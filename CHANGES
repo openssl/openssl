@@ -4,6 +4,19 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Add support for TLS extensions, specifically for the HostName extension.
+     The SSL_SESSION, SSL_CTX, and SSL data structures now have new members
+     for HostName support.
+
+     openssl s_client has a new '-servername' option.
+
+     openssl s_server has new options '-servername', '-cert2', and '-key2';
+     this allows testing the HostName extension for a specific single
+     host name ('-cert' and '-key' remain fallbacks for handshakes without
+     HostName negotiation).
+
+     [Peter Sylvester]
+
   *) Whirlpool hash implementation is added.
      [Andy Polyakov]
 

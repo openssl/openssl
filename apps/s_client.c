@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -236,7 +236,8 @@ typedef struct tlsextctx_st {
 } tlsextctx;
 
 
-static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg) {
+static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
+	{
 	tlsextctx * p = (tlsextctx *) arg;
 	const unsigned char * hn= SSL_get_servername(s, TLSEXT_TYPE_SERVER_host);
 	if (SSL_get_servername_type(s) != -1) 
@@ -245,7 +246,7 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg) {
 		BIO_printf(bio_err,"SSL_get_tlsext_hostname does not work\n");
 	
 	return SSL_ERROR_NONE;
-}
+	}
 #endif
 
 int MAIN(int, char **);
@@ -277,7 +278,7 @@ int MAIN(int argc, char **argv)
 	int starttls_proto = 0;
 	int prexit = 0, vflags = 0;
 	const SSL_METHOD *meth=NULL;
-	int socketType=SOCK_STREAM;
+	int socket_type=SOCK_STREAM;
 	BIO *sbio;
 	char *inrand=NULL;
 #ifndef OPENSSL_NO_ENGINE
@@ -296,7 +297,7 @@ int MAIN(int argc, char **argv)
 	struct sockaddr peer;
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0 ;
-	long mtu = 0;
+	long socket_mtu = 0;
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_client_method();
@@ -419,14 +420,14 @@ int MAIN(int argc, char **argv)
 		else if	(strcmp(*argv,"-dtls1") == 0)
 			{
 			meth=DTLSv1_client_method();
-			socketType=SOCK_DGRAM;
+			socket_type=SOCK_DGRAM;
 			}
 		else if (strcmp(*argv,"-timeout") == 0)
 			enable_timeouts=1;
 		else if (strcmp(*argv,"-mtu") == 0)
 			{
 			if (--argc < 1) goto bad;
-			mtu = atol(*(++argv));
+			socket_mtu = atol(*(++argv));
 			}
 #endif
 		else if (strcmp(*argv,"-bugs") == 0)
@@ -605,7 +606,7 @@ bad:
 	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 	 * Setting read ahead solves this problem.
 	 */
-	if (socketType == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
+	if (socket_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 	if (cipher != NULL)
@@ -634,22 +635,25 @@ bad:
 	store = SSL_CTX_get_cert_store(ctx);
 	X509_STORE_set_flags(store, vflags);
 #ifndef OPENSSL_NO_TLSEXT
-	if (servername != NULL) {
+	if (servername != NULL)
+		{
 		tlsextcbp.biodebug = bio_err;
 		SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
 		SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
-	}
+		}
 #endif
 
 	con=SSL_new(ctx);
 #ifndef OPENSSL_NO_TLSEXT
-	if (servername != NULL){
-		if (!SSL_set_tlsext_hostname(con,servername)){
+	if (servername != NULL)
+		{
+		if (!SSL_set_tlsext_hostname(con,servername))
+			{
 			BIO_printf(bio_err,"Unable to set TLS servername extension.\n");
 			ERR_print_errors(bio_err);
 			goto end;
+			}
 		}
-	}
 #endif
 #ifndef OPENSSL_NO_KRB5
 	if (con  &&  (con->kssl_ctx = kssl_ctx_new()) != NULL)
@@ -661,7 +665,7 @@ bad:
 
 re_start:
 
-	if (init_client(&s,host,port,socketType) == 0)
+	if (init_client(&s,host,port,socket_type) == 0)
 		{
 		BIO_printf(bio_err,"connect:errno=%d\n",get_last_socket_error());
 		SHUTDOWN(s);
@@ -698,7 +702,7 @@ re_start:
 
 		BIO_ctrl_set_connected(sbio, 1, &peer);
 
-		if ( enable_timeouts)
+		if (enable_timeouts)
 			{
 			timeout.tv_sec = 0;
 			timeout.tv_usec = DGRAM_RCV_TIMEOUT;
@@ -709,10 +713,10 @@ re_start:
 			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_SEND_TIMEOUT, 0, &timeout);
 			}
 
-		if ( mtu > 0)
+		if (socket_mtu > 0)
 			{
 			SSL_set_options(con, SSL_OP_NO_QUERY_MTU);
-			SSL_set_mtu(con, mtu);
+			SSL_set_mtu(con, socket_mtu);
 			}
 		else
 			/* want to do MTU discovery */
@@ -791,9 +795,10 @@ re_start:
 				{
 				in_init=0;
 #ifndef OPENSSL_NO_TLSEXT
-	if (servername != NULL && !SSL_session_reused(con)) {
+	if (servername != NULL && !SSL_session_reused(con))
+		{
 		BIO_printf(bio_c_out,"Server did %sacknowledge servername extension.\n",tlsextcbp.ack?"":"not ");
-	}
+		}
 #endif
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
