@@ -75,8 +75,8 @@ BIO_new                                 78	EXIST::FUNCTION:
 BIO_new_accept                          79	EXIST::FUNCTION:
 BIO_new_connect                         80	EXIST::FUNCTION:
 BIO_new_fd                              81	EXIST::FUNCTION:
-BIO_new_file                            82	EXIST:!WIN16:FUNCTION:FP_API
-BIO_new_fp                              83	EXIST:!WIN16:FUNCTION:FP_API
+BIO_new_file                            82	EXIST::FUNCTION:FP_API
+BIO_new_fp                              83	EXIST::FUNCTION:FP_API
 BIO_new_socket                          84	EXIST::FUNCTION:
 BIO_pop                                 85	EXIST::FUNCTION:
 BIO_printf                              86	EXIST::FUNCTION:
@@ -86,7 +86,7 @@ BIO_read                                89	EXIST::FUNCTION:
 BIO_s_accept                            90	EXIST::FUNCTION:
 BIO_s_connect                           91	EXIST::FUNCTION:
 BIO_s_fd                                92	EXIST::FUNCTION:
-BIO_s_file                              93	EXIST:!WIN16:FUNCTION:FP_API
+BIO_s_file                              93	EXIST::FUNCTION:FP_API
 BIO_s_mem                               95	EXIST::FUNCTION:
 BIO_s_null                              96	EXIST::FUNCTION:
 BIO_s_proxy_client                      97	NOEXIST::FUNCTION:
@@ -356,9 +356,9 @@ OBJ_nid2sn                              363	EXIST::FUNCTION:
 OBJ_obj2nid                             364	EXIST::FUNCTION:
 OBJ_sn2nid                              365	EXIST::FUNCTION:
 OBJ_txt2nid                             366	EXIST::FUNCTION:
-PEM_ASN1_read                           367	EXIST:!WIN16:FUNCTION:
+PEM_ASN1_read                           367	EXIST::FUNCTION:
 PEM_ASN1_read_bio                       368	EXIST::FUNCTION:BIO
-PEM_ASN1_write                          369	EXIST:!WIN16:FUNCTION:
+PEM_ASN1_write                          369	EXIST::FUNCTION:
 PEM_ASN1_write_bio                      370	EXIST::FUNCTION:BIO
 PEM_SealFinal                           371	EXIST::FUNCTION:RSA
 PEM_SealInit                            372	EXIST::FUNCTION:RSA
@@ -366,14 +366,14 @@ PEM_SealUpdate                          373	EXIST::FUNCTION:RSA
 PEM_SignFinal                           374	EXIST::FUNCTION:
 PEM_SignInit                            375	EXIST::FUNCTION:
 PEM_SignUpdate                          376	EXIST::FUNCTION:
-PEM_X509_INFO_read                      377	EXIST:!WIN16:FUNCTION:
+PEM_X509_INFO_read                      377	EXIST::FUNCTION:
 PEM_X509_INFO_read_bio                  378	EXIST::FUNCTION:BIO
 PEM_X509_INFO_write_bio                 379	EXIST::FUNCTION:BIO
 PEM_dek_info                            380	EXIST::FUNCTION:
 PEM_do_header                           381	EXIST::FUNCTION:
 PEM_get_EVP_CIPHER_INFO                 382	EXIST::FUNCTION:
 PEM_proc_type                           383	EXIST::FUNCTION:
-PEM_read                                384	EXIST:!WIN16:FUNCTION:
+PEM_read                                384	EXIST::FUNCTION:
 PEM_read_DHparams                       385	EXIST:!WIN16:FUNCTION:DH
 PEM_read_DSAPrivateKey                  386	EXIST:!WIN16:FUNCTION:DSA
 PEM_read_DSAparams                      387	EXIST:!WIN16:FUNCTION:DSA
@@ -393,7 +393,7 @@ PEM_read_bio_RSAPrivateKey              400	EXIST::FUNCTION:RSA
 PEM_read_bio_X509                       401	EXIST::FUNCTION:
 PEM_read_bio_X509_CRL                   402	EXIST::FUNCTION:
 PEM_read_bio_X509_REQ                   403	EXIST::FUNCTION:
-PEM_write                               404	EXIST:!WIN16:FUNCTION:
+PEM_write                               404	EXIST::FUNCTION:
 PEM_write_DHparams                      405	EXIST:!WIN16:FUNCTION:DH
 PEM_write_DSAPrivateKey                 406	EXIST:!WIN16:FUNCTION:DSA
 PEM_write_DSAparams                     407	EXIST:!WIN16:FUNCTION:DSA
@@ -950,9 +950,9 @@ ERR_get_next_error_library              966	EXIST::FUNCTION:
 EVP_PKEY_cmp_parameters                 967	EXIST::FUNCTION:
 HMAC_cleanup                            968	NOEXIST::FUNCTION:
 BIO_ptr_ctrl                            969	EXIST::FUNCTION:
-BIO_new_file_internal                   970	EXIST:WIN16:FUNCTION:FP_API
-BIO_new_fp_internal                     971	EXIST:WIN16:FUNCTION:FP_API
-BIO_s_file_internal                     972	EXIST:WIN16:FUNCTION:FP_API
+BIO_new_file_internal                   970	NOEXIST::FUNCTION:
+BIO_new_fp_internal                     971	NOEXIST::FUNCTION:
+BIO_s_file_internal                     972	NOEXIST::FUNCTION:
 BN_BLINDING_convert                     973	EXIST::FUNCTION:
 BN_BLINDING_invert                      974	EXIST::FUNCTION:
 BN_BLINDING_update                      975	EXIST::FUNCTION:
@@ -984,8 +984,8 @@ BIO_ghbn_ctrl                           1003	NOEXIST::FUNCTION:
 CRYPTO_free_ex_data                     1004	EXIST::FUNCTION:
 CRYPTO_get_ex_data                      1005	EXIST::FUNCTION:
 CRYPTO_set_ex_data                      1007	EXIST::FUNCTION:
-ERR_load_CRYPTO_strings                 1009	EXIST:!OS2,!VMS,!WIN16:FUNCTION:
-ERR_load_CRYPTOlib_strings              1009	EXIST:OS2,VMS,WIN16:FUNCTION:
+ERR_load_CRYPTO_strings                 1009	EXIST:!OS2,!VMS:FUNCTION:
+ERR_load_CRYPTOlib_strings              1009	EXIST:OS2,VMS:FUNCTION:
 EVP_PKEY_bits                           1010	EXIST::FUNCTION:
 MD5_Transform                           1011	EXIST::FUNCTION:MD5
 SHA1_Transform                          1012	EXIST::FUNCTION:SHA,SHA1
@@ -2732,8 +2732,8 @@ EC_POINT_point2oct                      3178	EXIST::FUNCTION:EC
 KRB5_APREQ_free                         3179	EXIST::FUNCTION:
 ASN1_OBJECT_it                          3180	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ASN1_OBJECT_it                          3180	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-OCSP_crlID_new                          3181	EXIST:!OS2,!VMS,!WIN16:FUNCTION:
-OCSP_crlID2_new                         3181	EXIST:OS2,VMS,WIN16:FUNCTION:
+OCSP_crlID_new                          3181	EXIST:!OS2,!VMS:FUNCTION:
+OCSP_crlID2_new                         3181	EXIST:OS2,VMS:FUNCTION:
 CONF_modules_load_file                  3182	EXIST::FUNCTION:
 CONF_imodule_set_usr_data               3183	EXIST::FUNCTION:
 ENGINE_set_default_string               3184	EXIST::FUNCTION:ENGINE
@@ -3421,3 +3421,4 @@ WHIRLPOOL                               3819	EXIST::FUNCTION:WHIRLPOOL
 WHIRLPOOL_BitUpdate                     3820	EXIST::FUNCTION:WHIRLPOOL
 WHIRLPOOL_Final                         3821	EXIST::FUNCTION:WHIRLPOOL
 WHIRLPOOL_Update                        3822	EXIST::FUNCTION:WHIRLPOOL
+DSO_global_lookup                       3823	EXIST::FUNCTION:

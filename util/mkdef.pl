@@ -454,17 +454,22 @@ sub do_defs
 				next;
 			}
 
-	    		$cpp = 1 if /^\#.*ifdef.*cplusplus/;
+			if(/\/\*/) {
+				if (not /\*\//) {	# multiline comment...
+					$line = $_;	# ... just accumulate
+					next;
+				} else {
+					s/\/\*.*?\*\///gs;# wipe it
+				}
+			}
+
 			if ($cpp) {
-				$cpp = 0 if /^\#.*endif/;
+				$cpp++ if /^#\s*if/;
+				$cpp-- if /^#\s*endif/;
 				next;
 	    		}
+			$cpp = 1 if /^#.*ifdef.*cplusplus/;
 
-			s/\/\*.*?\*\///gs;                   # ignore comments
-			if (/\/\*/) {			     # if we have part
-				$line = $_;		     # of a comment,
-				next;			     # continue reading
-			}
 			s/{[^{}]*}//gs;                      # ignore {} blocks
 			print STDERR "DEBUG: \$def=\"$def\"\n" if $debug && $def ne "";
 			print STDERR "DEBUG: \$_=\"$_\"\n" if $debug;
@@ -840,6 +845,17 @@ sub do_defs
 			next if(/typedef\W/);
 			next if(/\#define/);
 
+			# Reduce argument lists to empty ()
+			# fold round brackets recursively: (t(*v)(t),t) -> (t{}{},t) -> {}
+			while(/\(.*\)/s) {
+				s/\([^\(\)]+\)/\{\}/gs;
+				s/\(\s*\*\s*(\w+)\s*\{\}\s*\)/$1/gs;	#(*f{}) -> f
+			}
+			# pretend as we didn't use curly braces: {} -> ()
+			s/\{\}/\(\)/gs;
+
+			s/STACK_OF\(\)/void/gs;
+
 			print STDERR "DEBUG: \$_ = \"$_\"\n" if $debug;
 			if (/^\#INFO:([^:]*):(.*)$/) {
 				$plats = $1;
@@ -850,25 +866,11 @@ sub do_defs
 				$s = $1;
 				$k = "VARIABLE";
 				print STDERR "DEBUG: found external variable $s\n" if $debug;
-			} elsif (/\(\*(\w*(\{[0-9]+\})?)\([^\)]+/) {
-				$s = $1;
-				print STDERR "DEBUG: found ANSI C function $s\n" if $debug;
-			} elsif (/\w+\W+(\w+)\W*\(\s*\)(\s*__attribute__\(.*\)\s*)?$/s) {
-				# K&R C
-				print STDERR "DEBUG: found K&R C function $s\n" if $debug;
+			} elsif (/TYPEDEF_\w+_OF/s) {
 				next;
-			} elsif (/\w+\W+\w+(\{[0-9]+\})?\W*\(.*\)(\s*__attribute__\(.*\)\s*)?$/s) {
-				while (not /\(\)(\s*__attribute__\(.*\)\s*)?$/s) {
-					s/[^\(\)]*\)(\s*__attribute__\(.*\)\s*)?$/\)/s;
-					s/\([^\(\)]*\)\)(\s*__attribute__\(.*\)\s*)?$/\)/s;
-				}
-				s/\(void\)//;
-				/(\w+(\{[0-9]+\})?)\W*\(\)/s;
-				$s = $1;
+			} elsif (/(\w+)\s*\(\).*/s) {	# first token prior [first] () is
+				$s = $1;		# a function name!
 				print STDERR "DEBUG: found function $s\n" if $debug;
-
-			} elsif (/TYPEDEF_\w+_OF/) {
-				next;
 			} elsif (/\(/ and not (/=/)) {
 				print STDERR "File $file: cannot parse: $_;\n";
 				next;

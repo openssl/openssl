@@ -143,11 +143,14 @@ while (($hdr, $lib) = each %libinc)
 	    s/[\n\s]*$//g;
 
 	    # Skip over recognized non-function declarations
-	    next if(/typedef\W/ or /struct\W/ or /DECLARE_STACK_OF/ or /TYPEDEF_.*_OF/);
+	    next if(/typedef\W/ or /DECLARE_STACK_OF/ or /TYPEDEF_.*_OF/);
 
 	    # Reduce argument lists to empty ()
 	    # fold round brackets recursively: (t(*v)(t),t) -> (t{}{},t) -> {}
-	    while(/\(.*\)/s) { s/\([^\(\)]+\)/\{\}/gs; }
+	    while(/\(.*\)/s) {
+		s/\([^\(\)]+\)/\{\}/gs;
+		s/\(\s*\*\s*(\w+)\s*\{\}\s*\)/$1/gs;	#(*f{}) -> f
+	    }
 	    # pretend as we didn't use curly braces: {} -> ()
 	    s/\{\}/\(\)/gs;
 
