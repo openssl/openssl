@@ -255,6 +255,16 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CR_SRVR_HELLO_B:
 			ret=ssl3_get_server_hello(s);
 			if (ret <= 0) goto end;
+#ifndef OPENSSL_NO_TLSEXT
+			{
+				int extension_error = 0,al;
+				if ((al = ssl_check_Hello_TLS_extensions(s,&extension_error)) != SSL_ERROR_NONE){
+					ret = -1;
+					SSLerr(SSL_F_SSL3_CONNECT,SSL_R_SERVERHELLO_TLS_EXT);
+					goto end;
+				}
+			}
+#endif
 			if (s->hit)
 				s->state=SSL3_ST_CR_FINISHED_A;
 			else
@@ -602,6 +612,13 @@ int ssl3_client_hello(SSL *s)
 			}
 #endif
 		*(p++)=0; /* Add the NULL method */
+#ifndef OPENSSL_NO_TLSEXT
+		if ((p = ssl_add_ClientHello_TLS_extensions(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+		{
+			SSLerr(SSL_F_SSL3_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
+			goto err;
+		}
+#endif
 		
 		l=(p-d);
 		d=buf;
@@ -785,6 +802,16 @@ int ssl3_get_server_hello(SSL *s)
 		{
 		s->s3->tmp.new_compression=comp;
 		}
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+	/* TLS extensions*/
+	if (s->version > SSL3_VERSION)
+	{
+		if ((al = ssl_parse_ServerHello_TLS_extensions(s,&p,d,n)) != SSL_ERROR_NONE){
+			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_PARSE_TLS_EXT);
+			goto f_err; 
+		}
+	}
 #endif
 
 	if (p != (d+n))

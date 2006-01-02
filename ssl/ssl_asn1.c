@@ -78,12 +78,15 @@ typedef struct ssl_session_asn1_st
 	ASN1_INTEGER time;
 	ASN1_INTEGER timeout;
 	ASN1_INTEGER verify_result;
+#ifndef OPENSSL_NO_TLSEXT
+	ASN1_OCTET_STRING tlsext_hostname;
+#endif /* OPENSSL_NO_TLSEXT */
 	} SSL_SESSION_ASN1;
 
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
-	int v1=0,v2=0,v3=0,v4=0,v5=0;
+	int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
 	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2],ibuf5[LSIZE2];
 	long l;
@@ -178,6 +181,14 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		ASN1_INTEGER_set(&a.verify_result,in->verify_result);
 		}
 
+#ifndef OPENSSL_NO_TLSEXT
+	if (in->tlsext_hostname)
+                {
+                a.tlsext_hostname.length=strlen(in->tlsext_hostname);
+                a.tlsext_hostname.type=V_ASN1_OCTET_STRING;
+                a.tlsext_hostname.data=in->tlsext_hostname;
+                }                
+#endif /* OPENSSL_NO_TLSEXT */
 
 	M_ASN1_I2D_len(&(a.version),		i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(&(a.ssl_version),	i2d_ASN1_INTEGER);
@@ -200,6 +211,10 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->verify_result != X509_V_OK)
 		M_ASN1_I2D_len_EXP_opt(&(a.verify_result),i2d_ASN1_INTEGER,5,v5);
 
+#ifndef OPENSSL_NO_TLSEXT
+	if (in->tlsext_hostname)
+        	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
+#endif /* OPENSSL_NO_TLSEXT */
 	M_ASN1_I2D_seq_total();
 
 	M_ASN1_I2D_put(&(a.version),		i2d_ASN1_INTEGER);
@@ -223,6 +238,10 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 			       v4);
 	if (in->verify_result != X509_V_OK)
 		M_ASN1_I2D_put_EXP_opt(&a.verify_result,i2d_ASN1_INTEGER,5,v5);
+#ifndef OPENSSL_NO_TLSEXT
+	if (in->tlsext_hostname)
+        	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
+#endif /* OPENSSL_NO_TLSEXT */
 	M_ASN1_I2D_finish();
 	}
 
@@ -393,6 +412,22 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		}
 	else
 		ret->verify_result=X509_V_OK;
+
+#ifndef OPENSSL_NO_TLSEXT
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,6);
+	if (os.data)
+		{
+		ret->tlsext_hostname = BUF_strndup(os.data, os.length);
+		OPENSSL_free(os.data);
+		os.data = NULL;
+		os.length = 0;
+		}
+	else
+		ret->tlsext_hostname=NULL;
+
+#endif /* OPENSSL_NO_TLSEXT */
 
 	M_ASN1_D2I_Finish(a,SSL_SESSION_free,SSL_F_D2I_SSL_SESSION);
 	}

@@ -101,14 +101,186 @@ void tls1_clear(SSL *s)
 	s->version=TLS1_VERSION;
 	}
 
-#if 0
-long tls1_ctrl(SSL *s, int cmd, long larg, char *parg)
-	{
-	return(0);
+#ifndef OPENSSL_NO_TLSEXT
+unsigned char *ssl_add_ClientHello_TLS_extensions(SSL *s, unsigned char *p, unsigned char *limit) {
+	int extdatalen=0;
+	unsigned char *ret = p;
+
+	ret+=2;
+
+	if (ret>=limit) return NULL; /* this really never occurs, but ... */
+ 	if (s->servername_done == 0 && s->tlsext_hostname != NULL) { 
+		/* Add TLS extension servername to the Client Hello message */
+		unsigned long size_str;
+		long lenmax; 
+
+		if ((lenmax = limit - p - 7) < 0) return NULL; 
+		if ((size_str = strlen(s->tlsext_hostname)) > (unsigned long)lenmax) return NULL;
+
+		s2n(TLSEXT_TYPE_server_name,ret);
+		s2n(size_str+3,ret);
+		*(ret++) = (unsigned char) TLSEXT_TYPE_SERVER_host;
+		s2n(size_str,ret);
+	
+		memcpy(ret, s->tlsext_hostname, size_str);
+		ret+=size_str;
 	}
 
-long tls1_callback_ctrl(SSL *s, int cmd, void *(*fp)())
-	{
-	return(0);
+	
+	if ((extdatalen = ret-p-2)== 0) 
+		return p;
+
+	s2n(extdatalen,p);
+	return ret;
+
+}
+
+unsigned char *ssl_add_ServerHello_TLS_extensions(SSL *s, unsigned char *p, unsigned char *limit) {
+	int extdatalen=0;
+	unsigned char *ret = p;
+	if (s->hit || s->servername_done == 2)
+		return p;
+	ret+=2;
+	if (s->servername_done == 1)  
+		s->servername_done = 2;
+
+	if (ret>=limit) return NULL; /* this really never occurs, but ... */
+
+	if (s->session->tlsext_hostname != NULL) { 
+
+		if (limit - p - 4 < 0) return NULL; 
+
+		s2n(TLSEXT_TYPE_server_name,ret);
+		s2n(0,ret);
 	}
+
+	
+	if ((extdatalen = ret-p-2)== 0) 
+		return p;
+
+	s2n(extdatalen,p);
+	return ret;
+
+}
+
+int ssl_parse_ClientHello_TLS_extensions(SSL *s, unsigned char **p, unsigned char *d, int n) {
+	unsigned short type;
+	unsigned short size;
+	unsigned short len;
+	unsigned char * data = *p;
+
+	if (data >= (d+n-2))
+	   return SSL_ERROR_NONE;
+	n2s(data,len);
+
+        if (data > (d+n-len)) 
+	   return SSL_ERROR_NONE;
+
+	while(data <= (d+n-4)){
+		n2s(data,type);
+		n2s(data,size);
+
+		if (data+size > (d+n))
+	   		return SSL_ERROR_SSL;
+
+		if (type == TLSEXT_TYPE_server_name) {
+			unsigned char *sdata = data;
+			int servname_type;
+			int dsize = size-3 ;
+                        
+			if (dsize > 0 ) {
+ 				servname_type = *(sdata++); 
+				n2s(sdata,len);
+				if (len != dsize) 
+			   		return SSL_ERROR_SSL;
+
+				switch (servname_type) {
+				case TLSEXT_TYPE_SERVER_host:
+                                        if (s->session->tlsext_hostname == NULL) {
+						if (len > 255 || 
+							((s->session->tlsext_hostname = OPENSSL_malloc(len+1)) == NULL))
+							return SSL_ERROR_SSL;
+						memcpy(s->session->tlsext_hostname, sdata, len);
+						s->session->tlsext_hostname[len]='\0'; 
+					}
+					break;
+				default:
+					break;
+				}
+                                 
+			}
+		}
+
+		data+=size;		
+	}
+	*p = data;
+
+	return SSL_ERROR_NONE;
+}
+int ssl_parse_ServerHello_TLS_extensions(SSL *s, unsigned char **p, unsigned char *d, int n) {
+	unsigned short type;
+	unsigned short size;
+	unsigned short len;  
+	unsigned char *data = *p;
+
+	int tlsext_servername = 0;
+
+	if (data >= (d+n-2))
+	   return SSL_ERROR_NONE;
+
+
+	n2s(data,len);
+
+	while(data <= (d+n-4)){
+		n2s(data,type);
+		n2s(data,size);
+
+		if (data+size > (d+n))
+	   		return SSL_ERROR_SSL;
+
+		if (type == TLSEXT_TYPE_server_name) {
+			if ( s->tlsext_hostname == NULL || size > 0 ) {
+				return SSL_ERROR_SSL;
+			}
+			tlsext_servername = 1;   
+		} 
+
+		data+=size;		
+	}
+
+	
+
+	if (data != d+n)
+	   	return SSL_ERROR_SSL;
+
+	if (!s->hit && tlsext_servername == 1) {
+ 		if (s->tlsext_hostname) {
+			if (s->session->tlsext_hostname == NULL) {
+				s->session->tlsext_hostname = BUF_strdup(s->tlsext_hostname);	
+				if (!s->session->tlsext_hostname)
+					return SSL_ERROR_SSL;
+			}
+		} else 
+			return SSL_ERROR_SSL;
+	}
+	*p = data;
+
+	return SSL_ERROR_NONE;
+}
+
+int ssl_check_Hello_TLS_extensions(SSL *s,int *ad)
+{
+	int ret = SSL_ERROR_NONE;
+
+	*ad = SSL_AD_UNRECOGNIZED_NAME;
+	if (s->servername_done == 0 && (s->ctx != NULL && s->ctx->tlsext_servername_callback != NULL) 
+		&& ((ret = s->ctx->tlsext_servername_callback(s, ad, s->ctx->tlsext_servername_arg))!= SSL_ERROR_NONE)) 
+  		return ret;
+
+	else if (s->servername_done == 1) 	
+		s->servername_done = 2;
+
+	return ret;
+}
 #endif
+

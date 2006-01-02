@@ -940,5 +940,11 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
-
+#ifndef OPENSSL_NO_TLSEXT
+unsigned char *ssl_add_ClientHello_TLS_extensions(SSL *s, unsigned char *p, unsigned char *limit); 
+unsigned char *ssl_add_ServerHello_TLS_extensions(SSL *s, unsigned char *p, unsigned char *limit); 
+int ssl_parse_ClientHello_TLS_extensions(SSL *s, unsigned char **data, unsigned char *d, int n);
+int ssl_parse_ServerHello_TLS_extensions(SSL *s, unsigned char **data, unsigned char *d, int n);
+int ssl_check_Hello_TLS_extensions(SSL *s,int *ad);
+#endif
 #endif

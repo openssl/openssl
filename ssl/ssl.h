@@ -172,6 +172,11 @@
 
 #include <openssl/e_os2.h>
 
+#ifdef OPENSSL_NO_TLS1
+#	ifndef OPENSSL_NO_TLSEXT 
+#		define OPENSSL_NO_TLSEXT
+#	endif
+#endif
 #ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
 #endif
@@ -439,6 +444,9 @@ typedef struct ssl_session_st
         unsigned int krb5_client_princ_len;
         unsigned char krb5_client_princ[SSL_MAX_KRB5_PRINCIPAL_LENGTH];
 #endif /* OPENSSL_NO_KRB5 */
+#ifndef OPENSSL_NO_TLSEXT
+	char *tlsext_hostname;
+#endif
 
 	int not_resumable;
 
@@ -755,6 +763,13 @@ struct ssl_ctx_st
 	 * padding and MAC overheads.
 	 */
 	unsigned int max_send_fragment;
+
+#ifndef OPENSSL_NO_TLSEXT
+    /* TLS extensions servername callback */
+	int (*tlsext_servername_callback)(SSL*, int *, void *);
+	void *tlsext_servername_arg;
+#endif
+
 	};
 
 #define SSL_SESS_CACHE_OFF			0x0000
@@ -977,6 +992,14 @@ struct ssl_st
 	int client_version;	/* what was passed, used for
 				 * SSLv3/TLS rollback check */
 	unsigned int max_send_fragment;
+#ifndef OPENSSL_NO_TLSEXT
+	char *tlsext_hostname;
+        int servername_done;   /* no further mod of servername 
+                                  0 : call the servername extension callback.
+                                  1 : prepare 2, allow last ack just after in server callback.
+                                  2 : don't call servername callback, no ack in server hello
+                               */
+#endif
 	};
 
 #ifdef __cplusplus
@@ -1122,6 +1145,9 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_AD_INTERNAL_ERROR		TLS1_AD_INTERNAL_ERROR	/* fatal */
 #define SSL_AD_USER_CANCELLED		TLS1_AD_USER_CANCELLED
 #define SSL_AD_NO_RENEGOTIATION		TLS1_AD_NO_RENEGOTIATION
+#ifndef OPENSSL_NO_TLSEXT
+#define SSL_AD_UNRECOGNIZED_NAME	TLS1_AD_UNRECOGNIZED_NAME
+#endif
 
 #define SSL_ERROR_NONE			0
 #define SSL_ERROR_SSL			1
@@ -1454,6 +1480,7 @@ int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 SSL_SESSION *SSL_get_session(const SSL *ssl);
 SSL_SESSION *SSL_get1_session(SSL *ssl); /* obtain a reference count */
 SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl);
+SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx);
 void SSL_set_info_callback(SSL *ssl,
 			   void (*cb)(const SSL *ssl,int type,int val));
 void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl,int type,int val);
@@ -1777,6 +1804,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_CIPHER_CODE_WRONG_LENGTH			 137
 #define SSL_R_CIPHER_OR_HASH_UNAVAILABLE		 138
 #define SSL_R_CIPHER_TABLE_SRC_ERROR			 139
+#define SSL_R_CLIENTHELLO_TLS_EXT			 2003
 #define SSL_R_COMPRESSED_LENGTH_TOO_LONG		 140
 #define SSL_R_COMPRESSION_FAILURE			 141
 #define SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE	 1120
@@ -1861,6 +1889,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_NULL_SSL_METHOD_PASSED			 196
 #define SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED		 197
 #define SSL_R_PACKET_LENGTH_TOO_LONG			 198
+#define SSL_R_PARSE_TLS_EXT				 2004
 #define SSL_R_PATH_TOO_LONG				 270
 #define SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE		 199
 #define SSL_R_PEER_ERROR				 200
@@ -1884,11 +1913,14 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_REUSE_CERT_LENGTH_NOT_ZERO		 216
 #define SSL_R_REUSE_CERT_TYPE_NOT_ZERO			 217
 #define SSL_R_REUSE_CIPHER_LIST_NOT_ZERO		 218
+#define SSL_R_SERVERHELLO_TLS_EXT			 2005
 #define SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED		 277
 #define SSL_R_SHORT_READ				 219
 #define SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE	 220
 #define SSL_R_SSL23_DOING_SESSION_ID_REUSE		 221
 #define SSL_R_SSL2_CONNECTION_ID_TOO_LONG		 1114
+#define SSL_R_SSL3_EXT_INVALID_SERVERNAME		 2006
+#define SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE		 2007
 #define SSL_R_SSL3_SESSION_ID_TOO_LONG			 1113
 #define SSL_R_SSL3_SESSION_ID_TOO_SHORT			 222
 #define SSL_R_SSLV3_ALERT_BAD_CERTIFICATE		 1042

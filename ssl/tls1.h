@@ -97,6 +97,53 @@ extern "C" {
 #define TLS1_AD_USER_CANCELLED		90
 #define TLS1_AD_NO_RENEGOTIATION	100
 
+#ifndef OPENSSL_NO_TLSEXT
+#define TLS1_AD_UNRECOGNIZED_NAME 	122
+
+#define TLSEXT_TYPE_server_name			0
+#define TLSEXT_TYPE_max_fragment_length		1
+#define TLSEXT_TYPE_client_certificate_url	2
+#define TLSEXT_TYPE_trusted_ca_keys		3
+#define TLSEXT_TYPE_truncated_hmac		4
+#define TLSEXT_TYPE_status_request		5
+#define TLSEXT_TYPE_srp				6
+
+#define TLSEXT_TYPE_SERVER_host 0
+
+#define SSL_CTX_set_tlsext_hostname(ctx,name) \
+SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_TYPE_SERVER_host,(char *)name)
+#define SSL_set_tlsext_hostname(s,name) \
+SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_TYPE_SERVER_host,(char *)name)
+
+#define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
+SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)
+#define SSL_CTX_set_tlsext_servername_arg(ctx, arg) \
+SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
+
+
+const char *SSL_get_servername(const SSL *s, const int type) ;
+int SSL_get_servername_type(const SSL *s) ;
+
+#if 0
+	#define SSL_get_tlsext_hostname(s,psn) \
+	SSL_ctrl(s,SSL_CTRL_GET_TLSEXT_HOSTNAME,TLSEXT_TYPE_SERVER_host, (void *)psn)
+#else
+	#define SSL_get_tlsext_hostname(s,psn) \
+	(*psn = SSL_get_servername(s, TLSEXT_TYPE_SERVER_host),*psn != NULL)
+#endif
+	#define SSL_set_tlsext_servername_done(s,t) \
+	SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE,t, NULL)
+
+void SSL_set_ctx(SSL *s, SSL_CTX *ctx) ;
+
+#define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB	53
+#define SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG	54
+#define SSL_CTRL_SET_TLSEXT_HOSTNAME		55
+#define SSL_CTRL_GET_TLSEXT_HOSTNAME		56
+#define SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE	57
+  
+#endif
+
 /* Additional TLS ciphersuites from expired Internet Draft
  * draft-ietf-tls-56-bit-ciphersuites-01.txt
  * (available if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES is defined, see

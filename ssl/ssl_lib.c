@@ -1315,6 +1315,27 @@ err:
 	return(NULL);
 	}
 
+#ifndef OPENSSL_TLSEXT
+/** return a servername extension value if provided in CLIENT HELLO
+ * or NULL. 
+ * For the moment, only hostname types are supported. 
+ */
+
+const char *SSL_get_servername(const SSL *s, const int type) {
+
+	if (type != TLSEXT_TYPE_SERVER_host) 
+		return NULL;
+	return s->session /*&&s->session->tlsext_hostname*/?s->session->tlsext_hostname:s->tlsext_hostname;
+}
+
+int SSL_get_servername_type(const SSL *s) {
+
+	if (s->session &&s->session->tlsext_hostname ?s->session->tlsext_hostname:s->tlsext_hostname) 
+		return TLSEXT_TYPE_SERVER_host;
+	return -1;
+}
+
+#endif
 unsigned long SSL_SESSION_hash(const SSL_SESSION *a)
 	{
 	unsigned long l;
@@ -1466,6 +1487,10 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 
 	ret->max_send_fragment = SSL3_RT_MAX_PLAIN_LENGTH;
 
+#ifndef OPENSSL_NO_TLSEXT
+	ret->tlsext_servername_callback = NULL;
+	ret->tlsext_servername_arg = NULL;
+#endif
 	return(ret);
 err:
 	SSLerr(SSL_F_SSL_CTX_NEW,ERR_R_MALLOC_FAILURE);
@@ -2412,6 +2437,19 @@ int SSL_version(const SSL *s)
 
 SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 	{
+	return(ssl->ctx);
+	}
+
+SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
+	{
+
+	if (ssl->cert != NULL)
+		ssl_cert_free(ssl->cert);
+	ssl->cert = ssl_cert_dup(ctx->cert);
+	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
+	if (ssl->ctx != NULL)
+		SSL_CTX_free(ssl->ctx); /* decrement reference count */
+	ssl->ctx = ctx;
 	return(ssl->ctx);
 	}
 

@@ -222,8 +222,31 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 #endif
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
-
+#ifndef OPENSSL_NO_TLSEXT
+	BIO_printf(bio_err," -servername host  - Set TLS extension servername in ClientHello\n");
+#endif
 	}
+
+#ifndef OPENSSL_NO_TLSEXT
+
+/* This is a context that we pass to callbacks */
+typedef struct tlsextctx_st {
+   BIO * biodebug;
+   int ack;
+} tlsextctx;
+
+
+static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg) {
+	tlsextctx * p = (tlsextctx *) arg;
+	const unsigned char * hn= SSL_get_servername(s, TLSEXT_TYPE_SERVER_host);
+	if (SSL_get_servername_type(s) != -1) 
+ 	        p->ack = !SSL_session_reused(s) && hn != NULL;
+	else 
+		BIO_printf(bio_err,"SSL_get_tlsext_hostname does not work\n");
+	
+	return SSL_ERROR_NONE;
+}
+#endif
 
 int MAIN(int, char **);
 
@@ -254,10 +277,7 @@ int MAIN(int argc, char **argv)
 	int starttls_proto = 0;
 	int prexit = 0, vflags = 0;
 	const SSL_METHOD *meth=NULL;
-#ifdef sock_type
-#undef sock_type
-#endif
-	int sock_type=SOCK_STREAM;
+	int socketType=SOCK_STREAM;
 	BIO *sbio;
 	char *inrand=NULL;
 #ifndef OPENSSL_NO_ENGINE
@@ -268,6 +288,11 @@ int MAIN(int argc, char **argv)
 	struct timeval tv;
 #endif
 
+#ifndef OPENSSL_NO_TLSEXT
+	char *servername = NULL; 
+        tlsextctx tlsextcbp = 
+        {NULL,0};
+#endif
 	struct sockaddr peer;
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0 ;
@@ -394,7 +419,7 @@ int MAIN(int argc, char **argv)
 		else if	(strcmp(*argv,"-dtls1") == 0)
 			{
 			meth=DTLSv1_client_method();
-			sock_type=SOCK_DGRAM;
+			socketType=SOCK_DGRAM;
 			}
 		else if (strcmp(*argv,"-timeout") == 0)
 			enable_timeouts=1;
@@ -477,6 +502,14 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			inrand= *(++argv);
 			}
+#ifndef OPENSSL_NO_TLSEXT
+		else if (strcmp(*argv,"-servername") == 0)
+			{
+			if (--argc < 1) goto bad;
+			servername= *(++argv);
+			/* meth=TLSv1_client_method(); */
+			}
+#endif
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -572,7 +605,7 @@ bad:
 	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 	 * Setting read ahead solves this problem.
 	 */
-	if (sock_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
+	if (socketType == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 	if (cipher != NULL)
@@ -600,8 +633,24 @@ bad:
 
 	store = SSL_CTX_get_cert_store(ctx);
 	X509_STORE_set_flags(store, vflags);
+#ifndef OPENSSL_NO_TLSEXT
+	if (servername != NULL) {
+		tlsextcbp.biodebug = bio_err;
+		SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
+		SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
+	}
+#endif
 
 	con=SSL_new(ctx);
+#ifndef OPENSSL_NO_TLSEXT
+	if (servername != NULL){
+		if (!SSL_set_tlsext_hostname(con,servername)){
+			BIO_printf(bio_err,"Unable to set TLS servername extension.\n");
+			ERR_print_errors(bio_err);
+			goto end;
+		}
+	}
+#endif
 #ifndef OPENSSL_NO_KRB5
 	if (con  &&  (con->kssl_ctx = kssl_ctx_new()) != NULL)
                 {
@@ -612,7 +661,7 @@ bad:
 
 re_start:
 
-	if (init_client(&s,host,port,sock_type) == 0)
+	if (init_client(&s,host,port,socketType) == 0)
 		{
 		BIO_printf(bio_err,"connect:errno=%d\n",get_last_socket_error());
 		SHUTDOWN(s);
@@ -741,6 +790,11 @@ re_start:
 			if (in_init)
 				{
 				in_init=0;
+#ifndef OPENSSL_NO_TLSEXT
+	if (servername != NULL && !SSL_session_reused(con)) {
+		BIO_printf(bio_c_out,"Server did %sacknowledge servername extension.\n",tlsextcbp.ack?"":"not ");
+	}
+#endif
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
 

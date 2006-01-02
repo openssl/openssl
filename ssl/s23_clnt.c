@@ -349,6 +349,10 @@ static int ssl23_client_hello(SSL *s)
 			p+=i;
 
 			/* COMPRESSION */
+#ifdef OPENSSL_NO_COMP
+			*(p++)=1;
+#else
+
 			if ((s->options & SSL_OP_NO_COMPRESSION)
 						|| !s->ctx->comp_methods)
 				j=0;
@@ -360,7 +364,15 @@ static int ssl23_client_hello(SSL *s)
 				comp=sk_SSL_COMP_value(s->ctx->comp_methods,i);
 				*(p++)=comp->id;
 				}
+#endif
 			*(p++)=0; /* Add the NULL method */
+#ifndef OPENSSL_NO_TLSEXT
+			if ((p = ssl_add_ClientHello_TLS_extensions(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+			{
+				SSLerr(SSL_F_SSL3_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
+				return -1;
+			}
+#endif
 			
 			l = p-d;
 			*p = 42;

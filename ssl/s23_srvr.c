@@ -140,7 +140,7 @@ IMPLEMENT_ssl23_meth_func(SSLv23_server_method,
 int ssl23_accept(SSL *s)
 	{
 	BUF_MEM *buf;
-	unsigned long Time=(unsigned long)time(NULL);
+	unsigned long Time=time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state;
@@ -416,7 +416,7 @@ int ssl23_get_client_hello(SSL *s)
 		n2s(p,sil);
 		n2s(p,cl);
 		d=(unsigned char *)s->init_buf->data;
-		if ((csl+sil+cl+11) != s->packet_length)
+		if ((csl+sil+cl+11) > s->packet_length)
 			{
 			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_RECORD_LENGTH_MISMATCH);
 			goto err;
@@ -459,6 +459,12 @@ int ssl23_get_client_hello(SSL *s)
 		*(d++)=1;
 		*(d++)=0;
 		
+                /* copy any remaining data with may be extensions */
+	        p = p+csl+sil+cl ;
+		while (p <  s->packet+s->packet_length) {
+			*(d++)=*(p++);
+		}
+
 		i = (d-(unsigned char *)s->init_buf->data) - 4;
 		l2n3((long)i, d_len);
 

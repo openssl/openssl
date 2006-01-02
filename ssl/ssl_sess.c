@@ -122,6 +122,9 @@ SSL_SESSION *SSL_SESSION_new(void)
 	ss->prev=NULL;
 	ss->next=NULL;
 	ss->compress_meth=0;
+#ifndef OPENSSL_NO_TLSEXT
+	ss->tlsext_hostname = NULL; 
+#endif
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 	return(ss);
 	}
@@ -546,6 +549,10 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 	if (ss->sess_cert != NULL) ssl_sess_cert_free(ss->sess_cert);
 	if (ss->peer != NULL) X509_free(ss->peer);
 	if (ss->ciphers != NULL) sk_SSL_CIPHER_free(ss->ciphers);
+#ifndef OPENSSL_NO_TLSEXT
+	if (ss->tlsext_hostname != NULL)
+		OPENSSL_free(ss->tlsext_hostname);
+#endif
 	OPENSSL_cleanse(ss,sizeof(*ss));
 	OPENSSL_free(ss);
 	}

@@ -281,6 +281,17 @@ int ssl3_accept(SSL *s)
 			s->shutdown=0;
 			ret=ssl3_get_client_hello(s);
 			if (ret <= 0) goto end;
+#ifndef OPENSSL_NO_TLSEXT
+			{
+				int extension_error = 0,al;
+				if ((al = ssl_check_Hello_TLS_extensions(s,&extension_error)) != SSL_ERROR_NONE){
+					ret = -1;
+					SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLS_EXT);
+					ssl3_send_alert(s,al,extension_error);
+					goto end;
+				}
+			}
+#endif
 			s->new_session = 2;
 			s->state=SSL3_ST_SW_SRVR_HELLO_A;
 			s->init_num=0;
@@ -942,6 +953,17 @@ int ssl3_get_client_hello(SSL *s)
 			}
 		}
 #endif
+#ifndef OPENSSL_NO_TLSEXT
+	/* TLS extensions*/
+	if (s->version > SSL3_VERSION)
+	{
+		if ((al = ssl_parse_ClientHello_TLS_extensions(s,&p,d,n)) != SSL_ERROR_NONE){
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_PARSE_TLS_EXT);
+			ssl3_send_alert(s,SSL3_AL_WARNING,al);
+			return (ret = al);
+		}
+	}
+#endif
 
 	/* Given s->session->ciphers and SSL_get_ciphers, we must
 	 * pick a cipher */
@@ -1085,6 +1107,13 @@ int ssl3_send_server_hello(SSL *s)
 			*(p++)=0;
 		else
 			*(p++)=s->s3->tmp.new_compression->id;
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+		if ((p = ssl_add_ServerHello_TLS_extensions(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+		{
+			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,ERR_R_INTERNAL_ERROR);
+			return -1;
+		}
 #endif
 
 		/* do the header */

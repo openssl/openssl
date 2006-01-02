@@ -1643,6 +1643,43 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		}
 		break;
 #endif /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_GET_TLSEXT_HOSTNAME:	
+		if (larg != TLSEXT_TYPE_SERVER_host)
+			{
+			SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
+			return(0);
+			}
+	   	*((char **) parg) = s->session&&s->session->tlsext_hostname?s->session->tlsext_hostname:s->tlsext_hostname;
+		ret = 1;
+                break;
+	case SSL_CTRL_SET_TLSEXT_HOSTNAME:
+ 		if (larg == TLSEXT_TYPE_SERVER_host) {
+			if (s->tlsext_hostname != NULL) 
+				OPENSSL_free(s->tlsext_hostname);
+			s->tlsext_hostname = NULL;
+
+			ret = 1;
+			if (parg == NULL) 
+				break;
+			if (strlen((char *)parg) > 255) {
+				SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
+				return 0;
+			}
+			if ((s->tlsext_hostname = BUF_strdup((char *)parg)) == NULL) {
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_INTERNAL_ERROR);
+				return 0;
+			}
+		} else {
+			SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
+			return 0;
+		}
+		s->options |= SSL_OP_NO_SSLv2;
+ 		break;
+	case SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE:
+		s->servername_done = larg;
+		break;
+#endif /* !OPENSSL_NO_TLSEXT */
 	default:
 		break;
 		}
@@ -1827,6 +1864,11 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		}
 		break;
 #endif /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
+		ctx->tlsext_servername_arg=parg;
+		break;
+#endif /* !OPENSSL_NO_TLSEXT */
 	/* A Thawte special :-) */
 	case SSL_CTRL_EXTRA_CHAIN_CERT:
 		if (ctx->extra_certs == NULL)
@@ -1870,6 +1912,11 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		{
 		cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		}
+		break;
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
+		ctx->tlsext_servername_callback=(int (*)(SSL *,int *,void *))fp;
 		break;
 #endif
 	default:
