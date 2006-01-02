@@ -68,11 +68,9 @@
 
 #ifndef OPENSSL_NO_SOCK
 
-#ifdef OPENSSL_SYS_WIN16
-#define SOCKET_PROTOCOL 0 /* more microsoft stupidity */
-#else
+#include <openssl/dso.h>
+
 #define SOCKET_PROTOCOL IPPROTO_TCP
-#endif
 
 #ifdef SO_MAXCONN
 #define MAX_LISTEN  SO_MAXCONN
@@ -461,7 +459,12 @@ int BIO_sock_init(void)
 #endif
 		wsa_init_done=1;
 		memset(&wsa_state,0,sizeof(wsa_state));
-		if (WSAStartup(0x0101,&wsa_state)!=0)
+		/* Not making wsa_state available to the rest of the
+		 * code is formally wrong. But the structures we use
+		 * are [beleived to be] invariable among Winsock DLLs,
+		 * while API availability is [expected to be] probed
+		 * at run-time with DSO_global_lookup. */
+		if (WSAStartup(0x0202,&wsa_state)!=0)
 			{
 			err=WSAGetLastError();
 			SYSerr(SYS_F_WSASTARTUP,err);
@@ -581,12 +584,13 @@ static int get_ip(const char *str, unsigned char ip[4])
 int BIO_get_accept_socket(char *host, int bind_mode)
 	{
 	int ret=0;
-	struct sockaddr_in server,client;
+	struct sockaddr server,client;
+	struct sockaddr_in *sin;
 	int s=INVALID_SOCKET,cs;
 	unsigned char ip[4];
 	unsigned short port;
 	char *str=NULL,*e;
-	const char *h,*p;
+	char *h,*p;
 	unsigned long l;
 	int err_num;
 
@@ -600,8 +604,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		{
 		if (*e == ':')
 			{
-			p= &(e[1]);
-			*e='\0';
+			p=e;
 			}
 		else if (*e == '/')
 			{
@@ -609,21 +612,51 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 			break;
 			}
 		}
+	if (p)	*p++='\0';	/* points at last ':', '::port' is special [see below] */
+	else	p=h,h=NULL;
 
-	if (p == NULL)
+#ifdef EAI_FAMILY
+	do {
+	static union {	void *p;
+			int (*f)(const char *,const char *,
+				 const struct addrinfo *,
+				 struct addrinfo **);
+			} getaddrinfo = {NULL};
+	static union {	void *p;
+			void (*f)(struct addrinfo *);
+			} freeaddrinfo = {NULL};
+	struct addrinfo *res,hint;
+
+	if (getaddrinfo.p==NULL)
 		{
-		p=h;
-		h="*";
+		if ((getaddrinfo.p=DSO_global_lookup("getaddrinfo"))==NULL ||
+		    (freeaddrinfo.p=DSO_global_lookup("freeaddrinfo"))==NULL)
+			getaddrinfo.p=(void*)-1;
 		}
+	if (getaddrinfo.p==(void *)-1) break;
+
+	/* '::port' enforces IPv6 wildcard listener. Some OSes,
+	 * e.g. Solaris, default to IPv6 without any hint. Also
+	 * note that commonly IPv6 wildchard socket can service
+	 * IPv4 connections just as well...  */
+	memset(&hint,0,sizeof(hint));
+	if (h && strchr(h,':')) hint.ai_family = AF_INET6;
+	if ((*getaddrinfo.f)(h,p,&hint,&res)) break;
+	server = *res->ai_addr;
+	(*freeaddrinfo.f)(res);
+	goto again;
+	} while (0);
+#endif
 
 	if (!BIO_get_port(p,&port)) goto err;
 
 	memset((char *)&server,0,sizeof(server));
-	server.sin_family=AF_INET;
-	server.sin_port=htons(port);
+	sin = (struct sockaddr_in *)&server;
+	sin->sin_family=AF_INET;
+	sin->sin_port=htons(port);
 
-	if (strcmp(h,"*") == 0)
-		server.sin_addr.s_addr=INADDR_ANY;
+	if (h == NULL || strcmp(h,"*") == 0)
+		sin->sin_addr.s_addr=INADDR_ANY;
 	else
 		{
                 if (!BIO_get_host_ip(h,&(ip[0]))) goto err;
@@ -632,11 +665,11 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 			((unsigned long)ip[1]<<16L)|
 			((unsigned long)ip[2]<< 8L)|
 			((unsigned long)ip[3]);
-		server.sin_addr.s_addr=htonl(l);
+		sin->sin_addr.s_addr=htonl(l);
 		}
 
 again:
-	s=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
+	s=socket(server.sa_family,SOCK_STREAM,SOCKET_PROTOCOL);
 	if (s == INVALID_SOCKET)
 		{
 		SYSerr(SYS_F_SOCKET,get_last_socket_error());
@@ -654,17 +687,35 @@ again:
 		bind_mode=BIO_BIND_NORMAL;
 		}
 #endif
-	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)
+	if (bind(s,&server,sizeof(server)) == -1)
 		{
 #ifdef SO_REUSEADDR
 		err_num=get_last_socket_error();
 		if ((bind_mode == BIO_BIND_REUSEADDR_IF_UNUSED) &&
 			(err_num == EADDRINUSE))
 			{
-			memcpy((char *)&client,(char *)&server,sizeof(server));
-			if (strcmp(h,"*") == 0)
-				client.sin_addr.s_addr=htonl(0x7F000001);
-			cs=socket(AF_INET,SOCK_STREAM,SOCKET_PROTOCOL);
+			client = server;
+			if (h == NULL || strcmp(h,"*") == 0)
+				{
+#ifdef AF_INET6
+				if (client.sa_family == AF_INET6)
+					{
+					struct sockaddr_in6 *sin =
+						(struct sockaddr_in6 *)&client;
+					memset(&sin->sin6_addr,0,sizeof(sin->sin6_addr));
+					sin->sin6_addr.s6_addr[15]=1;
+					}
+				else
+#endif
+				if (client.sa_family == AF_INET)
+					{
+					struct sockaddr_in *sin =
+						(struct sockaddr_in *)&client;
+					sin->sin_addr.s_addr=htonl(0x7F000001);
+					}
+				else	goto err;
+				}
+			cs=socket(client.sa_family,SOCK_STREAM,SOCKET_PROTOCOL);
 			if (cs != INVALID_SOCKET)
 				{
 				int ii;
@@ -708,20 +759,21 @@ err:
 int BIO_accept(int sock, char **addr)
 	{
 	int ret=INVALID_SOCKET;
-	static struct sockaddr_in from;
+	struct sockaddr from;
+	struct sockaddr_in *sin;
 	unsigned long l;
 	unsigned short port;
 	int len;
 	char *p;
 
-	memset((char *)&from,0,sizeof(from));
+	memset(&from,0,sizeof(from));
 	len=sizeof(from);
 	/* Note: under VMS with SOCKETSHR the fourth parameter is currently
 	 * of type (int *) whereas under other systems it is (void *) if
 	 * you don't have a cast it will choke the compiler: if you do
 	 * have a cast then you can either go for (int *) or (void *).
 	 */
-	ret=accept(sock,(struct sockaddr *)&from,(void *)&len);
+	ret=accept(sock,&from,(void *)&len);
 	if (ret == INVALID_SOCKET)
 		{
 		if(BIO_sock_should_retry(ret)) return -2;
@@ -732,8 +784,42 @@ int BIO_accept(int sock, char **addr)
 
 	if (addr == NULL) goto end;
 
-	l=ntohl(from.sin_addr.s_addr);
-	port=ntohs(from.sin_port);
+#ifdef EAI_FAMILY
+	do {
+	char   h[NI_MAXHOST],s[NI_MAXSERV];
+	size_t l;
+	static union {	void *p;
+			int (*f)(const struct sockaddr *,socklen_t,
+				 char *,size_t,char *,size_t,int);
+			} getnameinfo = {NULL};
+
+	if (getnameinfo.p==NULL)
+		{
+		if ((getnameinfo.p=DSO_global_lookup("getnameinfo"))==NULL)
+			getnameinfo.p=(void*)-1;
+		}
+	if (getnameinfo.p==(void *)-1) break;
+
+	if ((*getnameinfo.f)(&from,sizeof(from),h,sizeof(h),s,sizeof(s),
+	    NI_NUMERICHOST|NI_NUMERICSERV)) break;
+	l = strlen(h)+strlen(p)+2; if (len<24) len=24;
+	p = *addr;
+	if (p)	p = OPENSSL_realloc(p,l);
+	else	p = OPENSSL_malloc(l);
+	if (p==NULL)
+		{
+		BIOerr(BIO_F_BIO_ACCEPT,ERR_R_MALLOC_FAILURE);
+		goto end;
+		}
+	*addr = p;
+	BIO_snprintf(*addr,l,"%s:%s",h,s);
+	goto end;
+	} while(0);
+#endif
+	if (from.sa_family != AF_INET) goto end;
+	sin = (struct sockaddr_in *)&from;
+	l=ntohl(sin->sin_addr.s_addr);
+	port=ntohs(sin->sin_port);
 	if (*addr == NULL)
 		{
 		if ((p=OPENSSL_malloc(24)) == NULL)
