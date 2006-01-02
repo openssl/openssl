@@ -802,10 +802,10 @@ int BIO_accept(int sock, char **addr)
 
 	if ((*getnameinfo.f)(&from,sizeof(from),h,sizeof(h),s,sizeof(s),
 	    NI_NUMERICHOST|NI_NUMERICSERV)) break;
-	l = strlen(h)+strlen(p)+2; if (len<24) len=24;
+	l = strlen(h)+strlen(s)+2; if (len<24) len=24;
 	p = *addr;
-	if (p)	p = OPENSSL_realloc(p,l);
-	else	p = OPENSSL_malloc(l);
+	if (p)	{ *p = '\0'; p = OPENSSL_realloc(p,l);	}
+	else	{ p = OPENSSL_malloc(l);		}
 	if (p==NULL)
 		{
 		BIOerr(BIO_F_BIO_ACCEPT,ERR_R_MALLOC_FAILURE);
