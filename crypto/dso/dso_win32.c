@@ -826,7 +826,7 @@ static void *win32_globallookup(const char *name)
 		}
 
 	do	{
-		if (ret = GetProcAddress(me32.hModule,fname))
+		if (ret = GetProcAddress(me32.hModule,name))
 			{
 			(*close_snap)(hModuleSnap);
 			FreeLibrary(dll);
