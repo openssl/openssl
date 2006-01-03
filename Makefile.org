@@ -213,21 +213,21 @@ build_all: build_libs build_apps build_tests build_tools
 build_libs: build_crypto build_ssl build_engines
 
 build_crypto:
-	@dir=crypto; target=all; $(BUILD_CMD)
+	@dir=crypto; target=all; $(RECURSIVE_BUILD_CMD)
 build_ssl:
-	@dir=ssl; target=all; $(BUILD_CMD)
+	@dir=ssl; target=all; $(RECURSIVE_BUILD_CMD)
 build_engines:
-	@dir=engines; target=all; $(BUILD_CMD)
+	@dir=engines; target=all; $(RECURSIVE_BUILD_CMD)
 build_apps:
-	@dir=apps; target=all; $(BUILD_CMD)
+	@dir=apps; target=all; $(RECURSIVE_BUILD_CMD)
 build_tests:
-	@dir=test; target=all; $(BUILD_CMD)
+	@dir=test; target=all; $(RECURSIVE_BUILD_CMD)
 build_tools:
-	@dir=tools; target=all; $(BUILD_CMD)
+	@dir=tools; target=all; $(RECURSIVE_BUILD_CMD)
 
 all_testapps: build_libs build_testapps
 build_testapps:
-	@dir=crypto; target=testapps; $(BUILD_CMD)
+	@dir=crypto; target=testapps; $(RECURSIVE_BUILD_CMD)
 
 libcrypto$(SHLIB_EXT): libcrypto.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
