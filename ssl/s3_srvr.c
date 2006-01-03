@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -283,13 +283,14 @@ int ssl3_accept(SSL *s)
 			if (ret <= 0) goto end;
 #ifndef OPENSSL_NO_TLSEXT
 			{
-				int extension_error = 0,al;
-				if ((al = ssl_check_Hello_TLS_extensions(s,&extension_error)) != SSL_ERROR_NONE){
-					ret = -1;
+				int al;
+				if (ssl_check_tlsext(s,&al) <= 0)
+					{
+					ssl3_send_alert(s,SSL3_AL_FATAL,al); /* XXX does this *have* to be fatal? */
 					SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLS_EXT);
-					ssl3_send_alert(s,al,extension_error);
+					ret = -1;
 					goto end;
-				}
+					}
 			}
 #endif
 			s->new_session = 2;
@@ -937,32 +938,17 @@ int ssl3_get_client_hello(SSL *s)
 		}
 #endif
 
-	/* TLS does not mind if there is extra stuff */
-#if 0   /* SSL 3.0 does not mind either, so we should disable this test
-         * (was enabled in 0.9.6d through 0.9.6j and 0.9.7 through 0.9.7b,
-         * in earlier SSLeay/OpenSSL releases this test existed but was buggy) */
-	if (s->version == SSL3_VERSION)
-		{
-		if (p < (d+n))
-			{
-			/* wrong number of bytes,
-			 * there could be more to follow */
-			al=SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_LENGTH_MISMATCH);
-			goto f_err;
-			}
-		}
-#endif
 #ifndef OPENSSL_NO_TLSEXT
 	/* TLS extensions*/
 	if (s->version > SSL3_VERSION)
-	{
-		if ((al = ssl_parse_ClientHello_TLS_extensions(s,&p,d,n)) != SSL_ERROR_NONE){
+		{
+		if (!ssl_parse_clienthello_tlsext(s,&p,d,n, &al))
+			{
+			/* 'al' set by ssl_parse_clienthello_tlsext */
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_PARSE_TLS_EXT);
-			ssl3_send_alert(s,SSL3_AL_WARNING,al);
-			return (ret = al);
+			goto f_err;
+			}
 		}
-	}
 #endif
 
 	/* Given s->session->ciphers and SSL_get_ciphers, we must
@@ -1109,11 +1095,11 @@ int ssl3_send_server_hello(SSL *s)
 			*(p++)=s->s3->tmp.new_compression->id;
 #endif
 #ifndef OPENSSL_NO_TLSEXT
-		if ((p = ssl_add_ServerHello_TLS_extensions(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
-		{
+		if ((p = ssl_add_serverhello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+			{
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,ERR_R_INTERNAL_ERROR);
 			return -1;
-		}
+			}
 #endif
 
 		/* do the header */

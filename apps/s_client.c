@@ -239,11 +239,11 @@ typedef struct tlsextctx_st {
 static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	{
 	tlsextctx * p = (tlsextctx *) arg;
-	const unsigned char * hn= SSL_get_servername(s, TLSEXT_TYPE_SERVER_host);
+	const unsigned char * hn= SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
 	if (SSL_get_servername_type(s) != -1) 
  	        p->ack = !SSL_session_reused(s) && hn != NULL;
 	else 
-		BIO_printf(bio_err,"SSL_get_tlsext_hostname does not work\n");
+		BIO_printf(bio_err,"Can't use SSL_get_servername\n");
 	
 	return SSL_ERROR_NONE;
 	}

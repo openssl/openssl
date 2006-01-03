@@ -539,7 +539,7 @@ typedef struct tlsextctx_st {
 static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	{
 	tlsextctx * p = (tlsextctx *) arg;
-	const char * servername = SSL_get_servername(s, TLSEXT_TYPE_SERVER_host);
+	const char * servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
         if (servername) 
 		BIO_printf(p->biodebug,"Hostname in TLS extension: \"%s\"\n",servername);
         
@@ -1257,12 +1257,14 @@ bad:
 #endif
 #endif
 
-	if (cipher != NULL) {
-		if(!SSL_CTX_set_cipher_list(ctx,cipher)) {
+	if (cipher != NULL)
+		{
+		if(!SSL_CTX_set_cipher_list(ctx,cipher))
+			{
 			BIO_printf(bio_err,"error setting cipher list\n");
 			ERR_print_errors(bio_err);
 			goto end;
-		}
+			}
 #ifndef OPENSSL_NO_TLSEXT
 		if (ctx2 && !SSL_CTX_set_cipher_list(ctx2,cipher))
 			{
@@ -1271,7 +1273,7 @@ bad:
 			goto end;
 			}
 #endif
-	}
+		}
 	SSL_CTX_set_verify(ctx,s_server_verify,verify_callback);
 	SSL_CTX_set_session_id_context(ctx,(void*)&s_server_session_id_context,
 		sizeof s_server_session_id_context);
@@ -1283,13 +1285,14 @@ bad:
 		SSL_CTX_set_session_id_context(ctx2,(void*)&s_server_session_id_context,
 			sizeof s_server_session_id_context);
 
+		tlsextcbp.biodebug = bio_s_out;
+		SSL_CTX_set_tlsext_servername_callback(ctx2, ssl_servername_cb);
+		SSL_CTX_set_tlsext_servername_arg(ctx2, &tlsextcbp);
+		SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
+		SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
 		}
-	tlsextcbp.biodebug = bio_s_out;
-	SSL_CTX_set_tlsext_servername_callback(ctx2, ssl_servername_cb);
-	SSL_CTX_set_tlsext_servername_arg(ctx2, &tlsextcbp);
-	SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
-	SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
 #endif
+
 	if (CAfile != NULL)
 		{
 		SSL_CTX_set_client_CA_list(ctx,SSL_load_client_CA_file(CAfile));

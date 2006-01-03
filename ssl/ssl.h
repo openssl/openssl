@@ -109,7 +109,7 @@
  *
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -172,11 +172,6 @@
 
 #include <openssl/e_os2.h>
 
-#ifdef OPENSSL_NO_TLS1
-#	ifndef OPENSSL_NO_TLSEXT 
-#		define OPENSSL_NO_TLSEXT
-#	endif
-#endif
 #ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
 #endif
@@ -765,11 +760,10 @@ struct ssl_ctx_st
 	unsigned int max_send_fragment;
 
 #ifndef OPENSSL_NO_TLSEXT
-    /* TLS extensions servername callback */
+	/* TLS extensions servername callback */
 	int (*tlsext_servername_callback)(SSL*, int *, void *);
 	void *tlsext_servername_arg;
 #endif
-
 	};
 
 #define SSL_SESS_CACHE_OFF			0x0000
@@ -994,11 +988,11 @@ struct ssl_st
 	unsigned int max_send_fragment;
 #ifndef OPENSSL_NO_TLSEXT
 	char *tlsext_hostname;
-        int servername_done;   /* no further mod of servername 
-                                  0 : call the servername extension callback.
-                                  1 : prepare 2, allow last ack just after in server callback.
-                                  2 : don't call servername callback, no ack in server hello
-                               */
+	int servername_done;   /* no further mod of servername 
+	                          0 : call the servername extension callback.
+	                          1 : prepare 2, allow last ack just after in server callback.
+	                          2 : don't call servername callback, no ack in server hello
+	                       */
 #endif
 	};
 
@@ -1145,9 +1139,7 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_AD_INTERNAL_ERROR		TLS1_AD_INTERNAL_ERROR	/* fatal */
 #define SSL_AD_USER_CANCELLED		TLS1_AD_USER_CANCELLED
 #define SSL_AD_NO_RENEGOTIATION		TLS1_AD_NO_RENEGOTIATION
-#ifndef OPENSSL_NO_TLSEXT
 #define SSL_AD_UNRECOGNIZED_NAME	TLS1_AD_UNRECOGNIZED_NAME
-#endif
 
 #define SSL_ERROR_NONE			0
 #define SSL_ERROR_SSL			1
@@ -1207,6 +1199,13 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_CTRL_SET_MAX_CERT_LIST		51
 
 #define SSL_CTRL_SET_MAX_SEND_FRAGMENT		52
+
+/* see tls.h for macros based on these */
+#define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB	53
+#define SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG	54
+#define SSL_CTRL_SET_TLSEXT_HOSTNAME		55
+#define SSL_CTRL_GET_TLSEXT_HOSTNAME		56
+#define SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE	57
 
 #define SSL_session_reused(ssl) \
 	SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)

@@ -56,6 +56,59 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
+/* ====================================================================
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  *
  * Portions of the attached software ("Contribution") are developed by 
@@ -96,53 +149,54 @@ extern "C" {
 #define TLS1_AD_INTERNAL_ERROR		80	/* fatal */
 #define TLS1_AD_USER_CANCELLED		90
 #define TLS1_AD_NO_RENEGOTIATION	100
-
-#ifndef OPENSSL_NO_TLSEXT
 #define TLS1_AD_UNRECOGNIZED_NAME 	122
 
+/* ExtensionType values from RFC 3546 */
 #define TLSEXT_TYPE_server_name			0
 #define TLSEXT_TYPE_max_fragment_length		1
 #define TLSEXT_TYPE_client_certificate_url	2
 #define TLSEXT_TYPE_trusted_ca_keys		3
 #define TLSEXT_TYPE_truncated_hmac		4
 #define TLSEXT_TYPE_status_request		5
+#if 0
 #define TLSEXT_TYPE_srp				6
+#endif
 
-#define TLSEXT_TYPE_SERVER_host 0
+/* NameType value from RFC 3546 */
+#define TLSEXT_NAMETYPE_host_name 0
 
-#define SSL_CTX_set_tlsext_hostname(ctx,name) \
-SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_TYPE_SERVER_host,(char *)name)
+
+#ifndef OPENSSL_NO_TLSEXT
+
+const char *SSL_get_servername(const SSL *s, const int type) ;
+int SSL_get_servername_type(const SSL *s) ;
+
 #define SSL_set_tlsext_hostname(s,name) \
-SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_TYPE_SERVER_host,(char *)name)
+SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
 
 #define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
 SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)
 #define SSL_CTX_set_tlsext_servername_arg(ctx, arg) \
 SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
 
-
-const char *SSL_get_servername(const SSL *s, const int type) ;
-int SSL_get_servername_type(const SSL *s) ;
+#define SSL_set_tlsext_servername_done(s,t) \
+SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE,t, NULL)
 
 #if 0
+#  if 0
+
 	#define SSL_get_tlsext_hostname(s,psn) \
-	SSL_ctrl(s,SSL_CTRL_GET_TLSEXT_HOSTNAME,TLSEXT_TYPE_SERVER_host, (void *)psn)
-#else
+	SSL_ctrl(s,SSL_CTRL_GET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name, (void *)psn)
+#  else
+	/* XXX this looks weird for a macro, define a function instead? */
+	 * or just used SSL_get_servername() directly ... */
 	#define SSL_get_tlsext_hostname(s,psn) \
-	(*psn = SSL_get_servername(s, TLSEXT_TYPE_SERVER_host),*psn != NULL)
+	(*psn = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name),*psn != NULL)
+#  endif
 #endif
-	#define SSL_set_tlsext_servername_done(s,t) \
-	SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE,t, NULL)
-
-void SSL_set_ctx(SSL *s, SSL_CTX *ctx) ;
-
-#define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB	53
-#define SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG	54
-#define SSL_CTRL_SET_TLSEXT_HOSTNAME		55
-#define SSL_CTRL_GET_TLSEXT_HOSTNAME		56
-#define SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE	57
   
 #endif
+
 
 /* Additional TLS ciphersuites from expired Internet Draft
  * draft-ietf-tls-56-bit-ciphersuites-01.txt

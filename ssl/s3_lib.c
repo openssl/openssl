@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1645,16 +1645,21 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #endif /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_TLSEXT
 	case SSL_CTRL_GET_TLSEXT_HOSTNAME:	
-		if (larg != TLSEXT_TYPE_SERVER_host)
+		if (larg != TLSEXT_NAMETYPE_host_name)
 			{
 			SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
 			return(0);
 			}
-	   	*((char **) parg) = s->session&&s->session->tlsext_hostname?s->session->tlsext_hostname:s->tlsext_hostname;
+		/* XXX cf. SSL_get_servername() (ssl_lib.c) */
+		if (s->session && s->session->tlsext_hostname)
+			*((char **) parg) = s->session->tlsext_hostname;
+		else
+			*((char **) parg) = s->tlsext_hostname;
 		ret = 1;
-                break;
+		break;
 	case SSL_CTRL_SET_TLSEXT_HOSTNAME:
- 		if (larg == TLSEXT_TYPE_SERVER_host) {
+ 		if (larg == TLSEXT_NAMETYPE_host_name)
+			{
 			if (s->tlsext_hostname != NULL) 
 				OPENSSL_free(s->tlsext_hostname);
 			s->tlsext_hostname = NULL;
@@ -1662,19 +1667,23 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			ret = 1;
 			if (parg == NULL) 
 				break;
-			if (strlen((char *)parg) > 255) {
+			if (strlen((char *)parg) > 255)
+				{
 				SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
 				return 0;
-			}
-			if ((s->tlsext_hostname = BUF_strdup((char *)parg)) == NULL) {
+				}
+			if ((s->tlsext_hostname = BUF_strdup((char *)parg)) == NULL)
+				{
 				SSLerr(SSL_F_SSL3_CTRL, ERR_R_INTERNAL_ERROR);
 				return 0;
+				}
 			}
-		} else {
+		else
+			{
 			SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
 			return 0;
-		}
-		s->options |= SSL_OP_NO_SSLv2;
+			}
+		s->options |= SSL_OP_NO_SSLv2; /* can't use extension w/ SSL 2.0 format */
  		break;
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE:
 		s->servername_done = larg;

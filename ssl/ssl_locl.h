@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -941,10 +941,10 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs);
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
 #ifndef OPENSSL_NO_TLSEXT
-unsigned char *ssl_add_ClientHello_TLS_extensions(SSL *s, unsigned char *p, unsigned char *limit); 
-unsigned char *ssl_add_ServerHello_TLS_extensions(SSL *s, unsigned char *p, unsigned char *limit); 
-int ssl_parse_ClientHello_TLS_extensions(SSL *s, unsigned char **data, unsigned char *d, int n);
-int ssl_parse_ServerHello_TLS_extensions(SSL *s, unsigned char **data, unsigned char *d, int n);
-int ssl_check_Hello_TLS_extensions(SSL *s,int *ad);
+unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
+unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
+int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n, int *al);
+int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n, int *al);
+int ssl_check_tlsext(SSL *s,int *al);
 #endif
 #endif

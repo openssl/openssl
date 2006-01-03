@@ -4,16 +4,33 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
-  *) Add support for TLS extensions, specifically for the HostName extension.
-     The SSL_SESSION, SSL_CTX, and SSL data structures now have new members
-     for HostName support.
+  *) Add support for TLS extensions, specifically for the HostName extension
+     so far.  The SSL_SESSION, SSL_CTX, and SSL data structures now have new
+     members for HostName support.
+
+     New functions (subject to change):
+
+         SSL_get_servername()
+         SSL_get_servername_type()
+         SSL_set_SSL_CTX()
+
+     New CTRL codes and macros (subject to change):
+
+         SSL_CTRL_SET_TLSEXT_SERVERNAME_CB
+                                 - SSL_CTX_set_tlsext_servername_callback()
+         SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG
+                                      - SSL_CTX_set_tlsext_servername_arg()
+         SSL_CTRL_SET_TLSEXT_HOSTNAME           - SSL_set_tlsext_hostname()
+         SSL_CTRL_GET_TLSEXT_HOSTNAME     [similar to SSL_get_servername()]
+         SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE
+                                         - SSL_set_tlsext_servername_done()
 
      openssl s_client has a new '-servername' option.
 
-     openssl s_server has new options '-servername', '-cert2', and '-key2';
-     this allows testing the HostName extension for a specific single
-     host name ('-cert' and '-key' remain fallbacks for handshakes without
-     HostName negotiation).
+     openssl s_server has new options '-servername', '-cert2', and '-key2'
+     (subject to change); this allows testing the HostName extension for a
+     specific single host name ('-cert' and '-key' remain fallbacks for
+     handshakes without HostName negotiation).
 
      [Peter Sylvester]
 
