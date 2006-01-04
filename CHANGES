@@ -32,7 +32,7 @@
      specific single host name ('-cert' and '-key' remain fallbacks for
      handshakes without HostName negotiation).
 
-     [Peter Sylvester]
+     [Peter Sylvester,  Remy Allais, Christophe Renou]
 
   *) Whirlpool hash implementation is added.
      [Andy Polyakov]
