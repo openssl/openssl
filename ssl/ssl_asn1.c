@@ -186,7 +186,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
                 {
                 a.tlsext_hostname.length=strlen(in->tlsext_hostname);
                 a.tlsext_hostname.type=V_ASN1_OCTET_STRING;
-                a.tlsext_hostname.data=in->tlsext_hostname;
+                a.tlsext_hostname.data=(unsigned char *)in->tlsext_hostname;
                 }                
 #endif /* OPENSSL_NO_TLSEXT */
 
@@ -419,7 +419,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,6);
 	if (os.data)
 		{
-		ret->tlsext_hostname = BUF_strndup(os.data, os.length);
+		ret->tlsext_hostname = BUF_strndup((char *)os.data, os.length);
 		OPENSSL_free(os.data);
 		os.data = NULL;
 		os.length = 0;

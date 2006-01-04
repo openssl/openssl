@@ -239,7 +239,7 @@ typedef struct tlsextctx_st {
 static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	{
 	tlsextctx * p = (tlsextctx *) arg;
-	const unsigned char * hn= SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
+	const char * hn= SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
 	if (SSL_get_servername_type(s) != -1) 
  	        p->ack = !SSL_session_reused(s) && hn != NULL;
 	else 
