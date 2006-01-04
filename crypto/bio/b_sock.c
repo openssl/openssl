@@ -799,11 +799,16 @@ int BIO_accept(int sock, char **addr)
 	if (addr == NULL) goto end;
 
 #ifdef EAI_FAMILY
+# ifdef OPENSSL_SYS_VMS
+#  define SOCKLEN_T size_t
+# else
+#  define SOCKLEN_T socklen_t
+#endif
 	do {
 	char   h[NI_MAXHOST],s[NI_MAXSERV];
 	size_t l;
 	static union {	void *p;
-			int (*f)(const struct sockaddr *,socklen_t,
+			int (*f)(const struct sockaddr *,SOCKLEN_T,
 				 char *,size_t,char *,size_t,int);
 			} getnameinfo = {NULL};
 
