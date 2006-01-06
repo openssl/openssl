@@ -993,6 +993,7 @@ struct ssl_st
 	                          1 : prepare 2, allow last ack just after in server callback.
 	                          2 : don't call servername callback, no ack in server hello
 	                       */
+	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 #endif
 	};
 
@@ -1201,11 +1202,12 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_CTRL_SET_MAX_SEND_FRAGMENT		52
 
 /* see tls.h for macros based on these */
+#ifndef OPENSSL_NO_TLSEXT
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB	53
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG	54
 #define SSL_CTRL_SET_TLSEXT_HOSTNAME		55
-#define SSL_CTRL_GET_TLSEXT_HOSTNAME		56
-#define SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE	57
+#define SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE	56
+#endif
 
 #define SSL_session_reused(ssl) \
 	SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)

@@ -1644,19 +1644,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		break;
 #endif /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_TLSEXT
-	case SSL_CTRL_GET_TLSEXT_HOSTNAME:	
-		if (larg != TLSEXT_NAMETYPE_host_name)
-			{
-			SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
-			return(0);
-			}
-		/* XXX cf. SSL_get_servername() (ssl_lib.c) */
-		if (s->session && s->session->tlsext_hostname)
-			*((char **) parg) = s->session->tlsext_hostname;
-		else
-			*((char **) parg) = s->tlsext_hostname;
-		ret = 1;
-		break;
 	case SSL_CTRL_SET_TLSEXT_HOSTNAME:
  		if (larg == TLSEXT_NAMETYPE_host_name)
 			{

@@ -114,6 +114,12 @@
 #include <openssl/rand.h>
 #include "ssl_locl.h"
 
+#ifndef OPENSSL_NO_TLSEXT
+#define session_ctx initial_ctx
+#else
+#define session_ctx ctx
+#endif
+
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx,SSL_SESSION *s);
 static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
@@ -233,7 +239,7 @@ int ssl_get_new_session(SSL *s, int session)
 	if ((ss=SSL_SESSION_new()) == NULL) return(0);
 
 	/* If the context has a default timeout, use it */
-	if (s->ctx->session_timeout == 0)
+	if (s->session_ctx->session_timeout == 0)
 		ss->timeout=SSL_get_default_timeout(s);
 	else
 		ss->timeout=s->ctx->session_timeout;
@@ -276,8 +282,8 @@ int ssl_get_new_session(SSL *s, int session)
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 		if(s->generate_session_id)
 			cb = s->generate_session_id;
-		else if(s->ctx->generate_session_id)
-			cb = s->ctx->generate_session_id;
+		else if(s->session_ctx->generate_session_id)
+			cb = s->session_ctx->generate_session_id;
 		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 		/* Choose a session ID */
 		tmp = ss->session_id_length;
@@ -347,10 +353,10 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 		goto err;
 	memcpy(data.session_id,session_id,len);
 
-	if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
+	if (!(s->session_ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
 		{
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-		ret=(SSL_SESSION *)lh_retrieve(s->ctx->sessions,&data);
+		ret=(SSL_SESSION *)lh_retrieve(s->session_ctx->sessions,&data);
 		if (ret != NULL)
 		    /* don't allow other threads to steal it: */
 		    CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
@@ -361,13 +367,13 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 		{
 		int copy=1;
 	
-		s->ctx->stats.sess_miss++;
+		s->session_ctx->stats.sess_miss++;
 		ret=NULL;
-		if (s->ctx->get_session_cb != NULL
-		    && (ret=s->ctx->get_session_cb(s,session_id,len,&copy))
+		if (s->session_ctx->get_session_cb != NULL
+		    && (ret=s->session_ctx->get_session_cb(s,session_id,len,&copy))
 		       != NULL)
 			{
-			s->ctx->stats.sess_cb_hit++;
+			s->session_ctx->stats.sess_cb_hit++;
 
 			/* Increment reference count now if the session callback
 			 * asks us to do so (note that if the session structures
@@ -379,10 +385,10 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 
 			/* Add the externally cached session to the internal
 			 * cache as well if and only if we are supposed to. */
-			if(!(s->ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_STORE))
+			if(!(s->session_ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_STORE))
 				/* The following should not return 1, otherwise,
 				 * things are very strange */
-				SSL_CTX_add_session(s->ctx,ret);
+				SSL_CTX_add_session(s->session_ctx,ret);
 			}
 		if (ret == NULL)
 			goto err;
@@ -447,13 +453,13 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 
 	if (ret->timeout < (long)(time(NULL) - ret->time)) /* timeout */
 		{
-		s->ctx->stats.sess_timeout++;
+		s->session_ctx->stats.sess_timeout++;
 		/* remove it from the cache */
-		SSL_CTX_remove_session(s->ctx,ret);
+		SSL_CTX_remove_session(s->session_ctx,ret);
 		goto err;
 		}
 
-	s->ctx->stats.sess_hit++;
+	s->session_ctx->stats.sess_hit++;
 
 	/* ret->time=time(NULL); */ /* rezero timeout? */
 	/* again, just leave the session 

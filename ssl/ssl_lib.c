@@ -307,6 +307,10 @@ SSL *SSL_new(SSL_CTX *ctx)
 
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->ctx=ctx;
+#ifndef OPENSSL_NO_TLSEXT
+	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
+	s->initial_ctx=ctx;
+#endif
 
 	s->verify_result=X509_V_OK;
 
@@ -493,6 +497,9 @@ void SSL_free(SSL *s)
 	/* Free up if allocated */
 
 	if (s->ctx) SSL_CTX_free(s->ctx);
+#ifndef OPENSSL_NO_TLSEXT
+	if (s->initial_ctx) SSL_CTX_free(s->initial_ctx);
+#endif
 
 	if (s->client_CA != NULL)
 		sk_X509_NAME_pop_free(s->client_CA,X509_NAME_free);

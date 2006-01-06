@@ -540,24 +540,24 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	{
 	tlsextctx * p = (tlsextctx *) arg;
 	const char * servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
-        if (servername) 
+        if (servername && p->biodebug) 
 		BIO_printf(p->biodebug,"Hostname in TLS extension: \"%s\"\n",servername);
         
 	if (!p->servername)
 		{
 		SSL_set_tlsext_servername_done(s,2);
-		return SSL_ERROR_NONE;
+		return 1;
 		}
 	
 	if (servername)
 		{
     		if (strcmp(servername,p->servername)) 
-			return TLS1_AD_UNRECOGNIZED_NAME;
+			return 0;
 		if (ctx2) 
 			SSL_set_SSL_CTX(s,ctx2);
 		SSL_set_tlsext_servername_done(s,1);
 		}
-	return SSL_ERROR_NONE;
+	return 1;
 }
 #endif
 
@@ -845,7 +845,6 @@ int MAIN(int argc, char *argv[])
 			{
 			if (--argc < 1) goto bad;
 			tlsextcbp.servername= *(++argv);
-			/* meth=TLSv1_server_method(); */
 			}
 		else if	(strcmp(*argv,"-cert2") == 0)
 			{

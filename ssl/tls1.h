@@ -158,9 +158,6 @@ extern "C" {
 #define TLSEXT_TYPE_trusted_ca_keys		3
 #define TLSEXT_TYPE_truncated_hmac		4
 #define TLSEXT_TYPE_status_request		5
-#if 0
-#define TLSEXT_TYPE_srp				6
-#endif
 
 /* NameType value from RFC 3546 */
 #define TLSEXT_NAMETYPE_host_name 0
@@ -181,19 +178,6 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
 
 #define SSL_set_tlsext_servername_done(s,t) \
 SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE,t, NULL)
-
-#if 0
-#  if 0
-
-	#define SSL_get_tlsext_hostname(s,psn) \
-	SSL_ctrl(s,SSL_CTRL_GET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name, (void *)psn)
-#  else
-	/* XXX this looks weird for a macro, define a function instead? */
-	 * or just used SSL_get_servername() directly ... */
-	#define SSL_get_tlsext_hostname(s,psn) \
-	(*psn = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name),*psn != NULL)
-#  endif
-#endif
   
 #endif
 
