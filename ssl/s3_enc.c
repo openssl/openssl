@@ -709,6 +709,7 @@ int ssl3_alert_code(int code)
 	case SSL_AD_INTERNAL_ERROR:	return(SSL3_AD_HANDSHAKE_FAILURE);
 	case SSL_AD_USER_CANCELLED:	return(SSL3_AD_HANDSHAKE_FAILURE);
 	case SSL_AD_NO_RENEGOTIATION:	return(-1); /* Don't send it :-) */
+	case SSL_AD_UNRECOGNIZED_NAME:	return(SSL3_AD_HANDSHAKE_FAILURE);
 	default:			return(-1);
 		}
 	}
