@@ -71,7 +71,9 @@ extern "C" {
 #define DTLS1_VERSION_MAJOR		0x01
 #define DTLS1_VERSION_MINOR		0x00
 
+#if 0
 #define DTLS1_AD_MISSING_HANDSHAKE_MESSAGE    110
+#endif
 
 /* lengths of messages */
 #define DTLS1_COOKIE_LENGTH                     32

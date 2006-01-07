@@ -1551,6 +1551,7 @@ int dtls1_dispatch_alert(SSL *s)
 	*ptr++ = s->s3->send_alert[0];
 	*ptr++ = s->s3->send_alert[1];
 
+#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
 	if (s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE)
 		{	
 		s2n(s->d1->handshake_read_seq, ptr);
@@ -1566,6 +1567,7 @@ int dtls1_dispatch_alert(SSL *s)
 #endif
 		l2n3(s->d1->r_msg_hdr.frag_off, ptr);
 		}
+#endif
 
 	i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), 0);
 	if (i <= 0)
@@ -1575,8 +1577,11 @@ int dtls1_dispatch_alert(SSL *s)
 		}
 	else
 		{
-		if ( s->s3->send_alert[0] == SSL3_AL_FATAL ||
-			s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE)
+		if (s->s3->send_alert[0] == SSL3_AL_FATAL
+#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
+		    || s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
+#endif
+		    )
 			(void)BIO_flush(s->wbio);
 
 		if (s->msg_callback)

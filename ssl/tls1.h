@@ -360,6 +360,3 @@ SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE,t, NULL)
 }
 #endif
 #endif
-
-
-
