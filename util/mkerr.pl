@@ -205,6 +205,13 @@ while (($hdr, $lib) = each %libinc)
 		}
 	}
 
+	if ($lib eq "SSL") {
+		if ($rmax{$lib} >= 1000) {
+			print STDERR "!! ERROR: SSL error codes 1000+ are reserved for alerts.\n";
+			print STDERR "!!        Any new alerts must be added to $config.\n";
+			print STDERR "\n";
+		}
+	}
 	close IN;
 }
 
