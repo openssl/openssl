@@ -75,6 +75,7 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_DSA_DO_VERIFY),	"DSA_do_verify"},
 {ERR_FUNC(FIPS_F_DSA_GENERATE_PARAMETERS),	"DSA_generate_parameters"},
 {ERR_FUNC(FIPS_F_FIPS_CHECK_DSA),	"FIPS_CHECK_DSA"},
+{ERR_FUNC(FIPS_F_FIPS_CHECK_DSO),	"FIPS_CHECK_DSO"},
 {ERR_FUNC(FIPS_F_FIPS_CHECK_EXE),	"FIPS_CHECK_EXE"},
 {ERR_FUNC(FIPS_F_FIPS_CHECK_RSA),	"FIPS_CHECK_RSA"},
 {ERR_FUNC(FIPS_F_FIPS_DSA_CHECK),	"FIPS_dsa_check"},
@@ -90,7 +91,6 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_RSA_GENERATE_KEY),	"RSA_generate_key"},
 {ERR_FUNC(FIPS_F_RSA_X931_GENERATE_KEY),	"RSA_X931_generate_key"},
 {ERR_FUNC(FIPS_F_SSLEAY_RAND_BYTES),	"SSLEAY_RAND_BYTES"},
-{ERR_FUNC(FIPS_F_FIPS_CHECK_DSO),	"FIPS_check_dso"},
 {0,NULL}
 	};
 
@@ -104,9 +104,9 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {ERR_REASON(FIPS_R_INVALID_KEY_LENGTH)   ,"invalid key length"},
 {ERR_REASON(FIPS_R_KEY_TOO_SHORT)        ,"key too short"},
 {ERR_REASON(FIPS_R_NON_FIPS_METHOD)      ,"non fips method"},
+{ERR_REASON(FIPS_R_NO_DSO_PATH)          ,"DSO path can't be determined"},
 {ERR_REASON(FIPS_R_PAIRWISE_TEST_FAILED) ,"pairwise test failed"},
 {ERR_REASON(FIPS_R_SELFTEST_FAILED)      ,"selftest failed"},
-{ERR_REASON(FIPS_R_NO_DSO_PATH)		 ,"DSO path can't be determined"},
 {0,NULL}
 	};
 
