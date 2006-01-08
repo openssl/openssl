@@ -350,26 +350,31 @@ void ERR_load_DSO_strings(void);
 #define DSO_F_DSO_FREE					 111
 #define DSO_F_DSO_GET_FILENAME				 127
 #define DSO_F_DSO_GET_LOADED_FILENAME			 128
+#define DSO_F_DSO_GLOBAL_LOOKUP				 139
 #define DSO_F_DSO_LOAD					 112
 #define DSO_F_DSO_MERGE					 132
 #define DSO_F_DSO_NEW_METHOD				 113
+#define DSO_F_DSO_PATHBYADDR				 140
 #define DSO_F_DSO_SET_FILENAME				 129
 #define DSO_F_DSO_SET_NAME_CONVERTER			 122
 #define DSO_F_DSO_UP_REF				 114
+#define DSO_F_GLOBAL_LOOKUP_FUNC			 138
+#define DSO_F_PATHBYADDR				 137
 #define DSO_F_VMS_BIND_SYM				 115
 #define DSO_F_VMS_LOAD					 116
 #define DSO_F_VMS_MERGER				 133
 #define DSO_F_VMS_UNLOAD				 117
 #define DSO_F_WIN32_BIND_FUNC				 118
 #define DSO_F_WIN32_BIND_VAR				 119
+#define DSO_F_WIN32_GLOBALLOOKUP			 142
+#define DSO_F_WIN32_GLOBALLOOKUP_FUNC			 143
 #define DSO_F_WIN32_JOINER				 135
 #define DSO_F_WIN32_LOAD				 120
 #define DSO_F_WIN32_MERGER				 134
 #define DSO_F_WIN32_NAME_CONVERTER			 125
+#define DSO_F_WIN32_PATHBYADDR				 141
 #define DSO_F_WIN32_SPLITTER				 136
 #define DSO_F_WIN32_UNLOAD				 121
-#define DSO_F_PATHBYADDR				 137
-#define DSO_F_GLOBAL_LOOKUP_FUNC			 138
 
 /* Reason codes. */
 #define DSO_R_CTRL_FAILED				 100

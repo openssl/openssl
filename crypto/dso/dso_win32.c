@@ -698,7 +698,7 @@ static int win32_pathbyaddr(void *addr,char *path,int sz)
 	dll = LoadLibrary(TEXT(DLLNAME));
 	if (dll == NULL)
 		{
-		DSOerr(DSO_F_PATHBYADDR,DSO_R_UNSUPPORTED);
+		DSOerr(DSO_F_WIN32_PATHBYADDR,DSO_R_UNSUPPORTED);
 		return -1;
 		}
 
@@ -707,7 +707,7 @@ static int win32_pathbyaddr(void *addr,char *path,int sz)
 	if (create_snap == NULL)
 		{
 		FreeLibrary(dll);
-		DSOerr(DSO_F_PATHBYADDR,DSO_R_UNSUPPORTED);
+		DSOerr(DSO_F_WIN32_PATHBYADDR,DSO_R_UNSUPPORTED);
 		return -1;
 		}
 	/* We take the rest for granted... */
@@ -724,7 +724,7 @@ static int win32_pathbyaddr(void *addr,char *path,int sz)
 	if( hModuleSnap == INVALID_HANDLE_VALUE ) 
 		{ 
 		FreeLibrary(dll);
-		DSOerr(DSO_F_PATHBYADDR,DSO_R_UNSUPPORTED);
+		DSOerr(DSO_F_WIN32_PATHBYADDR,DSO_R_UNSUPPORTED);
 		return -1;
 		} 
  
@@ -734,7 +734,7 @@ static int win32_pathbyaddr(void *addr,char *path,int sz)
 		{ 
 		(*close_snap)(hModuleSnap);
 		FreeLibrary(dll);
-		DSOerr(DSO_F_PATHBYADDR,DSO_R_FAILURE);
+		DSOerr(DSO_F_WIN32_PATHBYADDR,DSO_R_FAILURE);
 		return -1;
 		}
  
@@ -786,7 +786,7 @@ static void *win32_globallookup(const char *name)
 	dll = LoadLibrary(TEXT(DLLNAME));
 	if (dll == NULL)
 		{
-		DSOerr(DSO_F_GLOBAL_LOOKUP_FUNC,DSO_R_UNSUPPORTED);
+		DSOerr(DSO_F_WIN32_GLOBALLOOKUP,DSO_R_UNSUPPORTED);
 		return NULL;
 		}
 
@@ -795,7 +795,7 @@ static void *win32_globallookup(const char *name)
 	if (create_snap == NULL)
 		{
 		FreeLibrary(dll);
-		DSOerr(DSO_F_GLOBAL_LOOKUP_FUNC,DSO_R_UNSUPPORTED);
+		DSOerr(DSO_F_WIN32_GLOBALLOOKUP,DSO_R_UNSUPPORTED);
 		return NULL;
 		}
 	/* We take the rest for granted... */
@@ -812,7 +812,7 @@ static void *win32_globallookup(const char *name)
 	if( hModuleSnap == INVALID_HANDLE_VALUE )
 		{
 		FreeLibrary(dll);
-		DSOerr(DSO_F_PATHBYADDR,DSO_R_UNSUPPORTED);
+		DSOerr(DSO_F_WIN32_GLOBALLOOKUP,DSO_R_UNSUPPORTED);
 		return NULL;
 		}
 

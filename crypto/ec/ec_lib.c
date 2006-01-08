@@ -79,7 +79,7 @@ EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 
 	if (meth == NULL)
 		{
-		ECerr(EC_F_EC_GROUP_NEW, ERR_R_PASSED_NULL_PARAMETER);
+		ECerr(EC_F_EC_GROUP_NEW, EC_R_SLOT_FULL);
 		return NULL;
 		}
 	if (meth->group_init == 0)

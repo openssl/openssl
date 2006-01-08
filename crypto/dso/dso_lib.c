@@ -471,7 +471,7 @@ int DSO_pathbyaddr(void *addr,char *path,int sz)
 	if (meth == NULL) meth = DSO_METHOD_openssl();
 	if (meth->pathbyaddr == NULL)
 		{
-		DSOerr(DSO_F_PATHBYADDR,DSO_R_UNSUPPORTED);
+		DSOerr(DSO_F_DSO_PATHBYADDR,DSO_R_UNSUPPORTED);
 		return -1;
 		}
 	return (*meth->pathbyaddr)(addr,path,sz);
@@ -483,7 +483,7 @@ void *DSO_global_lookup(const char *name)
 	if (meth == NULL) meth = DSO_METHOD_openssl();
 	if (meth->globallookup == NULL)
 		{
-		DSOerr(DSO_F_GLOBAL_LOOKUP_FUNC,DSO_R_UNSUPPORTED);
+		DSOerr(DSO_F_DSO_GLOBAL_LOOKUP,DSO_R_UNSUPPORTED);
 		return NULL;
 		}
 	return (*meth->globallookup)(name);

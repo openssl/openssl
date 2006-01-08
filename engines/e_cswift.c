@@ -1089,7 +1089,7 @@ static int cswift_rand_bytes(unsigned char *buf, int num)
 		if (swrc != SW_OK)
 		{
 			char tmpbuf[20];
-			CSWIFTerr(CSWIFT_F_CSWIFT_CTRL, CSWIFT_R_REQUEST_FAILED);
+			CSWIFTerr(CSWIFT_F_CSWIFT_RAND_BYTES, CSWIFT_R_REQUEST_FAILED);
 			sprintf(tmpbuf, "%ld", swrc);
 			ERR_add_error_data(2, "CryptoSwift error number is ", tmpbuf);
 			goto err;
