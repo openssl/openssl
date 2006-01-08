@@ -1592,7 +1592,7 @@ void ERR_load_SSL_strings(void);
 
 /* Function codes. */
 #define SSL_F_CLIENT_CERTIFICATE			 100
-#define SSL_F_CLIENT_FINISHED				 238
+#define SSL_F_CLIENT_FINISHED				 167
 #define SSL_F_CLIENT_HELLO				 101
 #define SSL_F_CLIENT_MASTER_KEY				 102
 #define SSL_F_D2I_SSL_SESSION				 103
