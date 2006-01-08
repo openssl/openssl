@@ -740,7 +740,7 @@ int DSAparams_print(BIO *bp, const DSA *x)
 		buf_len = (size_t)BN_num_bytes(x->p);
 	else
 		{
-		DSAerr(DSA_F_DSA_PRINT,DSA_R_MISSING_PARAMETERS);
+		DSAerr(DSA_F_DSAPARAMS_PRINT,DSA_R_MISSING_PARAMETERS);
 		goto err;
 		}
 	if (x->q)
@@ -752,7 +752,7 @@ int DSAparams_print(BIO *bp, const DSA *x)
 	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
-		DSAerr(DSA_F_DSA_PRINT,ERR_R_MALLOC_FAILURE);
+		DSAerr(DSA_F_DSAPARAMS_PRINT,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
