@@ -195,6 +195,16 @@ while (($hdr, $lib) = each %libinc)
 		}
 	    }
 	}
+
+	if ($debug) {
+		if (defined($rmax{$lib})) {
+			print STDERR "Max reason code rmax" . "{" . "$lib" . "} = $rmax{$lib}\n";
+		}
+		if (defined($fmax{$lib})) {
+			print STDERR "Max function code fmax" . "{" . "$lib" . "} = $fmax{$lib}\n";
+		}
+	}
+
 	close IN;
 }
 
@@ -237,7 +247,7 @@ foreach $file (@source) {
 	}
 	close IN;
 }
-print STDERR "\n" if $debug;
+print STDERR "                                  \n" if $debug;
 
 # Now process each library in turn.
 
