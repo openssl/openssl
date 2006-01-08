@@ -65,6 +65,8 @@ while(<IN>)
 			$csrc{$1} = $3;
 			$fmax{$1} = 99;
 			$rmax{$1} = 99;
+			$fassigned{$1} = ":";
+			$rassigned{$1} = ":";
 			$fnew{$1} = 0;
 			$rnew{$1} = 0;
 		}
@@ -171,7 +173,7 @@ while (($hdr, $lib) = each %libinc)
 	# maximum code used.
 
 	if ($gotfile) {
-	    while(<IN>) {
+	  while(<IN>) {
 		if(/^\#define\s+(\S+)\s+(\S+)/) {
 			$name = $1;
 			$code = $2;
@@ -182,18 +184,49 @@ while (($hdr, $lib) = each %libinc)
 			}
 			if($1 eq "R") {
 				$rcodes{$name} = $code;
+				if ($rassigned{$lib} =~ /:$code:/) {
+					print STDERR "!! ERROR: $lib reason code $code assigned twice\n";
+				}
+				$rassigned{$lib} .= "$code:";
 				if(!(exists $rextra{$name}) &&
 					 ($code > $rmax{$lib}) ) {
 					$rmax{$lib} = $code;
 				}
 			} else {
+				if ($fassigned{$lib} =~ /:$code:/) {
+					print STDERR "!! ERROR: $lib function code $code assigned twice\n";
+				}
+				$fassigned{$lib} .= "$code:";
 				if($code > $fmax{$lib}) {
 					$fmax{$lib} = $code;
 				}
 				$fcodes{$name} = $code;
 			}
 		}
-	    }
+	  }
+	}
+
+	if ($debug) {
+		if (defined($fmax{$lib})) {
+			print STDERR "Max function code fmax" . "{" . "$lib" . "} = $fmax{$lib}\n";
+			$fassigned{$lib} =~ m/^:(.*):$/;
+			@fassigned = sort {$a <=> $b} split(":", $1);
+			print STDERR "  @fassigned\n";
+		}
+		if (defined($rmax{$lib})) {
+			print STDERR "Max reason code rmax" . "{" . "$lib" . "} = $rmax{$lib}\n";
+			$rassigned{$lib} =~ m/^:(.*):$/;
+			@rassigned = sort {$a <=> $b} split(":", $1);
+			print STDERR "  @rassigned\n";
+		}
+	}
+
+	if ($lib eq "SSL") {
+		if ($rmax{$lib} >= 1000) {
+			print STDERR "!! ERROR: SSL error codes 1000+ are reserved for alerts.\n";
+			print STDERR "!!        Any new alerts must be added to $config.\n";
+			print STDERR "\n";
+		}
 	}
 	close IN;
 }
@@ -237,7 +270,7 @@ foreach $file (@source) {
 	}
 	close IN;
 }
-print STDERR "\n" if $debug;
+print STDERR "                                  \n" if $debug;
 
 # Now process each library in turn.
 
@@ -364,7 +397,16 @@ EOF
 	foreach $i (@function) {
 		$z=6-int(length($i)/8);
 		if($fcodes{$i} eq "X") {
-			$fcodes{$i} = ++$fmax{$lib};
+			$fassigned{$lib} =~ m/^:([^:]*):/;
+			$findcode = $1;
+			if (!defined($findcode)) {
+				$findcode = $fmax{$lib};
+			}
+			while ($fassigned{$lib} =~ m/:$findcode:/) {
+				$findcode++;
+			}
+			$fcodes{$i} = $findcode;
+			$fassigned{$lib} .= "$findcode:";
 			print STDERR "New Function code $i\n" if $debug;
 		}
 		printf OUT "#define $i%s $fcodes{$i}\n","\t" x $z;
@@ -375,7 +417,16 @@ EOF
 	foreach $i (@reasons) {
 		$z=6-int(length($i)/8);
 		if($rcodes{$i} eq "X") {
-			$rcodes{$i} = ++$rmax{$lib};
+			$rassigned{$lib} =~ m/^:([^:]*):/;
+			$findcode = $1;
+			if (!defined($findcode)) {
+				$findcode = $rmax{$lib};
+			}
+			while ($rassigned{$lib} =~ m/:$findcode:/) {
+				$findcode++;
+			}
+			$rcodes{$i} = $findcode;
+			$rassigned{$lib} .= "$findcode:";
 			print STDERR "New Reason code   $i\n" if $debug;
 		}
 		printf OUT "#define $i%s $rcodes{$i}\n","\t" x $z;
