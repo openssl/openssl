@@ -83,8 +83,8 @@ static ERR_STRING_DATA DH_str_functs[]=
 static ERR_STRING_DATA DH_str_reasons[]=
 	{
 {ERR_REASON(DH_R_BAD_GENERATOR)          ,"bad generator"},
-{ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
 {ERR_REASON(DH_R_INVALID_PUBKEY)         ,"invalid public key"},
+{ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
 {0,NULL}
 	};
 

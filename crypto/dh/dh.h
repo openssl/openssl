@@ -220,8 +220,8 @@ void ERR_load_DH_strings(void);
 
 /* Reason codes. */
 #define DH_R_BAD_GENERATOR				 101
-#define DH_R_NO_PRIVATE_VALUE				 100
 #define DH_R_INVALID_PUBKEY				 102
+#define DH_R_NO_PRIVATE_VALUE				 100
 
 #ifdef  __cplusplus
 }
