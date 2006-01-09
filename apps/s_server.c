@@ -367,6 +367,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 #ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err," -servername host - servername for HostName TLS extension\n");
+	BIO_printf(bio_err," -servername_warn - on mismatch send warning (default fatal alert)\n");
 	BIO_printf(bio_err," -cert2 arg    - certificate file to use for servername\n");
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT2);
 	BIO_printf(bio_err," -key2 arg     - Private Key file to use for servername, in cert file if\n");
@@ -533,6 +534,7 @@ static int ebcdic_puts(BIO *bp, const char *str)
 typedef struct tlsextctx_st {
    char * servername;
    BIO * biodebug;
+   int servername_warn;
 } tlsextctx;
 
 
@@ -544,18 +546,16 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 		BIO_printf(p->biodebug,"Hostname in TLS extension: \"%s\"\n",servername);
         
 	if (!p->servername)
-		{
-		SSL_set_tlsext_servername_done(s,2);
 		return 1;
-		}
 	
 	if (servername)
 		{
     		if (strcmp(servername,p->servername)) 
-			return 0;
-		if (ctx2) 
+			return  p->servername_warn;
+		if (ctx2) {
+			BIO_printf(p->biodebug,"Swiching server context.\n");
 			SSL_set_SSL_CTX(s,ctx2);
-		SSL_set_tlsext_servername_done(s,1);
+			}     
 		}
 	return 1;
 }
@@ -597,7 +597,7 @@ int MAIN(int argc, char *argv[])
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
-        tlsextctx tlsextcbp = {NULL, NULL};
+        tlsextctx tlsextcbp = {NULL, NULL, -1};
 #endif
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_server_method();
@@ -846,6 +846,8 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			tlsextcbp.servername= *(++argv);
 			}
+		else if (strcmp(*argv,"-servername_warn") == 0)
+			{ tlsextcbp.servername_warn = 0; }
 		else if	(strcmp(*argv,"-cert2") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1553,6 +1555,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					ret= -11;*/
 					goto err;
 					}
+
 				if ((buf[0] == 'r') && 
 					((buf[1] == '\n') || (buf[1] == '\r')))
 					{

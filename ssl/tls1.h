@@ -170,10 +170,12 @@ extern "C" {
 
 #ifndef OPENSSL_NO_TLSEXT
 
+#define TLSEXT_MAXLEN_host_name 255
+
 const char *SSL_get_servername(const SSL *s, const int type) ;
 int SSL_get_servername_type(const SSL *s) ;
 
-#define SSL_set_tlsext_hostname(s,name) \
+#define SSL_set_tlsext_host_name(s,name) \
 SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
 
 #define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \

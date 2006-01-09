@@ -114,12 +114,6 @@
 #include <openssl/rand.h>
 #include "ssl_locl.h"
 
-#ifndef OPENSSL_NO_TLSEXT
-#define session_ctx initial_ctx
-#else
-#define session_ctx ctx
-#endif
-
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx,SSL_SESSION *s);
 static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
@@ -242,7 +236,7 @@ int ssl_get_new_session(SSL *s, int session)
 	if (s->session_ctx->session_timeout == 0)
 		ss->timeout=SSL_get_default_timeout(s);
 	else
-		ss->timeout=s->ctx->session_timeout;
+		ss->timeout=s->session_ctx->session_timeout;
 
 	if (s->session != NULL)
 		{
@@ -319,6 +313,16 @@ int ssl_get_new_session(SSL *s, int session)
 			SSL_SESSION_free(ss);
 			return(0);
 			}
+#ifndef OPENSSL_NO_TLSEXT
+		if (s->tlsext_hostname) {
+			ss->tlsext_hostname = BUF_strdup(s->tlsext_hostname);
+			if (ss->tlsext_hostname == NULL) {
+				SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_INTERNAL_ERROR);
+				SSL_SESSION_free(ss);
+				return 0;
+				}
+			}
+#endif
 		}
 	else
 		{

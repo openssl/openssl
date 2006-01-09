@@ -1332,15 +1332,15 @@ const char *SSL_get_servername(const SSL *s, const int type)
 	{
 	if (type != TLSEXT_NAMETYPE_host_name)
 		return NULL;
-	/* XXX cf. SSL_CTRL_GET_TLSEXT_HOSTNAME case in ssl3_ctrl (s3_lib.c) */
-	return s->session /*&&s->session->tlsext_hostname*/ ?
+
+	return s->session && !s->tlsext_hostname ?
 		s->session->tlsext_hostname :
 		s->tlsext_hostname;
 	}
 
 int SSL_get_servername_type(const SSL *s)
 	{
-	if (s->session &&s->session->tlsext_hostname ? s->session->tlsext_hostname : s->tlsext_hostname) 
+	if (s->session && (!s->tlsext_hostname ? s->session->tlsext_hostname : s->tlsext_hostname)) 
 		return TLSEXT_NAMETYPE_host_name;
 	return -1;
 	}
@@ -1930,14 +1930,14 @@ void ssl_update_cache(SSL *s,int mode)
 	 * and it would be rather hard to do anyway :-) */
 	if (s->session->session_id_length == 0) return;
 
-	i=s->ctx->session_cache_mode;
+	i=s->session_ctx->session_cache_mode;
 	if ((i & mode) && (!s->hit)
 		&& ((i & SSL_SESS_CACHE_NO_INTERNAL_STORE)
-		    || SSL_CTX_add_session(s->ctx,s->session))
-		&& (s->ctx->new_session_cb != NULL))
+		    || SSL_CTX_add_session(s->session_ctx,s->session))
+		&& (s->session_ctx->new_session_cb != NULL))
 		{
 		CRYPTO_add(&s->session->references,1,CRYPTO_LOCK_SSL_SESSION);
-		if (!s->ctx->new_session_cb(s,s->session))
+		if (!s->session_ctx->new_session_cb(s,s->session))
 			SSL_SESSION_free(s->session);
 		}
 
@@ -1946,10 +1946,10 @@ void ssl_update_cache(SSL *s,int mode)
 		((i & mode) == mode))
 		{
 		if (  (((mode & SSL_SESS_CACHE_CLIENT)
-			?s->ctx->stats.sess_connect_good
-			:s->ctx->stats.sess_accept_good) & 0xff) == 0xff)
+			?s->session_ctx->stats.sess_connect_good
+			:s->session_ctx->stats.sess_accept_good) & 0xff) == 0xff)
 			{
-			SSL_CTX_flush_sessions(s->ctx,(unsigned long)time(NULL));
+			SSL_CTX_flush_sessions(s->session_ctx,(unsigned long)time(NULL));
 			}
 		}
 	}
@@ -2452,6 +2452,10 @@ SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 
 SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 	{
+	if (ssl->ctx == ctx) 
+		return ssl->ctx;
+	if (ctx == NULL)
+		ctx = ssl->initial_ctx;
 	if (ssl->cert != NULL)
 		ssl_cert_free(ssl->cert);
 	ssl->cert = ssl_cert_dup(ctx->cert);

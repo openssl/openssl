@@ -994,6 +994,9 @@ struct ssl_st
 	                          2 : don't call servername callback, no ack in server hello
 	                       */
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
+#define session_ctx initial_ctx
+#else
+#define session_ctx ctx
 #endif
 	};
 
@@ -1114,7 +1117,7 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 	PEM_ASN1_write_bio_of(SSL_SESSION,i2d_SSL_SESSION,PEM_STRING_SSL_SESSION,bp,x,NULL,NULL,0,NULL,NULL)
 #endif
 
-#define SSL_AD_REASON_OFFSET		1000 /* offset to get SSL_R_... value from SSL_AD_... /
+#define SSL_AD_REASON_OFFSET		1000 /* offset to get SSL_R_... value from SSL_AD_... */
 
 /* These alert types are for SSLv3 and TLSv1 */
 #define SSL_AD_CLOSE_NOTIFY		SSL3_AD_CLOSE_NOTIFY
@@ -1206,12 +1209,11 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 
 #define SSL_CTRL_SET_MAX_SEND_FRAGMENT		52
 
-/* see tls.h for macros based on these */
+/* see tls1.h for macros based on these */
 #ifndef OPENSSL_NO_TLSEXT
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB	53
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG	54
 #define SSL_CTRL_SET_TLSEXT_HOSTNAME		55
-#define SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE	56
 #endif
 
 #define SSL_session_reused(ssl) \

@@ -193,15 +193,11 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	{
 	int extdatalen=0;
 	unsigned char *ret = p;
-	if (s->hit || s->servername_done == 2)
-		return p;
-	ret+=2;
-	if (s->servername_done == 1)  
-		s->servername_done = 2;
 
+	ret+=2;
 	if (ret>=limit) return NULL; /* this really never occurs, but ... */
 
-	if (s->session->tlsext_hostname != NULL)
+	if (!s->hit && s->servername_done == 1 && s->session->tlsext_hostname != NULL)
 		{ 
 		if (limit - p - 4 < 0) return NULL; 
 
@@ -222,6 +218,10 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	unsigned short size;
 	unsigned short len;
 	unsigned char *data = *p;
+#if 0
+	fprintf(stderr,"ssl_parse_clienthello_tlsext %s\n",s->session->tlsext_hostname?s->session->tlsext_hostname:"NULL");
+#endif
+	s->servername_done = 0;
 
 	if (data >= (d+n-2))
 		return 1;
@@ -238,6 +238,29 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		if (data+size > (d+n))
 	   		return 1;
 		
+/* The servername extension is treated as follows:
+
+   - Only the hostname type is supported with a maximum length of 255.
+   - The servername is rejected if too long or if it contains zeros,
+     in which case an fatal alert is generated.
+   - The servername field is maintained together with the session cache.
+   - When a session is resumed, the servername call back invoked in order
+     to allow the application to position itself to the right context. 
+   - The servername is acknowledged if it is new for a session or when 
+     it is identical to a previously used for the same session. 
+     Applications can control the behaviour.  They can at any time
+     set a 'desirable' servername for a new SSL object. This can be the
+     case for example with HTTPS when a Host: header field is received and
+     a renegotiation is requested. In this case, a possible servername
+     presented in the new client hello is only acknowledged if it matches
+     the value of the Host: field. 
+   - Applications must  use SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+     if they provide for changing an explicit servername context for the session,
+     i.e. when the session has been established with a servername extension. 
+   - On session reconnect, the servername extension may be absent. 
+
+*/      
+
 		if (type == TLSEXT_TYPE_server_name)
 			{
 			unsigned char *sdata = data;
@@ -259,16 +282,29 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				case TLSEXT_NAMETYPE_host_name:
                                         if (s->session->tlsext_hostname == NULL)
 						{
-						if (len > 255 || 
+						if (len > TLSEXT_MAXLEN_host_name || 
 							((s->session->tlsext_hostname = OPENSSL_malloc(len+1)) == NULL))
 							{
 							*al = TLS1_AD_UNRECOGNIZED_NAME;
 							return 0;
 							}
-						
 						memcpy(s->session->tlsext_hostname, sdata, len);
-						s->session->tlsext_hostname[len]='\0'; 
+						s->session->tlsext_hostname[len]='\0';
+						if (strlen(s->session->tlsext_hostname) != len) {
+							OPENSSL_free(s->session->tlsext_hostname);
+							*al = TLS1_AD_UNRECOGNIZED_NAME;
+							return 0;
 						}
+						s->servername_done = 1; 
+
+#if 0
+						fprintf(stderr,"ssl_parse_clienthello_tlsext s->session->tlsext_hostname %s\n",s->session->tlsext_hostname);
+#endif
+						}
+					else 
+						s->servername_done = strlen(s->session->tlsext_hostname) == len 
+							&& strncmp(s->session->tlsext_hostname,sdata, len) == 0;
+					
 					break;
 
 				default:
@@ -356,14 +392,18 @@ int ssl_check_tlsext(SSL *s,int *al)
 	int ret;
 
 	*al = SSL_AD_UNRECOGNIZED_NAME;
-	if (s->servername_done == 0 && (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0))
+	if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0)
 		{
 		ret = s->ctx->tlsext_servername_callback(s, al, s->ctx->tlsext_servername_arg);
 		if (ret <= 0)
 			return ret;
 		}
-	if (s->servername_done == 1) 	
-		s->servername_done = 2;
+	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0)
+		{
+		ret = s->initial_ctx->tlsext_servername_callback(s, al, s->initial_ctx->tlsext_servername_arg);
+		if (ret <= 0)
+			return ret;
+		}
 	
 	return 1;
 	}

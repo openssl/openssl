@@ -1654,7 +1654,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			ret = 1;
 			if (parg == NULL) 
 				break;
-			if (strlen((char *)parg) > 255)
+			if (strlen((char *)parg) > TLSEXT_MAXLEN_host_name)
 				{
 				SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
 				return 0;
@@ -1672,9 +1672,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			}
 		s->options |= SSL_OP_NO_SSLv2; /* can't use extension w/ SSL 2.0 format */
  		break;
-	case SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE:
-		s->servername_done = larg;
-		break;
 #endif /* !OPENSSL_NO_TLSEXT */
 	default:
 		break;

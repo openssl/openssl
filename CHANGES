@@ -25,8 +25,6 @@
          SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG
                                       - SSL_CTX_set_tlsext_servername_arg()
          SSL_CTRL_SET_TLSEXT_HOSTNAME           - SSL_set_tlsext_hostname()
-         SSL_CTRL_SET_TLSEXT_SERVERNAME_DONE
-                                         - SSL_set_tlsext_servername_done()
 
      openssl s_client has a new '-servername' option.
 
@@ -34,6 +32,8 @@
      (subject to change); this allows testing the HostName extension for a
      specific single host name ('-cert' and '-key' remain fallbacks for
      handshakes without HostName negotiation).
+     The option servername_warn allows to return a warning alert instead of
+     a fatal alert in case of servername mismatch. 
 
      [Peter Sylvester,  Remy Allais, Christophe Renou]
 

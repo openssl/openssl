@@ -647,7 +647,7 @@ bad:
 #ifndef OPENSSL_NO_TLSEXT
 	if (servername != NULL)
 		{
-		if (!SSL_set_tlsext_hostname(con,servername))
+		if (!SSL_set_tlsext_host_name(con,servername))
 			{
 			BIO_printf(bio_err,"Unable to set TLS servername extension.\n");
 			ERR_print_errors(bio_err);
