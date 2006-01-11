@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -503,6 +503,21 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 					break;
 				case 100:
 					str_details2 = " no_renegotiation";
+					break;
+				case 110:
+					str_details2 = " unsupported_extension";
+					break;
+				case 111:
+					str_details2 = " certificate_unobtainable";
+					break;
+				case 112:
+					str_details2 = " unrecognized_name";
+					break;
+				case 113:
+					str_details2 = " bad_certificate_status_response";
+					break;
+				case 114:
+					str_details2 = " bad_certificate_hash_value";
 					break;
 					}
 				}

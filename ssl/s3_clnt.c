@@ -258,12 +258,19 @@ int ssl3_connect(SSL *s)
 #ifndef OPENSSL_NO_TLSEXT
 			{
 				int al;
-				if (ssl_check_tlsext(s,&al) <= 0)
+				switch (ssl_check_tlsext(s,&al))
 					{
-					ssl3_send_alert(s,SSL3_AL_FATAL,al); /* XXX does this *have* to be fatal? */
+				case SSL_TLSEXT_ERR_ALERT_FATAL:
+					ssl3_send_alert(s,SSL3_AL_FATAL,al);
 					SSLerr(SSL_F_SSL3_CONNECT,SSL_R_SERVERHELLO_TLS_EXT);
 					ret = -1;
 					goto end;
+
+				case SSL_TLSEXT_ERR_ALERT_WARNING:
+					ssl3_send_alert(s,SSL3_AL_WARNING,al); 
+					
+				default:
+					;
 					}
 			}
 #endif

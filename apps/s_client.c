@@ -245,7 +245,7 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	else 
 		BIO_printf(bio_err,"Can't use SSL_get_servername\n");
 	
-	return 1;
+	return SSL_TLSEXT_ERR_OK;
 	}
 #endif
 

@@ -283,16 +283,21 @@ int ssl3_accept(SSL *s)
 			if (ret <= 0) goto end;
 #ifndef OPENSSL_NO_TLSEXT
 			{
-				int al,warn;
-				warn = ssl_check_tlsext(s,&al);
-				if (warn == 0)
-					ssl3_send_alert(s,SSL3_AL_WARNING,al); 
-				else if (warn < 0) {
+				int al;
+				switch (ssl_check_tlsext(s,&al))
+					{
+				case SSL_TLSEXT_ERR_ALERT_FATAL:
 					ssl3_send_alert(s,SSL3_AL_FATAL,al); 
 					SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLS_EXT);
 					ret = -1;
 					goto end;
-				}
+
+				case SSL_TLSEXT_ERR_ALERT_WARNING:
+					ssl3_send_alert(s,SSL3_AL_WARNING,al); 
+					
+				default:
+					break;
+					}
 			}
 #endif
 			s->new_session = 2;

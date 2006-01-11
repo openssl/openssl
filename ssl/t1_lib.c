@@ -389,22 +389,17 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 int ssl_check_tlsext(SSL *s,int *al)
 	{
-	int ret;
+	int ret=SSL_TLSEXT_ERR_NOACK;
 
 	*al = SSL_AD_UNRECOGNIZED_NAME;
-	if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0)
-		{
+
+	if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0) 
 		ret = s->ctx->tlsext_servername_callback(s, al, s->ctx->tlsext_servername_arg);
-		if (ret <= 0)
-			return ret;
-		}
-	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0)
-		{
+	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0) 		
 		ret = s->initial_ctx->tlsext_servername_callback(s, al, s->initial_ctx->tlsext_servername_arg);
-		if (ret <= 0)
-			return ret;
-		}
-	
-	return 1;
+
+	if (ret == SSL_TLSEXT_ERR_NOACK) 
+		s->servername_done=0;
+	return ret;
 	}
 #endif

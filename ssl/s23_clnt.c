@@ -565,6 +565,7 @@ static int ssl23_get_server_hello(SSL *s)
 		 (p[5] == SSL3_MT_SERVER_HELLO))
 		{
 		/* we have sslv3 or tls1 */
+	have_sslv3_or_tls1:	
 
 		if (!ssl_init_wbio_buffer(s,1)) goto err;
 
@@ -622,6 +623,9 @@ static int ssl23_get_server_hello(SSL *s)
 			j=(i<<8)|p[6];
 			cb(s,SSL_CB_READ_ALERT,j);
 			}
+
+		if (p[5] == SSL3_AL_WARNING)
+			goto have_sslv3_or_tls1;
 
 		s->rwstate=SSL_NOTHING;
 		SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,SSL_AD_REASON_OFFSET+p[6]);
