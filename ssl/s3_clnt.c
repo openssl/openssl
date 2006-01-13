@@ -255,25 +255,7 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CR_SRVR_HELLO_B:
 			ret=ssl3_get_server_hello(s);
 			if (ret <= 0) goto end;
-#ifndef OPENSSL_NO_TLSEXT
-			{
-				int al;
-				switch (ssl_check_tlsext(s,&al))
-					{
-				case SSL_TLSEXT_ERR_ALERT_FATAL:
-					ssl3_send_alert(s,SSL3_AL_FATAL,al);
-					SSLerr(SSL_F_SSL3_CONNECT,SSL_R_SERVERHELLO_TLS_EXT);
-					ret = -1;
-					goto end;
 
-				case SSL_TLSEXT_ERR_ALERT_WARNING:
-					ssl3_send_alert(s,SSL3_AL_WARNING,al); 
-					
-				default:
-					;
-					}
-			}
-#endif
 			if (s->hit)
 				s->state=SSL3_ST_CR_FINISHED_A;
 			else
@@ -821,6 +803,11 @@ int ssl3_get_server_hello(SSL *s)
 			/* 'al' set by ssl_parse_serverhello_tlsext */
 			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_PARSE_TLS_EXT);
 			goto f_err; 
+			}
+		if (ssl_check_tlsext(s,0) <= 0)
+			{
+			SSLerr(SSL_F_SSL3_CONNECT,SSL_R_SERVERHELLO_TLS_EXT);
+				goto err;
 			}
 		}
 #endif

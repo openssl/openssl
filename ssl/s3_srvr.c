@@ -281,25 +281,7 @@ int ssl3_accept(SSL *s)
 			s->shutdown=0;
 			ret=ssl3_get_client_hello(s);
 			if (ret <= 0) goto end;
-#ifndef OPENSSL_NO_TLSEXT
-			{
-				int al;
-				switch (ssl_check_tlsext(s,&al))
-					{
-				case SSL_TLSEXT_ERR_ALERT_FATAL:
-					ssl3_send_alert(s,SSL3_AL_FATAL,al); 
-					SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLS_EXT);
-					ret = -1;
-					goto end;
-
-				case SSL_TLSEXT_ERR_ALERT_WARNING:
-					ssl3_send_alert(s,SSL3_AL_WARNING,al); 
-					
-				default:
-					break;
-					}
-			}
-#endif
+			
 			s->new_session = 2;
 			s->state=SSL3_ST_SW_SRVR_HELLO_A;
 			s->init_num=0;
@@ -914,6 +896,23 @@ int ssl3_get_client_hello(SSL *s)
 		goto f_err;
 		}
 
+#ifndef OPENSSL_NO_TLSEXT
+	/* TLS extensions*/
+	if (s->version > SSL3_VERSION)
+		{
+		if (!ssl_parse_clienthello_tlsext(s,&p,d,n, &al))
+			{
+			/* 'al' set by ssl_parse_clienthello_tlsext */
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_PARSE_TLS_EXT);
+			goto f_err;
+			}
+		}
+		if (ssl_check_tlsext(s,1) <= 0) {
+			SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLS_EXT);
+			goto err;
+		}
+#endif
+
 	/* Worst case, we will use the NULL compression, but if we have other
 	 * options, we will now look for them.  We have i-1 compression
 	 * algorithms from the client, starting at q. */
@@ -942,19 +941,6 @@ int ssl3_get_client_hello(SSL *s)
 			s->s3->tmp.new_compression=comp;
 		else
 			comp=NULL;
-		}
-#endif
-
-#ifndef OPENSSL_NO_TLSEXT
-	/* TLS extensions*/
-	if (s->version > SSL3_VERSION)
-		{
-		if (!ssl_parse_clienthello_tlsext(s,&p,d,n, &al))
-			{
-			/* 'al' set by ssl_parse_clienthello_tlsext */
-			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_PARSE_TLS_EXT);
-			goto f_err;
-			}
 		}
 #endif
 

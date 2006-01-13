@@ -387,19 +387,30 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	return 1;
 }
 
-int ssl_check_tlsext(SSL *s,int *al)
+int ssl_check_tlsext(SSL *s, int is_server)
 	{
 	int ret=SSL_TLSEXT_ERR_NOACK;
 
-	*al = SSL_AD_UNRECOGNIZED_NAME;
+	int al = SSL_AD_UNRECOGNIZED_NAME;
 
 	if (s->ctx != NULL && s->ctx->tlsext_servername_callback != 0) 
-		ret = s->ctx->tlsext_servername_callback(s, al, s->ctx->tlsext_servername_arg);
+		ret = s->ctx->tlsext_servername_callback(s, &al, s->ctx->tlsext_servername_arg);
 	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0) 		
-		ret = s->initial_ctx->tlsext_servername_callback(s, al, s->initial_ctx->tlsext_servername_arg);
+		ret = s->initial_ctx->tlsext_servername_callback(s, &al, s->initial_ctx->tlsext_servername_arg);
 
-	if (ret == SSL_TLSEXT_ERR_NOACK) 
-		s->servername_done=0;
-	return ret;
+	switch (ret) {
+		case SSL_TLSEXT_ERR_ALERT_FATAL:
+			ssl3_send_alert(s,SSL3_AL_FATAL,al); 
+			return -1;
+
+		case SSL_TLSEXT_ERR_ALERT_WARNING:
+			ssl3_send_alert(s,SSL3_AL_WARNING,al);
+			return 1; 
+					
+		case SSL_TLSEXT_ERR_NOACK:
+			s->servername_done=0;
+			default:
+		return 1;
 	}
+}
 #endif
