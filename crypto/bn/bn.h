@@ -412,9 +412,15 @@ int	BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b);
 int	BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
 int	BN_sqr(BIGNUM *r, const BIGNUM *a,BN_CTX *ctx);
-/* BN_set_negative(): sets sign of a bignum */
+/** BN_set_negative sets sign of a BIGNUM
+ * \param  b  pointer to the BIGNUM object
+ * \param  n  0 if the BIGNUM b should be positive and a value != 0 otherwise 
+ */
 void	BN_set_negative(BIGNUM *b, int n);
-/* BN_get_negative():  returns 1 if the bignum is < 0 and 0 otherwise */
+/** BN_is_negative returns 1 if the BIGNUM is negative
+ * \param  a  pointer to the BIGNUM object
+ * \return 1 if a < 0 and 0 otherwise
+ */
 #define BN_is_negative(a) ((a)->neg != 0)
 
 int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
