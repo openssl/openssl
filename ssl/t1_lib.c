@@ -303,7 +303,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 						}
 					else 
 						s->servername_done = strlen(s->session->tlsext_hostname) == len 
-							&& strncmp(s->session->tlsext_hostname,sdata, len) == 0;
+							&& strncmp(s->session->tlsext_hostname, (char *)sdata, len) == 0;
 					
 					break;
 
