@@ -584,6 +584,8 @@ static int asn1_str2tag(const char *tagstr, int len)
 		ASN1_GEN_STR("TELETEXSTRING", V_ASN1_T61STRING),
 		ASN1_GEN_STR("GeneralString", V_ASN1_GENERALSTRING),
 		ASN1_GEN_STR("GENSTR", V_ASN1_GENERALSTRING),
+		ASN1_GEN_STR("NUMERIC", V_ASN1_NUMERICSTRING),
+		ASN1_GEN_STR("NUMERICSTRING", V_ASN1_NUMERICSTRING),
 
 		/* Special cases */
 		ASN1_GEN_STR("SEQUENCE", V_ASN1_SEQUENCE),
@@ -727,6 +729,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 		case V_ASN1_VISIBLESTRING:
 		case V_ASN1_UNIVERSALSTRING:
 		case V_ASN1_GENERALSTRING:
+		case V_ASN1_NUMERICSTRING:
 
 		if (format == ASN1_GEN_FORMAT_ASCII)
 			format = MBSTRING_ASC;
