@@ -578,14 +578,14 @@ static char *win32_merger(DSO *dso, const char *filespec1, const char *filespec2
 		}
 	else
 		{
-		filespec1_split = win32_splitter(dso, filespec1, 1);
+		filespec1_split = win32_splitter(dso, filespec1, 0);
 		if (!filespec1_split)
 			{
 			DSOerr(DSO_F_WIN32_MERGER,
 				ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
-		filespec2_split = win32_splitter(dso, filespec2, 0);
+		filespec2_split = win32_splitter(dso, filespec2, 1);
 		if (!filespec2_split)
 			{
 			DSOerr(DSO_F_WIN32_MERGER,
