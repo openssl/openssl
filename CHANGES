@@ -117,6 +117,9 @@
 
  Changes between 0.9.8a and 0.9.8b  [XX xxx XXXX]
 
+  *) Link in manifests for VC++ if needed.
+     [Austin Ziegler <halostatue@gmail.com>]
+
   *) Update support for ECC-based TLS ciphersuites according to
      draft-ietf-tls-ecc-12.txt with proposed changes.
      [Douglas Stebila]
