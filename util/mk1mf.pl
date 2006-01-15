@@ -338,8 +338,8 @@ EOF
 	if ($no_static_engine)
 		{
 		$extra_install .= <<"EOF"
-	\$(MKDIR) \$(INSTALLTOP)${o}engines
-	\$(CP) \$(E_SHLIB) \$(INSTALLTOP)${o}engines
+	\$(MKDIR) \$(INSTALLTOP)${o}lib${o}engines
+	\$(CP) \$(E_SHLIB) \$(INSTALLTOP)${o}lib${o}engines
 EOF
 		}
 	}
