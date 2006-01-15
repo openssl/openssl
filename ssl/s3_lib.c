@@ -901,6 +901,102 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
+#if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
+	/* New TLS Export CipherSuites from expired ID */
+#if 0
+	/* Cipher 60 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_MD5,
+	    TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5,
+	    SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 61 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
+	    TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
+	    SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+#endif
+	/* Cipher 62 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_DES_CBC_SHA,
+	    TLS1_CK_RSA_EXPORT1024_WITH_DES_CBC_SHA,
+	    SSL_kRSA|SSL_aRSA|SSL_DES|SSL_SHA|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    56,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 63 */
+	    {
+	    1,
+	    TLS1_TXT_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA,
+	    TLS1_CK_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA,
+	    SSL_kEDH|SSL_aDSS|SSL_DES|SSL_SHA|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    56,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 64 */
+	    {
+	    1,
+	    TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_SHA,
+	    TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_SHA,
+	    SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_SHA|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 65 */
+	    {
+	    1,
+	    TLS1_TXT_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA,
+	    TLS1_CK_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA,
+	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_TLSV1,
+	    SSL_EXPORT|SSL_EXP56,
+	    0,
+	    56,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS,
+	    },
+	/* Cipher 66 */
+	    {
+	    1,
+	    TLS1_TXT_DHE_DSS_WITH_RC4_128_SHA,
+	    TLS1_CK_DHE_DSS_WITH_RC4_128_SHA,
+	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_TLSV1,
+	    SSL_NOT_EXP|SSL_MEDIUM,
+	    0,
+	    128,
+	    128,
+	    SSL_ALL_CIPHERS,
+	    SSL_ALL_STRENGTHS
+	    },
+#endif
 #ifndef OPENSSL_NO_ECDH
 	/* Cipher C001 */
 	    {
@@ -1252,103 +1348,6 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
             SSL_ALL_STRENGTHS,
             },
 #endif	/* OPENSSL_NO_ECDH */
-
-#if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES
-	/* New TLS Export CipherSuites from expired ID */
-#if 0
-	/* Cipher 60 */
-	    {
-	    1,
-	    TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_MD5,
-	    TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_MD5,
-	    SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 61 */
-	    {
-	    1,
-	    TLS1_TXT_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
-	    TLS1_CK_RSA_EXPORT1024_WITH_RC2_CBC_56_MD5,
-	    SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-#endif
-	/* Cipher 62 */
-	    {
-	    1,
-	    TLS1_TXT_RSA_EXPORT1024_WITH_DES_CBC_SHA,
-	    TLS1_CK_RSA_EXPORT1024_WITH_DES_CBC_SHA,
-	    SSL_kRSA|SSL_aRSA|SSL_DES|SSL_SHA|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    56,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 63 */
-	    {
-	    1,
-	    TLS1_TXT_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA,
-	    TLS1_CK_DHE_DSS_EXPORT1024_WITH_DES_CBC_SHA,
-	    SSL_kEDH|SSL_aDSS|SSL_DES|SSL_SHA|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    56,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 64 */
-	    {
-	    1,
-	    TLS1_TXT_RSA_EXPORT1024_WITH_RC4_56_SHA,
-	    TLS1_CK_RSA_EXPORT1024_WITH_RC4_56_SHA,
-	    SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_SHA|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 65 */
-	    {
-	    1,
-	    TLS1_TXT_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA,
-	    TLS1_CK_DHE_DSS_EXPORT1024_WITH_RC4_56_SHA,
-	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_TLSV1,
-	    SSL_EXPORT|SSL_EXP56,
-	    0,
-	    56,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS,
-	    },
-	/* Cipher 66 */
-	    {
-	    1,
-	    TLS1_TXT_DHE_DSS_WITH_RC4_128_SHA,
-	    TLS1_CK_DHE_DSS_WITH_RC4_128_SHA,
-	    SSL_kEDH|SSL_aDSS|SSL_RC4|SSL_SHA|SSL_TLSV1,
-	    SSL_NOT_EXP|SSL_MEDIUM,
-	    0,
-	    128,
-	    128,
-	    SSL_ALL_CIPHERS,
-	    SSL_ALL_STRENGTHS
-	    },
-#endif
 
 /* end of list */
 	};
