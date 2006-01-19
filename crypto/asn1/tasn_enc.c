@@ -618,11 +618,14 @@ int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
 		tbool = (ASN1_BOOLEAN *)pval;
 		if (*tbool == -1)
 			return -1;
-		/* Default handling if value == size field then omit */
-		if (*tbool && (it->size > 0))
-			return -1;
-		if (!*tbool && !it->size)
-			return -1;
+		if (it->utype != V_ASN1_ANY)
+			{
+			/* Default handling if value == size field then omit */
+			if (*tbool && (it->size > 0))
+				return -1;
+			if (!*tbool && !it->size)
+				return -1;
+			}
 		c = (unsigned char)*tbool;
 		cont = &c;
 		len = 1;
