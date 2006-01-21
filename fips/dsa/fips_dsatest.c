@@ -147,7 +147,7 @@ int main(int argc, char **argv)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
 
 #ifdef OPENSSL_FIPS
-	if(!FIPS_mode_set(1,argv[0]))
+	if(!FIPS_mode_set(1))
 	    {
 	    ERR_print_errors(bio_err);
 	    EXIT(1);

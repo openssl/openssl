@@ -237,14 +237,7 @@ int main(int Argc, char *Argv[])
 
 #ifdef OPENSSL_FIPS
 	if(getenv("OPENSSL_FIPS")) {
-#if defined(_WIN32)
-		char filename[MAX_PATH] = "";
-		GetModuleFileNameA( NULL, filename, MAX_PATH) ;
-		p = filename;
-#else
-		p = Argv[0];
-#endif
-		if (!FIPS_mode_set(1,p)) {
+		if (!FIPS_mode_set(1)) {
 			ERR_load_crypto_strings();
 			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
 			EXIT(1);

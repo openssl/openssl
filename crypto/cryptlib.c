@@ -734,5 +734,11 @@ int fips_clear_owning_thread(void)
 		}
 	return ret;
 	}
+
+unsigned char *fips_signature_witness(void)
+	{
+	extern unsigned char FIPS_signature[];
+	return FIPS_signature;
+	}
 #endif /* OPENSSL_FIPS */
 

@@ -248,7 +248,7 @@ int main(int argc,char **argv)
             printf("Bad argument \"%s\"\n", argv[1]);
             exit(1);
         }
-        if (!FIPS_mode_set(1,argv[0]))
+        if (!FIPS_mode_set(1))
    	    {
 	    ERR_load_crypto_strings();
 	    ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
@@ -271,7 +271,7 @@ int main(int argc,char **argv)
     */
     ERR_clear_error();
     printf("2. Automatic power-up self test...");
-    if (!FIPS_mode_set(1,argv[0]))
+    if (!FIPS_mode_set(1))
 	{
 	ERR_load_crypto_strings();
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));

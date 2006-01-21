@@ -145,135 +145,78 @@ int FIPS_selftest()
 	&& FIPS_selftest_dsa();
     }
 
-#ifndef HMAC_EXT
-#define HMAC_EXT "sha1"
-#endif
+extern const void         *FIPS_text_start(),  *FIPS_text_end();
+extern const unsigned char FIPS_rodata_start[], FIPS_rodata_end[];
+unsigned char              FIPS_signature [20] = { 0 };
+static const char          FIPS_hmac_key[]="etaonrishdlcupfm";
 
-static char key[]="etaonrishdlcupfm";
-
-#ifdef OPENSSL_PIC
-int DSO_pathbyaddr(void *addr,char *path,int sz);
-
-static int FIPS_check_dso()
+unsigned int FIPS_incore_fingerprint(unsigned char *sig,unsigned int len)
     {
-    unsigned char buf[1024];
-    char path [512];
-    unsigned char mdbuf[EVP_MAX_MD_SIZE];
-    FILE *f;
-    HMAC_CTX hmac;
-    int len,n;
+    const unsigned char *p1 = FIPS_text_start();
+    const unsigned char *p2 = FIPS_text_end();
+    const unsigned char *p3 = FIPS_rodata_start;
+    const unsigned char *p4 = FIPS_rodata_end;
+    HMAC_CTX c;
 
-    len = DSO_pathbyaddr(NULL,path,sizeof(path)-sizeof(HMAC_EXT));
-    if (len<=0)
-    	{
-	FIPSerr(FIPS_F_FIPS_CHECK_DSO,FIPS_R_NO_DSO_PATH);
+    HMAC_CTX_init(&c);
+    HMAC_Init(&c,FIPS_hmac_key,strlen(FIPS_hmac_key),EVP_sha1());
+
+    /* detect overlapping regions */
+    if (p1<=p3 && p2>=p3)
+	p3=p1, p4=p2>p4?p2:p4, p1=NULL, p2=NULL;
+    else if (p3<=p1 && p4>=p1)
+	p3=p3, p4=p2>p4?p2:p4, p1=NULL, p2=NULL;
+
+    if (p1)
+	HMAC_Update(&c,p1,(size_t)p2-(size_t)p1);
+
+    if (FIPS_signature>=p3 && FIPS_signature<p4)
+	{
+	/* "punch" hole */
+	HMAC_Update(&c,p3,(size_t)FIPS_signature-(size_t)p3);
+	p3 = FIPS_signature+sizeof(FIPS_signature);
+	if (p3<p4)
+	    HMAC_Update(&c,p3,(size_t)p4-(size_t)p3);
+	}
+    else
+	HMAC_Update(&c,p3,(size_t)p4-(size_t)p3);
+
+    HMAC_Final(&c,sig,&len);
+    HMAC_CTX_cleanup(&c);
+
+    return len;
+    }
+
+int FIPS_check_incore_fingerprint(void)
+    {
+    unsigned char sig[EVP_MAX_MD_SIZE];
+    unsigned int len;
+    extern int OPENSSL_NONPIC_relocated;
+
+    if (FIPS_text_start()==NULL)
+	{
+	FIPSerr(FIPS_F_FIPS_CHECK_FINGERPRINT,FIPS_R_UNSUPPORTED_PLATFORM);
 	return 0;
 	}
 
-    f=fopen(path,"rb");
-    if(!f)
+    len=FIPS_incore_fingerprint (sig,sizeof(sig));
+
+    if (len!=sizeof(FIPS_signature) ||
+	memcmp(FIPS_signature,sig,sizeof(FIPS_signature)))
 	{
-	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE);
+	if (FIPS_signature>=FIPS_rodata_start && FIPS_signature<FIPS_rodata_end)
+	    FIPSerr(FIPS_F_FIPS_CHECK_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH_SEGMENT_ALIASING);
+	else if (OPENSSL_NONPIC_relocated)
+	    FIPSerr(FIPS_F_FIPS_CHECK_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH_NONPIC_RELOCATED);
+	else
+	    FIPSerr(FIPS_F_FIPS_CHECK_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH);
 	return 0;
 	}
 
-    HMAC_Init(&hmac,key,strlen(key),EVP_sha1());
-    while(!feof(f))
-	{
-	n=fread(buf,1,sizeof buf,f);
-	if(ferror(f))
-	    {
-	    clearerr(f);
-	    fclose(f);
-	    FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE);
-	    return 0;
-	    }
-	if (n) HMAC_Update(&hmac,buf,n);
-	}
-    fclose(f);
-    HMAC_Final(&hmac,mdbuf,&n);
-    HMAC_CTX_cleanup(&hmac);
-
-    path[len-1]='.';
-    strcpy(path+len,HMAC_EXT);
-    f=fopen(path,"rb");
-    if(!f || fread(buf,1,20,f) != 20)
-	{
-	if (f) fclose(f);
-	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE_DIGEST);
-	return 0;
-	}
-    fclose(f);
-    if(memcmp(buf,mdbuf,20))
-	{
-	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_EXE_DIGEST_DOES_NOT_MATCH);
-	return 0;
-	}
     return 1;
     }
-#else
-static int FIPS_check_exe(const char *path)
-    {
-    unsigned char buf[1024];
-    char p2[PATH_MAX];
-    unsigned int n;
-    unsigned char mdbuf[EVP_MAX_MD_SIZE];
-    FILE *f;
-    HMAC_CTX hmac;
-    const char *sha1_fmt="%s."HMAC_EXT;
 
-    f=fopen(path,"rb");
-#ifdef __CYGWIN32__
-    /* cygwin scrupulously strips .exe extentions:-( as of now it's
-       actually no point to attempt above fopen, but we keep the call
-       just in case the behavior changes in the future... */
-    if (!f)
-	{
-	sha1_fmt="%s.exe."HMAC_EXT;
-	BIO_snprintf(p2,sizeof p2,"%s.exe",path);
-	f=fopen(p2,"rb");
-	}
-#endif
-    if(!f)
-	{
-	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE);
-	return 0;
-	}
-    HMAC_Init(&hmac,key,strlen(key),EVP_sha1());
-    while(!feof(f))
-	{
-	n=fread(buf,1,sizeof buf,f);
-	if(ferror(f))
-	    {
-	    clearerr(f);
-	    fclose(f);
-	    FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE);
-	    return 0;
-	    }
-	if (n) HMAC_Update(&hmac,buf,n);
-	}
-    fclose(f);
-    HMAC_Final(&hmac,mdbuf,&n);
-    HMAC_CTX_cleanup(&hmac);
-    BIO_snprintf(p2,sizeof p2,sha1_fmt,path);
-    f=fopen(p2,"rb");
-    if(!f || fread(buf,1,20,f) != 20)
-	{
-	if (f) fclose(f);
-	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_CANNOT_READ_EXE_DIGEST);
-	return 0;
-	}
-    fclose(f);
-    if(memcmp(buf,mdbuf,20))
-	{
-	FIPSerr(FIPS_F_FIPS_CHECK_EXE,FIPS_R_EXE_DIGEST_DOES_NOT_MATCH);
-	return 0;
-	}
-    return 1;
-    }
-#endif
-
-int FIPS_mode_set(int onoff,const char *path)
+int FIPS_mode_set(int onoff)
     {
     int fips_set_owning_thread();
     int fips_clear_owning_thread();
@@ -299,11 +242,15 @@ int FIPS_mode_set(int onoff,const char *path)
 	    goto end;
 	    }
 
-#ifdef OPENSSL_PIC
-	if(!FIPS_check_dso())
-#else
-	if(!FIPS_check_exe(path))
-#endif
+	if(fips_signature_witness() != FIPS_signature)
+	    {
+	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_CONTRADICTING_EVIDENCE);
+	    fips_selftest_fail = 1;
+	    ret = 0;
+	    goto end;
+	    }
+
+	if(!FIPS_check_incore_fingerprint())
 	    {
 	    fips_selftest_fail = 1;
 	    ret = 0;

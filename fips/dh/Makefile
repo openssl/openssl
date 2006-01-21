@@ -38,9 +38,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@sleep 2; touch lib
+	@echo $(LIBOBJ) > lib
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

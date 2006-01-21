@@ -336,12 +336,9 @@ BUILD_CMD=SHARED_LIBS="$(SHARED_LIBS)"; \
 		$(CC) -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 
-FIPS_BUILD_CMD=$(BUILD_CMD); \
-	if [ -z "$$SHARED_LIBS" ]; then \
-	    if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-		TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $$target; \
-	    fi; \
-	fi
+FIPS_BUILD_CMD=if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+	  FIPSLD_CC=$(CC); CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
+	fi; $(BUILD_CMD)
 
 $(FIPS_AESTEST)$(EXE_EXT): $(FIPS_AESTEST).o $(DLIBCRYPTO)
 	@target=$(FIPS_AESTEST); $(FIPS_BUILD_CMD)

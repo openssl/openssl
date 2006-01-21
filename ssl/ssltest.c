@@ -391,7 +391,6 @@ int main(int argc, char *argv[])
 	COMP_METHOD *cm = NULL;
 #ifdef OPENSSL_FIPS
 	int fips_mode=0;
-	const char *path=argv[0];
 #endif
 
 	verbose = 0;
@@ -594,7 +593,7 @@ bad:
 #ifdef OPENSSL_FIPS
 	if(fips_mode)
 		{
-		if(!FIPS_mode_set(1,path))
+		if(!FIPS_mode_set(1))
 			{
 			ERR_load_crypto_strings();
 			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));

@@ -32,15 +32,15 @@ GENERAL=Makefile README fips-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
-LIBSRC=fips.c fips_err_wrapper.c
-LIBOBJ=fips.o fips_err_wrapper.o
+LIBSRC=fips.c fips_err_wrapper.c fipshashes.c
+LIBOBJ=fips.o fips_err_wrapper.o fipshashes.o
 
+FIPS_OBJ_LISTS=sha/lib rand/lib des/lib aes/lib dsa/lib rsa/lib dh/lib
 SRC= $(LIBSRC)
 
 EXHEADER=fips.h
 HEADER=$(EXHEADER) fips_err.h
-EXE=openssl_fips_fingerprint
-TEST= fips_test_suite.c
+EXE=fipsld
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
@@ -53,7 +53,48 @@ all:
 	fi
 
 check:
-	$(PERL) ../util/checkhash.pl
+	$(PERL) ../util/checkhash.pl || (rm fipscanister.o* 2>/dev/null; exit 1)
+
+# Idea behind fipscanister.o is to "seize" the sequestered code between
+# known symbols for fingerprinting purposes, which would be commonly
+# done with ld -r start.o ... end.o. The latter however presents a minor
+# challenge on multi-ABI platforms. As just implied, we'd rather use ld,
+# but the trouble is that we don't generally know how ABI-selection
+# compiler flag is translated to corresponding linker flag. All compiler
+# drivers seem to recognize -r flag and pass it down to linker, but some
+# of them, including gcc, erroneously add -lc, as well as run-time
+# components, such as crt1.o and alike. Fortunately among those vendor
+# compilers which were observed to misinterpret -r flag multi-ABI ones
+# are equipped with smart linkers, which don't require any ABI-selection
+# flag and simply assume that all objects are of the same type as first
+# one in command line. So the idea is to identify gcc and deficient
+# vendor compiler drivers...
+fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
+	@objs="fips_start.o $(LIBOBJ)"; \
+	for i in $(FIPS_OBJ_LISTS); do \
+		dir=`dirname $$i`; script="s|^|$$dir/|;s| | $$dir/|g"; \
+		objs="$$objs `sed "$$script" $$i`"; \
+	done; \
+	objs="$$objs fips_end.o" ; \
+	if [ -n "${FIPS_SITE_LD}" ]; then \
+		set -x; ${FIPS_SITE_LD} -r -o $@ $$objs; \
+	elif $(CC) -dumpversion >/dev/null 2>&1; then \
+		set -x; $(CC) $(CFLAGS) -r -nostdlib -o $@ $$objs ; \
+	else case "`(uname -s) 2>/dev/null`" in \
+		HP-UX|OSF1|SunOS) set -x; /usr/ccs/bin/ld -r -o $@ $$objs ;; \
+		*) set -x; $(CC) $(CFLAGS) -r -o $@ $$objs ;; \
+	esac fi
+	sha/fips_standalone_sha1 fipscanister.o > fipscanister.o.sha1
+# If another exception is immediately required, assign approprite
+# site-specific ld command to FIPS_SITE_LD environment variable.
+
+fips_start.o: fips_canister.c
+	$(CC) $(CFLAGS) -DFIPS_START -c -o $@ fips_canister.c
+fips_end.o: fips_canister.c
+	$(CC) $(CFLAGS) -DFIPS_END -c -o $@ fips_canister.c
+fips_premain_dso$(EXE_EXT): fips_premain.c
+	$(CC) $(CFLAGS) -DFINGERPRINT_PREMAIN_DSO_LOAD -o $@ fips_premain.c \
+		../libcrypto.a $(EX_LIBS)
 
 subdirs:
 	@for i in $(FDIRS) ;\
@@ -85,14 +126,14 @@ links:
 	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' FIPS_DES_ENC='${FIPS_DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' FIPS_SHA1_ASM_OBJ='${FIPS_SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PERL='${PERL}' links ); \
 	done;
 
-lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+lib:	fipscanister.o
+	$(AR) $(LIB) fipscanister.o
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-shared:
+shared:	fips_premain_dso$(EXE_EXT)
 	if [ -n "$(SHARED_LIBS)" ]; then \
-		(cd ..; $(MAKE) $(SHARED_LIB)); \
+		(cd ..; $(MAKE) FIPSLD_CC=$(CC) FIPSLD=fips/fipsld $(SHARED_LIB)); \
 	fi
 
 libs:
@@ -130,6 +171,9 @@ install:
 		chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
 		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
 	done
+	@cp -p -f fipscanister.o fipscanister.o.sha1 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/; \
+	chmod 0444 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/fipscanister.o \
+		   $(INSTALL_PREFIX)$(INSTALLTOP)/lib/fipscanister.o.sha1
 
 lint:
 	@for i in $(FDIRS) ;\
@@ -149,7 +193,7 @@ depend:
 	done;
 
 clean:
-	rm -f buildinf.h *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f buildinf.h *.o *.obj fips_premain_dso$(EXE_EXT) lib tags core .pure .nfs* *.old *.bak fluff
 	@for i in $(FDIRS) ;\
 	do \
 	(cd $$i && echo "making clean in fips/$$i..." && \

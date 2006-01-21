@@ -766,7 +766,7 @@ int main(int argc, char **argv)
     int f_opt = 0, d_opt = 1;
 
 #ifdef OPENSSL_FIPS
-    if(!FIPS_mode_set(1,argv[0]))
+    if(!FIPS_mode_set(1))
 	{
 	ERR_load_crypto_strings();
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));

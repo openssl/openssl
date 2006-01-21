@@ -103,7 +103,7 @@ int main(int argc, char **argv)
 		goto end;
 		}
 
-	if(!FIPS_mode_set(1,argv[0]))
+	if(!FIPS_mode_set(1))
 		{
 		ERR_print_errors(err);
 		goto end;

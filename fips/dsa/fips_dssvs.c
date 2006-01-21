@@ -292,7 +292,7 @@ int main(int argc,char **argv)
 	fprintf(stderr,"%s [prime|pqg]\n",argv[0]);
 	exit(1);
 	}
-    if(!FIPS_mode_set(1,argv[0]))
+    if(!FIPS_mode_set(1))
 	{
 	ERR_load_crypto_strings();
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));

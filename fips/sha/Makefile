@@ -43,9 +43,7 @@ top:
 all:	fips_standalone_sha1$(EXE_EXT) lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
-	@sleep 2; touch lib
+	@echo $(LIBOBJ) > lib
 
 fips_standalone_sha1$(EXE_EXT): fips_standalone_sha1.o fips_sha1dgst.o $(FIPS_SHA1_ASM_OBJ)
 	$(CC) -o fips_standalone_sha1$(EXE_EXT) $(CFLAGS) \

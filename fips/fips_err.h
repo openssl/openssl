@@ -75,8 +75,8 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_DSA_DO_VERIFY),	"DSA_do_verify"},
 {ERR_FUNC(FIPS_F_DSA_GENERATE_PARAMETERS),	"DSA_generate_parameters"},
 {ERR_FUNC(FIPS_F_FIPS_CHECK_DSA),	"FIPS_CHECK_DSA"},
-{ERR_FUNC(FIPS_F_FIPS_CHECK_DSO),	"FIPS_CHECK_DSO"},
 {ERR_FUNC(FIPS_F_FIPS_CHECK_EXE),	"FIPS_CHECK_EXE"},
+{ERR_FUNC(FIPS_F_FIPS_CHECK_FINGERPRINT),	"FIPS_CHECK_FINGERPRINT"},
 {ERR_FUNC(FIPS_F_FIPS_CHECK_RSA),	"FIPS_CHECK_RSA"},
 {ERR_FUNC(FIPS_F_FIPS_DSA_CHECK),	"FIPS_dsa_check"},
 {ERR_FUNC(FIPS_F_FIPS_MODE_SET),	"FIPS_mode_set"},
@@ -91,6 +91,7 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_RSA_GENERATE_KEY),	"RSA_generate_key"},
 {ERR_FUNC(FIPS_F_RSA_X931_GENERATE_KEY),	"RSA_X931_generate_key"},
 {ERR_FUNC(FIPS_F_SSLEAY_RAND_BYTES),	"SSLEAY_RAND_BYTES"},
+{ERR_FUNC(FIPS_F_FIPS_CHECK_DSO),	"FIPS_check_dso"},
 {0,NULL}
 	};
 
@@ -99,14 +100,18 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {ERR_REASON(FIPS_R_CANNOT_READ_EXE)      ,"cannot access executable object"},
 {ERR_REASON(FIPS_R_CANNOT_READ_EXE_DIGEST),"cannot access detached digest"},
 {ERR_REASON(FIPS_R_EXE_DIGEST_DOES_NOT_MATCH),"detached digest verification failed"},
+{ERR_REASON(FIPS_R_FINGERPRINT_DOES_NOT_MATCH),"fingerprint does not match"},
+{ERR_REASON(FIPS_R_FINGERPRINT_DOES_NOT_MATCH_NONPIC_RELOCATED),"fingerprint does not match, possibly because non-PIC was relocated"},
+{ERR_REASON(FIPS_R_FINGERPRINT_DOES_NOT_MATCH_SEGMENT_ALIASING),"fingerprint does not match, invalid segment aliasing"},
 {ERR_REASON(FIPS_R_FIPS_MODE_ALREADY_SET),"fips mode already set"},
 {ERR_REASON(FIPS_R_FIPS_SELFTEST_FAILED) ,"fips selftest failed"},
 {ERR_REASON(FIPS_R_INVALID_KEY_LENGTH)   ,"invalid key length"},
 {ERR_REASON(FIPS_R_KEY_TOO_SHORT)        ,"key too short"},
 {ERR_REASON(FIPS_R_NON_FIPS_METHOD)      ,"non fips method"},
-{ERR_REASON(FIPS_R_NO_DSO_PATH)          ,"DSO path can't be determined"},
 {ERR_REASON(FIPS_R_PAIRWISE_TEST_FAILED) ,"pairwise test failed"},
 {ERR_REASON(FIPS_R_SELFTEST_FAILED)      ,"selftest failed"},
+{ERR_REASON(FIPS_R_UNSUPPORTED_PLATFORM) ,"unsupported platform"},
+{ERR_REASON(FIPS_R_CONTRADICTING_EVIDENCE),"duplicate code detected, check your linking procedure"},
 {0,NULL}
 	};
 
@@ -114,11 +119,11 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 
 void ERR_load_FIPS_strings(void)
 	{
-	static int init=1;
+	static int init;
 
-	if (init)
+	if (!init)
 		{
-		init=0;
+		init=1;
 #ifndef OPENSSL_NO_ERR
 		ERR_load_strings(0,FIPS_str_functs);
 		ERR_load_strings(0,FIPS_str_reasons);

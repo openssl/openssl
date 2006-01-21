@@ -103,14 +103,6 @@ install:
 	 chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
 	 mv -f  $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new \
 	 	$(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
-	 sig="$$i.$${HMAC_EXT:-sha1}"; \
-	 if [ -f $$sig ]; then \
-	  echo installing $$sig; \
-	  cp $$sig $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$sig.new; \
-	  chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$sig.new; \
-	  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$sig.new \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$sig; \
-	 fi; \
 	) done;
 	@for i in $(SCRIPTS); \
 	do  \
@@ -152,20 +144,18 @@ $(DLIBCRYPTO):
 
 $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(EXE)
+	@if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+	  FIPSLD_CC=$(CC); CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
+	fi; \
 	SHARED_LIBS="$(SHARED_LIBS)"; \
 	if [ "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
 	  SHARED_LIBS=""; \
 	fi; \
-	if [ -z "$(SHARED_LIBS)" ]; then \
+	if [ -z "$$SHARED_LIBS" ]; then \
 	  set -x; $${CC:-$(CC)} -o $(EXE) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(DLIBSSL) $(LIBKRB5) $(DLIBCRYPTO) $(EX_LIBS) ; \
 	else \
 	  set -x; LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
 	  $(CC) -o $(EXE) $(CFLAGS) $(PROGRAM).o $(E_OBJ) $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
-	fi; \
-	if [ -z "$$SHARED_LIBS" ]; then \
-	  if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	    TOP=$(TOP) $(TOP)/fips/openssl_fips_fingerprint $(TOP)/libcrypto.a $(EXE); \
-	  fi; \
 	fi
 	-(cd ..; \
 	  OPENSSL="`pwd`/util/opensslwrap.sh"; export OPENSSL; \

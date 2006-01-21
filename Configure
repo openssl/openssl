@@ -1160,6 +1160,7 @@ if (!$no_shared)
 	if ($shared_cflag ne "")
 		{
 		$cflags = "$shared_cflag -DOPENSSL_PIC $cflags";
+		$shared_ldflag = "$shared_ldflag $shared_cflag" if($fips);
 		}
 	}
 
