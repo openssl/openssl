@@ -63,6 +63,7 @@ void fips_set_started(void);
 int fips_is_owning_thread(void);
 int fips_set_owning_thread(void);
 int fips_clear_owning_thread(void);
+unsigned char *fips_signature_witness(void);
 
 #ifdef  __cplusplus
 }

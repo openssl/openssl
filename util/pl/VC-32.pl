@@ -103,11 +103,21 @@ $cflags.=" /Fd$out_def";
 
 sub do_lib_rule
 	{
-	local($objs,$target,$name,$shlib)=@_;
+	local($objs,$target,$name,$shlib,$ign,$base_addr, $fips_get_sig, $fips_premain_src)=@_;
 	local($ret,$Name);
 
 	$taget =~ s/\//$o/g if $o ne '/';
 	($Name=$name) =~ tr/a-z/A-Z/;
+	my $base_arg;
+	if ($base_addr ne "")
+		{
+		$base_arg= " /base:$base_addr";
+		}
+	else
+		{
+		$base_arg = "";
+		}
+
 
 #	$target="\$(LIB_D)$o$target";
 	$ret.="$target: $objs\n";
@@ -122,7 +132,21 @@ sub do_lib_rule
 		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
 		$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
  		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
-		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+		if (defined $fips_get_sig)
+			{
+			$ret.="\tSET FIPS_LINK=\$(LINK)\n";
+			$ret.="\tSET FIPS_CC=\$(CC)\n";
+			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c \$(SRC_D)${o}fips${o}fips_premain.c\n";
+			$ret.="\tSET FIPS_PREMAIN_DSO=$fips_get_sig\n";
+			$ret.="\tSET FIPS_TARGET=$target\n";
+			$ret.="\t\$(FIPSLINK) \$(MLFLAGS) $base_arg $efile$target ";
+			$ret.="/def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs ";
+			$ret.="\$(OBJ_D)${o}fips_premain.obj $ex\n<<\n";
+			}
+		else
+			{
+			$ret.="\t\$(LINK) \$(MLFLAGS) $base_arg $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+			}
 		}
 	$ret.="\n";
 	return($ret);
@@ -136,14 +160,39 @@ sub do_link_rule
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
 	$ret.="$target: $files $dep_libs\n";
-	$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n";
-	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
-	if (defined $sha1file)
+	if ($fips && !$shlib)
 		{
-		$ret.="  $openssl sha1 -hmac etaonrishdlcupfm -binary $target > $sha1file";
+		$ret.="$target: $files $dep_libs\n";
+		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
+		$ret.="\tSET FIPS_CC=\$(CC)\n";
+		$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c \$(SRC_D)${o}fips${o}fips_premain.c\n";
+		$ret.="\tSET FIPS_PREMAIN_DSO=\n";
+		$ret.="\tSET FIPS_TARGET=$target\n";
+		$ret.="  \$(FIPSLINK) \$(LFLAGS) $efile$target @<<\n";
+		$ret.="  \$(APP_EX_OBJ) $files \$(OBJ_D)${o}fips_premain.obj $libs\n<<\n";
 		}
+	else
+		{
+		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n";
+		}
+	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
 	$ret.="\n";
 	return($ret);
 	}
+
+sub do_rlink_rule
+	{
+	local($target,$files,$dep_libs,$libs)=@_;
+	local($ret,$_);
+
+	$file =~ s/\//$o/g if $o ne '/';
+	$n=&bname($targer);
+	$ret.="$target: $files $dep_libs\n";
+	$ret.="  \$(MKCANISTER) $target <<\n";
+	$ret.="INPUT($files)\n<<\n";
+	$ret.="\n";
+	return($ret);
+	}
+
 
 1;

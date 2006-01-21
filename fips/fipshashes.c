@@ -3,6 +3,7 @@ const char * const FIPS_source_hashes[] = {
 "HMAC-SHA1(fips_err_wrapper.c)= d3e2be316062510312269e98f964cb87e7577898",
 "HMAC-SHA1(fips.h)= 57d602d18efe0594f806fbcc64269e9440638ef4",
 "HMAC-SHA1(fips_err.h)= e0649ee1d60c8162f7eeb293f89f3b63ac85202a",
+"HMAC-SHA1(fips_locl.h)= f90a23c7f68642727012bbfd48ed58706383ad71",
 "HMAC-SHA1(fips_canister.c)= da6d0f5daf9594881fd060773a5f3e057ba302ff",
 "HMAC-SHA1(fips_premain.c)= 6a08d15c578f1258246181bf52134ae974aa5a80",
 "HMAC-SHA1(aes/fips_aes_core.c)= b70bbbd675efe0613da0d57055310926a0104d55",
