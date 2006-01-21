@@ -2,7 +2,7 @@
 perl util\mkfiles.pl >MINFO
 rem perl util\mk1mf.pl no-sock %1 VC-MSDOS >ms\msdos.mak
 rem perl util\mk1mf.pl %1 VC-W31-32 >ms\w31.mak
-perl util\mk1mf.pl dll %1 VC-W31-32 >ms\w31dll.mak
+rem perl util\mk1mf.pl dll %1 VC-W31-32 >ms\w31dll.mak
 perl util\mk1mf.pl no-asm %1 VC-WIN32 >ms\nt.mak
 perl util\mk1mf.pl dll no-asm %1 VC-WIN32 >ms\ntdll.mak
 perl util\mk1mf.pl no-asm %1 VC-CE >ms\ce.mak

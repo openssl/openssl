@@ -120,10 +120,10 @@ sub do_lib_rule
 
 
 #	$target="\$(LIB_D)$o$target";
-	$ret.="$target: $objs\n";
 	if (!$shlib)
 		{
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
+		$ret.="$target: $objs\n";
 		$ex =' advapi32.lib';
 		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
 		}
@@ -134,6 +134,7 @@ sub do_lib_rule
  		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
 		if (defined $fips_get_sig)
 			{
+			$ret.="$target: $objs $fips_get_sig\n";
 			$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
 			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c \$(SRC_D)${o}fips${o}fips_premain.c\n";
@@ -145,6 +146,7 @@ sub do_lib_rule
 			}
 		else
 			{
+			$ret.="$target: $objs\n";
 			$ret.="\t\$(LINK) \$(MLFLAGS) $base_arg $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
 			}
 		}
