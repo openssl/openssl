@@ -164,7 +164,6 @@ sub do_link_rule
 	$ret.="$target: $files $dep_libs\n";
 	if ($fips && !$shlib)
 		{
-		$ret.="$target: $files $dep_libs\n";
 		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 		$ret.="\tSET FIPS_CC=\$(CC)\n";
 		$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c \$(SRC_D)${o}fips${o}fips_premain.c\n";
@@ -176,8 +175,8 @@ sub do_link_rule
 	else
 		{
 		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n";
+		$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
 		}
-	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
 	$ret.="\n";
 	return($ret);
 	}
