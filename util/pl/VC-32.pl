@@ -156,13 +156,17 @@ sub do_lib_rule
 
 sub do_link_rule
 	{
-	local($target,$files,$dep_libs,$libs,$sha1file,$openssl)=@_;
+	local($target,$files,$dep_libs,$libs,$standalone)=@_;
 	local($ret,$_);
-	
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
 	$ret.="$target: $files $dep_libs\n";
-	if ($fips && !$shlib)
+	if ($standalone)
+		{
+		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n";
+		$ret.="  $files $libs\n<<\n";
+		}
+	elsif ($fips && !$shlib)
 		{
 		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 		$ret.="\tSET FIPS_CC=\$(CC)\n";

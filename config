@@ -54,6 +54,22 @@ SYSTEM=`(uname -s) 2>/dev/null`  || SYSTEM="unknown"
 VERSION=`(uname -v) 2>/dev/null` || VERSION="unknown"
 
 
+
+ 
+
+# Check for VC++ presence first.
+
+if [ "x$MSVCDIR" != "x" -o "x$VCINSTALLDIR" != "x" ]; then
+	perl Configure VC-WIN32 $*
+	cmd /c ms\\do_masm.bat
+	perl util/mk1mf.pl VC-WIN32-GMAKE >mak.tmp
+	rm Makefile
+	mv mak.tmp Makefile
+	echo "Configured for VC++ using GNU make"
+	exit 0
+fi
+
+
 # Now test for ISC and SCO, since it is has a braindamaged uname.
 #
 # We need to work around FreeBSD 1.1.5.1 

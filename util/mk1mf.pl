@@ -27,6 +27,7 @@ $infile="MINFO";
 
 %ops=(
 	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
+	"VC-WIN32-GMAKE", "Microsoft Visual C++ [4-6] - Windows NT or 9X, GNU make",
 	"VC-CE",   "Microsoft eMbedded Visual C++ 3.0 - Windows CE ONLY",
 	"VC-NT",   "Microsoft Visual C++ [4-6] - Windows NT ONLY",
 	"VC-W31-16",  "Microsoft Visual C++ 1.52 - Windows 3.1 - 286",
@@ -144,6 +145,10 @@ elsif (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
 	{
 	$NT = 1 if $platform eq "VC-NT";
 	require 'VC-32.pl';
+	}
+elsif ($platform eq "VC-WIN32-GMAKE")
+	{
+	require 'VC-32-GMAKE.pl';
 	}
 elsif ($platform eq "VC-CE")
 	{
@@ -601,6 +606,8 @@ if ($fips)
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
 		"fips${o}fips_premain.c",
 		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)");
+	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_standalone_sha1$obj",
+		"fips${o}sha${o}fips_standalone_sha1.c", "\$(SHLIB_CFLAGS)");
 	}
 
 
@@ -707,9 +714,11 @@ if ($fips)
 
 if ($fips)
 	{
-	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj \$(FIPSOBJ) \$(OBJ_D)${o}fips_end$obj");
+	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj \$(FIPSOBJ) \$(OBJ_D)${o}fips_end$obj", "\$(BIN_D)${o}fips_standalone_sha1$exep");
 	$rules.=&do_link_rule("\$(BIN_D)$o\$(E_PREMAIN_DSO)$exep","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPCANISTER)","","\$(EX_LIBS) \$(O_FIPSCANISTER)");
-	$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)","\$(BIN_D)$o.sha1","\$(BIN_D)$o\$(E_EXE)$exep");
+	$rules.=&do_link_rule("\$(BIN_D)${o}fips_standalone_sha1$exep","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}fips_sha1dgst$obj","","", 1);
+
+	$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)",0,"\$(BIN_D)$o\$(E_EXE)$exep");
 	}
 else
 	{
