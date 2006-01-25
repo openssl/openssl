@@ -195,7 +195,7 @@ sub do_rlink_rule
 
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
-	$ret.="$target: $files $dep_libs\n";
+	$ret.="$target: $check_hash $files $dep_libs\n";
 	$ret.="\t\$(PERL) util${o}checkhash.pl -chdir fips -program_path ..$o$check_hash\n";
 	$ret.="\t\$(MKCANISTER) $target $files\n\n";
 	return($ret);
