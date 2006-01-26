@@ -14,6 +14,8 @@ $rm='rm';
 
 $zlib_lib="zlib1.lib";
 
+$fips_canister_build = 1 if $fips; 
+
 # C compiler stuff
 $cc='cl';
 $cflags=' -MD -W3 -WX -G5 -Ox -O2 -Ob2 -Gs0 -GF -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
@@ -21,9 +23,9 @@ $cflags.=' -D_CRT_SECURE_NO_DEPRECATE';	# shut up VC8
 $lflags="-nologo -subsystem:console -machine:I386 -opt:ref";
 $mlflags='';
 
-$out_def="out32";
-$tmp_def="tmp32";
-$inc_def="inc32";
+$out_def="gmout32";
+$tmp_def="gmtmp32";
+$inc_def="gminc32";
 
 if ($debug)
 	{
@@ -98,8 +100,8 @@ if ($shlib)
 	$mlflags.=" $lflags -dll";
 #	$cflags =~ s| -MD| -MT|;
 	$lib_cflag=" -D_WINDLL";
-	$out_def="out32dll";
-	$tmp_def="tmp32dll";
+	$out_def="gmout32dll";
+	$tmp_def="gmtmp32dll";
 	}
 
 $cflags.=" -Fd$out_def";
@@ -137,12 +139,13 @@ sub do_lib_rule
  		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
 		if (defined $fips_get_sig)
 			{
-			$ret.="$target: $objs $fips_get_sig\n";
+			$ret.="$target: \$(O_FIPSCANISTER) $objs $fips_get_sig\n";
 			$ret.="\tFIPS_LINK=\$(LINK) ";
 			$ret.="FIPS_CC=\$(CC) ";
-			$ret.="FIPS_CC_ARGS=\"-Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c \$(SRC_D)${o}fips${o}fips_premain.c\" ";
+			$ret.="FIPS_CC_ARGS=\"-Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\" ";
 			$ret.="FIPS_PREMAIN_DSO=$fips_get_sig ";
 			$ret.="FIPS_TARGET=$target ";
+			$ret.="FIPS_LIBDIR=\$(FIPSLIB_D) ";
 			$ret.="\$(FIPSLINK) \$(MLFLAGS) $base_arg $efile$target ";
 			$ret.="-def:ms/${Name}.def \$(SHLIB_EX_OBJ) $objs ";
 			$ret.="\$(OBJ_D)${o}fips_premain.obj $ex\n\n";
@@ -163,24 +166,27 @@ sub do_link_rule
 	local($ret,$_);
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
-	$ret.="$target: $files $dep_libs\n";
 	if ($standalone)
 		{
+		$ret.="$target: $files $dep_libs\n";
 		$ret.="\t\$(LINK) \$(LFLAGS) $efile$target ";
 		$ret.="$files $libs\n\n";
 		}
 	elsif ($fips && !$shlib)
 		{
+		$ret.="$target: \$(O_FIPSCANISTER) $files $dep_libs\n";
 		$ret.="\tFIPS_LINK=\$(LINK) ";
 		$ret.="FIPS_CC=\$(CC) ";
-		$ret.="FIPS_CC_ARGS=\"-Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c \$(SRC_D)${o}fips${o}fips_premain.c\" ";
+		$ret.="FIPS_CC_ARGS=\"-Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\" ";
 		$ret.="FIPS_PREMAIN_DSO= ";
 		$ret.="FIPS_TARGET=$target ";
+		$ret.="FIPS_LIBDIR=\$(FIPSLIB_D) ";
 		$ret.=" \$(FIPSLINK) \$(LFLAGS) $efile$target ";
 		$ret.="\$(APP_EX_OBJ) $files \$(OBJ_D)${o}fips_premain.obj $libs\n\n";
 		}
 	else
 		{
+		$ret.="$target: $files $dep_libs\n";
 		$ret.="\t\$(LINK) \$(LFLAGS) $efile$target ";
 		$ret.="\$(APP_EX_OBJ) $files $libs\n\n";
 		}
@@ -190,14 +196,17 @@ sub do_link_rule
 
 sub do_rlink_rule
 	{
-	local($target,$files,$check_hash)=@_;
+	local($target,$files,$check_hash, $deps)=@_;
 	local($ret,$_);
 
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
-	$ret.="$target: $check_hash $files $dep_libs\n";
+	$ret.="$target: $check_hash $files $deps\n";
 	$ret.="\t\$(PERL) util${o}checkhash.pl -chdir fips -program_path ..$o$check_hash\n";
-	$ret.="\t\$(MKCANISTER) $target $files\n\n";
+	$ret.="\t\$(MKCANISTER) $target $files\n";
+	$ret.="\t$check_hash $target > $target.sha1\n";
+	$ret.="\t\$(CP) fips${o}fips_premain.c \$(FIPSLIB_D)\n";
+	$ret.="\t$check_hash \$(FIPSLIB_D)${o}fips_premain.c > \$(FIPSLIB_D)${o}fips_premain.c.sha1\n\n";
 	return($ret);
 	}
 

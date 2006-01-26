@@ -13,6 +13,9 @@ $banner="\t\@echo Building OpenSSL";
 local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
 local $zlib_lib = "";
 
+my $fips_canister_path = "";
+my $fipslibdir = "fipslib";
+
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
     $ssl_version=$1 if (/^VERSION=(.*)$/);
@@ -110,6 +113,8 @@ $tmp_def="tmp";
 
 $mkdir="-mkdir";
 $mkcanister="ld -r -o";
+
+$ex_build_targets = "";
 
 ($ssl,$crypto)=("ssl","crypto");
 $ranlib="echo ranlib";
@@ -301,8 +306,11 @@ for (;;)
  				$uc =~ s/^lib(.*)\.a/$1/;
  				$uc =~ tr/a-z/A-Z/;
 				}
-			$lib_nam{$uc}=$uc;
-			$lib_obj{$uc}.=$libobj." ";
+			if (($uc ne "FIPS") || $fips_canister_build)
+				{
+				$lib_nam{$uc}=$uc;
+				$lib_obj{$uc}.=$libobj." ";
+				}
 			}
 		last if ($val eq "FINISHED");
 		$lib="";
@@ -347,6 +355,13 @@ for (;;)
 		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
 	}
 close(IN);
+
+if ($fips_canister_path eq "")
+	{
+	$fips_canister_path = "\$(FIPSLIB_D)${o}fipscanister.o";
+	}
+
+	$ex_build_targets .= "\$(FIPSLIB_D)${o}\$(E_PREMAIN_DSO)$exep" if ($fips_canister_build);
 
 $defs= <<"EOF";
 # This makefile has been automatically generated from the OpenSSL distribution.
@@ -428,6 +443,10 @@ TMP_D=$tmp_dir
 INC_D=$inc_dir
 INCO_D=$inc_dir${o}openssl
 
+# Directory containing FIPS module
+
+FIPSLIB_D=$fipslibdir
+
 CP=$cp
 RM=$rm
 RANLIB=$ranlib
@@ -463,7 +482,7 @@ INCL_D=\$(TMP_D)
 
 O_SSL=     \$(LIB_D)$o$plib\$(SSL)$shlibp
 O_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$shlibp
-O_FIPSCANISTER= \$(LIB_D)${o}fipscanister$obj
+O_FIPSCANISTER= $fips_canister_path
 SO_SSL=    $plib\$(SSL)$so_shlibp
 SO_CRYPTO= $plib\$(CRYPTO)$so_shlibp
 L_SSL=     \$(LIB_D)$o$plib\$(SSL)$libp
@@ -485,7 +504,7 @@ LIBS_DEP=\$(O_CRYPTO) \$(O_SSL)
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) \$(FIPSLIB_D) headers lib exe $ex_build_targets
 
 banner:
 $banner
@@ -507,6 +526,9 @@ $banner
 
 \$(INC_D):
 	\$(MKDIR) \$(INC_D)
+
+\$(FIPSLIB_D):
+	\$(MKDIR) \$(FIPSLIB_D)
 
 headers: \$(HEADER) \$(EXHEADER)
 	@
@@ -597,20 +619,18 @@ $rules.=&do_compile_rule("\$(OBJ_D)",$e_exe,'-DMONOLITH $(APP_CFLAGS)');
 
 # Special case rules for fips_start and fips_end fips_premain_dso
 
-if ($fips)
+if ($fips && $fips_canister_build)
 	{
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_start$obj",
 		"fips${o}fips_canister.c", "-DFIPS_START \$(SHLIB_CFLAGS)");
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_end$obj",
 		"fips${o}fips_canister.c", "\$(SHLIB_CFLAGS)");
+	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_standalone_sha1$obj",
+		"fips${o}sha${o}fips_standalone_sha1.c", "\$(SHLIB_CFLAGS)");
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
 		"fips${o}fips_premain.c",
 		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)");
-	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_standalone_sha1$obj",
-		"fips${o}sha${o}fips_standalone_sha1.c", "\$(SHLIB_CFLAGS)");
 	}
-
-
 
 foreach (values %lib_nam)
 	{
@@ -696,12 +716,13 @@ if ($fips)
 		{
 		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
 			"\$(O_CRYPTO)",$crypto,$shlib, "\$(SO_CRYPTO)",
-			"0xFB00000", "\$(BIN_D)$o\$(E_PREMAIN_DSO)$exep",
+			"0xFB00000", "\$(FIPSLIB_D)$o\$(E_PREMAIN_DSO)$exep",
 					"fips${o}fips_premain.c");
 		}
 	else
 		{
 		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
+#		$rules.= &do_lib_rule("\$(CRYPTOOBJ)",
 			"\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)", "");
 		}
 	}
@@ -712,12 +733,16 @@ if ($fips)
 	}
 
 
+if ($fips && $fips_canister_build)
+	{
+	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj \$(FIPSOBJ) \$(OBJ_D)${o}fips_end$obj", "\$(FIPSLIB_D)${o}fips_standalone_sha1$exep", "") if $fips_canister_build;
+	$rules.=&do_link_rule("\$(FIPSLIB_D)${o}\$(E_PREMAIN_DSO)$exep","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(O_CRYPTO)","","\$(EX_LIBS)", 1);
+	}
+	
+	$rules.=&do_link_rule("\$(FIPSLIB_D)${o}fips_standalone_sha1$exep","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}fips_sha1dgst$obj","","", 1);
+
 if ($fips)
 	{
-	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj \$(FIPSOBJ) \$(OBJ_D)${o}fips_end$obj", "\$(BIN_D)${o}fips_standalone_sha1$exep");
-	$rules.=&do_link_rule("\$(BIN_D)$o\$(E_PREMAIN_DSO)$exep","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPCANISTER)","","\$(EX_LIBS) \$(O_FIPSCANISTER)");
-	$rules.=&do_link_rule("\$(BIN_D)${o}fips_standalone_sha1$exep","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}fips_sha1dgst$obj","","", 1);
-
 	$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)",0,"\$(BIN_D)$o\$(E_EXE)$exep");
 	}
 else

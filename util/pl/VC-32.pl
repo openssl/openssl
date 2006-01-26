@@ -137,9 +137,10 @@ sub do_lib_rule
 			$ret.="$target: $objs $fips_get_sig\n";
 			$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
-			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c \$(SRC_D)${o}fips${o}fips_premain.c\n";
+			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
 			$ret.="\tSET FIPS_PREMAIN_DSO=$fips_get_sig\n";
 			$ret.="\tSET FIPS_TARGET=$target\n";
+			$ret.="\tSET FIPS_LIBDIR=\$(FIPSLIB_D)\n";
 			$ret.="\t\$(FIPSLINK) \$(MLFLAGS) $base_arg $efile$target ";
 			$ret.="/def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs ";
 			$ret.="\$(OBJ_D)${o}fips_premain.obj $ex\n<<\n";
@@ -170,9 +171,10 @@ sub do_link_rule
 		{
 		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 		$ret.="\tSET FIPS_CC=\$(CC)\n";
-		$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c \$(SRC_D)${o}fips${o}fips_premain.c\n";
+		$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
 		$ret.="\tSET FIPS_PREMAIN_DSO=\n";
 		$ret.="\tSET FIPS_TARGET=$target\n";
+		$ret.="\tSET FIPS_LIBDIR=\$(FIPSLIB_D)\n";
 		$ret.="  \$(FIPSLINK) \$(LFLAGS) $efile$target @<<\n";
 		$ret.="  \$(APP_EX_OBJ) $files \$(OBJ_D)${o}fips_premain.obj $libs\n<<\n";
 		}
