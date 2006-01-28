@@ -2,8 +2,17 @@
 # VCw32lib.pl - the file for Visual C++ 4.[01] for windows NT, static libraries
 #
 
+
+if ($fips && !$shlib)
+	{
+	$crypto="libeayfips32";
+	$crypto_compat = "libeaycompat32.lib";
+	}
+else
+	{
+	$crypto="libeay32";
+	}
 $ssl=	"ssleay32";
-$crypto="libeay32";
 
 $o='/';
 #$cp='copy nul+';	# Timestamps get stuffed otherwise
