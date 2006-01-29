@@ -83,7 +83,8 @@ RSA *RSA_generate_key(int bits, unsigned long e_value,
 	for (i=0; i<(int)sizeof(unsigned long)*8; i++)
 		{
 		if (e_value & (1UL<<i))
-			BN_set_bit(e,i);
+			if (BN_set_bit(e,i) == 0)
+				goto err;
 		}
 
 	BN_GENCB_set_old(&cb, callback, cb_arg);

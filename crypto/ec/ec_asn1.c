@@ -837,11 +837,6 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 
 		/* create the EC_GROUP structure */
 		ret = EC_GROUP_new_curve_GF2m(p, a, b, NULL);
-		if (ret == NULL)
-			{
-			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_EC_LIB);
-			goto err;
-			}
 		}
 	else if (tmp == NID_X9_62_prime_field)
 		{
@@ -860,11 +855,17 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 			}
 		/* create the EC_GROUP structure */
 		ret = EC_GROUP_new_curve_GFp(p, a, b, NULL);
-		if (ret == NULL)
-			{
-			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_EC_LIB);
-			goto err;
-			}
+		}
+	else
+		{
+		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_INVALID_FIELD);
+		goto err;
+		}
+
+	if (ret == NULL)
+		{
+		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_EC_LIB);
+		goto err;
 		}
 
 	/* extract seed (optional) */

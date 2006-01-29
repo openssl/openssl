@@ -194,6 +194,8 @@ static int do_buf(unsigned char *buf, int buflen,
 			if(i < 0) return -1;	/* Invalid UTF8String */
 			p += i;
 			break;
+			default:
+			return -1;	/* invalid width */
 		}
 		if (p == q) orflags = CHARTYPE_LAST_ESC_2253;
 		if(type & BUF_TYPE_CONVUTF8) {
@@ -356,12 +358,13 @@ static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags, ASN1_STR
 	}
 
 	len = do_buf(str->data, str->length, type, flags, &quotes, io_ch, NULL);
-	if(outlen < 0) return -1;
+	if(len < 0) return -1;
 	outlen += len;
 	if(quotes) outlen += 2;
 	if(!arg) return outlen;
 	if(quotes && !io_ch(arg, "\"", 1)) return -1;
-	do_buf(str->data, str->length, type, flags, NULL, io_ch, arg);
+	if(do_buf(str->data, str->length, type, flags, NULL, io_ch, arg) < 0)
+		return -1;
 	if(quotes && !io_ch(arg, "\"", 1)) return -1;
 	return outlen;
 }

@@ -924,6 +924,8 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 		if (!*pval)
 			{
 			typ = ASN1_TYPE_new();
+			if (typ == NULL)
+				goto err;
 			*pval = (ASN1_VALUE *)typ;
 			}
 		else

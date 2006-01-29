@@ -2110,8 +2110,13 @@ int ssl3_get_client_key_exchange(SSL *s)
                            	goto f_err;
                            	}
 
-			EC_POINT_copy(clnt_ecpoint,
-			    EC_KEY_get0_public_key(clnt_pub_pkey->pkey.ec));
+			if (EC_POINT_copy(clnt_ecpoint,
+			    EC_KEY_get0_public_key(clnt_pub_pkey->pkey.ec)) == 0)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+					ERR_R_EC_LIB);
+				goto err;
+				}
                         ret = 2; /* Skip certificate verify processing */
                         }
                 else

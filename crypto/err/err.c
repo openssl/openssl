@@ -1108,7 +1108,7 @@ int ERR_pop_to_mark(void)
 		{
 		err_clear(es,es->top);
 		es->top-=1;
-		if (es->top == -1) es->top=ERR_NUM_ERRORS;
+		if (es->top == -1) es->top=ERR_NUM_ERRORS-1;
 		}
 		
 	if (es->bottom == es->top) return 0;
