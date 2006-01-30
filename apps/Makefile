@@ -145,7 +145,7 @@ $(DLIBCRYPTO):
 $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(EXE)
 	@if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  FIPSLD_CC=$(CC); CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
+	  FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; export CC FIPSLD_CC; \
 	fi; \
 	SHARED_LIBS="$(SHARED_LIBS)"; \
 	if [ "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \

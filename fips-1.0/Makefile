@@ -133,7 +133,7 @@ lib:	fipscanister.o
 
 shared:	fips_premain_dso$(EXE_EXT)
 	if [ -n "$(SHARED_LIBS)" ]; then \
-		(cd ..; $(MAKE) FIPSLD_CC=$(CC) FIPSLD=fips/fipsld $(SHARED_LIB)); \
+		(cd ..; $(MAKE) FIPSLD_CC=$(CC) FIPSLD=fips-1.0/fipsld $(SHARED_LIB)); \
 	fi
 
 libs:

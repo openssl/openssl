@@ -180,7 +180,7 @@ LIBZLIB=
 # we might set SHLIB_MARK to '$(SHARED_LIBS)'.
 SHLIB_MARK=
 
-DIRS=   crypto fips ssl $(SHLIB_MARK) apps test tools
+DIRS=   crypto fips-1.0 ssl $(SHLIB_MARK) apps test tools
 SHLIBDIRS= crypto ssl
 
 # dirs in crypto to build

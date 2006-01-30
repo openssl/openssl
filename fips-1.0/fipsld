@@ -49,9 +49,9 @@ case "${TARGET}" in
 *libcrypto*|*.dll)	# must be linking a shared lib...
 	# Shared lib creation can be taking place in the source
 	# directory only!!!
-	FINGERTYPE="${THERE}/fips/sha/fips_standalone_sha1"
-	CANISTER_O="${THERE}/fips/fipscanister.o"
-	PREMAIN_C="${THERE}/fips/fips_premain.c"
+	FINGERTYPE="${THERE}/fips-1.0/sha/fips_standalone_sha1"
+	CANISTER_O="${THERE}/fips-1.0/fipscanister.o"
+	PREMAIN_C="${THERE}/fips-1.0/fips_premain.c"
 
 	# verify fipscanister.o against its detached signature...
 	${FINGERTYPE} "${CANISTER_O}" | sed "s/(.*\//(/" | \
@@ -80,7 +80,7 @@ case "${TARGET}" in
 		${_WL_PREMAIN} "$@"
 
 	# generate signature...
-	SIG=`("${THERE}/fips/fips_premain_dso" "${TARGET}" || rm "${TARGET}")`
+	SIG=`("${THERE}/fips-1.0/fips_premain_dso" "${TARGET}" || rm "${TARGET}")`
 	if [ -z "${SIG}" ]; then
 	   echo "unable to collect signature"; exit 1
 	fi
@@ -94,10 +94,10 @@ case "${TARGET}" in
 *)	# must be linking statically...
 	# Static linking can be taking place either in the source
 	# directory or off the installed binary target destination.
-	if [ -x "${THERE}/fips/sha/fips_standalone_sha1" ]; then
-		FINGERTYPE="${THERE}/fips/sha/fips_standalone_sha1"
-		CANISTER_O="${THERE}/fips/fipscanister.o"
-		PREMAIN_C="${THERE}/fips/fips_premain.c"
+	if [ -x "${THERE}/fips-1.0/sha/fips_standalone_sha1" ]; then
+		FINGERTYPE="${THERE}/fips-1.0/sha/fips_standalone_sha1"
+		CANISTER_O="${THERE}/fips-1.0/fipscanister.o"
+		PREMAIN_C="${THERE}/fips-1.0/fips_premain.c"
 	else	# Installed tree is expected to contain
 		# lib/fipscanister.o, lib/fipscanister.o.sha1 and
 		# lib/fips_premain.c [not to mention bin/openssl].
