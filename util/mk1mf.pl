@@ -632,13 +632,13 @@ $rules.=&do_compile_rule("\$(OBJ_D)",$e_exe,'-DMONOLITH $(APP_CFLAGS)');
 if ($fips && $fips_canister_build)
 	{
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_start$obj",
-		"fips${o}fips_canister.c", "-DFIPS_START \$(SHLIB_CFLAGS)");
+		"fips-1.0${o}fips_canister.c", "-DFIPS_START \$(SHLIB_CFLAGS)");
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_end$obj",
-		"fips${o}fips_canister.c", "\$(SHLIB_CFLAGS)");
+		"fips-1.0${o}fips_canister.c", "\$(SHLIB_CFLAGS)");
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_standalone_sha1$obj",
-		"fips${o}sha${o}fips_standalone_sha1.c", "\$(SHLIB_CFLAGS)");
+		"fips-1.0${o}sha${o}fips_standalone_sha1.c", "\$(SHLIB_CFLAGS)");
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
-		"fips${o}fips_premain.c",
+		"fips-1.0${o}fips_premain.c",
 		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)");
 	}
 
@@ -727,7 +727,7 @@ if ($fips)
 		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
 			"\$(O_CRYPTO)",$crypto,$shlib, "\$(SO_CRYPTO)",
 			"0xFB00000", "\$(FIPSLIB_D)$o\$(E_PREMAIN_DSO)$exep",
-					"fips${o}fips_premain.c");
+					"\$(FIPSLIB_D)${o}fips_premain.c");
 		}
 	else
 		{

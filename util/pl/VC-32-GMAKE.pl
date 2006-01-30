@@ -212,10 +212,10 @@ sub do_rlink_rule
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
 	$ret.="$target: $check_hash $files $deps\n";
-	$ret.="\t\$(PERL) util${o}checkhash.pl -chdir fips -program_path ..$o$check_hash\n";
+	$ret.="\t\$(PERL) util${o}checkhash.pl -chdir fips-1.0 -program_path ..$o$check_hash\n";
 	$ret.="\t\$(MKCANISTER) $target $files\n";
 	$ret.="\t$check_hash $target > $target.sha1\n";
-	$ret.="\t\$(CP) fips${o}fips_premain.c \$(FIPSLIB_D)\n";
+	$ret.="\t\$(CP) fips-1.0${o}fips_premain.c \$(FIPSLIB_D)\n";
 	$ret.="\t$check_hash \$(FIPSLIB_D)${o}fips_premain.c > \$(FIPSLIB_D)${o}fips_premain.c.sha1\n\n";
 	return($ret);
 	}

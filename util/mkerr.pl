@@ -44,8 +44,8 @@ while (@ARGV) {
 }
 
 if($recurse) {
-	@source = (<crypto/*.c>, <crypto/*/*.c>, <ssl/*.c>, <fips/*.c>,
-		   <fips/*/*.c>);
+	@source = (<crypto/*.c>, <crypto/*/*.c>, <ssl/*.c>, <fips-1.0/*.c>,
+		   <fips-1.0/*/*.c>);
 } else {
 	@source = @ARGV;
 }
