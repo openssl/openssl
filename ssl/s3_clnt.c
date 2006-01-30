@@ -165,7 +165,7 @@ SSL_METHOD *SSLv3_client_method(void)
 int ssl3_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
-	unsigned long Time=time(NULL),l;
+	unsigned long Time=(unsigned long)time(NULL),l;
 	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
@@ -533,7 +533,7 @@ static int ssl3_client_hello(SSL *s)
 		/* else use the pre-loaded session */
 
 		p=s->s3->client_random;
-		Time=time(NULL);			/* Time */
+		Time=(unsigned long)time(NULL);			/* Time */
 		l2n(Time,p);
 		if(RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 		    goto err;
