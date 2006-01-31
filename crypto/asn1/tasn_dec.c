@@ -1169,7 +1169,7 @@ static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
 			return 0;
 #endif
 			}
-		else if (!collect_data(buf, &p, plen))
+		else if (plen && !collect_data(buf, &p, plen))
 			return 0;
 		len -= p - q;
 		}
