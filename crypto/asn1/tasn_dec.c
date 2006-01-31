@@ -903,7 +903,7 @@ static int asn1_collect(BUF_MEM *buf, unsigned char **in, long len, char inf, in
 			return 0;
 #endif
 		} else {
-			if(!collect_data(buf, &p, plen)) return 0;
+			if(plen && !collect_data(buf, &p, plen)) return 0;
 		}
 		len -= p - q;
 	}
