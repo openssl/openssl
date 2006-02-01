@@ -35,7 +35,8 @@ SHARED_LIB= libcrypto$(SHLIB_EXT)
 LIBSRC=fips.c fips_err_wrapper.c fipshashes.c
 LIBOBJ=fips.o fips_err_wrapper.o fipshashes.o
 
-FIPS_OBJ_LISTS=sha/lib rand/lib des/lib aes/lib dsa/lib rsa/lib dh/lib
+FIPS_OBJ_LISTS=sha/lib hmac/lib rand/lib des/lib aes/lib dsa/lib rsa/lib dh/lib
+
 SRC= $(LIBSRC)
 
 EXHEADER=fips.h
