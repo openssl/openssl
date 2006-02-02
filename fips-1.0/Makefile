@@ -42,6 +42,7 @@ SRC= $(LIBSRC)
 EXHEADER=fips.h
 HEADER=$(EXHEADER) fips_err.h
 EXE=fipsld
+TEST=fips_test_suite.c
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
