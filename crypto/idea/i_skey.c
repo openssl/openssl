@@ -94,10 +94,11 @@ void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
 		}
 	}
 
-void idea_set_decrypt_key(IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
+void idea_set_decrypt_key(const IDEA_KEY_SCHEDULE *ek, IDEA_KEY_SCHEDULE *dk)
 	{
 	int r;
-	register IDEA_INT *fp,*tp,t;
+	register IDEA_INT *tp,t;
+	const IDEA_INT *fp;
 
 	tp= &(dk->data[0][0]);
 	fp= &(ek->data[8][0]);
