@@ -20,7 +20,8 @@
 #include <openssl/des.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
-#include <openssl/sha.h>
+#include <openssl/hmac.h>
+#include <openssl/fips_sha.h>
 #include <openssl/md5.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
@@ -144,6 +145,154 @@ static int FIPS_sha1_test()
     ERR_clear_error();
     if (!SHA1(str,sizeof(str) - 1,md)) return 0;
     if (memcmp(md,digest,sizeof(md)))
+        return 0;
+    return 1;
+    }
+
+/* SHA256: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_sha256_test()
+    {
+    unsigned char digest[SHA256_DIGEST_LENGTH] =
+	{0xf5, 0x53, 0xcd, 0xb8, 0xcf, 0x1, 0xee, 0x17, 0x9b, 0x93, 0xc9, 0x68, 0xc0, 0xea, 0x40, 0x91,
+	 0x6, 0xec, 0x8e, 0x11, 0x96, 0xc8, 0x5d, 0x1c, 0xaf, 0x64, 0x22, 0xe6, 0x50, 0x4f, 0x47, 0x57};
+    unsigned char str[] = "etaonrishd";
+
+    unsigned char md[SHA256_DIGEST_LENGTH];
+
+    ERR_clear_error();
+    if (!SHA256(str,sizeof(str) - 1,md)) return 0;
+    if (memcmp(md,digest,sizeof(md)))
+        return 0;
+    return 1;
+    }
+
+/* SHA512: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_sha512_test()
+    {
+    unsigned char digest[SHA512_DIGEST_LENGTH] =
+	{0x99, 0xc9, 0xe9, 0x5b, 0x88, 0xd4, 0x78, 0x88, 0xdf, 0x88, 0x5f, 0x94, 0x71, 0x64, 0x28, 0xca,
+	 0x16, 0x1f, 0x3d, 0xf4, 0x1f, 0xf3, 0x0f, 0xc5, 0x03, 0x99, 0xb2, 0xd0, 0xe7, 0x0b, 0x94, 0x4a,
+	 0x45, 0xd2, 0x6c, 0x4f, 0x20, 0x06, 0xef, 0x71, 0xa9, 0x25, 0x7f, 0x24, 0xb1, 0xd9, 0x40, 0x22,
+	 0x49, 0x54, 0x10, 0xc2, 0x22, 0x9d, 0x27, 0xfe, 0xbd, 0xd6, 0xd6, 0xeb, 0x2d, 0x42, 0x1d, 0xa3};
+    unsigned char str[] = "etaonrishd";
+
+    unsigned char md[SHA512_DIGEST_LENGTH];
+
+    ERR_clear_error();
+    if (!SHA512(str,sizeof(str) - 1,md)) return 0;
+    if (memcmp(md,digest,sizeof(md)))
+        return 0;
+    return 1;
+    }
+
+/* HMAC-SHA1: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_hmac_sha1_test()
+    {
+    unsigned char key[] = "etaonrishd";
+    unsigned char iv[] = "Sample text";
+    unsigned char kaval[EVP_MAX_MD_SIZE] =
+	{0x73, 0xf7, 0xa0, 0x48, 0xf8, 0x94, 0xed, 0xdd, 0x0a, 0xea, 0xea, 0x56, 0x1b, 0x61, 0x2e, 0x70,
+	 0xb2, 0xfb, 0xec, 0xc6};
+
+    unsigned char out[EVP_MAX_MD_SIZE];
+    unsigned int outlen;
+
+    ERR_clear_error();
+    if (!HMAC(EVP_sha1(),key,sizeof(key)-1,iv,sizeof(iv)-1,out,&outlen)) return 0;
+    if (memcmp(out,kaval,outlen))
+        return 0;
+    return 1;
+    }
+
+/* HMAC-SHA224: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_hmac_sha224_test()
+    {
+    unsigned char key[] = "etaonrishd";
+    unsigned char iv[] = "Sample text";
+    unsigned char kaval[EVP_MAX_MD_SIZE] =
+	{0x75, 0x58, 0xd5, 0xbd, 0x55, 0x6d, 0x87, 0x0f, 0x75, 0xff, 0xbe, 0x1c, 0xb2, 0xf0, 0x20, 0x35,
+	 0xe5, 0x62, 0x49, 0xb6, 0x94, 0xb9, 0xfc, 0x65, 0x34, 0x33, 0x3a, 0x19};
+
+    unsigned char out[EVP_MAX_MD_SIZE];
+    unsigned int outlen;
+
+    ERR_clear_error();
+    if (!HMAC(EVP_sha224(),key,sizeof(key)-1,iv,sizeof(iv)-1,out,&outlen)) return 0;
+    if (memcmp(out,kaval,outlen))
+        return 0;
+    return 1;
+    }
+
+/* HMAC-SHA256: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_hmac_sha256_test()
+    {
+    unsigned char key[] = "etaonrishd";
+    unsigned char iv[] = "Sample text";
+    unsigned char kaval[EVP_MAX_MD_SIZE] =
+	{0xe9, 0x17, 0xc1, 0x7b, 0x4c, 0x6b, 0x77, 0xda, 0xd2, 0x30, 0x36, 0x02, 0xf5, 0x72, 0x33, 0x87,
+	 0x9f, 0xc6, 0x6e, 0x7b, 0x7e, 0xa8, 0xea, 0xaa, 0x9f, 0xba, 0xee, 0x51, 0xff, 0xda, 0x24, 0xf4};
+
+    unsigned char out[EVP_MAX_MD_SIZE];
+    unsigned int outlen;
+
+    ERR_clear_error();
+    if (!HMAC(EVP_sha256(),key,sizeof(key)-1,iv,sizeof(iv)-1,out,&outlen)) return 0;
+    if (memcmp(out,kaval,outlen))
+        return 0;
+    return 1;
+    }
+
+/* HMAC-SHA384: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_hmac_sha384_test()
+    {
+    unsigned char key[] = "etaonrishd";
+    unsigned char iv[] = "Sample text";
+    unsigned char kaval[EVP_MAX_MD_SIZE] =
+	{0xb2, 0x9d, 0x40, 0x58, 0x32, 0xc4, 0xe3, 0x31, 0xb6, 0x63, 0x08, 0x26, 0x99, 0xef, 0x3b, 0x10,
+	 0xe2, 0xdf, 0xf8, 0xff, 0xc6, 0xe1, 0x03, 0x29, 0x81, 0x2a, 0x1b, 0xac, 0xb0, 0x07, 0x39, 0x08,
+	 0xf3, 0x91, 0x35, 0x11, 0x76, 0xd6, 0x4c, 0x20, 0xfb, 0x4d, 0xc3, 0xf3, 0xb8, 0x9b, 0x88, 0x1c};
+
+    unsigned char out[EVP_MAX_MD_SIZE];
+    unsigned int outlen;
+
+    ERR_clear_error();
+    if (!HMAC(EVP_sha384(),key,sizeof(key)-1,iv,sizeof(iv)-1,out,&outlen)) return 0;
+    if (memcmp(out,kaval,outlen))
+        return 0;
+    return 1;
+    }
+
+/* HMAC-SHA512: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_hmac_sha512_test()
+    {
+    unsigned char key[] = "etaonrishd";
+    unsigned char iv[] = "Sample text";
+    unsigned char kaval[EVP_MAX_MD_SIZE] =
+	{0xcd, 0x3e, 0xb9, 0x51, 0xb8, 0xbc, 0x7f, 0x9a, 0x23, 0xaf, 0xf3, 0x77, 0x59, 0x85, 0xa9, 0xe6,
+	 0xf7, 0xd1, 0x51, 0x96, 0x17, 0xe0, 0x92, 0xd8, 0xa6, 0x3b, 0xc1, 0xad, 0x7e, 0x24, 0xca, 0xb1,
+	 0xd7, 0x79, 0x0a, 0xa5, 0xea, 0x2c, 0x02, 0x58, 0x0b, 0xa6, 0x52, 0x6b, 0x61, 0x7f, 0xeb, 0x9c,
+	 0x47, 0x86, 0x5d, 0x74, 0x2b, 0x88, 0xdf, 0xee, 0x46, 0x69, 0x96, 0x3d, 0xa6, 0xd9, 0x2a, 0x53};
+
+    unsigned char out[EVP_MAX_MD_SIZE];
+    unsigned int outlen;
+
+    ERR_clear_error();
+    if (!HMAC(EVP_sha512(),key,sizeof(key)-1,iv,sizeof(iv)-1,out,&outlen)) return 0;
+    if (memcmp(out,kaval,outlen))
         return 0;
     return 1;
     }
@@ -302,8 +451,43 @@ int main(int argc,char **argv)
 
     /* SHA-1 hash
     */
-    printf("7. SHA-1 hash...");
+    printf("7a. SHA-1 hash...");
     printf( FIPS_sha1_test() ? "successful\n" :  Fail("FAILED!\n") );
+
+    /* SHA-256 hash
+    */
+    printf("7b. SHA-256 hash...");
+    printf( FIPS_sha256_test() ? "successful\n" :  Fail("FAILED!\n") );
+
+    /* SHA-512 hash
+    */
+    printf("7c. SHA-512 hash...");
+    printf( FIPS_sha512_test() ? "successful\n" :  Fail("FAILED!\n") );
+
+    /* HMAC-SHA-1 hash
+    */
+    printf("7d. SHA-1 hash...");
+    printf( FIPS_hmac_sha1_test() ? "successful\n" :  Fail("FAILED!\n") );
+
+    /* HMAC-SHA-224 hash
+    */
+    printf("7e. SHA-224 hash...");
+    printf( FIPS_hmac_sha224_test() ? "successful\n" :  Fail("FAILED!\n") );
+
+    /* HMAC-SHA-256 hash
+    */
+    printf("7f. SHA-256 hash...");
+    printf( FIPS_hmac_sha256_test() ? "successful\n" :  Fail("FAILED!\n") );
+
+    /* HMAC-SHA-384 hash
+    */
+    printf("7g. SHA-384 hash...");
+    printf( FIPS_hmac_sha384_test() ? "successful\n" :  Fail("FAILED!\n") );
+
+    /* HMAC-SHA-512 hash
+    */
+    printf("7h. SHA-512 hash...");
+    printf( FIPS_hmac_sha512_test() ? "successful\n" :  Fail("FAILED!\n") );
 
     /* Non-Approved cryptographic operation
     */
