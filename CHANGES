@@ -4,6 +4,12 @@
 
  Changes between 0.9.7i and 0.9.7j  [XX xxx XXXX]
 
+  *) Add new Windows build target VC-32-GMAKE for VC++. This uses GNU make 
+     from a Windows bash shell such as MSYS. It is autodetected from the
+     "config" script when run from a VC++ environment. Modify standard VC++
+     build to use fipscanister.o from the GNU make build. 
+     [Steve Henson]
+
  Changes between 0.9.7h and 0.9.7i  [14 Oct 2005]
 
   *) Wrapped the definition of EVP_MAX_MD_SIZE in a #ifdef OPENSSL_FIPS.
