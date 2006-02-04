@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/pkcs12/Makefile
+# OpenSSL/crypto/pkcs12/Makefile
 #
 
 DIR=	pkcs12

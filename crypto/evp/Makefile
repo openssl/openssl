@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/evp/Makefile
+# OpenSSL/crypto/evp/Makefile
 #
 
 DIR=	evp

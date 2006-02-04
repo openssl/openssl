@@ -1,5 +1,5 @@
 #
-# SSLeay/ssl/Makefile
+# OpenSSL/ssl/Makefile
 #
 
 DIR=	ssl

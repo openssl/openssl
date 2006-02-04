@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/sha/Makefile
+# OpenSSL/crypto/sha/Makefile
 #
 
 DIR=    sha

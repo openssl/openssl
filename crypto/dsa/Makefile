@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/dsa/Makefile
+# OpenSSL/crypto/dsa/Makefile
 #
 
 DIR=	dsa

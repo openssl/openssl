@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/pem/Makefile
+# OpenSSL/crypto/pem/Makefile
 #
 
 DIR=	pem
