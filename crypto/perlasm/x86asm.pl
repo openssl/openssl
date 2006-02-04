@@ -93,7 +93,7 @@ $tmp
 #ifdef OUT
 #define OK	1
 #define ALIGN	4
-#if defined(__CYGWIN__) || defined(__DJGPP__)
+#if defined(__CYGWIN__) || defined(__DJGPP__) || (__MINGW32__)
 #undef SIZE
 #undef TYPE
 #define SIZE(a,b)
