@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/x509v3/Makefile
+# OpenSSL/crypto/x509v3/Makefile
 #
 
 DIR=	x509v3

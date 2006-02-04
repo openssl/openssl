@@ -1,5 +1,5 @@
 #
-# SSLeay/fips/hmac/Makefile
+# OpenSSL/fips-1.0/hmac/Makefile
 #
 
 DIR=	hmac

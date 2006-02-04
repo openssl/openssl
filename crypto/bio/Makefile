@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/bio/Makefile
+# OpenSSL/crypto/bio/Makefile
 #
 
 DIR=	bio

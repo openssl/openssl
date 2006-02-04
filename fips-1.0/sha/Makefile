@@ -1,5 +1,5 @@
 #
-# SSLeay/fips/sha/Makefile
+# OpenSSL/fips-1.0/sha/Makefile
 #
 
 DIR=	sha

@@ -1,5 +1,5 @@
 #
-# SSLeay/tools/Makefile
+# OpenSSL/tools/Makefile
 #
 
 DIR=	tools

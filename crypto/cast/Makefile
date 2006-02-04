@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/cast/Makefile
+# OpenSSL/crypto/cast/Makefile
 #
 
 DIR=	cast

@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/rc4/Makefile
+# OpenSSL/crypto/rc4/Makefile
 #
 
 DIR=	rc4

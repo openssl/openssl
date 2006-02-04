@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/rsa/Makefile
+# OpenSSL/crypto/rsa/Makefile
 #
 
 DIR=	rsa

@@ -1,5 +1,5 @@
 #
-# SSLeay/fips/dh/Makefile
+# OpenSSL/fips-1.0/dh/Makefile
 #
 
 DIR=	dh

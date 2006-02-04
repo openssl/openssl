@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/objects/Makefile
+# OpenSSL/crypto/objects/Makefile
 #
 
 DIR=	objects

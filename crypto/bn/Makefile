@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/bn/Makefile
+# OpenSSL/crypto/bn/Makefile
 #
 
 DIR=	bn

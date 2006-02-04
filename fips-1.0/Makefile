@@ -1,5 +1,5 @@
 #
-# SSLeay/fips/Makefile
+# OpenSSL/fips-1.0/Makefile
 #
 
 DIR=		fips

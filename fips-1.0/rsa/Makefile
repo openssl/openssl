@@ -1,5 +1,5 @@
 #
-# SSLeay/fips/rsa/Makefile
+# OpenSSL/fips-1.0/rsa/Makefile
 #
 
 DIR=	rsa

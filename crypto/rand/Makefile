@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/rand/Makefile
+# OpenSSL/crypto/rand/Makefile
 #
 
 DIR=	rand

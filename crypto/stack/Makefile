@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/stack/Makefile
+# OpenSSL/crypto/stack/Makefile
 #
 
 DIR=	stack

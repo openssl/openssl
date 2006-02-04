@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/rc2/Makefile
+# OpenSSL/crypto/rc2/Makefile
 #
 
 DIR=	rc2

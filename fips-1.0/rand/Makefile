@@ -1,5 +1,5 @@
 #
-# SSLeay/fips/rand/Makefile
+# OpenSSL/fips-1.0/rand/Makefile
 #
 
 DIR=	rand

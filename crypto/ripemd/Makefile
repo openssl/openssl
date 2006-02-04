@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/ripemd/Makefile
+# OpenSSL/crypto/ripemd/Makefile
 #
 
 DIR=    ripemd
