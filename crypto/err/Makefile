@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/err/Makefile
+# OpenSSL/crypto/err/Makefile
 #
 
 DIR=	err

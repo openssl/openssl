@@ -1,5 +1,5 @@
 #
-# SSLeay/engines/Makefile
+# OpenSSL/engines/Makefile
 #
 
 DIR=	engines

@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/idea/Makefile
+# OpenSSL/crypto/idea/Makefile
 #
 
 DIR=	idea

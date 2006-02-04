@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/conf/Makefile
+# OpenSSL/crypto/conf/Makefile
 #
 
 DIR=	conf

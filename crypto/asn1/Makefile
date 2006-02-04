@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/asn1/Makefile
+# OpenSSL/crypto/asn1/Makefile
 #
 
 DIR=	asn1

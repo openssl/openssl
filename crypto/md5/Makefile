@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/md5/Makefile
+# OpenSSL/crypto/md5/Makefile
 #
 
 DIR=    md5

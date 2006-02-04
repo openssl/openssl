@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/lhash/Makefile
+# OpenSSL/crypto/lhash/Makefile
 #
 
 DIR=	lhash

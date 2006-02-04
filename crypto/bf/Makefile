@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/blowfish/Makefile
+# OpenSSL/crypto/blowfish/Makefile
 #
 
 DIR=	bf

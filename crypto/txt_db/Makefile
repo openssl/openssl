@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/txt_db/Makefile
+# OpenSSL/crypto/txt_db/Makefile
 #
 
 DIR=	txt_db

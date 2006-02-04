@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/pqueue/Makefile
+# OpenSSL/crypto/pqueue/Makefile
 #
 
 DIR=	pqueue

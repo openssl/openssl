@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/buffer/Makefile
+# OpenSSL/crypto/buffer/Makefile
 #
 
 DIR=	buffer

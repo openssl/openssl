@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/md/Makefile
+# OpenSSL/crypto/md/Makefile
 #
 
 DIR=	md2

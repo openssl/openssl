@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/des/Makefile
+# OpenSSL/crypto/des/Makefile
 #
 
 DIR=	des

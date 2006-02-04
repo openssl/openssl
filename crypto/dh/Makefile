@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/dh/Makefile
+# OpenSSL/crypto/dh/Makefile
 #
 
 DIR=	dh

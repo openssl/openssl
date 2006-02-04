@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/dso/Makefile
+# OpenSSL/crypto/dso/Makefile
 #
 
 DIR=	dso
