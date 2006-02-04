@@ -267,7 +267,7 @@ $crypto.=" crypto/ocsp/ocsp.h";
 $crypto.=" crypto/ui/ui.h crypto/ui/ui_compat.h";
 $crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/tmdiff.h";
-$crypto.=" fips-1.0/fips.h fips-1.0/rand/fips_rand.h";
+$crypto.=" fips-1.0/fips.h fips-1.0/rand/fips_rand.h fips-1.0/sha/fips_sha.h";
 
 my $symhacks="crypto/symhacks.h";
 
@@ -864,6 +864,9 @@ sub do_defs
 			$a .= ",RSA" if($s =~ /PEM_Seal(Final|Init|Update)/);
 			$a .= ",RSA" if($s =~ /RSAPrivateKey/);
 			$a .= ",RSA" if($s =~ /SSLv23?_((client|server)_)?method/);
+			# SHA2 algorithms only defined in FIPS mode for
+			# OpenSSL 0.9.7
+			$p .= "OPENSSL_FIPS" if($s =~ /SHA[235]/);
 
 			$platform{$s} =
 			    &reduce_platforms((defined($platform{$s})?$platform{$s}.',':"").$p);
