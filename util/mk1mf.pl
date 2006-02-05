@@ -377,7 +377,7 @@ if ($fips_premain_c_path eq "")
 if ($fips_sha1_exe_path eq "")
 	{
 	$fips_sha1_exe_path =
-			"fips-1.0${o}sha${o}fips_sha1_standalone$exep";
+			"fips-1.0${o}sha${o}fips_standalone_sha1$exep";
 	}
 
 if ($fips_premain_dso_exe_path eq "")
@@ -499,14 +499,6 @@ MLFLAGS=$mlflags
 ASM=$bin_dir$asm
 MKCANISTER=$mkcanister
 
-######################################################
-# You should not need to touch anything below this point
-######################################################
-
-E_EXE=openssl
-SSL=$ssl
-CRYPTO=$crypto
-
 # FIPS validated module and support file locations
 
 E_PREMAIN_DSO=fips_premain_dso
@@ -516,6 +508,14 @@ FIPS_PREMAIN_SRC=$fips_premain_c_path
 O_FIPSCANISTER=$fips_canister_path
 FIPS_SHA1_EXE=$fips_sha1_exe_path
 PREMAIN_DSO_EXE=$fips_premain_dso_exe_path
+
+######################################################
+# You should not need to touch anything below this point
+######################################################
+
+E_EXE=openssl
+SSL=$ssl
+CRYPTO=$crypto
 
 # BIN_D  - Binary output directory
 # TEST_D - Binary test file output directory
@@ -764,8 +764,7 @@ if ($fips)
 		{
 		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
 			"\$(O_CRYPTO)",$crypto,$shlib, "\$(SO_CRYPTO)",
-			"0xFB00000", "\$(PREMAIN_DSO_EXE)",
-					"\$(FIPS_PREMAIN_SRC)");
+			"0xFB00000");
 		}
 	else
 		{

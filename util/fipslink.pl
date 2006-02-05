@@ -12,23 +12,23 @@ sub check_env
 	}
 
 
-my ($fips_cc,$fips_cc_args, $fips_link,$fips_target, $fips_libdir)
+my ($fips_cc,$fips_cc_args, $fips_link,$fips_target, $fips_libdir, $sha1_exe)
 	 = check_env("FIPS_CC", "FIPS_CC_ARGS", "FIPS_LINK", "FIPS_TARGET",
-	 	"FIPS_LIBDIR");
+	 	"FIPSLIB_D", "FIPS_SHA1_EXE");
 
 
 
-if (exists $ENV{"FIPS_PREMAIN_DSO"})
+if (exists $ENV{"PREMAIN_DSO_EXE"})
 	{
-	$fips_premain_dso = $ENV{"FIPS_PREMAIN_DSO"};
+	$fips_premain_dso = $ENV{"PREMAIN_DSO_EXE"};
 	}
 	else
 	{
 	$fips_premain_dso = "";
 	}
 
-check_hash("fips_premain.c");
-check_hash("fipscanister.o");
+check_hash($sha1_exe, "fips_premain.c");
+check_hash($sha1_exe, "fipscanister.o");
 
 
 print "Integrity check OK\n";
@@ -59,13 +59,13 @@ die "Second stage Link failure" if $? != 0;
 
 sub check_hash
 	{
-	my ($filename) = @_;
+	my ($sha1_exe, $filename) = @_;
 	my ($hashfile, $hashval);
 
 	open(IN, "${fips_libdir}/${filename}.sha1") || die "Cannot open file hash file ${fips_libdir}/${filename}.sha1";
 	$hashfile = <IN>;
 	close IN;
-	$hashval = `${fips_libdir}/fips_standalone_sha1.exe ${fips_libdir}/$filename`;
+	$hashval = `$sha1_exe ${fips_libdir}/$filename`;
 	chomp $hashfile;
 	chomp $hashval;
 	$hashfile =~ s/^.*=\s+//;

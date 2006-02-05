@@ -113,7 +113,7 @@ $cflags.=" /Fd$out_def";
 
 sub do_lib_rule
 	{
-	local($objs,$target,$name,$shlib,$ign,$base_addr, $fips_get_sig, $fips_premain_src)=@_;
+	local($objs,$target,$name,$shlib,$ign,$base_addr) = @_;
 	local($ret,$Name);
 
 	$taget =~ s/\//$o/g if $o ne '/';
@@ -143,16 +143,17 @@ sub do_lib_rule
 		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
 		$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
  		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
- 		$ex.=" ms${o}_chkstk.o" if $fips && $target =~ /O_CRYPTO/;
-		if (defined $fips_get_sig)
+ 		if ($fips && $target =~ /O_CRYPTO/)
 			{
+ 			$ex.=" ms${o}_chkstk.o";
 			$ret.="$target: $objs $fips_get_sig\n";
 			$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
 			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
-			$ret.="\tSET FIPS_PREMAIN_DSO=$fips_get_sig\n";
+			$ret.="\tSET PREMAIN_DSO_EXE=\$(PREMAIN_DSO_EXE)\n";
+			$ret.="\tSET FIPS_SHA1_EXE=\$(FIPS_SHA1_EXE)\n";
 			$ret.="\tSET FIPS_TARGET=$target\n";
-			$ret.="\tSET FIPS_LIBDIR=\$(FIPSLIB_D)\n";
+			$ret.="\tSET FIPSLIB_D=\$(FIPSLIB_D)\n";
 			$ret.="\t\$(FIPSLINK) \$(MLFLAGS) $base_arg $efile$target ";
 			$ret.="/def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs ";
 			$ret.="\$(OBJ_D)${o}fips_premain.obj $ex\n<<\n";
@@ -184,9 +185,10 @@ sub do_link_rule
 		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 		$ret.="\tSET FIPS_CC=\$(CC)\n";
 		$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
-		$ret.="\tSET FIPS_PREMAIN_DSO=\n";
+		$ret.="\tSET PREMAIN_DSO_EXE=\n";
 		$ret.="\tSET FIPS_TARGET=$target\n";
-		$ret.="\tSET FIPS_LIBDIR=\$(FIPSLIB_D)\n";
+		$ret.="\tSET FIPS_SHA1_EXE=\$(FIPS_SHA1_EXE)\n";
+		$ret.="\tSET FIPSLIB_D=\$(FIPSLIB_D)\n";
 		$ret.="  \$(FIPSLINK) \$(LFLAGS) $efile$target @<<\n";
 		$ret.="  \$(APP_EX_OBJ) $files \$(OBJ_D)${o}fips_premain.obj $libs\n<<\n";
 		}
