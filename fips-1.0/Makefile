@@ -2,7 +2,7 @@
 # OpenSSL/fips-1.0/Makefile
 #
 
-DIR=		fips
+DIR=		fips-1.0
 TOP=		..
 CC=		cc
 INCLUDE=	-I. -I$(TOP) -I../include
