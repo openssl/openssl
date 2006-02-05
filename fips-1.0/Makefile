@@ -173,9 +173,11 @@ install:
 		chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
 		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
 	done
-	@cp -p -f fipscanister.o fipscanister.o.sha1 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/; \
-	chmod 0444 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/fipscanister.o \
-		   $(INSTALL_PREFIX)$(INSTALLTOP)/lib/fipscanister.o.sha1
+	@cp -p -f fipscanister.o fipscanister.o.sha1 fips_premain.c \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/; \
+	strings fipscanister.o | grep "HMAC-SHA1(fips_premain\\.c)" > \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/fips_premain.c.sha1; \
+	chmod 0444 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/fips*
 
 lint:
 	@for i in $(FDIRS) ;\
