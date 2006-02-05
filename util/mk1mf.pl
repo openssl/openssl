@@ -394,14 +394,16 @@ if ($fips)
 		$ex_build_targets .= " \$(LIB_D)$o$crypto_compat";
 		$ex_l_libs .= " \$(O_FIPSCANISTER)";
 		}
-	if ($fipslibpath == "")
+	if ($fipslibpath eq "")
 		{
 		open (IN, "util/fipslib_path.txt") || fipslib_error();
 		$fipslibdir = <IN>;
 		chomp $fipslibdir;
 		close IN;
 		}
-
+	fips_check_files($fipslibdir,
+			"fipscanister.o", "fipscanister.o.sha1",
+			"fips_premain.c", "fips_premain.c.sha1");
 	}
 	
 
@@ -1119,8 +1121,28 @@ sub read_options
 
 sub fipslib_error
 	{
-	print STDERR "FIPS install directory sanity check failed\n";
-	print STDERR "Either FIPS module build was not completed, or";
-	print STDERR "was deleted.\nPlease rebuild FIPS module\n"; 
+	print STDERR "***FIPS module directory sanity check failed***\n";
+	print STDERR "FIPS module build failed, or was deleted\n";
+	print STDERR "Please rebuild FIPS module.\n"; 
 	exit 1;
+	}
+
+sub fips_check_files
+	{
+	my $dir = shift @_;
+	my $ret = 1;
+	if (!-d $dir)
+		{
+		print STDERR "FIPS module directory $dir does not exist\n";
+		fipslib_error();
+		}
+	foreach (@_)
+		{
+		if (!-f "$dir${o}$_")
+			{
+			print STDERR "FIPS module file $_ does not exist!\n";
+			$ret = 0;
+			}
+		}
+	fipslib_error() if ($ret == 0);
 	}
