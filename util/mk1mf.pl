@@ -764,7 +764,7 @@ if ($fips)
 		{
 		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
 			"\$(O_CRYPTO)",$crypto,$shlib, "\$(SO_CRYPTO)",
-			"0xFB00000", "\$(FIPSLIB_D)$o\$(E_PREMAIN_DSO)$exep",
+			"0xFB00000", "\$(PREMAIN_DSO_EXE)",
 					"\$(FIPS_PREMAIN_SRC)");
 		}
 	else
