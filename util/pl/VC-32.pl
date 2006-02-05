@@ -135,6 +135,7 @@ sub do_lib_rule
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
 		$ret.="$target: $objs\n";
 		$ex =' advapi32.lib';
+ 		$ex.=" ms${o}_chkstk.o" if $fips && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
 		}
 	else
@@ -142,6 +143,7 @@ sub do_lib_rule
 		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
 		$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
  		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
+ 		$ex.=" ms${o}_chkstk.o" if $fips && $target =~ /O_CRYPTO/;
 		if (defined $fips_get_sig)
 			{
 			$ret.="$target: $objs $fips_get_sig\n";

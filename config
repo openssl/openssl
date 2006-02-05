@@ -58,17 +58,17 @@ VERSION=`(uname -v) 2>/dev/null` || VERSION="unknown"
  
 
 # Check for VC++ presence first.
-
-if [ "x$MSVCDIR" != "x" -o "x$VCINSTALLDIR" != "x" ]; then
-	perl Configure VC-WIN32 $*
-	cmd /c ms\\do_masm.bat
-	perl util/mk1mf.pl VC-WIN32-GMAKE >mak.tmp
-	rm Makefile
-	mv mak.tmp Makefile
-	echo "Configured for VC++ using GNU make"
-	exit 0
-fi
-
+#
+#if [ "x$MSVCDIR" != "x" -o "x$VCINSTALLDIR" != "x" ]; then
+#	perl Configure VC-WIN32 $*
+#	cmd /c ms\\do_masm.bat
+#	perl util/mk1mf.pl VC-WIN32-GMAKE >mak.tmp
+#	rm Makefile
+#	mv mak.tmp Makefile
+#	echo "Configured for VC++ using GNU make"
+#	exit 0
+#fi
+#
 
 # Now test for ISC and SCO, since it is has a braindamaged uname.
 #
@@ -355,6 +355,10 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 
     MINGW*)
 	echo "${MACHINE}-whatever-mingw"; echo 0;
+	# Save fipslib path so VC++ build can find it
+	(cd /usr/local/ssl/lib ; pwd -W ) > util/fipslib_path.txt
+	# Extract _chkstk.o so VC++ can use it, to avoid __alloca link error
+	(cd ms ; ar x `gcc -print-libgcc-file-name` _chkstk.o)
 	;;
     CYGWIN*)
 	case "$RELEASE" in

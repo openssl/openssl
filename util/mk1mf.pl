@@ -14,7 +14,11 @@ local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
 local $zlib_lib = "";
 
 my $fips_canister_path = "";
-my $fipslibdir = "fipslib";
+my $fips_premain_dso_exe_path = "";
+my $fips_premain_c_path = "";
+my $fips_sha1_exe_path = "";
+
+my $fipslibdir = "";
 
 my $ex_l_libs = "";
 
@@ -365,13 +369,41 @@ if ($fips_canister_path eq "")
 	$fips_canister_path = "\$(FIPSLIB_D)${o}fipscanister.o";
 	}
 
-	$ex_build_targets .= "\$(FIPSLIB_D)${o}\$(E_PREMAIN_DSO)$exep" if ($fips_canister_build);
-
-if ($fips && !$shlib)
+if ($fips_premain_c_path eq "")
 	{
-	$ex_build_targets .= " \$(LIB_D)$o$crypto_compat";
-	$ex_l_libs .= " \$(O_FIPSCANISTER)";
+	$fips_premain_c_path = "\$(FIPSLIB_D)${o}fips_premain.c";
 	}
+
+if ($fips_sha1_exe_path eq "")
+	{
+	$fips_sha1_exe_path =
+			"fips-1.0${o}sha${o}fips_sha1_standalone$exep";
+	}
+
+if ($fips_premain_dso_exe_path eq "")
+	{
+	$fips_premain_dso_exe_path = "fips-1.0${o}fips_premain_dso$exep";
+	}
+
+#	$ex_build_targets .= "\$(FIPSLIB_D)${o}\$(E_PREMAIN_DSO)$exep" if ($fips_canister_build);
+
+if ($fips)
+	{
+	if (!$shlib)
+		{
+		$ex_build_targets .= " \$(LIB_D)$o$crypto_compat";
+		$ex_l_libs .= " \$(O_FIPSCANISTER)";
+		}
+	if ($fipslibpath == "")
+		{
+		open (IN, "util/fipslib_path.txt") || fipslib_error();
+		$fipslibdir = <IN>;
+		chomp $fipslibdir;
+		close IN;
+		}
+
+	}
+	
 
 $defs= <<"EOF";
 # This makefile has been automatically generated from the OpenSSL distribution.
@@ -455,7 +487,6 @@ INCO_D=$inc_dir${o}openssl
 
 # Directory containing FIPS module
 
-FIPSLIB_D=$fipslibdir
 
 CP=$cp
 RM=$rm
@@ -471,9 +502,18 @@ MKCANISTER=$mkcanister
 ######################################################
 
 E_EXE=openssl
-E_PREMAIN_DSO=fips_premain_dso
 SSL=$ssl
 CRYPTO=$crypto
+
+# FIPS validated module and support file locations
+
+E_PREMAIN_DSO=fips_premain_dso
+
+FIPSLIB_D=$fipslibdir
+FIPS_PREMAIN_SRC=$fips_premain_c_path
+O_FIPSCANISTER=$fips_canister_path
+FIPS_SHA1_EXE=$fips_sha1_exe_path
+PREMAIN_DSO_EXE=$fips_premain_dso_exe_path
 
 # BIN_D  - Binary output directory
 # TEST_D - Binary test file output directory
@@ -492,7 +532,6 @@ INCL_D=\$(TMP_D)
 
 O_SSL=     \$(LIB_D)$o$plib\$(SSL)$shlibp
 O_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$shlibp
-O_FIPSCANISTER= $fips_canister_path
 SO_SSL=    $plib\$(SSL)$so_shlibp
 SO_CRYPTO= $plib\$(CRYPTO)$so_shlibp
 L_SSL=     \$(LIB_D)$o$plib\$(SSL)$libp
@@ -514,7 +553,7 @@ LIBS_DEP=\$(O_CRYPTO) \$(O_SSL) $ex_libs_dep
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) \$(FIPSLIB_D) headers lib exe $ex_build_targets
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe $ex_build_targets
 
 banner:
 $banner
@@ -536,9 +575,6 @@ $banner
 
 \$(INC_D):
 	\$(MKDIR) \$(INC_D)
-
-\$(FIPSLIB_D):
-	\$(MKDIR) \$(FIPSLIB_D)
 
 headers: \$(HEADER) \$(EXHEADER)
 	@
@@ -727,7 +763,7 @@ if ($fips)
 		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
 			"\$(O_CRYPTO)",$crypto,$shlib, "\$(SO_CRYPTO)",
 			"0xFB00000", "\$(FIPSLIB_D)$o\$(E_PREMAIN_DSO)$exep",
-					"\$(FIPSLIB_D)${o}fips_premain.c");
+					"\$(FIPS_PREMAIN_SRC)");
 		}
 	else
 		{
@@ -746,7 +782,7 @@ if ($fips)
 
 if ($fips && $fips_canister_build)
 	{
-	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj \$(FIPSOBJ) \$(OBJ_D)${o}fips_end$obj", "\$(FIPSLIB_D)${o}fips_standalone_sha1$exep", "") if $fips_canister_build;
+	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj \$(FIPSOBJ) \$(OBJ_D)${o}fips_end$obj", "\$(FIPSLIB_D)${o}fips_standalone_sha1$exep", "");
 	$rules.=&do_link_rule("\$(FIPSLIB_D)${o}\$(E_PREMAIN_DSO)$exep","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(O_CRYPTO) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
 	}
 	
@@ -1079,4 +1115,12 @@ sub read_options
 		{ $c_flags.="$_ "; }
 	else { return(0); }
 	return(1);
+	}
+
+sub fipslib_error
+	{
+	print STDERR "FIPS install directory sanity check failed\n";
+	print STDERR "Either FIPS module build was not completed, or";
+	print STDERR "was deleted.\nPlease rebuild FIPS module\n"; 
+	exit 1;
 	}
