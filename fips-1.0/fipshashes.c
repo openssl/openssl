@@ -1,4 +1,5 @@
 const char * const FIPS_source_hashes[] = {
+"HMAC-SHA1(Makefile)= 369e2e023b73789e6af4b8fa2503a7b909c4c3f0",
 "HMAC-SHA1(fips.c)= 3a2deb3c319512952bf5547ed92116a7e0db472b",
 "HMAC-SHA1(fips_err_wrapper.c)= d3e2be316062510312269e98f964cb87e7577898",
 "HMAC-SHA1(fips.h)= 57d602d18efe0594f806fbcc64269e9440638ef4",
