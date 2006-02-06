@@ -23,8 +23,6 @@ $rm='rm';
 
 $zlib_lib="zlib1.lib";
 
-$fips_canister_build = 1 if $fips; 
-
 # C compiler stuff
 $cc='cl';
 $cflags=' -MD -W3 -WX -Ox -O2 -Ob2 -Gs0 -GF -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';

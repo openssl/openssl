@@ -146,7 +146,7 @@ sub do_lib_rule
  		if ($fips && $target =~ /O_CRYPTO/)
 			{
  			$ex.=" ms${o}_chkstk.o";
-			$ret.="$target: $objs $fips_get_sig\n";
+			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)\n";
 			$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
 			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
@@ -177,8 +177,9 @@ sub do_link_rule
 	$ret.="$target: $files $dep_libs\n";
 	if ($standalone)
 		{
-		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n";
-		$ret.="  $files $libs\n<<\n";
+		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n\t";
+		$ret.="ms/_chkstk.o " if ($files =~ /O_FIPSCANISTER/);
+		$ret.="$files $libs\n<<\n";
 		}
 	elsif ($fips && !$shlib)
 		{

@@ -374,18 +374,25 @@ if ($fips_premain_c_path eq "")
 	$fips_premain_c_path = "\$(FIPSLIB_D)${o}fips_premain.c";
 	}
 
-if ($fips_sha1_exe_path eq "")
+if ($fips)
 	{
-	$fips_sha1_exe_path =
-			"fips-1.0${o}sha${o}fips_standalone_sha1$exep";
+	if ($fips_sha1_exe_path eq "")
+		{
+		$fips_sha1_exe_path =
+			"\$(BIN_D)${o}fips_standalone_sha1$exep";
+		}
+	}
+	else
+	{
+	$fips_sha1_exe_path = "";
 	}
 
 if ($fips_premain_dso_exe_path eq "")
 	{
-	$fips_premain_dso_exe_path = "fips-1.0${o}fips_premain_dso$exep";
+	$fips_premain_dso_exe_path = "\$(BIN_D)${o}fips_premain_dso$exep";
 	}
 
-#	$ex_build_targets .= "\$(FIPSLIB_D)${o}\$(E_PREMAIN_DSO)$exep" if ($fips_canister_build);
+#	$ex_build_targets .= "\$(BIN_D)${o}\$(E_PREMAIN_DSO)$exep" if ($fips);
 
 if ($fips)
 	{
@@ -555,7 +562,7 @@ LIBS_DEP=\$(O_CRYPTO) \$(O_SSL) $ex_libs_dep
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe $ex_build_targets
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) \$(FIPS_SHA1_EXE) headers lib exe $ex_build_targets
 
 banner:
 $banner
@@ -667,14 +674,22 @@ $rules.=&do_compile_rule("\$(OBJ_D)",$e_exe,'-DMONOLITH $(APP_CFLAGS)');
 
 # Special case rules for fips_start and fips_end fips_premain_dso
 
-if ($fips && $fips_canister_build)
+if ($fips)
 	{
-	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_start$obj",
-		"fips-1.0${o}fips_canister.c", "-DFIPS_START \$(SHLIB_CFLAGS)");
-	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_end$obj",
-		"fips-1.0${o}fips_canister.c", "\$(SHLIB_CFLAGS)");
+	if ($fips_canister_build)
+		{
+		$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_start$obj",
+			"fips-1.0${o}fips_canister.c",
+			"-DFIPS_START \$(SHLIB_CFLAGS)");
+		$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_end$obj",
+			"fips-1.0${o}fips_canister.c", "\$(SHLIB_CFLAGS)");
+		}
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_standalone_sha1$obj",
-		"fips-1.0${o}sha${o}fips_standalone_sha1.c", "\$(SHLIB_CFLAGS)");
+		"fips-1.0${o}sha${o}fips_standalone_sha1.c",
+		"\$(SHLIB_CFLAGS)");
+	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_sha1dgst$obj",
+		"fips-1.0${o}sha${o}fips_sha1dgst.c",
+		"\$(SHLIB_CFLAGS)") unless $fips_canister_build;
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
 		"fips-1.0${o}fips_premain.c",
 		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)");
@@ -763,8 +778,9 @@ if ($fips)
 	if ($shlib)
 		{
 		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
-			"\$(O_CRYPTO)",$crypto,$shlib, "\$(SO_CRYPTO)",
-			"0xFB00000");
+			"\$(O_CRYPTO)",
+			"$crypto",
+			$shlib, "\$(SO_CRYPTO)", "0xFB00000");
 		}
 	else
 		{
@@ -781,22 +797,16 @@ if ($fips)
 	}
 
 
-if ($fips && $fips_canister_build)
-	{
-	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj \$(FIPSOBJ) \$(OBJ_D)${o}fips_end$obj", "\$(FIPSLIB_D)${o}fips_standalone_sha1$exep", "");
-	$rules.=&do_link_rule("\$(FIPSLIB_D)${o}\$(E_PREMAIN_DSO)$exep","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(O_CRYPTO) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
-	}
-	
-	$rules.=&do_link_rule("\$(FIPSLIB_D)${o}fips_standalone_sha1$exep","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}fips_sha1dgst$obj","","", 1);
-
 if ($fips)
 	{
-	$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)",0,"\$(BIN_D)$o\$(E_EXE)$exep");
+	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj \$(FIPSOBJ) \$(OBJ_D)${o}fips_end$obj", "\$(FIPSLIB_D)${o}fips_standalone_sha1$exep", "") if $fips_canister_build;
+	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
+	
+	$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}fips_sha1dgst$obj","","", 1);
 	}
-else
-	{
-	$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
-	}
+
+	$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)",0);
+
 print $defs;
 
 if ($platform eq "linux-elf") {
