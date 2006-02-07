@@ -439,9 +439,6 @@ typedef struct ssl_session_st
         unsigned int krb5_client_princ_len;
         unsigned char krb5_client_princ[SSL_MAX_KRB5_PRINCIPAL_LENGTH];
 #endif /* OPENSSL_NO_KRB5 */
-#ifndef OPENSSL_NO_TLSEXT
-	char *tlsext_hostname;
-#endif
 
 	int not_resumable;
 
@@ -475,6 +472,9 @@ typedef struct ssl_session_st
 	/* These are used to make removal of session-ids more
 	 * efficient and to implement a maximum cache size. */
 	struct ssl_session_st *prev,*next;
+#ifndef OPENSSL_NO_TLSEXT
+	char *tlsext_hostname;
+#endif
 	} SSL_SESSION;
 
 
