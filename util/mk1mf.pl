@@ -398,7 +398,7 @@ if ($fips)
 	{
 	if (!$shlib)
 		{
-		$ex_build_targets .= " \$(LIB_D)$o$crypto_compat";
+		$ex_build_targets .= " \$(LIB_D)$o$crypto_compat \$(PREMAIN_DSO_EXE)";
 		$ex_l_libs .= " \$(O_FIPSCANISTER)";
 		}
 	if ($fipslibpath eq "")
