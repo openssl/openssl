@@ -562,7 +562,7 @@ LIBS_DEP=\$(O_CRYPTO) \$(O_SSL) $ex_libs_dep
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) \$(FIPS_SHA1_EXE) headers lib exe $ex_build_targets
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers \$(FIPS_SHA1_EXE) lib exe $ex_build_targets
 
 banner:
 $banner
