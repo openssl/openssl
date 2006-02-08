@@ -158,7 +158,7 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 	const ASN1_EXTERN_FUNCS *ef;
 	const ASN1_AUX *aux = it->funcs;
 	ASN1_aux_cb *asn1_cb;
-	const unsigned char *p, *q;
+	const unsigned char *p = NULL, *q;
 	unsigned char *wp=NULL;	/* BIG FAT WARNING!  BREAKS CONST WHERE USED */
 	unsigned char imphack = 0, oclass;
 	char seq_eoc, seq_nolen, cst, isopt;
@@ -283,6 +283,12 @@ int ASN1_item_ex_d2i(ASN1_VALUE **pval, const unsigned char **in, long len,
 			{
 			wp = *(unsigned char **)in;
 			imphack = *wp;
+			if (p == NULL)
+				{
+				ASN1err(ASN1_F_ASN1_ITEM_EX_D2I,
+					ERR_R_NESTED_ASN1_ERROR);
+				goto err;
+				}
 			*wp = (unsigned char)((*p & V_ASN1_CONSTRUCTED)
 								| it->utype);
 			}
