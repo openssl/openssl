@@ -197,7 +197,13 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, PQ_64BIT priority)
 	memset(&(s->s3->rbuf), 0, sizeof(SSL3_BUFFER));
 	memset(&(s->s3->rrec), 0, sizeof(SSL3_RECORD));
 	
-	ssl3_setup_buffers(s);
+	if (!ssl3_setup_buffers(s))
+		{
+		SSLerr(SSL_F_DTLS1_BUFFER_RECORD, ERR_R_INTERNAL_ERROR);
+		OPENSSL_free(rdata);
+		pitem_free(item);
+		return(0);
+		}
 	
 	return(1);
     }

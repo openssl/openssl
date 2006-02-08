@@ -976,11 +976,13 @@ static	DSA_SIG * surewarehk_dsa_do_sign(const unsigned char *from, int flen, DSA
 	if (!p_surewarehk_Dsa_Sign)
 	{
 		SUREWAREerr(SUREWARE_F_SUREWAREHK_DSA_DO_SIGN,ENGINE_R_NOT_INITIALISED);
+		goto err;
 	}
 	/* extract ref to private key */
 	else if (!(hptr=DSA_get_ex_data(dsa, dsaHndidx)))
 	{
 		SUREWAREerr(SUREWARE_F_SUREWAREHK_DSA_DO_SIGN,SUREWARE_R_MISSING_KEY_COMPONENTS);
+		goto err;
 	}
 	else
 	{

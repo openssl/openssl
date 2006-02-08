@@ -128,7 +128,10 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 		return(NULL);
 		}
 	if ((ret=BIO_new(BIO_s_file_internal())) == NULL)
+		{
+		fclose(file);
 		return(NULL);
+		}
 
 	BIO_clear_flags(ret,BIO_FLAGS_UPLINK); /* we did fopen -> we disengage UPLINK */
 	BIO_set_fp(ret,file,BIO_CLOSE);

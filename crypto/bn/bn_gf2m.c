@@ -1080,7 +1080,8 @@ int BN_GF2m_arr2poly(const unsigned int p[], BIGNUM *a)
 	BN_zero(a);
 	for (i = 0; p[i] != 0; i++)
 		{
-		BN_set_bit(a, p[i]);
+		if (BN_set_bit(a, p[i]) == 0)
+			return 0;
 		}
 	BN_set_bit(a, 0);
 	bn_check_top(a);

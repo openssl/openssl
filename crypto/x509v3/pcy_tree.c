@@ -631,6 +631,7 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
 		break;
 		}
 
+	if (!tree) goto error;
 	ret = tree_evaluate(tree);
 
 	if (ret <= 0)

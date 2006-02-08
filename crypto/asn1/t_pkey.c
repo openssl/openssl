@@ -109,7 +109,7 @@ int RSA_print(BIO *bp, const RSA *x, int off)
 	char str[128];
 	const char *s;
 	unsigned char *m=NULL;
-	int ret=0;
+	int ret=0, mod_len = 0;
 	size_t buf_len=0, i;
 
 	if (x->n)
@@ -143,27 +143,37 @@ int RSA_print(BIO *bp, const RSA *x, int off)
 		goto err;
 		}
 
+	if (x->n != NULL)
+		mod_len = BN_num_bits(x->n);
+
 	if (x->d != NULL)
 		{
 		if(!BIO_indent(bp,off,128))
 		   goto err;
-		if (BIO_printf(bp,"Private-Key: (%d bit)\n",BN_num_bits(x->n))
+		if (BIO_printf(bp,"Private-Key: (%d bit)\n", mod_len)
 			<= 0) goto err;
 		}
 
 	if (x->d == NULL)
-		BIO_snprintf(str,sizeof str,"Modulus (%d bit):",BN_num_bits(x->n));
+		BIO_snprintf(str,sizeof str,"Modulus (%d bit):", mod_len);
 	else
 		BUF_strlcpy(str,"modulus:",sizeof str);
 	if (!print(bp,str,x->n,m,off)) goto err;
 	s=(x->d == NULL)?"Exponent:":"publicExponent:";
-	if (!print(bp,s,x->e,m,off)) goto err;
-	if (!print(bp,"privateExponent:",x->d,m,off)) goto err;
-	if (!print(bp,"prime1:",x->p,m,off)) goto err;
-	if (!print(bp,"prime2:",x->q,m,off)) goto err;
-	if (!print(bp,"exponent1:",x->dmp1,m,off)) goto err;
-	if (!print(bp,"exponent2:",x->dmq1,m,off)) goto err;
-	if (!print(bp,"coefficient:",x->iqmp,m,off)) goto err;
+	if ((x->e != NULL) && !print(bp,s,x->e,m,off))
+		goto err;
+	if ((x->d != NULL) && !print(bp,"privateExponent:",x->d,m,off))
+		goto err;
+	if ((x->p != NULL) && !print(bp,"prime1:",x->p,m,off))
+		goto err;
+	if ((x->q != NULL) && !print(bp,"prime2:",x->q,m,off))
+		goto err;
+	if ((x->dmp1 != NULL) && !print(bp,"exponent1:",x->dmp1,m,off))
+		goto err;
+	if ((x->dmq1 != NULL) && !print(bp,"exponent2:",x->dmq1,m,off))
+		goto err;
+	if ((x->iqmp != NULL) && !print(bp,"coefficient:",x->iqmp,m,off))
+		goto err;
 	ret=1;
 err:
 	if (m != NULL) OPENSSL_free(m);
@@ -760,8 +770,8 @@ int DSAparams_print(BIO *bp, const DSA *x)
 		BN_num_bits(x->p)) <= 0)
 		goto err;
 	if (!print(bp,"p:",x->p,m,4)) goto err;
-	if (!print(bp,"q:",x->q,m,4)) goto err;
-	if (!print(bp,"g:",x->g,m,4)) goto err;
+	if ((x->q != NULL) && !print(bp,"q:",x->q,m,4)) goto err;
+	if ((x->g != NULL) && !print(bp,"g:",x->g,m,4)) goto err;
 	ret=1;
 err:
 	if (m != NULL) OPENSSL_free(m);

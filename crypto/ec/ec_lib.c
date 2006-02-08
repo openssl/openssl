@@ -147,7 +147,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 
 	if (group->meth->group_clear_finish != 0)
 		group->meth->group_clear_finish(group);
-	else if (group->meth != NULL && group->meth->group_finish != 0)
+	else if (group->meth->group_finish != 0)
 		group->meth->group_finish(group);
 
 	EC_EX_DATA_clear_free_all_data(&group->extra_data);

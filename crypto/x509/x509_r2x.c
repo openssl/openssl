@@ -89,8 +89,10 @@ X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 		}
 
 	xn=X509_REQ_get_subject_name(r);
-	X509_set_subject_name(ret,X509_NAME_dup(xn));
-	X509_set_issuer_name(ret,X509_NAME_dup(xn));
+	if (X509_set_subject_name(ret,X509_NAME_dup(xn)) == 0)
+		goto err;
+	if (X509_set_issuer_name(ret,X509_NAME_dup(xn)) == 0)
+		goto err;
 
 	if (X509_gmtime_adj(xi->validity->notBefore,0) == NULL)
 		goto err;
