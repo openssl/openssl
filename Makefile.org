@@ -176,6 +176,8 @@ LIBKRB5=
 ZLIB_INCLUDE=
 LIBZLIB=
 
+FIPSLIBDIR=$(INSTALLTOP)/lib
+
 # When we're prepared to use shared libraries in the programs we link here
 # we might set SHLIB_MARK to '$(SHARED_LIBS)'.
 SHLIB_MARK=
