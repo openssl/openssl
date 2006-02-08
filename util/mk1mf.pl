@@ -359,6 +359,9 @@ for (;;)
 	if ($key eq "LIBOBJ")
 		{ $libobj=&var_add($dir,$val); }
 
+	if ($key eq "FIPSLIBDIR")
+		{ $fipslibdir=$val;}
+
 	if (!($_=<IN>))
 		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
 	}
@@ -401,7 +404,7 @@ if ($fips)
 		$ex_build_targets .= " \$(LIB_D)$o$crypto_compat \$(PREMAIN_DSO_EXE)";
 		$ex_l_libs .= " \$(O_FIPSCANISTER)";
 		}
-	if ($fipslibpath eq "")
+	if ($fipslibdir eq "")
 		{
 		open (IN, "util/fipslib_path.txt") || fipslib_error();
 		$fipslibdir = <IN>;

@@ -869,6 +869,10 @@ PROCESS_ARGS:
 				{
 				$withargs{"zlib-lib"}=$1;
 				}
+			elsif (/^--with-fipslibdir=(.*)$/)
+				{
+				$withargs{"fipslibdir"}="$1";
+				}
 			elsif (/^--with-zlib-include=(.*)$/)
 				{
 				$withargs{"zlib-include"}="-I$1";
@@ -1318,6 +1322,7 @@ while (<IN>)
 	s/^KRB5_INCLUDES=.*/KRB5_INCLUDES=$withargs{"krb5-include"}/;
 	s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
 	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
+	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$withargs{"fipslibdir"}/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
