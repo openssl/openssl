@@ -621,19 +621,19 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 			int (*f)(const char *,const char *,
 				 const struct addrinfo *,
 				 struct addrinfo **);
-			} getaddrinfo = {NULL};
+			} p_getaddrinfo = {NULL};
 	static union {	void *p;
 			void (*f)(struct addrinfo *);
-			} freeaddrinfo = {NULL};
+			} p_freeaddrinfo = {NULL};
 	struct addrinfo *res,hint;
 
-	if (getaddrinfo.p==NULL)
+	if (p_getaddrinfo.p==NULL)
 		{
-		if ((getaddrinfo.p=DSO_global_lookup("getaddrinfo"))==NULL ||
-		    (freeaddrinfo.p=DSO_global_lookup("freeaddrinfo"))==NULL)
-			getaddrinfo.p=(void*)-1;
+		if ((p_getaddrinfo.p=DSO_global_lookup("getaddrinfo"))==NULL ||
+		    (p_freeaddrinfo.p=DSO_global_lookup("freeaddrinfo"))==NULL)
+			p_getaddrinfo.p=(void*)-1;
 		}
-	if (getaddrinfo.p==(void *)-1) break;
+	if (p_getaddrinfo.p==(void *)-1) break;
 
 	/* '::port' enforces IPv6 wildcard listener. Some OSes,
 	 * e.g. Solaris, default to IPv6 without any hint. Also
@@ -655,9 +655,9 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 			h=NULL;
 		}
 
-	if ((*getaddrinfo.f)(h,p,&hint,&res)) break;
+	if ((*p_getaddrinfo.f)(h,p,&hint,&res)) break;
 	server = *res->ai_addr;
-	(*freeaddrinfo.f)(res);
+	(*p_freeaddrinfo.f)(res);
 	goto again;
 	} while (0);
 #endif
@@ -714,18 +714,18 @@ again:
 #ifdef AF_INET6
 				if (client.sa_family == AF_INET6)
 					{
-					struct sockaddr_in6 *sin =
+					struct sockaddr_in6 *sin6 =
 						(struct sockaddr_in6 *)&client;
-					memset(&sin->sin6_addr,0,sizeof(sin->sin6_addr));
-					sin->sin6_addr.s6_addr[15]=1;
+					memset(&sin6->sin6_addr,0,sizeof(sin6->sin6_addr));
+					sin6->sin6_addr.s6_addr[15]=1;
 					}
 				else
 #endif
 				if (client.sa_family == AF_INET)
 					{
-					struct sockaddr_in *sin =
+					struct sockaddr_in *sin6 =
 						(struct sockaddr_in *)&client;
-					sin->sin_addr.s_addr=htonl(0x7F000001);
+					sin6->sin_addr.s_addr=htonl(0x7F000001);
 					}
 				else	goto err;
 				}
@@ -806,32 +806,32 @@ int BIO_accept(int sock, char **addr)
 #endif
 	do {
 	char   h[NI_MAXHOST],s[NI_MAXSERV];
-	size_t l;
+	size_t nl;
 	static union {	void *p;
 			int (*f)(const struct sockaddr *,SOCKLEN_T,
 				 char *,size_t,char *,size_t,int);
-			} getnameinfo = {NULL};
+			} p_getnameinfo = {NULL};
 
-	if (getnameinfo.p==NULL)
+	if (p_getnameinfo.p==NULL)
 		{
-		if ((getnameinfo.p=DSO_global_lookup("getnameinfo"))==NULL)
-			getnameinfo.p=(void*)-1;
+		if ((p_getnameinfo.p=DSO_global_lookup("getnameinfo"))==NULL)
+			p_getnameinfo.p=(void*)-1;
 		}
-	if (getnameinfo.p==(void *)-1) break;
+	if (p_getnameinfo.p==(void *)-1) break;
 
-	if ((*getnameinfo.f)(&from,sizeof(from),h,sizeof(h),s,sizeof(s),
+	if ((*p_getnameinfo.f)(&from,sizeof(from),h,sizeof(h),s,sizeof(s),
 	    NI_NUMERICHOST|NI_NUMERICSERV)) break;
-	l = strlen(h)+strlen(s)+2; if (len<24) len=24;
+	nl = strlen(h)+strlen(s)+2; if (len<24) len=24;
 	p = *addr;
-	if (p)	{ *p = '\0'; p = OPENSSL_realloc(p,l);	}
-	else	{ p = OPENSSL_malloc(l);		}
+	if (p)	{ *p = '\0'; p = OPENSSL_realloc(p,nl);	}
+	else	{ p = OPENSSL_malloc(nl);		}
 	if (p==NULL)
 		{
 		BIOerr(BIO_F_BIO_ACCEPT,ERR_R_MALLOC_FAILURE);
 		goto end;
 		}
 	*addr = p;
-	BIO_snprintf(*addr,l,"%s:%s",h,s);
+	BIO_snprintf(*addr,nl,"%s:%s",h,s);
 	goto end;
 	} while(0);
 #endif
