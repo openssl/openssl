@@ -585,7 +585,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	{
 	int ret=0;
 	struct sockaddr server,client;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *sa_in;
 	int s=INVALID_SOCKET,cs;
 	unsigned char ip[4];
 	unsigned short port;
@@ -665,12 +665,12 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	if (!BIO_get_port(p,&port)) goto err;
 
 	memset((char *)&server,0,sizeof(server));
-	sin = (struct sockaddr_in *)&server;
-	sin->sin_family=AF_INET;
-	sin->sin_port=htons(port);
+	sa_in = (struct sockaddr_in *)&server;
+	sa_in->sin_family=AF_INET;
+	sa_in->sin_port=htons(port);
 
 	if (h == NULL || strcmp(h,"*") == 0)
-		sin->sin_addr.s_addr=INADDR_ANY;
+		sa_in->sin_addr.s_addr=INADDR_ANY;
 	else
 		{
                 if (!BIO_get_host_ip(h,&(ip[0]))) goto err;
@@ -679,7 +679,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 			((unsigned long)ip[1]<<16L)|
 			((unsigned long)ip[2]<< 8L)|
 			((unsigned long)ip[3]);
-		sin->sin_addr.s_addr=htonl(l);
+		sa_in->sin_addr.s_addr=htonl(l);
 		}
 
 again:
@@ -774,7 +774,7 @@ int BIO_accept(int sock, char **addr)
 	{
 	int ret=INVALID_SOCKET;
 	struct sockaddr from;
-	struct sockaddr_in *sin;
+	struct sockaddr_in *sa_in;
 	unsigned long l;
 	unsigned short port;
 	int len;
@@ -836,9 +836,9 @@ int BIO_accept(int sock, char **addr)
 	} while(0);
 #endif
 	if (from.sa_family != AF_INET) goto end;
-	sin = (struct sockaddr_in *)&from;
-	l=ntohl(sin->sin_addr.s_addr);
-	port=ntohs(sin->sin_port);
+	sa_in = (struct sockaddr_in *)&from;
+	l=ntohl(sa_in->sin_addr.s_addr);
+	port=ntohs(sa_in->sin_port);
 	if (*addr == NULL)
 		{
 		if ((p=OPENSSL_malloc(24)) == NULL)
