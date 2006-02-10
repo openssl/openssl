@@ -197,6 +197,19 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 # MAKEOVERRIDES= effectively "equalizes" GNU-ish and SysV-ish make flavors,
 # which in turn eliminates ambiguities in variable treatment with -e.
 
+# BUILD_CMD is a generic macro to build a given target in a given
+# subdirectory.  The target must be given through the shell variable
+# `target' and the subdirectory to build in must be given through `dir'.
+# This macro shouldn't be used directly, use RECURSIVE_BUILD_CMD or
+# BUILD_ONE_CMD instead.
+#
+# BUILD_ONE_CMD is a macro to build a given target in a given
+# subdirectory if that subdirectory is part of $(DIRS).  It requires
+# exactly the same shell variables as BUILD_CMD.
+#
+# RECURSIVE_BUILD_CMD is a macro to build a given target in all
+# subdirectories defined in $(DIRS).  It requires that the target
+# is given through the shell variable `target'.
 BUILD_CMD=  if [ -d "$$dir" ]; then \
 	    (	cd $$dir && echo "making $$target in $$dir..." && \
 		$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. DIR=$$dir $$target \
