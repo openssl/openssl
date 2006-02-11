@@ -32,6 +32,7 @@ OpenSSL  -  Frequently Asked Questions
 * How do I install a CA certificate into a browser?
 * Why is OpenSSL x509 DN output not conformant to RFC2253?
 * What is a "128 bit certificate"? Can I create one with OpenSSL?
+* Why does OpenSSL set the authority key identifier extension incorrectly?
 
 [BUILD] Questions about building and testing OpenSSL
 
@@ -423,6 +424,25 @@ be recognized.
 
 The export laws were later changed to allow almost unrestricted use of strong
 encryption so these certificates are now obsolete.
+
+
+* Why does OpenSSL set the authority key identifier AKID) extension incorrectly?
+
+It doesn't: this extension is often the cause of confusion.
+
+Consider a certificate chain A->B->C so that A signs, B and B signs C. Suppose
+certificate C contains AKID.
+
+The purpose of this extension is to identify the authority certificate B. This
+can be done either by including the subject key identifier of B or its issuer
+name and serial number.
+
+In this latter case because it is identifying certifcate B it must contain the
+issuer name and serial number of B.
+
+It is often wrongly assumed that it should contain the issuer name of C. If it
+did this would be redundant information because it would duplicate the issuer
+name of C.
 
 
 [BUILD] =======================================================================
