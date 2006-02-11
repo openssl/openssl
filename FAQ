@@ -426,7 +426,7 @@ The export laws were later changed to allow almost unrestricted use of strong
 encryption so these certificates are now obsolete.
 
 
-* Why does OpenSSL set the authority key identifier AKID) extension incorrectly?
+* Why does OpenSSL set the authority key identifier (AKID) extension incorrectly?
 
 It doesn't: this extension is often the cause of confusion.
 
@@ -440,7 +440,7 @@ name and serial number.
 In this latter case because it is identifying certifcate B it must contain the
 issuer name and serial number of B.
 
-It is often wrongly assumed that it should contain the issuer name of C. If it
+It is often wrongly assumed that it should contain the subject name of B. If it
 did this would be redundant information because it would duplicate the issuer
 name of C.
 
