@@ -69,6 +69,10 @@ PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
 3174 US Secure Hash Algorithm 1 (SHA1). D. Eastlake 3rd, P. Jones.
      September 2001. (Format: TXT=35525 bytes) (Status: INFORMATIONAL)
 
+3161 Internet X.509 Public Key Infrastructure, Time-Stamp Protocol (TSP)
+     C. Adams, P. Cain, D. Pinkas, R. Zuccherato. August 2001
+     (Status: PROPOSED STANDARD)
+
 3268 Advanced Encryption Standard (AES) Ciphersuites for Transport
      Layer Security (TLS). P. Chown. June 2002. (Format: TXT=13530 bytes)
      (Status: PROPOSED STANDARD)

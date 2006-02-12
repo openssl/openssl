@@ -326,10 +326,11 @@ typedef struct x509_cert_pair_st {
 #define X509_TRUST_OBJECT_SIGN	5
 #define X509_TRUST_OCSP_SIGN	6
 #define X509_TRUST_OCSP_REQUEST	7
+#define X509_TRUST_TSA		8
 
 /* Keep these up to date! */
 #define X509_TRUST_MIN		1
-#define X509_TRUST_MAX		7
+#define X509_TRUST_MAX		8
 
 
 /* trust_flags values */

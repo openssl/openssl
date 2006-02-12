@@ -176,6 +176,11 @@ int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
 			o++;
 			}
 		}
+	else
+		{
+		/* Missing time zone information. */
+		goto err;
+		}
 	return(o == l);
 err:
 	return(0);

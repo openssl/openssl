@@ -1,6 +1,7 @@
 #!/usr/local/bin/perl -w
 
 my $config = "crypto/err/openssl.ec";
+my $hprefix = "openssl/";
 my $debug = 0;
 my $rebuild = 0;
 my $static = 1;
@@ -17,6 +18,9 @@ while (@ARGV) {
 	if($arg eq "-conf") {
 		shift @ARGV;
 		$config = shift @ARGV;
+	} elsif($arg eq "-hprefix") {
+		shift @ARGV;
+		$hprefix = shift @ARGV;
 	} elsif($arg eq "-debug") {
 		$debug = 1;
 		shift @ARGV;
@@ -456,7 +460,7 @@ EOF
 	my $hincf;
 	if($static) {
 		$hfile =~ /([^\/]+)$/;
-		$hincf = "<openssl/$1>";
+		$hincf = "<${hprefix}$1>";
 	} else {
 		$hincf = "\"$hfile\"";
 	}

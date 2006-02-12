@@ -56,6 +56,7 @@ my @dirs = (
 "crypto/store",
 "crypto/pqueue",
 "crypto/whrlpool",
+"crypto/ts",
 "ssl",
 "apps",
 "engines",

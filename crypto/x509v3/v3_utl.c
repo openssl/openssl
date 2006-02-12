@@ -107,6 +107,19 @@ int X509V3_add_value_uchar(const char *name, const unsigned char *value,
     return X509V3_add_value(name,(const char *)value,extlist);
     }
 
+/* New function for CONF_VALUE. */
+
+CONF_VALUE *X509V3_conf_new()
+	{
+	CONF_VALUE *v = (CONF_VALUE *) OPENSSL_malloc(sizeof(CONF_VALUE));
+	if (!v)
+		{
+		v->section = v->name = v->value = NULL;
+		}
+
+	return v;
+	}
+
 /* Free function for STACK_OF(CONF_VALUE) */
 
 void X509V3_conf_free(CONF_VALUE *conf)

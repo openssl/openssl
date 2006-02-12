@@ -4,6 +4,10 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Add RFC 3161 compliant time stamp request creation, response generation
+     and response verification functionality.
+     [Zoltán Glózik <zglozik@opentsa.org>, The OpenTSA Project]
+
   *) Add initial support for TLS extensions, specifically for the server_name
      extension so far.  The SSL_SESSION, SSL_CTX, and SSL data structures now
      have new members for a host name.  The SSL data structure has an

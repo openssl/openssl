@@ -21,11 +21,16 @@ oid_section		= new_oids
 
 [ new_oids ]
 
-# We can add new OIDs in here for use by 'ca' and 'req'.
+# We can add new OIDs in here for use by 'ca', 'req' and 'ts'.
 # Add a simple OID like this:
 # testoid1=1.2.3.4
 # Or use config file substitution like this:
 # testoid2=${testoid1}.5.6
+
+# Policies used by the TSA examples.
+tsa_policy1 = 1.2.3.4.1
+tsa_policy2 = 1.2.3.4.5.6
+tsa_policy3 = 1.2.3.4.5.7
 
 ####################################################################
 [ ca ]
@@ -188,7 +193,7 @@ nsComment			= "OpenSSL Generated Certificate"
 
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
-authorityKeyIdentifier=keyid,issuer:always
+authorityKeyIdentifier=keyid,issuer
 
 # This stuff is for subjectAltName and issuerAltname.
 # Import the email address.
@@ -206,6 +211,9 @@ authorityKeyIdentifier=keyid,issuer:always
 #nsRenewalUrl
 #nsCaPolicyUrl
 #nsSslServerName
+
+# This is required for TSA certificates.
+extendedKeyUsage = critical,timeStamping
 
 [ v3_req ]
 
@@ -311,3 +319,33 @@ authorityKeyIdentifier=keyid,issuer:always
 
 # This really needs to be in place for it to be a proxy certificate.
 proxyCertInfo=critical,language:id-ppl-anyLanguage,pathlen:3,policy:foo
+
+####################################################################
+[ tsa ]
+
+default_tsa = tsa_config1	# the default TSA section
+
+[ tsa_config1 ]
+
+# These are used by the TSA reply generation only.
+dir		= sys\$disk:[.demoCA		# TSA root directory
+serial		= $dir]tsaserial.	# The current serial number (mandatory)
+crypto_device	= builtin		# OpenSSL engine to use for signing
+signer_cert	= $dir/tsacert.pem 	# The TSA signing certificate
+					# (optional)
+certs		= $dir.cacert.pem]	# Certificate chain to include in reply
+					# (optional)
+signer_key	= $dir/private/tsakey.pem # The TSA private key (optional)
+
+default_policy	= tsa_policy1		# Policy if request did not specify it
+					# (optional)
+other_policies	= tsa_policy2, tsa_policy3	# acceptable policies (optional)
+digests		= md5, sha1		# Acceptable message digests (mandatory)
+accuracy	= secs:1, millisecs:500, microsecs:100	# (optional)
+clock_precision_digits  = 0	# number of digits after dot. (optional)
+ordering		= yes	# Is ordering defined for timestamps?
+				# (optional, default: no)
+tsa_name		= yes	# Must the TSA name be included in the reply?
+				# (optional, default: no)
+ess_cert_id_chain	= no	# Must the ESS cert id chain be included?
+				# (optional, default: no)

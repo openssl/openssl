@@ -344,6 +344,28 @@ STACK_OF(type) \
 #define sk_ASN1_TYPE_sort(st) SKM_sk_sort(ASN1_TYPE, (st))
 #define sk_ASN1_TYPE_is_sorted(st) SKM_sk_is_sorted(ASN1_TYPE, (st))
 
+#define sk_ASN1_UTF8STRING_new(st) SKM_sk_new(ASN1_UTF8STRING, (st))
+#define sk_ASN1_UTF8STRING_new_null() SKM_sk_new_null(ASN1_UTF8STRING)
+#define sk_ASN1_UTF8STRING_free(st) SKM_sk_free(ASN1_UTF8STRING, (st))
+#define sk_ASN1_UTF8STRING_num(st) SKM_sk_num(ASN1_UTF8STRING, (st))
+#define sk_ASN1_UTF8STRING_value(st, i) SKM_sk_value(ASN1_UTF8STRING, (st), (i))
+#define sk_ASN1_UTF8STRING_set(st, i, val) SKM_sk_set(ASN1_UTF8STRING, (st), (i), (val))
+#define sk_ASN1_UTF8STRING_zero(st) SKM_sk_zero(ASN1_UTF8STRING, (st))
+#define sk_ASN1_UTF8STRING_push(st, val) SKM_sk_push(ASN1_UTF8STRING, (st), (val))
+#define sk_ASN1_UTF8STRING_unshift(st, val) SKM_sk_unshift(ASN1_UTF8STRING, (st), (val))
+#define sk_ASN1_UTF8STRING_find(st, val) SKM_sk_find(ASN1_UTF8STRING, (st), (val))
+#define sk_ASN1_UTF8STRING_find_ex(st, val) SKM_sk_find_ex(ASN1_UTF8STRING, (st), (val))
+#define sk_ASN1_UTF8STRING_delete(st, i) SKM_sk_delete(ASN1_UTF8STRING, (st), (i))
+#define sk_ASN1_UTF8STRING_delete_ptr(st, ptr) SKM_sk_delete_ptr(ASN1_UTF8STRING, (st), (ptr))
+#define sk_ASN1_UTF8STRING_insert(st, val, i) SKM_sk_insert(ASN1_UTF8STRING, (st), (val), (i))
+#define sk_ASN1_UTF8STRING_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(ASN1_UTF8STRING, (st), (cmp))
+#define sk_ASN1_UTF8STRING_dup(st) SKM_sk_dup(ASN1_UTF8STRING, st)
+#define sk_ASN1_UTF8STRING_pop_free(st, free_func) SKM_sk_pop_free(ASN1_UTF8STRING, (st), (free_func))
+#define sk_ASN1_UTF8STRING_shift(st) SKM_sk_shift(ASN1_UTF8STRING, (st))
+#define sk_ASN1_UTF8STRING_pop(st) SKM_sk_pop(ASN1_UTF8STRING, (st))
+#define sk_ASN1_UTF8STRING_sort(st) SKM_sk_sort(ASN1_UTF8STRING, (st))
+#define sk_ASN1_UTF8STRING_is_sorted(st) SKM_sk_is_sorted(ASN1_UTF8STRING, (st))
+
 #define sk_ASN1_VALUE_new(st) SKM_sk_new(ASN1_VALUE, (st))
 #define sk_ASN1_VALUE_new_null() SKM_sk_new_null(ASN1_VALUE)
 #define sk_ASN1_VALUE_free(st) SKM_sk_free(ASN1_VALUE, (st))
@@ -563,6 +585,50 @@ STACK_OF(type) \
 #define sk_ENGINE_CLEANUP_ITEM_pop(st) SKM_sk_pop(ENGINE_CLEANUP_ITEM, (st))
 #define sk_ENGINE_CLEANUP_ITEM_sort(st) SKM_sk_sort(ENGINE_CLEANUP_ITEM, (st))
 #define sk_ENGINE_CLEANUP_ITEM_is_sorted(st) SKM_sk_is_sorted(ENGINE_CLEANUP_ITEM, (st))
+
+#define sk_ESS_CERT_ID_new(st) SKM_sk_new(ESS_CERT_ID, (st))
+#define sk_ESS_CERT_ID_new_null() SKM_sk_new_null(ESS_CERT_ID)
+#define sk_ESS_CERT_ID_free(st) SKM_sk_free(ESS_CERT_ID, (st))
+#define sk_ESS_CERT_ID_num(st) SKM_sk_num(ESS_CERT_ID, (st))
+#define sk_ESS_CERT_ID_value(st, i) SKM_sk_value(ESS_CERT_ID, (st), (i))
+#define sk_ESS_CERT_ID_set(st, i, val) SKM_sk_set(ESS_CERT_ID, (st), (i), (val))
+#define sk_ESS_CERT_ID_zero(st) SKM_sk_zero(ESS_CERT_ID, (st))
+#define sk_ESS_CERT_ID_push(st, val) SKM_sk_push(ESS_CERT_ID, (st), (val))
+#define sk_ESS_CERT_ID_unshift(st, val) SKM_sk_unshift(ESS_CERT_ID, (st), (val))
+#define sk_ESS_CERT_ID_find(st, val) SKM_sk_find(ESS_CERT_ID, (st), (val))
+#define sk_ESS_CERT_ID_find_ex(st, val) SKM_sk_find_ex(ESS_CERT_ID, (st), (val))
+#define sk_ESS_CERT_ID_delete(st, i) SKM_sk_delete(ESS_CERT_ID, (st), (i))
+#define sk_ESS_CERT_ID_delete_ptr(st, ptr) SKM_sk_delete_ptr(ESS_CERT_ID, (st), (ptr))
+#define sk_ESS_CERT_ID_insert(st, val, i) SKM_sk_insert(ESS_CERT_ID, (st), (val), (i))
+#define sk_ESS_CERT_ID_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(ESS_CERT_ID, (st), (cmp))
+#define sk_ESS_CERT_ID_dup(st) SKM_sk_dup(ESS_CERT_ID, st)
+#define sk_ESS_CERT_ID_pop_free(st, free_func) SKM_sk_pop_free(ESS_CERT_ID, (st), (free_func))
+#define sk_ESS_CERT_ID_shift(st) SKM_sk_shift(ESS_CERT_ID, (st))
+#define sk_ESS_CERT_ID_pop(st) SKM_sk_pop(ESS_CERT_ID, (st))
+#define sk_ESS_CERT_ID_sort(st) SKM_sk_sort(ESS_CERT_ID, (st))
+#define sk_ESS_CERT_ID_is_sorted(st) SKM_sk_is_sorted(ESS_CERT_ID, (st))
+
+#define sk_EVP_MD_new(st) SKM_sk_new(EVP_MD, (st))
+#define sk_EVP_MD_new_null() SKM_sk_new_null(EVP_MD)
+#define sk_EVP_MD_free(st) SKM_sk_free(EVP_MD, (st))
+#define sk_EVP_MD_num(st) SKM_sk_num(EVP_MD, (st))
+#define sk_EVP_MD_value(st, i) SKM_sk_value(EVP_MD, (st), (i))
+#define sk_EVP_MD_set(st, i, val) SKM_sk_set(EVP_MD, (st), (i), (val))
+#define sk_EVP_MD_zero(st) SKM_sk_zero(EVP_MD, (st))
+#define sk_EVP_MD_push(st, val) SKM_sk_push(EVP_MD, (st), (val))
+#define sk_EVP_MD_unshift(st, val) SKM_sk_unshift(EVP_MD, (st), (val))
+#define sk_EVP_MD_find(st, val) SKM_sk_find(EVP_MD, (st), (val))
+#define sk_EVP_MD_find_ex(st, val) SKM_sk_find_ex(EVP_MD, (st), (val))
+#define sk_EVP_MD_delete(st, i) SKM_sk_delete(EVP_MD, (st), (i))
+#define sk_EVP_MD_delete_ptr(st, ptr) SKM_sk_delete_ptr(EVP_MD, (st), (ptr))
+#define sk_EVP_MD_insert(st, val, i) SKM_sk_insert(EVP_MD, (st), (val), (i))
+#define sk_EVP_MD_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(EVP_MD, (st), (cmp))
+#define sk_EVP_MD_dup(st) SKM_sk_dup(EVP_MD, st)
+#define sk_EVP_MD_pop_free(st, free_func) SKM_sk_pop_free(EVP_MD, (st), (free_func))
+#define sk_EVP_MD_shift(st) SKM_sk_shift(EVP_MD, (st))
+#define sk_EVP_MD_pop(st) SKM_sk_pop(EVP_MD, (st))
+#define sk_EVP_MD_sort(st) SKM_sk_sort(EVP_MD, (st))
+#define sk_EVP_MD_is_sorted(st) SKM_sk_is_sorted(EVP_MD, (st))
 
 #define sk_GENERAL_NAME_new(st) SKM_sk_new(GENERAL_NAME, (st))
 #define sk_GENERAL_NAME_new_null() SKM_sk_new_null(GENERAL_NAME)
@@ -1612,6 +1678,15 @@ STACK_OF(type) \
 #define ASN1_seq_unpack_ASN1_TYPE(buf, len, d2i_func, free_func) \
 	SKM_ASN1_seq_unpack(ASN1_TYPE, (buf), (len), (d2i_func), (free_func))
 
+#define d2i_ASN1_SET_OF_ASN1_UTF8STRING(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
+	SKM_ASN1_SET_OF_d2i(ASN1_UTF8STRING, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 
+#define i2d_ASN1_SET_OF_ASN1_UTF8STRING(st, pp, i2d_func, ex_tag, ex_class, is_set) \
+	SKM_ASN1_SET_OF_i2d(ASN1_UTF8STRING, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
+#define ASN1_seq_pack_ASN1_UTF8STRING(st, i2d_func, buf, len) \
+	SKM_ASN1_seq_pack(ASN1_UTF8STRING, (st), (i2d_func), (buf), (len))
+#define ASN1_seq_unpack_ASN1_UTF8STRING(buf, len, d2i_func, free_func) \
+	SKM_ASN1_seq_unpack(ASN1_UTF8STRING, (buf), (len), (d2i_func), (free_func))
+
 #define d2i_ASN1_SET_OF_DIST_POINT(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
 	SKM_ASN1_SET_OF_d2i(DIST_POINT, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 
 #define i2d_ASN1_SET_OF_DIST_POINT(st, pp, i2d_func, ex_tag, ex_class, is_set) \
@@ -1620,6 +1695,24 @@ STACK_OF(type) \
 	SKM_ASN1_seq_pack(DIST_POINT, (st), (i2d_func), (buf), (len))
 #define ASN1_seq_unpack_DIST_POINT(buf, len, d2i_func, free_func) \
 	SKM_ASN1_seq_unpack(DIST_POINT, (buf), (len), (d2i_func), (free_func))
+
+#define d2i_ASN1_SET_OF_ESS_CERT_ID(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
+	SKM_ASN1_SET_OF_d2i(ESS_CERT_ID, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 
+#define i2d_ASN1_SET_OF_ESS_CERT_ID(st, pp, i2d_func, ex_tag, ex_class, is_set) \
+	SKM_ASN1_SET_OF_i2d(ESS_CERT_ID, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
+#define ASN1_seq_pack_ESS_CERT_ID(st, i2d_func, buf, len) \
+	SKM_ASN1_seq_pack(ESS_CERT_ID, (st), (i2d_func), (buf), (len))
+#define ASN1_seq_unpack_ESS_CERT_ID(buf, len, d2i_func, free_func) \
+	SKM_ASN1_seq_unpack(ESS_CERT_ID, (buf), (len), (d2i_func), (free_func))
+
+#define d2i_ASN1_SET_OF_EVP_MD(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
+	SKM_ASN1_SET_OF_d2i(EVP_MD, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 
+#define i2d_ASN1_SET_OF_EVP_MD(st, pp, i2d_func, ex_tag, ex_class, is_set) \
+	SKM_ASN1_SET_OF_i2d(EVP_MD, (st), (pp), (i2d_func), (ex_tag), (ex_class), (is_set))
+#define ASN1_seq_pack_EVP_MD(st, i2d_func, buf, len) \
+	SKM_ASN1_seq_pack(EVP_MD, (st), (i2d_func), (buf), (len))
+#define ASN1_seq_unpack_EVP_MD(buf, len, d2i_func, free_func) \
+	SKM_ASN1_seq_unpack(EVP_MD, (buf), (len), (d2i_func), (free_func))
 
 #define d2i_ASN1_SET_OF_GENERAL_NAME(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
 	SKM_ASN1_SET_OF_d2i(GENERAL_NAME, (st), (pp), (length), (d2i_func), (free_func), (ex_tag), (ex_class)) 
