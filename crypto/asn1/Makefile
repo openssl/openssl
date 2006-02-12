@@ -175,14 +175,6 @@ a_gentm.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 a_gentm.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 a_gentm.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 a_gentm.o: ../cryptlib.h ../o_time.h a_gentm.c
-a_hdr.o: ../../e_os.h ../../include/openssl/asn1.h
-a_hdr.o: ../../include/openssl/asn1_mac.h ../../include/openssl/bio.h
-a_hdr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-a_hdr.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-a_hdr.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-a_hdr.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-a_hdr.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-a_hdr.o: ../../include/openssl/symhacks.h ../cryptlib.h a_hdr.c
 a_i2d_fp.o: ../../e_os.h ../../include/openssl/asn1.h
 a_i2d_fp.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 a_i2d_fp.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -207,13 +199,6 @@ a_mbstr.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 a_mbstr.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 a_mbstr.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 a_mbstr.o: ../cryptlib.h a_mbstr.c
-a_meth.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-a_meth.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-a_meth.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-a_meth.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-a_meth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-a_meth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-a_meth.o: ../../include/openssl/symhacks.h ../cryptlib.h a_meth.c
 a_object.o: ../../e_os.h ../../include/openssl/asn1.h
 a_object.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 a_object.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -632,13 +617,15 @@ tasn_dec.o: ../../include/openssl/opensslconf.h
 tasn_dec.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tasn_dec.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 tasn_dec.o: ../../include/openssl/symhacks.h tasn_dec.c
-tasn_enc.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
-tasn_enc.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-tasn_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
+tasn_enc.o: ../../e_os.h ../../include/openssl/asn1.h
+tasn_enc.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+tasn_enc.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+tasn_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+tasn_enc.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 tasn_enc.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 tasn_enc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tasn_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-tasn_enc.o: ../../include/openssl/symhacks.h tasn_enc.c
+tasn_enc.o: ../../include/openssl/symhacks.h ../cryptlib.h tasn_enc.c
 tasn_fre.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 tasn_fre.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 tasn_fre.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
@@ -654,6 +641,21 @@ tasn_new.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 tasn_new.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tasn_new.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 tasn_new.o: ../../include/openssl/symhacks.h tasn_new.c
+tasn_prn.o: ../../e_os.h ../../include/openssl/asn1.h
+tasn_prn.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+tasn_prn.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
+tasn_prn.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+tasn_prn.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+tasn_prn.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+tasn_prn.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+tasn_prn.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+tasn_prn.o: ../../include/openssl/opensslconf.h
+tasn_prn.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+tasn_prn.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+tasn_prn.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+tasn_prn.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+tasn_prn.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+tasn_prn.o: ../cryptlib.h asn1_locl.h tasn_prn.c
 tasn_typ.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 tasn_typ.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 tasn_typ.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
@@ -760,7 +762,19 @@ x_name.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 x_name.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 x_name.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 x_name.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-x_name.o: ../../include/openssl/x509_vfy.h ../cryptlib.h x_name.c
+x_name.o: ../../include/openssl/x509_vfy.h ../cryptlib.h asn1_locl.h x_name.c
+x_nx509.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+x_nx509.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+x_nx509.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+x_nx509.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+x_nx509.o: ../../include/openssl/ecdsa.h ../../include/openssl/evp.h
+x_nx509.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+x_nx509.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+x_nx509.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+x_nx509.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+x_nx509.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+x_nx509.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+x_nx509.o: ../../include/openssl/x509_vfy.h x_nx509.c
 x_pkey.o: ../../e_os.h ../../include/openssl/asn1.h
 x_pkey.o: ../../include/openssl/asn1_mac.h ../../include/openssl/bio.h
 x_pkey.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

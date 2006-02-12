@@ -824,7 +824,7 @@ speed.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 speed.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 speed.o: ../include/openssl/txt_db.h ../include/openssl/ui.h
 speed.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
-speed.o: ../include/openssl/x509_vfy.h testdsa.h testrsa.h apps.h speed.c
+speed.o: ../include/openssl/x509_vfy.h apps.h speed.c testdsa.h testrsa.h
 spkac.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 spkac.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 spkac.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
@@ -839,6 +839,23 @@ spkac.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
 spkac.o: ../include/openssl/sha.h ../include/openssl/stack.h
 spkac.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
 spkac.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h spkac.c
+ts.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+ts.o: ../include/openssl/buffer.h ../include/openssl/conf.h
+ts.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+ts.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+ts.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+ts.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+ts.o: ../include/openssl/err.h ../include/openssl/evp.h
+ts.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+ts.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+ts.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+ts.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+ts.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+ts.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+ts.o: ../include/openssl/sha.h ../include/openssl/stack.h
+ts.o: ../include/openssl/symhacks.h ../include/openssl/ts.h
+ts.o: ../include/openssl/txt_db.h ../include/openssl/x509.h
+ts.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h ts.c
 verify.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 verify.o: ../include/openssl/buffer.h ../include/openssl/conf.h
 verify.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
