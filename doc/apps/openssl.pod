@@ -32,6 +32,7 @@ It can be used for
  o  Encryption and Decryption with Ciphers
  o  SSL/TLS Client and Server Tests
  o  Handling of S/MIME signed or encrypted mail
+ o  Time Stamp requests, generation and verification
 
 =head1 COMMAND SUMMARY
 
@@ -184,6 +185,10 @@ S/MIME mail processing.
 =item L<B<speed>|speed(1)>
 
 Algorithm Speed Measurement.
+
+=item L<B<ts>|<ts(1)>
+
+Time Stamping Authority tool (client/server)
 
 =item L<B<verify>|verify(1)>
 
