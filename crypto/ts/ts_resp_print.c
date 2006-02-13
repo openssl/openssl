@@ -194,7 +194,7 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
 
 	/* Print version. */
 	v = TS_TST_INFO_get_version(a);
-	BIO_printf(bio, "Version: %ld\n", v);
+	BIO_printf(bio, "Version: %d\n", v);
 
 	/* Print policy id. */
 	BIO_printf(bio, "Policy OID: ");

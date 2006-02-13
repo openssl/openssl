@@ -74,7 +74,7 @@ int TS_REQ_print_bio(BIO *bio, TS_REQ *a)
 	if (a == NULL) return 0;
 
 	v = TS_REQ_get_version(a);
-	BIO_printf(bio, "Version: %ld\n", v);
+	BIO_printf(bio, "Version: %d\n", v);
 
 	TS_MSG_IMPRINT_print_bio(bio, TS_REQ_get_msg_imprint(a));
 
