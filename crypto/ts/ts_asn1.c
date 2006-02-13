@@ -69,19 +69,18 @@ IMPLEMENT_ASN1_DUP_FUNCTION(TS_MSG_IMPRINT)
 #ifndef OPENSSL_NO_BIO
 int i2d_TS_MSG_IMPRINT_bio(BIO *bp, TS_MSG_IMPRINT *a)
 {
-	return ASN1_i2d_bio(i2d_TS_MSG_IMPRINT, bp, (unsigned char *) a);
+	return ASN1_i2d_bio_of_const(TS_MSG_IMPRINT, i2d_TS_MSG_IMPRINT, bp, a);
 }
 #endif
 #ifndef OPENSSL_NO_FP_API
 TS_MSG_IMPRINT *d2i_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT **a)
 	{
-	return (TS_MSG_IMPRINT *) ASN1_d2i_fp((char *(*)()) TS_MSG_IMPRINT_new,
-		(char *(*)()) d2i_TS_MSG_IMPRINT, fp, (unsigned char **) a);
+	return ASN1_d2i_fp_of(TS_MSG_IMPRINT, TS_MSG_IMPRINT_new, d2i_TS_MSG_IMPRINT, fp, a);
 	}
 
 int i2d_TS_MSG_IMPRINT_fp(FILE *fp, TS_MSG_IMPRINT *a)
 	{
-	return ASN1_i2d_fp(i2d_TS_MSG_IMPRINT, fp, (unsigned char *) a);
+	return ASN1_i2d_fp_of_const(TS_MSG_IMPRINT, i2d_TS_MSG_IMPRINT, fp, a);
 	}
 #endif
 
@@ -99,25 +98,23 @@ IMPLEMENT_ASN1_DUP_FUNCTION(TS_REQ)
 #ifndef OPENSSL_NO_BIO
 TS_REQ *d2i_TS_REQ_bio(BIO *bp, TS_REQ **a)
 	{
-	return (TS_REQ *) ASN1_d2i_bio((char *(*)()) TS_REQ_new,
-		(char *(*)()) d2i_TS_REQ, bp, (unsigned char **) a);
+	return ASN1_d2i_bio_of(TS_REQ, TS_REQ_new, d2i_TS_REQ, bp, a);
 	}
 
 int i2d_TS_REQ_bio(BIO *bp, TS_REQ *a)
 	{
-	return ASN1_i2d_bio(i2d_TS_REQ, bp, (unsigned char *) a);
+	return ASN1_i2d_bio_of_const(TS_REQ, i2d_TS_REQ, bp, a);
 	}
 #endif
 #ifndef OPENSSL_NO_FP_API
 TS_REQ *d2i_TS_REQ_fp(FILE *fp, TS_REQ **a)
 	{
-	return (TS_REQ *) ASN1_d2i_fp((char *(*)()) TS_REQ_new,
-		(char *(*)()) d2i_TS_REQ, fp, (unsigned char **) a);
+	return ASN1_d2i_fp_of(TS_REQ, TS_REQ_new, d2i_TS_REQ, fp, a);
 	}
 
 int i2d_TS_REQ_fp(FILE *fp, TS_REQ *a)
 	{
-	return ASN1_i2d_fp(i2d_TS_REQ, fp, (unsigned char *) a);
+	return ASN1_i2d_fp_of_const(TS_REQ, i2d_TS_REQ, fp, a);
 	}
 #endif
 
@@ -148,27 +145,23 @@ IMPLEMENT_ASN1_DUP_FUNCTION(TS_TST_INFO)
 #ifndef OPENSSL_NO_BIO
 TS_TST_INFO *d2i_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO **a)
 	{
-	return (TS_TST_INFO *) ASN1_d2i_bio((char *(*)()) TS_TST_INFO_new,
-					    (char *(*)()) d2i_TS_TST_INFO,
-					    bp, (unsigned char **) a);
+	return ASN1_d2i_bio_of(TS_TST_INFO, TS_TST_INFO_new, d2i_TS_TST_INFO, bp, a);
 	}
 
 int i2d_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO *a)
 	{
-	return ASN1_i2d_bio(i2d_TS_TST_INFO, bp, (unsigned char *) a);
+	return ASN1_i2d_bio_of_const(TS_TST_INFO, i2d_TS_TST_INFO, bp, a);
 	}
 #endif
 #ifndef OPENSSL_NO_FP_API
 TS_TST_INFO *d2i_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO **a)
 	{
-	return (TS_TST_INFO *) ASN1_d2i_fp((char *(*)()) TS_TST_INFO_new,
-					   (char *(*)()) d2i_TS_TST_INFO,
-					   fp, (unsigned char **) a);
+	return ASN1_d2i_fp_of(TS_TST_INFO, TS_TST_INFO_new, d2i_TS_TST_INFO, fp, a);
 	}
 
 int i2d_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO *a)
 	{
-	return ASN1_i2d_fp(i2d_TS_TST_INFO, fp, (unsigned char *) a);
+	return ASN1_i2d_fp_of_const(TS_TST_INFO, i2d_TS_TST_INFO, fp, a);
 	}
 #endif
 
@@ -186,7 +179,9 @@ ASN1_SEQUENCE(TS_RESP) = {
 	ASN1_OPT(TS_RESP, token, PKCS7),
 } ASN1_SEQUENCE_END(TS_RESP)
 
+DECLARE_ASN1_ALLOC_FUNCTIONS_name(TS_RESP, TS_RESP_int)
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(TS_RESP, TS_RESP, TS_RESP_int)
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(TS_RESP, TS_RESP_int)
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(TS_RESP, TS_RESP, TS_RESP_int)
 
 TS_RESP *TS_RESP_new(void)
@@ -252,27 +247,23 @@ IMPLEMENT_ASN1_DUP_FUNCTION(TS_RESP)
 #ifndef OPENSSL_NO_BIO
 TS_RESP *d2i_TS_RESP_bio(BIO *bp, TS_RESP **a)
 	{
-	return (TS_RESP *) ASN1_d2i_bio((char *(*)()) TS_RESP_new,
-				       (char *(*)()) d2i_TS_RESP,
-				       bp, (unsigned char **) a);
+	return ASN1_d2i_bio_of(TS_RESP, TS_RESP_new, d2i_TS_RESP, bp, a);
 	}
 
 int i2d_TS_RESP_bio(BIO *bp, TS_RESP *a)
 	{
-	return ASN1_i2d_bio(i2d_TS_RESP, bp, (unsigned char *) a);
+	return ASN1_i2d_bio_of_const(TS_RESP, i2d_TS_RESP, bp, a);
 	}
 #endif
 #ifndef OPENSSL_NO_FP_API
 TS_RESP *d2i_TS_RESP_fp(FILE *fp, TS_RESP **a)
 	{
-	return (TS_RESP *) ASN1_d2i_fp((char *(*)()) TS_RESP_new,
-				       (char *(*)()) d2i_TS_RESP,
-				       fp, (unsigned char **) a);
+	return ASN1_d2i_fp_of(TS_RESP, TS_RESP_new, d2i_TS_RESP, fp, a);
 	}
 
 int i2d_TS_RESP_fp(FILE *fp, TS_RESP *a)
 	{
-	return ASN1_i2d_fp(i2d_TS_RESP, fp, (unsigned char *) a);
+	return ASN1_i2d_fp_of_const(TS_RESP, i2d_TS_RESP, fp, a);
 	}
 #endif
 
