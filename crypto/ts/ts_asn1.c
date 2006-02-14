@@ -174,75 +174,54 @@ ASN1_SEQUENCE(TS_STATUS_INFO) = {
 IMPLEMENT_ASN1_FUNCTIONS_const(TS_STATUS_INFO)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_STATUS_INFO)
 
-ASN1_SEQUENCE(TS_RESP) = {
-	ASN1_SIMPLE(TS_RESP, status_info, TS_STATUS_INFO),
-	ASN1_OPT(TS_RESP, token, PKCS7),
-} ASN1_SEQUENCE_END(TS_RESP)
-
-DECLARE_ASN1_ALLOC_FUNCTIONS_name(TS_RESP, TS_RESP_int)
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(TS_RESP, TS_RESP, TS_RESP_int)
-DECLARE_ASN1_ENCODE_FUNCTIONS_const(TS_RESP, TS_RESP_int)
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(TS_RESP, TS_RESP, TS_RESP_int)
-
-TS_RESP *TS_RESP_new(void)
-{
-	TS_RESP *ret = TS_RESP_int_new();
-	if (!ret)
-		return NULL;
-	ret->tst_info = NULL;
-	return ret;
-}
-
-void TS_RESP_free(TS_RESP *a)
-{
-	if (!a)
-		return;
-	if (a->tst_info)
-		TS_TST_INFO_free(a->tst_info);
-	TS_RESP_int_free(a);
-}
-
-int i2d_TS_RESP(const TS_RESP *a, unsigned char **pp)
-{
-	return i2d_TS_RESP_int(a, pp);
-}
-
-TS_RESP *d2i_TS_RESP(TS_RESP **a, const unsigned char **pp, long len)
+static int ts_resp_set_tst_info(TS_RESP *a)
 {
 	long    status;
-	TS_RESP *ret;
 
-	ret = d2i_TS_RESP_int(a, pp, len);
-	if (!ret) {
-		TSerr(TS_F_D2I_TS_RESP, TS_R_D2I_TS_RESP_INT_FAILED);
-		return NULL;
-	}
-	status = ASN1_INTEGER_get(ret->status_info->status);
+	status = ASN1_INTEGER_get(a->status_info->status);
 
-	if (ret->token) {
+	if (a->token) {
 		if (status != 0 && status != 1) {
 			TSerr(TS_F_D2I_TS_RESP, TS_R_TOKEN_PRESENT);
-			if (!*a)
-				TS_RESP_free(ret);
-			return NULL;
+			return 0;
 		}
-		ret->tst_info = PKCS7_to_TS_TST_INFO(ret->token);
-		if (!ret->tst_info) {
+		if (a->tst_info != NULL)
+			TS_TST_INFO_free(a->tst_info);
+		a->tst_info = PKCS7_to_TS_TST_INFO(a->token);
+		if (!a->tst_info) {
 			TSerr(TS_F_D2I_TS_RESP, TS_R_PKCS7_TO_TS_TST_INFO_FAILED);
-			if (!*a)
-				TS_RESP_free(ret);
-			return NULL;
+			return 0;
 		}
 	} else if (status == 0 || status == 1) {
 		TSerr(TS_F_D2I_TS_RESP, TS_R_TOKEN_NOT_PRESENT);
-		if (!*a)
-			TS_RESP_free(ret);
-		return NULL;
+		return 0;
 	}
 
-	return ret;
+	return 1;
 }
 
+static int ts_resp_cb(int op, ASN1_VALUE **pval, const ASN1_ITEM *it,
+	void *exarg)
+{
+	TS_RESP *ts_resp = (TS_RESP *)*pval;
+	if (op == ASN1_OP_NEW_POST) {
+		ts_resp->tst_info = NULL;
+	} else if (op == ASN1_OP_FREE_POST) {
+		if (ts_resp->tst_info != NULL)
+			TS_TST_INFO_free(ts_resp->tst_info);
+	} else if (op == ASN1_OP_D2I_POST) {
+		if (ts_resp_set_tst_info(ts_resp) == 0)
+			return 0;
+	}
+	return 1;
+}
+
+ASN1_SEQUENCE_cb(TS_RESP, ts_resp_cb) = {
+	ASN1_SIMPLE(TS_RESP, status_info, TS_STATUS_INFO),
+	ASN1_OPT(TS_RESP, token, PKCS7),
+} ASN1_SEQUENCE_END_cb(TS_RESP, TS_RESP)
+
+IMPLEMENT_ASN1_FUNCTIONS_const(TS_RESP)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_RESP)
 #ifndef OPENSSL_NO_BIO
 TS_RESP *d2i_TS_RESP_bio(BIO *bp, TS_RESP **a)
