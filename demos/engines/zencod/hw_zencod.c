@@ -1233,7 +1233,7 @@ static const EVP_MD engine_sha1_md =
 	SHA_CBLOCK,
 	/* sizeof ( EVP_MD * ) + sizeof ( SHA_CTX ) */
 	sizeof ( ZEN_MD_DATA )
-	/* sizeof ( MD_CTX_DATA )	The message digest data stucture ... */
+	/* sizeof ( MD_CTX_DATA )	The message digest data structure ... */
 } ;
 
 /* The one for MD5 ... */
@@ -1254,7 +1254,7 @@ static const EVP_MD engine_md5_md =
 	MD5_CBLOCK,
 	/* sizeof ( EVP_MD * ) + sizeof ( MD5_CTX ) */
 	sizeof ( ZEN_MD_DATA )
-	/* sizeof ( MD_CTX_DATA )	The message digest data stucture ... */
+	/* sizeof ( MD_CTX_DATA )	The message digest data structure ... */
 } ;
 
 

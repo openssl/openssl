@@ -4295,7 +4295,7 @@ X-Status:
 Loading client certs into MSIE 3.01
 ===================================
 
-This document conatains all the information necessary to succesfully set up 
+This document contains all the information necessary to successfully set up 
 some scripts to issue client certs to Microsoft Internet Explorer. It 
 includes the required knowledge about the model MSIE uses for client 
 certification and includes complete sample scripts ready to play with. The 
