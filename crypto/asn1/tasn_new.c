@@ -68,7 +68,7 @@ static int asn1_item_ex_combine_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
 								int combine);
 static void asn1_item_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
 static void asn1_template_clear(ASN1_VALUE **pval, const ASN1_TEMPLATE *tt);
-void asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
+static void asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it);
 
 ASN1_VALUE *ASN1_item_new(const ASN1_ITEM *it)
 	{
@@ -373,7 +373,7 @@ int ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 	return 0;
 	}
 
-void asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 	{
 	int utype;
 	if (it && it->funcs)

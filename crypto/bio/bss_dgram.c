@@ -82,7 +82,7 @@ static int dgram_new(BIO *h);
 static int dgram_free(BIO *data);
 static int dgram_clear(BIO *bio);
 
-int BIO_dgram_should_retry(int s);
+static int BIO_dgram_should_retry(int s);
 
 static BIO_METHOD methods_dgramp=
 	{
@@ -399,7 +399,7 @@ static int dgram_puts(BIO *bp, const char *str)
 	return(ret);
 	}
 
-int BIO_dgram_should_retry(int i)
+static int BIO_dgram_should_retry(int i)
 	{
 	int err;
 
