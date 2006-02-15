@@ -546,11 +546,19 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 					buf_len--;
 					}
 				BUF_strlcpy(buf,bndec,buf_len);
-				buf += i;
+				if (i > buf_len)
+					{
+					buf += buf_len;
+					buf_len = 0;
+					}
+				else
+					{
+					buf+=i;
+					buf_len-=i;
+					}
 				}
 			n++;
 			n += i;
-			buf_len -= i;
 			OPENSSL_free(bndec);
 			}
 		else
@@ -560,9 +568,17 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 			if (buf && (buf_len > 0))
 				{
 				BUF_strlcpy(buf,tbuf,buf_len);
-				buf+=i;
+				if (i > buf_len)
+					{
+					buf += buf_len;
+					buf_len = 0;
+					}
+				else
+					{
+					buf+=i;
+					buf_len-=i;
+					}
 				}
-			buf_len-=i;
 			n+=i;
 			l=0;
 			}
