@@ -278,7 +278,7 @@ int TS_RESP_CTX_add_md(TS_RESP_CTX *ctx, const EVP_MD *md)
 	if (!ctx->mds && !(ctx->mds = sk_EVP_MD_new_null())) 
 		goto err;
 	/* Add the shared md, no copy needed. */
-	if (!sk_EVP_MD_push(ctx->mds, md)) goto err;
+	if (!sk_EVP_MD_push(ctx->mds, (EVP_MD *)md)) goto err;
 
 	return 1;
  err:
