@@ -30,3 +30,4 @@ sha256t
 sha512t
 *.flc
 semantic.cache
+newkey.pem
