@@ -16,7 +16,7 @@ export OPENSSL
 
 error () {
 
-    echo "ERROR DURING TSA TESTS!!!!!!!!!!!!!!!!" >&2
+    echo "TSA test failed!" >&2
     exit 1
 }
 
@@ -152,6 +152,7 @@ verify_time_stamp_response_fail () {
 	-untrusted tsa_cert1.pem
     # Checks if the verification failed, as it should have.
     test $? == 0 && error
+    echo Ok
 }
 
 # main functions
