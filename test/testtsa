@@ -11,7 +11,7 @@ export SH PATH
 OPENSSL_CONF="../CAtsa.cnf"
 export OPENSSL_CONF
 
-OPENSSL="../util/opensslwrap.sh"
+OPENSSL="`pwd`/../util/opensslwrap.sh"
 export OPENSSL
 
 error () {
