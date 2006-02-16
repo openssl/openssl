@@ -287,7 +287,7 @@ test_aes: #$(AESTEST)
 #	../util/shlib_wrap.sh ./$(AESTEST)
 
 test_tsa:
-	@if ../apps/openssl no-rsa; then \
+	@if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then \
 	  echo "skipping testtsa test -- requires RSA"; \
 	else \
 	  sh ./testtsa; \
