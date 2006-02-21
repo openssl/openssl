@@ -246,6 +246,8 @@ int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 			return -1;
 		i2t_ASN1_OBJECT(p,i + 1,a);
 		}
+	if (i <= 0)
+		return BIO_write(bp, "<INVALID>", 9);
 	BIO_write(bp,p,i);
 	if (p != buf)
 		OPENSSL_free(p);
