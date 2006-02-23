@@ -1169,7 +1169,7 @@ $! Save directory information
 $!
 $ __HERE = F$PARSE(F$PARSE("A.;",F$ENVIRONMENT("PROCEDURE"))-"A.;","[]A.;") - "A.;"
 $ __HERE = F$EDIT(__HERE,"UPCASE")
-$ __TOP = __HERE - "FIPS]"
+$ __TOP = __HERE - "FIPS-1_0]"
 $ __INCLUDE = __TOP + "INCLUDE.OPENSSL]"
 $!
 $! Set up the logical name OPENSSL to point at the include directory
