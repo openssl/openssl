@@ -296,7 +296,7 @@ CERT *ssl_cert_dup(CERT *cert)
 
 	return(ret);
 	
-#ifndef OPENSSL_NO_DH /* avoid 'unreferenced label' warning if OPENSSL_NO_DH is defined */
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
 err:
 #endif
 #ifndef OPENSSL_NO_RSA
