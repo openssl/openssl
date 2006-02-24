@@ -2234,6 +2234,7 @@ static DH *get_dh1024dsa()
 	dh->length = 160;
 	return(dh);
 	}
+#endif
 
 static int do_test_cipherlist(void)
 	{
@@ -2291,4 +2292,3 @@ static int do_test_cipherlist(void)
 
 	return 1;
 	}
-#endif
