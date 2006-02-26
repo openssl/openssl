@@ -191,16 +191,6 @@ int MAIN(int argc, char **argv)
 			if (argc-- < 1) goto usage;
 			digest = *++argv;
 			}
-		else if (strcmp(*argv, "-md2") == 0
-			|| strcmp(*argv, "-md4") == 0
-			|| strcmp(*argv, "-md5") == 0
-			|| strcmp(*argv, "-sha") == 0
-			|| strcmp(*argv, "-sha1") == 0
-			|| strcmp(*argv, "-mdc2") == 0
-			|| strcmp(*argv, "-ripemd160") == 0)
-			{
-			md = EVP_get_digestbyname(*argv + 1);
-			}
 		else if (strcmp(*argv, "-rand") == 0)
 			{
 			if (argc-- < 1) goto usage;
@@ -295,6 +285,10 @@ int MAIN(int argc, char **argv)
 			{
 			if (argc-- < 1) goto usage;
 			engine = *++argv;
+			}
+		else if ((md = EVP_get_digestbyname(*argv + 1)) != NULL)
+			{
+			/* empty. */
 			}
 		else
 			goto usage;
