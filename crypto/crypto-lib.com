@@ -83,7 +83,7 @@ $ ENCRYPT_TYPES = "Basic,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
 		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
-		  "STORE,PQUEUE"
+		  "STORE,PQUEUE,TS"
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -275,6 +275,9 @@ $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
 $ LIB_KRB5 = "krb5_asn"
 $ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
 $ LIB_PQUEUE = "pqueue"
+$ LIB_TS = "ts_err,ts_req_utils,ts_req_print,ts_rsp_utils,ts_rsp_print,"+ -
+	"ts_rsp_sign,ts_rsp_verify,ts_verify_ctx,ts_lib,ts_conf,"+ -
+	"ts_asn1"
 $!
 $! Setup exceptional compilations
 $!
