@@ -20,12 +20,12 @@ $	    tests = p1
 $	else
 $	    tests := -
 	test_des,test_idea,test_sha,test_md4,test_md5,test_hmac,-
-	test_md2,test_mdc2,-
-	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,test_rd,-
+	test_md2,test_mdc2,test_wp,-
+	test_rmd,test_rc2,test_rc4,test_rc5,test_bf,test_cast,test_aes,-
 	test_rand,test_bn,test_ec,test_ecdsa,test_ecdh,-
 	test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
-	test_ss,test_ca,test_engine,test_evp,test_ssl
+	test_ss,test_ca,test_engine,test_evp,test_ssl,test_tsa
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
@@ -246,9 +246,22 @@ $	    write sys$output "Generate and certify a test certificate via the 'ca' pro
 $	    @testca.com
 $	endif
 $	return
-$ test_rd: 
-$	write sys$output "test Rijndael"
-$	!mcr 'texe_dir''rdtest'
+$ test_aes: 
+$!	write sys$output "test AES"
+$!	!mcr 'texe_dir''aestest'
+$	return
+$ test_tsa:
+$	set noon
+$	define/user sys$output nla0:
+$	mcr 'exe_dir'openssl no-rsa
+$	save_severity=$SEVERITY
+$	set on
+$	if save_severity
+$	then
+$	    write sys$output "skipping testtsa.com test -- requires RSA"
+$	else
+$	    @testtsa.com
+$	endif
 $	return
 $
 $
