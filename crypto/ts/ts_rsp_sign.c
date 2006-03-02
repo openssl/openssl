@@ -689,7 +689,14 @@ static int TS_RESP_process_extensions(TS_RESP_CTX *ctx)
 	for (i = 0; ok && i < sk_X509_EXTENSION_num(exts); ++i)
 		{
 		X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
-		ok = (*ctx->extension_cb)(ctx, ext, (void *)ctx->extension_cb);
+		/* XXXXX The last argument was previously
+		   (void *)ctx->extension_cb, but ISO C doesn't permit
+		   converting a function pointer to void *.  For lack of
+		   better information, I'm placing a NULL there instead.
+		   The callback can pick its own address out from the ctx
+		   anyway...
+		*/
+		ok = (*ctx->extension_cb)(ctx, ext, NULL);
 		}
 
 	return ok;
