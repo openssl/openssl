@@ -340,7 +340,7 @@ int asn1_GetSequence(ASN1_const_CTX *c, long *length)
 	return(1);
 	}
 
-ASN1_STRING *ASN1_STRING_dup(ASN1_STRING *str)
+ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
 	{
 	ASN1_STRING *ret;
 
@@ -423,7 +423,7 @@ void ASN1_STRING_free(ASN1_STRING *a)
 	OPENSSL_free(a);
 	}
 
-int ASN1_STRING_cmp(ASN1_STRING *a, ASN1_STRING *b)
+int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 	{
 	int i;
 
@@ -449,7 +449,7 @@ void asn1_add_error(const unsigned char *address, int offset)
 	ERR_add_error_data(4,"address=",buf1," offset=",buf2);
 	}
 
-int ASN1_STRING_length(ASN1_STRING *x)
+int ASN1_STRING_length(const ASN1_STRING *x)
 { return M_ASN1_STRING_length(x); }
 
 void ASN1_STRING_length_set(ASN1_STRING *x, int len)

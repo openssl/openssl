@@ -548,32 +548,34 @@ typedef struct BIT_STRING_BITNAME_st {
 		ASN1_STRING_type_new(V_ASN1_BIT_STRING)
 #define M_ASN1_BIT_STRING_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
 #define M_ASN1_BIT_STRING_dup(a) (ASN1_BIT_STRING *)\
-		ASN1_STRING_dup((ASN1_STRING *)a)
+		ASN1_STRING_dup((const ASN1_STRING *)a)
 #define M_ASN1_BIT_STRING_cmp(a,b) ASN1_STRING_cmp(\
-		(ASN1_STRING *)a,(ASN1_STRING *)b)
+		(const ASN1_STRING *)a,(const ASN1_STRING *)b)
 #define M_ASN1_BIT_STRING_set(a,b,c) ASN1_STRING_set((ASN1_STRING *)a,b,c)
 
 #define M_ASN1_INTEGER_new()	(ASN1_INTEGER *)\
 		ASN1_STRING_type_new(V_ASN1_INTEGER)
 #define M_ASN1_INTEGER_free(a)		ASN1_STRING_free((ASN1_STRING *)a)
-#define M_ASN1_INTEGER_dup(a) (ASN1_INTEGER *)ASN1_STRING_dup((ASN1_STRING *)a)
+#define M_ASN1_INTEGER_dup(a) (ASN1_INTEGER *)\
+		ASN1_STRING_dup((const ASN1_STRING *)a)
 #define M_ASN1_INTEGER_cmp(a,b)	ASN1_STRING_cmp(\
-		(ASN1_STRING *)a,(ASN1_STRING *)b)
+		(const ASN1_STRING *)a,(const ASN1_STRING *)b)
 
 #define M_ASN1_ENUMERATED_new()	(ASN1_ENUMERATED *)\
 		ASN1_STRING_type_new(V_ASN1_ENUMERATED)
 #define M_ASN1_ENUMERATED_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
-#define M_ASN1_ENUMERATED_dup(a) (ASN1_ENUMERATED *)ASN1_STRING_dup((ASN1_STRING *)a)
+#define M_ASN1_ENUMERATED_dup(a) (ASN1_ENUMERATED *)\
+		ASN1_STRING_dup((const ASN1_STRING *)a)
 #define M_ASN1_ENUMERATED_cmp(a,b)	ASN1_STRING_cmp(\
-		(ASN1_STRING *)a,(ASN1_STRING *)b)
+		(const ASN1_STRING *)a,(const ASN1_STRING *)b)
 
 #define M_ASN1_OCTET_STRING_new()	(ASN1_OCTET_STRING *)\
 		ASN1_STRING_type_new(V_ASN1_OCTET_STRING)
 #define M_ASN1_OCTET_STRING_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
 #define M_ASN1_OCTET_STRING_dup(a) (ASN1_OCTET_STRING *)\
-		ASN1_STRING_dup((ASN1_STRING *)a)
+		ASN1_STRING_dup((const ASN1_STRING *)a)
 #define M_ASN1_OCTET_STRING_cmp(a,b) ASN1_STRING_cmp(\
-		(ASN1_STRING *)a,(ASN1_STRING *)b)
+		(const ASN1_STRING *)a,(const ASN1_STRING *)b)
 #define M_ASN1_OCTET_STRING_set(a,b,c)	ASN1_STRING_set((ASN1_STRING *)a,b,c)
 #define M_ASN1_OCTET_STRING_print(a,b)	ASN1_STRING_print(a,(ASN1_STRING *)b)
 #define M_i2d_ASN1_OCTET_STRING(a,pp) \
@@ -656,7 +658,7 @@ typedef struct BIT_STRING_BITNAME_st {
 		ASN1_STRING_type_new(V_ASN1_IA5STRING)
 #define M_ASN1_IA5STRING_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
 #define M_ASN1_IA5STRING_dup(a)	\
-			(ASN1_IA5STRING *)ASN1_STRING_dup((ASN1_STRING *)a)
+		(ASN1_IA5STRING *)ASN1_STRING_dup((const ASN1_STRING *)a)
 #define M_i2d_ASN1_IA5STRING(a,pp) \
 		i2d_ASN1_bytes((ASN1_STRING *)a,pp,V_ASN1_IA5STRING,\
 			V_ASN1_UNIVERSAL)
@@ -667,18 +669,20 @@ typedef struct BIT_STRING_BITNAME_st {
 #define M_ASN1_UTCTIME_new()	(ASN1_UTCTIME *)\
 		ASN1_STRING_type_new(V_ASN1_UTCTIME)
 #define M_ASN1_UTCTIME_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
-#define M_ASN1_UTCTIME_dup(a) (ASN1_UTCTIME *)ASN1_STRING_dup((ASN1_STRING *)a)
+#define M_ASN1_UTCTIME_dup(a) (ASN1_UTCTIME *)\
+		ASN1_STRING_dup((const ASN1_STRING *)a)
 
 #define M_ASN1_GENERALIZEDTIME_new()	(ASN1_GENERALIZEDTIME *)\
 		ASN1_STRING_type_new(V_ASN1_GENERALIZEDTIME)
 #define M_ASN1_GENERALIZEDTIME_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
 #define M_ASN1_GENERALIZEDTIME_dup(a) (ASN1_GENERALIZEDTIME *)ASN1_STRING_dup(\
-	(ASN1_STRING *)a)
+	(const ASN1_STRING *)a)
 
 #define M_ASN1_TIME_new()	(ASN1_TIME *)\
 		ASN1_STRING_type_new(V_ASN1_UTCTIME)
 #define M_ASN1_TIME_free(a)	ASN1_STRING_free((ASN1_STRING *)a)
-#define M_ASN1_TIME_dup(a) (ASN1_TIME *)ASN1_STRING_dup((ASN1_STRING *)a)
+#define M_ASN1_TIME_dup(a) (ASN1_TIME *)\
+	ASN1_STRING_dup((const ASN1_STRING *)a)
 
 #define M_ASN1_GENERALSTRING_new()	(ASN1_GENERALSTRING *)\
 		ASN1_STRING_type_new(V_ASN1_GENERALSTRING)
@@ -755,13 +759,13 @@ DECLARE_ASN1_SET_OF(ASN1_OBJECT)
 
 ASN1_STRING *	ASN1_STRING_new(void);
 void		ASN1_STRING_free(ASN1_STRING *a);
-ASN1_STRING *	ASN1_STRING_dup(ASN1_STRING *a);
+ASN1_STRING *	ASN1_STRING_dup(const ASN1_STRING *a);
 ASN1_STRING *	ASN1_STRING_type_new(int type );
-int 		ASN1_STRING_cmp(ASN1_STRING *a, ASN1_STRING *b);
+int 		ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b);
   /* Since this is used to store all sorts of things, via macros, for now, make
      its data void * */
 int 		ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
-int ASN1_STRING_length(ASN1_STRING *x);
+int ASN1_STRING_length(const ASN1_STRING *x);
 void ASN1_STRING_length_set(ASN1_STRING *x, int n);
 int ASN1_STRING_type(ASN1_STRING *x);
 unsigned char * ASN1_STRING_data(ASN1_STRING *x);
@@ -794,8 +798,8 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a,const unsigned char **pp,
 			long length);
 ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a,const unsigned char **pp,
 			long length);
-ASN1_INTEGER *	ASN1_INTEGER_dup(ASN1_INTEGER *x);
-int ASN1_INTEGER_cmp(ASN1_INTEGER *x, ASN1_INTEGER *y);
+ASN1_INTEGER *	ASN1_INTEGER_dup(const ASN1_INTEGER *x);
+int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_ENUMERATED)
 
@@ -812,8 +816,8 @@ ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,time_t t)
 int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_OCTET_STRING)
-ASN1_OCTET_STRING *	ASN1_OCTET_STRING_dup(ASN1_OCTET_STRING *a);
-int 	ASN1_OCTET_STRING_cmp(ASN1_OCTET_STRING *a, ASN1_OCTET_STRING *b);
+ASN1_OCTET_STRING *	ASN1_OCTET_STRING_dup(const ASN1_OCTET_STRING *a);
+int 	ASN1_OCTET_STRING_cmp(const ASN1_OCTET_STRING *a, const ASN1_OCTET_STRING *b);
 int 	ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *str, const unsigned char *data, int len);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_VISIBLESTRING)
@@ -865,9 +869,9 @@ ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data,int len,
 	const char *sn, const char *ln);
 
 int ASN1_INTEGER_set(ASN1_INTEGER *a, long v);
-long ASN1_INTEGER_get(ASN1_INTEGER *a);
-ASN1_INTEGER *BN_to_ASN1_INTEGER(BIGNUM *bn, ASN1_INTEGER *ai);
-BIGNUM *ASN1_INTEGER_to_BN(ASN1_INTEGER *ai,BIGNUM *bn);
+long ASN1_INTEGER_get(const ASN1_INTEGER *a);
+ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai);
+BIGNUM *ASN1_INTEGER_to_BN(const ASN1_INTEGER *ai,BIGNUM *bn);
 
 int ASN1_ENUMERATED_set(ASN1_ENUMERATED *a, long v);
 long ASN1_ENUMERATED_get(ASN1_ENUMERATED *a);
