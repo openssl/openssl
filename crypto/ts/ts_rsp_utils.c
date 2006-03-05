@@ -112,7 +112,7 @@ int TS_TST_INFO_set_version(TS_TST_INFO *a, long version)
 	return ASN1_INTEGER_set(a->version, version);
 	}
 
-long TS_TST_INFO_get_version(TS_TST_INFO *a)
+long TS_TST_INFO_get_version(const TS_TST_INFO *a)
 	{
 	return ASN1_INTEGER_get(a->version);
 	}
@@ -161,7 +161,7 @@ TS_MSG_IMPRINT *TS_TST_INFO_get_msg_imprint(TS_TST_INFO *a)
 	return a->msg_imprint;
 	}
 
-int TS_TST_INFO_set_serial(TS_TST_INFO *a, ASN1_INTEGER *serial)
+int TS_TST_INFO_set_serial(TS_TST_INFO *a, const ASN1_INTEGER *serial)
 	{
 	ASN1_INTEGER *new_serial;
 
@@ -178,12 +178,12 @@ int TS_TST_INFO_set_serial(TS_TST_INFO *a, ASN1_INTEGER *serial)
 	return 1;
 	}
 
-ASN1_INTEGER *TS_TST_INFO_get_serial(TS_TST_INFO *a)
+const ASN1_INTEGER *TS_TST_INFO_get_serial(const TS_TST_INFO *a)
 	{
 	return a->serial;
 	}
 
-int TS_TST_INFO_set_time(TS_TST_INFO *a, ASN1_GENERALIZEDTIME *gtime)
+int TS_TST_INFO_set_time(TS_TST_INFO *a, const ASN1_GENERALIZEDTIME *gtime)
 	{
 	ASN1_GENERALIZEDTIME *new_time;
 
@@ -200,7 +200,7 @@ int TS_TST_INFO_set_time(TS_TST_INFO *a, ASN1_GENERALIZEDTIME *gtime)
 	return 1;
 	}
 
-ASN1_GENERALIZEDTIME *TS_TST_INFO_get_time(TS_TST_INFO *a)
+const ASN1_GENERALIZEDTIME *TS_TST_INFO_get_time(const TS_TST_INFO *a)
 	{
 	return a->time;
 	}
@@ -227,7 +227,7 @@ TS_ACCURACY *TS_TST_INFO_get_accuracy(TS_TST_INFO *a)
 	return a->accuracy;
 	}
 
-int TS_ACCURACY_set_seconds(TS_ACCURACY *a, ASN1_INTEGER *seconds)
+int TS_ACCURACY_set_seconds(TS_ACCURACY *a, const ASN1_INTEGER *seconds)
 	{
 	ASN1_INTEGER *new_seconds;
 
@@ -244,12 +244,12 @@ int TS_ACCURACY_set_seconds(TS_ACCURACY *a, ASN1_INTEGER *seconds)
 	return 1;
 	}
 
-ASN1_INTEGER *TS_ACCURACY_get_seconds(TS_ACCURACY *a)
+const ASN1_INTEGER *TS_ACCURACY_get_seconds(const TS_ACCURACY *a)
 	{
 	return a->seconds;
 	}
 
-int TS_ACCURACY_set_millis(TS_ACCURACY *a, ASN1_INTEGER *millis)
+int TS_ACCURACY_set_millis(TS_ACCURACY *a, const ASN1_INTEGER *millis)
 	{
 	ASN1_INTEGER *new_millis = NULL;
 
@@ -270,12 +270,12 @@ int TS_ACCURACY_set_millis(TS_ACCURACY *a, ASN1_INTEGER *millis)
 	return 1;
 	}
 
-ASN1_INTEGER *TS_ACCURACY_get_millis(TS_ACCURACY *a)
+const ASN1_INTEGER *TS_ACCURACY_get_millis(const TS_ACCURACY *a)
 	{
 	return a->millis;
 	}
 
-int TS_ACCURACY_set_micros(TS_ACCURACY *a, ASN1_INTEGER *micros)
+int TS_ACCURACY_set_micros(TS_ACCURACY *a, const ASN1_INTEGER *micros)
 	{
 	ASN1_INTEGER *new_micros = NULL;
 
@@ -296,7 +296,7 @@ int TS_ACCURACY_set_micros(TS_ACCURACY *a, ASN1_INTEGER *micros)
 	return 1;
 	}
 
-ASN1_INTEGER *TS_ACCURACY_get_micros(TS_ACCURACY *a)
+const ASN1_INTEGER *TS_ACCURACY_get_micros(const TS_ACCURACY *a)
 	{
 	return a->micros;
 	}
@@ -307,12 +307,12 @@ int TS_TST_INFO_set_ordering(TS_TST_INFO *a, int ordering)
 	return 1;
 	}
 
-int TS_TST_INFO_get_ordering(TS_TST_INFO *a)
+int TS_TST_INFO_get_ordering(const TS_TST_INFO *a)
 	{
 	return a->ordering ? 1 : 0;
 	}
 
-int TS_TST_INFO_set_nonce(TS_TST_INFO *a, ASN1_INTEGER *nonce)
+int TS_TST_INFO_set_nonce(TS_TST_INFO *a, const ASN1_INTEGER *nonce)
 	{
 	ASN1_INTEGER *new_nonce;
 
@@ -329,7 +329,7 @@ int TS_TST_INFO_set_nonce(TS_TST_INFO *a, ASN1_INTEGER *nonce)
 	return 1;
 	}
 
-ASN1_INTEGER *TS_TST_INFO_get_nonce(TS_TST_INFO *a)
+const ASN1_INTEGER *TS_TST_INFO_get_nonce(const TS_TST_INFO *a)
 	{
 	return a->nonce;
 	}

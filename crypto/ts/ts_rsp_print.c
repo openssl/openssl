@@ -73,7 +73,7 @@ struct status_map_st
 
 static int TS_status_map_print(BIO *bio, struct status_map_st *a,
 			       ASN1_BIT_STRING *v);
-static int TS_ACCURACY_print_bio(BIO *bio, TS_ACCURACY *accuracy);
+static int TS_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy);
 
 /* Function definitions. */
 
@@ -184,10 +184,10 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
 	{
 	int v;
 	ASN1_OBJECT *policy_id;
-	ASN1_INTEGER *serial;
-	ASN1_GENERALIZEDTIME *gtime;
+	const ASN1_INTEGER *serial;
+	const ASN1_GENERALIZEDTIME *gtime;
 	TS_ACCURACY *accuracy;
-	ASN1_INTEGER *nonce;
+	const ASN1_INTEGER *nonce;
 	GENERAL_NAME *tsa_name;
 
 	if (a == NULL) return 0;
@@ -261,11 +261,11 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a)
 	return 1;
 	}
 
-static int TS_ACCURACY_print_bio(BIO *bio, TS_ACCURACY *accuracy)
+static int TS_ACCURACY_print_bio(BIO *bio, const TS_ACCURACY *accuracy)
 	{
-	ASN1_INTEGER *seconds = TS_ACCURACY_get_seconds(accuracy);
-	ASN1_INTEGER *millis = TS_ACCURACY_get_millis(accuracy);
-	ASN1_INTEGER *micros = TS_ACCURACY_get_micros(accuracy);
+	const ASN1_INTEGER *seconds = TS_ACCURACY_get_seconds(accuracy);
+	const ASN1_INTEGER *millis = TS_ACCURACY_get_millis(accuracy);
+	const ASN1_INTEGER *micros = TS_ACCURACY_get_micros(accuracy);
 
 	if (seconds != NULL)
 		TS_ASN1_INTEGER_print_bio(bio, seconds);

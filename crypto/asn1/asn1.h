@@ -940,10 +940,10 @@ int ASN1_i2d_bio(i2d_of_void *i2d,BIO *out, unsigned char *x);
 #define ASN1_i2d_bio_of_const(type,i2d,out,x) \
 	((int (*)(I2D_OF_const(type),BIO *,const type *))openssl_fcast(ASN1_i2d_bio))(i2d,out,x)
 int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x);
-int ASN1_UTCTIME_print(BIO *fp,ASN1_UTCTIME *a);
-int ASN1_GENERALIZEDTIME_print(BIO *fp,ASN1_GENERALIZEDTIME *a);
-int ASN1_TIME_print(BIO *fp,ASN1_TIME *a);
-int ASN1_STRING_print(BIO *bp,ASN1_STRING *v);
+int ASN1_UTCTIME_print(BIO *fp, const ASN1_UTCTIME *a);
+int ASN1_GENERALIZEDTIME_print(BIO *fp, const ASN1_GENERALIZEDTIME *a);
+int ASN1_TIME_print(BIO *fp, const ASN1_TIME *a);
+int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v);
 int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags);
 int ASN1_parse(BIO *bp,const unsigned char *pp,long len,int indent);
 int ASN1_parse_dump(BIO *bp,const unsigned char *pp,long len,int indent,int dump);

@@ -69,7 +69,7 @@ int TS_REQ_print_bio(BIO *bio, TS_REQ *a)
 	{
 	int v;
 	ASN1_OBJECT *policy_id;
-	ASN1_INTEGER *nonce;
+	const ASN1_INTEGER *nonce;
 
 	if (a == NULL) return 0;
 

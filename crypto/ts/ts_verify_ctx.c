@@ -114,7 +114,7 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
 	TS_MSG_IMPRINT *imprint;
 	X509_ALGOR *md_alg;
 	ASN1_OCTET_STRING *msg;
-	ASN1_INTEGER *nonce;
+	const ASN1_INTEGER *nonce;
 
 	assert(req != NULL);
 	if (ret)

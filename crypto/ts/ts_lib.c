@@ -67,7 +67,7 @@
 
 /* Function definitions. */
 
-int TS_ASN1_INTEGER_print_bio(BIO *bio, ASN1_INTEGER *num)
+int TS_ASN1_INTEGER_print_bio(BIO *bio, const ASN1_INTEGER *num)
 	{
 	BIGNUM num_bn;
 	int result = 0;
@@ -86,7 +86,7 @@ int TS_ASN1_INTEGER_print_bio(BIO *bio, ASN1_INTEGER *num)
 	return result;
 	}
 
-int TS_OBJ_print_bio(BIO *bio, ASN1_OBJECT *obj)
+int TS_OBJ_print_bio(BIO *bio, const ASN1_OBJECT *obj)
 	{
 	char obj_txt[128];
 
@@ -97,7 +97,7 @@ int TS_OBJ_print_bio(BIO *bio, ASN1_OBJECT *obj)
 	return 1;
 	}
 
-int TS_ext_print_bio(BIO *bio, STACK_OF(X509_EXTENSION) *extensions)
+int TS_ext_print_bio(BIO *bio, const STACK_OF(X509_EXTENSION) *extensions)
 	{
 	int i, critical, n;
 	X509_EXTENSION *ex;
@@ -123,7 +123,7 @@ int TS_ext_print_bio(BIO *bio, STACK_OF(X509_EXTENSION) *extensions)
 	return 1;
 	}
 
-int TS_X509_ALGOR_print_bio(BIO *bio, X509_ALGOR *alg)
+int TS_X509_ALGOR_print_bio(BIO *bio, const X509_ALGOR *alg)
 	{
 	int i = OBJ_obj2nid(alg->algorithm);
 	return BIO_printf(bio, "Hash Algorithm: %s\n",
@@ -132,7 +132,7 @@ int TS_X509_ALGOR_print_bio(BIO *bio, X509_ALGOR *alg)
 
 int TS_MSG_IMPRINT_print_bio(BIO *bio, TS_MSG_IMPRINT *a)
 	{
-	ASN1_OCTET_STRING *msg;
+	const ASN1_OCTET_STRING *msg;
 
 	TS_X509_ALGOR_print_bio(bio, TS_MSG_IMPRINT_get_algo(a));
 

@@ -512,7 +512,7 @@ static int TS_RESP_check_request(TS_RESP_CTX *ctx)
 	TS_MSG_IMPRINT *msg_imprint;
 	X509_ALGOR *md_alg;
 	int md_alg_id;
-	ASN1_OCTET_STRING *digest;
+	const ASN1_OCTET_STRING *digest;
 	EVP_MD *md = NULL;
 	int i;
 
@@ -607,7 +607,7 @@ static TS_TST_INFO *TS_RESP_create_tst_info(TS_RESP_CTX *ctx,
 	ASN1_GENERALIZEDTIME *asn1_time = NULL;
 	long sec, usec;
 	TS_ACCURACY *accuracy = NULL;
-	ASN1_INTEGER *nonce;
+	const ASN1_INTEGER *nonce;
 	GENERAL_NAME *tsa_name = NULL;
 
 	if (!(tst_info = TS_TST_INFO_new())) goto end;

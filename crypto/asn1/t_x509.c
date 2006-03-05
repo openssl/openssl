@@ -329,14 +329,15 @@ int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
 	return 1;
 }
 
-int ASN1_STRING_print(BIO *bp, ASN1_STRING *v)
+int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)
 	{
 	int i,n;
-	char buf[80],*p;;
+	char buf[80];
+	const char *p;
 
 	if (v == NULL) return(0);
 	n=0;
-	p=(char *)v->data;
+	p=(const char *)v->data;
 	for (i=0; i<v->length; i++)
 		{
 		if ((p[i] > '~') || ((p[i] < ' ') &&
@@ -358,7 +359,7 @@ int ASN1_STRING_print(BIO *bp, ASN1_STRING *v)
 	return(1);
 	}
 
-int ASN1_TIME_print(BIO *bp, ASN1_TIME *tm)
+int ASN1_TIME_print(BIO *bp, const ASN1_TIME *tm)
 {
 	if(tm->type == V_ASN1_UTCTIME) return ASN1_UTCTIME_print(bp, tm);
 	if(tm->type == V_ASN1_GENERALIZEDTIME)
@@ -373,7 +374,7 @@ static const char *mon[12]=
     "Jul","Aug","Sep","Oct","Nov","Dec"
     };
 
-int ASN1_GENERALIZEDTIME_print(BIO *bp, ASN1_GENERALIZEDTIME *tm)
+int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
 	{
 	char *v;
 	int gmt=0;
@@ -420,15 +421,15 @@ err:
 	return(0);
 	}
 
-int ASN1_UTCTIME_print(BIO *bp, ASN1_UTCTIME *tm)
+int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 	{
-	char *v;
+	const char *v;
 	int gmt=0;
 	int i;
 	int y=0,M=0,d=0,h=0,m=0,s=0;
 
 	i=tm->length;
-	v=(char *)tm->data;
+	v=(const char *)tm->data;
 
 	if (i < 10) goto err;
 	if (v[i-1] == 'Z') gmt=1;

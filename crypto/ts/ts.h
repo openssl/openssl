@@ -372,7 +372,7 @@ ESS_SIGNING_CERT *ESS_SIGNING_CERT_dup(ESS_SIGNING_CERT *a);
 void ERR_load_TS_strings(void);
 
 int TS_REQ_set_version(TS_REQ *a, long version);
-long TS_REQ_get_version(TS_REQ *a);
+long TS_REQ_get_version(const TS_REQ *a);
 
 int TS_REQ_set_msg_imprint(TS_REQ *a, TS_MSG_IMPRINT *msg_imprint);
 TS_MSG_IMPRINT *TS_REQ_get_msg_imprint(TS_REQ *a);
@@ -386,11 +386,11 @@ ASN1_OCTET_STRING *TS_MSG_IMPRINT_get_msg(TS_MSG_IMPRINT *a);
 int TS_REQ_set_policy_id(TS_REQ *a, ASN1_OBJECT *policy);
 ASN1_OBJECT *TS_REQ_get_policy_id(TS_REQ *a);
 
-int TS_REQ_set_nonce(TS_REQ *a, ASN1_INTEGER *nonce);
-ASN1_INTEGER *TS_REQ_get_nonce(TS_REQ *a);
+int TS_REQ_set_nonce(TS_REQ *a, const ASN1_INTEGER *nonce);
+const ASN1_INTEGER *TS_REQ_get_nonce(const TS_REQ *a);
 
 int TS_REQ_set_cert_req(TS_REQ *a, int cert_req);
-int TS_REQ_get_cert_req(TS_REQ *a);
+int TS_REQ_get_cert_req(const TS_REQ *a);
 
 STACK_OF(X509_EXTENSION) *TS_REQ_get_exts(TS_REQ *a);
 void TS_REQ_ext_free(TS_REQ *a);
@@ -418,7 +418,7 @@ PKCS7 *TS_RESP_get_token(TS_RESP *a);
 TS_TST_INFO *TS_RESP_get_tst_info(TS_RESP *a);
 
 int TS_TST_INFO_set_version(TS_TST_INFO *a, long version);
-long TS_TST_INFO_get_version(TS_TST_INFO *a);
+long TS_TST_INFO_get_version(const TS_TST_INFO *a);
 
 int TS_TST_INFO_set_policy_id(TS_TST_INFO *a, ASN1_OBJECT *policy_id);
 ASN1_OBJECT *TS_TST_INFO_get_policy_id(TS_TST_INFO *a);
@@ -426,29 +426,29 @@ ASN1_OBJECT *TS_TST_INFO_get_policy_id(TS_TST_INFO *a);
 int TS_TST_INFO_set_msg_imprint(TS_TST_INFO *a, TS_MSG_IMPRINT *msg_imprint);
 TS_MSG_IMPRINT *TS_TST_INFO_get_msg_imprint(TS_TST_INFO *a);
 
-int TS_TST_INFO_set_serial(TS_TST_INFO *a, ASN1_INTEGER *serial);
-ASN1_INTEGER *TS_TST_INFO_get_serial(TS_TST_INFO *a);
+int TS_TST_INFO_set_serial(TS_TST_INFO *a, const ASN1_INTEGER *serial);
+const ASN1_INTEGER *TS_TST_INFO_get_serial(const TS_TST_INFO *a);
 
-int TS_TST_INFO_set_time(TS_TST_INFO *a, ASN1_GENERALIZEDTIME *gtime);
-ASN1_GENERALIZEDTIME *TS_TST_INFO_get_time(TS_TST_INFO *a);
+int TS_TST_INFO_set_time(TS_TST_INFO *a, const ASN1_GENERALIZEDTIME *gtime);
+const ASN1_GENERALIZEDTIME *TS_TST_INFO_get_time(const TS_TST_INFO *a);
 
 int TS_TST_INFO_set_accuracy(TS_TST_INFO *a, TS_ACCURACY *accuracy);
 TS_ACCURACY *TS_TST_INFO_get_accuracy(TS_TST_INFO *a);
 
-int TS_ACCURACY_set_seconds(TS_ACCURACY *a, ASN1_INTEGER *seconds);
-ASN1_INTEGER *TS_ACCURACY_get_seconds(TS_ACCURACY *a);
+int TS_ACCURACY_set_seconds(TS_ACCURACY *a, const ASN1_INTEGER *seconds);
+const ASN1_INTEGER *TS_ACCURACY_get_seconds(const TS_ACCURACY *a);
 
-int TS_ACCURACY_set_millis(TS_ACCURACY *a, ASN1_INTEGER *millis);
-ASN1_INTEGER *TS_ACCURACY_get_millis(TS_ACCURACY *a);
+int TS_ACCURACY_set_millis(TS_ACCURACY *a, const ASN1_INTEGER *millis);
+const ASN1_INTEGER *TS_ACCURACY_get_millis(const TS_ACCURACY *a);
 
-int TS_ACCURACY_set_micros(TS_ACCURACY *a, ASN1_INTEGER *micros);
-ASN1_INTEGER *TS_ACCURACY_get_micros(TS_ACCURACY *a);
+int TS_ACCURACY_set_micros(TS_ACCURACY *a, const ASN1_INTEGER *micros);
+const ASN1_INTEGER *TS_ACCURACY_get_micros(const TS_ACCURACY *a);
 
 int TS_TST_INFO_set_ordering(TS_TST_INFO *a, int ordering);
-int TS_TST_INFO_get_ordering(TS_TST_INFO *a);
+int TS_TST_INFO_get_ordering(const TS_TST_INFO *a);
 
-int TS_TST_INFO_set_nonce(TS_TST_INFO *a, ASN1_INTEGER *nonce);
-ASN1_INTEGER *TS_TST_INFO_get_nonce(TS_TST_INFO *a);
+int TS_TST_INFO_set_nonce(TS_TST_INFO *a, const ASN1_INTEGER *nonce);
+const ASN1_INTEGER *TS_TST_INFO_get_nonce(const TS_TST_INFO *a);
 
 int TS_TST_INFO_set_tsa(TS_TST_INFO *a, GENERAL_NAME *tsa);
 GENERAL_NAME *TS_TST_INFO_get_tsa(TS_TST_INFO *a);
@@ -719,10 +719,10 @@ int TS_TST_INFO_print_bio(BIO *bio, TS_TST_INFO *a);
 
 /* Common utility functions defined in ts/ts_lib.c */
 
-int TS_ASN1_INTEGER_print_bio(BIO *bio, ASN1_INTEGER *num);
-int TS_OBJ_print_bio(BIO *bio, ASN1_OBJECT *obj);
-int TS_ext_print_bio(BIO *bio, STACK_OF(X509_EXTENSION) *extensions);
-int TS_X509_ALGOR_print_bio(BIO *bio, X509_ALGOR *alg);
+int TS_ASN1_INTEGER_print_bio(BIO *bio, const ASN1_INTEGER *num);
+int TS_OBJ_print_bio(BIO *bio, const ASN1_OBJECT *obj);
+int TS_ext_print_bio(BIO *bio, const STACK_OF(X509_EXTENSION) *extensions);
+int TS_X509_ALGOR_print_bio(BIO *bio, const X509_ALGOR *alg);
 int TS_MSG_IMPRINT_print_bio(BIO *bio, TS_MSG_IMPRINT *msg);
 
 /* Function declarations for handling configuration options,

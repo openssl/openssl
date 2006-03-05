@@ -67,7 +67,7 @@ int TS_REQ_set_version(TS_REQ *a, long version)
 	return ASN1_INTEGER_set(a->version, version);
 	}
 
-long TS_REQ_get_version(TS_REQ *a)
+long TS_REQ_get_version(const TS_REQ *a)
 	{
 	return ASN1_INTEGER_get(a->version);
 	}
@@ -148,7 +148,7 @@ ASN1_OBJECT *TS_REQ_get_policy_id(TS_REQ *a)
 	return a->policy_id;
 	}
 
-int TS_REQ_set_nonce(TS_REQ *a, ASN1_INTEGER *nonce)
+int TS_REQ_set_nonce(TS_REQ *a, const ASN1_INTEGER *nonce)
 	{
 	ASN1_INTEGER *new_nonce;
 
@@ -165,7 +165,7 @@ int TS_REQ_set_nonce(TS_REQ *a, ASN1_INTEGER *nonce)
 	return 1;
 	}
 
-ASN1_INTEGER *TS_REQ_get_nonce(TS_REQ *a)
+const ASN1_INTEGER *TS_REQ_get_nonce(const TS_REQ *a)
 	{
 	return a->nonce;
 	}
@@ -176,7 +176,7 @@ int TS_REQ_set_cert_req(TS_REQ *a, int cert_req)
 	return 1;
 	}
 
-int TS_REQ_get_cert_req(TS_REQ *a)
+int TS_REQ_get_cert_req(const TS_REQ *a)
 	{
 	return a->cert_req ? 1 : 0;
 	}

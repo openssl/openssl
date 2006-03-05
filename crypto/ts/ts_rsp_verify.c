@@ -81,7 +81,7 @@ static int TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 static int TS_check_imprints(X509_ALGOR *algor_a, 
 			     unsigned char *imprint_a, unsigned len_a,
 			     TS_TST_INFO *tst_info);
-static int TS_check_nonces(ASN1_INTEGER *a, TS_TST_INFO *tst_info);
+static int TS_check_nonces(const ASN1_INTEGER *a, TS_TST_INFO *tst_info);
 static int TS_check_signer_name(GENERAL_NAME *tsa_name, X509 *signer);
 static int TS_find_name(STACK_OF(GENERAL_NAME) *gen_names, GENERAL_NAME *name);
 
@@ -657,9 +657,9 @@ static int TS_check_imprints(X509_ALGOR *algor_a,
 	return ret;
 	}
 
-static int TS_check_nonces(ASN1_INTEGER *a, TS_TST_INFO *tst_info)
+static int TS_check_nonces(const ASN1_INTEGER *a, TS_TST_INFO *tst_info)
 	{
-	ASN1_INTEGER *b = TS_TST_INFO_get_nonce(tst_info);
+	const ASN1_INTEGER *b = TS_TST_INFO_get_nonce(tst_info);
 
 	/* Error if nonce is missing. */
 	if (!b)
