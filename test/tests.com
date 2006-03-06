@@ -43,6 +43,7 @@ $	MD2TEST :=	md2test
 $	MD4TEST :=	md4test
 $	MD5TEST :=	md5test
 $	HMACTEST :=	hmactest
+$	WPTEST :=	wp_test
 $	RC2TEST :=	rc2test
 $	RC4TEST :=	rc4test
 $	RC5TEST :=	rc5test
@@ -90,6 +91,9 @@ $	mcr 'texe_dir''md4test'
 $	return
 $ test_hmac:
 $	mcr 'texe_dir''hmactest'
+$	return
+$ test_wp:
+$	mcr 'texe_dir''wptest'
 $	return
 $ test_md2:
 $	mcr 'texe_dir''md2test'
