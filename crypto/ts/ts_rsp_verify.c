@@ -425,7 +425,7 @@ static int _TS_RESP_verify_token(TS_VERIFY_CTX *ctx,
 	if ((ctx->flags & TS_VFY_VERSION)
 	    && TS_TST_INFO_get_version(tst_info) != 1)
 		{
-		TSerr(TS_F_TS_VERIFY, TS_R_UNSUPPORTED_VERSION);
+		TSerr(TS_F_TS_RESP_VERIFY_TOKEN, TS_R_UNSUPPORTED_VERSION);
 		goto err;
 		}
 
