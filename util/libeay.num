@@ -3531,7 +3531,8 @@ i2d_TS_REQ_bio                          3929	EXIST::FUNCTION:
 i2d_ESS_CERT_ID                         3930	EXIST::FUNCTION:
 TS_VERIFY_CTX_new                       3931	EXIST::FUNCTION:
 TS_RESP_CTX_set_extension_cb            3932	EXIST::FUNCTION:
-TS_RESP_CTX_set_status_info_cond        3933	EXIST::FUNCTION:
+TS_RESP_CTX_set_status_info_cond        3933	EXIST:!VMS:FUNCTION:
+TS_RESP_CTX_set_stat_info_cond          3933	EXIST:VMS:FUNCTION:
 TS_RESP_CTX_set_def_policy              3934	EXIST::FUNCTION:
 TS_RESP_create_response                 3935	EXIST::FUNCTION:
 TS_TST_INFO_get_nonce                   3936	EXIST::FUNCTION:
@@ -3575,7 +3576,8 @@ d2i_TS_STATUS_INFO                      3973	EXIST::FUNCTION:
 TS_MSG_IMPRINT_set_msg                  3974	EXIST::FUNCTION:
 TS_REQ_free                             3975	EXIST::FUNCTION:
 TS_REQ_get_exts                         3976	EXIST::FUNCTION:
-TS_RESP_CTX_set_clock_precision_digits  3977	EXIST::FUNCTION:
+TS_RESP_CTX_set_clock_precision_digits  3977	EXIST:!VMS:FUNCTION:
+TS_RESP_CTX_set_clk_prec_digits         3977	EXIST:VMS:FUNCTION:
 TS_RESP_CTX_add_failure_info            3978	EXIST::FUNCTION:
 i2d_TS_RESP_bio                         3979	EXIST::FUNCTION:
 TS_REQ_new                              3980	EXIST::FUNCTION:
@@ -3590,7 +3592,8 @@ TS_RESP_CTX_set_certs                   3988	EXIST::FUNCTION:
 TS_CONF_set_def_policy                  3989	EXIST::FUNCTION:
 TS_ACCURACY_free                        3990	EXIST::FUNCTION:
 TS_RESP_get_tst_info                    3991	EXIST::FUNCTION:
-TS_CONF_set_clock_precision_digits      3992	EXIST::FUNCTION:
+TS_CONF_set_clock_precision_digits      3992	EXIST:!VMS:FUNCTION:
+TS_CONF_set_clk_prec_digits             3992	EXIST:VMS:FUNCTION:
 ESS_ISSUER_SERIAL_dup                   3993	EXIST::FUNCTION:
 TS_ACCURACY_get_micros                  3994	EXIST::FUNCTION:
 ASN1_BIT_STRING_check                   3995	EXIST::FUNCTION:
