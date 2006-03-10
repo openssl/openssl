@@ -166,6 +166,32 @@
  * ECC cipher suite support in OpenSSL originally developed by 
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #ifndef HEADER_SSL_H 
 #define HEADER_SSL_H 
@@ -294,6 +320,9 @@ extern "C" {
 #define SSL_TXT_TLSV1		"TLSv1"
 #define SSL_TXT_ALL		"ALL"
 #define SSL_TXT_ECC		"ECCdraft" /* ECC ciphersuites are not yet official */
+#define SSL_TXT_PSK             "PSK"
+#define SSL_TXT_kPSK            "kPSK"
+#define SSL_TXT_aPSK            "aPSK"
 
 /*
  * COMPLEMENTOF* definitions. These identifiers are used to (de-select)
@@ -410,8 +439,9 @@ typedef struct ssl_method_st
  *	Timeout [ 2 ] EXPLICIT	INTEGER,	-- optional Timeout ins seconds
  *	Peer [ 3 ] EXPLICIT	X509,		-- optional Peer Certificate
  *	Session_ID_context [ 4 ] EXPLICIT OCTET_STRING,   -- the Session ID context
- *	Verify_result [ 5 ] EXPLICIT INTEGER    -- X509_V_... code for `Peer'
- *	Compression [6] IMPLICIT ASN1_OBJECT	-- compression OID XXXXX
+ *	Verify_result [ 5 ] EXPLICIT INTEGER,   -- X509_V_... code for `Peer'
+ *	PSK_identity_hint [ 6 ] EXPLICIT OCTET_STRING, -- PSK identity hint
+ *      PSK_identity [ 7 ] EXPLICIT OCTET_STRING -- PSK identity
  *	}
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
@@ -439,7 +469,10 @@ typedef struct ssl_session_st
         unsigned int krb5_client_princ_len;
         unsigned char krb5_client_princ[SSL_MAX_KRB5_PRINCIPAL_LENGTH];
 #endif /* OPENSSL_NO_KRB5 */
-
+#ifndef OPENSSL_NO_PSK
+	char *psk_identity_hint;
+	char *psk_identity;
+#endif
 	int not_resumable;
 
 	/* The cert is the certificate used to establish this connection */
@@ -764,6 +797,14 @@ struct ssl_ctx_st
 	int (*tlsext_servername_callback)(SSL*, int *, void *);
 	void *tlsext_servername_arg;
 #endif
+#ifndef OPENSSL_NO_PSK
+	char *psk_identity_hint;
+	unsigned int (*psk_client_callback)(SSL *ssl, const char *hint, char *identity,
+		unsigned int max_identity_len, unsigned char *psk,
+		unsigned int max_psk_len);
+	unsigned int (*psk_server_callback)(SSL *ssl, const char *identity,
+		unsigned char *psk, unsigned int max_psk_len);
+#endif
 	};
 
 #define SSL_SESS_CACHE_OFF			0x0000
@@ -815,6 +856,21 @@ struct ssl_ctx_st
 #define SSL_CTX_get_client_cert_cb(ctx)		((ctx)->client_cert_cb)
 #define SSL_CTX_set_cookie_generate_cb(ctx,cb) ((ctx)->app_gen_cookie_cb=(cb))
 #define SSL_CTX_set_cookie_verify_cb(ctx,cb) ((ctx)->app_verify_cookie_cb=(cb))
+
+#ifndef OPENSSL_NO_PSK
+/* the maximum length of the buffer given to callbacks containing the
+ * resulting identity/psk */
+#define PSK_MAX_IDENTITY_LEN 128
+#define PSK_MAX_PSK_LEN 64
+#define SSL_CTX_set_psk_client_callback(ctx,cb) ((ctx)->psk_client_callback=(cb))
+#define SSL_set_psk_client_callback(ssl, cb) ((ssl)->psk_client_callback=(cb))
+#define SSL_CTX_set_psk_server_callback(ctx,cb) ((ctx)->psk_server_callback=(cb))
+#define SSL_set_psk_server_callback(ssl, cb) ((ssl)->psk_server_callback=(cb))
+int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint);
+int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint);
+const char *SSL_get_psk_identity_hint(const SSL *s);
+const char *SSL_get_psk_identity(const SSL *s);
+#endif
 
 #define SSL_NOTHING	1
 #define SSL_WRITING	2
@@ -965,6 +1021,14 @@ struct ssl_st
 #ifndef OPENSSL_NO_KRB5
 	KSSL_CTX *kssl_ctx;     /* Kerberos 5 context */
 #endif	/* OPENSSL_NO_KRB5 */
+
+#ifndef OPENSSL_NO_PSK
+	unsigned int (*psk_client_callback)(SSL *ssl, const char *hint, char *identity,
+		unsigned int max_identity_len, unsigned char *psk,
+		unsigned int max_psk_len);
+	unsigned int (*psk_server_callback)(SSL *ssl, const char *identity,
+		unsigned char *psk, unsigned int max_psk_len);
+#endif
 
 	SSL_CTX *ctx;
 	/* set this flag to 1 and a sleep(1) is put into all SSL_read()
@@ -1149,6 +1213,7 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_AD_UNRECOGNIZED_NAME	TLS1_AD_UNRECOGNIZED_NAME
 #define SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE
 #define SSL_AD_BAD_CERTIFICATE_HASH_VALUE TLS1_AD_BAD_CERTIFICATE_HASH_VALUE
+#define SSL_AD_UNKNOWN_PSK_IDENTITY     TLS1_AD_UNKNOWN_PSK_IDENTITY /* fatal */
 
 #define SSL_ERROR_NONE			0
 #define SSL_ERROR_SSL			1
@@ -1718,6 +1783,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_CTX_USE_PRIVATEKEY			 174
 #define SSL_F_SSL_CTX_USE_PRIVATEKEY_ASN1		 175
 #define SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE		 176
+#define SSL_F_SSL_CTX_USE_PSK_IDENTITY_HINT		 272
 #define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY			 177
 #define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_ASN1		 178
 #define SSL_F_SSL_CTX_USE_RSAPRIVATEKEY_FILE		 179
@@ -1756,6 +1822,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_USE_PRIVATEKEY			 201
 #define SSL_F_SSL_USE_PRIVATEKEY_ASN1			 202
 #define SSL_F_SSL_USE_PRIVATEKEY_FILE			 203
+#define SSL_F_SSL_USE_PSK_IDENTITY_HINT			 273
 #define SSL_F_SSL_USE_RSAPRIVATEKEY			 204
 #define SSL_F_SSL_USE_RSAPRIVATEKEY_ASN1		 205
 #define SSL_F_SSL_USE_RSAPRIVATEKEY_FILE		 206
@@ -1789,6 +1856,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_BAD_MESSAGE_TYPE				 114
 #define SSL_R_BAD_PACKET_LENGTH				 115
 #define SSL_R_BAD_PROTOCOL_VERSION_NUMBER		 116
+#define SSL_R_BAD_PSK_IDENTITY_HINT_LENGTH		 157
 #define SSL_R_BAD_RESPONSE_ARGUMENT			 117
 #define SSL_R_BAD_RSA_DECRYPT				 118
 #define SSL_R_BAD_RSA_ENCRYPT				 119
@@ -1908,6 +1976,9 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_PRE_MAC_LENGTH_TOO_LONG			 205
 #define SSL_R_PROBLEMS_MAPPING_CIPHER_FUNCTIONS		 206
 #define SSL_R_PROTOCOL_IS_SHUTDOWN			 207
+#define SSL_R_PSK_IDENTITY_NOT_FOUND			 223
+#define SSL_R_PSK_NO_CLIENT_CB				 224
+#define SSL_R_PSK_NO_SERVER_CB				 225
 #define SSL_R_PUBLIC_KEY_ENCRYPT_ERROR			 208
 #define SSL_R_PUBLIC_KEY_IS_NOT_RSA			 209
 #define SSL_R_PUBLIC_KEY_NOT_RSA			 210

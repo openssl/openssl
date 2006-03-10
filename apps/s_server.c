@@ -113,6 +113,32 @@
  * ECC cipher suite support in OpenSSL originally developed by 
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 /* Until the key-gen callbacks are modified to use newer prototypes, we allow
  * deprecated functions for openssl-internal code */
@@ -121,6 +147,7 @@
 #endif
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -263,6 +290,70 @@ static int enable_timeouts = 0;
 static long socket_mtu;
 static int cert_chain = 0;
 
+#ifndef OPENSSL_NO_PSK
+static char *psk_identity="Client_identity";
+static char *psk_key=NULL; /* by default PSK is not used */
+
+static unsigned int psk_server_cb(SSL *ssl, const char *identity,
+	unsigned char *psk, unsigned int max_psk_len)
+	{
+	unsigned int psk_len = 0;
+	int ret;
+	BIGNUM *bn = NULL;
+
+	if (s_debug)
+		BIO_printf(bio_s_out,"psk_server_cb\n");
+	if (!identity)
+		{
+		BIO_printf(bio_err,"Error: client did not send PSK identity\n");
+		goto out_err;
+		}
+	if (s_debug)
+		BIO_printf(bio_s_out,"identity_len=%d identity=%s\n",
+			identity ? strlen(identity) : 0, identity);
+
+	/* here we could lookup the given identity e.g. from a database */
+  	if (strcmp(identity, psk_identity) != 0)
+		{
+                BIO_printf(bio_s_out, "PSK error: client identity not found\n");
+		goto out_err;
+                }
+	if (s_debug)
+		BIO_printf(bio_s_out, "PSK client identity found\n");
+
+	/* convert the PSK key to binary */
+	ret = BN_hex2bn(&bn, psk_key);
+	if (!ret)
+		{
+		BIO_printf(bio_err,"Could not convert PSK key '%s' to BIGNUM\n", psk_key);
+		if (bn)
+			BN_free(bn);
+		return 0;
+		}
+	if (BN_num_bytes(bn) > (int)max_psk_len)
+		{
+		BIO_printf(bio_err,"psk buffer of callback is too small (%d) for key (%d)\n",
+			max_psk_len, BN_num_bytes(bn));
+		BN_free(bn);
+		return 0;
+		}
+
+	ret = BN_bn2bin(bn, psk);
+	BN_free(bn);
+
+	if (ret < 0)
+		goto out_err;
+	psk_len = (unsigned int)ret;
+
+	if (s_debug)
+		BIO_printf(bio_s_out, "fetched PSK len=%d\n", psk_len);
+        return psk_len;
+ out_err:
+	if (s_debug)
+		BIO_printf(bio_err, "Error in PSK server callback\n");
+	return 0;
+        }
+#endif
 
 #ifdef MONOLITH
 static void s_server_init(void)
@@ -339,6 +430,10 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences\n");
 	BIO_printf(bio_err," -quiet        - No server output\n");
 	BIO_printf(bio_err," -no_tmp_rsa   - Do not generate a tmp RSA key\n");
+#ifndef OPENSSL_NO_PSK
+	BIO_printf(bio_err," -psk_hint arg - PSK identity hint to use\n");
+	BIO_printf(bio_err," -psk arg      - PSK in hex (without 0x)\n");
+#endif
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
 	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
@@ -600,6 +695,10 @@ int MAIN(int argc, char *argv[])
 #ifndef OPENSSL_NO_TLSEXT
         tlsextctx tlsextcbp = {NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING};
 #endif
+#ifndef OPENSSL_NO_PSK
+	/* by default do not send a PSK identity hint */
+	static char *psk_identity_hint=NULL;
+#endif
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_server_method();
 #elif !defined(OPENSSL_NO_SSL3)
@@ -782,6 +881,27 @@ int MAIN(int argc, char *argv[])
 			{ no_dhe=1; }
 		else if	(strcmp(*argv,"-no_ecdhe") == 0)
 			{ no_ecdhe=1; }
+#ifndef OPENSSL_NO_PSK
+                else if (strcmp(*argv,"-psk_hint") == 0)
+			{
+                        if (--argc < 1) goto bad;
+                        psk_identity_hint= *(++argv);
+                        }
+                else if (strcmp(*argv,"-psk") == 0)
+			{
+			int i;
+
+			if (--argc < 1) goto bad;
+			psk_key=*(++argv);
+			for (i=0; i<strlen(psk_key); i++)
+				{
+				if (isxdigit((int)psk_key[i]))
+					continue;
+				BIO_printf(bio_err,"Not a hex number '%s'\n",*argv);
+				goto bad;
+				}
+			}
+#endif
 		else if	(strcmp(*argv,"-www") == 0)
 			{ www=1; }
 		else if	(strcmp(*argv,"-WWW") == 0)
@@ -1257,6 +1377,22 @@ bad:
 		BIO_printf(bio_s_out,"\n");
 		}
 #endif
+#endif
+
+#ifndef OPENSSL_NO_PSK
+	if (psk_key != NULL)
+		{
+		if (s_debug)
+			BIO_printf(bio_s_out, "PSK key given, setting server callback\n");
+		SSL_CTX_set_psk_server_callback(ctx, psk_server_cb);
+		}
+
+	if (!SSL_CTX_use_psk_identity_hint(ctx, psk_identity_hint))
+		{
+		BIO_printf(bio_err,"error setting PSK identity hint to context\n");
+		ERR_print_errors(bio_err);
+		goto end;
+		}
 #endif
 
 	if (cipher != NULL)

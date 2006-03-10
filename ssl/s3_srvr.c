@@ -121,6 +121,32 @@
  * Vipul Gupta and Sumit Gupta of Sun Microsystems Laboratories.
  *
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #define REUSE_CIPHER_BUG
 #define NETSCAPE_HANG_BUG
@@ -302,7 +328,9 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
 			/* Check if it is anon DH or anon ECDH */
-			if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL))
+			/* or normal PSK */
+			if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL)
+				&& !(s->s3->tmp.new_cipher->algorithms & SSL_kPSK))
 				{
 				ret=ssl3_send_server_certificate(s);
 				if (ret <= 0) goto end;
@@ -336,6 +364,8 @@ int ssl3_accept(SSL *s)
 			/* only send if a DH key exchange, fortezza or
 			 * RSA but we have a sign only certificate
 			 *
+			 * PSK: may send PSK identity hints
+			 *
 			 * For ECC ciphersuites, we send a serverKeyExchange
 			 * message only if the cipher suite is either
 			 * ECDH-anon or ECDHE. In other cases, the
@@ -343,6 +373,11 @@ int ssl3_accept(SSL *s)
 			 * public key for key exchange.
 			 */
 			if (s->s3->tmp.use_rsa_tmp
+			/* PSK: send ServerKeyExchange if PSK identity
+			 * hint if provided */
+#ifndef OPENSSL_NO_PSK
+			    || ((l & SSL_kPSK) && s->ctx->psk_identity_hint)
+#endif
 			    || (l & SSL_kECDHE)
 			    || (l & (SSL_DH|SSL_kFZA))
 			    || ((l & SSL_kRSA)
@@ -380,7 +415,10 @@ int ssl3_accept(SSL *s)
 				  * (against the specs, but s3_clnt.c accepts this for SSL 3) */
 				 !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) ||
                                  /* never request cert in Kerberos ciphersuites */
-                                (s->s3->tmp.new_cipher->algorithms & SSL_aKRB5))
+                                (s->s3->tmp.new_cipher->algorithms & SSL_aKRB5)
+				/* With normal PSK Certificates and
+				 * Certificate Requests are omitted */
+                                || (s->s3->tmp.new_cipher->algorithms & SSL_kPSK))
 				{
 				/* no cert request */
 				skip=1;
@@ -1390,6 +1428,14 @@ int ssl3_send_server_key_exchange(SSL *s)
 			}
 		else 
 #endif /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_PSK
+			if (type & SSL_kPSK)
+				{
+				/* reserve size for record length and PSK identity hint*/
+				n+=2+strlen(s->ctx->psk_identity_hint);
+				}
+			else
+#endif /* !OPENSSL_NO_PSK */
 			{
 			al=SSL_AD_HANDSHAKE_FAILURE;
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
@@ -1401,7 +1447,8 @@ int ssl3_send_server_key_exchange(SSL *s)
 			n+=2+nr[i];
 			}
 
-		if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL))
+		if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL)
+			&& !(s->s3->tmp.new_cipher->algorithms & SSL_kPSK))
 			{
 			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher))
 				== NULL)
@@ -1454,6 +1501,16 @@ int ssl3_send_server_key_exchange(SSL *s)
 			    encodedlen);
 			OPENSSL_free(encodedPoint);
 			p += encodedlen;
+			}
+#endif
+
+#ifndef OPENSSL_NO_PSK
+		if (type & SSL_kPSK)
+			{
+			/* copy PSK identity hint */
+			s2n(strlen(s->ctx->psk_identity_hint), p); 
+			strncpy(p, s->ctx->psk_identity_hint, strlen(s->ctx->psk_identity_hint));
+			p+=strlen(s->ctx->psk_identity_hint);
 			}
 #endif
 
@@ -2177,6 +2234,101 @@ int ssl3_get_client_key_exchange(SSL *s)
                 return (ret);
 		}
 	else
+#endif
+#ifndef OPENSSL_NO_PSK
+		if (l & SSL_kPSK)
+			{
+			unsigned char *t = NULL;
+			unsigned char psk_or_pre_ms[PSK_MAX_PSK_LEN*2+4];
+			unsigned int pre_ms_len = 0, psk_len = 0;
+			int psk_err = 1;
+			char tmp_id[PSK_MAX_IDENTITY_LEN+1];
+
+			al=SSL_AD_HANDSHAKE_FAILURE;
+
+			n2s(p,i);
+			if (n != i+2)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+					SSL_R_LENGTH_MISMATCH);
+				goto psk_err;
+				}
+			if (i > PSK_MAX_IDENTITY_LEN)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+					SSL_R_DATA_LENGTH_TOO_LONG);
+				goto psk_err;
+				}
+			if (s->psk_server_callback == NULL)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				       SSL_R_PSK_NO_SERVER_CB);
+				goto psk_err;
+				}
+
+			/* Create guaranteed NULL-terminated identity
+			 * string for the callback */
+			memcpy(tmp_id, p, i);
+			memset(tmp_id+i, 0, PSK_MAX_IDENTITY_LEN+1-i);
+			psk_len = s->psk_server_callback(s, tmp_id,
+				psk_or_pre_ms, sizeof(psk_or_pre_ms));
+			OPENSSL_cleanse(tmp_id, PSK_MAX_IDENTITY_LEN+1);
+
+			if (psk_len > PSK_MAX_PSK_LEN)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+					ERR_R_INTERNAL_ERROR);
+				goto psk_err;
+				}
+			else if (psk_len == 0)
+				{
+				/* PSK related to the given identity not found */
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				       SSL_R_PSK_IDENTITY_NOT_FOUND);
+				al=SSL_AD_UNKNOWN_PSK_IDENTITY;
+				goto psk_err;
+				}
+
+			/* create PSK pre_master_secret */
+			pre_ms_len=2+psk_len+2+psk_len;
+			t = psk_or_pre_ms;
+			memmove(psk_or_pre_ms+psk_len+4, psk_or_pre_ms, psk_len);
+			s2n(psk_len, t);
+			memset(t, 0, psk_len);
+			t+=psk_len;
+			s2n(psk_len, t);
+
+			if (s->session->psk_identity != NULL)
+				OPENSSL_free(s->session->psk_identity);
+			s->session->psk_identity = BUF_strdup(p);
+			if (s->session->psk_identity == NULL)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+					ERR_R_MALLOC_FAILURE);
+				goto psk_err;
+				}
+
+			if (s->session->psk_identity_hint != NULL)
+				OPENSSL_free(s->session->psk_identity_hint);
+			s->session->psk_identity_hint = BUF_strdup(s->ctx->psk_identity_hint);
+			if (s->ctx->psk_identity_hint != NULL &&
+				s->session->psk_identity_hint == NULL)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+					ERR_R_MALLOC_FAILURE);
+				goto psk_err;
+				}
+
+			s->session->master_key_length=
+				s->method->ssl3_enc->generate_master_secret(s,
+					s->session->master_key, psk_or_pre_ms, pre_ms_len);
+			psk_err = 0;
+		psk_err:
+			OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));
+                        if (psk_err != 0)
+                                goto f_err;
+			}
+		else
 #endif
 		{
 		al=SSL_AD_HANDSHAKE_FAILURE;

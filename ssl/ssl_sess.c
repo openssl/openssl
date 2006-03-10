@@ -108,6 +108,32 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #include <stdio.h>
 #include <openssl/lhash.h>
@@ -179,6 +205,10 @@ SSL_SESSION *SSL_SESSION_new(void)
 	ss->tlsext_hostname = NULL; 
 #endif
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
+#ifndef OPENSSL_NO_PSK
+	ss->psk_identity_hint=NULL;
+	ss->psk_identity=NULL;
+#endif
 	return(ss);
 	}
 
@@ -614,6 +644,12 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 	if (ss->ciphers != NULL) sk_SSL_CIPHER_free(ss->ciphers);
 #ifndef OPENSSL_NO_TLSEXT
 	if (ss->tlsext_hostname != NULL) OPENSSL_free(ss->tlsext_hostname);
+#endif
+#ifndef OPENSSL_NO_PSK
+	if (ss->psk_identity_hint != NULL)
+		OPENSSL_free(ss->psk_identity_hint);
+	if (ss->psk_identity != NULL)
+		OPENSSL_free(ss->psk_identity);
 #endif
 	OPENSSL_cleanse(ss,sizeof(*ss));
 	OPENSSL_free(ss);

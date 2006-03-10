@@ -142,4 +142,10 @@ else
   fi
 fi
 
+echo test tls1 with PSK
+$ssltest -tls1 -cipher PSK -psk abc123 $extra || exit 1
+
+echo test tls1 with PSK via BIO pair
+$ssltest -bio_pair -tls1 -cipher PSK -psk abc123 $extra || exit 1
+
 exit 0

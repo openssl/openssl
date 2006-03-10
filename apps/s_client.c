@@ -108,8 +108,35 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #include <assert.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -171,6 +198,69 @@ static BIO *bio_c_out=NULL;
 static int c_quiet=0;
 static int c_ign_eof=0;
 
+#ifndef OPENSSL_NO_PSK
+/* Default PSK identity and key */
+static char *psk_identity="Client_identity";
+static char *psk_key=NULL; /* by default PSK is not used */
+
+static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
+	unsigned int max_identity_len, unsigned char *psk,
+	unsigned int max_psk_len)
+	{
+	unsigned int psk_len = 0;
+	int ret;
+        BIGNUM *bn=NULL;
+
+	if (c_debug)
+		BIO_printf(bio_c_out, "psk_client_cb\n");
+	if (!hint)
+                {
+                /* no ServerKeyExchange message*/
+		if (c_debug)
+			BIO_printf(bio_c_out,"NULL received PSK identity hint, continuing anyway\n");
+                }
+        else if (c_debug)
+		BIO_printf(bio_c_out, "Received PSK identity hint '%s'\n", hint);
+
+	/* lookup PSK identity and PSK key based on the given identity hint here */
+	ret = snprintf(identity, max_identity_len, psk_identity);
+	if (ret < 0 || ret > max_identity_len)
+		goto out_err;
+	if (c_debug)
+		BIO_printf(bio_c_out, "created identity '%s' len=%d\n", identity, ret);
+        ret=BN_hex2bn(&bn, psk_key);
+        if (!ret)
+                {
+                BIO_printf(bio_err,"Could not convert PSK key '%s' to BIGNUM\n", psk_key);
+                if (bn)
+                        BN_free(bn);
+                return 0;
+                }
+
+        if (BN_num_bytes(bn) > max_psk_len)
+                {
+                BIO_printf(bio_err,"psk buffer of callback is too small (%d) for key (%d)\n",
+                        max_psk_len, BN_num_bytes(bn));
+                BN_free(bn);
+                return 0;
+                }
+
+        psk_len=BN_bn2bin(bn, psk);
+        BN_free(bn);
+        if (psk_len == 0)
+                goto out_err;
+
+	if (c_debug)
+		BIO_printf(bio_c_out, "created PSK len=%d\n", psk_len);
+
+        return psk_len;
+ out_err:
+	if (c_debug)
+		BIO_printf(bio_err, "Error in PSK client callback\n");
+        return 0;
+	}
+#endif
+
 static void sc_usage(void)
 	{
 	BIO_printf(bio_err,"usage: s_client args\n");
@@ -204,6 +294,10 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -crlf         - convert LF from terminal into CRLF\n");
 	BIO_printf(bio_err," -quiet        - no s_client output\n");
 	BIO_printf(bio_err," -ign_eof      - ignore input eof (default when -quiet)\n");
+#ifndef OPENSSL_NO_PSK
+	BIO_printf(bio_err," -psk_identity arg - PSK identity\n");
+	BIO_printf(bio_err," -psk arg      - PSK in hex (without 0x)\n");
+#endif
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
@@ -404,6 +498,27 @@ int MAIN(int argc, char **argv)
 			nbio_test=1;
 		else if	(strcmp(*argv,"-state") == 0)
 			state=1;
+#ifndef OPENSSL_NO_PSK
+                else if (strcmp(*argv,"-psk_identity") == 0)
+			{
+			if (--argc < 1) goto bad;
+			psk_identity=*(++argv);
+			}
+                else if (strcmp(*argv,"-psk") == 0)
+			{
+                        size_t j;
+
+			if (--argc < 1) goto bad;
+			psk_key=*(++argv);
+			for (j = 0; j < strlen(psk_key); j++)
+                                {
+                                if (isxdigit((int)psk_key[j]))
+                                        continue;
+                                BIO_printf(bio_err,"Not a hex number '%s'\n",*argv);
+                                goto bad;
+                                }
+			}
+#endif
 #ifndef OPENSSL_NO_SSL2
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			meth=SSLv2_client_method();
@@ -599,6 +714,14 @@ bad:
 		goto end;
 		}
 
+#ifndef OPENSSL_NO_PSK
+	if (psk_key != NULL)
+		{
+		if (c_debug)
+			BIO_printf(bio_c_out, "PSK key given, setting client callback\n");
+		SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
+		}
+#endif
 	if (bugs)
 		SSL_CTX_set_options(ctx,SSL_OP_ALL|off);
 	else

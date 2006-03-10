@@ -1,3 +1,4 @@
+
 /* ssl/ssl_locl.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -112,6 +113,32 @@
  * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
  * ECC cipher suite support in OpenSSL originally developed by 
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
  */
 
 #ifndef HEADER_SSL_LOCL_H
@@ -249,7 +276,7 @@
  * that the different entities within are mutually exclusive:
  * ONLY ONE BIT PER MASK CAN BE SET AT A TIME.
  */
-#define SSL_MKEY_MASK		0x000000FFL
+#define SSL_MKEY_MASK		0x080000FFL
 #define SSL_kRSA		0x00000001L /* RSA key exchange */
 #define SSL_kDHr		0x00000002L /* DH cert RSA CA cert */
 #define SSL_kDHd		0x00000004L /* DH cert DSA CA cert */
@@ -259,8 +286,9 @@
 #define SSL_kECDH               0x00000040L /* ECDH w/ long-term keys */
 #define SSL_kECDHE              0x00000080L /* ephemeral ECDH */
 #define SSL_EDH			(SSL_kEDH|(SSL_AUTH_MASK^SSL_aNULL))
+#define SSL_kPSK                0x08000000L /* PSK */
 
-#define SSL_AUTH_MASK		0x00007F00L
+#define SSL_AUTH_MASK		0x10007f00L
 #define SSL_aRSA		0x00000100L /* Authenticate with RSA */
 #define SSL_aDSS 		0x00000200L /* Authenticate with DSS */
 #define SSL_DSS 		SSL_aDSS
@@ -269,6 +297,7 @@
 #define SSL_aDH 		0x00001000L /* no Authenticate, ADH */
 #define SSL_aKRB5               0x00002000L /* Authenticate with KRB5 */
 #define SSL_aECDSA              0x00004000L /* Authenticate with ECDSA */
+#define SSL_aPSK                0x10000000L /* PSK */
 
 #define SSL_NULL		(SSL_eNULL)
 #define SSL_ADH			(SSL_kEDH|SSL_aNULL)
@@ -277,6 +306,7 @@
 #define SSL_ECDH		(SSL_kECDH|SSL_kECDHE)
 #define SSL_FZA			(SSL_aFZA|SSL_kFZA|SSL_eFZA)
 #define SSL_KRB5                (SSL_kKRB5|SSL_aKRB5)
+#define SSL_PSK                 (SSL_kPSK|SSL_aPSK)
 
 #define SSL_ENC_MASK		0x043F8000L
 #define SSL_DES			0x00008000L
@@ -298,7 +328,7 @@
 #define SSL_SSLV3		0x02000000L
 #define SSL_TLSV1		SSL_SSLV3	/* for now */
 
-/* we have used 07ffffff - 5 bits left to go. */
+/* we have used 1fffffff - 3 bits left to go. */
 
 /*
  * Export and cipher strength information. For each cipher we have to decide

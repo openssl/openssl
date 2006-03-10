@@ -121,6 +121,32 @@
  * Vipul Gupta and Sumit Gupta of Sun Microsystems Laboratories.
  *
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #include <stdio.h>
 #include <openssl/objects.h>
@@ -997,6 +1023,63 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	    SSL_ALL_STRENGTHS
 	    },
 #endif
+#ifndef OPENSSL_NO_PSK
+	/* Cipher 8A */
+	{
+	1,
+	TLS1_TXT_PSK_WITH_RC4_128_SHA,
+	TLS1_CK_PSK_WITH_RC4_128_SHA,
+	SSL_kPSK|SSL_aPSK|SSL_RC4|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+	/* Cipher 8B */
+	{
+	1,
+	TLS1_TXT_PSK_WITH_3DES_EDE_CBC_SHA,
+	TLS1_CK_PSK_WITH_3DES_EDE_CBC_SHA,
+	SSL_kPSK|SSL_aPSK|SSL_3DES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	168,
+	168,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+	/* Cipher 8C */
+	{
+	1,
+	TLS1_TXT_PSK_WITH_AES_128_CBC_SHA,
+	TLS1_CK_PSK_WITH_AES_128_CBC_SHA,
+	SSL_kPSK|SSL_aPSK|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+	/* Cipher 8D */
+	{
+	1,
+	TLS1_TXT_PSK_WITH_AES_256_CBC_SHA,
+	TLS1_CK_PSK_WITH_AES_256_CBC_SHA,
+	SSL_kPSK|SSL_aPSK|SSL_AES|SSL_SHA|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	256,
+	256,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+#endif  /* OPENSSL_NO_PSK */
 #ifndef OPENSSL_NO_ECDH
 	/* Cipher C001 */
 	    {
@@ -2018,6 +2101,12 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
                             continue;
                         }
 #endif /* OPENSSL_NO_KRB5 */
+#ifndef OPENSSL_NO_PSK
+		/* with PSK there must be server callback set */
+		if ((alg & SSL_PSK) && s->psk_server_callback == NULL)
+			continue;
+#endif /* OPENSSL_NO_PSK */
+
 		if (SSL_C_IS_EXPORT(c))
 			{
 			ok=((alg & emask) == alg)?1:0;

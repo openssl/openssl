@@ -4,6 +4,22 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Add initial support for RFC 4279 PSK TLS ciphersuites. Add members
+     for the psk identity [hint] and the psk callback functions to the
+     SSL_SESSION, SSL and SSL_CTX structure.
+     
+     New ciphersuites:
+         PSK-RC4-SHA, PSK-3DES-EDE-CBC-SHA, PSK-AES128-CBC-SHA,
+         PSK-AES256-CBC-SHA
+ 
+     New functions:
+         SSL_CTX_use_psk_identity_hint
+         SSL_get_psk_identity_hint
+         SSL_get_psk_identity
+         SSL_use_psk_identity_hint
+
+     [Mika Kousa and Pasi Eronen of Nokia Corporation]
+
   *) Add RFC 3161 compliant time stamp request creation, response generation
      and response verification functionality.
      [Zoltán Glózik <zglozik@opentsa.org>, The OpenTSA Project]

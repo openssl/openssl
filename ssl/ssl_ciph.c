@@ -60,6 +60,33 @@
  * ECC cipher suite support in OpenSSL originally developed by 
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
+
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
@@ -120,6 +147,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_kDHd,0,SSL_kDHd,  0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_kEDH,0,SSL_kEDH,  0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_kFZA,0,SSL_kFZA,  0,0,0,0,SSL_MKEY_MASK,0},
+        {0,SSL_TXT_kPSK,0,SSL_kPSK,  0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_DH,	0,SSL_DH,    0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_ECC,	0,(SSL_kECDH|SSL_kECDHE), 0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_EDH,	0,SSL_EDH,   0,0,0,0,SSL_MKEY_MASK|SSL_AUTH_MASK,0},
@@ -127,6 +155,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_aRSA,0,SSL_aRSA,  0,0,0,0,SSL_AUTH_MASK,0},
 	{0,SSL_TXT_aDSS,0,SSL_aDSS,  0,0,0,0,SSL_AUTH_MASK,0},
 	{0,SSL_TXT_aFZA,0,SSL_aFZA,  0,0,0,0,SSL_AUTH_MASK,0},
+        {0,SSL_TXT_aPSK,0,SSL_aPSK,  0,0,0,0,SSL_AUTH_MASK,0},
 	{0,SSL_TXT_aNULL,0,SSL_aNULL,0,0,0,0,SSL_AUTH_MASK,0},
 	{0,SSL_TXT_aDH, 0,SSL_aDH,   0,0,0,0,SSL_AUTH_MASK,0},
 	{0,SSL_TXT_DSS,	0,SSL_DSS,   0,0,0,0,SSL_AUTH_MASK,0},
@@ -151,6 +180,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_RSA,	0,SSL_RSA,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
 	{0,SSL_TXT_ADH,	0,SSL_ADH,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
 	{0,SSL_TXT_FZA,	0,SSL_FZA,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK|SSL_ENC_MASK,0},
+        {0,SSL_TXT_PSK, 0,SSL_PSK,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
 
 	{0,SSL_TXT_SSLV2, 0,SSL_SSLV2, 0,0,0,0,SSL_SSL_MASK,0},
 	{0,SSL_TXT_SSLV3, 0,SSL_SSLV3, 0,0,0,0,SSL_SSL_MASK,0},
@@ -369,6 +399,9 @@ static unsigned long ssl_cipher_get_disabled(void)
 #endif
 #ifdef OPENSSL_NO_ECDH
 	mask |= SSL_kECDH|SSL_kECDHE;
+#endif
+#ifdef OPENSSL_NO_PSK
+	mask |= SSL_kPSK;
 #endif
 #ifdef SSL_FORBID_ENULL
 	mask |= SSL_eNULL;
@@ -986,6 +1019,9 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_kECDHE:
 		kx=is_export?"ECDH(<=163)":"ECDH";
 		break;
+	case SSL_kPSK:
+		kx="PSK";
+		break;
 	default:
 		kx="unknown";
 		}
@@ -1011,6 +1047,9 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_aECDSA:
 		au="ECDSA";
+		break;
+	case SSL_aPSK:
+		au="PSK";
 		break;
 	default:
 		au="unknown";

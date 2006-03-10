@@ -121,6 +121,32 @@
  * Vipul Gupta and Sumit Gupta of Sun Microsystems Laboratories.
  *
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #ifndef HEADER_TLS1_H 
 #define HEADER_TLS1_H 
@@ -155,6 +181,7 @@ extern "C" {
 #define TLS1_AD_UNRECOGNIZED_NAME 	112
 #define TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE 113
 #define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 114
+#define TLS1_AD_UNKNOWN_PSK_IDENTITY	115	/* fatal */
 
 /* ExtensionType values from RFC 3546 */
 #define TLSEXT_TYPE_server_name			0
@@ -191,6 +218,11 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
 
 #endif
 
+/* PSK ciphersuites from 4279 */
+#define TLS1_CK_PSK_WITH_RC4_128_SHA                    0x0300008A
+#define TLS1_CK_PSK_WITH_3DES_EDE_CBC_SHA               0x0300008B
+#define TLS1_CK_PSK_WITH_AES_128_CBC_SHA                0x0300008C
+#define TLS1_CK_PSK_WITH_AES_256_CBC_SHA                0x0300008D
 
 /* Additional TLS ciphersuites from expired Internet Draft
  * draft-ietf-tls-56-bit-ciphersuites-01.txt
@@ -312,6 +344,12 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
 #define TLS1_TXT_ECDH_anon_WITH_DES_192_CBC3_SHA        "AECDH-DES-CBC3-SHA"
 #define TLS1_TXT_ECDH_anon_WITH_AES_128_CBC_SHA         "AECDH-AES128-SHA"
 #define TLS1_TXT_ECDH_anon_WITH_AES_256_CBC_SHA         "AECDH-AES256-SHA"
+
+/* PSK ciphersuites from RFC 4279 */
+#define TLS1_TXT_PSK_WITH_RC4_128_SHA			"PSK-RC4-SHA"
+#define TLS1_TXT_PSK_WITH_3DES_EDE_CBC_SHA		"PSK-3DES-EDE-CBC-SHA"
+#define TLS1_TXT_PSK_WITH_AES_128_CBC_SHA		"PSK-AES128-CBC-SHA"
+#define TLS1_TXT_PSK_WITH_AES_256_CBC_SHA		"PSK-AES256-CBC-SHA"
 
 #define TLS_CT_RSA_SIGN			1
 #define TLS_CT_DSS_SIGN			2

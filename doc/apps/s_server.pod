@@ -181,6 +181,16 @@ this option translated a line feed from the terminal into CR+LF.
 
 inhibit printing of session and certificate information.
 
+=item B<-psk_hint hint>
+
+Use the PSK identity hint B<hint> when using a PSK cipher suite.
+
+=item B<-psk key>
+
+Use the PSK key B<key> when using a PSK cipher suite. The key is
+given as a hexadecimal number without leading 0x, for example -psk
+1a2b3c4d.
+
 =item B<-ssl2>, B<-ssl3>, B<-tls1>, B<-no_ssl2>, B<-no_ssl3>, B<-no_tls1>
 
 these options disable the use of certain SSL or TLS protocols. By default

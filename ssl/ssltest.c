@@ -113,6 +113,32 @@
  * ECC cipher suite support in OpenSSL originally developed by 
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #define _BSD_SOURCE 1		/* Or gethostname won't be declared properly
 				   on Linux and GNU platforms. */
@@ -207,6 +233,16 @@ static DH *get_dh1024(void);
 static DH *get_dh1024dsa(void);
 #endif
 
+
+static char *psk_key=NULL; /* by default PSK is not used */
+#ifndef OPENSSL_NO_PSK
+static unsigned int psk_client_callback(SSL *ssl, const char *hint, char *identity,
+	unsigned int max_identity_len, unsigned char *psk,
+	unsigned int max_psk_len);
+static unsigned int psk_server_callback(SSL *ssl, const char *identity, unsigned char *psk,
+	unsigned int max_psk_len);
+#endif
+
 static BIO *bio_err=NULL;
 static BIO *bio_stdout=NULL;
 
@@ -246,6 +282,9 @@ static void sv_usage(void)
 #endif
 #ifndef OPENSSL_NO_ECDH
 	fprintf(stderr," -no_ecdhe     - disable ECDHE\n");
+#endif
+#ifndef OPENSSL_NO_PSK
+	fprintf(stderr," -psk arg      - PSK in hex (without 0x)\n");
 #endif
 #ifndef OPENSSL_NO_SSL2
 	fprintf(stderr," -ssl2         - use SSLv2\n");
@@ -417,6 +456,7 @@ int main(int argc, char *argv[])
 #endif
 	int no_dhe = 0;
 	int no_ecdhe = 0;
+	int no_psk = 0;
 	int print_time = 0;
 	clock_t s_time = 0, c_time = 0;
 	int comp = 0;
@@ -496,6 +536,20 @@ int main(int argc, char *argv[])
 			no_dhe=1;
 		else if	(strcmp(*argv,"-no_ecdhe") == 0)
 			no_ecdhe=1;
+		else if (strcmp(*argv,"-psk") == 0)
+			{
+			if (--argc < 1) goto bad;
+			psk_key=*(++argv);
+#ifndef OPENSSL_NO_PSK
+			if (strspn(psk_key, "abcdefABCDEF1234567890") != strlen(psk_key))
+				{
+				BIO_printf(bio_err,"Not a hex number '%s'\n",*argv);
+				goto bad;
+				}
+#else
+			no_psk=1;
+#endif
+			}
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			ssl2=1;
 		else if	(strcmp(*argv,"-tls1") == 0)
@@ -832,6 +886,31 @@ bad:
 		int session_id_context = 0;
 		SSL_CTX_set_session_id_context(s_ctx, (void *)&session_id_context, sizeof session_id_context);
 	}
+
+	/* Use PSK only if PSK key is given */
+	if (psk_key != NULL)
+		{
+		/* no_psk is used to avoid putting psk command to openssl tool */
+		if (no_psk)
+			{
+			/* if PSK is not compiled in and psk key is
+			 * given, do nothing and exit successfully */
+			ret=0;
+			goto end;
+			}
+#ifndef OPENSSL_NO_PSK
+		SSL_CTX_set_psk_client_callback(c_ctx, psk_client_callback);
+		SSL_CTX_set_psk_server_callback(s_ctx, psk_server_callback);
+		if (debug)
+			BIO_printf(bio_err,"setting PSK identity hint to s_ctx\n");
+		if (!SSL_CTX_use_psk_identity_hint(s_ctx, "ctx server identity_hint"))
+			{
+			BIO_printf(bio_err,"error setting PSK identity hint to s_ctx\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+#endif
+		}
 
 	c_ssl=SSL_new(c_ctx);
 	s_ssl=SSL_new(s_ctx);
@@ -2233,6 +2312,69 @@ static DH *get_dh1024dsa()
 		{ DH_free(dh); return(NULL); }
 	dh->length = 160;
 	return(dh);
+	}
+#endif
+
+#ifndef OPENSSL_NO_PSK
+/* convert the PSK key (psk_key) in ascii to binary (psk) */
+static int psk_key2bn(const char *pskkey, unsigned char *psk,
+	unsigned int max_psk_len)
+	{
+	int ret;
+	BIGNUM *bn = NULL;
+
+	ret = BN_hex2bn(&bn, pskkey);
+	if (!ret)
+		{
+		BIO_printf(bio_err,"Could not convert PSK key '%s' to BIGNUM\n", pskkey); 
+		if (bn)
+			BN_free(bn);
+		return 0;
+		}
+	if (BN_num_bytes(bn) > (int)max_psk_len)
+		{
+		BIO_printf(bio_err,"psk buffer of callback is too small (%d) for key (%d)\n",
+			max_psk_len, BN_num_bytes(bn));
+		BN_free(bn);
+		return 0;
+		}
+	ret = BN_bn2bin(bn, psk);
+	BN_free(bn);
+	return ret;
+	}
+
+static unsigned int psk_client_callback(SSL *ssl, const char *hint, char *identity,
+	unsigned int max_identity_len, unsigned char *psk,
+	unsigned int max_psk_len)
+	{
+	int ret;
+	unsigned int psk_len = 0;
+
+	ret = snprintf(identity, max_identity_len, "Client_identity");
+	if (ret < 0)
+		goto out_err;
+	if (debug)
+		fprintf(stderr, "client: created identity '%s' len=%d\n", identity, ret);
+	ret = psk_key2bn(psk_key, psk, max_psk_len);
+	if (ret < 0)
+		goto out_err;
+	psk_len = ret;
+out_err:
+	return psk_len;
+	}
+
+static unsigned int psk_server_callback(SSL *ssl, const char *identity,
+	unsigned char *psk, unsigned int max_psk_len)
+	{
+	unsigned int psk_len=0;
+
+	if (strcmp(identity, "Client_identity") != 0)
+		{
+		BIO_printf(bio_err, "server: PSK error: client identity not found\n");
+		return 0;
+		}
+	psk_len=psk_key2bn(psk_key, psk, max_psk_len);
+	return psk_len;
 	}
 #endif
 

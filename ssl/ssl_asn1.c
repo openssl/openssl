@@ -55,6 +55,32 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,12 +107,16 @@ typedef struct ssl_session_asn1_st
 #ifndef OPENSSL_NO_TLSEXT
 	ASN1_OCTET_STRING tlsext_hostname;
 #endif /* OPENSSL_NO_TLSEXT */
+#ifndef OPENSSL_NO_PSK
+	ASN1_OCTET_STRING psk_identity_hint;
+	ASN1_OCTET_STRING psk_identity;
+#endif /* OPENSSL_NO_PSK */
 	} SSL_SESSION_ASN1;
 
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
-	int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0;
+	int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0,v7=0,v8=0;
 	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2],ibuf5[LSIZE2];
 	long l;
@@ -156,7 +186,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		a.krb5_princ.data=in->krb5_client_princ;
 		}
 #endif /* OPENSSL_NO_KRB5 */
- 
+
 	if (in->time != 0L)
 		{
 		a.time.length=LSIZE2;
@@ -189,6 +219,20 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
                 a.tlsext_hostname.data=(unsigned char *)in->tlsext_hostname;
                 }                
 #endif /* OPENSSL_NO_TLSEXT */
+#ifndef OPENSSL_NO_PSK
+	if (in->psk_identity_hint)
+		{
+		a.psk_identity_hint.length=strlen(in->psk_identity_hint);
+		a.psk_identity_hint.type=V_ASN1_OCTET_STRING;
+		a.psk_identity_hint.data=in->psk_identity_hint;
+		}
+	if (in->psk_identity)
+		{
+		a.psk_identity.length=strlen(in->psk_identity);
+		a.psk_identity.type=V_ASN1_OCTET_STRING;
+		a.psk_identity.data=in->psk_identity;
+		}
+#endif /* OPENSSL_NO_PSK */
 
 	M_ASN1_I2D_len(&(a.version),		i2d_ASN1_INTEGER);
 	M_ASN1_I2D_len(&(a.ssl_version),	i2d_ASN1_INTEGER);
@@ -215,6 +259,13 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->tlsext_hostname)
         	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
 #endif /* OPENSSL_NO_TLSEXT */
+#ifndef OPENSSL_NO_PSK
+	if (in->psk_identity_hint)
+        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,6,v7);
+	if (in->psk_identity)
+        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,7,v8);
+#endif /* OPENSSL_NO_PSK */
+
 	M_ASN1_I2D_seq_total();
 
 	M_ASN1_I2D_put(&(a.version),		i2d_ASN1_INTEGER);
@@ -242,6 +293,12 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->tlsext_hostname)
         	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
 #endif /* OPENSSL_NO_TLSEXT */
+#ifndef OPENSSL_NO_PSK
+	if (in->psk_identity_hint)
+		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,6,v6);
+	if (in->psk_identity)
+		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,7,v7);
+#endif /* OPENSSL_NO_PSK */
 	M_ASN1_I2D_finish();
 	}
 
@@ -428,6 +485,34 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		ret->tlsext_hostname=NULL;
 
 #endif /* OPENSSL_NO_TLSEXT */
+
+#ifndef OPENSSL_NO_PSK
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,6);
+	if (os.data)
+		{
+		ret->psk_identity_hint = BUF_strndup(os.data, os.length);
+		OPENSSL_free(os.data);
+		os.data = NULL;
+		os.length = 0;
+		}
+	else
+		ret->psk_identity_hint=NULL;
+
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,7);
+	if (os.data)
+		{
+		ret->psk_identity = BUF_strndup(os.data, os.length);
+		OPENSSL_free(os.data);
+		os.data = NULL;
+		os.length = 0;
+		}
+	else
+		ret->psk_identity=NULL;
+#endif /* OPENSSL_NO_KRB5 */
 
 	M_ASN1_D2I_Finish(a,SSL_SESSION_free,SSL_F_D2I_SSL_SESSION);
 	}

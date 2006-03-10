@@ -115,6 +115,32 @@
  * ECC cipher suite support in OpenSSL originally developed by 
  * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
  */
+/* ====================================================================
+ * Copyright 2005 Nokia. All rights reserved.
+ *
+ * The portions of the attached software ("Contribution") is developed by
+ * Nokia Corporation and is licensed pursuant to the OpenSSL open source
+ * license.
+ *
+ * The Contribution, originally written by Mika Kousa and Pasi Eronen of
+ * Nokia Corporation, consists of the "PSK" (Pre-Shared Key) ciphersuites
+ * support (see RFC 4279) to OpenSSL.
+ *
+ * No patent licenses or other rights except those expressly stated in
+ * the OpenSSL open source license shall be deemed granted or received
+ * expressly, by implication, estoppel, or otherwise.
+ *
+ * No assurances are provided by Nokia that the Contribution does not
+ * infringe the patent or other intellectual property rights of any third
+ * party or that the license provides you with all the necessary rights
+ * to make use of the Contribution.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND. IN
+ * ADDITION TO THE DISCLAIMERS INCLUDED IN THE LICENSE, NOKIA
+ * SPECIFICALLY DISCLAIMS ANY LIABILITY FOR CLAIMS BROUGHT BY YOU OR ANY
+ * OTHER ENTITY BASED ON INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS OR
+ * OTHERWISE.
+ */
 
 #ifdef REF_CHECK
 #  include <assert.h>
@@ -325,6 +351,11 @@ SSL *SSL_new(SSL_CTX *ctx)
 	SSL_clear(s);
 
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL, s, &s->ex_data);
+
+#ifndef OPENSSL_NO_PSK
+	s->psk_client_callback=ctx->psk_client_callback;
+	s->psk_server_callback=ctx->psk_server_callback;
+#endif
 
 	return(s);
 err:
@@ -1271,7 +1302,11 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
                 if ((c->algorithms & SSL_KRB5) && nokrb5)
                     continue;
 #endif /* OPENSSL_NO_KRB5 */                    
-
+#ifndef OPENSSL_NO_PSK
+		/* with PSK there must be client callback set */
+		if ((c->algorithms & SSL_PSK) && s->psk_client_callback == NULL)
+			continue;
+#endif /* OPENSSL_NO_PSK */
 		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
 		p+=j;
 		}
@@ -1501,6 +1536,11 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	ret->tlsext_servername_callback = 0;
 	ret->tlsext_servername_arg = NULL;
 #endif
+#ifndef OPENSSL_NO_PSK
+	ret->psk_identity_hint=NULL;
+	ret->psk_client_callback=NULL;
+	ret->psk_server_callback=NULL;
+#endif
 	return(ret);
 err:
 	SSLerr(SSL_F_SSL_CTX_NEW,ERR_R_MALLOC_FAILURE);
@@ -1570,6 +1610,11 @@ void SSL_CTX_free(SSL_CTX *a)
 		sk_SSL_COMP_pop_free(a->comp_methods,SSL_COMP_free);
 #else
 	a->comp_methods = NULL;
+#endif
+
+#ifndef OPENSSL_NO_PSK
+	if (a->psk_identity_hint)
+		OPENSSL_free(a->psk_identity_hint);
 #endif
 	OPENSSL_free(a);
 	}
@@ -1763,6 +1808,12 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 		emask|=SSL_kECDHE;
 		}
 #endif
+
+#ifndef OPENSSL_NO_PSK
+	mask  |= SSL_kPSK | SSL_aPSK;
+	emask |= SSL_kPSK | SSL_aPSK;
+#endif
+
 	c->mask=mask;
 	c->export_mask=emask;
 	c->valid=1;
@@ -2634,6 +2685,67 @@ void SSL_set_tmp_ecdh_callback(SSL *ssl,EC_KEY *(*ecdh)(SSL *ssl,int is_export,
 	}
 #endif
 
+#ifndef OPENSSL_NO_PSK
+int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint)
+	{
+	if (identity_hint != NULL && strlen(identity_hint) > PSK_MAX_IDENTITY_LEN)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_PSK_IDENTITY_HINT, SSL_R_DATA_LENGTH_TOO_LONG);
+		return 0;
+		}
+	if (ctx->psk_identity_hint != NULL)
+		OPENSSL_free(ctx->psk_identity_hint);
+	if (identity_hint != NULL)
+		{
+		ctx->psk_identity_hint = BUF_strdup(identity_hint);
+		if (ctx->psk_identity_hint == NULL)
+			return 0;
+		}
+	else
+		ctx->psk_identity_hint = NULL;
+	return 1;
+	}
+
+int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint)
+	{
+	if (s == NULL)
+		return 0;
+
+	if (s->session == NULL)
+		return 1; /* session not created yet, ignored */
+
+	if (identity_hint != NULL && strlen(identity_hint) > PSK_MAX_IDENTITY_LEN)
+		{
+		SSLerr(SSL_F_SSL_USE_PSK_IDENTITY_HINT, SSL_R_DATA_LENGTH_TOO_LONG);
+		return 0;
+		}
+	if (s->session->psk_identity_hint != NULL)
+		OPENSSL_free(s->session->psk_identity_hint);
+	if (identity_hint != NULL)
+		{
+		s->session->psk_identity_hint = BUF_strdup(identity_hint);
+		if (s->session->psk_identity_hint == NULL)
+			return 0;
+		}
+	else
+		s->session->psk_identity_hint = NULL;
+	return 1;
+	}
+
+const char *SSL_get_psk_identity_hint(const SSL *s)
+	{
+	if (s == NULL || s->session == NULL)
+		return NULL;
+	return(s->session->psk_identity_hint);
+	}
+
+const char *SSL_get_psk_identity(const SSL *s)
+	{
+	if (s == NULL || s->session == NULL)
+		return NULL;
+	return(s->session->psk_identity);
+	}
+#endif
 
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg))
 	{

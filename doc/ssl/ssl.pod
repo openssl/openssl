@@ -374,6 +374,15 @@ session instead of a context.
 
 =item int B<SSL_CTX_use_certificate_file>(SSL_CTX *ctx, char *file, int type);
 
+=item void B<SSL_CTX_set_psk_client_callback>(SSL_CTX *ctx, unsigned int (*callback)(SSL *ssl, const char *hint, char *identity, unsigned int max_identity_len, unsigned char *psk, unsigned int max_psk_len));
+
+=item int B<SSL_CTX_use_psk_identity_hint>(SSL_CTX *ctx, const char *hint);
+
+=item void B<SSL_CTX_set_psk_server_callback>(SSL_CTX *ctx, unsigned int (*callback)(SSL *ssl, const char *identity, unsigned char *psk, int max_psk_len));
+
+
+
+
 =back
 
 =head2 DEALING WITH SESSIONS
@@ -650,6 +659,16 @@ connection defined in the B<SSL> structure.
 
 =item int B<SSL_write>(SSL *ssl, const void *buf, int num);
 
+=item void B<SSL_set_psk_client_callback>(SSL *ssl, unsigned int (*callback)(SSL *ssl, const char *hint, char *identity, unsigned int max_identity_len, unsigned char *psk, unsigned int max_psk_len));
+
+=item int B<SSL_use_psk_identity_hint>(SSL *ssl, const char *hint);
+
+=item void B<SSL_set_psk_server_callback>(SSL *ssl, unsigned int (*callback)(SSL *ssl, const char *identity, unsigned char *psk, int max_psk_len));
+
+=item const char *B<SSL_get_psk_identity_hint>(SSL *ssl);
+
+=item const char *B<SSL_get_psk_identity>(SSL *ssl);
+
 =back
 
 =head1 SEE ALSO
@@ -726,7 +745,10 @@ L<SSL_write(3)|SSL_write(3)>,
 L<SSL_SESSION_free(3)|SSL_SESSION_free(3)>,
 L<SSL_SESSION_get_ex_new_index(3)|SSL_SESSION_get_ex_new_index(3)>,
 L<SSL_SESSION_get_time(3)|SSL_SESSION_get_time(3)>,
-L<d2i_SSL_SESSION(3)|d2i_SSL_SESSION(3)>
+L<d2i_SSL_SESSION(3)|d2i_SSL_SESSION(3)>,
+L<SSL_CTX_set_psk_client_callback(3)|SSL_CTX_set_psk_client_callback(3)>,
+L<SSL_CTX_use_psk_identity_hint(3)|SSL_CTX_use_psk_identity_hint(3)>,
+L<SSL_get_psk_identity(3)|SSL_get_psk_identity(3)>
 
 =head1 HISTORY
 
