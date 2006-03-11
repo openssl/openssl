@@ -216,8 +216,7 @@ int WHIRLPOOL_Final	(unsigned char *md,WHIRLPOOL_CTX *c)
 	{
 	unsigned int	bitoff  = c->bitoff,
 			byteoff = bitoff/8;
-	int		i,j;
-	size_t		v;
+	size_t		i,j,v;
 	unsigned char  *p;
 
 	bitoff %= 8;
