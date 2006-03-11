@@ -141,7 +141,9 @@
      [Austin Ziegler <halostatue@gmail.com>]
 
   *) Update support for ECC-based TLS ciphersuites according to
-     draft-ietf-tls-ecc-12.txt with proposed changes.
+     draft-ietf-tls-ecc-12.txt with proposed changes (but without
+     TLS extensions, which are supported starting with the 0.9.9
+     branch, not in the OpenSSL 0.9.8 branch).
      [Douglas Stebila]
 
   *) New functions EVP_CIPHER_CTX_new() and EVP_CIPHER_CTX_free() to support
