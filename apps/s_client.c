@@ -224,7 +224,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
 
 	/* lookup PSK identity and PSK key based on the given identity hint here */
 	ret = snprintf(identity, max_identity_len, psk_identity);
-	if (ret < 0 || ret > max_identity_len)
+	if (ret < 0 || (unsigned int)ret > max_identity_len)
 		goto out_err;
 	if (c_debug)
 		BIO_printf(bio_c_out, "created identity '%s' len=%d\n", identity, ret);
@@ -237,7 +237,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
                 return 0;
                 }
 
-        if (BN_num_bytes(bn) > max_psk_len)
+        if ((unsigned int)BN_num_bytes(bn) > max_psk_len)
                 {
                 BIO_printf(bio_err,"psk buffer of callback is too small (%d) for key (%d)\n",
                         max_psk_len, BN_num_bytes(bn));

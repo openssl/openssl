@@ -889,7 +889,7 @@ int MAIN(int argc, char *argv[])
                         }
                 else if (strcmp(*argv,"-psk") == 0)
 			{
-			int i;
+			size_t i;
 
 			if (--argc < 1) goto bad;
 			psk_key=*(++argv);
