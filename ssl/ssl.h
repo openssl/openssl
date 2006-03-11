@@ -507,6 +507,10 @@ typedef struct ssl_session_st
 	struct ssl_session_st *prev,*next;
 #ifndef OPENSSL_NO_TLSEXT
 	char *tlsext_hostname;
+#ifndef OPENSSL_NO_EC
+	int tlsext_ecpointformatlist_length;
+	char * tlsext_ecpointformatlist;
+#endif /* OPENSSL_NO_EC */
 #endif
 	} SSL_SESSION;
 
@@ -1057,6 +1061,10 @@ struct ssl_st
 	                          1 : prepare 2, allow last ack just after in server callback.
 	                          2 : don't call servername callback, no ack in server hello
 	                       */
+#ifndef OPENSSL_NO_EC
+	int tlsext_ecpointformatlist_length;
+	char * tlsext_ecpointformatlist;
+#endif /* OPENSSL_NO_EC */
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 #define session_ctx initial_ctx
 #else
@@ -1279,6 +1287,7 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB	53
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG	54
 #define SSL_CTRL_SET_TLSEXT_HOSTNAME		55
+#define SSL_CTRL_SET_TLSEXT_ECPOINTFORMATLIST	56
 #endif
 
 #define SSL_session_reused(ssl) \
@@ -1829,7 +1838,10 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_VERIFY_CERT_CHAIN			 207
 #define SSL_F_SSL_WRITE					 208
 #define SSL_F_TLS1_CHANGE_CIPHER_STATE			 209
+#define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT		 274
 #define SSL_F_TLS1_ENC					 210
+#define SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT		 275
+#define SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT		 276
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
 
@@ -1880,7 +1892,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_CIPHER_CODE_WRONG_LENGTH			 137
 #define SSL_R_CIPHER_OR_HASH_UNAVAILABLE		 138
 #define SSL_R_CIPHER_TABLE_SRC_ERROR			 139
-#define SSL_R_CLIENTHELLO_TLS_EXT			 316
+#define SSL_R_CLIENTHELLO_TLSEXT			 226
 #define SSL_R_COMPRESSED_LENGTH_TOO_LONG		 140
 #define SSL_R_COMPRESSION_FAILURE			 141
 #define SSL_R_COMPRESSION_ID_NOT_WITHIN_PRIVATE_RANGE	 307
@@ -1965,7 +1977,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED		 197
 #define SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE		 297
 #define SSL_R_PACKET_LENGTH_TOO_LONG			 198
-#define SSL_R_PARSE_TLS_EXT				 317
+#define SSL_R_PARSE_TLSEXT				 227
 #define SSL_R_PATH_TOO_LONG				 270
 #define SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE		 199
 #define SSL_R_PEER_ERROR				 200
@@ -1992,12 +2004,13 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_REUSE_CERT_LENGTH_NOT_ZERO		 216
 #define SSL_R_REUSE_CERT_TYPE_NOT_ZERO			 217
 #define SSL_R_REUSE_CIPHER_LIST_NOT_ZERO		 218
-#define SSL_R_SERVERHELLO_TLS_EXT			 318
+#define SSL_R_SERVERHELLO_TLSEXT			 275
 #define SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED		 277
 #define SSL_R_SHORT_READ				 219
 #define SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE	 220
 #define SSL_R_SSL23_DOING_SESSION_ID_REUSE		 221
 #define SSL_R_SSL2_CONNECTION_ID_TOO_LONG		 299
+#define SSL_R_SSL3_EXT_INVALID_ECPOINTFORMAT		 321
 #define SSL_R_SSL3_EXT_INVALID_SERVERNAME		 319
 #define SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE		 320
 #define SSL_R_SSL3_SESSION_ID_TOO_LONG			 300
@@ -2039,6 +2052,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_TLSV1_UNRECOGNIZED_NAME			 1112
 #define SSL_R_TLSV1_UNSUPPORTED_EXTENSION		 1110
 #define SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER	 232
+#define SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST		 157
 #define SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST 233
 #define SSL_R_TLS_RSA_ENCRYPTED_VALUE_LENGTH_IS_WRONG	 234
 #define SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER		 235

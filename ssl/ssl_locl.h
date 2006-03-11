@@ -975,6 +975,9 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n, int *al);
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n, int *al);
-int ssl_check_tlsext(SSL *s, int is_server);
+int ssl_prepare_clienthello_tlsext(SSL *s);
+int ssl_prepare_serverhello_tlsext(SSL *s);
+int ssl_check_clienthello_tlsext(SSL *s);
+int ssl_check_serverhello_tlsext(SSL *s);
 #endif
 #endif

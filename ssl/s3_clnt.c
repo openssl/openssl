@@ -632,6 +632,11 @@ int ssl3_client_hello(SSL *s)
 #endif
 		*(p++)=0; /* Add the NULL method */
 #ifndef OPENSSL_NO_TLSEXT
+		if (ssl_prepare_clienthello_tlsext(s) <= 0)
+			{
+			SSLerr(SSL_F_SSL3_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
+			goto err;
+			}
 		if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
 			{
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
@@ -829,12 +834,12 @@ int ssl3_get_server_hello(SSL *s)
 		if (!ssl_parse_serverhello_tlsext(s,&p,d,n, &al))
 			{
 			/* 'al' set by ssl_parse_serverhello_tlsext */
-			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_PARSE_TLS_EXT);
+			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_PARSE_TLSEXT);
 			goto f_err; 
 			}
-		if (ssl_check_tlsext(s,0) <= 0)
+		if (ssl_check_serverhello_tlsext(s) <= 0)
 			{
-			SSLerr(SSL_F_SSL3_CONNECT,SSL_R_SERVERHELLO_TLS_EXT);
+			SSLerr(SSL_F_SSL3_CONNECT,SSL_R_SERVERHELLO_TLSEXT);
 				goto err;
 			}
 		}

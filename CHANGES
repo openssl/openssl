@@ -4,6 +4,10 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Implement the Supported Point Formats Extension for
+     ECC ciphersuites from draft-ietf-tls-ecc-12.txt.
+     [Douglas Stebila]
+
   *) Add initial support for RFC 4279 PSK TLS ciphersuites. Add members
      for the psk identity [hint] and the psk callback functions to the
      SSL_SESSION, SSL and SSL_CTX structure.

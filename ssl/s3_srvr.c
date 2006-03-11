@@ -941,12 +941,12 @@ int ssl3_get_client_hello(SSL *s)
 		if (!ssl_parse_clienthello_tlsext(s,&p,d,n, &al))
 			{
 			/* 'al' set by ssl_parse_clienthello_tlsext */
-			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_PARSE_TLS_EXT);
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_PARSE_TLSEXT);
 			goto f_err;
 			}
 		}
-		if (ssl_check_tlsext(s,1) <= 0) {
-			SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLS_EXT);
+		if (ssl_check_clienthello_tlsext(s) <= 0) {
+			SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLSEXT);
 			goto err;
 		}
 #endif
@@ -1126,6 +1126,11 @@ int ssl3_send_server_hello(SSL *s)
 			*(p++)=s->s3->tmp.new_compression->id;
 #endif
 #ifndef OPENSSL_NO_TLSEXT
+		if (ssl_prepare_serverhello_tlsext(s) <= 0)
+			{
+			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,SSL_R_SERVERHELLO_TLSEXT);
+			return -1;
+			}
 		if ((p = ssl_add_serverhello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
 			{
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,ERR_R_INTERNAL_ERROR);

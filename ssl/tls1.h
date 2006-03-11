@@ -190,10 +190,18 @@ extern "C" {
 #define TLSEXT_TYPE_trusted_ca_keys		3
 #define TLSEXT_TYPE_truncated_hmac		4
 #define TLSEXT_TYPE_status_request		5
+#define TLSEXT_TYPE_elliptic_curves		10
+#define TLSEXT_TYPE_ec_point_formats		11
 
 /* NameType value from RFC 3546 */
 #define TLSEXT_NAMETYPE_host_name 0
 
+/* ECPointFormat values from draft-ietf-tls-ecc-12 */
+#define TLSEXT_ECPOINTFORMAT_first			0
+#define TLSEXT_ECPOINTFORMAT_uncompressed		0
+#define TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime	1
+#define TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2	2
+#define TLSEXT_ECPOINTFORMAT_last			2
 
 #ifndef OPENSSL_NO_TLSEXT
 
@@ -216,6 +224,10 @@ SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)
 #define SSL_CTX_set_tlsext_servername_arg(ctx, arg) \
 SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
 
+#ifndef OPENSSL_NO_EC
+#define SSL_set_tlsext_ecpointformat(s,length,list) \
+SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_ECPOINTFORMATLIST,length,(unsigned char *)list)
+#endif /* OPENSSL_NO_EC */
 #endif
 
 /* PSK ciphersuites from 4279 */

@@ -106,6 +106,9 @@ typedef struct ssl_session_asn1_st
 	ASN1_INTEGER verify_result;
 #ifndef OPENSSL_NO_TLSEXT
 	ASN1_OCTET_STRING tlsext_hostname;
+#ifndef OPENSSL_NO_EC
+	ASN1_OCTET_STRING tlsext_ecpointformatlist;
+#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	ASN1_OCTET_STRING psk_identity_hint;
@@ -116,7 +119,7 @@ typedef struct ssl_session_asn1_st
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
-	int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0,v7=0,v8=0;
+	int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0,v7=0,v8=0,v9=0;
 	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2],ibuf5[LSIZE2];
 	long l;
@@ -218,6 +221,20 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
                 a.tlsext_hostname.type=V_ASN1_OCTET_STRING;
                 a.tlsext_hostname.data=(unsigned char *)in->tlsext_hostname;
                 }                
+#ifndef OPENSSL_NO_EC
+	if (in->tlsext_ecpointformatlist)
+		{
+		a.tlsext_ecpointformatlist.length=1+in->tlsext_ecpointformatlist_length;
+		a.tlsext_ecpointformatlist.type=V_ASN1_OCTET_STRING;
+		if ((a.tlsext_ecpointformatlist.data = OPENSSL_malloc(1+in->tlsext_ecpointformatlist_length)) == NULL)
+			{
+			SSLerr(SSL_F_I2D_SSL_SESSION,ERR_R_MALLOC_FAILURE);
+			return(0);
+			}
+		*a.tlsext_ecpointformatlist.data = (unsigned char) in->tlsext_ecpointformatlist_length;
+		memcpy(a.tlsext_ecpointformatlist.data+1, in->tlsext_ecpointformatlist, in->tlsext_ecpointformatlist_length);
+		}
+#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint)
@@ -258,12 +275,16 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #ifndef OPENSSL_NO_TLSEXT
 	if (in->tlsext_hostname)
         	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
+#ifndef OPENSSL_NO_EC
+	if (in->tlsext_ecpointformatlist)
+        	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_ecpointformatlist), i2d_ASN1_OCTET_STRING,7,v7);
+#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint)
-        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,6,v7);
+        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,8,v8);
 	if (in->psk_identity)
-        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,7,v8);
+        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,9,v9);
 #endif /* OPENSSL_NO_PSK */
 
 	M_ASN1_I2D_seq_total();
@@ -292,14 +313,23 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #ifndef OPENSSL_NO_TLSEXT
 	if (in->tlsext_hostname)
         	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
+#ifndef OPENSSL_NO_EC
+	if (in->tlsext_ecpointformatlist)
+        	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_ecpointformatlist), i2d_ASN1_OCTET_STRING,7,v7);
+#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint)
-		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,6,v6);
+		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,8,v8);
 	if (in->psk_identity)
-		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,7,v7);
+		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,9,v9);
 #endif /* OPENSSL_NO_PSK */
 	M_ASN1_I2D_finish();
+#ifndef OPENSSL_NO_TLSEXT
+#ifndef OPENSSL_NO_EC
+	OPENSSL_free(a.tlsext_ecpointformatlist.data);
+#endif /* OPENSSL_NO_EC */
+#endif /* OPENSSL_NO_TLSEXT */
 	}
 
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
@@ -484,12 +514,38 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	else
 		ret->tlsext_hostname=NULL;
 
+#ifndef OPENSSL_NO_EC
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,7);
+	if (os.data)
+		{
+		if ((ret->tlsext_ecpointformatlist = OPENSSL_malloc(os.length - 1)) == NULL)
+			{
+			SSLerr(SSL_F_D2I_SSL_SESSION,ERR_R_MALLOC_FAILURE);
+			}
+		else
+			{
+			ret->tlsext_ecpointformatlist_length = os.length - 1;
+			memcpy(ret->tlsext_ecpointformatlist, (unsigned char *) os.data + 1, os.length - 1);
+			}
+		OPENSSL_free(os.data);
+		os.data = NULL;
+		os.length = 0;
+		}
+	else
+		{
+		ret->tlsext_ecpointformatlist=NULL;
+		ret->tlsext_ecpointformatlist_length=0;
+		}
+
+#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 
 #ifndef OPENSSL_NO_PSK
 	os.length=0;
 	os.data=NULL;
-	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,6);
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,8);
 	if (os.data)
 		{
 		ret->psk_identity_hint = BUF_strndup(os.data, os.length);
@@ -502,7 +558,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 
 	os.length=0;
 	os.data=NULL;
-	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,7);
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,9);
 	if (os.data)
 		{
 		ret->psk_identity = BUF_strndup(os.data, os.length);
