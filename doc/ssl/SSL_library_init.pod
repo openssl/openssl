@@ -23,6 +23,7 @@ for SSL_library_init().
 =head1 NOTES
 
 SSL_library_init() must be called before any other action takes place.
+SSL_library_init() is not reentrant. 
 
 =head1 WARNING
 
