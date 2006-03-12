@@ -430,18 +430,20 @@ typedef struct ssl_method_st
  * SSL_SESSION_ID ::= SEQUENCE {
  *	version 		INTEGER,	-- structure version number
  *	SSLversion 		INTEGER,	-- SSL version number
- *	Cipher 			OCTET_STRING,	-- the 3 byte cipher ID
- *	Session_ID 		OCTET_STRING,	-- the Session ID
- *	Master_key 		OCTET_STRING,	-- the master key
- *	KRB5_principal		OCTET_STRING	-- optional Kerberos principal
- *	Key_Arg [ 0 ] IMPLICIT	OCTET_STRING,	-- the optional Key argument
+ *	Cipher 			OCTET STRING,	-- the 3 byte cipher ID
+ *	Session_ID 		OCTET STRING,	-- the Session ID
+ *	Master_key 		OCTET STRING,	-- the master key
+ *	KRB5_principal		OCTET STRING	-- optional Kerberos principal
+ *	Key_Arg [ 0 ] IMPLICIT	OCTET STRING,	-- the optional Key argument
  *	Time [ 1 ] EXPLICIT	INTEGER,	-- optional Start Time
  *	Timeout [ 2 ] EXPLICIT	INTEGER,	-- optional Timeout ins seconds
  *	Peer [ 3 ] EXPLICIT	X509,		-- optional Peer Certificate
- *	Session_ID_context [ 4 ] EXPLICIT OCTET_STRING,   -- the Session ID context
+ *	Session_ID_context [ 4 ] EXPLICIT OCTET STRING,   -- the Session ID context
  *	Verify_result [ 5 ] EXPLICIT INTEGER,   -- X509_V_... code for `Peer'
- *	PSK_identity_hint [ 6 ] EXPLICIT OCTET_STRING, -- PSK identity hint
- *      PSK_identity [ 7 ] EXPLICIT OCTET_STRING -- PSK identity
+ *	HostName [ 6 ] EXPLICY OCTET STRING,      -- optional HostName from servername TLS extension 
+ *	ECPointFormatList [ 7 ] OCTET STRING,     -- optional EC point format list from TLS extension
+ *	PSK_identity_hint [ 8 ] EXPLICIT OCTET STRING, -- optional PSK identity hint
+ *	PSK_identity [ 9 ] EXPLICIT OCTET STRING -- optional PSK identity
  *	}
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
