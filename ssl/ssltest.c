@@ -470,7 +470,7 @@ int main(int argc, char *argv[])
 	debug = 0;
 	cipher = 0;
 
-	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);	
+	bio_err=BIO_new_fp(stderr,BIO_NOCLOSE|BIO_FP_TEXT);	
 
 	CRYPTO_set_locking_callback(lock_dbg_cb);
 
@@ -489,7 +489,7 @@ int main(int argc, char *argv[])
 
 	RAND_seed(rnd_seed, sizeof rnd_seed);
 
-	bio_stdout=BIO_new_fp(stdout,BIO_NOCLOSE);
+	bio_stdout=BIO_new_fp(stdout,BIO_NOCLOSE|BIO_FP_TEXT);
 
 	argc--;
 	argv++;
@@ -2350,7 +2350,7 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint, char *identi
 	int ret;
 	unsigned int psk_len = 0;
 
-	ret = snprintf(identity, max_identity_len, "Client_identity");
+	ret = BIO_snprintf(identity, max_identity_len, "Client_identity");
 	if (ret < 0)
 		goto out_err;
 	if (debug)
