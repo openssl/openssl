@@ -629,7 +629,7 @@ int ssl_check_serverhello_tlsext(SSL *s)
 	    ((algs & SSL_kECDH) || (algs & SSL_kECDHE) || (algs & SSL_aECDSA))) 
 		{
 		/* we are using an ECC cipher */
-		int i;
+		size_t i;
 		unsigned char *list;
 		int found_uncompressed = 0;
 		if ((s->session->tlsext_ecpointformatlist == NULL) || (s->session->tlsext_ecpointformatlist_length <= 0))
