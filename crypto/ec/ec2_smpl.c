@@ -281,7 +281,8 @@ int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group, BN_CTX *ctx)
 	ret = 1;
 
 err:
-	BN_CTX_end(ctx);
+	if (ctx != NULL)
+		BN_CTX_end(ctx);
 	if (new_ctx != NULL)
 		BN_CTX_free(new_ctx);
 	return ret;

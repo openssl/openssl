@@ -183,8 +183,11 @@ err:
 		RSAerr(RSA_F_RSA_BUILTIN_KEYGEN,ERR_LIB_BN);
 		ok=0;
 		}
-	BN_CTX_end(ctx);
-	BN_CTX_free(ctx);
+	if (ctx != NULL)
+		{
+		BN_CTX_end(ctx);
+		BN_CTX_free(ctx);
+		}
 
 	return ok;
 	}
