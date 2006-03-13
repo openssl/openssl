@@ -1514,7 +1514,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 			{
 			/* copy PSK identity hint */
 			s2n(strlen(s->ctx->psk_identity_hint), p); 
-			strncpy(p, s->ctx->psk_identity_hint, strlen(s->ctx->psk_identity_hint));
+			strncpy((char *)p, s->ctx->psk_identity_hint, strlen(s->ctx->psk_identity_hint));
 			p+=strlen(s->ctx->psk_identity_hint);
 			}
 #endif
@@ -2305,7 +2305,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 
 			if (s->session->psk_identity != NULL)
 				OPENSSL_free(s->session->psk_identity);
-			s->session->psk_identity = BUF_strdup(p);
+			s->session->psk_identity = BUF_strdup((char *)p);
 			if (s->session->psk_identity == NULL)
 				{
 				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,

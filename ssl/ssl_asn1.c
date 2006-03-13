@@ -241,13 +241,13 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		{
 		a.psk_identity_hint.length=strlen(in->psk_identity_hint);
 		a.psk_identity_hint.type=V_ASN1_OCTET_STRING;
-		a.psk_identity_hint.data=in->psk_identity_hint;
+		a.psk_identity_hint.data=(unsigned char *)(in->psk_identity_hint);
 		}
 	if (in->psk_identity)
 		{
 		a.psk_identity.length=strlen(in->psk_identity);
 		a.psk_identity.type=V_ASN1_OCTET_STRING;
-		a.psk_identity.data=in->psk_identity;
+		a.psk_identity.data=(unsigned char *)(in->psk_identity);
 		}
 #endif /* OPENSSL_NO_PSK */
 
@@ -548,7 +548,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,8);
 	if (os.data)
 		{
-		ret->psk_identity_hint = BUF_strndup(os.data, os.length);
+		ret->psk_identity_hint = BUF_strndup((char *)os.data, os.length);
 		OPENSSL_free(os.data);
 		os.data = NULL;
 		os.length = 0;
@@ -561,7 +561,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,9);
 	if (os.data)
 		{
-		ret->psk_identity = BUF_strndup(os.data, os.length);
+		ret->psk_identity = BUF_strndup((char *)os.data, os.length);
 		OPENSSL_free(os.data);
 		os.data = NULL;
 		os.length = 0;
