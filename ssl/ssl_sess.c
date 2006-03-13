@@ -359,6 +359,7 @@ int ssl_get_new_session(SSL *s, int session)
 #ifndef OPENSSL_NO_EC
 		if (s->tlsext_ecpointformatlist)
 			{
+			if (ss->tlsext_ecpointformatlist != NULL) OPENSSL_free(ss->tlsext_ecpointformatlist);
 			if ((ss->tlsext_ecpointformatlist = OPENSSL_malloc(s->tlsext_ecpointformatlist_length)) == NULL)
 				{
 				SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_MALLOC_FAILURE);

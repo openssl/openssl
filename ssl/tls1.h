@@ -223,11 +223,6 @@ SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)
 
 #define SSL_CTX_set_tlsext_servername_arg(ctx, arg) \
 SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
-
-#ifndef OPENSSL_NO_EC
-#define SSL_set_tlsext_ecpointformat(s,length,list) \
-SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_ECPOINTFORMATLIST,length,(unsigned char *)list)
-#endif /* OPENSSL_NO_EC */
 #endif
 
 /* PSK ciphersuites from 4279 */

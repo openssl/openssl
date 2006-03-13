@@ -1754,30 +1754,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			}
 		s->options |= SSL_OP_NO_SSLv2; /* can't use extension w/ SSL 2.0 format */
  		break;
-#ifndef OPENSSL_NO_EC
-	case SSL_CTRL_SET_TLSEXT_ECPOINTFORMATLIST:
-		if ((s->tlsext_ecpointformatlist = OPENSSL_malloc(larg)) == NULL)
-			{
-			SSLerr(SSL_F_SSL3_CTRL, ERR_R_MALLOC_FAILURE);
-			return 0;
-			}
-		{
-		int i;
-		unsigned char *sparg = (unsigned char *) parg;
-		for (i = 0; i < larg; i++, sparg++)
-			{
-			if (TLSEXT_ECPOINTFORMAT_last < *sparg)
-				{
-				SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_ECPOINTFORMAT);
-				return(0);
-				}
-			}
-		}
-		s->tlsext_ecpointformatlist_length = larg;
-		memcpy(s->tlsext_ecpointformatlist, parg, larg);
-		s->options |= SSL_OP_NO_SSLv2; /* can't use extension w/ SSL 2.0 format */
- 		break;
-#endif /* OPENSSL_NO_EC */
 #endif /* !OPENSSL_NO_TLSEXT */
 	default:
 		break;

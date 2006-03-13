@@ -1289,7 +1289,6 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB	53
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG	54
 #define SSL_CTRL_SET_TLSEXT_HOSTNAME		55
-#define SSL_CTRL_SET_TLSEXT_ECPOINTFORMATLIST	56
 #endif
 
 #define SSL_session_reused(ssl) \

@@ -359,6 +359,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				return 0;
 				}
 			s->session->tlsext_ecpointformatlist_length = 0;
+			if (s->session->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->session->tlsext_ecpointformatlist);
 			if ((s->session->tlsext_ecpointformatlist = OPENSSL_malloc(ecpointformatlist_length)) == NULL)
 				{
 				*al = TLS1_AD_INTERNAL_ERROR;
@@ -430,6 +431,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				return 0;
 				}
 			s->session->tlsext_ecpointformatlist_length = 0;
+			if (s->session->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->session->tlsext_ecpointformatlist);
 			if ((s->session->tlsext_ecpointformatlist = OPENSSL_malloc(ecpointformatlist_length)) == NULL)
 				{
 				*al = TLS1_AD_INTERNAL_ERROR;
@@ -485,6 +487,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			if (s->session->tlsext_ecpointformatlist == NULL)
 				{
 				s->session->tlsext_ecpointformatlist_length = s->tlsext_ecpointformatlist_length;
+				if (s->session->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->session->tlsext_ecpointformatlist);
 				if ((s->session->tlsext_ecpointformatlist = OPENSSL_malloc(s->tlsext_ecpointformatlist_length)) == NULL)
 					{
 					*al = TLS1_AD_INTERNAL_ERROR;
@@ -509,7 +512,7 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 	{
 #ifndef OPENSSL_NO_EC
 	/* If we are client and using an elliptic curve cryptography cipher suite, send the point formats we 
-	 * support (namely, only uncompressed points).
+	 * support.
 	 */
 	int using_ecc = 0;
 	int i;
@@ -528,13 +531,16 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 	using_ecc = using_ecc && (s->version == TLS1_VERSION);
 	if (using_ecc)
 		{
-		if ((s->tlsext_ecpointformatlist = OPENSSL_malloc(1)) == NULL)
+		if (s->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->tlsext_ecpointformatlist);
+		if ((s->tlsext_ecpointformatlist = OPENSSL_malloc(3)) == NULL)
 			{
 			SSLerr(SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
 			return -1;
 			}
-		s->tlsext_ecpointformatlist_length = 1;
-		*s->tlsext_ecpointformatlist = TLSEXT_ECPOINTFORMAT_uncompressed;
+		s->tlsext_ecpointformatlist_length = 3;
+		s->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_uncompressed;
+		s->tlsext_ecpointformatlist[1] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
+		s->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
 		}
 #endif /* OPENSSL_NO_EC */
 	return 1;
@@ -543,8 +549,8 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 int ssl_prepare_serverhello_tlsext(SSL *s)
 	{
 #ifndef OPENSSL_NO_EC
-	/* If we are server and using an ECC cipher suite, send the point formats we support (namely, only
-	 * uncompressed points) if the client sent us an ECPointsFormat extension.
+	/* If we are server and using an ECC cipher suite, send the point formats we support 
+	 * if the client sent us an ECPointsFormat extension.
 	 */
 	int i;
 	int algs = s->s3->tmp.new_cipher->algorithms;
@@ -553,13 +559,16 @@ int ssl_prepare_serverhello_tlsext(SSL *s)
 
 	if (using_ecc)
 		{
-		if ((s->tlsext_ecpointformatlist = OPENSSL_malloc(1)) == NULL)
+		if (s->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->tlsext_ecpointformatlist);
+		if ((s->tlsext_ecpointformatlist = OPENSSL_malloc(3)) == NULL)
 			{
 			SSLerr(SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
 			return -1;
 			}
-		s->tlsext_ecpointformatlist_length = 1;
-		*s->tlsext_ecpointformatlist = TLSEXT_ECPOINTFORMAT_uncompressed;
+		s->tlsext_ecpointformatlist_length = 3;
+		s->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_uncompressed;
+		s->tlsext_ecpointformatlist[1] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
+		s->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
 		}
 #endif /* OPENSSL_NO_EC */
 	return 1;
