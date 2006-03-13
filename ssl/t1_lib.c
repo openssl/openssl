@@ -637,7 +637,7 @@ int ssl_check_serverhello_tlsext(SSL *s)
 			SSLerr(SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT,SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
 			return -1;
 			}
-		list = (unsigned char *)(s->session->tlsext_ecpointformatlist);
+		list = s->session->tlsext_ecpointformatlist;
 		for (i = 0; i < s->session->tlsext_ecpointformatlist_length; i++)
 			{
 			if (*(list++) == TLSEXT_ECPOINTFORMAT_uncompressed)
