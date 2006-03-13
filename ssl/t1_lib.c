@@ -351,7 +351,6 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			{
 			unsigned char *sdata = data;
 			int ecpointformatlist_length = *(sdata++);
-			int i;
 
 			if (ecpointformatlist_length != size - 1)
 				{
@@ -423,7 +422,6 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			{
 			unsigned char *sdata = data;
 			int ecpointformatlist_length = *(sdata++);
-			int i;
 
 			if (ecpointformatlist_length != size - 1)
 				{
@@ -552,7 +550,6 @@ int ssl_prepare_serverhello_tlsext(SSL *s)
 	/* If we are server and using an ECC cipher suite, send the point formats we support 
 	 * if the client sent us an ECPointsFormat extension.
 	 */
-	int i;
 	int algs = s->s3->tmp.new_cipher->algorithms;
 	int using_ecc = (algs & SSL_kECDH) || (algs & SSL_kECDHE) || (algs & SSL_aECDSA);
 	using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
