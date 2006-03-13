@@ -189,6 +189,11 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 		if ((lenmax = limit - p - 5) < 0) return NULL; 
 		if (s->tlsext_ecpointformatlist_length > (unsigned long)lenmax) return NULL;
+		if (s->tlsext_ecpointformatlist_length > 255)
+			{
+			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+			return NULL;
+			}
 		
 		s2n(TLSEXT_TYPE_ec_point_formats,ret);
 		s2n(s->tlsext_ecpointformatlist_length + 1,ret);
@@ -228,6 +233,11 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 		if ((lenmax = limit - p - 5) < 0) return NULL; 
 		if (s->tlsext_ecpointformatlist_length > (unsigned long)lenmax) return NULL;
+		if (s->tlsext_ecpointformatlist_length > 255)
+			{
+			SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+			return NULL;
+			}
 		
 		s2n(TLSEXT_TYPE_ec_point_formats,ret);
 		s2n(s->tlsext_ecpointformatlist_length + 1,ret);

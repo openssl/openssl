@@ -510,8 +510,8 @@ typedef struct ssl_session_st
 #ifndef OPENSSL_NO_TLSEXT
 	char *tlsext_hostname;
 #ifndef OPENSSL_NO_EC
-	int tlsext_ecpointformatlist_length;
-	char * tlsext_ecpointformatlist;
+	size_t tlsext_ecpointformatlist_length;
+	unsigned char *tlsext_ecpointformatlist; /* peer's list */
 #endif /* OPENSSL_NO_EC */
 #endif
 	} SSL_SESSION;
@@ -1064,8 +1064,8 @@ struct ssl_st
 	                          2 : don't call servername callback, no ack in server hello
 	                       */
 #ifndef OPENSSL_NO_EC
-	int tlsext_ecpointformatlist_length;
-	char * tlsext_ecpointformatlist;
+	size_t tlsext_ecpointformatlist_length;
+	unsigned char *tlsext_ecpointformatlist; /* our list */
 #endif /* OPENSSL_NO_EC */
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 #define session_ctx initial_ctx
@@ -1764,8 +1764,10 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL3_SETUP_KEY_BLOCK			 157
 #define SSL_F_SSL3_WRITE_BYTES				 158
 #define SSL_F_SSL3_WRITE_PENDING			 159
+#define SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT		 277
 #define SSL_F_SSL_ADD_DIR_CERT_SUBJECTS_TO_STACK	 215
 #define SSL_F_SSL_ADD_FILE_CERT_SUBJECTS_TO_STACK	 216
+#define SSL_F_SSL_ADD_SERVERHELLO_TLSEXT		 278
 #define SSL_F_SSL_BAD_METHOD				 160
 #define SSL_F_SSL_BYTES_TO_CIPHER_LIST			 161
 #define SSL_F_SSL_CERT_DUP				 221
