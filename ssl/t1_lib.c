@@ -632,7 +632,7 @@ int ssl_check_serverhello_tlsext(SSL *s)
 		size_t i;
 		unsigned char *list;
 		int found_uncompressed = 0;
-		if ((s->session->tlsext_ecpointformatlist == NULL) || (s->session->tlsext_ecpointformatlist_length <= 0))
+		if ((s->session->tlsext_ecpointformatlist == NULL) || (s->session->tlsext_ecpointformatlist_length == 0))
 			{
 			SSLerr(SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT,SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
 			return -1;
