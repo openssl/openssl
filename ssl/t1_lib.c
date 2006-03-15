@@ -384,9 +384,9 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			fprintf(stderr,"\n");
 #endif
 			}
+#endif /* OPENSSL_NO_EC */
 		data+=size;		
 		}
-#endif /* OPENSSL_NO_EC */
 
 	*p = data;
 	return 1;
@@ -455,10 +455,9 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			fprintf(stderr,"\n");
 #endif
 			}
-
+#endif /* OPENSSL_NO_EC */
 		data+=size;		
 		}
-#endif /* OPENSSL_NO_EC */
 
 	if (data != d+n)
 		{
