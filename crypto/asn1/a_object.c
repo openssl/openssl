@@ -280,8 +280,6 @@ ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 	return ret;
 err:
 	ASN1err(ASN1_F_D2I_ASN1_OBJECT,i);
-	if ((ret != NULL) && ((a == NULL) || (*a != ret)))
-		ASN1_OBJECT_free(ret);
 	return(NULL);
 }
 ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,

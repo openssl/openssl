@@ -281,8 +281,8 @@ err:
 	if (!ret)
 		{
 		DSAerr(DSA_F_DSA_SIGN_SETUP,ERR_R_BN_LIB);
-		if (kinv != NULL) BN_clear_free(kinv);
-		if (r != NULL) BN_clear_free(r);
+		if (r != NULL)
+			BN_clear_free(r);
 		}
 	if (ctx_in == NULL) BN_CTX_free(ctx);
 	if (kinv != NULL) BN_clear_free(kinv);

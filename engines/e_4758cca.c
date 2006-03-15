@@ -482,8 +482,6 @@ static EVP_PKEY *ibm_4758_load_privkey(ENGINE* e, const char* key_id,
 err:
 	if (keyToken)
 		OPENSSL_free(keyToken);
-	if (res)
-		EVP_PKEY_free(res);
 	if (rtmp)
 		RSA_free(rtmp);
 	return NULL;
@@ -560,8 +558,6 @@ static EVP_PKEY *ibm_4758_load_pubkey(ENGINE* e, const char* key_id,
 err:
 	if (keyToken)
 		OPENSSL_free(keyToken);
-	if (res)
-		EVP_PKEY_free(res);
 	if (rtmp)
 		RSA_free(rtmp);
 	return NULL;

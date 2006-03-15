@@ -148,11 +148,6 @@ static int util_flags(BIO *bio_out, unsigned int flags, const char *indent)
 
 	if(flags & ENGINE_CMD_FLAG_NUMERIC)
 		{
-		if(started)
-			{
-			BIO_printf(bio_out, "|");
-			err = 1;
-			}
 		BIO_printf(bio_out, "NUMERIC");
 		started = 1;
 		}

@@ -439,7 +439,7 @@ static int parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
 
 static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 	{
-	ASN1_TYPE *ret = NULL, *typ = NULL;
+	ASN1_TYPE *ret = NULL;
 	STACK_OF(ASN1_TYPE) *sk = NULL;
 	STACK_OF(CONF_VALUE) *sect = NULL;
 	unsigned char *der = NULL, *p;
@@ -455,11 +455,10 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 			goto bad;
 		for (i = 0; i < sk_CONF_VALUE_num(sect); i++)
 			{
-			typ = ASN1_generate_v3(sk_CONF_VALUE_value(sect, i)->value, cnf);
+			ASN1_TYPE *typ = ASN1_generate_v3(sk_CONF_VALUE_value(sect, i)->value, cnf);
 			if (!typ)
 				goto bad;
 			sk_ASN1_TYPE_push(sk, typ);
-			typ = NULL;
 			}
 		}
 
@@ -498,8 +497,6 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf)
 
 	if (sk)
 		sk_ASN1_TYPE_pop_free(sk, ASN1_TYPE_free);
-	if (typ)
-		ASN1_TYPE_free(typ);
 	if (sect)
 		X509V3_section_free(cnf, sect);
 

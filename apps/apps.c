@@ -1734,10 +1734,7 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
 		goto err;
 		}
 	if ((tmpdb = TXT_DB_read(in,DB_NUMBER)) == NULL)
-		{
-		if (tmpdb != NULL) TXT_DB_free(tmpdb);
 		goto err;
-		}
 
 #ifndef OPENSSL_SYS_VMS
 	BIO_snprintf(buf[0], sizeof buf[0], "%s.attr", dbfile);

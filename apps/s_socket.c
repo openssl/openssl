@@ -231,13 +231,11 @@ static int ssl_sock_init(void)
 int init_client(int *sock, char *host, int port, int type)
 	{
 	unsigned char ip[4];
-	short p=0;
 
 	if (!host_ip(host,&(ip[0])))
 		{
 		return(0);
 		}
-	if (p != 0) port=p;
 	return(init_client_ip(sock,ip,port,type));
 	}
 

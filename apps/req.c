@@ -797,8 +797,6 @@ bad:
 
 		app_RAND_write_file(randfile, bio_err);
 
-		if (pkey == NULL) goto end;
-
 		if (keyout == NULL)
 			{
 			keyout=NCONF_get_string(req_conf,SECTION,KEYFILE);

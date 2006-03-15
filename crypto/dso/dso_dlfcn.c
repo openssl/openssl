@@ -325,7 +325,7 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 		{
 		int spec2len, len;
 
-		spec2len = (filespec2 ? strlen(filespec2) : 0);
+		spec2len = strlen(filespec2);
 		len = spec2len + (filespec1 ? strlen(filespec1) : 0);
 
 		if(filespec2 && filespec2[spec2len - 1] == '/')

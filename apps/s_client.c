@@ -348,7 +348,7 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 	{
 	int off=0;
-	SSL *con=NULL,*con2=NULL;
+	SSL *con=NULL;
 	X509_STORE *store = NULL;
 	int s,k,width,state=0;
 	char *cbuf=NULL,*sbuf=NULL,*mbuf=NULL;
@@ -1239,7 +1239,6 @@ shut:
 end:
 	if(prexit) print_stuff(bio_c_out,con,1);
 	if (con != NULL) SSL_free(con);
-	if (con2 != NULL) SSL_free(con2);
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (cert)
 		X509_free(cert);

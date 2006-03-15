@@ -111,7 +111,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 	ASN1_INTEGER *bs;
 	EVP_PKEY *pkey=NULL;
 	const char *neg;
-	ASN1_STRING *str=NULL;
 
 	if((nmflags & XN_FLAG_SEP_MASK) == XN_FLAG_SEP_MULTILINE) {
 			mlch = '\n';
@@ -259,7 +258,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		}
 	ret=1;
 err:
-	if (str != NULL) ASN1_STRING_free(str);
 	if (m != NULL) OPENSSL_free(m);
 	return(ret);
 	}

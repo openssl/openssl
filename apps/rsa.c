@@ -282,7 +282,7 @@ bad:
 				passin, e, "Private Key");
 
 		if (pkey != NULL)
-		rsa = pkey == NULL ? NULL : EVP_PKEY_get1_RSA(pkey);
+			rsa = EVP_PKEY_get1_RSA(pkey);
 		EVP_PKEY_free(pkey);
 	}
 
