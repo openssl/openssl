@@ -312,6 +312,13 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 		goto err;
 		}
 
+	ctx = BN_CTX_new();
+	if (ctx == NULL)
+		{
+		reason = ERR_R_MALLOC_FAILURE;
+		goto err;
+		}
+
 	if (EC_GROUP_get_asn1_flag(x))
 		{
 		/* the curve parameter are given by an asn1 OID */
@@ -505,6 +512,13 @@ int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 	if (x == NULL || (group = EC_KEY_get0_group(x)) == NULL)
 		{
 		reason = ERR_R_PASSED_NULL_PARAMETER;
+		goto err;
+		}
+
+	ctx = BN_CTX_new();
+	if (ctx == NULL)
+		{
+		reason = ERR_R_MALLOC_FAILURE;
 		goto err;
 		}
 
