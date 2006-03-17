@@ -77,7 +77,7 @@
   386           Use the 80386 instruction set only (the default x86 code is
                 more efficient, but requires at least a 486). Note: Use
                 compiler flags for any other CPU specific configuration,
-                e.g. "-m32" to build x86 code on a 64 bit system.
+                e.g. "-m32" to build x86 code on an x64 system.
 
   no-sse2	Exclude SSE2 code pathes. Normally SSE2 extention is
 		detected at run-time, but the decision whether or not the
