@@ -75,7 +75,9 @@
   no-asm        Do not use assembler code.
 
   386           Use the 80386 instruction set only (the default x86 code is
-                more efficient, but requires at least a 486).
+                more efficient, but requires at least a 486). Note: Use
+                compiler flags for any other CPU specific configuration,
+                e.g. "-m32" to build x86 code on a 64 bit system.
 
   no-sse2	Exclude SSE2 code pathes. Normally SSE2 extention is
 		detected at run-time, but the decision whether or not the
@@ -96,7 +98,7 @@
                 The crypto/<cipher> directory can be removed after running
                 "make depend".
 
-  -Dxxx, -lxxx, -Lxxx, -fxxx, -Kxxx These system specific options will
+  -Dxxx, -lxxx, -Lxxx, -fxxx, -mxxx, -Kxxx These system specific options will
                 be passed through to the compiler to allow you to
                 define preprocessor symbols, specify additional libraries,
                 library directories or other compiler options.
@@ -328,7 +330,7 @@
  Note on support for multiple builds
  -----------------------------------
 
- OpenSSL is usually built in it's source tree.  Unfortunately, this doesn't
+ OpenSSL is usually built in its source tree.  Unfortunately, this doesn't
  support building for multiple platforms from the same source tree very well.
  It is however possible to build in a separate tree through the use of lots
  of symbolic links, which should be prepared like this:
