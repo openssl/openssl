@@ -466,18 +466,21 @@ TS_RESP *TS_RESP_create_response(TS_RESP_CTX *ctx, BIO *req_bio)
 	if (!result)
 		{
 		TSerr(TS_F_TS_RESP_CREATE_RESPONSE, TS_R_RESPONSE_SETUP_ERROR);
-		TS_RESP_CTX_set_status_info_cond(ctx, TS_STATUS_REJECTION,
-						 "Error during response "
-						 "generation.");
-		/* Check if the status info was set. */
-		if (ctx->response
-		    && ASN1_INTEGER_get(
-			    TS_RESP_get_status_info(ctx->response)->status)
-		    == TS_STATUS_GRANTED)
+		if (ctx != NULL)
 			{
-			/* Status info wasn't set, don't return a response. */
-			TS_RESP_free(ctx->response);
-			ctx->response = NULL;
+			TS_RESP_CTX_set_status_info_cond(ctx,
+				TS_STATUS_REJECTION, "Error during response "
+				"generation.");
+			/* Check if the status info was set. */
+			if (ctx->response && ASN1_INTEGER_get(
+			    TS_RESP_get_status_info(ctx->response)->status)
+			    == TS_STATUS_GRANTED)
+				{
+				/* Status info wasn't set, don't
+				 * return a response. */
+				TS_RESP_free(ctx->response);
+				ctx->response = NULL;
+				}
 			}
 		}
 	response = ctx->response;
@@ -567,13 +570,18 @@ static int TS_RESP_check_request(TS_RESP_CTX *ctx)
 	return 1;
 	}
 
-/* Returns the TSA policy based on the rqeuested and acceptable policies. */
+/* Returns the TSA policy based on the requested and acceptable policies. */
 static ASN1_OBJECT *TS_RESP_get_policy(TS_RESP_CTX *ctx)
 	{
 	ASN1_OBJECT *requested = TS_REQ_get_policy_id(ctx->request);
 	ASN1_OBJECT *policy = NULL;
 	int i;
 
+	if (ctx->default_policy == NULL)
+		{
+		TSerr(TS_F_TS_RESP_GET_POLICY, TS_R_INVALID_NULL_POINTER);
+		return NULL;
+		}
 	/* Return the default policy if none is requested or the default is
 	   requested. */
 	if (!requested || !OBJ_cmp(requested, ctx->default_policy))

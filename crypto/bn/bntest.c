@@ -732,6 +732,8 @@ int test_mont(BIO *bp, BN_CTX *ctx)
 	BN_init(&n);
 
 	mont=BN_MONT_CTX_new();
+	if (mont == NULL)
+		return 0;
 
 	BN_bntest_rand(&a,100,0,0); /**/
 	BN_bntest_rand(&b,100,0,0); /**/

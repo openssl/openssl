@@ -1041,6 +1041,8 @@ static TS_VERIFY_CTX *create_verify_ctx(char *data, char *digest,
 		if (!(request = d2i_TS_REQ_bio(input, NULL))) goto err;
 		if (!(ctx = TS_REQ_to_TS_VERIFY_CTX(request, NULL))) goto err;
 		}
+	else
+		return NULL;
 
 	/* Add the signature verification flag and arguments. */
 	ctx->flags |= TS_VFY_SIGNATURE;
