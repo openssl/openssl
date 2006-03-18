@@ -1813,13 +1813,16 @@ again:
 			}
 		}
 err:
-	BIO_printf(bio_s_out,"shutting down SSL\n");
+	if (con != NULL)
+		{
+		BIO_printf(bio_s_out,"shutting down SSL\n");
 #if 1
-	SSL_set_shutdown(con,SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
+		SSL_set_shutdown(con,SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
 #else
-	SSL_shutdown(con);
+		SSL_shutdown(con);
 #endif
-	if (con != NULL) SSL_free(con);
+		SSL_free(con);
+		}
 	BIO_printf(bio_s_out,"CONNECTION CLOSED\n");
 	if (buf != NULL)
 		{

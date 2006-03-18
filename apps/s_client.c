@@ -1237,8 +1237,12 @@ shut:
 	SHUTDOWN(SSL_get_fd(con));
 	ret=0;
 end:
-	if(prexit) print_stuff(bio_c_out,con,1);
-	if (con != NULL) SSL_free(con);
+	if (con != NULL)
+		{
+		if (prexit != 0)
+			print_stuff(bio_c_out,con,1);
+		SSL_free(con);
+		}
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (cert)
 		X509_free(cert);
