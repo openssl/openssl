@@ -305,7 +305,7 @@ EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 				goto ecerr;
 			}
 			priv_key = EC_KEY_get0_private_key(eckey);
-			if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, ctx))
+			if (!EC_POINT_mul(group, pub_key, priv_key, NULL, NULL, NULL))
 			{
 				EC_POINT_free(pub_key);
 				EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_EC_LIB);
@@ -321,12 +321,8 @@ EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 		}
 
 		EVP_PKEY_assign_EC_KEY(pkey, eckey);
-		if (ctx)
-			BN_CTX_free(ctx);
 		break;
 ecerr:
-		if (ctx)
-			BN_CTX_free(ctx);
 		if (eckey)
 			EC_KEY_free(eckey);
 		if (pkey)

@@ -285,7 +285,6 @@ err:
 			BN_clear_free(r);
 		}
 	if (ctx_in == NULL) BN_CTX_free(ctx);
-	if (kinv != NULL) BN_clear_free(kinv);
 	BN_clear_free(&k);
 	BN_clear_free(&kq);
 	return(ret);

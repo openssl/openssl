@@ -852,8 +852,6 @@ static EVP_PKEY *hwcrhk_load_privkey(ENGINE *eng, const char *key_id,
 
 	return res;
  err:
-	if (res)
-		EVP_PKEY_free(res);
 #ifndef OPENSSL_NO_RSA
 	if (rtmp)
 		RSA_free(rtmp);
