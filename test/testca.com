@@ -11,7 +11,7 @@ $
 $	set noon
 $	if f$search("demoCA.dir") .nes. ""
 $	then
-$	    @[-.utils]deltree [.demoCA]*.*
+$	    @[-.util]deltree [.demoCA]*.*
 $	    set file/prot=(S:RWED,O:RWED,G:RWED,W:RWED) demoCA.dir;*
 $	    delete demoCA.dir;*
 $	endif
@@ -38,7 +38,7 @@ $	@[-.apps]CA.com -verify newcert.pem
 $	if $severity .ne. 1 then exit 3
 $
 $	set noon
-$	@[-.utils]deltree [.demoCA]*.*
+$	@[-.util]deltree [.demoCA]*.*
 $	set file/prot=(S:RWED,O:RWED,G:RWED,W:RWED) demoCA.dir;*
 $	delete demoCA.dir;*
 $	if f$search("newcert.pem") .nes. "" then delete newcert.pem;*

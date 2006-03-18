@@ -18,7 +18,7 @@ $
 $ setup_dir:
 $	subroutine
 $
-$		@[-.utils]deltree [.tsa]*.*
+$		@[-.util]deltree [.tsa]*.*
 $ 		set file/prot=(S:RWED,O:RWED,G:RWED,W:RWED) tsa.dir;*
 $ 		delete tsa.dir;*
 $
@@ -30,7 +30,7 @@ $ clean_up_dir:
 $	subroutine
 $
 $		set default [-]
-$		@[-.utils]deltree [.tsa]*.*
+$		@[-.util]deltree [.tsa]*.*
 $ 		set file/prot=(S:RWED,O:RWED,G:RWED,W:RWED) tsa.dir;*
 $ 		delete tsa.dir;*
 $	endsubroutine
@@ -39,7 +39,7 @@ $ create_ca:
 $	subroutine
 $
 $		write sys$output "Creating a new CA for the TSA tests..."
-$		@[--.utils]deltree [.demoCA]*.*
+$		@[--.util]deltree [.demoCA]*.*
 $
 $		open/write file VMStsa-response.create_ca
 $		write file ""
