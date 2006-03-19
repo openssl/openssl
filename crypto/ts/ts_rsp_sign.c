@@ -466,18 +466,12 @@ TS_RESP *TS_RESP_create_response(TS_RESP_CTX *ctx, BIO *req_bio)
 	if (!result)
 		{
 		TSerr(TS_F_TS_RESP_CREATE_RESPONSE, TS_R_RESPONSE_SETUP_ERROR);
-		if (ctx != NULL)
+		if (ctx->response != NULL)
 			{
-			TS_RESP_CTX_set_status_info_cond(ctx,
+			if (TS_RESP_CTX_set_status_info_cond(ctx,
 				TS_STATUS_REJECTION, "Error during response "
-				"generation.");
-			/* Check if the status info was set. */
-			if (ctx->response && ASN1_INTEGER_get(
-			    TS_RESP_get_status_info(ctx->response)->status)
-			    == TS_STATUS_GRANTED)
+				"generation.") == 0)
 				{
-				/* Status info wasn't set, don't
-				 * return a response. */
 				TS_RESP_free(ctx->response);
 				ctx->response = NULL;
 				}
