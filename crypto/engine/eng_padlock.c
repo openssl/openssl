@@ -260,9 +260,9 @@ struct padlock_cipher_data
 			int dgst:1;	/* n/a in C3 */
 			int align:1;	/* n/a in C3 */
 			int ciphr:1;	/* n/a in C3 */
-			int keygen:1;
+			unsigned int keygen:1;
 			int interm:1;
-			int encdec:1;
+			unsigned int encdec:1;
 			int ksize:2;
 		} b;
 	} cword;		/* Control word */
