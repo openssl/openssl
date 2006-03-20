@@ -119,7 +119,7 @@ static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 
 	}
 
-static int dsa_pub_encode(X509_PUBKEY *pk, EVP_PKEY *pkey)
+static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	{
 	DSA *dsa;
 	void *pval;
@@ -166,6 +166,14 @@ static int dsa_pub_encode(X509_PUBKEY *pk, EVP_PKEY *pkey)
 		ASN1_STRING_free(pval);
 
 	return 0;
+	}
+
+static int dsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
+	{
+	if (BN_cmp(b->pkey.dsa->pub_key,a->pkey.dsa->pub_key) != 0)
+		return 0;
+	else
+		return 1;
 	}
 
 /* In PKCS#8 DSA: you just get a private key integer and parameters in the
@@ -278,7 +286,7 @@ static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	return 0;
 	}
 
-static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
+static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
 	ASN1_STRING *params = NULL;
 	ASN1_INTEGER *prkey = NULL;
@@ -330,6 +338,64 @@ err:
 	return 0;
 }
 
+static int int_dsa_size(const EVP_PKEY *pkey)
+	{
+	return(DSA_size(pkey->pkey.dsa));
+	}
+
+static int dsa_bits(const EVP_PKEY *pkey)
+	{
+	return BN_num_bits(pkey->pkey.dsa->p);
+	}
+
+static int dsa_missing_parameters(const EVP_PKEY *pkey)
+	{
+	DSA *dsa;
+	dsa=pkey->pkey.dsa;
+	if ((dsa->p == NULL) || (dsa->q == NULL) || (dsa->g == NULL))
+			return 1;
+	return 0;
+	}
+
+static int dsa_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
+	{
+	BIGNUM *a;
+
+	if ((a=BN_dup(from->pkey.dsa->p)) == NULL)
+		return 0;
+	if (to->pkey.dsa->p != NULL)
+		BN_free(to->pkey.dsa->p);
+	to->pkey.dsa->p=a;
+
+	if ((a=BN_dup(from->pkey.dsa->q)) == NULL)
+		return 0;
+	if (to->pkey.dsa->q != NULL)
+		BN_free(to->pkey.dsa->q);
+	to->pkey.dsa->q=a;
+
+	if ((a=BN_dup(from->pkey.dsa->g)) == NULL)
+		return 0;
+	if (to->pkey.dsa->g != NULL)
+		BN_free(to->pkey.dsa->g);
+	to->pkey.dsa->g=a;
+	return 1;
+	}
+
+static int dsa_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
+	{
+	if (	BN_cmp(a->pkey.dsa->p,b->pkey.dsa->p) ||
+		BN_cmp(a->pkey.dsa->q,b->pkey.dsa->q) ||
+		BN_cmp(a->pkey.dsa->g,b->pkey.dsa->g))
+		return 0;
+	else
+		return 1;
+	}
+
+static void int_dsa_free(EVP_PKEY *pkey)
+	{
+	DSA_free(pkey->pkey.dsa);
+	}
+
 /* NB these are sorted in pkey_id order, lowest first */
 
 const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] = 
@@ -363,13 +429,26 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] =
 		EVP_PKEY_DSA,
 		EVP_PKEY_DSA,
 		0,
+
 		dsa_pub_decode,
 		dsa_pub_encode,
+		dsa_pub_cmp,
 		0,
+
 		dsa_priv_decode,
 		dsa_priv_encode,
 		0,
+
+		int_dsa_size,
+		dsa_bits,
+
+		0,0,
+		dsa_missing_parameters,
+		dsa_copy_parameters,
+		dsa_cmp_parameters,
 		0,
+
+		int_dsa_free,
 		0
 		}
 	};

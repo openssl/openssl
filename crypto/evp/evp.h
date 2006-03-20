@@ -128,6 +128,7 @@ struct evp_pkey_st
 	int type;
 	int save_type;
 	int references;
+	const EVP_PKEY_ASN1_METHOD *ameth;
 	union	{
 		char *ptr;
 #ifndef OPENSSL_NO_RSA

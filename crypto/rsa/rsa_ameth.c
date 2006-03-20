@@ -61,7 +61,7 @@
 #include <openssl/x509.h>
 #include <openssl/rsa.h>
 
-static int rsa_pub_encode(X509_PUBKEY *pk, EVP_PKEY *pkey)
+static int rsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	{
 	unsigned char *penc = NULL;
 	int penclen;
@@ -92,6 +92,14 @@ static int rsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	return 1;
 	}
 
+static int rsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
+	{
+	if (BN_cmp(b->pkey.rsa->n,a->pkey.rsa->n) != 0
+		|| BN_cmp(b->pkey.rsa->e,a->pkey.rsa->e) != 0)
+			return 0;
+	return 1;
+	}
+
 static int rsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	{
 	const unsigned char *p;
@@ -108,7 +116,7 @@ static int rsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	return 1;
 	}
 
-static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
+static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 	{
 	unsigned char *rk = NULL;
 	int rklen;
@@ -130,19 +138,43 @@ static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	return 1;
 	}
 
+static int int_rsa_size(const EVP_PKEY *pkey)
+	{
+	return RSA_size(pkey->pkey.rsa);
+	}
+
+static int rsa_bits(const EVP_PKEY *pkey)
+	{
+	return BN_num_bits(pkey->pkey.rsa->n);
+	}
+
+static void int_rsa_free(EVP_PKEY *pkey)
+	{
+	RSA_free(pkey->pkey.rsa);
+	}
+
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] = 
 	{
 		{
 		EVP_PKEY_RSA,
 		EVP_PKEY_RSA,
 		0,
+
 		rsa_pub_decode,
 		rsa_pub_encode,
+		rsa_pub_cmp,
 		0,
+
 		rsa_priv_decode,
 		rsa_priv_encode,
 		0,
-		0,
+
+		int_rsa_size,
+		rsa_bits,
+
+		0,0,0,0,0,0,
+
+		int_rsa_free,
 		0
 		},
 

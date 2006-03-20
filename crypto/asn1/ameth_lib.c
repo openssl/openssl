@@ -64,6 +64,7 @@
 
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
 extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
 
 /* Keep this sorted in type order !! */
@@ -71,6 +72,7 @@ const EVP_PKEY_ASN1_METHOD *standard_methods[] =
 	{
 	&rsa_asn1_meths[0],
 	&rsa_asn1_meths[1],
+	&dh_asn1_meth,
 	&dsa_asn1_meths[0],
 	&dsa_asn1_meths[1],
 	&dsa_asn1_meths[2],
@@ -86,14 +88,16 @@ void main()
 	for (i = 0;
 		i < sizeof(standard_methods)/sizeof(EVP_PKEY_ASN1_METHOD *);
 		i++)
-		fprintf(stderr, "Number %d id=%d\n", i,
-			standard_methods[i]->pkey_id);
+		fprintf(stderr, "Number %d id=%d (%s)\n", i,
+			standard_methods[i]->pkey_id,
+			OBJ_nid2sn(standard_methods[i]->pkey_id));
 	}
 #endif
 
 static int ameth_cmp(const EVP_PKEY_ASN1_METHOD * const *a,
                 const EVP_PKEY_ASN1_METHOD * const *b)
 	{
+/*fprintf(stderr, "Comparing %d with %d\n", (*a)->pkey_id, (*b)->pkey_id);*/
         return ((*a)->pkey_id - (*b)->pkey_id);
 	}
 
@@ -106,6 +110,8 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_ASN1_find(int type)
 			sizeof(standard_methods)/sizeof(EVP_PKEY_ASN1_METHOD *),
         		sizeof(EVP_PKEY_ASN1_METHOD *),
 			(int (*)(const void *, const void *))ameth_cmp);
+	if (!ret || !*ret)
+		return NULL;
 	if ((*ret)->pkey_flags & ASN1_PKEY_ALIAS)
 		return EVP_PKEY_ASN1_find((*ret)->pkey_base_id);
 	return *ret;

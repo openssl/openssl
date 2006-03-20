@@ -95,7 +95,7 @@ static int eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
 	return 1;
 	}
 
-static int eckey_pub_encode(X509_PUBKEY *pk, EVP_PKEY *pkey)
+static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	{
 	EC_KEY *ec_key = pkey->pkey.ec;
 	void *pval = NULL;
@@ -218,6 +218,20 @@ static int eckey_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	return 0;
 	}
 
+static int eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
+	{
+	int  r;
+	const EC_GROUP *group = EC_KEY_get0_group(b->pkey.ec);
+	const EC_POINT *pa = EC_KEY_get0_public_key(a->pkey.ec),
+	               *pb = EC_KEY_get0_public_key(b->pkey.ec);
+	r = EC_POINT_cmp(group, pa, pb, NULL);
+	if (r == 0)
+		return 1;
+	if (r == 1)
+		return 0;
+	return -2;
+	}
+
 static int eckey_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	{
 	const unsigned char *p = NULL;
@@ -290,7 +304,7 @@ static int eckey_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	return 0;
 	}
 
-static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
+static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
 	EC_KEY		*ec_key;
 	unsigned char	*ep, *p;
@@ -344,17 +358,91 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
 	return 1;
 }
 
+static int int_ec_size(const EVP_PKEY *pkey)
+	{
+	return ECDSA_size(pkey->pkey.ec);
+	}
+
+static int ec_bits(const EVP_PKEY *pkey)
+	{
+	BIGNUM *order = BN_new();
+	const EC_GROUP *group;
+	int ret;
+
+	if (!order)
+		{
+		ERR_clear_error();
+		return 0;
+		}
+	group = EC_KEY_get0_group(pkey->pkey.ec);
+	if (!EC_GROUP_get_order(group, order, NULL))
+		{
+		ERR_clear_error();
+		return 0;
+		}
+
+	ret = BN_num_bits(order);
+	BN_free(order);
+	return ret;
+	}
+
+static int ec_missing_parameters(const EVP_PKEY *pkey)
+	{
+	if (EC_KEY_get0_group(pkey->pkey.ec) == NULL)
+		return 1;
+	return 0;
+	}
+
+int ec_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
+	{
+	EC_GROUP *group = EC_GROUP_dup(EC_KEY_get0_group(from->pkey.ec));
+	if (group == NULL)
+		return 0;
+	if (EC_KEY_set_group(to->pkey.ec, group) == 0)
+		return 0;
+	EC_GROUP_free(group);
+	return 1;
+	}
+
+int ec_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
+	{
+	const EC_GROUP *group_a = EC_KEY_get0_group(a->pkey.ec),
+	               *group_b = EC_KEY_get0_group(b->pkey.ec);
+	if (EC_GROUP_cmp(group_a, group_b, NULL))
+		return 0;
+	else
+		return 1;
+	}
+
+static void int_ec_free(EVP_PKEY *pkey)
+	{
+	EC_KEY_free(pkey->pkey.ec);
+	}
+
 EVP_PKEY_ASN1_METHOD eckey_asn1_meth = 
 	{
 	EVP_PKEY_EC,
 	0,
 	0,
+
 	eckey_pub_decode,
 	eckey_pub_encode,
+	eckey_pub_cmp,
 	0,
+
 	eckey_priv_decode,
 	eckey_priv_encode,
 	0,
+
+	int_ec_size,
+	ec_bits,
+
+	0,0,	
+	ec_missing_parameters,
+	ec_copy_parameters,
+	ec_cmp_parameters,
 	0,
+
+	int_ec_free,
 	0
 	};
