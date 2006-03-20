@@ -262,6 +262,10 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_DSA_NEW_METHOD				 103
 #define DSA_F_DSA_PRINT					 104
 #define DSA_F_DSA_PRINT_FP				 105
+#define DSA_F_DSA_PRIV_DECODE				 115
+#define DSA_F_DSA_PRIV_ENCODE				 116
+#define DSA_F_DSA_PUB_DECODE				 117
+#define DSA_F_DSA_PUB_ENCODE				 118
 #define DSA_F_DSA_SIGN					 106
 #define DSA_F_DSA_SIGN_SETUP				 107
 #define DSA_F_DSA_SIG_NEW				 109
@@ -270,8 +274,12 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_SIG_CB					 114
 
 /* Reason codes. */
+#define DSA_R_BN_DECODE_ERROR				 102
+#define DSA_R_BN_ERROR					 103
 #define DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 100
+#define DSA_R_DECODE_ERROR				 104
 #define DSA_R_MISSING_PARAMETERS			 101
+#define DSA_R_PARAMETER_ENCODING_ERROR			 105
 
 #ifdef  __cplusplus
 }

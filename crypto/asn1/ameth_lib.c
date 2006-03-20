@@ -1,9 +1,8 @@
-/* x_algor.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 2000.
+ * project 2006.
  */
 /* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,70 +55,59 @@
  *
  */
 
-#include <stddef.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
+#include <stdio.h>
+#include "cryptlib.h"
 #include <openssl/asn1t.h>
+#include <openssl/x509.h>
+#include <openssl/ec.h>
+#include "asn1_locl.h"
 
-ASN1_SEQUENCE(X509_ALGOR) = {
-	ASN1_SIMPLE(X509_ALGOR, algorithm, ASN1_OBJECT),
-	ASN1_OPT(X509_ALGOR, parameter, ASN1_ANY)
-} ASN1_SEQUENCE_END(X509_ALGOR)
+extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[];
+extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
 
-IMPLEMENT_ASN1_FUNCTIONS(X509_ALGOR)
-IMPLEMENT_ASN1_DUP_FUNCTION(X509_ALGOR)
-
-IMPLEMENT_STACK_OF(X509_ALGOR)
-IMPLEMENT_ASN1_SET_OF(X509_ALGOR)
-
-int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
+/* Keep this sorted in type order !! */
+const EVP_PKEY_ASN1_METHOD *standard_methods[] = 
 	{
-	if (!alg)
-		return 0;
-	if (ptype != V_ASN1_UNDEF)
-		{
-		if (alg->parameter == NULL)
-			alg->parameter = ASN1_TYPE_new();
-		if (alg->parameter == NULL)
-			return 0;
-		}
-	if (alg)
-		{
-		if (alg->algorithm)
-			ASN1_OBJECT_free(alg->algorithm);
-		alg->algorithm = aobj;
-		}
-	if (ptype == 0)
-		return 1;	
-	if (ptype == V_ASN1_UNDEF)
-		{
-		if (alg->parameter)
-			{
-			ASN1_TYPE_free(alg->parameter);
-			alg->parameter = NULL;
-			}
-		}
-	else
-		ASN1_TYPE_set(alg->parameter, ptype, pval);
-	return 1;
+	&rsa_asn1_meths[0],
+	&rsa_asn1_meths[1],
+	&dsa_asn1_meths[0],
+	&dsa_asn1_meths[1],
+	&dsa_asn1_meths[2],
+	&dsa_asn1_meths[3],
+	&dsa_asn1_meths[4],
+	&eckey_asn1_meth
+	};
+
+#ifdef TEST
+void main()
+	{
+	int i;
+	for (i = 0;
+		i < sizeof(standard_methods)/sizeof(EVP_PKEY_ASN1_METHOD *);
+		i++)
+		fprintf(stderr, "Number %d id=%d\n", i,
+			standard_methods[i]->pkey_id);
+	}
+#endif
+
+static int ameth_cmp(const EVP_PKEY_ASN1_METHOD * const *a,
+                const EVP_PKEY_ASN1_METHOD * const *b)
+	{
+        return ((*a)->pkey_id - (*b)->pkey_id);
 	}
 
-void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
-						X509_ALGOR *algor)
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_ASN1_find(int type)
 	{
-	if (paobj)
-		*paobj = algor->algorithm;
-	if (*pptype)
-		{
-		if (algor->parameter == NULL)
-			{
-			*pptype = V_ASN1_UNDEF;
-			return;
-			}
-		else
-			*pptype = algor->parameter->type;
-		if (ppval)
-			*ppval = algor->parameter->value.ptr;
-		}
+	EVP_PKEY_ASN1_METHOD tmp, *t = &tmp, **ret;
+	tmp.pkey_id = type;
+	ret = (EVP_PKEY_ASN1_METHOD **) OBJ_bsearch((char *)&t,
+        		(char *)standard_methods,
+			sizeof(standard_methods)/sizeof(EVP_PKEY_ASN1_METHOD *),
+        		sizeof(EVP_PKEY_ASN1_METHOD *),
+			(int (*)(const void *, const void *))ameth_cmp);
+	if ((*ret)->pkey_flags & ASN1_PKEY_ALIAS)
+		return EVP_PKEY_ASN1_find((*ret)->pkey_base_id);
+	return *ret;
 	}
 

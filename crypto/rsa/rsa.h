@@ -374,6 +374,9 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_PADDING_CHECK_X931			 128
 #define RSA_F_RSA_PRINT					 115
 #define RSA_F_RSA_PRINT_FP				 116
+#define RSA_F_RSA_PRIV_DECODE				 137
+#define RSA_F_RSA_PRIV_ENCODE				 138
+#define RSA_F_RSA_PUB_DECODE				 139
 #define RSA_F_RSA_SETUP_BLINDING			 136
 #define RSA_F_RSA_SIGN					 117
 #define RSA_F_RSA_SIGN_ASN1_OCTET_STRING		 118

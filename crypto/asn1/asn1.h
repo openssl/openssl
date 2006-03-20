@@ -282,6 +282,26 @@ typedef struct ASN1_TLC_st ASN1_TLC;
 /* This is just an opaque pointer */
 typedef struct ASN1_VALUE_st ASN1_VALUE;
 
+/* ASN1 public key method structure */
+
+#define ASN1_PKEY_ALIAS		0x1
+
+struct evp_pkey_asn1_method_st
+	{
+	int pkey_id;
+	int pkey_base_id;
+	unsigned long pkey_flags;
+	int (*pub_decode)(EVP_PKEY *pk, X509_PUBKEY *pub);
+	int (*pub_encode)(X509_PUBKEY *pub, EVP_PKEY *pk);
+	int (*pub_print)(BIO *out, EVP_PKEY *pkey, int indent, ASN1_PCTX *pctx);
+	int (*priv_decode)(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf);
+	int (*priv_encode)(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pk);
+	int (*priv_print)(BIO *out, EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *pctx);
+	void (*pkey_free)(EVP_PKEY *pkey);
+	void (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2);
+	} /* EVP_PKEY_ASN1_METHOD */;
+
 /* Declare ASN1 functions: the implement macro in in asn1t.h */
 
 #define DECLARE_ASN1_FUNCTIONS(type) DECLARE_ASN1_FUNCTIONS_name(type, type)

@@ -121,6 +121,8 @@ typedef struct env_md_st EVP_MD;
 typedef struct env_md_ctx_st EVP_MD_CTX;
 typedef struct evp_pkey_st EVP_PKEY;
 
+typedef struct evp_pkey_asn1_method_st EVP_PKEY_ASN1_METHOD;
+
 typedef struct dh_st DH;
 typedef struct dh_method DH_METHOD;
 
@@ -139,8 +141,11 @@ typedef struct x509_st X509;
 typedef struct X509_algor_st X509_ALGOR;
 typedef struct X509_crl_st X509_CRL;
 typedef struct X509_name_st X509_NAME;
+typedef struct X509_pubkey_st X509_PUBKEY;
 typedef struct x509_store_st X509_STORE;
 typedef struct x509_store_ctx_st X509_STORE_CTX;
+
+typedef struct pkcs8_priv_key_info_st PKCS8_PRIV_KEY_INFO;
 
 typedef struct v3_ext_ctx X509V3_CTX;
 typedef struct conf_st CONF;

@@ -4,6 +4,14 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Initial support for pluggable public key ASN1.
+     De-spaghettify the public key ASN1 handling. Move public and private
+     key ASN1 handling to a new EVP_PKEY_ASN1_METHOD structure. Relocate
+     algorithm specific handling to a single module within the relevant
+     algorithm directory. Add functions to allow (near) opaque processing
+     of public and private key structures.
+     [Steve Henson]
+
   *) Implement the Supported Point Formats Extension for
      ECC ciphersuites from draft-ietf-tls-ecc-12.txt.
      [Douglas Stebila]

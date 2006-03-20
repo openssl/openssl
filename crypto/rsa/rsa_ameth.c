@@ -1,9 +1,8 @@
-/* x_algor.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 2000.
+ * project 2006.
  */
 /* ====================================================================
- * Copyright (c) 2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,70 +55,100 @@
  *
  */
 
-#include <stddef.h>
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
+#include <stdio.h>
+#include "cryptlib.h"
 #include <openssl/asn1t.h>
+#include <openssl/x509.h>
+#include <openssl/rsa.h>
 
-ASN1_SEQUENCE(X509_ALGOR) = {
-	ASN1_SIMPLE(X509_ALGOR, algorithm, ASN1_OBJECT),
-	ASN1_OPT(X509_ALGOR, parameter, ASN1_ANY)
-} ASN1_SEQUENCE_END(X509_ALGOR)
-
-IMPLEMENT_ASN1_FUNCTIONS(X509_ALGOR)
-IMPLEMENT_ASN1_DUP_FUNCTION(X509_ALGOR)
-
-IMPLEMENT_STACK_OF(X509_ALGOR)
-IMPLEMENT_ASN1_SET_OF(X509_ALGOR)
-
-int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
+static int rsa_pub_encode(X509_PUBKEY *pk, EVP_PKEY *pkey)
 	{
-	if (!alg)
+	unsigned char *penc = NULL;
+	int penclen;
+	penclen = i2d_RSAPublicKey(pkey->pkey.rsa, &penc);
+	if (penclen <= 0)
 		return 0;
-	if (ptype != V_ASN1_UNDEF)
+	if (X509_PUBKEY_set0_param(pk, OBJ_nid2obj(EVP_PKEY_RSA),
+				V_ASN1_NULL, NULL, penc, penclen))
+		return 1;
+
+	OPENSSL_free(penc);
+	return 0;
+	}
+
+static int rsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
+	{
+	const unsigned char *p;
+	int pklen;
+	RSA *rsa = NULL;
+	if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, NULL, pubkey))
+		return 0;
+	if (!(rsa = d2i_RSAPublicKey(NULL, &p, pklen)))
 		{
-		if (alg->parameter == NULL)
-			alg->parameter = ASN1_TYPE_new();
-		if (alg->parameter == NULL)
-			return 0;
+		RSAerr(RSA_F_RSA_PUB_DECODE, ERR_R_RSA_LIB);
+		return 0;
 		}
-	if (alg)
-		{
-		if (alg->algorithm)
-			ASN1_OBJECT_free(alg->algorithm);
-		alg->algorithm = aobj;
-		}
-	if (ptype == 0)
-		return 1;	
-	if (ptype == V_ASN1_UNDEF)
-		{
-		if (alg->parameter)
-			{
-			ASN1_TYPE_free(alg->parameter);
-			alg->parameter = NULL;
-			}
-		}
-	else
-		ASN1_TYPE_set(alg->parameter, ptype, pval);
+	EVP_PKEY_assign_RSA (pkey, rsa);
 	return 1;
 	}
 
-void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
-						X509_ALGOR *algor)
+static int rsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	{
-	if (paobj)
-		*paobj = algor->algorithm;
-	if (*pptype)
+	const unsigned char *p;
+	int pklen;
+	RSA *rsa = NULL;
+	if (!PKCS8_pkey_get0(NULL, &p, &pklen, NULL, p8))
+		return 0;
+	if (!(rsa = d2i_RSAPrivateKey (NULL, &p, pklen)))
 		{
-		if (algor->parameter == NULL)
-			{
-			*pptype = V_ASN1_UNDEF;
-			return;
-			}
-		else
-			*pptype = algor->parameter->type;
-		if (ppval)
-			*ppval = algor->parameter->value.ptr;
+		RSAerr(RSA_F_RSA_PRIV_DECODE, ERR_R_RSA_LIB);
+		return 0;
 		}
+	EVP_PKEY_assign_RSA (pkey, rsa);
+	return 1;
 	}
 
+static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, EVP_PKEY *pkey)
+	{
+	unsigned char *rk = NULL;
+	int rklen;
+	rklen = i2d_RSAPrivateKey(pkey->pkey.rsa, &rk);
+
+	if (rklen <= 0)
+		{
+		RSAerr(RSA_F_RSA_PRIV_ENCODE,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+
+	if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_rsaEncryption), 0,
+				V_ASN1_NULL, NULL, rk, rklen))
+		{
+		RSAerr(RSA_F_RSA_PRIV_ENCODE,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+
+	return 1;
+	}
+
+const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] = 
+	{
+		{
+		EVP_PKEY_RSA,
+		EVP_PKEY_RSA,
+		0,
+		rsa_pub_decode,
+		rsa_pub_encode,
+		0,
+		rsa_priv_decode,
+		rsa_priv_encode,
+		0,
+		0,
+		0
+		},
+
+		{
+		EVP_PKEY_RSA2,
+		EVP_PKEY_RSA,
+		ASN1_PKEY_ALIAS
+		}
+	};

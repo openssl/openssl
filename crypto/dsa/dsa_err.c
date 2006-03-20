@@ -78,6 +78,10 @@ static ERR_STRING_DATA DSA_str_functs[]=
 {ERR_FUNC(DSA_F_DSA_NEW_METHOD),	"DSA_new_method"},
 {ERR_FUNC(DSA_F_DSA_PRINT),	"DSA_print"},
 {ERR_FUNC(DSA_F_DSA_PRINT_FP),	"DSA_print_fp"},
+{ERR_FUNC(DSA_F_DSA_PRIV_DECODE),	"DSA_PRIV_DECODE"},
+{ERR_FUNC(DSA_F_DSA_PRIV_ENCODE),	"DSA_PRIV_ENCODE"},
+{ERR_FUNC(DSA_F_DSA_PUB_DECODE),	"DSA_PUB_DECODE"},
+{ERR_FUNC(DSA_F_DSA_PUB_ENCODE),	"DSA_PUB_ENCODE"},
 {ERR_FUNC(DSA_F_DSA_SIGN),	"DSA_sign"},
 {ERR_FUNC(DSA_F_DSA_SIGN_SETUP),	"DSA_sign_setup"},
 {ERR_FUNC(DSA_F_DSA_SIG_NEW),	"DSA_SIG_new"},
@@ -89,8 +93,12 @@ static ERR_STRING_DATA DSA_str_functs[]=
 
 static ERR_STRING_DATA DSA_str_reasons[]=
 	{
+{ERR_REASON(DSA_R_BN_DECODE_ERROR)       ,"bn decode error"},
+{ERR_REASON(DSA_R_BN_ERROR)              ,"bn error"},
 {ERR_REASON(DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE),"data too large for key size"},
+{ERR_REASON(DSA_R_DECODE_ERROR)          ,"decode error"},
 {ERR_REASON(DSA_R_MISSING_PARAMETERS)    ,"missing parameters"},
+{ERR_REASON(DSA_R_PARAMETER_ENCODING_ERROR),"parameter encoding error"},
 {0,NULL}
 	};
 
