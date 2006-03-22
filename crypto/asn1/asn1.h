@@ -300,7 +300,7 @@ struct evp_pkey_asn1_method_st
 
 	int (*priv_decode)(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf);
 	int (*priv_encode)(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk);
-	int (*priv_print)(BIO *out, EVP_PKEY *pkey, int indent,
+	int (*priv_print)(BIO *out, const EVP_PKEY *pkey, int indent,
 							ASN1_PCTX *pctx);
 
 	int (*pkey_size)(const EVP_PKEY *pk);
@@ -981,6 +981,8 @@ int ASN1_GENERALIZEDTIME_print(BIO *fp, const ASN1_GENERALIZEDTIME *a);
 int ASN1_TIME_print(BIO *fp, const ASN1_TIME *a);
 int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v);
 int ASN1_STRING_print_ex(BIO *out, ASN1_STRING *str, unsigned long flags);
+int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
+				unsigned char *buf, int off);
 int ASN1_parse(BIO *bp,const unsigned char *pp,long len,int indent);
 int ASN1_parse_dump(BIO *bp,const unsigned char *pp,long len,int indent,int dump);
 #endif

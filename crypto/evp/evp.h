@@ -819,6 +819,13 @@ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
 
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);
 
+int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
+				int indent, ASN1_PCTX *pctx);
+int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
+				int indent, ASN1_PCTX *pctx);
+int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
+				int indent, ASN1_PCTX *pctx);
+
 int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 
 /* calls methods */

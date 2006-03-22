@@ -396,6 +396,101 @@ static void int_dsa_free(EVP_PKEY *pkey)
 	DSA_free(pkey->pkey.dsa);
 	}
 
+static void update_buflen(const BIGNUM *b, size_t *pbuflen)
+	{
+	int i;
+	if (!b)
+		return;
+	if (*pbuflen < (i = (size_t)BN_num_bytes(b)))
+			*pbuflen = i;
+	}
+
+int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
+	{
+	unsigned char *m=NULL;
+	int ret=0;
+	size_t buf_len=0;
+	const char *ktype = NULL;
+
+	const BIGNUM *priv_key, *pub_key;
+
+	if (ptype == 2)
+		priv_key = x->priv_key;
+	else
+		priv_key = NULL;
+
+	if (ptype > 0)
+		pub_key = x->pub_key;
+	else
+		pub_key = NULL;
+
+	if (ptype == 2)
+		ktype = "Private-Key";
+	else if (ptype == 1)
+		ktype = "Public-Key";
+	else
+		ktype = "DSA-Parameters";
+
+	if (x->p == NULL)
+		{
+		DSAerr(DSA_F_DSA_PRINT,DSA_R_MISSING_PARAMETERS);
+		goto err;
+		}
+
+	update_buflen(x->p, &buf_len);
+	update_buflen(x->q, &buf_len);
+	update_buflen(x->g, &buf_len);
+	update_buflen(priv_key, &buf_len);
+	update_buflen(pub_key, &buf_len);
+
+	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
+	if (m == NULL)
+		{
+		DSAerr(DSA_F_DSA_PRINT,ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
+
+	if (priv_key)
+		{
+		if(!BIO_indent(bp,off,128))
+		   goto err;
+		if (BIO_printf(bp,"%s: (%d bit)\n",ktype, BN_num_bits(x->p))
+			<= 0) goto err;
+		}
+
+	if (!ASN1_bn_print(bp,"priv:",priv_key,m,off))
+		goto err;
+	if (!ASN1_bn_print(bp,"pub: ",pub_key,m,off))
+		goto err;
+	if (!ASN1_bn_print(bp,"P:   ",x->p,m,off)) goto err;
+	if (!ASN1_bn_print(bp,"Q:   ",x->q,m,off)) goto err;
+	if (!ASN1_bn_print(bp,"G:   ",x->g,m,off)) goto err;
+	ret=1;
+err:
+	if (m != NULL) OPENSSL_free(m);
+	return(ret);
+	}
+
+
+static int dsa_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *ctx)
+	{
+	return do_dsa_print(bp, pkey->pkey.dsa, indent, 0);
+	}
+
+static int dsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *ctx)
+	{
+	return do_dsa_print(bp, pkey->pkey.dsa, indent, 1);
+	}
+
+
+static int dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *ctx)
+	{
+	return do_dsa_print(bp, pkey->pkey.dsa, indent, 2);
+	}
+
 /* NB these are sorted in pkey_id order, lowest first */
 
 const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] = 
@@ -433,11 +528,11 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] =
 		dsa_pub_decode,
 		dsa_pub_encode,
 		dsa_pub_cmp,
-		0,
+		dsa_pub_print,
 
 		dsa_priv_decode,
 		dsa_priv_encode,
-		0,
+		dsa_priv_print,
 
 		int_dsa_size,
 		dsa_bits,
@@ -446,7 +541,7 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] =
 		dsa_missing_parameters,
 		dsa_copy_parameters,
 		dsa_cmp_parameters,
-		0,
+		dsa_param_print,
 
 		int_dsa_free,
 		0

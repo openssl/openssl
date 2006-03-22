@@ -320,3 +320,37 @@ static void EVP_PKEY_free_it(EVP_PKEY *x)
 		x->ameth->pkey_free(x);
 	}
 
+static int unsup_alg(BIO *out, const EVP_PKEY *pkey, int indent,
+				const char *kstr)
+	{
+	BIO_indent(out, indent, 128);
+	BIO_printf(out, "%s %s, algorithm, unsupported\n",
+						OBJ_nid2ln(pkey->type), kstr);
+	return 1;
+	}
+
+int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
+				int indent, ASN1_PCTX *pctx)
+	{
+	if (pkey->ameth && pkey->ameth->pub_print)
+		return pkey->ameth->pub_print(out, pkey, indent, pctx);
+	
+	return unsup_alg(out, pkey, indent, "Public Key");
+	}
+
+int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
+				int indent, ASN1_PCTX *pctx)
+	{
+	if (pkey->ameth && pkey->ameth->priv_print)
+		return pkey->ameth->priv_print(out, pkey, indent, pctx);
+	
+	return unsup_alg(out, pkey, indent, "Private Key");
+	}
+
+int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
+				int indent, ASN1_PCTX *pctx)
+	{
+	if (pkey->ameth && pkey->ameth->param_print)
+		return pkey->ameth->param_print(out, pkey, indent, pctx);
+	return unsup_alg(out, pkey, indent, "Parameters");
+	}

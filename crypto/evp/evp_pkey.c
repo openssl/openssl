@@ -69,12 +69,6 @@
 #endif
 #include <openssl/bn.h>
 
-#ifdef FLAT_INC
-#include "asn1_locl.h"
-#else
-#include "../asn1/asn1_locl.h"
-#endif
-
 /* Extract a private key from a PKCS8 structure */
 
 EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)

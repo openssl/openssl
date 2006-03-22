@@ -2,7 +2,7 @@
  * project 2006.
  */
 /* ====================================================================
- * Copyright (c) 2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -419,6 +419,121 @@ static void int_ec_free(EVP_PKEY *pkey)
 	EC_KEY_free(pkey->pkey.ec);
 	}
 
+static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
+	{
+	unsigned char *buffer=NULL;
+	const char *ecstr;
+	size_t	buf_len=0, i;
+	int     ret=0, reason=ERR_R_BIO_LIB;
+	BIGNUM  *pub_key=NULL, *order=NULL;
+	BN_CTX  *ctx=NULL;
+	const EC_GROUP *group;
+	const EC_POINT *public_key;
+	const BIGNUM *priv_key;
+ 
+	if (x == NULL || (group = EC_KEY_get0_group(x)) == NULL)
+		{
+		reason = ERR_R_PASSED_NULL_PARAMETER;
+		goto err;
+		}
+
+	ctx = BN_CTX_new();
+	if (ctx == NULL)
+		{
+		reason = ERR_R_MALLOC_FAILURE;
+		goto err;
+		}
+
+
+	if (ktype > 0)
+		{
+		public_key = EC_KEY_get0_public_key(x);
+		if ((pub_key = EC_POINT_point2bn(group, public_key,
+			EC_KEY_get_conv_form(x), NULL, ctx)) == NULL)
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+		buf_len = (size_t)BN_num_bytes(pub_key);
+		}
+	else
+
+	if (ktype == 2)
+		{
+		if ((i = (size_t)BN_num_bytes(priv_key)) > buf_len)
+			buf_len = i;
+		priv_key = EC_KEY_get0_private_key(x);
+		}
+	else
+		priv_key = NULL;
+
+	if (ktype > 0)
+		{
+		buf_len += 10;
+		if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+			{
+			reason = ERR_R_MALLOC_FAILURE;
+			goto err;
+			}
+		}
+	if (ktype == 2)
+		ecstr = "Private-Key";
+	else if (ktype == 1)
+		ecstr = "Public-Key";
+	else
+		ecstr = "ECDSA-Parameters";
+
+	if (!BIO_indent(bp, off, 128))
+		goto err;
+	if ((order = BN_new()) == NULL)
+		goto err;
+	if (!EC_GROUP_get_order(group, order, NULL))
+		goto err;
+	if (BIO_printf(bp, "%s: (%d bit)\n", ecstr,
+		BN_num_bits(order)) <= 0) goto err;
+  
+	if ((priv_key != NULL) && !ASN1_bn_print(bp, "priv:", priv_key, 
+		buffer, off))
+		goto err;
+	if ((pub_key != NULL) && !ASN1_bn_print(bp, "pub: ", pub_key,
+		buffer, off))
+		goto err;
+	if (!ECPKParameters_print(bp, group, off))
+		goto err;
+	ret=1;
+err:
+	if (!ret)
+ 		ECerr(EC_F_EC_KEY_PRINT, reason);
+	if (pub_key) 
+		BN_free(pub_key);
+	if (order)
+		BN_free(order);
+	if (ctx)
+		BN_CTX_free(ctx);
+	if (buffer != NULL)
+		OPENSSL_free(buffer);
+	return(ret);
+	}
+
+static int eckey_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *ctx)
+	{
+	return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 0);
+	}
+
+static int eckey_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *ctx)
+	{
+	return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 1);
+	}
+
+
+static int eckey_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *ctx)
+	{
+	return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 2);
+	}
+
 EVP_PKEY_ASN1_METHOD eckey_asn1_meth = 
 	{
 	EVP_PKEY_EC,
@@ -428,11 +543,11 @@ EVP_PKEY_ASN1_METHOD eckey_asn1_meth =
 	eckey_pub_decode,
 	eckey_pub_encode,
 	eckey_pub_cmp,
-	0,
+	eckey_pub_print,
 
 	eckey_priv_decode,
 	eckey_priv_encode,
-	0,
+	eckey_priv_print,
 
 	int_ec_size,
 	ec_bits,
@@ -441,8 +556,257 @@ EVP_PKEY_ASN1_METHOD eckey_asn1_meth =
 	ec_missing_parameters,
 	ec_copy_parameters,
 	ec_cmp_parameters,
-	0,
+	eckey_param_print,
 
 	int_ec_free,
 	0
 	};
+
+static int print_bin(BIO *fp, const char *str, const unsigned char *num,
+		size_t len, int off);
+
+int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
+	{
+	unsigned char *buffer=NULL;
+	size_t	buf_len=0, i;
+	int     ret=0, reason=ERR_R_BIO_LIB;
+	BN_CTX  *ctx=NULL;
+	const EC_POINT *point=NULL;
+	BIGNUM	*p=NULL, *a=NULL, *b=NULL, *gen=NULL,
+		*order=NULL, *cofactor=NULL;
+	const unsigned char *seed;
+	size_t	seed_len=0;
+	
+	static const char *gen_compressed = "Generator (compressed):";
+	static const char *gen_uncompressed = "Generator (uncompressed):";
+	static const char *gen_hybrid = "Generator (hybrid):";
+ 
+	if (!x)
+		{
+		reason = ERR_R_PASSED_NULL_PARAMETER;
+		goto err;
+		}
+
+	ctx = BN_CTX_new();
+	if (ctx == NULL)
+		{
+		reason = ERR_R_MALLOC_FAILURE;
+		goto err;
+		}
+
+	if (EC_GROUP_get_asn1_flag(x))
+		{
+		/* the curve parameter are given by an asn1 OID */
+		int nid;
+
+		if (!BIO_indent(bp, off, 128))
+			goto err;
+
+		nid = EC_GROUP_get_curve_name(x);
+		if (nid == 0)
+			goto err;
+
+		if (BIO_printf(bp, "ASN1 OID: %s", OBJ_nid2sn(nid)) <= 0)
+			goto err;
+		if (BIO_printf(bp, "\n") <= 0)
+			goto err;
+		}
+	else
+		{
+		/* explicit parameters */
+		int is_char_two = 0;
+		point_conversion_form_t form;
+		int tmp_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(x));
+
+		if (tmp_nid == NID_X9_62_characteristic_two_field)
+			is_char_two = 1;
+
+		if ((p = BN_new()) == NULL || (a = BN_new()) == NULL ||
+			(b = BN_new()) == NULL || (order = BN_new()) == NULL ||
+			(cofactor = BN_new()) == NULL)
+			{
+			reason = ERR_R_MALLOC_FAILURE;
+			goto err;
+			}
+
+		if (is_char_two)
+			{
+			if (!EC_GROUP_get_curve_GF2m(x, p, a, b, ctx))
+				{
+				reason = ERR_R_EC_LIB;
+				goto err;
+				}
+			}
+		else /* prime field */
+			{
+			if (!EC_GROUP_get_curve_GFp(x, p, a, b, ctx))
+				{
+				reason = ERR_R_EC_LIB;
+				goto err;
+				}
+			}
+
+		if ((point = EC_GROUP_get0_generator(x)) == NULL)
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+		if (!EC_GROUP_get_order(x, order, NULL) || 
+            		!EC_GROUP_get_cofactor(x, cofactor, NULL))
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+		
+		form = EC_GROUP_get_point_conversion_form(x);
+
+		if ((gen = EC_POINT_point2bn(x, point, 
+				form, NULL, ctx)) == NULL)
+			{
+			reason = ERR_R_EC_LIB;
+			goto err;
+			}
+
+		buf_len = (size_t)BN_num_bytes(p);
+		if (buf_len < (i = (size_t)BN_num_bytes(a)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(b)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(gen)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(order)))
+			buf_len = i;
+		if (buf_len < (i = (size_t)BN_num_bytes(cofactor))) 
+			buf_len = i;
+
+		if ((seed = EC_GROUP_get0_seed(x)) != NULL)
+			seed_len = EC_GROUP_get_seed_len(x);
+
+		buf_len += 10;
+		if ((buffer = OPENSSL_malloc(buf_len)) == NULL)
+			{
+			reason = ERR_R_MALLOC_FAILURE;
+			goto err;
+			}
+
+		if (!BIO_indent(bp, off, 128))
+			goto err;
+
+		/* print the 'short name' of the field type */
+		if (BIO_printf(bp, "Field Type: %s\n", OBJ_nid2sn(tmp_nid))
+			<= 0)
+			goto err;  
+
+		if (is_char_two)
+			{
+			/* print the 'short name' of the base type OID */
+			int basis_type = EC_GROUP_get_basis_type(x);
+			if (basis_type == 0)
+				goto err;
+
+			if (!BIO_indent(bp, off, 128))
+				goto err;
+
+			if (BIO_printf(bp, "Basis Type: %s\n", 
+				OBJ_nid2sn(basis_type)) <= 0)
+				goto err;
+
+			/* print the polynomial */
+			if ((p != NULL) && !ASN1_bn_print(bp, "Polynomial:", p, buffer,
+				off))
+				goto err;
+			}
+		else
+			{
+			if ((p != NULL) && !ASN1_bn_print(bp, "Prime:", p, buffer,off))
+				goto err;
+			}
+		if ((a != NULL) && !ASN1_bn_print(bp, "A:   ", a, buffer, off)) 
+			goto err;
+		if ((b != NULL) && !ASN1_bn_print(bp, "B:   ", b, buffer, off))
+			goto err;
+		if (form == POINT_CONVERSION_COMPRESSED)
+			{
+			if ((gen != NULL) && !ASN1_bn_print(bp, gen_compressed, gen,
+				buffer, off))
+				goto err;
+			}
+		else if (form == POINT_CONVERSION_UNCOMPRESSED)
+			{
+			if ((gen != NULL) && !ASN1_bn_print(bp, gen_uncompressed, gen,
+				buffer, off))
+				goto err;
+			}
+		else /* form == POINT_CONVERSION_HYBRID */
+			{
+			if ((gen != NULL) && !ASN1_bn_print(bp, gen_hybrid, gen,
+				buffer, off))
+				goto err;
+			}
+		if ((order != NULL) && !ASN1_bn_print(bp, "Order: ", order, 
+			buffer, off)) goto err;
+		if ((cofactor != NULL) && !ASN1_bn_print(bp, "Cofactor: ", cofactor, 
+			buffer, off)) goto err;
+		if (seed && !print_bin(bp, "Seed:", seed, seed_len, off))
+			goto err;
+		}
+	ret=1;
+err:
+	if (!ret)
+ 		ECerr(EC_F_ECPKPARAMETERS_PRINT, reason);
+	if (p) 
+		BN_free(p);
+	if (a) 
+		BN_free(a);
+	if (b)
+		BN_free(b);
+	if (gen)
+		BN_free(gen);
+	if (order)
+		BN_free(order);
+	if (cofactor)
+		BN_free(cofactor);
+	if (ctx)
+		BN_CTX_free(ctx);
+	if (buffer != NULL) 
+		OPENSSL_free(buffer);
+	return(ret);	
+	}
+
+static int print_bin(BIO *fp, const char *name, const unsigned char *buf,
+		size_t len, int off)
+	{
+	size_t i;
+	char str[128];
+
+	if (buf == NULL)
+		return 1;
+	if (off)
+		{
+		if (off > 128)
+			off=128;
+		memset(str,' ',off);
+		if (BIO_write(fp, str, off) <= 0)
+			return 0;
+		}
+
+	if (BIO_printf(fp,"%s", name) <= 0)
+		return 0;
+
+	for (i=0; i<len; i++)
+		{
+		if ((i%15) == 0)
+			{
+			str[0]='\n';
+			memset(&(str[1]),' ',off+4);
+			if (BIO_write(fp, str, off+1+4) <= 0)
+				return 0;
+			}
+		if (BIO_printf(fp,"%02x%s",buf[i],((i+1) == len)?"":":") <= 0)
+			return 0;
+		}
+	if (BIO_write(fp,"\n",1) <= 0)
+		return 0;
+
+	return 1;
+	}
