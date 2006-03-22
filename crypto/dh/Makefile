@@ -18,9 +18,9 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= dh_asn1.c dh_gen.c dh_key.c dh_lib.c dh_check.c dh_err.c dh_depr.c \
-	dh_ameth.c
+	dh_ameth.c dh_prn.c
 LIBOBJ= dh_asn1.o dh_gen.o dh_key.o dh_lib.o dh_check.o dh_err.o dh_depr.o \
-	dh_ameth.o
+	dh_ameth.o dh_prn.o
 
 SRC= $(LIBSRC)
 

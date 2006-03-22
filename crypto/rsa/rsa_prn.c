@@ -1,4 +1,4 @@
-/* crypto/asn1/t_pkey.c */
+/* crypto/rsa/rsa_prn.c */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -58,57 +58,36 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
-#include <openssl/objects.h>
-#include <openssl/buffer.h>
-#include <openssl/bn.h>
+#include <openssl/rsa.h>
+#include <openssl/evp.h>
 
-int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
-			unsigned char *buf, int off)
+#ifndef OPENSSL_NO_FP_API
+int RSA_print_fp(FILE *fp, const RSA *x, int off)
 	{
-	int n,i;
-	const char *neg;
+	BIO *b;
+	int ret;
 
-	if (num == NULL) return(1);
-	neg = (BN_is_negative(num))?"-":"";
-	if(!BIO_indent(bp,off,128))
-		return 0;
-	if (BN_is_zero(num))
+	if ((b=BIO_new(BIO_s_file())) == NULL)
 		{
-		if (BIO_printf(bp, "%s 0\n", number) <= 0)
-			return 0;
-		return 1;
+		RSAerr(RSA_F_RSA_PRINT_FP,ERR_R_BUF_LIB);
+		return(0);
 		}
-
-	if (BN_num_bytes(num) <= BN_BYTES)
-		{
-		if (BIO_printf(bp,"%s %s%lu (%s0x%lx)\n",number,neg,
-			(unsigned long)num->d[0],neg,(unsigned long)num->d[0])
-			<= 0) return(0);
-		}
-	else
-		{
-		buf[0]=0;
-		if (BIO_printf(bp,"%s%s",number,
-			(neg[0] == '-')?" (Negative)":"") <= 0)
-			return(0);
-		n=BN_bn2bin(num,&buf[1]);
-	
-		if (buf[1] & 0x80)
-			n++;
-		else	buf++;
-
-		for (i=0; i<n; i++)
-			{
-			if ((i%15) == 0)
-				{
-				if(BIO_puts(bp,"\n") <= 0
-				   || !BIO_indent(bp,off+4,128))
-				    return 0;
-				}
-			if (BIO_printf(bp,"%02x%s",buf[i],((i+1) == n)?"":":")
-				<= 0) return(0);
-			}
-		if (BIO_write(bp,"\n",1) <= 0) return(0);
-		}
-	return(1);
+	BIO_set_fp(b,fp,BIO_NOCLOSE);
+	ret=RSA_print(b,x,off);
+	BIO_free(b);
+	return(ret);
 	}
+#endif
+
+int RSA_print(BIO *bp, const RSA *x, int off)
+	{
+	EVP_PKEY *pk;
+	int ret;
+	pk = EVP_PKEY_new();
+	if (!pk || !EVP_PKEY_set1_RSA(pk, (RSA *)x))
+		return 0;
+	ret = EVP_PKEY_print_private(bp, pk, off, NULL);
+	EVP_PKEY_free(pk);
+	return ret;
+	}
+
