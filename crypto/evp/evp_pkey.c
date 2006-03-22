@@ -61,13 +61,7 @@
 #include "cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/rand.h>
-#ifndef OPENSSL_NO_RSA
-#include <openssl/rsa.h>
-#endif
-#ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
-#endif
-#include <openssl/bn.h>
+#include "asn1_locl.h"
 
 /* Extract a private key from a PKCS8 structure */
 
@@ -86,7 +80,7 @@ EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 		return NULL;
 	}
 
-	meth = EVP_PKEY_ASN1_find(OBJ_obj2nid(algoid));
+	meth = EVP_PKEY_asn1_find(OBJ_obj2nid(algoid));
 
 	if (meth)
 		{
@@ -138,7 +132,7 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 	}
 	p8->broken = broken;
 
-	meth = EVP_PKEY_ASN1_find(pkey->type);
+	meth = EVP_PKEY_asn1_find(pkey->type);
 
 	if (meth)
 		{

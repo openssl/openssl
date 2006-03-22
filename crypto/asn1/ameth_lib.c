@@ -81,6 +81,11 @@ const EVP_PKEY_ASN1_METHOD *standard_methods[] =
 	&eckey_asn1_meth
 	};
 
+typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);
+static STACK *app_methods = NULL;
+
+
+
 #ifdef TEST
 void main()
 	{
@@ -97,14 +102,21 @@ void main()
 static int ameth_cmp(const EVP_PKEY_ASN1_METHOD * const *a,
                 const EVP_PKEY_ASN1_METHOD * const *b)
 	{
-/*fprintf(stderr, "Comparing %d with %d\n", (*a)->pkey_id, (*b)->pkey_id);*/
         return ((*a)->pkey_id - (*b)->pkey_id);
 	}
 
-const EVP_PKEY_ASN1_METHOD *EVP_PKEY_ASN1_find(int type)
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type)
 	{
 	EVP_PKEY_ASN1_METHOD tmp, *t = &tmp, **ret;
 	tmp.pkey_id = type;
+	if (app_methods)
+		{
+		int idx;
+		idx = sk_find(app_methods, (char *)&t);
+		if (idx > 0)
+			return (EVP_PKEY_ASN1_METHOD *)
+				sk_value(app_methods, idx);
+		}
 	ret = (EVP_PKEY_ASN1_METHOD **) OBJ_bsearch((char *)&t,
         		(char *)standard_methods,
 			sizeof(standard_methods)/sizeof(EVP_PKEY_ASN1_METHOD *),
@@ -113,7 +125,117 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_ASN1_find(int type)
 	if (!ret || !*ret)
 		return NULL;
 	if ((*ret)->pkey_flags & ASN1_PKEY_ALIAS)
-		return EVP_PKEY_ASN1_find((*ret)->pkey_base_id);
+		return EVP_PKEY_asn1_find((*ret)->pkey_base_id);
 	return *ret;
 	}
 
+int EVP_PKEY_asn1_add(const EVP_PKEY_ASN1_METHOD *ameth)
+	{
+	if (app_methods == NULL)
+		{
+		app_methods = sk_new((sk_cmp_fn_type *)ameth_cmp);
+		if (!app_methods)
+			return 0;
+		}
+	if (!sk_push(app_methods, (char *)ameth))
+		return 0;
+	sk_sort(app_methods);
+	return 1;
+	}
+
+EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id)
+	{
+	EVP_PKEY_ASN1_METHOD *ameth;
+	ameth = OPENSSL_malloc(sizeof(EVP_PKEY_ASN1_METHOD));
+	if (!ameth)
+		return NULL;
+
+	ameth->pkey_id = id;
+	ameth->pkey_base_id = id;
+	ameth->pkey_flags = ASN1_PKEY_DYNAMIC;
+	
+	ameth->pub_decode = 0;
+	ameth->pub_encode = 0;
+	ameth->pub_cmp = 0;
+	ameth->pub_print = 0;
+
+
+	ameth->priv_decode = 0;
+	ameth->priv_encode = 0;
+	ameth->priv_print = 0;
+	
+
+	ameth->pkey_size = 0;
+	ameth->pkey_bits = 0;
+
+	ameth->param_decode = 0;
+	ameth->param_encode = 0;
+	ameth->param_missing = 0;
+	ameth->param_copy = 0;
+	ameth->param_cmp = 0;
+	ameth->param_print = 0;
+
+
+	ameth->pkey_free = 0;
+	ameth->pkey_ctrl = 0;
+
+	return ameth;
+	}
+
+void EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
+		int (*pub_decode)(EVP_PKEY *pk, X509_PUBKEY *pub),
+		int (*pub_encode)(X509_PUBKEY *pub, const EVP_PKEY *pk),
+		int (*pub_cmp)(const EVP_PKEY *a, const EVP_PKEY *b),
+		int (*pub_print)(BIO *out, const EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *pctx),
+		int (*pkey_size)(const EVP_PKEY *pk),
+		int (*pkey_bits)(const EVP_PKEY *pk))
+	{
+	ameth->pub_decode = pub_decode;
+	ameth->pub_encode = pub_encode;
+	ameth->pub_cmp = pub_cmp;
+	ameth->pub_print = pub_print;
+	ameth->pkey_size = pkey_size;
+	ameth->pkey_bits = pkey_bits;
+	}
+
+void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
+		int (*priv_decode)(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf),
+		int (*priv_encode)(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk),
+		int (*priv_print)(BIO *out, const EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *pctx))
+	{
+	ameth->priv_decode = priv_decode;
+	ameth->priv_encode = priv_encode;
+	ameth->priv_print = priv_print;
+	}
+
+void EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
+		int (*param_decode)(const EVP_PKEY *pk, X509_PUBKEY *pub),
+		int (*param_encode)(X509_PUBKEY *pub, const EVP_PKEY *pk),
+		int (*param_missing)(const EVP_PKEY *pk),
+		int (*param_copy)(EVP_PKEY *to, const EVP_PKEY *from),
+		int (*param_cmp)(const EVP_PKEY *a, const EVP_PKEY *b),
+		int (*param_print)(BIO *out, const EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *pctx))
+	{
+	ameth->param_decode = param_decode;
+	ameth->param_encode = param_encode;
+	ameth->param_missing = param_missing;
+	ameth->param_copy = param_copy;
+	ameth->param_cmp = param_cmp;
+	ameth->param_print = param_print;
+	}
+
+void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
+		void (*pkey_free)(EVP_PKEY *pkey))
+	{
+	ameth->pkey_free = pkey_free;
+	}
+
+void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
+		void (*pkey_ctrl)(EVP_PKEY *pkey, int op,
+							long arg1, void *arg2))
+	{
+	ameth->pkey_ctrl = pkey_ctrl;
+	}

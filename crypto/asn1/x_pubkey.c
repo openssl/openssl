@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+#include "asn1_locl.h"
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
@@ -95,7 +96,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 
 	if ((pk=X509_PUBKEY_new()) == NULL) goto error;
 
-	meth = EVP_PKEY_ASN1_find(pkey->type);
+	meth = EVP_PKEY_asn1_find(pkey->type);
 
 	if (meth)
 		{
@@ -153,7 +154,7 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 		goto error;
 		}
 
-	meth = EVP_PKEY_ASN1_find(OBJ_obj2nid(key->algor->algorithm));
+	meth = EVP_PKEY_asn1_find(OBJ_obj2nid(key->algor->algorithm));
 
 	if (meth)
 		{

@@ -7,7 +7,7 @@ TOP=		..
 CC=		cc
 INCLUDE=	-I. -I$(TOP) -I../include
 # INCLUDES targets sudbirs!
-INCLUDES=	-I.. -I../.. -I../../include
+INCLUDES=	-I.. -I../.. -I../asn1 -I../../include
 CFLAG=		-g
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)

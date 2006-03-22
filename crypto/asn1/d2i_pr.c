@@ -89,7 +89,7 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
 
 	ret->save_type=type;
 	ret->type=EVP_PKEY_type(type);
-	ret->ameth = EVP_PKEY_ASN1_find(type);
+	ret->ameth = EVP_PKEY_asn1_find(type);
 	switch (ret->type)
 		{
 #ifndef OPENSSL_NO_RSA

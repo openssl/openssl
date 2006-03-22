@@ -74,6 +74,8 @@
 #include <openssl/dh.h>
 #endif
 
+#include "asn1_locl.h"
+
 static void EVP_PKEY_free_it(EVP_PKEY *x);
 
 int EVP_PKEY_bits(EVP_PKEY *pkey)
@@ -189,7 +191,7 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, char *key)
 	if (pkey == NULL) return(0);
 	if (pkey->pkey.ptr != NULL)
 		EVP_PKEY_free_it(pkey);
-	ameth = EVP_PKEY_ASN1_find(type);
+	ameth = EVP_PKEY_asn1_find(type);
 	pkey->ameth = ameth;
 	pkey->type = ameth->pkey_id;
 	pkey->save_type=type;
@@ -284,7 +286,7 @@ DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 int EVP_PKEY_type(int type)
 	{
 	const EVP_PKEY_ASN1_METHOD *ameth;
-	ameth = EVP_PKEY_ASN1_find(type);
+	ameth = EVP_PKEY_asn1_find(type);
 	if (ameth)
 		return ameth->pkey_id;
 	return NID_undef;
