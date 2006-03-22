@@ -192,15 +192,15 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_depr,bn_const"
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err,ec_curve,ec_check,ec_print,ec_asn1,ec_key,"+ -
-	"ec2_smpl,ec2_mult,ec_ameth"
+	"ec2_smpl,ec2_mult,ec_ameth,eck_prn"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
-	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr,rsa_ameth"
+	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr,rsa_ameth,rsa_prn"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
-	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth"
+	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth,dsa_prn"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
 $ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr,"+ -
-	"dh_ameth"
+	"dh_ameth,dh_prn"
 $ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 	"dso_openssl,dso_win32,dso_vms"
