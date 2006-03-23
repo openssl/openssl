@@ -143,7 +143,8 @@ int EVP_PKEY_asn1_add(const EVP_PKEY_ASN1_METHOD *ameth)
 	return 1;
 	}
 
-EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id)
+EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id,
+					const char *pem_str, const char *info)
 	{
 	EVP_PKEY_ASN1_METHOD *ameth;
 	ameth = OPENSSL_malloc(sizeof(EVP_PKEY_ASN1_METHOD));
@@ -153,6 +154,20 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id)
 	ameth->pkey_id = id;
 	ameth->pkey_base_id = id;
 	ameth->pkey_flags = ASN1_PKEY_DYNAMIC;
+
+	if (info)
+		{
+		ameth->info = BUF_strdup(info);
+		if (!ameth->info)
+			goto err;
+		}
+
+	if (pem_str)
+		{
+		ameth->pem_str = BUF_strdup(pem_str);
+		if (!ameth->pem_str)
+			goto err;
+		}
 	
 	ameth->pub_decode = 0;
 	ameth->pub_encode = 0;
@@ -180,6 +195,24 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id)
 	ameth->pkey_ctrl = 0;
 
 	return ameth;
+
+	err:
+
+	EVP_PKEY_asn1_free(ameth);
+	return NULL;
+
+	}
+
+void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth)
+	{
+	if (ameth && (ameth->pkey_flags & ASN1_PKEY_DYNAMIC))
+		{
+		if (ameth->pem_str)
+			OPENSSL_free(ameth->pem_str);
+		if (ameth->info)
+			OPENSSL_free(ameth->info);
+		OPENSSL_free(ameth);
+		}
 	}
 
 void EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,

@@ -76,6 +76,20 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+dh_ameth.o: ../../e_os.h ../../include/openssl/asn1.h
+dh_ameth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+dh_ameth.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+dh_ameth.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+dh_ameth.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+dh_ameth.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+dh_ameth.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+dh_ameth.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+dh_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dh_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+dh_ameth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dh_ameth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+dh_ameth.o: ../../include/openssl/x509_vfy.h ../asn1/asn1_locl.h ../cryptlib.h
+dh_ameth.o: dh_ameth.c
 dh_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
 dh_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 dh_asn1.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
@@ -133,3 +147,12 @@ dh_lib.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 dh_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dh_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 dh_lib.o: ../../include/openssl/symhacks.h ../cryptlib.h dh_lib.c
+dh_prn.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
+dh_prn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dh_prn.o: ../../include/openssl/dh.h ../../include/openssl/e_os2.h
+dh_prn.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+dh_prn.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+dh_prn.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+dh_prn.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dh_prn.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dh_prn.o: ../../include/openssl/symhacks.h ../cryptlib.h dh_prn.c

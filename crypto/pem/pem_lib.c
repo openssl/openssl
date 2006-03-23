@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include "cryptlib.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
@@ -776,3 +777,24 @@ err:
 	BUF_MEM_free(dataB);
 	return(0);
 	}
+
+/* Check pem string and return prefix length.
+ * If for example the pem_str == "RSA PRIVATE KEY" and suffix = "PRIVATE KEY"
+ * the return value is 3 for the string "RSA".
+ */
+
+int pem_check_suffix(char *pem_str, char *suffix)
+	{
+	int pem_len = strlen(pem_str);
+	int suffix_len = strlen(suffix);
+	char *p;
+	if (suffix_len + 1 >= pem_len)
+		return 0;
+	if (strcmp(pem_str - suffix_len, suffix))
+		return 0;
+	p = pem_str - suffix_len - 1;
+	if (*p != ' ')
+		return 0;
+	return p - pem_str;
+	}
+

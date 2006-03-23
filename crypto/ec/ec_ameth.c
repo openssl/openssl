@@ -538,8 +538,10 @@ static int eckey_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 EVP_PKEY_ASN1_METHOD eckey_asn1_meth = 
 	{
 	EVP_PKEY_EC,
+	EVP_PKEY_EC,
 	0,
-	0,
+	"ec",
+	"OpenSSL EC algorithm",
 
 	eckey_pub_decode,
 	eckey_pub_encode,
