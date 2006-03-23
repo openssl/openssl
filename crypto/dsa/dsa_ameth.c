@@ -108,7 +108,7 @@ static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		}
 
 	ASN1_INTEGER_free(public_key);
-
+	EVP_PKEY_assign_DSA(pkey, dsa);
 	return 1;
 
 	err:
@@ -139,6 +139,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 			DSAerr(DSA_F_DSA_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
+		pval = str;
 		ptype = V_ASN1_SEQUENCE;
 		}
 	else

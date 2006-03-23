@@ -445,7 +445,6 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 		goto err;
 		}
 
-
 	if (ktype > 0)
 		{
 		public_key = EC_KEY_get0_public_key(x);
@@ -455,15 +454,15 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 			reason = ERR_R_EC_LIB;
 			goto err;
 			}
-		buf_len = (size_t)BN_num_bytes(pub_key);
+		if (pub_key)
+			buf_len = (size_t)BN_num_bytes(pub_key);
 		}
-	else
 
 	if (ktype == 2)
 		{
-		if ((i = (size_t)BN_num_bytes(priv_key)) > buf_len)
-			buf_len = i;
 		priv_key = EC_KEY_get0_private_key(x);
+		if (priv_key && (i = (size_t)BN_num_bytes(priv_key)) > buf_len)
+			buf_len = i;
 		}
 	else
 		priv_key = NULL;
