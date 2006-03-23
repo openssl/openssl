@@ -107,4 +107,11 @@ struct evp_pkey_asn1_method_st
 
 	void (*pkey_free)(EVP_PKEY *pkey);
 	void (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2);
+
+	/* Legacy functions for old PEM */
+
+	int (*old_priv_decode)(EVP_PKEY *pkey,
+				const unsigned char **pder, int derlen);
+	int (*old_priv_encode)(const EVP_PKEY *pkey, unsigned char **pder);
+
 	} /* EVP_PKEY_ASN1_METHOD */;

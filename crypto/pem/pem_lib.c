@@ -66,6 +66,7 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
+#include "asn1_locl.h"
 #ifndef OPENSSL_NO_DES
 #include <openssl/des.h>
 #endif
@@ -76,6 +77,7 @@ const char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
 
 static int load_iv(char **fromp,unsigned char *to, int num);
 static int check_pem(const char *nm, const char *name);
+int pem_check_suffix(const char *pem_str, const char *suffix);
 
 int PEM_def_callback(char *buf, int num, int w, void *key)
 	{
@@ -184,20 +186,24 @@ static int check_pem(const char *nm, const char *name)
 
 	/* Make PEM_STRING_EVP_PKEY match any private key */
 
-	if(!strcmp(nm,PEM_STRING_PKCS8) &&
-		!strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
+	if(!strcmp(name,PEM_STRING_EVP_PKEY))
+		{
+		int slen;
+		const EVP_PKEY_ASN1_METHOD *ameth;
+		if(!strcmp(nm,PEM_STRING_PKCS8))
+			return 1;
+		if(!strcmp(nm,PEM_STRING_PKCS8INF))
+			return 1;
+		slen = pem_check_suffix(nm, "PRIVATE KEY"); 
+		if (slen > 0)
+			{
+			ameth = EVP_PKEY_asn1_find_str(nm, slen);
+			if (ameth && ameth->old_priv_decode)
+				return 1;
+			}
+		return 0;
+		}
 
-	if(!strcmp(nm,PEM_STRING_PKCS8INF) &&
-		 !strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
-
-	if(!strcmp(nm,PEM_STRING_RSA) &&
-		!strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
-
-	if(!strcmp(nm,PEM_STRING_DSA) &&
-		 !strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
-
- 	if(!strcmp(nm,PEM_STRING_ECPRIVATEKEY) &&
- 		 !strcmp(name,PEM_STRING_EVP_PKEY)) return 1;
 	/* Permit older strings */
 
 	if(!strcmp(nm,PEM_STRING_X509_OLD) &&
@@ -783,16 +789,17 @@ err:
  * the return value is 3 for the string "RSA".
  */
 
-int pem_check_suffix(char *pem_str, char *suffix)
+int pem_check_suffix(const char *pem_str, const char *suffix)
 	{
 	int pem_len = strlen(pem_str);
 	int suffix_len = strlen(suffix);
-	char *p;
+	const char *p;
 	if (suffix_len + 1 >= pem_len)
 		return 0;
-	if (strcmp(pem_str - suffix_len, suffix))
+	p = pem_str + pem_len - suffix_len;
+	if (strcmp(p, suffix))
 		return 0;
-	p = pem_str - suffix_len - 1;
+	p--;
 	if (*p != ' ')
 		return 0;
 	return p - pem_str;

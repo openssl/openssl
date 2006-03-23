@@ -105,6 +105,25 @@ static int ameth_cmp(const EVP_PKEY_ASN1_METHOD * const *a,
         return ((*a)->pkey_id - (*b)->pkey_id);
 	}
 
+int EVP_PKEY_asn1_get_count(void)
+	{
+	int num = sizeof(standard_methods)/sizeof(EVP_PKEY_ASN1_METHOD *);
+	if (app_methods)
+		num += sk_num(app_methods);
+	return num;
+	}
+
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
+	{
+	int num = sizeof(standard_methods)/sizeof(EVP_PKEY_ASN1_METHOD *);
+	if (idx < 0)
+		return NULL; 
+	if (idx < num)
+		return standard_methods[idx];
+	idx -= num;
+	return (const EVP_PKEY_ASN1_METHOD *)sk_value(app_methods, idx);
+	}
+
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type)
 	{
 	EVP_PKEY_ASN1_METHOD tmp, *t = &tmp, **ret;
@@ -127,6 +146,22 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type)
 	if ((*ret)->pkey_flags & ASN1_PKEY_ALIAS)
 		return EVP_PKEY_asn1_find((*ret)->pkey_base_id);
 	return *ret;
+	}
+
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(const char *str, int len)
+	{
+	int i;
+	const EVP_PKEY_ASN1_METHOD *ameth;
+	for (i = 0; i < EVP_PKEY_asn1_get_count(); i++)
+		{
+		ameth = EVP_PKEY_asn1_get0(i);
+		if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
+			continue;
+		if ((strlen(ameth->pem_str) == len) && 
+			!strncasecmp(ameth->pem_str, str, len))
+			return ameth;
+		}
+	return NULL;
 	}
 
 int EVP_PKEY_asn1_add(const EVP_PKEY_ASN1_METHOD *ameth)

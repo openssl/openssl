@@ -534,12 +534,30 @@ static int eckey_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 	return do_EC_KEY_print(bp, pkey->pkey.ec, indent, 2);
 	}
 
+static int old_ec_priv_decode(EVP_PKEY *pkey,
+					const unsigned char **pder, int derlen)
+	{
+	EC_KEY *ec;
+	if (!(ec = d2i_ECPrivateKey (NULL, pder, derlen)))
+		{
+		ECerr(EC_F_ECKEY_PRIV_DECODE, EC_R_DECODE_ERROR);
+		return 0;
+		}
+	EVP_PKEY_assign_EC_KEY(pkey, ec);
+	return 1;
+	}
+
+static int old_ec_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
+	{
+	return i2d_ECPrivateKey(pkey->pkey.ec, pder);
+	}
+
 EVP_PKEY_ASN1_METHOD eckey_asn1_meth = 
 	{
 	EVP_PKEY_EC,
 	EVP_PKEY_EC,
 	0,
-	"ec",
+	"EC",
 	"OpenSSL EC algorithm",
 
 	eckey_pub_decode,
@@ -561,5 +579,7 @@ EVP_PKEY_ASN1_METHOD eckey_asn1_meth =
 	eckey_param_print,
 
 	int_ec_free,
-	0
+	0,
+	old_ec_priv_decode,
+	old_ec_priv_encode
 	};

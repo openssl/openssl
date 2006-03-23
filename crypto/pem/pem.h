@@ -731,6 +731,7 @@ void ERR_load_PEM_strings(void);
 #define PEM_F_PEM_SIGNFINAL				 112
 #define PEM_F_PEM_WRITE					 113
 #define PEM_F_PEM_WRITE_BIO				 114
+#define PEM_F_PEM_WRITE_PRIVATEKEY			 139
 #define PEM_F_PEM_X509_INFO_READ			 115
 #define PEM_F_PEM_X509_INFO_READ_BIO			 116
 #define PEM_F_PEM_X509_INFO_WRITE_BIO			 117

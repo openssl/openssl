@@ -493,6 +493,24 @@ static int dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 	return do_dsa_print(bp, pkey->pkey.dsa, indent, 2);
 	}
 
+static int old_dsa_priv_decode(EVP_PKEY *pkey,
+					const unsigned char **pder, int derlen)
+	{
+	DSA *dsa;
+	if (!(dsa = d2i_DSAPrivateKey (NULL, pder, derlen)))
+		{
+		DSAerr(DSA_F_DSA_PRIV_DECODE, ERR_R_DSA_LIB);
+		return 0;
+		}
+	EVP_PKEY_assign_DSA(pkey, dsa);
+	return 1;
+	}
+
+static int old_dsa_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
+	{
+	return i2d_DSAPrivateKey(pkey->pkey.dsa, pder);
+	}
+
 /* NB these are sorted in pkey_id order, lowest first */
 
 const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] = 
@@ -527,7 +545,7 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] =
 		EVP_PKEY_DSA,
 		0,
 
-		"dsa",
+		"DSA",
 		"OpenSSL DSA method",
 
 		dsa_pub_decode,
@@ -549,7 +567,9 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] =
 		dsa_param_print,
 
 		int_dsa_free,
-		0
+		0,
+		old_dsa_priv_decode,
+		old_dsa_priv_encode
 		}
 	};
 

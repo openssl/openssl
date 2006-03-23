@@ -101,20 +101,22 @@ static int rsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 	return 1;
 	}
 
-static int rsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+static int old_rsa_priv_decode(EVP_PKEY *pkey,
+					const unsigned char **pder, int derlen)
 	{
-	const unsigned char *p;
-	int pklen;
-	RSA *rsa = NULL;
-	if (!PKCS8_pkey_get0(NULL, &p, &pklen, NULL, p8))
-		return 0;
-	if (!(rsa = d2i_RSAPrivateKey (NULL, &p, pklen)))
+	RSA *rsa;
+	if (!(rsa = d2i_RSAPrivateKey (NULL, pder, derlen)))
 		{
 		RSAerr(RSA_F_RSA_PRIV_DECODE, ERR_R_RSA_LIB);
 		return 0;
 		}
-	EVP_PKEY_assign_RSA (pkey, rsa);
+	EVP_PKEY_assign_RSA(pkey, rsa);
 	return 1;
+	}
+
+static int old_rsa_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
+	{
+	return i2d_RSAPrivateKey(pkey->pkey.rsa, pder);
 	}
 
 static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
@@ -137,6 +139,15 @@ static int rsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 		}
 
 	return 1;
+	}
+
+static int rsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+	{
+	const unsigned char *p;
+	int pklen;
+	if (!PKCS8_pkey_get0(NULL, &p, &pklen, NULL, p8))
+		return 0;
+	return old_rsa_priv_decode(pkey, &p, pklen);
 	}
 
 static int int_rsa_size(const EVP_PKEY *pkey)
@@ -256,7 +267,7 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] =
 		EVP_PKEY_RSA,
 		0,
 
-		"rsa",
+		"RSA",
 		"OpenSSL RSA method",
 
 		rsa_pub_decode,
@@ -274,7 +285,9 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] =
 		0,0,0,0,0,0,
 
 		int_rsa_free,
-		0
+		0,
+		old_rsa_priv_decode,
+		old_rsa_priv_encode
 		},
 
 		{

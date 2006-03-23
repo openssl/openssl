@@ -855,7 +855,10 @@ int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
 		    EVP_PBE_KEYGEN *keygen);
 void EVP_PBE_cleanup(void);
 
+int EVP_PKEY_asn1_get_count(void);
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type);
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(const char *str, int len);
 int EVP_PKEY_asn1_add(const EVP_PKEY_ASN1_METHOD *ameth);
 EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id,
 					const char *pem_str, const char *info);
