@@ -777,6 +777,7 @@ int		EVP_PKEY_type(int type);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
 int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,char *key);
+void *		EVP_PKEY_get0(EVP_PKEY *pkey);
 
 #ifndef OPENSSL_NO_RSA
 struct rsa_st;
@@ -868,14 +869,17 @@ void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
 		int (*priv_encode)(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk),
 		int (*priv_print)(BIO *out, const EVP_PKEY *pkey, int indent,
 							ASN1_PCTX *pctx));
+
 void EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
-		int (*param_decode)(const EVP_PKEY *pk, X509_PUBKEY *pub),
-		int (*param_encode)(X509_PUBKEY *pub, const EVP_PKEY *pk),
+		int (*param_decode)(EVP_PKEY *pkey,
+				const unsigned char **pder, int derlen),
+		int (*param_encode)(const EVP_PKEY *pkey, unsigned char **pder),
 		int (*param_missing)(const EVP_PKEY *pk),
 		int (*param_copy)(EVP_PKEY *to, const EVP_PKEY *from),
 		int (*param_cmp)(const EVP_PKEY *a, const EVP_PKEY *b),
 		int (*param_print)(BIO *out, const EVP_PKEY *pkey, int indent,
 							ASN1_PCTX *pctx));
+
 void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
 		void (*pkey_free)(EVP_PKEY *pkey));
 void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,

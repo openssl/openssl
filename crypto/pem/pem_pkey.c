@@ -149,6 +149,60 @@ int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
 				pem_str,bp,(char *)x,enc,kstr,klen,cb,u);
 	}
 
+EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, void *u)
+	{
+	char *nm=NULL;
+	const unsigned char *p=NULL;
+	unsigned char *data=NULL;
+	long len;
+	int slen;
+	EVP_PKEY *ret=NULL;
+
+	if (!PEM_bytes_read_bio(&data, &len, &nm, PEM_STRING_PARAMETERS,
+								bp, cb, u))
+		return NULL;
+	p = data;
+
+	if ((slen = pem_check_suffix(nm, "PARAMETERS")) > 0)
+		{
+		const EVP_PKEY_ASN1_METHOD *ameth;
+		ameth = EVP_PKEY_asn1_find_str(nm, slen);
+		if (!ameth || !ameth->param_decode)
+			goto err;
+		ret = EVP_PKEY_new();
+		if (!ret)
+			goto err;
+		if (!ameth->param_decode(ret, &p, len))
+			{
+			EVP_PKEY_free(ret);
+			ret = NULL;
+			goto err;
+			}
+		if(x)
+			{
+			if(*x) EVP_PKEY_free((EVP_PKEY *)*x);
+			*x = ret;
+			}
+		}
+err:
+	if (ret == NULL)
+		PEMerr(PEM_F_PEM_READ_BIO_PARAMETERS,ERR_R_ASN1_LIB);
+	OPENSSL_free(nm);
+	OPENSSL_free(data);
+	return(ret);
+	}
+
+int PEM_write_bio_Paramters(BIO *bp, EVP_PKEY *x)
+	{
+	char pem_str[80];
+	if (!x->ameth || !x->ameth->param_encode)
+		return 0;
+
+	BIO_snprintf(pem_str, 80, "%s PARAMETERS", x->ameth->pem_str);
+	return PEM_ASN1_write_bio(
+		(i2d_of_void *)openssl_fcast(x->ameth->param_encode),
+				pem_str,bp,(char *)x,NULL,NULL,0,0,NULL);
+	}
 
 #ifndef OPENSSL_NO_FP_API
 EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)

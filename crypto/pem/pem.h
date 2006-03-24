@@ -133,6 +133,7 @@ extern "C" {
 #define PEM_STRING_ECDSA_PUBLIC "ECDSA PUBLIC KEY"
 #define PEM_STRING_ECPARAMETERS "EC PARAMETERS"
 #define PEM_STRING_ECPRIVATEKEY	"EC PRIVATE KEY"
+#define PEM_STRING_PARAMETERS	"PARAMETERS"
 
   /* Note that this structure is initialised by PEM_SealInit and cleaned up
      by PEM_SealFinal (at least for now) */
@@ -724,6 +725,7 @@ void ERR_load_PEM_strings(void);
 #define PEM_F_PEM_PK8PKEY				 119
 #define PEM_F_PEM_READ					 108
 #define PEM_F_PEM_READ_BIO				 109
+#define PEM_F_PEM_READ_BIO_PARAMETERS			 140
 #define PEM_F_PEM_READ_BIO_PRIVATEKEY			 123
 #define PEM_F_PEM_READ_PRIVATEKEY			 124
 #define PEM_F_PEM_SEALFINAL				 110

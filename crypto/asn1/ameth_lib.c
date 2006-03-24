@@ -70,15 +70,23 @@ extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
 /* Keep this sorted in type order !! */
 const EVP_PKEY_ASN1_METHOD *standard_methods[] = 
 	{
+#ifndef OPENSSL_NO_RSA
 	&rsa_asn1_meths[0],
 	&rsa_asn1_meths[1],
+#endif
+#ifndef OPENSSL_NO_DH
 	&dh_asn1_meth,
+#endif
+#ifndef OPENSSL_NO_DSA
 	&dsa_asn1_meths[0],
 	&dsa_asn1_meths[1],
 	&dsa_asn1_meths[2],
 	&dsa_asn1_meths[3],
 	&dsa_asn1_meths[4],
+#endif
+#ifndef OPENSSL_NO_EC
 	&eckey_asn1_meth
+#endif
 	};
 
 typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);
@@ -209,11 +217,9 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id,
 	ameth->pub_cmp = 0;
 	ameth->pub_print = 0;
 
-
 	ameth->priv_decode = 0;
 	ameth->priv_encode = 0;
 	ameth->priv_print = 0;
-	
 
 	ameth->pkey_size = 0;
 	ameth->pkey_bits = 0;
@@ -224,7 +230,6 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id,
 	ameth->param_copy = 0;
 	ameth->param_cmp = 0;
 	ameth->param_print = 0;
-
 
 	ameth->pkey_free = 0;
 	ameth->pkey_ctrl = 0;
@@ -279,8 +284,9 @@ void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
 	}
 
 void EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
-		int (*param_decode)(const EVP_PKEY *pk, X509_PUBKEY *pub),
-		int (*param_encode)(X509_PUBKEY *pub, const EVP_PKEY *pk),
+		int (*param_decode)(EVP_PKEY *pkey,
+				const unsigned char **pder, int derlen),
+		int (*param_encode)(const EVP_PKEY *pkey, unsigned char **pder),
 		int (*param_missing)(const EVP_PKEY *pk),
 		int (*param_copy)(EVP_PKEY *to, const EVP_PKEY *from),
 		int (*param_cmp)(const EVP_PKEY *a, const EVP_PKEY *b),

@@ -199,6 +199,11 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, char *key)
 	return(key != NULL);
 	}
 
+void *EVP_PKEY_get0(EVP_PKEY *pkey)
+	{
+	return pkey->pkey.ptr;
+	}
+
 #ifndef OPENSSL_NO_RSA
 int EVP_PKEY_set1_RSA(EVP_PKEY *pkey, RSA *key)
 {
