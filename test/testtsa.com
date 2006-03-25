@@ -18,9 +18,12 @@ $
 $ setup_dir:
 $	subroutine
 $
-$		@[-.util]deltree [.tsa]*.*
-$ 		set file/prot=(S:RWED,O:RWED,G:RWED,W:RWED) tsa.dir;*
-$ 		delete tsa.dir;*
+$		if f$search("tsa.dir") .nes ""
+$		then
+$			@[-.util]deltree [.tsa]*.*
+$ 			set file/prot=(S:RWED,O:RWED,G:RWED,W:RWED) tsa.dir;*
+$ 			delete tsa.dir;*
+$		endif
 $
 $		create/dir [.tsa]
 $		set default [.tsa]
