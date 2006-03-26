@@ -224,15 +224,9 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #ifndef OPENSSL_NO_EC
 	if (in->tlsext_ecpointformatlist)
 		{
-		a.tlsext_ecpointformatlist.length=1+in->tlsext_ecpointformatlist_length;
+		a.tlsext_ecpointformatlist.length=in->tlsext_ecpointformatlist_length;
 		a.tlsext_ecpointformatlist.type=V_ASN1_OCTET_STRING;
-		if ((a.tlsext_ecpointformatlist.data = OPENSSL_malloc(1+in->tlsext_ecpointformatlist_length)) == NULL)
-			{
-			SSLerr(SSL_F_I2D_SSL_SESSION,ERR_R_MALLOC_FAILURE);
-			return(0);
-			}
-		*a.tlsext_ecpointformatlist.data = (unsigned char) in->tlsext_ecpointformatlist_length;
-		memcpy(a.tlsext_ecpointformatlist.data+1, in->tlsext_ecpointformatlist, in->tlsext_ecpointformatlist_length);
+		a.tlsext_ecpointformatlist.data=(unsigned char *)in->tlsext_ecpointformatlist;
 		}
 #endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
@@ -325,11 +319,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,9,v9);
 #endif /* OPENSSL_NO_PSK */
 	M_ASN1_I2D_finish();
-#ifndef OPENSSL_NO_TLSEXT
-#ifndef OPENSSL_NO_EC
-	OPENSSL_free(a.tlsext_ecpointformatlist.data);
-#endif /* OPENSSL_NO_EC */
-#endif /* OPENSSL_NO_TLSEXT */
 	}
 
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
@@ -516,29 +505,18 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 
 #ifndef OPENSSL_NO_EC
 	os.length=0;
-	os.data=NULL;
 	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,7);
 	if (os.data)
 		{
-		if ((ret->tlsext_ecpointformatlist = OPENSSL_malloc(os.length - 1)) == NULL)
-			{
-			SSLerr(SSL_F_D2I_SSL_SESSION,ERR_R_MALLOC_FAILURE);
-			}
-		else
-			{
-			ret->tlsext_ecpointformatlist_length = os.length - 1;
-			memcpy(ret->tlsext_ecpointformatlist, (unsigned char *) os.data + 1, os.length - 1);
-			}
+		ret->tlsext_ecpointformatlist_length=os.length;
+		memcpy(ret->tlsext_ecpointformatlist,os.data,ret->tlsext_ecpointformatlist_length);
 		OPENSSL_free(os.data);
 		os.data = NULL;
 		os.length = 0;
 		}
 	else
-		{
-		ret->tlsext_ecpointformatlist=NULL;
 		ret->tlsext_ecpointformatlist_length=0;
-		}
-
+		ret->tlsext_ecpointformatlist=NULL;
 #endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 
