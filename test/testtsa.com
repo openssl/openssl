@@ -6,7 +6,7 @@ $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then __arch := AXP
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
-$	openssl := mcr 'exe_dir'openssl
+$	openssl := mcr 'f$parse(exe_dir+"openssl.exe")'
 $	OPENSSL_CONF := [-]CAtsa.cnf
 $
 $ error:
