@@ -10,6 +10,8 @@
 # command line syntax and $FIPSLD_CC or $CC environment variable set
 # and can even be used to compile source files.
 
+#set -x
+
 CC=${FIPSLD_CC:-${CC}}
 [ -n "${CC}" ] || { echo '$CC is not defined'; exit 1; }
 
@@ -29,6 +31,14 @@ TARGET=`(while [ "x$1" != "x" -a "x$1" != "x-o" ]; do shift; done; echo $2)`
 [ -n "${TARGET}" ] || { echo 'no -o specified'; exit 1; }
 
 THERE="`echo $0 | sed -e 's|[^/]*$||'`"..
+
+# Location of installed validated FIPS module
+FIPSLIBDIR=${FIPSLIBDIR:-/usr/local/ssl/lib}
+# If this is a build from a validated tarball use this instead
+# FIPSLIBDIR=${THERE}/fips-1.0
+
+[ -f "${FIPSLIBDIR}/fipscanister.o" ] ||
+	{ echo "fipscanister.o not found"; exit 1; }
 
 HMAC_KEY="etaonrishdlcupfm"
 
@@ -50,8 +60,10 @@ case "${TARGET}" in
 	# Shared lib creation can be taking place in the source
 	# directory only!!!
 	FINGERTYPE="${THERE}/fips-1.0/sha/fips_standalone_sha1"
-	CANISTER_O="${THERE}/fips-1.0/fipscanister.o"
-	PREMAIN_C="${THERE}/fips-1.0/fips_premain.c"
+	CANISTER_O="${FIPSLIBDIR}/fipscanister.o"
+	PREMAIN_C="${FIPSLIBDIR}/fips_premain.c"
+
+echo Canister: $CANISTER_O
 
 	# verify fipscanister.o against its detached signature...
 	${FINGERTYPE} "${CANISTER_O}" | sed "s/(.*\//(/" | \
@@ -96,15 +108,14 @@ case "${TARGET}" in
 	# directory or off the installed binary target destination.
 	if [ -x "${THERE}/fips-1.0/sha/fips_standalone_sha1" ]; then
 		FINGERTYPE="${THERE}/fips-1.0/sha/fips_standalone_sha1"
-		CANISTER_O="${THERE}/fips-1.0/fipscanister.o"
-		PREMAIN_C="${THERE}/fips-1.0/fips_premain.c"
 	else	# Installed tree is expected to contain
 		# lib/fipscanister.o, lib/fipscanister.o.sha1 and
 		# lib/fips_premain.c [not to mention bin/openssl].
 		FINGERTYPE="${THERE}/bin/openssl sha1 -hmac ${HMAC_KEY}"
-		CANISTER_O="${THERE}/lib/fipscanister.o"
-		PREMAIN_C="${THERE}/lib/fips_premain.c"
 	fi
+
+	CANISTER_O="${FIPSLIBDIR}/fipscanister.o"
+	PREMAIN_C="${FIPSLIBDIR}/fips_premain.c"
 
 	# verify fipscanister.o against its detached signature...
 	${FINGERTYPE} "${CANISTER_O}" | sed "s/(.*\//(/" | \

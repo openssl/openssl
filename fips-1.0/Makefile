@@ -55,7 +55,8 @@ all:
 	fi
 
 check:
-	$(PERL) ../util/checkhash.pl || (rm fipscanister.o* 2>/dev/null; exit 1)
+#	$(PERL) ../util/checkhash.pl || (rm fipscanister.o* 2>/dev/null; exit 1)
+	echo FIPS module not built: no check done
 
 # Idea behind fipscanister.o is to "seize" the sequestered code between
 # known symbols for fingerprinting purposes, which would be commonly
@@ -71,6 +72,7 @@ check:
 # flag and simply assume that all objects are of the same type as first
 # one in command line. So the idea is to identify gcc and deficient
 # vendor compiler drivers...
+
 fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
 	@objs="fips_start.o $(LIBOBJ)"; \
 	for i in $(FIPS_OBJ_LISTS); do \
@@ -87,6 +89,7 @@ fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
 		*) set -x; $(CC) $(CFLAGS) -r -o $@ $$objs ;; \
 	esac fi
 	sha/fips_standalone_sha1 fipscanister.o > fipscanister.o.sha1
+
 # If another exception is immediately required, assign approprite
 # site-specific ld command to FIPS_SITE_LD environment variable.
 
@@ -128,8 +131,8 @@ links:
 	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' FIPS_DES_ENC='${FIPS_DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' FIPS_SHA1_ASM_OBJ='${FIPS_SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PERL='${PERL}' links ); \
 	done;
 
-lib:	fipscanister.o
-	$(AR) $(LIB) fipscanister.o
+lib:	$(FIPSLIBDIR)/fipscanister.o
+	$(AR) $(LIB) $(FIPSLIBDIR)/fipscanister.o
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 

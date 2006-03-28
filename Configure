@@ -621,6 +621,7 @@ my $prefix="";
 my $openssldir="";
 my $exe_ext="";
 my $install_prefix="";
+my $fipslibdir="/usr/local/ssl/lib";
 my $no_threads=0;
 my $no_shared=1;
 my $zlib=0;
@@ -871,7 +872,7 @@ PROCESS_ARGS:
 				}
 			elsif (/^--with-fipslibdir=(.*)$/)
 				{
-				$withargs{"fipslibdir"}="$1";
+				$fipslibdir="$1";
 				}
 			elsif (/^--with-zlib-include=(.*)$/)
 				{
@@ -975,6 +976,21 @@ chop $prefix if $prefix =~ /\/$/;
 
 $openssldir=$prefix . "/ssl" if $openssldir eq "";
 $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /(^\/|^[a-zA-Z]:[\\\/])/;
+
+if ($fips && ! -f "$fipslibdir/fipscanister.o")
+	{
+	my $fipswinerr = "";
+	$fipswinerr = <<EOF if $IsWindows;
+ Ensure that the correct path to the FIPS module directory
+has been given to the --with-fipslibdir option.
+EOF
+	print STDERR <<EOF;
+The file fipscanister.o could not be located. Please build and install the
+FIPS module using the instructions in the user guide before compiling OpenSSL
+in FIPS mode.$fipswinerr
+EOF
+	exit 1;
+	}
 
 
 print "IsWindows=$IsWindows\n";
@@ -1322,7 +1338,7 @@ while (<IN>)
 	s/^KRB5_INCLUDES=.*/KRB5_INCLUDES=$withargs{"krb5-include"}/;
 	s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
 	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
-	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$withargs{"fipslibdir"}/;
+	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
