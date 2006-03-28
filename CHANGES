@@ -4,6 +4,10 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Don't free up OIDs in OBJ_cleanup() if they are in use by EVP_MD or
+     EVP_CIPHER structures to avoid later problems in EVP_cleanup().
+     [Steve Henson]
+
   *) New utilities pkey and pkeyparam. These are similar to algorithm specific
      utilities such as rsa, dsa, dsaparam etc except they processes any key
      type.

@@ -208,8 +208,26 @@ static IMPLEMENT_LHASH_DOALL_FN(cleanup1, ADDED_OBJ *)
 static IMPLEMENT_LHASH_DOALL_FN(cleanup2, ADDED_OBJ *)
 static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ *)
 
+/* The purpose of obj_cleanup_defer is to avoid EVP_cleanup() attempting
+ * to use freed up OIDs. If neccessary the actual freeing up of OIDs is
+ * delayed.
+ */
+
+int obj_cleanup_defer = 0;
+
+void check_defer(int nid)
+	{
+	if (obj_cleanup_defer && nid >= NUM_NID)
+			obj_cleanup_defer = 1;
+	}
+
 void OBJ_cleanup(void)
 	{
+	if (obj_cleanup_defer)
+		{
+		obj_cleanup_defer = 2;
+		return ;
+		}
 	if (added == NULL) return;
 	added->down_load=0;
 	lh_doall(added,LHASH_DOALL_FN(cleanup1)); /* zero counters */

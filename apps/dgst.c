@@ -180,6 +180,7 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) break;
 			engine= *(++argv);
+        		e = setup_engine(bio_err, engine, 0);
 			}
 #endif
 		else if (strcmp(*argv,"-hex") == 0)
@@ -256,10 +257,6 @@ int MAIN(int argc, char **argv)
 		err=1;
 		goto end;
 		}
-
-#ifndef OPENSSL_NO_ENGINE
-        e = setup_engine(bio_err, engine, 0);
-#endif
 
 	in=BIO_new(BIO_s_file());
 	bmd=BIO_new(BIO_f_md());

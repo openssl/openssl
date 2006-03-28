@@ -430,7 +430,7 @@ encryption so these certificates are now obsolete.
 
 It doesn't: this extension is often the cause of confusion.
 
-Consider a certificate chain A->B->C so that A signs, B and B signs C. Suppose
+Consider a certificate chain A->B->C so that A signs B and B signs C. Suppose
 certificate C contains AKID.
 
 The purpose of this extension is to identify the authority certificate B. This

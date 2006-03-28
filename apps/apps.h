@@ -177,7 +177,7 @@ extern BIO *bio_err;
 			ENGINE_load_builtin_engines(); setup_ui_method(); } while(0)
 #    define apps_shutdown() \
 			do { CONF_modules_unload(1); destroy_ui_method(); \
-			EVP_cleanup(); ENGINE_cleanup(); \
+			OBJ_cleanup(); EVP_cleanup(); ENGINE_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_state(0); \
 			ERR_free_strings(); } while(0)
 #  else
@@ -187,7 +187,7 @@ extern BIO *bio_err;
 			setup_ui_method(); } while(0)
 #    define apps_shutdown() \
 			do { CONF_modules_unload(1); destroy_ui_method(); \
-			EVP_cleanup(); \
+			OBJ_cleanup(); EVP_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_state(0); \
 			ERR_free_strings(); } while(0)
 #  endif
