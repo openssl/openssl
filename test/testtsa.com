@@ -8,6 +8,8 @@ $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
 $	openssl := mcr 'f$parse(exe_dir+"openssl.exe")'
 $	OPENSSL_CONF := [-]CAtsa.cnf
+$	! Because that's what ../apps/CA.sh really looks at
+$	SSLEAY_CONFIG = OPENSSL_CONF
 $
 $ error:
 $	subroutine
