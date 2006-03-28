@@ -402,10 +402,10 @@ You can't generally create such a certificate using OpenSSL but there is no
 need to any more. Nowadays web browsers using unrestricted strong encryption
 are generally available.
 
-When there were tight export restrictions on the export of strong encryption
+When there were tight restrictions on the export of strong encryption
 software from the US only weak encryption algorithms could be freely exported
 (initially 40 bit and then 56 bit). It was widely recognised that this was
-inadequate. A relaxation the rules allowed the use of strong encryption but
+inadequate. A relaxation of the rules allowed the use of strong encryption but
 only to an authorised server.
 
 Two slighly different techniques were developed to support this, one used by
