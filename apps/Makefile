@@ -39,7 +39,7 @@ E_EXE=	verify asn1pars req dgst dh dhparam enc passwd gendh errstr \
 	ca crl rsa rsautl dsa dsaparam ec ecparam \
 	x509 genrsa gendsa s_server s_client speed \
 	s_time version pkcs7 crl2pkcs7 sess_id ciphers nseq pkcs12 \
-	pkcs8 spkac smime rand engine ocsp prime ts
+	pkcs8 pkey spkac smime rand engine ocsp prime ts
 
 PROGS= $(PROGRAM).c
 
@@ -55,16 +55,16 @@ E_OBJ=	verify.o asn1pars.o req.o dgst.o dh.o dhparam.o enc.o passwd.o gendh.o er
 	rsa.o rsautl.o dsa.o dsaparam.o ec.o ecparam.o \
 	x509.o genrsa.o gendsa.o s_server.o s_client.o speed.o \
 	s_time.o $(A_OBJ) $(S_OBJ) $(RAND_OBJ) version.o sess_id.o \
-	ciphers.o nseq.o pkcs12.o pkcs8.o spkac.o smime.o rand.o engine.o \
-	ocsp.o prime.o ts.o
+	ciphers.o nseq.o pkcs12.o pkcs8.o pkey.o \
+	spkac.o smime.o rand.o engine.o ocsp.o prime.o ts.o
 
 E_SRC=	verify.c asn1pars.c req.c dgst.c dh.c enc.c passwd.c gendh.c errstr.c ca.c \
 	pkcs7.c crl2p7.c crl.c \
 	rsa.c rsautl.c dsa.c dsaparam.c ec.c ecparam.c \
 	x509.c genrsa.c gendsa.c s_server.c s_client.c speed.c \
 	s_time.c $(A_SRC) $(S_SRC) $(RAND_SRC) version.c sess_id.c \
-	ciphers.c nseq.c pkcs12.c pkcs8.c spkac.c smime.c rand.c engine.c \
-	ocsp.c prime.c ts.c
+	ciphers.c nseq.c pkcs12.c pkcs8.c pkey.c \
+	spkac.c smime.c rand.c engine.c ocsp.c prime.c ts.c
 
 SRC=$(E_SRC)
 
