@@ -75,6 +75,7 @@ static ERR_STRING_DATA DH_str_functs[]=
 {ERR_FUNC(DH_F_DHPARAMS_PRINT_FP),	"DHparams_print_fp"},
 {ERR_FUNC(DH_F_DH_BUILTIN_GENPARAMS),	"DH_BUILTIN_GENPARAMS"},
 {ERR_FUNC(DH_F_DH_NEW_METHOD),	"DH_new_method"},
+{ERR_FUNC(DH_F_DH_PARAM_DECODE),	"DH_PARAM_DECODE"},
 {ERR_FUNC(DH_F_GENERATE_KEY),	"GENERATE_KEY"},
 {ERR_FUNC(DH_F_GENERATE_PARAMETERS),	"GENERATE_PARAMETERS"},
 {0,NULL}
@@ -83,8 +84,8 @@ static ERR_STRING_DATA DH_str_functs[]=
 static ERR_STRING_DATA DH_str_reasons[]=
 	{
 {ERR_REASON(DH_R_BAD_GENERATOR)          ,"bad generator"},
-{ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
 {ERR_REASON(DH_R_INVALID_PUBKEY)         ,"invalid public key"},
+{ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
 {0,NULL}
 	};
 

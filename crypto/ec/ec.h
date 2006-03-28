@@ -919,6 +919,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_D2I_ECPKPARAMETERS				 145
 #define EC_F_D2I_ECPRIVATEKEY				 146
 #define EC_F_ECKEY_PARAM2TYPE				 211
+#define EC_F_ECKEY_PARAM_DECODE				 196
 #define EC_F_ECKEY_PRIV_DECODE				 212
 #define EC_F_ECKEY_PRIV_ENCODE				 213
 #define EC_F_ECKEY_PUB_DECODE				 214

@@ -1,4 +1,4 @@
-/* pkey.c */
+/* apps/pkey.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
  * project 2006
  */
@@ -81,6 +81,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
+	int ret = 1;
 
 	if (bio_err == NULL)
 		bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
@@ -203,7 +204,7 @@ int MAIN(int argc, char **argv)
 	if (!app_passwd(bio_err, passargin, passargout, &passin, &passout))
 		{
 		BIO_printf(bio_err, "Error getting passwords\n");
-		return 1;
+		goto end;
 		}
 
 	if (outfile)
@@ -212,7 +213,7 @@ int MAIN(int argc, char **argv)
 			{
 			BIO_printf(bio_err,
 				 "Can't open output file %s\n", outfile);
-			return (1);
+			goto end;
 			}
 		}
 	else
@@ -233,10 +234,7 @@ int MAIN(int argc, char **argv)
 		pkey = load_key(bio_err, infile, informat, 1,
 			passin, e, "key");
 	if (!pkey)
-		{
-		BIO_free_all(out);
-		return 1;
-		}
+		goto end;
 
 	if (!noout)
 		{
@@ -258,7 +256,7 @@ int MAIN(int argc, char **argv)
 		else
 			{
 			BIO_printf(bio_err, "Bad format specified for key\n");
-				return (1);
+			goto end;
 			}
 
 		}
@@ -271,6 +269,8 @@ int MAIN(int argc, char **argv)
 			EVP_PKEY_print_private(out, pkey, 0, NULL);
 		}
 
+	ret = 0;
+
 	end:
 	EVP_PKEY_free(pkey);
 	BIO_free_all(out);
@@ -280,5 +280,5 @@ int MAIN(int argc, char **argv)
 	if (passout)
 		OPENSSL_free(passout);
 
-	return (0);
+	return ret;
 	}

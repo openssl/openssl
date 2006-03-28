@@ -204,6 +204,20 @@ static int check_pem(const char *nm, const char *name)
 		return 0;
 		}
 
+	if(!strcmp(name,PEM_STRING_PARAMETERS))
+		{
+		int slen;
+		const EVP_PKEY_ASN1_METHOD *ameth;
+		slen = pem_check_suffix(nm, "PARAMETERS"); 
+		if (slen > 0)
+			{
+			ameth = EVP_PKEY_asn1_find_str(nm, slen);
+			if (ameth && ameth->param_decode)
+				return 1;
+			}
+		return 0;
+		}
+
 	/* Permit older strings */
 
 	if(!strcmp(nm,PEM_STRING_X509_OLD) &&

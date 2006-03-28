@@ -260,6 +260,7 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_DSA_DO_SIGN				 112
 #define DSA_F_DSA_DO_VERIFY				 113
 #define DSA_F_DSA_NEW_METHOD				 103
+#define DSA_F_DSA_PARAM_DECODE				 119
 #define DSA_F_DSA_PRINT					 104
 #define DSA_F_DSA_PRINT_FP				 105
 #define DSA_F_DSA_PRIV_DECODE				 115

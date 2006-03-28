@@ -4,8 +4,9 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
-  *) New utility 'pkey'. This is similar to algorithm specific utilities
-     such as 'rsa', 'dsa' etc except it processes any key type.
+  *) New utilities pkey and pkeyparam. These are similar to algorithm specific
+     utilities such as rsa, dsa, dsaparam etc except they processes any key
+     type.
      [Steve Henson]
 
   *) Transfer public key printing routines to EVP_PKEY_ASN1_METHOD. New 

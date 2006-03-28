@@ -515,6 +515,24 @@ err:
 	return(ret);
 	}
 
+static int eckey_param_decode(EVP_PKEY *pkey,
+					const unsigned char **pder, int derlen)
+	{
+	EC_KEY *eckey;
+	if (!(eckey = d2i_ECParameters(NULL, pder, derlen)))
+		{
+		ECerr(EC_F_ECKEY_PARAM_DECODE, ERR_R_EC_LIB);
+		return 0;
+		}
+	EVP_PKEY_assign_EC_KEY(pkey, eckey);
+	return 1;
+	}
+
+static int eckey_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
+	{
+	return i2d_ECParameters(pkey->pkey.ec, pder);
+	}
+
 static int eckey_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 							ASN1_PCTX *ctx)
 	{
@@ -572,7 +590,8 @@ EVP_PKEY_ASN1_METHOD eckey_asn1_meth =
 	int_ec_size,
 	ec_bits,
 
-	0,0,	
+	eckey_param_decode,
+	eckey_param_encode,
 	ec_missing_parameters,
 	ec_copy_parameters,
 	ec_cmp_parameters,

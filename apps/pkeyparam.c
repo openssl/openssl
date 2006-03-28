@@ -1,5 +1,6 @@
+/* apps/pkeyparam.c */
 /* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 2006.
+ * project 2006
  */
 /* ====================================================================
  * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
@@ -54,122 +55,143 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-
 #include <stdio.h>
-#include "cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
-#include <openssl/dh.h>
-#include "asn1_locl.h"
+#include <string.h>
+#include "apps.h"
+#include <openssl/pem.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 
-static void int_dh_free(EVP_PKEY *pkey)
-	{
-	DH_free(pkey->pkey.dh);
-	}
+#define PROG pkeyparam_main
 
-static int dh_param_decode(EVP_PKEY *pkey,
-					const unsigned char **pder, int derlen)
+int MAIN(int, char **);
+
+int MAIN(int argc, char **argv)
 	{
-	DH *dh;
-	if (!(dh = d2i_DHparams(NULL, pder, derlen)))
+	ENGINE *e = NULL;
+	char **args, *infile = NULL, *outfile = NULL;
+	BIO *in = NULL, *out = NULL;
+	int text = 0, noout = 0;
+	EVP_PKEY *pkey=NULL;
+	int badarg = 0;
+#ifndef OPENSSL_NO_ENGINE
+	char *engine=NULL;
+#endif
+	int ret = 1;
+
+	if (bio_err == NULL)
+		bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
+
+	if (!load_config(bio_err, NULL))
+		goto end;
+
+	ERR_load_crypto_strings();
+	OpenSSL_add_all_algorithms();
+	args = argv + 1;
+	while (!badarg && *args && *args[0] == '-')
 		{
-		DHerr(DH_F_DH_PARAM_DECODE, ERR_R_DH_LIB);
-		return 0;
+		if (!strcmp (*args, "-in"))
+			{
+			if (args[1])
+				{
+				args++;
+				infile = *args;
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp (*args, "-out"))
+			{
+			if (args[1])
+				{
+				args++;
+				outfile = *args;
+				}
+			else badarg = 1;
+			}
+#ifndef OPENSSL_NO_ENGINE
+		else if (strcmp(*args,"-engine") == 0)
+			{
+			if (!args[1]) goto bad;
+			engine= *(++args);
+			}
+#endif
+
+		else if (strcmp(*args,"-text") == 0)
+			text=1;
+		else if (strcmp(*args,"-noout") == 0)
+			noout=1;
+		args++;
 		}
-	EVP_PKEY_assign_DH(pkey, dh);
-	return 1;
-	}
 
-static int dh_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
-	{
-	return i2d_DHparams(pkey->pkey.dh, pder);
-	}
+	if (badarg)
+		{
+		bad:
+		BIO_printf(bio_err, "Usage pkeyparam [options]\n");
+		BIO_printf(bio_err, "where options are\n");
+		BIO_printf(bio_err, "-in file        input file\n");
+		BIO_printf(bio_err, "-out file       output file\n");
+#ifndef OPENSSL_NO_ENGINE
+		BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
+#endif
+		return 1;
+		}
 
-static int do_dhparam_print(BIO *bp, const DH *x, int indent,
-							ASN1_PCTX *ctx)
-	{
-	unsigned char *m=NULL;
-	int reason=ERR_R_BUF_LIB,ret=0;
-	size_t buf_len=0, i;
+#ifndef OPENSSL_NO_ENGINE
+        e = setup_engine(bio_err, engine, 0);
+#endif
 
-	if (x->p)
-		buf_len = (size_t)BN_num_bytes(x->p);
+	if (infile)
+		{
+		if (!(in = BIO_new_file (infile, "r")))
+			{
+			BIO_printf(bio_err,
+				 "Can't open input file %s\n", infile);
+			goto end;
+			}
+		}
+	else
+		in = BIO_new_fp (stdin, BIO_NOCLOSE);
+
+	if (outfile)
+		{
+		if (!(out = BIO_new_file (outfile, "w")))
+			{
+			BIO_printf(bio_err,
+				 "Can't open output file %s\n", outfile);
+			goto end;
+			}
+		}
 	else
 		{
-		reason = ERR_R_PASSED_NULL_PARAMETER;
-		goto err;
+		out = BIO_new_fp (stdout, BIO_NOCLOSE);
+#ifdef OPENSSL_SYS_VMS
+			{
+			BIO *tmpbio = BIO_new(BIO_f_linebuffer());
+			out = BIO_push(tmpbio, out);
+			}
+#endif
 		}
-	if (x->g)
-		if (buf_len < (i = (size_t)BN_num_bytes(x->g)))
-			buf_len = i;
-	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
-	if (m == NULL)
+
+	pkey = PEM_read_bio_Parameters(in, NULL);
+	if (!pkey)
 		{
-		reason=ERR_R_MALLOC_FAILURE;
-		goto err;
+		BIO_printf(bio_err, "Error reading paramters\n");
+		ERR_print_errors(bio_err);
+		goto end;
 		}
 
-	BIO_indent(bp, indent, 128);
-	if (BIO_printf(bp,"Diffie-Hellman-Parameters: (%d bit)\n",
-		BN_num_bits(x->p)) <= 0)
-		goto err;
-	indent += 4;
-	if (!ASN1_bn_print(bp,"prime:",x->p,m,indent)) goto err;
-	if (!ASN1_bn_print(bp,"generator:",x->g,m,indent)) goto err;
-	if (x->length != 0)
-		{
-		BIO_indent(bp, indent, 128);
-		if (BIO_printf(bp,"recommended-private-length: %d bits\n",
-			(int)x->length) <= 0) goto err;
-		}
-	ret=1;
-	if (0)
-		{
-err:
-		DHerr(DH_F_DHPARAMS_PRINT,reason);
-		}
-	if (m != NULL) OPENSSL_free(m);
-	return(ret);
+	if (!noout)
+		PEM_write_bio_Parameters(out,pkey);
+
+	if (text)
+		EVP_PKEY_print_params(out, pkey, 0, NULL);
+
+	ret = 0;
+
+	end:
+	EVP_PKEY_free(pkey);
+	BIO_free_all(out);
+	BIO_free(in);
+
+	return ret;
 	}
-
-static int dh_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-							ASN1_PCTX *ctx)
-	{
-	return do_dhparam_print(bp, pkey->pkey.dh, indent, ctx);
-	}
-
-int DHparams_print(BIO *bp, const DH *x)
-	{
-	return do_dhparam_print(bp, x, 4, NULL);
-	}
-
-const EVP_PKEY_ASN1_METHOD dh_asn1_meth = 
-	{
-	EVP_PKEY_DH,
-	EVP_PKEY_DH,
-	0,
-
-	"dh",
-	"OpenSSL PKCS#3 DH method",
-
-	0,
-	0,
-	0,
-	0,
-
-	0,
-	0,
-	0,
-
-	0,
-	0,
-
-	dh_param_decode,
-	dh_param_encode,
-	0,0,0,
-	dh_param_print,
-
-	int_dh_free,
-	0
-	};
-

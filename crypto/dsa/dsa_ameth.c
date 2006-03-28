@@ -473,6 +473,23 @@ err:
 	return(ret);
 	}
 
+static int dsa_param_decode(EVP_PKEY *pkey,
+					const unsigned char **pder, int derlen)
+	{
+	DSA *dsa;
+	if (!(dsa = d2i_DSAparams(NULL, pder, derlen)))
+		{
+		DSAerr(DSA_F_DSA_PARAM_DECODE, ERR_R_DSA_LIB);
+		return 0;
+		}
+	EVP_PKEY_assign_DSA(pkey, dsa);
+	return 1;
+	}
+
+static int dsa_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
+	{
+	return i2d_DSAparams(pkey->pkey.dsa, pder);
+	}
 
 static int dsa_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 							ASN1_PCTX *ctx)
@@ -560,7 +577,8 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] =
 		int_dsa_size,
 		dsa_bits,
 
-		0,0,
+		dsa_param_decode,
+		dsa_param_encode,
 		dsa_missing_parameters,
 		dsa_copy_parameters,
 		dsa_cmp_parameters,
