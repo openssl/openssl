@@ -1051,3 +1051,11 @@ rsadsi 1 1 6		: rsaOAEPEncryptionSET
 			: Oakley-EC2N-4		: ipsec4
 
 iso 0 10118 3 0 55	: whirlpool
+
+# GOST OIDs
+
+member-body 643 2 2	: cryptopro
+cryptopro 3		: id-GostR3411-94-with-GostR3410-2001 : GOST R 34.11-94 with GOST R 34.10-2001
+cryptopro 4		: id-GostR3411-94-with-GostR3410-94 : GOST R 34.11-94 with GOST R 34.10-94
+cryptopro 19		: id-GostR3411-2001	: GOST R 34.10-2001
+cryptopro 20		: id-GostR3411-94	: GOST R 34.10-94

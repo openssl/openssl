@@ -3312,3 +3312,27 @@
 #define NID_whirlpool		752
 #define OBJ_whirlpool		OBJ_iso,0L,10118L,3L,0L,55L
 
+#define SN_cryptopro		"cryptopro"
+#define NID_cryptopro		753
+#define OBJ_cryptopro		OBJ_member_body,643L,2L,2L
+
+#define SN_id_GostR3411_94_with_GostR3410_2001		"id-GostR3411-94-with-GostR3410-2001"
+#define LN_id_GostR3411_94_with_GostR3410_2001		"GOST R 34.11-94 with GOST R 34.10-2001"
+#define NID_id_GostR3411_94_with_GostR3410_2001		754
+#define OBJ_id_GostR3411_94_with_GostR3410_2001		OBJ_cryptopro,3L
+
+#define SN_id_GostR3411_94_with_GostR3410_94		"id-GostR3411-94-with-GostR3410-94"
+#define LN_id_GostR3411_94_with_GostR3410_94		"GOST R 34.11-94 with GOST R 34.10-94"
+#define NID_id_GostR3411_94_with_GostR3410_94		755
+#define OBJ_id_GostR3411_94_with_GostR3410_94		OBJ_cryptopro,4L
+
+#define SN_id_GostR3411_2001		"id-GostR3411-2001"
+#define LN_id_GostR3411_2001		"GOST R 34.10-2001"
+#define NID_id_GostR3411_2001		756
+#define OBJ_id_GostR3411_2001		OBJ_cryptopro,19L
+
+#define SN_id_GostR3411_94		"id-GostR3411-94"
+#define LN_id_GostR3411_94		"GOST R 34.10-94"
+#define NID_id_GostR3411_94		757
+#define OBJ_id_GostR3411_94		OBJ_cryptopro,20L
+

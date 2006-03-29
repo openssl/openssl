@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 753
-#define NUM_SN 749
-#define NUM_LN 749
-#define NUM_OBJ 711
+#define NUM_NID 758
+#define NUM_SN 754
+#define NUM_LN 754
+#define NUM_OBJ 716
 
-static unsigned char lvalues[5011]={
+static unsigned char lvalues[5040]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -779,6 +779,11 @@ static unsigned char lvalues[5011]={
 0x2B,0x06,0x01,0x05,0x05,0x07,0x15,0x02,     /* [4993] OBJ_Independent */
 0x55,0x1D,0x1C,                              /* [5001] OBJ_issuing_distribution_point */
 0x28,0xCF,0x06,0x03,0x00,0x37,               /* [5004] OBJ_whirlpool */
+0x2A,0x85,0x03,0x02,0x02,                    /* [5010] OBJ_cryptopro */
+0x2A,0x85,0x03,0x02,0x02,0x03,               /* [5015] OBJ_id_GostR3411_94_with_GostR3410_2001 */
+0x2A,0x85,0x03,0x02,0x02,0x04,               /* [5021] OBJ_id_GostR3411_94_with_GostR3410_94 */
+0x2A,0x85,0x03,0x02,0x02,0x13,               /* [5027] OBJ_id_GostR3411_2001 */
+0x2A,0x85,0x03,0x02,0x02,0x14,               /* [5033] OBJ_id_GostR3411_94 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1950,6 +1955,17 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"issuingDistributionPoint","X509v3 Issuing Distrubution Point",
 	NID_issuing_distribution_point,3,&(lvalues[5001]),0},
 {"whirlpool","whirlpool",NID_whirlpool,6,&(lvalues[5004]),0},
+{"cryptopro","cryptopro",NID_cryptopro,5,&(lvalues[5010]),0},
+{"id-GostR3411-94-with-GostR3410-2001",
+	"GOST R 34.11-94 with GOST R 34.10-2001",
+	NID_id_GostR3411_94_with_GostR3410_2001,6,&(lvalues[5015]),0},
+{"id-GostR3411-94-with-GostR3410-94",
+	"GOST R 34.11-94 with GOST R 34.10-94",
+	NID_id_GostR3411_94_with_GostR3410_94,6,&(lvalues[5021]),0},
+{"id-GostR3411-2001","GOST R 34.10-2001",NID_id_GostR3411_2001,6,
+	&(lvalues[5027]),0},
+{"id-GostR3411-94","GOST R 34.10-94",NID_id_GostR3411_94,6,
+	&(lvalues[5033]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2159,6 +2175,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[153]),/* "crlBag" */
 &(nid_objs[103]),/* "crlDistributionPoints" */
 &(nid_objs[88]),/* "crlNumber" */
+&(nid_objs[753]),/* "cryptopro" */
 &(nid_objs[500]),/* "dITRedirect" */
 &(nid_objs[451]),/* "dNSDomain" */
 &(nid_objs[495]),/* "dSAQuality" */
@@ -2202,6 +2219,10 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[473]),/* "homeTelephoneNumber" */
 &(nid_objs[466]),/* "host" */
 &(nid_objs[442]),/* "iA5StringSyntax" */
+&(nid_objs[756]),/* "id-GostR3411-2001" */
+&(nid_objs[757]),/* "id-GostR3411-94" */
+&(nid_objs[754]),/* "id-GostR3411-94-with-GostR3410-2001" */
+&(nid_objs[755]),/* "id-GostR3411-94-with-GostR3410-94" */
 &(nid_objs[266]),/* "id-aca" */
 &(nid_objs[355]),/* "id-aca-accessIdentity" */
 &(nid_objs[354]),/* "id-aca-authenticationInfo" */
@@ -2721,6 +2742,10 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[384]),/* "Experimental" */
 &(nid_objs[372]),/* "Extended OCSP Status" */
 &(nid_objs[172]),/* "Extension Request" */
+&(nid_objs[756]),/* "GOST R 34.10-2001" */
+&(nid_objs[757]),/* "GOST R 34.10-94" */
+&(nid_objs[754]),/* "GOST R 34.11-94 with GOST R 34.10-2001" */
+&(nid_objs[755]),/* "GOST R 34.11-94 with GOST R 34.10-94" */
 &(nid_objs[432]),/* "Hold Instruction Call Issuer" */
 &(nid_objs[430]),/* "Hold Instruction Code" */
 &(nid_objs[431]),/* "Hold Instruction None" */
@@ -2889,6 +2914,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[53]),/* "countersignature" */
 &(nid_objs[14]),/* "countryName" */
 &(nid_objs[153]),/* "crlBag" */
+&(nid_objs[753]),/* "cryptopro" */
 &(nid_objs[500]),/* "dITRedirect" */
 &(nid_objs[451]),/* "dNSDomain" */
 &(nid_objs[495]),/* "dSAQuality" */
@@ -3653,6 +3679,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[637]),/* OBJ_set_brand_Diners             2 23 42 8 30 */
 &(nid_objs[638]),/* OBJ_set_brand_AmericanExpress    2 23 42 8 34 */
 &(nid_objs[639]),/* OBJ_set_brand_JCB                2 23 42 8 35 */
+&(nid_objs[753]),/* OBJ_cryptopro                    1 2 643 2 2 */
 &(nid_objs[184]),/* OBJ_X9_57                        1 2 840 10040 */
 &(nid_objs[405]),/* OBJ_ansi_X9_62                   1 2 840 10045 */
 &(nid_objs[389]),/* OBJ_Enterprises                  1 3 6 1 4 1 */
@@ -3726,6 +3753,10 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[752]),/* OBJ_whirlpool                    1 0 10118 3 0 55 */
 &(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666 1 */
 &(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666 2 */
+&(nid_objs[754]),/* OBJ_id_GostR3411_94_with_GostR3410_2001 1 2 643 2 2 3 */
+&(nid_objs[755]),/* OBJ_id_GostR3411_94_with_GostR3410_94 1 2 643 2 2 4 */
+&(nid_objs[756]),/* OBJ_id_GostR3411_2001            1 2 643 2 2 19 */
+&(nid_objs[757]),/* OBJ_id_GostR3411_94              1 2 643 2 2 20 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */
 &(nid_objs[185]),/* OBJ_X9cm                         1 2 840 10040 4 */
 &(nid_objs[127]),/* OBJ_id_pkix                      1 3 6 1 5 5 7 */
