@@ -861,15 +861,23 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(const char *str, int len);
 int EVP_PKEY_asn1_add(const EVP_PKEY_ASN1_METHOD *ameth);
+
 EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id,
 					const char *pem_str, const char *info);
 void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth);
+void EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
+		int (*pub_decode)(EVP_PKEY *pk, X509_PUBKEY *pub),
+		int (*pub_encode)(X509_PUBKEY *pub, const EVP_PKEY *pk),
+		int (*pub_cmp)(const EVP_PKEY *a, const EVP_PKEY *b),
+		int (*pub_print)(BIO *out, const EVP_PKEY *pkey, int indent,
+							ASN1_PCTX *pctx),
+		int (*pkey_size)(const EVP_PKEY *pk),
+		int (*pkey_bits)(const EVP_PKEY *pk));
 void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
 		int (*priv_decode)(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf),
 		int (*priv_encode)(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk),
 		int (*priv_print)(BIO *out, const EVP_PKEY *pkey, int indent,
 							ASN1_PCTX *pctx));
-
 void EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
 		int (*param_decode)(EVP_PKEY *pkey,
 				const unsigned char **pder, int derlen),
