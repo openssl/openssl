@@ -2046,7 +2046,9 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	int i,j,ok;
 #ifndef OPENSSL_NO_TLSEXT
 #ifndef OPENSSL_NO_EC
-	int ec_ok;
+	int ec_ok, ec_nid;
+	unsigned char ec_search1, ec_search2;
+	unsigned char *ec_ptr;
 #endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 	CERT *cert;
@@ -2183,6 +2185,103 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 						{
 						ec_ok = 1;
 						break;
+						}
+					}
+				}
+			ok = ok && ec_ok;
+			}
+		if (
+			/* if we are considering an ECC cipher suite that uses our certificate */
+			(alg & SSL_aECDSA)
+			/* and we have an ECC certificate */
+			&& (s->cert->pkeys[SSL_PKEY_ECC].x509 != NULL)
+			/* and the client specified an EllipticCurves extension */
+			&& ((s->session->tlsext_ellipticcurvelist_length > 0) && (s->session->tlsext_ellipticcurvelist != NULL))
+		)
+			{
+			ec_ok = 0;
+			if (
+				(s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec != NULL)
+				&& (s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec->group != NULL)
+			)
+				{
+				ec_nid = EC_GROUP_get_curve_name(s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec->group);
+				if ((ec_nid == 0)
+					&& (s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec->group->meth != NULL)
+				)
+					{
+					if (EC_METHOD_get_field_type(s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec->group->meth) == NID_X9_62_prime_field)
+						{
+						ec_search1 = 0xFF;
+						ec_search2 = 0x01;
+						}
+					else if (EC_METHOD_get_field_type(s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec->group->meth) == NID_X9_62_characteristic_two_field)
+						{
+						ec_search1 = 0xFF;
+						ec_search2 = 0x02;
+						}
+					}
+				else
+					{
+					ec_search1 = 0x00;
+					ec_search2 = tls1_ec_nid2curve_id(ec_nid);
+					}
+				if ((ec_search1 != 0) || (ec_search2 != 0))
+					{
+					for (j = 0; j < s->session->tlsext_ellipticcurvelist_length / 2; j++)
+						{
+						if ((s->session->tlsext_ellipticcurvelist[2*j] == ec_search1) && (s->session->tlsext_ellipticcurvelist[2*j+1] == ec_search2))
+							{
+							ec_ok = 1;
+							break;
+							}
+						}
+					}
+				}
+			ok = ok && ec_ok;
+			}
+		if (
+			/* if we are considering an ECC cipher suite that uses an ephemeral EC key */
+			((alg & SSL_kECDH) || (alg & SSL_kECDHE))
+			/* and we have an ephemeral EC key */
+			&& (s->cert->ecdh_tmp != NULL)
+			/* and the client specified an EllipticCurves extension */
+			&& ((s->session->tlsext_ellipticcurvelist_length > 0) && (s->session->tlsext_ellipticcurvelist != NULL))
+		)
+			{
+			ec_ok = 0;
+			if (s->cert->ecdh_tmp->group != NULL)
+				{
+				ec_nid = EC_GROUP_get_curve_name(s->cert->ecdh_tmp->group);
+				if ((ec_nid == 0)
+					&& (s->cert->ecdh_tmp->group->meth != NULL)
+				)
+					{
+					if (EC_METHOD_get_field_type(s->cert->ecdh_tmp->group->meth) == NID_X9_62_prime_field)
+						{
+						ec_search1 = 0xFF;
+						ec_search2 = 0x01;
+						}
+					else if (EC_METHOD_get_field_type(s->cert->ecdh_tmp->group->meth) == NID_X9_62_characteristic_two_field)
+						{
+						ec_search1 = 0xFF;
+						ec_search2 = 0x02;
+						}
+					}
+				else
+					{
+					ec_search1 = 0x00;
+					ec_search2 = tls1_ec_nid2curve_id(ec_nid);
+					}
+				if ((ec_search1 != 0) || (ec_search2 != 0))
+					{
+					for (j = 0; j < s->session->tlsext_ellipticcurvelist_length / 2; j++)
+						{
+						if ((s->session->tlsext_ellipticcurvelist[2*j] == ec_search1) && (s->session->tlsext_ellipticcurvelist[2*j+1] == ec_search2))
+							{
+							ec_ok = 1;
+							break;
+							}
 						}
 					}
 				}

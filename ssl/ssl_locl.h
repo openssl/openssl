@@ -970,6 +970,11 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
+#ifndef OPENSSL_NO_EC
+int tls1_ec_curve_id2nid(int curve_id);
+int tls1_ec_nid2curve_id(int nid);
+#endif /* OPENSSL_NO_EC */
+
 #ifndef OPENSSL_NO_TLSEXT
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
 unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 

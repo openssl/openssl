@@ -512,6 +512,8 @@ typedef struct ssl_session_st
 #ifndef OPENSSL_NO_EC
 	size_t tlsext_ecpointformatlist_length;
 	unsigned char *tlsext_ecpointformatlist; /* peer's list */
+	size_t tlsext_ellipticcurvelist_length;
+	unsigned char *tlsext_ellipticcurvelist; /* peer's list */
 #endif /* OPENSSL_NO_EC */
 #endif
 	} SSL_SESSION;
@@ -1066,6 +1068,8 @@ struct ssl_st
 #ifndef OPENSSL_NO_EC
 	size_t tlsext_ecpointformatlist_length;
 	unsigned char *tlsext_ecpointformatlist; /* our list */
+	size_t tlsext_ellipticcurvelist_length;
+	unsigned char *tlsext_ellipticcurvelist; /* our list */
 #endif /* OPENSSL_NO_EC */
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 #define session_ctx initial_ctx

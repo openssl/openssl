@@ -206,6 +206,8 @@ SSL_SESSION *SSL_SESSION_new(void)
 #ifndef OPENSSL_NO_EC
 	ss->tlsext_ecpointformatlist_length = 0;
 	ss->tlsext_ecpointformatlist = NULL;
+	ss->tlsext_ellipticcurvelist_length = 0;
+	ss->tlsext_ellipticcurvelist = NULL;
 #endif
 #endif
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
@@ -368,6 +370,18 @@ int ssl_get_new_session(SSL *s, int session)
 				}
 			ss->tlsext_ecpointformatlist_length = s->tlsext_ecpointformatlist_length;
 			memcpy(ss->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist_length);
+			}
+		if (s->tlsext_ellipticcurvelist)
+			{
+			if (ss->tlsext_ellipticcurvelist != NULL) OPENSSL_free(ss->tlsext_ellipticcurvelist);
+			if ((ss->tlsext_ellipticcurvelist = OPENSSL_malloc(s->tlsext_ellipticcurvelist_length)) == NULL)
+				{
+				SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_MALLOC_FAILURE);
+				SSL_SESSION_free(ss);
+				return 0;
+				}
+			ss->tlsext_ellipticcurvelist_length = s->tlsext_ellipticcurvelist_length;
+			memcpy(ss->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist_length);
 			}
 #endif
 #endif
@@ -665,6 +679,8 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 #ifndef OPENSSL_NO_EC
 	ss->tlsext_ecpointformatlist_length = 0;
 	if (ss->tlsext_ecpointformatlist != NULL) OPENSSL_free(ss->tlsext_ecpointformatlist);
+	ss->tlsext_ellipticcurvelist_length = 0;
+	if (ss->tlsext_ellipticcurvelist != NULL) OPENSSL_free(ss->tlsext_ellipticcurvelist);
 #endif /* OPENSSL_NO_EC */
 #endif
 #ifndef OPENSSL_NO_PSK
