@@ -413,7 +413,7 @@ static void sv_usage(void)
 #ifndef OPENSSL_NO_ECDH
 	BIO_printf(bio_err," -named_curve arg  - Elliptic curve name to use for ephemeral ECDH keys.\n" \
 	                   "                 Use \"openssl ecparam -list_curves\" for all names\n" \
-	                   "                 (default is sect163r2).\n");
+	                   "                 (default is nistp256).\n");
 #endif
 #ifdef FIONBIO
 	BIO_printf(bio_err," -nbio         - Run with non-blocking IO\n");
@@ -1308,10 +1308,10 @@ bad:
 		else
 			{
 			BIO_printf(bio_s_out,"Using default temp ECDH parameters\n");
-			ecdh = EC_KEY_new_by_curve_name(NID_sect163r2);
+			ecdh = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
 			if (ecdh == NULL) 
 				{
-				BIO_printf(bio_err, "unable to create curve (sect163r2)\n");
+				BIO_printf(bio_err, "unable to create curve (nistp256)\n");
 				goto end;
 				}
 			}
