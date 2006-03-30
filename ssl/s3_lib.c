@@ -152,6 +152,11 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 #include "kssl_lcl.h"
+#ifndef OPENSSL_NO_TLSEXT
+#ifndef OPENSSL_NO_EC
+#include "../crypto/ec/ec_lcl.h"
+#endif /* OPENSSL_NO_EC */
+#endif /* OPENSSL_NO_TLSEXT */
 #include <openssl/md5.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
@@ -2039,6 +2044,11 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	SSL_CIPHER *c,*ret=NULL;
 	STACK_OF(SSL_CIPHER) *prio, *allow;
 	int i,j,ok;
+#ifndef OPENSSL_NO_TLSEXT
+#ifndef OPENSSL_NO_EC
+	int ec_ok;
+#endif /* OPENSSL_NO_EC */
+#endif /* OPENSSL_NO_TLSEXT */
 	CERT *cert;
 	unsigned long alg,mask,emask;
 
@@ -2123,6 +2133,63 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 			       c->name);
 #endif
 			}
+
+#ifndef OPENSSL_NO_TLSEXT
+#ifndef OPENSSL_NO_EC
+		if (
+			/* if we are considering an ECC cipher suite that uses our certificate */
+			(alg & SSL_aECDSA)
+			/* and we have an ECC certificate */
+			&& (s->cert->pkeys[SSL_PKEY_ECC].x509 != NULL)
+			/* and the client specified a Supported Point Formats extension */
+			&& ((s->session->tlsext_ecpointformatlist_length > 0) && (s->session->tlsext_ecpointformatlist != NULL))
+			/* and our certificate's point is compressed */
+			&& (
+				(s->cert->pkeys[SSL_PKEY_ECC].x509->cert_info != NULL)
+				&& (s->cert->pkeys[SSL_PKEY_ECC].x509->cert_info->key != NULL)
+				&& (s->cert->pkeys[SSL_PKEY_ECC].x509->cert_info->key->public_key != NULL)
+				&& (s->cert->pkeys[SSL_PKEY_ECC].x509->cert_info->key->public_key->data != NULL)
+				&& (
+					(*(s->cert->pkeys[SSL_PKEY_ECC].x509->cert_info->key->public_key->data) == POINT_CONVERSION_COMPRESSED)
+					|| (*(s->cert->pkeys[SSL_PKEY_ECC].x509->cert_info->key->public_key->data) == POINT_CONVERSION_COMPRESSED + 1)
+					)
+				)
+		)
+			{
+			ec_ok = 0;
+			/* if our certificate's curve is over a field type that the client does not support
+			 * then do not allow this cipher suite to be negotiated */
+			if (
+				(s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec != NULL)
+				&& (s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec->group != NULL)
+				&& (s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec->group->meth != NULL)
+				&& (EC_METHOD_get_field_type(s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec->group->meth) == NID_X9_62_prime_field)
+			)
+				{
+				for (j = 0; j < s->session->tlsext_ecpointformatlist_length; j++)
+					{
+					if (s->session->tlsext_ecpointformatlist[j] == TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime)
+						{
+						ec_ok = 1;
+						break;
+						}
+					}
+				}
+			else if (EC_METHOD_get_field_type(s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec->group->meth) == NID_X9_62_characteristic_two_field)
+				{
+				for (j = 0; j < s->session->tlsext_ecpointformatlist_length; j++)
+					{
+					if (s->session->tlsext_ecpointformatlist[j] == TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2)
+						{
+						ec_ok = 1;
+						break;
+						}
+					}
+				}
+			ok = ok && ec_ok;
+			}
+#endif /* OPENSSL_NO_EC */
+#endif /* OPENSSL_NO_TLSEXT */
 
 		if (!ok) continue;
 		j=sk_SSL_CIPHER_find(allow,c);
