@@ -164,22 +164,37 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	ret+=2;
 
 	if (ret>=limit) return NULL; /* this really never occurs, but ... */
- 	if (s->servername_done == 0 && s->tlsext_hostname != NULL)
+ 	if (s->tlsext_hostname != NULL)
 		{ 
 		/* Add TLS extension servername to the Client Hello message */
 		unsigned long size_str;
 		long lenmax; 
 
-		if ((lenmax = limit - p - 7) < 0) return NULL; 
-		if ((size_str = strlen(s->tlsext_hostname)) > (unsigned long)lenmax) return NULL;
+		/* check for enough space.
+                   4 for the servername type and entension length
+                   2 for servernamelist length
+                   1 for the hostname type
+                   2 for hostname length
+                   + hostname length 
+		*/
+                   
+		if ((lenmax = limit - p - 9) < 0 
+		|| (size_str = strlen(s->tlsext_hostname)) > (unsigned long)lenmax) 
+			return NULL;
+			
+		/* extension type and length */
+		s2n(TLSEXT_TYPE_server_name,ret); 
+		s2n(size_str+5,ret);
 		
-		s2n(TLSEXT_TYPE_server_name,ret);
+		/* length of servername list */
 		s2n(size_str+3,ret);
+	
+		/* hostname type, length and hostname */
 		*(ret++) = (unsigned char) TLSEXT_NAMETYPE_host_name;
 		s2n(size_str,ret);
-	
 		memcpy(ret, s->tlsext_hostname, size_str);
 		ret+=size_str;
+
 		}
 #ifndef OPENSSL_NO_EC
 	if (s->tlsext_ecpointformatlist != NULL)
@@ -264,6 +279,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		*(ret++) = (unsigned char) s->tlsext_ecpointformatlist_length;
 		memcpy(ret, s->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist_length);
 		ret+=s->tlsext_ecpointformatlist_length;
+
 		}
 	/* Currently the server should not respond with a SupportedCurves extension */
 #endif /* OPENSSL_NO_EC */
@@ -281,9 +297,6 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	unsigned short size;
 	unsigned short len;
 	unsigned char *data = *p;
-#if 0
-	fprintf(stderr,"ssl_parse_clienthello_tlsext %s\n",s->session->tlsext_hostname?s->session->tlsext_hostname:"NULL");
-#endif
 	s->servername_done = 0;
 
 	if (data >= (d+n-2))
@@ -326,20 +339,36 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 		if (type == TLSEXT_TYPE_server_name)
 			{
-			unsigned char *sdata = data;
+			unsigned char *sdata;
 			int servname_type;
-			int dsize = size-3 ;
-                        
-			if (dsize > 0 )
+			int dsize; 
+		
+			if (size < 2) 
 				{
- 				servname_type = *(sdata++); 
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				}
+			n2s(data,dsize);  
+			size -= 2;                    
+			if (dsize > size  ) 
+				{
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				} 
+
+			sdata = data;
+			while (dsize > 3) 
+				{
+	 			servname_type = *(sdata++); 
 				n2s(sdata,len);
-				if (len != dsize) 
+				dsize -= 3;
+
+				if (len > dsize) 
 					{
 					*al = SSL_AD_DECODE_ERROR;
 					return 0;
 					}
-
+				if (s->servername_done == 0)
 				switch (servname_type)
 					{
 				case TLSEXT_NAMETYPE_host_name:
@@ -360,9 +389,6 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 						}
 						s->servername_done = 1; 
 
-#if 0
-						fprintf(stderr,"ssl_parse_clienthello_tlsext s->session->tlsext_hostname %s\n",s->session->tlsext_hostname);
-#endif
 						}
 					else 
 						s->servername_done = strlen(s->session->tlsext_hostname) == len 
@@ -374,7 +400,14 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 					break;
 					}
                                  
+				dsize -= len;
 				}
+			if (dsize != 0) 
+				{
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				}
+
 			}
 
 #ifndef OPENSSL_NO_EC
