@@ -11,7 +11,7 @@ export SH PATH
 OPENSSL_CONF="../CAtsa.cnf"
 export OPENSSL_CONF
 # Because that's what ../apps/CA.sh really looks at
-SSLEAY_CONFIG="$OPENSSL_CONF"
+SSLEAY_CONFIG="-config $OPENSSL_CONF"
 export SSLEAY_CONFIG
 
 OPENSSL="`pwd`/../util/opensslwrap.sh"
