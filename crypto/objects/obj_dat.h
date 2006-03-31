@@ -782,8 +782,8 @@ static unsigned char lvalues[5040]={
 0x2A,0x85,0x03,0x02,0x02,                    /* [5010] OBJ_cryptopro */
 0x2A,0x85,0x03,0x02,0x02,0x03,               /* [5015] OBJ_id_GostR3411_94_with_GostR3410_2001 */
 0x2A,0x85,0x03,0x02,0x02,0x04,               /* [5021] OBJ_id_GostR3411_94_with_GostR3410_94 */
-0x2A,0x85,0x03,0x02,0x02,0x13,               /* [5027] OBJ_id_GostR3411_2001 */
-0x2A,0x85,0x03,0x02,0x02,0x14,               /* [5033] OBJ_id_GostR3411_94 */
+0x2A,0x85,0x03,0x02,0x02,0x13,               /* [5027] OBJ_id_GostR3410_2001 */
+0x2A,0x85,0x03,0x02,0x02,0x14,               /* [5033] OBJ_id_GostR3410_94 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1962,10 +1962,9 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"id-GostR3411-94-with-GostR3410-94",
 	"GOST R 34.11-94 with GOST R 34.10-94",
 	NID_id_GostR3411_94_with_GostR3410_94,6,&(lvalues[5021]),0},
-{"id-GostR3411-2001","GOST R 34.10-2001",NID_id_GostR3411_2001,6,
+{"gost2001","GOST R 34.10-2001",NID_id_GostR3410_2001,6,
 	&(lvalues[5027]),0},
-{"id-GostR3411-94","GOST R 34.10-94",NID_id_GostR3411_94,6,
-	&(lvalues[5033]),0},
+{"gost94","GOST R 34.10-94",NID_id_GostR3410_94,6,&(lvalues[5033]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2210,6 +2209,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[490]),/* "friendlyCountryName" */
 &(nid_objs[156]),/* "friendlyName" */
 &(nid_objs[509]),/* "generationQualifier" */
+&(nid_objs[756]),/* "gost2001" */
+&(nid_objs[757]),/* "gost94" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
 &(nid_objs[432]),/* "holdInstructionCallIssuer" */
 &(nid_objs[430]),/* "holdInstructionCode" */
@@ -2219,8 +2220,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[473]),/* "homeTelephoneNumber" */
 &(nid_objs[466]),/* "host" */
 &(nid_objs[442]),/* "iA5StringSyntax" */
-&(nid_objs[756]),/* "id-GostR3411-2001" */
-&(nid_objs[757]),/* "id-GostR3411-94" */
 &(nid_objs[754]),/* "id-GostR3411-94-with-GostR3410-2001" */
 &(nid_objs[755]),/* "id-GostR3411-94-with-GostR3410-94" */
 &(nid_objs[266]),/* "id-aca" */
@@ -3755,8 +3754,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666 2 */
 &(nid_objs[754]),/* OBJ_id_GostR3411_94_with_GostR3410_2001 1 2 643 2 2 3 */
 &(nid_objs[755]),/* OBJ_id_GostR3411_94_with_GostR3410_94 1 2 643 2 2 4 */
-&(nid_objs[756]),/* OBJ_id_GostR3411_2001            1 2 643 2 2 19 */
-&(nid_objs[757]),/* OBJ_id_GostR3411_94              1 2 643 2 2 20 */
+&(nid_objs[756]),/* OBJ_id_GostR3410_2001            1 2 643 2 2 19 */
+&(nid_objs[757]),/* OBJ_id_GostR3410_94              1 2 643 2 2 20 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */
 &(nid_objs[185]),/* OBJ_X9cm                         1 2 840 10040 4 */
 &(nid_objs[127]),/* OBJ_id_pkix                      1 3 6 1 5 5 7 */

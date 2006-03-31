@@ -3326,13 +3326,13 @@
 #define NID_id_GostR3411_94_with_GostR3410_94		755
 #define OBJ_id_GostR3411_94_with_GostR3410_94		OBJ_cryptopro,4L
 
-#define SN_id_GostR3411_2001		"id-GostR3411-2001"
-#define LN_id_GostR3411_2001		"GOST R 34.10-2001"
-#define NID_id_GostR3411_2001		756
-#define OBJ_id_GostR3411_2001		OBJ_cryptopro,19L
+#define SN_id_GostR3410_2001		"gost2001"
+#define LN_id_GostR3410_2001		"GOST R 34.10-2001"
+#define NID_id_GostR3410_2001		756
+#define OBJ_id_GostR3410_2001		OBJ_cryptopro,19L
 
-#define SN_id_GostR3411_94		"id-GostR3411-94"
-#define LN_id_GostR3411_94		"GOST R 34.10-94"
-#define NID_id_GostR3411_94		757
-#define OBJ_id_GostR3411_94		OBJ_cryptopro,20L
+#define SN_id_GostR3410_94		"gost94"
+#define LN_id_GostR3410_94		"GOST R 34.10-94"
+#define NID_id_GostR3410_94		757
+#define OBJ_id_GostR3410_94		OBJ_cryptopro,20L
 
