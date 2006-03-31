@@ -72,7 +72,8 @@
 DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{
 #ifdef OPENSSL_FIPS
-	if(FIPS_mode() && !FIPS_dsa_check(dsa))
+	if(FIPS_mode() && !FIPS_dsa_check(dsa)
+		&& !(dsa->flags & DSA_FLAG_FIPS_EXTERNAL_METHOD_ALLOW))
 		return NULL;
 #endif
 	return dsa->meth->dsa_do_sign(dgst, dlen, dsa);
@@ -96,7 +97,8 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
 int DSA_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp)
 	{
 #ifdef OPENSSL_FIPS
-	if(FIPS_mode() && !FIPS_dsa_check(dsa))
+	if(FIPS_mode() && !FIPS_dsa_check(dsa)
+		&& !(dsa->flags & DSA_FLAG_FIPS_EXTERNAL_METHOD_ALLOW))
 		return 0;
 #endif
 	return dsa->meth->dsa_sign_setup(dsa, ctx_in, kinvp, rp);

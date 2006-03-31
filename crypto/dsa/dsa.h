@@ -88,6 +88,13 @@
                                               * be used for all exponents.
                                               */
 
+/* If this flag is set external DSA_METHOD callbacks are allowed in FIPS mode
+ * it is then the applications responsibility to ensure the external method
+ * is compliant.
+ */
+
+#define DSA_FLAG_FIPS_EXTERNAL_METHOD_ALLOW	0x04
+
 #if defined(OPENSSL_FIPS)
 #define FIPS_DSA_SIZE_T	int
 #endif
