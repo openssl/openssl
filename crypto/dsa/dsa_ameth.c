@@ -123,7 +123,7 @@ static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	{
 	DSA *dsa;
-	void *pval;
+	void *pval = NULL;
 	int ptype;
 	unsigned char *penc = NULL;
 	int penclen;
@@ -143,10 +143,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 		ptype = V_ASN1_SEQUENCE;
 		}
 	else
-		{
 		ptype = V_ASN1_UNDEF;
-		pval = NULL;
-		}
 	dsa->write_params=0;
 
 	penclen = i2d_DSAPublicKey(dsa, &penc);
