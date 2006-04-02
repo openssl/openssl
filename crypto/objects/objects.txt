@@ -1061,3 +1061,36 @@ cryptopro 4		: id-GostR3411-94-with-GostR3410-94 : GOST R 34.11-94 with GOST R 3
 cryptopro 19		: gost2001	: GOST R 34.10-2001
 !Cname id-GostR3410-94
 cryptopro 20		: gost94	: GOST R 34.10-94
+
+# GOST parameter set OIDs
+
+cryptopro 30 0		: id-GostR3411-94-TestParamSet
+cryptopro 30 1		: id-GostR3411-94-CryptoProParamSet
+
+cryptopro 31 0		: id-Gost28147-89-TestParamSet
+cryptopro 31 1		: id-Gost28147-89-CryptoPro-A-ParamSet
+cryptopro 31 2		: id-Gost28147-89-CryptoPro-B-ParamSet
+cryptopro 31 3		: id-Gost28147-89-CryptoPro-C-ParamSet
+cryptopro 31 4		: id-Gost28147-89-CryptoPro-D-ParamSet
+cryptopro 31 5		: id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet
+cryptopro 31 6		: id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet
+cryptopro 31 7		: id-Gost28147-89-CryptoPro-RIC-1-ParamSet
+
+cryptopro 32 0		: id-GostR3410-94-TestParamSet
+cryptopro 32 2		: id-GostR3410-94-CryptoPro-A-ParamSet
+cryptopro 32 3		: id-GostR3410-94-CryptoPro-B-ParamSet
+cryptopro 32 4		: id-GostR3410-94-CryptoPro-C-ParamSet
+cryptopro 32 5		: id-GostR3410-94-CryptoPro-D-ParamSet
+
+cryptopro 33 1		: id-GostR3410-94-CryptoPro-XchA-ParamSet
+cryptopro 33 2		: id-GostR3410-94-CryptoPro-XchB-ParamSet
+cryptopro 33 3		: id-GostR3410-94-CryptoPro-XchC-ParamSet
+
+cryptopro 35 0		: id-GostR3410-2001-TestParamSet
+cryptopro 35 1		: id-GostR3410-2001-CryptoPro-A-ParamSet
+cryptopro 35 2		: id-GostR3410-2001-CryptoPro-B-ParamSet
+cryptopro 35 3		: id-GostR3410-2001-CryptoPro-C-ParamSet
+
+cryptopro 36 0		: id-GostR3410-2001-CryptoPro-XchA-ParamSet
+cryptopro 36 1		: id-GostR3410-2001-CryptoPro-XchB-ParamSet
+

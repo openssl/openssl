@@ -3336,3 +3336,99 @@
 #define NID_id_GostR3410_94		757
 #define OBJ_id_GostR3410_94		OBJ_cryptopro,20L
 
+#define SN_id_GostR3411_94_TestParamSet		"id-GostR3411-94-TestParamSet"
+#define NID_id_GostR3411_94_TestParamSet		758
+#define OBJ_id_GostR3411_94_TestParamSet		OBJ_cryptopro,30L,0L
+
+#define SN_id_GostR3411_94_CryptoProParamSet		"id-GostR3411-94-CryptoProParamSet"
+#define NID_id_GostR3411_94_CryptoProParamSet		759
+#define OBJ_id_GostR3411_94_CryptoProParamSet		OBJ_cryptopro,30L,1L
+
+#define SN_id_Gost28147_89_TestParamSet		"id-Gost28147-89-TestParamSet"
+#define NID_id_Gost28147_89_TestParamSet		760
+#define OBJ_id_Gost28147_89_TestParamSet		OBJ_cryptopro,31L,0L
+
+#define SN_id_Gost28147_89_CryptoPro_A_ParamSet		"id-Gost28147-89-CryptoPro-A-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_A_ParamSet		761
+#define OBJ_id_Gost28147_89_CryptoPro_A_ParamSet		OBJ_cryptopro,31L,1L
+
+#define SN_id_Gost28147_89_CryptoPro_B_ParamSet		"id-Gost28147-89-CryptoPro-B-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_B_ParamSet		762
+#define OBJ_id_Gost28147_89_CryptoPro_B_ParamSet		OBJ_cryptopro,31L,2L
+
+#define SN_id_Gost28147_89_CryptoPro_C_ParamSet		"id-Gost28147-89-CryptoPro-C-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_C_ParamSet		763
+#define OBJ_id_Gost28147_89_CryptoPro_C_ParamSet		OBJ_cryptopro,31L,3L
+
+#define SN_id_Gost28147_89_CryptoPro_D_ParamSet		"id-Gost28147-89-CryptoPro-D-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_D_ParamSet		764
+#define OBJ_id_Gost28147_89_CryptoPro_D_ParamSet		OBJ_cryptopro,31L,4L
+
+#define SN_id_Gost28147_89_CryptoPro_Oscar_1_1_ParamSet		"id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_Oscar_1_1_ParamSet		765
+#define OBJ_id_Gost28147_89_CryptoPro_Oscar_1_1_ParamSet		OBJ_cryptopro,31L,5L
+
+#define SN_id_Gost28147_89_CryptoPro_Oscar_1_0_ParamSet		"id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_Oscar_1_0_ParamSet		766
+#define OBJ_id_Gost28147_89_CryptoPro_Oscar_1_0_ParamSet		OBJ_cryptopro,31L,6L
+
+#define SN_id_Gost28147_89_CryptoPro_RIC_1_ParamSet		"id-Gost28147-89-CryptoPro-RIC-1-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_RIC_1_ParamSet		767
+#define OBJ_id_Gost28147_89_CryptoPro_RIC_1_ParamSet		OBJ_cryptopro,31L,7L
+
+#define SN_id_GostR3410_94_TestParamSet		"id-GostR3410-94-TestParamSet"
+#define NID_id_GostR3410_94_TestParamSet		768
+#define OBJ_id_GostR3410_94_TestParamSet		OBJ_cryptopro,32L,0L
+
+#define SN_id_GostR3410_94_CryptoPro_A_ParamSet		"id-GostR3410-94-CryptoPro-A-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_A_ParamSet		769
+#define OBJ_id_GostR3410_94_CryptoPro_A_ParamSet		OBJ_cryptopro,32L,2L
+
+#define SN_id_GostR3410_94_CryptoPro_B_ParamSet		"id-GostR3410-94-CryptoPro-B-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_B_ParamSet		770
+#define OBJ_id_GostR3410_94_CryptoPro_B_ParamSet		OBJ_cryptopro,32L,3L
+
+#define SN_id_GostR3410_94_CryptoPro_C_ParamSet		"id-GostR3410-94-CryptoPro-C-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_C_ParamSet		771
+#define OBJ_id_GostR3410_94_CryptoPro_C_ParamSet		OBJ_cryptopro,32L,4L
+
+#define SN_id_GostR3410_94_CryptoPro_D_ParamSet		"id-GostR3410-94-CryptoPro-D-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_D_ParamSet		772
+#define OBJ_id_GostR3410_94_CryptoPro_D_ParamSet		OBJ_cryptopro,32L,5L
+
+#define SN_id_GostR3410_94_CryptoPro_XchA_ParamSet		"id-GostR3410-94-CryptoPro-XchA-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_XchA_ParamSet		773
+#define OBJ_id_GostR3410_94_CryptoPro_XchA_ParamSet		OBJ_cryptopro,33L,1L
+
+#define SN_id_GostR3410_94_CryptoPro_XchB_ParamSet		"id-GostR3410-94-CryptoPro-XchB-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_XchB_ParamSet		774
+#define OBJ_id_GostR3410_94_CryptoPro_XchB_ParamSet		OBJ_cryptopro,33L,2L
+
+#define SN_id_GostR3410_94_CryptoPro_XchC_ParamSet		"id-GostR3410-94-CryptoPro-XchC-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_XchC_ParamSet		775
+#define OBJ_id_GostR3410_94_CryptoPro_XchC_ParamSet		OBJ_cryptopro,33L,3L
+
+#define SN_id_GostR3410_2001_TestParamSet		"id-GostR3410-2001-TestParamSet"
+#define NID_id_GostR3410_2001_TestParamSet		776
+#define OBJ_id_GostR3410_2001_TestParamSet		OBJ_cryptopro,35L,0L
+
+#define SN_id_GostR3410_2001_CryptoPro_A_ParamSet		"id-GostR3410-2001-CryptoPro-A-ParamSet"
+#define NID_id_GostR3410_2001_CryptoPro_A_ParamSet		777
+#define OBJ_id_GostR3410_2001_CryptoPro_A_ParamSet		OBJ_cryptopro,35L,1L
+
+#define SN_id_GostR3410_2001_CryptoPro_B_ParamSet		"id-GostR3410-2001-CryptoPro-B-ParamSet"
+#define NID_id_GostR3410_2001_CryptoPro_B_ParamSet		778
+#define OBJ_id_GostR3410_2001_CryptoPro_B_ParamSet		OBJ_cryptopro,35L,2L
+
+#define SN_id_GostR3410_2001_CryptoPro_C_ParamSet		"id-GostR3410-2001-CryptoPro-C-ParamSet"
+#define NID_id_GostR3410_2001_CryptoPro_C_ParamSet		779
+#define OBJ_id_GostR3410_2001_CryptoPro_C_ParamSet		OBJ_cryptopro,35L,3L
+
+#define SN_id_GostR3410_2001_CryptoPro_XchA_ParamSet		"id-GostR3410-2001-CryptoPro-XchA-ParamSet"
+#define NID_id_GostR3410_2001_CryptoPro_XchA_ParamSet		780
+#define OBJ_id_GostR3410_2001_CryptoPro_XchA_ParamSet		OBJ_cryptopro,36L,0L
+
+#define SN_id_GostR3410_2001_CryptoPro_XchB_ParamSet		"id-GostR3410-2001-CryptoPro-XchB-ParamSet"
+#define NID_id_GostR3410_2001_CryptoPro_XchB_ParamSet		781
+#define OBJ_id_GostR3410_2001_CryptoPro_XchB_ParamSet		OBJ_cryptopro,36L,1L
+

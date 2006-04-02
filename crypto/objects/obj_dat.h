@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 758
-#define NUM_SN 754
-#define NUM_LN 754
-#define NUM_OBJ 716
+#define NUM_NID 782
+#define NUM_SN 778
+#define NUM_LN 778
+#define NUM_OBJ 740
 
-static unsigned char lvalues[5040]={
+static unsigned char lvalues[5208]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -784,6 +784,30 @@ static unsigned char lvalues[5040]={
 0x2A,0x85,0x03,0x02,0x02,0x04,               /* [5021] OBJ_id_GostR3411_94_with_GostR3410_94 */
 0x2A,0x85,0x03,0x02,0x02,0x13,               /* [5027] OBJ_id_GostR3410_2001 */
 0x2A,0x85,0x03,0x02,0x02,0x14,               /* [5033] OBJ_id_GostR3410_94 */
+0x2A,0x85,0x03,0x02,0x02,0x1E,0x00,          /* [5039] OBJ_id_GostR3411_94_TestParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x1E,0x01,          /* [5046] OBJ_id_GostR3411_94_CryptoProParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x1F,0x00,          /* [5053] OBJ_id_Gost28147_89_TestParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x1F,0x01,          /* [5060] OBJ_id_Gost28147_89_CryptoPro_A_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x1F,0x02,          /* [5067] OBJ_id_Gost28147_89_CryptoPro_B_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x1F,0x03,          /* [5074] OBJ_id_Gost28147_89_CryptoPro_C_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x1F,0x04,          /* [5081] OBJ_id_Gost28147_89_CryptoPro_D_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x1F,0x05,          /* [5088] OBJ_id_Gost28147_89_CryptoPro_Oscar_1_1_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x1F,0x06,          /* [5095] OBJ_id_Gost28147_89_CryptoPro_Oscar_1_0_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x1F,0x07,          /* [5102] OBJ_id_Gost28147_89_CryptoPro_RIC_1_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x20,0x00,          /* [5109] OBJ_id_GostR3410_94_TestParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x20,0x02,          /* [5116] OBJ_id_GostR3410_94_CryptoPro_A_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x20,0x03,          /* [5123] OBJ_id_GostR3410_94_CryptoPro_B_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x20,0x04,          /* [5130] OBJ_id_GostR3410_94_CryptoPro_C_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x20,0x05,          /* [5137] OBJ_id_GostR3410_94_CryptoPro_D_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x21,0x01,          /* [5144] OBJ_id_GostR3410_94_CryptoPro_XchA_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x21,0x02,          /* [5151] OBJ_id_GostR3410_94_CryptoPro_XchB_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x21,0x03,          /* [5158] OBJ_id_GostR3410_94_CryptoPro_XchC_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x23,0x00,          /* [5165] OBJ_id_GostR3410_2001_TestParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x23,0x01,          /* [5172] OBJ_id_GostR3410_2001_CryptoPro_A_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x23,0x02,          /* [5179] OBJ_id_GostR3410_2001_CryptoPro_B_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x23,0x03,          /* [5186] OBJ_id_GostR3410_2001_CryptoPro_C_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x24,0x00,          /* [5193] OBJ_id_GostR3410_2001_CryptoPro_XchA_ParamSet */
+0x2A,0x85,0x03,0x02,0x02,0x24,0x01,          /* [5200] OBJ_id_GostR3410_2001_CryptoPro_XchB_ParamSet */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1965,6 +1989,78 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"gost2001","GOST R 34.10-2001",NID_id_GostR3410_2001,6,
 	&(lvalues[5027]),0},
 {"gost94","GOST R 34.10-94",NID_id_GostR3410_94,6,&(lvalues[5033]),0},
+{"id-GostR3411-94-TestParamSet","id-GostR3411-94-TestParamSet",
+	NID_id_GostR3411_94_TestParamSet,7,&(lvalues[5039]),0},
+{"id-GostR3411-94-CryptoProParamSet",
+	"id-GostR3411-94-CryptoProParamSet",
+	NID_id_GostR3411_94_CryptoProParamSet,7,&(lvalues[5046]),0},
+{"id-Gost28147-89-TestParamSet","id-Gost28147-89-TestParamSet",
+	NID_id_Gost28147_89_TestParamSet,7,&(lvalues[5053]),0},
+{"id-Gost28147-89-CryptoPro-A-ParamSet",
+	"id-Gost28147-89-CryptoPro-A-ParamSet",
+	NID_id_Gost28147_89_CryptoPro_A_ParamSet,7,&(lvalues[5060]),0},
+{"id-Gost28147-89-CryptoPro-B-ParamSet",
+	"id-Gost28147-89-CryptoPro-B-ParamSet",
+	NID_id_Gost28147_89_CryptoPro_B_ParamSet,7,&(lvalues[5067]),0},
+{"id-Gost28147-89-CryptoPro-C-ParamSet",
+	"id-Gost28147-89-CryptoPro-C-ParamSet",
+	NID_id_Gost28147_89_CryptoPro_C_ParamSet,7,&(lvalues[5074]),0},
+{"id-Gost28147-89-CryptoPro-D-ParamSet",
+	"id-Gost28147-89-CryptoPro-D-ParamSet",
+	NID_id_Gost28147_89_CryptoPro_D_ParamSet,7,&(lvalues[5081]),0},
+{"id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet",
+	"id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet",
+	NID_id_Gost28147_89_CryptoPro_Oscar_1_1_ParamSet,7,&(lvalues[5088]),
+	0},
+{"id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet",
+	"id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet",
+	NID_id_Gost28147_89_CryptoPro_Oscar_1_0_ParamSet,7,&(lvalues[5095]),
+	0},
+{"id-Gost28147-89-CryptoPro-RIC-1-ParamSet",
+	"id-Gost28147-89-CryptoPro-RIC-1-ParamSet",
+	NID_id_Gost28147_89_CryptoPro_RIC_1_ParamSet,7,&(lvalues[5102]),0},
+{"id-GostR3410-94-TestParamSet","id-GostR3410-94-TestParamSet",
+	NID_id_GostR3410_94_TestParamSet,7,&(lvalues[5109]),0},
+{"id-GostR3410-94-CryptoPro-A-ParamSet",
+	"id-GostR3410-94-CryptoPro-A-ParamSet",
+	NID_id_GostR3410_94_CryptoPro_A_ParamSet,7,&(lvalues[5116]),0},
+{"id-GostR3410-94-CryptoPro-B-ParamSet",
+	"id-GostR3410-94-CryptoPro-B-ParamSet",
+	NID_id_GostR3410_94_CryptoPro_B_ParamSet,7,&(lvalues[5123]),0},
+{"id-GostR3410-94-CryptoPro-C-ParamSet",
+	"id-GostR3410-94-CryptoPro-C-ParamSet",
+	NID_id_GostR3410_94_CryptoPro_C_ParamSet,7,&(lvalues[5130]),0},
+{"id-GostR3410-94-CryptoPro-D-ParamSet",
+	"id-GostR3410-94-CryptoPro-D-ParamSet",
+	NID_id_GostR3410_94_CryptoPro_D_ParamSet,7,&(lvalues[5137]),0},
+{"id-GostR3410-94-CryptoPro-XchA-ParamSet",
+	"id-GostR3410-94-CryptoPro-XchA-ParamSet",
+	NID_id_GostR3410_94_CryptoPro_XchA_ParamSet,7,&(lvalues[5144]),0},
+{"id-GostR3410-94-CryptoPro-XchB-ParamSet",
+	"id-GostR3410-94-CryptoPro-XchB-ParamSet",
+	NID_id_GostR3410_94_CryptoPro_XchB_ParamSet,7,&(lvalues[5151]),0},
+{"id-GostR3410-94-CryptoPro-XchC-ParamSet",
+	"id-GostR3410-94-CryptoPro-XchC-ParamSet",
+	NID_id_GostR3410_94_CryptoPro_XchC_ParamSet,7,&(lvalues[5158]),0},
+{"id-GostR3410-2001-TestParamSet","id-GostR3410-2001-TestParamSet",
+	NID_id_GostR3410_2001_TestParamSet,7,&(lvalues[5165]),0},
+{"id-GostR3410-2001-CryptoPro-A-ParamSet",
+	"id-GostR3410-2001-CryptoPro-A-ParamSet",
+	NID_id_GostR3410_2001_CryptoPro_A_ParamSet,7,&(lvalues[5172]),0},
+{"id-GostR3410-2001-CryptoPro-B-ParamSet",
+	"id-GostR3410-2001-CryptoPro-B-ParamSet",
+	NID_id_GostR3410_2001_CryptoPro_B_ParamSet,7,&(lvalues[5179]),0},
+{"id-GostR3410-2001-CryptoPro-C-ParamSet",
+	"id-GostR3410-2001-CryptoPro-C-ParamSet",
+	NID_id_GostR3410_2001_CryptoPro_C_ParamSet,7,&(lvalues[5186]),0},
+{"id-GostR3410-2001-CryptoPro-XchA-ParamSet",
+	"id-GostR3410-2001-CryptoPro-XchA-ParamSet",
+	NID_id_GostR3410_2001_CryptoPro_XchA_ParamSet,7,&(lvalues[5193]),0},
+	
+{"id-GostR3410-2001-CryptoPro-XchB-ParamSet",
+	"id-GostR3410-2001-CryptoPro-XchB-ParamSet",
+	NID_id_GostR3410_2001_CryptoPro_XchB_ParamSet,7,&(lvalues[5200]),0},
+	
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2220,6 +2316,30 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[473]),/* "homeTelephoneNumber" */
 &(nid_objs[466]),/* "host" */
 &(nid_objs[442]),/* "iA5StringSyntax" */
+&(nid_objs[761]),/* "id-Gost28147-89-CryptoPro-A-ParamSet" */
+&(nid_objs[762]),/* "id-Gost28147-89-CryptoPro-B-ParamSet" */
+&(nid_objs[763]),/* "id-Gost28147-89-CryptoPro-C-ParamSet" */
+&(nid_objs[764]),/* "id-Gost28147-89-CryptoPro-D-ParamSet" */
+&(nid_objs[766]),/* "id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet" */
+&(nid_objs[765]),/* "id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet" */
+&(nid_objs[767]),/* "id-Gost28147-89-CryptoPro-RIC-1-ParamSet" */
+&(nid_objs[760]),/* "id-Gost28147-89-TestParamSet" */
+&(nid_objs[777]),/* "id-GostR3410-2001-CryptoPro-A-ParamSet" */
+&(nid_objs[778]),/* "id-GostR3410-2001-CryptoPro-B-ParamSet" */
+&(nid_objs[779]),/* "id-GostR3410-2001-CryptoPro-C-ParamSet" */
+&(nid_objs[780]),/* "id-GostR3410-2001-CryptoPro-XchA-ParamSet" */
+&(nid_objs[781]),/* "id-GostR3410-2001-CryptoPro-XchB-ParamSet" */
+&(nid_objs[776]),/* "id-GostR3410-2001-TestParamSet" */
+&(nid_objs[769]),/* "id-GostR3410-94-CryptoPro-A-ParamSet" */
+&(nid_objs[770]),/* "id-GostR3410-94-CryptoPro-B-ParamSet" */
+&(nid_objs[771]),/* "id-GostR3410-94-CryptoPro-C-ParamSet" */
+&(nid_objs[772]),/* "id-GostR3410-94-CryptoPro-D-ParamSet" */
+&(nid_objs[773]),/* "id-GostR3410-94-CryptoPro-XchA-ParamSet" */
+&(nid_objs[774]),/* "id-GostR3410-94-CryptoPro-XchB-ParamSet" */
+&(nid_objs[775]),/* "id-GostR3410-94-CryptoPro-XchC-ParamSet" */
+&(nid_objs[768]),/* "id-GostR3410-94-TestParamSet" */
+&(nid_objs[759]),/* "id-GostR3411-94-CryptoProParamSet" */
+&(nid_objs[758]),/* "id-GostR3411-94-TestParamSet" */
 &(nid_objs[754]),/* "id-GostR3411-94-with-GostR3410-2001" */
 &(nid_objs[755]),/* "id-GostR3411-94-with-GostR3410-94" */
 &(nid_objs[266]),/* "id-aca" */
@@ -2977,6 +3097,30 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[466]),/* "host" */
 &(nid_objs[442]),/* "iA5StringSyntax" */
 &(nid_objs[381]),/* "iana" */
+&(nid_objs[761]),/* "id-Gost28147-89-CryptoPro-A-ParamSet" */
+&(nid_objs[762]),/* "id-Gost28147-89-CryptoPro-B-ParamSet" */
+&(nid_objs[763]),/* "id-Gost28147-89-CryptoPro-C-ParamSet" */
+&(nid_objs[764]),/* "id-Gost28147-89-CryptoPro-D-ParamSet" */
+&(nid_objs[766]),/* "id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet" */
+&(nid_objs[765]),/* "id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet" */
+&(nid_objs[767]),/* "id-Gost28147-89-CryptoPro-RIC-1-ParamSet" */
+&(nid_objs[760]),/* "id-Gost28147-89-TestParamSet" */
+&(nid_objs[777]),/* "id-GostR3410-2001-CryptoPro-A-ParamSet" */
+&(nid_objs[778]),/* "id-GostR3410-2001-CryptoPro-B-ParamSet" */
+&(nid_objs[779]),/* "id-GostR3410-2001-CryptoPro-C-ParamSet" */
+&(nid_objs[780]),/* "id-GostR3410-2001-CryptoPro-XchA-ParamSet" */
+&(nid_objs[781]),/* "id-GostR3410-2001-CryptoPro-XchB-ParamSet" */
+&(nid_objs[776]),/* "id-GostR3410-2001-TestParamSet" */
+&(nid_objs[769]),/* "id-GostR3410-94-CryptoPro-A-ParamSet" */
+&(nid_objs[770]),/* "id-GostR3410-94-CryptoPro-B-ParamSet" */
+&(nid_objs[771]),/* "id-GostR3410-94-CryptoPro-C-ParamSet" */
+&(nid_objs[772]),/* "id-GostR3410-94-CryptoPro-D-ParamSet" */
+&(nid_objs[773]),/* "id-GostR3410-94-CryptoPro-XchA-ParamSet" */
+&(nid_objs[774]),/* "id-GostR3410-94-CryptoPro-XchB-ParamSet" */
+&(nid_objs[775]),/* "id-GostR3410-94-CryptoPro-XchC-ParamSet" */
+&(nid_objs[768]),/* "id-GostR3410-94-TestParamSet" */
+&(nid_objs[759]),/* "id-GostR3411-94-CryptoProParamSet" */
+&(nid_objs[758]),/* "id-GostR3411-94-TestParamSet" */
 &(nid_objs[266]),/* "id-aca" */
 &(nid_objs[355]),/* "id-aca-accessIdentity" */
 &(nid_objs[354]),/* "id-aca-authenticationInfo" */
@@ -3768,6 +3912,30 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[634]),/* OBJ_setAttr_TokICCsig            2 23 42 3 3 5 1 */
 &(nid_objs[635]),/* OBJ_setAttr_SecDevSig            2 23 42 3 3 5 2 */
 &(nid_objs[436]),/* OBJ_ucl                          0 9 2342 19200300 */
+&(nid_objs[758]),/* OBJ_id_GostR3411_94_TestParamSet 1 2 643 2 2 30 0 */
+&(nid_objs[759]),/* OBJ_id_GostR3411_94_CryptoProParamSet 1 2 643 2 2 30 1 */
+&(nid_objs[760]),/* OBJ_id_Gost28147_89_TestParamSet 1 2 643 2 2 31 0 */
+&(nid_objs[761]),/* OBJ_id_Gost28147_89_CryptoPro_A_ParamSet 1 2 643 2 2 31 1 */
+&(nid_objs[762]),/* OBJ_id_Gost28147_89_CryptoPro_B_ParamSet 1 2 643 2 2 31 2 */
+&(nid_objs[763]),/* OBJ_id_Gost28147_89_CryptoPro_C_ParamSet 1 2 643 2 2 31 3 */
+&(nid_objs[764]),/* OBJ_id_Gost28147_89_CryptoPro_D_ParamSet 1 2 643 2 2 31 4 */
+&(nid_objs[765]),/* OBJ_id_Gost28147_89_CryptoPro_Oscar_1_1_ParamSet 1 2 643 2 2 31 5 */
+&(nid_objs[766]),/* OBJ_id_Gost28147_89_CryptoPro_Oscar_1_0_ParamSet 1 2 643 2 2 31 6 */
+&(nid_objs[767]),/* OBJ_id_Gost28147_89_CryptoPro_RIC_1_ParamSet 1 2 643 2 2 31 7 */
+&(nid_objs[768]),/* OBJ_id_GostR3410_94_TestParamSet 1 2 643 2 2 32 0 */
+&(nid_objs[769]),/* OBJ_id_GostR3410_94_CryptoPro_A_ParamSet 1 2 643 2 2 32 2 */
+&(nid_objs[770]),/* OBJ_id_GostR3410_94_CryptoPro_B_ParamSet 1 2 643 2 2 32 3 */
+&(nid_objs[771]),/* OBJ_id_GostR3410_94_CryptoPro_C_ParamSet 1 2 643 2 2 32 4 */
+&(nid_objs[772]),/* OBJ_id_GostR3410_94_CryptoPro_D_ParamSet 1 2 643 2 2 32 5 */
+&(nid_objs[773]),/* OBJ_id_GostR3410_94_CryptoPro_XchA_ParamSet 1 2 643 2 2 33 1 */
+&(nid_objs[774]),/* OBJ_id_GostR3410_94_CryptoPro_XchB_ParamSet 1 2 643 2 2 33 2 */
+&(nid_objs[775]),/* OBJ_id_GostR3410_94_CryptoPro_XchC_ParamSet 1 2 643 2 2 33 3 */
+&(nid_objs[776]),/* OBJ_id_GostR3410_2001_TestParamSet 1 2 643 2 2 35 0 */
+&(nid_objs[777]),/* OBJ_id_GostR3410_2001_CryptoPro_A_ParamSet 1 2 643 2 2 35 1 */
+&(nid_objs[778]),/* OBJ_id_GostR3410_2001_CryptoPro_B_ParamSet 1 2 643 2 2 35 2 */
+&(nid_objs[779]),/* OBJ_id_GostR3410_2001_CryptoPro_C_ParamSet 1 2 643 2 2 35 3 */
+&(nid_objs[780]),/* OBJ_id_GostR3410_2001_CryptoPro_XchA_ParamSet 1 2 643 2 2 36 0 */
+&(nid_objs[781]),/* OBJ_id_GostR3410_2001_CryptoPro_XchB_ParamSet 1 2 643 2 2 36 1 */
 &(nid_objs[ 2]),/* OBJ_pkcs                         1 2 840 113549 1 */
 &(nid_objs[431]),/* OBJ_hold_instruction_none        1 2 840 10040 2 1 */
 &(nid_objs[432]),/* OBJ_hold_instruction_call_issuer 1 2 840 10040 2 2 */
