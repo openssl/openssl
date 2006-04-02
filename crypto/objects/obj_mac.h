@@ -3316,6 +3316,10 @@
 #define NID_cryptopro		753
 #define OBJ_cryptopro		OBJ_member_body,643L,2L,2L
 
+#define SN_cryptocom		"cryptocom"
+#define NID_cryptocom		782
+#define OBJ_cryptocom		OBJ_member_body,643L,2L,9L
+
 #define SN_id_GostR3411_94_with_GostR3410_2001		"id-GostR3411-94-with-GostR3410-2001"
 #define LN_id_GostR3411_94_with_GostR3410_2001		"GOST R 34.11-94 with GOST R 34.10-2001"
 #define NID_id_GostR3411_94_with_GostR3410_2001		754
@@ -3326,6 +3330,11 @@
 #define NID_id_GostR3411_94_with_GostR3410_94		755
 #define OBJ_id_GostR3411_94_with_GostR3410_94		OBJ_cryptopro,4L
 
+#define SN_id_HMACGostR3411_94		"id-HMACGostR3411-94"
+#define LN_id_HMACGostR3411_94		"HMAC GOST 34.11-94"
+#define NID_id_HMACGostR3411_94		783
+#define OBJ_id_HMACGostR3411_94		OBJ_cryptopro,10L
+
 #define SN_id_GostR3410_2001		"gost2001"
 #define LN_id_GostR3410_2001		"GOST R 34.10-2001"
 #define NID_id_GostR3410_2001		756
@@ -3335,6 +3344,34 @@
 #define LN_id_GostR3410_94		"GOST R 34.10-94"
 #define NID_id_GostR3410_94		757
 #define OBJ_id_GostR3410_94		OBJ_cryptopro,20L
+
+#define SN_id_Gost28147_89		"id-Gost28147-89"
+#define LN_id_Gost28147_89		"GOST 28147-89"
+#define NID_id_Gost28147_89		784
+#define OBJ_id_Gost28147_89		OBJ_cryptopro,21L
+
+#define SN_id_Gost28147_89_MAC		"id-Gost28147-89-MAC"
+#define LN_id_Gost28147_89_MAC		"GOST 28147-89 MAC"
+#define NID_id_Gost28147_89_MAC		785
+#define OBJ_id_Gost28147_89_MAC		OBJ_cryptopro,22L
+
+#define SN_id_GostR3410_2001DH		"id-GostR3410-2001DH"
+#define LN_id_GostR3410_2001DH		"GOST R 34.10-2001 DH"
+#define NID_id_GostR3410_2001DH		786
+#define OBJ_id_GostR3410_2001DH		OBJ_cryptopro,98L
+
+#define SN_id_GostR3410_94DH		"id-GostR3410-94DH"
+#define LN_id_GostR3410_94DH		"GOST R 34.10-94 DH"
+#define NID_id_GostR3410_94DH		787
+#define OBJ_id_GostR3410_94DH		OBJ_cryptopro,99L
+
+#define SN_id_Gost28147_89_CryptoPro_KeyMeshing		"id-Gost28147-89-CryptoPro-KeyMeshing"
+#define NID_id_Gost28147_89_CryptoPro_KeyMeshing		788
+#define OBJ_id_Gost28147_89_CryptoPro_KeyMeshing		OBJ_cryptopro,14L,1L
+
+#define SN_id_Gost28147_89_None_KeyMeshing		"id-Gost28147-89-None-KeyMeshing"
+#define NID_id_Gost28147_89_None_KeyMeshing		789
+#define OBJ_id_Gost28147_89_None_KeyMeshing		OBJ_cryptopro,14L,0L
 
 #define SN_id_GostR3411_94_TestParamSet		"id-GostR3411-94-TestParamSet"
 #define NID_id_GostR3411_94_TestParamSet		758
@@ -3431,4 +3468,50 @@
 #define SN_id_GostR3410_2001_CryptoPro_XchB_ParamSet		"id-GostR3410-2001-CryptoPro-XchB-ParamSet"
 #define NID_id_GostR3410_2001_CryptoPro_XchB_ParamSet		781
 #define OBJ_id_GostR3410_2001_CryptoPro_XchB_ParamSet		OBJ_cryptopro,36L,1L
+
+#define SN_id_GostR3410_94_a		"id-GostR3410-94-a"
+#define NID_id_GostR3410_94_a		790
+#define OBJ_id_GostR3410_94_a		OBJ_id_GostR3410_94,1L
+
+#define SN_id_GostR3410_94_aBis		"id-GostR3410-94-aBis"
+#define NID_id_GostR3410_94_aBis		791
+#define OBJ_id_GostR3410_94_aBis		OBJ_id_GostR3410_94,2L
+
+#define SN_id_GostR3410_94_b		"id-GostR3410-94-b"
+#define NID_id_GostR3410_94_b		792
+#define OBJ_id_GostR3410_94_b		OBJ_id_GostR3410_94,3L
+
+#define SN_id_GostR3410_94_bBis		"id-GostR3410-94-bBis"
+#define NID_id_GostR3410_94_bBis		793
+#define OBJ_id_GostR3410_94_bBis		OBJ_id_GostR3410_94,4L
+
+#define SN_id_Gost28147_89_cc		"id-Gost28147-89-cc"
+#define LN_id_Gost28147_89_cc		"GOST 28147-89 Cryptocom"
+#define NID_id_Gost28147_89_cc		794
+#define OBJ_id_Gost28147_89_cc		OBJ_cryptocom,1L,6L,1L
+
+#define SN_id_Gost3410_94_cc		"gost94cc"
+#define LN_id_Gost3410_94_cc		"GOST 34.10-94 Cryptocom"
+#define NID_id_Gost3410_94_cc		795
+#define OBJ_id_Gost3410_94_cc		OBJ_cryptocom,1L,5L,3L
+
+#define SN_id_Gost3410_2001_cc		"gost2001cc"
+#define LN_id_Gost3410_2001_cc		"GOST 34.10-2001 Cryptocom"
+#define NID_id_Gost3410_2001_cc		796
+#define OBJ_id_Gost3410_2001_cc		OBJ_cryptocom,1L,5L,4L
+
+#define SN_id_GostR3410_11_94_with_GostR3411_94_cc		"id-GostR3410-11-94-with-GostR3411-94-cc"
+#define LN_id_GostR3410_11_94_with_GostR3411_94_cc		"GOST R 34.10 with GOST R 34.11-94 Cryptocom"
+#define NID_id_GostR3410_11_94_with_GostR3411_94_cc		797
+#define OBJ_id_GostR3410_11_94_with_GostR3411_94_cc		OBJ_cryptocom,1L,3L,3L
+
+#define SN_id_GostR3410_2001_with_GostR3411_94_cc		"id-GostR3410-2001-with-GostR3411-94-cc"
+#define LN_id_GostR3410_2001_with_GostR3411_94_cc		"GOST R 34.10-2001 with GOST R 34.10-94 Cryptocom"
+#define NID_id_GostR3410_2001_with_GostR3411_94_cc		798
+#define OBJ_id_GostR3410_2001_with_GostR3411_94_cc		OBJ_cryptocom,1L,3L,4L
+
+#define SN_id_GostR3410_2001_ParamSet_cc		"id-GostR3410-2001-ParamSet-cc"
+#define LN_id_GostR3410_2001_ParamSet_cc		"GOST R 3410-2001 Parameter Set Cryptocom"
+#define NID_id_GostR3410_2001_ParamSet_cc		799
+#define OBJ_id_GostR3410_2001_ParamSet_cc		OBJ_cryptocom,1L,8L,1L
 

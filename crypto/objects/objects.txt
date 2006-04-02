@@ -1055,12 +1055,21 @@ iso 0 10118 3 0 55	: whirlpool
 # GOST OIDs
 
 member-body 643 2 2	: cryptopro
+member-body 643 2 9	: cryptocom
 cryptopro 3		: id-GostR3411-94-with-GostR3410-2001 : GOST R 34.11-94 with GOST R 34.10-2001
 cryptopro 4		: id-GostR3411-94-with-GostR3410-94 : GOST R 34.11-94 with GOST R 34.10-94
+cryptopro 10		: id-HMACGostR3411-94	: HMAC GOST 34.11-94
 !Cname id-GostR3410-2001
 cryptopro 19		: gost2001	: GOST R 34.10-2001
 !Cname id-GostR3410-94
 cryptopro 20		: gost94	: GOST R 34.10-94
+cryptopro 21		: id-Gost28147-89 : GOST 28147-89
+cryptopro 22		: id-Gost28147-89-MAC	: GOST 28147-89 MAC
+cryptopro 98		: id-GostR3410-2001DH	: GOST R 34.10-2001 DH
+cryptopro 99		: id-GostR3410-94DH	: GOST R 34.10-94 DH
+
+cryptopro 14 1		: id-Gost28147-89-CryptoPro-KeyMeshing
+cryptopro 14 0		: id-Gost28147-89-None-KeyMeshing
 
 # GOST parameter set OIDs
 
@@ -1094,3 +1103,20 @@ cryptopro 35 3		: id-GostR3410-2001-CryptoPro-C-ParamSet
 cryptopro 36 0		: id-GostR3410-2001-CryptoPro-XchA-ParamSet
 cryptopro 36 1		: id-GostR3410-2001-CryptoPro-XchB-ParamSet
 
+id-GostR3410-94 1	: id-GostR3410-94-a
+id-GostR3410-94 2	: id-GostR3410-94-aBis
+id-GostR3410-94 3	: id-GostR3410-94-b
+id-GostR3410-94 4	: id-GostR3410-94-bBis
+
+# Cryptocom LTD GOST OIDs
+
+cryptocom 1 6 1		: id-Gost28147-89-cc	: GOST 28147-89 Cryptocom
+!Cname id-Gost3410-94-cc
+cryptocom 1 5 3		: gost94cc	: GOST 34.10-94 Cryptocom
+!Cname id-Gost3410-2001-cc
+cryptocom 1 5 4		: gost2001cc	: GOST 34.10-2001 Cryptocom
+
+cryptocom 1 3 3		: id-GostR3410-11-94-with-GostR3411-94-cc : GOST R 34.10 with GOST R 34.11-94 Cryptocom
+cryptocom 1 3 4		: id-GostR3410-2001-with-GostR3411-94-cc : GOST R 34.10-2001 with GOST R 34.10-94 Cryptocom
+
+cryptocom 1 8 1		: id-GostR3410-2001-ParamSet-cc : GOST R 3410-2001 Parameter Set Cryptocom
