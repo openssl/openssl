@@ -697,7 +697,7 @@ PROCESS_ARGS:
 				{
 				while (<IN>)
 					{
-					chop;
+					chomp;
 					if (/^CONFIGURE_ARGS=(.*)/)
 						{
 						$argvstring=$1;
@@ -1264,7 +1264,7 @@ print OUT "### Generated automatically from Makefile.org by Configure.\n\n";
 my $sdirs=0;
 while (<IN>)
 	{
-	chop;
+	chomp;
 	$sdirs = 1 if /^SDIRS=/;
 	if ($sdirs) {
 		my $dir;
