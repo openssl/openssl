@@ -223,7 +223,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 		if ((lenmax = limit - p - 6) < 0) return NULL; 
 		if (s->tlsext_ellipticcurvelist_length > (unsigned long)lenmax) return NULL;
-		if (s->tlsext_ellipticcurvelist_length > 255)
+		if (s->tlsext_ellipticcurvelist_length > 65532)
 			{
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
 			return NULL;
@@ -231,6 +231,12 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		
 		s2n(TLSEXT_TYPE_elliptic_curves,ret);
 		s2n(s->tlsext_ellipticcurvelist_length + 2, ret);
+
+		/* NB: draft-ietf-tls-ecc-12.txt uses a one-byte prefix for
+		 * elliptic_curve_list, but the examples use two bytes.
+		 * http://www1.ietf.org/mail-archive/web/tls/current/msg00538.html
+		 * resolves this to two bytes.
+		 */
 		s2n(s->tlsext_ellipticcurvelist_length, ret);
 		memcpy(ret, s->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist_length);
 		ret+=s->tlsext_ellipticcurvelist_length;
