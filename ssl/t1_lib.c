@@ -221,7 +221,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		/* Add TLS extension EllipticCurves to the ClientHello message */
 		long lenmax; 
 
-		if ((lenmax = limit - p - 5) < 0) return NULL; 
+		if ((lenmax = limit - p - 6) < 0) return NULL; 
 		if (s->tlsext_ellipticcurvelist_length > (unsigned long)lenmax) return NULL;
 		if (s->tlsext_ellipticcurvelist_length > 255)
 			{
