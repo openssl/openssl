@@ -230,10 +230,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			}
 		
 		s2n(TLSEXT_TYPE_elliptic_curves,ret);
-
-		s2n(s->tlsext_ellipticcurvelist_length + 2,ret);
-		*(ret++) = (unsigned char) ((s->tlsext_ellipticcurvelist_length >> 8) & 0xFF);
-		*(ret++) = (unsigned char) (s->tlsext_ellipticcurvelist_length & 0xFF);
+		s2n(s->tlsext_ellipticcurvelist_length + 2, ret);
+		s2n(s->tlsext_ellipticcurvelist_length, ret);
 		memcpy(ret, s->tlsext_ellipticcurvelist, s->tlsext_ellipticcurvelist_length);
 		ret+=s->tlsext_ellipticcurvelist_length;
 		}
