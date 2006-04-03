@@ -230,6 +230,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			}
 		
 		s2n(TLSEXT_TYPE_elliptic_curves,ret);
+
 		s2n(s->tlsext_ellipticcurvelist_length + 2,ret);
 		*(ret++) = (unsigned char) ((s->tlsext_ellipticcurvelist_length >> 8) & 0xFF);
 		*(ret++) = (unsigned char) (s->tlsext_ellipticcurvelist_length & 0xFF);
@@ -569,6 +570,104 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	return 1;
 }
 
+#ifndef OPENSSL_NO_EC
+static int nid_list[] =
+	{
+		NID_sect163k1, /* sect163k1 (1) */
+		NID_sect163r1, /* sect163r1 (2) */
+		NID_sect163r2, /* sect163r2 (3) */
+		NID_sect193r1, /* sect193r1 (4) */ 
+		NID_sect193r2, /* sect193r2 (5) */ 
+		NID_sect233k1, /* sect233k1 (6) */
+		NID_sect233r1, /* sect233r1 (7) */ 
+		NID_sect239k1, /* sect239k1 (8) */ 
+		NID_sect283k1, /* sect283k1 (9) */
+		NID_sect283r1, /* sect283r1 (10) */ 
+		NID_sect409k1, /* sect409k1 (11) */ 
+		NID_sect409r1, /* sect409r1 (12) */
+		NID_sect571k1, /* sect571k1 (13) */ 
+		NID_sect571r1, /* sect571r1 (14) */ 
+		NID_secp160k1, /* secp160k1 (15) */
+		NID_secp160r1, /* secp160r1 (16) */ 
+		NID_secp160r2, /* secp160r2 (17) */ 
+		NID_secp192k1, /* secp192k1 (18) */
+		NID_X9_62_prime192v1, /* secp192r1 (19) */ 
+		NID_secp224k1, /* secp224k1 (20) */ 
+		NID_secp224r1, /* secp224r1 (21) */
+		NID_secp256k1, /* secp256k1 (22) */ 
+		NID_X9_62_prime256v1, /* secp256r1 (23) */ 
+		NID_secp384r1, /* secp384r1 (24) */
+		NID_secp521r1  /* secp521r1 (25) */	
+	};
+	
+int tls1_ec_curve_id2nid(int curve_id)
+	{
+	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
+	if ((curve_id < 1) || (curve_id > sizeof(nid_list)/sizeof(nid_list[0]))) return 0;
+	return nid_list[curve_id-1];
+	}
+
+int tls1_ec_nid2curve_id(int nid)
+	{
+	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
+	switch (nid)
+		{
+	case NID_sect163k1: /* sect163k1 (1) */
+		return 1;
+	case NID_sect163r1: /* sect163r1 (2) */
+		return 2;
+	case NID_sect163r2: /* sect163r2 (3) */
+		return 3;
+	case NID_sect193r1: /* sect193r1 (4) */ 
+		return 4;
+	case NID_sect193r2: /* sect193r2 (5) */ 
+		return 5;
+	case NID_sect233k1: /* sect233k1 (6) */
+		return 6;
+	case NID_sect233r1: /* sect233r1 (7) */ 
+		return 7;
+	case NID_sect239k1: /* sect239k1 (8) */ 
+		return 8;
+	case NID_sect283k1: /* sect283k1 (9) */
+		return 9;
+	case NID_sect283r1: /* sect283r1 (10) */ 
+		return 10;
+	case NID_sect409k1: /* sect409k1 (11) */ 
+		return 11;
+	case NID_sect409r1: /* sect409r1 (12) */
+		return 12;
+	case NID_sect571k1: /* sect571k1 (13) */ 
+		return 13;
+	case NID_sect571r1: /* sect571r1 (14) */ 
+		return 14;
+	case NID_secp160k1: /* secp160k1 (15) */
+		return 15;
+	case NID_secp160r1: /* secp160r1 (16) */ 
+		return 16;
+	case NID_secp160r2: /* secp160r2 (17) */ 
+		return 17;
+	case NID_secp192k1: /* secp192k1 (18) */
+		return 18;
+	case NID_X9_62_prime192v1: /* secp192r1 (19) */ 
+		return 19;
+	case NID_secp224k1: /* secp224k1 (20) */ 
+		return 20;
+	case NID_secp224r1: /* secp224r1 (21) */
+		return 21;
+	case NID_secp256k1: /* secp256k1 (22) */ 
+		return 22;
+	case NID_X9_62_prime256v1: /* secp256r1 (23) */ 
+		return 23;
+	case NID_secp384r1: /* secp384r1 (24) */
+		return 24;
+	case NID_secp521r1:  /* secp521r1 (25) */	
+		return 25;
+	default:
+		return 0;
+		}
+	}
+#endif /* OPENSSL_NO_EC */
+
 int ssl_prepare_clienthello_tlsext(SSL *s)
 	{
 #ifndef OPENSSL_NO_EC
@@ -603,19 +702,18 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 		s->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_uncompressed;
 		s->tlsext_ecpointformatlist[1] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
 		s->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
+
 		/* we support all named elliptic curves in draft-ietf-tls-ecc-12 */
 		if (s->tlsext_ellipticcurvelist != NULL) OPENSSL_free(s->tlsext_ellipticcurvelist);
-		if ((s->tlsext_ellipticcurvelist = OPENSSL_malloc(50)) == NULL)
+		s->tlsext_ellipticcurvelist_length = sizeof(nid_list)/sizeof(nid_list[0]) * 2;
+		if ((s->tlsext_ellipticcurvelist = OPENSSL_malloc(s->tlsext_ellipticcurvelist_length)) == NULL)
 			{
+			s->tlsext_ellipticcurvelist_length = 0;
 			SSLerr(SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
 			return -1;
 			}
-		s->tlsext_ellipticcurvelist_length = 50;
-		for (i = 1, j = s->tlsext_ellipticcurvelist; i <= 25; i++)
-			{
-			*(j++) = 0x00;
-			*(j++) = i;
-			}
+		for (i = 1, j = s->tlsext_ellipticcurvelist; i <= sizeof(nid_list)/sizeof(nid_list[0]); i++)
+			s2n(i,j);
 		}
 #endif /* OPENSSL_NO_EC */
 	return 1;
@@ -746,101 +844,3 @@ int ssl_check_serverhello_tlsext(SSL *s)
 }
 #endif
 
-#ifndef OPENSSL_NO_EC
-int tls1_ec_curve_id2nid(int curve_id)
-{
-	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
-	static int nid_list[26] =
-	{
-		0,
-		NID_sect163k1, /* sect163k1 (1) */
-		NID_sect163r1, /* sect163r1 (2) */
-		NID_sect163r2, /* sect163r2 (3) */
-		NID_sect193r1, /* sect193r1 (4) */ 
-		NID_sect193r2, /* sect193r2 (5) */ 
-		NID_sect233k1, /* sect233k1 (6) */
-		NID_sect233r1, /* sect233r1 (7) */ 
-		NID_sect239k1, /* sect239k1 (8) */ 
-		NID_sect283k1, /* sect283k1 (9) */
-		NID_sect283r1, /* sect283r1 (10) */ 
-		NID_sect409k1, /* sect409k1 (11) */ 
-		NID_sect409r1, /* sect409r1 (12) */
-		NID_sect571k1, /* sect571k1 (13) */ 
-		NID_sect571r1, /* sect571r1 (14) */ 
-		NID_secp160k1, /* secp160k1 (15) */
-		NID_secp160r1, /* secp160r1 (16) */ 
-		NID_secp160r2, /* secp160r2 (17) */ 
-		NID_secp192k1, /* secp192k1 (18) */
-		NID_X9_62_prime192v1, /* secp192r1 (19) */ 
-		NID_secp224k1, /* secp224k1 (20) */ 
-		NID_secp224r1, /* secp224r1 (21) */
-		NID_secp256k1, /* secp256k1 (22) */ 
-		NID_X9_62_prime256v1, /* secp256r1 (23) */ 
-		NID_secp384r1, /* secp384r1 (24) */
-		NID_secp521r1  /* secp521r1 (25) */	
-	};
-	
-	if ((curve_id < 1) || (curve_id > 25)) return 0;
-
-	return nid_list[curve_id];
-}
-
-int tls1_ec_nid2curve_id(int nid)
-{
-	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
-	switch (nid) {
-	case NID_sect163k1: /* sect163k1 (1) */
-		return 1;
-	case NID_sect163r1: /* sect163r1 (2) */
-		return 2;
-	case NID_sect163r2: /* sect163r2 (3) */
-		return 3;
-	case NID_sect193r1: /* sect193r1 (4) */ 
-		return 4;
-	case NID_sect193r2: /* sect193r2 (5) */ 
-		return 5;
-	case NID_sect233k1: /* sect233k1 (6) */
-		return 6;
-	case NID_sect233r1: /* sect233r1 (7) */ 
-		return 7;
-	case NID_sect239k1: /* sect239k1 (8) */ 
-		return 8;
-	case NID_sect283k1: /* sect283k1 (9) */
-		return 9;
-	case NID_sect283r1: /* sect283r1 (10) */ 
-		return 10;
-	case NID_sect409k1: /* sect409k1 (11) */ 
-		return 11;
-	case NID_sect409r1: /* sect409r1 (12) */
-		return 12;
-	case NID_sect571k1: /* sect571k1 (13) */ 
-		return 13;
-	case NID_sect571r1: /* sect571r1 (14) */ 
-		return 14;
-	case NID_secp160k1: /* secp160k1 (15) */
-		return 15;
-	case NID_secp160r1: /* secp160r1 (16) */ 
-		return 16;
-	case NID_secp160r2: /* secp160r2 (17) */ 
-		return 17;
-	case NID_secp192k1: /* secp192k1 (18) */
-		return 18;
-	case NID_X9_62_prime192v1: /* secp192r1 (19) */ 
-		return 19;
-	case NID_secp224k1: /* secp224k1 (20) */ 
-		return 20;
-	case NID_secp224r1: /* secp224r1 (21) */
-		return 21;
-	case NID_secp256k1: /* secp256k1 (22) */ 
-		return 22;
-	case NID_X9_62_prime256v1: /* secp256r1 (23) */ 
-		return 23;
-	case NID_secp384r1: /* secp384r1 (24) */
-		return 24;
-	case NID_secp521r1:  /* secp521r1 (25) */	
-		return 25;
-	default:
-		return 0;
-	}
-}
-#endif /* OPENSSL_NO_EC */
