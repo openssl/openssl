@@ -432,6 +432,10 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 		bio_stdout = BIO_push(tmpbio, bio_stdout);
 		}
 #endif
+
+		if (!load_config(bio_err, NULL))
+			goto end;
+
 		if (list_type == FUNC_TYPE_PKEY)
 			list_pkey(bio_stdout);	
 		else
