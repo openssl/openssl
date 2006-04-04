@@ -149,7 +149,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth =
 	EVP_PKEY_DH,
 	0,
 
-	"dh",
+	"DH",
 	"OpenSSL PKCS#3 DH method",
 
 	0,

@@ -13,6 +13,7 @@ print <<'EOF';
 #define FUNC_TYPE_GENERAL	1
 #define FUNC_TYPE_MD		2
 #define FUNC_TYPE_CIPHER	3
+#define FUNC_TYPE_PKEY		4
 
 typedef struct {
 	int type;

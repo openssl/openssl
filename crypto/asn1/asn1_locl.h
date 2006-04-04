@@ -71,9 +71,6 @@ struct asn1_pctx_st
 
 /* ASN1 public key method structure */
 
-#define ASN1_PKEY_ALIAS		0x1
-#define ASN1_PKEY_DYNAMIC	0x2
-
 struct evp_pkey_asn1_method_st
 	{
 	int pkey_id;
