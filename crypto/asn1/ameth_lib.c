@@ -139,8 +139,8 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type)
 	if (app_methods)
 		{
 		int idx;
-		idx = sk_find(app_methods, (char *)&t);
-		if (idx > 0)
+		idx = sk_find(app_methods, (char *)&tmp);
+		if (idx >= 0)
 			return (EVP_PKEY_ASN1_METHOD *)
 				sk_value(app_methods, idx);
 		}
