@@ -3500,15 +3500,15 @@
 #define NID_id_Gost28147_89_cc		794
 #define OBJ_id_Gost28147_89_cc		OBJ_cryptocom,1L,6L,1L
 
-#define SN_id_Gost3410_94_cc		"gost94cc"
-#define LN_id_Gost3410_94_cc		"GOST 34.10-94 Cryptocom"
-#define NID_id_Gost3410_94_cc		795
-#define OBJ_id_Gost3410_94_cc		OBJ_cryptocom,1L,5L,3L
+#define SN_id_GostR3410_94_cc		"gost94cc"
+#define LN_id_GostR3410_94_cc		"GOST 34.10-94 Cryptocom"
+#define NID_id_GostR3410_94_cc		802
+#define OBJ_id_GostR3410_94_cc		OBJ_cryptocom,1L,5L,3L
 
-#define SN_id_Gost3410_2001_cc		"gost2001cc"
-#define LN_id_Gost3410_2001_cc		"GOST 34.10-2001 Cryptocom"
-#define NID_id_Gost3410_2001_cc		796
-#define OBJ_id_Gost3410_2001_cc		OBJ_cryptocom,1L,5L,4L
+#define SN_id_GostR3410_2001_cc		"gost2001cc"
+#define LN_id_GostR3410_2001_cc		"GOST 34.10-2001 Cryptocom"
+#define NID_id_GostR3410_2001_cc		803
+#define OBJ_id_GostR3410_2001_cc		OBJ_cryptocom,1L,5L,4L
 
 #define SN_id_GostR3410_11_94_with_GostR3411_94_cc		"id-GostR3410-11-94-with-GostR3411-94-cc"
 #define LN_id_GostR3410_11_94_with_GostR3411_94_cc		"GOST R 34.10 with GOST R 34.11-94 Cryptocom"

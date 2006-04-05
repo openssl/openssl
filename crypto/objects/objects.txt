@@ -1117,9 +1117,9 @@ id-GostR3410-94 4	: id-GostR3410-94-bBis
 # Cryptocom LTD GOST OIDs
 
 cryptocom 1 6 1		: id-Gost28147-89-cc	: GOST 28147-89 Cryptocom ParamSet
-!Cname id-Gost3410-94-cc
+!Cname id-GostR3410-94-cc
 cryptocom 1 5 3		: gost94cc	: GOST 34.10-94 Cryptocom
-!Cname id-Gost3410-2001-cc
+!Cname id-GostR3410-2001-cc
 cryptocom 1 5 4		: gost2001cc	: GOST 34.10-2001 Cryptocom
 
 cryptocom 1 3 3		: id-GostR3410-11-94-with-GostR3411-94-cc : GOST R 34.10 with GOST R 34.11-94 Cryptocom
