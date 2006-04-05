@@ -106,10 +106,6 @@ typedef struct ssl_session_asn1_st
 	ASN1_INTEGER verify_result;
 #ifndef OPENSSL_NO_TLSEXT
 	ASN1_OCTET_STRING tlsext_hostname;
-#ifndef OPENSSL_NO_EC
-	ASN1_OCTET_STRING tlsext_ecpointformatlist;
-	ASN1_OCTET_STRING tlsext_ellipticcurvelist;
-#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	ASN1_OCTET_STRING psk_identity_hint;
@@ -120,7 +116,7 @@ typedef struct ssl_session_asn1_st
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
-	int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0,v7=0,v8=0,v9=0,v10=0;
+	int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0,v7=0,v8=0;
 	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2],ibuf5[LSIZE2];
 	long l;
@@ -222,20 +218,6 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
                 a.tlsext_hostname.type=V_ASN1_OCTET_STRING;
                 a.tlsext_hostname.data=(unsigned char *)in->tlsext_hostname;
                 }                
-#ifndef OPENSSL_NO_EC
-	if (in->tlsext_ecpointformatlist)
-		{
-		a.tlsext_ecpointformatlist.length=in->tlsext_ecpointformatlist_length;
-		a.tlsext_ecpointformatlist.type=V_ASN1_OCTET_STRING;
-		a.tlsext_ecpointformatlist.data=(unsigned char *)in->tlsext_ecpointformatlist;
-		}
-	if (in->tlsext_ellipticcurvelist)
-		{
-		a.tlsext_ellipticcurvelist.length=in->tlsext_ellipticcurvelist_length;
-		a.tlsext_ellipticcurvelist.type=V_ASN1_OCTET_STRING;
-		a.tlsext_ellipticcurvelist.data=(unsigned char *)in->tlsext_ellipticcurvelist;
-		}
-#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint)
@@ -276,18 +258,12 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #ifndef OPENSSL_NO_TLSEXT
 	if (in->tlsext_hostname)
         	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
-#ifndef OPENSSL_NO_EC
-	if (in->tlsext_ecpointformatlist)
-        	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_ecpointformatlist), i2d_ASN1_OCTET_STRING,7,v7);
-	if (in->tlsext_ellipticcurvelist)
-        	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_ellipticcurvelist), i2d_ASN1_OCTET_STRING,8,v8);
-#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint)
-        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,9,v9);
+        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,7,v7);
 	if (in->psk_identity)
-        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,10,v10);
+        	M_ASN1_I2D_len_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,8,v8);
 #endif /* OPENSSL_NO_PSK */
 
 	M_ASN1_I2D_seq_total();
@@ -316,18 +292,12 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #ifndef OPENSSL_NO_TLSEXT
 	if (in->tlsext_hostname)
         	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
-#ifndef OPENSSL_NO_EC
-	if (in->tlsext_ecpointformatlist)
-        	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_ecpointformatlist), i2d_ASN1_OCTET_STRING,7,v7);
-	if (in->tlsext_ellipticcurvelist)
-        	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_ellipticcurvelist), i2d_ASN1_OCTET_STRING,8,v8);
-#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint)
-		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,9,v9);
+		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity_hint), i2d_ASN1_OCTET_STRING,7,v7);
 	if (in->psk_identity)
-		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,10,v10);
+		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,8,v8);
 #endif /* OPENSSL_NO_PSK */
 	M_ASN1_I2D_finish();
 	}
@@ -513,35 +483,6 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		}
 	else
 		ret->tlsext_hostname=NULL;
-
-#ifndef OPENSSL_NO_EC
-	os.length=0;
-	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,7);
-	if (os.data)
-		{
-		ret->tlsext_ecpointformatlist_length=os.length;
-		memcpy(ret->tlsext_ecpointformatlist,os.data,ret->tlsext_ecpointformatlist_length);
-		OPENSSL_free(os.data);
-		os.data = NULL;
-		os.length = 0;
-		}
-	else
-		ret->tlsext_ecpointformatlist_length=0;
-		ret->tlsext_ecpointformatlist=NULL;
-	os.length=0;
-	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,8);
-	if (os.data)
-		{
-		ret->tlsext_ellipticcurvelist_length=os.length;
-		memcpy(ret->tlsext_ellipticcurvelist,os.data,ret->tlsext_ellipticcurvelist_length);
-		OPENSSL_free(os.data);
-		os.data = NULL;
-		os.length = 0;
-		}
-	else
-		ret->tlsext_ellipticcurvelist_length=0;
-		ret->tlsext_ellipticcurvelist=NULL;
-#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 
 #ifndef OPENSSL_NO_PSK
