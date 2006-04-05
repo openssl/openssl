@@ -109,7 +109,7 @@ void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
 	{
 	if (paobj)
 		*paobj = algor->algorithm;
-	if (*pptype)
+	if (pptype)
 		{
 		if (algor->parameter == NULL)
 			{
