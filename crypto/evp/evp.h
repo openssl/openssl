@@ -776,7 +776,7 @@ int		EVP_PKEY_encrypt(unsigned char *enc_key,
 int		EVP_PKEY_type(int type);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
-int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,char *key);
+int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,void *key);
 void *		EVP_PKEY_get0(EVP_PKEY *pkey);
 
 #ifndef OPENSSL_NO_RSA

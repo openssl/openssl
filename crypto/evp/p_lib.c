@@ -185,7 +185,7 @@ EVP_PKEY *EVP_PKEY_new(void)
 	return(ret);
 	}
 
-int EVP_PKEY_assign(EVP_PKEY *pkey, int type, char *key)
+int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 	{
 	const EVP_PKEY_ASN1_METHOD *ameth;
 	if (pkey == NULL) return(0);
