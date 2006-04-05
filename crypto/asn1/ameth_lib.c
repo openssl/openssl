@@ -172,7 +172,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(const char *str, int len)
 	return NULL;
 	}
 
-int EVP_PKEY_asn1_add(const EVP_PKEY_ASN1_METHOD *ameth)
+int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 	{
 	if (app_methods == NULL)
 		{
@@ -184,6 +184,17 @@ int EVP_PKEY_asn1_add(const EVP_PKEY_ASN1_METHOD *ameth)
 		return 0;
 	sk_sort(app_methods);
 	return 1;
+	}
+
+int EVP_PKEY_asn1_add_alias(int to, int from)
+	{
+	EVP_PKEY_ASN1_METHOD *ameth;
+	ameth = EVP_PKEY_asn1_new(from, NULL, NULL);
+	if (!ameth)
+		return 0;
+	ameth->pkey_base_id = to;
+	ameth->pkey_flags |= ASN1_PKEY_ALIAS;
+	return EVP_PKEY_asn1_add0(ameth);
 	}
 
 int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *ppkey_base_id, int *ppkey_flags,

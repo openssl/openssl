@@ -863,7 +863,8 @@ int EVP_PKEY_asn1_get_count(void);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(const char *str, int len);
-int EVP_PKEY_asn1_add(const EVP_PKEY_ASN1_METHOD *ameth);
+int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth);
+int EVP_PKEY_asn1_add_alias(int to, int from);
 int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *pkey_base_id, int *ppkey_flags,
 				const char **pinfo, const char **ppem_str,
 					const EVP_PKEY_ASN1_METHOD *ameth);
