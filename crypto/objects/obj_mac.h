@@ -3332,7 +3332,7 @@
 
 #define SN_id_GostR3411_94		"md_gost94"
 #define LN_id_GostR3411_94		"GOST R 34.11-94"
-#define NID_id_GostR3411_94		800
+#define NID_id_GostR3411_94		795
 #define OBJ_id_GostR3411_94		OBJ_cryptopro,9L
 
 #define SN_id_HMACGostR3411_94		"id-HMACGostR3411-94"
@@ -3362,7 +3362,7 @@
 
 #define SN_id_GostR3411_94_prf		"prf-gostr3411-94"
 #define LN_id_GostR3411_94_prf		"GOST R 34.11-94 PRF"
-#define NID_id_GostR3411_94_prf		801
+#define NID_id_GostR3411_94_prf		796
 #define OBJ_id_GostR3411_94_prf		OBJ_cryptopro,23L
 
 #define SN_id_GostR3410_2001DH		"id-GostR3410-2001DH"
@@ -3502,26 +3502,26 @@
 
 #define SN_id_GostR3410_94_cc		"gost94cc"
 #define LN_id_GostR3410_94_cc		"GOST 34.10-94 Cryptocom"
-#define NID_id_GostR3410_94_cc		802
+#define NID_id_GostR3410_94_cc		797
 #define OBJ_id_GostR3410_94_cc		OBJ_cryptocom,1L,5L,3L
 
 #define SN_id_GostR3410_2001_cc		"gost2001cc"
 #define LN_id_GostR3410_2001_cc		"GOST 34.10-2001 Cryptocom"
-#define NID_id_GostR3410_2001_cc		803
+#define NID_id_GostR3410_2001_cc		798
 #define OBJ_id_GostR3410_2001_cc		OBJ_cryptocom,1L,5L,4L
 
 #define SN_id_GostR3410_11_94_with_GostR3411_94_cc		"id-GostR3410-11-94-with-GostR3411-94-cc"
 #define LN_id_GostR3410_11_94_with_GostR3411_94_cc		"GOST R 34.10 with GOST R 34.11-94 Cryptocom"
-#define NID_id_GostR3410_11_94_with_GostR3411_94_cc		797
+#define NID_id_GostR3410_11_94_with_GostR3411_94_cc		799
 #define OBJ_id_GostR3410_11_94_with_GostR3411_94_cc		OBJ_cryptocom,1L,3L,3L
 
 #define SN_id_GostR3410_2001_with_GostR3411_94_cc		"id-GostR3410-2001-with-GostR3411-94-cc"
 #define LN_id_GostR3410_2001_with_GostR3411_94_cc		"GOST R 34.10-2001 with GOST R 34.10-94 Cryptocom"
-#define NID_id_GostR3410_2001_with_GostR3411_94_cc		798
+#define NID_id_GostR3410_2001_with_GostR3411_94_cc		800
 #define OBJ_id_GostR3410_2001_with_GostR3411_94_cc		OBJ_cryptocom,1L,3L,4L
 
 #define SN_id_GostR3410_2001_ParamSet_cc		"id-GostR3410-2001-ParamSet-cc"
 #define LN_id_GostR3410_2001_ParamSet_cc		"GOST R 3410-2001 Parameter Set Cryptocom"
-#define NID_id_GostR3410_2001_ParamSet_cc		799
+#define NID_id_GostR3410_2001_ParamSet_cc		801
 #define OBJ_id_GostR3410_2001_ParamSet_cc		OBJ_cryptocom,1L,8L,1L
 
