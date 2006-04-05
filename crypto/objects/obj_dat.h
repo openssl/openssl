@@ -2084,8 +2084,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"cryptocom","cryptocom",NID_cryptocom,5,&(lvalues[5207]),0},
 {"id-HMACGostR3411-94","HMAC GOST 34.11-94",NID_id_HMACGostR3411_94,6,
 	&(lvalues[5212]),0},
-{"id-Gost28147-89","GOST 28147-89",NID_id_Gost28147_89,6,
-	&(lvalues[5218]),0},
+{"gost89","GOST 28147-89",NID_id_Gost28147_89,6,&(lvalues[5218]),0},
 {"id-Gost28147-89-MAC","GOST 28147-89 MAC",NID_id_Gost28147_89_MAC,6,
 	&(lvalues[5224]),0},
 {"id-GostR3410-2001DH","GOST R 34.10-2001 DH",NID_id_GostR3410_2001DH,
@@ -2370,6 +2369,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[509]),/* "generationQualifier" */
 &(nid_objs[756]),/* "gost2001" */
 &(nid_objs[796]),/* "gost2001cc" */
+&(nid_objs[784]),/* "gost89" */
 &(nid_objs[757]),/* "gost94" */
 &(nid_objs[795]),/* "gost94cc" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
@@ -2381,7 +2381,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[473]),/* "homeTelephoneNumber" */
 &(nid_objs[466]),/* "host" */
 &(nid_objs[442]),/* "iA5StringSyntax" */
-&(nid_objs[784]),/* "id-Gost28147-89" */
 &(nid_objs[761]),/* "id-Gost28147-89-CryptoPro-A-ParamSet" */
 &(nid_objs[762]),/* "id-Gost28147-89-CryptoPro-B-ParamSet" */
 &(nid_objs[763]),/* "id-Gost28147-89-CryptoPro-C-ParamSet" */

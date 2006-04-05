@@ -3350,7 +3350,7 @@
 #define NID_id_GostR3410_94		757
 #define OBJ_id_GostR3410_94		OBJ_cryptopro,20L
 
-#define SN_id_Gost28147_89		"id-Gost28147-89"
+#define SN_id_Gost28147_89		"gost89"
 #define LN_id_Gost28147_89		"GOST 28147-89"
 #define NID_id_Gost28147_89		784
 #define OBJ_id_Gost28147_89		OBJ_cryptopro,21L

@@ -1066,7 +1066,8 @@ cryptopro 10		: id-HMACGostR3411-94	: HMAC GOST 34.11-94
 cryptopro 19		: gost2001	: GOST R 34.10-2001
 !Cname id-GostR3410-94
 cryptopro 20		: gost94	: GOST R 34.10-94
-cryptopro 21		: id-Gost28147-89 : GOST 28147-89
+!Cname id-Gost28147-89
+cryptopro 21		: gost89 		: GOST 28147-89
 cryptopro 22		: id-Gost28147-89-MAC	: GOST 28147-89 MAC
 !Cname id-GostR3411-94-prf
 cryptopro 23		: prf-gostr3411-94	: GOST R 34.11-94 PRF
