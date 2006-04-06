@@ -28,7 +28,7 @@ LIBSRC= encode.c digest.c evp_enc.c evp_key.c evp_acnf.c \
 	bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
 	c_all.c c_allc.c c_alld.c evp_lib.c bio_ok.c \
 	evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c \
-	e_old.c
+	e_old.c pmeth_lib.c
 
 LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o evp_acnf.o \
 	e_des.o e_bf.o e_idea.o e_des3.o \
@@ -40,7 +40,7 @@ LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o evp_acnf.o \
 	bio_md.o bio_b64.o bio_enc.o evp_err.o e_null.o \
 	c_all.o c_allc.o c_alld.o evp_lib.o bio_ok.o \
 	evp_pkey.o evp_pbe.o p5_crpt.o p5_crpt2.o \
-	e_old.o
+	e_old.o pmeth_lib.o
 
 SRC= $(LIBSRC)
 

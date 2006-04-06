@@ -4,6 +4,10 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Initial definitions for EVP_PKEY_METHOD. This will be a high level public
+     key API, doesn't do much yet.
+     [Steve Henson]
+
   *) New function EVP_PKEY_asn1_get0_info() to retrieve information about
      public key algorithms. New option to openssl utility:
      "list-public-key-algorithms" to print out info.
