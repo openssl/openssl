@@ -60,6 +60,7 @@
 #include <stdlib.h>
 #include <openssl/objects.h>
 #include "cryptlib.h"
+#include <openssl/evp.h>
 #include "evp_locl.h"
 
 STACK *app_pkey_methods = NULL;
@@ -112,35 +113,58 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new(int ktype, ENGINE *e)
 	ret->pkey = NULL;
 	ret->data = NULL;
 
+	if (pmeth->init)
+		{
+		if (pmeth->init(ret) <= 0)
+			{
+			EVP_PKEY_CTX_free(ret);
+			return NULL;
+			}
+		}
+
 	return ret;
+	}
+
+void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
+	{
+	if (ctx->pmeth && ctx->pmeth->cleanup)
+		ctx->pmeth->cleanup(ctx);
+	if (ctx->pkey)
+		EVP_PKEY_free(ctx->pkey);
+	OPENSSL_free(ctx);
 	}
 
 int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 				int cmd, int p1, void *p2)
 	{
+	int ret;
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl)
+		{
+		EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
 		return -2;
+		}
 	if ((keytype != -1) && (ctx->pmeth->pkey_id != keytype))
 		return -1;
 
 	if (ctx->operation == EVP_PKEY_OP_UNDEFINED)
 		{
-		/* Not initialized */
+		EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_NO_OPERATION_SET);
 		return -1;
 		}
 
 	if ((optype != -1) && (ctx->operation != optype))
 		{
-		/* Invalid operation type */
+		EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_INVALID_OPERATION);
 		return -1;
 		}
 
-	return ctx->pmeth->ctrl(ctx, cmd, p1, p2);
+	ret = ctx->pmeth->ctrl(ctx, cmd, p1, p2);
+
+	if (ret == -2)
+		EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
+
+	return ret;
 
 	}
-
-
-
-
 
 

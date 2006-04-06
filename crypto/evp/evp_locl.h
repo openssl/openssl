@@ -262,6 +262,8 @@ struct evp_pkey_ctx_st
 struct evp_pkey_method_st
 	{
 	int pkey_id;
+	int flags;
+	int (*init)(EVP_PKEY_CTX *ctx);
 	int (*paramgen_init)(EVP_PKEY_CTX *ctx);
 	int (*paramgen)(EVP_PKEY *key, EVP_PKEY_CTX *ctx);
 
