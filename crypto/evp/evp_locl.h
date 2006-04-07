@@ -248,17 +248,6 @@ struct evp_pkey_ctx_st
 	void *data;
 	} /* EVP_PKEY_CTX */;
 
-#define EVP_PKEY_OP_UNDEFINED		0
-#define EVP_PKEY_OP_PARAMGEN		1
-#define EVP_PKEY_OP_KEYGEN		2
-#define EVP_PKEY_OP_SIGN		3
-#define EVP_PKEY_OP_VERIFY		4
-#define EVP_PKEY_OP_VERIFYRECOVER	5
-#define EVP_PKEY_OP_SIGNCTX		6
-#define EVP_PKEY_OP_VERIFYCTX		7
-#define EVP_PKEY_OP_ENCRYPT		8
-#define EVP_PKEY_OP_DECRYPT		9
-
 struct evp_pkey_method_st
 	{
 	int pkey_id;

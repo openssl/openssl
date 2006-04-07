@@ -68,7 +68,7 @@ STACK *app_pkey_methods = NULL;
 
 extern EVP_PKEY_METHOD rsa_pkey_meth;
 
-const EVP_PKEY_METHOD *standard_methods[] =
+static const EVP_PKEY_METHOD *standard_methods[] =
 	{
 	&rsa_pkey_meth
 	};

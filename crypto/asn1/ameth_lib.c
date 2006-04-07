@@ -68,7 +68,7 @@ extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD eckey_asn1_meth;
 
 /* Keep this sorted in type order !! */
-const EVP_PKEY_ASN1_METHOD *standard_methods[] = 
+static const EVP_PKEY_ASN1_METHOD *standard_methods[] = 
 	{
 #ifndef OPENSSL_NO_RSA
 	&rsa_asn1_meths[0],
