@@ -135,7 +135,7 @@ sub do_lib_rule
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
 		$ret.="$target: $objs\n";
 		$ex =' advapi32.lib';
- 		$ex.=" \$(FIPSLIB_d)${o}_chkstk.o" if $fips && $target =~ /O_CRYPTO/;
+ 		$ex.=" \$(FIPSLIB_D)${o}_chkstk.o" if $fips && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
 		}
 	else
@@ -145,7 +145,7 @@ sub do_lib_rule
  		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
  		if ($fips && $target =~ /O_CRYPTO/)
 			{
- 			$ex.=" \$(FIPSLIB_D)ms${o}_chkstk.o";
+ 			$ex.=" \$(FIPSLIB_D)${o}_chkstk.o";
 			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)\n";
 			$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
