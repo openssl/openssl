@@ -906,7 +906,7 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type, ENGINE *e);
-EVP_PKEY_CTX *EVP_PKEY_CTX_new(int ktype, ENGINE *e);
+EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey);
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 				int cmd, int p1, void *p2);

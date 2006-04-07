@@ -266,39 +266,37 @@ struct evp_pkey_method_st
 	int (*init)(EVP_PKEY_CTX *ctx);
 
 	int (*paramgen_init)(EVP_PKEY_CTX *ctx);
-	int (*paramgen)(EVP_PKEY *key, EVP_PKEY_CTX *ctx);
+	int (*paramgen)(EVP_PKEY_CTX *ctx);
 
 	int (*keygen_init)(EVP_PKEY_CTX *ctx);
-	int (*keygen)(EVP_PKEY *key, EVP_PKEY_CTX *ctx);
+	int (*keygen)(EVP_PKEY_CTX *ctx);
 
-	int (*sign_init)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
+	int (*sign_init)(EVP_PKEY_CTX *ctx);
 	int (*sign)(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
 					unsigned char *tbs, int tbslen);
 
-	int (*verify_init)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
+	int (*verify_init)(EVP_PKEY_CTX *ctx);
 	int (*verify)(EVP_PKEY_CTX *ctx, unsigned char *sig, int siglen,
 					unsigned char *tbs, int tbslen);
 
-	int (*verify_recover_init)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
+	int (*verify_recover_init)(EVP_PKEY_CTX *ctx);
 	int (*verify_recover)(EVP_PKEY_CTX *ctx,
 					unsigned char *rout, int *routlen,
 					unsigned char *sig, int siglen);
 
-	int (*signctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx,
-					EVP_PKEY *pkey);
+	int (*signctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
 	int (*signctx)(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
 					EVP_MD_CTX *mctx);
 
-	int (*verifyctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx,
-							EVP_PKEY *pkey);
+	int (*verifyctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
 	int (*verifyctx)(EVP_PKEY_CTX *ctx, unsigned char *sig, int siglen,
 					EVP_MD_CTX *mctx);
 
-	int (*encrypt_init)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
+	int (*encrypt_init)(EVP_PKEY_CTX *ctx);
 	int (*encrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
 					unsigned char *in, int inlen);
 
-	int (*decrypt_init)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
+	int (*decrypt_init)(EVP_PKEY_CTX *ctx);
 	int (*decrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
 					unsigned char *in, int inlen);
 

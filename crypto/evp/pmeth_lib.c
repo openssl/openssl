@@ -61,6 +61,7 @@
 #include <openssl/objects.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
+#include "asn1_locl.h"
 #include "evp_locl.h"
 
 STACK *app_pkey_methods = NULL;
@@ -100,17 +101,20 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type, ENGINE *e)
 	return *ret;
 	}
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_new(int ktype, ENGINE *e)
+EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey)
 	{
 	EVP_PKEY_CTX *ret;
 	const EVP_PKEY_METHOD *pmeth;
-	pmeth = EVP_PKEY_meth_find(ktype, e);
+	if (!pkey || !pkey->ameth)
+		return NULL;
+	pmeth = EVP_PKEY_meth_find(pkey->ameth->pkey_id, NULL);
 	if (pmeth == NULL)
 		return NULL;
 	ret = OPENSSL_malloc(sizeof(EVP_PKEY_CTX));
 	ret->pmeth = pmeth;
 	ret->operation = EVP_PKEY_OP_UNDEFINED;
-	ret->pkey = NULL;
+	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
+	ret->pkey = pkey;
 	ret->data = NULL;
 
 	if (pmeth->init)
