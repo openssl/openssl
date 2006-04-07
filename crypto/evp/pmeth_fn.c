@@ -66,13 +66,15 @@
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx)
 	{
 	int ret;
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->sign_init)
+	if (!ctx || !ctx->pmeth || !ctx->pmeth->sign)
 		{
 		EVPerr(EVP_F_EVP_PKEY_SIGN_INIT,
 			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 		}
 	ctx->operation = EVP_PKEY_OP_SIGN;
+	if (!ctx->pmeth->sign_init)
+		return 1;
 	ret = ctx->pmeth->sign_init(ctx);
 	if (ret <= 0)
 		ctx->operation = EVP_PKEY_OP_UNDEFINED;
@@ -100,13 +102,15 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx)
 	{
 	int ret;
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify_init)
+	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify)
 		{
 		EVPerr(EVP_F_EVP_PKEY_VERIFY_INIT,
 			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 		}
 	ctx->operation = EVP_PKEY_OP_VERIFY;
+	if (!ctx->pmeth->verify_init)
+		return 1;
 	ret = ctx->pmeth->verify_init(ctx);
 	if (ret <= 0)
 		ctx->operation = EVP_PKEY_OP_UNDEFINED;
@@ -134,13 +138,15 @@ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx)
 	{
 	int ret;
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify_recover_init)
+	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify_recover)
 		{
 		EVPerr(EVP_F_EVP_PKEY_VERIFY_RECOVER_INIT,
 			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 		}
 	ctx->operation = EVP_PKEY_OP_VERIFYRECOVER;
+	if (!ctx->pmeth->verify_recover_init)
+		return 1;
 	ret = ctx->pmeth->verify_recover_init(ctx);
 	if (ret <= 0)
 		ctx->operation = EVP_PKEY_OP_UNDEFINED;
@@ -168,13 +174,15 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_encrypt_init(EVP_PKEY_CTX *ctx)
 	{
 	int ret;
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->encrypt_init)
+	if (!ctx || !ctx->pmeth || !ctx->pmeth->encrypt)
 		{
 		EVPerr(EVP_F_EVP_PKEY_ENCRYPT_INIT,
 			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 		}
 	ctx->operation = EVP_PKEY_OP_ENCRYPT;
+	if (!ctx->pmeth->encrypt_init)
+		return 1;
 	ret = ctx->pmeth->encrypt_init(ctx);
 	if (ret <= 0)
 		ctx->operation = EVP_PKEY_OP_UNDEFINED;
@@ -202,13 +210,15 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx)
 	{
 	int ret;
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->decrypt_init)
+	if (!ctx || !ctx->pmeth || !ctx->pmeth->decrypt)
 		{
 		EVPerr(EVP_F_EVP_PKEY_DECRYPT_INIT,
 			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 		}
 	ctx->operation = EVP_PKEY_OP_DECRYPT;
+	if (!ctx->pmeth->decrypt_init)
+		return 1;
 	ret = ctx->pmeth->decrypt_init(ctx);
 	if (ret <= 0)
 		ctx->operation = EVP_PKEY_OP_UNDEFINED;

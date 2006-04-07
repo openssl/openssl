@@ -927,7 +927,7 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
 			unsigned char *tbs, int tbslen);
 int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
-			unsigned char *sig, int *siglen,
+			unsigned char *sig, int siglen,
 			unsigned char *tbs, int tbslen);
 int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
