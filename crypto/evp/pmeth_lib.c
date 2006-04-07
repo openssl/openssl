@@ -167,4 +167,12 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 
 	}
 
-
+int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, char *name, char *value)
+	{
+	if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl)
+		{
+		EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
+		return -2;
+		}
+	return ctx->pmeth->ctrl_str(ctx, name, value);
+	}

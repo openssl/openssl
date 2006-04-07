@@ -256,7 +256,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			{
 			ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
 			pkey=X509_get_pubkey(ri->cert);
-			jj=EVP_PKEY_encrypt(tmp,key,keylen,pkey);
+			jj=EVP_PKEY_encrypt_old(tmp,key,keylen,pkey);
 			EVP_PKEY_free(pkey);
 			if (jj <= 0)
 				{
@@ -458,7 +458,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++)
 				{
 				ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
-				jj=EVP_PKEY_decrypt(tmp,
+				jj=EVP_PKEY_decrypt_old(tmp,
 					M_ASN1_STRING_data(ri->enc_key),
 					M_ASN1_STRING_length(ri->enc_key),
 						pkey);
@@ -476,7 +476,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			}
 		else
 			{
-			jj=EVP_PKEY_decrypt(tmp,
+			jj=EVP_PKEY_decrypt_old(tmp,
 				M_ASN1_STRING_data(ri->enc_key),
 				M_ASN1_STRING_length(ri->enc_key), pkey);
 			if (jj <= 0)

@@ -768,10 +768,10 @@ const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
 const EVP_MD *EVP_get_digestbyname(const char *name);
 void EVP_cleanup(void);
 
-int		EVP_PKEY_decrypt(unsigned char *dec_key,
+int		EVP_PKEY_decrypt_old(unsigned char *dec_key,
 			const unsigned char *enc_key,int enc_key_len,
 			EVP_PKEY *private_key);
-int		EVP_PKEY_encrypt(unsigned char *enc_key,
+int		EVP_PKEY_encrypt_old(unsigned char *enc_key,
 			const unsigned char *key,int key_len,
 			EVP_PKEY *pub_key);
 int		EVP_PKEY_type(int type);
@@ -943,13 +943,21 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_PKEY_COPY_PARAMETERS			 103
 #define EVP_F_EVP_PKEY_CTX_CTRL				 137
 #define EVP_F_EVP_PKEY_DECRYPT				 104
+#define EVP_F_EVP_PKEY_DECRYPT_INIT			 138
 #define EVP_F_EVP_PKEY_ENCRYPT				 105
+#define EVP_F_EVP_PKEY_ENCRYPT_INIT			 139
 #define EVP_F_EVP_PKEY_GET1_DH				 119
 #define EVP_F_EVP_PKEY_GET1_DSA				 120
 #define EVP_F_EVP_PKEY_GET1_ECDSA			 130
 #define EVP_F_EVP_PKEY_GET1_EC_KEY			 131
 #define EVP_F_EVP_PKEY_GET1_RSA				 121
 #define EVP_F_EVP_PKEY_NEW				 106
+#define EVP_F_EVP_PKEY_SIGN				 140
+#define EVP_F_EVP_PKEY_SIGN_INIT			 141
+#define EVP_F_EVP_PKEY_VERIFY				 142
+#define EVP_F_EVP_PKEY_VERIFY_INIT			 143
+#define EVP_F_EVP_PKEY_VERIFY_RECOVER			 144
+#define EVP_F_EVP_PKEY_VERIFY_RECOVER_INIT		 145
 #define EVP_F_EVP_RIJNDAEL				 126
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
@@ -995,6 +1003,8 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_NO_OPERATION_SET				 149
 #define EVP_R_NO_SIGN_FUNCTION_CONFIGURED		 104
 #define EVP_R_NO_VERIFY_FUNCTION_CONFIGURED		 105
+#define EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE	 150
+#define EVP_R_OPERATON_NOT_INITIALIZED			 151
 #define EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE			 117
 #define EVP_R_PRIVATE_KEY_DECODE_ERROR			 145
 #define EVP_R_PRIVATE_KEY_ENCODE_ERROR			 146

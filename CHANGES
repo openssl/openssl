@@ -4,6 +4,11 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Add functions for main EVP_PKEY_method operations. The undocumented
+     functions EVP_PKEY_{encrypt,decrypt} have been renamed to
+     EVP_PKEY_{encrypt,decrypt}_old. 
+     [Steve Henson]
+
   *) Initial definitions for EVP_PKEY_METHOD. This will be a high level public
      key API, doesn't do much yet.
      [Steve Henson]
