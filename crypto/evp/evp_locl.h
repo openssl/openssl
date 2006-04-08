@@ -252,7 +252,9 @@ struct evp_pkey_method_st
 	{
 	int pkey_id;
 	int flags;
+
 	int (*init)(EVP_PKEY_CTX *ctx);
+	void (*cleanup)(EVP_PKEY_CTX *ctx);
 
 	int (*paramgen_init)(EVP_PKEY_CTX *ctx);
 	int (*paramgen)(EVP_PKEY_CTX *ctx);
@@ -292,6 +294,5 @@ struct evp_pkey_method_st
 	int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
 	int (*ctrl_str)(EVP_PKEY_CTX *ctx, const char *type, const char *value);
 
-	void (*cleanup)(EVP_PKEY_CTX *ctx);
 
 	} /* EVP_PKEY_METHOD */;

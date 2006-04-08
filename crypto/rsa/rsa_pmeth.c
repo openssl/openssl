@@ -60,10 +60,89 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/rsa.h>
-#include "asn1_locl.h"
 #include "evp_locl.h"
+
+/* RSA pkey context structure */
+
+typedef struct
+	{
+	/* Key gen parameters */
+	int nbits;
+	BIGNUM *pub_exp;
+	/* RSA padding mode */
+	int pad_mode;
+	} RSA_PKEY_CTX;
+
+static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
+	{
+	RSA_PKEY_CTX *rctx;
+	rctx = OPENSSL_malloc(sizeof(RSA_PKEY_CTX));
+	if (!rctx)
+		return 0;
+	rctx->nbits = 1024;
+	rctx->pub_exp = NULL;
+	rctx->pad_mode = RSA_PKCS1_PADDING;
+	ctx->data = rctx;
+	return 1;
+	}
+
+static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
+	{
+	RSA_PKEY_CTX *rctx = ctx->data;
+	if (rctx)
+		{
+		if (rctx->pub_exp)
+			BN_free(rctx->pub_exp);
+		}
+	OPENSSL_free(rctx);
+	}
+
+static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
+                                        unsigned char *tbs, int tbslen)
+	{
+	int ret;
+	RSA_PKEY_CTX *rctx = ctx->data;
+	ret = RSA_private_encrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
+							rctx->pad_mode);
+	if (ret < 0)
+		return ret;
+	*siglen = ret;
+	return 1;
+	}
+
+
+static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
+					unsigned char *sig, int *siglen,
+                                        unsigned char *tbs, int tbslen)
+	{
+	int ret;
+	RSA_PKEY_CTX *rctx = ctx->data;
+	ret = RSA_public_decrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
+							rctx->pad_mode);
+	if (ret < 0)
+		return ret;
+	*siglen = ret;
+	return 1;
+	}
+
 
 const EVP_PKEY_METHOD rsa_pkey_meth = 
 	{
 	EVP_PKEY_RSA,
+	0,
+	pkey_rsa_init,
+	pkey_rsa_cleanup,
+
+	0,0,
+
+	0,0,
+
+	0,
+	pkey_rsa_sign,
+
+	0,0,
+
+	0,
+	pkey_rsa_verifyrecover
+
 	};
