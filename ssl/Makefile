@@ -545,7 +545,8 @@ s3_enc.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
 s3_enc.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 s3_enc.o: ../include/openssl/tls1.h ../include/openssl/x509.h
 s3_enc.o: ../include/openssl/x509_vfy.h s3_enc.c ssl_locl.h
-s3_lib.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+s3_lib.o: ../crypto/ec/ec_lcl.h ../e_os.h ../include/openssl/asn1.h
+s3_lib.o: ../include/openssl/bio.h ../include/openssl/bn.h
 s3_lib.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 s3_lib.o: ../include/openssl/crypto.h ../include/openssl/dh.h
 s3_lib.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h

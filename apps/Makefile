@@ -593,6 +593,50 @@ pkcs8.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 pkcs8.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 pkcs8.o: ../include/openssl/txt_db.h ../include/openssl/x509.h
 pkcs8.o: ../include/openssl/x509_vfy.h apps.h pkcs8.c
+pkey.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+pkey.o: ../include/openssl/buffer.h ../include/openssl/conf.h
+pkey.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+pkey.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+pkey.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+pkey.o: ../include/openssl/err.h ../include/openssl/evp.h
+pkey.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+pkey.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+pkey.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+pkey.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+pkey.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
+pkey.o: ../include/openssl/sha.h ../include/openssl/stack.h
+pkey.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+pkey.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h pkey.c
+pkeyparam.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+pkeyparam.o: ../include/openssl/buffer.h ../include/openssl/conf.h
+pkeyparam.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+pkeyparam.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+pkeyparam.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+pkeyparam.o: ../include/openssl/err.h ../include/openssl/evp.h
+pkeyparam.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+pkeyparam.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+pkeyparam.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+pkeyparam.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+pkeyparam.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
+pkeyparam.o: ../include/openssl/sha.h ../include/openssl/stack.h
+pkeyparam.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+pkeyparam.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
+pkeyparam.o: pkeyparam.c
+pkeyutl.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+pkeyutl.o: ../include/openssl/buffer.h ../include/openssl/conf.h
+pkeyutl.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+pkeyutl.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+pkeyutl.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+pkeyutl.o: ../include/openssl/err.h ../include/openssl/evp.h
+pkeyutl.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+pkeyutl.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+pkeyutl.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+pkeyutl.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+pkeyutl.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
+pkeyutl.o: ../include/openssl/sha.h ../include/openssl/stack.h
+pkeyutl.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+pkeyutl.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
+pkeyutl.o: pkeyutl.c
 prime.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 prime.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 prime.o: ../include/openssl/conf.h ../include/openssl/crypto.h
