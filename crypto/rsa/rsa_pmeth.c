@@ -125,6 +125,31 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
 	return 1;
 	}
 
+static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
+                                        unsigned char *in, int inlen)
+	{
+	int ret;
+	RSA_PKEY_CTX *rctx = ctx->data;
+	ret = RSA_public_encrypt(inlen, in, out, ctx->pkey->pkey.rsa,
+							rctx->pad_mode);
+	if (ret < 0)
+		return ret;
+	*outlen = ret;
+	return 1;
+	}
+
+static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
+                                        unsigned char *in, int inlen)
+	{
+	int ret;
+	RSA_PKEY_CTX *rctx = ctx->data;
+	ret = RSA_private_decrypt(inlen, in, out, ctx->pkey->pkey.rsa,
+							rctx->pad_mode);
+	if (ret < 0)
+		return ret;
+	*outlen = ret;
+	return 1;
+	}
 
 const EVP_PKEY_METHOD rsa_pkey_meth = 
 	{
@@ -143,6 +168,18 @@ const EVP_PKEY_METHOD rsa_pkey_meth =
 	0,0,
 
 	0,
-	pkey_rsa_verifyrecover
+	pkey_rsa_verifyrecover,
+
+
+	0,0,0,0,
+
+	0,
+	pkey_rsa_encrypt,
+
+	0,
+	pkey_rsa_decrypt,
+
+	0,0
+
 
 	};
