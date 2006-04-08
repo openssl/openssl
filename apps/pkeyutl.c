@@ -81,7 +81,7 @@ int MAIN(int argc, char **);
 int MAIN(int argc, char **argv)
 {
 	BIO *in = NULL, *out = NULL;
-	char *infile = NULL, *outfile = NULL;
+	char *infile = NULL, *outfile = NULL, *sigfile = NULL;
 	char *engine = NULL;
 	int pkey_op = EVP_PKEY_OP_SIGN, key_type = KEY_PRIVKEY;
 	int keyform = FORMAT_PEM;
@@ -89,12 +89,12 @@ int MAIN(int argc, char **argv)
 	char hexdump = 0, asn1parse = 0;
 	EVP_PKEY_CTX *ctx = NULL;
 	char *passargin = NULL;
-	int keysize;
+	int keysize = -1;
 
-	unsigned char *buf_in = NULL, *buf_out = NULL;
-	int buf_inlen, buf_outlen;
+	unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL;
+	int buf_inlen, buf_outlen, siglen = -1;
 
-	int ret = 1, rv;
+	int ret = 1, rv = -1;
 
 	argc--;
 	argv++;
@@ -117,6 +117,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) badarg = 1;
 			outfile= *(++argv);
+			}
+		else if (!strcmp(*argv,"-sigfile"))
+			{
+			if (--argc < 1) badarg = 1;
+			sigfile= *(++argv);
 			}
 		else if(!strcmp(*argv, "-inkey"))
 			{
@@ -163,6 +168,8 @@ int MAIN(int argc, char **argv)
 			hexdump = 1;
 		else if(!strcmp(*argv, "-sign"))
 			pkey_op = EVP_PKEY_OP_SIGN;
+		else if(!strcmp(*argv, "-verifyr"))
+			pkey_op = EVP_PKEY_OP_VERIFY;
 		else if(!strcmp(*argv, "-verifyrecover"))
 			pkey_op = EVP_PKEY_OP_VERIFYRECOVER;
 		else if(!strcmp(*argv, "-rev"))
@@ -187,24 +194,44 @@ int MAIN(int argc, char **argv)
 		goto end;
 		}
 
+	if (sigfile && (pkey_op != EVP_PKEY_OP_VERIFY))
+		{
+		BIO_puts(bio_err, "Signature file specified for non verify\n");
+		goto end;
+		}
+
+	if (!sigfile && (pkey_op == EVP_PKEY_OP_VERIFY))
+		{
+		BIO_puts(bio_err, "No signature file specified for verify\n");
+		goto end;
+		}
+
 /* FIXME: seed PRNG only if needed */
 	app_RAND_load_file(NULL, bio_err, 0);
 
-	if(infile) {
-		if(!(in = BIO_new_file(infile, "rb"))) {
+	if(infile)
+		{
+		if(!(in = BIO_new_file(infile, "rb")))
+			{
 			BIO_printf(bio_err, "Error Reading Input File\n");
 			ERR_print_errors(bio_err);	
 			goto end;
+			}
 		}
-	} else in = BIO_new_fp(stdin, BIO_NOCLOSE);
+	else
+		in = BIO_new_fp(stdin, BIO_NOCLOSE);
 
-	if(outfile) {
-		if(!(out = BIO_new_file(outfile, "wb"))) {
-			BIO_printf(bio_err, "Error Reading Output File\n");
+	if(outfile)
+		{
+		if(!(out = BIO_new_file(outfile, "wb")))
+			{
+			BIO_printf(bio_err, "Error Creating Output File\n");
 			ERR_print_errors(bio_err);	
 			goto end;
+			}
 		}
-	} else {
+	else
+		{
 		out = BIO_new_fp(stdout, BIO_NOCLOSE);
 #ifdef OPENSSL_SYS_VMS
 		{
@@ -214,24 +241,44 @@ int MAIN(int argc, char **argv)
 #endif
 	}
 
-	buf_in = OPENSSL_malloc(keysize * 2);
+	if (sigfile)
+		{
+		BIO *sigbio = BIO_new_file(sigfile, "rb");
+		if (!sigbio)
+			{
+			BIO_printf(bio_err, "Can't open signature file %s\n",
+								sigfile);
+			goto end;
+			}
+		siglen = bio_to_mem(&sig, keysize * 10, sigbio);
+		BIO_free(sigbio);
+		if (siglen <= 0)
+			{
+			BIO_printf(bio_err, "Error reading signature data\n");
+			goto end;
+			}
+		}
+	
 	buf_out = OPENSSL_malloc(keysize);
 
 	/* Read the input data */
-	buf_inlen = BIO_read(in, buf_in, keysize * 2);
-	if(buf_inlen <= 0) {
+	buf_inlen = bio_to_mem(&buf_in, keysize * 10, in);
+	if(buf_inlen <= 0)
+		{
 		BIO_printf(bio_err, "Error reading input Data\n");
 		exit(1);
-	}
-	if(rev) {
+		}
+	if(rev)
+		{
 		int i;
 		unsigned char ctmp;
-		for(i = 0; i < buf_inlen/2; i++) {
+		for(i = 0; i < buf_inlen/2; i++)
+			{
 			ctmp = buf_in[i];
 			buf_in[i] = buf_in[buf_inlen - 1 - i];
 			buf_in[buf_inlen - 1 - i] = ctmp;
+			}
 		}
-	}
 	switch(pkey_op)
 		{
 		case EVP_PKEY_OP_VERIFYRECOVER:
@@ -252,30 +299,48 @@ int MAIN(int argc, char **argv)
 		case EVP_PKEY_OP_DECRYPT:
 		rv  = EVP_PKEY_decrypt(ctx, buf_out, &buf_outlen,
 							buf_in, buf_inlen);
-		break;
+		break; 
+
+		case EVP_PKEY_OP_VERIFY:
+		rv  = EVP_PKEY_verify(ctx, sig, siglen, buf_in, buf_inlen);
+		if (rv == 0)
+			BIO_puts(out, "Signature Verification Failure\n");
+		else if (rv == 1)
+			BIO_puts(out, "Signature Verified Successfully\n");
+		if (rv >= 0)
+			goto end;
+		break; 
 
 		}
 
-	if(rv <= 0) {
+	if(rv <= 0)
+		{
 		BIO_printf(bio_err, "Public Key operation error\n");
 		ERR_print_errors(bio_err);
 		goto end;
-	}
+		}
 	ret = 0;
-	if(asn1parse) {
-		if(!ASN1_parse_dump(out, buf_out, buf_outlen, 1, -1)) {
+	if(asn1parse)
+		{
+		if(!ASN1_parse_dump(out, buf_out, buf_outlen, 1, -1))
 			ERR_print_errors(bio_err);
 		}
-	} else if(hexdump) BIO_dump(out, (char *)buf_out, buf_outlen);
-	else BIO_write(out, buf_out, buf_outlen);
+	else if(hexdump)
+		BIO_dump(out, (char *)buf_out, buf_outlen);
+	else
+		BIO_write(out, buf_out, buf_outlen);
 
 	end:
 	if (ctx)
 		EVP_PKEY_CTX_free(ctx);
 	BIO_free(in);
 	BIO_free_all(out);
-	if(buf_in) OPENSSL_free(buf_in);
-	if(buf_out) OPENSSL_free(buf_out);
+	if (buf_in)
+		OPENSSL_free(buf_in);
+	if (buf_out)
+		OPENSSL_free(buf_out);
+	if (sig)
+		OPENSSL_free(sig);
 	return ret;
 }
 
@@ -309,7 +374,7 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
 	EVP_PKEY *pkey = NULL;
 	EVP_PKEY_CTX *ctx = NULL;
 	char *passin = NULL;
-	int rv;
+	int rv = -1;
 	X509 *x;
 	if(((pkey_op == EVP_PKEY_OP_SIGN) || (pkey_op == EVP_PKEY_OP_DECRYPT))
 		&& (key_type != KEY_PRIVKEY))

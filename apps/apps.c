@@ -2267,6 +2267,43 @@ int args_verify(char ***pargs, int *pargc,
 
 	}
 
+/* Read whole contents of a BIO into an allocated memory buffer and
+ * return it.
+ */
+
+int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
+	{
+	BIO *mem;
+	int len, ret;
+	unsigned char tbuf[1024];
+	mem = BIO_new(BIO_s_mem());
+	if (!mem)
+		return -1;
+	for(;;)
+		{
+		if ((maxlen != -1) && maxlen < 1024)
+			len = maxlen;
+		else
+			len = 1024;
+		len = BIO_read(in, tbuf, len);
+		if (len <= 0)
+			break;
+		if (BIO_write(mem, tbuf, len) != len)
+			{
+			BIO_free(mem);
+			return -1;
+			}
+		maxlen -= len;
+
+		if (maxlen == 0)
+			break;
+		}
+	ret = BIO_get_mem_data(mem, (char **)out);
+	BIO_set_flags(mem, BIO_FLAGS_MEM_RDONLY);
+	BIO_free(mem);
+	return ret;
+	}
+
 static void nodes_print(BIO *out, const char *name,
 	STACK_OF(X509_POLICY_NODE) *nodes)
 	{
