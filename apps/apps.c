@@ -2304,6 +2304,24 @@ int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
 	return ret;
 	}
 
+int pkey_ctrl_string(BIO *err, EVP_PKEY_CTX *ctx, char *value)
+	{
+	char *stmp, *vtmp = NULL;
+	stmp = BUF_strdup(value);
+	int rv;
+	if (!stmp)
+		return -1;
+	vtmp = strchr(stmp, ':');
+	if (vtmp)
+		{
+		*vtmp = 0;
+		vtmp++;
+		}
+	rv = EVP_PKEY_CTX_ctrl_str(ctx, stmp, vtmp);
+	OPENSSL_free(stmp);
+	return rv;
+	}
+
 static void nodes_print(BIO *out, const char *name,
 	STACK_OF(X509_POLICY_NODE) *nodes)
 	{

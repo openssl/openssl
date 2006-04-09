@@ -168,7 +168,7 @@ int MAIN(int argc, char **argv)
 			hexdump = 1;
 		else if(!strcmp(*argv, "-sign"))
 			pkey_op = EVP_PKEY_OP_SIGN;
-		else if(!strcmp(*argv, "-verifyr"))
+		else if(!strcmp(*argv, "-verify"))
 			pkey_op = EVP_PKEY_OP_VERIFY;
 		else if(!strcmp(*argv, "-verifyrecover"))
 			pkey_op = EVP_PKEY_OP_VERIFYRECOVER;
