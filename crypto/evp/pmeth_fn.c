@@ -83,7 +83,7 @@ int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
 			unsigned char *sig, int *siglen,
-			unsigned char *tbs, int tbslen)
+			const unsigned char *tbs, int tbslen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->sign)
 		{
@@ -118,8 +118,8 @@ int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx)
 	}
 
 int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
-			unsigned char *sig, int siglen,
-			unsigned char *tbs, int tbslen)
+			const unsigned char *sig, int siglen,
+			const unsigned char *tbs, int tbslen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify)
 		{
@@ -155,7 +155,7 @@ int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
 			unsigned char *rout, int *routlen,
-			unsigned char *sig, int siglen)
+			const unsigned char *sig, int siglen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify_recover)
 		{
@@ -191,7 +191,7 @@ int EVP_PKEY_encrypt_init(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
 			unsigned char *out, int *outlen,
-			unsigned char *in, int inlen)
+			const unsigned char *in, int inlen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->encrypt)
 		{
@@ -227,7 +227,7 @@ int EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx)
 
 int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 			unsigned char *out, int *outlen,
-			unsigned char *in, int inlen)
+			const unsigned char *in, int inlen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->decrypt)
 		{

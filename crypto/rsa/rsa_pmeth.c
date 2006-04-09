@@ -65,7 +65,7 @@
 
 extern int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 		unsigned char *rm, unsigned int *prm_len,
-		unsigned char *sigbuf, unsigned int siglen,
+		const unsigned char *sigbuf, unsigned int siglen,
 		RSA *rsa);
 
 /* RSA pkey context structure */
@@ -124,7 +124,7 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
 	}
 
 static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
-                                        unsigned char *tbs, int tbslen)
+					const unsigned char *tbs, int tbslen)
 	{
 	int ret;
 	RSA_PKEY_CTX *rctx = ctx->data;
@@ -163,7 +163,7 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
 
 static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
 					unsigned char *sig, int *siglen,
-                                        unsigned char *tbs, int tbslen)
+                                        const unsigned char *tbs, int tbslen)
 	{
 	int ret;
 	RSA_PKEY_CTX *rctx = ctx->data;
@@ -207,7 +207,7 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
 	}
 
 static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
-                                        unsigned char *in, int inlen)
+                                        const unsigned char *in, int inlen)
 	{
 	int ret;
 	RSA_PKEY_CTX *rctx = ctx->data;
@@ -220,7 +220,7 @@ static int pkey_rsa_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
 	}
 
 static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
-                                        unsigned char *in, int inlen)
+                                        const unsigned char *in, int inlen)
 	{
 	int ret;
 	RSA_PKEY_CTX *rctx = ctx->data;
