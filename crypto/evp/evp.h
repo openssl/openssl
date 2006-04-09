@@ -914,6 +914,10 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 #define EVP_PKEY_OP_ENCRYPT		8
 #define EVP_PKEY_OP_DECRYPT		9
 
+#define EVP_PKEY_CTRL_MD_NID		1
+
+#define EVP_PKEY_ALG_CTRL		0x1000
+
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey);
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
@@ -1024,6 +1028,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_EXPECTING_A_EC_KEY			 142
 #define EVP_R_INITIALIZATION_ERROR			 134
 #define EVP_R_INPUT_NOT_INITIALIZED			 111
+#define EVP_R_INVALID_DIGEST				 152
 #define EVP_R_INVALID_KEY_LENGTH			 130
 #define EVP_R_INVALID_OPERATION				 148
 #define EVP_R_IV_TOO_LARGE				 102

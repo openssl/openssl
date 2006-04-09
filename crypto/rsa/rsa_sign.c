@@ -142,8 +142,10 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 	return(ret);
 	}
 
-int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
-	     unsigned char *sigbuf, unsigned int siglen, RSA *rsa)
+int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
+		unsigned char *rm, unsigned int *prm_len,
+		unsigned char *sigbuf, unsigned int siglen,
+		RSA *rsa)
 	{
 	int i,ret=0,sigtype;
 	unsigned char *s;
@@ -155,10 +157,14 @@ int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
 		return(0);
 		}
 
-	if((rsa->flags & RSA_FLAG_SIGN_VER) && rsa->meth->rsa_verify)
+	if((dtype == NID_md5_sha1) && rm)
 		{
-		return rsa->meth->rsa_verify(dtype, m, m_len,
-			sigbuf, siglen, rsa);
+		i = RSA_public_decrypt((int)siglen,
+					sigbuf,rm,rsa,RSA_PKCS1_PADDING);
+		if (i <= 0)
+			return 0;
+		*prm_len = i;
+		return 1;
 		}
 
 	s=(unsigned char *)OPENSSL_malloc((unsigned int)siglen);
@@ -212,7 +218,13 @@ int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
 				goto err;
 				}
 			}
-		if (	((unsigned int)sig->digest->length != m_len) ||
+		if (rm)
+			{
+			memcpy(rm, sig->digest->data, sig->digest->length);
+			*prm_len = sig->digest->length;
+			ret = 1;
+			}
+		else if (((unsigned int)sig->digest->length != m_len) ||
 			(memcmp(m,sig->digest->data,m_len) != 0))
 			{
 			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
@@ -230,3 +242,16 @@ err:
 	return(ret);
 	}
 
+int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
+		unsigned char *sigbuf, unsigned int siglen,
+		RSA *rsa)
+	{
+
+	if((rsa->flags & RSA_FLAG_SIGN_VER) && rsa->meth->rsa_verify)
+		{
+		return rsa->meth->rsa_verify(dtype, m, m_len,
+			sigbuf, siglen, rsa);
+		}
+
+	return int_rsa_verify(dtype, m, m_len, NULL, NULL, sigbuf, siglen, rsa);
+	}

@@ -60,7 +60,13 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/rsa.h>
+#include <openssl/evp.h>
 #include "evp_locl.h"
+
+extern int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
+		unsigned char *rm, unsigned int *prm_len,
+		unsigned char *sigbuf, unsigned int siglen,
+		RSA *rsa);
 
 /* RSA pkey context structure */
 
@@ -71,6 +77,10 @@ typedef struct
 	BIGNUM *pub_exp;
 	/* RSA padding mode */
 	int pad_mode;
+	/* nid for message digest */
+	int md_nid;
+	/* Temp buffer */
+	unsigned char *tbuf;
 	} RSA_PKEY_CTX;
 
 static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
@@ -82,7 +92,21 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 	rctx->nbits = 1024;
 	rctx->pub_exp = NULL;
 	rctx->pad_mode = RSA_PKCS1_PADDING;
+	rctx->md_nid = NID_undef;
+	rctx->tbuf = NULL;
+
 	ctx->data = rctx;
+	
+	return 1;
+	}
+
+static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
+	{
+	if (ctx->tbuf)
+		return 1;
+	ctx->tbuf = OPENSSL_malloc(EVP_PKEY_size(pk->pkey));
+	if (!ctx->tbuf)
+		return 0;
 	return 1;
 	}
 
@@ -102,7 +126,31 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
 	{
 	int ret;
 	RSA_PKEY_CTX *rctx = ctx->data;
-	ret = RSA_private_encrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
+
+	if (rctx->md_nid != NID_undef)
+		{
+
+		if (rctx->pad_mode == RSA_X931_PADDING)
+			{
+			if (!setup_tbuf(rctx, ctx))
+				return -1;
+			memcpy(rctx->tbuf, tbs, tbslen);
+			rctx->tbuf[tbslen] = RSA_X931_hash_id(rctx->md_nid);
+			ret = RSA_private_encrypt(tbslen + 1, rctx->tbuf,
+						sig, ctx->pkey->pkey.rsa,
+						RSA_X931_PADDING);
+			}
+		else if (rctx->pad_mode == RSA_PKCS1_PADDING)
+			{
+			unsigned int sltmp;
+			ret = RSA_sign(rctx->md_nid, tbs, tbslen, sig, &sltmp,
+							ctx->pkey->pkey.rsa);
+			}
+		else
+			return -1;
+		}
+	else
+		ret = RSA_private_encrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
 							rctx->pad_mode);
 	if (ret < 0)
 		return ret;
@@ -117,7 +165,38 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
 	{
 	int ret;
 	RSA_PKEY_CTX *rctx = ctx->data;
-	ret = RSA_public_decrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
+
+	if (rctx->md_nid != NID_undef)
+		{
+		if (rctx->pad_mode == RSA_X931_PADDING)
+			{
+			if (!setup_tbuf(rctx, ctx))
+				return -1;
+			ret = RSA_private_encrypt(tbslen, tbs,
+						rctx->tbuf, ctx->pkey->pkey.rsa,
+						RSA_X931_PADDING);
+			if (ret < 1)
+				return 0;
+			if (rctx->tbuf[ret] != RSA_X931_hash_id(rctx->md_nid))
+				{
+				RSAerr(RSA_F_PKEY_RSA_VERIFYRECOVER,
+						RSA_R_ALGORITHM_MISMATCH);
+				return 0;
+				}
+			ret--;
+			memcpy(sig, rctx->tbuf, ret);
+			}
+		else if (rctx->pad_mode == RSA_PKCS1_PADDING)
+			{
+			unsigned int sltmp;
+			ret = int_rsa_verify(rctx->md_nid, NULL, 0, sig, &sltmp,
+					tbs, tbslen, ctx->pkey->pkey.rsa);
+			}
+		else
+			return -1;
+		}
+	else
+		ret = RSA_public_decrypt(tbslen, tbs, sig, ctx->pkey->pkey.rsa,
 							rctx->pad_mode);
 	if (ret < 0)
 		return ret;
@@ -151,22 +230,54 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
 	return 1;
 	}
 
+static int check_padding_nid(int nid, int padding)
+	{
+	if (nid == NID_undef)
+		return 1;
+	if (padding == RSA_NO_PADDING)
+		{
+		RSAerr(RSA_F_CHECK_PADDING_NID, RSA_R_INVALID_PADDING_MODE);
+		return 0;
+		}
+
+	if (padding == RSA_X931_PADDING)
+		{
+		if (RSA_X931_hash_id(nid) == -1)
+			{
+			RSAerr(RSA_F_CHECK_PADDING_NID,
+						RSA_R_INVALID_X931_DIGEST);
+			return 0;
+			}
+		return 1;
+		}
+
+	return 1;
+	}
+			
+
 static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	{
 	RSA_PKEY_CTX *rctx = ctx->data;
 	switch (type)
 		{
-
 		case EVP_PKEY_CTRL_RSA_PADDING:
 		/* TODO: add PSS support */
 		if ((p1 >= RSA_PKCS1_PADDING) && (p1 <= RSA_X931_PADDING))
 			{
 			if (ctx->operation == EVP_PKEY_OP_KEYGEN)
 				return -2;
+			if (!check_padding_nid(rctx->md_nid, p1))
+				return 0;
 			rctx->pad_mode = p1;
 			return 1;
 			}
 		return -2;
+
+		case EVP_PKEY_CTRL_MD_NID:
+		if (!check_padding_nid(p1, rctx->pad_mode))
+			return 0;
+		rctx->md_nid = p1;
+		return 1;
 
 		default:
 		return -2;

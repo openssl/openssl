@@ -179,5 +179,16 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 		EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
 		return -2;
 		}
+	if (!strcmp(name, "digest"))
+		{
+		const EVP_MD *md;
+		if (!value || !(md = EVP_get_digestbyname(value)))
+			{
+			EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_INVALID_DIGEST);
+			return 0;
+			}
+		return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_MD_NID,
+					EVP_MD_type(md), NULL);
+		}
 	return ctx->pmeth->ctrl_str(ctx, name, value);
 	}

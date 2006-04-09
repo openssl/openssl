@@ -143,6 +143,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_EXPECTING_A_EC_KEY)    ,"expecting a ec key"},
 {ERR_REASON(EVP_R_INITIALIZATION_ERROR)  ,"initialization error"},
 {ERR_REASON(EVP_R_INPUT_NOT_INITIALIZED) ,"input not initialized"},
+{ERR_REASON(EVP_R_INVALID_DIGEST)        ,"invalid digest"},
 {ERR_REASON(EVP_R_INVALID_KEY_LENGTH)    ,"invalid key length"},
 {ERR_REASON(EVP_R_INVALID_OPERATION)     ,"invalid operation"},
 {ERR_REASON(EVP_R_IV_TOO_LARGE)          ,"iv too large"},

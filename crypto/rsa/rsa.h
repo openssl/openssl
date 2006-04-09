@@ -196,7 +196,7 @@ struct rsa_st
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, EVP_PKEY_CTRL_RSA_PADDING, \
 				pad, NULL)
 
-#define EVP_PKEY_CTRL_RSA_PADDING	1
+#define EVP_PKEY_CTRL_RSA_PADDING	(EVP_PKEY_ALG_CTRL + 1)
 
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2
@@ -349,7 +349,9 @@ void ERR_load_RSA_strings(void);
 /* Error codes for the RSA functions. */
 
 /* Function codes. */
+#define RSA_F_CHECK_PADDING_NID				 140
 #define RSA_F_MEMORY_LOCK				 100
+#define RSA_F_PKEY_RSA_VERIFYRECOVER			 141
 #define RSA_F_RSA_BUILTIN_KEYGEN			 129
 #define RSA_F_RSA_CHECK_KEY				 123
 #define RSA_F_RSA_EAY_PRIVATE_DECRYPT			 101
@@ -409,10 +411,13 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_DMQ1_NOT_CONGRUENT_TO_D			 125
 #define RSA_R_D_E_NOT_CONGRUENT_TO_1			 123
 #define RSA_R_FIRST_OCTET_INVALID			 133
+#define RSA_R_INVALID_DIGEST				 105
 #define RSA_R_INVALID_HEADER				 137
 #define RSA_R_INVALID_MESSAGE_LENGTH			 131
 #define RSA_R_INVALID_PADDING				 138
+#define RSA_R_INVALID_PADDING_MODE			 141
 #define RSA_R_INVALID_TRAILER				 139
+#define RSA_R_INVALID_X931_DIGEST			 142
 #define RSA_R_IQMP_NOT_INVERSE_OF_Q			 126
 #define RSA_R_KEY_SIZE_TOO_SMALL			 120
 #define RSA_R_LAST_OCTET_INVALID			 134
