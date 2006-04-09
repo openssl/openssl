@@ -2304,11 +2304,11 @@ int bio_to_mem(unsigned char **out, int maxlen, BIO *in)
 	return ret;
 	}
 
-int pkey_ctrl_string(BIO *err, EVP_PKEY_CTX *ctx, char *value)
+int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value)
 	{
+	int rv;
 	char *stmp, *vtmp = NULL;
 	stmp = BUF_strdup(value);
-	int rv;
 	if (!stmp)
 		return -1;
 	vtmp = strchr(stmp, ':');

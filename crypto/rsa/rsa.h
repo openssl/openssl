@@ -192,6 +192,12 @@ struct rsa_st
                                                 * be used for all exponents.
                                                 */
 
+#define EVP_PKEY_CTX_set_rsa_padding(ctx, pad) \
+	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_CTRL_RSA_PADDING, \
+				pad, NULL)
+
+#define EVP_PKEY_CTRL_RSA_PADDING	1
+
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2
 #define RSA_NO_PADDING		3

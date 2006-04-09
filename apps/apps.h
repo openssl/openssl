@@ -286,6 +286,7 @@ int args_verify(char ***pargs, int *pargc,
 			int *badarg, BIO *err, X509_VERIFY_PARAM **pm);
 void policies_print(BIO *out, X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
+int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value);
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1

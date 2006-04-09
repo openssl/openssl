@@ -154,8 +154,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 		else if(!strcmp(*argv, "-engine"))
 			{
-			if (--argc < 1) badarg = 1;
-			engine = *(++argv);
+			if (--argc < 1)
+				badarg = 1;
+			else
+				engine = *(++argv);
 			}
 #endif
 		else if(!strcmp(*argv, "-pubin"))
@@ -178,6 +180,23 @@ int MAIN(int argc, char **argv)
 			pkey_op = EVP_PKEY_OP_ENCRYPT;
 		else if(!strcmp(*argv, "-decrypt"))
 			pkey_op = EVP_PKEY_OP_DECRYPT;
+		else if (strcmp(*argv,"-param") == 0)
+			{
+			if (--argc < 1)
+				badarg = 1;
+			if (!ctx)
+				{
+				BIO_puts(bio_err,
+					"-param command before -inkey\n");
+				badarg = 1;
+				}
+			else if (pkey_ctrl_string(ctx, *(++argv)) <= 0)
+				{
+				BIO_puts(bio_err, "parameter setting error\n");
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			}
 		else badarg = 1;
 		if(badarg)
 			{

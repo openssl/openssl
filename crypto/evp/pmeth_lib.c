@@ -171,7 +171,8 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 
 	}
 
-int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, char *name, char *value)
+int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
+					const char *name, const char *value)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl)
 		{

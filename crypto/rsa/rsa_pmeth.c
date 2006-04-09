@@ -151,6 +151,52 @@ static int pkey_rsa_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
 	return 1;
 	}
 
+static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+	{
+	RSA_PKEY_CTX *rctx = ctx->data;
+	switch (type)
+		{
+
+		case EVP_PKEY_CTRL_RSA_PADDING:
+		/* TODO: add PSS support */
+		if ((p1 >= RSA_PKCS1_PADDING) && (p1 <= RSA_X931_PADDING))
+			{
+			rctx->pad_mode = p1;
+			return 1;
+			}
+		return 0;
+
+		default:
+		return -2;
+
+		}
+	}
+			
+static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
+			const char *type, const char *value)
+	{
+	if (!strcmp(type, "rsa_padding_mode"))
+		{
+		int pm;
+		if (!value)
+			return 0;
+		if (!strcmp(value, "pkcs1"))
+			pm = RSA_PKCS1_PADDING;
+		else if (!strcmp(value, "sslv23"))
+			pm = RSA_SSLV23_PADDING;
+		else if (!strcmp(value, "none"))
+			pm = RSA_NO_PADDING;
+		else if (!strcmp(value, "oeap"))
+			pm = RSA_PKCS1_OAEP_PADDING;
+		else if (!strcmp(value, "x931"))
+			pm = RSA_X931_PADDING;
+		else
+			return -2;
+		return pkey_rsa_ctrl(ctx, EVP_PKEY_CTRL_RSA_PADDING, pm, NULL);
+		}
+	return -2;
+	}
+
 const EVP_PKEY_METHOD rsa_pkey_meth = 
 	{
 	EVP_PKEY_RSA,
@@ -179,7 +225,8 @@ const EVP_PKEY_METHOD rsa_pkey_meth =
 	0,
 	pkey_rsa_decrypt,
 
-	0,0
+	pkey_rsa_ctrl,
+	pkey_rsa_ctrl_str
 
 
 	};
