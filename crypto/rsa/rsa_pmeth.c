@@ -117,6 +117,8 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
 		{
 		if (rctx->pub_exp)
 			BN_free(rctx->pub_exp);
+		if (rctx->tbuf)
+			OPENSSL_free(rctx->tbuf);
 		}
 	OPENSSL_free(rctx);
 	}
@@ -172,18 +174,18 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
 			{
 			if (!setup_tbuf(rctx, ctx))
 				return -1;
-			ret = RSA_private_encrypt(tbslen, tbs,
+			ret = RSA_public_decrypt(tbslen, tbs,
 						rctx->tbuf, ctx->pkey->pkey.rsa,
 						RSA_X931_PADDING);
 			if (ret < 1)
 				return 0;
+			ret--;
 			if (rctx->tbuf[ret] != RSA_X931_hash_id(rctx->md_nid))
 				{
 				RSAerr(RSA_F_PKEY_RSA_VERIFYRECOVER,
 						RSA_R_ALGORITHM_MISMATCH);
 				return 0;
 				}
-			ret--;
 			memcpy(sig, rctx->tbuf, ret);
 			}
 		else if (rctx->pad_mode == RSA_PKCS1_PADDING)
