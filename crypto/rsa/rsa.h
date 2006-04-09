@@ -351,6 +351,7 @@ void ERR_load_RSA_strings(void);
 /* Function codes. */
 #define RSA_F_CHECK_PADDING_NID				 140
 #define RSA_F_MEMORY_LOCK				 100
+#define RSA_F_PKEY_RSA_SIGN				 142
 #define RSA_F_PKEY_RSA_VERIFYRECOVER			 141
 #define RSA_F_RSA_BUILTIN_KEYGEN			 129
 #define RSA_F_RSA_CHECK_KEY				 123
@@ -412,6 +413,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_D_E_NOT_CONGRUENT_TO_1			 123
 #define RSA_R_FIRST_OCTET_INVALID			 133
 #define RSA_R_INVALID_DIGEST				 105
+#define RSA_R_INVALID_DIGEST_LENGTH			 143
 #define RSA_R_INVALID_HEADER				 137
 #define RSA_R_INVALID_MESSAGE_LENGTH			 131
 #define RSA_R_INVALID_PADDING				 138

@@ -220,9 +220,18 @@ int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 			}
 		if (rm)
 			{
-			memcpy(rm, sig->digest->data, sig->digest->length);
-			*prm_len = sig->digest->length;
-			ret = 1;
+			const EVP_MD *md;
+			md = EVP_get_digestbynid(dtype);
+			if (md && (EVP_MD_size(md) != sig->digest->length))
+				RSAerr(RSA_F_RSA_VERIFY,
+						RSA_R_INVALID_DIGEST_LENGTH);
+			else
+				{
+				memcpy(rm, sig->digest->data,
+							sig->digest->length);
+				*prm_len = sig->digest->length;
+				ret = 1;
+				}
 			}
 		else if (((unsigned int)sig->digest->length != m_len) ||
 			(memcmp(m,sig->digest->data,m_len) != 0))

@@ -187,8 +187,8 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 			EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_INVALID_DIGEST);
 			return 0;
 			}
-		return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_MD_NID,
-					EVP_MD_type(md), NULL);
+		return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_MD,
+								0, (void *)md);
 		}
 	return ctx->pmeth->ctrl_str(ctx, name, value);
 	}
