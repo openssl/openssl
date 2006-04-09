@@ -193,7 +193,7 @@ struct rsa_st
                                                 */
 
 #define EVP_PKEY_CTX_set_rsa_padding(ctx, pad) \
-	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_CTRL_RSA_PADDING, \
+	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, EVP_PKEY_CTRL_RSA_PADDING, \
 				pad, NULL)
 
 #define EVP_PKEY_CTRL_RSA_PADDING	1

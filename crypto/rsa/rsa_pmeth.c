@@ -161,10 +161,12 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		/* TODO: add PSS support */
 		if ((p1 >= RSA_PKCS1_PADDING) && (p1 <= RSA_X931_PADDING))
 			{
+			if (ctx->operation == EVP_PKEY_OP_KEYGEN)
+				return -2;
 			rctx->pad_mode = p1;
 			return 1;
 			}
-		return 0;
+		return -2;
 
 		default:
 		return -2;
@@ -192,7 +194,7 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 			pm = RSA_X931_PADDING;
 		else
 			return -2;
-		return pkey_rsa_ctrl(ctx, EVP_PKEY_CTRL_RSA_PADDING, pm, NULL);
+		return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);
 		}
 	return -2;
 	}
