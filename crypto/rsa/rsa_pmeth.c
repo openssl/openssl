@@ -79,6 +79,8 @@ typedef struct
 	int pad_mode;
 	/* message digest */
 	const EVP_MD *md;
+	/* PSS seedlength */
+	int pss_seedlen;
 	/* Temp buffer */
 	unsigned char *tbuf;
 	} RSA_PKEY_CTX;
@@ -94,6 +96,8 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 	rctx->pad_mode = RSA_PKCS1_PADDING;
 	rctx->md = NULL;
 	rctx->tbuf = NULL;
+
+	rctx->pss_seedlen = 0;
 
 	ctx->data = rctx;
 	
@@ -321,13 +325,18 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	switch (type)
 		{
 		case EVP_PKEY_CTRL_RSA_PADDING:
-		/* TODO: add PSS support */
-		if ((p1 >= RSA_PKCS1_PADDING) && (p1 <= RSA_X931_PADDING))
+		if ((p1 >= RSA_PKCS1_PADDING) && (p1 <= RSA_PKCS1_PSS_PADDING))
 			{
-			if (ctx->operation == EVP_PKEY_OP_KEYGEN)
+			if (ctx->operation & EVP_PKEY_OP_TYPE_GEN)
 				return -2;
 			if (!check_padding_md(rctx->md, p1))
 				return 0;
+			if ((p1 == RSA_PKCS1_PSS_PADDING) 
+				&& !(ctx->operation & EVP_PKEY_OP_TYPE_SIG))
+				return -2;
+			if ((p1 == RSA_PKCS1_OAEP_PADDING) 
+				&& !(ctx->operation & EVP_PKEY_OP_TYPE_CRYPT))
+				return -2;
 			rctx->pad_mode = p1;
 			return 1;
 			}
@@ -363,6 +372,8 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 			pm = RSA_PKCS1_OAEP_PADDING;
 		else if (!strcmp(value, "x931"))
 			pm = RSA_X931_PADDING;
+		else if (!strcmp(value, "pss"))
+			pm = RSA_PKCS1_PSS_PADDING;
 		else
 			return -2;
 		return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);
