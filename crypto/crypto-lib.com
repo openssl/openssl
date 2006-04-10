@@ -78,10 +78,10 @@ $!
 $ ENCRYPT_TYPES = "Basic,"+ -
 		  "OBJECTS,"+ -
 		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,"+ -
-		  "DES,RC2,RC4,RC5,IDEA,BF,CAST,"+ -
-		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,"+ -
+		  "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,"+ -
+		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
-		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
+		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
 		  "STORE,PQUEUE,TS"
 $!
@@ -195,7 +195,8 @@ $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec2_smpl,ec2_mult,ec_ameth,eck_prn"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
-	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr,rsa_ameth,rsa_prn"
+	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr,rsa_ameth,rsa_prn,"+ -
+	"rsa_pmeth"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
 	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth,dsa_prn"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
@@ -234,6 +235,7 @@ $ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wp," + -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
+$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn"	
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,"+ -
 	"a_enum,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -
