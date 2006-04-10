@@ -219,3 +219,26 @@ size_t BUF_strlcat(char *dst, const char *src, size_t size)
 		l++;
 	return l + BUF_strlcpy(dst, src, size);
 	}
+
+void BUF_reverse(unsigned char *out, unsigned char *in, size_t size)
+	{
+	size_t i;
+	if (in)
+		{
+		out += size - 1;
+		for (i = 0; i < size; i++)
+			*in++ = *out--;
+		}
+	else
+		{
+		unsigned char *q;
+		char c;
+		q = out + size - 1;
+		for (i = 0; i < size/2; i++)
+			{
+			c = *q;
+			*q-- = *out;
+			*out++ = c;
+			}
+		}
+	}
