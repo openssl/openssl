@@ -212,6 +212,7 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
 			ret = int_rsa_verify(EVP_MD_type(rctx->md),
 						NULL, 0, rout, &sltmp,
 					sig, siglen, ctx->pkey->pkey.rsa);
+			ret = sltmp;
 			}
 		else
 			return -1;

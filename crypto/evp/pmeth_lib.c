@@ -156,7 +156,7 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 		return -1;
 		}
 
-	if ((optype != -1) && (ctx->operation != optype))
+	if ((optype != -1) && !(ctx->operation & optype))
 		{
 		EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_INVALID_OPERATION);
 		return -1;
@@ -187,8 +187,7 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 			EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_INVALID_DIGEST);
 			return 0;
 			}
-		return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_MD,
-								0, (void *)md);
+		return EVP_PKEY_CTX_set_signature_md(ctx, md);
 		}
 	return ctx->pmeth->ctrl_str(ctx, name, value);
 	}
