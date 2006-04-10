@@ -353,13 +353,11 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		case EVP_PKEY_CTRL_RSA_PADDING:
 		if ((p1 >= RSA_PKCS1_PADDING) && (p1 <= RSA_PKCS1_PSS_PADDING))
 			{
-			if (ctx->operation & EVP_PKEY_OP_TYPE_GEN)
-				return -2;
 			if (!check_padding_md(rctx->md, p1))
 				return 0;
 			if (p1 == RSA_PKCS1_PSS_PADDING) 
 				{
-				if (!(ctx->operation & EVP_PKEY_OP_TYPE_SIG))
+				if (ctx->operation == EVP_PKEY_OP_VERIFYRECOVER)
 					return -2;
 				if (!rctx->md)
 					rctx->md = EVP_sha1();
@@ -375,6 +373,14 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 			return 1;
 			}
 		return -2;
+
+		case EVP_PKEY_CTRL_RSA_PSS_SALTLEN:
+		if (p1 < -2)
+			return -2;
+		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING)
+			return -2;
+		rctx->saltlen = p1;
+		return 1;
 
 		case EVP_PKEY_CTRL_MD:
 		if (!check_padding_md(p2, rctx->pad_mode))
@@ -411,6 +417,12 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 		else
 			return -2;
 		return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);
+		}
+	if (!strcmp(type, "rsa_pss_saltlen"))
+		{
+		int saltlen;
+		saltlen = atoi(value);
+		return EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, saltlen);
 		}
 	return -2;
 	}
