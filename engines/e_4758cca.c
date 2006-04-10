@@ -92,7 +92,7 @@ static int cca_rsa_priv_dec(int flen, const unsigned char *from,
 static int cca_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
 		unsigned char *sigret, unsigned int *siglen, const RSA *rsa);
 static int cca_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
-		unsigned char *sigbuf, unsigned int siglen, const RSA *rsa);
+	const unsigned char *sigbuf, unsigned int siglen, const RSA *rsa);
 
 /* utility functions */
 /*-----------------------*/
@@ -618,7 +618,7 @@ static int cca_rsa_priv_dec(int flen, const unsigned char *from,
 #define SSL_SIG_LEN 36
 
 static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
-		unsigned char *sigbuf, unsigned int siglen, const RSA *rsa)
+	const unsigned char *sigbuf, unsigned int siglen, const RSA *rsa)
 	{
 	long returnCode;
 	long reasonCode;
@@ -727,7 +727,8 @@ static int cca_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
 
 	digitalSignatureVerify(&returnCode, &reasonCode, &exitDataLength,
 		exitData, &ruleArrayLength, ruleArray, &keyTokenLength,
-		keyToken, &length, hashBuffer, &lsiglen, sigbuf);
+		keyToken, &length, hashBuffer, &lsiglen,
+						(unsigned char *)sigbuf);
 
 	if (type == NID_sha1 || type == NID_md5)
 		{

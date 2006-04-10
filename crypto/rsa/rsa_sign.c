@@ -144,7 +144,7 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 
 int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 		unsigned char *rm, unsigned int *prm_len,
-		unsigned char *sigbuf, unsigned int siglen,
+		const unsigned char *sigbuf, unsigned int siglen,
 		RSA *rsa)
 	{
 	int i,ret=0,sigtype;
@@ -252,7 +252,7 @@ err:
 	}
 
 int RSA_verify(int dtype, const unsigned char *m, unsigned int m_len,
-		unsigned char *sigbuf, unsigned int siglen,
+		const unsigned char *sigbuf, unsigned int siglen,
 		RSA *rsa)
 	{
 

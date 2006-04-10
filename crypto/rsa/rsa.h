@@ -117,7 +117,8 @@ struct rsa_meth_st
 		unsigned char *sigret, unsigned int *siglen, const RSA *rsa);
 	int (*rsa_verify)(int dtype,
 		const unsigned char *m, unsigned int m_length,
-		unsigned char *sigbuf, unsigned int siglen, const RSA *rsa);
+		const unsigned char *sigbuf, unsigned int siglen,
+								const RSA *rsa);
 /* If this callback is NULL, the builtin software RSA key-gen will be used. This
  * is for behavioural compatibility whilst the code gets rewired, but one day
  * it would be nice to assume there are no such things as "builtin software"
@@ -281,7 +282,7 @@ RSA *d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length,
 int RSA_sign(int type, const unsigned char *m, unsigned int m_length,
 	unsigned char *sigret, unsigned int *siglen, RSA *rsa);
 int RSA_verify(int type, const unsigned char *m, unsigned int m_length,
-	unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
+	const unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
 
 /* The following 2 function sign and verify a ASN1_OCTET_STRING
  * object inside PKCS#1 padded RSA encryption */
