@@ -255,7 +255,9 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
-	if (outformat == FORMAT_PEM) 
+	if (do_param)
+		PEM_write_bio_Parameters(out, pkey);
+	else if (outformat == FORMAT_PEM) 
 		PEM_write_bio_PrivateKey(out, pkey, cipher, NULL, 0,
 								NULL, pass);
 	else if (outformat == FORMAT_ASN1)
