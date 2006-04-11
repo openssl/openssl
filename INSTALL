@@ -206,6 +206,10 @@
                        compile programs with libcrypto or libssl.
        lib             Contains the OpenSSL library files themselves.
 
+     Use "make install_sw" to install the software without documentation,
+     and "install_docs_html" to install HTML renditions of the manual
+     pages.
+
      Package builders who want to configure the library for standard
      locations, but have the package installed somewhere else so that
      it can easily be packaged, can use

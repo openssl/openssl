@@ -130,6 +130,8 @@ MANDIR=$(OPENSSLDIR)/man
 MAN1=1
 MAN3=3
 MANSUFFIX=
+HTMLSUFFIX=html
+HTMLDIR=$(OPENSSLDIR)/html
 SHELL=/bin/sh
 
 TOP=    .
@@ -539,6 +541,27 @@ install_sw:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/libssl.pc
 	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/openssl.pc
+
+install_html_docs:
+	here="`pwd`"; \
+	for subdir in apps crypto ssl; do \
+		mkdir -p $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir; \
+		for i in doc/$$subdir/*.pod; do \
+			fn=`basename $$i .pod`; \
+			echo "installing html/$$fn.$(HTMLSUFFIX)"; \
+			cat $$i \
+			| sed -r 's/L<([^)]*)(\([0-9]\))?\|([^)]*)(\([0-9]\))?>/L<\1|\3>/g' \
+			| pod2html --podroot=doc --htmlroot=.. --podpath=apps:crypto:ssl \
+			| sed -r 's/<!DOCTYPE.*//g' \
+			> $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir/$$fn.$(HTMLSUFFIX); \
+			$(PERL) util/extract-names.pl < $$i | \
+				grep -v $$filecase "^$$fn\$$" | \
+				(cd $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir; \
+				 while read n; do \
+					$$here/util/point.sh $$fn.$(HTMLSUFFIX) "$$n".$(HTMLSUFFIX); \
+				 done); \
+		done; \
+	done
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \
