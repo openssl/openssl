@@ -422,6 +422,7 @@ static int dladdr(void *address, Dl_info *dl)
 
 static int dlfcn_pathbyaddr(void *addr,char *path,int sz)
 	{
+#ifdef HAVE_DLINFO
 	Dl_info dli;
 	int len;
 
@@ -443,6 +444,7 @@ static int dlfcn_pathbyaddr(void *addr,char *path,int sz)
 		}
 
 	ERR_add_error_data(4, "dlfcn_pathbyaddr(): ", dlerror());
+#endif
 	return -1;
 	}
 

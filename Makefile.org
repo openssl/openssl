@@ -377,7 +377,7 @@ gentests:
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on generate );
 
 dclean:
-	rm -f *.bak
+	rm -rf *.bak include/openssl certs/.0
 	@set -e; target=dclean; $(RECURSIVE_BUILD_CMD)
 
 rehash: rehash.time

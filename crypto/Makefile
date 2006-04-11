@@ -135,6 +135,7 @@ clean:
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
+	rm -f opensslconf.h
 	@target=dclean; $(RECURSIVE_MAKE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
