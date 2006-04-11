@@ -386,6 +386,18 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		rctx->saltlen = p1;
 		return 1;
 
+		case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
+		if (p1 < 256)
+			return -2;
+		rctx->nbits = p1;
+		return 1;
+
+		case EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP:
+		if (!p2)
+			return -2;
+		rctx->pub_exp = p2;
+		return 1;
+
 		case EVP_PKEY_CTRL_MD:
 		if (!check_padding_md(p2, rctx->pad_mode))
 			return 0;
@@ -422,12 +434,33 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 			return -2;
 		return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);
 		}
+
 	if (!strcmp(type, "rsa_pss_saltlen"))
 		{
 		int saltlen;
 		saltlen = atoi(value);
 		return EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, saltlen);
 		}
+
+	if (!strcmp(type, "rsa_keygen_bits"))
+		{
+		int nbits;
+		nbits = atoi(value);
+		return EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, nbits);
+		}
+
+	if (!strcmp(type, "rsa_keygen_pubexp"))
+		{
+		int ret;
+		BIGNUM *pubexp = NULL;
+		if (!BN_asc2bn(&pubexp, value))
+			return 0;
+		ret = EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, pubexp);
+		if (ret <= 0)
+			BN_free(pubexp);
+		return ret;
+		}
+
 	return -2;
 	}
 

@@ -203,8 +203,19 @@ struct rsa_st
 				EVP_PKEY_CTRL_RSA_PSS_SALTLEN, \
 				len, NULL)
 
+#define EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits) \
+	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN, \
+				EVP_PKEY_CTRL_RSA_KEYGEN_BITS, bits, NULL)
+
+#define EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, pubexp) \
+	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN, \
+				EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp)
+
 #define EVP_PKEY_CTRL_RSA_PADDING	(EVP_PKEY_ALG_CTRL + 1)
 #define EVP_PKEY_CTRL_RSA_PSS_SALTLEN	(EVP_PKEY_ALG_CTRL + 2)
+
+#define EVP_PKEY_CTRL_RSA_KEYGEN_BITS	(EVP_PKEY_ALG_CTRL + 3)
+#define EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP	(EVP_PKEY_ALG_CTRL + 4)
 
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2
