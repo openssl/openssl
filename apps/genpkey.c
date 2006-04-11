@@ -242,7 +242,8 @@ int MAIN(int argc, char **argv)
 		{
 		if (EVP_PKEY_paramgen(ctx, &pkey) <= 0)
 			{
-			BIO_puts(bio_err, "Error generating key\n");
+			BIO_puts(bio_err, "Error generating parameters\n");
+			ERR_print_errors(bio_err);
 			goto end;
 			}
 		}
@@ -251,6 +252,7 @@ int MAIN(int argc, char **argv)
 		if (EVP_PKEY_keygen(ctx, &pkey) <= 0)
 			{
 			BIO_puts(bio_err, "Error generating key\n");
+			ERR_print_errors(bio_err);
 			goto end;
 			}
 		}
