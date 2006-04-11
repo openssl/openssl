@@ -4,6 +4,12 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) New utility "genpkey" this is analagous to "genrsa" etc except it can
+     generate keys for any algorithm. Extend and update EVP_PKEY_METHOD to
+     support key and parameter generation and add initial key generation
+     functionality for RSA.
+     [Steve Henson]
+
   *) Add functions for main EVP_PKEY_method operations. The undocumented
      functions EVP_PKEY_{encrypt,decrypt} have been renamed to
      EVP_PKEY_{encrypt,decrypt}_old. 
@@ -27,7 +33,7 @@
      [Steve Henson]
 
   *) New utilities pkey and pkeyparam. These are similar to algorithm specific
-     utilities such as rsa, dsa, dsaparam etc except they processes any key
+     utilities such as rsa, dsa, dsaparam etc except they process any key
      type.
      [Steve Henson]
 

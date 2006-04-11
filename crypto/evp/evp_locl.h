@@ -235,7 +235,6 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 			     EVP_CIPHER_get_asn1_iv, \
 			     NULL)
 
-
 struct evp_pkey_ctx_st
 	{
 	/* Method associated with this operation */
@@ -246,6 +245,13 @@ struct evp_pkey_ctx_st
 	int operation;
 	/* Algorithm specific data */
 	void *data;
+	/* Application specific data */
+	void *app_data;
+	/* Keygen callback */
+	EVP_PKEY_gen_cb *pkey_gencb;
+	/* implementation specific keygen data */
+	int *keygen_info;
+	int keygen_info_count;
 	} /* EVP_PKEY_CTX */;
 
 struct evp_pkey_method_st
@@ -257,10 +263,10 @@ struct evp_pkey_method_st
 	void (*cleanup)(EVP_PKEY_CTX *ctx);
 
 	int (*paramgen_init)(EVP_PKEY_CTX *ctx);
-	int (*paramgen)(EVP_PKEY_CTX *ctx);
+	int (*paramgen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
 
 	int (*keygen_init)(EVP_PKEY_CTX *ctx);
-	int (*keygen)(EVP_PKEY_CTX *ctx);
+	int (*keygen)(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
 
 	int (*sign_init)(EVP_PKEY_CTX *ctx);
 	int (*sign)(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
@@ -296,3 +302,5 @@ struct evp_pkey_method_st
 
 
 	} /* EVP_PKEY_METHOD */;
+
+void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);

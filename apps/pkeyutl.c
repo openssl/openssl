@@ -435,7 +435,7 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
 	if (!pkey)
 		goto end;
 
-	ctx = EVP_PKEY_CTX_new(pkey);
+	ctx = EVP_PKEY_CTX_new(pkey, NULL);
 
 	EVP_PKEY_free(pkey);
 

@@ -101,20 +101,25 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type, ENGINE *e)
 	return *ret;
 	}
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey)
+static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 	{
 	EVP_PKEY_CTX *ret;
 	const EVP_PKEY_METHOD *pmeth;
-	if (!pkey || !pkey->ameth)
-		return NULL;
-	pmeth = EVP_PKEY_meth_find(pkey->ameth->pkey_id, NULL);
+	if (id == -1)
+		{
+		if (!pkey || !pkey->ameth)
+			return NULL;
+		id = pkey->ameth->pkey_id;
+		}
+	pmeth = EVP_PKEY_meth_find(id, e);
 	if (pmeth == NULL)
 		return NULL;
 	ret = OPENSSL_malloc(sizeof(EVP_PKEY_CTX));
 	ret->pmeth = pmeth;
 	ret->operation = EVP_PKEY_OP_UNDEFINED;
-	CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
 	ret->pkey = pkey;
+	if (pkey)
+		CRYPTO_add(&pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
 	ret->data = NULL;
 
 	if (pmeth->init)
@@ -127,6 +132,16 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey)
 		}
 
 	return ret;
+	}
+
+EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e)
+	{
+	return int_ctx_new(pkey, e, -1);
+	}
+
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
+	{
+	return int_ctx_new(NULL, e, id);
 	}
 
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
@@ -190,4 +205,24 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 		return EVP_PKEY_CTX_set_signature_md(ctx, md);
 		}
 	return ctx->pmeth->ctrl_str(ctx, name, value);
+	}
+
+void EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data)
+	{
+	ctx->data = data;
+	}
+
+void *EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx)
+	{
+	return ctx->data;
+	}
+
+void EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data)
+	{
+	ctx->app_data = data;
+	}
+
+void *EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx)
+	{
+	return ctx->app_data;
 	}

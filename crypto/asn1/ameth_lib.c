@@ -160,6 +160,8 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(const char *str, int len)
 	{
 	int i;
 	const EVP_PKEY_ASN1_METHOD *ameth;
+	if (len == -1)
+		len = strlen(str);
 	for (i = 0; i < EVP_PKEY_asn1_get_count(); i++)
 		{
 		ameth = EVP_PKEY_asn1_get0(i);

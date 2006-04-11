@@ -22,6 +22,7 @@ extern int ecparam_main(int argc,char *argv[]);
 extern int x509_main(int argc,char *argv[]);
 extern int genrsa_main(int argc,char *argv[]);
 extern int gendsa_main(int argc,char *argv[]);
+extern int genpkey_main(int argc,char *argv[]);
 extern int s_server_main(int argc,char *argv[]);
 extern int s_client_main(int argc,char *argv[]);
 extern int speed_main(int argc,char *argv[]);
@@ -100,6 +101,7 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_DSA
 	{FUNC_TYPE_GENERAL,"gendsa",gendsa_main},
 #endif
+	{FUNC_TYPE_GENERAL,"genpkey",genpkey_main},
 #if !defined(OPENSSL_NO_SOCK) && !(defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_SSL3))
 	{FUNC_TYPE_GENERAL,"s_server",s_server_main},
 #endif
