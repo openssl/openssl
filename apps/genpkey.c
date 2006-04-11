@@ -87,6 +87,8 @@ int MAIN(int argc, char **argv)
 	int badarg = 0;
 	int ret = 1;
 
+	int do_param = -1;
+
 	if (bio_err == NULL)
 		bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
 
@@ -127,6 +129,8 @@ int MAIN(int argc, char **argv)
 			if (!args[1])
 				goto bad;
 			args++;
+			if (do_param == 1)
+				goto bad;
 			if (!init_keygen_file(bio_err, &ctx, *args, e))
 				goto end;
 			}
@@ -143,7 +147,9 @@ int MAIN(int argc, char **argv)
 			{
 			if (!args[1])
 				goto bad;
-			if (!init_gen_str(bio_err, &ctx, *(++args), e, 0))
+			if (do_param == -1)
+				do_param = 0;
+			if (!init_gen_str(bio_err, &ctx, *(++args),e, do_param))
 				goto end;
 			}
 		else if (strcmp(*args,"-param") == 0)
@@ -162,6 +168,12 @@ int MAIN(int argc, char **argv)
 				goto end;
 				}
 			}
+		else if (strcmp(*args,"-genparam") == 0)
+			{
+			if (ctx)
+				goto bad;
+			do_param = 1;
+			}
 		else if (strcmp(*args,"-text") == 0)
 			text=1;
 		else
@@ -173,6 +185,8 @@ int MAIN(int argc, char **argv)
 								*args + 1);
 				badarg = 1;
 				}
+			if (do_param == 1)
+				badarg = 1;
 			}
 		args++;
 		}
@@ -224,10 +238,21 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY_CTX_set_cb(ctx, genpkey_cb);
 	EVP_PKEY_CTX_set_app_data(ctx, bio_err);
 
-	if (EVP_PKEY_keygen(ctx, &pkey) <= 0)
+	if (do_param)
 		{
-		BIO_puts(bio_err, "Error generating key\n");
-		goto end;
+		if (EVP_PKEY_paramgen(ctx, &pkey) <= 0)
+			{
+			BIO_puts(bio_err, "Error generating key\n");
+			goto end;
+			}
+		}
+	else
+		{
+		if (EVP_PKEY_keygen(ctx, &pkey) <= 0)
+			{
+			BIO_puts(bio_err, "Error generating key\n");
+			goto end;
+			}
 		}
 
 	if (outformat == FORMAT_PEM) 
@@ -243,7 +268,12 @@ int MAIN(int argc, char **argv)
 
 
 	if (text)
-		EVP_PKEY_print_private(out, pkey, 0, NULL);
+		{
+		if (do_param)
+			EVP_PKEY_print_params(out, pkey, 0, NULL);
+		else
+			EVP_PKEY_print_private(out, pkey, 0, NULL);
+		}
 
 	ret = 0;
 
