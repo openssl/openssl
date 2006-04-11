@@ -169,6 +169,10 @@ typedef unsigned int u_int;
 #undef FIONBIO
 #endif
 
+#if defined(OPENSSL_SYS_BEOS_R5)
+#include <fcntl.h>
+#endif
+
 #undef PROG
 #define PROG	s_client_main
 
@@ -379,8 +383,11 @@ int MAIN(int argc, char **argv)
 	char *engine_id=NULL;
 	ENGINE *e=NULL;
 #endif
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
 	struct timeval tv;
+#if defined(OPENSSL_SYS_BEOS_R5)
+	int stdin_set = 0;
+#endif
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -949,7 +956,7 @@ re_start:
 
 		if (!ssl_pending)
 			{
-#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE)
+#if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined (OPENSSL_SYS_BEOS_R5)
 			if (tty_on)
 				{
 				if (read_tty)  FD_SET(fileno(stdin),&readfds);
@@ -1009,6 +1016,25 @@ re_start:
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
 					NULL,NULL);
 			}
+#elif defined(OPENSSL_SYS_BEOS_R5)
+			/* Under BeOS-R5 the situation is similar to DOS */
+			i=0;
+			stdin_set = 0;
+			(void)fcntl(fileno(stdin), F_SETFL, O_NONBLOCK);
+			if(!write_tty) {
+				if(read_tty) {
+					tv.tv_sec = 1;
+					tv.tv_usec = 0;
+					i=select(width,(void *)&readfds,(void *)&writefds,
+						 NULL,&tv);
+					if (read(fileno(stdin), sbuf, 0) >= 0)
+						stdin_set = 1;
+					if (!i && (stdin_set != 1 || !read_tty))
+						continue;
+				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
+					 NULL,NULL);
+			}
+			(void)fcntl(fileno(stdin), F_SETFL, 0);
 #else
 			i=select(width,(void *)&readfds,(void *)&writefds,
 				 NULL,NULL);
@@ -1089,8 +1115,8 @@ re_start:
 				goto shut;
 				}
 			}
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
-		/* Assume Windows/DOS can always write */
+#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
+		/* Assume Windows/DOS/BeOS can always write */
 		else if (!ssl_pending && write_tty)
 #else
 		else if (!ssl_pending && FD_ISSET(fileno(stdout),&writefds))
@@ -1178,6 +1204,8 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 #endif
 #elif defined (OPENSSL_SYS_NETWARE)
 		else if (_kbhit())
+#elif defined(OPENSSL_SYS_BEOS_R5)
+		else if (stdin_set)
 #else
 		else if (FD_ISSET(fileno(stdin),&readfds))
 #endif

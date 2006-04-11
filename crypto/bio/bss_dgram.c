@@ -341,6 +341,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 
         memcpy(&(data->peer), to, sizeof(struct sockaddr));
         break;
+#if defined(SO_RCVTIMEO)
 	case BIO_CTRL_DGRAM_SET_RECV_TIMEOUT:
 		if ( setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, ptr,
 			sizeof(struct timeval)) < 0)
@@ -351,6 +352,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ptr, (void *)&ret) < 0)
 			{ perror("getsockopt"); ret = -1; }
 		break;
+#endif
+#if defined(SO_SNDTIMEO)
 	case BIO_CTRL_DGRAM_SET_SEND_TIMEOUT:
 		if ( setsockopt(b->num, SOL_SOCKET, SO_SNDTIMEO, ptr,
 			sizeof(struct timeval)) < 0)
@@ -361,6 +364,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ptr, (void *)&ret) < 0)
 			{ perror("getsockopt"); ret = -1; }
 		break;
+#endif
 	case BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP:
 		/* fall-through */
 	case BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP:

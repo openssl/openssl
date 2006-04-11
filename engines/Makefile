@@ -93,6 +93,7 @@ install:
 			( echo installing $$l; \
 			  if [ "$(PLATFORM)" != "Cygwin" ]; then \
 				case "$(CFLAGS)" in \
+				*DSO_BEOS*)	sfx="so";;	\
 				*DSO_DLFCN*)	sfx="so";;	\
 				*DSO_DL*)	sfx="sl";;	\
 				*)		sfx="bad";;	\

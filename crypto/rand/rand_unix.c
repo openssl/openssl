@@ -205,6 +205,16 @@ int RAND_poll(void)
 
 			do
 				{
+#if defined(OPENSSL_SYS_BEOS_R5)
+				/* select() is broken in BeOS R5, so we simply 
+				 *  try to read something and snooze if we couldn't: */
+				r=read(fd,(unsigned char *)tmpbuf+n,
+				       ENTROPY_NEEDED-n);
+				if (r > 0)
+					n += r;
+				else if (r == 0)
+					snooze(t.tv_usec);
+#else
 				FD_ZERO(&fset);
 				FD_SET(fd, &fset);
 				r = -1;
@@ -218,7 +228,7 @@ int RAND_poll(void)
 					if (r > 0)
 						n += r;
 					}
-
+#endif
 				/* Some Unixen will update t, some
 				   won't.  For those who won't, give
 				   up here, otherwise, we will do
@@ -266,6 +276,14 @@ int RAND_poll(void)
 
 	l=time(NULL);
 	RAND_add(&l,sizeof(l),0.0);
+
+#if defined(OPENSSL_SYS_BEOS)
+	{
+	system_info sysInfo;
+	get_system_info(&sysInfo);
+	RAND_add(&sysInfo,sizeof(sysInfo),0);
+	}
+#endif
 
 #if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	return 1;

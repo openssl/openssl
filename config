@@ -122,6 +122,14 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	echo "${MACHINE}-ibm-aix3"; exit 0
 	;;
 
+    BeOS:*:BePC)
+    if [ -e /boot/develop/headers/be/bone ]; then
+		echo "beos-x86-bone"; exit 0
+	else
+		echo "beos-x86-r5"; exit 0
+	fi
+	;;
+
     dgux:*)
 	echo "${MACHINE}-dg-dgux"; exit 0
 	;;
@@ -759,6 +767,7 @@ case "$GUESSOS" in
   t3e-cray-unicosmk) OUT="cray-t3e" ;;
   j90-cray-unicos) OUT="cray-j90" ;;
   nsr-tandem-nsk) OUT="tandem-c89" ;;
+  beos-*) OUT="$GUESSOS" ;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 

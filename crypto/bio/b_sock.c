@@ -84,6 +84,11 @@
 static int wsa_init_done=0;
 #endif
 
+#if defined(OPENSSL_SYS_BEOS_BONE)		
+/* BONE's IP6 support is incomplete */
+#undef AF_INET6
+#endif
+
 #if 0
 static unsigned long BIO_ghbn_hits=0L;
 static unsigned long BIO_ghbn_miss=0L;
@@ -219,6 +224,10 @@ int BIO_sock_error(int sock)
 	{
 	int j,i;
 	int size;
+		 
+#if defined(OPENSSL_SYS_BEOS_R5)
+	return 0;
+#endif
 		 
 	size=sizeof(int);
 	/* Note: under Windows the third parameter is of type (char *)
@@ -799,7 +808,7 @@ int BIO_accept(int sock, char **addr)
 	if (addr == NULL) goto end;
 
 #ifdef EAI_FAMILY
-# ifdef OPENSSL_SYS_VMS
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_BEOS_BONE)
 #  define SOCKLEN_T size_t
 # else
 #  define SOCKLEN_T socklen_t

@@ -4,6 +4,13 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) BeOS support.
+     [Oliver Tappe <zooey@hirschkaefer.de>]
+
+  *) New make target "install_html_docs" installs HTML renditions of the
+     manual pages.
+     [Oliver Tappe <zooey@hirschkaefer.de>]
+
   *) New utility "genpkey" this is analagous to "genrsa" etc except it can
      generate keys for any algorithm. Extend and update EVP_PKEY_METHOD to
      support key and parameter generation and add initial key generation

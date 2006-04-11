@@ -436,6 +436,8 @@ unsigned long CRYPTO_thread_id(void)
 		ret=(unsigned long)GetCurrentThreadId();
 #elif defined(GETPID_IS_MEANINGLESS)
 		ret=1L;
+#elif defined(OPENSSL_SYS_BEOS)
+		ret=(unsigned long)find_thread(NULL);
 #else
 		ret=(unsigned long)getpid();
 #endif
