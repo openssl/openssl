@@ -2673,7 +2673,7 @@ int raw_read_stdin(void *buf,int siz)
 #endif
 
 #if defined(_WIN32) && defined(STD_OUTPUT_HANDLE)
-int raw_write_stdout(void *buf,int siz)
+int raw_write_stdout(const void *buf,int siz)
 	{
 	DWORD n;
 	if (WriteFile(GetStdHandle(STD_OUTPUT_HANDLE),buf,siz,&n,NULL))
