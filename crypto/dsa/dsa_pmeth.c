@@ -200,6 +200,24 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	return ret;
 	}
 
+static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+	{
+	DSA *dsa = NULL;
+	if (ctx->pkey == NULL)
+		{
+		DSAerr(DSA_F_PKEY_DSA_KEYGEN, DSA_R_NO_PARAMETERS_SET);
+		return 0;
+		}
+	dsa = DSA_new();
+	if (!dsa)
+		return 0;
+	EVP_PKEY_assign_DSA(pkey, dsa);
+	/* Note: if error return, pkey is freed by parent routine */
+	if (!EVP_PKEY_copy_parameters(pkey, ctx->pkey))
+		return 0;
+	return DSA_generate_key(pkey->pkey.dsa);
+	}
+
 const EVP_PKEY_METHOD dsa_pkey_meth = 
 	{
 	EVP_PKEY_DSA,
@@ -210,7 +228,8 @@ const EVP_PKEY_METHOD dsa_pkey_meth =
 	0,
 	pkey_dsa_paramgen,
 
-	0,0,
+	0,
+	pkey_dsa_keygen,
 
 	0,
 	pkey_dsa_sign,

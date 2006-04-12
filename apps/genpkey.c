@@ -87,7 +87,7 @@ int MAIN(int argc, char **argv)
 	int badarg = 0;
 	int ret = 1;
 
-	int do_param = -1;
+	int do_param = 0;
 
 	if (bio_err == NULL)
 		bio_err = BIO_new_fp (stderr, BIO_NOCLOSE);
@@ -147,8 +147,6 @@ int MAIN(int argc, char **argv)
 			{
 			if (!args[1])
 				goto bad;
-			if (do_param == -1)
-				do_param = 0;
 			if (!init_gen_str(bio_err, &ctx, *(++args),e, do_param))
 				goto end;
 			}

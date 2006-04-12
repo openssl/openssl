@@ -279,6 +279,7 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_DSA_VERIFY				 108
 #define DSA_F_I2D_DSA_SIG				 111
 #define DSA_F_PKEY_DSA_CTRL				 120
+#define DSA_F_PKEY_DSA_KEYGEN				 121
 #define DSA_F_SIG_CB					 114
 
 /* Reason codes. */
@@ -288,6 +289,7 @@ void ERR_load_DSA_strings(void);
 #define DSA_R_DECODE_ERROR				 104
 #define DSA_R_INVALID_DIGEST_TYPE			 106
 #define DSA_R_MISSING_PARAMETERS			 101
+#define DSA_R_NO_PARAMETERS_SET				 107
 #define DSA_R_PARAMETER_ENCODING_ERROR			 105
 
 #ifdef  __cplusplus
