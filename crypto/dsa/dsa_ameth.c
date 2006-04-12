@@ -167,14 +167,6 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	return 0;
 	}
 
-static int dsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
-	{
-	if (BN_cmp(b->pkey.dsa->pub_key,a->pkey.dsa->pub_key) != 0)
-		return 0;
-	else
-		return 1;
-	}
-
 /* In PKCS#8 DSA: you just get a private key integer and parameters in the
  * AlgorithmIdentifier the pubkey must be recalculated.
  */
@@ -384,6 +376,16 @@ static int dsa_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 	if (	BN_cmp(a->pkey.dsa->p,b->pkey.dsa->p) ||
 		BN_cmp(a->pkey.dsa->q,b->pkey.dsa->q) ||
 		BN_cmp(a->pkey.dsa->g,b->pkey.dsa->g))
+		return 0;
+	else
+		return 1;
+	}
+
+static int dsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
+	{
+	if (dsa_cmp_parameters(a, b) == 0)
+		return 0;
+	if (BN_cmp(b->pkey.dsa->pub_key,a->pkey.dsa->pub_key) != 0)
 		return 0;
 	else
 		return 1;
