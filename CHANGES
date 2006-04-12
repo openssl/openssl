@@ -4,6 +4,13 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Add DSA pkey method and DH pkey methods, extend DH ASN1 method to support
+     public and private key formats. As a side effect these add additional 
+     command line functionality not previously available: DSA signatures can be
+     generated and verified using pkeyutl and DH key support and generation in
+     pkey, genpkey.
+     [Steve Henson]
+
   *) BeOS support.
      [Oliver Tappe <zooey@hirschkaefer.de>]
 

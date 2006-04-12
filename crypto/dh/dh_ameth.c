@@ -260,7 +260,7 @@ static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
 	if (!prkey)
 		{
-		DHerr(DH_F_DSA_PRIV_ENCODE,DH_R_BN_ERROR);
+		DHerr(DH_F_DH_PRIV_ENCODE,DH_R_BN_ERROR);
 		goto err;
 		}
 
@@ -268,7 +268,7 @@ static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 
 	ASN1_INTEGER_free(prkey);
 
-	if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_dsa), 0,
+	if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_dhKeyAgreement), 0,
 				V_ASN1_SEQUENCE, params, dp, dplen))
 		goto err;
 
@@ -403,9 +403,9 @@ static int dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 	if ((a=BN_dup(from->pkey.dh->p)) == NULL)
 		return 0;
-	if (to->pkey.dsa->p != NULL)
+	if (to->pkey.dh->p != NULL)
 		BN_free(to->pkey.dh->p);
-	to->pkey.dsa->p=a;
+	to->pkey.dh->p=a;
 
 	if ((a=BN_dup(from->pkey.dh->g)) == NULL)
 		return 0;
