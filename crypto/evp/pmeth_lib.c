@@ -66,11 +66,12 @@
 
 STACK *app_pkey_methods = NULL;
 
-extern EVP_PKEY_METHOD rsa_pkey_meth;
+extern EVP_PKEY_METHOD rsa_pkey_meth, dsa_pkey_meth;
 
 static const EVP_PKEY_METHOD *standard_methods[] =
 	{
-	&rsa_pkey_meth
+	&rsa_pkey_meth,
+	&dsa_pkey_meth
 	};
 
 static int pmeth_cmp(const EVP_PKEY_METHOD * const *a,
@@ -189,9 +190,10 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 					const char *name, const char *value)
 	{
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl)
+	if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl_str)
 		{
-		EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
+		EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR,
+						EVP_R_COMMAND_NOT_SUPPORTED);
 		return -2;
 		}
 	if (!strcmp(name, "digest"))
@@ -199,7 +201,8 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 		const EVP_MD *md;
 		if (!value || !(md = EVP_get_digestbyname(value)))
 			{
-			EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_INVALID_DIGEST);
+			EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR,
+						EVP_R_INVALID_DIGEST);
 			return 0;
 			}
 		return EVP_PKEY_CTX_set_signature_md(ctx, md);

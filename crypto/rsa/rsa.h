@@ -370,7 +370,7 @@ void ERR_load_RSA_strings(void);
 /* Error codes for the RSA functions. */
 
 /* Function codes. */
-#define RSA_F_CHECK_PADDING_NID				 140
+#define RSA_F_CHECK_PADDING_MD				 140
 #define RSA_F_MEMORY_LOCK				 100
 #define RSA_F_PKEY_RSA_SIGN				 142
 #define RSA_F_PKEY_RSA_VERIFYRECOVER			 141

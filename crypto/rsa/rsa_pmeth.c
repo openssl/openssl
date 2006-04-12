@@ -127,8 +127,8 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
 			BN_free(rctx->pub_exp);
 		if (rctx->tbuf)
 			OPENSSL_free(rctx->tbuf);
+		OPENSSL_free(rctx);
 		}
-	OPENSSL_free(rctx);
 	}
 
 static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
@@ -330,7 +330,7 @@ static int check_padding_md(const EVP_MD *md, int padding)
 
 	if (padding == RSA_NO_PADDING)
 		{
-		RSAerr(RSA_F_CHECK_PADDING_NID, RSA_R_INVALID_PADDING_MODE);
+		RSAerr(RSA_F_CHECK_PADDING_MD, RSA_R_INVALID_PADDING_MODE);
 		return 0;
 		}
 
@@ -338,7 +338,7 @@ static int check_padding_md(const EVP_MD *md, int padding)
 		{
 		if (RSA_X931_hash_id(EVP_MD_type(md)) == -1)
 			{
-			RSAerr(RSA_F_CHECK_PADDING_NID,
+			RSAerr(RSA_F_CHECK_PADDING_MD,
 						RSA_R_INVALID_X931_DIGEST);
 			return 0;
 			}

@@ -75,7 +75,7 @@ int EVP_PKEY_decrypt_old(unsigned char *key, const unsigned char *ek, int ekl,
 	if (priv->type != EVP_PKEY_RSA)
 		{
 #endif
-		EVPerr(EVP_F_EVP_PKEY_DECRYPT,EVP_R_PUBLIC_KEY_NOT_RSA);
+		EVPerr(EVP_F_EVP_PKEY_DECRYPT_OLD,EVP_R_PUBLIC_KEY_NOT_RSA);
 #ifndef OPENSSL_NO_RSA
 		goto err;
                 }

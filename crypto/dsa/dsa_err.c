@@ -88,6 +88,7 @@ static ERR_STRING_DATA DSA_str_functs[]=
 {ERR_FUNC(DSA_F_DSA_SIG_NEW),	"DSA_SIG_new"},
 {ERR_FUNC(DSA_F_DSA_VERIFY),	"DSA_verify"},
 {ERR_FUNC(DSA_F_I2D_DSA_SIG),	"i2d_DSA_SIG"},
+{ERR_FUNC(DSA_F_PKEY_DSA_CTRL),	"PKEY_DSA_CTRL"},
 {ERR_FUNC(DSA_F_SIG_CB),	"SIG_CB"},
 {0,NULL}
 	};
@@ -98,6 +99,7 @@ static ERR_STRING_DATA DSA_str_reasons[]=
 {ERR_REASON(DSA_R_BN_ERROR)              ,"bn error"},
 {ERR_REASON(DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE),"data too large for key size"},
 {ERR_REASON(DSA_R_DECODE_ERROR)          ,"decode error"},
+{ERR_REASON(DSA_R_INVALID_DIGEST_TYPE)   ,"invalid digest type"},
 {ERR_REASON(DSA_R_MISSING_PARAMETERS)    ,"missing parameters"},
 {ERR_REASON(DSA_R_PARAMETER_ENCODING_ERROR),"parameter encoding error"},
 {0,NULL}
