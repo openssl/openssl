@@ -216,14 +216,18 @@ void ERR_load_DH_strings(void);
 #define DH_F_DH_BUILTIN_GENPARAMS			 106
 #define DH_F_DH_NEW_METHOD				 105
 #define DH_F_DH_PARAM_DECODE				 107
+#define DH_F_DH_PRIV_DECODE				 110
+#define DH_F_DH_PRIV_ENCODE				 111
 #define DH_F_DH_PUB_DECODE				 108
 #define DH_F_DH_PUB_ENCODE				 109
+#define DH_F_DSA_PRIV_ENCODE				 112
 #define DH_F_GENERATE_KEY				 103
 #define DH_F_GENERATE_PARAMETERS			 104
 
 /* Reason codes. */
 #define DH_R_BAD_GENERATOR				 101
 #define DH_R_BN_DECODE_ERROR				 103
+#define DH_R_BN_ERROR					 106
 #define DH_R_DECODE_ERROR				 104
 #define DH_R_INVALID_PUBKEY				 102
 #define DH_R_NO_PRIVATE_VALUE				 100

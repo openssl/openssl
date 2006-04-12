@@ -174,6 +174,117 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	return 0;
 	}
 
+
+/* PKCS#8 DH is defined in PKCS#11 of all places. It is similar to DH in
+ * that the AlgorithmIdentifier contains the paramaters, the private key
+ * is explcitly included and the pubkey must be recalculated.
+ */
+	
+static int dh_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
+	{
+	const unsigned char *p, *pm;
+	int pklen, pmlen;
+	int ptype;
+	void *pval;
+	ASN1_STRING *pstr;
+	X509_ALGOR *palg;
+	ASN1_INTEGER *privkey = NULL;
+
+	DH *dh = NULL;
+
+	if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8))
+		return 0;
+
+	X509_ALGOR_get0(NULL, &ptype, &pval, palg);
+
+	if (ptype != V_ASN1_SEQUENCE)
+			goto decerr;
+
+	if (!(privkey=d2i_ASN1_INTEGER(NULL, &p, pklen)))
+		goto decerr;
+
+
+	pstr = pval;	
+	pm = pstr->data;
+	pmlen = pstr->length;
+	if (!(dh = d2i_DHparams(NULL, &pm, pmlen)))
+		goto decerr;
+	/* We have parameters now set private key */
+	if (!(dh->priv_key = ASN1_INTEGER_to_BN(privkey, NULL)))
+		{
+		DHerr(DH_F_DH_PRIV_DECODE,DH_R_BN_ERROR);
+		goto dherr;
+		}
+	/* Calculate public key */
+	if (!DH_generate_key(dh))
+		goto dherr;
+
+	EVP_PKEY_assign_DH(pkey, dh);
+
+	ASN1_INTEGER_free(privkey);
+
+	return 1;
+
+	decerr:
+	DHerr(DH_F_DH_PRIV_DECODE, EVP_R_DECODE_ERROR);
+	dherr:
+	DH_free(dh);
+	return 0;
+	}
+
+static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
+{
+	ASN1_STRING *params = NULL;
+	ASN1_INTEGER *prkey = NULL;
+	unsigned char *dp = NULL;
+	int dplen;
+
+	params = ASN1_STRING_new();
+
+	if (!params)
+		{
+		DHerr(DH_F_DH_PRIV_ENCODE,ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
+
+	params->length = i2d_DHparams(pkey->pkey.dh, &params->data);
+	if (params->length <= 0)
+		{
+		DHerr(DH_F_DH_PRIV_ENCODE,ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
+	params->type = V_ASN1_SEQUENCE;
+
+	/* Get private key into integer */
+	prkey = BN_to_ASN1_INTEGER(pkey->pkey.dh->priv_key, NULL);
+
+	if (!prkey)
+		{
+		DHerr(DH_F_DSA_PRIV_ENCODE,DH_R_BN_ERROR);
+		goto err;
+		}
+
+	dplen = i2d_ASN1_INTEGER(prkey, &dp);
+
+	ASN1_INTEGER_free(prkey);
+
+	if (!PKCS8_pkey_set0(p8, OBJ_nid2obj(NID_dsa), 0,
+				V_ASN1_SEQUENCE, params, dp, dplen))
+		goto err;
+
+	return 1;
+
+err:
+	if (dp != NULL)
+		OPENSSL_free(dp);
+	if (params != NULL)
+		ASN1_STRING_free(params);
+	if (prkey != NULL)
+		ASN1_INTEGER_free(prkey);
+	return 0;
+}
+
+
 static void update_buflen(const BIGNUM *b, size_t *pbuflen)
 	{
 	int i;
@@ -361,8 +472,8 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth =
 	dh_pub_cmp,
 	dh_public_print,
 
-	0,
-	0,
+	dh_priv_decode,
+	dh_priv_encode,
 	dh_private_print,
 
 	int_dh_size,
