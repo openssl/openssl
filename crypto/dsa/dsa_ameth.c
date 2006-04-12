@@ -271,6 +271,8 @@ static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	DSAerr(DSA_F_DSA_PRIV_DECODE, EVP_R_DECODE_ERROR);
 	dsaerr:
 	BN_CTX_free (ctx);
+	if (privkey)
+		ASN1_INTEGER_free(privkey);
 	sk_ASN1_TYPE_pop_free(ndsa, ASN1_TYPE_free);
 	DSA_free(dsa);
 	return 0;
