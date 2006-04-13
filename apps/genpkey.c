@@ -150,7 +150,7 @@ int MAIN(int argc, char **argv)
 			if (!init_gen_str(bio_err, &ctx, *(++args),e, do_param))
 				goto end;
 			}
-		else if (strcmp(*args,"-param") == 0)
+		else if (strcmp(*args,"-pkeyopt") == 0)
 			{
 			if (!args[1])
 				goto bad;

@@ -180,7 +180,7 @@ int MAIN(int argc, char **argv)
 			pkey_op = EVP_PKEY_OP_ENCRYPT;
 		else if(!strcmp(*argv, "-decrypt"))
 			pkey_op = EVP_PKEY_OP_DECRYPT;
-		else if (strcmp(*argv,"-param") == 0)
+		else if (strcmp(*argv,"-pkeyopt") == 0)
 			{
 			if (--argc < 1)
 				badarg = 1;
