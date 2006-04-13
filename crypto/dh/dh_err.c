@@ -82,6 +82,7 @@ static ERR_STRING_DATA DH_str_functs[]=
 {ERR_FUNC(DH_F_DH_PUB_ENCODE),	"DH_PUB_ENCODE"},
 {ERR_FUNC(DH_F_GENERATE_KEY),	"GENERATE_KEY"},
 {ERR_FUNC(DH_F_GENERATE_PARAMETERS),	"GENERATE_PARAMETERS"},
+{ERR_FUNC(DH_F_PKEY_DH_DERIVE),	"PKEY_DH_DERIVE"},
 {ERR_FUNC(DH_F_PKEY_DH_KEYGEN),	"PKEY_DH_KEYGEN"},
 {0,NULL}
 	};
@@ -93,6 +94,7 @@ static ERR_STRING_DATA DH_str_reasons[]=
 {ERR_REASON(DH_R_BN_ERROR)               ,"bn error"},
 {ERR_REASON(DH_R_DECODE_ERROR)           ,"decode error"},
 {ERR_REASON(DH_R_INVALID_PUBKEY)         ,"invalid public key"},
+{ERR_REASON(DH_R_KEYS_NOT_SET)           ,"keys not set"},
 {ERR_REASON(DH_R_NO_PARAMETERS_SET)      ,"no parameters set"},
 {ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
 {ERR_REASON(DH_R_PARAMETER_ENCODING_ERROR),"parameter encoding error"},

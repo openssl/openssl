@@ -397,6 +397,15 @@ static int dh_bits(const EVP_PKEY *pkey)
 	return BN_num_bits(pkey->pkey.dh->p);
 	}
 
+static int dh_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
+	{
+	if (	BN_cmp(a->pkey.dh->p,b->pkey.dh->p) ||
+		BN_cmp(a->pkey.dh->g,b->pkey.dh->g))
+		return 0;
+	else
+		return 1;
+	}
+
 static int dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 	{
 	BIGNUM *a;
@@ -409,20 +418,18 @@ static int dh_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 	if ((a=BN_dup(from->pkey.dh->g)) == NULL)
 		return 0;
-	if (to->pkey.dsa->g != NULL)
+	if (to->pkey.dh->g != NULL)
 		BN_free(to->pkey.dh->g);
 	to->pkey.dh->g=a;
 
 	return 1;
 	}
 
-static int dh_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
+static int dh_missing_parameters(const EVP_PKEY *a)
 	{
-	if (	BN_cmp(a->pkey.dh->p,b->pkey.dsa->p) ||
-		BN_cmp(a->pkey.dh->g,b->pkey.dsa->g))
-		return 0;
-	else
+	if (!a->pkey.dh->p || !a->pkey.dh->g)
 		return 1;
+	return 0;
 	}
 
 static int dh_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
@@ -481,7 +488,7 @@ const EVP_PKEY_ASN1_METHOD dh_asn1_meth =
 
 	dh_param_decode,
 	dh_param_encode,
-	0,
+	dh_missing_parameters,
 	dh_copy_parameters,
 	dh_cmp_parameters,
 	dh_param_print,

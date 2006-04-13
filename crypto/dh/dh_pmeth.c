@@ -115,11 +115,16 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		dctx->generator = p1;
 		return 1;
 
+		case EVP_PKEY_CTRL_PEER_KEY:
+		/* Default behaviour is OK */
+		return 1;
+
 		default:
 		return -2;
 
 		}
 	}
+
 			
 static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
 			const char *type, const char *value)
@@ -182,6 +187,22 @@ static int pkey_dh_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	return DH_generate_key(pkey->pkey.dh);
 	}
 
+static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key, int *keylen)
+	{
+	int ret;
+	if (!ctx->pkey || !ctx->peerkey)
+		{
+		DHerr(DH_F_PKEY_DH_DERIVE, DH_R_KEYS_NOT_SET);
+		return 0;
+		}
+	ret = DH_compute_key(key, ctx->peerkey->pkey.dh->pub_key,
+							ctx->pkey->pkey.dh);
+	if (ret < 0)
+		return ret;
+	*keylen = ret;
+	return 1;
+	}
+
 const EVP_PKEY_METHOD dh_pkey_meth = 
 	{
 	EVP_PKEY_DH,
@@ -209,7 +230,8 @@ const EVP_PKEY_METHOD dh_pkey_meth =
 
 	0,0,
 
-	0,0,
+	0,
+	pkey_dh_derive,
 
 	pkey_dh_ctrl,
 	pkey_dh_ctrl_str

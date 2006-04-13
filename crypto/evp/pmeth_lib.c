@@ -153,6 +153,8 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 		ctx->pmeth->cleanup(ctx);
 	if (ctx->pkey)
 		EVP_PKEY_free(ctx->pkey);
+	if (ctx->peerkey)
+		EVP_PKEY_free(ctx->peerkey);
 	OPENSSL_free(ctx);
 	}
 

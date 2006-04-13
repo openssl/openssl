@@ -262,6 +262,66 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 	return ret;
 	}
 
+int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
+	{
+	int ret;
+	if (!ctx || !ctx->pmeth || !ctx->pmeth->derive || !ctx->pmeth->ctrl)
+		{
+		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
+			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		return -2;
+		}
+	if (ctx->operation != EVP_PKEY_OP_DERIVE)
+		{
+		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
+					EVP_R_OPERATON_NOT_INITIALIZED);
+		return -1;
+		}
+
+	ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 0, peer);
+
+	if (ret <= 0)
+		return ret;
+
+	if (ret == 2)
+		return 1;
+
+	if (!ctx->pkey)
+		{
+		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, EVP_R_NO_KEY_SET);
+		return -1;
+		}
+
+	if (ctx->pkey->type != peer->type)
+		{
+		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
+						EVP_R_DIFFERENT_KEY_TYPES);
+		return -1;
+		}
+
+	if (!EVP_PKEY_missing_parameters(peer) &&
+		!EVP_PKEY_cmp_parameters(ctx->pkey, peer))
+		{
+		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
+						EVP_R_DIFFERENT_PARAMETERS);
+		return -1;
+		}
+
+	ctx->peerkey = peer;
+
+	ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);
+
+	if (ret <= 0)
+		{
+		ctx->peerkey = NULL;
+		return ret;
+		}
+
+	CRYPTO_add(&peer->references,1,CRYPTO_LOCK_EVP_PKEY);
+	return 1;
+	}
+
+
 int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, int *pkeylen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->derive)

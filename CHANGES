@@ -4,6 +4,10 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Add support for key derivation (agreement) in the API, DH method and
+     pkeyutl.
+     [Steve Henson]
+
   *) Add DSA pkey method and DH pkey methods, extend DH ASN1 method to support
      public and private key formats. As a side effect these add additional 
      command line functionality not previously available: DSA signatures can be

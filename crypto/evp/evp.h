@@ -933,6 +933,7 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 					EVP_PKEY_CTRL_MD, 0, (void *)md)
 
 #define EVP_PKEY_CTRL_MD		1
+#define EVP_PKEY_CTRL_PEER_KEY		2
 
 #define EVP_PKEY_ALG_CTRL		0x1000
 
@@ -971,6 +972,10 @@ int EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 			unsigned char *out, int *outlen,
 			const unsigned char *in, int inlen);
+
+int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer);
+int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, int *keylen);
 
 typedef int EVP_PKEY_gen_cb(EVP_PKEY_CTX *ctx);
 
@@ -1018,6 +1023,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_PKEY_DECRYPT_OLD			 151
 #define EVP_F_EVP_PKEY_DERIVE				 153
 #define EVP_F_EVP_PKEY_DERIVE_INIT			 154
+#define EVP_F_EVP_PKEY_DERIVE_SET_PEER			 155
 #define EVP_F_EVP_PKEY_ENCRYPT				 105
 #define EVP_F_EVP_PKEY_ENCRYPT_INIT			 139
 #define EVP_F_EVP_PKEY_ENCRYPT_OLD			 152
@@ -1061,6 +1067,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH		 138
 #define EVP_R_DECODE_ERROR				 114
 #define EVP_R_DIFFERENT_KEY_TYPES			 101
+#define EVP_R_DIFFERENT_PARAMETERS			 153
 #define EVP_R_ENCODE_ERROR				 115
 #define EVP_R_EVP_PBE_CIPHERINIT_ERROR			 119
 #define EVP_R_EXPECTING_AN_RSA_KEY			 127
@@ -1080,6 +1087,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_NO_CIPHER_SET				 131
 #define EVP_R_NO_DIGEST_SET				 139
 #define EVP_R_NO_DSA_PARAMETERS				 116
+#define EVP_R_NO_KEY_SET				 154
 #define EVP_R_NO_OPERATION_SET				 149
 #define EVP_R_NO_SIGN_FUNCTION_CONFIGURED		 104
 #define EVP_R_NO_VERIFY_FUNCTION_CONFIGURED		 105
