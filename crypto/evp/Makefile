@@ -658,6 +658,16 @@ pmeth_fn.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 pmeth_fn.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 pmeth_fn.o: ../../include/openssl/symhacks.h ../cryptlib.h evp_locl.h
 pmeth_fn.o: pmeth_fn.c
+pmeth_gn.o: ../../e_os.h ../../include/openssl/asn1.h
+pmeth_gn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+pmeth_gn.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+pmeth_gn.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+pmeth_gn.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+pmeth_gn.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+pmeth_gn.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+pmeth_gn.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+pmeth_gn.o: ../../include/openssl/symhacks.h ../cryptlib.h evp_locl.h
+pmeth_gn.o: pmeth_gn.c
 pmeth_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 pmeth_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pmeth_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

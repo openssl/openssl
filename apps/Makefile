@@ -462,6 +462,21 @@ gendsa.o: ../include/openssl/sha.h ../include/openssl/stack.h
 gendsa.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
 gendsa.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
 gendsa.o: gendsa.c
+genpkey.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+genpkey.o: ../include/openssl/buffer.h ../include/openssl/conf.h
+genpkey.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+genpkey.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+genpkey.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+genpkey.o: ../include/openssl/err.h ../include/openssl/evp.h
+genpkey.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+genpkey.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+genpkey.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+genpkey.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+genpkey.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
+genpkey.o: ../include/openssl/sha.h ../include/openssl/stack.h
+genpkey.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
+genpkey.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h
+genpkey.o: genpkey.c
 genrsa.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 genrsa.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 genrsa.o: ../include/openssl/conf.h ../include/openssl/crypto.h

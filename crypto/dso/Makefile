@@ -76,6 +76,14 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+dso_beos.o: ../../e_os.h ../../include/openssl/bio.h
+dso_beos.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+dso_beos.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
+dso_beos.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dso_beos.o: ../../include/openssl/opensslconf.h
+dso_beos.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+dso_beos.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dso_beos.o: ../../include/openssl/symhacks.h ../cryptlib.h dso_beos.c
 dso_dl.o: ../../e_os.h ../../include/openssl/bio.h
 dso_dl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dso_dl.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
