@@ -198,13 +198,13 @@ $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr,rsa_ameth,rsa_prn,"+ -
 	"rsa_pmeth"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
-	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth,dsa_prn"
+	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth,dsa_pmeth,dsa_prn"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
 $ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr,"+ -
-	"dh_ameth,dh_prn"
+	"dh_ameth,dh_pmeth,dh_prn"
 $ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
-	"dso_openssl,dso_win32,dso_vms"
+	"dso_openssl,dso_win32,dso_vms,dso_beos"
 $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
 	"tb_rsa,tb_dsa,tb_ecdsa,tb_dh,tb_ecdh,tb_rand,tb_store,"+ -
@@ -235,7 +235,7 @@ $ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wp," + -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
-$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn"	
+$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn,pmeth_gn"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,"+ -
 	"a_enum,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -
@@ -337,7 +337,7 @@ $ IF (MODULE_NAME.EQS."ASN1_2")
 $ THEN
 $   MODULE_NAME = "ASN1"
 $ ENDIF
-$ IF (MODULE_NAME.EQS."EVP_2")
+$ IF (MODULE_NAME.EQS."EVP_2".OR.MODULE_NAME.EQS."EVP_3")
 $ THEN
 $   MODULE_NAME = "EVP"
 $ ENDIF
