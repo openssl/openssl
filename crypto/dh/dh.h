@@ -242,6 +242,7 @@ void ERR_load_DH_strings(void);
 #define DH_R_BN_ERROR					 106
 #define DH_R_DECODE_ERROR				 104
 #define DH_R_INVALID_PUBKEY				 102
+#define DH_R_NO_PARAMETERS_SET				 107
 #define DH_R_NO_PRIVATE_VALUE				 100
 #define DH_R_PARAMETER_ENCODING_ERROR			 105
 

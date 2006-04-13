@@ -169,7 +169,7 @@ static int pkey_dh_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	DH *dh = NULL;
 	if (ctx->pkey == NULL)
 		{
-		DHerr(DH_F_PKEY_DH_KEYGEN, DSA_R_NO_PARAMETERS_SET);
+		DHerr(DH_F_PKEY_DH_KEYGEN, DH_R_NO_PARAMETERS_SET);
 		return 0;
 		}
 	dh = DH_new();

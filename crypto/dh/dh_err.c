@@ -93,6 +93,7 @@ static ERR_STRING_DATA DH_str_reasons[]=
 {ERR_REASON(DH_R_BN_ERROR)               ,"bn error"},
 {ERR_REASON(DH_R_DECODE_ERROR)           ,"decode error"},
 {ERR_REASON(DH_R_INVALID_PUBKEY)         ,"invalid public key"},
+{ERR_REASON(DH_R_NO_PARAMETERS_SET)      ,"no parameters set"},
 {ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
 {ERR_REASON(DH_R_PARAMETER_ENCODING_ERROR),"parameter encoding error"},
 {0,NULL}
