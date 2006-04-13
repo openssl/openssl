@@ -241,6 +241,8 @@ struct evp_pkey_ctx_st
 	const EVP_PKEY_METHOD *pmeth;
 	/* Key: may be NULL */
 	EVP_PKEY *pkey;
+	/* Peer key for key agreement, may be NULL */
+	EVP_PKEY *peerkey;
 	/* Actual operation */
 	int operation;
 	/* Algorithm specific data */
@@ -296,6 +298,9 @@ struct evp_pkey_method_st
 	int (*decrypt_init)(EVP_PKEY_CTX *ctx);
 	int (*decrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
 					const unsigned char *in, int inlen);
+
+	int (*derive_init)(EVP_PKEY_CTX *ctx);
+	int (*derive)(EVP_PKEY_CTX *ctx, unsigned char *key, int *keylen);
 
 	int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2);
 	int (*ctrl_str)(EVP_PKEY_CTX *ctx, const char *type, const char *value);

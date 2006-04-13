@@ -243,3 +243,38 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 	return ctx->pmeth->decrypt(ctx, out, outlen, in, inlen);
 	}
 
+
+int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
+	{
+	int ret;
+	if (!ctx || !ctx->pmeth || !ctx->pmeth->derive)
+		{
+		EVPerr(EVP_F_EVP_PKEY_DERIVE_INIT,
+			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		return -2;
+		}
+	ctx->operation = EVP_PKEY_OP_DERIVE;
+	if (!ctx->pmeth->derive_init)
+		return 1;
+	ret = ctx->pmeth->derive_init(ctx);
+	if (ret <= 0)
+		ctx->operation = EVP_PKEY_OP_UNDEFINED;
+	return ret;
+	}
+
+int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, int *pkeylen)
+	{
+	if (!ctx || !ctx->pmeth || !ctx->pmeth->derive)
+		{
+		EVPerr(EVP_F_EVP_PKEY_DERIVE,
+			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+		return -2;
+		}
+	if (ctx->operation != EVP_PKEY_OP_DERIVE)
+		{
+		EVPerr(EVP_F_EVP_PKEY_DERIVE, EVP_R_OPERATON_NOT_INITIALIZED);
+		return -1;
+		}
+	return ctx->pmeth->derive(ctx, key, pkeylen);
+	}
+
