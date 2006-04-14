@@ -256,6 +256,8 @@ struct evp_pkey_ctx_st
 	int keygen_info_count;
 	} /* EVP_PKEY_CTX */;
 
+#define EVP_PKEY_DYNAMIC	1
+
 struct evp_pkey_method_st
 	{
 	int pkey_id;
