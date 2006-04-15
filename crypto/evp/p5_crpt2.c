@@ -201,11 +201,16 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
 	/* Now decode key derivation function */
 
+	if(!pbe2->keyfunc->parameter ||
+		 (pbe2->keyfunc->parameter->type != V_ASN1_SEQUENCE))
+		{
+		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
+		goto err;
+		}
+
 	pbuf = pbe2->keyfunc->parameter->value.sequence->data;
 	plen = pbe2->keyfunc->parameter->value.sequence->length;
-	if(!pbe2->keyfunc->parameter ||
-		 (pbe2->keyfunc->parameter->type != V_ASN1_SEQUENCE) ||
-				!(kdf = d2i_PBKDF2PARAM(NULL, &pbuf, plen)) ) {
+	if(!(kdf = d2i_PBKDF2PARAM(NULL, &pbuf, plen)) ) {
 		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
 		goto err;
 	}
