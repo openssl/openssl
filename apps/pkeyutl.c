@@ -79,6 +79,10 @@ static EVP_PKEY_CTX *init_ctx(int *pkeysize,
 static int setup_peer(BIO *err, EVP_PKEY_CTX *ctx, int peerform,
 							const char *file);
 
+static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
+		unsigned char *out, int *poutlen,
+		unsigned char *in, int inlen);
+
 int MAIN(int argc, char **);
 
 int MAIN(int argc, char **argv)
@@ -299,8 +303,6 @@ int MAIN(int argc, char **argv)
 			}
 		}
 	
-	buf_out = OPENSSL_malloc(keysize);
-
 	if (in)
 		{
 		/* Read the input data */
@@ -323,29 +325,8 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
-	switch(pkey_op)
+	if(pkey_op == EVP_PKEY_OP_VERIFY)
 		{
-		case EVP_PKEY_OP_VERIFYRECOVER:
-		rv  = EVP_PKEY_verify_recover(ctx, buf_out, &buf_outlen,
-							buf_in, buf_inlen);
-		break;
-
-		case EVP_PKEY_OP_SIGN:
-		rv  = EVP_PKEY_sign(ctx, buf_out, &buf_outlen,
-							buf_in, buf_inlen);
-		break;
-
-		case EVP_PKEY_OP_ENCRYPT:
-		rv  = EVP_PKEY_encrypt(ctx, buf_out, &buf_outlen,
-							buf_in, buf_inlen);
-		break;
-
-		case EVP_PKEY_OP_DECRYPT:
-		rv  = EVP_PKEY_decrypt(ctx, buf_out, &buf_outlen,
-							buf_in, buf_inlen);
-		break; 
-
-		case EVP_PKEY_OP_VERIFY:
 		rv  = EVP_PKEY_verify(ctx, sig, siglen, buf_in, buf_inlen);
 		if (rv == 0)
 			BIO_puts(out, "Signature Verification Failure\n");
@@ -353,12 +334,21 @@ int MAIN(int argc, char **argv)
 			BIO_puts(out, "Signature Verified Successfully\n");
 		if (rv >= 0)
 			goto end;
-		break; 
-
-		case EVP_PKEY_OP_DERIVE:
-		rv  = EVP_PKEY_derive(ctx, buf_out, &buf_outlen);
-		break;
-
+		}
+	else
+		{	
+		rv = do_keyop(ctx, pkey_op, NULL, &buf_outlen,
+							buf_in, buf_inlen);
+		if (rv > 0)
+			{
+			buf_out = OPENSSL_malloc(buf_outlen);
+			if (!buf_out)
+				rv = -1;
+			else
+				rv = do_keyop(ctx, pkey_op,
+						buf_out, &buf_outlen,
+						buf_in, buf_inlen);
+			}
 		}
 
 	if(rv <= 0)
@@ -541,4 +531,34 @@ static int setup_peer(BIO *err, EVP_PKEY_CTX *ctx, int peerform,
 		ERR_print_errors(err);
 	return ret;
 	}
-			
+
+static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
+		unsigned char *out, int *poutlen,
+		unsigned char *in, int inlen)
+	{
+	int rv;
+	switch(pkey_op)
+		{
+		case EVP_PKEY_OP_VERIFYRECOVER:
+		rv  = EVP_PKEY_verify_recover(ctx, out, poutlen, in, inlen);
+		break;
+
+		case EVP_PKEY_OP_SIGN:
+		rv  = EVP_PKEY_sign(ctx, out, poutlen, in, inlen);
+		break;
+
+		case EVP_PKEY_OP_ENCRYPT:
+		rv  = EVP_PKEY_encrypt(ctx, out, poutlen, in, inlen);
+		break;
+
+		case EVP_PKEY_OP_DECRYPT:
+		rv  = EVP_PKEY_decrypt(ctx, out, poutlen, in, inlen);
+		break; 
+
+		case EVP_PKEY_OP_DERIVE:
+		rv  = EVP_PKEY_derive(ctx, out, poutlen);
+		break;
+
+		}
+	return rv;
+	}

@@ -63,6 +63,22 @@
 #include <openssl/evp.h>
 #include "evp_locl.h"
 
+#define M_check_autoarg(ctx, arg, arglen, err) \
+	if (ctx->pmeth->flags & EVP_PKEY_FLAG_AUTOARGLEN) \
+		{ \
+		int pksize = EVP_PKEY_size(ctx->pkey); \
+		if (!arg) \
+			{ \
+			*arglen = pksize; \
+			return 1; \
+			} \
+		else if (*arglen < pksize) \
+			{ \
+			EVPerr(err, EVP_R_BUFFER_TOO_SMALL); \
+			return 0; \
+			} \
+		}
+
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx)
 	{
 	int ret;
@@ -96,6 +112,7 @@ int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
 		EVPerr(EVP_F_EVP_PKEY_SIGN, EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 		}
+	M_check_autoarg(ctx, sig, siglen, EVP_F_EVP_PKEY_SIGN)
 	return ctx->pmeth->sign(ctx, sig, siglen, tbs, tbslen);
 	}
 
@@ -168,6 +185,7 @@ int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
 		EVPerr(EVP_F_EVP_PKEY_VERIFY_RECOVER, EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 		}
+	M_check_autoarg(ctx, rout, routlen, EVP_F_EVP_PKEY_VERIFY_RECOVER)
 	return ctx->pmeth->verify_recover(ctx, rout, routlen, sig, siglen);
 	}
 
@@ -204,6 +222,7 @@ int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
 		EVPerr(EVP_F_EVP_PKEY_ENCRYPT, EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 		}
+	M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_ENCRYPT)
 	return ctx->pmeth->encrypt(ctx, out, outlen, in, inlen);
 	}
 
@@ -240,6 +259,7 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 		EVPerr(EVP_F_EVP_PKEY_DECRYPT, EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 		}
+	M_check_autoarg(ctx, out, outlen, EVP_F_EVP_PKEY_DECRYPT)
 	return ctx->pmeth->decrypt(ctx, out, outlen, in, inlen);
 	}
 
@@ -335,6 +355,7 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, int *pkeylen)
 		EVPerr(EVP_F_EVP_PKEY_DERIVE, EVP_R_OPERATON_NOT_INITIALIZED);
 		return -1;
 		}
+	M_check_autoarg(ctx, key, pkeylen, EVP_F_EVP_PKEY_DERIVE)
 	return ctx->pmeth->derive(ctx, key, pkeylen);
 	}
 

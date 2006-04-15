@@ -221,7 +221,7 @@ static int pkey_dsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 const EVP_PKEY_METHOD dsa_pkey_meth = 
 	{
 	EVP_PKEY_DSA,
-	0,
+	EVP_PKEY_FLAG_AUTOARGLEN,
 	pkey_dsa_init,
 	pkey_dsa_cleanup,
 

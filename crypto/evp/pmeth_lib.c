@@ -146,7 +146,7 @@ EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags)
 		return NULL;
 
 	pmeth->pkey_id = id;
-	pmeth->flags = flags | EVP_PKEY_DYNAMIC;
+	pmeth->flags = flags | EVP_PKEY_FLAG_DYNAMIC;
 
 	pmeth->init = 0;
 	pmeth->cleanup = 0;
@@ -178,7 +178,7 @@ EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags)
 
 void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 	{
-	if (pmeth && (pmeth->flags & EVP_PKEY_DYNAMIC))
+	if (pmeth && (pmeth->flags & EVP_PKEY_FLAG_DYNAMIC))
 		OPENSSL_free(pmeth);
 	}
 

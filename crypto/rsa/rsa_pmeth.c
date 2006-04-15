@@ -498,7 +498,7 @@ static int pkey_rsa_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 const EVP_PKEY_METHOD rsa_pkey_meth = 
 	{
 	EVP_PKEY_RSA,
-	0,
+	EVP_PKEY_FLAG_AUTOARGLEN,
 	pkey_rsa_init,
 	pkey_rsa_cleanup,
 

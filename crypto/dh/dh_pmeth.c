@@ -206,7 +206,7 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key, int *keylen)
 const EVP_PKEY_METHOD dh_pkey_meth = 
 	{
 	EVP_PKEY_DH,
-	0,
+	EVP_PKEY_FLAG_AUTOARGLEN,
 	pkey_dh_init,
 	pkey_dh_cleanup,
 

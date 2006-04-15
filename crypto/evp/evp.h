@@ -937,6 +937,8 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 
 #define EVP_PKEY_ALG_CTRL		0x1000
 
+#define EVP_PKEY_FLAG_AUTOARGLEN	2
+
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
@@ -1119,6 +1121,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_BAD_KEY_LENGTH				 137
 #define EVP_R_BN_DECODE_ERROR				 112
 #define EVP_R_BN_PUBKEY_ERROR				 113
+#define EVP_R_BUFFER_TOO_SMALL				 155
 #define EVP_R_CIPHER_PARAMETER_ERROR			 122
 #define EVP_R_COMMAND_NOT_SUPPORTED			 147
 #define EVP_R_CTRL_NOT_IMPLEMENTED			 132
