@@ -482,7 +482,8 @@ static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
 	*ca_curr = NULL;	/* end of list */
 	}
 
-static void ssl_cipher_apply_rule(unsigned long algorithms, unsigned long mask,
+static void ssl_cipher_apply_rule(unsigned long cipher_id,
+		unsigned long algorithms, unsigned long mask,
 		unsigned long algo_strength, unsigned long mask_strength,
 		int rule, int strength_bits, CIPHER_ORDER *co_list,
 		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
@@ -508,11 +509,19 @@ static void ssl_cipher_apply_rule(unsigned long algorithms, unsigned long mask,
 
 		cp = curr->cipher;
 
+		/* If explicit cipher suite match that one only */
+
+		if (cipher_id)
+			{
+			if (cp->id != cipher_id)
+				continue;
+			}
+
 		/*
 		 * Selection criteria is either the number of strength_bits
 		 * or the algorithm used.
 		 */
-		if (strength_bits == -1)
+		else if (strength_bits == -1)
 			{
 			ma = mask & cp->algorithms;
 			ma_s = mask_strength & cp->algo_strength;
@@ -625,7 +634,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER *co_list,
 	 */
 	for (i = max_strength_bits; i >= 0; i--)
 		if (number_uses[i] > 0)
-			ssl_cipher_apply_rule(0, 0, 0, 0, CIPHER_ORD, i,
+			ssl_cipher_apply_rule(0, 0, 0, 0, 0, CIPHER_ORD, i,
 					co_list, head_p, tail_p);
 
 	OPENSSL_free(number_uses);
@@ -639,6 +648,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 	unsigned long algorithms, mask, algo_strength, mask_strength;
 	const char *l, *start, *buf;
 	int j, multi, found, rule, retval, ok, buflen;
+	unsigned long cipher_id;
 	char ch;
 
 	retval = 1;
@@ -728,6 +738,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			 * use strcmp(), because buf is not '\0' terminated.)
 			 */
 			 j = found = 0;
+			 cipher_id = 0;
 			 while (ca_list[j])
 				{
 				if (!strncmp(buf, ca_list[j]->name, buflen) &&
@@ -741,6 +752,12 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 				}
 			if (!found)
 				break;	/* ignore this entry */
+
+			if (ca_list[j]->valid)
+				{
+				cipher_id = ca_list[j]->id;
+				break;
+				}
 
 			/* New algorithms:
 			 *  1 - any old restrictions apply outside new mask
@@ -785,7 +802,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			}
 		else if (found)
 			{
-			ssl_cipher_apply_rule(algorithms, mask,
+			ssl_cipher_apply_rule(cipher_id, algorithms, mask,
 				algo_strength, mask_strength, rule, -1,
 				co_list, head_p, tail_p);
 			}
