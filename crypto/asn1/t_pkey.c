@@ -158,21 +158,21 @@ int RSA_print(BIO *bp, const RSA *x, int off)
 		BIO_snprintf(str,sizeof str,"Modulus (%d bit):", mod_len);
 	else
 		BUF_strlcpy(str,"modulus:",sizeof str);
-	if (!ASN1_bn_print(bp,str,x->n,m,off)) goto err;
+	if (!print(bp,str,x->n,m,off)) goto err;
 	s=(x->d == NULL)?"Exponent:":"publicExponent:";
-	if ((x->e != NULL) && !ASN1_bn_print(bp,s,x->e,m,off))
+	if ((x->e != NULL) && !print(bp,s,x->e,m,off))
 		goto err;
-	if ((x->d != NULL) && !ASN1_bn_print(bp,"privateExponent:",x->d,m,off))
+	if ((x->d != NULL) && !print(bp,"privateExponent:",x->d,m,off))
 		goto err;
-	if ((x->p != NULL) && !ASN1_bn_print(bp,"prime1:",x->p,m,off))
+	if ((x->p != NULL) && !print(bp,"prime1:",x->p,m,off))
 		goto err;
-	if ((x->q != NULL) && !ASN1_bn_print(bp,"prime2:",x->q,m,off))
+	if ((x->q != NULL) && !print(bp,"prime2:",x->q,m,off))
 		goto err;
-	if ((x->dmp1 != NULL) && !ASN1_bn_print(bp,"exponent1:",x->dmp1,m,off))
+	if ((x->dmp1 != NULL) && !print(bp,"exponent1:",x->dmp1,m,off))
 		goto err;
-	if ((x->dmq1 != NULL) && !ASN1_bn_print(bp,"exponent2:",x->dmq1,m,off))
+	if ((x->dmq1 != NULL) && !print(bp,"exponent2:",x->dmq1,m,off))
 		goto err;
-	if ((x->iqmp != NULL) && !ASN1_bn_print(bp,"coefficient:",x->iqmp,m,off))
+	if ((x->iqmp != NULL) && !print(bp,"coefficient:",x->iqmp,m,off))
 		goto err;
 	ret=1;
 err:
@@ -241,13 +241,13 @@ int DSA_print(BIO *bp, const DSA *x, int off)
 			<= 0) goto err;
 		}
 
-	if ((x->priv_key != NULL) && !ASN1_bn_print(bp,"priv:",x->priv_key,m,off))
+	if ((x->priv_key != NULL) && !print(bp,"priv:",x->priv_key,m,off))
 		goto err;
-	if ((x->pub_key  != NULL) && !ASN1_bn_print(bp,"pub: ",x->pub_key,m,off))
+	if ((x->pub_key  != NULL) && !print(bp,"pub: ",x->pub_key,m,off))
 		goto err;
-	if ((x->p != NULL) && !ASN1_bn_print(bp,"P:   ",x->p,m,off)) goto err;
-	if ((x->q != NULL) && !ASN1_bn_print(bp,"Q:   ",x->q,m,off)) goto err;
-	if ((x->g != NULL) && !ASN1_bn_print(bp,"G:   ",x->g,m,off)) goto err;
+	if ((x->p != NULL) && !print(bp,"P:   ",x->p,m,off)) goto err;
+	if ((x->q != NULL) && !print(bp,"Q:   ",x->q,m,off)) goto err;
+	if ((x->g != NULL) && !print(bp,"G:   ",x->g,m,off)) goto err;
 	ret=1;
 err:
 	if (m != NULL) OPENSSL_free(m);
@@ -430,40 +430,40 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 				goto err;
 
 			/* print the polynomial */
-			if ((p != NULL) && !ASN1_bn_print(bp, "Polynomial:", p, buffer,
+			if ((p != NULL) && !print(bp, "Polynomial:", p, buffer,
 				off))
 				goto err;
 			}
 		else
 			{
-			if ((p != NULL) && !ASN1_bn_print(bp, "Prime:", p, buffer,off))
+			if ((p != NULL) && !print(bp, "Prime:", p, buffer,off))
 				goto err;
 			}
-		if ((a != NULL) && !ASN1_bn_print(bp, "A:   ", a, buffer, off)) 
+		if ((a != NULL) && !print(bp, "A:   ", a, buffer, off)) 
 			goto err;
-		if ((b != NULL) && !ASN1_bn_print(bp, "B:   ", b, buffer, off))
+		if ((b != NULL) && !print(bp, "B:   ", b, buffer, off))
 			goto err;
 		if (form == POINT_CONVERSION_COMPRESSED)
 			{
-			if ((gen != NULL) && !ASN1_bn_print(bp, gen_compressed, gen,
+			if ((gen != NULL) && !print(bp, gen_compressed, gen,
 				buffer, off))
 				goto err;
 			}
 		else if (form == POINT_CONVERSION_UNCOMPRESSED)
 			{
-			if ((gen != NULL) && !ASN1_bn_print(bp, gen_uncompressed, gen,
+			if ((gen != NULL) && !print(bp, gen_uncompressed, gen,
 				buffer, off))
 				goto err;
 			}
 		else /* form == POINT_CONVERSION_HYBRID */
 			{
-			if ((gen != NULL) && !ASN1_bn_print(bp, gen_hybrid, gen,
+			if ((gen != NULL) && !print(bp, gen_hybrid, gen,
 				buffer, off))
 				goto err;
 			}
-		if ((order != NULL) && !ASN1_bn_print(bp, "Order: ", order, 
+		if ((order != NULL) && !print(bp, "Order: ", order, 
 			buffer, off)) goto err;
-		if ((cofactor != NULL) && !ASN1_bn_print(bp, "Cofactor: ", cofactor, 
+		if ((cofactor != NULL) && !print(bp, "Cofactor: ", cofactor, 
 			buffer, off)) goto err;
 		if (seed && !print_bin(bp, "Seed:", seed, seed_len, off))
 			goto err;
@@ -543,10 +543,10 @@ int EC_KEY_print(BIO *bp, const EC_KEY *x, int off)
 			BN_num_bits(order)) <= 0) goto err;
 		}
   
-	if ((priv_key != NULL) && !ASN1_bn_print(bp, "priv:", priv_key, 
+	if ((priv_key != NULL) && !print(bp, "priv:", priv_key, 
 		buffer, off))
 		goto err;
-	if ((pub_key != NULL) && !ASN1_bn_print(bp, "pub: ", pub_key,
+	if ((pub_key != NULL) && !print(bp, "pub: ", pub_key,
 		buffer, off))
 		goto err;
 	if (!ECPKParameters_print(bp, group, off))
@@ -567,7 +567,7 @@ err:
 	}
 #endif /* OPENSSL_NO_EC */
 
-static int BN_print_pkey(BIO *bp, const char *number, const BIGNUM *num, unsigned char *buf,
+static int print(BIO *bp, const char *number, const BIGNUM *num, unsigned char *buf,
 	     int off)
 	{
 	int n,i;
@@ -703,8 +703,8 @@ int DHparams_print(BIO *bp, const DH *x)
 	if (BIO_printf(bp,"Diffie-Hellman-Parameters: (%d bit)\n",
 		BN_num_bits(x->p)) <= 0)
 		goto err;
-	if (!ASN1_bn_print(bp,"prime:",x->p,m,4)) goto err;
-	if (!ASN1_bn_print(bp,"generator:",x->g,m,4)) goto err;
+	if (!print(bp,"prime:",x->p,m,4)) goto err;
+	if (!print(bp,"generator:",x->g,m,4)) goto err;
 	if (x->length != 0)
 		{
 		if (BIO_printf(bp,"    recommended-private-length: %d bits\n",
@@ -769,9 +769,9 @@ int DSAparams_print(BIO *bp, const DSA *x)
 	if (BIO_printf(bp,"DSA-Parameters: (%d bit)\n",
 		BN_num_bits(x->p)) <= 0)
 		goto err;
-	if (!ASN1_bn_print(bp,"p:",x->p,m,4)) goto err;
-	if ((x->q != NULL) && !ASN1_bn_print(bp,"q:",x->q,m,4)) goto err;
-	if ((x->g != NULL) && !ASN1_bn_print(bp,"g:",x->g,m,4)) goto err;
+	if (!print(bp,"p:",x->p,m,4)) goto err;
+	if ((x->q != NULL) && !print(bp,"q:",x->q,m,4)) goto err;
+	if ((x->g != NULL) && !print(bp,"g:",x->g,m,4)) goto err;
 	ret=1;
 err:
 	if (m != NULL) OPENSSL_free(m);
