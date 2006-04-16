@@ -64,6 +64,8 @@ sha256-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
 sha512-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
+sha1-x86_64.s: asm/sha1-x86_64.pl
+	$(PERL) asm/sha1-x86_64.pl $@
 sha256-x86_64.s: asm/sha512-x86_64.pl
 	$(PERL) asm/sha512-x86_64.pl $@
 sha512-x86_64.s: asm/sha512-x86_64.pl

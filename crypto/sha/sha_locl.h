@@ -115,7 +115,8 @@
 # endif
 
 # ifdef SHA1_ASM
-#  if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
+#  if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) \
+   || defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 #   define sha1_block_host_order		sha1_block_asm_host_order
 #   define DONT_IMPLEMENT_BLOCK_HOST_ORDER
 #   define sha1_block_data_order		sha1_block_asm_data_order
