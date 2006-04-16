@@ -4,6 +4,9 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Add provisional EC pkey method with support for ECDSA and ECDH.
+     [Steve Henson]
+
   *) Add support for key derivation (agreement) in the API, DH method and
      pkeyutl.
      [Steve Henson]

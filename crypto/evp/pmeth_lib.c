@@ -67,13 +67,14 @@
 typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);
 STACK *app_pkey_methods = NULL;
 
-extern EVP_PKEY_METHOD rsa_pkey_meth, dh_pkey_meth, dsa_pkey_meth;
+extern EVP_PKEY_METHOD rsa_pkey_meth, dh_pkey_meth, dsa_pkey_meth, ec_pkey_meth;
 
 static const EVP_PKEY_METHOD *standard_methods[] =
 	{
 	&rsa_pkey_meth,
 	&dh_pkey_meth,
-	&dsa_pkey_meth
+	&dsa_pkey_meth,
+	&ec_pkey_meth
 	};
 
 static int pmeth_cmp(const EVP_PKEY_METHOD * const *a,
