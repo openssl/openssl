@@ -45,7 +45,7 @@ LIBOBJ=	encode.o digest.o evp_enc.o evp_key.o evp_acnf.o \
 SRC= $(LIBSRC)
 
 EXHEADER= evp.h
-HEADER=	$(EXHEADER)
+HEADER=	evp_locl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

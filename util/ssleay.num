@@ -227,7 +227,9 @@ SSL_COMP_get_compression_methods        276	EXIST:!VMS:FUNCTION:COMP
 SSL_COMP_get_compress_methods           276	EXIST:VMS:FUNCTION:COMP
 SSL_SESSION_get_id                      277	EXIST::FUNCTION:
 SSL_set_SSL_CTX                         278	EXIST::FUNCTION:
-SSL_CTX_use_psk_identity_hint           279	EXIST::FUNCTION:
-SSL_get_psk_identity_hint               280	EXIST::FUNCTION:
-SSL_get_psk_identity                    281	EXIST::FUNCTION:
-SSL_use_psk_identity_hint               282	EXIST::FUNCTION:
+SSL_CTX_use_psk_identity_hint           279	EXIST::FUNCTION:PSK
+SSL_get_psk_identity_hint               280	EXIST::FUNCTION:PSK
+SSL_get_psk_identity                    281	EXIST::FUNCTION:PSK
+SSL_use_psk_identity_hint               282	EXIST::FUNCTION:PSK
+SSL_get_servername                      283	EXIST::FUNCTION:TLSEXT
+SSL_get_servername_type                 284	EXIST::FUNCTION:TLSEXT

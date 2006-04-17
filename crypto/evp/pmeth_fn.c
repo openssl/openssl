@@ -58,8 +58,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/objects.h>
 #include "cryptlib.h"
+#include <openssl/objects.h>
 #include <openssl/evp.h>
 #include "evp_locl.h"
 

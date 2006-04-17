@@ -400,7 +400,7 @@ static void int_dsa_free(EVP_PKEY *pkey)
 
 static void update_buflen(const BIGNUM *b, size_t *pbuflen)
 	{
-	int i;
+	size_t i;
 	if (!b)
 		return;
 	if (*pbuflen < (i = (size_t)BN_num_bytes(b)))

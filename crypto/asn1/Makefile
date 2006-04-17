@@ -47,7 +47,7 @@ LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 SRC= $(LIBSRC)
 
 EXHEADER=  asn1.h asn1_mac.h asn1t.h
-HEADER=	$(EXHEADER)
+HEADER=	$(EXHEADER) asn1_locl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
