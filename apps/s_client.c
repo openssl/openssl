@@ -959,19 +959,19 @@ re_start:
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined (OPENSSL_SYS_BEOS_R5)
 			if (tty_on)
 				{
-				if (read_tty)  FD_SET(fileno(stdin),&readfds);
-				if (write_tty) FD_SET(fileno(stdout),&writefds);
+				if (read_tty)  openssl_fdset(fileno(stdin),&readfds);
+				if (write_tty) openssl_fdset(fileno(stdout),&writefds);
 				}
 			if (read_ssl)
-				FD_SET(SSL_get_fd(con),&readfds);
+				openssl_fdset(SSL_get_fd(con),&readfds);
 			if (write_ssl)
-				FD_SET(SSL_get_fd(con),&writefds);
+				openssl_fdset(SSL_get_fd(con),&writefds);
 #else
 			if(!tty_on || !write_tty) {
 				if (read_ssl)
-					FD_SET(SSL_get_fd(con),&readfds);
+					openssl_fdset(SSL_get_fd(con),&readfds);
 				if (write_ssl)
-					FD_SET(SSL_get_fd(con),&writefds);
+					openssl_fdset(SSL_get_fd(con),&writefds);
 			}
 #endif
 /*			printf("mode tty(%d %d%d) ssl(%d%d)\n",

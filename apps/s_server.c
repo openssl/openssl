@@ -1621,9 +1621,9 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 			{
 			FD_ZERO(&readfds);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_NETWARE) && !defined(OPENSSL_SYS_BEOS_R5)
-			FD_SET(fileno(stdin),&readfds);
+			openssl_fdset(fileno(stdin),&readfds);
 #endif
-			FD_SET(s,&readfds);
+			openssl_fdset(s,&readfds);
 			/* Note: under VMS with SOCKETSHR the second parameter is
 			 * currently of type (int *) whereas under other systems
 			 * it is (void *) if you don't have a cast it will choke

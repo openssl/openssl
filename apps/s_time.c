@@ -601,7 +601,7 @@ static SSL *doConnection(SSL *scon)
 			i=SSL_get_fd(serverCon);
 			width=i+1;
 			FD_ZERO(&readfds);
-			FD_SET(i,&readfds);
+			openssl_fdset(i,&readfds);
 			/* Note: under VMS with SOCKETSHR the 2nd parameter
 			 * is currently of type (int *) whereas under other
 			 * systems it is (void *) if you don't have a cast it
