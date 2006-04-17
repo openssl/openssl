@@ -528,6 +528,29 @@ static int old_dsa_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
 	return i2d_DSAPrivateKey(pkey->pkey.dsa, pder);
 	}
 
+static int dsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+	{
+	switch (op)
+		{
+		case ASN1_PKEY_CTRL_PKCS7_SIGN:
+		if (arg1 == 0)
+			{
+			X509_ALGOR *alg1, *alg2;
+			PKCS7_SIGNER_INFO_get0_algs(arg2, NULL, &alg1, &alg2);
+			X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_sha1),
+							V_ASN1_NULL, 0);
+			X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_dsaWithSHA1),
+							V_ASN1_UNDEF, 0);
+			}
+		return 1;
+
+		default:
+		return -2;
+
+		}
+
+	}
+
 /* NB these are sorted in pkey_id order, lowest first */
 
 const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] = 
@@ -585,7 +608,7 @@ const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[] =
 		dsa_param_print,
 
 		int_dsa_free,
-		0,
+		dsa_pkey_ctrl,
 		old_dsa_priv_decode,
 		old_dsa_priv_encode
 		}

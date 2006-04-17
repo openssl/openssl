@@ -104,7 +104,7 @@ struct evp_pkey_asn1_method_st
 							ASN1_PCTX *pctx);
 
 	void (*pkey_free)(EVP_PKEY *pkey);
-	void (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2);
+	int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2);
 
 	/* Legacy functions for old PEM */
 

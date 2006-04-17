@@ -4,6 +4,11 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Remove algorithm specific dependencies when setting PKCS7_SIGNER_INFO
+     structures for PKCS7_sign(). They are now set up by the relevant public
+     key ASN1 method.
+     [Steve Henson]
+
   *) Add provisional EC pkey method with support for ECDSA and ECDH.
      [Steve Henson]
 

@@ -261,6 +261,29 @@ static int rsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 	return do_rsa_print(bp, pkey->pkey.rsa, indent, 1);
 	}
 
+
+static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+	{
+	switch (op)
+		{
+		case ASN1_PKEY_CTRL_PKCS7_SIGN:
+		if (arg1 == 0)
+			{
+			X509_ALGOR *alg;
+			PKCS7_SIGNER_INFO_get0_algs(arg2, NULL, NULL, &alg);
+			X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption),
+							V_ASN1_NULL, 0);
+			}
+		return 1;
+
+		default:
+		return -2;
+
+		}
+
+	}
+
+
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] = 
 	{
 		{
@@ -286,7 +309,7 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] =
 		0,0,0,0,0,0,
 
 		int_rsa_free,
-		0,
+		rsa_pkey_ctrl,
 		old_rsa_priv_decode,
 		old_rsa_priv_encode
 		},

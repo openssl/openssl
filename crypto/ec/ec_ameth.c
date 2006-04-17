@@ -570,6 +570,29 @@ static int old_ec_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
 	return i2d_ECPrivateKey(pkey->pkey.ec, pder);
 	}
 
+static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+	{
+	switch (op)
+		{
+		case ASN1_PKEY_CTRL_PKCS7_SIGN:
+		if (arg1 == 0)
+			{
+			X509_ALGOR *alg1, *alg2;
+			PKCS7_SIGNER_INFO_get0_algs(arg2, NULL, &alg1, &alg2);
+			X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_sha1),
+							V_ASN1_NULL, 0);
+			X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_ecdsa_with_SHA1),
+							V_ASN1_NULL, 0);
+			}
+		return 1;
+
+		default:
+		return -2;
+
+		}
+
+	}
+
 EVP_PKEY_ASN1_METHOD eckey_asn1_meth = 
 	{
 	EVP_PKEY_EC,
@@ -598,7 +621,7 @@ EVP_PKEY_ASN1_METHOD eckey_asn1_meth =
 	eckey_param_print,
 
 	int_ec_free,
-	0,
+	ec_pkey_ctrl,
 	old_ec_priv_decode,
 	old_ec_priv_encode
 	};

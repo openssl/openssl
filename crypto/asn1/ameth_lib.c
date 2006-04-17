@@ -340,7 +340,7 @@ void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
 	}
 
 void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
-		void (*pkey_ctrl)(EVP_PKEY *pkey, int op,
+		int (*pkey_ctrl)(EVP_PKEY *pkey, int op,
 							long arg1, void *arg2))
 	{
 	ameth->pkey_ctrl = pkey_ctrl;

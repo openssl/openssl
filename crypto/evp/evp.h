@@ -860,6 +860,8 @@ void EVP_PBE_cleanup(void);
 #define ASN1_PKEY_ALIAS		0x1
 #define ASN1_PKEY_DYNAMIC	0x2
 
+#define ASN1_PKEY_CTRL_PKCS7_SIGN	0x1
+
 int EVP_PKEY_asn1_get_count(void);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type);
@@ -899,7 +901,7 @@ void EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
 void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
 		void (*pkey_free)(EVP_PKEY *pkey));
 void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
-		void (*pkey_ctrl)(EVP_PKEY *pkey, int op,
+		int (*pkey_ctrl)(EVP_PKEY *pkey, int op,
 							long arg1, void *arg2));
 
 
