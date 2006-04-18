@@ -4,6 +4,12 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Add an OID cross reference table and utility functions. Its purpose is to
+     translate between signature OIDs such as SHA1WithrsaEncryption and SHA1,
+     rsaEncryption. This will allow some of the algorithm specific hackery
+     needed to use the correct OID to be removed. 
+     [Steve Henson]
+
   *) Remove algorithm specific dependencies when setting PKCS7_SIGNER_INFO
      structures for PKCS7_sign(). They are now set up by the relevant public
      key ASN1 method.

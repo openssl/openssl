@@ -825,8 +825,8 @@ static unsigned char lvalues[5345]={
 0x2A,0x85,0x03,0x02,0x02,0x17,               /* [5298] OBJ_id_GostR3411_94_prf */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x05,0x03,     /* [5304] OBJ_id_GostR3410_94_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x05,0x04,     /* [5312] OBJ_id_GostR3410_2001_cc */
-0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x03,     /* [5320] OBJ_id_GostR3410_11_94_with_GostR3411_94_cc */
-0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x04,     /* [5328] OBJ_id_GostR3410_2001_with_GostR3411_94_cc */
+0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x03,     /* [5320] OBJ_id_GostR3411_94_with_GostR3410_94_cc */
+0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x04,     /* [5328] OBJ_id_GostR3411_94_with_GostR3410_2001_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x08,0x01,     /* [5336] OBJ_id_GostR3410_2001_ParamSet_cc */
 };
 
@@ -2113,12 +2113,12 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5304]),0},
 {"gost2001cc","GOST 34.10-2001 Cryptocom",NID_id_GostR3410_2001_cc,8,
 	&(lvalues[5312]),0},
-{"id-GostR3410-11-94-with-GostR3411-94-cc",
-	"GOST R 34.10 with GOST R 34.11-94 Cryptocom",
-	NID_id_GostR3410_11_94_with_GostR3411_94_cc,8,&(lvalues[5320]),0},
-{"id-GostR3410-2001-with-GostR3411-94-cc",
-	"GOST R 34.10-2001 with GOST R 34.10-94 Cryptocom",
-	NID_id_GostR3410_2001_with_GostR3411_94_cc,8,&(lvalues[5328]),0},
+{"id-GostR3411-94-with-GostR3410-94-cc",
+	"GOST R 34.11-94 with GOST R 34.10-94 Cryptocom",
+	NID_id_GostR3411_94_with_GostR3410_94_cc,8,&(lvalues[5320]),0},
+{"id-GostR3411-94-with-GostR3410-2001-cc",
+	"GOST R 34.11-94 with GOST R 34.10-2001 Cryptocom",
+	NID_id_GostR3411_94_with_GostR3410_2001_cc,8,&(lvalues[5328]),0},
 {"id-GostR3410-2001-ParamSet-cc",
 	"GOST R 3410-2001 Parameter Set Cryptocom",
 	NID_id_GostR3410_2001_ParamSet_cc,8,&(lvalues[5336]),0},
@@ -2393,7 +2393,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[789]),/* "id-Gost28147-89-None-KeyMeshing" */
 &(nid_objs[760]),/* "id-Gost28147-89-TestParamSet" */
 &(nid_objs[794]),/* "id-Gost28147-89-cc" */
-&(nid_objs[799]),/* "id-GostR3410-11-94-with-GostR3411-94-cc" */
 &(nid_objs[777]),/* "id-GostR3410-2001-CryptoPro-A-ParamSet" */
 &(nid_objs[778]),/* "id-GostR3410-2001-CryptoPro-B-ParamSet" */
 &(nid_objs[779]),/* "id-GostR3410-2001-CryptoPro-C-ParamSet" */
@@ -2401,7 +2400,6 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[781]),/* "id-GostR3410-2001-CryptoPro-XchB-ParamSet" */
 &(nid_objs[801]),/* "id-GostR3410-2001-ParamSet-cc" */
 &(nid_objs[776]),/* "id-GostR3410-2001-TestParamSet" */
-&(nid_objs[800]),/* "id-GostR3410-2001-with-GostR3411-94-cc" */
 &(nid_objs[786]),/* "id-GostR3410-2001DH" */
 &(nid_objs[769]),/* "id-GostR3410-94-CryptoPro-A-ParamSet" */
 &(nid_objs[770]),/* "id-GostR3410-94-CryptoPro-B-ParamSet" */
@@ -2419,7 +2417,9 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[759]),/* "id-GostR3411-94-CryptoProParamSet" */
 &(nid_objs[758]),/* "id-GostR3411-94-TestParamSet" */
 &(nid_objs[754]),/* "id-GostR3411-94-with-GostR3410-2001" */
+&(nid_objs[800]),/* "id-GostR3411-94-with-GostR3410-2001-cc" */
 &(nid_objs[755]),/* "id-GostR3411-94-with-GostR3410-94" */
+&(nid_objs[799]),/* "id-GostR3411-94-with-GostR3410-94-cc" */
 &(nid_objs[783]),/* "id-HMACGostR3411-94" */
 &(nid_objs[266]),/* "id-aca" */
 &(nid_objs[355]),/* "id-aca-accessIdentity" */
@@ -2947,16 +2947,16 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[785]),/* "GOST 28147-89 MAC" */
 &(nid_objs[798]),/* "GOST 34.10-2001 Cryptocom" */
 &(nid_objs[797]),/* "GOST 34.10-94 Cryptocom" */
-&(nid_objs[799]),/* "GOST R 34.10 with GOST R 34.11-94 Cryptocom" */
 &(nid_objs[756]),/* "GOST R 34.10-2001" */
 &(nid_objs[786]),/* "GOST R 34.10-2001 DH" */
-&(nid_objs[800]),/* "GOST R 34.10-2001 with GOST R 34.10-94 Cryptocom" */
 &(nid_objs[757]),/* "GOST R 34.10-94" */
 &(nid_objs[787]),/* "GOST R 34.10-94 DH" */
 &(nid_objs[795]),/* "GOST R 34.11-94" */
 &(nid_objs[796]),/* "GOST R 34.11-94 PRF" */
 &(nid_objs[754]),/* "GOST R 34.11-94 with GOST R 34.10-2001" */
+&(nid_objs[800]),/* "GOST R 34.11-94 with GOST R 34.10-2001 Cryptocom" */
 &(nid_objs[755]),/* "GOST R 34.11-94 with GOST R 34.10-94" */
+&(nid_objs[799]),/* "GOST R 34.11-94 with GOST R 34.10-94 Cryptocom" */
 &(nid_objs[801]),/* "GOST R 3410-2001 Parameter Set Cryptocom" */
 &(nid_objs[783]),/* "HMAC GOST 34.11-94" */
 &(nid_objs[432]),/* "Hold Instruction Call Issuer" */
@@ -4080,8 +4080,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[508]),/* OBJ_id_hex_multipart_message     1 3 6 1 7 1 1 2 */
 &(nid_objs[57]),/* OBJ_netscape                     2 16 840 1 113730 */
 &(nid_objs[437]),/* OBJ_pilot                        0 9 2342 19200300 100 */
-&(nid_objs[799]),/* OBJ_id_GostR3410_11_94_with_GostR3411_94_cc 1 2 643 2 9 1 3 3 */
-&(nid_objs[800]),/* OBJ_id_GostR3410_2001_with_GostR3411_94_cc 1 2 643 2 9 1 3 4 */
+&(nid_objs[799]),/* OBJ_id_GostR3411_94_with_GostR3410_94_cc 1 2 643 2 9 1 3 3 */
+&(nid_objs[800]),/* OBJ_id_GostR3411_94_with_GostR3410_2001_cc 1 2 643 2 9 1 3 4 */
 &(nid_objs[797]),/* OBJ_id_GostR3410_94_cc           1 2 643 2 9 1 5 3 */
 &(nid_objs[798]),/* OBJ_id_GostR3410_2001_cc         1 2 643 2 9 1 5 4 */
 &(nid_objs[794]),/* OBJ_id_Gost28147_89_cc           1 2 643 2 9 1 6 1 */

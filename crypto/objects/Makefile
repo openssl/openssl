@@ -18,20 +18,20 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	o_names.c obj_dat.c obj_lib.c obj_err.c
-LIBOBJ= o_names.o obj_dat.o obj_lib.o obj_err.o
+LIBSRC=	o_names.c obj_dat.c obj_lib.c obj_err.c obj_xref.c
+LIBOBJ= o_names.o obj_dat.o obj_lib.o obj_err.o obj_xref.o
 
 SRC= $(LIBSRC)
 
 EXHEADER= objects.h obj_mac.h
-HEADER=	$(EXHEADER) obj_dat.h
+HEADER=	$(EXHEADER) obj_dat.h obj_xref.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
 	(cd ../..; $(MAKE) DIRS=crypto SDIRS=$(DIR) sub_all)
 
-all:	obj_dat.h lib
+all:	obj_dat.h obj_xref.h lib
 
 lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
@@ -45,6 +45,10 @@ obj_dat.h: obj_dat.pl obj_mac.h
 obj_mac.h: objects.pl objects.txt obj_mac.num
 	$(PERL) objects.pl objects.txt obj_mac.num obj_mac.h
 	@sleep 1; touch obj_mac.h; sleep 1
+
+obj_xref.h: objxref.pl obj_xref.txt obj_mac.num
+	$(PERL) objxref.pl > obj_xref.h
+	@sleep 1; touch obj_xref.h; sleep 1
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

@@ -796,6 +796,6 @@ id_GostR3411_94		795
 id_GostR3411_94_prf		796
 id_GostR3410_94_cc		797
 id_GostR3410_2001_cc		798
-id_GostR3410_11_94_with_GostR3411_94_cc		799
-id_GostR3410_2001_with_GostR3411_94_cc		800
+id_GostR3411_94_with_GostR3410_94_cc		799
+id_GostR3411_94_with_GostR3410_2001_cc		800
 id_GostR3410_2001_ParamSet_cc		801

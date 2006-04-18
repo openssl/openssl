@@ -1122,7 +1122,7 @@ cryptocom 1 5 3		: gost94cc	: GOST 34.10-94 Cryptocom
 !Cname id-GostR3410-2001-cc
 cryptocom 1 5 4		: gost2001cc	: GOST 34.10-2001 Cryptocom
 
-cryptocom 1 3 3		: id-GostR3410-11-94-with-GostR3411-94-cc : GOST R 34.10 with GOST R 34.11-94 Cryptocom
-cryptocom 1 3 4		: id-GostR3410-2001-with-GostR3411-94-cc : GOST R 34.10-2001 with GOST R 34.10-94 Cryptocom
+cryptocom 1 3 3		: id-GostR3411-94-with-GostR3410-94-cc : GOST R 34.11-94 with GOST R 34.10-94 Cryptocom
+cryptocom 1 3 4		: id-GostR3411-94-with-GostR3410-2001-cc : GOST R 34.11-94 with GOST R 34.10-2001 Cryptocom
 
 cryptocom 1 8 1		: id-GostR3410-2001-ParamSet-cc : GOST R 3410-2001 Parameter Set Cryptocom
