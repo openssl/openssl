@@ -188,6 +188,15 @@ typedef int evp_verify_method(int type,const unsigned char *m,
 #define EVP_MD_FLAG_ONESHOT	0x0001 /* digest can only handle a single
 					* block */
 
+#define EVP_MD_FLAG_PKEY_DIGEST	0x0002 /* digest is a "clone" digest used
+					* which is a copy of an existing
+					* one for a specific public key type.
+					* EVP_dss1() etc */
+
+/* Digest uses EVP_PKEY_METHOD for signing instead of MD specific signing */
+
+#define EVP_MD_FLAG_PKEY_METHOD_SIGNATURE	0x0004
+
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
 #ifndef OPENSSL_NO_DSA
@@ -792,6 +801,7 @@ void EVP_PBE_cleanup(void);
 
 #define ASN1_PKEY_ALIAS		0x1
 #define ASN1_PKEY_DYNAMIC	0x2
+#define ASN1_PKEY_SIGPARAM_NULL	0x4
 
 #define ASN1_PKEY_CTRL_PKCS7_SIGN	0x1
 

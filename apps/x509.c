@@ -912,6 +912,7 @@ bad:
 						passin, e, "Private key");
 					if (Upkey == NULL) goto end;
 					}
+#if 0
 #ifndef OPENSSL_NO_DSA
 		                if (Upkey->type == EVP_PKEY_DSA)
 		                        digest=EVP_dss1();
@@ -919,6 +920,7 @@ bad:
 #ifndef OPENSSL_NO_ECDSA
 				if (Upkey->type == EVP_PKEY_EC)
 					digest=EVP_ecdsa();
+#endif
 #endif
 
 				assert(need_rand);

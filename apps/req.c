@@ -894,6 +894,7 @@ loop:
 			BIO_printf(bio_err,"you need to specify a private key\n");
 			goto end;
 			}
+#if 0
 #ifndef OPENSSL_NO_DSA
 		if (pkey->type == EVP_PKEY_DSA)
 			digest=EVP_dss1();
@@ -901,6 +902,7 @@ loop:
 #ifndef OPENSSL_NO_ECDSA
 		if (pkey->type == EVP_PKEY_EC)
 			digest=EVP_ecdsa();
+#endif
 #endif
 		if (req == NULL)
 			{

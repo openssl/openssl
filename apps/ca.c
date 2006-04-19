@@ -1412,6 +1412,7 @@ bad:
 
 		/* we now have a CRL */
 		if (verbose) BIO_printf(bio_err,"signing CRL\n");
+#if 0
 #ifndef OPENSSL_NO_DSA
 		if (pkey->type == EVP_PKEY_DSA) 
 			dgst=EVP_dss1();
@@ -1420,6 +1421,7 @@ bad:
 #ifndef OPENSSL_NO_ECDSA
 		if (pkey->type == EVP_PKEY_EC)
 			dgst=EVP_ecdsa();
+#endif
 #endif
 
 		/* Add any extensions asked for */

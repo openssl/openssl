@@ -4,6 +4,12 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Use OID cross reference table in ASN1_sign() and ASN1_verify(). New 
+     EVP_MD flag EVP_MD_FLAG_PKEY_METHOD_SIGNATURE. This uses the relevant
+     signing method from the key type. This effectively removes the link
+     between digests and public key types.
+     [Steve Henson]
+
   *) Add an OID cross reference table and utility functions. Its purpose is to
      translate between signature OIDs such as SHA1WithrsaEncryption and SHA1,
      rsaEncryption. This will allow some of the algorithm specific hackery
