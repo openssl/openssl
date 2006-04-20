@@ -110,7 +110,7 @@ static int des_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     unsigned int n;
     unsigned char c[1],d[1];
 
-    for(n=0 ; n < inl ; ++n)
+    for(n=0 ; n < inl * 8; ++n)
 	{
 	c[0]=(in[n/8]&(1 << (7-n%8))) ? 0x80 : 0;
 	DES_cfb_encrypt(c,d,1,1,ctx->cipher_data,(DES_cblock *)ctx->iv,
