@@ -394,7 +394,7 @@ static int ec_missing_parameters(const EVP_PKEY *pkey)
 	return 0;
 	}
 
-int ec_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
+static int ec_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 	{
 	EC_GROUP *group = EC_GROUP_dup(EC_KEY_get0_group(from->pkey.ec));
 	if (group == NULL)
@@ -405,7 +405,7 @@ int ec_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 	return 1;
 	}
 
-int ec_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
+static int ec_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 	{
 	const EC_GROUP *group_a = EC_KEY_get0_group(a->pkey.ec),
 	               *group_b = EC_KEY_get0_group(b->pkey.ec);
