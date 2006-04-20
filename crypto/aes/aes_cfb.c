@@ -202,7 +202,7 @@ void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
     assert(*num == 0);
 
     memset(out,0,(length+7)/8);
-    for(n=0 ; n < length * 8; ++n)
+    for(n=0 ; n < length ; ++n)
 	{
 	c[0]=(in[n/8]&(1 << (7-n%8))) ? 0x80 : 0;
 	AES_cfbr_encrypt_block(c,d,1,key,ivec,enc);
