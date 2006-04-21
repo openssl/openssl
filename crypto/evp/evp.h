@@ -815,7 +815,7 @@ int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *pkey_base_id, int *ppkey_flags,
 				const char **pinfo, const char **ppem_str,
 					const EVP_PKEY_ASN1_METHOD *ameth);
 
-EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id,
+EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 					const char *pem_str, const char *info);
 void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth);
 void EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,

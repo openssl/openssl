@@ -191,11 +191,10 @@ int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 int EVP_PKEY_asn1_add_alias(int to, int from)
 	{
 	EVP_PKEY_ASN1_METHOD *ameth;
-	ameth = EVP_PKEY_asn1_new(from, NULL, NULL);
+	ameth = EVP_PKEY_asn1_new(from, ASN1_PKEY_ALIAS, NULL, NULL);
 	if (!ameth)
 		return 0;
 	ameth->pkey_base_id = to;
-	ameth->pkey_flags |= ASN1_PKEY_ALIAS;
 	return EVP_PKEY_asn1_add0(ameth);
 	}
 
@@ -218,7 +217,7 @@ int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *ppkey_base_id, int *ppkey_flags,
 	return 1;
 	}
 
-EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id,
+EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 					const char *pem_str, const char *info)
 	{
 	EVP_PKEY_ASN1_METHOD *ameth;
@@ -228,7 +227,7 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id,
 
 	ameth->pkey_id = id;
 	ameth->pkey_base_id = id;
-	ameth->pkey_flags = ASN1_PKEY_DYNAMIC;
+	ameth->pkey_flags = flags | ASN1_PKEY_DYNAMIC;
 
 	if (info)
 		{
