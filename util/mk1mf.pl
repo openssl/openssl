@@ -19,6 +19,7 @@ my $fips_premain_c_path = "";
 my $fips_sha1_exe_path = "";
 
 my $fipslibdir = "";
+my $baseaddr = "";
 
 my $ex_l_libs = "";
 
@@ -362,6 +363,9 @@ for (;;)
 	if ($key eq "FIPSLIBDIR")
 		{ $fipslibdir=$val;}
 
+	if ($key eq "BASEADDR")
+		{ $baseaddr=$val;}
+
 	if (!($_=<IN>))
 		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
 	}
@@ -514,6 +518,7 @@ MKCANISTER=$mkcanister
 E_PREMAIN_DSO=fips_premain_dso
 
 FIPSLIB_D=$fipslibdir
+BASEADDR=$baseaddr
 FIPS_PREMAIN_SRC=$fips_premain_c_path
 O_FIPSCANISTER=$fips_canister_path
 FIPS_SHA1_EXE=$fips_sha1_exe_path
@@ -783,7 +788,7 @@ if ($fips)
 		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
 			"\$(O_CRYPTO)",
 			"$crypto",
-			$shlib, "\$(SO_CRYPTO)", "0xFB00000");
+			$shlib, "\$(SO_CRYPTO)", "\$(BASEADDR)");
 		}
 	else
 		{

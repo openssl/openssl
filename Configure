@@ -622,6 +622,7 @@ my $openssldir="";
 my $exe_ext="";
 my $install_prefix="";
 my $fipslibdir="/usr/local/ssl/lib";
+my $baseaddr="0xFB00000";
 my $no_threads=0;
 my $no_shared=1;
 my $zlib=0;
@@ -873,6 +874,10 @@ PROCESS_ARGS:
 			elsif (/^--with-fipslibdir=(.*)$/)
 				{
 				$fipslibdir="$1";
+				}
+			elsif (/^--with-baseaddr=(.*)$/)
+				{
+				$baseaddr="$1";
 				}
 			elsif (/^--with-zlib-include=(.*)$/)
 				{
@@ -1339,6 +1344,7 @@ while (<IN>)
 	s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
 	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
 	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
+	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
