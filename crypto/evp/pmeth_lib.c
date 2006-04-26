@@ -284,6 +284,11 @@ void *EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx)
 	return ctx->data;
 	}
 
+EVP_PKEY *EVP_PKEY_CTX_get0_pkey(EVP_PKEY_CTX *ctx)
+	{
+	return ctx->pkey;
+	}
+
 void EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data)
 	{
 	ctx->app_data = data;

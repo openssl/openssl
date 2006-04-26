@@ -885,6 +885,9 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 #define EVP_PKEY_FLAG_AUTOARGLEN	2
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type, ENGINE *e);
+EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags);
+int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth);
+
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
@@ -896,6 +899,8 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
 
 void EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data);
 void *EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx);
+EVP_PKEY *EVP_PKEY_CTX_get0_pkey(EVP_PKEY_CTX *ctx);
+
 void EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data);
 void *EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx);
 
