@@ -366,8 +366,6 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	X509_ALGOR_set0(p7i->digest_alg, OBJ_nid2obj(EVP_MD_type(dgst)),
 				V_ASN1_NULL, NULL);
 
-	if (p7i->digest_enc_alg->parameter != NULL)
-		ASN1_TYPE_free(p7i->digest_enc_alg->parameter);
 	if (pkey->ameth && pkey->ameth->pkey_ctrl)
 		{
 		ret = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_PKCS7_SIGN,
