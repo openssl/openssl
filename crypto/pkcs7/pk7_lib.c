@@ -444,6 +444,12 @@ void PKCS7_SIGNER_INFO_get0_algs(PKCS7_SIGNER_INFO *si, EVP_PKEY **pk,
 		*psig = si->digest_enc_alg;
 	}
 
+void PKCS7_RECIP_INFO_get0_alg(PKCS7_RECIP_INFO *ri, X509_ALGOR **penc)
+	{
+	if (penc)
+		*penc = ri->key_enc_algor;
+	}
+
 PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509)
 	{
 	PKCS7_RECIP_INFO *ri;
