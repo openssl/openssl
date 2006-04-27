@@ -804,6 +804,7 @@ void EVP_PBE_cleanup(void);
 #define ASN1_PKEY_SIGPARAM_NULL	0x4
 
 #define ASN1_PKEY_CTRL_PKCS7_SIGN	0x1
+#define ASN1_PKEY_CTRL_PKCS7_ENCRYPT	0x2
 
 int EVP_PKEY_asn1_get_count(void);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);

@@ -266,11 +266,22 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	{
 	switch (op)
 		{
+
 		case ASN1_PKEY_CTRL_PKCS7_SIGN:
 		if (arg1 == 0)
 			{
 			X509_ALGOR *alg;
 			PKCS7_SIGNER_INFO_get0_algs(arg2, NULL, NULL, &alg);
+			X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption),
+							V_ASN1_NULL, 0);
+			}
+		return 1;
+
+		case ASN1_PKEY_CTRL_PKCS7_ENCRYPT:
+		if (arg1 == 0)
+			{
+			X509_ALGOR *alg;
+			PKCS7_RECIP_INFO_get0_alg(arg2, &alg);
 			X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption),
 							V_ASN1_NULL, 0);
 			}
