@@ -149,7 +149,7 @@ int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 		return -1;
 	if (a->ameth && a->ameth->param_cmp)
 		return a->ameth->param_cmp(a, b);
-	return -1;
+	return -2;
 	}
 
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
