@@ -120,6 +120,14 @@ linux_ppc64.s: asm/ppc.pl;	$(PERL) $< $@
 aix_ppc32.s: asm/ppc.pl;	$(PERL) asm/ppc.pl $@
 aix_ppc64.s: asm/ppc.pl;	$(PERL) asm/ppc.pl $@
 osx_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
+osx_ppc64.s: asm/ppc.pl;	$(PERL) $< $@
+
+linux_ppc32-mont.s: asm/ppc-mont.pl;	$(PERL) $< $@
+linux_ppc64-mont.s: asm/ppc-mont.pl;	$(PERL) $< $@
+aix_ppc32-mont.s: asm/ppc-mont.pl;	$(PERL) asm/ppc-mont.pl $@
+aix_ppc64-mont.s: asm/ppc-mont.pl;	$(PERL) asm/ppc-mont.pl $@
+osx_ppc32-mont.s: asm/ppc-mont.pl;	$(PERL) $< $@
+osx_ppc64-mont.s: asm/ppc-mont.pl;	$(PERL) $< $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
