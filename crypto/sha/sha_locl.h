@@ -127,6 +127,13 @@
 #   define DONT_IMPLEMENT_BLOCK_HOST_ORDER
 #   define sha1_block_data_order		sha1_block_asm_data_order
 #   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
+#  elif defined(_ARCH_PPC) || defined(_ARCH_PPC64) || \
+	defined(__ppc) || defined(__ppc__) || defined(__powerpc) || \
+	defined(__ppc64) || defined(__ppc64__) || defined(__powerpc64)
+#   define sha1_block_host_order		sha1_block_asm_data_order
+#   define DONT_IMPLEMENT_BLOCK_HOST_ORDER
+#   define sha1_block_data_order		sha1_block_asm_data_order
+#   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
 #  endif
 # endif
   void sha1_block_host_order (SHA_CTX *c, const void *p,size_t num);
