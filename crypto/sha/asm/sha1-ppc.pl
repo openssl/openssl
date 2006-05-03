@@ -62,10 +62,10 @@ sub BODY_00_19 {
 my ($i,$a,$b,$c,$d,$e,$f)=@_;
 my $j=$i+1;
 $code.=<<___ if ($i==0);
-	lwz	@X[$i],$i*4($inp)
+	lwz	@X[$i],`$i*4`($inp)
 ___
 $code.=<<___ if ($i<15);
-	lwz	@X[$j],$j*4($inp)
+	lwz	@X[$j],`$j*4`($inp)
 	add	$f,$K,$e
 	rotlwi	$e,$a,5
 	add	$f,$f,@X[$i]
@@ -149,6 +149,7 @@ ___
 }
 
 $code=<<___;
+.machine any
 .text
 
 .globl	.sha1_block_asm_data_order

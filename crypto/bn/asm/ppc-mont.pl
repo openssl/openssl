@@ -98,6 +98,7 @@ $nlo="r25";
 $nhi="r0";
 
 $code=<<___;
+.machine any
 .text
 
 .globl	.bn_mul_mont

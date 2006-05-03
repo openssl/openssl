@@ -58,7 +58,8 @@ my $text = sub {
 my $machine = sub {
     my $junk = shift;
     my $arch = shift;
-    $arch = "ppc970" if ($arch eq "any" and $flavour =~ /osx/);
+    if ($arch eq "any" and $flavour =~ /osx/)
+    {   $arch = ($flavour =~ /64/) ? "ppc970-64" : "ppc970";   }
     ".machine	$arch";
 };
 
