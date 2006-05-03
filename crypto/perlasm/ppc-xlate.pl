@@ -52,6 +52,9 @@ my $globl = sub {
     $$global = $name;
     $ret;
 };
+my $text = sub {
+    ($flavour =~ /aix/) ? ".csect" : ".text";
+};
 my $machine = sub {
     my $junk = shift;
     my $arch = shift;
@@ -102,6 +105,7 @@ while($line=<>) {
 	my $mnemonic = $2;
 	my $f = $3;
 	my $opcode = eval("\$$mnemonic");
+	$line =~ s|\br([0-9]+)\b|$1|g if ($c ne "." and $flavour !~ /osx/);
 	if (ref($opcode) eq 'CODE') { $line = &$opcode($f,split(',',$line)); }
 	elsif ($mnemonic)           { $line = $c.$mnemonic.$f."\t".$line; }
     }
