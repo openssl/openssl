@@ -58,8 +58,10 @@ my $text = sub {
 my $machine = sub {
     my $junk = shift;
     my $arch = shift;
-    if ($arch eq "any" and $flavour =~ /osx/)
-    {   $arch = ($flavour =~ /64/) ? "ppc970-64" : "ppc970";   }
+    if ($flavour =~ /osx/)
+    {	$arch =~ s/\"//g;
+	$arch = ($flavour=~/64/) ? "ppc970-64" : "ppc970" if ($arch eq "any");
+    }
     ".machine	$arch";
 };
 
@@ -69,12 +71,10 @@ my $machine = sub {
 my $cmplw = sub {
     my $f = shift;
     my $cr = 0; $cr = shift if ($#_>1);
-    "	cmpl$f	".join(',',$cr,0,@_);
-};
-my $cmpld = sub {
-    my $f = shift;
-    my $cr = 0; $cr = shift if ($#_>1);
-    "	cmpl$f	".join(',',$cr,1,@_);
+    # Some out-of-date 32-bit GNU assembler just can't handle cmplw...
+    ($flavour =~ /linux.*32/) ?
+	"	.long	".sprintf "0x%x",31<<26|$cr<<23|$_[0]<<16|$_[1]<<11|64 :
+	"	cmplw	".join(',',$cr,@_);
 };
 my $bdnz = sub {
     my $f = shift;

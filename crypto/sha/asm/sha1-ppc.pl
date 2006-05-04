@@ -149,7 +149,7 @@ ___
 }
 
 $code=<<___;
-.machine any
+.machine "any"
 .text
 
 .globl	.sha1_block_asm_data_order
