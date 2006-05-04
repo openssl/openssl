@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8a and 0.9.8b  [XX xxx XXXX]
+ Changes between 0.9.8a and 0.9.8b  [04 May 2006]
 
   *) When applying a cipher rule check to see if string match is an explicit
      cipher suite and only match that one cipher suite if it is.
