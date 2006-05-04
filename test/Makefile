@@ -732,15 +732,23 @@ fips_shatest.o: ../include/openssl/ui_compat.h ../include/openssl/x509.h
 fips_shatest.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h
 fips_shatest.o: fips_shatest.c
 fips_test_suite.o: ../include/openssl/aes.h ../include/openssl/asn1.h
-fips_test_suite.o: ../include/openssl/bio.h ../include/openssl/bn.h
+fips_test_suite.o: ../include/openssl/bio.h ../include/openssl/blowfish.h
+fips_test_suite.o: ../include/openssl/bn.h ../include/openssl/cast.h
 fips_test_suite.o: ../include/openssl/crypto.h ../include/openssl/des.h
 fips_test_suite.o: ../include/openssl/des_old.h ../include/openssl/dh.h
 fips_test_suite.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-fips_test_suite.o: ../include/openssl/err.h ../include/openssl/fips.h
-fips_test_suite.o: ../include/openssl/lhash.h ../include/openssl/md5.h
+fips_test_suite.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_test_suite.o: ../include/openssl/fips.h ../include/openssl/fips_sha.h
+fips_test_suite.o: ../include/openssl/hmac.h ../include/openssl/idea.h
+fips_test_suite.o: ../include/openssl/lhash.h ../include/openssl/md2.h
+fips_test_suite.o: ../include/openssl/md4.h ../include/openssl/md5.h
+fips_test_suite.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+fips_test_suite.o: ../include/openssl/objects.h
 fips_test_suite.o: ../include/openssl/opensslconf.h
 fips_test_suite.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-fips_test_suite.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+fips_test_suite.o: ../include/openssl/rand.h ../include/openssl/rc2.h
+fips_test_suite.o: ../include/openssl/rc4.h ../include/openssl/rc5.h
+fips_test_suite.o: ../include/openssl/ripemd.h ../include/openssl/rsa.h
 fips_test_suite.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 fips_test_suite.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 fips_test_suite.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
