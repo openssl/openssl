@@ -4,6 +4,13 @@
 
  Changes between 0.9.7i and 0.9.7j  [XX xxx XXXX]
 
+  *) Adapt fipsld and the build system to link against the validated FIPS
+     module in FIPS mode.
+     [Steve Henson]
+
+  *) Fixes for VC++ 2005 build under Windows.
+     [Steve Henson]
+
   *) Add new Windows build target VC-32-GMAKE for VC++. This uses GNU make 
      from a Windows bash shell such as MSYS. It is autodetected from the
      "config" script when run from a VC++ environment. Modify standard VC++
