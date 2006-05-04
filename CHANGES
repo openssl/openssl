@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.7j and 0.9.7k  [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.7i and 0.9.7j  [04 May 2006]
 
   *) Adapt fipsld and the build system to link against the validated FIPS
