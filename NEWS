@@ -5,6 +5,16 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8a and OpenSSL 0.9.8b:
+
+      o Cipher string fixes.
+      o Fixes for VC++ 2005.
+      o Updated ECC cipher suite support.
+      o New functions EVP_CIPHER_CTX_new() and EVP_CIPHER_CTX_free().
+      o Zlib compression usage fixes.
+      o Built in dynamic engine compilation support on Win32.
+      o Fixes auto dynamic engine loading in Win32.
+
   Major changes between OpenSSL 0.9.8 and OpenSSL 0.9.8a:
 
       o Fix potential SSL 2.0 rollback, CAN-2005-2969
@@ -83,6 +93,21 @@
       o Added support for files larger than 2GB.
       o Added initial support for Win64.
       o Added alternate pkg-config files.
+
+  Major changes between OpenSSL 0.9.7i and OpenSSL 0.9.7j:
+
+      o Visual C++ 2005 fixes.
+      o Update Windows build system for FIPS.
+
+  Major changes between OpenSSL 0.9.7h and OpenSSL 0.9.7i:
+
+      o Give EVP_MAX_MD_SIZE it's old value, except for a FIPS build.
+
+  Major changes between OpenSSL 0.9.7g and OpenSSL 0.9.7h:
+
+      o Fix SSL 2.0 Rollback, CAN-2005-2969
+      o Allow use of fixed-length exponent on DSA signing
+      o Default fixed-window RSA, DSA, DH private-key operations
 
   Major changes between OpenSSL 0.9.7f and OpenSSL 0.9.7g:
 
