@@ -630,13 +630,15 @@ tasn_dec.o: ../../include/openssl/opensslconf.h
 tasn_dec.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tasn_dec.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 tasn_dec.o: ../../include/openssl/symhacks.h tasn_dec.c
-tasn_enc.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
-tasn_enc.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-tasn_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h
+tasn_enc.o: ../../e_os.h ../../include/openssl/asn1.h
+tasn_enc.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+tasn_enc.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+tasn_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+tasn_enc.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 tasn_enc.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 tasn_enc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tasn_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-tasn_enc.o: ../../include/openssl/symhacks.h tasn_enc.c
+tasn_enc.o: ../../include/openssl/symhacks.h ../cryptlib.h tasn_enc.c
 tasn_fre.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 tasn_fre.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 tasn_fre.o: ../../include/openssl/e_os2.h ../../include/openssl/obj_mac.h

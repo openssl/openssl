@@ -188,7 +188,7 @@ nsComment			= "OpenSSL Generated Certificate"
 
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
-authorityKeyIdentifier=keyid,issuer:always
+authorityKeyIdentifier=keyid,issuer
 
 # This stuff is for subjectAltName and issuerAltname.
 # Import the email address.
