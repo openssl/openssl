@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8b and 0.9.8c  [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8a and 0.9.8b  [04 May 2006]
 
   *) When applying a cipher rule check to see if string match is an explicit
