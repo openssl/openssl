@@ -717,9 +717,9 @@ case "$GUESSOS" in
 		fi
 	     fi
 	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
-	     OUT="hpux-parisc-${CC}
+	     OUT="hpux-parisc-${CC}"
 	elif [ $CPU_VERSION -ge 523 ]; then	# PA-RISC 1.0 CPU
-	     OUT="hpux-parisc-${CC}
+	     OUT="hpux-parisc-${CC}"
 	else					# Motorola(?) CPU
 	     OUT="hpux-$CC"
 	fi
