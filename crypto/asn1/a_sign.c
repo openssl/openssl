@@ -222,6 +222,19 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	int inl=0,outl=0,outll=0;
 	int signid, paramtype;
 
+	if (type == NULL)
+		{
+		int def_nid;
+		if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) > 0)
+			type = EVP_get_digestbynid(def_nid);
+		}
+
+	if (type == NULL)
+		{
+		ASN1err(ASN1_F_ASN1_ITEM_SIGN, ASN1_R_NO_DEFAULT_DIGEST);
+		return 0;
+		}
+
 	if (type->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE)
 		{
 		if (!pkey->ameth ||

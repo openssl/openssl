@@ -188,7 +188,7 @@ int MAIN(int argc, char **argv)
 	X509_REQ *rq=NULL;
 	int fingerprint=0;
 	char buf[256];
-	const EVP_MD *md_alg,*digest=EVP_sha1();
+	const EVP_MD *md_alg,*digest=NULL;
 	CONF *extconf = NULL;
 	char *extsect = NULL, *extfile = NULL, *passin = NULL, *passargin = NULL;
 	int need_rand = 0;
@@ -885,14 +885,18 @@ bad:
 				int j;
 				unsigned int n;
 				unsigned char md[EVP_MAX_MD_SIZE];
+				const EVP_MD *fdig = digest;
 
-				if (!X509_digest(x,digest,md,&n))
+				if (!fdig)
+					fdig = EVP_sha1();
+
+				if (!X509_digest(x,fdig,md,&n))
 					{
 					BIO_printf(bio_err,"out of memory\n");
 					goto end;
 					}
 				BIO_printf(STDout,"%s Fingerprint=",
-						OBJ_nid2sn(EVP_MD_type(digest)));
+						OBJ_nid2sn(EVP_MD_type(fdig)));
 				for (j=0; j<(int)n; j++)
 					{
 					BIO_printf(STDout,"%02X%c",md[j],
@@ -912,16 +916,6 @@ bad:
 						passin, e, "Private key");
 					if (Upkey == NULL) goto end;
 					}
-#if 0
-#ifndef OPENSSL_NO_DSA
-		                if (Upkey->type == EVP_PKEY_DSA)
-		                        digest=EVP_dss1();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-				if (Upkey->type == EVP_PKEY_EC)
-					digest=EVP_ecdsa();
-#endif
-#endif
 
 				assert(need_rand);
 				if (!sign(x,Upkey,days,clrext,digest,
@@ -938,14 +932,6 @@ bad:
 						"CA Private Key");
 					if (CApkey == NULL) goto end;
 					}
-#ifndef OPENSSL_NO_DSA
-		                if (CApkey->type == EVP_PKEY_DSA)
-		                        digest=EVP_dss1();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-				if (CApkey->type == EVP_PKEY_EC)
-					digest = EVP_ecdsa();
-#endif
 				
 				assert(need_rand);
 				if (!x509_certify(ctx,CAfile,digest,x,xca,
@@ -972,15 +958,6 @@ bad:
 					}
 
 				BIO_printf(bio_err,"Generating certificate request\n");
-
-#ifndef OPENSSL_NO_DSA
-		                if (pk->type == EVP_PKEY_DSA)
-		                        digest=EVP_dss1();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-				if (pk->type == EVP_PKEY_EC)
-					digest=EVP_ecdsa();
-#endif
 
 				rq=X509_to_X509_REQ(x,pk,digest);
 				EVP_PKEY_free(pk);

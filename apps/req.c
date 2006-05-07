@@ -193,7 +193,7 @@ int MAIN(int argc, char **argv)
 	char *p;
 	char *subj = NULL;
 	int multirdn = 0;
-	const EVP_MD *md_alg=NULL,*digest=EVP_sha1();
+	const EVP_MD *md_alg=NULL,*digest=NULL;
 	unsigned long chtype = MBSTRING_ASC;
 #ifndef MONOLITH
 	char *to_free;
@@ -894,16 +894,7 @@ loop:
 			BIO_printf(bio_err,"you need to specify a private key\n");
 			goto end;
 			}
-#if 0
-#ifndef OPENSSL_NO_DSA
-		if (pkey->type == EVP_PKEY_DSA)
-			digest=EVP_dss1();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-		if (pkey->type == EVP_PKEY_EC)
-			digest=EVP_ecdsa();
-#endif
-#endif
+
 		if (req == NULL)
 			{
 			req=X509_REQ_new();

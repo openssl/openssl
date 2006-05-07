@@ -4,6 +4,16 @@
 
  Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
 
+  *) Add a ctrl to asn1 method to allow a public key algorithm to express
+     a default digest type to use. In most cases this will be SHA1 but some
+     algorithms (such as GOST) need to specify an alternative digest. The
+     return value indicates how strong the prefernce is 1 means optional and
+     2 is mandatory (that is it is the only supported type). Modify
+     ASN1_item_sign() to accept a NULL digest argument to indicate it should
+     use the default md. Update openssl utilities to use the default digest
+     type for signing if it is not explicitly indicated.
+     [Steve Henson]
+
   *) Use OID cross reference table in ASN1_sign() and ASN1_verify(). New 
      EVP_MD flag EVP_MD_FLAG_PKEY_METHOD_SIGNATURE. This uses the relevant
      signing method from the key type. This effectively removes the link

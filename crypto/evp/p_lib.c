@@ -361,3 +361,12 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
 		return pkey->ameth->param_print(out, pkey, indent, pctx);
 	return unsup_alg(out, pkey, indent, "Parameters");
 	}
+
+int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid)
+	{
+	if (!pkey->ameth || !pkey->ameth->pkey_ctrl)
+		return -2;
+	return pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_DEFAULT_MD_NID,
+						0, pnid);
+	}
+

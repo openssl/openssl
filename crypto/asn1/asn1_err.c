@@ -248,6 +248,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_NON_HEX_CHARACTERS)   ,"non hex characters"},
 {ERR_REASON(ASN1_R_NOT_ASCII_FORMAT)     ,"not ascii format"},
 {ERR_REASON(ASN1_R_NOT_ENOUGH_DATA)      ,"not enough data"},
+{ERR_REASON(ASN1_R_NO_DEFAULT_DIGEST)    ,"no default digest"},
 {ERR_REASON(ASN1_R_NO_MATCHING_CHOICE_TYPE),"no matching choice type"},
 {ERR_REASON(ASN1_R_NULL_IS_WRONG_LENGTH) ,"null is wrong length"},
 {ERR_REASON(ASN1_R_OBJECT_NOT_ASCII_FORMAT),"object not ascii format"},

@@ -770,6 +770,8 @@ int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
 int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
 				int indent, ASN1_PCTX *pctx);
 
+int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid);
+
 int EVP_CIPHER_type(const EVP_CIPHER *ctx);
 
 /* calls methods */
@@ -805,6 +807,7 @@ void EVP_PBE_cleanup(void);
 
 #define ASN1_PKEY_CTRL_PKCS7_SIGN	0x1
 #define ASN1_PKEY_CTRL_PKCS7_ENCRYPT	0x2
+#define ASN1_PKEY_CTRL_DEFAULT_MD_NID	0x3
 
 int EVP_PKEY_asn1_get_count(void);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);

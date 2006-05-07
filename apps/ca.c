@@ -1016,6 +1016,17 @@ bad:
 		goto err;
 		}
 
+	if (!strcmp(md, "default"))
+		{
+		int def_nid;
+		if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0)
+			{
+			BIO_puts(bio_err,"no default digest\n");
+			goto err;
+			}
+		md = (char *)OBJ_nid2sn(def_nid);
+		}
+
 	if ((dgst=EVP_get_digestbyname(md)) == NULL)
 		{
 		BIO_printf(bio_err,"%s is an unsupported message digest type\n",md);
@@ -1412,17 +1423,6 @@ bad:
 
 		/* we now have a CRL */
 		if (verbose) BIO_printf(bio_err,"signing CRL\n");
-#if 0
-#ifndef OPENSSL_NO_DSA
-		if (pkey->type == EVP_PKEY_DSA) 
-			dgst=EVP_dss1();
-		else
-#endif
-#ifndef OPENSSL_NO_ECDSA
-		if (pkey->type == EVP_PKEY_EC)
-			dgst=EVP_ecdsa();
-#endif
-#endif
 
 		/* Add any extensions asked for */
 
@@ -2101,25 +2101,11 @@ again2:
 			}
 		}
 
-
-#ifndef OPENSSL_NO_DSA
-	if (pkey->type == EVP_PKEY_DSA) dgst=EVP_dss1();
 	pktmp=X509_get_pubkey(ret);
 	if (EVP_PKEY_missing_parameters(pktmp) &&
 		!EVP_PKEY_missing_parameters(pkey))
 		EVP_PKEY_copy_parameters(pktmp,pkey);
 	EVP_PKEY_free(pktmp);
-#endif
-#ifndef OPENSSL_NO_ECDSA
-	if (pkey->type == EVP_PKEY_EC)
-		dgst = EVP_ecdsa();
-	pktmp = X509_get_pubkey(ret);
-	if (EVP_PKEY_missing_parameters(pktmp) &&
-		!EVP_PKEY_missing_parameters(pkey))
-		EVP_PKEY_copy_parameters(pktmp, pkey);
-	EVP_PKEY_free(pktmp);
-#endif
-
 
 	if (!X509_sign(ret,pkey,dgst))
 		goto err;
