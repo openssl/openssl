@@ -224,7 +224,17 @@
   *) Add print and set support for Issuing Distribution Point CRL extension.
      [Steve Henson]
 
- Changes between 0.9.8a and 0.9.8b  [XX xxx XXXX]
+ Changes between 0.9.8b and 0.9.8c  [xx XXX xxxx]
+
+  *) Disable the padding bug check when compression is in use. The padding
+     bug check assumes the first packet is of even length, this is not
+     necessarily true if compresssion is enabled and can result in false
+     positives causing handshake failure. The actual bug test is ancient
+     code so it is hoped that implementations will either have fixed it by
+     now or any which still have the bug do not support compression.
+     [Steve Henson]
+
+ Changes between 0.9.8a and 0.9.8b  [04 May 2006]
 
   *) When applying a cipher rule check to see if string match is an explicit
      cipher suite and only match that one cipher suite if it is.
