@@ -86,7 +86,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 
 	PKCS7_content_new(p7, NID_pkcs7_data);
 
-    	if (!(si = PKCS7_add_signature(p7,signcert,pkey,EVP_sha1()))) {
+    	if (!(si = PKCS7_add_signature(p7,signcert,pkey,NULL))) {
 		PKCS7err(PKCS7_F_PKCS7_SIGN,PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR);
 		PKCS7_free(p7);
 		return NULL;

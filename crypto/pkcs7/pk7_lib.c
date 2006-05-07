@@ -390,6 +390,20 @@ PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
 	{
 	PKCS7_SIGNER_INFO *si;
 
+	if (dgst == NULL)
+		{
+		int def_nid;
+		if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) <= 0)
+			goto err;
+		dgst = EVP_get_digestbynid(def_nid);
+		if (dgst == NULL)
+			{
+			PKCS7err(PKCS7_F_PKCS7_ADD_SIGNATURE,
+						PKCS7_R_NO_DEFAULT_DIGEST);
+			goto err;
+			}
+		}
+
 	if ((si=PKCS7_SIGNER_INFO_new()) == NULL) goto err;
 	if (!PKCS7_SIGNER_INFO_set(si,x509,pkey,dgst)) goto err;
 	if (!PKCS7_add_signer(p7,si)) goto err;
