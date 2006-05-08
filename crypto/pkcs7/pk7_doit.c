@@ -197,6 +197,61 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
 	}
 
 
+int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
+			PKCS7_RECIP_INFO *ri, EVP_PKEY *pkey)
+	{
+	EVP_PKEY_CTX *pctx = NULL;
+	unsigned char *ek = NULL;
+	int eklen;
+
+	int ret = 0;
+
+	pctx = EVP_PKEY_CTX_new(pkey, NULL);
+	if (!pctx)
+		return 0;
+
+	if (EVP_PKEY_decrypt_init(pctx) <= 0)
+		goto err;
+
+	if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DECRYPT,
+				EVP_PKEY_CTRL_PKCS7_DECRYPT, 0, ri) <= 0)
+		{
+		PKCS7err(PKCS7_F_PKCS7_DECRYPT_RINFO, PKCS7_R_CTRL_ERROR);
+		goto err;
+		}
+
+	if (EVP_PKEY_decrypt(pctx, NULL, &eklen,
+				ri->enc_key->data, ri->enc_key->length) <= 0)
+		goto err;
+
+	ek = OPENSSL_malloc(eklen);
+
+	if (ek == NULL)
+		{
+		PKCS7err(PKCS7_F_PKCS7_DECRYPT_RINFO, ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
+
+	if (EVP_PKEY_decrypt(pctx, ek, &eklen,
+				ri->enc_key->data, ri->enc_key->length) <= 0)
+		{
+		PKCS7err(PKCS7_F_PKCS7_DECRYPT_RINFO, ERR_R_EVP_LIB);
+		goto err;
+		}
+
+	ret = 1;
+
+	*pek = ek;
+	*peklen = eklen;
+
+	err:
+	if (pctx)
+		EVP_PKEY_CTX_free(pctx);
+	if (!ret && ek)
+		OPENSSL_free(ek);
+
+	return ret;
+	}
 
 BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 	{
@@ -347,7 +402,6 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	{
 	int i,j;
 	BIO *out=NULL,*btmp=NULL,*etmp=NULL,*bio=NULL;
-	unsigned char *tmp=NULL;
 	X509_ALGOR *xa;
 	ASN1_OCTET_STRING *data_body=NULL;
 	const EVP_MD *evp_md;
@@ -437,7 +491,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		int max;
 		X509_OBJECT ret;
 #endif
-		int jj;
+		unsigned char *ek = NULL;
+		int eklen;
 
 		if ((etmp=BIO_new(BIO_f_cipher())) == NULL)
 			{
@@ -452,26 +507,21 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		 * (if any)
 		 */
 
-		if (pcert) {
-			for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++) {
+		if (pcert)
+			{
+			for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++)
+				{
 				ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
 				if (!pkcs7_cmp_ri(ri, pcert))
 					break;
 				ri=NULL;
-			}
-			if (ri == NULL) {
+				}
+			if (ri == NULL)
+				{
 				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
 				      PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE);
 				goto err;
-			}
-		}
-
-		jj=EVP_PKEY_size(pkey);
-		tmp=(unsigned char *)OPENSSL_malloc(jj+10);
-		if (tmp == NULL)
-			{
-			PKCS7err(PKCS7_F_PKCS7_DATADECODE,ERR_R_MALLOC_FAILURE);
-			goto err;
+				}
 			}
 
 		/* If we haven't got a certificate try each ri in turn */
@@ -481,11 +531,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++)
 				{
 				ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
-				jj=EVP_PKEY_decrypt_old(tmp,
-					M_ASN1_STRING_data(ri->enc_key),
-					M_ASN1_STRING_length(ri->enc_key),
-						pkey);
-				if (jj > 0)
+				if (pkcs7_decrypt_rinfo(&ek, &eklen,
+							ri, pkey) > 0)
 					break;
 				ERR_clear_error();
 				ri = NULL;
@@ -499,15 +546,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			}
 		else
 			{
-			jj=EVP_PKEY_decrypt_old(tmp,
-				M_ASN1_STRING_data(ri->enc_key),
-				M_ASN1_STRING_length(ri->enc_key), pkey);
-			if (jj <= 0)
-				{
-				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
-								ERR_R_EVP_LIB);
+			if (pkcs7_decrypt_rinfo(&ek, &eklen, ri, pkey) <= 0)
 				goto err;
-				}
 			}
 
 		evp_ctx=NULL;
@@ -517,22 +557,26 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		if (EVP_CIPHER_asn1_to_param(evp_ctx,enc_alg->parameter) < 0)
 			goto err;
 
-		if (jj != EVP_CIPHER_CTX_key_length(evp_ctx)) {
+		if (eklen != EVP_CIPHER_CTX_key_length(evp_ctx)) {
 			/* Some S/MIME clients don't use the same key
 			 * and effective key length. The key length is
 			 * determined by the size of the decrypted RSA key.
 			 */
-			if(!EVP_CIPHER_CTX_set_key_length(evp_ctx, jj))
+			if(!EVP_CIPHER_CTX_set_key_length(evp_ctx, eklen))
 				{
 				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
 					PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH);
 				goto err;
 				}
 		} 
-		if (EVP_CipherInit_ex(evp_ctx,NULL,NULL,tmp,NULL,0) <= 0)
+		if (EVP_CipherInit_ex(evp_ctx,NULL,NULL,ek,NULL,0) <= 0)
 			goto err;
 
-		OPENSSL_cleanse(tmp,jj);
+		if (ek)
+			{
+			OPENSSL_cleanse(ek,eklen);
+			OPENSSL_free(ek);
+			}
 
 		if (out == NULL)
 			out=etmp;
@@ -578,8 +622,6 @@ err:
 		if (bio != NULL) BIO_free_all(bio);
 		out=NULL;
 		}
-	if (tmp != NULL)
-		OPENSSL_free(tmp);
 	return(out);
 	}
 
