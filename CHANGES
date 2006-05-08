@@ -2,7 +2,14 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8a and 0.9.9  [xx XXX xxxx]
+ Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
+
+  *) Update PKCS#7 enveloped data routines to use new API. This is now
+     supported by any public key method supporting the encrypt operation. A
+     ctrl is added to allow the public key algorithm to examine or modify
+     the PKCS#7 RecipientInfo structure if it needs to: for RSA this is
+     a no op.
+     [Steve Henson]
 
   *) Add a ctrl to asn1 method to allow a public key algorithm to express
      a default digest type to use. In most cases this will be SHA1 but some

@@ -393,6 +393,14 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 	return(1);
 	}
 
+void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
+	{
+	if (str->data)
+		OPENSSL_free(str->data);
+	str->data = data;
+	str->length = len;
+	}
+
 ASN1_STRING *ASN1_STRING_new(void)
 	{
 	return(ASN1_STRING_type_new(V_ASN1_OCTET_STRING));

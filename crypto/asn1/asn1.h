@@ -765,6 +765,7 @@ int 		ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b);
   /* Since this is used to store all sorts of things, via macros, for now, make
      its data void * */
 int 		ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
+void		ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
 int ASN1_STRING_length(const ASN1_STRING *x);
 void ASN1_STRING_length_set(ASN1_STRING *x, int n);
 int ASN1_STRING_type(ASN1_STRING *x);

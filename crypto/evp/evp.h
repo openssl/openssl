@@ -882,7 +882,10 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 					EVP_PKEY_CTRL_MD, 0, (void *)md)
 
 #define EVP_PKEY_CTRL_MD		1
-#define EVP_PKEY_CTRL_PEER_KEY		2
+#define EVP_PKEY_CTRL_PEER_KEY		2	
+
+#define EVP_PKEY_CTRL_PKCS7_ENCRYPT	3	
+#define EVP_PKEY_CTRL_PKCS7_DECRYPT	4	
 
 #define EVP_PKEY_ALG_CTRL		0x1000
 
