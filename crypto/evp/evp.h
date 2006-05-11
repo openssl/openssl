@@ -717,6 +717,8 @@ int		EVP_PKEY_encrypt_old(unsigned char *enc_key,
 			const unsigned char *key,int key_len,
 			EVP_PKEY *pub_key);
 int		EVP_PKEY_type(int type);
+int		EVP_PKEY_id(const EVP_PKEY *pkey);
+int		EVP_PKEY_base_id(const EVP_PKEY *pkey);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
 int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,void *key);

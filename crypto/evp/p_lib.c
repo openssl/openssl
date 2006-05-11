@@ -297,6 +297,16 @@ int EVP_PKEY_type(int type)
 	return NID_undef;
 	}
 
+int EVP_PKEY_id(const EVP_PKEY *pkey)
+	{
+	return pkey->type;
+	}
+
+int EVP_PKEY_base_id(const EVP_PKEY *pkey)
+	{
+	return EVP_PKEY_type(pkey->type);
+	}
+
 void EVP_PKEY_free(EVP_PKEY *x)
 	{
 	int i;

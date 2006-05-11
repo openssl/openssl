@@ -362,34 +362,44 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 				return 0;
 			if (p1 == RSA_PKCS1_PSS_PADDING) 
 				{
-				if (ctx->operation == EVP_PKEY_OP_VERIFYRECOVER)
-					return -2;
+				if (!(ctx->operation &
+				     (EVP_PKEY_OP_SIGN | EVP_PKEY_OP_VERIFY)))
+					goto bad_pad;
 				if (!rctx->md)
 					rctx->md = EVP_sha1();
 				}
 			if (p1 == RSA_PKCS1_OAEP_PADDING) 
 				{
 				if (!(ctx->operation & EVP_PKEY_OP_TYPE_CRYPT))
-					return -2;
+					goto bad_pad;
 				if (!rctx->md)
 					rctx->md = EVP_sha1();
 				}
 			rctx->pad_mode = p1;
 			return 1;
 			}
+		bad_pad:
+		RSAerr(RSA_F_PKEY_RSA_CTRL,
+				RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
 		return -2;
 
 		case EVP_PKEY_CTRL_RSA_PSS_SALTLEN:
 		if (p1 < -2)
 			return -2;
 		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING)
+			{
+			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
 			return -2;
+			}
 		rctx->saltlen = p1;
 		return 1;
 
 		case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
 		if (p1 < 256)
+			{
+			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_KEYBITS);
 			return -2;
+			}
 		rctx->nbits = p1;
 		return 1;
 
@@ -418,11 +428,14 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 			const char *type, const char *value)
 	{
+	if (!value)
+		{
+		RSAerr(RSA_F_PKEY_RSA_CTRL_STR, RSA_R_VALUE_MISSING);
+		return 0;
+		}
 	if (!strcmp(type, "rsa_padding_mode"))
 		{
 		int pm;
-		if (!value)
-			return 0;
 		if (!strcmp(value, "pkcs1"))
 			pm = RSA_PKCS1_PADDING;
 		else if (!strcmp(value, "sslv23"))
@@ -436,7 +449,11 @@ static int pkey_rsa_ctrl_str(EVP_PKEY_CTX *ctx,
 		else if (!strcmp(value, "pss"))
 			pm = RSA_PKCS1_PSS_PADDING;
 		else
+			{
+			RSAerr(RSA_F_PKEY_RSA_CTRL_STR,
+						RSA_R_UNKNOWN_PADDING_TYPE);
 			return -2;
+			}
 		return EVP_PKEY_CTX_set_rsa_padding(ctx, pm);
 		}
 

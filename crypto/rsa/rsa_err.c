@@ -72,6 +72,8 @@ static ERR_STRING_DATA RSA_str_functs[]=
 	{
 {ERR_FUNC(RSA_F_CHECK_PADDING_MD),	"CHECK_PADDING_MD"},
 {ERR_FUNC(RSA_F_MEMORY_LOCK),	"MEMORY_LOCK"},
+{ERR_FUNC(RSA_F_PKEY_RSA_CTRL),	"PKEY_RSA_CTRL"},
+{ERR_FUNC(RSA_F_PKEY_RSA_CTRL_STR),	"PKEY_RSA_CTRL_STR"},
 {ERR_FUNC(RSA_F_PKEY_RSA_SIGN),	"PKEY_RSA_SIGN"},
 {ERR_FUNC(RSA_F_PKEY_RSA_VERIFYRECOVER),	"PKEY_RSA_VERIFYRECOVER"},
 {ERR_FUNC(RSA_F_RSA_BUILTIN_KEYGEN),	"RSA_BUILTIN_KEYGEN"},
@@ -136,12 +138,15 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_DMQ1_NOT_CONGRUENT_TO_D),"dmq1 not congruent to d"},
 {ERR_REASON(RSA_R_D_E_NOT_CONGRUENT_TO_1),"d e not congruent to 1"},
 {ERR_REASON(RSA_R_FIRST_OCTET_INVALID)   ,"first octet invalid"},
+{ERR_REASON(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE),"illegal or unsupported padding mode"},
 {ERR_REASON(RSA_R_INVALID_DIGEST)        ,"invalid digest"},
 {ERR_REASON(RSA_R_INVALID_DIGEST_LENGTH) ,"invalid digest length"},
 {ERR_REASON(RSA_R_INVALID_HEADER)        ,"invalid header"},
+{ERR_REASON(RSA_R_INVALID_KEYBITS)       ,"invalid keybits"},
 {ERR_REASON(RSA_R_INVALID_MESSAGE_LENGTH),"invalid message length"},
 {ERR_REASON(RSA_R_INVALID_PADDING)       ,"invalid padding"},
 {ERR_REASON(RSA_R_INVALID_PADDING_MODE)  ,"invalid padding mode"},
+{ERR_REASON(RSA_R_INVALID_PSS_SALTLEN)   ,"invalid pss saltlen"},
 {ERR_REASON(RSA_R_INVALID_TRAILER)       ,"invalid trailer"},
 {ERR_REASON(RSA_R_INVALID_X931_DIGEST)   ,"invalid x931 digest"},
 {ERR_REASON(RSA_R_IQMP_NOT_INVERSE_OF_Q) ,"iqmp not inverse of q"},
@@ -161,6 +166,7 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD),"the asn1 object identifier is not known for this md"},
 {ERR_REASON(RSA_R_UNKNOWN_ALGORITHM_TYPE),"unknown algorithm type"},
 {ERR_REASON(RSA_R_UNKNOWN_PADDING_TYPE)  ,"unknown padding type"},
+{ERR_REASON(RSA_R_VALUE_MISSING)         ,"value missing"},
 {ERR_REASON(RSA_R_WRONG_SIGNATURE_LENGTH),"wrong signature length"},
 {0,NULL}
 	};
