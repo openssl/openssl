@@ -4,6 +4,10 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) Replace the algorithm specific calls to genrate keys in "req" with the
+     new API.
+     [Steve Henson]
+
   *) Update PKCS#7 enveloped data routines to use new API. This is now
      supported by any public key method supporting the encrypt operation. A
      ctrl is added to allow the public key algorithm to examine or modify

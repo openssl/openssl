@@ -141,21 +141,17 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
 				int n_max, unsigned long chtype);
 static int add_DN_object(X509_NAME *n, char *text, const char *def, char *value,
 	int nid,int n_min,int n_max, unsigned long chtype, int mval);
-#ifndef OPENSSL_NO_RSA
-static int MS_CALLBACK req_cb(int p, int n, BN_GENCB *cb);
-#endif
+static int genpkey_cb(EVP_PKEY_CTX *ctx);
 static int req_check_len(int len,int n_min,int n_max);
 static int check_end(const char *str, const char *end);
+static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
+					long *pkeylen, const char **palgnam,
+					ENGINE *e);
 #ifndef MONOLITH
 static char *default_config_file=NULL;
 #endif
 static CONF *req_conf=NULL;
 static int batch=0;
-
-#define TYPE_RSA	1
-#define TYPE_DSA	2
-#define TYPE_DH		3
-#define TYPE_EC		4
 
 int MAIN(int, char **);
 
@@ -172,8 +168,10 @@ int MAIN(int argc, char **argv)
 	int ex=1,x509=0,days=30;
 	X509 *x509ss=NULL;
 	X509_REQ *req=NULL;
+	EVP_PKEY_CTX *genctx = NULL;
+	const char *keyalgstr;
 	EVP_PKEY *pkey=NULL;
-	int i=0,badops=0,newreq=0,verbose=0,pkey_type=TYPE_RSA;
+	int i=0,badops=0,newreq=0,verbose=0,pkey_type=EVP_PKEY_RSA;
 	long newkey = -1;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
@@ -292,125 +290,33 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-newkey") == 0)
 			{
-			int is_numeric;
 
-			if (--argc < 1) goto bad;
-			p= *(++argv);
-			is_numeric = p[0] >= '0' && p[0] <= '9';
-			if (strncmp("rsa:",p,4) == 0 || is_numeric)
-				{
-				pkey_type=TYPE_RSA;
-				if(!is_numeric)
-				    p+=4;
-				newkey= atoi(p);
-				}
-			else
-#ifndef OPENSSL_NO_DSA
-				if (strncmp("dsa:",p,4) == 0)
-				{
-				X509 *xtmp=NULL;
-				EVP_PKEY *dtmp;
-
-				pkey_type=TYPE_DSA;
-				p+=4;
-				if ((in=BIO_new_file(p,"r")) == NULL)
-					{
-					perror(p);
-					goto end;
-					}
-				if ((dsa_params=PEM_read_bio_DSAparams(in,NULL,NULL,NULL)) == NULL)
-					{
-					ERR_clear_error();
-					(void)BIO_reset(in);
-					if ((xtmp=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL)
-						{
-						BIO_printf(bio_err,"unable to load DSA parameters from file\n");
-						goto end;
-						}
-
-					if ((dtmp=X509_get_pubkey(xtmp)) == NULL) goto end;
-					if (dtmp->type == EVP_PKEY_DSA)
-						dsa_params=DSAparams_dup(dtmp->pkey.dsa);
-					EVP_PKEY_free(dtmp);
-					X509_free(xtmp);
-					if (dsa_params == NULL)
-						{
-						BIO_printf(bio_err,"Certificate does not contain DSA parameters\n");
-						goto end;
-						}
-					}
-				BIO_free(in);
-				in=NULL;
-				newkey=BN_num_bits(dsa_params->p);
-				}
-			else 
-#endif
-#ifndef OPENSSL_NO_ECDSA
-				if (strncmp("ec:",p,3) == 0)
-				{
-				X509 *xtmp=NULL;
-				EVP_PKEY *dtmp;
-				EC_GROUP *group;
-
-				pkey_type=TYPE_EC;
-				p+=3;
-				if ((in=BIO_new_file(p,"r")) == NULL)
-					{
-					perror(p);
-					goto end;
-					}
-				if ((ec_params = EC_KEY_new()) == NULL)
-					goto end;
-				group = PEM_read_bio_ECPKParameters(in, NULL, NULL, NULL);
-				if (group == NULL)
-					{
-					EC_KEY_free(ec_params);
-					ERR_clear_error();
-					(void)BIO_reset(in);
-					if ((xtmp=PEM_read_bio_X509(in,NULL,NULL,NULL)) == NULL)
-						{	
-						BIO_printf(bio_err,"unable to load EC parameters from file\n");
-						goto end;
-						}
-
-					if ((dtmp=X509_get_pubkey(xtmp))==NULL)
-						goto end;
-					if (dtmp->type == EVP_PKEY_EC)
-						ec_params = EC_KEY_dup(dtmp->pkey.ec);
-					EVP_PKEY_free(dtmp);
-					X509_free(xtmp);
-					if (ec_params == NULL)
-						{
-						BIO_printf(bio_err,"Certificate does not contain EC parameters\n");
-						goto end;
-						}
-					}
-				else
-					{
-					if (EC_KEY_set_group(ec_params, group) == 0)
-						goto end;
-					EC_GROUP_free(group);
-					}
-
-				BIO_free(in);
-				in=NULL;
-				newkey = EC_GROUP_get_degree(EC_KEY_get0_group(ec_params));
-				}
-			else
-#endif
-#ifndef OPENSSL_NO_DH
-				if (strncmp("dh:",p,4) == 0)
-				{
-				pkey_type=TYPE_DH;
-				p+=3;
-				}
-			else
-#endif
-				{
+			if (--argc < 1)
 				goto bad;
-				}
+
+			genctx = set_keygen_ctx(bio_err, *(++argv), &newkey,
+							&keyalgstr, e);
+
+			if (!genctx)
+				goto bad;
 
 			newreq=1;
+			}
+		else if (strcmp(*argv,"-pkeyopt") == 0)
+			{
+			if (--argc < 1)
+				goto bad;
+			if (!genctx)
+				{
+				BIO_puts(bio_err, "No keytype specified\n");
+				goto bad;
+				}
+			else if (pkey_ctrl_string(genctx, *(++argv)) <= 0)
+				{
+				BIO_puts(bio_err, "parameter setting error\n");
+				ERR_print_errors(bio_err);
+				goto end;
+				}
 			}
 		else if (strcmp(*argv,"-batch") == 0)
 			batch=1;
@@ -731,9 +637,6 @@ bad:
 
 	if (newreq && (pkey == NULL))
 		{
-#ifndef OPENSSL_NO_RSA
-		BN_GENCB cb;
-#endif
 		char *randfile = NCONF_get_string(req_conf,SECTION,"RANDFILE");
 		if (randfile == NULL)
 			ERR_clear_error();
@@ -747,53 +650,35 @@ bad:
 				newkey=DEFAULT_KEY_LENGTH;
 			}
 
-		if (newkey < MIN_KEY_LENGTH && (pkey_type == TYPE_RSA || pkey_type == TYPE_DSA))
+		if (newkey < MIN_KEY_LENGTH && (pkey_type == EVP_PKEY_RSA || pkey_type == EVP_PKEY_DSA))
 			{
 			BIO_printf(bio_err,"private key length is too short,\n");
 			BIO_printf(bio_err,"it needs to be at least %d bits, not %ld\n",MIN_KEY_LENGTH,newkey);
 			goto end;
 			}
+
+		if (!genctx)
+			{
+			genctx = set_keygen_ctx(bio_err, NULL, &newkey,
+							&keyalgstr, e);
+			if (!genctx)
+				goto end;
+			}
+
 		BIO_printf(bio_err,"Generating a %ld bit %s private key\n",
-			newkey,(pkey_type == TYPE_RSA)?"RSA":
-			(pkey_type == TYPE_DSA)?"DSA":"EC");
+				newkey, keyalgstr);
 
-		if ((pkey=EVP_PKEY_new()) == NULL) goto end;
+		EVP_PKEY_CTX_set_cb(genctx, genpkey_cb);
+		EVP_PKEY_CTX_set_app_data(genctx, bio_err);
 
-#ifndef OPENSSL_NO_RSA
-		BN_GENCB_set(&cb, req_cb, bio_err);
-		if (pkey_type == TYPE_RSA)
+		if (EVP_PKEY_keygen(genctx, &pkey) <= 0)
 			{
-			RSA *rsa = RSA_new();
-			BIGNUM *bn = BN_new();
-			if(!bn || !rsa || !BN_set_word(bn, 0x10001) ||
-					!RSA_generate_key_ex(rsa, newkey, bn, &cb) ||
-					!EVP_PKEY_assign_RSA(pkey, rsa))
-				{
-				if(bn) BN_free(bn);
-				if(rsa) RSA_free(rsa);
-				goto end;
-				}
-			BN_free(bn);
+			BIO_puts(bio_err, "Error Generating Key\n");
+			goto end;
 			}
-		else
-#endif
-#ifndef OPENSSL_NO_DSA
-			if (pkey_type == TYPE_DSA)
-			{
-			if (!DSA_generate_key(dsa_params)) goto end;
-			if (!EVP_PKEY_assign_DSA(pkey,dsa_params)) goto end;
-			dsa_params=NULL;
-			}
-#endif
-#ifndef OPENSSL_NO_ECDSA
-			if (pkey_type == TYPE_EC)
-			{
-			if (!EC_KEY_generate_key(ec_params)) goto end;
-			if (!EVP_PKEY_assign_EC_KEY(pkey, ec_params)) 
-				goto end;
-			ec_params = NULL;
-			}
-#endif
+
+		EVP_PKEY_CTX_free(genctx);
+		genctx = NULL;
 
 		app_RAND_write_file(randfile, bio_err);
 
@@ -959,7 +844,10 @@ loop:
 				}
 			
 			if (!(i=X509_sign(x509ss,pkey,digest)))
+				{
+				ERR_print_errors(bio_err);
 				goto end;
+				}
 			}
 		else
 			{
@@ -980,7 +868,10 @@ loop:
 				goto end;
 				}
 			if (!(i=X509_REQ_sign(req,pkey,digest)))
+				{
+				ERR_print_errors(bio_err);
 				goto end;
+				}
 			}
 		}
 
@@ -1117,7 +1008,7 @@ loop:
 			}
 		fprintf(stdout,"Modulus=");
 #ifndef OPENSSL_NO_RSA
-		if (tpubkey->type == EVP_PKEY_RSA)
+		if (EVP_PKEY_base_id(tpubkey))
 			BN_print(out,tpubkey->pkey.rsa->n);
 		else
 #endif
@@ -1173,6 +1064,8 @@ end:
 	BIO_free(in);
 	BIO_free_all(out);
 	EVP_PKEY_free(pkey);
+	if (genctx)
+		EVP_PKEY_CTX_free(genctx);
 	X509_REQ_free(req);
 	X509_free(x509ss);
 	ASN1_INTEGER_free(serial);
@@ -1631,24 +1524,6 @@ err:
 	return(0);
 	}
 
-#ifndef OPENSSL_NO_RSA
-static int MS_CALLBACK req_cb(int p, int n, BN_GENCB *cb)
-	{
-	char c='*';
-
-	if (p == 0) c='.';
-	if (p == 1) c='+';
-	if (p == 2) c='*';
-	if (p == 3) c='\n';
-	BIO_write(cb->arg,&c,1);
-	(void)BIO_flush(cb->arg);
-#ifdef LINT
-	p=n;
-#endif
-	return 1;
-	}
-#endif
-
 static int req_check_len(int len, int n_min, int n_max)
 	{
 	if ((n_min > 0) && (len < n_min))
@@ -1675,3 +1550,169 @@ static int check_end(const char *str, const char *end)
 	tmp = str + slen - elen;
 	return strcmp(tmp, end);
 }
+
+static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
+					long *pkeylen, const char **palgnam,
+					ENGINE *e)
+	{
+	EVP_PKEY_CTX *gctx = NULL;
+	EVP_PKEY *param = NULL;
+	long keylen = -1;
+	int pkey_type = -1;
+	BIO *pbio = NULL;
+	const char *paramfile = NULL;
+
+	if (gstr == NULL)
+		{
+		pkey_type = EVP_PKEY_RSA;
+		keylen = *pkeylen;
+		}
+	else if (gstr[0] >= '0' && gstr[0] <= '9')
+		{
+		pkey_type = EVP_PKEY_RSA;
+		keylen = atol(gstr);
+		*pkeylen = keylen;
+		}
+	else if (!strncmp(gstr, "param:", 6))
+		paramfile = gstr + 6;
+	else
+		{
+		const char *p = strchr(gstr, ':');
+		int len;
+		const EVP_PKEY_ASN1_METHOD *ameth;
+
+		if (p)
+			len = p - gstr;
+		else
+			len = strlen(gstr);
+
+		ameth = EVP_PKEY_asn1_find_str(gstr, len);
+
+		if (!ameth)
+			{
+			BIO_printf(err, "Unknown algorithm %.*s\n", len, gstr);
+			return NULL;
+			}
+
+		EVP_PKEY_asn1_get0_info(NULL, &pkey_type, NULL, NULL, NULL,
+						ameth);
+		if (pkey_type == EVP_PKEY_RSA)
+			{
+			if (p)
+				{
+				keylen = atol(p + 1);
+				*pkeylen = keylen;
+				}
+			}
+		else if (p)
+			paramfile = p + 1;
+		}
+
+	if (paramfile)
+		{
+		pbio = BIO_new_file(paramfile, "r");
+		if (!pbio)
+			{
+			BIO_printf(err, "Can't open parameter file %s\n",
+					paramfile);
+			return NULL;
+			}
+		param = PEM_read_bio_Parameters(pbio, NULL);
+
+		if (!param)
+			{
+			X509 *x;
+			BIO_reset(pbio);
+			x = PEM_read_bio_X509(pbio, NULL, NULL, NULL);
+			if (x)
+				{
+				param = X509_get_pubkey(x);
+				X509_free(x);
+				}
+			}
+
+		BIO_free(pbio);
+
+		if (!param)
+			{
+			BIO_printf(err, "Error reading parameter file %s\n",
+					paramfile);
+			return NULL;
+			}
+		if (pkey_type == -1)
+			pkey_type = EVP_PKEY_id(param);
+		else if (pkey_type != EVP_PKEY_base_id(param))
+			{
+			BIO_printf(err, "Key Type does not match parameters\n");
+			EVP_PKEY_free(param);
+			return NULL;
+			}
+		}
+
+	if (palgnam)
+		{
+		const EVP_PKEY_ASN1_METHOD *ameth;
+		ameth = EVP_PKEY_asn1_find(pkey_type);
+		if (!ameth)
+			{
+			BIO_puts(err, "Internal error: can't find key algorithm\n");
+			return NULL;
+			}
+		EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, palgnam,
+						ameth);
+		}
+
+	if (param)
+		{
+		gctx = EVP_PKEY_CTX_new(param, e);
+		*pkeylen = EVP_PKEY_bits(param);
+		EVP_PKEY_free(param);
+		}
+	else
+		gctx = EVP_PKEY_CTX_new_id(pkey_type, e);
+
+	if (!gctx)
+		{
+		BIO_puts(err, "Error allocating keygen context\n");
+		ERR_print_errors(err);
+		return NULL;
+		}
+
+	if (EVP_PKEY_keygen_init(gctx) <= 0)
+		{
+		BIO_puts(err, "Error initializing keygen context\n");
+		ERR_print_errors(err);
+		return NULL;
+		}
+
+	if ((pkey_type == EVP_PKEY_RSA) && (keylen != -1))
+		{
+		if (EVP_PKEY_CTX_set_rsa_keygen_bits(gctx, keylen) <= 0)
+			{
+			BIO_puts(err, "Error setting RSA keysize\n");
+			ERR_print_errors(err);
+			EVP_PKEY_CTX_free(gctx);
+			return NULL;
+			}
+		}
+
+	return gctx;
+	}
+
+static int genpkey_cb(EVP_PKEY_CTX *ctx)
+	{
+	char c='*';
+	BIO *b = EVP_PKEY_CTX_get_app_data(ctx);
+	int p;
+	p = EVP_PKEY_CTX_get_keygen_info(ctx, 0);
+	if (p == 0) c='.';
+	if (p == 1) c='+';
+	if (p == 2) c='*';
+	if (p == 3) c='\n';
+	BIO_write(b,&c,1);
+	(void)BIO_flush(b);
+#ifdef LINT
+	p=n;
+#endif
+	return 1;
+	}
