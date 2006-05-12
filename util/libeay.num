@@ -3683,3 +3683,14 @@ EVP_PKEY_meth_set_paramgen              4078	EXIST::FUNCTION:
 EVP_PKEY_verify_recover                 4079	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_ctrl                  4080	EXIST::FUNCTION:
 EVP_PKEY_CTX_new_id                     4081	EXIST::FUNCTION:
+EVP_PKEY_get_default_digest_nid         4082	EXIST::FUNCTION:
+OBJ_find_sigid_by_algs                  4083	EXIST::FUNCTION:
+PKCS7_RECIP_INFO_get0_alg               4084	EXIST::FUNCTION:
+EVP_PKEY_base_id                        4085	EXIST::FUNCTION:
+PKCS7_SIGNER_INFO_get0_algs             4086	EXIST::FUNCTION:
+EVP_PKEY_CTX_get0_pkey                  4087	EXIST::FUNCTION:
+EVP_PKEY_meth_add0                      4088	EXIST::FUNCTION:
+EVP_PKEY_meth_new                       4089	EXIST::FUNCTION:
+ASN1_STRING_set0                        4090	EXIST::FUNCTION:
+EVP_PKEY_id                             4091	EXIST::FUNCTION:
+OBJ_find_sigid_algs                     4092	EXIST::FUNCTION:

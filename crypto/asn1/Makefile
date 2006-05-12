@@ -244,7 +244,7 @@ a_sign.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
 a_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 a_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 a_sign.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-a_sign.o: ../cryptlib.h a_sign.c
+a_sign.o: ../cryptlib.h a_sign.c asn1_locl.h
 a_strex.o: ../../e_os.h ../../include/openssl/asn1.h
 a_strex.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 a_strex.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -312,6 +312,7 @@ a_verify.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 a_verify.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 a_verify.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 a_verify.o: ../../include/openssl/x509_vfy.h ../cryptlib.h a_verify.c
+a_verify.o: asn1_locl.h
 ameth_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 ameth_lib.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 ameth_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
