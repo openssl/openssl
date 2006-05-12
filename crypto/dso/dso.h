@@ -334,11 +334,11 @@ void ERR_load_DSO_strings(void);
 /* Error codes for the DSO functions. */
 
 /* Function codes. */
-#define DSO_F_BEOS_BIND_FUNC				 130
-#define DSO_F_BEOS_BIND_VAR				 131
-#define DSO_F_BEOS_LOAD					 132
-#define DSO_F_BEOS_NAME_CONVERTER			 133
-#define DSO_F_BEOS_UNLOAD				 134
+#define DSO_F_BEOS_BIND_FUNC				 144
+#define DSO_F_BEOS_BIND_VAR				 145
+#define DSO_F_BEOS_LOAD					 146
+#define DSO_F_BEOS_NAME_CONVERTER			 147
+#define DSO_F_BEOS_UNLOAD				 148
 #define DSO_F_DLFCN_BIND_FUNC				 100
 #define DSO_F_DLFCN_BIND_VAR				 101
 #define DSO_F_DLFCN_LOAD				 102
