@@ -535,9 +535,9 @@ case "$GUESSOS" in
 	esac
 	if [ "$CC" = "gcc" ]; then
 	    case ${ISA:-generic} in
-	    EV5|EV45)		options="$options -mcpu=ev5";;
-	    EV56|PCA56)		options="$options -mcpu=ev56";;
-	    *)			options="$options -mcpu=ev6";;
+	    EV5|EV45)		options="$options -march=ev5";;
+	    EV56|PCA56)		options="$options -march=ev56";;
+	    *)			options="$options -march=ev6";;
 	    esac
 	fi
 	;;
@@ -598,13 +598,13 @@ case "$GUESSOS" in
   *86-*-linux2) OUT="linux-elf"
 	if [ "$GCCVER" -gt 28 ]; then
           if grep '^model.*Pentium' /proc/cpuinfo >/dev/null ; then
-	    options="$options -mcpu=pentium"
+	    options="$options -march=pentium"
           fi
           if grep '^model.*Pentium Pro' /proc/cpuinfo >/dev/null ; then
-	    options="$options -mcpu=pentiumpro"
+	    options="$options -march=pentiumpro"
           fi
           if grep '^model.*K6' /proc/cpuinfo >/dev/null ; then
-	    options="$options -mcpu=k6"
+	    options="$options -march=k6"
           fi
         fi ;;
   *-*-linux1) OUT="linux-aout" ;;
@@ -783,7 +783,7 @@ esac
 #  options="$options -DATALLA"
 #fi
 
-# gcc < 2.8 does not support -mcpu=ultrasparc
+# gcc < 2.8 does not support -march=ultrasparc
 if [ "$OUT" = solaris-sparcv9-gcc -a $GCCVER -lt 28 ]
 then
   echo "WARNING! Falling down to 'solaris-sparcv8-gcc'."
