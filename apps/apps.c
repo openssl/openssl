@@ -1437,6 +1437,10 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug)
 
 int load_config(BIO *err, CONF *cnf)
 	{
+	static int load_config_called = 0;
+	if (load_config_called)
+		return 1;
+	load_config_called = 1;
 	if (!cnf)
 		cnf = config;
 	if (!cnf)
