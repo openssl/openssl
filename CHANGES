@@ -4,7 +4,7 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
-  *) Replace the algorithm specific calls to genrate keys in "req" with the
+  *) Replace the algorithm specific calls to generate keys in "req" with the
      new API.
      [Steve Henson]
 
