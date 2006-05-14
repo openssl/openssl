@@ -82,15 +82,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, vo
 		return NULL;
 	p = data;
 
-	if ((slen = pem_check_suffix(nm, "PRIVATE KEY")) > 0)
-		{
-		const EVP_PKEY_ASN1_METHOD *ameth;
-		ameth = EVP_PKEY_asn1_find_str(nm, slen);
-		if (!ameth || !ameth->old_priv_decode)
-			goto p8err;
-		ret=d2i_PrivateKey(ameth->pkey_id,x,&p,len);
-		}
-	else if (strcmp(nm,PEM_STRING_PKCS8INF) == 0) {
+	if (strcmp(nm,PEM_STRING_PKCS8INF) == 0) {
 		PKCS8_PRIV_KEY_INFO *p8inf;
 		p8inf=d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, len);
 		if(!p8inf) goto p8err;
@@ -124,7 +116,14 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, vo
 			*x = ret;
 		}
 		PKCS8_PRIV_KEY_INFO_free(p8inf);
-	}
+	} else if ((slen = pem_check_suffix(nm, "PRIVATE KEY")) > 0)
+		{
+		const EVP_PKEY_ASN1_METHOD *ameth;
+		ameth = EVP_PKEY_asn1_find_str(nm, slen);
+		if (!ameth || !ameth->old_priv_decode)
+			goto p8err;
+		ret=d2i_PrivateKey(ameth->pkey_id,x,&p,len);
+		}
 p8err:
 	if (ret == NULL)
 		PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY,ERR_R_ASN1_LIB);
