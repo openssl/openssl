@@ -6,6 +6,8 @@ X509_new, X509_free - X509 certificate ASN1 allocation functions
 
 =head1 SYNOPSIS
 
+ #include <openssl/x509.h>
+
  X509 *X509_new(void);
  void X509_free(X509 *a);
 

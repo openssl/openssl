@@ -8,6 +8,8 @@ functions
 
 =head1 SYNOPSIS
 
+ #include <openssl/objects.h>
+
  ASN1_OBJECT * OBJ_nid2obj(int n);
  const char *  OBJ_nid2ln(int n);
  const char *  OBJ_nid2sn(int n);

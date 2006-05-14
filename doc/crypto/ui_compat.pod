@@ -7,6 +7,8 @@ Compatibility user interface functions
 
 =head1 SYNOPSIS
 
+ #include <openssl/des_old.h>
+
  int des_read_password(DES_cblock *key,const char *prompt,int verify);
  int des_read_2passwords(DES_cblock *key1,DES_cblock *key2,
  	const char *prompt,int verify);

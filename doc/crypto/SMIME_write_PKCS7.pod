@@ -6,7 +6,9 @@ SMIME_write_PKCS7 - convert PKCS#7 structure to S/MIME format.
 
 =head1 SYNOPSIS
 
-int SMIME_write_PKCS7(BIO *out, PKCS7 *p7, BIO *data, int flags);
+ #include <openssl/pkcs7.h>
+
+ int SMIME_write_PKCS7(BIO *out, PKCS7 *p7, BIO *data, int flags);
 
 =head1 DESCRIPTION
 

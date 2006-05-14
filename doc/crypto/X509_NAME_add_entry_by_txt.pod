@@ -7,15 +7,17 @@ X509_NAME_add_entry, X509_NAME_delete_entry - X509_NAME modification functions
 
 =head1 SYNOPSIS
 
-int X509_NAME_add_entry_by_txt(X509_NAME *name, const char *field, int type, const unsigned char *bytes, int len, int loc, int set);
+ #include <openssl/x509.h>
 
-int X509_NAME_add_entry_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int type, unsigned char *bytes, int len, int loc, int set);
+ int X509_NAME_add_entry_by_txt(X509_NAME *name, const char *field, int type, const unsigned char *bytes, int len, int loc, int set);
 
-int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type, unsigned char *bytes, int len, int loc, int set);
+ int X509_NAME_add_entry_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, int type, unsigned char *bytes, int len, int loc, int set);
 
-int X509_NAME_add_entry(X509_NAME *name,X509_NAME_ENTRY *ne, int loc, int set);
+ int X509_NAME_add_entry_by_NID(X509_NAME *name, int nid, int type, unsigned char *bytes, int len, int loc, int set);
 
-X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
+ int X509_NAME_add_entry(X509_NAME *name,X509_NAME_ENTRY *ne, int loc, int set);
+
+ X509_NAME_ENTRY *X509_NAME_delete_entry(X509_NAME *name, int loc);
 
 =head1 DESCRIPTION
 
