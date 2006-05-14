@@ -97,6 +97,7 @@ EVP_PBE_alg_add(NID_pbeWithSHA1AndRC2_CBC, EVP_rc2_64_cbc(), EVP_sha1(),
 #endif
 #ifndef OPENSSL_NO_HMAC
 EVP_PBE_alg_add(NID_pbes2, NULL, NULL, PKCS5_v2_PBE_keyivgen);
+EVP_PBE_alg_add_type(EVP_PBE_TYPE_PRF, NID_hmacWithSHA1, -1, NID_sha1, 0);
 #endif
 }
 

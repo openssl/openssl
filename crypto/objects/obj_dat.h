@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 802
-#define NUM_SN 798
-#define NUM_LN 798
-#define NUM_OBJ 760
+#define NUM_NID 803
+#define NUM_SN 799
+#define NUM_LN 799
+#define NUM_OBJ 761
 
-static unsigned char lvalues[5345]={
+static unsigned char lvalues[5353]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -828,6 +828,7 @@ static unsigned char lvalues[5345]={
 0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x03,     /* [5320] OBJ_id_GostR3411_94_with_GostR3410_94_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x04,     /* [5328] OBJ_id_GostR3411_94_with_GostR3410_2001_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x08,0x01,     /* [5336] OBJ_id_GostR3410_2001_ParamSet_cc */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x06,     /* [5344] OBJ_hmacWithMD5 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2122,6 +2123,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"id-GostR3410-2001-ParamSet-cc",
 	"GOST R 3410-2001 Parameter Set Cryptocom",
 	NID_id_GostR3410_2001_ParamSet_cc,8,&(lvalues[5336]),0},
+{"hmacWithMD5","hmacWithMD5",NID_hmacWithMD5,8,&(lvalues[5344]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2372,6 +2374,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[784]),/* "gost89" */
 &(nid_objs[757]),/* "gost94" */
 &(nid_objs[797]),/* "gost94cc" */
+&(nid_objs[802]),/* "hmacWithMD5" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
 &(nid_objs[432]),/* "holdInstructionCallIssuer" */
 &(nid_objs[430]),/* "holdInstructionCode" */
@@ -3186,6 +3189,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[509]),/* "generationQualifier" */
 &(nid_objs[601]),/* "generic cryptogram" */
 &(nid_objs[99]),/* "givenName" */
+&(nid_objs[802]),/* "hmacWithMD5" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
 &(nid_objs[486]),/* "homePostalAddress" */
 &(nid_objs[473]),/* "homeTelephoneNumber" */
@@ -4094,6 +4098,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 3]),/* OBJ_md2                          1 2 840 113549 2 2 */
 &(nid_objs[257]),/* OBJ_md4                          1 2 840 113549 2 4 */
 &(nid_objs[ 4]),/* OBJ_md5                          1 2 840 113549 2 5 */
+&(nid_objs[802]),/* OBJ_hmacWithMD5                  1 2 840 113549 2 6 */
 &(nid_objs[163]),/* OBJ_hmacWithSHA1                 1 2 840 113549 2 7 */
 &(nid_objs[37]),/* OBJ_rc2_cbc                      1 2 840 113549 3 2 */
 &(nid_objs[ 5]),/* OBJ_rc4                          1 2 840 113549 3 4 */

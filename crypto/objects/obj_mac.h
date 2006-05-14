@@ -1075,6 +1075,10 @@
 #define LN_md5_sha1		"md5-sha1"
 #define NID_md5_sha1		114
 
+#define LN_hmacWithMD5		"hmacWithMD5"
+#define NID_hmacWithMD5		802
+#define OBJ_hmacWithMD5		OBJ_rsadsi,2L,6L
+
 #define LN_hmacWithSHA1		"hmacWithSHA1"
 #define NID_hmacWithSHA1		163
 #define OBJ_hmacWithSHA1		OBJ_rsadsi,2L,7L

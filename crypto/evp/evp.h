@@ -799,8 +799,20 @@ void PKCS5_PBE_add(void);
 
 int EVP_PBE_CipherInit (ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de);
+
+/* PBE type */
+
+/* Can appear as the outermost AlgorithmIdentifier */
+#define EVP_PBE_TYPE_OUTER	0x0
+/* Is an PRF type OID */
+#define EVP_PBE_TYPE_PRF	0x1
+
+int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
+	     EVP_PBE_KEYGEN *keygen);
 int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
 		    EVP_PBE_KEYGEN *keygen);
+int EVP_PBE_find(int type, int pbe_nid,
+			int *pcnid, int *pmnid, EVP_PBE_KEYGEN **pkeygen);
 void EVP_PBE_cleanup(void);
 
 #define ASN1_PKEY_ALIAS		0x1
