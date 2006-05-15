@@ -6,7 +6,9 @@
 
   *) Initial support for PKCS#5 v2.0 PRFs other than default SHA1 HMAC.
      Reorganize PBE internals to lookup from a static table using NIDs,
-     add support for HMAC PBE OID translation.
+     add support for HMAC PBE OID translation. Add a EVP_CIPHER ctrl:
+     EVP_CTRL_PBE_PRF_NID this allows a cipher to specify an alternative
+     PRF which will be automatically used with PBES2.
      [Steve Henson]
 
   *) Replace the algorithm specific calls to generate keys in "req" with the

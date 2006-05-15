@@ -95,6 +95,7 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	PBE2PARAM *pbe2 = NULL;
 	ASN1_OCTET_STRING *osalt = NULL;
 	ASN1_OBJECT *obj;
+	int prf_nid;
 
 	alg_nid = EVP_CIPHER_type(cipher);
 	if(alg_nid == NID_undef) {
@@ -119,7 +120,7 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 
 	EVP_CIPHER_CTX_init(&ctx);
 
-	/* Dummy cipherinit to just setup the IV */
+	/* Dummy cipherinit to just setup the IV, and PRF */
 	EVP_CipherInit_ex(&ctx, cipher, NULL, NULL, iv, 0);
 	if(EVP_CIPHER_param_to_asn1(&ctx, scheme->parameter) < 0) {
 		ASN1err(ASN1_F_PKCS5_PBE2_SET,
@@ -127,6 +128,12 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 		EVP_CIPHER_CTX_cleanup(&ctx);
 		goto err;
 	}
+	/* An error is OK here: just means use default PRF */
+	if (EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0)
+		{
+		ERR_clear_error();
+		prf_nid = NID_hmacWithSHA1;
+		}
 	EVP_CIPHER_CTX_cleanup(&ctx);
 
 	if(!(kdf = PBKDF2PARAM_new())) goto merr;
@@ -154,7 +161,15 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 				 EVP_CIPHER_key_length(cipher))) goto merr;
 	}
 
-	/* prf can stay NULL because we are using hmacWithSHA1 */
+	/* prf can stay NULL if we are using hmacWithSHA1 */
+	if (prf_nid != NID_hmacWithSHA1)
+		{
+		kdf->prf = X509_ALGOR_new();
+		if (!kdf->prf)
+			goto merr;
+		X509_ALGOR_set0(kdf->prf, OBJ_nid2obj(prf_nid),
+					V_ASN1_NULL, NULL);
+		}
 
 	/* Now setup the PBE2PARAM keyfunc structure */
 

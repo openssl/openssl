@@ -301,6 +301,7 @@ struct evp_cipher_st
 #define 	EVP_CTRL_GET_RC5_ROUNDS		0x4
 #define 	EVP_CTRL_SET_RC5_ROUNDS		0x5
 #define 	EVP_CTRL_RAND_KEY		0x6
+#define 	EVP_CTRL_PBE_PRF_NID		0x7
 
 typedef struct evp_cipher_info_st
 	{
