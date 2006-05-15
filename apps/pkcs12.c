@@ -88,6 +88,7 @@ int print_attribs(BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst,const char *name);
 void hex_prin(BIO *out, unsigned char *buf, int len);
 int alg_print(BIO *x, X509_ALGOR *alg);
 int cert_load(BIO *in, STACK_OF(X509) *sk);
+static int set_pbe(BIO *err, int *ppbe, const char *str);
 
 int MAIN(int, char **);
 
@@ -171,30 +172,11 @@ int MAIN(int argc, char **argv)
 					 maciter = -1;
 		else if (!strcmp (*args, "-nodes")) enc=NULL;
 		else if (!strcmp (*args, "-certpbe")) {
-			if (args[1]) {
-				args++;
-				if (!strcmp(*args, "NONE"))
-					cert_pbe = -1;
-				cert_pbe=OBJ_txt2nid(*args);
-				if(cert_pbe == NID_undef) {
-					BIO_printf(bio_err,
-						 "Unknown PBE algorithm %s\n", *args);
-					badarg = 1;
-				}
-			} else badarg = 1;
+			if (!set_pbe(bio_err, &cert_pbe, *++args))
+				badarg = 1;
 		} else if (!strcmp (*args, "-keypbe")) {
-			if (args[1]) {
-				args++;
-				if (!strcmp(*args, "NONE"))
-					key_pbe = -1;
-				else
-					key_pbe=OBJ_txt2nid(*args);
-				if(key_pbe == NID_undef) {
-					BIO_printf(bio_err,
-						 "Unknown PBE algorithm %s\n", *args);
-					badarg = 1;
-				}
-			} else badarg = 1;
+			if (!set_pbe(bio_err, &key_pbe, *++args))
+				badarg = 1;
 		} else if (!strcmp (*args, "-rand")) {
 		    if (args[1]) {
 			args++;	
@@ -923,4 +905,22 @@ void hex_prin(BIO *out, unsigned char *buf, int len)
 	for (i = 0; i < len; i++) BIO_printf (out, "%02X ", buf[i]);
 }
 
+static int set_pbe(BIO *err, int *ppbe, const char *str)
+	{
+	if (!str)
+		return 0;
+	if (!strcmp(str, "NONE"))
+		{
+		*ppbe = -1;
+		return 1;
+		}
+	*ppbe=OBJ_txt2nid(str);
+	if (*ppbe == NID_undef)
+		{
+		BIO_printf(bio_err, "Unknown PBE algorithm %s\n", str);
+		return 0;
+		}
+	return 1;
+	}
+			
 #endif
