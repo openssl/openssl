@@ -183,6 +183,4 @@ void OpenSSL_add_all_ciphers(void)
 	EVP_add_cipher_alias(SN_aes_256_cbc,"AES256");
 	EVP_add_cipher_alias(SN_aes_256_cbc,"aes256");
 #endif
-	PKCS12_PBE_add();
-	PKCS5_PBE_add();
 	}

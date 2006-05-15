@@ -5,6 +5,8 @@
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
   *) Initial support for PKCS#5 v2.0 PRFs other than default SHA1 HMAC.
+     Reorganize PBE internals to lookup from a static table using NIDs,
+     add support for HMAC PBE OID translation.
      [Steve Henson]
 
   *) Replace the algorithm specific calls to generate keys in "req" with the

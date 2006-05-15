@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
+#include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 
 /* Password based encryption (PBE) functions */
@@ -75,6 +76,71 @@ typedef struct
 	int md_nid;
 	EVP_PBE_KEYGEN *keygen;
 	} EVP_PBE_CTL;
+
+EVP_PBE_CTL builtin_pbe[] = 
+	{
+	{EVP_PBE_TYPE_OUTER, NID_pbeWithMD2AndDES_CBC,
+			NID_des_cbc, NID_md2, PKCS5_PBE_keyivgen},
+	{EVP_PBE_TYPE_OUTER, NID_pbeWithMD5AndDES_CBC,
+			NID_des_cbc, NID_md5, PKCS5_PBE_keyivgen},
+	{EVP_PBE_TYPE_OUTER, NID_pbeWithSHA1AndRC2_CBC,
+			NID_rc2_64_cbc, NID_sha1, PKCS5_PBE_keyivgen},
+
+	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And128BitRC4,
+			NID_rc4, NID_sha1, PKCS12_PBE_keyivgen},
+	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And40BitRC4,
+			NID_rc4_40, NID_sha1, PKCS12_PBE_keyivgen},
+	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And3_Key_TripleDES_CBC,
+		 	NID_des_ede3_cbc, NID_sha1, PKCS12_PBE_keyivgen},
+	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And2_Key_TripleDES_CBC, 
+			NID_des_ede_cbc, NID_sha1, PKCS12_PBE_keyivgen},
+	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And128BitRC2_CBC,
+			NID_rc2_cbc, NID_sha1, PKCS12_PBE_keyivgen},
+	{EVP_PBE_TYPE_OUTER, NID_pbe_WithSHA1And40BitRC2_CBC,
+			NID_rc2_40_cbc, NID_sha1, PKCS12_PBE_keyivgen},
+
+#ifndef OPENSSL_NO_HMAC
+	{EVP_PBE_TYPE_OUTER, NID_pbes2, -1, -1, PKCS5_v2_PBE_keyivgen},
+#endif
+	{EVP_PBE_TYPE_OUTER, NID_pbeWithMD2AndRC2_CBC,
+			NID_rc2_64_cbc, NID_md2, PKCS5_PBE_keyivgen},
+	{EVP_PBE_TYPE_OUTER, NID_pbeWithMD5AndRC2_CBC,
+			NID_rc2_64_cbc, NID_md5, PKCS5_PBE_keyivgen},
+	{EVP_PBE_TYPE_OUTER, NID_pbeWithSHA1AndDES_CBC,
+			NID_des_cbc, NID_sha1, PKCS5_PBE_keyivgen},
+
+
+	{EVP_PBE_TYPE_PRF, NID_hmacWithSHA1, -1, NID_sha1, 0},
+	{EVP_PBE_TYPE_PRF, NID_id_HMACGostR3411_94, -1, NID_id_GostR3411_94, 0},
+	{EVP_PBE_TYPE_PRF, NID_hmacWithMD5, -1, NID_md5, 0},
+	};
+
+#ifdef TEST
+int main(int argc, char **argv)
+	{
+	int i, nid_md, nid_cipher;
+	EVP_PBE_CTL *tpbe, *tpbe2;
+	/*OpenSSL_add_all_algorithms();*/
+
+	for (i = 0; i < sizeof(builtin_pbe)/sizeof(EVP_PBE_CTL); i++)
+		{
+		tpbe = builtin_pbe + i;
+		fprintf(stderr, "%d %d %s ", tpbe->pbe_type, tpbe->pbe_nid,
+						OBJ_nid2sn(tpbe->pbe_nid));
+		if (EVP_PBE_find(tpbe->pbe_type, tpbe->pbe_nid,
+					&nid_cipher ,&nid_md,0))
+			fprintf(stderr, "Found %s %s\n",
+					OBJ_nid2sn(nid_cipher),
+					OBJ_nid2sn(nid_md));
+		else
+			fprintf(stderr, "Find ERROR!!\n");
+		}
+
+	return 0;
+	}
+#endif
+		
+
 
 int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de)
@@ -117,6 +183,17 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 		}
 	return 1;	
 }
+
+static int pbe_cmp2(const void *a, const void *b)
+	{
+	const EVP_PBE_CTL *pbe1 = a;
+	const EVP_PBE_CTL *pbe2 = b;
+	int ret = pbe1->pbe_type - pbe2->pbe_type;
+	if (ret)
+		return ret;
+	else
+		return pbe1->pbe_nid - pbe2->pbe_nid;
+	}
 
 static int pbe_cmp(const char * const *a, const char * const *b)
 	{
@@ -173,16 +250,30 @@ int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
 int EVP_PBE_find(int type, int pbe_nid,
 			int *pcnid, int *pmnid, EVP_PBE_KEYGEN **pkeygen)
 	{
-	EVP_PBE_CTL *pbetmp, pbelu;
+	EVP_PBE_CTL *pbetmp = NULL, pbelu;
 	int i;
 	if (pbe_nid == NID_undef)
 		return 0;
+
 	pbelu.pbe_type = type;
 	pbelu.pbe_nid = pbe_nid;
-	i = sk_find(pbe_algs, (char *)&pbelu);
-	if (i == -1)
+
+	if (pbe_algs)
+		{
+		i = sk_find(pbe_algs, (char *)&pbelu);
+		if (i != -1)
+			pbetmp = (EVP_PBE_CTL *)sk_value (pbe_algs, i);
+		}
+	if (pbetmp == NULL)
+		{
+		pbetmp = (EVP_PBE_CTL *) OBJ_bsearch((char *)&pbelu,
+        		(char *)builtin_pbe,
+			sizeof(builtin_pbe)/sizeof(EVP_PBE_CTL),
+        		sizeof(EVP_PBE_CTL),
+			pbe_cmp2);
+		}
+	if (pbetmp == NULL)
 		return 0;
-	pbetmp = (EVP_PBE_CTL *)sk_value (pbe_algs, i);
 	if (pcnid)
 		*pcnid = pbetmp->cipher_nid;
 	if (pmnid)
