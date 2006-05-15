@@ -78,19 +78,31 @@ static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		return 0;
 	X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
-	if (ptype != V_ASN1_SEQUENCE)
+
+	if (ptype == V_ASN1_SEQUENCE)
+		{
+		pstr = pval;	
+		pm = pstr->data;
+		pmlen = pstr->length;
+
+		if (!(dsa = d2i_DSAparams(NULL, &pm, pmlen)))
+			{
+			DSAerr(DSA_F_DSA_PUB_DECODE, DSA_R_DECODE_ERROR);
+			goto err;
+			}
+
+		}
+	else if ((ptype == V_ASN1_NULL) || (ptype == V_ASN1_UNDEF))
+		{
+		if (!(dsa = DSA_new()))
+			{
+			DSAerr(DSA_F_DSA_PUB_DECODE, ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		}
+	else
 		{
 		DSAerr(DSA_F_DSA_PUB_DECODE, DSA_R_PARAMETER_ENCODING_ERROR);
-		goto err;
-		}
-
-	pstr = pval;	
-	pm = pstr->data;
-	pmlen = pstr->length;
-
-	if (!(dsa = d2i_DSAparams(NULL, &pm, pmlen)))
-		{
-		DSAerr(DSA_F_DSA_PUB_DECODE, DSA_R_DECODE_ERROR);
 		goto err;
 		}
 
@@ -100,7 +112,6 @@ static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 		goto err;
 		}
 
-	/* We have parameters now set public key */
 	if (!(dsa->pub_key = ASN1_INTEGER_to_BN(public_key, NULL)))
 		{
 		DSAerr(DSA_F_DSA_PUB_DECODE, DSA_R_BN_DECODE_ERROR);
@@ -129,7 +140,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 	int penclen;
 
 	dsa=pkey->pkey.dsa;
-	if (pkey->save_parameters)
+	if (pkey->save_parameters && dsa->p && dsa->q && dsa->g)
 		{
 		ASN1_STRING *str;
 		str = ASN1_STRING_new();
@@ -144,6 +155,7 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 		}
 	else
 		ptype = V_ASN1_UNDEF;
+
 	dsa->write_params=0;
 
 	penclen = i2d_DSAPublicKey(dsa, &penc);
@@ -433,11 +445,13 @@ int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 	else
 		ktype = "DSA-Parameters";
 
+#if 0
 	if (x->p == NULL)
 		{
 		DSAerr(DSA_F_DSA_PRINT,DSA_R_MISSING_PARAMETERS);
 		goto err;
 		}
+#endif
 
 	update_buflen(x->p, &buf_len);
 	update_buflen(x->q, &buf_len);
