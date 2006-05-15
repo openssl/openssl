@@ -98,7 +98,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pe
 	long len,error=0;
 	int ok=0;
 	STACK_OF(X509_INFO) *ret=NULL;
-	unsigned int i,raw;
+	unsigned int i,raw,ptype;
 	d2i_of_void *d2i;
 
 	if (sk == NULL)
@@ -116,6 +116,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pe
 	for (;;)
 		{
 		raw=0;
+		ptype = 0;
 		i=PEM_read_bio(bp,&name,&header,&data,&len);
 		if (i == 0)
 			{
@@ -166,7 +167,6 @@ start:
 #ifndef OPENSSL_NO_RSA
 			if (strcmp(name,PEM_STRING_RSA) == 0)
 			{
-			d2i=(D2I_OF(void))d2i_RSAPrivateKey;
 			if (xi->x_pkey != NULL) 
 				{
 				if (!sk_X509_INFO_push(ret,xi)) goto err;
@@ -178,10 +178,8 @@ start:
 			xi->enc_len=0;
 
 			xi->x_pkey=X509_PKEY_new();
-			if ((xi->x_pkey->dec_pkey=EVP_PKEY_new()) == NULL)
-				goto err;
-			xi->x_pkey->dec_pkey->type=EVP_PKEY_RSA;
-			pp=&(xi->x_pkey->dec_pkey->pkey.rsa);
+			ptype=EVP_PKEY_RSA;
+			pp=&xi->x_pkey->dec_pkey;
 			if ((int)strlen(header) > 10) /* assume encrypted */
 				raw=1;
 			}
@@ -202,10 +200,8 @@ start:
 			xi->enc_len=0;
 
 			xi->x_pkey=X509_PKEY_new();
-			if ((xi->x_pkey->dec_pkey=EVP_PKEY_new()) == NULL)
-				goto err;
-			xi->x_pkey->dec_pkey->type=EVP_PKEY_DSA;
-			pp=(char **)&(xi->x_pkey->dec_pkey->pkey.dsa);
+			ptype = EVP_PKEY_DSA;
+			pp=&xi->x_pkey->dec_pkey;
 			if ((int)strlen(header) > 10) /* assume encrypted */
 				raw=1;
 			}
@@ -226,10 +222,8 @@ start:
  			xi->enc_len=0;
  
  			xi->x_pkey=X509_PKEY_new();
- 			if ((xi->x_pkey->dec_pkey=EVP_PKEY_new()) == NULL)
- 				goto err;
- 			xi->x_pkey->dec_pkey->type=EVP_PKEY_EC;
- 			pp=&(xi->x_pkey->dec_pkey->pkey.ec);
+			ptype = EVP_PKEY_EC;
+ 			pp=&xi->x_pkey->dec_pkey;
  			if ((int)strlen(header) > 10) /* assume encrypted */
  				raw=1;
 			}
@@ -251,7 +245,15 @@ start:
 				if (!PEM_do_header(&cipher,data,&len,cb,u))
 					goto err;
 				p=data;
-				if (d2i(pp,&p,len) == NULL)
+				if (ptype)
+					{
+					if (!d2i_PrivateKey(ptype, pp, &p, len))
+						{
+						PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,ERR_R_ASN1_LIB);
+						goto err;
+						}
+					}
+				else if (d2i(pp,&p,len) == NULL)
 					{
 					PEMerr(PEM_F_PEM_X509_INFO_READ_BIO,ERR_R_ASN1_LIB);
 					goto err;
