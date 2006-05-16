@@ -169,7 +169,8 @@ int MAIN(int argc, char **argv)
 	X509 *x509ss=NULL;
 	X509_REQ *req=NULL;
 	EVP_PKEY_CTX *genctx = NULL;
-	const char *keyalgstr;
+	const char *keyalg = NULL, *keyalgstr;
+	STACK *pkeyopts = NULL;
 	EVP_PKEY *pkey=NULL;
 	int i=0,badops=0,newreq=0,verbose=0,pkey_type=EVP_PKEY_RSA;
 	long newkey = -1;
@@ -290,33 +291,19 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-newkey") == 0)
 			{
-
 			if (--argc < 1)
 				goto bad;
-
-			genctx = set_keygen_ctx(bio_err, *(++argv), &newkey,
-							&keyalgstr, e);
-
-			if (!genctx)
-				goto bad;
-
+			keyalg = *(++argv);
 			newreq=1;
 			}
 		else if (strcmp(*argv,"-pkeyopt") == 0)
 			{
 			if (--argc < 1)
 				goto bad;
-			if (!genctx)
-				{
-				BIO_puts(bio_err, "No keytype specified\n");
+			if (!pkeyopts)
+				pkeyopts = sk_new_null();
+			if (!pkeyopts || !sk_push(pkeyopts, *(++argv)))
 				goto bad;
-				}
-			else if (pkey_ctrl_string(genctx, *(++argv)) <= 0)
-				{
-				BIO_puts(bio_err, "parameter setting error\n");
-				ERR_print_errors(bio_err);
-				goto end;
-				}
 			}
 		else if (strcmp(*argv,"-batch") == 0)
 			batch=1;
@@ -643,6 +630,14 @@ bad:
 		app_RAND_load_file(randfile, bio_err, 0);
 		if (inrand)
 			app_RAND_load_files(inrand);
+
+		if (keyalg)
+			{
+			genctx = set_keygen_ctx(bio_err, keyalg, &newkey,
+							&keyalgstr, e);
+			if (!genctx)
+				goto end;
+			}
 	
 		if (newkey <= 0)
 			{
@@ -663,6 +658,23 @@ bad:
 							&keyalgstr, e);
 			if (!genctx)
 				goto end;
+			}
+
+		if (pkeyopts)
+			{
+			char *genopt;
+			for (i = 0; i < sk_num(pkeyopts); i++)
+				{
+				genopt = sk_value(pkeyopts, i);
+				if (pkey_ctrl_string(genctx, genopt) <= 0)
+					{
+					BIO_printf(bio_err,
+						"parameter error \"%s\"\n",
+						genopt);
+					ERR_print_errors(bio_err);
+					goto end;
+					}
+				}
 			}
 
 		BIO_printf(bio_err,"Generating a %ld bit %s private key\n",
@@ -1066,6 +1078,8 @@ end:
 	EVP_PKEY_free(pkey);
 	if (genctx)
 		EVP_PKEY_CTX_free(genctx);
+	if (pkeyopts)
+		sk_free(pkeyopts);
 	X509_REQ_free(req);
 	X509_free(x509ss);
 	ASN1_INTEGER_free(serial);
