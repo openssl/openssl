@@ -1083,6 +1083,22 @@
 #define NID_hmacWithSHA1		163
 #define OBJ_hmacWithSHA1		OBJ_rsadsi,2L,7L
 
+#define LN_hmacWithSHA224		"hmacWithSHA224"
+#define NID_hmacWithSHA224		803
+#define OBJ_hmacWithSHA224		OBJ_rsadsi,2L,8L
+
+#define LN_hmacWithSHA256		"hmacWithSHA256"
+#define NID_hmacWithSHA256		804
+#define OBJ_hmacWithSHA256		OBJ_rsadsi,2L,9L
+
+#define LN_hmacWithSHA384		"hmacWithSHA384"
+#define NID_hmacWithSHA384		805
+#define OBJ_hmacWithSHA384		OBJ_rsadsi,2L,10L
+
+#define LN_hmacWithSHA512		"hmacWithSHA512"
+#define NID_hmacWithSHA512		806
+#define OBJ_hmacWithSHA512		OBJ_rsadsi,2L,11L
+
 #define SN_rc2_cbc		"RC2-CBC"
 #define LN_rc2_cbc		"rc2-cbc"
 #define NID_rc2_cbc		37

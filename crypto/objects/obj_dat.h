@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 803
-#define NUM_SN 799
-#define NUM_LN 799
-#define NUM_OBJ 761
+#define NUM_NID 807
+#define NUM_SN 803
+#define NUM_LN 803
+#define NUM_OBJ 765
 
-static unsigned char lvalues[5353]={
+static unsigned char lvalues[5385]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -829,6 +829,10 @@ static unsigned char lvalues[5353]={
 0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x04,     /* [5328] OBJ_id_GostR3411_94_with_GostR3410_2001_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x08,0x01,     /* [5336] OBJ_id_GostR3410_2001_ParamSet_cc */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x06,     /* [5344] OBJ_hmacWithMD5 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x08,     /* [5352] OBJ_hmacWithSHA224 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x09,     /* [5360] OBJ_hmacWithSHA256 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0A,     /* [5368] OBJ_hmacWithSHA384 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0B,     /* [5376] OBJ_hmacWithSHA512 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2124,6 +2128,14 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	"GOST R 3410-2001 Parameter Set Cryptocom",
 	NID_id_GostR3410_2001_ParamSet_cc,8,&(lvalues[5336]),0},
 {"hmacWithMD5","hmacWithMD5",NID_hmacWithMD5,8,&(lvalues[5344]),0},
+{"hmacWithSHA224","hmacWithSHA224",NID_hmacWithSHA224,8,
+	&(lvalues[5352]),0},
+{"hmacWithSHA256","hmacWithSHA256",NID_hmacWithSHA256,8,
+	&(lvalues[5360]),0},
+{"hmacWithSHA384","hmacWithSHA384",NID_hmacWithSHA384,8,
+	&(lvalues[5368]),0},
+{"hmacWithSHA512","hmacWithSHA512",NID_hmacWithSHA512,8,
+	&(lvalues[5376]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2376,6 +2388,10 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[797]),/* "gost94cc" */
 &(nid_objs[802]),/* "hmacWithMD5" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
+&(nid_objs[803]),/* "hmacWithSHA224" */
+&(nid_objs[804]),/* "hmacWithSHA256" */
+&(nid_objs[805]),/* "hmacWithSHA384" */
+&(nid_objs[806]),/* "hmacWithSHA512" */
 &(nid_objs[432]),/* "holdInstructionCallIssuer" */
 &(nid_objs[430]),/* "holdInstructionCode" */
 &(nid_objs[431]),/* "holdInstructionNone" */
@@ -3191,6 +3207,10 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[99]),/* "givenName" */
 &(nid_objs[802]),/* "hmacWithMD5" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
+&(nid_objs[803]),/* "hmacWithSHA224" */
+&(nid_objs[804]),/* "hmacWithSHA256" */
+&(nid_objs[805]),/* "hmacWithSHA384" */
+&(nid_objs[806]),/* "hmacWithSHA512" */
 &(nid_objs[486]),/* "homePostalAddress" */
 &(nid_objs[473]),/* "homeTelephoneNumber" */
 &(nid_objs[466]),/* "host" */
@@ -4100,6 +4120,10 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[ 4]),/* OBJ_md5                          1 2 840 113549 2 5 */
 &(nid_objs[802]),/* OBJ_hmacWithMD5                  1 2 840 113549 2 6 */
 &(nid_objs[163]),/* OBJ_hmacWithSHA1                 1 2 840 113549 2 7 */
+&(nid_objs[803]),/* OBJ_hmacWithSHA224               1 2 840 113549 2 8 */
+&(nid_objs[804]),/* OBJ_hmacWithSHA256               1 2 840 113549 2 9 */
+&(nid_objs[805]),/* OBJ_hmacWithSHA384               1 2 840 113549 2 10 */
+&(nid_objs[806]),/* OBJ_hmacWithSHA512               1 2 840 113549 2 11 */
 &(nid_objs[37]),/* OBJ_rc2_cbc                      1 2 840 113549 3 2 */
 &(nid_objs[ 5]),/* OBJ_rc4                          1 2 840 113549 3 4 */
 &(nid_objs[44]),/* OBJ_des_ede3_cbc                 1 2 840 113549 3 7 */
