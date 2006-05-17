@@ -121,6 +121,7 @@ int MAIN(int argc, char **argv)
     char *passargin = NULL, *passargout = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL;
     char *inrand = NULL;
+    char *macalg = NULL;
     char *CApath = NULL, *CAfile = NULL;
 #ifndef OPENSSL_NO_ENGINE
     char *engine=NULL;
@@ -170,6 +171,11 @@ int MAIN(int argc, char **argv)
 					 maciter = 1;
 		else if (!strcmp (*args, "-nomac"))
 					 maciter = -1;
+		else if (!strcmp (*args, "-macalg"))
+		    if (args[1]) {
+			args++;	
+			macalg = *args;
+		    } else badarg = 1;
 		else if (!strcmp (*args, "-nodes")) enc=NULL;
 		else if (!strcmp (*args, "-certpbe")) {
 			if (!set_pbe(bio_err, &cert_pbe, *++args))
@@ -393,6 +399,7 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY *key = NULL;
 	X509 *ucert = NULL, *x = NULL;
 	STACK_OF(X509) *certs=NULL;
+	const EVP_MD *macmd = NULL;
 	unsigned char *catmp = NULL;
 	int i;
 
@@ -554,8 +561,18 @@ int MAIN(int argc, char **argv)
 		goto export_end;
 		}
 
+	if (macalg)
+		{
+		macmd = EVP_get_digestbyname(macalg);
+		if (!macmd)
+			{
+			BIO_printf(bio_err, "Unknown digest algorithm %s\n", 
+						macalg);
+			}
+		}
+
 	if (maciter != -1)
-		PKCS12_set_mac(p12, mpass, -1, NULL, 0, maciter, NULL);
+		PKCS12_set_mac(p12, mpass, -1, NULL, 0, maciter, macmd);
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();

@@ -4,6 +4,10 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) New -macalg option to pkcs12 utility to allow setting of an alternative
+     digest MAC.
+     [Steve Henson]
+
   *) Initial support for PKCS#5 v2.0 PRFs other than default SHA1 HMAC.
      Reorganize PBE internals to lookup from a static table using NIDs,
      add support for HMAC PBE OID translation. Add a EVP_CIPHER ctrl:
