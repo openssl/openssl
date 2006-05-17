@@ -1238,6 +1238,9 @@ DECLARE_ASN1_FUNCTIONS(PBKDF2PARAM)
 X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt, int saltlen);
 X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 					 unsigned char *salt, int saltlen);
+X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
+				 unsigned char *salt, int saltlen,
+				 unsigned char *aiv, int prf_nid);
 
 /* PKCS#8 utilities */
 

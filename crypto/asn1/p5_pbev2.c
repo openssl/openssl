@@ -82,10 +82,13 @@ IMPLEMENT_ASN1_FUNCTIONS(PBKDF2PARAM)
 
 /* Return an algorithm identifier for a PKCS#5 v2.0 PBE algorithm:
  * yes I know this is horrible!
+ *
+ * Extended version to allow application supplied PRF NID and IV.
  */
 
-X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
-				 unsigned char *salt, int saltlen)
+X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
+				 unsigned char *salt, int saltlen,
+				 unsigned char *aiv, int prf_nid)
 {
 	X509_ALGOR *scheme = NULL, *kalg = NULL, *ret = NULL;
 	int alg_nid;
@@ -95,7 +98,6 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	PBE2PARAM *pbe2 = NULL;
 	ASN1_OCTET_STRING *osalt = NULL;
 	ASN1_OBJECT *obj;
-	int prf_nid;
 
 	alg_nid = EVP_CIPHER_type(cipher);
 	if(alg_nid == NID_undef) {
@@ -114,9 +116,13 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	if(!(scheme->parameter = ASN1_TYPE_new())) goto merr;
 
 	/* Create random IV */
-	if (EVP_CIPHER_iv_length(cipher) &&
-		RAND_pseudo_bytes(iv, EVP_CIPHER_iv_length(cipher)) < 0)
-  		goto err;
+	if (EVP_CIPHER_iv_length(cipher))
+		{
+		if (aiv)
+			memcpy(iv, aiv, EVP_CIPHER_iv_length(cipher));
+		else if (RAND_pseudo_bytes(iv, EVP_CIPHER_iv_length(cipher)) < 0)
+  			goto err;
+		}
 
 	EVP_CIPHER_CTX_init(&ctx);
 
@@ -128,8 +134,11 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 		EVP_CIPHER_CTX_cleanup(&ctx);
 		goto err;
 	}
-	/* An error is OK here: just means use default PRF */
-	if (EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0)
+	/* If prf NID unspecified see if cipher has a preference.
+	 * An error is OK here: just means use default PRF.
+	 */
+	if ((prf_nid == -1) && 
+	EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_PBE_PRF_NID, 0, &prf_nid) <= 0)
 		{
 		ERR_clear_error();
 		prf_nid = NID_hmacWithSHA1;
@@ -218,3 +227,9 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 	return NULL;
 
 }
+
+X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
+				 unsigned char *salt, int saltlen)
+	{
+	return PKCS5_pbe2_set_iv(cipher, iter, salt, saltlen, NULL, -1);
+	}
