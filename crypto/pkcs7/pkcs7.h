@@ -269,6 +269,7 @@ DECLARE_PKCS12_STACK_OF(PKCS7)
 #define PKCS7_CRLFEOL		0x800
 #define PKCS7_STREAM		0x1000
 #define PKCS7_NOCRL		0x2000
+#define PKCS7_PARTIAL		0x4000
 
 /* Flags: for compatibility with older code */
 
@@ -362,6 +363,12 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,STACK_OF(X509_ATTRIBUTE) *sk);
 
 PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 							BIO *data, int flags);
+
+PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7,
+			X509 *signcert, EVP_PKEY *pkey, const EVP_MD *md,
+			int flags);
+
+int PKCS7_final(PKCS7 *p7, BIO *data, int flags);
 int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 					BIO *indata, BIO *out, int flags);
 STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs, int flags);
@@ -407,6 +414,7 @@ void ERR_load_PKCS7_strings(void);
 #define PKCS7_F_PKCS7_DECRYPT_RINFO			 133
 #define PKCS7_F_PKCS7_ENCODE_RINFO			 132
 #define PKCS7_F_PKCS7_ENCRYPT				 115
+#define PKCS7_F_PKCS7_FINAL				 134
 #define PKCS7_F_PKCS7_FIND_DIGEST			 127
 #define PKCS7_F_PKCS7_GET0_SIGNERS			 124
 #define PKCS7_F_PKCS7_RECIP_INFO_SET			 130
@@ -454,6 +462,7 @@ void ERR_load_PKCS7_strings(void);
 #define PKCS7_R_NO_SIG_CONTENT_TYPE			 138
 #define PKCS7_R_OPERATION_NOT_SUPPORTED_ON_THIS_TYPE	 104
 #define PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR		 124
+#define PKCS7_R_PKCS7_ADD_SIGNER_ERROR			 153
 #define PKCS7_R_PKCS7_DATAFINAL				 126
 #define PKCS7_R_PKCS7_DATAFINAL_ERROR			 125
 #define PKCS7_R_PKCS7_DATASIGN				 145
