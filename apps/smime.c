@@ -90,6 +90,7 @@ int MAIN(int argc, char **argv)
 	const char *inmode = "r", *outmode = "w";
 	char *infile = NULL, *outfile = NULL;
 	char *signerfile = NULL, *recipfile = NULL;
+	STACK *sksigners = NULL, *skkeys = NULL;
 	char *certfile = NULL, *keyfile = NULL, *contfile=NULL;
 	const EVP_CIPHER *cipher = NULL;
 	PKCS7 *p7 = NULL;
@@ -229,6 +230,20 @@ int MAIN(int argc, char **argv)
 			{
 			if (!args[1])
 				goto argerr;
+			/* If previous -signer argument add signer to list */
+
+			if (signerfile)
+				{
+				if (!sksigners)
+					sksigners = sk_new_null();
+				sk_push(sksigners, signerfile);
+				if (!keyfile)
+					keyfile = signerfile;
+				if (!skkeys)
+					skkeys = sk_new_null();
+				sk_push(skkeys, keyfile);
+				keyfile = NULL;
+				}
 			signerfile = *++args;
 			}
 		else if (!strcmp (*args, "-recip"))
@@ -241,6 +256,22 @@ int MAIN(int argc, char **argv)
 			{
 			if (!args[1])	
 				goto argerr;
+			/* If previous -inkey arument add signer to list */
+			if (keyfile)
+				{
+				if (!signerfile)
+					{
+					BIO_puts(bio_err, "Illegal -inkey without -signer\n");
+					goto argerr;
+					}
+				if (!sksigners)
+					sksigners = sk_new_null();
+				sk_push(sksigners, signerfile);
+				signerfile = NULL;
+				if (!skkeys)
+					skkeys = sk_new_null();
+				sk_push(skkeys, keyfile);
+				}
 			keyfile = *++args;
 			}
 		else if (!strcmp (*args, "-keyform"))
@@ -304,14 +335,38 @@ int MAIN(int argc, char **argv)
 		args++;
 		}
 
+	if ((operation != SMIME_SIGN) && (skkeys || sksigners))
+		{
+		BIO_puts(bio_err, "Multiple signers or keys not allowed\n");
+		goto argerr;
+		}
 
 	if (operation == SMIME_SIGN)
 		{
-		if (!signerfile)
+		/* Check to see if any final signer needs to be appended */
+		if (keyfile && !signerfile)
+			{
+			BIO_puts(bio_err, "Illegal -inkey without -signer\n");
+			goto argerr;
+			}
+		if (signerfile)
+			{
+			if (!sksigners)
+				sksigners = sk_new_null();
+			sk_push(sksigners, signerfile);
+			if (!skkeys)
+				skkeys = sk_new_null();
+			if (!keyfile)
+				keyfile = signerfile;
+			sk_push(skkeys, keyfile);
+			}
+		if (!sksigners)
 			{
 			BIO_printf(bio_err, "No signer certificate specified\n");
 			badarg = 1;
 			}
+		signerfile = NULL;
+		keyfile = NULL;
 		need_rand = 1;
 		}
 	else if (operation == SMIME_DECRYPT)
@@ -565,17 +620,44 @@ int MAIN(int argc, char **argv)
 		p7 = PKCS7_encrypt(encerts, in, cipher, flags);
 	else if (operation == SMIME_SIGN)
 		{
+		int i;
 		/* If detached data and SMIME output enable partial
 		 * signing.
 		 */
 		if ((flags & PKCS7_DETACHED) && (outformat == FORMAT_SMIME))
 			flags |= PKCS7_STREAM;
-		p7 = PKCS7_sign(signer, key, other, in, flags);
-		/* Don't need to rewind for partial signing */
-		if (!(flags & PKCS7_STREAM) && (BIO_reset(in) != 0))
+		flags |= PKCS7_PARTIAL;
+		p7 = PKCS7_sign(NULL, NULL, other, in, flags);
+		for (i = 0; i < sk_num(sksigners); i++)
 			{
-			BIO_printf(bio_err, "Can't rewind input file\n");
-			goto end;
+			signerfile = sk_value(sksigners, i);
+			keyfile = sk_value(skkeys, i);
+			signer = load_cert(bio_err, signerfile,FORMAT_PEM, NULL,
+					e, "signer certificate");
+			if (!signer)
+				goto end;
+			key = load_key(bio_err, keyfile, keyform, 0, passin, e,
+			       "signing key file");
+			if (!key)
+				goto end;
+			if (!PKCS7_sign_add_signer(p7, signer, key,
+						NULL, flags))
+				goto end;
+			X509_free(signer);
+			signer = NULL;
+			EVP_PKEY_free(key);
+			key = NULL;
+			}
+		/* If not streaming finalize structure */
+		if (!(flags & PKCS7_STREAM))
+			{
+			if (!PKCS7_final(p7, in, flags))
+				goto end;
+			if (BIO_reset(in) != 0)
+				{
+				BIO_puts(bio_err, "Can't rewind input file\n");
+				goto end;
+				}
 			}
 		}
 	else
@@ -674,6 +756,10 @@ end:
 	sk_X509_pop_free(other, X509_free);
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
+	if (sksigners)
+		sk_free(sksigners);
+	if (skkeys)
+		sk_free(skkeys);
 	X509_STORE_free(store);
 	X509_free(cert);
 	X509_free(recip);

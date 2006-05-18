@@ -4,6 +4,11 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) Tidy up PKCS#7 routines and add new functions to make it easier to
+     create PKCS7 structures containing multiple signers. Update smime
+     application to support multiple signers.
+     [Steve Henson]
+
   *) New -macalg option to pkcs12 utility to allow setting of an alternative
      digest MAC.
      [Steve Henson]
