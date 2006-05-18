@@ -320,6 +320,7 @@ int PKCS7_set0_type_other(PKCS7 *p7, int type, ASN1_TYPE *other);
 int PKCS7_set_content(PKCS7 *p7, PKCS7 *p7_data);
 int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
 	const EVP_MD *dgst);
+int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si);
 int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *p7i);
 int PKCS7_add_certificate(PKCS7 *p7, X509 *x509);
 int PKCS7_add_crl(PKCS7 *p7, X509_CRL *x509);
@@ -381,6 +382,11 @@ int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
 STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si);
 int PKCS7_simple_smimecap(STACK_OF(X509_ALGOR) *sk, int nid, int arg);
 
+int PKCS7_add_attrib_content_type(PKCS7_SIGNER_INFO *si, ASN1_OBJECT *coid);
+int PKCS7_add0_attrib_signing_time(PKCS7_SIGNER_INFO *si, ASN1_TIME *t);
+int PKCS7_add1_attrib_digest(PKCS7_SIGNER_INFO *si,
+				const unsigned char *md, int mdlen);
+
 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags);
 PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont);
 int SMIME_crlf_copy(BIO *in, BIO *out, int flags);
@@ -397,6 +403,8 @@ void ERR_load_PKCS7_strings(void);
 /* Function codes. */
 #define PKCS7_F_B64_READ_PKCS7				 120
 #define PKCS7_F_B64_WRITE_PKCS7				 121
+#define PKCS7_F_DO_PKCS7_SIGNED_ATTRIB			 136
+#define PKCS7_F_PKCS7_ADD0_ATTRIB_SIGNING_TIME		 135
 #define PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP		 118
 #define PKCS7_F_PKCS7_ADD_CERTIFICATE			 100
 #define PKCS7_F_PKCS7_ADD_CRL				 101
@@ -425,6 +433,7 @@ void ERR_load_PKCS7_strings(void);
 #define PKCS7_F_PKCS7_SIGN				 116
 #define PKCS7_F_PKCS7_SIGNATUREVERIFY			 113
 #define PKCS7_F_PKCS7_SIGNER_INFO_SET			 129
+#define PKCS7_F_PKCS7_SIGN_ADD_SIGNER			 137
 #define PKCS7_F_PKCS7_SIMPLE_SMIMECAP			 119
 #define PKCS7_F_PKCS7_VERIFY				 117
 #define PKCS7_F_SMIME_READ_PKCS7			 122

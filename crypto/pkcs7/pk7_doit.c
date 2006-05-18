@@ -648,13 +648,43 @@ static BIO *PKCS7_find_digest(EVP_MD_CTX **pmd, BIO *bio, int nid)
 	return NULL;
 	}
 
+static int do_pkcs7_signed_attrib(PKCS7_SIGNER_INFO *si, EVP_MD_CTX *mctx)
+	{
+	unsigned char md_data[EVP_MAX_MD_SIZE];
+	unsigned int md_len;
+
+	/* Add signing time if not already present */
+	if (!PKCS7_get_signed_attribute(si, NID_pkcs9_signingTime))
+		{
+		if (!PKCS7_add0_attrib_signing_time(si, NULL))
+			{
+			PKCS7err(PKCS7_F_DO_PKCS7_SIGNED_ATTRIB,
+					ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
+		}
+
+	/* Add digest */
+	EVP_DigestFinal_ex(mctx, md_data,&md_len);
+	if (!PKCS7_add1_attrib_digest(si, md_data, md_len))
+		{
+		PKCS7err(PKCS7_F_DO_PKCS7_SIGNED_ATTRIB, ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+
+	/* Now sign the attributes */
+	if (!PKCS7_SIGNER_INFO_sign(si))
+			return 0;
+
+	return 1;
+	}
+	
+				
 int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 	{
 	int ret=0;
 	int i,j;
 	BIO *btmp;
-	BUF_MEM *buf_mem=NULL;
-	BUF_MEM *buf=NULL;
 	PKCS7_SIGNER_INFO *si;
 	EVP_MD_CTX *mdc,ctx_tmp;
 	STACK_OF(X509_ATTRIBUTE) *sk;
@@ -710,17 +740,13 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 
 	if (si_sk != NULL)
 		{
-		if ((buf=BUF_MEM_new()) == NULL)
-			{
-			PKCS7err(PKCS7_F_PKCS7_DATAFINAL,ERR_R_BIO_LIB);
-			goto err;
-			}
 		for (i=0; i<sk_PKCS7_SIGNER_INFO_num(si_sk); i++)
 			{
 			si=sk_PKCS7_SIGNER_INFO_value(si_sk,i);
-			if (si->pkey == NULL) continue;
+			if (si->pkey == NULL)
+				continue;
 
-			j=OBJ_obj2nid(si->digest_alg->algorithm);
+			j = OBJ_obj2nid(si->digest_alg->algorithm);
 
 			btmp=bio;
 
@@ -732,79 +758,33 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			/* We now have the EVP_MD_CTX, lets do the
 			 * signing. */
 			EVP_MD_CTX_copy_ex(&ctx_tmp,mdc);
-			if (!BUF_MEM_grow_clean(buf,EVP_PKEY_size(si->pkey)))
-				{
-				PKCS7err(PKCS7_F_PKCS7_DATAFINAL,ERR_R_BIO_LIB);
-				goto err;
-				}
 
 			sk=si->auth_attr;
 
 			/* If there are attributes, we add the digest
 			 * attribute and only sign the attributes */
-			if ((sk != NULL) && (sk_X509_ATTRIBUTE_num(sk) != 0))
+			if (sk_X509_ATTRIBUTE_num(sk) > 0)
 				{
-				unsigned char md_data[EVP_MAX_MD_SIZE], *abuf=NULL;
-				unsigned int md_len, alen;
-				ASN1_OCTET_STRING *digest;
-				ASN1_UTCTIME *sign_time;
-				const EVP_MD *md_tmp;
+				if (!do_pkcs7_signed_attrib(si, &ctx_tmp))
+					goto err;
+				}
+			else
+				{
+				unsigned char *abuf = NULL;
+				unsigned int abuflen;
+				abuflen = EVP_PKEY_size(si->pkey);
+				abuf = OPENSSL_malloc(abuflen);
+				if (!abuf)
+					goto err;
 
-				/* Add signing time if not already present */
-				if (!PKCS7_get_signed_attribute(si,
-							NID_pkcs9_signingTime))
-					{
-					if (!(sign_time=X509_gmtime_adj(NULL,0)))
-						{
-						PKCS7err(PKCS7_F_PKCS7_DATAFINAL,
-							ERR_R_MALLOC_FAILURE);
-						goto err;
-						}
-					PKCS7_add_signed_attribute(si,
-						NID_pkcs9_signingTime,
-						V_ASN1_UTCTIME,sign_time);
-					}
-
-				/* Add digest */
-				md_tmp=EVP_MD_CTX_md(&ctx_tmp);
-				EVP_DigestFinal_ex(&ctx_tmp,md_data,&md_len);
-				if (!(digest=M_ASN1_OCTET_STRING_new()))
+				if (!EVP_SignFinal(&ctx_tmp, abuf, &abuflen,
+							si->pkey))
 					{
 					PKCS7err(PKCS7_F_PKCS7_DATAFINAL,
-						ERR_R_MALLOC_FAILURE);
+							ERR_R_EVP_LIB);
 					goto err;
 					}
-				if (!M_ASN1_OCTET_STRING_set(digest,md_data,
-								md_len))
-					{
-					PKCS7err(PKCS7_F_PKCS7_DATAFINAL,
-						ERR_R_MALLOC_FAILURE);
-					goto err;
-					}
-				PKCS7_add_signed_attribute(si,
-					NID_pkcs9_messageDigest,
-					V_ASN1_OCTET_STRING,digest);
-
-				/* Now sign the attributes */
-				EVP_SignInit_ex(&ctx_tmp,md_tmp,NULL);
-				alen = ASN1_item_i2d((ASN1_VALUE *)sk,&abuf,
-							ASN1_ITEM_rptr(PKCS7_ATTR_SIGN));
-				if(!abuf) goto err;
-				EVP_SignUpdate(&ctx_tmp,abuf,alen);
-				OPENSSL_free(abuf);
-				}
-
-			if (!EVP_SignFinal(&ctx_tmp,(unsigned char *)buf->data,
-				(unsigned int *)&buf->length,si->pkey))
-				{
-				PKCS7err(PKCS7_F_PKCS7_DATAFINAL,ERR_R_EVP_LIB);
-				goto err;
-				}
-			if (!ASN1_STRING_set(si->enc_digest,
-				(unsigned char *)buf->data,buf->length))
-				{
-				PKCS7err(PKCS7_F_PKCS7_DATAFINAL,ERR_R_ASN1_LIB);
-				goto err;
+				ASN1_STRING_set0(si->enc_digest, abuf, abuflen);
 				}
 			}
 		}
@@ -821,31 +801,74 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 
 	if (!PKCS7_is_detached(p7))
 		{
+		char *cont;
+		long contlen;
 		btmp=BIO_find_type(bio,BIO_TYPE_MEM);
 		if (btmp == NULL)
 			{
 			PKCS7err(PKCS7_F_PKCS7_DATAFINAL,PKCS7_R_UNABLE_TO_FIND_MEM_BIO);
 			goto err;
 			}
-		BIO_get_mem_ptr(btmp,&buf_mem);
+		contlen = BIO_get_mem_data(btmp, &cont);
 		/* Mark the BIO read only then we can use its copy of the data
 		 * instead of making an extra copy.
 		 */
 		BIO_set_flags(btmp, BIO_FLAGS_MEM_RDONLY);
 		BIO_set_mem_eof_return(btmp, 0);
-		os->data = (unsigned char *)buf_mem->data;
-		os->length = buf_mem->length;
-#if 0
-		M_ASN1_OCTET_STRING_set(os,
-			(unsigned char *)buf_mem->data,buf_mem->length);
-#endif
+		ASN1_STRING_set0(os, (unsigned char *)cont, contlen);
 		}
 	ret=1;
 err:
 	EVP_MD_CTX_cleanup(&ctx_tmp);
-	if (buf != NULL) BUF_MEM_free(buf);
 	return(ret);
 	}
+
+int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
+	{
+	EVP_MD_CTX mctx;
+	unsigned char *abuf = NULL;
+	int alen;
+	unsigned int siglen;
+	const EVP_MD *md = NULL;
+
+	md = EVP_get_digestbyobj(si->digest_alg->algorithm);
+	if (md == NULL)
+		return 0;
+
+	EVP_MD_CTX_init(&mctx);
+	if (!EVP_SignInit_ex(&mctx,md,NULL))
+		goto err;
+	alen = ASN1_item_i2d((ASN1_VALUE *)si->auth_attr,&abuf,
+				ASN1_ITEM_rptr(PKCS7_ATTR_SIGN));
+	if(!abuf)
+		goto err;
+	if (!EVP_SignUpdate(&mctx,abuf,alen))
+		goto err;
+	OPENSSL_free(abuf);
+	abuf = OPENSSL_malloc(EVP_PKEY_size(si->pkey));
+	if(!abuf)
+		goto err;
+	if (!EVP_SignFinal(&mctx, abuf, &siglen, si->pkey))
+		goto err;
+
+	EVP_MD_CTX_cleanup(&mctx);
+
+	ASN1_STRING_set0(si->enc_digest, abuf, siglen);
+	abuf = NULL;
+
+	return 1;
+
+	err:
+	if (abuf)
+		OPENSSL_free(abuf);
+	EVP_MD_CTX_cleanup(&mctx);
+	return 0;
+
+	}
+	
+
+	
+	
 
 int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 	     PKCS7 *p7, PKCS7_SIGNER_INFO *si)

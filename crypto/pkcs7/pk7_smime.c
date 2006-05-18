@@ -155,14 +155,14 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 	STACK_OF(X509_ALGOR) *smcap = NULL;
 	if(!X509_check_private_key(signcert, pkey))
 		{
-		PKCS7err(PKCS7_F_PKCS7_ADD_SIGNER,
+		PKCS7err(PKCS7_F_PKCS7_SIGN_ADD_SIGNER,
 			PKCS7_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
                 return NULL;
 		}
 
     	if (!(si = PKCS7_add_signature(p7,signcert,pkey, md)))
 		{
-		PKCS7err(PKCS7_F_PKCS7_ADD_SIGNER,
+		PKCS7err(PKCS7_F_PKCS7_SIGN_ADD_SIGNER,
 				PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR);
 		return NULL;
 		}
@@ -179,15 +179,14 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 
 	if(!(flags & PKCS7_NOATTR))
 		{
-		if (!PKCS7_add_signed_attribute(si, NID_pkcs9_contentType,
-				V_ASN1_OBJECT, OBJ_nid2obj(NID_pkcs7_data)))
+		if (!PKCS7_add_attrib_content_type(si, NULL))
 			goto err;
 		/* Add SMIMECapabilities */
 		if(!(flags & PKCS7_NOSMIMECAP))
 			{
 			if(!(smcap = sk_X509_ALGOR_new_null()))
 				{
-				PKCS7err(PKCS7_F_PKCS7_ADD_SIGNER,
+				PKCS7err(PKCS7_F_PKCS7_SIGN_ADD_SIGNER,
 					ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
