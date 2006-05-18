@@ -187,183 +187,115 @@ int MAIN(int argc, char **argv)
 				flags |= PKCS7_CRLFEOL;
 		else if (!strcmp(*args,"-rand"))
 			{
-			if (args[1])
-				{
-				args++;
-				inrand = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			args++;
+			inrand = *args;
 			need_rand = 1;
 			}
 #ifndef OPENSSL_NO_ENGINE
 		else if (!strcmp(*args,"-engine"))
 			{
-			if (args[1])
-				{
-				args++;
-				engine = *args;
-				}
-			else badarg = 1;
+			if (!args[1])
+				goto argerr;
+			engine = *++args;
 			}
 #endif
 		else if (!strcmp(*args,"-passin"))
 			{
-			if (args[1])
-				{
-				args++;
-				passargin = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			passargin = *++args;
 			}
 		else if (!strcmp (*args, "-to"))
 			{
-			if (args[1])
-				{
-				args++;
-				to = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			to = *++args;
 			}
 		else if (!strcmp (*args, "-from"))
 			{
-			if (args[1])
-				{
-				args++;
-				from = *args;
-				}
-			else badarg = 1;
+			if (!args[1])
+				goto argerr;
+			from = *++args;
 			}
 		else if (!strcmp (*args, "-subject"))
 			{
-			if (args[1])
-				{
-				args++;
-				subject = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			subject = *++args;
 			}
 		else if (!strcmp (*args, "-signer"))
 			{
-			if (args[1])
-				{
-				args++;
-				signerfile = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			signerfile = *++args;
 			}
 		else if (!strcmp (*args, "-recip"))
 			{
-			if (args[1])
-				{
-				args++;
-				recipfile = *args;
-				}
-			else badarg = 1;
+			if (!args[1])
+				goto argerr;
+			recipfile = *++args;
 			}
 		else if (!strcmp (*args, "-inkey"))
 			{
-			if (args[1])
-				{
-				args++;
-				keyfile = *args;
-				}
-			else
-				badarg = 1;
-		}
+			if (!args[1])	
+				goto argerr;
+			keyfile = *++args;
+			}
 		else if (!strcmp (*args, "-keyform"))
 			{
-			if (args[1])
-				{
-				args++;
-				keyform = str2fmt(*args);
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			keyform = str2fmt(*++args);
 			}
 		else if (!strcmp (*args, "-certfile"))
 			{
-			if (args[1])
-				{
-				args++;
-				certfile = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			certfile = *++args;
 			}
 		else if (!strcmp (*args, "-CAfile"))
 			{
-			if (args[1])
-				{
-				args++;
-				CAfile = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			CAfile = *++args;
 			}
 		else if (!strcmp (*args, "-CApath"))
 			{
-			if (args[1])
-				{
-				args++;
-				CApath = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			CApath = *++args;
 			}
 		else if (!strcmp (*args, "-in"))
 			{
-			if (args[1])
-				{
-				args++;
-				infile = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			infile = *++args;
 			}
 		else if (!strcmp (*args, "-inform"))
 			{
-			if (args[1])
-				{
-				args++;
-				informat = str2fmt(*args);
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			informat = str2fmt(*++args);
 			}
 		else if (!strcmp (*args, "-outform"))
 			{
-			if (args[1])
-				{
-				args++;
-				outformat = str2fmt(*args);
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			outformat = str2fmt(*++args);
 			}
 		else if (!strcmp (*args, "-out"))
 			{
-			if (args[1])
-				{
-				args++;
-				outfile = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			outfile = *++args;
 			}
 		else if (!strcmp (*args, "-content"))
 			{
-			if (args[1])
-				{
-				args++;
-				contfile = *args;
-				}
-			else
-				badarg = 1;
+			if (!args[1])
+				goto argerr;
+			contfile = *++args;
 			}
 		else if (args_verify(&args, NULL, &badarg, bio_err, &vpm))
 			continue;
@@ -404,6 +336,7 @@ int MAIN(int argc, char **argv)
 
 	if (badarg)
 		{
+		argerr:
 		BIO_printf (bio_err, "Usage smime [options] cert.pem ...\n");
 		BIO_printf (bio_err, "where options are\n");
 		BIO_printf (bio_err, "-encrypt       encrypt message\n");
