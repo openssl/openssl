@@ -794,15 +794,6 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 				OPENSSL_free(abuf);
 				}
 
-#ifndef OPENSSL_NO_DSA
-			if (si->pkey->type == EVP_PKEY_DSA)
-				ctx_tmp.digest=EVP_dss1();
-#endif
-#ifndef OPENSSL_NO_ECDSA
- 			if (si->pkey->type == EVP_PKEY_EC)
- 				ctx_tmp.digest=EVP_ecdsa();
-#endif
-
 			if (!EVP_SignFinal(&ctx_tmp,(unsigned char *)buf->data,
 				(unsigned int *)&buf->length,si->pkey))
 				{
@@ -1011,14 +1002,6 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 		ret = -1;
 		goto err;
 		}
-#if 0
-#ifndef OPENSSL_NO_DSA
-	if(pkey->type == EVP_PKEY_DSA) mdc_tmp.digest=EVP_dss1();
-#endif
-#ifndef OPENSSL_NO_ECDSA
-	if (pkey->type == EVP_PKEY_EC) mdc_tmp.digest=EVP_ecdsa();
-#endif
-#endif
 
 	i=EVP_VerifyFinal(&mdc_tmp,os->data,os->length, pkey);
 	EVP_PKEY_free(pkey);
