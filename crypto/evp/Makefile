@@ -348,11 +348,11 @@ evp_pbe.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
 evp_pbe.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 evp_pbe.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 evp_pbe.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-evp_pbe.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-evp_pbe.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-evp_pbe.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-evp_pbe.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-evp_pbe.o: ../cryptlib.h evp_pbe.c
+evp_pbe.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs12.h
+evp_pbe.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+evp_pbe.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+evp_pbe.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+evp_pbe.o: ../../include/openssl/x509_vfy.h ../cryptlib.h evp_pbe.c
 evp_pkey.o: ../../e_os.h ../../include/openssl/asn1.h
 evp_pkey.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 evp_pkey.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

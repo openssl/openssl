@@ -3694,3 +3694,12 @@ EVP_PKEY_meth_new                       4089	EXIST::FUNCTION:
 ASN1_STRING_set0                        4090	EXIST::FUNCTION:
 EVP_PKEY_id                             4091	EXIST::FUNCTION:
 OBJ_find_sigid_algs                     4092	EXIST::FUNCTION:
+PKCS7_add0_attrib_signing_time          4093	EXIST::FUNCTION:
+PKCS7_final                             4094	EXIST::FUNCTION:
+PKCS7_SIGNER_INFO_sign                  4095	EXIST::FUNCTION:
+PKCS7_sign_add_signer                   4096	EXIST::FUNCTION:
+PKCS5_pbe2_set_iv                       4097	EXIST::FUNCTION:
+EVP_PBE_find                            4098	EXIST::FUNCTION:
+PKCS7_add1_attrib_digest                4099	EXIST::FUNCTION:
+EVP_PBE_alg_add_type                    4100	EXIST::FUNCTION:
+PKCS7_add_attrib_content_type           4101	EXIST::FUNCTION:
