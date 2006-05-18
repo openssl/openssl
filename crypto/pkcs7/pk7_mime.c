@@ -204,7 +204,7 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 		msg_type = "enveloped-data";
 	else if (PKCS7_type_is_signed(p7))
 		{
-		/* If we have any signers it is signed-data othewise 
+		/* If we have any signers it is signed-data otherwise 
 		 * certs-only.
 		 */
 		STACK_OF(PKCS7_SIGNER_INFO) *sinfos;

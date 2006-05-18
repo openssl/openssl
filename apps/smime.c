@@ -73,11 +73,14 @@ static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int smime_cb(int ok, X509_STORE_CTX *ctx);
 
 #define SMIME_OP	0x10
+#define SMIME_IP	0x20
+#define SMIME_SIGNERS	0x40
 #define SMIME_ENCRYPT	(1 | SMIME_OP)
-#define SMIME_DECRYPT	2
-#define SMIME_SIGN	(3 | SMIME_OP)
-#define SMIME_VERIFY	4
-#define SMIME_PK7OUT	5
+#define SMIME_DECRYPT	(2 | SMIME_IP)
+#define SMIME_SIGN	(3 | SMIME_OP | SMIME_SIGNERS)
+#define SMIME_VERIFY	(4 | SMIME_IP)
+#define SMIME_PK7OUT	(5 | SMIME_OP)
+#define SMIME_RESIGN	(6 | SMIME_IP | SMIME_OP | SMIME_SIGNERS)
 
 int MAIN(int, char **);
 
@@ -106,6 +109,7 @@ int MAIN(int argc, char **argv)
 	char *passargin = NULL, *passin = NULL;
 	char *inrand = NULL;
 	int need_rand = 0;
+	const EVP_MD *sign_md = NULL;
 	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
         int keyform = FORMAT_PEM;
 #ifndef OPENSSL_NO_ENGINE
@@ -136,6 +140,8 @@ int MAIN(int argc, char **argv)
 			operation = SMIME_DECRYPT;
 		else if (!strcmp (*args, "-sign"))
 			operation = SMIME_SIGN;
+		else if (!strcmp (*args, "-resign"))
+			operation = SMIME_RESIGN;
 		else if (!strcmp (*args, "-verify"))
 			operation = SMIME_VERIFY;
 		else if (!strcmp (*args, "-pk7out"))
@@ -252,6 +258,18 @@ int MAIN(int argc, char **argv)
 				goto argerr;
 			recipfile = *++args;
 			}
+		else if (!strcmp (*args, "-md"))
+			{
+			if (!args[1])
+				goto argerr;
+			sign_md = EVP_get_digestbyname(*++args);
+			if (sign_md == NULL)
+				{
+				BIO_printf(bio_err, "Unknown digest %s\n",
+							*args);
+				goto argerr;
+				}
+			}
 		else if (!strcmp (*args, "-inkey"))
 			{
 			if (!args[1])	
@@ -335,13 +353,13 @@ int MAIN(int argc, char **argv)
 		args++;
 		}
 
-	if ((operation != SMIME_SIGN) && (skkeys || sksigners))
+	if (!(operation & SMIME_SIGNERS) && (skkeys || sksigners))
 		{
 		BIO_puts(bio_err, "Multiple signers or keys not allowed\n");
 		goto argerr;
 		}
 
-	if (operation == SMIME_SIGN)
+	if (operation & SMIME_SIGNERS)
 		{
 		/* Check to see if any final signer needs to be appended */
 		if (keyfile && !signerfile)
@@ -468,13 +486,11 @@ int MAIN(int argc, char **argv)
 
 	ret = 2;
 
-	if (operation != SMIME_SIGN)
+	if (!(operation & SMIME_SIGNERS))
 		flags &= ~PKCS7_DETACHED;
 
 	if (operation & SMIME_OP)
 		{
-		if (flags & PKCS7_BINARY)
-			inmode = "rb";
 		if (outformat == FORMAT_ASN1)
 			outmode = "wb";
 		}
@@ -482,7 +498,16 @@ int MAIN(int argc, char **argv)
 		{
 		if (flags & PKCS7_BINARY)
 			outmode = "wb";
+		}
+
+	if (operation & SMIME_IP)
+		{
 		if (informat == FORMAT_ASN1)
+			inmode = "rb";
+		}
+	else
+		{
+		if (flags & PKCS7_BINARY)
 			inmode = "rb";
 		}
 
@@ -514,26 +539,11 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
-	if (signerfile && (operation == SMIME_SIGN))
-		{
-		if (!(signer = load_cert(bio_err,signerfile,FORMAT_PEM, NULL,
-			e, "signer certificate")))
-			{
-#if 0			/* An appropri message has already been printed */
-			BIO_printf(bio_err, "Can't read signer certificate file %s\n", signerfile);
-#endif
-			goto end;
-			}
-		}
-
 	if (certfile)
 		{
 		if (!(other = load_certs(bio_err,certfile,FORMAT_PEM, NULL,
 			e, "certificate file")))
 			{
-#if 0			/* An appropriate message has already been printed */
-			BIO_printf(bio_err, "Can't read certificate file %s\n", certfile);
-#endif
 			ERR_print_errors(bio_err);
 			goto end;
 			}
@@ -544,9 +554,6 @@ int MAIN(int argc, char **argv)
 		if (!(recip = load_cert(bio_err,recipfile,FORMAT_PEM,NULL,
 			e, "recipient certificate file")))
 			{
-#if 0			/* An appropriate message has alrady been printed */
-			BIO_printf(bio_err, "Can't read recipient certificate file %s\n", recipfile);
-#endif
 			ERR_print_errors(bio_err);
 			goto end;
 			}
@@ -584,6 +591,36 @@ int MAIN(int argc, char **argv)
 	else
 		in = BIO_new_fp(stdin, BIO_NOCLOSE);
 
+	if (operation & SMIME_IP)
+		{
+		if (informat == FORMAT_SMIME) 
+			p7 = SMIME_read_PKCS7(in, &indata);
+		else if (informat == FORMAT_PEM) 
+			p7 = PEM_read_bio_PKCS7(in, NULL, NULL, NULL);
+		else if (informat == FORMAT_ASN1) 
+			p7 = d2i_PKCS7_bio(in, NULL);
+		else
+			{
+			BIO_printf(bio_err, "Bad input format for PKCS#7 file\n");
+			goto end;
+			}
+
+		if (!p7)
+			{
+			BIO_printf(bio_err, "Error reading S/MIME message\n");
+			goto end;
+			}
+		if (contfile)
+			{
+			BIO_free(indata);
+			if (!(indata = BIO_new_file(contfile, "rb")))
+				{
+				BIO_printf(bio_err, "Can't read content file %s\n", contfile);
+				goto end;
+				}
+			}
+		}
+
 	if (outfile)
 		{
 		if (!(out = BIO_new_file(outfile, outmode)))
@@ -618,16 +655,22 @@ int MAIN(int argc, char **argv)
 
 	if (operation == SMIME_ENCRYPT)
 		p7 = PKCS7_encrypt(encerts, in, cipher, flags);
-	else if (operation == SMIME_SIGN)
+	else if (operation & SMIME_SIGNERS)
 		{
 		int i;
 		/* If detached data and SMIME output enable partial
 		 * signing.
 		 */
-		if ((flags & PKCS7_DETACHED) && (outformat == FORMAT_SMIME))
-			flags |= PKCS7_STREAM;
-		flags |= PKCS7_PARTIAL;
-		p7 = PKCS7_sign(NULL, NULL, other, in, flags);
+		if (operation == SMIME_SIGN)
+			{
+			if ((flags & PKCS7_DETACHED)
+				&& (outformat == FORMAT_SMIME))
+				flags |= PKCS7_STREAM;
+			flags |= PKCS7_PARTIAL;
+			p7 = PKCS7_sign(NULL, NULL, other, in, flags);
+			}
+		else
+			flags |= PKCS7_REUSE_DIGEST;
 		for (i = 0; i < sk_num(sksigners); i++)
 			{
 			signerfile = sk_value(sksigners, i);
@@ -641,50 +684,21 @@ int MAIN(int argc, char **argv)
 			if (!key)
 				goto end;
 			if (!PKCS7_sign_add_signer(p7, signer, key,
-						NULL, flags))
+						sign_md, flags))
 				goto end;
 			X509_free(signer);
 			signer = NULL;
 			EVP_PKEY_free(key);
 			key = NULL;
 			}
-		/* If not streaming finalize structure */
-		if (!(flags & PKCS7_STREAM))
+		/* If not streaming or resigning finalize structure */
+		if ((operation == SMIME_SIGN) && !(flags & PKCS7_STREAM))
 			{
 			if (!PKCS7_final(p7, in, flags))
 				goto end;
 			if (BIO_reset(in) != 0)
 				{
 				BIO_puts(bio_err, "Can't rewind input file\n");
-				goto end;
-				}
-			}
-		}
-	else
-		{
-		if (informat == FORMAT_SMIME) 
-			p7 = SMIME_read_PKCS7(in, &indata);
-		else if (informat == FORMAT_PEM) 
-			p7 = PEM_read_bio_PKCS7(in, NULL, NULL, NULL);
-		else if (informat == FORMAT_ASN1) 
-			p7 = d2i_PKCS7_bio(in, NULL);
-		else
-			{
-			BIO_printf(bio_err, "Bad input format for PKCS#7 file\n");
-			goto end;
-			}
-
-		if (!p7)
-			{
-			BIO_printf(bio_err, "Error reading S/MIME message\n");
-			goto end;
-			}
-		if (contfile)
-			{
-			BIO_free(indata);
-			if (!(indata = BIO_new_file(contfile, "rb")))
-				{
-				BIO_printf(bio_err, "Can't read content file %s\n", contfile);
 				goto end;
 				}
 			}
@@ -736,7 +750,12 @@ int MAIN(int argc, char **argv)
 		if (subject)
 			BIO_printf(out, "Subject: %s\n", subject);
 		if (outformat == FORMAT_SMIME) 
-			SMIME_write_PKCS7(out, p7, in, flags);
+			{
+			if (operation == SMIME_RESIGN)
+				SMIME_write_PKCS7(out, p7, indata, flags);
+			else
+				SMIME_write_PKCS7(out, p7, in, flags);
+			}
 		else if (outformat == FORMAT_PEM) 
 			PEM_write_bio_PKCS7(out,p7);
 		else if (outformat == FORMAT_ASN1) 

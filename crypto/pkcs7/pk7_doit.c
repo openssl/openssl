@@ -854,7 +854,6 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 	EVP_MD_CTX_cleanup(&mctx);
 
 	ASN1_STRING_set0(si->enc_digest, abuf, siglen);
-	abuf = NULL;
 
 	return 1;
 

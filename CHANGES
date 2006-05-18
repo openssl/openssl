@@ -4,6 +4,11 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) New -resign option to smime utility. This adds one or more signers
+     to an existing PKCS#7 signedData structure. Also -md option to use an
+     alternative message digest algorithm for signing.
+     [Steve Henson]
+
   *) Tidy up PKCS#7 routines and add new functions to make it easier to
      create PKCS7 structures containing multiple signers. Update smime
      application to support multiple signers.

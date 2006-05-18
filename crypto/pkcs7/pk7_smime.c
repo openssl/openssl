@@ -63,6 +63,8 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
+
 PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 		  BIO *data, int flags)
 {
@@ -198,6 +200,14 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 				|| !PKCS7_add_attrib_smimecap (si, smcap))
 				goto err;
 			sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
+			smcap = NULL;
+			}
+		if (flags & PKCS7_REUSE_DIGEST)
+			{
+			if (!pkcs7_copy_existing_digest(p7, si))
+				goto err;
+			if (!PKCS7_SIGNER_INFO_sign(si))
+				goto err;
 			}
 		}
 	return si;
@@ -207,6 +217,41 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 	if (si && si_free)
 		PKCS7_SIGNER_INFO_free(si);
 	return NULL;
+	}
+
+/* Search for a digest matching SignerInfo digest type and if found
+ * copy across.
+ */
+
+static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
+	{
+	int i;
+	STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
+	PKCS7_SIGNER_INFO *sitmp;
+	ASN1_OCTET_STRING *osdig = NULL;
+	sinfos = PKCS7_get_signer_info(p7);
+	for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++)
+		{
+		sitmp = sk_PKCS7_SIGNER_INFO_value(sinfos, i);
+		if (si == sitmp)
+			break;
+		if (sk_X509_ATTRIBUTE_num(sitmp->auth_attr) <= 0)
+			continue;
+		if (!OBJ_cmp(si->digest_alg->algorithm,
+				sitmp->digest_alg->algorithm))
+			{
+			osdig = PKCS7_digest_from_attributes(sitmp->auth_attr);
+			break;
+			}
+
+		}
+
+	if (osdig)
+		return PKCS7_add1_attrib_digest(si, osdig->data, osdig->length);
+
+	PKCS7err(PKCS7_F_PKCS7_COPY_EXISTING_DIGEST,
+			PKCS7_R_NO_MATCHING_DIGEST_TYPE_FOUND);
+	return 0;
 	}
 
 int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
