@@ -455,7 +455,7 @@ link_o.hpux:
 	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
-	expr "$(CFLAGS)" : 'DSO_DLFCN' > /dev/null && SHLIB=lib$(LIBNAME).so; \
+	expr "$(CFLAGS)" : '.*DSO_DLFCN' > /dev/null && SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS='-Wl,-Fl'; \
 	NOALLSYMSFLAGS=''; \
