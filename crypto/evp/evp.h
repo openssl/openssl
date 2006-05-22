@@ -176,6 +176,8 @@ struct env_md_st
 	int required_pkey_type[5]; /*EVP_PKEY_xxx */
 	int block_size;
 	int ctx_size; /* how big does the ctx->md_data need to be */
+	/* control function */
+	int (*md_ctrl)(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 	} /* EVP_MD */;
 
 typedef int evp_sign_method(int type,const unsigned char *m,
@@ -196,6 +198,30 @@ typedef int evp_verify_method(int type,const unsigned char *m,
 /* Digest uses EVP_PKEY_METHOD for signing instead of MD specific signing */
 
 #define EVP_MD_FLAG_PKEY_METHOD_SIGNATURE	0x0004
+
+/* DigestAlgorithmIdentifier flags... */
+
+#define EVP_MD_FLAG_DIGALGID_MASK		0x0018
+
+/* NULL or absent parameter accepted. Use NULL */
+
+#define EVP_MD_FLAG_DIGALGID_NULL		0x0000
+
+/* NULL or absent parameter accepted. Use NULL for PKCS#1 otherwise absent */
+
+#define EVP_MD_FLAG_DIGALGID_ABSENT		0x0008
+
+/* Custom handling via ctrl */
+
+#define EVP_MD_FLAG_DIGALGID_CUSTOM		0x0018
+
+/* Digest ctrls */
+
+#define	EVP_MD_CTRL_DIGALGID			0x1
+
+/* Minimum Algorithm specific ctrl value */
+
+#define	EVP_MD_CTRL_ALG_CTRL			0x1000
 
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
@@ -237,6 +263,8 @@ struct env_md_ctx_st
 	ENGINE *engine; /* functional reference if 'digest' is ENGINE-provided */
 	unsigned long flags;
 	void *md_data;
+	/* Public key context for sign/verify */
+	EVP_PKEY_CTX *pctx;
 	} /* EVP_MD_CTX */;
 
 /* values for EVP_MD_CTX flags */
@@ -247,6 +275,14 @@ struct env_md_ctx_st
 						* cleaned */
 #define EVP_MD_CTX_FLAG_REUSE		0x0004 /* Don't free up ctx->md_data
 						* in EVP_MD_CTX_cleanup */
+
+/* MD operational flags */
+
+#define EVP_MD_CTX_FLAG_OP_MASK		0x00f0
+
+#define EVP_MD_CTX_FLAG_OP_DIGEST	0x0000
+#define EVP_MD_CTX_FLAG_OP_SIGN		0x0010
+#define EVP_MD_CTX_FLAG_OP_VERIFY	0x0020
 
 struct evp_cipher_st
 	{
