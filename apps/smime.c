@@ -79,7 +79,7 @@ static int smime_cb(int ok, X509_STORE_CTX *ctx);
 #define SMIME_DECRYPT	(2 | SMIME_IP)
 #define SMIME_SIGN	(3 | SMIME_OP | SMIME_SIGNERS)
 #define SMIME_VERIFY	(4 | SMIME_IP)
-#define SMIME_PK7OUT	(5 | SMIME_OP)
+#define SMIME_PK7OUT	(5 | SMIME_IP | SMIME_OP)
 #define SMIME_RESIGN	(6 | SMIME_IP | SMIME_OP | SMIME_SIGNERS)
 
 int MAIN(int, char **);
