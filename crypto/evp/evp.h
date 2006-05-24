@@ -452,6 +452,8 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define	EVP_VerifyUpdate(a,b,c)		EVP_DigestUpdate(a,b,c)
 #define EVP_OpenUpdate(a,b,c,d,e)	EVP_DecryptUpdate(a,b,c,d,e)
 #define EVP_SealUpdate(a,b,c,d,e)	EVP_EncryptUpdate(a,b,c,d,e)	
+#define EVP_SignDigestUpdate(a,b,c)	EVP_DigestUpdate(a,b,c)
+#define EVP_VerifyDigestUpdate(a,b,c)	EVP_DigestUpdate(a,b,c)
 
 #ifdef CONST_STRICT
 void BIO_set_md(BIO *,const EVP_MD *md);
@@ -535,6 +537,16 @@ int	EVP_SignFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s,
 
 int	EVP_VerifyFinal(EVP_MD_CTX *ctx,const unsigned char *sigbuf,
 		unsigned int siglen,EVP_PKEY *pkey);
+
+int	EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+			const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
+int	EVP_DigestSignFinal(EVP_MD_CTX *ctx,
+			unsigned char *sigret, size_t *siglen);
+
+int	EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+			const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
+int	EVP_DigestVerifyFinal(EVP_MD_CTX *ctx,
+			unsigned char *sig, size_t siglen);
 
 int	EVP_OpenInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
 		const unsigned char *ek, int ekl, const unsigned char *iv,

@@ -3703,3 +3703,7 @@ EVP_PBE_find                            4098	EXIST::FUNCTION:
 PKCS7_add1_attrib_digest                4099	EXIST::FUNCTION:
 EVP_PBE_alg_add_type                    4100	EXIST::FUNCTION:
 PKCS7_add_attrib_content_type           4101	EXIST::FUNCTION:
+EVP_DigestSignInit                      4102	EXIST::FUNCTION:
+EVP_DigestVerifyFinal                   4103	EXIST::FUNCTION:
+EVP_DigestVerifyInit                    4104	EXIST::FUNCTION:
+EVP_DigestSignFinal                     4105	EXIST::FUNCTION:
