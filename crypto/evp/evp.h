@@ -964,28 +964,28 @@ void *EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx);
 
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
-			unsigned char *sig, int *siglen,
-			const unsigned char *tbs, int tbslen);
+			unsigned char *sig, size_t *siglen,
+			const unsigned char *tbs, size_t tbslen);
 int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
-			const unsigned char *sig, int siglen,
-			const unsigned char *tbs, int tbslen);
+			const unsigned char *sig, size_t siglen,
+			const unsigned char *tbs, size_t tbslen);
 int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
-			unsigned char *rout, int *routlen,
-			const unsigned char *sig, int siglen);
+			unsigned char *rout, size_t *routlen,
+			const unsigned char *sig, size_t siglen);
 int EVP_PKEY_encrypt_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
-			unsigned char *out, int *outlen,
-			const unsigned char *in, int inlen);
+			unsigned char *out, size_t *outlen,
+			const unsigned char *in, size_t inlen);
 int EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
-			unsigned char *out, int *outlen,
-			const unsigned char *in, int inlen);
+			unsigned char *out, size_t *outlen,
+			const unsigned char *in, size_t inlen);
 
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer);
-int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, int *keylen);
+int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
 
 typedef int EVP_PKEY_gen_cb(EVP_PKEY_CTX *ctx);
 
@@ -1013,23 +1013,23 @@ void EVP_PKEY_meth_set_keygen(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_sign(EVP_PKEY_METHOD *pmeth,
 	int (*sign_init)(EVP_PKEY_CTX *ctx),
-	int (*sign)(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
-					const unsigned char *tbs, int tbslen));
+	int (*sign)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+					const unsigned char *tbs, size_t tbslen));
 
 void EVP_PKEY_meth_set_verify(EVP_PKEY_METHOD *pmeth,
 	int (*verify_init)(EVP_PKEY_CTX *ctx),
-	int (*verify)(EVP_PKEY_CTX *ctx, const unsigned char *sig, int siglen,
-					const unsigned char *tbs, int tbslen));
+	int (*verify)(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
+					const unsigned char *tbs, size_t tbslen));
 
 void EVP_PKEY_meth_set_verify_recover(EVP_PKEY_METHOD *pmeth,
 	int (*verify_recover_init)(EVP_PKEY_CTX *ctx),
 	int (*verify_recover)(EVP_PKEY_CTX *ctx,
-					unsigned char *sig, int *siglen,
-					const unsigned char *tbs, int tbslen));
+					unsigned char *sig, size_t *siglen,
+					const unsigned char *tbs, size_t tbslen));
 
 void EVP_PKEY_meth_set_signctx(EVP_PKEY_METHOD *pmeth,
 	int (*signctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx),
-	int (*signctx)(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
+	int (*signctx)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 					EVP_MD_CTX *mctx));
 
 void EVP_PKEY_meth_set_verifyctx(EVP_PKEY_METHOD *pmeth,
@@ -1039,17 +1039,17 @@ void EVP_PKEY_meth_set_verifyctx(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_encrypt(EVP_PKEY_METHOD *pmeth,
 	int (*encrypt_init)(EVP_PKEY_CTX *ctx),
-	int (*encrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
-					const unsigned char *in, int inlen));
+	int (*encrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
+					const unsigned char *in, size_t inlen));
 
 void EVP_PKEY_meth_set_decrypt(EVP_PKEY_METHOD *pmeth,
 	int (*decrypt_init)(EVP_PKEY_CTX *ctx),
-	int (*decrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
-					const unsigned char *in, int inlen));
+	int (*decrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
+					const unsigned char *in, size_t inlen));
 
 void EVP_PKEY_meth_set_derive(EVP_PKEY_METHOD *pmeth,
 	int (*derive_init)(EVP_PKEY_CTX *ctx),
-	int (*derive)(EVP_PKEY_CTX *ctx, unsigned char *key, int *keylen));
+	int (*derive)(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen));
 
 void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
 	int (*ctrl)(EVP_PKEY_CTX *ctx, int type, int p1, void *p2),

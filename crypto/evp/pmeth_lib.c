@@ -329,8 +329,8 @@ void EVP_PKEY_meth_set_keygen(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_sign(EVP_PKEY_METHOD *pmeth,
 	int (*sign_init)(EVP_PKEY_CTX *ctx),
-	int (*sign)(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
-					const unsigned char *tbs, int tbslen))
+	int (*sign)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+					const unsigned char *tbs, size_t tbslen))
 	{
 	pmeth->sign_init = sign_init;
 	pmeth->sign = sign;
@@ -338,8 +338,8 @@ void EVP_PKEY_meth_set_sign(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_verify(EVP_PKEY_METHOD *pmeth,
 	int (*verify_init)(EVP_PKEY_CTX *ctx),
-	int (*verify)(EVP_PKEY_CTX *ctx, const unsigned char *sig, int siglen,
-					const unsigned char *tbs, int tbslen))
+	int (*verify)(EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
+					const unsigned char *tbs, size_t tbslen))
 	{
 	pmeth->verify_init = verify_init;
 	pmeth->verify = verify;
@@ -348,8 +348,8 @@ void EVP_PKEY_meth_set_verify(EVP_PKEY_METHOD *pmeth,
 void EVP_PKEY_meth_set_verify_recover(EVP_PKEY_METHOD *pmeth,
 	int (*verify_recover_init)(EVP_PKEY_CTX *ctx),
 	int (*verify_recover)(EVP_PKEY_CTX *ctx,
-					unsigned char *sig, int *siglen,
-					const unsigned char *tbs, int tbslen))
+					unsigned char *sig, size_t *siglen,
+					const unsigned char *tbs, size_t tbslen))
 	{
 	pmeth->verify_recover_init = verify_recover_init;
 	pmeth->verify_recover = verify_recover;
@@ -357,7 +357,7 @@ void EVP_PKEY_meth_set_verify_recover(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_signctx(EVP_PKEY_METHOD *pmeth,
 	int (*signctx_init)(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx),
-	int (*signctx)(EVP_PKEY_CTX *ctx, unsigned char *sig, int *siglen,
+	int (*signctx)(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 					EVP_MD_CTX *mctx))
 	{
 	pmeth->signctx_init = signctx_init;
@@ -375,8 +375,8 @@ void EVP_PKEY_meth_set_verifyctx(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_encrypt(EVP_PKEY_METHOD *pmeth,
 	int (*encrypt_init)(EVP_PKEY_CTX *ctx),
-	int (*encrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
-					const unsigned char *in, int inlen))
+	int (*encrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
+					const unsigned char *in, size_t inlen))
 	{
 	pmeth->encrypt_init = encrypt_init;
 	pmeth->encrypt = encrypt;
@@ -384,8 +384,8 @@ void EVP_PKEY_meth_set_encrypt(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_decrypt(EVP_PKEY_METHOD *pmeth,
 	int (*decrypt_init)(EVP_PKEY_CTX *ctx),
-	int (*decrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, int *outlen,
-					const unsigned char *in, int inlen))
+	int (*decrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
+					const unsigned char *in, size_t inlen))
 	{
 	pmeth->decrypt_init = decrypt_init;
 	pmeth->decrypt = decrypt;
@@ -393,7 +393,7 @@ void EVP_PKEY_meth_set_decrypt(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_derive(EVP_PKEY_METHOD *pmeth,
 	int (*derive_init)(EVP_PKEY_CTX *ctx),
-	int (*derive)(EVP_PKEY_CTX *ctx, unsigned char *key, int *keylen))
+	int (*derive)(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen))
 	{
 	pmeth->derive_init = derive_init;
 	pmeth->derive = derive;

@@ -66,7 +66,7 @@
 #define M_check_autoarg(ctx, arg, arglen, err) \
 	if (ctx->pmeth->flags & EVP_PKEY_FLAG_AUTOARGLEN) \
 		{ \
-		int pksize = EVP_PKEY_size(ctx->pkey); \
+		size_t pksize = (size_t)EVP_PKEY_size(ctx->pkey); \
 		if (!arg) \
 			{ \
 			*arglen = pksize; \
@@ -98,8 +98,8 @@ int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx)
 	}
 
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
-			unsigned char *sig, int *siglen,
-			const unsigned char *tbs, int tbslen)
+			unsigned char *sig, size_t *siglen,
+			const unsigned char *tbs, size_t tbslen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->sign)
 		{
@@ -135,8 +135,8 @@ int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx)
 	}
 
 int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
-			const unsigned char *sig, int siglen,
-			const unsigned char *tbs, int tbslen)
+			const unsigned char *sig, size_t siglen,
+			const unsigned char *tbs, size_t tbslen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify)
 		{
@@ -171,8 +171,8 @@ int EVP_PKEY_verify_recover_init(EVP_PKEY_CTX *ctx)
 	}
 
 int EVP_PKEY_verify_recover(EVP_PKEY_CTX *ctx,
-			unsigned char *rout, int *routlen,
-			const unsigned char *sig, int siglen)
+			unsigned char *rout, size_t *routlen,
+			const unsigned char *sig, size_t siglen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->verify_recover)
 		{
@@ -208,8 +208,8 @@ int EVP_PKEY_encrypt_init(EVP_PKEY_CTX *ctx)
 	}
 
 int EVP_PKEY_encrypt(EVP_PKEY_CTX *ctx,
-			unsigned char *out, int *outlen,
-			const unsigned char *in, int inlen)
+			unsigned char *out, size_t *outlen,
+			const unsigned char *in, size_t inlen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->encrypt)
 		{
@@ -245,8 +245,8 @@ int EVP_PKEY_decrypt_init(EVP_PKEY_CTX *ctx)
 	}
 
 int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
-			unsigned char *out, int *outlen,
-			const unsigned char *in, int inlen)
+			unsigned char *out, size_t *outlen,
+			const unsigned char *in, size_t inlen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->decrypt)
 		{
@@ -342,7 +342,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 	}
 
 
-int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, int *pkeylen)
+int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
 	{
 	if (!ctx || !ctx->pmeth || !ctx->pmeth->derive)
 		{
