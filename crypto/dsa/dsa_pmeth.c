@@ -91,6 +91,18 @@ static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 	return 1;
 	}
 
+static int pkey_dsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+	{
+	DSA_PKEY_CTX *dctx, *sctx;
+	if (!pkey_dsa_init(dst))
+		return 0;
+       	sctx = src->data;
+	dctx = dst->data;
+	dctx->nbits = sctx->nbits;
+	dctx->md = sctx->md;
+	return 1;
+	}
+
 static void pkey_dsa_cleanup(EVP_PKEY_CTX *ctx)
 	{
 	DSA_PKEY_CTX *dctx = ctx->data;
@@ -223,6 +235,7 @@ const EVP_PKEY_METHOD dsa_pkey_meth =
 	EVP_PKEY_DSA,
 	EVP_PKEY_FLAG_AUTOARGLEN,
 	pkey_dsa_init,
+	pkey_dsa_copy,
 	pkey_dsa_cleanup,
 
 	0,

@@ -88,6 +88,23 @@ static int pkey_ec_init(EVP_PKEY_CTX *ctx)
 	return 1;
 	}
 
+static int pkey_ec_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+	{
+	EC_PKEY_CTX *dctx, *sctx;
+	if (!pkey_ec_init(dst))
+		return 0;
+       	sctx = src->data;
+	dctx = dst->data;
+	if (sctx->gen_group)
+		{
+		dctx->gen_group = EC_GROUP_dup(sctx->gen_group);
+		if (!dctx->gen_group)
+			return 0;
+		}
+	dctx->md = sctx->md;
+	return 1;
+	}
+
 static void pkey_ec_cleanup(EVP_PKEY_CTX *ctx)
 	{
 	EC_PKEY_CTX *dctx = ctx->data;
@@ -284,6 +301,7 @@ const EVP_PKEY_METHOD ec_pkey_meth =
 	EVP_PKEY_EC,
 	0,
 	pkey_ec_init,
+	pkey_ec_copy,
 	pkey_ec_cleanup,
 
 	0,

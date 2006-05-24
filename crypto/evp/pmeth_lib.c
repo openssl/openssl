@@ -150,6 +150,7 @@ EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags)
 	pmeth->flags = flags | EVP_PKEY_FLAG_DYNAMIC;
 
 	pmeth->init = 0;
+	pmeth->copy = 0;
 	pmeth->cleanup = 0;
 	pmeth->paramgen_init = 0;
 	pmeth->paramgen = 0;
@@ -191,6 +192,41 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e)
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
 	{
 	return int_ctx_new(NULL, e, id);
+	}
+
+EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
+	{
+	EVP_PKEY_CTX *rctx;
+	if (!pctx->pmeth || !pctx->pmeth->copy)
+		return NULL;
+	rctx = OPENSSL_malloc(sizeof(EVP_PKEY_CTX));
+	if (!rctx)
+		return NULL;
+
+	rctx->pmeth = pctx->pmeth;
+
+	if (pctx->pkey)
+		{
+		CRYPTO_add(&pctx->pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
+		rctx->pkey = pctx->pkey;
+		}
+
+	if (pctx->peerkey)
+		{
+		CRYPTO_add(&pctx->peerkey->references,1,CRYPTO_LOCK_EVP_PKEY);
+		rctx->peerkey = pctx->peerkey;
+		}
+
+	rctx->data = NULL;
+	rctx->app_data = NULL;
+	rctx->operation = pctx->operation;
+
+	if (pctx->pmeth->copy(rctx, pctx) > 0)
+		return pctx;
+
+	EVP_PKEY_CTX_free(rctx);
+	return NULL;
+
 	}
 
 int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
@@ -303,6 +339,12 @@ void EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
 	int (*init)(EVP_PKEY_CTX *ctx))
 	{
 	pmeth->init = init;
+	}
+
+void EVP_PKEY_meth_set_copy(EVP_PKEY_METHOD *pmeth,
+	int (*copy)(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src))
+	{
+	pmeth->copy = copy;
 	}
 
 void EVP_PKEY_meth_set_cleanup(EVP_PKEY_METHOD *pmeth,

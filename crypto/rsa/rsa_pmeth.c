@@ -109,6 +109,25 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 	return 1;
 	}
 
+static int pkey_rsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+	{
+	RSA_PKEY_CTX *dctx, *sctx;
+	if (!pkey_rsa_init(dst))
+		return 0;
+       	sctx = src->data;
+	dctx = dst->data;
+	dctx->nbits = sctx->nbits;
+	if (sctx->pub_exp)
+		{
+		dctx->pub_exp = BN_dup(sctx->pub_exp);
+		if (!dctx->pub_exp)
+			return 0;
+		}
+	dctx->pad_mode = sctx->pad_mode;
+	dctx->md = sctx->md;
+	return 1;
+	}
+
 static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
 	{
 	if (ctx->tbuf)
@@ -523,6 +542,7 @@ const EVP_PKEY_METHOD rsa_pkey_meth =
 	EVP_PKEY_RSA,
 	EVP_PKEY_FLAG_AUTOARGLEN,
 	pkey_rsa_init,
+	pkey_rsa_copy,
 	pkey_rsa_cleanup,
 
 	0,0,

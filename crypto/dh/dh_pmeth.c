@@ -93,6 +93,19 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
 	return 1;
 	}
 
+static int pkey_dh_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+	{
+	DH_PKEY_CTX *dctx, *sctx;
+	if (!pkey_dh_init(dst))
+		return 0;
+       	sctx = src->data;
+	dctx = dst->data;
+	dctx->prime_len = sctx->prime_len;
+	dctx->generator = sctx->generator;
+	dctx->use_dsa = sctx->use_dsa;
+	return 1;
+	}
+
 static void pkey_dh_cleanup(EVP_PKEY_CTX *ctx)
 	{
 	DH_PKEY_CTX *dctx = ctx->data;
@@ -208,6 +221,7 @@ const EVP_PKEY_METHOD dh_pkey_meth =
 	EVP_PKEY_DH,
 	EVP_PKEY_FLAG_AUTOARGLEN,
 	pkey_dh_init,
+	pkey_dh_copy,
 	pkey_dh_cleanup,
 
 	0,
