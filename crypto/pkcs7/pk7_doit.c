@@ -145,7 +145,7 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
 	EVP_PKEY *pkey = NULL;
 	unsigned char *ek = NULL;
 	int ret = 0;
-	int eklen;
+	size_t eklen;
 
 	pkey = X509_get_pubkey(ri->cert);
 
@@ -202,7 +202,7 @@ int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
 	{
 	EVP_PKEY_CTX *pctx = NULL;
 	unsigned char *ek = NULL;
-	int eklen;
+	size_t eklen;
 
 	int ret = 0;
 

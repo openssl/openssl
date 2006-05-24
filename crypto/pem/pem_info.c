@@ -99,7 +99,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pe
 	int ok=0;
 	STACK_OF(X509_INFO) *ret=NULL;
 	unsigned int i,raw,ptype;
-	d2i_of_void *d2i;
+	d2i_of_void *d2i = 0;
 
 	if (sk == NULL)
 		{

@@ -388,7 +388,7 @@ err:
 PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
 	     const EVP_MD *dgst)
 	{
-	PKCS7_SIGNER_INFO *si;
+	PKCS7_SIGNER_INFO *si = NULL;
 
 	if (dgst == NULL)
 		{

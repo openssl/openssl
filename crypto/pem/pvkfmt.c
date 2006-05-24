@@ -480,7 +480,7 @@ static void write_dsa(unsigned char **out, DSA *dsa, int ispub);
 static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
 	{
 	unsigned char *p;
-	unsigned int bitlen, magic, keyalg;
+	unsigned int bitlen, magic = 0, keyalg;
 	int outlen, noinc = 0;
 	if (pk->type == EVP_PKEY_DSA)
 		{

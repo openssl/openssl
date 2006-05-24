@@ -92,7 +92,7 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 	if (ctx->digest->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE)
 		{
 		EVP_PKEY_CTX *pkctx = NULL;
-		int sltmp = EVP_PKEY_size(pkey);
+		size_t sltmp = (size_t)EVP_PKEY_size(pkey);
 		i = 0;
 		pkctx = EVP_PKEY_CTX_new(pkey, NULL);
 		if (!pkctx)

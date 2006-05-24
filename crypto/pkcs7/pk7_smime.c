@@ -112,7 +112,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 int PKCS7_final(PKCS7 *p7, BIO *data, int flags)
 	{
 	BIO *p7bio;
-	int ret;
+	int ret = 0;
 	if (!(p7bio = PKCS7_dataInit(p7, NULL)))
 		{
 		PKCS7err(PKCS7_F_PKCS7_FINAL,ERR_R_MALLOC_FAILURE);
