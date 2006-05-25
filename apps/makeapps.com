@@ -133,37 +133,16 @@ $ GOSUB CHECK_OPT_FILE
 $!
 $! Define The Application Files.
 $!
-$ LIB_FILES = "VERIFY;ASN1PARS;REQ;DGST;DH;DHPARAM;ENC;PASSWD;GENDH;ERRSTR;"+-
-	      "CA;PKCS7;CRL2P7;CRL;"+-
-	      "RSA;RSAUTL;DSA;DSAPARAM;EC;ECPARAM;"+-
-	      "X509;GENRSA;GENDSA;GENPKEY;S_SERVER;S_CLIENT;SPEED;"+-
-	      "S_TIME;APPS;S_CB;S_SOCKET;APP_RAND;VERSION;SESS_ID;"+-
-	      "CIPHERS;NSEQ;PKCS12;PKCS8;PKEY;PKEYPARAM;PKEYUTL;"+ -
-	      "SPKAC;SMIME;RAND;ENGINE;OCSP;PRIME;TS"
-$ APP_FILES = ""
-$ LIB_FILES_I = 0
-$LOOP_APP_FILES:
-$   E = F$ELEMENT(LIB_FILES_I,";",LIB_FILES)
-$   IF E .NES. ";"
-$   THEN
-$     APP_FILES = APP_FILES + "," + E + ".OBJ"
-$     GOTO LOOP_APP_FILES
-$   ENDIF
-$ APP_FILES = "OPENSSL,"+OBJ_DIR+(APP_FILES-",")
+$ LIB_OPENSSL = "VERIFY,ASN1PARS,REQ,DGST,DH,DHPARAM,ENC,PASSWD,GENDH,ERRSTR,"+-
+	     	"CA,PKCS7,CRL2P7,CRL,"+-
+	      	"RSA,RSAUTL,DSA,DSAPARAM,EC,ECPARAM,"+-
+	      	"X509,GENRSA,GENDSA,GENPKEY,S_SERVER,S_CLIENT,SPEED,"+-
+	      	"S_TIME,APPS,S_CB,S_SOCKET,APP_RAND,VERSION,SESS_ID,"+-
+	      	"CIPHERS,NSEQ,PKCS12,PKCS8,PKEY,PKEYPARAM,PKEYUTL,"+ -
+	      	"SPKAC,SMIME,RAND,ENGINE,OCSP,PRIME,TS"
 $ TCPIP_PROGRAMS = ",,"
 $ IF COMPILER .EQS. "VAXC" THEN -
      TCPIP_PROGRAMS = ",OPENSSL,"
-$!$ APP_FILES := VERIFY;ASN1PARS;REQ;DGST;DH;ENC;GENDH;ERRSTR;CA;-
-$!	       PKCS7;CRL2P7;CRL;-
-$!	       RSA;DSA;DSAPARAM;-
-$!	       X509;GENRSA;GENDSA;-
-$!	       S_SERVER,'OBJ_DIR'S_SOCKET.OBJ,'OBJ_DIR'S_CB.OBJ;-
-$!	       S_CLIENT,'OBJ_DIR'S_SOCKET.OBJ,'OBJ_DIR'S_CB.OBJ;-
-$!	       SPEED;-
-$!	       S_TIME,'OBJ_DIR'S_CB.OBJ;VERSION;SESS_ID;CIPHERS;NSEQ
-$!$ TCPIP_PROGRAMS = ",,"
-$!$ IF COMPILER .EQS. "VAXC" THEN -
-$!     TCPIP_PROGRAMS = ",S_SERVER,S_CLIENT,SESS_ID,CIPHERS,S_TIME,"
 $!
 $! Setup exceptional compilations
 $!
@@ -173,113 +152,141 @@ $ PHASE := LIB
 $!
 $ RESTART: 
 $!
-$!  Define A File Counter And Set It To "0".
+$!  Define An App Counter And Set It To "0".
 $!
-$ FILE_COUNTER = 0
+$ APP_COUNTER = 0
 $!
-$! Top Of The File Loop.
+$!  Top Of The App Loop.
 $!
-$ NEXT_FILE:
+$ NEXT_APP:
 $!
-$! O.K, Extract The File Name From The File List.
+$!  Make The Application File Name
 $!
-$ FILE_NAME0 = F$EDIT(F$ELEMENT(FILE_COUNTER,";",'PHASE'_FILES),"TRIM")
-$ FILE_NAME = F$EDIT(F$ELEMENT(0,",",FILE_NAME0),"TRIM")
-$ EXTRA_OBJ = FILE_NAME0 - FILE_NAME
+$ CURRENT_APP = F$EDIT(F$ELEMENT(APP_COUNTER,",",PROGRAMS),"TRIM")
 $!
-$! Check To See If We Are At The End Of The File List.
+$!  Check To See If We Are At The End Of The File List.
 $!
-$ IF (FILE_NAME0.EQS.";")
+$ IF (CURRENT_APP.EQS.",")
 $ THEN
 $   IF (PHASE.EQS."LIB")
 $   THEN
 $     PHASE := APP
 $     GOTO RESTART
 $   ELSE
-$     GOTO FILE_DONE
+$     GOTO APP_DONE
 $   ENDIF
 $ ENDIF
 $!
-$! Increment The Counter.
+$!  Increment The Counter.
 $!
-$ FILE_COUNTER = FILE_COUNTER + 1
+$ APP_COUNTER = APP_COUNTER + 1
 $!
-$! Check to see if this program should actually be compiled
-$!
-$ IF PHASE .EQS. "APP" .AND. -
-     ","+PROGRAMS+"," - (","+F$EDIT(FILE_NAME,"UPCASE")+",") .EQS. ","+PROGRAMS+","
-$ THEN
-$   GOTO NEXT_FILE
-$ ENDIF
-$!
-$! Create The Source File Name.
-$!
-$ SOURCE_FILE = "SYS$DISK:[]" + FILE_NAME + ".C"
-$!
-$! Create The Object File Name.
-$!
-$ OBJECT_FILE = OBJ_DIR + FILE_NAME + ".OBJ"
-$!
-$! Create The Executable File Name.
-$!
-$ EXE_FILE = EXE_DIR + FILE_NAME + ".EXE"
-$ ON WARNING THEN GOTO NEXT_FILE
-$!
-$! Check To See If The File We Want To Compile Actually Exists.
-$!
-$ IF (F$SEARCH(SOURCE_FILE).EQS."")
-$ THEN
-$!
-$!  Tell The User That The File Dosen't Exist.
-$!
-$   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Dosen't Exist."
-$   WRITE SYS$OUTPUT ""
-$!
-$!  Exit The Build.
-$!
-$   GOTO EXIT
-$!
-$! End The File Exist Check.
-$!
-$ ENDIF
-$!
-$! Tell The User What We Are Building.
+$!  Decide if we're building the object files or not.
 $!
 $ IF (PHASE.EQS."LIB")
 $ THEN
-$   WRITE SYS$OUTPUT "Compiling The ",FILE_NAME,".C File."
-$ ELSE
-$   WRITE SYS$OUTPUT "Building The ",FILE_NAME," Application Program."
-$ ENDIF
 $!
-$! Compile The File.
+$!  Define A Library File Counter And Set It To "-1".
+$!  -1 Means The Application File Name Is To Be Used.
 $!
-$ ON ERROR THEN GOTO NEXT_FILE
-$ IF COMPILEWITH_CC2 - FILE_NAME .NES. COMPILEWITH_CC2
-$ THEN
-$   CC2/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
-$ ELSE
-$   CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
-$ ENDIF
+$   LIB_COUNTER = -1
 $!
-$ ON WARNING THEN GOTO NEXT_FILE
+$!  Create a .OPT file for the object files
 $!
-$ IF (PHASE.EQS."LIB") 
-$ THEN 
-$   GOTO NEXT_FILE
+$   OPEN/WRITE OBJECTS 'EXE_DIR''CURRENT_APP'.OPT
+$!
+$!  Top Of The File Loop.
+$!
+$  NEXT_LIB:
+$!
+$!  O.K, Extract The File Name From The File List.
+$!
+$   IF LIB_COUNTER .GE. 0
+$   THEN
+$     FILE_NAME = F$EDIT(F$ELEMENT(LIB_COUNTER,",",LIB_'CURRENT_APP'),"TRIM")
+$   ELSE
+$     FILE_NAME = CURRENT_APP
+$   ENDIF
+$!
+$!  Check To See If We Are At The End Of The File List.
+$!
+$   IF (FILE_NAME.EQS.",")
+$   THEN
+$     CLOSE OBJECTS
+$     GOTO NEXT_APP
+$   ENDIF
+$!
+$!  Increment The Counter.
+$!
+$   LIB_COUNTER = LIB_COUNTER + 1
+$!
+$!  Create The Source File Name.
+$!
+$   SOURCE_FILE = "SYS$DISK:[]" + FILE_NAME + ".C"
+$!
+$!  Create The Object File Name.
+$!
+$   OBJECT_FILE = OBJ_DIR + FILE_NAME + ".OBJ"
+$!
+$!  Create The Executable File Name.
+$!
+$   EXE_FILE = EXE_DIR + FILE_NAME + ".EXE"
+$   ON WARNING THEN GOTO NEXT_LIB
+$!
+$!  Check To See If The File We Want To Compile Actually Exists.
+$!
+$   IF (F$SEARCH(SOURCE_FILE).EQS."")
+$   THEN
+$!
+$!    Tell The User That The File Dosen't Exist.
+$!
+$     WRITE SYS$OUTPUT ""
+$     WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Dosen't Exist."
+$     WRITE SYS$OUTPUT ""
+$!
+$!    Exit The Build.
+$!
+$     GOTO EXIT
+$!
+$!  End The File Exist Check.
+$!
+$   ENDIF
+$!
+$!  Tell The User What We Are Building.
+$!
+$   IF (PHASE.EQS."LIB")
+$   THEN
+$     WRITE SYS$OUTPUT "Compiling The ",FILE_NAME,".C File."
+$   ELSE
+$     WRITE SYS$OUTPUT "Building The ",FILE_NAME," Application Program."
+$   ENDIF
+$!
+$!  Compile The File.
+$!
+$   ON ERROR THEN GOTO NEXT_LIB
+$   IF COMPILEWITH_CC2 - FILE_NAME .NES. COMPILEWITH_CC2
+$   THEN
+$     CC2/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$   ELSE
+$     CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$   ENDIF
+$   WRITE OBJECTS OBJECT_FILE
+$!
+$   GOTO NEXT_LIB
 $ ENDIF
 $!
 $!  Check if this program works well without a TCPIP library
 $!
-$ IF TCPIP_LIB .EQS. "" .AND. TCPIP_PROGRAMS - FILE_NAME .NES. TCPIP_PROGRAMS
+$ IF TCPIP_LIB .EQS. "" .AND. TCPIP_PROGRAMS - CURRENT_APP .NES. TCPIP_PROGRAMS
 $ THEN
-$   WRITE SYS$OUTPUT FILE_NAME," needs a TCP/IP library.  Can't link.  Skipping..."
-$   GOTO NEXT_FILE
+$   WRITE SYS$OUTPUT CURRENT_APP," needs a TCP/IP library.  Can't link.  Skipping..."
+$   GOTO NEXT_APP
 $ ENDIF
 $!
 $! Link The Program.
 $! Check To See If We Are To Link With A Specific TCP/IP Library.
+$!
+$ ON WARNING THEN GOTO NEXT_APP
 $!
 $ IF (TCPIP_LIB.NES."")
 $ THEN
@@ -287,7 +294,7 @@ $!
 $! Don't Link With The RSAREF Routines And TCP/IP Library.
 $!
 $   LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
-	'OBJECT_FILE''EXTRA_OBJ', -
+	'OBJECT_FILE','EXE_DIR''CURRENT_APP'.OPT/OPTION, -
         'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
         'TCPIP_LIB','OPT_FILE'/OPTION
 $!
@@ -298,7 +305,7 @@ $!
 $! Don't Link With The RSAREF Routines And Link With A TCP/IP Library.
 $!
 $   LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
-	'OBJECT_FILE''EXTRA_OBJ', -
+	'OBJECT_FILE','EXE_DIR''CURRENT_APP'.OPT/OPTION, -
         'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
         'OPT_FILE'/OPTION
 $!
@@ -308,11 +315,11 @@ $ ENDIF
 $!
 $! Go Back And Do It Again.
 $!
-$ GOTO NEXT_FILE
+$ GOTO NEXT_APP
 $!
 $! All Done With This File.
 $!
-$ FILE_DONE:
+$ APP_DONE:
 $ EXIT:
 $!
 $! All Done, Time To Clean Up And Exit.
