@@ -956,6 +956,7 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type, ENGINE *e);
 EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags);
+void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth);
 int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth);
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
@@ -1012,6 +1013,9 @@ int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx);
 
 void EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
 	int (*init)(EVP_PKEY_CTX *ctx));
+
+void EVP_PKEY_meth_set_copy(EVP_PKEY_METHOD *pmeth,
+	int (*copy)(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src));
 
 void EVP_PKEY_meth_set_cleanup(EVP_PKEY_METHOD *pmeth,
 	void (*cleanup)(EVP_PKEY_CTX *ctx));

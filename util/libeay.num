@@ -3708,3 +3708,5 @@ EVP_DigestVerifyFinal                   4103	EXIST::FUNCTION:
 EVP_DigestVerifyInit                    4104	EXIST::FUNCTION:
 EVP_DigestSignFinal                     4105	EXIST::FUNCTION:
 EVP_PKEY_CTX_dup                        4106	EXIST::FUNCTION:
+EVP_PKEY_meth_free                      4107	EXIST::FUNCTION:
+EVP_PKEY_meth_set_copy                  4108	EXIST::FUNCTION:
