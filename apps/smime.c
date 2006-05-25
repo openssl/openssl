@@ -348,7 +348,7 @@ int MAIN(int argc, char **argv)
 			}
 		else if (args_verify(&args, NULL, &badarg, bio_err, &vpm))
 			continue;
-		else
+		else if ((cipher = EVP_get_cipherbyname(*args + 1)) == NULL)
 			badarg = 1;
 		args++;
 		}
