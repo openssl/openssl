@@ -279,6 +279,16 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 		memcpy(out->md_data,in->md_data,out->digest->ctx_size);
 		}
 
+	if (in->pctx)
+		{
+		out->pctx = EVP_PKEY_CTX_dup(in->pctx);
+		if (!out->pctx)
+			{
+			EVP_MD_CTX_cleanup(out);
+			return 0;
+			}
+		}
+
 	if (out->digest->copy)
 		return out->digest->copy(out,in);
 	
