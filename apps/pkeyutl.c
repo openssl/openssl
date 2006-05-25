@@ -543,23 +543,23 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 	switch(pkey_op)
 		{
 		case EVP_PKEY_OP_VERIFYRECOVER:
-		rv  = EVP_PKEY_verify_recover(ctx, out, poutlen, in, inlen);
+		rv  = EVP_PKEY_verify_recover(ctx, out, (unsigned int *)poutlen, in, inlen);
 		break;
 
 		case EVP_PKEY_OP_SIGN:
-		rv  = EVP_PKEY_sign(ctx, out, poutlen, in, inlen);
+		rv  = EVP_PKEY_sign(ctx, out, (unsigned int *)poutlen, in, inlen);
 		break;
 
 		case EVP_PKEY_OP_ENCRYPT:
-		rv  = EVP_PKEY_encrypt(ctx, out, poutlen, in, inlen);
+		rv  = EVP_PKEY_encrypt(ctx, out, (unsigned int *)poutlen, in, inlen);
 		break;
 
 		case EVP_PKEY_OP_DECRYPT:
-		rv  = EVP_PKEY_decrypt(ctx, out, poutlen, in, inlen);
+		rv  = EVP_PKEY_decrypt(ctx, out, (unsigned int *)poutlen, in, inlen);
 		break; 
 
 		case EVP_PKEY_OP_DERIVE:
-		rv  = EVP_PKEY_derive(ctx, out, poutlen);
+		rv  = EVP_PKEY_derive(ctx, out, (unsigned int *)poutlen);
 		break;
 
 		}
