@@ -2048,7 +2048,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #ifndef OPENSSL_NO_TLSEXT
 #ifndef OPENSSL_NO_EC
 	int ec_ok, ec_nid;
-	unsigned char ec_search1, ec_search2;
+	unsigned char ec_search1 = 0, ec_search2 = 0;
 #endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 	CERT *cert;

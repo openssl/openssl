@@ -815,6 +815,7 @@ int get_cert_chain (X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
 	*chain = chn;
 err:
 	X509_STORE_CTX_cleanup(&store_ctx);
+	*chain = NULL;
 	
 	return i;
 }	

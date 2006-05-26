@@ -99,7 +99,7 @@ int MAIN(int argc, char **argv)
 	int keysize = -1;
 
 	unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL;
-	int buf_inlen, buf_outlen, siglen = -1;
+	int buf_inlen = 0, buf_outlen, siglen = -1;
 
 	int ret = 1, rv = -1;
 
@@ -539,7 +539,7 @@ static int do_keyop(EVP_PKEY_CTX *ctx, int pkey_op,
 		unsigned char *out, size_t *poutlen,
 		unsigned char *in, size_t inlen)
 	{
-	int rv;
+	int rv = 0;
 	switch(pkey_op)
 		{
 		case EVP_PKEY_OP_VERIFYRECOVER:
