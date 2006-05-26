@@ -121,6 +121,8 @@ int PKCS7_final(PKCS7 *p7, BIO *data, int flags)
 
 	SMIME_crlf_copy(data, p7bio, flags);
 
+	BIO_flush(p7bio);
+
 	if(PKCS7_type_is_signed(p7) && (flags & PKCS7_DETACHED))
 		PKCS7_set_detached(p7, 1);
 
