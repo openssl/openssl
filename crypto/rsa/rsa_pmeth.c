@@ -305,7 +305,7 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
 			return -1;
 		rslen = RSA_public_decrypt(siglen, sig, rctx->tbuf,
 						rsa, rctx->pad_mode);
-		if (rslen <= 0)
+		if (rslen == 0)
 			return 0;
 		}
 
