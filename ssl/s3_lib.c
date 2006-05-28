@@ -2043,7 +2043,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	{
 	SSL_CIPHER *c,*ret=NULL;
 	STACK_OF(SSL_CIPHER) *prio, *allow;
-	int i,ok;
+	int i,ii,ok;
 	unsigned int j;
 #ifndef OPENSSL_NO_TLSEXT
 #ifndef OPENSSL_NO_EC
@@ -2291,10 +2291,10 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #endif /* OPENSSL_NO_TLSEXT */
 
 		if (!ok) continue;
-		j=sk_SSL_CIPHER_find(allow,c);
-		if (j >= 0)
+		ii=sk_SSL_CIPHER_find(allow,c);
+		if (ii >= 0)
 			{
-			ret=sk_SSL_CIPHER_value(allow,j);
+			ret=sk_SSL_CIPHER_value(allow,ii);
 			break;
 			}
 		}
