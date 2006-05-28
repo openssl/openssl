@@ -6,6 +6,7 @@
 #
 
 $INSTALLTOP="/usr/local/ssl";
+$OPENSSLDIR="/usr/local/ssl";
 $OPTIONS="";
 $ssl_version="";
 $banner="\t\@echo Building OpenSSL";
@@ -21,6 +22,7 @@ while(<IN>) {
     $ssl_version=$1 if (/^VERSION=(.*)$/);
     $OPTIONS=$1 if (/^OPTIONS=(.*)$/);
     $INSTALLTOP=$1 if (/^INSTALLTOP=(.*$)/);
+    $OPENSSLDIR=$1 if (/^OPENSSLDIR=(.*$)/);
 }
 close(IN);
 
@@ -262,6 +264,7 @@ if ($msdos)
 $link="$bin_dir$link" if ($link !~ /^\$/);
 
 $INSTALLTOP =~ s|/|$o|g;
+$OPENSSLDIR =~ s|/|$o|g;
 
 #############################################
 # We parse in input file and 'store' info for later printing.
@@ -373,6 +376,7 @@ $defs .= $preamble if defined $preamble;
 
 $defs.= <<"EOF";
 INSTALLTOP=$INSTALLTOP
+OPENSSLDIR=$OPENSSLDIR
 
 # Set your compiler options
 PLATFORM=$platform
@@ -522,7 +526,8 @@ install: all
 	\$(MKDIR) \$(INSTALLTOP)${o}lib
 	\$(CP) \$(INCO_D)${o}*.\[ch\] \$(INSTALLTOP)${o}include${o}openssl
 	\$(CP) \$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin
-	\$(CP) apps${o}openssl.cnf \$(INSTALLTOP)
+	\$(MKDIR) \$(OPENSSLDIR)
+	\$(CP) apps${o}openssl.cnf \$(OPENSSLDIR)
 $extra_install
 
 
