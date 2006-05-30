@@ -99,7 +99,7 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,
 	unsigned char *ivec, const int enc);
 void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const AES_KEY *key,
+	unsigned long length, const AES_KEY *key,
 	unsigned char *ivec, int *num, const int enc);
 void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,

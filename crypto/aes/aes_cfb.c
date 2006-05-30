@@ -116,39 +116,122 @@
 #include "aes_locl.h"
 #include "e_os.h"
 
+#define STRICT_ALIGNMENT
+#if defined(__i386) || defined(__i386__) || \
+    defined(__x86_64) || defined(__x86_64__) || \
+    defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64)
+#  undef STRICT_ALIGNMENT
+#endif
+
 /* The input and output encrypted as though 128bit cfb mode is being
  * used.  The extra state information to record how much of the
  * 128bit block we have used is contained in *num;
  */
 
 void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const AES_KEY *key,
+	unsigned long length, const AES_KEY *key,
 	unsigned char *ivec, int *num, const int enc) {
 
-	unsigned int n;
-	unsigned long l = length;
-	unsigned char c;
+    unsigned int n;
+    unsigned long l = 0;
 
-	assert(in && out && key && ivec && num);
+    assert(in && out && key && ivec && num);
 
-	n = *num;
+    n = *num;
 
+#if !defined(OPENSSL_SMALL_FOOTPRINT)
+    if (AES_BLOCK_SIZE%sizeof(size_t) == 0) {	/* always true actually */
 	if (enc) {
-		while (l--) {
+		if (n) {
+			while (length) {
+				*(out++) = ivec[n] ^= *(in++);
+				length--;
+				if(!(n = (n + 1) % AES_BLOCK_SIZE))
+					break;
+			}
+		}
+#if defined(STRICT_ALIGNMENT)
+		if (((size_t)in|(size_t)out)%sizeof(size_t) != 0)
+			goto enc_unaligned;
+#endif
+		while ((l + AES_BLOCK_SIZE) <= length) {
+			unsigned int i;
+			AES_encrypt(ivec, ivec, key);
+			for (i=0;i<AES_BLOCK_SIZE;i+=sizeof(size_t)) {
+				*(size_t*)(out+l+i) =
+				*(size_t*)(ivec+i) ^= *(size_t*)(in+l+i);
+			}
+			l += AES_BLOCK_SIZE;
+		}
+
+		if (l < length) {
+			AES_encrypt(ivec, ivec, key);
+			do {	out[l] = ivec[n] ^= in[l];
+				l++; n++;
+			} while (l < length);
+		}
+	} else {
+		if (n) {
+			while (length) {
+				unsigned char c;
+				*(out++) = ivec[n] ^ (c = *(in++)); ivec[n] = c;
+				length--;
+				if(!(n = (n + 1) % AES_BLOCK_SIZE))
+					break;
+ 			}
+		}
+#if defined(STRICT_ALIGNMENT)
+		if (((size_t)in|(size_t)out)%sizeof(size_t) != 0)
+			goto dec_unaligned;
+#endif
+		while (l + AES_BLOCK_SIZE <= length) {
+			unsigned int i;
+			AES_encrypt(ivec, ivec, key);
+			for (i=0;i<AES_BLOCK_SIZE;i+=sizeof(size_t)) {
+				size_t t = *(size_t*)(in+l+i);
+				*(size_t*)(out+l+i) = *(size_t*)(ivec+i) ^ t;
+				*(size_t*)(ivec+i) = t;
+			}
+			l += AES_BLOCK_SIZE;
+		}
+
+		if (l < length) {
+			AES_encrypt(ivec, ivec, key);
+			do {	unsigned char c;
+				out[l] = ivec[n] ^ (c = in[l]); ivec[n] = c;
+				l++; n++;
+			} while (l < length);
+ 		}
+	}
+	*num = n;
+	return;
+    }
+#endif
+
+    /* this code would be commonly eliminated by x86* compiler */
+	if (enc) {
+#if defined(STRICT_ALIGNMENT) && !defined(OPENSSL_SMALL_FOOTPRINT)
+	    enc_unaligned:
+#endif
+		while (l<length) {
 			if (n == 0) {
 				AES_encrypt(ivec, ivec, key);
 			}
-			ivec[n] = *(out++) = *(in++) ^ ivec[n];
+			out[l] = ivec[n] ^= in[l];
+			l++;
 			n = (n+1) % AES_BLOCK_SIZE;
 		}
 	} else {
-		while (l--) {
+#if defined(STRICT_ALIGNMENT) && !defined(OPENSSL_SMALL_FOOTPRINT)
+	    dec_unaligned:
+#endif
+		while (l<length) {
+			unsigned char c;
 			if (n == 0) {
 				AES_encrypt(ivec, ivec, key);
 			}
-			c = *(in);
-			*(out++) = *(in++) ^ ivec[n];
-			ivec[n] = c;
+			out[l] = ivec[n] ^ (c = in[l]); ivec[n] = c;
+			l++;
 			n = (n+1) % AES_BLOCK_SIZE;
 		}
 	}
