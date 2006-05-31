@@ -310,6 +310,17 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 	return ctx->pmeth->ctrl_str(ctx, name, value);
 	}
 
+int EVP_PKEY_CTX_get_operation(EVP_PKEY_CTX *ctx)
+	{
+	return ctx->operation;
+	}
+
+void EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen)
+	{
+	ctx->keygen_info = dat;
+	ctx->keygen_info_count = datlen;
+	}
+
 void EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data)
 	{
 	ctx->data = data;

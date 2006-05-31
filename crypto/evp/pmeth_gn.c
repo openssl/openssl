@@ -166,6 +166,11 @@ void EVP_PKEY_CTX_set_cb(EVP_PKEY_CTX *ctx, EVP_PKEY_gen_cb *cb)
 	ctx->pkey_gencb = cb;
 	}
 
+EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx)
+	{
+	return ctx->pkey_gencb;
+	}
+
 /* "translation callback" to call EVP_PKEY_CTX callbacks using BN_GENCB
  * style callbacks.
  */
