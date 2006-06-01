@@ -160,7 +160,8 @@ struct engine_st
 	ENGINE_CIPHERS_PTR ciphers;
 	/* Digest handling is via this callback */
 	ENGINE_DIGESTS_PTR digests;
-
+	/* Public key handling via this callback */
+	ENGINE_PKEY_METHS_PTR pkey_meths;
 
 	ENGINE_GEN_INT_FUNC_PTR	destroy;
 

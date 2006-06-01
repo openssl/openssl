@@ -292,7 +292,7 @@ typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *,
  * parameter is non-NULL it is set to the size of the returned array. */
 typedef int (*ENGINE_CIPHERS_PTR)(ENGINE *, const EVP_CIPHER **, const int **, int);
 typedef int (*ENGINE_DIGESTS_PTR)(ENGINE *, const EVP_MD **, const int **, int);
-
+typedef int (*ENGINE_PKEY_METHS_PTR)(ENGINE *, const EVP_PKEY_METHOD **, const int **, int);
 /* STRUCTURE functions ... all of these functions deal with pointers to ENGINE
  * structures where the pointers have a "structural reference". This means that
  * their reference is to allowed access to the structure but it does not imply
@@ -383,6 +383,10 @@ void ENGINE_register_all_ciphers(void);
 int ENGINE_register_digests(ENGINE *e);
 void ENGINE_unregister_digests(ENGINE *e);
 void ENGINE_register_all_digests(void);
+
+int ENGINE_register_pkey_meths(ENGINE *e);
+void ENGINE_unregister_pkey_meths(ENGINE *e);
+void ENGINE_register_all_pkey_meths(void);
 
 /* These functions register all support from the above categories. Note, use of
  * these functions can result in static linkage of code your application may not
@@ -496,8 +500,10 @@ ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e);
 ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e);
 ENGINE_CIPHERS_PTR ENGINE_get_ciphers(const ENGINE *e);
 ENGINE_DIGESTS_PTR ENGINE_get_digests(const ENGINE *e);
+ENGINE_PKEY_METHS_PTR ENGINE_get_pkey_meths(const ENGINE *e);
 const EVP_CIPHER *ENGINE_get_cipher(ENGINE *e, int nid);
 const EVP_MD *ENGINE_get_digest(ENGINE *e, int nid);
+const EVP_PKEY_METHOD *ENGINE_get_pkey_meth(ENGINE *e, int nid);
 const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
 int ENGINE_get_flags(const ENGINE *e);
 

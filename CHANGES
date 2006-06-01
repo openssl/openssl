@@ -4,6 +4,10 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) Initial engine support for EVP_PKEY_METHOD. New functions to permit
+     an engine to register a method. 
+     [Steve Henson]
+
   *) New functions EVP_Digest{Sign,Verify)*. These are enchance versions of
      EVP_{Sign,Verify}* which allow an application to customise the signature
      process.
