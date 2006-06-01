@@ -504,6 +504,19 @@ m_sha1.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 m_sha1.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 m_sha1.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 m_sha1.o: ../cryptlib.h m_sha1.c
+m_sigver.o: ../../e_os.h ../../include/openssl/asn1.h
+m_sigver.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+m_sigver.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+m_sigver.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+m_sigver.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+m_sigver.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+m_sigver.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+m_sigver.o: ../../include/openssl/opensslconf.h
+m_sigver.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+m_sigver.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+m_sigver.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+m_sigver.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+m_sigver.o: ../../include/openssl/x509_vfy.h ../cryptlib.h m_sigver.c
 m_wp.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 m_wp.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 m_wp.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

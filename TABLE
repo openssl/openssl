@@ -1848,6 +1848,34 @@ $shared_extension =
 $ranlib       = 
 $arflags      = 
 
+*** debug-steve-opt
+$cc           = gcc
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -march=i486 -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe -O3
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -rdynamic -ldl
+$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
+$cpuid_obj    = x86cpuid-elf.o
+$bn_obj       = bn86-elf.o co86-elf.o mo86-elf.o
+$des_obj      = dx86-elf.o yx86-elf.o
+$aes_obj      = ax86-elf.o
+$bf_obj       = bx86-elf.o
+$md5_obj      = mx86-elf.o
+$sha1_obj     = sx86-elf.o s512sse2-elf.o
+$cast_obj     = cx86-elf.o
+$rc4_obj      = rx86-elf.o
+$rmd160_obj   = rm86-elf.o
+$rc5_obj      = r586-elf.o
+$wp_obj       = wp_block.o w86mmx-elf.o
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
+
 *** debug-ulf
 $cc           = gcc
 $cflags       = -DTERMIOS -DL_ENDIAN -march=i486 -Wall -DBN_DEBUG -DBN_DEBUG_RAND -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -g -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations

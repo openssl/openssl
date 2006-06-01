@@ -3647,7 +3647,8 @@ EVP_PKEY_asn1_get0                      4042	EXIST::FUNCTION:
 EVP_PKEY_paramgen_init                  4043	EXIST::FUNCTION:
 EVP_PKEY_sign                           4044	EXIST::FUNCTION:
 EVP_PKEY_meth_set_init                  4045	EXIST::FUNCTION:
-EVP_PKEY_meth_set_verify_recover        4046	EXIST::FUNCTION:
+EVP_PKEY_meth_set_verify_recover        4046	EXIST:!VMS:FUNCTION:
+EVP_PKEY_meth_set_vrfy_recover          4046	EXIST:VMS:FUNCTION:
 EVP_PKEY_CTX_set_cb                     4047	EXIST::FUNCTION:
 EVP_PKEY_meth_set_derive                4048	EXIST::FUNCTION:
 BUF_reverse                             4049	EXIST::FUNCTION:
@@ -3710,3 +3711,12 @@ EVP_DigestSignFinal                     4105	EXIST::FUNCTION:
 EVP_PKEY_CTX_dup                        4106	EXIST::FUNCTION:
 EVP_PKEY_meth_free                      4107	EXIST::FUNCTION:
 EVP_PKEY_meth_set_copy                  4108	EXIST::FUNCTION:
+ENGINE_register_pkey_meths              4109	EXIST::FUNCTION:ENGINE
+ENGINE_get_pkey_meth                    4110	EXIST::FUNCTION:ENGINE
+EVP_PKEY_CTX_set0_keygen_info           4111	EXIST::FUNCTION:
+ENGINE_get_pkey_meths                   4112	EXIST::FUNCTION:ENGINE
+ENGINE_register_all_pkey_meths          4113	EXIST::FUNCTION:ENGINE
+EVP_PKEY_CTX_get_cb                     4114	EXIST::FUNCTION:
+EVP_PKEY_CTX_get_operation              4115	EXIST::FUNCTION:
+ENGINE_unregister_pkey_meths            4116	EXIST::FUNCTION:ENGINE
+ENGINE_set_pkey_meths                   4117	EXIST::FUNCTION:ENGINE

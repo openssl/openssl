@@ -122,8 +122,8 @@ const EVP_PKEY_METHOD *ENGINE_get_pkey_meth(ENGINE *e, int nid)
 	ENGINE_PKEY_METHS_PTR fn = ENGINE_get_pkey_meths(e);
 	if(!fn || !fn(e, &ret, NULL, nid))
 		{
-		ENGINEerr(ENGINE_F_ENGINE_GET_CIPHER,
-				ENGINE_R_UNIMPLEMENTED_CIPHER);
+		ENGINEerr(ENGINE_F_ENGINE_GET_PKEY_METH,
+				ENGINE_R_UNIMPLEMENTED_PUBLIC_KEY_METHOD);
 		return NULL;
 		}
 	return ret;

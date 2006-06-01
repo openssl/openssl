@@ -262,6 +262,15 @@ tb_ecdsa.o: ../../include/openssl/opensslconf.h
 tb_ecdsa.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tb_ecdsa.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 tb_ecdsa.o: ../../include/openssl/symhacks.h ../cryptlib.h eng_int.h tb_ecdsa.c
+tb_pkmeth.o: ../../e_os.h ../../include/openssl/bio.h
+tb_pkmeth.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+tb_pkmeth.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
+tb_pkmeth.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+tb_pkmeth.o: ../../include/openssl/opensslconf.h
+tb_pkmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+tb_pkmeth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+tb_pkmeth.o: ../../include/openssl/symhacks.h ../cryptlib.h eng_int.h
+tb_pkmeth.o: tb_pkmeth.c
 tb_rand.o: ../../e_os.h ../../include/openssl/bio.h
 tb_rand.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 tb_rand.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
