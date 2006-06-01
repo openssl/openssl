@@ -465,6 +465,7 @@ int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f);
 int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
 int ENGINE_set_ciphers(ENGINE *e, ENGINE_CIPHERS_PTR f);
 int ENGINE_set_digests(ENGINE *e, ENGINE_DIGESTS_PTR f);
+int ENGINE_set_pkey_meths(ENGINE *e, ENGINE_PKEY_METHS_PTR f);
 int ENGINE_set_flags(ENGINE *e, int flags);
 int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 /* These functions allow control over any per-structure ENGINE data. */

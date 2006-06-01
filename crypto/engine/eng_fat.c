@@ -154,6 +154,7 @@ int ENGINE_register_complete(ENGINE *e)
 	ENGINE_register_ECDSA(e);
 #endif
 	ENGINE_register_RAND(e);
+	ENGINE_register_pkey_meths(e);
 	return 1;
 	}
 
