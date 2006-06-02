@@ -293,7 +293,7 @@ typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *,
  * parameter is non-NULL it is set to the size of the returned array. */
 typedef int (*ENGINE_CIPHERS_PTR)(ENGINE *, const EVP_CIPHER **, const int **, int);
 typedef int (*ENGINE_DIGESTS_PTR)(ENGINE *, const EVP_MD **, const int **, int);
-typedef int (*ENGINE_PKEY_METHS_PTR)(ENGINE *, const EVP_PKEY_METHOD **, const int **, int);
+typedef int (*ENGINE_PKEY_METHS_PTR)(ENGINE *, EVP_PKEY_METHOD **, const int **, int);
 /* STRUCTURE functions ... all of these functions deal with pointers to ENGINE
  * structures where the pointers have a "structural reference". This means that
  * their reference is to allowed access to the structure but it does not imply

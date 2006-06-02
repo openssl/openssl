@@ -143,6 +143,10 @@ void engine_set_all_null(ENGINE *e);
 /* NB: Bitwise OR-able values for the "flags" variable in ENGINE are now exposed
  * in engine.h. */
 
+/* Free up dynamically allocated public key methods associated with ENGINE */
+
+void engine_pkey_meths_free(ENGINE *e);
+
 /* This is a structure for storing implementations of various crypto
  * algorithms and functions. */
 struct engine_st
