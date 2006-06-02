@@ -166,6 +166,8 @@ struct engine_st
 	ENGINE_DIGESTS_PTR digests;
 	/* Public key handling via this callback */
 	ENGINE_PKEY_METHS_PTR pkey_meths;
+	/* ASN1 public key handling via this callback */
+	ENGINE_PKEY_ASN1_METHS_PTR pkey_asn1_meths;
 
 	ENGINE_GEN_INT_FUNC_PTR	destroy;
 

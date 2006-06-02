@@ -294,6 +294,7 @@ typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *,
 typedef int (*ENGINE_CIPHERS_PTR)(ENGINE *, const EVP_CIPHER **, const int **, int);
 typedef int (*ENGINE_DIGESTS_PTR)(ENGINE *, const EVP_MD **, const int **, int);
 typedef int (*ENGINE_PKEY_METHS_PTR)(ENGINE *, EVP_PKEY_METHOD **, const int **, int);
+typedef int (*ENGINE_PKEY_ASN1_METHS_PTR)(ENGINE *, EVP_PKEY_ASN1_METHOD **, const int **, int);
 /* STRUCTURE functions ... all of these functions deal with pointers to ENGINE
  * structures where the pointers have a "structural reference". This means that
  * their reference is to allowed access to the structure but it does not imply
@@ -467,6 +468,7 @@ int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
 int ENGINE_set_ciphers(ENGINE *e, ENGINE_CIPHERS_PTR f);
 int ENGINE_set_digests(ENGINE *e, ENGINE_DIGESTS_PTR f);
 int ENGINE_set_pkey_meths(ENGINE *e, ENGINE_PKEY_METHS_PTR f);
+int ENGINE_set_pkey_asn1_meths(ENGINE *e, ENGINE_PKEY_ASN1_METHS_PTR f);
 int ENGINE_set_flags(ENGINE *e, int flags);
 int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 /* These functions allow control over any per-structure ENGINE data. */
@@ -503,9 +505,11 @@ ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e);
 ENGINE_CIPHERS_PTR ENGINE_get_ciphers(const ENGINE *e);
 ENGINE_DIGESTS_PTR ENGINE_get_digests(const ENGINE *e);
 ENGINE_PKEY_METHS_PTR ENGINE_get_pkey_meths(const ENGINE *e);
+ENGINE_PKEY_ASN1_METHS_PTR ENGINE_get_pkey_asn1_meths(const ENGINE *e);
 const EVP_CIPHER *ENGINE_get_cipher(ENGINE *e, int nid);
 const EVP_MD *ENGINE_get_digest(ENGINE *e, int nid);
 const EVP_PKEY_METHOD *ENGINE_get_pkey_meth(ENGINE *e, int nid);
+const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth(ENGINE *e, int nid);
 const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
 int ENGINE_get_flags(const ENGINE *e);
 
@@ -727,6 +731,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_GET_DEFAULT_TYPE		 177
 #define ENGINE_F_ENGINE_GET_DIGEST			 186
 #define ENGINE_F_ENGINE_GET_NEXT			 115
+#define ENGINE_F_ENGINE_GET_PKEY_ASN1_METH		 193
 #define ENGINE_F_ENGINE_GET_PKEY_METH			 192
 #define ENGINE_F_ENGINE_GET_PREV			 116
 #define ENGINE_F_ENGINE_INIT				 119
