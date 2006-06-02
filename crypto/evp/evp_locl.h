@@ -239,6 +239,8 @@ struct evp_pkey_ctx_st
 	{
 	/* Method associated with this operation */
 	const EVP_PKEY_METHOD *pmeth;
+	/* Engine that implements this method or NULL if builtin */
+	ENGINE *engine;
 	/* Key: may be NULL */
 	EVP_PKEY *pkey;
 	/* Peer key for key agreement, may be NULL */

@@ -5,7 +5,8 @@
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
   *) Initial engine support for EVP_PKEY_METHOD. New functions to permit
-     an engine to register a method. 
+     an engine to register a method. Add ENGINE lookups for methods and
+     functional reference processing.
      [Steve Henson]
 
   *) New functions EVP_Digest{Sign,Verify)*. These are enchance versions of

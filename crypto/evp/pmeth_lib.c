@@ -61,6 +61,9 @@
 #include "cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 #include "asn1_locl.h"
 #include "evp_locl.h"
 
@@ -83,7 +86,7 @@ static int pmeth_cmp(const EVP_PKEY_METHOD * const *a,
         return ((*a)->pkey_id - (*b)->pkey_id);
 	}
 
-const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type, ENGINE *e)
+const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
 	{
 	EVP_PKEY_METHOD tmp, *t = &tmp, **ret;
 	tmp.pkey_id = type;
@@ -115,10 +118,32 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 			return NULL;
 		id = pkey->ameth->pkey_id;
 		}
-	pmeth = EVP_PKEY_meth_find(id, e);
+	/* Try to find an ENGINE which implements this method */
+	if (e)
+		{
+		if (!ENGINE_init(e))
+			{
+			EVPerr(EVP_F_INT_CTX_NEW,ERR_R_ENGINE_LIB);
+			return NULL;
+			}
+		else
+			e = ENGINE_get_pkey_meth_engine(id);
+		}
+
+	/* If an ENGINE handled this method look it up. Othewise
+	 * use internal table.S
+	 */
+
+	if (e)
+		pmeth = ENGINE_get_pkey_meth(e, id);
+	else
+		pmeth = EVP_PKEY_meth_find(id);
+
 	if (pmeth == NULL)
 		return NULL;
+
 	ret = OPENSSL_malloc(sizeof(EVP_PKEY_CTX));
+	ret->engine = e;
 	ret->pmeth = pmeth;
 	ret->operation = EVP_PKEY_OP_UNDEFINED;
 	ret->pkey = pkey;
@@ -199,11 +224,22 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
 	EVP_PKEY_CTX *rctx;
 	if (!pctx->pmeth || !pctx->pmeth->copy)
 		return NULL;
+#ifndef OPENSSL_NO_ENGINE
+	/* Make sure it's safe to copy a pkey context using an ENGINE */
+	if (pctx->engine && !ENGINE_init(pctx->engine))
+		{
+		EVPerr(EVP_F_EVP_PKEY_CTX_DUP,ERR_R_ENGINE_LIB);
+		return 0;
+		}
+#endif
 	rctx = OPENSSL_malloc(sizeof(EVP_PKEY_CTX));
 	if (!rctx)
 		return NULL;
 
 	rctx->pmeth = pctx->pmeth;
+#ifndef OPENSSL_NO_ENGINE
+	rctx->engine = pctx->engine;
+#endif
 
 	if (pctx->pkey)
 		{
@@ -251,6 +287,12 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 		EVP_PKEY_free(ctx->pkey);
 	if (ctx->peerkey)
 		EVP_PKEY_free(ctx->peerkey);
+#ifndef OPENSSL_NO_ENGINE
+	if(ctx->engine)
+		/* The EVP_PKEY_CTX we used belongs to an ENGINE, release the
+		 * functional reference we held for this reason. */
+		ENGINE_finish(ctx->engine);
+#endif
 	OPENSSL_free(ctx);
 	}
 

@@ -552,6 +552,7 @@ ENGINE *ENGINE_get_default_RAND(void);
  * ciphering or digesting corresponding to "nid". */
 ENGINE *ENGINE_get_cipher_engine(int nid);
 ENGINE *ENGINE_get_digest_engine(int nid);
+ENGINE *ENGINE_get_pkey_meth_engine(int nid);
 
 /* This sets a new default ENGINE structure for performing RSA
  * operations. If the result is non-zero (success) then the ENGINE

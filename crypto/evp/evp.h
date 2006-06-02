@@ -954,7 +954,7 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 
 #define EVP_PKEY_FLAG_AUTOARGLEN	2
 
-const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type, ENGINE *e);
+const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type);
 EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags);
 void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth);
 int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth);
@@ -1109,6 +1109,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_PKEY_COPY_PARAMETERS			 103
 #define EVP_F_EVP_PKEY_CTX_CTRL				 137
 #define EVP_F_EVP_PKEY_CTX_CTRL_STR			 150
+#define EVP_F_EVP_PKEY_CTX_DUP				 156
 #define EVP_F_EVP_PKEY_DECRYPT				 104
 #define EVP_F_EVP_PKEY_DECRYPT_INIT			 138
 #define EVP_F_EVP_PKEY_DECRYPT_OLD			 151
@@ -1137,6 +1138,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_RIJNDAEL				 126
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
+#define EVP_F_INT_CTX_NEW				 157
 #define EVP_F_PKCS5_PBE_KEYIVGEN			 117
 #define EVP_F_PKCS5_V2_PBE_KEYIVGEN			 118
 #define EVP_F_PKCS8_SET_BROKEN				 112
