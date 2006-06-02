@@ -89,6 +89,8 @@ int ENGINE_set_default(ENGINE *e, unsigned int flags)
 #endif
 	if((flags & ENGINE_METHOD_RAND) && !ENGINE_set_default_RAND(e))
 		return 0;
+	if((flags & ENGINE_METHOD_PKEY_METHS) && !ENGINE_set_default_pkey_meths(e))
+		return 0;
 	return 1;
 	}
 
@@ -115,6 +117,8 @@ static int int_def_cb(const char *alg, int len, void *arg)
 		*pflags |= ENGINE_METHOD_CIPHERS;
 	else if (!strncmp(alg, "DIGESTS", len))
 		*pflags |= ENGINE_METHOD_DIGESTS;
+	else if (!strncmp(alg, "PKEY", len))
+		*pflags |= ENGINE_METHOD_PKEY_METHS;
 	else
 		return 0;
 	return 1;

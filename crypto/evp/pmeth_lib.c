@@ -126,9 +126,9 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 			EVPerr(EVP_F_INT_CTX_NEW,ERR_R_ENGINE_LIB);
 			return NULL;
 			}
-		else
-			e = ENGINE_get_pkey_meth_engine(id);
 		}
+	else
+		e = ENGINE_get_pkey_meth_engine(id);
 
 	/* If an ENGINE handled this method look it up. Othewise
 	 * use internal tables.
@@ -143,6 +143,13 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 		return NULL;
 
 	ret = OPENSSL_malloc(sizeof(EVP_PKEY_CTX));
+	if (!ret)
+		{
+		if (e)
+			ENGINE_finish(e);
+		EVPerr(EVP_F_INT_CTX_NEW,ERR_R_MALLOC_FAILURE);
+		return NULL;
+		}
 	ret->engine = e;
 	ret->pmeth = pmeth;
 	ret->operation = EVP_PKEY_OP_UNDEFINED;

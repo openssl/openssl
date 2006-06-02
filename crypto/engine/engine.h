@@ -111,6 +111,7 @@ extern "C" {
 #define ENGINE_METHOD_CIPHERS		(unsigned int)0x0040
 #define ENGINE_METHOD_DIGESTS		(unsigned int)0x0080
 #define ENGINE_METHOD_STORE		(unsigned int)0x0100
+#define ENGINE_METHOD_PKEY_METHS	(unsigned int)0x0200
 /* Obvious all-or-nothing cases. */
 #define ENGINE_METHOD_ALL		(unsigned int)0xFFFF
 #define ENGINE_METHOD_NONE		(unsigned int)0x0000
@@ -568,6 +569,7 @@ int ENGINE_set_default_DH(ENGINE *e);
 int ENGINE_set_default_RAND(ENGINE *e);
 int ENGINE_set_default_ciphers(ENGINE *e);
 int ENGINE_set_default_digests(ENGINE *e);
+int ENGINE_set_default_pkey_meths(ENGINE *e);
 
 /* The combination "set" - the flags are bitwise "OR"d from the
  * ENGINE_METHOD_*** defines above. As with the "ENGINE_register_complete()"
