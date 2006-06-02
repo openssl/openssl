@@ -131,7 +131,7 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 		}
 
 	/* If an ENGINE handled this method look it up. Othewise
-	 * use internal table.S
+	 * use internal tables.
 	 */
 
 	if (e)
