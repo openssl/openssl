@@ -684,9 +684,9 @@ pmeth_gn.o: pmeth_gn.c
 pmeth_lib.o: ../../e_os.h ../../include/openssl/asn1.h
 pmeth_lib.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 pmeth_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-pmeth_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-pmeth_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-pmeth_lib.o: ../../include/openssl/objects.h
+pmeth_lib.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+pmeth_lib.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+pmeth_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 pmeth_lib.o: ../../include/openssl/opensslconf.h
 pmeth_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 pmeth_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h

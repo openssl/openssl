@@ -3720,3 +3720,8 @@ EVP_PKEY_CTX_get_cb                     4114	EXIST::FUNCTION:
 EVP_PKEY_CTX_get_operation              4115	EXIST::FUNCTION:
 ENGINE_unregister_pkey_meths            4116	EXIST::FUNCTION:ENGINE
 ENGINE_set_pkey_meths                   4117	EXIST::FUNCTION:ENGINE
+ENGINE_get_pkey_asn1_meth               4118	EXIST::FUNCTION:ENGINE
+ENGINE_set_default_pkey_meths           4119	EXIST::FUNCTION:ENGINE
+ENGINE_get_pkey_asn1_meths              4120	EXIST::FUNCTION:ENGINE
+ENGINE_set_pkey_asn1_meths              4121	EXIST::FUNCTION:ENGINE
+ENGINE_get_pkey_meth_engine             4122	EXIST::FUNCTION:ENGINE
