@@ -6,27 +6,28 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 
-# I let hardware handle unaligned input, except on page boundaries
+# I let hardware handle unaligned input(*), except on page boundaries
 # (see below for details). Otherwise straightforward implementation
 # with X vector in register bank. The module is big-endian [which is
 # not big deal as there're no little-endian targets left around].
+#
+# (*) this means that this module is inappropriate for PPC403? Does
+#     anybody know if pre-POWER3 can sustain unaligned load?
 
-# gcc-4.0.0	-m64	-m32
-# --------------------------
-# sha1		+76%	+59%
+# 			-m64	-m32
+# ----------------------------------
+# PPC970,gcc-4.0.0	+76%	+59%
 
 $output = shift;
 
 if ($output =~ /64\.s/) {
 	$SIZE_T	=8;
-	$RZONE	=288;
 	$UCMP	="cmpld";
 	$STU	="stdu";
 	$POP	="ld";
 	$PUSH	="std";
 } elsif ($output =~ /32\.s/) {
 	$SIZE_T	=4;
-	$RZONE	=224;
 	$UCMP	="cmplw";
 	$STU	="stwu";
 	$POP	="lwz";
@@ -149,14 +150,13 @@ ___
 }
 
 $code=<<___;
-.machine "any"
 .text
 
 .globl	.sha1_block_asm_data_order
 .align	4
 .sha1_block_asm_data_order:
 	mflr	r0
-	$STU	$sp,`-($FRAME+64+$RZONE)`($sp)
+	$STU	$sp,`-($FRAME+64)`($sp)
 	$PUSH	r0,`$FRAME-$SIZE_T*18`($sp)
 	$PUSH	r15,`$FRAME-$SIZE_T*17`($sp)
 	$PUSH	r16,`$FRAME-$SIZE_T*16`($sp)
@@ -205,7 +205,7 @@ Ldone:
 	$POP	r30,`$FRAME-$SIZE_T*2`($sp)
 	$POP	r31,`$FRAME-$SIZE_T*1`($sp)
 	mtlr	r0
-	addi	$sp,$sp,`$FRAME+64+$RZONE`
+	addi	$sp,$sp,`$FRAME+64`
 	blr
 ___
 
@@ -218,15 +218,14 @@ ___
 $code.=<<___;
 .align	4
 Lunaligned:
-	li	$t1,4096
-	subf	$t1,$inp,$t1
+	subfic	$t1,$inp,4096
 	andi.	$t1,$t1,4095	; distance to closest page boundary
 	srwi.	$t1,$t1,6	; t1/=64
 	beq	Lcross_page
 	$UCMP	$num,$t1
 	ble-	Laligned	; didn't cross the page boundary
 	mtctr	$t1
-	subf	$num,$t1,$num
+	subfc	$num,$t1,$num
 	bl	Lsha1_block_private
 Lcross_page:
 	li	$t1,16
