@@ -111,7 +111,7 @@ void AES_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
 			    const int nbits,const AES_KEY *key,
 			    unsigned char *ivec,const int enc);
 void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const AES_KEY *key,
+	unsigned long length, const AES_KEY *key,
 	unsigned char *ivec, int *num);
 void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned long length, const AES_KEY *key,
