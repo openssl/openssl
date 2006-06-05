@@ -170,7 +170,7 @@ void engine_pkey_asn1_meths_free(ENGINE *e)
 /* Find a method based on a string. This does a linear search through
  * all implemented algorithms. This is OK in practice because only
  * a small number of algorithms are likely to be implemented in an engine
- * and it is only used for non speed critical operations.
+ * and it is not used for speed critical operations.
  */
 
 const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,

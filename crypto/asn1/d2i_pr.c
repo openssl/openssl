@@ -61,7 +61,9 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #include <openssl/asn1.h>
 #include "asn1_locl.h"
 
@@ -81,11 +83,13 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
 	else
 		{
 		ret= *a;
+#ifndef OPENSSL_NO_ENGINE
 		if (ret->engine)
 			{
 			ENGINE_finish(ret->engine);
 			ret->engine = NULL;
 			}
+#endif
 		}
 
 	if (!EVP_PKEY_set_type(ret, type))
