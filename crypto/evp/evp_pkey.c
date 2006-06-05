@@ -69,7 +69,6 @@ EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 {
 	EVP_PKEY *pkey = NULL;
 	ASN1_OBJECT *algoid;
-	const EVP_PKEY_ASN1_METHOD *meth;
 	char obj_tmp[80];
 
 	if (!PKCS8_pkey_get0(&algoid, NULL, NULL, NULL, p8))
@@ -80,33 +79,29 @@ EVP_PKEY *EVP_PKCS82PKEY(PKCS8_PRIV_KEY_INFO *p8)
 		return NULL;
 	}
 
-	meth = EVP_PKEY_asn1_find(OBJ_obj2nid(algoid));
-
-	if (meth)
-		{
-		if (meth->priv_decode)
-			{
-			if (!meth->priv_decode(pkey, p8))
-				{
-				EVPerr(EVP_F_EVP_PKCS82PKEY,
-					EVP_R_PRIVATE_KEY_DECODE_ERROR);
-				goto error;
-				}
-			}
-		else
-			{
-			EVPerr(EVP_F_EVP_PKCS82PKEY,
-					EVP_R_METHOD_NOT_SUPPORTED);
-			goto error;
-			}
-		}
-	else
+	if (!EVP_PKEY_set_type(pkey, OBJ_obj2nid(algoid)))
 		{
 		EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
 		i2t_ASN1_OBJECT(obj_tmp, 80, algoid);
 		ERR_add_error_data(2, "TYPE=", obj_tmp);
 		goto error;
 		}
+
+	if (pkey->ameth->priv_decode)
+		{
+		if (!pkey->ameth->priv_decode(pkey, p8))
+			{
+			EVPerr(EVP_F_EVP_PKCS82PKEY,
+					EVP_R_PRIVATE_KEY_DECODE_ERROR);
+			goto error;
+			}
+		}
+	else
+		{
+		EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_METHOD_NOT_SUPPORTED);
+		goto error;
+		}
+
 	return pkey;
 
 	error:
@@ -124,7 +119,6 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(EVP_PKEY *pkey)
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 {
 	PKCS8_PRIV_KEY_INFO *p8;
-	const EVP_PKEY_ASN1_METHOD *meth;
 
 	if (!(p8 = PKCS8_PRIV_KEY_INFO_new())) {	
 		EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN,ERR_R_MALLOC_FAILURE);
@@ -132,13 +126,11 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8_broken(EVP_PKEY *pkey, int broken)
 	}
 	p8->broken = broken;
 
-	meth = EVP_PKEY_asn1_find(pkey->type);
-
-	if (meth)
+	if (pkey->ameth)
 		{
-		if (meth->priv_encode)
+		if (pkey->ameth->priv_encode)
 			{
-			if (!meth->priv_encode(p8, pkey))
+			if (!pkey->ameth->priv_encode(p8, pkey))
 				{
 				EVPerr(EVP_F_EVP_PKEY2PKCS8_BROKEN,
 					EVP_R_PRIVATE_KEY_ENCODE_ERROR);

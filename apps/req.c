@@ -145,8 +145,8 @@ static int genpkey_cb(EVP_PKEY_CTX *ctx);
 static int req_check_len(int len,int n_min,int n_max);
 static int check_end(const char *str, const char *end);
 static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
-					long *pkeylen, const char **palgnam,
-					ENGINE *e);
+					long *pkeylen, char **palgnam,
+					ENGINE *keygen_engine);
 #ifndef MONOLITH
 static char *default_config_file=NULL;
 #endif
@@ -157,19 +157,14 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	ENGINE *e = NULL;
-#ifndef OPENSSL_NO_DSA
-	DSA *dsa_params=NULL;
-#endif
-#ifndef OPENSSL_NO_ECDSA
-	EC_KEY *ec_params = NULL;
-#endif
+	ENGINE *e = NULL, *gen_eng = NULL;
 	unsigned long nmflag = 0, reqflag = 0;
 	int ex=1,x509=0,days=30;
 	X509 *x509ss=NULL;
 	X509_REQ *req=NULL;
 	EVP_PKEY_CTX *genctx = NULL;
-	const char *keyalg = NULL, *keyalgstr;
+	const char *keyalg = NULL;
+	char *keyalgstr = NULL;
 	STACK *pkeyopts = NULL;
 	EVP_PKEY *pkey=NULL;
 	int i=0,badops=0,newreq=0,verbose=0,pkey_type=EVP_PKEY_RSA;
@@ -234,6 +229,16 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			engine= *(++argv);
+			}
+		else if (strcmp(*argv,"-keygen_engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			gen_eng = ENGINE_by_id(*(++argv));
+			if (gen_eng == NULL)
+				{
+				BIO_printf(bio_err, "Can't find keygen engine %s\n", *argv);
+				goto end;
+				}
 			}
 #endif
 		else if (strcmp(*argv,"-key") == 0)
@@ -634,7 +639,7 @@ bad:
 		if (keyalg)
 			{
 			genctx = set_keygen_ctx(bio_err, keyalg, &newkey,
-							&keyalgstr, e);
+							&keyalgstr, gen_eng);
 			if (!genctx)
 				goto end;
 			}
@@ -655,7 +660,7 @@ bad:
 		if (!genctx)
 			{
 			genctx = set_keygen_ctx(bio_err, NULL, &newkey,
-							&keyalgstr, e);
+							&keyalgstr, gen_eng);
 			if (!genctx)
 				goto end;
 			}
@@ -1080,18 +1085,18 @@ end:
 		EVP_PKEY_CTX_free(genctx);
 	if (pkeyopts)
 		sk_free(pkeyopts);
+#ifndef OPENSSL_NO_ENGINE
+	if (gen_eng)
+		ENGINE_free(gen_eng);
+#endif
+	if (keyalgstr)
+		OPENSSL_free(keyalgstr);
 	X509_REQ_free(req);
 	X509_free(x509ss);
 	ASN1_INTEGER_free(serial);
 	if(passargin && passin) OPENSSL_free(passin);
 	if(passargout && passout) OPENSSL_free(passout);
 	OBJ_cleanup();
-#ifndef OPENSSL_NO_DSA
-	if (dsa_params != NULL) DSA_free(dsa_params);
-#endif
-#ifndef OPENSSL_NO_ECDSA
-	if (ec_params != NULL) EC_KEY_free(ec_params);
-#endif
 	apps_shutdown();
 	OPENSSL_EXIT(ex);
 	}
@@ -1566,8 +1571,8 @@ static int check_end(const char *str, const char *end)
 }
 
 static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
-					long *pkeylen, const char **palgnam,
-					ENGINE *e)
+					long *pkeylen, char **palgnam,
+					ENGINE *keygen_engine)
 	{
 	EVP_PKEY_CTX *gctx = NULL;
 	EVP_PKEY *param = NULL;
@@ -1593,14 +1598,18 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
 		{
 		const char *p = strchr(gstr, ':');
 		int len;
+		ENGINE *tmpeng;
 		const EVP_PKEY_ASN1_METHOD *ameth;
 
 		if (p)
 			len = p - gstr;
 		else
 			len = strlen(gstr);
+		/* The lookup of a the string will cover all engines so
+		 * keep a note of the implementation.
+		 */
 
-		ameth = EVP_PKEY_asn1_find_str(gstr, len);
+		ameth = EVP_PKEY_asn1_find_str(&tmpeng, gstr, len);
 
 		if (!ameth)
 			{
@@ -1609,7 +1618,11 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
 			}
 
 		EVP_PKEY_asn1_get0_info(NULL, &pkey_type, NULL, NULL, NULL,
-						ameth);
+									ameth);
+#ifndef OPENSSL_NO_ENGINE
+		if (tmpeng)
+			ENGINE_finish(tmpeng);
+#endif
 		if (pkey_type == EVP_PKEY_RSA)
 			{
 			if (p)
@@ -1666,24 +1679,30 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
 	if (palgnam)
 		{
 		const EVP_PKEY_ASN1_METHOD *ameth;
-		ameth = EVP_PKEY_asn1_find(pkey_type);
+		ENGINE *tmpeng;
+		const char *anam;
+		ameth = EVP_PKEY_asn1_find(&tmpeng, pkey_type);
 		if (!ameth)
 			{
 			BIO_puts(err, "Internal error: can't find key algorithm\n");
 			return NULL;
 			}
-		EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, palgnam,
-						ameth);
+		EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, &anam, ameth);
+		*palgnam = BUF_strdup(anam);
+#ifndef OPENSSL_NO_ENGINE
+		if (tmpeng)
+			ENGINE_finish(tmpeng);
+#endif
 		}
 
 	if (param)
 		{
-		gctx = EVP_PKEY_CTX_new(param, e);
+		gctx = EVP_PKEY_CTX_new(param, keygen_engine);
 		*pkeylen = EVP_PKEY_bits(param);
 		EVP_PKEY_free(param);
 		}
 	else
-		gctx = EVP_PKEY_CTX_new_id(pkey_type, e);
+		gctx = EVP_PKEY_CTX_new_id(pkey_type, keygen_engine);
 
 	if (!gctx)
 		{

@@ -129,7 +129,7 @@ struct evp_pkey_st
 	int save_type;
 	int references;
 	const EVP_PKEY_ASN1_METHOD *ameth;
-	const EVP_PKEY_METHOD *pmeth;
+	ENGINE *engine;
 	union	{
 		char *ptr;
 #ifndef OPENSSL_NO_RSA
@@ -770,6 +770,8 @@ int		EVP_PKEY_id(const EVP_PKEY *pkey);
 int		EVP_PKEY_base_id(const EVP_PKEY *pkey);
 int		EVP_PKEY_bits(EVP_PKEY *pkey);
 int		EVP_PKEY_size(EVP_PKEY *pkey);
+int 		EVP_PKEY_set_type(EVP_PKEY *pkey,int type);
+int		EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int 		EVP_PKEY_assign(EVP_PKEY *pkey,int type,void *key);
 void *		EVP_PKEY_get0(EVP_PKEY *pkey);
 
@@ -874,8 +876,9 @@ void EVP_PBE_cleanup(void);
 
 int EVP_PKEY_asn1_get_count(void);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
-const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type);
-const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(const char *str, int len);
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type);
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
+					const char *str, int len);
 int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth);
 int EVP_PKEY_asn1_add_alias(int to, int from);
 int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *pkey_base_id, int *ppkey_flags,
@@ -1142,6 +1145,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_PKCS5_PBE_KEYIVGEN			 117
 #define EVP_F_PKCS5_V2_PBE_KEYIVGEN			 118
 #define EVP_F_PKCS8_SET_BROKEN				 112
+#define EVP_F_PKEY_SET_TYPE				 158
 #define EVP_F_RC2_MAGIC_TO_METH				 109
 #define EVP_F_RC5_CTRL					 125
 
@@ -1193,6 +1197,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_PUBLIC_KEY_NOT_RSA			 106
 #define EVP_R_UNKNOWN_PBE_ALGORITHM			 121
 #define EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS		 135
+#define EVP_R_UNSUPPORTED_ALGORITHM			 156
 #define EVP_R_UNSUPPORTED_CIPHER			 107
 #define EVP_R_UNSUPPORTED_KEYLENGTH			 123
 #define EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION	 124

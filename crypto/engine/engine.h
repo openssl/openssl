@@ -112,6 +112,7 @@ extern "C" {
 #define ENGINE_METHOD_DIGESTS		(unsigned int)0x0080
 #define ENGINE_METHOD_STORE		(unsigned int)0x0100
 #define ENGINE_METHOD_PKEY_METHS	(unsigned int)0x0200
+#define ENGINE_METHOD_PKEY_ASN1_METHS	(unsigned int)0x0400
 /* Obvious all-or-nothing cases. */
 #define ENGINE_METHOD_ALL		(unsigned int)0xFFFF
 #define ENGINE_METHOD_NONE		(unsigned int)0x0000
@@ -510,6 +511,8 @@ const EVP_CIPHER *ENGINE_get_cipher(ENGINE *e, int nid);
 const EVP_MD *ENGINE_get_digest(ENGINE *e, int nid);
 const EVP_PKEY_METHOD *ENGINE_get_pkey_meth(ENGINE *e, int nid);
 const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth(ENGINE *e, int nid);
+const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,
+					const char *str, int len);
 const ENGINE_CMD_DEFN *ENGINE_get_cmd_defns(const ENGINE *e);
 int ENGINE_get_flags(const ENGINE *e);
 
@@ -558,6 +561,7 @@ ENGINE *ENGINE_get_default_RAND(void);
 ENGINE *ENGINE_get_cipher_engine(int nid);
 ENGINE *ENGINE_get_digest_engine(int nid);
 ENGINE *ENGINE_get_pkey_meth_engine(int nid);
+ENGINE *ENGINE_get_pkey_asn1_meth_engine(int nid);
 
 /* This sets a new default ENGINE structure for performing RSA
  * operations. If the result is non-zero (success) then the ENGINE
@@ -574,6 +578,7 @@ int ENGINE_set_default_RAND(ENGINE *e);
 int ENGINE_set_default_ciphers(ENGINE *e);
 int ENGINE_set_default_digests(ENGINE *e);
 int ENGINE_set_default_pkey_meths(ENGINE *e);
+int ENGINE_set_default_pkey_asn1_meths(ENGINE *e);
 
 /* The combination "set" - the flags are bitwise "OR"d from the
  * ENGINE_METHOD_*** defines above. As with the "ENGINE_register_complete()"

@@ -65,6 +65,9 @@
 #include <openssl/x509.h>
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 #include "asn1_locl.h"
 
 int pem_check_suffix(const char *pem_str, const char *suffix);
@@ -119,7 +122,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb, vo
 	} else if ((slen = pem_check_suffix(nm, "PRIVATE KEY")) > 0)
 		{
 		const EVP_PKEY_ASN1_METHOD *ameth;
-		ameth = EVP_PKEY_asn1_find_str(nm, slen);
+		ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
 		if (!ameth || !ameth->old_priv_decode)
 			goto p8err;
 		ret=d2i_PrivateKey(ameth->pkey_id,x,&p,len);
@@ -164,14 +167,12 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 
 	if ((slen = pem_check_suffix(nm, "PARAMETERS")) > 0)
 		{
-		const EVP_PKEY_ASN1_METHOD *ameth;
-		ameth = EVP_PKEY_asn1_find_str(nm, slen);
-		if (!ameth || !ameth->param_decode)
-			goto err;
 		ret = EVP_PKEY_new();
 		if (!ret)
 			goto err;
-		if (!ameth->param_decode(ret, &p, len))
+		if (!EVP_PKEY_set_type_str(ret, nm, slen)
+			|| !ret->ameth->param_decode
+			|| !ret->ameth->param_decode(ret, &p, len))
 			{
 			EVP_PKEY_free(ret);
 			ret = NULL;

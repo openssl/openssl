@@ -61,6 +61,7 @@
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/engine.h>
 #include <openssl/asn1.h>
 #include "asn1_locl.h"
 
@@ -77,25 +78,27 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
 			return(NULL);
 			}
 		}
-	else	ret= *a;
-
-	ret->save_type=type;
-	ret->type=EVP_PKEY_type(type);
-	ret->ameth = EVP_PKEY_asn1_find(type);
-	if (ret->ameth)
+	else
 		{
-		if (!ret->ameth->old_priv_decode ||
-			!ret->ameth->old_priv_decode(ret, pp, length))
+		ret= *a;
+		if (ret->engine)
 			{
-			ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_ASN1_LIB);
-			goto err;
+			ENGINE_finish(ret->engine);
+			ret->engine = NULL;
 			}
 		}
-	else
+
+	if (!EVP_PKEY_set_type(ret, type))
 		{
 		ASN1err(ASN1_F_D2I_PRIVATEKEY,ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE);
 		goto err;
-		/* break; */
+		}
+
+	if (!ret->ameth->old_priv_decode ||
+			!ret->ameth->old_priv_decode(ret, pp, length))
+		{
+		ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_ASN1_LIB);
+		goto err;
 		}
 	if (a != NULL) (*a)=ret;
 	return(ret);

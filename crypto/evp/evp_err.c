@@ -125,6 +125,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_PKCS5_PBE_KEYIVGEN),	"PKCS5_PBE_keyivgen"},
 {ERR_FUNC(EVP_F_PKCS5_V2_PBE_KEYIVGEN),	"PKCS5_v2_PBE_keyivgen"},
 {ERR_FUNC(EVP_F_PKCS8_SET_BROKEN),	"PKCS8_set_broken"},
+{ERR_FUNC(EVP_F_PKEY_SET_TYPE),	"PKEY_SET_TYPE"},
 {ERR_FUNC(EVP_F_RC2_MAGIC_TO_METH),	"RC2_MAGIC_TO_METH"},
 {ERR_FUNC(EVP_F_RC5_CTRL),	"RC5_CTRL"},
 {0,NULL}
@@ -179,6 +180,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_PUBLIC_KEY_NOT_RSA)    ,"public key not rsa"},
 {ERR_REASON(EVP_R_UNKNOWN_PBE_ALGORITHM) ,"unknown pbe algorithm"},
 {ERR_REASON(EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS),"unsuported number of rounds"},
+{ERR_REASON(EVP_R_UNSUPPORTED_ALGORITHM) ,"unsupported algorithm"},
 {ERR_REASON(EVP_R_UNSUPPORTED_CIPHER)    ,"unsupported cipher"},
 {ERR_REASON(EVP_R_UNSUPPORTED_KEYLENGTH) ,"unsupported keylength"},
 {ERR_REASON(EVP_R_UNSUPPORTED_KEY_DERIVATION_FUNCTION),"unsupported key derivation function"},

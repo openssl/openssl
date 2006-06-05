@@ -146,6 +146,7 @@ void engine_set_all_null(ENGINE *e);
 /* Free up dynamically allocated public key methods associated with ENGINE */
 
 void engine_pkey_meths_free(ENGINE *e);
+void engine_pkey_asn1_meths_free(ENGINE *e);
 
 /* This is a structure for storing implementations of various crypto
  * algorithms and functions. */

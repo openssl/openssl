@@ -89,7 +89,11 @@ int ENGINE_set_default(ENGINE *e, unsigned int flags)
 #endif
 	if((flags & ENGINE_METHOD_RAND) && !ENGINE_set_default_RAND(e))
 		return 0;
-	if((flags & ENGINE_METHOD_PKEY_METHS) && !ENGINE_set_default_pkey_meths(e))
+	if((flags & ENGINE_METHOD_PKEY_METHS)
+				&& !ENGINE_set_default_pkey_meths(e))
+		return 0;
+	if((flags & ENGINE_METHOD_PKEY_ASN1_METHS)
+				&& !ENGINE_set_default_pkey_asn1_meths(e))
 		return 0;
 	return 1;
 	}
@@ -118,7 +122,12 @@ static int int_def_cb(const char *alg, int len, void *arg)
 	else if (!strncmp(alg, "DIGESTS", len))
 		*pflags |= ENGINE_METHOD_DIGESTS;
 	else if (!strncmp(alg, "PKEY", len))
+		*pflags |=
+			ENGINE_METHOD_PKEY_METHS|ENGINE_METHOD_PKEY_ASN1_METHS;
+	else if (!strncmp(alg, "PKEY_CRYPTO", len))
 		*pflags |= ENGINE_METHOD_PKEY_METHS;
+	else if (!strncmp(alg, "PKEY_ASN1", len))
+		*pflags |= ENGINE_METHOD_PKEY_ASN1_METHS;
 	else
 		return 0;
 	return 1;

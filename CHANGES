@@ -4,7 +4,9 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
-  *) Initial engine support for EVP_PKEY_ASN1_METHOD.
+  *) Add engine support for EVP_PKEY_ASN1_METHOD. Add functions to process
+     an ENGINE asn1 method. Support ENGINE lookups in the ASN1 code.
+     [Steve Henson]
 
   *) Initial engine support for EVP_PKEY_METHOD. New functions to permit
      an engine to register a method. Add ENGINE lookups for methods and

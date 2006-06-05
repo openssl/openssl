@@ -140,7 +140,10 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 		pmeth = EVP_PKEY_meth_find(id);
 
 	if (pmeth == NULL)
+		{
+		EVPerr(EVP_F_INT_CTX_NEW,EVP_R_UNSUPPORTED_ALGORITHM);
 		return NULL;
+		}
 
 	ret = OPENSSL_malloc(sizeof(EVP_PKEY_CTX));
 	if (!ret)

@@ -74,6 +74,10 @@
 #include <openssl/dh.h>
 #endif
 
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
+
 #include "asn1_locl.h"
 
 static void EVP_PKEY_free_it(EVP_PKEY *x);
@@ -177,26 +181,79 @@ EVP_PKEY *EVP_PKEY_new(void)
 		return(NULL);
 		}
 	ret->type=EVP_PKEY_NONE;
+	ret->save_type=EVP_PKEY_NONE;
 	ret->references=1;
 	ret->ameth=NULL;
+	ret->engine=NULL;
 	ret->pkey.ptr=NULL;
 	ret->attributes=NULL;
 	ret->save_parameters=1;
 	return(ret);
 	}
 
-int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
+/* Setup a public key ASN1 method and ENGINE from a NID or a string.
+ * If pkey is NULL just return 1 or 0 if the algorithm exists.
+ */
+
+static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 	{
 	const EVP_PKEY_ASN1_METHOD *ameth;
-	if (pkey == NULL) return(0);
-	if (pkey->pkey.ptr != NULL)
-		EVP_PKEY_free_it(pkey);
-	ameth = EVP_PKEY_asn1_find(type);
-	pkey->ameth = ameth;
-	pkey->type = ameth->pkey_id;
-	pkey->save_type=type;
+	ENGINE *e = NULL;
+	if (pkey)
+		{
+		if (pkey->pkey.ptr)
+			EVP_PKEY_free_it(pkey);
+		/* If key type matches and a method exists then this
+		 * lookup has succeeded once so just indicate success.
+		 */
+		if ((type == pkey->save_type) && pkey->ameth)
+			return 1;
+#ifndef OPENSSL_NO_ENGINE
+		/* If we have an ENGINE release it */
+		if (pkey->engine)
+			ENGINE_finish(pkey->engine);
+#endif
+		}
+	if (str)
+		ameth = EVP_PKEY_asn1_find_str(&e, str, len);
+	else
+		ameth = EVP_PKEY_asn1_find(&e, type);
+#ifndef OPENSSL_NO_ENGINE
+	if (!pkey && e)
+		ENGINE_finish(e);
+#endif
+	if (!ameth)
+		{
+		EVPerr(EVP_F_PKEY_SET_TYPE, EVP_R_UNSUPPORTED_ALGORITHM);
+		return 0;
+		}
+	if (pkey)
+		{
+		pkey->ameth = ameth;
+		pkey->engine = e;
+
+		pkey->type = pkey->ameth->pkey_id;
+		pkey->save_type=type;
+		}
+	return 1;
+	}
+
+int EVP_PKEY_set_type(EVP_PKEY *pkey, int type)
+	{
+	return pkey_set_type(pkey, type, NULL, -1);
+	}
+
+int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
+	{
+	return pkey_set_type(pkey, EVP_PKEY_NONE, str, len);
+	}
+
+int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
+	{
+	if (!EVP_PKEY_set_type(pkey, type))
+		return 0;
 	pkey->pkey.ptr=key;
-	return(key != NULL);
+	return (key != NULL);
 	}
 
 void *EVP_PKEY_get0(EVP_PKEY *pkey)
@@ -290,11 +347,19 @@ DH *EVP_PKEY_get1_DH(EVP_PKEY *pkey)
 
 int EVP_PKEY_type(int type)
 	{
+	int ret;
 	const EVP_PKEY_ASN1_METHOD *ameth;
-	ameth = EVP_PKEY_asn1_find(type);
+	ENGINE *e;
+	ameth = EVP_PKEY_asn1_find(&e, type);
 	if (ameth)
-		return ameth->pkey_id;
-	return NID_undef;
+		ret = ameth->pkey_id;
+	else
+		ret = NID_undef;
+#ifndef OPENSSL_NO_ENGINE
+	if (e)
+		ENGINE_finish(e);
+#endif
+	return ret;
 	}
 
 int EVP_PKEY_id(const EVP_PKEY *pkey)
@@ -335,14 +400,21 @@ static void EVP_PKEY_free_it(EVP_PKEY *x)
 	{
 	if (x->ameth && x->ameth->pkey_free)
 		x->ameth->pkey_free(x);
+#ifndef OPENSSL_NO_ENGINE
+	if (x->engine)
+		{
+		ENGINE_finish(x->engine);
+		x->engine = NULL;
+		}
+#endif
 	}
 
 static int unsup_alg(BIO *out, const EVP_PKEY *pkey, int indent,
 				const char *kstr)
 	{
 	BIO_indent(out, indent, 128);
-	BIO_printf(out, "%s %s, algorithm, unsupported\n",
-						OBJ_nid2ln(pkey->type), kstr);
+	BIO_printf(out, "%s algorithm \"%s\" unsupported\n",
+						kstr, OBJ_nid2ln(pkey->type));
 	return 1;
 	}
 

@@ -61,6 +61,9 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 
 static int init_keygen_file(BIO *err, EVP_PKEY_CTX **pctx,
 				const char *file, ENGINE *e);
@@ -85,7 +88,7 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY_CTX *ctx = NULL;
 	char *pass = NULL;
 	int badarg = 0;
-	int ret = 1;
+	int ret = 1, rv;
 
 	int do_param = 0;
 
@@ -204,7 +207,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
 #endif
-		return 1;
+		goto end;
 		}
 
 	if (!app_passwd(bio_err, passarg, NULL, &pass, NULL))
@@ -256,25 +259,36 @@ int MAIN(int argc, char **argv)
 		}
 
 	if (do_param)
-		PEM_write_bio_Parameters(out, pkey);
+		rv = PEM_write_bio_Parameters(out, pkey);
 	else if (outformat == FORMAT_PEM) 
-		PEM_write_bio_PrivateKey(out, pkey, cipher, NULL, 0,
+		rv = PEM_write_bio_PrivateKey(out, pkey, cipher, NULL, 0,
 								NULL, pass);
 	else if (outformat == FORMAT_ASN1)
-		i2d_PrivateKey_bio(out, pkey);
+		rv = i2d_PrivateKey_bio(out, pkey);
 	else
 		{
 		BIO_printf(bio_err, "Bad format specified for key\n");
 		goto end;
 		}
 
+	if (rv <= 0)
+		{
+		BIO_puts(bio_err, "Error writing key\n");
+		ERR_print_errors(bio_err);
+		}
 
 	if (text)
 		{
 		if (do_param)
-			EVP_PKEY_print_params(out, pkey, 0, NULL);
+			rv = EVP_PKEY_print_params(out, pkey, 0, NULL);
 		else
-			EVP_PKEY_print_private(out, pkey, 0, NULL);
+			rv = EVP_PKEY_print_private(out, pkey, 0, NULL);
+
+		if (rv <= 0)
+			{
+			BIO_puts(bio_err, "Error printing key\n");
+			ERR_print_errors(bio_err);
+			}
 		}
 
 	ret = 0;
@@ -346,14 +360,16 @@ static int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
 	{
 	EVP_PKEY_CTX *ctx = NULL;
 	const EVP_PKEY_ASN1_METHOD *ameth;
+	ENGINE *tmpeng = NULL;
 	int pkey_id;
+
 	if (*pctx)
 		{
 		BIO_puts(err, "Algorithm already set!\n");
 		return 0;
 		}
+	ameth = EVP_PKEY_asn1_find_str(&tmpeng, algname, -1);
 
-	ameth = EVP_PKEY_asn1_find_str(algname, -1);
 	if (!ameth)
 		{
 		BIO_printf(bio_err, "Algorithm %s not found\n", algname);
@@ -361,6 +377,10 @@ static int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
 		}
 
 	EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
+#ifndef OPENSSL_NO_ENGINE
+	if (tmpeng)
+		ENGINE_finish(tmpeng);
+#endif
 	ctx = EVP_PKEY_CTX_new_id(pkey_id, e);
 
 	if (!ctx)

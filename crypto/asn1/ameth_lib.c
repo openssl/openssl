@@ -59,7 +59,9 @@
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include <openssl/ec.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 #include "asn1_locl.h"
 
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[];
@@ -132,7 +134,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
 	return (const EVP_PKEY_ASN1_METHOD *)sk_value(app_methods, idx);
 	}
 
-const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type)
+static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 	{
 	EVP_PKEY_ASN1_METHOD tmp, *t = &tmp, **ret;
 	tmp.pkey_id = type;
@@ -151,17 +153,72 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(int type)
 			(int (*)(const void *, const void *))ameth_cmp);
 	if (!ret || !*ret)
 		return NULL;
-	if ((*ret)->pkey_flags & ASN1_PKEY_ALIAS)
-		return EVP_PKEY_asn1_find((*ret)->pkey_base_id);
 	return *ret;
 	}
 
-const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(const char *str, int len)
+/* Find an implementation of an ASN1 algorithm. If 'pe' is not NULL
+ * also search through engines and set *pe to a functional reference
+ * to the engine implementing 'type' or NULL if no engine implements 
+ * it.
+ */
+
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find(ENGINE **pe, int type)
+	{
+	const EVP_PKEY_ASN1_METHOD *t;
+	ENGINE *e;
+
+	for (;;)
+		{
+		t = pkey_asn1_find(type);
+		if (!t || !(t->pkey_flags & ASN1_PKEY_ALIAS))
+			break;
+		type = t->pkey_base_id;
+		}
+	if (pe)
+		{
+#ifndef OPENSSL_NO_ENGINE
+		/* type will contain the final unaliased type */
+		e = ENGINE_get_pkey_asn1_meth_engine(type);
+		if (e)
+			{
+			*pe = e;
+			return ENGINE_get_pkey_asn1_meth(e, type);
+			}
+#endif
+		*pe = NULL;
+		}
+	return t;
+	}
+
+const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
+					const char *str, int len)
 	{
 	int i;
 	const EVP_PKEY_ASN1_METHOD *ameth;
 	if (len == -1)
 		len = strlen(str);
+	if (pe)
+		{
+#ifndef OPENSSL_NO_ENGINE
+		ENGINE *e;
+		for (e = ENGINE_get_first(); e; e = ENGINE_get_next(e))
+			{
+			ameth = ENGINE_get_pkey_asn1_meth_str(e, str, len);
+			if (ameth)
+				{
+				/* Convert structural into
+				 * functional reference
+				 */
+				if (!ENGINE_init(e))
+					ameth = NULL;
+				ENGINE_free(e);
+				*pe = e;
+				return ameth;
+				}
+			}
+#endif
+		*pe = NULL;
+		}
 	for (i = 0; i < EVP_PKEY_asn1_get_count(); i++)
 		{
 		ameth = EVP_PKEY_asn1_get0(i);

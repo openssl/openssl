@@ -90,19 +90,16 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_PUBKEY)
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 	{
 	X509_PUBKEY *pk=NULL;
-	const EVP_PKEY_ASN1_METHOD *meth;
 
 	if (x == NULL) return(0);
 
 	if ((pk=X509_PUBKEY_new()) == NULL) goto error;
 
-	meth = EVP_PKEY_asn1_find(pkey->type);
-
-	if (meth)
+	if (pkey->ameth)
 		{
-		if (meth->pub_encode)
+		if (pkey->ameth->pub_encode)
 			{
-			if (!meth->pub_encode(pk, pkey))
+			if (!pkey->ameth->pub_encode(pk, pkey))
 				{
 				X509err(X509_F_X509_PUBKEY_SET,
 					X509_R_PUBLIC_KEY_ENCODE_ERROR);
@@ -136,7 +133,6 @@ error:
 EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 	{
 	EVP_PKEY *ret=NULL;
-	const EVP_PKEY_ASN1_METHOD *meth;
 
 	if (key == NULL) goto error;
 
@@ -154,29 +150,24 @@ EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 		goto error;
 		}
 
-	meth = EVP_PKEY_asn1_find(OBJ_obj2nid(key->algor->algorithm));
-
-	if (meth)
+	if (!EVP_PKEY_set_type(ret, OBJ_obj2nid(key->algor->algorithm)))
 		{
-		if (meth->pub_decode)
-			{
-			if (!meth->pub_decode(ret, key))
-				{
-				X509err(X509_F_X509_PUBKEY_GET,
-						X509_R_PUBLIC_KEY_DECODE_ERROR);
-				goto error;
-				}
-			}
-		else
+		X509err(X509_F_X509_PUBKEY_GET,X509_R_UNSUPPORTED_ALGORITHM);
+		goto error;
+		}
+
+	if (ret->ameth->pub_decode)
+		{
+		if (!ret->ameth->pub_decode(ret, key))
 			{
 			X509err(X509_F_X509_PUBKEY_GET,
-				X509_R_METHOD_NOT_SUPPORTED);
+						X509_R_PUBLIC_KEY_DECODE_ERROR);
 			goto error;
 			}
 		}
 	else
 		{
-		X509err(X509_F_X509_PUBKEY_GET,X509_R_UNSUPPORTED_ALGORITHM);
+		X509err(X509_F_X509_PUBKEY_GET, X509_R_METHOD_NOT_SUPPORTED);
 		goto error;
 		}
 

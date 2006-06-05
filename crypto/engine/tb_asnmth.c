@@ -53,10 +53,12 @@
  */
 
 #include "eng_int.h"
+#include "asn1_locl.h"
 
-/* If this symbol is defined then ENGINE_get_pkey_asn1_meth_engine(), the function
- * that is used by EVP to hook in pkey_asn1_meth code and cache defaults (etc), will
- * display brief debugging summaries to stderr with the 'nid'. */
+/* If this symbol is defined then ENGINE_get_pkey_asn1_meth_engine(), the
+ * function that is used by EVP to hook in pkey_asn1_meth code and cache
+ * defaults (etc), will display brief debugging summaries to stderr with the
+ * 'nid'. */
 /* #define ENGINE_PKEY_ASN1_METH_DEBUG */
 
 static ENGINE_TABLE *pkey_asn1_meth_table = NULL;
@@ -163,4 +165,31 @@ void engine_pkey_asn1_meths_free(ENGINE *e)
 				}
 			}
 		}
+	}
+
+/* Find a method based on a string. This does a linear search through
+ * all implemented algorithms. This is OK in practice because only
+ * a small number of algorithms are likely to be implemented in an engine
+ * and it is only used for non speed critical operations.
+ */
+
+const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,
+					const char *str, int len)
+	{
+	int i, nidcount;
+	const int *nids;
+	EVP_PKEY_ASN1_METHOD *ameth;
+	if (!e->pkey_asn1_meths)
+		return NULL;
+	if (len == -1)
+		len = strlen(str);
+	nidcount = e->pkey_asn1_meths(e, NULL, &nids, 0);
+	for (i = 0; i < nidcount; i++)
+		{
+		e->pkey_asn1_meths(e, &ameth, NULL, nids[i]);
+		if (((int)strlen(ameth->pem_str) == len) && 
+					!strncasecmp(ameth->pem_str, str, len))
+			return ameth;
+		}
+	return NULL;
 	}

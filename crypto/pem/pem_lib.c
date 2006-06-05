@@ -70,6 +70,9 @@
 #ifndef OPENSSL_NO_DES
 #include <openssl/des.h>
 #endif
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 
 const char *PEM_version="PEM" OPENSSL_VERSION_PTEXT;
 
@@ -197,7 +200,11 @@ static int check_pem(const char *nm, const char *name)
 		slen = pem_check_suffix(nm, "PRIVATE KEY"); 
 		if (slen > 0)
 			{
-			ameth = EVP_PKEY_asn1_find_str(nm, slen);
+			/* NB: ENGINE implementations wont contain
+			 * a deprecated old private key decode function
+			 * so don't look for them.
+			 */
+			ameth = EVP_PKEY_asn1_find_str(NULL, nm, slen);
 			if (ameth && ameth->old_priv_decode)
 				return 1;
 			}
@@ -211,9 +218,21 @@ static int check_pem(const char *nm, const char *name)
 		slen = pem_check_suffix(nm, "PARAMETERS"); 
 		if (slen > 0)
 			{
-			ameth = EVP_PKEY_asn1_find_str(nm, slen);
-			if (ameth && ameth->param_decode)
-				return 1;
+			ENGINE *e;
+			ameth = EVP_PKEY_asn1_find_str(&e, nm, slen);
+			if (ameth)
+				{
+				int r;
+				if (ameth->param_decode)
+					r = 1;
+				else
+					r = 0;
+#ifndef OPENSSL_NO_ENGINE
+				if (e)
+					ENGINE_finish(e);
+#endif
+				return r;
+				}
 			}
 		return 0;
 		}
