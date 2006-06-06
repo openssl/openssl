@@ -150,6 +150,13 @@ static int add_cipher_smcap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
 	return 1;
 	}
 
+static int add_digest_smcap(STACK_OF(X509_ALGOR) *sk, int nid, int arg)
+	{
+	if (EVP_get_digestbynid(nid))
+		return PKCS7_simple_smimecap(sk, nid, arg);
+	return 1;
+	}
+
 PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 					EVP_PKEY *pkey, const EVP_MD *md,
 					int flags)
@@ -194,7 +201,12 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 					ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
-			if (!add_cipher_smcap(smcap, NID_des_ede3_cbc, -1)
+			if (!add_cipher_smcap(smcap, NID_aes_256_cbc, -1)
+			|| !add_digest_smcap(smcap, NID_id_GostR3411_94, -1)
+			|| !add_cipher_smcap(smcap, NID_id_Gost28147_89, -1)
+				|| !add_cipher_smcap(smcap, NID_aes_192_cbc, -1)
+				|| !add_cipher_smcap(smcap, NID_aes_128_cbc, -1)
+			|| !add_cipher_smcap(smcap, NID_des_ede3_cbc, -1)
 				|| !add_cipher_smcap(smcap, NID_rc2_cbc, 128)
 				|| !add_cipher_smcap(smcap, NID_rc2_cbc, 64)
 				|| !add_cipher_smcap(smcap, NID_des_cbc, -1)
