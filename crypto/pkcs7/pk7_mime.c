@@ -144,6 +144,83 @@ static PKCS7 *B64_read_PKCS7(BIO *bio)
 	return p7;
 }
 
+/* Generate the MIME "micalg" parameter from RFC3851, RFC4490 */
+
+static int pk7_write_micalg(BIO *out, PKCS7 *p7)
+	{
+	STACK_OF(X509_ALGOR) *mdalgs;
+	STACK *mic_sk;
+	int i, have_unknown = 0, ret = 0;
+	mdalgs = p7->d.sign->md_algs;
+	mic_sk = sk_new_null();
+	if (!mic_sk)
+		goto err;
+	have_unknown = 0;
+	for (i = 0; i < sk_X509_ALGOR_num(mdalgs); i++)
+		{
+		switch(OBJ_obj2nid(sk_X509_ALGOR_value(mdalgs, i)->algorithm))
+			{
+			case NID_sha1:
+			if (!sk_push(mic_sk, "sha1"))
+				goto err;
+			break;
+
+			case NID_md5:
+			if (!sk_push(mic_sk, "md5"))
+				goto err;
+			break;
+
+			case NID_sha256:
+			if (!sk_push(mic_sk, "sha-256"))
+				goto err;
+			break;
+
+			case NID_sha384:
+			if (!sk_push(mic_sk, "sha-384"))
+				goto err;
+			break;
+
+			case NID_sha512:
+			if (!sk_push(mic_sk, "sha-512"))
+				goto err;
+			break;
+
+			case NID_id_GostR3411_94:
+			if (!sk_push(mic_sk, "gostr3411-94"))
+				goto err;
+			break;
+
+			default:
+			if (!have_unknown)
+				{
+				if (!sk_push(mic_sk, "unknown"))
+					goto err;
+				have_unknown = 1;
+				}
+			break;
+
+			}
+		}
+
+	for (i = 0; i < sk_num(mic_sk); i++)
+		{
+		BIO_puts(out, sk_value(mic_sk, i));
+		if (i > 0)
+			BIO_write(out, ",", 1);
+		}
+	ret = 1;
+	err:
+
+	if (mic_sk)
+		sk_free(mic_sk);	
+
+	return ret;
+
+	}
+
+
+
+
 /* SMIME sender */
 
 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
@@ -174,7 +251,9 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 		BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
 		BIO_printf(bio, "Content-Type: multipart/signed;");
 		BIO_printf(bio, " protocol=\"%ssignature\";", mime_prefix);
-		BIO_printf(bio, " micalg=sha1; boundary=\"----%s\"%s%s",
+		BIO_puts(bio, " micalg=\"");
+		pk7_write_micalg(bio, p7);
+		BIO_printf(bio, "\"; boundary=\"----%s\"%s%s",
 						bound, mime_eol, mime_eol);
 		BIO_printf(bio, "This is an S/MIME signed message%s%s",
 						mime_eol, mime_eol);
