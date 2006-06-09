@@ -1047,3 +1047,41 @@ rsadsi 1 1 6		: rsaOAEPEncryptionSET
 
 			: Oakley-EC2N-3		: ipsec3
 			: Oakley-EC2N-4		: ipsec4
+
+
+# Definitions for Camellia cipher - CBC MODE
+1 2 392 200011 61 1 1 1 2 : CAMELLIA-128-CBC		: camellia-128-cbc
+1 2 392 200011 61 1 1 1 3 : CAMELLIA-192-CBC		: camellia-192-cbc
+1 2 392 200011 61 1 1 1 4 : CAMELLIA-256-CBC		: camellia-256-cbc
+
+# Definitions for Camellia cipher - ECB, CFB, OFB MODE
+!Alias ntt-ds 0 3 4401 5
+!Alias camellia ntt-ds 3 1 9 
+
+camellia 1		: CAMELLIA-128-ECB		: camellia-128-ecb
+!Cname camellia-128-ofb128
+camellia 3		: CAMELLIA-128-OFB		: camellia-128-ofb
+!Cname camellia-128-cfb128
+camellia 4		: CAMELLIA-128-CFB		: camellia-128-cfb
+
+camellia 21		: CAMELLIA-192-ECB		: camellia-192-ecb
+!Cname camellia-192-ofb128
+camellia 23		: CAMELLIA-192-OFB		: camellia-192-ofb
+!Cname camellia-192-cfb128
+camellia 24		: CAMELLIA-192-CFB		: camellia-192-cfb
+
+camellia 41		: CAMELLIA-256-ECB		: camellia-256-ecb
+!Cname camellia-256-ofb128
+camellia 43		: CAMELLIA-256-OFB		: camellia-256-ofb
+!Cname camellia-256-cfb128
+camellia 44		: CAMELLIA-256-CFB		: camellia-256-cfb
+
+# There are no OIDs for these modes...
+
+			: CAMELLIA-128-CFB1		: camellia-128-cfb1
+			: CAMELLIA-192-CFB1		: camellia-192-cfb1
+			: CAMELLIA-256-CFB1		: camellia-256-cfb1
+			: CAMELLIA-128-CFB8		: camellia-128-cfb8
+			: CAMELLIA-192-CFB8		: camellia-192-cfb8
+			: CAMELLIA-256-CFB8		: camellia-256-cfb8
+

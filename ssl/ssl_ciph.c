@@ -75,6 +75,11 @@
 #define SSL_ENC_AES128_IDX	7
 #define SSL_ENC_AES256_IDX	8
 #define SSL_ENC_NUM_IDX		9
+#define SSL_ENC_CAMELLIA128_IDX	9
+#define SSL_ENC_CAMELLIA256_IDX	10
+#undef  SSL_ENC_NUM_IDX
+#define SSL_ENC_NUM_IDX		11
+
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
 	NULL,NULL,NULL,NULL,NULL,NULL,
@@ -141,6 +146,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_eNULL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_eFZA,0,SSL_eFZA,  0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_AES,	0,SSL_AES,   0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_CAMELLIA,	0,SSL_CAMELLIA,   0,0,0,0,SSL_ENC_MASK,0},
 
 	{0,SSL_TXT_MD5,	0,SSL_MD5,   0,0,0,0,SSL_MAC_MASK,0},
 	{0,SSL_TXT_SHA1,0,SSL_SHA1,  0,0,0,0,SSL_MAC_MASK,0},
@@ -185,6 +191,10 @@ void ssl_load_ciphers(void)
 	  EVP_get_cipherbyname(SN_aes_128_cbc);
 	ssl_cipher_methods[SSL_ENC_AES256_IDX]=
 	  EVP_get_cipherbyname(SN_aes_256_cbc);
+	ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX]=
+	  EVP_get_cipherbyname(SN_camellia_128_cbc);
+	ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX]=
+	  EVP_get_cipherbyname(SN_camellia_256_cbc);
 
 	ssl_digest_methods[SSL_MD_MD5_IDX]=
 		EVP_get_digestbyname(SN_md5);
@@ -293,6 +303,15 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		default: i=-1; break;
 			}
 		break;
+	case SSL_CAMELLIA:
+		switch(c->alg_bits)
+			{
+		case 128: i=SSL_ENC_CAMELLIA128_IDX; break;
+		case 256: i=SSL_ENC_CAMELLIA256_IDX; break;
+		default: i=-1; break;
+			}
+		break;
+
 	default:
 		i= -1;
 		break;
@@ -381,6 +400,7 @@ static unsigned long ssl_cipher_get_disabled(void)
 	mask |= (ssl_cipher_methods[SSL_ENC_IDEA_IDX] == NULL) ? SSL_IDEA:0;
 	mask |= (ssl_cipher_methods[SSL_ENC_eFZA_IDX] == NULL) ? SSL_eFZA:0;
 	mask |= (ssl_cipher_methods[SSL_ENC_AES128_IDX] == NULL) ? SSL_AES:0;
+	mask |= (ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] == NULL) ? SSL_CAMELLIA:0;
 
 	mask |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
 	mask |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;
@@ -1067,6 +1087,15 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 		default: enc="AES(?""?""?)"; break;
 			}
 		break;
+	case SSL_CAMELLIA:
+		switch(cipher->strength_bits)
+			{
+		case 128: enc="Camellia(128)"; break;
+		case 256: enc="Camellia(256)"; break;
+		default: enc="Camellia(?""?""?)"; break;
+			}
+		break;
+		
 	default:
 		enc="unknown";
 		break;

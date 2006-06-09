@@ -738,6 +738,29 @@ const EVP_CIPHER *EVP_aes_256_ofb(void);
 const EVP_CIPHER *EVP_aes_256_ctr(void);
 #endif
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+const EVP_CIPHER *EVP_camellia_128_ecb(void);
+const EVP_CIPHER *EVP_camellia_128_cbc(void);
+const EVP_CIPHER *EVP_camellia_128_cfb1(void);
+const EVP_CIPHER *EVP_camellia_128_cfb8(void);
+const EVP_CIPHER *EVP_camellia_128_cfb128(void);
+# define EVP_camellia_128_cfb EVP_camellia_128_cfb128
+const EVP_CIPHER *EVP_camellia_128_ofb(void);
+const EVP_CIPHER *EVP_camellia_192_ecb(void);
+const EVP_CIPHER *EVP_camellia_192_cbc(void);
+const EVP_CIPHER *EVP_camellia_192_cfb1(void);
+const EVP_CIPHER *EVP_camellia_192_cfb8(void);
+const EVP_CIPHER *EVP_camellia_192_cfb128(void);
+# define EVP_camellia_192_cfb EVP_camellia_192_cfb128
+const EVP_CIPHER *EVP_camellia_192_ofb(void);
+const EVP_CIPHER *EVP_camellia_256_ecb(void);
+const EVP_CIPHER *EVP_camellia_256_cbc(void);
+const EVP_CIPHER *EVP_camellia_256_cfb1(void);
+const EVP_CIPHER *EVP_camellia_256_cfb8(void);
+const EVP_CIPHER *EVP_camellia_256_cfb128(void);
+# define EVP_camellia_256_cfb EVP_camellia_256_cfb128
+const EVP_CIPHER *EVP_camellia_256_ofb(void);
+#endif
 
 void OPENSSL_add_all_algorithms_noconf(void);
 void OPENSSL_add_all_algorithms_conf(void);
@@ -854,6 +877,7 @@ void ERR_load_EVP_strings(void);
 
 /* Function codes. */
 #define EVP_F_AES_INIT_KEY				 133
+#define EVP_F_CAMELLIA_INIT_KEY				 159
 #define EVP_F_D2I_PKEY					 100
 #define EVP_F_DSAPKEY2PKCS8				 134
 #define EVP_F_DSA_PKEY2PKCS8				 135
@@ -897,6 +921,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_BAD_KEY_LENGTH				 137
 #define EVP_R_BN_DECODE_ERROR				 112
 #define EVP_R_BN_PUBKEY_ERROR				 113
+#define EVP_R_CAMELLIA_KEY_SETUP_FAILED			 157
 #define EVP_R_CIPHER_PARAMETER_ERROR			 122
 #define EVP_R_CTRL_NOT_IMPLEMENTED			 132
 #define EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED		 133

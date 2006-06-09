@@ -3303,3 +3303,91 @@
 #define LN_ipsec4		"ipsec4"
 #define NID_ipsec4		750
 
+#define SN_camellia_128_cbc		"CAMELLIA-128-CBC"
+#define LN_camellia_128_cbc		"camellia-128-cbc"
+#define NID_camellia_128_cbc		751
+#define OBJ_camellia_128_cbc		1L,2L,392L,200011L,61L,1L,1L,1L,2L
+
+#define SN_camellia_192_cbc		"CAMELLIA-192-CBC"
+#define LN_camellia_192_cbc		"camellia-192-cbc"
+#define NID_camellia_192_cbc		752
+#define OBJ_camellia_192_cbc		1L,2L,392L,200011L,61L,1L,1L,1L,3L
+
+#define SN_camellia_256_cbc		"CAMELLIA-256-CBC"
+#define LN_camellia_256_cbc		"camellia-256-cbc"
+#define NID_camellia_256_cbc		753
+#define OBJ_camellia_256_cbc		1L,2L,392L,200011L,61L,1L,1L,1L,4L
+
+#define OBJ_ntt_ds		0L,3L,4401L,5L
+
+#define OBJ_camellia		OBJ_ntt_ds,3L,1L,9L
+
+#define SN_camellia_128_ecb		"CAMELLIA-128-ECB"
+#define LN_camellia_128_ecb		"camellia-128-ecb"
+#define NID_camellia_128_ecb		754
+#define OBJ_camellia_128_ecb		OBJ_camellia,1L
+
+#define SN_camellia_128_ofb128		"CAMELLIA-128-OFB"
+#define LN_camellia_128_ofb128		"camellia-128-ofb"
+#define NID_camellia_128_ofb128		766
+#define OBJ_camellia_128_ofb128		OBJ_camellia,3L
+
+#define SN_camellia_128_cfb128		"CAMELLIA-128-CFB"
+#define LN_camellia_128_cfb128		"camellia-128-cfb"
+#define NID_camellia_128_cfb128		757
+#define OBJ_camellia_128_cfb128		OBJ_camellia,4L
+
+#define SN_camellia_192_ecb		"CAMELLIA-192-ECB"
+#define LN_camellia_192_ecb		"camellia-192-ecb"
+#define NID_camellia_192_ecb		755
+#define OBJ_camellia_192_ecb		OBJ_camellia,21L
+
+#define SN_camellia_192_ofb128		"CAMELLIA-192-OFB"
+#define LN_camellia_192_ofb128		"camellia-192-ofb"
+#define NID_camellia_192_ofb128		767
+#define OBJ_camellia_192_ofb128		OBJ_camellia,23L
+
+#define SN_camellia_192_cfb128		"CAMELLIA-192-CFB"
+#define LN_camellia_192_cfb128		"camellia-192-cfb"
+#define NID_camellia_192_cfb128		758
+#define OBJ_camellia_192_cfb128		OBJ_camellia,24L
+
+#define SN_camellia_256_ecb		"CAMELLIA-256-ECB"
+#define LN_camellia_256_ecb		"camellia-256-ecb"
+#define NID_camellia_256_ecb		756
+#define OBJ_camellia_256_ecb		OBJ_camellia,41L
+
+#define SN_camellia_256_ofb128		"CAMELLIA-256-OFB"
+#define LN_camellia_256_ofb128		"camellia-256-ofb"
+#define NID_camellia_256_ofb128		768
+#define OBJ_camellia_256_ofb128		OBJ_camellia,43L
+
+#define SN_camellia_256_cfb128		"CAMELLIA-256-CFB"
+#define LN_camellia_256_cfb128		"camellia-256-cfb"
+#define NID_camellia_256_cfb128		759
+#define OBJ_camellia_256_cfb128		OBJ_camellia,44L
+
+#define SN_camellia_128_cfb1		"CAMELLIA-128-CFB1"
+#define LN_camellia_128_cfb1		"camellia-128-cfb1"
+#define NID_camellia_128_cfb1		760
+
+#define SN_camellia_192_cfb1		"CAMELLIA-192-CFB1"
+#define LN_camellia_192_cfb1		"camellia-192-cfb1"
+#define NID_camellia_192_cfb1		761
+
+#define SN_camellia_256_cfb1		"CAMELLIA-256-CFB1"
+#define LN_camellia_256_cfb1		"camellia-256-cfb1"
+#define NID_camellia_256_cfb1		762
+
+#define SN_camellia_128_cfb8		"CAMELLIA-128-CFB8"
+#define LN_camellia_128_cfb8		"camellia-128-cfb8"
+#define NID_camellia_128_cfb8		763
+
+#define SN_camellia_192_cfb8		"CAMELLIA-192-CFB8"
+#define LN_camellia_192_cfb8		"camellia-192-cfb8"
+#define NID_camellia_192_cfb8		764
+
+#define SN_camellia_256_cfb8		"CAMELLIA-256-CFB8"
+#define LN_camellia_256_cfb8		"camellia-256-cfb8"
+#define NID_camellia_256_cfb8		765
+

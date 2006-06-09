@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 751
-#define NUM_SN 747
-#define NUM_LN 747
-#define NUM_OBJ 709
+#define NUM_NID 769
+#define NUM_SN 765
+#define NUM_LN 765
+#define NUM_OBJ 721
 
-static unsigned char lvalues[5002]={
+static unsigned char lvalues[5107]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -777,6 +777,18 @@ static unsigned char lvalues[5002]={
 0x55,0x1D,0x20,0x00,                         /* [4991] OBJ_any_policy */
 0x55,0x1D,0x21,                              /* [4995] OBJ_policy_mappings */
 0x55,0x1D,0x36,                              /* [4998] OBJ_inhibit_any_policy */
+0x2A,0x83,0x08,0x8C,0x9A,0x4B,0x3D,0x01,0x01,0x01,0x02,/* [5001] OBJ_camellia_128_cbc */
+0x2A,0x83,0x08,0x8C,0x9A,0x4B,0x3D,0x01,0x01,0x01,0x03,/* [5012] OBJ_camellia_192_cbc */
+0x2A,0x83,0x08,0x8C,0x9A,0x4B,0x3D,0x01,0x01,0x01,0x04,/* [5023] OBJ_camellia_256_cbc */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x01,     /* [5034] OBJ_camellia_128_ecb */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x15,     /* [5042] OBJ_camellia_192_ecb */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x29,     /* [5050] OBJ_camellia_256_ecb */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x04,     /* [5058] OBJ_camellia_128_cfb128 */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x18,     /* [5066] OBJ_camellia_192_cfb128 */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x2C,     /* [5074] OBJ_camellia_256_cfb128 */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x03,     /* [5082] OBJ_camellia_128_ofb128 */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x17,     /* [5090] OBJ_camellia_192_ofb128 */
+0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x2B,     /* [5098] OBJ_camellia_256_ofb128 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1945,6 +1957,36 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_inhibit_any_policy,3,&(lvalues[4998]),0},
 {"Oakley-EC2N-3","ipsec3",NID_ipsec3,0,NULL,0},
 {"Oakley-EC2N-4","ipsec4",NID_ipsec4,0,NULL,0},
+{"CAMELLIA-128-CBC","camellia-128-cbc",NID_camellia_128_cbc,11,
+	&(lvalues[5001]),0},
+{"CAMELLIA-192-CBC","camellia-192-cbc",NID_camellia_192_cbc,11,
+	&(lvalues[5012]),0},
+{"CAMELLIA-256-CBC","camellia-256-cbc",NID_camellia_256_cbc,11,
+	&(lvalues[5023]),0},
+{"CAMELLIA-128-ECB","camellia-128-ecb",NID_camellia_128_ecb,8,
+	&(lvalues[5034]),0},
+{"CAMELLIA-192-ECB","camellia-192-ecb",NID_camellia_192_ecb,8,
+	&(lvalues[5042]),0},
+{"CAMELLIA-256-ECB","camellia-256-ecb",NID_camellia_256_ecb,8,
+	&(lvalues[5050]),0},
+{"CAMELLIA-128-CFB","camellia-128-cfb",NID_camellia_128_cfb128,8,
+	&(lvalues[5058]),0},
+{"CAMELLIA-192-CFB","camellia-192-cfb",NID_camellia_192_cfb128,8,
+	&(lvalues[5066]),0},
+{"CAMELLIA-256-CFB","camellia-256-cfb",NID_camellia_256_cfb128,8,
+	&(lvalues[5074]),0},
+{"CAMELLIA-128-CFB1","camellia-128-cfb1",NID_camellia_128_cfb1,0,NULL,0},
+{"CAMELLIA-192-CFB1","camellia-192-cfb1",NID_camellia_192_cfb1,0,NULL,0},
+{"CAMELLIA-256-CFB1","camellia-256-cfb1",NID_camellia_256_cfb1,0,NULL,0},
+{"CAMELLIA-128-CFB8","camellia-128-cfb8",NID_camellia_128_cfb8,0,NULL,0},
+{"CAMELLIA-192-CFB8","camellia-192-cfb8",NID_camellia_192_cfb8,0,NULL,0},
+{"CAMELLIA-256-CFB8","camellia-256-cfb8",NID_camellia_256_cfb8,0,NULL,0},
+{"CAMELLIA-128-OFB","camellia-128-ofb",NID_camellia_128_ofb128,8,
+	&(lvalues[5082]),0},
+{"CAMELLIA-192-OFB","camellia-192-ofb",NID_camellia_192_ofb128,8,
+	&(lvalues[5090]),0},
+{"CAMELLIA-256-OFB","camellia-256-ofb",NID_camellia_256_ofb128,8,
+	&(lvalues[5098]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -1972,6 +2014,24 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[92]),/* "BF-ECB" */
 &(nid_objs[94]),/* "BF-OFB" */
 &(nid_objs[14]),/* "C" */
+&(nid_objs[751]),/* "CAMELLIA-128-CBC" */
+&(nid_objs[757]),/* "CAMELLIA-128-CFB" */
+&(nid_objs[760]),/* "CAMELLIA-128-CFB1" */
+&(nid_objs[763]),/* "CAMELLIA-128-CFB8" */
+&(nid_objs[754]),/* "CAMELLIA-128-ECB" */
+&(nid_objs[766]),/* "CAMELLIA-128-OFB" */
+&(nid_objs[752]),/* "CAMELLIA-192-CBC" */
+&(nid_objs[758]),/* "CAMELLIA-192-CFB" */
+&(nid_objs[761]),/* "CAMELLIA-192-CFB1" */
+&(nid_objs[764]),/* "CAMELLIA-192-CFB8" */
+&(nid_objs[755]),/* "CAMELLIA-192-ECB" */
+&(nid_objs[767]),/* "CAMELLIA-192-OFB" */
+&(nid_objs[753]),/* "CAMELLIA-256-CBC" */
+&(nid_objs[759]),/* "CAMELLIA-256-CFB" */
+&(nid_objs[762]),/* "CAMELLIA-256-CFB1" */
+&(nid_objs[765]),/* "CAMELLIA-256-CFB8" */
+&(nid_objs[756]),/* "CAMELLIA-256-ECB" */
+&(nid_objs[768]),/* "CAMELLIA-256-OFB" */
 &(nid_objs[108]),/* "CAST5-CBC" */
 &(nid_objs[110]),/* "CAST5-CFB" */
 &(nid_objs[109]),/* "CAST5-ECB" */
@@ -2863,6 +2923,24 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[701]),/* "c2tnb359v1" */
 &(nid_objs[703]),/* "c2tnb431r1" */
 &(nid_objs[483]),/* "cNAMERecord" */
+&(nid_objs[751]),/* "camellia-128-cbc" */
+&(nid_objs[757]),/* "camellia-128-cfb" */
+&(nid_objs[760]),/* "camellia-128-cfb1" */
+&(nid_objs[763]),/* "camellia-128-cfb8" */
+&(nid_objs[754]),/* "camellia-128-ecb" */
+&(nid_objs[766]),/* "camellia-128-ofb" */
+&(nid_objs[752]),/* "camellia-192-cbc" */
+&(nid_objs[758]),/* "camellia-192-cfb" */
+&(nid_objs[761]),/* "camellia-192-cfb1" */
+&(nid_objs[764]),/* "camellia-192-cfb8" */
+&(nid_objs[755]),/* "camellia-192-ecb" */
+&(nid_objs[767]),/* "camellia-192-ofb" */
+&(nid_objs[753]),/* "camellia-256-cbc" */
+&(nid_objs[759]),/* "camellia-256-cfb" */
+&(nid_objs[762]),/* "camellia-256-cfb1" */
+&(nid_objs[765]),/* "camellia-256-cfb8" */
+&(nid_objs[756]),/* "camellia-256-ecb" */
+&(nid_objs[768]),/* "camellia-256-ofb" */
 &(nid_objs[443]),/* "caseIgnoreIA5StringSyntax" */
 &(nid_objs[108]),/* "cast5-cbc" */
 &(nid_objs[110]),/* "cast5-cfb" */
@@ -3755,6 +3833,15 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[507]),/* OBJ_id_hex_partial_message       1 3 6 1 7 1 1 1 */
 &(nid_objs[508]),/* OBJ_id_hex_multipart_message     1 3 6 1 7 1 1 2 */
 &(nid_objs[57]),/* OBJ_netscape                     2 16 840 1 113730 */
+&(nid_objs[754]),/* OBJ_camellia_128_ecb             0 3 4401 5 3 1 9 1 */
+&(nid_objs[766]),/* OBJ_camellia_128_ofb128          0 3 4401 5 3 1 9 3 */
+&(nid_objs[757]),/* OBJ_camellia_128_cfb128          0 3 4401 5 3 1 9 4 */
+&(nid_objs[755]),/* OBJ_camellia_192_ecb             0 3 4401 5 3 1 9 21 */
+&(nid_objs[767]),/* OBJ_camellia_192_ofb128          0 3 4401 5 3 1 9 23 */
+&(nid_objs[758]),/* OBJ_camellia_192_cfb128          0 3 4401 5 3 1 9 24 */
+&(nid_objs[756]),/* OBJ_camellia_256_ecb             0 3 4401 5 3 1 9 41 */
+&(nid_objs[768]),/* OBJ_camellia_256_ofb128          0 3 4401 5 3 1 9 43 */
+&(nid_objs[759]),/* OBJ_camellia_256_cfb128          0 3 4401 5 3 1 9 44 */
 &(nid_objs[437]),/* OBJ_pilot                        0 9 2342 19200300 100 */
 &(nid_objs[186]),/* OBJ_pkcs1                        1 2 840 113549 1 1 */
 &(nid_objs[27]),/* OBJ_pkcs3                        1 2 840 113549 1 3 */
@@ -4089,6 +4176,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[138]),/* OBJ_ms_efs                       1 3 6 1 4 1 311 10 3 4 */
 &(nid_objs[648]),/* OBJ_ms_smartcard_login           1 3 6 1 4 1 311 20 2 2 */
 &(nid_objs[649]),/* OBJ_ms_upn                       1 3 6 1 4 1 311 20 2 3 */
+&(nid_objs[751]),/* OBJ_camellia_128_cbc             1 2 392 200011 61 1 1 1 2 */
+&(nid_objs[752]),/* OBJ_camellia_192_cbc             1 2 392 200011 61 1 1 1 3 */
+&(nid_objs[753]),/* OBJ_camellia_256_cbc             1 2 392 200011 61 1 1 1 4 */
 &(nid_objs[196]),/* OBJ_id_smime_mod_cms             1 2 840 113549 1 9 16 0 1 */
 &(nid_objs[197]),/* OBJ_id_smime_mod_ess             1 2 840 113549 1 9 16 0 2 */
 &(nid_objs[198]),/* OBJ_id_smime_mod_oid             1 2 840 113549 1 9 16 0 3 */

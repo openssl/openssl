@@ -161,6 +161,14 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp(*args,"-aes256"))
 				cipher = EVP_aes_256_cbc();
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+		else if (!strcmp(*args,"-camellia128"))
+				cipher = EVP_camellia_128_cbc();
+		else if (!strcmp(*args,"-camellia192"))
+				cipher = EVP_camellia_192_cbc();
+		else if (!strcmp(*args,"-camellia256"))
+				cipher = EVP_camellia_256_cbc();
+#endif
 		else if (!strcmp (*args, "-text")) 
 				flags |= PKCS7_TEXT;
 		else if (!strcmp (*args, "-nointern")) 
@@ -423,6 +431,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_AES
 		BIO_printf (bio_err, "-aes128, -aes192, -aes256\n");
 		BIO_printf (bio_err, "               encrypt PEM output with cbc aes\n");
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+		BIO_printf (bio_err, "-camellia128, -camellia192, -camellia256\n");
+		BIO_printf (bio_err, "               encrypt PEM output with cbc camellia\n");
 #endif
 		BIO_printf (bio_err, "-nointern      don't search certificates in message for signer\n");
 		BIO_printf (bio_err, "-nosigs        don't verify message signature\n");

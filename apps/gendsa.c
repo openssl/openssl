@@ -148,6 +148,14 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-aes256") == 0)
 			enc=EVP_aes_256_cbc();
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+		else if (strcmp(*argv,"-camellia128") == 0)
+			enc=EVP_camellia_128_cbc();
+		else if (strcmp(*argv,"-camellia192") == 0)
+			enc=EVP_camellia_192_cbc();
+		else if (strcmp(*argv,"-camellia256") == 0)
+			enc=EVP_camellia_256_cbc();
+#endif
 		else if (**argv != '-' && dsaparams == NULL)
 			{
 			dsaparams = *argv;
@@ -173,6 +181,10 @@ bad:
 #ifndef OPENSSL_NO_AES
 		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");
 		BIO_printf(bio_err,"                 encrypt PEM output with cbc aes\n");
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+		BIO_printf(bio_err," -camellia128, -camellia192, -camellia256\n");
+		BIO_printf(bio_err,"                 encrypt PEM output with cbc camellia\n");
 #endif
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e - use engine e, possibly a hardware device.\n");

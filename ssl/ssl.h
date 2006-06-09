@@ -282,6 +282,7 @@ extern "C" {
 #define SSL_TXT_RC2		"RC2"
 #define SSL_TXT_IDEA		"IDEA"
 #define SSL_TXT_AES		"AES"
+#define SSL_TXT_CAMELLIA	"CAMELLIA"
 #define SSL_TXT_MD5		"MD5"
 #define SSL_TXT_SHA1		"SHA1"
 #define SSL_TXT_SHA		"SHA"

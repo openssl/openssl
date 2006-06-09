@@ -82,6 +82,15 @@ int SSL_library_init(void)
 	EVP_add_cipher(EVP_aes_192_cbc());
 	EVP_add_cipher(EVP_aes_256_cbc());
 #endif
+
+
+/* The Camellia algorithm is registered in the management table of EVP. */
+#ifndef OPENSSL_NO_CAMELLIA
+	EVP_add_cipher(EVP_camellia_128_cbc());
+	EVP_add_cipher(EVP_camellia_256_cbc());
+#endif
+
+
 #ifndef OPENSSL_NO_MD2
 	EVP_add_digest(EVP_md2());
 #endif

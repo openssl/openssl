@@ -166,6 +166,24 @@ FUNCTION functions[] = {
 #ifndef OPENSSL_NO_AES
 	{FUNC_TYPE_CIPHER,"aes-256-ecb",enc_main},
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-128-cbc",enc_main},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-128-ecb",enc_main},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-192-cbc",enc_main},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-192-ecb",enc_main},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-256-cbc",enc_main},
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	{FUNC_TYPE_CIPHER,"camellia-256-ecb",enc_main},
+#endif
 	{FUNC_TYPE_CIPHER,"base64",enc_main},
 #ifndef OPENSSL_NO_DES
 	{FUNC_TYPE_CIPHER,"des",enc_main},
