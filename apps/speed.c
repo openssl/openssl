@@ -119,6 +119,9 @@
 #ifndef OPENSSL_NO_AES
 #include <openssl/aes.h>
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+#include <openssl/camellia.h>
+#endif
 #ifndef OPENSSL_NO_MD2
 #include <openssl/md2.h>
 #endif
@@ -195,7 +198,7 @@ static void print_result(int alg,int run_no,int count,double time_used);
 static int do_multi(int multi);
 #endif
 
-#define ALGOR_NUM	21
+#define ALGOR_NUM	24
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
@@ -207,7 +210,9 @@ static const char *names[ALGOR_NUM]={
   "md2","mdc2","md4","md5","hmac(md5)","sha1","rmd160","rc4",
   "des cbc","des ede3","idea cbc",
   "rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc",
-  "aes-128 cbc","aes-192 cbc","aes-256 cbc","evp","sha256","sha512"};
+  "aes-128 cbc","aes-192 cbc","aes-256 cbc",
+  "camellia-128 cbc","camellia-192 cbc","camellia-256 cbc",
+  "evp","sha256","sha512"};
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 static double rsa_results[RSA_NUM][2];
@@ -379,6 +384,17 @@ int MAIN(int argc, char **argv)
 		 0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,
 		 0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56};
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+	static const unsigned char ckey24[24]=
+		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
+		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,
+		 0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
+	static const unsigned char ckey32[32]=
+		{0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,
+		 0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,
+		 0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,
+		 0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34,0x56};
+#endif
 #ifndef OPENSSL_NO_AES
 #define MAX_BLOCK_SIZE 128
 #else
@@ -398,6 +414,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_AES
 	AES_KEY aes_ks1, aes_ks2, aes_ks3;
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+	CAMELLIA_KEY camellia_ks1, camellia_ks2, camellia_ks3;
+#endif
 #define	D_MD2		0
 #define	D_MDC2		1
 #define	D_MD4		2
@@ -416,9 +435,12 @@ int MAIN(int argc, char **argv)
 #define D_CBC_128_AES	15
 #define D_CBC_192_AES	16
 #define D_CBC_256_AES	17
-#define D_EVP		18
-#define D_SHA256	19
-#define D_SHA512	20
+#define D_CBC_128_CML   18 
+#define D_CBC_192_CML   19
+#define D_CBC_256_CML   20 
+#define D_EVP		21
+#define D_SHA256	22	
+#define D_SHA512	23
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 #define	R_DSA_512	0
@@ -761,6 +783,12 @@ int MAIN(int argc, char **argv)
 		else	if (strcmp(*argv,"aes-256-cbc") == 0) doit[D_CBC_256_AES]=1;
 		else
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+			if (strcmp(*argv,"camellia-128-cbc") == 0) doit[D_CBC_128_CML]=1;
+		else    if (strcmp(*argv,"camellia-192-cbc") == 0) doit[D_CBC_192_CML]=1;
+		else    if (strcmp(*argv,"camellia-256-cbc") == 0) doit[D_CBC_256_CML]=1;
+		else
+#endif
 #ifndef OPENSSL_NO_RSA
 #if 0 /* was: #ifdef RSAref */
 			if (strcmp(*argv,"rsaref") == 0) 
@@ -828,6 +856,15 @@ int MAIN(int argc, char **argv)
 			doit[D_CBC_128_AES]=1;
 			doit[D_CBC_192_AES]=1;
 			doit[D_CBC_256_AES]=1;
+			}
+		else
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+			if (strcmp(*argv,"camellia") == 0)
+			{
+			doit[D_CBC_128_CML]=1;
+			doit[D_CBC_192_CML]=1;
+			doit[D_CBC_256_CML]=1;
 			}
 		else
 #endif
@@ -957,6 +994,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_AES
 			BIO_printf(bio_err,"aes-128-cbc aes-192-cbc aes-256-cbc ");
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+			BIO_printf(bio_err,"\n");
+			BIO_printf(bio_err,"camellia-128-cbc camellia-192-cbc camellia-256-cbc ");
+#endif
 #ifndef OPENSSL_NO_RC4
 			BIO_printf(bio_err,"rc4");
 #endif
@@ -994,6 +1035,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_AES
 			BIO_printf(bio_err,"aes      ");
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+			BIO_printf(bio_err,"camellia ");
+#endif
 #ifndef OPENSSL_NO_RSA
 			BIO_printf(bio_err,"rsa      ");
 #endif
@@ -1002,7 +1046,8 @@ int MAIN(int argc, char **argv)
 #endif
 #if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_RC2) || \
     !defined(OPENSSL_NO_DES) || !defined(OPENSSL_NO_RSA) || \
-    !defined(OPENSSL_NO_BF) || !defined(OPENSSL_NO_AES)
+    !defined(OPENSSL_NO_BF) || !defined(OPENSSL_NO_AES) || \
+    !defined(OPENSSL_NO_CAMELLIA) 
 			BIO_printf(bio_err,"\n");
 #endif
 
@@ -1091,6 +1136,11 @@ int MAIN(int argc, char **argv)
 	AES_set_encrypt_key(key24,192,&aes_ks2);
 	AES_set_encrypt_key(key32,256,&aes_ks3);
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+	Camellia_set_key(key16,128,&camellia_ks1);
+	Camellia_set_key(ckey24,192,&camellia_ks2);
+	Camellia_set_key(ckey32,256,&camellia_ks3);
+#endif
 #ifndef OPENSSL_NO_IDEA
 	idea_set_encrypt_key(key16,&idea_ks);
 #endif
@@ -1144,6 +1194,9 @@ int MAIN(int argc, char **argv)
 	c[D_CBC_128_AES][0]=count;
 	c[D_CBC_192_AES][0]=count;
 	c[D_CBC_256_AES][0]=count;
+	c[D_CBC_128_CML][0]=count;
+	c[D_CBC_192_CML][0]=count;
+	c[D_CBC_256_CML][0]=count;
 	c[D_SHA256][0]=count;
 	c[D_SHA512][0]=count;
 
@@ -1176,6 +1229,9 @@ int MAIN(int argc, char **argv)
 		c[D_CBC_128_AES][i]=c[D_CBC_128_AES][i-1]*l0/l1;
 		c[D_CBC_192_AES][i]=c[D_CBC_192_AES][i-1]*l0/l1;
 		c[D_CBC_256_AES][i]=c[D_CBC_256_AES][i-1]*l0/l1;
+ 		c[D_CBC_128_CML][i]=c[D_CBC_128_CML][i-1]*l0/l1;
+		c[D_CBC_192_CML][i]=c[D_CBC_192_CML][i-1]*l0/l1;
+		c[D_CBC_256_CML][i]=c[D_CBC_256_CML][i-1]*l0/l1;
 		}
 #ifndef OPENSSL_NO_RSA
 	rsa_c[R_RSA_512][0]=count/2000;
@@ -1568,6 +1624,51 @@ int MAIN(int argc, char **argv)
 					iv,AES_ENCRYPT);
 			d=Time_F(STOP);
 			print_result(D_CBC_256_AES,j,count,d);
+			}
+		}
+
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	if (doit[D_CBC_128_CML])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_CBC_128_CML],c[D_CBC_128_CML][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_CBC_128_CML][j]); count++)
+				Camellia_cbc_encrypt(buf,buf,
+				        (unsigned long)lengths[j],&camellia_ks1,
+				        iv,CAMELLIA_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_CBC_128_CML,j,count,d);
+			}
+		}
+	if (doit[D_CBC_192_CML])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_CBC_192_CML],c[D_CBC_192_CML][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_CBC_192_CML][j]); count++)
+				Camellia_cbc_encrypt(buf,buf,
+				        (unsigned long)lengths[j],&camellia_ks2,
+				        iv,CAMELLIA_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_CBC_192_CML,j,count,d);
+			}
+		}
+	if (doit[D_CBC_256_CML])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_CBC_256_CML],c[D_CBC_256_CML][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_CBC_256_CML][j]); count++)
+				Camellia_cbc_encrypt(buf,buf,
+				        (unsigned long)lengths[j],&camellia_ks3,
+				        iv,CAMELLIA_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_CBC_256_CML,j,count,d);
 			}
 		}
 

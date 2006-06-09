@@ -1,4 +1,3 @@
-
 /* ssl/ssl_locl.h */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -276,7 +275,7 @@
  * that the different entities within are mutually exclusive:
  * ONLY ONE BIT PER MASK CAN BE SET AT A TIME.
  */
-#define SSL_MKEY_MASK		0x080000FFL
+#define SSL_MKEY_MASK		0x200000FFL
 #define SSL_kRSA		0x00000001L /* RSA key exchange */
 #define SSL_kDHr		0x00000002L /* DH cert RSA CA cert */
 #define SSL_kDHd		0x00000004L /* DH cert DSA CA cert */
@@ -286,7 +285,7 @@
 #define SSL_kECDH               0x00000040L /* ECDH w/ long-term keys */
 #define SSL_kECDHE              0x00000080L /* ephemeral ECDH */
 #define SSL_EDH			(SSL_kEDH|(SSL_AUTH_MASK^SSL_aNULL))
-#define SSL_kPSK                0x08000000L /* PSK */
+#define SSL_kPSK                0x20000000L /* PSK */
 
 #define SSL_AUTH_MASK		0x10007f00L
 #define SSL_aRSA		0x00000100L /* Authenticate with RSA */
@@ -308,7 +307,7 @@
 #define SSL_KRB5                (SSL_kKRB5|SSL_aKRB5)
 #define SSL_PSK                 (SSL_kPSK|SSL_aPSK)
 
-#define SSL_ENC_MASK		0x043F8000L
+#define SSL_ENC_MASK		0x0C3F8000L
 #define SSL_DES			0x00008000L
 #define SSL_3DES		0x00010000L
 #define SSL_RC4			0x00020000L
@@ -317,6 +316,7 @@
 #define SSL_eFZA		0x00100000L
 #define SSL_eNULL		0x00200000L
 #define SSL_AES			0x04000000L
+#define SSL_CAMELLIA		0x08000000L
 
 #define SSL_MAC_MASK		0x00c00000L
 #define SSL_MD5			0x00400000L
@@ -328,7 +328,7 @@
 #define SSL_SSLV3		0x02000000L
 #define SSL_TLSV1		SSL_SSLV3	/* for now */
 
-/* we have used 1fffffff - 3 bits left to go. */
+/* we have used 3fffffff - 2 bits left to go. */
 
 /*
  * Export and cipher strength information. For each cipher we have to decide

@@ -318,9 +318,9 @@ ameth_lib.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 ameth_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 ameth_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
 ameth_lib.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-ameth_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-ameth_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-ameth_lib.o: ../../include/openssl/objects.h
+ameth_lib.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+ameth_lib.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+ameth_lib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 ameth_lib.o: ../../include/openssl/opensslconf.h
 ameth_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ameth_lib.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
@@ -391,12 +391,13 @@ asn_pack.o: ../../include/openssl/symhacks.h ../cryptlib.h asn_pack.c
 d2i_pr.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 d2i_pr.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 d2i_pr.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-d2i_pr.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-d2i_pr.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-d2i_pr.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-d2i_pr.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-d2i_pr.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-d2i_pr.o: ../../include/openssl/symhacks.h ../cryptlib.h asn1_locl.h d2i_pr.c
+d2i_pr.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+d2i_pr.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+d2i_pr.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+d2i_pr.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+d2i_pr.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+d2i_pr.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+d2i_pr.o: ../cryptlib.h asn1_locl.h d2i_pr.c
 d2i_pu.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 d2i_pu.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 d2i_pu.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h

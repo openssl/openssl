@@ -219,8 +219,8 @@ tb_asnmth.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 tb_asnmth.o: ../../include/openssl/opensslconf.h
 tb_asnmth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tb_asnmth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-tb_asnmth.o: ../../include/openssl/symhacks.h ../cryptlib.h eng_int.h
-tb_asnmth.o: tb_asnmth.c
+tb_asnmth.o: ../../include/openssl/symhacks.h ../asn1/asn1_locl.h ../cryptlib.h
+tb_asnmth.o: eng_int.h tb_asnmth.c
 tb_cipher.o: ../../e_os.h ../../include/openssl/bio.h
 tb_cipher.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 tb_cipher.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h

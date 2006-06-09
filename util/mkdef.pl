@@ -85,7 +85,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "SHA256", "SHA512", "RIPEMD",
 			 "MDC2", "RSA", "DSA", "DH", "EC", "ECDH", "ECDSA",
-			 "HMAC", "AES", "WHIRLPOOL",
+			 "HMAC", "AES", "WHIRLPOOL", "CAMELLIA",
 			 # Envelope "algorithms"
 			 "EVP", "X509", "ASN1_TYPEDEFS",
 			 # Helper "algorithms"
@@ -111,7 +111,7 @@ close(IN);
 # defined with ifndef(NO_XXX) are not included in the .def file, and everything
 # in directory xxx is ignored.
 my $no_rc2; my $no_rc4; my $no_rc5; my $no_idea; my $no_des; my $no_bf;
-my $no_cast; my $no_whirlpool;
+my $no_cast; my $no_whirlpool; my $no_camellia;
 my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
 my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw;
@@ -180,6 +180,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-ecdh$/) 	{ $no_ecdh=1; }
 	elsif (/^no-hmac$/)	{ $no_hmac=1; }
 	elsif (/^no-aes$/)	{ $no_aes=1; }
+	elsif (/^no-camellia$/)	{ $no_camellia=1; }
 	elsif (/^no-evp$/)	{ $no_evp=1; }
 	elsif (/^no-lhash$/)	{ $no_lhash=1; }
 	elsif (/^no-stack$/)	{ $no_stack=1; }
@@ -247,6 +248,7 @@ $crypto.=" crypto/mdc2/mdc2.h" ; # unless $no_mdc2;
 $crypto.=" crypto/sha/sha.h" ; # unless $no_sha;
 $crypto.=" crypto/ripemd/ripemd.h" ; # unless $no_ripemd;
 $crypto.=" crypto/aes/aes.h" ; # unless $no_aes;
+$crypto.=" crypto/camellia/camellia.h" ; # unless $no_camellia;
 
 $crypto.=" crypto/bn/bn.h";
 $crypto.=" crypto/rsa/rsa.h" ; # unless $no_rsa;
@@ -1097,6 +1099,7 @@ sub is_valid
 			if ($keyword eq "ECDH" && $no_ecdh) { return 0; }
 			if ($keyword eq "HMAC" && $no_hmac) { return 0; }
 			if ($keyword eq "AES" && $no_aes) { return 0; }
+			if ($keyword eq "CAMELLIA" && $no_camellia) { return 0; }
 			if ($keyword eq "EVP" && $no_evp) { return 0; }
 			if ($keyword eq "LHASH" && $no_lhash) { return 0; }
 			if ($keyword eq "STACK" && $no_stack) { return 0; }

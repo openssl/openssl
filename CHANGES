@@ -284,7 +284,20 @@
   *) Add print and set support for Issuing Distribution Point CRL extension.
      [Steve Henson]
 
+  *) Change 'Configure' script to enable Camellia by default.
+     [NTT]
+
  Changes between 0.9.8b and 0.9.8c  [xx XXX xxxx]
+
+  *) Add the symmetric cipher Camellia (128-bit, 192-bit, 256-bit key
+     versions), which is now available for royalty-free use
+     (see http://info.isl.ntt.co.jp/crypt/eng/info/chiteki.html).
+     Also, add Camellia TLS ciphersuites from RFC 4132.
+
+     To minimize changes between patchlevels in the OpenSSL 0.9.8
+     series, Camellia remains excluded from compilation unless OpenSSL
+     is configured with 'enable-camellia'.
+     [NTT]
 
   *) Disable the padding bug check when compression is in use. The padding
      bug check assumes the first packet is of even length, this is not

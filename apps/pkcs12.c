@@ -3,7 +3,7 @@
  * project.
  */
 /* ====================================================================
- * Copyright (c) 1999-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -164,6 +164,11 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp(*args,"-aes192")) enc=EVP_aes_192_cbc();
 		else if (!strcmp(*args,"-aes256")) enc=EVP_aes_256_cbc();
 #endif
+#ifndef OPENSSL_NO_CAMELLIA
+		else if (!strcmp(*args,"-camellia128")) enc=EVP_camellia_128_cbc();
+		else if (!strcmp(*args,"-camellia192")) enc=EVP_camellia_192_cbc();
+		else if (!strcmp(*args,"-camellia256")) enc=EVP_camellia_256_cbc();
+#endif
 		else if (!strcmp (*args, "-noiter")) iter = 1;
 		else if (!strcmp (*args, "-maciter"))
 					 maciter = PKCS12_DEFAULT_ITER;
@@ -291,6 +296,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_AES
 	BIO_printf (bio_err, "-aes128, -aes192, -aes256\n");
 	BIO_printf (bio_err, "              encrypt PEM output with cbc aes\n");
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+	BIO_printf (bio_err, "-camellia128, -camellia192, -camellia256\n");
+	BIO_printf (bio_err, "              encrypt PEM output with cbc camellia\n");
 #endif
 	BIO_printf (bio_err, "-nodes        don't encrypt private keys\n");
 	BIO_printf (bio_err, "-noiter       don't use encryption iteration\n");

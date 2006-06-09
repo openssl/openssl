@@ -65,7 +65,7 @@ and [options] can be one of
 	no-md2 no-md4 no-md5 no-sha no-mdc2	- Skip this digest
 	no-ripemd
 	no-rc2 no-rc4 no-rc5 no-idea no-des     - Skip this symetric cipher
-	no-bf no-cast no-aes
+	no-bf no-cast no-aes no-camellia
 	no-rsa no-dsa no-dh			- Skip this public key cipher
 	no-ssl2 no-ssl3				- Skip this version of SSL
 	just-ssl				- remove all non-ssl keys/digest
@@ -199,6 +199,7 @@ $cflags= "$xcflags$cflags" if $xcflags ne "";
 
 $cflags.=" -DOPENSSL_NO_IDEA" if $no_idea;
 $cflags.=" -DOPENSSL_NO_AES"  if $no_aes;
+$cflags.=" -DOPENSSL_NO_CAMELLIA"  if $no_camellia;
 $cflags.=" -DOPENSSL_NO_RC2"  if $no_rc2;
 $cflags.=" -DOPENSSL_NO_RC4"  if $no_rc4;
 $cflags.=" -DOPENSSL_NO_RC5"  if $no_rc5;
@@ -741,6 +742,7 @@ sub var_add
 	return("") if $no_hw   && $dir =~ /\/hw/;
 	return("") if $no_idea && $dir =~ /\/idea/;
 	return("") if $no_aes  && $dir =~ /\/aes/;
+	return("") if $no_camellia  && $dir =~ /\/camellia/;
 	return("") if $no_rc2  && $dir =~ /\/rc2/;
 	return("") if $no_rc4  && $dir =~ /\/rc4/;
 	return("") if $no_rc5  && $dir =~ /\/rc5/;
@@ -775,6 +777,7 @@ sub var_add
 	@a=grep(!/^e_.*_bf$/,@a) if $no_bf;
 	@a=grep(!/^e_.*_c$/,@a) if $no_cast;
 	@a=grep(!/^e_rc4$/,@a) if $no_rc4;
+	@a=grep(!/^e_camellia$/,@a) if $no_camellia;
 
 	@a=grep(!/(^s2_)|(^s23_)/,@a) if $no_ssl2;
 	@a=grep(!/(^s3_)|(^s23_)/,@a) if $no_ssl3;
@@ -987,6 +990,7 @@ sub read_options
 		"no-rc5" => \$no_rc5,
 		"no-idea" => \$no_idea,
 		"no-aes" => \$no_aes,
+		"no-camellia" => \$no_camellia,
 		"no-des" => \$no_des,
 		"no-bf" => \$no_bf,
 		"no-cast" => \$no_cast,
@@ -1005,6 +1009,7 @@ sub read_options
 		"no-dh" => \$no_dh,
 		"no-hmac" => \$no_hmac,
 		"no-aes" => \$no_aes,
+		"no-camellia" => \$no_camellia,
 		"no-asm" => \$no_asm,
 		"nasm" => \$nasm,
 		"nw-nasm" => \$nw_nasm,
@@ -1024,7 +1029,7 @@ sub read_options
 			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
 			  \$no_md2, \$no_sha, \$no_mdc2, \$no_dsa, \$no_dh,
 			  \$no_ssl2, \$no_err, \$no_ripemd, \$no_rc5,
-			  \$no_aes],
+			  \$no_aes, \$no_camellia],
 		"rsaref" => 0,
 		"gcc" => \$gcc,
 		"debug" => \$debug,
