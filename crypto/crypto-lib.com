@@ -78,7 +78,7 @@ $!
 $ ENCRYPT_TYPES = "Basic,"+ -
 		  "OBJECTS,"+ -
 		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,"+ -
-		  "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,"+ -
+		  "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,"+ -
 		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
 		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
@@ -183,6 +183,8 @@ $ LIB_RC5 = "rc5_skey,rc5_ecb,rc5_enc,rc5cfb64,rc5ofb64"
 $ LIB_IDEA = "i_cbc,i_cfb64,i_ofb64,i_ecb,i_skey"
 $ LIB_BF = "bf_skey,bf_ecb,bf_enc,bf_cfb64,bf_ofb64"
 $ LIB_CAST = "c_skey,c_ecb,c_enc,c_cfb64,c_ofb64"
+$ LIB_CAMELLIA = "camellia,cmll_misc,cmll_ecb,cmll_cbc,cmll_ofb,"+ -
+	"cmll_cfb,cmll_ctr"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
 $ IF F$TRNLNM("OPENSSL_NO_ASM").OR.ARCH.EQS."AXP" THEN LIB_BN_ASM = "bn_asm"
 $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
