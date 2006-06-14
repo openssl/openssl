@@ -4,6 +4,21 @@
 
  Changes between 0.9.7j and 0.9.7k  [xx XXX xxxx]
 
+  *) Disable rogue ciphersuites:
+
+      - SSLv2 0x08 0x00 0x80 ("RC4-64-MD5")
+      - SSLv3/TLSv1 0x00 0x61 ("EXP1024-RC2-CBC-MD5")
+      - SSLv3/TLSv1 0x00 0x60 ("EXP1024-RC4-MD5")
+
+     The latter two were purportedly from
+     draft-ietf-tls-56-bit-ciphersuites-0[01].txt, but do not really
+     appear there.
+
+     Also deactive the remaining ciphersuites from
+     draft-ietf-tls-56-bit-ciphersuites-01.txt.  These are just as
+     unofficial, and the ID has long expired.
+     [Bodo Moeller]
+
   *) Fix RSA blinding Heisenbug (problems sometimes occured on
      dual-core machines) and other potential thread-safety issues.
      [Bodo Moeller]
