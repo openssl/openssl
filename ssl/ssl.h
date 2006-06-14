@@ -109,7 +109,7 @@
  *
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -316,7 +316,11 @@ extern "C" {
 /* The following cipher list is used by default.
  * It also is substituted when an application-defined cipher list string
  * starts with 'DEFAULT'. */
-#define SSL_DEFAULT_CIPHER_LIST	"ALL:!ADH:+RC4:@STRENGTH" /* low priority for RC4 */
+#ifdef OPENSSL_NO_CAMELLIA
+# define SSL_DEFAULT_CIPHER_LIST	"ALL:!ADH:+RC4:@STRENGTH" /* low priority for RC4 */
+#else
+# define SSL_DEFAULT_CIPHER_LIST	"AES:CAMELLIA:-ECCdraft:ALL:!ADH:+RC4:@STRENGTH" /* low priority for RC4 */
+#endif
 
 /* Used in SSL_set_shutdown()/SSL_get_shutdown(); */
 #define SSL_SENT_SHUTDOWN	1
