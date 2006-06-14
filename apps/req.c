@@ -144,7 +144,7 @@ static int add_DN_object(X509_NAME *n, char *text, const char *def, char *value,
 static int genpkey_cb(EVP_PKEY_CTX *ctx);
 static int req_check_len(int len,int n_min,int n_max);
 static int check_end(const char *str, const char *end);
-static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
+static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr, int *pkey_type,
 					long *pkeylen, char **palgnam,
 					ENGINE *keygen_engine);
 #ifndef MONOLITH
@@ -167,7 +167,7 @@ int MAIN(int argc, char **argv)
 	char *keyalgstr = NULL;
 	STACK *pkeyopts = NULL;
 	EVP_PKEY *pkey=NULL;
-	int i=0,badops=0,newreq=0,verbose=0,pkey_type=EVP_PKEY_RSA;
+	int i=0,badops=0,newreq=0,verbose=0,pkey_type=-1;
 	long newkey = -1;
 	BIO *in=NULL,*out=NULL;
 	int informat,outformat,verify=0,noout=0,text=0,keyform=FORMAT_PEM;
@@ -638,7 +638,7 @@ bad:
 
 		if (keyalg)
 			{
-			genctx = set_keygen_ctx(bio_err, keyalg, &newkey,
+			genctx = set_keygen_ctx(bio_err, keyalg, &pkey_type, &newkey,
 							&keyalgstr, gen_eng);
 			if (!genctx)
 				goto end;
@@ -659,7 +659,7 @@ bad:
 
 		if (!genctx)
 			{
-			genctx = set_keygen_ctx(bio_err, NULL, &newkey,
+			genctx = set_keygen_ctx(bio_err, NULL, &pkey_type, &newkey,
 							&keyalgstr, gen_eng);
 			if (!genctx)
 				goto end;
@@ -1570,25 +1570,24 @@ static int check_end(const char *str, const char *end)
 	return strcmp(tmp, end);
 }
 
-static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
+static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr, int *pkey_type,
 					long *pkeylen, char **palgnam,
 					ENGINE *keygen_engine)
 	{
 	EVP_PKEY_CTX *gctx = NULL;
 	EVP_PKEY *param = NULL;
 	long keylen = -1;
-	int pkey_type = -1;
 	BIO *pbio = NULL;
 	const char *paramfile = NULL;
 
 	if (gstr == NULL)
 		{
-		pkey_type = EVP_PKEY_RSA;
+		*pkey_type = EVP_PKEY_RSA;
 		keylen = *pkeylen;
 		}
 	else if (gstr[0] >= '0' && gstr[0] <= '9')
 		{
-		pkey_type = EVP_PKEY_RSA;
+		*pkey_type = EVP_PKEY_RSA;
 		keylen = atol(gstr);
 		*pkeylen = keylen;
 		}
@@ -1617,13 +1616,13 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
 			return NULL;
 			}
 
-		EVP_PKEY_asn1_get0_info(NULL, &pkey_type, NULL, NULL, NULL,
+		EVP_PKEY_asn1_get0_info(NULL, pkey_type, NULL, NULL, NULL,
 									ameth);
 #ifndef OPENSSL_NO_ENGINE
 		if (tmpeng)
 			ENGINE_finish(tmpeng);
 #endif
-		if (pkey_type == EVP_PKEY_RSA)
+		if (*pkey_type == EVP_PKEY_RSA)
 			{
 			if (p)
 				{
@@ -1666,9 +1665,9 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
 					paramfile);
 			return NULL;
 			}
-		if (pkey_type == -1)
-			pkey_type = EVP_PKEY_id(param);
-		else if (pkey_type != EVP_PKEY_base_id(param))
+		if (*pkey_type == -1)
+			*pkey_type = EVP_PKEY_id(param);
+		else if (*pkey_type != EVP_PKEY_base_id(param))
 			{
 			BIO_printf(err, "Key Type does not match parameters\n");
 			EVP_PKEY_free(param);
@@ -1681,7 +1680,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
 		const EVP_PKEY_ASN1_METHOD *ameth;
 		ENGINE *tmpeng;
 		const char *anam;
-		ameth = EVP_PKEY_asn1_find(&tmpeng, pkey_type);
+		ameth = EVP_PKEY_asn1_find(&tmpeng, *pkey_type);
 		if (!ameth)
 			{
 			BIO_puts(err, "Internal error: can't find key algorithm\n");
@@ -1702,7 +1701,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
 		EVP_PKEY_free(param);
 		}
 	else
-		gctx = EVP_PKEY_CTX_new_id(pkey_type, keygen_engine);
+		gctx = EVP_PKEY_CTX_new_id(*pkey_type, keygen_engine);
 
 	if (!gctx)
 		{
@@ -1718,7 +1717,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr,
 		return NULL;
 		}
 
-	if ((pkey_type == EVP_PKEY_RSA) && (keylen != -1))
+	if ((*pkey_type == EVP_PKEY_RSA) && (keylen != -1))
 		{
 		if (EVP_PKEY_CTX_set_rsa_keygen_bits(gctx, keylen) <= 0)
 			{
