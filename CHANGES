@@ -289,6 +289,10 @@
 
  Changes between 0.9.8b and 0.9.8c  [xx XXX xxxx]
 
+  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+     dual-core machines) and other potential thread-safety issues.
+     [Bodo Moeller]
+
   *) Add the symmetric cipher Camellia (128-bit, 192-bit, 256-bit key
      versions), which is now available for royalty-free use
      (see http://info.isl.ntt.co.jp/crypt/eng/info/chiteki.html).
@@ -388,6 +392,9 @@
      [Steve Henson]
 
  Changes between 0.9.7h and 0.9.8  [05 Jul 2005]
+
+  [NB: OpenSSL 0.9.7i and later 0.9.7 patch levels were released after
+  OpenSSL 0.9.8.]
 
   *) Add libcrypto.pc and libssl.pc for those who feel they need them.
      [Richard Levitte]
@@ -1205,6 +1212,27 @@
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
+
+ Changes between 0.9.7j and 0.9.7k  [xx XXX xxxx]
+
+  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+     dual-core machines) and other potential thread-safety issues.
+     [Bodo Moeller]
+
+ Changes between 0.9.7i and 0.9.7j  [04 May 2006]
+
+  *) Adapt fipsld and the build system to link against the validated FIPS
+     module in FIPS mode.
+     [Steve Henson]
+
+  *) Fixes for VC++ 2005 build under Windows.
+     [Steve Henson]
+
+  *) Add new Windows build target VC-32-GMAKE for VC++. This uses GNU make 
+     from a Windows bash shell such as MSYS. It is autodetected from the
+     "config" script when run from a VC++ environment. Modify standard VC++
+     build to use fipscanister.o from the GNU make build. 
+     [Steve Henson]
 
  Changes between 0.9.7h and 0.9.7i  [14 Oct 2005]
 

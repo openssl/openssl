@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -238,40 +238,63 @@ err:
 	return(r);
 	}
 
-static BN_BLINDING *rsa_get_blinding(RSA *rsa, BIGNUM **r, int *local, BN_CTX *ctx)
+static BN_BLINDING *rsa_get_blinding(RSA *rsa, int *local, BN_CTX *ctx)
 {
 	BN_BLINDING *ret;
+	int got_write_lock = 0;
+
+	CRYPTO_r_lock(CRYPTO_LOCK_RSA);
 
 	if (rsa->blinding == NULL)
 		{
+		CRYPTO_r_unlock(CRYPTO_LOCK_RSA);
+		CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+		got_write_lock = 1;
+
 		if (rsa->blinding == NULL)
-			{
-			CRYPTO_w_lock(CRYPTO_LOCK_RSA);
-			if (rsa->blinding == NULL)
-				rsa->blinding = RSA_setup_blinding(rsa, ctx);
-			CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
-			}
+			rsa->blinding = RSA_setup_blinding(rsa, ctx);
 		}
 
 	ret = rsa->blinding;
 	if (ret == NULL)
-		return NULL;
+		goto err;
 
-	if (BN_BLINDING_get_thread_id(ret) != CRYPTO_thread_id())
+	if (BN_BLINDING_get_thread_id(ret) == CRYPTO_thread_id())
 		{
-		*local = 0;
+		/* rsa->blinding is ours! */
+
+		*local = 1;
+		}
+	else
+		{
+		/* resort to rsa->mt_blinding instead */
+
+		*local = 0; /* instructs rsa_blinding_convert(), rsa_blinding_invert()
+		             * that the BN_BLINDING is shared, meaning that accesses
+		             * require locks, and that the blinding factor must be
+		             * stored outside the BN_BLINDING
+		             */
+
 		if (rsa->mt_blinding == NULL)
 			{
-			CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+			if (!got_write_lock)
+				{
+				CRYPTO_r_unlock(CRYPTO_LOCK_RSA);
+				CRYPTO_w_lock(CRYPTO_LOCK_RSA);
+				got_write_lock = 1;
+				}
+			
 			if (rsa->mt_blinding == NULL)
 				rsa->mt_blinding = RSA_setup_blinding(rsa, ctx);
-			CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
 			}
 		ret = rsa->mt_blinding;
 		}
-	else
-		*local = 1;
 
+ err:
+	if (got_write_lock)
+		CRYPTO_w_unlock(CRYPTO_LOCK_RSA);
+	else
+		CRYPTO_r_unlock(CRYPTO_LOCK_RSA);
 	return ret;
 }
 
@@ -358,7 +381,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 
 	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
 		{
-		blinding = rsa_get_blinding(rsa, &br, &local_blinding, ctx);
+		blinding = rsa_get_blinding(rsa, &local_blinding, ctx);
 		if (blinding == NULL)
 			{
 			RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, ERR_R_INTERNAL_ERROR);
@@ -479,7 +502,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 
 	if (!(rsa->flags & RSA_FLAG_NO_BLINDING))
 		{
-		blinding = rsa_get_blinding(rsa, &br, &local_blinding, ctx);
+		blinding = rsa_get_blinding(rsa, &local_blinding, ctx);
 		if (blinding == NULL)
 			{
 			RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, ERR_R_INTERNAL_ERROR);
