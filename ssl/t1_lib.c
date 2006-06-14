@@ -686,7 +686,7 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 	for (i = 0; i < sk_SSL_CIPHER_num(cipher_stack); i++)
 		{
 		algs = (sk_SSL_CIPHER_value(cipher_stack, i))->algorithms;
-		if ((algs & SSL_kECDH) || (algs & SSL_kECDHE) || (algs & SSL_aECDSA)) 
+		if ((algs & SSL_kECDH) || (algs & SSL_kEECDH) || (algs & SSL_aECDSA)) 
 			{
 			using_ecc = 1;
 			break;
@@ -731,7 +731,7 @@ int ssl_prepare_serverhello_tlsext(SSL *s)
 	 * supposed to send an EllipticCurves extension.
 	 */
 	int algs = s->s3->tmp.new_cipher->algorithms;
-	int using_ecc = (algs & SSL_kECDH) || (algs & SSL_kECDHE) || (algs & SSL_aECDSA);
+	int using_ecc = (algs & SSL_kECDH) || (algs & SSL_kEECDH) || (algs & SSL_aECDSA);
 	using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
 
 	if (using_ecc)
@@ -797,7 +797,7 @@ int ssl_check_serverhello_tlsext(SSL *s)
 	 */
 	int algs = s->s3->tmp.new_cipher->algorithms;
 	if ((s->tlsext_ecpointformatlist != NULL) && (s->tlsext_ecpointformatlist_length > 0) && 
-	    ((algs & SSL_kECDH) || (algs & SSL_kECDHE) || (algs & SSL_aECDSA))) 
+	    ((algs & SSL_kECDH) || (algs & SSL_kEECDH) || (algs & SSL_aECDSA))) 
 		{
 		/* we are using an ECC cipher */
 		size_t i;

@@ -333,10 +333,10 @@ int dtls1_accept(SSL *s)
 			else
 				s->s3->tmp.use_rsa_tmp=0;
 
-			/* only send if a DH key exchange, fortezza or
+			/* only send if a DH key exchange or
 			 * RSA but we have a sign only certificate */
 			if (s->s3->tmp.use_rsa_tmp
-			    || (l & (SSL_DH|SSL_kFZA))
+			    || (l & SSL_DH)
 			    || ((l & SSL_kRSA)
 				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
 				    || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)

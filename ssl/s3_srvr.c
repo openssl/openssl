@@ -365,7 +365,7 @@ int ssl3_accept(SSL *s)
 			 * For ECC ciphersuites, we send a serverKeyExchange
 			 * message only if the cipher suite is either
 			 * ECDH-anon or ECDHE. In other cases, the
-			 * server certificate contains the server's 
+			 * server certificate contains the server's
 			 * public key for key exchange.
 			 */
 			if (s->s3->tmp.use_rsa_tmp
@@ -374,8 +374,7 @@ int ssl3_accept(SSL *s)
 #ifndef OPENSSL_NO_PSK
 			    || ((l & SSL_kPSK) && s->ctx->psk_identity_hint)
 #endif
-			    || (l & SSL_kECDHE)
-			    || (l & (SSL_DH|SSL_kFZA))
+			    || (l & SSL_kEECDH)
 			    || ((l & SSL_kRSA)
 				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
 				    || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)
@@ -481,7 +480,7 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SR_KEY_EXCH_A:
 		case SSL3_ST_SR_KEY_EXCH_B:
 			ret=ssl3_get_client_key_exchange(s);
-			if (ret <= 0) 
+			if (ret <= 0)
 				goto end;
 			if (ret == 2)
 				{
@@ -493,14 +492,14 @@ int ssl3_accept(SSL *s)
 				s->state=SSL3_ST_SR_FINISHED_A;
 				s->init_num = 0;
 				}
-			else   
+			else
 				{
 				s->state=SSL3_ST_SR_CERT_VRFY_A;
 				s->init_num=0;
 
 				/* We need to get hashes here so if there is
 				 * a client cert, it can be verified
-				 */ 
+				 */
 				s->method->ssl3_enc->cert_verify_mac(s,
 				    &(s->s3->finish_dgst1),
 				    &(s->s3->tmp.cert_verify_md[0]));
@@ -735,7 +734,7 @@ int ssl3_get_client_hello(SSL *s)
 	if (s->client_version < s->version)
 		{
 		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_WRONG_VERSION_NUMBER);
-		if ((s->client_version>>8) == SSL3_VERSION_MAJOR) 
+		if ((s->client_version>>8) == SSL3_VERSION_MAJOR)
 			{
 			/* similar to ssl3_get_record, send alert using remote version number */
 			s->version = s->client_version;
@@ -1302,7 +1301,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 		else 
 #endif
 #ifndef OPENSSL_NO_ECDH
-			if (type & SSL_kECDHE)
+			if (type & SSL_kEECDH)
 			{
 			const EC_GROUP *group;
 
@@ -1481,7 +1480,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 			}
 
 #ifndef OPENSSL_NO_ECDH
-		if (type & SSL_kECDHE) 
+		if (type & SSL_kEECDH) 
 			{
 			/* XXX: For now, we only support named (not generic) curves.
 			 * In this situation, the serverKeyExchange message has:
@@ -2088,7 +2087,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 #endif	/* OPENSSL_NO_KRB5 */
 
 #ifndef OPENSSL_NO_ECDH
-		if ((l & SSL_kECDH) || (l & SSL_kECDHE))
+		if ((l & SSL_kECDH) || (l & SSL_kEECDH))
 		{
 		int ret = 1;
 		int field_size = 0;
@@ -2141,7 +2140,7 @@ int ssl3_get_client_key_exchange(SSL *s)
                         {
 			/* Client Publickey was in Client Certificate */
 
-			 if (l & SSL_kECDHE) 
+			 if (l & SSL_kEECDH)
 				 {
 				 al=SSL_AD_HANDSHAKE_FAILURE;
 				 SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_MISSING_TMP_ECDH_KEY);

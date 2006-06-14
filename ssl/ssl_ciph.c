@@ -150,15 +150,12 @@
 #define SSL_ENC_RC4_IDX		2
 #define SSL_ENC_RC2_IDX		3
 #define SSL_ENC_IDEA_IDX	4
-#define SSL_ENC_eFZA_IDX	5
-#define SSL_ENC_NULL_IDX	6
-#define SSL_ENC_AES128_IDX	7
-#define SSL_ENC_AES256_IDX	8
-#define SSL_ENC_NUM_IDX		9
-#define SSL_ENC_CAMELLIA128_IDX	9
-#define SSL_ENC_CAMELLIA256_IDX	10
-#undef  SSL_ENC_NUM_IDX
-#define SSL_ENC_NUM_IDX		11
+#define SSL_ENC_NULL_IDX	5
+#define SSL_ENC_AES128_IDX	6
+#define SSL_ENC_AES256_IDX	7
+#define SSL_ENC_CAMELLIA128_IDX	8
+#define SSL_ENC_CAMELLIA256_IDX	9
+#define SSL_ENC_NUM_IDX		10
 
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
@@ -193,31 +190,49 @@ typedef struct cipher_order_st
 	} CIPHER_ORDER;
 
 static const SSL_CIPHER cipher_aliases[]={
-	/* Don't include eNULL unless specifically enabled. */
-	/* Don't include ECC in ALL because these ciphers are not yet official. */
-	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL & ~SSL_kECDH & ~SSL_kECDHE, SSL_ALL ,0,0,0,SSL_ALL,SSL_ALL}, /* must be first */
-	/* TODO: COMPLEMENT OF ALL and COMPLEMENT OF DEFAULT do not have ECC cipher suites handled properly. */
-	{0,SSL_TXT_CMPALL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},  /* COMPLEMENT OF ALL */
-	{0,SSL_TXT_CMPDEF,0,SSL_ADH, 0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_kKRB5,0,SSL_kKRB5,0,0,0,0,SSL_MKEY_MASK,0},  /* VRS Kerberos5 */
+	/* "ALL" must be first; it doesn't include eNULL (must be specifically enabled) */
+	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL, SSL_ALL ,0,0,0,SSL_ALL,SSL_ALL},
+	/* "COMPLEMENTOFALL" */
+	{0,SSL_TXT_CMPALL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
+
+	/* "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in ALL!) */
+	{0,SSL_TXT_CMPDEF,0,SSL_ADH|SSL_AECDH|(SSL_ENC_MASK & ~SSL_eNULL), 0,0,0,0,SSL_AUTH_MASK|SSL_ENC_MASK,0},
+
+	/* Single key exchange bits
+	 * (some of these are multiple key exchange algs according to the RFCs,
+	 * e.g. kEDH combines DHE_DSS and DHE_RSA) */
 	{0,SSL_TXT_kRSA,0,SSL_kRSA,  0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_kDHr,0,SSL_kDHr,  0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_kDHd,0,SSL_kDHd,  0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_kDHr,0,SSL_kDHr,  0,0,0,0,SSL_MKEY_MASK,0}, /* no such ciphersuites supported! */
+	{0,SSL_TXT_kDHd,0,SSL_kDHd,  0,0,0,0,SSL_MKEY_MASK,0}, /* no such ciphersuites supported! */
 	{0,SSL_TXT_kEDH,0,SSL_kEDH,  0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_kFZA,0,SSL_kFZA,  0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_kKRB5,0,SSL_kKRB5,0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_kECDHr,0,SSL_kECDHr,0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_kECDHe,0,SSL_kECDHe,0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_kEECDH,0,SSL_kEECDH,0,0,0,0,SSL_MKEY_MASK,0},
         {0,SSL_TXT_kPSK,0,SSL_kPSK,  0,0,0,0,SSL_MKEY_MASK,0},
+
+	/* More key exchange aliases (combined bits) */
 	{0,SSL_TXT_DH,	0,SSL_DH,    0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_ECC,	0,(SSL_kECDH|SSL_kECDHE), 0,0,0,0,SSL_MKEY_MASK,0},
 	{0,SSL_TXT_EDH,	0,SSL_EDH,   0,0,0,0,SSL_MKEY_MASK|SSL_AUTH_MASK,0},
-	{0,SSL_TXT_aKRB5,0,SSL_aKRB5,0,0,0,0,SSL_AUTH_MASK,0},  /* VRS Kerberos5 */
+	{0,SSL_TXT_kECDH,0,SSL_kECDH,0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_ECDH,0,SSL_ECDH,  0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_EECDH,0,SSL_EECDH,0,0,0,0,SSL_MKEY_MASK|SSL_AUTH_MASK,0},
+
+	/* Single authentication bits */
 	{0,SSL_TXT_aRSA,0,SSL_aRSA,  0,0,0,0,SSL_AUTH_MASK,0},
 	{0,SSL_TXT_aDSS,0,SSL_aDSS,  0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_aFZA,0,SSL_aFZA,  0,0,0,0,SSL_AUTH_MASK,0},
-        {0,SSL_TXT_aPSK,0,SSL_aPSK,  0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_aKRB5,0,SSL_aKRB5,0,0,0,0,SSL_AUTH_MASK,0},
 	{0,SSL_TXT_aNULL,0,SSL_aNULL,0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_aDH, 0,SSL_aDH,   0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_DSS,	0,SSL_DSS,   0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_aDH, 0,SSL_aDH,   0,0,0,0,SSL_AUTH_MASK,0}, /* no such ciphersuites supported! */
+	{0,SSL_TXT_aECDH, 0,SSL_aECDH,0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_aECDSA, 0,SSL_aECDSA,0,0,0,0,SSL_AUTH_MASK,0},
+        {0,SSL_TXT_aPSK,0,SSL_aPSK,  0,0,0,0,SSL_AUTH_MASK,0},
 
+	/* More authentication aliases */
+	{0,SSL_TXT_DSS,	0,SSL_DSS,   0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_ECDSA,0,SSL_ECDSA,0,0,0,0,SSL_AUTH_MASK,0},
+
+	/* Single encryption bits */
 	{0,SSL_TXT_DES,	0,SSL_DES,   0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_3DES,0,SSL_3DES,  0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_RC4,	0,SSL_RC4,   0,0,0,0,SSL_ENC_MASK,0},
@@ -226,19 +241,20 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_IDEA,0,SSL_IDEA,  0,0,0,0,SSL_ENC_MASK,0},
 #endif
 	{0,SSL_TXT_eNULL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
-	{0,SSL_TXT_eFZA,0,SSL_eFZA,  0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_AES,	0,SSL_AES,   0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_CAMELLIA,	0,SSL_CAMELLIA,   0,0,0,0,SSL_ENC_MASK,0},
 
+	/* Single MAC bits */	
 	{0,SSL_TXT_MD5,	0,SSL_MD5,   0,0,0,0,SSL_MAC_MASK,0},
 	{0,SSL_TXT_SHA1,0,SSL_SHA1,  0,0,0,0,SSL_MAC_MASK,0},
 	{0,SSL_TXT_SHA,	0,SSL_SHA,   0,0,0,0,SSL_MAC_MASK,0},
 
+	/* More aliases */
 	{0,SSL_TXT_NULL,0,SSL_NULL,  0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_KRB5,0,SSL_KRB5,  0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
 	{0,SSL_TXT_RSA,	0,SSL_RSA,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
 	{0,SSL_TXT_ADH,	0,SSL_ADH,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
-	{0,SSL_TXT_FZA,	0,SSL_FZA,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK|SSL_ENC_MASK,0},
+	{0,SSL_TXT_AECDH,0,SSL_AECDH,0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
         {0,SSL_TXT_PSK, 0,SSL_PSK,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
 
 	{0,SSL_TXT_SSLV2, 0,SSL_SSLV2, 0,0,0,0,SSL_SSL_MASK,0},
@@ -466,7 +482,6 @@ static unsigned long ssl_cipher_get_disabled(void)
 	{
 	unsigned long mask;
 
-	mask = SSL_kFZA;
 #ifdef OPENSSL_NO_RSA
 	mask |= SSL_aRSA|SSL_kRSA;
 #endif
@@ -479,8 +494,11 @@ static unsigned long ssl_cipher_get_disabled(void)
 #ifdef OPENSSL_NO_KRB5
 	mask |= SSL_kKRB5|SSL_aKRB5;
 #endif
+#ifdef OPENSSL_NO_ECDSA
+	mask |= SSL_aECDSA;
+#endif
 #ifdef OPENSSL_NO_ECDH
-	mask |= SSL_kECDH|SSL_kECDHE;
+	mask |= SSL_kECDHe|SSL_kECDHr|SSL_kECDHE|SSL_aECDH;
 #endif
 #ifdef OPENSSL_NO_PSK
 	mask |= SSL_kPSK;
@@ -494,7 +512,6 @@ static unsigned long ssl_cipher_get_disabled(void)
 	mask |= (ssl_cipher_methods[SSL_ENC_RC4_IDX ] == NULL) ? SSL_RC4 :0;
 	mask |= (ssl_cipher_methods[SSL_ENC_RC2_IDX ] == NULL) ? SSL_RC2 :0;
 	mask |= (ssl_cipher_methods[SSL_ENC_IDEA_IDX] == NULL) ? SSL_IDEA:0;
-	mask |= (ssl_cipher_methods[SSL_ENC_eFZA_IDX] == NULL) ? SSL_eFZA:0;
 	mask |= (ssl_cipher_methods[SSL_ENC_AES128_IDX] == NULL) ? SSL_AES:0;
 	mask |= (ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] == NULL) ? SSL_CAMELLIA:0;
 
@@ -581,14 +598,24 @@ static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
 
 	/*
 	 * Now we add the available ones from the cipher_aliases[] table.
-	 * They represent either an algorithm, that must be fully
-	 * supported (not match any bit in mask) or represent a cipher
-	 * strength value (will be added in any case because algorithms=0).
+	 * They represent either an algorithm, that must be
+	 * supported (not disabled through 'mask', i.e. all of the
+	 * SSL_MKEY_MASK, SSL_AUTH_MASK, .. bits in the alias are set in 'mask')
+	 * or represent a cipher strength value (will be added in any case because algorithms=0).
 	 */
 	for (i = 0; i < num_of_group_aliases; i++)
 		{
-		if ((i == 0) ||		/* always fetch "ALL" */
-		    !(cipher_aliases[i].algorithms & mask))
+		int algorithms = cipher_aliases[i].algorithms;
+
+		if ((i == 0) /* always fetch "ALL" */ ||
+		    !(((SSL_MKEY_MASK & algorithms) && (SSL_MKEY_MASK & mask)
+		       && ((algorithms & SSL_MKEY_MASK & mask) == (SSL_MKEY_MASK & mask))) ||
+		      ((SSL_AUTH_MASK & algorithms) && (SSL_AUTH_MASK & mask)
+		       && ((algorithms & SSL_AUTH_MASK & mask) == (SSL_AUTH_MASK & mask))) ||
+		      ((SSL_ENC_MASK & algorithms) && (SSL_ENC_MASK & mask)
+		       && ((algorithms & SSL_ENC_MASK & mask) == (SSL_ENC_MASK & mask))) ||
+		      ((SSL_MAC_MASK & algorithms) && (SSL_MAC_MASK & mask)
+		       && ((algorithms & SSL_MAC_MASK & mask) == (SSL_MAC_MASK & mask)))))
 			{
 			*ca_curr = (SSL_CIPHER *)(cipher_aliases + i);
 			ca_curr++;
@@ -1105,19 +1132,20 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_kDHd:
 		kx="DH/DSS";
 		break;
-        case SSL_kKRB5:         /* VRS */
-        case SSL_KRB5:          /* VRS */
-            kx="KRB5";
-            break;
-	case SSL_kFZA:
-		kx="Fortezza";
+        case SSL_kKRB5:
+		kx="KRB5";
 		break;
 	case SSL_kEDH:
 		kx=is_export?(pkl == 512 ? "DH(512)" : "DH(1024)"):"DH";
 		break;
-	case SSL_kECDH:
-	case SSL_kECDHE:
-		kx=is_export?"ECDH(<=163)":"ECDH";
+	case SSL_kECDHr:
+		kx="ECDH/RSA";
+		break;
+	case SSL_kECDHe:
+		kx="ECDH/ECDSA";
+		break;
+	case SSL_kEECDH:
+		kx="ECDH";
 		break;
 	case SSL_kPSK:
 		kx="PSK";
@@ -1137,11 +1165,12 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_aDH:
 		au="DH";
 		break;
-        case SSL_aKRB5:         /* VRS */
-        case SSL_KRB5:          /* VRS */
-            au="KRB5";
-            break;
-	case SSL_aFZA:
+        case SSL_aKRB5:
+		au="KRB5";
+		break;
+        case SSL_aECDH:
+		au="ECDH";
+		break;
 	case SSL_aNULL:
 		au="None";
 		break;
@@ -1173,9 +1202,6 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_IDEA:
 		enc="IDEA(128)";
-		break;
-	case SSL_eFZA:
-		enc="Fortezza";
 		break;
 	case SSL_eNULL:
 		enc="None";

@@ -1308,7 +1308,7 @@ int ssl3_get_key_exchange(SSL *s)
 #endif /* !OPENSSL_NO_DH */
 
 #ifndef OPENSSL_NO_ECDH
-	else if (alg & SSL_kECDHE)
+	else if (alg & SSL_kEECDH)
 		{
 		EC_GROUP *ngroup;
 		const EC_GROUP *group;
@@ -1407,19 +1407,13 @@ int ssl3_get_key_exchange(SSL *s)
 		EC_POINT_free(srvr_ecpoint);
 		srvr_ecpoint = NULL;
 		}
-	else if (alg & SSL_kECDH)
+	else if (alg)
 		{
 		al=SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
 		goto f_err;
 		}
 #endif /* !OPENSSL_NO_ECDH */
-	if (alg & SSL_aFZA)
-		{
-		al=SSL_AD_HANDSHAKE_FAILURE;
-		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER);
-		goto f_err;
-		}
 
 
 	/* p points to the next byte, there are 'n' bytes left */
@@ -2009,7 +2003,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 #endif
 
 #ifndef OPENSSL_NO_ECDH 
-		else if ((l & SSL_kECDH) || (l & SSL_kECDHE))
+		else if ((l & SSL_kECDH) || (l & SSL_kEECDH))
 			{
 			const EC_GROUP *srvr_group = NULL;
 			EC_KEY *tkey;

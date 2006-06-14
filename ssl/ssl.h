@@ -277,31 +277,43 @@ extern "C" {
 #define SSL_TXT_LOW		"LOW"
 #define SSL_TXT_MEDIUM		"MEDIUM"
 #define SSL_TXT_HIGH		"HIGH"
-#define SSL_TXT_kFZA		"kFZA"
-#define	SSL_TXT_aFZA		"aFZA"
-#define SSL_TXT_eFZA		"eFZA"
-#define SSL_TXT_FZA		"FZA"
+#define SSL_TXT_kFZA		"kFZA" /* unused! */
+#define	SSL_TXT_aFZA		"aFZA" /* unused! */
+#define SSL_TXT_eFZA		"eFZA" /* unused! */
+#define SSL_TXT_FZA		"FZA"  /* unused! */
 
 #define	SSL_TXT_aNULL		"aNULL"
 #define	SSL_TXT_eNULL		"eNULL"
 #define	SSL_TXT_NULL		"NULL"
 
-#define SSL_TXT_kKRB5     	"kKRB5"
-#define SSL_TXT_aKRB5     	"aKRB5"
-#define SSL_TXT_KRB5      	"KRB5"
-
 #define SSL_TXT_kRSA		"kRSA"
-#define SSL_TXT_kDHr		"kDHr"
-#define SSL_TXT_kDHd		"kDHd"
+#define SSL_TXT_kDHr		"kDHr" /* no such ciphersuites supported! */
+#define SSL_TXT_kDHd		"kDHd" /* no such ciphersuites supported! */
 #define SSL_TXT_kEDH		"kEDH"
+#define SSL_TXT_kKRB5     	"kKRB5"
+#define SSL_TXT_kECDHr		"kECDHr"
+#define SSL_TXT_kECDHe		"kECDHe"
+#define SSL_TXT_kECDH		"kECDH"
+#define SSL_TXT_kEECDH		"kEECDH"
+#define SSL_TXT_kPSK            "kPSK"
+
 #define	SSL_TXT_aRSA		"aRSA"
 #define	SSL_TXT_aDSS		"aDSS"
-#define	SSL_TXT_aDH		"aDH"
+#define	SSL_TXT_aDH		"aDH" /* no such ciphersuites supported! */
+#define	SSL_TXT_aECDH		"aECDH"
+#define SSL_TXT_aKRB5     	"aKRB5"
+#define SSL_TXT_aECDSA		"aECDSA"
+#define SSL_TXT_aPSK            "aPSK"
+
 #define	SSL_TXT_DSS		"DSS"
 #define SSL_TXT_DH		"DH"
-#define SSL_TXT_EDH		"EDH"
+#define SSL_TXT_EDH		"EDH" /* same as "kEDH:-ADH" */
 #define SSL_TXT_ADH		"ADH"
 #define SSL_TXT_RSA		"RSA"
+#define SSL_TXT_ECDH		"ECDH"
+#define SSL_TXT_EECDH		"EECDH" /* same as "kEECDH:-AECDH" */
+#define SSL_TXT_AECDH		"AECDH"
+#define SSL_TXT_ECDSA		"ECDSA"
 #define SSL_TXT_DES		"DES"
 #define SSL_TXT_3DES		"3DES"
 #define SSL_TXT_RC4		"RC4"
@@ -319,11 +331,10 @@ extern "C" {
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
-#define SSL_TXT_ALL		"ALL"
-#define SSL_TXT_ECC		"ECCdraft" /* ECC ciphersuites are not yet official */
+#define SSL_TXT_KRB5      	"KRB5"
 #define SSL_TXT_PSK             "PSK"
-#define SSL_TXT_kPSK            "kPSK"
-#define SSL_TXT_aPSK            "aPSK"
+
+#define SSL_TXT_ALL		"ALL"
 
 /*
  * COMPLEMENTOF* definitions. These identifiers are used to (de-select)
@@ -345,7 +356,7 @@ extern "C" {
 /* The following cipher list is used by default.
  * It also is substituted when an application-defined cipher list string
  * starts with 'DEFAULT'. */
-#define SSL_DEFAULT_CIPHER_LIST	"AES:CAMELLIA:ALL:!ADH:+RC4:@STRENGTH" /* low priority for RC4 */
+#define SSL_DEFAULT_CIPHER_LIST	"AES:CAMELLIA:ALL:!ADH:!AECDH:+RC4:@STRENGTH" /* low priority for RC4 */
 
 /* Used in SSL_set_shutdown()/SSL_get_shutdown(); */
 #define SSL_SENT_SHUTDOWN	1

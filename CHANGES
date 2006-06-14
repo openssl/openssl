@@ -4,6 +4,39 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) Various modifications and fixes to SSL/TLS cipher string
+     handling.  For ECC, the code now distinguishes between fixed ECDH
+     with RSA certificates on the one hand and with ECDSA certificates
+     on the other hand, since these are separate ciphersuites.  The
+     unused code for Fortezza ciphersuites has been removed.
+
+     For consistency with EDH, ephemeral ECDH is now called "EECDH"
+     (not "ECDHE").  For consistency with the code for DH
+     certificates, use of ECDH certificates is now considered ECDH
+     authentication, not RSA or ECDSA authentication (the latter is
+     merely the CA's signing algorithm and not actively used in the
+     protocol).
+
+     The temporary ciphersuite alias "ECCdraft" is no longer
+     available, and ECC ciphersuites are no longer excluded from "ALL"
+     and "DEFAULT".  The following aliases now exist for RFC 4492
+     ciphersuites, most of these by analogy with the DH case:
+
+         kECDHr   - ECDH cert, signed with RSA
+         kECDHe   - ECDH cert, signed with ECDSA
+         kECDH    - ECDH cert (signed with either RSA or ECDSA)
+         kEECDH   - ephemeral ECDH
+         ECDH     - ECDH cert or ephemeral ECDH
+
+         aECDH    - ECDH cert
+         aECDSA   - ECDSA cert
+         ECDSA    - ECDSA cert
+
+         AECDH    - anonymous ECDH
+         EECDH    - non-anonymous ephemeral ECDH (equivalent to "kEECDH:-AECDH")
+
+     [Bodo Moeller]
+
   *) Add additional S/MIME capabilities for AES and GOST ciphers if supported.
      Use correct micalg parameters depending on digest(s) in signed message.
      [Steve Henson]

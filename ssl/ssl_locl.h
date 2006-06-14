@@ -277,33 +277,36 @@
  */
 #define SSL_MKEY_MASK		0x200000FFL
 #define SSL_kRSA		0x00000001L /* RSA key exchange */
-#define SSL_kDHr		0x00000002L /* DH cert RSA CA cert */
-#define SSL_kDHd		0x00000004L /* DH cert DSA CA cert */
-#define SSL_kFZA		0x00000008L
-#define SSL_kEDH		0x00000010L /* tmp DH key no DH cert */
-#define SSL_kKRB5		0x00000020L /* Kerberos5 key exchange */
-#define SSL_kECDH               0x00000040L /* ECDH w/ long-term keys */
-#define SSL_kECDHE              0x00000080L /* ephemeral ECDH */
+#define SSL_kDHr		0x00000002L /* DH cert, RSA CA cert */ /* no such ciphersuites supported! */
+#define SSL_kDHd		0x00000004L /* DH cert, DSA CA cert */ /* no such ciphersuite supported! */
+#define SSL_kEDH		0x00000008L /* tmp DH key no DH cert */
 #define SSL_EDH			(SSL_kEDH|(SSL_AUTH_MASK^SSL_aNULL))
-#define SSL_kPSK                0x20000000L /* PSK */
+#define SSL_kKRB5		0x00000010L /* Kerberos5 key exchange */
+#define SSL_kECDHr		0x00000020L /* ECDH cert, RSA CA cert */
+#define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
+#define SSL_kECDH		(SSL_kECDHr|SSL_kECDHe)
+#define SSL_kEECDH		0x00000080L /* ephemeral ECDH */
+#define SSL_EECDH		(SSL_kEECDH|(SSL_AUTH_MASK^SSL_aNULL))
+#define SSL_kPSK		0x20000000L /* PSK */
 
 #define SSL_AUTH_MASK		0x10007f00L
-#define SSL_aRSA		0x00000100L /* Authenticate with RSA */
-#define SSL_aDSS 		0x00000200L /* Authenticate with DSS */
+#define SSL_aRSA		0x00000100L /* RSA auth */
+#define SSL_aDSS 		0x00000200L /* DSS auth */
 #define SSL_DSS 		SSL_aDSS
-#define SSL_aFZA 		0x00000400L
-#define SSL_aNULL 		0x00000800L /* no Authenticate, ADH */
-#define SSL_aDH 		0x00001000L /* no Authenticate, ADH */
-#define SSL_aKRB5               0x00002000L /* Authenticate with KRB5 */
-#define SSL_aECDSA              0x00004000L /* Authenticate with ECDSA */
-#define SSL_aPSK                0x10000000L /* PSK */
+#define SSL_aNULL 		0x00000400L /* no auth (i.e. use ADH or AECDH) */
+#define SSL_aDH 		0x00000800L /* Fixed DH auth (kDHd or kDHr) */ /* no such ciphersuites supported! */
+#define SSL_aECDH 		0x00001000L /* Fixed ECDH auth (kECDHe or kECDHr) */
+#define SSL_aKRB5               0x00002000L /* KRB5 auth */
+#define SSL_aECDSA              0x00004000L /* ECDSA auth*/
+#define SSL_ECDSA 		SSL_aECDSA
+#define SSL_aPSK                0x10000000L /* PSK auth */
 
 #define SSL_NULL		(SSL_eNULL)
-#define SSL_ADH			(SSL_kEDH|SSL_aNULL)
 #define SSL_RSA			(SSL_kRSA|SSL_aRSA)
 #define SSL_DH			(SSL_kDHr|SSL_kDHd|SSL_kEDH)
-#define SSL_ECDH		(SSL_kECDH|SSL_kECDHE)
-#define SSL_FZA			(SSL_aFZA|SSL_kFZA|SSL_eFZA)
+#define SSL_ADH			(SSL_kEDH|SSL_aNULL)
+#define SSL_ECDH		(SSL_kECDH|SSL_kEECDH)
+#define SSL_AECDH		(SSL_kEECDH|SSL_aNULL)
 #define SSL_KRB5                (SSL_kKRB5|SSL_aKRB5)
 #define SSL_PSK                 (SSL_kPSK|SSL_aPSK)
 
@@ -313,7 +316,6 @@
 #define SSL_RC4			0x00020000L
 #define SSL_RC2			0x00040000L
 #define SSL_IDEA		0x00080000L
-#define SSL_eFZA		0x00100000L
 #define SSL_eNULL		0x00200000L
 #define SSL_AES			0x04000000L
 #define SSL_CAMELLIA		0x08000000L

@@ -1784,15 +1784,15 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 			    (signature_nid == NID_md4WithRSAEncryption) ||
 			    (signature_nid == NID_md2WithRSAEncryption))
 				{
-				mask|=SSL_kECDH|SSL_aRSA;
+				mask|=SSL_kECDHr|SSL_aECDH;
 				if (ecc_pkey_size <= 163)
-					emask|=SSL_kECDH|SSL_aRSA;
+					emask|=SSL_kECDHr|SSL_aECDH;
 				}
 			if (signature_nid == NID_ecdsa_with_SHA1)
 				{
-				mask|=SSL_kECDH|SSL_aECDSA;
+				mask|=SSL_kECDHe|SSL_aECDH;
 				if (ecc_pkey_size <= 163)
-					emask|=SSL_kECDH|SSL_aECDSA;
+					emask|=SSL_kECDHe|SSL_aECDH;
 				}
 			}
 #endif
@@ -1808,8 +1808,8 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 #ifndef OPENSSL_NO_ECDH
 	if (have_ecdh_tmp)
 		{
-		mask|=SSL_kECDHE;
-		emask|=SSL_kECDHE;
+		mask|=SSL_kEECDH;
+		emask|=SSL_kEECDH;
 		}
 #endif
 
@@ -1902,13 +1902,13 @@ X509 *ssl_get_server_send_cert(SSL *s)
 
 	if (kalg & SSL_kECDH)
 		{
-		/* we don't need to look at SSL_kECDHE 
+		/* we don't need to look at SSL_kEECDH
 		 * since no certificate is needed for
 		 * anon ECDH and for authenticated
-		 * ECDHE, the check for the auth 
+		 * EECDH, the check for the auth
 		 * algorithm will set i correctly
 		 * NOTE: For ECDH-RSA, we need an ECC
-		 * not an RSA cert but for ECDHE-RSA
+		 * not an RSA cert but for EECDH-RSA
 		 * we need an RSA cert. Placing the
 		 * checks for SSL_kECDH before RSA
 		 * checks ensures the correct cert is chosen.
