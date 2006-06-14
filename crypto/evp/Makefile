@@ -195,15 +195,7 @@ e_bf.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 e_bf.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 e_bf.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 e_bf.o: ../../include/openssl/symhacks.h ../cryptlib.h e_bf.c evp_locl.h
-e_camellia.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-e_camellia.o: ../../include/openssl/camellia.h ../../include/openssl/crypto.h
-e_camellia.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-e_camellia.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-e_camellia.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-e_camellia.o: ../../include/openssl/opensslconf.h
-e_camellia.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-e_camellia.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-e_camellia.o: ../../include/openssl/symhacks.h e_camellia.c evp_locl.h
+e_camellia.o: ../../include/openssl/opensslconf.h e_camellia.c
 e_cast.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_cast.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
 e_cast.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
