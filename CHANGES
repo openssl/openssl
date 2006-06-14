@@ -4,7 +4,9 @@
 
  Changes between 0.9.7j and 0.9.7k  [xx XXX xxxx]
 
-  *)
+  *) Fix RSA blinding Heisenbug (problems sometimes occured on
+     dual-core machines) and other potential thread-safety issues.
+     [Bodo Moeller]
 
  Changes between 0.9.7i and 0.9.7j  [04 May 2006]
 
