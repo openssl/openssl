@@ -583,6 +583,7 @@ static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
 	CIPHER_ORDER *ciph_curr;
 	SSL_CIPHER **ca_curr;
 	int i;
+	unsigned long enabled_mask = ~mask;
 
 	/*
 	 * First, add the real ciphers as already collected
@@ -598,28 +599,40 @@ static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
 
 	/*
 	 * Now we add the available ones from the cipher_aliases[] table.
-	 * They represent either an algorithm, that must be
-	 * supported (not disabled through 'mask', i.e. all of the
-	 * SSL_MKEY_MASK, SSL_AUTH_MASK, .. bits in the alias are set in 'mask')
+	 * They represent either one or more algorithms, some of which
+	 * in any affected category must be supported (set in enabled_mask),
 	 * or represent a cipher strength value (will be added in any case because algorithms=0).
 	 */
 	for (i = 0; i < num_of_group_aliases; i++)
 		{
 		int algorithms = cipher_aliases[i].algorithms;
 
-		if ((i == 0) /* always fetch "ALL" */ ||
-		    !(((SSL_MKEY_MASK & algorithms) && (SSL_MKEY_MASK & mask)
-		       && ((algorithms & SSL_MKEY_MASK & mask) == (SSL_MKEY_MASK & mask))) ||
-		      ((SSL_AUTH_MASK & algorithms) && (SSL_AUTH_MASK & mask)
-		       && ((algorithms & SSL_AUTH_MASK & mask) == (SSL_AUTH_MASK & mask))) ||
-		      ((SSL_ENC_MASK & algorithms) && (SSL_ENC_MASK & mask)
-		       && ((algorithms & SSL_ENC_MASK & mask) == (SSL_ENC_MASK & mask))) ||
-		      ((SSL_MAC_MASK & algorithms) && (SSL_MAC_MASK & mask)
-		       && ((algorithms & SSL_MAC_MASK & mask) == (SSL_MAC_MASK & mask)))))
+		if (SSL_MKEY_MASK & algorithms)
 			{
-			*ca_curr = (SSL_CIPHER *)(cipher_aliases + i);
-			ca_curr++;
+			if ((SSL_MKEY_MASK & algorithms & enabled_mask) == 0)
+				continue;
 			}
+		
+		if (SSL_AUTH_MASK & algorithms)
+			{
+			if ((SSL_AUTH_MASK & algorithms & enabled_mask) == 0)
+				continue;
+			}
+		
+		if (SSL_ENC_MASK & algorithms)
+			{
+			if ((SSL_ENC_MASK & algorithms & enabled_mask) == 0)
+				continue;
+			}
+		
+		if (SSL_MAC_MASK & algorithms)
+			{
+			if ((SSL_MAC_MASK & algorithms & enabled_mask) == 0)
+				continue;
+			}
+		
+		*ca_curr = (SSL_CIPHER *)(cipher_aliases + i);
+		ca_curr++;
 		}
 
 	*ca_curr = NULL;	/* end of list */
