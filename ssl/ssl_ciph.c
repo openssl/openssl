@@ -480,7 +480,7 @@ static void ll_append_tail(CIPHER_ORDER **head, CIPHER_ORDER *curr,
 
 static unsigned long ssl_cipher_get_disabled(void)
 	{
-	unsigned long mask;
+	unsigned long mask = 0;
 
 #ifdef OPENSSL_NO_RSA
 	mask |= SSL_aRSA|SSL_kRSA;
@@ -628,7 +628,7 @@ static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
 static void ssl_cipher_apply_rule(unsigned long cipher_id,
 		unsigned long algorithms, unsigned long mask,
 		unsigned long algo_strength, unsigned long mask_strength,
-		int rule, int strength_bits, CIPHER_ORDER *co_list,
+		int rule, int strength_bits,
 		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 	{
 	CIPHER_ORDER *head, *tail, *curr, *curr2, *tail2;
@@ -731,8 +731,7 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 	*tail_p = tail;
 	}
 
-static int ssl_cipher_strength_sort(CIPHER_ORDER *co_list,
-				    CIPHER_ORDER **head_p,
+static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 				    CIPHER_ORDER **tail_p)
 	{
 	int max_strength_bits, i, *number_uses;
@@ -778,15 +777,15 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER *co_list,
 	for (i = max_strength_bits; i >= 0; i--)
 		if (number_uses[i] > 0)
 			ssl_cipher_apply_rule(0, 0, 0, 0, 0, CIPHER_ORD, i,
-					co_list, head_p, tail_p);
+					head_p, tail_p);
 
 	OPENSSL_free(number_uses);
 	return(1);
 	}
 
 static int ssl_cipher_process_rulestr(const char *rule_str,
-		CIPHER_ORDER *co_list, CIPHER_ORDER **head_p,
-		CIPHER_ORDER **tail_p, SSL_CIPHER **ca_list)
+                CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p,
+                SSL_CIPHER **ca_list)
 	{
 	unsigned long algorithms, mask, algo_strength, mask_strength;
 	const char *l, *start, *buf;
@@ -927,8 +926,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			ok = 0;
 			if ((buflen == 8) &&
 				!strncmp(buf, "STRENGTH", 8))
-				ok = ssl_cipher_strength_sort(co_list,
-					head_p, tail_p);
+				ok = ssl_cipher_strength_sort(head_p, tail_p);
 			else
 				SSLerr(SSL_F_SSL_CIPHER_PROCESS_RULESTR,
 					SSL_R_INVALID_COMMAND);
@@ -947,7 +945,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			{
 			ssl_cipher_apply_rule(cipher_id, algorithms, mask,
 				algo_strength, mask_strength, rule, -1,
-				co_list, head_p, tail_p);
+				head_p, tail_p);
 			}
 		else
 			{
@@ -1033,15 +1031,14 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	if (strncmp(rule_str,"DEFAULT",7) == 0)
 		{
 		ok = ssl_cipher_process_rulestr(SSL_DEFAULT_CIPHER_LIST,
-			co_list, &head, &tail, ca_list);
+			&head, &tail, ca_list);
 		rule_p += 7;
 		if (*rule_p == ':')
 			rule_p++;
 		}
 
 	if (ok && (strlen(rule_p) > 0))
-		ok = ssl_cipher_process_rulestr(rule_p, co_list, &head, &tail,
-						ca_list);
+		ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list);
 
 	OPENSSL_free(ca_list);	/* Not needed anymore */
 
