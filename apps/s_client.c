@@ -925,10 +925,10 @@ re_start:
 				{
 				in_init=0;
 #ifndef OPENSSL_NO_TLSEXT
-	if (servername != NULL && !SSL_session_reused(con))
-		{
-		BIO_printf(bio_c_out,"Server did %sacknowledge servername extension.\n",tlsextcbp.ack?"":"not ");
-		}
+				if (servername != NULL && !SSL_session_reused(con))
+					{
+					BIO_printf(bio_c_out,"Server did %sacknowledge servername extension.\n",tlsextcbp.ack?"":"not ");
+					}
 #endif
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
@@ -1261,6 +1261,8 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 			}
 		}
 shut:
+	if (in_init)
+		print_stuff(bio_c_out,con,full_log);
 	SSL_shutdown(con);
 	SHUTDOWN(SSL_get_fd(con));
 	ret=0;
