@@ -2309,7 +2309,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #ifndef OPENSSL_NO_EC
 		if (
 			/* if we are considering an ECC cipher suite that uses our certificate */
-			(alg & SSL_aECDSA)
+			(alg & SSL_aECDSA || alg & SSL_aECDH)
 			/* and we have an ECC certificate */
 			&& (s->cert->pkeys[SSL_PKEY_ECC].x509 != NULL)
 			/* and the client specified a Supported Point Formats extension */
@@ -2361,7 +2361,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 			}
 		if (
 			/* if we are considering an ECC cipher suite that uses our certificate */
-			(alg & SSL_aECDSA)
+			(alg & SSL_aECDSA || alg & SSL_aECDH)
 			/* and we have an ECC certificate */
 			&& (s->cert->pkeys[SSL_PKEY_ECC].x509 != NULL)
 			/* and the client specified an EllipticCurves extension */
@@ -2411,7 +2411,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 			}
 		if (
 			/* if we are considering an ECC cipher suite that uses an ephemeral EC key */
-			((alg & SSL_kECDH) || (alg & SSL_kEECDH))
+			(alg & SSL_kEECDH)
 			/* and we have an ephemeral EC key */
 			&& (s->cert->ecdh_tmp != NULL)
 			/* and the client specified an EllipticCurves extension */

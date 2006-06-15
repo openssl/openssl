@@ -1707,8 +1707,8 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	emask=0;
 
 #ifdef CIPHER_DEBUG
-	printf("rt=%d rte=%d dht=%d re=%d ree=%d rs=%d ds=%d dhr=%d dhd=%d\n",
-		rsa_tmp,rsa_tmp_export,dh_tmp,
+	printf("rt=%d rte=%d dht=%d ecdht=%d re=%d ree=%d rs=%d ds=%d dhr=%d dhd=%d\n",
+	        rsa_tmp,rsa_tmp_export,dh_tmp,ecdh_tmp,
 		rsa_enc,rsa_enc_export,rsa_sign,dsa_sign,dh_rsa,dh_dsa);
 #endif
 
@@ -1780,14 +1780,20 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 #ifndef OPENSSL_NO_ECDH
 		if (ecdh_ok)
 			{
-			if ((signature_nid == NID_md5WithRSAEncryption) ||
-			    (signature_nid == NID_md4WithRSAEncryption) ||
-			    (signature_nid == NID_md2WithRSAEncryption))
+			const char *sig = OBJ_nid2ln(signature_nid);
+			if (sig == NULL)
+				{
+				ERR_clear_error();
+				sig = "unknown";
+				}
+				
+			if (strstr(sig, "WithRSA"))
 				{
 				mask|=SSL_kECDHr|SSL_aECDH;
 				if (ecc_pkey_size <= 163)
 					emask|=SSL_kECDHr|SSL_aECDH;
 				}
+
 			if (signature_nid == NID_ecdsa_with_SHA1)
 				{
 				mask|=SSL_kECDHe|SSL_aECDH;
@@ -1848,14 +1854,14 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 	X509_check_purpose(x, -1, 0);
 	if ((x->sig_alg) && (x->sig_alg->algorithm))
 		signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
-	if (alg & SSL_kECDH) 
+	if (alg & SSL_kECDHe || alg & SSL_kECDHr) 
 		{
 		/* key usage, if present, must allow key agreement */
 		if (ku_reject(x, X509v3_KU_KEY_AGREEMENT))
 			{
 			return 0;
 			}
-		if (alg & SSL_aECDSA) 
+		if (alg & SSL_kECDHe)
 			{
 			/* signature alg must be ECDSA */
 			if (signature_nid != NID_ecdsa_with_SHA1)
@@ -1863,18 +1869,21 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 				return 0;
 				}
 			}
-		if (alg & SSL_aRSA)
+		if (alg & SSL_kECDHr)
 			{
 			/* signature alg must be RSA */
-			if ((signature_nid != NID_md5WithRSAEncryption) &&
-			    (signature_nid != NID_md4WithRSAEncryption) &&
-			    (signature_nid != NID_md2WithRSAEncryption))
+
+			const char *sig = OBJ_nid2ln(signature_nid);
+			if (sig == NULL)
 				{
-				return 0;
+				ERR_clear_error();
+				sig = "unknown";
 				}
+			if (strstr(sig, "WithRSA") == NULL)
+				return 0;
 			}
 		} 
-	else if (alg & SSL_aECDSA)
+	if (alg & SSL_aECDSA)
 		{
 		/* key usage, if present, must allow signing */
 		if (ku_reject(x, X509v3_KU_DIGITAL_SIGNATURE))
