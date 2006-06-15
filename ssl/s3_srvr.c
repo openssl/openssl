@@ -374,6 +374,7 @@ int ssl3_accept(SSL *s)
 #ifndef OPENSSL_NO_PSK
 			    || ((l & SSL_kPSK) && s->ctx->psk_identity_hint)
 #endif
+			    || (l & SSL_DH)
 			    || (l & SSL_kEECDH)
 			    || ((l & SSL_kRSA)
 				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
