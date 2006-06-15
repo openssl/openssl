@@ -356,7 +356,8 @@ extern "C" {
 /* The following cipher list is used by default.
  * It also is substituted when an application-defined cipher list string
  * starts with 'DEFAULT'. */
-#define SSL_DEFAULT_CIPHER_LIST	"AES:CAMELLIA:ALL:!ADH:!AECDH:+RC4:@STRENGTH" /* low priority for RC4 */
+#define SSL_DEFAULT_CIPHER_LIST	"AES:CAMELLIA:ALL:!ADH:!AECDH:+aECDH:+kRSA:+RC4:@STRENGTH"
+/* low priority for ciphersuites w/o forwared secrecy (fixed ECDH, RSA key exchange), and for RC4 */
 
 /* Used in SSL_set_shutdown()/SSL_get_shutdown(); */
 #define SSL_SENT_SHUTDOWN	1
@@ -1791,6 +1792,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_CERT_INSTANTIATE			 214
 #define SSL_F_SSL_CERT_NEW				 162
 #define SSL_F_SSL_CHECK_PRIVATE_KEY			 163
+#define SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG		 279
 #define SSL_F_SSL_CIPHER_PROCESS_RULESTR		 230
 #define SSL_F_SSL_CIPHER_STRENGTH_SORT			 231
 #define SSL_F_SSL_CLEAR					 164
@@ -1926,6 +1928,10 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_DH_PUBLIC_VALUE_LENGTH_IS_WRONG		 148
 #define SSL_R_DIGEST_CHECK_FAILED			 149
 #define SSL_R_DUPLICATE_COMPRESSION_ID			 309
+#define SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT		 317
+#define SSL_R_ECC_CERT_NOT_FOR_SIGNING			 318
+#define SSL_R_ECC_CERT_SHOULD_HAVE_RSA_SIGNATURE	 322
+#define SSL_R_ECC_CERT_SHOULD_HAVE_SHA1_SIGNATURE	 323
 #define SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER		 310
 #define SSL_R_ENCRYPTED_LENGTH_TOO_LONG			 150
 #define SSL_R_ERROR_GENERATING_TMP_RSA_KEY		 282

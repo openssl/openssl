@@ -164,10 +164,6 @@
 static const SSL_METHOD *ssl3_get_client_method(int ver);
 static int ca_dn_cmp(const X509_NAME * const *a,const X509_NAME * const *b);
 
-#ifndef OPENSSL_NO_ECDH
-int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs);
-#endif
-
 static const SSL_METHOD *ssl3_get_client_method(int ver)
 	{
 	if (ver == SSL3_VERSION)
@@ -2506,7 +2502,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 #ifndef OPENSSL_NO_ECDH
 	if (idx == SSL_PKEY_ECC)
 		{
-		if (check_srvr_ecc_cert_and_alg(sc->peer_pkeys[idx].x509,
+		if (ssl_check_srvr_ecc_cert_and_alg(sc->peer_pkeys[idx].x509,
 		    s->s3->tmp.new_cipher) == 0) 
 			{ /* check failed */
 			SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_BAD_ECC_CERT);

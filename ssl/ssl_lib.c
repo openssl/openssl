@@ -1833,7 +1833,7 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 #define ku_reject(x, usage) \
 	(((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
 
-int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
+int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 	{
 	unsigned long alg = cs->algorithms;
 	EVP_PKEY *pkey = NULL;
@@ -1859,6 +1859,7 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 		/* key usage, if present, must allow key agreement */
 		if (ku_reject(x, X509v3_KU_KEY_AGREEMENT))
 			{
+			SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG, SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT);
 			return 0;
 			}
 		if (alg & SSL_kECDHe)
@@ -1866,6 +1867,7 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 			/* signature alg must be ECDSA */
 			if (signature_nid != NID_ecdsa_with_SHA1)
 				{
+				SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG, SSL_R_ECC_CERT_SHOULD_HAVE_SHA1_SIGNATURE);
 				return 0;
 				}
 			}
@@ -1880,7 +1882,10 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 				sig = "unknown";
 				}
 			if (strstr(sig, "WithRSA") == NULL)
+				{
+				SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG, SSL_R_ECC_CERT_SHOULD_HAVE_RSA_SIGNATURE);
 				return 0;
+				}
 			}
 		} 
 	if (alg & SSL_aECDSA)
@@ -1888,6 +1893,7 @@ int check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 		/* key usage, if present, must allow signing */
 		if (ku_reject(x, X509v3_KU_DIGITAL_SIGNATURE))
 			{
+			SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
 			return 0;
 			}
 		}

@@ -190,7 +190,7 @@ typedef struct cipher_order_st
 	} CIPHER_ORDER;
 
 static const SSL_CIPHER cipher_aliases[]={
-	/* "ALL" must be first; it doesn't include eNULL (must be specifically enabled) */
+	/* "ALL" doesn't include eNULL (must be specifically enabled) */
 	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL, SSL_ALL ,0,0,0,SSL_ALL,SSL_ALL},
 	/* "COMPLEMENTOFALL" */
 	{0,SSL_TXT_CMPALL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
