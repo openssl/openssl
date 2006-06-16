@@ -403,18 +403,32 @@ BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
 BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, int lock,
 					const BIGNUM *mod, BN_CTX *ctx)
 	{
-	if (*pmont)
-		return *pmont;
-	CRYPTO_w_lock(lock);
+	int got_write_lock = 0;
+	BN_MONT_CTX *ret;
+
+	CRYPTO_r_lock(lock);
 	if (!*pmont)
 		{
-		BN_MONT_CTX *mtmp;
-		mtmp = BN_MONT_CTX_new();
-		if (mtmp && !BN_MONT_CTX_set(mtmp, mod, ctx))
-			BN_MONT_CTX_free(mtmp);
-		else
-			*pmont = mtmp;
+		CRYPTO_r_unlock(lock);
+		CRYPTO_w_lock(lock);
+		got_write_lock = 1;
+
+		if (!*pmont)
+			{
+			ret = BN_MONT_CTX_new();
+			if (ret && !BN_MONT_CTX_set(ret, mod, ctx))
+				BN_MONT_CTX_free(ret);
+			else
+				*pmont = ret;
+			}
 		}
-	CRYPTO_w_unlock(lock);
-	return *pmont;
+	
+	ret = *pmont;
+	
+	if (got_write_lock)
+		CRYPTO_w_unlock(lock);
+	else
+		CRYPTO_r_unlock(lock);
+		
+	return ret;
 	}
