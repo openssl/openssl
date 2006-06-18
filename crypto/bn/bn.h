@@ -558,24 +558,24 @@ int	BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
  *     t^p[0] + t^p[1] + ... + t^p[k]
  * where m = p[0] > p[1] > ... > p[k] = 0.
  */
-int	BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[]);
+int	BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[]);
 	/* r = a mod p */
 int	BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
-	const unsigned int p[], BN_CTX *ctx); /* r = (a * b) mod p */
-int	BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[],
+	const int p[], BN_CTX *ctx); /* r = (a * b) mod p */
+int	BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const int p[],
 	BN_CTX *ctx); /* r = (a * a) mod p */
-int	BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *b, const unsigned int p[],
+int	BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *b, const int p[],
 	BN_CTX *ctx); /* r = (1 / b) mod p */
 int	BN_GF2m_mod_div_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
-	const unsigned int p[], BN_CTX *ctx); /* r = (a / b) mod p */
+	const int p[], BN_CTX *ctx); /* r = (a / b) mod p */
 int	BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
-	const unsigned int p[], BN_CTX *ctx); /* r = (a ^ b) mod p */
+	const int p[], BN_CTX *ctx); /* r = (a ^ b) mod p */
 int	BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a,
-	const unsigned int p[], BN_CTX *ctx); /* r = sqrt(a) mod p */
+	const int p[], BN_CTX *ctx); /* r = sqrt(a) mod p */
 int	BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a,
-	const unsigned int p[], BN_CTX *ctx); /* r^2 + r = a mod p */
-int	BN_GF2m_poly2arr(const BIGNUM *a, unsigned int p[], int max);
-int	BN_GF2m_arr2poly(const unsigned int p[], BIGNUM *a);
+	const int p[], BN_CTX *ctx); /* r^2 + r = a mod p */
+int	BN_GF2m_poly2arr(const BIGNUM *a, int p[], int max);
+int	BN_GF2m_arr2poly(const int p[], BIGNUM *a);
 
 /* faster mod functions for the 'NIST primes' 
  * 0 <= a < p^2 */

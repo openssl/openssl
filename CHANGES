@@ -4,6 +4,14 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) Change the array representation of binary polynomials: the list
+     of degrees of non-zero coefficients is now terminated with -1.
+     Previously it was terminated with 0, which was also part of the
+     value; thus, the array representation was not applicable to
+     polynomials where t^0 has coefficient zero.  This change makes
+     the array representation useful in a more general context.
+     [Douglas Stebila]
+
   *) Various modifications and fixes to SSL/TLS cipher string
      handling.  For ECC, the code now distinguishes between fixed ECDH
      with RSA certificates on the one hand and with ECDSA certificates

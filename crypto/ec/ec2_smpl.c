@@ -157,6 +157,7 @@ void ec_GF2m_simple_group_clear_finish(EC_GROUP *group)
 	group->poly[2] = 0;
 	group->poly[3] = 0;
 	group->poly[4] = 0;
+	group->poly[5] = -1;
 	}
 
 
@@ -174,6 +175,7 @@ int ec_GF2m_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 	dest->poly[2] = src->poly[2];
 	dest->poly[3] = src->poly[3];
 	dest->poly[4] = src->poly[4];
+	dest->poly[5] = src->poly[5];
 	bn_wexpand(&dest->a, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2);
 	bn_wexpand(&dest->b, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2);
 	for (i = dest->a.top; i < dest->a.dmax; i++) dest->a.d[i] = 0;
@@ -190,7 +192,7 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 
 	/* group->field */
 	if (!BN_copy(&group->field, p)) goto err;
-	i = BN_GF2m_poly2arr(&group->field, group->poly, 5);
+	i = BN_GF2m_poly2arr(&group->field, group->poly, 6) - 1;
 	if ((i != 5) && (i != 3))
 		{
 		ECerr(EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE, EC_R_UNSUPPORTED_FIELD);

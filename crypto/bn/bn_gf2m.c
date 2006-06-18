@@ -258,7 +258,7 @@ int	BN_GF2m_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 
 
 /* Performs modular reduction of a and store result in r.  r could be a. */
-int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[])
+int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const int p[])
 	{
 	int j, k;
 	int n, dN, d0, d1;
@@ -355,11 +355,11 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[])
 int	BN_GF2m_mod(BIGNUM *r, const BIGNUM *a, const BIGNUM *p)
 	{
 	int ret = 0;
-	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL;
+	const int max = BN_num_bits(p) + 1;
+	int *arr=NULL;
 	bn_check_top(a);
 	bn_check_top(p);
-	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
+	if ((arr = (int *)OPENSSL_malloc(sizeof(int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
 		{
@@ -377,7 +377,7 @@ err:
 /* Compute the product of two polynomials a and b, reduce modulo p, and store
  * the result in r.  r could be a or b; a could be b.
  */
-int	BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsigned int p[], BN_CTX *ctx)
+int	BN_GF2m_mod_mul_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const int p[], BN_CTX *ctx)
 	{
 	int zlen, i, j, k, ret = 0;
 	BIGNUM *s;
@@ -433,12 +433,12 @@ err:
 int	BN_GF2m_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p, BN_CTX *ctx)
 	{
 	int ret = 0;
-	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL;
+	const int max = BN_num_bits(p) + 1;
+	int *arr=NULL;
 	bn_check_top(a);
 	bn_check_top(b);
 	bn_check_top(p);
-	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
+	if ((arr = (int *)OPENSSL_malloc(sizeof(int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
 		{
@@ -454,7 +454,7 @@ err:
 
 
 /* Square a, reduce the result mod p, and store it in a.  r could be a. */
-int	BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_CTX *ctx)
+int	BN_GF2m_mod_sqr_arr(BIGNUM *r, const BIGNUM *a, const int p[], BN_CTX *ctx)
 	{
 	int i, ret = 0;
 	BIGNUM *s;
@@ -489,12 +489,12 @@ err:
 int	BN_GF2m_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	{
 	int ret = 0;
-	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL;
+	const int max = BN_num_bits(p) + 1;
+	int *arr=NULL;
 
 	bn_check_top(a);
 	bn_check_top(p);
-	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
+	if ((arr = (int *)OPENSSL_malloc(sizeof(int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
 		{
@@ -576,7 +576,7 @@ err:
  * function is only provided for convenience; for best performance, use the 
  * BN_GF2m_mod_inv function.
  */
-int BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *xx, const unsigned int p[], BN_CTX *ctx)
+int BN_GF2m_mod_inv_arr(BIGNUM *r, const BIGNUM *xx, const int p[], BN_CTX *ctx)
 	{
 	BIGNUM *field;
 	int ret = 0;
@@ -702,7 +702,7 @@ err:
  * function is only provided for convenience; for best performance, use the 
  * BN_GF2m_mod_div function.
  */
-int BN_GF2m_mod_div_arr(BIGNUM *r, const BIGNUM *yy, const BIGNUM *xx, const unsigned int p[], BN_CTX *ctx)
+int BN_GF2m_mod_div_arr(BIGNUM *r, const BIGNUM *yy, const BIGNUM *xx, const int p[], BN_CTX *ctx)
 	{
 	BIGNUM *field;
 	int ret = 0;
@@ -727,7 +727,7 @@ err:
  * the result in r.  r could be a.
  * Uses simple square-and-multiply algorithm A.5.1 from IEEE P1363.
  */
-int	BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const unsigned int p[], BN_CTX *ctx)
+int	BN_GF2m_mod_exp_arr(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const int p[], BN_CTX *ctx)
 	{
 	int ret = 0, i, n;
 	BIGNUM *u;
@@ -773,12 +773,12 @@ err:
 int BN_GF2m_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *p, BN_CTX *ctx)
 	{
 	int ret = 0;
-	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL;
+	const int max = BN_num_bits(p) + 1;
+	int *arr=NULL;
 	bn_check_top(a);
 	bn_check_top(b);
 	bn_check_top(p);
-	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
+	if ((arr = (int *)OPENSSL_malloc(sizeof(int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
 		{
@@ -796,7 +796,7 @@ err:
  * the result in r.  r could be a.
  * Uses exponentiation as in algorithm A.4.1 from IEEE P1363.
  */
-int	BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[], BN_CTX *ctx)
+int	BN_GF2m_mod_sqrt_arr(BIGNUM *r, const BIGNUM *a, const int p[], BN_CTX *ctx)
 	{
 	int ret = 0;
 	BIGNUM *u;
@@ -832,11 +832,11 @@ err:
 int BN_GF2m_mod_sqrt(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	{
 	int ret = 0;
-	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL;
+	const int max = BN_num_bits(p) + 1;
+	int *arr=NULL;
 	bn_check_top(a);
 	bn_check_top(p);
-	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) * max)) == NULL) goto err;
+	if ((arr = (int *)OPENSSL_malloc(sizeof(int) * max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
 		{
@@ -853,7 +853,7 @@ err:
 /* Find r such that r^2 + r = a mod p.  r could be a. If no r exists returns 0.
  * Uses algorithms A.4.7 and A.4.6 from IEEE P1363.
  */
-int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const unsigned int p[], BN_CTX *ctx)
+int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[], BN_CTX *ctx)
 	{
 	int ret = 0, count = 0;
 	unsigned int j;
@@ -951,11 +951,11 @@ err:
 int BN_GF2m_mod_solve_quad(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	{
 	int ret = 0;
-	const int max = BN_num_bits(p);
-	unsigned int *arr=NULL;
+	const int max = BN_num_bits(p) + 1;
+	int *arr=NULL;
 	bn_check_top(a);
 	bn_check_top(p);
-	if ((arr = (unsigned int *)OPENSSL_malloc(sizeof(unsigned int) *
+	if ((arr = (int *)OPENSSL_malloc(sizeof(int) *
 						max)) == NULL) goto err;
 	ret = BN_GF2m_poly2arr(p, arr, max);
 	if (!ret || ret > max)
@@ -971,20 +971,17 @@ err:
 	}
 
 /* Convert the bit-string representation of a polynomial
- * ( \sum_{i=0}^n a_i * x^i , where a_0 is *not* zero) into an array
- * of integers corresponding to the bits with non-zero coefficient.
+ * ( \sum_{i=0}^n a_i * x^i) into an array of integers corresponding 
+ * to the bits with non-zero coefficient.  Array is terminated with -1.
  * Up to max elements of the array will be filled.  Return value is total
- * number of coefficients that would be extracted if array was large enough.
+ * number of array elements that would be filled if array was large enough.
  */
-int BN_GF2m_poly2arr(const BIGNUM *a, unsigned int p[], int max)
+int BN_GF2m_poly2arr(const BIGNUM *a, int p[], int max)
 	{
 	int i, j, k = 0;
 	BN_ULONG mask;
 
-	if (BN_is_zero(a) || !BN_is_bit_set(a, 0))
-		/* a_0 == 0 => return error (the unsigned int array
-		 * must be terminated by 0)
-		 */
+	if (BN_is_zero(a))
 		return 0;
 
 	for (i = a->top - 1; i >= 0; i--)
@@ -1004,24 +1001,28 @@ int BN_GF2m_poly2arr(const BIGNUM *a, unsigned int p[], int max)
 			}
 		}
 
+	if (k < max) {
+		p[k] = -1;
+		k++;
+	}
+
 	return k;
 	}
 
 /* Convert the coefficient array representation of a polynomial to a 
- * bit-string.  The array must be terminated by 0.
+ * bit-string.  The array must be terminated by -1.
  */
-int BN_GF2m_arr2poly(const unsigned int p[], BIGNUM *a)
+int BN_GF2m_arr2poly(const int p[], BIGNUM *a)
 	{
 	int i;
 
 	bn_check_top(a);
 	BN_zero(a);
-	for (i = 0; p[i] != 0; i++)
+	for (i = 0; p[i] != -1; i++)
 		{
 		if (BN_set_bit(a, p[i]) == 0)
 			return 0;
 		}
-	BN_set_bit(a, 0);
 	bn_check_top(a);
 
 	return 1;
