@@ -315,6 +315,11 @@
 
  Changes between 0.9.8b and 0.9.8c  [xx XXX xxxx]
 
+  *) Disable "ECCdraft" ciphersuites (which were not part of the "ALL"
+     alias).  These are now excluded from compilation by default, since
+     OpenSSL 0.9.9[-dev] should be used for TLS with elliptic curves.
+     [Bodo Moeller]
+
   *) Disable rogue ciphersuites:
 
       - SSLv2 0x08 0x00 0x80 ("RC4-64-MD5")
