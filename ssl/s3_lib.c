@@ -1165,6 +1165,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	},
 #endif /* OPENSSL_NO_CAMELLIA */
 
+#if 0 /* please use OpenSSL 0.9.9 branch for ECC ciphersuites */
 #ifndef OPENSSL_NO_ECDH
 	/* Cipher C001 */
 	    {
@@ -1516,6 +1517,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
             SSL_ALL_STRENGTHS,
             },
 #endif	/* OPENSSL_NO_ECDH */
+#endif
 
 
 /* end of list */
