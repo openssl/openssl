@@ -4,9 +4,13 @@
 
  Changes between 0.9.8b and 0.9.8c  [xx XXX xxxx]
 
-  *) Disable "ECCdraft" ciphersuites (which were not part of the "ALL"
-     alias).  These are now excluded from compilation by default, since
-     OpenSSL 0.9.9[-dev] should be used for TLS with elliptic curves.
+  *) Disable "ECCdraft" ciphersuites more thoroughly.  Now special
+     treatment in ssl/ssl_ciph.s makes sure that these ciphersuites
+     cannot be implicitly activated as part of, e.g., the "AES" alias.
+     However, please upgrade to OpenSSL 0.9.9[-dev] for
+     non-experimental use of the ECC ciphersuites to get TLS extension
+     support, which is required for curve and point format negotiation
+     to avoid potential handshake problems.
      [Bodo Moeller]
 
   *) Disable rogue ciphersuites:

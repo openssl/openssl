@@ -635,8 +635,22 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 			{
 			if (!curr->active)
 				{
-				ll_append_tail(&head, curr, &tail);
-				curr->active = 1;
+				int add_this_cipher = 1;
+
+				if (((cp->algorithms & (SSL_kECDHE|SSL_kECDH|SSL_aECDSA)) != 0))
+					{
+					/* Make sure "ECCdraft" ciphersuites are activated only if
+					 * *explicitly* requested, but not implicitly (such as
+					 * as part of the "AES" alias). */
+
+					add_this_cipher = (mask & (SSL_kECDHE|SSL_kECDH|SSL_aECDSA)) != 0;
+					}
+				
+				if (add_this_cipher)
+					{
+					ll_append_tail(&head, curr, &tail);
+					curr->active = 1;
+					}
 				}
 			}
 		/* Move the added cipher to this location */
