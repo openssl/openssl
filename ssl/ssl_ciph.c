@@ -643,7 +643,7 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 					 * *explicitly* requested, but not implicitly (such as
 					 * as part of the "AES" alias). */
 
-					add_this_cipher = (mask & (SSL_kECDHE|SSL_kECDH|SSL_aECDSA)) != 0;
+					add_this_cipher = (mask & (SSL_kECDHE|SSL_kECDH|SSL_aECDSA)) != 0 || cipher_id != 0;
 					}
 				
 				if (add_this_cipher)
