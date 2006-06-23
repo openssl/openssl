@@ -699,8 +699,11 @@ libraries.  If your platform is not one of these, consult the INSTALL
 file.
 
 Multi-threaded applications must provide two callback functions to
-OpenSSL.  This is described in the threads(3) manpage.
-
+OpenSSL by calling CRYPTO_set_locking_callback() and
+CRYPTO_set_id_callback().  (For OpenSSL 0.9.9 or later, the new
+function CRYPTO_set_idptr_callback() may be used in place of
+CRYPTO_set_id_callback().)  This is described in the threads(3)
+manpage.
 
 * I've compiled a program under Windows and it crashes: why?
 

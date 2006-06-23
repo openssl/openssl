@@ -4,6 +4,30 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) In addition to the numerical (unsigned long) thread ID, provide
+     for a pointer (void *) thread ID.  This helps accomodate systems
+     that do not provide an unsigned long thread ID.  OpenSSL assumes
+     it is in the same thread iff both the numerical and the pointer
+     thread ID agree; so applications are just required to define one
+     of them appropriately (e.g., by using a pointer to a per-thread
+     memory object malloc()ed by the application for the pointer-type
+     thread ID).  Exactly analoguous to the existing functions
+
+        void CRYPTO_set_id_callback(unsigned long (*func)(void));
+        unsigned long (*CRYPTO_get_id_callback(void))(void);
+        unsigned long CRYPTO_thread_id(void);
+
+     we now have additional functions
+
+        void CRYPTO_set_idptr_callback(void *(*func)(void));
+        void *(*CRYPTO_get_idptr_callback(void))(void);
+        void *CRYPTO_thread_idptr(void);
+
+     also in <openssl/crypto.h>.  The default value for
+     CRYPTO_thread_idptr() if the application has not provided its own
+     callback is &errno.
+     [Bodo Moeller]
+
   *) Change the array representation of binary polynomials: the list
      of degrees of non-zero coefficients is now terminated with -1.
      Previously it was terminated with 0, which was also part of the

@@ -3761,3 +3761,8 @@ TS_TST_INFO_get_ext_by_critical         4153	EXIST::FUNCTION:
 EVP_PKEY_CTX_new_id                     4154	EXIST::FUNCTION:
 TS_REQ_get_ext_by_OBJ                   4155	EXIST::FUNCTION:
 TS_CONF_set_signer_cert                 4156	EXIST::FUNCTION:
+BN_BLINDING_set_thread_idptr            4157	EXIST::FUNCTION:
+BN_BLINDING_get_thread_idptr            4158	EXIST::FUNCTION:
+CRYPTO_set_idptr_callback               4159	EXIST::FUNCTION:
+CRYPTO_get_idptr_callback               4160	EXIST::FUNCTION:
+CRYPTO_thread_idptr                     4161	EXIST::FUNCTION:

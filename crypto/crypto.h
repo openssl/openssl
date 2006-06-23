@@ -1,6 +1,6 @@
 /* crypto/crypto.h */
 /* ====================================================================
- * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -423,6 +423,9 @@ int (*CRYPTO_get_add_lock_callback(void))(int *num,int mount,int type,
 void CRYPTO_set_id_callback(unsigned long (*func)(void));
 unsigned long (*CRYPTO_get_id_callback(void))(void);
 unsigned long CRYPTO_thread_id(void);
+void CRYPTO_set_idptr_callback(void *(*func)(void));
+void *(*CRYPTO_get_idptr_callback(void))(void);
+void *CRYPTO_thread_idptr(void);
 const char *CRYPTO_get_lock_name(int type);
 int CRYPTO_add_lock(int *pointer,int amount,int type, const char *file,
 		    int line);

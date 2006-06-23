@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -94,7 +147,8 @@ typedef struct app_mem_info_st
  *   CRYPTO_remove_all_info()    to pop all entries.
  */
 	{	
-	unsigned long thread;
+	unsigned long thread_id;
+	void *thread_idptr;
 	const char *file;
 	int line;
 	const char *info;
@@ -116,7 +170,8 @@ typedef struct mem_st
 	int num;
 	const char *file;
 	int line;
-	unsigned long thread;
+	unsigned long thread_id;
+	void *thread_idptr;
 	unsigned long order;
 	time_t time;
 	APP_INFO *app_info;
@@ -136,11 +191,13 @@ static unsigned int num_disable = 0; /* num_disable > 0
                                       *     iff
                                       * mh_mode == CRYPTO_MEM_CHECK_ON (w/o ..._ENABLE)
                                       */
-static unsigned long disabling_thread = 0; /* Valid iff num_disable > 0.
-                                            * CRYPTO_LOCK_MALLOC2 is locked
-                                            * exactly in this case (by the
-                                            * thread named in disabling_thread).
-                                            */
+
+/* The following two variables, disabling_thread_id and disabling_thread_idptr,
+ * are valid iff num_disable > 0.  CRYPTO_LOCK_MALLOC2 is locked exactly in
+ * this case (by the thread named in disabling_thread_id / disabling_thread_idptr).
+ */
+static unsigned long disabling_thread_id = 0;
+static void *disabling_thread_idptr = NULL;
 
 static void app_info_free(APP_INFO *inf)
 	{
@@ -177,7 +234,9 @@ int CRYPTO_mem_ctrl(int mode)
 	case CRYPTO_MEM_CHECK_DISABLE: /* aka MemCheck_off() */
 		if (mh_mode & CRYPTO_MEM_CHECK_ON)
 			{
-			if (!num_disable || (disabling_thread != CRYPTO_thread_id())) /* otherwise we already have the MALLOC2 lock */
+			if (!num_disable
+			    || (disabling_thread_id != CRYPTO_thread_id())
+			    || (disabling_thread_idptr != CRYPTO_thread_idptr())) /* otherwise we already have the MALLOC2 lock */
 				{
 				/* Long-time lock CRYPTO_LOCK_MALLOC2 must not be claimed while
 				 * we're holding CRYPTO_LOCK_MALLOC, or we'll deadlock if
@@ -195,7 +254,8 @@ int CRYPTO_mem_ctrl(int mode)
 				CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
 				CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 				mh_mode &= ~CRYPTO_MEM_CHECK_ENABLE;
-				disabling_thread=CRYPTO_thread_id();
+				disabling_thread_id=CRYPTO_thread_id();
+				disabling_thread_idptr=CRYPTO_thread_idptr();
 				}
 			num_disable++;
 			}
@@ -231,7 +291,8 @@ int CRYPTO_is_mem_check_on(void)
 		CRYPTO_r_lock(CRYPTO_LOCK_MALLOC);
 
 		ret = (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
-			|| (disabling_thread != CRYPTO_thread_id());
+		        || (disabling_thread_id != CRYPTO_thread_id())
+		        || (disabling_thread_idptr != CRYPTO_thread_idptr());
 
 		CRYPTO_r_unlock(CRYPTO_LOCK_MALLOC);
 		}
@@ -278,16 +339,19 @@ static unsigned long mem_hash(const void *a_void)
 /* static int app_info_cmp(APP_INFO *a, APP_INFO *b) */
 static int app_info_cmp(const void *a_void, const void *b_void)
 	{
-	return(((const APP_INFO *)a_void)->thread
-		!= ((const APP_INFO *)b_void)->thread);
+	return (((const APP_INFO *)a_void)->thread_id != ((const APP_INFO *)b_void)->thread_id)
+	       || (((const APP_INFO *)a_void)->thread_idptr != ((const APP_INFO *)b_void)->thread_idptr);
 	}
 
 /* static unsigned long app_info_hash(APP_INFO *a) */
 static unsigned long app_info_hash(const void *a_void)
 	{
+	unsigned long id1, id2;
 	unsigned long ret;
 
-	ret=(unsigned long)((const APP_INFO *)a_void)->thread;
+	id1=(unsigned long)((const APP_INFO *)a_void)->thread_id;
+	id2=(unsigned long)((const APP_INFO *)a_void)->thread_idptr;
+	ret = id1 + id2;
 
 	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
 	return(ret);
@@ -300,7 +364,8 @@ static APP_INFO *pop_info(void)
 
 	if (amih != NULL)
 		{
-		tmp.thread=CRYPTO_thread_id();
+		tmp.thread_id=CRYPTO_thread_id();
+		tmp.thread_idptr=CRYPTO_thread_idptr();
 		if ((ret=(APP_INFO *)lh_delete(amih,&tmp)) != NULL)
 			{
 			APP_INFO *next=ret->next;
@@ -311,10 +376,10 @@ static APP_INFO *pop_info(void)
 				lh_insert(amih,(char *)next);
 				}
 #ifdef LEVITTE_DEBUG_MEM
-			if (ret->thread != tmp.thread)
+			if (ret->thread_id != tmp.thread_id || ret->thread_idptr != tmp.thread_idptr)
 				{
-				fprintf(stderr, "pop_info(): deleted info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
-					ret->thread, tmp.thread);
+				fprintf(stderr, "pop_info(): deleted info has other thread ID (%lu/%p) than the current thread (%lu/%p)!!!!\n",
+					ret->thread_id, ret->thread_idptr, tmp.thread_id, tmp.thread_idptr);
 				abort();
 				}
 #endif
@@ -354,7 +419,8 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 				}
 			}
 
-		ami->thread=CRYPTO_thread_id();
+		ami->thread_id=CRYPTO_thread_id();
+		ami->thread_idptr=CRYPTO_thread_idptr();
 		ami->file=file;
 		ami->line=line;
 		ami->info=info;
@@ -364,10 +430,10 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 		if ((amim=(APP_INFO *)lh_insert(amih,(char *)ami)) != NULL)
 			{
 #ifdef LEVITTE_DEBUG_MEM
-			if (ami->thread != amim->thread)
+			if (ami->thread_id != amim->thread_id || ami->thread_idptr != amim->thread_idptr)
 				{
-				fprintf(stderr, "CRYPTO_push_info(): previous info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
-					amim->thread, ami->thread);
+				fprintf(stderr, "CRYPTO_push_info(): previous info has other thread ID (%lu/%p) than the current thread (%lu/%p)!!!!\n",
+					amim->thread_id, amim->thread_idptr, ami->thread_id, ami->thread_idptr);
 				abort();
 				}
 #endif
@@ -453,9 +519,15 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 			m->line=line;
 			m->num=num;
 			if (options & V_CRYPTO_MDEBUG_THREAD)
-				m->thread=CRYPTO_thread_id();
+				{
+				m->thread_id=CRYPTO_thread_id();
+				m->thread_idptr=CRYPTO_thread_idptr();
+				}
 			else
-				m->thread=0;
+				{
+				m->thread_id=0;
+				m->thread_idptr=NULL;
+				}
 
 			if (order == break_order_num)
 				{
@@ -464,7 +536,7 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 				}
 			m->order=order++;
 #ifdef LEVITTE_DEBUG_MEM
-			fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5d] %c 0x%p (%d)\n",
+			fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5ld] %c 0x%p (%d)\n",
 				m->order,
 				(before_p & 128) ? '*' : '+',
 				m->addr, m->num);
@@ -474,7 +546,8 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 			else
 				m->time=0;
 
-			tmp.thread=CRYPTO_thread_id();
+			tmp.thread_id=CRYPTO_thread_id();
+			tmp.thread_idptr=CRYPTO_thread_idptr();
 			m->app_info=NULL;
 			if (amih != NULL
 				&& (amim=(APP_INFO *)lh_retrieve(amih,(char *)&tmp)) != NULL)
@@ -520,7 +593,7 @@ void CRYPTO_dbg_free(void *addr, int before_p)
 			if (mp != NULL)
 				{
 #ifdef LEVITTE_DEBUG_MEM
-			fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5d] - 0x%p (%d)\n",
+			fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5ld] - 0x%p (%d)\n",
 				mp->order, mp->addr, mp->num);
 #endif
 				if (mp->app_info != NULL)
@@ -570,7 +643,7 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 			if (mp != NULL)
 				{
 #ifdef LEVITTE_DEBUG_MEM
-				fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5d] * 0x%p (%d) -> 0x%p (%d)\n",
+				fprintf(stderr, "LEVITTE_DEBUG_MEM: [%5ld] * 0x%p (%d) -> 0x%p (%d)\n",
 					mp->order,
 					mp->addr, mp->num,
 					addr2, num);
@@ -604,6 +677,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 	int ami_cnt;
 	struct tm *lcl = NULL;
 	unsigned long ti;
+	void *tip;
 
 #define BUF_REMAIN (sizeof buf - (size_t)(bufp - buf))
 
@@ -625,7 +699,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 
 	if (options & V_CRYPTO_MDEBUG_THREAD)
 		{
-		BIO_snprintf(bufp, BUF_REMAIN, "thread=%lu, ", m->thread);
+		BIO_snprintf(bufp, BUF_REMAIN, "thread=%lu/%p, ", m->thread_id, m->thread_idptr);
 		bufp += strlen(bufp);
 		}
 
@@ -642,7 +716,8 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 	ami_cnt=0;
 	if (!amip)
 		return;
-	ti=amip->thread;
+	ti=amip->thread_id;
+	tip=amip->thread_idptr;
 	
 	do
 		{
@@ -652,8 +727,8 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 		ami_cnt++;
 		memset(buf,'>',ami_cnt);
 		BIO_snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
-			" thread=%lu, file=%s, line=%d, info=\"",
-			amip->thread, amip->file, amip->line);
+			" thread=%lu/%p, file=%s, line=%d, info=\"",
+			amip->thread_id, amip->thread_idptr, amip->file, amip->line);
 		buf_len=strlen(buf);
 		info_len=strlen(amip->info);
 		if (128 - buf_len - 3 < info_len)
@@ -673,7 +748,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 
 		amip = amip->next;
 		}
-	while(amip && amip->thread == ti);
+	while(amip && amip->thread_id == ti && amip->thread_idptr == tip);
 		
 #ifdef LEVITTE_DEBUG_MEM
 	if (amip)

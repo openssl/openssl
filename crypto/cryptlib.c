@@ -1,6 +1,6 @@
 /* crypto/cryptlib.c */
 /* ====================================================================
- * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -182,16 +182,17 @@ static STACK_OF(CRYPTO_dynlock) *dyn_locks=NULL;
 
 
 static void (MS_FAR *locking_callback)(int mode,int type,
-	const char *file,int line)=NULL;
+	const char *file,int line)=0;
 static int (MS_FAR *add_lock_callback)(int *pointer,int amount,
-	int type,const char *file,int line)=NULL;
-static unsigned long (MS_FAR *id_callback)(void)=NULL;
+	int type,const char *file,int line)=0;
+static unsigned long (MS_FAR *id_callback)(void)=0;
+static void *(MS_FAR *idptr_callback)(void)=0;
 static struct CRYPTO_dynlock_value *(MS_FAR *dynlock_create_callback)
-	(const char *file,int line)=NULL;
+	(const char *file,int line)=0;
 static void (MS_FAR *dynlock_lock_callback)(int mode,
-	struct CRYPTO_dynlock_value *l, const char *file,int line)=NULL;
+	struct CRYPTO_dynlock_value *l, const char *file,int line)=0;
 static void (MS_FAR *dynlock_destroy_callback)(struct CRYPTO_dynlock_value *l,
-	const char *file,int line)=NULL;
+	const char *file,int line)=0;
 
 int CRYPTO_get_new_lockid(char *name)
 	{
@@ -447,6 +448,28 @@ unsigned long CRYPTO_thread_id(void)
 	return(ret);
 	}
 
+void *(*CRYPTO_get_idptr_callback(void))(void)
+	{
+	return(idptr_callback);
+	}
+
+void CRYPTO_set_idptr_callback(void *(*func)(void))
+	{
+	idptr_callback=func;
+	}
+
+void *CRYPTO_thread_idptr(void)
+	{
+	void *ret=NULL;
+
+	if (idptr_callback == NULL)
+		ret = &errno;
+	else
+		ret = idptr_callback();
+
+	return ret;
+	}
+
 void CRYPTO_lock(int mode, int type, const char *file, int line)
 	{
 #ifdef LOCK_DEBUG
@@ -467,8 +490,8 @@ void CRYPTO_lock(int mode, int type, const char *file, int line)
 		else
 			rw_text="ERROR";
 
-		fprintf(stderr,"lock:%08lx:(%s)%s %-18s %s:%d\n",
-			CRYPTO_thread_id(), rw_text, operation_text,
+		fprintf(stderr,"lock:%08lx/%08p:(%s)%s %-18s %s:%d\n",
+			CRYPTO_thread_id(), CRYPTO_thread_idptr(), rw_text, operation_text,
 			CRYPTO_get_lock_name(type), file, line);
 		}
 #endif
@@ -504,8 +527,8 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 
 		ret=add_lock_callback(pointer,amount,type,file,line);
 #ifdef LOCK_DEBUG
-		fprintf(stderr,"ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
-			CRYPTO_thread_id(),
+		fprintf(stderr,"ladd:%08lx/%0xp:%2d+%2d->%2d %-18s %s:%d\n",
+			CRYPTO_thread_id(), CRYPTO_thread_idptr(),
 			before,amount,ret,
 			CRYPTO_get_lock_name(type),
 			file,line);
@@ -517,8 +540,8 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 
 		ret= *pointer+amount;
 #ifdef LOCK_DEBUG
-		fprintf(stderr,"ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
-			CRYPTO_thread_id(),
+		fprintf(stderr,"ladd:%08lx/%0xp:%2d+%2d->%2d %-18s %s:%d\n",
+			CRYPTO_thread_id(), CRYPTO_thread_idptr(),
 			*pointer,amount,ret,
 			CRYPTO_get_lock_name(type),
 			file,line);

@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -973,24 +973,32 @@ static int err_cmp(const void *a_void, const void *b_void)
 /* static unsigned long pid_hash(ERR_STATE *a) */
 static unsigned long pid_hash(const void *a_void)
 	{
-	return(((const ERR_STATE *)a_void)->pid*13);
+	return((((const ERR_STATE *)a_void)->pid + (unsigned long)((const ERR_STATE *)a_void)->pidptr)*13);
 	}
 
 /* static int pid_cmp(ERR_STATE *a, ERR_STATE *b) */
 static int pid_cmp(const void *a_void, const void *b_void)
 	{
-	return((int)((long)((const ERR_STATE *)a_void)->pid -
-			(long)((const ERR_STATE *)b_void)->pid));
+	return (((const ERR_STATE *)a_void)->pid != ((const ERR_STATE *)b_void)->pid)
+	       || (((const ERR_STATE *)a_void)->pidptr != ((const ERR_STATE *)b_void)->pidptr);
 	}
 
 void ERR_remove_state(unsigned long pid)
 	{
 	ERR_STATE tmp;
+	void *pidptr;
 
 	err_fns_check();
-	if (pid == 0)
-		pid=(unsigned long)CRYPTO_thread_id();
+	if (pid != 0)
+		pidptr = &errno;
+	else
+		{
+		pid = CRYPTO_thread_id();
+		pidptr = CRYPTO_thread_idptr();
+		}
+	
 	tmp.pid=pid;
+	tmp.pidptr=pidptr;
 	/* thread_del_item automatically destroys the LHASH if the number of
 	 * items reaches zero. */
 	ERRFN(thread_del_item)(&tmp);
@@ -1002,10 +1010,13 @@ ERR_STATE *ERR_get_state(void)
 	ERR_STATE *ret,tmp,*tmpp=NULL;
 	int i;
 	unsigned long pid;
+	void *pidptr;
 
 	err_fns_check();
-	pid=(unsigned long)CRYPTO_thread_id();
-	tmp.pid=pid;
+	pid = CRYPTO_thread_id();
+	pidptr = CRYPTO_thread_idptr();
+	tmp.pid = pid;
+	tmp.pidptr = pidptr;
 	ret=ERRFN(thread_get_item)(&tmp);
 
 	/* ret == the error state, if NULL, make a new one */
@@ -1014,6 +1025,7 @@ ERR_STATE *ERR_get_state(void)
 		ret=(ERR_STATE *)OPENSSL_malloc(sizeof(ERR_STATE));
 		if (ret == NULL) return(&fallback);
 		ret->pid=pid;
+		ret->pidptr=pidptr;
 		ret->top=0;
 		ret->bottom=0;
 		for (i=0; i<ERR_NUM_ERRORS; i++)
