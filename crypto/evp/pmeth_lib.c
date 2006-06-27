@@ -252,23 +252,21 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(EVP_PKEY_CTX *pctx)
 #endif
 
 	if (pctx->pkey)
-		{
 		CRYPTO_add(&pctx->pkey->references,1,CRYPTO_LOCK_EVP_PKEY);
-		rctx->pkey = pctx->pkey;
-		}
+
+	rctx->pkey = pctx->pkey;
 
 	if (pctx->peerkey)
-		{
 		CRYPTO_add(&pctx->peerkey->references,1,CRYPTO_LOCK_EVP_PKEY);
-		rctx->peerkey = pctx->peerkey;
-		}
+
+	rctx->peerkey = pctx->peerkey;
 
 	rctx->data = NULL;
 	rctx->app_data = NULL;
 	rctx->operation = pctx->operation;
 
 	if (pctx->pmeth->copy(rctx, pctx) > 0)
-		return pctx;
+		return rctx;
 
 	EVP_PKEY_CTX_free(rctx);
 	return NULL;
