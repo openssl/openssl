@@ -125,6 +125,54 @@
 #include <unistd.h>
 #include <time.h>
 
+#if defined(OPENSSL_SYS_LINUX)
+ /* lets use poll() */
+# include <sys/poll.h>
+# define IOWAIT_VARS		struct pollfd pset; struct timeval t
+# define IOWAIT_INIT(f, t)	do {					\
+					pset.fd = (f);			\
+					pset.events = POLLIN;		\
+					pset.revents = 0;		\
+					(t)->tv_sec = 0;		\
+					(t)->tv_usec = 10*1000;		\
+					/* Spend 10ms on each file. */	\
+				} while(0)
+# define IOWAIT_FUNC(f, t)	poll(&pset, 1, ((t)->tv_sec * 1000) + ((t)->tv_usec / 1000))
+# define IOWAIT_CHECK(f)	((pset.revents & POLLIN) != 0)
+#else
+ /* lets use select() */
+
+ /* For each platform we could do with making a guess at
+  *  how many FDs we support.  With glibc/Linux its possible
+  *  to use FD_SETSIZE directly, but this may not be very
+  *  portable. Another options was to use _POSIX_OPEN_MAX
+  *  but that value is a tad dull on modern hardware.  So
+  *  I ended up trying sizeof(fd_set)*8 which should be
+  *  closer to the real value.
+  * If this causes a problem on your platform because we
+  *  can not guess correctly then set it to zero.
+  */
+# if defined(FD_SETSIZE)
+#  define IOWAIT_FD_SETSIZE	(FD_SETSIZE)
+# else
+  /* fallback method */
+#  define IOWAIT_FD_SETSIZE	(sizeof(fd_set) * 8)
+# endif
+# define IOWAIT_VARS		fd_set fset; struct timeval t
+# define IOWAIT_INIT(f, t)	do {					\
+					FD_ZERO(&fset);			\
+					if(IOWAIT_FD_SETSIZE > 0	\
+					   && (f) >= IOWAIT_FD_SETSIZE)	\
+						{ break; }		\
+					FD_SET((f), &fset);		\
+					(t)->tv_sec = 0;		\
+					(t)->tv_usec = 10*1000;		\
+					/* Spend 10ms on each file. */	\
+				} while(0)
+# define IOWAIT_FUNC(f, t)	select((f)+1,&fset,NULL,NULL,(t))
+# define IOWAIT_CHECK(f)	FD_ISSET((f), &fset)
+#endif
+
 #ifdef __OpenBSD__
 int RAND_poll(void)
 {
@@ -182,10 +230,8 @@ int RAND_poll(void)
 #endif
 			)) >= 0)
 			{
-			struct timeval t = { 0, 10*1000 }; /* Spend 10ms on
-							      each file. */
 			int r,j;
-			fd_set fset;
+			IOWAIT_VARS;
 			struct stat *st=&randomstats[i];
 
 			/* Avoid using same input... Used to be O_NOFOLLOW
@@ -201,13 +247,12 @@ int RAND_poll(void)
 
 			do
 				{
-				FD_ZERO(&fset);
-				FD_SET(fd, &fset);
 				r = -1;
+				IOWAIT_INIT(fd, &t);
 
-				if (select(fd+1,&fset,NULL,NULL,&t) < 0)
+				if (IOWAIT_FUNC(fd, &t) < 0)
 					t.tv_usec=0;
-				else if (FD_ISSET(fd, &fset))
+				else if (IOWAIT_CHECK(fd))
 					{
 					r=read(fd,(unsigned char *)tmpbuf+n,
 					       ENTROPY_NEEDED-n);
