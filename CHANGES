@@ -1289,6 +1289,11 @@
 
  Changes between 0.9.7j and 0.9.7k  [xx XXX xxxx]
 
+  *) Change the Unix randomness entropy gathering to use poll() when
+     possible instead of select(), since the latter has some
+     undesirable limitations.
+     [Darryl Miles via Richard Levitte]
+
   *) Disable rogue ciphersuites:
 
       - SSLv2 0x08 0x00 0x80 ("RC4-64-MD5")
