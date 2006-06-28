@@ -6,7 +6,7 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 1.0
+# Version 1.1
 #
 # The major reason for undertaken effort was to mitigate the hazard of
 # cache-timing attack. This is [currently and initially!] addressed in
@@ -15,6 +15,9 @@
 # that the tables don't have to reside in L1 cache. Once again, this
 # is an initial draft and one should expect more countermeasures to
 # be implemented...
+#
+# Version 1.1 prefetches T[ed]4 in order to mitigate attack on last
+# round.
 #
 # Even though performance was not the primary goal [on the contrary,
 # extra shifts "induced" by compressed S-box and longer loop epilogue
@@ -78,7 +81,7 @@ ___
 $code.=<<___;
 .section	".text",#alloc,#execinstr
 
-.align	64
+.align	256
 AES_Te:
 ___
 &_data_word(
@@ -364,20 +367,28 @@ _sparcv9_AES_encrypt:
 	ld	[$key+28],$t3			!
 		srlx	$acc9,8,$acc9
 		xor	$acc5,$s1,$s1
+	ldx	[$tbl+2048+0],%g0		! prefetch te4
 		srlx	$acc10,16,$acc10
 		xor	$acc6,$s1,$s1
+	ldx	[$tbl+2048+32],%g0		! prefetch te4
 		srlx	$acc11,24,$acc11
 		xor	$acc7,$s1,$s1
+	ldx	[$tbl+2048+64],%g0		! prefetch te4
 		srlx	$acc13,8,$acc13
 		xor	$acc8,$s2,$s2
+	ldx	[$tbl+2048+96],%g0		! prefetch te4
 		srlx	$acc14,16,$acc14	!
 		xor	$acc9,$s2,$s2
+	ldx	[$tbl+2048+128],%g0		! prefetch te4
 		srlx	$acc15,24,$acc15
 		xor	$acc10,$s2,$s2
+	ldx	[$tbl+2048+160],%g0		! prefetch te4
 	srl	$s0,21,$acc0
 		xor	$acc11,$s2,$s2
+	ldx	[$tbl+2048+192],%g0		! prefetch te4
 		xor	$acc12,$acc14,$acc14
 		xor	$acc13,$s3,$s3
+	ldx	[$tbl+2048+224],%g0		! prefetch te4
 	srl	$s1,13,$acc1			!
 		xor	$acc14,$s3,$s3
 		xor	$acc15,$s3,$s3
@@ -616,7 +627,7 @@ AES_encrypt:
 ___
 
 $code.=<<___;
-.align	64
+.align	256
 AES_Td:
 ___
 &_data_word(
@@ -902,20 +913,28 @@ _sparcv9_AES_decrypt:
 	ld	[$key+28],$t3			!
 		srlx	$acc9,8,$acc9
 		xor	$acc5,$s1,$s1
+	ldx	[$tbl+2048+0],%g0		! prefetch td4
 		srlx	$acc10,16,$acc10
 		xor	$acc6,$s1,$s1
+	ldx	[$tbl+2048+32],%g0		! prefetch td4
 		srlx	$acc11,24,$acc11
 		xor	$acc7,$s1,$s1
+	ldx	[$tbl+2048+64],%g0		! prefetch td4
 		srlx	$acc13,8,$acc13
 		xor	$acc8,$s2,$s2
+	ldx	[$tbl+2048+96],%g0		! prefetch td4
 		srlx	$acc14,16,$acc14	!
 		xor	$acc9,$s2,$s2
+	ldx	[$tbl+2048+128],%g0		! prefetch td4
 		srlx	$acc15,24,$acc15
 		xor	$acc10,$s2,$s2
+	ldx	[$tbl+2048+160],%g0		! prefetch td4
 	srl	$s0,21,$acc0
 		xor	$acc11,$s2,$s2
+	ldx	[$tbl+2048+192],%g0		! prefetch td4
 		xor	$acc12,$acc14,$acc14
 		xor	$acc13,$s3,$s3
+	ldx	[$tbl+2048+224],%g0		! prefetch td4
 	and	$acc0,2040,$acc0		!
 		xor	$acc14,$s3,$s3
 		xor	$acc15,$s3,$s3
