@@ -7,7 +7,7 @@
   *) Change the Unix randomness entropy gathering to use poll() when
      possible instead of select(), since the latter has some
      undesirable limitations.
-     [Darryl Miles via Richard Levitte]
+     [Darryl Miles via Richard Levitte and Bodo Moeller]
 
   *) Disable rogue ciphersuites:
 
