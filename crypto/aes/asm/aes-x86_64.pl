@@ -6,14 +6,14 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 1.1.
+# Version 1.2.
 #
 # aes-*-cbc benchmarks are improved by >70% [compared to gcc 3.3.2 on
 # Opteron 240 CPU] plus all the bells-n-whistles from 32-bit version
 # [you'll notice a lot of resemblance], such as compressed S-boxes
 # in little-endian byte order, prefetch of these tables in CBC mode,
 # as well as avoiding L1 cache aliasing between stack frame and key
-# schedule and already mentioned tables.
+# schedule and already mentioned tables, compressed Td4...
 #
 # Performance in number of cycles per processed byte for 128-bit key:
 #
@@ -61,6 +61,14 @@ sub data_word()
     $code.=".long\t";
     while(defined($i=shift)) { $code.=sprintf"0x%08x,",$i; }
     $code.=sprintf"0x%08x\n",$last;
+}
+
+sub data_byte()
+{ my $i;
+  my $last=pop(@_);
+    $code.=".byte\t";
+    while(defined($i=shift)) { $code.=sprintf"0x%02x,",$i&0xff; }
+    $code.=sprintf"0x%02x\n",$last&0xff;
 }
 
 sub encvert()
@@ -448,24 +456,19 @@ $code.=<<___;
 	movzb	`&lo("$s0")`,$acc0
 	movzb	`&lo("$s1")`,$acc1
 	movzb	`&lo("$s2")`,$acc2
-	mov	2048($sbox,$acc0,4),$t0
-	mov	2048($sbox,$acc1,4),$t1
-	mov	2048($sbox,$acc2,4),$t2
-
-	and	\$0x000000ff,$t0
-	and	\$0x000000ff,$t1
-	and	\$0x000000ff,$t2
+	movzb	2048($sbox,$acc0,1),$t0
+	movzb	2048($sbox,$acc1,1),$t1
+	movzb	2048($sbox,$acc2,1),$t2
 
 	movzb	`&lo("$s3")`,$acc0
 	movzb	`&hi("$s3")`,$acc1
 	movzb	`&hi("$s0")`,$acc2
-	mov	2048($sbox,$acc0,4),$t3
-	mov	2048($sbox,$acc1,4),$acc1	#$t0
-	mov	2048($sbox,$acc2,4),$acc2	#$t1
+	movzb	2048($sbox,$acc0,1),$t3
+	movzb	2048($sbox,$acc1,1),$acc1	#$t0
+	movzb	2048($sbox,$acc2,1),$acc2	#$t1
 
-	and	\$0x000000ff,$t3
-	and	\$0x0000ff00,$acc1
-	and	\$0x0000ff00,$acc2
+	shl	\$8,$acc1
+	shl	\$8,$acc2
 
 	xor	$acc1,$t0
 	xor	$acc2,$t1
@@ -474,11 +477,11 @@ $code.=<<___;
 	movzb	`&hi("$s1")`,$acc0
 	movzb	`&hi("$s2")`,$acc1
 	shr	\$16,$s0
-	mov	2048($sbox,$acc0,4),$acc0	#$t2
-	mov	2048($sbox,$acc1,4),$acc1	#$t3
+	movzb	2048($sbox,$acc0,1),$acc0	#$t2
+	movzb	2048($sbox,$acc1,1),$acc1	#$t3
 
-	and	\$0x0000ff00,$acc0
-	and	\$0x0000ff00,$acc1
+	shl	\$8,$acc0
+	shl	\$8,$acc1
 	shr	\$16,$s1
 	xor	$acc0,$t2
 	xor	$acc1,$t3
@@ -487,13 +490,13 @@ $code.=<<___;
 	movzb	`&lo("$s2")`,$acc0
 	movzb	`&lo("$s3")`,$acc1
 	movzb	`&lo("$s0")`,$acc2
-	mov	2048($sbox,$acc0,4),$acc0	#$t0
-	mov	2048($sbox,$acc1,4),$acc1	#$t1
-	mov	2048($sbox,$acc2,4),$acc2	#$t2
+	movzb	2048($sbox,$acc0,1),$acc0	#$t0
+	movzb	2048($sbox,$acc1,1),$acc1	#$t1
+	movzb	2048($sbox,$acc2,1),$acc2	#$t2
 
-	and	\$0x00ff0000,$acc0
-	and	\$0x00ff0000,$acc1
-	and	\$0x00ff0000,$acc2
+	shl	\$16,$acc0
+	shl	\$16,$acc1
+	shl	\$16,$acc2
 
 	xor	$acc0,$t0
 	xor	$acc1,$t1
@@ -502,13 +505,13 @@ $code.=<<___;
 	movzb	`&lo("$s1")`,$acc0
 	movzb	`&hi("$s1")`,$acc1
 	movzb	`&hi("$s2")`,$acc2
-	mov	2048($sbox,$acc0,4),$acc0	#$t3
-	mov	2048($sbox,$acc1,4),$acc1	#$t0
-	mov	2048($sbox,$acc2,4),$acc2	#$t1
+	movzb	2048($sbox,$acc0,1),$acc0	#$t3
+	movzb	2048($sbox,$acc1,1),$acc1	#$t0
+	movzb	2048($sbox,$acc2,1),$acc2	#$t1
 
-	and	\$0x00ff0000,$acc0
-	and	\$0xff000000,$acc1
-	and	\$0xff000000,$acc2
+	shl	\$16,$acc0
+	shl	\$24,$acc1
+	shl	\$24,$acc2
 
 	xor	$acc0,$t3
 	xor	$acc1,$t0
@@ -517,12 +520,12 @@ $code.=<<___;
 	movzb	`&hi("$s3")`,$acc0
 	movzb	`&hi("$s0")`,$acc1
 	mov	16+12($key),$s3
-	mov	2048($sbox,$acc0,4),$acc0	#$t2
-	mov	2048($sbox,$acc1,4),$acc1	#$t3
+	movzb	2048($sbox,$acc0,1),$acc0	#$t2
+	movzb	2048($sbox,$acc1,1),$acc1	#$t3
 	mov	16+0($key),$s0
 
-	and	\$0xff000000,$acc0
-	and	\$0xff000000,$acc1
+	shl	\$24,$acc0
+	shl	\$24,$acc1
 
 	xor	$acc0,$t2
 	xor	$acc1,$t3
@@ -580,24 +583,23 @@ sub declast()
 	$code.="	mov	$s[2],$tmp1\n"		if ($i!=3);
 	$code.="	and	\$0xFF,$out\n";
 
-	$code.="	mov	2048($sbox,$out,4),$out\n";
+	$code.="	movzb	2048($sbox,$out,1),$out\n";
 	$code.="	shr	\$16,$tmp1\n";
 			$tmp2=$s[3]			if ($i==3);
 	$code.="	mov	$s[3],$tmp2\n"		if ($i!=3);
 
-	$code.="	and	\$0x000000ff,$out\n";
 			$tmp0=$s[1]			if ($i==3);
 	$code.="	movzb	".&hi($s[1]).",$tmp0\n";
 	$code.="	and	\$0xFF,$tmp1\n";
 	$code.="	shr	\$24,$tmp2\n";
 
-	$code.="	mov	2048($sbox,$tmp0,4),$tmp0\n";
-	$code.="	mov	2048($sbox,$tmp1,4),$tmp1\n";
-	$code.="	mov	2048($sbox,$tmp2,4),$tmp2\n";
+	$code.="	movzb	2048($sbox,$tmp0,1),$tmp0\n";
+	$code.="	movzb	2048($sbox,$tmp1,1),$tmp1\n";
+	$code.="	movzb	2048($sbox,$tmp2,1),$tmp2\n";
 
-	$code.="	and	\$0x0000ff00,$tmp0\n";
-	$code.="	and	\$0x00ff0000,$tmp1\n";
-	$code.="	and	\$0xff000000,$tmp2\n";
+	$code.="	shl	\$8,$tmp0\n";
+	$code.="	shl	\$16,$tmp1\n";
+	$code.="	shl	\$24,$tmp2\n";
 
 	$code.="	xor	$tmp0,$out\n";
 	$code.="	mov	$t2,$s[1]\n"		if ($i==3);
@@ -647,9 +649,9 @@ ___
 		&declast(3,$s3,$s2,$s1,$s0);
 		$code.=<<___;
 		xor	16+0($key),$s0			# xor with key
-		xor	4($key),$s1
-		xor	8($key),$s2
-		xor	12($key),$s3
+		xor	16+4($key),$s1
+		xor	16+8($key),$s2
+		xor	16+12($key),$s3
 ___
 	}
 $code.=<<___;
@@ -676,6 +678,18 @@ AES_decrypt:
 
 	.picmeup	$sbox
 	lea	AES_Td-.($sbox),$sbox
+
+	# prefetch Td4
+	lea	2048+128($sbox),$sbox;
+	mov	0-128($sbox),$s0
+	mov	32-128($sbox),$s1
+	mov	64-128($sbox),$s2
+	mov	96-128($sbox),$s3
+	mov	128-128($sbox),$s0
+	mov	160-128($sbox),$s1
+	mov	192-128($sbox),$s2
+	mov	224-128($sbox),$s3
+	lea	-2048-128($sbox),$sbox;
 
 	mov	0($inp),$s0
 	mov	4($inp),$s1
@@ -1208,10 +1222,10 @@ AES_cbc_encrypt:
 
 	# ... and make it doesn't alias with AES_Td modulo 4096
 	mov	$sbox,%r10
-	lea	3072($sbox),%r11
+	lea	2304($sbox),%r11
 	mov	$key,%r12
 	and	\$0xFFF,%r10	# s = $sbox&0xfff
-	and	\$0xFFF,%r11	# e = ($sbox+2048)&0xfff
+	and	\$0xFFF,%r11	# e = ($sbox+2048+256)&0xfff
 	and	\$0xFFF,%r12	# p = %rsp&0xfff
 
 	cmp	%r11,%r12	# if (p=>e) %rsp =- (p-e);
@@ -1243,7 +1257,7 @@ AES_cbc_encrypt:
 	mov	$key,%r10
 	sub	$sbox,%r10
 	and	\$0xfff,%r10
-	cmp	\$3072,%r10
+	cmp	\$2304,%r10
 	jb	.Lcbc_do_dcopy
 	cmp	\$4096-248,%r10
 	jb	.Lcbc_skip_dcopy
@@ -1259,7 +1273,7 @@ AES_cbc_encrypt:
 .Lcbc_skip_dcopy:
 	mov	$key,$keyp	# save key pointer
 
-	mov	\$24,%ecx
+	mov	\$18,%ecx
 .align	4
 .Lcbc_prefetch_td:
 		mov	0($sbox),%r10
@@ -1269,7 +1283,7 @@ AES_cbc_encrypt:
 		lea	128($sbox),$sbox
 		sub	\$1,%ecx
 	jnz	.Lcbc_prefetch_td
-	sub	\$3072,$sbox
+	sub	\$2304,$sbox
 
 	cmp	$inp,$out
 	je	.Lcbc_dec_in_place
@@ -1523,70 +1537,38 @@ ___
 	&_data_word(0x7101a839, 0xdeb30c08, 0x9ce4b4d8, 0x90c15664);
 	&_data_word(0x6184cb7b, 0x70b632d5, 0x745c6c48, 0x4257b8d0);
 #Td4:
-	&data_word(0x52525252, 0x09090909, 0x6a6a6a6a, 0xd5d5d5d5);
-	&data_word(0x30303030, 0x36363636, 0xa5a5a5a5, 0x38383838);
-	&data_word(0xbfbfbfbf, 0x40404040, 0xa3a3a3a3, 0x9e9e9e9e);
-	&data_word(0x81818181, 0xf3f3f3f3, 0xd7d7d7d7, 0xfbfbfbfb);
-	&data_word(0x7c7c7c7c, 0xe3e3e3e3, 0x39393939, 0x82828282);
-	&data_word(0x9b9b9b9b, 0x2f2f2f2f, 0xffffffff, 0x87878787);
-	&data_word(0x34343434, 0x8e8e8e8e, 0x43434343, 0x44444444);
-	&data_word(0xc4c4c4c4, 0xdededede, 0xe9e9e9e9, 0xcbcbcbcb);
-	&data_word(0x54545454, 0x7b7b7b7b, 0x94949494, 0x32323232);
-	&data_word(0xa6a6a6a6, 0xc2c2c2c2, 0x23232323, 0x3d3d3d3d);
-	&data_word(0xeeeeeeee, 0x4c4c4c4c, 0x95959595, 0x0b0b0b0b);
-	&data_word(0x42424242, 0xfafafafa, 0xc3c3c3c3, 0x4e4e4e4e);
-	&data_word(0x08080808, 0x2e2e2e2e, 0xa1a1a1a1, 0x66666666);
-	&data_word(0x28282828, 0xd9d9d9d9, 0x24242424, 0xb2b2b2b2);
-	&data_word(0x76767676, 0x5b5b5b5b, 0xa2a2a2a2, 0x49494949);
-	&data_word(0x6d6d6d6d, 0x8b8b8b8b, 0xd1d1d1d1, 0x25252525);
-	&data_word(0x72727272, 0xf8f8f8f8, 0xf6f6f6f6, 0x64646464);
-	&data_word(0x86868686, 0x68686868, 0x98989898, 0x16161616);
-	&data_word(0xd4d4d4d4, 0xa4a4a4a4, 0x5c5c5c5c, 0xcccccccc);
-	&data_word(0x5d5d5d5d, 0x65656565, 0xb6b6b6b6, 0x92929292);
-	&data_word(0x6c6c6c6c, 0x70707070, 0x48484848, 0x50505050);
-	&data_word(0xfdfdfdfd, 0xedededed, 0xb9b9b9b9, 0xdadadada);
-	&data_word(0x5e5e5e5e, 0x15151515, 0x46464646, 0x57575757);
-	&data_word(0xa7a7a7a7, 0x8d8d8d8d, 0x9d9d9d9d, 0x84848484);
-	&data_word(0x90909090, 0xd8d8d8d8, 0xabababab, 0x00000000);
-	&data_word(0x8c8c8c8c, 0xbcbcbcbc, 0xd3d3d3d3, 0x0a0a0a0a);
-	&data_word(0xf7f7f7f7, 0xe4e4e4e4, 0x58585858, 0x05050505);
-	&data_word(0xb8b8b8b8, 0xb3b3b3b3, 0x45454545, 0x06060606);
-	&data_word(0xd0d0d0d0, 0x2c2c2c2c, 0x1e1e1e1e, 0x8f8f8f8f);
-	&data_word(0xcacacaca, 0x3f3f3f3f, 0x0f0f0f0f, 0x02020202);
-	&data_word(0xc1c1c1c1, 0xafafafaf, 0xbdbdbdbd, 0x03030303);
-	&data_word(0x01010101, 0x13131313, 0x8a8a8a8a, 0x6b6b6b6b);
-	&data_word(0x3a3a3a3a, 0x91919191, 0x11111111, 0x41414141);
-	&data_word(0x4f4f4f4f, 0x67676767, 0xdcdcdcdc, 0xeaeaeaea);
-	&data_word(0x97979797, 0xf2f2f2f2, 0xcfcfcfcf, 0xcececece);
-	&data_word(0xf0f0f0f0, 0xb4b4b4b4, 0xe6e6e6e6, 0x73737373);
-	&data_word(0x96969696, 0xacacacac, 0x74747474, 0x22222222);
-	&data_word(0xe7e7e7e7, 0xadadadad, 0x35353535, 0x85858585);
-	&data_word(0xe2e2e2e2, 0xf9f9f9f9, 0x37373737, 0xe8e8e8e8);
-	&data_word(0x1c1c1c1c, 0x75757575, 0xdfdfdfdf, 0x6e6e6e6e);
-	&data_word(0x47474747, 0xf1f1f1f1, 0x1a1a1a1a, 0x71717171);
-	&data_word(0x1d1d1d1d, 0x29292929, 0xc5c5c5c5, 0x89898989);
-	&data_word(0x6f6f6f6f, 0xb7b7b7b7, 0x62626262, 0x0e0e0e0e);
-	&data_word(0xaaaaaaaa, 0x18181818, 0xbebebebe, 0x1b1b1b1b);
-	&data_word(0xfcfcfcfc, 0x56565656, 0x3e3e3e3e, 0x4b4b4b4b);
-	&data_word(0xc6c6c6c6, 0xd2d2d2d2, 0x79797979, 0x20202020);
-	&data_word(0x9a9a9a9a, 0xdbdbdbdb, 0xc0c0c0c0, 0xfefefefe);
-	&data_word(0x78787878, 0xcdcdcdcd, 0x5a5a5a5a, 0xf4f4f4f4);
-	&data_word(0x1f1f1f1f, 0xdddddddd, 0xa8a8a8a8, 0x33333333);
-	&data_word(0x88888888, 0x07070707, 0xc7c7c7c7, 0x31313131);
-	&data_word(0xb1b1b1b1, 0x12121212, 0x10101010, 0x59595959);
-	&data_word(0x27272727, 0x80808080, 0xecececec, 0x5f5f5f5f);
-	&data_word(0x60606060, 0x51515151, 0x7f7f7f7f, 0xa9a9a9a9);
-	&data_word(0x19191919, 0xb5b5b5b5, 0x4a4a4a4a, 0x0d0d0d0d);
-	&data_word(0x2d2d2d2d, 0xe5e5e5e5, 0x7a7a7a7a, 0x9f9f9f9f);
-	&data_word(0x93939393, 0xc9c9c9c9, 0x9c9c9c9c, 0xefefefef);
-	&data_word(0xa0a0a0a0, 0xe0e0e0e0, 0x3b3b3b3b, 0x4d4d4d4d);
-	&data_word(0xaeaeaeae, 0x2a2a2a2a, 0xf5f5f5f5, 0xb0b0b0b0);
-	&data_word(0xc8c8c8c8, 0xebebebeb, 0xbbbbbbbb, 0x3c3c3c3c);
-	&data_word(0x83838383, 0x53535353, 0x99999999, 0x61616161);
-	&data_word(0x17171717, 0x2b2b2b2b, 0x04040404, 0x7e7e7e7e);
-	&data_word(0xbabababa, 0x77777777, 0xd6d6d6d6, 0x26262626);
-	&data_word(0xe1e1e1e1, 0x69696969, 0x14141414, 0x63636363);
-	&data_word(0x55555555, 0x21212121, 0x0c0c0c0c, 0x7d7d7d7d);
+	&data_byte(0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38);
+	&data_byte(0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb);
+	&data_byte(0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87);
+	&data_byte(0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb);
+	&data_byte(0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d);
+	&data_byte(0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e);
+	&data_byte(0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2);
+	&data_byte(0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25);
+	&data_byte(0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16);
+	&data_byte(0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92);
+	&data_byte(0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda);
+	&data_byte(0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84);
+	&data_byte(0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a);
+	&data_byte(0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06);
+	&data_byte(0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02);
+	&data_byte(0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b);
+	&data_byte(0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea);
+	&data_byte(0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73);
+	&data_byte(0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85);
+	&data_byte(0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e);
+	&data_byte(0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89);
+	&data_byte(0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b);
+	&data_byte(0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20);
+	&data_byte(0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4);
+	&data_byte(0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31);
+	&data_byte(0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f);
+	&data_byte(0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d);
+	&data_byte(0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef);
+	&data_byte(0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0);
+	&data_byte(0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61);
+	&data_byte(0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26);
+	&data_byte(0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d);
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
