@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2000 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -116,7 +116,7 @@
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE)) 
+#if !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE))
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -125,53 +125,12 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
-
 #if defined(OPENSSL_SYS_LINUX)
- /* lets use poll() */
 # include <sys/poll.h>
-# define IOWAIT_VARS		struct pollfd pset; struct timeval t
-# define IOWAIT_INIT(f, t)	do {					\
-					pset.fd = (f);			\
-					pset.events = POLLIN;		\
-					pset.revents = 0;		\
-					(t)->tv_sec = 0;		\
-					(t)->tv_usec = 10*1000;		\
-					/* Spend 10ms on each file. */	\
-				} while(0)
-# define IOWAIT_FUNC(f, t)	poll(&pset, 1, ((t)->tv_sec * 1000) + ((t)->tv_usec / 1000))
-# define IOWAIT_CHECK(f)	((pset.revents & POLLIN) != 0)
-#else
- /* lets use select() */
-
- /* For each platform we could do with making a guess at
-  *  how many FDs we support.  With glibc/Linux its possible
-  *  to use FD_SETSIZE directly, but this may not be very
-  *  portable. Another options was to use _POSIX_OPEN_MAX
-  *  but that value is a tad dull on modern hardware.  So
-  *  I ended up trying sizeof(fd_set)*8 which should be
-  *  closer to the real value.
-  * If this causes a problem on your platform because we
-  *  can not guess correctly then set it to zero.
-  */
-# if defined(FD_SETSIZE)
-#  define IOWAIT_FD_SETSIZE	(FD_SETSIZE)
-# else
-  /* fallback method */
-#  define IOWAIT_FD_SETSIZE	(sizeof(fd_set) * 8)
-# endif
-# define IOWAIT_VARS		fd_set fset; struct timeval t
-# define IOWAIT_INIT(f, t)	do {					\
-					FD_ZERO(&fset);			\
-					if(IOWAIT_FD_SETSIZE > 0	\
-					   && (f) >= IOWAIT_FD_SETSIZE)	\
-						{ break; }		\
-					FD_SET((f), &fset);		\
-					(t)->tv_sec = 0;		\
-					(t)->tv_usec = 10*1000;		\
-					/* Spend 10ms on each file. */	\
-				} while(0)
-# define IOWAIT_FUNC(f, t)	select((f)+1,&fset,NULL,NULL,(t))
-# define IOWAIT_CHECK(f)	FD_ISSET((f), &fset)
+#endif
+#include <limits.h>
+#ifndef FD_SETSIZE
+# define FD_SETSIZE (8*sizeof(fd_set))
 #endif
 
 #ifdef __OpenBSD__
@@ -191,7 +150,7 @@ int RAND_poll(void)
 
 	return 1;
 }
-#else
+#else /* !defined(__OpenBSD__) */
 int RAND_poll(void)
 {
 	unsigned long l;
@@ -233,9 +192,9 @@ int RAND_poll(void)
 #endif
 			)) >= 0)
 			{
+			int usec = 10*1000; /* spend 10ms on each file */
 			int r;
 			unsigned int j;
-			IOWAIT_VARS;
 			struct stat *st=&randomstats[i];
 
 			/* Avoid using same input... Used to be O_NOFOLLOW
@@ -251,44 +210,84 @@ int RAND_poll(void)
 
 			do
 				{
-#if defined(OPENSSL_SYS_BEOS_R5)
-				/* select() is broken in BeOS R5, so we simply 
-				 *  try to read something and snooze if we couldn't: */
-				r=read(fd,(unsigned char *)tmpbuf+n,
-				       ENTROPY_NEEDED-n);
-				if (r > 0)
-					n += r;
-				else if (r == 0)
-					snooze(t.tv_usec);
-#else
-				IOWAIT_INIT(fd, &t);
-				r = -1;
+				int try_read = 0;
 
-				if (IOWAIT_FUNC(fd, &t) < 0)
-					t.tv_usec=0;
-				else if (IOWAIT_CHECK(fd))
+#if defined(OPENSSL_SYS_BEOS_R5)
+				/* select() is broken in BeOS R5, so we simply
+				 *  try to read something and snooze if we couldn't */
+				try_read = 1;
+
+#elif defined(OPENSSL_SYS_LINUX)
+				/* use poll() */
+				struct pollfd pset;
+				
+				pset.fd = fd;
+				pset.events = POLLIN;
+				pset.revents = 0;
+
+				if (poll(&pset, 1, usec / 1000) < 0)
+					usec = 0;
+				else
+					try_read = (pset.revents & POLLIN) != 0;
+
+#else
+				/* use select() */
+				fd_set fset;
+				struct timeval t;
+				
+				t.tv_sec = 0;
+				t.tv_usec = usec;
+
+				if (FD_SETSIZE > 0 && fd >= FD_SETSIZE)
 					{
-					r=read(fd,(unsigned char *)tmpbuf+n,
-					       ENTROPY_NEEDED-n);
-					if (r > 0)
-						n += r;
+					/* can't use select, so just try to read once anyway */
+					try_read = 1;
+					}
+				else
+					{
+					FD_ZERO(&fset);
+					FD_SET(fd, &fset);
+					
+					if (select(fd+1,&fset,NULL,NULL,&t) >= 0)
+						{
+						usec = t.tv_usec;
+						if (FD_ISSET(fd, &fset))
+							try_read = 1;
+						}
+					else
+						usec = 0;
 					}
 #endif
-				/* Some Unixen will update t, some
-				   won't.  For those who won't, give
-				   up here, otherwise, we will do
+				
+				if (try_read)
+					{
+					r = read(fd,(unsigned char *)tmpbuf+n, ENTROPY_NEEDED-n);
+					if (r > 0)
+						n += r;
+#if defined(OPENSSL_SYS_BEOS_R5)
+					if (r == 0)
+						snooze(t.tv_usec);
+#endif
+					}
+				else
+					r = -1;
+				
+				/* Some Unixen will update t in select(), some
+				   won't.  For those who won't, or if we
+				   didn't use select() in the first place,
+				   give up here, otherwise, we will do
 				   this once again for the remaining
 				   time. */
-				if (t.tv_usec == 10*1000)
-					t.tv_usec=0;
+				if (usec == 10*1000)
+					usec = 0;
 				}
-			while ((r > 0 || (errno == EINTR || errno == EAGAIN))
-				&& t.tv_usec != 0 && n < ENTROPY_NEEDED);
+			while ((r > 0 ||
+			       (errno == EINTR || errno == EAGAIN)) && usec != 0 && n < ENTROPY_NEEDED);
 
 			close(fd);
 			}
 		}
-#endif
+#endif /* defined(DEVRANDOM) */
 
 #ifdef DEVRANDOM_EGD
 	/* Use an EGD socket to read entropy from an EGD or PRNGD entropy
@@ -303,7 +302,7 @@ int RAND_poll(void)
 		if (r > 0)
 			n += r;
 		}
-#endif
+#endif /* defined(DEVRANDOM_EGD) */
 
 #if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	if (n > 0)
@@ -337,12 +336,13 @@ int RAND_poll(void)
 #endif
 }
 
-#endif
-#endif
+#endif /* defined(__OpenBSD__) */
+#endif /* !(defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE)) */
+
 
 #if defined(OPENSSL_SYS_VXWORKS)
 int RAND_poll(void)
-{
-    return 0;
-}
+	{
+	return 0;
+	}
 #endif
