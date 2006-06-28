@@ -6,7 +6,7 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 3.4.
+# Version 3.6.
 #
 # You might fail to appreciate this module performance from the first
 # try. If compared to "vanilla" linux-ia32-icc target, i.e. considered
@@ -65,6 +65,13 @@
 # latter is achieved by copying the key schedule to controlled place in
 # stack. This unfortunately has rather strong impact on small block CBC
 # performance, ~2x deterioration on 16-byte block if compared to 3.3.
+#
+# Version 3.5 checks if there is L1 cache aliasing between user-supplied
+# key schedule and S-boxes and abstains from copying the former if
+# there is no. This allows end-user to consciously retain small block
+# performance by aligning key schedule in specific manner.
+#
+# Version 3.6 compresses Td4 to 256 bytes and prefetches it in ECB.
 #
 # Current ECB performance numbers for 128-bit key in CPU cycles per
 # processed byte [measure commonly used by AES benchmarkers] are:
@@ -505,28 +512,27 @@ sub declast()
 	if($i==3)   {	&mov	($key,&DWP(12,"esp"));		}
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
-			&mov	($out,&DWP(2048,$td,$out,4));
-			&and	($out,0x000000ff);
+			&movz	($out,&DWP(2048,$td,$out,1));
 
 	if ($i==3)  {	$tmp=$s[1];				}
 			&movz	($tmp,&HB($s[1]));
-			&mov	($tmp,&DWP(2048,$td,$tmp,4));
-			&and	($tmp,0x0000ff00);
+			&movz	($tmp,&DWP(2048,$td,$tmp,1));
+			&shl	($tmp,8);
 			&xor	($out,$tmp);
 
 	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],$acc);		}
 	else        {	mov	($tmp,$s[2]);			}
 			&shr	($tmp,16);
 			&and	($tmp,0xFF);
-			&mov	($tmp,&DWP(2048,$td,$tmp,4));
-			&and	($tmp,0x00ff0000);
+			&movz	($tmp,&DWP(2048,$td,$tmp,1));
+			&shl	($tmp,16);
 			&xor	($out,$tmp);
 
 	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}
 	else        {	&mov	($tmp,$s[3]);			}
 			&shr	($tmp,24);
-			&mov	($tmp,&DWP(2048,$td,$tmp,4));
-			&and	($tmp,0xff000000);
+			&movz	($tmp,&DWP(2048,$td,$tmp,1));
+			&shl	($tmp,24);
 			&xor	($out,$tmp);
 	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
 	if ($i==3)  {	&mov	($s[3],&DWP(4,"esp"));		}
@@ -687,70 +693,38 @@ sub declast()
 	&_data_word(0x7101a839, 0xdeb30c08, 0x9ce4b4d8, 0x90c15664);
 	&_data_word(0x6184cb7b, 0x70b632d5, 0x745c6c48, 0x4257b8d0);
 #Td4:
-	&data_word(0x52525252, 0x09090909, 0x6a6a6a6a, 0xd5d5d5d5);
-	&data_word(0x30303030, 0x36363636, 0xa5a5a5a5, 0x38383838);
-	&data_word(0xbfbfbfbf, 0x40404040, 0xa3a3a3a3, 0x9e9e9e9e);
-	&data_word(0x81818181, 0xf3f3f3f3, 0xd7d7d7d7, 0xfbfbfbfb);
-	&data_word(0x7c7c7c7c, 0xe3e3e3e3, 0x39393939, 0x82828282);
-	&data_word(0x9b9b9b9b, 0x2f2f2f2f, 0xffffffff, 0x87878787);
-	&data_word(0x34343434, 0x8e8e8e8e, 0x43434343, 0x44444444);
-	&data_word(0xc4c4c4c4, 0xdededede, 0xe9e9e9e9, 0xcbcbcbcb);
-	&data_word(0x54545454, 0x7b7b7b7b, 0x94949494, 0x32323232);
-	&data_word(0xa6a6a6a6, 0xc2c2c2c2, 0x23232323, 0x3d3d3d3d);
-	&data_word(0xeeeeeeee, 0x4c4c4c4c, 0x95959595, 0x0b0b0b0b);
-	&data_word(0x42424242, 0xfafafafa, 0xc3c3c3c3, 0x4e4e4e4e);
-	&data_word(0x08080808, 0x2e2e2e2e, 0xa1a1a1a1, 0x66666666);
-	&data_word(0x28282828, 0xd9d9d9d9, 0x24242424, 0xb2b2b2b2);
-	&data_word(0x76767676, 0x5b5b5b5b, 0xa2a2a2a2, 0x49494949);
-	&data_word(0x6d6d6d6d, 0x8b8b8b8b, 0xd1d1d1d1, 0x25252525);
-	&data_word(0x72727272, 0xf8f8f8f8, 0xf6f6f6f6, 0x64646464);
-	&data_word(0x86868686, 0x68686868, 0x98989898, 0x16161616);
-	&data_word(0xd4d4d4d4, 0xa4a4a4a4, 0x5c5c5c5c, 0xcccccccc);
-	&data_word(0x5d5d5d5d, 0x65656565, 0xb6b6b6b6, 0x92929292);
-	&data_word(0x6c6c6c6c, 0x70707070, 0x48484848, 0x50505050);
-	&data_word(0xfdfdfdfd, 0xedededed, 0xb9b9b9b9, 0xdadadada);
-	&data_word(0x5e5e5e5e, 0x15151515, 0x46464646, 0x57575757);
-	&data_word(0xa7a7a7a7, 0x8d8d8d8d, 0x9d9d9d9d, 0x84848484);
-	&data_word(0x90909090, 0xd8d8d8d8, 0xabababab, 0x00000000);
-	&data_word(0x8c8c8c8c, 0xbcbcbcbc, 0xd3d3d3d3, 0x0a0a0a0a);
-	&data_word(0xf7f7f7f7, 0xe4e4e4e4, 0x58585858, 0x05050505);
-	&data_word(0xb8b8b8b8, 0xb3b3b3b3, 0x45454545, 0x06060606);
-	&data_word(0xd0d0d0d0, 0x2c2c2c2c, 0x1e1e1e1e, 0x8f8f8f8f);
-	&data_word(0xcacacaca, 0x3f3f3f3f, 0x0f0f0f0f, 0x02020202);
-	&data_word(0xc1c1c1c1, 0xafafafaf, 0xbdbdbdbd, 0x03030303);
-	&data_word(0x01010101, 0x13131313, 0x8a8a8a8a, 0x6b6b6b6b);
-	&data_word(0x3a3a3a3a, 0x91919191, 0x11111111, 0x41414141);
-	&data_word(0x4f4f4f4f, 0x67676767, 0xdcdcdcdc, 0xeaeaeaea);
-	&data_word(0x97979797, 0xf2f2f2f2, 0xcfcfcfcf, 0xcececece);
-	&data_word(0xf0f0f0f0, 0xb4b4b4b4, 0xe6e6e6e6, 0x73737373);
-	&data_word(0x96969696, 0xacacacac, 0x74747474, 0x22222222);
-	&data_word(0xe7e7e7e7, 0xadadadad, 0x35353535, 0x85858585);
-	&data_word(0xe2e2e2e2, 0xf9f9f9f9, 0x37373737, 0xe8e8e8e8);
-	&data_word(0x1c1c1c1c, 0x75757575, 0xdfdfdfdf, 0x6e6e6e6e);
-	&data_word(0x47474747, 0xf1f1f1f1, 0x1a1a1a1a, 0x71717171);
-	&data_word(0x1d1d1d1d, 0x29292929, 0xc5c5c5c5, 0x89898989);
-	&data_word(0x6f6f6f6f, 0xb7b7b7b7, 0x62626262, 0x0e0e0e0e);
-	&data_word(0xaaaaaaaa, 0x18181818, 0xbebebebe, 0x1b1b1b1b);
-	&data_word(0xfcfcfcfc, 0x56565656, 0x3e3e3e3e, 0x4b4b4b4b);
-	&data_word(0xc6c6c6c6, 0xd2d2d2d2, 0x79797979, 0x20202020);
-	&data_word(0x9a9a9a9a, 0xdbdbdbdb, 0xc0c0c0c0, 0xfefefefe);
-	&data_word(0x78787878, 0xcdcdcdcd, 0x5a5a5a5a, 0xf4f4f4f4);
-	&data_word(0x1f1f1f1f, 0xdddddddd, 0xa8a8a8a8, 0x33333333);
-	&data_word(0x88888888, 0x07070707, 0xc7c7c7c7, 0x31313131);
-	&data_word(0xb1b1b1b1, 0x12121212, 0x10101010, 0x59595959);
-	&data_word(0x27272727, 0x80808080, 0xecececec, 0x5f5f5f5f);
-	&data_word(0x60606060, 0x51515151, 0x7f7f7f7f, 0xa9a9a9a9);
-	&data_word(0x19191919, 0xb5b5b5b5, 0x4a4a4a4a, 0x0d0d0d0d);
-	&data_word(0x2d2d2d2d, 0xe5e5e5e5, 0x7a7a7a7a, 0x9f9f9f9f);
-	&data_word(0x93939393, 0xc9c9c9c9, 0x9c9c9c9c, 0xefefefef);
-	&data_word(0xa0a0a0a0, 0xe0e0e0e0, 0x3b3b3b3b, 0x4d4d4d4d);
-	&data_word(0xaeaeaeae, 0x2a2a2a2a, 0xf5f5f5f5, 0xb0b0b0b0);
-	&data_word(0xc8c8c8c8, 0xebebebeb, 0xbbbbbbbb, 0x3c3c3c3c);
-	&data_word(0x83838383, 0x53535353, 0x99999999, 0x61616161);
-	&data_word(0x17171717, 0x2b2b2b2b, 0x04040404, 0x7e7e7e7e);
-	&data_word(0xbabababa, 0x77777777, 0xd6d6d6d6, 0x26262626);
-	&data_word(0xe1e1e1e1, 0x69696969, 0x14141414, 0x63636363);
-	&data_word(0x55555555, 0x21212121, 0x0c0c0c0c, 0x7d7d7d7d);
+	&data_byte(0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38);
+	&data_byte(0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb);
+	&data_byte(0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87);
+	&data_byte(0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb);
+	&data_byte(0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d);
+	&data_byte(0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e);
+	&data_byte(0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2);
+	&data_byte(0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25);
+	&data_byte(0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16);
+	&data_byte(0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92);
+	&data_byte(0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda);
+	&data_byte(0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84);
+	&data_byte(0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a);
+	&data_byte(0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06);
+	&data_byte(0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02);
+	&data_byte(0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b);
+	&data_byte(0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea);
+	&data_byte(0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73);
+	&data_byte(0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85);
+	&data_byte(0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e);
+	&data_byte(0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89);
+	&data_byte(0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b);
+	&data_byte(0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20);
+	&data_byte(0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4);
+	&data_byte(0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31);
+	&data_byte(0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f);
+	&data_byte(0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d);
+	&data_byte(0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef);
+	&data_byte(0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0);
+	&data_byte(0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61);
+	&data_byte(0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26);
+	&data_byte(0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d);
 &function_end_B("_x86_AES_decrypt");
 
 # void AES_decrypt (const void *inp,void *out,const AES_KEY *key);
@@ -769,6 +743,18 @@ sub declast()
 	&set_label("pic_point");
 	&blindpop("ebp");
 	&lea    ("ebp",&DWP(&label("AES_Td")."-".&label("pic_point"),"ebp"));
+
+	# prefetch Td4
+	&lea	("ebp",&DWP(2048+128,"ebp"));
+	&mov	($s0,&DWP(0-128,"ebp"));
+	&mov	($s1,&DWP(32-128,"ebp"));
+	&mov	($s2,&DWP(64-128,"ebp"));
+	&mov	($s3,&DWP(96-128,"ebp"));
+	&mov	($s0,&DWP(128-128,"ebp"));
+	&mov	($s1,&DWP(160-128,"ebp"));
+	&mov	($s2,&DWP(192-128,"ebp"));
+	&mov	($s3,&DWP(224-128,"ebp"));
+	&lea	("ebp",&DWP(-2048-128,"ebp"));
 
 	&mov	($s0,&DWP(0,$acc));		# load input data
 	&mov	($s1,&DWP(4,$acc));
@@ -805,6 +791,7 @@ my $_ivp=&DWP(36,"esp");	#copy of wparam(4)
 my $_tmp=&DWP(40,"esp");	#volatile variable
 my $ivec=&DWP(44,"esp");	#ivec[16]
 my $aes_key=&DWP(60,"esp");	#copy of aes_key
+my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 
 &public_label("AES_Te");
 &public_label("AES_Td");
@@ -865,18 +852,27 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&mov	($_key,$s3);		# save copy of key
 	&mov	($_ivp,$acc);		# save copy of ivp
 
+	&mov	($mark,0);		# copy of aes_key->rounds = 0;
 	if ($compromise) {
 		&cmp	($s2,$compromise);
 		&jb	(&label("skip_ecopy"));
 	}
-	# copy key schedule to stack
-	&mov	("ecx",244/4);
+	# do we copy key schedule to stack?
+	&mov	($s1 eq "ebx" ? $s1 : "",$s3);
+	&mov	($s2 eq "ecx" ? $s2 : "",244/4);
+	&sub	($s1,"ebp");
 	&mov	("esi",$s3);
+	&and	($s1,0xfff);
 	&lea	("edi",$aes_key);
-	&mov	($_key,"edi");
+	&cmp	($s1,2048);
+	&jb	(&label("do_ecopy"));
+	&cmp	($s1,4096-244);
+	&jb	(&label("skip_ecopy"));
 	&align	(4);
-	&data_word(0xF689A5F3);	# rep movsd
-	&set_label("skip_ecopy") if ($compromise);
+	&set_label("do_ecopy");
+		&mov	($_key,"edi");
+		&data_word(0xA5F3F689);	# rep movsd
+	&set_label("skip_ecopy");
 
 	&mov	($acc,$s0);
 	&mov	($key,16);
@@ -942,18 +938,16 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
 
+	&cmp	($mark,0);		# was the key schedule copied?
 	&mov	("edi",$_key);
 	&mov	("esp",$_esp);
-	if ($compromise) {
-		&cmp	(&wparam(2),$compromise);
-		&jb	(&label("skip_ezero"));
-	}
+	&je	(&label("skip_ezero"));
 	# zero copy of key schedule
 	&mov	("ecx",240/4);
 	&xor	("eax","eax");
 	&align	(4);
-	&data_word(0xF689ABF3);	# rep stosd
-	&set_label("skip_ezero") if ($compromise);
+	&data_word(0xABF3F689);	# rep stosd
+	&set_label("skip_ezero")
 	&popf	();
     &set_label("enc_out");
 	&function_end_A();
@@ -968,7 +962,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&cmp	($key,$acc);			# compare with inp
 	&je	(&label("enc_in_place"));
 	&align	(4);
-	&data_word(0xF689A4F3);	# rep movsb	# copy input
+	&data_word(0xA4F3F689);	# rep movsb	# copy input
 	&jmp	(&label("enc_skip_in_place"));
     &set_label("enc_in_place");
 	&lea	($key,&DWP(0,$key,$s2));
@@ -976,7 +970,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&mov	($s2,$s1);
 	&xor	($s0,$s0);
 	&align	(4);
-	&data_word(0xF689AAF3);	# rep stosb	# zero tail
+	&data_word(0xAAF3F689);	# rep stosb	# zero tail
 	&pop	($key);				# pop ivp
 
 	&mov	($acc,$_out);			# output as input
@@ -996,10 +990,10 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 
 	# ... and make sure it doesn't alias with AES_Td modulo 4096
 	&mov	($s0,"ebp");
-	&lea	($s1,&DWP(3072,"ebp"));
+	&lea	($s1,&DWP(2048+256,"ebp"));
 	&mov	($s3,$key);
 	&and	($s0,0xfff);		# s = %ebp&0xfff
-	&and	($s1,0xfff);		# e = (%ebp+3072)&0xfff
+	&and	($s1,0xfff);		# e = (%ebp+2048+256)&0xfff
 	&and	($s3,0xfff);		# p = %esp&0xfff
 
 	&cmp	($s3,$s1);		# if (p>=e) %esp =- (p-e);
@@ -1030,21 +1024,30 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&mov	($_key,$s3);		# save copy of key
 	&mov	($_ivp,$acc);		# save copy of ivp
 
+	&mov	($mark,0);		# copy of aes_key->rounds = 0;
 	if ($compromise) {
 		&cmp	($s2,$compromise);
 		&jb	(&label("skip_dcopy"));
 	}
-	# copy key schedule to stack
-	&mov	("ecx",244/4);
+	# do we copy key schedule to stack?
+	&mov	($s1 eq "ebx" ? $s1 : "",$s3);
+	&mov	($s2 eq "ecx" ? $s2 : "",244/4);
+	&sub	($s1,"ebp");
 	&mov	("esi",$s3);
+	&and	($s1,0xfff);
 	&lea	("edi",$aes_key);
-	&mov	($_key,"edi");
+	&cmp	($s1,2048+256);
+	&jb	(&label("do_dcopy"));
+	&cmp	($s1,4096-244);
+	&jb	(&label("skip_dcopy"));
 	&align	(4);
-	&data_word(0xF689A5F3);	# rep movsd
-	&set_label("skip_dcopy") if ($compromise);
+	&set_label("do_dcopy");
+		&mov	($_key,"edi");
+		&data_word(0xA5F3F689);	# rep movsd
+	&set_label("skip_dcopy");
 
 	&mov	($acc,$s0);
-	&mov	($key,24);
+	&mov	($key,18);
 	&align	(4);
 	&set_label("prefetch_td");
 		&mov	($s0,&DWP(0,"ebp"));
@@ -1054,7 +1057,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 		&lea	("ebp",&DWP(128,"ebp"));
 		&dec	($key);
 	&jnz	(&label("prefetch_td"));
-	&sub	("ebp",3072);
+	&sub	("ebp",2048+256);
 
 	&cmp	($acc,$_out);
 	&je	(&label("dec_in_place"));	# in-place processing...
@@ -1121,7 +1124,7 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&lea	($s2 eq "ecx" ? $s2 : "",&DWP(16,$acc));
 	&mov	($acc eq "esi" ? $acc : "",$key);
 	&mov	($key eq "edi" ? $key : "",$_out);	# load out
-	&data_word(0xF689A4F3);	# rep movsb		# copy output
+	&data_word(0xA4F3F689);	# rep movsb		# copy output
 	&mov	($key,$_inp);				# use inp as temp ivp
 	&jmp	(&label("dec_end"));
 
@@ -1188,22 +1191,20 @@ my $aes_key=&DWP(60,"esp");	#copy of aes_key
 	&lea	($key,&DWP(0,$key,$s2));
 	&lea	($acc,&DWP(16,$acc,$s2));
 	&neg	($s2 eq "ecx" ? $s2 : "");
-	&data_word(0xF689A4F3);	# rep movsb	# restore tail
+	&data_word(0xA4F3F689);	# rep movsb	# restore tail
 
     &align	(4);
     &set_label("dec_out");
+    &cmp	($mark,0);		# was the key schedule copied?
     &mov	("edi",$_key);
     &mov	("esp",$_esp);
-    if ($compromise) {
-	&cmp	(&wparam(2),$compromise);
-	&jb	(&label("skip_dzero"));
-    }
+    &je		(&label("skip_dzero"));
     # zero copy of key schedule
     &mov	("ecx",240/4);
     &xor	("eax","eax");
     &align	(4);
-    &data_word(0xF689ABF3);	# rep stosd
-    &set_label("skip_dzero") if ($compromise);
+    &data_word(0xABF3F689);	# rep stosd
+    &set_label("skip_dzero")
     &popf	();
 &function_end("AES_cbc_encrypt");
 }
