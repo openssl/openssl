@@ -4,6 +4,11 @@
 
  Changes between 0.9.8b and 0.9.8c  [xx XXX xxxx]
 
+  *) Change the Unix randomness entropy gathering to use poll() when
+     possible instead of select(), since the latter has some
+     undesirable limitations.
+     [Darryl Miles via Richard Levitte and Bodo Moeller]
+
   *) Disable "ECCdraft" ciphersuites more thoroughly.  Now special
      treatment in ssl/ssl_ciph.s makes sure that these ciphersuites
      cannot be implicitly activated as part of, e.g., the "AES" alias.
@@ -957,7 +962,7 @@
   *) Change the Unix randomness entropy gathering to use poll() when
      possible instead of select(), since the latter has some
      undesirable limitations.
-     [Darryl Miles via Richard Levitte]
+     [Darryl Miles via Richard Levitte and Bodo Moeller]
 
   *) Disable rogue ciphersuites:
 
