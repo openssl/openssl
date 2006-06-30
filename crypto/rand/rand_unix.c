@@ -124,8 +124,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
-#if defined(OPENSSL_SYS_LINUX)
-# include <sys/poll.h>
+#if defined(OPENSSL_SYS_LINUX) /* should actually be available virtually everywhere */
+# include <poll.h>
 #endif
 #include <limits.h>
 #ifndef FD_SETSIZE
