@@ -125,11 +125,11 @@ the cipher suites not enabled by B<ALL>, currently being B<eNULL>.
 =item B<HIGH>
 
 "high" encryption cipher suites. This currently means those with key lengths larger
-than 128 bits.
+than 128 bits, and some cipher suites with 128-bit keys.
 
 =item B<MEDIUM>
 
-"medium" encryption cipher suites, currently those using 128 bit encryption.
+"medium" encryption cipher suites, currently some of those using 128 bit encryption.
 
 =item B<LOW>
 
