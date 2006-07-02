@@ -745,7 +745,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 	unsigned long algorithms, mask, algo_strength, mask_strength;
 	const char *l, *start, *buf;
 	int j, multi, found, rule, retval, ok, buflen;
-	unsigned long cipher_id;
+	unsigned long cipher_id = 0;
 	char ch;
 
 	retval = 1;
