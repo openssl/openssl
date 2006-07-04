@@ -69,10 +69,10 @@ Te1[x] = S [x].[03, 02, 01, 01];
 Te2[x] = S [x].[01, 03, 02, 01];
 Te3[x] = S [x].[01, 01, 03, 02];
 */
-#define Te0 ((u64*)((u8*)Te+0))
-#define Te1 ((u64*)((u8*)Te+3))
-#define Te2 ((u64*)((u8*)Te+2))
-#define Te3 ((u64*)((u8*)Te+1))
+#define Te0 (u32)((u64*)((u8*)Te+0))
+#define Te1 (u32)((u64*)((u8*)Te+3))
+#define Te2 (u32)((u64*)((u8*)Te+2))
+#define Te3 (u32)((u64*)((u8*)Te+1))
 /*
 Td [x] = Si[x].[0e, 09, 0d, 0b, 0e, 09, 0d, 0b];
 Td0[x] = Si[x].[0e, 09, 0d, 0b];
@@ -81,10 +81,10 @@ Td2[x] = Si[x].[0d, 0b, 0e, 09];
 Td3[x] = Si[x].[09, 0d, 0b, 0e];
 Td4[x] = Si[x].[01];
 */
-#define Td0 ((u64*)((u8*)Td+0))
-#define Td1 ((u64*)((u8*)Td+3))
-#define Td2 ((u64*)((u8*)Td+2))
-#define Td3 ((u64*)((u8*)Td+1))
+#define Td0 (u32)((u64*)((u8*)Td+0))
+#define Td1 (u32)((u64*)((u8*)Td+3))
+#define Td2 (u32)((u64*)((u8*)Td+2))
+#define Td3 (u32)((u64*)((u8*)Td+1))
 
 static const u64 Te[256] = {
     U64(0xa56363c6a56363c6), U64(0x847c7cf8847c7cf8),
