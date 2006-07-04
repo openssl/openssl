@@ -161,13 +161,13 @@ int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 	if (a->type != b->type)
 		return -1;
 
-	if (a->meth)
+	if (a->ameth)
 		{
 		int ret;
 		/* Compare parameters if the algorithm has them */
-		if (a->meth->param_cmp)
+		if (a->ameth->param_cmp)
 			{
-			ret = a->meth->param_cmp(a, b);
+			ret = a->ameth->param_cmp(a, b);
 			if (ret <= 0)
 				return ret;
 			}
