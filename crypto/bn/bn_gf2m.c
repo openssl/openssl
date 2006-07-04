@@ -855,8 +855,7 @@ err:
  */
 int BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a_, const int p[], BN_CTX *ctx)
 	{
-	int ret = 0, count = 0;
-	unsigned int j;
+	int ret = 0, count = 0, j;
 	BIGNUM *a, *z, *rho, *w, *w2, *tmp;
 
 	bn_check_top(a_);
