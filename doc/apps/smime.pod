@@ -10,6 +10,7 @@ B<openssl> B<smime>
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-sign>]
+[B<-resign>]
 [B<-verify>]
 [B<-pk7out>]
 [B<-des>]
@@ -38,6 +39,7 @@ B<openssl> B<smime>
 [B<-subject s>]
 [B<-text>]
 [B<-rand file(s)>]
+[B<-md digest>]
 [cert.pem]...
 
 =head1 DESCRIPTION
@@ -77,6 +79,10 @@ the signed data. Both clear text and opaque signing is supported.
 =item B<-pk7out>
 
 takes an input message and writes out a PEM encoded PKCS#7 structure.
+
+=item B<-resign>
+
+resign a message: take an existing message and one or more new signers.
 
 =item B<-in filename>
 
@@ -132,11 +138,20 @@ B<-verify>. This directory must be a standard certificate directory: that
 is a hash of each subject name (using B<x509 -hash>) should be linked
 to each certificate.
 
+=item B<-md digest>
+
+digest algorithm to use when signing or resigning. If not present then the
+default digest algorithm for the signing key will be used (usually SHA1).
+
 =item B<-des -des3 -rc2-40 -rc2-64 -rc2-128 -aes128 -aes192 -aes256 -camellia128 -camellia192 -camellia256>
 
-the encryption algorithm to use. DES (56 bits), triple DES (168 bits),
-40, 64 or 128 bit RC2, 128, 192 or 256 bit AES, or 128, 192 or 256 bit Camellia respectively.  If not
-specified 40 bit RC2 is used. Only used with B<-encrypt>.
+the encryption algorithm to use. DES (56 bits), triple DES (168 bits), 40, 64
+or 128 bit RC2, 128, 192 or 256 bit AES, or 128, 192 or 256 bit Camellia
+respectively. Any other cipher name (as recognized by the
+EVP_get_cipherbyname() function) can also be used preceded by a dash, for 
+example B<-aes_128_cbc>.
+
+If not specified 40 bit RC2 is used. Only used with B<-encrypt>.
 
 =item B<-nointern>
 
@@ -193,9 +208,10 @@ the signers certificates. The certificates should be in PEM format.
 
 =item B<-signer file>
 
-the signers certificate when signing a message. If a message is
-being verified then the signers certificates will be written to this
-file if the verification was successful.
+a signing certificate when signing or resigning a message, this option can be
+used multiple times if more than one signer is required. If a message is being
+verified then the signers certificates will be written to this file if the
+verification was successful.
 
 =item B<-recip file>
 
@@ -207,7 +223,8 @@ must match one of the recipients of the message or an error occurs.
 the private key to use when signing or decrypting. This must match the
 corresponding certificate. If this option is not specified then the
 private key must be included in the certificate file specified with
-the B<-recip> or B<-signer> file.
+the B<-recip> or B<-signer> file. When signing this option can be used
+multiple times to specify successive keys.
 
 =item B<-passin arg>
 
@@ -261,6 +278,10 @@ The options B<-encrypt> and B<-decrypt> reflect common usage in S/MIME
 clients. Strictly speaking these process PKCS#7 enveloped data: PKCS#7
 encrypted data is used for other purposes.
 
+The B<-resign> option uses an existing message digest when adding a new
+signer. This means that attributes must be present in at least one existing
+signer using the same message digest or this operation will fail.
+
 =head1 EXIT CODES
 
 =over 4
@@ -300,7 +321,7 @@ Create a cleartext signed message:
  openssl smime -sign -in message.txt -text -out mail.msg \
 	-signer mycert.pem
 
-Create and opaque signed message
+Create an opaque signed message
 
  openssl smime -sign -in message.txt -text -out mail.msg -nodetach \
 	-signer mycert.pem
@@ -310,6 +331,11 @@ read the private key from another file:
 
  openssl smime -sign -in in.txt -text -out mail.msg \
 	-signer mycert.pem -inkey mykey.pem -certfile mycerts.pem
+
+Create a signed message with two signers:
+
+ openssl smime -sign -in message.txt -text -out mail.msg \
+	-signer mycert.pem -signer othercert.pem
 
 Send a signed message under Unix directly to sendmail, including headers:
 
@@ -334,8 +360,8 @@ Sign and encrypt mail:
 	-from steve@openssl.org -to someone@somewhere \
 	-subject "Signed and Encrypted message" -des3 user.pem
 
-Note: the encryption command does not include the B<-text> option because the message
-being encrypted already has MIME headers.
+Note: the encryption command does not include the B<-text> option because the
+message being encrypted already has MIME headers.
 
 Decrypt mail:
 
@@ -361,16 +387,22 @@ Create an encrypted message using 128 bit Camellia:
 
  openssl smime -encrypt -in plain.txt -camellia128 -out mail.msg cert.pem
 
+Add a signer to an existing message:
+
+ openssl smime -resign -in mail.msg -signer newsign.pem -out mail2.msg
+
 =head1 BUGS
 
-The MIME parser isn't very clever: it seems to handle most messages that I've thrown
-at it but it may choke on others.
+The MIME parser isn't very clever: it seems to handle most messages that I've
+thrown at it but it may choke on others.
 
-The code currently will only write out the signer's certificate to a file: if the
-signer has a separate encryption certificate this must be manually extracted. There
-should be some heuristic that determines the correct encryption certificate.
+The code currently will only write out the signer's certificate to a file: if
+the signer has a separate encryption certificate this must be manually
+extracted. There should be some heuristic that determines the correct
+encryption certificate.
 
-Ideally a database should be maintained of a certificates for each email address.
+Ideally a database should be maintained of a certificates for each email
+address.
 
 The code doesn't currently take note of the permitted symmetric encryption
 algorithms as supplied in the SMIMECapabilities signed attribute. this means the
@@ -381,5 +413,11 @@ No revocation checking is done on the signer's certificate.
 
 The current code can only handle S/MIME v2 messages, the more complex S/MIME v3
 structures may cause parsing errors.
+
+=head1 HISTORY
+
+The use of multiple B<-signer> options and the B<-resign> command were first
+added in OpenSSL 0.9.9
+
 
 =cut
