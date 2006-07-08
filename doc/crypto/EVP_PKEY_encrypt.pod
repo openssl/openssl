@@ -38,7 +38,8 @@ context if several operations are performed using the same parameters.
 =head1 RETURN VALUES
 
 EVP_PKEY_encrypt_init() and EVP_PKEY_encrypt() return 1 for success and 0
-or a negative value for failure.
+or a negative value for failure. In particular a return value of -2
+indicates the operation is not supported by the public key algorithm.
 
 =head1 EXAMPLE
 
