@@ -133,8 +133,9 @@ Recover the signed data (e.g. if an RSA key is used):
 
 Verify the signature (e.g. a DSA key):
 
- openssl pkeyutl -verify -sigfile file -in sig -inkey key.pem
+ openssl pkeyutl -verify -in file -sigfile sig -inkey key.pem
 
 =head1 SEE ALSO
+
 L<genpkey(1)|genpkey(1)>, L<pkey(1)|pkey(1)>, L<rsautl(1)|rsautl(1)>
 L<dgst(1)|dgst(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>
