@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-EVP_PKEY_encrypt_init, EVP_PKEY_encrypt - encrypt using a public key algorithm
+EVP_PKEY_sign_init, EVP_PKEY_sign - sign using a public key algorithm
 
 =head1 SYNOPSIS
 
