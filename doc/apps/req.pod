@@ -23,6 +23,7 @@ B<openssl> B<req>
 [B<-rand file(s)>]
 [B<-newkey rsa:bits>]
 [B<-newkey dsa:file>]
+[B<-newkey alg:file>]
 [B<-nodes>]
 [B<-key filename>]
 [B<-keyform PEM|DER>]
@@ -129,10 +130,21 @@ all others.
 =item B<-newkey arg>
 
 this option creates a new certificate request and a new private
-key. The argument takes one of two forms. B<rsa:nbits>, where
+key. The argument takes one of several forms. B<rsa:nbits>, where
 B<nbits> is the number of bits, generates an RSA key B<nbits>
 in size. B<dsa:filename> generates a DSA key using the parameters
-in the file B<filename>.
+in the file B<filename>. B<param:file> generates a key using the
+parameter file B<file>, the algorithm is determined by the
+parameters. B<algname:file> use algorithm B<algname> and parameter file
+B<file> the two algorithms must match or an error occurs. B<algname> just
+uses algorithm B<algname>.
+
+=item B<-pkeyopt opt:value>
+
+set the public key algorithm option B<opt> to B<value>. The precise set of
+options supported depends on the public key algorithm used and its
+implementation. See B<KEY GENERATION OPTIONS> in the B<genpkey> manual page
+for more details.
 
 =item B<-key filename>
 
