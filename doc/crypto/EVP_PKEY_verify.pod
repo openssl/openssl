@@ -1,0 +1,66 @@
+=pod
+
+=head1 NAME
+
+EVP_PKEY_verify_init, EVP_PKEY_verify - signature verification using a public key algorithm
+
+=head1 SYNOPSIS
+
+ #include <openssl/evp.h>
+
+ int EVP_PKEY_verify_init(EVP_PKEY_CTX *ctx);
+ int EVP_PKEY_verify(EVP_PKEY_CTX *ctx,
+			const unsigned char *sig, size_t siglen,
+			const unsigned char *tbs, size_t tbslen);
+
+=head1 DESCRIPTION
+
+The EVP_PKEY_verify_init() function initializes a public key algorithm
+context using key B<pkey> for a signature verification operation.
+
+The EVP_PKEY_verify() function performs a public key verification operation
+using B<ctx>. The signature is specified using the B<sig> and
+B<siglen> parameters. The verified data (i.e. the data believed originally
+signed) is specified using the B<tbs> and B<tbslen> parameters.
+
+=head1 NOTES
+
+After the call to EVP_PKEY_verify_init() algorithm specific control
+operations can be performed to set any appropriate parameters for the
+operation.
+
+The function EVP_PKEY_verify() can be called more than once on the same
+context if several operations are performed using the same parameters.
+
+=head1 RETURN VALUES
+
+EVP_PKEY_verify_init() and EVP_PKEY_verify() return 1 if the verification
+was successful and 0 if it failed. Unlike other functions the return value
+0 only indicates that the signature did not not verify successfully (that is
+tbs did not match the original data or the signature was of invalid form)
+it is not an indication of a more serious error.
+
+A negative value indicates an error other that signature verification failure.
+In particular a return value of -2 indicates the operation is not supported by
+the public key algorithm.
+
+=head1 EXAMPLE
+
+Verify signature using PKCS#1 and SHA256 digest:
+
+[to be added]
+
+=head1 SEE ALSO
+
+L<EVP_PKEY_CTX_new(3)|EVP_PKEY_CTX_new(3)>,
+L<EVP_PKEY_encrypt(3)|EVP_PKEY_encrypt(3)>,
+L<EVP_PKEY_decrypt(3)|EVP_PKEY_decrypt(3)>,
+L<EVP_PKEY_sign(3)|EVP_PKEY_sign(3)>,
+L<EVP_PKEY_verifyrecover(3)|EVP_PKEY_verifyrecover(3)>,
+L<EVP_PKEY_derive(3)|EVP_PKEY_derive(3)> 
+
+=head1 HISTORY
+
+These functions were first added to OpenSSL 0.9.9.
+
+=cut
