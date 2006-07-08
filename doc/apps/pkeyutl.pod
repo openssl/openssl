@@ -1,0 +1,140 @@
+=pod
+
+=head1 NAME
+
+pkeyutl - public key algorithm utility
+
+=head1 SYNOPSIS
+
+B<openssl> B<pkeyutl>
+[B<-in file>]
+[B<-out file>]
+[B<-sigfile file>]
+[B<-inkey file>]
+[B<-keyform PEM|DER>]
+[B<-peerkey file>]
+[B<-peerform PEM|DER>]
+[B<-pubin>]
+[B<-certin>]
+[B<-rev>]
+[B<-sign>]
+[B<-verify>]
+[B<-verifyrecover>]
+[B<-encrypt>]
+[B<-decrypt>]
+[B<-derive>]
+[B<-pkeyopt opt:value>]
+[B<-hexdump>]
+[B<-asn1parse>]
+
+=head1 DESCRIPTION
+
+The B<pkeyutl> command can be used to perform public key operations using
+any supported algorithm.
+
+=head1 COMMAND OPTIONS
+
+=over 4
+
+=item B<-in filename>
+
+This specifies the input filename to read data from or standard input
+if this option is not specified.
+
+=item B<-out filename>
+
+specifies the output filename to write to or standard output by
+default.
+
+=item B<-inkey file>
+
+the input key file, by default it should be a private key.
+
+=item B<-keyform PEM|DER>
+
+the key format PEM or DER.
+
+=item B<-peerkey file>
+
+the peer key file, used by key derivation (agreement) operations.
+
+=item B<-peerform PEM|DER>
+
+the peer key format PEM or DER.
+
+=item B<-pubin>
+
+the input file is a public key. 
+
+=item B<-certin>
+
+the input is a certificate containing a public key. 
+
+=item B<-sign>
+
+sign the input data and output the signed result. This requires
+a private key.
+
+=item B<-verify>
+
+verify the input data against the signature file and indicate if the
+verification succeeded or failed.
+
+=item B<-verifyrecover>
+
+verify the input data and output the recovered data.
+
+=item B<-encrypt>
+
+encrypt the input data using a public key.
+
+=item B<-decrypt>
+
+decrypt the input data using a private key.
+
+=item B<-derive>
+
+derive a shared secret using the peer key.
+
+=item B<-hexdump>
+
+hex dump the output data.
+
+=item B<-asn1parse>
+
+asn1parse the output data, this is useful when combined with the
+B<-verifyrecover> option when an ASN1 structure is signed.
+
+=back
+
+=head1 NOTES
+
+The operations and options supported vary according to the key algorithm
+and its implementation. The OpenSSL operations and options are indicated below.
+
+=head1 RSA ALGORITHM
+
+The RSA algorithm supports encrypt, decrypt, sign, verify and verifyrecover
+operations in general. Some padding modes only support some of these 
+operations however.
+
+[NB: more to be added later]
+
+
+=head1 EXAMPLES
+
+Sign some data using a private key:
+
+ openssl pkeyutl -sign -in file -inkey key.pem -out sig
+
+Recover the signed data (e.g. if an RSA key is used):
+
+ openssl pkeyutl -verifyrecover -in sig -inkey key.pem
+
+Verify the signature (e.g. a DSA key):
+
+ openssl pkeyutl -verify -sigfile file -in sig -inkey key.pem
+
+=head1 SEE ALSO
+L<genpkey(1)|genpkey(1)>, L<pkey(1)|pkey(1)>, L<rsautl(1)|rsautl(1)>
+L<dgst(1)|dgst(1)>, L<rsa(1)|rsa(1)>, L<genrsa(1)|genrsa(1)>
