@@ -43,9 +43,42 @@ indicates the operation is not supported by the public key algorithm.
 
 =head1 EXAMPLE
 
-Sign data using PKCS#1 and SHA256 digest:
+Sign data using RSA with PKCS#1 padding and SHA256 digest:
 
-[to be added]
+ #include <openssl/evp.h>
+ #include <openssl/rsa.h>
+
+ EVP_PKEY_CTX *ctx;
+ unsigned char *md, *sig;
+ size_t mdlen, siglen; 
+ EVP_PKEY *signing_key;
+ /* NB: assumes signing_key, md and mdlen are already set up
+  * and that signing_key is an RSA private key
+  */
+ ctx = EVP_PKEY_CTX_new(signing_key);
+ if (!ctx)
+	/* Error occurred */
+ if (EVP_PKEY_sign_init(ctx) <= 0)
+	/* Error */
+ if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
+	/* Error */
+ if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
+	/* Error */
+
+ /* Determine buffer length */
+ if (EVP_PKEY_sign(ctx, NULL, &siglen, md, mdlen) <= 0)
+	/* Error */
+
+ sig = OPENSSL_malloc(siglen);
+
+ if (!sig)
+	/* malloc failure */
+ 
+ if (EVP_PKEY_sign(ctx, sig, &siglen, md, mdlen) <= 0)
+	/* Error */
+
+ /* Signature is siglen bytes written to buffer sig */
+
 
 =head1 SEE ALSO
 

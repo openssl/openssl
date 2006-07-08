@@ -48,7 +48,32 @@ the public key algorithm.
 
 Verify signature using PKCS#1 and SHA256 digest:
 
-[to be added]
+ #include <openssl/evp.h>
+ #include <openssl/rsa.h>
+
+ EVP_PKEY_CTX *ctx;
+ unsigned char *md, *sig;
+ size_t mdlen, siglen; 
+ EVP_PKEY *verify_key;
+ /* NB: assumes verify_key, sig, siglen md and mdlen are already set up
+  * and that verify_key is an RSA public key
+  */
+ ctx = EVP_PKEY_CTX_new(verify_key);
+ if (!ctx)
+	/* Error occurred */
+ if (EVP_PKEY_verify_init(ctx) <= 0)
+	/* Error */
+ if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_PADDING) <= 0)
+	/* Error */
+ if (EVP_PKEY_CTX_set_signature_md(ctx, EVP_sha256()) <= 0)
+	/* Error */
+
+ /* Perform operation */
+ ret = EVP_PKEY_verify(ctx, md, mdlen, sig, siglen);
+
+ /* ret == 1 indicates success, 0 verify failure and < 0 for some
+  * other error.
+  */
 
 =head1 SEE ALSO
 
