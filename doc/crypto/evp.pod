@@ -22,14 +22,24 @@ digital signatures.
 Symmetric encryption is available with the B<EVP_Encrypt>I<...>
 functions.  The B<EVP_Digest>I<...> functions provide message digests.
 
+The B<EVP_PKEY>I<...> functions provide a high level interface to
+asymmetric algorithms.
+
 Algorithms are loaded with OpenSSL_add_all_algorithms(3).
 
-All the symmetric algorithms (ciphers) and digests can be replaced by ENGINE
-modules providing alternative implementations. If ENGINE implementations of
-ciphers or digests are registered as defaults, then the various EVP functions
-will automatically use those implementations automatically in preference to
-built in software implementations. For more information, consult the engine(3)
-man page.
+All the symmetric algorithms (ciphers), digests and asymmetric algorithms
+(public key algorithms) can be replaced by ENGINE modules providing alternative
+implementations. If ENGINE implementations of ciphers or digests are registered
+as defaults, then the various EVP functions will automatically use those
+implementations automatically in preference to built in software
+implementations. For more information, consult the engine(3) man page.
+
+Although low level algorithm specific functions exist for many algorithms
+their use is discouraged. They cannot be used with an ENGINE and ENGINE
+versions of new algorithms cannot be accessed using the low level functions.
+Also makes code harder to adapt to new algorithms and some options are not 
+cleanly supported at the low level and some operations are more efficient
+using the high level interface.
 
 =head1 SEE ALSO
 
