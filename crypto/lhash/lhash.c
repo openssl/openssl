@@ -273,6 +273,9 @@ static void doall_util_fn(LHASH *lh, int use_arg, LHASH_DOALL_FN_TYPE func,
 	int i;
 	LHASH_NODE *a,*n;
 
+	if (lh == NULL)
+		return;
+
 	/* reverse the order so we search from 'top to bottom'
 	 * We were having memory leaks otherwise */
 	for (i=lh->num_nodes-1; i>=0; i--)

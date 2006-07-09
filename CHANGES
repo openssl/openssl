@@ -4,6 +4,12 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) New functions EVP_CIPHER_do_all(), EVP_CIPHER_do_all_sorted(),
+     EVP_MD_do_all() and EVP_MD_do_all_sorted() to enumerate internal
+     digest and cipher tables. New options added to openssl utility:
+     list-message-digest-algorithms and list-cipher-algorithms.
+     [Steve Henson]
+
   *) In addition to the numerical (unsigned long) thread ID, provide
      for a pointer (void *) thread ID.  This helps accomodate systems
      that do not provide an unsigned long thread ID.  OpenSSL assumes

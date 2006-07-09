@@ -142,6 +142,8 @@ static int MS_CALLBACK cmp(const void *a_void,const void *b_void);
 static LHASH *prog_init(void );
 static int do_cmd(LHASH *prog,int argc,char *argv[]);
 static void list_pkey(BIO *out);
+static void list_cipher(BIO *out);
+static void list_md(BIO *out);
 char *default_config_file=NULL;
 
 /* Make sure there is only one when MONOLITH is defined */
@@ -367,8 +369,11 @@ end:
 
 #define LIST_STANDARD_COMMANDS "list-standard-commands"
 #define LIST_MESSAGE_DIGEST_COMMANDS "list-message-digest-commands"
+#define LIST_MESSAGE_DIGEST_ALGORITHMS "list-message-digest-algorithms"
 #define LIST_CIPHER_COMMANDS "list-cipher-commands"
+#define LIST_CIPHER_ALGORITHMS "list-cipher-algorithms"
 #define LIST_PUBLIC_KEY_ALGORITHMS "list-public-key-algorithms"
+
 
 static int do_cmd(LHASH *prog, int argc, char *argv[])
 	{
@@ -411,7 +416,9 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 		}
 	else if ((strcmp(argv[0],LIST_STANDARD_COMMANDS) == 0) ||
 		(strcmp(argv[0],LIST_MESSAGE_DIGEST_COMMANDS) == 0) ||
+		(strcmp(argv[0],LIST_MESSAGE_DIGEST_ALGORITHMS) == 0) ||
 		(strcmp(argv[0],LIST_CIPHER_COMMANDS) == 0) ||
+		(strcmp(argv[0],LIST_CIPHER_ALGORITHMS) == 0) ||
 		(strcmp(argv[0],LIST_PUBLIC_KEY_ALGORITHMS) == 0))
 		{
 		int list_type;
@@ -421,8 +428,12 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 			list_type = FUNC_TYPE_GENERAL;
 		else if (strcmp(argv[0],LIST_MESSAGE_DIGEST_COMMANDS) == 0)
 			list_type = FUNC_TYPE_MD;
+		else if (strcmp(argv[0],LIST_MESSAGE_DIGEST_ALGORITHMS) == 0)
+			list_type = FUNC_TYPE_MD_ALG;
 		else if (strcmp(argv[0],LIST_PUBLIC_KEY_ALGORITHMS) == 0)
 			list_type = FUNC_TYPE_PKEY;
+		else if (strcmp(argv[0],LIST_CIPHER_ALGORITHMS) == 0)
+			list_type = FUNC_TYPE_CIPHER_ALG;
 		else /* strcmp(argv[0],LIST_CIPHER_COMMANDS) == 0 */
 			list_type = FUNC_TYPE_CIPHER;
 		bio_stdout = BIO_new_fp(stdout,BIO_NOCLOSE);
@@ -438,6 +449,10 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 
 		if (list_type == FUNC_TYPE_PKEY)
 			list_pkey(bio_stdout);	
+		if (list_type == FUNC_TYPE_MD_ALG)
+			list_md(bio_stdout);	
+		if (list_type == FUNC_TYPE_CIPHER_ALG)
+			list_cipher(bio_stdout);	
 		else
 			{
 			for (fp=functions; fp->name != NULL; fp++)
@@ -538,6 +553,46 @@ static void list_pkey(BIO *out)
 			}
 					
 		}
+	}
+
+static void list_cipher_fn(const EVP_CIPHER *c,
+			const char *from, const char *to, void *arg)
+	{
+	if (c)
+		BIO_printf(arg, "%s\n", EVP_CIPHER_name(c));
+	else
+		{
+		if (!from)
+			from = "<undefined>";
+		if (!to)
+			to = "<undefined>";
+		BIO_printf(arg, "%s => %s\n", from, to);
+		}
+	}
+
+static void list_cipher(BIO *out)
+	{
+	EVP_CIPHER_do_all_sorted(list_cipher_fn, out);
+	}
+
+static void list_md_fn(const EVP_MD *m,
+			const char *from, const char *to, void *arg)
+	{
+	if (m)
+		BIO_printf(arg, "%s\n", EVP_MD_name(m));
+	else
+		{
+		if (!from)
+			from = "<undefined>";
+		if (!to)
+			to = "<undefined>";
+		BIO_printf(arg, "%s => %s\n", from, to);
+		}
+	}
+
+static void list_md(BIO *out)
+	{
+	EVP_MD_do_all_sorted(list_md_fn, out);
 	}
 
 static LHASH *prog_init(void)

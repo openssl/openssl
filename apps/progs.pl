@@ -14,6 +14,8 @@ print <<'EOF';
 #define FUNC_TYPE_MD		2
 #define FUNC_TYPE_CIPHER	3
 #define FUNC_TYPE_PKEY		4
+#define FUNC_TYPE_MD_ALG	5
+#define FUNC_TYPE_CIPHER_ALG	6
 
 typedef struct {
 	int type;

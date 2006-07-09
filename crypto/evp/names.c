@@ -76,6 +76,7 @@ int EVP_add_cipher(const EVP_CIPHER *c)
 	return(r);
 	}
 
+
 int EVP_add_digest(const EVP_MD *md)
 	{
 	int r;
@@ -131,4 +132,72 @@ void EVP_cleanup(void)
 		obj_cleanup_defer = 0;
 		OBJ_cleanup();
 		}
+	}
+
+struct doall_cipher
+	{
+	void *arg;
+	void (*fn)(const EVP_CIPHER *ciph,
+			const char *from, const char *to, void *arg);
+	};
+
+static void do_all_cipher_fn(const OBJ_NAME *nm, void *arg)
+	{
+	struct doall_cipher *dc = arg;
+	if (nm->alias)
+		dc->fn(NULL, nm->name, nm->data, dc->arg);
+	else
+		dc->fn((const EVP_CIPHER *)nm->data, NULL, NULL, dc->arg);
+	}
+
+void EVP_CIPHER_do_all(void (*fn)(const EVP_CIPHER *ciph,
+		const char *from, const char *to, void *x), void *arg)
+	{
+	struct doall_cipher dc;
+	dc.fn = fn;
+	dc.arg = arg;
+	OBJ_NAME_do_all(OBJ_NAME_TYPE_CIPHER_METH, do_all_cipher_fn, &dc);
+	}
+
+void EVP_CIPHER_do_all_sorted(void (*fn)(const EVP_CIPHER *ciph,
+		const char *from, const char *to, void *x), void *arg)
+	{
+	struct doall_cipher dc;
+	dc.fn = fn;
+	dc.arg = arg;
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_CIPHER_METH, do_all_cipher_fn,&dc);
+	}
+
+struct doall_md
+	{
+	void *arg;
+	void (*fn)(const EVP_MD *ciph,
+			const char *from, const char *to, void *arg);
+	};
+
+static void do_all_md_fn(const OBJ_NAME *nm, void *arg)
+	{
+	struct doall_md *dc = arg;
+	if (nm->alias)
+		dc->fn(NULL, nm->name, nm->data, dc->arg);
+	else
+		dc->fn((const EVP_MD *)nm->data, NULL, NULL, dc->arg);
+	}
+
+void EVP_MD_do_all(void (*fn)(const EVP_MD *md,
+		const char *from, const char *to, void *x), void *arg)
+	{
+	struct doall_md dc;
+	dc.fn = fn;
+	dc.arg = arg;
+	OBJ_NAME_do_all(OBJ_NAME_TYPE_MD_METH, do_all_md_fn, &dc);
+	}
+
+void EVP_MD_do_all_sorted(void (*fn)(const EVP_MD *md,
+		const char *from, const char *to, void *x), void *arg)
+	{
+	struct doall_md dc;
+	dc.fn = fn;
+	dc.arg = arg;
+	OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH, do_all_md_fn, &dc);
 	}

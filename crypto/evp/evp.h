@@ -782,6 +782,16 @@ const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
 const EVP_MD *EVP_get_digestbyname(const char *name);
 void EVP_cleanup(void);
 
+void EVP_CIPHER_do_all(void (*fn)(const EVP_CIPHER *ciph,
+		const char *from, const char *to, void *x), void *arg);
+void EVP_CIPHER_do_all_sorted(void (*fn)(const EVP_CIPHER *ciph,
+		const char *from, const char *to, void *x), void *arg);
+
+void EVP_MD_do_all(void (*fn)(const EVP_MD *ciph,
+		const char *from, const char *to, void *x), void *arg);
+void EVP_MD_do_all_sorted(void (*fn)(const EVP_MD *ciph,
+		const char *from, const char *to, void *x), void *arg);
+
 int		EVP_PKEY_decrypt_old(unsigned char *dec_key,
 			const unsigned char *enc_key,int enc_key_len,
 			EVP_PKEY *private_key);
