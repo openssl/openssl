@@ -12,7 +12,7 @@ I<command>
 [ I<command_opts> ]
 [ I<command_args> ]
 
-B<openssl> [ B<list-standard-commands> | B<list-message-digest-commands> | B<list-cipher-commands> ]
+B<openssl> [ B<list-standard-commands> | B<list-message-digest-commands> | B<list-cipher-commands> | B<list-cipher-algorithms> | B<list-message-digest-algorithms> | B<list-public-key-algorithms]
 
 B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
 
@@ -44,6 +44,14 @@ The pseudo-commands B<list-standard-commands>, B<list-message-digest-commands>,
 and B<list-cipher-commands> output a list (one entry per line) of the names
 of all standard commands, message digest commands, or cipher commands,
 respectively, that are available in the present B<openssl> utility.
+
+The pseudo-commands B<list-cipher-algorithms> and
+B<list-message-digest-algorithms> list all cipher and message digest names, one entry per line. Aliases are listed as:
+
+ from => to
+
+The pseudo-command B<list-public-key-algorithms> lists all supported public
+key algorithms.
 
 The pseudo-command B<no->I<XXX> tests whether a command of the
 specified name is available.  If no command named I<XXX> exists, it

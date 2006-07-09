@@ -63,25 +63,25 @@ by default.
 
 =item B<-out filename>
 
-The filename to write certificates and private keys to, standard output by default.
-They are all written in PEM format.
+The filename to write certificates and private keys to, standard output by
+default.  They are all written in PEM format.
 
 =item B<-pass arg>, B<-passin arg>
 
-the PKCS#12 file (i.e. input file) password source. For more information about the
-format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
+the PKCS#12 file (i.e. input file) password source. For more information about
+the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
 L<openssl(1)|openssl(1)>.
 
 =item B<-passout arg>
 
-pass phrase source to encrypt any outputed private keys with. For more information
-about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section in
-L<openssl(1)|openssl(1)>.
+pass phrase source to encrypt any outputed private keys with. For more
+information about the format of B<arg> see the B<PASS PHRASE ARGUMENTS> section
+in L<openssl(1)|openssl(1)>.
 
 =item B<-noout>
 
-this option inhibits output of the keys and certificates to the output file version
-of the PKCS#12 file.
+this option inhibits output of the keys and certificates to the output file
+version of the PKCS#12 file.
 
 =item B<-clcerts>
 
@@ -148,10 +148,10 @@ by default.
 
 =item B<-in filename>
 
-The filename to read certificates and private keys from, standard input by default.
-They must all be in PEM format. The order doesn't matter but one private key and
-its corresponding certificate should be present. If additional certificates are
-present they will also be included in the PKCS#12 file.
+The filename to read certificates and private keys from, standard input by
+default.  They must all be in PEM format. The order doesn't matter but one
+private key and its corresponding certificate should be present. If additional
+certificates are present they will also be included in the PKCS#12 file.
 
 =item B<-inkey filename>
 
@@ -160,8 +160,8 @@ in the input file.
 
 =item B<-name friendlyname>
 
-This specifies the "friendly name" for the certificate and private key. This name
-is typically displayed in list boxes by software importing the file.
+This specifies the "friendly name" for the certificate and private key. This
+name is typically displayed in list boxes by software importing the file.
 
 =item B<-certfile filename>
 
@@ -201,9 +201,11 @@ key is encrypted using triple DES and the certificate using 40 bit RC2.
 =item B<-keypbe alg>, B<-certpbe alg>
 
 these options allow the algorithm used to encrypt the private key and
-certificates to be selected. Although any PKCS#5 v1.5 or PKCS#12 algorithms
-can be selected it is advisable only to use PKCS#12 algorithms. See the list
-in the B<NOTES> section for more information.
+certificates to be selected. Any PKCS#5 v1.5 or PKCS#12 PBE algorithm name
+can be used (see B<NOTES> section for more information). If a a cipher name
+(as output by the B<list-cipher-algorithms> command is specified then it
+is used with PKCS#5 v2.0. For interoperability reasons it is advisable to only
+use PKCS#12 algorithms.
 
 =item B<-keyex|-keysig>
 
@@ -215,6 +217,10 @@ option marks the key for signing only. Signing only keys can be used for
 S/MIME signing, authenticode (ActiveX control signing)  and SSL client
 authentication, however due to a bug only MSIE 5.0 and later support
 the use of signing only keys for SSL client authentication.
+
+=item B<-macalg digest>
+
+specify the MAC digest algorithm. If not included them SHA1 will be used.
 
 =item B<-nomaciter>, B<-noiter>
 
