@@ -4,6 +4,11 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) New function OBJ_add_sigid() to allow application defined signature OIDs
+     to be added to OpenSSLs internal tables. New function OBJ_sigid_free()
+     to free up any added signature OIDs.
+     [Steve Henson]
+
   *) New functions EVP_CIPHER_do_all(), EVP_CIPHER_do_all_sorted(),
      EVP_MD_do_all() and EVP_MD_do_all_sorted() to enumerate internal
      digest and cipher tables. New options added to openssl utility:

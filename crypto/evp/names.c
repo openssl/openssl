@@ -132,6 +132,7 @@ void EVP_cleanup(void)
 		obj_cleanup_defer = 0;
 		OBJ_cleanup();
 		}
+	OBJ_sigid_free();
 	}
 
 struct doall_cipher
