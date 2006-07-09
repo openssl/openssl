@@ -98,6 +98,9 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 			}
 		}
 
+	if(flags & PKCS7_DETACHED)
+		PKCS7_set_detached(p7, 1);
+
 	if (flags & (PKCS7_STREAM|PKCS7_PARTIAL))
 		return p7;
 
@@ -123,8 +126,6 @@ int PKCS7_final(PKCS7 *p7, BIO *data, int flags)
 
 	BIO_flush(p7bio);
 
-	if(PKCS7_type_is_signed(p7) && (flags & PKCS7_DETACHED))
-		PKCS7_set_detached(p7, 1);
 
         if (!PKCS7_dataFinal(p7,p7bio))
 		{
