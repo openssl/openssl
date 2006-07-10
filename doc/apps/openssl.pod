@@ -12,7 +12,7 @@ I<command>
 [ I<command_opts> ]
 [ I<command_args> ]
 
-B<openssl> [ B<list-standard-commands> | B<list-message-digest-commands> | B<list-cipher-commands> | B<list-cipher-algorithms> | B<list-message-digest-algorithms> | B<list-public-key-algorithms]
+B<openssl> [ B<list-standard-commands> | B<list-message-digest-commands> | B<list-cipher-commands> | B<list-cipher-algorithms> | B<list-message-digest-algorithms> | B<list-public-key-algorithms>]
 
 B<openssl> B<no->I<XXX> [ I<arbitrary options> ]
 
@@ -26,7 +26,8 @@ The B<openssl> program is a command line tool for using the various
 cryptography functions of OpenSSL's B<crypto> library from the shell. 
 It can be used for 
 
- o  Creation of RSA, DH and DSA key parameters
+ o  Creation and management of private keys, public keys and parameters
+ o  Public key cryptographic operations
  o  Creation of X.509 certificates, CSRs and CRLs 
  o  Calculation of Message Digests
  o  Encryption and Decryption with Ciphers
@@ -103,7 +104,8 @@ DSA Data Management.
 
 =item L<B<dsaparam>|dsaparam(1)>
 
-DSA Parameter Generation.
+DSA Parameter Generation and Management. Superseded by 
+L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>
 
 =item L<B<enc>|enc(1)>
 
@@ -115,7 +117,8 @@ Error Number to Error String Conversion.
 
 =item L<B<dhparam>|dhparam(1)>
 
-Generation and Management of Diffie-Hellman Parameters.
+Generation and Management of Diffie-Hellman Parameters. Superseded by 
+L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>
 
 =item B<gendh>
 
@@ -124,11 +127,16 @@ Obsoleted by L<B<dhparam>|dhparam(1)>.
 
 =item L<B<gendsa>|gendsa(1)>
 
-Generation of DSA Parameters.
+Generation of DSA Private Key from Parameters. Superseded by 
+L<B<genpkey>|genpkey(1)> and L<B<pkey>|pkey(1)>
+
+=item L<B<genpkey>|genpkey(1)>
+
+Generation of Private Key or Parameters.
 
 =item L<B<genrsa>|genrsa(1)>
 
-Generation of RSA Parameters.
+Generation of RSA Private Key. Superceded by L<B<genpkey>|genpkey(1)>.
 
 =item L<B<ocsp>|ocsp(1)>
 
@@ -146,21 +154,34 @@ PKCS#12 Data Management.
 
 PKCS#7 Data Management.
 
+=item L<B<pkey>|pkey(1)>
+
+Public and private key management.
+
+=item L<B<pkeyutl>|pkeyutl(1)>
+
+Public key algorithm cryptographic operation utility.
+
+=item L<B<pkeyparam>|pkeyparam(1)>
+
+Public key algorithm parameter management.
+
 =item L<B<rand>|rand(1)>
 
 Generate pseudo-random bytes.
 
 =item L<B<req>|req(1)>
 
-X.509 Certificate Signing Request (CSR) Management.
+PKCS#10 X.509 Certificate Signing Request (CSR) Management.
 
 =item L<B<rsa>|rsa(1)>
 
-RSA Data Management.
+RSA key management.
 
 =item L<B<rsautl>|rsautl(1)>
 
-RSA utility for signing, verification, encryption, and decryption.
+RSA utility for signing, verification, encryption, and decryption. Superseded
+by  L<B<pkeyutl>|pkeyutl(1)>
 
 =item L<B<s_client>|s_client(1)>
 
@@ -336,7 +357,7 @@ read the password from standard input.
 L<asn1parse(1)|asn1parse(1)>, L<ca(1)|ca(1)>, L<config(5)|config(5)>,
 L<crl(1)|crl(1)>, L<crl2pkcs7(1)|crl2pkcs7(1)>, L<dgst(1)|dgst(1)>,
 L<dhparam(1)|dhparam(1)>, L<dsa(1)|dsa(1)>, L<dsaparam(1)|dsaparam(1)>,
-L<enc(1)|enc(1)>, L<gendsa(1)|gendsa(1)>,
+L<enc(1)|enc(1)>, L<gendsa(1)|gendsa(1)>, L<genpkey(1)|genpkey(1)>,
 L<genrsa(1)|genrsa(1)>, L<nseq(1)|nseq(1)>, L<openssl(1)|openssl(1)>,
 L<passwd(1)|passwd(1)>,
 L<pkcs12(1)|pkcs12(1)>, L<pkcs7(1)|pkcs7(1)>, L<pkcs8(1)|pkcs8(1)>,
@@ -351,6 +372,7 @@ L<crypto(3)|crypto(3)>, L<ssl(3)|ssl(3)>
 
 The openssl(1) document appeared in OpenSSL 0.9.2.
 The B<list->I<XXX>B<-commands> pseudo-commands were added in OpenSSL 0.9.3;
+The B<list->I<XXX>B<-algorithms> pseudo-commands were added in OpenSSL 0.9.9;
 the B<no->I<XXX> pseudo-commands were added in OpenSSL 0.9.5a.
 For notes on the availability of other commands, see their individual
 manual pages.

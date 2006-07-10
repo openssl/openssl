@@ -50,11 +50,14 @@ name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
 specifying an engine (by it's unique B<id> string) will cause B<req>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+for all available algorithms. If used this option should precede all other
+options.
 
 =item B<-algorithm alg>
 
-public key algorithm to use such as RSA, DSA or DH.
+public key algorithm to use such as RSA, DSA or DH. If used this option must
+precede and B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
+are mutually exclusive.
 
 =item B<-pkeyopt opt:value>
 
@@ -64,13 +67,21 @@ implementation. See B<KEY GENERATION OPTIONS> below for more details.
 
 =item B<-genparam>
 
-generate a set of parameters instead of a private key.
+generate a set of parameters instead of a private key. If used this option must
+precede and B<-algorithm>, B<-paramfile> or B<-pkeyopt> options.
 
 =item B<-paramfile filename>
 
 Some public key algorithms generate a private key based on a set of parameters.
-They can be supplied using this option. If this option is used the public
-key algorithm used is determined by the parameters.
+They can be supplied using this option. If this option is used the public key
+algorithm used is determined by the parameters. If used this option must
+precede and B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
+are mutually exclusive.
+
+=item B<-text>
+
+Print an (unencrypted) text representation of private and public keys and
+parameters along with the PEM or DER structure.
 
 =back
 
