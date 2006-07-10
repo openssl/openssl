@@ -826,6 +826,7 @@ err:
 int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 	{
 	EVP_MD_CTX mctx;
+	EVP_PKEY_CTX *pctx;
 	unsigned char *abuf = NULL;
 	int alen;
 	unsigned int siglen;
@@ -836,20 +837,37 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 		return 0;
 
 	EVP_MD_CTX_init(&mctx);
-	if (!EVP_SignInit_ex(&mctx,md,NULL))
+	if (EVP_DigestSignInit(&mctx, &pctx, md,NULL, si->pkey) <= 0)
 		goto err;
+
+	if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
+				EVP_PKEY_CTRL_PKCS7_SIGN, 0, si) <= 0)
+		{
+		PKCS7err(PKCS7_F_PKCS7_SIGNER_INFO_SIGN, PKCS7_R_CTRL_ERROR);
+		goto err;
+		}
+
 	alen = ASN1_item_i2d((ASN1_VALUE *)si->auth_attr,&abuf,
 				ASN1_ITEM_rptr(PKCS7_ATTR_SIGN));
 	if(!abuf)
 		goto err;
-	if (!EVP_SignUpdate(&mctx,abuf,alen))
+	if (EVP_DigestSignUpdate(&mctx,abuf,alen) <= 0)
 		goto err;
 	OPENSSL_free(abuf);
-	abuf = OPENSSL_malloc(EVP_PKEY_size(si->pkey));
+	if (EVP_DigestSignFinal(&mctx, NULL, &siglen) <= 0)
+		goto err;
+	abuf = OPENSSL_malloc(siglen);
 	if(!abuf)
 		goto err;
-	if (!EVP_SignFinal(&mctx, abuf, &siglen, si->pkey))
+	if (EVP_DigestSignFinal(&mctx, abuf, &siglen) <= 0)
 		goto err;
+
+	if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_SIGN,
+				EVP_PKEY_CTRL_PKCS7_SIGN, 1, si) <= 0)
+		{
+		PKCS7err(PKCS7_F_PKCS7_SIGNER_INFO_SIGN, PKCS7_R_CTRL_ERROR);
+		goto err;
+		}
 
 	EVP_MD_CTX_cleanup(&mctx);
 
@@ -864,10 +882,6 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 	return 0;
 
 	}
-	
-
-	
-	
 
 int PKCS7_dataVerify(X509_STORE *cert_store, X509_STORE_CTX *ctx, BIO *bio,
 	     PKCS7 *p7, PKCS7_SIGNER_INFO *si)

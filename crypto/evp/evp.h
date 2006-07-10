@@ -218,6 +218,7 @@ typedef int evp_verify_method(int type,const unsigned char *m,
 /* Digest ctrls */
 
 #define	EVP_MD_CTRL_DIGALGID			0x1
+#define	EVP_MD_CTRL_MICALG			0x2
 
 /* Minimum Algorithm specific ctrl value */
 
@@ -454,6 +455,9 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_SealUpdate(a,b,c,d,e)	EVP_EncryptUpdate(a,b,c,d,e)	
 #define EVP_SignDigestUpdate(a,b,c)	EVP_DigestUpdate(a,b,c)
 #define EVP_VerifyDigestUpdate(a,b,c)	EVP_DigestUpdate(a,b,c)
+
+#define EVP_DigestSignUpdate(a,b,c)		EVP_DigestUpdate(a,b,c)
+#define EVP_DigestVerifyUpdate(a,b,c)		EVP_DigestUpdate(a,b,c)
 
 #ifdef CONST_STRICT
 void BIO_set_md(BIO *,const EVP_MD *md);
@@ -981,10 +985,12 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 					EVP_PKEY_CTRL_MD, 0, (void *)md)
 
 #define EVP_PKEY_CTRL_MD		1
-#define EVP_PKEY_CTRL_PEER_KEY		2	
+#define EVP_PKEY_CTRL_PEER_KEY		2
 
-#define EVP_PKEY_CTRL_PKCS7_ENCRYPT	3	
-#define EVP_PKEY_CTRL_PKCS7_DECRYPT	4	
+#define EVP_PKEY_CTRL_PKCS7_ENCRYPT	3
+#define EVP_PKEY_CTRL_PKCS7_DECRYPT	4
+
+#define EVP_PKEY_CTRL_PKCS7_SIGN	5
 
 #define EVP_PKEY_ALG_CTRL		0x1000
 

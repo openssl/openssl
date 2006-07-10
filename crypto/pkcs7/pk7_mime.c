@@ -149,52 +149,65 @@ static PKCS7 *B64_read_PKCS7(BIO *bio)
 static int pk7_write_micalg(BIO *out, PKCS7 *p7)
 	{
 	STACK_OF(X509_ALGOR) *mdalgs;
-	STACK *mic_sk;
-	int i, have_unknown = 0, ret = 0;
+	const EVP_MD *md;
+	int i, have_unknown = 0, write_comma, ret = 0, md_nid;
 	mdalgs = p7->d.sign->md_algs;
-	mic_sk = sk_new_null();
-	if (!mic_sk)
-		goto err;
 	have_unknown = 0;
+	write_comma = 0;
 	for (i = 0; i < sk_X509_ALGOR_num(mdalgs); i++)
 		{
-		switch(OBJ_obj2nid(sk_X509_ALGOR_value(mdalgs, i)->algorithm))
+		if (write_comma)
+			BIO_write(out, ",", 1);
+		write_comma = 1;
+		md_nid = OBJ_obj2nid(sk_X509_ALGOR_value(mdalgs, i)->algorithm);
+		md = EVP_get_digestbynid(md_nid);
+		if (md && md->md_ctrl)
+			{
+			int rv;
+			char *micstr;
+			rv = md->md_ctrl(NULL, EVP_MD_CTRL_MICALG, 0, &micstr);
+			if (rv > 0)
+				{
+				BIO_puts(out, micstr);
+				OPENSSL_free(micstr);
+				continue;
+				}
+			if (rv != -2)
+				goto err;
+			}
+		switch(md_nid)
 			{
 			case NID_sha1:
-			if (!sk_push(mic_sk, "sha1"))
-				goto err;
+			BIO_puts(out, "sha1");
 			break;
 
 			case NID_md5:
-			if (!sk_push(mic_sk, "md5"))
-				goto err;
+			BIO_puts(out, "md5");
 			break;
 
 			case NID_sha256:
-			if (!sk_push(mic_sk, "sha-256"))
-				goto err;
+			BIO_puts(out, "sha-256");
 			break;
 
 			case NID_sha384:
-			if (!sk_push(mic_sk, "sha-384"))
-				goto err;
+			BIO_puts(out, "sha-384");
 			break;
 
 			case NID_sha512:
-			if (!sk_push(mic_sk, "sha-512"))
-				goto err;
+			BIO_puts(out, "sha-512");
 			break;
 
 			case NID_id_GostR3411_94:
-			if (!sk_push(mic_sk, "gostr3411-94"))
+			BIO_puts(out, "gostr3411-94");
 				goto err;
 			break;
 
 			default:
-			if (!have_unknown)
+			if (have_unknown)
+				write_comma = 0;
+			else
 				{
-				if (!sk_push(mic_sk, "unknown"))
-					goto err;
+				BIO_puts(out, "unknown");
 				have_unknown = 1;
 				}
 			break;
@@ -202,17 +215,8 @@ static int pk7_write_micalg(BIO *out, PKCS7 *p7)
 			}
 		}
 
-	for (i = 0; i < sk_num(mic_sk); i++)
-		{
-		BIO_puts(out, sk_value(mic_sk, i));
-		if (i > 0)
-			BIO_write(out, ",", 1);
-		}
 	ret = 1;
 	err:
-
-	if (mic_sk)
-		sk_free(mic_sk);	
 
 	return ret;
 

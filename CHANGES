@@ -4,6 +4,16 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) Allow digests to supply their own micalg string for S/MIME type using
+     the ctrl EVP_MD_CTRL_MICALG.
+     [Steve Henson]
+
+  *) During PKCS7 signing pass the PKCS7 SignerInfo structure to the
+     EVP_PKEY_METHOD before and after signing via the EVP_PKEY_CTRL_PKCS7_SIGN
+     ctrl. It can then customise the structure before and/or after signing
+     if necessary.
+     [Steve Henson]
+
   *) New function OBJ_add_sigid() to allow application defined signature OIDs
      to be added to OpenSSLs internal tables. New function OBJ_sigid_free()
      to free up any added signature OIDs.
