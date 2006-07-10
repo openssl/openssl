@@ -3766,3 +3766,9 @@ BN_BLINDING_get_thread_idptr            4158	EXIST::FUNCTION:
 CRYPTO_set_idptr_callback               4159	EXIST::FUNCTION:
 CRYPTO_get_idptr_callback               4160	EXIST::FUNCTION:
 CRYPTO_thread_idptr                     4161	EXIST::FUNCTION:
+EVP_MD_do_all_sorted                    4162	EXIST::FUNCTION:
+OBJ_add_sigid                           4163	EXIST::FUNCTION:
+OBJ_sigid_free                          4164	EXIST::FUNCTION:
+EVP_CIPHER_do_all                       4165	EXIST::FUNCTION:
+EVP_CIPHER_do_all_sorted                4166	EXIST::FUNCTION:
+EVP_MD_do_all                           4167	EXIST::FUNCTION:
