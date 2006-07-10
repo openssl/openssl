@@ -198,15 +198,22 @@ int MAIN(int argc, char **argv)
 	if (badarg)
 		{
 		bad:
-		BIO_printf(bio_err, "Usage genpkey [options]\n");
-		BIO_printf(bio_err, "where options are\n");
-		BIO_printf(bio_err, "-paramfile file parameter file\n");
-		BIO_printf(bio_err, "-pass arg       output file pass phrase source\n");
-		BIO_printf(bio_err, "-outform X      output format (DER or PEM)\n");
-		BIO_printf(bio_err, "-out file       output file\n");
+		BIO_printf(bio_err, "Usage: genpkey [options]\n");
+		BIO_printf(bio_err, "where options may be\n");
+		BIO_printf(bio_err, "-out file          output file\n");
+		BIO_printf(bio_err, "-outform X         output format (DER or PEM)\n");
+		BIO_printf(bio_err, "-pass arg          output file pass phrase source\n");
+		BIO_printf(bio_err, "-<cipher>          use cipher <cipher> to encrypt the key\n");
 #ifndef OPENSSL_NO_ENGINE
-		BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
+		BIO_printf(bio_err, "-engine e          use engine e, possibly a hardware device.\n");
 #endif
+		BIO_printf(bio_err, "-paramfile file    parameters file\n");
+		BIO_printf(bio_err, "-algorithm alg     the public key algorithm\n");
+		BIO_printf(bio_err, "-pkeyopt opt:value set the public key algorithm option <opt>\n"
+				            "                   to value <value>\n");
+		BIO_printf(bio_err, "-genparam          generate parameters, not key\n");
+		BIO_printf(bio_err, "-text              print the in text\n");
+		BIO_printf(bio_err, "NB: options order may be important!  See the manual page.\n");
 		goto end;
 		}
 

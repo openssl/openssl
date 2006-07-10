@@ -130,6 +130,8 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "where options are\n");
 		BIO_printf(bio_err, "-in file        input file\n");
 		BIO_printf(bio_err, "-out file       output file\n");
+		BIO_printf(bio_err, "-text           print parameters as text\n");
+		BIO_printf(bio_err, "-noout          don't output encoded parameters\n");
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err, "-engine e       use engine e, possibly a hardware device.\n");
 #endif
