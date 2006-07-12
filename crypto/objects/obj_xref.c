@@ -127,11 +127,14 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 		}
 
 #ifndef OBJ_XREF_TEST2
-	rv = (nid_triple **)OBJ_bsearch((char *)&t,
+	if (rv == NULL)
+		{
+		rv = (nid_triple **)OBJ_bsearch((char *)&t,
 				(char *)sigoid_srt_xref,
 				sizeof(sigoid_srt_xref) / sizeof(nid_triple *),
 				sizeof(nid_triple *),
 				(int (*)(const void *, const void *))cmp_sigx);
+		}
 #endif
 	if (rv == NULL)
 		return 0;
