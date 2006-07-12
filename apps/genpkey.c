@@ -375,13 +375,19 @@ static int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
 		BIO_puts(err, "Algorithm already set!\n");
 		return 0;
 		}
+
 	ameth = EVP_PKEY_asn1_find_str(&tmpeng, algname, -1);
+
+	if (!ameth && e)
+		ameth = ENGINE_get_pkey_asn1_meth_str(e, algname, -1);
 
 	if (!ameth)
 		{
 		BIO_printf(bio_err, "Algorithm %s not found\n", algname);
 		return 0;
 		}
+
+	ERR_clear_error();
 
 	EVP_PKEY_asn1_get0_info(&pkey_id, NULL, NULL, NULL, NULL, ameth);
 #ifndef OPENSSL_NO_ENGINE
