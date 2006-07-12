@@ -56,7 +56,7 @@ options.
 =item B<-algorithm alg>
 
 public key algorithm to use such as RSA, DSA or DH. If used this option must
-precede and B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
+precede any B<-pkeyopt> options. The options B<-paramfile> and B<-algorithm>
 are mutually exclusive.
 
 =item B<-pkeyopt opt:value>
