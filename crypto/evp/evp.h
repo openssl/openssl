@@ -453,11 +453,8 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define	EVP_VerifyUpdate(a,b,c)		EVP_DigestUpdate(a,b,c)
 #define EVP_OpenUpdate(a,b,c,d,e)	EVP_DecryptUpdate(a,b,c,d,e)
 #define EVP_SealUpdate(a,b,c,d,e)	EVP_EncryptUpdate(a,b,c,d,e)	
-#define EVP_SignDigestUpdate(a,b,c)	EVP_DigestUpdate(a,b,c)
-#define EVP_VerifyDigestUpdate(a,b,c)	EVP_DigestUpdate(a,b,c)
-
-#define EVP_DigestSignUpdate(a,b,c)		EVP_DigestUpdate(a,b,c)
-#define EVP_DigestVerifyUpdate(a,b,c)		EVP_DigestUpdate(a,b,c)
+#define EVP_DigestSignUpdate(a,b,c)	EVP_DigestUpdate(a,b,c)
+#define EVP_DigestVerifyUpdate(a,b,c)	EVP_DigestUpdate(a,b,c)
 
 #ifdef CONST_STRICT
 void BIO_set_md(BIO *,const EVP_MD *md);

@@ -77,6 +77,15 @@ will occur.
 Older versions of this documentation wrongly stated that calls to 
 EVP_SignUpdate() could not be made after calling EVP_SignFinal().
 
+Since the private key is passed in the call to EVP_SignFinal() any error
+relating to the private key (for example an unsuitable key and digest
+combination) will not be indicated until after potentially large amounts of
+data have been passed through EVP_SignUpdate().
+
+It is not possible to change the signing parameters using these function.
+
+The previous two bugs are fixed in the newer EVP_SignDigest*() function.
+
 =head1 SEE ALSO
 
 L<EVP_VerifyInit(3)|EVP_VerifyInit(3)>,

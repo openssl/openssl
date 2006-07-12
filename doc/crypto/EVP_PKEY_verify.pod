@@ -34,11 +34,11 @@ context if several operations are performed using the same parameters.
 
 =head1 RETURN VALUES
 
-EVP_PKEY_verify_init() and EVP_PKEY_verify() return 1 if the verification
-was successful and 0 if it failed. Unlike other functions the return value
-0 only indicates that the signature did not not verify successfully (that is
-tbs did not match the original data or the signature was of invalid form)
-it is not an indication of a more serious error.
+EVP_PKEY_verify_init() and EVP_PKEY_verify() return 1 if the verification was
+successful and 0 if it failed. Unlike other functions the return value 0 from
+EVP_PKEY_verify() only indicates that the signature did not not verify
+successfully (that is tbs did not match the original data or the signature was
+of invalid form) it is not an indication of a more serious error.
 
 A negative value indicates an error other that signature verification failure.
 In particular a return value of -2 indicates the operation is not supported by

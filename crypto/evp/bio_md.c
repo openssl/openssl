@@ -192,13 +192,9 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ret=0;
 		break;
 	case BIO_C_GET_MD_CTX:
-		if (b->init)
-			{
-			pctx=ptr;
-			*pctx=ctx;
-			}
-		else
-			ret=0;
+		pctx=ptr;
+		*pctx=ctx;
+		b->init = 1;
 		break;
 	case BIO_C_DO_STATE_MACHINE:
 		BIO_clear_retry_flags(b);
