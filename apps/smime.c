@@ -483,7 +483,8 @@ int MAIN(int argc, char **argv)
 		p7 = PKCS7_encrypt(encerts, in, cipher, flags);
 	} else if(operation == SMIME_SIGN) {
 		p7 = PKCS7_sign(signer, key, other, in, flags);
-		if (BIO_reset(in) != 0 && (flags & PKCS7_DETACHED)) {
+		if ((flags & PKCS7_DETACHED) && (outformat == FORMAT_SMIME)
+			&& (BIO_reset(in) != 0)) {
 		  BIO_printf(bio_err, "Can't rewind input file\n");
 		  goto end;
 		}
