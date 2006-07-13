@@ -708,11 +708,6 @@ int MAIN(int argc, char **argv)
 			{
 			if (!PKCS7_final(p7, in, flags))
 				goto end;
-			if (BIO_reset(in) != 0)
-				{
-				BIO_puts(bio_err, "Can't rewind input file\n");
-				goto end;
-				}
 			}
 		}
 
