@@ -650,12 +650,6 @@ int MAIN(int argc, char **argv)
 		if ((flags & PKCS7_DETACHED) && (outformat == FORMAT_SMIME))
 			flags |= PKCS7_STREAM;
 		p7 = PKCS7_sign(signer, key, other, in, flags);
-		/* Don't need to rewind for partial signing */
-		if (!(flags & PKCS7_STREAM) && (BIO_reset(in) != 0))
-			{
-			BIO_printf(bio_err, "Can't rewind input file\n");
-			goto end;
-			}
 		}
 	else
 		{
