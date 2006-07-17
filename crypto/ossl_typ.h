@@ -181,4 +181,6 @@ typedef void CRYPTO_EX_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
 typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from, void *from_d, 
 					int idx, long argl, void *argp);
 
+typedef struct ocsp_req_ctx_st OCSP_REQ_CTX;
+
 #endif /* def HEADER_OPENSSL_TYPES_H */

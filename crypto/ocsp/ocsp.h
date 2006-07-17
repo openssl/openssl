@@ -64,6 +64,7 @@
 #ifndef HEADER_OCSP_H
 #define HEADER_OCSP_H
 
+#include <openssl/ossl_typ.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/safestack.h>
@@ -397,6 +398,10 @@ typedef struct ocsp_service_locator_st
 		(char *(*)())d2i_OCSP_CERTSTATUS,(char *)(cs))
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req);
+OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
+								int maxline);
+int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx);
+void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx);
 
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer);
 
@@ -574,6 +579,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_F_OCSP_REQUEST_VERIFY			 116
 #define OCSP_F_OCSP_RESPONSE_GET1_BASIC			 111
 #define OCSP_F_OCSP_SENDREQ_BIO				 112
+#define OCSP_F_OCSP_SENDREQ_NBIO			 117
 #define OCSP_F_REQUEST_VERIFY				 113
 
 /* Reason codes. */

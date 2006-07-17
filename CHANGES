@@ -4,6 +4,9 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) Non-blocking OCSP request processing.
+     [Steve Henson]
+
   *) Allow digests to supply their own micalg string for S/MIME type using
      the ctrl EVP_MD_CTRL_MICALG.
      [Steve Henson]
