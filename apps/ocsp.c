@@ -86,6 +86,8 @@ static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(char *port);
 static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio, char *port);
 static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp);
+static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
+				OCSP_REQUEST *req, int req_timeout);
 
 #undef PROG
 #define PROG ocsp_main
@@ -112,6 +114,7 @@ int MAIN(int argc, char **argv)
 	BIO *acbio = NULL, *cbio = NULL;
 	BIO *derbio = NULL;
 	BIO *out = NULL;
+	int req_timeout = -1;
 	int req_text = 0, resp_text = 0;
 	long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
 	char *CAfile = NULL, *CApath = NULL;
@@ -150,6 +153,22 @@ int MAIN(int argc, char **argv)
 				{
 				args++;
 				outfile = *args;
+				}
+			else badarg = 1;
+			}
+		else if (!strcmp(*args, "-timeout"))
+			{
+			if (args[1])
+				{
+				args++;
+				req_timeout = atol(*args);
+				if (req_timeout < 0)
+					{
+					BIO_printf(bio_err,
+						"Illegal timeout value %s\n",
+						*args);
+					badarg = 1;
+					}
 				}
 			else badarg = 1;
 			}
@@ -730,12 +749,8 @@ int MAIN(int argc, char **argv)
 			sbio = BIO_new_ssl(ctx, 1);
 			cbio = BIO_push(sbio, cbio);
 			}
-		if (BIO_do_connect(cbio) <= 0)
-			{
-			BIO_printf(bio_err, "Error connecting BIO\n");
-			goto end;
-			}
-		resp = OCSP_sendreq_bio(cbio, path, req);
+
+		resp = query_responder(bio_err, cbio, path, req, req_timeout);
 		BIO_free_all(cbio);
 		cbio = NULL;
 		if (!resp)
@@ -1223,6 +1238,79 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
 	i2d_OCSP_RESPONSE_bio(cbio, resp);
 	BIO_flush(cbio);
 	return 1;
+	}
+
+static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
+				OCSP_REQUEST *req, int req_timeout)
+	{
+	int fd;
+	int rv;
+	OCSP_REQ_CTX *ctx = NULL;
+	OCSP_RESPONSE *rsp = NULL;
+	fd_set confds;
+	struct timeval tv;
+
+	if (req_timeout != -1)
+		BIO_set_nbio(cbio, 1);
+
+	rv = BIO_do_connect(cbio);
+
+	if ((rv <= 0) && ((req_timeout == -1) || !BIO_should_retry(cbio)))
+		{
+		BIO_puts(err, "Error connecting BIO\n");
+		return NULL;
+		}
+
+	if (req_timeout == -1)
+		return OCSP_sendreq_bio(cbio, path, req);
+
+	if (BIO_get_fd(cbio, &fd) <= 0)
+		{
+		BIO_puts(err, "Can't get connection fd\n");
+		goto err;
+		}
+
+	ctx = OCSP_sendreq_new(cbio, path, req, -1);
+
+	if (!ctx)
+		return NULL;
+	
+	for (;;)
+		{
+		rv = OCSP_sendreq_nbio(&rsp, ctx);
+		if (rv != -1)
+			break;
+		FD_ZERO(&confds);
+		FD_SET(fd, &confds);
+		tv.tv_usec = 0;
+		tv.tv_sec = req_timeout;
+		if (BIO_should_read(cbio) || BIO_should_io_special(cbio))
+			rv = select(fd + 1, (void *)&confds, NULL, NULL, &tv);
+		else if (BIO_should_write(cbio))
+			rv = select(fd + 1, NULL, (void *)&confds, NULL, &tv);
+		else
+			{
+			BIO_puts(err, "Unexpected retry condition\n");
+			goto err;
+			}
+		if (rv == 0)
+			{
+			BIO_puts(err, "Timeout on request\n");
+			break;
+			}
+		if (rv == -1)
+			{
+			BIO_puts(err, "Select error\n");
+			break;
+			}
+			
+		}
+
+	err:
+
+	OCSP_REQ_CTX_free(ctx);
+
+	return rsp;
 	}
 
 #endif
