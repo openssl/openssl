@@ -237,7 +237,6 @@ int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx)
 	{
 	int i, n;
 	const unsigned char *p;
-	
 	next_io:
 	if (!(rctx->state & OHS_NOREAD))
 		{
@@ -246,7 +245,7 @@ int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx)
 		if (n <= 0)
 			{
 			if (BIO_should_retry(rctx->io))
-			return -1;
+				return -1;
 			return 0;
 			}
 
@@ -420,7 +419,7 @@ int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx)
 		
 		case OHS_ASN1_CONTENT:
 		n = BIO_get_mem_data(rctx->mem, &p);
-		if (n < rctx->asn1_len)
+		if (n < (int)rctx->asn1_len)
 			goto next_io;
 
 

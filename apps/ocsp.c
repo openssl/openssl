@@ -1270,8 +1270,22 @@ static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
 		goto err;
 		}
 
-	ctx = OCSP_sendreq_new(cbio, path, req, -1);
+	if (rv <= 0)
+		{
+		FD_ZERO(&confds);
+		openssl_fdset(fd, &confds);
+		tv.tv_usec = 0;
+		tv.tv_sec = req_timeout;
+		rv = select(fd + 1, NULL, (void *)&confds, NULL, &tv);
+		if (rv == 0)
+			{
+			BIO_puts(err, "Timeout on connect\n");
+			return NULL;
+			}
+		}
 
+
+	ctx = OCSP_sendreq_new(cbio, path, req, -1);
 	if (!ctx)
 		return NULL;
 	
@@ -1281,10 +1295,10 @@ static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
 		if (rv != -1)
 			break;
 		FD_ZERO(&confds);
-		FD_SET(fd, &confds);
+		openssl_fdset(fd, &confds);
 		tv.tv_usec = 0;
 		tv.tv_sec = req_timeout;
-		if (BIO_should_read(cbio) || BIO_should_io_special(cbio))
+		if (BIO_should_read(cbio))
 			rv = select(fd + 1, (void *)&confds, NULL, NULL, &tv);
 		else if (BIO_should_write(cbio))
 			rv = select(fd + 1, NULL, (void *)&confds, NULL, &tv);
@@ -1305,7 +1319,6 @@ static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
 			}
 			
 		}
-
 	err:
 
 	OCSP_REQ_CTX_free(ctx);

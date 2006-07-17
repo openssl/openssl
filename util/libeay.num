@@ -3772,3 +3772,6 @@ OBJ_sigid_free                          4164	EXIST::FUNCTION:
 EVP_CIPHER_do_all                       4165	EXIST::FUNCTION:
 EVP_CIPHER_do_all_sorted                4166	EXIST::FUNCTION:
 EVP_MD_do_all                           4167	EXIST::FUNCTION:
+OCSP_REQ_CTX_free                       4168	EXIST::FUNCTION:
+OCSP_sendreq_nbio                       4169	EXIST::FUNCTION:
+OCSP_sendreq_new                        4170	EXIST::FUNCTION:
