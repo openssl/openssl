@@ -1151,7 +1151,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_LONG_C2I					 166
 #define ASN1_F_OID_MODULE_INIT				 174
 #define ASN1_F_PARSE_TAGGING				 182
-#define ASN1_F_PKCS5_PBE2_SET				 167
+#define ASN1_F_PKCS5_PBE2_SET_IV			 167
 #define ASN1_F_PKCS5_PBE_SET				 202
 #define ASN1_F_X509_CINF_NEW				 168
 #define ASN1_F_X509_CRL_ADD0_REVOKED			 169

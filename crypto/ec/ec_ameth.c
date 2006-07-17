@@ -503,7 +503,7 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, int ktype)
 	ret=1;
 err:
 	if (!ret)
- 		ECerr(EC_F_EC_KEY_PRINT, reason);
+ 		ECerr(EC_F_DO_EC_KEY_PRINT, reason);
 	if (pub_key) 
 		BN_free(pub_key);
 	if (order)
@@ -558,7 +558,7 @@ static int old_ec_priv_decode(EVP_PKEY *pkey,
 	EC_KEY *ec;
 	if (!(ec = d2i_ECPrivateKey (NULL, pder, derlen)))
 		{
-		ECerr(EC_F_ECKEY_PRIV_DECODE, EC_R_DECODE_ERROR);
+		ECerr(EC_F_OLD_EC_PRIV_DECODE, EC_R_DECODE_ERROR);
 		return 0;
 		}
 	EVP_PKEY_assign_EC_KEY(pkey, ec);

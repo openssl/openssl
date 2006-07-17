@@ -101,7 +101,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 
 	alg_nid = EVP_CIPHER_type(cipher);
 	if(alg_nid == NID_undef) {
-		ASN1err(ASN1_F_PKCS5_PBE2_SET,
+		ASN1err(ASN1_F_PKCS5_PBE2_SET_IV,
 				ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER);
 		goto err;
 	}
@@ -129,7 +129,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 	/* Dummy cipherinit to just setup the IV, and PRF */
 	EVP_CipherInit_ex(&ctx, cipher, NULL, NULL, iv, 0);
 	if(EVP_CIPHER_param_to_asn1(&ctx, scheme->parameter) < 0) {
-		ASN1err(ASN1_F_PKCS5_PBE2_SET,
+		ASN1err(ASN1_F_PKCS5_PBE2_SET_IV,
 					ASN1_R_ERROR_SETTING_CIPHER_PARAMS);
 		EVP_CIPHER_CTX_cleanup(&ctx);
 		goto err;
@@ -214,7 +214,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 	return ret;
 
 	merr:
-	ASN1err(ASN1_F_PKCS5_PBE2_SET,ERR_R_MALLOC_FAILURE);
+	ASN1err(ASN1_F_PKCS5_PBE2_SET_IV,ERR_R_MALLOC_FAILURE);
 
 	err:
 	PBE2PARAM_free(pbe2);

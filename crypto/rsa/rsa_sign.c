@@ -153,7 +153,7 @@ int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 
 	if (siglen != (unsigned int)RSA_size(rsa))
 		{
-		RSAerr(RSA_F_RSA_VERIFY,RSA_R_WRONG_SIGNATURE_LENGTH);
+		RSAerr(RSA_F_INT_RSA_VERIFY,RSA_R_WRONG_SIGNATURE_LENGTH);
 		return(0);
 		}
 
@@ -170,11 +170,11 @@ int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 	s=(unsigned char *)OPENSSL_malloc((unsigned int)siglen);
 	if (s == NULL)
 		{
-		RSAerr(RSA_F_RSA_VERIFY,ERR_R_MALLOC_FAILURE);
+		RSAerr(RSA_F_INT_RSA_VERIFY,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 	if((dtype == NID_md5_sha1) && (m_len != SSL_SIG_LENGTH) ) {
-			RSAerr(RSA_F_RSA_VERIFY,RSA_R_INVALID_MESSAGE_LENGTH);
+			RSAerr(RSA_F_INT_RSA_VERIFY,RSA_R_INVALID_MESSAGE_LENGTH);
 			goto err;
 	}
 	i=RSA_public_decrypt((int)siglen,sigbuf,s,rsa,RSA_PKCS1_PADDING);
@@ -184,7 +184,7 @@ int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 	/* Special case: SSL signature */
 	if(dtype == NID_md5_sha1) {
 		if((i != SSL_SIG_LENGTH) || memcmp(s, m, SSL_SIG_LENGTH))
-				RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+				RSAerr(RSA_F_INT_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
 		else ret = 1;
 	} else {
 		const unsigned char *p=s;
@@ -213,7 +213,7 @@ int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 				}
 			else
 				{
-				RSAerr(RSA_F_RSA_VERIFY,
+				RSAerr(RSA_F_INT_RSA_VERIFY,
 						RSA_R_ALGORITHM_MISMATCH);
 				goto err;
 				}
@@ -223,7 +223,7 @@ int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 			const EVP_MD *md;
 			md = EVP_get_digestbynid(dtype);
 			if (md && (EVP_MD_size(md) != sig->digest->length))
-				RSAerr(RSA_F_RSA_VERIFY,
+				RSAerr(RSA_F_INT_RSA_VERIFY,
 						RSA_R_INVALID_DIGEST_LENGTH);
 			else
 				{
@@ -236,7 +236,7 @@ int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 		else if (((unsigned int)sig->digest->length != m_len) ||
 			(memcmp(m,sig->digest->data,m_len) != 0))
 			{
-			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			RSAerr(RSA_F_INT_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
 			}
 		else
 			ret=1;

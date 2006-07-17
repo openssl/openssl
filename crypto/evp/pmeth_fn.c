@@ -74,7 +74,7 @@
 			} \
 		else if (*arglen < pksize) \
 			{ \
-			EVPerr(err, EVP_R_BUFFER_TOO_SMALL); \
+			EVPerr(err, EVP_R_BUFFER_TOO_SMALL); /*ckerr_ignore*/\
 			return 0; \
 			} \
 		}

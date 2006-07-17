@@ -223,7 +223,7 @@ void ERR_load_DH_strings(void);
 
 /* Function codes. */
 #define DH_F_COMPUTE_KEY				 102
-#define DH_F_DHPARAMS_PRINT				 100
+#define DH_F_DO_DH_PRINT				 100
 #define DH_F_DHPARAMS_PRINT_FP				 101
 #define DH_F_DH_BUILTIN_GENPARAMS			 106
 #define DH_F_DH_NEW_METHOD				 105

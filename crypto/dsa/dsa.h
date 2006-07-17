@@ -261,13 +261,13 @@ void ERR_load_DSA_strings(void);
 
 /* Function codes. */
 #define DSA_F_D2I_DSA_SIG				 110
+#define DSA_F_DO_DSA_PRINT				 104
 #define DSA_F_DSAPARAMS_PRINT				 100
 #define DSA_F_DSAPARAMS_PRINT_FP			 101
 #define DSA_F_DSA_DO_SIGN				 112
 #define DSA_F_DSA_DO_VERIFY				 113
 #define DSA_F_DSA_NEW_METHOD				 103
 #define DSA_F_DSA_PARAM_DECODE				 119
-#define DSA_F_DSA_PRINT					 104
 #define DSA_F_DSA_PRINT_FP				 105
 #define DSA_F_DSA_PRIV_DECODE				 115
 #define DSA_F_DSA_PRIV_ENCODE				 116
@@ -278,6 +278,7 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_DSA_SIG_NEW				 109
 #define DSA_F_DSA_VERIFY				 108
 #define DSA_F_I2D_DSA_SIG				 111
+#define DSA_F_OLD_DSA_PRIV_DECODE			 122
 #define DSA_F_PKEY_DSA_CTRL				 120
 #define DSA_F_PKEY_DSA_KEYGEN				 121
 #define DSA_F_SIG_CB					 114

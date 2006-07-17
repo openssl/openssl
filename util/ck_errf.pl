@@ -20,7 +20,7 @@ foreach $file (@ARGV)
 			$func = $1;
 			$func =~ tr/A-Z/a-z/;
 			}
-		if (/([A-Z0-9]+)err\(([^,]+)/)
+		if (/([A-Z0-9]+)err\(([^,]+)/ && ! /ckerr_ignore/)
 			{
 			$errlib=$1;
 			$n=$2;

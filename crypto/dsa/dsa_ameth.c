@@ -443,14 +443,6 @@ int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 	else
 		ktype = "DSA-Parameters";
 
-#if 0
-	if (x->p == NULL)
-		{
-		DSAerr(DSA_F_DSA_PRINT,DSA_R_MISSING_PARAMETERS);
-		goto err;
-		}
-#endif
-
 	update_buflen(x->p, &buf_len);
 	update_buflen(x->q, &buf_len);
 	update_buflen(x->g, &buf_len);
@@ -460,7 +452,7 @@ int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
-		DSAerr(DSA_F_DSA_PRINT,ERR_R_MALLOC_FAILURE);
+		DSAerr(DSA_F_DO_DSA_PRINT,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
@@ -528,7 +520,7 @@ static int old_dsa_priv_decode(EVP_PKEY *pkey,
 	DSA *dsa;
 	if (!(dsa = d2i_DSAPrivateKey (NULL, pder, derlen)))
 		{
-		DSAerr(DSA_F_DSA_PRIV_DECODE, ERR_R_DSA_LIB);
+		DSAerr(DSA_F_OLD_DSA_PRIV_DECODE, ERR_R_DSA_LIB);
 		return 0;
 		}
 	EVP_PKEY_assign_DSA(pkey, dsa);

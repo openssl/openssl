@@ -1142,6 +1142,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_MD_CTX_COPY_EX			 110
 #define EVP_F_EVP_OPENINIT				 102
 #define EVP_F_EVP_PBE_ALG_ADD				 115
+#define EVP_F_EVP_PBE_ALG_ADD_TYPE			 160
 #define EVP_F_EVP_PBE_CIPHERINIT			 116
 #define EVP_F_EVP_PKCS82PKEY				 111
 #define EVP_F_EVP_PKCS82PKEY_BROKEN			 136

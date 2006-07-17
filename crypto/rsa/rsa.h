@@ -371,7 +371,10 @@ void ERR_load_RSA_strings(void);
 
 /* Function codes. */
 #define RSA_F_CHECK_PADDING_MD				 140
+#define RSA_F_DO_RSA_PRINT				 146
+#define RSA_F_RSA_VERIFY				 119
 #define RSA_F_MEMORY_LOCK				 100
+#define RSA_F_OLD_RSA_PRIV_DECODE			 147
 #define RSA_F_PKEY_RSA_CTRL				 143
 #define RSA_F_PKEY_RSA_CTRL_STR				 144
 #define RSA_F_PKEY_RSA_SIGN				 142
@@ -412,7 +415,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_SETUP_BLINDING			 136
 #define RSA_F_RSA_SIGN					 117
 #define RSA_F_RSA_SIGN_ASN1_OCTET_STRING		 118
-#define RSA_F_RSA_VERIFY				 119
+#define RSA_F_INT_RSA_VERIFY				 145
 #define RSA_F_RSA_VERIFY_ASN1_OCTET_STRING		 120
 #define RSA_F_RSA_VERIFY_PKCS1_PSS			 126
 

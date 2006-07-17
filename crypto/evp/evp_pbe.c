@@ -220,7 +220,7 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
 		pbe_algs = sk_new(pbe_cmp);
 	if (!(pbe_tmp = (EVP_PBE_CTL*) OPENSSL_malloc (sizeof(EVP_PBE_CTL))))
 		{
-		EVPerr(EVP_F_EVP_PBE_ALG_ADD,ERR_R_MALLOC_FAILURE);
+		EVPerr(EVP_F_EVP_PBE_ALG_ADD_TYPE,ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 	pbe_tmp->pbe_type = pbe_type;

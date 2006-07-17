@@ -381,7 +381,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
 	if (0)
 		{
 err:
-		DHerr(DH_F_DHPARAMS_PRINT,reason);
+		DHerr(DH_F_DO_DH_PRINT,reason);
 		}
 	if (m != NULL) OPENSSL_free(m);
 	return(ret);

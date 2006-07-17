@@ -925,6 +925,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_D2I_ECPARAMETERS				 144
 #define EC_F_D2I_ECPKPARAMETERS				 145
 #define EC_F_D2I_ECPRIVATEKEY				 146
+#define EC_F_DO_EC_KEY_PRINT				 221
 #define EC_F_ECKEY_PARAM2TYPE				 196
 #define EC_F_ECKEY_PARAM_DECODE				 212
 #define EC_F_ECKEY_PRIV_DECODE				 213
@@ -1035,6 +1036,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_I2D_ECPRIVATEKEY				 192
 #define EC_F_I2O_ECPUBLICKEY				 151
 #define EC_F_O2I_ECPUBLICKEY				 152
+#define EC_F_OLD_EC_PRIV_DECODE				 222
 #define EC_F_PKEY_EC_CTRL				 197
 #define EC_F_PKEY_EC_CTRL_STR				 198
 #define EC_F_PKEY_EC_DERIVE				 217

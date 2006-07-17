@@ -108,7 +108,7 @@ static int old_rsa_priv_decode(EVP_PKEY *pkey,
 	RSA *rsa;
 	if (!(rsa = d2i_RSAPrivateKey (NULL, pder, derlen)))
 		{
-		RSAerr(RSA_F_RSA_PRIV_DECODE, ERR_R_RSA_LIB);
+		RSAerr(RSA_F_OLD_RSA_PRIV_DECODE, ERR_R_RSA_LIB);
 		return 0;
 		}
 	EVP_PKEY_assign_RSA(pkey, rsa);
@@ -200,7 +200,7 @@ static int do_rsa_print(BIO *bp, const RSA *x, int off, int priv)
 	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
-		RSAerr(RSA_F_RSA_PRINT,ERR_R_MALLOC_FAILURE);
+		RSAerr(RSA_F_DO_RSA_PRINT,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 

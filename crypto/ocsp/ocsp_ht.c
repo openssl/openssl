@@ -169,7 +169,7 @@ static int parse_http_line1(char *line)
 		continue;
 	if(!*p)
 		{
-		OCSPerr(OCSP_F_OCSP_SENDREQ_NBIO,
+		OCSPerr(OCSP_F_PARSE_HTTP_LINE1,
 					OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
 		return 0;
 		}
@@ -180,7 +180,7 @@ static int parse_http_line1(char *line)
 
 	if(!*p)
 		{
-		OCSPerr(OCSP_F_OCSP_SENDREQ_NBIO,
+		OCSPerr(OCSP_F_PARSE_HTTP_LINE1,
 					OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
 		return 0;
 		}
@@ -191,7 +191,7 @@ static int parse_http_line1(char *line)
 
 	if(!*q)
 		{
-		OCSPerr(OCSP_F_OCSP_SENDREQ_NBIO,
+		OCSPerr(OCSP_F_PARSE_HTTP_LINE1,
 					OCSP_R_SERVER_RESPONSE_PARSE_ERROR);
 		return 0;
 		}
@@ -220,7 +220,7 @@ static int parse_http_line1(char *line)
 		}
 	if(retcode != 200)
 		{
-		OCSPerr(OCSP_F_OCSP_SENDREQ_NBIO, OCSP_R_SERVER_RESPONSE_ERROR);
+		OCSPerr(OCSP_F_PARSE_HTTP_LINE1, OCSP_R_SERVER_RESPONSE_ERROR);
 		if(!*q)
 			ERR_add_error_data(2, "Code=", p);
 		else
