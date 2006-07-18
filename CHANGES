@@ -4,6 +4,11 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) Store a "canonical" representation of X509_NAME structure (ASN1 Name)
+     this maps equivalent X509_NAME structures into a consistent structure.
+     Name comparison can then be performed rapidly using memcmp().
+     [Steve Henson]
+
   *) Non-blocking OCSP request processing. Add -timeout option to ocsp 
      utility.
      [Steve Henson]

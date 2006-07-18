@@ -190,6 +190,8 @@ struct X509_name_st
 	char *bytes;
 #endif
 	unsigned long hash; /* Keep the hash around for lookups */
+	unsigned char *canon_enc;
+	int canon_enclen;
 	} /* X509_NAME */;
 
 DECLARE_STACK_OF(X509_NAME)
