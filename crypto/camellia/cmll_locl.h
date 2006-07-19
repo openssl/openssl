@@ -68,30 +68,111 @@
 #ifndef HEADER_CAMELLIA_LOCL_H
 #define HEADER_CAMELLIA_LOCL_H
 
+#include "openssl/e_os2.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#if defined(_MSC_VER)
+typedef unsigned char uint8_t;
+typedef unsigned int uint32_t;
+typedef unsigned __int64 uint64_t;
+#else
+#include <inttypes.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define ALIGN 4
+#define UNITSIZE 4
+
 #if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64))
-# define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)
-# define GETU32(p) SWAP(*((u32 *)(p)))
-# define PUTU32(ct, st) { *((u32 *)(ct)) = SWAP((st)); }
-#else
-# define GETU32(pt) (((u32)(pt)[0] << 24) ^ ((u32)(pt)[1] << 16) ^ ((u32)(pt)[2] <<  8) ^ ((u32)(pt)[3]))
-# define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); (ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
+# define SWAP(x) ( _lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00 )
+# define GETU32(p) SWAP(*((uint32_t *)(p)))
+# define PUTU32(ct, st) { *((uint32_t *)(ct)) = SWAP((st)); }
+# define CAMELLIA_SWAP4(x) (x = ( _lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00) )
+
+
+#else /* not windows */
+# define GETU32(pt) (((uint32_t)(pt)[0] << 24) \
+	^ ((uint32_t)(pt)[1] << 16) \
+	^ ((uint32_t)(pt)[2] <<  8) \
+	^ ((uint32_t)(pt)[3]))
+
+# define PUTU32(ct, st) { (ct)[0] = (uint8_t)((st) >> 24); \
+	(ct)[1] = (uint8_t)((st) >> 16); \
+	(ct)[2] = (uint8_t)((st) >>  8); \
+	(ct)[3] = (uint8_t)(st); }
+
+#ifdef L_ENDIAN
+#if (defined (__GNUC__) && !defined(i386))
+#define CAMELLIA_SWAP4(x) \
+  do{\
+    asm("bswap %1" : "+r" (x));\
+  }while(0)
+#else /* not gcc */
+#define CAMELLIA_SWAP4(x) \
+   do{\
+     x = ((uint32_t)x << 16) + ((uint32_t)x >> 16);\
+     x = (((uint32_t)x & 0xff00ff) << 8) + (((uint32_t)x >> 8) & 0xff00ff);\
+   } while(0)
+#endif /* not gcc */
+#else /* big endian */
+#define CAMELLIA_SWAP4(x)
+#endif /* L_ENDIAN */
 #endif
 
-/* Internal types */
-typedef unsigned char Byte;
-typedef unsigned int Word;
+#define COPY4WORD(dst, src)	 \
+	     do			 \
+		     {		 \
+		     (dst)[0]=(src)[0];		\
+		     (dst)[1]=(src)[1];		\
+		     (dst)[2]=(src)[2];		\
+		     (dst)[3]=(src)[3];		\
+		     }while(0)
 
-#ifdef CAMELLIA_LONG
-typedef unsigned long u32;
-#else
-typedef unsigned int u32;
+#define SWAP4WORD(word)				\
+   do						\
+	   {					\
+	   CAMELLIA_SWAP4((word)[0]);			\
+	   CAMELLIA_SWAP4((word)[1]);			\
+	   CAMELLIA_SWAP4((word)[2]);			\
+	   CAMELLIA_SWAP4((word)[3]);			\
+	   }while(0)
+
+#define XOR4WORD(a, b)/* a = a ^ b */		\
+   do						\
+	{					\
+	(a)[0]^=(b)[0];				\
+	(a)[1]^=(b)[1];				\
+	(a)[2]^=(b)[2];				\
+	(a)[3]^=(b)[3];				\
+	}while(0)
+
+#define XOR4WORD2(a, b, c)/* a = b ^ c */	\
+   do						\
+	{					\
+	(a)[0]=(b)[0]^(c)[0];			\
+	(a)[1]=(b)[1]^(c)[1];				\
+	(a)[2]=(b)[2]^(c)[2];				\
+	(a)[3]=(b)[3]^(c)[3];				\
+	}while(0)
+
+
+void camellia_setup128(const unsigned char *key, uint32_t *subkey);
+void camellia_setup192(const unsigned char *key, uint32_t *subkey);
+void camellia_setup256(const unsigned char *key, uint32_t *subkey);
+
+void camellia_encrypt128(const uint32_t *subkey, uint32_t *io);
+void camellia_decrypt128(const uint32_t *subkey, uint32_t *io);
+void camellia_encrypt256(const uint32_t *subkey, uint32_t *io);
+void camellia_decrypt256(const uint32_t *subkey, uint32_t *io);
+
+#ifdef __cplusplus
+}
 #endif
-typedef unsigned short u16;
-typedef unsigned char u8;
 
-void Camellia_Ekeygen(const int keyBitLength, const Byte *rawKey, KEY_TABLE_TYPE keyTable);
-void Camellia_EncryptBlock(const int keyBitLength, const Byte plaintext[], 
-		const KEY_TABLE_TYPE keyTable, Byte ciphertext[]);
-void Camellia_DecryptBlock(const int keyBitLength, const Byte ciphertext[], 
-		const KEY_TABLE_TYPE keyTable, Byte plaintext[]);
 #endif /* #ifndef HEADER_CAMELLIA_LOCL_H */
+
