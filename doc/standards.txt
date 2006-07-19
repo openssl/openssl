@@ -88,10 +88,17 @@ PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
      (Format: TXT=143173 bytes) (Obsoletes RFC2437) (Status:           
      INFORMATIONAL)                                         
 
+3713 A Description of the Camellia Encryption Algorithm. M. Matsui,
+     J. Nakajima, S. Moriai. April 2004. (Format: TXT=25031 bytes)
+     (Status: INFORMATIONAL)
+
 3820 Internet X.509 Public Key Infrastructure (PKI) Proxy Certificate
      Profile. S. Tuecke, V. Welch, D. Engert, L. Pearlman, M. Thompson.
      June 2004. (Format: TXT=86374 bytes) (Status: PROPOSED STANDARD)
 
+4132 Addition of Camellia Cipher Suites to Transport Layer Security
+     (TLS). S. Moriai, A. Kato, M. Kanda. July 2005. (Format: TXT=13590
+     bytes) (Status: PROPOSED STANDARD)
 
 Related:
 --------
@@ -250,7 +257,11 @@ STARTTLS documents.
      Protocol. A. Jungmaier, E. Rescorla, M. Tuexen. December 2002.
      (Format: TXT=16333 bytes) (Status: PROPOSED STANDARD)
 
-  "Securing FTP with TLS", 01/27/2000, <draft-murray-auth-ftp-ssl-05.txt>  
+3657 Use of the Camellia Encryption Algorithm in Cryptographic 
+     Message Syntax (CMS). S. Moriai, A. Kato. January 2004.
+     (Format: TXT=26282 bytes) (Status: PROPOSED STANDARD)
+
+"Securing FTP with TLS", 01/27/2000, <draft-murray-auth-ftp-ssl-05.txt>  
  
 
 To be implemented:
