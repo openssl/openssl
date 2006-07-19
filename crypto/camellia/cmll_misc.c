@@ -53,16 +53,37 @@
 #include <openssl/camellia.h>
 #include "cmll_locl.h"
 
- const char *CAMELLIA_version="CAMELLIA" OPENSSL_VERSION_PTEXT;
+const char *CAMELLIA_version="CAMELLIA" OPENSSL_VERSION_PTEXT;
 
 int Camellia_set_key(const unsigned char *userKey, const int bits,
 	CAMELLIA_KEY *key)
 	{
-	if(!userKey || !key)
+	if (!userKey || !key)
+		{
 		return -1;
-	if(bits != 128 && bits != 192 && bits != 256)
+		}
+	
+	switch(bits)
+		{
+	case 128:
+		camellia_setup128(userKey, (unsigned int *)key->rd_key);
+		key->enc = camellia_encrypt128;
+		key->dec = camellia_decrypt128;
+		break;
+	case 192:
+		camellia_setup192(userKey, (unsigned int *)key->rd_key);
+		key->enc = camellia_encrypt256;
+		key->dec = camellia_decrypt256;
+		break;
+	case 256:
+		camellia_setup256(userKey, (unsigned int *)key->rd_key);
+		key->enc = camellia_encrypt256;
+		key->dec = camellia_decrypt256;
+		break;
+	default:
 		return -2;
-	Camellia_Ekeygen(bits , userKey, key->rd_key);
+		}
+	
 	key->bitLength = bits;
 	return 0;
 	}
@@ -70,12 +91,20 @@ int Camellia_set_key(const unsigned char *userKey, const int bits,
 void Camellia_encrypt(const unsigned char *in, unsigned char *out,
 	const CAMELLIA_KEY *key)
 	{
-	Camellia_EncryptBlock(key->bitLength, in , key->rd_key , out);
+	uint32_t tmp[UNITSIZE];
+
+	memcpy(tmp, in, CAMELLIA_BLOCK_SIZE);
+	key->enc(key->rd_key, tmp);
+	memcpy(out, tmp, CAMELLIA_BLOCK_SIZE);
 	}
 
 void Camellia_decrypt(const unsigned char *in, unsigned char *out,
 	const CAMELLIA_KEY *key)
 	{
-	Camellia_DecryptBlock(key->bitLength, in , key->rd_key , out);
+	uint32_t tmp[UNITSIZE];
+
+	memcpy(tmp, in, CAMELLIA_BLOCK_SIZE);
+	key->dec(key->rd_key, tmp);
+	memcpy(out, tmp, CAMELLIA_BLOCK_SIZE);
 	}
 
