@@ -120,7 +120,7 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 					const unsigned char *tbs, size_t tbslen)
 	{
 	int ret, type;
-	size_t sltmp;
+	unsigned int sltmp;
 	EC_PKEY_CTX *dctx = ctx->data;
 	EC_KEY *ec = ctx->pkey->pkey.ec;
 
@@ -145,7 +145,7 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 
 	if (ret < 0)
 		return ret;
-	*siglen = sltmp;
+	*siglen = (size_t)sltmp;
 	return 1;
 	}
 

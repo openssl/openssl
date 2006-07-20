@@ -829,7 +829,7 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
 	EVP_PKEY_CTX *pctx;
 	unsigned char *abuf = NULL;
 	int alen;
-	unsigned int siglen;
+	size_t siglen;
 	const EVP_MD *md = NULL;
 
 	md = EVP_get_digestbyobj(si->digest_alg->algorithm);

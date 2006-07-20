@@ -245,7 +245,7 @@ static int pkey_rsa_verifyrecover(EVP_PKEY_CTX *ctx,
 			}
 		else if (rctx->pad_mode == RSA_PKCS1_PADDING)
 			{
-			unsigned int sltmp;
+			size_t sltmp;
 			ret = int_rsa_verify(EVP_MD_type(rctx->md),
 						NULL, 0, rout, &sltmp,
 					sig, siglen, ctx->pkey->pkey.rsa);
