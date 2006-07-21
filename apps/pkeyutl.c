@@ -99,7 +99,7 @@ int MAIN(int argc, char **argv)
 	int keysize = -1;
 
 	unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL;
-	int buf_inlen = 0, buf_outlen, siglen = -1;
+	size_t buf_inlen = 0, buf_outlen, siglen = -1;
 
 	int ret = 1, rv = -1;
 
