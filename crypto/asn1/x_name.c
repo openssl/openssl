@@ -313,7 +313,7 @@ static int x509_name_canon(X509_NAME *a)
 	unsigned char *p;
 	STACK *intname = NULL;
 	STACK_OF(X509_NAME_ENTRY) *entries = NULL;
-	X509_NAME_ENTRY *entry, *tmpentry;
+	X509_NAME_ENTRY *entry, *tmpentry = NULL;
 	int i, set = -1, ret = 0;
 	if (a->canon_enc)
 		{
