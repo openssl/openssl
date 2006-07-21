@@ -314,7 +314,7 @@ int MAIN(int argc, char **argv)
 			}
 		if(rev)
 			{
-			int i;
+			size_t i;
 			unsigned char ctmp;
 			for(i = 0; i < buf_inlen/2; i++)
 				{
