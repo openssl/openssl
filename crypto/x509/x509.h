@@ -288,8 +288,9 @@ struct x509_st
 	unsigned long ex_xkusage;
 	unsigned long ex_nscert;
 	ASN1_OCTET_STRING *skid;
-	struct AUTHORITY_KEYID_st *akid;
+	AUTHORITY_KEYID *akid;
 	X509_POLICY_CACHE *policy_cache;
+	STACK_OF(DIST_POINT) *crldp;
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif
@@ -449,6 +450,13 @@ struct X509_crl_st
 	X509_ALGOR *sig_alg;
 	ASN1_BIT_STRING *signature;
 	int references;
+	int flags;
+	/* Copies of various extensions */
+	AUTHORITY_KEYID *akid;
+	ISSUING_DIST_POINT *idp;
+#ifndef OPENSSL_NO_SHA
+	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+#endif
 	} /* X509_CRL */;
 
 DECLARE_STACK_OF(X509_CRL)

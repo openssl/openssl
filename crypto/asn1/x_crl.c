@@ -60,6 +60,7 @@
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 static int X509_REVOKED_cmp(const X509_REVOKED * const *a,
 				const X509_REVOKED * const *b);
@@ -102,7 +103,42 @@ ASN1_SEQUENCE_enc(X509_CRL_INFO, enc, crl_inf_cb) = {
 	ASN1_EXP_SEQUENCE_OF_OPT(X509_CRL_INFO, extensions, X509_EXTENSION, 0)
 } ASN1_SEQUENCE_END_enc(X509_CRL_INFO, X509_CRL_INFO)
 
-ASN1_SEQUENCE_ref(X509_CRL, 0, CRYPTO_LOCK_X509_CRL) = {
+/* The X509_CRL structure needs a bit of customisation. Cache some extensions
+ * and hash of the whole CRL.
+ */
+static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+								void *exarg)
+	{
+	X509_CRL *crl = (X509_CRL *)*pval;
+
+	switch(operation)
+		{
+		case ASN1_OP_NEW_POST:
+		crl->idp = NULL;
+		crl->akid = NULL;
+		break;
+
+		case ASN1_OP_D2I_POST:
+#ifndef OPENSSL_NO_SHA
+		X509_CRL_digest(crl, EVP_sha1(), crl->sha1_hash, NULL);
+#endif
+		crl->idp = X509_CRL_get_ext_d2i(crl,
+				NID_issuing_distribution_point, NULL, NULL);
+		crl->akid = X509_CRL_get_ext_d2i(crl,
+				NID_authority_key_identifier, NULL, NULL);	
+		break;
+
+		case ASN1_OP_FREE_POST:
+		if (crl->akid)
+			AUTHORITY_KEYID_free(crl->akid);
+		if (crl->idp)
+			ISSUING_DIST_POINT_free(crl->idp);
+		break;
+		}
+	return 1;
+	}
+
+ASN1_SEQUENCE_ref(X509_CRL, crl_cb, CRYPTO_LOCK_X509_CRL) = {
 	ASN1_SIMPLE(X509_CRL, crl, X509_CRL_INFO),
 	ASN1_SIMPLE(X509_CRL, sig_alg, X509_ALGOR),
 	ASN1_SIMPLE(X509_CRL, signature, ASN1_BIT_STRING)

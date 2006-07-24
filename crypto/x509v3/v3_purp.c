@@ -412,6 +412,7 @@ static void x509v3_cache_extensions(X509 *x)
 	}
 	x->skid =X509_get_ext_d2i(x, NID_subject_key_identifier, NULL, NULL);
 	x->akid =X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
+	x->crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
 	for (i = 0; i < X509_get_ext_count(x); i++)
 		{
 		ex = X509_get_ext(x, i);

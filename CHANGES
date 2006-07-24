@@ -4,6 +4,12 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) New function X509_CRL_match() to check if two CRLs are identical. Normally
+     this would be called X509_CRL_cmp() but that name is already used by
+     a function that just compares CRL issuer names. Cache several CRL 
+     extensions in X509_CRL structure and cache CRLDP in X509.
+     [Steve Henson]
+
   *) Store a "canonical" representation of X509_NAME structure (ASN1 Name)
      this maps equivalent X509_NAME structures into a consistent structure.
      Name comparison can then be performed rapidly using memcmp().

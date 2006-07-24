@@ -116,6 +116,13 @@ int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b)
 	return(X509_NAME_cmp(a->crl->issuer,b->crl->issuer));
 	}
 
+#ifndef OPENSSL_NO_SHA
+int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
+	{
+	return memcmp(a->sha1_hash, b->sha1_hash, 20);
+	}
+#endif
+
 X509_NAME *X509_get_issuer_name(X509 *a)
 	{
 	return(a->cert_info->issuer);

@@ -222,22 +222,22 @@ union {
 } name;
 } DIST_POINT_NAME;
 
-typedef struct DIST_POINT_st {
+struct DIST_POINT_st {
 DIST_POINT_NAME	*distpoint;
 ASN1_BIT_STRING *reasons;
 GENERAL_NAMES *CRLissuer;
-} DIST_POINT;
+};
 
 typedef STACK_OF(DIST_POINT) CRL_DIST_POINTS;
 
 DECLARE_STACK_OF(DIST_POINT)
 DECLARE_ASN1_SET_OF(DIST_POINT)
 
-typedef struct AUTHORITY_KEYID_st {
+struct AUTHORITY_KEYID_st {
 ASN1_OCTET_STRING *keyid;
 GENERAL_NAMES *issuer;
 ASN1_INTEGER *serial;
-} AUTHORITY_KEYID;
+};
 
 /* Strong extranet structures */
 
@@ -329,7 +329,7 @@ typedef struct PROXY_CERT_INFO_EXTENSION_st
 DECLARE_ASN1_FUNCTIONS(PROXY_POLICY)
 DECLARE_ASN1_FUNCTIONS(PROXY_CERT_INFO_EXTENSION)
 
-typedef struct ISSUING_DIST_POINT_st
+struct ISSUING_DIST_POINT_st
 	{
 	DIST_POINT_NAME *distpoint;
 	int onlyuser;
@@ -337,7 +337,7 @@ typedef struct ISSUING_DIST_POINT_st
 	ASN1_BIT_STRING *onlysomereasons;
 	int indirectCRL;
 	int onlyattr;
-	} ISSUING_DIST_POINT;
+	};
 
 #define X509V3_conf_err(val) ERR_add_error_data(6, "section:", val->section, \
 ",name:", val->name, ",value:", val->value);

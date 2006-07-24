@@ -96,6 +96,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		ret->skid = NULL;
 		ret->akid = NULL;
 		ret->aux = NULL;
+		ret->crldp = NULL;
 		CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
 		break;
 
@@ -109,6 +110,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		X509_CERT_AUX_free(ret->aux);
 		ASN1_OCTET_STRING_free(ret->skid);
 		AUTHORITY_KEYID_free(ret->akid);
+		CRL_DIST_POINTS_free(ret->crldp);
 		policy_cache_free(ret->policy_cache);
 
 		if (ret->name != NULL) OPENSSL_free(ret->name);
