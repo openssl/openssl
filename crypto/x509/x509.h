@@ -1072,6 +1072,7 @@ int		X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
 unsigned long	X509_NAME_hash(X509_NAME *x);
 
 int		X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
+int		X509_CRL_match(const X509_CRL *a, const X509_CRL *b);
 #ifndef OPENSSL_NO_FP_API
 int		X509_print_ex_fp(FILE *bp,X509 *x, unsigned long nmflag, unsigned long cflag);
 int		X509_print_fp(FILE *bp,X509 *x);

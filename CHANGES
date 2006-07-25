@@ -4,6 +4,10 @@
 
  Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
 
+  *) Allow multiple CRLs to exist in an X509_STORE with matching issuer names.
+     Modify get_crl() to find a valid (unexpired) CRL if possible.
+     [Steve Henson]
+
   *) New function X509_CRL_match() to check if two CRLs are identical. Normally
      this would be called X509_CRL_cmp() but that name is already used by
      a function that just compares CRL issuer names. Cache several CRL 

@@ -258,6 +258,7 @@ int MAIN(int argc, char **argv)
 	int doupdatedb=0;
 	long crldays=0;
 	long crlhours=0;
+	long crlsec=0;
 	long errorline= -1;
 	char *configfile=NULL;
 	char *md=NULL;
@@ -455,6 +456,11 @@ EF_ALIGNMENT=0;
 			{
 			if (--argc < 1) goto bad;
 			crlhours= atol(*(++argv));
+			}
+		else if (strcmp(*argv,"-crlsec") == 0)
+			{
+			if (--argc < 1) goto bad;
+			crlsec = atol(*(++argv));
 			}
 		else if (strcmp(*argv,"-infiles") == 0)
 			{
@@ -1367,7 +1373,7 @@ bad:
 				goto err;
 				}
 
-		if (!crldays && !crlhours)
+		if (!crldays && !crlhours && !crlsec)
 			{
 			if (!NCONF_get_number(conf,section,
 				ENV_DEFAULT_CRL_DAYS, &crldays))
@@ -1376,7 +1382,7 @@ bad:
 				ENV_DEFAULT_CRL_HOURS, &crlhours))
 				crlhours = 0;
 			}
-		if ((crldays == 0) && (crlhours == 0))
+		if ((crldays == 0) && (crlhours == 0) && (crlsec == 0))
 			{
 			BIO_printf(bio_err,"cannot lookup how long until the next CRL is issued\n");
 			goto err;
@@ -1390,7 +1396,7 @@ bad:
 		if (!tmptm) goto err;
 		X509_gmtime_adj(tmptm,0);
 		X509_CRL_set_lastUpdate(crl, tmptm);	
-		X509_gmtime_adj(tmptm,(crldays*24+crlhours)*60*60);
+		X509_gmtime_adj(tmptm,(crldays*24+crlhours)*60*60 + crlsec);
 		X509_CRL_set_nextUpdate(crl, tmptm);	
 
 		ASN1_TIME_free(tmptm);
@@ -1455,6 +1461,12 @@ bad:
 		if (crlnumberfile != NULL)	/* we have a CRL number that need updating */
 			if (!save_serial(crlnumberfile,"new",crlnumber,NULL)) goto err;
 
+		if (crlnumber)
+			{
+			BN_free(crlnumber);
+			crlnumber = NULL;
+			}
+
 		if (!X509_CRL_sign(crl,pkey,dgst)) goto err;
 
 		PEM_write_bio_X509_CRL(Sout,crl);
@@ -1507,6 +1519,7 @@ err:
 	if (free_key && key)
 		OPENSSL_free(key);
 	BN_free(serial);
+	BN_free(crlnumber);
 	free_index(db);
 	EVP_PKEY_free(pkey);
 	if (x509) X509_free(x509);

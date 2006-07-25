@@ -713,7 +713,38 @@ static int get_crl(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 *x)
 		return 0;
 		}
 
-	*pcrl = xobj.data.crl;
+	/* If CRL times not valid look through store */
+	if (!check_crl_time(ctx, xobj.data.crl, 0))
+		{
+		int idx, i;
+		X509_OBJECT *pobj;
+		X509_OBJECT_free_contents(&xobj);
+		idx = X509_OBJECT_idx_by_subject(ctx->ctx->objs,
+							X509_LU_CRL, nm);
+		if (idx == -1)
+			return 0;
+		*pcrl = NULL;
+		for (i = idx; i < sk_X509_OBJECT_num(ctx->ctx->objs); i++)
+			{
+			pobj = sk_X509_OBJECT_value(ctx->ctx->objs, i);
+			/* Check to see if it is a CRL and issuer matches */
+			if (pobj->type != X509_LU_CRL)
+				break;
+			if (X509_NAME_cmp(nm,
+					X509_CRL_get_issuer(pobj->data.crl)))
+				break;
+			/* Set *pcrl because the CRL will either be valid or
+			 * a "best fit" CRL.
+			 */
+			*pcrl = pobj->data.crl;
+			if (check_crl_time(ctx, *pcrl, 0))
+				break;
+			}
+		if (*pcrl)
+			CRYPTO_add(&(*pcrl)->references, 1, CRYPTO_LOCK_X509);
+		}
+	else 
+		*pcrl = xobj.data.crl;
 	if (crl)
 		X509_CRL_free(crl);
 	return 1;
