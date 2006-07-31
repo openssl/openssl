@@ -113,6 +113,10 @@
 
  The MDC2 algorithm is patented by IBM.
 
+ NTT and Mitsubishi have patents and pending patents on the Camellia
+ algorithm, but allow use at no charge without requiring an explicit
+ licensing agreement: http://info.isl.ntt.co.jp/crypt/eng/info/chiteki.html
+
  INSTALLATION
  ------------
 
