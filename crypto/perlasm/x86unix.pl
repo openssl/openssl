@@ -234,6 +234,15 @@ sub main'movq	{
 		{	push(@out,"\tpshufw\t\$0xe4,%$p2,%$p1\n");	}
 	else	{	&out2("movq",@_);				}
 	}
+sub main'pshufw	{
+	local ($dst,$src,$magic)=@_;
+	push(@out,"\tpshufw\t\$$magic,%$src,%$dst\n");
+	}
+sub main'punpckldq	{ &out2("punpckldq",@_); }
+sub main'pcmpgtb	{ &out2("pcmpgtb",@_);   }
+sub main'paddb		{ &out2("paddb",@_);     }
+sub main'psrld		{ &out2("psrld",@_);     }
+sub main'pslld		{ &out2("pslld",@_);     }
 
 # The bswapl instruction is new for the 486. Emulate if i386.
 sub main'bswap
@@ -690,10 +699,14 @@ sub popvars
 
 sub main'picmeup
 	{
-	local($dst,$sym)=@_;
+	local($dst,$sym,$base,$label)=@_;
+
 	if ($main'cpp)
 		{
-		local($tmp)=<<___;
+		local($tmp);
+		if (!defined($base))
+			{
+			$tmp=<<___;
 #if (defined(ELF) || defined(SOL)) && defined(PIC)
 	call	1f
 1:	popl	$regs{$dst}
@@ -703,15 +716,34 @@ sub main'picmeup
 	leal	$sym,$regs{$dst}
 #endif
 ___
+			}
+		else	{
+			$tmp=<<___;
+#if (defined(ELF) || defined(SOL)) && defined(PIC)
+	leal	_GLOBAL_OFFSET_TABLE_+[.-$label]($regs{$base}),$regs{$dst}
+	movl	$sym\@GOT($regs{$dst}),$regs{$dst}
+#else
+	leal	$sym,$regs{$dst}
+#endif
+___
+			}
 		push(@out,$tmp);
 		}
 	elsif ($main'pic && ($main'elf || $main'aout))
 		{
-		&main'call(&main'label("PIC_me_up"));
-		&main'set_label("PIC_me_up");
-		&main'blindpop($dst);
-		&main'add($dst,"\$${under}_GLOBAL_OFFSET_TABLE_+[.-".
+		if (!defined($base))
+			{
+			&main'call(&main'label("PIC_me_up"));
+			&main'set_label("PIC_me_up");
+			&main'blindpop($dst);
+			&main'add($dst,"\$${under}_GLOBAL_OFFSET_TABLE_+[.-".
 				&main'label("PIC_me_up") . "]");
+			}
+		else	{
+			&main'lea($dst,&main'DWP(
+				"${under}_GLOBAL_OFFSET_TABLE_+[.-$label]",
+				$base));
+			}
 		&main'mov($dst,&main'DWP($under.$sym."\@GOT",$dst));
 		}
 	else
