@@ -6,7 +6,7 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 3.7.
+# Version 4.0.
 #
 # You might fail to appreciate this module performance from the first
 # try. If compared to "vanilla" linux-ia32-icc target, i.e. considered
@@ -88,6 +88,24 @@
 # and decrypt performance becomes asymmetric. Encrypt performance
 # drops by 10-12%, while decrypt - by 20-25%:-( 256 bytes S-box is
 # aggressively pre-fetched.
+#
+# Version 4.0 effectively rolls back to 3.6 and instead implements
+# additional set of functions, _[x86|mmx]_AES_[en|de]crypt_compact,
+# which use exclusively 256 byte S-box. These functions are to be
+# called in modes not concealing plain text, such as ECB, or when
+# we're asked to process smaller amount of data [or unconditionally
+# on hyper-threading CPU]. Currently it's called unconditionally from
+# AES_[en|de]crypt, which affects all modes, but CBC. CBC routine
+# still needs to be modified to switch between slower and faster
+# mode when appropriate... But in either case benchmark landscape
+# changes dramatically and below numbers are CPU cycles per processed
+# byte for 128-bit key.
+#
+#		ECB encrypt	ECB decrypt	CBC large chunk
+# P4		57[60]		84[100]		23
+# AMD K8	48[44]		70[79]		18
+# PIII		41[50]		61[91]		24
+# Pentium	120		160		77
 
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
@@ -100,6 +118,9 @@ $s2="ecx";
 $s3="edx";
 $key="edi";
 $acc="esi";
+$tbl="ebp";
+
+sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 
 $compromise=0;		# $compromise=128 abstains from copying key
 			# schedule to stack when encrypting inputs
@@ -112,9 +133,9 @@ $small_footprint=1;	# $small_footprint=1 code is ~5% slower [on
 			# I favor compact code to minimize cache
 			# contention and in hope to "collect" 5% back
 			# in real-life applications...
+
 $vertical_spin=0;	# shift "verticaly" defaults to 0, because of
 			# its proof-of-concept status...
-
 # Note that there is no decvert(), as well as last encryption round is
 # performed with "horizontal" shifts. This is because this "vertical"
 # implementation [one which groups shifts on a given $s[i] to form a
@@ -181,6 +202,472 @@ sub encvert()
 	&xor	($s[2],&DWP(1,$te,$v0,8));		# s1>>24
 }
 
+# Another experimental routine, which features "horizontal spin," but
+# eliminates one reference to stack. Strangely enough runs slower...
+sub enchoriz()
+{ my $v0 = $key, $v1 = $acc;
+
+	&movz	($v0,&LB($s0));			#  3, 2, 1, 0*
+	&rotr	($s2,8);			#  8,11,10, 9
+	&mov	($v1,&DWP(0,$te,$v0,8));	#  0
+	&movz	($v0,&HB($s1));			#  7, 6, 5*, 4
+	&rotr	($s3,16);			# 13,12,15,14
+	&xor	($v1,&DWP(3,$te,$v0,8));	#  5
+	&movz	($v0,&HB($s2));			#  8,11,10*, 9
+	&rotr	($s0,16);			#  1, 0, 3, 2
+	&xor	($v1,&DWP(2,$te,$v0,8));	# 10
+	&movz	($v0,&HB($s3));			# 13,12,15*,14
+	&xor	($v1,&DWP(1,$te,$v0,8));	# 15, t[0] collected
+	&mov	(&DWP(4,"esp"),$v1);		# t[0] saved
+
+	&movz	($v0,&LB($s1));			#  7, 6, 5, 4*
+	&shr	($s1,16);			#  -, -, 7, 6
+	&mov	($v1,&DWP(0,$te,$v0,8));	#  4
+	&movz	($v0,&LB($s3));			# 13,12,15,14*
+	&xor	($v1,&DWP(2,$te,$v0,8));	# 14
+	&movz	($v0,&HB($s0));			#  1, 0, 3*, 2
+	&and	($s3,0xffff0000);		# 13,12, -, -
+	&xor	($v1,&DWP(1,$te,$v0,8));	#  3
+	&movz	($v0,&LB($s2));			#  8,11,10, 9*
+	&or	($s3,$s1);			# 13,12, 7, 6
+	&xor	($v1,&DWP(3,$te,$v0,8));	#  9, t[1] collected
+	&mov	($s1,$v1);			#  s[1]=t[1]
+
+	&movz	($v0,&LB($s0));			#  1, 0, 3, 2*
+	&shr	($s2,16);			#  -, -, 8,11
+	&mov	($v1,&DWP(2,$te,$v0,8));	#  2
+	&movz	($v0,&HB($s3));			# 13,12, 7*, 6
+	&xor	($v1,&DWP(1,$te,$v0,8));	#  7
+	&movz	($v0,&HB($s2));			#  -, -, 8*,11
+	&xor	($v1,&DWP(0,$te,$v0,8));	#  8
+	&mov	($v0,$s3);
+	&shr	($v0,24);			# 13
+	&xor	($v1,&DWP(3,$te,$v0,8));	# 13, t[2] collected
+
+	&movz	($v0,&LB($s2));			#  -, -, 8,11*
+	&shr	($s0,24);			#  1*
+	&mov	($s2,&DWP(1,$te,$v0,8));	# 11
+	&xor	($s2,&DWP(3,$te,$s0,8));	#  1
+	&mov	($s0,&DWP(4,"esp"));		# s[0]=t[0]
+	&movz	($v0,&LB($s3));			# 13,12, 7, 6*
+	&shr	($s3,16);			#   ,  ,13,12
+	&xor	($s2,&DWP(2,$te,$v0,8));	#  6
+	&mov	($key,&DWP(20,"esp"));		# reincarnate v0 as key
+	&and	($s3,0xff);			#   ,  ,13,12*
+	&mov	($s3,&DWP(0,$te,$s3,8));	# 12
+	&xor	($s3,$s2);			# s[2]=t[3] collected
+	&mov	($s2,$v1);			# s[2]=t[2]
+}
+
+# More experimental code... MMX one... Even though this one eliminates
+# *all* references to stack, it's not faster...
+sub mmx_encbody()
+{
+	&movz	("esi",&LB("eax"));		#  0
+	&mov	("ecx",&DWP(0,$tbl,"esi",8));	#  0
+	&pshufw	("mm2","mm0",0x0d);		#  7, 6, 3, 2
+	&movz	("edx",&HB("eax"));		#  1
+	&mov	("edx",&DWP(3,$tbl,"edx",8));	#  1
+	&shr	("eax",16);			#  5, 4
+
+	&movz	("esi",&LB("ebx"));		# 10
+	&xor	("ecx",&DWP(2,$tbl,"esi",8));	# 10
+	&pshufw	("mm6","mm4",0x08);		# 13,12, 9, 8
+	&movz	("esi",&HB("ebx"));		# 11
+	&xor	("edx",&DWP(1,$tbl,"esi",8));	# 11
+	&shr	("ebx",16);			# 15,14
+
+	&movz	("esi",&HB("eax"));		#  5
+	&xor	("ecx",&DWP(3,$tbl,"esi",8));	#  5
+	&movq	("mm3",QWP(16,$key));
+	&movz	("esi",&HB("ebx"));		# 15
+	&xor	("ecx",&DWP(1,$tbl,"esi",8));	# 15
+	&movd	("mm0","ecx");			# t[0] collected
+
+	&movz	("esi",&LB("eax"));		#  4
+	&mov	("ecx",&DWP(0,$tbl,"esi",8));	#  4
+	&movd	("eax","mm2");			#  7, 6, 3, 2
+	&movz	("esi",&LB("ebx"));		# 14
+	&xor	("ecx",&DWP(2,$tbl,"esi",8));	# 14
+	&movd	("ebx","mm6");			# 13,12, 9, 8
+
+	&movz	("esi",&HB("eax"));		#  3
+	&xor	("ecx",&DWP(1,$tbl,"esi",8));	#  3
+	&movz	("esi",&HB("ebx"));		#  9
+	&xor	("ecx",&DWP(3,$tbl,"esi",8));	#  9
+	&movd	("mm1","ecx");			# t[1] collected
+
+	&movz	("esi",&LB("eax"));		#  2
+	&mov	("ecx",&DWP(2,$tbl,"esi",8));	#  2
+	&shr	("eax",16);			#  7, 6
+	&punpckldq	("mm0","mm1");		# t[0,1] collected
+	&movz	("esi",&LB("ebx"));		#  8
+	&xor	("ecx",&DWP(0,$tbl,"esi",8));	#  8
+	&shr	("ebx",16);			# 13,12
+
+	&movz	("esi",&HB("eax"));		#  7
+	&xor	("ecx",&DWP(1,$tbl,"esi",8));	#  7
+	&pxor	("mm0","mm3");
+	&movz	("eax",&LB("eax"));		#  6
+	&xor	("edx",&DWP(2,$tbl,"eax",8));	#  6
+	&pshufw	("mm1","mm0",0x08);		#  5, 4, 1, 0
+	&movz	("esi",&HB("ebx"));		# 13
+	&xor	("ecx",&DWP(3,$tbl,"esi",8));	# 13
+	&xor	("ecx",&DWP(24,$key));		# t[2]
+	&movd	("mm4","ecx");			# t[2] collected
+	&movz	("ebx",&LB("ebx"));		# 12
+	&xor	("edx",&DWP(0,$tbl,"ebx",8));	# 12
+	&shr	("ecx",16);
+	&movd	("eax","mm1");			#  5, 4, 1, 0
+	&mov	("ebx",&DWP(28,$key));		# t[3]
+	&xor	("ebx","edx");
+	&movd	("mm5","ebx");			# t[3] collected
+	&and	("ebx",0xffff0000);
+	&or	("ebx","ecx");
+
+	&punpckldq	("mm4","mm5");		# t[2,3] collected
+}
+
+######################################################################
+# "Compact" block function
+######################################################################
+
+sub enccompact()
+{ my $Fn = mov;
+  while ($#_>5) { pop(@_); $Fn=sub{}; }
+  my ($i,$te,@s)=@_;
+  my $tmp = $key;
+  my $out = $i==3?$s[0]:$acc;
+
+	# $Fn is used in first compact round and its purpose is to
+	# void restoration of some values from stack, so that after
+	# 4xenccompact with extra argument $key value is left there...
+	if ($i==3)  {	&$Fn	($key,&DWP(20,"esp"));		}##%edx
+	else        {	&mov	($out,$s[0]);			}
+			&and	($out,0xFF);
+	if ($i==1)  {	&shr	($s[0],16);			}#%ebx[1]
+	if ($i==2)  {	&shr	($s[0],24);			}#%ecx[2]
+			&movz	($out,&DWP(-128,$te,$out,1));
+
+	if ($i==3)  {	$tmp=$s[1];				}##%eax
+			&movz	($tmp,&HB($s[1]));
+			&movz	($tmp,&DWP(-128,$te,$tmp,1));
+			&shl	($tmp,8);
+			&xor	($out,$tmp);
+
+	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(4,"esp"));	}##%ebx
+	else        {	&mov	($tmp,$s[2]);
+			&shr	($tmp,16);			}
+	if ($i==2)  {	&and	($s[1],0xFF);			}#%edx[2]
+			&and	($tmp,0xFF);
+			&movz	($tmp,&DWP(-128,$te,$tmp,1));
+			&shl	($tmp,16);
+			&xor	($out,$tmp);
+
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}##%ecx
+	elsif($i==2){	&movz	($tmp,&HB($s[3]));		}#%ebx[2]
+	else        {	&mov	($tmp,$s[3]);
+			&shr	($tmp,24);			}
+			&movz	($tmp,&DWP(-128,$te,$tmp,1));
+			&shl	($tmp,24);
+			&xor	($out,$tmp);
+	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
+	if ($i==3)  {	&mov	($s[3],$acc);			}
+	&comment();
+}
+
+sub enctransform()
+{ my @s = ($s0,$s1,$s2,$s3);
+  my $i = shift;
+  my $tmp = $tbl;
+  my $r2  = $key ;
+
+	&mov	($acc,$s[$i]);
+	&and	($acc,0x80808080);
+	&mov	($tmp,$acc);
+	&mov	($r2,$s[$i]);
+	&shr	($tmp,7);
+	&and	($r2,0x7f7f7f7f);
+	&sub	($acc,$tmp);
+	&lea	($r2,&DWP(0,$r2,$r2));
+	&and	($acc,0x1b1b1b1b);
+	&mov	($tmp,$s[$i]);
+	&xor	($acc,$r2);	# r2
+
+	&xor	($s[$i],$acc);	# r0 ^ r2
+	&rotl	($s[$i],24);
+	&xor	($s[$i],$acc)	# ROTATE(r2^r0,24) ^ r2
+	&rotr	($tmp,16);
+	&xor	($s[$i],$tmp);
+	&rotr	($tmp,8);
+	&xor	($s[$i],$tmp);
+}
+
+&public_label("AES_Te");
+&function_begin_B("_x86_AES_encrypt_compact");
+	# note that caller is expected to allocate stack frame for me!
+	&mov	(&DWP(20,"esp"),$key);		# save key
+
+	&xor	($s0,&DWP(0,$key));		# xor with key
+	&xor	($s1,&DWP(4,$key));
+	&xor	($s2,&DWP(8,$key));
+	&xor	($s3,&DWP(12,$key));
+
+	&mov	($acc,&DWP(240,$key));		# load key->rounds
+	&lea	($acc,&DWP(-2,$acc,$acc));
+	&lea	($acc,&DWP(0,$key,$acc,8));
+	&mov	(&DWP(24,"esp"),$acc);		# end of key schedule
+
+	# prefetch Te4
+	&mov	($key,&DWP(0-128,$tbl));
+	&mov	($acc,&DWP(32-128,$tbl));
+	&mov	($key,&DWP(64-128,$tbl));
+	&mov	($acc,&DWP(96-128,$tbl));
+	&mov	($key,&DWP(128-128,$tbl));
+	&mov	($acc,&DWP(160-128,$tbl));
+	&mov	($key,&DWP(192-128,$tbl));
+	&mov	($acc,&DWP(224-128,$tbl));
+
+	&set_label("loop",16);
+
+		&enccompact(0,$tbl,$s0,$s1,$s2,$s3,1);
+		&enccompact(1,$tbl,$s1,$s2,$s3,$s0,1);
+		&enccompact(2,$tbl,$s2,$s3,$s0,$s1,1);
+		&enccompact(3,$tbl,$s3,$s0,$s1,$s2,1);
+		&enctransform(2);
+		&enctransform(3);
+		&enctransform(0);
+		&enctransform(1);
+		&mov 	($key,&DWP(20,"esp"));
+		&mov	($tbl,&DWP(28,"esp"));
+		&add	($key,16);		# advance rd_key
+		&xor	($s0,&DWP(0,$key));
+		&xor	($s1,&DWP(4,$key));
+		&xor	($s2,&DWP(8,$key));
+		&xor	($s3,&DWP(12,$key));
+
+	&cmp	($key,&DWP(24,"esp"));
+	&mov	(&DWP(20,"esp"),$key);
+	&jb	(&label("loop"));
+
+	&enccompact(0,$tbl,$s0,$s1,$s2,$s3);
+	&enccompact(1,$tbl,$s1,$s2,$s3,$s0);
+	&enccompact(2,$tbl,$s2,$s3,$s0,$s1);
+	&enccompact(3,$tbl,$s3,$s0,$s1,$s2);
+
+	&xor	($s0,&DWP(16,$key));
+	&xor	($s1,&DWP(20,$key));
+	&xor	($s2,&DWP(24,$key));
+	&xor	($s3,&DWP(28,$key));
+
+	&ret	();
+&function_end_B("_x86_AES_encrypt_compact");
+
+######################################################################
+# "Compact" MMX block function.
+######################################################################
+#
+# Performance is not actually extraordinary in comparison to pure
+# x86 code. In particular encrypt performance is virtually the same.
+# same. Decrypt performance on the other hand is 15-20% better on
+# newer µ-archs [but we're thankful for *any* improvement here], and
+# ~50% better on PIII:-) And additionally on the pros side this code
+# eliminates redundant references to stack and thus relieves/
+# minimizes the pressure on the memory bus.
+#
+# MMX register layout                           lsb
+# +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+# |          mm4          |          mm0          |
+# +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+# |     s3    |     s2    |     s1    |     s0    |    
+# +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+# |15|14|13|12|11|10| 9| 8| 7| 6| 5| 4| 3| 2| 1| 0|
+# +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+#
+# Indexes translate as s[N/4]>>(8*(N%4)), e.g. 5 means s1>>8.
+# In this terms encryption and decryption "compact" permutation
+# matrices can be depicted as following:
+#
+# encryption              lsb	# decryption              lsb
+# +----++----+----+----+----+	# +----++----+----+----+----+
+# | t0 || 15 | 10 |  5 |  0 |	# | t0 ||  7 | 10 | 13 |  0 |
+# +----++----+----+----+----+	# +----++----+----+----+----+
+# | t1 ||  3 | 14 |  9 |  4 |	# | t1 || 11 | 14 |  1 |  4 |
+# +----++----+----+----+----+	# +----++----+----+----+----+
+# | t2 ||  7 |  2 | 13 |  8 |	# | t2 || 15 |  2 |  5 |  8 |
+# +----++----+----+----+----+	# +----++----+----+----+----+
+# | t3 || 11 |  6 |  1 | 12 |	# | t3 ||  3 |  6 |  9 | 12 |
+# +----++----+----+----+----+	# +----++----+----+----+----+
+#
+######################################################################
+# Why not xmm registers? Short answer. It was actually tested and
+# was not any faster, but *contrary*, most notably on Intel CPUs.
+# Longer answer. Main advantage of using mm registers is that movd
+# latency is lower, especially on Intel P4. While arithmetic
+# instructions are twice as many, they can be scheduled every cycle
+# and not every second one when they are operating on xmm register,
+# so that "arithmetic throughput" remains virtually the same. And
+# finally the code can be executed even on elder MMX-only CPUs:-)
+
+sub mmx_enccompact()
+{
+	&pshufw	("mm1","mm0",0x08);		#  5, 4, 1, 0
+	&pshufw	("mm5","mm4",0x0d);		# 15,14,11,10
+	&movd	("eax","mm1");			#  5, 4, 1, 0
+	&movd	("ebx","mm5");			# 15,14,11,10
+
+	&movz	("esi",&LB("eax"));		#  0
+	&movz	("ecx",&DWP(-128,$tbl,"esi",1));#  0
+	&pshufw	("mm2","mm0",0x0d);		#  7, 6, 3, 2
+	&movz	("edx",&HB("eax"));		#  1
+	&movz	("edx",&DWP(-128,$tbl,"edx",1));#  1
+	&shl	("edx",8);			#  1
+	&shr	("eax",16);			#  5, 4
+
+	&movz	("esi",&LB("ebx"));		# 10
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 10
+	&shl	("esi",16);			# 10
+	&or	("ecx","esi");			# 10
+	&pshufw	("mm6","mm4",0x08);		# 13,12, 9, 8
+	&movz	("esi",&HB("ebx"));		# 11
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 11
+	&shl	("esi",24);			# 11
+	&or	("edx","esi");			# 11
+	&shr	("ebx",16);			# 15,14
+
+	&movz	("esi",&HB("eax"));		#  5
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  5
+	&shl	("esi",8);			#  5
+	&or	("ecx","esi");			#  5
+	&movz	("esi",&HB("ebx"));		# 15
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 15
+	&shl	("esi",24);			# 15
+	&or	("ecx","esi");			# 15
+	&movd	("mm0","ecx");			# t[0] collected
+
+	&movz	("esi",&LB("eax"));		#  4
+	&movz	("ecx",&DWP(-128,$tbl,"esi",1));#  4
+	&movd	("eax","mm2");			#  7, 6, 3, 2
+	&movz	("esi",&LB("ebx"));		# 14
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 14
+	&shl	("esi",16);			# 14
+	&or	("ecx","esi");			# 14
+
+	&movd	("ebx","mm6");			# 13,12, 9, 8
+	&movz	("esi",&HB("eax"));		#  3
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  3
+	&shl	("esi",24);			#  3
+	&or	("ecx","esi");			#  3
+	&movz	("esi",&HB("ebx"));		#  9
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  9
+	&shl	("esi",8);			#  9
+	&or	("ecx","esi");			#  9
+	&movd	("mm1","ecx");			# t[1] collected
+
+	&movz	("esi",&LB("ebx"));		#  8
+	&movz	("ecx",&DWP(-128,$tbl,"esi",1));#  8
+	&shr	("ebx",16);			# 13,12
+	&movz	("esi",&LB("eax"));		#  2
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  2
+	&shl	("esi",16);			#  2
+	&or	("ecx","esi");			#  2
+	&shr	("eax",16);			#  7, 6
+
+	&punpckldq	("mm0","mm1");		# t[0,1] collected
+
+	&movz	("esi",&HB("eax"));		#  7
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  7
+	&shl	("esi",24);			#  7
+	&or	("ecx","esi");			#  7
+	&and	("eax",0xff);			#  6
+	&movz	("eax",&DWP(-128,$tbl,"eax",1));#  6
+	&shl	("eax",16);			#  6
+	&or	("edx","eax");			#  6
+	&movz	("esi",&HB("ebx"));		# 13
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 13
+	&shl	("esi",8);			# 13
+	&or	("ecx","esi");			# 13
+	&movd	("mm4","ecx");			# t[2] collected
+	&and	("ebx",0xff);			# 12
+	&movz	("ebx",&DWP(-128,$tbl,"ebx",1));# 12
+	&or	("edx","ebx");			# 12
+	&movd	("mm5","edx");			# t[3] collected
+
+	&punpckldq	("mm4","mm5");		# t[2,3] collected
+}
+
+&public_label("AES_Te");
+&function_begin_B("_mmx_AES_encrypt_compact");
+	&pxor	("mm0",&QWP(0,$key));	#  7, 6, 5, 4, 3, 2, 1, 0
+	&pxor	("mm4",&QWP(8,$key));	# 15,14,13,12,11,10, 9, 8
+
+	# note that caller is expected to allocate stack frame for me!
+	&mov	($acc,&DWP(240,$key));		# load key->rounds
+	&lea	($acc,&DWP(-2,$acc,$acc));
+	&lea	($acc,&DWP(0,$key,$acc,8));
+	&mov	(&DWP(24,"esp"),$acc);		# end of key schedule
+
+	&mov	($s0,0x1b1b1b1b);		# magic constant
+	&mov	(&DWP(8,"esp"),$s0);
+	&mov	(&DWP(12,"esp"),$s0);
+
+	# prefetch Te4
+	&mov	($s0,&DWP(0-128,$tbl));
+	&mov	($s1,&DWP(32-128,$tbl));
+	&mov	($s2,&DWP(64-128,$tbl));
+	&mov	($s3,&DWP(96-128,$tbl));
+	&mov	($s0,&DWP(128-128,$tbl));
+	&mov	($s1,&DWP(160-128,$tbl));
+	&mov	($s2,&DWP(192-128,$tbl));
+	&mov	($s3,&DWP(224-128,$tbl));
+
+	&set_label("loop",16);
+		&mmx_enccompact();
+		&add	($key,16);
+		&cmp	($key,&DWP(24,"esp"));
+		&ja	(&label("out"));
+
+		&movq	("mm2",&QWP(8,"esp"));
+		&pxor	("mm3","mm3");		&pxor	("mm7","mm7");
+		&movq	("mm1","mm0");		&movq	("mm5","mm4");	# r0
+		&pcmpgtb("mm3","mm0");		&pcmpgtb("mm7","mm4");
+		&pand	("mm3","mm2");		&pand	("mm7","mm2");
+		&movq	("mm2","mm0");		&movq	("mm6","mm4");	# r0
+		&paddb	("mm0","mm0");		&paddb	("mm4","mm4");
+		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# = r2
+		&movq	("mm3","mm2");		&movq	("mm7","mm6");
+		&pxor	("mm1","mm0");		&pxor	("mm5","mm4");	# r2^r0
+
+		&pslld	("mm3",8);		&pslld	("mm7",8);
+		&psrld	("mm2",16);		&psrld	("mm6",16);
+		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= r0<<8
+		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");	# ^= r0>>16
+		&pslld	("mm3",8);		&pslld	("mm7",8);
+		&psrld	("mm2",8);		&psrld	("mm6",8);
+		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= r0<<16
+		&movq	("mm3","mm1");		&movq	("mm7","mm5");
+		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");	# ^= r0>>24
+
+		&psrld	("mm1",8);		&psrld	("mm5",8);
+		&movq	("mm2",&QWP(0,$key));	&movq	("mm6",&QWP(8,$key));
+		&pslld	("mm3",24);		&pslld	("mm7",24);
+		&pxor	("mm0","mm1");		&pxor	("mm4","mm5");	# ^= (r2^r0)<<8
+		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= (r2^r0)>>24
+
+		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");
+	&jmp	(&label("loop"));
+
+	&set_label("out",16);
+	&pxor	("mm0",&QWP(0,$key));
+	&pxor	("mm4",&QWP(8,$key));
+
+	&ret	();
+&function_end_B("_mmx_AES_encrypt_compact");
+
+######################################################################
+# Vanilla block function.
+######################################################################
+
 sub encstep()
 { my ($i,$te,@s) = @_;
   my $tmp = $key;
@@ -216,91 +703,6 @@ sub encstep()
 }
 
 sub enclast()
-{ my $Fn = mov;
-  while ($#_>5) { pop(@_); $Fn=sub{}; }
-  my ($i,$te,@s)=@_;
-  my $tmp = $key;
-  my $out = $i==3?$s[0]:$acc;
-
-	if ($i==0)	# prefetch 256-byte Te4
-	{   &lea	($te,&DWP(2048+128,$te));
-	    &mov	($tmp,&DWP(0-128,$te));
-	    &mov	($acc,&DWP(32-128,$te));
-	    &mov	($tmp,&DWP(64-128,$te));
-	    &mov	($acc,&DWP(96-128,$te));
-	    &mov	($tmp,&DWP(128-128,$te));
-	    &mov	($acc,&DWP(160-128,$te));
-	    &mov	($tmp,&DWP(192-128,$te));
-	    &mov	($acc,&DWP(224-128,$te));
-	    &lea	($te,&DWP(-128,$te));
-	}
-
-	# $Fn is used in first compact round and its purpose is to
-	# void restoration of some values from stack, so that after
-	# 4xenclast with extra argument $key value is left there...
-	if ($i==3)  {	&$Fn	($key,&DWP(20,"esp"));		}##%edx
-	else        {	&mov	($out,$s[0]);			}
-			&and	($out,0xFF);
-	if ($i==1)  {	&shr	($s[0],16);			}#%ebx[1]
-	if ($i==2)  {	&shr	($s[0],24);			}#%ecx[2]
-			&movz	($out,&DWP(0,$te,$out,1));
-
-	if ($i==3)  {	$tmp=$s[1];				}##%eax
-			&movz	($tmp,&HB($s[1]));
-			&movz	($tmp,&DWP(0,$te,$tmp,1));
-			&shl	($tmp,8);
-			&xor	($out,$tmp);
-
-	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(4,"esp"));	}##%ebx
-	else        {	&mov	($tmp,$s[2]);
-			&shr	($tmp,16);			}
-	if ($i==2)  {	&and	($s[1],0xFF);			}#%edx[2]
-			&and	($tmp,0xFF);
-			&movz	($tmp,&DWP(0,$te,$tmp,1));
-			&shl	($tmp,16);
-			&xor	($out,$tmp);
-
-	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}##%ecx
-	elsif($i==2){	&movz	($tmp,&HB($s[3]));		}#%ebx[2]
-	else        {	&mov	($tmp,$s[3]);
-			&shr	($tmp,24);			}
-			&movz	($tmp,&DWP(0,$te,$tmp,1));
-			&shl	($tmp,24);
-			&xor	($out,$tmp);
-	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
-	if ($i==3)  {	&mov	($s[3],$acc);
-			&lea	($te,&DWP(-2048,$te));		}
-	&comment();
-}
-
-sub enctransform()
-{ my @s = ($s0,$s1,$s2,$s3);
-  my $i = shift;
-  my $tmp = $key;
-  my $r2 = "ebp";
-
-	&mov	($acc,$s[$i]);
-	&and	($acc,0x80808080);
-	&mov	($tmp,$acc);
-	&mov	($r2,$s[$i]);
-	&shr	($tmp,7);
-	&and	($r2,0x7f7f7f7f);
-	&sub	($acc,$tmp);
-	&lea	($r2,&DWP(0,$r2,$r2));
-	&and	($acc,0x1b1b1b1b);
-	&mov	($tmp,$s[$i]);
-	&xor	($r2,$acc);	# r2
-
-	&xor	($s[$i],$r2);	# r0 ^ r2
-	&rotl	($s[$i],24);
-	&xor	($s[$i],$r2)	# ROTATE(r2^r0,24) ^ r2
-	&rotr	($tmp,16);
-	&xor	($s[$i],$tmp);
-	&rotr	($tmp,8);
-	&xor	($s[$i],$tmp);
-}
-
-sub enclast_large()
 { my ($i,$te,@s)=@_;
   my $tmp = $key;
   my $out = $i==3?$s[0]:$acc;
@@ -339,8 +741,6 @@ sub enclast_large()
 	if ($i==3)  {	&mov	($s[3],$acc);			}
 }
 
-sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
-
 &public_label("AES_Te");
 &function_begin_B("_x86_AES_encrypt");
 	if ($vertical_spin) {
@@ -357,40 +757,21 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 	&xor	($s2,&DWP(8,$key));
 	&xor	($s3,&DWP(12,$key));
 
-	# not really last round, just "compact" one...
-	&enclast(0,"ebp",$s0,$s1,$s2,$s3,1);
-	&enclast(1,"ebp",$s1,$s2,$s3,$s0,1);
-	&enclast(2,"ebp",$s2,$s3,$s0,$s1,1);
-	&enclast(3,"ebp",$s3,$s0,$s1,$s2,1);
-	&enctransform(2);
-	&enctransform(3);
-	&enctransform(0);
-	&enctransform(1);
-	&mov 	($key,&DWP(20,"esp"));
-	&mov	("ebp",&DWP(28,"esp"));
-	&xor	($s0,&DWP(16,$key));
-	&xor	($s1,&DWP(20,$key));
-	&xor	($s2,&DWP(24,$key));
-	&xor	($s3,&DWP(28,$key));
-
 	&mov	($acc,&DWP(240,$key));		# load key->rounds
 
 	if ($small_footprint) {
 	    &lea	($acc,&DWP(-2,$acc,$acc));
 	    &lea	($acc,&DWP(0,$key,$acc,8));
-	    &add	($key,16);
-	    &mov	(&DWP(20,"esp"),$key);
 	    &mov	(&DWP(24,"esp"),$acc);	# end of key schedule
 
-	    &align	(4);
-	    &set_label("loop");
+	    &set_label("loop",16);
 		if ($vertical_spin) {
-		    &encvert("ebp",$s0,$s1,$s2,$s3);
+		    &encvert($tbl,$s0,$s1,$s2,$s3);
 		} else {
-		    &encstep(0,"ebp",$s0,$s1,$s2,$s3);
-		    &encstep(1,"ebp",$s1,$s2,$s3,$s0);
-		    &encstep(2,"ebp",$s2,$s3,$s0,$s1);
-		    &encstep(3,"ebp",$s3,$s0,$s1,$s2);
+		    &encstep(0,$tbl,$s0,$s1,$s2,$s3);
+		    &encstep(1,$tbl,$s1,$s2,$s3,$s0);
+		    &encstep(2,$tbl,$s2,$s3,$s0,$s1);
+		    &encstep(3,$tbl,$s3,$s0,$s1,$s2);
 		}
 		&add	($key,16);		# advance rd_key
 		&xor	($s0,&DWP(0,$key));
@@ -407,15 +788,15 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 	    &cmp	($acc,12);
 	    &jle	(&label("12rounds"));
 
-	&set_label("14rounds");
-	    for ($i=2;$i<4;$i++) {
+	&set_label("14rounds",4);
+	    for ($i=1;$i<3;$i++) {
 		if ($vertical_spin) {
-		    &encvert("ebp",$s0,$s1,$s2,$s3);
+		    &encvert($tbl,$s0,$s1,$s2,$s3);
 		} else {
-		    &encstep(0,"ebp",$s0,$s1,$s2,$s3);
-		    &encstep(1,"ebp",$s1,$s2,$s3,$s0);
-		    &encstep(2,"ebp",$s2,$s3,$s0,$s1);
-		    &encstep(3,"ebp",$s3,$s0,$s1,$s2);
+		    &encstep(0,$tbl,$s0,$s1,$s2,$s3);
+		    &encstep(1,$tbl,$s1,$s2,$s3,$s0);
+		    &encstep(2,$tbl,$s2,$s3,$s0,$s1);
+		    &encstep(3,$tbl,$s3,$s0,$s1,$s2);
 		}
 		&xor	($s0,&DWP(16*$i+0,$key));
 		&xor	($s1,&DWP(16*$i+4,$key));
@@ -424,15 +805,15 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 	    }
 	    &add	($key,32);
 	    &mov	(&DWP(20,"esp"),$key);	# advance rd_key
-	&set_label("12rounds");
-	    for ($i=2;$i<4;$i++) {
+	&set_label("12rounds",4);
+	    for ($i=1;$i<3;$i++) {
 		if ($vertical_spin) {
-		    &encvert("ebp",$s0,$s1,$s2,$s3);
+		    &encvert($tbl,$s0,$s1,$s2,$s3);
 		} else {
-		    &encstep(0,"ebp",$s0,$s1,$s2,$s3);
-		    &encstep(1,"ebp",$s1,$s2,$s3,$s0);
-		    &encstep(2,"ebp",$s2,$s3,$s0,$s1);
-		    &encstep(3,"ebp",$s3,$s0,$s1,$s2);
+		    &encstep(0,$tbl,$s0,$s1,$s2,$s3);
+		    &encstep(1,$tbl,$s1,$s2,$s3,$s0);
+		    &encstep(2,$tbl,$s2,$s3,$s0,$s1);
+		    &encstep(3,$tbl,$s3,$s0,$s1,$s2);
 		}
 		&xor	($s0,&DWP(16*$i+0,$key));
 		&xor	($s1,&DWP(16*$i+4,$key));
@@ -441,15 +822,15 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 	    }
 	    &add	($key,32);
 	    &mov	(&DWP(20,"esp"),$key);	# advance rd_key
-	&set_label("10rounds");
-	    for ($i=2;$i<10;$i++) {
+	&set_label("10rounds",4);
+	    for ($i=1;$i<10;$i++) {
 		if ($vertical_spin) {
-		    &encvert("ebp",$s0,$s1,$s2,$s3);
+		    &encvert($tbl,$s0,$s1,$s2,$s3);
 		} else {
-		    &encstep(0,"ebp",$s0,$s1,$s2,$s3);
-		    &encstep(1,"ebp",$s1,$s2,$s3,$s0);
-		    &encstep(2,"ebp",$s2,$s3,$s0,$s1);
-		    &encstep(3,"ebp",$s3,$s0,$s1,$s2);
+		    &encstep(0,$tbl,$s0,$s1,$s2,$s3);
+		    &encstep(1,$tbl,$s1,$s2,$s3,$s0);
+		    &encstep(2,$tbl,$s2,$s3,$s0,$s1);
+		    &encstep(3,$tbl,$s3,$s0,$s1,$s2);
 		}
 		&xor	($s0,&DWP(16*$i+0,$key));
 		&xor	($s1,&DWP(16*$i+4,$key));
@@ -463,10 +844,10 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 	    &mov	($s1="ebx",$key="edi");
 	    &mov	($s2="ecx",$acc="esi");
 	}
-	&enclast(0,"ebp",$s0,$s1,$s2,$s3);
-	&enclast(1,"ebp",$s1,$s2,$s3,$s0);
-	&enclast(2,"ebp",$s2,$s3,$s0,$s1);
-	&enclast(3,"ebp",$s3,$s0,$s1,$s2);
+	&enclast(0,$tbl,$s0,$s1,$s2,$s3);
+	&enclast(1,$tbl,$s1,$s2,$s3,$s0);
+	&enclast(2,$tbl,$s2,$s3,$s0,$s1);
+	&enclast(3,$tbl,$s3,$s0,$s1,$s2);
 
 	&add	($key,$small_footprint?16:160);
 	&xor	($s0,&DWP(0,$key));
@@ -476,7 +857,7 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 
 	&ret	();
 
-&set_label("AES_Te",64);	# Yes! I keep it in the code segment!
+&set_label("AES_Te",1024);	# Yes! I keep it in the code segment!
 	&_data_word(0xa56363c6, 0x847c7cf8, 0x997777ee, 0x8d7b7bf6);
 	&_data_word(0x0df2f2ff, 0xbd6b6bd6, 0xb16f6fde, 0x54c5c591);
 	&_data_word(0x50303060, 0x03010102, 0xa96767ce, 0x7d2b2b56);
@@ -541,7 +922,107 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 	&_data_word(0xdabfbf65, 0x31e6e6d7, 0xc6424284, 0xb86868d0);
 	&_data_word(0xc3414182, 0xb0999929, 0x772d2d5a, 0x110f0f1e);
 	&_data_word(0xcbb0b07b, 0xfc5454a8, 0xd6bbbb6d, 0x3a16162c);
-#Te4
+
+#Te4	# four copies of Te4 to choose from to avoid L1 aliasing
+	&data_byte(0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5);
+	&data_byte(0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76);
+	&data_byte(0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0);
+	&data_byte(0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0);
+	&data_byte(0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc);
+	&data_byte(0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15);
+	&data_byte(0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a);
+	&data_byte(0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75);
+	&data_byte(0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0);
+	&data_byte(0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84);
+	&data_byte(0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b);
+	&data_byte(0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf);
+	&data_byte(0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85);
+	&data_byte(0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8);
+	&data_byte(0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5);
+	&data_byte(0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2);
+	&data_byte(0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17);
+	&data_byte(0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73);
+	&data_byte(0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88);
+	&data_byte(0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb);
+	&data_byte(0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c);
+	&data_byte(0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79);
+	&data_byte(0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9);
+	&data_byte(0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08);
+	&data_byte(0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6);
+	&data_byte(0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a);
+	&data_byte(0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e);
+	&data_byte(0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e);
+	&data_byte(0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94);
+	&data_byte(0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf);
+	&data_byte(0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68);
+	&data_byte(0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16);
+
+	&data_byte(0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5);
+	&data_byte(0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76);
+	&data_byte(0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0);
+	&data_byte(0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0);
+	&data_byte(0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc);
+	&data_byte(0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15);
+	&data_byte(0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a);
+	&data_byte(0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75);
+	&data_byte(0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0);
+	&data_byte(0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84);
+	&data_byte(0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b);
+	&data_byte(0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf);
+	&data_byte(0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85);
+	&data_byte(0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8);
+	&data_byte(0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5);
+	&data_byte(0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2);
+	&data_byte(0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17);
+	&data_byte(0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73);
+	&data_byte(0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88);
+	&data_byte(0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb);
+	&data_byte(0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c);
+	&data_byte(0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79);
+	&data_byte(0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9);
+	&data_byte(0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08);
+	&data_byte(0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6);
+	&data_byte(0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a);
+	&data_byte(0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e);
+	&data_byte(0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e);
+	&data_byte(0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94);
+	&data_byte(0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf);
+	&data_byte(0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68);
+	&data_byte(0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16);
+
+	&data_byte(0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5);
+	&data_byte(0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76);
+	&data_byte(0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0);
+	&data_byte(0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0);
+	&data_byte(0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc);
+	&data_byte(0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15);
+	&data_byte(0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a);
+	&data_byte(0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75);
+	&data_byte(0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0);
+	&data_byte(0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84);
+	&data_byte(0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b);
+	&data_byte(0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf);
+	&data_byte(0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85);
+	&data_byte(0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8);
+	&data_byte(0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5);
+	&data_byte(0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2);
+	&data_byte(0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17);
+	&data_byte(0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73);
+	&data_byte(0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88);
+	&data_byte(0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb);
+	&data_byte(0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c);
+	&data_byte(0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79);
+	&data_byte(0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9);
+	&data_byte(0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08);
+	&data_byte(0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6);
+	&data_byte(0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a);
+	&data_byte(0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e);
+	&data_byte(0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e);
+	&data_byte(0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94);
+	&data_byte(0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf);
+	&data_byte(0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68);
+	&data_byte(0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16);
+
 	&data_byte(0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5);
 	&data_byte(0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76);
 	&data_byte(0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0);
@@ -588,34 +1069,421 @@ sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 
 	&mov	($s0,"esp");
 	&sub	("esp",36);
-	&and	("esp",-64);
-	&add	("esp",4);
-	&mov	(&DWP(28,"esp"),$s0);
+	&and	("esp",-64);			# align to cache-line
+
+	# place stack frame just "above" the key schedule
+	&lea	($s1,&DWP(-64-63,$key));
+	&sub	($s1,"esp");
+	&neg	($s1);
+	&and	($s1,0x3C0);	# modulo 1024, but aligned to cache-line
+	&sub	("esp",$s1);
+	&add	("esp",4);	# 4 is reserved for caller's return address
+	&mov	(&DWP(28,"esp"),$s0);		# save stack pointer
 
 	&call   (&label("pic_point"));          # make it PIC!
 	&set_label("pic_point");
-	&blindpop("ebp");
-	&lea    ("ebp",&DWP(&label("AES_Te")."-".&label("pic_point"),"ebp"));
+	&blindpop($tbl);
+	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point"));
+	&lea    ($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
+	# pick Te4 copy which can't "overlap" with stack frame or key schedule
+	&lea	($s1,&DWP(768,"esp"));
+	&and	($s1,0x300);
+	&lea	($tbl,&DWP(2048+128,$tbl,$s1));
 
+	&bt	(&DWP(0,$s0),23);		# check for MMX bit
+	&jc	(&label("mmx"));
+
+	&mov	(&DWP(24,"esp"),$tbl);
 	&mov	($s0,&DWP(0,$acc));		# load input data
 	&mov	($s1,&DWP(4,$acc));
 	&mov	($s2,&DWP(8,$acc));
 	&mov	($s3,&DWP(12,$acc));
-
-	&mov	(&DWP(24,"esp"),"ebp");
-
-	&call	("_x86_AES_encrypt");
-
-	&mov	("esp",&DWP(28,"esp"));
-
+	&call	("_x86_AES_encrypt_compact");
+	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
 	&mov	($acc,&wparam(1));		# load out
 	&mov	(&DWP(0,$acc),$s0);		# write output data
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
+	&jmp	(&label("ret"));
+
+	&set_label("mmx",16);
+	&movq	("mm0",&QWP(0,$acc));
+	&movq	("mm4",&QWP(8,$acc));
+	&call	("_mmx_AES_encrypt_compact");
+	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
+	&mov	($acc,&wparam(1));		# load out
+	&movq	(&QWP(0,$acc),"mm0");		# write output data
+	&movq	(&QWP(8,$acc),"mm4");
+	&emms	();
+
+&set_label("ret",4);
 &function_end("AES_encrypt");
 
-#------------------------------------------------------------------#
+#--------------------------------------------------------------------#
+
+######################################################################
+# "Compact" block function
+######################################################################
+
+sub deccompact()
+{ my $Fn = mov;
+  while ($#_>5) { pop(@_); $Fn=sub{}; }
+  my ($i,$td,@s)=@_;
+  my $tmp = $key;
+  my $out = $i==3?$s[0]:$acc;
+
+	# $Fn is used in first compact round and its purpose is to
+	# void restoration of some values from stack, so that after
+	# 4xdeccompact with extra argument $key, $s0 and $s1 values
+	# are left there...
+	if($i==3)   {	&$Fn	($key,&DWP(20,"esp"));		}
+	else        {	&mov	($out,$s[0]);			}
+			&and	($out,0xFF);
+			&movz	($out,&DWP(-128,$td,$out,1));
+
+	if ($i==3)  {	$tmp=$s[1];				}
+			&movz	($tmp,&HB($s[1]));
+			&movz	($tmp,&DWP(-128,$td,$tmp,1));
+			&shl	($tmp,8);
+			&xor	($out,$tmp);
+
+	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],$acc);		}
+	else        {	mov	($tmp,$s[2]);			}
+			&shr	($tmp,16);
+			&and	($tmp,0xFF);
+			&movz	($tmp,&DWP(-128,$td,$tmp,1));
+			&shl	($tmp,16);
+			&xor	($out,$tmp);
+
+	if ($i==3)  {	$tmp=$s[3]; &$Fn ($s[2],&DWP(8,"esp"));	}
+	else        {	&mov	($tmp,$s[3]);			}
+			&shr	($tmp,24);
+			&movz	($tmp,&DWP(-128,$td,$tmp,1));
+			&shl	($tmp,24);
+			&xor	($out,$tmp);
+	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
+	if ($i==3)  {	&$Fn	($s[3],&DWP(4,"esp"));		}
+}
+
+# must be called with 2,3,0,1 as argument sequence!!!
+sub dectransform()
+{ my @s = ($s0,$s1,$s2,$s3);
+  my $i = shift;
+  my $tmp = $key;
+  my $tp2 = @s[($i+2)%4]; $tp2 = @s[2] if ($i==1);
+  my $tp4 = @s[($i+3)%4]; $tp4 = @s[3] if ($i==1);
+  my $tp8 = $tbl;
+
+	&mov	($acc,$s[$i]);
+	&and	($acc,0x80808080);
+	&mov	($tmp,$acc);
+	&mov	($tp2,$s[$i]);
+	&shr	($tmp,7);
+	&and	($tp2,0x7f7f7f7f);
+	&sub	($acc,$tmp);
+	&add	($tp2,$tp2);
+	&and	($acc,0x1b1b1b1b);
+	&xor	($acc,$tp2);
+	&mov	($tp2,$acc);
+
+	&and	($acc,0x80808080);
+	&mov	($tmp,$acc);
+	&mov	($tp4,$tp2);
+	 &xor	($tp2,$s[$i]);	# tp2^tp1
+	&shr	($tmp,7);
+	&and	($tp4,0x7f7f7f7f);
+	&sub	($acc,$tmp);
+	&add	($tp4,$tp4);
+	&and	($acc,0x1b1b1b1b);
+	&xor	($acc,$tp4);
+	&mov	($tp4,$acc);
+
+	&and	($acc,0x80808080);
+	&mov	($tmp,$acc);
+	&mov	($tp8,$tp4);
+	 &xor	($tp4,$s[$i]);	# tp4^tp1
+	&shr	($tmp,7);
+	&and	($tp8,0x7f7f7f7f);
+	&sub	($acc,$tmp);
+	&add	($tp8,$tp8);
+	&and	($acc,0x1b1b1b1b);
+	 &rotl	($s[$i],8);	# = ROTATE(tp1,8)
+	&xor	($tp8,$acc);
+
+	&xor	($s[$i],$tp2);
+	&xor	($tp2,$tp8);
+	&xor	($s[$i],$tp4);
+	&rotl	($tp2,24);
+	&xor	($tp4,$tp8);
+	&xor	($s[$i],$tp8);	# ^= tp8^(tp4^tp1)^(tp2^tp1)
+	&rotl	($tp4,16);
+	&xor	($s[$i],$tp2);	# ^= ROTATE(tp8^tp2^tp1,24)
+	&rotl	($tp8,8);
+	&xor	($s[$i],$tp4);	# ^= ROTATE(tp8^tp4^tp1,16)
+	&xor	($s[$i],$tp8);	# ^= ROTATE(tp8,8)
+
+	&mov	($s[0],&DWP(4,"esp"))		if($i==2); #prefetch $s0
+	&mov	($s[1],&DWP(8,"esp"))		if($i==3); #prefetch $s1
+	&mov	($s[2],&DWP(12,"esp"))		if($i==1);
+	&mov	($s[3],&DWP(16,"esp"))		if($i==1);
+	&mov	(&DWP(4+4*$i,"esp"),$s[$i])	if($i>=2);
+}
+
+&public_label("AES_Td");
+&function_begin_B("_x86_AES_decrypt_compact");
+	# note that caller is expected to allocate stack frame for me!
+	&mov	(&DWP(20,"esp"),$key);		# save key
+
+	&xor	($s0,&DWP(0,$key));		# xor with key
+	&xor	($s1,&DWP(4,$key));
+	&xor	($s2,&DWP(8,$key));
+	&xor	($s3,&DWP(12,$key));
+
+	&mov	($acc,&DWP(240,$key));		# load key->rounds
+
+	&lea	($acc,&DWP(-2,$acc,$acc));
+	&lea	($acc,&DWP(0,$key,$acc,8));
+	&mov	(&DWP(24,"esp"),$acc);		# end of key schedule
+
+	# prefetch Td4
+	&mov	($key,&DWP(0-128,$tbl));
+	&mov	($acc,&DWP(32-128,$tbl));
+	&mov	($key,&DWP(64-128,$tbl));
+	&mov	($acc,&DWP(96-128,$tbl));
+	&mov	($key,&DWP(128-128,$tbl));
+	&mov	($acc,&DWP(160-128,$tbl));
+	&mov	($key,&DWP(192-128,$tbl));
+	&mov	($acc,&DWP(224-128,$tbl));
+
+	&set_label("loop",16);
+
+		&deccompact(0,$tbl,$s0,$s3,$s2,$s1,1);
+		&deccompact(1,$tbl,$s1,$s0,$s3,$s2,1);
+		&deccompact(2,$tbl,$s2,$s1,$s0,$s3,1);
+		&deccompact(3,$tbl,$s3,$s2,$s1,$s0,1);
+		&dectransform(2);
+		&dectransform(3);
+		&dectransform(0);
+		&dectransform(1);
+		&mov 	($key,&DWP(20,"esp"));
+		&mov	($tbl,&DWP(28,"esp"));
+		&add	($key,16);		# advance rd_key
+		&xor	($s0,&DWP(0,$key));
+		&xor	($s1,&DWP(4,$key));
+		&xor	($s2,&DWP(8,$key));
+		&xor	($s3,&DWP(12,$key));
+
+	&cmp	($key,&DWP(24,"esp"));
+	&mov	(&DWP(20,"esp"),$key);
+	&jb	(&label("loop"));
+
+	&deccompact(0,$tbl,$s0,$s3,$s2,$s1);
+	&deccompact(1,$tbl,$s1,$s0,$s3,$s2);
+	&deccompact(2,$tbl,$s2,$s1,$s0,$s3);
+	&deccompact(3,$tbl,$s3,$s2,$s1,$s0);
+
+	&xor	($s0,&DWP(16,$key));
+	&xor	($s1,&DWP(20,$key));
+	&xor	($s2,&DWP(24,$key));
+	&xor	($s3,&DWP(28,$key));
+
+	&ret	();
+&function_end_B("_x86_AES_decrypt_compact");
+
+######################################################################
+# "Compact" MMX block function.
+######################################################################
+
+sub mmx_deccompact()
+{
+	&pshufw	("mm1","mm0",0x0c);		#  7, 6, 1, 0
+	&movd	("eax","mm1");			#  7, 6, 1, 0
+
+	&pshufw	("mm5","mm4",0x09);		# 13,12,11,10
+	&movz	("esi",&LB("eax"));		#  0
+	&movz	("ecx",&DWP(-128,$tbl,"esi",1));#  0
+	&movd	("ebx","mm5");			# 13,12,11,10
+	&movz	("edx",&HB("eax"));		#  1
+	&movz	("edx",&DWP(-128,$tbl,"edx",1));#  1
+	&shl	("edx",8);			#  1
+
+	&pshufw	("mm2","mm0",0x06);		#  3, 2, 5, 4
+	&movz	("esi",&LB("ebx"));		# 10
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 10
+	&shl	("esi",16);			# 10
+	&or	("ecx","esi");			# 10
+	&shr	("eax",16);			#  7, 6
+	&movz	("esi",&HB("ebx"));		# 11
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 11
+	&shl	("esi",24);			# 11
+	&or	("edx","esi");			# 11
+	&shr	("ebx",16);			# 13,12
+
+	&pshufw	("mm6","mm4",0x03);		# 9, 8,15,14
+	&movz	("esi",&HB("eax"));		#  7
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  7
+	&shl	("esi",24);			#  7
+	&or	("ecx","esi");			#  7
+	&movz	("esi",&HB("ebx"));		# 13
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 13
+	&shl	("esi",8);			# 13
+	&or	("ecx","esi");			# 13
+	&movd	("mm0","ecx");			# t[0] collected
+
+	&movz	("esi",&LB("eax"));		#  6
+	&movd	("eax","mm2");			#  3, 2, 5, 4
+	&movz	("ecx",&DWP(-128,$tbl,"esi",1));#  6
+	&shl	("ecx",16);			#  6
+	&movz	("esi",&LB("ebx"));		# 12
+	&movd	("ebx","mm6");			#  9, 8,15,14
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 12
+	&or	("ecx","esi");			# 12
+
+	&movz	("esi",&LB("eax"));		#  4
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  4
+	&or	("edx","esi");			#  4
+	&movz	("esi",&LB("ebx"));		# 14
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 14
+	&shl	("esi",16);			# 14
+	&or	("edx","esi");			# 14
+	&movd	("mm1","edx");			# t[1] collected
+
+	&movz	("esi",&HB("eax"));		#  5
+	&movz	("edx",&DWP(-128,$tbl,"esi",1));#  5
+	&shl	("edx",8);			#  5
+	&movz	("esi",&HB("ebx"));		# 15
+	&shr	("eax",16);			#  3, 2
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 15
+	&shl	("esi",24);			# 15
+	&or	("edx","esi");			# 15
+	&shr	("ebx",16);			#  9, 8
+
+	&punpckldq	("mm0","mm1");		# t[0,1] collected
+
+	&movz	("esi",&HB("ebx"));		#  9
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  9
+	&shl	("esi",8);			#  9
+	&or	("ecx","esi");			#  9
+	&and	("ebx",0xff);			#  8
+	&movz	("ebx",&DWP(-128,$tbl,"ebx",1));#  8
+	&or	("edx","ebx");			#  8
+	&movz	("esi",&LB("eax"));		#  2
+	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  2
+	&shl	("esi",16);			#  2
+	&or	("edx","esi");			#  2
+	&movd	("mm4","edx");			# t[2] collected
+	&movz	("eax",&HB("eax"));		#  3
+	&movz	("eax",&DWP(-128,$tbl,"eax",1));#  3
+	&shl	("eax",24);			#  3
+	&or	("ecx","eax");			#  3
+	&movd	("mm5","ecx");			# t[3] collected
+
+	&punpckldq	("mm4","mm5");		# t[2,3] collected
+}
+
+&public_label("AES_Td");
+&function_begin_B("_mmx_AES_decrypt_compact");
+	&pxor	("mm0",&QWP(0,$key));	#  7, 6, 5, 4, 3, 2, 1, 0
+	&pxor	("mm4",&QWP(8,$key));	# 15,14,13,12,11,10, 9, 8
+
+	# note that caller is expected to allocate stack frame for me!
+	&mov	($acc,&DWP(240,$key));		# load key->rounds
+	&lea	($acc,&DWP(-2,$acc,$acc));
+	&lea	($acc,&DWP(0,$key,$acc,8));
+	&mov	(&DWP(24,"esp"),$acc);		# end of key schedule
+
+	&mov	($s0,0x1b1b1b1b);		# magic constant
+	&mov	(&DWP(8,"esp"),$s0);
+	&mov	(&DWP(12,"esp"),$s0);
+
+	# prefetch Td4
+	&mov	($s0,&DWP(0-128,$tbl));
+	&mov	($s1,&DWP(32-128,$tbl));
+	&mov	($s2,&DWP(64-128,$tbl));
+	&mov	($s3,&DWP(96-128,$tbl));
+	&mov	($s0,&DWP(128-128,$tbl));
+	&mov	($s1,&DWP(160-128,$tbl));
+	&mov	($s2,&DWP(192-128,$tbl));
+	&mov	($s3,&DWP(224-128,$tbl));
+
+	&align	(4);
+	&set_label("loop",16);
+		&mmx_deccompact();
+		&add	($key,16);
+		&cmp	($key,&DWP(24,"esp"));
+		&ja	(&label("out"));
+
+		# ROTATE(x^y,N) == ROTATE(x,N)^ROTATE(y,N)
+		&movq	("mm3","mm0");		&movq	("mm7","mm4");
+		&movq	("mm2","mm0",1);	&movq	("mm6","mm4",1);
+		&movq	("mm1","mm0");		&movq	("mm5","mm4");
+		&pshufw	("mm0","mm0",0xb1);	&pshufw	("mm4","mm4",0xb1);# = ROTATE(tp0,16)
+		&pslld	("mm2",8);		&pslld	("mm6",8);
+		&psrld	("mm3",8);		&psrld	("mm7",8);
+		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");	# ^= tp0<<8
+		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= tp0>>8
+		&pslld	("mm2",16);		&pslld	("mm6",16);
+		&psrld	("mm3",16);		&psrld	("mm7",16);
+		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");	# ^= tp0<<24
+		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= tp0>>24
+
+		&movq	("mm3",&QWP(8,"esp"));
+		&pxor	("mm2","mm2");		&pxor	("mm6","mm6");
+		&pcmpgtb("mm2","mm1");		&pcmpgtb("mm6","mm5");
+		&pand	("mm2","mm3");		&pand	("mm6","mm3");
+		&paddb	("mm1","mm1");		&paddb	("mm5","mm5");
+		&pxor	("mm1","mm2");		&pxor	("mm5","mm6");	# tp2
+		&movq	("mm3","mm1");		&movq	("mm7","mm5");
+		&movq	("mm2","mm1");		&movq	("mm6","mm5");
+		&pxor	("mm0","mm1");		&pxor	("mm4","mm5");	# ^= tp2
+		&pslld	("mm3",24);		&pslld	("mm7",24);
+		&psrld	("mm2",8);		&psrld	("mm6",8);
+		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= tp2<<24
+		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");	# ^= tp2>>8
+
+		&movq	("mm2",&QWP(8,"esp"));
+		&pxor	("mm3","mm3");		&pxor	("mm7","mm7");
+		&pcmpgtb("mm3","mm1");		&pcmpgtb("mm7","mm5");
+		&pand	("mm3","mm2");		&pand	("mm7","mm2");
+		&paddb	("mm1","mm1");		&paddb	("mm5","mm5");
+		&pxor	("mm1","mm3");		&pxor	("mm5","mm7");	# tp4
+		&pshufw	("mm3","mm1",0xb1);	&pshufw	("mm7","mm5",0xb1);
+		&pxor	("mm0","mm1");		&pxor	("mm4","mm5");	# ^= tp4
+		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= ROTATE(tp4,16)	
+
+		&pxor	("mm3","mm3");		&pxor	("mm7","mm7");
+		&pcmpgtb("mm3","mm1");		&pcmpgtb("mm7","mm5");
+		&pand	("mm3","mm2");		&pand	("mm7","mm2");
+		&paddb	("mm1","mm1");		&paddb	("mm5","mm5");
+		&pxor	("mm1","mm3");		&pxor	("mm5","mm7");	# tp8
+		&pxor	("mm0","mm1");		&pxor	("mm4","mm5");	# ^= tp8
+		&movq	("mm3","mm1");		&movq	("mm7","mm5");
+		&pshufw	("mm2","mm1",0xb1);	&pshufw	("mm6","mm5",0xb1);
+		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");	# ^= ROTATE(tp8,16)
+		&pslld	("mm1",8);		&pslld	("mm5",8);
+		&psrld	("mm3",8);		&psrld	("mm7",8);
+		&movq	("mm2",&QWP(0,$key));	&movq	("mm6",&DWP(8,$key));
+		&pxor	("mm0","mm1");		&pxor	("mm4","mm5");	# ^= tp8<<8
+		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= tp8>>8
+		&pslld	("mm1",16);		&pslld	("mm5",16);
+		&psrld	("mm3",16);		&psrld	("mm7",16);
+		&pxor	("mm0","mm1");		&pxor	("mm4","mm5");	# ^= tp8<<24
+		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= tp8>>24
+
+		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");
+	&jmp	(&label("loop"));
+
+	&set_label("out",16);
+	&pxor	("mm0",&QWP(0,$key));
+	&pxor	("mm4",&QWP(8,$key));
+
+	&ret	();
+&function_end_B("_mmx_AES_decrypt_compact");
+
+######################################################################
+# Vanilla block function.
+######################################################################
 
 sub decstep()
 { my ($i,$td,@s) = @_;
@@ -651,30 +1519,21 @@ sub decstep()
 }
 
 sub declast()
-{ my $Fn = mov;
-  while ($#_>5) { pop(@_); $Fn=sub{}; }
-  my ($i,$td,@s)=@_;
+{ my ($i,$td,@s)=@_;
   my $tmp = $key;
   my $out = $i==3?$s[0]:$acc;
 
-	if ($i==0)	# prefetch 256-byte Td4
-	{   &lea	($td,&DWP(2048+128,$td));
-	    &mov	($tmp,&DWP(0-128,$td));
-	    &mov	($acc,&DWP(32-128,$td));
-	    &mov	($tmp,&DWP(64-128,$td));
-	    &mov	($acc,&DWP(96-128,$td));
-	    &mov	($tmp,&DWP(128-128,$td));
-	    &mov	($acc,&DWP(160-128,$td));
-	    &mov	($tmp,&DWP(192-128,$td));
-	    &mov	($acc,&DWP(224-128,$td));
-	    &lea	($td,&DWP(-128,$td));
-	}
-
-	# $Fn is used in first compact round and its purpose is to
-	# void restoration of some values from stack, so that after
-	# 4xenclast with extra argument $key, $s0 and $s1 values
-	# are left there...
-	if($i==3)   {	&$Fn	($key,&DWP(20,"esp"));		}
+	if($i==0)   {	&lea	($td,&DWP(2048+128,$td));
+			&mov	($tmp,&DWP(0-128,$td));
+			&mov	($acc,&DWP(32-128,$td));
+			&mov	($tmp,&DWP(64-128,$td));
+			&mov	($acc,&DWP(96-128,$td));
+			&mov	($tmp,&DWP(128-128,$td));
+			&mov	($acc,&DWP(160-128,$td));
+			&mov	($tmp,&DWP(192-128,$td));
+			&mov	($acc,&DWP(224-128,$td));
+			&lea	($td,&DWP(-128,$td));		}
+	if($i==3)   {	&mov	($key,&DWP(20,"esp"));		}
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
 			&movz	($out,&DWP(0,$td,$out,1));
@@ -693,75 +1552,15 @@ sub declast()
 			&shl	($tmp,16);
 			&xor	($out,$tmp);
 
-	if ($i==3)  {	$tmp=$s[3]; &$Fn ($s[2],&DWP(8,"esp"));	}
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}
 	else        {	&mov	($tmp,$s[3]);			}
 			&shr	($tmp,24);
 			&movz	($tmp,&DWP(0,$td,$tmp,1));
 			&shl	($tmp,24);
 			&xor	($out,$tmp);
 	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
-	if ($i==3)  {	&$Fn	($s[3],&DWP(4,"esp"));
+	if ($i==3)  {	&mov	($s[3],&DWP(4,"esp"));
 			&lea	($td,&DWP(-2048,$td));		}
-}
-
-# must be called with 2,3,0,1 as argument sequence!!!
-sub dectransform()
-{ my @s = ($s0,$s1,$s2,$s3);
-  my $i = shift;
-  my $tmp = $key;
-  my $tp2 = @s[($i+2)%4]; $tp2 = @s[2] if ($i==1);
-  my $tp4 = @s[($i+3)%4]; $tp4 = @s[3] if ($i==1);
-  my $tp8 = "ebp";
-
-	&mov	($acc,$s[$i]);
-	&and	($acc,0x80808080);
-	&mov	($tmp,$acc);
-	&mov	($tp2,$s[$i]);
-	&shr	($tmp,7);
-	&and	($tp2,0x7f7f7f7f);
-	&sub	($acc,$tmp);
-	&lea	($tp2,&DWP(0,$tp2,$tp2));
-	&and	($acc,0x1b1b1b1b);
-	&xor	($acc,$tp2);
-	&mov	($tp2,$acc);
-
-	&and	($acc,0x80808080);
-	&mov	($tmp,$acc);
-	&mov	($tp4,$tp2);
-	&shr	($tmp,7);
-	&and	($tp4,0x7f7f7f7f);
-	&sub	($acc,$tmp);
-	&lea	($tp4,&DWP(0,$tp4,$tp4));
-	&and	($acc,0x1b1b1b1b);
-	&xor	($acc,$tp4);
-	&mov	($tp4,$acc);
-
-	&and	($acc,0x80808080);
-	&mov	($tmp,$acc);
-	&mov	($tp8,$tp4);
-	&shr	($tmp,7);
-	&and	($tp8,0x7f7f7f7f);
-	&sub	($acc,$tmp);
-	&lea	($tp8,&DWP(0,$tp8,$tp8));
-	&and	($acc,0x1b1b1b1b);
-	&xor	($tp8,$acc);
-
-	&exch	($s[$i],$tp8);
-	&xor	($tp8,$s[$i]);	# tp8 ^ tp1
-	&xor	($s[$i],$tp4);
-	&xor	($s[$i],$tp2);	# tp8 ^ tp4 ^ tp2
-	&xor	($tp4,$tp8);
-	&xor	($tp2,$tp8);
-	&rotl	($tp4,16);
-	&xor	($s[$i],$tp4);
-	&rotl	($tp2,24);
-	&xor	($s[$i],$tp2);
-	&rotl	($tp8,8);
-	&xor	($s[$i],$tp8);
-
-	&mov	($s[0],&DWP(4,"esp"))		if($i==2); #prefetch $s0
-	&mov	($s[1],&DWP(8,"esp"))		if($i==3); #prefetch $s1
-	&mov	(&DWP(4+4*$i,"esp"),$s[$i])	if($i>=2);
 }
 
 &public_label("AES_Td");
@@ -774,38 +1573,17 @@ sub dectransform()
 	&xor	($s2,&DWP(8,$key));
 	&xor	($s3,&DWP(12,$key));
 
-	# not really last round, just "compact" one...
-	&declast(0,"ebp",$s0,$s3,$s2,$s1,1);
-	&declast(1,"ebp",$s1,$s0,$s3,$s2,1);
-	&declast(2,"ebp",$s2,$s1,$s0,$s3,1);
-	&declast(3,"ebp",$s3,$s2,$s1,$s0,1);
-	&dectransform(2);
-	&dectransform(3);
-	&dectransform(0);
-	&dectransform(1);
-	&mov 	($key,&DWP(20,"esp"));
-	&mov	($s2,&DWP(12,"esp"));
-	&mov	($s3,&DWP(16,"esp"));
-	&mov	("ebp",&DWP(28,"esp"));
-	&xor	($s0,&DWP(16,$key));
-	&xor	($s1,&DWP(20,$key));
-	&xor	($s2,&DWP(24,$key));
-	&xor	($s3,&DWP(28,$key));
-
 	&mov	($acc,&DWP(240,$key));		# load key->rounds
 
 	if ($small_footprint) {
 	    &lea	($acc,&DWP(-2,$acc,$acc));
 	    &lea	($acc,&DWP(0,$key,$acc,8));
-	    &add	($key,16);
-	    &mov	(&DWP(20,"esp"),$key);
 	    &mov	(&DWP(24,"esp"),$acc);	# end of key schedule
-	    &align	(4);
-	    &set_label("loop");
-		&decstep(0,"ebp",$s0,$s3,$s2,$s1);
-		&decstep(1,"ebp",$s1,$s0,$s3,$s2);
-		&decstep(2,"ebp",$s2,$s1,$s0,$s3);
-		&decstep(3,"ebp",$s3,$s2,$s1,$s0);
+	    &set_label("loop",16);
+		&decstep(0,$tbl,$s0,$s3,$s2,$s1);
+		&decstep(1,$tbl,$s1,$s0,$s3,$s2);
+		&decstep(2,$tbl,$s2,$s1,$s0,$s3);
+		&decstep(3,$tbl,$s3,$s2,$s1,$s0);
 		&add	($key,16);		# advance rd_key
 		&xor	($s0,&DWP(0,$key));
 		&xor	($s1,&DWP(4,$key));
@@ -821,12 +1599,12 @@ sub dectransform()
 	    &cmp	($acc,12);
 	    &jle	(&label("12rounds"));
 
-	&set_label("14rounds");
-	    for ($i=2;$i<4;$i++) {
-		&decstep(0,"ebp",$s0,$s3,$s2,$s1);
-		&decstep(1,"ebp",$s1,$s0,$s3,$s2);
-		&decstep(2,"ebp",$s2,$s1,$s0,$s3);
-		&decstep(3,"ebp",$s3,$s2,$s1,$s0);
+	&set_label("14rounds",4);
+	    for ($i=1;$i<3;$i++) {
+		&decstep(0,$tbl,$s0,$s3,$s2,$s1);
+		&decstep(1,$tbl,$s1,$s0,$s3,$s2);
+		&decstep(2,$tbl,$s2,$s1,$s0,$s3);
+		&decstep(3,$tbl,$s3,$s2,$s1,$s0);
 		&xor	($s0,&DWP(16*$i+0,$key));
 		&xor	($s1,&DWP(16*$i+4,$key));
 		&xor	($s2,&DWP(16*$i+8,$key));
@@ -834,12 +1612,12 @@ sub dectransform()
 	    }
 	    &add	($key,32);
 	    &mov	(&DWP(20,"esp"),$key);	# advance rd_key
-	&set_label("12rounds");
-	    for ($i=2;$i<4;$i++) {
-		&decstep(0,"ebp",$s0,$s3,$s2,$s1);
-		&decstep(1,"ebp",$s1,$s0,$s3,$s2);
-		&decstep(2,"ebp",$s2,$s1,$s0,$s3);
-		&decstep(3,"ebp",$s3,$s2,$s1,$s0);
+	&set_label("12rounds",4);
+	    for ($i=1;$i<3;$i++) {
+		&decstep(0,$tbl,$s0,$s3,$s2,$s1);
+		&decstep(1,$tbl,$s1,$s0,$s3,$s2);
+		&decstep(2,$tbl,$s2,$s1,$s0,$s3);
+		&decstep(3,$tbl,$s3,$s2,$s1,$s0);
 		&xor	($s0,&DWP(16*$i+0,$key));
 		&xor	($s1,&DWP(16*$i+4,$key));
 		&xor	($s2,&DWP(16*$i+8,$key));
@@ -847,12 +1625,12 @@ sub dectransform()
 	    }
 	    &add	($key,32);
 	    &mov	(&DWP(20,"esp"),$key);	# advance rd_key
-	&set_label("10rounds");
-	    for ($i=2;$i<10;$i++) {
-		&decstep(0,"ebp",$s0,$s3,$s2,$s1);
-		&decstep(1,"ebp",$s1,$s0,$s3,$s2);
-		&decstep(2,"ebp",$s2,$s1,$s0,$s3);
-		&decstep(3,"ebp",$s3,$s2,$s1,$s0);
+	&set_label("10rounds",4);
+	    for ($i=1;$i<10;$i++) {
+		&decstep(0,$tbl,$s0,$s3,$s2,$s1);
+		&decstep(1,$tbl,$s1,$s0,$s3,$s2);
+		&decstep(2,$tbl,$s2,$s1,$s0,$s3);
+		&decstep(3,$tbl,$s3,$s2,$s1,$s0);
 		&xor	($s0,&DWP(16*$i+0,$key));
 		&xor	($s1,&DWP(16*$i+4,$key));
 		&xor	($s2,&DWP(16*$i+8,$key));
@@ -860,10 +1638,10 @@ sub dectransform()
 	    }
 	}
 
-	&declast(0,"ebp",$s0,$s3,$s2,$s1);
-	&declast(1,"ebp",$s1,$s0,$s3,$s2);
-	&declast(2,"ebp",$s2,$s1,$s0,$s3);
-	&declast(3,"ebp",$s3,$s2,$s1,$s0);
+	&declast(0,$tbl,$s0,$s3,$s2,$s1);
+	&declast(1,$tbl,$s1,$s0,$s3,$s2);
+	&declast(2,$tbl,$s2,$s1,$s0,$s3);
+	&declast(3,$tbl,$s3,$s2,$s1,$s0);
 
 	&add	($key,$small_footprint?16:160);
 	&xor	($s0,&DWP(0,$key));
@@ -873,7 +1651,7 @@ sub dectransform()
 
 	&ret	();
 
-&set_label("AES_Td",64);	# Yes! I keep it in the code segment!
+&set_label("AES_Td",1024);	# Yes! I keep it in the code segment!
 	&_data_word(0x50a7f451, 0x5365417e, 0xc3a4171a, 0x965e273a);
 	&_data_word(0xcb6bab3b, 0xf1459d1f, 0xab58faac, 0x9303e34b);
 	&_data_word(0x55fa3020, 0xf66d76ad, 0x9176cc88, 0x254c02f5);
@@ -938,7 +1716,107 @@ sub dectransform()
 	&_data_word(0x72c31d16, 0x0c25e2bc, 0x8b493c28, 0x41950dff);
 	&_data_word(0x7101a839, 0xdeb30c08, 0x9ce4b4d8, 0x90c15664);
 	&_data_word(0x6184cb7b, 0x70b632d5, 0x745c6c48, 0x4257b8d0);
-#Td4:
+
+#Td4:	# four copies of Td4 to choose from to avoid L1 aliasing
+	&data_byte(0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38);
+	&data_byte(0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb);
+	&data_byte(0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87);
+	&data_byte(0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb);
+	&data_byte(0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d);
+	&data_byte(0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e);
+	&data_byte(0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2);
+	&data_byte(0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25);
+	&data_byte(0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16);
+	&data_byte(0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92);
+	&data_byte(0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda);
+	&data_byte(0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84);
+	&data_byte(0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a);
+	&data_byte(0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06);
+	&data_byte(0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02);
+	&data_byte(0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b);
+	&data_byte(0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea);
+	&data_byte(0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73);
+	&data_byte(0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85);
+	&data_byte(0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e);
+	&data_byte(0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89);
+	&data_byte(0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b);
+	&data_byte(0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20);
+	&data_byte(0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4);
+	&data_byte(0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31);
+	&data_byte(0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f);
+	&data_byte(0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d);
+	&data_byte(0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef);
+	&data_byte(0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0);
+	&data_byte(0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61);
+	&data_byte(0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26);
+	&data_byte(0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d);
+
+	&data_byte(0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38);
+	&data_byte(0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb);
+	&data_byte(0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87);
+	&data_byte(0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb);
+	&data_byte(0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d);
+	&data_byte(0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e);
+	&data_byte(0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2);
+	&data_byte(0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25);
+	&data_byte(0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16);
+	&data_byte(0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92);
+	&data_byte(0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda);
+	&data_byte(0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84);
+	&data_byte(0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a);
+	&data_byte(0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06);
+	&data_byte(0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02);
+	&data_byte(0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b);
+	&data_byte(0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea);
+	&data_byte(0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73);
+	&data_byte(0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85);
+	&data_byte(0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e);
+	&data_byte(0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89);
+	&data_byte(0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b);
+	&data_byte(0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20);
+	&data_byte(0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4);
+	&data_byte(0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31);
+	&data_byte(0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f);
+	&data_byte(0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d);
+	&data_byte(0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef);
+	&data_byte(0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0);
+	&data_byte(0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61);
+	&data_byte(0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26);
+	&data_byte(0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d);
+
+	&data_byte(0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38);
+	&data_byte(0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb);
+	&data_byte(0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87);
+	&data_byte(0x34, 0x8e, 0x43, 0x44, 0xc4, 0xde, 0xe9, 0xcb);
+	&data_byte(0x54, 0x7b, 0x94, 0x32, 0xa6, 0xc2, 0x23, 0x3d);
+	&data_byte(0xee, 0x4c, 0x95, 0x0b, 0x42, 0xfa, 0xc3, 0x4e);
+	&data_byte(0x08, 0x2e, 0xa1, 0x66, 0x28, 0xd9, 0x24, 0xb2);
+	&data_byte(0x76, 0x5b, 0xa2, 0x49, 0x6d, 0x8b, 0xd1, 0x25);
+	&data_byte(0x72, 0xf8, 0xf6, 0x64, 0x86, 0x68, 0x98, 0x16);
+	&data_byte(0xd4, 0xa4, 0x5c, 0xcc, 0x5d, 0x65, 0xb6, 0x92);
+	&data_byte(0x6c, 0x70, 0x48, 0x50, 0xfd, 0xed, 0xb9, 0xda);
+	&data_byte(0x5e, 0x15, 0x46, 0x57, 0xa7, 0x8d, 0x9d, 0x84);
+	&data_byte(0x90, 0xd8, 0xab, 0x00, 0x8c, 0xbc, 0xd3, 0x0a);
+	&data_byte(0xf7, 0xe4, 0x58, 0x05, 0xb8, 0xb3, 0x45, 0x06);
+	&data_byte(0xd0, 0x2c, 0x1e, 0x8f, 0xca, 0x3f, 0x0f, 0x02);
+	&data_byte(0xc1, 0xaf, 0xbd, 0x03, 0x01, 0x13, 0x8a, 0x6b);
+	&data_byte(0x3a, 0x91, 0x11, 0x41, 0x4f, 0x67, 0xdc, 0xea);
+	&data_byte(0x97, 0xf2, 0xcf, 0xce, 0xf0, 0xb4, 0xe6, 0x73);
+	&data_byte(0x96, 0xac, 0x74, 0x22, 0xe7, 0xad, 0x35, 0x85);
+	&data_byte(0xe2, 0xf9, 0x37, 0xe8, 0x1c, 0x75, 0xdf, 0x6e);
+	&data_byte(0x47, 0xf1, 0x1a, 0x71, 0x1d, 0x29, 0xc5, 0x89);
+	&data_byte(0x6f, 0xb7, 0x62, 0x0e, 0xaa, 0x18, 0xbe, 0x1b);
+	&data_byte(0xfc, 0x56, 0x3e, 0x4b, 0xc6, 0xd2, 0x79, 0x20);
+	&data_byte(0x9a, 0xdb, 0xc0, 0xfe, 0x78, 0xcd, 0x5a, 0xf4);
+	&data_byte(0x1f, 0xdd, 0xa8, 0x33, 0x88, 0x07, 0xc7, 0x31);
+	&data_byte(0xb1, 0x12, 0x10, 0x59, 0x27, 0x80, 0xec, 0x5f);
+	&data_byte(0x60, 0x51, 0x7f, 0xa9, 0x19, 0xb5, 0x4a, 0x0d);
+	&data_byte(0x2d, 0xe5, 0x7a, 0x9f, 0x93, 0xc9, 0x9c, 0xef);
+	&data_byte(0xa0, 0xe0, 0x3b, 0x4d, 0xae, 0x2a, 0xf5, 0xb0);
+	&data_byte(0xc8, 0xeb, 0xbb, 0x3c, 0x83, 0x53, 0x99, 0x61);
+	&data_byte(0x17, 0x2b, 0x04, 0x7e, 0xba, 0x77, 0xd6, 0x26);
+	&data_byte(0xe1, 0x69, 0x14, 0x63, 0x55, 0x21, 0x0c, 0x7d);
+
 	&data_byte(0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38);
 	&data_byte(0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb);
 	&data_byte(0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87);
@@ -981,31 +1859,55 @@ sub dectransform()
 
 	&mov	($s0,"esp");
 	&sub	("esp",36);
-	&and	("esp",-64);
-	&add	("esp",4);
-	&mov	(&DWP(28,"esp"),$s0);
+	&and	("esp",-64);			# align to cache-line
+
+	# place stack frame just "above" the key schedule
+	&lea	($s1,&DWP(-64-63,$key));
+	&sub	($s1,"esp");
+	&neg	($s1);
+	&and	($s1,0x3C0);	# modulo 1024, but aligned to cache-line
+	&sub	("esp",$s1);
+	&add	("esp",4);	# 4 is reserved for caller's return address
+	&mov	(&DWP(28,"esp"),$s0);		# save stack pointer
 
 	&call   (&label("pic_point"));          # make it PIC!
 	&set_label("pic_point");
-	&blindpop("ebp");
-	&lea    ("ebp",&DWP(&label("AES_Td")."-".&label("pic_point"),"ebp"));
+	&blindpop($tbl);
+	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point"));
+	&lea    ($tbl,&DWP(&label("AES_Td")."-".&label("pic_point"),$tbl));
+	# pick Td4 copy which can't "overlap" with stack frame or key schedule
+	&lea	($s1,&DWP(768,"esp"));
+	&and	($s1,0x300);
+	&lea	($tbl,&DWP(2048+128,$tbl,$s1));
 
+	&bt	(&DWP(0,$s0),23);		# check for MMX bit
+	&jc	(&label("mmx"));
+
+	&mov	(&DWP(24,"esp"),$tbl);
 	&mov	($s0,&DWP(0,$acc));		# load input data
 	&mov	($s1,&DWP(4,$acc));
 	&mov	($s2,&DWP(8,$acc));
 	&mov	($s3,&DWP(12,$acc));
-
-	&mov	(&DWP(24,"esp"),"ebp");
-
-	&call	("_x86_AES_decrypt");
-
-	&mov	("esp",&DWP(28,"esp"));
-
+	&call	("_x86_AES_decrypt_compact");
+	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
 	&mov	($acc,&wparam(1));		# load out
 	&mov	(&DWP(0,$acc),$s0);		# write output data
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
+	&jmp	(&label("ret"));
+
+	&set_label("mmx",16);
+	&movq	("mm0",&QWP(0,$acc));
+	&movq	("mm4",&QWP(8,$acc));
+	&call	("_mmx_AES_decrypt_compact");
+	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
+	&mov	($acc,&wparam(1));		# load out
+	&movq	(&QWP(0,$acc),"mm0");		# write output data
+	&movq	(&QWP(8,$acc),"mm4");
+	&emms	();
+
+&set_label("ret",4);
 &function_end("AES_decrypt");
 
 # void AES_cbc_encrypt (const void char *inp, unsigned char *out,
@@ -1041,7 +1943,7 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 
 	&call   (&label("pic_point"));		# make it PIC!
 	&set_label("pic_point");
-	&blindpop("ebp");
+	&blindpop($tbl);
 
 	&pushf	();
 	&cld	();
@@ -1049,18 +1951,18 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 	&cmp	(&wparam(5),0);
 	&je	(&label("DECRYPT"));
 
-	&lea    ("ebp",&DWP(&label("AES_Te")."-".&label("pic_point"),"ebp"));
+	&lea    ($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
 
 	# allocate aligned stack frame...
 	&lea	($key,&DWP(-76-244,"esp"));
 	&and	($key,-64);
 
 	# ... and make sure it doesn't alias with AES_Te modulo 4096
-	&mov	($s0,"ebp");
-	&lea	($s1,&DWP(2048+256,"ebp"));
+	&mov	($s0,$tbl);
+	&lea	($s1,&DWP(2048,$tbl));
 	&mov	($s3,$key);
 	&and	($s0,0xfff);		# s = %ebp&0xfff
-	&and	($s1,0xfff);		# e = (%ebp+2048+256)&0xfff
+	&and	($s1,0xfff);		# e = (%ebp+2048)&0xfff
 	&and	($s3,0xfff);		# p = %esp&0xfff
 
 	&cmp	($s3,$s1);		# if (p>=e) %esp =- (p-e);
@@ -1099,11 +2001,11 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 	# do we copy key schedule to stack?
 	&mov	($s1 eq "ebx" ? $s1 : "",$s3);
 	&mov	($s2 eq "ecx" ? $s2 : "",244/4);
-	&sub	($s1,"ebp");
+	&sub	($s1,$tbl);
 	&mov	("esi",$s3);
 	&and	($s1,0xfff);
 	&lea	("edi",$aes_key);
-	&cmp	($s1,2048+256);
+	&cmp	($s1,2048);
 	&jb	(&label("do_ecopy"));
 	&cmp	($s1,4096-244);
 	&jb	(&label("skip_ecopy"));
@@ -1114,18 +2016,18 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 	&set_label("skip_ecopy");
 
 	&mov	($acc,$s0);
-	&mov	($key,18);
+	&mov	($key,16);
 	&align	(4);
 	&set_label("prefetch_te");
-		&mov	($s0,&DWP(0,"ebp"));
-		&mov	($s1,&DWP(32,"ebp"));
-		&mov	($s2,&DWP(64,"ebp"));
-		&mov	($s3,&DWP(96,"ebp"));
-		&lea	("ebp",&DWP(128,"ebp"));
+		&mov	($s0,&DWP(0,$tbl));
+		&mov	($s1,&DWP(32,$tbl));
+		&mov	($s2,&DWP(64,$tbl));
+		&mov	($s3,&DWP(96,$tbl));
+		&lea	($tbl,&DWP(128,$tbl));
 		&dec	($key);
 	&jnz	(&label("prefetch_te"));
-	&sub	("ebp",2048+256);
-	&mov	(&DWP(24,"esp"),"ebp");
+	&sub	($tbl,2048);
+	&mov	(&DWP(24,"esp"),$tbl);
 
 	&mov	($s2,$_len);
 	&mov	($key,$_ivp);
@@ -1222,15 +2124,15 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 #----------------------------- DECRYPT -----------------------------#
 &align	(4);
 &set_label("DECRYPT");
-	&lea    ("ebp",&DWP(&label("AES_Td")."-".&label("pic_point"),"ebp"));
+	&lea    ($tbl,&DWP(&label("AES_Td")."-".&label("pic_point"),$tbl));
 
 	# allocate aligned stack frame...
 	&lea	($key,&DWP(-64-244,"esp"));
 	&and	($key,-64);
 
 	# ... and make sure it doesn't alias with AES_Td modulo 4096
-	&mov	($s0,"ebp");
-	&lea	($s1,&DWP(2048+256,"ebp"));
+	&mov	($s0,$tbl);
+	&lea	($s1,&DWP(2048+256,$tbl));
 	&mov	($s3,$key);
 	&and	($s0,0xfff);		# s = %ebp&0xfff
 	&and	($s1,0xfff);		# e = (%ebp+2048+256)&0xfff
@@ -1272,7 +2174,7 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 	# do we copy key schedule to stack?
 	&mov	($s1 eq "ebx" ? $s1 : "",$s3);
 	&mov	($s2 eq "ecx" ? $s2 : "",244/4);
-	&sub	($s1,"ebp");
+	&sub	($s1,$tbl);
 	&mov	("esi",$s3);
 	&and	($s1,0xfff);
 	&lea	("edi",$aes_key);
@@ -1290,15 +2192,15 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 	&mov	($key,18);
 	&align	(4);
 	&set_label("prefetch_td");
-		&mov	($s0,&DWP(0,"ebp"));
-		&mov	($s1,&DWP(32,"ebp"));
-		&mov	($s2,&DWP(64,"ebp"));
-		&mov	($s3,&DWP(96,"ebp"));
-		&lea	("ebp",&DWP(128,"ebp"));
+		&mov	($s0,&DWP(0,$tbl));
+		&mov	($s1,&DWP(32,$tbl));
+		&mov	($s2,&DWP(64,$tbl));
+		&mov	($s3,&DWP(96,$tbl));
+		&lea	($tbl,&DWP(128,$tbl));
 		&dec	($key);
 	&jnz	(&label("prefetch_td"));
-	&sub	("ebp",2048+256);
-	&mov	(&DWP(24,"esp"),"ebp");
+	&sub	($tbl,2048+256);
+	&mov	(&DWP(24,"esp"),$tbl);
 
 	&cmp	($acc,$_out);
 	&je	(&label("dec_in_place"));	# in-place processing...
@@ -1455,27 +2357,27 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 sub enckey()
 {
 	&movz	("esi",&LB("edx"));		# rk[i]>>0
-	&mov	("ebx",&DWP(2,"ebp","esi",8));
+	&mov	("ebx",&DWP(2,$tbl,"esi",8));
 	&movz	("esi",&HB("edx"));		# rk[i]>>8
 	&and	("ebx",0xFF000000);
 	&xor	("eax","ebx");
 
-	&mov	("ebx",&DWP(2,"ebp","esi",8));
+	&mov	("ebx",&DWP(2,$tbl,"esi",8));
 	&shr	("edx",16);
 	&and	("ebx",0x000000FF);
 	&movz	("esi",&LB("edx"));		# rk[i]>>16
 	&xor	("eax","ebx");
 
-	&mov	("ebx",&DWP(0,"ebp","esi",8));
+	&mov	("ebx",&DWP(0,$tbl,"esi",8));
 	&movz	("esi",&HB("edx"));		# rk[i]>>24
 	&and	("ebx",0x0000FF00);
 	&xor	("eax","ebx");
 
-	&mov	("ebx",&DWP(0,"ebp","esi",8));
+	&mov	("ebx",&DWP(0,$tbl,"esi",8));
 	&and	("ebx",0x00FF0000);
 	&xor	("eax","ebx");
 
-	&xor	("eax",&DWP(2048+256,"ebp","ecx",4));	# rcon
+	&xor	("eax",&DWP(2048+1024,$tbl,"ecx",4));	# rcon
 }
 
 # int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
@@ -1492,8 +2394,8 @@ sub enckey()
 
 	&call	(&label("pic_point"));
 	&set_label("pic_point");
-	&blindpop("ebp");
-	&lea	("ebp",&DWP(&label("AES_Te")."-".&label("pic_point"),"ebp"));
+	&blindpop($tbl);
+	&lea	($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
 
 	&mov	("ecx",&wparam(1));		# number of bits in key
 	&cmp	("ecx",128);
@@ -1634,23 +2536,23 @@ sub enckey()
 		&mov	("edx","eax");
 		&mov	("eax",&DWP(16,"edi"));		# rk[4]
 		&movz	("esi",&LB("edx"));		# rk[11]>>0
-		&mov	("ebx",&DWP(2,"ebp","esi",8));
+		&mov	("ebx",&DWP(2,$tbl,"esi",8));
 		&movz	("esi",&HB("edx"));		# rk[11]>>8
 		&and	("ebx",0x000000FF);
 		&xor	("eax","ebx");
 
-		&mov	("ebx",&DWP(0,"ebp","esi",8));
+		&mov	("ebx",&DWP(0,$tbl,"esi",8));
 		&shr	("edx",16);
 		&and	("ebx",0x0000FF00);
 		&movz	("esi",&LB("edx"));		# rk[11]>>16
 		&xor	("eax","ebx");
 
-		&mov	("ebx",&DWP(0,"ebp","esi",8));
+		&mov	("ebx",&DWP(0,$tbl,"esi",8));
 		&movz	("esi",&HB("edx"));		# rk[11]>>24
 		&and	("ebx",0x00FF0000);
 		&xor	("eax","ebx");
 
-		&mov	("ebx",&DWP(2,"ebp","esi",8));
+		&mov	("ebx",&DWP(2,$tbl,"esi",8));
 		&and	("ebx",0xFF000000);
 		&xor	("eax","ebx");
 
@@ -1750,9 +2652,9 @@ sub deckey()
 
 	&call	(&label("pic_point"));
 	&set_label("pic_point");
-	blindpop("ebp");
-	&lea	("edi",&DWP(&label("AES_Td")."-".&label("pic_point"),"ebp"));
-	&lea	("ebp",&DWP(&label("AES_Te")."-".&label("pic_point"),"ebp"));
+	blindpop($tbl);
+	&lea	("edi",&DWP(&label("AES_Td")."-".&label("pic_point"),$tbl));
+	&lea	($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
 
 	&mov	("esi",&wparam(2));
 	&mov	("ecx",&DWP(240,"esi"));	# pull number of rounds
@@ -1760,10 +2662,10 @@ sub deckey()
 	&align	(4);
 	&set_label("permute");			# permute the key schedule
 		&add	("esi",16);
-		&deckey	(0,"esi","ebp","edi");
-		&deckey	(4,"esi","ebp","edi");
-		&deckey	(8,"esi","ebp","edi");
-		&deckey	(12,"esi","ebp","edi");
+		&deckey	(0,"esi",$tbl,"edi");
+		&deckey	(4,"esi",$tbl,"edi");
+		&deckey	(8,"esi",$tbl,"edi");
+		&deckey	(12,"esi",$tbl,"edi");
 		&dec	("ecx");
 	&jnz	(&label("permute"));
 
