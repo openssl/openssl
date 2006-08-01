@@ -154,7 +154,7 @@ verify_time_stamp_response_fail () {
     ../../util/shlib_wrap.sh ../../apps/openssl ts -verify -queryfile $1 -in $2 -CAfile demoCA/cacert.pem \
 	-untrusted tsa_cert1.pem
     # Checks if the verification failed, as it should have.
-    test $? == 0 && error
+    test $? = 0 && error
     echo Ok
 }
 
