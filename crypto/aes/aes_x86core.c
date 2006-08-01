@@ -496,10 +496,10 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 		while (1) {
 			temp  = rk[3];
 			rk[4] = rk[0] ^
-				(Te2[(temp >>  8) & 0xff] & 0x000000ffU) ^
-				(Te3[(temp >> 16) & 0xff] & 0x0000ff00U) ^
-				(Te0[(temp >> 24)       ] & 0x00ff0000U) ^
-				(Te1[(temp      ) & 0xff] & 0xff000000U) ^
+				(Te4[(temp >>  8) & 0xff]      ) ^
+				(Te4[(temp >> 16) & 0xff] <<  8) ^
+				(Te4[(temp >> 24)       ] << 16) ^
+				(Te4[(temp      ) & 0xff] << 24) ^
 				rcon[i];
 			rk[5] = rk[1] ^ rk[4];
 			rk[6] = rk[2] ^ rk[5];
@@ -516,10 +516,10 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 		while (1) {
 			temp = rk[ 5];
 			rk[ 6] = rk[ 0] ^
-				(Te2[(temp >>  8) & 0xff] & 0x000000ffU) ^
-				(Te3[(temp >> 16) & 0xff] & 0x0000ff00U) ^
-				(Te0[(temp >> 24)       ] & 0x00ff0000U) ^
-				(Te1[(temp      ) & 0xff] & 0xff000000U) ^
+				(Te4[(temp >>  8) & 0xff]      ) ^
+				(Te4[(temp >> 16) & 0xff] <<  8) ^
+				(Te4[(temp >> 24)       ] << 16) ^
+				(Te4[(temp      ) & 0xff] << 24) ^
 				rcon[i];
 			rk[ 7] = rk[ 1] ^ rk[ 6];
 			rk[ 8] = rk[ 2] ^ rk[ 7];
@@ -538,10 +538,10 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 		while (1) {
 			temp = rk[ 7];
 			rk[ 8] = rk[ 0] ^
-				(Te2[(temp >>  8) & 0xff] & 0x000000ffU) ^
-				(Te3[(temp >> 16) & 0xff] & 0x0000ff00U) ^
-				(Te0[(temp >> 24)       ] & 0x00ff0000U) ^
-				(Te1[(temp      ) & 0xff] & 0xff000000U) ^
+				(Te4[(temp >>  8) & 0xff]      ) ^
+				(Te4[(temp >> 16) & 0xff] <<  8) ^
+				(Te4[(temp >> 24)       ] << 16) ^
+				(Te4[(temp      ) & 0xff] << 24) ^
 				rcon[i];
 			rk[ 9] = rk[ 1] ^ rk[ 8];
 			rk[10] = rk[ 2] ^ rk[ 9];
@@ -551,10 +551,10 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 			}
 			temp = rk[11];
 			rk[12] = rk[ 4] ^
-				(Te2[(temp      ) & 0xff] & 0x000000ffU) ^
-				(Te3[(temp >>  8) & 0xff] & 0x0000ff00U) ^
-				(Te0[(temp >> 16) & 0xff] & 0x00ff0000U) ^
-				(Te1[(temp >> 24)       ] & 0xff000000U);
+				(Te4[(temp      ) & 0xff]      ) ^
+				(Te4[(temp >>  8) & 0xff] <<  8) ^
+				(Te4[(temp >> 16) & 0xff] << 16) ^
+				(Te4[(temp >> 24)       ] << 24);
 			rk[13] = rk[ 5] ^ rk[12];
 			rk[14] = rk[ 6] ^ rk[13];
 			rk[15] = rk[ 7] ^ rk[14];
@@ -592,6 +592,34 @@ int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
 	/* apply the inverse MixColumn transform to all round keys but the first and the last: */
 	for (i = 1; i < (key->rounds); i++) {
 		rk += 4;
+#if 1
+		for (j = 0; j < 4; j++) {
+			u32 tp1, tp2, tp4, tp8, tp9, tpb, tpd, tpe, m;
+
+			tp1 = rk[j];
+			m = tp1 & 0x80808080;
+			tp2 = ((tp1 & 0x7f7f7f7f) << 1) ^
+				((m - (m >> 7)) & 0x1b1b1b1b);
+			m = tp2 & 0x80808080;
+			tp4 = ((tp2 & 0x7f7f7f7f) << 1) ^
+				((m - (m >> 7)) & 0x1b1b1b1b);
+			m = tp4 & 0x80808080;
+			tp8 = ((tp4 & 0x7f7f7f7f) << 1) ^
+				((m - (m >> 7)) & 0x1b1b1b1b);
+			tp9 = tp8 ^ tp1;
+			tpb = tp9 ^ tp2;
+			tpd = tp9 ^ tp4;
+			tpe = tp8 ^ tp4 ^ tp2;
+#if defined(ROTATE)
+			rk[j] = tpe ^ ROTATE(tpd,16) ^
+				ROTATE(tp9,8) ^ ROTATE(tpb,24);
+#else
+			rk[j] = tpe ^ (tpd >> 16) ^ (tpd << 16) ^ 
+				(tp9 >> 24) ^ (tp9 << 8) ^
+				(tpb >> 8) ^ (tpb << 24);
+#endif
+		}
+#else
 		rk[0] =
 			Td0[Te2[(rk[0]      ) & 0xff] & 0xff] ^
 			Td1[Te2[(rk[0] >>  8) & 0xff] & 0xff] ^
@@ -612,6 +640,7 @@ int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
 			Td1[Te2[(rk[3] >>  8) & 0xff] & 0xff] ^
 			Td2[Te2[(rk[3] >> 16) & 0xff] & 0xff] ^
 			Td3[Te2[(rk[3] >> 24)       ] & 0xff];
+#endif
 	}
 	return 0;
 }
