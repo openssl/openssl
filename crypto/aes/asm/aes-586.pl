@@ -6,7 +6,7 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 4.1.
+# Version 4.2.
 #
 # You might fail to appreciate this module performance from the first
 # try. If compared to "vanilla" linux-ia32-icc target, i.e. considered
@@ -90,7 +90,7 @@
 # aggressively pre-fetched.
 #
 # Version 4.0 effectively rolls back to 3.6 and instead implements
-# additional set of functions, _[x86|mmx]_AES_[en|de]crypt_compact,
+# additional set of functions, _[x86|sse]_AES_[en|de]crypt_compact,
 # which use exclusively 256 byte S-box. These functions are to be
 # called in modes not concealing plain text, such as ECB, or when
 # we're asked to process smaller amount of data [or unconditionally
@@ -108,6 +108,12 @@
 # Pentium	120		160		77
 #
 # Version 4.1 switches to compact S-box even in key schedule setup.
+#
+# Version 4.2 prefetches compact S-box in every SSE round or in other
+# words every cache-line is *guaranteed* to be accessed within ~50
+# cycles window. Why just SSE? Because it's needed on hyper-threading
+# CPU! Which is also why it's prefetched with 64 byte stride. Best
+# part is that it has no negative effect on performance:-)  
 
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
@@ -261,9 +267,9 @@ sub enchoriz()
 	&mov	($s2,$v1);			# s[2]=t[2]
 }
 
-# More experimental code... MMX one... Even though this one eliminates
+# More experimental code... SSE one... Even though this one eliminates
 # *all* references to stack, it's not faster...
-sub mmx_encbody()
+sub sse_encbody()
 {
 	&movz	($acc,&LB("eax"));		#  0
 	&mov	("ecx",&DWP(0,$tbl,$acc,8));	#  0
@@ -466,7 +472,7 @@ sub enctransform()
 &function_end_B("_x86_AES_encrypt_compact");
 
 ######################################################################
-# "Compact" MMX block function.
+# "Compact" SSE block function.
 ######################################################################
 #
 # Performance is not actually extraordinary in comparison to pure
@@ -509,9 +515,9 @@ sub enctransform()
 # instructions are twice as many, they can be scheduled every cycle
 # and not every second one when they are operating on xmm register,
 # so that "arithmetic throughput" remains virtually the same. And
-# finally the code can be executed even on elder MMX-only CPUs:-)
+# finally the code can be executed even on elder SSE-only CPUs:-)
 
-sub mmx_enccompact()
+sub sse_enccompact()
 {
 	&pshufw	("mm1","mm0",0x08);		#  5, 4, 1, 0
 	&pshufw	("mm5","mm4",0x0d);		# 15,14,11,10
@@ -599,7 +605,7 @@ sub mmx_enccompact()
 }
 
 &public_label("AES_Te");
-&function_begin_B("_mmx_AES_encrypt_compact");
+&function_begin_B("_sse_AES_encrypt_compact");
 	&pxor	("mm0",&QWP(0,$key));	#  7, 6, 5, 4, 3, 2, 1, 0
 	&pxor	("mm4",&QWP(8,$key));	# 15,14,13,12,11,10, 9, 8
 
@@ -624,7 +630,7 @@ sub mmx_enccompact()
 	&mov	($s3,&DWP(224-128,$tbl));
 
 	&set_label("loop",16);
-		&mmx_enccompact();
+		&sse_enccompact();
 		&add	($key,16);
 		&cmp	($key,&DWP(24,"esp"));
 		&ja	(&label("out"));
@@ -650,9 +656,13 @@ sub mmx_enccompact()
 		&movq	("mm3","mm1");		&movq	("mm7","mm5");
 		&movq	("mm2",&QWP(0,$key));	&movq	("mm6",&QWP(8,$key));
 		&psrld	("mm1",8);		&psrld	("mm5",8);
+		&mov	($s0,&DWP(0-128,$tbl));
 		&pslld	("mm3",24);		&pslld	("mm7",24);
+		&mov	($s1,&DWP(64-128,$tbl));
 		&pxor	("mm0","mm1");		&pxor	("mm4","mm5");	# ^= (r2^r0)<<8
+		&mov	($s2,&DWP(128-128,$tbl));
 		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= (r2^r0)>>24
+		&mov	($s3,&DWP(192-128,$tbl));
 
 		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");
 	&jmp	(&label("loop"));
@@ -662,7 +672,7 @@ sub mmx_enccompact()
 	&pxor	("mm4",&QWP(8,$key));
 
 	&ret	();
-&function_end_B("_mmx_AES_encrypt_compact");
+&function_end_B("_sse_AES_encrypt_compact");
 
 ######################################################################
 # Vanilla block function.
@@ -857,7 +867,7 @@ sub enclast()
 
 	&ret	();
 
-&set_label("AES_Te",1024);	# Yes! I keep it in the code segment!
+&set_label("AES_Te",64);	# Yes! I keep it in the code segment!
 	&_data_word(0xa56363c6, 0x847c7cf8, 0x997777ee, 0x8d7b7bf6);
 	&_data_word(0x0df2f2ff, 0xbd6b6bd6, 0xb16f6fde, 0x54c5c591);
 	&_data_word(0x50303060, 0x03010102, 0xa96767ce, 0x7d2b2b56);
@@ -1058,7 +1068,8 @@ sub enclast()
 #rcon:
 	&data_word(0x00000001, 0x00000002, 0x00000004, 0x00000008);
 	&data_word(0x00000010, 0x00000020, 0x00000040, 0x00000080);
-	&data_word(0x0000001b, 0x00000036, 0, 0, 0, 0, 0, 0);
+	&data_word(0x0000001b, 0x00000036, 0x00000000, 0x00000000);
+	&data_word(0x00000000, 0x00000000, 0x00000000, 0x00000000);
 &function_end_B("_x86_AES_encrypt");
 
 # void AES_encrypt (const void *inp,void *out,const AES_KEY *key);
@@ -1086,13 +1097,25 @@ sub enclast()
 	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point"));
 	&lea    ($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
 	# pick Te4 copy which can't "overlap" with stack frame or key schedule
-	&lea	($s1,&DWP(768,"esp"));
+	&lea	($s1,&DWP(768-4,"esp"));
+	&sub	($s1,$tbl);
 	&and	($s1,0x300);
 	&lea	($tbl,&DWP(2048+128,$tbl,$s1));
 
-	&bt	(&DWP(0,$s0),23);		# check for MMX bit
-	&jc	(&label("mmx"));
+	&bt	(&DWP(0,$s0),25);		# check for SSE bit
+	&jnc	(&label("x86"));
 
+	&movq	("mm0",&QWP(0,$acc));
+	&movq	("mm4",&QWP(8,$acc));
+	&call	("_sse_AES_encrypt_compact");
+	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
+	&mov	($acc,&wparam(1));		# load out
+	&movq	(&QWP(0,$acc),"mm0");		# write output data
+	&movq	(&QWP(8,$acc),"mm4");
+	&emms	();
+	&function_end_A();
+
+	&set_label("x86",16);
 	&mov	(&DWP(24,"esp"),$tbl);
 	&mov	($s0,&DWP(0,$acc));		# load input data
 	&mov	($s1,&DWP(4,$acc));
@@ -1105,17 +1128,6 @@ sub enclast()
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
-	&function_end_A();
-
-	&set_label("mmx",16);
-	&movq	("mm0",&QWP(0,$acc));
-	&movq	("mm4",&QWP(8,$acc));
-	&call	("_mmx_AES_encrypt_compact");
-	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
-	&mov	($acc,&wparam(1));		# load out
-	&movq	(&QWP(0,$acc),"mm0");		# write output data
-	&movq	(&QWP(8,$acc),"mm4");
-	&emms	();
 &function_end("AES_encrypt");
 
 #--------------------------------------------------------------------#
@@ -1290,10 +1302,10 @@ sub dectransform()
 &function_end_B("_x86_AES_decrypt_compact");
 
 ######################################################################
-# "Compact" MMX block function.
+# "Compact" SSE block function.
 ######################################################################
 
-sub mmx_deccompact()
+sub sse_deccompact()
 {
 	&pshufw	("mm1","mm0",0x0c);		#  7, 6, 1, 0
 	&movd	("eax","mm1");			#  7, 6, 1, 0
@@ -1381,7 +1393,7 @@ sub mmx_deccompact()
 }
 
 &public_label("AES_Td");
-&function_begin_B("_mmx_AES_decrypt_compact");
+&function_begin_B("_sse_AES_decrypt_compact");
 	&pxor	("mm0",&QWP(0,$key));	#  7, 6, 5, 4, 3, 2, 1, 0
 	&pxor	("mm4",&QWP(8,$key));	# 15,14,13,12,11,10, 9, 8
 
@@ -1406,7 +1418,7 @@ sub mmx_deccompact()
 	&mov	($s3,&DWP(224-128,$tbl));
 
 	&set_label("loop",16);
-		&mmx_deccompact();
+		&sse_deccompact();
 		&add	($key,16);
 		&cmp	($key,&DWP(24,"esp"));
 		&ja	(&label("out"));
@@ -1460,12 +1472,16 @@ sub mmx_deccompact()
 		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");	# ^= ROTATE(tp8,16)
 		&pslld	("mm1",8);		&pslld	("mm5",8);
 		&psrld	("mm3",8);		&psrld	("mm7",8);
-		&movq	("mm2",&QWP(0,$key));	&movq	("mm6",&DWP(8,$key));
+		&movq	("mm2",&QWP(0,$key));	&movq	("mm6",&QWP(8,$key));
 		&pxor	("mm0","mm1");		&pxor	("mm4","mm5");	# ^= tp8<<8
 		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= tp8>>8
+		&mov	($s0,&DWP(0-128,$tbl));
 		&pslld	("mm1",16);		&pslld	("mm5",16);
+		&mov	($s1,&DWP(64-128,$tbl));
 		&psrld	("mm3",16);		&psrld	("mm7",16);
+		&mov	($s2,&DWP(128-128,$tbl));
 		&pxor	("mm0","mm1");		&pxor	("mm4","mm5");	# ^= tp8<<24
+		&mov	($s3,&DWP(192-128,$tbl));
 		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= tp8>>24
 
 		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");
@@ -1476,7 +1492,7 @@ sub mmx_deccompact()
 	&pxor	("mm4",&QWP(8,$key));
 
 	&ret	();
-&function_end_B("_mmx_AES_decrypt_compact");
+&function_end_B("_sse_AES_decrypt_compact");
 
 ######################################################################
 # Vanilla block function.
@@ -1648,7 +1664,7 @@ sub declast()
 
 	&ret	();
 
-&set_label("AES_Td",1024);	# Yes! I keep it in the code segment!
+&set_label("AES_Td",64);	# Yes! I keep it in the code segment!
 	&_data_word(0x50a7f451, 0x5365417e, 0xc3a4171a, 0x965e273a);
 	&_data_word(0xcb6bab3b, 0xf1459d1f, 0xab58faac, 0x9303e34b);
 	&_data_word(0x55fa3020, 0xf66d76ad, 0x9176cc88, 0x254c02f5);
@@ -1873,13 +1889,25 @@ sub declast()
 	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point"));
 	&lea    ($tbl,&DWP(&label("AES_Td")."-".&label("pic_point"),$tbl));
 	# pick Td4 copy which can't "overlap" with stack frame or key schedule
-	&lea	($s1,&DWP(768,"esp"));
+	&lea	($s1,&DWP(768-4,"esp"));
+	&sub	($s1,$tbl);
 	&and	($s1,0x300);
 	&lea	($tbl,&DWP(2048+128,$tbl,$s1));
 
-	&bt	(&DWP(0,$s0),23);		# check for MMX bit
-	&jc	(&label("mmx"));
+	&bt	(&DWP(0,$s0),25);		# check for SSE bit
+	&jnc	(&label("x86"));
 
+	&movq	("mm0",&QWP(0,$acc));
+	&movq	("mm4",&QWP(8,$acc));
+	&call	("_sse_AES_decrypt_compact");
+	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
+	&mov	($acc,&wparam(1));		# load out
+	&movq	(&QWP(0,$acc),"mm0");		# write output data
+	&movq	(&QWP(8,$acc),"mm4");
+	&emms	();
+	&function_end_A();
+
+	&set_label("x86",16);
 	&mov	(&DWP(24,"esp"),$tbl);
 	&mov	($s0,&DWP(0,$acc));		# load input data
 	&mov	($s1,&DWP(4,$acc));
@@ -1892,17 +1920,6 @@ sub declast()
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
-	&function_end_A();
-
-	&set_label("mmx",16);
-	&movq	("mm0",&QWP(0,$acc));
-	&movq	("mm4",&QWP(8,$acc));
-	&call	("_mmx_AES_decrypt_compact");
-	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
-	&mov	($acc,&wparam(1));		# load out
-	&movq	(&QWP(0,$acc),"mm0");		# write output data
-	&movq	(&QWP(8,$acc),"mm4");
-	&emms	();
 &function_end("AES_decrypt");
 
 # void AES_cbc_encrypt (const void char *inp, unsigned char *out,
@@ -2371,7 +2388,7 @@ sub enckey()
 	&shl	("ebx",16);
 	&xor	("eax","ebx");
 
-	&xor	("eax",&BP(1024-128,$tbl,"ecx",4));	# rcon
+	&xor	("eax",&DWP(1024-128,$tbl,"ecx",4));	# rcon
 }
 
 # int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
