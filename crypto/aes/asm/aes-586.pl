@@ -6,7 +6,7 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 4.0.
+# Version 4.1.
 #
 # You might fail to appreciate this module performance from the first
 # try. If compared to "vanilla" linux-ia32-icc target, i.e. considered
@@ -102,10 +102,12 @@
 # byte for 128-bit key.
 #
 #		ECB encrypt	ECB decrypt	CBC large chunk
-# P4		57[60]		84[100]		23
+# P4		56[60]		84[100]		23
 # AMD K8	48[44]		70[79]		18
 # PIII		41[50]		61[91]		24
 # Pentium	120		160		77
+#
+# Version 4.1 switches to compact S-box even in key schedule setup.
 
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
@@ -263,56 +265,56 @@ sub enchoriz()
 # *all* references to stack, it's not faster...
 sub mmx_encbody()
 {
-	&movz	("esi",&LB("eax"));		#  0
-	&mov	("ecx",&DWP(0,$tbl,"esi",8));	#  0
+	&movz	($acc,&LB("eax"));		#  0
+	&mov	("ecx",&DWP(0,$tbl,$acc,8));	#  0
 	&pshufw	("mm2","mm0",0x0d);		#  7, 6, 3, 2
 	&movz	("edx",&HB("eax"));		#  1
 	&mov	("edx",&DWP(3,$tbl,"edx",8));	#  1
 	&shr	("eax",16);			#  5, 4
 
-	&movz	("esi",&LB("ebx"));		# 10
-	&xor	("ecx",&DWP(2,$tbl,"esi",8));	# 10
+	&movz	($acc,&LB("ebx"));		# 10
+	&xor	("ecx",&DWP(2,$tbl,$acc,8));	# 10
 	&pshufw	("mm6","mm4",0x08);		# 13,12, 9, 8
-	&movz	("esi",&HB("ebx"));		# 11
-	&xor	("edx",&DWP(1,$tbl,"esi",8));	# 11
+	&movz	($acc,&HB("ebx"));		# 11
+	&xor	("edx",&DWP(1,$tbl,$acc,8));	# 11
 	&shr	("ebx",16);			# 15,14
 
-	&movz	("esi",&HB("eax"));		#  5
-	&xor	("ecx",&DWP(3,$tbl,"esi",8));	#  5
+	&movz	($acc,&HB("eax"));		#  5
+	&xor	("ecx",&DWP(3,$tbl,$acc,8));	#  5
 	&movq	("mm3",QWP(16,$key));
-	&movz	("esi",&HB("ebx"));		# 15
-	&xor	("ecx",&DWP(1,$tbl,"esi",8));	# 15
+	&movz	($acc,&HB("ebx"));		# 15
+	&xor	("ecx",&DWP(1,$tbl,$acc,8));	# 15
 	&movd	("mm0","ecx");			# t[0] collected
 
-	&movz	("esi",&LB("eax"));		#  4
-	&mov	("ecx",&DWP(0,$tbl,"esi",8));	#  4
+	&movz	($acc,&LB("eax"));		#  4
+	&mov	("ecx",&DWP(0,$tbl,$acc,8));	#  4
 	&movd	("eax","mm2");			#  7, 6, 3, 2
-	&movz	("esi",&LB("ebx"));		# 14
-	&xor	("ecx",&DWP(2,$tbl,"esi",8));	# 14
+	&movz	($acc,&LB("ebx"));		# 14
+	&xor	("ecx",&DWP(2,$tbl,$acc,8));	# 14
 	&movd	("ebx","mm6");			# 13,12, 9, 8
 
-	&movz	("esi",&HB("eax"));		#  3
-	&xor	("ecx",&DWP(1,$tbl,"esi",8));	#  3
-	&movz	("esi",&HB("ebx"));		#  9
-	&xor	("ecx",&DWP(3,$tbl,"esi",8));	#  9
+	&movz	($acc,&HB("eax"));		#  3
+	&xor	("ecx",&DWP(1,$tbl,$acc,8));	#  3
+	&movz	($acc,&HB("ebx"));		#  9
+	&xor	("ecx",&DWP(3,$tbl,$acc,8));	#  9
 	&movd	("mm1","ecx");			# t[1] collected
 
-	&movz	("esi",&LB("eax"));		#  2
-	&mov	("ecx",&DWP(2,$tbl,"esi",8));	#  2
+	&movz	($acc,&LB("eax"));		#  2
+	&mov	("ecx",&DWP(2,$tbl,$acc,8));	#  2
 	&shr	("eax",16);			#  7, 6
 	&punpckldq	("mm0","mm1");		# t[0,1] collected
-	&movz	("esi",&LB("ebx"));		#  8
-	&xor	("ecx",&DWP(0,$tbl,"esi",8));	#  8
+	&movz	($acc,&LB("ebx"));		#  8
+	&xor	("ecx",&DWP(0,$tbl,$acc,8));	#  8
 	&shr	("ebx",16);			# 13,12
 
-	&movz	("esi",&HB("eax"));		#  7
-	&xor	("ecx",&DWP(1,$tbl,"esi",8));	#  7
+	&movz	($acc,&HB("eax"));		#  7
+	&xor	("ecx",&DWP(1,$tbl,$acc,8));	#  7
 	&pxor	("mm0","mm3");
 	&movz	("eax",&LB("eax"));		#  6
 	&xor	("edx",&DWP(2,$tbl,"eax",8));	#  6
 	&pshufw	("mm1","mm0",0x08);		#  5, 4, 1, 0
-	&movz	("esi",&HB("ebx"));		# 13
-	&xor	("ecx",&DWP(3,$tbl,"esi",8));	# 13
+	&movz	($acc,&HB("ebx"));		# 13
+	&xor	("ecx",&DWP(3,$tbl,$acc,8));	# 13
 	&xor	("ecx",&DWP(24,$key));		# t[2]
 	&movd	("mm4","ecx");			# t[2] collected
 	&movz	("ebx",&LB("ebx"));		# 12
@@ -347,11 +349,11 @@ sub enccompact()
 			&and	($out,0xFF);
 	if ($i==1)  {	&shr	($s[0],16);			}#%ebx[1]
 	if ($i==2)  {	&shr	($s[0],24);			}#%ecx[2]
-			&movz	($out,&DWP(-128,$te,$out,1));
+			&movz	($out,&BP(-128,$te,$out,1));
 
 	if ($i==3)  {	$tmp=$s[1];				}##%eax
 			&movz	($tmp,&HB($s[1]));
-			&movz	($tmp,&DWP(-128,$te,$tmp,1));
+			&movz	($tmp,&BP(-128,$te,$tmp,1));
 			&shl	($tmp,8);
 			&xor	($out,$tmp);
 
@@ -360,7 +362,7 @@ sub enccompact()
 			&shr	($tmp,16);			}
 	if ($i==2)  {	&and	($s[1],0xFF);			}#%edx[2]
 			&and	($tmp,0xFF);
-			&movz	($tmp,&DWP(-128,$te,$tmp,1));
+			&movz	($tmp,&BP(-128,$te,$tmp,1));
 			&shl	($tmp,16);
 			&xor	($out,$tmp);
 
@@ -368,7 +370,7 @@ sub enccompact()
 	elsif($i==2){	&movz	($tmp,&HB($s[3]));		}#%ebx[2]
 	else        {	&mov	($tmp,$s[3]);
 			&shr	($tmp,24);			}
-			&movz	($tmp,&DWP(-128,$te,$tmp,1));
+			&movz	($tmp,&BP(-128,$te,$tmp,1));
 			&shl	($tmp,24);
 			&xor	($out,$tmp);
 	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
@@ -469,9 +471,9 @@ sub enctransform()
 #
 # Performance is not actually extraordinary in comparison to pure
 # x86 code. In particular encrypt performance is virtually the same.
-# same. Decrypt performance on the other hand is 15-20% better on
-# newer µ-archs [but we're thankful for *any* improvement here], and
-# ~50% better on PIII:-) And additionally on the pros side this code
+# Decrypt performance on the other hand is 15-20% better on newer
+# µ-archs [but we're thankful for *any* improvement here], and ~50%
+# better on PIII:-) And additionally on the pros side this code
 # eliminates redundant references to stack and thus relieves/
 # minimizes the pressure on the memory bus.
 #
@@ -516,80 +518,80 @@ sub mmx_enccompact()
 	&movd	("eax","mm1");			#  5, 4, 1, 0
 	&movd	("ebx","mm5");			# 15,14,11,10
 
-	&movz	("esi",&LB("eax"));		#  0
-	&movz	("ecx",&DWP(-128,$tbl,"esi",1));#  0
+	&movz	($acc,&LB("eax"));		#  0
+	&movz	("ecx",&BP(-128,$tbl,$acc,1));	#  0
 	&pshufw	("mm2","mm0",0x0d);		#  7, 6, 3, 2
 	&movz	("edx",&HB("eax"));		#  1
-	&movz	("edx",&DWP(-128,$tbl,"edx",1));#  1
+	&movz	("edx",&BP(-128,$tbl,"edx",1));	#  1
 	&shl	("edx",8);			#  1
 	&shr	("eax",16);			#  5, 4
 
-	&movz	("esi",&LB("ebx"));		# 10
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 10
-	&shl	("esi",16);			# 10
-	&or	("ecx","esi");			# 10
+	&movz	($acc,&LB("ebx"));		# 10
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 10
+	&shl	($acc,16);			# 10
+	&or	("ecx",$acc);			# 10
 	&pshufw	("mm6","mm4",0x08);		# 13,12, 9, 8
-	&movz	("esi",&HB("ebx"));		# 11
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 11
-	&shl	("esi",24);			# 11
-	&or	("edx","esi");			# 11
+	&movz	($acc,&HB("ebx"));		# 11
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 11
+	&shl	($acc,24);			# 11
+	&or	("edx",$acc);			# 11
 	&shr	("ebx",16);			# 15,14
 
-	&movz	("esi",&HB("eax"));		#  5
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  5
-	&shl	("esi",8);			#  5
-	&or	("ecx","esi");			#  5
-	&movz	("esi",&HB("ebx"));		# 15
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 15
-	&shl	("esi",24);			# 15
-	&or	("ecx","esi");			# 15
+	&movz	($acc,&HB("eax"));		#  5
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	#  5
+	&shl	($acc,8);			#  5
+	&or	("ecx",$acc);			#  5
+	&movz	($acc,&HB("ebx"));		# 15
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 15
+	&shl	($acc,24);			# 15
+	&or	("ecx",$acc);			# 15
 	&movd	("mm0","ecx");			# t[0] collected
 
-	&movz	("esi",&LB("eax"));		#  4
-	&movz	("ecx",&DWP(-128,$tbl,"esi",1));#  4
+	&movz	($acc,&LB("eax"));		#  4
+	&movz	("ecx",&BP(-128,$tbl,$acc,1));	#  4
 	&movd	("eax","mm2");			#  7, 6, 3, 2
-	&movz	("esi",&LB("ebx"));		# 14
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 14
-	&shl	("esi",16);			# 14
-	&or	("ecx","esi");			# 14
+	&movz	($acc,&LB("ebx"));		# 14
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 14
+	&shl	($acc,16);			# 14
+	&or	("ecx",$acc);			# 14
 
 	&movd	("ebx","mm6");			# 13,12, 9, 8
-	&movz	("esi",&HB("eax"));		#  3
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  3
-	&shl	("esi",24);			#  3
-	&or	("ecx","esi");			#  3
-	&movz	("esi",&HB("ebx"));		#  9
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  9
-	&shl	("esi",8);			#  9
-	&or	("ecx","esi");			#  9
+	&movz	($acc,&HB("eax"));		#  3
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	#  3
+	&shl	($acc,24);			#  3
+	&or	("ecx",$acc);			#  3
+	&movz	($acc,&HB("ebx"));		#  9
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	#  9
+	&shl	($acc,8);			#  9
+	&or	("ecx",$acc);			#  9
 	&movd	("mm1","ecx");			# t[1] collected
 
-	&movz	("esi",&LB("ebx"));		#  8
-	&movz	("ecx",&DWP(-128,$tbl,"esi",1));#  8
+	&movz	($acc,&LB("ebx"));		#  8
+	&movz	("ecx",&BP(-128,$tbl,$acc,1));	#  8
 	&shr	("ebx",16);			# 13,12
-	&movz	("esi",&LB("eax"));		#  2
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  2
-	&shl	("esi",16);			#  2
-	&or	("ecx","esi");			#  2
+	&movz	($acc,&LB("eax"));		#  2
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	#  2
+	&shl	($acc,16);			#  2
+	&or	("ecx",$acc);			#  2
 	&shr	("eax",16);			#  7, 6
 
 	&punpckldq	("mm0","mm1");		# t[0,1] collected
 
-	&movz	("esi",&HB("eax"));		#  7
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  7
-	&shl	("esi",24);			#  7
-	&or	("ecx","esi");			#  7
+	&movz	($acc,&HB("eax"));		#  7
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	#  7
+	&shl	($acc,24);			#  7
+	&or	("ecx",$acc);			#  7
 	&and	("eax",0xff);			#  6
-	&movz	("eax",&DWP(-128,$tbl,"eax",1));#  6
+	&movz	("eax",&BP(-128,$tbl,"eax",1));	#  6
 	&shl	("eax",16);			#  6
 	&or	("edx","eax");			#  6
-	&movz	("esi",&HB("ebx"));		# 13
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 13
-	&shl	("esi",8);			# 13
-	&or	("ecx","esi");			# 13
+	&movz	($acc,&HB("ebx"));		# 13
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 13
+	&shl	($acc,8);			# 13
+	&or	("ecx",$acc);			# 13
 	&movd	("mm4","ecx");			# t[2] collected
 	&and	("ebx",0xff);			# 12
-	&movz	("ebx",&DWP(-128,$tbl,"ebx",1));# 12
+	&movz	("ebx",&BP(-128,$tbl,"ebx",1));	# 12
 	&or	("edx","ebx");			# 12
 	&movd	("mm5","edx");			# t[3] collected
 
@@ -632,24 +634,22 @@ sub mmx_enccompact()
 		&movq	("mm1","mm0");		&movq	("mm5","mm4");	# r0
 		&pcmpgtb("mm3","mm0");		&pcmpgtb("mm7","mm4");
 		&pand	("mm3","mm2");		&pand	("mm7","mm2");
-		&movq	("mm2","mm0");		&movq	("mm6","mm4");	# r0
+		&pshufw	("mm2","mm0",0xb1);	&pshufw	("mm6","mm4",0xb1);# ROTATE(r0,16)
 		&paddb	("mm0","mm0");		&paddb	("mm4","mm4");
 		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# = r2
-		&movq	("mm3","mm2");		&movq	("mm7","mm6");
-		&pxor	("mm1","mm0");		&pxor	("mm5","mm4");	# r2^r0
+		&pshufw	("mm3","mm2",0xb1);	&pshufw	("mm7","mm6",0xb1);# r0
+		&pxor	("mm1","mm0");		&pxor	("mm5","mm4");	# r0^r2
+		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");	# ^= ROTATE(r0,16)
 
+		&movq	("mm2","mm3");		&movq	("mm6","mm7");
 		&pslld	("mm3",8);		&pslld	("mm7",8);
-		&psrld	("mm2",16);		&psrld	("mm6",16);
+		&psrld	("mm2",24);		&psrld	("mm6",24);
 		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= r0<<8
-		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");	# ^= r0>>16
-		&pslld	("mm3",8);		&pslld	("mm7",8);
-		&psrld	("mm2",8);		&psrld	("mm6",8);
-		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= r0<<16
-		&movq	("mm3","mm1");		&movq	("mm7","mm5");
 		&pxor	("mm0","mm2");		&pxor	("mm4","mm6");	# ^= r0>>24
 
-		&psrld	("mm1",8);		&psrld	("mm5",8);
+		&movq	("mm3","mm1");		&movq	("mm7","mm5");
 		&movq	("mm2",&QWP(0,$key));	&movq	("mm6",&QWP(8,$key));
+		&psrld	("mm1",8);		&psrld	("mm5",8);
 		&pslld	("mm3",24);		&pslld	("mm7",24);
 		&pxor	("mm0","mm1");		&pxor	("mm4","mm5");	# ^= (r2^r0)<<8
 		&pxor	("mm0","mm3");		&pxor	("mm4","mm7");	# ^= (r2^r0)>>24
@@ -1105,7 +1105,7 @@ sub enclast()
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
-	&jmp	(&label("ret"));
+	&function_end_A();
 
 	&set_label("mmx",16);
 	&movq	("mm0",&QWP(0,$acc));
@@ -1116,8 +1116,6 @@ sub enclast()
 	&movq	(&QWP(0,$acc),"mm0");		# write output data
 	&movq	(&QWP(8,$acc),"mm4");
 	&emms	();
-
-&set_label("ret",4);
 &function_end("AES_encrypt");
 
 #--------------------------------------------------------------------#
@@ -1140,11 +1138,11 @@ sub deccompact()
 	if($i==3)   {	&$Fn	($key,&DWP(20,"esp"));		}
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
-			&movz	($out,&DWP(-128,$td,$out,1));
+			&movz	($out,&BP(-128,$td,$out,1));
 
 	if ($i==3)  {	$tmp=$s[1];				}
 			&movz	($tmp,&HB($s[1]));
-			&movz	($tmp,&DWP(-128,$td,$tmp,1));
+			&movz	($tmp,&BP(-128,$td,$tmp,1));
 			&shl	($tmp,8);
 			&xor	($out,$tmp);
 
@@ -1152,14 +1150,14 @@ sub deccompact()
 	else        {	mov	($tmp,$s[2]);			}
 			&shr	($tmp,16);
 			&and	($tmp,0xFF);
-			&movz	($tmp,&DWP(-128,$td,$tmp,1));
+			&movz	($tmp,&BP(-128,$td,$tmp,1));
 			&shl	($tmp,16);
 			&xor	($out,$tmp);
 
 	if ($i==3)  {	$tmp=$s[3]; &$Fn ($s[2],&DWP(8,"esp"));	}
 	else        {	&mov	($tmp,$s[3]);			}
 			&shr	($tmp,24);
-			&movz	($tmp,&DWP(-128,$td,$tmp,1));
+			&movz	($tmp,&BP(-128,$td,$tmp,1));
 			&shl	($tmp,24);
 			&xor	($out,$tmp);
 	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
@@ -1301,80 +1299,80 @@ sub mmx_deccompact()
 	&movd	("eax","mm1");			#  7, 6, 1, 0
 
 	&pshufw	("mm5","mm4",0x09);		# 13,12,11,10
-	&movz	("esi",&LB("eax"));		#  0
-	&movz	("ecx",&DWP(-128,$tbl,"esi",1));#  0
+	&movz	($acc,&LB("eax"));		#  0
+	&movz	("ecx",&BP(-128,$tbl,$acc,1));	#  0
 	&movd	("ebx","mm5");			# 13,12,11,10
 	&movz	("edx",&HB("eax"));		#  1
-	&movz	("edx",&DWP(-128,$tbl,"edx",1));#  1
+	&movz	("edx",&BP(-128,$tbl,"edx",1));	#  1
 	&shl	("edx",8);			#  1
 
 	&pshufw	("mm2","mm0",0x06);		#  3, 2, 5, 4
-	&movz	("esi",&LB("ebx"));		# 10
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 10
-	&shl	("esi",16);			# 10
-	&or	("ecx","esi");			# 10
+	&movz	($acc,&LB("ebx"));		# 10
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 10
+	&shl	($acc,16);			# 10
+	&or	("ecx",$acc);			# 10
 	&shr	("eax",16);			#  7, 6
-	&movz	("esi",&HB("ebx"));		# 11
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 11
-	&shl	("esi",24);			# 11
-	&or	("edx","esi");			# 11
+	&movz	($acc,&HB("ebx"));		# 11
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 11
+	&shl	($acc,24);			# 11
+	&or	("edx",$acc);			# 11
 	&shr	("ebx",16);			# 13,12
 
 	&pshufw	("mm6","mm4",0x03);		# 9, 8,15,14
-	&movz	("esi",&HB("eax"));		#  7
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  7
-	&shl	("esi",24);			#  7
-	&or	("ecx","esi");			#  7
-	&movz	("esi",&HB("ebx"));		# 13
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 13
-	&shl	("esi",8);			# 13
-	&or	("ecx","esi");			# 13
+	&movz	($acc,&HB("eax"));		#  7
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	#  7
+	&shl	($acc,24);			#  7
+	&or	("ecx",$acc);			#  7
+	&movz	($acc,&HB("ebx"));		# 13
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 13
+	&shl	($acc,8);			# 13
+	&or	("ecx",$acc);			# 13
 	&movd	("mm0","ecx");			# t[0] collected
 
-	&movz	("esi",&LB("eax"));		#  6
+	&movz	($acc,&LB("eax"));		#  6
 	&movd	("eax","mm2");			#  3, 2, 5, 4
-	&movz	("ecx",&DWP(-128,$tbl,"esi",1));#  6
+	&movz	("ecx",&BP(-128,$tbl,$acc,1));	#  6
 	&shl	("ecx",16);			#  6
-	&movz	("esi",&LB("ebx"));		# 12
+	&movz	($acc,&LB("ebx"));		# 12
 	&movd	("ebx","mm6");			#  9, 8,15,14
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 12
-	&or	("ecx","esi");			# 12
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 12
+	&or	("ecx",$acc);			# 12
 
-	&movz	("esi",&LB("eax"));		#  4
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  4
-	&or	("edx","esi");			#  4
-	&movz	("esi",&LB("ebx"));		# 14
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 14
-	&shl	("esi",16);			# 14
-	&or	("edx","esi");			# 14
+	&movz	($acc,&LB("eax"));		#  4
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	#  4
+	&or	("edx",$acc);			#  4
+	&movz	($acc,&LB("ebx"));		# 14
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 14
+	&shl	($acc,16);			# 14
+	&or	("edx",$acc);			# 14
 	&movd	("mm1","edx");			# t[1] collected
 
-	&movz	("esi",&HB("eax"));		#  5
-	&movz	("edx",&DWP(-128,$tbl,"esi",1));#  5
+	&movz	($acc,&HB("eax"));		#  5
+	&movz	("edx",&BP(-128,$tbl,$acc,1));	#  5
 	&shl	("edx",8);			#  5
-	&movz	("esi",&HB("ebx"));		# 15
+	&movz	($acc,&HB("ebx"));		# 15
 	&shr	("eax",16);			#  3, 2
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));# 15
-	&shl	("esi",24);			# 15
-	&or	("edx","esi");			# 15
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	# 15
+	&shl	($acc,24);			# 15
+	&or	("edx",$acc);			# 15
 	&shr	("ebx",16);			#  9, 8
 
 	&punpckldq	("mm0","mm1");		# t[0,1] collected
 
-	&movz	("esi",&HB("ebx"));		#  9
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  9
-	&shl	("esi",8);			#  9
-	&or	("ecx","esi");			#  9
+	&movz	($acc,&HB("ebx"));		#  9
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	#  9
+	&shl	($acc,8);			#  9
+	&or	("ecx",$acc);			#  9
 	&and	("ebx",0xff);			#  8
-	&movz	("ebx",&DWP(-128,$tbl,"ebx",1));#  8
+	&movz	("ebx",&BP(-128,$tbl,"ebx",1));	#  8
 	&or	("edx","ebx");			#  8
-	&movz	("esi",&LB("eax"));		#  2
-	&movz	("esi",&DWP(-128,$tbl,"esi",1));#  2
-	&shl	("esi",16);			#  2
-	&or	("edx","esi");			#  2
+	&movz	($acc,&LB("eax"));		#  2
+	&movz	($acc,&BP(-128,$tbl,$acc,1));	#  2
+	&shl	($acc,16);			#  2
+	&or	("edx",$acc);			#  2
 	&movd	("mm4","edx");			# t[2] collected
 	&movz	("eax",&HB("eax"));		#  3
-	&movz	("eax",&DWP(-128,$tbl,"eax",1));#  3
+	&movz	("eax",&BP(-128,$tbl,"eax",1));	#  3
 	&shl	("eax",24);			#  3
 	&or	("ecx","eax");			#  3
 	&movd	("mm5","ecx");			# t[3] collected
@@ -1407,7 +1405,6 @@ sub mmx_deccompact()
 	&mov	($s2,&DWP(192-128,$tbl));
 	&mov	($s3,&DWP(224-128,$tbl));
 
-	&align	(4);
 	&set_label("loop",16);
 		&mmx_deccompact();
 		&add	($key,16);
@@ -1536,11 +1533,11 @@ sub declast()
 	if($i==3)   {	&mov	($key,&DWP(20,"esp"));		}
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
-			&movz	($out,&DWP(0,$td,$out,1));
+			&movz	($out,&BP(0,$td,$out,1));
 
 	if ($i==3)  {	$tmp=$s[1];				}
 			&movz	($tmp,&HB($s[1]));
-			&movz	($tmp,&DWP(0,$td,$tmp,1));
+			&movz	($tmp,&BP(0,$td,$tmp,1));
 			&shl	($tmp,8);
 			&xor	($out,$tmp);
 
@@ -1548,14 +1545,14 @@ sub declast()
 	else        {	mov	($tmp,$s[2]);			}
 			&shr	($tmp,16);
 			&and	($tmp,0xFF);
-			&movz	($tmp,&DWP(0,$td,$tmp,1));
+			&movz	($tmp,&BP(0,$td,$tmp,1));
 			&shl	($tmp,16);
 			&xor	($out,$tmp);
 
 	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}
 	else        {	&mov	($tmp,$s[3]);			}
 			&shr	($tmp,24);
-			&movz	($tmp,&DWP(0,$td,$tmp,1));
+			&movz	($tmp,&BP(0,$td,$tmp,1));
 			&shl	($tmp,24);
 			&xor	($out,$tmp);
 	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
@@ -1895,7 +1892,7 @@ sub declast()
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
-	&jmp	(&label("ret"));
+	&function_end_A();
 
 	&set_label("mmx",16);
 	&movq	("mm0",&QWP(0,$acc));
@@ -1906,8 +1903,6 @@ sub declast()
 	&movq	(&QWP(0,$acc),"mm0");		# write output data
 	&movq	(&QWP(8,$acc),"mm4");
 	&emms	();
-
-&set_label("ret",4);
 &function_end("AES_decrypt");
 
 # void AES_cbc_encrypt (const void char *inp, unsigned char *out,
@@ -2357,27 +2352,26 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 sub enckey()
 {
 	&movz	("esi",&LB("edx"));		# rk[i]>>0
-	&mov	("ebx",&DWP(2,$tbl,"esi",8));
+	&movz	("ebx",&BP(-128,$tbl,"esi",1));
 	&movz	("esi",&HB("edx"));		# rk[i]>>8
-	&and	("ebx",0xFF000000);
+	&shl	("ebx",24);
 	&xor	("eax","ebx");
 
-	&mov	("ebx",&DWP(2,$tbl,"esi",8));
+	&movz	("ebx",&BP(-128,$tbl,"esi",1));
 	&shr	("edx",16);
-	&and	("ebx",0x000000FF);
 	&movz	("esi",&LB("edx"));		# rk[i]>>16
 	&xor	("eax","ebx");
 
-	&mov	("ebx",&DWP(0,$tbl,"esi",8));
+	&movz	("ebx",&BP(-128,$tbl,"esi",1));
 	&movz	("esi",&HB("edx"));		# rk[i]>>24
-	&and	("ebx",0x0000FF00);
+	&shl	("ebx",8);
 	&xor	("eax","ebx");
 
-	&mov	("ebx",&DWP(0,$tbl,"esi",8));
-	&and	("ebx",0x00FF0000);
+	&movz	("ebx",&BP(-128,$tbl,"esi",1));
+	&shl	("ebx",16);
 	&xor	("eax","ebx");
 
-	&xor	("eax",&DWP(2048+1024,$tbl,"ecx",4));	# rcon
+	&xor	("eax",&BP(1024-128,$tbl,"ecx",4));	# rcon
 }
 
 # int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
@@ -2396,6 +2390,17 @@ sub enckey()
 	&set_label("pic_point");
 	&blindpop($tbl);
 	&lea	($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
+	&lea	($tbl,&DWP(2048+128,$tbl));
+
+	# prefetch Te4
+	&mov	("eax",&DWP(0-128,$tbl));
+	&mov	("ebx",&DWP(32-128,$tbl));
+	&mov	("ecx",&DWP(64-128,$tbl));
+	&mov	("edx",&DWP(96-128,$tbl));
+	&mov	("eax",&DWP(128-128,$tbl));
+	&mov	("ebx",&DWP(160-128,$tbl));
+	&mov	("ecx",&DWP(192-128,$tbl));
+	&mov	("edx",&DWP(224-128,$tbl));
 
 	&mov	("ecx",&wparam(1));		# number of bits in key
 	&cmp	("ecx",128);
@@ -2536,24 +2541,23 @@ sub enckey()
 		&mov	("edx","eax");
 		&mov	("eax",&DWP(16,"edi"));		# rk[4]
 		&movz	("esi",&LB("edx"));		# rk[11]>>0
-		&mov	("ebx",&DWP(2,$tbl,"esi",8));
+		&movz	("ebx",&BP(-128,$tbl,"esi",1));
 		&movz	("esi",&HB("edx"));		# rk[11]>>8
-		&and	("ebx",0x000000FF);
 		&xor	("eax","ebx");
 
-		&mov	("ebx",&DWP(0,$tbl,"esi",8));
+		&movz	("ebx",&BP(-128,$tbl,"esi",1));
 		&shr	("edx",16);
-		&and	("ebx",0x0000FF00);
+		&shl	("ebx",8);
 		&movz	("esi",&LB("edx"));		# rk[11]>>16
 		&xor	("eax","ebx");
 
-		&mov	("ebx",&DWP(0,$tbl,"esi",8));
+		&movz	("ebx",&BP(-128,$tbl,"esi",1));
 		&movz	("esi",&HB("edx"));		# rk[11]>>24
-		&and	("ebx",0x00FF0000);
+		&shl	("ebx",16);
 		&xor	("eax","ebx");
 
-		&mov	("ebx",&DWP(2,$tbl,"esi",8));
-		&and	("ebx",0xFF000000);
+		&movz	("ebx",&BP(-128,$tbl,"esi",1));
+		&shl	("ebx",24);
 		&xor	("eax","ebx");
 
 		&mov	(&DWP(48,"edi"),"eax");		# rk[12]
@@ -2578,24 +2582,61 @@ sub enckey()
 &function_end("AES_set_encrypt_key");
 
 sub deckey()
-{ my ($i,$ptr,$te,$td) = @_;
+{ my ($i,$key,$tp1,$tp2,$tp4,$tp8) = @_;
+  my $tmp = $tbl;
 
-	&mov	("eax",&DWP($i,$ptr));
-	&mov	("edx","eax");
-	&movz	("ebx",&HB("eax"));
-	&shr	("edx",16);
-	&and	("eax",0xFF);
-	&movz	("eax",&BP(2,$te,"eax",8));
-	&movz	("ebx",&BP(2,$te,"ebx",8));
-	&mov	("eax",&DWP(0,$td,"eax",8));
-	&xor	("eax",&DWP(3,$td,"ebx",8));
-	&movz	("ebx",&HB("edx"));
-	&and	("edx",0xFF);
-	&movz	("edx",&BP(2,$te,"edx",8));
-	&movz	("ebx",&BP(2,$te,"ebx",8));
-	&xor	("eax",&DWP(2,$td,"edx",8));
-	&xor	("eax",&DWP(1,$td,"ebx",8));
-	&mov	(&DWP($i,$ptr),"eax");
+	&mov	($acc,$tp1);
+	&and	($acc,0x80808080);
+	&mov	($tmp,$acc);
+	&mov	($tp2,$tp1);
+	&shr	($tmp,7);
+	&and	($tp2,0x7f7f7f7f);
+	&sub	($acc,$tmp);
+	&add	($tp2,$tp2);
+	&and	($acc,0x1b1b1b1b);
+	&xor	($acc,$tp2);
+	&mov	($tp2,$acc);
+
+	&and	($acc,0x80808080);
+	&mov	($tmp,$acc);
+	&mov	($tp4,$tp2);
+	 &xor	($tp2,$tp1);	# tp2^tp1
+	&shr	($tmp,7);
+	&and	($tp4,0x7f7f7f7f);
+	&sub	($acc,$tmp);
+	&add	($tp4,$tp4);
+	&and	($acc,0x1b1b1b1b);
+	&xor	($acc,$tp4);
+	&mov	($tp4,$acc);
+
+	&and	($acc,0x80808080);
+	&mov	($tmp,$acc);
+	&mov	($tp8,$tp4);
+	 &xor	($tp4,$tp1);	# tp4^tp1
+	&shr	($tmp,7);
+	&and	($tp8,0x7f7f7f7f);
+	&sub	($acc,$tmp);
+	&add	($tp8,$tp8);
+	&and	($acc,0x1b1b1b1b);
+	 &rotl	($tp1,8);	# = ROTATE(tp1,8)
+	&xor	($tp8,$acc);
+
+	&mov	($tmp,&DWP(4*($i+1),$key));	# modulo-scheduled load
+
+	&xor	($tp1,$tp2);
+	&xor	($tp2,$tp8);
+	&xor	($tp1,$tp4);
+	&rotl	($tp2,24);
+	&xor	($tp4,$tp8);
+	&xor	($tp1,$tp8);	# ^= tp8^(tp4^tp1)^(tp2^tp1)
+	&rotl	($tp4,16);
+	&xor	($tp1,$tp2);	# ^= ROTATE(tp8^tp2^tp1,24)
+	&rotl	($tp8,8);
+	&xor	($tp1,$tp4);	# ^= ROTATE(tp8^tp4^tp1,16)
+	&mov	($tp2,$tmp);
+	&xor	($tp1,$tp8);	# ^= ROTATE(tp8,8)
+
+	&mov	(&DWP(4*$i,$key),$tp1);
 }
 
 # int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
@@ -2627,8 +2668,7 @@ sub deckey()
 	&lea	("ecx",&DWP(0,"","ecx",4));
 	&lea	("edi",&DWP(0,"esi","ecx",4));	# pointer to last chunk
 
-	&align	(4);
-	&set_label("invert");			# invert order of chunks
+	&set_label("invert",4);			# invert order of chunks
 		&mov	("eax",&DWP(0,"esi"));
 		&mov	("ebx",&DWP(4,"esi"));
 		&mov	("ecx",&DWP(0,"edi"));
@@ -2650,24 +2690,21 @@ sub deckey()
 		&cmp	("esi","edi");
 	&jne	(&label("invert"));
 
-	&call	(&label("pic_point"));
-	&set_label("pic_point");
-	blindpop($tbl);
-	&lea	("edi",&DWP(&label("AES_Td")."-".&label("pic_point"),$tbl));
-	&lea	($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
+	&mov	($key,&wparam(2));
+	&mov	($acc,&DWP(240,$key));		# pull number of rounds
+	&lea	($acc,&DWP(-2,$acc,$acc));
+	&lea	($acc,&DWP(0,$key,$acc,8));
+	&mov	(&wparam(2),$acc);
 
-	&mov	("esi",&wparam(2));
-	&mov	("ecx",&DWP(240,"esi"));	# pull number of rounds
-	&dec	("ecx");
-	&align	(4);
-	&set_label("permute");			# permute the key schedule
-		&add	("esi",16);
-		&deckey	(0,"esi",$tbl,"edi");
-		&deckey	(4,"esi",$tbl,"edi");
-		&deckey	(8,"esi",$tbl,"edi");
-		&deckey	(12,"esi",$tbl,"edi");
-		&dec	("ecx");
-	&jnz	(&label("permute"));
+	&mov	($s0,&DWP(16,$key));		# modulo-scheduled load
+	&set_label("permute",4);		# permute the key schedule
+		&add	($key,16);
+		&deckey	(0,$key,$s0,$s1,$s2,$s3);
+		&deckey	(1,$key,$s1,$s2,$s3,$s0);
+		&deckey	(2,$key,$s2,$s3,$s0,$s1);
+		&deckey	(3,$key,$s3,$s0,$s1,$s2);
+		&cmp	($key,&wparam(2));
+	&jb	(&label("permute"));
 
 	&xor	("eax","eax");			# return success
 &function_end("AES_set_decrypt_key");
