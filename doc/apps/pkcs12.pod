@@ -49,7 +49,7 @@ programs including Netscape, MSIE and MS Outlook.
 =head1 COMMAND OPTIONS
 
 There are a lot of options the meaning of some depends of whether a PKCS#12 file
-is being created or parsed. By default a PKCS#12 file is parsed a PKCS#12
+is being created or parsed. By default a PKCS#12 file is parsed. A PKCS#12
 file can be created by using the B<-export> option (see below).
 
 =head1 PARSING OPTIONS
