@@ -6,7 +6,7 @@
 # forms are granted according to the OpenSSL license.
 # ====================================================================
 #
-# Version 4.2.
+# Version 4.3.
 #
 # You might fail to appreciate this module performance from the first
 # try. If compared to "vanilla" linux-ia32-icc target, i.e. considered
@@ -114,11 +114,79 @@
 # cycles window. Why just SSE? Because it's needed on hyper-threading
 # CPU! Which is also why it's prefetched with 64 byte stride. Best
 # part is that it has no negative effect on performance:-)  
+#
+# Version 4.3 implements switch between compact and non-compact block
+# functions in AES_cbc_encrypt depending on how much data was asked
+# to process in one stroke.
+#
+# Timing attacks are classified in two classes: synchronous when
+# attacker consciously initiates cryptographic operation and collect
+# timing data of various character afterwards, and asynchronous when
+# malicious code is executed on same CPU simultaneously with AES,
+# instruments itself and performs statistical analysis of this data.
+#
+# As far as synchronous attacks go the root to the AES timing
+# vulnerability is twofold. Firstly, of 256 S-box elements at most 160
+# are referred to in single 128-bit block operation. Well, in C
+# implementation with 4 distinct tables it's actually as little as 40
+# references per 256 elements table, but anyway... Secondly, even
+# though S-box elements are clustered into smaller amount of cache-
+# lines, smaller than 160 and even 40, it turned out that for certain
+# plain-text pattern[s] or simply put chosen plain-text and given key
+# few cache-lines remain unaccessed during block operation. Now, if
+# attacker can figure out this access pattern, he can deduct the key
+# [or at least part of it]. The natural way to mitigate this kind of
+# attacks is to minimize the amount of cache-lines in S-box and/or
+# prefetch them to ensure that every one is accessed for more uniform
+# timing. But note that *if* plain-text was concealed in such way that
+# input to block function is distributed *uniformly*, then attack
+# wouldn't apply. Now note that some encryption modes, most notably
+# CBC, do masks the plain-text in this exact way [secure cipher output
+# is distributed uniformly]. Yes, one still might find input that
+# would reveal the information about given key, but if amount of
+# candidate inputs to be tried is larger than amount possible key
+# combinations then attack becomes infeasible. This is why revised
+# AES_cbc_encrypt "dares" to switch to larger S-box when larger chunk
+# of data is to be processed in one stroke. The current size limit of
+# 512 bytes is chosen to provide same [diminishigly low] probability
+# for cache-line to remain untouched in large chunk operation with
+# large S-box as for single block operation with compact S-box and
+# surely needs more careful consideration...
+#
+# As for asynchronous attacks. There are two flavours: attacker code
+# being interleaved with AES on hyper-threading CPU at *instruction*
+# level, and two processes time sharing single core. As for latter.
+# Two vectors. 1. Given that attacker process has higher priority,
+# yield execution to process performing AES just before timer fires
+# off the scheduler, immediately regain control of CPU and analyze the
+# cache state. For this attack to be efficient attacker would have to
+# effectively slow down the operation by several *orders* of magnitute,
+# by ratio of time slice to duration of handful of AES rounds, which
+# unlikely to remain unnoticed. Not to mention that this also means
+# that he would spend correspondigly more time to collect enough
+# statistical data to mount the attack. It's probably appropriate to
+# say that if adeversary reckons that this attack is beneficial and
+# risks to be noticed, you probably have larger problems having him
+# mere opportunity. In other words suggested code design expects you
+# to preclude/mitigate this attack by overall system security design.
+# 2. Attacker manages to make his code interrupt driven. In order for
+# this kind of attack to be feasible, interrupt rate has to be high
+# enough, again comparable to duration of handful of AES rounds. But
+# is there interrupt source of such rate? Hardly, not even 1Gbps NIC
+# generates interrupts at such raging rate...
+#
+# And now back to the former, hyper-threading CPU or more specifically
+# Intel P4. Recall that asynchronous attack implies that malicious
+# code instruments itself. And naturally instrumentation granularity
+# has be noticeably lower than duration of codepath accessing S-box.
+# Given that all cache-lines are accessed during that time that is.
+# Current implementation accesses *all* cache-lines within ~50 cycles
+# window, which is actually *less* than RDTSC latency on Intel P4!
 
 push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
 
-&asm_init($ARGV[0],"aes-586.pl",$ARGV[$#ARGV] eq "386");
+&asm_init($ARGV[0],"aes-586.pl",$x86only = $ARGV[$#ARGV] eq "386");
 
 $s0="eax";
 $s1="ebx";
@@ -128,14 +196,26 @@ $key="edi";
 $acc="esi";
 $tbl="ebp";
 
+# stack frame layout in _[x86|sse]_AES_* routines, frame is allocated
+# by caller
+$__ra=&DWP(0,"esp");	# return address
+$__s0=&DWP(4,"esp");	# s0 backing store
+$__s1=&DWP(8,"esp");	# s1 backing store
+$__s2=&DWP(12,"esp");	# s2 backing store
+$__s3=&DWP(16,"esp");	# s3 backing store
+$__key=&DWP(20,"esp");	# pointer to key schedule
+$__end=&DWP(24,"esp");	# pointer to end of key schedule
+$__tbl=&DWP(28,"esp");	# %ebp backing store
+
+# stack frame layout in AES_[en|crypt] routines, which differs from
+# above by 4 and overlaps by %ebp backing store
+$_tbl=&DWP(24,"esp");
+$_esp=&DWP(28,"esp");
+
 sub _data_word() { my $i; while(defined($i=shift)) { &data_word($i,$i); } }
 
-$compromise=0;		# $compromise=128 abstains from copying key
-			# schedule to stack when encrypting inputs
-			# shorter than 128 bytes at the cost of
-			# risksing aliasing with S-boxes. In return
-			# you get way better, up to +70%, small block
-			# performance.
+$speed_limit=512;	# chunks smaller than $speed_limit are
+			# processed with compact routine in CBC mode
 $small_footprint=1;	# $small_footprint=1 code is ~5% slower [on
 			# recent µ-archs], but ~5 times smaller!
 			# I favor compact code to minimize cache
@@ -206,7 +286,7 @@ sub encvert()
 	&movz	($v0,&HB($v1));
 	&and	($v1,0xFF);
 	&xor	($s[3],&DWP(2,$te,$v1,8));		# s1>>16
-	 &mov	($key,&DWP(20,"esp"));			# reincarnate v1 as key
+	 &mov	($key,$__key);				# reincarnate v1 as key
 	&xor	($s[2],&DWP(1,$te,$v0,8));		# s1>>24
 }
 
@@ -226,7 +306,7 @@ sub enchoriz()
 	&xor	($v1,&DWP(2,$te,$v0,8));	# 10
 	&movz	($v0,&HB($s3));			# 13,12,15*,14
 	&xor	($v1,&DWP(1,$te,$v0,8));	# 15, t[0] collected
-	&mov	(&DWP(4,"esp"),$v1);		# t[0] saved
+	&mov	($__s0,$v1);			# t[0] saved
 
 	&movz	($v0,&LB($s1));			#  7, 6, 5, 4*
 	&shr	($s1,16);			#  -, -, 7, 6
@@ -256,11 +336,11 @@ sub enchoriz()
 	&shr	($s0,24);			#  1*
 	&mov	($s2,&DWP(1,$te,$v0,8));	# 11
 	&xor	($s2,&DWP(3,$te,$s0,8));	#  1
-	&mov	($s0,&DWP(4,"esp"));		# s[0]=t[0]
+	&mov	($s0,$__s0);			# s[0]=t[0]
 	&movz	($v0,&LB($s3));			# 13,12, 7, 6*
 	&shr	($s3,16);			#   ,  ,13,12
 	&xor	($s2,&DWP(2,$te,$v0,8));	#  6
-	&mov	($key,&DWP(20,"esp"));		# reincarnate v0 as key
+	&mov	($key,$__key);			# reincarnate v0 as key
 	&and	($s3,0xff);			#   ,  ,13,12*
 	&mov	($s3,&DWP(0,$te,$s3,8));	# 12
 	&xor	($s3,$s2);			# s[2]=t[3] collected
@@ -350,7 +430,7 @@ sub enccompact()
 	# $Fn is used in first compact round and its purpose is to
 	# void restoration of some values from stack, so that after
 	# 4xenccompact with extra argument $key value is left there...
-	if ($i==3)  {	&$Fn	($key,&DWP(20,"esp"));		}##%edx
+	if ($i==3)  {	&$Fn	($key,$__key);			}##%edx
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
 	if ($i==1)  {	&shr	($s[0],16);			}#%ebx[1]
@@ -363,7 +443,7 @@ sub enccompact()
 			&shl	($tmp,8);
 			&xor	($out,$tmp);
 
-	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(4,"esp"));	}##%ebx
+	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],$__s0);		}##%ebx
 	else        {	&mov	($tmp,$s[2]);
 			&shr	($tmp,16);			}
 	if ($i==2)  {	&and	($s[1],0xFF);			}#%edx[2]
@@ -372,7 +452,7 @@ sub enccompact()
 			&shl	($tmp,16);
 			&xor	($out,$tmp);
 
-	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}##%ecx
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],$__s1);		}##%ecx
 	elsif($i==2){	&movz	($tmp,&HB($s[3]));		}#%ebx[2]
 	else        {	&mov	($tmp,$s[3]);
 			&shr	($tmp,24);			}
@@ -414,7 +494,7 @@ sub enctransform()
 &public_label("AES_Te");
 &function_begin_B("_x86_AES_encrypt_compact");
 	# note that caller is expected to allocate stack frame for me!
-	&mov	(&DWP(20,"esp"),$key);		# save key
+	&mov	($__key,$key);			# save key
 
 	&xor	($s0,&DWP(0,$key));		# xor with key
 	&xor	($s1,&DWP(4,$key));
@@ -424,7 +504,7 @@ sub enctransform()
 	&mov	($acc,&DWP(240,$key));		# load key->rounds
 	&lea	($acc,&DWP(-2,$acc,$acc));
 	&lea	($acc,&DWP(0,$key,$acc,8));
-	&mov	(&DWP(24,"esp"),$acc);		# end of key schedule
+	&mov	($__end,$acc);			# end of key schedule
 
 	# prefetch Te4
 	&mov	($key,&DWP(0-128,$tbl));
@@ -446,16 +526,16 @@ sub enctransform()
 		&enctransform(3);
 		&enctransform(0);
 		&enctransform(1);
-		&mov 	($key,&DWP(20,"esp"));
-		&mov	($tbl,&DWP(28,"esp"));
+		&mov 	($key,$__key);
+		&mov	($tbl,$__tbl);
 		&add	($key,16);		# advance rd_key
 		&xor	($s0,&DWP(0,$key));
 		&xor	($s1,&DWP(4,$key));
 		&xor	($s2,&DWP(8,$key));
 		&xor	($s3,&DWP(12,$key));
 
-	&cmp	($key,&DWP(24,"esp"));
-	&mov	(&DWP(20,"esp"),$key);
+	&cmp	($key,$__end);
+	&mov	($__key,$key);
 	&jb	(&label("loop"));
 
 	&enccompact(0,$tbl,$s0,$s1,$s2,$s3);
@@ -604,6 +684,7 @@ sub sse_enccompact()
 	&punpckldq	("mm4","mm5");		# t[2,3] collected
 }
 
+					if (!$x86only) {
 &public_label("AES_Te");
 &function_begin_B("_sse_AES_encrypt_compact");
 	&pxor	("mm0",&QWP(0,$key));	#  7, 6, 5, 4, 3, 2, 1, 0
@@ -613,7 +694,7 @@ sub sse_enccompact()
 	&mov	($acc,&DWP(240,$key));		# load key->rounds
 	&lea	($acc,&DWP(-2,$acc,$acc));
 	&lea	($acc,&DWP(0,$key,$acc,8));
-	&mov	(&DWP(24,"esp"),$acc);		# end of key schedule
+	&mov	($__end,$acc);			# end of key schedule
 
 	&mov	($s0,0x1b1b1b1b);		# magic constant
 	&mov	(&DWP(8,"esp"),$s0);
@@ -632,7 +713,7 @@ sub sse_enccompact()
 	&set_label("loop",16);
 		&sse_enccompact();
 		&add	($key,16);
-		&cmp	($key,&DWP(24,"esp"));
+		&cmp	($key,$__end);
 		&ja	(&label("out"));
 
 		&movq	("mm2",&QWP(8,"esp"));
@@ -673,6 +754,7 @@ sub sse_enccompact()
 
 	&ret	();
 &function_end_B("_sse_AES_encrypt_compact");
+					}
 
 ######################################################################
 # Vanilla block function.
@@ -684,7 +766,7 @@ sub encstep()
   my $out = $i==3?$s[0]:$acc;
 
 	# lines marked with #%e?x[i] denote "reordered" instructions...
-	if ($i==3)  {	&mov	($key,&DWP(20,"esp"));		}##%edx
+	if ($i==3)  {	&mov	($key,$__key);			}##%edx
 	else        {	&mov	($out,$s[0]);
 			&and	($out,0xFF);			}
 	if ($i==1)  {	&shr	($s[0],16);			}#%ebx[1]
@@ -695,14 +777,14 @@ sub encstep()
 			&movz	($tmp,&HB($s[1]));
 			&xor	($out,&DWP(3,$te,$tmp,8));
 
-	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(4,"esp"));	}##%ebx
+	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],$__s0);		}##%ebx
 	else        {	&mov	($tmp,$s[2]);
 			&shr	($tmp,16);			}
 	if ($i==2)  {	&and	($s[1],0xFF);			}#%edx[2]
 			&and	($tmp,0xFF);
 			&xor	($out,&DWP(2,$te,$tmp,8));
 
-	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}##%ecx
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],$__s1);		}##%ecx
 	elsif($i==2){	&movz	($tmp,&HB($s[3]));		}#%ebx[2]
 	else        {	&mov	($tmp,$s[3]); 
 			&shr	($tmp,24)			}
@@ -717,7 +799,7 @@ sub enclast()
   my $tmp = $key;
   my $out = $i==3?$s[0]:$acc;
 
-	if ($i==3)  {	&mov	($key,&DWP(20,"esp"));		}##%edx
+	if ($i==3)  {	&mov	($key,$__key);			}##%edx
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
 	if ($i==1)  {	&shr	($s[0],16);			}#%ebx[1]
@@ -731,7 +813,7 @@ sub enclast()
 			&and	($tmp,0x0000ff00);
 			&xor	($out,$tmp);
 
-	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],&DWP(4,"esp"));	}##%ebx
+	if ($i==3)  {	$tmp=$s[2]; &mov ($s[1],$__s0);		}##%ebx
 	else        {	&mov	($tmp,$s[2]);
 			&shr	($tmp,16);			}
 	if ($i==2)  {	&and	($s[1],0xFF);			}#%edx[2]
@@ -740,7 +822,7 @@ sub enclast()
 			&and	($tmp,0x00ff0000);
 			&xor	($out,$tmp);
 
-	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}##%ecx
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],$__s1);		}##%ecx
 	elsif($i==2){	&movz	($tmp,&HB($s[3]));		}#%ebx[2]
 	else        {	&mov	($tmp,$s[3]);
 			&shr	($tmp,24);			}
@@ -760,7 +842,7 @@ sub enclast()
 	}
 
 	# note that caller is expected to allocate stack frame for me!
-	&mov	(&DWP(20,"esp"),$key);		# save key
+	&mov	($__key,$key);			# save key
 
 	&xor	($s0,&DWP(0,$key));		# xor with key
 	&xor	($s1,&DWP(4,$key));
@@ -772,7 +854,7 @@ sub enclast()
 	if ($small_footprint) {
 	    &lea	($acc,&DWP(-2,$acc,$acc));
 	    &lea	($acc,&DWP(0,$key,$acc,8));
-	    &mov	(&DWP(24,"esp"),$acc);	# end of key schedule
+	    &mov	($__end,$acc);		# end of key schedule
 
 	    &set_label("loop",16);
 		if ($vertical_spin) {
@@ -788,8 +870,8 @@ sub enclast()
 		&xor	($s1,&DWP(4,$key));
 		&xor	($s2,&DWP(8,$key));
 		&xor	($s3,&DWP(12,$key));
-	    &cmp	($key,&DWP(24,"esp"));
-	    &mov	(&DWP(20,"esp"),$key);
+	    &cmp	($key,$__end);
+	    &mov	($__key,$key);
 	    &jb		(&label("loop"));
 	}
 	else {
@@ -814,7 +896,7 @@ sub enclast()
 		&xor	($s3,&DWP(16*$i+12,$key));
 	    }
 	    &add	($key,32);
-	    &mov	(&DWP(20,"esp"),$key);	# advance rd_key
+	    &mov	($__key,$key);		# advance rd_key
 	&set_label("12rounds",4);
 	    for ($i=1;$i<3;$i++) {
 		if ($vertical_spin) {
@@ -831,7 +913,7 @@ sub enclast()
 		&xor	($s3,&DWP(16*$i+12,$key));
 	    }
 	    &add	($key,32);
-	    &mov	(&DWP(20,"esp"),$key);	# advance rd_key
+	    &mov	($__key,$key);		# advance rd_key
 	&set_label("10rounds",4);
 	    for ($i=1;$i<10;$i++) {
 		if ($vertical_spin) {
@@ -1089,40 +1171,42 @@ sub enclast()
 	&and	($s1,0x3C0);	# modulo 1024, but aligned to cache-line
 	&sub	("esp",$s1);
 	&add	("esp",4);	# 4 is reserved for caller's return address
-	&mov	(&DWP(28,"esp"),$s0);		# save stack pointer
+	&mov	($_esp,$s0);			# save stack pointer
 
 	&call   (&label("pic_point"));          # make it PIC!
 	&set_label("pic_point");
 	&blindpop($tbl);
-	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point"));
+	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point")) if (!$x86only);
 	&lea    ($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
+
 	# pick Te4 copy which can't "overlap" with stack frame or key schedule
 	&lea	($s1,&DWP(768-4,"esp"));
 	&sub	($s1,$tbl);
 	&and	($s1,0x300);
 	&lea	($tbl,&DWP(2048+128,$tbl,$s1));
 
-	&bt	(&DWP(0,$s0),25);		# check for SSE bit
+					if (!$x86only) {
+	&bt	(&DWP(0,$s0),25);	# check for SSE bit
 	&jnc	(&label("x86"));
 
 	&movq	("mm0",&QWP(0,$acc));
 	&movq	("mm4",&QWP(8,$acc));
 	&call	("_sse_AES_encrypt_compact");
-	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
+	&mov	("esp",$_esp);			# restore stack pointer
 	&mov	($acc,&wparam(1));		# load out
 	&movq	(&QWP(0,$acc),"mm0");		# write output data
 	&movq	(&QWP(8,$acc),"mm4");
 	&emms	();
 	&function_end_A();
-
+					}
 	&set_label("x86",16);
-	&mov	(&DWP(24,"esp"),$tbl);
+	&mov	($_tbl,$tbl);
 	&mov	($s0,&DWP(0,$acc));		# load input data
 	&mov	($s1,&DWP(4,$acc));
 	&mov	($s2,&DWP(8,$acc));
 	&mov	($s3,&DWP(12,$acc));
 	&call	("_x86_AES_encrypt_compact");
-	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
+	&mov	("esp",$_esp);			# restore stack pointer
 	&mov	($acc,&wparam(1));		# load out
 	&mov	(&DWP(0,$acc),$s0);		# write output data
 	&mov	(&DWP(4,$acc),$s1);
@@ -1147,7 +1231,7 @@ sub deccompact()
 	# void restoration of some values from stack, so that after
 	# 4xdeccompact with extra argument $key, $s0 and $s1 values
 	# are left there...
-	if($i==3)   {	&$Fn	($key,&DWP(20,"esp"));		}
+	if($i==3)   {	&$Fn	($key,$__key);			}
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
 			&movz	($out,&BP(-128,$td,$out,1));
@@ -1166,14 +1250,14 @@ sub deccompact()
 			&shl	($tmp,16);
 			&xor	($out,$tmp);
 
-	if ($i==3)  {	$tmp=$s[3]; &$Fn ($s[2],&DWP(8,"esp"));	}
+	if ($i==3)  {	$tmp=$s[3]; &$Fn ($s[2],$__s1);		}
 	else        {	&mov	($tmp,$s[3]);			}
 			&shr	($tmp,24);
 			&movz	($tmp,&BP(-128,$td,$tmp,1));
 			&shl	($tmp,24);
 			&xor	($out,$tmp);
 	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
-	if ($i==3)  {	&$Fn	($s[3],&DWP(4,"esp"));		}
+	if ($i==3)  {	&$Fn	($s[3],$__s0);			}
 }
 
 # must be called with 2,3,0,1 as argument sequence!!!
@@ -1233,17 +1317,17 @@ sub dectransform()
 	&xor	($s[$i],$tp4);	# ^= ROTATE(tp8^tp4^tp1,16)
 	&xor	($s[$i],$tp8);	# ^= ROTATE(tp8,8)
 
-	&mov	($s[0],&DWP(4,"esp"))		if($i==2); #prefetch $s0
-	&mov	($s[1],&DWP(8,"esp"))		if($i==3); #prefetch $s1
-	&mov	($s[2],&DWP(12,"esp"))		if($i==1);
-	&mov	($s[3],&DWP(16,"esp"))		if($i==1);
+	&mov	($s[0],$__s0)			if($i==2); #prefetch $s0
+	&mov	($s[1],$__s1)			if($i==3); #prefetch $s1
+	&mov	($s[2],$__s2)			if($i==1);
+	&mov	($s[3],$__s3)			if($i==1);
 	&mov	(&DWP(4+4*$i,"esp"),$s[$i])	if($i>=2);
 }
 
 &public_label("AES_Td");
 &function_begin_B("_x86_AES_decrypt_compact");
 	# note that caller is expected to allocate stack frame for me!
-	&mov	(&DWP(20,"esp"),$key);		# save key
+	&mov	($__key,$key);			# save key
 
 	&xor	($s0,&DWP(0,$key));		# xor with key
 	&xor	($s1,&DWP(4,$key));
@@ -1254,7 +1338,7 @@ sub dectransform()
 
 	&lea	($acc,&DWP(-2,$acc,$acc));
 	&lea	($acc,&DWP(0,$key,$acc,8));
-	&mov	(&DWP(24,"esp"),$acc);		# end of key schedule
+	&mov	($__end,$acc);			# end of key schedule
 
 	# prefetch Td4
 	&mov	($key,&DWP(0-128,$tbl));
@@ -1276,16 +1360,16 @@ sub dectransform()
 		&dectransform(3);
 		&dectransform(0);
 		&dectransform(1);
-		&mov 	($key,&DWP(20,"esp"));
-		&mov	($tbl,&DWP(28,"esp"));
+		&mov 	($key,$__key);
+		&mov	($tbl,$__tbl);
 		&add	($key,16);		# advance rd_key
 		&xor	($s0,&DWP(0,$key));
 		&xor	($s1,&DWP(4,$key));
 		&xor	($s2,&DWP(8,$key));
 		&xor	($s3,&DWP(12,$key));
 
-	&cmp	($key,&DWP(24,"esp"));
-	&mov	(&DWP(20,"esp"),$key);
+	&cmp	($key,$__end);
+	&mov	($__key,$key);
 	&jb	(&label("loop"));
 
 	&deccompact(0,$tbl,$s0,$s3,$s2,$s1);
@@ -1392,6 +1476,7 @@ sub sse_deccompact()
 	&punpckldq	("mm4","mm5");		# t[2,3] collected
 }
 
+					if (!$x86only) {
 &public_label("AES_Td");
 &function_begin_B("_sse_AES_decrypt_compact");
 	&pxor	("mm0",&QWP(0,$key));	#  7, 6, 5, 4, 3, 2, 1, 0
@@ -1401,7 +1486,7 @@ sub sse_deccompact()
 	&mov	($acc,&DWP(240,$key));		# load key->rounds
 	&lea	($acc,&DWP(-2,$acc,$acc));
 	&lea	($acc,&DWP(0,$key,$acc,8));
-	&mov	(&DWP(24,"esp"),$acc);		# end of key schedule
+	&mov	($__end,$acc);			# end of key schedule
 
 	&mov	($s0,0x1b1b1b1b);		# magic constant
 	&mov	(&DWP(8,"esp"),$s0);
@@ -1420,7 +1505,7 @@ sub sse_deccompact()
 	&set_label("loop",16);
 		&sse_deccompact();
 		&add	($key,16);
-		&cmp	($key,&DWP(24,"esp"));
+		&cmp	($key,$__end);
 		&ja	(&label("out"));
 
 		# ROTATE(x^y,N) == ROTATE(x,N)^ROTATE(y,N)
@@ -1493,6 +1578,7 @@ sub sse_deccompact()
 
 	&ret	();
 &function_end_B("_sse_AES_decrypt_compact");
+					}
 
 ######################################################################
 # Vanilla block function.
@@ -1507,7 +1593,7 @@ sub decstep()
 	# optimal... or rather that all attempts to reorder didn't
 	# result in better performance [which by the way is not a
 	# bit lower than ecryption].
-	if($i==3)   {	&mov	($key,&DWP(20,"esp"));		}
+	if($i==3)   {	&mov	($key,$__key);			}
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
 			&mov	($out,&DWP(0,$td,$out,8));
@@ -1522,12 +1608,12 @@ sub decstep()
 			&and	($tmp,0xFF);
 			&xor	($out,&DWP(2,$td,$tmp,8));
 
-	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],$__s1);		}
 	else        {	&mov	($tmp,$s[3]);			}
 			&shr	($tmp,24);
 			&xor	($out,&DWP(1,$td,$tmp,8));
 	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
-	if ($i==3)  {	&mov	($s[3],&DWP(4,"esp"));		}
+	if ($i==3)  {	&mov	($s[3],$__s0);			}
 			&comment();
 }
 
@@ -1546,7 +1632,7 @@ sub declast()
 			&mov	($tmp,&DWP(192-128,$td));
 			&mov	($acc,&DWP(224-128,$td));
 			&lea	($td,&DWP(-128,$td));		}
-	if($i==3)   {	&mov	($key,&DWP(20,"esp"));		}
+	if($i==3)   {	&mov	($key,$__key);			}
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
 			&movz	($out,&BP(0,$td,$out,1));
@@ -1565,21 +1651,21 @@ sub declast()
 			&shl	($tmp,16);
 			&xor	($out,$tmp);
 
-	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}
+	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],$__s1);		}
 	else        {	&mov	($tmp,$s[3]);			}
 			&shr	($tmp,24);
 			&movz	($tmp,&BP(0,$td,$tmp,1));
 			&shl	($tmp,24);
 			&xor	($out,$tmp);
 	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
-	if ($i==3)  {	&mov	($s[3],&DWP(4,"esp"));
+	if ($i==3)  {	&mov	($s[3],$__s0);
 			&lea	($td,&DWP(-2048,$td));		}
 }
 
 &public_label("AES_Td");
 &function_begin_B("_x86_AES_decrypt");
 	# note that caller is expected to allocate stack frame for me!
-	&mov	(&DWP(20,"esp"),$key);		# save key
+	&mov	($__key,$key);			# save key
 
 	&xor	($s0,&DWP(0,$key));		# xor with key
 	&xor	($s1,&DWP(4,$key));
@@ -1591,7 +1677,7 @@ sub declast()
 	if ($small_footprint) {
 	    &lea	($acc,&DWP(-2,$acc,$acc));
 	    &lea	($acc,&DWP(0,$key,$acc,8));
-	    &mov	(&DWP(24,"esp"),$acc);	# end of key schedule
+	    &mov	($__end,$acc);		# end of key schedule
 	    &set_label("loop",16);
 		&decstep(0,$tbl,$s0,$s3,$s2,$s1);
 		&decstep(1,$tbl,$s1,$s0,$s3,$s2);
@@ -1602,8 +1688,8 @@ sub declast()
 		&xor	($s1,&DWP(4,$key));
 		&xor	($s2,&DWP(8,$key));
 		&xor	($s3,&DWP(12,$key));
-	    &cmp	($key,&DWP(24,"esp"));
-	    &mov	(&DWP(20,"esp"),$key);
+	    &cmp	($key,$__end);
+	    &mov	($__key,$key);
 	    &jb		(&label("loop"));
 	}
 	else {
@@ -1624,7 +1710,7 @@ sub declast()
 		&xor	($s3,&DWP(16*$i+12,$key));
 	    }
 	    &add	($key,32);
-	    &mov	(&DWP(20,"esp"),$key);	# advance rd_key
+	    &mov	($__key,$key);		# advance rd_key
 	&set_label("12rounds",4);
 	    for ($i=1;$i<3;$i++) {
 		&decstep(0,$tbl,$s0,$s3,$s2,$s1);
@@ -1637,7 +1723,7 @@ sub declast()
 		&xor	($s3,&DWP(16*$i+12,$key));
 	    }
 	    &add	($key,32);
-	    &mov	(&DWP(20,"esp"),$key);	# advance rd_key
+	    &mov	($__key,$key);		# advance rd_key
 	&set_label("10rounds",4);
 	    for ($i=1;$i<10;$i++) {
 		&decstep(0,$tbl,$s0,$s3,$s2,$s1);
@@ -1881,40 +1967,42 @@ sub declast()
 	&and	($s1,0x3C0);	# modulo 1024, but aligned to cache-line
 	&sub	("esp",$s1);
 	&add	("esp",4);	# 4 is reserved for caller's return address
-	&mov	(&DWP(28,"esp"),$s0);		# save stack pointer
+	&mov	($_esp,$s0);	# save stack pointer
 
 	&call   (&label("pic_point"));          # make it PIC!
 	&set_label("pic_point");
 	&blindpop($tbl);
-	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point"));
+	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point")) if(!$x86only);
 	&lea    ($tbl,&DWP(&label("AES_Td")."-".&label("pic_point"),$tbl));
+
 	# pick Td4 copy which can't "overlap" with stack frame or key schedule
 	&lea	($s1,&DWP(768-4,"esp"));
 	&sub	($s1,$tbl);
 	&and	($s1,0x300);
 	&lea	($tbl,&DWP(2048+128,$tbl,$s1));
 
-	&bt	(&DWP(0,$s0),25);		# check for SSE bit
+					if (!$x86only) {
+	&bt	(&DWP(0,$s0),25);	# check for SSE bit
 	&jnc	(&label("x86"));
 
 	&movq	("mm0",&QWP(0,$acc));
 	&movq	("mm4",&QWP(8,$acc));
 	&call	("_sse_AES_decrypt_compact");
-	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
+	&mov	("esp",$_esp);			# restore stack pointer
 	&mov	($acc,&wparam(1));		# load out
 	&movq	(&QWP(0,$acc),"mm0");		# write output data
 	&movq	(&QWP(8,$acc),"mm4");
 	&emms	();
 	&function_end_A();
-
+					}
 	&set_label("x86",16);
-	&mov	(&DWP(24,"esp"),$tbl);
+	&mov	($_tbl,$tbl);
 	&mov	($s0,&DWP(0,$acc));		# load input data
 	&mov	($s1,&DWP(4,$acc));
 	&mov	($s2,&DWP(8,$acc));
 	&mov	($s3,&DWP(12,$acc));
 	&call	("_x86_AES_decrypt_compact");
-	&mov	("esp",&DWP(28,"esp"));		# restore stack pointer
+	&mov	("esp",$_esp);			# restore stack pointer
 	&mov	($acc,&wparam(1));		# load out
 	&mov	(&DWP(0,$acc),$s0);		# write output data
 	&mov	(&DWP(4,$acc),$s1);
@@ -1927,130 +2015,138 @@ sub declast()
 #			unsigned char *ivp,const int enc);
 {
 # stack frame layout
-# -4(%esp)	0(%esp)		return address
-# 0(%esp)	4(%esp)		s0 backup
-# 4(%esp)	8(%esp)		s1 backup
-# 8(%esp)	12(%esp)	s2 backup
-# 12(%esp)	16(%esp)	s3 backup
-# 16(%esp)	20(%esp)	key backup	
-# 20(%esp)	24(%esp)	end of key schedule
-# 24(%esp)	28(%esp)	ebp backup
-my $_esp=&DWP(28,"esp");	#saved %esp
-my $_inp=&DWP(32,"esp");	#copy of wparam(0)
-my $_out=&DWP(36,"esp");	#copy of wparam(1)
-my $_len=&DWP(40,"esp");	#copy of wparam(2)
-my $_key=&DWP(44,"esp");	#copy of wparam(3)
-my $_ivp=&DWP(48,"esp");	#copy of wparam(4)
-my $_tmp=&DWP(52,"esp");	#volatile variable
-my $ivec=&DWP(56,"esp");	#ivec[16]
-my $aes_key=&DWP(72,"esp");	#copy of aes_key
-my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
+#             -4(%esp)		# return address	 0(%esp)
+#              0(%esp)		# s0 backing store	 4(%esp)	
+#              4(%esp)		# s1 backing store	 8(%esp)
+#              8(%esp)		# s2 backing store	12(%esp)
+#             12(%esp)		# s3 backing store	16(%esp)
+#             16(%esp)		# key backup		20(%esp)
+#             20(%esp)		# end of key schedule	24(%esp)
+#             24(%esp)		# %ebp backup		28(%esp)
+#             28(%esp)		# %esp backup
+my $_inp=&DWP(32,"esp");	# copy of wparam(0)
+my $_out=&DWP(36,"esp");	# copy of wparam(1)
+my $_len=&DWP(40,"esp");	# copy of wparam(2)
+my $_key=&DWP(44,"esp");	# copy of wparam(3)
+my $_ivp=&DWP(48,"esp");	# copy of wparam(4)
+my $_tmp=&DWP(52,"esp");	# volatile variable
+#
+my $ivec=&DWP(60,"esp");	# ivec[16]
+my $aes_key=&DWP(76,"esp");	# copy of aes_key
+my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 
 &public_label("AES_Te");
 &public_label("AES_Td");
 &function_begin("AES_cbc_encrypt");
 	&mov	($s2 eq "ecx"? $s2 : "",&wparam(2));	# load len
 	&cmp	($s2,0);
-	&je	(&label("enc_out"));
+	&je	(&label("drop_out"));
 
 	&call   (&label("pic_point"));		# make it PIC!
 	&set_label("pic_point");
 	&blindpop($tbl);
+	&picmeup($s0,"OPENSSL_ia32cap_P",$tbl,&label("pic_point")) if(!$x86only);
 
+	&cmp	(&wparam(5),0);
+	&lea    ($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
+	&jne	(&label("picked_te"));
+	&lea	($tbl,&DWP(&label("AES_Td")."-".&label("AES_Te"),$tbl));
+	&set_label("picked_te");
+
+	# one can argue if this is required
 	&pushf	();
 	&cld	();
 
-	&cmp	(&wparam(5),0);
-	&je	(&label("DECRYPT"));
+	&cmp	($s2,$speed_limit);
+	&jb	(&label("slow_way"));
+	&test	($s2,15);
+	&jnz	(&label("slow_way"));
+					if (!$x86only) {
+	&bt	(&DWP(0,$s0),28);	# check for hyper-threading bit
+	&jc	(&label("slow_way"));
+					}
+	# pre-allocate aligned stack frame...
+	&lea	($acc,&DWP(-80-244,"esp"));
+	&and	($acc,-64);
 
-	&lea    ($tbl,&DWP(&label("AES_Te")."-".&label("pic_point"),$tbl));
-
-	# allocate aligned stack frame...
-	&lea	($key,&DWP(-76-244,"esp"));
-	&and	($key,-64);
-
-	# ... and make sure it doesn't alias with AES_Te modulo 4096
+	# ... and make sure it doesn't alias with $tbl modulo 4096
 	&mov	($s0,$tbl);
-	&lea	($s1,&DWP(2048,$tbl));
-	&mov	($s3,$key);
+	&lea	($s1,&DWP(2048+256,$tbl));
+	&mov	($s3,$acc);
 	&and	($s0,0xfff);		# s = %ebp&0xfff
-	&and	($s1,0xfff);		# e = (%ebp+2048)&0xfff
+	&and	($s1,0xfff);		# e = (%ebp+2048+256)&0xfff
 	&and	($s3,0xfff);		# p = %esp&0xfff
 
 	&cmp	($s3,$s1);		# if (p>=e) %esp =- (p-e);
-	&jb	(&label("te_break_out"));
+	&jb	(&label("tbl_break_out"));
 	&sub	($s3,$s1);
-	&sub	($key,$s3);
-	&jmp	(&label("te_ok"));
-	&set_label("te_break_out");	# else %esp -= (p-s)&0xfff + framesz;
+	&sub	($acc,$s3);
+	&jmp	(&label("tbl_ok"));
+	&set_label("tbl_break_out",4);	# else %esp -= (p-s)&0xfff + framesz;
 	&sub	($s3,$s0);
 	&and	($s3,0xfff);
-	&add	($s3,72+256);
-	&sub	($key,$s3);
-	&align	(4);
-	&set_label("te_ok");
+	&add	($s3,384);
+	&sub	($acc,$s3);
+	&set_label("tbl_ok",4);
 
-	&mov	($s0,&wparam(0));	# load inp
-	&mov	($s1,&wparam(1));	# load out
-	&mov	($s3,&wparam(3));	# load key
-	&mov	($acc,&wparam(4));	# load ivp
-
-	&exch	("esp",$key);
+	&lea	($s3,&wparam(0));	# obtain pointer to parameter block
+	&exch	("esp",$acc);		# allocate stack frame
 	&add	("esp",4);		# reserve for return address!
-	&mov	($_esp,$key);		# save %esp
+	&mov	($_tbl,$tbl);		# save %ebp
+	&mov	($_esp,$acc);		# save %esp
+
+	&mov	($s0,&DWP(0,$s3));	# load inp
+	&mov	($s1,&DWP(4,$s3));	# load out
+	#&mov	($s2,&DWP(8,$s3));	# load len
+	&mov	($key,&DWP(12,$s3));	# load key
+	&mov	($acc,&DWP(16,$s3));	# load ivp
+	&mov	($s3,&DWP(20,$s3));	# load enc flag
 
 	&mov	($_inp,$s0);		# save copy of inp
 	&mov	($_out,$s1);		# save copy of out
 	&mov	($_len,$s2);		# save copy of len
-	&mov	($_key,$s3);		# save copy of key
+	&mov	($_key,$key);		# save copy of key
 	&mov	($_ivp,$acc);		# save copy of ivp
 
 	&mov	($mark,0);		# copy of aes_key->rounds = 0;
-	if ($compromise) {
-		&cmp	($s2,$compromise);
-		&jb	(&label("skip_ecopy"));
-	}
 	# do we copy key schedule to stack?
-	&mov	($s1 eq "ebx" ? $s1 : "",$s3);
+	&mov	($s1 eq "ebx" ? $s1 : "",$key);
 	&mov	($s2 eq "ecx" ? $s2 : "",244/4);
 	&sub	($s1,$tbl);
-	&mov	("esi",$s3);
+	&mov	("esi",$key);
 	&and	($s1,0xfff);
 	&lea	("edi",$aes_key);
-	&cmp	($s1,2048);
-	&jb	(&label("do_ecopy"));
+	&cmp	($s1,2048+256);
+	&jb	(&label("do_copy"));
 	&cmp	($s1,4096-244);
-	&jb	(&label("skip_ecopy"));
-	&align	(4);
-	&set_label("do_ecopy");
+	&jb	(&label("skip_copy"));
+	&set_label("do_copy",4);
 		&mov	($_key,"edi");
 		&data_word(0xA5F3F689);	# rep movsd
-	&set_label("skip_ecopy");
+	&set_label("skip_copy");
 
-	&mov	($acc,$s0);
 	&mov	($key,16);
-	&align	(4);
-	&set_label("prefetch_te");
+	&set_label("prefetch_tbl",4);
 		&mov	($s0,&DWP(0,$tbl));
 		&mov	($s1,&DWP(32,$tbl));
 		&mov	($s2,&DWP(64,$tbl));
-		&mov	($s3,&DWP(96,$tbl));
+		&mov	($acc,&DWP(96,$tbl));
 		&lea	($tbl,&DWP(128,$tbl));
-		&dec	($key);
-	&jnz	(&label("prefetch_te"));
+		&sub	($key,1);
+	&jnz	(&label("prefetch_tbl"));
 	&sub	($tbl,2048);
-	&mov	(&DWP(24,"esp"),$tbl);
 
-	&mov	($s2,$_len);
+	&mov	($acc,$_inp);
 	&mov	($key,$_ivp);
-	&test	($s2,0xFFFFFFF0);
-	&jz	(&label("enc_tail"));		# short input...
 
+	&cmp	($s3,0);
+	&je	(&label("fast_decrypt"));
+
+#----------------------------- ENCRYPT -----------------------------#
 	&mov	($s0,&DWP(0,$key));		# load iv
 	&mov	($s1,&DWP(4,$key));
 
-	&align	(4);
-	&set_label("enc_loop");
+	&set_label("fast_enc_loop",16);
 		&mov	($s2,&DWP(8,$key));
 		&mov	($s3,&DWP(12,$key));
 
@@ -2070,22 +2166,16 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 		&mov	(&DWP(8,$key),$s2);
 		&mov	(&DWP(12,$key),$s3);
 
+		&lea	($acc,&DWP(16,$acc));	# advance inp
 		&mov	($s2,$_len);		# load len
-
-		&lea	($acc,&DWP(16,$acc));
 		&mov	($_inp,$acc);		# save inp
-
-		&lea	($s3,&DWP(16,$key));
+		&lea	($s3,&DWP(16,$key));	# advance out
 		&mov	($_out,$s3);		# save out
-
-		&sub	($s2,16);
-		&test	($s2,0xFFFFFFF0);
+		&sub	($s2,16);		# decrease len
 		&mov	($_len,$s2);		# save len
-	&jnz	(&label("enc_loop"));
-	&test	($s2,15);
-	&jnz	(&label("enc_tail"));
+	&jnz	(&label("fast_enc_loop"));
 	&mov	($acc,$_ivp);		# load ivp
-	&mov	($s2,&DWP(8,$key));	# restore last dwords
+	&mov	($s2,&DWP(8,$key));	# restore last 2 dwords
 	&mov	($s3,&DWP(12,$key));
 	&mov	(&DWP(0,$acc),$s0);	# save ivec
 	&mov	(&DWP(4,$acc),$s1);
@@ -2094,7 +2184,6 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 
 	&cmp	($mark,0);		# was the key schedule copied?
 	&mov	("edi",$_key);
-	&mov	("esp",$_esp);
 	&je	(&label("skip_ezero"));
 	# zero copy of key schedule
 	&mov	("ecx",240/4);
@@ -2102,126 +2191,22 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 	&align	(4);
 	&data_word(0xABF3F689);	# rep stosd
 	&set_label("skip_ezero")
+	&mov	("esp",$_esp);
 	&popf	();
-    &set_label("enc_out");
+    &set_label("drop_out");
 	&function_end_A();
 	&pushf	();			# kludge, never executed
 
-    &align	(4);
-    &set_label("enc_tail");
-	&push	($key eq "edi" ? $key : "");	# push ivp
-	&mov	($key,$_out);			# load out
-	&mov	($s1,16);
-	&sub	($s1,$s2);
-	&cmp	($key,$acc);			# compare with inp
-	&je	(&label("enc_in_place"));
-	&align	(4);
-	&data_word(0xA4F3F689);	# rep movsb	# copy input
-	&jmp	(&label("enc_skip_in_place"));
-    &set_label("enc_in_place");
-	&lea	($key,&DWP(0,$key,$s2));
-    &set_label("enc_skip_in_place");
-	&mov	($s2,$s1);
-	&xor	($s0,$s0);
-	&align	(4);
-	&data_word(0xAAF3F689);	# rep stosb	# zero tail
-	&pop	($key);				# pop ivp
-
-	&mov	($acc,$_out);			# output as input
-	&mov	($s0,&DWP(0,$key));
-	&mov	($s1,&DWP(4,$key));
-	&mov	($_len,16);			# len=16
-	&jmp	(&label("enc_loop"));		# one more spin...
-
 #----------------------------- DECRYPT -----------------------------#
-&align	(4);
-&set_label("DECRYPT");
-	&lea    ($tbl,&DWP(&label("AES_Td")."-".&label("pic_point"),$tbl));
-
-	# allocate aligned stack frame...
-	&lea	($key,&DWP(-64-244,"esp"));
-	&and	($key,-64);
-
-	# ... and make sure it doesn't alias with AES_Td modulo 4096
-	&mov	($s0,$tbl);
-	&lea	($s1,&DWP(2048+256,$tbl));
-	&mov	($s3,$key);
-	&and	($s0,0xfff);		# s = %ebp&0xfff
-	&and	($s1,0xfff);		# e = (%ebp+2048+256)&0xfff
-	&and	($s3,0xfff);		# p = %esp&0xfff
-
-	&cmp	($s3,$s1);		# if (p>=e) %esp =- (p-e);
-	&jb	(&label("td_break_out"));
-	&sub	($s3,$s1);
-	&sub	($key,$s3);
-	&jmp	(&label("td_ok"));
-	&set_label("td_break_out");	# else %esp -= (p-s)&0xfff + framesz;
-	&sub	($s3,$s0);
-	&and	($s3,0xfff);
-	&add	($s3,72+256);
-	&sub	($key,$s3);
-	&align	(4);
-	&set_label("td_ok");
-
-	&mov	($s0,&wparam(0));	# load inp
-	&mov	($s1,&wparam(1));	# load out
-	&mov	($s3,&wparam(3));	# load key
-	&mov	($acc,&wparam(4));	# load ivp
-
-	&exch	("esp",$key);
-	&add	("esp",4);		# reserve for return address!
-	&mov	($_esp,$key);		# save %esp
-
-	&mov	($_inp,$s0);		# save copy of inp
-	&mov	($_out,$s1);		# save copy of out
-	&mov	($_len,$s2);		# save copy of len
-	&mov	($_key,$s3);		# save copy of key
-	&mov	($_ivp,$acc);		# save copy of ivp
-
-	&mov	($mark,0);		# copy of aes_key->rounds = 0;
-	if ($compromise) {
-		&cmp	($s2,$compromise);
-		&jb	(&label("skip_dcopy"));
-	}
-	# do we copy key schedule to stack?
-	&mov	($s1 eq "ebx" ? $s1 : "",$s3);
-	&mov	($s2 eq "ecx" ? $s2 : "",244/4);
-	&sub	($s1,$tbl);
-	&mov	("esi",$s3);
-	&and	($s1,0xfff);
-	&lea	("edi",$aes_key);
-	&cmp	($s1,2048+256);
-	&jb	(&label("do_dcopy"));
-	&cmp	($s1,4096-244);
-	&jb	(&label("skip_dcopy"));
-	&align	(4);
-	&set_label("do_dcopy");
-		&mov	($_key,"edi");
-		&data_word(0xA5F3F689);	# rep movsd
-	&set_label("skip_dcopy");
-
-	&mov	($acc,$s0);
-	&mov	($key,18);
-	&align	(4);
-	&set_label("prefetch_td");
-		&mov	($s0,&DWP(0,$tbl));
-		&mov	($s1,&DWP(32,$tbl));
-		&mov	($s2,&DWP(64,$tbl));
-		&mov	($s3,&DWP(96,$tbl));
-		&lea	($tbl,&DWP(128,$tbl));
-		&dec	($key);
-	&jnz	(&label("prefetch_td"));
-	&sub	($tbl,2048+256);
-	&mov	(&DWP(24,"esp"),$tbl);
+&set_label("fast_decrypt",16);
 
 	&cmp	($acc,$_out);
-	&je	(&label("dec_in_place"));	# in-place processing...
+	&je	(&label("fast_dec_in_place"));	# in-place processing...
 
-	&mov	($key,$_ivp);		# load ivp
 	&mov	($_tmp,$key);
 
 	&align	(4);
-	&set_label("dec_loop");
+	&set_label("fast_dec_loop",16);
 		&mov	($s0,&DWP(0,$acc));	# read input
 		&mov	($s1,&DWP(4,$acc));
 		&mov	($s2,&DWP(8,$acc));
@@ -2237,27 +2222,24 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 		&xor	($s2,&DWP(8,$key));
 		&xor	($s3,&DWP(12,$key));
 
-		&sub	($acc,16);
-		&jc	(&label("dec_partial"));
-		&mov	($_len,$acc);		# save len
-		&mov	($acc,$_inp);		# load inp
 		&mov	($key,$_out);		# load out
+		&mov	($acc,$_inp);		# load inp
 
 		&mov	(&DWP(0,$key),$s0);	# write output
 		&mov	(&DWP(4,$key),$s1);
 		&mov	(&DWP(8,$key),$s2);
 		&mov	(&DWP(12,$key),$s3);
 
+		&mov	($s2,$_len);		# load len
 		&mov	($_tmp,$acc);		# save ivp
-		&lea	($acc,&DWP(16,$acc));
+		&lea	($acc,&DWP(16,$acc));	# advance inp
 		&mov	($_inp,$acc);		# save inp
-
-		&lea	($key,&DWP(16,$key));
+		&lea	($key,&DWP(16,$key));	# advance out
 		&mov	($_out,$key);		# save out
-
-	&jnz	(&label("dec_loop"));
+		&sub	($s2,16);		# decrease len
+		&mov	($_len,$s2);		# save len
+	&jnz	(&label("fast_dec_loop"));
 	&mov	($key,$_tmp);		# load temp ivp
-    &set_label("dec_end");
 	&mov	($acc,$_ivp);		# load user ivp
 	&mov	($s0,&DWP(0,$key));	# load iv
 	&mov	($s1,&DWP(4,$key));
@@ -2267,31 +2249,16 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 	&mov	(&DWP(4,$acc),$s1);
 	&mov	(&DWP(8,$acc),$s2);
 	&mov	(&DWP(12,$acc),$s3);
-	&jmp	(&label("dec_out"));
+	&jmp	(&label("fast_dec_out"));
 
-    &align	(4);
-    &set_label("dec_partial");
-	&lea	($key,$ivec);
-	&mov	(&DWP(0,$key),$s0);	# dump output to stack
-	&mov	(&DWP(4,$key),$s1);
-	&mov	(&DWP(8,$key),$s2);
-	&mov	(&DWP(12,$key),$s3);
-	&lea	($s2 eq "ecx" ? $s2 : "",&DWP(16,$acc));
-	&mov	($acc eq "esi" ? $acc : "",$key);
-	&mov	($key eq "edi" ? $key : "",$_out);	# load out
-	&data_word(0xA4F3F689);	# rep movsb		# copy output
-	&mov	($key,$_inp);				# use inp as temp ivp
-	&jmp	(&label("dec_end"));
-
-    &align	(4);
-    &set_label("dec_in_place");
-	&set_label("dec_in_place_loop");
-		&lea	($key,$ivec);
+    &set_label("fast_dec_in_place",16);
+	&set_label("fast_dec_in_place_loop");
 		&mov	($s0,&DWP(0,$acc));	# read input
 		&mov	($s1,&DWP(4,$acc));
 		&mov	($s2,&DWP(8,$acc));
 		&mov	($s3,&DWP(12,$acc));
 
+		&lea	($key,$ivec);
 		&mov	(&DWP(0,$key),$s0);	# copy to temp
 		&mov	(&DWP(4,$key),$s1);
 		&mov	(&DWP(8,$key),$s2);
@@ -2312,7 +2279,7 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 		&mov	(&DWP(8,$acc),$s2);
 		&mov	(&DWP(12,$acc),$s3);
 
-		&lea	($acc,&DWP(16,$acc));
+		&lea	($acc,&DWP(16,$acc));	# advance out
 		&mov	($_out,$acc);		# save out
 
 		&lea	($acc,$ivec);
@@ -2327,40 +2294,340 @@ my $mark=&DWP(72+240,"esp");	#copy of aes_key->rounds
 		&mov	(&DWP(12,$key),$s3);
 
 		&mov	($acc,$_inp);		# load inp
-
-		&lea	($acc,&DWP(16,$acc));
+		&mov	($s2,$_len);		# load len
+		&lea	($acc,&DWP(16,$acc));	# advance inp
 		&mov	($_inp,$acc);		# save inp
+		&sub	($s2,16);		# decrease len
+		&mov	($_len,$s2);		# save len
+	&jnz	(&label("fast_dec_in_place_loop"));
+
+    &set_label("fast_dec_out",4);
+	&cmp	($mark,0);		# was the key schedule copied?
+	&mov	("edi",$_key);
+	&je	(&label("skip_dzero"));
+	# zero copy of key schedule
+	&mov	("ecx",240/4);
+	&xor	("eax","eax");
+	&align	(4);
+	&data_word(0xABF3F689);	# rep stosd
+	&set_label("skip_dzero")
+	&mov	("esp",$_esp);
+	&popf	();
+	&function_end_A();
+	&pushf	();			# kludge, never executed
+
+#--------------------------- SLOW ROUTINE ---------------------------#
+&set_label("slow_way",16);
+
+	&mov	($s0,&DWP(0,$s0)) if (!$x86only);# load OPENSSL_ia32cap
+	&mov	($key,&wparam(3));	# load key
+
+	# pre-allocate aligned stack frame...
+	&lea	($acc,&DWP(-80,"esp"));
+	&and	($acc,-64);
+
+	# ... and make sure it doesn't alias with $key modulo 1024
+	&lea	($s1,&DWP(-80-63,$key));
+	&sub	($s1,$acc);
+	&neg	($s1);
+	&and	($s1,0x3C0);	# modulo 1024, but aligned to cache-line
+	&sub	($acc,$s1);
+
+	# pick S-box copy which can't overlap with stack frame or $key
+	&lea	($s1,&DWP(768,$acc));
+	&sub	($s1,$tbl);
+	&and	($s1,0x300);
+	&lea	($tbl,&DWP(2048+128,$tbl,$s1));
+
+	&lea	($s3,&wparam(0));	# pointer to parameter block
+
+	&exch	("esp",$acc);
+	&add	("esp",4);		# reserve for return address!
+	&mov	($_tbl,$tbl);		# save %ebp
+	&mov	($_esp,$acc);		# save %esp
+	&mov	($_tmp,$s0);		# save OPENSSL_ia32cap
+
+	&mov	($s0,&DWP(0,$s3));	# load inp
+	&mov	($s1,&DWP(4,$s3));	# load out
+	#&mov	($s2,&DWP(8,$s3));	# load len
+	#&mov	($key,&DWP(12,$s3));	# load key
+	&mov	($acc,&DWP(16,$s3));	# load ivp
+	&mov	($s3,&DWP(20,$s3));	# load enc flag
+
+	&mov	($_inp,$s0);		# save copy of inp
+	&mov	($_out,$s1);		# save copy of out
+	&mov	($_len,$s2);		# save copy of len
+	&mov	($_key,$key);		# save copy of key
+	&mov	($_ivp,$acc);		# save copy of ivp
+
+	&mov	($key,$acc);
+	&mov	($acc,$s0);
+
+	&cmp	($s3,0);
+	&je	(&label("slow_decrypt"));
+
+#--------------------------- SLOW ENCRYPT ---------------------------#
+	&cmp	($s2,16);
+	&jb	(&label("slow_enc_tail"));
+
+					if (!$x86only) {
+	&bt	($_tmp,25);		# check for SSE bit
+	&jnc	(&label("slow_enc_x86"));
+
+	&movq	("mm0",&QWP(0,$key));	# load iv
+	&movq	("mm4",&QWP(8,$key));
+
+	&set_label("slow_enc_loop_sse",16);
+		&pxor	("mm0",&QWP(0,$acc));	# xor input data
+		&pxor	("mm4",&QWP(8,$acc));
+
+		&mov	($key,$_key);
+		&call	("_sse_AES_encrypt_compact");
+
+		&mov	($acc,$_inp);		# load inp
+		&mov	($key,$_out);		# load out
+		&mov	($s2,$_len);		# load len
+
+		&movq	(&QWP(0,$key),"mm0");	# save output data
+		&movq	(&QWP(8,$key),"mm4");
+
+		&lea	($acc,&DWP(16,$acc));	# advance inp
+		&mov	($_inp,$acc);		# save inp
+		&lea	($s3,&DWP(16,$key));	# advance out
+		&mov	($_out,$s3);		# save out
+		&sub	($s2,16);		# decrease len
+		&cmp	($s2,16);
+		&mov	($_len,$s2);		# save len
+	&jae	(&label("slow_enc_loop_sse"));
+	&test	($s2,15);
+	&jnz	(&label("slow_enc_tail"));
+	&mov	($acc,$_ivp);		# load ivp
+	&movq	(&QWP(0,$acc),"mm0");	# save ivec
+	&movq	(&QWP(8,$acc),"mm4");
+	&emms	();
+	&mov	("esp",$_esp);
+	&popf	();
+	&function_end_A();
+	&pushf	();			# kludge, never executed
+					}
+    &set_label("slow_enc_x86",16);
+	&mov	($s0,&DWP(0,$key));	# load iv
+	&mov	($s1,&DWP(4,$key));
+
+	&set_label("slow_enc_loop_x86",4);
+		&mov	($s2,&DWP(8,$key));
+		&mov	($s3,&DWP(12,$key));
+
+		&xor	($s0,&DWP(0,$acc));	# xor input data
+		&xor	($s1,&DWP(4,$acc));
+		&xor	($s2,&DWP(8,$acc));
+		&xor	($s3,&DWP(12,$acc));
+
+		&mov	($key,$_key);		# load key
+		&call	("_x86_AES_encrypt_compact");
+
+		&mov	($acc,$_inp);		# load inp
+		&mov	($key,$_out);		# load out
+
+		&mov	(&DWP(0,$key),$s0);	# save output data
+		&mov	(&DWP(4,$key),$s1);
+		&mov	(&DWP(8,$key),$s2);
+		&mov	(&DWP(12,$key),$s3);
 
 		&mov	($s2,$_len);		# load len
-		&sub	($s2,16);
-		&jc	(&label("dec_in_place_partial"));
+		&lea	($acc,&DWP(16,$acc));	# advance inp
+		&mov	($_inp,$acc);		# save inp
+		&lea	($s3,&DWP(16,$key));	# advance out
+		&mov	($_out,$s3);		# save out
+		&sub	($s2,16);		# decrease len
+		&cmp	($s2,16);
 		&mov	($_len,$s2);		# save len
-	&jnz	(&label("dec_in_place_loop"));
-	&jmp	(&label("dec_out"));
+	&jae	(&label("slow_enc_loop_x86"));
+	&test	($s2,15);
+	&jnz	(&label("slow_enc_tail"));
+	&mov	($acc,$_ivp);		# load ivp
+	&mov	($s2,&DWP(8,$key));	# restore last dwords
+	&mov	($s3,&DWP(12,$key));
+	&mov	(&DWP(0,$acc),$s0);	# save ivec
+	&mov	(&DWP(4,$acc),$s1);
+	&mov	(&DWP(8,$acc),$s2);
+	&mov	(&DWP(12,$acc),$s3);
 
-    &align	(4);
-    &set_label("dec_in_place_partial");
-	# one can argue if this is actually required...
-	&mov	($key eq "edi" ? $key : "",$_out);
-	&lea	($acc eq "esi" ? $acc : "",$ivec);
+	&mov	("esp",$_esp);
+	&popf	();
+	&function_end_A();
+	&pushf	();			# kludge, never executed
+
+    &set_label("slow_enc_tail",16);
+	&emms	();
+	&mov	($key eq "edi"? $key:"",$s3);	# load out to edi
+	&mov	($s1,16);
+	&sub	($s1,$s2);
+	&cmp	($key,$acc eq "esi"? $acc:"");	# compare with inp
+	&je	(&label("enc_in_place"));
+	&align	(4);
+	&data_word(0xA4F3F689);	# rep movsb	# copy input
+	&jmp	(&label("enc_skip_in_place"));
+    &set_label("enc_in_place");
 	&lea	($key,&DWP(0,$key,$s2));
-	&lea	($acc,&DWP(16,$acc,$s2));
-	&neg	($s2 eq "ecx" ? $s2 : "");
-	&data_word(0xA4F3F689);	# rep movsb	# restore tail
+    &set_label("enc_skip_in_place");
+	&mov	($s2,$s1);
+	&xor	($s0,$s0);
+	&align	(4);
+	&data_word(0xAAF3F689);	# rep stosb	# zero tail
 
-    &align	(4);
-    &set_label("dec_out");
-    &cmp	($mark,0);		# was the key schedule copied?
-    &mov	("edi",$_key);
-    &mov	("esp",$_esp);
-    &je		(&label("skip_dzero"));
-    # zero copy of key schedule
-    &mov	("ecx",240/4);
-    &xor	("eax","eax");
-    &align	(4);
-    &data_word(0xABF3F689);	# rep stosd
-    &set_label("skip_dzero")
-    &popf	();
+	&lea	($key,&DWP(-16,$s3));		# restore ivp
+	&mov	($acc,$s3);			# output as input
+	&mov	($s0,&DWP(0,$key));
+	&mov	($s1,&DWP(4,$key));
+	&mov	($_len,16);			# len=16
+	&jmp	(&label("slow_enc_loop_x86"));	# one more spin...
+
+#--------------------------- SLOW DECRYPT ---------------------------#
+&set_label("slow_decrypt",16);
+					if (!$x86only) {
+	&bt	($_tmp,25);		# check for SSE bit
+	&jnc	(&label("slow_dec_loop_x86"));
+
+	&set_label("slow_dec_loop_sse",4);
+		&movq	("mm0",&QWP(0,$acc));	# read input
+		&movq	("mm4",&QWP(8,$acc));
+
+		&mov	($key,$_key);
+		&call	("_sse_AES_decrypt_compact");
+
+		&mov	($acc,$_inp);		# load inp
+		&lea	($s0,$ivec);
+		&mov	($s1,$_out);		# load out
+		&mov	($s2,$_len);		# load len
+		&mov	($key,$_ivp);		# load ivp
+
+		&movq	("mm1",&QWP(0,$acc));	# re-read input
+		&movq	("mm5",&QWP(8,$acc));
+
+		&pxor	("mm0",&QWP(0,$key));	# xor iv
+		&pxor	("mm4",&QWP(8,$key));
+
+		&movq	(&QWP(0,$key),"mm1");	# copy input to iv
+		&movq	(&QWP(8,$key),"mm5");
+
+		&sub	($s2,16);		# decrease len
+		&jc	(&label("slow_dec_partial_sse"));
+
+		&movq	(&QWP(0,$s1),"mm0");	# write output
+		&movq	(&QWP(8,$s1),"mm4");
+
+		&lea	($s1,&DWP(16,$s1));	# advance out
+		&mov	($_out,$s1);		# save out
+		&lea	($acc,&DWP(16,$acc));	# advance inp
+		&mov	($_inp,$acc);		# save inp
+		&mov	($_len,$s2);		# save len
+	&jnz	(&label("slow_dec_loop_sse"));
+	&emms	();
+	&mov	("esp",$_esp);
+	&popf	();
+	&function_end_A();
+	&pushf	();			# kludge, never executed
+
+    &set_label("slow_dec_partial_sse",16);
+	&movq	(&QWP(0,$s0),"mm0");	# save output to temp
+	&movq	(&QWP(8,$s0),"mm4");
+	&emms	();
+
+	&add	($s2 eq "ecx" ? "ecx":"",16);
+	&mov	("edi",$s1);		# out
+	&mov	("esi",$s0);		# temp
+	&align	(4);
+	&data_word(0xA4F3F689);		# rep movsb # copy partial output
+
+	&mov	("esp",$_esp);
+	&popf	();
+	&function_end_A();
+	&pushf	();			# kludge, never executed
+					}
+	&set_label("slow_dec_loop_x86",16);
+		&mov	($s0,&DWP(0,$acc));	# read input
+		&mov	($s1,&DWP(4,$acc));
+		&mov	($s2,&DWP(8,$acc));
+		&mov	($s3,&DWP(12,$acc));
+
+		&lea	($key,$ivec);
+		&mov	(&DWP(0,$key),$s0);	# copy to temp
+		&mov	(&DWP(4,$key),$s1);
+		&mov	(&DWP(8,$key),$s2);
+		&mov	(&DWP(12,$key),$s3);
+
+		&mov	($key,$_key);		# load key
+		&call	("_x86_AES_decrypt_compact");
+
+		&mov	($key,$_ivp);		# load ivp
+		&mov	($acc,$_len);		# load len
+		&xor	($s0,&DWP(0,$key));	# xor iv
+		&xor	($s1,&DWP(4,$key));
+		&xor	($s2,&DWP(8,$key));
+		&xor	($s3,&DWP(12,$key));
+
+		&sub	($acc,16);
+		&jc	(&label("slow_dec_partial_x86"));
+
+		&mov	($_len,$acc);		# save len
+		&mov	($acc,$_out);		# load out
+
+		&mov	(&DWP(0,$acc),$s0);	# write output
+		&mov	(&DWP(4,$acc),$s1);
+		&mov	(&DWP(8,$acc),$s2);
+		&mov	(&DWP(12,$acc),$s3);
+
+		&lea	($acc,&DWP(16,$acc));	# advance out
+		&mov	($_out,$acc);		# save out
+
+		&lea	($acc,$ivec);
+		&mov	($s0,&DWP(0,$acc));	# read temp
+		&mov	($s1,&DWP(4,$acc));
+		&mov	($s2,&DWP(8,$acc));
+		&mov	($s3,&DWP(12,$acc));
+
+		&mov	(&DWP(0,$key),$s0);	# copy it to iv
+		&mov	(&DWP(4,$key),$s1);
+		&mov	(&DWP(8,$key),$s2);
+		&mov	(&DWP(12,$key),$s3);
+
+		&mov	($acc,$_inp);		# load inp
+		&lea	($acc,&DWP(16,$acc));	# advance inp
+		&mov	($_inp,$acc);		# save inp
+		&mov	($_len,$s2);		# save len
+	&jnz	(&label("slow_dec_loop_x86"));
+	&mov	("esp",$_esp);
+	&popf	();
+	&function_end_A();
+	&pushf	();			# kludge, never executed
+
+    &set_label("slow_dec_partial_x86",16);
+	&lea	($acc,$ivec);
+	&mov	(&DWP(0,$acc),$s0);	# save output to temp
+	&mov	(&DWP(4,$acc),$s1);
+	&mov	(&DWP(8,$acc),$s2);
+	&mov	(&DWP(12,$acc),$s3);
+
+	&mov	($acc,$_inp);
+	&mov	($s0,&DWP(0,$acc));	# re-read input
+	&mov	($s1,&DWP(4,$acc));
+	&mov	($s2,&DWP(8,$acc));
+	&mov	($s3,&DWP(12,$acc));
+
+	&mov	(&DWP(0,$key),$s0);	# copy it to iv
+	&mov	(&DWP(4,$key),$s1);
+	&mov	(&DWP(8,$key),$s2);
+	&mov	(&DWP(12,$key),$s3);
+
+	&mov	("ecx",$_len);
+	&mov	("edi",$_out);
+	&lea	("esi",$ivec);
+	&align	(4);
+	&data_word(0xA4F3F689);		# rep movsb # copy partial output
+
+	&mov	("esp",$_esp);
+	&popf	();
 &function_end("AES_cbc_encrypt");
 }
 
