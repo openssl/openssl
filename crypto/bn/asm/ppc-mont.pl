@@ -162,17 +162,16 @@ $code=<<___;
 .align	4
 L1st:
 	$LDX	$aj,$ap,$j	; ap[j]
-	$LDX	$nj,$np,$j	; np[j]
 	addc	$lo0,$alo,$hi0
+	$LDX	$nj,$np,$j	; np[j]
 	addze	$hi0,$ahi
 	$UMULL	$alo,$aj,$m0	; ap[j]*bp[0]
-	$UMULH	$ahi,$aj,$m0
-
 	addc	$lo1,$nlo,$hi1
+	$UMULH	$ahi,$aj,$m0
 	addze	$hi1,$nhi
 	$UMULL	$nlo,$nj,$m1	; np[j]*m1
-	$UMULH	$nhi,$nj,$m1
 	addc	$lo1,$lo1,$lo0	; np[j]*m1+ap[j]*bp[0]
+	$UMULH	$nhi,$nj,$m1
 	addze	$hi1,$hi1
 	$ST	$lo1,0($tp)	; tp[j-1]
 
@@ -206,20 +205,16 @@ Louter:
 	$LD	$aj,$BNSZ($ap)	; ap[1]
 	$LD	$nj,0($np)	; np[0]
 	addc	$lo0,$lo0,$tj	; ap[0]*bp[i]+tp[0]
-	addze	$hi0,$hi0
-
-	$UMULL	$m1,$lo0,$n0	; tp[0]*n0
-
 	$UMULL	$alo,$aj,$m0	; ap[j]*bp[i]
+	addze	$hi0,$hi0
+	$UMULL	$m1,$lo0,$n0	; tp[0]*n0
 	$UMULH	$ahi,$aj,$m0
-
 	$UMULL	$lo1,$nj,$m1	; np[0]*m1
 	$UMULH	$hi1,$nj,$m1
 	$LD	$nj,$BNSZ($np)	; np[1]
 	addc	$lo1,$lo1,$lo0
-	addze	$hi1,$hi1
-
 	$UMULL	$nlo,$nj,$m1	; np[1]*m1
+	addze	$hi1,$hi1
 	$UMULH	$nhi,$nj,$m1
 
 	mtctr	$num
@@ -227,24 +222,22 @@ Louter:
 .align	4
 Linner:
 	$LDX	$aj,$ap,$j	; ap[j]
-	$LD	$tj,$BNSZ($tp)	; tp[j]
 	addc	$lo0,$alo,$hi0
+	$LD	$tj,$BNSZ($tp)	; tp[j]
 	addze	$hi0,$ahi
 	$LDX	$nj,$np,$j	; np[j]
-	addc	$lo0,$lo0,$tj	; ap[j]*bp[i]+tp[j]
-	addze	$hi0,$hi0
-	$UMULL	$alo,$aj,$m0	; ap[j]*bp[i]
-	$UMULH	$ahi,$aj,$m0
-
 	addc	$lo1,$nlo,$hi1
+	$UMULL	$alo,$aj,$m0	; ap[j]*bp[i]
 	addze	$hi1,$nhi
+	$UMULH	$ahi,$aj,$m0
+	addc	$lo0,$lo0,$tj	; ap[j]*bp[i]+tp[j]
 	$UMULL	$nlo,$nj,$m1	; np[j]*m1
+	addze	$hi0,$hi0
 	$UMULH	$nhi,$nj,$m1
 	addc	$lo1,$lo1,$lo0	; np[j]*m1+ap[j]*bp[i]+tp[j]
+	addi	$j,$j,$BNSZ	; j++
 	addze	$hi1,$hi1
 	$ST	$lo1,0($tp)	; tp[j-1]
-
-	addi	$j,$j,$BNSZ	; j++
 	addi	$tp,$tp,$BNSZ	; tp++
 	bdnz-	Linner
 ;Linner
