@@ -59,6 +59,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include "apps.h"
 #include <openssl/pem.h>
 #include <openssl/ocsp.h>
