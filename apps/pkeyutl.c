@@ -99,7 +99,8 @@ int MAIN(int argc, char **argv)
 	int keysize = -1;
 
 	unsigned char *buf_in = NULL, *buf_out = NULL, *sig = NULL;
-	size_t buf_inlen = 0, buf_outlen, siglen = -1;
+	size_t buf_outlen;
+	int buf_inlen = 0, siglen = -1;
 
 	int ret = 1, rv = -1;
 
@@ -316,18 +317,20 @@ int MAIN(int argc, char **argv)
 			{
 			size_t i;
 			unsigned char ctmp;
-			for(i = 0; i < buf_inlen/2; i++)
+			size_t l = (size_t)buf_inlen;
+			for(i = 0; i < l/2; i++)
 				{
 				ctmp = buf_in[i];
-				buf_in[i] = buf_in[buf_inlen - 1 - i];
-				buf_in[buf_inlen - 1 - i] = ctmp;
+				buf_in[i] = buf_in[l - 1 - i];
+				buf_in[l - 1 - i] = ctmp;
 				}
 			}
 		}
 
 	if(pkey_op == EVP_PKEY_OP_VERIFY)
 		{
-		rv  = EVP_PKEY_verify(ctx, sig, siglen, buf_in, buf_inlen);
+		rv  = EVP_PKEY_verify(ctx, sig, (size_t)siglen,
+				      buf_in, (size_t)buf_inlen);
 		if (rv == 0)
 			BIO_puts(out, "Signature Verification Failure\n");
 		else if (rv == 1)
@@ -338,7 +341,7 @@ int MAIN(int argc, char **argv)
 	else
 		{	
 		rv = do_keyop(ctx, pkey_op, NULL, (size_t *)&buf_outlen,
-							buf_in, buf_inlen);
+			      buf_in, (size_t)buf_inlen);
 		if (rv > 0)
 			{
 			buf_out = OPENSSL_malloc(buf_outlen);
@@ -347,7 +350,7 @@ int MAIN(int argc, char **argv)
 			else
 				rv = do_keyop(ctx, pkey_op,
 						buf_out, (size_t *)&buf_outlen,
-						buf_in, buf_inlen);
+						buf_in, (size_t)buf_inlen);
 			}
 		}
 
