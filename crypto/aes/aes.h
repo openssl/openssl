@@ -119,6 +119,17 @@ void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 	unsigned char ecount_buf[AES_BLOCK_SIZE],
 	unsigned int *num);
 
+/* For IGE, see also http://www.links.org/files/openssl-ige.pdf */
+/* NB: the IV is _two_ blocks long */
+void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
+		     const unsigned long length, const AES_KEY *key,
+		     unsigned char *ivec, const int enc);
+/* NB: the IV is _four_ blocks long */
+void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
+			const unsigned long length, const AES_KEY *key,
+			const AES_KEY *key2, const unsigned char *ivec,
+			const int enc);
+
 
 #ifdef  __cplusplus
 }

@@ -4,6 +4,9 @@
 
  Changes between 0.9.8b and 0.9.8c  [xx XXX xxxx]
 
+  *) Add AES IGE and biIGE modes.
+     [Ben Laurie]
+
   *) Change the Unix randomness entropy gathering to use poll() when
      possible instead of select(), since the latter has some
      undesirable limitations.
