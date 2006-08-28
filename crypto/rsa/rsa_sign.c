@@ -62,6 +62,7 @@
 #include <openssl/rsa.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#include "rsa_locl.h"
 
 /* Size of an SSL signature: MD5+SHA1 */
 #define SSL_SIG_LENGTH	36
@@ -142,10 +143,11 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 	return(ret);
 	}
 
-int int_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
-		unsigned char *rm, unsigned int *prm_len,
-		const unsigned char *sigbuf, unsigned int siglen,
-		RSA *rsa)
+int int_rsa_verify(int dtype, const unsigned char *m,
+			  unsigned int m_len,
+			  unsigned char *rm, unsigned int *prm_len,
+			  const unsigned char *sigbuf, unsigned int siglen,
+			  RSA *rsa)
 	{
 	int i,ret=0,sigtype;
 	unsigned char *s;

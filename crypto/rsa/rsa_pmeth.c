@@ -63,11 +63,7 @@
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include "evp_locl.h"
-
-extern int int_rsa_verify(int dtype, const unsigned char *m, size_t m_len,
-		unsigned char *rm, size_t *prm_len,
-		const unsigned char *sigbuf, size_t siglen,
-		RSA *rsa);
+#include "rsa_locl.h"
 
 /* RSA pkey context structure */
 

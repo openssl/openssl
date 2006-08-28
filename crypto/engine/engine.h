@@ -391,6 +391,10 @@ int ENGINE_register_pkey_meths(ENGINE *e);
 void ENGINE_unregister_pkey_meths(ENGINE *e);
 void ENGINE_register_all_pkey_meths(void);
 
+int ENGINE_register_pkey_asn1_meths(ENGINE *e);
+void ENGINE_unregister_pkey_asn1_meths(ENGINE *e);
+void ENGINE_register_all_pkey_asn1_meths(void);
+
 /* These functions register all support from the above categories. Note, use of
  * these functions can result in static linkage of code your application may not
  * need. If you only need a subset of functionality, consider using more

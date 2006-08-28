@@ -62,8 +62,9 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-			const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey, int ver)
+static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+			  const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey,
+			  int ver)
 	{
 	if (!EVP_DigestInit_ex(ctx, type, e))
 		return 0;

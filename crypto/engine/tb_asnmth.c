@@ -87,7 +87,7 @@ int ENGINE_register_pkey_asn1_meths(ENGINE *e)
 	return 1;
 	}
 
-void ENGINE_register_all_pkey_asn1_meths()
+void ENGINE_register_all_pkey_asn1_meths(void)
 	{
 	ENGINE *e;
 

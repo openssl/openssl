@@ -197,8 +197,8 @@ static int pkcs7_encode_rinfo(PKCS7_RECIP_INFO *ri,
 	}
 
 
-int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
-			PKCS7_RECIP_INFO *ri, EVP_PKEY *pkey)
+static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
+			       PKCS7_RECIP_INFO *ri, EVP_PKEY *pkey)
 	{
 	EVP_PKEY_CTX *pctx = NULL;
 	unsigned char *ek = NULL;

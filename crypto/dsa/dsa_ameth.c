@@ -417,7 +417,7 @@ static void update_buflen(const BIGNUM *b, size_t *pbuflen)
 			*pbuflen = i;
 	}
 
-int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
+static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
 	{
 	unsigned char *m=NULL;
 	int ret=0;
