@@ -120,7 +120,7 @@
 # to process in one stroke.
 #
 # Timing attacks are classified in two classes: synchronous when
-# attacker consciously initiates cryptographic operation and collect
+# attacker consciously initiates cryptographic operation and collects
 # timing data of various character afterwards, and asynchronous when
 # malicious code is executed on same CPU simultaneously with AES,
 # instruments itself and performs statistical analysis of this data.
@@ -144,7 +144,7 @@
 # CBC, do masks the plain-text in this exact way [secure cipher output
 # is distributed uniformly]. Yes, one still might find input that
 # would reveal the information about given key, but if amount of
-# candidate inputs to be tried is larger than amount possible key
+# candidate inputs to be tried is larger than amount of possible key
 # combinations then attack becomes infeasible. This is why revised
 # AES_cbc_encrypt "dares" to switch to larger S-box when larger chunk
 # of data is to be processed in one stroke. The current size limit of
@@ -2595,7 +2595,6 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 		&mov	($acc,$_inp);		# load inp
 		&lea	($acc,&DWP(16,$acc));	# advance inp
 		&mov	($_inp,$acc);		# save inp
-		&mov	($_len,$s2);		# save len
 	&jnz	(&label("slow_dec_loop_x86"));
 	&mov	("esp",$_esp);
 	&popf	();
