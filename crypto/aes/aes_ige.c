@@ -49,7 +49,7 @@
  *
  */
 
-#include <assert.h>
+#include "cryptlib.h"
 
 #include <openssl/aes.h>
 #include "aes_locl.h"
@@ -84,9 +84,9 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned char *iv = ivec;
 	const unsigned char *iv2 = ivec + AES_BLOCK_SIZE;
 
-	assert(in && out && key && ivec);
-	assert((AES_ENCRYPT == enc)||(AES_DECRYPT == enc));
-	assert((length%AES_BLOCK_SIZE) == 0);
+	OPENSSL_assert(in && out && key && ivec);
+	OPENSSL_assert((AES_ENCRYPT == enc)||(AES_DECRYPT == enc));
+	OPENSSL_assert((length%AES_BLOCK_SIZE) == 0);
 
 	if (AES_ENCRYPT == enc)
 		{
@@ -94,17 +94,17 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
 		   check for overlap, too) */
 		while (len >= AES_BLOCK_SIZE)
 			{
-			//			hexdump(stdout, "in", in, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "iv", iv, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "in", in, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout, "iv", iv, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				out[n] = in[n] ^ iv[n];
-			//			hexdump(stdout, "in ^ iv", out, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "in ^ iv", out, AES_BLOCK_SIZE); */
 			AES_encrypt(out, out, key);
-			//			hexdump(stdout,"enc", out, AES_BLOCK_SIZE);
-			//			hexdump(stdout,"iv2", iv2, AES_BLOCK_SIZE);
+			/*			hexdump(stdout,"enc", out, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout,"iv2", iv2, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				out[n] ^= iv2[n];
-			//			hexdump(stdout,"out", out, AES_BLOCK_SIZE);
+			/*			hexdump(stdout,"out", out, AES_BLOCK_SIZE); */
 			iv = out;
 			memcpy(prev, in, AES_BLOCK_SIZE);
 			iv2 = prev;
@@ -121,17 +121,17 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
 			{
 			memcpy(tmp, in, AES_BLOCK_SIZE);
 			memcpy(tmp2, in, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "in", in, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "iv2", iv2, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "in", in, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout, "iv2", iv2, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				tmp[n] ^= iv2[n];
-			//			hexdump(stdout, "in ^ iv2", tmp, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "in ^ iv2", tmp, AES_BLOCK_SIZE); */
 			AES_decrypt(tmp, out, key);
-			//			hexdump(stdout, "dec", out, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "iv", ivec, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "dec", out, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout, "iv", ivec, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				out[n] ^= ivec[n];
-			//			hexdump(stdout, "out", out, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "out", out, AES_BLOCK_SIZE); */
 			memcpy(ivec, tmp2, AES_BLOCK_SIZE);
 			iv2 = out;
 			len -= AES_BLOCK_SIZE;
@@ -163,9 +163,9 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
 	const unsigned char *iv;
 	const unsigned char *iv2;
 
-	assert(in && out && key && ivec);
-	assert((AES_ENCRYPT == enc)||(AES_DECRYPT == enc));
-	assert((length%AES_BLOCK_SIZE) == 0);
+	OPENSSL_assert(in && out && key && ivec);
+	OPENSSL_assert((AES_ENCRYPT == enc)||(AES_DECRYPT == enc));
+	OPENSSL_assert((length%AES_BLOCK_SIZE) == 0);
 
 	if (AES_ENCRYPT == enc)
 		{
@@ -177,17 +177,17 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
 		iv2 = ivec + AES_BLOCK_SIZE;
 		while (len >= AES_BLOCK_SIZE)
 			{
-			//			hexdump(stdout, "in", in, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "iv", iv, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "in", in, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout, "iv", iv, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				out[n] = in[n] ^ iv[n];
-			//			hexdump(stdout, "in ^ iv", out, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "in ^ iv", out, AES_BLOCK_SIZE); */
 			AES_encrypt(out, out, key);
-			//			hexdump(stdout,"enc", out, AES_BLOCK_SIZE);
-			//			hexdump(stdout,"iv2", iv2, AES_BLOCK_SIZE);
+			/*			hexdump(stdout,"enc", out, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout,"iv2", iv2, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				out[n] ^= iv2[n];
-			//			hexdump(stdout,"out", out, AES_BLOCK_SIZE);
+			/*			hexdump(stdout,"out", out, AES_BLOCK_SIZE); */
 			iv = out;
 			memcpy(prev, in, AES_BLOCK_SIZE);
 			iv2 = prev;
@@ -203,19 +203,19 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
 		while(len >= AES_BLOCK_SIZE)
 			{
 			out -= AES_BLOCK_SIZE;
-			//			hexdump(stdout, "intermediate", out, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "iv", iv, AES_BLOCK_SIZE);
-			// XXX: reduce copies by alternating between buffers
+			/*			hexdump(stdout, "intermediate", out, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout, "iv", iv, AES_BLOCK_SIZE); */
+			/* XXX: reduce copies by alternating between buffers */
 			memcpy(tmp, out, AES_BLOCK_SIZE);
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				out[n] ^= iv[n];
-			//			hexdump(stdout, "out ^ iv", out, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "out ^ iv", out, AES_BLOCK_SIZE); */
 			AES_encrypt(out, out, key);
-			//			hexdump(stdout,"enc", out, AES_BLOCK_SIZE);
-			//			hexdump(stdout,"iv2", iv2, AES_BLOCK_SIZE);
+			/*			hexdump(stdout,"enc", out, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout,"iv2", iv2, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				out[n] ^= iv2[n];
-			//			hexdump(stdout,"out", out, AES_BLOCK_SIZE);
+			/*			hexdump(stdout,"out", out, AES_BLOCK_SIZE); */
 			iv = out;
 			memcpy(prev, tmp, AES_BLOCK_SIZE);
 			iv2 = prev;
@@ -235,17 +235,17 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
 			out -= AES_BLOCK_SIZE;
 			memcpy(tmp, in, AES_BLOCK_SIZE);
 			memcpy(tmp2, in, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "in", in, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "iv2", iv2, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "in", in, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout, "iv2", iv2, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				tmp[n] ^= iv2[n];
-			//			hexdump(stdout, "in ^ iv2", tmp, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "in ^ iv2", tmp, AES_BLOCK_SIZE); */
 			AES_decrypt(tmp, out, key);
-			//			hexdump(stdout, "dec", out, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "iv", iv, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "dec", out, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout, "iv", iv, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				out[n] ^= iv[n];
-			//			hexdump(stdout, "out", out, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "out", out, AES_BLOCK_SIZE); */
 			memcpy(tmp3, tmp2, AES_BLOCK_SIZE);
 			iv = tmp3;
 			iv2 = out;
@@ -260,17 +260,17 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
 			{
 			memcpy(tmp, out, AES_BLOCK_SIZE);
 			memcpy(tmp2, out, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "intermediate", out, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "iv2", iv2, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "intermediate", out, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout, "iv2", iv2, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				tmp[n] ^= iv2[n];
-			//			hexdump(stdout, "out ^ iv2", tmp, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "out ^ iv2", tmp, AES_BLOCK_SIZE); */
 			AES_decrypt(tmp, out, key);
-			//			hexdump(stdout, "dec", out, AES_BLOCK_SIZE);
-			//			hexdump(stdout, "iv", ivec, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "dec", out, AES_BLOCK_SIZE); */
+			/*			hexdump(stdout, "iv", ivec, AES_BLOCK_SIZE); */
 			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
 				out[n] ^= iv[n];
-			//			hexdump(stdout, "out", out, AES_BLOCK_SIZE);
+			/*			hexdump(stdout, "out", out, AES_BLOCK_SIZE); */
 			memcpy(tmp3, tmp2, AES_BLOCK_SIZE);
 			iv = tmp3;
 			iv2 = out;

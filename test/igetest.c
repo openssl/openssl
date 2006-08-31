@@ -285,9 +285,9 @@ int main(int argc, char **argv)
 	RAND_pseudo_bytes(iv, sizeof iv);
 	memcpy(saved_iv, iv, sizeof saved_iv);
 
-	// Forward IGE only...
+	/* Forward IGE only... */
 
-	// Straight encrypt/decrypt
+	/* Straight encrypt/decrypt */
 	AES_set_encrypt_key(rkey, 8*sizeof rkey, &key);
 	AES_ige_encrypt(plaintext, ciphertext, TEST_SIZE, &key, iv,
 					AES_ENCRYPT);
@@ -305,7 +305,7 @@ int main(int argc, char **argv)
 		++err;
 		}
 
-	// Now check encrypt chaining works
+	/* Now check encrypt chaining works */
 	AES_set_encrypt_key(rkey, 8*sizeof rkey, &key);
 	memcpy(iv, saved_iv, sizeof iv);
 	AES_ige_encrypt(plaintext, ciphertext, TEST_SIZE/2, &key, iv,
@@ -327,7 +327,7 @@ int main(int argc, char **argv)
 		++err;
 		}
 
-	// And check decrypt chaining
+	/* And check decrypt chaining */
 	AES_set_encrypt_key(rkey, 8*sizeof rkey, &key);
 	memcpy(iv, saved_iv, sizeof iv);
 	AES_ige_encrypt(plaintext, ciphertext, TEST_SIZE/2, &key, iv,
@@ -352,13 +352,13 @@ int main(int argc, char **argv)
 		++err;
 		}
 
-	// make sure garble extends forwards only
+	/* make sure garble extends forwards only */
 	AES_set_encrypt_key(rkey, 8*sizeof rkey, &key);
 	memcpy(iv, saved_iv, sizeof iv);
 	AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
 					AES_ENCRYPT);
 
-	// corrupt halfway through
+	/* corrupt halfway through */
 	++ciphertext[sizeof ciphertext/2];
 	AES_set_decrypt_key(rkey, 8*sizeof rkey, &key);
 	memcpy(iv, saved_iv, sizeof iv);
@@ -382,14 +382,14 @@ int main(int argc, char **argv)
 		++err;
 		}
 
-	// Bi-directional IGE
+	/* Bi-directional IGE */
 
-	// Note that we don't have to recover the IV, because chaining isn't
-	// possible with biIGE, so the IV is not updated.
+	/* Note that we don't have to recover the IV, because chaining isn't */
+	/* possible with biIGE, so the IV is not updated. */
 
 	RAND_pseudo_bytes(rkey2, sizeof rkey2);
 
-	// Straight encrypt/decrypt
+	/* Straight encrypt/decrypt */
 	AES_set_encrypt_key(rkey, 8*sizeof rkey, &key);
 	AES_set_encrypt_key(rkey2, 8*sizeof rkey2, &key2);
 	AES_bi_ige_encrypt(plaintext, ciphertext, TEST_SIZE, &key, &key2, iv,
@@ -408,13 +408,13 @@ int main(int argc, char **argv)
 		++err;
 		}
 
-	// make sure garble extends both ways
+	/* make sure garble extends both ways */
 	AES_set_encrypt_key(rkey, 8*sizeof rkey, &key);
 	AES_set_encrypt_key(rkey2, 8*sizeof rkey2, &key2);
 	AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
 					AES_ENCRYPT);
 
-	// corrupt halfway through
+	/* corrupt halfway through */
 	++ciphertext[sizeof ciphertext/2];
 	AES_set_decrypt_key(rkey, 8*sizeof rkey, &key);
 	AES_set_decrypt_key(rkey2, 8*sizeof rkey2, &key2);
@@ -432,13 +432,13 @@ int main(int argc, char **argv)
 		++err;
 		}
 
-	// make sure garble extends both ways (2)
+	/* make sure garble extends both ways (2) */
 	AES_set_encrypt_key(rkey, 8*sizeof rkey, &key);
 	AES_set_encrypt_key(rkey2, 8*sizeof rkey2, &key2);
 	AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
 					AES_ENCRYPT);
 
-	// corrupt right at the end
+	/* corrupt right at the end */
 	++ciphertext[sizeof ciphertext-1];
 	AES_set_decrypt_key(rkey, 8*sizeof rkey, &key);
 	AES_set_decrypt_key(rkey2, 8*sizeof rkey2, &key2);
@@ -456,13 +456,13 @@ int main(int argc, char **argv)
 		++err;
 		}
 
-	// make sure garble extends both ways (3)
+	/* make sure garble extends both ways (3) */
 	AES_set_encrypt_key(rkey, 8*sizeof rkey, &key);
 	AES_set_encrypt_key(rkey2, 8*sizeof rkey2, &key2);
 	AES_ige_encrypt(plaintext, ciphertext, sizeof plaintext, &key, iv,
 					AES_ENCRYPT);
 
-	// corrupt right at the start
+	/* corrupt right at the start */
 	++ciphertext[0];
 	AES_set_decrypt_key(rkey, 8*sizeof rkey, &key);
 	AES_set_decrypt_key(rkey2, 8*sizeof rkey2, &key2);
