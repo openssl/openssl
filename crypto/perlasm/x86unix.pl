@@ -699,7 +699,7 @@ sub popvars
 
 sub main'picmeup
 	{
-	local($dst,$sym,$base,$label)=@_;
+	local($dst,$sym,$base,$reflabel)=@_;
 
 	if ($main'cpp)
 		{
@@ -720,7 +720,7 @@ ___
 		else	{
 			$tmp=<<___;
 #if (defined(ELF) || defined(SOL)) && defined(PIC)
-	leal	_GLOBAL_OFFSET_TABLE_+[.-$label]($regs{$base}),$regs{$dst}
+	leal	_GLOBAL_OFFSET_TABLE_+[.-$reflabel]($regs{$base}),$regs{$dst}
 	movl	$sym\@GOT($regs{$dst}),$regs{$dst}
 #else
 	leal	$sym,$regs{$dst}
@@ -741,7 +741,7 @@ ___
 			}
 		else	{
 			&main'lea($dst,&main'DWP(
-				"${under}_GLOBAL_OFFSET_TABLE_+[.-$label]",
+				"${under}_GLOBAL_OFFSET_TABLE_+[.-$reflabel]",
 				$base));
 			}
 		&main'mov($dst,&main'DWP($under.$sym."\@GOT",$dst));
