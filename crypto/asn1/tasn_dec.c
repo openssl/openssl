@@ -878,7 +878,10 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
 		 * for UNIVERSAL class and ignore the tag.
 		 */
 		if (!asn1_collect(&buf, &p, plen, inf, -1, V_ASN1_UNIVERSAL))
+			{
+			free_cont = 1;
 			goto err;
+			}
 		len = buf.length;
 		/* Append a final null to string */
 		if (!BUF_MEM_grow_clean(&buf, len + 1))
