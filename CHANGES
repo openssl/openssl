@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.7j and 0.9.7k  [xx XXX xxxx]
+ Changes between 0.9.7j and 0.9.7k  [05 Sep 2006]
 
   *) Avoid PKCS #1 v1.5 signature attack discovered by Daniel Bleichenbacher
      (CVE-2006-4339)  [Ben Laurie and Google Security Team]
