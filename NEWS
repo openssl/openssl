@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 0.9.8 and OpenSSL 0.9.8a:
 
-      o Fix potential SSL 2.0 rollback, CAN-2005-2969
+      o Fix potential SSL 2.0 rollback, CVE-2005-2969
       o Extended Windows CE support
 
   Major changes between OpenSSL 0.9.7g and OpenSSL 0.9.8:
