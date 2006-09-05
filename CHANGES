@@ -2,6 +2,8 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8c and 0.9.8d  [xx XXX xxxx]
+
  Changes between 0.9.8b and 0.9.8c  [05 Sep 2006]
 
   *) Avoid PKCS #1 v1.5 signature attack discovered by Daniel Bleichenbacher
