@@ -4,6 +4,9 @@
 
  Changes between 0.9.8b and 0.9.8c  [xx XXX xxxx]
 
+  *) Avoid PKCS #1 v1.5 signature attack discovered by Daniel Bleichenbacher
+     (CVE-2006-4339)  [Ben Laurie and Google Security Team]
+
   *) Add AES IGE and biIGE modes.
      [Ben Laurie]
 
@@ -961,6 +964,9 @@
      [Richard Levitte]
 
  Changes between 0.9.7j and 0.9.7k  [xx XXX xxxx]
+
+  *) Avoid PKCS #1 v1.5 signature attack discovered by Daniel Bleichenbacher
+     (CVE-2006-4339)  [Ben Laurie and Google Security Team]
 
   *) Change the Unix randomness entropy gathering to use poll() when
      possible instead of select(), since the latter has some
