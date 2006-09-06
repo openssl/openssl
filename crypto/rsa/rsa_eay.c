@@ -370,7 +370,7 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 	
 	if (blinding != NULL)
 		{
-		if (blinding->thread_id != CRYPTO_thread_id())
+		if (1)
 			{
 			/* we need a local one-time blinding factor */
 
@@ -507,7 +507,7 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 	
 	if (blinding != NULL)
 		{
-		if (blinding->thread_id != CRYPTO_thread_id())
+		if (1)
 			{
 			/* we need a local one-time blinding factor */
 
@@ -651,15 +651,6 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 		{
 	case RSA_PKCS1_PADDING:
 		r=RSA_padding_check_PKCS1_type_1(to,num,buf,i,num);
-		/* Generally signatures should be at least 2/3 padding, though
-		   this isn't possible for really short keys and some standard
-		   signature schemes, so don't check if the unpadded data is
-		   small. */
-		if(r > 42 && 3*8*r >= BN_num_bits(rsa->n))
-			{
-			RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, RSA_R_PKCS1_PADDING_TOO_SHORT);
-			goto err;
-			}
 		break;
 	case RSA_NO_PADDING:
 		r=RSA_padding_check_none(to,num,buf,i,num);
