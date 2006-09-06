@@ -2,10 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8b and 0.9.9  [xx XXX xxxx]
-
-  *) Avoid PKCS #1 v1.5 signature attack discovered by Daniel Bleichenbacher
-     (CVE-2006-4339)  [Ben Laurie and Google Security Team]
+ Changes between 0.9.8c and 0.9.9  [xx XXX xxxx]
 
   *) Allow multiple CRLs to exist in an X509_STORE with matching issuer names.
      Modify get_crl() to find a valid (unexpired) CRL if possible.
@@ -1342,8 +1339,6 @@
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
-
- Changes between 0.9.7k and 0.9.7l  [xx XXX xxxx]
 
  Changes between 0.9.7j and 0.9.7k  [05 Sep 2006]
 
