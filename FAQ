@@ -67,6 +67,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why doesn't my server application receive a client certificate?
 * Why does compilation fail due to an undefined symbol NID_uniqueIdentifier?
 * I think I've detected a memory leak, is this a bug?
+* Why doesn't a memory BIO work when a file does?
 
 ===============================================================================
 
@@ -914,6 +915,25 @@ thread-safe):
 "Brutal" (thread-unsafe) Application-global cleanup functions:
 
   ERR_free_strings(), EVP_cleanup() and CRYPTO_cleanup_all_ex_data().
+
+
+* Why doesn't a memory BIO work when a file does?
+
+This can occur in several cases for example reading an S/MIME email message.
+The reason is that a memory BIO can do one of two things when all the data
+has been read from it.
+
+The default behaviour is to indicate that no more data is available and that
+the call should be retried, this is to allow the application to fill up the BIO
+again if necessary.
+
+Alternatively it can indicate that no more data is available and that EOF has
+been reached.
+
+If a memory BIO is to behave in the same way as a file this second behaviour
+is needed. This must be done by calling:
+
+   BIO_set_mem_eof_return(bio, 0);
 
 
 ===============================================================================
