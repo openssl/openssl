@@ -935,6 +935,8 @@ is needed. This must be done by calling:
 
    BIO_set_mem_eof_return(bio, 0);
 
+See the manual pages for more details.
+
 
 ===============================================================================
 
