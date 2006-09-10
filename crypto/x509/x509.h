@@ -454,6 +454,9 @@ struct X509_crl_st
 	/* Copies of various extensions */
 	AUTHORITY_KEYID *akid;
 	ISSUING_DIST_POINT *idp;
+	/* Convenient breakdown of IDP */
+	int idp_flags;
+	int idp_reasons;
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif

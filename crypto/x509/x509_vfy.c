@@ -79,6 +79,8 @@ static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
+static STACK_OF(X509) * lookup_certs(X509_STORE_CTX *ctx, X509_NAME *nm);
+static STACK_OF(X509_CRL) * lookup_crls(X509_STORE_CTX *ctx, X509_NAME *nm);
 const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
 
 
@@ -669,7 +671,7 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 		if (check_crl_time(ctx, crl, 0))
 			{
 			*pcrl = crl;
-			CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509);
+			CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
 			return 1;
 			}
 		best_crl = crl;
@@ -872,6 +874,16 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 			}
 		}
 	return 1;
+	}
+
+static STACK_OF(X509) * lookup_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
+	{
+	return X509_STORE_get_certs(ctx->ctx, nm);
+	}
+
+static STACK_OF(X509_CRL) * lookup_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
+	{
+	return X509_STORE_get_crls(ctx->ctx, nm);
 	}
 
 static int check_policy(X509_STORE_CTX *ctx)
@@ -1460,6 +1472,16 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 		ctx->cert_crl = store->cert_crl;
 	else
 		ctx->cert_crl = cert_crl;
+
+	if (store && store->lookup_certs)
+		ctx->lookup_certs = store->lookup_certs;
+	else
+		ctx->lookup_certs = lookup_certs;
+
+	if (store && store->lookup_crls)
+		ctx->lookup_crls = store->lookup_crls;
+	else
+		ctx->lookup_crls = lookup_crls;
 
 	ctx->check_policy = check_policy;
 

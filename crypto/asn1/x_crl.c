@@ -64,6 +64,7 @@
 
 static int X509_REVOKED_cmp(const X509_REVOKED * const *a,
 				const X509_REVOKED * const *b);
+static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp);
 
 ASN1_SEQUENCE(X509_REVOKED) = {
 	ASN1_SIMPLE(X509_REVOKED,serialNumber, ASN1_INTEGER),
@@ -116,6 +117,8 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		case ASN1_OP_NEW_POST:
 		crl->idp = NULL;
 		crl->akid = NULL;
+		crl->flags = 0;
+		crl->idp_flags = 0;
 		break;
 
 		case ASN1_OP_D2I_POST:
@@ -124,6 +127,9 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 #endif
 		crl->idp = X509_CRL_get_ext_d2i(crl,
 				NID_issuing_distribution_point, NULL, NULL);
+		if (crl->idp)
+			setup_idp(crl, crl->idp);
+
 		crl->akid = X509_CRL_get_ext_d2i(crl,
 				NID_authority_key_identifier, NULL, NULL);	
 		break;
@@ -136,6 +142,46 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		break;
 		}
 	return 1;
+	}
+
+/* Convert IDP into a more convenient form */
+
+static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
+	{
+	int idp_only = 0;
+	/* Set various flags according to IDP */
+	crl->idp_flags |= IDP_PRESENT;
+	if (idp->onlyuser > 0)
+		{
+		idp_only++;
+		crl->idp_flags |= IDP_ONLYUSER;
+		}
+	if (idp->onlyCA > 0)
+		{
+		idp_only++;
+		crl->idp_flags |= IDP_ONLYCA;
+		}
+	if (idp->onlyattr > 0)
+		{
+		idp_only++;
+		crl->idp_flags |= IDP_ONLYATTR;
+		}
+
+	if (idp_only > 1)
+		crl->idp_flags |= IDP_INVALID;
+
+	if (idp->indirectCRL > 0)
+		crl->idp_flags |= IDP_INDIRECT;
+
+	if (idp->onlysomereasons)
+		{
+		crl->idp_flags |= IDP_REASONS;
+		if (idp->onlysomereasons->length > 0)
+			crl->idp_reasons = idp->onlysomereasons->data[0];
+		if (idp->onlysomereasons->length > 1)
+			crl->idp_reasons |=
+				(idp->onlysomereasons->data[1] << 8);
+		}
 	}
 
 ASN1_SEQUENCE_ref(X509_CRL, crl_cb, CRYPTO_LOCK_X509_CRL) = {
