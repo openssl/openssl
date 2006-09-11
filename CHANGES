@@ -4,6 +4,32 @@
 
  Changes between 0.9.8c and 0.9.8d  [xx XXX xxxx]
 
+  *) Since 0.9.8b, ciphersuite strings naming explicit ciphersuites
+     match only those.  Before that, "AES256-SHA" would be interpreted
+     as a pattern and match "AES128-SHA" too since we currently only
+     have a single AES bit in the ciphersuite description bitmap.
+     That change, however, also applied to ciphersuite strings such as
+     "RC4-MD5" that intentionally matched multiple ciphersuites --
+     namely, SSL 2.0 ciphersuites in addition to the more common ones
+     from SSL 3.0/TLS 1.0.
+
+     So we change the selection algorithm again: Naming an explicit
+     ciphersuite selects this one ciphersuite, and any other similar
+     ciphersuite (same bitmap) from *other* protocol versions.
+     Thus, "RC4-MD5" again will properly select both the SSL 2.0
+     ciphersuite and the SSL 3.0/TLS 1.0 ciphersuite.
+
+     Since SSL 2.0 does not have any ciphersuites for which the
+     128/256 bit distinction would be relevant, this works for now.
+     The proper fix will be to use different bits for AES128 and
+     AES256, which would have avoided the problems from the beginning;
+     however, bits are scarce, so we can only do this in a new release
+     (not just a patchlevel) when we can change the SSL_CIPHER
+     definition to split the single 'unsigned long mask' bitmap into
+     multiple values to extend the available space.
+
+     [Bodo Moeller]
+
  Changes between 0.9.8b and 0.9.8c  [05 Sep 2006]
 
   *) Avoid PKCS #1 v1.5 signature attack discovered by Daniel Bleichenbacher
