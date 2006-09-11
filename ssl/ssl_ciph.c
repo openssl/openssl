@@ -638,7 +638,7 @@ static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
 	*ca_curr = NULL;	/* end of list */
 	}
 
-static void ssl_cipher_apply_rule(unsigned long cipher_id,
+static void ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long ssl_version,
 		unsigned long algorithms, unsigned long mask,
 		unsigned long algo_strength, unsigned long mask_strength,
 		int rule, int strength_bits,
@@ -665,9 +665,10 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 
 		cp = curr->cipher;
 
-		/* If explicit cipher suite match that one only */
+		/* If explicit cipher suite, match only that one for its own protocol version.
+		 * Usual selection criteria will be used for similar ciphersuites from other version! */
 
-		if (cipher_id)
+		if (cipher_id && (cp->algorithms & SSL_SSL_MASK) == ssl_version)
 			{
 			if (cp->id != cipher_id)
 				continue;
@@ -789,7 +790,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 	 */
 	for (i = max_strength_bits; i >= 0; i--)
 		if (number_uses[i] > 0)
-			ssl_cipher_apply_rule(0, 0, 0, 0, 0, CIPHER_ORD, i,
+			ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, CIPHER_ORD, i,
 					head_p, tail_p);
 
 	OPENSSL_free(number_uses);
@@ -803,7 +804,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 	unsigned long algorithms, mask, algo_strength, mask_strength;
 	const char *l, *start, *buf;
 	int j, multi, found, rule, retval, ok, buflen;
-	unsigned long cipher_id = 0;
+	unsigned long cipher_id = 0, ssl_version = 0;
 	char ch;
 
 	retval = 1;
@@ -894,6 +895,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			 */
 			 j = found = 0;
 			 cipher_id = 0;
+			 ssl_version = 0;
 			 while (ca_list[j])
 				{
 				if (!strncmp(buf, ca_list[j]->name, buflen) &&
@@ -908,12 +910,6 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			if (!found)
 				break;	/* ignore this entry */
 
-			if (ca_list[j]->valid)
-				{
-				cipher_id = ca_list[j]->id;
-				break;
-				}
-
 			/* New algorithms:
 			 *  1 - any old restrictions apply outside new mask
 			 *  2 - any new restrictions apply outside old mask
@@ -927,6 +923,14 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			                (ca_list[j]->algo_strength & ~mask_strength) |
 			                (algo_strength & ca_list[j]->algo_strength);
 			mask_strength |= ca_list[j]->mask_strength;
+
+			/* explicit ciphersuite found */
+			if (ca_list[j]->valid)
+				{
+				cipher_id = ca_list[j]->id;
+				ssl_version = ca_list[j]->algorithms & SSL_SSL_MASK;
+				break;
+				}
 
 			if (!multi) break;
 			}
@@ -956,7 +960,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			}
 		else if (found)
 			{
-			ssl_cipher_apply_rule(cipher_id, algorithms, mask,
+			ssl_cipher_apply_rule(cipher_id, ssl_version, algorithms, mask,
 				algo_strength, mask_strength, rule, -1,
 				head_p, tail_p);
 			}
