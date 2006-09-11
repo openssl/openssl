@@ -79,8 +79,6 @@ static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
-static STACK_OF(X509) * lookup_certs(X509_STORE_CTX *ctx, X509_NAME *nm);
-static STACK_OF(X509_CRL) * lookup_crls(X509_STORE_CTX *ctx, X509_NAME *nm);
 const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
 
 
@@ -666,7 +664,7 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 	for (i = 0; i < sk_X509_CRL_num(crls); i++)
 		{
 		crl = sk_X509_CRL_value(crls, i);
-		if (X509_NAME_cmp(nm, X509_CRL_get_issuer(crl)))
+		if (nm && X509_NAME_cmp(nm, X509_CRL_get_issuer(crl)))
 			continue;
 		if (check_crl_time(ctx, crl, 0))
 			{
@@ -692,7 +690,7 @@ static int get_crl(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 *x)
 	{
 	int ok;
 	X509_CRL *crl = NULL;
-	X509_OBJECT xobj;
+	STACK_OF(X509_CRL) *skcrl;
 	X509_NAME *nm;
 	nm = X509_get_issuer_name(x);
 	ok = get_crl_sk(ctx, &crl, nm, ctx->crls);
@@ -702,11 +700,13 @@ static int get_crl(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 *x)
 		return 1;
 		}
 
-	ok = X509_STORE_get_by_subject(ctx, X509_LU_CRL, nm, &xobj);
+	/* Lookup CRLs from store */
 
-	if (!ok)
+	skcrl = ctx->lookup_crls(ctx, nm);
+
+	/* If no CRLs found and a near match from get_crl_sk use that */
+	if (!skcrl)
 		{
-		/* If we got a near match from get_crl_sk use that */
 		if (crl)
 			{
 			*pcrl = crl;
@@ -715,41 +715,18 @@ static int get_crl(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 *x)
 		return 0;
 		}
 
-	/* If CRL times not valid look through store */
-	if (!check_crl_time(ctx, xobj.data.crl, 0))
-		{
-		int idx, i;
-		X509_OBJECT *pobj;
-		X509_OBJECT_free_contents(&xobj);
-		idx = X509_OBJECT_idx_by_subject(ctx->ctx->objs,
-							X509_LU_CRL, nm);
-		if (idx == -1)
-			return 0;
-		*pcrl = NULL;
-		for (i = idx; i < sk_X509_OBJECT_num(ctx->ctx->objs); i++)
-			{
-			pobj = sk_X509_OBJECT_value(ctx->ctx->objs, i);
-			/* Check to see if it is a CRL and issuer matches */
-			if (pobj->type != X509_LU_CRL)
-				break;
-			if (X509_NAME_cmp(nm,
-					X509_CRL_get_issuer(pobj->data.crl)))
-				break;
-			/* Set *pcrl because the CRL will either be valid or
-			 * a "best fit" CRL.
-			 */
-			*pcrl = pobj->data.crl;
-			if (check_crl_time(ctx, *pcrl, 0))
-				break;
-			}
-		if (*pcrl)
-			CRYPTO_add(&(*pcrl)->references, 1, CRYPTO_LOCK_X509);
-		}
-	else 
-		*pcrl = xobj.data.crl;
+	get_crl_sk(ctx, &crl, NULL, skcrl);
+
+	sk_X509_CRL_pop_free(skcrl, X509_CRL_free);
+
+	/* If we got any kind of CRL use it and return success */
 	if (crl)
-		X509_CRL_free(crl);
-	return 1;
+		{
+		*pcrl = crl;
+		return 1;
+		}
+
+	return 0;
 	}
 
 /* Check CRL validity */
@@ -874,16 +851,6 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 			}
 		}
 	return 1;
-	}
-
-static STACK_OF(X509) * lookup_certs(X509_STORE_CTX *ctx, X509_NAME *nm)
-	{
-	return X509_STORE_get_certs(ctx->ctx, nm);
-	}
-
-static STACK_OF(X509_CRL) * lookup_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
-	{
-	return X509_STORE_get_crls(ctx->ctx, nm);
 	}
 
 static int check_policy(X509_STORE_CTX *ctx)
@@ -1476,12 +1443,12 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	if (store && store->lookup_certs)
 		ctx->lookup_certs = store->lookup_certs;
 	else
-		ctx->lookup_certs = lookup_certs;
+		ctx->lookup_certs = X509_STORE_get1_certs;
 
 	if (store && store->lookup_crls)
 		ctx->lookup_crls = store->lookup_crls;
 	else
-		ctx->lookup_crls = lookup_crls;
+		ctx->lookup_crls = X509_STORE_get1_crls;
 
 	ctx->check_policy = check_policy;
 
