@@ -108,7 +108,64 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-
+/* ====================================================================
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
+/* ====================================================================
+ * Copyright 2002 Sun Microsystems, Inc. ALL RIGHTS RESERVED.
+ * ECC cipher suite support in OpenSSL originally developed by 
+ * SUN MICROSYSTEMS, INC., and contributed to the OpenSSL project.
+ */
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
@@ -493,7 +550,8 @@ static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
 	*ca_curr = NULL;	/* end of list */
 	}
 
-static void ssl_cipher_apply_rule(unsigned long algorithms, unsigned long mask,
+static void ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long ssl_version,
+		unsigned long algorithms, unsigned long mask,
 		unsigned long algo_strength, unsigned long mask_strength,
 		int rule, int strength_bits, CIPHER_ORDER *co_list,
 		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
@@ -519,11 +577,20 @@ static void ssl_cipher_apply_rule(unsigned long algorithms, unsigned long mask,
 
 		cp = curr->cipher;
 
+		/* If explicit cipher suite, match only that one for its own protocol version.
+		 * Usual selection criteria will be used for similar ciphersuites from other version! */
+
+		if (cipher_id && (cp->algorithms & SSL_SSL_MASK) == ssl_version)
+			{
+			if (cp->id != cipher_id)
+				continue;
+			}
+
 		/*
 		 * Selection criteria is either the number of strength_bits
 		 * or the algorithm used.
 		 */
-		if (strength_bits == -1)
+		else if (strength_bits == -1)
 			{
 			ma = mask & cp->algorithms;
 			ma_s = mask_strength & cp->algo_strength;
@@ -636,7 +703,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER *co_list,
 	 */
 	for (i = max_strength_bits; i >= 0; i--)
 		if (number_uses[i] > 0)
-			ssl_cipher_apply_rule(0, 0, 0, 0, CIPHER_ORD, i,
+			ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, CIPHER_ORD, i,
 					co_list, head_p, tail_p);
 
 	OPENSSL_free(number_uses);
@@ -650,6 +717,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 	unsigned long algorithms, mask, algo_strength, mask_strength;
 	const char *l, *start, *buf;
 	int j, multi, found, rule, retval, ok, buflen;
+	unsigned long cipher_id = 0, ssl_version = 0;
 	char ch;
 
 	retval = 1;
@@ -739,6 +807,8 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			 * use strcmp(), because buf is not '\0' terminated.)
 			 */
 			 j = found = 0;
+			 cipher_id = 0;
+			 ssl_version = 0;
 			 while (ca_list[j])
 				{
 				if (!strncmp(buf, ca_list[j]->name, buflen) &&
@@ -766,6 +836,14 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			                (ca_list[j]->algo_strength & ~mask_strength) |
 			                (algo_strength & ca_list[j]->algo_strength);
 			mask_strength |= ca_list[j]->mask_strength;
+
+			/* explicit ciphersuite found */
+			if (ca_list[j]->valid)
+				{
+				cipher_id = ca_list[j]->id;
+				ssl_version = ca_list[j]->algorithms & SSL_SSL_MASK;
+				break;
+				}
 
 			if (!multi) break;
 			}
@@ -796,7 +874,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			}
 		else if (found)
 			{
-			ssl_cipher_apply_rule(algorithms, mask,
+			ssl_cipher_apply_rule(cipher_id, ssl_version, algorithms, mask,
 				algo_strength, mask_strength, rule, -1,
 				co_list, head_p, tail_p);
 			}
