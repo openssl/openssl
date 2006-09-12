@@ -381,7 +381,8 @@
 
   *) Since 0.9.8b, ciphersuite strings naming explicit ciphersuites
      match only those.  Before that, "AES256-SHA" would be interpreted
-     as a pattern and match "AES128-SHA" too since we currently only
+     as a pattern and match "AES128-SHA" too (since AES128-SHA got
+     the same strength classification in 0.9.7h) as we currently only
      have a single AES bit in the ciphersuite description bitmap.
      That change, however, also applied to ciphersuite strings such as
      "RC4-MD5" that intentionally matched multiple ciphersuites --
@@ -1365,6 +1366,17 @@
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
+
+ Changes between 0.9.7k and 0.9.7l  [xx XXX xxxx]
+
+  *) Change ciphersuite string processing so that an explicit
+     ciphersuite selects this one ciphersuite (so that "AES256-SHA"
+     will no longer include "AES128-SHA"), and any other similar
+     ciphersuite (same bitmap) from *other* protocol versions (so that
+     "RC4-MD5" will still include both the SSL 2.0 ciphersuite and the
+     SSL 3.0/TLS 1.0 ciphersuite).  This is a backport combining
+     changes from 0.9.8b and 0.9.8d.
+     [Bodo Moeller]
 
  Changes between 0.9.7j and 0.9.7k  [05 Sep 2006]
 
