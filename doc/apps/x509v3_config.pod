@@ -226,21 +226,82 @@ Example:
 
 =head2 CRL distribution points.
 
-This is a multi-valued extension that supports all the literal options of
-subject alternative name. Of the few software packages that currently interpret
-this extension most only interpret the URI option.
+This is a multi-valued extension whose options can be either in name:value pair
+using the same form as subject alternative name or a single value representing
+a section name containing all the distribution point fields.
 
-Currently each option will set a new DistributionPoint with the fullName
-field set to the given value.
+For a name:value pair a new DistributionPoint with the fullName field set to
+the given value both the cRLissuer and reasons fields are omitted in this case.
 
-Other fields like cRLissuer and reasons cannot currently be set or displayed:
-at this time no examples were available that used these fields.
+In the single option case the section indicated contains values for each
+field. In this section:
 
-Examples:
+If the name is "fullname" the value field should contain the full name
+of the distribution point in the same format as subject alternative name.
+
+If the name is "relativename" then the value field should contain a section
+name whose contents represent a DN fragment to be placed in this field.
+
+The name "CRLIssuer" if present should contain a value for this field in
+subject alternative name format.
+
+If the name is "reasons" the value field should consist of a comma
+separated field containing the reasons. Valid reasons are: "keyCompromise",
+"CACompromise", "affiliationChanged", "superseded", "cessationOfOperation",
+"certificateHold", "privilegeWithdrawn" and "AACompromise".
+
+
+Simple examples:
 
  crlDistributionPoints=URI:http://myhost.com/myca.crl
  crlDistributionPoints=URI:http://my.com/my.crl,URI:http://oth.com/my.crl
 
+Full distribution point example:
+
+ crlDistributionPoints=crldp1_section
+
+ [crldp1_section]
+
+ fullname=URI:http://myhost.com/myca.crl
+ CRLissuer=dirName:issuer_sect
+ reasons=keyCompromise, CACompromise
+
+ [issuer_sect]
+ C=UK
+ O=Organisation
+ CN=Some Name
+
+=head2 Issuing Distribution Point
+
+This extension should only appear in CRLs. It is a multi valued extension
+whose syntax is similar to the "section" pointed to by the CRL distribution
+points extension with a few differences.
+
+The names "reasons" and "CRLissuer" are not recognized.
+
+The name "onlysomereasons" is accepted which sets this field. The value is
+in the same format as the CRL distribution point "reasons" field.
+
+The names "onlyuser", "onlyCA", "onlyAA" and "indirectCRL" are also accepted
+the values should be a boolean value (TRUE or FALSE) to indicate the value of
+the corresponding field.
+
+Example:
+
+ issuingDistributionPoint=critical, @idp_section
+
+ [idp_section]
+
+ fullname=URI:http://myhost.com/myca.crl
+ indirectCRL=TRUE
+ onlysomereasons=keyCompromise, CACompromise
+
+ [issuer_sect]
+ C=UK
+ O=Organisation
+ CN=Some Name
+
+ 
 =head2 Certificate Policies.
 
 This is a I<raw> extension. All the fields of this extension can be set by
@@ -329,6 +390,8 @@ Examples:
  nameConstraints=permitted;email:.somedomain.com
 
  nameConstraints=excluded;email:.com
+issuingDistributionPoint = idp_section
+
 
 =head1 DEPRECATED EXTENSIONS
 
