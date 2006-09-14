@@ -78,6 +78,8 @@ static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
+static int crl_akid_check(X509_STORE_CTX *ctx, AUTHORITY_KEYID *akid);
+static int idp_check_scope(X509 *x, X509_CRL *crl);
 static int internal_verify(X509_STORE_CTX *ctx);
 const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
 
@@ -649,30 +651,81 @@ static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 	return 1;
 	}
 
-/* Lookup CRLs from the supplied list. Look for matching isser name
- * and validity. If we can't find a valid CRL return the last one
- * with matching name. This gives more meaningful error codes. Otherwise
- * we'd get a CRL not found error if a CRL existed with matching name but
- * was invalid.
+/* Based on a set of possible CRLs decide which one is best suited
+ * to handle the current certificate. This is determined by a number
+ * of criteria. If any of the "must" criteria is not satisfied then
+ * the candidate CRL is rejected. If all "must" and all "should" are
+ * satisfied the CRL is accepted. If no CRL satisfies all criteria then
+ * a "best CRL" is used to provide some meaningful error information.
+ *
+ * CRL issuer name must match "nm" if not NULL.
+ * If IDP is present:
+ *   a. it must be consistent.
+ *   b. onlyuser, onlyCA, onlyAA should match certificate being checked.
+ *   c. indirectCRL must be FALSE.
+ *   d. onlysomereason must be absent.
+ *   e. if name present a DP in certificate CRLDP must match.
+ * If AKID present it should match certificate AKID.
+ * Check time should fall between lastUpdate and nextUpdate.
  */
+
+/* IDP name field matches CRLDP or IDP name not present */
+#define CRL_SCORE_SCOPE		4
+/* AKID present and matches cert, or AKID not present */
+#define CRL_SCORE_AKID		2
+/* times OK */
+#define CRL_SCORE_TIME		1
+
+#define CRL_SCORE_ALL		7
+
+/* IDP flags which cause a CRL to be rejected */
+
+#define IDP_REJECT	(IDP_INVALID|IDP_INDIRECT|IDP_REASONS)
 
 static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 			X509_NAME *nm, STACK_OF(X509_CRL) *crls)
 	{
-	int i;
+	int i, crl_score, best_score = -1;
 	X509_CRL *crl, *best_crl = NULL;
 	for (i = 0; i < sk_X509_CRL_num(crls); i++)
 		{
+		crl_score = 0;
 		crl = sk_X509_CRL_value(crls, i);
 		if (nm && X509_NAME_cmp(nm, X509_CRL_get_issuer(crl)))
 			continue;
 		if (check_crl_time(ctx, crl, 0))
+			crl_score |= CRL_SCORE_TIME;
+
+		if (crl->idp_flags & IDP_PRESENT)
+			{
+			if (crl->idp_flags & IDP_REJECT)
+				continue;
+			if (idp_check_scope(ctx->current_cert, crl))
+				crl_score |= CRL_SCORE_SCOPE;
+			}
+		else
+			crl_score |= CRL_SCORE_SCOPE;
+
+		if (crl->akid)
+			{
+			if (crl_akid_check(ctx, crl->akid))
+				crl_score |= CRL_SCORE_AKID;
+			}
+		else
+			crl_score |= CRL_SCORE_AKID;
+
+		if (crl_score == CRL_SCORE_ALL)
 			{
 			*pcrl = crl;
 			CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
 			return 1;
 			}
-		best_crl = crl;
+
+		if (crl_score > best_score)
+			{
+			best_crl = crl;
+			best_score = crl_score;
+			}
 		}
 	if (best_crl)
 		{
@@ -683,9 +736,71 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 	return 0;
 	}
 
-/* Retrieve CRL corresponding to certificate: currently just a
- * subject lookup: maybe use AKID later...
+static int crl_akid_check(X509_STORE_CTX *ctx, AUTHORITY_KEYID *akid)
+	{
+	int cidx = ctx->error_depth;
+	if (cidx != sk_X509_num(ctx->chain) - 1)
+		cidx++;
+	if (X509_check_akid(sk_X509_value(ctx->chain, cidx), akid) == X509_V_OK)
+		return 1;
+	return 0;
+	}
+
+
+/* Check IDP name matches at least one CRLDP name */
+
+static int idp_check_scope(X509 *x, X509_CRL *crl)
+	{
+	int i, j, k;
+	GENERAL_NAMES *inames, *dnames;
+	if (crl->idp_flags & IDP_ONLYATTR)
+		return 0;
+	if (x->ex_flags & EXFLAG_CA)
+		{
+		if (crl->idp_flags & IDP_ONLYUSER)
+			return 0;
+		}
+	else
+		{
+		if (crl->idp_flags & IDP_ONLYCA)
+			return 0;
+		}
+	if (!crl->idp->distpoint)
+		return 1;
+	if (crl->idp->distpoint->type != 0)
+		return 1;
+	if (!x->crldp)
+		return 0;
+	inames = crl->idp->distpoint->name.fullname;
+	for (i = 0; i < sk_GENERAL_NAME_num(inames); i++)
+		{
+		GENERAL_NAME *igen = sk_GENERAL_NAME_value(inames, i);
+		for (j = 0; j < sk_DIST_POINT_num(x->crldp); j++)
+			{
+			DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, j);
+			/* We don't handle these at present */
+			if (dp->reasons || dp->CRLissuer)
+				continue;
+			if (!dp->distpoint || (dp->distpoint->type != 0))
+				continue;
+			dnames = dp->distpoint->name.fullname;
+			for (k = 0; k < sk_GENERAL_NAME_num(dnames); k++)
+				{
+				GENERAL_NAME *cgen =
+					sk_GENERAL_NAME_value(dnames, k);
+				if (!GENERAL_NAME_cmp(igen, cgen))
+					return 1;
+				}
+			}
+		}
+	return 0;
+	}
+
+/* Retrieve CRL corresponding to current certificate. Currently only
+ * one CRL is retrieved. Multiple CRLs may be needed if we handle
+ * CRLs partitioned on reason code later.
  */
+	
 static int get_crl(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 *x)
 	{
 	int ok;
@@ -763,6 +878,28 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 			ctx->error = X509_V_ERR_KEYUSAGE_NO_CRL_SIGN;
 			ok = ctx->verify_cb(0, ctx);
 			if(!ok) goto err;
+			}
+
+		if (crl->idp_flags & IDP_PRESENT)
+			{
+			if (crl->idp_flags & IDP_INVALID)
+				{
+				ctx->error = X509_V_ERR_INVALID_EXTENSION;
+				ok = ctx->verify_cb(0, ctx);
+				if(!ok) goto err;
+				}
+			if (crl->idp_flags & (IDP_REASONS|IDP_INDIRECT))
+				{
+				ctx->error = X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE;
+				ok = ctx->verify_cb(0, ctx);
+				if(!ok) goto err;
+				}
+			if (!idp_check_scope(ctx->current_cert, crl))
+				{
+				ctx->error = X509_V_ERR_DIFFERENT_CRL_SCOPE;
+				ok = ctx->verify_cb(0, ctx);
+				if(!ok) goto err;
+				}
 			}
 
 		/* Attempt to get issuer certificate public key */
@@ -843,6 +980,10 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 		ext = sk_X509_EXTENSION_value(exts, idx);
 		if (ext->critical > 0)
 			{
+			/* We handle IDP now so permit it */
+			if (OBJ_obj2nid(ext->object) ==
+				NID_issuing_distribution_point)
+				continue;
 			ctx->error =
 				X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION;
 			ok = ctx->verify_cb(0, ctx);

@@ -162,6 +162,10 @@ const char *X509_verify_cert_error_string(long n)
 		return("invalid or inconsistent certificate policy extension");
 	case X509_V_ERR_NO_EXPLICIT_POLICY:
 		return("no explicit policy");
+	case X509_V_ERR_DIFFERENT_CRL_SCOPE:
+	return("Different CRL scope");
+	case X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE:
+	return("Unsupported extension feature");
 	default:
 		BIO_snprintf(buf,sizeof buf,"error number %ld",n);
 		return(buf);

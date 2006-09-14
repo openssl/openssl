@@ -632,6 +632,7 @@ int X509_check_purpose(X509 *x, int id, int ca);
 int X509_supported_extension(X509_EXTENSION *ex);
 int X509_PURPOSE_set(int *p, int purpose);
 int X509_check_issued(X509 *issuer, X509 *subject);
+int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid);
 int X509_PURPOSE_get_count(void);
 X509_PURPOSE * X509_PURPOSE_get0(int idx);
 int X509_PURPOSE_get_by_sname(char *sname);

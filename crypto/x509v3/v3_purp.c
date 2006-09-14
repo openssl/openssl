@@ -644,39 +644,14 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 				return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 	x509v3_cache_extensions(issuer);
 	x509v3_cache_extensions(subject);
-	if(subject->akid) {
-		/* Check key ids (if present) */
-		if(subject->akid->keyid && issuer->skid &&
-		 ASN1_OCTET_STRING_cmp(subject->akid->keyid, issuer->skid) )
-				return X509_V_ERR_AKID_SKID_MISMATCH;
-		/* Check serial number */
-		if(subject->akid->serial &&
-			ASN1_INTEGER_cmp(X509_get_serialNumber(issuer),
-						subject->akid->serial))
-				return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
-		/* Check issuer name */
-		if(subject->akid->issuer) {
-			/* Ugh, for some peculiar reason AKID includes
-			 * SEQUENCE OF GeneralName. So look for a DirName.
-			 * There may be more than one but we only take any
-			 * notice of the first.
-			 */
-			GENERAL_NAMES *gens;
-			GENERAL_NAME *gen;
-			X509_NAME *nm = NULL;
-			int i;
-			gens = subject->akid->issuer;
-			for(i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
-				gen = sk_GENERAL_NAME_value(gens, i);
-				if(gen->type == GEN_DIRNAME) {
-					nm = gen->d.dirn;
-					break;
-				}
-			}
-			if(nm && X509_NAME_cmp(nm, X509_get_issuer_name(issuer)))
-				return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
+
+	if(subject->akid)
+		{
+		int ret = X509_check_akid(issuer, subject->akid);
+		if (ret != X509_V_OK)
+			return ret;
 		}
-	}
+
 	if(subject->ex_flags & EXFLAG_PROXY)
 		{
 		if(ku_reject(issuer, KU_DIGITAL_SIGNATURE))
@@ -686,4 +661,46 @@ int X509_check_issued(X509 *issuer, X509 *subject)
 		return X509_V_ERR_KEYUSAGE_NO_CERTSIGN;
 	return X509_V_OK;
 }
+
+int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
+	{
+
+	if(!akid)
+		return X509_V_OK;
+
+	/* Check key ids (if present) */
+	if(akid->keyid && issuer->skid &&
+		 ASN1_OCTET_STRING_cmp(akid->keyid, issuer->skid) )
+				return X509_V_ERR_AKID_SKID_MISMATCH;
+	/* Check serial number */
+	if(akid->serial &&
+		ASN1_INTEGER_cmp(X509_get_serialNumber(issuer), akid->serial))
+				return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
+	/* Check issuer name */
+	if(akid->issuer)
+		{
+		/* Ugh, for some peculiar reason AKID includes
+		 * SEQUENCE OF GeneralName. So look for a DirName.
+		 * There may be more than one but we only take any
+		 * notice of the first.
+		 */
+		GENERAL_NAMES *gens;
+		GENERAL_NAME *gen;
+		X509_NAME *nm = NULL;
+		int i;
+		gens = akid->issuer;
+		for(i = 0; i < sk_GENERAL_NAME_num(gens); i++)
+			{
+			gen = sk_GENERAL_NAME_value(gens, i);
+			if(gen->type == GEN_DIRNAME)
+				{
+				nm = gen->d.dirn;
+				break;
+				}
+			}
+		if(nm && X509_NAME_cmp(nm, X509_get_issuer_name(issuer)))
+			return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
+		}
+	return X509_V_OK;
+	}
 

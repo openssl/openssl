@@ -4,6 +4,18 @@
 
  Changes between 0.9.8d and 0.9.9  [xx XXX xxxx]
 
+  *) Partial support for Issuing Distribution Point CRL extension. CRLs
+     partitioned by DP are handled but no indirect CRL or reason partitioning
+     (yet). Complete overhaul of CRL handling: now the most suitable CRL is
+     selected via a scoring technique which handles IDP and AKID in CRLs.
+     [Steve Henson]
+
+  *) New X509_STORE_CTX callbacks lookup_crls() and lookup_certs() which
+     will ultimately be used for all verify operations: this will remove the
+     X509_STORE dependency on certificate verification and allow alternative
+     lookup methods.  X509_STORE based implementations of these two callbacks.
+     [Steve Henson]
+
   *) Allow multiple CRLs to exist in an X509_STORE with matching issuer names.
      Modify get_crl() to find a valid (unexpired) CRL if possible.
      [Steve Henson]

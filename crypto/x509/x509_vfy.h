@@ -334,6 +334,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_INVALID_EXTENSION			41
 #define		X509_V_ERR_INVALID_POLICY_EXTENSION		42
 #define		X509_V_ERR_NO_EXPLICIT_POLICY			43
+#define		X509_V_ERR_DIFFERENT_CRL_SCOPE			44
+#define		X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE	45
 
 
 /* The application is not happy */
