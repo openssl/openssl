@@ -258,7 +258,7 @@ static int accept_socket= -1;
 #undef PROG
 #define PROG		s_server_main
 
-extern int verify_depth;
+extern int verify_depth, verify_return_error;
 
 static char *cipher=NULL;
 static int s_server_verify=SSL_VERIFY_NONE;
@@ -842,6 +842,8 @@ int MAIN(int argc, char *argv[])
 			{
 			vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
 			}
+		else if (strcmp(*argv,"-verify_return_error") == 0)
+			verify_return_error = 1;
 		else if	(strcmp(*argv,"-serverpref") == 0)
 			{ off|=SSL_OP_CIPHER_SERVER_PREFERENCE; }
 		else if	(strcmp(*argv,"-cipher") == 0)

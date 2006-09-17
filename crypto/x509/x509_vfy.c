@@ -967,8 +967,8 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 		return 1;
 
 	/* See if we have any critical CRL extensions: since we
-	 * currently don't handle any CRL extensions the CRL must be
-	 * rejected. 
+	 * currently only handle IDP the CRL must be rejected if any others
+	 * are present. 
 	 * This code accesses the X509_CRL structure directly: applications
 	 * shouldn't do this.
 	 */

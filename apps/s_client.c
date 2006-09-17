@@ -187,6 +187,7 @@ typedef unsigned int u_int;
 
 extern int verify_depth;
 extern int verify_error;
+extern int verify_return_error;
 
 #ifdef FIONBIO
 static int c_nbio=0;
@@ -478,6 +479,8 @@ int MAIN(int argc, char **argv)
 			vflags |= X509_V_FLAG_CRL_CHECK;
 		else if	(strcmp(*argv,"-crl_check_all") == 0)
 			vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
+		else if (strcmp(*argv,"-verify_return_error") == 0)
+			verify_return_error = 1;
 		else if	(strcmp(*argv,"-prexit") == 0)
 			prexit=1;
 		else if	(strcmp(*argv,"-crlf") == 0)

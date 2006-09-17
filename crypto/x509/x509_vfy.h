@@ -77,6 +77,7 @@
 extern "C" {
 #endif
 
+#if 0
 /* Outer object */
 typedef struct x509_hash_dir_st
 	{
@@ -85,6 +86,7 @@ typedef struct x509_hash_dir_st
 	int *dirs_type;
 	int num_dirs_alloced;
 	} X509_HASH_DIR_CTX;
+#endif
 
 typedef struct x509_file_st
 	{

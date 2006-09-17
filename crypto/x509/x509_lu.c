@@ -288,7 +288,7 @@ int X509_STORE_get_by_subject(X509_STORE_CTX *vs, int type, X509_NAME *name,
 
 	tmp=X509_OBJECT_retrieve_by_subject(ctx->objs,type,name);
 
-	if (tmp == NULL)
+	if (tmp == NULL || type == X509_LU_CRL)
 		{
 		for (i=vs->current_method; i<sk_X509_LOOKUP_num(ctx->get_cert_methods); i++)
 			{
@@ -530,33 +530,30 @@ STACK_OF(X509_CRL)* X509_STORE_get1_crls(X509_STORE_CTX *ctx, X509_NAME *nm)
 	int i, idx, cnt;
 	STACK_OF(X509_CRL) *sk;
 	X509_CRL *x;
-	X509_OBJECT *obj;
+	X509_OBJECT *obj, xobj;
 	sk = sk_X509_CRL_new_null();
 	CRYPTO_r_lock(CRYPTO_LOCK_X509_STORE);
 	/* Check cache first */
 	idx = x509_object_idx_cnt(ctx->ctx->objs, X509_LU_CRL, nm, &cnt);
+
+	/* Always do lookup to possibly add new CRLs to cache
+	 */
+	CRYPTO_r_unlock(CRYPTO_LOCK_X509_STORE);
+	if (!X509_STORE_get_by_subject(ctx, X509_LU_CRL, nm, &xobj))
+		{
+		sk_X509_CRL_free(sk);
+		return NULL;
+		}
+	X509_OBJECT_free_contents(&xobj);
+	CRYPTO_r_lock(CRYPTO_LOCK_X509_STORE);
+	idx = x509_object_idx_cnt(ctx->ctx->objs,X509_LU_CRL, nm, &cnt);
 	if (idx < 0)
 		{
-		/* Nothing found in cache: do lookup to possibly add new
-		 * objects to cache
-		 */
-		X509_OBJECT xobj;
 		CRYPTO_r_unlock(CRYPTO_LOCK_X509_STORE);
-		if (!X509_STORE_get_by_subject(ctx, X509_LU_CRL, nm, &xobj))
-			{
-			sk_X509_CRL_free(sk);
-			return NULL;
-			}
-		X509_OBJECT_free_contents(&xobj);
-		CRYPTO_r_lock(CRYPTO_LOCK_X509_STORE);
-		idx = x509_object_idx_cnt(ctx->ctx->objs,X509_LU_CRL, nm, &cnt);
-		if (idx < 0)
-			{
-			CRYPTO_r_unlock(CRYPTO_LOCK_X509_STORE);
-			sk_X509_CRL_free(sk);
-			return NULL;
-			}
+		sk_X509_CRL_free(sk);
+		return NULL;
 		}
+
 	for (i = 0; i < cnt; i++, idx++)
 		{
 		obj = sk_X509_OBJECT_value(ctx->ctx->objs, idx);

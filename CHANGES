@@ -4,6 +4,17 @@
 
  Changes between 0.9.8d and 0.9.9  [xx XXX xxxx]
 
+  *) Overhaul of by_dir code. Add support for dynamic loading of CRLs so
+     new CRLs added to a directory can be used. New command line option
+     -verify_return_error to s_client and s_server. This causes real errors
+     to be returned by the verify callback instead of carrying on no matter
+     what. This reflects the way a "real world" verify callback would behave.
+     [Steve Henson]
+
+  *) GOST engine, supporting several GOST algorithms and public key formats.
+     Kindly donated by Cryptocom.
+     [Cryptocom]
+
   *) Partial support for Issuing Distribution Point CRL extension. CRLs
      partitioned by DP are handled but no indirect CRL or reason partitioning
      (yet). Complete overhaul of CRL handling: now the most suitable CRL is
