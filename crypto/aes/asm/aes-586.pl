@@ -117,8 +117,9 @@
 #
 # Version 4.3 implements switch between compact and non-compact block
 # functions in AES_cbc_encrypt depending on how much data was asked
-# to process in one stroke.
+# to be processed in one stroke.
 #
+######################################################################
 # Timing attacks are classified in two classes: synchronous when
 # attacker consciously initiates cryptographic operation and collects
 # timing data of various character afterwards, and asynchronous when
@@ -141,7 +142,7 @@
 # timing. But note that *if* plain-text was concealed in such way that
 # input to block function is distributed *uniformly*, then attack
 # wouldn't apply. Now note that some encryption modes, most notably
-# CBC, do masks the plain-text in this exact way [secure cipher output
+# CBC, do mask the plain-text in this exact way [secure cipher output
 # is distributed uniformly]. Yes, one still might find input that
 # would reveal the information about given key, but if amount of
 # candidate inputs to be tried is larger than amount of possible key
@@ -2459,7 +2460,7 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 	&pushf	();			# kludge, never executed
 
     &set_label("slow_enc_tail",16);
-	&emms	();
+	&emms	()	if (!$x86only);
 	&mov	($key eq "edi"? $key:"",$s3);	# load out to edi
 	&mov	($s1,16);
 	&sub	($s1,$s2);
