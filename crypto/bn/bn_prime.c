@@ -378,13 +378,14 @@ static int probable_prime(BIGNUM *rnd, int bits)
 	{
 	int i;
 	BN_ULONG mods[NUMPRIMES];
-	BN_ULONG delta,d;
+	BN_ULONG delta,maxdelta;
 
 again:
 	if (!BN_rand(rnd,bits,1,1)) return(0);
 	/* we now have a random number 'rand' to test. */
 	for (i=1; i<NUMPRIMES; i++)
 		mods[i]=BN_mod_word(rnd,(BN_ULONG)primes[i]);
+	maxdelta=BN_MASK2 - primes[NUMPRIMES-1];
 	delta=0;
 	loop: for (i=1; i<NUMPRIMES; i++)
 		{
@@ -392,12 +393,8 @@ again:
 		 * that gcd(rnd-1,primes) == 1 (except for 2) */
 		if (((mods[i]+delta)%primes[i]) <= 1)
 			{
-			d=delta;
 			delta+=2;
-			/* perhaps need to check for overflow of
-			 * delta (but delta can be up to 2^32)
-			 * 21-May-98 eay - added overflow check */
-			if (delta < d) goto again;
+			if (delta > maxdelta) goto again;
 			goto loop;
 			}
 		}
