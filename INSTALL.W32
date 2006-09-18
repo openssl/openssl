@@ -29,23 +29,10 @@
  If you want to compile in the assembly language routines with Visual C++ then
  you will need an assembler. This is worth doing because it will result in
  faster code: for example it will typically result in a 2 times speedup in the
- RSA routines. Currently the following assemblers are supported:
-
-  * Microsoft MASM (aka "ml")
-  * Free Netwide Assembler NASM.
-
- MASM is distributed with most versions of VC++. For the versions where it is
- not included in VC++, it is also distributed with some Microsoft DDKs, for
- example the Windows NT 4.0 DDK and the Windows 98 DDK. If you do not have
- either of these DDKs then you can just download the binaries for the Windows
- 98 DDK and extract and rename the two files XXXXXml.exe and XXXXXml.err, to
- ml.exe and ml.err and install somewhere on your PATH. Both DDKs can be
- downloaded from the Microsoft developers site www.msdn.com.
-
- NASM is freely available. Version 0.98 was used during testing: other versions
- may also work. It is available from many places, see for example:
- http://www.kernel.org/pub/software/devel/nasm/binaries/win32/
- The NASM binary nasmw.exe needs to be installed anywhere on your PATH.
+ RSA routines. Assembler choice is limited to Free Netwise Assember, NASM,
+ available for download from http://sourceforge.net/projects/nasm/, even in
+ binary form. The NASM binary, nasmw.exe needs to be installed anywhere on
+ your %PATH%.
 
  Firstly you should run Configure:
 
@@ -55,10 +42,6 @@ Where the prefix argument specifies where OpenSSL will be installed to.
 
  Next you need to build the Makefiles and optionally the assembly language
  files:
-
- - If you are using MASM then run:
-
-   > ms\do_masm
 
  - If you are using NASM then run:
 
