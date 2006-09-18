@@ -294,7 +294,7 @@ test_tsa:
 	  sh ./testtsa; \
 	fi
 
-test_ige: $(IGETEST)
+test_ige: $(IGETEST)$(EXE_EXT)
 	@echo "Test IGE mode"
 	../util/shlib_wrap.sh ./$(IGETEST)
 
