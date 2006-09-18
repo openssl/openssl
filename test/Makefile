@@ -283,7 +283,7 @@ test_aes: #$(AESTEST)
 #	@echo "test Rijndael"
 #	../util/shlib_wrap.sh ./$(AESTEST)
 
-test_ige: $(IGETEST)
+test_ige: $(IGETEST)$(EXE_EXT)
 	@echo "Test IGE mode"
 	../util/shlib_wrap.sh ./$(IGETEST)
 
