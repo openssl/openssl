@@ -7,7 +7,7 @@
  *         OpenSSL 0.9.9 libraries required to compile and use        *
  *                              this code                             *
  **********************************************************************/ 
-#include "paramset.h"
+#include "gost_params.h"
 #include <openssl/objects.h>
 /* Parameters of GOST 34.10 */
 

@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "gost_asn1.h"
+#include "gost_lcl.h"
 
 ASN1_NDEF_SEQUENCE(GOST_KEY_TRANSPORT) = {
 	ASN1_SIMPLE(GOST_KEY_TRANSPORT, key_info, GOST_KEY_INFO),

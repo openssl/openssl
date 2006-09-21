@@ -1,5 +1,5 @@
 /**********************************************************************
- *                          pmeth.c                                   *
+ *                          gost_pmeth.c                              *
  *             Copyright (c) 2005-2006 Cryptocom LTD                  *
  *         This file is distributed under the same license as OpenSSL *
  *                                                                    *
@@ -13,107 +13,115 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "meth.h"
-#include "pmeth.h"
-#include "sign.h"
-#include "gostkeyx.h"
-#include "paramset.h"
-#include "tools.h"
+#include "gost_params.h"
+#include "gost_lcl.h"
 #include "e_gost_err.h"
 /*-------init, cleanup, copy - uniform for all algs  ---------------*/
 /* Allocates new gost_pmeth_data structure and assigns it as data */
-static int pkey_gost_init(EVP_PKEY_CTX *ctx) {
+static int pkey_gost_init(EVP_PKEY_CTX *ctx)
+	{
 	struct gost_pmeth_data *data;
 	data = OPENSSL_malloc(sizeof(struct gost_pmeth_data));
 	if (!data) return 0;
 	memset(data,0,sizeof(struct gost_pmeth_data));
 	EVP_PKEY_CTX_set_data(ctx,data);
 	return 1;
-}
+	}
+
 /* Copies contents of gost_pmeth_data structure */
 static int pkey_gost_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
-{
+	{
 	struct gost_pmeth_data *dst_data,*src_data;
-	if (!pkey_gost_init(dst)) {
+	if (!pkey_gost_init(dst))
+		{
 		return 0;
-	}
+		}
 	src_data = EVP_PKEY_CTX_get_data(src);
 	dst_data = EVP_PKEY_CTX_get_data(dst);
 	*dst_data = *src_data;
-	if (src_data -> eph_seckey) {
+	if (src_data -> eph_seckey)
+		{
 		dst_data ->eph_seckey = NULL;
-	}	
+		}	
 	return 1;
-}
+	}
+
 /* Frees up gost_pmeth_data structure */
-static void pkey_gost_cleanup (EVP_PKEY_CTX *ctx) {
+static void pkey_gost_cleanup (EVP_PKEY_CTX *ctx)
+	{
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 	if (data->eph_seckey) EVP_PKEY_free(data->eph_seckey);
 	OPENSSL_free(data);
-}	
+	}	
+
 /* --------------------- control functions  ------------------------------*/
 static int pkey_gost_ctrl (EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
-{
+	{
 	struct gost_pmeth_data *pctx = (struct gost_pmeth_data*)EVP_PKEY_CTX_get_data(ctx);
 	switch (type)
-	{
+		{
 		case EVP_PKEY_CTRL_MD:
+		{
+		if (EVP_MD_type((const EVP_MD *)p2) != NID_id_GostR3411_94)
 			{
-				if (EVP_MD_type((const EVP_MD *)p2) != NID_id_GostR3411_94) {
-					GOSTerr(GOST_F_PKEY_GOST_CTRL, GOST_R_INVALID_DIGEST_TYPE);
-					return 0;
-				}
-				pctx->md = (EVP_MD *)p2;
-				return 1;
+			GOSTerr(GOST_F_PKEY_GOST_CTRL, GOST_R_INVALID_DIGEST_TYPE);
+			return 0;
 			}
-			break;
+		pctx->md = (EVP_MD *)p2;
+		return 1;
+		}
+		break;
 
 		case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
 		case EVP_PKEY_CTRL_PKCS7_DECRYPT:
 		case EVP_PKEY_CTRL_PKCS7_SIGN:
-		return 1; 
+			return 1;
 
 		case EVP_PKEY_CTRL_GOST_PARAMSET:
 			pctx->sign_param_nid = (int)p1;
-			pctx->crypt_param_nid= (int)p2;
 			return 1;
 			
-	}
-	return -2;
-}
-
-static int pkey_gost_ctrl94cc_str(EVP_PKEY_CTX *ctx, 
-		const char *type, const char *value)
-{
-	if(!strcmp(type, param_ctrl_string)) {
-		return pkey_gost_ctrl(ctx, EVP_PKEY_CTRL_GOST_PARAMSET,
-			NID_id_GostR3410_94_CryptoPro_A_ParamSet, 
-			(void *)NID_id_Gost28147_89_cc);
-	}
-	return -2;
-}
-
-static int pkey_gost_ctrl01cc_str(EVP_PKEY_CTX *ctx, 
-		const char *type, const char *value)
-{
-	if(!strcmp(type, param_ctrl_string)) {
-		return pkey_gost_ctrl(ctx, EVP_PKEY_CTRL_GOST_PARAMSET,
-			NID_id_GostR3410_2001_ParamSet_cc, 
-			(void *)
-			NID_id_Gost28147_89_cc);
-	}
-	return -2;
-}
-static int pkey_gost_ctrl94_str(EVP_PKEY_CTX *ctx, 
-		const char *type, const char *value)
-{
-	int param_nid=0;
-	if(!strcmp(type, param_ctrl_string)) {
-		if (!value) {
-			return 0;
 		}
-		if (strlen(value) == 1) {
-			switch(toupper(value[0])) {
+	return -2;
+	}
+
+static int pkey_gost_ctrl94cc_str(EVP_PKEY_CTX *ctx,
+	const char *type, const char *value)
+	{
+	if(!strcmp(type, param_ctrl_string))
+		{
+		return pkey_gost_ctrl(ctx, EVP_PKEY_CTRL_GOST_PARAMSET,
+			NID_id_GostR3410_94_CryptoPro_A_ParamSet,
+			NULL);
+		}
+	return -2;
+	}
+
+static int pkey_gost_ctrl01cc_str(EVP_PKEY_CTX *ctx,
+	const char *type, const char *value)
+	{
+	if(!strcmp(type, param_ctrl_string))
+		{
+		return pkey_gost_ctrl(ctx, EVP_PKEY_CTRL_GOST_PARAMSET,
+			NID_id_GostR3410_2001_ParamSet_cc,NULL);
+		}
+	return -2;
+	}
+
+static int pkey_gost_ctrl94_str(EVP_PKEY_CTX *ctx,
+	const char *type, const char *value)
+	{
+	int param_nid=0;
+	if(!strcmp(type, param_ctrl_string))
+		{
+		if (!value)
+			{
+			return 0;
+			}
+		if (strlen(value) == 1)
+			{
+			switch(toupper(value[0]))
+				{
 				case 'A':
 					param_nid = NID_id_GostR3410_94_CryptoPro_A_ParamSet;
 					break;
@@ -129,9 +137,12 @@ static int pkey_gost_ctrl94_str(EVP_PKEY_CTX *ctx,
 				default:
 					return 0;
 					break;
+				}
 			}
-		} else if ((strlen(value) == 2) && (toupper(value[0]) == 'X')) {
-			switch (toupper(value[1])) {
+		else if ((strlen(value) == 2) && (toupper(value[0]) == 'X'))
+			{
+			switch (toupper(value[1]))
+				{
 				case 'A':
 					param_nid = NID_id_GostR3410_94_CryptoPro_XchA_ParamSet;
 					break;
@@ -144,39 +155,48 @@ static int pkey_gost_ctrl94_str(EVP_PKEY_CTX *ctx,
 				default:
 					return 0;
 					break;
+				}
 			}
-		} else {
+		else
+			{
 			R3410_params *p = R3410_paramset;
 			param_nid = OBJ_txt2nid(value);
-			if (param_nid == NID_undef) {
+			if (param_nid == NID_undef)
+				{
 				return 0;
-			}
-			for (;p->nid != NID_undef;p++) {
+				}
+			for (;p->nid != NID_undef;p++)
+				{
 				if (p->nid == param_nid) break;
-			}
-			if (p->nid == NID_undef) {
+				}
+			if (p->nid == NID_undef)
+				{
 				GOSTerr(GOST_F_PKEY_GOST_CTRL94_STR,
-				GOST_R_INVALID_PARAMSET);
+					GOST_R_INVALID_PARAMSET);
 				return 0;
+				}
 			}
-		}
 
-		return pkey_gost_ctrl(ctx, EVP_PKEY_CTRL_GOST_PARAMSET, 
-				param_nid, (void *)NID_id_Gost28147_89_CryptoPro_A_ParamSet);
-	}
+		return pkey_gost_ctrl(ctx, EVP_PKEY_CTRL_GOST_PARAMSET,
+			param_nid, NULL);
+		}
 	return -2;
-}
+	}
 
-static int pkey_gost_ctrl01_str(EVP_PKEY_CTX *ctx, 
-		const char *type, const char *value)
-{
+static int pkey_gost_ctrl01_str(EVP_PKEY_CTX *ctx,
+	const char *type, const char *value)
+	{
 	int param_nid=0;
-	if(!strcmp(type, param_ctrl_string)) {
-		if (!value) {
+	if(!strcmp(type, param_ctrl_string))
+		{
+		if (!value)
+			{
 			return 0;
-		}
-		if (strlen(value) == 1) {
-			switch(toupper(value[0])) {
+			}
+		if (strlen(value) == 1)
+			{
+			switch(toupper(value[0]))
+				{
 				case 'A':
 					param_nid = NID_id_GostR3410_2001_CryptoPro_A_ParamSet;
 					break;	
@@ -192,9 +212,12 @@ static int pkey_gost_ctrl01_str(EVP_PKEY_CTX *ctx,
 				default:
 					return 0;
 					break;
+				}
 			}
-		} else if ((strlen(value) == 2) && (toupper(value[0]) == 'X')) {
-			switch (toupper(value[1])) {
+		else if ((strlen(value) == 2) && (toupper(value[0]) == 'X'))
+			{
+			switch (toupper(value[1]))
+				{
 				case 'A':
 					param_nid = NID_id_GostR3410_2001_CryptoPro_XchA_ParamSet;
 					break;
@@ -204,172 +227,198 @@ static int pkey_gost_ctrl01_str(EVP_PKEY_CTX *ctx,
 				default:
 					return 0;
 					break;
+				}
 			}
-		} else {
+		else
+			{
 			R3410_2001_params *p = R3410_2001_paramset;
 			param_nid = OBJ_txt2nid(value);
-			if (param_nid == NID_undef) {
+			if (param_nid == NID_undef)
+				{
 				return 0;
-			}
-			for (;p->nid != NID_undef;p++) {
+				}
+			for (;p->nid != NID_undef;p++)
+				{
 				if (p->nid == param_nid) break;
-			}
-			if (p->nid == NID_undef) {
+				}
+			if (p->nid == NID_undef)
+				{
 				GOSTerr(GOST_F_PKEY_GOST_CTRL01_STR,
-				GOST_R_INVALID_PARAMSET);
+					GOST_R_INVALID_PARAMSET);
 				return 0;
+				}
 			}
-		}
 
-		return pkey_gost_ctrl(ctx, EVP_PKEY_CTRL_GOST_PARAMSET, 
-				param_nid, (void *)NID_id_Gost28147_89_CryptoPro_A_ParamSet);
-	}
+		return pkey_gost_ctrl(ctx, EVP_PKEY_CTRL_GOST_PARAMSET,
+			param_nid, NULL);
+		}
 	return -2;
-}
+	}
+
 /* --------------------- key generation  --------------------------------*/
 /* Generates GOST 94 key and assigns it setting specified type */
 static int pkey_gost94_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey,int type)
-{
+	{
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 	DSA *dsa=NULL;
-	if (data->sign_param_nid == NID_undef) {
-		if (type== NID_id_GostR3410_94_cc) {
+	if (data->sign_param_nid == NID_undef)
+		{
+		if (type== NID_id_GostR3410_94_cc)
+			{
 			data->sign_param_nid = NID_id_GostR3410_94_CryptoPro_A_ParamSet;
-		} else {
+			}
+		else
+			{
 			GOSTerr(GOST_F_PKEY_GOST94_KEYGEN,
-			GOST_R_NO_PARAMETERS_SET);
+				GOST_R_NO_PARAMETERS_SET);
 			return 0;
-		}	
-	}
+			}	
+		}
 	dsa = DSA_new();
-	if (!fill_GOST94_params(dsa,data->sign_param_nid)) {
+	if (!fill_GOST94_params(dsa,data->sign_param_nid))
+		{
 		DSA_free(dsa);
 		return 0;
-	}
+		}
 	gost_sign_keygen(dsa);
 	EVP_PKEY_assign(pkey,type,dsa);
 	return 1;
-}
+	}
+
 /* Generates Gost_R3410_94_cc key */
-static int pkey_gost94cc_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
+static int pkey_gost94cc_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+	{
 	return pkey_gost94_keygen(ctx,pkey,NID_id_GostR3410_94_cc);
-}
+	}
 
 /* Generates Gost_R3410_94_cp key */
-static int pkey_gost94cp_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
+static int pkey_gost94cp_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+	{
 	return pkey_gost94_keygen(ctx,pkey,NID_id_GostR3410_94);
-}
+	}
+
 /* Generates GOST_R3410 2001 key and assigns it using specified type */
 static int pkey_gost01_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey,int type)
-{
+	{
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 	EC_KEY *ec=NULL;
-	if (data->sign_param_nid == NID_undef) {
-		if (type == NID_id_GostR3410_2001_cc) {
+	if (data->sign_param_nid == NID_undef)
+		{
+		if (type == NID_id_GostR3410_2001_cc)
+			{
 			data->sign_param_nid = NID_id_GostR3410_2001_ParamSet_cc;
-		} else {	
+			}
+		else {	
 			GOSTerr(GOST_F_PKEY_GOST01_KEYGEN,
-			GOST_R_NO_PARAMETERS_SET);
+				GOST_R_NO_PARAMETERS_SET);
 			return 0;
+			}
 		}
-	}
 	ec = EC_KEY_new();
-	if (!fill_GOST2001_params(ec,data->sign_param_nid)) {
+	if (!fill_GOST2001_params(ec,data->sign_param_nid))
+		{
 		EC_KEY_free(ec);
 		return 0;
-	}
+		}
 	gost2001_keygen(ec);
 
 	EVP_PKEY_assign(pkey,type,ec);
 	return 1;
-}
+	}
+
 /* Generates GOST R3410 2001_cc key */
-static int pkey_gost01cc_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
+static int pkey_gost01cc_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+	{
 	return pkey_gost01_keygen(ctx,pkey,NID_id_GostR3410_2001_cc);
-}
+	}
 
 /* Generates GOST R3410 2001_cp key */
-static int pkey_gost01cp_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) {
+static int pkey_gost01cp_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+	{
 	return pkey_gost01_keygen(ctx,pkey,NID_id_GostR3410_2001);
-}
+	}
+
 /* ----------- sign callbacks --------------------------------------*/
 static int pkey_gost94_cc_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 	const unsigned char *tbs, size_t tbs_len)
-{
+	{
 	DSA_SIG *unpacked_sig=NULL;
 	EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
 	if (!siglen) return 0;
-	if (!sig) 
-	{
+	if (!sig)
+		{
 		*siglen= 64; /* better to check size of pkey->pkey.dsa-q */
 		return 1;
-	}	
+		}	
 	unpacked_sig = gost_do_sign(tbs,tbs_len,EVP_PKEY_get0(pkey));
-	if (!unpacked_sig) {
+	if (!unpacked_sig)
+		{
 		return 0;
+		}
+	return pack_sign_cc(unpacked_sig,32,sig,siglen);
 	}
 
-	return pack_sign_cc(unpacked_sig,32,sig,siglen);
-	
-	
-}
 static int pkey_gost94_cp_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 	const unsigned char *tbs, size_t tbs_len)
-{
+	{
 	DSA_SIG *unpacked_sig=NULL;
 	EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
 	if (!siglen) return 0;
-	if (!sig) 
-	{
+	if (!sig)
+		{
 		*siglen= 64; /* better to check size of pkey->pkey.dsa-q */
 		return 1;
-	}	
+		}	
 	unpacked_sig = gost_do_sign(tbs,tbs_len,EVP_PKEY_get0(pkey));
-	if (!unpacked_sig) {
+	if (!unpacked_sig)
+		{
 		return 0;
-	}
+		}
 	return pack_sign_cp(unpacked_sig,32,sig,siglen);
-	
-	
-}
+	}
+
 static int pkey_gost01_cc_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 	const unsigned char *tbs, size_t tbs_len)
-{
+	{
 	DSA_SIG *unpacked_sig=NULL;
 	EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
 	if (!siglen) return 0;
-	if (!sig) 
-	{
+	if (!sig)
+		{
 		*siglen= 64; /* better to check size of curve order*/
 		return 1;
-	}	
+		}	
 	unpacked_sig = gost2001_do_sign(tbs,tbs_len,EVP_PKEY_get0(pkey));
-	if (!unpacked_sig) {
+	if (!unpacked_sig)
+		{
 		return 0;
-	}
+		}
 	return pack_sign_cc(unpacked_sig,32,sig,siglen);
-}
+	}
+
 static int pkey_gost01_cp_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 	const unsigned char *tbs, size_t tbs_len)
-{
+	{
 	DSA_SIG *unpacked_sig=NULL;
 	EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
 	if (!siglen) return 0;
-	if (!sig) 
-	{
+	if (!sig)
+		{
 		*siglen= 64; /* better to check size of curve order*/
 		return 1;
-	}	
+		}	
 	unpacked_sig = gost2001_do_sign(tbs,tbs_len,EVP_PKEY_get0(pkey));
-	if (!unpacked_sig) {
+	if (!unpacked_sig)
+		{
 		return 0;
-	}
+		}
 	return pack_sign_cp(unpacked_sig,32,sig,siglen);
-}
+	}
+
 /* ------------------- verify callbacks ---------------------------*/
 static int pkey_gost94_cc_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
 	size_t siglen, const unsigned char *tbs, size_t tbs_len)
-{
+	{
 	int ok = 0;
 	EVP_PKEY* pub_key = EVP_PKEY_CTX_get0_pkey(ctx);
 	DSA_SIG *s=unpack_cc_signature(sig,siglen);
@@ -377,11 +426,11 @@ static int pkey_gost94_cc_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
 	if (pub_key) ok = gost_do_verify(tbs,tbs_len,s,EVP_PKEY_get0(pub_key));
 	DSA_SIG_free(s);
 	return ok;
-}
+	}
 
 static int pkey_gost94_cp_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
 	size_t siglen, const unsigned char *tbs, size_t tbs_len)
-{
+	{
 	int ok = 0;
 	EVP_PKEY* pub_key = EVP_PKEY_CTX_get0_pkey(ctx);
 	DSA_SIG *s=unpack_cp_signature(sig,siglen);
@@ -389,10 +438,11 @@ static int pkey_gost94_cp_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
 	if (pub_key) ok = gost_do_verify(tbs,tbs_len,s,EVP_PKEY_get0(pub_key));
 	DSA_SIG_free(s);
 	return ok;
-}
+	}
+
 static int pkey_gost01_cc_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
 	size_t siglen, const unsigned char *tbs, size_t tbs_len)
-{
+	{
 	int ok = 0;
 	EVP_PKEY* pub_key = EVP_PKEY_CTX_get0_pkey(ctx);
 	DSA_SIG *s=unpack_cc_signature(sig,siglen);
@@ -405,11 +455,11 @@ static int pkey_gost01_cc_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
 	if (pub_key) ok = gost2001_do_verify(tbs,tbs_len,s,EVP_PKEY_get0(pub_key));
 	DSA_SIG_free(s);
 	return ok;
-}
+	}
 
 static int pkey_gost01_cp_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
 	size_t siglen, const unsigned char *tbs, size_t tbs_len)
-{
+	{
 	int ok = 0;
 	EVP_PKEY* pub_key = EVP_PKEY_CTX_get0_pkey(ctx);
 	DSA_SIG *s=unpack_cp_signature(sig,siglen);
@@ -422,11 +472,12 @@ static int pkey_gost01_cp_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
 	if (pub_key) ok = gost2001_do_verify(tbs,tbs_len,s,EVP_PKEY_get0(pub_key));
 	DSA_SIG_free(s);
 	return ok;
-}
+	}
+
 /* ------------- encrypt init -------------------------------------*/
 /* Generates ephermeral key */
-static int pkey_gost_encrypt_init(EVP_PKEY_CTX *ctx) 
-{
+static int pkey_gost_encrypt_init(EVP_PKEY_CTX *ctx)
+	{
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 	EVP_PKEY *eph_key = EVP_PKEY_new();
 	EVP_PKEY *old_key =EVP_PKEY_CTX_get0_pkey(ctx);
@@ -434,46 +485,50 @@ static int pkey_gost_encrypt_init(EVP_PKEY_CTX *ctx)
 	if (data->eph_seckey) EVP_PKEY_free(data->eph_seckey);
 	EVP_PKEY_assign(eph_key,EVP_PKEY_base_id(old_key),NULL);
 	if (!EVP_PKEY_copy_parameters(eph_key,old_key)) return 0;
-	switch (EVP_PKEY_base_id(old_key)) {
-	case NID_id_GostR3410_2001:
-	case NID_id_GostR3410_2001_cc:
-		gost2001_keygen(EVP_PKEY_get0(eph_key));
-		break;
-	case NID_id_GostR3410_94:
-	case NID_id_GostR3410_94_cc:
-		gost_sign_keygen(EVP_PKEY_get0(eph_key));
-		break;
+	switch (EVP_PKEY_base_id(old_key))
+		{
+		case NID_id_GostR3410_2001:
+		case NID_id_GostR3410_2001_cc:
+			gost2001_keygen(EVP_PKEY_get0(eph_key));
+			break;
+		case NID_id_GostR3410_94:
+		case NID_id_GostR3410_94_cc:
+			gost_sign_keygen(EVP_PKEY_get0(eph_key));
+			break;
 	
 			
-	}
+		}
 
 	
 	data->eph_seckey=eph_key;
 	return 1;
-}
+	}
+
 /* ----------------------------------------------------------------*/
-int register_pmeth_gost(int id, EVP_PKEY_METHOD **pmeth,int flags) {
+int register_pmeth_gost(int id, EVP_PKEY_METHOD **pmeth,int flags)
+	{
 	*pmeth = EVP_PKEY_meth_new(id, flags);
 	if (!*pmeth) return 0;
 
-	switch (id) {
+	switch (id)
+		{
 		case NID_id_GostR3410_94_cc:
-			EVP_PKEY_meth_set_ctrl(*pmeth,pkey_gost_ctrl, pkey_gost_ctrl94cc_str); 
+			EVP_PKEY_meth_set_ctrl(*pmeth,pkey_gost_ctrl, pkey_gost_ctrl94cc_str);
 			EVP_PKEY_meth_set_keygen(*pmeth,NULL,pkey_gost94cc_keygen);
 			EVP_PKEY_meth_set_sign(*pmeth, NULL, pkey_gost94_cc_sign);
 			EVP_PKEY_meth_set_verify(*pmeth, NULL, pkey_gost94_cc_verify);
-			EVP_PKEY_meth_set_encrypt(*pmeth, 
+			EVP_PKEY_meth_set_encrypt(*pmeth,
 				pkey_gost_encrypt_init, pkey_GOST94cc_encrypt);
-			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST94cc_decrypt); 
+			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST94cc_decrypt);
 			break;
 		case NID_id_GostR3410_94:
 			EVP_PKEY_meth_set_ctrl(*pmeth,pkey_gost_ctrl, pkey_gost_ctrl94_str);
 			EVP_PKEY_meth_set_keygen(*pmeth,NULL,pkey_gost94cp_keygen);
 			EVP_PKEY_meth_set_sign(*pmeth, NULL, pkey_gost94_cp_sign);
 			EVP_PKEY_meth_set_verify(*pmeth, NULL, pkey_gost94_cp_verify);
-			EVP_PKEY_meth_set_encrypt(*pmeth, 
+			EVP_PKEY_meth_set_encrypt(*pmeth,
 				pkey_gost_encrypt_init, pkey_GOST94cp_encrypt);
-			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST94cp_decrypt); 
+			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST94cp_decrypt);
 
 	
 			break;
@@ -484,9 +539,9 @@ int register_pmeth_gost(int id, EVP_PKEY_METHOD **pmeth,int flags) {
 
 			EVP_PKEY_meth_set_keygen(*pmeth, NULL, pkey_gost01cc_keygen);
 
-			EVP_PKEY_meth_set_encrypt(*pmeth, 
+			EVP_PKEY_meth_set_encrypt(*pmeth,
 				pkey_gost_encrypt_init, pkey_GOST01cc_encrypt);
-			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST01cc_decrypt); 
+			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST01cc_decrypt);
 			break;
 			/* There is intentionally no break here */
 		case NID_id_GostR3410_2001:
@@ -496,13 +551,13 @@ int register_pmeth_gost(int id, EVP_PKEY_METHOD **pmeth,int flags) {
 
 			EVP_PKEY_meth_set_keygen(*pmeth, NULL, pkey_gost01cp_keygen);
 
-			EVP_PKEY_meth_set_encrypt(*pmeth, 
+			EVP_PKEY_meth_set_encrypt(*pmeth,
 				pkey_gost_encrypt_init, pkey_GOST01cp_encrypt);
-			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST01cp_decrypt); 
+			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST01cp_decrypt);
 			break;
 		default: //Unsupported method
 			return 0;
-	}
+		}
 	EVP_PKEY_meth_set_init(*pmeth, pkey_gost_init);
 	EVP_PKEY_meth_set_cleanup(*pmeth, pkey_gost_cleanup);
 
@@ -510,5 +565,5 @@ int register_pmeth_gost(int id, EVP_PKEY_METHOD **pmeth,int flags) {
 	//FIXME derive etc...
 	
 	return 1;
-}
+	}
 

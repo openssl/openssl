@@ -6,9 +6,8 @@
  *          Implementation of GOST R 34.10-2001      				  *
  *          Requires OpenSSL 0.9.9 for compilation                    *
  **********************************************************************/
-#include "tools.h"
-#include "sign.h"
-#include "paramset.h"
+#include "gost_lcl.h"
+#include "gost_params.h"
 #include <string.h>
 #include <openssl/rand.h>
 #include <openssl/ecdsa.h>
@@ -32,9 +31,10 @@ void dump_dsa_sig(const char *message, DSA_SIG *sig);
  * Also fils DSA->q field with copy of EC_GROUP order field to make
  * DSA_size function work
  */ 
-int fill_GOST2001_params(EC_KEY *eckey, int nid) {
+int fill_GOST2001_params(EC_KEY *eckey, int nid)
+	{
 	R3410_2001_params *params = R3410_2001_paramset;
-	EC_GROUP *grp;
+	EC_GROUP *grp=NULL;
 	BIGNUM *p=NULL,*q=NULL,*a=NULL,*b=NULL,*x=NULL,*y=NULL;
 	EC_POINT *P=NULL;
 	BN_CTX *ctx=BN_CTX_new();
@@ -48,10 +48,11 @@ int fill_GOST2001_params(EC_KEY *eckey, int nid) {
 	y=BN_CTX_get(ctx);
 	q=BN_CTX_get(ctx);
 	while (params->nid!=NID_undef && params->nid != nid) params++;
-	if (params->nid == NID_undef) {
+	if (params->nid == NID_undef)
+		{
 		GOSTerr(GOST_F_FILL_GOST2001_PARAMS,GOST_R_UNSUPPORTED_PARAMETER_SET);
 		goto err;
-	}	
+		}	
 	BN_hex2bn(&p,params->p);
 	BN_hex2bn(&a,params->a);
 	BN_hex2bn(&b,params->b);
@@ -66,7 +67,7 @@ int fill_GOST2001_params(EC_KEY *eckey, int nid) {
 	BN_hex2bn(&q,params->q);
 #ifdef DEBUG_KEYS
 	fprintf(stderr,"Set params index %d oid %s\nq=",
-			(params-R3410_2001_paramset),OBJ_nid2sn(params->nid));
+		(params-R3410_2001_paramset),OBJ_nid2sn(params->nid));
 	BN_print_fp(stderr,q);
 	fprintf(stderr,"\n");
 #endif	
@@ -76,14 +77,13 @@ int fill_GOST2001_params(EC_KEY *eckey, int nid) {
 
 	EC_KEY_set_group(eckey,grp);
 	ok=1;
-err:
+	err:
 	EC_POINT_free(P);
 	EC_GROUP_free(grp);
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	return ok;
-			
-}	
+	}	
 
 
 /*
@@ -91,88 +91,96 @@ err:
  *
  *
  */ 
-DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey) {
-		DSA_SIG *newsig = NULL;
-		BIGNUM *md = hashsum2bn(dgst);
-		BIGNUM *order = NULL;
-		const EC_GROUP *group;
-		const BIGNUM *priv_key;
-		BIGNUM *r=NULL,*s=NULL,*X=NULL,*tmp=NULL,*tmp2=NULL, *k=NULL,*e=NULL;
-		EC_POINT *C=NULL;
-		BN_CTX *ctx = BN_CTX_new();	
-		BN_CTX_start(ctx);
-		OPENSSL_assert(dlen==32);
-		newsig=DSA_SIG_new();
-		if (!newsig) 
+DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey)
+	{
+	DSA_SIG *newsig = NULL;
+	BIGNUM *md = hashsum2bn(dgst);
+	BIGNUM *order = NULL;
+	const EC_GROUP *group;
+	const BIGNUM *priv_key;
+	BIGNUM *r=NULL,*s=NULL,*X=NULL,*tmp=NULL,*tmp2=NULL, *k=NULL,*e=NULL;
+	EC_POINT *C=NULL;
+	BN_CTX *ctx = BN_CTX_new();	
+	BN_CTX_start(ctx);
+	OPENSSL_assert(dlen==32);
+	newsig=DSA_SIG_new();
+	if (!newsig) 
 		{
-			GOSTerr(GOST_F_GOST2001_DO_SIGN,GOST_R_NO_MEMORY);
-			goto err;
+		GOSTerr(GOST_F_GOST2001_DO_SIGN,GOST_R_NO_MEMORY);
+		goto err;
 		}	
-		group = EC_KEY_get0_group(eckey);
-		order=BN_CTX_get(ctx);
-		EC_GROUP_get_order(group,order,ctx);
-		priv_key = EC_KEY_get0_private_key(eckey);
-		e = BN_CTX_get(ctx);
-		BN_mod(e,md,order,ctx);
+	group = EC_KEY_get0_group(eckey);
+	order=BN_CTX_get(ctx);
+	EC_GROUP_get_order(group,order,ctx);
+	priv_key = EC_KEY_get0_private_key(eckey);
+	e = BN_CTX_get(ctx);
+	BN_mod(e,md,order,ctx);
 #ifdef DEBUG_SIGN
-		fprintf(stderr,"digest as bignum=");
-		BN_print_fp(stderr,md);
-		fprintf(stderr,"\ndigest mod q=");
-		BN_print_fp(stderr,e);
-		fprintf(stderr,"\n");
+	fprintf(stderr,"digest as bignum=");
+	BN_print_fp(stderr,md);
+	fprintf(stderr,"\ndigest mod q=");
+	BN_print_fp(stderr,e);
+	fprintf(stderr,"\n");
 #endif		
-		if (BN_is_zero(e))
+	if (BN_is_zero(e))
 		{
-		   BN_one(e);
+		BN_one(e);
 		}   
-		k =BN_CTX_get(ctx);
-		C=EC_POINT_new(group);
-		do {
-			do {
-				if (!BN_rand_range(k,order)) 
+	k =BN_CTX_get(ctx);
+	C=EC_POINT_new(group);
+	do 
+		{
+		do 
+			{
+			if (!BN_rand_range(k,order)) 
 				{
-					GOSTerr(GOST_F_GOST2001_DO_SIGN,GOST_R_RANDOM_NUMBER_GENERATOR_FAILED);
-					DSA_SIG_free(newsig);
-					goto err;
+				GOSTerr(GOST_F_GOST2001_DO_SIGN,GOST_R_RANDOM_NUMBER_GENERATOR_FAILED);
+				DSA_SIG_free(newsig);
+				goto err;
 				}	
-				if (!EC_POINT_mul(group,C,k,NULL,NULL,ctx)) {
-					GOSTerr(GOST_F_GOST2001_DO_SIGN,ERR_R_EC_LIB);
-					DSA_SIG_free(newsig);
-					goto err;
+			if (!EC_POINT_mul(group,C,k,NULL,NULL,ctx))
+				{
+				GOSTerr(GOST_F_GOST2001_DO_SIGN,ERR_R_EC_LIB);
+				DSA_SIG_free(newsig);
+				goto err;
 				}	
-				if (!X) X=BN_CTX_get(ctx);
-				if (!EC_POINT_get_affine_coordinates_GFp(group,C,X,NULL,ctx)) {
-					GOSTerr(GOST_F_GOST2001_DO_SIGN,ERR_R_EC_LIB);
-					DSA_SIG_free(newsig);
-					goto err;
+			if (!X) X=BN_CTX_get(ctx);
+			if (!EC_POINT_get_affine_coordinates_GFp(group,C,X,NULL,ctx))
+				{
+				GOSTerr(GOST_F_GOST2001_DO_SIGN,ERR_R_EC_LIB);
+				DSA_SIG_free(newsig);
+				goto err;
 				}	
-				if (!r) r=BN_CTX_get(ctx);
-				BN_nnmod(r,X,order,ctx);
-			} while (BN_is_zero(r));
-			/* s =  (r*priv_key+k*e) mod order */
-			if (!tmp) tmp = BN_CTX_get(ctx);
-			BN_mod_mul(tmp,priv_key,r,order,ctx);
-			if (!tmp2) tmp2 = BN_CTX_get(ctx);
-			BN_mod_mul(tmp2,k,e,order,ctx);
-			if (!s) s=BN_CTX_get(ctx);
-			BN_mod_add(s,tmp,tmp2,order,ctx);
-		} while (BN_is_zero(s));	
+			if (!r) r=BN_CTX_get(ctx);
+			BN_nnmod(r,X,order,ctx);
+			}
+		while (BN_is_zero(r));
+		/* s =  (r*priv_key+k*e) mod order */
+		if (!tmp) tmp = BN_CTX_get(ctx);
+		BN_mod_mul(tmp,priv_key,r,order,ctx);
+		if (!tmp2) tmp2 = BN_CTX_get(ctx);
+		BN_mod_mul(tmp2,k,e,order,ctx);
+		if (!s) s=BN_CTX_get(ctx);
+		BN_mod_add(s,tmp,tmp2,order,ctx);
+		}
+	while (BN_is_zero(s));	
 
-		newsig->s=BN_dup(s);
-		newsig->r=BN_dup(r);
-err:			
-		BN_CTX_end(ctx);
-		BN_CTX_free(ctx);
-		EC_POINT_free(C);
-		BN_free(md);
-		return newsig;
-}
+	newsig->s=BN_dup(s);
+	newsig->r=BN_dup(r);
+	err:			
+	BN_CTX_end(ctx);
+	BN_CTX_free(ctx);
+	EC_POINT_free(C);
+	BN_free(md);
+	return newsig;
+	}
 /*
  * Verifies gost 2001 signature
  *
  */ 
 int gost2001_do_verify(const unsigned char *dgst,int dgst_len,
-			DSA_SIG *sig, EC_KEY *ec) {
+	DSA_SIG *sig, EC_KEY *ec)
+	{
 	BN_CTX *ctx=BN_CTX_new();
 	const EC_GROUP *group = EC_KEY_get0_group(ec);
 	BIGNUM *order;
@@ -196,11 +204,11 @@ int gost2001_do_verify(const unsigned char *dgst,int dgst_len,
 	pub_key = EC_KEY_get0_public_key(ec);
 	if (BN_is_zero(sig->s) || BN_is_zero(sig->r) ||
 		(BN_cmp(sig->s,order)>=1) || (BN_cmp(sig->r,order)>=1)) 
-	{
-	  GOSTerr(GOST_F_GOST_DO_VERIFY,GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q);
-	  goto err;
+		{
+		GOSTerr(GOST_F_GOST_DO_VERIFY,GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q);
+		goto err;
 
-	}
+		}
 	md = hashsum2bn(dgst);
 
 	BN_mod(e,md,order,ctx);
@@ -225,15 +233,15 @@ int gost2001_do_verify(const unsigned char *dgst,int dgst_len,
 #endif	
 	C = EC_POINT_new(group);
 	if (!EC_POINT_mul(group,C,z1,pub_key,z2,ctx)) 
-	{	
+		{	
 		GOSTerr(GOST_F_GOST2001_DO_VERIFY,ERR_R_EC_LIB);
 		goto err;
-	}	
+		}	
 	if (!EC_POINT_get_affine_coordinates_GFp(group,C,X,NULL,ctx)) 
-	{
+		{
 		GOSTerr(GOST_F_GOST2001_DO_VERIFY,ERR_R_EC_LIB);
 		goto err;
-	}
+		}
 	BN_mod(R,X,order,ctx);
 #ifdef DEBUG_SIGN
 	fprintf(stderr,"\nX=");
@@ -242,83 +250,91 @@ int gost2001_do_verify(const unsigned char *dgst,int dgst_len,
 	BN_print_fp(stderr,R);
 	fprintf(stderr,"\n");
 #endif	
-	if (BN_cmp(R,sig->r)!=0) {
+	if (BN_cmp(R,sig->r)!=0)
+		{
 		GOSTerr(GOST_F_GOST2001_DO_VERIFY,GOST_R_SIGNATURE_MISMATCH);
-	} else {
+		}
+	else
+		{
 		ok = 1;
-	}
-err:
+		}
+	err:
 	EC_POINT_free(C);
 	BN_CTX_end(ctx);
 	BN_CTX_free(ctx);
 	BN_free(md);
 	return ok;
-}
+	}
 /*
  * Computes GOST R 34.10-2001 public key
  *
  *
  */ 
 int gost2001_compute_public(EC_KEY *ec) 
-{
+	{
 	const EC_GROUP *group = EC_KEY_get0_group(ec);
 	EC_POINT *pub_key=NULL;
 	const BIGNUM *priv_key=NULL;
 	BN_CTX *ctx=NULL;
 	int ok=0;
 
-	if (!group) {
+	if (!group)
+		{
 		GOSTerr(GOST_F_GOST2001_COMPUTE_PUBLIC,GOST_R_KEY_IS_NOT_INITIALIZED);
 		return 0;
-	}	
+		}	
 	ctx=BN_CTX_new();
 	BN_CTX_start(ctx);
 	if (!(priv_key=EC_KEY_get0_private_key(ec))) 
-	{
+		{
 		GOSTerr(GOST_F_GOST2001_COMPUTE_PUBLIC,ERR_R_EC_LIB);
 		goto err;
-	}	
+		}	
 
 	pub_key = EC_POINT_new(group);
 	if (!EC_POINT_mul(group,pub_key,priv_key,NULL,NULL,ctx)) 
-	{
+		{
 		GOSTerr(GOST_F_GOST2001_COMPUTE_PUBLIC,ERR_R_EC_LIB);
 		goto err;
-	}	
-	if (!EC_KEY_set_public_key(ec,pub_key)) {
+		}	
+	if (!EC_KEY_set_public_key(ec,pub_key))
+		{
 		GOSTerr(GOST_F_GOST2001_COMPUTE_PUBLIC,ERR_R_EC_LIB);
 		goto err;
-	}	
+		}	
 	ok = 256;
-err:
+	err:
 	BN_CTX_end(ctx);
 	EC_POINT_free(pub_key);
 	BN_CTX_free(ctx);
 	return ok;
-}
+	}
 /*
  * 
  * Generates GOST R 34.10-2001 keypair
  *
  *
  */ 
-int gost2001_keygen(EC_KEY *ec) {
+int gost2001_keygen(EC_KEY *ec)
+	{
 	BIGNUM *order = BN_new(),*d=BN_new();
 	const EC_GROUP *group = EC_KEY_get0_group(ec);
 	EC_GROUP_get_order(group,order,NULL);
 	
-	do {
-		if (!BN_rand_range(d,order)) 
+	do 
 		{
+		if (!BN_rand_range(d,order)) 
+			{
 			GOSTerr(GOST_F_GOST2001_DO_SIGN,GOST_R_RANDOM_NUMBER_GENERATOR_FAILED);
 			BN_free(d);
 			BN_free(order);
 			return 0;
-		}	
-	} while (BN_is_zero(d));
+			}	
+		}
+	while (BN_is_zero(d));
 	EC_KEY_set_private_key(ec,d);
 	BN_free(d);
 	BN_free(order);
 	return gost2001_compute_public(ec);
-}
+	}
 

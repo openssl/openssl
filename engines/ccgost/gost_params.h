@@ -1,5 +1,5 @@
 /**********************************************************************
- *                        paramset.h                                  *
+ *                        gost_params.h                               *
  *             Copyright (c) 2005-2006 Cryptocom LTD                  *
  *       This file is distributed under the same license as OpenSSL   *
  *                                                                    *

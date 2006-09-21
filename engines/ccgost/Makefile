@@ -1,122 +1,269 @@
-# OPENSSL_DIR is a root directory of openssl sources
-THISDIR?=$(shell perl -MCwd -e 'print getcwd')
-OPENSSL_DIR?=$(THISDIR)/../openssl
-ENGINE_ID?=gost
-TESTSUITE_DIR?=$(THISDIR)/test-suite
-FOR?=$(HOST)
-CC=gcc
-CFLAGS=-fPIC -g -Wall -I$(OPENSSL_DIR)/include
-LDFLAGS=-g -L $(OPENSSL_DIR) -static-libgcc
-ifeq "$(FOR)" "s64"
-CFLAGS+=-m64
-LDFLAGS+=-m64
-endif
-OS:=$(shell uname -s)
-ifeq "$(OS)" "FreeBSD" 
-LIBDIR:=$(shell LD_LIBRARY_PATH=$(OPENSSL_DIR) $(OPENSSL_DIR)/apps/openssl version -d|sed -e 's/^[^"]*"//' -e 's/".*$$//')/lib
-LDFLAGS+=-rpath $(LIBDIR)
-endif
+DIR=ccgost
+TOP=../..
+CC=cc
+INCLUDES= -I../../include
+CFLAG=-g
+MAKEFILE= Makefile
+AR= ar r
+CFLAGS= $(INCLUDES) $(CFLAG)
+LIB=$(TOP)/libcrypto.a
+
+LIBSRC= gost2001.c gost2001_keyx.c gost89.c gost94_keyx.c gost_ameth.c gost_asn1.c gost_crypt.c gost_ctl.c gost_eng.c gosthash.c gost_keywrap.c gost_md.c gost_params.c gost_pmeth.c gost_sign.c
+
+LIBOBJ= e_gost_err.o gost2001_keyx.o gost2001.o gost89.o gost94_keyx.o gost_ameth.o gost_asn1.o gost_crypt.o gost_ctl.o gost_eng.o gosthash.o gost_keywrap.o gost_md.o gost_params.o gost_pmeth.o gost_sign.o
+
+SRC=$(LIBSRC)
+
+LIBNAME=gost
+
+top: 
+	(cd $(TOP); $(MAKE) DIRS=engines EDIRS=$(DIR) sub_all)
+
+all: lib
+
+tags:
+	ctags $(SRC)
+
+errors:
+	$(PERL) ../../util/mkerr.pl -conf gost.ec -nostatic -debug -write $(SRC)
+
+lib: $(LIBOBJ)
+	if [ -n "$(SHARED_LIBS)" ]; then \
+		$(MAKE) -f $(TOP)/Makefile.shared -e \
+			LIBNAME=$(LIBNAME) \
+			LIBEXTRAS='$(LIBOBJ)' \
+			LIBDEPS='-L$(TOP) -lcrypto' \
+			link_o.$(SHLIB_TARGET); \
+	else \
+		$(AR) $(LIB) $(LIBOBJ); \
+	fi
+
+install: 	
+	[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
+	if [ -n "$(SHARED_LIBS)" ]; then \
+		set -e; \
+		echo installing $(LIBNAME); \
+		if [ "$(PLATFORM)" != "Cygwin" ]; then \
+			case "$(CFLAGS)" in \
+			*DSO_BEOS*) sfx="so";; \
+			*DSO_DLFCN*) sfx="so";; \
+			*DSO_DL*) sfx="sl";; \
+			*) sfx="bad";; \
+			esac; \
+			cp lib$(LIBNAME).$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$(LIBNAME).$$sfx.new; \
+		else \
+			sfx="so"; \
+			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$(LIBNAME).$$sfx.new; \
+		fi; \
+		chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$(LIBNAME).$$sfx.new; \
+		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$(LIBNAME).$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$(LIBNAME).$$sfx; \
+	fi
+
+links:
+
+tests:
+
+depend:
+	@if [ -z "$(THIS)" ]; then \
+	    $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; \
+	else \
+	    $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC); \
+	fi
+
+files:
 
 
-ifeq "$(FOR)" "w32"
-ENGINE_LIB?=$(ENGINE_ID)$(DLLSUFFIX)
-DLLSUFFIX=.dll
-EXESUFFIX=.exe
-CFLAGS+=-mno-cygwin
-LDFLAGS+=-mno-cygwin
-ifeq "$(OS)" "Linux"
-CC=i586-mingw32msvc-gcc
-endif
-LIBS=-lcrypto.dll 
-else
-ENGINE_LIB?=lib$(ENGINE_ID)$(DLLSUFFIX)
-LIBS=-lcrypto 
-DLLSUFFIX=.so
-endif
-export DLLSUFFIX
-export EXESUFFIX
-ifneq "$(FOR)" ""
-export FOR
-endif
-CFLAGS+=$(DEBUG_FLAGS)
-export ENGINE_LIB
-ENG_SOURCES=md_gost.c  gost_crypt.c  gost_asn1.c ameth.c pmeth.c\
-	gost_crypt.c gost_sign.c gost2001.c md_gost.c gost_crypt.c\
-	engine.c gost94_keyx.c keywrap.c gost2001_keyx.c
-all: $(ENGINE_LIB) openssl.cnf
-buildtests:
-$(ENGINE_LIB): e_gost_err.o engine.o ameth.o pmeth.o params.o md_gost.o gosthash.o gost89.o gost_sign.o gost_crypt.o  keywrap.o  gost2001.o gost94_keyx.o gost2001_keyx.o gost_asn1.o
-	$(CC) $(LDFLAGS) -shared -o $@ $+ $(LIBS) $(LDFLAGS)
-openssl.cnf: openssl.cnf.1 openssl.cnf.2
-	cat $+ > $@
-openssl.cnf.1:
-	echo "openssl_conf = openssl_def" > $@
-openssl.cnf.2:
-	echo "[openssl_def]" > $@
-	echo "engines = engine_section" >> $@
-	echo "[engine_section]" >> $@
-	echo "$(ENGINE_ID) = $(ENGINE_ID)_section" >> $@
-	echo "[$(ENGINE_ID)_section]" >> $@
-	echo "dynamic_path = $(THISDIR)/$(ENGINE_LIB)" >> $@
-	echo "engine_id = $(ENGINE_ID)" >> $@
-	echo "default_algorithms = ALL" >> $@
-gosthash1.o: gosthash.c
-	$(CC) -c $(CFLAGS) -o $@ -DOPENSSL_BUILD $+
-gostsum: gostsum.o gosthash.o gost89.o
-inttests: gosttest$(EXESUFFIX) etalon wraptest$(EXESUFFIX) etalon.wrap ectest$(EXESUFFIX) etalon.ec
-	./gosttest${EXESUFFIX} > gost_test
-	diff -uw gost_test etalon
-	./wraptest$(EXESUFFIX) > wrap_test
-	diff -uw wrap_test etalon.wrap
-	./ectest$(EXESUFFIX) > ec_test 2>&1
-	diff -uw ec_test etalon.ec
-ectest$(EXESUFFIX): ectest.o gost2001_dbg.o gost_sign_dbg.o params.o e_gost_err.o
-	$(CC) -o $@ $(LDFLAGS) $+ -lcrypto 
-%_dbg.o: %.c	
-	$(CC) -c $(CFLAGS) -DDEBUG_SIGN -DDEBUG_KEYS -o $@ $+
-gosttest$(EXESUFFIX): gosttest.o gosthash.o gost89.o
-	$(CC) $(LDFLAGS) -o $@ $+
-wraptest$(EXESUFFIX): wraptest.c keywrap.c gost89.c 	
-	$(CC) -DDEBUG_DH $(LDFLAGS) -o $@ $+
-sign_ex: LOADLIBES=-lcrypto
-sign_ex: sign_ex.o
+
+lint:
+	lint -DLINT $(INCLUDES) $(SRC)>fluff
+
+dclean:
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+
 clean:
-	rm -f core gosttest gostsum *.o gost_test openssl.cnf* $(ENGINE_LIB)
-	if [ -f t/Makefile ]; then $(MAKE) -C t clean; fi
-	if [ -f $(TESTSUITE_DIR)/Makefile ]; then $(MAKE) -C $(TESTSUITE_DIR) clean; fi
-e_gost_err.c e_gost_err.h: $(ENG_SOURCES) gost.ec e_gost_err.proto
-	perl $(OPENSSL_DIR)/util/mkerr.pl -conf gost.ec -nostatic -debug -write $(ENG_SOURCES)
+	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff *.so *.sl *.dll
 
-tests: openssl.cnf.2
-	OPENSSL_DIR=$(OPENSSL_DIR) $(MAKE) -C $(TESTSUITE_DIR) CONFADD=$(THISDIR)/openssl.cnf.2
+# DO NOT DELETE THIS LINE -- make depend depends on it.
 
-# depedencies
-#
-#
-gost_sign.o: gost_sign.c sign.h paramset.h tools.h e_gost_err.h
-
-pmeth.o: pmeth.c meth.h pmeth.h sign.h paramset.h e_gost_err.h
-
-ameth.o: ameth.c tools.h meth.h pmeth.h gost_asn1.h crypt.h e_gost_err.h paramset.h
-
-keywrap.o: keywrap.c gost89.h keywrap.h
-
-gost2001.o: gost2001.c tools.h sign.h paramset.h e_gost_err.h
-
-engine.o: engine.c md.h crypt.h meth.h e_gost_err.h
-
+gost2001.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost2001.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost2001.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost2001.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+gost2001.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+gost2001.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost2001.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+gost2001.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+gost2001.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+gost2001.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+gost2001.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+gost2001.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+gost2001.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+gost2001.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+gost2001.o: e_gost_err.h gost2001.c gost89.h gost_lcl.h gost_params.h
+gost2001.o: gosthash.h
+gost2001_keyx.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost2001_keyx.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost2001_keyx.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost2001_keyx.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+gost2001_keyx.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+gost2001_keyx.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost2001_keyx.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost2001_keyx.o: ../../include/openssl/obj_mac.h
+gost2001_keyx.o: ../../include/openssl/objects.h
+gost2001_keyx.o: ../../include/openssl/opensslconf.h
+gost2001_keyx.o: ../../include/openssl/opensslv.h
+gost2001_keyx.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
+gost2001_keyx.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+gost2001_keyx.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+gost2001_keyx.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+gost2001_keyx.o: ../../include/openssl/x509_vfy.h e_gost_err.h gost2001_keyx.c
+gost2001_keyx.o: gost89.h gost_keywrap.h gost_lcl.h gosthash.h
 gost89.o: gost89.c gost89.h
-
-gost_asn1.o: gost_asn1.c gost_asn1.h
-
-gost_crypt.o: gost_crypt.c crypt.h gost89.h e_gost_err.h gost_asn1.h
-
-gosthash.o: gosthash.c gost89.h gosthash.h
-
-md_gost.o: md_gost.c md.h gosthash.h e_gost_err.h
-
-params.o: params.c paramset.h
-
-gost94_keyx.o: gost94_keyx.c  gost_asn1.h gost89.h gosthash.h crypt.h pmeth.h keywrap.h e_gost_err.h gostkeyx.h
-
-gost2001_keyx.o: gost2001_keyx.c gost89.h gost_asn1.h e_gost_err.h keywrap.h crypt.h sign.h gostkeyx.h pmeth.h gosthash.h tools.h
+gost94_keyx.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost94_keyx.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost94_keyx.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost94_keyx.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+gost94_keyx.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+gost94_keyx.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+gost94_keyx.o: ../../include/openssl/engine.h ../../include/openssl/evp.h
+gost94_keyx.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+gost94_keyx.o: ../../include/openssl/objects.h
+gost94_keyx.o: ../../include/openssl/opensslconf.h
+gost94_keyx.o: ../../include/openssl/opensslv.h
+gost94_keyx.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
+gost94_keyx.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+gost94_keyx.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+gost94_keyx.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+gost94_keyx.o: ../../include/openssl/x509_vfy.h e_gost_err.h gost89.h
+gost94_keyx.o: gost94_keyx.c gost_keywrap.h gost_lcl.h gosthash.h
+gost_ameth.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost_ameth.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost_ameth.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost_ameth.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+gost_ameth.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+gost_ameth.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_ameth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost_ameth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+gost_ameth.o: ../../include/openssl/opensslconf.h
+gost_ameth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+gost_ameth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+gost_ameth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+gost_ameth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+gost_ameth.o: ../../include/openssl/x509_vfy.h e_gost_err.h gost89.h
+gost_ameth.o: gost_ameth.c gost_lcl.h gost_params.h gosthash.h
+gost_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost_asn1.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost_asn1.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost_asn1.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+gost_asn1.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+gost_asn1.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_asn1.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost_asn1.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+gost_asn1.o: ../../include/openssl/opensslconf.h
+gost_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+gost_asn1.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+gost_asn1.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+gost_asn1.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+gost_asn1.o: ../../include/openssl/x509_vfy.h gost89.h gost_asn1.c gost_lcl.h
+gost_asn1.o: gosthash.h
+gost_crypt.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost_crypt.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost_crypt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost_crypt.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+gost_crypt.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+gost_crypt.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_crypt.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost_crypt.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+gost_crypt.o: ../../include/openssl/opensslconf.h
+gost_crypt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+gost_crypt.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+gost_crypt.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+gost_crypt.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+gost_crypt.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+gost_crypt.o: e_gost_err.h gost89.h gost_crypt.c gost_lcl.h gosthash.h
+gost_ctl.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost_ctl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost_ctl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost_ctl.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+gost_ctl.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+gost_ctl.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_ctl.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost_ctl.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+gost_ctl.o: ../../include/openssl/opensslconf.h
+gost_ctl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+gost_ctl.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+gost_ctl.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+gost_ctl.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+gost_ctl.o: ../../include/openssl/x509_vfy.h gost89.h gost_ctl.c gost_lcl.h
+gost_ctl.o: gosthash.h
+gost_eng.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost_eng.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost_eng.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost_eng.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+gost_eng.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+gost_eng.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_eng.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost_eng.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+gost_eng.o: ../../include/openssl/opensslconf.h
+gost_eng.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+gost_eng.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+gost_eng.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+gost_eng.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+gost_eng.o: ../../include/openssl/x509_vfy.h e_gost_err.h gost89.h gost_eng.c
+gost_eng.o: gost_lcl.h gosthash.h
+gost_keywrap.o: gost89.h gost_keywrap.c gost_keywrap.h
+gost_md.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost_md.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost_md.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost_md.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+gost_md.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+gost_md.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_md.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost_md.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+gost_md.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+gost_md.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
+gost_md.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+gost_md.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+gost_md.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+gost_md.o: e_gost_err.h gost89.h gost_lcl.h gost_md.c gosthash.h
+gost_params.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+gost_params.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+gost_params.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+gost_params.o: ../../include/openssl/opensslconf.h
+gost_params.o: ../../include/openssl/opensslv.h
+gost_params.o: ../../include/openssl/ossl_typ.h
+gost_params.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+gost_params.o: ../../include/openssl/symhacks.h gost_params.c gost_params.h
+gost_pmeth.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost_pmeth.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost_pmeth.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost_pmeth.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+gost_pmeth.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+gost_pmeth.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_pmeth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost_pmeth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+gost_pmeth.o: ../../include/openssl/opensslconf.h
+gost_pmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+gost_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+gost_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+gost_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+gost_pmeth.o: ../../include/openssl/x509_vfy.h e_gost_err.h gost89.h gost_lcl.h
+gost_pmeth.o: gost_params.h gost_pmeth.c gosthash.h
+gost_sign.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+gost_sign.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+gost_sign.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+gost_sign.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+gost_sign.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+gost_sign.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+gost_sign.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+gost_sign.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+gost_sign.o: ../../include/openssl/opensslconf.h
+gost_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+gost_sign.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+gost_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+gost_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+gost_sign.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+gost_sign.o: e_gost_err.h gost89.h gost_lcl.h gost_params.h gost_sign.c
+gost_sign.o: gosthash.h
+gosthash.o: gost89.h gosthash.c gosthash.h
