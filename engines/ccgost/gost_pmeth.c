@@ -555,14 +555,14 @@ int register_pmeth_gost(int id, EVP_PKEY_METHOD **pmeth,int flags)
 				pkey_gost_encrypt_init, pkey_GOST01cp_encrypt);
 			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST01cp_decrypt);
 			break;
-		default: //Unsupported method
+		default: /*Unsupported method*/
 			return 0;
 		}
 	EVP_PKEY_meth_set_init(*pmeth, pkey_gost_init);
 	EVP_PKEY_meth_set_cleanup(*pmeth, pkey_gost_cleanup);
 
 	EVP_PKEY_meth_set_copy(*pmeth, pkey_gost_copy);
-	//FIXME derive etc...
+	/*FIXME derive etc...*/
 	
 	return 1;
 	}

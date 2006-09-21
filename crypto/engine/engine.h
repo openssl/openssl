@@ -336,6 +336,7 @@ void ENGINE_load_ubsec(void);
 #endif
 void ENGINE_load_cryptodev(void);
 void ENGINE_load_padlock(void);
+void ENGINE_load_gost(void);
 void ENGINE_load_builtin_engines(void);
 
 /* Get and set global flags (ENGINE_TABLE_FLAG_***) for the implementation

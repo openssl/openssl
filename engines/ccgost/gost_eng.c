@@ -145,16 +145,16 @@ static int bind_gost (ENGINE *e,const char *id)
 extern __declspec( dllexport ) 
 #endif
 	
-//#ifndef OPENSSL_NO_DYNAMIC_ENGINE
-IMPLEMENT_DYNAMIC_BIND_FN(bind_gost);
+/*#ifndef OPENSSL_NO_DYNAMIC_ENGINE*/
+IMPLEMENT_DYNAMIC_BIND_FN(bind_gost)
 
 #ifdef _WIN32
 extern __declspec( dllexport ) 
 #endif
 
-IMPLEMENT_DYNAMIC_CHECK_FN();
-//#else
-//#endif /* OPENSSL_NO_DYNAMIC_ENGINE */
+IMPLEMENT_DYNAMIC_CHECK_FN()
+/*#else*/
+/*#endif OPENSSL_NO_DYNAMIC_ENGINE */
 
 static int gost_digests(ENGINE *e, const EVP_MD **digest,
 	const int **nids, int nid)
@@ -165,7 +165,7 @@ static int gost_digests(ENGINE *e, const EVP_MD **digest,
 		*nids = gost_digest_nids;
 		return 1; 
 		}
-	//printf("Digest no %d requested\n",nid);
+	/*printf("Digest no %d requested\n",nid);*/
 	if(nid == NID_id_GostR3411_94) 
 		{
 		*digest = &digest_gost;

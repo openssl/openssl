@@ -23,9 +23,11 @@ static int	gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 /* Handles block of data in CFB mode */			
 static int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl);
+#if 0
 /* Handles block of data in CNT mode */			
 static int	gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl);
+#endif
 /* Cleanup function */			
 static int gost_cipher_cleanup(EVP_CIPHER_CTX *);
 /* set/get cipher parameters */
