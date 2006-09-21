@@ -9,6 +9,12 @@ INCLUDES= -I../include
 CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
+EDIRS= ccgost
+
+RECURSIVE_MAKE=	[ -n "$(EDIRS)" ] && for i in $(EDIRS) ; do \
+		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
+		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
+		done;
 
 PEX_LIBS=
 EX_LIBS=
@@ -61,7 +67,7 @@ top:
 
 all:	lib
 
-lib:	$(LIBOBJ)
+lib:	$(LIBOBJ) subdirs
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \
@@ -76,10 +82,16 @@ lib:	$(LIBOBJ)
 	fi; \
 	touch lib
 
+subdirs:
+	echo $(EDIRS)
+	@target=all; $(RECURSIVE_MAKE)
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
+	@target=files; $(RECURSIVE_MAKE)
 
 links:
+	@target=links; $(RECURSIVE_MAKE)
 
 # XXXXX This currently only works on systems that use .so as suffix
 # for shared libraries as well as for Cygwin which uses the
@@ -107,6 +119,7 @@ install:
 			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx ); \
 		done; \
 	fi
+	@target=install; $(RECURSIVE_MAKE)
 
 tags:
 	ctags $(SRC)
@@ -121,20 +134,23 @@ tests:
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
+	@target=lint; $(RECURSIVE_MAKE)
 
 depend:
 	@if [ -z "$(THIS)" ]; then \
 	    $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; \
-	else \
-	    $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC); \
 	fi
+	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
+	@target=dclean; $(RECURSIVE_MAKE)
 
 clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
+	@target=clean; $(RECURSIVE_MAKE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
