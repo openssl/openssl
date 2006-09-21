@@ -4,6 +4,12 @@
 
  Changes between 0.9.8d and 0.9.9  [xx XXX xxxx]
 
+  *) Add an X509_CRL_METHOD structure to allow CRL processing to be redirected
+     to external functions. This can be used to increase CRL handling 
+     efficiency especially when CRLs are very large by (for example) storing
+     the CRL revoked certificates in a database.
+     [Steve Henson]
+
   *) Overhaul of by_dir code. Add support for dynamic loading of CRLs so
      new CRLs added to a directory can be used. New command line option
      -verify_return_error to s_client and s_server. This causes real errors

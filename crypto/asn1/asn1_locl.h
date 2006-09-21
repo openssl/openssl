@@ -113,3 +113,18 @@ struct evp_pkey_asn1_method_st
 	int (*old_priv_encode)(const EVP_PKEY *pkey, unsigned char **pder);
 
 	} /* EVP_PKEY_ASN1_METHOD */;
+
+/* Method to handle CRL access.
+ * In general a CRL could be very large (several Mb) and can consume large
+ * amounts of resources if stored in memory by multiple processes.
+ * This method allows general CRL operations to be redirected to more
+ * efficient callbacks: for example a CRL entry database.
+ */
+
+struct x509_crl_method_st
+	{
+	int (*crl_init)(X509_CRL *crl);
+	int (*crl_free)(X509_CRL *crl);
+	int (*crl_lookup)(X509_CRL *crl, X509_REVOKED **ret, ASN1_INTEGER *ser);
+	int (*crl_verify)(X509_CRL *crl, EVP_PKEY *pk);
+	};

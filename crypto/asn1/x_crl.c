@@ -58,6 +58,7 @@
 
 #include <stdio.h>
 #include "cryptlib.h"
+#include "asn1_locl.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -111,6 +112,9 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 								void *exarg)
 	{
 	X509_CRL *crl = (X509_CRL *)*pval;
+	STACK_OF(X509_EXTENSION) *exts;
+	X509_EXTENSION *ext;
+	int idx;
 
 	switch(operation)
 		{
@@ -119,6 +123,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		crl->akid = NULL;
 		crl->flags = 0;
 		crl->idp_flags = 0;
+		crl->meth = 0;
 		break;
 
 		case ASN1_OP_D2I_POST:
@@ -132,9 +137,37 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 		crl->akid = X509_CRL_get_ext_d2i(crl,
 				NID_authority_key_identifier, NULL, NULL);	
+		if (crl->meth && crl->meth->crl_init)
+			return crl->meth->crl_init(crl);
+
+		/* See if we have any unhandled critical CRL extensions and 
+		 * indicate this in a flag. We only currently handle IDP so
+		 * anything else critical sets the flag.
+		 *
+		 * This code accesses the X509_CRL structure directly:
+		 * applications shouldn't do this.
+		 */
+
+		exts = crl->crl->extensions;
+
+		for (idx = 0; idx < sk_X509_EXTENSION_num(exts); idx++)
+			{
+			ext = sk_X509_EXTENSION_value(exts, idx);
+			if (ext->critical > 0)
+				{
+				/* We handle IDP now so permit it */
+				if (OBJ_obj2nid(ext->object) ==
+					NID_issuing_distribution_point)
+					continue;
+				crl->flags |= EXFLAG_CRITICAL;
+				break;
+				}
+			}
 		break;
 
 		case ASN1_OP_FREE_POST:
+		if (crl->meth && crl->meth->crl_free)
+			return crl->meth->crl_free(crl);
 		if (crl->akid)
 			AUTHORITY_KEYID_free(crl->akid);
 		if (crl->idp)
@@ -216,6 +249,44 @@ int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev)
 	inf->enc.modified = 1;
 	return 1;
 }
+
+int X509_CRL_verify(X509_CRL *crl, EVP_PKEY *r)
+	{
+	if (crl->meth && crl->meth->crl_verify)
+		return crl->meth->crl_verify(crl, r);
+	return(ASN1_item_verify(ASN1_ITEM_rptr(X509_CRL_INFO),
+		crl->sig_alg, crl->signature,crl->crl,r));
+	}
+
+int X509_CRL_get0_by_serial(X509_CRL *crl,
+		X509_REVOKED **ret, ASN1_INTEGER *serial)
+	{
+	X509_REVOKED rtmp;
+	int idx;
+	if (crl->meth && crl->meth->crl_lookup)
+		return crl->meth->crl_lookup(crl, ret, serial);
+	rtmp.serialNumber = serial;
+	/* Sort revoked into serial number order if not already sorted.
+	 * Do this under a lock to avoid race condition.
+ 	 */
+	if (!sk_X509_REVOKED_is_sorted(crl->crl->revoked))
+		{
+		CRYPTO_w_lock(CRYPTO_LOCK_X509_CRL);
+		sk_X509_REVOKED_sort(crl->crl->revoked);
+		CRYPTO_w_unlock(CRYPTO_LOCK_X509_CRL);
+		}
+	idx = sk_X509_REVOKED_find(crl->crl->revoked, &rtmp);
+	/* If found assume revoked: want something cleverer than
+	 * this to handle entry extensions in V2 CRLs.
+	 */
+	if(idx >= 0)
+		{
+		if (ret)
+			*ret = sk_X509_REVOKED_value(crl->crl->revoked, idx);
+		return 1;
+		}
+	return 0;
+	}
 
 IMPLEMENT_STACK_OF(X509_REVOKED)
 IMPLEMENT_ASN1_SET_OF(X509_REVOKED)

@@ -420,13 +420,13 @@ typedef struct x509_cert_pair_st {
 			XN_FLAG_FN_LN | \
 			XN_FLAG_FN_ALIGN)
 
-typedef struct X509_revoked_st
+struct x509_revoked_st
 	{
 	ASN1_INTEGER *serialNumber;
 	ASN1_TIME *revocationDate;
 	STACK_OF(X509_EXTENSION) /* optional */ *extensions;
 	int sequence; /* load sequence */
-	} X509_REVOKED;
+	};
 
 DECLARE_STACK_OF(X509_REVOKED)
 DECLARE_ASN1_SET_OF(X509_REVOKED)
@@ -460,6 +460,7 @@ struct X509_crl_st
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif
+	X509_CRL_METHOD *meth;
 	} /* X509_CRL */;
 
 DECLARE_STACK_OF(X509_CRL)
@@ -969,6 +970,8 @@ DECLARE_ASN1_FUNCTIONS(X509_CRL_INFO)
 DECLARE_ASN1_FUNCTIONS(X509_CRL)
 
 int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev);
+int X509_CRL_get0_by_serial(X509_CRL *crl,
+		X509_REVOKED **ret, ASN1_INTEGER *serial);
 
 X509_PKEY *	X509_PKEY_new(void );
 void		X509_PKEY_free(X509_PKEY *a);
