@@ -137,8 +137,6 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 		crl->akid = X509_CRL_get_ext_d2i(crl,
 				NID_authority_key_identifier, NULL, NULL);	
-		if (crl->meth && crl->meth->crl_init)
-			return crl->meth->crl_init(crl);
 
 		/* See if we have any unhandled critical CRL extensions and 
 		 * indicate this in a flag. We only currently handle IDP so
@@ -163,6 +161,8 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 				break;
 				}
 			}
+		if (crl->meth && crl->meth->crl_init)
+			return crl->meth->crl_init(crl);
 		break;
 
 		case ASN1_OP_FREE_POST:
