@@ -180,7 +180,8 @@ int MAIN(int argc, char **argv)
 				args++;
 				if (!strcmp(*args, "NONE"))
 					cert_pbe = -1;
-				cert_pbe=OBJ_txt2nid(*args);
+				else
+					cert_pbe=OBJ_txt2nid(*args);
 				if(cert_pbe == NID_undef) {
 					BIO_printf(bio_err,
 						 "Unknown PBE algorithm %s\n", *args);
