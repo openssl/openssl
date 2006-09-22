@@ -428,7 +428,10 @@ static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in)
 		{
 		/* If MSB set just copy across */
 		if (*from & 0x80)
+			{
 			*to++ = *from++;
+			i++;
+			}
 		/* Collapse multiple spaces */
 		else if (isspace(*from))
 			{
