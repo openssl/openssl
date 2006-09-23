@@ -796,8 +796,14 @@ start:
 			dest = s->d1->alert_fragment;
 			dest_len = &s->d1->alert_fragment_len;
 			}
-		else	/* else it's a CCS message */
-			OPENSSL_assert(rr->type == SSL3_RT_CHANGE_CIPHER_SPEC);
+                /* else it's a CCS message, or it's wrong */
+                else if (rr->type != SSL3_RT_CHANGE_CIPHER_SPEC)
+                        {
+                          /* Not certain if this is the right error handling */
+                          al=SSL_AD_UNEXPECTED_MESSAGE;
+                          SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_UNEXPECTED_RECORD);
+                          goto f_err;
+                        }
 
 
 		if (dest_maxlen > 0)
