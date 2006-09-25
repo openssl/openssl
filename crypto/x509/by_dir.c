@@ -357,7 +357,7 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			{
 			char c = '/';
 #ifdef OPENSSL_SYS_VMS
-			c = ent->dir[strlen(ctx->dirs[i])-1];
+			c = ent->dir[strlen(ent->dir)-1];
 			if (c != ':' && c != '>' && c != ']')
 				{
 				/* If no separator is present, we assume the
