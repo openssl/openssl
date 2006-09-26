@@ -352,7 +352,10 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 			CRYPTO_r_unlock(CRYPTO_LOCK_X509_STORE);
 			}
 		else
+			{
 			k = 0;
+			hent = NULL;
+			}
 		for (;;)
 			{
 			char c = '/';

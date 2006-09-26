@@ -196,6 +196,8 @@ X509_STORE *X509_STORE_new(void)
 	ret->get_crl = 0;
 	ret->check_crl = 0;
 	ret->cert_crl = 0;
+	ret->lookup_certs = 0;
+	ret->lookup_crls = 0;
 	ret->cleanup = 0;
 
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data);
