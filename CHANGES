@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8c and 0.9.8d  [xx XXX xxxx]
+ Changes between 0.9.8c and 0.9.8d  [28 Sep 2006]
 
   *) Introduce limits to prevent malicious keys being able to
      cause a denial of service.  (CVE-2006-2940)
