@@ -2,6 +2,8 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8d and 0.9.8e  [XX xxx XXXX]
+
  Changes between 0.9.8c and 0.9.8d  [28 Sep 2006]
 
   *) Introduce limits to prevent malicious keys being able to
