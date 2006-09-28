@@ -4,6 +4,9 @@
 
  Changes between 0.9.8d and 0.9.9  [xx XXX xxxx]
 
+  *) Fix ASN.1 parsing of certain invalid structures that can result
+     in a denial of service.  (CVE-2006-2937)  [Steve Henson]
+
   *) Fix buffer overflow in SSL_get_shared_ciphers() function.
      (CVE-2006-3738) [Tavis Ormandy and Will Drewry, Google Security Team]
 
