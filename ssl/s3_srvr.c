@@ -300,8 +300,9 @@ int ssl3_accept(SSL *s)
 
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
-			/* Check if it is anon DH or anon ECDH */
-			if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL))
+			/* Check if it is anon DH or anon ECDH or KRB5 */
+			if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL)
+				&& !(s->s3->tmp.new_cipher->algorithms & SSL_aKRB5))
 				{
 				ret=ssl3_send_server_certificate(s);
 				if (ret <= 0) goto end;
@@ -1995,6 +1996,25 @@ int ssl3_get_client_key_exchange(SSL *s)
 				SSL_R_DATA_LENGTH_TOO_LONG);
 			goto err;
 			}
+		if (!((p[0] == (s->client_version>>8)) && (p[1] == (s->client_version & 0xff))))
+		    {
+		    /* The premaster secret must contain the same version number as the
+		     * ClientHello to detect version rollback attacks (strangely, the
+		     * protocol does not offer such protection for DH ciphersuites).
+		     * However, buggy clients exist that send random bytes instead of
+		     * the protocol version.
+		     * If SSL_OP_TLS_ROLLBACK_BUG is set, tolerate such clients. 
+		     * (Perhaps we should have a separate BUG value for the Kerberos cipher)
+		     */
+		    if (!((s->options & SSL_OP_TLS_ROLLBACK_BUG) &&
+			   (p[0] == (s->version>>8)) && (p[1] == (s->version & 0xff))))
+		        {
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+			       SSL_AD_DECODE_ERROR);
+			goto err;
+			}
+		    }
+
 		EVP_CIPHER_CTX_cleanup(&ciph_ctx);
 
                 s->session->master_key_length=

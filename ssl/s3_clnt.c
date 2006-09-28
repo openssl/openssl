@@ -1796,8 +1796,10 @@ int ssl3_send_client_key_exchange(SSL *s)
 				n+=2;
 				}
  
-			if (RAND_bytes(tmp_buf,sizeof tmp_buf) <= 0)
-			    goto err;
+			    tmp_buf[0]=s->client_version>>8;
+			    tmp_buf[1]=s->client_version&0xff;
+			    if (RAND_bytes(&(tmp_buf[2]),sizeof tmp_buf-2) <= 0)
+				goto err;
 
 			/*  20010420 VRS.  Tried it this way; failed.
 			**	EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
