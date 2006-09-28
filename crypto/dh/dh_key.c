@@ -180,6 +180,12 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	BIGNUM *tmp;
 	int ret= -1;
 
+	if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS)
+		{
+		DHerr(DH_F_DH_COMPUTE_KEY,DH_R_MODULUS_TOO_LARGE);
+		goto err;
+		}
+
 	ctx = BN_CTX_new();
 	if (ctx == NULL) goto err;
 	BN_CTX_start(ctx);

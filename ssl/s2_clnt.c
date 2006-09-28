@@ -538,7 +538,8 @@ static int get_server_hello(SSL *s)
 		CRYPTO_add(&s->session->peer->references, 1, CRYPTO_LOCK_X509);
 		}
 
-	if (s->session->peer != s->session->sess_cert->peer_key->x509)
+	if (s->session->sess_cert == NULL 
+      || s->session->peer != s->session->sess_cert->peer_key->x509)
 		/* can't happen */
 		{
 		ssl2_return_error(s, SSL2_PE_UNDEFINED_ERROR);
