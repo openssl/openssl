@@ -1219,7 +1219,7 @@ char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 		c=sk_SSL_CIPHER_value(sk,i);
 		for (cp=c->name; *cp; )
 			{
-			if (len-- == 0)
+			if (len-- <= 0)
 				{
 				*p='\0';
 				return(buf);

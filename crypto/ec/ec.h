@@ -93,6 +93,10 @@ extern "C" {
 #endif
 
 
+#ifndef OPENSSL_ECC_MAX_FIELD_BITS
+# define OPENSSL_ECC_MAX_FIELD_BITS 661
+#endif
+
 typedef enum {
 	/* values as defined in X9.62 (ECDSA) and elsewhere */
 	POINT_CONVERSION_COMPRESSED = 2,
@@ -482,6 +486,7 @@ void ERR_load_EC_strings(void);
 #define EC_R_D2I_ECPKPARAMETERS_FAILURE			 117
 #define EC_R_DISCRIMINANT_IS_ZERO			 118
 #define EC_R_EC_GROUP_NEW_BY_NAME_FAILURE		 119
+#define EC_R_FIELD_TOO_LARGE				 138
 #define EC_R_GROUP2PKPARAMETERS_FAILURE			 120
 #define EC_R_I2D_ECPKPARAMETERS_FAILURE			 121
 #define EC_R_INCOMPATIBLE_OBJECTS			 101
@@ -492,7 +497,9 @@ void ERR_load_EC_strings(void);
 #define EC_R_INVALID_FIELD				 103
 #define EC_R_INVALID_FORM				 104
 #define EC_R_INVALID_GROUP_ORDER			 122
+#define EC_R_INVALID_PENTANOMIAL_BASIS			 132
 #define EC_R_INVALID_PRIVATE_KEY			 123
+#define EC_R_INVALID_TRINOMIAL_BASIS			 137
 #define EC_R_MISSING_PARAMETERS				 124
 #define EC_R_MISSING_PRIVATE_KEY			 125
 #define EC_R_NOT_A_NIST_PRIME				 135

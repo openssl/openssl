@@ -4,6 +4,20 @@
 
  Changes between 0.9.8c and 0.9.8d  [xx XXX xxxx]
 
+  *) Introduce limits to prevent malicious keys being able to
+     cause a denial of service.  (CVE-2006-2940)
+     [Steve Henson, Bodo Moeller]
+
+  *) Fix ASN.1 parsing of certain invalid structures that can result
+     in a denial of service.  (CVE-2006-2937)  [Steve Henson]
+
+  *) Fix buffer overflow in SSL_get_shared_ciphers() function. 
+     (CVE-2006-3738) [Tavis Ormandy and Will Drewry, Google Security Team]
+
+  *) Fix SSL client code which could crash if connecting to a
+     malicious SSLv2 server.  (CVE-2006-4343)
+     [Tavis Ormandy and Will Drewry, Google Security Team]
+
   *) Since 0.9.8b, ciphersuite strings naming explicit ciphersuites
      match only those.  Before that, "AES256-SHA" would be interpreted
      as a pattern and match "AES128-SHA" too (since AES128-SHA got

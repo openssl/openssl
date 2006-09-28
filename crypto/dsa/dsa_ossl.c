@@ -304,6 +304,18 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 		return -1;
 		}
 
+	if (BN_num_bits(dsa->q) != 160)
+		{
+		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_BAD_Q_VALUE);
+		return -1;
+		}
+
+	if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS)
+		{
+		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_MODULUS_TOO_LARGE);
+		return -1;
+		}
+
 	BN_init(&u1);
 	BN_init(&u2);
 	BN_init(&t1);

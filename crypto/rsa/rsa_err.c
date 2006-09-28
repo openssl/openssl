@@ -137,6 +137,7 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_IQMP_NOT_INVERSE_OF_Q) ,"iqmp not inverse of q"},
 {ERR_REASON(RSA_R_KEY_SIZE_TOO_SMALL)    ,"key size too small"},
 {ERR_REASON(RSA_R_LAST_OCTET_INVALID)    ,"last octet invalid"},
+{ERR_REASON(RSA_R_MODULUS_TOO_LARGE)     ,"modulus too large"},
 {ERR_REASON(RSA_R_NO_PUBLIC_EXPONENT)    ,"no public exponent"},
 {ERR_REASON(RSA_R_NULL_BEFORE_BLOCK_MISSING),"null before block missing"},
 {ERR_REASON(RSA_R_N_DOES_NOT_EQUAL_P_Q)  ,"n does not equal p q"},

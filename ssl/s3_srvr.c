@@ -2003,7 +2003,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 
                 if (kssl_ctx->client_princ)
                         {
-                        int len = strlen(kssl_ctx->client_princ);
+                        size_t len = strlen(kssl_ctx->client_princ);
                         if ( len < SSL_MAX_KRB5_PRINCIPAL_LENGTH ) 
                                 {
                                 s->session->krb5_client_princ_len = len;

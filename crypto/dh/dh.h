@@ -73,6 +73,10 @@
 #include <openssl/bn.h>
 #endif
 	
+#ifndef OPENSSL_DH_MAX_MODULUS_BITS
+# define OPENSSL_DH_MAX_MODULUS_BITS	10000
+#endif
+
 #define DH_FLAG_CACHE_MONT_P     0x01
 #define DH_FLAG_NO_EXP_CONSTTIME 0x02 /* new with 0.9.7h; the built-in DH
                                        * implementation now uses constant time
@@ -221,6 +225,7 @@ void ERR_load_DH_strings(void);
 /* Reason codes. */
 #define DH_R_BAD_GENERATOR				 101
 #define DH_R_INVALID_PUBKEY				 102
+#define DH_R_MODULUS_TOO_LARGE				 103
 #define DH_R_NO_PRIVATE_VALUE				 100
 
 #ifdef  __cplusplus

@@ -832,6 +832,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
 		}
 	else if (ret == -1)
 		return -1;
+        ret = 0;
 	/* SEQUENCE, SET and "OTHER" are left in encoded form */
 	if ((utype == V_ASN1_SEQUENCE)
 		|| (utype == V_ASN1_SET) || (utype == V_ASN1_OTHER))
