@@ -416,7 +416,9 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
- Changes between 0.9.8c and 0.9.8d  [xx XXX xxxx]
+ Changes between 0.9.8d and 0.9.8e  [XX xxx XXXX]
+
+ Changes between 0.9.8c and 0.9.8d  [28 Sep 2006]
 
   *) Introduce limits to prevent malicious keys being able to
      cause a denial of service.  (CVE-2006-2940)
@@ -1420,7 +1422,21 @@
      differing sizes.
      [Richard Levitte]
 
- Changes between 0.9.7k and 0.9.7l  [xx XXX xxxx]
+ Changes between 0.9.7k and 0.9.7l  [28 Sep 2006]
+
+  *) Introduce limits to prevent malicious keys being able to
+     cause a denial of service.  (CVE-2006-2940)
+     [Steve Henson, Bodo Moeller]
+
+  *) Fix ASN.1 parsing of certain invalid structures that can result
+     in a denial of service.  (CVE-2006-2937)  [Steve Henson]
+
+  *) Fix buffer overflow in SSL_get_shared_ciphers() function. 
+     (CVE-2006-3738) [Tavis Ormandy and Will Drewry, Google Security Team]
+
+  *) Fix SSL client code which could crash if connecting to a
+     malicious SSLv2 server.  (CVE-2006-4343)
+     [Tavis Ormandy and Will Drewry, Google Security Team]
 
   *) Change ciphersuite string processing so that an explicit
      ciphersuite selects this one ciphersuite (so that "AES256-SHA"
