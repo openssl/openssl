@@ -5,7 +5,7 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 0.9.7c and OpenSSL 0.9.8d:
+  Major changes between OpenSSL 0.9.8c and OpenSSL 0.9.8d:
 
       o Introduce limits to prevent malicious key DoS  (CVE-2006-2940)
       o Fix security issues (CVE-2006-2937, CVE-2006-3737, CVE-2006-4343)
