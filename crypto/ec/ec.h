@@ -96,6 +96,11 @@ extern "C" {
 # endif
 #endif
 
+  
+#ifndef OPENSSL_ECC_MAX_FIELD_BITS
+# define OPENSSL_ECC_MAX_FIELD_BITS 661
+#endif
+
 /** Enum for the point conversion form as defined in X9.62 (ECDSA)
  *  for the encoding of a elliptic curve point (x,y) */
 typedef enum {
@@ -1049,22 +1054,25 @@ void ERR_load_EC_strings(void);
 #define EC_R_ASN1_UNKNOWN_FIELD				 116
 #define EC_R_BUFFER_TOO_SMALL				 100
 #define EC_R_D2I_ECPKPARAMETERS_FAILURE			 117
-#define EC_R_DECODE_ERROR				 137
+#define EC_R_DECODE_ERROR				 142
 #define EC_R_DISCRIMINANT_IS_ZERO			 118
 #define EC_R_EC_GROUP_NEW_BY_NAME_FAILURE		 119
+#define EC_R_FIELD_TOO_LARGE				 138
 #define EC_R_GROUP2PKPARAMETERS_FAILURE			 120
 #define EC_R_I2D_ECPKPARAMETERS_FAILURE			 121
 #define EC_R_INCOMPATIBLE_OBJECTS			 101
 #define EC_R_INVALID_ARGUMENT				 112
 #define EC_R_INVALID_COMPRESSED_POINT			 110
 #define EC_R_INVALID_COMPRESSION_BIT			 109
-#define EC_R_INVALID_CURVE				 132
+#define EC_R_INVALID_CURVE				 141
 #define EC_R_INVALID_DIGEST_TYPE			 138
 #define EC_R_INVALID_ENCODING				 102
 #define EC_R_INVALID_FIELD				 103
 #define EC_R_INVALID_FORM				 104
 #define EC_R_INVALID_GROUP_ORDER			 122
+#define EC_R_INVALID_PENTANOMIAL_BASIS			 132
 #define EC_R_INVALID_PRIVATE_KEY			 123
+#define EC_R_INVALID_TRINOMIAL_BASIS			 137
 #define EC_R_KEYS_NOT_SET				 140
 #define EC_R_MISSING_PARAMETERS				 124
 #define EC_R_MISSING_PRIVATE_KEY			 125

@@ -84,6 +84,10 @@
 #endif
 #endif
 
+#ifndef OPENSSL_DSA_MAX_MODULUS_BITS
+# define OPENSSL_DSA_MAX_MODULUS_BITS	10000
+#endif
+
 #define DSA_FLAG_CACHE_MONT_P	0x01
 #define DSA_FLAG_NO_EXP_CONSTTIME       0x02 /* new with 0.9.7h; the built-in DSA
                                               * implementation now uses constant time
@@ -284,12 +288,14 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_SIG_CB					 114
 
 /* Reason codes. */
-#define DSA_R_BN_DECODE_ERROR				 102
-#define DSA_R_BN_ERROR					 103
+#define DSA_R_BAD_Q_VALUE				 102
+#define DSA_R_BN_DECODE_ERROR				 108
+#define DSA_R_BN_ERROR					 109
 #define DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 100
 #define DSA_R_DECODE_ERROR				 104
 #define DSA_R_INVALID_DIGEST_TYPE			 106
 #define DSA_R_MISSING_PARAMETERS			 101
+#define DSA_R_MODULUS_TOO_LARGE				 103
 #define DSA_R_NO_PARAMETERS_SET				 107
 #define DSA_R_PARAMETER_ENCODING_ERROR			 105
 
