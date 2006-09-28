@@ -2,6 +2,8 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
+
  Changes between 0.9.7k and 0.9.7l  [28 Sep 2006]
 
   *) Introduce limits to prevent malicious keys being able to
