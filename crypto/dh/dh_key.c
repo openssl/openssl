@@ -173,7 +173,7 @@ err:
 
 static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	{
-	BN_CTX *ctx;
+	BN_CTX *ctx=NULL;
 	BN_MONT_CTX *mont=NULL;
 	BIGNUM *tmp;
 	int ret= -1;
