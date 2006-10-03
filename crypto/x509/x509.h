@@ -460,7 +460,8 @@ struct X509_crl_st
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif
-	X509_CRL_METHOD *meth;
+	const X509_CRL_METHOD *meth;
+	void *meth_data;
 	} /* X509_CRL */;
 
 DECLARE_STACK_OF(X509_CRL)
@@ -747,6 +748,22 @@ extern "C" {
 #define 	X509_CRL_get_nextUpdate(x) ((x)->crl->nextUpdate)
 #define		X509_CRL_get_issuer(x) ((x)->crl->issuer)
 #define		X509_CRL_get_REVOKED(x) ((x)->crl->revoked)
+
+void X509_CRL_set_default_method(const X509_CRL_METHOD *meth);
+X509_CRL_METHOD *X509_CRL_METHOD_new(
+	int (*crl_init)(X509_CRL *crl),
+	int (*crl_free)(X509_CRL *crl),
+	int (*crl_lookup)(X509_CRL *crl, X509_REVOKED **ret, ASN1_INTEGER *ser),
+	int (*crl_verify)(X509_CRL *crl, EVP_PKEY *pk));
+void X509_CRL_METHOD_free(X509_CRL_METHOD *m);
+
+void X509_CRL_set_meth_data(X509_CRL *crl, void *dat);
+void *X509_CRL_get_meth_data(X509_CRL *crl);
+
+IMPLEMENT_STACK_OF(X509_REVOKED)
+IMPLEMENT_ASN1_SET_OF(X509_REVOKED)
+IMPLEMENT_STACK_OF(X509_CRL)
+IMPLEMENT_ASN1_SET_OF(X509_CRL)
 
 /* This one is only used so that a binary form can output, as in
  * i2d_X509_NAME(X509_get_X509_PUBKEY(x),&buf) */

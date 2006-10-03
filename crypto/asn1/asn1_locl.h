@@ -121,8 +121,11 @@ struct evp_pkey_asn1_method_st
  * efficient callbacks: for example a CRL entry database.
  */
 
+#define X509_CRL_METHOD_DYNAMIC		1
+
 struct x509_crl_method_st
 	{
+	int flags;
 	int (*crl_init)(X509_CRL *crl);
 	int (*crl_free)(X509_CRL *crl);
 	int (*crl_lookup)(X509_CRL *crl, X509_REVOKED **ret, ASN1_INTEGER *ser);
