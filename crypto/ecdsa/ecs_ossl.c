@@ -299,8 +299,21 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 			ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_BN_LIB);
 			goto err;
 		}
+		if (BN_is_zero(s))
+		{
+			/* if kinv and r have been supplied by the caller
+			 * don't to generate new kinv and r values */
+			if (in_kinv != NULL && in_r != NULL)
+			{
+				ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ECDSA_R_NEED_NEW_SETUP_VALUES);
+				goto err;
+			}
+		}
+		else
+			/* s != 0 => we have a valid signature */
+			break;
 	}
-	while (BN_is_zero(s));
+	while (1);
 
 	ok = 1;
 err:
