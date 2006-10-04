@@ -136,8 +136,9 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 
 	int mdnid, pknid;
 
-	/* Convert signature OID into digest and public key OIDs */
+	EVP_MD_CTX_init(&ctx);
 
+	/* Convert signature OID into digest and public key OIDs */
 	if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->algorithm), &mdnid, &pknid))
 		{
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
@@ -157,7 +158,6 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 		goto err;
 		}
 
-	EVP_MD_CTX_init(&ctx);
 	if (!EVP_VerifyInit_ex(&ctx,type, NULL))
 		{
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_EVP_LIB);
