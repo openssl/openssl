@@ -197,7 +197,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 			/* Any matching allowed if certificate is self
 			 * issued and not the last in the chain.
 			 */
-			if (!(x->ex_flags && EXFLAG_SS) || (i == 0))
+			if (!(x->ex_flags & EXFLAG_SS) || (i == 0))
 				level->flags |= X509_V_FLAG_INHIBIT_ANY;
 			}
 		else
