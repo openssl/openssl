@@ -18,23 +18,23 @@ const char *SHA256_version="SHA-256" OPENSSL_VERSION_PTEXT;
 
 int SHA224_Init (SHA256_CTX *c)
 	{
+	memset (c,0,sizeof(*c));
 	c->h[0]=0xc1059ed8UL;	c->h[1]=0x367cd507UL;
 	c->h[2]=0x3070dd17UL;	c->h[3]=0xf70e5939UL;
 	c->h[4]=0xffc00b31UL;	c->h[5]=0x68581511UL;
 	c->h[6]=0x64f98fa7UL;	c->h[7]=0xbefa4fa4UL;
-	c->Nl=0;	c->Nh=0;
-	c->num=0;	c->md_len=SHA224_DIGEST_LENGTH;
+	c->md_len=SHA224_DIGEST_LENGTH;
 	return 1;
 	}
 
 int SHA256_Init (SHA256_CTX *c)
 	{
+	memset (c,0,sizeof(*c));
 	c->h[0]=0x6a09e667UL;	c->h[1]=0xbb67ae85UL;
 	c->h[2]=0x3c6ef372UL;	c->h[3]=0xa54ff53aUL;
 	c->h[4]=0x510e527fUL;	c->h[5]=0x9b05688cUL;
 	c->h[6]=0x1f83d9abUL;	c->h[7]=0x5be0cd19UL;
-	c->Nl=0;	c->Nh=0;
-	c->num=0;	c->md_len=SHA256_DIGEST_LENGTH;
+	c->md_len=SHA256_DIGEST_LENGTH;
 	return 1;
 	}
 
@@ -69,17 +69,11 @@ int SHA224_Update(SHA256_CTX *c, const void *data, size_t len)
 int SHA224_Final (unsigned char *md, SHA256_CTX *c)
 {   return SHA256_Final (md,c);   }
 
-#ifndef	SHA_LONG_LOG2
-#define	SHA_LONG_LOG2	2	/* default to 32 bits */
-#endif
-
 #define	DATA_ORDER_IS_BIG_ENDIAN
 
 #define	HASH_LONG		SHA_LONG
-#define	HASH_LONG_LOG2		SHA_LONG_LOG2
 #define	HASH_CTX		SHA256_CTX
 #define	HASH_CBLOCK		SHA_CBLOCK
-#define	HASH_LBLOCK		SHA_LBLOCK
 /*
  * Note that FIPS180-2 discusses "Truncation of the Hash Function Output."
  * default: case below covers for it. It's not clear however if it's
@@ -112,9 +106,7 @@ int SHA224_Final (unsigned char *md, SHA256_CTX *c)
 #define	HASH_UPDATE		SHA256_Update
 #define	HASH_TRANSFORM		SHA256_Transform
 #define	HASH_FINAL		SHA256_Final
-#define	HASH_BLOCK_HOST_ORDER	sha256_block_host_order
 #define	HASH_BLOCK_DATA_ORDER	sha256_block_data_order
-void sha256_block_host_order (SHA256_CTX *ctx, const void *in, size_t num);
 void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num);
 
 #include "md32_common.h"
@@ -158,7 +150,7 @@ static const SHA_LONG K256[64] = {
 static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	{
 	unsigned MD32_REG_T a,b,c,d,e,f,g,h,s0,s1,T1,T2;
-	SHA_LONG	X[16];
+	SHA_LONG	X[16],l;
 	int i;
 	const unsigned char *data=in;
 
@@ -167,33 +159,13 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	a = ctx->h[0];	b = ctx->h[1];	c = ctx->h[2];	d = ctx->h[3];
 	e = ctx->h[4];	f = ctx->h[5];	g = ctx->h[6];	h = ctx->h[7];
 
-	if (host)
+	for (i=0;i<16;i++)
 		{
-		const SHA_LONG *W=(const SHA_LONG *)data;
-
-		for (i=0;i<16;i++)
-			{
-			T1 = X[i] = W[i];
-			T1 += h + Sigma1(e) + Ch(e,f,g) + K256[i];
-			T2 = Sigma0(a) + Maj(a,b,c);
-			h = g;	g = f;	f = e;	e = d + T1;
-			d = c;	c = b;	b = a;	a = T1 + T2;
-			}
-
-		data += SHA256_CBLOCK;
-		}
-	else
-		{
-		SHA_LONG l;
-
-		for (i=0;i<16;i++)
-			{
-			HOST_c2l(data,l); T1 = X[i] = l;
-			T1 += h + Sigma1(e) + Ch(e,f,g) + K256[i];
-			T2 = Sigma0(a) + Maj(a,b,c);
-			h = g;	g = f;	f = e;	e = d + T1;
-			d = c;	c = b;	b = a;	a = T1 + T2;
-			}
+		HOST_c2l(data,l); T1 = X[i] = l;
+		T1 += h + Sigma1(e) + Ch(e,f,g) + K256[i];
+		T2 = Sigma0(a) + Maj(a,b,c);
+		h = g;	g = f;	f = e;	e = d + T1;
+		d = c;	c = b;	b = a;	a = T1 + T2;
 		}
 
 	for (;i<64;i++)
@@ -233,13 +205,14 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	SHA_LONG	X[16];
 	int i;
 	const unsigned char *data=in;
+	const union { long one; char little; } is_endian = {1};
 
 			while (num--) {
 
 	a = ctx->h[0];	b = ctx->h[1];	c = ctx->h[2];	d = ctx->h[3];
 	e = ctx->h[4];	f = ctx->h[5];	g = ctx->h[6];	h = ctx->h[7];
 
-	if (host)
+	if (!is_endian.little && sizeof(SHA_LONG)==4 && ((size_t)in%4)==0)
 		{
 		const SHA_LONG *W=(const SHA_LONG *)data;
 
@@ -304,14 +277,6 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 
 #endif
 #endif /* SHA256_ASM */
-
-/*
- * Idea is to trade couple of cycles for some space. On IA-32 we save
- * about 4K in "big footprint" case. In "small footprint" case any gain
- * is appreciated:-)
- */
-void HASH_BLOCK_HOST_ORDER (SHA256_CTX *ctx, const void *in, size_t num)
-{   sha256_block (ctx,in,num,1);   }
 
 void HASH_BLOCK_DATA_ORDER (SHA256_CTX *ctx, const void *in, size_t num)
 {   sha256_block (ctx,in,num,0);   }
