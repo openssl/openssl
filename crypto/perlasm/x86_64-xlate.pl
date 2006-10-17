@@ -323,6 +323,8 @@ my $current_function;
 		$line =~ s/\@function.*/\@function/;
 		if ($line =~ /\.picmeup\s+(%r[\w]+)/i) {
 		    $self->{value} = sprintf "\t.long\t0x%x,0x90000000",$opcode{$1};
+		} elsif ($line =~ /\.asciz\s+"(.*)"$/) {
+		    $self->{value} = ".byte\t".join(",",unpack("C*",$1),0);
 		} else {
 		    $self->{value} = $line;
 		}
@@ -376,6 +378,12 @@ my $current_function;
 				    last;
 				  };
 		/\.picmeup/ && do { $self->{value} = sprintf"\tDD\t 0%Xh,090000000h",$opcode{$line};
+				    last;
+				  };
+		/\.asciz/   && do { if ($line =~ /^"(.*)"$/) {
+					$self->{value} = "DB\t"
+						.join(",",unpack("C*",$1),0);
+				    }
 				    last;
 				  };
 	    }

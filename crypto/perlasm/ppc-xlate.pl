@@ -64,6 +64,14 @@ my $machine = sub {
     }
     ".machine	$arch";
 };
+my $asciz = sub {
+    shift;
+    my $line = join(",",@_);
+    if ($line =~ /^"(.*)"$/)
+    {	".byte	" . join(",",unpack("C*",$1),0);	}
+    else
+    {	"";	}
+};
 
 ################################################################
 # simplified mnemonics not handled by at least one assembler

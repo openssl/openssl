@@ -94,6 +94,8 @@ sub ::function_end_A
     $stack+=16;	# readjust esp as if we didn't pop anything
 }
 
+sub ::asciz {   foreach (@_) { &data_byte(unpack("C*",$_[0]),0); }   }
+
 sub ::asm_finish
 {   &file_end();
     print @out;
