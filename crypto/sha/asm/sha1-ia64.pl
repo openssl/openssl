@@ -186,9 +186,7 @@ $code.=<<___;
 	extr.u	tmp1=$a,27,5		}   // a>>27
 { .mib;	add	$f=$f,tmp4		    // f+=e+K_20_39
 	add	$h1=$h1,$a		};; // wrap up
-{ .mmi;
-(p16)	ld4.s	$X[0]=[inp],4		    // non-faulting prefetch
-	add	$f=$f,tmp0		    // f+=F_20_39(b,c,d)
+{ .mmi;	add	$f=$f,tmp0		    // f+=F_20_39(b,c,d)
 	shrp	$b=tmp6,tmp6,2		}   // b=ROTATE(b,30) ;;?
 { .mmi;	or	tmp1=tmp1,tmp5		    // ROTATE(a,5)
 	add	$h3=$h3,$c		};; // wrap up

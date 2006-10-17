@@ -86,9 +86,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 #define	pPad2		p12
 #define	pPad3		p13
 #define	pSkip		p8
-//	This two below shall remain constant througout whole routine
-#define	pDataOrder	p14
-#define	pHostOrder	p15
 
 #define	A_		out24
 #define	B_		out25
@@ -150,7 +147,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 #define	Y		in21
 #define	Z		in20
 
-/* register stack configuration for md5_block_asm_host_order(): */
+/* register stack configuration for md5_block_asm_data_order(): */
 #define	MD5_NINP	3
 #define	MD5_NLOC	0
 #define MD5_NOUT	29
@@ -242,7 +239,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 
 	.text
 
-/* md5_block_asm_host_order(MD5_CTX *c, const void *data, size_t num)
+/* md5_block_asm_data_order(MD5_CTX *c, const void *data, size_t num)
 
      where:
       c: a pointer to a structure of this type:
@@ -267,22 +264,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.  */
 	.align	32
 	.proc	md5_block_asm_data_order
 md5_block_asm_data_order:
-{	.mib
-	cmp.eq	pDataOrder,pHostOrder = r0,r0
-	br.sptk.many	.md5_block
-};;
-	.endp	md5_block_asm_data_order
-
-	.type	md5_block_asm_host_order, @function
-	.global	md5_block_asm_host_order
-
-	.proc	md5_block_asm_host_order
-md5_block_asm_host_order:
-	.prologue
-{	.mib
-	cmp.eq	pHostOrder,pDataOrder = r0,r0
-};;
 .md5_block:
+	.prologue
 {	.mmi
 	.save	ar.pfs, PFSSave
 	alloc	PFSSave = ar.pfs, MD5_NINP, MD5_NLOC, MD5_NOUT, MD5_NROT
@@ -296,10 +279,8 @@ md5_block_asm_host_order:
 	mov	LCSave = ar.lc
 }
 ;;
-.pred.rel	"mutex",pDataOrder,pHostOrder
 {	.mmi
-(pDataOrder)	add	CTable = .md5_tbl_data_order#-.md5_block#, CTable
-(pHostOrder)	add	CTable = .md5_tbl_host_order#-.md5_block#, CTable	
+	add	CTable = .md5_tbl_data_order#-.md5_block#, CTable
 	and	InAlign = 0x3, DPtrIn
 }
 
@@ -317,7 +298,7 @@ md5_block_asm_host_order:
 	dep	DPtr_ = 0, DPtrIn, 0, 2
 } ;;
 #ifdef HOST_IS_BIG_ENDIAN
-(pDataOrder)	rum	psr.be;;	// switch to little-endian
+	rum	psr.be;;	// switch to little-endian
 #endif
 {	.mmb
 	ld4	CTable0 = [CTable], 4
@@ -366,7 +347,7 @@ md5_block_asm_host_order:
 
 .md5_exit:
 #ifdef HOST_IS_BIG_ENDIAN
-(pDataOrder)	sum	psr.be;;	// switch back to big-endian mode
+	sum	psr.be;;	// switch back to big-endian mode
 #endif
 {	.mmi
 	st4	[CtxPtr0] = AccumB, -4
@@ -452,7 +433,7 @@ md5_block_asm_host_order:
 	MD5UNALIGNED(1)
 	MD5UNALIGNED(2)
 
-	.endp md5_block_asm_host_order
+	.endp md5_block_asm_data_order
 
 
 // MD5 Perform the F function and load
@@ -1008,23 +989,4 @@ md5_constants:
 	data1 0x35, 0xf2, 0x3a, 0xbd	//    61
 	data1 0xbb, 0xd2, 0xd7, 0x2a	//    62
 	data1 0x91, 0xd3, 0x86, 0xeb	//    63
-
-.md5_tbl_host_order:			// OS data order, might as well
-					// be little-endian.
-	data4 0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee	// 0
-	data4 0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501	// 4
-	data4 0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be	// 8
-	data4 0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821	// 12
-	data4 0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa	// 16
-	data4 0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8	// 20
-	data4 0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed	// 24
-	data4 0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a	// 28
-	data4 0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c	// 32
-	data4 0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70	// 36
-	data4 0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05	// 40
-	data4 0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665	// 44
-	data4 0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039	// 48
-	data4 0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1	// 52
-	data4 0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1	// 56
-	data4 0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391	// 60
-.size	md5_constants#,64*4*2
+.size	md5_constants#,64*4
