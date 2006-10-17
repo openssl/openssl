@@ -89,7 +89,7 @@ int SHA512_Init (SHA512_CTX *c)
 #ifndef SHA512_ASM
 static
 #endif
-void sha512_block (SHA512_CTX *ctx, const void *in, size_t num);
+void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num);
 
 int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 	{
@@ -100,7 +100,7 @@ int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 	n++;
 	if (n > (sizeof(c->u)-16))
 		memset (p+n,0,sizeof(c->u)-n), n=0,
-		sha512_block (c,p,1);
+		sha512_block_data_order (c,p,1);
 
 	memset (p+n,0,sizeof(c->u)-16-n);
 #ifdef	B_ENDIAN
@@ -125,7 +125,7 @@ int SHA512_Final (unsigned char *md, SHA512_CTX *c)
 	p[sizeof(c->u)-16] = (unsigned char)(c->Nh>>56);
 #endif
 
-	sha512_block (c,p,1);
+	sha512_block_data_order (c,p,1);
 
 	if (md==0) return 0;
 
@@ -197,7 +197,7 @@ int SHA512_Update (SHA512_CTX *c, const void *_data, size_t len)
 		else	{
 			memcpy (p+c->num,data,n), c->num = 0;
 			len-=n, data+=n;
-			sha512_block (c,p,1);
+			sha512_block_data_order (c,p,1);
 			}
 		}
 
@@ -207,12 +207,12 @@ int SHA512_Update (SHA512_CTX *c, const void *_data, size_t len)
 		if ((size_t)data%sizeof(c->u.d[0]) != 0)
 			while (len >= sizeof(c->u))
 				memcpy (p,data,sizeof(c->u)),
-				sha512_block (c,p,1),
+				sha512_block_data_order (c,p,1),
 				len  -= sizeof(c->u),
 				data += sizeof(c->u);
 		else
 #endif
-			sha512_block (c,data,len/sizeof(c->u)),
+			sha512_block_data_order (c,data,len/sizeof(c->u)),
 			data += len,
 			len  %= sizeof(c->u),
 			data -= len;
@@ -227,7 +227,7 @@ int SHA384_Update (SHA512_CTX *c, const void *data, size_t len)
 {   return SHA512_Update (c,data,len);   }
 
 void SHA512_Transform (SHA512_CTX *c, const unsigned char *data)
-{   sha512_block (c,data,1);  }
+{   sha512_block_data_order (c,data,1);  }
 
 unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md)
 	{
@@ -392,7 +392,7 @@ static const SHA_LONG64 K512[80] = {
 
 #ifdef OPENSSL_SMALL_FOOTPRINT
 
-static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
+static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num)
 	{
 	const SHA_LONG64 *W=in;
 	SHA_LONG64	a,b,c,d,e,f,g,h,s0,s1,T1,T2;
@@ -453,7 +453,7 @@ static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
 	T1 = X[(i)&0x0f] += s0 + s1 + X[(i+9)&0x0f];	\
 	ROUND_00_15(i,a,b,c,d,e,f,g,h);		} while (0)
 
-static void sha512_block (SHA512_CTX *ctx, const void *in, size_t num)
+static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num)
 	{
 	const SHA_LONG64 *W=in;
 	SHA_LONG64	a,b,c,d,e,f,g,h,s0,s1,T1;

@@ -85,7 +85,7 @@
 # define HASH_BLOCK_DATA_ORDER   	sha_block_data_order
 # define Xupdate(a,ix,ia,ib,ic,id)	(ix=(a)=(ia^ib^ic^id))
 
-  void sha_block_data_order (SHA_CTX *c, const void *p,size_t num);
+static void sha_block_data_order (SHA_CTX *c, const void *p,size_t num);
 
 #elif defined(SHA_1)
 
@@ -105,22 +105,10 @@
 					)
 # endif
 
-# ifdef SHA1_ASM
-#  if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) \
-   || defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
-#   define sha1_block_data_order		sha1_block_asm_data_order
-#   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
-#  elif defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
-#   define sha1_block_data_order		sha1_block_asm_data_order
-#   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
-#  elif defined(_ARCH_PPC) || defined(_ARCH_PPC64) || \
-	defined(__ppc) || defined(__ppc__) || defined(__powerpc) || \
-	defined(__ppc64) || defined(__ppc64__) || defined(__powerpc64)
-#   define sha1_block_data_order		sha1_block_asm_data_order
-#   define DONT_IMPLEMENT_BLOCK_DATA_ORDER
-#  endif
-# endif
-  void sha1_block_data_order (SHA_CTX *c, const void *p,size_t num);
+#ifndef SHA1_ASM
+static
+#endif
+void sha1_block_data_order (SHA_CTX *c, const void *p,size_t num);
 
 #else
 # error "Either SHA_0 or SHA_1 must be defined."
@@ -216,8 +204,8 @@ int HASH_INIT (SHA_CTX *c)
 # define X(i)	XX[i]
 #endif
 
-#ifndef DONT_IMPLEMENT_BLOCK_DATA_ORDER
-void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
+#if !defined(SHA_1) || !defined(SHA1_ASM)
+static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 	{
 	const unsigned char *data=p;
 	register unsigned MD32_REG_T A,B,C,D,E,T,l;
@@ -416,8 +404,8 @@ void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 	E=D, D=C, C=ROTATE(B,30), B=A;	\
 	A=ROTATE(A,5)+T+xa;	    } while(0)
 
-#ifndef DONT_IMPLEMENT_BLOCK_DATA_ORDER
-void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
+#if !defined(SHA_1) || !defined(SHA1_ASM)
+static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 	{
 	const unsigned char *data=p;
 	register unsigned MD32_REG_T A,B,C,D,E,T,l;

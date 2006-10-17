@@ -158,6 +158,8 @@ $code.=<<___ if ($i<79);
 	rol	\$30,$b
 	add	$t0,$f
 	rol	\$1,$xi
+___
+$code.=<<___ if ($i<76);
 	mov	$xi,`4*($j%16)`(%rsp)
 ___
 $code.=<<___ if ($i==79);
@@ -200,7 +202,7 @@ ___
 
 $code=".text\n";
 
-&PROLOGUE("sha1_block_asm_data_order");
+&PROLOGUE("sha1_block_data_order");
 $code.=".align	4\n.Lloop:\n";
 for($i=0;$i<20;$i++)	{ &BODY_00_19($i,@V); unshift(@V,pop(@V)); }
 for(;$i<40;$i++)	{ &BODY_20_39($i,@V); unshift(@V,pop(@V)); }
@@ -227,7 +229,7 @@ $code.=<<___;
 	sub	\$1,$num
 	jnz	.Lloop
 ___
-&EPILOGUE("sha1_block_asm_data_order");
+&EPILOGUE("sha1_block_data_order");
 $code.=<<___;
 .asciz	"SHA1 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 ___

@@ -107,13 +107,14 @@ int SHA224_Final (unsigned char *md, SHA256_CTX *c)
 #define	HASH_TRANSFORM		SHA256_Transform
 #define	HASH_FINAL		SHA256_Final
 #define	HASH_BLOCK_DATA_ORDER	sha256_block_data_order
+#ifndef SHA256_ASM
+static
+#endif
 void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num);
 
 #include "md32_common.h"
 
-#ifdef SHA256_ASM
-void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host);
-#else
+#ifndef SHA256_ASM
 static const SHA_LONG K256[64] = {
 	0x428a2f98UL,0x71374491UL,0xb5c0fbcfUL,0xe9b5dba5UL,
 	0x3956c25bUL,0x59f111f1UL,0x923f82a4UL,0xab1c5ed5UL,
@@ -147,7 +148,7 @@ static const SHA_LONG K256[64] = {
 
 #ifdef OPENSSL_SMALL_FOOTPRINT
 
-static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
+static void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num)
 	{
 	unsigned MD32_REG_T a,b,c,d,e,f,g,h,s0,s1,T1,T2;
 	SHA_LONG	X[16],l;
@@ -199,7 +200,7 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 	T1 = X[(i)&0x0f] += s0 + s1 + X[(i+9)&0x0f];	\
 	ROUND_00_15(i,a,b,c,d,e,f,g,h);		} while (0)
 
-static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
+static void sha256_block_data_order (SHA256_CTX *ctx, const void *in, size_t num)
 	{
 	unsigned MD32_REG_T a,b,c,d,e,f,g,h,s0,s1,T1;
 	SHA_LONG	X[16];
@@ -277,8 +278,5 @@ static void sha256_block (SHA256_CTX *ctx, const void *in, size_t num, int host)
 
 #endif
 #endif /* SHA256_ASM */
-
-void HASH_BLOCK_DATA_ORDER (SHA256_CTX *ctx, const void *in, size_t num)
-{   sha256_block (ctx,in,num,0);   }
 
 #endif /* OPENSSL_NO_SHA256 */

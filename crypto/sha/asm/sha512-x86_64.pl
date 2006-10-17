@@ -44,7 +44,7 @@ $output=shift;
 open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
 
 if ($output =~ /512/) {
-	$func="sha512_block";
+	$func="sha512_block_data_order";
 	$TABLE="K512";
 	$SZ=8;
 	@ROT=($A,$B,$C,$D,$E,$F,$G,$H)=("%rax","%rbx","%rcx","%rdx",
@@ -56,7 +56,7 @@ if ($output =~ /512/) {
 	@sigma1=(19,61, 6);
 	$rounds=80;
 } else {
-	$func="sha256_block";
+	$func="sha256_block_data_order";
 	$TABLE="K256";
 	$SZ=4;
 	@ROT=($A,$B,$C,$D,$E,$F,$G,$H)=("%eax","%ebx","%ecx","%edx",
@@ -77,9 +77,8 @@ $Tbl="%rbp";
 $_ctx="16*$SZ+0*8(%rsp)";
 $_inp="16*$SZ+1*8(%rsp)";
 $_end="16*$SZ+2*8(%rsp)";
-$_ord="16*$SZ+3*8(%rsp)";
-$_rsp="16*$SZ+4*8(%rsp)";
-$framesz="16*$SZ+5*8";
+$_rsp="16*$SZ+3*8(%rsp)";
+$framesz="16*$SZ+4*8";
 
 
 sub ROUND_00_15()
@@ -189,7 +188,6 @@ $func:
 	mov	$ctx,$_ctx		# save ctx, 1st arg
 	mov	$inp,$_inp		# save inp, 2nd arh
 	mov	%rdx,$_end		# save end pointer, "3rd" arg
-	mov	%ecx,$_ord		# save host, 4th arg
 	mov	%rbp,$_rsp		# save copy of %rsp
 
 	.picmeup $Tbl
@@ -209,25 +207,6 @@ $func:
 .Lloop:
 	xor	$round,$round
 ___
-if ($SZ==4) {
-$code.=<<___;
-	cmpl	\$0,$_ord
-	je	.Ldata_order
-.align	16
-.Lhost_order:
-___
-
-	for($i=0;$i<16;$i++) {
-		$code.="	mov	$SZ*$i($inp),$T1\n";
-		&ROUND_00_15($i,@ROT);
-		unshift(@ROT,pop(@ROT));
-	}
-$code.=<<___;
-	jmp	.Lrounds_16_xx
-.align	16
-.Ldata_order:
-___
-} # 256
 	for($i=0;$i<16;$i++) {
 		$code.="	mov	$SZ*$i($inp),$T1\n";
 		$code.="	bswap	$T1\n";

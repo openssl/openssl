@@ -41,7 +41,7 @@ if ($output =~ /64/) {
 	die "can't call ../perlasm/ppc-xlate.pl: $!";
 
 if ($output =~ /512/) {
-	$func="sha512_block";
+	$func="sha512_block_data_order";
 	$SZ=8;
 	@Sigma0=(28,34,39);
 	@Sigma1=(14,18,41);
@@ -53,7 +53,7 @@ if ($output =~ /512/) {
 	$ROR="rotrdi";
 	$SHR="srdi";
 } else {
-	$func="sha256_block";
+	$func="sha256_block_data_order";
 	$SZ=4;
 	@Sigma0=( 2,13,22);
 	@Sigma1=( 6,11,25);

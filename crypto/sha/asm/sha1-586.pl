@@ -149,7 +149,7 @@ sub BODY_40_59
 	&add($f,$e);			# f+=ROTATE(a,5)
 	}
 
-&function_begin("sha1_block_asm_data_order",16);
+&function_begin("sha1_block_data_order",16);
 	&mov($tmp1,&wparam(0));	# SHA_CTX *c
 	&mov($T,&wparam(1));	# const void *input
 	&mov($A,&wparam(2));	# size_t num
@@ -214,7 +214,7 @@ sub BODY_40_59
 	&jb(&label("loop"));
 
 	&stack_pop(16);
-&function_end("sha1_block_asm_data_order");
+&function_end("sha1_block_data_order");
 &asciz("SHA1 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();

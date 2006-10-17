@@ -158,9 +158,9 @@ ___
 $code=<<___;
 .text
 
-.globl	.sha1_block_asm_data_order
+.globl	.sha1_block_data_order
 .align	4
-.sha1_block_asm_data_order:
+.sha1_block_data_order:
 	mflr	r0
 	$STU	$sp,`-($FRAME+64)`($sp)
 	$PUSH	r0,`$FRAME-$SIZE_T*18`($sp)
