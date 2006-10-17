@@ -1,6 +1,11 @@
 // Works on all IA-64 platforms: Linux, HP-UX, Win64i...
 // On Win64i compile with ias.exe.
 .text
+.global	OPENSSL_cpuid_setup#
+.proc	OPENSSL_cpuid_setup#
+OPENSSL_cpuid_setup:
+{ .mib;	br.ret.sptk.many	b0		};;
+.endp	OPENSSL_cpuid_setup#
 .global	OPENSSL_rdtsc#
 .proc	OPENSSL_rdtsc#
 OPENSSL_rdtsc:

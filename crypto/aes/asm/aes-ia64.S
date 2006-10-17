@@ -221,7 +221,7 @@ AES_encrypt:
 	ADDP	in1=0,in1
 (p6)	br.spnt	.Le_o_unaligned		};;
 
-{ .mii;	mov	ar.pfs=psfsave
+{ .mii;	mov	ar.pfs=pfssave
 	mov	ar.lc=lcsave		}
 { .mmi;	st4	[in1]=r16,8		// s0
 	st4	[in0]=r20,8		// s1
