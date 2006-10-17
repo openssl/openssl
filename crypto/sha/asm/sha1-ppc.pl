@@ -2,8 +2,9 @@
 
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
 # I let hardware handle unaligned input(*), except on page boundaries
@@ -34,8 +35,13 @@ if ($output =~ /64\.s/) {
 	$PUSH	="stw";
 } else { die "nonsense $output"; }
 
-( defined shift || open STDOUT,"| $^X ../perlasm/ppc-xlate.pl $output" ) ||
-	die "can't call ../perlasm/ppc-xlate.pl: $!";
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
+die "can't locate ppc-xlate.pl";
+
+( defined shift || open STDOUT,"| $^X $xlate $output" ) ||
+	die "can't call $xlate: $!";
 
 $FRAME=24*$SIZE_T;
 
@@ -302,6 +308,9 @@ $code.=<<___;
 	addi	$inp,$inp,`16*4`
 	bdnz-	Lsha1_block_private
 	blr
+___
+$code.=<<___;
+.asciz	"SHA1 block transform for PPC, CRYPTOGAMS by <appro\@fy.chalmers.se>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

@@ -2,8 +2,9 @@
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
 # Eternal question is what's wrong with compiler generated code? The
@@ -11,15 +12,10 @@
 # to perform rotations by maintaining copy of 32-bit value in upper
 # bits of 64-bit register. Just follow mux2 and shrp instructions...
 # Performance under big-endian OS such as HP-UX is 179MBps*1GHz, which
-# is >50% better than HP C and >2x better than gcc. As of this moment
-# performance under little-endian OS such as Linux and Windows will be
-# a bit lower, because data has to be picked in reverse byte-order.
-# It's possible to resolve this issue by implementing third function,
-# sha1_block_asm_data_order_aligned, which would temporarily flip
-# BE field in User Mask register...
+# is >50% better than HP C and >2x better than gcc.
 
 $code=<<___;
-.ident  \"sha1-ia64.s, version 1.0\"
+.ident  \"sha1-ia64.s, version 1.1\"
 .ident  \"IA-64 ISA artwork by Andy Polyakov <appro\@fy.chalmers.se>\"
 .explicit
 
@@ -245,164 +241,11 @@ tmp3=r11;
 ctx=r32;	// in0
 inp=r33;	// in1
 
-// void sha1_block_asm_host_order(SHA_CTX *c,const void *p,size_t num);
-.global	sha1_block_asm_host_order#
-.proc	sha1_block_asm_host_order#
-.align	32
-sha1_block_asm_host_order:
-	.prologue
-{ .mmi;	alloc	tmp1=ar.pfs,3,15,0,0
-	$ADDP	tmp0=4,ctx
-	.save	ar.lc,r3
-	mov	r3=ar.lc		}
-{ .mmi;	$ADDP	ctx=0,ctx
-	$ADDP	inp=0,inp
-	mov	r2=pr			};;
-tmp4=in2;
-tmp5=loc13;
-tmp6=loc14;
-	.body
-{ .mlx;	ld4	$h0=[ctx],8
-	movl	$K_00_19=0x5a827999	}
-{ .mlx;	ld4	$h1=[tmp0],8
-	movl	$K_20_39=0x6ed9eba1	};;
-{ .mlx;	ld4	$h2=[ctx],8
-	movl	$K_40_59=0x8f1bbcdc	}
-{ .mlx;	ld4	$h3=[tmp0]
-	movl	$K_60_79=0xca62c1d6	};;
-{ .mmi;	ld4	$h4=[ctx],-16
-	add	in2=-1,in2		    // adjust num for ar.lc
-	mov	ar.ec=1			};;
-{ .mmi;	ld4	$X[0]=[inp],4		    // prefetch
-	cmp.ne	p16,p0=r0,in2		    // prefecth at loop end
-	mov	ar.lc=in2		};; // brp.loop.imp: too far
-
-.Lhtop:
-{ .mmi;	mov	$A=$h0
-	mov	$B=$h1
-	mux2	tmp6=$h1,0x44		}
-{ .mmi;	mov	$C=$h2
-	mov	$D=$h3
-	mov	$E=$h4			};;
-
-___
-
-	&BODY_00_15(\$code, 0,$A,$B,$C,$D,$E,$T);
-	&BODY_00_15(\$code, 1,$T,$A,$B,$C,$D,$E);
-	&BODY_00_15(\$code, 2,$E,$T,$A,$B,$C,$D);
-	&BODY_00_15(\$code, 3,$D,$E,$T,$A,$B,$C);
-	&BODY_00_15(\$code, 4,$C,$D,$E,$T,$A,$B);
-	&BODY_00_15(\$code, 5,$B,$C,$D,$E,$T,$A);
-	&BODY_00_15(\$code, 6,$A,$B,$C,$D,$E,$T);
-	&BODY_00_15(\$code, 7,$T,$A,$B,$C,$D,$E);
-	&BODY_00_15(\$code, 8,$E,$T,$A,$B,$C,$D);
-	&BODY_00_15(\$code, 9,$D,$E,$T,$A,$B,$C);
-	&BODY_00_15(\$code,10,$C,$D,$E,$T,$A,$B);
-	&BODY_00_15(\$code,11,$B,$C,$D,$E,$T,$A);
-	&BODY_00_15(\$code,12,$A,$B,$C,$D,$E,$T);
-	&BODY_00_15(\$code,13,$T,$A,$B,$C,$D,$E);
-	&BODY_00_15(\$code,14,$E,$T,$A,$B,$C,$D);
-	&BODY_00_15(\$code,15,$D,$E,$T,$A,$B,$C);
-
-	&BODY_16_19(\$code,16,$C,$D,$E,$T,$A,$B);
-	&BODY_16_19(\$code,17,$B,$C,$D,$E,$T,$A);
-	&BODY_16_19(\$code,18,$A,$B,$C,$D,$E,$T);
-	&BODY_16_19(\$code,19,$T,$A,$B,$C,$D,$E);
-
-	&BODY_20_39(\$code,20,$E,$T,$A,$B,$C,$D);
-	&BODY_20_39(\$code,21,$D,$E,$T,$A,$B,$C);
-	&BODY_20_39(\$code,22,$C,$D,$E,$T,$A,$B);
-	&BODY_20_39(\$code,23,$B,$C,$D,$E,$T,$A);
-	&BODY_20_39(\$code,24,$A,$B,$C,$D,$E,$T);
-	&BODY_20_39(\$code,25,$T,$A,$B,$C,$D,$E);
-	&BODY_20_39(\$code,26,$E,$T,$A,$B,$C,$D);
-	&BODY_20_39(\$code,27,$D,$E,$T,$A,$B,$C);
-	&BODY_20_39(\$code,28,$C,$D,$E,$T,$A,$B);
-	&BODY_20_39(\$code,29,$B,$C,$D,$E,$T,$A);
-	&BODY_20_39(\$code,30,$A,$B,$C,$D,$E,$T);
-	&BODY_20_39(\$code,31,$T,$A,$B,$C,$D,$E);
-	&BODY_20_39(\$code,32,$E,$T,$A,$B,$C,$D);
-	&BODY_20_39(\$code,33,$D,$E,$T,$A,$B,$C);
-	&BODY_20_39(\$code,34,$C,$D,$E,$T,$A,$B);
-	&BODY_20_39(\$code,35,$B,$C,$D,$E,$T,$A);
-	&BODY_20_39(\$code,36,$A,$B,$C,$D,$E,$T);
-	&BODY_20_39(\$code,37,$T,$A,$B,$C,$D,$E);
-	&BODY_20_39(\$code,38,$E,$T,$A,$B,$C,$D);
-	&BODY_20_39(\$code,39,$D,$E,$T,$A,$B,$C);
-
-	&BODY_40_59(\$code,40,$C,$D,$E,$T,$A,$B);
-	&BODY_40_59(\$code,41,$B,$C,$D,$E,$T,$A);
-	&BODY_40_59(\$code,42,$A,$B,$C,$D,$E,$T);
-	&BODY_40_59(\$code,43,$T,$A,$B,$C,$D,$E);
-	&BODY_40_59(\$code,44,$E,$T,$A,$B,$C,$D);
-	&BODY_40_59(\$code,45,$D,$E,$T,$A,$B,$C);
-	&BODY_40_59(\$code,46,$C,$D,$E,$T,$A,$B);
-	&BODY_40_59(\$code,47,$B,$C,$D,$E,$T,$A);
-	&BODY_40_59(\$code,48,$A,$B,$C,$D,$E,$T);
-	&BODY_40_59(\$code,49,$T,$A,$B,$C,$D,$E);
-	&BODY_40_59(\$code,50,$E,$T,$A,$B,$C,$D);
-	&BODY_40_59(\$code,51,$D,$E,$T,$A,$B,$C);
-	&BODY_40_59(\$code,52,$C,$D,$E,$T,$A,$B);
-	&BODY_40_59(\$code,53,$B,$C,$D,$E,$T,$A);
-	&BODY_40_59(\$code,54,$A,$B,$C,$D,$E,$T);
-	&BODY_40_59(\$code,55,$T,$A,$B,$C,$D,$E);
-	&BODY_40_59(\$code,56,$E,$T,$A,$B,$C,$D);
-	&BODY_40_59(\$code,57,$D,$E,$T,$A,$B,$C);
-	&BODY_40_59(\$code,58,$C,$D,$E,$T,$A,$B);
-	&BODY_40_59(\$code,59,$B,$C,$D,$E,$T,$A);
-
-	&BODY_60_79(\$code,60,$A,$B,$C,$D,$E,$T);
-	&BODY_60_79(\$code,61,$T,$A,$B,$C,$D,$E);
-	&BODY_60_79(\$code,62,$E,$T,$A,$B,$C,$D);
-	&BODY_60_79(\$code,63,$D,$E,$T,$A,$B,$C);
-	&BODY_60_79(\$code,64,$C,$D,$E,$T,$A,$B);
-	&BODY_60_79(\$code,65,$B,$C,$D,$E,$T,$A);
-	&BODY_60_79(\$code,66,$A,$B,$C,$D,$E,$T);
-	&BODY_60_79(\$code,67,$T,$A,$B,$C,$D,$E);
-	&BODY_60_79(\$code,68,$E,$T,$A,$B,$C,$D);
-	&BODY_60_79(\$code,69,$D,$E,$T,$A,$B,$C);
-	&BODY_60_79(\$code,70,$C,$D,$E,$T,$A,$B);
-	&BODY_60_79(\$code,71,$B,$C,$D,$E,$T,$A);
-	&BODY_60_79(\$code,72,$A,$B,$C,$D,$E,$T);
-	&BODY_60_79(\$code,73,$T,$A,$B,$C,$D,$E);
-	&BODY_60_79(\$code,74,$E,$T,$A,$B,$C,$D);
-	&BODY_60_79(\$code,75,$D,$E,$T,$A,$B,$C);
-	&BODY_60_79(\$code,76,$C,$D,$E,$T,$A,$B);
-	&BODY_60_79(\$code,77,$B,$C,$D,$E,$T,$A);
-	&BODY_60_79(\$code,78,$A,$B,$C,$D,$E,$T);
-	&BODY_60_79(\$code,79,$T,$A,$B,$C,$D,$E);
-
-$code.=<<___;
-{ .mmb;	add	$h0=$h0,$E
-	nop.m	0
-	br.ctop.dptk.many	.Lhtop	};;
-.Lhend:
-{ .mmi;	add	tmp0=4,ctx
-	mov	ar.lc=r3		};;
-{ .mmi;	st4	[ctx]=$h0,8
-	st4	[tmp0]=$h1,8		};;
-{ .mmi;	st4	[ctx]=$h2,8
-	st4	[tmp0]=$h3		};;
-{ .mib;	st4	[ctx]=$h4,-16
-	mov	pr=r2,0x1ffff
-	br.ret.sptk.many	b0	};;
-.endp	sha1_block_asm_host_order#
-___
-
-
-$code.=<<___;
 // void sha1_block_asm_data_order(SHA_CTX *c,const void *p,size_t num);
 .global	sha1_block_asm_data_order#
 .proc	sha1_block_asm_data_order#
 .align	32
 sha1_block_asm_data_order:
-___
-$code.=<<___ if ($big_endian);
-{ .mmi;	and	r2=3,inp				};;
-{ .mib;	cmp.eq	p6,p0=r0,r2
-(p6)	br.dptk.many	sha1_block_asm_host_order	};;
-___
-$code.=<<___;
 	.prologue
 { .mmi;	alloc	tmp1=ar.pfs,3,15,0,0
 	$ADDP	tmp0=4,ctx
@@ -440,90 +283,16 @@ tmp6=loc14;
 
 ___
 
-	&BODY_00_15(\$code, 0,$A,$B,$C,$D,$E,$T,1);
-	&BODY_00_15(\$code, 1,$T,$A,$B,$C,$D,$E,1);
-	&BODY_00_15(\$code, 2,$E,$T,$A,$B,$C,$D,1);
-	&BODY_00_15(\$code, 3,$D,$E,$T,$A,$B,$C,1);
-	&BODY_00_15(\$code, 4,$C,$D,$E,$T,$A,$B,1);
-	&BODY_00_15(\$code, 5,$B,$C,$D,$E,$T,$A,1);
-	&BODY_00_15(\$code, 6,$A,$B,$C,$D,$E,$T,1);
-	&BODY_00_15(\$code, 7,$T,$A,$B,$C,$D,$E,1);
-	&BODY_00_15(\$code, 8,$E,$T,$A,$B,$C,$D,1);
-	&BODY_00_15(\$code, 9,$D,$E,$T,$A,$B,$C,1);
-	&BODY_00_15(\$code,10,$C,$D,$E,$T,$A,$B,1);
-	&BODY_00_15(\$code,11,$B,$C,$D,$E,$T,$A,1);
-	&BODY_00_15(\$code,12,$A,$B,$C,$D,$E,$T,1);
-	&BODY_00_15(\$code,13,$T,$A,$B,$C,$D,$E,1);
-	&BODY_00_15(\$code,14,$E,$T,$A,$B,$C,$D,1);
-	&BODY_00_15(\$code,15,$D,$E,$T,$A,$B,$C,1);
+{ my $i,@V=($A,$B,$C,$D,$E,$T);
 
-	&BODY_16_19(\$code,16,$C,$D,$E,$T,$A,$B);
-	&BODY_16_19(\$code,17,$B,$C,$D,$E,$T,$A);
-	&BODY_16_19(\$code,18,$A,$B,$C,$D,$E,$T);
-	&BODY_16_19(\$code,19,$T,$A,$B,$C,$D,$E);
+	for($i=0;$i<16;$i++)	{ &BODY_00_15(\$code,$i,@V,1); unshift(@V,pop(@V)); }
+	for(;$i<20;$i++)	{ &BODY_16_19(\$code,$i,@V); unshift(@V,pop(@V)); }
+	for(;$i<40;$i++)	{ &BODY_20_39(\$code,$i,@V); unshift(@V,pop(@V)); }
+	for(;$i<60;$i++)	{ &BODY_40_59(\$code,$i,@V); unshift(@V,pop(@V)); }
+	for(;$i<80;$i++)	{ &BODY_60_79(\$code,$i,@V); unshift(@V,pop(@V)); }
 
-	&BODY_20_39(\$code,20,$E,$T,$A,$B,$C,$D);
-	&BODY_20_39(\$code,21,$D,$E,$T,$A,$B,$C);
-	&BODY_20_39(\$code,22,$C,$D,$E,$T,$A,$B);
-	&BODY_20_39(\$code,23,$B,$C,$D,$E,$T,$A);
-	&BODY_20_39(\$code,24,$A,$B,$C,$D,$E,$T);
-	&BODY_20_39(\$code,25,$T,$A,$B,$C,$D,$E);
-	&BODY_20_39(\$code,26,$E,$T,$A,$B,$C,$D);
-	&BODY_20_39(\$code,27,$D,$E,$T,$A,$B,$C);
-	&BODY_20_39(\$code,28,$C,$D,$E,$T,$A,$B);
-	&BODY_20_39(\$code,29,$B,$C,$D,$E,$T,$A);
-	&BODY_20_39(\$code,30,$A,$B,$C,$D,$E,$T);
-	&BODY_20_39(\$code,31,$T,$A,$B,$C,$D,$E);
-	&BODY_20_39(\$code,32,$E,$T,$A,$B,$C,$D);
-	&BODY_20_39(\$code,33,$D,$E,$T,$A,$B,$C);
-	&BODY_20_39(\$code,34,$C,$D,$E,$T,$A,$B);
-	&BODY_20_39(\$code,35,$B,$C,$D,$E,$T,$A);
-	&BODY_20_39(\$code,36,$A,$B,$C,$D,$E,$T);
-	&BODY_20_39(\$code,37,$T,$A,$B,$C,$D,$E);
-	&BODY_20_39(\$code,38,$E,$T,$A,$B,$C,$D);
-	&BODY_20_39(\$code,39,$D,$E,$T,$A,$B,$C);
-
-	&BODY_40_59(\$code,40,$C,$D,$E,$T,$A,$B);
-	&BODY_40_59(\$code,41,$B,$C,$D,$E,$T,$A);
-	&BODY_40_59(\$code,42,$A,$B,$C,$D,$E,$T);
-	&BODY_40_59(\$code,43,$T,$A,$B,$C,$D,$E);
-	&BODY_40_59(\$code,44,$E,$T,$A,$B,$C,$D);
-	&BODY_40_59(\$code,45,$D,$E,$T,$A,$B,$C);
-	&BODY_40_59(\$code,46,$C,$D,$E,$T,$A,$B);
-	&BODY_40_59(\$code,47,$B,$C,$D,$E,$T,$A);
-	&BODY_40_59(\$code,48,$A,$B,$C,$D,$E,$T);
-	&BODY_40_59(\$code,49,$T,$A,$B,$C,$D,$E);
-	&BODY_40_59(\$code,50,$E,$T,$A,$B,$C,$D);
-	&BODY_40_59(\$code,51,$D,$E,$T,$A,$B,$C);
-	&BODY_40_59(\$code,52,$C,$D,$E,$T,$A,$B);
-	&BODY_40_59(\$code,53,$B,$C,$D,$E,$T,$A);
-	&BODY_40_59(\$code,54,$A,$B,$C,$D,$E,$T);
-	&BODY_40_59(\$code,55,$T,$A,$B,$C,$D,$E);
-	&BODY_40_59(\$code,56,$E,$T,$A,$B,$C,$D);
-	&BODY_40_59(\$code,57,$D,$E,$T,$A,$B,$C);
-	&BODY_40_59(\$code,58,$C,$D,$E,$T,$A,$B);
-	&BODY_40_59(\$code,59,$B,$C,$D,$E,$T,$A);
-
-	&BODY_60_79(\$code,60,$A,$B,$C,$D,$E,$T);
-	&BODY_60_79(\$code,61,$T,$A,$B,$C,$D,$E);
-	&BODY_60_79(\$code,62,$E,$T,$A,$B,$C,$D);
-	&BODY_60_79(\$code,63,$D,$E,$T,$A,$B,$C);
-	&BODY_60_79(\$code,64,$C,$D,$E,$T,$A,$B);
-	&BODY_60_79(\$code,65,$B,$C,$D,$E,$T,$A);
-	&BODY_60_79(\$code,66,$A,$B,$C,$D,$E,$T);
-	&BODY_60_79(\$code,67,$T,$A,$B,$C,$D,$E);
-	&BODY_60_79(\$code,68,$E,$T,$A,$B,$C,$D);
-	&BODY_60_79(\$code,69,$D,$E,$T,$A,$B,$C);
-	&BODY_60_79(\$code,70,$C,$D,$E,$T,$A,$B);
-	&BODY_60_79(\$code,71,$B,$C,$D,$E,$T,$A);
-	&BODY_60_79(\$code,72,$A,$B,$C,$D,$E,$T);
-	&BODY_60_79(\$code,73,$T,$A,$B,$C,$D,$E);
-	&BODY_60_79(\$code,74,$E,$T,$A,$B,$C,$D);
-	&BODY_60_79(\$code,75,$D,$E,$T,$A,$B,$C);
-	&BODY_60_79(\$code,76,$C,$D,$E,$T,$A,$B);
-	&BODY_60_79(\$code,77,$B,$C,$D,$E,$T,$A);
-	&BODY_60_79(\$code,78,$A,$B,$C,$D,$E,$T);
-	&BODY_60_79(\$code,79,$T,$A,$B,$C,$D,$E);
+	(($V[5] eq $D) and ($V[0] eq $E)) or die;	# double-check
+}
 
 $code.=<<___;
 { .mmb;	add	$h0=$h0,$E

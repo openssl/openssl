@@ -2,8 +2,9 @@
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
 # sha1_block procedure for x86_64.
@@ -28,7 +29,13 @@
 # Xeon		+65%		+0%		9.9
 
 $output=shift;
-open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
+die "can't locate x86_64-xlate.pl";
+
+open STDOUT,"| $^X $xlate $output";
 
 $ctx="%rdi";	# 1st arg
 $inp="%rsi";	# 2nd arg
@@ -112,7 +119,6 @@ $code.=<<___ if ($i<15);
 	rol	\$30,$b
 	add	$t0,$f
 ___
-$code.=".Lshortcut:\n" if ($i==15);
 $code.=<<___ if ($i>=15);
 	lea	0x5a827999($xi,$e),$f
 	mov	`4*($j%16)`(%rsp),$xi
@@ -222,17 +228,11 @@ $code.=<<___;
 	jnz	.Lloop
 ___
 &EPILOGUE("sha1_block_asm_data_order");
+$code.=<<___;
+.asciz	"SHA1 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+___
 
 ####################################################################
-
-@V=($A,$B,$C,$D,$E,$T);
-
-&PROLOGUE("sha1_block_asm_host_order");
-for($i=0;$i<15;$i++)	{ &BODY_00_19($i,@V,1); unshift(@V,pop(@V)); }
-$code.=<<___;
-	jmp	.Lshortcut
-.size	sha1_block_asm_host_order,.-sha1_block_asm_host_order
-___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;

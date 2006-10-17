@@ -2,8 +2,9 @@
 
 # ====================================================================
 # [Re]written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
 # "[Re]written" was achieved in two major overhauls. In 2004 BODY_*
@@ -28,15 +29,10 @@
 # improvement on P4 outweights the loss and incorporate this
 # re-tuned code to 0.9.7 and later.
 # ----------------------------------------------------------------
-# Those who for any particular reason absolutely must score on
-# Pentium can replace this module with one from 0.9.6 distribution.
-# This "offer" shall be revoked the moment programming interface to
-# this module is changed, in which case this paragraph should be
-# removed.
-# ----------------------------------------------------------------
 #					<appro@fy.chalmers.se>
 
-push(@INC,"perlasm","../../perlasm");
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],"sha1-586.pl",$ARGV[$#ARGV] eq "386");
@@ -189,10 +185,6 @@ sub BODY_40_59
 	&mov($D,&DWP(12,$tmp1));
 	# E is pre-loaded
 
-	&set_label("shortcut");
-	# keep a note of shortcut label so it can be used outside the block.
-	$shortcut = &label("shortcut");
-
 	for($i=0;$i<16;$i++)	{ &BODY_00_15($i,@V); unshift(@V,pop(@V)); }
 	for(;$i<20;$i++)	{ &BODY_16_19($i,@V); unshift(@V,pop(@V)); }
 	for(;$i<40;$i++)	{ &BODY_20_39($i,@V); unshift(@V,pop(@V)); }
@@ -223,35 +215,6 @@ sub BODY_40_59
 
 	&stack_pop(16);
 &function_end("sha1_block_asm_data_order");
-
-&function_begin("sha1_block_asm_host_order",16);
-	&mov($tmp1,&wparam(0));	# SHA_CTX *c
-	&mov($T,&wparam(1));	# const void *input
-	#&mov($A,&wparam(2));	# size_t num, always 1
-	&stack_push(16);	# allocate X[16]
-	&lea($A,&DWP(64,$T));	# this works, because num is always 1 here
-	&mov(&wparam(2),$A);	# pointer beyond the end of input
-
-	# just copy input to X
-	for ($i=0; $i<16; $i+=4)
-		{
-		&mov($A,&DWP(4*($i+0),$T));
-		&mov($B,&DWP(4*($i+1),$T));
-		&mov($C,&DWP(4*($i+2),$T));
-		&mov($D,&DWP(4*($i+3),$T));
-		&mov(&swtmp($i+0),$A);
-		&mov(&swtmp($i+1),$B);
-		&mov(&swtmp($i+2),$C);
-		&mov(&swtmp($i+3),$D);
-		}
-
-	&mov($A,&DWP(0,$tmp1));	# load SHA_CTX
-	&mov($B,&DWP(4,$tmp1));
-	&mov($C,&DWP(8,$tmp1));
-	&mov($D,&DWP(12,$tmp1));
-	&mov($E,&DWP(16,$tmp1));
-
-	&jmp($shortcut);	# this works, because num is always 1
-&function_end_B("sha1_block_asm_host_order");
+&asciz("SHA1 block transform for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();
