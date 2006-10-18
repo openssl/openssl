@@ -162,7 +162,7 @@ $func:
 	add	Ktbl=($TABLE#-.Lpic_point),Ktbl		}
 { .mmi;	$LDW	G=[r10]
 	$LDW	H=[r11]
-	cmp.ne	p15,p14=0,r35	};;	// used in sha256_block
+	cmp.ne	p15,p14=0,r0	};;	// used in sha256_block
 
 .L_outer:
 { .mii;	mov	sgm1=$sigma1[2]
