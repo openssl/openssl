@@ -228,42 +228,27 @@ static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 
 	if (!is_endian.little && sizeof(SHA_LONG)==4 && ((size_t)p%4)==0)
 		{
-		const SHA_LONG *W=p;
+		const SHA_LONG *W=(const SHA_LONG *)data;
 
-		BODY_00_15( 0,A,B,C,D,E,T,W[ 0]);
-		BODY_00_15( 1,T,A,B,C,D,E,W[ 1]);
-		BODY_00_15( 2,E,T,A,B,C,D,W[ 2]);
-		BODY_00_15( 3,D,E,T,A,B,C,W[ 3]);
-		BODY_00_15( 4,C,D,E,T,A,B,W[ 4]);
-		BODY_00_15( 5,B,C,D,E,T,A,W[ 5]);
-		BODY_00_15( 6,A,B,C,D,E,T,W[ 6]);
-		BODY_00_15( 7,T,A,B,C,D,E,W[ 7]);
-		BODY_00_15( 8,E,T,A,B,C,D,W[ 8]);
-		BODY_00_15( 9,D,E,T,A,B,C,W[ 9]);
-		BODY_00_15(10,C,D,E,T,A,B,W[10]);
-		BODY_00_15(11,B,C,D,E,T,A,W[11]);
-		BODY_00_15(12,A,B,C,D,E,T,W[12]);
-		BODY_00_15(13,T,A,B,C,D,E,W[13]);
-		BODY_00_15(14,E,T,A,B,C,D,W[14]);
-		BODY_00_15(15,D,E,T,A,B,C,W[15]);
+		X( 0) = W[0];				X( 1) = W[ 1];
+		BODY_00_15( 0,A,B,C,D,E,T,X( 0));	X( 2) = W[ 2];
+		BODY_00_15( 1,T,A,B,C,D,E,X( 1));	X( 3) = W[ 3];
+		BODY_00_15( 2,E,T,A,B,C,D,X( 2));	X( 4) = W[ 4];
+		BODY_00_15( 3,D,E,T,A,B,C,X( 3));	X( 5) = W[ 5];
+		BODY_00_15( 4,C,D,E,T,A,B,X( 4));	X( 6) = W[ 6];
+		BODY_00_15( 5,B,C,D,E,T,A,X( 5));	X( 7) = W[ 7];
+		BODY_00_15( 6,A,B,C,D,E,T,X( 6));	X( 8) = W[ 8];
+		BODY_00_15( 7,T,A,B,C,D,E,X( 7));	X( 9) = W[ 9];
+		BODY_00_15( 8,E,T,A,B,C,D,X( 8));	X(10) = W[10];
+		BODY_00_15( 9,D,E,T,A,B,C,X( 9));	X(11) = W[11];
+		BODY_00_15(10,C,D,E,T,A,B,X(10));	X(12) = W[12];
+		BODY_00_15(11,B,C,D,E,T,A,X(11));	X(13) = W[13];
+		BODY_00_15(12,A,B,C,D,E,T,X(12));	X(14) = W[14];
+		BODY_00_15(13,T,A,B,C,D,E,X(13));	X(15) = W[15];
+		BODY_00_15(14,E,T,A,B,C,D,X(14));
+		BODY_00_15(15,D,E,T,A,B,C,X(15));
 
-		BODY_16_19(16,C,D,E,T,A,B,X( 0),W[ 0],W[ 2],W[ 8],W[13]);
-		BODY_16_19(17,B,C,D,E,T,A,X( 1),W[ 1],W[ 3],W[ 9],W[14]);
-		BODY_16_19(18,A,B,C,D,E,T,X( 2),W[ 2],W[ 4],W[10],W[15]);
-		BODY_16_19(19,T,A,B,C,D,E,X( 3),W[ 3],W[ 5],W[11],X( 0));
-
-		BODY_20_31(20,E,T,A,B,C,D,X( 4),W[ 4],W[ 6],W[12],X( 1));
-		BODY_20_31(21,D,E,T,A,B,C,X( 5),W[ 5],W[ 7],W[13],X( 2));
-		BODY_20_31(22,C,D,E,T,A,B,X( 6),W[ 6],W[ 8],W[14],X( 3));
-		BODY_20_31(23,B,C,D,E,T,A,X( 7),W[ 7],W[ 9],W[15],X( 4));
-		BODY_20_31(24,A,B,C,D,E,T,X( 8),W[ 8],W[10],X( 0),X( 5));
-		BODY_20_31(25,T,A,B,C,D,E,X( 9),W[ 9],W[11],X( 1),X( 6));
-		BODY_20_31(26,E,T,A,B,C,D,X(10),W[10],W[12],X( 2),X( 7));
-		BODY_20_31(27,D,E,T,A,B,C,X(11),W[11],W[13],X( 3),X( 8));
-		BODY_20_31(28,C,D,E,T,A,B,X(12),W[12],W[14],X( 4),X( 9));
-		BODY_20_31(29,B,C,D,E,T,A,X(13),W[13],W[15],X( 5),X(10));
-		BODY_20_31(30,A,B,C,D,E,T,X(14),W[14],X( 0),X( 6),X(11));
-		BODY_20_31(31,T,A,B,C,D,E,X(15),W[15],X( 1),X( 7),X(12));
+		data += SHA_CBLOCK;
 		}
 	else
 		{
@@ -284,25 +269,25 @@ static void HASH_BLOCK_DATA_ORDER (SHA_CTX *c, const void *p, size_t num)
 		BODY_00_15(13,T,A,B,C,D,E,X(13));	HOST_c2l(data,l); X(15)=l;
 		BODY_00_15(14,E,T,A,B,C,D,X(14));
 		BODY_00_15(15,D,E,T,A,B,C,X(15));
-
-		BODY_16_19(16,C,D,E,T,A,B,X( 0),X( 0),X( 2),X( 8),X(13));
-		BODY_16_19(17,B,C,D,E,T,A,X( 1),X( 1),X( 3),X( 9),X(14));
-		BODY_16_19(18,A,B,C,D,E,T,X( 2),X( 2),X( 4),X(10),X(15));
-		BODY_16_19(19,T,A,B,C,D,E,X( 3),X( 3),X( 5),X(11),X( 0));
-
-		BODY_20_31(20,E,T,A,B,C,D,X( 4),X( 4),X( 6),X(12),X( 1));
-		BODY_20_31(21,D,E,T,A,B,C,X( 5),X( 5),X( 7),X(13),X( 2));
-		BODY_20_31(22,C,D,E,T,A,B,X( 6),X( 6),X( 8),X(14),X( 3));
-		BODY_20_31(23,B,C,D,E,T,A,X( 7),X( 7),X( 9),X(15),X( 4));
-		BODY_20_31(24,A,B,C,D,E,T,X( 8),X( 8),X(10),X( 0),X( 5));
-		BODY_20_31(25,T,A,B,C,D,E,X( 9),X( 9),X(11),X( 1),X( 6));
-		BODY_20_31(26,E,T,A,B,C,D,X(10),X(10),X(12),X( 2),X( 7));
-		BODY_20_31(27,D,E,T,A,B,C,X(11),X(11),X(13),X( 3),X( 8));
-		BODY_20_31(28,C,D,E,T,A,B,X(12),X(12),X(14),X( 4),X( 9));
-		BODY_20_31(29,B,C,D,E,T,A,X(13),X(13),X(15),X( 5),X(10));
-		BODY_20_31(30,A,B,C,D,E,T,X(14),X(14),X( 0),X( 6),X(11));
-		BODY_20_31(31,T,A,B,C,D,E,X(15),X(15),X( 1),X( 7),X(12));
 		}
+
+	BODY_16_19(16,C,D,E,T,A,B,X( 0),X( 0),X( 2),X( 8),X(13));
+	BODY_16_19(17,B,C,D,E,T,A,X( 1),X( 1),X( 3),X( 9),X(14));
+	BODY_16_19(18,A,B,C,D,E,T,X( 2),X( 2),X( 4),X(10),X(15));
+	BODY_16_19(19,T,A,B,C,D,E,X( 3),X( 3),X( 5),X(11),X( 0));
+
+	BODY_20_31(20,E,T,A,B,C,D,X( 4),X( 4),X( 6),X(12),X( 1));
+	BODY_20_31(21,D,E,T,A,B,C,X( 5),X( 5),X( 7),X(13),X( 2));
+	BODY_20_31(22,C,D,E,T,A,B,X( 6),X( 6),X( 8),X(14),X( 3));
+	BODY_20_31(23,B,C,D,E,T,A,X( 7),X( 7),X( 9),X(15),X( 4));
+	BODY_20_31(24,A,B,C,D,E,T,X( 8),X( 8),X(10),X( 0),X( 5));
+	BODY_20_31(25,T,A,B,C,D,E,X( 9),X( 9),X(11),X( 1),X( 6));
+	BODY_20_31(26,E,T,A,B,C,D,X(10),X(10),X(12),X( 2),X( 7));
+	BODY_20_31(27,D,E,T,A,B,C,X(11),X(11),X(13),X( 3),X( 8));
+	BODY_20_31(28,C,D,E,T,A,B,X(12),X(12),X(14),X( 4),X( 9));
+	BODY_20_31(29,B,C,D,E,T,A,X(13),X(13),X(15),X( 5),X(10));
+	BODY_20_31(30,A,B,C,D,E,T,X(14),X(14),X( 0),X( 6),X(11));
+	BODY_20_31(31,T,A,B,C,D,E,X(15),X(15),X( 1),X( 7),X(12));
 
 	BODY_32_39(32,E,T,A,B,C,D,X( 0),X( 2),X( 8),X(13));
 	BODY_32_39(33,D,E,T,A,B,C,X( 1),X( 3),X( 9),X(14));
