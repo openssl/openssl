@@ -248,12 +248,27 @@ extern "C" {
 #define SSL3_SESSION_ID_SIZE			32
 #define SSL3_RT_HEADER_LENGTH			5
 
+#ifndef SSL3_ALIGN_PAYLOAD
+ /* Some will argue that this increases memory footprint, but it's
+  * not actually true. Point is that malloc has to return at least
+  * 64-bit aligned pointers, meaning that allocating 5 bytes wastes
+  * 3 bytes in either case. Suggested pre-gaping simply moves these
+  * wasted bytes from the end of allocated region to its front,
+  * but makes data payload aligned, which improves performance:-) */
+# define SSL3_ALIGN_PAYLOAD			8
+#else
+# if (SSL3_ALIGN_PAYLOAD&(SSL3_ALIGN_PAYLOAD-1))!=0
+#  error "insane SSL3_ALIGN_PAYLOAD"
+#  undef SSL3_ALIGN_PAYLOAD
+# endif
+#endif
+
 /* This is the maximum MAC (digest) size used by the SSL library.
- * Currently this is 20 when SHA1 is used. This must be updated if larger
- * digests are used in future.
+ * Currently maximum of 20 is used by SHA1, but we reserve for
+ * future extension for 512-bit hashes.
  */
 
-#define SSL3_RT_MAX_MD_SIZE			20
+#define SSL3_RT_MAX_MD_SIZE			64
 
 /* Maximum block size used in all ciphersuites. Currently 16 for AES.
  */
@@ -292,7 +307,6 @@ extern "C" {
 		(SSL3_RT_MAX_ENCRYPTED_OVERHEAD+SSL3_RT_MAX_COMPRESSED_LENGTH)
 #define SSL3_RT_MAX_PACKET_SIZE		\
 		(SSL3_RT_MAX_ENCRYPTED_LENGTH+SSL3_RT_HEADER_LENGTH)
-#define SSL3_RT_MAX_DATA_SIZE			(1024*1024)
 
 #define SSL3_MD_CLIENT_FINISHED_CONST	"\x43\x4C\x4E\x54"
 #define SSL3_MD_SERVER_FINISHED_CONST	"\x53\x52\x56\x52"

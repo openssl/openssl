@@ -589,13 +589,17 @@ int ssl_verify_alarm_type(long type)
 int ssl3_setup_buffers(SSL *s)
 	{
 	unsigned char *p;
-	size_t len;
+	size_t len,align=0;
+
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+	align = (-SSL3_RT_HEADER_LENGTH)&(SSL3_ALIGN_PAYLOAD-1);
+#endif
 
 	if (s->s3->rbuf.buf == NULL)
 		{
 		len = SSL3_RT_MAX_PLAIN_LENGTH
 			+ SSL3_RT_MAX_ENCRYPTED_OVERHEAD
-			+ SSL3_RT_HEADER_LENGTH;
+			+ SSL3_RT_HEADER_LENGTH + align;
 		if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
 			{
 			s->s3->init_extra = 1;
@@ -615,13 +619,13 @@ int ssl3_setup_buffers(SSL *s)
 		{
 		len = s->max_send_fragment
 			+ SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
-			+ SSL3_RT_HEADER_LENGTH;
+			+ SSL3_RT_HEADER_LENGTH + align;
 #ifndef OPENSSL_NO_COMP
 		if (!(s->options & SSL_OP_NO_COMPRESSION))
 			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
 		if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
-			len += SSL3_RT_HEADER_LENGTH
+			len += SSL3_RT_HEADER_LENGTH + align
 				+ SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 		if ((p=OPENSSL_malloc(len)) == NULL)
 			goto err;

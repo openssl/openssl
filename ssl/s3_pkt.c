@@ -129,14 +129,44 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 	 * (If s->read_ahead is set, 'max' bytes may be stored in rbuf
 	 * [plus s->packet_length bytes if extend == 1].)
 	 */
-	int i,off,newb;
+	int i,len,left,align=0;
+	unsigned char *pkt;
+	SSL3_BUFFER *rb;
+
+	if (n <= 0) return n;
+
+	rb    = &(s->s3->rbuf);
+	left  = rb->left;
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+	align = (int)rb->buf + SSL3_RT_HEADER_LENGTH;
+	align = (-align)&(SSL3_ALIGN_PAYLOAD-1);
+#endif
 
 	if (!extend)
 		{
 		/* start with empty packet ... */
-		if (s->s3->rbuf.left == 0)
-			s->s3->rbuf.offset = 0;
-		s->packet = s->s3->rbuf.buf + s->s3->rbuf.offset;
+		if (left == 0)
+			rb->offset = align;
+		else if (align != 0 && left >= SSL3_RT_HEADER_LENGTH)
+			{
+			/* check if next packet length is large
+			 * enough to justify payload alignment... */
+			pkt = rb->buf + rb->offset;
+			if (pkt[0] == SSL3_RT_APPLICATION_DATA
+			    && (pkt[3]<<8|pkt[4]) >= 128)
+				{
+			 	/* Note that even if packet is corrupted
+				 * and its length field is insane, we can
+				 * only be led to wrong decision about
+				 * whether memmove will occur or not.
+				 * Header values has no effect on memmove
+				 * arguments and therefore no buffer
+				 * overrun can be triggered. */
+				memmove (rb->buf+align,pkt,left);
+				rb->offset = align;
+				}
+			}
+		s->packet = rb->buf + rb->offset;
 		s->packet_length = 0;
 		/* ... now we can act as if 'extend' was set */
 		}
@@ -145,57 +175,54 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 	if ( SSL_version(s) == DTLS1_VERSION &&
 		extend)
 		{
-		if ( s->s3->rbuf.left > 0 && n > s->s3->rbuf.left)
-			n = s->s3->rbuf.left;
+		if ( left > 0 && n > left)
+			n = left;
 		}
 
 	/* if there is enough in the buffer from a previous read, take some */
-	if (s->s3->rbuf.left >= (int)n)
+	if (left >= n)
 		{
 		s->packet_length+=n;
-		s->s3->rbuf.left-=n;
-		s->s3->rbuf.offset+=n;
+		rb->left=left-n;
+		rb->offset+=n;
 		return(n);
 		}
 
 	/* else we need to read more data */
-	if (!s->read_ahead)
-		max=n;
 
-	{
-		/* avoid buffer overflow */
-		int max_max = s->s3->rbuf.len - s->packet_length;
-		if (max > max_max)
-			max = max_max;
-	}
+	len = s->packet_length;
+	pkt = rb->buf+align;
+	/* Move any available bytes to front of buffer:
+	 * 'len' bytes already pointed to by 'packet',
+	 * 'left' extra ones at the end */
+	if (s->packet != pkt) /* len > 0 */
+		{
+		memmove(pkt, s->packet, len+left);
+		s->packet = pkt;
+		rb->offset = len + align;
+		}
+
+	max = rb->len - rb->offset;
 	if (n > max) /* does not happen */
 		{
 		SSLerr(SSL_F_SSL3_READ_N,ERR_R_INTERNAL_ERROR);
 		return -1;
 		}
 
-	off = s->packet_length;
-	newb = s->s3->rbuf.left;
-	/* Move any available bytes to front of buffer:
-	 * 'off' bytes already pointed to by 'packet',
-	 * 'newb' extra ones at the end */
-	if (s->packet != s->s3->rbuf.buf)
-		{
-		/*  off > 0 */
-		memmove(s->s3->rbuf.buf, s->packet, off+newb);
-		s->packet = s->s3->rbuf.buf;
-		}
+	if (!s->read_ahead)
+		max=n;
 
-	while (newb < n)
+	while (left < n)
 		{
-		/* Now we have off+newb bytes at the front of s->s3->rbuf.buf and need
-		 * to read in more until we have off+n (up to off+max if possible) */
+		/* Now we have len+left bytes at the front of s->s3->rbuf.buf
+		 * and need to read in more until we have len+n (up to
+		 * len+max if possible) */
 
 		clear_sys_error();
 		if (s->rbio != NULL)
 			{
 			s->rwstate=SSL_READING;
-			i=BIO_read(s->rbio,	&(s->s3->rbuf.buf[off+newb]), max-newb);
+			i=BIO_read(s->rbio,pkt+len+left, max-left);
 			}
 		else
 			{
@@ -205,15 +232,15 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 
 		if (i <= 0)
 			{
-			s->s3->rbuf.left = newb;
+			rb->left = left;
 			return(i);
 			}
-		newb+=i;
+		left+=i;
 		}
 
 	/* done reading, now the book-keeping */
-	s->s3->rbuf.offset = off + n;
-	s->s3->rbuf.left = newb - n;
+	rb->offset += n;
+	rb->left = left - n;
 	s->packet_length += n;
 	s->rwstate=SSL_NOTHING;
 	return(n);
@@ -579,14 +606,14 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	{
 	unsigned char *p,*plen;
 	int i,mac_size,clear=0;
-	int prefix_len = 0;
+	int prefix_len=0,align=0;
 	SSL3_RECORD *wr;
-	SSL3_BUFFER *wb;
+	SSL3_BUFFER *wb=&(s->s3->wbuf);
 	SSL_SESSION *sess;
 
 	/* first check if there is a SSL3_BUFFER still being written
 	 * out.  This will happen with non blocking IO */
-	if (s->s3->wbuf.left != 0)
+	if (wb->left != 0)
 		return(ssl3_write_pending(s,type,buf,len));
 
 	/* If we have an alert to send, lets send it */
@@ -602,7 +629,6 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		return 0;
 
 	wr= &(s->s3->wrec);
-	wb= &(s->s3->wbuf);
 	sess=s->session;
 
 	if (	(sess == NULL) ||
@@ -643,7 +669,32 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		s->s3->empty_fragment_done = 1;
 		}
 
-	p = wb->buf + prefix_len;
+	if (create_empty_fragment)
+		{
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+		/* extra fragment would be couple of cipher blocks,
+		 * which would be multiple of SSL3_ALIGN_PAYLOAD, so
+		 * if we want to align the real payload, then we can
+		 * just pretent we simply have two headers. */
+		align = (int)wb->buf + 2*SSL3_RT_HEADER_LENGTH;
+		align = (-align)&(SSL3_ALIGN_PAYLOAD-1);
+#endif
+		p = wb->buf + align;
+		wb->offset  = align;
+		}
+	else if (prefix_len)
+		{
+		p = wb->buf + wb->offset + prefix_len;
+		}
+	else
+		{
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+		align = (int)wb->buf + SSL3_RT_HEADER_LENGTH;
+		align = (-align)&(SSL3_ALIGN_PAYLOAD-1);
+#endif
+		p = wb->buf + align;
+		wb->offset  = align;
+		}
 
 	/* write the header */
 
@@ -714,7 +765,6 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 	/* now let's set up wb */
 	wb->left = prefix_len + wr->length;
-	wb->offset = 0;
 
 	/* memorize arguments so that ssl3_write_pending can detect bad write retries later */
 	s->s3->wpend_tot=len;
@@ -733,6 +783,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 	unsigned int len)
 	{
 	int i;
+	SSL3_BUFFER *wb=&(s->s3->wbuf);
 
 /* XXXX */
 	if ((s->s3->wpend_tot > (int)len)
@@ -751,24 +802,25 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			{
 			s->rwstate=SSL_WRITING;
 			i=BIO_write(s->wbio,
-				(char *)&(s->s3->wbuf.buf[s->s3->wbuf.offset]),
-				(unsigned int)s->s3->wbuf.left);
+				(char *)&(wb->buf[wb->offset]),
+				(unsigned int)wb->left);
 			}
 		else
 			{
 			SSLerr(SSL_F_SSL3_WRITE_PENDING,SSL_R_BIO_NOT_SET);
 			i= -1;
 			}
-		if (i == s->s3->wbuf.left)
+		if (i == wb->left)
 			{
-			s->s3->wbuf.left=0;
+			wb->left=0;
+			wb->offset+=i;
 			s->rwstate=SSL_NOTHING;
 			return(s->s3->wpend_ret);
 			}
 		else if (i <= 0)
 			return(i);
-		s->s3->wbuf.offset+=i;
-		s->s3->wbuf.left-=i;
+		wb->offset+=i;
+		wb->left-=i;
 		}
 	}
 
