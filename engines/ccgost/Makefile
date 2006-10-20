@@ -37,6 +37,7 @@ lib: $(LIBOBJ)
 	else \
 		$(AR) $(LIB) $(LIBOBJ); \
 	fi
+	@touch lib
 
 install: 	
 	[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
