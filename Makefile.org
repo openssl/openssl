@@ -66,6 +66,7 @@ EXE_EXT=
 ARFLAGS=
 AR=ar $(ARFLAGS) r
 RANLIB= ranlib
+NM= nm
 PERL= perl
 TAR= tar
 TARFLAGS= --no-recursion
@@ -174,7 +175,8 @@ CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		CC='${CC}' CFLAG='${CFLAG}' 			\
 		AS='${CC}' ASFLAG='${CFLAG} -c'			\
-		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
+		AR='${AR}' NM='${NM}' RANLIB='${RANLIB}'	\
+		PERL='${PERL}'					\
 		SDIRS='${SDIRS}' LIBRPATH='${INSTALLTOP}/lib'	\
 		INSTALL_PREFIX='${INSTALL_PREFIX}'		\
 		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
@@ -383,12 +385,14 @@ dclean:
 	@set -e; target=dclean; $(RECURSIVE_BUILD_CMD)
 
 rehash: rehash.time
-rehash.time: certs
-	@(OPENSSL="`pwd`/util/opensslwrap.sh"; \
-	  OPENSSL_DEBUG_MEMORY=on; \
-	  export OPENSSL OPENSSL_DEBUG_MEMORY; \
-	  $(PERL) tools/c_rehash certs)
-	touch rehash.time
+rehash.time: certs apps
+	@if [ -z "$(CROSS_COMPILE_PREFIX)" ]; then \
+		(OPENSSL="`pwd`/util/opensslwrap.sh"; \
+		OPENSSL_DEBUG_MEMORY=on; \
+		export OPENSSL OPENSSL_DEBUG_MEMORY; \
+		$(PERL) tools/c_rehash certs) && \
+		touch rehash.time; \
+	else :; fi
 
 test:   tests
 

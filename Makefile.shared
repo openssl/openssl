@@ -14,6 +14,8 @@ CFLAGS=$(CFLAG)
 LDFLAGS=
 SHARED_LDFLAGS=
 
+NM=nm
+
 # LIBNAME contains just the name of the library, without prefix ("lib"
 # on Unix, "cyg" for certain forms under Cygwin...) or suffix (.a, .so,
 # .dll, ...).  This one MUST have a value when using this makefile to
@@ -101,7 +103,7 @@ LINK_SO=	\
     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
     SHAREDCMD="$${SHAREDCMD:-$(CC)}"; \
     SHAREDFLAGS="$${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
-    nm -Pg $$SHOBJECTS | grep ' [BDT] ' | cut -f1 -d' ' > lib$(LIBNAME).exp; \
+    $(NM) -Pg $$SHOBJECTS | grep ' [BDT] ' | cut -f1 -d' ' > lib$(LIBNAME).exp; \
     LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \

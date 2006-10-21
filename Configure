@@ -38,6 +38,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # --test-sanity Make a number of sanity checks on the data in this file.
 #               This is a debugging tool for OpenSSL developers.
 #
+# --cross-compile-prefix Add specified prefix to binutils components.
+#
 # no-hw-xxx     do not compile support for specific crypto hardware.
 #               Generic OpenSSL-style methods relating to this support
 #               are always compiled but return NULL if the hardware
@@ -571,6 +573,7 @@ my $prefix="";
 my $openssldir="";
 my $exe_ext="";
 my $install_prefix="";
+my $cross_compile_prefix="";
 my $no_threads=0;
 my $threads=0;
 my $no_shared=0; # but "no-shared" is default
@@ -763,6 +766,10 @@ PROCESS_ARGS:
 			elsif (/^--with-zlib-include=(.*)$/)
 				{
 				$withargs{"zlib-include"}="-I$1";
+				}
+			elsif (/^--cross-compile-prefix=(.*)$/)
+				{
+				$cross_compile_prefix=$1;
 				}
 			else
 				{
@@ -1310,7 +1317,17 @@ while (<IN>)
 	s/^PLATFORM=.*$/PLATFORM=$target/;
 	s/^OPTIONS=.*$/OPTIONS=$options/;
 	s/^CONFIGURE_ARGS=.*$/CONFIGURE_ARGS=$argvstring/;
-	s/^CC=.*$/CC= $cc/;
+	if ($cross_compile_prefix)
+		{
+		s/^CC=.*$/CROSS_COMPILE_PREFIX= $cross_compile_prefix\nCC= \$\(CROSS_COMPILE_PREFIX\)$cc/;
+		s/^AR=\s*/AR= \$\(CROSS_COMPILE_PREFIX\)/;
+		s/^NM=\s*/NM= \$\(CROSS_COMPILE_PREFIX\)/;
+		s/^RANLIB=\s*/RANLIB= \$\(CROSS_COMPILE_PREFIX\)/;
+		}
+	else	{
+		s/^CC=.*$/CC= $cc/;
+		s/^RANLIB=.*/RANLIB= $ranlib/;
+		}
 	s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc";
 	s/^CFLAG=.*$/CFLAG= $cflags/;
 	s/^DEPFLAG=.*$/DEPFLAG= $depflags/;
@@ -1329,7 +1346,6 @@ while (<IN>)
 	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
 	s/^WP_ASM_OBJ=.*$/WP_ASM_OBJ= $wp_obj/;
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
-	s/^RANLIB=.*/RANLIB= $ranlib/;
 	s/^ARFLAGS=.*/ARFLAGS= $arflags/;
 	s/^PERL=.*/PERL= $perl/;
 	s/^KRB5_INCLUDES=.*/KRB5_INCLUDES=$withargs{"krb5-include"}/;
