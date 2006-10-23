@@ -141,20 +141,8 @@ static int bind_gost (ENGINE *e,const char *id)
 	return ret;
 	}	
 
-#ifdef _WIN32
-extern __declspec( dllexport ) 
-#endif
-	
-/*#ifndef OPENSSL_NO_DYNAMIC_ENGINE*/
 IMPLEMENT_DYNAMIC_BIND_FN(bind_gost)
-
-#ifdef _WIN32
-extern __declspec( dllexport ) 
-#endif
-
 IMPLEMENT_DYNAMIC_CHECK_FN()
-/*#else*/
-/*#endif OPENSSL_NO_DYNAMIC_ENGINE */
 
 static int gost_digests(ENGINE *e, const EVP_MD **digest,
 	const int **nids, int nid)
