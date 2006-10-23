@@ -3194,11 +3194,11 @@ $arflags      =
 
 *** mingw
 $cc           = gcc
-$cflags       = -mno-cygwin -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall -D_WIN32_WINNT=0x333
+$cflags       = -mno-cygwin -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = MINGW32
-$lflags       = -lwsock32 -lgdi32
+$lflags       = -lws2_32 -lgdi32
 $bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT EXPORT_VAR_AS_FN
 $cpuid_obj    = x86cpuid-cof.o
 $bn_obj       = bn86-cof.o co86-cof.o mo86-cof.o

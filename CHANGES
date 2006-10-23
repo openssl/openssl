@@ -4,6 +4,9 @@
 
  Changes between 0.9.8e and 0.9.9  [xx XXX xxxx]
 
+  *) Win32/64 targets are linked with Winsock2.
+     [Andy Polyakov]
+
   *) Add an X509_CRL_METHOD structure to allow CRL processing to be redirected
      to external functions. This can be used to increase CRL handling 
      efficiency especially when CRLs are very large by (for example) storing
