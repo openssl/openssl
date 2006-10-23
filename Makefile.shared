@@ -260,14 +260,13 @@ link_o.cygwin:
 link_a.cygwin:
 	@ $(CALC_VERSIONS); \
 	INHIBIT_SYMLINKS=yes; \
-	SHLIB=cyg$(LIBNAME); def=; \
+	SHLIB=cyg$(LIBNAME); SHLIB_SOVER=-$(LIBVERSION); def=; \
 	if expr $(PLATFORM) : 'mingw' > /dev/null; then \
-		SHLIB=$(LIBNAME); \
+		SHLIB=$(LIBNAME); SHLIB_SOVER=32; \
 		def="$(LIBNAME).def"; \
 		$(PERL) util/mkdef.pl 32 $(LIBNAME) > $$def; \
 	fi; \
 	SHLIB_SUFFIX=.dll; \
-	SHLIB_SOVER=-$(LIBVERSION); \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	base=;  [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x63000000; \
