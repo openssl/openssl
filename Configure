@@ -937,8 +937,6 @@ foreach (sort (keys %disabled))
 
 my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
 
-$IsMK1MF=1 if ($target eq "mingw" && $^O ne "cygwin" && !is_msys());
-
 $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target eq "mingw");
 $exe_ext=".pm"  if ($target =~ /vos/);
 $openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
@@ -1846,12 +1844,4 @@ sub test_sanity
 		}
 	print STDERR "No sanity errors detected!\n" if $errorcnt == 0;
 	return $errorcnt;
-	}
-
-# Attempt to detect MSYS environment
-
-sub is_msys
-	{
-	return 1 if (exists $ENV{"TERM"} && $ENV{"TERM"} eq "msys");
-	return 0;
 	}

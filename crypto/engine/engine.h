@@ -333,10 +333,10 @@ void ENGINE_load_gmp(void);
 void ENGINE_load_nuron(void);
 void ENGINE_load_sureware(void);
 void ENGINE_load_ubsec(void);
+void ENGINE_load_gost(void);
 #endif
 void ENGINE_load_cryptodev(void);
 void ENGINE_load_padlock(void);
-void ENGINE_load_gost(void);
 void ENGINE_load_builtin_engines(void);
 
 /* Get and set global flags (ENGINE_TABLE_FLAG_***) for the implementation
