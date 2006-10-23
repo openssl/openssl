@@ -452,7 +452,10 @@ static unsigned int _strlen31(const char *str)
 #      if defined(_WIN32_WCE) && _WIN32_WCE<410
 #        define getservbyname _masked_declaration_getservbyname
 #      endif
-#      include <winsock.h>
+#      if !defined(IPPROTO_IP)
+         /* winsock[2].h was included already? */
+#        include <winsock.h>
+#      endif
 #      ifdef getservbyname
 #        undef getservbyname
          /* this is used to be wcecompat/include/winsock_extras.h */

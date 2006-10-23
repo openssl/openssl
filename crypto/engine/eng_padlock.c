@@ -123,9 +123,11 @@ void ENGINE_load_padlock (void)
 #ifdef COMPILE_HW_PADLOCK
 /* We do these includes here to avoid header problems on platforms that
    do not have the VIA padlock anyway... */
-#ifdef _MSC_VER
+#ifdef _WIN32
 # include <malloc.h>
-# define alloca _alloca
+# ifndef alloca
+#  define alloca _alloca
+# endif
 #else
 # include <stdlib.h>
 #endif
