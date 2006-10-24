@@ -255,28 +255,37 @@ link_o.cygwin:
 	SHLIB_SOVER=${LIBVERSION:+"-$(LIBVERSION)"}; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a"; \
+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-s,-Bsymbolic"; \
 	$(LINK_SO_O)
 link_a.cygwin:
 	@ $(CALC_VERSIONS); \
 	INHIBIT_SYMLINKS=yes; \
-	SHLIB=cyg$(LIBNAME); SHLIB_SOVER=-$(LIBVERSION); def=; \
+	SHLIB=cyg$(LIBNAME); SHLIB_SOVER=-$(LIBVERSION); SHLIB_SUFFIX=.dll; \
+	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; extras=; \
 	if expr $(PLATFORM) : 'mingw' > /dev/null; then \
 		SHLIB=$(LIBNAME); SHLIB_SOVER=32; \
-		def="$(LIBNAME).def"; \
-		$(PERL) util/mkdef.pl 32 $(LIBNAME) > $$def; \
+		extras="$(LIBNAME).def"; \
+		$(PERL) util/mkdef.pl 32 $(LIBNAME) > $$extras; \
 	fi; \
-	SHLIB_SUFFIX=.dll; \
+	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
+	$(PERL) util/mkrc.pl $$dll_name | \
+		$(CROSS_COMPILE_PREFIX)windres -o rc.o; \
+	extras="$$extras rc.o"; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
 	base=;  [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x63000000; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $$def"; \
-	[ -f apps/$$SHLIB$$SHLIB_SUFFIX ] && rm apps/$$SHLIB$$SHLIB_SUFFIX; \
-	[ -f test/$$SHLIB$$SHLIB_SUFFIX ] && rm test/$$SHLIB$$SHLIB_SUFFIX; \
+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-s,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $$extras"; \
+	[ -f apps/$$dll_name ] && rm apps/$$dll_name; \
+	[ -f test/$$dll_name ] && rm test/$$dll_name; \
 	$(LINK_SO_A) || exit 1; \
-	cp -p $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX apps/; \
-	cp -p $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX test/
+	rm $$extras; \
+	cp -p $$dll_name apps/; \
+	cp -p $$dll_name test/
 link_app.cygwin:
+	@if expr "$(CFLAGS)" : '.*OPENSSL_USE_APPLINK' > /dev/null; then \
+		LIBDEPS="$(TOP)/crypto/applink.o $${LIBDEPS:-$(LIBDEPS)}"; \
+		export LIBDEPS; \
+	fi; \
 	$(LINK_APP)
 
 link_o.alpha-osf1:
