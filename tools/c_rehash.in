@@ -15,7 +15,13 @@ if(defined $ENV{OPENSSL}) {
 	$ENV{OPENSSL} = $openssl;
 }
 
-my $pwd = `pwd`; chomp $pwd;
+my $pwd;
+eval "require Cwd";
+if (defined(&Cwd::getcwd)) {
+	$pwd=Cwd::getcwd();
+} else {
+	$pwd=`pwd`; chomp($pwd);
+}
 my $path_delim = ($pwd =~ /^[a-z]\:/i) ? ';' : ':'; # DOS/Win32 or Unix delimiter?
 
 $ENV{PATH} .= "$path_delim$dir/bin";
