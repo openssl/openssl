@@ -12,10 +12,10 @@ RIPEMD-160 hash function
  unsigned char *RIPEMD160(const unsigned char *d, unsigned long n,
                   unsigned char *md);
 
- void RIPEMD160_Init(RIPEMD160_CTX *c);
- void RIPEMD160_Update(RIPEMD_CTX *c, const void *data,
+ int RIPEMD160_Init(RIPEMD160_CTX *c);
+ int RIPEMD160_Update(RIPEMD_CTX *c, const void *data,
                   unsigned long len);
- void RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
+ int RIPEMD160_Final(unsigned char *md, RIPEMD160_CTX *c);
 
 =head1 DESCRIPTION
 
@@ -47,8 +47,8 @@ hash functions directly.
 
 RIPEMD160() returns a pointer to the hash value. 
 
-RIPEMD160_Init(), RIPEMD160_Update() and RIPEMD160_Final() do not
-return values.
+RIPEMD160_Init(), RIPEMD160_Update() and RIPEMD160_Final() return 1 for
+success, 0 otherwise.
 
 =head1 CONFORMING TO
 

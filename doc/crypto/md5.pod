@@ -12,10 +12,10 @@ MD4_Final, MD5_Init, MD5_Update, MD5_Final - MD2, MD4, and MD5 hash functions
  unsigned char *MD2(const unsigned char *d, unsigned long n,
                   unsigned char *md);
 
- void MD2_Init(MD2_CTX *c);
- void MD2_Update(MD2_CTX *c, const unsigned char *data,
+ int MD2_Init(MD2_CTX *c);
+ int MD2_Update(MD2_CTX *c, const unsigned char *data,
                   unsigned long len);
- void MD2_Final(unsigned char *md, MD2_CTX *c);
+ int MD2_Final(unsigned char *md, MD2_CTX *c);
 
 
  #include <openssl/md4.h>
@@ -23,10 +23,10 @@ MD4_Final, MD5_Init, MD5_Update, MD5_Final - MD2, MD4, and MD5 hash functions
  unsigned char *MD4(const unsigned char *d, unsigned long n,
                   unsigned char *md);
 
- void MD4_Init(MD4_CTX *c);
- void MD4_Update(MD4_CTX *c, const void *data,
+ int MD4_Init(MD4_CTX *c);
+ int MD4_Update(MD4_CTX *c, const void *data,
                   unsigned long len);
- void MD4_Final(unsigned char *md, MD4_CTX *c);
+ int MD4_Final(unsigned char *md, MD4_CTX *c);
 
 
  #include <openssl/md5.h>
@@ -34,10 +34,10 @@ MD4_Final, MD5_Init, MD5_Update, MD5_Final - MD2, MD4, and MD5 hash functions
  unsigned char *MD5(const unsigned char *d, unsigned long n,
                   unsigned char *md);
 
- void MD5_Init(MD5_CTX *c);
- void MD5_Update(MD5_CTX *c, const void *data,
+ int MD5_Init(MD5_CTX *c);
+ int MD5_Update(MD5_CTX *c, const void *data,
                   unsigned long len);
- void MD5_Final(unsigned char *md, MD5_CTX *c);
+ int MD5_Final(unsigned char *md, MD5_CTX *c);
 
 =head1 DESCRIPTION
 
@@ -78,8 +78,8 @@ preferred.
 MD2(), MD4(), and MD5() return pointers to the hash value. 
 
 MD2_Init(), MD2_Update(), MD2_Final(), MD4_Init(), MD4_Update(),
-MD4_Final(), MD5_Init(), MD5_Update(), and MD5_Final() do not return
-values.
+MD4_Final(), MD5_Init(), MD5_Update(), and MD5_Final() return 1 for
+success, 0 otherwise.
 
 =head1 CONFORMING TO
 
