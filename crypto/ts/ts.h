@@ -59,29 +59,30 @@
 #ifndef HEADER_TS_H
 #define HEADER_TS_H
 
+#include <openssl/opensslconf.h>
 #include <openssl/symhacks.h>
-#ifndef NO_BUFFER
+#ifndef OPENSSL_NO_BUFFER
 #include <openssl/buffer.h>
 #endif
-#ifndef NO_EVP
+#ifndef OPENSSL_NO_EVP
 #include <openssl/evp.h>
 #endif
-#ifndef NO_BIO
+#ifndef OPENSSL_NO_BIO
 #include <openssl/bio.h>
 #endif
 #include <openssl/stack.h>
 #include <openssl/asn1.h>
 #include <openssl/safestack.h>
 
-#ifndef NO_RSA
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
 
-#ifndef NO_DSA
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
 
-#ifndef NO_DH
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
 
