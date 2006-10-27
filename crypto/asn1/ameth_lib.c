@@ -309,6 +309,9 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 	ameth->priv_encode = 0;
 	ameth->priv_print = 0;
 
+	ameth->old_priv_encode = 0;
+	ameth->old_priv_decode = 0;
+
 	ameth->pkey_size = 0;
 	ameth->pkey_bits = 0;
 
