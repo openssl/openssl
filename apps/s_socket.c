@@ -283,7 +283,7 @@ int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, uns
 	{
 	int sock;
 	char *name = NULL;
-	int accept_socket;
+	int accept_socket = 0;
 	int i;
 
 	if (!init_server(&accept_socket,port,type)) return(0);
