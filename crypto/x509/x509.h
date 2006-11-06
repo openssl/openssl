@@ -584,151 +584,6 @@ struct pkcs8_priv_key_info_st
 extern "C" {
 #endif
 
-#ifdef SSLEAY_MACROS
-#define X509_verify(a,r) ASN1_verify((int (*)())i2d_X509_CINF,a->sig_alg,\
-	a->signature,(char *)a->cert_info,r)
-#define X509_REQ_verify(a,r) ASN1_verify((int (*)())i2d_X509_REQ_INFO, \
-	a->sig_alg,a->signature,(char *)a->req_info,r)
-#define X509_CRL_verify(a,r) ASN1_verify((int (*)())i2d_X509_CRL_INFO, \
-	a->sig_alg, a->signature,(char *)a->crl,r)
-
-#define X509_sign(x,pkey,md) \
-	ASN1_sign((int (*)())i2d_X509_CINF, x->cert_info->signature, \
-		x->sig_alg, x->signature, (char *)x->cert_info,pkey,md)
-#define X509_REQ_sign(x,pkey,md) \
-	ASN1_sign((int (*)())i2d_X509_REQ_INFO,x->sig_alg, NULL, \
-		x->signature, (char *)x->req_info,pkey,md)
-#define X509_CRL_sign(x,pkey,md) \
-	ASN1_sign((int (*)())i2d_X509_CRL_INFO,x->crl->sig_alg,x->sig_alg, \
-		x->signature, (char *)x->crl,pkey,md)
-#define NETSCAPE_SPKI_sign(x,pkey,md) \
-	ASN1_sign((int (*)())i2d_NETSCAPE_SPKAC, x->sig_algor,NULL, \
-		x->signature, (char *)x->spkac,pkey,md)
-
-#define X509_dup(x509) (X509 *)ASN1_dup((int (*)())i2d_X509, \
-		(char *(*)())d2i_X509,(char *)x509)
-#define X509_ATTRIBUTE_dup(xa) (X509_ATTRIBUTE *)ASN1_dup(\
-		(int (*)())i2d_X509_ATTRIBUTE, \
-		(char *(*)())d2i_X509_ATTRIBUTE,(char *)xa)
-#define X509_EXTENSION_dup(ex) (X509_EXTENSION *)ASN1_dup( \
-		(int (*)())i2d_X509_EXTENSION, \
-		(char *(*)())d2i_X509_EXTENSION,(char *)ex)
-#define d2i_X509_fp(fp,x509) (X509 *)ASN1_d2i_fp((char *(*)())X509_new, \
-		(char *(*)())d2i_X509, (fp),(unsigned char **)(x509))
-#define i2d_X509_fp(fp,x509) ASN1_i2d_fp(i2d_X509,fp,(unsigned char *)x509)
-#define d2i_X509_bio(bp,x509) (X509 *)ASN1_d2i_bio((char *(*)())X509_new, \
-		(char *(*)())d2i_X509, (bp),(unsigned char **)(x509))
-#define i2d_X509_bio(bp,x509) ASN1_i2d_bio(i2d_X509,bp,(unsigned char *)x509)
-
-#define X509_CRL_dup(crl) (X509_CRL *)ASN1_dup((int (*)())i2d_X509_CRL, \
-		(char *(*)())d2i_X509_CRL,(char *)crl)
-#define d2i_X509_CRL_fp(fp,crl) (X509_CRL *)ASN1_d2i_fp((char *(*)()) \
-		X509_CRL_new,(char *(*)())d2i_X509_CRL, (fp),\
-		(unsigned char **)(crl))
-#define i2d_X509_CRL_fp(fp,crl) ASN1_i2d_fp(i2d_X509_CRL,fp,\
-		(unsigned char *)crl)
-#define d2i_X509_CRL_bio(bp,crl) (X509_CRL *)ASN1_d2i_bio((char *(*)()) \
-		X509_CRL_new,(char *(*)())d2i_X509_CRL, (bp),\
-		(unsigned char **)(crl))
-#define i2d_X509_CRL_bio(bp,crl) ASN1_i2d_bio(i2d_X509_CRL,bp,\
-		(unsigned char *)crl)
-
-#define PKCS7_dup(p7) (PKCS7 *)ASN1_dup((int (*)())i2d_PKCS7, \
-		(char *(*)())d2i_PKCS7,(char *)p7)
-#define d2i_PKCS7_fp(fp,p7) (PKCS7 *)ASN1_d2i_fp((char *(*)()) \
-		PKCS7_new,(char *(*)())d2i_PKCS7, (fp),\
-		(unsigned char **)(p7))
-#define i2d_PKCS7_fp(fp,p7) ASN1_i2d_fp(i2d_PKCS7,fp,\
-		(unsigned char *)p7)
-#define d2i_PKCS7_bio(bp,p7) (PKCS7 *)ASN1_d2i_bio((char *(*)()) \
-		PKCS7_new,(char *(*)())d2i_PKCS7, (bp),\
-		(unsigned char **)(p7))
-#define i2d_PKCS7_bio(bp,p7) ASN1_i2d_bio(i2d_PKCS7,bp,\
-		(unsigned char *)p7)
-
-#define X509_REQ_dup(req) (X509_REQ *)ASN1_dup((int (*)())i2d_X509_REQ, \
-		(char *(*)())d2i_X509_REQ,(char *)req)
-#define d2i_X509_REQ_fp(fp,req) (X509_REQ *)ASN1_d2i_fp((char *(*)())\
-		X509_REQ_new, (char *(*)())d2i_X509_REQ, (fp),\
-		(unsigned char **)(req))
-#define i2d_X509_REQ_fp(fp,req) ASN1_i2d_fp(i2d_X509_REQ,fp,\
-		(unsigned char *)req)
-#define d2i_X509_REQ_bio(bp,req) (X509_REQ *)ASN1_d2i_bio((char *(*)())\
-		X509_REQ_new, (char *(*)())d2i_X509_REQ, (bp),\
-		(unsigned char **)(req))
-#define i2d_X509_REQ_bio(bp,req) ASN1_i2d_bio(i2d_X509_REQ,bp,\
-		(unsigned char *)req)
-
-#define RSAPublicKey_dup(rsa) (RSA *)ASN1_dup((int (*)())i2d_RSAPublicKey, \
-		(char *(*)())d2i_RSAPublicKey,(char *)rsa)
-#define RSAPrivateKey_dup(rsa) (RSA *)ASN1_dup((int (*)())i2d_RSAPrivateKey, \
-		(char *(*)())d2i_RSAPrivateKey,(char *)rsa)
-
-#define d2i_RSAPrivateKey_fp(fp,rsa) (RSA *)ASN1_d2i_fp((char *(*)())\
-		RSA_new,(char *(*)())d2i_RSAPrivateKey, (fp), \
-		(unsigned char **)(rsa))
-#define i2d_RSAPrivateKey_fp(fp,rsa) ASN1_i2d_fp(i2d_RSAPrivateKey,fp, \
-		(unsigned char *)rsa)
-#define d2i_RSAPrivateKey_bio(bp,rsa) (RSA *)ASN1_d2i_bio((char *(*)())\
-		RSA_new,(char *(*)())d2i_RSAPrivateKey, (bp), \
-		(unsigned char **)(rsa))
-#define i2d_RSAPrivateKey_bio(bp,rsa) ASN1_i2d_bio(i2d_RSAPrivateKey,bp, \
-		(unsigned char *)rsa)
-
-#define d2i_RSAPublicKey_fp(fp,rsa) (RSA *)ASN1_d2i_fp((char *(*)())\
-		RSA_new,(char *(*)())d2i_RSAPublicKey, (fp), \
-		(unsigned char **)(rsa))
-#define i2d_RSAPublicKey_fp(fp,rsa) ASN1_i2d_fp(i2d_RSAPublicKey,fp, \
-		(unsigned char *)rsa)
-#define d2i_RSAPublicKey_bio(bp,rsa) (RSA *)ASN1_d2i_bio((char *(*)())\
-		RSA_new,(char *(*)())d2i_RSAPublicKey, (bp), \
-		(unsigned char **)(rsa))
-#define i2d_RSAPublicKey_bio(bp,rsa) ASN1_i2d_bio(i2d_RSAPublicKey,bp, \
-		(unsigned char *)rsa)
-
-#define d2i_DSAPrivateKey_fp(fp,dsa) (DSA *)ASN1_d2i_fp((char *(*)())\
-		DSA_new,(char *(*)())d2i_DSAPrivateKey, (fp), \
-		(unsigned char **)(dsa))
-#define i2d_DSAPrivateKey_fp(fp,dsa) ASN1_i2d_fp(i2d_DSAPrivateKey,fp, \
-		(unsigned char *)dsa)
-#define d2i_DSAPrivateKey_bio(bp,dsa) (DSA *)ASN1_d2i_bio((char *(*)())\
-		DSA_new,(char *(*)())d2i_DSAPrivateKey, (bp), \
-		(unsigned char **)(dsa))
-#define i2d_DSAPrivateKey_bio(bp,dsa) ASN1_i2d_bio(i2d_DSAPrivateKey,bp, \
-		(unsigned char *)dsa)
-
-#define d2i_ECPrivateKey_fp(fp,ecdsa) (EC_KEY *)ASN1_d2i_fp((char *(*)())\
-		EC_KEY_new,(char *(*)())d2i_ECPrivateKey, (fp), \
-		(unsigned char **)(ecdsa))
-#define i2d_ECPrivateKey_fp(fp,ecdsa) ASN1_i2d_fp(i2d_ECPrivateKey,fp, \
-		(unsigned char *)ecdsa)
-#define d2i_ECPrivateKey_bio(bp,ecdsa) (EC_KEY *)ASN1_d2i_bio((char *(*)())\
-		EC_KEY_new,(char *(*)())d2i_ECPrivateKey, (bp), \
-		(unsigned char **)(ecdsa))
-#define i2d_ECPrivateKey_bio(bp,ecdsa) ASN1_i2d_bio(i2d_ECPrivateKey,bp, \
-		(unsigned char *)ecdsa)
-
-#define X509_ALGOR_dup(xn) (X509_ALGOR *)ASN1_dup((int (*)())i2d_X509_ALGOR,\
-		(char *(*)())d2i_X509_ALGOR,(char *)xn)
-
-#define X509_NAME_dup(xn) (X509_NAME *)ASN1_dup((int (*)())i2d_X509_NAME, \
-		(char *(*)())d2i_X509_NAME,(char *)xn)
-#define X509_NAME_ENTRY_dup(ne) (X509_NAME_ENTRY *)ASN1_dup( \
-		(int (*)())i2d_X509_NAME_ENTRY, \
-		(char *(*)())d2i_X509_NAME_ENTRY,\
-		(char *)ne)
-
-#define X509_digest(data,type,md,len) \
-	ASN1_digest((int (*)())i2d_X509,type,(char *)data,md,len)
-#define X509_NAME_digest(data,type,md,len) \
-	ASN1_digest((int (*)())i2d_X509_NAME,type,(char *)data,md,len)
-#ifndef PKCS7_ISSUER_AND_SERIAL_digest
-#define PKCS7_ISSUER_AND_SERIAL_digest(data,type,md,len) \
-	ASN1_digest((int (*)())i2d_PKCS7_ISSUER_AND_SERIAL,type,\
-		(char *)data,md,len)
-#endif
-#endif
-
 #define X509_EXT_PACK_UNKNOWN	1
 #define X509_EXT_PACK_STRING	2
 
@@ -772,7 +627,6 @@ IMPLEMENT_ASN1_SET_OF(X509_CRL)
 
 const char *X509_verify_cert_error_string(long n);
 
-#ifndef SSLEAY_MACROS
 #ifndef OPENSSL_NO_EVP
 int X509_verify(X509 *a, EVP_PKEY *r);
 
@@ -896,8 +750,6 @@ void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
 
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
-
-#endif /* !SSLEAY_MACROS */
 
 int		X509_cmp_time(ASN1_TIME *s, time_t *t);
 int		X509_cmp_current_time(ASN1_TIME *s);

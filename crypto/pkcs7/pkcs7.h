@@ -245,14 +245,6 @@ DECLARE_PKCS12_STACK_OF(PKCS7)
 
 #define PKCS7_is_detached(p7) (PKCS7_type_is_signed(p7) && PKCS7_get_detached(p7))
 
-#ifdef SSLEAY_MACROS
-#ifndef PKCS7_ISSUER_AND_SERIAL_digest
-#define PKCS7_ISSUER_AND_SERIAL_digest(data,type,md,len) \
-        ASN1_digest((int (*)())i2d_PKCS7_ISSUER_AND_SERIAL,type,\
-	                (char *)data,md,len)
-#endif
-#endif
-
 /* S/MIME related flags */
 
 #define PKCS7_TEXT		0x1
@@ -286,7 +278,6 @@ DECLARE_PKCS12_STACK_OF(PKCS7)
 
 DECLARE_ASN1_FUNCTIONS(PKCS7_ISSUER_AND_SERIAL)
 
-#ifndef SSLEAY_MACROS
 int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,const EVP_MD *type,
 	unsigned char *md,unsigned int *len);
 #ifndef OPENSSL_NO_FP_API
@@ -296,7 +287,6 @@ int i2d_PKCS7_fp(FILE *fp,PKCS7 *p7);
 PKCS7 *PKCS7_dup(PKCS7 *p7);
 PKCS7 *d2i_PKCS7_bio(BIO *bp,PKCS7 **p7);
 int i2d_PKCS7_bio(BIO *bp,PKCS7 *p7);
-#endif
 
 DECLARE_ASN1_FUNCTIONS(PKCS7_SIGNER_INFO)
 DECLARE_ASN1_FUNCTIONS(PKCS7_RECIP_INFO)
