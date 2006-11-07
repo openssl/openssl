@@ -84,21 +84,21 @@ int SHA224_Final (unsigned char *md, SHA256_CTX *c)
  */
 #define	HASH_MAKE_STRING(c,s)	do {	\
 	unsigned long ll;		\
-	unsigned int  n;		\
+	unsigned int  nn;		\
 	switch ((c)->md_len)		\
 	{   case SHA224_DIGEST_LENGTH:	\
-		for (n=0;n<SHA224_DIGEST_LENGTH/4;n++)	\
-		{   ll=(c)->h[n]; HOST_l2c(ll,(s));   }	\
+		for (nn=0;nn<SHA224_DIGEST_LENGTH/4;nn++)	\
+		{   ll=(c)->h[nn]; HOST_l2c(ll,(s));   }	\
 		break;			\
 	    case SHA256_DIGEST_LENGTH:	\
-		for (n=0;n<SHA256_DIGEST_LENGTH/4;n++)	\
-		{   ll=(c)->h[n]; HOST_l2c(ll,(s));   }	\
+		for (nn=0;nn<SHA256_DIGEST_LENGTH/4;nn++)	\
+		{   ll=(c)->h[nn]; HOST_l2c(ll,(s));   }	\
 		break;			\
 	    default:			\
 		if ((c)->md_len > SHA256_DIGEST_LENGTH)	\
 		    return 0;				\
-		for (n=0;n<(c)->md_len/4;n++)		\
-		{   ll=(c)->h[n]; HOST_l2c(ll,(s));   }	\
+		for (nn=0;nn<(c)->md_len/4;nn++)		\
+		{   ll=(c)->h[nn]; HOST_l2c(ll,(s));   }	\
 		break;			\
 	}				\
 	} while (0)
