@@ -212,7 +212,7 @@ authorityKeyIdentifier=keyid,issuer
 #nsSslServerName
 
 # This is required for TSA certificates.
-extendedKeyUsage = critical,timeStamping
+# extendedKeyUsage = critical,timeStamping
 
 [ v3_req ]
 
