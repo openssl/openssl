@@ -178,7 +178,7 @@ preceeding the name with a B<+> character.
 
 otherName can include arbitrary data associated with an OID: the value
 should be the OID followed by a semicolon and the content in standard
-L<ASN1_generate_nconf(1)|ASN1_generate_nconf(1)> format.
+L<ASN1_generate_nconf(3)|ASN1_generate_nconf(3)> format.
 
 Examples:
 
@@ -441,7 +441,8 @@ the data is formatted correctly for the given extension type.
 There are two ways to encode arbitrary extensions.
 
 The first way is to use the word ASN1 followed by the extension content
-using the same syntax as ASN1_generate_nconf(). For example:
+using the same syntax as L<ASN1_generate_nconf(3)|ASN1_generate_nconf(3)>.
+For example:
 
  1.2.3.4=critical,ASN1:UTF8String:Some random data
 
@@ -522,7 +523,7 @@ for arbitrary extensions was added in OpenSSL 0.9.8
 =head1 SEE ALSO
 
 L<req(1)|req(1)>, L<ca(1)|ca(1)>, L<x509(1)|x509(1)>,
-L<ASN1_generate_nconf(1)|ASN1_generate_nconf(1)>
+L<ASN1_generate_nconf(3)|ASN1_generate_nconf(3)>
 
 
 =cut
