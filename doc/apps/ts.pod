@@ -337,7 +337,7 @@ all intermediate CA certificates unless the response includes them.
 =head1 CONFIGURATION FILE OPTIONS
 
 The B<-query> and B<-reply> commands make use of a configuration file
-defined by the B<OPENSSL_CONF> environment variable. See L<config(5)|config(5>
+defined by the B<OPENSSL_CONF> environment variable. See L<config(5)|config(5)>
 for a general description of the syntax of the config file. The
 B<-query> command uses only the symbolic OID names section
 and it can work without it. However, the B<-reply> command needs the
