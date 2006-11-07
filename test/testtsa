@@ -39,36 +39,29 @@ clean_up_dir () {
 create_ca () {
 
     echo "Creating a new CA for the TSA tests..."
-    /bin/rm -fr demoCA
-    $SH ../../apps/CA.sh -newca <<EOF
-
-HU
-Budapest
-Budapest
-Gov-CA Ltd.
-ca1
-EOF
+    TSDNSECT=ts_ca_dn
+    export TSDNSECT   
+    ../../util/shlib_wrap.sh ../../apps/openssl req -new -x509 -nodes \
+	-out tsaca.pem -keyout tsacakey.pem
     test $? != 0 && error
 }
 
 create_tsa_cert () {
 
     INDEX=$1
+    export INDEX
     EXT=$2
-    ../../util/shlib_wrap.sh ../../apps/openssl req -new -out tsa_req${INDEX}.pem -keyout tsa_key${INDEX}.pem <<EOF
-HU
-Budapest
-Buda
-Hun-TSA Ltd.
-tsa${INDEX}
-EOF
-    test $? != 0 && error
+    TSDNSECT=ts_cert_dn
+    export TSDNSECT   
 
-    ../../util/shlib_wrap.sh ../../apps/openssl ca -in tsa_req${INDEX}.pem -out tsa_cert${INDEX}.pem \
-	-extensions $EXT <<EOF
-y
-y
-EOF
+    ../../util/shlib_wrap.sh ../../apps/openssl req -new \
+	-out tsa_req${INDEX}.pem -keyout tsa_key${INDEX}.pem
+    test $? != 0 && error
+echo Using extension $EXT
+    ../../util/shlib_wrap.sh ../../apps/openssl x509 -req \
+	-in tsa_req${INDEX}.pem -out tsa_cert${INDEX}.pem \
+	-CA tsaca.pem -CAkey tsacakey.pem -CAcreateserial \
+	-extfile $OPENSSL_CONF -extensions $EXT
     test $? != 0 && error
 }
 
@@ -128,10 +121,10 @@ time_stamp_response_token_test () {
 
 verify_time_stamp_response () {
 
-    ../../util/shlib_wrap.sh ../../apps/openssl ts -verify -queryfile $1 -in $2 -CAfile demoCA/cacert.pem \
+    ../../util/shlib_wrap.sh ../../apps/openssl ts -verify -queryfile $1 -in $2 -CAfile tsaca.pem \
 	-untrusted tsa_cert1.pem
     test $? != 0 && error
-    ../../util/shlib_wrap.sh ../../apps/openssl ts -verify -data $3 -in $2 -CAfile demoCA/cacert.pem \
+    ../../util/shlib_wrap.sh ../../apps/openssl ts -verify -data $3 -in $2 -CAfile tsaca.pem \
 	-untrusted tsa_cert1.pem
     test $? != 0 && error
 }
@@ -142,16 +135,16 @@ verify_time_stamp_token () {
     ../../util/shlib_wrap.sh ../../apps/openssl ts -reply -in $2 -out $2.token -token_out
     test $? != 0 && error
     ../../util/shlib_wrap.sh ../../apps/openssl ts -verify -queryfile $1 -in $2.token -token_in \
-	-CAfile demoCA/cacert.pem -untrusted tsa_cert1.pem
+	-CAfile tsaca.pem -untrusted tsa_cert1.pem
     test $? != 0 && error
     ../../util/shlib_wrap.sh ../../apps/openssl ts -verify -data $3 -in $2.token -token_in \
-	-CAfile demoCA/cacert.pem -untrusted tsa_cert1.pem
+	-CAfile tsaca.pem -untrusted tsa_cert1.pem
     test $? != 0 && error
 }
 
 verify_time_stamp_response_fail () {
 
-    ../../util/shlib_wrap.sh ../../apps/openssl ts -verify -queryfile $1 -in $2 -CAfile demoCA/cacert.pem \
+    ../../util/shlib_wrap.sh ../../apps/openssl ts -verify -queryfile $1 -in $2 -CAfile tsaca.pem \
 	-untrusted tsa_cert1.pem
     # Checks if the verification failed, as it should have.
     test $? = 0 && error

@@ -11,6 +11,9 @@ RANDFILE		= $ENV::HOME/.rnd
 # Extra OBJECT IDENTIFIER info:
 oid_section		= new_oids
 
+TSDNSECT		= ts_cert_dn
+INDEX			= 1
+
 [ new_oids ]
 
 # Policies used by the TSA tests.
@@ -53,36 +56,27 @@ emailAddress		= optional
 [ req ]
 default_bits		= 1024
 default_md		= sha1
-distinguished_name	= req_distinguished_name
+distinguished_name	= $ENV::TSDNSECT
 encrypt_rsa_key		= no
+prompt 			= no
 # attributes		= req_attributes
 x509_extensions	= v3_ca	# The extentions to add to the self signed cert
 
 string_mask = nombstr
 
-[ req_distinguished_name ]
-countryName			= Country Name (2 letter code)
-countryName_default		= HU
-countryName_min			= 2
-countryName_max			= 2
+[ ts_ca_dn ]
+countryName			= HU
+stateOrProvinceName		= Budapest
+localityName			= Budapest
+organizationName		= Gov-CA Ltd.
+commonName			= ca1
 
-stateOrProvinceName		= State or Province Name (full name)
-stateOrProvinceName_default	= 
-
-localityName			= Locality Name (eg, city)
-
-0.organizationName		= Organization Name (eg, company)
-0.organizationName_default	= 
-
-commonName			= Common Name (eg, YOUR name)
-commonName_max			= 64
-
-[ req_attributes ]
-challengePassword		= A challenge password
-challengePassword_min		= 4
-challengePassword_max		= 20
-
-unstructuredName		= An optional company name
+[ ts_cert_dn ]
+countryName			= HU
+stateOrProvinceName		= Budapest
+localityName			= Buda
+organizationName		= Hun-TSA Ltd.
+commonName			= tsa$ENV::INDEX
 
 [ tsa_cert ]
 
@@ -138,7 +132,7 @@ dir		= .			# TSA root directory
 serial		= $dir/tsa_serial	# The current serial number (mandatory)
 signer_cert	= $dir/tsa_cert1.pem 	# The TSA signing certificate
 					# (optional)
-certs		= $dir/demoCA/cacert.pem# Certificate chain to include in reply
+certs		= $dir/tsaca.pem	# Certificate chain to include in reply
 					# (optional)
 signer_key	= $dir/tsa_key1.pem	# The TSA private key (optional)
 
