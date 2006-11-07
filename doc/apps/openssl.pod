@@ -215,7 +215,7 @@ S/MIME mail processing.
 
 Algorithm Speed Measurement.
 
-=item L<B<ts>|<ts(1)>
+=item L<B<ts>|ts(1)>
 
 Time Stamping Authority tool (client/server)
 
