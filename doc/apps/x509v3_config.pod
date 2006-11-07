@@ -178,7 +178,7 @@ preceeding the name with a B<+> character.
 
 otherName can include arbitrary data associated with an OID: the value
 should be the OID followed by a semicolon and the content in standard
-ASN1_generate_nconf() format.
+L<ASN1_generate_nconf(1)|ASN1_generate_nconf(1)> format.
 
 Examples:
 
@@ -392,6 +392,14 @@ Examples:
  nameConstraints=excluded;email:.com
 issuingDistributionPoint = idp_section
 
+=head2 OCSP No Check
+
+The OCSP No Check extension is a string extension but its value is ignored.
+
+Example:
+
+ noCheck = ignored
+
 
 =head1 DEPRECATED EXTENSIONS
 
@@ -513,7 +521,8 @@ for arbitrary extensions was added in OpenSSL 0.9.8
 
 =head1 SEE ALSO
 
-L<req(1)|req(1)>, L<ca(1)|ca(1)>, L<x509(1)|x509(1)>
+L<req(1)|req(1)>, L<ca(1)|ca(1)>, L<x509(1)|x509(1)>,
+L<ASN1_generate_nconf(1)|ASN1_generate_nconf(1)>
 
 
 =cut

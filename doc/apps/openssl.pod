@@ -366,7 +366,7 @@ L<rsautl(1)|rsautl(1)>, L<s_client(1)|s_client(1)>,
 L<s_server(1)|s_server(1)>, L<s_time(1)|s_time(1)>,
 L<smime(1)|smime(1)>, L<spkac(1)|spkac(1)>,
 L<verify(1)|verify(1)>, L<version(1)|version(1)>, L<x509(1)|x509(1)>,
-L<crypto(3)|crypto(3)>, L<ssl(3)|ssl(3)> 
+L<crypto(3)|crypto(3)>, L<ssl(3)|ssl(3)>, L<x509v3_config(5)|x509v3_config(5)> 
 
 =head1 HISTORY
 

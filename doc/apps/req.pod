@@ -356,7 +356,9 @@ problems with BMPStrings and UTF8Strings: in particular Netscape.
 
 this specifies the configuration file section containing a list of
 extensions to add to the certificate request. It can be overridden
-by the B<-reqexts> command line switch.
+by the B<-reqexts> command line switch. See the 
+L<x509v3_config(5)|x509v3_config(5)> manual page for details of the
+extension section format.
 
 =item B<x509_extensions>
 
@@ -618,6 +620,7 @@ address in subjectAltName should be input by the user.
 =head1 SEE ALSO
 
 L<x509(1)|x509(1)>, L<ca(1)|ca(1)>, L<genrsa(1)|genrsa(1)>,
-L<gendsa(1)|gendsa(1)>, L<config(5)|config(5)>
+L<gendsa(1)|gendsa(1)>, L<config(5)|config(5)>,
+L<x509v3_config(5)|x509v3_config(5)> 
 
 =cut

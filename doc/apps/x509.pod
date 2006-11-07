@@ -376,7 +376,9 @@ no extensions are added to the certificate.
 the section to add certificate extensions from. If this option is not
 specified then the extensions should either be contained in the unnamed
 (default) section or the default section should contain a variable called
-"extensions" which contains the section to use.
+"extensions" which contains the section to use. See the
+L<x509v3_config(5)|x509v3_config(5)> manual page for details of the
+extension section format.
 
 =back
 
