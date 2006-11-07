@@ -670,6 +670,6 @@ then even if a certificate is issued with CA:TRUE it will not be valid.
 =head1 SEE ALSO
 
 L<req(1)|req(1)>, L<spkac(1)|spkac(1)>, L<x509(1)|x509(1)>, L<CA.pl(1)|CA.pl(1)>,
-L<config(5)|config(5)>
+L<config(5)|config(5)>, L<x509v3_config(5)|x509v3_config(5)> 
 
 =cut
