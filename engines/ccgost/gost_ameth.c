@@ -98,11 +98,13 @@ static int decode_gost_algor_params(EVP_PKEY *pkey, X509_ALGOR *palg)
 	ASN1_OBJECT *palg_obj =NULL;
 	int ptype = V_ASN1_UNDEF;
 	int pkey_nid = NID_undef,param_nid = NID_undef;
+        void *_pval;
 	ASN1_STRING *pval = NULL;
 	const unsigned char  *p;
 	GOST_KEY_PARAMS *gkp = NULL;
 
-	X509_ALGOR_get0(&palg_obj, &ptype, (void **) (&pval), palg);
+	X509_ALGOR_get0(&palg_obj, &ptype, &_pval, palg);
+        pval = _pval;
 	if (ptype != V_ASN1_SEQUENCE) 
 		{
 		GOSTerr(GOST_F_DECODE_GOST_ALGOR_PARAMS,

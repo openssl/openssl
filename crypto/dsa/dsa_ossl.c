@@ -68,7 +68,7 @@
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
 static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
-		  DSA *dsa);
+			 DSA *dsa);
 static int dsa_init(DSA *dsa);
 static int dsa_finish(DSA *dsa);
 
@@ -291,7 +291,7 @@ err:
 	}
 
 static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
-		  DSA *dsa)
+			 DSA *dsa)
 	{
 	BN_CTX *ctx;
 	BIGNUM u1,u2,t1;

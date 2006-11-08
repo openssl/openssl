@@ -118,7 +118,7 @@ struct dsa_method
 	int (*dsa_sign_setup)(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp,
 								BIGNUM **rp);
 	int (*dsa_do_verify)(const unsigned char *dgst, int dgst_len,
-							DSA_SIG *sig, DSA *dsa);
+			     DSA_SIG *sig, DSA *dsa);
 	int (*dsa_mod_exp)(DSA *dsa, BIGNUM *rr, BIGNUM *a1, BIGNUM *p1,
 			BIGNUM *a2, BIGNUM *p2, BIGNUM *m, BN_CTX *ctx,
 			BN_MONT_CTX *in_mont);

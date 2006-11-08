@@ -62,9 +62,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-extern int obj_cleanup_defer;
-extern void check_defer(int nid);
-
 int EVP_add_cipher(const EVP_CIPHER *c)
 	{
 	int r;

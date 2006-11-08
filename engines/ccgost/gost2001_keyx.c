@@ -16,6 +16,7 @@
 #include "e_gost_err.h"
 #include "gost_keywrap.h"
 #include "gost_lcl.h"
+#include "gost2001_keyx.h"
 
 /* Transform ECDH shared key into little endian as required by Cryptocom
  * key exchange */

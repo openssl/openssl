@@ -114,7 +114,7 @@ const byte CryptoProKeyMeshingKey[]={
     0xC0, 0x86, 0xDC, 0xC2,   0xEF, 0x4C, 0xA9, 0x2B
 	};	
 /* Initialization of gost_ctx subst blocks*/
-void kboxinit(gost_ctx *c, const gost_subst_block *b)
+static void kboxinit(gost_ctx *c, const gost_subst_block *b)
 	{ 
 	int i; 
 	

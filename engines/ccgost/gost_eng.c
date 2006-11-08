@@ -141,8 +141,10 @@ static int bind_gost (ENGINE *e,const char *id)
 	return ret;
 	}	
 
+#ifdef ENGINE_DYNAMIC_SUPPORT
 IMPLEMENT_DYNAMIC_BIND_FN(bind_gost)
 IMPLEMENT_DYNAMIC_CHECK_FN()
+#endif  /* def ENGINE_DYNAMIC_SUPPORT */
 
 static int gost_digests(ENGINE *e, const EVP_MD **digest,
 	const int **nids, int nid)

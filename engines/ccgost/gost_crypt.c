@@ -197,7 +197,7 @@ const struct gost_cipher_info *get_encryption_params(ASN1_OBJECT *obj)
 	}
 
 /* Sets cipher param from paramset NID. */
-int gost_cipher_set_param(struct ossl_gost_cipher_ctx *c,int nid)
+static int gost_cipher_set_param(struct ossl_gost_cipher_ctx *c,int nid)
 	{
 	const struct gost_cipher_info *param;
 	param=get_encryption_params((nid==NID_undef?NULL:OBJ_nid2obj(nid)));
@@ -226,8 +226,9 @@ static int gost_cipher_init_param(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 	}	
 
+#ifdef USE_SSL
 /* Initializes EVP_CIPHER_CTX with fixed cryptopro A paramset */
-int gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc)
 	{
 	struct ossl_gost_cipher_ctx *c=ctx->cipher_data;
@@ -241,7 +242,7 @@ int gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	}
 
 /* Initializes EVP_CIPHER_CTX with fixed vizir paramset */
-int gost_cipher_init_vizir(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+static int gost_cipher_init_vizir(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc)
 	{
 	struct ossl_gost_cipher_ctx *c=ctx->cipher_data;
@@ -254,6 +255,7 @@ int gost_cipher_init_vizir(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
 	return 1;
 	}	
+#endif  /* def USE_SSL */
 
 /* Initializes EVP_CIPHER_CTX with default values */
 int gost_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -275,6 +277,7 @@ static void gost_crypt_mesh (void *ctx,unsigned char *iv,unsigned char *buf)
 	c->count+=8;
 	}
 
+#ifdef USE_SSL
 static void gost_cnt_next (void *ctx, unsigned char *iv, unsigned char *buf)
 	{
 	struct ossl_gost_cipher_ctx *c = ctx;
@@ -305,6 +308,7 @@ static void gost_cnt_next (void *ctx, unsigned char *iv, unsigned char *buf)
 	gostcrypt(&(c->cctx),buf1,buf);
 	c->count +=8;
 	}
+#endif  /* def USE_SSL */
 
 /* GOST encryption in CFB mode */
 int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -369,7 +373,8 @@ int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 	}
 
-int	gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
+#if USE_SSL
+static int gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl)
 	{
 	const unsigned char *in_ptr=in;
@@ -422,6 +427,7 @@ int	gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}	
 	return 1;
 	}
+#endif  /* def USE_SSL */
 
 /* Cleaning up of EVP_CIPHER_CTX */
 int gost_cipher_cleanup(EVP_CIPHER_CTX *ctx) 
