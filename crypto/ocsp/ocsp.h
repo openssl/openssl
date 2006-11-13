@@ -391,11 +391,11 @@ typedef struct ocsp_service_locator_st
 #define ASN1_BIT_STRING_digest(data,type,md,len) \
 	ASN1_item_digest(ASN1_ITEM_rptr(ASN1_BIT_STRING),type,data,md,len)
 
-#define OCSP_CERTID_dup(cid) ASN1_dup_of(OCSP_CERTID,i2d_OCSP_CERTID,d2i_OCSP_CERTID,cid)
-
 #define OCSP_CERTSTATUS_dup(cs)\
                 (OCSP_CERTSTATUS*)ASN1_dup((int(*)())i2d_OCSP_CERTSTATUS,\
 		(char *(*)())d2i_OCSP_CERTSTATUS,(char *)(cs))
+
+OCSP_CERTID *OCSP_CERTID_dup(OCSP_CERTID *id);
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req);
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
