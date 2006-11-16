@@ -518,11 +518,17 @@ typedef struct asn1_type_st
 		 * contain the set or sequence bytes */
 		ASN1_STRING *		set;
 		ASN1_STRING *		sequence;
+		ASN1_VALUE *		asn1_value;
 		} value;
 	} ASN1_TYPE;
 
 DECLARE_STACK_OF(ASN1_TYPE)
 DECLARE_ASN1_SET_OF(ASN1_TYPE)
+
+typedef STACK_OF(ASN1_TYPE) ASN1_SEQUENCE_ANY;
+
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(ASN1_SEQUENCE_ANY, ASN1_SEQUENCE_ANY)
+DECLARE_ASN1_ENCODE_FUNCTIONS_const(ASN1_SEQUENCE_ANY, ASN1_SET_ANY)
 
 typedef struct NETSCAPE_X509_st
 	{

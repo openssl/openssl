@@ -79,8 +79,6 @@ typedef struct
 	} CONF_VALUE;
 
 DECLARE_STACK_OF(CONF_VALUE)
-DECLARE_STACK_OF(CONF_MODULE)
-DECLARE_STACK_OF(CONF_IMODULE)
 
 struct conf_st;
 struct conf_method_st;
@@ -104,6 +102,9 @@ struct conf_method_st
 
 typedef struct conf_imodule_st CONF_IMODULE;
 typedef struct conf_module_st CONF_MODULE;
+
+DECLARE_STACK_OF(CONF_MODULE)
+DECLARE_STACK_OF(CONF_IMODULE)
 
 /* DSO module function typedefs */
 typedef int conf_init_func(CONF_IMODULE *md, const CONF *cnf);

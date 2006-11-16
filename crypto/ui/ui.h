@@ -287,8 +287,8 @@ UI_METHOD *UI_OpenSSL(void);
 /* The UI_STRING type is the data structure that contains all the needed info
    about a string or a prompt, including test data for a verification prompt.
 */
-DECLARE_STACK_OF(UI_STRING)
 typedef struct ui_string_st UI_STRING;
+DECLARE_STACK_OF(UI_STRING)
 
 /* The different types of strings that are currently supported.
    This is only needed by method authors. */

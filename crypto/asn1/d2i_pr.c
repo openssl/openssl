@@ -124,8 +124,7 @@ EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
 	 * by analyzing it we can determine the passed structure: this
 	 * assumes the input is surrounded by an ASN1 SEQUENCE.
 	 */
-	inkey = d2i_ASN1_SET_OF_ASN1_TYPE(NULL, &p, length, d2i_ASN1_TYPE, 
-			ASN1_TYPE_free, V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
+	inkey = d2i_ASN1_SEQUENCE_ANY(NULL, &p, length);
 	/* Since we only need to discern "traditional format" RSA and DSA
 	 * keys we can just count the elements.
          */

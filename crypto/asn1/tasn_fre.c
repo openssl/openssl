@@ -221,7 +221,7 @@ void ASN1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 		{
 		ASN1_TYPE *typ = (ASN1_TYPE *)*pval;
 		utype = typ->type;
-		pval = (ASN1_VALUE **)&typ->value.ptr;
+		pval = &typ->value.asn1_value;
 		if (!*pval)
 			return;
 		}

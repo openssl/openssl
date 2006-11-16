@@ -533,7 +533,7 @@ static int asn1_primitive_print(BIO *out, ASN1_VALUE **fld,
 		{
 		ASN1_TYPE *atype = (ASN1_TYPE *)*fld;
 		utype = atype->type;
-		fld = (ASN1_VALUE **)&atype->value.ptr;
+		fld = &atype->value.asn1_value;
 		str = (ASN1_STRING *)*fld;
 		if (pctx->flags & ASN1_PCTX_FLAGS_NO_ANY_TYPE)
 			pname = NULL;
