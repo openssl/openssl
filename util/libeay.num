@@ -3794,3 +3794,13 @@ ENGINE_unreg_pkey_asn1_meths            4188	EXIST:VMS:FUNCTION:ENGINE
 PKCS5_PBKDF2_HMAC                       4189	EXIST::FUNCTION:
 check_defer                             4190	EXIST::FUNCTION:
 ENGINE_load_gost                        4192	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ASN1_SEQUENCE_ANY_it                    4193	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+ASN1_SEQUENCE_ANY_it                    4193	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+i2d_ASN1_SEQUENCE_ANY                   4194	EXIST::FUNCTION:
+d2i_TS_MSG_IMPRINT_bio                  4195	EXIST::FUNCTION:
+i2d_ASN1_SET_ANY                        4196	EXIST::FUNCTION:
+ASN1_SET_ANY_it                         4197	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+ASN1_SET_ANY_it                         4197	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+OCSP_CERTID_dup                         4198	EXIST::FUNCTION:
+d2i_ASN1_SET_ANY                        4199	EXIST::FUNCTION:
+d2i_ASN1_SEQUENCE_ANY                   4200	EXIST::FUNCTION:
