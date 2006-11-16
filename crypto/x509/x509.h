@@ -615,11 +615,6 @@ void X509_CRL_METHOD_free(X509_CRL_METHOD *m);
 void X509_CRL_set_meth_data(X509_CRL *crl, void *dat);
 void *X509_CRL_get_meth_data(X509_CRL *crl);
 
-IMPLEMENT_STACK_OF(X509_REVOKED)
-IMPLEMENT_ASN1_SET_OF(X509_REVOKED)
-IMPLEMENT_STACK_OF(X509_CRL)
-IMPLEMENT_ASN1_SET_OF(X509_CRL)
-
 /* This one is only used so that a binary form can output, as in
  * i2d_X509_NAME(X509_get_X509_PUBKEY(x),&buf) */
 #define 	X509_get_X509_PUBKEY(x) ((x)->cert_info->key)
