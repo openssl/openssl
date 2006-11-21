@@ -100,7 +100,7 @@ static ERR_STRING_DATA RSA_str_functs[]=
 {ERR_FUNC(RSA_F_RSA_PADDING_CHECK_SSLV23),	"RSA_padding_check_SSLv23"},
 {ERR_FUNC(RSA_F_RSA_PADDING_CHECK_X931),	"RSA_padding_check_X931"},
 {ERR_FUNC(RSA_F_RSA_PRINT),	"RSA_print"},
-{ERR_FUNC(RSA_F_RSA_PRINT_FP),	"RSA_PRINT_FP"},
+{ERR_FUNC(RSA_F_RSA_PRINT_FP),	"RSA_print_fp"},
 {ERR_FUNC(RSA_F_RSA_SETUP_BLINDING),	"RSA_setup_blinding"},
 {ERR_FUNC(RSA_F_RSA_SIGN),	"RSA_sign"},
 {ERR_FUNC(RSA_F_RSA_SIGN_ASN1_OCTET_STRING),	"RSA_sign_ASN1_OCTET_STRING"},
@@ -160,15 +160,12 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 
 void ERR_load_RSA_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(RSA_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,RSA_str_functs);
 		ERR_load_strings(0,RSA_str_reasons);
-#endif
-
 		}
+#endif
 	}

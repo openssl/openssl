@@ -204,7 +204,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL_GET_SERVER_SEND_CERT),	"SSL_GET_SERVER_SEND_CERT"},
 {ERR_FUNC(SSL_F_SSL_GET_SIGN_PKEY),	"SSL_GET_SIGN_PKEY"},
 {ERR_FUNC(SSL_F_SSL_INIT_WBIO_BUFFER),	"SSL_INIT_WBIO_BUFFER"},
-{ERR_FUNC(SSL_F_SSL_LOAD_CLIENT_CA_FILE),	"SSL_LOAD_CLIENT_CA_FILE"},
+{ERR_FUNC(SSL_F_SSL_LOAD_CLIENT_CA_FILE),	"SSL_load_client_CA_file"},
 {ERR_FUNC(SSL_F_SSL_NEW),	"SSL_new"},
 {ERR_FUNC(SSL_F_SSL_PEEK),	"SSL_peek"},
 {ERR_FUNC(SSL_F_SSL_READ),	"SSL_read"},
@@ -486,15 +486,12 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 
 void ERR_load_SSL_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(SSL_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,SSL_str_functs);
 		ERR_load_strings(0,SSL_str_reasons);
-#endif
-
 		}
+#endif
 	}
