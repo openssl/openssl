@@ -1011,7 +1011,6 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_KEY_PRINT				 180
 #define EC_F_EC_KEY_PRINT_FP				 181
 #define EC_F_EC_POINTS_MAKE_AFFINE			 136
-#define EC_F_EC_POINTS_MUL				 138
 #define EC_F_EC_POINT_ADD				 112
 #define EC_F_EC_POINT_CMP				 113
 #define EC_F_EC_POINT_COPY				 114

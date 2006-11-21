@@ -1,6 +1,6 @@
 /* crypto/x509v3/v3err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -96,12 +96,12 @@ static ERR_STRING_DATA X509V3_str_functs[]=
 {ERR_FUNC(X509V3_F_S2I_SKEY_ID),	"S2I_SKEY_ID"},
 {ERR_FUNC(X509V3_F_SET_DIST_POINT_NAME),	"SET_DIST_POINT_NAME"},
 {ERR_FUNC(X509V3_F_STRING_TO_HEX),	"string_to_hex"},
-{ERR_FUNC(X509V3_F_SXNET_ADD_ID_ASC),	"SXNET_ADD_ID_ASC"},
+{ERR_FUNC(X509V3_F_SXNET_ADD_ID_ASC),	"SXNET_add_id_asc"},
 {ERR_FUNC(X509V3_F_SXNET_ADD_ID_INTEGER),	"SXNET_add_id_INTEGER"},
 {ERR_FUNC(X509V3_F_SXNET_ADD_ID_ULONG),	"SXNET_add_id_ulong"},
 {ERR_FUNC(X509V3_F_SXNET_GET_ID_ASC),	"SXNET_get_id_asc"},
 {ERR_FUNC(X509V3_F_SXNET_GET_ID_ULONG),	"SXNET_get_id_ulong"},
-{ERR_FUNC(X509V3_F_V2I_ASN1_BIT_STRING),	"V2I_ASN1_BIT_STRING"},
+{ERR_FUNC(X509V3_F_V2I_ASN1_BIT_STRING),	"v2i_ASN1_BIT_STRING"},
 {ERR_FUNC(X509V3_F_V2I_AUTHORITY_INFO_ACCESS),	"V2I_AUTHORITY_INFO_ACCESS"},
 {ERR_FUNC(X509V3_F_V2I_AUTHORITY_KEYID),	"V2I_AUTHORITY_KEYID"},
 {ERR_FUNC(X509V3_F_V2I_BASIC_CONSTRAINTS),	"V2I_BASIC_CONSTRAINTS"},
@@ -123,10 +123,10 @@ static ERR_STRING_DATA X509V3_str_functs[]=
 {ERR_FUNC(X509V3_F_X509V3_EXT_CONF),	"X509V3_EXT_conf"},
 {ERR_FUNC(X509V3_F_X509V3_EXT_I2D),	"X509V3_EXT_i2d"},
 {ERR_FUNC(X509V3_F_X509V3_EXT_NCONF),	"X509V3_EXT_nconf"},
-{ERR_FUNC(X509V3_F_X509V3_GET_SECTION),	"X509V3_GET_SECTION"},
+{ERR_FUNC(X509V3_F_X509V3_GET_SECTION),	"X509V3_get_section"},
 {ERR_FUNC(X509V3_F_X509V3_GET_STRING),	"X509V3_get_string"},
 {ERR_FUNC(X509V3_F_X509V3_GET_VALUE_BOOL),	"X509V3_get_value_bool"},
-{ERR_FUNC(X509V3_F_X509V3_PARSE_LIST),	"X509V3_PARSE_LIST"},
+{ERR_FUNC(X509V3_F_X509V3_PARSE_LIST),	"X509V3_parse_list"},
 {ERR_FUNC(X509V3_F_X509_PURPOSE_ADD),	"X509_PURPOSE_add"},
 {ERR_FUNC(X509V3_F_X509_PURPOSE_SET),	"X509_PURPOSE_set"},
 {0,NULL}
@@ -203,15 +203,12 @@ static ERR_STRING_DATA X509V3_str_reasons[]=
 
 void ERR_load_X509V3_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(X509V3_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,X509V3_str_functs);
 		ERR_load_strings(0,X509V3_str_reasons);
-#endif
-
 		}
+#endif
 	}

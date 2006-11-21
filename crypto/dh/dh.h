@@ -227,7 +227,6 @@ void ERR_load_DH_strings(void);
 
 /* Function codes. */
 #define DH_F_COMPUTE_KEY				 102
-#define DH_F_DO_DH_PRINT				 100
 #define DH_F_DHPARAMS_PRINT_FP				 101
 #define DH_F_DH_BUILTIN_GENPARAMS			 106
 #define DH_F_DH_NEW_METHOD				 105
@@ -236,6 +235,7 @@ void ERR_load_DH_strings(void);
 #define DH_F_DH_PRIV_ENCODE				 111
 #define DH_F_DH_PUB_DECODE				 108
 #define DH_F_DH_PUB_ENCODE				 109
+#define DH_F_DO_DH_PRINT				 100
 #define DH_F_GENERATE_KEY				 103
 #define DH_F_GENERATE_PARAMETERS			 104
 #define DH_F_PKEY_DH_DERIVE				 112

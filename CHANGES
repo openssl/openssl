@@ -4,6 +4,11 @@
 
  Changes between 0.9.8e and 0.9.9  [xx XXX xxxx]
 
+  *) Load error codes if they are not already present instead of using a
+     static variable. This allows them to be cleanly unloaded and reloaded.
+     Improve header file function name parsing.
+     [Steve Henson]
+
   *) Initial incomplete changes to avoid need for function casts in OpenSSL
      when OPENSSL_NO_FCAST is set: some compilers (gcc 4.2 and later) reject
      their use. Safestack is reimplemented using inline functions: tests show

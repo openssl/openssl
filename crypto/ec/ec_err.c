@@ -1,6 +1,6 @@
 /* crypto/ec/ec_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -155,7 +155,6 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_FUNC(EC_F_EC_KEY_PRINT),	"EC_KEY_print"},
 {ERR_FUNC(EC_F_EC_KEY_PRINT_FP),	"EC_KEY_print_fp"},
 {ERR_FUNC(EC_F_EC_POINTS_MAKE_AFFINE),	"EC_POINTs_make_affine"},
-{ERR_FUNC(EC_F_EC_POINTS_MUL),	"EC_POINTs_mul"},
 {ERR_FUNC(EC_F_EC_POINT_ADD),	"EC_POINT_add"},
 {ERR_FUNC(EC_F_EC_POINT_CMP),	"EC_POINT_cmp"},
 {ERR_FUNC(EC_F_EC_POINT_COPY),	"EC_POINT_copy"},
@@ -247,15 +246,12 @@ static ERR_STRING_DATA EC_str_reasons[]=
 
 void ERR_load_EC_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(EC_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,EC_str_functs);
 		ERR_load_strings(0,EC_str_reasons);
-#endif
-
 		}
+#endif
 	}

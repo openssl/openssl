@@ -1,6 +1,6 @@
 /* crypto/pkcs7/pkcs7err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -82,7 +82,7 @@ static ERR_STRING_DATA PKCS7_str_functs[]=
 {ERR_FUNC(PKCS7_F_PKCS7_ADD_SIGNER),	"PKCS7_add_signer"},
 {ERR_FUNC(PKCS7_F_PKCS7_BIO_ADD_DIGEST),	"PKCS7_BIO_ADD_DIGEST"},
 {ERR_FUNC(PKCS7_F_PKCS7_COPY_EXISTING_DIGEST),	"PKCS7_COPY_EXISTING_DIGEST"},
-{ERR_FUNC(PKCS7_F_PKCS7_CTRL),	"PKCS7_CTRL"},
+{ERR_FUNC(PKCS7_F_PKCS7_CTRL),	"PKCS7_ctrl"},
 {ERR_FUNC(PKCS7_F_PKCS7_DATADECODE),	"PKCS7_dataDecode"},
 {ERR_FUNC(PKCS7_F_PKCS7_DATAFINAL),	"PKCS7_dataFinal"},
 {ERR_FUNC(PKCS7_F_PKCS7_DATAINIT),	"PKCS7_dataInit"},
@@ -94,7 +94,7 @@ static ERR_STRING_DATA PKCS7_str_functs[]=
 {ERR_FUNC(PKCS7_F_PKCS7_ENCRYPT),	"PKCS7_encrypt"},
 {ERR_FUNC(PKCS7_F_PKCS7_FINAL),	"PKCS7_final"},
 {ERR_FUNC(PKCS7_F_PKCS7_FIND_DIGEST),	"PKCS7_FIND_DIGEST"},
-{ERR_FUNC(PKCS7_F_PKCS7_GET0_SIGNERS),	"PKCS7_GET0_SIGNERS"},
+{ERR_FUNC(PKCS7_F_PKCS7_GET0_SIGNERS),	"PKCS7_get0_signers"},
 {ERR_FUNC(PKCS7_F_PKCS7_RECIP_INFO_SET),	"PKCS7_RECIP_INFO_set"},
 {ERR_FUNC(PKCS7_F_PKCS7_SET_CIPHER),	"PKCS7_set_cipher"},
 {ERR_FUNC(PKCS7_F_PKCS7_SET_CONTENT),	"PKCS7_set_content"},
@@ -175,15 +175,12 @@ static ERR_STRING_DATA PKCS7_str_reasons[]=
 
 void ERR_load_PKCS7_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(PKCS7_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,PKCS7_str_functs);
 		ERR_load_strings(0,PKCS7_str_reasons);
-#endif
-
 		}
+#endif
 	}

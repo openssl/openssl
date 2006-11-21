@@ -1,6 +1,6 @@
 /* crypto/rsa/rsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -108,7 +108,7 @@ static ERR_STRING_DATA RSA_str_functs[]=
 {ERR_FUNC(RSA_F_RSA_PADDING_CHECK_SSLV23),	"RSA_padding_check_SSLv23"},
 {ERR_FUNC(RSA_F_RSA_PADDING_CHECK_X931),	"RSA_padding_check_X931"},
 {ERR_FUNC(RSA_F_RSA_PRINT),	"RSA_print"},
-{ERR_FUNC(RSA_F_RSA_PRINT_FP),	"RSA_PRINT_FP"},
+{ERR_FUNC(RSA_F_RSA_PRINT_FP),	"RSA_print_fp"},
 {ERR_FUNC(RSA_F_RSA_PRIV_DECODE),	"RSA_PRIV_DECODE"},
 {ERR_FUNC(RSA_F_RSA_PRIV_ENCODE),	"RSA_PRIV_ENCODE"},
 {ERR_FUNC(RSA_F_RSA_PUB_DECODE),	"RSA_PUB_DECODE"},
@@ -142,7 +142,6 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_D_E_NOT_CONGRUENT_TO_1),"d e not congruent to 1"},
 {ERR_REASON(RSA_R_FIRST_OCTET_INVALID)   ,"first octet invalid"},
 {ERR_REASON(RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE),"illegal or unsupported padding mode"},
-{ERR_REASON(RSA_R_INVALID_DIGEST)        ,"invalid digest"},
 {ERR_REASON(RSA_R_INVALID_DIGEST_LENGTH) ,"invalid digest length"},
 {ERR_REASON(RSA_R_INVALID_HEADER)        ,"invalid header"},
 {ERR_REASON(RSA_R_INVALID_KEYBITS)       ,"invalid keybits"},
@@ -179,15 +178,12 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 
 void ERR_load_RSA_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(RSA_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,RSA_str_functs);
 		ERR_load_strings(0,RSA_str_reasons);
-#endif
-
 		}
+#endif
 	}
