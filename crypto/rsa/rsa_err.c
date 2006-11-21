@@ -1,6 +1,6 @@
 /* crypto/rsa/rsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -133,17 +133,17 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_NULL_BEFORE_BLOCK_MISSING),"null before block missing"},
 {ERR_REASON(RSA_R_N_DOES_NOT_EQUAL_P_Q)  ,"n does not equal p q"},
 {ERR_REASON(RSA_R_OAEP_DECODING_ERROR)   ,"oaep decoding error"},
-{ERR_REASON(RSA_R_SLEN_RECOVERY_FAILED)  ,"salt length recovery failed"},
 {ERR_REASON(RSA_R_PADDING_CHECK_FAILED)  ,"padding check failed"},
 {ERR_REASON(RSA_R_P_NOT_PRIME)           ,"p not prime"},
 {ERR_REASON(RSA_R_Q_NOT_PRIME)           ,"q not prime"},
 {ERR_REASON(RSA_R_RSA_OPERATIONS_NOT_SUPPORTED),"rsa operations not supported"},
+{ERR_REASON(RSA_R_SLEN_CHECK_FAILED)     ,"salt length check failed"},
+{ERR_REASON(RSA_R_SLEN_RECOVERY_FAILED)  ,"salt length recovery failed"},
 {ERR_REASON(RSA_R_SSLV3_ROLLBACK_ATTACK) ,"sslv3 rollback attack"},
 {ERR_REASON(RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD),"the asn1 object identifier is not known for this md"},
 {ERR_REASON(RSA_R_UNKNOWN_ALGORITHM_TYPE),"unknown algorithm type"},
 {ERR_REASON(RSA_R_UNKNOWN_PADDING_TYPE)  ,"unknown padding type"},
 {ERR_REASON(RSA_R_WRONG_SIGNATURE_LENGTH),"wrong signature length"},
-{ERR_REASON(RSA_R_SLEN_CHECK_FAILED)     ,"salt length check failed"},
 {0,NULL}
 	};
 
@@ -151,15 +151,12 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 
 void ERR_load_RSA_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(RSA_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,RSA_str_functs);
 		ERR_load_strings(0,RSA_str_reasons);
-#endif
-
 		}
+#endif
 	}

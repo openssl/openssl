@@ -1,6 +1,6 @@
 /* crypto/pem/pem_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -121,15 +121,12 @@ static ERR_STRING_DATA PEM_str_reasons[]=
 
 void ERR_load_PEM_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(PEM_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,PEM_str_functs);
 		ERR_load_strings(0,PEM_str_reasons);
-#endif
-
 		}
+#endif
 	}

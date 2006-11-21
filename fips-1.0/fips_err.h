@@ -1,6 +1,6 @@
-/* fips/fips_err.h */
+/* fips-1.0/fips_err.h */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -75,6 +75,7 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_DSA_DO_VERIFY),	"DSA_do_verify"},
 {ERR_FUNC(FIPS_F_DSA_GENERATE_PARAMETERS),	"DSA_generate_parameters"},
 {ERR_FUNC(FIPS_F_FIPS_CHECK_DSA),	"FIPS_CHECK_DSA"},
+{ERR_FUNC(FIPS_F_FIPS_CHECK_DSO),	"FIPS_CHECK_DSO"},
 {ERR_FUNC(FIPS_F_FIPS_CHECK_EXE),	"FIPS_CHECK_EXE"},
 {ERR_FUNC(FIPS_F_FIPS_CHECK_FINGERPRINT),	"FIPS_CHECK_FINGERPRINT"},
 {ERR_FUNC(FIPS_F_FIPS_CHECK_RSA),	"FIPS_CHECK_RSA"},
@@ -91,7 +92,6 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_RSA_GENERATE_KEY),	"RSA_generate_key"},
 {ERR_FUNC(FIPS_F_RSA_X931_GENERATE_KEY),	"RSA_X931_generate_key"},
 {ERR_FUNC(FIPS_F_SSLEAY_RAND_BYTES),	"SSLEAY_RAND_BYTES"},
-{ERR_FUNC(FIPS_F_FIPS_CHECK_DSO),	"FIPS_check_dso"},
 {0,NULL}
 	};
 
@@ -99,6 +99,7 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 	{
 {ERR_REASON(FIPS_R_CANNOT_READ_EXE)      ,"cannot access executable object"},
 {ERR_REASON(FIPS_R_CANNOT_READ_EXE_DIGEST),"cannot access detached digest"},
+{ERR_REASON(FIPS_R_CONTRADICTING_EVIDENCE),"duplicate code detected, check your linking procedure"},
 {ERR_REASON(FIPS_R_EXE_DIGEST_DOES_NOT_MATCH),"detached digest verification failed"},
 {ERR_REASON(FIPS_R_FINGERPRINT_DOES_NOT_MATCH),"fingerprint does not match"},
 {ERR_REASON(FIPS_R_FINGERPRINT_DOES_NOT_MATCH_NONPIC_RELOCATED),"fingerprint does not match, possibly because non-PIC was relocated"},
@@ -111,7 +112,6 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {ERR_REASON(FIPS_R_PAIRWISE_TEST_FAILED) ,"pairwise test failed"},
 {ERR_REASON(FIPS_R_SELFTEST_FAILED)      ,"selftest failed"},
 {ERR_REASON(FIPS_R_UNSUPPORTED_PLATFORM) ,"unsupported platform"},
-{ERR_REASON(FIPS_R_CONTRADICTING_EVIDENCE),"duplicate code detected, check your linking procedure"},
 {0,NULL}
 	};
 
@@ -119,15 +119,12 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 
 void ERR_load_FIPS_strings(void)
 	{
-	static int init;
-
-	if (!init)
-		{
-		init=1;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(FIPS_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,FIPS_str_functs);
 		ERR_load_strings(0,FIPS_str_reasons);
-#endif
-
 		}
+#endif
 	}
