@@ -422,7 +422,7 @@ EOF
 	print OUT <<"EOF";
 /* $cfile */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -536,17 +536,14 @@ if($static) {
 
 ${staticloader}void ERR_load_${lib}_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(${lib}_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings($load_errcode,${lib}_str_functs);
 		ERR_load_strings($load_errcode,${lib}_str_reasons);
-#endif
-
 		}
+#endif
 	}
 EOF
 } else {

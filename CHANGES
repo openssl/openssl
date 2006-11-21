@@ -4,6 +4,10 @@
 
  Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
 
+  *) Load error codes if they are not already present instead of using a
+     static variable. This allows them to be cleanly unloaded and reloaded.
+     [Steve Henson]
+
  Changes between 0.9.7k and 0.9.7l  [28 Sep 2006]
 
   *) Introduce limits to prevent malicious keys being able to
