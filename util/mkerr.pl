@@ -135,6 +135,8 @@ while (($hdr, $lib) = each %libinc)
 
 	print STDERR "                                  \r" if $debug;
         $defnr = 0;
+	# Delete any DECLARE_ macros
+	$def =~ s/DECLARE_\w+\([\w,\s]+\)//gs;
 	foreach (split /;/, $def) {
 	    $defnr++;
 	    print STDERR "def: $defnr\r" if $debug;
@@ -146,6 +148,9 @@ while (($hdr, $lib) = each %libinc)
 
 	    # Skip over recognized non-function declarations
 	    next if(/typedef\W/ or /DECLARE_STACK_OF/ or /TYPEDEF_.*_OF/);
+
+	    # Remove STACK_OF(foo)
+	    s/STACK_OF\(\w+\)/void/;
 
 	    # Reduce argument lists to empty ()
 	    # fold round brackets recursively: (t(*v)(t),t) -> (t{}{},t) -> {}
@@ -595,17 +600,14 @@ if($static) {
 
 ${staticloader}void ERR_load_${lib}_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(${lib}_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings($load_errcode,${lib}_str_functs);
 		ERR_load_strings($load_errcode,${lib}_str_reasons);
-#endif
-
 		}
+#endif
 	}
 EOF
 } else {

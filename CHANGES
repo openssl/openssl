@@ -4,6 +4,11 @@
 
  Changes between 0.9.8d and 0.9.8e  [XX xxx XXXX]
 
+  *) Load error codes if they are not already present instead of using a
+     static variable. This allows them to be cleanly unloaded and reloaded.
+     Improve header file function name parsing.
+     [Steve Henson]
+
  Changes between 0.9.8c and 0.9.8d  [28 Sep 2006]
 
   *) Introduce limits to prevent malicious keys being able to
