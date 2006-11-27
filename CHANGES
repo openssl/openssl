@@ -423,6 +423,9 @@
 
  Changes between 0.9.8d and 0.9.8e  [XX xxx XXXX]
 
+  *) Add RFC 3779 support.
+     [Rob Austein for ARIN, Ben Laurie]
+
  Changes between 0.9.8c and 0.9.8d  [28 Sep 2006]
 
   *) Introduce limits to prevent malicious keys being able to

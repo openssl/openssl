@@ -291,6 +291,10 @@ struct x509_st
 	AUTHORITY_KEYID *akid;
 	X509_POLICY_CACHE *policy_cache;
 	STACK_OF(DIST_POINT) *crldp;
+#ifdef OPENSSL_RFC3779
+	STACK_OF(IPAddressFamily) *rfc3779_addr;
+	struct ASIdentifiers_st *rfc3779_asid;
+#endif
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif

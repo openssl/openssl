@@ -166,6 +166,8 @@ const char *X509_verify_cert_error_string(long n)
 	return("Different CRL scope");
 	case X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE:
 	return("Unsupported extension feature");
+ 	case X509_V_ERR_UNNESTED_RESOURCE:
+ 		return("RFC 3779 resource not subset of parent's resources");
 	default:
 		BIO_snprintf(buf,sizeof buf,"error number %ld",n);
 		return(buf);

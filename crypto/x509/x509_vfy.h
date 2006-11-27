@@ -339,6 +339,7 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_DIFFERENT_CRL_SCOPE			44
 #define		X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE	45
 
+#define		X509_V_ERR_UNNESTED_RESOURCE			46
 
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50

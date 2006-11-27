@@ -314,6 +314,14 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		ok=internal_verify(ctx);
 	if(!ok) goto end;
 
+#ifdef OPENSSL_RFC3779
+	/* RFC 3779 path validation, now that CRL check has been done */
+	ok = v3_asid_validate_path(ctx);
+	if (!ok) goto end;
+	ok = v3_addr_validate_path(ctx);
+	if (!ok) goto end;
+#endif
+
 	/* If we get this far evaluate policies */
 	if (!bad_chain && (ctx->param->flags & X509_V_FLAG_POLICY_CHECK))
 		ok = ctx->check_policy(ctx);
