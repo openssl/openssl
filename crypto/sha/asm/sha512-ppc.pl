@@ -2,8 +2,9 @@
 
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
 # I let hardware handle unaligned input, except on page boundaries
@@ -17,7 +18,21 @@
 # PPC970,gcc-4.0.0	+50%	+38%	|	+40%	+410%(*)
 #
 # (*)	64-bit code in 32-bit application context, which actually is
-#	on TODO list
+#	on TODO list. It should be noted that for safe deployment in
+#	32-bit *mutli-threaded* context asyncronous signals should be
+#	blocked upon entry to SHA512 block routine. This is because
+#	32-bit signaling procedure invalidates upper halves of GPRs.
+#	Context switch procedure preserves them, but not signaling:-(
+
+# Second version is true multi-thread safe. Trouble with the original
+# version was that it was using thread local storage pointer register.
+# Well, it scrupulously preserved it, but the problem would arise the
+# moment asynchronous signal was delivered and signal handler would
+# dereference the TLS pointer. While it's never the case in openssl
+# application or test suite, we have to respect this scenario and not
+# use TLS pointer register. Alternative would be to require caller to
+# block signals prior calling this routine. For the record, in 32-bit
+# context R2 serves as TLS pointer, while in 64-bit context - R13.
 
 $output=shift;
 
@@ -69,30 +84,32 @@ if ($output =~ /512/) {
 $FRAME=32*$SIZE_T;
 
 $sp ="r1";
-$toc="r2";	# zapped by $Tbl
+$toc="r2";
 $ctx="r3";	# zapped by $a0
-$inp="r4";
-$num="r5";	# zapped by $a1
+$inp="r4";	# zapped by $a1
+$num="r5";	# zapped by $t0
 
 $T  ="r0";
-$Tbl="r2";
 $a0 ="r3";
-$a1 ="r5";
-$t0 ="r6";
-$t1 ="r7";
+$a1 ="r4";
+$t0 ="r5";
+$t1 ="r6";
+$Tbl="r7";
 
 $A  ="r8";
 $B  ="r9";
 $C  ="r10";
 $D  ="r11";
 $E  ="r12";
-$F  ="r13";
+$F  ="r13";	$F="r2" if ($SIZE_T==8);# reassigned to exempt TLS pointer
 $G  ="r14";
 $H  ="r15";
 
 @V=($A,$B,$C,$D,$E,$F,$G,$H);
 @X=("r16","r17","r18","r19","r20","r21","r22","r23",
     "r24","r25","r26","r27","r28","r29","r30","r31");
+
+$inp="r31";	# reassigned $inp! aliases with @X[15]
 
 sub ROUND_00_15 {
 my ($i,$a,$b,$c,$d,$e,$f,$g,$h)=@_;
@@ -184,6 +201,7 @@ $func:
 	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
 
 	$LD	$A,`0*$SZ`($ctx)
+	mr	$inp,r4				; incarnate $inp
 	$LD	$B,`1*$SZ`($ctx)
 	$LD	$C,`2*$SZ`($ctx)
 	$LD	$D,`3*$SZ`($ctx)
@@ -197,8 +215,9 @@ LPICedup:
 	andi.	r0,$inp,3
 	bne	Lunaligned
 Laligned:
-	add	$t0,$inp,$num
-	$PUSH	$t0,`$FRAME-$SIZE_T*23`($sp)	; end pointer
+	add	$num,$inp,$num
+	$PUSH	$num,`$FRAME-$SIZE_T*24`($sp)	; end pointer
+	$PUSH	$inp,`$FRAME-$SIZE_T*23`($sp)	; inp pointer
 	bl	Lsha2_block_private
 Ldone:
 	$POP	r0,`$FRAME-$SIZE_T*21`($sp)
@@ -242,15 +261,17 @@ Lunaligned:
 	$UCMP	$num,$t1
 	ble-	Laligned		; didn't cross the page boundary
 	subfc	$num,$t1,$num
-	add	$t0,$inp,$t1
-	$PUSH	$num,`$FRAME-$SIZE_T*24`($sp)
-	$PUSH	$t0,`$FRAME-$SIZE_T*23`($sp)	; end pointer
+	add	$t1,$inp,$t1
+	$PUSH	$num,`$FRAME-$SIZE_T*25`($sp)	; save real remaining num
+	$PUSH	$t1,`$FRAME-$SIZE_T*24`($sp)	; intermediate end pointer
+	$PUSH	$inp,`$FRAME-$SIZE_T*23`($sp)	; inp pointer
 	bl	Lsha2_block_private
-	$POP	$num,`$FRAME-$SIZE_T*24`($sp)
+	; $inp equals to the intermediate end pointer here
+	$POP	$num,`$FRAME-$SIZE_T*25`($sp)	; restore real remaining num
 Lcross_page:
 	li	$t1,`16*$SZ/4`
 	mtctr	$t1
-	addi	r20,$sp,$FRAME	; spot below the frame
+	addi	r20,$sp,$FRAME			; aligned spot below the frame
 Lmemcpy:
 	lbz	r16,0($inp)
 	lbz	r17,1($inp)
@@ -264,15 +285,16 @@ Lmemcpy:
 	addi	r20,r20,4
 	bdnz	Lmemcpy
 
-	$PUSH	$inp,`$FRAME-$SIZE_T*25`($sp)
-	addi	$inp,$sp,$FRAME
-	addi	$t0,$sp,`$FRAME+16*$SZ`
-	$PUSH	$num,`$FRAME-$SIZE_T*24`($sp)
-	$PUSH	$t0,`$FRAME-$SIZE_T*23`($sp)	; end pointer
+	$PUSH	$inp,`$FRAME-$SIZE_T*26`($sp)	; save real inp
+	addi	$t1,$sp,`$FRAME+16*$SZ`		; fictitious end pointer
+	addi	$inp,$sp,$FRAME			; fictitious inp pointer
+	$PUSH	$num,`$FRAME-$SIZE_T*25`($sp)	; save real num
+	$PUSH	$t1,`$FRAME-$SIZE_T*24`($sp)	; end pointer
+	$PUSH	$inp,`$FRAME-$SIZE_T*23`($sp)	; inp pointer
 	bl	Lsha2_block_private
-	$POP	$inp,`$FRAME-$SIZE_T*25`($sp)
-	$POP	$num,`$FRAME-$SIZE_T*24`($sp)
-	addic.	$num,$num,`-16*$SZ`
+	$POP	$inp,`$FRAME-$SIZE_T*26`($sp)	; restore real inp
+	$POP	$num,`$FRAME-$SIZE_T*25`($sp)	; restore real num
+	addic.	$num,$num,`-16*$SZ`		; num--
 	bne-	Lunaligned
 	b	Ldone
 ___
@@ -309,9 +331,10 @@ for(;$i<32;$i++) {
 $code.=<<___;
 	bdnz-	Lrounds
 
-	subi	$Tbl,$Tbl,`($rounds-16)*$SZ`
 	$POP	$ctx,`$FRAME-$SIZE_T*22`($sp)
-	$POP	$num,`$FRAME-$SIZE_T*23`($sp)	; end pointer
+	$POP	$inp,`$FRAME-$SIZE_T*23`($sp)	; inp pointer
+	$POP	$num,`$FRAME-$SIZE_T*24`($sp)	; end pointer
+	subi	$Tbl,$Tbl,`($rounds-16)*$SZ`	; rewind Tbl
 
 	$LD	r16,`0*$SZ`($ctx)
 	$LD	r17,`1*$SZ`($ctx)
@@ -320,9 +343,11 @@ $code.=<<___;
 	$LD	r20,`4*$SZ`($ctx)
 	$LD	r21,`5*$SZ`($ctx)
 	$LD	r22,`6*$SZ`($ctx)
+	addi	$inp,$inp,`16*$SZ`		; advance inp
 	$LD	r23,`7*$SZ`($ctx)
 	add	$A,$A,r16
 	add	$B,$B,r17
+	$PUSH	$inp,`$FRAME-$SIZE_T*23`($sp)
 	add	$C,$C,r18
 	$ST	$A,`0*$SZ`($ctx)
 	add	$D,$D,r19
@@ -335,7 +360,6 @@ $code.=<<___;
 	$ST	$E,`4*$SZ`($ctx)
 	add	$H,$H,r23
 	$ST	$F,`5*$SZ`($ctx)
-	addi	$inp,$inp,`16*$SZ`
 	$ST	$G,`6*$SZ`($ctx)
 	$UCMP	$inp,$num
 	$ST	$H,`7*$SZ`($ctx)
@@ -349,16 +373,16 @@ $code.=<<___;
 .align	6
 LPICmeup:
 	bl	LPIC
+	addi	$Tbl,$Tbl,`64-4`	; "distance" between . and last nop
 	b	LPICedup
 	nop
 	nop
 	nop
 	nop
 	nop
-	nop
 LPIC:	mflr	$Tbl
-	addi	$Tbl,$Tbl,`64-4`	; "distance" between bl and last nop
 	blr
+	nop
 	nop
 	nop
 	nop
