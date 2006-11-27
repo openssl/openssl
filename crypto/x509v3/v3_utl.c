@@ -71,7 +71,6 @@ static STACK *get_email(X509_NAME *name, GENERAL_NAMES *gens);
 static void str_free(void *str);
 static int append_ia5(STACK **sk, ASN1_IA5STRING *email);
 
-static int a2i_ipadd(unsigned char *ipout, const char *ipasc);
 static int ipv4_from_asc(unsigned char *v4, const char *in);
 static int ipv6_from_asc(unsigned char *v6, const char *in);
 static int ipv6_cb(const char *elem, int len, void *usr);
@@ -615,7 +614,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
 	}
 	
 
-static int a2i_ipadd(unsigned char *ipout, const char *ipasc)
+int a2i_ipadd(unsigned char *ipout, const char *ipasc)
 	{
 	/* If string contains a ':' assume IPv6 */
 

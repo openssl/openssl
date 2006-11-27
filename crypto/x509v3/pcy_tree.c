@@ -628,6 +628,16 @@ int X509_policy_check(X509_POLICY_TREE **ptree, int *pexplicit_policy,
 		/* Tree OK: continue */
 
 		case 1:
+		if (!tree)
+			/*
+			 * tree_init() returns success and a null tree
+			 * if it's just looking at a trust anchor.
+			 * I'm not sure that returning success here is
+			 * correct, but I'm sure that reporting this
+			 * as an internal error which our caller
+			 * interprets as a malloc failure is wrong.
+			 */
+			return 1;
 		break;
 		}
 

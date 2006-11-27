@@ -4,6 +4,9 @@
 
  Changes between 0.9.8d and 0.9.8e  [XX xxx XXXX]
 
+  *) Add RFC 3779 support.
+     [Rob Austein for ARIN, Ben Laurie]
+
   *) Load error codes if they are not already present instead of using a
      static variable. This allows them to be cleanly unloaded and reloaded.
      Improve header file function name parsing.

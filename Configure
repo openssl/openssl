@@ -568,6 +568,7 @@ my $threads=0;
 my $no_shared=0; # but "no-shared" is default
 my $zlib=1;      # but "no-zlib" is default
 my $no_krb5=0;   # but "no-krb5" is implied unless "--with-krb5-..." is used
+my $rfc3779=1;	 # but "no-rfc3779" is default
 my $no_asm=0;
 my $no_dso=0;
 my $no_gmp=0;
@@ -604,6 +605,7 @@ my %disabled = ( # "what"         => "comment"
 		 "gmp"		  => "default",
                  "mdc2"           => "default",
                  "rc5"            => "default",
+		 "rfc3779"	  => "default",
                  "shared"         => "default",
                  "zlib"           => "default",
                  "zlib-dynamic"   => "default"
@@ -883,6 +885,8 @@ foreach (sort (keys %disabled))
 		{ $symlink = 0; }
 	elsif (/^sse2$/)
 		{ $no_sse2 = 1; }
+	elsif (/^rfc3779$/)
+		{ $rfc3779 = 0; }
 	else
 		{
 		my ($ALGO, $algo);
@@ -1118,6 +1122,11 @@ if ($zlib)
 		{
 		$cflags = "-DZLIB_SHARED $cflags";
 		}
+	}
+
+if ($rfc3779)
+	{
+	$openssl_other_defines.="#define OPENSSL_RFC3779\n";
 	}
 
 # You will find shlib_mark1 and shlib_mark2 explained in Makefile.org

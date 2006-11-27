@@ -331,6 +331,7 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_INVALID_POLICY_EXTENSION		42
 #define		X509_V_ERR_NO_EXPLICIT_POLICY			43
 
+#define		X509_V_ERR_UNNESTED_RESOURCE			44
 
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50

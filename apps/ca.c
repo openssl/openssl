@@ -1520,6 +1520,7 @@ err:
 	if (x509) X509_free(x509);
 	X509_CRL_free(crl);
 	NCONF_free(conf);
+	NCONF_free(extconf);
 	OBJ_cleanup();
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
