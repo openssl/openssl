@@ -18,8 +18,8 @@
 # implementations from compatibility matrix. But the rest, whole Sun
 # UltraSPARC family and brand new Fujitsu's SPARC64 V, all support
 # VIS extension instructions used in this module. This is considered
-# good enough to recommend HAL SPARC64 users [if any] to simply fall
-# down to no-asm configuration.
+# good enough to not care about HAL SPARC64 users [if any] who have
+# integer-only pure SPARCv9 module to "fall down" to.
 
 # USI&II cores currently exhibit uniform 2x improvement [over pre-
 # bn_mul_mont codebase] for all key lengths and benchmarks. On USIII
@@ -31,7 +31,7 @@
 # is pipelined, which in turn *might* be impossible to match... On
 # additional note, SPARC64 V implements FP Multiply-Add instruction,
 # which is perfectly usable in this context... In other words, as far
-# as HAL/Fujitsu SPARC64 family goes, talk to the author:-)
+# as Fujitsu SPARC64 V goes, talk to the author:-)
 
 # The implementation implies following "non-natural" limitations on
 # input arguments:
