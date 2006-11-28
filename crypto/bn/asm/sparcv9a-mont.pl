@@ -455,13 +455,18 @@ $fname:
 	add	$tp,8,$tp
 
 .L1stskip:
+	fdtox	$dota,$dota
+	fdtox	$dotb,$dotb
+
 	ldx	[%sp+$bias+$frame+0],%o0
 	ldx	[%sp+$bias+$frame+8],%o1
 	ldx	[%sp+$bias+$frame+16],%o2
 	ldx	[%sp+$bias+$frame+24],%o3
 
 	srlx	%o0,16,%o7
+	std	$dota,[%sp+$bias+$frame+32]
 	add	%o7,%o1,%o1
+	std	$dotb,[%sp+$bias+$frame+40]
 	srlx	%o1,16,%o7
 	add	%o7,%o2,%o2
 	srlx	%o2,16,%o7
@@ -475,33 +480,28 @@ $fname:
 	or	%o1,%o0,%o0
 	or	%o2,%o0,%o0
 	or	%o7,%o0,%o0		! 64-bit result
+	ldx	[%sp+$bias+$frame+32],%o4
 	addcc	%g1,%o0,%o0
+	ldx	[%sp+$bias+$frame+40],%o5
 	srlx	%o3,16,%g1		! 34-bit carry
 	bcs,a	%xcc,.+8
 	add	%g1,1,%g1
 
 	stx	%o0,[$tp]		! tp[j-1]=
 	add	$tp,8,$tp
-
-	fdtox	$dota,$dota
-	fdtox	$dotb,$dotb
-	std	$dota,[%sp+$bias+$frame+32]
-	std	$dotb,[%sp+$bias+$frame+40]
-	ldx	[%sp+$bias+$frame+32],%o0
-	ldx	[%sp+$bias+$frame+40],%o1
 
-	srlx	%o0,16,%o7
-	add	%o7,%o1,%o1
-	and	%o0,$mask,%o0
-	sllx	%o1,16,%o7
-	or	%o7,%o0,%o0
-	addcc	%g1,%o0,%o0
-	srlx	%o1,48,%g1
+	srlx	%o4,16,%o7
+	add	%o7,%o5,%o5
+	and	%o4,$mask,%o4
+	sllx	%o5,16,%o7
+	or	%o7,%o4,%o4
+	addcc	%g1,%o4,%o4
+	srlx	%o5,48,%g1
 	bcs,a	%xcc,.+8
 	add	%g1,1,%g1
 
 	mov	%g1,$carry
-	stx	%o0,[$tp]		! tp[num-1]=
+	stx	%o4,[$tp]		! tp[num-1]=
 
 	ba	.Louter
 	add	$i,8,$i
@@ -664,7 +664,9 @@ $fname:
 	bz,pn	%icc,.Linnerskip
 	std	$nlod,[%sp+$bias+$frame+24]
 
-.align	32,0x1000000
+	ba	.Linner
+	nop
+.align	32
 .Linner:
 	ldd	[$ap_l+$j],$alo		! load a[j] in double format
 	ldd	[$ap_h+$j],$ahi
@@ -719,12 +721,12 @@ $fname:
 	or	%o7,%o0,%o0		! 64-bit result
 		faddd	$nloc,$nhia,$nloc
 	addcc	%g1,%o0,%o0
+	ldx	[$tp+8],%o7		! tp[j]
 		faddd	$nlod,$nhib,$nlod
 	srlx	%o3,16,%g1		! 34-bit carry
 		fdtox	$nloa,$nloa
 	bcs,a	%xcc,.+8
 	add	%g1,1,%g1
-	ldx	[$tp+8],%o7		! tp[j]
 		fdtox	$nlob,$nlob
 	addcc	%o7,%o0,%o0
 		fdtox	$nloc,$nloc
