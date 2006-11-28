@@ -286,19 +286,16 @@ $fname:
 	!or	%o7,%o0,%o0		! 64-bit result
 	srlx	%o3,16,%g1		! 34-bit carry
 
-	ba	.L1st
 	add	$j,8,$j
-.align	32
-.L1st:
-	add	$ap,$j,%o3
-	add	$np,$j,%o4
-	ld	[%o3+0],$alo_	! load a[j] as pair of 32-bit words
+	add	$ap,$j,%o4
+	add	$np,$j,%o5
+	ld	[%o4+0],$alo_	! load a[j] as pair of 32-bit words
 	fzeros	$alo
-	ld	[%o3+4],$ahi_
+	ld	[%o4+4],$ahi_
 	fzeros	$ahi
-	ld	[%o4+0],$nlo_	! load n[j] as pair of 32-bit words
+	ld	[%o5+0],$nlo_	! load n[j] as pair of 32-bit words
 	fzeros	$nlo
-	ld	[%o4+4],$nhi_
+	ld	[%o5+4],$nhi_
 	fzeros	$nhi
 
 	fxtod	$alo,$alo
@@ -350,6 +347,11 @@ $fname:
 	std	$nlob,[%sp+$bias+$frame+8]
 	std	$nloc,[%sp+$bias+$frame+16]
 	std	$nlod,[%sp+$bias+$frame+24]
+
+	addcc	$j,8,$j
+	bz,pn	%icc,.L1stskip
+.align	32,0x1000000
+.L1st:
 	ldx	[%sp+$bias+$frame+0],%o0
 	ldx	[%sp+$bias+$frame+8],%o1
 	ldx	[%sp+$bias+$frame+16],%o2
@@ -376,8 +378,100 @@ $fname:
 	add	%g1,1,%g1
 
 	stx	%o0,[$tp]		! tp[j-1]=
+
+
+	add	$ap,$j,%o4
+	add	$np,$j,%o5
+	ld	[%o4+0],$alo_	! load a[j] as pair of 32-bit words
+	fzeros	$alo
+	ld	[%o4+4],$ahi_
+	fzeros	$ahi
+	ld	[%o5+0],$nlo_	! load n[j] as pair of 32-bit words
+	fzeros	$nlo
+	ld	[%o5+4],$nhi_
+	fzeros	$nhi
+
+	fxtod	$alo,$alo
+	fxtod	$ahi,$ahi
+	fxtod	$nlo,$nlo
+	fxtod	$nhi,$nhi
+
+	std	$alo,[$ap_l+$j]		! save smashed ap[j] in double format
+		fmuld	$alo,$ba,$aloa
+	std	$ahi,[$ap_h+$j]
+		fmuld	$nlo,$na,$nloa
+	std	$nlo,[$np_l+$j]		! save smashed np[j] in double format
+		fmuld	$alo,$bb,$alob
+	std	$nhi,[$np_h+$j]
+		fmuld	$nlo,$nb,$nlob
+		fmuld	$alo,$bc,$aloc
+	faddd	$aloa,$nloa,$nloa
+		fmuld	$nlo,$nc,$nloc
+		fmuld	$alo,$bd,$alod
+	faddd	$alob,$nlob,$nlob
+		fmuld	$nlo,$nd,$nlod
+		fmuld	$ahi,$ba,$ahia
+	faddd	$aloc,$nloc,$nloc
+		fmuld	$nhi,$na,$nhia
+		fmuld	$ahi,$bb,$ahib
+	faddd	$alod,$nlod,$nlod
+		fmuld	$nhi,$nb,$nhib
+		fmuld	$ahi,$bc,$ahic
+	faddd	$ahia,$nhia,$nhia
+		fmuld	$nhi,$nc,$nhic
+		fmuld	$ahi,$bd,$ahid
+	faddd	$ahib,$nhib,$nhib
+		fmuld	$nhi,$nd,$nhid
+
+	faddd	$dota,$nloa,$nloa
+	faddd	$dotb,$nlob,$nlob
+	faddd	$ahic,$nhic,$dota	! $nhic
+	faddd	$ahid,$nhid,$dotb	! $nhid
+
+	faddd	$nloc,$nhia,$nloc
+	faddd	$nlod,$nhib,$nlod
+
+	fdtox	$nloa,$nloa
+	fdtox	$nlob,$nlob
+	fdtox	$nloc,$nloc
+	fdtox	$nlod,$nlod
+
+	std	$nloa,[%sp+$bias+$frame+0]
+	std	$nlob,[%sp+$bias+$frame+8]
+	std	$nloc,[%sp+$bias+$frame+16]
+	std	$nlod,[%sp+$bias+$frame+24]
+
 	addcc	$j,8,$j
 	bnz,pt	%icc,.L1st
+	add	$tp,8,$tp
+
+.L1stskip:
+	ldx	[%sp+$bias+$frame+0],%o0
+	ldx	[%sp+$bias+$frame+8],%o1
+	ldx	[%sp+$bias+$frame+16],%o2
+	ldx	[%sp+$bias+$frame+24],%o3
+
+	srlx	%o0,16,%o7
+	add	%o7,%o1,%o1
+	srlx	%o1,16,%o7
+	add	%o7,%o2,%o2
+	srlx	%o2,16,%o7
+	add	%o7,%o3,%o3		! %o3.%o2[0..15].%o1[0..15].%o0[0..15]
+	and	%o0,$mask,%o0
+	and	%o1,$mask,%o1
+	and	%o2,$mask,%o2
+	sllx	%o1,16,%o1
+	sllx	%o2,32,%o2
+	sllx	%o3,48,%o7
+	or	%o1,%o0,%o0
+	or	%o2,%o0,%o0
+	or	%o7,%o0,%o0		! 64-bit result
+	addcc	%g1,%o0,%o0
+	srlx	%o3,16,%g1		! 34-bit carry
+	bcs,a	%xcc,.+8
+	add	%g1,1,%g1
+
+	stx	%o0,[$tp]		! tp[j-1]=
 	add	$tp,8,$tp
 
 	fdtox	$dota,$dota
@@ -514,10 +608,7 @@ $fname:
 	bcs,a	%xcc,.+8
 	add	%g1,1,%g1
 
-	ba	.Linner
 	add	$j,8,$j
-.align	32
-.Linner:
 	ldd	[$ap_l+$j],$alo		! load a[j] in double format
 	ldd	[$ap_h+$j],$ahi
 	ldd	[$np_l+$j],$nlo		! load n[j] in double format
@@ -563,6 +654,11 @@ $fname:
 	std	$nlob,[%sp+$bias+$frame+8]
 	std	$nloc,[%sp+$bias+$frame+16]
 	std	$nlod,[%sp+$bias+$frame+24]
+
+	addcc	$j,8,$j
+	bz,pn	%icc,.Linnerskip
+.align	32,0x1000000
+.Linner:
 	ldx	[%sp+$bias+$frame+0],%o0
 	ldx	[%sp+$bias+$frame+8],%o1
 	ldx	[%sp+$bias+$frame+16],%o2
@@ -594,8 +690,90 @@ $fname:
 	add	%g1,1,%g1
 
 	stx	%o0,[$tp]		! tp[j-1]
+
+
+	ldd	[$ap_l+$j],$alo		! load a[j] in double format
+	ldd	[$ap_h+$j],$ahi
+	ldd	[$np_l+$j],$nlo		! load n[j] in double format
+	ldd	[$np_h+$j],$nhi
+
+		fmuld	$alo,$ba,$aloa
+		fmuld	$nlo,$na,$nloa
+		fmuld	$alo,$bb,$alob
+		fmuld	$nlo,$nb,$nlob
+		fmuld	$alo,$bc,$aloc
+	faddd	$aloa,$nloa,$nloa
+		fmuld	$nlo,$nc,$nloc
+		fmuld	$alo,$bd,$alod
+	faddd	$alob,$nlob,$nlob
+		fmuld	$nlo,$nd,$nlod
+		fmuld	$ahi,$ba,$ahia
+	faddd	$aloc,$nloc,$nloc
+		fmuld	$nhi,$na,$nhia
+		fmuld	$ahi,$bb,$ahib
+	faddd	$alod,$nlod,$nlod
+		fmuld	$nhi,$nb,$nhib
+		fmuld	$ahi,$bc,$ahic
+	faddd	$ahia,$nhia,$nhia
+		fmuld	$nhi,$nc,$nhic
+		fmuld	$ahi,$bd,$ahid
+	faddd	$ahib,$nhib,$nhib
+		fmuld	$nhi,$nd,$nhid
+
+	faddd	$dota,$nloa,$nloa
+	faddd	$dotb,$nlob,$nlob
+	faddd	$ahic,$nhic,$dota	! $nhic
+	faddd	$ahid,$nhid,$dotb	! $nhid
+
+	faddd	$nloc,$nhia,$nloc
+	faddd	$nlod,$nhib,$nlod
+
+	fdtox	$nloa,$nloa
+	fdtox	$nlob,$nlob
+	fdtox	$nloc,$nloc
+	fdtox	$nlod,$nlod
+
+	std	$nloa,[%sp+$bias+$frame+0]
+	std	$nlob,[%sp+$bias+$frame+8]
+	std	$nloc,[%sp+$bias+$frame+16]
+	std	$nlod,[%sp+$bias+$frame+24]
+
 	addcc	$j,8,$j
 	bnz,pt	%icc,.Linner
+	add	$tp,8,$tp
+
+.Linnerskip:
+	ldx	[%sp+$bias+$frame+0],%o0
+	ldx	[%sp+$bias+$frame+8],%o1
+	ldx	[%sp+$bias+$frame+16],%o2
+	ldx	[%sp+$bias+$frame+24],%o3
+
+	srlx	%o0,16,%o7
+	add	%o7,%o1,%o1
+	srlx	%o1,16,%o7
+	add	%o7,%o2,%o2
+	srlx	%o2,16,%o7
+	add	%o7,%o3,%o3		! %o3.%o2[0..15].%o1[0..15].%o0[0..15]
+	and	%o0,$mask,%o0
+	and	%o1,$mask,%o1
+	and	%o2,$mask,%o2
+	sllx	%o1,16,%o1
+	sllx	%o2,32,%o2
+	sllx	%o3,48,%o7
+	or	%o1,%o0,%o0
+	or	%o2,%o0,%o0
+	or	%o7,%o0,%o0		! 64-bit result
+	addcc	%g1,%o0,%o0
+	srlx	%o3,16,%g1		! 34-bit carry
+	bcs,a	%xcc,.+8
+	add	%g1,1,%g1
+
+	ldx	[$tp+8],%o7		! tp[j]
+	addcc	%o7,%o0,%o0
+	bcs,a	%xcc,.+8
+	add	%g1,1,%g1
+
+	stx	%o0,[$tp]		! tp[j-1]
 	add	$tp,8,$tp
 
 	fdtox	$dota,$dota
