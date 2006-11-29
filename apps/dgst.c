@@ -264,7 +264,7 @@ int MAIN(int argc, char **argv)
 		{
 		BIO_set_callback(in,BIO_debug_callback);
 		/* needed for windows 3.1 */
-		BIO_set_callback_arg(in,bio_err);
+		BIO_set_callback_arg(in,(char *)bio_err);
 		}
 
 	if(!app_passwd(bio_err, passargin, NULL, &passin, NULL))

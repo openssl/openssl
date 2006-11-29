@@ -1602,7 +1602,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		{
 		con->debug=1;
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
-		BIO_set_callback_arg(SSL_get_rbio(con),bio_s_out);
+		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
 		}
 	if (s_msg)
 		{
@@ -2020,7 +2020,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 		{
 		con->debug=1;
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
-		BIO_set_callback_arg(SSL_get_rbio(con),bio_s_out);
+		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
 		}
 	if (s_msg)
 		{

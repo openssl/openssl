@@ -865,28 +865,38 @@ struct ssl_ctx_st
 #define SSL_CTX_sess_cache_full(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_CACHE_FULL,0,NULL)
 
-#define SSL_CTX_sess_set_new_cb(ctx,cb)	((ctx)->new_session_cb=(cb))
-#define SSL_CTX_sess_get_new_cb(ctx)	((ctx)->new_session_cb)
-#define SSL_CTX_sess_set_remove_cb(ctx,cb)	((ctx)->remove_session_cb=(cb))
-#define SSL_CTX_sess_get_remove_cb(ctx)	((ctx)->remove_session_cb)
-#define SSL_CTX_sess_set_get_cb(ctx,cb)	((ctx)->get_session_cb=(cb))
-#define SSL_CTX_sess_get_get_cb(ctx)	((ctx)->get_session_cb)
-#define SSL_CTX_set_info_callback(ctx,cb)	((ctx)->info_callback=(cb))
-#define SSL_CTX_get_info_callback(ctx)		((ctx)->info_callback)
-#define SSL_CTX_set_client_cert_cb(ctx,cb)	((ctx)->client_cert_cb=(cb))
-#define SSL_CTX_get_client_cert_cb(ctx)		((ctx)->client_cert_cb)
-#define SSL_CTX_set_cookie_generate_cb(ctx,cb) ((ctx)->app_gen_cookie_cb=(cb))
-#define SSL_CTX_set_cookie_verify_cb(ctx,cb) ((ctx)->app_verify_cookie_cb=(cb))
+void SSL_CTX_sess_set_new_cb(SSL_CTX *ctx, int (*new_session_cb)(struct ssl_st *ssl,SSL_SESSION *sess));
+int (*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx))(struct ssl_st *ssl, SSL_SESSION *sess);
+void SSL_CTX_sess_set_remove_cb(SSL_CTX *ctx, void (*remove_session_cb)(struct ssl_ctx_st *ctx,SSL_SESSION *sess));
+void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))(struct ssl_ctx_st *ctx, SSL_SESSION *sess);
+void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx, SSL_SESSION *(*get_session_cb)(struct ssl_st *ssl, unsigned char *data,int len,int *copy));
+SSL_SESSION *(*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(struct ssl_st *ssl, unsigned char *Data, int len, int *copy);
+void SSL_CTX_set_info_callback(SSL_CTX *ctx, void (*cb)(const SSL *ssl,int type,int val));
+void (*SSL_CTX_get_info_callback(SSL_CTX *ctx))(const SSL *ssl,int type,int val);
+void SSL_CTX_set_client_cert_cb(SSL_CTX *ctx, int (*client_cert_cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey));
+int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL *ssl, X509 **x509, EVP_PKEY **pkey);
+void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx, int (*app_gen_cookie_cb)(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len));
+void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx, int (*app_verify_cookie_cb)(SSL *ssl, unsigned char *cookie, unsigned int cookie_len));
 
 #ifndef OPENSSL_NO_PSK
 /* the maximum length of the buffer given to callbacks containing the
  * resulting identity/psk */
 #define PSK_MAX_IDENTITY_LEN 128
 #define PSK_MAX_PSK_LEN 64
-#define SSL_CTX_set_psk_client_callback(ctx,cb) ((ctx)->psk_client_callback=(cb))
-#define SSL_set_psk_client_callback(ssl, cb) ((ssl)->psk_client_callback=(cb))
-#define SSL_CTX_set_psk_server_callback(ctx,cb) ((ctx)->psk_server_callback=(cb))
-#define SSL_set_psk_server_callback(ssl, cb) ((ssl)->psk_server_callback=(cb))
+void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx, 
+	unsigned int (*psk_client_callback)(SSL *ssl, const char *hint, 
+		char *identity, unsigned int max_identity_len, unsigned char *psk,
+		unsigned int max_psk_len));
+void SSL_set_psk_client_callback(SSL *ssl, 
+	unsigned int (*psk_client_callback)(SSL *ssl, const char *hint, 
+		char *identity, unsigned int max_identity_len, unsigned char *psk,
+		unsigned int max_psk_len));
+void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx, 
+	unsigned int (*psk_server_callback)(SSL *ssl, const char *identity,
+		unsigned char *psk, unsigned int max_psk_len));
+void SSL_set_psk_server_callback(SSL *ssl,
+	unsigned int (*psk_server_callback)(SSL *ssl, const char *identity,
+		unsigned char *psk, unsigned int max_psk_len));
 int SSL_CTX_use_psk_identity_hint(SSL_CTX *ctx, const char *identity_hint);
 int SSL_use_psk_identity_hint(SSL *s, const char *identity_hint);
 const char *SSL_get_psk_identity_hint(const SSL *s);

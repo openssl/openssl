@@ -141,6 +141,52 @@ int BIO_free(BIO *a)
 void BIO_vfree(BIO *a)
     { BIO_free(a); }
 
+void BIO_clear_flags(BIO *b, int flags)
+	{
+	b->flags &= ~flags;
+	}
+
+int	BIO_test_flags(const BIO *b, int flags)
+	{
+	return (b->flags & flags);
+	}
+
+void	BIO_set_flags(BIO *b, int flags)
+	{
+	b->flags |= flags;
+	}
+
+long (*BIO_get_callback(const BIO *b))(struct bio_st *,int,const char *,int, long,long)
+	{
+	return b->callback;
+	}
+
+void BIO_set_callback(BIO *b, long (*cb)(struct bio_st *,int,const char *,int, long,long))
+	{
+	b->callback = cb;
+	}
+
+void BIO_set_callback_arg(BIO *b, char *arg)
+	{
+	b->cb_arg = arg;
+	}
+
+char * BIO_get_callback_arg(const BIO *b)
+	{
+	return b->cb_arg;
+	}
+
+const char * BIO_method_name(const BIO *b)
+	{
+	return b->method->name;
+	}
+
+int BIO_method_type(const BIO *b)
+	{
+	return b->method->type;
+	}
+
+
 int BIO_read(BIO *b, void *out, int outl)
 	{
 	int i;

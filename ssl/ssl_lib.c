@@ -2550,14 +2550,14 @@ int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 #endif
 
 void SSL_set_info_callback(SSL *ssl,
-			   void (*cb)(const SSL *ssl,int type,int val))
+	void (*cb)(const SSL *ssl,int type,int val))
 	{
 	ssl->info_callback=cb;
 	}
 
 /* One compiler (Diab DCC) doesn't like argument names in returned
    function pointer.  */
-void (*SSL_get_info_callback(const SSL *ssl))(const SSL * /*ssl*/,int /*type*/,int /*val*/)
+void (*SSL_get_info_callback(const SSL *ssl))(const SSL * /*ssl*/,int /*type*/,int /*val*/) 
 	{
 	return ssl->info_callback;
 	}
@@ -2763,6 +2763,36 @@ const char *SSL_get_psk_identity(const SSL *s)
 	if (s == NULL || s->session == NULL)
 		return NULL;
 	return(s->session->psk_identity);
+	}
+
+void SSL_set_psk_client_callback(SSL *s, 
+	unsigned int (*cb)(SSL *ssl, const char *hint,
+                char *identity, unsigned int max_identity_len, unsigned char *psk,
+                unsigned int max_psk_len))
+	{
+	s->psk_client_callback = cb;	
+	}
+
+void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx,
+	unsigned int (*cb)(SSL *ssl, const char *hint,
+                char *identity, unsigned int max_identity_len, unsigned char *psk,
+                unsigned int max_psk_len))
+	{
+	ctx->psk_client_callback = cb;	
+	}
+
+void SSL_set_psk_server_callback(SSL *s, 
+	unsigned int (*cb)(SSL *ssl, const char *identity,
+                unsigned char *psk, unsigned int max_psk_len))
+	{
+	s->psk_server_callback = cb;	
+	}
+
+void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx,
+	unsigned int (*cb)(SSL *ssl, const char *identity,
+                unsigned char *psk, unsigned int max_psk_len))
+	{
+	ctx->psk_server_callback = cb;	
 	}
 #endif
 
