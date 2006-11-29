@@ -429,36 +429,36 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_get_cipherbynid(a) EVP_get_cipherbyname(OBJ_nid2sn(a))
 #define EVP_get_cipherbyobj(a) EVP_get_cipherbynid(OBJ_obj2nid(a))
 
-#define EVP_MD_type(e)			((e)->type)
+int EVP_MD_type(const EVP_MD *md);
 #define EVP_MD_nid(e)			EVP_MD_type(e)
 #define EVP_MD_name(e)			OBJ_nid2sn(EVP_MD_nid(e))
-#define EVP_MD_pkey_type(e)		((e)->pkey_type)
-#define EVP_MD_size(e)			((e)->md_size)
-#define EVP_MD_block_size(e)		((e)->block_size)
+int EVP_MD_pkey_type(const EVP_MD *md);	
+int EVP_MD_size(const EVP_MD *md);
+int EVP_MD_block_size(const EVP_MD *md);
 
-#define EVP_MD_CTX_md(e)		((e)->digest)
-#define EVP_MD_CTX_size(e)		EVP_MD_size((e)->digest)
-#define EVP_MD_CTX_block_size(e)	EVP_MD_block_size((e)->digest)
-#define EVP_MD_CTX_type(e)		EVP_MD_type((e)->digest)
+const EVP_MD * EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
+#define EVP_MD_CTX_size(e)		EVP_MD_size(EVP_MD_CTX_md(e))
+#define EVP_MD_CTX_block_size(e)	EVP_MD_block_size(EVP_MD_CTX_md(e))
+#define EVP_MD_CTX_type(e)		EVP_MD_type(EVP_MD_CTX_md(e))
 
-#define EVP_CIPHER_nid(e)		((e)->nid)
+int EVP_CIPHER_nid(const EVP_CIPHER *cipher);
 #define EVP_CIPHER_name(e)		OBJ_nid2sn(EVP_CIPHER_nid(e))
-#define EVP_CIPHER_block_size(e)	((e)->block_size)
-#define EVP_CIPHER_key_length(e)	((e)->key_len)
-#define EVP_CIPHER_iv_length(e)		((e)->iv_len)
-#define EVP_CIPHER_flags(e)		((e)->flags)
-#define EVP_CIPHER_mode(e)		(((e)->flags) & EVP_CIPH_MODE)
+int EVP_CIPHER_block_size(const EVP_CIPHER *cipher);
+int EVP_CIPHER_key_length(const EVP_CIPHER *cipher);
+int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher);
+unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher);
+#define EVP_CIPHER_mode(e)		(EVP_CIPHER_flags(e) & EVP_CIPH_MODE)
 
-#define EVP_CIPHER_CTX_cipher(e)	((e)->cipher)
-#define EVP_CIPHER_CTX_nid(e)		((e)->cipher->nid)
-#define EVP_CIPHER_CTX_block_size(e)	((e)->cipher->block_size)
-#define EVP_CIPHER_CTX_key_length(e)	((e)->key_len)
-#define EVP_CIPHER_CTX_iv_length(e)	((e)->cipher->iv_len)
-#define EVP_CIPHER_CTX_get_app_data(e)	((e)->app_data)
-#define EVP_CIPHER_CTX_set_app_data(e,d) ((e)->app_data=(char *)(d))
+const EVP_CIPHER * EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
+int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx);
+int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
+int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
+int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
+void * EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
+void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);
 #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
-#define EVP_CIPHER_CTX_flags(e)		((e)->cipher->flags)
-#define EVP_CIPHER_CTX_mode(e)		((e)->cipher->flags & EVP_CIPH_MODE)
+unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx);
+#define EVP_CIPHER_CTX_mode(e)		(EVP_CIPHER_CTX_flags(e) & EVP_CIPH_MODE)
 
 #define EVP_ENCODE_LENGTH(l)	(((l+2)/3*4)+(l/48+1)*2+80)
 #define EVP_DECODE_LENGTH(l)	((l+3)/4*3+80)
@@ -482,7 +482,10 @@ void BIO_set_md(BIO *,const EVP_MD *md);
 #define BIO_get_cipher_status(b)	BIO_ctrl(b,BIO_C_GET_CIPHER_STATUS,0,NULL)
 #define BIO_get_cipher_ctx(b,c_pp)	BIO_ctrl(b,BIO_C_GET_CIPHER_CTX,0,(char *)c_pp)
 
-#define	EVP_Cipher(c,o,i,l)	(c)->cipher->do_cipher((c),(o),(i),(l))
+int EVP_Cipher(EVP_CIPHER_CTX *c,
+		unsigned char *out,
+		const unsigned char *in,
+		unsigned int inl);
 
 #define EVP_add_cipher_alias(n,alias) \
 	OBJ_NAME_add((alias),OBJ_NAME_TYPE_CIPHER_METH|OBJ_NAME_ALIAS,(n))
@@ -498,9 +501,9 @@ int	EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
 void	EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
 int     EVP_MD_CTX_copy_ex(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
-#define EVP_MD_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
-#define EVP_MD_CTX_clear_flags(ctx,flgs) ((ctx)->flags&=~(flgs))
-#define EVP_MD_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
+void	EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
+void	EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
+int 	EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx,int flags);
 int	EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
 int	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
 			 size_t cnt);

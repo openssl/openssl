@@ -765,3 +765,72 @@ static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s)
 		}
 	}
 
+void SSL_CTX_sess_set_new_cb(SSL_CTX *ctx,
+	int (*cb)(struct ssl_st *ssl,SSL_SESSION *sess))
+	{
+	ctx->new_session_cb=cb;
+	}
+
+int (*SSL_CTX_sess_get_new_cb(SSL_CTX *ctx))(struct ssl_st */*ssl*/,SSL_SESSION */*sess*/)
+	{
+	return ctx->new_session_cb;
+	}
+
+void SSL_CTX_sess_set_remove_cb(SSL_CTX *ctx,
+	void (*cb)(struct ssl_ctx_st *ctx,SSL_SESSION *sess))
+	{
+	ctx->remove_session_cb=cb;
+	}
+
+void (*SSL_CTX_sess_get_remove_cb(SSL_CTX *ctx))(struct ssl_ctx_st */*ctx*/,SSL_SESSION */*sess*/)
+	{
+	return ctx->remove_session_cb;
+	}
+
+void SSL_CTX_sess_set_get_cb(SSL_CTX *ctx,
+	SSL_SESSION *(*cb)(struct ssl_st *ssl,
+	         unsigned char *data,int len,int *copy))
+	{
+	ctx->get_session_cb=cb;
+	}
+
+SSL_SESSION * (*SSL_CTX_sess_get_get_cb(SSL_CTX *ctx))(struct ssl_st */*ssl*/,
+	         unsigned char */*data*/,int /*len*/,int */*copy*/)
+	{
+	return ctx->get_session_cb;
+	}
+
+void SSL_CTX_set_info_callback(SSL_CTX *ctx, 
+	void (*cb)(const SSL *ssl,int type,int val))
+	{
+	ctx->info_callback=cb;
+	}
+
+void (*SSL_CTX_get_info_callback(SSL_CTX *ctx))(const SSL */*ssl*/,int /*type*/,int /*val*/)
+	{
+	return ctx->info_callback;
+	}
+
+void SSL_CTX_set_client_cert_cb(SSL_CTX *ctx,
+	int (*cb)(SSL *ssl, X509 **x509, EVP_PKEY **pkey))
+	{
+	ctx->client_cert_cb=cb;
+	}
+
+int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL * /*ssl */, X509 **/* x509 */, EVP_PKEY **/*pkey*/)
+	{
+	return ctx->client_cert_cb;
+	}
+
+void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
+	int (*cb)(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len))
+	{
+	ctx->app_gen_cookie_cb=cb;
+	}
+
+void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
+	int (*cb)(SSL *ssl, unsigned char *cookie, unsigned int cookie_len))
+	{
+	ctx->app_verify_cookie_cb=cb;
+	}
+

@@ -693,7 +693,7 @@ re_start:
 		{
 		con->debug=1;
 		BIO_set_callback(sbio,bio_dump_callback);
-		BIO_set_callback_arg(sbio,bio_c_out);
+		BIO_set_callback_arg(sbio,(char *)bio_c_out);
 		}
 	if (c_msg)
 		{
