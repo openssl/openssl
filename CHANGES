@@ -4,11 +4,6 @@
 
  Changes between 0.9.8e and 0.9.9  [xx XXX xxxx]
 
-  *) Load error codes if they are not already present instead of using a
-     static variable. This allows them to be cleanly unloaded and reloaded.
-     Improve header file function name parsing.
-     [Steve Henson]
-
   *) Initial incomplete changes to avoid need for function casts in OpenSSL
      when OPENSSL_NO_FCAST is set: some compilers (gcc 4.2 and later) reject
      their use. Safestack is reimplemented using inline functions: tests show
@@ -423,8 +418,20 @@
 
  Changes between 0.9.8d and 0.9.8e  [XX xxx XXXX]
 
+  *) Have SSL/TLS server implementation tolerate "mismatched" record
+     protocol version while receiving ClientHello even if the
+     ClientHello is fragmented.  (The server can't insist on the
+     particular protocol version it has chosen before the ServerHello
+     message has informed the client about his choice.)
+     [Bodo Moeller]
+
   *) Add RFC 3779 support.
      [Rob Austein for ARIN, Ben Laurie]
+
+  *) Load error codes if they are not already present instead of using a
+     static variable. This allows them to be cleanly unloaded and reloaded.
+     Improve header file function name parsing.
+     [Steve Henson]
 
  Changes between 0.9.8c and 0.9.8d  [28 Sep 2006]
 
@@ -1429,6 +1436,19 @@
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
+
+ Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
+
+  *) Have SSL/TLS server implementation tolerate "mismatched" record
+     protocol version while receiving ClientHello even if the
+     ClientHello is fragmented.  (The server can't insist on the
+     particular protocol version it has chosen before the ServerHello
+     message has informed the client about his choice.)
+     [Bodo Moeller]
+
+  *) Load error codes if they are not already present instead of using a
+     static variable. This allows them to be cleanly unloaded and reloaded.
+     [Steve Henson]
 
  Changes between 0.9.7k and 0.9.7l  [28 Sep 2006]
 

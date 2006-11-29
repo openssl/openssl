@@ -307,11 +307,7 @@ fprintf(stderr, "Record type=%d, Length=%d\n", rr->type, rr->length);
 #endif
 
 		/* Lets check version */
-		if (s->first_packet)
-			{
-			s->first_packet=0;
-			}
-		else
+		if (!s->first_packet)
 			{
 			if (version != s->version)
 				{
