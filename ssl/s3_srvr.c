@@ -680,9 +680,9 @@ int ssl3_get_client_hello(SSL *s)
 	 */
 	if (s->state == SSL3_ST_SR_CLNT_HELLO_A)
 		{
-		s->first_packet=1;
 		s->state=SSL3_ST_SR_CLNT_HELLO_B;
 		}
+	s->first_packet=1;
 	n=s->method->ssl_get_message(s,
 		SSL3_ST_SR_CLNT_HELLO_B,
 		SSL3_ST_SR_CLNT_HELLO_C,
@@ -691,6 +691,7 @@ int ssl3_get_client_hello(SSL *s)
 		&ok);
 
 	if (!ok) return((int)n);
+	s->first_packet=0;
 	d=p=(unsigned char *)s->init_msg;
 
 	/* use version from inside client hello, not from record header

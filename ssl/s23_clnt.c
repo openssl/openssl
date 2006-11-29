@@ -574,7 +574,6 @@ static int ssl23_get_server_hello(SSL *s)
 	if (!ssl_get_new_session(s,0))
 		goto err;
 
-	s->first_packet=1;
 	return(SSL_connect(s));
 err:
 	return(-1);

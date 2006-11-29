@@ -4,6 +4,13 @@
 
  Changes between 0.9.8d and 0.9.8e  [XX xxx XXXX]
 
+  *) Have SSL/TLS server implementation tolerate "mismatched" record
+     protocol version while receiving ClientHello even if the
+     ClientHello is fragmented.  (The server can't insist on the
+     particular protocol version it has chosen before the ServerHello
+     message has informed the client about his choice.)
+     [Bodo Moeller]
+
   *) Add RFC 3779 support.
      [Rob Austein for ARIN, Ben Laurie]
 
@@ -1015,6 +1022,19 @@
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
+
+ Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
+
+  *) Have SSL/TLS server implementation tolerate "mismatched" record
+     protocol version while receiving ClientHello even if the
+     ClientHello is fragmented.  (The server can't insist on the
+     particular protocol version it has chosen before the ServerHello
+     message has informed the client about his choice.)
+     [Bodo Moeller]
+
+  *) Load error codes if they are not already present instead of using a
+     static variable. This allows them to be cleanly unloaded and reloaded.
+     [Steve Henson]
 
  Changes between 0.9.7k and 0.9.7l  [28 Sep 2006]
 
