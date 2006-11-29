@@ -4,6 +4,13 @@
 
  Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
 
+  *) Have SSL/TLS server implementation tolerate "mismatched" record
+     protocol version while receiving ClientHello even if the
+     ClientHello is fragmented.  (The server can't insist on the
+     particular protocol version it has chosen before the ServerHello
+     message has informed the client about his choice.)
+     [Bodo Moeller]
+
   *) Load error codes if they are not already present instead of using a
      static variable. This allows them to be cleanly unloaded and reloaded.
      [Steve Henson]
