@@ -119,7 +119,7 @@ gost2001_keyx.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 gost2001_keyx.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 gost2001_keyx.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 gost2001_keyx.o: ../../include/openssl/x509_vfy.h e_gost_err.h gost2001_keyx.c
-gost2001_keyx.o: gost89.h gost_keywrap.h gost_lcl.h gosthash.h
+gost2001_keyx.o: gost2001_keyx.h gost89.h gost_keywrap.h gost_lcl.h gosthash.h
 gost89.o: gost89.c gost89.h
 gost94_keyx.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 gost94_keyx.o: ../../include/openssl/bio.h ../../include/openssl/bn.h

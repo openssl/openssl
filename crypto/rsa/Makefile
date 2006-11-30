@@ -210,7 +210,7 @@ rsa_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
 rsa_pmeth.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 rsa_pmeth.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rsa_pmeth.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-rsa_pmeth.o: ../cryptlib.h ../evp/evp_locl.h rsa_pmeth.c
+rsa_pmeth.o: ../cryptlib.h ../evp/evp_locl.h rsa_locl.h rsa_pmeth.c
 rsa_prn.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_prn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 rsa_prn.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -259,7 +259,7 @@ rsa_sign.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
 rsa_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 rsa_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rsa_sign.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-rsa_sign.o: ../cryptlib.h rsa_sign.c
+rsa_sign.o: ../cryptlib.h rsa_locl.h rsa_sign.c
 rsa_ssl.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_ssl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_ssl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
