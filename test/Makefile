@@ -532,6 +532,9 @@ hmactest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 hmactest.o: ../include/openssl/symhacks.h hmactest.c
 ideatest.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/idea.h
 ideatest.o: ../include/openssl/opensslconf.h ideatest.c
+igetest.o: ../include/openssl/aes.h ../include/openssl/e_os2.h
+igetest.o: ../include/openssl/opensslconf.h ../include/openssl/ossl_typ.h
+igetest.o: ../include/openssl/rand.h igetest.c
 md2test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 md2test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 md2test.o: ../include/openssl/evp.h ../include/openssl/md2.h
