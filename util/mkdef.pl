@@ -94,6 +94,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "FP_API", "STDIO", "SOCK", "KRB5", "DGRAM",
 			 # Engines
 			 "STATIC_ENGINE", "ENGINE", "HW", "GMP",
+			 # RFC3779 support 
+			 "RFC3779",
 			 # Deprecated functions
 			 "DEPRECATED" );
 
@@ -113,6 +115,7 @@ my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
 my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw; my $no_camellia;
 my $no_fp_api; my $no_static_engine; my $no_gmp; my $no_deprecated;
+my $no_rfc3779;
 
 
 foreach (@ARGV, split(/ /, $options))
@@ -189,6 +192,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-engine$/)	{ $no_engine=1; }
 	elsif (/^no-hw$/)	{ $no_hw=1; }
 	elsif (/^no-gmp$/)	{ $no_gmp=1; }
+	elsif (/^no-rfc3779$/)	{ $no_rfc3779=1; }
 	}
 
 
@@ -1106,6 +1110,7 @@ sub is_valid
 			if ($keyword eq "FP_API" && $no_fp_api) { return 0; }
 			if ($keyword eq "STATIC_ENGINE" && $no_static_engine) { return 0; }
 			if ($keyword eq "GMP" && $no_gmp) { return 0; }
+			if ($keyword eq "RFC3779" && $no_rfc3779) { return 0; }
 			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }
 
 			# Nothing recognise as true
