@@ -658,7 +658,7 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
 
-#ifdef OPENSSL_RFC3779
+#ifndef OPENSSL_NO_RFC3779
 
 typedef struct ASRange_st {
   ASN1_INTEGER *min, *max;
