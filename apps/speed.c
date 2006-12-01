@@ -144,6 +144,9 @@
 #ifndef OPENSSL_NO_RIPEMD
 #include <openssl/ripemd.h>
 #endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+#include <openssl/whrlpool.h>
+#endif
 #ifndef OPENSSL_NO_RC4
 #include <openssl/rc4.h>
 #endif
@@ -198,7 +201,7 @@ static void print_result(int alg,int run_no,int count,double time_used);
 static int do_multi(int multi);
 #endif
 
-#define ALGOR_NUM	24
+#define ALGOR_NUM	25
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
@@ -212,7 +215,7 @@ static const char *names[ALGOR_NUM]={
   "rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc",
   "aes-128 cbc","aes-192 cbc","aes-256 cbc",
   "camellia-128 cbc","camellia-192 cbc","camellia-256 cbc",
-  "evp","sha256","sha512"};
+  "evp","sha256","sha512","whirlpool"};
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 static double rsa_results[RSA_NUM][2];
@@ -349,6 +352,9 @@ int MAIN(int argc, char **argv)
 	unsigned char sha512[SHA512_DIGEST_LENGTH];
 #endif
 #endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+	unsigned char whirlpool[WHIRLPOOL_DIGEST_LENGTH];
+#endif
 #ifndef OPENSSL_NO_RIPEMD
 	unsigned char rmd160[RIPEMD160_DIGEST_LENGTH];
 #endif
@@ -441,6 +447,7 @@ int MAIN(int argc, char **argv)
 #define D_EVP		21
 #define D_SHA256	22	
 #define D_SHA512	23
+#define D_WHIRLPOOL	24
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 #define	R_DSA_512	0
@@ -760,6 +767,10 @@ int MAIN(int argc, char **argv)
 		else
 #endif
 #endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+			if (strcmp(*argv,"whirlpool") == 0) doit[D_WHIRLPOOL]=1;
+		else
+#endif
 #ifndef OPENSSL_NO_RIPEMD
 			if (strcmp(*argv,"ripemd") == 0) doit[D_RMD160]=1;
 		else
@@ -963,12 +974,16 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_SHA512
 			BIO_printf(bio_err,"sha512   ");
 #endif
+#ifndef OPENSSL_NO_WHIRLPOOL
+			BIO_printf(bio_err,"whirlpool");
+#endif
 #ifndef OPENSSL_NO_RIPEMD160
 			BIO_printf(bio_err,"rmd160");
 #endif
 #if !defined(OPENSSL_NO_MD2) || !defined(OPENSSL_NO_MDC2) || \
     !defined(OPENSSL_NO_MD4) || !defined(OPENSSL_NO_MD5) || \
-    !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RIPEMD160)
+    !defined(OPENSSL_NO_SHA1) || !defined(OPENSSL_NO_RIPEMD160) || \
+    !defined(OPENSSL_NO_WHIRLPOOL)
 			BIO_printf(bio_err,"\n");
 #endif
 
@@ -1199,6 +1214,7 @@ int MAIN(int argc, char **argv)
 	c[D_CBC_256_CML][0]=count;
 	c[D_SHA256][0]=count;
 	c[D_SHA512][0]=count;
+	c[D_WHIRLPOOL][0]=count;
 
 	for (i=1; i<SIZE_NUM; i++)
 		{
@@ -1211,6 +1227,7 @@ int MAIN(int argc, char **argv)
 		c[D_RMD160][i]=c[D_RMD160][0]*4*lengths[0]/lengths[i];
 		c[D_SHA256][i]=c[D_SHA256][0]*4*lengths[0]/lengths[i];
 		c[D_SHA512][i]=c[D_SHA512][0]*4*lengths[0]/lengths[i];
+		c[D_WHIRLPOOL][i]=c[D_WHIRLPOOL][0]*4*lengths[0]/lengths[i];
 		}
 	for (i=1; i<SIZE_NUM; i++)
 		{
@@ -1522,8 +1539,23 @@ int MAIN(int argc, char **argv)
 			}
 		}
 #endif
-
 #endif
+
+#ifndef OPENSSL_NO_WHIRLPOOL
+	if (doit[D_WHIRLPOOL])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_WHIRLPOOL],c[D_WHIRLPOOL][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_WHIRLPOOL][j]); count++)
+				WHIRLPOOL(buf,lengths[j],whirlpool);
+			d=Time_F(STOP);
+			print_result(D_WHIRLPOOL,j,count,d);
+			}
+		}
+#endif
+
 #ifndef OPENSSL_NO_RIPEMD
 	if (doit[D_RMD160])
 		{
