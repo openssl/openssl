@@ -85,19 +85,19 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-camellia.o: ../../include/openssl/opensslconf.h camellia.c camellia.h
-camellia.o: cmll_locl.h
-cmll_cbc.o: ../../include/openssl/camellia.h
+camellia.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+camellia.o: camellia.c camellia.h cmll_locl.h
+cmll_cbc.o: ../../include/openssl/camellia.h ../../include/openssl/e_os2.h
 cmll_cbc.o: ../../include/openssl/opensslconf.h cmll_cbc.c cmll_locl.h
 cmll_cfb.o: ../../e_os.h ../../include/openssl/camellia.h
 cmll_cfb.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 cmll_cfb.o: cmll_cfb.c cmll_locl.h
-cmll_ctr.o: ../../include/openssl/camellia.h
+cmll_ctr.o: ../../include/openssl/camellia.h ../../include/openssl/e_os2.h
 cmll_ctr.o: ../../include/openssl/opensslconf.h cmll_ctr.c cmll_locl.h
-cmll_ecb.o: ../../include/openssl/camellia.h
+cmll_ecb.o: ../../include/openssl/camellia.h ../../include/openssl/e_os2.h
 cmll_ecb.o: ../../include/openssl/opensslconf.h cmll_ecb.c cmll_locl.h
-cmll_misc.o: ../../include/openssl/camellia.h
+cmll_misc.o: ../../include/openssl/camellia.h ../../include/openssl/e_os2.h
 cmll_misc.o: ../../include/openssl/opensslconf.h
 cmll_misc.o: ../../include/openssl/opensslv.h cmll_locl.h cmll_misc.c
-cmll_ofb.o: ../../include/openssl/camellia.h
+cmll_ofb.o: ../../include/openssl/camellia.h ../../include/openssl/e_os2.h
 cmll_ofb.o: ../../include/openssl/opensslconf.h cmll_locl.h cmll_ofb.c

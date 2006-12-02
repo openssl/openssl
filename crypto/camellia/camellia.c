@@ -76,12 +76,7 @@
 #include "camellia.h"
 #include "cmll_locl.h"
 
-/*
- * must be defined uint32_t
- */
-
 /* key constants */
-
 #define CAMELLIA_SIGMA1L (0xA09E667FL)
 #define CAMELLIA_SIGMA1R (0x3BCC908BL)
 #define CAMELLIA_SIGMA2L (0xB67AE858L)
@@ -100,17 +95,8 @@
  */
 
 /* e is pointer of subkey */
-#ifdef L_ENDIAN
-
-#define CamelliaSubkeyL(INDEX) (subkey[(INDEX)*2 + 1])
-#define CamelliaSubkeyR(INDEX) (subkey[(INDEX)*2])
-
-#else /* big endian */
-
 #define CamelliaSubkeyL(INDEX) (subkey[(INDEX)*2])
 #define CamelliaSubkeyR(INDEX) (subkey[(INDEX)*2 + 1])
-
-#endif /* IS_LITTLE_ENDIAN */
 
 /* rotation right shift 1byte */
 #define CAMELLIA_RR8(x) (((x) >> 8) + ((x) << 24))
@@ -170,44 +156,6 @@ do									\
  * for speed up
  *
  */
-#if !defined(_MSC_VER)
-
-#define CAMELLIA_FLS(ll, lr, rl, rr, kll, klr, krl, krr, t0, t1, t2, t3) \
-do									\
-	{								\
-	t0 = kll;							\
-	t2 = krr;							\
-	t0 &= ll;							\
-	t2 |= rr;							\
-	rl ^= t2;							\
-	lr ^= CAMELLIA_RL1(t0);						\
-	t3 = krl;							\
-	t1 = klr;							\
-	t3 &= rl;							\
-	t1 |= lr;							\
-	ll ^= t1;							\
-	rr ^= CAMELLIA_RL1(t3);						\
-	} while(0)
-
-#define CAMELLIA_ROUNDSM(xl, xr, kl, kr, yl, yr, il, ir, t0, t1)	\
-do									\
-	{								\
-	ir =  CAMELLIA_SP1110(xr & 0xff);				\
-	il =  CAMELLIA_SP1110((xl>>24) & 0xff);				\
-	ir ^= CAMELLIA_SP0222((xr>>24) & 0xff);				\
-	il ^= CAMELLIA_SP0222((xl>>16) & 0xff);				\
-	ir ^= CAMELLIA_SP3033((xr>>16) & 0xff);				\
-	il ^= CAMELLIA_SP3033((xl>>8) & 0xff);				\
-	ir ^= CAMELLIA_SP4404((xr>>8) & 0xff);				\
-	il ^= CAMELLIA_SP4404(xl & 0xff);				\
-	il ^= kl;							\
-	ir ^= il ^ kr;							\
-	yl ^= ir;							\
-	yr ^= CAMELLIA_RR8(il) ^ ir;					\
-	} while(0)
-
-#else /* for MS-VC */
-
 #define CAMELLIA_FLS(ll, lr, rl, rr, kll, klr, krl, krr, t0, t1, t2, t3) \
 do									\
 	{								\
@@ -249,9 +197,8 @@ do									\
 	yl ^= ir;							\
 	yr ^= il;							\
 	} while(0)
-#endif
 
-static const uint32_t camellia_sp1110[256] =
+static const u32 camellia_sp1110[256] =
 	{
 	0x70707000,0x82828200,0x2c2c2c00,0xececec00,
 	0xb3b3b300,0x27272700,0xc0c0c000,0xe5e5e500,
@@ -319,7 +266,7 @@ static const uint32_t camellia_sp1110[256] =
 	0x77777700,0xc7c7c700,0x80808000,0x9e9e9e00,
 	};
 
-static const uint32_t camellia_sp0222[256] =
+static const u32 camellia_sp0222[256] =
 	{
 	0x00e0e0e0,0x00050505,0x00585858,0x00d9d9d9,
 	0x00676767,0x004e4e4e,0x00818181,0x00cbcbcb,
@@ -387,7 +334,7 @@ static const uint32_t camellia_sp0222[256] =
 	0x00eeeeee,0x008f8f8f,0x00010101,0x003d3d3d,
 	};
 
-static const uint32_t camellia_sp3033[256] =
+static const u32 camellia_sp3033[256] =
 	{
 	0x38003838,0x41004141,0x16001616,0x76007676,
 	0xd900d9d9,0x93009393,0x60006060,0xf200f2f2,
@@ -455,7 +402,7 @@ static const uint32_t camellia_sp3033[256] =
 	0xbb00bbbb,0xe300e3e3,0x40004040,0x4f004f4f,
 	};
 
-static const uint32_t camellia_sp4404[256] =
+static const u32 camellia_sp4404[256] =
 	{
 	0x70700070,0x2c2c002c,0xb3b300b3,0xc0c000c0,
 	0xe4e400e4,0x57570057,0xeaea00ea,0xaeae00ae,
@@ -523,20 +470,19 @@ static const uint32_t camellia_sp4404[256] =
 	0xe3e300e3,0xf4f400f4,0xc7c700c7,0x9e9e009e,
 	};
 
-
 /**
  * Stuff related to the Camellia key schedule
  */
 #define subl(x) subL[(x)]
 #define subr(x) subR[(x)]
 
-void camellia_setup128(const unsigned char *key, uint32_t *subkey)
+void camellia_setup128(const u8 *key, u32 *subkey)
 	{
-	uint32_t kll, klr, krl, krr;
-	uint32_t il, ir, t0, t1, w0, w1;
-	uint32_t kw4l, kw4r, dw, tl, tr;
-	uint32_t subL[26];
-	uint32_t subR[26];
+	u32 kll, klr, krl, krr;
+	u32 il, ir, t0, t1, w0, w1;
+	u32 kw4l, kw4r, dw, tl, tr;
+	u32 subL[26];
+	u32 subR[26];
 
 	/**
 	 *  k == kll || klr || krl || krr (|| is concatination)
@@ -833,14 +779,14 @@ void camellia_setup128(const unsigned char *key, uint32_t *subkey)
 	return;
 	}
 
-void camellia_setup256(const unsigned char *key, uint32_t *subkey)
+void camellia_setup256(const u8 *key, u32 *subkey)
 	{
-	uint32_t kll,klr,krl,krr;           /* left half of key */
-	uint32_t krll,krlr,krrl,krrr;       /* right half of key */
-	uint32_t il, ir, t0, t1, w0, w1;    /* temporary variables */
-	uint32_t kw4l, kw4r, dw, tl, tr;
-	uint32_t subL[34];
-	uint32_t subR[34];
+	u32 kll,klr,krl,krr;           /* left half of key */
+	u32 krll,krlr,krrl,krrr;       /* right half of key */
+	u32 il, ir, t0, t1, w0, w1;    /* temporary variables */
+	u32 kw4l, kw4r, dw, tl, tr;
+	u32 subL[34];
+	u32 subR[34];
 
 	/**
 	 *  key = (kll || klr || krl || krr || krll || krlr || krrl || krrr)
@@ -1245,18 +1191,18 @@ void camellia_setup256(const unsigned char *key, uint32_t *subkey)
 	return;
 	}
 
-void camellia_setup192(const unsigned char *key, uint32_t *subkey)
+void camellia_setup192(const u8 *key, u32 *subkey)
 	{
-	unsigned char kk[32];
-	uint32_t krll, krlr, krrl,krrr;
+	u8 kk[32];
+	u32 krll, krlr, krrl,krrr;
 
 	memcpy(kk, key, 24);
-	memcpy((unsigned char *)&krll, key+16,4);
-	memcpy((unsigned char *)&krlr, key+20,4);
+	memcpy((u8 *)&krll, key+16,4);
+	memcpy((u8 *)&krlr, key+20,4);
 	krrl = ~krll;
 	krrr = ~krlr;
-	memcpy(kk+24, (unsigned char *)&krrl, 4);
-	memcpy(kk+28, (unsigned char *)&krrr, 4);
+	memcpy(kk+24, (u8 *)&krrl, 4);
+	memcpy(kk+28, (u8 *)&krrr, 4);
 	camellia_setup256(kk, subkey);
 	return;
 	}
@@ -1265,11 +1211,10 @@ void camellia_setup192(const unsigned char *key, uint32_t *subkey)
 /**
  * Stuff related to camellia encryption/decryption
  */
-void camellia_encrypt128(const uint32_t *subkey, uint32_t *io)
+void camellia_encrypt128(const u32 *subkey, u32 *io)
 	{
-	uint32_t il, ir, t0, t1;
+	u32 il, ir, t0, t1;
 
-	SWAP4WORD(io);
 	/* pre whitening but absorb kw2*/
 	io[0] ^= CamelliaSubkeyL(0);
 	io[1] ^= CamelliaSubkeyR(0);
@@ -1352,16 +1297,13 @@ void camellia_encrypt128(const uint32_t *subkey, uint32_t *io)
 	io[1] = io[3];
 	io[2] = t0;
 	io[3] = t1;
-	SWAP4WORD(io);
-	
+
 	return;
 	}
 
-void camellia_decrypt128(const uint32_t *subkey, uint32_t *io)
+void camellia_decrypt128(const u32 *subkey, u32 *io)
 	{
-	uint32_t il,ir,t0,t1;               /* temporary valiables */
-    
-	SWAP4WORD(io);
+	u32 il,ir,t0,t1;               /* temporary valiables */
 
 	/* pre whitening but absorb kw2*/
 	io[0] ^= CamelliaSubkeyL(24);
@@ -1445,7 +1387,6 @@ void camellia_decrypt128(const uint32_t *subkey, uint32_t *io)
 	io[1] = io[3];
 	io[2] = t0;
 	io[3] = t1;
-	SWAP4WORD(io);
 
 	return;
 	}
@@ -1453,11 +1394,9 @@ void camellia_decrypt128(const uint32_t *subkey, uint32_t *io)
 /**
  * stuff for 192 and 256bit encryption/decryption
  */
-void camellia_encrypt256(const uint32_t *subkey, uint32_t *io)
+void camellia_encrypt256(const u32 *subkey, u32 *io)
 	{
-	uint32_t il,ir,t0,t1;           /* temporary valiables */
-
-	SWAP4WORD(io);
+	u32 il,ir,t0,t1;           /* temporary valiables */
 
 	/* pre whitening but absorb kw2*/
 	io[0] ^= CamelliaSubkeyL(0);
@@ -1565,16 +1504,14 @@ void camellia_encrypt256(const uint32_t *subkey, uint32_t *io)
 	io[1] = io[3];
 	io[2] = t0;
 	io[3] = t1;
-	SWAP4WORD(io);
 
 	return;
 	}
 
-void camellia_decrypt256(const uint32_t *subkey, uint32_t *io)
+void camellia_decrypt256(const u32 *subkey, u32 *io)
 	{
-	uint32_t il,ir,t0,t1;           /* temporary valiables */
+	u32 il,ir,t0,t1;           /* temporary valiables */
 
-	SWAP4WORD(io);
 	/* pre whitening but absorb kw2*/
 	io[0] ^= CamelliaSubkeyL(32);
 	io[1] ^= CamelliaSubkeyR(32);
@@ -1681,7 +1618,6 @@ void camellia_decrypt256(const uint32_t *subkey, uint32_t *io)
 	io[1] = io[3];
 	io[2] = t0;
 	io[3] = t1;
-	SWAP4WORD(io);
 
 	return;
 	}

@@ -91,20 +91,26 @@ int Camellia_set_key(const unsigned char *userKey, const int bits,
 void Camellia_encrypt(const unsigned char *in, unsigned char *out,
 	const CAMELLIA_KEY *key)
 	{
-	uint32_t tmp[UNITSIZE];
+	u32 tmp[UNITSIZE];
+	const union { long one; char little; } camellia_endian = {1};
 
 	memcpy(tmp, in, CAMELLIA_BLOCK_SIZE);
+	if (camellia_endian.little) SWAP4WORD(tmp);
 	key->enc(key->rd_key, tmp);
+	if (camellia_endian.little) SWAP4WORD(tmp);
 	memcpy(out, tmp, CAMELLIA_BLOCK_SIZE);
 	}
 
 void Camellia_decrypt(const unsigned char *in, unsigned char *out,
 	const CAMELLIA_KEY *key)
 	{
-	uint32_t tmp[UNITSIZE];
+	u32 tmp[UNITSIZE];
+	const union { long one; char little; } camellia_endian = {1};
 
 	memcpy(tmp, in, CAMELLIA_BLOCK_SIZE);
+	if (camellia_endian.little) SWAP4WORD(tmp);
 	key->dec(key->rd_key, tmp);
+	if (camellia_endian.little) SWAP4WORD(tmp);
 	memcpy(out, tmp, CAMELLIA_BLOCK_SIZE);
 	}
 

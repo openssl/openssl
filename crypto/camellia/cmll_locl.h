@@ -73,13 +73,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_MSC_VER)
-typedef unsigned char uint8_t;
-typedef unsigned int uint32_t;
-typedef unsigned __int64 uint64_t;
-#else
-#include <inttypes.h>
-#endif
+typedef unsigned char u8;
+typedef unsigned int u32;
 
 #ifdef __cplusplus
 extern "C" {
@@ -90,38 +85,33 @@ extern "C" {
 
 #if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64))
 # define SWAP(x) ( _lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00 )
-# define GETU32(p) SWAP(*((uint32_t *)(p)))
-# define PUTU32(ct, st) { *((uint32_t *)(ct)) = SWAP((st)); }
+# define GETU32(p) SWAP(*((u32 *)(p)))
+# define PUTU32(ct, st) { *((u32 *)(ct)) = SWAP((st)); }
 # define CAMELLIA_SWAP4(x) (x = ( _lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00) )
 
-
 #else /* not windows */
-# define GETU32(pt) (((uint32_t)(pt)[0] << 24) \
-	^ ((uint32_t)(pt)[1] << 16) \
-	^ ((uint32_t)(pt)[2] <<  8) \
-	^ ((uint32_t)(pt)[3]))
+# define GETU32(pt) (((u32)(pt)[0] << 24) \
+	^ ((u32)(pt)[1] << 16) \
+	^ ((u32)(pt)[2] <<  8) \
+	^ ((u32)(pt)[3]))
 
-# define PUTU32(ct, st) { (ct)[0] = (uint8_t)((st) >> 24); \
-	(ct)[1] = (uint8_t)((st) >> 16); \
-	(ct)[2] = (uint8_t)((st) >>  8); \
-	(ct)[3] = (uint8_t)(st); }
+# define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); \
+	(ct)[1] = (u8)((st) >> 16); \
+	(ct)[2] = (u8)((st) >>  8); \
+	(ct)[3] = (u8)(st); }
 
-#ifdef L_ENDIAN
-#if (defined (__GNUC__) && !defined(i386))
+#if (defined (__GNUC__) && (defined(__x86_64__) || defined(__x86_64)))
 #define CAMELLIA_SWAP4(x) \
   do{\
     asm("bswap %1" : "+r" (x));\
   }while(0)
-#else /* not gcc */
+#else
 #define CAMELLIA_SWAP4(x) \
    do{\
-     x = ((uint32_t)x << 16) + ((uint32_t)x >> 16);\
-     x = (((uint32_t)x & 0xff00ff) << 8) + (((uint32_t)x >> 8) & 0xff00ff);\
+     x = ((u32)x << 16) + ((u32)x >> 16);\
+     x = (((u32)x & 0xff00ff) << 8) + (((u32)x >> 8) & 0xff00ff);\
    } while(0)
-#endif /* not gcc */
-#else /* big endian */
-#define CAMELLIA_SWAP4(x)
-#endif /* L_ENDIAN */
+#endif
 #endif
 
 #define COPY4WORD(dst, src)	 \
@@ -161,14 +151,14 @@ extern "C" {
 	}while(0)
 
 
-void camellia_setup128(const unsigned char *key, uint32_t *subkey);
-void camellia_setup192(const unsigned char *key, uint32_t *subkey);
-void camellia_setup256(const unsigned char *key, uint32_t *subkey);
+void camellia_setup128(const u8 *key, u32 *subkey);
+void camellia_setup192(const u8 *key, u32 *subkey);
+void camellia_setup256(const u8 *key, u32 *subkey);
 
-void camellia_encrypt128(const uint32_t *subkey, uint32_t *io);
-void camellia_decrypt128(const uint32_t *subkey, uint32_t *io);
-void camellia_encrypt256(const uint32_t *subkey, uint32_t *io);
-void camellia_decrypt256(const uint32_t *subkey, uint32_t *io);
+void camellia_encrypt128(const u32 *subkey, u32 *io);
+void camellia_decrypt128(const u32 *subkey, u32 *io);
+void camellia_encrypt256(const u32 *subkey, u32 *io);
+void camellia_decrypt256(const u32 *subkey, u32 *io);
 
 #ifdef __cplusplus
 }
