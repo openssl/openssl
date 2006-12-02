@@ -69,16 +69,14 @@ void Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out,
 	unsigned long len = length;
 	unsigned char tmp[CAMELLIA_BLOCK_SIZE];
 	const unsigned char *iv = ivec;
-	u32 t32[UNITSIZE];
+	u32 t32[CAMELLIA_BLOCK_SIZE/sizeof(u32)];
 	const union { long one; char little; } camellia_endian = {1};
 
 
 	assert(in && out && key && ivec);
 	assert((CAMELLIA_ENCRYPT == enc)||(CAMELLIA_DECRYPT == enc));
 
-	if(((size_t)in) % ALIGN == 0
-		&& ((size_t)out) % ALIGN == 0
-		&& ((size_t)ivec) % ALIGN == 0)
+	if(((size_t)in|(size_t)out|(size_t)ivec) % sizeof(u32) == 0)
 		{
 		if (CAMELLIA_ENCRYPT == enc)
 			{
@@ -281,4 +279,3 @@ void Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out,
 			}
 		}
 }
-
