@@ -766,3 +766,6 @@ camellia_256_cfb8		765
 camellia_128_ofb128		766
 camellia_192_ofb128		767
 camellia_256_ofb128		768
+subject_directory_attributes		769
+issuing_distribution_point		770
+certificate_issuer		771
