@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 825
-#define NUM_SN 821
-#define NUM_LN 821
-#define NUM_OBJ 777
+#define NUM_NID 827
+#define NUM_SN 823
+#define NUM_LN 823
+#define NUM_OBJ 779
 
-static unsigned char lvalues[5490]={
+static unsigned char lvalues[5496]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -845,6 +845,8 @@ static unsigned char lvalues[5490]={
 0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x03,     /* [5465] OBJ_camellia_128_ofb128 */
 0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x17,     /* [5473] OBJ_camellia_192_ofb128 */
 0x03,0xA2,0x31,0x05,0x03,0x01,0x09,0x2B,     /* [5481] OBJ_camellia_256_ofb128 */
+0x55,0x1D,0x09,                              /* [5489] OBJ_subject_directory_attributes */
+0x55,0x1D,0x1D,                              /* [5492] OBJ_certificate_issuer */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2178,6 +2180,10 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5473]),0},
 {"CAMELLIA-256-OFB","camellia-256-ofb",NID_camellia_256_ofb128,8,
 	&(lvalues[5481]),0},
+{"subjectDirectoryAttributes","X509v3 Subject Directory Attributes",
+	NID_subject_directory_attributes,3,&(lvalues[5489]),0},
+{"certificateIssuer","X509v3 Certificate Issuer",
+	NID_certificate_issuer,3,&(lvalues[5492]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2394,6 +2400,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[443]),/* "caseIgnoreIA5StringSyntax" */
 &(nid_objs[152]),/* "certBag" */
 &(nid_objs[663]),/* "certicom-arc" */
+&(nid_objs[826]),/* "certificateIssuer" */
 &(nid_objs[89]),/* "certificatePolicies" */
 &(nid_objs[54]),/* "challengePassword" */
 &(nid_objs[407]),/* "characteristic-two-field" */
@@ -2969,6 +2976,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[387]),/* "snmpv2" */
 &(nid_objs[660]),/* "streetAddress" */
 &(nid_objs[85]),/* "subjectAltName" */
+&(nid_objs[825]),/* "subjectDirectoryAttributes" */
 &(nid_objs[398]),/* "subjectInfoAccess" */
 &(nid_objs[82]),/* "subjectKeyIdentifier" */
 &(nid_objs[498]),/* "subtreeMaximumQuality" */
@@ -3116,6 +3124,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[103]),/* "X509v3 CRL Distribution Points" */
 &(nid_objs[88]),/* "X509v3 CRL Number" */
 &(nid_objs[141]),/* "X509v3 CRL Reason Code" */
+&(nid_objs[826]),/* "X509v3 Certificate Issuer" */
 &(nid_objs[89]),/* "X509v3 Certificate Policies" */
 &(nid_objs[140]),/* "X509v3 Delta CRL Indicator" */
 &(nid_objs[126]),/* "X509v3 Extended Key Usage" */
@@ -3129,6 +3138,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[738]),/* "X509v3 Policy Mappings" */
 &(nid_objs[84]),/* "X509v3 Private Key Usage Period" */
 &(nid_objs[85]),/* "X509v3 Subject Alternative Name" */
+&(nid_objs[825]),/* "X509v3 Subject Directory Attributes" */
 &(nid_objs[82]),/* "X509v3 Subject Key Identifier" */
 &(nid_objs[184]),/* "X9.57" */
 &(nid_objs[185]),/* "X9.57 CM ?" */
@@ -3872,6 +3882,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[174]),/* OBJ_dnQualifier                  2 5 4 46 */
 &(nid_objs[510]),/* OBJ_pseudonym                    2 5 4 65 */
 &(nid_objs[400]),/* OBJ_role                         2 5 4 72 */
+&(nid_objs[825]),/* OBJ_subject_directory_attributes 2 5 29 9 */
 &(nid_objs[82]),/* OBJ_subject_key_identifier       2 5 29 14 */
 &(nid_objs[83]),/* OBJ_key_usage                    2 5 29 15 */
 &(nid_objs[84]),/* OBJ_private_key_usage_period     2 5 29 16 */
@@ -3884,6 +3895,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[142]),/* OBJ_invalidity_date              2 5 29 24 */
 &(nid_objs[140]),/* OBJ_delta_crl                    2 5 29 27 */
 &(nid_objs[751]),/* OBJ_issuing_distribution_point   2 5 29 28 */
+&(nid_objs[826]),/* OBJ_certificate_issuer           2 5 29 29 */
 &(nid_objs[736]),/* OBJ_name_constraints             2 5 29 30 */
 &(nid_objs[103]),/* OBJ_crl_distribution_points      2 5 29 31 */
 &(nid_objs[89]),/* OBJ_certificate_policies         2 5 29 32 */

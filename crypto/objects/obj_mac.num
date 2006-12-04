@@ -822,3 +822,5 @@ camellia_256_cfb8		821
 camellia_128_ofb128		822
 camellia_192_ofb128		823
 camellia_256_ofb128		824
+subject_directory_attributes		825
+certificate_issuer		826

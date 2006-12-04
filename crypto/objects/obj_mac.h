@@ -2064,6 +2064,11 @@
 #define NID_id_ce		81
 #define OBJ_id_ce		OBJ_X500,29L
 
+#define SN_subject_directory_attributes		"subjectDirectoryAttributes"
+#define LN_subject_directory_attributes		"X509v3 Subject Directory Attributes"
+#define NID_subject_directory_attributes		825
+#define OBJ_subject_directory_attributes		OBJ_id_ce,9L
+
 #define SN_subject_key_identifier		"subjectKeyIdentifier"
 #define LN_subject_key_identifier		"X509v3 Subject Key Identifier"
 #define NID_subject_key_identifier		82
@@ -2118,6 +2123,11 @@
 #define LN_issuing_distribution_point		"X509v3 Issuing Distrubution Point"
 #define NID_issuing_distribution_point		751
 #define OBJ_issuing_distribution_point		OBJ_id_ce,28L
+
+#define SN_certificate_issuer		"certificateIssuer"
+#define LN_certificate_issuer		"X509v3 Certificate Issuer"
+#define NID_certificate_issuer		826
+#define OBJ_certificate_issuer		OBJ_id_ce,29L
 
 #define SN_name_constraints		"nameConstraints"
 #define LN_name_constraints		"X509v3 Name Constraints"
