@@ -189,7 +189,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 
 	s=dir;
 	p=s;
-	for (;;)
+	for (;;p++)
 		{
 		if ((*p == LIST_SEPARATOR_CHAR) || (*p == '\0'))
 			{
@@ -198,8 +198,11 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 			len=(int)(p-ss);
 			if (len == 0) continue;
 			for (j=0; j<ctx->num_dirs; j++)
-				if (strncmp(ctx->dirs[j],ss,(unsigned int)len) == 0)
-					continue;
+				if (strlen(ctx->dirs[j]) == len &&
+				    strncmp(ctx->dirs[j],ss,(unsigned int)len) == 0)
+					break;
+			if (j<ctx->num_dirs)
+				continue;
 			if (ctx->num_dirs_alloced < (ctx->num_dirs+1))
 				{
 				ctx->num_dirs_alloced+=10;
@@ -231,7 +234,6 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 			ctx->num_dirs++;
 			}
 		if (*p == '\0') break;
-		p++;
 		}
 	return(1);
 	}
