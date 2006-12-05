@@ -347,7 +347,10 @@ bad:
 			}
 
 	if (noout) 
+		{
+		ret = 0;
 		goto end;
+		}
 
 	BIO_printf(bio_err, "writing EC key\n");
 	if (outformat == FORMAT_ASN1) 
