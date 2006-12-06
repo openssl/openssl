@@ -18,7 +18,7 @@ SSL_CTX_set_tmp_rsa_callback, SSL_CTX_set_tmp_rsa, SSL_CTX_need_tmp_rsa, SSL_set
  long SSL_set_tmp_rsa(SSL *ssl, RSA *rsa)
  long SSL_need_tmp_rsa(SSL *ssl)
 
- RSA *(*tmp_rsa_callback)(SSL *ssl, int is_export, int keylength));
+ RSA *(*tmp_rsa_callback)(SSL *ssl, int is_export, int keylength);
 
 =head1 DESCRIPTION
 
