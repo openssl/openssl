@@ -67,7 +67,7 @@ extern X509V3_EXT_METHOD v3_ocsp_crlid, v3_ocsp_nocheck, v3_ocsp_serviceloc;
 extern X509V3_EXT_METHOD v3_crl_hold, v3_pci;
 extern X509V3_EXT_METHOD v3_policy_mappings, v3_policy_constraints;
 extern X509V3_EXT_METHOD v3_name_constraints, v3_inhibit_anyp;
-#ifdef OPENSSL_RFC3779
+#ifndef OPENSSL_NO_RFC3779
 extern X509V3_EXT_METHOD v3_addr, v3_asid;
 #endif
 
@@ -102,7 +102,7 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 #endif
 &v3_sxnet,
 &v3_info,
-#ifdef OPENSSL_RFC3779
+#ifndef OPENSSL_NO_RFC3779
 &v3_addr,
 &v3_asid,
 #endif

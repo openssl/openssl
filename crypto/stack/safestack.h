@@ -234,7 +234,6 @@ STACK_OF(type) \
 #define sk_ACCESS_DESCRIPTION_sort(st) SKM_sk_sort(ACCESS_DESCRIPTION, (st))
 #define sk_ACCESS_DESCRIPTION_is_sorted(st) SKM_sk_is_sorted(ACCESS_DESCRIPTION, (st))
 
-#ifdef OPENSSL_RFC3779
 #define sk_ASIdOrRange_new(st) SKM_sk_new(ASIdOrRange, (st))
 #define sk_ASIdOrRange_new_null() SKM_sk_new_null(ASIdOrRange)
 #define sk_ASIdOrRange_free(st) SKM_sk_free(ASIdOrRange, (st))
@@ -256,7 +255,6 @@ STACK_OF(type) \
 #define sk_ASIdOrRange_pop(st) SKM_sk_pop(ASIdOrRange, (st))
 #define sk_ASIdOrRange_sort(st) SKM_sk_sort(ASIdOrRange, (st))
 #define sk_ASIdOrRange_is_sorted(st) SKM_sk_is_sorted(ASIdOrRange, (st))
-#endif /* def OPENSSL_RFC3779 */
 
 #define sk_ASN1_GENERALSTRING_new(st) SKM_sk_new(ASN1_GENERALSTRING, (st))
 #define sk_ASN1_GENERALSTRING_new_null() SKM_sk_new_null(ASN1_GENERALSTRING)
@@ -632,7 +630,7 @@ STACK_OF(type) \
 #define sk_GENERAL_SUBTREE_sort(st) SKM_sk_sort(GENERAL_SUBTREE, (st))
 #define sk_GENERAL_SUBTREE_is_sorted(st) SKM_sk_is_sorted(GENERAL_SUBTREE, (st))
 
-#ifdef OPENSSL_RFC3779
+#ifndef OPENSSL_NO_RFC3779
 #define sk_IPAddressFamily_new(st) SKM_sk_new(IPAddressFamily, (st))
 #define sk_IPAddressFamily_new_null() SKM_sk_new_null(IPAddressFamily)
 #define sk_IPAddressFamily_free(st) SKM_sk_free(IPAddressFamily, (st))
@@ -676,7 +674,7 @@ STACK_OF(type) \
 #define sk_IPAddressOrRange_pop(st) SKM_sk_pop(IPAddressOrRange, (st))
 #define sk_IPAddressOrRange_sort(st) SKM_sk_sort(IPAddressOrRange, (st))
 #define sk_IPAddressOrRange_is_sorted(st) SKM_sk_is_sorted(IPAddressOrRange, (st))
-#endif /* def OPENSSL_RFC3779 */
+#endif /* OPENSSL_NO_RFC3779 */
 
 #define sk_KRB5_APREQBODY_new(st) SKM_sk_new(KRB5_APREQBODY, (st))
 #define sk_KRB5_APREQBODY_new_null() SKM_sk_new_null(KRB5_APREQBODY)

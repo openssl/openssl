@@ -288,7 +288,7 @@ struct x509_st
 	ASN1_OCTET_STRING *skid;
 	struct AUTHORITY_KEYID_st *akid;
 	X509_POLICY_CACHE *policy_cache;
-#ifdef OPENSSL_RFC3779
+#ifndef OPENSSL_NO_RFC3779
 	STACK_OF(IPAddressFamily) *rfc3779_addr;
 	struct ASIdentifiers_st *rfc3779_asid;
 #endif
