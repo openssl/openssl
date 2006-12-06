@@ -17,7 +17,7 @@ BIO_debug_callback - BIO callback functions
  long BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
 	long argl,long ret);
 
- typedef long callback(BIO *b, int oper, const char *argp,
+ typedef long (*callback)(BIO *b, int oper, const char *argp,
 			int argi, long argl, long retvalue);
 
 =head1 DESCRIPTION
