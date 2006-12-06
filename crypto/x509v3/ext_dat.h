@@ -100,7 +100,7 @@ static X509V3_EXT_METHOD *standard_exts[] = {
 #endif
 &v3_sxnet,
 &v3_info,
-#ifdef OPENSSL_RFC3779
+#ifndef OPENSSL_NO_RFC3779
 &v3_addr,
 &v3_asid,
 #endif

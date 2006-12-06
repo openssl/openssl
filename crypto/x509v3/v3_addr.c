@@ -1277,4 +1277,4 @@ int v3_addr_validate_resource_set(STACK_OF(X509) *chain,
   return v3_addr_validate_path_internal(NULL, chain, ext);
 }
 
-#endif /* OPENSSL_RFC3779 */
+#endif /* OPENSSL_NO_RFC3779 */
