@@ -51,8 +51,8 @@ $code=<<___;
 
 .globl	bn_mul_mont
 .align	5
+.ent	bn_mul_mont
 bn_mul_mont:
-	.ent	bn_mul_mont
 	lda	sp,-40(sp)
 	stq	ra,0(sp)
 	stq	s3,8(sp)
@@ -305,7 +305,7 @@ bn_mul_mont:
 
 .align	4
 .Lexit:	mov	fp,sp
-	#ldq	ra,0(sp)
+	/*ldq	ra,0(sp)*/
 	ldq	s3,8(sp)
 	ldq	s4,16(sp)
 	ldq	s5,24(sp)

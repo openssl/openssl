@@ -129,6 +129,9 @@ aix_ppc64-mont.s: asm/ppc-mont.pl;	$(PERL) asm/ppc-mont.pl $@
 osx_ppc32-mont.s: asm/ppc-mont.pl;	$(PERL) $< $@
 osx_ppc64-mont.s: asm/ppc-mont.pl;	$(PERL) $< $@
 
+alpha-mont.s:	asm/alpha-mont.pl
+	$(PERL) $< | $(CC) -E - > $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
