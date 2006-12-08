@@ -2,8 +2,9 @@
 
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
 # October 2005.
@@ -81,19 +82,18 @@ bn_mul_mont:
 	add	$hi0,%rax
 	adc	\$0,%rdx
 	mov	%rax,$lo0
+	mov	($np,$j,8),%rax
 	mov	%rdx,$hi0
 
-	mov	($np,$j,8),%rax
 	mulq	$m1			# np[j]*m1
 	add	$hi1,%rax
+	lea	1($j),$j		# j++
 	adc	\$0,%rdx
 	add	$lo0,%rax		# np[j]*m1+ap[j]*bp[0]
 	adc	\$0,%rdx
-	mov	%rax,-8(%rsp,$j,8)	# tp[j-1]
-	mov	%rdx,$hi1
-
-	lea	1($j),$j		# j++
+	mov	%rax,-16(%rsp,$j,8)	# tp[j-1]
 	cmp	$num,$j
+	mov	%rdx,$hi1
 	jl	.L1st
 
 	xor	%rdx,%rdx
@@ -120,6 +120,7 @@ bn_mul_mont:
 
 	mulq	($np,$j,8)		# np[0]*m1
 	add	$lo0,%rax		# discarded
+	mov	8(%rsp),$lo0		# tp[1]
 	adc	\$0,%rdx
 	mov	%rdx,$hi1
 
@@ -130,28 +131,27 @@ bn_mul_mont:
 	mulq	$m0			# ap[j]*bp[i]
 	add	$hi0,%rax
 	adc	\$0,%rdx
-	add	(%rsp,$j,8),%rax	# ap[j]*bp[i]+tp[j]
+	add	%rax,$lo0		# ap[j]*bp[i]+tp[j]
+	mov	($np,$j,8),%rax
 	adc	\$0,%rdx
-	mov	%rax,$lo0
 	mov	%rdx,$hi0
 
-	mov	($np,$j,8),%rax
 	mulq	$m1			# np[j]*m1
 	add	$hi1,%rax
+	lea	1($j),$j		# j++
 	adc	\$0,%rdx
 	add	$lo0,%rax		# np[j]*m1+ap[j]*bp[i]+tp[j]
 	adc	\$0,%rdx
-	mov	%rax,-8(%rsp,$j,8)	# tp[j-1]
-	mov	%rdx,$hi1
-
-	lea	1($j),$j		# j++
+	mov	(%rsp,$j,8),$lo0
 	cmp	$num,$j
+	mov	%rax,-16(%rsp,$j,8)	# tp[j-1]
+	mov	%rdx,$hi1
 	jl	.Linner
 
 	xor	%rdx,%rdx
 	add	$hi0,$hi1
 	adc	\$0,%rdx
-	add	(%rsp,$num,8),$hi1	# pull upmost overflow bit
+	add	$lo0,$hi1		# pull upmost overflow bit
 	adc	\$0,%rdx
 	mov	$hi1,-8(%rsp,$num,8)
 	mov	%rdx,(%rsp,$num,8)	# store upmost overflow bit
@@ -202,6 +202,7 @@ bn_mul_mont:
 	jge	.Lzap
 	jmp	.Lexit
 .size	bn_mul_mont,.-bn_mul_mont
+.asciz	"Montgomery Multiplication for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
 print $code;
