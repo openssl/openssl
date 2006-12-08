@@ -37,8 +37,6 @@
 # input arguments:
 # - num may not be less than 4;
 # - num has to be even;
-# - ap, bp, rp, np has to be 64-bit aligned [which is not a problem
-#   as long as BIGNUM.d are malloc-ated];
 # Failure to meet either condition has no fatal effects, simply
 # doesn't give any performance gain.
 
@@ -183,12 +181,12 @@ $fname:
 	add	$ap,$j,%o3
 	add	$bp,$i,%o4
 
-	ldx	[$bp+$i],%o0		! bp[0]
-	ldx	[$ap+$j],%o1		! ap[0]
-	sllx	%o0,32,%g1
-	sllx	%o1,32,%g5
-	srlx	%o0,32,%o0
-	srlx	%o1,32,%o1
+	ld	[%o3+4],%g1		! bp[0]
+	ld	[%o3+0],%o0
+	ld	[%o4+4],%g5		! ap[0]
+	sllx	%g1,32,%g1
+	ld	[%o4+0],%o1
+	sllx	%g5,32,%g5
 	or	%g1,%o0,%o0
 	or	%g5,%o1,%o1
 
@@ -510,14 +508,15 @@ $fname:
 	sub	%g0,$num,$j		! j=-num
 	add	%sp,$bias+$frame+$locals,$tp
 
+	add	$ap,$j,%o3
 	add	$bp,$i,%o4
 
-	ldx	[$bp+$i],%o0		! bp[i]
-	ldx	[$ap+$j],%o1		! ap[0]
-	sllx	%o0,32,%g1
-	sllx	%o1,32,%g5
-	srlx	%o0,32,%o0
-	srlx	%o1,32,%o1
+	ld	[%o3+4],%g1		! bp[i]
+	ld	[%o3+0],%o0
+	ld	[%o4+4],%g5		! ap[0]
+	sllx	%g1,32,%g1
+	ld	[%o4+0],%o1
+	sllx	%g5,32,%g5
 	or	%g1,%o0,%o0
 	or	%g5,%o1,%o1
 
@@ -818,14 +817,18 @@ $fname:
 
 .align	32,0x1000000
 .Lsub:
-	ldd	[$tp+%o7],%o0
-	ldd	[$np+%o7],%o2
-	subccc	%o1,%o2,%o2
-	subccc	%o0,%o3,%o3
-	std	%o2,[$rp+%o7]
+	ldx	[$tp+%o7],%o0
+	add	$np,%o7,%g1
+	ld	[%g1+0],%o2
+	ld	[%g1+4],%o3
+	srlx	%o0,32,%o1
+	subccc	%o0,%o2,%o2
+	add	$rp,%o7,%g1
+	subccc	%o1,%o3,%o3
+	st	%o2,[%g1+0]
 	add	%o7,8,%o7
 	brnz,pt	%o7,.Lsub
-	nop
+	st	%o3,[%g1+4]
 	subccc	$carry,0,$carry
 	bcc,pt	%icc,.Lzap
 	sub	%g0,$num,%o7		! n=-num
@@ -834,10 +837,11 @@ $fname:
 .Lcopy:
 	ldx	[$tp+%o7],%o0
 	srlx	%o0,32,%o1
-	std	%o0,[$rp+%o7]
+	add	$rp,%o7,%g1
+	st	%o0,[%g1+0]
 	add	%o7,8,%o7
 	brnz,pt	%o7,.Lcopy
-	nop
+	st	%o1,[%g1+4]
 	ba	.Lzap
 	sub	%g0,$num,%o7		! n=-num
 
@@ -861,6 +865,7 @@ $fname:
 	restore
 .type   $fname,#function
 .size	$fname,(.-$fname)
+.asciz	"Montgomery Multipltication for UltraSPARC, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
