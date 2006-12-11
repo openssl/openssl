@@ -1157,12 +1157,12 @@ end:
 	return ok;
 	}
 
-int X509_cmp_current_time(ASN1_TIME *ctm)
+int X509_cmp_current_time(const ASN1_TIME *ctm)
 {
 	return X509_cmp_time(ctm, NULL);
 }
 
-int X509_cmp_time(ASN1_TIME *ctm, time_t *cmp_time)
+int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 	{
 	char *str;
 	ASN1_TIME atm;

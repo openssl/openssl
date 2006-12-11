@@ -750,8 +750,8 @@ void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
 
-int		X509_cmp_time(ASN1_TIME *s, time_t *t);
-int		X509_cmp_current_time(ASN1_TIME *s);
+int		X509_cmp_time(const ASN1_TIME *s, time_t *t);
+int		X509_cmp_current_time(const ASN1_TIME *s);
 ASN1_TIME *	X509_time_adj(ASN1_TIME *s, long adj, time_t *t);
 ASN1_TIME *	X509_gmtime_adj(ASN1_TIME *s, long adj);
 
@@ -883,8 +883,8 @@ int 		X509_set_issuer_name(X509 *x, X509_NAME *name);
 X509_NAME *	X509_get_issuer_name(X509 *a);
 int 		X509_set_subject_name(X509 *x, X509_NAME *name);
 X509_NAME *	X509_get_subject_name(X509 *a);
-int 		X509_set_notBefore(X509 *x, ASN1_TIME *tm);
-int 		X509_set_notAfter(X509 *x, ASN1_TIME *tm);
+int 		X509_set_notBefore(X509 *x, const ASN1_TIME *tm);
+int 		X509_set_notAfter(X509 *x, const ASN1_TIME *tm);
 int 		X509_set_pubkey(X509 *x, EVP_PKEY *pkey);
 EVP_PKEY *	X509_get_pubkey(X509 *x);
 ASN1_BIT_STRING * X509_get0_pubkey_bitstr(const X509 *x);
@@ -921,8 +921,8 @@ int X509_REQ_add1_attr_by_txt(X509_REQ *req,
 
 int X509_CRL_set_version(X509_CRL *x, long version);
 int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name);
-int X509_CRL_set_lastUpdate(X509_CRL *x, ASN1_TIME *tm);
-int X509_CRL_set_nextUpdate(X509_CRL *x, ASN1_TIME *tm);
+int X509_CRL_set_lastUpdate(X509_CRL *x, const ASN1_TIME *tm);
+int X509_CRL_set_nextUpdate(X509_CRL *x, const ASN1_TIME *tm);
 int X509_CRL_sort(X509_CRL *crl);
 
 int X509_REVOKED_set_serialNumber(X509_REVOKED *x, ASN1_INTEGER *serial);
