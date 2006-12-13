@@ -139,6 +139,7 @@ int MAIN(int argc, char **argv)
 	if (!load_config(bio_err, NULL))
 		goto end;
 	SSL_load_error_strings();
+	OpenSSL_add_ssl_algorithms();
 	args = argv + 1;
 	reqnames = sk_new_null();
 	ids = sk_OCSP_CERTID_new_null();
@@ -726,6 +727,11 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err, "SSL is disabled\n");
 			goto end;
 #endif
+			if (ctx == NULL)
+				{
+				BIO_printf(bio_err, "Error creating SSL context.\n");
+				goto end;
+				}
 			SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
 			sbio = BIO_new_ssl(ctx, 1);
 			cbio = BIO_push(sbio, cbio);
