@@ -293,7 +293,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
 		NID_sbgp_ipAddrBlock,	/* 290 */
 		NID_sbgp_autonomousSysNum, /* 291 */
 #endif
-		NID_proxyCertInfo	/* 661 */
+		NID_proxyCertInfo	/* 663 */
 	};
 
 	int ex_nid;
