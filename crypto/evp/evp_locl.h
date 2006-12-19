@@ -65,7 +65,7 @@
 	bl = ctx->cipher->block_size;\
 	if(inl < bl) return 1;\
 	inl -= bl; \
-	for(i=0; i <= inl; i+=bl) \
+	for(i=0; i <= inl; i+=bl) 
 
 #define BLOCK_CIPHER_func_ecb(cname, cprefix, kstruct, ksched) \
 static int cname##_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
