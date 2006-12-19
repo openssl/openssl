@@ -221,7 +221,7 @@ typedef struct pem_ctx_st
 type *PEM_read_##name(FILE *fp, type **x, pem_password_cb *cb, void *u)\
 { \
 return(((type *(*)(D2I_OF(type),char *,FILE *,type **,pem_password_cb *,void *))openssl_fcast(PEM_ASN1_read))(d2i_##asn1, str,fp,x,cb,u)); \
-} \
+} 
 
 #define IMPLEMENT_PEM_write_fp(name, type, str, asn1) \
 int PEM_write_##name(FILE *fp, type *x) \

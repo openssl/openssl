@@ -67,7 +67,7 @@ if (ul != 0) \
 	r-=((r)>>16); \
 	} \
 else \
-	r=(-(int)a-b+1); /* assuming a or b is 0 and in range */ \
+	r=(-(int)a-b+1); /* assuming a or b is 0 and in range */ 
 
 #ifdef undef
 #define idea_mul(r,a,b,ul,sl) \
