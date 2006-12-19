@@ -529,6 +529,8 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 				ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
+		curve->seed->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
+		curve->seed->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 		if (!ASN1_BIT_STRING_set(curve->seed, group->seed, 
 		                         (int)group->seed_len))
 			{
@@ -1291,6 +1293,8 @@ int	i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 			goto err;
 			}
 
+		priv_key->publicKey->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
+		priv_key->publicKey->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 		if (!M_ASN1_BIT_STRING_set(priv_key->publicKey, buffer, 
 				buf_len))
 			{
