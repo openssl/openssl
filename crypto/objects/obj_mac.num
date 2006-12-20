@@ -824,3 +824,9 @@ id_GostR3410_2001_cc		823
 id_GostR3411_94_with_GostR3410_94_cc		824
 id_GostR3411_94_with_GostR3410_2001_cc		825
 id_GostR3410_2001_ParamSet_cc		826
+ecdsa_with_Recommended		827
+ecdsa_with_Specified		828
+ecdsa_with_SHA224		829
+ecdsa_with_SHA256		830
+ecdsa_with_SHA384		831
+ecdsa_with_SHA512		832

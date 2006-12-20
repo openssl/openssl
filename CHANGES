@@ -4,6 +4,9 @@
 
  Changes between 0.9.8e and 0.9.9  [xx XXX xxxx]
 
+  *) Add support for the ecdsa-with-SHA224/256/384/512 signature types.
+     [Nils Larsch]
+
   *) Initial incomplete changes to avoid need for function casts in OpenSSL
      when OPENSSL_NO_FCAST is set: some compilers (gcc 4.2 and later) reject
      their use. Safestack is reimplemented using inline functions: tests show

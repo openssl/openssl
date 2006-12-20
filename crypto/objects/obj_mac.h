@@ -305,6 +305,30 @@
 #define NID_ecdsa_with_SHA1		416
 #define OBJ_ecdsa_with_SHA1		OBJ_X9_62_id_ecSigType,1L
 
+#define SN_ecdsa_with_Recommended		"ecdsa-with-Recommended"
+#define NID_ecdsa_with_Recommended		827
+#define OBJ_ecdsa_with_Recommended		OBJ_X9_62_id_ecSigType,2L
+
+#define SN_ecdsa_with_Specified		"ecdsa-with-Specified"
+#define NID_ecdsa_with_Specified		828
+#define OBJ_ecdsa_with_Specified		OBJ_X9_62_id_ecSigType,3L
+
+#define SN_ecdsa_with_SHA224		"ecdsa-with-SHA224"
+#define NID_ecdsa_with_SHA224		829
+#define OBJ_ecdsa_with_SHA224		OBJ_ecdsa_with_Specified,1L
+
+#define SN_ecdsa_with_SHA256		"ecdsa-with-SHA256"
+#define NID_ecdsa_with_SHA256		830
+#define OBJ_ecdsa_with_SHA256		OBJ_ecdsa_with_Specified,2L
+
+#define SN_ecdsa_with_SHA384		"ecdsa-with-SHA384"
+#define NID_ecdsa_with_SHA384		831
+#define OBJ_ecdsa_with_SHA384		OBJ_ecdsa_with_Specified,3L
+
+#define SN_ecdsa_with_SHA512		"ecdsa-with-SHA512"
+#define NID_ecdsa_with_SHA512		832
+#define OBJ_ecdsa_with_SHA512		OBJ_ecdsa_with_Specified,4L
+
 #define OBJ_secg_ellipticCurve		OBJ_certicom_arc,0L
 
 #define SN_secp112r1		"secp112r1"

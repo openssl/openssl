@@ -75,6 +75,12 @@ X9-62_primeCurve 7	 	: prime256v1
 !Alias id-ecSigType ansi-X9-62 4
 !global
 X9-62_id-ecSigType 1		: ecdsa-with-SHA1
+X9-62_id-ecSigType 2		: ecdsa-with-Recommended
+X9-62_id-ecSigType 3		: ecdsa-with-Specified
+ecdsa-with-Specified 1		: ecdsa-with-SHA224
+ecdsa-with-Specified 2		: ecdsa-with-SHA256
+ecdsa-with-Specified 3		: ecdsa-with-SHA384
+ecdsa-with-Specified 4		: ecdsa-with-SHA512
 
 # SECG curve OIDs from "SEC 2: Recommended Elliptic Curve Domain Parameters"
 # (http://www.secg.org/)

@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 827
-#define NUM_SN 823
-#define NUM_LN 823
-#define NUM_OBJ 779
+#define NUM_NID 833
+#define NUM_SN 829
+#define NUM_LN 829
+#define NUM_OBJ 785
 
-static unsigned char lvalues[5496]={
+static unsigned char lvalues[5542]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -847,6 +847,12 @@ static unsigned char lvalues[5496]={
 0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x03,     /* [5471] OBJ_id_GostR3411_94_with_GostR3410_94_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x04,     /* [5479] OBJ_id_GostR3411_94_with_GostR3410_2001_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x08,0x01,     /* [5487] OBJ_id_GostR3410_2001_ParamSet_cc */
+0x2A,0x86,0x48,0xCE,0x3D,0x04,0x02,          /* [5495] OBJ_ecdsa_with_Recommended */
+0x2A,0x86,0x48,0xCE,0x3D,0x04,0x03,          /* [5502] OBJ_ecdsa_with_Specified */
+0x2A,0x86,0x48,0xCE,0x3D,0x04,0x03,0x01,     /* [5509] OBJ_ecdsa_with_SHA224 */
+0x2A,0x86,0x48,0xCE,0x3D,0x04,0x03,0x02,     /* [5517] OBJ_ecdsa_with_SHA256 */
+0x2A,0x86,0x48,0xCE,0x3D,0x04,0x03,0x03,     /* [5525] OBJ_ecdsa_with_SHA384 */
+0x2A,0x86,0x48,0xCE,0x3D,0x04,0x03,0x04,     /* [5533] OBJ_ecdsa_with_SHA512 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2184,6 +2190,18 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"id-GostR3410-2001-ParamSet-cc",
 	"GOST R 3410-2001 Parameter Set Cryptocom",
 	NID_id_GostR3410_2001_ParamSet_cc,8,&(lvalues[5487]),0},
+{"ecdsa-with-Recommended","ecdsa-with-Recommended",
+	NID_ecdsa_with_Recommended,7,&(lvalues[5495]),0},
+{"ecdsa-with-Specified","ecdsa-with-Specified",
+	NID_ecdsa_with_Specified,7,&(lvalues[5502]),0},
+{"ecdsa-with-SHA224","ecdsa-with-SHA224",NID_ecdsa_with_SHA224,8,
+	&(lvalues[5509]),0},
+{"ecdsa-with-SHA256","ecdsa-with-SHA256",NID_ecdsa_with_SHA256,8,
+	&(lvalues[5517]),0},
+{"ecdsa-with-SHA384","ecdsa-with-SHA384",NID_ecdsa_with_SHA384,8,
+	&(lvalues[5525]),0},
+{"ecdsa-with-SHA512","ecdsa-with-SHA512",NID_ecdsa_with_SHA512,8,
+	&(lvalues[5533]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2434,7 +2452,13 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[470]),/* "documentVersion" */
 &(nid_objs[392]),/* "domain" */
 &(nid_objs[452]),/* "domainRelatedObject" */
+&(nid_objs[827]),/* "ecdsa-with-Recommended" */
 &(nid_objs[416]),/* "ecdsa-with-SHA1" */
+&(nid_objs[829]),/* "ecdsa-with-SHA224" */
+&(nid_objs[830]),/* "ecdsa-with-SHA256" */
+&(nid_objs[831]),/* "ecdsa-with-SHA384" */
+&(nid_objs[832]),/* "ecdsa-with-SHA512" */
+&(nid_objs[828]),/* "ecdsa-with-Specified" */
 &(nid_objs[48]),/* "emailAddress" */
 &(nid_objs[132]),/* "emailProtection" */
 &(nid_objs[389]),/* "enterprises" */
@@ -3281,7 +3305,13 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[113]),/* "dsaWithSHA1" */
 &(nid_objs[70]),/* "dsaWithSHA1-old" */
 &(nid_objs[297]),/* "dvcs" */
+&(nid_objs[827]),/* "ecdsa-with-Recommended" */
 &(nid_objs[416]),/* "ecdsa-with-SHA1" */
+&(nid_objs[829]),/* "ecdsa-with-SHA224" */
+&(nid_objs[830]),/* "ecdsa-with-SHA256" */
+&(nid_objs[831]),/* "ecdsa-with-SHA384" */
+&(nid_objs[832]),/* "ecdsa-with-SHA512" */
+&(nid_objs[828]),/* "ecdsa-with-Specified" */
 &(nid_objs[48]),/* "emailAddress" */
 &(nid_objs[632]),/* "encrypted track 2" */
 &(nid_objs[56]),/* "extendedCertificateAttributes" */
@@ -4175,6 +4205,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[407]),/* OBJ_X9_62_characteristic_two_field 1 2 840 10045 1 2 */
 &(nid_objs[408]),/* OBJ_X9_62_id_ecPublicKey         1 2 840 10045 2 1 */
 &(nid_objs[416]),/* OBJ_ecdsa_with_SHA1              1 2 840 10045 4 1 */
+&(nid_objs[827]),/* OBJ_ecdsa_with_Recommended       1 2 840 10045 4 2 */
+&(nid_objs[828]),/* OBJ_ecdsa_with_Specified         1 2 840 10045 4 3 */
 &(nid_objs[258]),/* OBJ_id_pkix_mod                  1 3 6 1 5 5 7 0 */
 &(nid_objs[175]),/* OBJ_id_pe                        1 3 6 1 5 5 7 1 */
 &(nid_objs[259]),/* OBJ_id_qt                        1 3 6 1 5 5 7 2 */
@@ -4256,6 +4288,10 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[413]),/* OBJ_X9_62_prime239v2             1 2 840 10045 3 1 5 */
 &(nid_objs[414]),/* OBJ_X9_62_prime239v3             1 2 840 10045 3 1 6 */
 &(nid_objs[415]),/* OBJ_X9_62_prime256v1             1 2 840 10045 3 1 7 */
+&(nid_objs[829]),/* OBJ_ecdsa_with_SHA224            1 2 840 10045 4 3 1 */
+&(nid_objs[830]),/* OBJ_ecdsa_with_SHA256            1 2 840 10045 4 3 2 */
+&(nid_objs[831]),/* OBJ_ecdsa_with_SHA384            1 2 840 10045 4 3 3 */
+&(nid_objs[832]),/* OBJ_ecdsa_with_SHA512            1 2 840 10045 4 3 4 */
 &(nid_objs[269]),/* OBJ_id_pkix1_explicit_88         1 3 6 1 5 5 7 0 1 */
 &(nid_objs[270]),/* OBJ_id_pkix1_implicit_88         1 3 6 1 5 5 7 0 2 */
 &(nid_objs[271]),/* OBJ_id_pkix1_explicit_93         1 3 6 1 5 5 7 0 3 */
