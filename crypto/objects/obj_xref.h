@@ -24,10 +24,18 @@ static const nid_triple sigoid_srt[] =
 	{NID_id_GostR3411_94_with_GostR3410_94, NID_id_GostR3411_94, NID_id_GostR3410_94},
 	{NID_id_GostR3411_94_with_GostR3410_94_cc, NID_id_GostR3411_94, NID_id_GostR3410_94_cc},
 	{NID_id_GostR3411_94_with_GostR3410_2001_cc, NID_id_GostR3411_94, NID_id_GostR3410_2001_cc},
+	{NID_ecdsa_with_Recommended, NID_undef, NID_X9_62_id_ecPublicKey},
+	{NID_ecdsa_with_Specified, NID_undef, NID_X9_62_id_ecPublicKey},
+	{NID_ecdsa_with_SHA224, NID_sha224, NID_X9_62_id_ecPublicKey},
+	{NID_ecdsa_with_SHA256, NID_sha256, NID_X9_62_id_ecPublicKey},
+	{NID_ecdsa_with_SHA384, NID_sha384, NID_X9_62_id_ecPublicKey},
+	{NID_ecdsa_with_SHA512, NID_sha512, NID_X9_62_id_ecPublicKey},
 	};
 
 static const nid_triple * const sigoid_srt_xref[] =
 	{
+	&sigoid_srt[21],
+	&sigoid_srt[22],
 	&sigoid_srt[0],
 	&sigoid_srt[1],
 	&sigoid_srt[7],
@@ -42,9 +50,13 @@ static const nid_triple * const sigoid_srt_xref[] =
 	&sigoid_srt[10],
 	&sigoid_srt[11],
 	&sigoid_srt[13],
+	&sigoid_srt[24],
 	&sigoid_srt[14],
+	&sigoid_srt[25],
 	&sigoid_srt[15],
+	&sigoid_srt[26],
 	&sigoid_srt[16],
+	&sigoid_srt[23],
 	&sigoid_srt[17],
 	&sigoid_srt[18],
 	&sigoid_srt[19],
