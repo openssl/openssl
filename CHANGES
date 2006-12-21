@@ -340,7 +340,7 @@
                                  - SSL_CTX_set_tlsext_servername_callback()
          SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG
                                       - SSL_CTX_set_tlsext_servername_arg()
-         SSL_CTRL_SET_TLSEXT_HOSTNAME           - SSL_set_tlsext_hostname()
+         SSL_CTRL_SET_TLSEXT_HOSTNAME           - SSL_set_tlsext_host_name()
 
      openssl s_client has a new '-servername ...' option.
 
@@ -519,7 +519,7 @@
      draft-ietf-tls-56-bit-ciphersuites-0[01].txt, but do not really
      appear there.
 
-     Also deactive the remaining ciphersuites from
+     Also deactivate the remaining ciphersuites from
      draft-ietf-tls-56-bit-ciphersuites-01.txt.  These are just as
      unofficial, and the ID has long expired.
      [Bodo Moeller]

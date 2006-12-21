@@ -453,7 +453,7 @@ typedef struct ssl_method_st
  *	Peer [ 3 ] EXPLICIT	X509,		-- optional Peer Certificate
  *	Session_ID_context [ 4 ] EXPLICIT OCTET STRING,   -- the Session ID context
  *	Verify_result [ 5 ] EXPLICIT INTEGER,   -- X509_V_... code for `Peer'
- *	HostName [ 6 ] EXPLICY OCTET STRING,      -- optional HostName from servername TLS extension 
+ *	HostName [ 6 ] EXPLICIT OCTET STRING,   -- optional HostName from servername TLS extension 
  *	ECPointFormatList [ 7 ] OCTET STRING,     -- optional EC point format list from TLS extension
  *	PSK_identity_hint [ 8 ] EXPLICIT OCTET STRING, -- optional PSK identity hint
  *	PSK_identity [ 9 ] EXPLICIT OCTET STRING -- optional PSK identity
