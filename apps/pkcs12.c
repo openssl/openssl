@@ -303,11 +303,14 @@ int MAIN(int argc, char **argv)
 #endif
 	BIO_printf (bio_err, "-nodes        don't encrypt private keys\n");
 	BIO_printf (bio_err, "-noiter       don't use encryption iteration\n");
+	BIO_printf (bio_err, "-nomaciter    don't use MAC iteration\n");
 	BIO_printf (bio_err, "-maciter      use MAC iteration\n");
+	BIO_printf (bio_err, "-nomac        don't generate MAC\n");
 	BIO_printf (bio_err, "-twopass      separate MAC, encryption passwords\n");
 	BIO_printf (bio_err, "-descert      encrypt PKCS#12 certificates with triple DES (default RC2-40)\n");
 	BIO_printf (bio_err, "-certpbe alg  specify certificate PBE algorithm (default RC2-40)\n");
 	BIO_printf (bio_err, "-keypbe alg   specify private key PBE algorithm (default 3DES)\n");
+	BIO_printf (bio_err, "-macalg alg   digest algorithm used in MAC (default SHA1)\n");
 	BIO_printf (bio_err, "-keyex        set MS key exchange type\n");
 	BIO_printf (bio_err, "-keysig       set MS key signature type\n");
 	BIO_printf (bio_err, "-password p   set import/export password source\n");
@@ -319,6 +322,7 @@ int MAIN(int argc, char **argv)
 	BIO_printf(bio_err,  "-rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	BIO_printf(bio_err,  "              load the file (or the files in the directory) into\n");
 	BIO_printf(bio_err,  "              the random number generator\n");
+	BIO_printf(bio_err,  "-CSP name     Microsoft CSP name\n");
     	goto end;
     }
 

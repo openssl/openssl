@@ -23,22 +23,23 @@ B<openssl> B<pkcs12>
 [B<-cacerts>]
 [B<-nokeys>]
 [B<-info>]
-[B<-des>]
-[B<-des3>]
-[B<-idea>]
-[B<-nodes>]
+[B<-des | -des3 | -idea | -aes128 | -aes192 | -aes256 | -camellia128 | -camellia192 | -camellia256 | -nodes>]
 [B<-noiter>]
-[B<-maciter>]
+[B<-maciter | -nomaciter | -nomac>]
 [B<-twopass>]
 [B<-descert>]
-[B<-certpbe>]
-[B<-keypbe>]
+[B<-certpbe cipher>]
+[B<-keypbe cipher>]
+[B<-macalg digest>]
 [B<-keyex>]
 [B<-keysig>]
 [B<-password arg>]
 [B<-passin arg>]
 [B<-passout arg>]
 [B<-rand file(s)>]
+[B<-CAfile file>]
+[B<-CApath dir>]
+[B<-CSP name>]
 
 =head1 DESCRIPTION
 
@@ -115,6 +116,14 @@ use triple DES to encrypt private keys before outputting, this is the default.
 =item B<-idea>
 
 use IDEA to encrypt private keys before outputting.
+
+=item B<-aes128>, B<-aes192>, B<-aes256>
+
+use AES to encrypt private keys before outputting.
+
+=item B<-camellia128>, B<-camellia192>, B<-camellia256>
+
+use Camellia to encrypt private keys before outputting.
 
 =item B<-nodes>
 
@@ -245,6 +254,10 @@ option.
 This option is included for compatibility with previous versions, it used
 to be needed to use MAC iterations counts but they are now used by default.
 
+=item B<-nomac>
+
+don't attempt to provide the MAC integrity.
+
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
@@ -252,6 +265,20 @@ generator, or an EGD socket (see L<RAND_egd(3)|RAND_egd(3)>).
 Multiple files can be specified separated by a OS-dependent character.
 The separator is B<;> for MS-Windows, B<,> for OpenVMS, and B<:> for
 all others.
+
+=item B<-CAfile file>
+
+CA storage as a file.
+
+=item B<-CApath dir>
+
+CA storage as a directory. This directory must be a standard certificate
+directory: that is a hash of each subject name (using B<x509 -hash>) should be
+linked to each certificate.
+
+=item B<-CSP name>
+
+write B<name> as a Microsoft CSP name.
 
 =back
 
