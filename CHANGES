@@ -102,7 +102,7 @@
      draft-ietf-tls-56-bit-ciphersuites-0[01].txt, but do not really
      appear there.
 
-     Also deactive the remaining ciphersuites from
+     Also deactivate the remaining ciphersuites from
      draft-ietf-tls-56-bit-ciphersuites-01.txt.  These are just as
      unofficial, and the ID has long expired.
      [Bodo Moeller]
