@@ -446,11 +446,13 @@ static int pkey_gost01_cc_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
 	int ok = 0;
 	EVP_PKEY* pub_key = EVP_PKEY_CTX_get0_pkey(ctx);
 	DSA_SIG *s=unpack_cc_signature(sig,siglen);
+#ifdef DEBUG_SIGN	
 	fprintf(stderr,"R=");
 	BN_print_fp(stderr,s->r);
 	fprintf(stderr,"\nS=");
 	BN_print_fp(stderr,s->s);
 	fprintf(stderr,"\n");
+#endif	
 	if (!s) return 0;
 	if (pub_key) ok = gost2001_do_verify(tbs,tbs_len,s,EVP_PKEY_get0(pub_key));
 	DSA_SIG_free(s);
@@ -464,11 +466,13 @@ static int pkey_gost01_cp_verify(EVP_PKEY_CTX *ctx, const unsigned char *sig,
 	EVP_PKEY* pub_key = EVP_PKEY_CTX_get0_pkey(ctx);
 	DSA_SIG *s=unpack_cp_signature(sig,siglen);
 	if (!s) return 0;
+#ifdef DEBUG_SIGN	
 	fprintf(stderr,"R=");
 	BN_print_fp(stderr,s->r);
 	fprintf(stderr,"\nS=");
 	BN_print_fp(stderr,s->s);
 	fprintf(stderr,"\n");
+#endif	
 	if (pub_key) ok = gost2001_do_verify(tbs,tbs_len,s,EVP_PKEY_get0(pub_key));
 	DSA_SIG_free(s);
 	return ok;
