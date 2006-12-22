@@ -20,7 +20,14 @@
 # Yet, for being draft, the code improves rsa512 *sign* benchmark by
 # 110%(!), rsa1024 one - by 70% and rsa4096 - by 20%:-)
 
-push(@INC,"perlasm","../../perlasm");
+# December 2006
+#
+# Modulo-scheduling SSE2 loops results in further 15-20% improvement.
+# Integer-only code [being equipped with dedicated squaring procedure]
+# gives >=30% on rsa512 sign benchmark...
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],$0);
@@ -30,7 +37,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 &external_label("OPENSSL_ia32cap_P") if ($sse2);
 
-&function_begin("bn_mul_mont",$sse2?"EXTRN\t_OPENSSL_ia32cap_P:DWORD":"");
+&function_begin("bn_mul_mont");
 
 $i="edx";
 $j="ecx";
@@ -51,8 +58,8 @@ $frame=32;				# size of above frame rounded up to 16n
 
 	&xor	("eax","eax");
 	&mov	("edi",&wparam(5));	# int num
-	&cmp	("edi",3);
-	&jb	(&label("just_leave"));
+	&cmp	("edi",4);
+	&jl	(&label("just_leave"));
 
 	################################# load argument block...
 	&mov	("eax",&wparam(0));	# BN_ULONG *rp
@@ -75,10 +82,10 @@ $frame=32;				# size of above frame rounded up to 16n
 	&mov	($_bp,"ecx");
 	&mov	($_np,"edx");
 	&mov	($_n0,"esi");
-	&lea	($num,&DWP(-2,"edi"));	# num is restored to its original value
+	&lea	($num,&DWP(-3,"edi"));	# num=num-1 to assist modulo-scheduling
 	#&mov	($_num,$num);		# redundant as $num is not reused
 	&mov	($_sp,"ebp");		# saved stack pointer!
-
+
 if($sse2) {
 $acc0="mm0";	# mmx register bank layout
 $acc1="mm1";
@@ -117,34 +124,48 @@ $mask="mm7";
 	&pmuludq($car1,$mul1);			# "t[0]"*np[0]*n0
 	&paddq	($car1,$acc0);
 
+	&movd	($acc1,&DWP(4,$np));		# np[1]
+	&movd	($acc0,&DWP(4,$ap));		# ap[1]
+
 	&psrlq	($car0,32);
 	&psrlq	($car1,32);
 
 	&inc	($j);				# j++
 &set_label("1st");
-	&movd	($acc0,&DWP(0,$ap,$j,4));	# ap[j]
-	&movd	($acc1,&DWP(0,$np,$j,4));	# np[j]
 	&pmuludq($acc0,$mul0);			# ap[j]*bp[0]
 	&pmuludq($acc1,$mul1);			# np[j]*m1
-
 	&paddq	($car0,$acc0);			# +=c0
+	&paddq	($car1,$acc1);			# +=c1
+
 	&movq	($acc0,$car0);
 	&pand	($acc0,$mask);
-
-	&paddq	($car1,$acc1);			# +=c1
+	&movd	($acc1,&DWP(4,$np,$j,4));	# np[j+1]
 	&paddq	($car1,$acc0);			# +=ap[j]*bp[0];
-	&movd	(&DWP($frame-4,"esp",$j,4),$car1);	# tp[j-1]=
-
+	&movd	($acc0,&DWP(4,$ap,$j,4));	# ap[j+1]
 	&psrlq	($car0,32);
+	&movd	(&DWP($frame-4,"esp",$j,4),$car1);	# tp[j-1]=
 	&psrlq	($car1,32);
 
 	&lea	($j,&DWP(1,$j));
 	&cmp	($j,$num);
 	&jl	(&label("1st"));
 
-	&paddq	($car1,$car0);
-	&movq	(&DWP($frame-4,"esp",$num,4),$car1);
+	&pmuludq($acc0,$mul0);			# ap[num-1]*bp[0]
+	&pmuludq($acc1,$mul1);			# np[num-1]*m1
+	&paddq	($car0,$acc0);			# +=c0
+	&paddq	($car1,$acc1);			# +=c1
 
+	&movq	($acc0,$car0);
+	&pand	($acc0,$mask);
+	&paddq	($car1,$acc0);			# +=ap[num-1]*bp[0];
+	&movd	(&DWP($frame-4,"esp",$j,4),$car1);	# tp[num-2]=
+
+	&psrlq	($car0,32);
+	&psrlq	($car1,32);
+
+	&paddq	($car1,$car0);
+	&movq	(&DWP($frame,"esp",$num,4),$car1);	# tp[num].tp[num-1]
+
 	&inc	($i);				# i++
 &set_label("outer");
 	&xor	($j,$j);			# j=0
@@ -165,92 +186,113 @@ $mask="mm7";
 	&pmuludq($car1,$mul1);
 	&paddq	($car1,$acc0);
 
+	&movd	($temp,&DWP($frame+4,"esp"));	# tp[1]
+	&movd	($acc1,&DWP(4,$np));		# np[1]
+	&movd	($acc0,&DWP(4,$ap));		# ap[1]
+
 	&psrlq	($car0,32);
 	&psrlq	($car1,32);
+	&paddq	($car0,$temp);			# +=tp[1]
 
 	&inc	($j);				# j++
+	&dec	($num);
 &set_label("inner");
-	&movd	($acc0,&DWP(0,$ap,$j,4));	# ap[j]
-	&movd	($acc1,&DWP(0,$np,$j,4));	# np[j]
-	&movd	($temp,&DWP($frame,"esp",$j,4));# tp[j]
 	&pmuludq($acc0,$mul0);			# ap[j]*bp[i]
 	&pmuludq($acc1,$mul1);			# np[j]*m1
-	&paddq	($car0,$temp);			# +=tp[j]
 	&paddq	($car0,$acc0);			# +=c0
+	&paddq	($car1,$acc1);			# +=c1
+
+	&movq	($acc0,$car0);
+	&movd	($temp,&DWP($frame+4,"esp",$j,4));# tp[j+1]
+	&pand	($acc0,$mask);
+	&movd	($acc1,&DWP(4,$np,$j,4));	# np[j+1]
+	&paddq	($car1,$acc0);			# +=ap[j]*bp[i]+tp[j]
+	&movd	($acc0,&DWP(4,$ap,$j,4));	# ap[j+1]
+	&psrlq	($car0,32);
+	&movd	(&DWP($frame-4,"esp",$j,4),$car1);# tp[j-1]=
+	&psrlq	($car1,32);
+	&paddq	($car0,$temp);			# +=tp[j+1]
+
+	&dec	($num);
+	&lea	($j,&DWP(1,$j));		# j++
+	&jnz	(&label("inner"));
+
+	&mov	($num,$j);
+	&pmuludq($acc0,$mul0);			# ap[num-1]*bp[i]
+	&pmuludq($acc1,$mul1);			# np[num-1]*m1
+	&paddq	($car0,$acc0);			# +=c0
+	&paddq	($car1,$acc1);			# +=c1
+
 	&movq	($acc0,$car0);
 	&pand	($acc0,$mask);
-
-	&paddq	($car1,$acc1);			# +=c1
-	&paddq	($car1,$acc0);			# +=ap[j]*bp[i]+tp[j]
-	&movd	(&DWP($frame-4,"esp",$j,4),$car1);	# tp[j-1]=
-
+	&paddq	($car1,$acc0);			# +=ap[num-1]*bp[i]+tp[num-1]
+	&movd	(&DWP($frame-4,"esp",$j,4),$car1);	# tp[num-2]=
 	&psrlq	($car0,32);
 	&psrlq	($car1,32);
 
-	&lea	($j,&DWP(1,$j));		# j++
-	&cmp	($j,$num);
-	&jl	(&label("inner"));
-
-	&movd	($temp,&DWP($frame,"esp",$num,4));
+	&movd	($temp,&DWP($frame+4,"esp",$num,4));	# += tp[num]
 	&paddq	($car1,$car0);
 	&paddq	($car1,$temp);
-	&movq	(&DWP($frame-4,"esp",$num,4),$car1);
+	&movq	(&DWP($frame,"esp",$num,4),$car1);	# tp[num].tp[num-1]
 
 	&lea	($i,&DWP(1,$i));		# i++
 	&cmp	($i,$num);
-	&jl	(&label("outer"));
+	&jle	(&label("outer"));
 
 	&emms	();				# done with mmx bank
 	&jmp	(&label("common_tail"));
 
 &set_label("non_sse2",16);
 }
-
-if (1) {
+
+if (0) {
 	&mov	("esp",$_sp);
 	&xor	("eax","eax");	# signal "not fast enough [yet]"
 	&jmp	(&label("just_leave"));
-	# The code below gives ~15% improvement on 512-bit benchmark
-	# *only*:-( On all other key lengths it's slower for up to 20%.
-	# This is because the original code path holds down the overall
-	# amount of multiplications by ~25% by deploying bn_sqr_words.
-	# In other words, for the code below to be competitive,
-	# dedicated squaring procedure is a must...
+	# While the below code provides competitive performance for
+	# all key lengthes on modern cores, it's still a tad slower
+	# for >=2048-bits keys on *elder* CPUs:-( "Competitive" means
+	# compared to the original integer-only assembler. 512-bit
+	# RSA sign is better by >=30%, but that's about all one can
+	# say about all CPUs...
 } else {
 $inp="esi";	# integer path uses these registers differently
 $word="edi";
 $carry="ebp";
 
-	&sub	($num,1);		# non-SSE2 path uses num-1
-
 	&mov	($inp,$_ap);
+	&lea	($carry,&DWP(1,$num));
 	&mov	($word,$_bp);
+	&xor	($j,$j);				# j=0
+	&mov	("edx",$inp);
+	&and	($carry,1);				# see if num is even
+	&sub	("edx",$word);				# see if ap==bp
 	&lea	("eax",&DWP(4,$word,$num,4));		# &bp[num]
+	&or	($carry,"edx");
 	&mov	($word,&DWP(0,$word));			# bp[0]
+	&jz	(&label("bn_sqr_mont"));
 	&mov	($_bpend,"eax");
-	&xor	($j,$j);
+	&mov	("eax",&DWP(0,$inp));
 	&xor	("edx","edx");
 
 &set_label("mull",16);
-	&mov	("eax",&DWP(0,$inp,$j,4));		# ap[j]
 	&mov	($carry,"edx");
 	&mul	($word);				# ap[j]*bp[0]
+	&add	($carry,"eax");
 	&lea	($j,&DWP(1,$j));
-	&add	("eax",$carry);
 	&adc	("edx",0);
-	&mov	(&DWP($frame-4,"esp",$j,4),"eax");	# tp[j]=
+	&mov	("eax",&DWP(0,$inp,$j,4));		# ap[j+1]
 	&cmp	($j,$num);
-	&jb	(&label("mull"));
+	&mov	(&DWP($frame-4,"esp",$j,4),$carry);	# tp[j]=
+	&jl	(&label("mull"));
 
-	&mov	("eax",&DWP(0,$inp,$num,4));		# ap[num-1]
 	&mov	($carry,"edx");
 	&mul	($word);				# ap[num-1]*bp[0]
+	 &mov	($word,$_n0);
 	&add	("eax",$carry);
+	 &mov	($inp,$_np);
 	&adc	("edx",0);
-
-	&mov	($word,$_n0);
-	&mov	($inp,$_np);
-	&imul	($word,&DWP($frame,"esp"));		# n0*tp[0]
+	 &imul	($word,&DWP($frame,"esp"));		# n0*tp[0]
 
 	&mov	(&DWP($frame,"esp",$num,4),"eax");	# tp[num-1]=
 	&xor	($j,$j);
@@ -260,99 +302,244 @@ $carry="ebp";
 	&mov	("eax",&DWP(0,$inp));			# np[0]
 	&mul	($word);				# np[0]*m
 	&add	("eax",&DWP($frame,"esp"));		# +=tp[0]
+	&mov	("eax",&DWP(4,$inp));			# np[1]
 	&adc	("edx",0);
-	&mov	($j,1);
+	&inc	($j);
 
 	&jmp	(&label("2ndmadd"));
-
+
 &set_label("1stmadd",16);
-	&mov	("eax",&DWP(0,$inp,$j,4));		# ap[j]
 	&mov	($carry,"edx");
 	&mul	($word);				# ap[j]*bp[i]
+	&add	($carry,&DWP($frame,"esp",$j,4));	# +=tp[j]
 	&lea	($j,&DWP(1,$j));
-	&add	("eax",&DWP($frame-4,"esp",$j,4));	# +=tp[j]
 	&adc	("edx",0);
-	&add	("eax",$carry);
+	&add	($carry,"eax");
+	&mov	("eax",&DWP(0,$inp,$j,4));		# ap[j+1]
 	&adc	("edx",0);
-	&mov	(&DWP($frame-4,"esp",$j,4),"eax");	# tp[j]=
 	&cmp	($j,$num);
-	&jb	(&label("1stmadd"));
+	&mov	(&DWP($frame-4,"esp",$j,4),$carry);	# tp[j]=
+	&jl	(&label("1stmadd"));
 
-	&mov	("eax",&DWP(0,$inp,$num,4));		# ap[num-1]
 	&mov	($carry,"edx");
 	&mul	($word);				# ap[num-1]*bp[i]
 	&add	("eax",&DWP($frame,"esp",$num,4));	# +=tp[num-1]
+	 &mov	($word,$_n0);
 	&adc	("edx",0);
-	&add	("eax",$carry);
+	 &mov	($inp,$_np);
+	&add	($carry,"eax");
 	&adc	("edx",0);
+	 &imul	($word,&DWP($frame,"esp"));		# n0*tp[0]
 
+	&xor	($j,$j);
+	&add	("edx",&DWP($frame+4,"esp",$num,4));	# carry+=tp[num]
+	&mov	(&DWP($frame,"esp",$num,4),$carry);	# tp[num-1]=
+	&adc	($j,0);
+	 &mov	("eax",&DWP(0,$inp));			# np[0]
+	&mov	(&DWP($frame+4,"esp",$num,4),"edx");	# tp[num]=
+	&mov	(&DWP($frame+8,"esp",$num,4),$j);	# tp[num+1]=
+
+	&mul	($word);				# np[0]*m
+	&add	("eax",&DWP($frame,"esp"));		# +=tp[0]
+	&mov	("eax",&DWP(4,$inp));			# np[1]
+	&adc	("edx",0);
+	&mov	($j,1);
+
+&set_label("2ndmadd",16);
+	&mov	($carry,"edx");
+	&mul	($word);				# np[j]*m
+	&add	($carry,&DWP($frame,"esp",$j,4));	# +=tp[j]
+	&lea	($j,&DWP(1,$j));
+	&adc	("edx",0);
+	&add	($carry,"eax");
+	&mov	("eax",&DWP(0,$inp,$j,4));		# np[j+1]
+	&adc	("edx",0);
+	&cmp	($j,$num);
+	&mov	(&DWP($frame-8,"esp",$j,4),$carry);	# tp[j-1]=
+	&jl	(&label("2ndmadd"));
+
+	&mov	($carry,"edx");
+	&mul	($word);				# np[j]*m
+	&add	($carry,&DWP($frame,"esp",$j,4));	# +=tp[j]
+	&adc	("edx",0);
+	&add	($carry,"eax");
+	&adc	("edx",0);
+	&mov	(&DWP($frame-4,"esp",$num,4),$carry);	# tp[num-2]=
+
+	&xor	("eax","eax");
+	 &mov	($j,$_bp);				# &bp[i]
+	&add	("edx",&DWP($frame+4,"esp",$num,4));	# carry+=tp[num]
+	&adc	("eax",&DWP($frame+8,"esp",$num,4));	# +=tp[num+1]
+	 &lea	($j,&DWP(4,$j));
+	&mov	(&DWP($frame,"esp",$num,4),"edx");	# tp[num-1]=
+	 &cmp	($j,$_bpend);
+	&mov	(&DWP($frame+4,"esp",$num,4),"eax");	# tp[num]=
+	&je	(&label("x86done"));
+
+	&mov	($word,&DWP(0,$j));			# bp[i]
+	&mov	($inp,$_ap);
+	&mov	($_bp,$j);				# &bp[++i]
+	&xor	($j,$j);
+	&xor	("edx","edx");
+	&mov	("eax",&DWP(0,$inp));
+	&jmp	(&label("1stmadd"));
+
+&set_label("bn_sqr_mont",16);
+$sbit=$num;
+	&mov	($_num,$num);
+	&mov	($_bp,$j);				# i=0
+
+	&mov	("eax",$word);				# ap[0]
+	&mul	($word);				# ap[0]*ap[0]
+	&mov	(&DWP($frame,"esp"),"eax");		# tp[0]=
+	&mov	($sbit,"edx");
+	&shr	("edx",1);
+	&and	($sbit,1);
+	&inc	($j);
+&set_label("sqr",16);
+	&mov	("eax",&DWP(0,$inp,$j,4));		# ap[j]
+	&mov	($carry,"edx");
+	&mul	($word);				# ap[j]*ap[0]
+	&add	("eax",$carry);
+	&lea	($j,&DWP(1,$j));
+	&adc	("edx",0);
+	&lea	($carry,&DWP(0,$sbit,"eax",2));
+	&shr	("eax",31);
+	&cmp	($j,$_num);
+	&mov	($sbit,"eax");
+	&mov	(&DWP($frame-4,"esp",$j,4),$carry);	# tp[j]=
+	&jl	(&label("sqr"));
+
+	&mov	("eax",&DWP(0,$inp,$j,4));		# ap[num-1]
+	&mov	($carry,"edx");
+	&mul	($word);				# ap[num-1]*ap[0]
+	&add	("eax",$carry);
+	 &mov	($word,$_n0);
+	&adc	("edx",0);
+	 &mov	($inp,$_np);
+	&lea	($carry,&DWP(0,$sbit,"eax",2));
+	 &imul	($word,&DWP($frame,"esp"));		# n0*tp[0]
+	&shr	("eax",31);
+	&mov	(&DWP($frame,"esp",$j,4),$carry);	# tp[num-1]=
+
+	&lea	($carry,&DWP(0,"eax","edx",2));
+	 &mov	("eax",&DWP(0,$inp));			# np[0]
+	&shr	("edx",31);
+	&mov	(&DWP($frame+4,"esp",$j,4),$carry);	# tp[num]=
+	&mov	(&DWP($frame+8,"esp",$j,4),"edx");	# tp[num+1]=
+
+	&mul	($word);				# np[0]*m
+	&add	("eax",&DWP($frame,"esp"));		# +=tp[0]
+	&mov	($num,$j);
+	&adc	("edx",0);
+	&mov	("eax",&DWP(4,$inp));			# np[1]
+	&mov	($j,1);
+
+&set_label("3rdmadd",16);
+	&mov	($carry,"edx");
+	&mul	($word);				# np[j]*m
+	&add	($carry,&DWP($frame,"esp",$j,4));	# +=tp[j]
+	&adc	("edx",0);
+	&add	($carry,"eax");
+	&mov	("eax",&DWP(4,$inp,$j,4));		# np[j+1]
+	&adc	("edx",0);
+	&mov	(&DWP($frame-4,"esp",$j,4),$carry);	# tp[j-1]=
+
+	&mov	($carry,"edx");
+	&mul	($word);				# np[j+1]*m
+	&add	($carry,&DWP($frame+4,"esp",$j,4));	# +=tp[j+1]
+	&lea	($j,&DWP(2,$j));
+	&adc	("edx",0);
+	&add	($carry,"eax");
+	&mov	("eax",&DWP(0,$inp,$j,4));		# np[j+2]
+	&adc	("edx",0);
+	&cmp	($j,$num);
+	&mov	(&DWP($frame-8,"esp",$j,4),$carry);	# tp[j]=
+	&jl	(&label("3rdmadd"));
+
+	&mov	($carry,"edx");
+	&mul	($word);				# np[j]*m
+	&add	($carry,&DWP($frame,"esp",$num,4));	# +=tp[num-1]
+	&adc	("edx",0);
+	&add	($carry,"eax");
+	&adc	("edx",0);
+	&mov	(&DWP($frame-4,"esp",$num,4),$carry);	# tp[num-2]=
+
+	&mov	($j,$_bp);				# i
+	&xor	("eax","eax");
+	&mov	($inp,$_ap);
+	&add	("edx",&DWP($frame+4,"esp",$num,4));	# carry+=tp[num]
+	&adc	("eax",&DWP($frame+8,"esp",$num,4));	# +=tp[num+1]
+	&mov	(&DWP($frame,"esp",$num,4),"edx");	# tp[num-1]=
+	&cmp	($j,$num);
+	&mov	(&DWP($frame+4,"esp",$num,4),"eax");	# tp[num]=
+	&je	(&label("x86done"));
+
+	&mov	($word,&DWP(4,$inp,$j,4));		# ap[i]
+	&lea	($j,&DWP(1,$j));
+	&mov	("eax",$word);
+	&mov	($_bp,$j);				# ++i
+	&mul	($word);				# ap[i]*ap[i]
+	&add	("eax",&DWP($frame,"esp",$j,4));	# +=tp[i]
+	&adc	("edx",0);
+	&mov	(&DWP($frame,"esp",$j,4),"eax");	# tp[i]=
+	&xor	($carry,$carry);
+	&cmp	($j,$num);
+	&lea	($j,&DWP(1,$j));
+	&je	(&label("sqrlast"));
+
+	&mov	($sbit,"edx");				# zaps $num
+	&shr	("edx",1);
+	&and	($sbit,1);
+&set_label("sqradd",16);
+	&mov	("eax",&DWP(0,$inp,$j,4));		# ap[j]
+	&mov	($carry,"edx");
+	&mul	($word);				# ap[j]*ap[i]
+	&add	("eax",$carry);
+	&lea	($j,&DWP(1,$j));
+	&adc	("edx",0);
+	&lea	($carry,&DWP(0,$sbit,"eax",2));
+	&shr	("eax",31);
+	&add	($carry,&DWP($frame-4,"esp",$j,4));	# +=tp[j]
+	&adc	("eax",0);
+	&cmp	($j,$_num);
+	&mov	(&DWP($frame-4,"esp",$j,4),$carry);	# tp[j]=
+	&mov	($sbit,"eax");
+	&jle	(&label("sqradd"));
+
+	&mov	($carry,"edx");
+	&lea	("edx",&DWP(0,$sbit,"edx",2));
+	&shr	($carry,31);
+&set_label("sqrlast");
 	&mov	($word,$_n0);
 	&mov	($inp,$_np);
 	&imul	($word,&DWP($frame,"esp"));		# n0*tp[0]
 
-	&xor	($j,$j);
-	&add	("edx",&DWP($frame+4,"esp",$num,4));	# carry+=tp[num]
-	&mov	(&DWP($frame,"esp",$num,4),"eax");	# tp[num-1]=
-	&adc	($j,0);
-	&mov	(&DWP($frame+4,"esp",$num,4),"edx");	# tp[num]=
-	&mov	(&DWP($frame+8,"esp",$num,4),$j);	# tp[num+1]=
-
+	&add	("edx",&DWP($frame,"esp",$j,4));	# +=tp[num]
 	&mov	("eax",&DWP(0,$inp));			# np[0]
+	&adc	($carry,0);
+	&mov	(&DWP($frame,"esp",$j,4),"edx");	# tp[num]=
+	&mov	(&DWP($frame+4,"esp",$j,4),$carry);	# tp[num+1]=
+
 	&mul	($word);				# np[0]*m
 	&add	("eax",&DWP($frame,"esp"));		# +=tp[0]
+	&lea	($num,&DWP(-1,$j));
 	&adc	("edx",0);
 	&mov	($j,1);
+	&mov	("eax",&DWP(4,$inp));			# np[1]
 
-&set_label("2ndmadd",16);
-	&mov	("eax",&DWP(0,$inp,$j,4));		# np[j]
-	&mov	($carry,"edx");
-	&mul	($word);				# np[j]*m
-	&lea	($j,&DWP(1,$j));
-	&add	("eax",&DWP($frame-4,"esp",$j,4));	# +=tp[j]
-	&adc	("edx",0);
-	&add	("eax",$carry);
-	&adc	("edx",0);
-	&mov	(&DWP($frame-8,"esp",$j,4),"eax");	# tp[j-1]=
-	&cmp	($j,$num);
-	&jb	(&label("2ndmadd"));
-
-	&mov	("eax",&DWP(0,$inp,$num,4));		# np[num-1]
-	&mov	($carry,"edx");
-	&mul	($word);				# np[num-1]*m
-	&add	("eax",&DWP($frame,"esp",$num,4));	# +=tp[num-1]
-	&adc	("edx",0);
-	&add	("eax",$carry);
-	&adc	("edx",0);
-	&mov	(&DWP($frame-4,"esp",$num,4),"eax");	# tp[num-2]=
-
-	&xor	("eax","eax");
-	&add	("edx",&DWP($frame+4,"esp",$num,4));	# carry+=tp[num]
-	&adc	("eax",&DWP($frame+8,"esp",$num,4));	# +=tp[num+1]
-	&mov	(&DWP($frame,"esp",$num,4),"edx");	# tp[num-1]=
-	&mov	(&DWP($frame+4,"esp",$num,4),"eax");	# tp[num]=
-
-	&mov	($carry,$_bp);				# &bp[i]
-	&add	($carry,4);
-	&cmp	($carry,$_bpend);
-	&je	(&label("x86done"));
-	&mov	($word,&DWP(0,$carry));			# bp[i]
-	&mov	($inp,$_ap);
-	&mov	($_bp,$carry);				# &bp[++i]
-	&xor	($j,$j);
-	&xor	("edx","edx");
-	&jmp	(&label("1stmadd"));
-
-&set_label("x86done",16);
+	&jmp	(&label("3rdmadd"));
+
+&set_label("x86done",4);
 	&mov	($np,$_np);	# make adjustments for tail processing
-	&add	($num,1);
 }
 
 &set_label("common_tail",16);
-	&mov	("esi",&DWP($frame,"esp",$num,4));# load upmost overflow bit
+	&mov	("esi",&DWP($frame+4,"esp",$num,4));# load upmost overflow bit
 	&mov	($rp,$_rp);			# load result pointer
 						# [$ap and $bp are zapped]
 	&xor	($i,$i);			# i=0
-	&lea	($j,&DWP(-1,$num));		# j=num-1
+	&mov	($j,$num);			# j=num-1
 	&cmp	("esi",0);			# clears CF unconditionally
 	&jnz	(&label("sub"));
 	&mov	("eax",&DWP($frame,"esp",$j,4));
@@ -373,7 +560,7 @@ $carry="ebp";
 	&lea	($i,&DWP(1,$i));		# i++
 	&dec	($j);				# doesn't affect CF!
 	&jge	(&label("sub"));
-	&lea	($j,&DWP(-1,$num));		# j=num-1
+	&mov	($j,$num);			# j=num-1
 	&sbb	("esi",0);			# esi holds upmost overflow bit
 	&jc	(&label("copy"));
 &set_label("zap",16);
@@ -386,5 +573,7 @@ $carry="ebp";
 	&mov	("eax",1);
 &set_label("just_leave");
 &function_end("bn_mul_mont");
+
+&asciz("Montgomery Multiplication for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();
