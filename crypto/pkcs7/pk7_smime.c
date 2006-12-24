@@ -518,6 +518,9 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
 		}
 	}
 
+	if (flags & PKCS7_STREAM)
+		return p7;
+
 	if (PKCS7_final(p7, in, flags))
 		return p7;
 

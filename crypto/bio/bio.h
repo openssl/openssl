@@ -95,6 +95,7 @@ extern "C" {
 #define BIO_TYPE_BIO		(19|0x0400)		/* (half a) BIO pair */
 #define BIO_TYPE_LINEBUFFER	(20|0x0200)		/* filter */
 #define BIO_TYPE_DGRAM		(21|0x0400|0x0100)
+#define BIO_TYPE_ASN1 		(22|0x0200)		/* filter */
 
 #define BIO_TYPE_DESCRIPTOR	0x0100	/* socket, fd, connect or accept */
 #define BIO_TYPE_FILTER		0x0200
@@ -314,6 +315,9 @@ typedef struct bio_f_buffer_ctx_struct
 	int obuf_off;		/* write/read offset */
 	} BIO_F_BUFFER_CTX;
 
+/* Prefix and suffix callback in ASN1 BIO */
+typedef int asn1_ps_func(BIO *b, unsigned char **pbuf, int *plen, void *parg);
+
 /* connect BIO stuff */
 #define BIO_CONN_S_BEFORE		1
 #define BIO_CONN_S_GET_IP		2
@@ -375,6 +379,13 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_C_NWRITE				146
 #define BIO_C_RESET_READ_REQUEST		147
 
+#define BIO_C_SET_PREFIX			148
+#define BIO_C_GET_PREFIX			149
+#define BIO_C_SET_SUFFIX			150
+#define BIO_C_GET_SUFFIX			151
+
+#define BIO_C_SET_EX_ARG			152
+#define BIO_C_GET_EX_ARG			153
 
 #define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,arg)
 #define BIO_get_app_data(s)		BIO_get_ex_data(s,0)
@@ -535,6 +546,16 @@ int BIO_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 unsigned long BIO_number_read(BIO *bio);
 unsigned long BIO_number_written(BIO *bio);
+
+/* For BIO_f_asn1() */
+int BIO_asn1_set_prefix(BIO *b, asn1_ps_func *prefix,
+					asn1_ps_func *prefix_free);
+int BIO_asn1_get_prefix(BIO *b, asn1_ps_func **pprefix,
+					asn1_ps_func **pprefix_free);
+int BIO_asn1_set_suffix(BIO *b, asn1_ps_func *suffix,
+					asn1_ps_func *suffix_free);
+int BIO_asn1_get_suffix(BIO *b, asn1_ps_func **psuffix,
+					asn1_ps_func **psuffix_free);
 
 # ifndef OPENSSL_NO_FP_API
 BIO_METHOD *BIO_s_file(void );

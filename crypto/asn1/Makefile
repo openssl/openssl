@@ -27,7 +27,7 @@ LIBSRC=	a_object.c a_bitstr.c a_utctm.c a_gentm.c a_time.c a_int.c a_octet.c \
 	tasn_new.c tasn_fre.c tasn_enc.c tasn_dec.c tasn_utl.c tasn_typ.c \
 	tasn_prn.c ameth_lib.c \
 	f_int.c f_string.c n_pkey.c \
-	f_enum.c x_pkey.c a_bool.c x_exten.c \
+	f_enum.c x_pkey.c a_bool.c x_exten.c bio_asn1.c \
 	asn1_gen.c asn1_par.c asn1_lib.c asn1_err.c a_bytes.c a_strnid.c \
 	evp_asn1.c asn_pack.c p5_pbe.c p5_pbev2.c p8_pkey.c asn_moid.c
 LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
@@ -40,7 +40,7 @@ LIBOBJ= a_object.o a_bitstr.o a_utctm.o a_gentm.o a_time.o a_int.o a_octet.o \
 	tasn_new.o tasn_fre.o tasn_enc.o tasn_dec.o tasn_utl.o tasn_typ.o \
 	tasn_prn.o ameth_lib.o \
 	f_int.o f_string.o n_pkey.o \
-	f_enum.o x_pkey.o a_bool.o x_exten.o \
+	f_enum.o x_pkey.o a_bool.o x_exten.o bio_asn1.o \
 	asn1_gen.o asn1_par.o asn1_lib.o asn1_err.o a_bytes.o a_strnid.o \
 	evp_asn1.o asn_pack.o p5_pbe.o p5_pbev2.o p8_pkey.o asn_moid.o
 

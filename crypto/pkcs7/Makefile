@@ -21,9 +21,9 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	pk7_asn1.c pk7_lib.c pkcs7err.c pk7_doit.c pk7_smime.c pk7_attr.c \
-	pk7_mime.c
+	pk7_mime.c bio_pk7.c
 LIBOBJ= pk7_asn1.o pk7_lib.o pkcs7err.o pk7_doit.o pk7_smime.o pk7_attr.o \
-	pk7_mime.o
+	pk7_mime.o bio_pk7.o
 
 SRC= $(LIBSRC)
 

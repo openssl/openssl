@@ -4,6 +4,10 @@
 
  Changes between 0.9.8e and 0.9.9  [xx XXX xxxx]
 
+  *) Very *very* experimental PKCS#7 streaming encoder support. Nothing uses
+     it yet and it is largely untested.
+     [Steve Henson]
+
   *) Add support for the ecdsa-with-SHA224/256/384/512 signature types.
      [Nils Larsch]
 
