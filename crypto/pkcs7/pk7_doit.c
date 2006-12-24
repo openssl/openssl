@@ -301,6 +301,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		xa = p7->d.digest->md;
 		os = PKCS7_get_octet_string(p7->d.digest->contents);
 		break;
+	case NID_pkcs7_data:
+		break;
 	default:
 		PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
 	        goto err;
@@ -372,7 +374,10 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			BIO_set_mem_eof_return(bio,0);
 			}
 		}
-	BIO_push(out,bio);
+	if (out)
+		BIO_push(out,bio);
+	else
+		out = bio;
 	bio=NULL;
 	if (0)
 		{
@@ -697,24 +702,37 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 
 	switch (i)
 		{
+	case NID_pkcs7_data:
+		os = p7->d.data;
+		break;
 	case NID_pkcs7_signedAndEnveloped:
 		/* XXXXXXXXXXXXXXXX */
 		si_sk=p7->d.signed_and_enveloped->signer_info;
-		if (!(os=M_ASN1_OCTET_STRING_new()))
+		os = p7->d.signed_and_enveloped->enc_data->enc_data;
+		if (!os)
 			{
-			PKCS7err(PKCS7_F_PKCS7_DATAFINAL,ERR_R_MALLOC_FAILURE);
-			goto err;
+			os=M_ASN1_OCTET_STRING_new();
+			if (!os)
+				{
+				PKCS7err(PKCS7_F_PKCS7_DATAFINAL,ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+			p7->d.signed_and_enveloped->enc_data->enc_data=os;
 			}
-		p7->d.signed_and_enveloped->enc_data->enc_data=os;
 		break;
 	case NID_pkcs7_enveloped:
 		/* XXXXXXXXXXXXXXXX */
-		if (!(os=M_ASN1_OCTET_STRING_new()))
+		os = p7->d.enveloped->enc_data->enc_data;
+		if (!os)
 			{
-			PKCS7err(PKCS7_F_PKCS7_DATAFINAL,ERR_R_MALLOC_FAILURE);
-			goto err;
+			os=M_ASN1_OCTET_STRING_new();
+			if (!os)
+				{
+				PKCS7err(PKCS7_F_PKCS7_DATAFINAL,ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+			p7->d.enveloped->enc_data->enc_data=os;
 			}
-		p7->d.enveloped->enc_data->enc_data=os;
 		break;
 	case NID_pkcs7_signed:
 		si_sk=p7->d.sign->signer_info;
@@ -799,7 +817,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		M_ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data, md_len);
 		}
 
-	if (!PKCS7_is_detached(p7))
+	if (!PKCS7_is_detached(p7) && !(os->flags & ASN1_STRING_FLAG_NDEF))
 		{
 		char *cont;
 		long contlen;
