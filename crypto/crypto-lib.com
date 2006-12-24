@@ -248,7 +248,7 @@ $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"tasn_new,tasn_fre,tasn_enc,tasn_dec,tasn_utl,tasn_typ,"+ -
 	"tasn_prn,ameth_lib,"+ -
 	"f_int,f_string,n_pkey,"+ -
-	"f_enum,x_pkey,a_bool,x_exten,"+ -
+	"f_enum,x_pkey,a_bool,x_exten,bio_asn1,"+ -
 	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_bytes,a_strnid,"+ -
 	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey,asn_moid"
 $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
@@ -268,7 +268,7 @@ $ LIB_X509V3 = "v3_bcons,v3_bitst,v3_conf,v3_extku,v3_ia5,v3_lib,"+ -
 $ LIB_CONF = "conf_err,conf_lib,conf_api,conf_def,conf_mod,conf_mall,conf_sap"
 $ LIB_TXT_DB = "txt_db"
 $ LIB_PKCS7 = "pk7_asn1,pk7_lib,pkcs7err,pk7_doit,pk7_smime,pk7_attr,"+ -
-	"pk7_mime"
+	"pk7_mime,bio_pk7"
 $ LIB_PKCS12 = "p12_add,p12_asn,p12_attr,p12_crpt,p12_crt,p12_decr,"+ -
 	"p12_init,p12_key,p12_kiss,p12_mutl,"+ -
 	"p12_utl,p12_npas,pk12err,p12_p8d,p12_p8e"
