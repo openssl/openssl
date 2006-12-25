@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/engine.h>
+#include <openssl/buffer.h>
 #include "gost_lcl.h"
 
 static char *gost_params[GOST_PARAM_MAX+1]={NULL};
@@ -54,7 +55,7 @@ const char *get_gost_engine_param(int param)
 	tmp = getenv(gost_envnames[param]);
 	if (tmp) 
 		{
-		gost_params[param] = strdup(tmp);
+		gost_params[param] = BUF_strdup(tmp);
 		return gost_params[param];
 		}	
 	return NULL;
@@ -68,7 +69,7 @@ int gost_set_default_param(int param, const char *value)
 	/* if there is value in the environment, use it, else -passed string * */
 	if (!tmp) tmp=value;
 	if (gost_params[param]) free(gost_params[param]);
-	gost_params[param] = strdup(tmp);
+	gost_params[param] = BUF_strdup(tmp);
 
 	return 1;
 	}	
