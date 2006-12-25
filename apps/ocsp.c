@@ -59,6 +59,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#define _XOPEN_SOURCE_EXTENDED	1 /* Or fd_set, select() and so on won't be
+				     declared properly on Compaq platforms
+				     (at least with DEC C).
+				  */
 #include <time.h>
 #include "apps.h"
 #include <openssl/pem.h>
