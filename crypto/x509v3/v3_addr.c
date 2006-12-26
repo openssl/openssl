@@ -66,6 +66,7 @@
 #include <openssl/conf.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/buffer.h>
 #include <openssl/x509v3.h>
 
 #ifndef OPENSSL_NO_RFC3779
@@ -935,7 +936,7 @@ static void *v2i_IPAddrBlocks(struct v3_ext_method *method,
     length = length_from_afi(afi);
 
     /*
-     * Handle SAFI, if any, and strdup() so we can null-terminate
+     * Handle SAFI, if any, and BUF_strdup() so we can null-terminate
      * the other input values.
      */
     if (safi != NULL) {
@@ -947,9 +948,9 @@ static void *v2i_IPAddrBlocks(struct v3_ext_method *method,
 	goto err;
       }
       t += strspn(t, " \t");
-      s = strdup(t);
+      s = BUF_strdup(t);
     } else {
-      s = strdup(val->value);
+      s = BUF_strdup(val->value);
     }
     if (s == NULL) {
       X509V3err(X509V3_F_V2I_IPADDRBLOCKS, ERR_R_MALLOC_FAILURE);
