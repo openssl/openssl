@@ -360,7 +360,7 @@ $carry="ebp";
 
 	&mov	($carry,"edx");
 	&mul	($word);				# np[j]*m
-	&add	($carry,&DWP($frame,"esp",$j,4));	# +=tp[j]
+	&add	($carry,&DWP($frame,"esp",$num,4));	# +=tp[num-1]
 	&adc	("edx",0);
 	&add	($carry,"eax");
 	&adc	("edx",0);
@@ -374,9 +374,9 @@ $carry="ebp";
 	&mov	(&DWP($frame,"esp",$num,4),"edx");	# tp[num-1]=
 	 &cmp	($j,$_bpend);
 	&mov	(&DWP($frame+4,"esp",$num,4),"eax");	# tp[num]=
-	&je	(&label("x86done"));
+	&je	(&label("common_tail"));
 
-	&mov	($word,&DWP(0,$j));			# bp[i]
+	&mov	($word,&DWP(0,$j));			# bp[i+1]
 	&mov	($inp,$_ap);
 	&mov	($_bp,$j);				# &bp[++i]
 	&xor	($j,$j);
@@ -473,7 +473,7 @@ $sbit=$num;
 	&mov	(&DWP($frame,"esp",$num,4),"edx");	# tp[num-1]=
 	&cmp	($j,$num);
 	&mov	(&DWP($frame+4,"esp",$num,4),"eax");	# tp[num]=
-	&je	(&label("x86done"));
+	&je	(&label("common_tail"));
 
 	&mov	($word,&DWP(4,$inp,$j,4));		# ap[i]
 	&lea	($j,&DWP(1,$j));
@@ -500,6 +500,8 @@ $sbit=$num;
 	&adc	("edx",0);
 	&lea	($carry,&DWP(0,$sbit,"eax",2));
 	&shr	("eax",31);
+	&cmp	($carry,$sbit);
+	&adc	("eax",0);
 	&add	($carry,&DWP($frame-4,"esp",$j,4));	# +=tp[j]
 	&adc	("eax",0);
 	&cmp	($j,$_num);
@@ -529,12 +531,10 @@ $sbit=$num;
 	&mov	("eax",&DWP(4,$inp));			# np[1]
 
 	&jmp	(&label("3rdmadd"));
-
-&set_label("x86done",4);
-	&mov	($np,$_np);	# make adjustments for tail processing
 }
-
+
 &set_label("common_tail",16);
+	&mov	($np,$_np);
 	&mov	("esi",&DWP($frame+4,"esp",$num,4));# load upmost overflow bit
 	&mov	($rp,$_rp);			# load result pointer
 						# [$ap and $bp are zapped]
@@ -563,12 +563,12 @@ $sbit=$num;
 	&mov	($j,$num);			# j=num-1
 	&sbb	("esi",0);			# esi holds upmost overflow bit
 	&jc	(&label("copy"));
-&set_label("zap",16);
+&set_label("zap",8);
 	&mov	(&DWP($frame,"esp",$j,4),$i);	# zap temporary vector
 	&dec	($j);
 	&jge	(&label("zap"));
 
-&set_label("exit",4);
+&set_label("exit",8);
 	&mov	("esp",$_sp);		# pull saved stack pointer
 	&mov	("eax",1);
 &set_label("just_leave");
