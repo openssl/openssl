@@ -536,8 +536,11 @@ int MAIN(int argc, char **argv)
 		    X509_free(sk_X509_value(chain2, 0));
 		    sk_X509_free(chain2);
 		} else {
-			BIO_printf (bio_err, "Error %s getting chain.\n",
+			if (vret >= 0)
+				BIO_printf (bio_err, "Error %s getting chain.\n",
 					X509_verify_cert_error_string(vret));
+			else
+				ERR_print_errors(bio_err);
 			goto export_end;
 		}			
     	}
@@ -811,7 +814,7 @@ int get_cert_chain (X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
 {
 	X509_STORE_CTX store_ctx;
 	STACK_OF(X509) *chn;
-	int i;
+	int i = 0;
 
 	/* FIXME: Should really check the return status of X509_STORE_CTX_init
 	 * for an error, but how that fits into the return value of this
@@ -819,13 +822,17 @@ int get_cert_chain (X509 *cert, X509_STORE *store, STACK_OF(X509) **chain)
 	X509_STORE_CTX_init(&store_ctx, store, cert, NULL);
 	if (X509_verify_cert(&store_ctx) <= 0) {
 		i = X509_STORE_CTX_get_error (&store_ctx);
+		if (i == 0)
+			/* avoid returning 0 if X509_verify_cert() did not
+			 * set an appropriate error value in the context */
+			i = -1;
+		chn = NULL;
 		goto err;
-	}
-	chn =  X509_STORE_CTX_get1_chain(&store_ctx);
-	i = 0;
-	*chain = chn;
+	} else
+		chn = X509_STORE_CTX_get1_chain(&store_ctx);
 err:
 	X509_STORE_CTX_cleanup(&store_ctx);
+	*chain = chn;
 	
 	return i;
 }	
