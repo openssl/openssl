@@ -24,7 +24,7 @@
 #
 # Modulo-scheduling SSE2 loops results in further 15-20% improvement.
 # Integer-only code [being equipped with dedicated squaring procedure]
-# gives >=30% on rsa512 sign benchmark...
+# gives ~40% on rsa512 sign benchmark...
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
@@ -46,12 +46,12 @@ $rp="edi";	$bp="edi";		# overlapping variables!!!
 $np="ebp";
 $num="ebx";
 
-$_rp=&DWP(4*0,"esp");			# stack top layout
-$_ap=&DWP(4*1,"esp");
-$_bp=&DWP(4*2,"esp");
-$_np=&DWP(4*3,"esp");
-$_n0=&DWP(4*4,"esp");
-$_num=&DWP(4*5,"esp");
+$_num=&DWP(4*0,"esp");			# stack top layout
+$_rp=&DWP(4*1,"esp");
+$_ap=&DWP(4*2,"esp");
+$_bp=&DWP(4*3,"esp");
+$_np=&DWP(4*4,"esp");
+$_n0=&DWP(4*5,"esp");
 $_sp=&DWP(4*6,"esp");
 $_bpend=&DWP(4*7,"esp");
 $frame=32;				# size of above frame rounded up to 16n
@@ -61,20 +61,37 @@ $frame=32;				# size of above frame rounded up to 16n
 	&cmp	("edi",4);
 	&jl	(&label("just_leave"));
 
-	################################# load argument block...
-	&mov	("eax",&wparam(0));	# BN_ULONG *rp
-	&mov	("ebx",&wparam(1));	# const BN_ULONG *ap
-	&mov	("ecx",&wparam(2));	# const BN_ULONG *bp
-	&mov	("edx",&wparam(3));	# const BN_ULONG *np
-	&mov	("esi",&wparam(4));	# const BN_ULONG *n0
-	#&mov	("edi",&wparam(5));	# int num
-
+	&lea	("esi",&wparam(0));	# put aside pointer to argument block
+	&lea	("edx",&wparam(1));	# load ap
 	&mov	("ebp","esp");		# saved stack pointer!
 	&add	("edi",2);		# extra two words on top of tp
 	&neg	("edi");
 	&lea	("esp",&DWP(-$frame,"esp","edi",4));	# alloca($frame+4*(num+2))
 	&neg	("edi");
-	&and	("esp",-4096);		# minimize TLB utilization
+
+	# minimize cache contention by arraning 2K window between stack
+	# pointer and ap argument [np is also position sensitive vector,
+	# but it's assumed to be near ap, as it's allocated at ~same
+	# time].
+	&mov	("eax","esp");
+	&sub	("eax","edx");
+	&and	("eax",2047);
+	&sub	("esp","eax");		# this aligns sp and ap modulo 2048
+
+	&xor	("edx","esp");
+	&and	("edx",2048);
+	&xor	("edx",2048);
+	&sub	("esp","edx");		# this splits them apart modulo 4096
+
+	&and	("esp",-64);		# align to cache line
+
+	################################# load argument block...
+	&mov	("eax",&DWP(0*4,"esi"));# BN_ULONG *rp
+	&mov	("ebx",&DWP(1*4,"esi"));# const BN_ULONG *ap
+	&mov	("ecx",&DWP(2*4,"esi"));# const BN_ULONG *bp
+	&mov	("edx",&DWP(3*4,"esi"));# const BN_ULONG *np
+	&mov	("esi",&DWP(4*4,"esi"));# const BN_ULONG *n0
+	#&mov	("edi",&DWP(5*4,"esi"));# int num
 
 	&mov	("esi",&DWP(0,"esi"));	# pull n0[0]
 	&mov	($_rp,"eax");		# ... save a copy of argument block
@@ -131,7 +148,7 @@ $mask="mm7";
 	&psrlq	($car1,32);
 
 	&inc	($j);				# j++
-&set_label("1st");
+&set_label("1st",16);
 	&pmuludq($acc0,$mul0);			# ap[j]*bp[0]
 	&pmuludq($acc1,$mul1);			# np[j]*m1
 	&paddq	($car0,$acc0);			# +=c0
@@ -250,11 +267,11 @@ if (0) {
 	&xor	("eax","eax");	# signal "not fast enough [yet]"
 	&jmp	(&label("just_leave"));
 	# While the below code provides competitive performance for
-	# all key lengthes on modern cores, it's still a tad slower
-	# for >=2048-bits keys on *elder* CPUs:-( "Competitive" means
-	# compared to the original integer-only assembler. 512-bit
-	# RSA sign is better by >=30%, but that's about all one can
-	# say about all CPUs...
+	# all key lengthes on modern Intel cores, it's still more
+	# than 10% slower for 4096-bit key elsewhere:-( "Competitive"
+	# means compared to the original integer-only assembler.
+	# 512-bit RSA sign is better by ~40%, but that's about all
+	# one can say about all CPUs...
 } else {
 $inp="esi";	# integer path uses these registers differently
 $word="edi";
@@ -496,13 +513,13 @@ $sbit=$num;
 	&mov	($carry,"edx");
 	&mul	($word);				# ap[j]*ap[i]
 	&add	("eax",$carry);
-	&lea	($j,&DWP(1,$j));
+	&lea	($carry,&DWP(0,"eax","eax"));
 	&adc	("edx",0);
-	&lea	($carry,&DWP(0,$sbit,"eax",2));
 	&shr	("eax",31);
-	&cmp	($carry,$sbit);
+	&add	($carry,&DWP($frame,"esp",$j,4));	# +=tp[j]
+	&lea	($j,&DWP(1,$j));
 	&adc	("eax",0);
-	&add	($carry,&DWP($frame-4,"esp",$j,4));	# +=tp[j]
+	&add	($carry,$sbit);
 	&adc	("eax",0);
 	&cmp	($j,$_num);
 	&mov	(&DWP($frame-4,"esp",$j,4),$carry);	# tp[j]=
