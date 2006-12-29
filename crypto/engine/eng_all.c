@@ -61,12 +61,15 @@
 
 void ENGINE_load_builtin_engines(void)
 	{
+#if 0
 	/* There's no longer any need for an "openssl" ENGINE unless, one day,
 	 * it is the *only* way for standard builtin implementations to be be
 	 * accessed (ie. it would be possible to statically link binaries with
 	 * *no* builtin implementations). */
-#if 0
 	ENGINE_load_openssl();
+#endif
+#if defined(__OpenBSD__) || defined(__FreeBSD__)
+	ENGINE_load_cryptodev();
 #endif
 	ENGINE_load_dynamic();
 #ifndef OPENSSL_NO_STATIC_ENGINE
@@ -98,14 +101,11 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_HW_PADLOCK
 	ENGINE_load_padlock();
 #endif
+#endif
 #ifndef OPENSSL_NO_GOST
 	ENGINE_load_gost();
 #endif
-#endif
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
-	ENGINE_load_cryptodev();
-#endif
-#if !defined(OPENSSL_NO_GMP) && !defined(OPENSSL_NO_HW_GMP)
+#ifndef OPENSSL_NO_GMP
 	ENGINE_load_gmp();
 #endif
 #endif

@@ -3107,7 +3107,7 @@ EC_GFp_nist_method                      3529	EXIST::FUNCTION:EC
 STORE_method_set_modify_function        3530	EXIST:!VMS:FUNCTION:
 STORE_meth_set_modify_fn                3530	EXIST:VMS:FUNCTION:
 STORE_parse_attrs_next                  3531	EXIST::FUNCTION:
-ENGINE_load_padlock                     3532	EXIST::FUNCTION:ENGINE
+ENGINE_load_padlock                     3532	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
 EC_GROUP_set_curve_name                 3533	EXIST::FUNCTION:EC
 X509_CERT_PAIR_it                       3534	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 X509_CERT_PAIR_it                       3534	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
@@ -3587,7 +3587,7 @@ X509_ALGOR_get0                         3976	EXIST::FUNCTION:
 DSO_global_lookup                       3977	EXIST::FUNCTION:
 TS_CONF_set_tsa_name                    3978	EXIST::FUNCTION:
 i2d_ASN1_SET_ANY                        3979	EXIST::FUNCTION:
-ENGINE_load_gost                        3980	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
+ENGINE_load_gost                        3980	EXIST::FUNCTION:ENGINE,GOST,STATIC_ENGINE
 WHIRLPOOL_BitUpdate                     3981	EXIST::FUNCTION:WHIRLPOOL
 ASN1_PCTX_get_flags                     3982	EXIST::FUNCTION:
 TS_TST_INFO_get_ext_by_NID              3983	EXIST::FUNCTION:
