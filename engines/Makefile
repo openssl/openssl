@@ -26,7 +26,7 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBNAMES= 4758cca aep atalla cswift gmp chil nuron sureware ubsec
+LIBNAMES= 4758cca aep atalla cswift gmp chil nuron sureware ubsec padlock
 
 LIBSRC=	e_4758cca.c \
 	e_aep.c \
@@ -36,7 +36,8 @@ LIBSRC=	e_4758cca.c \
 	e_chil.c \
 	e_nuron.c \
 	e_sureware.c \
-	e_ubsec.c
+	e_ubsec.c \
+	e_padlock.c
 LIBOBJ= e_4758cca.o \
 	e_aep.o \
 	e_atalla.o \
@@ -45,7 +46,8 @@ LIBOBJ= e_4758cca.o \
 	e_chil.o \
 	e_nuron.o \
 	e_sureware.o \
-	e_ubsec.o
+	e_ubsec.o \
+	e_padlock.o
 
 SRC= $(LIBSRC)
 
@@ -235,6 +237,16 @@ e_nuron.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 e_nuron.o: ../include/openssl/ossl_typ.h ../include/openssl/rsa.h
 e_nuron.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 e_nuron.o: ../include/openssl/symhacks.h e_nuron.c e_nuron_err.c e_nuron_err.h
+e_padlock.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+e_padlock.o: ../include/openssl/bio.h ../include/openssl/crypto.h
+e_padlock.o: ../include/openssl/dso.h ../include/openssl/e_os2.h
+e_padlock.o: ../include/openssl/engine.h ../include/openssl/err.h
+e_padlock.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+e_padlock.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+e_padlock.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+e_padlock.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
+e_padlock.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+e_padlock.o: ../include/openssl/symhacks.h e_padlock.c
 e_sureware.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_sureware.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_sureware.o: ../include/openssl/crypto.h ../include/openssl/dh.h
