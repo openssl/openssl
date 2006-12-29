@@ -3,7 +3,7 @@
 HERE="`echo $0 | sed -e 's|[^/]*$||'`"
 OPENSSL="${HERE}../apps/openssl"
 
-if [ -d "${HERE}../engines" ]; then
+if [ -d "${HERE}../engines" -a "x$OPENSSL_ENGINES" = "x" ]; then
 	OPENSSL_ENGINES="${HERE}../engines"; export OPENSSL_ENGINES
 fi
 
