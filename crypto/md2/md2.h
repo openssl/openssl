@@ -63,6 +63,7 @@
 #ifdef OPENSSL_NO_MD2
 #error MD2 is disabled.
 #endif
+#include <stddef.h>
 
 #define MD2_DIGEST_LENGTH	16
 #define MD2_BLOCK       	16
