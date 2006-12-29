@@ -16,7 +16,13 @@
 # dedicated squaring routine can provide further improvement...
 
 $output=shift;
-open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
+die "can't locate x86_64-xlate.pl";
+
+open STDOUT,"| $^X $xlate $output";
 
 # int bn_mul_mont(
 $rp="%rdi";	# BN_ULONG *rp,

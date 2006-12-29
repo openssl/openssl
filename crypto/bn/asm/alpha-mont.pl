@@ -65,6 +65,7 @@ bn_mul_mont:
 	.prologue 0
 
 	.align	4
+	.set	reorder
 	sextl	$num,$num
 	mov	0,v0
 	cmplt	$num,4,AT
@@ -104,6 +105,7 @@ bn_mul_mont:
 	s8addq	$j,$np,$nj
 .align	4
 .L1st:
+	.set	noreorder
 	ldq	$aj,($aj)
 	addl	$j,1,$j
 	ldq	$nj,($nj)
@@ -133,6 +135,7 @@ bn_mul_mont:
 	nop
 	unop
 	bne	$tj,.L1st
+	.set	reorder
 
 	addq	$alo,$hi0,$lo0
 	addq	$nlo,$hi1,$lo1
@@ -187,9 +190,9 @@ bn_mul_mont:
 	mulq	$nj,$m1,$nlo
 	s8addq	$j,$ap,$aj
 	umulh	$nj,$m1,$nhi
-	.set	noreorder
 .align	4
 .Linner:
+	.set	noreorder
 	ldq	$tj,8($tp)	#L0
 	nop			#U1
 	ldq	$aj,($aj)	#L1
@@ -224,6 +227,7 @@ bn_mul_mont:
 	addq	$hi1,v0,$hi1	#U1
 	stq	$lo1,-8($tp)	#L1
 	bne	$tj,.Linner	#U0
+	.set	reorder
 
 	ldq	$tj,8($tp)
 	addq	$alo,$hi0,$lo0
@@ -304,7 +308,9 @@ bn_mul_mont:
 	mov	1,v0
 
 .align	4
-.Lexit:	mov	fp,sp
+.Lexit:
+	.set	noreorder
+	mov	fp,sp
 	/*ldq	ra,0(sp)*/
 	ldq	s3,8(sp)
 	ldq	s4,16(sp)
