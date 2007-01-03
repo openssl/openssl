@@ -498,7 +498,7 @@ static unsigned long ssl_cipher_get_disabled(void)
 	mask |= SSL_aECDSA;
 #endif
 #ifdef OPENSSL_NO_ECDH
-	mask |= SSL_kECDHe|SSL_kECDHr|SSL_kECDHE|SSL_aECDH;
+	mask |= SSL_kECDHe|SSL_kECDHr|SSL_aECDH;
 #endif
 #ifdef OPENSSL_NO_PSK
 	mask |= SSL_kPSK;
