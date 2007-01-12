@@ -50,7 +50,7 @@ non-blocking mode.
 
 Alternatively, the EGD-interface compatible daemon PRNGD can be used. It is
 available from
-http://www.aet.tu-cottbus.de/personen/jaenicke/postfix_tls/prngd.html .
+http://prngd.sourceforge.net/ .
 PRNGD does employ an internal PRNG itself and can therefore never run
 out of entropy.
 
