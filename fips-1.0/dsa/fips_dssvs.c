@@ -16,6 +16,47 @@ int main()
 #include <openssl/err.h>
 #include <openssl/fips_sha.h>
 #include <string.h>
+#include <ctype.h>
+
+static int parse_line(char **pkw, char **pval, char *linebuf, char *olinebuf)
+	{
+	char *keyword, *value, *p, *q;
+	strcpy(linebuf, olinebuf);
+	keyword = linebuf;
+	/* Skip leading space */
+	while (isspace((unsigned char)*keyword))
+		keyword++;
+
+	/* Look for = sign */
+	p = strchr(linebuf, '=');
+
+	/* If no '=' exit */
+	if (!p)
+		return 0;
+
+	q = p - 1;
+
+	/* Remove trailing space */
+	while (isspace((unsigned char)*q))
+		*q-- = 0;
+
+	*p = 0;
+	value = p + 1;
+
+	/* Remove leading space from value */
+	while (isspace((unsigned char)*value))
+		value++;
+
+	/* Remove trailing space from value */
+	p = value + strlen(value) - 1;
+
+	while (*p == '\n' || isspace((unsigned char)*p))
+		*p-- = 0;
+
+	*pkw = keyword;
+	*pval = value;
+	return 1;
+	}
 
 int hex2bin(const char *in, unsigned char *out)
     {
@@ -99,16 +140,20 @@ void pbn(const char *tag,const BIGNUM *val)
 void primes()
     {
     char buf[10240];
+    char lbuf[10240];
+    char *keyword, *value;
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
 	fputs(buf,stdout);
-	if(!strncmp(buf,"Prime= ",7))
+	if (!parse_line(&keyword, &value, lbuf, buf))
+		continue;
+	if(!strcmp(keyword,"Prime"))
 	    {
 	    BIGNUM *pp;
 
 	    pp=BN_new();
-	    BN_hex2bn(&pp,buf+7);
+	    BN_hex2bn(&pp,value);
 	    printf("result= %c\n",
 		   BN_is_prime(pp,20,NULL,NULL,NULL) ? 'P' : 'F');
 	    }	    
@@ -118,15 +163,22 @@ void primes()
 void pqg()
     {
     char buf[1024];
+    char lbuf[1024];
+    char *keyword, *value;
     int nmod=0;
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
-	if(!strncmp(buf,"[mod = ",7))
-	    nmod=atoi(buf+7);
-	else if(!strncmp(buf,"N = ",4))
+	if (!parse_line(&keyword, &value, lbuf, buf))
+		{
+		fputs(buf,stdout);
+		continue;
+		}
+	if(!strcmp(keyword,"[mod"))
+	    nmod=atoi(value);
+	else if(!strcmp(keyword,"N"))
 	    {
-	    int n=atoi(buf+4);
+	    int n=atoi(value);
 
 	    printf("[mod = %d]\n\n",nmod);
 
@@ -155,16 +207,23 @@ void pqg()
 void keypair()
     {
     char buf[1024];
+    char lbuf[1024];
+    char *keyword, *value;
     int nmod=0;
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
-	if(!strncmp(buf,"[mod = ",7))
-	    nmod=atoi(buf+7);
-	else if(!strncmp(buf,"N = ",4))
+	if (!parse_line(&keyword, &value, lbuf, buf))
+		{
+		fputs(buf,stdout);
+		continue;
+		}
+	if(!strcmp(keyword,"[mod"))
+	    nmod=atoi(value);
+	else if(!strcmp(keyword,"N"))
 	    {
 	    DSA *dsa;
-	    int n=atoi(buf+4);
+	    int n=atoi(value);
 
 	    printf("[mod = %d]\n\n",nmod);
 
@@ -189,14 +248,21 @@ void keypair()
 void siggen()
     {
     char buf[1024];
+    char lbuf[1024];
+    char *keyword, *value;
     int nmod=0;
     DSA *dsa=NULL;
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
-	if(!strncmp(buf,"[mod = ",7))
+	if (!parse_line(&keyword, &value, lbuf, buf))
+		{
+		fputs(buf,stdout);
+		continue;
+		}
+	if(!strcmp(keyword,"[mod"))
 	    {
-	    nmod=atoi(buf+7);
+	    nmod=atoi(value);
 	    printf("[mod = %d]\n\n",nmod);
 
 	    dsa=DSA_generate_parameters(nmod,NULL,0,NULL,NULL,NULL,NULL);
@@ -205,14 +271,14 @@ void siggen()
 	    pbn("G",dsa->g);
 	    putc('\n',stdout);
 	    }
-	else if(!strncmp(buf,"Msg = ",6))
+	else if(!strcmp(keyword,"Msg"))
 	    {
 	    unsigned char msg[1024];
 	    unsigned char hash[20];
 	    int n;
 	    DSA_SIG *sig;
 
-	    n=hex2bin(buf+6,msg);
+	    n=hex2bin(value,msg);
 	    pv("Msg",msg,n);
 
 	    DSA_generate_key(dsa);
@@ -231,26 +297,33 @@ void sigver()
     {
     DSA *dsa=NULL;
     char buf[1024];
+    char lbuf[1024];
+    char *keyword, *value;
     int nmod=0;
     unsigned char hash[20];
     DSA_SIG *sig=DSA_SIG_new();
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
-	if(!strncmp(buf,"[mod = ",7))
+	if (!parse_line(&keyword, &value, lbuf, buf))
+		{
+		fputs(buf,stdout);
+		continue;
+		}
+	if(!strcmp(keyword,"[mod"))
 	    {
-	    nmod=atoi(buf+7);
+	    nmod=atoi(value);
 	    if(dsa)
 		DSA_free(dsa);
 	    dsa=DSA_new();
 	    }
-	else if(!strncmp(buf,"P = ",4))
-	    dsa->p=hex2bn(buf+4);
-	else if(!strncmp(buf,"Q = ",4))
-	    dsa->q=hex2bn(buf+4);
-	else if(!strncmp(buf,"G = ",4))
+	else if(!strcmp(keyword,"P"))
+	    dsa->p=hex2bn(value);
+	else if(!strcmp(keyword,"Q"))
+	    dsa->q=hex2bn(value);
+	else if(!strcmp(keyword,"G"))
 	    {
-	    dsa->g=hex2bn(buf+4);
+	    dsa->g=hex2bn(value);
 
 	    printf("[mod = %d]\n\n",nmod);
 	    pbn("P",dsa->p);
@@ -258,22 +331,22 @@ void sigver()
 	    pbn("G",dsa->g);
 	    putc('\n',stdout);
 	    }
-	else if(!strncmp(buf,"Msg = ",6))
+	else if(!strcmp(keyword,"Msg"))
 	    {
 	    unsigned char msg[1024];
 	    int n;
 
-	    n=hex2bin(buf+6,msg);
+	    n=hex2bin(value,msg);
 	    pv("Msg",msg,n);
 	    SHA1(msg,n,hash);
 	    }
-	else if(!strncmp(buf,"Y = ",4))
-	    dsa->pub_key=hex2bn(buf+4);
-	else if(!strncmp(buf,"R = ",4))
-	    sig->r=hex2bn(buf+4);
-	else if(!strncmp(buf,"S = ",4))
+	else if(!strcmp(keyword,"Y"))
+	    dsa->pub_key=hex2bn(value);
+	else if(!strcmp(keyword,"R"))
+	    sig->r=hex2bn(value);
+	else if(!strcmp(keyword,"S"))
 	    {
-	    sig->s=hex2bn(buf+4);
+	    sig->s=hex2bn(value);
 	
 	    pbn("Y",dsa->pub_key);
 	    pbn("R",sig->r);
@@ -316,4 +389,5 @@ int main(int argc,char **argv)
 
     return 0;
     }
+
 #endif

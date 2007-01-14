@@ -149,7 +149,7 @@ int main(int argc, char **argv)
 	}
 
 #define SHA_TEST_MAX_BITS	102400
-#define SHA_TEST_MAXLINELEN	(((SHA_TEST_MAX_BITS >> 3) * 2) + 10)
+#define SHA_TEST_MAXLINELEN	(((SHA_TEST_MAX_BITS >> 3) * 2) + 100)
 
 int dgst_test(BIO *err, BIO *out, BIO *in)
 	{
@@ -203,7 +203,6 @@ int dgst_test(BIO *err, BIO *out, BIO *in)
 
 		/* Remove trailing space from value */
 		p = value + strlen(value) - 1;
-
 		while (*p == '\n' || isspace((unsigned char)*p))
 			*p-- = 0;
 

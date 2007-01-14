@@ -4,6 +4,9 @@
 
  Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
 
+  *) Make algorithm test programs more tolerant of whitespace.
+     [Steve Henson]
+
   *) Have SSL/TLS server implementation tolerate "mismatched" record
      protocol version while receiving ClientHello even if the
      ClientHello is fragmented.  (The server can't insist on the

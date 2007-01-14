@@ -63,12 +63,68 @@
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
+#include <ctype.h>
 
 #include <openssl/des.h>
 #include <openssl/evp.h>
 #include <openssl/fips.h>
 #include <openssl/err.h>
 #include "e_os.h"
+
+/* To avoid extensive changes to test program at this stage just convert
+ * the input line into an acceptable form. Keyword lines converted to form
+ * "keyword = value\n" no matter what white space present, all other lines
+ * just have leading and trailing space removed.
+ */
+
+static int tidy_line(char *linebuf, char *olinebuf)
+	{
+	char *keyword, *value, *p, *q;
+	strcpy(linebuf, olinebuf);
+	keyword = linebuf;
+	/* Skip leading space */
+	while (isspace((unsigned char)*keyword))
+		keyword++;
+	/* Look for = sign */
+	p = strchr(linebuf, '=');
+
+	/* If no '=' just chop leading, trailing ws */
+	if (!p)
+		{
+		p = keyword + strlen(keyword) - 1;
+		while (*p == '\n' || isspace((unsigned char)*p))
+			*p-- = 0;
+		strcpy(olinebuf, keyword);
+		strcat(olinebuf, "\n");
+		return 1;
+		}
+
+	q = p - 1;
+
+	/* Remove trailing space */
+	while (isspace((unsigned char)*q))
+		*q-- = 0;
+
+	*p = 0;
+	value = p + 1;
+
+	/* Remove leading space from value */
+	while (isspace((unsigned char)*value))
+		value++;
+
+	/* Remove trailing space from value */
+	p = value + strlen(value) - 1;
+
+	while (*p == '\n' || isspace((unsigned char)*p))
+		*p-- = 0;
+
+	strcpy(olinebuf, keyword);
+	strcat(olinebuf, " = ");
+	strcat(olinebuf, value);
+	strcat(olinebuf, "\n");
+
+	return 1;
+	}
 
 /*#define AES_BLOCK_SIZE 16*/
 
@@ -414,7 +470,7 @@ int proc_file(char *rqfile)
     {
     char afn[256], rfn[256];
     FILE *afp = NULL, *rfp = NULL;
-    char ibuf[2048];
+    char ibuf[2048], tbuf[2048];
     int ilen, len, ret = 0;
     char amode[8] = "";
     char atest[100] = "";
@@ -456,6 +512,7 @@ int proc_file(char *rqfile)
 	}
     while (!err && (fgets(ibuf, sizeof(ibuf), afp)) != NULL)
 	{
+	tidy_line(tbuf, ibuf);
 	ilen = strlen(ibuf);
 	/*	printf("step=%d ibuf=%s",step,ibuf);*/
 	if(step == 3 && !strcmp(amode,"ECB"))

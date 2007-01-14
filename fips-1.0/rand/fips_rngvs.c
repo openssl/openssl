@@ -25,6 +25,47 @@ int main()
 #include <openssl/rand.h>
 #include <openssl/fips_rand.h>
 #include <string.h>
+#include <ctype.h>
+
+static int parse_line(char **pkw, char **pval, char *linebuf, char *olinebuf)
+	{
+	char *keyword, *value, *p, *q;
+	strcpy(linebuf, olinebuf);
+	keyword = linebuf;
+	/* Skip leading space */
+	while (isspace((unsigned char)*keyword))
+		keyword++;
+
+	/* Look for = sign */
+	p = strchr(linebuf, '=');
+
+	/* If no '=' exit */
+	if (!p)
+		return 0;
+
+	q = p - 1;
+
+	/* Remove trailing space */
+	while (isspace((unsigned char)*q))
+		*q-- = 0;
+
+	*p = 0;
+	value = p + 1;
+
+	/* Remove leading space from value */
+	while (isspace((unsigned char)*value))
+		value++;
+
+	/* Remove trailing space from value */
+	p = value + strlen(value) - 1;
+
+	while (*p == '\n' || isspace((unsigned char)*p))
+		*p-- = 0;
+
+	*pkw = keyword;
+	*pval = value;
+	return 1;
+	}
 
 int hex2bin(const char *in, unsigned char *out)
     {
@@ -99,29 +140,30 @@ void vst()
     unsigned char dt[8];
     unsigned char ret[8];
     char buf[1024];
+    char lbuf[1024];
+    char *keyword, *value;
     int n;
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
-	if(!strncmp(buf,"Key1 = ",7))
+	fputs(buf,stdout);
+	if (!parse_line(&keyword, &value, lbuf, buf))
+		continue;
+	if(!strcmp(keyword,"Key1"))
 	    {
-	    n=hex2bin(buf+7,key1);
-	    pv("Key1",key1,n);
+	    n=hex2bin(value,key1);
 	    }
-	else if(!strncmp(buf,"Key2 = ",7))
+	else if(!strcmp(keyword,"Key2"))
 	    {
-	    n=hex2bin(buf+7,key2);
-	    pv("Key1",key2,n);
+	    n=hex2bin(value,key2);
 	    }
-	else if(!strncmp(buf,"DT = ",5))
+	else if(!strcmp(keyword,"DT"))
 	    {
-	    n=hex2bin(buf+5,dt);
-	    pv("DT",dt,n);
+	    n=hex2bin(value,dt);
 	    }
-	else if(!strncmp(buf,"V = ",4))
+	else if(!strcmp(keyword,"V"))
 	    {
-	    n=hex2bin(buf+4,v);
-	    pv("V",v,n);
+	    n=hex2bin(value,v);
 
 	    FIPS_rand_method()->cleanup();
 	    FIPS_set_prng_key(key1,key2);
@@ -137,8 +179,6 @@ void vst()
 	    pv("R",ret,8);
 	    putc('\n',stdout);
 	    }
-	else
-	    fputs(buf,stdout);
 	}
     }
 
@@ -151,6 +191,8 @@ void mct()
     unsigned char dt[8];
     unsigned char ret[8];
     char buf[1024];
+    char lbuf[1024];
+    char *keyword, *value;
     int n;
 
     BIGNUM *bn;
@@ -159,26 +201,25 @@ void mct()
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
-	if(!strncmp(buf,"Key1 = ",7))
+	fputs(buf,stdout);
+	if (!parse_line(&keyword, &value, lbuf, buf))
+		continue;
+	if(!strcmp(keyword,"Key1"))
 	    {
-	    n=hex2bin(buf+7,key1);
-	    pv("Key1",key1,n);
+	    n=hex2bin(value,key1);
 	    }
-	else if(!strncmp(buf,"Key2 = ",7))
+	else if(!strcmp(keyword,"Key2"))
 	    {
-	    n=hex2bin(buf+7,key2);
-	    pv("Key1",key2,n);
+	    n=hex2bin(value,key2);
 	    }
-	else if(!strncmp(buf,"DT = ",5))
+	else if(!strcmp(keyword,"DT"))
 	    {
-	    n=hex2bin(buf+5,dt);
-	    pv("DT",dt,n);
+	    n=hex2bin(value,dt);
 	    }
-	else if(!strncmp(buf,"V = ",4))
+	else if(!strcmp(keyword,"V"))
 	    {
 	    int iter;
-	    n=hex2bin(buf+4,v);
-	    pv("V",v,n);
+	    n=hex2bin(value,v);
 
 	    FIPS_rand_method()->cleanup();
 	    FIPS_set_prng_key(key1,key2);
@@ -200,8 +241,6 @@ void mct()
 	    pv("R",ret,8);
 	    putc('\n',stdout);
 	    }
-	else
-	    fputs(buf,stdout);
 	}
     BN_free(bn);
     }

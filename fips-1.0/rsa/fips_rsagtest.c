@@ -217,7 +217,7 @@ int rsa_test(BIO *err, BIO *out, BIO *in)
 		while (isspace((unsigned char)*q))
 			*q-- = 0;
 
-
+		*p = 0;
 		value = p + 1;
 
 		/* Remove leading space from value */
