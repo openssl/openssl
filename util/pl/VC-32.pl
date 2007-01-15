@@ -135,7 +135,7 @@ sub do_lib_rule
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
 		$ret.="$target: $objs\n";
 		$ex =' advapi32.lib';
- 		$ex.=" \$(FIPSLIB_D)${o}_chkstk.o" if $fips && $target =~ /O_CRYPTO/;
+		$ex.=" \$(FIPSLIB_D)${o}_chkstk.o \$(FIPSLIB_D)${o}_udivdi3.o \$(FIPSLIB_D)${o}_umoddi3.o" if $fips && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
 		}
 	else
@@ -145,7 +145,7 @@ sub do_lib_rule
  		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
  		if ($fips && $target =~ /O_CRYPTO/)
 			{
- 			$ex.=" \$(FIPSLIB_D)${o}_chkstk.o";
+			$ex.=" \$(FIPSLIB_D)${o}_chkstk.o \$(FIPSLIB_D)${o}_udivdi3.o \$(FIPSLIB_D)${o}_umoddi3.o";
 			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)\n";
 			$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
@@ -178,7 +178,7 @@ sub do_link_rule
 	if ($standalone)
 		{
 		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n\t";
-		$ret.="\$(FIPSLIB_D)${o}_chkstk.o " if ($files =~ /O_FIPSCANISTER/);
+		$ret.="\$(FIPSLIB_D)${o}_chkstk.o \$(FIPSLIB_D)${o}_udivdi3.o \$(FIPSLIB_D)${o}_umoddi3.o advapi32.lib " if ($files =~ /O_FIPSCANISTER/);
 		$ret.="$files $libs\n<<\n";
 		}
 	elsif ($fips && !$shlib)

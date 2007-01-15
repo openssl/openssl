@@ -4,6 +4,10 @@
 
  Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
 
+  *) New perl script mkfipsscr.pl to create shell scripts or batch files to
+     run algorithm test programs.
+     [Steve Henson]
+
   *) Make algorithm test programs more tolerant of whitespace.
      [Steve Henson]
 

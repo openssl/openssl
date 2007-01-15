@@ -360,6 +360,9 @@ for (;;)
 	if ($key eq "LIBOBJ")
 		{ $libobj=&var_add($dir,$val); }
 
+	if ($key eq "FIPS_EX_OBJ")
+		{ $fips_ex_obj=&var_add($dir,$val); }
+
 	if ($key eq "FIPSLIBDIR")
 		{ $fipslibdir=$val;}
 
@@ -370,6 +373,33 @@ for (;;)
 		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
 	}
 close(IN);
+
+foreach (split " ", $fips_ex_obj)
+	{
+	$fips_exclude_obj{$1} = 1 if (/\/([^\/]*)$/);
+	}
+
+$fips_exclude_obj{"bn_asm"} = 1;
+
+my @ltmp = split " ", $lib_obj{"CRYPTO"};
+
+
+$lib_obj{"CRYPTO"} = "";
+
+foreach(@ltmp)
+	{
+	if (/\/([^\/]*)$/ && exists $fips_exclude_obj{$1})
+		{
+		print STDERR "Excluing $_\n";
+		}
+	else
+		{
+		$lib_obj{"CRYPTO"} .= "$_ ";
+		}
+	}
+			
+
+#foreach (keys %fips_exclude_obj) { print STDERR "FIPS is $_\n"; }
 
 if ($fips_canister_path eq "")
 	{
@@ -765,6 +795,10 @@ foreach (values %lib_nam)
 		$lib_obj =~ s/\s(\S*\/rmd_dgst\S*)/ $1 \$(RMD160_ASM_OBJ)/;
 		$rules.=&do_asm_rule($rmd160_asm_obj,$rmd160_asm_src);
 		}
+if ($_ eq "CRYPTO")
+	{
+#	print STDERR "OBJ is $lib_obj\n";
+	}
 	$defs.=&do_defs(${_}."OBJ",$lib_obj,"\$(OBJ_D)",$obj);
 	$lib=($slib)?" \$(SHLIB_CFLAGS)".$shlib_ex_cflags{$_}:" \$(LIB_CFLAGS)";
 	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},$lib);
