@@ -75,13 +75,6 @@ echo Canister: $CANISTER_O
 		diff -w "${PREMAIN_C}.sha1" - || \
 	{ echo "${PREMAIN_C} fingerprint mismatch"; exit 1; }
 
-	# verify fips_premain.c against its signature embedded into
-	# fipscanister.o...
-	#SIG=`${FINGERTYPE} "${PREMAIN_C}" | sed -n "s/(.*\//(/;/^./p"`
-	#REF=`strings "${CANISTER_O}" | grep "HMAC-SHA1(fips_premain\\.c)"`
-	#[ "${SIG}" = "${REF}" ] || \
-	#{ echo "${PREMAIN_C} fingerprint mismatch"; exit 1; }
-
 	# Temporarily remove fipscanister.o from libcrypto.a!
 	# We are required to use the standalone copy...
 	trap	'ar r "${THERE}/libcrypto.a" "${CANISTER_O}";
@@ -127,11 +120,9 @@ echo Canister: $CANISTER_O
 		diff -w "${CANISTER_O}.sha1" - || \
 	{ echo "${CANISTER_O} fingerprint mismatch"; exit 1; }
 
-	# verify fips_premain.c against its signature embedded into
-	# fipscanister.o...
-	SIG=`${FINGERTYPE} "${PREMAIN_C}" | sed -n "s/(.*\//(/;/^./p"`
-	REF=`strings "${CANISTER_O}" | grep "HMAC-SHA1(fips_premain\\.c)"`
-	[ "${SIG}" = "${REF}" ] || \
+	# verify fips_premain.c against its detached signature...
+	${FINGERTYPE} "${PREMAIN_C}" | sed "s/(.*\//(/" | \
+		diff -w "${PREMAIN_C}.sha1" - || \
 	{ echo "${PREMAIN_C} fingerprint mismatch"; exit 1; }
 
 	${CC}	"${CANISTER_O}" \
