@@ -16,6 +16,9 @@ tmp.bntest
 *.sha1
 fips_aesavs
 fips_desmovs
+fips_dssvs
+fips_rngvs
+fips_test_suite
 evptests.txt
 *.flc
 semantic.cache
