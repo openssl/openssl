@@ -40,8 +40,6 @@ else
 	FIPSLIBDIR=${THERE}/fips-1.0
 fi
 
-echo libdir = $FIPSLIBDIR
-
 [ -f "${FIPSLIBDIR}/fipscanister.o" ] ||
 	{ echo "fipscanister.o not found"; exit 1; }
 
