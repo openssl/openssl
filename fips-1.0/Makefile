@@ -18,7 +18,7 @@ PERL=		perl
 RM=             rm -f
 AR=		ar r
 
-FIPSCANLOC=	$(FIPSLIBDIR)/fipscanister.o
+FIPSCANLOC=	$(FIPSLIBDIR)fipscanister.o
 
 PEX_LIBS=
 EX_LIBS=
@@ -196,7 +196,7 @@ depend:
 	done;
 
 clean:
-	rm -f buildinf.h *.o *.obj fips_premain_dso$(EXE_EXT) lib tags core .pure .nfs* *.old *.bak fluff
+	rm -f buildinf.h *.o fipscanister.o.sha1 *.obj fips_premain_dso$(EXE_EXT) lib tags core .pure .nfs* *.old *.bak fluff
 	@for i in $(FDIRS) ;\
 	do \
 	(cd $$i && echo "making clean in fips/$$i..." && \

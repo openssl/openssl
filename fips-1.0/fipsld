@@ -32,10 +32,15 @@ TARGET=`(while [ "x$1" != "x" -a "x$1" != "x-o" ]; do shift; done; echo $2)`
 
 THERE="`echo $0 | sed -e 's|[^/]*$||'`"..
 
-# Location of installed validated FIPS module
-FIPSLIBDIR=${FIPSLIBDIR:-/usr/local/ssl/lib}
-# If this is a build from a validated tarball use this instead
-# FIPSLIBDIR=${THERE}/fips-1.0
+# FIPSLIBDIR is location of installed validated FIPS module
+# if FIPSCANISTERINTERNAL="y" link against internally generated fipscanister.o
+if [ "x$FIPSCANISTERINTERNAL" != "xy" ]; then
+	FIPSLIBDIR=${FIPSLIBDIR:-/usr/local/ssl/lib}
+else
+	FIPSLIBDIR=${THERE}/fips-1.0
+fi
+
+echo libdir = $FIPSLIBDIR
 
 [ -f "${FIPSLIBDIR}/fipscanister.o" ] ||
 	{ echo "fipscanister.o not found"; exit 1; }
