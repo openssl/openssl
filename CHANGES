@@ -4,6 +4,10 @@
 
  Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
 
+  *) Remove redundant features: hash file source, editing of test vectors
+     modify fipsld to use external fips_premain.c signature.
+     [Steve Henson]
+
   *) New perl script mkfipsscr.pl to create shell scripts or batch files to
      run algorithm test programs.
      [Steve Henson]

@@ -18,6 +18,8 @@ PERL=		perl
 RM=             rm -f
 AR=		ar r
 
+FIPSCANLOC=	$(FIPSLIBDIR)/fipscanister.o
+
 PEX_LIBS=
 EX_LIBS=
 
@@ -51,12 +53,8 @@ top:
 
 all:
 	@if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-		$(MAKE) -e subdirs check lib shared; \
+		$(MAKE) -e subdirs $(FIPSCHECK) lib shared; \
 	fi
-
-check:
-#	$(PERL) ../util/checkhash.pl || (rm fipscanister.o* 2>/dev/null; exit 1)
-	echo FIPS module not built: no check done
 
 # Idea behind fipscanister.o is to "seize" the sequestered code between
 # known symbols for fingerprinting purposes, which would be commonly
@@ -131,8 +129,8 @@ links:
 	$(MAKE) CC='$(CC)' INCLUDES='${INCLUDES}' CFLAG='${CFLAG}' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' FIPS_DES_ENC='${FIPS_DES_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' FIPS_SHA1_ASM_OBJ='${FIPS_SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' AR='${AR}' PERL='${PERL}' links ); \
 	done;
 
-lib:	$(FIPSLIBDIR)/fipscanister.o
-	$(AR) $(LIB) $(FIPSLIBDIR)/fipscanister.o
+lib:	$(FIPSCANLOC)
+	$(AR) $(LIB) $(FIPSCANLOC)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -152,7 +150,6 @@ tests:
 	(cd ..; make DIRS=test)
 
 fips_test: top tests
-	-cd testvectors && perl -p -i -e 's/COUNT=/COUNT = /' des[23]/req/*.req
 	@for i in dsa sha aes des hmac rand rsa; \
 	do \
 		(cd $$i && echo "making fips_test in fips/$$i..." && $(MAKE) fips_test) \
