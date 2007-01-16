@@ -53,7 +53,7 @@ top:
 
 all:
 	@if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-		$(MAKE) -e subdirs $(FIPSCHECK) lib shared; \
+		$(MAKE) -e subdirs lib shared; \
 	fi
 
 # Idea behind fipscanister.o is to "seize" the sequestered code between
