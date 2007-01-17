@@ -61,7 +61,7 @@ bn_mul_mont:
 	cmp	$num,#2
 	movlt	r0,#0
 	addlt	sp,sp,#2*4
-	bxlt	lr			@ interoperate with Thumb ISA
+	blt	.Labort
 
 	stmdb	sp!,{r4-r12,lr}		@ save 10 registers
 
@@ -177,7 +177,9 @@ bn_mul_mont:
 	ldmia	sp!,{r4-r12,lr}		@ restore registers
 	add	sp,sp,#2*4		@ skip over {r0,r2}
 	mov	r0,#1
-	bx	lr			@ interoperate with Thumb ISA
+.Labort:tst	lr,#1
+	moveq	pc,lr			@ be binary compatible with V4, yet
+	bx	lr			@ interoperable with Thumb ISA:-)
 
 .Lsub:	ldr	$tj,[$tp],#4
 	ldr	$nj,[$np],#4
