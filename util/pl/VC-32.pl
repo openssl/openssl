@@ -77,6 +77,7 @@ $des_enc_src='';
 $bf_enc_obj='';
 $bf_enc_src='';
 
+
 if (!$no_asm && !$fips)
 	{
 	$bn_asm_obj='crypto\bn\asm\bn_win32.obj';
@@ -135,7 +136,7 @@ sub do_lib_rule
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
 		$ret.="$target: $objs\n";
 		$ex =' advapi32.lib';
- 		$ex.=" \$(FIPSLIB_D)${o}_chkstk.o" if $fips && $target =~ /O_CRYPTO/;
+ 		$ex.=" \$(FIPSLIB_D)${o}_chkstk.o" if $fips && !$fipscanisterbuild && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
 		}
 	else
@@ -145,7 +146,7 @@ sub do_lib_rule
  		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
  		if ($fips && $target =~ /O_CRYPTO/)
 			{
- 			$ex.=" \$(FIPSLIB_D)${o}_chkstk.o";
+ 			$ex.=" \$(FIPSLIB_D)${o}_chkstk.o" unless $fipscanisterbuild;
 			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)\n";
 			$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
@@ -178,7 +179,7 @@ sub do_link_rule
 	if ($standalone)
 		{
 		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n\t";
-		$ret.="\$(FIPSLIB_D)${o}_chkstk.o " if ($files =~ /O_FIPSCANISTER/);
+		$ret.="\$(FIPSLIB_D)${o}_chkstk.o " if ($files =~ /O_FIPSCANISTER/ && !$fipscanisterbuild);
 		$ret.="$files $libs\n<<\n";
 		}
 	elsif ($fips && !$shlib)
@@ -209,9 +210,12 @@ sub do_rlink_rule
 
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
-	$ret.="$target: $files $dep_libs\n";
-	$ret.="  \$(MKCANISTER) $target <<\n";
+	$ret.="$target: $files $dep_libs \$(FIPS_SHA1_EXE)\n";
+	$ret.="\t\$(MKCANISTER) $target <<\n";
 	$ret.="INPUT($files)\n<<\n";
+	$ret.="\t\$(FIPS_SHA1_EXE) $target > ${target}.sha1\n";
+	$ret.="\tperl util${o}copy.pl -stripcr fips-1.0${o}fips_premain.c \$(LIB_D)${o}fips_premain.c\n";
+	$ret.="\t\$(CP) fips-1.0${o}fips_premain.c.sha1 \$(LIB_D)${o}fips_premain.c.sha1\n";
 	$ret.="\n";
 	return($ret);
 	}
