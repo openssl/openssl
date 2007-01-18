@@ -279,7 +279,8 @@ $ex_libs="$l_flags$ex_libs" if ($l_flags ne "");
 
 
 %shlib_ex_cflags=("SSL" => " -DOPENSSL_BUILD_SHLIBSSL",
-		  "CRYPTO" => " -DOPENSSL_BUILD_SHLIBCRYPTO");
+		  "CRYPTO" => " -DOPENSSL_BUILD_SHLIBCRYPTO",
+		  "FIPS" => " -DOPENSSL_BUILD_SHLIBCRYPTO");
 
 if ($msdos)
 	{
@@ -362,6 +363,12 @@ for (;;)
 	if ($key eq "LIBOBJ")
 		{ $libobj=&var_add($dir,$val); }
 
+	if ($key eq "FIPS_EX_OBJ")
+		{ 
+		$val =~ s|\.\./crypto/||g;
+		$fips_ex_obj=&var_add("crypto",$val);
+		}
+
 	if ($key eq "FIPSLIBDIR")
 		{ $fipslibdir=$val;}
 
@@ -372,6 +379,41 @@ for (;;)
 		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
 	}
 close(IN);
+
+
+if ($fips)
+	{
+	 
+	foreach (split " ", $fips_ex_obj)
+		{
+		$fips_exclude_obj{$1} = 1 if (/\/([^\/]*)$/);
+		}
+
+	# $fips_exclude_obj{"bn_asm"} = 1;
+
+	my @ltmp = split " ", $lib_obj{"CRYPTO"};
+
+
+	$lib_obj{"CRYPTO"} = "";
+
+	foreach(@ltmp)
+		{
+		if (/\/bn_asm$/)
+			{
+			$lib_obj{"FIPS"} .= "$_ ";
+			}
+		elsif (!/\/([^\/]*)$/ || !exists $fips_exclude_obj{$1})
+			{
+			$lib_obj{"CRYPTO"} .= "$_ ";
+			}
+		}
+
+	if ($fipscanisterbuild)
+		{
+		$lib_obj{"FIPS"} .= $fips_ex_obj;
+		}
+
+	}
 
 if ($fipscanisterbuild)
 	{
@@ -1147,7 +1189,6 @@ sub read_options
 		}
 	elsif (/^--fipscanisterbuild$/)
 		{
-		print STDERR "FIPS CANISTER BUILD\n";
 		$fipscanisterbuild=1;
 		}
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
