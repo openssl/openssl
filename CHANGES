@@ -4,6 +4,9 @@
 
  Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
 
+  *) Expand security boundary to match 1.1.1 module.
+     [Steve Henson]
+
   *) Remove redundant features: hash file source, editing of test vectors
      modify fipsld to use external fips_premain.c signature.
      [Steve Henson]
