@@ -365,7 +365,6 @@ for (;;)
 
 	if ($key eq "FIPS_EX_OBJ")
 		{ 
-		$val =~ s|\.\./crypto/||g;
 		$fips_ex_obj=&var_add("crypto",$val);
 		}
 
@@ -389,7 +388,7 @@ if ($fips)
 		$fips_exclude_obj{$1} = 1 if (/\/([^\/]*)$/);
 		}
 
-	# $fips_exclude_obj{"bn_asm"} = 1;
+	$fips_exclude_obj{"bn_asm"} = 1;
 
 	my @ltmp = split " ", $lib_obj{"CRYPTO"};
 
@@ -398,19 +397,17 @@ if ($fips)
 
 	foreach(@ltmp)
 		{
-		if (/\/bn_asm$/)
+		if (/\/([^\/]*)$/ && exists $fips_exclude_obj{$1})
 			{
-			$lib_obj{"FIPS"} .= "$_ ";
+			if ($fipscanisterbuild)
+				{
+				$lib_obj{"FIPS"} .= "$_ ";
+				}
 			}
-		elsif (!/\/([^\/]*)$/ || !exists $fips_exclude_obj{$1})
+		else
 			{
 			$lib_obj{"CRYPTO"} .= "$_ ";
 			}
-		}
-
-	if ($fipscanisterbuild)
-		{
-		$lib_obj{"FIPS"} .= $fips_ex_obj;
 		}
 
 	}
