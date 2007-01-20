@@ -336,7 +336,21 @@ BUILD_CMD=SHARED_LIBS="$(SHARED_LIBS)"; \
 		$(CC) -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBSSL) $(LIBKRB5) $(LIBCRYPTO) $(EX_LIBS) ; \
 	fi
 
+STANDALONE_BUILD_CMD=SHARED_LIBS="$(SHARED_LIBS)"; \
+	if [ "$(SHLIB_TARGET)" = "darwin-shared" ] ; then \
+		SHARED_LIBS=""; \
+	fi; \
+	if [ -z "$$SHARED_LIBS" ]; then \
+		set -x; $${CC:-$(CC)} -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBKRB5) $(EX_LIBS) ; \
+	else	set -x; LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
+		$(CC) -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBKRB5) $(EX_LIBS) ; \
+	fi
+
 FIPS_BUILD_CMD=if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
+	  FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; export CC FIPSLD_CC; \
+	fi; $(STANDALONE_BUILD_CMD)
+
+FIPS_CRYPTO_BUILD_CMD=if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
 	  FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; export CC FIPSLD_CC; \
 	fi; $(BUILD_CMD)
 
@@ -446,7 +460,7 @@ $(METHTEST)$(EXE_EXT): $(METHTEST).o $(DLIBCRYPTO)
 	@target=$(METHTEST); $(BUILD_CMD)
 
 $(SSLTEST)$(EXE_EXT): $(SSLTEST).o $(DLIBSSL) $(DLIBCRYPTO)
-	@target=$(SSLTEST); $(FIPS_BUILD_CMD)
+	@target=$(SSLTEST); $(FIPS_CRYPTO_BUILD_CMD)
 
 $(ENGINETEST)$(EXE_EXT): $(ENGINETEST).o $(DLIBCRYPTO)
 	@target=$(ENGINETEST); $(BUILD_CMD)
