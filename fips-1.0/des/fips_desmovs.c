@@ -71,6 +71,16 @@
 #include <openssl/err.h>
 #include "e_os.h"
 
+#ifndef OPENSSL_FIPS
+
+int main(int argc, char *argv[])
+{
+    printf("No FIPS DES support\n");
+    return(0);
+}
+
+#else
+
 /* To avoid extensive changes to test program at this stage just convert
  * the input line into an acceptable form. Keyword lines converted to form
  * "keyword = value\n" no matter what white space present, all other lines
@@ -888,3 +898,5 @@ int main(int argc, char **argv)
     EXIT(0);
     return 0;
     }
+
+#endif

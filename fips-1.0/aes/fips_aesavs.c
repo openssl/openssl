@@ -70,6 +70,16 @@
 #include <openssl/err.h>
 #include "e_os.h"
 
+#ifndef OPENSSL_FIPS
+
+int main(int argc, char *argv[])
+{
+    printf("No FIPS DES support\n");
+    return(0);
+}
+
+#else
+
 #define AES_BLOCK_SIZE 16
 
 #define VERBOSE 1
@@ -1061,3 +1071,5 @@ int main(int argc, char **argv)
     EXIT(0);
     return 0;
     }
+
+#endif
