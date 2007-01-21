@@ -608,7 +608,7 @@ static void *v2i_ASIdentifiers(struct v3_ext_method *method,
 /*
  * OpenSSL dispatch.
  */
-X509V3_EXT_METHOD v3_asid = {
+const X509V3_EXT_METHOD v3_asid = {
   NID_sbgp_autonomousSysNum,	/* nid */
   0,				/* flags */
   ASN1_ITEM_ref(ASIdentifiers),	/* template */

@@ -77,7 +77,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
 					STACK_OF(CONF_VALUE) *unot, int ia5org);
 static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos);
 
-X509V3_EXT_METHOD v3_cpols = {
+const X509V3_EXT_METHOD v3_cpols = {
 NID_certificate_policies, 0,ASN1_ITEM_ref(CERTIFICATEPOLICIES),
 0,0,0,0,
 0,0,

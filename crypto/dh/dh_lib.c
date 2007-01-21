@@ -64,7 +64,7 @@
 #include <openssl/engine.h>
 #endif
 
-const char *DH_version="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
+const char DH_version[]="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
 static const DH_METHOD *default_DH_method = NULL;
 

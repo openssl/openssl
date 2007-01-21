@@ -68,7 +68,7 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
 static int do_othername(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
 static int do_dirname(GENERAL_NAME *gen, char *value, X509V3_CTX *ctx);
 
-X509V3_EXT_METHOD v3_alt[] = {
+const X509V3_EXT_METHOD v3_alt[] = {
 { NID_subject_alt_name, 0, ASN1_ITEM_ref(GENERAL_NAMES),
 0,0,0,0,
 0,0,

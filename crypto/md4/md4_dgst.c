@@ -60,7 +60,7 @@
 #include "md4_locl.h"
 #include <openssl/opensslv.h>
 
-const char *MD4_version="MD4" OPENSSL_VERSION_PTEXT;
+const char MD4_version[]="MD4" OPENSSL_VERSION_PTEXT;
 
 /* Implemented from RFC1186 The MD4 Message-Digest Algorithm
  */

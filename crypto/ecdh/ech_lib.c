@@ -74,7 +74,7 @@
 #endif
 #include <openssl/err.h>
 
-const char *ECDH_version="ECDH" OPENSSL_VERSION_PTEXT;
+const char ECDH_version[]="ECDH" OPENSSL_VERSION_PTEXT;
 
 static const ECDH_METHOD *default_ECDH_method = NULL;
 

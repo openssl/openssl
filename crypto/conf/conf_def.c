@@ -88,7 +88,7 @@ static int def_dump(const CONF *conf, BIO *bp);
 static int def_is_number(const CONF *conf, char c);
 static int def_to_int(const CONF *conf, char c);
 
-const char *CONF_def_version="CONF_def" OPENSSL_VERSION_PTEXT;
+const char CONF_def_version[]="CONF_def" OPENSSL_VERSION_PTEXT;
 
 static CONF_METHOD default_method = {
 	"OpenSSL default",

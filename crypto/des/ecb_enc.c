@@ -62,8 +62,8 @@
 #include <openssl/opensslv.h>
 #include <openssl/bio.h>
 
-OPENSSL_GLOBAL const char *libdes_version="libdes" OPENSSL_VERSION_PTEXT;
-OPENSSL_GLOBAL const char *DES_version="DES" OPENSSL_VERSION_PTEXT;
+OPENSSL_GLOBAL const char libdes_version[]="libdes" OPENSSL_VERSION_PTEXT;
+OPENSSL_GLOBAL const char DES_version[]="DES" OPENSSL_VERSION_PTEXT;
 
 const char *DES_options(void)
 	{
