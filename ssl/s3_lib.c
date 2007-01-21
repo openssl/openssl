@@ -132,7 +132,7 @@
 #endif
 #include <openssl/pq_compat.h>
 
-const char *ssl3_version_str="SSLv3" OPENSSL_VERSION_PTEXT;
+const char ssl3_version_str[]="SSLv3" OPENSSL_VERSION_PTEXT;
 
 #define SSL3_NUM_CIPHERS	(sizeof(ssl3_ciphers)/sizeof(SSL_CIPHER))
 
