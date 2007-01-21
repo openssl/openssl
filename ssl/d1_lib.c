@@ -61,7 +61,7 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
-const char *dtls1_version_str="DTLSv1" OPENSSL_VERSION_PTEXT;
+const char dtls1_version_str[]="DTLSv1" OPENSSL_VERSION_PTEXT;
 
 SSL3_ENC_METHOD DTLSv1_enc_data={
     dtls1_enc,
