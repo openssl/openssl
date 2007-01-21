@@ -66,7 +66,7 @@
 #undef BUFSIZE
 #define BUFSIZE	512
 
-const char *TXT_DB_version="TXT_DB" OPENSSL_VERSION_PTEXT;
+const char TXT_DB_version[]="TXT_DB" OPENSSL_VERSION_PTEXT;
 
 TXT_DB *TXT_DB_read(BIO *in, int num)
 	{

@@ -67,7 +67,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-const char *BN_version="Big Number" OPENSSL_VERSION_PTEXT;
+const char BN_version[]="Big Number" OPENSSL_VERSION_PTEXT;
 
 /* For a 32 bit machine
  * 2 -   4 ==  128

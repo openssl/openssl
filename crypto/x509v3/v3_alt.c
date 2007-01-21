@@ -65,7 +65,7 @@ static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx
 static GENERAL_NAMES *v2i_issuer_alt(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p);
 static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens);
-X509V3_EXT_METHOD v3_alt[] = {
+const X509V3_EXT_METHOD v3_alt[] = {
 { NID_subject_alt_name, 0, ASN1_ITEM_ref(GENERAL_NAMES),
 0,0,0,0,
 0,0,

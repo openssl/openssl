@@ -72,7 +72,7 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out, int indent)
 static SXNET * sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
 						STACK_OF(CONF_VALUE) *nval);
 #endif
-X509V3_EXT_METHOD v3_sxnet = {
+const X509V3_EXT_METHOD v3_sxnet = {
 NID_sxnet, X509V3_EXT_MULTILINE, ASN1_ITEM_ref(SXNET),
 0,0,0,0,
 0,0,

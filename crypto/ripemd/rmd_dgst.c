@@ -61,7 +61,7 @@
 #include <openssl/fips.h>
 #include <openssl/opensslv.h>
 
-const char *RMD160_version="RIPE-MD160" OPENSSL_VERSION_PTEXT;
+const char RMD160_version[]="RIPE-MD160" OPENSSL_VERSION_PTEXT;
 
 #  ifdef RMD160_ASM
      void ripemd160_block_x86(RIPEMD160_CTX *c, unsigned long *p,int num);

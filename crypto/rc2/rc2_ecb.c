@@ -60,7 +60,7 @@
 #include "rc2_locl.h"
 #include <openssl/opensslv.h>
 
-const char *RC2_version="RC2" OPENSSL_VERSION_PTEXT;
+const char RC2_version[]="RC2" OPENSSL_VERSION_PTEXT;
 
 /* RC2 as implemented frm a posting from
  * Newsgroups: sci.crypt

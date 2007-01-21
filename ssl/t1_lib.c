@@ -60,7 +60,7 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
-const char *tls1_version_str="TLSv1" OPENSSL_VERSION_PTEXT;
+const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
 
 static long tls1_default_timeout(void);
 

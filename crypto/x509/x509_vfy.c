@@ -78,7 +78,7 @@ static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
-const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
+const char X509_version[]="X.509" OPENSSL_VERSION_PTEXT;
 
 
 static int null_callback(int ok, X509_STORE_CTX *e)

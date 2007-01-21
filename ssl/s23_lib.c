@@ -68,7 +68,7 @@ static int ssl23_write(SSL *s, const void *buf, int len);
 static long ssl23_default_timeout(void );
 static int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
 static SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p);
-const char *SSL23_version_str="SSLv2/3 compatibility" OPENSSL_VERSION_PTEXT;
+const char SSL23_version_str[]="SSLv2/3 compatibility" OPENSSL_VERSION_PTEXT;
 
 static SSL_METHOD SSLv23_data= {
 	TLS1_VERSION,
