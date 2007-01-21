@@ -70,7 +70,7 @@
 #include <openssl/dh.h>
 #endif
 
-const char *DSA_version="DSA" OPENSSL_VERSION_PTEXT;
+const char DSA_version[]="DSA" OPENSSL_VERSION_PTEXT;
 
 static const DSA_METHOD *default_DSA_method = NULL;
 

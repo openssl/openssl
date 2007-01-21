@@ -81,7 +81,7 @@ static int check_policy(X509_STORE_CTX *ctx);
 static int crl_akid_check(X509_STORE_CTX *ctx, AUTHORITY_KEYID *akid);
 static int idp_check_scope(X509 *x, X509_CRL *crl);
 static int internal_verify(X509_STORE_CTX *ctx);
-const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
+const char X509_version[]="X.509" OPENSSL_VERSION_PTEXT;
 
 
 static int null_callback(int ok, X509_STORE_CTX *e)

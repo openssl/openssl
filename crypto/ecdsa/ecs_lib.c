@@ -61,7 +61,7 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 
-const char *ECDSA_version="ECDSA" OPENSSL_VERSION_PTEXT;
+const char ECDSA_version[]="ECDSA" OPENSSL_VERSION_PTEXT;
 
 static const ECDSA_METHOD *default_ECDSA_method = NULL;
 

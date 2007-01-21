@@ -68,7 +68,7 @@ static void *v2i_crld(X509V3_EXT_METHOD *method,
 static int i2r_crldp(X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
 								int indent);
 
-X509V3_EXT_METHOD v3_crld =
+const X509V3_EXT_METHOD v3_crld =
 	{
 	NID_crl_distribution_points, 0, ASN1_ITEM_ref(CRL_DIST_POINTS),
 	0,0,0,0,
@@ -399,7 +399,7 @@ static int i2r_idp(X509V3_EXT_METHOD *method,
 static void *v2i_idp(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 
-X509V3_EXT_METHOD v3_idp =
+const X509V3_EXT_METHOD v3_idp =
 	{
 	NID_issuing_distribution_point, X509V3_EXT_MULTILINE,
 	ASN1_ITEM_ref(ISSUING_DIST_POINT),

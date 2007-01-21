@@ -64,7 +64,7 @@
 
 #include <openssl/opensslv.h>
 
-const char *SHA_version="SHA" OPENSSL_VERSION_PTEXT;
+const char SHA_version[]="SHA" OPENSSL_VERSION_PTEXT;
 
 /* The implementation is in ../md32_common.h */
 

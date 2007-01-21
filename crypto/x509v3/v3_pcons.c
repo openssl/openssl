@@ -69,7 +69,7 @@ static STACK_OF(CONF_VALUE) *i2v_POLICY_CONSTRAINTS(X509V3_EXT_METHOD *method,
 static void *v2i_POLICY_CONSTRAINTS(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *values);
 
-X509V3_EXT_METHOD v3_policy_constraints = {
+const X509V3_EXT_METHOD v3_policy_constraints = {
 NID_policy_constraints, 0,
 ASN1_ITEM_ref(POLICY_CONSTRAINTS),
 0,0,0,0,

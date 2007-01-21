@@ -63,7 +63,7 @@
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
 
-const char *MD2_version="MD2" OPENSSL_VERSION_PTEXT;
+const char MD2_version[]="MD2" OPENSSL_VERSION_PTEXT;
 
 /* Implemented from RFC1319 The MD2 Message-Digest Algorithm
  */

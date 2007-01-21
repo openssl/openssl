@@ -77,7 +77,7 @@ typedef struct
 	EVP_PBE_KEYGEN *keygen;
 	} EVP_PBE_CTL;
 
-EVP_PBE_CTL builtin_pbe[] = 
+static const EVP_PBE_CTL builtin_pbe[] = 
 	{
 	{EVP_PBE_TYPE_OUTER, NID_pbeWithMD2AndDES_CBC,
 			NID_des_cbc, NID_md2, PKCS5_PBE_keyivgen},

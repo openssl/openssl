@@ -67,7 +67,7 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-const char *BN_version="Big Number" OPENSSL_VERSION_PTEXT;
+const char BN_version[]="Big Number" OPENSSL_VERSION_PTEXT;
 
 /* This stuff appears to be completely unused, so is deprecated */
 #ifndef OPENSSL_NO_DEPRECATED

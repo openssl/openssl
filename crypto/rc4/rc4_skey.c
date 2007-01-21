@@ -60,7 +60,7 @@
 #include "rc4_locl.h"
 #include <openssl/opensslv.h>
 
-const char *RC4_version="RC4" OPENSSL_VERSION_PTEXT;
+const char RC4_version[]="RC4" OPENSSL_VERSION_PTEXT;
 
 const char *RC4_options(void)
 	{
