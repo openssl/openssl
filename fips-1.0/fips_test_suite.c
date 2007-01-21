@@ -22,7 +22,6 @@
 #include <openssl/dsa.h>
 #include <openssl/hmac.h>
 #include <openssl/fips_sha.h>
-#include <openssl/md5.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
 #include <openssl/bn.h>                                                                                          
@@ -297,24 +296,6 @@ static int FIPS_hmac_sha512_test()
     return 1;
     }
 
-/* MD5: generate hash of known digest value and compare to known
-   precomputed correct hash
-*/
-static int md5_test()
-    {
-    unsigned char digest[MD5_DIGEST_LENGTH] =
-	{ 0x48, 0x50, 0xf0, 0xa3, 0x3a, 0xed, 0xd3, 0xaf, 0x6e, 0x47, 0x7f, 0x83, 0x02, 0xb1, 0x09, 0x68 };
-    unsigned char str[] = "etaonrishd";
-
-    unsigned char md[MD5_DIGEST_LENGTH];
-
-    ERR_clear_error();
-    if (!MD5(str,sizeof(str) - 1,md))
-	return 0;
-    if (memcmp(md,digest,sizeof(md)))
-	return 0;
-    return 1;
-    }
 
 /* DH: generate shared parameters
 */
@@ -411,9 +392,7 @@ int main(int argc,char **argv)
     /* Non-Approved cryptographic operation
     */
     printf("1. Non-Approved cryptographic operation test...\n");
-    printf("\ta. Excluded algorithm (MD5)...");
-    printf( md5_test() ? "successful\n" :  Fail("FAILED!\n") );
-    printf("\tb. Included algorithm (D-H)...");
+    printf("\ta. Included algorithm (D-H)...");
     printf( dh_test() ? "successful\n" :  Fail("FAILED!\n") );
 
     /* Power-up self test
@@ -466,36 +445,33 @@ int main(int argc,char **argv)
 
     /* HMAC-SHA-1 hash
     */
-    printf("7d. SHA-1 hash...");
+    printf("7d. HMAC-SHA-1 hash...");
     printf( FIPS_hmac_sha1_test() ? "successful\n" :  Fail("FAILED!\n") );
 
     /* HMAC-SHA-224 hash
     */
-    printf("7e. SHA-224 hash...");
+    printf("7e. HMAC-SHA-224 hash...");
     printf( FIPS_hmac_sha224_test() ? "successful\n" :  Fail("FAILED!\n") );
 
     /* HMAC-SHA-256 hash
     */
-    printf("7f. SHA-256 hash...");
+    printf("7f. HMAC-SHA-256 hash...");
     printf( FIPS_hmac_sha256_test() ? "successful\n" :  Fail("FAILED!\n") );
 
     /* HMAC-SHA-384 hash
     */
-    printf("7g. SHA-384 hash...");
+    printf("7g. HMAC-SHA-384 hash...");
     printf( FIPS_hmac_sha384_test() ? "successful\n" :  Fail("FAILED!\n") );
 
     /* HMAC-SHA-512 hash
     */
-    printf("7h. SHA-512 hash...");
+    printf("7h. HMAC-SHA-512 hash...");
     printf( FIPS_hmac_sha512_test() ? "successful\n" :  Fail("FAILED!\n") );
 
     /* Non-Approved cryptographic operation
     */
     printf("8. Non-Approved cryptographic operation test...\n");
-    printf("\ta. Excluded algorithm (MD5)...");
-    printf( md5_test() ? Fail("passed INCORRECTLY!\n")
-	    : "failed as expected\n" );
-    printf("\tb. Included algorithm (D-H)...");
+    printf("\ta. Included algorithm (D-H)...");
     printf( dh_test() ? "successful as expected\n"
 	    : Fail("failed INCORRECTLY!\n") );
 
