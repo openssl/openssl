@@ -74,7 +74,7 @@
 
 int main(int argc, char *argv[])
 {
-    printf("No FIPS DES support\n");
+    printf("No FIPS AES support\n");
     return(0);
 }
 
