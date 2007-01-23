@@ -162,7 +162,6 @@ int FIPS_selftest_dsa()
 	{
     	i = DSA_do_verify(str1, 20, sig, dsa);
 	DSA_SIG_free(sig);
-	OPENSSL_free(sig);
 	}
     else
 	i = 0;
