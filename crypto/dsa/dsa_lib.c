@@ -255,7 +255,7 @@ DSA_SIG *DSA_SIG_new(void)
 		return NULL;
 	sig->r = NULL;
 	sig->s = NULL;
-	return NULL;
+	return sig;
 	}
 
 void DSA_SIG_free(DSA_SIG *sig)
