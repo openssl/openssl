@@ -136,36 +136,157 @@ static int tidy_line(char *linebuf, char *olinebuf)
 	return 1;
 	}
 
-/*#define AES_BLOCK_SIZE 16*/
+#define DES_BLOCK_SIZE 8
 
 #define VERBOSE 0
 
+typedef struct
+	{
+	DES_key_schedule ks1, ks2, ks3;
+	unsigned char tiv[DES_BLOCK_SIZE];
+	int dir, cmode, cbits, num, akeysz;
+	} DES_CTX;
+
 /*-----------------------------------------------*/
 
-int DESTest(EVP_CIPHER_CTX *ctx,
+int DES_Cipher(DES_CTX *ctx,
+		unsigned char *out,
+		unsigned char *in,
+		int inl)
+	{
+
+	unsigned long len = inl;
+
+	DES_cblock *iv = (DES_cblock *)ctx->tiv;
+
+	switch(ctx->cmode)
+		{
+		case EVP_CIPH_ECB_MODE:
+		while (len > 0)
+			{
+			if (ctx->akeysz == 64)
+				DES_ecb_encrypt((DES_cblock *)in,
+						(DES_cblock *)out,
+							&ctx->ks1, ctx->dir);
+			else
+				DES_ecb3_encrypt(in, out,
+					&ctx->ks1,
+					&ctx->ks2,
+					&ctx->ks3,
+					ctx->dir);
+			in += DES_BLOCK_SIZE;
+			out += DES_BLOCK_SIZE;
+			len -= DES_BLOCK_SIZE;
+			}
+		break;
+
+		case EVP_CIPH_CBC_MODE:
+		if (ctx->akeysz == 64)
+			DES_ncbc_encrypt(in, out, len, &ctx->ks1, iv, ctx->dir);
+		else
+			DES_ede3_cbc_encrypt(in, out, len,
+				&ctx->ks1, &ctx->ks2, &ctx->ks3,
+				iv, ctx->dir);
+		break;
+
+		case EVP_CIPH_CFB_MODE:
+#if 0
+		if (ctx->cbits == 1)
+			{
+			if (ctx->akeysz == 64)
+				DES_cfb64_encrypt(in, out, len,
+						&ctx->ks1, iv,
+						&ctx->num, ctx->dir);
+			else
+				DES_ede3_cfb64_encrypt(in, out, len,
+						&ctx->ks1,
+						&ctx->ks2,
+						&ctx->ks3, iv,
+						&ctx->num, ctx->dir);
+			}
+		else
+#endif
+		if (ctx->cbits == 8)
+			{
+			if (ctx->akeysz == 64)
+				DES_cfb_encrypt(in, out, 8, len,
+						&ctx->ks1, iv, ctx->dir);
+			else
+				DES_ede3_cfb_encrypt(in, out, 8, len,
+						&ctx->ks1,
+						&ctx->ks2,
+						&ctx->ks3, iv, ctx->dir);
+			}
+		else if (ctx->cbits == 64)
+			{
+			if (ctx->akeysz == 64)
+				DES_cfb64_encrypt(in, out, len,
+						&ctx->ks1, iv,
+						&ctx->num, ctx->dir);
+			else
+				DES_ede3_cfb64_encrypt(in, out, len,
+						&ctx->ks1,
+						&ctx->ks2,
+						&ctx->ks3, iv,
+						&ctx->num, ctx->dir);
+			}
+		break;
+
+		case EVP_CIPH_OFB_MODE:
+		if (ctx->akeysz == 64)
+			DES_ofb64_encrypt(in, out, len, &ctx->ks1, iv,
+								&ctx->num);
+		else
+			DES_ede3_ofb64_encrypt(in, out, len,
+					&ctx->ks1, &ctx->ks2, &ctx->ks3,
+					iv, &ctx->num);
+
+		break;
+
+		default:
+		return 0;
+
+		}
+
+	return 1;
+
+	}
+
+int DESTest(DES_CTX *ctx,
 	    char *amode, int akeysz, unsigned char *aKey, 
 	    unsigned char *iVec, 
 	    int dir,  /* 0 = decrypt, 1 = encrypt */
 	    unsigned char *out, unsigned char *in, int len)
     {
-    const EVP_CIPHER *cipher = NULL;
-    int kt = 0;
-
-    if (ctx)
-	memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
+    DES_cblock *deskey = (DES_cblock *)aKey;
+    ctx->cmode = -1;
+    ctx->cbits = -1;
+    ctx->dir = dir;
+    ctx->num = 0;
 
     if (strcasecmp(amode, "CBC") == 0)
-	kt = 1000;
+	ctx->cmode = EVP_CIPH_CBC_MODE;
     else if (strcasecmp(amode, "ECB") == 0)
-	kt = 2000;
+	ctx->cmode = EVP_CIPH_ECB_MODE;
     else if (strcasecmp(amode, "CFB64") == 0)
-	kt = 3000;
+	{
+	ctx->cbits = 64;
+	ctx->cmode = EVP_CIPH_CFB_MODE;
+	}
     else if (strncasecmp(amode, "OFB", 3) == 0)
-	kt = 4000;
+	ctx->cmode = EVP_CIPH_OFB_MODE;
+#if 0
     else if(!strcasecmp(amode,"CFB1"))
-	kt=5000;
+	{
+	ctx->cbits = 1;
+	ctx->cmode = EVP_CIPH_CFB_MODE;
+	}
+#endif
     else if(!strcasecmp(amode,"CFB8"))
-	kt=6000;
+	{
+	ctx->cbits = 8;
+	ctx->cmode = EVP_CIPH_CFB_MODE;
+	}
     else
 	{
 	printf("Unknown mode: %s\n", amode);
@@ -178,55 +299,16 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 	}
     else
 	{
-	kt += akeysz;
-	switch (kt)
-	    {
-	case 1064:
-	    cipher=EVP_des_cbc();
-	    break;
-	case 1192:
-	    cipher=EVP_des_ede3_cbc();
-	    break;
-	case 2064:
-	    cipher=EVP_des_ecb();
-	    break;
-	case 2192:
-	    cipher=EVP_des_ede3_ecb();
-	    break;
-	case 3064:
-	    cipher=EVP_des_cfb64();
-	    break;
-	case 3192:
-	    cipher=EVP_des_ede3_cfb64();
-	    break;
-	case 4064:
-	    cipher=EVP_des_ofb();
-	    break;
-	case 4192:
-	    cipher=EVP_des_ede3_ofb();
-	    break;
-	case 5064:
-	    cipher=EVP_des_cfb1();
-	    break;
-	case 5192:
-	    cipher=EVP_des_ede3_cfb1();
-	    break;
-	case 6064:
-	    cipher=EVP_des_cfb8();
-	    break;
-	case 6192:
-	    cipher=EVP_des_ede3_cfb8();
-	    break;
-	default:
-	    printf("Didn't handle mode %d\n",kt);
-	    EXIT(1);
-	    }
-	if(!EVP_CipherInit(ctx, cipher, aKey, iVec, dir))
-	    {
-	    ERR_print_errors_fp(stderr);
-	    EXIT(1);
-	    }
-	EVP_Cipher(ctx, out, in, len);
+	ctx->akeysz = akeysz;
+	DES_set_key_unchecked(deskey, &ctx->ks1);
+	if(ctx->akeysz == 192)
+		{
+		DES_set_key_unchecked(deskey + 1, &ctx->ks2);
+		DES_set_key_unchecked(deskey + 2, &ctx->ks3);
+		}
+	if (iVec)
+		memcpy(ctx->tiv, iVec, DES_BLOCK_SIZE);
+	DES_Cipher(ctx, out, in, len);
 	}
     return 1;
     }
@@ -392,7 +474,7 @@ void do_mct(char *amode,
 	{
 	int j;
 	int n;
-	EVP_CIPHER_CTX ctx;
+	DES_CTX ctx;
 	int kp=akeysz/64;
 	unsigned char old_iv[8];
 
@@ -428,8 +510,8 @@ void do_mct(char *amode,
 		}
 	    else
 		{
-		memcpy(old_iv,ctx.iv,8);
-		EVP_Cipher(&ctx,text,text,len);
+		memcpy(old_iv,ctx.tiv,8);
+		DES_Cipher(&ctx,text,text,len);
 		}
 	    if(j == 9999)
 		{
@@ -465,7 +547,7 @@ void do_mct(char *amode,
 	DES_set_odd_parity((DES_cblock *)akey);
 	DES_set_odd_parity((DES_cblock *)(akey+8));
 	DES_set_odd_parity((DES_cblock *)(akey+16));
-	memcpy(ivec,ctx.iv,8);
+	memcpy(ivec,ctx.tiv,8);
 
 	/* pointless exercise - the final text doesn't depend on the
 	   initial text in OFB mode, so who cares what it is? (Who
@@ -490,7 +572,7 @@ int proc_file(char *rqfile)
     unsigned char plaintext[2048];
     unsigned char ciphertext[2048];
     char *rp;
-    EVP_CIPHER_CTX ctx;
+    DES_CTX ctx;
     int numkeys=1;
 
     if (!rqfile || !(*rqfile))
@@ -835,12 +917,10 @@ int main(int argc, char **argv)
 #ifdef OPENSSL_FIPS
     if(!FIPS_mode_set(1))
 	{
-	ERR_load_crypto_strings();
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
 	EXIT(1);
 	}
 #endif
-    ERR_load_crypto_strings();
     if (argc > 1)
 	{
 	if (strcasecmp(argv[1], "-d") == 0)

@@ -86,31 +86,99 @@ int main(int argc, char *argv[])
 
 /*-----------------------------------------------*/
 
-int AESTest(EVP_CIPHER_CTX *ctx,
+typedef struct
+	{
+	AES_KEY ks;
+	unsigned char tiv[AES_BLOCK_SIZE];
+	int dir, cmode, cbits, num;
+	} AES_CTX;
+
+int AES_Cipher(AES_CTX *ctx,
+		unsigned char *out,
+		unsigned char *in,
+		int inl)
+	{
+
+	unsigned long len = inl;
+
+	switch(ctx->cmode)
+		{
+		case EVP_CIPH_ECB_MODE:
+		while (len > 0)
+			{
+			AES_ecb_encrypt(in, out, &ctx->ks, ctx->dir);
+			in += AES_BLOCK_SIZE;
+			out += AES_BLOCK_SIZE;
+			len -= AES_BLOCK_SIZE;
+			}
+		break;
+
+		case EVP_CIPH_CBC_MODE:
+		AES_cbc_encrypt(in, out, len, &ctx->ks, ctx->tiv, ctx->dir);
+		break;
+
+		case EVP_CIPH_CFB_MODE:
+		if (ctx->cbits == 1)
+			AES_cfb1_encrypt(in, out, len, &ctx->ks, ctx->tiv,
+						&ctx->num, ctx->dir);
+		else if (ctx->cbits == 8)
+			AES_cfb8_encrypt(in, out, len, &ctx->ks, ctx->tiv,
+						&ctx->num, ctx->dir);
+		else if (ctx->cbits == 128)
+			AES_cfb128_encrypt(in, out, len, &ctx->ks, ctx->tiv,
+						&ctx->num, ctx->dir);
+		break;
+
+		case EVP_CIPH_OFB_MODE:
+		AES_ofb128_encrypt(in, out, len, &ctx->ks, ctx->tiv,
+						&ctx->num);
+
+		break;
+
+		default:
+		return 0;
+
+		}
+
+	return 1;
+
+	}
+
+
+
+int AESTest(AES_CTX *ctx,
 	    char *amode, int akeysz, unsigned char *aKey, 
 	    unsigned char *iVec, 
 	    int dir,  /* 0 = decrypt, 1 = encrypt */
 	    unsigned char *plaintext, unsigned char *ciphertext, int len)
     {
-    const EVP_CIPHER *cipher = NULL;
     int ret = 1;
-    int kt = 0;
 
-    if (ctx)
-	memset(ctx, 0, sizeof(EVP_CIPHER_CTX));
-
+    ctx->cmode = -1;
+    ctx->cbits = -1;
+    ctx->dir = dir;
+    ctx->num = 0;
     if (strcasecmp(amode, "CBC") == 0)
-	kt = 1000;
+	ctx->cmode = EVP_CIPH_CBC_MODE;
     else if (strcasecmp(amode, "ECB") == 0)
-	kt = 2000;
+	ctx->cmode = EVP_CIPH_ECB_MODE;
     else if (strcasecmp(amode, "CFB128") == 0)
-	kt = 3000;
+	{
+	ctx->cbits = 128;
+	ctx->cmode = EVP_CIPH_CFB_MODE;
+	}
     else if (strncasecmp(amode, "OFB", 3) == 0)
-	kt = 4000;
+	ctx->cmode = EVP_CIPH_OFB_MODE;
     else if(!strcasecmp(amode,"CFB1"))
-	kt=5000;
+	{
+	ctx->cbits = 1;
+	ctx->cmode = EVP_CIPH_CFB_MODE;
+	}
     else if(!strcasecmp(amode,"CFB8"))
-	kt=6000;
+	{
+	ctx->cbits = 8;
+	ctx->cmode = EVP_CIPH_CFB_MODE;
+	}
     else
 	{
 	printf("Unknown mode: %s\n", amode);
@@ -123,89 +191,18 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 	    printf("Invalid key size: %d\n", akeysz);
 	    ret = 0;
 	    }
-	else
-	    {
-	    kt += akeysz;
-	    switch (kt)
-		{
-	    case 1128:  /* CBC 128 */
-		cipher = EVP_aes_128_cbc();
-		break;
-	    case 1192:  /* CBC 192 */
-		cipher = EVP_aes_192_cbc();
-		break;
-	    case 1256:  /* CBC 256 */
-		cipher = EVP_aes_256_cbc();
-		break;
-	    case 2128:  /* ECB 128 */
-		cipher = EVP_aes_128_ecb();
-		break;
-	    case 2192:  /* ECB 192 */
-		cipher = EVP_aes_192_ecb();
-		break;
-	    case 2256:  /* ECB 256 */
-		cipher = EVP_aes_256_ecb();
-		break;
-	    case 3128:  /* CFB 128 */
-		cipher = EVP_aes_128_cfb();
-		break;
-	    case 3192:  /* CFB 192 */
-		cipher = EVP_aes_192_cfb();
-		break;
-	    case 3256:  /* CFB 256 */
-		cipher = EVP_aes_256_cfb();
-		break;
-	    case 4128:  /* OFB 128 */
-		cipher = EVP_aes_128_ofb();
-		break;
-	    case 4192:  /* OFB 192 */
-		cipher = EVP_aes_192_ofb();
-		break;
-	    case 4256:  /* OFB 256 */
-		cipher = EVP_aes_256_ofb();
-		break;
-	    case 5128:
-		cipher=EVP_aes_128_cfb1();
-		break;
-	    case 5192:
-		cipher=EVP_aes_192_cfb1();
-		break;
-	    case 5256:
-		cipher=EVP_aes_256_cfb1();
-		break;
-	    case 6128:
-		cipher=EVP_aes_128_cfb8();
-		break;
-	    case 6192:
-		cipher=EVP_aes_192_cfb8();
-		break;
-	    case 6256:
-		cipher=EVP_aes_256_cfb8();
-		break;
-	    default:
-		printf("Didn't handle mode %d\n",kt);
-		EXIT(1);
-		}
-	    if (dir)
-		{ /* encrypt */
-		if(!EVP_CipherInit(ctx, cipher, aKey, iVec, AES_ENCRYPT))
-		    {
-		    ERR_print_errors_fp(stderr);
-		    EXIT(1);
-		    }
-		  
-		EVP_Cipher(ctx, ciphertext, (unsigned char*)plaintext, len);
-		}
+	    if (ctx->dir
+		|| (ctx->cmode == EVP_CIPH_CFB_MODE)
+		|| (ctx->cmode == EVP_CIPH_OFB_MODE))
+		AES_set_encrypt_key(aKey, akeysz, &ctx->ks);
 	    else
-		{ /* decrypt */
-		if(!EVP_CipherInit(ctx, cipher, aKey, iVec, AES_DECRYPT))
-		    {
-		    ERR_print_errors_fp(stderr);
-		    EXIT(1);
-		    }
-		EVP_Cipher(ctx, (unsigned char*)plaintext, ciphertext, len);
-		}
-	    }
+		AES_set_decrypt_key(aKey, akeysz, &ctx->ks);
+	    if (iVec)
+		memcpy(ctx->tiv, iVec, AES_BLOCK_SIZE);
+	if (ctx->dir)
+		AES_Cipher(ctx, ciphertext, plaintext, len);
+	else
+		AES_Cipher(ctx, plaintext, ciphertext, len);
 	}
     return ret;
     }
@@ -350,7 +347,7 @@ int do_mct(char *amode,
     unsigned char ciphertext[64+4];
     int i, j, n, n1, n2;
     int imode = 0, nkeysz = akeysz/8;
-    EVP_CIPHER_CTX ctx;
+    AES_CTX ctx;
 
     if (len > 32)
 	{
@@ -406,12 +403,12 @@ int do_mct(char *amode,
 		    {
 		    if (dir == XENCRYPT)
 			{
-			EVP_Cipher(&ctx, ctext[j], ptext[j], len);
+			AES_Cipher(&ctx, ctext[j], ptext[j], len);
 			memcpy(ptext[j+1], ctext[j], len);
 			}
 		    else
 			{
-			EVP_Cipher(&ctx, ptext[j], ctext[j], len);
+			AES_Cipher(&ctx, ptext[j], ctext[j], len);
 			memcpy(ctext[j+1], ptext[j], len);
 			}
 		    }
@@ -434,12 +431,12 @@ int do_mct(char *amode,
 		    {
 		    if (dir == XENCRYPT)
 			{
-			EVP_Cipher(&ctx, ctext[j], ptext[j], len);
+			AES_Cipher(&ctx, ctext[j], ptext[j], len);
 			memcpy(ptext[j+1], ctext[j-1], len);
 			}
 		    else
 			{
-			EVP_Cipher(&ctx, ptext[j], ctext[j], len);
+			AES_Cipher(&ctx, ptext[j], ctext[j], len);
 			memcpy(ctext[j+1], ptext[j-1], len);
 			}
 		    }
@@ -455,9 +452,9 @@ int do_mct(char *amode,
 		else
 		    {
 		    if (dir == XENCRYPT)
-			EVP_Cipher(&ctx, ctext[j], ptext[j], len);
+			AES_Cipher(&ctx, ctext[j], ptext[j], len);
 		    else
-			EVP_Cipher(&ctx, ptext[j], ctext[j], len);
+			AES_Cipher(&ctx, ptext[j], ctext[j], len);
 		    }
 		if (dir == XENCRYPT)
 		    {
@@ -487,9 +484,9 @@ int do_mct(char *amode,
 		else
 		    {
 		    if (dir == XENCRYPT)
-			EVP_Cipher(&ctx, ctext[j], ptext[j], len);
+			AES_Cipher(&ctx, ctext[j], ptext[j], len);
 		    else
-			EVP_Cipher(&ctx, ptext[j], ctext[j], len);
+			AES_Cipher(&ctx, ptext[j], ctext[j], len);
 
 		    }
 		if(dir == XENCRYPT)
@@ -713,7 +710,7 @@ int proc_file(char *rqfile)
     unsigned char plaintext[2048];
     unsigned char ciphertext[2048];
     char *rp;
-    EVP_CIPHER_CTX ctx;
+    AES_CTX ctx;
 
     if (!rqfile || !(*rqfile))
 	{
@@ -1013,7 +1010,6 @@ int main(int argc, char **argv)
 	EXIT(1);
 	}
 #endif
-    ERR_load_crypto_strings();
     if (argc > 1)
 	{
 	if (strcasecmp(argv[1], "-d") == 0)
