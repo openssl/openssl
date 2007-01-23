@@ -301,7 +301,10 @@ void sigver()
     char *keyword, *value;
     int nmod=0;
     unsigned char hash[20];
-    DSA_SIG *sig=DSA_SIG_new();
+    DSA_SIG sg, *sig = &sg;
+
+    sig->r = NULL;
+    sig->s = NULL;
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
@@ -367,7 +370,6 @@ int main(int argc,char **argv)
 	}
     if(!FIPS_mode_set(1))
 	{
-	ERR_load_crypto_strings();
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
 	exit(1);
 	}

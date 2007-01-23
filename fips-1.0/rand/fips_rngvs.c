@@ -254,7 +254,6 @@ int main(int argc,char **argv)
 	}
     if(!FIPS_mode_set(1))
 	{
-	ERR_load_crypto_strings();
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
 	exit(1);
 	}

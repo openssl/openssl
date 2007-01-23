@@ -85,8 +85,8 @@ static int FIPS_dsa_test()
     {
     DSA *dsa = NULL;
     unsigned char dgst[] = "etaonrishdlc";
-    unsigned char sig[256];
-    unsigned int siglen;
+    DSA_SIG *sig = NULL;
+    int r = 0;
 
     ERR_clear_error();
     dsa = DSA_generate_parameters(512,NULL,0,NULL,NULL,NULL,NULL);
@@ -94,9 +94,13 @@ static int FIPS_dsa_test()
 	return 0;
     if (!DSA_generate_key(dsa))
 	return 0;
-    if ( DSA_sign(0,dgst,sizeof(dgst) - 1,sig,&siglen,dsa) != 1 )
-	return 0;
-    if ( DSA_verify(0,dgst,sizeof(dgst) - 1,sig,siglen,dsa) != 1 )
+    sig = DSA_do_sign(dgst,sizeof(dgst) - 1,dsa);
+    if (sig)
+	{
+    	r = DSA_do_verify(dgst,sizeof(dgst) - 1,sig,dsa);
+	DSA_SIG_free(sig);
+	}
+    if (r != 1)
 	return 0;
     DSA_free(dsa);
     return 1;
@@ -380,7 +384,6 @@ int main(int argc,char **argv)
         }
         if (!FIPS_mode_set(1))
    	    {
-	    ERR_load_crypto_strings();
 	    ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
             printf("Power-up self test failed\n");
 	    exit(1);
@@ -401,7 +404,6 @@ int main(int argc,char **argv)
     printf("2. Automatic power-up self test...");
     if (!FIPS_mode_set(1))
 	{
-	ERR_load_crypto_strings();
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
         printf(Fail("FAILED!\n"));
 	exit(1);

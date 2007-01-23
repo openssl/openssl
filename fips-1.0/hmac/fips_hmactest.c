@@ -86,8 +86,6 @@ int main(int argc, char **argv)
 
 	int ret = 1;
 
-	ERR_load_crypto_strings();
-
 	err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
 	if (!err)

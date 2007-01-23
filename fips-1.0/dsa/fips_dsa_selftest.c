@@ -112,8 +112,8 @@ int FIPS_selftest_dsa()
     int counter,i,j;
     unsigned char buf[256];
     unsigned long h;
-    unsigned char sig[256];
-    unsigned int siglen;
+
+    DSA_SIG *sig = NULL;
 
     dsa=DSA_generate_parameters(512,seed,20,&counter,&h,NULL,NULL);
 
@@ -156,8 +156,18 @@ int FIPS_selftest_dsa()
 	return 0;
 	}
     DSA_generate_key(dsa);
-    DSA_sign(0, str1, 20, sig, &siglen, dsa);
-    if(DSA_verify(0, str1, 20, sig, siglen, dsa) != 1)
+    sig = DSA_do_sign(str1, 20, dsa);
+
+    if (sig)
+	{
+    	i = DSA_do_verify(str1, 20, sig, dsa);
+	DSA_SIG_free(sig);
+	OPENSSL_free(sig);
+	}
+    else
+	i = 0;
+
+    if (i != 1)
 	{
 	FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
 	return 0;

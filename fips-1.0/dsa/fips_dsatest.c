@@ -140,8 +140,7 @@ int main(int argc, char **argv)
 	int counter,ret=0,i,j;
 	unsigned char buf[256];
 	unsigned long h;
-	unsigned char sig[256];
-	unsigned int siglen;
+	DSA_SIG *sig = NULL;
 
 	if (bio_err == NULL)
 		bio_err=BIO_new_fp(stderr,BIO_NOCLOSE);
@@ -157,7 +156,6 @@ int main(int argc, char **argv)
 	CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-	ERR_load_crypto_strings();
 	FIPS_set_prng_key(rnd_key1,rnd_key2);
 	RAND_seed(rnd_seed, sizeof rnd_seed);
 
@@ -174,7 +172,7 @@ int main(int argc, char **argv)
 	BIO_printf(bio_err,"\ncounter=%d h=%d\n",counter,h);
 		
 	if (dsa == NULL) goto end;
-	DSA_print(bio_err,dsa,0);
+	/*DSA_print(bio_err,dsa,0);*/
 	if (counter != 105) 
 		{
 		BIO_printf(bio_err,"counter should be 105\n");
@@ -210,8 +208,17 @@ int main(int argc, char **argv)
 		goto end;
 		}
 	DSA_generate_key(dsa);
-	DSA_sign(0, str1, 20, sig, &siglen, dsa);
-	if (DSA_verify(0, str1, 20, sig, siglen, dsa) == 1)
+
+	sig = DSA_do_sign(str1, 20, dsa);
+
+	if (sig)
+		{	
+		i = DSA_do_verify(str1, 20, sig, dsa);
+		DSA_SIG_free(sig);
+		}
+	else
+		i = 0;
+	if (i == 1)
 		ret=1;
 end:
 	if (!ret)

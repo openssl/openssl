@@ -93,11 +93,18 @@
 static int fips_check_dsa(DSA *dsa)
     {
     static const unsigned char str1[]="12345678901234567890";
-    unsigned char sig[256];
-    unsigned int siglen;
+    int r = 0;
+    DSA_SIG *sig;
 
-    DSA_sign(0, str1, 20, sig, &siglen, dsa);
-    if(DSA_verify(0, str1, 20, sig, siglen, dsa) != 1)
+    sig = DSA_do_sign(str1, 20, dsa);
+
+    if (sig)
+	{
+    	r = DSA_do_verify(str1, 20, sig, dsa);
+	DSA_SIG_free(sig);
+	}
+
+    if(r != 1)
 	{
 	FIPSerr(FIPS_F_FIPS_CHECK_DSA,FIPS_R_PAIRWISE_TEST_FAILED);
 	return 0;

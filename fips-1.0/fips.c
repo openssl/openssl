@@ -135,7 +135,6 @@ int FIPS_selftest_failed(void)
 
 int FIPS_selftest()
     {
-    ERR_load_crypto_strings();
 
     return FIPS_selftest_sha1()
 	&& FIPS_selftest_hmac()

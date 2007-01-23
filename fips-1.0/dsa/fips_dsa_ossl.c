@@ -164,7 +164,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, FIPS_DSA_SIZE_T dlen, DSA
 		BN_sub(s,s,dsa->q);
 	if (!BN_mod_mul(s,s,kinv,dsa->q,ctx)) goto err;
 
-	ret=DSA_SIG_new();
+	ret= DSA_SIG_new();
 	if (ret == NULL) goto err;
 	ret->r = r;
 	ret->s = s;

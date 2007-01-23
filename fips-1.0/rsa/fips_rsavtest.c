@@ -88,7 +88,6 @@ int main(int argc, char **argv)
 
 	int ret = 1;
 	int Saltlen = -1;
-	ERR_load_crypto_strings();
 
 	err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
@@ -330,19 +329,18 @@ static int rsa_printver(BIO *err, BIO *out,
 	int ret = 0, r;
 	/* Setup RSA and EVP_PKEY structures */
 	RSA *rsa_pubkey = NULL;
-	EVP_PKEY *pubkey = NULL;
+	EVP_PKEY pk;
 	EVP_MD_CTX ctx;
 	unsigned char *buf = NULL;
 	rsa_pubkey = RSA_new();
-	pubkey = EVP_PKEY_new();
-	if (!rsa_pubkey || !pubkey)
+	if (!rsa_pubkey)
 		goto error;
 	rsa_pubkey->n = BN_dup(n);
 	rsa_pubkey->e = BN_dup(e);
 	if (!rsa_pubkey->n || !rsa_pubkey->e)
 		goto error;
-	if (!EVP_PKEY_set1_RSA(pubkey, rsa_pubkey))
-		goto error;
+	pk.type = EVP_PKEY_RSA;
+	pk.pkey.rsa = rsa_pubkey;
 
 	EVP_MD_CTX_init(&ctx);
 
@@ -395,7 +393,7 @@ static int rsa_printver(BIO *err, BIO *out,
 		if (!EVP_VerifyUpdate(&ctx, Msg, Msglen))
 			goto error;
 
-		r = EVP_VerifyFinal(&ctx, S, Slen, pubkey);
+		r = EVP_VerifyFinal(&ctx, S, Slen, &pk);
 
 		}
 
@@ -415,8 +413,6 @@ static int rsa_printver(BIO *err, BIO *out,
 	error:
 	if (rsa_pubkey)
 		RSA_free(rsa_pubkey);
-	if (pubkey)
-		EVP_PKEY_free(pubkey);
 	if (buf)
 		OPENSSL_free(buf);
 

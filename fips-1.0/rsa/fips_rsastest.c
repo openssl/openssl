@@ -84,7 +84,6 @@ int main(int argc, char **argv)
 	BIO *in = NULL, *out = NULL, *err = NULL;
 
 	int ret = 1, Saltlen = -1;
-	ERR_load_crypto_strings();
 
 	err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
@@ -326,15 +325,12 @@ static int rsa_printsig(BIO *err, BIO *out, RSA *rsa, const EVP_MD *dgst,
 	unsigned char *sigbuf = NULL;
 	int i, siglen;
 	/* EVP_PKEY structure */
-	EVP_PKEY *key = NULL;
+	EVP_PKEY pk;
 	EVP_MD_CTX ctx;
-	key = EVP_PKEY_new();
-	if (!key)
-		goto error;
-	if (!EVP_PKEY_set1_RSA(key, rsa))
-		goto error;
+	pk.type = EVP_PKEY_RSA;
+	pk.pkey.rsa = rsa;
 
-	siglen = EVP_PKEY_size(key);
+	siglen = RSA_size(rsa);
 	sigbuf = OPENSSL_malloc(siglen);
 	if (!sigbuf)
 		goto error;
@@ -378,7 +374,7 @@ static int rsa_printsig(BIO *err, BIO *out, RSA *rsa, const EVP_MD *dgst,
 			goto error;
 		if (!EVP_SignUpdate(&ctx, Msg, Msglen))
 			goto error;
-		if (!EVP_SignFinal(&ctx, sigbuf, (unsigned int *)&siglen, key))
+		if (!EVP_SignFinal(&ctx, sigbuf, (unsigned int *)&siglen, &pk))
 			goto error;
 		}
 
@@ -394,8 +390,6 @@ static int rsa_printsig(BIO *err, BIO *out, RSA *rsa, const EVP_MD *dgst,
 	ret = 1;
 
 	error:
-	if (key)
-		EVP_PKEY_free(key);
 
 	return ret;
 	}
