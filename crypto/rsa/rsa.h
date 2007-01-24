@@ -276,6 +276,13 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_length,
 int RSA_verify(int type, const unsigned char *m, unsigned int m_length,
 	unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
 
+#ifdef OPENSSL_FIPS
+int FIPS_rsa_sign(int type, const unsigned char *m, unsigned int m_length,
+	unsigned char *sigret, unsigned int *siglen, RSA *rsa);
+int FIPS_rsa_verify(int type, const unsigned char *m, unsigned int m_length,
+	unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
+#endif
+
 /* The following 2 function sign and verify a ASN1_OCTET_STRING
  * object inside PKCS#1 padded RSA encryption */
 int RSA_sign_ASN1_OCTET_STRING(int type,

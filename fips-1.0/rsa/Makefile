@@ -22,8 +22,10 @@ TEST= fips_rsavtest.c fips_rsastest.c fips_rsagtest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_rsa_eay.c fips_rsa_gen.c fips_rsa_selftest.c fips_rsa_x931g.c
-LIBOBJ=fips_rsa_eay.o fips_rsa_gen.o fips_rsa_selftest.o fips_rsa_x931g.o
+LIBSRC=fips_rsa_eay.c fips_rsa_gen.c fips_rsa_selftest.c fips_rsa_x931g.c \
+	fips_rsa_sign.c
+LIBOBJ=fips_rsa_eay.o fips_rsa_gen.o fips_rsa_selftest.o fips_rsa_x931g.o \
+	fips_rsa_sign.o
 
 SRC= $(LIBSRC)
 

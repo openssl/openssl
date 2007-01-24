@@ -4,7 +4,11 @@
 
  Changes between 0.9.7l and 0.9.7m-fips2 [xx XXX xxxx]
 
-  *) 
+  *) New version of RSA_{sign,verify} for FIPS code. This uses pregenerated
+     DigestInfo encodings and thus avoids all ASN1 library dependencies. Update
+     FIPS digests to use new functions. Remove large numbers of obsolete 
+     dependencies from fipscanister.o
+     [Steve Henson]
 
  Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
 
