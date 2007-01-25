@@ -342,8 +342,13 @@ STANDALONE_BUILD_CMD=SHARED_LIBS="$(SHARED_LIBS)"; \
 	fi; \
 	if [ -z "$$SHARED_LIBS" ]; then \
 		set -x; $${CC:-$(CC)} -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBKRB5) $(EX_LIBS) ; \
-	else	set -x; LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH \
-		$(CC) -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBKRB5) $(EX_LIBS) ; \
+	else	set -x; LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH ; \
+		if [ "$(FIPSCANLIB)" = "libfips" ]; then \
+			fipsexlib="-lfips" ; \
+		else \
+			fipsexlib="-lcrypto" ; \
+		fi ; \
+		$(CC) -o $$target$(EXE_EXT) $(CFLAGS) $$target.o $(PEX_LIBS) $(LIBKRB5) $(EX_LIBS) -L.. $$fipsexlib ; \
 	fi
 
 FIPS_BUILD_CMD=if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \

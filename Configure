@@ -623,6 +623,7 @@ my $exe_ext="";
 my $install_prefix="";
 my $fipslibdir="/usr/local/ssl/lib/";
 my $nofipscanistercheck=0;
+my $fipsdso=0;
 my $fipscanisterinternal="n";
 my $baseaddr="0xFB00000";
 my $no_threads=0;
@@ -843,6 +844,27 @@ PROCESS_ARGS:
 			# The check for the option is there so scripts aren't
 			# broken
 			}
+		elsif (/^nofipscanistercheck$/)
+			{
+			$fips = 1;
+			$nofipscanistercheck = 1;
+			}
+		elsif (/^fipscanisterbuild$/)
+			{
+			$fips = 1;
+			$nofipscanistercheck = 1;
+			$fipslibdir="";
+			$fipscanisterinternal="y";
+			}
+		elsif (/^fipsdso$/)
+			{
+			$fips = 1;
+			$nofipscanistercheck = 1;
+			$fipslibdir="";
+			$fipscanisterinternal="y";
+			$fipsdso = 1;
+			$no_shared = 0;
+			}
 		elsif (/^[-+]/)
 			{
 			if (/^-[lL](.*)$/)
@@ -872,16 +894,6 @@ PROCESS_ARGS:
 			elsif (/^--with-zlib-lib=(.*)$/)
 				{
 				$withargs{"zlib-lib"}=$1;
-				}
-			elsif (/^--nofipscanistercheck$/)
-				{
-				$nofipscanistercheck = 1;
-				}
-			elsif (/^--fipscanisterbuild$/)
-				{
-				$nofipscanistercheck = 1;
-				$fipslibdir="";
-				$fipscanisterinternal="y";
 				}
 			elsif (/^--with-fipslibdir=(.*)$/)
 				{
@@ -1356,6 +1368,16 @@ while (<IN>)
 	s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
 	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
 	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
+	if ($fipsdso)
+		{
+		s/^FIPSCANLIB=.*/FIPSCANLIB=libfips/;
+		s/^SHARED_FIPS=.*/SHARED_FIPS=libfips\$(SHLIB_EXT)/;
+		}
+	else
+		{
+		s/^FIPSCANLIB=.*/FIPSCANLIB=/;
+		s/^SHARED_FIPS=.*/SHARED_FIPS=/;
+		}
 	s/^FIPSCANISTERINTERNAL=.*/FIPSCANISTERINTERNAL=$fipscanisterinternal/;
 	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;

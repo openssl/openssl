@@ -32,6 +32,11 @@ TARGET=`(while [ "x$1" != "x" -a "x$1" != "x-o" ]; do shift; done; echo $2)`
 
 THERE="`echo $0 | sed -e 's|[^/]*$||'`"..
 
+# FIPSCANLIB is the library containing fipscanister.o by default it is
+# libcrypto.a
+
+FIPSCANLIB=${FIPSCANLIB:-libcrypto}
+
 # FIPSLIBDIR is location of installed validated FIPS module
 # if FIPSCANISTERINTERNAL="y" link against internally generated fipscanister.o
 if [ "x$FIPSCANISTERINTERNAL" != "xy" ]; then
@@ -59,7 +64,7 @@ case "${TARGET}" in
 esac
 
 case "${TARGET}" in
-*libcrypto*|*.dll)	# must be linking a shared lib...
+*${FIPCANLIB}*|*.dll)	# must be linking a shared lib...
 	# Shared lib creation can be taking place in the source
 	# directory only!!!
 	FINGERTYPE="${THERE}/fips-1.0/sha/fips_standalone_sha1"
@@ -78,15 +83,15 @@ echo Canister: $CANISTER_O
 		diff -w "${PREMAIN_C}.sha1" - || \
 	{ echo "${PREMAIN_C} fingerprint mismatch"; exit 1; }
 
-	# Temporarily remove fipscanister.o from libcrypto.a!
+	# Temporarily remove fipscanister.o from library!
 	# We are required to use the standalone copy...
-	trap	'ar r "${THERE}/libcrypto.a" "${CANISTER_O}";
-		 (ranlib "${THERE}/libcrypto.a") 2>/dev/null;
+	trap	'ar r "${THERE}/$FIPSCANLIB.a" "${CANISTER_O}";
+		 (ranlib "${THERE}/$FIPSCANLIB.a") 2>/dev/null;
 		 sleep 1;
 		 touch -c "${TARGET}"' 0
 
-	ar d "${THERE}/libcrypto.a" fipscanister.o 2>&1 > /dev/null || :
-	(ranlib "${THERE}/libcrypto.a") 2>/dev/null || :
+	ar d "${THERE}/$FIPSCANLIB.a" fipscanister.o 2>&1 > /dev/null || :
+	(ranlib "${THERE}/$FIPSCANLIB.a") 2>/dev/null || :
 
 	${CC}	"${CANISTER_O}" \
 		"${PREMAIN_C}" \

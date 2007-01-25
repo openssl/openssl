@@ -185,6 +185,7 @@ LIBZLIB=
 
 FIPSLIBDIR=/usr/local/ssl/lib/
 FIPSCANISTERINTERNAL=n
+FIPSCANLIB=
 
 # Shared library base address. Currently only used on Windows.
 #
@@ -227,6 +228,7 @@ WDIRS=  windows
 LIBS=   libcrypto.a libssl.a
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
+SHARED_FIPS=
 SHARED_LIBS=
 SHARED_LIBS_LINK_EXTS=
 SHARED_LDFLAGS=
@@ -249,7 +251,7 @@ sub_all:
 	do \
 	if [ -d "$$i" ]; then \
 		(cd $$i && echo "making all in $$i..." && \
-		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' AS='${AS}' ASFLAG='${ASFLAG}' SDIRS='$(SDIRS)' FDIRS='$(FDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' FIPS_DES_ENC='${FIPS_DES_ENC}' FIPS_AES_ENC='${FIPS_AES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' FIPS_SHA1_ASM_OBJ='${FIPS_SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' FIPSCANISTERINTERNAL='${FIPSCANISTERINTERNAL}' FIPSLIBDIR='${FIPSLIBDIR}' all ) || exit 1; \
+		$(MAKE) CC='${CC}' PLATFORM='${PLATFORM}' CFLAG='${CFLAG}' AS='${AS}' ASFLAG='${ASFLAG}' SDIRS='$(SDIRS)' FDIRS='$(FDIRS)' INSTALLTOP='${INSTALLTOP}' PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}' BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' FIPS_DES_ENC='${FIPS_DES_ENC}' FIPS_AES_ENC='${FIPS_AES_ENC}' BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}' RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}' SHA1_ASM_OBJ='${SHA1_ASM_OBJ}' FIPS_SHA1_ASM_OBJ='${FIPS_SHA1_ASM_OBJ}' MD5_ASM_OBJ='${MD5_ASM_OBJ}' RMD160_ASM_OBJ='${RMD160_ASM_OBJ}' AR='${AR}' PROCESSOR='${PROCESSOR}' PERL='${PERL}' RANLIB='${RANLIB}' KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}' EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}' SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}' FIPSCANISTERINTERNAL='${FIPSCANISTERINTERNAL}' FIPSLIBDIR='${FIPSLIBDIR}' FIPSCANLIB='${FIPSCANLIB}' all ) || exit 1; \
 	else \
 		$(MAKE) $$i; \
 	fi; \
@@ -266,9 +268,15 @@ sub_target:
 	fi; \
 	done;
 
-libcrypto$(SHLIB_EXT): libcrypto.a
+libcrypto$(SHLIB_EXT): libcrypto.a $(SHARED_FIPS)
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
-		$(MAKE) SHLIBDIRS=crypto build-shared; \
+		if [ "$(FIPSCANLIB)" = "libfips" ]; then \
+			$(ARD) libcrypto.a fipscanister.o ; \
+			$(MAKE) SHLIBDIRS='crypto' SHLIBDEPS='-lfips' build-shared; \
+			$(AR) libcrypto.a fips-1.0/fipscanister.o ; \
+		else \
+			$(MAKE) SHLIBDIRS='crypto' build-shared; \
+		fi \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 	fi
@@ -276,6 +284,13 @@ libcrypto$(SHLIB_EXT): libcrypto.a
 libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
 		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS='-lcrypto' build-shared; \
+	else \
+		echo "There's no support for shared libraries on this platform" >&2; \
+	fi
+
+libfips$(SHLIB_EXT):
+	@if [ "$(SHLIB_TARGET)" != "" ]; then \
+		$(MAKE) SHLIBDIRS=fips build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 	fi
