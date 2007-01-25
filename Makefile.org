@@ -66,6 +66,7 @@ EX_LIBS=
 EXE_EXT= 
 ARFLAGS=
 AR=ar $(ARFLAGS) r
+ARD=ar $(ARFLAGS) d
 RANLIB= ranlib
 PERL= perl
 TAR= tar
