@@ -1372,18 +1372,20 @@ while (<IN>)
 		{
 		s/^FIPSCANLIB=.*/FIPSCANLIB=libfips/;
 		s/^SHARED_FIPS=.*/SHARED_FIPS=libfips\$(SHLIB_EXT)/;
+		s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl fips/;
 		}
 	else
 		{
-		s/^FIPSCANLIB=.*/FIPSCANLIB=/;
+		s/^FIPSCANLIB=.*/FIPSCANLIB=libcrypto/;
 		s/^SHARED_FIPS=.*/SHARED_FIPS=/;
+		s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl/;
 		}
 	s/^FIPSCANISTERINTERNAL=.*/FIPSCANISTERINTERNAL=$fipscanisterinternal/;
 	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
-	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);
+	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL) \$(SHARED_FIPS)/ if (!$no_shared);
 	if ($shared_extension ne "" && $shared_extension =~ /^\.s([ol])\.[^\.]*$/)
 		{
 		my $sotmp = $1;
