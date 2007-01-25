@@ -137,7 +137,7 @@ lib:	$(FIPSCANLOC) delexobj
 	@touch lib
 
 shared:	fips_premain_dso$(EXE_EXT)
-	if [ -n "$(SHARED_LIBS)" ]; then \
+	if [ -n "$(SHARED_LIBS)" -a "$(FIPSCANLIB)" != "libfips" ]; then \
 		(cd ..; $(MAKE) FIPSLD_CC=$(CC) FIPSLD=fips-1.0/fipsld $(SHARED_LIB)); \
 	fi
 

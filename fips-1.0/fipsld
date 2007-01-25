@@ -64,7 +64,7 @@ case "${TARGET}" in
 esac
 
 case "${TARGET}" in
-*${FIPCANLIB}*|*.dll)	# must be linking a shared lib...
+*${FIPSCANLIB}*|*.dll)	# must be linking a shared lib...
 	# Shared lib creation can be taking place in the source
 	# directory only!!!
 	FINGERTYPE="${THERE}/fips-1.0/sha/fips_standalone_sha1"
