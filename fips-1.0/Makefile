@@ -132,8 +132,8 @@ links:
 	done;
 
 lib:	$(FIPSCANLOC) delexobj
-	$(AR) $(LIB) $(FIPSCANLOC)
-	$(RANLIB) $(LIB) || echo Never mind.
+	$(AR) ../$(FIPSCANLIB).a $(FIPSCANLOC)
+	$(RANLIB) ../$(FIPSCANLIB).a || echo Never mind.
 	@touch lib
 
 shared:	fips_premain_dso$(EXE_EXT)
