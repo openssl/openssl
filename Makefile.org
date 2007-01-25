@@ -198,7 +198,7 @@ BASEADDR=
 SHLIB_MARK=
 
 DIRS=   crypto fips-1.0 ssl $(SHLIB_MARK) apps test tools
-SHLIBDIRS= crypto ssl
+SHLIBDIRS= crypto ssl fips
 
 # dirs in crypto to build
 SDIRS=  objects \

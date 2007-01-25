@@ -133,6 +133,10 @@ links:
 
 lib:	$(FIPSCANLOC) delexobj
 	$(AR) ../$(FIPSCANLIB).a $(FIPSCANLOC)
+	if [ "$(FIPSCANLIB)" == "libfips" ]; then \
+		$(AR) $(LIB) $(FIPSCANLOC) ; \
+		$(RANLIB) $(LIB) || echo Never Mind. ; \
+	fi
 	$(RANLIB) ../$(FIPSCANLIB).a || echo Never mind.
 	@touch lib
 
