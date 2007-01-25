@@ -7,7 +7,7 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
-# sha1_block precedure for ARMv4.
+# sha1_block procedure for ARMv4.
 #
 # January 2007.
 
@@ -16,10 +16,10 @@
 # impl		size in bytes	comp cycles[*]	measured performance
 # ====================================================================
 # thumb		304		3212		4420
-# armv4-small	392/+29%	1958/+64%	2290/+93%
-# armv4-compact	740/+89%	1552/+26%	1910/+20%
-# armv4-large	1420/+92%	1307/+19%	1630/+17%
-# full unroll	~5100/+260%	~1260/+4%	~1600/+2%
+# armv4-small	392/+29%	1958/+64%	2250/+96%
+# armv4-compact	740/+89%	1552/+26%	1840/+22%
+# armv4-large	1420/+92%	1307/+19%	1500/+23%
+# full unroll	~5100/+260%	~1260/+4%	~1500/+0%
 # ====================================================================
 # thumb		= same as 'small' but in Thumb instructions[**] and
 #		  with recurring code in two private functions;
@@ -64,15 +64,16 @@ $code.=<<___;
 	add	$e,$K,$e,ror#2			@ E+=K_00_19
 	orr	$t0,$t1,$t0,lsl#8
 	ldrb	$t1,[$inp,#-1]
-	add	$e,$e,$a,ror#27			@ E+=ROR(A,27)
 	orr	$t0,$t2,$t0,lsl#8
+	add	$e,$e,$a,ror#27			@ E+=ROR(A,27)
 	orr	$t0,$t1,$t0,lsl#8
 	add	$e,$e,$t0			@ E+=X[i]
+	eor	$t1,$c,$d			@ F_xx_xx
 	str	$t0,[$Xi,#-4]!
 ___
 }
 sub Xupdate {
-my ($a,$b,$c,$d,$e)=@_;
+my ($a,$b,$c,$d,$e,$flag)=@_;
 $code.=<<___;
 	ldr	$t0,[$Xi,#15*4]
 	ldr	$t1,[$Xi,#13*4]
@@ -83,6 +84,11 @@ $code.=<<___;
 	add	$e,$e,$a,ror#27			@ E+=ROR(A,27)
 	eor	$t0,$t0,$t2
 	eor	$t0,$t0,$t1
+___
+$code.=<<___ if (!defined($flag));
+	eor	$t1,$c,$d			@ F_xx_xx, but not in 40_59
+___
+$code.=<<___;
 	mov	$t0,$t0,ror#31
 	add	$e,$e,$t0			@ E+=X[i]
 	str	$t0,[$Xi,#-4]!
@@ -93,7 +99,6 @@ sub BODY_00_15 {
 my ($a,$b,$c,$d,$e)=@_;
 	&Xload(@_);
 $code.=<<___;
-	eor	$t1,$c,$d
 	and	$t1,$b,$t1,ror#2
 	eor	$t1,$t1,$d,ror#2		@ F_00_19(B,C,D)
 	add	$e,$e,$t1			@ E+=F_00_19(B,C,D)
@@ -104,7 +109,6 @@ sub BODY_16_19 {
 my ($a,$b,$c,$d,$e)=@_;
 	&Xupdate(@_);
 $code.=<<___;
-	eor	$t1,$c,$d
 	and	$t1,$b,$t1,ror#2
 	eor	$t1,$t1,$d,ror#2		@ F_00_19(B,C,D)
 	add	$e,$e,$t1			@ E+=F_00_19(B,C,D)
@@ -115,7 +119,6 @@ sub BODY_20_39 {
 my ($a,$b,$c,$d,$e)=@_;
 	&Xupdate(@_);
 $code.=<<___;
-	eor	$t1,$c,$d
 	eor	$t1,$b,$t1,ror#2		@ F_20_39(B,C,D)
 	add	$e,$e,$t1			@ E+=F_20_39(B,C,D)
 ___
@@ -123,7 +126,7 @@ ___
 
 sub BODY_40_59 {
 my ($a,$b,$c,$d,$e)=@_;
-	&Xupdate(@_);
+	&Xupdate(@_,1);
 $code.=<<___;
 	and	$t1,$b,$c,ror#2
 	orr	$t2,$b,$c,ror#2
