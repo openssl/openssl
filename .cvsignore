@@ -13,6 +13,7 @@ cctest
 cctest.c
 cctest.a
 libcrypto.so.*
+libfips.so.*
 libssl.so.*
 libcrypto.sha1
 libcrypto.a.sha1
