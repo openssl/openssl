@@ -311,6 +311,7 @@ _armv4_AES_encrypt:
 	eor	$s2,$s2,$i3,lsl#16
 	eor	$s3,$t3,$s3,lsl#24
 
+	ldr	lr,[sp],#4		@ pop lr
 	ldr	$t1,[$key,#0]
 	ldr	$t2,[$key,#4]
 	ldr	$t3,[$key,#8]
@@ -320,7 +321,8 @@ _armv4_AES_encrypt:
 	eor	$s2,$s2,$t3
 	eor	$s3,$s3,$i1
 
-	ldr	pc,[sp],#4		@ return
+	sub	$tbl,$tbl,#2
+	mov	pc,lr			@ return
 .size	_armv4_AES_encrypt,.-_armv4_AES_encrypt
 
 .type	AES_Td,%object
@@ -635,6 +637,7 @@ _armv4_AES_decrypt:
 	eor	$s2,$i3,$s2,lsl#8
 	eor	$s3,$t3,$s3,lsl#24
 
+	ldr	lr,[sp],#4		@ pop lr
 	ldr	$t1,[$key,#0]
 	ldr	$t2,[$key,#4]
 	ldr	$t3,[$key,#8]
@@ -644,7 +647,8 @@ _armv4_AES_decrypt:
 	eor	$s2,$s2,$t3
 	eor	$s3,$s3,$i1
 
-	ldr	pc,[sp],#4		@ return
+	sub	$tbl,$tbl,#1024
+	mov	pc,lr			@ return
 .size	_armv4_AES_decrypt,.-_armv4_AES_decrypt
 .asciz	"AES for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
 ___
