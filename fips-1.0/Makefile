@@ -34,7 +34,7 @@ FDIRS=sha rand des aes dsa rsa dh hmac
 GENERAL=Makefile README fips-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
-SHARED_LIB= libcrypto$(SHLIB_EXT)
+SHARED_LIB= $(FIPSCANLIB)$(SHLIB_EXT)
 LIBSRC=fips.c fips_err_wrapper.c
 LIBOBJ=fips.o fips_err_wrapper.o
 
@@ -141,7 +141,7 @@ lib:	$(FIPSCANLOC) delexobj
 	@touch lib
 
 shared:	fips_premain_dso$(EXE_EXT)
-	if [ -n "$(SHARED_LIBS)" -a "$(FIPSCANLIB)" = "libfips" ]; then \
+	if [ -n "$(SHARED_LIBS)" ]; then \
 		(cd ..; $(MAKE) FIPSLD_CC=$(CC) FIPSLD=fips-1.0/fipsld $(SHARED_LIB)); \
 	fi
 
