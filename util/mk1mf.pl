@@ -1184,8 +1184,9 @@ sub read_options
 				}
 			}
 		}
-	elsif (/^--fipscanisterbuild$/)
+	elsif (/^fipscanisterbuild$/)
 		{
+		$fips=1;
 		$fipscanisterbuild=1;
 		}
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }

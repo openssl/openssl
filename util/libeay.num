@@ -2905,3 +2905,5 @@ SHA384_Init                             3737	EXIST:OPENSSL_FIPS:FUNCTION:SHA,SHA
 SHA384_Final                            3740	EXIST:OPENSSL_FIPS:FUNCTION:SHA,SHA512
 SHA384                                  3745	EXIST:OPENSSL_FIPS:FUNCTION:SHA,SHA512
 SHA256_Update                           3765	EXIST:OPENSSL_FIPS:FUNCTION:SHA,SHA256
+FIPS_rsa_sign                           3766	EXIST:OPENSSL_FIPS:FUNCTION:RSA
+FIPS_rsa_verify                         3767	EXIST:OPENSSL_FIPS:FUNCTION:RSA

@@ -213,7 +213,7 @@ int FIPS_rsa_verify(int dtype, const unsigned char *m, unsigned int m_len,
 	/* Compare, DigestInfo length, DigestInfo header and finally
 	 * digest value itself
 	 */
-	if ((i != (dlen + m_len)) || memcmp(der, s, dlen)
+	if ((i != (int)(dlen + m_len)) || memcmp(der, s, dlen)
 		|| memcmp(s + dlen, m, m_len))
 		{
 		RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
