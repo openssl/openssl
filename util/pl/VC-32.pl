@@ -216,7 +216,7 @@ sub do_rlink_rule
 	$ret.="\t\$(MKCANISTER) $target <<\n";
 	$ret.="INPUT($files)\n<<\n";
 	$ret.="\t\$(FIPS_SHA1_EXE) $target > ${target}.sha1\n";
-	$ret.="\tperl util${o}copy.pl -stripcr fips-1.0${o}fips_premain.c \$(LIB_D)${o}fips_premain.c\n";
+	$ret.="\t\$(PERL) util${o}copy.pl -stripcr fips-1.0${o}fips_premain.c \$(LIB_D)${o}fips_premain.c\n";
 	$ret.="\t\$(CP) fips-1.0${o}fips_premain.c.sha1 \$(LIB_D)${o}fips_premain.c.sha1\n";
 	$ret.="\n";
 	return($ret);
