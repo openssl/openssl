@@ -5,7 +5,8 @@
  Changes between 0.9.7l and 0.9.7m-fips2 [xx XXX xxxx]
 
   *) New build option fipsdso to link fipscanister.o into a DSO called 
-     libfips.so and modify build system to link against it.
+     libfips.so and modify build system to link against it. Preliminary changes
+     to VC++ build system to accomodate fipsdso.
      [Steve Henson]
 
   *) New version of RSA_{sign,verify} for FIPS code. This uses pregenerated

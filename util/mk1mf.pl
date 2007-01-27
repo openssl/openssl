@@ -19,6 +19,7 @@ my $fips_premain_c_path = "";
 my $fips_sha1_exe_path = "";
 
 local $fipscanisterbuild = 0;
+local $fipsdso = 0;
 
 my $fipslibdir = "";
 my $baseaddr = "";
@@ -450,6 +451,8 @@ if ($fips_premain_dso_exe_path eq "")
 
 #	$ex_build_targets .= "\$(BIN_D)${o}\$(E_PREMAIN_DSO)$exep" if ($fips);
 
+$ex_l_libs .= " \$(L_FIPS)" if $fipsdso;
+
 if ($fips)
 	{
 	if (!$shlib)
@@ -587,6 +590,7 @@ PREMAIN_DSO_EXE=$fips_premain_dso_exe_path
 E_EXE=openssl
 SSL=$ssl
 CRYPTO=$crypto
+LIBFIPS=libfips
 
 # BIN_D  - Binary output directory
 # TEST_D - Binary test file output directory
@@ -605,10 +609,12 @@ INCL_D=\$(TMP_D)
 
 O_SSL=     \$(LIB_D)$o$plib\$(SSL)$shlibp
 O_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$shlibp
+O_FIPS=    \$(LIB_D)$o$plib\$(LIBFIPS)$shlibp
 SO_SSL=    $plib\$(SSL)$so_shlibp
 SO_CRYPTO= $plib\$(CRYPTO)$so_shlibp
 L_SSL=     \$(LIB_D)$o$plib\$(SSL)$libp
 L_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$libp
+L_FIPS=    \$(LIB_D)$o$plib\$(LIBFIPS)$libp
 
 L_LIBS= \$(L_SSL) \$(L_CRYPTO) $ex_l_libs
 
@@ -841,10 +847,24 @@ if ($fips)
 	{
 	if ($shlib)
 		{
-		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
-			"\$(O_CRYPTO)",
-			"$crypto",
-			$shlib, "\$(SO_CRYPTO)", "\$(BASEADDR)");
+		if ($fipsdso)
+			{
+			$rules.= &do_lib_rule("\$(CRYPTOOBJ)",
+					"\$(O_CRYPTO)", "$crypto",
+					$shlib, "", "");
+			$rules.= &do_lib_rule(
+				"\$(O_FIPSCANISTER)",
+				"\$(O_FIPS)", "libfips",
+				$shlib, "\$(SO_CRYPTO)", "\$(BASEADDR)");
+			$rules.= &do_sdef_rule();
+			}
+		else
+			{
+			$rules.= &do_lib_rule(
+				"\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
+				"\$(O_CRYPTO)", "$crypto",
+				$shlib, "\$(SO_CRYPTO)", "\$(BASEADDR)");
+			}
 		}
 	else
 		{
@@ -1188,6 +1208,12 @@ sub read_options
 		{
 		$fips=1;
 		$fipscanisterbuild=1;
+		}
+	elsif (/^fipsdso$/)
+		{
+		$fips=1;
+		$fipscanisterbuild=1;
+		$fipsdso=1;
 		}
 	elsif (/^([^=]*)=(.*)$/){ $VARS{$1}=$2; }
 	elsif (/^-[lL].*$/)	{ $l_flags.="$_ "; }

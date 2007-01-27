@@ -991,6 +991,8 @@ print "Configuring for $target\n";
 
 my $IsWindows=scalar grep /^$target$/,@WinTargets;
 
+$no_shared = 1 if ($IsWindows && $fipsdso);
+
 $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target eq "mingw");
 $exe_ext=".pm" if ($target eq "vos-gcc" or $target eq "debug-vos-gcc" or $target eq "vos-vcc" or $target eq "debug-vos-vcc");
 $openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");

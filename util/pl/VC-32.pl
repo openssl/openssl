@@ -13,7 +13,14 @@ if ($fips && !$shlib)
 	}
 else
 	{
-	$crypto="libeay32";
+	if ($fipsdso) 
+		{
+		$crypto="libcryptofips";
+		}
+	else
+		{
+		$crypto="libeay32";
+		}
 	}
 
 $o='\\';
@@ -119,6 +126,7 @@ sub do_lib_rule
 	local($objs,$target,$name,$shlib,$ign,$base_addr) = @_;
 	local($ret,$Name);
 
+
 	$taget =~ s/\//$o/g if $o ne '/';
 	($Name=$name) =~ tr/a-z/A-Z/;
 	my $base_arg;
@@ -143,14 +151,29 @@ sub do_lib_rule
 		}
 	else
 		{
-		local($ex)=($target =~ /O_SSL/)?' $(L_CRYPTO)':'';
+		my $ex = "";		
+		if ($target =~ /O_SSL/)
+			{
+			$ex = " \$(L_CRYPTO)";
+			$ex .= " \$(L_FIPS)" if $fipsdso;
+			}
+		my $fipstarget;
+		if ($fipsdso)
+			{
+			$fipstarget = "O_FIPS";
+			}
+		else
+			{
+			$fipstarget = "O_CRYPTO";
+			}
 		$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
  		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
- 		if ($fips && $target =~ /O_CRYPTO/)
+ 		if ($fips && $target =~ /$fipstarget/)
 			{
 			$ex.= $mwex unless $fipscanisterbuild;
-			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)\n";
-			$ret.="\tSET FIPS_LINK=\$(LINK)\n";
+			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)";
+			$ret.=" ms/libfips.def" if $fipsdso;
+			$ret.="\n\tSET FIPS_LINK=\$(LINK)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
 			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
 			$ret.="\tSET PREMAIN_DSO_EXE=\$(PREMAIN_DSO_EXE)\n";
@@ -163,8 +186,13 @@ sub do_lib_rule
 			}
 		else
 			{
-			$ret.="$target: $objs\n";
-			$ret.="\t\$(LINK) \$(MLFLAGS) $base_arg $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+			$ret.="$target: $objs";
+			if ($target =~ /O_CRYPTO/ && $fipsdso)
+				{
+				$ret .= " \$(O_FIPS)";
+				$ex .= " \$(L_FIPS)";
+				}
+			$ret.="\n\t\$(LINK) \$(MLFLAGS) $efile$target /def:ms/${Name}.def @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
 			}
 		}
 	$ret.="\n";
@@ -173,7 +201,7 @@ sub do_lib_rule
 
 sub do_link_rule
 	{
-	local($target,$files,$dep_libs,$libs,$standalone)=@_;
+	my($target,$files,$dep_libs,$libs,$standalone)=@_;
 	local($ret,$_);
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
@@ -220,6 +248,14 @@ sub do_rlink_rule
 	$ret.="\t\$(CP) fips-1.0${o}fips_premain.c.sha1 \$(LIB_D)${o}fips_premain.c.sha1\n";
 	$ret.="\n";
 	return($ret);
+	}
+
+sub do_sdef_rule
+	{
+	my $ret = "ms/libfips.def: \$(O_FIPSCANISTER)\n";
+	$ret.="\t\$(PERL) util/mksdef.pl \$(MLFLAGS) /out:dummy.dll /def:ms/libeay32.def @<<\n  \$(O_FIPSCANISTER)\n<<\n";
+	$ret.="\n";
+	return $ret;
 	}
 
 

@@ -262,6 +262,8 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cbc.o \
 	../crypto/des/ecb_enc.o \
 	../crypto/des/ofb64ede.o \
 	../crypto/des/ofb64enc.o \
+	../crypto/des/fcrypt_b.o \
+	../crypto/des/fcrypt.o \
 	../crypto/dh/dh_lib.o \
 	../crypto/dsa/dsa_lib.o \
 	../crypto/dsa/dsa_sign.o \

@@ -130,8 +130,7 @@ foreach (@ARGV, split(/ /, $options))
 	}
 	$VMS=1 if $_ eq "VMS";
 	$OS2=1 if $_ eq "OS2";
-	$fips=1 if $_ eq "fips";
-	$fips=1 if $_ eq "fipscanisterbuild";
+	$fips=1 if /^fips/;
 
 	$do_ssl=1 if $_ eq "ssleay";
 	if ($_ eq "ssl") {
