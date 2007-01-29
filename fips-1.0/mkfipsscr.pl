@@ -60,8 +60,12 @@ my @fips_tests = (
 
 my $lnum = 0;
 my $win32 = 0;
-my $tvdir = "testvectors";
+my $onedir = 0;
 my $ltdir = "";
+my $tvdir;
+my $tvprefix;
+my $tprefix;
+my $shwrap_prefix;
 
 foreach (@ARGV)
 	{
@@ -69,15 +73,48 @@ foreach (@ARGV)
 		{
 		$win32 = 1;
 		}
+	elsif ($_ eq "--onedir")
+		{
+		$onedir = 1;
+		}
 	elsif (/--dir=(.*)$/)
 		{
 		$tvdir = $1;
 		}
+	elsif (/--tprefix=(.*)$/)
+		{
+		$tprefix = $1;
+		}
+	elsif (/--tvprefix=(.*)$/)
+		{
+		$tvprefix = $1;
+		}
+	elsif (/--shwrap_prefix=(.*)$/)
+		{
+		$shwrap_prefix = $1;
+		}
+	elsif (/--outfile=(.*)$/)
+		{
+		$outfile = $1;
+		}
 	}
+
+$tvdir = "testvectors" unless defined $tvdir;
+$shwrap_prefix = "../util/" unless defined $shwrap_prefix;
 
 if ($win32)
 	{
-	open(OUT, ">fipstests.bat");
+	if ($onedir)
+		{
+		$tvprefix = "" unless defined $tvprefix;
+		}
+	else
+		{
+		$tvprefix = "..\\fips-1.0\\" unless defined $tvprefix;
+		}
+	$tprefix = ".\\" unless defined $tprefix;
+	$outfile = "fipstests.bat" unless defined $outfile;
+	open(OUT, ">$outfile");
 
 	print OUT <<END;
 \@echo off
@@ -90,9 +127,19 @@ END
 	}
 else
 	{
-open(OUT, ">fipstests.sh");
+	$tvprefix = "" unless defined $tvprefix;
+	if ($onedir)
+		{
+		$tprefix = "./" unless defined $tprefix;
+		}
+	else
+		{
+		$tprefix = "../test/" unless defined $tprefix;
+		}
+	$outfile = "fipstests.sh" unless defined $outfile;
+	open(OUT, ">$outfile");
 
-print OUT <<END;
+	print OUT <<END;
 #!/bin/sh
 
 # Test vector run script
@@ -120,7 +167,7 @@ sub test_dir
 	my ($win32, $tdir) = @_;
 	if ($win32)
 		{
-		my $rsp = "..\\fips-1.0\\$tvdir\\$tdir\\rsp";
+		my $rsp = "$tvprefix$tvdir\\$tdir\\rsp";
 		print OUT <<END;
 
 echo $tdir tests
@@ -146,16 +193,17 @@ sub test_line
 	my ($win32, $tdir, $fprefix, $tcmd) = @_;
 	if ($fprefix =~ /\@/)
 		{
-		foreach(<$tvdir/$tdir/req/*.req>)
+		foreach(<$tvprefix$tvdir/$tdir/req/*.req>)
 			{
 			if ($win32)
 				{
-				print OUT ".\\$tcmd ../fips-1.0/${_}\n";
+				$_ =~ tr|/|\\|;
+				print OUT "$tprefix$tcmd $_\n";
 				}
 			else
 				{
 				print OUT <<END;
-../util/shlib_wrap.sh ../test/$tcmd $_
+${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd $_
 END
 				}
 			}
@@ -163,17 +211,17 @@ END
 		}
 	if ($win32)
 		{
-		my $req = "..\\fips-1.0\\$tvdir\\$tdir\\req\\$fprefix.req";
-		my $rsp = "..\\fips-1.0\\$tvdir\\$tdir\\rsp\\$fprefix.rsp";
-	print OUT ".\\$tcmd < $req > $rsp\n";
+		my $req = "$tvprefix$tvdir\\$tdir\\req\\$fprefix.req";
+		my $rsp = "$tvprefix$tvdir\\$tdir\\rsp\\$fprefix.rsp";
+	print OUT "$tprefix$tcmd < $req > $rsp\n";
 END
 		}
 	else
 		{
-		my $req = "$tvdir/$tdir/req/$fprefix.req";
+		my $req = "tvdir/$tdir/req/$fprefix.req";
 		my $rsp = "$tvdir/$tdir/rsp/$fprefix.rsp";
 		print OUT <<END;
-if [ -f $req ] ; then ../util/shlib_wrap.sh ../test/$tcmd < $req > $rsp; fi
+if [ -f $req ] ; then ${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd < $req > $rsp; fi
 END
 		}
 	}

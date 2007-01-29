@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 
 #define AES_BLOCK_SIZE 16
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 /*-----------------------------------------------*/
 
@@ -727,6 +727,10 @@ int proc_file(char *rqfile)
 	}
     strcpy(rfn,afn);
     rp=strstr(rfn,"req/");
+#ifdef OPENSSL_SYS_WIN32
+    if (!rp)
+	rp=strstr(rfn,"req\\");
+#endif
     assert(rp);
     memcpy(rp,"rsp",3);
     rp = strstr(rfn, ".req");
