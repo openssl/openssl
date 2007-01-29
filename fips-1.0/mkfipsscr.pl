@@ -171,7 +171,7 @@ sub test_dir
 		print OUT <<END;
 
 echo $tdir tests
-rd /s /q $rsp
+if exist $rsp rd /s /q $rsp
 md $rsp
 END
 		}
