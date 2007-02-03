@@ -25,7 +25,7 @@ LIBOBJ= dsa_gen.o dsa_key.o dsa_lib.o dsa_asn1.o dsa_vrf.o dsa_sign.o \
 SRC= $(LIBSRC)
 
 EXHEADER= dsa.h
-HEADER=	$(EXHEADER)
+HEADER=	dsa_locl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

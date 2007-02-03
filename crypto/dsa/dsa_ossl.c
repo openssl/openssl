@@ -61,6 +61,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
+#include <openssl/sha.h>
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
@@ -133,7 +134,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	BIGNUM m;
 	BIGNUM xr;
 	BN_CTX *ctx=NULL;
-	int i,reason=ERR_R_BN_LIB;
+	int i, j, reason=ERR_R_BN_LIB;
 	DSA_SIG *ret=NULL;
 
 	BN_init(&m);
@@ -148,8 +149,9 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	s=BN_new();
 	if (s == NULL) goto err;
 
-	i=BN_num_bytes(dsa->q); /* should be 20 */
-	if ((dlen > i) || (dlen > 50))
+	/* reject a excessive digest length (currently at most
+	 * dsa-with-SHA256 is supported) */
+	if (dlen > SHA256_DIGEST_LENGTH)
 		{
 		reason=DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE;
 		goto err;
@@ -170,7 +172,17 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		dsa->r=NULL;
 		}
 
-	if (BN_bin2bn(dgst,dlen,&m) == NULL) goto err;
+	if (BN_bin2bn(dgst,dlen,&m) == NULL)
+		goto err;
+	i = BN_num_bytes(dsa->q);
+	if (dlen > i)
+		{
+		/* if the digest length is greater than the size of q use the
+		 * BN_num_bits(dsa->q) leftmost bits of the digest, see
+		 * fips 186-3, 4.2 */
+		if (!BN_rshift(&m, &m, (dlen - i) << 3))
+			goto err; 
+		}
 
 	/* Compute  s = inv(k) (m + xr) mod q */
 	if (!BN_mod_mul(&xr,dsa->priv_key,r,dsa->q,ctx)) goto err;/* s = xr */
@@ -296,14 +308,16 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	BN_CTX *ctx;
 	BIGNUM u1,u2,t1;
 	BN_MONT_CTX *mont=NULL;
-	int ret = -1;
+	int ret = -1, i, j;
 	if (!dsa->p || !dsa->q || !dsa->g)
 		{
 		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_MISSING_PARAMETERS);
 		return -1;
 		}
 
-	if (BN_num_bits(dsa->q) != 160)
+	i = BN_num_bits(dsa->q);
+	/* fips 186-3 allows only different sizes for q */
+	if (i != 160 && i != 224 && i != 256)
 		{
 		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_BAD_Q_VALUE);
 		return -1;
@@ -312,6 +326,14 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS)
 		{
 		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_MODULUS_TOO_LARGE);
+		return -1;
+		}
+
+	/* reject a excessive digest length (currently at most
+	 * dsa-with-SHA256 is supported) */
+	if (dgst_len > SHA256_DIGEST_LENGTH)
+		{
+		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		return -1;
 		}
 
@@ -340,6 +362,15 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 
 	/* save M in u1 */
 	if (BN_bin2bn(dgst,dgst_len,&u1) == NULL) goto err;
+	j = dgst_len << 3;
+	if (j > i)
+		{
+		/* if the digest length is greater than the size of q use the
+		 * BN_num_bits(dsa->q) leftmost bits of the digest, see
+		 * fips 186-3, 4.2 */
+		if (!BN_rshift(&u1, &u1, j - i))
+			goto err; 
+		}
 
 	/* u1 = M * w mod q */
 	if (!BN_mod_mul(&u1,&u1,&u2,dsa->q,ctx)) goto err;

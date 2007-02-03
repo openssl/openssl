@@ -2497,6 +2497,16 @@
 #define NID_sha224		675
 #define OBJ_sha224		OBJ_nist_hashalgs,4L
 
+#define OBJ_dsa_with_sha2		OBJ_nistAlgorithms,3L
+
+#define SN_dsa_with_SHA224		"dsa_with_SHA224"
+#define NID_dsa_with_SHA224		833
+#define OBJ_dsa_with_SHA224		OBJ_dsa_with_sha2,1L
+
+#define SN_dsa_with_SHA256		"dsa_with_SHA256"
+#define NID_dsa_with_SHA256		834
+#define OBJ_dsa_with_SHA256		OBJ_dsa_with_sha2,2L
+
 #define SN_hold_instruction_code		"holdInstructionCode"
 #define LN_hold_instruction_code		"Hold Instruction Code"
 #define NID_hold_instruction_code		430

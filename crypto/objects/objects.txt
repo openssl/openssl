@@ -831,6 +831,11 @@ nist_hashalgs 2		: SHA384		: sha384
 nist_hashalgs 3		: SHA512		: sha512
 nist_hashalgs 4		: SHA224		: sha224
 
+# OIDs for dsa-with-sha224 and dsa-with-sha256
+!Alias dsa_with_sha2 nistAlgorithms 3
+dsa_with_sha2 1		: dsa_with_SHA224
+dsa_with_sha2 2		: dsa_with_SHA256
+
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code
 id-ce 23		: holdInstructionCode	: Hold Instruction Code

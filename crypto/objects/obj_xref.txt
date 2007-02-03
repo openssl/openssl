@@ -33,6 +33,9 @@ ecdsa_with_SHA512	sha512	X9_62_id_ecPublicKey
 ecdsa_with_Recommended	undef	X9_62_id_ecPublicKey
 ecdsa_with_Specified	undef	X9_62_id_ecPublicKey
 
+dsa_with_SHA224		sha224	dsa
+dsa_with_SHA256		sha256	dsa
+
 id_GostR3411_94_with_GostR3410_2001	id_GostR3411_94 id_GostR3410_2001
 id_GostR3411_94_with_GostR3410_94	id_GostR3411_94 id_GostR3410_94
 id_GostR3411_94_with_GostR3410_94_cc	id_GostR3411_94 id_GostR3410_94_cc

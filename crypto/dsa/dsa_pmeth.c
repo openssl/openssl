@@ -59,20 +59,22 @@
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include "evp_locl.h"
+#include "dsa_locl.h"
 
 /* DSA pkey context structure */
 
 typedef struct
 	{
 	/* Parameter gen parameters */
-	int nbits;
+	int nbits;		/* size of p in bits (default: 1024) */
+	int qbits;		/* size of q in bits (default: 160)  */
+	const EVP_MD *pmd;	/* MD for parameter generation */
 	/* Keygen callback info */
 	int gentmp[2];
 	/* message digest */
-	const EVP_MD *md;
+	const EVP_MD *md;	/* MD for the signature */
 	} DSA_PKEY_CTX;
 
 static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
@@ -82,6 +84,8 @@ static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 	if (!dctx)
 		return 0;
 	dctx->nbits = 1024;
+	dctx->qbits = 160;
+	dctx->pmd = NULL;
 	dctx->md = NULL;
 
 	ctx->data = dctx;
@@ -99,7 +103,9 @@ static int pkey_dsa_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
        	sctx = src->data;
 	dctx = dst->data;
 	dctx->nbits = sctx->nbits;
-	dctx->md = sctx->md;
+	dctx->qbits = sctx->qbits;
+	dctx->pmd = sctx->pmd;
+	dctx->md  = sctx->md;
 	return 1;
 	}
 
@@ -160,8 +166,27 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		dctx->nbits = p1;
 		return 1;
 
+		case EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS:
+		if (p1 != 160 && p1 != 224 && p1 && p1 != 256)
+			return -2;
+		dctx->qbits = p1;
+		return 1;
+
+		case EVP_PKEY_CTRL_DSA_PARAMGEN_MD:
+		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1   &&
+		    EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
+		    EVP_MD_type((const EVP_MD *)p2) != NID_sha256)
+			{
+			DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
+			return 0;
+			}
+		dctx->md = p2;
+		return 1;
+
 		case EVP_PKEY_CTRL_MD:
-		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1)
+		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1   &&
+		    EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
+		    EVP_MD_type((const EVP_MD *)p2) != NID_sha256)
 			{
 			DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
 			return 0;
@@ -187,6 +212,18 @@ static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
 		nbits = atoi(value);
 		return EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, nbits);
 		}
+	if (!strcmp(type, "dsa_paramgen_q_bits"))
+		{
+		int qbits = atoi(value);
+		return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
+		                         EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS, qbits, NULL);
+		}
+	if (!strcmp(type, "dsa_paramgen_md"))
+		{
+		return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA, EVP_PKEY_OP_PARAMGEN,
+		                         EVP_PKEY_CTRL_DSA_PARAMGEN_MD, 0, 
+		                         (void *)EVP_get_digestbyname(value));
+		}
 	return -2;
 	}
 
@@ -206,8 +243,8 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	dsa = DSA_new();
 	if (!dsa)
 		return 0;
-	ret = DSA_generate_parameters_ex(dsa, dctx->nbits, NULL, 0, NULL, NULL,
-									pcb);
+	ret = dsa_builtin_paramgen(dsa, dctx->nbits, dctx->qbits, dctx->pmd,
+	                           NULL, 0, NULL, NULL, pcb);
 	if (ret)
 		EVP_PKEY_assign_DSA(pkey, dsa);
 	else

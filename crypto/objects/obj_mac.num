@@ -830,3 +830,5 @@ ecdsa_with_SHA224		829
 ecdsa_with_SHA256		830
 ecdsa_with_SHA384		831
 ecdsa_with_SHA512		832
+dsa_with_SHA224		833
+dsa_with_SHA256		834

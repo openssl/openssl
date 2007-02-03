@@ -4,6 +4,11 @@
 
  Changes between 0.9.8e and 0.9.9  [xx XXX xxxx]
 
+  *) Add support for dsa-with-SHA224 and dsa-with-SHA256.
+     Use the leftmost N bytes of the signature input if the input is
+     larger than the prime q (with N being the size in bytes of q).
+     [Nils Larsch]
+
   *) Very *very* experimental PKCS#7 streaming encoder support. Nothing uses
      it yet and it is largely untested.
      [Steve Henson]

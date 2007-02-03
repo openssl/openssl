@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 833
-#define NUM_SN 829
-#define NUM_LN 829
-#define NUM_OBJ 785
+#define NUM_NID 835
+#define NUM_SN 831
+#define NUM_LN 831
+#define NUM_OBJ 787
 
-static unsigned char lvalues[5542]={
+static unsigned char lvalues[5560]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -853,6 +853,8 @@ static unsigned char lvalues[5542]={
 0x2A,0x86,0x48,0xCE,0x3D,0x04,0x03,0x02,     /* [5517] OBJ_ecdsa_with_SHA256 */
 0x2A,0x86,0x48,0xCE,0x3D,0x04,0x03,0x03,     /* [5525] OBJ_ecdsa_with_SHA384 */
 0x2A,0x86,0x48,0xCE,0x3D,0x04,0x03,0x04,     /* [5533] OBJ_ecdsa_with_SHA512 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x01,/* [5541] OBJ_dsa_with_SHA224 */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x03,0x02,/* [5550] OBJ_dsa_with_SHA256 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2202,6 +2204,10 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5525]),0},
 {"ecdsa-with-SHA512","ecdsa-with-SHA512",NID_ecdsa_with_SHA512,8,
 	&(lvalues[5533]),0},
+{"dsa_with_SHA224","dsa_with_SHA224",NID_dsa_with_SHA224,9,
+	&(lvalues[5541]),0},
+{"dsa_with_SHA256","dsa_with_SHA256",NID_dsa_with_SHA256,9,
+	&(lvalues[5550]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2452,6 +2458,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[470]),/* "documentVersion" */
 &(nid_objs[392]),/* "domain" */
 &(nid_objs[452]),/* "domainRelatedObject" */
+&(nid_objs[833]),/* "dsa_with_SHA224" */
+&(nid_objs[834]),/* "dsa_with_SHA256" */
 &(nid_objs[827]),/* "ecdsa-with-Recommended" */
 &(nid_objs[416]),/* "ecdsa-with-SHA1" */
 &(nid_objs[829]),/* "ecdsa-with-SHA224" */
@@ -3304,6 +3312,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[66]),/* "dsaWithSHA" */
 &(nid_objs[113]),/* "dsaWithSHA1" */
 &(nid_objs[70]),/* "dsaWithSHA1-old" */
+&(nid_objs[833]),/* "dsa_with_SHA224" */
+&(nid_objs[834]),/* "dsa_with_SHA256" */
 &(nid_objs[297]),/* "dvcs" */
 &(nid_objs[827]),/* "ecdsa-with-Recommended" */
 &(nid_objs[416]),/* "ecdsa-with-SHA1" */
@@ -4486,6 +4496,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[673]),/* OBJ_sha384                       2 16 840 1 101 3 4 2 2 */
 &(nid_objs[674]),/* OBJ_sha512                       2 16 840 1 101 3 4 2 3 */
 &(nid_objs[675]),/* OBJ_sha224                       2 16 840 1 101 3 4 2 4 */
+&(nid_objs[833]),/* OBJ_dsa_with_SHA224              2 16 840 1 101 3 4 3 1 */
+&(nid_objs[834]),/* OBJ_dsa_with_SHA256              2 16 840 1 101 3 4 3 2 */
 &(nid_objs[71]),/* OBJ_netscape_cert_type           2 16 840 1 113730 1 1 */
 &(nid_objs[72]),/* OBJ_netscape_base_url            2 16 840 1 113730 1 2 */
 &(nid_objs[73]),/* OBJ_netscape_revocation_url      2 16 840 1 113730 1 3 */
