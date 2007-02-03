@@ -217,7 +217,9 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		keylen=EVP_CIPHER_key_length(evp_cipher);
 		ivlen=EVP_CIPHER_iv_length(evp_cipher);
 		xalg->algorithm = OBJ_nid2obj(EVP_CIPHER_type(evp_cipher));
-		if (ivlen > 0) RAND_pseudo_bytes(iv,ivlen);
+		if (ivlen > 0)
+			if (RAND_pseudo_bytes(iv,ivlen) <= 0)
+				goto err;
 		if (EVP_CipherInit_ex(ctx, evp_cipher, NULL, NULL, NULL, 1)<=0)
 			goto err;
 		if (EVP_CIPHER_CTX_rand_key(ctx, key) <= 0)
@@ -226,10 +228,13 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 			goto err;
 
 		if (ivlen > 0) {
-			if (xalg->parameter == NULL) 
-						xalg->parameter=ASN1_TYPE_new();
+			if (xalg->parameter == NULL) {
+				xalg->parameter = ASN1_TYPE_new();
+				if (xalg->parameter == NULL)
+					goto err;
+			}
 			if(EVP_CIPHER_param_to_asn1(ctx, xalg->parameter) < 0)
-								       goto err;
+			       goto err;
 		}
 
 		/* Lets do the pub key stuff :-) */
@@ -242,7 +247,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 				PKCS7err(PKCS7_F_PKCS7_DATAINIT,PKCS7_R_MISSING_CERIPEND_INFO);
 				goto err;
 				}
-			pkey=X509_get_pubkey(ri->cert);
+			if ((pkey=X509_get_pubkey(ri->cert)) == NULL)
+				goto err;
 			jj=EVP_PKEY_size(pkey);
 			EVP_PKEY_free(pkey);
 			if (max < jj) max=jj;
@@ -255,7 +261,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++)
 			{
 			ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
-			pkey=X509_get_pubkey(ri->cert);
+			if ((pkey=X509_get_pubkey(ri->cert)) == NULL)
+				goto err;
 			jj=EVP_PKEY_encrypt(tmp,key,keylen,pkey);
 			EVP_PKEY_free(pkey);
 			if (jj <= 0)
@@ -291,6 +298,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
 		if(bio == NULL)
 			{
 			bio=BIO_new(BIO_s_mem());
+			if (bio == NULL)
+				goto err;
 			BIO_set_mem_eof_return(bio,0);
 			}
 		}
@@ -541,6 +550,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			bio=BIO_new(BIO_s_mem());
 			BIO_set_mem_eof_return(bio,0);
 		}
+		if (bio == NULL)
+			goto err;
 #endif
 		}
 	BIO_push(out,bio);
@@ -695,9 +706,13 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 							ERR_R_MALLOC_FAILURE);
 						goto err;
 						}
-					PKCS7_add_signed_attribute(si,
+					if (!PKCS7_add_signed_attribute(si,
 						NID_pkcs9_signingTime,
-						V_ASN1_UTCTIME,sign_time);
+						V_ASN1_UTCTIME,sign_time))
+						{
+						M_ASN1_UTCTIME_free(sign_time);
+						goto err;
+						}
 					}
 
 				/* Add digest */
@@ -714,11 +729,16 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 					{
 					PKCS7err(PKCS7_F_PKCS7_DATAFINAL,
 						ERR_R_MALLOC_FAILURE);
+					M_ASN1_OCTET_STRING_free(digest);
 					goto err;
 					}
-				PKCS7_add_signed_attribute(si,
+				if (!PKCS7_add_signed_attribute(si,
 					NID_pkcs9_messageDigest,
-					V_ASN1_OCTET_STRING,digest);
+					V_ASN1_OCTET_STRING,digest))
+					{
+					M_ASN1_OCTET_STRING_free(digest);
+					goto err;
+					}
 
 				/* Now sign the attributes */
 				EVP_SignInit_ex(&ctx_tmp,md_tmp,NULL);
@@ -976,8 +996,13 @@ PKCS7_ISSUER_AND_SERIAL *PKCS7_get_issuer_and_serial(PKCS7 *p7, int idx)
 	int i;
 
 	i=OBJ_obj2nid(p7->type);
-	if (i != NID_pkcs7_signedAndEnveloped) return(NULL);
+	if (i != NID_pkcs7_signedAndEnveloped)
+		return NULL;
+	if (p7->d.signed_and_enveloped == NULL)
+		return NULL;
 	rsk=p7->d.signed_and_enveloped->recipientinfo;
+	if (rsk == NULL)
+		return NULL;
 	ri=sk_PKCS7_RECIP_INFO_value(rsk,0);
 	if (sk_PKCS7_RECIP_INFO_num(rsk) <= idx) return(NULL);
 	ri=sk_PKCS7_RECIP_INFO_value(rsk,idx);
@@ -1031,6 +1056,8 @@ int PKCS7_set_signed_attributes(PKCS7_SIGNER_INFO *p7si,
 	if (p7si->auth_attr != NULL)
 		sk_X509_ATTRIBUTE_pop_free(p7si->auth_attr,X509_ATTRIBUTE_free);
 	p7si->auth_attr=sk_X509_ATTRIBUTE_dup(sk);
+	if (p7si->auth_attr == NULL)
+		return 0;
 	for (i=0; i<sk_X509_ATTRIBUTE_num(sk); i++)
 		{
 		if ((sk_X509_ATTRIBUTE_set(p7si->auth_attr,i,
@@ -1049,6 +1076,8 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si, STACK_OF(X509_ATTRIBUTE) *sk)
 		sk_X509_ATTRIBUTE_pop_free(p7si->unauth_attr,
 					   X509_ATTRIBUTE_free);
 	p7si->unauth_attr=sk_X509_ATTRIBUTE_dup(sk);
+	if (p7si->unauth_attr == NULL)
+		return 0;
 	for (i=0; i<sk_X509_ATTRIBUTE_num(sk); i++)
 		{
 		if ((sk_X509_ATTRIBUTE_set(p7si->unauth_attr,i,
@@ -1078,10 +1107,16 @@ static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
 
 	if (*sk == NULL)
 		{
-		*sk = sk_X509_ATTRIBUTE_new_null();
+		if (!(*sk = sk_X509_ATTRIBUTE_new_null()))
+			return 0;
 new_attrib:
-		attr=X509_ATTRIBUTE_create(nid,atrtype,value);
-		sk_X509_ATTRIBUTE_push(*sk,attr);
+		if (!(attr=X509_ATTRIBUTE_create(nid,atrtype,value)))
+			return 0;
+		if (!sk_X509_ATTRIBUTE_push(*sk,attr))
+			{
+			X509_ATTRIBUTE_free(attr);
+			return 0;
+			}
 		}
 	else
 		{
@@ -1094,7 +1129,13 @@ new_attrib:
 				{
 				X509_ATTRIBUTE_free(attr);
 				attr=X509_ATTRIBUTE_create(nid,atrtype,value);
-				sk_X509_ATTRIBUTE_set(*sk,i,attr);
+				if (attr == NULL)
+					return 0;
+				if (!sk_X509_ATTRIBUTE_set(*sk,i,attr))
+					{
+					X509_ATTRIBUTE_free(attr);
+					return 0;
+					}
 				goto end;
 				}
 			}
