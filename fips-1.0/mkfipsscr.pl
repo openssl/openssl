@@ -100,7 +100,6 @@ foreach (@ARGV)
 	}
 
 $tvdir = "testvectors" unless defined $tvdir;
-$shwrap_prefix = "../util/" unless defined $shwrap_prefix;
 
 if ($win32)
 	{
@@ -131,10 +130,12 @@ else
 	if ($onedir)
 		{
 		$tprefix = "./" unless defined $tprefix;
+		$shwrap_prefix = "./" unless defined $shwrap_prefix;
 		}
 	else
 		{
 		$tprefix = "../test/" unless defined $tprefix;
+		$shwrap_prefix = "../util/" unless defined $shwrap_prefix;
 		}
 	$outfile = "fipstests.sh" unless defined $outfile;
 	open(OUT, ">$outfile");
@@ -218,7 +219,7 @@ END
 		}
 	else
 		{
-		my $req = "tvdir/$tdir/req/$fprefix.req";
+		my $req = "$tvdir/$tdir/req/$fprefix.req";
 		my $rsp = "$tvdir/$tdir/rsp/$fprefix.rsp";
 		print OUT <<END;
 if [ -f $req ] ; then ${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd < $req > $rsp; fi
