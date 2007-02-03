@@ -185,6 +185,7 @@ ex_data.o: ../include/openssl/err.h ../include/openssl/lhash.h
 ex_data.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 ex_data.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 ex_data.o: ../include/openssl/symhacks.h cryptlib.h ex_data.c
+fips_err.o: ../include/openssl/opensslconf.h fips_err.c
 mem.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 mem.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem.o: ../include/openssl/err.h ../include/openssl/lhash.h

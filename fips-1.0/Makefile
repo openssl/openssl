@@ -329,4 +329,3 @@ fips.o: ../include/openssl/safestack.h ../include/openssl/sha.h
 fips.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 fips.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h fips.c
 fips.o: fips_locl.h
-fips_err_wrapper.o: ../include/openssl/opensslconf.h fips_err_wrapper.c

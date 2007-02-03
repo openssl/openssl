@@ -116,3 +116,10 @@ err_prn.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 err_prn.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
 err_prn.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 err_prn.o: ../cryptlib.h err_prn.c
+err_str.o: ../../e_os.h ../../include/openssl/bio.h
+err_str.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+err_str.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+err_str.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+err_str.o: ../../include/openssl/opensslv.h ../../include/openssl/safestack.h
+err_str.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+err_str.o: ../cryptlib.h err_str.c

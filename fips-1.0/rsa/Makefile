@@ -126,6 +126,27 @@ fips_rsa_selftest.o: ../../include/openssl/rsa.h
 fips_rsa_selftest.o: ../../include/openssl/safestack.h
 fips_rsa_selftest.o: ../../include/openssl/stack.h
 fips_rsa_selftest.o: ../../include/openssl/symhacks.h fips_rsa_selftest.c
+fips_rsa_sign.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+fips_rsa_sign.o: ../../include/openssl/bio.h ../../include/openssl/blowfish.h
+fips_rsa_sign.o: ../../include/openssl/bn.h ../../include/openssl/cast.h
+fips_rsa_sign.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+fips_rsa_sign.o: ../../include/openssl/des_old.h ../../include/openssl/dh.h
+fips_rsa_sign.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_rsa_sign.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_rsa_sign.o: ../../include/openssl/idea.h ../../include/openssl/lhash.h
+fips_rsa_sign.o: ../../include/openssl/md2.h ../../include/openssl/md4.h
+fips_rsa_sign.o: ../../include/openssl/md5.h ../../include/openssl/mdc2.h
+fips_rsa_sign.o: ../../include/openssl/obj_mac.h
+fips_rsa_sign.o: ../../include/openssl/objects.h
+fips_rsa_sign.o: ../../include/openssl/opensslconf.h
+fips_rsa_sign.o: ../../include/openssl/opensslv.h
+fips_rsa_sign.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rc2.h
+fips_rsa_sign.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+fips_rsa_sign.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+fips_rsa_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+fips_rsa_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_rsa_sign.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+fips_rsa_sign.o: fips_rsa_sign.c
 fips_rsa_x931g.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_rsa_x931g.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 fips_rsa_x931g.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
