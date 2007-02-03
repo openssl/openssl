@@ -62,7 +62,7 @@
 #include <openssl/buffer.h>
 #include "bn_lcl.h"
 
-static const char *Hex="0123456789ABCDEF";
+static const char Hex[]="0123456789ABCDEF";
 
 /* Must 'OPENSSL_free' the returned data */
 char *BN_bn2hex(const BIGNUM *a)

@@ -125,7 +125,7 @@ DECLARE_STACK_OF(CRYPTO_dynlock)
 IMPLEMENT_STACK_OF(CRYPTO_dynlock)
 
 /* real #defines in crypto.h, keep these upto date */
-static const char* lock_names[CRYPTO_NUM_LOCKS] =
+static const char* const lock_names[CRYPTO_NUM_LOCKS] =
 	{
 	"<<ERROR>>",
 	"err",
