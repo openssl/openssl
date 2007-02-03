@@ -122,99 +122,6 @@
 static void err_load_strings(int lib, ERR_STRING_DATA *str);
 
 static void ERR_STATE_free(ERR_STATE *s);
-#ifndef OPENSSL_NO_ERR
-static ERR_STRING_DATA ERR_str_libraries[]=
-	{
-{ERR_PACK(ERR_LIB_NONE,0,0)		,"unknown library"},
-{ERR_PACK(ERR_LIB_SYS,0,0)		,"system library"},
-{ERR_PACK(ERR_LIB_BN,0,0)		,"bignum routines"},
-{ERR_PACK(ERR_LIB_RSA,0,0)		,"rsa routines"},
-{ERR_PACK(ERR_LIB_DH,0,0)		,"Diffie-Hellman routines"},
-{ERR_PACK(ERR_LIB_EVP,0,0)		,"digital envelope routines"},
-{ERR_PACK(ERR_LIB_BUF,0,0)		,"memory buffer routines"},
-{ERR_PACK(ERR_LIB_OBJ,0,0)		,"object identifier routines"},
-{ERR_PACK(ERR_LIB_PEM,0,0)		,"PEM routines"},
-{ERR_PACK(ERR_LIB_DSA,0,0)		,"dsa routines"},
-{ERR_PACK(ERR_LIB_X509,0,0)		,"x509 certificate routines"},
-{ERR_PACK(ERR_LIB_ASN1,0,0)		,"asn1 encoding routines"},
-{ERR_PACK(ERR_LIB_CONF,0,0)		,"configuration file routines"},
-{ERR_PACK(ERR_LIB_CRYPTO,0,0)		,"common libcrypto routines"},
-{ERR_PACK(ERR_LIB_EC,0,0)		,"elliptic curve routines"},
-{ERR_PACK(ERR_LIB_SSL,0,0)		,"SSL routines"},
-{ERR_PACK(ERR_LIB_BIO,0,0)		,"BIO routines"},
-{ERR_PACK(ERR_LIB_PKCS7,0,0)		,"PKCS7 routines"},
-{ERR_PACK(ERR_LIB_X509V3,0,0)		,"X509 V3 routines"},
-{ERR_PACK(ERR_LIB_PKCS12,0,0)		,"PKCS12 routines"},
-{ERR_PACK(ERR_LIB_RAND,0,0)		,"random number generator"},
-{ERR_PACK(ERR_LIB_DSO,0,0)		,"DSO support routines"},
-{ERR_PACK(ERR_LIB_ENGINE,0,0)		,"engine routines"},
-{ERR_PACK(ERR_LIB_OCSP,0,0)		,"OCSP routines"},
-{ERR_PACK(ERR_LIB_FIPS,0,0)		,"FIPS routines"},
-{0,NULL},
-	};
-
-static ERR_STRING_DATA ERR_str_functs[]=
-	{
-	{ERR_PACK(0,SYS_F_FOPEN,0),     	"fopen"},
-	{ERR_PACK(0,SYS_F_CONNECT,0),		"connect"},
-	{ERR_PACK(0,SYS_F_GETSERVBYNAME,0),	"getservbyname"},
-	{ERR_PACK(0,SYS_F_SOCKET,0),		"socket"}, 
-	{ERR_PACK(0,SYS_F_IOCTLSOCKET,0),	"ioctlsocket"},
-	{ERR_PACK(0,SYS_F_BIND,0),		"bind"},
-	{ERR_PACK(0,SYS_F_LISTEN,0),		"listen"},
-	{ERR_PACK(0,SYS_F_ACCEPT,0),		"accept"},
-#ifdef OPENSSL_SYS_WINDOWS
-	{ERR_PACK(0,SYS_F_WSASTARTUP,0),	"WSAstartup"},
-#endif
-	{ERR_PACK(0,SYS_F_OPENDIR,0),		"opendir"},
-	{ERR_PACK(0,SYS_F_FREAD,0),		"fread"},
-	{ERR_PACK(0,SYS_F_GETADDRINFO,0),	"getaddrinfo"},
-	{0,NULL},
-	};
-
-static ERR_STRING_DATA ERR_str_reasons[]=
-	{
-{ERR_R_SYS_LIB				,"system lib"},
-{ERR_R_BN_LIB				,"BN lib"},
-{ERR_R_RSA_LIB				,"RSA lib"},
-{ERR_R_DH_LIB				,"DH lib"},
-{ERR_R_EVP_LIB				,"EVP lib"},
-{ERR_R_BUF_LIB				,"BUF lib"},
-{ERR_R_OBJ_LIB				,"OBJ lib"},
-{ERR_R_PEM_LIB				,"PEM lib"},
-{ERR_R_DSA_LIB				,"DSA lib"},
-{ERR_R_X509_LIB				,"X509 lib"},
-{ERR_R_ASN1_LIB				,"ASN1 lib"},
-{ERR_R_CONF_LIB				,"CONF lib"},
-{ERR_R_CRYPTO_LIB			,"CRYPTO lib"},
-{ERR_R_EC_LIB				,"EC lib"},
-{ERR_R_SSL_LIB				,"SSL lib"},
-{ERR_R_BIO_LIB				,"BIO lib"},
-{ERR_R_PKCS7_LIB			,"PKCS7 lib"},
-{ERR_R_X509V3_LIB			,"X509V3 lib"},
-{ERR_R_PKCS12_LIB			,"PKCS12 lib"},
-{ERR_R_RAND_LIB				,"RAND lib"},
-{ERR_R_DSO_LIB				,"DSO lib"},
-{ERR_R_ENGINE_LIB			,"ENGINE lib"},
-{ERR_R_OCSP_LIB				,"OCSP lib"},
-
-{ERR_R_NESTED_ASN1_ERROR		,"nested asn1 error"},
-{ERR_R_BAD_ASN1_OBJECT_HEADER		,"bad asn1 object header"},
-{ERR_R_BAD_GET_ASN1_OBJECT_CALL		,"bad get asn1 object call"},
-{ERR_R_EXPECTING_AN_ASN1_SEQUENCE	,"expecting an asn1 sequence"},
-{ERR_R_ASN1_LENGTH_MISMATCH		,"asn1 length mismatch"},
-{ERR_R_MISSING_ASN1_EOS			,"missing asn1 eos"},
-
-{ERR_R_FATAL                            ,"fatal"},
-{ERR_R_MALLOC_FAILURE			,"malloc failure"},
-{ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED	,"called a function you should not call"},
-{ERR_R_PASSED_NULL_PARAMETER		,"passed a null parameter"},
-{ERR_R_INTERNAL_ERROR			,"internal error"},
-
-{0,NULL},
-	};
-#endif
-
 
 /* Define the predeclared (but externally opaque) "ERR_FNS" type */
 struct st_ERR_FNS
@@ -528,71 +435,6 @@ static int int_err_get_next_lib(void)
 	}
 
 
-#ifndef OPENSSL_NO_ERR
-#define NUM_SYS_STR_REASONS 127
-#define LEN_SYS_STR_REASON 32
-
-static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
-/* SYS_str_reasons is filled with copies of strerror() results at
- * initialization.
- * 'errno' values up to 127 should cover all usual errors,
- * others will be displayed numerically by ERR_error_string.
- * It is crucial that we have something for each reason code
- * that occurs in ERR_str_reasons, or bogus reason strings
- * will be returned for SYSerr(), which always gets an errno
- * value and never one of those 'standard' reason codes. */
-
-static void build_SYS_str_reasons()
-	{
-	/* OPENSSL_malloc cannot be used here, use static storage instead */
-	static char strerror_tab[NUM_SYS_STR_REASONS][LEN_SYS_STR_REASON];
-	int i;
-	static int init = 1;
-
-	CRYPTO_r_lock(CRYPTO_LOCK_ERR);
-	if (!init)
-		{
-		CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
-		return;
-		}
-	
-	CRYPTO_r_unlock(CRYPTO_LOCK_ERR);
-	CRYPTO_w_lock(CRYPTO_LOCK_ERR);
-	if (!init)
-		{
-		CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
-		return;
-		}
-
-	for (i = 1; i <= NUM_SYS_STR_REASONS; i++)
-		{
-		ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
-
-		str->error = (unsigned long)i;
-		if (str->string == NULL)
-			{
-			char (*dest)[LEN_SYS_STR_REASON] = &(strerror_tab[i - 1]);
-			char *src = strerror(i);
-			if (src != NULL)
-				{
-				strncpy(*dest, src, sizeof *dest);
-				(*dest)[sizeof *dest - 1] = '\0';
-				str->string = *dest;
-				}
-			}
-		if (str->string == NULL)
-			str->string = "unknown";
-		}
-
-	/* Now we still have SYS_str_reasons[NUM_SYS_STR_REASONS] = {0, NULL},
-	 * as required by ERR_load_strings. */
-
-	init = 0;
-	
-	CRYPTO_w_unlock(CRYPTO_LOCK_ERR);
-	}
-#endif
-
 #define err_clear_data(p,i) \
 	if (((p)->err_data[i] != NULL) && \
 		(p)->err_data_flags[i] & ERR_TXT_MALLOCED) \
@@ -616,18 +458,6 @@ static void ERR_STATE_free(ERR_STATE *s)
 	OPENSSL_free(s);
 	}
 
-void ERR_load_ERR_strings(void)
-	{
-	err_fns_check();
-#ifndef OPENSSL_NO_ERR
-	err_load_strings(0,ERR_str_libraries);
-	err_load_strings(0,ERR_str_reasons);
-	err_load_strings(ERR_LIB_SYS,ERR_str_functs);
-	build_SYS_str_reasons();
-	err_load_strings(ERR_LIB_SYS,SYS_str_reasons);
-#endif
-	}
-
 static void err_load_strings(int lib, ERR_STRING_DATA *str)
 	{
 	while (str->error)
@@ -641,7 +471,7 @@ static void err_load_strings(int lib, ERR_STRING_DATA *str)
 
 void ERR_load_strings(int lib, ERR_STRING_DATA *str)
 	{
-	ERR_load_ERR_strings();
+	err_fns_check();
 	err_load_strings(lib, str);
 	}
 

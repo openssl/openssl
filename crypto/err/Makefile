@@ -22,8 +22,8 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=err.c err_all.c err_prn.c
-LIBOBJ=err.o err_all.o err_prn.o
+LIBSRC=err.c err_all.c err_prn.c err_str.c
+LIBOBJ=err.o err_all.o err_prn.o err_str.o
 
 SRC= $(LIBSRC)
 

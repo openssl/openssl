@@ -4,6 +4,11 @@
 
  Changes between 0.9.7l and 0.9.7m-fips2 [xx XXX xxxx]
 
+  *) Move error strings for remaing libraries into separate files to avoid 
+     unnecessary dependencies for fipscanister.o which doesn't require the
+     loading of error strings.
+     [Steve Henson]
+
   *) New build option fipsdso to link fipscanister.o into a DSO called 
      libfips.so and modify build system to link against it. Preliminary changes
      to VC++ build system to accomodate fipsdso.

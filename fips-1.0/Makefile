@@ -35,15 +35,15 @@ GENERAL=Makefile README fips-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= $(FIPSCANLIB)$(SHLIB_EXT)
-LIBSRC=fips.c fips_err_wrapper.c
-LIBOBJ=fips.o fips_err_wrapper.o
+LIBSRC=fips.c 
+LIBOBJ=fips.o
 
 FIPS_OBJ_LISTS=sha/lib hmac/lib rand/lib des/lib aes/lib dsa/lib rsa/lib dh/lib
 
 SRC= $(LIBSRC)
 
 EXHEADER=fips.h
-HEADER=$(EXHEADER) fips_err.h
+HEADER=$(EXHEADER)
 EXE=fipsld
 TEST=fips_test_suite.c
 

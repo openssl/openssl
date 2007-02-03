@@ -1,4 +1,4 @@
-/* fips-1.0/fips_err.h */
+/* crypto/fips_err.c */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *
@@ -97,13 +97,13 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 
 static ERR_STRING_DATA FIPS_str_reasons[]=
 	{
-{ERR_REASON(FIPS_R_CANNOT_READ_EXE)      ,"cannot access executable object"},
-{ERR_REASON(FIPS_R_CANNOT_READ_EXE_DIGEST),"cannot access detached digest"},
-{ERR_REASON(FIPS_R_CONTRADICTING_EVIDENCE),"duplicate code detected, check your linking procedure"},
-{ERR_REASON(FIPS_R_EXE_DIGEST_DOES_NOT_MATCH),"detached digest verification failed"},
+{ERR_REASON(FIPS_R_CANNOT_READ_EXE)      ,"cannot read exe"},
+{ERR_REASON(FIPS_R_CANNOT_READ_EXE_DIGEST),"cannot read exe digest"},
+{ERR_REASON(FIPS_R_CONTRADICTING_EVIDENCE),"contradicting evidence"},
+{ERR_REASON(FIPS_R_EXE_DIGEST_DOES_NOT_MATCH),"exe digest does not match"},
 {ERR_REASON(FIPS_R_FINGERPRINT_DOES_NOT_MATCH),"fingerprint does not match"},
-{ERR_REASON(FIPS_R_FINGERPRINT_DOES_NOT_MATCH_NONPIC_RELOCATED),"fingerprint does not match, possibly because non-PIC was relocated"},
-{ERR_REASON(FIPS_R_FINGERPRINT_DOES_NOT_MATCH_SEGMENT_ALIASING),"fingerprint does not match, invalid segment aliasing"},
+{ERR_REASON(FIPS_R_FINGERPRINT_DOES_NOT_MATCH_NONPIC_RELOCATED),"fingerprint does not match nonpic relocated"},
+{ERR_REASON(FIPS_R_FINGERPRINT_DOES_NOT_MATCH_SEGMENT_ALIASING),"fingerprint does not match segment aliasing"},
 {ERR_REASON(FIPS_R_FIPS_MODE_ALREADY_SET),"fips mode already set"},
 {ERR_REASON(FIPS_R_FIPS_SELFTEST_FAILED) ,"fips selftest failed"},
 {ERR_REASON(FIPS_R_INVALID_KEY_LENGTH)   ,"invalid key length"},
