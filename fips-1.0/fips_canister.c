@@ -77,13 +77,19 @@ static void *instruction_pointer(void)
 # elif	defined(__ppc__) || defined(__powerpc) || defined(__powerpc__) || \
 	defined(__POWERPC__) || defined(_POWER) || defined(__PPC__) || \
 	defined(__PPC64__) || defined(__powerpc64__)
-#   define INSTRUCTION_POINTER_IMPLEMENTED
+/* GCC on AIX cannot use inline ASM since the assembler used is the
+ * native assembler, not GNU as. Prevent INSTRUCTION_POINTER_IMPLEMENTED
+ * from being defined. It will use the fallback method which is the
+ * same as xlC uses for AIX in FIPS_ref_point() */
+#   ifndef (_AIX)
+#     define INSTRUCTION_POINTER_IMPLEMENTED
     void *scratch;
     __asm __volatile (	"mfspr	%1,8\n\t"	/* save lr */
 			"bl	.+4\n\t"
 			"mfspr	%0,8\n\t"	/* mflr ret */
 			"mtspr	8,%1"		/* restore lr */
 			: "=r"(ret),"=r"(scratch) );
+#   endif /* !_AIX */
 # elif	defined(__sparc) || defined(__sparc__) || defined(__sparcv9)
 #   define INSTRUCTION_POINTER_IMPLEMENTED
     void *scratch;

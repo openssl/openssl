@@ -294,6 +294,15 @@ static char *dlfcn_name_converter(DSO *dso, const char *filename)
 	return(translated);
 	}
 
+/* This section uses dladdr() which appears to be a GNU extension, though
+ * some other OS's have adopted it.  Specifically, AIX4, AIX5, and SCO5
+ * do not support dladdr().
+ * No reference to DSO_pathbyaddr() is made, and appears to be a function
+ * which was added during construction of FIPS support in OpenSSL.  It appears
+ * that it has been replaced by FIPS_ref_point() in fipscanister.c
+ * Removing the below code fixes compile-time issues on the afore-mentioned
+ * OS's */
+#ifdef DEADBEEF_0
 #ifdef OPENSSL_FIPS
 static void dlfcn_ref_point(){}
 
@@ -322,4 +331,6 @@ int DSO_pathbyaddr(void *addr,char *path,int sz)
 	return -1;
 	}
 #endif
+#endif /* DEADBEEF_0 */
+
 #endif /* DSO_DLFCN */

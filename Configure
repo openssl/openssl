@@ -460,13 +460,14 @@ my %table=(
 # SCO 5 - Ben Laurie <ben@algroup.co.uk> says the -O breaks the SCO cc.
 "sco5-cc",  "cc:-belf::(unknown)::-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:svr3-shared:-Kpic::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "sco5-gcc",  "gcc:-O3 -fomit-frame-pointer::(unknown)::-lsocket -lnsl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:svr3-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-
+"sco6-cc",  "cc:-O::-Kpthread::-lsocket -lnsl:${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:svr3-shared:-Kpic::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 
 # IBM's AIX.
 "aix3-cc",    "cc:-O -DB_ENDIAN -qmaxmem=16384::(unknown):AIX::BN_LLONG RC4_CHAR:::",
 "aix-gcc",    "gcc:-O3 -DB_ENDIAN::-D_THREAD_SAFE:AIX::BN_LLONG RC4_CHAR:asm/aix_ppc32.o:::::::::dlfcn:",
 "aix-cc",     "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384::-qthreaded:AIX::BN_LLONG RC4_CHAR:asm/aix_ppc32.o:::::::::dlfcn:aix-shared::-q32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
 "aix64-cc",   "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384::-qthreaded:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:asm/aix_ppc64.o:::::::::dlfcn:aix-shared::-q64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
+"aix64-gcc",   "gcc:-maix64 -O -DB_ENDIAN::-D_THREAD_SAFE:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:asm/aix_ppc64.o:::::::::dlfcn:aix-shared::-maix64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
 
 #
 # Cray T90 and similar (SDSC)

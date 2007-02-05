@@ -4,6 +4,9 @@
 
  Changes between 0.9.7l and 0.9.7m-fips2 [xx XXX xxxx]
 
+  *) FIPS portability patches.
+     [Brad House <brad@mainstreetsoftworks.com>]
+
   *) Move error strings for remaing libraries into separate files to avoid 
      unnecessary dependencies for fipscanister.o which doesn't require the
      loading of error strings.

@@ -22,6 +22,21 @@ CC=${FIPSLD_CC:-${CC}}
     [ $# -ge 1 ]
 ) && exec ${CC} "$@"
 
+# If using an auto-tooled (autoconf/automake/libtool) project,
+# configure will fail when testing the compiler or even performing
+# simple checks.  Pass-thru to compiler directly if not linking
+# to libcrypto, allowing auto-tooled applications to utilize fipsld
+# (e.g.  CC=/usr/local/ssl/bin/fipsld FIPSLD_CC=gcc ./configure && make )
+case "$*" in
+	*libcrypto.a*)
+	;;
+	*-lcrypto*)
+	;;
+	*)
+		exec ${CC} $*
+	;;
+esac
+
 # Turn on debugging output?
 (   while [ "x$1" != "x" -a "x$1" != "x-DDEBUG_FINGERPRINT_PREMAIN" ]; do shift; done;
     [ $# -ge 1 ]
