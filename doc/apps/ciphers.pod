@@ -146,7 +146,9 @@ export encryption algorithms. Including 40 and 56 bits algorithms.
 
 =item B<EXPORT56>
 
-56 bit export encryption algorithms.
+56 bit export encryption algorithms. In OpenSSL 0.9.8c and later the set of
+56 bit export ciphers is empty unless OpenSSL has been explicitly configured
+with support for experimental ciphers.
 
 =item B<eNULL>, B<NULL>
 
