@@ -134,7 +134,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	BIGNUM m;
 	BIGNUM xr;
 	BN_CTX *ctx=NULL;
-	int i, j, reason=ERR_R_BN_LIB;
+	int i, reason=ERR_R_BN_LIB;
 	DSA_SIG *ret=NULL;
 
 	BN_init(&m);
