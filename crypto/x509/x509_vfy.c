@@ -1468,9 +1468,16 @@ void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 	{
 	if (ctx->cleanup) ctx->cleanup(ctx);
-	X509_VERIFY_PARAM_free(ctx->param);
-	if (ctx->tree)
+	if (ctx->param != NULL)
+		{
+		X509_VERIFY_PARAM_free(ctx->param);
+		ctx->param=NULL;
+		}
+	if (ctx->tree != NULL)
+		{
 		X509_policy_tree_free(ctx->tree);
+		ctx->tree=NULL;
+		}
 	if (ctx->chain != NULL)
 		{
 		sk_X509_pop_free(ctx->chain,X509_free);
