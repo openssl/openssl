@@ -2063,7 +2063,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 		if (l & SSL_kECDH) 
 			{ 
                         /* use the certificate */
-			tkey = s->cert->key->privatekey->pkey.ec;
+			tkey = s->cert->pkeys[SSL_PKEY_ECC].privatekey->pkey.ec;
 			}
 		else
 			{
