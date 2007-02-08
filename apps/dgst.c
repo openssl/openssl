@@ -66,6 +66,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/hmac.h>
 
 #undef BUFSIZE
 #define BUFSIZE	1024*8
@@ -75,7 +76,7 @@
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
-	  const char *file);
+	  const char *file,BIO *bmd,const char *hmac_key);
 
 int MAIN(int, char **);
 
@@ -104,6 +105,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
+	char *hmac_key=NULL;
 
 	apps_startup();
 
@@ -189,6 +191,12 @@ int MAIN(int argc, char **argv)
 			out_bin = 1;
 		else if (strcmp(*argv,"-d") == 0)
 			debug=1;
+		else if (!strcmp(*argv,"-hmac"))
+			{
+			if (--argc < 1)
+				break;
+			hmac_key=*++argv;
+			}
 		else if ((m=EVP_get_digestbyname(&((*argv)[1]))) != NULL)
 			md=m;
 		else
@@ -361,7 +369,7 @@ int MAIN(int argc, char **argv)
 		{
 		BIO_set_fp(in,stdin,BIO_NOCLOSE);
 		err=do_fp(out, buf,inp,separator, out_bin, sigkey, sigbuf,
-			  siglen,"","(stdin)");
+			  siglen,"","(stdin)",bmd,hmac_key);
 		}
 	else
 		{
@@ -379,14 +387,15 @@ int MAIN(int argc, char **argv)
 				}
 			if(!out_bin)
 				{
-				size_t len = strlen(name)+strlen(argv[i])+5;
+				size_t len = strlen(name)+strlen(argv[i])+(hmac_key ? 5 : 0)+5;
 				tmp=tofree=OPENSSL_malloc(len);
-				BIO_snprintf(tmp,len,"%s(%s)= ",name,argv[i]);
+				BIO_snprintf(tmp,len,"%s%s(%s)= ",
+							 hmac_key ? "HMAC-" : "",name,argv[i]);
 				}
 			else
 				tmp="";
 			r=do_fp(out,buf,inp,separator,out_bin,sigkey,sigbuf,
-				siglen,tmp,argv[i]);
+				siglen,tmp,argv[i],bmd,hmac_key);
 			if(r)
 			    err=r;
 			if(tofree)
@@ -413,11 +422,23 @@ end:
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
-	  const char *file)
+	  const char *file,BIO *bmd,const char *hmac_key)
 	{
-	int len;
+	unsigned int len;
 	int i;
+	EVP_MD_CTX *md_ctx;
+	HMAC_CTX hmac_ctx;
 
+	if (hmac_key)
+		{
+		EVP_MD *md;
+
+		BIO_get_md(bmd,&md);
+		HMAC_CTX_init(&hmac_ctx);
+		HMAC_Init_ex(&hmac_ctx,hmac_key,strlen(hmac_key),md, NULL);
+		BIO_get_md_ctx(bmd,&md_ctx);
+		BIO_set_md_ctx(bmd,&hmac_ctx.md_ctx);
+		}
 	for (;;)
 		{
 		i=BIO_read(bp,(char *)buf,BUFSIZE);
@@ -460,6 +481,11 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			return 1;
 			}
 		}
+	else if(hmac_key)
+		{
+		HMAC_Final(&hmac_ctx,buf,&len);
+		HMAC_CTX_cleanup(&hmac_ctx);
+		}
 	else
 		len=BIO_gets(bp,(char *)buf,BUFSIZE);
 
@@ -474,6 +500,10 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			BIO_printf(out, "%02x",buf[i]);
 			}
 		BIO_printf(out, "\n");
+		}
+	if (hmac_key)
+		{
+		BIO_set_md_ctx(bmd,md_ctx);
 		}
 	return 0;
 	}

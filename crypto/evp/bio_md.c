@@ -196,6 +196,12 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
 		*pctx=ctx;
 		b->init = 1;
 		break;
+	case BIO_C_SET_MD_CTX:
+		if (b->init)
+			b->ptr=ptr;
+		else
+			ret=0;
+		break;
 	case BIO_C_DO_STATE_MACHINE:
 		BIO_clear_retry_flags(b);
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);

@@ -378,14 +378,15 @@ typedef int asn1_ps_func(BIO *b, unsigned char **pbuf, int *plen, void *parg);
 #define BIO_C_NWRITE0				145
 #define BIO_C_NWRITE				146
 #define BIO_C_RESET_READ_REQUEST		147
+#define BIO_C_SET_MD_CTX			148
 
-#define BIO_C_SET_PREFIX			148
-#define BIO_C_GET_PREFIX			149
-#define BIO_C_SET_SUFFIX			150
-#define BIO_C_GET_SUFFIX			151
+#define BIO_C_SET_PREFIX			149
+#define BIO_C_GET_PREFIX			150
+#define BIO_C_SET_SUFFIX			151
+#define BIO_C_GET_SUFFIX			152
 
-#define BIO_C_SET_EX_ARG			152
-#define BIO_C_GET_EX_ARG			153
+#define BIO_C_SET_EX_ARG			153
+#define BIO_C_GET_EX_ARG			154
 
 #define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,arg)
 #define BIO_get_app_data(s)		BIO_get_ex_data(s,0)
