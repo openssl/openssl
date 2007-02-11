@@ -134,7 +134,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	BIGNUM m;
 	BIGNUM xr;
 	BN_CTX *ctx=NULL;
-	int i, reason=ERR_R_BN_LIB;
+	int reason=ERR_R_BN_LIB;
 	DSA_SIG *ret=NULL;
 
 	BN_init(&m);
@@ -172,17 +172,14 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		dsa->r=NULL;
 		}
 
-	if (BN_bin2bn(dgst,dlen,&m) == NULL)
-		goto err;
-	i = BN_num_bytes(dsa->q);
-	if (dlen > i)
-		{
+	
+	if (dlen > BN_num_bytes(dsa->q))
 		/* if the digest length is greater than the size of q use the
 		 * BN_num_bits(dsa->q) leftmost bits of the digest, see
 		 * fips 186-3, 4.2 */
-		if (!BN_rshift(&m, &m, (dlen - i) << 3))
-			goto err; 
-		}
+		dlen = BN_num_bytes(dsa->q);
+	if (BN_bin2bn(dgst,dlen,&m) == NULL)
+		goto err;
 
 	/* Compute  s = inv(k) (m + xr) mod q */
 	if (!BN_mod_mul(&xr,dsa->priv_key,r,dsa->q,ctx)) goto err;/* s = xr */
@@ -308,7 +305,7 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	BN_CTX *ctx;
 	BIGNUM u1,u2,t1;
 	BN_MONT_CTX *mont=NULL;
-	int ret = -1, i, j;
+	int ret = -1, i;
 	if (!dsa->p || !dsa->q || !dsa->g)
 		{
 		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_MISSING_PARAMETERS);
@@ -361,16 +358,12 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	if ((BN_mod_inverse(&u2,sig->s,dsa->q,ctx)) == NULL) goto err;
 
 	/* save M in u1 */
-	if (BN_bin2bn(dgst,dgst_len,&u1) == NULL) goto err;
-	j = dgst_len << 3;
-	if (j > i)
-		{
+	if (dgst_len > (i >> 3))
 		/* if the digest length is greater than the size of q use the
 		 * BN_num_bits(dsa->q) leftmost bits of the digest, see
 		 * fips 186-3, 4.2 */
-		if (!BN_rshift(&u1, &u1, j - i))
-			goto err; 
-		}
+		dgst_len = (i >> 3);
+	if (BN_bin2bn(dgst,dgst_len,&u1) == NULL) goto err;
 
 	/* u1 = M * w mod q */
 	if (!BN_mod_mul(&u1,&u1,&u2,dsa->q,ctx)) goto err;
