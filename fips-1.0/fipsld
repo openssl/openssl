@@ -27,6 +27,9 @@ CC=${FIPSLD_CC:-${CC}}
 # simple checks.  Pass-thru to compiler directly if not linking
 # to libcrypto, allowing auto-tooled applications to utilize fipsld
 # (e.g.  CC=/usr/local/ssl/bin/fipsld FIPSLD_CC=gcc ./configure && make )
+# If FIPSLD_NPT is set never call the pass-thru: the standalone fips commands
+# need this because they don't link to libcrypto
+[ "x$FIPSLD_NPT" != "x" ] || {
 case "$*" in
 	*libcrypto.a*)
 	;;
@@ -36,6 +39,7 @@ case "$*" in
 		exec ${CC} $*
 	;;
 esac
+}
 
 # Turn on debugging output?
 (   while [ "x$1" != "x" -a "x$1" != "x-DDEBUG_FINGERPRINT_PREMAIN" ]; do shift; done;

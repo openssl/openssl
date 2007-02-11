@@ -352,7 +352,8 @@ STANDALONE_BUILD_CMD=SHARED_LIBS="$(SHARED_LIBS)"; \
 	fi
 
 FIPS_BUILD_CMD=if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
-	  FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; export CC FIPSLD_CC; \
+	  FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; FIPSLD_NPT="y"\
+	  export CC FIPSLD_CC FIPSLD_STANDALONE ; \
 	fi; $(STANDALONE_BUILD_CMD)
 
 FIPS_CRYPTO_BUILD_CMD=if egrep 'define OPENSSL_FIPS' $(TOP)/include/openssl/opensslconf.h > /dev/null; then \
