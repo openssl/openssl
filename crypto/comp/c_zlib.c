@@ -31,6 +31,24 @@ static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
 static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen);
 
+
+/* memory allocations functions for zlib intialization */
+static void* zlib_zalloc(void* opaque, unsigned int no, unsigned int size)
+{
+	void *p;
+	
+	p=OPENSSL_malloc(no*size);
+	if (p)
+		memset(p, 0, no*size);
+	return p;
+}
+
+
+static void zlib_zfree(void* opaque, void* address)
+{
+	OPENSSL_free(address);
+}
+
 #if 0
 static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen);
@@ -133,8 +151,8 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	if (state == NULL)
 		goto err;
 
-	state->istream.zalloc = Z_NULL;
-	state->istream.zfree = Z_NULL;
+	state->istream.zalloc = zlib_zalloc;
+	state->istream.zfree = zlib_zfree;
 	state->istream.opaque = Z_NULL;
 	state->istream.next_in = Z_NULL;
 	state->istream.next_out = Z_NULL;
@@ -145,8 +163,8 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	if (err != Z_OK)
 		goto err;
 
-	state->ostream.zalloc = Z_NULL;
-	state->ostream.zfree = Z_NULL;
+	state->ostream.zalloc = zlib_zalloc;
+	state->ostream.zfree = zlib_zfree;
 	state->ostream.opaque = Z_NULL;
 	state->ostream.next_in = Z_NULL;
 	state->ostream.next_out = Z_NULL;
@@ -158,17 +176,6 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 		goto err;
 
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data);
-	if (zlib_stateful_ex_idx == -1)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_COMP);
-		if (zlib_stateful_ex_idx == -1)
-			zlib_stateful_ex_idx =
-				CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
-					0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
-		CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
-		if (zlib_stateful_ex_idx == -1)
-			goto err;
-		}
 	CRYPTO_set_ex_data(&ctx->ex_data,zlib_stateful_ex_idx,state);
 	return 1;
  err:
@@ -379,7 +386,25 @@ COMP_METHOD *COMP_zlib(void)
 	if (zlib_loaded)
 #endif
 #if defined(ZLIB) || defined(ZLIB_SHARED)
+		{
+		/* init zlib_stateful_ex_idx here so that in a multi-process
+		 * application it's enough to intialize openssl before forking
+		 * (idx will be inherited in all the children) */
+		if (zlib_stateful_ex_idx == -1)
+			{
+			CRYPTO_w_lock(CRYPTO_LOCK_COMP);
+			if (zlib_stateful_ex_idx == -1)
+				zlib_stateful_ex_idx =
+					CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
+						0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
+			CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
+			if (zlib_stateful_ex_idx == -1)
+				goto err;
+			}
+		
 		meth = &zlib_stateful_method;
+		}
+err:	
 #endif
 
 	return(meth);
