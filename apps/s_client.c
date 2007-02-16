@@ -226,13 +226,22 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -starttls prot - use the STARTTLS command before starting TLS\n");
 	BIO_printf(bio_err,"                 for those protocols that support it, where\n");
 	BIO_printf(bio_err,"                 'prot' defines which one to assume.  Currently,\n");
-	BIO_printf(bio_err,"                 only \"smtp\" and \"pop3\" are supported.\n");
+	BIO_printf(bio_err,"                 only \"smtp\", \"pop3\", \"imap\", and \"ftp\" are supported.\n");
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 #endif
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 
 	}
+
+enum
+{
+	PROTO_OFF	= 0,
+	PROTO_SMTP,
+	PROTO_POP3,
+	PROTO_IMAP,
+	PROTO_FTP,
+};
 
 int MAIN(int, char **);
 
@@ -260,7 +269,7 @@ int MAIN(int argc, char **argv)
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
-	int starttls_proto = 0;
+	int starttls_proto = PROTO_OFF;
 	int prexit = 0, vflags = 0;
 	SSL_METHOD *meth=NULL;
 #ifdef sock_type
@@ -269,6 +278,7 @@ int MAIN(int argc, char **argv)
 	int sock_type=SOCK_STREAM;
 	BIO *sbio;
 	char *inrand=NULL;
+	int mbuf_len=0;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine_id=NULL;
 	ENGINE *e=NULL;
@@ -466,9 +476,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			++argv;
 			if (strcmp(*argv,"smtp") == 0)
-				starttls_proto = 1;
+				starttls_proto = PROTO_SMTP;
 			else if (strcmp(*argv,"pop3") == 0)
-				starttls_proto = 2;
+				starttls_proto = PROTO_POP3;
+			else if (strcmp(*argv,"imap") == 0)
+				starttls_proto = PROTO_IMAP;
+			else if (strcmp(*argv,"ftp") == 0)
+				starttls_proto = PROTO_FTP;
 			else
 				goto bad;
 			}
@@ -719,16 +733,38 @@ re_start:
 	sbuf_off=0;
 
 	/* This is an ugly hack that does a lot of assumptions */
-	if (starttls_proto == 1)
+	if (starttls_proto == PROTO_SMTP)
 		{
-		BIO_read(sbio,mbuf,BUFSIZZ);
+		/* wait for multi-line response to end from SMTP */
+		do
+			{
+			mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
+			}
+		while (mbuf_len>3 && mbuf[3]=='-');
 		BIO_printf(sbio,"STARTTLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}
-	if (starttls_proto == 2)
+	else if (starttls_proto == PROTO_POP3)
 		{
 		BIO_read(sbio,mbuf,BUFSIZZ);
 		BIO_printf(sbio,"STLS\r\n");
+		BIO_read(sbio,sbuf,BUFSIZZ);
+		}
+	else if (starttls_proto == PROTO_IMAP)
+		{
+		BIO_read(sbio,mbuf,BUFSIZZ);
+		BIO_printf(sbio,"0 STARTTLS\r\n");
+		BIO_read(sbio,sbuf,BUFSIZZ);
+		}
+	else if (starttls_proto == PROTO_FTP)
+		{
+		/* wait for multi-line response to end from FTP */
+		do
+			{
+			mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
+			}
+		while (mbuf_len>3 && mbuf[3]=='-');
+		BIO_printf(sbio,"AUTH TLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}
 
@@ -755,7 +791,7 @@ re_start:
 					{
 					BIO_printf(bio_err,"%s",mbuf);
 					/* We don't need to know any more */
-					starttls_proto = 0;
+					starttls_proto = PROTO_OFF;
 					}
 
 				if (reconnect)
