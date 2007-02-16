@@ -267,6 +267,9 @@ int tls1_change_cipher_state(SSL *s, int which)
 			reuse_dd = 1;
 		else if ((s->enc_read_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
+		else
+			/* make sure it's intialized in case we exit later with an error */
+			EVP_CIPHER_CTX_init(s->enc_read_ctx);
 		dd= s->enc_read_ctx;
 		s->read_hash=m;
 #ifndef OPENSSL_NO_COMP
@@ -301,10 +304,9 @@ int tls1_change_cipher_state(SSL *s, int which)
 			reuse_dd = 1;
 		else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
-		if ((s->enc_write_ctx == NULL) &&
-			((s->enc_write_ctx=(EVP_CIPHER_CTX *)
-			OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL))
-			goto err;
+		else
+			/* make sure it's intialized in case we exit later with an error */
+			EVP_CIPHER_CTX_init(s->enc_write_ctx);
 		dd= s->enc_write_ctx;
 		s->write_hash=m;
 #ifndef OPENSSL_NO_COMP
@@ -331,7 +333,6 @@ int tls1_change_cipher_state(SSL *s, int which)
 
 	if (reuse_dd)
 		EVP_CIPHER_CTX_cleanup(dd);
-	EVP_CIPHER_CTX_init(dd);
 
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
