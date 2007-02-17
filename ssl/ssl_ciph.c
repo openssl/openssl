@@ -432,9 +432,18 @@ static void ll_append_tail(CIPHER_ORDER **head, CIPHER_ORDER *curr,
 	*tail=curr;
 	}
 
-static unsigned long ssl_cipher_get_disabled(void)
+struct disabled_masks { /* This is a kludge no longer needed with OpenSSL 0.9.9,
+                         * where 128-bit and 256-bit algorithms simply will get
+                         * separate bits. */
+  unsigned long mask; /* everything except m256 */
+  unsigned long m256; /* applies to 256-bit algorithms only */
+};
+
+struct disabled_masks ssl_cipher_get_disabled(void)
 	{
 	unsigned long mask;
+	unsigned long m256;
+	struct disabled_masks ret;
 
 	mask = SSL_kFZA;
 #ifdef OPENSSL_NO_RSA
@@ -462,18 +471,26 @@ static unsigned long ssl_cipher_get_disabled(void)
 	mask |= (ssl_cipher_methods[SSL_ENC_RC2_IDX ] == NULL) ? SSL_RC2 :0;
 	mask |= (ssl_cipher_methods[SSL_ENC_IDEA_IDX] == NULL) ? SSL_IDEA:0;
 	mask |= (ssl_cipher_methods[SSL_ENC_eFZA_IDX] == NULL) ? SSL_eFZA:0;
-	mask |= (ssl_cipher_methods[SSL_ENC_AES128_IDX] == NULL) ? SSL_AES:0;
-	mask |= (ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] == NULL) ? SSL_CAMELLIA:0;
 
 	mask |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
 	mask |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;
 
-	return(mask);
+	/* finally consider algorithms where mask and m256 differ */
+	m256 = mask;
+	mask |= (ssl_cipher_methods[SSL_ENC_AES128_IDX] == NULL) ? SSL_AES:0;
+	mask |= (ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] == NULL) ? SSL_CAMELLIA:0;
+	m256 |= (ssl_cipher_methods[SSL_ENC_AES256_IDX] == NULL) ? SSL_AES:0;
+	m256 |= (ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX] == NULL) ? SSL_CAMELLIA:0;
+
+	ret.mask = mask;
+	ret.m256 = m256;
+	return ret;
 	}
 
 static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
-		int num_of_ciphers, unsigned long mask, CIPHER_ORDER *co_list,
-		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
+		int num_of_ciphers, unsigned long mask, unsigned long m256,
+		CIPHER_ORDER *co_list, CIPHER_ORDER **head_p,
+		CIPHER_ORDER **tail_p)
 	{
 	int i, co_list_num;
 	SSL_CIPHER *c;
@@ -490,8 +507,9 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 	for (i = 0; i < num_of_ciphers; i++)
 		{
 		c = ssl_method->get_cipher(i);
+#define IS_MASKED(c) ((c)->algorithms & (((c)->alg_bits == 256) ? m256 : mask))
 		/* drop those that use any of that is not available */
-		if ((c != NULL) && c->valid && !(c->algorithms & mask))
+		if ((c != NULL) && c->valid && !IS_MASKED(c))
 			{
 			co_list[co_list_num].cipher = c;
 			co_list[co_list_num].next = NULL;
@@ -898,7 +916,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			 * rest of the command, if any left, until
 			 * end or ':' is found.
 			 */
-			while ((*l != '\0') && ITEM_SEP(*l))
+			while ((*l != '\0') && !ITEM_SEP(*l))
 				l++;
 			}
 		else if (found)
@@ -909,7 +927,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			}
 		else
 			{
-			while ((*l != '\0') && ITEM_SEP(*l))
+			while ((*l != '\0') && !ITEM_SEP(*l))
 				l++;
 			}
 		if (*l == '\0') break; /* done */
@@ -925,6 +943,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	{
 	int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
 	unsigned long disabled_mask;
+	unsigned long disabled_m256;
 	STACK_OF(SSL_CIPHER) *cipherstack, *tmp_cipher_list;
 	const char *rule_p;
 	CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
@@ -940,7 +959,12 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 * To reduce the work to do we only want to process the compiled
 	 * in algorithms, so we first get the mask of disabled ciphers.
 	 */
-	disabled_mask = ssl_cipher_get_disabled();
+	{
+		struct disabled_masks d;
+		d = ssl_cipher_get_disabled();
+		disabled_mask = d.mask;
+		disabled_m256 = d.m256;
+	}
 
 	/*
 	 * Now we have to collect the available ciphers from the compiled
@@ -959,7 +983,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		}
 
 	ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers, disabled_mask,
-				   co_list, &head, &tail);
+				   disabled_m256, co_list, &head, &tail);
 
 	/*
 	 * We also need cipher aliases for selecting based on the rule_str.
@@ -979,8 +1003,8 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST,ERR_R_MALLOC_FAILURE);
 		return(NULL);	/* Failure */
 		}
-	ssl_cipher_collect_aliases(ca_list, num_of_group_aliases, disabled_mask,
-				   head);
+	ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,
+				   (disabled_mask & disabled_m256), head);
 
 	/*
 	 * If the rule_string begins with DEFAULT, apply the default rule
