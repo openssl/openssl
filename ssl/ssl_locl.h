@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -275,62 +275,56 @@
  * that the different entities within are mutually exclusive:
  * ONLY ONE BIT PER MASK CAN BE SET AT A TIME.
  */
-#define SSL_MKEY_MASK		0x200000FFL
+
+/* Bits for algorithm_mkey (key exchange algorithm) */
 #define SSL_kRSA		0x00000001L /* RSA key exchange */
 #define SSL_kDHr		0x00000002L /* DH cert, RSA CA cert */ /* no such ciphersuites supported! */
 #define SSL_kDHd		0x00000004L /* DH cert, DSA CA cert */ /* no such ciphersuite supported! */
 #define SSL_kEDH		0x00000008L /* tmp DH key no DH cert */
-#define SSL_EDH			(SSL_kEDH|(SSL_AUTH_MASK^SSL_aNULL))
 #define SSL_kKRB5		0x00000010L /* Kerberos5 key exchange */
 #define SSL_kECDHr		0x00000020L /* ECDH cert, RSA CA cert */
 #define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
-#define SSL_kECDH		(SSL_kECDHr|SSL_kECDHe)
 #define SSL_kEECDH		0x00000080L /* ephemeral ECDH */
-#define SSL_EECDH		(SSL_kEECDH|(SSL_AUTH_MASK^SSL_aNULL))
-#define SSL_kPSK		0x20000000L /* PSK */
+#define SSL_kPSK		0x00000100L /* PSK */
 
-#define SSL_AUTH_MASK		0x10007f00L
-#define SSL_aRSA		0x00000100L /* RSA auth */
-#define SSL_aDSS 		0x00000200L /* DSS auth */
-#define SSL_DSS 		SSL_aDSS
-#define SSL_aNULL 		0x00000400L /* no auth (i.e. use ADH or AECDH) */
-#define SSL_aDH 		0x00000800L /* Fixed DH auth (kDHd or kDHr) */ /* no such ciphersuites supported! */
-#define SSL_aECDH 		0x00001000L /* Fixed ECDH auth (kECDHe or kECDHr) */
-#define SSL_aKRB5               0x00002000L /* KRB5 auth */
-#define SSL_aECDSA              0x00004000L /* ECDSA auth*/
-#define SSL_ECDSA 		SSL_aECDSA
-#define SSL_aPSK                0x10000000L /* PSK auth */
 
-#define SSL_NULL		(SSL_eNULL)
-#define SSL_RSA			(SSL_kRSA|SSL_aRSA)
-#define SSL_DH			(SSL_kDHr|SSL_kDHd|SSL_kEDH)
-#define SSL_ADH			(SSL_kEDH|SSL_aNULL)
-#define SSL_ECDH		(SSL_kECDH|SSL_kEECDH)
-#define SSL_AECDH		(SSL_kEECDH|SSL_aNULL)
-#define SSL_KRB5                (SSL_kKRB5|SSL_aKRB5)
-#define SSL_PSK                 (SSL_kPSK|SSL_aPSK)
+/* Bits for algorithm_auth (server authentication) */
+#define SSL_aRSA		0x00000001L /* RSA auth */
+#define SSL_aDSS 		0x00000002L /* DSS auth */
+#define SSL_aNULL 		0x00000004L /* no auth (i.e. use ADH or AECDH) */
+#define SSL_aDH 		0x00000008L /* Fixed DH auth (kDHd or kDHr) */ /* no such ciphersuites supported! */
+#define SSL_aECDH 		0x00000010L /* Fixed ECDH auth (kECDHe or kECDHr) */
+#define SSL_aKRB5               0x00000020L /* KRB5 auth */
+#define SSL_aECDSA              0x00000040L /* ECDSA auth*/
+#define SSL_aPSK                0x00000080L /* PSK auth */
 
-#define SSL_ENC_MASK		0x0C3F8000L
-#define SSL_DES			0x00008000L
-#define SSL_3DES		0x00010000L
-#define SSL_RC4			0x00020000L
-#define SSL_RC2			0x00040000L
-#define SSL_IDEA		0x00080000L
-#define SSL_eNULL		0x00200000L
-#define SSL_AES			0x04000000L
-#define SSL_CAMELLIA		0x08000000L
 
-#define SSL_MAC_MASK		0x00c00000L
-#define SSL_MD5			0x00400000L
-#define SSL_SHA1		0x00800000L
-#define SSL_SHA			(SSL_SHA1)
+/* Bits for algorithm_enc (symmetric encryption) */
+#define SSL_DES			0x00000001L
+#define SSL_3DES		0x00000002L
+#define SSL_RC4			0x00000004L
+#define SSL_RC2			0x00000008L
+#define SSL_IDEA		0x00000010L
+#define SSL_eNULL		0x00000020L
+#define SSL_AES128		0x00000040L
+#define SSL_AES256		0x00000080L
+#define SSL_CAMELLIA128		0x00000100L
+#define SSL_CAMELLIA256		0x00000200L
 
-#define SSL_SSL_MASK		0x03000000L
-#define SSL_SSLV2		0x01000000L
-#define SSL_SSLV3		0x02000000L
+#define SSL_AES        		(SSL_AES128|SSL_AES256)
+#define SSL_CAMELLIA		(SSL_CAMELLIA128|SSL_CAMELLIA256)
+
+
+/* Bits for algorithm_mac (symmetric authentication) */
+#define SSL_MD5			0x00000001L
+#define SSL_SHA1		0x00000002L
+
+
+/* Bits for algorithm_ssl (protocol version) */
+#define SSL_SSLV2		0x00000001L
+#define SSL_SSLV3		0x00000002L
 #define SSL_TLSV1		SSL_SSLV3	/* for now */
 
-/* we have used 3fffffff - 2 bits left to go. */
 
 /*
  * Export and cipher strength information. For each cipher we have to decide
@@ -348,10 +342,11 @@
  * be possible.
  */
 #define SSL_EXP_MASK		0x00000003L
+#define SSL_STRONG_MASK		0x000000fcL
+
 #define SSL_NOT_EXP		0x00000001L
 #define SSL_EXPORT		0x00000002L
 
-#define SSL_STRONG_MASK		0x000000fcL
 #define SSL_STRONG_NONE		0x00000004L
 #define SSL_EXP40		0x00000008L
 #define SSL_MICRO		(SSL_EXP40)
@@ -384,17 +379,14 @@
 #define SSL_C_IS_EXPORT40(c)	SSL_IS_EXPORT40((c)->algo_strength)
 
 #define SSL_EXPORT_KEYLENGTH(a,s)	(SSL_IS_EXPORT40(s) ? 5 : \
-				 ((a)&SSL_ENC_MASK) == SSL_DES ? 8 : 7)
+				 (a) == SSL_DES ? 8 : 7)
 #define SSL_EXPORT_PKEYLENGTH(a) (SSL_IS_EXPORT40(a) ? 512 : 1024)
-#define SSL_C_EXPORT_KEYLENGTH(c)	SSL_EXPORT_KEYLENGTH((c)->algorithms, \
+#define SSL_C_EXPORT_KEYLENGTH(c)	SSL_EXPORT_KEYLENGTH((c)->algorithm_enc, \
 				(c)->algo_strength)
 #define SSL_C_EXPORT_PKEYLENGTH(c)	SSL_EXPORT_PKEYLENGTH((c)->algo_strength)
 
 
-#define SSL_ALL			0xffffffffL
-#define SSL_ALL_CIPHERS		(SSL_MKEY_MASK|SSL_AUTH_MASK|SSL_ENC_MASK|\
-				SSL_MAC_MASK)
-#define SSL_ALL_STRENGTHS	(SSL_EXP_MASK|SSL_STRONG_MASK)
+
 
 /* Mostly for SSLv3 */
 #define SSL_PKEY_RSA_ENC	0
@@ -444,8 +436,10 @@ typedef struct cert_st
 	/* The following masks are for the key and auth
 	 * algorithms that are supported by the certs below */
 	int valid;
-	unsigned long mask;
-	unsigned long export_mask;
+	unsigned long mask_k;
+	unsigned long mask_a;
+	unsigned long export_mask_k;
+	unsigned long export_mask_a;
 #ifndef OPENSSL_NO_RSA
 	RSA *rsa_tmp;
 	RSA *(*rsa_tmp_cb)(SSL *ssl,int is_export,int keysize);

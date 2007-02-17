@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -191,83 +191,94 @@ typedef struct cipher_order_st
 
 static const SSL_CIPHER cipher_aliases[]={
 	/* "ALL" doesn't include eNULL (must be specifically enabled) */
-	{0,SSL_TXT_ALL, 0,SSL_ALL & ~SSL_eNULL, SSL_ALL ,0,0,0,SSL_ALL,SSL_ALL},
+	{0,SSL_TXT_ALL,0,     0,0,~SSL_eNULL,0,0,0,0,0,0},
 	/* "COMPLEMENTOFALL" */
-	{0,SSL_TXT_CMPALL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_CMPALL,0,  0,0,SSL_eNULL,0,0,0,0,0,0},
 
 	/* "COMPLEMENTOFDEFAULT" (does *not* include ciphersuites not found in ALL!) */
-	{0,SSL_TXT_CMPDEF,0,SSL_ADH|SSL_AECDH|(SSL_ENC_MASK & ~SSL_eNULL), 0,0,0,0,SSL_AUTH_MASK|SSL_ENC_MASK,0},
+	{0,SSL_TXT_CMPDEF,0,  SSL_kEDH|SSL_kEECDH,SSL_aNULL,~SSL_eNULL,0,0,0,0,0,0},
 
-	/* Single key exchange bits
-	 * (some of these are multiple key exchange algs according to the RFCs,
+	/* key exchange aliases
+	 * (some of those using only a single bit here combine
+	 * multiple key exchange algs according to the RFCs,
 	 * e.g. kEDH combines DHE_DSS and DHE_RSA) */
-	{0,SSL_TXT_kRSA,0,SSL_kRSA,  0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_kDHr,0,SSL_kDHr,  0,0,0,0,SSL_MKEY_MASK,0}, /* no such ciphersuites supported! */
-	{0,SSL_TXT_kDHd,0,SSL_kDHd,  0,0,0,0,SSL_MKEY_MASK,0}, /* no such ciphersuites supported! */
-	{0,SSL_TXT_kEDH,0,SSL_kEDH,  0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_kKRB5,0,SSL_kKRB5,0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_kECDHr,0,SSL_kECDHr,0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_kECDHe,0,SSL_kECDHe,0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_kEECDH,0,SSL_kEECDH,0,0,0,0,SSL_MKEY_MASK,0},
-        {0,SSL_TXT_kPSK,0,SSL_kPSK,  0,0,0,0,SSL_MKEY_MASK,0},
+	{0,SSL_TXT_kRSA,0,    SSL_kRSA,  0,0,0,0,0,0,0,0},
 
-	/* More key exchange aliases (combined bits) */
-	{0,SSL_TXT_DH,	0,SSL_DH,    0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_EDH,	0,SSL_EDH,   0,0,0,0,SSL_MKEY_MASK|SSL_AUTH_MASK,0},
-	{0,SSL_TXT_kECDH,0,SSL_kECDH,0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_ECDH,0,SSL_ECDH,  0,0,0,0,SSL_MKEY_MASK,0},
-	{0,SSL_TXT_EECDH,0,SSL_EECDH,0,0,0,0,SSL_MKEY_MASK|SSL_AUTH_MASK,0},
+	{0,SSL_TXT_kDHr,0,    SSL_kDHr,  0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
+	{0,SSL_TXT_kDHd,0,    SSL_kDHd,  0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
+	{0,SSL_TXT_kDH,0,     SSL_kDHr|SSL_kDHd,0,0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
+	{0,SSL_TXT_kEDH,0,    SSL_kEDH,  0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_DH,0,      SSL_kDHr|SSL_kDHd|SSL_kEDH,0,0,0,0,0,0,0,0},
 
-	/* Single authentication bits */
-	{0,SSL_TXT_aRSA,0,SSL_aRSA,  0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_aDSS,0,SSL_aDSS,  0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_aKRB5,0,SSL_aKRB5,0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_aNULL,0,SSL_aNULL,0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_aDH, 0,SSL_aDH,   0,0,0,0,SSL_AUTH_MASK,0}, /* no such ciphersuites supported! */
-	{0,SSL_TXT_aECDH, 0,SSL_aECDH,0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_aECDSA, 0,SSL_aECDSA,0,0,0,0,SSL_AUTH_MASK,0},
-        {0,SSL_TXT_aPSK,0,SSL_aPSK,  0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_kKRB5,0,   SSL_kKRB5, 0,0,0,0,0,0,0,0},
 
-	/* More authentication aliases */
-	{0,SSL_TXT_DSS,	0,SSL_DSS,   0,0,0,0,SSL_AUTH_MASK,0},
-	{0,SSL_TXT_ECDSA,0,SSL_ECDSA,0,0,0,0,SSL_AUTH_MASK,0},
+	{0,SSL_TXT_kECDHr,0,  SSL_kECDHr,0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kECDHe,0,  SSL_kECDHe,0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kECDH,0,   SSL_kECDHr|SSL_kECDHe,0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kEECDH,0,  SSL_kEECDH,0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_ECDH,0,    SSL_kECDHr|SSL_kECDHe|SSL_kEECDH,0,0,0,0,0,0,0,0},
 
-	/* Single encryption bits */
-	{0,SSL_TXT_DES,	0,SSL_DES,   0,0,0,0,SSL_ENC_MASK,0},
-	{0,SSL_TXT_3DES,0,SSL_3DES,  0,0,0,0,SSL_ENC_MASK,0},
-	{0,SSL_TXT_RC4,	0,SSL_RC4,   0,0,0,0,SSL_ENC_MASK,0},
-	{0,SSL_TXT_RC2,	0,SSL_RC2,   0,0,0,0,SSL_ENC_MASK,0},
-#ifndef OPENSSL_NO_IDEA
-	{0,SSL_TXT_IDEA,0,SSL_IDEA,  0,0,0,0,SSL_ENC_MASK,0},
-#endif
-	{0,SSL_TXT_eNULL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
-	{0,SSL_TXT_AES,	0,SSL_AES,   0,0,0,0,SSL_ENC_MASK,0},
-	{0,SSL_TXT_CAMELLIA,	0,SSL_CAMELLIA,   0,0,0,0,SSL_ENC_MASK,0},
+        {0,SSL_TXT_kPSK,0,    SSL_kPSK,  0,0,0,0,0,0,0,0},
 
-	/* Single MAC bits */	
-	{0,SSL_TXT_MD5,	0,SSL_MD5,   0,0,0,0,SSL_MAC_MASK,0},
-	{0,SSL_TXT_SHA1,0,SSL_SHA1,  0,0,0,0,SSL_MAC_MASK,0},
-	{0,SSL_TXT_SHA,	0,SSL_SHA,   0,0,0,0,SSL_MAC_MASK,0},
 
-	/* More aliases */
-	{0,SSL_TXT_NULL,0,SSL_NULL,  0,0,0,0,SSL_ENC_MASK,0},
-	{0,SSL_TXT_KRB5,0,SSL_KRB5,  0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
-	{0,SSL_TXT_RSA,	0,SSL_RSA,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
-	{0,SSL_TXT_ADH,	0,SSL_ADH,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
-	{0,SSL_TXT_AECDH,0,SSL_AECDH,0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
-        {0,SSL_TXT_PSK, 0,SSL_PSK,   0,0,0,0,SSL_AUTH_MASK|SSL_MKEY_MASK,0},
+	/* server authentication aliases */
+	{0,SSL_TXT_aRSA,0,    0,SSL_aRSA,  0,0,0,0,0,0,0},
+	{0,SSL_TXT_aDSS,0,    0,SSL_aDSS,  0,0,0,0,0,0,0},
+	{0,SSL_TXT_DSS,0,     0,SSL_aDSS,   0,0,0,0,0,0,0},
+	{0,SSL_TXT_aKRB5,0,   0,SSL_aKRB5, 0,0,0,0,0,0,0},
+	{0,SSL_TXT_aNULL,0,   0,SSL_aNULL, 0,0,0,0,0,0,0},
+	{0,SSL_TXT_aDH,0,     0,SSL_aDH,   0,0,0,0,0,0,0}, /* no such ciphersuites supported! */
+	{0,SSL_TXT_aECDH,0,   0,SSL_aECDH, 0,0,0,0,0,0,0},
+	{0,SSL_TXT_aECDSA,0,  0,SSL_aECDSA,0,0,0,0,0,0,0},
+	{0,SSL_TXT_ECDSA,0,   0,SSL_aECDSA, 0,0,0,0,0,0,0},
+        {0,SSL_TXT_aPSK,0,    0,SSL_aPSK,  0,0,0,0,0,0,0},
 
-	{0,SSL_TXT_SSLV2, 0,SSL_SSLV2, 0,0,0,0,SSL_SSL_MASK,0},
-	{0,SSL_TXT_SSLV3, 0,SSL_SSLV3, 0,0,0,0,SSL_SSL_MASK,0},
-	{0,SSL_TXT_TLSV1, 0,SSL_TLSV1, 0,0,0,0,SSL_SSL_MASK,0},
 
-	{0,SSL_TXT_EXP   ,0, 0,SSL_EXPORT, 0,0,0,0,SSL_EXP_MASK},
-	{0,SSL_TXT_EXPORT,0, 0,SSL_EXPORT, 0,0,0,0,SSL_EXP_MASK},
-	{0,SSL_TXT_EXP40, 0, 0, SSL_EXP40, 0,0,0,0,SSL_STRONG_MASK},
-	{0,SSL_TXT_EXP56, 0, 0, SSL_EXP56, 0,0,0,0,SSL_STRONG_MASK},
-	{0,SSL_TXT_LOW,   0, 0,   SSL_LOW, 0,0,0,0,SSL_STRONG_MASK},
-	{0,SSL_TXT_MEDIUM,0, 0,SSL_MEDIUM, 0,0,0,0,SSL_STRONG_MASK},
-	{0,SSL_TXT_HIGH,  0, 0,  SSL_HIGH, 0,0,0,0,SSL_STRONG_MASK},
+	/* aliases combining key exchange and server authentication */
+	{0,SSL_TXT_EDH,0,     SSL_kEDH,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_EECDH,0,   SSL_kEECDH,~SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_NULL,0,    0,0,SSL_eNULL, 0,0,0,0,0,0},
+	{0,SSL_TXT_KRB5,0,    SSL_kKRB5,SSL_aKRB5,0,0,0,0,0,0,0},
+	{0,SSL_TXT_RSA,0,     SSL_kRSA,SSL_aRSA,0,0,0,0,0,0,0},
+	{0,SSL_TXT_ADH,0,     SSL_kEDH,SSL_aNULL,0,0,0,0,0,0,0},
+	{0,SSL_TXT_AECDH,0,   SSL_kEECDH,SSL_aNULL,0,0,0,0,0,0,0},
+        {0,SSL_TXT_PSK,0,     SSL_kPSK,SSL_aPSK,0,0,0,0,0,0,0},
+
+
+	/* symmetric encryption aliases */
+	{0,SSL_TXT_DES,0,     0,0,SSL_DES,   0,0,0,0,0,0},
+	{0,SSL_TXT_3DES,0,    0,0,SSL_3DES,  0,0,0,0,0,0},
+	{0,SSL_TXT_RC4,0,     0,0,SSL_RC4,   0,0,0,0,0,0},
+	{0,SSL_TXT_RC2,0,     0,0,SSL_RC2,   0,0,0,0,0,0},
+	{0,SSL_TXT_IDEA,0,    0,0,SSL_IDEA,  0,0,0,0,0,0},
+	{0,SSL_TXT_eNULL,0,   0,0,SSL_eNULL, 0,0,0,0,0,0},
+	{0,SSL_TXT_AES128,0,  0,0,SSL_AES128,0,0,0,0,0,0},
+	{0,SSL_TXT_AES256,0,  0,0,SSL_AES256,0,0,0,0,0,0},
+	{0,SSL_TXT_AES,0,     0,0,SSL_AES128|SSL_AES256,0,0,0,0,0,0},
+	{0,SSL_TXT_CAMELLIA128,0,0,0,SSL_CAMELLIA128,0,0,0,0,0,0},
+	{0,SSL_TXT_CAMELLIA256,0,0,0,SSL_CAMELLIA256,0,0,0,0,0,0},
+	{0,SSL_TXT_CAMELLIA   ,0,0,0,SSL_CAMELLIA128|SSL_CAMELLIA256,0,0,0,0,0,0},
+
+	/* MAC aliases */	
+	{0,SSL_TXT_MD5,0,     0,0,0,SSL_MD5,   0,0,0,0,0},
+	{0,SSL_TXT_SHA1,0,    0,0,0,SSL_SHA1,  0,0,0,0,0},
+	{0,SSL_TXT_SHA,0,     0,0,0,SSL_SHA1,  0,0,0,0,0},
+
+	/* protocol version aliases */
+	{0,SSL_TXT_SSLV2,0,   0,0,0,0,SSL_SSLV2, 0,0,0,0},
+	{0,SSL_TXT_SSLV3,0,   0,0,0,0,SSL_SSLV3, 0,0,0,0},
+	{0,SSL_TXT_TLSV1,0,   0,0,0,0,SSL_TLSV1, 0,0,0,0},
+
+	/* export flag */
+	{0,SSL_TXT_EXP,0,     0,0,0,0,0,SSL_EXPORT,0,0,0},
+	{0,SSL_TXT_EXPORT,0,  0,0,0,0,0,SSL_EXPORT,0,0,0},
+
+	/* strength classes */
+	{0,SSL_TXT_EXP40,0,   0,0,0,0,0,SSL_EXP40, 0,0,0},
+	{0,SSL_TXT_EXP56,0,   0,0,0,0,0,SSL_EXP56, 0,0,0},
+	{0,SSL_TXT_LOW,0,     0,0,0,0,0,SSL_LOW,   0,0,0},
+	{0,SSL_TXT_MEDIUM,0,  0,0,0,0,0,SSL_MEDIUM,0,0,0},
+	{0,SSL_TXT_HIGH,0,    0,0,0,0,0,SSL_HIGH,  0,0,0},
 	};
 
 void ssl_load_ciphers(void)
@@ -384,7 +395,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 
 	if ((enc == NULL) || (md == NULL)) return(0);
 
-	switch (c->algorithms & SSL_ENC_MASK)
+	switch (c->algorithm_enc)
 		{
 	case SSL_DES:
 		i=SSL_ENC_DES_IDX;
@@ -404,23 +415,18 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	case SSL_eNULL:
 		i=SSL_ENC_NULL_IDX;
 		break;
-	case SSL_AES:
-		switch(c->alg_bits)
-			{
-		case 128: i=SSL_ENC_AES128_IDX; break;
-		case 256: i=SSL_ENC_AES256_IDX; break;
-		default: i=-1; break;
-			}
+	case SSL_AES128:
+		i=SSL_ENC_AES128_IDX;
 		break;
-	case SSL_CAMELLIA:
-		switch(c->alg_bits)
-			{
-		case 128: i=SSL_ENC_CAMELLIA128_IDX; break;
-		case 256: i=SSL_ENC_CAMELLIA256_IDX; break;
-		default: i=-1; break;
-			}
+	case SSL_AES256:
+		i=SSL_ENC_AES256_IDX;
 		break;
-
+	case SSL_CAMELLIA128:
+		i=SSL_ENC_CAMELLIA128_IDX;
+		break;
+	case SSL_CAMELLIA256:
+		i=SSL_ENC_CAMELLIA256_IDX;
+		break;
 	default:
 		i= -1;
 		break;
@@ -436,7 +442,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 			*enc=ssl_cipher_methods[i];
 		}
 
-	switch (c->algorithms & SSL_MAC_MASK)
+	switch (c->algorithm_mac)
 		{
 	case SSL_MD5:
 		i=SSL_MD_MD5_IDX;
@@ -478,52 +484,67 @@ static void ll_append_tail(CIPHER_ORDER **head, CIPHER_ORDER *curr,
 	*tail=curr;
 	}
 
-static unsigned long ssl_cipher_get_disabled(void)
+static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, unsigned long *enc, unsigned long *mac, unsigned long *ssl)
 	{
-	unsigned long mask = 0;
+	*mkey = 0;
+	*auth = 0;
+	*enc = 0;
+	*mac = 0;
+	*ssl = 0;
 
 #ifdef OPENSSL_NO_RSA
-	mask |= SSL_aRSA|SSL_kRSA;
+	*mkey |= SSL_kRSA;
+	*auth |= SSL_aRSA;
 #endif
 #ifdef OPENSSL_NO_DSA
-	mask |= SSL_aDSS;
+	*auth |= SSL_aDSS;
 #endif
+	*mkey |= SSL_kDHr|SSL_kDHd; /* no such ciphersuites supported! */
+	*auth |= SSL_aDH;
 #ifdef OPENSSL_NO_DH
-	mask |= SSL_kDHr|SSL_kDHd|SSL_kEDH|SSL_aDH;
+	*mkey |= SSL_kDHr|SSL_kDHd|SSL_kEDH;
+	*auth |= SSL_aDH;
 #endif
 #ifdef OPENSSL_NO_KRB5
-	mask |= SSL_kKRB5|SSL_aKRB5;
+	*mkey |= SSL_kKRB5;
+	*auth |= SSL_aKRB5;
 #endif
 #ifdef OPENSSL_NO_ECDSA
-	mask |= SSL_aECDSA;
+	*auth |= SSL_aECDSA;
 #endif
 #ifdef OPENSSL_NO_ECDH
-	mask |= SSL_kECDHe|SSL_kECDHr|SSL_aECDH;
+	*mkey |= SSL_kECDHe|SSL_kECDHr;
+	*auth |= SSL_aECDH;
 #endif
 #ifdef OPENSSL_NO_PSK
-	mask |= SSL_kPSK;
+	*mkey |= SSL_kPSK;
+	*auth |= SSL_aPSK;
 #endif
 #ifdef SSL_FORBID_ENULL
-	mask |= SSL_eNULL;
+	*enc |= SSL_eNULL;
 #endif
 
-	mask |= (ssl_cipher_methods[SSL_ENC_DES_IDX ] == NULL) ? SSL_DES :0;
-	mask |= (ssl_cipher_methods[SSL_ENC_3DES_IDX] == NULL) ? SSL_3DES:0;
-	mask |= (ssl_cipher_methods[SSL_ENC_RC4_IDX ] == NULL) ? SSL_RC4 :0;
-	mask |= (ssl_cipher_methods[SSL_ENC_RC2_IDX ] == NULL) ? SSL_RC2 :0;
-	mask |= (ssl_cipher_methods[SSL_ENC_IDEA_IDX] == NULL) ? SSL_IDEA:0;
-	mask |= (ssl_cipher_methods[SSL_ENC_AES128_IDX] == NULL) ? SSL_AES:0;
-	mask |= (ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] == NULL) ? SSL_CAMELLIA:0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_DES_IDX ] == NULL) ? SSL_DES :0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_3DES_IDX] == NULL) ? SSL_3DES:0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_RC4_IDX ] == NULL) ? SSL_RC4 :0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_RC2_IDX ] == NULL) ? SSL_RC2 :0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_IDEA_IDX] == NULL) ? SSL_IDEA:0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_AES128_IDX] == NULL) ? SSL_AES128:0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_AES256_IDX] == NULL) ? SSL_AES256:0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] == NULL) ? SSL_CAMELLIA128:0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX] == NULL) ? SSL_CAMELLIA256:0;
 
-	mask |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
-	mask |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;
-
-	return(mask);
+	*mac |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
+	*mac |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;
 	}
 
 static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
-		int num_of_ciphers, unsigned long mask, CIPHER_ORDER *co_list,
-		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
+                int num_of_ciphers,
+                unsigned long disabled_mkey, unsigned long disabled_auth,
+                unsigned long disabled_enc, unsigned long disabled_mac,
+                unsigned long disabled_ssl,
+                CIPHER_ORDER *co_list,
+                CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 	{
 	int i, co_list_num;
 	SSL_CIPHER *c;
@@ -541,7 +562,12 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 		{
 		c = ssl_method->get_cipher(i);
 		/* drop those that use any of that is not available */
-		if ((c != NULL) && c->valid && !(c->algorithms & mask))
+		if ((c != NULL) && c->valid &&
+		    !(c->algorithm_mkey & disabled_mkey) &&
+		    !(c->algorithm_auth & disabled_auth) &&
+		    !(c->algorithm_enc & disabled_enc) &&
+		    !(c->algorithm_mac & disabled_mac) &&
+		    !(c->algorithm_ssl & disabled_ssl))
 			{
 			co_list[co_list_num].cipher = c;
 			co_list[co_list_num].next = NULL;
@@ -549,7 +575,7 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 			co_list[co_list_num].active = 0;
 			co_list_num++;
 #ifdef KSSL_DEBUG
-			printf("\t%d: %s %lx %lx\n",i,c->name,c->id,c->algorithms);
+			printf("\t%d: %s %lx %lx %lx\n",i,c->name,c->id,c->algorithm_mkey,c->algorithm_auth);
 #endif	/* KSSL_DEBUG */
 			/*
 			if (!sk_push(ca_list,(char *)c)) goto err;
@@ -577,13 +603,20 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 	}
 
 static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
-			int num_of_group_aliases, unsigned long mask,
+                        int num_of_group_aliases,
+                        unsigned long disabled_mkey, unsigned long disabled_auth,
+                        unsigned long disabled_enc, unsigned long disabled_mac,
+                        unsigned long disabled_ssl,
 			CIPHER_ORDER *head)
 	{
 	CIPHER_ORDER *ciph_curr;
 	SSL_CIPHER **ca_curr;
 	int i;
-	unsigned long enabled_mask = ~mask;
+	unsigned long mask_mkey = ~disabled_mkey;
+	unsigned long mask_auth = ~disabled_auth;
+	unsigned long mask_enc = ~disabled_enc;
+	unsigned long mask_mac = ~disabled_mac;
+	unsigned long mask_ssl = ~disabled_ssl;
 
 	/*
 	 * First, add the real ciphers as already collected
@@ -605,31 +638,31 @@ static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
 	 */
 	for (i = 0; i < num_of_group_aliases; i++)
 		{
-		int algorithms = cipher_aliases[i].algorithms;
+		unsigned long algorithm_mkey = cipher_aliases[i].algorithm_mkey;
+		unsigned long algorithm_auth = cipher_aliases[i].algorithm_auth;
+		unsigned long algorithm_enc = cipher_aliases[i].algorithm_enc;
+		unsigned long algorithm_mac = cipher_aliases[i].algorithm_mac;
+		unsigned long algorithm_ssl = cipher_aliases[i].algorithm_ssl;
 
-		if (SSL_MKEY_MASK & algorithms)
-			{
-			if ((SSL_MKEY_MASK & algorithms & enabled_mask) == 0)
+		if (algorithm_mkey)
+			if ((algorithm_mkey & mask_mkey) == 0)
 				continue;
-			}
+	
+		if (algorithm_auth)
+			if ((algorithm_auth & mask_auth) == 0)
+				continue;
 		
-		if (SSL_AUTH_MASK & algorithms)
-			{
-			if ((SSL_AUTH_MASK & algorithms & enabled_mask) == 0)
+		if (algorithm_enc)
+			if ((algorithm_enc & mask_enc) == 0)
 				continue;
-			}
 		
-		if (SSL_ENC_MASK & algorithms)
-			{
-			if ((SSL_ENC_MASK & algorithms & enabled_mask) == 0)
+		if (algorithm_mac)
+			if ((algorithm_mac & mask_mac) == 0)
 				continue;
-			}
 		
-		if (SSL_MAC_MASK & algorithms)
-			{
-			if ((SSL_MAC_MASK & algorithms & enabled_mask) == 0)
+		if (algorithm_ssl)
+			if ((algorithm_ssl & mask_ssl) == 0)
 				continue;
-			}
 		
 		*ca_curr = (SSL_CIPHER *)(cipher_aliases + i);
 		ca_curr++;
@@ -638,20 +671,20 @@ static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
 	*ca_curr = NULL;	/* end of list */
 	}
 
-static void ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long ssl_version,
-		unsigned long algorithms, unsigned long mask,
-		unsigned long algo_strength, unsigned long mask_strength,
+static void ssl_cipher_apply_rule(unsigned long cipher_id,
+                unsigned long alg_mkey, unsigned long alg_auth,
+                unsigned long alg_enc, unsigned long alg_mac,
+                unsigned long alg_ssl,
+		unsigned long algo_strength,
 		int rule, int strength_bits,
 		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 	{
 	CIPHER_ORDER *head, *tail, *curr, *curr2, *tail2;
 	SSL_CIPHER *cp;
-	unsigned long ma, ma_s;
 
 #ifdef CIPHER_DEBUG
-	printf("Applying rule %d with %08lx %08lx %08lx %08lx (%d)\n",
-		rule, algorithms, mask, algo_strength, mask_strength,
-		strength_bits);
+	printf("Applying rule %d with %08lx/%08lx/%08lx/%08lx/%08lx %08lx (%d)\n",
+		rule, alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength, strength_bits);
 #endif
 
 	curr = head = *head_p;
@@ -665,40 +698,36 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id, unsigned long ssl_ver
 
 		cp = curr->cipher;
 
-		/* If explicit cipher suite, match only that one for its own protocol version.
-		 * Usual selection criteria will be used for similar ciphersuites from other version! */
-
-		if (cipher_id && (cp->algorithms & SSL_SSL_MASK) == ssl_version)
+		/*
+		 * Selection criteria is either the value of strength_bits
+		 * or the algorithms used.
+		 */
+		if (strength_bits >= 0)
 			{
-			if (cp->id != cipher_id)
+			if (strength_bits != cp->strength_bits)
 				continue;
 			}
-
-		/*
-		 * Selection criteria is either the number of strength_bits
-		 * or the algorithm used.
-		 */
-		else if (strength_bits == -1)
+		else
 			{
-			ma = mask & cp->algorithms;
-			ma_s = mask_strength & cp->algo_strength;
-
 #ifdef CIPHER_DEBUG
-			printf("\nName: %s:\nAlgo = %08lx Algo_strength = %08lx\nMask = %08lx Mask_strength %08lx\n", cp->name, cp->algorithms, cp->algo_strength, mask, mask_strength);
-			printf("ma = %08lx ma_s %08lx, ma&algo=%08lx, ma_s&algos=%08lx\n", ma, ma_s, ma&algorithms, ma_s&algo_strength);
+			printf("\nName: %s:\nAlgo = %08lx/%08lx/%08lx/%08lx/%08lx Algo_strength = %08lx\n", cp->name, cp->algorithm_mkey, cp->algorithm_auth, cp->algorithm_enc, cp->algorithm_mac, cp->algorithm_ssl, cp->algo_strength);
 #endif
-			/*
-			 * Select: if none of the mask bit was met from the
-			 * cipher or not all of the bits were met, the
-			 * selection does not apply.
-			 */
-			if (((ma == 0) && (ma_s == 0)) ||
-			    ((ma & algorithms) != ma) ||
-			    ((ma_s & algo_strength) != ma_s))
-				continue; /* does not apply */
+
+			if (alg_mkey && !(alg_mkey & cp->algorithm_mkey))
+				continue;
+			if (alg_auth && !(alg_auth & cp->algorithm_auth))
+				continue;
+			if (alg_enc && !(alg_enc & cp->algorithm_enc))
+				continue;
+			if (alg_mac && !(alg_mac & cp->algorithm_mac))
+				continue;
+			if (alg_ssl && !(alg_ssl & cp->algorithm_ssl))
+				continue;
+			if ((algo_strength & SSL_EXP_MASK) && !(algo_strength & SSL_EXP_MASK & cp->algo_strength))
+				continue;
+			if ((algo_strength & SSL_STRONG_MASK) && !(algo_strength & SSL_STRONG_MASK & cp->algo_strength))
+				continue;
 			}
-		else if (strength_bits != cp->strength_bits)
-			continue;	/* does not apply */
 
 #ifdef CIPHER_DEBUG
 		printf("Action = %d\n", rule);
@@ -768,10 +797,10 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 
 	number_uses = OPENSSL_malloc((max_strength_bits + 1) * sizeof(int));
 	if (!number_uses)
-	{
+		{
 		SSLerr(SSL_F_SSL_CIPHER_STRENGTH_SORT,ERR_R_MALLOC_FAILURE);
 		return(0);
-	}
+		}
 	memset(number_uses, 0, (max_strength_bits + 1) * sizeof(int));
 
 	/*
@@ -790,8 +819,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 	 */
 	for (i = max_strength_bits; i >= 0; i--)
 		if (number_uses[i] > 0)
-			ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, CIPHER_ORD, i,
-					head_p, tail_p);
+			ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ORD, i, head_p, tail_p);
 
 	OPENSSL_free(number_uses);
 	return(1);
@@ -801,10 +829,10 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                 CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p,
                 SSL_CIPHER **ca_list)
 	{
-	unsigned long algorithms, mask, algo_strength, mask_strength;
+	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength;
 	const char *l, *start, *buf;
 	int j, multi, found, rule, retval, ok, buflen;
-	unsigned long cipher_id = 0, ssl_version = 0;
+	unsigned long cipher_id = 0;
 	char ch;
 
 	retval = 1;
@@ -832,7 +860,12 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			continue;
 			}
 
-		algorithms = mask = algo_strength = mask_strength = 0;
+		alg_mkey = 0;
+		alg_auth = 0;
+		alg_enc = 0;
+		alg_mac = 0;
+		alg_ssl = 0;
+		algo_strength = 0;
 
 		start=l;
 		for (;;)
@@ -893,10 +926,9 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			 * sufficient, we have to strncmp() anyway. (We cannot
 			 * use strcmp(), because buf is not '\0' terminated.)
 			 */
-			 j = found = 0;
-			 cipher_id = 0;
-			 ssl_version = 0;
-			 while (ca_list[j])
+			j = found = 0;
+			cipher_id = 0;
+			while (ca_list[j])
 				{
 				if (!strncmp(buf, ca_list[j]->name, buflen) &&
 				    (ca_list[j]->name[buflen] == '\0'))
@@ -907,31 +939,100 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 				else
 					j++;
 				}
+
 			if (!found)
 				break;	/* ignore this entry */
 
-			/* New algorithms:
-			 *  1 - any old restrictions apply outside new mask
-			 *  2 - any new restrictions apply outside old mask
-			 *  3 - enforce old & new where masks intersect
-			 */
-			algorithms = (algorithms & ~ca_list[j]->mask) |		/* 1 */
-			             (ca_list[j]->algorithms & ~mask) |		/* 2 */
-			             (algorithms & ca_list[j]->algorithms);	/* 3 */
-			mask |= ca_list[j]->mask;
-			algo_strength = (algo_strength & ~ca_list[j]->mask_strength) |
-			                (ca_list[j]->algo_strength & ~mask_strength) |
-			                (algo_strength & ca_list[j]->algo_strength);
-			mask_strength |= ca_list[j]->mask_strength;
-
-			/* explicit ciphersuite found */
-			if (ca_list[j]->valid)
+			if (ca_list[j]->algorithm_mkey)
 				{
-				cipher_id = ca_list[j]->id;
-				ssl_version = ca_list[j]->algorithms & SSL_SSL_MASK;
-				break;
+				if (alg_mkey)
+					{
+					alg_mkey &= ca_list[j]->algorithm_mkey;
+					if (!alg_mkey) { found = 0; break; }
+					}
+				else
+					alg_mkey = ca_list[j]->algorithm_mkey;
 				}
 
+			if (ca_list[j]->algorithm_auth)
+				{
+				if (alg_auth)
+					{
+					alg_auth &= ca_list[j]->algorithm_auth;
+					if (!alg_auth) { found = 0; break; }
+					}
+				else
+					alg_auth = ca_list[j]->algorithm_auth;
+				}
+			
+			if (ca_list[j]->algorithm_enc)
+				{
+				if (alg_enc)
+					{
+					alg_enc &= ca_list[j]->algorithm_enc;
+					if (!alg_enc) { found = 0; break; }
+					}
+				else
+					alg_enc = ca_list[j]->algorithm_enc;
+				}
+						
+			if (ca_list[j]->algorithm_mac)
+				{
+				if (alg_mac)
+					{
+					alg_mac &= ca_list[j]->algorithm_mac;
+					if (!alg_mac) { found = 0; break; }
+					}
+				else
+					alg_mac = ca_list[j]->algorithm_mac;
+				}
+			
+			if (ca_list[j]->algo_strength & SSL_EXP_MASK)
+				{
+				if (algo_strength & SSL_EXP_MASK)
+					{
+					algo_strength &= (ca_list[j]->algo_strength & SSL_EXP_MASK) | ~SSL_EXP_MASK;
+					if (!(algo_strength & SSL_EXP_MASK)) { found = 0; break; }
+					}
+				else
+					algo_strength |= ca_list[j]->algo_strength & SSL_EXP_MASK;
+				}
+
+			if (ca_list[j]->algo_strength & SSL_STRONG_MASK)
+				{
+				if (algo_strength & SSL_STRONG_MASK)
+					{
+					algo_strength &= (ca_list[j]->algo_strength & SSL_STRONG_MASK) | ~SSL_STRONG_MASK;
+					if (!(algo_strength & SSL_STRONG_MASK)) { found = 0; break; }
+					}
+				else
+					algo_strength |= ca_list[j]->algo_strength & SSL_STRONG_MASK;
+				}
+			
+			if (ca_list[j]->valid)
+				{
+				/* explicit ciphersuite found; its protocol version
+				 * does not become part of the search pattern!*/
+
+				cipher_id = ca_list[j]->id;
+				}
+			else
+				{
+				/* not an explicit ciphersuite; only in this case, the
+				 * protocol version is considered part of the search pattern */
+
+				if (ca_list[j]->algorithm_ssl)
+					{
+					if (alg_ssl)
+						{
+						alg_ssl &= ca_list[j]->algorithm_ssl;
+						if (!alg_ssl) { found = 0; break; }
+						}
+					else
+						alg_ssl = ca_list[j]->algorithm_ssl;
+					}
+				}
+			
 			if (!multi) break;
 			}
 
@@ -955,18 +1056,18 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 			 * rest of the command, if any left, until
 			 * end or ':' is found.
 			 */
-			while ((*l != '\0') && ITEM_SEP(*l))
+			while ((*l != '\0') && !ITEM_SEP(*l))
 				l++;
 			}
 		else if (found)
 			{
-			ssl_cipher_apply_rule(cipher_id, ssl_version, algorithms, mask,
-				algo_strength, mask_strength, rule, -1,
-				head_p, tail_p);
+			ssl_cipher_apply_rule(cipher_id,
+				alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength,
+				rule, -1, head_p, tail_p);
 			}
 		else
 			{
-			while ((*l != '\0') && ITEM_SEP(*l))
+			while ((*l != '\0') && !ITEM_SEP(*l))
 				l++;
 			}
 		if (*l == '\0') break; /* done */
@@ -981,7 +1082,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		const char *rule_str)
 	{
 	int ok, num_of_ciphers, num_of_alias_max, num_of_group_aliases;
-	unsigned long disabled_mask;
+	unsigned long disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl;
 	STACK_OF(SSL_CIPHER) *cipherstack, *tmp_cipher_list;
 	const char *rule_p;
 	CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
@@ -997,7 +1098,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 * To reduce the work to do we only want to process the compiled
 	 * in algorithms, so we first get the mask of disabled ciphers.
 	 */
-	disabled_mask = ssl_cipher_get_disabled();
+	ssl_cipher_get_disabled(&disabled_mkey, &disabled_auth, &disabled_enc, &disabled_mac, &disabled_ssl);
 
 	/*
 	 * Now we have to collect the available ciphers from the compiled
@@ -1015,8 +1116,9 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		return(NULL);	/* Failure */
 		}
 
-	ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers, disabled_mask,
-				   co_list, &head, &tail);
+	ssl_cipher_collect_ciphers(ssl_method, num_of_ciphers,
+	                           disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl,
+	                           co_list, &head, &tail);
 
 	/*
 	 * We also need cipher aliases for selecting based on the rule_str.
@@ -1036,8 +1138,9 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		SSLerr(SSL_F_SSL_CREATE_CIPHER_LIST,ERR_R_MALLOC_FAILURE);
 		return(NULL);	/* Failure */
 		}
-	ssl_cipher_collect_aliases(ca_list, num_of_group_aliases, disabled_mask,
-				   head);
+	ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,
+	                           disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl,
+	                           head);
 
 	/*
 	 * If the rule_string begins with DEFAULT, apply the default rule
@@ -1112,14 +1215,19 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	int is_export,pkl,kl;
 	const char *ver,*exp_str;
 	const char *kx,*au,*enc,*mac;
-	unsigned long alg,alg2,alg_s;
+	unsigned long alg_mkey,alg_auth,alg_enc,alg_mac,alg_ssl,alg2,alg_s;
 #ifdef KSSL_DEBUG
-	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s AL=%lx\n";
+	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s AL=%lx/%lx/%lx/%lx/%lx\n";
 #else
 	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s\n";
 #endif /* KSSL_DEBUG */
 
-	alg=cipher->algorithms;
+	alg_mkey = cipher->algorithm_mkey;
+	alg_auth = cipher->algorithm_auth;
+	alg_enc = cipher->algorithm_enc;
+	alg_mac = cipher->algorithm_mac;
+	alg_ssl = cipher->algorithm_ssl;
+
 	alg_s=cipher->algo_strength;
 	alg2=cipher->algorithm2;
 
@@ -1128,14 +1236,14 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	kl=SSL_C_EXPORT_KEYLENGTH(cipher);
 	exp_str=is_export?" export":"";
 	
-	if (alg & SSL_SSLV2)
+	if (alg_ssl & SSL_SSLV2)
 		ver="SSLv2";
-	else if (alg & SSL_SSLV3)
+	else if (alg_ssl & SSL_SSLV3)
 		ver="SSLv3";
 	else
 		ver="unknown";
 
-	switch (alg&SSL_MKEY_MASK)
+	switch (alg_mkey)
 		{
 	case SSL_kRSA:
 		kx=is_export?(pkl == 512 ? "RSA(512)" : "RSA(1024)"):"RSA";
@@ -1168,7 +1276,7 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 		kx="unknown";
 		}
 
-	switch (alg&SSL_AUTH_MASK)
+	switch (alg_auth)
 		{
 	case SSL_aRSA:
 		au="RSA";
@@ -1199,7 +1307,7 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 		break;
 		}
 
-	switch (alg&SSL_ENC_MASK)
+	switch (alg_enc)
 		{
 	case SSL_DES:
 		enc=(is_export && kl == 5)?"DES(40)":"DES(56)";
@@ -1220,30 +1328,24 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_eNULL:
 		enc="None";
 		break;
-	case SSL_AES:
-		switch(cipher->strength_bits)
-			{
-		case 128: enc="AES(128)"; break;
-		case 192: enc="AES(192)"; break;
-		case 256: enc="AES(256)"; break;
-		default: enc="AES(?""?""?)"; break;
-			}
+	case SSL_AES128:
+		enc="AES(128)";
 		break;
-	case SSL_CAMELLIA:
-		switch(cipher->strength_bits)
-			{
-		case 128: enc="Camellia(128)"; break;
-		case 256: enc="Camellia(256)"; break;
-		default: enc="Camellia(?""?""?)"; break;
-			}
+	case SSL_AES256:
+		enc="AES(256)";
 		break;
-		
+	case SSL_CAMELLIA128:
+		enc="Camellia(128)";
+		break;
+	case SSL_CAMELLIA256:
+		enc="Camellia(256)";
+		break;
 	default:
 		enc="unknown";
 		break;
 		}
 
-	switch (alg&SSL_MAC_MASK)
+	switch (alg_mac)
 		{
 	case SSL_MD5:
 		mac="MD5";
@@ -1266,7 +1368,7 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 		return("Buffer too small");
 
 #ifdef KSSL_DEBUG
-	BIO_snprintf(buf,len,format,cipher->name,ver,kx,au,enc,mac,exp_str,alg);
+	BIO_snprintf(buf,len,format,cipher->name,ver,kx,au,enc,mac,exp_str,alg_mkey,alg_auth,alg_enc,alg_mac,alg_ssl);
 #else
 	BIO_snprintf(buf,len,format,cipher->name,ver,kx,au,enc,mac,exp_str);
 #endif /* KSSL_DEBUG */

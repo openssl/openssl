@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -180,7 +180,7 @@ IMPLEMENT_ssl3_meth_func(SSLv3_client_method,
 int ssl3_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
-	unsigned long Time=(unsigned long)time(NULL),l;
+	unsigned long Time=(unsigned long)time(NULL);
 	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
@@ -288,8 +288,8 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CR_CERT_B:
 			/* Check if it is anon DH/ECDH */
 			/* or PSK */
-			if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL)
-				&& !(s->s3->tmp.new_cipher->algorithms & SSL_kPSK))
+			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL) &&
+			    !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK))
 				{
 				ret=ssl3_get_server_certificate(s);
 				if (ret <= 0) goto end;
@@ -350,7 +350,6 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CW_KEY_EXCH_B:
 			ret=ssl3_send_client_key_exchange(s);
 			if (ret <= 0) goto end;
-			l=s->s3->tmp.new_cipher->algorithms;
 			/* EAY EAY EAY need to check for DH fix cert
 			 * sent back */
 			/* For TLS, cert_req is set to 2, so a cert chain
@@ -940,10 +939,10 @@ int ssl3_get_server_certificate(SSL *s)
 	i=ssl_verify_cert_chain(s,sk);
 	if ((s->verify_mode != SSL_VERIFY_NONE) && (!i)
 #ifndef OPENSSL_NO_KRB5
-	        && (s->s3->tmp.new_cipher->algorithms & (SSL_MKEY_MASK|SSL_AUTH_MASK))
-	        != (SSL_aKRB5|SSL_kKRB5)
+	    && !((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kKRB5) &&
+		 (s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
 #endif /* OPENSSL_NO_KRB5 */
-	        )
+		)
 		{
 		al=ssl_verify_alarm_type(s->verify_result);
 		SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_CERTIFICATE_VERIFY_FAILED);
@@ -967,15 +966,15 @@ int ssl3_get_server_certificate(SSL *s)
 	pkey=X509_get_pubkey(x);
 
 	/* VRS: allow null cert if auth == KRB5 */
-	need_cert =	((s->s3->tmp.new_cipher->algorithms
-	                 & (SSL_MKEY_MASK|SSL_AUTH_MASK))
-	                 == (SSL_aKRB5|SSL_kKRB5))? 0: 1;
+	need_cert = ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kKRB5) &&
+	            (s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
+	            ? 0 : 1;
 
 #ifdef KSSL_DEBUG
 	printf("pkey,x = %p, %p\n", pkey,x);
 	printf("ssl_cert_type(x,pkey) = %d\n", ssl_cert_type(x,pkey));
-	printf("cipher, alg, nc = %s, %lx, %d\n", s->s3->tmp.new_cipher->name,
-	        s->s3->tmp.new_cipher->algorithms, need_cert);
+	printf("cipher, alg, nc = %s, %lx, %lx, %d\n", s->s3->tmp.new_cipher->name,
+		s->s3->tmp.new_cipher->algorithm_mkey, s->s3->tmp.new_cipher->algorithm_auth, need_cert);
 #endif    /* KSSL_DEBUG */
 
 	if (need_cert && ((pkey == NULL) || EVP_PKEY_missing_parameters(pkey)))
@@ -1047,7 +1046,7 @@ int ssl3_get_key_exchange(SSL *s)
 	EVP_MD_CTX md_ctx;
 	unsigned char *param,*p;
 	int al,i,j,param_len,ok;
-	long n,alg;
+	long n,alg_k,alg_a;
 	EVP_PKEY *pkey=NULL;
 #ifndef OPENSSL_NO_RSA
 	RSA *rsa=NULL;
@@ -1080,7 +1079,7 @@ int ssl3_get_key_exchange(SSL *s)
 		   omitted if no identity hint is sent. Set
 		   session->sess_cert anyway to avoid problems
 		   later.*/
-                if (s->s3->tmp.new_cipher->algorithms & SSL_kPSK)
+		if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)
 			{
 			s->session->sess_cert=ssl_sess_cert_new();
 			if (s->ctx->psk_identity_hint)
@@ -1123,12 +1122,13 @@ int ssl3_get_key_exchange(SSL *s)
 		}
 
 	param_len=0;
-	alg=s->s3->tmp.new_cipher->algorithms;
+	alg_k=s->s3->tmp.new_cipher->algorithm_mkey;
+	alg_a=s->s3->tmp.new_cipher->algorithm_auth;
 	EVP_MD_CTX_init(&md_ctx);
 
 #ifndef OPENSSL_NO_PSK
-	if (alg & SSL_kPSK)
-	        {
+	if (alg_k & SSL_kPSK)
+		{
 		char tmp_id_hint[PSK_MAX_IDENTITY_LEN+1];
 
 		al=SSL_AD_HANDSHAKE_FAILURE;
@@ -1164,7 +1164,7 @@ int ssl3_get_key_exchange(SSL *s)
 			{
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE, ERR_R_MALLOC_FAILURE);
 			goto f_err;
-			}           
+			}	   
 
 		p+=i;
 		n-=param_len;
@@ -1172,7 +1172,7 @@ int ssl3_get_key_exchange(SSL *s)
 	else
 #endif /* !OPENSSL_NO_PSK */
 #ifndef OPENSSL_NO_RSA
-	if (alg & SSL_kRSA)
+	if (alg_k & SSL_kRSA)
 		{
 		if ((rsa=RSA_new()) == NULL)
 			{
@@ -1211,7 +1211,7 @@ int ssl3_get_key_exchange(SSL *s)
 		n-=param_len;
 
 		/* this should be because we are using an export cipher */
-		if (alg & SSL_aRSA)
+		if (alg_a & SSL_aRSA)
 			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
 		else
 			{
@@ -1226,7 +1226,7 @@ int ssl3_get_key_exchange(SSL *s)
 		;
 #endif
 #ifndef OPENSSL_NO_DH
-	else if (alg & SSL_kEDH)
+	else if (alg_k & SSL_kEDH)
 		{
 		if ((dh=DH_new()) == NULL)
 			{
@@ -1280,14 +1280,14 @@ int ssl3_get_key_exchange(SSL *s)
 		n-=param_len;
 
 #ifndef OPENSSL_NO_RSA
-		if (alg & SSL_aRSA)
+		if (alg_a & SSL_aRSA)
 			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
 #else
 		if (0)
 			;
 #endif
 #ifndef OPENSSL_NO_DSA
-		else if (alg & SSL_aDSS)
+		else if (alg_a & SSL_aDSS)
 			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_DSA_SIGN].x509);
 #endif
 		/* else anonymous DH, so no certificate or pkey. */
@@ -1295,7 +1295,7 @@ int ssl3_get_key_exchange(SSL *s)
 		s->session->sess_cert->peer_dh_tmp=dh;
 		dh=NULL;
 		}
-	else if ((alg & SSL_kDHr) || (alg & SSL_kDHd))
+	else if ((alg_k & SSL_kDHr) || (alg_k & SSL_kDHd))
 		{
 		al=SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_TRIED_TO_USE_UNSUPPORTED_CIPHER);
@@ -1304,7 +1304,7 @@ int ssl3_get_key_exchange(SSL *s)
 #endif /* !OPENSSL_NO_DH */
 
 #ifndef OPENSSL_NO_ECDH
-	else if (alg & SSL_kEECDH)
+	else if (alg_k & SSL_kEECDH)
 		{
 		EC_GROUP *ngroup;
 		const EC_GROUP *group;
@@ -1388,11 +1388,11 @@ int ssl3_get_key_exchange(SSL *s)
 		 */
 		if (0) ;
 #ifndef OPENSSL_NO_RSA
-		else if (alg & SSL_aRSA)
+		else if (alg_a & SSL_aRSA)
 			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
 #endif
 #ifndef OPENSSL_NO_ECDSA
-		else if (alg & SSL_aECDSA)
+		else if (alg_a & SSL_aECDSA)
 			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_ECC].x509);
 #endif
 		/* else anonymous ECDH, so no certificate or pkey. */
@@ -1403,7 +1403,7 @@ int ssl3_get_key_exchange(SSL *s)
 		EC_POINT_free(srvr_ecpoint);
 		srvr_ecpoint = NULL;
 		}
-	else if (alg)
+	else if (alg_k)
 		{
 		al=SSL_AD_UNEXPECTED_MESSAGE;
 		SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
@@ -1508,7 +1508,7 @@ int ssl3_get_key_exchange(SSL *s)
 		}
 	else
 		{
-		if (!(alg & SSL_aNULL) && !(alg & SSL_kPSK))
+		if (!(alg_a & SSL_aNULL) && !(alg_k & SSL_kPSK))
 			/* aNULL or kPSK do not need public keys */
 			{
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
@@ -1584,8 +1584,7 @@ int ssl3_get_certificate_request(SSL *s)
 	/* TLS does not like anon-DH with client cert */
 	if (s->version > SSL3_VERSION)
 		{
-		l=s->s3->tmp.new_cipher->algorithms;
-		if (l & SSL_aNULL)
+		if (s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
 			{
 			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_UNEXPECTED_MESSAGE);
 			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER);
@@ -1724,7 +1723,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 	{
 	unsigned char *p,*d;
 	int n;
-	unsigned long l;
+	unsigned long alg_k;
 #ifndef OPENSSL_NO_RSA
 	unsigned char *q;
 	EVP_PKEY *pkey=NULL;
@@ -1746,12 +1745,12 @@ int ssl3_send_client_key_exchange(SSL *s)
 		d=(unsigned char *)s->init_buf->data;
 		p= &(d[4]);
 
-		l=s->s3->tmp.new_cipher->algorithms;
+		alg_k=s->s3->tmp.new_cipher->algorithm_mkey;
 
 		/* Fool emacs indentation */
 		if (0) {}
 #ifndef OPENSSL_NO_RSA
-		else if (l & SSL_kRSA)
+		else if (alg_k & SSL_kRSA)
 			{
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
@@ -1810,7 +1809,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			}
 #endif
 #ifndef OPENSSL_NO_KRB5
-		else if (l & SSL_kKRB5)
+		else if (alg_k & SSL_kKRB5)
 			{
 			krb5_error_code	krb5rc;
 			KSSL_CTX	*kssl_ctx = s->kssl_ctx;
@@ -1829,7 +1828,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 
 #ifdef KSSL_DEBUG
 			printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
-			        l, SSL_kKRB5);
+				l, SSL_kKRB5);
 #endif	/* KSSL_DEBUG */
 
 			authp = NULL;
@@ -1935,7 +1934,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			n+=outl + 2;
 
 			s->session->master_key_length=
-			        s->method->ssl3_enc->generate_master_secret(s,
+				s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,
 					tmp_buf, sizeof tmp_buf);
 
@@ -1944,7 +1943,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			}
 #endif
 #ifndef OPENSSL_NO_DH
-		else if (l & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+		else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 			{
 			DH *dh_srvr,*dh_clnt;
 
@@ -2001,7 +2000,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 #endif
 
 #ifndef OPENSSL_NO_ECDH 
-		else if ((l & SSL_kECDH) || (l & SSL_kEECDH))
+		else if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe))
 			{
 			const EC_GROUP *srvr_group = NULL;
 			EC_KEY *tkey;
@@ -2013,7 +2012,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			 * computation as part of client certificate?
 			 * If so, set ecdh_clnt_cert to 1.
 			 */
-			if ((l & SSL_kECDH) && (s->cert != NULL)) 
+			if ((alg_k & (SSL_kECDHr|SSL_kECDHe)) && (s->cert != NULL)) 
 				{
 				/* XXX: For now, we do not support client
 				 * authentication using ECDH certificates.
@@ -2186,7 +2185,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			}
 #endif /* !OPENSSL_NO_ECDH */
 #ifndef OPENSSL_NO_PSK
-		else if (l & SSL_kPSK)
+		else if (alg_k & SSL_kPSK)
 			{
 			char identity[PSK_MAX_IDENTITY_LEN];
 			unsigned char *t = NULL;
@@ -2259,7 +2258,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			psk_err = 0;
 		psk_err:
 			OPENSSL_cleanse(identity, PSK_MAX_IDENTITY_LEN);
-			OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));	
+			OPENSSL_cleanse(psk_or_pre_ms, sizeof(psk_or_pre_ms));
 			if (psk_err != 0)
 				{
 				ssl3_send_alert(s, SSL3_AL_FATAL, SSL_AD_HANDSHAKE_FAILURE);
@@ -2468,7 +2467,7 @@ int ssl3_send_client_certificate(SSL *s)
 int ssl3_check_cert_and_algorithm(SSL *s)
 	{
 	int i,idx;
-	long algs;
+	long alg_k,alg_a;
 	EVP_PKEY *pkey=NULL;
 	SESS_CERT *sc;
 #ifndef OPENSSL_NO_RSA
@@ -2485,10 +2484,11 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		goto err;
 		}
 
-	algs=s->s3->tmp.new_cipher->algorithms;
+	alg_k=s->s3->tmp.new_cipher->algorithm_mkey;
+	alg_a=s->s3->tmp.new_cipher->algorithm_auth;
 
 	/* we don't have a certificate */
-	if (algs & (SSL_aDH|SSL_aNULL|SSL_aKRB5|SSL_kPSK))
+	if ((alg_a & (SSL_aDH|SSL_aNULL|SSL_aKRB5)) || (alg_k & SSL_kPSK))
 		return(1);
 
 #ifndef OPENSSL_NO_RSA
@@ -2508,7 +2508,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		    s->s3->tmp.new_cipher) == 0) 
 			{ /* check failed */
 			SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_BAD_ECC_CERT);
-			goto f_err;			
+			goto f_err;
 			}
 		else 
 			{
@@ -2522,20 +2522,20 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 
 	
 	/* Check that we have a certificate if we require one */
-	if ((algs & SSL_aRSA) && !has_bits(i,EVP_PK_RSA|EVP_PKT_SIGN))
+	if ((alg_a & SSL_aRSA) && !has_bits(i,EVP_PK_RSA|EVP_PKT_SIGN))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_RSA_SIGNING_CERT);
 		goto f_err;
 		}
 #ifndef OPENSSL_NO_DSA
-	else if ((algs & SSL_aDSS) && !has_bits(i,EVP_PK_DSA|EVP_PKT_SIGN))
+	else if ((alg_a & SSL_aDSS) && !has_bits(i,EVP_PK_DSA|EVP_PKT_SIGN))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DSA_SIGNING_CERT);
 		goto f_err;
 		}
 #endif
 #ifndef OPENSSL_NO_RSA
-	if ((algs & SSL_kRSA) &&
+	if ((alg_k & SSL_kRSA) &&
 		!(has_bits(i,EVP_PK_RSA|EVP_PKT_ENC) || (rsa != NULL)))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_RSA_ENCRYPTING_CERT);
@@ -2543,19 +2543,19 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		}
 #endif
 #ifndef OPENSSL_NO_DH
-	if ((algs & SSL_kEDH) &&
+	if ((alg_k & SSL_kEDH) &&
 		!(has_bits(i,EVP_PK_DH|EVP_PKT_EXCH) || (dh != NULL)))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_KEY);
 		goto f_err;
 		}
-	else if ((algs & SSL_kDHr) && !has_bits(i,EVP_PK_DH|EVP_PKS_RSA))
+	else if ((alg_k & SSL_kDHr) && !has_bits(i,EVP_PK_DH|EVP_PKS_RSA))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_RSA_CERT);
 		goto f_err;
 		}
 #ifndef OPENSSL_NO_DSA
-	else if ((algs & SSL_kDHd) && !has_bits(i,EVP_PK_DH|EVP_PKS_DSA))
+	else if ((alg_k & SSL_kDHd) && !has_bits(i,EVP_PK_DH|EVP_PKS_DSA))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_DSA_CERT);
 		goto f_err;
@@ -2566,7 +2566,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 	if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) && !has_bits(i,EVP_PKT_EXP))
 		{
 #ifndef OPENSSL_NO_RSA
-		if (algs & SSL_kRSA)
+		if (alg_k & SSL_kRSA)
 			{
 			if (rsa == NULL
 			    || RSA_size(rsa)*8 > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher))
@@ -2578,7 +2578,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		else
 #endif
 #ifndef OPENSSL_NO_DH
-			if (algs & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+			if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 			    {
 			    if (dh == NULL
 				|| DH_size(dh)*8 > SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher))

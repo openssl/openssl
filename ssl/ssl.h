@@ -56,60 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. All advertising materials mentioning features or use of this
- *    software must display the following acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
- *
- * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
- *
- * 5. Products derived from this software may not be called "OpenSSL"
- *    nor may "OpenSSL" appear in their names without prior written
- *    permission of the OpenSSL Project.
- *
- * 6. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
- *
- * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
- * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
- * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
- */
-/* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -273,10 +220,15 @@ extern "C" {
 #define SSL_MAX_KEY_ARG_LENGTH			8
 #define SSL_MAX_MASTER_KEY_LENGTH		48
 
+
 /* These are used to specify which ciphers to use and not to use */
+
+#define SSL_TXT_EXP40		"EXPORT40"
+#define SSL_TXT_EXP56		"EXPORT56"
 #define SSL_TXT_LOW		"LOW"
 #define SSL_TXT_MEDIUM		"MEDIUM"
 #define SSL_TXT_HIGH		"HIGH"
+
 #define SSL_TXT_kFZA		"kFZA" /* unused! */
 #define	SSL_TXT_aFZA		"aFZA" /* unused! */
 #define SSL_TXT_eFZA		"eFZA" /* unused! */
@@ -289,6 +241,7 @@ extern "C" {
 #define SSL_TXT_kRSA		"kRSA"
 #define SSL_TXT_kDHr		"kDHr" /* no such ciphersuites supported! */
 #define SSL_TXT_kDHd		"kDHd" /* no such ciphersuites supported! */
+#define SSL_TXT_kDH 		"kDH"  /* no such ciphersuites supported! */
 #define SSL_TXT_kEDH		"kEDH"
 #define SSL_TXT_kKRB5     	"kKRB5"
 #define SSL_TXT_kECDHr		"kECDHr"
@@ -314,25 +267,31 @@ extern "C" {
 #define SSL_TXT_EECDH		"EECDH" /* same as "kEECDH:-AECDH" */
 #define SSL_TXT_AECDH		"AECDH"
 #define SSL_TXT_ECDSA		"ECDSA"
+#define SSL_TXT_KRB5      	"KRB5"
+#define SSL_TXT_PSK             "PSK"
+
 #define SSL_TXT_DES		"DES"
 #define SSL_TXT_3DES		"3DES"
 #define SSL_TXT_RC4		"RC4"
 #define SSL_TXT_RC2		"RC2"
 #define SSL_TXT_IDEA		"IDEA"
+#define SSL_TXT_AES128		"AES128"
+#define SSL_TXT_AES256		"AES256"
 #define SSL_TXT_AES		"AES"
+#define SSL_TXT_CAMELLIA128	"CAMELLIA128"
+#define SSL_TXT_CAMELLIA256	"CAMELLIA256"
 #define SSL_TXT_CAMELLIA	"CAMELLIA"
+
 #define SSL_TXT_MD5		"MD5"
 #define SSL_TXT_SHA1		"SHA1"
-#define SSL_TXT_SHA		"SHA"
-#define SSL_TXT_EXP		"EXP"
-#define SSL_TXT_EXPORT		"EXPORT"
-#define SSL_TXT_EXP40		"EXPORT40"
-#define SSL_TXT_EXP56		"EXPORT56"
+#define SSL_TXT_SHA		"SHA" /* same as "SHA1" */
+
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
-#define SSL_TXT_KRB5      	"KRB5"
-#define SSL_TXT_PSK             "PSK"
+
+#define SSL_TXT_EXP		"EXP"
+#define SSL_TXT_EXPORT		"EXPORT"
 
 #define SSL_TXT_ALL		"ALL"
 
@@ -389,13 +348,18 @@ typedef struct ssl_cipher_st
 	int valid;
 	const char *name;		/* text name */
 	unsigned long id;		/* id, 4 bytes, first is version */
-	unsigned long algorithms;	/* what ciphers are used */
+
+	/* changed in 0.9.9: these four used to be portions of a single value 'algorithms' */
+	unsigned long algorithm_mkey;	/* key exchange algorithm */
+	unsigned long algorithm_auth;	/* server authentication */
+	unsigned long algorithm_enc;	/* symmetric encryption */
+	unsigned long algorithm_mac;	/* symmetric authentication */
+	unsigned long algorithm_ssl;	/* (major) protocol version */
+
 	unsigned long algo_strength;	/* strength and export flags */
 	unsigned long algorithm2;	/* Extra flags */
 	int strength_bits;		/* Number of bits really used */
 	int alg_bits;			/* Number of bits for algorithm */
-	unsigned long mask;		/* used for matching */
-	unsigned long mask_strength;	/* also used for matching */
 	} SSL_CIPHER;
 
 DECLARE_STACK_OF(SSL_CIPHER)

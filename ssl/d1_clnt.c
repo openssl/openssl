@@ -4,7 +4,7 @@
  * (nagendra@cs.stanford.edu) for the OpenSSL project 2005.  
  */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -274,7 +274,7 @@ int dtls1_connect(SSL *s)
 		case SSL3_ST_CR_CERT_A:
 		case SSL3_ST_CR_CERT_B:
 			/* Check if it is anon DH */
-			if (!(s->s3->tmp.new_cipher->algorithms & SSL_aNULL))
+			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
 				{
 				ret=ssl3_get_server_certificate(s);
 				if (ret <= 0) goto end;
@@ -335,7 +335,6 @@ int dtls1_connect(SSL *s)
 		case SSL3_ST_CW_KEY_EXCH_B:
 			ret=dtls1_send_client_key_exchange(s);
 			if (ret <= 0) goto end;
-			l=s->s3->tmp.new_cipher->algorithms;
 			/* EAY EAY EAY need to check for DH fix cert
 			 * sent back */
 			/* For TLS, cert_req is set to 2, so a cert chain
@@ -684,7 +683,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 	{
 	unsigned char *p,*d;
 	int n;
-	unsigned long l;
+	unsigned long alg_k;
 #ifndef OPENSSL_NO_RSA
 	unsigned char *q;
 	EVP_PKEY *pkey=NULL;
@@ -697,13 +696,13 @@ int dtls1_send_client_key_exchange(SSL *s)
 		{
 		d=(unsigned char *)s->init_buf->data;
 		p= &(d[DTLS1_HM_HEADER_LENGTH]);
-
-		l=s->s3->tmp.new_cipher->algorithms;
+		
+		alg_k=s->s3->tmp.new_cipher->algorithm_mkey;
 
                 /* Fool emacs indentation */
                 if (0) {}
 #ifndef OPENSSL_NO_RSA
-		else if (l & SSL_kRSA)
+		else if (alg_k & SSL_kRSA)
 			{
 			RSA *rsa;
 			unsigned char tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
@@ -762,7 +761,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 			}
 #endif
 #ifndef OPENSSL_NO_KRB5
-		else if (l & SSL_kKRB5)
+		else if (alg_k & SSL_kKRB5)
                         {
                         krb5_error_code	krb5rc;
                         KSSL_CTX	*kssl_ctx = s->kssl_ctx;
@@ -781,7 +780,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 
 #ifdef KSSL_DEBUG
                         printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
-                                l, SSL_kKRB5);
+                                alg_k, SSL_kKRB5);
 #endif	/* KSSL_DEBUG */
 
 			authp = NULL;
@@ -894,7 +893,7 @@ int dtls1_send_client_key_exchange(SSL *s)
                         }
 #endif
 #ifndef OPENSSL_NO_DH
-		else if (l & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+		else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 			{
 			DH *dh_srvr,*dh_clnt;
 

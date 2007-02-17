@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -274,8 +274,10 @@ int tls1_change_cipher_state(SSL *s, int which)
 
 #ifdef KSSL_DEBUG
 	printf("tls1_change_cipher_state(which= %d) w/\n", which);
-	printf("\talg= %ld, comp= %p\n", s->s3->tmp.new_cipher->algorithms,
-                comp);
+	printf("\talg= %ld/%ld, comp= %p\n",
+	       s->s3->tmp.new_cipher->algorithm_mkey,
+	       s->s3->tmp.new_cipher->algorithm_auth,
+	       comp);
 	printf("\tevp_cipher == %p ==? &d_cbc_ede_cipher3\n", c);
 	printf("\tevp_cipher: nid, blksz= %d, %d, keylen=%d, ivlen=%d\n",
                 c->nid,c->block_size,c->key_len,c->iv_len);
@@ -531,11 +533,11 @@ printf("\nkey block\n");
 
 		if (s->session->cipher != NULL)
 			{
-			if ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_eNULL)
+			if (s->session->cipher->algorithm_enc == SSL_eNULL)
 				s->s3->need_empty_fragments = 0;
 			
 #ifndef OPENSSL_NO_RC4
-			if ((s->session->cipher->algorithms & SSL_ENC_MASK) == SSL_RC4)
+			if (s->session->cipher->algorithm_enc == SSL_RC4)
 				s->s3->need_empty_fragments = 0;
 #endif
 			}

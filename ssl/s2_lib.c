@@ -55,6 +55,59 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+/* ====================================================================
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
+ */
 
 #include "ssl_locl.h"
 #ifndef OPENSSL_NO_SSL2
@@ -69,131 +122,158 @@ const char ssl2_version_str[]="SSLv2" OPENSSL_VERSION_PTEXT;
 
 /* list of available SSLv2 ciphers (sorted by id) */
 OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
-/* NULL_WITH_MD5 v3 */
 #if 0
+/* NULL_WITH_MD5 v3 */
 	{
 	1,
 	SSL2_TXT_NULL_WITH_MD5,
 	SSL2_CK_NULL_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_eNULL|SSL_MD5|SSL_SSLV2,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_eNULL,
+	SSL_MD5,
+	SSL_SSLV2,
 	SSL_EXPORT|SSL_EXP40|SSL_STRONG_NONE,
 	0,
 	0,
 	0,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
 	},
 #endif
+
 /* RC4_128_WITH_MD5 */
 	{
 	1,
 	SSL2_TXT_RC4_128_WITH_MD5,
 	SSL2_CK_RC4_128_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_SSLV2,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_RC4,
+	SSL_MD5,
+	SSL_SSLV2,
 	SSL_NOT_EXP|SSL_MEDIUM,
 	0,
 	128,
 	128,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
 	},
+
 /* RC4_128_EXPORT40_WITH_MD5 */
 	{
 	1,
 	SSL2_TXT_RC4_128_EXPORT40_WITH_MD5,
 	SSL2_CK_RC4_128_EXPORT40_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_SSLV2,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_RC4,
+	SSL_MD5,
+	SSL_SSLV2,
 	SSL_EXPORT|SSL_EXP40,
 	SSL2_CF_5_BYTE_ENC,
 	40,
 	128,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
 	},
+
 /* RC2_128_CBC_WITH_MD5 */
 	{
 	1,
 	SSL2_TXT_RC2_128_CBC_WITH_MD5,
 	SSL2_CK_RC2_128_CBC_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_SSLV2,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_RC2,
+	SSL_MD5,
+	SSL_SSLV2,
 	SSL_NOT_EXP|SSL_MEDIUM,
 	0,
 	128,
 	128,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
 	},
+
 /* RC2_128_CBC_EXPORT40_WITH_MD5 */
 	{
 	1,
 	SSL2_TXT_RC2_128_CBC_EXPORT40_WITH_MD5,
 	SSL2_CK_RC2_128_CBC_EXPORT40_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_SSLV2,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_RC2,
+	SSL_MD5,
+	SSL_SSLV2,
 	SSL_EXPORT|SSL_EXP40,
 	SSL2_CF_5_BYTE_ENC,
 	40,
 	128,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
 	},
-/* IDEA_128_CBC_WITH_MD5 */
+
 #ifndef OPENSSL_NO_IDEA
+/* IDEA_128_CBC_WITH_MD5 */
 	{
 	1,
 	SSL2_TXT_IDEA_128_CBC_WITH_MD5,
 	SSL2_CK_IDEA_128_CBC_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_IDEA|SSL_MD5|SSL_SSLV2,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_IDEA,
+	SSL_MD5,
+	SSL_SSLV2,
 	SSL_NOT_EXP|SSL_MEDIUM,
 	0,
 	128,
 	128,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
 	},
 #endif
+
 /* DES_64_CBC_WITH_MD5 */
 	{
 	1,
 	SSL2_TXT_DES_64_CBC_WITH_MD5,
 	SSL2_CK_DES_64_CBC_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_DES|SSL_MD5|SSL_SSLV2,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_DES,
+	SSL_MD5,
+	SSL_SSLV2,
 	SSL_NOT_EXP|SSL_LOW,
 	0,
 	56,
 	56,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
 	},
+
 /* DES_192_EDE3_CBC_WITH_MD5 */
 	{
 	1,
 	SSL2_TXT_DES_192_EDE3_CBC_WITH_MD5,
 	SSL2_CK_DES_192_EDE3_CBC_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_3DES|SSL_MD5|SSL_SSLV2,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_3DES,
+	SSL_MD5,
+	SSL_SSLV2,
 	SSL_NOT_EXP|SSL_HIGH,
 	0,
 	168,
 	168,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
 	},
-/* RC4_64_WITH_MD5 */
+
 #if 0
+/* RC4_64_WITH_MD5 */
 	{
 	1,
 	SSL2_TXT_RC4_64_WITH_MD5,
 	SSL2_CK_RC4_64_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_SSLV2,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_RC4,
+	SSL_MD5,
+	SSL_SSLV2,
 	SSL_NOT_EXP|SSL_LOW,
 	SSL2_CF_8_BYTE_ENC,
 	64,
 	64,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
 	},
 #endif
-/* NULL SSLeay (testing) */
+
 #if 0
+/* NULL SSLeay (testing) */
 	{	
 	0,
 	SSL2_TXT_NULL,
@@ -203,8 +283,6 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	0,
 	0,
 	0,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
 	},
 #endif
 

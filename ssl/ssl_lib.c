@@ -58,7 +58,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -858,7 +858,7 @@ int SSL_check_private_key(const SSL *ssl)
 		}
 	if (ssl->cert == NULL)
 		{
-                SSLerr(SSL_F_SSL_CHECK_PRIVATE_KEY,SSL_R_NO_CERTIFICATE_ASSIGNED);
+		SSLerr(SSL_F_SSL_CHECK_PRIVATE_KEY,SSL_R_NO_CERTIFICATE_ASSIGNED);
 		return 0;
 		}
 	if (ssl->cert->key->x509 == NULL)
@@ -1218,8 +1218,8 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 	/* ssl_create_cipher_list may return an empty stack if it
 	 * was unable to find a cipher matching the given rule string
 	 * (for example if the rule string specifies a cipher which
-	 * has been disabled). This is not an error as far as 
-	 * ssl_create_cipher_list is concerned, and hence 
+	 * has been disabled). This is not an error as far as
+	 * ssl_create_cipher_list is concerned, and hence
 	 * ctx->cipher_list and ctx->cipher_list_by_id has been
 	 * updated. */
 	if (sk == NULL)
@@ -1287,13 +1287,13 @@ char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 	}
 
 int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
-                             int (*put_cb)(const SSL_CIPHER *, unsigned char *))
+			     int (*put_cb)(const SSL_CIPHER *, unsigned char *))
 	{
 	int i,j=0;
 	SSL_CIPHER *c;
 	unsigned char *q;
 #ifndef OPENSSL_NO_KRB5
-        int nokrb5 = !kssl_tgt_is_available(s->kssl_ctx);
+	int nokrb5 = !kssl_tgt_is_available(s->kssl_ctx);
 #endif /* OPENSSL_NO_KRB5 */
 
 	if (sk == NULL) return(0);
@@ -1303,12 +1303,14 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 		{
 		c=sk_SSL_CIPHER_value(sk,i);
 #ifndef OPENSSL_NO_KRB5
-                if ((c->algorithms & SSL_KRB5) && nokrb5)
-                    continue;
-#endif /* OPENSSL_NO_KRB5 */                    
+		if (((c->algorithm_mkey & SSL_kKRB5) || (c->algorithm_auth & SSL_aKRB5)) &&
+		    nokrb5)
+		    continue;
+#endif /* OPENSSL_NO_KRB5 */
 #ifndef OPENSSL_NO_PSK
 		/* with PSK there must be client callback set */
-		if ((c->algorithms & SSL_PSK) && s->psk_client_callback == NULL)
+		if (((c->algorithm_mkey & SSL_kPSK) || (c->algorithm_auth & SSL_aPSK)) &&
+		    s->psk_client_callback == NULL)
 			continue;
 #endif /* OPENSSL_NO_PSK */
 		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
@@ -1363,7 +1365,7 @@ err:
 
 
 #ifndef OPENSSL_TLSEXT
-/** return a servername extension value if provided in Client Hello, or NULL. 
+/** return a servername extension value if provided in Client Hello, or NULL.
  * So far, only host_name types are defined (RFC 3546).
  */
 
@@ -1379,7 +1381,7 @@ const char *SSL_get_servername(const SSL *s, const int type)
 
 int SSL_get_servername_type(const SSL *s)
 	{
-	if (s->session && (!s->tlsext_hostname ? s->session->tlsext_hostname : s->tlsext_hostname)) 
+	if (s->session && (!s->tlsext_hostname ? s->session->tlsext_hostname : s->tlsext_hostname))
 		return TLSEXT_NAMETYPE_host_name;
 	return -1;
 	}
@@ -1656,7 +1658,7 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	int rsa_enc,rsa_tmp,rsa_sign,dh_tmp,dh_rsa,dh_dsa,dsa_sign;
 	int rsa_enc_export,dh_rsa_export,dh_dsa_export;
 	int rsa_tmp_export,dh_tmp_export,kl;
-	unsigned long mask,emask;
+	unsigned long mask_k,mask_a,emask_k,emask_a;
 	int have_ecc_cert, ecdh_ok, ecdsa_ok, ecc_pkey_size;
 #ifndef OPENSSL_NO_ECDH
 	int have_ecdh_tmp;
@@ -1703,8 +1705,10 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	dh_dsa_export=(dh_dsa && EVP_PKEY_size(cpk->privatekey)*8 <= kl);
 	cpk= &(c->pkeys[SSL_PKEY_ECC]);
 	have_ecc_cert= (cpk->x509 != NULL && cpk->privatekey != NULL);
-	mask=0;
-	emask=0;
+	mask_k=0;
+	mask_a=0;
+	emask_k=0;
+	emask_a=0;
 
 #ifdef CIPHER_DEBUG
 	printf("rt=%d rte=%d dht=%d ecdht=%d re=%d ree=%d rs=%d ds=%d dhr=%d dhd=%d\n",
@@ -1713,50 +1717,52 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 #endif
 
 	if (rsa_enc || (rsa_tmp && rsa_sign))
-		mask|=SSL_kRSA;
+		mask_k|=SSL_kRSA;
 	if (rsa_enc_export || (rsa_tmp_export && (rsa_sign || rsa_enc)))
-		emask|=SSL_kRSA;
+		emask_k|=SSL_kRSA;
 
 #if 0
 	/* The match needs to be both kEDH and aRSA or aDSA, so don't worry */
-	if (	(dh_tmp || dh_rsa || dh_dsa) && 
+	if (	(dh_tmp || dh_rsa || dh_dsa) &&
 		(rsa_enc || rsa_sign || dsa_sign))
-		mask|=SSL_kEDH;
+		mask_k|=SSL_kEDH;
 	if ((dh_tmp_export || dh_rsa_export || dh_dsa_export) &&
 		(rsa_enc || rsa_sign || dsa_sign))
-		emask|=SSL_kEDH;
+		emask_k|=SSL_kEDH;
 #endif
 
-	if (dh_tmp_export) 
-		emask|=SSL_kEDH;
+	if (dh_tmp_export)
+		emask_k|=SSL_kEDH;
 
 	if (dh_tmp)
-		mask|=SSL_kEDH;
+		mask_k|=SSL_kEDH;
 
-	if (dh_rsa) mask|=SSL_kDHr;
-	if (dh_rsa_export) emask|=SSL_kDHr;
+	if (dh_rsa) mask_k|=SSL_kDHr;
+	if (dh_rsa_export) emask_k|=SSL_kDHr;
 
-	if (dh_dsa) mask|=SSL_kDHd;
-	if (dh_dsa_export) emask|=SSL_kDHd;
+	if (dh_dsa) mask_k|=SSL_kDHd;
+	if (dh_dsa_export) emask_k|=SSL_kDHd;
 
 	if (rsa_enc || rsa_sign)
 		{
-		mask|=SSL_aRSA;
-		emask|=SSL_aRSA;
+		mask_a|=SSL_aRSA;
+		emask_a|=SSL_aRSA;
 		}
 
 	if (dsa_sign)
 		{
-		mask|=SSL_aDSS;
-		emask|=SSL_aDSS;
+		mask_a|=SSL_aDSS;
+		emask_a|=SSL_aDSS;
 		}
 
-	mask|=SSL_aNULL;
-	emask|=SSL_aNULL;
+	mask_a|=SSL_aNULL;
+	emask_a|=SSL_aNULL;
 
 #ifndef OPENSSL_NO_KRB5
-	mask|=SSL_kKRB5|SSL_aKRB5;
-	emask|=SSL_kKRB5|SSL_aKRB5;
+	mask_k|=SSL_kKRB5;
+	mask_a|=SSL_aKRB5;
+	emask_k|=SSL_kKRB5;
+	emask_a|=SSL_aKRB5;
 #endif
 
 	/* An ECC certificate may be usable for ECDH and/or
@@ -1764,7 +1770,7 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	 */
 	if (have_ecc_cert)
 		{
-                /* This call populates extension flags (ex_flags) */
+		/* This call populates extension flags (ex_flags) */
 		x = (c->pkeys[SSL_PKEY_ECC]).x509;
 		X509_check_purpose(x, -1, 0);
 		ecdh_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
@@ -1772,7 +1778,7 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 		ecdsa_ok = (x->ex_flags & EXFLAG_KUSAGE) ?
 		    (x->ex_kusage & X509v3_KU_DIGITAL_SIGNATURE) : 1;
 		ecc_pkey = X509_get_pubkey(x);
-		ecc_pkey_size = (ecc_pkey != NULL) ? 
+		ecc_pkey_size = (ecc_pkey != NULL) ?
 		    EVP_PKEY_bits(ecc_pkey) : 0;
 		EVP_PKEY_free(ecc_pkey);
 		if ((x->sig_alg) && (x->sig_alg->algorithm))
@@ -1789,24 +1795,32 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 				
 			if (strstr(sig, "WithRSA"))
 				{
-				mask|=SSL_kECDHr|SSL_aECDH;
+				mask_k|=SSL_kECDHr;
+				mask_a|=SSL_aECDH;
 				if (ecc_pkey_size <= 163)
-					emask|=SSL_kECDHr|SSL_aECDH;
+					{
+					emask_k|=SSL_kECDHr;
+					emask_a|=SSL_aECDH;
+					}
 				}
 
 			if (signature_nid == NID_ecdsa_with_SHA1)
 				{
-				mask|=SSL_kECDHe|SSL_aECDH;
+				mask_k|=SSL_kECDHe;
+				mask_a|=SSL_aECDH;
 				if (ecc_pkey_size <= 163)
-					emask|=SSL_kECDHe|SSL_aECDH;
+					{
+					emask_k|=SSL_kECDHe;
+					emask_a|=SSL_aECDH;
+					}
 				}
 			}
 #endif
 #ifndef OPENSSL_NO_ECDSA
 		if (ecdsa_ok)
 			{
-			mask|=SSL_aECDSA;
-			emask|=SSL_aECDSA;
+			mask_a|=SSL_aECDSA;
+			emask_a|=SSL_aECDSA;
 			}
 #endif
 		}
@@ -1814,18 +1828,22 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 #ifndef OPENSSL_NO_ECDH
 	if (have_ecdh_tmp)
 		{
-		mask|=SSL_kEECDH;
-		emask|=SSL_kEECDH;
+		mask_k|=SSL_kEECDH;
+		emask_k|=SSL_kEECDH;
 		}
 #endif
 
 #ifndef OPENSSL_NO_PSK
-	mask  |= SSL_kPSK | SSL_aPSK;
-	emask |= SSL_kPSK | SSL_aPSK;
+	mask_k |= SSL_kPSK;
+	mask_a |= SSL_aPSK;
+	emask_k |= SSL_kPSK;
+	emask_a |= SSL_aPSK;
 #endif
 
-	c->mask=mask;
-	c->export_mask=emask;
+	c->mask_k=mask_k;
+	c->mask_a=mask_a;
+	c->export_mask_k=emask_k;
+	c->export_mask_a=emask_a;
 	c->valid=1;
 	}
 
@@ -1835,10 +1853,13 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 	{
-	unsigned long alg = cs->algorithms;
+	unsigned long alg_k, alg_a;
 	EVP_PKEY *pkey = NULL;
 	int keysize = 0;
 	int signature_nid = 0;
+
+	alg_k = cs->algorithm_mkey;
+	alg_a = cs->algorithm_auth;
 
 	if (SSL_C_IS_EXPORT(cs))
 		{
@@ -1854,7 +1875,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 	X509_check_purpose(x, -1, 0);
 	if ((x->sig_alg) && (x->sig_alg->algorithm))
 		signature_nid = OBJ_obj2nid(x->sig_alg->algorithm);
-	if (alg & SSL_kECDHe || alg & SSL_kECDHr) 
+	if (alg_k & SSL_kECDHe || alg_k & SSL_kECDHr)
 		{
 		/* key usage, if present, must allow key agreement */
 		if (ku_reject(x, X509v3_KU_KEY_AGREEMENT))
@@ -1862,7 +1883,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 			SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG, SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT);
 			return 0;
 			}
-		if (alg & SSL_kECDHe)
+		if (alg_k & SSL_kECDHe)
 			{
 			/* signature alg must be ECDSA */
 			if (signature_nid != NID_ecdsa_with_SHA1)
@@ -1871,7 +1892,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 				return 0;
 				}
 			}
-		if (alg & SSL_kECDHr)
+		if (alg_k & SSL_kECDHr)
 			{
 			/* signature alg must be RSA */
 
@@ -1887,8 +1908,8 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 				return 0;
 				}
 			}
-		} 
-	if (alg & SSL_aECDSA)
+		}
+	if (alg_a & SSL_aECDSA)
 		{
 		/* key usage, if present, must allow signing */
 		if (ku_reject(x, X509v3_KU_DIGITAL_SIGNATURE))
@@ -1904,18 +1925,28 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
 /* THIS NEEDS CLEANING UP */
 X509 *ssl_get_server_send_cert(SSL *s)
 	{
-	unsigned long alg,mask,kalg;
+	unsigned long alg_k,alg_a,mask_k,mask_a;
 	CERT *c;
 	int i,is_export;
 
 	c=s->cert;
 	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
-	alg=s->s3->tmp.new_cipher->algorithms;
 	is_export=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
-	mask=is_export?c->export_mask:c->mask;
-	kalg=alg&(SSL_MKEY_MASK|SSL_AUTH_MASK);
+	if (is_export)
+		{
+		mask_k = c->export_mask_k;
+		mask_a = c->export_mask_a;
+		}
+	else
+		{
+		mask_k = c->mask_k;
+		mask_a = c->mask_a;
+		}
+	
+	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 
-	if (kalg & SSL_kECDH)
+	if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe))
 		{
 		/* we don't need to look at SSL_kEECDH
 		 * since no certificate is needed for
@@ -1930,29 +1961,29 @@ X509 *ssl_get_server_send_cert(SSL *s)
 		 */
 		i=SSL_PKEY_ECC;
 		}
-	else if (kalg & SSL_aECDSA)
+	else if (alg_a & SSL_aECDSA)
 		{
 		i=SSL_PKEY_ECC;
 		}
-	else if (kalg & SSL_kDHr)
+	else if (alg_k & SSL_kDHr)
 		i=SSL_PKEY_DH_RSA;
-	else if (kalg & SSL_kDHd)
+	else if (alg_k & SSL_kDHd)
 		i=SSL_PKEY_DH_DSA;
-	else if (kalg & SSL_aDSS)
+	else if (alg_a & SSL_aDSS)
 		i=SSL_PKEY_DSA_SIGN;
-	else if (kalg & SSL_aRSA)
+	else if (alg_a & SSL_aRSA)
 		{
 		if (c->pkeys[SSL_PKEY_RSA_ENC].x509 == NULL)
 			i=SSL_PKEY_RSA_SIGN;
 		else
 			i=SSL_PKEY_RSA_ENC;
 		}
-	else if (kalg & SSL_aKRB5)
+	else if (alg_a & SSL_aKRB5)
 		{
 		/* VRS something else here? */
 		return(NULL);
 		}
-	else /* if (kalg & SSL_aNULL) */
+	else /* if (alg_a & SSL_aNULL) */
 		{
 		SSLerr(SSL_F_SSL_GET_SERVER_SEND_CERT,ERR_R_INTERNAL_ERROR);
 		return(NULL);
@@ -1964,16 +1995,16 @@ X509 *ssl_get_server_send_cert(SSL *s)
 
 EVP_PKEY *ssl_get_sign_pkey(SSL *s,SSL_CIPHER *cipher)
 	{
-	unsigned long alg;
+	unsigned long alg_a;
 	CERT *c;
 
-	alg=cipher->algorithms;
+	alg_a = cipher->algorithm_auth;
 	c=s->cert;
 
-	if ((alg & SSL_aDSS) &&
+	if ((alg_a & SSL_aDSS) &&
 		(c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL))
 		return(c->pkeys[SSL_PKEY_DSA_SIGN].privatekey);
-	else if (alg & SSL_aRSA)
+	else if (alg_a & SSL_aRSA)
 		{
 		if (c->pkeys[SSL_PKEY_RSA_SIGN].privatekey != NULL)
 			return(c->pkeys[SSL_PKEY_RSA_SIGN].privatekey);
@@ -1982,10 +2013,10 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s,SSL_CIPHER *cipher)
 		else
 			return(NULL);
 		}
-	else if ((alg & SSL_aECDSA) &&
+	else if ((alg_a & SSL_aECDSA) &&
 	         (c->pkeys[SSL_PKEY_ECC].privatekey != NULL))
 		return(c->pkeys[SSL_PKEY_ECC].privatekey);
-	else /* if (alg & SSL_aNULL) */
+	else /* if (alg_a & SSL_aNULL) */
 		{
 		SSLerr(SSL_F_SSL_GET_SIGN_PKEY,ERR_R_INTERNAL_ERROR);
 		return(NULL);
@@ -2226,7 +2257,7 @@ SSL *SSL_dup(SSL *s)
 	X509_NAME *xn;
 	SSL *ret;
 	int i;
-		 
+	
 	if ((ret=SSL_new(SSL_get_SSL_CTX(s))) == NULL)
 	    return(NULL);
 
@@ -2474,7 +2505,7 @@ void ssl_free_wbio_buffer(SSL *s)
 		s->wbio=BIO_pop(s->wbio);
 #ifdef REF_CHECK /* not the usual REF_CHECK, but this avoids adding one more preprocessor symbol */
 		assert(s->wbio != NULL);
-#endif	
+#endif
 	}
 	BIO_free(s->bbio);
 	s->bbio=NULL;
@@ -2522,7 +2553,7 @@ SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 
 SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 	{
-	if (ssl->ctx == ctx) 
+	if (ssl->ctx == ctx)
 		return ssl->ctx;
 	if (ctx == NULL)
 		ctx = ssl->initial_ctx;
@@ -2557,7 +2588,7 @@ void SSL_set_info_callback(SSL *ssl,
 
 /* One compiler (Diab DCC) doesn't like argument names in returned
    function pointer.  */
-void (*SSL_get_info_callback(const SSL *ssl))(const SSL * /*ssl*/,int /*type*/,int /*val*/) 
+void (*SSL_get_info_callback(const SSL *ssl))(const SSL * /*ssl*/,int /*type*/,int /*val*/)
 	{
 	return ssl->info_callback;
 	}
@@ -2678,13 +2709,13 @@ RSA *cb(SSL *ssl,int is_export,int keylength)
 
 #ifndef OPENSSL_NO_DH
 void SSL_CTX_set_tmp_dh_callback(SSL_CTX *ctx,DH *(*dh)(SSL *ssl,int is_export,
-							int keylength))
+                                                        int keylength))
 	{
 	SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_DH_CB,(void (*)(void))dh);
 	}
 
 void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int is_export,
-						int keylength))
+                                                int keylength))
 	{
 	SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_DH_CB,(void (*)(void))dh);
 	}
@@ -2692,13 +2723,13 @@ void SSL_set_tmp_dh_callback(SSL *ssl,DH *(*dh)(SSL *ssl,int is_export,
 
 #ifndef OPENSSL_NO_ECDH
 void SSL_CTX_set_tmp_ecdh_callback(SSL_CTX *ctx,EC_KEY *(*ecdh)(SSL *ssl,int is_export,
-							int keylength))
+                                                                int keylength))
 	{
 	SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TMP_ECDH_CB,(void (*)(void))ecdh);
 	}
 
 void SSL_set_tmp_ecdh_callback(SSL *ssl,EC_KEY *(*ecdh)(SSL *ssl,int is_export,
-						int keylength))
+                                                        int keylength))
 	{
 	SSL_callback_ctrl(ssl,SSL_CTRL_SET_TMP_ECDH_CB,(void (*)(void))ecdh);
 	}
@@ -2765,34 +2796,34 @@ const char *SSL_get_psk_identity(const SSL *s)
 	return(s->session->psk_identity);
 	}
 
-void SSL_set_psk_client_callback(SSL *s, 
-	unsigned int (*cb)(SSL *ssl, const char *hint,
-                char *identity, unsigned int max_identity_len, unsigned char *psk,
-                unsigned int max_psk_len))
+void SSL_set_psk_client_callback(SSL *s,
+    unsigned int (*cb)(SSL *ssl, const char *hint,
+                       char *identity, unsigned int max_identity_len, unsigned char *psk,
+                       unsigned int max_psk_len))
 	{
-	s->psk_client_callback = cb;	
+	s->psk_client_callback = cb;
 	}
 
 void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx,
-	unsigned int (*cb)(SSL *ssl, const char *hint,
-                char *identity, unsigned int max_identity_len, unsigned char *psk,
-                unsigned int max_psk_len))
+    unsigned int (*cb)(SSL *ssl, const char *hint,
+                       char *identity, unsigned int max_identity_len, unsigned char *psk,
+                       unsigned int max_psk_len))
 	{
-	ctx->psk_client_callback = cb;	
+	ctx->psk_client_callback = cb;
 	}
 
-void SSL_set_psk_server_callback(SSL *s, 
-	unsigned int (*cb)(SSL *ssl, const char *identity,
-                unsigned char *psk, unsigned int max_psk_len))
+void SSL_set_psk_server_callback(SSL *s,
+    unsigned int (*cb)(SSL *ssl, const char *identity,
+                       unsigned char *psk, unsigned int max_psk_len))
 	{
-	s->psk_server_callback = cb;	
+	s->psk_server_callback = cb;
 	}
 
 void SSL_CTX_set_psk_server_callback(SSL_CTX *ctx,
-	unsigned int (*cb)(SSL *ssl, const char *identity,
-                unsigned char *psk, unsigned int max_psk_len))
+    unsigned int (*cb)(SSL *ssl, const char *identity,
+                       unsigned char *psk, unsigned int max_psk_len))
 	{
-	ctx->psk_server_callback = cb;	
+	ctx->psk_server_callback = cb;
 	}
 #endif
 

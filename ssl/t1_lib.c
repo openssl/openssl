@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -171,13 +171,13 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		long lenmax; 
 
 		/* check for enough space.
-                   4 for the servername type and entension length
-                   2 for servernamelist length
-                   1 for the hostname type
-                   2 for hostname length
-                   + hostname length 
+		   4 for the servername type and entension length
+		   2 for servernamelist length
+		   1 for the hostname type
+		   2 for hostname length
+		   + hostname length 
 		*/
-                   
+		   
 		if ((lenmax = limit - p - 9) < 0 
 		|| (size_str = strlen(s->tlsext_hostname)) > (unsigned long)lenmax) 
 			return NULL;
@@ -248,7 +248,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 	s2n(extdatalen,p);
 	return ret;
-}
+	}
 
 unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	{
@@ -294,7 +294,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 	s2n(extdatalen,p);
 	return ret;
-}
+	}
 
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n, int *al)
 	{
@@ -308,7 +308,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		return 1;
 	n2s(data,len);
 
-        if (data > (d+n-len)) 
+	if (data > (d+n-len)) 
 		return 1;
 
 	while (data <= (d+n-4))
@@ -354,7 +354,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				return 0;
 				}
 			n2s(data,dsize);  
-			size -= 2;                    
+			size -= 2;
 			if (dsize > size  ) 
 				{
 				*al = SSL_AD_DECODE_ERROR;
@@ -377,7 +377,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				switch (servname_type)
 					{
 				case TLSEXT_NAMETYPE_host_name:
-                                        if (s->session->tlsext_hostname == NULL)
+					if (s->session->tlsext_hostname == NULL)
 						{
 						if (len > TLSEXT_MAXLEN_host_name || 
 							((s->session->tlsext_hostname = OPENSSL_malloc(len+1)) == NULL))
@@ -404,7 +404,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				default:
 					break;
 					}
-                                 
+				 
 				dsize -= len;
 				}
 			if (dsize != 0) 
@@ -477,7 +477,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 	*p = data;
 	return 1;
-}
+	}
 
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n, int *al)
 	{
@@ -572,7 +572,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 	*p = data;
 	return 1;
-}
+	}
 
 #ifndef OPENSSL_NO_EC
 static int nid_list[] =
@@ -681,17 +681,20 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 	int using_ecc = 0;
 	int i;
 	unsigned char *j;
-	int algs;
+	unsigned long alg_k, alg_a;
 	STACK_OF(SSL_CIPHER) *cipher_stack = SSL_get_ciphers(s);
+
 	for (i = 0; i < sk_SSL_CIPHER_num(cipher_stack); i++)
 		{
-		algs = (sk_SSL_CIPHER_value(cipher_stack, i))->algorithms;
-		if ((algs & SSL_kECDH) || (algs & SSL_kEECDH) || (algs & SSL_aECDSA)) 
+		SSL_CIPHER *c = sk_SSL_CIPHER_value(cipher_stack, i);
+
+		alg_k = c->algorithm_mkey;
+		alg_a = c->algorithm_auth;
+		if ((alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe) || (alg_a & SSL_aECDSA)))
 			{
 			using_ecc = 1;
 			break;
 			}
-
 		}
 	using_ecc = using_ecc && (s->version == TLS1_VERSION);
 	if (using_ecc)
@@ -721,7 +724,7 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 		}
 #endif /* OPENSSL_NO_EC */
 	return 1;
-}
+	}
 
 int ssl_prepare_serverhello_tlsext(SSL *s)
 	{
@@ -730,10 +733,12 @@ int ssl_prepare_serverhello_tlsext(SSL *s)
 	 * if the client sent us an ECPointsFormat extension.  Note that the server is not
 	 * supposed to send an EllipticCurves extension.
 	 */
-	int algs = s->s3->tmp.new_cipher->algorithms;
-	int using_ecc = (algs & SSL_kECDH) || (algs & SSL_kEECDH) || (algs & SSL_aECDSA);
-	using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
 
+	unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+	unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+	int using_ecc = (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) || (alg_a & SSL_aECDSA);
+	using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
+	
 	if (using_ecc)
 		{
 		if (s->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->tlsext_ecpointformatlist);
@@ -749,7 +754,7 @@ int ssl_prepare_serverhello_tlsext(SSL *s)
 		}
 #endif /* OPENSSL_NO_EC */
 	return 1;
-}
+	}
 
 int ssl_check_clienthello_tlsext(SSL *s)
 	{
@@ -770,7 +775,8 @@ int ssl_check_clienthello_tlsext(SSL *s)
 	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0) 		
 		ret = s->initial_ctx->tlsext_servername_callback(s, &al, s->initial_ctx->tlsext_servername_arg);
 
-	switch (ret) {
+	switch (ret)
+		{
 		case SSL_TLSEXT_ERR_ALERT_FATAL:
 			ssl3_send_alert(s,SSL3_AL_FATAL,al); 
 			return -1;
@@ -783,8 +789,8 @@ int ssl_check_clienthello_tlsext(SSL *s)
 			s->servername_done=0;
 			default:
 		return 1;
+		}
 	}
-}
 
 int ssl_check_serverhello_tlsext(SSL *s)
 	{
@@ -795,9 +801,10 @@ int ssl_check_serverhello_tlsext(SSL *s)
 	/* If we are client and using an elliptic curve cryptography cipher suite, then server
 	 * must return a an EC point formats lists containing uncompressed.
 	 */
-	int algs = s->s3->tmp.new_cipher->algorithms;
+	unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+	unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 	if ((s->tlsext_ecpointformatlist != NULL) && (s->tlsext_ecpointformatlist_length > 0) && 
-	    ((algs & SSL_kECDH) || (algs & SSL_kEECDH) || (algs & SSL_aECDSA))) 
+	    ((alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) || (alg_a & SSL_aECDSA)))
 		{
 		/* we are using an ECC cipher */
 		size_t i;
@@ -831,7 +838,8 @@ int ssl_check_serverhello_tlsext(SSL *s)
 	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0) 		
 		ret = s->initial_ctx->tlsext_servername_callback(s, &al, s->initial_ctx->tlsext_servername_arg);
 
-	switch (ret) {
+	switch (ret)
+		{
 		case SSL_TLSEXT_ERR_ALERT_FATAL:
 			ssl3_send_alert(s,SSL3_AL_FATAL,al); 
 			return -1;
@@ -844,7 +852,7 @@ int ssl_check_serverhello_tlsext(SSL *s)
 			s->servername_done=0;
 			default:
 		return 1;
+		}
 	}
-}
 #endif
 
