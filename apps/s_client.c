@@ -354,7 +354,7 @@ enum
 	PROTO_SMTP,
 	PROTO_POP3,
 	PROTO_IMAP,
-	PROTO_FTP,
+	PROTO_FTP
 };
 
 int MAIN(int, char **);

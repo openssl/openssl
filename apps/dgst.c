@@ -493,7 +493,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	else 
 		{
 		BIO_write(out,title,strlen(title));
-		for (i=0; i<len; i++)
+		for (i=0; i<(int)len; i++)
 			{
 			if (sep && (i != 0))
 				BIO_printf(out, ":");

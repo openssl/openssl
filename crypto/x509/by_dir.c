@@ -230,7 +230,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 			for (j=0; j < sk_BY_DIR_ENTRY_num(ctx->dirs); j++)
 				{
 				ent = sk_BY_DIR_ENTRY_value(ctx->dirs, j);
-				if (strlen(ent->dir) == len &&
+				if (strlen(ent->dir) == (size_t)len &&
 				    strncmp(ent->dir,ss,(unsigned int)len) == 0)
 					break;
 				}
