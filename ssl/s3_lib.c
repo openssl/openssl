@@ -2489,30 +2489,30 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 #endif
 
 #ifdef CIPHER_DEBUG
-        printf("Server has %d from %p:\n", sk_SSL_CIPHER_num(srvr), srvr);
-        for(i=0 ; i < sk_SSL_CIPHER_num(srvr) ; ++i)
-	    {
-	    c=sk_SSL_CIPHER_value(srvr,i);
-	    printf("%p:%s\n",c,c->name);
-	    }
-        printf("Client sent %d from %p:\n", sk_SSL_CIPHER_num(clnt), clnt);
-        for(i=0 ; i < sk_SSL_CIPHER_num(clnt) ; ++i)
+	printf("Server has %d from %p:\n", sk_SSL_CIPHER_num(srvr), (void *)srvr);
+	for(i=0 ; i < sk_SSL_CIPHER_num(srvr) ; ++i)
+		{
+		c=sk_SSL_CIPHER_value(srvr,i);
+		printf("%p:%s\n",(void *)c,c->name);
+		}
+	printf("Client sent %d from %p:\n", sk_SSL_CIPHER_num(clnt), (void *)clnt);
+	for(i=0 ; i < sk_SSL_CIPHER_num(clnt) ; ++i)
 	    {
 	    c=sk_SSL_CIPHER_value(clnt,i);
-	    printf("%p:%s\n",c,c->name);
+	    printf("%p:%s\n",(void *)c,c->name);
 	    }
 #endif
 
 	if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
-	    {
-	    prio = srvr;
-	    allow = clnt;
-	    }
+		{
+		prio = srvr;
+		allow = clnt;
+		}
 	else
-	    {
-	    prio = clnt;
-	    allow = srvr;
-	    }
+		{
+		prio = clnt;
+		allow = srvr;
+		}
 
 	for (i=0; i<sk_SSL_CIPHER_num(prio); i++)
 		{
@@ -2532,11 +2532,11 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		alg_a=c->algorithm_auth;
 
 #ifndef OPENSSL_NO_KRB5
-                if (alg_k & SSL_kKRB5)
-                        {
-                        if ( !kssl_keytab_is_available(s->kssl_ctx) )
-                            continue;
-                        }
+		if (alg_k & SSL_kKRB5)
+			{
+			if ( !kssl_keytab_is_available(s->kssl_ctx) )
+			    continue;
+			}
 #endif /* OPENSSL_NO_KRB5 */
 #ifndef OPENSSL_NO_PSK
 		/* with PSK there must be server callback set */
@@ -2549,14 +2549,14 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 			ok = (alg_k & emask_k) && (alg_a & emask_a);
 #ifdef CIPHER_DEBUG
 			printf("%d:[%08lX:%08lX:%08lX:%08lX]%p:%s (export)\n",ok,alg_k,alg_a,emask_k,emask_a,
-			       c,c->name);
+			       (void *)c,c->name);
 #endif
 			}
 		else
 			{
 			ok = (alg_k & mask_k) && (alg_a & mask_a);
 #ifdef CIPHER_DEBUG
-			printf("%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",ok,alg_k,alg_a,mask_k,mask_a,c,
+			printf("%d:[%08lX:%08lX:%08lX:%08lX]%p:%s\n",ok,alg_k,alg_a,mask_k,mask_a,(void *)c,
 			       c->name);
 #endif
 			}
