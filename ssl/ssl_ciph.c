@@ -1120,6 +1120,40 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	                           disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl,
 	                           co_list, &head, &tail);
 
+
+	/* Now arrange all ciphers by preference: */
+
+	/* Temporarily enabled AES first (preferred cipher) */
+	ssl_cipher_apply_rule(0, 0, 0, SSL_AES, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
+
+	/* Temporarily enable everything else */
+	ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
+
+	/* Move anonymous ciphers to the end.  Usually, these will remain disabled.
+	 * (For applications that allow them, they aren't too bad, but we prefer
+	 * authenticated ciphers.) */
+	ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
+
+	/* Move ciphers without forward secrecy to then end */
+	ssl_cipher_apply_rule(0, 0, SSL_aECDH, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
+	ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
+	ssl_cipher_apply_rule(0, 0, SSL_kPSK, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
+
+	/* RC4 is sort-of broken -- move the the end */
+	ssl_cipher_apply_rule(0, 0, 0, SSL_RC4, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
+
+	/* Now sort by symmetric encryption strength.  The above ordering remains
+	 * in force within each class */
+	if (!ssl_cipher_strength_sort(&head, &tail))
+		{
+		OPENSSL_free(co_list);
+		return NULL;
+		}
+
+	/* Now disable everything (maintaining the ordering!) */
+	ssl_cipher_apply_rule(0, 0, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
+
+
 	/*
 	 * We also need cipher aliases for selecting based on the rule_str.
 	 * There might be two types of entries in the rule_str: 1) names
@@ -1167,6 +1201,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		OPENSSL_free(co_list);
 		return(NULL);
 		}
+	
 	/*
 	 * Allocate new "cipherstack" for the result, return with error
 	 * if we cannot get one.
