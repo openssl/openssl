@@ -1828,7 +1828,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 
 #ifdef KSSL_DEBUG
 			printf("ssl3_send_client_key_exchange(%lx & %lx)\n",
-				l, SSL_kKRB5);
+				alg_k, SSL_kKRB5);
 #endif	/* KSSL_DEBUG */
 
 			authp = NULL;

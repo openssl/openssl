@@ -144,7 +144,7 @@ IMPLEMENT_dtls1_meth_func(DTLSv1_client_method,
 int dtls1_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
-	unsigned long Time=(unsigned long)time(NULL),l;
+	unsigned long Time=(unsigned long)time(NULL);
 	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;

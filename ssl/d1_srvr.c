@@ -145,7 +145,7 @@ IMPLEMENT_dtls1_meth_func(DTLSv1_server_method,
 int dtls1_accept(SSL *s)
 	{
 	BUF_MEM *buf;
-	unsigned long l,Time=(unsigned long)time(NULL);
+	unsigned long Time=(unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	long num1;
 	unsigned long alg_k;
