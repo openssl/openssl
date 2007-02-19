@@ -690,7 +690,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_SSLV3,
 	SSL_NOT_EXP|SSL_HIGH,
 	0,
-	112,
+	168,
 	168,
 	},
 
@@ -754,7 +754,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_SSLV3,
 	SSL_NOT_EXP|SSL_HIGH,
 	0,
-	112,
+	168,
 	168,
 	},
 
@@ -834,7 +834,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_SSLV3,
 	SSL_EXPORT|SSL_EXP40,
 	0,
-	128,
+	40,
 	128,
 	},
 
@@ -882,7 +882,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_SSLV3,
 	SSL_EXPORT|SSL_EXP40,
 	0,
-	128,
+	40,
 	128,
 	},
 #endif	/* OPENSSL_NO_KRB5 */
