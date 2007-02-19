@@ -4,6 +4,11 @@
 
  Changes between 0.9.8d and 0.9.8e  [XX xxx XXXX]
 
+  *) Include "!eNULL" in SSL_DEFAULT_CIPHER_LIST to make sure that
+     a ciphersuite string such as "DEFAULT:RSA" cannot enable
+     authentication-only ciphersuites.
+     [Bodo Moeller]
+
   *) Since AES128 and AES256 (and similarly Camellia128 and
      Camellia256) share a single mask bit in the logic of
      ssl/ssl_ciph.c, the code for masking out disabled ciphers needs a
@@ -1039,6 +1044,11 @@
      [Richard Levitte]
 
  Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
+
+  *) Include "!eNULL" in SSL_DEFAULT_CIPHER_LIST to make sure that
+     a ciphersuite string such as "DEFAULT:RSA" cannot enable
+     authentication-only ciphersuites.
+     [Bodo Moeller]
 
   *) Since AES128 and AES256 share a single mask bit in the logic of
      ssl/ssl_ciph.c, the code for masking out disabled ciphers needs a
