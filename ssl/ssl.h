@@ -319,7 +319,7 @@ extern "C" {
 #ifdef OPENSSL_NO_CAMELLIA
 # define SSL_DEFAULT_CIPHER_LIST	"ALL:!ADH:+RC4:@STRENGTH" /* low priority for RC4 */
 #else
-# define SSL_DEFAULT_CIPHER_LIST	"AES:CAMELLIA:-ECCdraft:ALL:!ADH:+RC4:@STRENGTH" /* low priority for RC4 */
+# define SSL_DEFAULT_CIPHER_LIST	"AES:CAMELLIA:ALL:!ADH:+RC4:@STRENGTH" /* low priority for RC4 */
 #endif
 
 /* Used in SSL_set_shutdown()/SSL_get_shutdown(); */
