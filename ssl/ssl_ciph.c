@@ -1134,10 +1134,11 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 * authenticated ciphers.) */
 	ssl_cipher_apply_rule(0, 0, SSL_aNULL, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
 
-	/* Move ciphers without forward secrecy to then end */
+	/* Move ciphers without forward secrecy to the end */
 	ssl_cipher_apply_rule(0, 0, SSL_aECDH, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
+	/* ssl_cipher_apply_rule(0, 0, SSL_aDH, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail); */
 	ssl_cipher_apply_rule(0, SSL_kRSA, 0, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
-	ssl_cipher_apply_rule(0, 0, SSL_kPSK, 0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
+	ssl_cipher_apply_rule(0, SSL_kPSK, 0,0, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
 
 	/* RC4 is sort-of broken -- move the the end */
 	ssl_cipher_apply_rule(0, 0, 0, SSL_RC4, 0, 0, 0, CIPHER_ORD, -1, &head, &tail);
