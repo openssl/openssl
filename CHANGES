@@ -4,6 +4,27 @@
 
  Changes between 0.9.8e and 0.9.9  [xx XXX xxxx]
 
+  *) Change ssl_cipher_apply_rule(), the internal function that does
+     the work each time a ciphersuite string requests enabling
+     ("foo+bar"), moving ("+foo+bar"), disabling ("-foo+bar", or
+     removing ("!foo+bar") a class of ciphersuites: Now it maintains
+     the order of disabled ciphersuites such that those ciphersuites
+     that most recently went from enabled to disabled not only stay
+     in order with respect to each other, but also have higher priority
+     than other disabled ciphersuites the next time ciphersuites are
+     enabled again.
+
+     This means that you can now say, e.g., "PSK:-PSK:HIGH" to enable
+     the same ciphersuites as with "HIGH" alone, but in a specific
+     order where the PSK ciphersuites come first (since they are the
+     most recently disabled ciphersuites when "HIGH" is parsed).
+
+     Also, change ssl_create_cipher_list() (using this new
+     funcionality) such that between otherwise identical
+     cihpersuites, ephemeral ECDH is preferred over ephemeral DH in
+     the default order.
+     [Bodo Moeller]
+
   *) Change ssl_create_cipher_list() so that it automatically
      arranges the ciphersuites in reasonable order before starting
      to process the rule string.  Thus, the definition for "DEFAULT"

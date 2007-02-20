@@ -476,12 +476,28 @@ static void ll_append_tail(CIPHER_ORDER **head, CIPHER_ORDER *curr,
 		*head=curr->next;
 	if (curr->prev != NULL)
 		curr->prev->next=curr->next;
-	if (curr->next != NULL) /* should always be true */
+	if (curr->next != NULL)
 		curr->next->prev=curr->prev;
 	(*tail)->next=curr;
 	curr->prev= *tail;
 	curr->next=NULL;
 	*tail=curr;
+	}
+
+static void ll_append_head(CIPHER_ORDER **head, CIPHER_ORDER *curr,
+	     CIPHER_ORDER **tail)
+	{
+	if (curr == *head) return;
+	if (curr == *tail)
+		*tail=curr->prev;
+	if (curr->next != NULL)
+		curr->next->prev=curr->prev;
+	if (curr->prev != NULL)
+		curr->prev->next=curr->next;
+	(*head)->prev=curr;
+	curr->next= *head;
+	curr->prev=NULL;
+	*head=curr;
 	}
 
 static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, unsigned long *enc, unsigned long *mac, unsigned long *ssl)
@@ -586,19 +602,27 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 	/*
 	 * Prepare linked list from list entries
 	 */	
-	for (i = 1; i < co_list_num - 1; i++)
-		{
-		co_list[i].prev = &(co_list[i-1]);
-		co_list[i].next = &(co_list[i+1]);
-		}
 	if (co_list_num > 0)
 		{
-		(*head_p) = &(co_list[0]);
-		(*head_p)->prev = NULL;
-		(*head_p)->next = &(co_list[1]);
-		(*tail_p) = &(co_list[co_list_num - 1]);
-		(*tail_p)->prev = &(co_list[co_list_num - 2]);
-		(*tail_p)->next = NULL;
+		co_list[0].prev = NULL;
+
+		if (co_list_num > 1)
+			{
+			co_list[0].next = &co_list[1];
+			
+			for (i = 1; i < co_list_num - 1; i++)
+				{
+				co_list[i].prev = &co_list[i - 1];
+				co_list[i].next = &co_list[i + 1];
+				}
+
+			co_list[co_list_num - 1].prev = &co_list[co_list_num - 2];
+			}
+		
+		co_list[co_list_num - 1].next = NULL;
+
+		*head_p = &co_list[0];
+		*tail_p = &co_list[co_list_num - 1];
 		}
 	}
 
@@ -679,22 +703,38 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 		int rule, int strength_bits,
 		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 	{
-	CIPHER_ORDER *head, *tail, *curr, *curr2, *tail2;
+	CIPHER_ORDER *head, *tail, *curr, *curr2, *last;
 	SSL_CIPHER *cp;
+	int reverse = 0;
 
 #ifdef CIPHER_DEBUG
 	printf("Applying rule %d with %08lx/%08lx/%08lx/%08lx/%08lx %08lx (%d)\n",
 		rule, alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength, strength_bits);
 #endif
 
-	curr = head = *head_p;
-	curr2 = head;
-	tail2 = tail = *tail_p;
+	if (rule == CIPHER_DEL)
+		reverse = 1; /* needed to maintain sorting between currently deleted ciphers */
+
+	head = *head_p;
+	tail = *tail_p;
+
+	if (reverse)
+		{
+		curr = tail;
+		last = head;
+		}
+	else
+		{
+		curr = head;
+		last = tail;
+		}
+
+	curr2 = curr;
 	for (;;)
 		{
-		if ((curr == NULL) || (curr == tail2)) break;
+		if ((curr == NULL) || (curr == last)) break;
 		curr = curr2;
-		curr2 = curr->next;
+		curr2 = reverse ? curr->prev : curr->next;
 
 		cp = curr->cipher;
 
@@ -736,6 +776,7 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 		/* add the cipher if it has not been added yet. */
 		if (rule == CIPHER_ADD)
 			{
+			/* reverse == 0 */
 			if (!curr->active)
 				{
 				ll_append_tail(&head, curr, &tail);
@@ -745,15 +786,27 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 		/* Move the added cipher to this location */
 		else if (rule == CIPHER_ORD)
 			{
+			/* reverse == 0 */
 			if (curr->active)
 				{
 				ll_append_tail(&head, curr, &tail);
 				}
 			}
 		else if	(rule == CIPHER_DEL)
-			curr->active = 0;
+			{
+			/* reverse == 1 */
+			if (curr->active)
+				{
+				/* most recently deleted ciphersuites get best positions
+				 * for any future CIPHER_ADD (note that the CIPHER_DEL loop
+				 * works in reverse to maintain the order) */
+				ll_append_head(&head, curr, &tail);
+				curr->active = 0;
+				}
+			}
 		else if (rule == CIPHER_KILL)
 			{
+			/* reverse == 0 */
 			if (head == curr)
 				head = curr->next;
 			else
@@ -1123,7 +1176,11 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 
 	/* Now arrange all ciphers by preference: */
 
-	/* Temporarily enabled AES first (preferred cipher) */
+	/* Everything else being equal, prefer ephemeral ECDH over other key exchange mechanisms */
+	ssl_cipher_apply_rule(0, SSL_kEECDH, 0, 0, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
+	ssl_cipher_apply_rule(0, SSL_kEECDH, 0, 0, 0, 0, 0, CIPHER_DEL, -1, &head, &tail);
+
+	/* Temporarily enable AES first (preferred cipher) */
 	ssl_cipher_apply_rule(0, 0, 0, SSL_AES, 0, 0, 0, CIPHER_ADD, -1, &head, &tail);
 
 	/* Temporarily enable everything else */
