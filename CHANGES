@@ -39,6 +39,10 @@
      Improve header file function name parsing.
      [Steve Henson]
 
+  *) extend SMTP and IMAP protocol emulation in s_client to use EHLO
+     or CAPABILITY handshake as required by RFCs.
+     [Goetz Babin-Ebell]
+
  Changes between 0.9.8c and 0.9.8d  [28 Sep 2006]
 
   *) Introduce limits to prevent malicious keys being able to

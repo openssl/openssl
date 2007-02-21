@@ -735,12 +735,27 @@ re_start:
 	/* This is an ugly hack that does a lot of assumptions */
 	if (starttls_proto == PROTO_SMTP)
 		{
+		int foundit=0;
 		/* wait for multi-line response to end from SMTP */
 		do
 			{
 			mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
 			}
 		while (mbuf_len>3 && mbuf[3]=='-');
+		/* STARTTLS command requires EHLO... */
+		BIO_printf(sbio,"EHLO openssl.client.net\r\n");
+		/* wait for multi-line response to end EHLO SMTP response */
+		do
+			{
+			mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
+			if (strstr(mbuf,"STARTTLS"))
+				foundit=1;
+			}
+		while (mbuf_len>3 && mbuf[3]=='-');
+		if (!foundit)
+			BIO_printf(bio_err,
+				   "didn't found starttls in server response,"
+				   " try anyway...\n");
 		BIO_printf(sbio,"STARTTLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}
@@ -752,8 +767,23 @@ re_start:
 		}
 	else if (starttls_proto == PROTO_IMAP)
 		{
+		int foundit=0;
 		BIO_read(sbio,mbuf,BUFSIZZ);
-		BIO_printf(sbio,"0 STARTTLS\r\n");
+		/* STARTTLS command requires CAPABILITY... */
+		BIO_printf(sbio,". CAPABILITY\r\n");
+		/* wait for multi-line CAPABILITY response */
+		do
+			{
+			mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
+			if (strstr(mbuf,"STARTTLS"))
+				foundit=1;
+			}
+		while (mbuf_len>3);
+		if (!foundit)
+			BIO_printf(bio_err,
+				   "didn't found STARTTLS in server response,"
+				   " try anyway...\n");
+		BIO_printf(sbio,". STARTTLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}
 	else if (starttls_proto == PROTO_FTP)
