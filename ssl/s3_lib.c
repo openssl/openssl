@@ -658,10 +658,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 #endif
 
 #ifndef OPENSSL_NO_KRB5
-/* The Kerberos ciphers
-** 20000107 VRS: And the first shall be last,
-** in hopes of avoiding the lynx ssl renegotiation problem.
-*/
+/* The Kerberos ciphers*/
 /* Cipher 1E */
 	{
 	1,
