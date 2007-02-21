@@ -4,6 +4,10 @@
 
  Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
 
+  *) Cleanse PEM buffers before freeing them since they may contain 
+     sensitive data.
+     [Benjamin Bennett <ben@psc.edu>]
+
   *) Include "!eNULL" in SSL_DEFAULT_CIPHER_LIST to make sure that
      a ciphersuite string such as "DEFAULT:RSA" cannot enable
      authentication-only ciphersuites.
