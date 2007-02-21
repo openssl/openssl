@@ -170,7 +170,7 @@ static int do_buf(unsigned char *buf, int buflen,
 	q = buf + buflen;
 	outlen = 0;
 	while(p != q) {
-		if(p == buf) orflags = CHARTYPE_FIRST_ESC_2253;
+		if(p == buf && flags & ASN1_STRFLGS_ESC_2253) orflags = CHARTYPE_FIRST_ESC_2253;
 		else orflags = 0;
 		switch(type & BUF_TYPE_WIDTH_MASK) {
 			case 4:
@@ -195,7 +195,7 @@ static int do_buf(unsigned char *buf, int buflen,
 			p += i;
 			break;
 		}
-		if (p == q) orflags = CHARTYPE_LAST_ESC_2253;
+		if (p == q && flags & ASN1_STRFLGS_ESC_2253) orflags = CHARTYPE_LAST_ESC_2253;
 		if(type & BUF_TYPE_CONVUTF8) {
 			unsigned char utfbuf[6];
 			int utflen;
