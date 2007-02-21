@@ -25,6 +25,20 @@
 
  Changes between 0.9.7l and 0.9.7m  [xx XXX xxxx]
 
+  *) Cleanse PEM buffers before freeing them since they may contain 
+     sensitive data.
+     [Benjamin Bennett <ben@psc.edu>]
+
+  *) Include "!eNULL" in SSL_DEFAULT_CIPHER_LIST to make sure that
+     a ciphersuite string such as "DEFAULT:RSA" cannot enable
+     authentication-only ciphersuites.
+     [Bodo Moeller]
+
+  *) Since AES128 and AES256 share a single mask bit in the logic of
+     ssl/ssl_ciph.c, the code for masking out disabled ciphers needs a
+     kludge to work properly if AES128 is available and AES256 isn't.
+     [Victor Duchovni]
+
   *) Expand security boundary to match 1.1.1 module.
      [Steve Henson]
 
