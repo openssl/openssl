@@ -585,6 +585,7 @@ case "$GUESSOS" in
 	OUT="linux-generic32" ;;
   arm*b-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
   arm*l-*-linux2) OUT="linux-generic32"; options="$options -DL_ENDIAN" ;;
+  m68k*-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
   s390*-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN -DNO_ASM" ;;
   x86_64-*-linux?) OUT="linux-x86_64" ;;
   *86-*-linux2) OUT="linux-elf"
