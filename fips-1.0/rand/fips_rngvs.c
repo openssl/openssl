@@ -24,6 +24,7 @@ int main()
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/fips_rand.h>
+#include <openssl/x509v3.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -134,55 +135,161 @@ void pv(const char *tag,const unsigned char *val,int len)
 
 void vst()
     {
-    unsigned char key1[8];
-    unsigned char key2[8];
-    unsigned char v[8];
-    unsigned char dt[8];
-    unsigned char ret[8];
+    unsigned char *key;
+    unsigned char *v;
+    unsigned char *dt;
+    unsigned char ret[16];
     char buf[1024];
     char lbuf[1024];
     char *keyword, *value;
-    int n;
+    long i, keylen;
+
+    keylen = 0;
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
 	fputs(buf,stdout);
+	if(!strncmp(buf,"[AES 128-Key]", 13))
+		keylen = 16;
+	else if(!strncmp(buf,"[AES 192-Key]", 13))
+		keylen = 24;
+	else if(!strncmp(buf,"[AES 256-Key]", 13))
+		keylen = 32;
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		continue;
-	if(!strcmp(keyword,"Key1"))
+	if(!strcmp(keyword,"Key"))
 	    {
-	    n=hex2bin(value,key1);
-	    }
-	else if(!strcmp(keyword,"Key2"))
-	    {
-	    n=hex2bin(value,key2);
+	    key=string_to_hex(value,&i);
+	    if (i != keylen)
+		{
+		fprintf(stderr, "Invalid key length, expecting %ld\n", keylen);
+		return;
+		}
 	    }
 	else if(!strcmp(keyword,"DT"))
 	    {
-	    n=hex2bin(value,dt);
+	    dt=string_to_hex(value,&i);
+	    if (i != 16)
+		{
+		fprintf(stderr, "Invalid DT length\n");
+		return;
+		}
 	    }
 	else if(!strcmp(keyword,"V"))
 	    {
-	    n=hex2bin(value,v);
+	    v=string_to_hex(value,&i);
+	    if (i != 16)
+		{
+		fprintf(stderr, "Invalid V length\n");
+		return;
+		}
 
-	    FIPS_rand_method()->cleanup();
-	    FIPS_set_prng_key(key1,key2);
-	    FIPS_rand_seed(v,8);
-	    FIPS_test_mode(1,dt);
-	    if (FIPS_rand_method()->bytes(ret,8) <= 0)
-	        {
-	        FIPS_test_mode(0,NULL);
-	        FIPSerr(FIPS_F_FIPS_SELFTEST_RNG,FIPS_R_SELFTEST_FAILED);
+	    if (!key || !dt)
+		{
+		fprintf(stderr, "Missing key or DT\n");
+		return;
+		}
+
+	    FIPS_rand_set_key(key, keylen);
+	    FIPS_rand_seed(v,16);
+	    FIPS_rand_set_dt(dt);
+	    if (FIPS_rand_bytes(ret,16) <= 0)
+		{
+		fprintf(stderr, "Error getting PRNG value\n");
 	        return;
 	        }
 
-	    pv("R",ret,8);
+	    pv("R",ret,16);
+	    putc('\n',stdout);
+	    }
+	}
+    }
+
+void mct()
+    {
+    unsigned char *key;
+    unsigned char *v;
+    unsigned char *dt;
+    unsigned char ret[16];
+    char buf[1024];
+    char lbuf[1024];
+    char *keyword, *value;
+    long i, keylen;
+    int j;
+
+    keylen = 0;
+
+    while(fgets(buf,sizeof buf,stdin) != NULL)
+	{
+	fputs(buf,stdout);
+	if(!strncmp(buf,"[AES 128-Key]", 13))
+		keylen = 16;
+	else if(!strncmp(buf,"[AES 192-Key]", 13))
+		keylen = 24;
+	else if(!strncmp(buf,"[AES 256-Key]", 13))
+		keylen = 32;
+	if (!parse_line(&keyword, &value, lbuf, buf))
+		continue;
+	if(!strcmp(keyword,"Key"))
+	    {
+	    key=string_to_hex(value,&i);
+	    if (i != keylen)
+		{
+		fprintf(stderr, "Invalid key length, expecting %ld\n", keylen);
+		return;
+		}
+	    }
+	else if(!strcmp(keyword,"DT"))
+	    {
+	    dt=string_to_hex(value,&i);
+	    if (i != 16)
+		{
+		fprintf(stderr, "Invalid DT length\n");
+		return;
+		}
+	    }
+	else if(!strcmp(keyword,"V"))
+	    {
+	    v=string_to_hex(value,&i);
+	    if (i != 16)
+		{
+		fprintf(stderr, "Invalid V length\n");
+		return;
+		}
+
+	    if (!key || !dt)
+		{
+		fprintf(stderr, "Missing key or DT\n");
+		return;
+		}
+
+	    FIPS_rand_set_key(key, keylen);
+	    FIPS_rand_seed(v,16);
+	    for (i = 0; i < 10000; i++)
+		{
+		    FIPS_rand_set_dt(dt);
+		    if (FIPS_rand_bytes(ret,16) <= 0)
+			{
+			fprintf(stderr, "Error getting PRNG value\n");
+		        return;
+		        }
+		    /* Increment DT */
+		    for (j = 15; j >= 0; j--)
+			{
+			dt[j]++;
+			if (dt[j])
+				break;
+			}
+		}
+
+	    pv("R",ret,16);
 	    putc('\n',stdout);
 	    }
 	}
     }
 
 
+#if 0
 void mct()
     {
     unsigned char key1[8];
@@ -198,6 +305,12 @@ void mct()
     BIGNUM *bn;
     BIGNUM *pbn;
     bn = BN_new();
+
+    if (FIPS_rand_reset() && !FIPS_rand_test_mode())
+	{
+	fprintf(stderr, Error setting PRNG test mode\n");
+	return;
+	}
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
@@ -244,6 +357,7 @@ void mct()
 	}
     BN_free(bn);
     }
+#endif
 
 int main(int argc,char **argv)
     {
@@ -255,6 +369,13 @@ int main(int argc,char **argv)
     if(!FIPS_mode_set(1))
 	{
 	ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+	exit(1);
+	}
+    FIPS_rand_reset();
+    if (!FIPS_rand_test_mode())
+	{
+	fprintf(stderr, "Error setting PRNG test mode\n");
+	ERR_print_errors_fp(stderr);
 	exit(1);
 	}
     if(!strcmp(argv[1],"mct"))

@@ -1,4 +1,4 @@
-/* crypto/fips_err.c */
+/* crypto/fips_err.h */
 /* ====================================================================
  * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
  *

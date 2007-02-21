@@ -38,7 +38,7 @@ HEADER=	$(EXHEADER) fips_sha_locl.h fips_md32_common.h
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
 top:
-	(cd $(TOP); $(MAKE) DIRS=fips SDIRS=$(DIR) sub_all)
+	(cd $(TOP); $(MAKE) DIRS=fips-1.0 SDIRS=$(DIR) sub_all)
 
 all:	fips_standalone_sha1$(EXE_EXT) lib
 

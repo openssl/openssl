@@ -265,7 +265,7 @@ int FIPS_mode_set(int onoff)
 	    }
 
 	/* automagically seed PRNG if not already seeded */
-	if(!FIPS_rand_seeded())
+	if(!FIPS_rand_status())
 	    {
 	    if(RAND_bytes(buf,sizeof buf) <= 0)
 		{
@@ -273,8 +273,8 @@ int FIPS_mode_set(int onoff)
 		ret = 0;
 		goto end;
 		}
-	    FIPS_set_prng_key(buf,buf+8);
-	    FIPS_rand_seed(buf+16,8);
+	    FIPS_rand_set_key(buf,32);
+	    FIPS_rand_seed(buf+32,16);
 	    }
 
 	/* now switch into FIPS mode */

@@ -92,7 +92,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_CHECK_DSA				 116
 #define FIPS_F_FIPS_CHECK_DSO				 120
 #define FIPS_F_FIPS_CHECK_EXE				 106
-#define FIPS_F_FIPS_CHECK_FINGERPRINT			 120
+#define FIPS_F_FIPS_CHECK_FINGERPRINT			 121
 #define FIPS_F_FIPS_CHECK_RSA				 115
 #define FIPS_F_FIPS_DSA_CHECK				 102
 #define FIPS_F_FIPS_MODE_SET				 105

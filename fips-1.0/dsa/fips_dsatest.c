@@ -129,8 +129,7 @@ static unsigned char out_g[]={
 static const unsigned char str1[]="12345678901234567890";
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
-static const unsigned char rnd_key1[]="12345678";
-static const unsigned char rnd_key2[]="abcdefgh";
+static const unsigned char rnd_key[]="ABCDEFGHIJKLMNOPQRSTUVWXYZ123456";
 
 static BIO *bio_err=NULL;
 
@@ -156,7 +155,7 @@ int main(int argc, char **argv)
 	CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
 
-	FIPS_set_prng_key(rnd_key1,rnd_key2);
+	FIPS_rand_set_key(rnd_key, 32);
 	RAND_seed(rnd_seed, sizeof rnd_seed);
 
 	BIO_printf(bio_err,"test generation of DSA parameters\n");

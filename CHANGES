@@ -4,6 +4,11 @@
 
  Changes between 0.9.7l and 0.9.7m-fips2 [xx XXX xxxx]
 
+  *) Replace FIPS PRNG with AES based version based on ANSI X9.31 A.2.4 .
+     This supports larger keys (up to 256 bits) and large seeding and DT
+     vectors (128 bits each). Update tests for modified PRNG.
+     [Steve Henson]
+
   *) FIPS portability patches.
      [Brad House <brad@mainstreetsoftworks.com>]
 

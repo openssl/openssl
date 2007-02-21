@@ -58,11 +58,15 @@
 extern "C" {
 #endif
 
-void FIPS_set_prng_key(const unsigned char k1[8],const unsigned char k2[8]);
-void FIPS_test_mode(int test,const unsigned char faketime[8]);
-void FIPS_rand_seed(const void *buf, FIPS_RAND_SIZE_T num);
-/* NB: this returns true if _partially_ seeded */
-int FIPS_rand_seeded(void);
+int FIPS_rand_set_key(const unsigned char *key, FIPS_RAND_SIZE_T keylen);
+int FIPS_rand_seed(const void *buf, FIPS_RAND_SIZE_T num);
+int FIPS_rand_bytes(unsigned char *out, FIPS_RAND_SIZE_T outlen);
+
+int FIPS_rand_test_mode(void);
+void FIPS_rand_reset(void);
+int FIPS_rand_set_dt(unsigned char *dt);
+
+int FIPS_rand_status(void);
 
 const RAND_METHOD *FIPS_rand_method(void);
 
