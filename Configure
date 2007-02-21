@@ -843,6 +843,16 @@ PROCESS_ARGS:
 			# The check for the option is there so scripts aren't
 			# broken
 			}
+		elsif (/^nofipscanistercheck$/)
+			{
+			$nofipscanistercheck = 1;
+			}
+		elsif (/^fipscanisterbuild$/)
+			{
+			$nofipscanistercheck = 1;
+			$fipslibdir="";
+			$fipscanisterinternal="y";
+			}
 		elsif (/^[-+]/)
 			{
 			if (/^-[lL](.*)$/)
@@ -872,16 +882,6 @@ PROCESS_ARGS:
 			elsif (/^--with-zlib-lib=(.*)$/)
 				{
 				$withargs{"zlib-lib"}=$1;
-				}
-			elsif (/^--nofipscanistercheck$/)
-				{
-				$nofipscanistercheck = 1;
-				}
-			elsif (/^--fipscanisterbuild$/)
-				{
-				$nofipscanistercheck = 1;
-				$fipslibdir="";
-				$fipscanisterinternal="y";
 				}
 			elsif (/^--with-fipslibdir=(.*)$/)
 				{
@@ -1638,6 +1638,17 @@ for this platform yet, so it will pretend you gave the option 'no-shared'.  If
 you can inform the developpers (openssl-dev\@openssl.org) how to support shared
 libraries on this platform, they will at least look at it and try their best
 (but please first make sure you have tried with a current version of OpenSSL).
+EOF
+
+print <<\EOF if ($fipscanisterinternal);
+
+WARNING: OpenSSL has been configured using unsupported option(s) to internally
+generate a fipscanister.o object module for TESTING PURPOSES ONLY; that
+compiled module is NOT FIPS 140-2 validated and CANNOT be used to replace the
+OpenSSL FIPS Object Module as identified by the CMVP
+(http://csrc.nist.gov/cryptval/) in any application requiring the use of FIPS
+140-2 validated software. 
+
 EOF
 
 exit(0);
