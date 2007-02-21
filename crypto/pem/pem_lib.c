@@ -619,6 +619,7 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 		}
 	EVP_EncodeFinal(&ctx,buf,&outl);
 	if ((outl > 0) && (BIO_write(bp,(char *)buf,outl) != outl)) goto err;
+	OPENSSL_cleanse(buf, PEM_BUFSIZE*8);
 	OPENSSL_free(buf);
 	buf = NULL;
 	if (	(BIO_write(bp,"-----END ",9) != 9) ||
@@ -627,8 +628,10 @@ int PEM_write_bio(BIO *bp, const char *name, char *header, unsigned char *data,
 		goto err;
 	return(i+outl);
 err:
-	if (buf)
+	if (buf) {
+		OPENSSL_cleanse(buf, PEM_BUFSIZE*8);
 		OPENSSL_free(buf);
+	}
 	PEMerr(PEM_F_PEM_WRITE_BIO,reason);
 	return(0);
 	}
