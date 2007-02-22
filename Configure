@@ -849,6 +849,7 @@ PROCESS_ARGS:
 			}
 		elsif (/^fipscanisterbuild$/)
 			{
+			$fips=1;
 			$nofipscanistercheck = 1;
 			$fipslibdir="";
 			$fipscanisterinternal="y";
