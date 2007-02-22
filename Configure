@@ -1640,7 +1640,7 @@ libraries on this platform, they will at least look at it and try their best
 (but please first make sure you have tried with a current version of OpenSSL).
 EOF
 
-print <<\EOF if ($fipscanisterinternal);
+print <<\EOF if ($fipscanisterinternal eq "y");
 
 WARNING: OpenSSL has been configured using unsupported option(s) to internally
 generate a fipscanister.o object module for TESTING PURPOSES ONLY; that
