@@ -912,25 +912,37 @@ re_start:
 	sbuf_off=0;
 
 	/* This is an ugly hack that does a lot of assumptions */
+	/* We do have to handle multi-line responses which may come
+ 	   in a single packet or not. We therefore have to use
+	   BIO_gets() which does need a buffering BIO. So during
+	   the initial chitchat we do push a buffering BIO into the
+	   chain that is removed again later on to not disturb the
+	   rest of the s_client operation. */
 	if (starttls_proto == PROTO_SMTP)
 		{
 		int foundit=0;
+		BIO *fbio = BIO_new(BIO_f_buffer());
+		BIO_push(fbio, sbio);
 		/* wait for multi-line response to end from SMTP */
 		do
 			{
-			mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
+			mbuf_len = BIO_gets(fbio,mbuf,BUFSIZZ);
 			}
 		while (mbuf_len>3 && mbuf[3]=='-');
 		/* STARTTLS command requires EHLO... */
-		BIO_printf(sbio,"EHLO openssl.client.net\r\n");
+		BIO_printf(fbio,"EHLO openssl.client.net\r\n");
+		BIO_flush(fbio);
 		/* wait for multi-line response to end EHLO SMTP response */
 		do
 			{
-			mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
+			mbuf_len = BIO_gets(fbio,mbuf,BUFSIZZ);
 			if (strstr(mbuf,"STARTTLS"))
 				foundit=1;
 			}
 		while (mbuf_len>3 && mbuf[3]=='-');
+		BIO_flush(fbio);
+		BIO_pop(fbio);
+		BIO_free(fbio);
 		if (!foundit)
 			BIO_printf(bio_err,
 				   "didn't found starttls in server response,"
@@ -947,17 +959,23 @@ re_start:
 	else if (starttls_proto == PROTO_IMAP)
 		{
 		int foundit=0;
-		BIO_read(sbio,mbuf,BUFSIZZ);
+		BIO *fbio = BIO_new(BIO_f_buffer());
+		BIO_push(fbio, sbio);
+		BIO_gets(fbio,mbuf,BUFSIZZ);
 		/* STARTTLS command requires CAPABILITY... */
-		BIO_printf(sbio,". CAPABILITY\r\n");
+		BIO_printf(fbio,". CAPABILITY\r\n");
+		BIO_flush(fbio);
 		/* wait for multi-line CAPABILITY response */
 		do
 			{
-			mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
+			mbuf_len = BIO_gets(fbio,mbuf,BUFSIZZ);
 			if (strstr(mbuf,"STARTTLS"))
 				foundit=1;
 			}
-		while (mbuf_len>3);
+		while (mbuf_len>3 && mbuf[0]!='.');
+		BIO_flush(fbio);
+		BIO_pop(fbio);
+		BIO_free(fbio);
 		if (!foundit)
 			BIO_printf(bio_err,
 				   "didn't found STARTTLS in server response,"
@@ -967,12 +985,17 @@ re_start:
 		}
 	else if (starttls_proto == PROTO_FTP)
 		{
+		BIO *fbio = BIO_new(BIO_f_buffer());
+		BIO_push(fbio, sbio);
 		/* wait for multi-line response to end from FTP */
 		do
 			{
-			mbuf_len = BIO_read(sbio,mbuf,BUFSIZZ);
+			mbuf_len = BIO_gets(fbio,mbuf,BUFSIZZ);
 			}
 		while (mbuf_len>3 && mbuf[3]=='-');
+		BIO_flush(fbio);
+		BIO_pop(fbio);
+		BIO_free(fbio);
 		BIO_printf(sbio,"AUTH TLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}
