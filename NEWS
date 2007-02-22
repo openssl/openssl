@@ -5,6 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8d and OpenSSL 0.9.8e:
+
+      o Various ciphersuite selection fixes.
+      o RFC3779 support.
+
   Major changes between OpenSSL 0.9.8c and OpenSSL 0.9.8d:
 
       o Introduce limits to prevent malicious key DoS  (CVE-2006-2940)
