@@ -1946,7 +1946,7 @@ X509 *ssl_get_server_send_cert(SSL *s)
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
 
-	if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe))
+	if (alg_k & (SSL_kECDHr|SSL_kECDHe))
 		{
 		/* we don't need to look at SSL_kEECDH
 		 * since no certificate is needed for
