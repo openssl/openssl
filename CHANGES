@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
 
   *) Include "!eNULL" in SSL_DEFAULT_CIPHER_LIST to make sure that
