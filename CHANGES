@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8d and 0.9.8e  [XX xxx XXXX]
+ Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
 
   *) Include "!eNULL" in SSL_DEFAULT_CIPHER_LIST to make sure that
      a ciphersuite string such as "DEFAULT:RSA" cannot enable
