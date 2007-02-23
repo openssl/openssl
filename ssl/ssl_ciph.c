@@ -489,7 +489,7 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 		/* drop those that use any of that is not available */
 #define IS_MASKED(c) ((c)->algorithms & (((c)->alg_bits == 256) ? m256 : mask))
 #ifdef OPENSSL_FIPS
-		if ((c != NULL) && c->valid && !IS_MASKED(c))
+		if ((c != NULL) && c->valid && !IS_MASKED(c)
 			&& (!FIPS_mode() || (c->algo_strength & SSL_FIPS)))
 #else
 		if ((c != NULL) && c->valid && !IS_MASKED(c))
