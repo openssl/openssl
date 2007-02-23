@@ -73,7 +73,7 @@ all:
 # vendor compiler drivers...
 
 fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
-	@FIPS_BN_ASM=`for i in $(BN_ASM) ; do echo -n "../crypto/bn/$$i " ; done`; \
+	@FIPS_BN_ASM=""; for i in $(BN_ASM) ; do FIPS_BN_ASM="$$FIPS_BN_ASM ../crypto/bn/$$i" ; done; \
 	objs="fips_start.o $(LIBOBJ) $(FIPS_EX_OBJ) $$FIPS_BN_ASM"; \
 	for i in $(FIPS_OBJ_LISTS); do \
 		dir=`dirname $$i`; script="s|^|$$dir/|;s| | $$dir/|g"; \
