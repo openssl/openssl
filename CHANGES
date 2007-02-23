@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.7m and 0.9.7n  [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.7l and 0.9.7m  [23 Feb 2007]
 
   *) Cleanse PEM buffers before freeing them since they may contain 
