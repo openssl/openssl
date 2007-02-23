@@ -1652,7 +1652,7 @@ $arflags      =
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wmissing-prototypes -Wno-long-long -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -march=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wmissing-prototypes -Wno-long-long -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1677,7 +1677,7 @@ $arflags      =
 
 *** debug-levitte-linux-elf-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wmissing-prototypes -Wconversion -Wno-long-long -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -march=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wmissing-prototypes -Wconversion -Wno-long-long -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1702,7 +1702,7 @@ $arflags      =
 
 *** debug-levitte-linux-noasm
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wmissing-prototypes -Wno-long-long -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -march=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wmissing-prototypes -Wno-long-long -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1727,7 +1727,7 @@ $arflags      =
 
 *** debug-levitte-linux-noasm-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wmissing-prototypes -Wconversion -Wno-long-long -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -march=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wmissing-prototypes -Wconversion -Wno-long-long -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1802,7 +1802,7 @@ $arflags      =
 
 *** debug-linux-pentium
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentium -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -march=pentium -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1827,7 +1827,7 @@ $arflags      =
 
 *** debug-linux-ppro
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -mcpu=pentiumpro -Wall
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -DTERMIO -g -march=pentiumpro -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1952,7 +1952,7 @@ $arflags      =
 
 *** debug-solaris-sparcv9-gcc
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -march=ultrasparc -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1977,7 +1977,7 @@ $arflags      =
 
 *** debug-steve
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -mcpu=i486 -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -march=i486 -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2002,7 +2002,7 @@ $arflags      =
 
 *** debug-steve-linux-pseudo64
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DOPENSSL_NO_ASM -g -mcpu=i486 -Wall -Werror -Wshadow -pipe
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DOPENSSL_NO_ASM -g -march=i486 -Wall -Werror -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3127,7 +3127,7 @@ $arflags      =
 
 *** linux-k6
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=k6 -Wall
+$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -march=k6 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3252,7 +3252,7 @@ $arflags      =
 
 *** linux-pentium
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=pentium -Wall
+$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -march=pentium -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3327,7 +3327,7 @@ $arflags      =
 
 *** linux-ppro
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -mcpu=pentiumpro -Wall
+$cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -march=pentiumpro -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3452,7 +3452,7 @@ $arflags      =
 
 *** linux-sparcv9
 $cc           = gcc
-$cflags       = -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DBN_DIV2W
+$cflags       = -march=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -3502,7 +3502,7 @@ $arflags      =
 
 *** linux64-sparcv9
 $cc           = gcc
-$cflags       = -m64 -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -m64 -march=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -3977,7 +3977,7 @@ $arflags      =
 
 *** solaris-sparcv9-gcc
 $cc           = gcc
-$cflags       = -m32 -mcpu=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
+$cflags       = -m32 -march=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -4102,7 +4102,7 @@ $arflags      =
 
 *** solaris64-sparcv9-gcc
 $cc           = gcc
-$cflags       = -m64 -mcpu=ultrasparc -O3 -Wall -DB_ENDIAN
+$cflags       = -m64 -march=ultrasparc -O3 -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -4127,7 +4127,7 @@ $arflags      =
 
 *** solaris64-sparcv9-gcc31
 $cc           = gcc
-$cflags       = -mcpu=ultrasparc -m64 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN
+$cflags       = -march=ultrasparc -m64 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
