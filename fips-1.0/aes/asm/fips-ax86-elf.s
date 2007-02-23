@@ -429,7 +429,7 @@ AES_Te:
 	.long	974525996,974525996
 	.long	1,2,4,8
 	.long	16,32,64,128
-	.long	27,54,0,0,
+	.long	27,54,0,0
 	.long	0,0,0,0
 .L__x86_AES_encrypt_end:
 .size	_x86_AES_encrypt,.L__x86_AES_encrypt_end-_x86_AES_encrypt
