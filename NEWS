@@ -5,6 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8d and OpenSSL 0.9.8e:
+
+      o Various ciphersuite selection fixes.
+      o RFC3779 support.
+
   Major changes between OpenSSL 0.9.8c and OpenSSL 0.9.8d:
 
       o Introduce limits to prevent malicious key DoS  (CVE-2006-2940)
@@ -104,6 +109,11 @@
       o Added support for files larger than 2GB.
       o Added initial support for Win64.
       o Added alternate pkg-config files.
+
+  Major changes between OpenSSL 0.9.7l and OpenSSL 0.9.7m:
+
+      o FIPS 1.1.1 module linking.
+      o Various ciphersuite selection fixes.
 
   Major changes between OpenSSL 0.9.7k and OpenSSL 0.9.7l:
 
