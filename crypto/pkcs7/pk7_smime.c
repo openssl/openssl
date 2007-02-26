@@ -163,7 +163,6 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 					int flags)
 	{
 	PKCS7_SIGNER_INFO *si = NULL;
-	int si_free = 1;
 	STACK_OF(X509_ALGOR) *smcap = NULL;
 	if(!X509_check_private_key(signcert, pkey))
 		{
@@ -178,10 +177,6 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 				PKCS7_R_PKCS7_ADD_SIGNATURE_ERROR);
 		return NULL;
 		}
-
-	/* si is now part of p7 so don't free it on error */
-
-	si_free = 0;
 
 	if(!(flags & PKCS7_NOCERTS))
 		{
@@ -229,8 +224,6 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 	err:
 	if (smcap)
 		sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
-	if (si && si_free)
-		PKCS7_SIGNER_INFO_free(si);
 	return NULL;
 	}
 
