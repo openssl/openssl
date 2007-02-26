@@ -289,6 +289,8 @@ int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth)
 
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 	{
+	if (ctx == NULL)
+		return;
 	if (ctx->pmeth && ctx->pmeth->cleanup)
 		ctx->pmeth->cleanup(ctx);
 	if (ctx->pkey)
