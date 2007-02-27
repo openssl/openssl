@@ -225,7 +225,7 @@ int EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
 
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
 	{
-	return ctx->cipher->key_len;
+	return ctx->key_len;
 	}
 
 int EVP_CIPHER_nid(const EVP_CIPHER *cipher)
