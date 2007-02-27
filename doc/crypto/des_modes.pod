@@ -4,7 +4,7 @@
 
 =head1 NAME
 
-Modes of DES - the variants of DES and other crypto algorithms of OpenSSL
+des_modes - the variants of DES and other crypto algorithms of OpenSSL
 
 =head1 DESCRIPTION
 
