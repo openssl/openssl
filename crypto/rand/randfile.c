@@ -103,10 +103,8 @@ int RAND_load_file(const char *file, long bytes)
 	if (file == NULL) return(0);
 
 #ifndef OPENSSL_NO_POSIX_IO
-	i=stat(file,&sb);
-	/* If the state fails, put some crap in anyway */
+	if (stat(file,&sb) < 0) return(0);
 	RAND_add(&sb,sizeof(sb),0.0);
-	if (i < 0) return(0);
 #endif
 	if (bytes == 0) return(ret);
 
