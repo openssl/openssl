@@ -439,7 +439,7 @@ struct disabled_masks { /* This is a kludge no longer needed with OpenSSL 0.9.9,
   unsigned long m256; /* applies to 256-bit algorithms only */
 };
 
-struct disabled_masks ssl_cipher_get_disabled(void)
+static struct disabled_masks ssl_cipher_get_disabled(void)
 	{
 	unsigned long mask;
 	unsigned long m256;
