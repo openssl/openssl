@@ -821,7 +821,9 @@ int ssl3_get_server_certificate(SSL *s)
 
 	if (!ok) return((int)n);
 
-	if (s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE)
+	if ((s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) ||
+		((s->s3->tmp.new_cipher->algorithms & SSL_aKRB5) && 
+		(s->s3->tmp.message_type == SSL3_MT_SERVER_DONE)))
 		{
 		s->s3->tmp.reuse_message=1;
 		return(1);
@@ -2292,17 +2294,17 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 
 	sc=s->session->sess_cert;
 
-	if (sc == NULL)
-		{
-		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,ERR_R_INTERNAL_ERROR);
-		goto err;
-		}
-
 	algs=s->s3->tmp.new_cipher->algorithms;
 
 	/* we don't have a certificate */
 	if (algs & (SSL_aDH|SSL_aNULL|SSL_aKRB5))
 		return(1);
+
+	if (sc == NULL)
+		{
+		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,ERR_R_INTERNAL_ERROR);
+		goto err;
+		}
 
 #ifndef OPENSSL_NO_RSA
 	rsa=s->session->sess_cert->peer_rsa_tmp;
