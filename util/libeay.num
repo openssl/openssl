@@ -3903,3 +3903,9 @@ TS_TST_INFO_get_ext_by_critical         4283	EXIST::FUNCTION:
 EVP_PKEY_CTX_new_id                     4284	EXIST::FUNCTION:
 TS_REQ_get_ext_by_OBJ                   4285	EXIST::FUNCTION:
 TS_CONF_set_signer_cert                 4286	EXIST::FUNCTION:
+BIO_asn1_get_prefix                     4287	EXIST::FUNCTION:
+BIO_asn1_set_prefix                     4288	EXIST::FUNCTION:
+BIO_f_asn1                              4289	EXIST::FUNCTION:
+BIO_asn1_set_suffix                     4290	EXIST::FUNCTION:
+BIO_asn1_get_suffix                     4291	EXIST::FUNCTION:
+PKCS7_stream                            4292	EXIST::FUNCTION:

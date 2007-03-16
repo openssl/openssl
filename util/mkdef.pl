@@ -85,7 +85,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
 			 "SHA256", "SHA512", "RIPEMD",
 			 "MDC2", "RSA", "DSA", "DH", "EC", "ECDH", "ECDSA",
-			 "HMAC", "AES", "WHIRLPOOL", "CAMELLIA",
+			 "HMAC", "AES", "WHIRLPOOL", "CAMELLIA", "GOST",
 			 # Envelope "algorithms"
 			 "EVP", "X509", "ASN1_TYPEDEFS",
 			 # Helper "algorithms"

@@ -140,9 +140,9 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 
 	bits = (bits+63)/64*64;
 
-	if (seed_len < qsize)
+	if (seed_len < (size_t)qsize)
 		seed_in = NULL;		/* seed buffer too small -- ignore */
-	if (seed_len > qsize) 
+	if (seed_len > (size_t)qsize) 
 		seed_len = qsize;	/* App. 2.2 of FIPS PUB 186 allows larger SEED,
 					 * but our internal buffers are restricted to 160 bits*/
 	if (seed_in != NULL)
