@@ -128,8 +128,6 @@ $code=<<___;
 .align  32
 $fname:
 	save	%sp,-$frame-$locals,%sp
-	sethi	%hi(0xffff),$mask
-	or	$mask,%lo(0xffff),$mask
 
 	cmp	$num,4
 	bl,a,pn %icc,.Lret
@@ -137,14 +135,11 @@ $fname:
 	andcc	$num,1,%g0		! $num has to be even...
 	bnz,a,pn %icc,.Lret
 	clr	%i0			! signal "unsupported input value"
-	or	$bp,$ap,%l0
+
 	srl	$num,1,$num
-	or	$rp,$np,%l1
-	or	%l0,%l1,%l0
-	andcc	%l0,7,%g0		! ...and pointers has to be 8-byte aligned
-	bnz,a,pn %icc,.Lret
-	clr	%i0			! signal "unsupported input value"
+	sethi	%hi(0xffff),$mask
 	ld	[%i4+0],$n0		! $n0 reassigned, remember?
+	or	$mask,%lo(0xffff),$mask
 	ld	[%i4+4],%o0
 	sllx	%o0,32,%o0
 	or	%o0,$n0,$n0		! $n0=n0[1].n0[0]
@@ -842,7 +837,6 @@ $fname:
 	add	%o7,8,%o7
 	brnz,pt	%o7,.Lcopy
 	st	%o1,[%g1+4]
-	ba	.Lzap
 	sub	%g0,$num,%o7		! n=-num
 
 .align	32
