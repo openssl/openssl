@@ -340,7 +340,7 @@ sub bn_sqr_words
 		&movd("mm0",&DWP(0,$a));	# mm0 = a[i]
 		&pmuludq("mm0","mm0");		# a[i] *= a[i]
 		&lea($a,&DWP(4,$a));		# a++
-		&movq(&DWP(0,$r),"mm0");	# r[i] = a[i]*a[i]
+		&movq(&QWP(0,$r),"mm0");	# r[i] = a[i]*a[i]
 		&sub($c,1);
 		&lea($r,&DWP(8,$r));		# r += 2
 		&jnz(&label("sqr_sse2_loop"));

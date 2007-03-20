@@ -81,7 +81,7 @@ sub get_mem
 }
 sub ::BP	{ &get_mem("BYTE",@_);  }
 sub ::DWP	{ &get_mem("DWORD",@_); }
-sub ::QWP	{ &get_mem("QWORD",@_); }
+sub ::QWP	{ &get_mem("",@_);      }
 sub ::BC	{ (($::mwerks)?"":"BYTE ")."@_";  }
 sub ::DWC	{ (($::mwerks)?"":"DWORD ")."@_"; }
 
@@ -160,6 +160,7 @@ dd	${lprfx}OPENSSL_ia32cap_init
 segment	.bss
 common	${under}OPENSSL_ia32cap_P 4
 ___
+	grep {s/(^extern\s+${under}OPENSSL_ia32cap_P)/\;$1/} @out;
 	push (@out,$tmp);		
     }
 }

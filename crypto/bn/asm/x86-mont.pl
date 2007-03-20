@@ -51,7 +51,7 @@ $_rp=&DWP(4*1,"esp");
 $_ap=&DWP(4*2,"esp");
 $_bp=&DWP(4*3,"esp");
 $_np=&DWP(4*4,"esp");
-$_n0=&DWP(4*5,"esp");
+$_n0=&DWP(4*5,"esp");	$_n0q=&QWP(4*5,"esp");
 $_sp=&DWP(4*6,"esp");
 $_bpend=&DWP(4*7,"esp");
 $frame=32;				# size of above frame rounded up to 16n
@@ -136,7 +136,7 @@ $mask="mm7";
 	&movq	($acc0,$mul1);			# I wish movd worked for
 	&pand	($acc0,$mask);			# inter-register transfers
 
-	&pmuludq($mul1,$_n0);			# *=n0
+	&pmuludq($mul1,$_n0q);			# *=n0
 
 	&pmuludq($car1,$mul1);			# "t[0]"*np[0]*n0
 	&paddq	($car1,$acc0);
@@ -181,7 +181,7 @@ $mask="mm7";
 	&psrlq	($car1,32);
 
 	&paddq	($car1,$car0);
-	&movq	(&DWP($frame,"esp",$num,4),$car1);	# tp[num].tp[num-1]
+	&movq	(&QWP($frame,"esp",$num,4),$car1);	# tp[num].tp[num-1]
 
 	&inc	($i);				# i++
 &set_label("outer");
@@ -198,7 +198,7 @@ $mask="mm7";
 	&movq	($car0,$mul1);
 	&pand	($acc0,$mask);
 
-	&pmuludq($mul1,$_n0);			# *=n0
+	&pmuludq($mul1,$_n0q);			# *=n0
 
 	&pmuludq($car1,$mul1);
 	&paddq	($car1,$acc0);
@@ -250,7 +250,7 @@ $mask="mm7";
 	&movd	($temp,&DWP($frame+4,"esp",$num,4));	# += tp[num]
 	&paddq	($car1,$car0);
 	&paddq	($car1,$temp);
-	&movq	(&DWP($frame,"esp",$num,4),$car1);	# tp[num].tp[num-1]
+	&movq	(&QWP($frame,"esp",$num,4),$car1);	# tp[num].tp[num-1]
 
 	&lea	($i,&DWP(1,$i));		# i++
 	&cmp	($i,$num);
