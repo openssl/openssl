@@ -760,7 +760,7 @@ $arflags      =
 $cc           = cc
 $cflags       = -q64 -O -DB_ENDIAN -qmaxmem=16384
 $unistd       = 
-$thread_cflag = (unknown)
+$thread_cflag = -qthreaded
 $sys_id       = AIX
 $lflags       = 
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR
@@ -785,7 +785,7 @@ $arflags      = -X 64
 
 *** aix64-gcc
 $cc           = gcc
-$cflags       = -O -DB_ENDIAN
+$cflags       = -maix64 -O -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_THREAD_SAFE
 $sys_id       = AIX
@@ -2810,7 +2810,7 @@ $arflags      =
 
 *** linux-ppc64
 $cc           = gcc
-$cflags       = -bpowerpc64-linux -DB_ENDIAN -DTERMIO -O3 -Wall
+$cflags       = -m64 -DB_ENDIAN -DTERMIO -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2830,7 +2830,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_ldflag = -bpowerpc64-linux
+$shared_ldflag = -m64
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
