@@ -756,7 +756,7 @@ case "$GUESSOS" in
 		fi
 	    fi
 	fi
-	if (lsattr -E -O -l proc0 | grep -i powerpc) >/dev/null 2>&1; then
+	if (lsattr -E -O -l `lsdev -c processor|awk '{print$1;exit}'` | grep -i powerpc) >/dev/null 2>&1; then
 	    :	# this applies even to Power3 and later, as they return PowerPC_POWER[345]
 	else
 	    options="$options no-asm"
