@@ -221,6 +221,8 @@ $code.=<<___;
 	movb	$TY#b,($dat,$XX[0])
 	add	$TX[0]#b,$TY#b
 	add	\$1,$XX[0]#b
+	movzb	$TY#b,$TY#d
+	movzb	$XX[0]#b,$XX[0]#d
 	movzb	($dat,$TY),$TY#d
 	movzb	($dat,$XX[0]),$TX[0]#d
 	xorb	($inp),$TY#b
