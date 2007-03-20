@@ -155,11 +155,12 @@ ${lprfx}OPENSSL_ia32cap_init:
 ${lprfx}nocpuid:
 	ret
 
-segment	.CRT\$XCU rdata align=4
+segment	.CRT\$XCU data align=4
 dd	${lprfx}OPENSSL_ia32cap_init
 segment	.bss
 common	${under}OPENSSL_ia32cap_P 4
 ___
+	# comment out OPENSSL_ia32cap_P declarations
 	grep {s/(^extern\s+${under}OPENSSL_ia32cap_P)/\;$1/} @out;
 	push (@out,$tmp);		
     }
