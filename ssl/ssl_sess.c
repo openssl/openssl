@@ -334,33 +334,35 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
 
 	/* Now ret is non-NULL, and we own one of its reference counts. */
 
-	if((s->verify_mode&SSL_VERIFY_PEER)
-	   && (!s->sid_ctx_length || ret->sid_ctx_length != s->sid_ctx_length
-	       || memcmp(ret->sid_ctx,s->sid_ctx,ret->sid_ctx_length)))
-	    {
+	if (ret->sid_ctx_length != s->sid_ctx_length
+	    || memcmp(ret->sid_ctx,s->sid_ctx,ret->sid_ctx_length))
+		{
 		/* We've found the session named by the client, but we don't
 		 * want to use it in this context. */
-		
-		if (s->sid_ctx_length == 0)
-			{
-			/* application should have used SSL[_CTX]_set_session_id_context
-			 * -- we could tolerate this and just pretend we never heard
-			 * of this session, but then applications could effectively
-			 * disable the session cache by accident without anyone noticing */
 
-			SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
-			fatal = 1;
-			goto err;
-			}
-		else
-			{
 #if 0 /* The client cannot always know when a session is not appropriate,
-	   * so we shouldn't generate an error message. */
+       * so we shouldn't generate an error message. */
 
-			SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
+		SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
 #endif
-			goto err; /* treat like cache miss */
-			}
+		goto err; /* treat like cache miss */
+		}
+	
+	if((s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0)
+		{
+		/* We can't be sure if this session is being used out of
+		 * context, which is especially important for SSL_VERIFY_PEER.
+		 * The application should have used SSL[_CTX]_set_session_id_context.
+		 *
+		 * For this error case, we generate an error instead of treating
+		 * the event like a cache miss (otherwise it would be easy for
+		 * applications to effectively disable the session cache by
+		 * accident without anyone noticing).
+		 */
+		
+		SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
+		fatal = 1;
+		goto err;
 		}
 
 	if (ret->cipher == NULL)
