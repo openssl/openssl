@@ -4,7 +4,16 @@
 
  Changes between 0.9.7m and 0.9.7n  [xx XXX xxxx]
 
-  *)
+  *) In the SSL/TLS server implementation, be strict about session ID
+     context matching (which matters if an application uses a single
+     external cache for different purposes).  Previously,
+     out-of-context reuse was forbidden only if SSL_VERIFY_PEER was
+     set.  This did ensure strict client verification, but meant that,
+     with applications using a single external cache for quite
+     different requirements, clients could circumvent ciphersuite
+     restrictions for a given session ID context by starting a session
+     in a different context.
+     [Bodo Moeller]
 
  Changes between 0.9.7l and 0.9.7m  [23 Feb 2007]
 
