@@ -4,14 +4,12 @@
 
  Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
 
-  *)
-
- Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
-
   *) Include "!eNULL" in SSL_DEFAULT_CIPHER_LIST to make sure that
      a ciphersuite string such as "DEFAULT:RSA" cannot enable
      authentication-only ciphersuites.
      [Bodo Moeller]
+
+ Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
 
   *) Since AES128 and AES256 (and similarly Camellia128 and
      Camellia256) share a single mask bit in the logic of
