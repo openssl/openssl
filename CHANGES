@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8e and 0.9.9  [xx XXX xxxx]
+ Changes between 0.9.8f and 0.9.9  [xx XXX xxxx]
 
   *) Change ssl_cipher_apply_rule(), the internal function that does
      the work each time a ciphersuite string requests enabling
@@ -481,12 +481,25 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
- Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
+ Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
+
+  *) In the SSL/TLS server implementation, be strict about session ID
+     context matching (which matters if an application uses a single
+     external cache for different purposes).  Previously,
+     out-of-context reuse was forbidden only if SSL_VERIFY_PEER was
+     set.  This did ensure strict client verification, but meant that,
+     with applications using a single external cache for quite
+     different requirements, clients could circumvent ciphersuite
+     restrictions for a given session ID context by starting a session
+     in a different context.
+     [Bodo Moeller]
 
   *) Include "!eNULL" in SSL_DEFAULT_CIPHER_LIST to make sure that
      a ciphersuite string such as "DEFAULT:RSA" cannot enable
      authentication-only ciphersuites.
      [Bodo Moeller]
+
+ Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
 
   *) Since AES128 and AES256 (and similarly Camellia128 and
      Camellia256) share a single mask bit in the logic of
@@ -1525,6 +1538,19 @@
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
+
+ Changes between 0.9.7m and 0.9.7n  [xx XXX xxxx]
+
+  *) In the SSL/TLS server implementation, be strict about session ID
+     context matching (which matters if an application uses a single
+     external cache for different purposes).  Previously,
+     out-of-context reuse was forbidden only if SSL_VERIFY_PEER was
+     set.  This did ensure strict client verification, but meant that,
+     with applications using a single external cache for quite
+     different requirements, clients could circumvent ciphersuite
+     restrictions for a given session ID context by starting a session
+     in a different context.
+     [Bodo Moeller]
 
  Changes between 0.9.7l and 0.9.7m  [23 Feb 2007]
 
