@@ -1,0 +1,52 @@
+=pod
+
+=head1 NAME
+
+SSL_library_init, OpenSSL_add_ssl_algorithms, SSLeay_add_ssl_algorithms
+- initialize SSL library by registering algorithms
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ int SSL_library_init(void);
+ #define OpenSSL_add_ssl_algorithms()    SSL_library_init()
+ #define SSLeay_add_ssl_algorithms()     SSL_library_init()
+
+=head1 DESCRIPTION
+
+SSL_library_init() registers the available ciphers and digests.
+
+OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
+for SSL_library_init().
+
+=head1 NOTES
+
+SSL_library_init() must be called before any other action takes place.
+
+=head1 WARNING
+
+SSL_library_init() only registers ciphers. Another important initialization
+is the seeding of the PRNG (Pseudo Random Number Generator), which has to
+be performed separately.
+
+=head1 EXAMPLES
+
+A typical TLS/SSL application will start with the library initialization,
+will provide readable error messages and will seed the PRNG.
+
+ SSL_load_error_strings();                /* readable error messages */
+ SSL_library_init();                      /* initialize library */
+ actions_to_seed_PRNG(); 
+
+=head1 RETURN VALUES
+
+SSL_library_init() always returns "1", so it is safe to discard the return
+value.
+
+=head1 SEE ALSO
+
+L<ssl(3)|ssl(3)>, L<SSL_load_error_strings(3)|SSL_load_error_strings(3)>,
+L<RAND_add(3)|RAND_add(3)>
+
+=cut

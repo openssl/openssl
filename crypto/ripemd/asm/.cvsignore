@@ -1,0 +1,4 @@
+rm86unix.cpp
+rm86-elf.s
+*.flc
+semantic.cache
