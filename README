@@ -36,12 +36,13 @@
      actually logically part of it. It includes routines for the following:
 
      Ciphers
-        libdes - EAY's libdes DES encryption package which has been floating
-                 around the net for a few years.  It includes 15
-                 'modes/variations' of DES (1, 2 and 3 key versions of ecb,
-                 cbc, cfb and ofb; pcbc and a more general form of cfb and
-                 ofb) including desx in cbc mode, a fast crypt(3), and
-                 routines to read passwords from the keyboard.
+        libdes - EAY's libdes DES encryption package which was floating
+                 around the net for a few years, and was then relicensed by
+                 him as part of SSLeay.  It includes 15 'modes/variations'
+                 of DES (1, 2 and 3 key versions of ecb, cbc, cfb and ofb;
+                 pcbc and a more general form of cfb and ofb) including desx
+                 in cbc mode, a fast crypt(3), and routines to read
+                 passwords from the keyboard.
         RC4 encryption,
         RC2 encryption      - 4 different modes, ecb, cbc, cfb and ofb.
         Blowfish encryption - 4 different modes, ecb, cbc, cfb and ofb.
