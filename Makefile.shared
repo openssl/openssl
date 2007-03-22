@@ -491,9 +491,9 @@ link_o.aix:
 	OBJECT_MODE=$${OBJECT_MODE:-32}; export OBJECT_MODE; \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
-	ALLSYMSFLAGS='-bnogc'; \
+	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -G -bE:lib$(LIBNAME).exp -bM:SRE'; \
+	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -G -bexpall -bnolibpath -bM:SRE'; \
 	$(LINK_SO_O); rm -rf lib$(LIBNAME).exp
 link_a.aix:
 	@ $(CALC_VERSIONS); \
@@ -503,10 +503,10 @@ link_a.aix:
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS='-bnogc'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -G -bE:lib$(LIBNAME).exp -bM:SRE'; \
+	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -G -bexpall -bnolibpath -bM:SRE'; \
 	$(LINK_SO_A_VIA_O)
 link_app.aix:
-	LDFLAGS="$(CFLAGS) -blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
+	LDFLAGS="$(CFLAGS) -brtl -blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
 	$(LINK_APP)
 
 link_o.reliantunix:
