@@ -4,6 +4,10 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+  *) Modify WIN32 build system to forward references to functions implemented
+     in FIPS DLL. 
+     [Steve Henson]
+
   *) Move error library so that all lhash dependencies are in a separate
      file. Include a simplified ERR_get_state() function for stand alone
      FIPS applications. Include a initialization function OPENSSL_init()

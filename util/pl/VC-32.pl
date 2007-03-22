@@ -14,20 +14,13 @@ if ($fips && !$shlib)
 	}
 else
 	{
-	if ($fipsdso) 
-		{
-		$crypto="libcryptofips";
-		}
-	else
-		{
-		$crypto="libeay32";
-		}
+	$crypto="libeay32";
 	}
 
 $o='\\';
 $cp='$(PERL) util/copy.pl';
 $mkdir='$(PERL) util/mkdir-p.pl';
-$rm='del';
+$rm='del /Q';
 
 $zlib_lib="zlib1.lib";
 
@@ -269,7 +262,11 @@ sub do_lib_rule
 		{
 		$base_arg = "";
 		}
-	if ($name ne "")
+	if ($target =~ /O_CRYPTO/ && $fipsdso)
+		{
+		$name = "/def:ms/libeayfips.def";
+		}
+	elsif ($name ne "")
 		{
 		$name =~ tr/a-z/A-Z/;
 		$name = "/def:ms/${name}.def";
@@ -291,7 +288,7 @@ sub do_lib_rule
 		if ($target =~ /O_SSL/)
 			{
 			$ex .= " \$(L_CRYPTO)";
-			$ex .= " \$(L_FIPS)" if $fipsdso;
+			#$ex .= " \$(L_FIPS)" if $fipsdso;
 			}
 		my $fipstarget;
 		if ($fipsdso)
@@ -324,7 +321,7 @@ sub do_lib_rule
 			{
 			$ex.= $mwex unless $fipscanisterbuild;
 			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)";
-			$ret.=" ms/libfips.def" if $fipsdso;
+			$ret.=" ms/\$(LIBFIPS).def" if $fipsdso;
 			$ret.="\n\tSET FIPS_LINK=\$(LINK)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
 			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
@@ -347,7 +344,7 @@ sub do_lib_rule
 			$ret.="\n\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
 			}
 
-        $ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;2\n\n";
+        $ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;2\n\n";
 		}
 	$ret.="\n";
 	return($ret);
@@ -383,7 +380,7 @@ sub do_link_rule
 		$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files $libs\n<<\n";
 		}
-    	$ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;1\n\n";
+    	$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n";
 	return($ret);
 	}
 
@@ -406,7 +403,7 @@ sub do_rlink_rule
 
 sub do_sdef_rule
 	{
-	my $ret = "ms/libfips.def: \$(O_FIPSCANISTER)\n";
+	my $ret = "ms/\$(LIBFIPS).def: \$(O_FIPSCANISTER)\n";
 	$ret.="\t\$(PERL) util/mksdef.pl \$(MLFLAGS) /out:dummy.dll /def:ms/libeay32.def @<<\n  \$(O_FIPSCANISTER)\n<<\n";
 	$ret.="\n";
 	return $ret;

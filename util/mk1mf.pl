@@ -433,7 +433,7 @@ if ($fips_premain_dso_exe_path eq "")
 
 #	$ex_build_targets .= "\$(BIN_D)${o}\$(E_PREMAIN_DSO)$exep" if ($fips);
 
-$ex_l_libs .= " \$(L_FIPS)" if $fipsdso;
+#$ex_l_libs .= " \$(L_FIPS)" if $fipsdso;
 
 if ($fips)
 	{
@@ -587,7 +587,7 @@ PREMAIN_DSO_EXE=$fips_premain_dso_exe_path
 E_EXE=openssl
 SSL=$ssl
 CRYPTO=$crypto
-LIBFIPS=libfips
+LIBFIPS=libosslfips
 
 # BIN_D  - Binary output directory
 # TEST_D - Binary test file output directory
@@ -884,7 +884,7 @@ if ($fips)
 					$shlib, "", "");
 			$rules.= &do_lib_rule(
 				"\$(O_FIPSCANISTER)",
-				"\$(O_FIPS)", "libfips",
+				"\$(O_FIPS)", "\$(LIBFIPS)",
 				$shlib, "\$(SO_CRYPTO)", "\$(BASEADDR)");
 			$rules.= &do_sdef_rule();
 			}

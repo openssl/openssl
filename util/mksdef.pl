@@ -24,7 +24,7 @@ foreach (@deferr)
 		}
 	}
 
-open (IN, "ms/libeay32.def") || die "Can't Open DEF file for splittling";
+open (IN, "ms/libeay32.def") || die "Can't Open DEF file for spliting";
 
 my $started = 0;
 
@@ -34,7 +34,7 @@ my $started = 0;
 
 foreach (<IN>)
 	{
-	if (/^\s*(\S+)\s*\@/)
+	if (/^\s*(\S+)\s*(\@\S+)\s*$/)
 		{
 		$started = 1;
 		if (exists $nosym{$1})
@@ -43,6 +43,9 @@ foreach (<IN>)
 			}
 		else
 			{
+			my $imptmp = sprintf "     %-39s %s\n",
+					"$1=libosslfips.$1", $2;
+			push @fipsrest, $imptmp;
 			push @fipsdll, "\t$1\n";
 			}
 		}
@@ -59,8 +62,8 @@ push @fipsdll, "\tOPENSSL_cpuid_setup\n";
 
 # Write out DEF files for each array
 
-write_def("ms/libfips.def", "LIBFIPS", $preamble, \@fipsdll);
-write_def("ms/libcryptofips.def", "LIBCRYPTOFIPS", $preamble, \@fipsrest);
+write_def("ms/libosslfips.def", "LIBOSSLFIPS", $preamble, \@fipsdll);
+write_def("ms/libeayfips.def", "", $preamble, \@fipsrest);
 
 
 sub write_def
@@ -68,9 +71,11 @@ sub write_def
 	my ($fnam, $defname, $preamble, $rdefs) = @_;
 	open (OUT, ">$fnam") || die "Can't Open DEF file $fnam for Writing\n";
 
-	$preamble =~ s/LIBEAY32/$defname/g;
-	$preamble =~ s/LIBEAY/$defname/g;
-
+	if ($defname ne "")
+		{
+		$preamble =~ s/LIBEAY32/$defname/g;
+		$preamble =~ s/LIBEAY/$defname/g;
+		}
 	print OUT $preamble;
 	foreach (@$rdefs)
 		{
