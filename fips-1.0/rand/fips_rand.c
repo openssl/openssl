@@ -77,6 +77,8 @@
 #endif
 #include <string.h>
 
+#ifdef OPENSSL_FIPS
+
 void *OPENSSL_stderr(void);
 
 #define AES_BLOCK_LENGTH	16
@@ -366,3 +368,5 @@ const RAND_METHOD *FIPS_rand_method(void)
 {
   return &rand_fips_meth;
 }
+
+#endif
