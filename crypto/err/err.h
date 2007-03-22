@@ -140,6 +140,7 @@ typedef struct err_state_st
 #define ERR_LIB_ECDSA		42
 #define ERR_LIB_ECDH		43
 #define ERR_LIB_STORE           44
+#define ERR_LIB_FIPS		45
 
 #define ERR_LIB_USER		128
 
@@ -171,6 +172,7 @@ typedef struct err_state_st
 #define ECDSAerr(f,r)  ERR_PUT_error(ERR_LIB_ECDSA,(f),(r),__FILE__,__LINE__)
 #define ECDHerr(f,r)  ERR_PUT_error(ERR_LIB_ECDH,(f),(r),__FILE__,__LINE__)
 #define STOREerr(f,r) ERR_PUT_error(ERR_LIB_STORE,(f),(r),__FILE__,__LINE__)
+#define FIPSerr(f,r) ERR_PUT_error(ERR_LIB_FIPS,(f),(r),__FILE__,__LINE__)
 
 /* Borland C seems too stupid to be able to shift and do longs in
  * the pre-processor :-( */
@@ -301,6 +303,12 @@ int ERR_get_next_error_library(void);
 
 int ERR_set_mark(void);
 int ERR_pop_to_mark(void);
+
+#ifdef OPENSSL_FIPS
+void int_ERR_set_state_func(ERR_STATE *(*get_func)(void),
+				void (*remove_func)(unsigned long pid));
+void int_ERR_lib_init(void);
+#endif
 
 /* Already defined in ossl_typ.h */
 /* typedef struct st_ERR_FNS ERR_FNS; */

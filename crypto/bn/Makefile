@@ -28,13 +28,13 @@ LIBSRC=	bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c bn_mod.c \
 	bn_print.c bn_rand.c bn_shift.c bn_word.c bn_blind.c \
 	bn_kron.c bn_sqrt.c bn_gcd.c bn_prime.c bn_err.c bn_sqr.c bn_asm.c \
 	bn_recp.c bn_mont.c bn_mpi.c bn_exp2.c bn_gf2m.c bn_nist.c \
-	bn_depr.c bn_const.c
+	bn_depr.c bn_const.c bn_x931p.c bn_opt.c
 
 LIBOBJ=	bn_add.o bn_div.o bn_exp.o bn_lib.o bn_ctx.o bn_mul.o bn_mod.o \
 	bn_print.o bn_rand.o bn_shift.o bn_word.o bn_blind.o \
 	bn_kron.o bn_sqrt.o bn_gcd.o bn_prime.o bn_err.o bn_sqr.o $(BN_ASM) \
 	bn_recp.o bn_mont.o bn_mpi.o bn_exp2.o bn_gf2m.o bn_nist.o \
-	bn_depr.o bn_const.o
+	bn_depr.o bn_const.o bn_x931p.o bn_opt.o
 
 SRC= $(LIBSRC)
 
@@ -58,7 +58,7 @@ bnbug: bnbug.c ../../libcrypto.a top
 	cc -g -I../../include bnbug.c -o bnbug ../../libcrypto.a
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -283,6 +283,13 @@ bn_nist.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_nist.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_nist.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_nist.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_nist.c
+bn_opt.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
+bn_opt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+bn_opt.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+bn_opt.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+bn_opt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+bn_opt.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bn_opt.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_opt.c
 bn_prime.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_prime.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_prime.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -341,3 +348,6 @@ bn_word.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_word.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_word.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_word.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_word.c
+bn_x931p.o: ../../include/openssl/bn.h ../../include/openssl/e_os2.h
+bn_x931p.o: ../../include/openssl/opensslconf.h
+bn_x931p.o: ../../include/openssl/ossl_typ.h bn_x931p.c

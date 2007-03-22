@@ -38,7 +38,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -102,5 +102,8 @@ c_ofb64.o: ../../e_os.h ../../include/openssl/cast.h
 c_ofb64.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 c_ofb64.o: c_ofb64.c cast_lcl.h
 c_skey.o: ../../e_os.h ../../include/openssl/cast.h
-c_skey.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-c_skey.o: c_skey.c cast_lcl.h cast_s.h
+c_skey.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+c_skey.o: ../../include/openssl/fips.h ../../include/openssl/opensslconf.h
+c_skey.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+c_skey.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+c_skey.o: ../../include/openssl/symhacks.h c_skey.c cast_lcl.h cast_s.h

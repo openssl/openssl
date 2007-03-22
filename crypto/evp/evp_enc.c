@@ -90,6 +90,48 @@ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	return EVP_CipherInit_ex(ctx,cipher,NULL,key,iv,enc);
 	}
 
+#ifdef OPENSSL_FIPS
+
+/* The purpose of these is to trap programs that attempt to use non FIPS
+ * algorithms in FIPS mode and ignore the errors.
+ */
+
+int bad_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+	    const unsigned char *iv, int enc)
+	{ FIPS_ERROR_IGNORED("Cipher init"); return 0;}
+
+int bad_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+		 const unsigned char *in, unsigned int inl)
+	{ FIPS_ERROR_IGNORED("Cipher update"); return 0;}
+
+/* NB: no cleanup because it is allowed after failed init */
+
+int bad_set_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *typ)
+	{ FIPS_ERROR_IGNORED("Cipher set_asn1"); return 0;}
+int bad_get_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *typ)
+	{ FIPS_ERROR_IGNORED("Cipher get_asn1"); return 0;}
+int bad_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
+	{ FIPS_ERROR_IGNORED("Cipher ctrl"); return 0;}
+
+static const EVP_CIPHER bad_cipher =
+	{
+	0,
+	0,
+	0,
+	0,
+	0,
+	bad_init,
+	bad_do_cipher,
+	NULL,
+	0,
+	bad_set_asn1,
+	bad_get_asn1,
+	bad_ctrl,
+	NULL
+	};
+
+#endif
+
 int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
 	     const unsigned char *key, const unsigned char *iv, int enc)
 	{
@@ -218,6 +260,24 @@ skip_to_init:
 			break;
 		}
 	}
+
+#ifdef OPENSSL_FIPS
+	/* After 'key' is set no further parameters changes are permissible.
+	 * So only check for non FIPS enabling at this point.
+	 */
+	if (key && FIPS_mode())
+		{
+		if (!(ctx->cipher->flags & EVP_CIPH_FLAG_FIPS)
+			& !(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW))
+			{
+			EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_DISABLED_FOR_FIPS);
+			ERR_add_error_data(2, "cipher=",
+						EVP_CIPHER_name(ctx->cipher));
+			ctx->cipher = &bad_cipher;
+			return 0;
+			}
+		}
+#endif
 
 	if(key || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT)) {
 		if(!ctx->cipher->init(ctx,key,iv,enc)) return 0;

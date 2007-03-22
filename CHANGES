@@ -2,7 +2,50 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
+ Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
+
+  *) Move error library so that all lhash dependencies are in a separate
+     file. Include a simplified ERR_get_state() function for stand alone
+     FIPS applications. Include a initialization function OPENSSL_init()
+     to set all callbacks, automatically call OPENSSL_init() once when
+     a cipher or digest is added. This should mean that almost all applications
+     set the callbacks automatically. Exceptional cases can call OPENSSL_init()
+     manually like this:
+
+#ifdef OPENSSL_HAVE_INIT
+    OPENSSL_init();
+#endif
+     before starting any threads.
+     [Steve Henson]
+
+  *) Collect common functions into header file "fips_utl.h".
+     [Steve Henson]
+
+  *) Only enable dynamic lock functionality in CRYPTO_lock() when it is really
+     needed. Move some lock functionality into new file dyn_lck.c .
+     This further reduces FIPS dependencies allowing the complete removal
+     of STACK and OBJ_bsearch().
+     [Steve Henson]
+
+  *) Reduce FIPS test program dependencies by providing stand alone
+     versions of some existing functions in libcrypto. Avoid use
+     of BIOs by converting to system stdio. Move some functions in FIPS
+     files: e.g. all use of BIO_printf().
+     [Steve Henson]
+
+  *) Modify build of libcrypto in FIPS mode by using a perl 
+     script "arx.pl" which calls the archiver specifically
+     excluding any FIPS dependencies in libcrypto.
+     [Steve Henson]
+
+  *) Port OpenSSL 0.9.7 FIPS code to 0.9.8. Convert to new
+     Makefile form. Update Configure. Convert and update
+     FIPS source files. Update libcrypto, libssl and apps
+     with additional functionality from 0.9.7 FIPS code.
+     Update Windows build system.
+     [Steve Henson]
+
+ Changes between 0.9.8e and 0.9.8f  [23 Feb 2007]
 
   *) In the SSL/TLS server implementation, be strict about session ID
      context matching (which matters if an application uses a single

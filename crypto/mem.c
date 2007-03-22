@@ -101,7 +101,7 @@ static void (*free_locked_func)(void *)     = free;
 
 /* may be changed as long as 'allow_customize_debug' is set */
 /* XXX use correct function pointer types */
-#ifdef CRYPTO_MDEBUG
+#if defined(CRYPTO_MDEBUG) && !defined(OPENSSL_FIPS)
 /* use default functions from mem_dbg.c */
 static void (*malloc_debug_func)(void *,int,const char *,int,int)
 	= CRYPTO_dbg_malloc;
@@ -110,6 +110,14 @@ static void (*realloc_debug_func)(void *,void *,int,const char *,int,int)
 static void (*free_debug_func)(void *,int) = CRYPTO_dbg_free;
 static void (*set_debug_options_func)(long) = CRYPTO_dbg_set_options;
 static long (*get_debug_options_func)(void) = CRYPTO_dbg_get_options;
+
+static int  (*push_info_func)(const char *info, const char *file, int line)
+	= CRYPTO_dbg_push_info;
+static int  (*pop_info_func)(void)
+	= CRYPTO_dbg_pop_info;
+static int (*remove_all_info_func)(void)
+	= CRYPTO_dbg_remove_all_info;
+
 #else
 /* applications can use CRYPTO_malloc_debug_init() to select above case
  * at run-time */
@@ -119,6 +127,13 @@ static void (*realloc_debug_func)(void *,void *,int,const char *,int,int)
 static void (*free_debug_func)(void *,int) = NULL;
 static void (*set_debug_options_func)(long) = NULL;
 static long (*get_debug_options_func)(void) = NULL;
+
+
+static int  (*push_info_func)(const char *info, const char *file, int line)
+	= NULL;
+static int  (*pop_info_func)(void) = NULL;
+static int (*remove_all_info_func)(void) = NULL;
+
 #endif
 
 
@@ -194,6 +209,15 @@ int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 	return 1;
 	}
 
+void CRYPTO_set_mem_info_functions(
+	int  (*push_info_fn)(const char *info, const char *file, int line),
+	int  (*pop_info_fn)(void),
+	int (*remove_all_info_fn)(void))
+	{
+	push_info_func = push_info_fn;
+	pop_info_func = pop_info_fn;
+	remove_all_info_func = remove_all_info_fn;
+	}
 
 void CRYPTO_get_mem_functions(void *(**m)(size_t), void *(**r)(void *, size_t),
 	void (**f)(void *))
@@ -398,4 +422,25 @@ long CRYPTO_get_mem_debug_options(void)
 	if (get_debug_options_func != NULL)
 		return get_debug_options_func();
 	return 0;
+	}
+
+int CRYPTO_push_info_(const char *info, const char *file, int line)
+	{
+	if (push_info_func)
+		return push_info_func(info, file, line);
+	return 1;
+	}
+
+int CRYPTO_pop_info(void)
+	{
+	if (pop_info_func)
+		return pop_info_func();
+	return 1;
+	}
+
+int CRYPTO_remove_all_info(void)
+	{
+	if (remove_all_info_func)
+		return remove_all_info_func();
+	return 1;
 	}

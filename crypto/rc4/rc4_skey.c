@@ -59,6 +59,8 @@
 #include <openssl/rc4.h>
 #include "rc4_locl.h"
 #include <openssl/opensslv.h>
+#include <openssl/crypto.h>
+#include <openssl/fips.h>
 
 const char RC4_version[]="RC4" OPENSSL_VERSION_PTEXT;
 
@@ -85,7 +87,7 @@ const char *RC4_options(void)
  * Date: Wed, 14 Sep 1994 06:35:31 GMT
  */
 
-void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
+FIPS_NON_FIPS_VCIPHER_Init(RC4)
 	{
         register RC4_INT tmp;
         register int id1,id2;

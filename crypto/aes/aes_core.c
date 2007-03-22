@@ -39,6 +39,8 @@
 #include <openssl/aes.h>
 #include "aes_locl.h"
 
+#ifndef OPENSSL_FIPS
+
 /*
 Te0[x] = S [x].[02, 01, 01, 03];
 Te1[x] = S [x].[03, 02, 01, 01];
@@ -1157,3 +1159,5 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 }
 
 #endif /* AES_ASM */
+
+#endif

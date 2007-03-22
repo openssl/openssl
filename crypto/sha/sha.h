@@ -106,6 +106,9 @@ typedef struct SHAstate_st
 	} SHA_CTX;
 
 #ifndef OPENSSL_NO_SHA0
+#ifdef OPENSSL_FIPS
+int private_SHA_Init(SHA_CTX *c);
+#endif
 int SHA_Init(SHA_CTX *c);
 int SHA_Update(SHA_CTX *c, const void *data, size_t len);
 int SHA_Final(unsigned char *md, SHA_CTX *c);

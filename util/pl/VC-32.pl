@@ -4,7 +4,25 @@
 #
 
 $ssl=	"ssleay32";
-$crypto="libeay32";
+
+my $mwex =" \$(FIPSLIB_D)${o}_chkstk.o \$(FIPSLIB_D)${o}_udivdi3.o \$(FIPSLIB_D)${o}_umoddi3.o";
+
+if ($fips && !$shlib)
+	{
+	$crypto="libeayfips32";
+	$crypto_compat = "libeaycompat32.lib";
+	}
+else
+	{
+	if ($fipsdso) 
+		{
+		$crypto="libcryptofips";
+		}
+	else
+		{
+		$crypto="libeay32";
+		}
+	}
 
 $o='\\';
 $cp='$(PERL) util/copy.pl';
@@ -171,7 +189,7 @@ $des_enc_src='';
 $bf_enc_obj='';
 $bf_enc_src='';
 
-if (!$no_asm)
+if (!$no_asm && !$fips)
 	{
 	$bn_asm_obj='crypto\bn\asm\bn_win32.obj';
 	$bn_asm_src='crypto\bn\asm\bn_win32.asm';
@@ -220,8 +238,8 @@ $(INCO_D)\applink.c:	ms\applink.c
 EXHEADER= $(EXHEADER) $(INCO_D)\applink.c
 
 LIBS_DEP=$(LIBS_DEP) $(OBJ_D)\applink.obj
-CRYPTOOBJ=$(OBJ_D)\uplink.obj $(CRYPTOOBJ)
 ___
+$banner .= "CRYPTOOBJ=\$(OBJ_D)\\uplink.obj \$(CRYPTOOBJ)\n";
 	$banner.=<<'___' if ($FLAVOR =~ /WIN64/);
 CRYPTOOBJ=ms\uptable.obj $(CRYPTOOBJ)
 ___
@@ -238,10 +256,19 @@ $cflags.=" /Fd$out_def";
 
 sub do_lib_rule
 	{
-	local($objs,$target,$name,$shlib)=@_;
+	my($objs,$target,$name,$shlib,$ign,$base_addr) = @_;
 	local($ret);
 
 	$taget =~ s/\//$o/g if $o ne '/';
+	my $base_arg;
+	if ($base_addr ne "")
+		{
+		$base_arg= " /base:$base_addr";
+		}
+	else
+		{
+		$base_arg = "";
+		}
 	if ($name ne "")
 		{
 		$name =~ tr/a-z/A-Z/;
@@ -249,16 +276,34 @@ sub do_lib_rule
 		}
 
 #	$target="\$(LIB_D)$o$target";
-	$ret.="$target: $objs\n";
+#	$ret.="$target: $objs\n";
 	if (!$shlib)
 		{
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
 		$ex =' ';
+		$ret.="$target: $objs\n";
+		$ex.= $mwex if $fips && !$fipscanisterbuild && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
 		}
 	else
 		{
-		local($ex)=($target =~ /O_CRYPTO/)?'':' $(L_CRYPTO)';
+		my $ex = "";		
+		if ($target =~ /O_SSL/)
+			{
+			$ex .= " \$(L_CRYPTO)";
+			$ex .= " \$(L_FIPS)" if $fipsdso;
+			}
+		my $fipstarget;
+		if ($fipsdso)
+			{
+			$fipstarget = "O_FIPS";
+			}
+		else
+			{
+			$fipstarget = "O_CRYPTO";
+			}
+
+
 		if ($name eq "")
 			{
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
@@ -274,7 +319,34 @@ sub do_lib_rule
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 			}
 		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
-		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+
+ 		if ($fips && $target =~ /$fipstarget/)
+			{
+			$ex.= $mwex unless $fipscanisterbuild;
+			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)";
+			$ret.=" ms/libfips.def" if $fipsdso;
+			$ret.="\n\tSET FIPS_LINK=\$(LINK)\n";
+			$ret.="\tSET FIPS_CC=\$(CC)\n";
+			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
+			$ret.="\tSET PREMAIN_DSO_EXE=\$(PREMAIN_DSO_EXE)\n";
+			$ret.="\tSET FIPS_SHA1_EXE=\$(FIPS_SHA1_EXE)\n";
+			$ret.="\tSET FIPS_TARGET=$target\n";
+			$ret.="\tSET FIPSLIB_D=\$(FIPSLIB_D)\n";
+			$ret.="\t\$(FIPSLINK) \$(MLFLAGS) $base_arg $efile$target ";
+			$ret.="$name @<<\n  \$(SHLIB_EX_OBJ) $objs ";
+			$ret.="\$(OBJ_D)${o}fips_premain.obj $ex\n<<\n";
+			}
+		else
+			{
+			$ret.="$target: $objs";
+			if ($target =~ /O_CRYPTO/ && $fipsdso)
+				{
+				$ret .= " \$(O_FIPS)";
+				$ex .= " \$(L_FIPS)";
+				}
+			$ret.="\n\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
+			}
+
         $ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;2\n\n";
 		}
 	$ret.="\n";
@@ -283,16 +355,61 @@ sub do_lib_rule
 
 sub do_link_rule
 	{
-	local($target,$files,$dep_libs,$libs)=@_;
+	my($target,$files,$dep_libs,$libs,$standalone)=@_;
 	local($ret,$_);
-	
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
 	$ret.="$target: $files $dep_libs\n";
-	$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
-	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
-    $ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;1\n\n";
+	if ($standalone)
+		{
+		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n\t";
+		$ret.= "$mwex advapi32.lib " if ($files =~ /O_FIPSCANISTER/ && !$fipscanisterbuild);
+		$ret.="$files $libs\n<<\n";
+		}
+	elsif ($fips && !$shlib)
+		{
+		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
+		$ret.="\tSET FIPS_CC=\$(CC)\n";
+		$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";
+		$ret.="\tSET PREMAIN_DSO_EXE=\n";
+		$ret.="\tSET FIPS_TARGET=$target\n";
+		$ret.="\tSET FIPS_SHA1_EXE=\$(FIPS_SHA1_EXE)\n";
+		$ret.="\tSET FIPSLIB_D=\$(FIPSLIB_D)\n";
+		$ret.="\t\$(FIPSLINK) \$(LFLAGS) $efile$target @<<\n";
+		$ret.="\t\$(APP_EX_OBJ) $files \$(OBJ_D)${o}fips_premain.obj $libs\n<<\n";
+		}
+	else
+		{
+		$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
+		$ret.="\t\$(APP_EX_OBJ) $files $libs\n<<\n";
+		}
+    	$ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;1\n\n";
 	return($ret);
+	}
+
+sub do_rlink_rule
+	{
+	local($target,$files,$dep_libs,$libs)=@_;
+	local($ret,$_);
+
+	$file =~ s/\//$o/g if $o ne '/';
+	$n=&bname($targer);
+	$ret.="$target: $files $dep_libs \$(FIPS_SHA1_EXE)\n";
+	$ret.="\t\$(MKCANISTER) $target <<\n";
+	$ret.="INPUT($files)\n<<\n";
+	$ret.="\t\$(FIPS_SHA1_EXE) $target > ${target}.sha1\n";
+	$ret.="\t\$(PERL) util${o}copy.pl -stripcr fips-1.0${o}fips_premain.c \$(LIB_D)${o}fips_premain.c\n";
+	$ret.="\t\$(CP) fips-1.0${o}fips_premain.c.sha1 \$(LIB_D)${o}fips_premain.c.sha1\n";
+	$ret.="\n";
+	return($ret);
+	}
+
+sub do_sdef_rule
+	{
+	my $ret = "ms/libfips.def: \$(O_FIPSCANISTER)\n";
+	$ret.="\t\$(PERL) util/mksdef.pl \$(MLFLAGS) /out:dummy.dll /def:ms/libeay32.def @<<\n  \$(O_FIPSCANISTER)\n<<\n";
+	$ret.="\n";
+	return $ret;
 	}
 
 1;

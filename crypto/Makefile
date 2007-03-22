@@ -33,8 +33,8 @@ GENERAL=Makefile README crypto-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
-LIBSRC=	cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c tmdiff.c cpt_err.c ebcdic.c uid.c o_time.c o_str.c o_dir.c
-LIBOBJ= cryptlib.o mem.o mem_clr.o mem_dbg.o cversion.o ex_data.o tmdiff.o cpt_err.o ebcdic.o uid.o o_time.o o_str.o o_dir.o $(CPUID_OBJ)
+LIBSRC=	cryptlib.c dyn_lck.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c tmdiff.c cpt_err.c ebcdic.c uid.c o_time.c o_str.c o_dir.c o_init.c fips_err.c 
+LIBOBJ= cryptlib.o dyn_lck.o mem.o mem_clr.o mem_dbg.o cversion.o ex_data.o tmdiff.o cpt_err.o ebcdic.o uid.o o_time.o o_str.o o_dir.o o_init.o fips_err.o $(CPUID_OBJ)
 
 SRC= $(LIBSRC)
 
@@ -98,7 +98,7 @@ links:
 lib:	$(LIB)
 	@touch lib
 $(LIB):	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 
 shared: buildinf.h lib subdirs
@@ -159,6 +159,13 @@ cversion.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 cversion.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 cversion.o: ../include/openssl/stack.h ../include/openssl/symhacks.h buildinf.h
 cversion.o: cryptlib.h cversion.c
+dyn_lck.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
+dyn_lck.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+dyn_lck.o: ../include/openssl/err.h ../include/openssl/lhash.h
+dyn_lck.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+dyn_lck.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+dyn_lck.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
+dyn_lck.o: dyn_lck.c
 ebcdic.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h ebcdic.c
 ex_data.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 ex_data.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
@@ -167,6 +174,13 @@ ex_data.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 ex_data.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 ex_data.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 ex_data.o: ex_data.c
+fips_err.o: ../include/openssl/bio.h ../include/openssl/crypto.h
+fips_err.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+fips_err.o: ../include/openssl/fips.h ../include/openssl/lhash.h
+fips_err.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+fips_err.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+fips_err.o: ../include/openssl/stack.h ../include/openssl/symhacks.h fips_err.c
+fips_err.o: fips_err.h
 mem.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 mem.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem.o: ../include/openssl/err.h ../include/openssl/lhash.h
@@ -187,6 +201,12 @@ mem_dbg.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 mem_dbg.o: mem_dbg.c
 o_dir.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 o_dir.o: LPdir_unix.c o_dir.c o_dir.h
+o_init.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/crypto.h
+o_init.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+o_init.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+o_init.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+o_init.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+o_init.o: ../include/openssl/symhacks.h o_init.c
 o_str.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 o_str.o: o_str.c o_str.h
 o_time.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h o_time.c

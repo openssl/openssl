@@ -76,7 +76,7 @@
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
-	  const char *file,BIO *bmd,const char *hmac_key);
+	  const char *file,BIO *bmd,const char *hmac_key, int non_fips_allow);
 
 int MAIN(int, char **);
 
@@ -106,9 +106,10 @@ int MAIN(int argc, char **argv)
 	char *engine=NULL;
 #endif
 	char *hmac_key=NULL;
+	int non_fips_allow = 0;
 
 	apps_startup();
-
+ERR_load_crypto_strings();
 	if ((buf=(unsigned char *)OPENSSL_malloc(BUFSIZE)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
@@ -190,6 +191,8 @@ int MAIN(int argc, char **argv)
 			out_bin = 1;
 		else if (strcmp(*argv,"-d") == 0)
 			debug=1;
+		else if (strcmp(*argv,"-non-fips-allow") == 0)
+			non_fips_allow=1;
 		else if (!strcmp(*argv,"-hmac"))
 			{
 			if (--argc < 1)
@@ -349,7 +352,13 @@ int MAIN(int argc, char **argv)
 			goto end;
 		}
 	}
-		
+
+	if (non_fips_allow)
+		{
+		EVP_MD_CTX *md_ctx;
+		BIO_get_md_ctx(bmd,&md_ctx);
+		EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+		}
 
 
 	/* we use md as a filter, reading from 'in' */
@@ -366,7 +375,7 @@ int MAIN(int argc, char **argv)
 		{
 		BIO_set_fp(in,stdin,BIO_NOCLOSE);
 		err=do_fp(out, buf,inp,separator, out_bin, sigkey, sigbuf,
-			  siglen,"","(stdin)",bmd,hmac_key);
+			  siglen,"","(stdin)",bmd,hmac_key,non_fips_allow);
 		}
 	else
 		{
@@ -392,7 +401,7 @@ int MAIN(int argc, char **argv)
 			else
 				tmp="";
 			r=do_fp(out,buf,inp,separator,out_bin,sigkey,sigbuf,
-				siglen,tmp,argv[i],bmd,hmac_key);
+				siglen,tmp,argv[i],bmd,hmac_key,non_fips_allow);
 			if(r)
 			    err=r;
 			if(tofree)
@@ -419,7 +428,7 @@ end:
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
-	  const char *file,BIO *bmd,const char *hmac_key)
+	  const char *file,BIO *bmd,const char *hmac_key,int non_fips_allow)
 	{
 	unsigned int len;
 	int i;

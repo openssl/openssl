@@ -146,9 +146,11 @@ int WIN32_rename(const char *oldname,const char *newname);
 #ifndef NON_MAIN
 CONF *config=NULL;
 BIO *bio_err=NULL;
+int in_FIPS_mode=0;
 #else
 extern CONF *config;
 extern BIO *bio_err;
+extern int in_FIPS_mode;
 #endif
 
 #else
@@ -157,6 +159,7 @@ extern BIO *bio_err;
 extern CONF *config;
 extern char *default_config_file;
 extern BIO *bio_err;
+extern int in_FIPS_mode;
 
 #endif
 

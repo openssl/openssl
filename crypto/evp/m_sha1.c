@@ -68,6 +68,15 @@
 #include <openssl/rsa.h>
 #endif
 
+#ifdef OPENSSL_FIPS
+#define EVP_PKEY_RSA_fips_method \
+				(evp_sign_method *)FIPS_rsa_sign, \
+				(evp_verify_method *) FIPS_rsa_verify, \
+				{EVP_PKEY_RSA,EVP_PKEY_RSA2,0,0}
+#else
+#define EVP_PKEY_RSA_fips_method EVP_PKEY_RSA_method
+#endif
+
 static int init(EVP_MD_CTX *ctx)
 	{ return SHA1_Init(ctx->md_data); }
 
@@ -82,13 +91,13 @@ static const EVP_MD sha1_md=
 	NID_sha1,
 	NID_sha1WithRSAEncryption,
 	SHA_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_FIPS,
 	init,
 	update,
 	final,
 	NULL,
 	NULL,
-	EVP_PKEY_RSA_method,
+	EVP_PKEY_RSA_fips_method,
 	SHA_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA_CTX),
 	};
@@ -119,13 +128,13 @@ static const EVP_MD sha224_md=
 	NID_sha224,
 	NID_sha224WithRSAEncryption,
 	SHA224_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_FIPS,
 	init224,
 	update256,
 	final256,
 	NULL,
 	NULL,
-	EVP_PKEY_RSA_method,
+	EVP_PKEY_RSA_fips_method,
 	SHA256_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA256_CTX),
 	};
@@ -138,13 +147,13 @@ static const EVP_MD sha256_md=
 	NID_sha256,
 	NID_sha256WithRSAEncryption,
 	SHA256_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_FIPS,
 	init256,
 	update256,
 	final256,
 	NULL,
 	NULL,
-	EVP_PKEY_RSA_method,
+	EVP_PKEY_RSA_fips_method,
 	SHA256_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA256_CTX),
 	};
@@ -169,13 +178,13 @@ static const EVP_MD sha384_md=
 	NID_sha384,
 	NID_sha384WithRSAEncryption,
 	SHA384_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_FIPS,
 	init384,
 	update512,
 	final512,
 	NULL,
 	NULL,
-	EVP_PKEY_RSA_method,
+	EVP_PKEY_RSA_fips_method,
 	SHA512_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA512_CTX),
 	};
@@ -188,13 +197,13 @@ static const EVP_MD sha512_md=
 	NID_sha512,
 	NID_sha512WithRSAEncryption,
 	SHA512_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_FIPS,
 	init512,
 	update512,
 	final512,
 	NULL,
 	NULL,
-	EVP_PKEY_RSA_method,
+	EVP_PKEY_RSA_fips_method,
 	SHA512_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA512_CTX),
 	};

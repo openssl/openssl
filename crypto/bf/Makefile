@@ -40,7 +40,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -103,5 +103,9 @@ bf_enc.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
 bf_enc.o: ../../include/openssl/opensslconf.h bf_enc.c bf_locl.h
 bf_ofb64.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
 bf_ofb64.o: ../../include/openssl/opensslconf.h bf_locl.h bf_ofb64.c
-bf_skey.o: ../../include/openssl/blowfish.h ../../include/openssl/e_os2.h
-bf_skey.o: ../../include/openssl/opensslconf.h bf_locl.h bf_pi.h bf_skey.c
+bf_skey.o: ../../include/openssl/blowfish.h ../../include/openssl/crypto.h
+bf_skey.o: ../../include/openssl/e_os2.h ../../include/openssl/fips.h
+bf_skey.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+bf_skey.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+bf_skey.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+bf_skey.o: bf_locl.h bf_pi.h bf_skey.c

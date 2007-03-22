@@ -146,6 +146,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 #endif
 	k=0;
 	EVP_MD_CTX_init(&m5);
+	EVP_MD_CTX_set_flags(&m5, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	EVP_MD_CTX_init(&s1);
 	for (i=0; (int)i<num; i+=MD5_DIGEST_LENGTH)
 		{
@@ -518,6 +519,8 @@ int ssl3_enc(SSL *s, int send)
 
 void ssl3_init_finished_mac(SSL *s)
 	{
+	EVP_MD_CTX_set_flags(&(s->s3->finish_dgst1),
+		EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	EVP_DigestInit_ex(&(s->s3->finish_dgst1),s->ctx->md5, NULL);
 	EVP_DigestInit_ex(&(s->s3->finish_dgst2),s->ctx->sha1, NULL);
 	}
@@ -554,6 +557,7 @@ static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
 	EVP_MD_CTX ctx;
 
 	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	EVP_MD_CTX_copy_ex(&ctx,in_ctx);
 
 	n=EVP_MD_CTX_size(&ctx);

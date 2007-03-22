@@ -61,6 +61,8 @@
 #include "cryptlib.h"
 #include <openssl/hmac.h>
 
+#ifndef OPENSSL_FIPS
+
 void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		  const EVP_MD *md, ENGINE *impl)
 	{
@@ -171,3 +173,11 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 	return(md);
 	}
 
+void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
+	{
+	EVP_MD_CTX_set_flags(&ctx->i_ctx, flags);
+	EVP_MD_CTX_set_flags(&ctx->o_ctx, flags);
+	EVP_MD_CTX_set_flags(&ctx->md_ctx, flags);
+	}
+
+#endif

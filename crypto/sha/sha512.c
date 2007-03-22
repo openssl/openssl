@@ -5,7 +5,8 @@
  * ====================================================================
  */
 #include <openssl/opensslconf.h>
-#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA512)
+#include <openssl/fips.h>
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA512) && !defined(OPENSSL_FIPS)
 /*
  * IMPLEMENTATION NOTES.
  *

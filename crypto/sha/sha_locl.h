@@ -145,7 +145,11 @@
 #define INIT_DATA_h3 0x10325476UL
 #define INIT_DATA_h4 0xc3d2e1f0UL
 
+#if defined(SHA_0) && defined(OPENSSL_FIPS)
+FIPS_NON_FIPS_MD_Init(SHA)
+#else
 int HASH_INIT (SHA_CTX *c)
+#endif
 	{
 	c->h0=INIT_DATA_h0;
 	c->h1=INIT_DATA_h1;

@@ -164,7 +164,8 @@ static int des_ede3_cfb8_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 
 BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
-			EVP_CIPH_RAND_KEY, des_ede_init_key, NULL, 
+			EVP_CIPH_RAND_KEY|EVP_CIPH_FLAG_FIPS,
+			des_ede_init_key, NULL, 
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,
 			des3_ctrl)
@@ -175,19 +176,22 @@ BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
 #define des_ede3_ecb_cipher des_ede_ecb_cipher
 
 BLOCK_CIPHER_defs(des_ede3, DES_EDE_KEY, NID_des_ede3, 8, 24, 8, 64,
-			EVP_CIPH_RAND_KEY, des_ede3_init_key, NULL, 
+			EVP_CIPH_RAND_KEY|EVP_CIPH_FLAG_FIPS,
+			des_ede3_init_key, NULL, 
 			EVP_CIPHER_set_asn1_iv,
 			EVP_CIPHER_get_asn1_iv,
 			des3_ctrl)
 
 BLOCK_CIPHER_def_cfb(des_ede3,DES_EDE_KEY,NID_des_ede3,24,8,1,
-		     EVP_CIPH_RAND_KEY, des_ede3_init_key,NULL,
+		     EVP_CIPH_RAND_KEY|EVP_CIPH_FLAG_FIPS,
+		     des_ede3_init_key,NULL,
 		     EVP_CIPHER_set_asn1_iv,
 		     EVP_CIPHER_get_asn1_iv,
 		     des3_ctrl)
 
 BLOCK_CIPHER_def_cfb(des_ede3,DES_EDE_KEY,NID_des_ede3,24,8,8,
-		     EVP_CIPH_RAND_KEY, des_ede3_init_key,NULL,
+		     EVP_CIPH_RAND_KEY|EVP_CIPH_FLAG_FIPS,
+		     des_ede3_init_key,NULL,
 		     EVP_CIPHER_set_asn1_iv,
 		     EVP_CIPHER_get_asn1_iv,
 		     des3_ctrl)

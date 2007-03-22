@@ -24,7 +24,7 @@ TEST=destest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
+LIBSRC=	des_lib.c cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 	ecb3_enc.c ecb_enc.c  enc_read.c enc_writ.c \
 	fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c \
 	qud_cksm.c rand_key.c rpc_enc.c  set_key.c  \
@@ -33,7 +33,7 @@ LIBSRC=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 	str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c des_old.c des_old2.c \
 	read2pwd.c
 
-LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
+LIBOBJ= des_lib.o set_key.o  ecb_enc.o  cbc_enc.o \
 	ecb3_enc.o cfb64enc.o cfb64ede.o cfb_enc.o  ofb64ede.o \
 	enc_read.o enc_writ.o ofb64enc.o \
 	ofb_enc.o  str2key.o  pcbc_enc.o qud_cksm.o rand_key.o \
@@ -54,7 +54,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -156,7 +156,14 @@ des_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 des_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 des_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 des_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
-des_enc.o: des_enc.c des_locl.h ncbc_enc.c
+des_enc.o: des_enc.c des_locl.h
+des_lib.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+des_lib.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+des_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+des_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+des_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+des_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+des_lib.o: ../../include/openssl/ui_compat.h des_lib.c des_locl.h des_ver.h
 des_old.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 des_old.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 des_old.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
@@ -175,14 +182,12 @@ ecb3_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 ecb3_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ecb3_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 ecb3_enc.o: des_locl.h ecb3_enc.c
-ecb_enc.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 ecb_enc.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 ecb_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-ecb_enc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ecb_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ecb_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ecb_enc.o: ../../include/openssl/ui_compat.h des_locl.h des_ver.h ecb_enc.c
-ecb_enc.o: spr.h
+ecb_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+ecb_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+ecb_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+ecb_enc.o: des_locl.h ecb_enc.c spr.h
 ede_cbcm_enc.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 ede_cbcm_enc.o: ../../include/openssl/e_os2.h
 ede_cbcm_enc.o: ../../include/openssl/opensslconf.h

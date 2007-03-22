@@ -65,6 +65,7 @@ EX_LIBS=
 EXE_EXT= 
 ARFLAGS=
 AR=ar $(ARFLAGS) r
+ARD=ar $(ARFLAGS) d
 RANLIB= ranlib
 PERL= perl
 TAR= tar
@@ -86,6 +87,8 @@ PROCESSOR=
 # CPUID module collects small commonly used assembler snippets
 CPUID_OBJ= 
 BN_ASM= bn_asm.o
+FIPS_DES_ENC= des_enc.o fcrypt_b.o
+FIPS_AES_ENC= fips_aes_core.o
 DES_ENC= des_enc.o fcrypt_b.o
 AES_ASM_OBJ=aes_core.o aes_cbc.o
 BF_ENC= bf_enc.o
@@ -93,6 +96,7 @@ CAST_ENC= c_enc.o
 RC4_ENC= rc4_enc.o
 RC5_ENC= rc5_enc.o
 MD5_ASM_OBJ= 
+FIPS_SHA1_ASM_OBJ= 
 SHA1_ASM_OBJ= 
 RMD160_ASM_OBJ= 
 
@@ -104,8 +108,34 @@ LIBKRB5=
 ZLIB_INCLUDE=
 LIBZLIB=
 
-DIRS=   crypto ssl engines apps test tools
-SHLIBDIRS= crypto ssl
+# This is the location of fipscanister.o and friends.
+# The FIPS module build will place it $(INSTALLTOP)/lib
+# but since $(INSTALLTOP) can only take the default value
+# when the module is built it will be in /usr/local/ssl/lib
+# $(INSTALLTOP) for this build make be different so hard
+# code the path.
+
+FIPSLIBDIR=/usr/local/ssl/lib/
+
+# This is set to "y" if fipscanister.o is compiled internally as
+# opposed to coming from an external validated location.
+
+FIPSCANISTERINTERNAL=n
+
+# The location of the library which contains fipscanister.o
+# normally it will be libcrypto unless fipsdso is set in which
+# case it will be libfips. If not compiling in FIPS mode at all
+# this is empty making it a useful test for a FIPS compile.
+
+FIPSCANLIB=
+
+# Shared library base address. Currently only used on Windows.
+#
+
+BASEADDR=
+
+DIRS=   crypto fips-1.0 ssl engines apps test tools
+SHLIBDIRS= crypto ssl fips
 
 # dirs in crypto to build
 SDIRS=  \
@@ -138,13 +168,14 @@ WDIRS=  windows
 LIBS=   libcrypto.a libssl.a
 SHARED_CRYPTO=libcrypto$(SHLIB_EXT)
 SHARED_SSL=libssl$(SHLIB_EXT)
+SHARED_FIPS=
 SHARED_LIBS=
 SHARED_LIBS_LINK_EXTS=
 SHARED_LDFLAGS=
 
 GENERAL=        Makefile
 BASENAME=       openssl
-NAME=           $(BASENAME)-$(VERSION)
+NAME=           $(BASENAME)-fips-$(VERSION)
 TARFILE=        $(NAME).tar
 WTARFILE=       $(NAME)-win.tar
 EXHEADER=       e_os2.h
@@ -191,6 +222,12 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
 		MD5_ASM_OBJ='${MD5_ASM_OBJ}'			\
 		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'		\
+		FIPS_SHA1_ASM_OBJ='${FIPS_SHA1_ASM_OBJ}'	\
+		FIPS_DES_ENC='${FIPS_DES_ENC}'		 	\
+		FIPS_AES_ENC='${FIPS_AES_ENC}'		 	\
+		FIPSLIBDIR='${FIPSLIBDIR}' FIPSCANLIB='${FIPSCANLIB}' \
+		FIPSCANISTERINTERNAL='${FIPSCANISTERINTERNAL}'	\
+		FIPS_EX_OBJ='${FIPS_EX_OBJ}'	\
 		THIS=$${THIS:-$@} MAKEFILE=Makefile MAKEOVERRIDES=
 # MAKEOVERRIDES= effectively "equalizes" GNU-ish and SysV-ish make flavors,
 # which in turn eliminates ambiguities in variable treatment with -e.
@@ -222,13 +259,81 @@ BUILD_ONE_CMD=\
 reflect:
 	@[ -n "$(THIS)" ] && $(CLEARENV) && $(MAKE) $(THIS) -e $(BUILDENV)
 
+FIPS_EX_OBJ= ../crypto/aes/aes_cbc.o \
+	../crypto/aes/aes_cfb.o \
+	../crypto/aes/aes_ecb.o \
+	../crypto/aes/aes_ofb.o \
+	../crypto/bn/bn_add.o \
+	../crypto/bn/bn_blind.o \
+	../crypto/bn/bn_ctx.o \
+	../crypto/bn/bn_div.o \
+	../crypto/bn/bn_exp2.o \
+	../crypto/bn/bn_exp.o \
+	../crypto/bn/bn_gcd.o \
+	../crypto/bn/bn_lib.o \
+	../crypto/bn/bn_mod.o \
+	../crypto/bn/bn_mont.o \
+	../crypto/bn/bn_mul.o \
+	../crypto/bn/bn_prime.o \
+	../crypto/bn/bn_rand.o \
+	../crypto/bn/bn_recp.o \
+	../crypto/bn/bn_shift.o \
+	../crypto/bn/bn_sqr.o \
+	../crypto/bn/bn_word.o \
+	../crypto/bn/bn_x931p.o \
+	../crypto/buffer/buf_str.o \
+	../crypto/cryptlib.o \
+	../crypto/des/cfb64ede.o \
+	../crypto/des/cfb64enc.o \
+	../crypto/des/cfb_enc.o \
+	../crypto/des/des_enc.o \
+	../crypto/des/ecb3_enc.o \
+	../crypto/des/ecb_enc.o \
+	../crypto/des/ofb64ede.o \
+	../crypto/des/ofb64enc.o \
+	../crypto/des/fcrypt_b.o \
+	../crypto/des/fcrypt.o \
+	../crypto/dsa/dsa_utl.o \
+	../crypto/dsa/dsa_sign.o \
+	../crypto/dsa/dsa_vrf.o \
+	../crypto/err/err.o \
+	../crypto/evp/digest.o \
+	../crypto/evp/m_sha1.o \
+	../crypto/evp/p_sign.o \
+	../crypto/evp/p_verify.o \
+	../crypto/mem_clr.o \
+	../crypto/mem.o \
+	../crypto/rand/md_rand.o \
+	../crypto/rand/rand_egd.o \
+	../crypto/rand/randfile.o \
+	../crypto/rand/rand_lib.o \
+	../crypto/rand/rand_os2.o \
+	../crypto/rand/rand_unix.o \
+	../crypto/rand/rand_win.o \
+	../crypto/rsa/rsa_lib.o \
+	../crypto/rsa/rsa_none.o \
+	../crypto/rsa/rsa_oaep.o \
+	../crypto/rsa/rsa_pk1.o \
+	../crypto/rsa/rsa_pss.o \
+	../crypto/rsa/rsa_ssl.o \
+	../crypto/rsa/rsa_x931.o \
+	../crypto/uid.o
+
 sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
 
-build_libs: build_crypto build_ssl build_engines
+build_libs: build_crypto build_fips build_ssl build_engines
 
 build_crypto:
-	@dir=crypto; target=all; $(BUILD_ONE_CMD)
+	if [ -n "$(FIPSCANLIB)" ]; then \
+		EXCL_OBJ='$(BN_ASM) $(CPUID_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
+		ARX='$(PERL) $${TOP}/util/arx.pl $(AR)' ; \
+	else \
+		ARX='${AR}' ; \
+	fi ; export ARX ; \
+		dir=crypto; target=all; $(BUILD_ONE_CMD)
+build_fips:
+	@dir=fips-1.0; target=all; $(BUILD_ONE_CMD)
 build_ssl:
 	@dir=ssl; target=all; $(BUILD_ONE_CMD)
 build_engines:
@@ -244,21 +349,42 @@ all_testapps: build_libs build_testapps
 build_testapps:
 	@dir=crypto; target=testapps; $(BUILD_ONE_CMD)
 
-libcrypto$(SHLIB_EXT): libcrypto.a
+libcrypto$(SHLIB_EXT): libcrypto.a $(SHARED_FIPS)
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
-		$(MAKE) SHLIBDIRS=crypto build-shared; \
+		if [ "$(FIPSCANLIB)" = "libfips" ]; then \
+			( dir=fips-1.0; target=all; $(BUILD_ONE_CMD) ) ; \
+			$(ARD) libcrypto.a fipscanister.o ; \
+			$(MAKE) SHLIBDIRS='crypto' SHLIBDEPS='-lfips' build-shared; \
+			$(AR) libcrypto.a fips-1.0/fipscanister.o ; \
+		else \
+			$(MAKE) SHLIBDIRS='crypto' build-shared; \
+		fi \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
-		exit 1; \
 	fi
 
 libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
 		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS='-lcrypto' build-shared; \
 	else \
-		echo "There's no support for shared libraries on this platform" >&2; \
+		echo "There's no support for shared libraries on this platform" >&2 ; \
 		exit 1; \
 	fi
+
+libfips$(SHLIB_EXT): libfips.a
+	@if [ "$(SHLIB_TARGET)" != "" ]; then \
+		if [ "$(FIPSCANLIB)" = "libfips" ]; then \
+			FIPSLD_CC=$(CC); CC=fips-1.0/fipsld; FIPSLD_NPT="y"; \
+			FIPSLD_LIBFIPS=y; \
+			export CC FIPSLD_CC FIPSLD_NPT FIPSLD_LIBFIPS; \
+		fi; \
+		$(MAKE) -e SHLIBDIRS=fips build-shared; \
+	else \
+		echo "There's no support for shared libraries on this platform" >&2; \
+	fi
+
+libfips.a:
+	dir=fips-1.0; target=all; $(BUILD_ONE_CMD)
 
 clean-shared:
 	@set -e; for i in $(SHLIBDIRS); do \
@@ -451,7 +577,7 @@ tar:
 	$(TAR) $(TARFLAGS) --files-from ../$(TARFILE).list -cvf - | \
 	tardy --user_number=0  --user_name=openssl \
 	      --group_number=0 --group_name=openssl \
-	      --prefix=openssl-$(VERSION) - |\
+	      --prefix=openssl-fips-$(VERSION) - |\
 	gzip --best >../$(TARFILE).gz; \
 	rm -f ../$(TARFILE).list; \
 	ls -l ../$(TARFILE).gz

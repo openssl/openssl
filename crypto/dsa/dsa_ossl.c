@@ -65,6 +65,8 @@
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
 
+#ifndef OPENSSL_FIPS
+
 static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa);
 static int dsa_sign_setup(DSA *dsa, BN_CTX *ctx_in, BIGNUM **kinvp, BIGNUM **rp);
 static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
@@ -391,3 +393,4 @@ static int dsa_finish(DSA *dsa)
 	return(1);
 }
 
+#endif

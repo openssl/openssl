@@ -41,7 +41,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -101,7 +101,8 @@ eng_cnf.o: ../../include/openssl/symhacks.h ../cryptlib.h eng_cnf.c eng_int.h
 eng_cryptodev.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 eng_cryptodev.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 eng_cryptodev.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-eng_cryptodev.o: ../../include/openssl/evp.h ../../include/openssl/obj_mac.h
+eng_cryptodev.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+eng_cryptodev.o: ../../include/openssl/obj_mac.h
 eng_cryptodev.o: ../../include/openssl/objects.h
 eng_cryptodev.o: ../../include/openssl/opensslconf.h
 eng_cryptodev.o: ../../include/openssl/opensslv.h
@@ -171,8 +172,9 @@ eng_openssl.o: ../../include/openssl/dsa.h ../../include/openssl/dso.h
 eng_openssl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
 eng_openssl.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 eng_openssl.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-eng_openssl.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-eng_openssl.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+eng_openssl.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+eng_openssl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+eng_openssl.o: ../../include/openssl/objects.h
 eng_openssl.o: ../../include/openssl/opensslconf.h
 eng_openssl.o: ../../include/openssl/opensslv.h
 eng_openssl.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pem.h
@@ -186,8 +188,9 @@ eng_padlock.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
 eng_padlock.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 eng_padlock.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
 eng_padlock.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-eng_padlock.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-eng_padlock.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+eng_padlock.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+eng_padlock.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+eng_padlock.o: ../../include/openssl/objects.h
 eng_padlock.o: ../../include/openssl/opensslconf.h
 eng_padlock.o: ../../include/openssl/opensslv.h
 eng_padlock.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
@@ -205,8 +208,9 @@ eng_table.o: ../../e_os.h ../../include/openssl/asn1.h
 eng_table.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 eng_table.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 eng_table.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-eng_table.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-eng_table.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+eng_table.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+eng_table.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+eng_table.o: ../../include/openssl/objects.h
 eng_table.o: ../../include/openssl/opensslconf.h
 eng_table.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 eng_table.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h

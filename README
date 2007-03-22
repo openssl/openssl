@@ -1,9 +1,15 @@
 
- OpenSSL 0.9.8f-dev
+ OpenSSL 0.9.8f-fips-dev test version
 
  Copyright (c) 1998-2007 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
  All rights reserved.
+
+ WARNING
+ -------
+
+ This version of OpenSSL is an initial port of the FIPS 140-2 code to OpenSSL
+ 0.9.8. See the file README.FIPS for brief usage details.
 
  DESCRIPTION
  -----------

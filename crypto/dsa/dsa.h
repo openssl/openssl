@@ -97,6 +97,17 @@
                                               * be used for all exponents.
                                               */
 
+/* If this flag is set external DSA_METHOD callbacks are allowed in FIPS mode
+ * it is then the applications responsibility to ensure the external method
+ * is compliant.
+ */
+
+#define DSA_FLAG_FIPS_EXTERNAL_METHOD_ALLOW	0x04
+
+#ifdef OPENSSL_FIPS
+#define FIPS_DSA_SIZE_T	int
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -188,6 +199,11 @@ const DSA_METHOD *DSA_OpenSSL(void);
 void	DSA_set_default_method(const DSA_METHOD *);
 const DSA_METHOD *DSA_get_default_method(void);
 int	DSA_set_method(DSA *dsa, const DSA_METHOD *);
+
+#ifdef OPENSSL_FIPS
+DSA *	FIPS_dsa_new(void);
+void	FIPS_dsa_free (DSA *r);
+#endif
 
 DSA *	DSA_new(void);
 DSA *	DSA_new_method(ENGINE *engine);

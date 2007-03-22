@@ -70,6 +70,8 @@
  * should hold.
  */
 
+#ifndef OPENSSL_FIPS
+
 int DH_check(const DH *dh, int *ret)
 	{
 	int ok=0;
@@ -140,3 +142,5 @@ err:
 	if (q != NULL) BN_free(q);
 	return(ok);
 	}
+
+#endif

@@ -79,7 +79,7 @@ my $OS2=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5", "NeXT",
-			"EXPORT_VAR_AS_FUNCTION" );
+			"EXPORT_VAR_AS_FUNCTION", "OPENSSL_FIPS" );
 my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
@@ -116,6 +116,7 @@ my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw; my $no_camellia;
 my $no_fp_api; my $no_static_engine; my $no_gmp; my $no_deprecated;
 my $no_rfc3779;
+my $fips;
 
 
 foreach (@ARGV, split(/ /, $options))
@@ -137,6 +138,7 @@ foreach (@ARGV, split(/ /, $options))
 	}
 	$VMS=1 if $_ eq "VMS";
 	$OS2=1 if $_ eq "OS2";
+	$fips=1 if /^fips/;
 
 	$do_ssl=1 if $_ eq "ssleay";
 	if ($_ eq "ssl") {
@@ -286,6 +288,7 @@ $crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/tmdiff.h";
 $crypto.=" crypto/store/store.h";
 $crypto.=" crypto/pqueue/pqueue.h";
+$crypto.=" fips-1.0/fips.h fips-1.0/rand/fips_rand.h fips-1.0/sha/fips_sha.h";
 
 my $symhacks="crypto/symhacks.h";
 
@@ -1069,6 +1072,9 @@ sub is_valid
 			# will be represented as functions.  This currently
 			# only happens on VMS-VAX.
 			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32 || $W16)) {
+				return 1;
+			}
+			if ($keyword eq "OPENSSL_FIPS" && $fips) {
 				return 1;
 			}
 			return 0;

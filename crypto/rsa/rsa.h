@@ -74,6 +74,10 @@
 #error RSA is disabled.
 #endif
 
+#ifdef OPENSSL_FIPS
+#define FIPS_RSA_SIZE_T	int
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -222,10 +226,22 @@ int	RSA_size(const RSA *);
 #ifndef OPENSSL_NO_DEPRECATED
 RSA *	RSA_generate_key(int bits, unsigned long e,void
 		(*callback)(int,int,void *),void *cb_arg);
+int RSA_X931_derive(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1, BIGNUM *q2,
+			void (*cb)(int, int, void *), void *cb_arg,
+			const BIGNUM *Xp1, const BIGNUM *Xp2, const BIGNUM *Xp,
+			const BIGNUM *Xq1, const BIGNUM *Xq2, const BIGNUM *Xq,
+			const BIGNUM *e);
+RSA *RSA_X931_generate_key(int bits, const BIGNUM *e,
+	     void (*cb)(int,int,void *), void *cb_arg);
 #endif /* !defined(OPENSSL_NO_DEPRECATED) */
 
 /* New version */
 int	RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1, BIGNUM *q2,
+			const BIGNUM *Xp1, const BIGNUM *Xp2, const BIGNUM *Xp,
+			const BIGNUM *Xq1, const BIGNUM *Xq2, const BIGNUM *Xq,
+			const BIGNUM *e, BN_GENCB *cb);
+int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e, BN_GENCB *cb);
 
 int	RSA_check_key(const RSA *);
 	/* next 4 return -1 on error */
@@ -242,6 +258,11 @@ void	RSA_free (RSA *r);
 int	RSA_up_ref(RSA *r);
 
 int	RSA_flags(const RSA *r);
+
+#ifdef OPENSSL_FIPS
+RSA *FIPS_rsa_new(void);
+void FIPS_rsa_free(RSA *r);
+#endif
 
 void RSA_set_default_method(const RSA_METHOD *meth);
 const RSA_METHOD *RSA_get_default_method(void);
@@ -287,6 +308,13 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_length,
 	unsigned char *sigret, unsigned int *siglen, RSA *rsa);
 int RSA_verify(int type, const unsigned char *m, unsigned int m_length,
 	unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
+
+#ifdef OPENSSL_FIPS
+int FIPS_rsa_sign(int type, const unsigned char *m, unsigned int m_length,
+	unsigned char *sigret, unsigned int *siglen, RSA *rsa);
+int FIPS_rsa_verify(int type, const unsigned char *m, unsigned int m_length,
+	unsigned char *sigbuf, unsigned int siglen, RSA *rsa);
+#endif
 
 /* The following 2 function sign and verify a ASN1_OCTET_STRING
  * object inside PKCS#1 padded RSA encryption */

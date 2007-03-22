@@ -66,6 +66,10 @@
 #define AES_MAXNR 14
 #define AES_BLOCK_SIZE 16
 
+#ifdef OPENSSL_FIPS
+#define FIPS_AES_SIZE_T	int
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif

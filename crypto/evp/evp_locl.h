@@ -226,11 +226,28 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 
 #define EVP_C_DATA(kstruct, ctx)	((kstruct *)(ctx)->cipher_data)
 
-#define IMPLEMENT_CFBR(cipher,cprefix,kstruct,ksched,keysize,cbits,iv_len) \
+#define IMPLEMENT_CFBR(cipher,cprefix,kstruct,ksched,keysize,cbits,iv_len,fl) \
 	BLOCK_CIPHER_func_cfb(cipher##_##keysize,cprefix,cbits,kstruct,ksched) \
 	BLOCK_CIPHER_def_cfb(cipher##_##keysize,kstruct, \
 			     NID_##cipher##_##keysize, keysize/8, iv_len, cbits, \
-			     0, cipher##_init_key, NULL, \
+			     fl, cipher##_init_key, NULL, \
 			     EVP_CIPHER_set_asn1_iv, \
 			     EVP_CIPHER_get_asn1_iv, \
 			     NULL)
+
+#ifdef OPENSSL_FIPS
+#define RC2_set_key	private_RC2_set_key
+#define RC4_set_key	private_RC4_set_key
+#define CAST_set_key	private_CAST_set_key
+#define RC5_32_set_key	private_RC5_32_set_key
+#define BF_set_key	private_BF_set_key
+#define idea_set_encrypt_key private_idea_set_encrypt_key
+
+#define MD5_Init	private_MD5_Init
+#define MD4_Init	private_MD4_Init
+#define MD2_Init	private_MD2_Init
+#define MDC2_Init	private_MDC2_Init
+#define SHA_Init	private_SHA_Init
+
+#endif
+

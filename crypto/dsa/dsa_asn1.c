@@ -83,7 +83,7 @@ ASN1_SEQUENCE_cb(DSA_SIG, sig_cb) = {
 	ASN1_SIMPLE(DSA_SIG, s, CBIGNUM)
 } ASN1_SEQUENCE_END_cb(DSA_SIG, DSA_SIG)
 
-IMPLEMENT_ASN1_FUNCTIONS_const(DSA_SIG)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA_SIG,DSA_SIG,DSA_SIG)
 
 /* Override the default free and new methods */
 static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
@@ -138,3 +138,61 @@ ASN1_CHOICE_cb(DSAPublicKey, dsa_cb) = {
 } ASN1_CHOICE_END_cb(DSA, DSAPublicKey, write_params)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPublicKey, DSAPublicKey)
+
+int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
+	     unsigned int *siglen, DSA *dsa)
+	{
+	DSA_SIG *s;
+	s=DSA_do_sign(dgst,dlen,dsa);
+	if (s == NULL)
+		{
+		*siglen=0;
+		return(0);
+		}
+	*siglen=i2d_DSA_SIG(s,&sig);
+	DSA_SIG_free(s);
+	return(1);
+	}
+
+int DSA_size(const DSA *r)
+	{
+	int ret,i;
+	ASN1_INTEGER bs;
+	unsigned char buf[4];	/* 4 bytes looks really small.
+				   However, i2d_ASN1_INTEGER() will not look
+				   beyond the first byte, as long as the second
+				   parameter is NULL. */
+
+	i=BN_num_bits(r->q);
+	bs.length=(i+7)/8;
+	bs.data=buf;
+	bs.type=V_ASN1_INTEGER;
+	/* If the top bit is set the asn1 encoding is 1 larger. */
+	buf[0]=0xff;	
+
+	i=i2d_ASN1_INTEGER(&bs,NULL);
+	i+=i; /* r and s */
+	ret=ASN1_object_size(1,i,V_ASN1_SEQUENCE);
+	return(ret);
+	}
+
+/* data has already been hashed (probably with SHA or SHA-1). */
+/* returns
+ *      1: correct signature
+ *      0: incorrect signature
+ *     -1: error
+ */
+int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
+	     const unsigned char *sigbuf, int siglen, DSA *dsa)
+	{
+	DSA_SIG *s;
+	int ret=-1;
+
+	s = DSA_SIG_new();
+	if (s == NULL) return(ret);
+	if (d2i_DSA_SIG(&s,&sigbuf,siglen) == NULL) goto err;
+	ret=DSA_do_verify(dgst,dgst_len,s,dsa);
+err:
+	DSA_SIG_free(s);
+	return(ret);
+	}

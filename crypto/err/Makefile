@@ -17,8 +17,8 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=err.c err_all.c err_prn.c
-LIBOBJ=err.o err_all.o err_prn.o
+LIBSRC=err.c err_def.c err_all.c err_prn.c err_str.c err_bio.c
+LIBOBJ=err.o err_def.o err_all.o err_prn.o err_str.o err_bio.o
 
 SRC= $(LIBSRC)
 
@@ -33,7 +33,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -89,17 +89,31 @@ err_all.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
 err_all.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
 err_all.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
 err_all.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-err_all.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-err_all.o: ../../include/openssl/objects.h ../../include/openssl/ocsp.h
-err_all.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-err_all.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pem2.h
-err_all.o: ../../include/openssl/pkcs12.h ../../include/openssl/pkcs7.h
-err_all.o: ../../include/openssl/rand.h ../../include/openssl/rsa.h
-err_all.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-err_all.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-err_all.o: ../../include/openssl/ui.h ../../include/openssl/x509.h
-err_all.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-err_all.o: err_all.c
+err_all.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+err_all.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+err_all.o: ../../include/openssl/ocsp.h ../../include/openssl/opensslconf.h
+err_all.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+err_all.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs12.h
+err_all.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+err_all.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+err_all.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+err_all.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+err_all.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+err_all.o: ../../include/openssl/x509v3.h err_all.c
+err_bio.o: ../../e_os.h ../../include/openssl/bio.h
+err_bio.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+err_bio.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+err_bio.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+err_bio.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+err_bio.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+err_bio.o: ../../include/openssl/symhacks.h ../cryptlib.h err_bio.c
+err_def.o: ../../e_os.h ../../include/openssl/bio.h
+err_def.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+err_def.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+err_def.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+err_def.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+err_def.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+err_def.o: ../../include/openssl/symhacks.h ../cryptlib.h err_def.c
 err_prn.o: ../../e_os.h ../../include/openssl/bio.h
 err_prn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 err_prn.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -107,3 +121,10 @@ err_prn.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 err_prn.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 err_prn.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 err_prn.o: ../../include/openssl/symhacks.h ../cryptlib.h err_prn.c
+err_str.o: ../../e_os.h ../../include/openssl/bio.h
+err_str.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+err_str.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+err_str.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+err_str.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+err_str.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+err_str.o: ../../include/openssl/symhacks.h ../cryptlib.h err_str.c

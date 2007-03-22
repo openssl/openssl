@@ -144,7 +144,9 @@ LINK_SO_A_UNPACKED=	\
   SHOBJECTS=$$UNPACKDIR/*.o; \
   $(LINK_SO) && rm -rf $$UNPACKDIR
 
-DETECT_GNU_LD=(${CC} -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
+# NB: force pass-through in case we are calling through fipsld.
+
+DETECT_GNU_LD=(FIPSLD_NPT="" FIPSLD_LIBFIPS="" ${CC} -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
 
 DO_GNU_SO=$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \

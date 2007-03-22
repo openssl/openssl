@@ -98,4 +98,33 @@ err:
 	if(rsa) RSA_free(rsa);
 	return 0;
 	}
+
+int RSA_X931_derive(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1, BIGNUM *q2,
+			void (*callback)(int, int, void *), void *cb_arg,
+			const BIGNUM *Xp1, const BIGNUM *Xp2, const BIGNUM *Xp,
+			const BIGNUM *Xq1, const BIGNUM *Xq2, const BIGNUM *Xq,
+			const BIGNUM *e)
+	{
+	BN_GENCB cb;
+	BN_GENCB_set_old(&cb, callback, cb_arg);
+	return RSA_X931_derive_ex(rsa, p1, p2, q1, q2, Xp1, Xp2, Xp,
+					Xq1, Xq2, Xq, e, &cb);
+	}
+
+RSA *RSA_X931_generate_key(int bits, const BIGNUM *e,
+	     void (*callback)(int,int,void *), void *cb_arg)
+	{
+	BN_GENCB cb;
+	int ret;
+	RSA *rsa = RSA_new();
+	if (!rsa)
+		return NULL;
+	BN_GENCB_set_old(&cb, callback, cb_arg);
+	ret = RSA_X931_generate_key_ex(rsa, bits, e, &cb);
+	if (ret)
+		return rsa;
+
+	RSA_free(rsa);
+	return NULL;
+	}
 #endif

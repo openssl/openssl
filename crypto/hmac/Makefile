@@ -33,7 +33,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -77,9 +77,10 @@ clean:
 hmac.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 hmac.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 hmac.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-hmac.o: ../../include/openssl/evp.h ../../include/openssl/hmac.h
-hmac.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-hmac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-hmac.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-hmac.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-hmac.o: ../../include/openssl/symhacks.h ../cryptlib.h hmac.c
+hmac.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+hmac.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
+hmac.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+hmac.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+hmac.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+hmac.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+hmac.o: ../cryptlib.h hmac.c

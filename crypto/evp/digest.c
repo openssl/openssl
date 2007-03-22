@@ -116,6 +116,7 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#include "evp_locl.h"
 
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 	{
@@ -137,17 +138,74 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	return EVP_DigestInit_ex(ctx, type, NULL);
 	}
 
-int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+#ifdef OPENSSL_FIPS
+
+/* The purpose of these is to trap programs that attempt to use non FIPS
+ * algorithms in FIPS mode and ignore the errors.
+ */
+
+static int bad_init(EVP_MD_CTX *ctx)
+	{ FIPS_ERROR_IGNORED("Digest init"); return 0;}
+
+static int bad_update(EVP_MD_CTX *ctx,const void *data,size_t count)
+	{ FIPS_ERROR_IGNORED("Digest update"); return 0;}
+
+static int bad_final(EVP_MD_CTX *ctx,unsigned char *md)
+	{ FIPS_ERROR_IGNORED("Digest Final"); return 0;}
+
+static const EVP_MD bad_md =
 	{
-	EVP_MD_CTX_clear_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
-#ifndef OPENSSL_NO_ENGINE
-	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
-	 * so this context may already have an ENGINE! Try to avoid releasing
-	 * the previous handle, re-querying for an ENGINE, and having a
-	 * reinitialisation, when it may all be unecessary. */
-	if (ctx->engine && ctx->digest && (!type ||
-			(type && (type->type == ctx->digest->type))))
-		goto skip_to_init;
+	0,
+	0,
+	0,
+	0,
+	bad_init,
+	bad_update,
+	bad_final,
+	NULL,
+	NULL,
+	NULL,
+	0,
+	{0,0,0,0},
+	};
+
+#endif
+
+#ifdef OPENSSL_FIPS
+
+static int do_engine_null(ENGINE *impl) { return 0;}
+static int do_evp_md_engine_null(EVP_MD_CTX *ctx,
+				const EVP_MD *type, ENGINE *impl)
+	{ return 1; }
+
+static int (*do_engine_init)(ENGINE *impl)
+		= do_engine_null;
+
+static int (*do_engine_finish)(ENGINE *impl)
+		= do_engine_null;
+
+static int (*do_evp_md_engine)
+	(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+		= do_evp_md_engine_null;
+
+void int_EVP_MD_set_engine_callbacks(
+	int (*eng_md_init)(ENGINE *impl),
+	int (*eng_md_fin)(ENGINE *impl),
+	int (*eng_md_evp)
+		(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl))
+	{
+	do_engine_init = eng_md_init;
+	do_engine_finish = eng_md_fin;
+	do_evp_md_engine = eng_md_evp;
+	}
+
+#else
+
+#define do_engine_init	ENGINE_init
+#define do_engine_finish ENGINE_finish
+
+static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+	{
 	if (type)
 		{
 		/* Ensure an ENGINE left lying around from last time is cleared
@@ -192,9 +250,39 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 		EVPerr(EVP_F_EVP_DIGESTINIT_EX,EVP_R_NO_DIGEST_SET);
 		return 0;
 		}
+	return 1;
+	}
+
+#endif
+
+int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+	{
+	M_EVP_MD_CTX_clear_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
+#ifndef OPENSSL_NO_ENGINE
+	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
+	 * so this context may already have an ENGINE! Try to avoid releasing
+	 * the previous handle, re-querying for an ENGINE, and having a
+	 * reinitialisation, when it may all be unecessary. */
+	if (ctx->engine && ctx->digest && (!type ||
+			(type && (type->type == ctx->digest->type))))
+		goto skip_to_init;
+	if (!do_evp_md_engine(ctx, type, impl))
+		return 0;
 #endif
 	if (ctx->digest != type)
 		{
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			{
+			if (!(type->flags & EVP_MD_FLAG_FIPS) 
+			 && !(ctx->flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW))
+				{
+				EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_DISABLED_FOR_FIPS);
+				ctx->digest = &bad_md;
+				return 0;
+				}
+			}
+#endif
 		if (ctx->digest && ctx->digest->ctx_size)
 			OPENSSL_free(ctx->md_data);
 		ctx->digest=type;
@@ -202,7 +290,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			ctx->md_data=OPENSSL_malloc(type->ctx_size);
 		}
 #ifndef OPENSSL_NO_ENGINE
-skip_to_init:
+	skip_to_init:
 #endif
 	return ctx->digest->init(ctx);
 	}
@@ -234,7 +322,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	if (ctx->digest->cleanup)
 		{
 		ctx->digest->cleanup(ctx);
-		EVP_MD_CTX_set_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
+		M_EVP_MD_CTX_set_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
 		}
 	memset(ctx->md_data,0,ctx->digest->ctx_size);
 	return ret;
@@ -256,7 +344,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 		}
 #ifndef OPENSSL_NO_ENGINE
 	/* Make sure it's safe to copy a digest context using an ENGINE */
-	if (in->engine && !ENGINE_init(in->engine))
+	if (in->engine && !do_engine_init(in->engine))
 		{
 		EVPerr(EVP_F_EVP_MD_CTX_COPY_EX,ERR_R_ENGINE_LIB);
 		return 0;
@@ -266,7 +354,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	if (out->digest == in->digest)
 		{
 		tmp_buf = out->md_data;
-	    	EVP_MD_CTX_set_flags(out,EVP_MD_CTX_FLAG_REUSE);
+	    	M_EVP_MD_CTX_set_flags(out,EVP_MD_CTX_FLAG_REUSE);
 		}
 	else tmp_buf = NULL;
 	EVP_MD_CTX_cleanup(out);
@@ -292,7 +380,7 @@ int EVP_Digest(const void *data, size_t count,
 	int ret;
 
 	EVP_MD_CTX_init(&ctx);
-	EVP_MD_CTX_set_flags(&ctx,EVP_MD_CTX_FLAG_ONESHOT);
+	M_EVP_MD_CTX_set_flags(&ctx,EVP_MD_CTX_FLAG_ONESHOT);
 	ret=EVP_DigestInit_ex(&ctx, type, impl)
 	  && EVP_DigestUpdate(&ctx, data, count)
 	  && EVP_DigestFinal_ex(&ctx, md, size);
@@ -314,10 +402,10 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	 * because sometimes only copies of the context are ever finalised.
 	 */
 	if (ctx->digest && ctx->digest->cleanup
-	    && !EVP_MD_CTX_test_flags(ctx,EVP_MD_CTX_FLAG_CLEANED))
+	    && !M_EVP_MD_CTX_test_flags(ctx,EVP_MD_CTX_FLAG_CLEANED))
 		ctx->digest->cleanup(ctx);
 	if (ctx->digest && ctx->digest->ctx_size && ctx->md_data
-	    && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE))
+	    && !M_EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_REUSE))
 		{
 		OPENSSL_cleanse(ctx->md_data,ctx->digest->ctx_size);
 		OPENSSL_free(ctx->md_data);
@@ -326,7 +414,7 @@ int EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx)
 	if(ctx->engine)
 		/* The EVP_MD we used belongs to an ENGINE, release the
 		 * functional reference we held for this reason. */
-		ENGINE_finish(ctx->engine);
+		do_engine_finish(ctx->engine);
 #endif
 	memset(ctx,'\0',sizeof *ctx);
 
