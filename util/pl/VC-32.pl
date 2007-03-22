@@ -321,7 +321,12 @@ sub do_lib_rule
 			{
 			$ex.= $mwex unless $fipscanisterbuild;
 			$ret.="$target: $objs \$(PREMAIN_DSO_EXE)";
-			$ret.=" ms/\$(LIBFIPS).def" if $fipsdso;
+			if ($fipsdso)
+				{
+				$ex.=" \$(OBJ_D)\\\$(LIBFIPS).res";
+				$ret.=" \$(OBJ_D)\\\$(LIBFIPS).res";
+				$ret.=" ms/\$(LIBFIPS).def";
+				}
 			$ret.="\n\tSET FIPS_LINK=\$(LINK)\n";
 			$ret.="\tSET FIPS_CC=\$(CC)\n";
 			$ret.="\tSET FIPS_CC_ARGS=/Fo\$(OBJ_D)${o}fips_premain.obj \$(SHLIB_CFLAGS) -c\n";

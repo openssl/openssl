@@ -850,6 +850,9 @@ if (($platform eq "VC-WIN32") || ($platform eq "VC-NT")) {
 \$(OBJ_D)\\\$(SSL).res: ms\\version32.rc
 	\$(RSC) /fo"\$(OBJ_D)\\\$(SSL).res" /d SSL ms\\version32.rc
 
+\$(OBJ_D)\\\$(LIBFIPS).res: ms\\version32.rc
+	\$(RSC) /fo"\$(OBJ_D)\\\$(LIBFIPS).res" /d FIPS ms\\version32.rc
+
 EOF
 }
 
