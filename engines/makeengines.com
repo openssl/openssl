@@ -34,7 +34,7 @@ $! Set the names of the engines we want to build
 $!
 $ ENGINES = "," + P6
 $ IF ENGINES .EQS. "," THEN -
-	ENGINES = ",4758cca,aep,atalla,cswift,chil,nuron,sureware,ubsec"
+	ENGINES = ",4758cca,aep,atalla,cswift,chil,nuron,sureware,ubsec,padlock"
 $!
 $! Set the default TCP/IP library to link against if needed
 $!
