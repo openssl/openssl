@@ -155,11 +155,12 @@
 #define SSL_ENC_AES256_IDX	7
 #define SSL_ENC_CAMELLIA128_IDX	8
 #define SSL_ENC_CAMELLIA256_IDX	9
-#define SSL_ENC_NUM_IDX		10
+#define SSL_ENC_GOST89_IDX	10
+#define SSL_ENC_NUM_IDX		11
 
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
-	NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
 	};
 
 #define SSL_COMP_NULL_IDX	0
@@ -305,6 +306,8 @@ void ssl_load_ciphers(void)
 	  EVP_get_cipherbyname(SN_camellia_128_cbc);
 	ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX]=
 	  EVP_get_cipherbyname(SN_camellia_256_cbc);
+	ssl_cipher_methods[SSL_ENC_GOST89_IDX]=
+		EVP_get_cipherbyname(SN_gost89_cnt);
 
 	ssl_digest_methods[SSL_MD_MD5_IDX]=
 		EVP_get_digestbyname(SN_md5);
@@ -426,6 +429,9 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		break;
 	case SSL_CAMELLIA256:
 		i=SSL_ENC_CAMELLIA256_IDX;
+		break;
+	case SSL_eGOST2814789CNT:
+		i=SSL_ENC_GOST89_IDX;
 		break;
 	default:
 		i= -1;
@@ -549,6 +555,7 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, un
 	*enc |= (ssl_cipher_methods[SSL_ENC_AES256_IDX] == NULL) ? SSL_AES256:0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] == NULL) ? SSL_CAMELLIA128:0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX] == NULL) ? SSL_CAMELLIA256:0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_GOST89_IDX] == NULL) ? SSL_eGOST2814789CNT:0;
 
 	*mac |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
 	*mac |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;

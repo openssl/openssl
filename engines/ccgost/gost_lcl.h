@@ -135,6 +135,7 @@ extern struct gost_cipher_info gost_cipher_list[];
 const struct gost_cipher_info *get_encryption_params(ASN1_OBJECT *obj);
 /* Implementation of GOST 28147-89 cipher in CFB and CNT modes */
 extern EVP_CIPHER cipher_gost;
+extern EVP_CIPHER cipher_gost_cpacnt;
 #ifdef USE_SSL
 #define EVP_MD_FLAG_NEEDS_KEY 0x20
 #define EVP_MD_CTRL_GET_TLS_MAC_KEY_LENGTH (EVP_MD_CTRL_ALG_CTRL+1)

@@ -13,21 +13,19 @@
 #include "gost_lcl.h"
 static int gost_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key, 
 	const unsigned char *iv, int enc);
+static int	gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+	const unsigned char *iv, int enc);
 #ifdef USE_SSL
 /* Specialized init functions which set specific parameters */			
 static int	gost_cipher_init_vizir(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-	const unsigned char *iv, int enc);
-static int	gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc);
 #endif
 /* Handles block of data in CFB mode */			
 static int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl);
-#if 0
 /* Handles block of data in CNT mode */			
 static int	gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl);
-#endif
 /* Cleanup function */			
 static int gost_cipher_cleanup(EVP_CIPHER_CTX *);
 /* set/get cipher parameters */
@@ -54,6 +52,24 @@ EVP_CIPHER cipher_gost =
 	NULL,
 	};
 
+EVP_CIPHER cipher_gost_cpacnt = 
+	{
+	NID_gost89_cnt,
+	1,/*block_size*/
+	32,/*key_size*/
+	8,/*iv_len - синхропосылка*/
+	EVP_CIPH_OFB_MODE| EVP_CIPH_NO_PADDING |
+	EVP_CIPH_CUSTOM_IV| EVP_CIPH_RAND_KEY | EVP_CIPH_ALWAYS_CALL_INIT,
+	gost_cipher_init_cpa,
+	gost_cipher_do_cnt,
+	gost_cipher_cleanup,
+	sizeof(struct ossl_gost_cipher_ctx), /* ctx_size */
+	gost89_set_asn1_parameters,
+	gost89_get_asn1_parameters,
+	gost_cipher_ctl,
+	NULL,
+	};
+
 #ifdef USE_SSL
 static EVP_CIPHER cipher_gost_vizircfb = 
 	{
@@ -73,23 +89,6 @@ static EVP_CIPHER cipher_gost_vizircfb =
 	NULL,
 	};
 
-static EVP_CIPHER cipher_gost_cpacnt = 
-	{
-	NID_undef,
-	1,/*block_size*/
-	32,/*key_size*/
-	8,/*iv_len - синхропосылка*/
-	EVP_CIPH_OFB_MODE| EVP_CIPH_NO_PADDING |
-	EVP_CIPH_CUSTOM_IV| EVP_CIPH_RAND_KEY | EVP_CIPH_ALWAYS_CALL_INIT,
-	gost_cipher_init_cpa,
-	gost_cipher_do_cnt,
-	gost_cipher_cleanup,
-	sizeof(struct ossl_gost_cipher_ctx), /* ctx_size */
-	gost89_set_asn1_parameters,
-	gost89_get_asn1_parameters,
-	gost_cipher_ctl,
-	NULL,
-	};
 /* Implementation of GOST 28147-89 in MAC (imitovstavka) mode */
 /* Init functions which set specific parameters */
 static int gost_imit_init_vizir(EVP_MD_CTX *ctx);
@@ -227,8 +226,6 @@ static int gost_cipher_init_param(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 	}	
 
-#ifdef USE_SSL
-/* Initializes EVP_CIPHER_CTX with fixed cryptopro A paramset */
 static int gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc)
 	{
@@ -241,6 +238,8 @@ static int gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
 	return 1;
 	}
+#ifdef USE_SSL
+/* Initializes EVP_CIPHER_CTX with fixed cryptopro A paramset */
 
 /* Initializes EVP_CIPHER_CTX with fixed vizir paramset */
 static int gost_cipher_init_vizir(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -278,7 +277,6 @@ static void gost_crypt_mesh (void *ctx,unsigned char *iv,unsigned char *buf)
 	c->count+=8;
 	}
 
-#ifdef USE_SSL
 static void gost_cnt_next (void *ctx, unsigned char *iv, unsigned char *buf)
 	{
 	struct ossl_gost_cipher_ctx *c = ctx;
@@ -309,7 +307,6 @@ static void gost_cnt_next (void *ctx, unsigned char *iv, unsigned char *buf)
 	gostcrypt(&(c->cctx),buf1,buf);
 	c->count +=8;
 	}
-#endif  /* def USE_SSL */
 
 /* GOST encryption in CFB mode */
 int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -374,7 +371,6 @@ int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	return 1;
 	}
 
-#if USE_SSL
 static int gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	const unsigned char *in, unsigned int inl)
 	{
@@ -428,7 +424,6 @@ static int gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}	
 	return 1;
 	}
-#endif  /* def USE_SSL */
 
 /* Cleaning up of EVP_CIPHER_CTX */
 int gost_cipher_cleanup(EVP_CIPHER_CTX *ctx) 

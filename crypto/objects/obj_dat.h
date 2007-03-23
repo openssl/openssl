@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 835
-#define NUM_SN 831
-#define NUM_LN 831
+#define NUM_NID 836
+#define NUM_SN 832
+#define NUM_LN 832
 #define NUM_OBJ 787
 
 static unsigned char lvalues[5560]={
@@ -2208,6 +2208,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5541]),0},
 {"dsa_with_SHA256","dsa_with_SHA256",NID_dsa_with_SHA256,9,
 	&(lvalues[5550]),0},
+{"gost89-cnt","gost89-cnt",NID_gost89_cnt,0,NULL,0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2483,6 +2484,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[784]),/* "gost2001" */
 &(nid_objs[823]),/* "gost2001cc" */
 &(nid_objs[786]),/* "gost89" */
+&(nid_objs[835]),/* "gost89-cnt" */
 &(nid_objs[785]),/* "gost94" */
 &(nid_objs[822]),/* "gost94cc" */
 &(nid_objs[772]),/* "hmacWithMD5" */
@@ -3333,6 +3335,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[509]),/* "generationQualifier" */
 &(nid_objs[601]),/* "generic cryptogram" */
 &(nid_objs[99]),/* "givenName" */
+&(nid_objs[835]),/* "gost89-cnt" */
 &(nid_objs[772]),/* "hmacWithMD5" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
 &(nid_objs[773]),/* "hmacWithSHA224" */

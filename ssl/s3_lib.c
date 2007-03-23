@@ -1855,6 +1855,24 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	},
 #endif	/* OPENSSL_NO_ECDH */
 
+#ifdef TEMP_GOST_TLS
+/* Cipher FF00 */
+	{
+	1,
+	"GOST-MD5",
+	0x0300ff00,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_eGOST2814789CNT,
+	SSL_MD5,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	0,
+	256,
+	256,
+	},
+#endif
+
 /* end of list */
 	};
 

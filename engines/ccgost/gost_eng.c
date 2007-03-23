@@ -31,7 +31,7 @@ static int gost_pkey_asn1_meths (ENGINE *e, EVP_PKEY_ASN1_METHOD **ameth,
 	const int **nids, int nid);
 
 static int gost_cipher_nids[] =
-    {NID_id_Gost28147_89, 0};
+    {NID_id_Gost28147_89, NID_gost89_cnt,0};
 
 static int gost_digest_nids[] =
 	{NID_id_GostR3411_94, 0};
@@ -129,6 +129,7 @@ static int bind_gost (ENGINE *e,const char *id)
 		|| ! ENGINE_register_pkey_meths(e)
 		/* These two actually should go in LIST_ADD command */
 		|| ! EVP_add_cipher(&cipher_gost)
+		|| ! EVP_add_cipher(&cipher_gost_cpacnt)
 		|| ! EVP_add_digest(&digest_gost)
 		)
 		{
@@ -175,14 +176,18 @@ static int gost_ciphers (ENGINE *e,const EVP_CIPHER **cipher,
 	if (!cipher) 
 		{
 		*nids = gost_cipher_nids;
-		return 1; /* Only one cipher supported */
+		return 2; /* two ciphers are supported */
 		}
 
 	if(nid == NID_id_Gost28147_89) 
 		{
 		*cipher = &cipher_gost;
 		}
-	else 
+	else if  (nid == NID_gost89_cnt) 
+		{
+		*cipher = &cipher_gost_cpacnt;
+		}
+	else	
 		{
 		ok = 0;
 		*cipher = NULL;

@@ -115,6 +115,8 @@ int MAIN(int argc, char **argv)
 	STDout = BIO_push(tmpbio, STDout);
 	}
 #endif
+	if (!load_config(bio_err, NULL))
+		goto end;
 
 	argc--;
 	argv++;
