@@ -281,7 +281,7 @@ test_dsa:
 	@echo "Generate a set of DSA parameters"
 	../util/shlib_wrap.sh ./$(DSATEST)
 	../util/shlib_wrap.sh ./$(DSATEST) -app2_1
-	if [ -n "$(FIPSCANLIB) ]; then \
+	if [ -n "$(FIPSCANLIB)" ]; then \
 	  ../util/shlib_wrap.sh ./$(FIPS_DSATEST); \
 	  ../util/shlib_wrap.sh ./$(FIPS_DSATEST) -app2_1; \
 	fi
