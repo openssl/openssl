@@ -702,7 +702,7 @@ $arflags      =
 
 *** aix-cc
 $cc           = cc
-$cflags       = -q32 -O -DB_ENDIAN -qmaxmem=16384
+$cflags       = -q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst
 $unistd       = 
 $thread_cflag = -qthreaded
 $sys_id       = AIX
@@ -786,7 +786,7 @@ $arflags      =
 
 *** aix64-cc
 $cc           = cc
-$cflags       = -q64 -O -DB_ENDIAN -qmaxmem=16384
+$cflags       = -q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst
 $unistd       = 
 $thread_cflag = -qthreaded
 $sys_id       = AIX
