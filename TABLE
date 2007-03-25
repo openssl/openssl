@@ -677,7 +677,7 @@ $arflags      =
 
 *** aix-cc
 $cc           = cc
-$cflags       = -q32 -O -DB_ENDIAN -qmaxmem=16384
+$cflags       = -q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst
 $unistd       = 
 $thread_cflag = -qthreaded
 $sys_id       = AIX
@@ -722,12 +722,12 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
+$shared_target= aix-shared
 $shared_cflag = 
 $shared_ldflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
-$arflags      = 
+$arflags      = -X 32
 
 *** aix3-cc
 $cc           = cc
@@ -758,7 +758,7 @@ $arflags      =
 
 *** aix64-cc
 $cc           = cc
-$cflags       = -q64 -O -DB_ENDIAN -qmaxmem=16384
+$cflags       = -q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst
 $unistd       = 
 $thread_cflag = -qthreaded
 $sys_id       = AIX
@@ -803,10 +803,10 @@ $rc4_obj      =
 $rmd160_obj   = 
 $rc5_obj      = 
 $dso_scheme   = dlfcn
-$shared_target= 
+$shared_target= aix-shared
 $shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
+$shared_ldflag = -maix64
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = -X64
 
