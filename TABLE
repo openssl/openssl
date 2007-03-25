@@ -749,12 +749,12 @@ $rmd160_obj   =
 $rc5_obj      = 
 $wp_obj       = 
 $dso_scheme   = dlfcn
-$shared_target= 
+$shared_target= aix-shared
 $shared_cflag = 
 $shared_ldflag = 
-$shared_extension = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
-$arflags      = 
+$arflags      = -X 32
 
 *** aix3-cc
 $cc           = cc
@@ -833,10 +833,10 @@ $rmd160_obj   =
 $rc5_obj      = 
 $wp_obj       = 
 $dso_scheme   = dlfcn
-$shared_target= 
+$shared_target= aix-shared
 $shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
+$shared_ldflag = -maix64
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = -X64
 
