@@ -28,7 +28,7 @@ if (exists $ENV{"PREMAIN_DSO_EXE"})
 	}
 
 check_hash($sha1_exe, "fips_premain.c");
-check_hash($sha1_exe, "fipscanister.o");
+check_hash($sha1_exe, "fipscanister.lib");
 
 
 print "Integrity check OK\n";

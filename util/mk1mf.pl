@@ -15,7 +15,7 @@ my $engines = "";
 local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
 local $zlib_lib = "";
 
-my $fips_canister_path = "";
+local $fips_canister_path = "";
 my $fips_premain_dso_exe_path = "";
 my $fips_premain_c_path = "";
 my $fips_sha1_exe_path = "";
@@ -397,7 +397,7 @@ if ($fips)
 
 if ($fipscanisterbuild)
 	{
-	$fips_canister_path = "\$(LIB_D)${o}fipscanister.o";
+	$fips_canister_path = "\$(LIB_D)${o}fipscanister.o" if $fips_canister_path eq "";
 	$fips_premain_c_path = "\$(LIB_D)${o}fips_premain.c";
 	}
 else
@@ -904,7 +904,7 @@ if ($fips)
 		{
 		$rules.= &do_lib_rule("\$(CRYPTOOBJ)",
 			"\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)", "");
-		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
+		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(FIPSOBJ)",
 			"\$(LIB_D)$o$crypto_compat",$crypto,$shlib,"\$(SO_CRYPTO)", "");
 		}
 	}
@@ -916,7 +916,7 @@ if ($fips)
 
 if ($fips)
 	{
-	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj \$(FIPSOBJ) \$(OBJ_D)${o}fips_end$obj", "\$(FIPS_SHA1_EXE)", "") if $fipscanisterbuild;
+	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj", "\$(FIPSOBJ)", "\$(OBJ_D)${o}fips_end$obj", "\$(FIPS_SHA1_EXE)", "") if $fipscanisterbuild;
 	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
 	
 	$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}fips_sha1dgst$obj","","", 1);

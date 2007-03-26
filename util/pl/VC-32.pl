@@ -17,6 +17,11 @@ else
 	$crypto="libeay32";
 	}
 
+if ($fipscanisterbuild)
+	{
+	$fips_canister_path = "\$(LIB_D)\\fipscanister.lib";
+	}
+
 $o='\\';
 $cp='$(PERL) util/copy.pl';
 $mkdir='$(PERL) util/mkdir-p.pl';
@@ -391,14 +396,19 @@ sub do_link_rule
 
 sub do_rlink_rule
 	{
-	local($target,$files,$dep_libs,$libs)=@_;
+	local($target,$rl_start, $rl_mid, $rl_end,$dep_libs,$libs)=@_;
 	local($ret,$_);
+	my $files = "$rl_start $rl_mid $rl_end";
 
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
 	$ret.="$target: $files $dep_libs \$(FIPS_SHA1_EXE)\n";
-	$ret.="\t\$(MKCANISTER) $target <<\n";
-	$ret.="INPUT($files)\n<<\n";
+	$ret.="\teditbin /SECTION:.text=.fipst\$\$a /SECTION:.rdata=.fipsr\$\$a $rl_start\n";
+	$ret.="\teditbin /SECTION:.text=.fipst\$\$b /SECTION:.rdata=.fipsr\$\$b @<<\n\t$rl_mid\n<<\n";
+	$ret.="\teditbin /SECTION:.text=.fipst\$\$c /SECTION:.rdata=.fipsr\$\$c $rl_end\n";
+	$ret.="\t\$(MKLIB) $lfile$target @<<\n\t$files\n<<\n";
+	#$ret.="\t\$(MKCANISTER) $target <<\n";
+	#$ret.="INPUT($files)\n<<\n";
 	$ret.="\t\$(FIPS_SHA1_EXE) $target > ${target}.sha1\n";
 	$ret.="\t\$(PERL) util${o}copy.pl -stripcr fips-1.0${o}fips_premain.c \$(LIB_D)${o}fips_premain.c\n";
 	$ret.="\t\$(CP) fips-1.0${o}fips_premain.c.sha1 \$(LIB_D)${o}fips_premain.c.sha1\n";

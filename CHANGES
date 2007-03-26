@@ -4,7 +4,16 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
-  *) Modify WIN32 build system to forward references to functions implemented
+  *) Modify VC++ build system to rename .text and .rdata segments in
+     FIPS sources to .fipst${a,b,c}, and $fipsr${a,b,c} and place them
+     in a static library fipscanister.lib. These are then combined by the
+     VC++ linker into a single segment in suffix order but without the
+     suffix (i.e. .fipst and .fipsr). This serves the same purpose as
+     fipscanister.o on other platforms but has the advantage that it can
+     be created using only standard VC++ utilities.
+     [Steve Henson]
+
+  *) Modify WIN32 build system to forward references functions implemented
      in FIPS DLL. 
      [Steve Henson]
 
