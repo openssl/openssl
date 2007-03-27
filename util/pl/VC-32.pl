@@ -403,12 +403,10 @@ sub do_rlink_rule
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
 	$ret.="$target: $files $dep_libs \$(FIPS_SHA1_EXE)\n";
-	$ret.="\teditbin /SECTION:.text=.fipst\$\$a /SECTION:.rdata=.fipsr\$\$a $rl_start\n";
-	$ret.="\teditbin /SECTION:.text=.fipst\$\$b /SECTION:.rdata=.fipsr\$\$b @<<\n\t$rl_mid\n<<\n";
-	$ret.="\teditbin /SECTION:.text=.fipst\$\$c /SECTION:.rdata=.fipsr\$\$c $rl_end\n";
+	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$a $rl_start\n";
+	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$b $rl_mid\n";
+	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$c $rl_end\n";
 	$ret.="\t\$(MKLIB) $lfile$target @<<\n\t$files\n<<\n";
-	#$ret.="\t\$(MKCANISTER) $target <<\n";
-	#$ret.="INPUT($files)\n<<\n";
 	$ret.="\t\$(FIPS_SHA1_EXE) $target > ${target}.sha1\n";
 	$ret.="\t\$(PERL) util${o}copy.pl -stripcr fips-1.0${o}fips_premain.c \$(LIB_D)${o}fips_premain.c\n";
 	$ret.="\t\$(CP) fips-1.0${o}fips_premain.c.sha1 \$(LIB_D)${o}fips_premain.c.sha1\n";
