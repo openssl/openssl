@@ -150,7 +150,7 @@ static int generate_key(DH *dh)
 			{
 			BN_init(&local_prk);
 			prk = &local_prk;
-			BN_with_flags(prk, priv_key, BN_FLG_EXP_CONSTTIME);
+			BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
 			}
 		else
 			prk = priv_key;
@@ -203,7 +203,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 		if ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) == 0)
 			{
 			/* XXX */
-			BN_set_flags(dh->priv_key, BN_FLG_EXP_CONSTTIME);
+			BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);
 			}
 		if (!mont)
 			goto err;
