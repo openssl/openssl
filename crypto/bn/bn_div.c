@@ -185,7 +185,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	BN_ULONG d0,d1;
 	int num_n,div_n;
 
-	if (BN_get_flags(num, BN_FLG_CONSTTIME) != 0)
+	if ((BN_get_flags(num, BN_FLG_CONSTTIME) != 0) || (BN_get_flags(divisor, BN_FLG_CONSTTIME) != 0))
 		{
 		return BN_div_no_branch(dv, rm, num, divisor, ctx);
 		}
