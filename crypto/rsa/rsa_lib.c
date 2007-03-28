@@ -361,7 +361,8 @@ err:
 
 BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 {
-	BIGNUM *e;
+	BIGNUM local_n;
+	BIGNUM *e,*n;
 	BN_CTX *ctx;
 	BN_BLINDING *ret = NULL;
 
@@ -400,7 +401,16 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 		RAND_add(rsa->d->d, rsa->d->dmax * sizeof rsa->d->d[0], 0.0);
 		}
 
-	ret = BN_BLINDING_create_param(NULL, e, rsa->n, ctx,
+	if (!(rsa->flags & RSA_FLAG_NO_CONSTTIME))
+		{
+		/* Set BN_FLG_CONSTTIME flag */
+		n = &local_n;
+		BN_with_flags(n, rsa->n, BN_FLG_CONSTTIME);
+		}
+	else
+		n = rsa->n;
+
+	ret = BN_BLINDING_create_param(NULL, e, n, ctx,
 			rsa->meth->bn_mod_exp, rsa->_method_mod_n);
 	if (ret == NULL)
 		{

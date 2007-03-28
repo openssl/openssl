@@ -763,7 +763,7 @@ int BN_is_bit_set(const BIGNUM *a, int n)
 	i=n/BN_BITS2;
 	j=n%BN_BITS2;
 	if (a->top <= i) return 0;
-	return((a->d[i]&(((BN_ULONG)1)<<j))?1:0);
+	return(((a->d[i])>>j)&((BN_ULONG)1));
 	}
 
 int BN_mask_bits(BIGNUM *a, int n)
