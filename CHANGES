@@ -14,9 +14,9 @@
      BN_mod_inverse_no_branch() of BN_div() and BN_mod_inverse(),
      respectively, which are slower, but avoid the security-relevant
      conditional branches.  These are automatically called by BN_div()
-     and BN_mod_inverse() if the flag BN_FLG_CONSTTIME is set for the
-     modulus.  Also, BN_is_bit_set() has been changed to remove a
-     conditional branch.
+     and BN_mod_inverse() if the flag BN_FLG_CONSTTIME is set for one
+     of the input BIGNUMs.  Also, BN_is_bit_set() has been changed to
+     remove a conditional branch.
 
      BN_FLG_CONSTTIME is the new name for the previous
      BN_FLG_EXP_CONSTTIME flag, since it now affects more than just
