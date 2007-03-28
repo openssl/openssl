@@ -210,7 +210,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 	BIGNUM *ret=NULL;
 	int sign;
 
-	if (BN_get_flags(n, BN_FLG_CONSTTIME) != 0)
+	if ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0) || (BN_get_flags(n, BN_FLG_CONSTTIME) != 0))
 		{
 		return BN_mod_inverse_no_branch(in, a, n, ctx);
 		}
