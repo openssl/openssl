@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
 	clen = key3(key, ctext_ex);
 	break;
 	}
-	if (v/3 > 1) key->flags |= RSA_FLAG_NO_EXP_CONSTTIME;
+	if (v/3 >= 1) key->flags |= RSA_FLAG_NO_CONSTTIME;
 
 	num = RSA_public_encrypt(plen, ptext_ex, ctext, key,
 				 RSA_PKCS1_PADDING);
