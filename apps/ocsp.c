@@ -63,7 +63,12 @@
 				     declared properly on Compaq platforms
 				     (at least with DEC C).
 				  */
-#include <time.h>
+#ifdef OPENSSL_SYS_VMS
+# include <time.h>
+#else
+# include <sys/time.h>
+# include <sys/select.h>
+#endif
 #include "apps.h"
 #include <openssl/pem.h>
 #include <openssl/ocsp.h>
