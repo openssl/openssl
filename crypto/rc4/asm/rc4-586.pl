@@ -36,10 +36,6 @@ $in="esi";
 $out="edi";
 $d="ebp";
 
-&RC4("RC4");
-
-&asm_finish();
-
 sub RC4_loop
 	{
 	local($n,$p,$char)=@_;
@@ -99,11 +95,10 @@ sub RC4_loop
 	}
 
 
-sub RC4
+&function_begin_B("RC4");
 	{
 	local($name)=@_;
 
-	&function_begin_B($name,"");
 
 	&mov($ty,&wparam(1));		# len
 	&cmp($ty,0);
@@ -224,7 +219,107 @@ sub RC4
 	 &stack_pop(3);
 	&movb(	&BP(-4,$d,"",0),&LB($y));
 	 &movb(	&BP(-8,$d,"",0),&LB($x));
+}
+&function_end("RC4");
 
-	&function_end($name);
-	}
+########################################################################
+
+$inp="esi";
+$out="edi";
+$idi="ebp";
+$ido="ecx";
+$idx="edx";
+
+&external_label("OPENSSL_ia32cap_P");
+
+# void RC4_set_key(RC4_KEY *key,int len,const unsigned char *data);
+&function_begin("RC4_set_key");
+	&mov	($out,&wparam(0));		# load key
+	&mov	($idi,&wparam(1));		# load len
+	&mov	($inp,&wparam(2));		# load data
+	&picmeup($idx,"OPENSSL_ia32cap_P");
+
+	&lea	($out,&DWP(2*4,$out));		# &key->data
+	&lea	($inp,&DWP(0,$inp,$idi));	# $inp to point at the end
+	&neg	($idi);
+	&xor	("eax","eax");
+	&mov	(&DWP(-4,$out),$idi);		# borrow key->y
+
+	&bt	(&DWP(0,$idx),20);		# check for bit#20
+	&jc	(&label("c1stloop"));
+
+&set_label("w1stloop",16);
+	&mov	(&DWP(0,$out,"eax",4),"eax");	# key->data[i]=i;
+	&add	(&LB("eax"),1);			# i++;
+	&jnc	(&label("w1stloop"));
+
+	&xor	($ido,$ido);
+	&xor	($idx,$idx);
+
+&set_label("w2ndloop",16);
+	&mov	("eax",&DWP(0,$out,$ido,4));
+	&add	(&LB($idx),&BP(0,$inp,$idi));
+	&add	(&LB($idx),&LB("eax"));
+	&add	($idi,1);
+	&mov	("ebx",&DWP(0,$out,$idx,4));
+	&jnz	(&label("wnowrap"));
+	  &mov	($idi,&DWP(-4,$out));
+	&set_label("wnowrap");
+	&mov	(&DWP(0,$out,$idx,4),"eax");
+	&mov	(&DWP(0,$out,$ido,4),"ebx");
+	&add	(&LB($ido),1);
+	&jnc	(&label("w2ndloop"));
+&jmp	(&label("exit"));
+
+&set_label("c1stloop",16);
+	&mov	(&BP(0,$out,"eax"),&LB("eax"));	# key->data[i]=i;
+	&add	(&LB("eax"),1);			# i++;
+	&jnc	(&label("c1stloop"));
+
+	&xor	($ido,$ido);
+	&xor	($idx,$idx);
+	&xor	("ebx","ebx");
+
+&set_label("c2ndloop",16);
+	&mov	(&LB("eax"),&BP(0,$out,$ido));
+	&add	(&LB($idx),&BP(0,$inp,$idi));
+	&add	(&LB($idx),&LB("eax"));
+	&add	($idi,1);
+	&mov	(&LB("ebx"),&BP(0,$out,$idx));
+	&jnz	(&label("cnowrap"));
+	  &mov	($idi,&DWP(-4,$out));
+	&set_label("cnowrap");
+	&mov	(&BP(0,$out,$idx),&LB("eax"));
+	&mov	(&BP(0,$out,$ido),&LB("ebx"));
+	&add	(&LB($ido),1);
+	&jnc	(&label("c2ndloop"));
+
+	&mov	(&DWP(256,$out),-1);		# mark schedule as compressed
+
+&set_label("exit");
+	&xor	("eax","eax");
+	&mov	(&DWP(-8,$out),"eax");		# key->x=0;
+	&mov	(&DWP(-4,$out),"eax");		# key->y=0;
+&function_end("RC4_set_key");
+
+# const char *RC4_options(void);
+&function_begin_B("RC4_options");
+	&call	(&label("pic_point"));
+&set_label("pic_point");
+	&blindpop("eax");
+	&lea	("eax",&DWP(&label("opts")."-".&label("pic_point"),"eax"));
+	&picmeup("edx","OPENSSL_ia32cap_P");
+	&bt	(&DWP(0,"edx"),20);
+	&jnc	(&label("skip"));
+	  &add	("eax",12);
+	&set_label("skip");
+	&ret	();
+&set_label("opts",64);
+&asciz	("rc4(8x,int)");
+&asciz	("rc4(1x,char)");
+&asciz	("RC4 for x86, OpenSSL project");	# RC4_version
+&align	(64);
+&function_end_B("RC4_options");
+
+&asm_finish();
 
