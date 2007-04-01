@@ -214,6 +214,7 @@ void ERR_load_CONF_strings(void);
 #define CONF_F_CONF_LOAD_BIO				 102
 #define CONF_F_CONF_LOAD_FP				 103
 #define CONF_F_CONF_MODULES_LOAD			 116
+#define CONF_F_CONF_PARSE_LIST				 119
 #define CONF_F_DEF_LOAD					 120
 #define CONF_F_DEF_LOAD_BIO				 121
 #define CONF_F_MODULE_INIT				 115
@@ -233,6 +234,7 @@ void ERR_load_CONF_strings(void);
 
 /* Reason codes. */
 #define CONF_R_ERROR_LOADING_DSO			 110
+#define CONF_R_LIST_CANNOT_BE_NULL			 115
 #define CONF_R_MISSING_CLOSE_SQUARE_BRACKET		 100
 #define CONF_R_MISSING_EQUAL_SIGN			 101
 #define CONF_R_MISSING_FINISH_FUNCTION			 111
