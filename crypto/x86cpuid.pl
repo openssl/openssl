@@ -20,12 +20,36 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&xor	("ecx","eax");
 	&bt	("ecx",21);
 	&jnc	(&label("nocpuid"));
+	&xor	("eax","eax");
+	&cpuid	();
+	&xor	("eax","eax");
+	&cmp	("ebx",0x756e6547);	# "Genu"
+	&setne	(&LB("eax"));
+	&mov	("ebp","eax");
+	&cmp	("edx",0x49656e69);	# "ineI"
+	&setne	(&LB("eax"));
+	&or	("ebp","eax");
+	&cmp	("ecx",0x6c65746e);	# "ntel"
+	&setne	(&LB("eax"));
+	&or	("ebp","eax");
 	&mov	("eax",1);
 	&cpuid	();
+	&bt	("edx",28);		# test hyper-threading bit
+	&jnc	(&label("nocpuid"));
+	&cmp	("ebp",0);
+	&jne	(&label("notintel"));
+	&or	("edx",1<<20);		# use reserved bit to engage RC4_CHAR
+&set_label("notintel");
+	&shr	("ebx",16);
+	&cmp	(&LB("ebx"),1);		# see if cache is shared(*)
+	&ja	(&label("nocpuid"));
+	&and	("edx",~(1<<28));	# clear hyper-threading bit if not
 &set_label("nocpuid");
 	&mov	("eax","edx");
 	&mov	("edx","ecx");
 &function_end("OPENSSL_ia32_cpuid");
+# (*)	on Core2 this value is set to 2 denoting the fact that L2
+#	cache is shared between cores.
 
 &external_label("OPENSSL_ia32cap_P");
 
