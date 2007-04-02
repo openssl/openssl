@@ -117,7 +117,7 @@ static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	return 1;
 
 	err:
-	if (pubkey)
+	if (public_key)
 		ASN1_INTEGER_free(public_key);
 	if (dh)
 		DH_free(dh);

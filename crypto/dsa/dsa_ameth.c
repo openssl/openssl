@@ -123,7 +123,7 @@ static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
 	return 1;
 
 	err:
-	if (pubkey)
+	if (public_key)
 		ASN1_INTEGER_free(public_key);
 	if (dsa)
 		DSA_free(dsa);
