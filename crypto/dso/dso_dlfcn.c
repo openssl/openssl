@@ -296,13 +296,12 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 		}
 	/* If the first file specification is a rooted path, it rules.
 	   same goes if the second file specification is missing. */
-	if (!filespec2 || filespec1[0] == '/')
+	if (!filespec2 || (filespec1 != NULL && filespec1[0] == '/'))
 		{
 		merged = OPENSSL_malloc(strlen(filespec1) + 1);
 		if(!merged)
 			{
-			DSOerr(DSO_F_DLFCN_MERGER,
-				ERR_R_MALLOC_FAILURE);
+			DSOerr(DSO_F_DLFCN_MERGER, ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
 		strcpy(merged, filespec1);
