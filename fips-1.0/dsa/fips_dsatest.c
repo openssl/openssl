@@ -139,20 +139,21 @@ static const unsigned char rnd_key2[]="abcdefgh";
 int main(int argc, char **argv)
 	{
 	DSA *dsa=NULL;
+	EVP_PKEY pk;
 	int counter,ret=0,i,j;
+	unsigned int slen;
 	unsigned char buf[256];
 	unsigned long h;
-	DSA_SIG *sig = NULL;
 	BN_GENCB cb;
+	EVP_MD_CTX mctx;
 	BN_GENCB_set(&cb, dsa_cb, stderr);
+	EVP_MD_CTX_init(&mctx);
 
-#ifdef OPENSSL_FIPS
 	if(!FIPS_mode_set(1))
 	    {
 	    do_print_errors();
 	    EXIT(1);
 	    }
-#endif
 #if 0
 	CRYPTO_malloc_debug_init();
 	CRYPTO_dbg_set_options(V_CRYPTO_MDEBUG_ALL);
@@ -214,22 +215,30 @@ int main(int argc, char **argv)
 		goto end;
 		}
 	DSA_generate_key(dsa);
+	pk.type = EVP_PKEY_DSA;
+	pk.pkey.dsa = dsa;
 
-	sig = DSA_do_sign(str1, 20, dsa);
+	if (!EVP_SignInit_ex(&mctx, EVP_dss1(), NULL))
+		goto end;
+	if (!EVP_SignUpdate(&mctx, str1, 20))
+		goto end;
+	if (!EVP_SignFinal(&mctx, buf, &slen, &pk))
+		goto end;
 
-	if (sig)
-		{	
-		i = DSA_do_verify(str1, 20, sig, dsa);
-		DSA_SIG_free(sig);
-		}
-	else
-		i = 0;
-	if (i == 1)
-		ret=1;
+	if (!EVP_VerifyInit_ex(&mctx, EVP_dss1(), NULL))
+		goto end;
+	if (!EVP_VerifyUpdate(&mctx, str1, 20))
+		goto end;
+	if (EVP_VerifyFinal(&mctx, buf, slen, &pk) != 1)
+		goto end;
+
+	ret = 1;
+
 end:
 	if (!ret)
 		do_print_errors();
 	if (dsa != NULL) FIPS_dsa_free(dsa);
+	EVP_MD_CTX_cleanup(&mctx);
 #if 0
 	CRYPTO_mem_leaks(bio_err);
 #endif

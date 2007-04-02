@@ -61,6 +61,7 @@
 #include <openssl/dsa.h>
 #include <openssl/fips.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 
 #ifdef OPENSSL_FIPS
 
@@ -109,74 +110,65 @@ void FIPS_corrupt_dsa()
 int FIPS_selftest_dsa()
     {
     DSA *dsa=NULL;
-    int counter,i,j;
+    int counter,i,j, ret = 0;
+    unsigned int slen;
     unsigned char buf[256];
     unsigned long h;
+    EVP_MD_CTX mctx;
+    EVP_PKEY pk;
 
-    DSA_SIG *sig = NULL;
+    EVP_MD_CTX_init(&mctx);
 
     dsa = FIPS_dsa_new();
 
     if(dsa == NULL)
-	{
-	FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
-	return 0;
-	}
+	goto err;
     if(!DSA_generate_parameters_ex(dsa, 512,seed,20,&counter,&h,NULL))
-	{
-	FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
-	return 0;
-	}
+	goto err;
     if (counter != 105) 
-	{
-	FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
-	return 0;
-	}
+	goto err;
     if (h != 2)
-	{
-	FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
-	return 0;
-	}
+	goto err;
     i=BN_bn2bin(dsa->q,buf);
     j=sizeof(out_q);
     if (i != j || memcmp(buf,out_q,i) != 0)
-	{
-	FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
-	return 0;
-	}
+	goto err;
 
     i=BN_bn2bin(dsa->p,buf);
     j=sizeof(out_p);
     if (i != j || memcmp(buf,out_p,i) != 0)
-	{
-	FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
-	return 0;
-	}
+	goto err;
 
     i=BN_bn2bin(dsa->g,buf);
     j=sizeof(out_g);
     if (i != j || memcmp(buf,out_g,i) != 0)
-	{
-	FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
-	return 0;
-	}
+	goto err;
     DSA_generate_key(dsa);
-    sig = DSA_do_sign(str1, 20, dsa);
+    pk.type = EVP_PKEY_DSA;
+    pk.pkey.dsa = dsa;
 
-    if (sig)
-	{
-    	i = DSA_do_verify(str1, 20, sig, dsa);
-	DSA_SIG_free(sig);
-	}
-    else
-	i = 0;
+    if (!EVP_SignInit_ex(&mctx, EVP_dss1(), NULL))
+	goto err;
+    if (!EVP_SignUpdate(&mctx, str1, 20))
+	goto err;
+    if (!EVP_SignFinal(&mctx, buf, &slen, &pk))
+	goto err;
 
-    if (i != 1)
-	{
-	FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
-	return 0;
-	}
-    FIPS_dsa_free(dsa);
-    return 1;
+    if (!EVP_VerifyInit_ex(&mctx, EVP_dss1(), NULL))
+	goto err;
+    if (!EVP_VerifyUpdate(&mctx, str1, 20))
+	goto err;
+    if (EVP_VerifyFinal(&mctx, buf, slen, &pk) != 1)
+	goto err;
+
+    ret = 1;
+
+    err:
+    EVP_MD_CTX_cleanup(&mctx);
+    if (dsa)
+	FIPS_dsa_free(dsa);
+    if (ret == 0)
+	    FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
+    return ret;
     }
 #endif

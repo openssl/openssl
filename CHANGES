@@ -4,6 +4,11 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+  *) Add small standalone ASN1 encoder/decoder to handle DSA signature format.
+     Modify test, algorithm test and selftest routines to use EVP for DSA.
+     Move FIPS implementation of EVP_sha*() and EVP_dss1() under fips-1.0.
+     [Steve Henson]
+
   *) Modify VC++ build system to rename .text and .rdata segments in
      FIPS sources to .fipst${a,b,c}, and $fipsr${a,b,c} and place them
      in a static library fipscanister.lib using a perl script. These are

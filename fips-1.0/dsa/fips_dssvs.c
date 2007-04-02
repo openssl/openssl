@@ -14,6 +14,7 @@ int main()
 #include <openssl/dsa.h>
 #include <openssl/fips.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/fips_sha.h>
 #include <string.h>
 #include <ctype.h>
@@ -179,21 +180,34 @@ void siggen()
 	else if(!strcmp(keyword,"Msg"))
 	    {
 	    unsigned char msg[1024];
-	    unsigned char hash[20];
+	    unsigned char sbuf[60];
+	    unsigned int slen;
 	    int n;
+	    EVP_PKEY pk;
+	    EVP_MD_CTX mctx;
 	    DSA_SIG *sig;
+	    EVP_MD_CTX_init(&mctx);
 
 	    n=hex2bin(value,msg);
 	    pv("Msg",msg,n);
 
 	    DSA_generate_key(dsa);
+	    pk.type = EVP_PKEY_DSA;
+	    pk.pkey.dsa = dsa;
 	    pbn("Y",dsa->pub_key);
 
-	    SHA1(msg,n,hash);
-	    sig=DSA_do_sign(hash,sizeof hash,dsa);
+	    EVP_SignInit_ex(&mctx, EVP_dss1(), NULL);
+	    EVP_SignUpdate(&mctx, msg, n);
+	    EVP_SignFinal(&mctx, sbuf, &slen, &pk);
+
+	    sig = DSA_SIG_new();
+	    FIPS_dsa_sig_decode(sig, sbuf, slen);
+
 	    pbn("R",sig->r);
 	    pbn("S",sig->s);
 	    putc('\n',stdout);
+	    EVP_MD_CTX_cleanup(&mctx);
+	    FIPS_dsa_free(dsa);
 	    }
 	}
     }
@@ -203,6 +217,8 @@ void sigver()
     DSA *dsa=NULL;
     char buf[1024];
     char lbuf[1024];
+    unsigned char msg[1024];
+    int n;
     char *keyword, *value;
     int nmod=0;
     unsigned char hash[20];
@@ -241,8 +257,6 @@ void sigver()
 	    }
 	else if(!strcmp(keyword,"Msg"))
 	    {
-	    unsigned char msg[1024];
-	    int n;
 
 	    n=hex2bin(value,msg);
 	    pv("Msg",msg,n);
@@ -254,13 +268,27 @@ void sigver()
 	    sig->r=hex2bn(value);
 	else if(!strcmp(keyword,"S"))
 	    {
+	    EVP_MD_CTX mctx;
+	    EVP_PKEY pk;
+	    unsigned char sigbuf[60];
+	    unsigned int slen;
+	    int r;
+	    EVP_MD_CTX_init(&mctx);
+	    pk.type = EVP_PKEY_DSA;
+	    pk.pkey.dsa = dsa;
 	    sig->s=hex2bn(value);
 	
 	    pbn("Y",dsa->pub_key);
 	    pbn("R",sig->r);
 	    pbn("S",sig->s);
-	    printf("Result = %c\n",DSA_do_verify(hash,sizeof hash,sig,dsa)
-		   ? 'P' : 'F');
+
+	    slen = FIPS_dsa_sig_encode(sigbuf, sig);
+	    EVP_VerifyInit_ex(&mctx, EVP_dss1(), NULL);
+	    EVP_VerifyUpdate(&mctx, msg, n);
+	    r = EVP_VerifyFinal(&mctx, sigbuf, slen, &pk);
+	    EVP_MD_CTX_cleanup(&mctx);
+	
+	    printf("Result = %c\n", r == 1 ? 'P' : 'F');
 	    putc('\n',stdout);
 	    }
 	}

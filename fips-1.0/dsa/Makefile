@@ -23,9 +23,9 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=fips_dsa_ossl.c fips_dsa_gen.c fips_dsa_selftest.c fips_dsa_key.c \
-	fips_dsa_lib.c
+	fips_dsa_lib.c fips_dsa_sign.c
 LIBOBJ=fips_dsa_ossl.o fips_dsa_gen.o fips_dsa_selftest.o fips_dsa_key.o \
-	fips_dsa_lib.o
+	fips_dsa_lib.o fips_dsa_sign.o
 
 SRC= $(LIBSRC)
 
