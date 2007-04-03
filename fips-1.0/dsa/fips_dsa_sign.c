@@ -177,11 +177,16 @@ int FIPS_dsa_sig_decode(DSA_SIG *sig, const unsigned char *in, int inlen)
 	return 1;
 	}
 
-static int fips_dsa_sign(int type, const unsigned char *dgst, int dlen,
-		unsigned char *sig, unsigned int *siglen, DSA *dsa)
+static int fips_dsa_sign(int type, const unsigned char *x, int y,
+	     unsigned char *sig, unsigned int *siglen, EVP_MD_SVCTX *sv)
 	{
+	DSA *dsa = sv->key;
+	unsigned char dig[EVP_MAX_MD_SIZE];
+	unsigned int dlen;
 	DSA_SIG *s;
-	s=dsa->meth->dsa_do_sign(dgst,dlen,dsa);
+        EVP_DigestFinal_ex(sv->mctx, dig, &dlen);
+	s=dsa->meth->dsa_do_sign(dig,dlen,dsa);
+	OPENSSL_cleanse(dig, dlen);
 	if (s == NULL)
 		{
 		*siglen=0;
@@ -194,18 +199,23 @@ static int fips_dsa_sign(int type, const unsigned char *dgst, int dlen,
 	return 1;
 	}
 
-static int fips_dsa_verify(int type, const unsigned char *dgst, int dgst_len,
-	     const unsigned char *sigbuf, int siglen, DSA *dsa)
+static int fips_dsa_verify(int type, const unsigned char *x, int y,
+	     const unsigned char *sigbuf, unsigned int siglen, EVP_MD_SVCTX *sv)
 	{
+	DSA *dsa = sv->key;
 	DSA_SIG *s;
 	int ret=-1;
+	unsigned char dig[EVP_MAX_MD_SIZE];
+	unsigned int dlen;
 
 	s = DSA_SIG_new();
 	if (s == NULL)
 		return ret;
 	if (!FIPS_dsa_sig_decode(s,sigbuf,siglen))
 		goto err;
-	ret=dsa->meth->dsa_do_verify(dgst,dgst_len,s,dsa);
+        EVP_DigestFinal_ex(sv->mctx, dig, &dlen);
+	ret=dsa->meth->dsa_do_verify(dig,dlen,s,dsa);
+	OPENSSL_cleanse(dig, dlen);
 err:
 	DSA_SIG_free(s);
 	return ret;
@@ -225,7 +235,7 @@ static const EVP_MD dss1_md=
 	NID_dsa,
 	NID_dsaWithSHA1,
 	SHA_DIGEST_LENGTH,
-	EVP_MD_FLAG_FIPS,
+	EVP_MD_FLAG_FIPS|EVP_MD_FLAG_SVCTX,
 	init,
 	update,
 	final,

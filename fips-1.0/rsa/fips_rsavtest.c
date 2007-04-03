@@ -336,58 +336,20 @@ static int rsa_printver(FILE *out,
 
 	EVP_MD_CTX_init(&ctx);
 
-	if (Saltlen != -1)
+	if (Saltlen >= 0)
 		{
-		int pad;
-		unsigned char mdtmp[EVP_MAX_MD_SIZE];
-		buf = OPENSSL_malloc(RSA_size(rsa_pubkey));
-		if (Saltlen == -2)
-			pad = RSA_X931_PADDING;
-		else
-			pad = RSA_NO_PADDING;
-		if (!buf)
-			goto error;
-		r = RSA_public_decrypt(Slen, S, buf, rsa_pubkey, pad);
-
-		if (r > 0)
-			{
-			EVP_DigestInit_ex(&ctx, dgst, NULL);
-			if (!EVP_DigestUpdate(&ctx, Msg, Msglen))
-				goto error;
-			if (!EVP_DigestFinal_ex(&ctx, mdtmp, NULL))
-				goto error;
-			if (pad == RSA_X931_PADDING)
-				{
-				int mdlen = M_EVP_MD_size(dgst);
-				if (r != mdlen + 1)
-					r = 0;
-				else if (buf[mdlen] !=
-				    RSA_X931_hash_id(M_EVP_MD_type(dgst)))
-					r = 0;
-				else if (memcmp(buf, mdtmp, mdlen))
-					r = 0;
-				else
-					r = 1;
-				}
-			else
-				r = RSA_verify_PKCS1_PSS(rsa_pubkey,
-							mdtmp, dgst,
-							buf, Saltlen);
-			}
-		if (r < 0)
-			r = 0;
+		M_EVP_MD_CTX_set_flags(&ctx,
+			EVP_MD_CTX_FLAG_PAD_PSS | (Saltlen << 16));
 		}
-	else
-		{
+	else if (Saltlen == -2)
+		M_EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_PAD_X931);
+	if (!EVP_VerifyInit_ex(&ctx, dgst, NULL))
+		goto error;
+	if (!EVP_VerifyUpdate(&ctx, Msg, Msglen))
+		goto error;
 
-		if (!EVP_VerifyInit_ex(&ctx, dgst, NULL))
-			goto error;
-		if (!EVP_VerifyUpdate(&ctx, Msg, Msglen))
-			goto error;
+	r = EVP_VerifyFinal(&ctx, S, Slen, &pk);
 
-		r = EVP_VerifyFinal(&ctx, S, Slen, &pk);
-
-		}
 
 	EVP_MD_CTX_cleanup(&ctx);
 

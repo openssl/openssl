@@ -254,10 +254,18 @@ typedef int evp_verify_method(int type,const unsigned char *m,
 			    unsigned int m_length,const unsigned char *sigbuf,
 			    unsigned int siglen, void *key);
 
+typedef struct
+	{
+	EVP_MD_CTX *mctx;
+	void *key;
+	} EVP_MD_SVCTX;
+
 #define EVP_MD_FLAG_ONESHOT	0x0001 /* digest can only handle a single
 					* block */
 
 #define EVP_MD_FLAG_FIPS	0x0400 /* Note if suitable for use in FIPS mode */
+
+#define EVP_MD_FLAG_SVCTX	0x0800 /* pass EVP_MD_SVCTX to sign/verify */
 
 #define EVP_PKEY_NULL_method	NULL,NULL,{0,0,0,0}
 
@@ -311,6 +319,15 @@ struct env_md_ctx_st
 						* in EVP_MD_CTX_cleanup */
 #define EVP_MD_CTX_FLAG_NON_FIPS_ALLOW	0x0008	/* Allow use of non FIPS digest
 						 * in FIPS mode */
+
+#define EVP_MD_CTX_FLAG_PAD_MASK	0xF0	/* RSA mode to use */
+#define EVP_MD_CTX_FLAG_PAD_PKCS1	0x00	/* PKCS#1 v1.5 mode */
+#define EVP_MD_CTX_FLAG_PAD_X931	0x10	/* X9.31 mode */
+#define EVP_MD_CTX_FLAG_PAD_PSS		0x20	/* PSS mode */
+#define M_EVP_MD_CTX_FLAG_PSS_SALT(ctx) \
+		((ctx->flags>>16) &0xFFFF) /* seed length */
+#define EVP_MD_CTX_FLAG_PSS_MDLEN	0xFFFF	/* salt len same as digest */
+#define EVP_MD_CTX_FLAG_PSS_MREC	0xFFFE	/* salt max or auto recovered */
 
 struct evp_cipher_st
 	{
@@ -448,6 +465,8 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define M_EVP_MD_CTX_clear_flags(ctx,flgs) ((ctx)->flags&=~(flgs))
 #define M_EVP_MD_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
 #define M_EVP_MD_type(e)			((e)->type)
+#define M_EVP_MD_CTX_type(e)		M_EVP_MD_type(M_EVP_MD_CTX_md(e))
+#define M_EVP_MD_CTX_md(e)			((e)->digest)
 
 
 int EVP_MD_type(const EVP_MD *md);

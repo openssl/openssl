@@ -336,46 +336,19 @@ static int rsa_printsig(FILE *out, RSA *rsa, const EVP_MD *dgst,
 
 	EVP_MD_CTX_init(&ctx);
 
-	if (Saltlen != -1)
+	if (Saltlen >= 0)
 		{
-		unsigned int mdlen;
-		unsigned char mdtmp[EVP_MAX_MD_SIZE + 1];
-
-		if (!EVP_DigestInit_ex(&ctx, dgst, NULL))
-			goto error;
-		if (!EVP_DigestUpdate(&ctx, Msg, Msglen))
-			goto error;
-		if (!EVP_DigestFinal(&ctx, mdtmp, &mdlen))
-			goto error;
-	
-		if (Saltlen == -2)
-			{
-			mdtmp[mdlen] = RSA_X931_hash_id(M_EVP_MD_type(dgst));
-			siglen = RSA_private_encrypt(mdlen + 1, mdtmp,
-					sigbuf, rsa, RSA_X931_PADDING);
-			if (siglen <= 0)
-				goto error;
-			}
-		else
-			{
-			if (!RSA_padding_add_PKCS1_PSS(rsa, sigbuf, mdtmp,
-							dgst, Saltlen))
-				goto error;
-			siglen = RSA_private_encrypt(siglen, sigbuf, sigbuf,
-						rsa, RSA_NO_PADDING);
-			if (siglen <= 0)
-				goto error;
-			}
+		M_EVP_MD_CTX_set_flags(&ctx,
+			EVP_MD_CTX_FLAG_PAD_PSS | (Saltlen << 16));
 		}
-	else
-		{
-		if (!EVP_SignInit_ex(&ctx, dgst, NULL))
-			goto error;
-		if (!EVP_SignUpdate(&ctx, Msg, Msglen))
-			goto error;
-		if (!EVP_SignFinal(&ctx, sigbuf, (unsigned int *)&siglen, &pk))
-			goto error;
-		}
+	else if (Saltlen == -2)
+		M_EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_PAD_X931);
+	if (!EVP_SignInit_ex(&ctx, dgst, NULL))
+		goto error;
+	if (!EVP_SignUpdate(&ctx, Msg, Msglen))
+		goto error;
+	if (!EVP_SignFinal(&ctx, sigbuf, (unsigned int *)&siglen, &pk))
+		goto error;
 
 	EVP_MD_CTX_cleanup(&ctx);
 

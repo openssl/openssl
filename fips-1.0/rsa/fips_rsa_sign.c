@@ -126,75 +126,132 @@ static const unsigned char *fips_digestinfo_encoding(int nid, unsigned int *len)
 		}
 	}
 
-static int fips_rsa_sign(int type, const unsigned char *m, unsigned int m_len,
-	     unsigned char *sigret, unsigned int *siglen, RSA *rsa)
+static int fips_rsa_sign(int type, const unsigned char *x, unsigned int y,
+	     unsigned char *sigret, unsigned int *siglen, EVP_MD_SVCTX *sv)
 	{
-	int i,j,ret=1;
+	int i,j,ret=0;
 	unsigned int dlen;
 	const unsigned char *der;
+	unsigned int m_len;
+	int pad_mode = sv->mctx->flags & EVP_MD_CTX_FLAG_PAD_MASK;
+	int rsa_pad_mode;
+	RSA *rsa = sv->key;
 	/* Largest DigestInfo: 19 (max encoding) + max MD */
 	unsigned char tmpdinfo[19 + EVP_MAX_MD_SIZE];
+	unsigned char md[EVP_MAX_MD_SIZE + 1];
+
+        EVP_DigestFinal_ex(sv->mctx, md, &m_len);
+
 	if((rsa->flags & RSA_FLAG_SIGN_VER) && rsa->meth->rsa_sign)
 		{
-		return rsa->meth->rsa_sign(type, m, m_len,
+		ret = rsa->meth->rsa_sign(type, md, m_len,
 			sigret, siglen, rsa);
+		goto done;
 		}
 
-	if(m_len > EVP_MAX_MD_SIZE)
+	if (pad_mode == EVP_MD_CTX_FLAG_PAD_X931)
 		{
-		RSAerr(RSA_F_RSA_SIGN,RSA_R_INVALID_MESSAGE_LENGTH);
-		return 0;
+		memcpy(tmpdinfo, md, m_len);
+		tmpdinfo[m_len] = RSA_X931_hash_id(M_EVP_MD_CTX_type(sv->mctx));
+		i = m_len + 1;
+		rsa_pad_mode = RSA_X931_PADDING;
 		}
-
-	der = fips_digestinfo_encoding(type, &dlen);
-	
-	if (!der)
+	else if (pad_mode == EVP_MD_CTX_FLAG_PAD_PKCS1)
 		{
-		RSAerr(RSA_F_RSA_SIGN,RSA_R_UNKNOWN_ALGORITHM_TYPE);
-		return(0);
-		}
-	memcpy(tmpdinfo, der, dlen);
-	memcpy(tmpdinfo + dlen, m, m_len);
 
-	i = dlen + m_len;
+		der = fips_digestinfo_encoding(type, &dlen);
+		
+		if (!der)
+			{
+			RSAerr(RSA_F_RSA_SIGN,RSA_R_UNKNOWN_ALGORITHM_TYPE);
+			return(0);
+			}
+		memcpy(tmpdinfo, der, dlen);
+		memcpy(tmpdinfo + dlen, md, m_len);
+
+		i = dlen + m_len;
+		rsa_pad_mode = RSA_PKCS1_PADDING;
+
+		}
+	else if (pad_mode == EVP_MD_CTX_FLAG_PAD_PSS)
+		{
+		unsigned char *sbuf;
+		int saltlen;
+		i = RSA_size(rsa);
+		sbuf = OPENSSL_malloc(RSA_size(rsa));
+		saltlen = M_EVP_MD_CTX_FLAG_PSS_SALT(sv->mctx);
+		if (saltlen == EVP_MD_CTX_FLAG_PSS_MDLEN)
+			saltlen = -1;
+		else if (saltlen == EVP_MD_CTX_FLAG_PSS_MREC)
+			saltlen = -2;
+		if (!sbuf)
+			{
+			RSAerr(RSA_F_RSA_SIGN,ERR_R_MALLOC_FAILURE);
+			goto psserr;
+			}
+		if (!RSA_padding_add_PKCS1_PSS(rsa, sbuf, md,
+					M_EVP_MD_CTX_md(sv->mctx), saltlen))
+			goto psserr;
+		j=rsa->meth->rsa_priv_enc(i,sbuf,sigret,rsa,RSA_NO_PADDING);
+		if (j > 0)
+			{
+			ret=1;
+			*siglen=j;
+			}
+		psserr:
+		OPENSSL_cleanse(md,m_len);
+		OPENSSL_cleanse(sbuf, i);
+		OPENSSL_free(sbuf);
+		return ret;
+		}
 
 	j=RSA_size(rsa);
 	if (i > (j-RSA_PKCS1_PADDING_SIZE))
 		{
 		RSAerr(RSA_F_RSA_SIGN,RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
-		return(0);
+		goto done;
 		}
 	/* NB: call underlying method directly to avoid FIPS blocking */
-	j=rsa->meth->rsa_priv_enc(i,tmpdinfo,sigret,rsa,RSA_PKCS1_PADDING);
-	if (j <= 0)
-		ret=0;
-	else
+	j=rsa->meth->rsa_priv_enc(i,tmpdinfo,sigret,rsa,rsa_pad_mode);
+	if (j > 0)
+		{
+		ret=1;
 		*siglen=j;
+		}
 
+	done:
 	OPENSSL_cleanse(tmpdinfo,i);
-	return(ret);
+	OPENSSL_cleanse(md,m_len);
+	return ret;
 	}
 
 static int fips_rsa_verify(int dtype,
-		const unsigned char *m, unsigned int m_len,
-		unsigned char *sigbuf, unsigned int siglen, RSA *rsa)
+		const unsigned char *x, unsigned int y,
+		unsigned char *sigbuf, unsigned int siglen, EVP_MD_SVCTX *sv)
 	{
 	int i,ret=0;
-	unsigned int dlen;
+	unsigned int dlen, diglen;
+	int pad_mode = sv->mctx->flags & EVP_MD_CTX_FLAG_PAD_MASK;
+	int rsa_pad_mode;
 	unsigned char *s;
 	const unsigned char *der;
+	unsigned char dig[EVP_MAX_MD_SIZE];
+	RSA *rsa = sv->key;
 
-	if (siglen != (unsigned int)RSA_size(rsa))
+	if (siglen != (unsigned int)RSA_size(sv->key))
 		{
 		RSAerr(RSA_F_RSA_VERIFY,RSA_R_WRONG_SIGNATURE_LENGTH);
 		return(0);
 		}
 
+        EVP_DigestFinal_ex(sv->mctx, dig, &diglen);
+
 	if((rsa->flags & RSA_FLAG_SIGN_VER) && rsa->meth->rsa_verify)
 		{
-		return rsa->meth->rsa_verify(dtype, m, m_len,
+		return rsa->meth->rsa_verify(dtype, dig, diglen,
 			sigbuf, siglen, rsa);
 		}
+
 
 	s= OPENSSL_malloc((unsigned int)siglen);
 	if (s == NULL)
@@ -202,31 +259,74 @@ static int fips_rsa_verify(int dtype,
 		RSAerr(RSA_F_RSA_VERIFY,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
+	if (pad_mode == EVP_MD_CTX_FLAG_PAD_X931)
+		rsa_pad_mode = RSA_X931_PADDING;
+	else if (pad_mode == EVP_MD_CTX_FLAG_PAD_PKCS1)
+		rsa_pad_mode = RSA_PKCS1_PADDING;
+	else if (pad_mode == EVP_MD_CTX_FLAG_PAD_PSS)
+		rsa_pad_mode = RSA_NO_PADDING;
 
 	/* NB: call underlying method directly to avoid FIPS blocking */
-	i=rsa->meth->rsa_pub_dec((int)siglen,sigbuf,s,rsa,RSA_PKCS1_PADDING);
+	i=rsa->meth->rsa_pub_dec((int)siglen,sigbuf,s, rsa, rsa_pad_mode);
 
 	if (i <= 0) goto err;
 
-	der = fips_digestinfo_encoding(dtype, &dlen);
-	
-	if (!der)
+	if (pad_mode == EVP_MD_CTX_FLAG_PAD_X931)
 		{
-		RSAerr(RSA_F_RSA_SIGN,RSA_R_UNKNOWN_ALGORITHM_TYPE);
-		return(0);
-		}
-
-	/* Compare, DigestInfo length, DigestInfo header and finally
-	 * digest value itself
-	 */
-	if ((i != (int)(dlen + m_len)) || memcmp(der, s, dlen)
-		|| memcmp(s + dlen, m, m_len))
-		{
-		RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
-		goto err;
-		}
-	else
+		if (i != diglen + 1)
+			{
+			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			goto err;
+			}
+		if (s[diglen] != RSA_X931_hash_id(M_EVP_MD_CTX_type(sv->mctx)))
+			{
+			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			goto err;
+			}
+		if (memcmp(s, dig, diglen))
+			{
+			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			goto err;
+			}
 		ret = 1;
+		}
+	else if (pad_mode == EVP_MD_CTX_FLAG_PAD_PKCS1)
+		{
+
+		der = fips_digestinfo_encoding(dtype, &dlen);
+		
+		if (!der)
+			{
+			RSAerr(RSA_F_RSA_SIGN,RSA_R_UNKNOWN_ALGORITHM_TYPE);
+			return(0);
+			}
+
+		/* Compare, DigestInfo length, DigestInfo header and finally
+		 * digest value itself
+		 */
+		if ((i != (int)(dlen + diglen)) || memcmp(der, s, dlen)
+			|| memcmp(s + dlen, dig, diglen))
+			{
+			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			goto err;
+			}
+		else
+			ret = 1;
+
+		}
+	else if (pad_mode == EVP_MD_CTX_FLAG_PAD_PSS)
+		{
+		int saltlen;
+		saltlen = M_EVP_MD_CTX_FLAG_PSS_SALT(sv->mctx);
+		if (saltlen == EVP_MD_CTX_FLAG_PSS_MDLEN)
+			saltlen = -1;
+		else if (saltlen == EVP_MD_CTX_FLAG_PSS_MREC)
+			saltlen = -2;
+		ret = RSA_verify_PKCS1_PSS(rsa, dig, M_EVP_MD_CTX_md(sv->mctx),
+						s, saltlen);
+		if (ret < 0)
+			ret = 0;
+		}
 err:
 	if (s != NULL)
 		{
@@ -255,7 +355,7 @@ static const EVP_MD sha1_md=
 	NID_sha1,
 	NID_sha1WithRSAEncryption,
 	SHA_DIGEST_LENGTH,
-	EVP_MD_FLAG_FIPS,
+	EVP_MD_FLAG_FIPS|EVP_MD_FLAG_SVCTX,
 	init,
 	update,
 	final,
@@ -290,7 +390,7 @@ static const EVP_MD sha224_md=
 	NID_sha224,
 	NID_sha224WithRSAEncryption,
 	SHA224_DIGEST_LENGTH,
-	EVP_MD_FLAG_FIPS,
+	EVP_MD_FLAG_FIPS|EVP_MD_FLAG_SVCTX,
 	init224,
 	update256,
 	final256,
@@ -309,7 +409,7 @@ static const EVP_MD sha256_md=
 	NID_sha256,
 	NID_sha256WithRSAEncryption,
 	SHA256_DIGEST_LENGTH,
-	EVP_MD_FLAG_FIPS,
+	EVP_MD_FLAG_FIPS|EVP_MD_FLAG_SVCTX,
 	init256,
 	update256,
 	final256,
@@ -338,7 +438,7 @@ static const EVP_MD sha384_md=
 	NID_sha384,
 	NID_sha384WithRSAEncryption,
 	SHA384_DIGEST_LENGTH,
-	EVP_MD_FLAG_FIPS,
+	EVP_MD_FLAG_FIPS|EVP_MD_FLAG_SVCTX,
 	init384,
 	update512,
 	final512,
@@ -357,7 +457,7 @@ static const EVP_MD sha512_md=
 	NID_sha512,
 	NID_sha512WithRSAEncryption,
 	SHA512_DIGEST_LENGTH,
-	EVP_MD_FLAG_FIPS,
+	EVP_MD_FLAG_FIPS|EVP_MD_FLAG_SVCTX,
 	init512,
 	update512,
 	final512,

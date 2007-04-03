@@ -4,6 +4,14 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+  *) New flag EVP_MD_FLAG_SVCTX which passes EVP_MD_CTX and key to underlying
+     sign/verify method. This permits the method to perform finalization
+     and signing itself and have access to the EVP_MD_CTX structure in case
+     additional parameters are needed. Modify fips_{dsa,rsa}_{sign,verify}
+     to use EVP_MD_FLAG_SVCTX and support PSS and X9.31 RSA modes.
+     Modify RSA algorithm test programs to use new parameters.
+     [Steve Henson]
+
   *) Add small standalone ASN1 encoder/decoder to handle DSA signature format.
      Modify test, algorithm test and selftest routines to use EVP for DSA.
      Move FIPS implementation of EVP_sha*() and EVP_dss1() under fips-1.0.
