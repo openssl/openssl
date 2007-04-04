@@ -1056,6 +1056,12 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 
 		alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
 						ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY));
+		if (alen <= 0) 
+			{
+			PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY,ERR_R_ASN1_LIB);
+			ret = -1;
+			goto err;
+			}
 		EVP_VerifyUpdate(&mdc_tmp, abuf, alen);
 
 		OPENSSL_free(abuf);
