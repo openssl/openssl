@@ -2658,6 +2658,8 @@ static int do_multi(int multi)
 			else
 				fprintf(stderr,"Unknown type '%s' from child %d\n",buf,n);
 			}
+
+		fclose(f);
 		}
 	return 1;
 	}
