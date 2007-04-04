@@ -763,6 +763,9 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 			}
 		break;
 
+	default:
+		PKCS7err(PKCS7_F_PKCS7_DATAFINAL,PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
+	        goto err;
 		}
 
 	if (si_sk != NULL)
