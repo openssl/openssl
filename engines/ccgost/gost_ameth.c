@@ -119,6 +119,7 @@ static int decode_gost_algor_params(EVP_PKEY *pkey, X509_ALGOR *palg)
 		{
 		GOSTerr(GOST_F_DECODE_GOST_ALGOR_PARAMS,
 			GOST_R_BAD_PKEY_PARAMETERS_FORMAT);
+		return 0;
 		}	
 	param_nid = OBJ_obj2nid(gkp->key_params);
 	GOST_KEY_PARAMS_free(gkp);
