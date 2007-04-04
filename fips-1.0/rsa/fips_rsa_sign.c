@@ -273,7 +273,7 @@ static int fips_rsa_verify(int dtype,
 
 	if (pad_mode == EVP_MD_CTX_FLAG_PAD_X931)
 		{
-		if (i != diglen + 1)
+		if (i != (int)(diglen + 1))
 			{
 			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
 			goto err;
