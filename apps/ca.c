@@ -2406,6 +2406,8 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 		row[i]=NULL;
 	row[DB_name]=X509_NAME_oneline(X509_get_subject_name(x509),NULL,0);
 	bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(x509),NULL);
+	if (!bn)
+		goto err;
 	if (BN_is_zero(bn))
 		row[DB_serial]=BUF_strdup("00");
 	else
