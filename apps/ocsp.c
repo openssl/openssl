@@ -1337,8 +1337,8 @@ static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
 			
 		}
 	err:
-
-	OCSP_REQ_CTX_free(ctx);
+	if (ctx)
+		OCSP_REQ_CTX_free(ctx);
 
 	return rsp;
 	}
