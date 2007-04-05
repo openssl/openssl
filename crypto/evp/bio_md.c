@@ -157,8 +157,11 @@ static int md_write(BIO *b, const char *in, int inl)
 				(unsigned int)ret);
 			}
 		}
-	BIO_clear_retry_flags(b);
-	BIO_copy_next_retry(b);
+	if(b->next_bio != NULL)
+		{
+		BIO_clear_retry_flags(b);
+		BIO_copy_next_retry(b);
+		}
 	return(ret);
 	}
 
