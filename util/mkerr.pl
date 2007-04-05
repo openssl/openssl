@@ -13,6 +13,8 @@ my $staticloader = "";
 my $pack_errcode;
 my $load_errcode;
 
+my $errcount;
+
 while (@ARGV) {
 	my $arg = $ARGV[0];
 	if($arg eq "-conf") {
@@ -195,6 +197,7 @@ while (($hdr, $lib) = each %libinc)
 				$rcodes{$name} = $code;
 				if ($rassigned{$lib} =~ /:$code:/) {
 					print STDERR "!! ERROR: $lib reason code $code assigned twice\n";
+					++$errcount;
 				}
 				$rassigned{$lib} .= "$code:";
 				if(!(exists $rextra{$name}) &&
@@ -204,6 +207,7 @@ while (($hdr, $lib) = each %libinc)
 			} else {
 				if ($fassigned{$lib} =~ /:$code:/) {
 					print STDERR "!! ERROR: $lib function code $code assigned twice\n";
+					++$errcount;
 				}
 				$fassigned{$lib} .= "$code:";
 				if($code > $fmax{$lib}) {
@@ -234,6 +238,7 @@ while (($hdr, $lib) = each %libinc)
 		if ($rmax{$lib} >= 1000) {
 			print STDERR "!! ERROR: SSL error codes 1000+ are reserved for alerts.\n";
 			print STDERR "!!        Any new alerts must be added to $config.\n";
+			++$errcount;
 			print STDERR "\n";
 		}
 	}
@@ -723,3 +728,9 @@ if($debug && defined(@runref) ) {
 		print STDERR "$_\n";
 	}
 }
+
+if($errcount) {
+	print STDERR "There were errors, failing...\n\n";
+	exit $errcount;
+}
+
