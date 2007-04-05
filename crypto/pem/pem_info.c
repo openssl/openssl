@@ -339,6 +339,12 @@ int PEM_X509_INFO_write_bio(BIO *bp, X509_INFO *xi, EVP_CIPHER *enc,
 		{
 		if ( (xi->enc_data!=NULL) && (xi->enc_len>0) )
 			{
+			if (enc == NULL)
+				{
+				PEMerr(PEM_F_PEM_X509_INFO_WRITE_BIO,PEM_R_CIPHER_IS_NULL);
+				goto err;
+				}
+
 			/* copy from weirdo names into more normal things */
 			iv=xi->enc_cipher.iv;
 			data=(unsigned char *)xi->enc_data;
