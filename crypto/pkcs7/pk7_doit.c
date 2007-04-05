@@ -1024,7 +1024,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 	if ((sk != NULL) && (sk_X509_ATTRIBUTE_num(sk) != 0))
 		{
 		unsigned char md_dat[EVP_MAX_MD_SIZE], *abuf = NULL;
-                unsigned int md_len, alen;
+                unsigned int md_len;
+		int alen;
 		ASN1_OCTET_STRING *message_digest;
 
 		EVP_DigestFinal_ex(&mdc_tmp,md_dat,&md_len);
