@@ -863,8 +863,10 @@ static int client_certificate(SSL *s)
 		EVP_SignUpdate(&ctx,s->s2->key_material,
 			       s->s2->key_material_length);
 		EVP_SignUpdate(&ctx,cert_ch,(unsigned int)cert_ch_len);
-		n=i2d_X509(s->session->sess_cert->peer_key->x509,&p);
-		EVP_SignUpdate(&ctx,buf,(unsigned int)n);
+		i=i2d_X509(s->session->sess_cert->peer_key->x509,&p);
+		/* Don't update the signature if it fails - FIXME: probably should handle this better */
+		if(i > 0)
+			EVP_SignUpdate(&ctx,buf,(unsigned int)i);
 
 		p=buf;
 		d=p+6;
