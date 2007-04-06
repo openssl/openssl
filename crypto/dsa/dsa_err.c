@@ -1,6 +1,6 @@
 /* crypto/dsa/dsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,6 +78,8 @@ static ERR_STRING_DATA DSA_str_functs[]=
 {ERR_FUNC(DSA_F_DSA_NEW_METHOD),	"DSA_new_method"},
 {ERR_FUNC(DSA_F_DSA_PRINT),	"DSA_print"},
 {ERR_FUNC(DSA_F_DSA_PRINT_FP),	"DSA_print_fp"},
+{ERR_FUNC(DSA_F_DSA_SET_DEFAULT_METHOD),	"DSA_set_default_method"},
+{ERR_FUNC(DSA_F_DSA_SET_METHOD),	"DSA_set_method"},
 {ERR_FUNC(DSA_F_DSA_SIGN),	"DSA_sign"},
 {ERR_FUNC(DSA_F_DSA_SIGN_SETUP),	"DSA_sign_setup"},
 {ERR_FUNC(DSA_F_DSA_SIG_NEW),	"DSA_SIG_new"},
@@ -93,6 +95,8 @@ static ERR_STRING_DATA DSA_str_reasons[]=
 {ERR_REASON(DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE),"data too large for key size"},
 {ERR_REASON(DSA_R_MISSING_PARAMETERS)    ,"missing parameters"},
 {ERR_REASON(DSA_R_MODULUS_TOO_LARGE)     ,"modulus too large"},
+{ERR_REASON(DSA_R_NON_FIPS_METHOD)       ,"non fips method"},
+{ERR_REASON(DSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE),"operation not allowed in fips mode"},
 {0,NULL}
 	};
 

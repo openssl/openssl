@@ -101,6 +101,7 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY *sigkey = NULL;
 	unsigned char *sigbuf = NULL;
 	int siglen = 0;
+	unsigned int sig_flags = 0;
 	char *passargin = NULL, *passin = NULL;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
@@ -167,6 +168,27 @@ ERR_load_crypto_strings();
 			if (--argc < 1) break;
 			keyfile=*(++argv);
 			do_verify = 1;
+			}
+		else if (strcmp(*argv,"-x931") == 0)
+			sig_flags = EVP_MD_CTX_FLAG_PAD_X931;
+		else if (strcmp(*argv,"-pss_saltlen") == 0)
+			{
+			int saltlen;
+			if (--argc < 1) break;
+			saltlen=atoi(*(++argv));
+			if (saltlen == -1)
+				sig_flags = EVP_MD_CTX_FLAG_PSS_MREC;
+			else if (saltlen == -2)
+				sig_flags = EVP_MD_CTX_FLAG_PSS_MDLEN;
+			else if (saltlen < -2 || saltlen >= 0xFFFE)
+				{
+				BIO_printf(bio_err, "Invalid PSS salt length %d\n", saltlen);
+				goto end;
+				}
+			else
+				sig_flags = saltlen;
+			sig_flags <<= 16;
+			sig_flags |= EVP_MD_CTX_FLAG_PAD_PSS;
 			}
 		else if (strcmp(*argv,"-signature") == 0)
 			{
@@ -360,6 +382,12 @@ ERR_load_crypto_strings();
 		EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 		}
 
+	if (sig_flags)
+		{
+		EVP_MD_CTX *md_ctx;
+		BIO_get_md_ctx(bmd,&md_ctx);
+		EVP_MD_CTX_set_flags(md_ctx, sig_flags);
+		}
 
 	/* we use md as a filter, reading from 'in' */
 	if (!BIO_set_md(bmd,md))

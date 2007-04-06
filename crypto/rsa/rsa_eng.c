@@ -80,6 +80,13 @@ RSA *RSA_new(void)
 
 void RSA_set_default_method(const RSA_METHOD *meth)
 	{
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !(meth->flags & RSA_FLAG_FIPS_METHOD))
+		{
+		RSAerr(RSA_F_RSA_SET_DEFAULT_METHOD, RSA_R_NON_FIPS_METHOD);
+		return;
+		}
+#endif
 	default_RSA_meth = meth;
 	}
 
@@ -111,6 +118,13 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
 	/* NB: The caller is specifically setting a method, so it's not up to us
 	 * to deal with which ENGINE it comes from. */
 	const RSA_METHOD *mtmp;
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !(meth->flags & RSA_FLAG_FIPS_METHOD))
+		{
+		RSAerr(RSA_F_RSA_SET_DEFAULT_METHOD, RSA_R_NON_FIPS_METHOD);
+		return 0;
+		}
+#endif
 	mtmp = rsa->meth;
 	if (mtmp->finish) mtmp->finish(rsa);
 #ifndef OPENSSL_NO_ENGINE
@@ -161,6 +175,18 @@ RSA *RSA_new_method(ENGINE *engine)
 			OPENSSL_free(ret);
 			return NULL;
 			}
+		}
+#endif
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !(ret->meth->flags & RSA_FLAG_FIPS_METHOD))
+		{
+		RSAerr(RSA_F_RSA_SET_DEFAULT_METHOD, RSA_R_NON_FIPS_METHOD);
+#ifndef OPENSSL_NO_ENGINE
+		if (ret->engine)
+			ENGINE_finish(ret->engine);
+#endif
+		OPENSSL_free(ret);
+		return NULL;
 		}
 #endif
 

@@ -97,12 +97,20 @@
                                               * be used for all exponents.
                                               */
 
-/* If this flag is set external DSA_METHOD callbacks are allowed in FIPS mode
- * it is then the applications responsibility to ensure the external method
- * is compliant.
+/* If this flag is set the DSA method is FIPS compliant and can be used
+ * in FIPS mode. This is set in the validated module method. If an
+ * application sets this flag in its own methods it is its reposibility
+ * to ensure the result is compliant.
  */
 
-#define DSA_FLAG_FIPS_EXTERNAL_METHOD_ALLOW	0x04
+#define DSA_FLAG_FIPS_METHOD			0x0400
+
+/* If this flag is set the operations normally disabled in FIPS mode are
+ * permitted it is then the applications responsibility to ensure that the
+ * usage is compliant.
+ */
+
+#define DSA_FLAG_NON_FIPS_ALLOW			0x0400
 
 #ifdef OPENSSL_FIPS
 #define FIPS_DSA_SIZE_T	int
@@ -287,6 +295,8 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_DSA_NEW_METHOD				 103
 #define DSA_F_DSA_PRINT					 104
 #define DSA_F_DSA_PRINT_FP				 105
+#define DSA_F_DSA_SET_DEFAULT_METHOD			 115
+#define DSA_F_DSA_SET_METHOD				 116
 #define DSA_F_DSA_SIGN					 106
 #define DSA_F_DSA_SIGN_SETUP				 107
 #define DSA_F_DSA_SIG_NEW				 109
@@ -299,6 +309,8 @@ void ERR_load_DSA_strings(void);
 #define DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 100
 #define DSA_R_MISSING_PARAMETERS			 101
 #define DSA_R_MODULUS_TOO_LARGE				 103
+#define DSA_R_NON_FIPS_METHOD				 104
+#define DSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE	 105
 
 #ifdef  __cplusplus
 }

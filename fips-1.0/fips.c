@@ -53,6 +53,7 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 #include <openssl/hmac.h>
+#include <openssl/rsa.h>
 #include <string.h>
 #include <limits.h>
 #include "fips_locl.h"
@@ -379,6 +380,73 @@ unsigned char *fips_signature_witness(void)
 	{
 	extern unsigned char FIPS_signature[];
 	return FIPS_signature;
+	}
+
+/* Generalized public key test routine. Signs and verifies the data
+ * supplied in tbs using mesage digest md and setting option digest
+ * flags md_flags. If the 'kat' parameter is not NULL it will
+ * additionally check the signature matches it: a known answer test
+ * The string "fail_str" is used for identification purposes in case
+ * of failure.
+ */
+
+int fips_pkey_signature_test(EVP_PKEY *pkey,
+			const unsigned char *tbs, int tbslen,
+			const unsigned char *kat, unsigned int katlen,
+			const EVP_MD *digest, unsigned int md_flags,
+			const char *fail_str)
+	{	
+	int ret = 0;
+	unsigned char sigtmp[256], *sig = sigtmp;
+	unsigned int siglen;
+	EVP_MD_CTX mctx;
+	EVP_MD_CTX_init(&mctx);
+
+	if ((pkey->type == EVP_PKEY_RSA)
+		&& (RSA_size(pkey->pkey.rsa) > sizeof(sigtmp)))
+		{
+		sig = OPENSSL_malloc(RSA_size(pkey->pkey.rsa));
+		if (!sig)
+			{
+			FIPSerr(FIPS_F_FIPS_CHECK_PK_SIG,ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
+		}
+
+	if (tbslen == -1)
+		tbslen = strlen((char *)tbs);
+
+	if (md_flags)
+		M_EVP_MD_CTX_set_flags(&mctx, md_flags);
+
+	if (!EVP_SignInit_ex(&mctx, digest, NULL))
+		goto error;
+	if (!EVP_SignUpdate(&mctx, tbs, tbslen))
+		goto error;
+	if (!EVP_SignFinal(&mctx, sig, &siglen, pkey))
+		goto error;
+
+	if (kat && ((siglen != katlen) || memcmp(kat, sig, katlen)))
+		goto error;
+
+	if (!EVP_VerifyInit_ex(&mctx, digest, NULL))
+		goto error;
+	if (!EVP_VerifyUpdate(&mctx, tbs, tbslen))
+		goto error;
+	ret = EVP_VerifyFinal(&mctx, sig, siglen, pkey);
+
+	error:
+	if (sig != sigtmp)
+		OPENSSL_free(sig);
+	EVP_MD_CTX_cleanup(&mctx);
+	if (ret != 1)
+		{
+		FIPSerr(FIPS_F_FIPS_PKEY_SIGNATURE_TEST,FIPS_R_TEST_FAILURE);
+		if (fail_str)
+			ERR_add_error_data(2, "Type=", fail_str);
+		return 0;
+		}
+	return 1;
 	}
 
 #endif

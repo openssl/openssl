@@ -76,6 +76,13 @@ int RSA_public_encrypt(int flen, const unsigned char *from, unsigned char *to,
 int RSA_private_encrypt(int flen, const unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode() && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW))
+		{
+		RSAerr(RSA_F_RSA_PRIVATE_ENCRYPT, RSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE);
+		return 0;
+		}
+#endif
 	return(rsa->meth->rsa_priv_enc(flen, from, to, rsa, padding));
 	}
 
@@ -88,6 +95,13 @@ int RSA_private_decrypt(int flen, const unsigned char *from, unsigned char *to,
 int RSA_public_decrypt(int flen, const unsigned char *from, unsigned char *to,
 	     RSA *rsa, int padding)
 	{
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode() && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW))
+		{
+		RSAerr(RSA_F_RSA_PUBLIC_DECRYPT, RSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE);
+		return 0;
+		}
+#endif
 	return(rsa->meth->rsa_pub_dec(flen, from, to, rsa, padding));
 	}
 

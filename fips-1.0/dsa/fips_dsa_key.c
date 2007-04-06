@@ -63,33 +63,28 @@
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/fips.h>
 
 #ifdef OPENSSL_FIPS
 
 static int dsa_builtin_keygen(DSA *dsa);
 
-static int fips_check_dsa(DSA *dsa)
-    {
-    static const unsigned char str1[]="12345678901234567890";
-    int r = 0;
-    DSA_SIG *sig;
-
-    sig = DSA_do_sign(str1, 20, dsa);
-
-    if (sig)
+int fips_check_dsa(DSA *dsa)
 	{
-    	r = DSA_do_verify(str1, 20, sig, dsa);
-	DSA_SIG_free(sig);
-	}
+	EVP_PKEY pk;
+	unsigned char tbs[] = "DSA Pairwise Check Data";
+    	pk.type = EVP_PKEY_DSA;
+    	pk.pkey.dsa = dsa;
 
-    if(r != 1)
-	{
-	FIPSerr(FIPS_F_FIPS_CHECK_DSA,FIPS_R_PAIRWISE_TEST_FAILED);
-	return 0;
+	if (!fips_pkey_signature_test(&pk, tbs, -1,
+					NULL, 0, EVP_dss1(), 0, NULL))
+		{
+		FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
+		return 0;
+		}
+	return 1;
 	}
-    return 1;
-    }
 
 int DSA_generate_key(DSA *dsa)
 	{

@@ -76,6 +76,14 @@ static const DSA_METHOD *default_DSA_method = NULL;
 
 void DSA_set_default_method(const DSA_METHOD *meth)
 	{
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !(meth->flags & DSA_FLAG_FIPS_METHOD))
+		{
+		DSAerr(DSA_F_DSA_SET_DEFAULT_METHOD, DSA_R_NON_FIPS_METHOD);
+		return;
+		}
+#endif
+		
 	default_DSA_method = meth;
 	}
 
@@ -96,6 +104,13 @@ int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
 	/* NB: The caller is specifically setting a method, so it's not up to us
 	 * to deal with which ENGINE it comes from. */
         const DSA_METHOD *mtmp;
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !(meth->flags & DSA_FLAG_FIPS_METHOD))
+		{
+		DSAerr(DSA_F_DSA_SET_METHOD, DSA_R_NON_FIPS_METHOD);
+		return 0;
+		}
+#endif
         mtmp = dsa->meth;
         if (mtmp->finish) mtmp->finish(dsa);
 #ifndef OPENSSL_NO_ENGINE
@@ -145,6 +160,18 @@ DSA *DSA_new_method(ENGINE *engine)
 			OPENSSL_free(ret);
 			return NULL;
 			}
+		}
+#endif
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !(ret->meth->flags & DSA_FLAG_FIPS_METHOD))
+		{
+		DSAerr(DSA_F_DSA_NEW_METHOD, DSA_R_NON_FIPS_METHOD);
+#ifndef OPENSSL_NO_ENGINE
+		if (ret->engine)
+			ENGINE_finish(ret->engine);
+#endif
+		OPENSSL_free(ret);
+		return NULL;
 		}
 #endif
 

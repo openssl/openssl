@@ -65,75 +65,34 @@
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <openssl/crypto.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/fips.h>
 
 #ifdef OPENSSL_FIPS
 
 int fips_check_rsa(RSA *rsa)
-    {
-    int n, ret = 0;
-    unsigned char tctext[256], *ctext = tctext;
-    unsigned char tptext[256], *ptext = tptext;
-    /* The longest we can have with PKCS#1 v1.5 padding and a 512 bit key,
-     * namely 512/8-11-1 = 52 bytes */
-    static const unsigned char original_ptext[] =
-	"\x01\x23\x45\x67\x89\xab\xcd\xef\x01\x23\x45\x67\x89\xab\xcd\xef"
-	"\x01\x23\x45\x67\x89\xab\xcd\xef\x01\x23\x45\x67\x89\xab\xcd\xef"
-	"\x01\x23\x45\x67\x89\xab\xcd\xef\x01\x23\x45\x67\x89\xab\xcd\xef"
-	"\x01\x23\x45\x67";
-
-    if (RSA_size(rsa) > sizeof(tctext))
 	{
-	ctext = OPENSSL_malloc(RSA_size(rsa));
-	ptext = OPENSSL_malloc(RSA_size(rsa));
-	if (!ctext || !ptext)
+	const unsigned char tbs[] = "RSA Pairwise Check Data";
+	EVP_PKEY pk;
+    	pk.type = EVP_PKEY_RSA;
+    	pk.pkey.rsa = rsa;
+
+	if (!fips_pkey_signature_test(&pk, tbs, -1,
+			NULL, 0, EVP_sha1(), EVP_MD_CTX_FLAG_PAD_PKCS1, NULL)
+		|| !fips_pkey_signature_test(&pk, tbs, -1,
+			NULL, 0, EVP_sha1(), EVP_MD_CTX_FLAG_PAD_X931, NULL)
+		|| !fips_pkey_signature_test(&pk, tbs, -1,
+			NULL, 0, EVP_sha1(), EVP_MD_CTX_FLAG_PAD_PSS, NULL))
 		{
-		FIPSerr(FIPS_F_FIPS_CHECK_RSA,ERR_R_MALLOC_FAILURE);
-		goto error;
+		FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
+		return 0;
 		}
+	return 1;
 	}
-	
-
-    /* this will fail for keys shorter than 512 bits */
-    n=RSA_private_encrypt(sizeof(original_ptext)-1,original_ptext,ctext,rsa,
-			 RSA_PKCS1_PADDING);
-    if(n < 0)
-	{
-	FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_RSA_ENCRYPT_ERROR);
-	goto error;
-	}
-    if(!memcmp(ctext,original_ptext,n))
-  	{
-  	FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
- 	goto error;
- 	}
-    n=RSA_public_decrypt(n,ctext,ptext,rsa,RSA_PKCS1_PADDING);
-    if(n < 0)
-	{
-	FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_RSA_DECRYPT_ERROR);
-	goto error;
-	}
-    if(n != sizeof(original_ptext)-1 || memcmp(ptext,original_ptext,n))
-	{
-	FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
-	goto error;
-	}
-
-    ret = 1;
-
-    error:
-
-    if (RSA_size(rsa) > sizeof(tctext))
-	{
-	OPENSSL_free(ctext);
-	OPENSSL_free(ptext);
-	}
-
-    return ret;
-    }
 
 static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb);
 

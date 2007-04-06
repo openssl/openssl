@@ -4,6 +4,15 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+  *) Rewrite self tests and pairwise tests to use EVP. Add more extensive
+     self tests for RSA in all digests and modes.
+     [Steve Henson]
+
+  *) New flags RSA_FIPS_METHOD and DSA_FIPS_METHOD to indicate a method is
+     allowed in FIPS mode. Disable direct low level RSA and DSA signature
+     operations in FIPS mode so all operations have to be made via EVP.
+     [Steve Henson]
+
   *) New flag EVP_MD_FLAG_SVCTX which passes EVP_MD_CTX and key to underlying
      sign/verify method. This permits the method to perform finalization
      and signing itself and have access to the EVP_MD_CTX structure in case

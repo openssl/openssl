@@ -1,6 +1,6 @@
 /* crypto/rsa/rsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -101,7 +101,10 @@ static ERR_STRING_DATA RSA_str_functs[]=
 {ERR_FUNC(RSA_F_RSA_PADDING_CHECK_X931),	"RSA_padding_check_X931"},
 {ERR_FUNC(RSA_F_RSA_PRINT),	"RSA_print"},
 {ERR_FUNC(RSA_F_RSA_PRINT_FP),	"RSA_print_fp"},
+{ERR_FUNC(RSA_F_RSA_PRIVATE_ENCRYPT),	"RSA_private_encrypt"},
+{ERR_FUNC(RSA_F_RSA_PUBLIC_DECRYPT),	"RSA_public_decrypt"},
 {ERR_FUNC(RSA_F_RSA_SETUP_BLINDING),	"RSA_setup_blinding"},
+{ERR_FUNC(RSA_F_RSA_SET_DEFAULT_METHOD),	"RSA_set_default_method"},
 {ERR_FUNC(RSA_F_RSA_SIGN),	"RSA_sign"},
 {ERR_FUNC(RSA_F_RSA_SIGN_ASN1_OCTET_STRING),	"RSA_sign_ASN1_OCTET_STRING"},
 {ERR_FUNC(RSA_F_RSA_VERIFY),	"RSA_verify"},
@@ -138,10 +141,12 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_KEY_SIZE_TOO_SMALL)    ,"key size too small"},
 {ERR_REASON(RSA_R_LAST_OCTET_INVALID)    ,"last octet invalid"},
 {ERR_REASON(RSA_R_MODULUS_TOO_LARGE)     ,"modulus too large"},
+{ERR_REASON(RSA_R_NON_FIPS_METHOD)       ,"non fips method"},
 {ERR_REASON(RSA_R_NO_PUBLIC_EXPONENT)    ,"no public exponent"},
 {ERR_REASON(RSA_R_NULL_BEFORE_BLOCK_MISSING),"null before block missing"},
 {ERR_REASON(RSA_R_N_DOES_NOT_EQUAL_P_Q)  ,"n does not equal p q"},
 {ERR_REASON(RSA_R_OAEP_DECODING_ERROR)   ,"oaep decoding error"},
+{ERR_REASON(RSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE),"operation not allowed in fips mode"},
 {ERR_REASON(RSA_R_PADDING_CHECK_FAILED)  ,"padding check failed"},
 {ERR_REASON(RSA_R_P_NOT_PRIME)           ,"p not prime"},
 {ERR_REASON(RSA_R_Q_NOT_PRIME)           ,"q not prime"},

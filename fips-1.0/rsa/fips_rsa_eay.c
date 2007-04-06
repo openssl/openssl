@@ -139,7 +139,7 @@ static RSA_METHOD rsa_pkcs1_eay_meth={
 	BN_mod_exp_mont, /* XXX probably we should not use Montgomery if  e == 3 */
 	RSA_eay_init,
 	RSA_eay_finish,
-	0, /* flags */
+	RSA_FLAG_FIPS_METHOD, /* flags */
 	NULL,
 	0, /* rsa_sign */
 	0, /* rsa_verify */

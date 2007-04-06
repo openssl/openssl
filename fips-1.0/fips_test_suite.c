@@ -82,49 +82,69 @@ static int FIPS_des_test()
     return 1;
     }
 
-/* DSA: generate key and sign a known digest, then verify the signature
- * against the digest
-*/
+/*
+ * DSA: generate keys and sign, verify input plaintext.
+ */
 static int FIPS_dsa_test()
     {
     DSA *dsa = NULL;
+    EVP_PKEY pk;
     unsigned char dgst[] = "etaonrishdlc";
-    DSA_SIG *sig = NULL;
+    unsigned char buf[60];
+    unsigned int slen;
     int r = 0;
+    EVP_MD_CTX mctx;
 
     ERR_clear_error();
+    EVP_MD_CTX_init(&mctx);
     dsa = FIPS_dsa_new();
     if (!dsa)
-	return 0;
+	goto end;
     if (!DSA_generate_parameters_ex(dsa, 512,NULL,0,NULL,NULL,NULL))
-	return 0;
+	goto end;
     if (!DSA_generate_key(dsa))
-	return 0;
-    sig = DSA_do_sign(dgst,sizeof(dgst) - 1,dsa);
-    if (sig)
-	{
-    	r = DSA_do_verify(dgst,sizeof(dgst) - 1,sig,dsa);
-	DSA_SIG_free(sig);
-	}
+	goto end;
+
+    pk.type = EVP_PKEY_DSA;
+    pk.pkey.dsa = dsa;
+
+    if (!EVP_SignInit_ex(&mctx, EVP_dss1(), NULL))
+	goto end;
+    if (!EVP_SignUpdate(&mctx, dgst, sizeof(dgst) - 1))
+	goto end;
+    if (!EVP_SignFinal(&mctx, buf, &slen, &pk))
+	goto end;
+
+    if (!EVP_VerifyInit_ex(&mctx, EVP_dss1(), NULL))
+	goto end;
+    if (!EVP_VerifyUpdate(&mctx, dgst, sizeof(dgst) - 1))
+	goto end;
+    r = EVP_VerifyFinal(&mctx, buf, slen, &pk);
+    end:
+    EVP_MD_CTX_cleanup(&mctx);
+    if (dsa)
+  	  FIPS_dsa_free(dsa);
     if (r != 1)
 	return 0;
-    FIPS_dsa_free(dsa);
     return 1;
     }
 
-/* RSA: generate keys and encrypt and decrypt known plaintext, verify result
- * matches the original plaintext
-*/
+/*
+ * RSA: generate keys and sign, verify input plaintext.
+ */
 static int FIPS_rsa_test()
     {
     RSA *key;
     unsigned char input_ptext[] = "etaonrishdlc";
-    unsigned char ctext[256];
-    unsigned char ptext[256];
+    unsigned char buf[256];
+    unsigned int slen;
     BIGNUM *bn;
-    int n;
+    EVP_MD_CTX mctx;
+    EVP_PKEY pk;
+    int r;
 
     ERR_clear_error();
+    EVP_MD_CTX_init(&mctx);
     key = FIPS_rsa_new();
     bn = BN_new();
     if (!key || !bn)
@@ -133,16 +153,28 @@ static int FIPS_rsa_test()
     if (!RSA_generate_key_ex(key, 1024,bn,NULL))
 	return 0;
     BN_free(bn);
-    n = RSA_size(key);
-    n = RSA_public_encrypt(sizeof(input_ptext) - 1,input_ptext,ctext,key,RSA_PKCS1_PADDING);
-    if (n < 0)
+
+    pk.type = EVP_PKEY_RSA;
+    pk.pkey.rsa = key;
+
+    if (!EVP_SignInit_ex(&mctx, EVP_sha1(), NULL))
+	goto end;
+    if (!EVP_SignUpdate(&mctx, input_ptext, sizeof(input_ptext) - 1))
+	goto end;
+    if (!EVP_SignFinal(&mctx, buf, &slen, &pk))
+	goto end;
+
+    if (!EVP_VerifyInit_ex(&mctx, EVP_sha1(), NULL))
+	goto end;
+    if (!EVP_VerifyUpdate(&mctx, input_ptext, sizeof(input_ptext) - 1))
+	goto end;
+    r = EVP_VerifyFinal(&mctx, buf, slen, &pk);
+    end:
+    EVP_MD_CTX_cleanup(&mctx);
+    if (key)
+  	  FIPS_rsa_free(key);
+    if (r != 1)
 	return 0;
-    n = RSA_private_decrypt(n,ctext,ptext,key,RSA_PKCS1_PADDING);
-    if (n < 0)
-	return 0;
-    FIPS_rsa_free(key);
-    if (memcmp(input_ptext,ptext,sizeof(input_ptext) - 1))
-        return 0;
     return 1;
     }
 

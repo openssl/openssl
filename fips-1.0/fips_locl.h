@@ -53,7 +53,6 @@
 extern "C" {
 #endif
 
-/* These are trampolines implemented in crypto/cryptlib.c */
 void fips_w_lock(void);
 void fips_w_unlock(void);
 void fips_r_lock(void);

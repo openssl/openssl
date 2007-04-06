@@ -92,10 +92,10 @@ dsa_mod_exp,
 dsa_bn_mod_exp,
 dsa_init,
 dsa_finish,
-0,
+DSA_FLAG_FIPS_METHOD,
 NULL
 };
-
+#if 0
 int FIPS_dsa_check(struct dsa_st *dsa)
     {
     if(dsa->meth != &openssl_dsa_meth || dsa->meth->dsa_do_sign != dsa_do_sign
@@ -110,6 +110,7 @@ int FIPS_dsa_check(struct dsa_st *dsa)
 	}
     return 1;
     }
+#endif
 
 const DSA_METHOD *DSA_OpenSSL(void)
 {
@@ -153,7 +154,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, FIPS_DSA_SIZE_T dlen, DSA
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
 
-	if (!DSA_sign_setup(dsa,ctx,&kinv,&r)) goto err;
+	if (!dsa->meth->dsa_sign_setup(dsa,ctx,&kinv,&r)) goto err;
 
 	if (BN_bin2bn(dgst,dlen,&m) == NULL) goto err;
 

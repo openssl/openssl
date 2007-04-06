@@ -61,6 +61,7 @@
 #include <openssl/dsa.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/fips.h>
 
 /* Override the default new methods */
 static int sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)
@@ -143,6 +144,13 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
 	     unsigned int *siglen, DSA *dsa)
 	{
 	DSA_SIG *s;
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode() && !(dsa->flags & DSA_FLAG_NON_FIPS_ALLOW))
+		{
+		DSAerr(DSA_F_DSA_SIGN, DSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE);
+		return 0;
+		}
+#endif
 	s=DSA_do_sign(dgst,dlen,dsa);
 	if (s == NULL)
 		{
@@ -187,6 +195,13 @@ int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
 	{
 	DSA_SIG *s;
 	int ret=-1;
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode() && !(dsa->flags & DSA_FLAG_NON_FIPS_ALLOW))
+		{
+		DSAerr(DSA_F_DSA_VERIFY, DSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE);
+		return 0;
+		}
+#endif
 
 	s = DSA_SIG_new();
 	if (s == NULL) return(ret);

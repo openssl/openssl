@@ -151,8 +151,15 @@ static int fips_rsa_sign(int type, const unsigned char *x, unsigned int y,
 
 	if (pad_mode == EVP_MD_CTX_FLAG_PAD_X931)
 		{
+		int hash_id;
 		memcpy(tmpdinfo, md, m_len);
-		tmpdinfo[m_len] = RSA_X931_hash_id(M_EVP_MD_CTX_type(sv->mctx));
+		hash_id = RSA_X931_hash_id(M_EVP_MD_CTX_type(sv->mctx));
+		if (hash_id == -1)
+			{
+			RSAerr(RSA_F_RSA_SIGN,RSA_R_UNKNOWN_ALGORITHM_TYPE);
+			return 0;
+			}
+		tmpdinfo[m_len] = (unsigned char)hash_id;
 		i = m_len + 1;
 		rsa_pad_mode = RSA_X931_PADDING;
 		}
@@ -164,7 +171,7 @@ static int fips_rsa_sign(int type, const unsigned char *x, unsigned int y,
 		if (!der)
 			{
 			RSAerr(RSA_F_RSA_SIGN,RSA_R_UNKNOWN_ALGORITHM_TYPE);
-			return(0);
+			return 0;
 			}
 		memcpy(tmpdinfo, der, dlen);
 		memcpy(tmpdinfo + dlen, md, m_len);
@@ -273,12 +280,19 @@ static int fips_rsa_verify(int dtype,
 
 	if (pad_mode == EVP_MD_CTX_FLAG_PAD_X931)
 		{
+		int hash_id;
 		if (i != (int)(diglen + 1))
 			{
 			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
 			goto err;
 			}
-		if (s[diglen] != RSA_X931_hash_id(M_EVP_MD_CTX_type(sv->mctx)))
+		hash_id = RSA_X931_hash_id(M_EVP_MD_CTX_type(sv->mctx));
+		if (hash_id == -1)
+			{
+			RSAerr(RSA_F_RSA_SIGN,RSA_R_UNKNOWN_ALGORITHM_TYPE);
+			goto err;
+			}
+		if (s[diglen] != (unsigned char)hash_id)
 			{
 			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
 			goto err;
