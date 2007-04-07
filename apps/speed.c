@@ -2662,6 +2662,7 @@ static int do_multi(int multi)
 
 		fclose(f);
 		}
+	free(fds);
 	return 1;
 	}
 #endif
