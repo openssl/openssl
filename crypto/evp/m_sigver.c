@@ -67,24 +67,18 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 			  const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey,
 			  int ver)
 	{
+	int r = 0;
 	if (ctx->pctx == NULL)
 		ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
 	if (ctx->pctx == NULL)
 		return 0;
-	if (EVP_PKEY_CTX_set_signature_md(ctx->pctx, type) <= 0)
-		return 0;
-	if (pctx)
-		*pctx = ctx->pctx;
 	if (ver)
 		{
 		if (ctx->pctx->pmeth->verifyctx_init)
 			{
-			int r;
 			r = ctx->pctx->pmeth->verifyctx_init(ctx->pctx, ctx);
 			if (r <= 0)
 				return 0;
-			if (r == 2)
-				return 1;
 			}
 		else if (EVP_PKEY_verify_init(ctx->pctx) <= 0)
 			return 0;
@@ -93,17 +87,18 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 		{
 		if (ctx->pctx->pmeth->signctx_init)
 			{
-			int r;
 			r = ctx->pctx->pmeth->signctx_init(ctx->pctx, ctx);
 			if (r <= 0)
 				return 0;
-			if (r == 2)
-				return 1;
 			}
 		if (EVP_PKEY_sign_init(ctx->pctx) <= 0)
 			return 0;
 		}
-	if (!EVP_DigestInit_ex(ctx, type, e))
+	if (EVP_PKEY_CTX_set_signature_md(ctx->pctx, type) <= 0)
+		return 0;
+	if (pctx)
+		*pctx = ctx->pctx;
+	if ((r != 2) && !EVP_DigestInit_ex(ctx, type, e))
 		return 0;
 	return 1;
 	}
