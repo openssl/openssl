@@ -4,6 +4,12 @@
 
  Changes between 0.9.8f and 0.9.9  [xx XXX xxxx]
 
+  *) New option -sigopt to dgst utility. Update dgst to use
+     EVP_Digest{Sign,Verify}*. These two changes make it possible to use
+     alternative signing paramaters such as X9.31 or PSS in the dgst 
+     utility.
+     [Steve Henson]
+
   *) Change ssl_cipher_apply_rule(), the internal function that does
      the work each time a ciphersuite string requests enabling
      ("foo+bar"), moving ("+foo+bar"), disabling ("-foo+bar", or

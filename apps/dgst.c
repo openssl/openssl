@@ -106,6 +106,7 @@ int MAIN(int argc, char **argv)
 	char *engine=NULL;
 #endif
 	char *hmac_key=NULL;
+	STACK *sigopts = NULL;
 
 	apps_startup();
 
@@ -197,6 +198,15 @@ int MAIN(int argc, char **argv)
 				break;
 			hmac_key=*++argv;
 			}
+		else if (strcmp(*argv,"-sigopt") == 0)
+			{
+			if (--argc < 1)
+				break;
+			if (!sigopts)
+				sigopts = sk_new_null();
+			if (!sigopts || !sk_push(sigopts, *(++argv)))
+				break;
+			}
 		else if ((m=EVP_get_digestbyname(&((*argv)[1]))) != NULL)
 			md=m;
 		else
@@ -227,6 +237,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"-prverify file  verify a signature using private key in file\n");
 		BIO_printf(bio_err,"-keyform arg    key file format (PEM or ENGINE)\n");
 		BIO_printf(bio_err,"-signature file signature to verify\n");
+		BIO_printf(bio_err,"-sigopt nm:v    signature parameter\n");
 		BIO_printf(bio_err,"-binary         output in binary form\n");
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
@@ -332,6 +343,47 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
+	if (sigkey)
+		{
+		EVP_MD_CTX *mctx = NULL;
+		EVP_PKEY_CTX *pctx = NULL;
+		if (!BIO_get_md_ctx(bmd, &mctx))
+			{
+			BIO_printf(bio_err, "Error getting context\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		if (!EVP_DigestSignInit(mctx, &pctx, md, e, sigkey))
+			{
+			BIO_printf(bio_err, "Error setting context\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		if (sigopts)
+			{
+			char *sigopt;
+			for (i = 0; i < sk_num(sigopts); i++)
+				{
+				sigopt = sk_value(sigopts, i);
+				if (pkey_ctrl_string(pctx, sigopt) <= 0)
+					{
+					BIO_printf(bio_err,
+						"parameter error \"%s\"\n",
+						sigopt);
+					ERR_print_errors(bio_err);
+					goto end;
+					}
+				}
+			}
+		}
+	/* we use md as a filter, reading from 'in' */
+	else if (!BIO_set_md(bmd,md))
+		{
+		BIO_printf(bio_err, "Error setting digest %s\n", pname);
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
 	if(sigfile && sigkey) {
 		BIO *sigbio;
 		sigbio = BIO_new_file(sigfile, "rb");
@@ -352,17 +404,6 @@ int MAIN(int argc, char **argv)
 			goto end;
 		}
 	}
-		
-
-
-	/* we use md as a filter, reading from 'in' */
-	if (!BIO_set_md(bmd,md))
-		{
-		BIO_printf(bio_err, "Error setting digest %s\n", pname);
-		ERR_print_errors(bio_err);
-		goto end;
-		}
-		
 	inp=BIO_push(bmd,in);
 
 	if (argc == 0)
@@ -414,6 +455,8 @@ end:
 		OPENSSL_free(passin);
 	BIO_free_all(out);
 	EVP_PKEY_free(sigkey);
+	if (sigopts)
+		sk_free(sigopts);
 	if(sigbuf) OPENSSL_free(sigbuf);
 	if (bmd != NULL) BIO_free(bmd);
 	apps_shutdown();
@@ -454,7 +497,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 		{
 		EVP_MD_CTX *ctx;
 		BIO_get_md_ctx(bp, &ctx);
-		i = EVP_VerifyFinal(ctx, sigin, (unsigned int)siglen, key); 
+		i = EVP_DigestVerifyFinal(ctx, sigin, (unsigned int)siglen); 
 		if(i > 0)
 			BIO_printf(out, "Verified OK\n");
 		else if(i == 0)
@@ -474,7 +517,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 		{
 		EVP_MD_CTX *ctx;
 		BIO_get_md_ctx(bp, &ctx);
-		if(!EVP_SignFinal(ctx, buf, (unsigned int *)&len, key)) 
+		if(!EVP_DigestSignFinal(ctx, buf, (unsigned int *)&len)) 
 			{
 			BIO_printf(bio_err, "Error Signing Data\n");
 			ERR_print_errors(bio_err);
