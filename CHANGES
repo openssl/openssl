@@ -4,6 +4,9 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+  *) Add algorithm config module. Currently just handles setting FIPS mode.
+     [Steve Henson]
+
   *) Rewrite self tests and pairwise tests to use EVP. Add more extensive
      self tests for RSA in all digests and modes.
      [Steve Henson]

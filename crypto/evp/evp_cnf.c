@@ -1,9 +1,9 @@
-/* conf_mall.c */
+/* evp_cnf.c */
 /* Written by Stephen Henson (shenson@bigfoot.com) for the OpenSSL
- * project 2001.
+ * project 2007.
  */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,26 +57,65 @@
  */
 
 #include <stdio.h>
+#include <ctype.h>
 #include <openssl/crypto.h>
 #include "cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/dso.h>
 #include <openssl/x509.h>
-#include <openssl/asn1.h>
-#include <openssl/evp.h>
-#ifndef OPENSSL_NO_ENGINE
-#include <openssl/engine.h>
-#endif
+#include <openssl/x509v3.h>
+#include <openssl/fips.h>
 
-/* Load all OpenSSL builtin modules */
+/* Algorithm configuration module. */
 
-void OPENSSL_load_builtin_modules(void)
+static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
 	{
-	/* Add builtin modules here */
-	ASN1_add_oid_module();
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE_add_conf_module();
+	int i;
+	const char *oid_section;
+	STACK_OF(CONF_VALUE) *sktmp;
+	CONF_VALUE *oval;
+	oid_section = CONF_imodule_get_value(md);
+	if(!(sktmp = NCONF_get_section(cnf, oid_section)))
+		{
+		EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_ERROR_LOADING_SECTION);
+		return 0;
+		}
+	for(i = 0; i < sk_CONF_VALUE_num(sktmp); i++)
+		{
+		oval = sk_CONF_VALUE_value(sktmp, i);
+		if (!strcmp(oval->name, "fips_mode"))
+			{
+			int m;
+			if (!X509V3_get_value_bool(oval, &m))
+				{
+				EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_INVALID_FIPS_MODE);
+				return 0;
+				}
+			if (m > 0)
+				{
+#ifdef OPENSSL_FIPS
+				if (!FIPS_mode_set(1))
+					{
+					EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_ERROR_SETTING_FIPS_MODE);
+					return 0;
+					}
+#else
+				EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_FIPS_MODE_NOT_SUPPORTED);
 #endif
-	EVP_add_alg_module();
+				}
+			}
+		else
+			{
+			EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_UNKNOWN_OPTION);
+			ERR_add_error_data(4, "name=", oval->name,
+						", value=", oval->value);
+			}
+				
+		}
+	return 1;
 	}
 
+void EVP_add_alg_module(void)
+	{
+	CONF_module_add("alg_section", alg_module_init, 0);
+	}

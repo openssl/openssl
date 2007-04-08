@@ -149,7 +149,7 @@ static int do_create(char *value, char *name)
 		if (lntmp == NULL)
 			return 0;
 		memcpy(lntmp, ln, p - ln);
-		lntmp[p - ln + 1] = 0;
+		lntmp[p - ln] = 0;
 		oid = OBJ_nid2obj(nid);
 		oid->ln = lntmp;
 		}

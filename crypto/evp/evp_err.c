@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,6 +71,7 @@
 static ERR_STRING_DATA EVP_str_functs[]=
 	{
 {ERR_FUNC(EVP_F_AES_INIT_KEY),	"AES_INIT_KEY"},
+{ERR_FUNC(EVP_F_ALG_MODULE_INIT),	"ALG_MODULE_INIT"},
 {ERR_FUNC(EVP_F_CAMELLIA_INIT_KEY),	"CAMELLIA_INIT_KEY"},
 {ERR_FUNC(EVP_F_D2I_PKEY),	"D2I_PKEY"},
 {ERR_FUNC(EVP_F_DSAPKEY2PKCS8),	"DSAPKEY2PKCS8"},
@@ -129,14 +130,18 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_DIFFERENT_KEY_TYPES)   ,"different key types"},
 {ERR_REASON(EVP_R_DISABLED_FOR_FIPS)     ,"disabled for fips"},
 {ERR_REASON(EVP_R_ENCODE_ERROR)          ,"encode error"},
+{ERR_REASON(EVP_R_ERROR_LOADING_SECTION) ,"error loading section"},
+{ERR_REASON(EVP_R_ERROR_SETTING_FIPS_MODE),"error setting fips mode"},
 {ERR_REASON(EVP_R_EVP_PBE_CIPHERINIT_ERROR),"evp pbe cipherinit error"},
 {ERR_REASON(EVP_R_EXPECTING_AN_RSA_KEY)  ,"expecting an rsa key"},
 {ERR_REASON(EVP_R_EXPECTING_A_DH_KEY)    ,"expecting a dh key"},
 {ERR_REASON(EVP_R_EXPECTING_A_DSA_KEY)   ,"expecting a dsa key"},
 {ERR_REASON(EVP_R_EXPECTING_A_ECDSA_KEY) ,"expecting a ecdsa key"},
 {ERR_REASON(EVP_R_EXPECTING_A_EC_KEY)    ,"expecting a ec key"},
+{ERR_REASON(EVP_R_FIPS_MODE_NOT_SUPPORTED),"fips mode not supported"},
 {ERR_REASON(EVP_R_INITIALIZATION_ERROR)  ,"initialization error"},
 {ERR_REASON(EVP_R_INPUT_NOT_INITIALIZED) ,"input not initialized"},
+{ERR_REASON(EVP_R_INVALID_FIPS_MODE)     ,"invalid fips mode"},
 {ERR_REASON(EVP_R_INVALID_KEY_LENGTH)    ,"invalid key length"},
 {ERR_REASON(EVP_R_IV_TOO_LARGE)          ,"iv too large"},
 {ERR_REASON(EVP_R_KEYGEN_FAILURE)        ,"keygen failure"},
@@ -148,6 +153,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_NO_VERIFY_FUNCTION_CONFIGURED),"no verify function configured"},
 {ERR_REASON(EVP_R_PKCS8_UNKNOWN_BROKEN_TYPE),"pkcs8 unknown broken type"},
 {ERR_REASON(EVP_R_PUBLIC_KEY_NOT_RSA)    ,"public key not rsa"},
+{ERR_REASON(EVP_R_UNKNOWN_OPTION)        ,"unknown option"},
 {ERR_REASON(EVP_R_UNKNOWN_PBE_ALGORITHM) ,"unknown pbe algorithm"},
 {ERR_REASON(EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS),"unsuported number of rounds"},
 {ERR_REASON(EVP_R_UNSUPPORTED_CIPHER)    ,"unsupported cipher"},
