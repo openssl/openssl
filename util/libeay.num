@@ -1330,6 +1330,7 @@ i2d_PBE2PARAM                           1401	EXIST::FUNCTION:
 PBE2PARAM_new                           1402	EXIST::FUNCTION:
 d2i_PBE2PARAM                           1403	EXIST::FUNCTION:
 PBE2PARAM_free                          1404	EXIST::FUNCTION:
+EVP_add_alg_module                      1405	EXIST::FUNCTION:
 d2i_ASN1_SET_OF_GENERAL_NAME            1421	NOEXIST::FUNCTION:
 i2d_ASN1_SET_OF_GENERAL_NAME            1422	NOEXIST::FUNCTION:
 d2i_ASN1_SET_OF_SXNETID                 1439	NOEXIST::FUNCTION:
@@ -3513,7 +3514,7 @@ i2d_ASIdentifiers                       3905	EXIST::FUNCTION:RFC3779
 BN_div_no_branch                        3906	EXIST::FUNCTION:
 BN_mod_inverse_no_branch                3907	EXIST::FUNCTION:
 EVP_CIPHER_CTX_clear_flags              3908	EXIST::FUNCTION:
-FIPS_dsa_sig_encode                     3909	EXIST:OPENSSL_FIPS:FUNCTION:RSA
+FIPS_dsa_sig_encode                     3909	EXIST:OPENSSL_FIPS:FUNCTION:DSA
 FIPS_rand_status                        3910	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_rand_set_key                       3911	EXIST:OPENSSL_FIPS:FUNCTION:
 CRYPTO_set_mem_info_functions           3912	EXIST::FUNCTION:
@@ -3526,7 +3527,7 @@ BN_X931_generate_prime_ex               3918	EXIST::FUNCTION:
 FIPS_rand_set_dt                        3919	EXIST:OPENSSL_FIPS:FUNCTION:
 CRYPTO_dbg_pop_info                     3920	EXIST::FUNCTION:
 FIPS_dsa_free                           3921	EXIST:OPENSSL_FIPS:FUNCTION:DSA
-FIPS_dsa_sig_decode                     3922	EXIST:OPENSSL_FIPS:FUNCTION:RSA
+FIPS_dsa_sig_decode                     3922	EXIST:OPENSSL_FIPS:FUNCTION:DSA
 RSA_X931_derive_ex                      3923	EXIST::FUNCTION:RSA
 FIPS_rsa_new                            3924	EXIST:OPENSSL_FIPS:FUNCTION:RSA
 FIPS_rand_bytes                         3925	EXIST:OPENSSL_FIPS:FUNCTION:
@@ -3546,3 +3547,4 @@ int_ERR_lib_init                        3938	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_rsa_free                           3939	EXIST:OPENSSL_FIPS:FUNCTION:RSA
 CRYPTO_dbg_remove_all_info              3940	EXIST::FUNCTION:
 OPENSSL_init                            3941	EXIST::FUNCTION:
+fips_pkey_signature_test                3942	EXIST:OPENSSL_FIPS:FUNCTION:
