@@ -126,17 +126,18 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 	{
 	STACK_OF(CONF_VALUE) *values;
 	CONF_VALUE *vl;
-	char *vsection;
+	char *vsection = NULL;
 
 	int ret, i;
 
 	if (!cnf)
 		return 1;
 
-	if (appname == NULL)
-		appname = "openssl_conf";
+	if (appname)
+		vsection = NCONF_get_string(cnf, NULL, appname);
 
-	vsection = NCONF_get_string(cnf, NULL, appname); 
+	if (!appname || (!vsection && (flags & CONF_MFLAGS_DEFAULT_SECTION)))
+		vsection = NCONF_get_string(cnf, NULL, "openssl_conf");
 
 	if (!vsection)
 		{
