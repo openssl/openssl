@@ -88,8 +88,8 @@ void OPENSSL_config(const char *config_name)
 
 
 	ERR_clear_error();
-	if (CONF_modules_load_file(NULL, NULL,
-					CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0)
+	if (CONF_modules_load_file(NULL, config_name,
+	CONF_MFLAGS_DEFAULT_SECTION|CONF_MFLAGS_IGNORE_MISSING_FILE) <= 0)
 		{
 		BIO *bio_err;
 		ERR_load_crypto_strings();
