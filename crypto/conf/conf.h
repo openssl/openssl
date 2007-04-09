@@ -114,6 +114,7 @@ typedef void conf_finish_func(CONF_IMODULE *md);
 #define CONF_MFLAGS_SILENT		0x4
 #define CONF_MFLAGS_NO_DSO		0x8
 #define CONF_MFLAGS_IGNORE_MISSING_FILE	0x10
+#define CONF_MFLAGS_DEFAULT_SECTION	0x20
 
 int CONF_set_default_method(CONF_METHOD *meth);
 void CONF_set_nconf(CONF *conf,LHASH *hash);
