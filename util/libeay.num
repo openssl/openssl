@@ -1330,6 +1330,7 @@ i2d_PBE2PARAM                           1401	EXIST::FUNCTION:
 PBE2PARAM_new                           1402	EXIST::FUNCTION:
 d2i_PBE2PARAM                           1403	EXIST::FUNCTION:
 PBE2PARAM_free                          1404	EXIST::FUNCTION:
+EVP_add_alg_module                      1405	EXIST::FUNCTION:
 d2i_ASN1_SET_OF_GENERAL_NAME            1421	NOEXIST::FUNCTION:
 i2d_ASN1_SET_OF_GENERAL_NAME            1422	NOEXIST::FUNCTION:
 d2i_ASN1_SET_OF_SXNETID                 1439	NOEXIST::FUNCTION:
