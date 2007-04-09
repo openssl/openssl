@@ -101,6 +101,7 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
 					}
 #else
 				EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_FIPS_MODE_NOT_SUPPORTED);
+				return 0;
 #endif
 				}
 			}
