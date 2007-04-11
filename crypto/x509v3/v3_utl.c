@@ -360,10 +360,10 @@ static char *strip_spaces(char *name)
  * @@@ (Contents of buffer are always kept in ASCII, also on EBCDIC machines)
  */
 
-char *hex_to_string(unsigned char *buffer, long len)
+char *hex_to_string(const unsigned char *buffer, long len)
 {
 	char *tmp, *q;
-	unsigned char *p;
+	const unsigned char *p;
 	int i;
 	const static char hexdig[] = "0123456789ABCDEF";
 	if(!buffer || !len) return NULL;
@@ -389,7 +389,7 @@ char *hex_to_string(unsigned char *buffer, long len)
  * a buffer
  */
 
-unsigned char *string_to_hex(char *str, long *len)
+unsigned char *string_to_hex(const char *str, long *len)
 {
 	unsigned char *hexbuf, *q;
 	unsigned char ch, cl, *p;
