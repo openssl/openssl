@@ -294,6 +294,8 @@ int args_verify(char ***pargs, int *pargc,
 void policies_print(BIO *out, X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value);
+int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
+			const char *algname, ENGINE *e, int do_param);
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1

@@ -67,8 +67,6 @@
 
 static int init_keygen_file(BIO *err, EVP_PKEY_CTX **pctx,
 				const char *file, ENGINE *e);
-static int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
-				const char *algname, ENGINE *e, int do_param);
 static int genpkey_cb(EVP_PKEY_CTX *ctx);
 
 #define PROG genpkey_main
@@ -362,8 +360,8 @@ static int init_keygen_file(BIO *err, EVP_PKEY_CTX **pctx,
 
 	}
 
-static int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
-				const char *algname, ENGINE *e, int do_param)
+int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
+			const char *algname, ENGINE *e, int do_param)
 	{
 	EVP_PKEY_CTX *ctx = NULL;
 	const EVP_PKEY_ASN1_METHOD *ameth;

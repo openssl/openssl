@@ -7,7 +7,8 @@
   *) Experimental support for use of HMAC via EVP_PKEY interface. This
      allows HMAC to be handled via the EVP_DigestSign*() interface. The
      EVP_PKEY "key" in this case is the HMAC key, potentially allowing
-     ENGINE support for HMAC keys which are unextractable.
+     ENGINE support for HMAC keys which are unextractable. New -mac and
+     -macopt options to dgst utility.
      [Steve Henson]
 
   *) New option -sigopt to dgst utility. Update dgst to use

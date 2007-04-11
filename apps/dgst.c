@@ -76,7 +76,7 @@
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
-	  const char *file,BIO *bmd,const char *hmac_key);
+	  const char *file,BIO *bmd);
 
 int MAIN(int, char **);
 
@@ -106,7 +106,8 @@ int MAIN(int argc, char **argv)
 	char *engine=NULL;
 #endif
 	char *hmac_key=NULL;
-	STACK *sigopts = NULL;
+	char *mac_name=NULL;
+	STACK *sigopts = NULL, *macopts = NULL;
 
 	apps_startup();
 
@@ -198,6 +199,12 @@ int MAIN(int argc, char **argv)
 				break;
 			hmac_key=*++argv;
 			}
+		else if (!strcmp(*argv,"-mac"))
+			{
+			if (--argc < 1)
+				break;
+			mac_name=*++argv;
+			}
 		else if (strcmp(*argv,"-sigopt") == 0)
 			{
 			if (--argc < 1)
@@ -205,6 +212,15 @@ int MAIN(int argc, char **argv)
 			if (!sigopts)
 				sigopts = sk_new_null();
 			if (!sigopts || !sk_push(sigopts, *(++argv)))
+				break;
+			}
+		else if (strcmp(*argv,"-macopt") == 0)
+			{
+			if (--argc < 1)
+				break;
+			if (!macopts)
+				macopts = sk_new_null();
+			if (!macopts || !sk_push(macopts, *(++argv)))
 				break;
 			}
 		else if ((m=EVP_get_digestbyname(&((*argv)[1]))) != NULL)
@@ -326,6 +342,11 @@ int MAIN(int argc, char **argv)
 		ERR_print_errors(bio_err);
 		goto end;
 	}
+	if ((!!mac_name + !!keyfile + !!hmac_key) > 1)
+		{
+		BIO_printf(bio_err, "MAC and Signing key cannot both be specified\n");
+		goto end;
+		}
 
 	if(keyfile)
 		{
@@ -341,6 +362,50 @@ int MAIN(int argc, char **argv)
 			   message */
 			goto end;
 			}
+		}
+
+	if (mac_name)
+		{
+		EVP_PKEY_CTX *mac_ctx = NULL;
+		int r = 0;
+		if (!init_gen_str(bio_err, &mac_ctx, mac_name,e, 0))
+			goto mac_end;
+		if (macopts)
+			{
+			char *macopt;
+			for (i = 0; i < sk_num(macopts); i++)
+				{
+				macopt = sk_value(macopts, i);
+				if (pkey_ctrl_string(mac_ctx, macopt) <= 0)
+					{
+					BIO_printf(bio_err,
+						"MAC parameter error \"%s\"\n",
+						macopt);
+					ERR_print_errors(bio_err);
+					goto mac_end;
+					}
+				}
+			}
+		if (EVP_PKEY_keygen(mac_ctx, &sigkey) <= 0)
+			{
+			BIO_puts(bio_err, "Error generating key\n");
+			ERR_print_errors(bio_err);
+			goto mac_end;
+			}
+		r = 1;
+		mac_end:
+		if (mac_ctx)
+			EVP_PKEY_CTX_free(mac_ctx);
+		if (r == 0)
+			goto end;
+		}
+
+	if (hmac_key)
+		{
+		sigkey = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, e,
+					(unsigned char *)hmac_key, -1);
+		if (!sigkey)
+			goto end;
 		}
 
 	if (sigkey)
@@ -410,7 +475,7 @@ int MAIN(int argc, char **argv)
 		{
 		BIO_set_fp(in,stdin,BIO_NOCLOSE);
 		err=do_fp(out, buf,inp,separator, out_bin, sigkey, sigbuf,
-			  siglen,"","(stdin)",bmd,hmac_key);
+			  siglen,"","(stdin)",bmd);
 		}
 	else
 		{
@@ -436,7 +501,7 @@ int MAIN(int argc, char **argv)
 			else
 				tmp="";
 			r=do_fp(out,buf,inp,separator,out_bin,sigkey,sigbuf,
-				siglen,tmp,argv[i],bmd,hmac_key);
+				siglen,tmp,argv[i],bmd);
 			if(r)
 			    err=r;
 			if(tofree)
@@ -457,6 +522,8 @@ end:
 	EVP_PKEY_free(sigkey);
 	if (sigopts)
 		sk_free(sigopts);
+	if (macopts)
+		sk_free(macopts);
 	if(sigbuf) OPENSSL_free(sigbuf);
 	if (bmd != NULL) BIO_free(bmd);
 	apps_shutdown();
@@ -465,23 +532,11 @@ end:
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
-	  const char *file,BIO *bmd,const char *hmac_key)
+	  const char *file,BIO *bmd)
 	{
 	unsigned int len;
 	int i;
-	EVP_MD_CTX *md_ctx;
-	HMAC_CTX hmac_ctx;
 
-	if (hmac_key)
-		{
-		EVP_MD *md;
-
-		BIO_get_md(bmd,&md);
-		HMAC_CTX_init(&hmac_ctx);
-		HMAC_Init_ex(&hmac_ctx,hmac_key,strlen(hmac_key),md, NULL);
-		BIO_get_md_ctx(bmd,&md_ctx);
-		BIO_set_md_ctx(bmd,&hmac_ctx.md_ctx);
-		}
 	for (;;)
 		{
 		i=BIO_read(bp,(char *)buf,BUFSIZE);
@@ -524,11 +579,6 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			return 1;
 			}
 		}
-	else if(hmac_key)
-		{
-		HMAC_Final(&hmac_ctx,buf,&len);
-		HMAC_CTX_cleanup(&hmac_ctx);
-		}
 	else
 		len=BIO_gets(bp,(char *)buf,BUFSIZE);
 
@@ -543,10 +593,6 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			BIO_printf(out, "%02x",buf[i]);
 			}
 		BIO_printf(out, "\n");
-		}
-	if (hmac_key)
-		{
-		BIO_set_md_ctx(bmd,md_ctx);
 		}
 	return 0;
 	}
