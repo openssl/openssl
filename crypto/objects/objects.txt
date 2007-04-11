@@ -1188,3 +1188,7 @@ camellia 44		: CAMELLIA-256-CFB		: camellia-256-cfb
 			: CAMELLIA-128-CFB8		: camellia-128-cfb8
 			: CAMELLIA-192-CFB8		: camellia-192-cfb8
 			: CAMELLIA-256-CFB8		: camellia-256-cfb8
+
+# There is no OID that just denotes "HMAC" oddly enough...
+
+			: HMAC				: hmac

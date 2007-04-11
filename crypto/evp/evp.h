@@ -115,6 +115,7 @@
 #define EVP_PKEY_DSA4	NID_dsaWithSHA1_2
 #define EVP_PKEY_DH	NID_dhKeyAgreement
 #define EVP_PKEY_EC	NID_X9_62_id_ecPublicKey
+#define EVP_PKEY_HMAC	NID_hmac
 
 #ifdef	__cplusplus
 extern "C" {
@@ -266,6 +267,8 @@ struct env_md_ctx_st
 	void *md_data;
 	/* Public key context for sign/verify */
 	EVP_PKEY_CTX *pctx;
+	/* Update function: usually copied from EVP_MD */
+	int (*update)(EVP_MD_CTX *ctx,const void *data,size_t count);
 	} /* EVP_MD_CTX */;
 
 /* values for EVP_MD_CTX flags */
@@ -276,6 +279,7 @@ struct env_md_ctx_st
 						* cleaned */
 #define EVP_MD_CTX_FLAG_REUSE		0x0004 /* Don't free up ctx->md_data
 						* in EVP_MD_CTX_cleanup */
+#define EVP_MD_CTX_FLAG_NO_INIT		0x0008 /* Don't initialized md_data */
 
 /* MD operational flags */
 
@@ -996,6 +1000,10 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 #define EVP_PKEY_CTRL_PKCS7_DECRYPT	4
 
 #define EVP_PKEY_CTRL_PKCS7_SIGN	5
+
+#define EVP_PKEY_CTRL_SET_MAC_KEY	6
+
+#define EVP_PKEY_CTRL_DIGESTINIT	7
 
 #define EVP_PKEY_ALG_CTRL		0x1000
 

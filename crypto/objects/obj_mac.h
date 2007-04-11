@@ -3680,3 +3680,7 @@
 #define LN_camellia_256_cfb8		"camellia-256-cfb8"
 #define NID_camellia_256_cfb8		765
 
+#define SN_hmac		"HMAC"
+#define LN_hmac		"hmac"
+#define NID_hmac		836
+

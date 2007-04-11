@@ -833,3 +833,4 @@ ecdsa_with_SHA512		832
 dsa_with_SHA224		833
 dsa_with_SHA256		834
 gost89_cnt		835
+hmac		836

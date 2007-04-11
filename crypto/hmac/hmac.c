@@ -147,6 +147,16 @@ void HMAC_CTX_init(HMAC_CTX *ctx)
 	EVP_MD_CTX_init(&ctx->md_ctx);
 	}
 
+void HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx)
+	{
+	EVP_MD_CTX_copy(&dctx->i_ctx, &sctx->i_ctx);
+	EVP_MD_CTX_copy(&dctx->o_ctx, &sctx->o_ctx);
+	EVP_MD_CTX_copy(&dctx->md_ctx, &sctx->md_ctx);
+	memcpy(dctx->key, sctx->key, HMAC_MAX_MD_CBLOCK);
+	dctx->key_length = sctx->key_length;
+	dctx->md = sctx->md;
+	}
+
 void HMAC_CTX_cleanup(HMAC_CTX *ctx)
 	{
 	EVP_MD_CTX_cleanup(&ctx->i_ctx);

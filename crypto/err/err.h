@@ -195,6 +195,7 @@ typedef struct err_state_st
 #define ERR_LIB_ECDH		43
 #define ERR_LIB_STORE           44
 #define ERR_LIB_TS		45
+#define ERR_LIB_HMAC		46
 
 #define ERR_LIB_USER		128
 
@@ -227,6 +228,7 @@ typedef struct err_state_st
 #define ECDHerr(f,r)  ERR_PUT_error(ERR_LIB_ECDH,(f),(r),__FILE__,__LINE__)
 #define STOREerr(f,r) ERR_PUT_error(ERR_LIB_STORE,(f),(r),__FILE__,__LINE__)
 #define TSerr(f,r) ERR_PUT_error(ERR_LIB_TS,(f),(r),__FILE__,__LINE__)
+#define HMACerr(f,r) ERR_PUT_error(ERR_LIB_HMAC,(f),(r),__FILE__,__LINE__)
 
 /* Borland C seems too stupid to be able to shift and do longs in
  * the pre-processor :-( */

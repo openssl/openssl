@@ -17,8 +17,8 @@ TEST=hmactest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=hmac.c
-LIBOBJ=hmac.o
+LIBSRC=hmac.c hm_ameth.c hm_pmeth.c
+LIBOBJ=hmac.o hm_ameth.o hm_pmeth.o
 
 SRC= $(LIBSRC)
 

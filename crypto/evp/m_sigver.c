@@ -67,7 +67,6 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 			  const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey,
 			  int ver)
 	{
-	int r = 0;
 	if (ctx->pctx == NULL)
 		ctx->pctx = EVP_PKEY_CTX_new(pkey, e);
 	if (ctx->pctx == NULL)
@@ -76,9 +75,9 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 		{
 		if (ctx->pctx->pmeth->verifyctx_init)
 			{
-			r = ctx->pctx->pmeth->verifyctx_init(ctx->pctx, ctx);
-			if (r <= 0)
+			if (ctx->pctx->pmeth->verifyctx_init(ctx->pctx, ctx) <=0)
 				return 0;
+			ctx->pctx->operation = EVP_PKEY_OP_VERIFYCTX;
 			}
 		else if (EVP_PKEY_verify_init(ctx->pctx) <= 0)
 			return 0;
@@ -87,18 +86,18 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 		{
 		if (ctx->pctx->pmeth->signctx_init)
 			{
-			r = ctx->pctx->pmeth->signctx_init(ctx->pctx, ctx);
-			if (r <= 0)
+			if (ctx->pctx->pmeth->signctx_init(ctx->pctx, ctx) <= 0)
 				return 0;
+			ctx->pctx->operation = EVP_PKEY_OP_SIGNCTX;
 			}
-		if (EVP_PKEY_sign_init(ctx->pctx) <= 0)
+		else if (EVP_PKEY_sign_init(ctx->pctx) <= 0)
 			return 0;
 		}
 	if (EVP_PKEY_CTX_set_signature_md(ctx->pctx, type) <= 0)
 		return 0;
 	if (pctx)
 		*pctx = ctx->pctx;
-	if ((r != 2) && !EVP_DigestInit_ex(ctx, type, e))
+	if (!EVP_DigestInit_ex(ctx, type, e))
 		return 0;
 	return 1;
 	}
@@ -118,7 +117,11 @@ int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 	{
-	int r;
+	int sctx, r = 0;
+	if (ctx->pctx->pmeth->signctx)
+		sctx = 1;
+	else
+		sctx = 0;
 	if (sigret)
 		{
 		MS_STATIC EVP_MD_CTX tmp_ctx;
@@ -127,20 +130,26 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 		EVP_MD_CTX_init(&tmp_ctx);
 		if (!EVP_MD_CTX_copy_ex(&tmp_ctx,ctx))
 		     	return 0;
-		if (tmp_ctx.pctx->pmeth->signctx)
+		if (sctx)
 			r = tmp_ctx.pctx->pmeth->signctx(tmp_ctx.pctx,
 					sigret, siglen, &tmp_ctx);
 		else
 			r = EVP_DigestFinal_ex(&tmp_ctx,md,&mdlen);
 		EVP_MD_CTX_cleanup(&tmp_ctx);
-		if (!r)
-			return 0;
+		if (sctx || !r)
+			return r;
 		if (EVP_PKEY_sign(ctx->pctx, sigret, siglen, md, mdlen) <= 0)
 			return 0;
 		}
 	else
 		{
-		if (EVP_PKEY_sign(ctx->pctx, sigret, siglen, NULL,
+		if (sctx)
+			{
+			if (ctx->pctx->pmeth->signctx(ctx->pctx, 
+						sigret, siglen, ctx) <= 0)
+				return 0;
+			}
+		else if (EVP_PKEY_sign(ctx->pctx, sigret, siglen, NULL,
 						EVP_MD_size(ctx->digest)) <= 0)
 			return 0;
 		}
@@ -153,10 +162,15 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, unsigned char *sig, size_t siglen)
 	unsigned char md[EVP_MAX_MD_SIZE];
 	int r;
 	unsigned int mdlen;
+	int vctx;
+	if (ctx->pctx->pmeth->signctx)
+		vctx = 1;
+	else
+		vctx = 0;
 	EVP_MD_CTX_init(&tmp_ctx);
 	if (!EVP_MD_CTX_copy_ex(&tmp_ctx,ctx))
 		return -1;	
-	if (tmp_ctx.pctx->pmeth->verifyctx)
+	if (vctx)
 		{
 		r = tmp_ctx.pctx->pmeth->verifyctx(tmp_ctx.pctx,
 					sig, siglen, &tmp_ctx);
@@ -164,7 +178,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, unsigned char *sig, size_t siglen)
 	else
 		r = EVP_DigestFinal_ex(&tmp_ctx,md,&mdlen);
 	EVP_MD_CTX_cleanup(&tmp_ctx);
-	if (!r)
-		return -1;
+	if (vctx || !r)
+		return r;
 	return EVP_PKEY_verify(ctx->pctx, sig, siglen, md, mdlen);
 	}

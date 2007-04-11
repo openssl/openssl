@@ -32,6 +32,7 @@ L ECDSA		crypto/ecdsa/ecdsa.h		crypto/ecdsa/ecs_err.c
 L ECDH		crypto/ecdh/ecdh.h		crypto/ecdh/ech_err.c
 L STORE		crypto/store/store.h		crypto/store/str_err.c
 L TS		crypto/ts/ts.h			crypto/ts/ts_err.c
+L HMAC		crypto/hmac/hmac.h		crypto/hmac/hmac_err.c
 
 # additional header files to be scanned for function names
 L NONE		crypto/x509/x509_vfy.h		NONE
