@@ -4,6 +4,12 @@
 
  Changes between 0.9.8f and 0.9.9  [xx XXX xxxx]
 
+  *) Experimental support for use of HMAC via EVP_PKEY interface. This
+     allows HMAC to be handled via the EVP_DigestSign*() interface. The
+     EVP_PKEY "key" in this case is the HMAC key, potentially allowing
+     ENGINE support for HMAC keys which are unextractable.
+     [Steve Henson]
+
   *) New option -sigopt to dgst utility. Update dgst to use
      EVP_Digest{Sign,Verify}*. These two changes make it possible to use
      alternative signing paramaters such as X9.31 or PSS in the dgst 
