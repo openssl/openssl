@@ -68,7 +68,6 @@
 typedef struct
 	{
 	const EVP_MD *md;	/* MD for HMAC use */
-	EVP_MD_CTX *mctx;	/* Parent EVP_MD_CTX */
 	ASN1_OCTET_STRING ktmp; /* Temp storage for key */
 	HMAC_CTX ctx;
 	} HMAC_PKEY_CTX;
@@ -80,7 +79,6 @@ static int pkey_hmac_init(EVP_PKEY_CTX *ctx)
 	if (!hctx)
 		return 0;
 	hctx->md = NULL;
-	hctx->mctx = NULL;
 	hctx->ktmp.data = NULL;
 	HMAC_CTX_init(&hctx->ctx);
 
@@ -145,8 +143,6 @@ static int int_update(EVP_MD_CTX *ctx,const void *data,size_t count)
 
 static int hmac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 	{
-	HMAC_PKEY_CTX *hctx = ctx->data;
-	hctx->mctx = mctx;
 	EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
 	mctx->update = int_update;
 	return 1;
