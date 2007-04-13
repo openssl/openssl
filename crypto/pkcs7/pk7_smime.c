@@ -216,7 +216,8 @@ PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7, X509 *signcert,
 			{
 			if (!pkcs7_copy_existing_digest(p7, si))
 				goto err;
-			if (!PKCS7_SIGNER_INFO_sign(si))
+			if (!(flags & PKCS7_PARTIAL) &&
+					!PKCS7_SIGNER_INFO_sign(si))
 				goto err;
 			}
 		}
