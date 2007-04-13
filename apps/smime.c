@@ -109,6 +109,7 @@ int MAIN(int argc, char **argv)
 	char *passargin = NULL, *passin = NULL;
 	char *inrand = NULL;
 	int need_rand = 0;
+	int indef = 0;
 	const EVP_MD *sign_md = NULL;
 	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
         int keyform = FORMAT_PEM;
@@ -196,6 +197,12 @@ int MAIN(int argc, char **argv)
 				flags |= PKCS7_BINARY;
 		else if (!strcmp (*args, "-nosigs"))
 				flags |= PKCS7_NOSIGS;
+		else if (!strcmp (*args, "-stream"))
+				indef = 1;
+		else if (!strcmp (*args, "-indef"))
+				indef = 1;
+		else if (!strcmp (*args, "-noindef"))
+				indef = 0;
 		else if (!strcmp (*args, "-nooldmime"))
 				flags |= PKCS7_NOOLDMIMETYPE;
 		else if (!strcmp (*args, "-crlfeol"))
@@ -666,7 +673,11 @@ int MAIN(int argc, char **argv)
 	ret = 3;
 
 	if (operation == SMIME_ENCRYPT)
+		{
+		if (indef)
+			flags |= PKCS7_STREAM;
 		p7 = PKCS7_encrypt(encerts, in, cipher, flags);
+		}
 	else if (operation & SMIME_SIGNERS)
 		{
 		int i;
@@ -675,8 +686,7 @@ int MAIN(int argc, char **argv)
 		 */
 		if (operation == SMIME_SIGN)
 			{
-			if ((flags & PKCS7_DETACHED)
-				&& (outformat == FORMAT_SMIME))
+			if (indef || (flags & PKCS7_DETACHED))
 				flags |= PKCS7_STREAM;
 			flags |= PKCS7_PARTIAL;
 			p7 = PKCS7_sign(NULL, NULL, other, in, flags);
@@ -764,9 +774,9 @@ int MAIN(int argc, char **argv)
 				SMIME_write_PKCS7(out, p7, in, flags);
 			}
 		else if (outformat == FORMAT_PEM) 
-			PEM_write_bio_PKCS7(out,p7);
+			PEM_write_bio_PKCS7_stream(out, p7, in, flags);
 		else if (outformat == FORMAT_ASN1) 
-			i2d_PKCS7_bio(out,p7);
+			i2d_PKCS7_bio_stream(out,p7, in, flags);
 		else
 			{
 			BIO_printf(bio_err, "Bad output format for PKCS#7 file\n");

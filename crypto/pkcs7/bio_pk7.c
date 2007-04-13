@@ -97,8 +97,9 @@ typedef struct pkcs7_aux_st
 	} PKCS7_SUPPORT;
 
 static int pkcs7_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg);
-static int pkcs7_psfix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg);
+static int pkcs7_prefix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg);
 static int pkcs7_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg);
+static int pkcs7_suffix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg);
 
 BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7) 
 	{
@@ -113,8 +114,8 @@ BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7)
 
 	out = BIO_push(asn_bio, out);
 
-	BIO_asn1_set_prefix(asn_bio, pkcs7_prefix, pkcs7_psfix_free);
-	BIO_asn1_set_suffix(asn_bio, pkcs7_suffix, pkcs7_psfix_free);
+	BIO_asn1_set_prefix(asn_bio, pkcs7_prefix, pkcs7_prefix_free);
+	BIO_asn1_set_suffix(asn_bio, pkcs7_suffix, pkcs7_suffix_free);
 
 	/* Now initialize BIO for PKCS#7 output */
 
@@ -131,7 +132,6 @@ BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7)
 	return p7bio;
 
 	}
-
 
 static int pkcs7_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 	{
@@ -150,12 +150,15 @@ static int pkcs7_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 	*pbuf = p;
 	i2d_PKCS7_NDEF(p7aux->p7, &p);
 
+	if (!*p7aux->boundary)
+		return 0;
+
 	*plen = *p7aux->boundary - *pbuf;
 
 	return 1;
 	}
 
-static int pkcs7_psfix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg)
+static int pkcs7_prefix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 	{
 	PKCS7_SUPPORT *p7aux;
 
@@ -170,6 +173,16 @@ static int pkcs7_psfix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 	p7aux->derbuf = NULL;
 	*pbuf = NULL;
 	*plen = 0;
+	return 1;
+	}
+
+static int pkcs7_suffix_free(BIO *b, unsigned char **pbuf, int *plen, void *parg)
+	{
+	PKCS7_SUPPORT **pp7aux = (PKCS7_SUPPORT **)parg;
+	if (!pkcs7_prefix_free(b, pbuf, plen, parg))
+		return 0;
+	OPENSSL_free(*pp7aux);
+	*pp7aux = NULL;
 	return 1;
 	}
 
@@ -191,6 +204,8 @@ static int pkcs7_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 	p = OPENSSL_malloc(derlen);
 	p7aux->derbuf = p;
 	i2d_PKCS7_NDEF(p7aux->p7, &p);
+	if (!*p7aux->boundary)
+		return 0;
 	*pbuf = *p7aux->boundary;
 	*plen = derlen - (*p7aux->boundary - p7aux->derbuf);
 

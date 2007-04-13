@@ -87,7 +87,7 @@ DECLARE_STACK_OF(MIME_HEADER)
 IMPLEMENT_STACK_OF(MIME_HEADER)
 
 static int pkcs7_output_data(BIO *bio, BIO *data, PKCS7 *p7, int flags);
-static int B64_write_PKCS7(BIO *bio, PKCS7 *p7);
+static int B64_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *in, int flags);
 static PKCS7 *B64_read_PKCS7(BIO *bio);
 static char * strip_ends(char *name);
 static char * strip_start(char *name);
@@ -110,22 +110,58 @@ static void mime_hdr_free(MIME_HEADER *hdr);
 #define MAX_SMLEN 1024
 #define mime_debug(x) /* x */
 
+/* Output a PKCS#7 structure in BER format streaming if necessary */
+
+int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
+	{
+	/* If streaming create stream BIO and copy all content through it */
+	if (flags & PKCS7_STREAM)
+		{
+		BIO *bio, *tbio;
+		bio = BIO_new_PKCS7(out, p7);
+		if (!bio)
+			{
+			PKCS7err(PKCS7_F_B64_WRITE_PKCS7,ERR_R_MALLOC_FAILURE);
+			return 0;
+			}
+		SMIME_crlf_copy(in, bio, flags);
+		BIO_flush(bio);
+		/* Free up successive BIOs until we hit the old output BIO */
+		do
+			{
+			tbio = BIO_pop(bio);
+			BIO_free(bio);
+			bio = tbio;
+			} while (bio != out);
+		}
+	/* else just write out PKCS7 structure which will have all content
+	 * stored internally
+	 */
+	else
+		i2d_PKCS7_bio(out, p7);
+	return 1;
+	}
+
 /* Base 64 read and write of PKCS#7 structure */
 
-static int B64_write_PKCS7(BIO *bio, PKCS7 *p7)
-{
+static int B64_write_PKCS7(BIO *out, PKCS7 *p7, BIO *in, int flags)
+	{
 	BIO *b64;
-	if(!(b64 = BIO_new(BIO_f_base64()))) {
+	int r;
+	b64 = BIO_new(BIO_f_base64());
+	if(!b64)
+		{
 		PKCS7err(PKCS7_F_B64_WRITE_PKCS7,ERR_R_MALLOC_FAILURE);
 		return 0;
-	}
-	bio = BIO_push(b64, bio);
-	i2d_PKCS7_bio(bio, p7);
-	BIO_flush(bio);
-	bio = BIO_pop(bio);
+		}
+	/* prepend the b64 BIO so all data is base64 encoded.
+	 */
+	out = BIO_push(b64, out);
+	r = i2d_PKCS7_bio_stream(out, p7, in, flags);
+	BIO_pop(out);
 	BIO_free(b64);
-	return 1;
-}
+	return r;
+	}
 
 static PKCS7 *B64_read_PKCS7(BIO *bio)
 {
@@ -143,6 +179,17 @@ static PKCS7 *B64_read_PKCS7(BIO *bio)
 	BIO_free(b64);
 	return p7;
 }
+
+/* Streaming PKCS#7 PEM write */
+
+int PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
+	{
+	int r;
+	BIO_puts(out, "-----BEGIN PKCS7-----\n");
+	r = B64_write_PKCS7(out, p7, in, flags);
+	BIO_puts(out, "-----END PKCS7-----\n");
+	return r;
+	}
 
 /* Generate the MIME "micalg" parameter from RFC3851, RFC4490 */
 
@@ -275,7 +322,7 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 		BIO_printf(bio, "Content-Disposition: attachment;");
 		BIO_printf(bio, " filename=\"smime.p7s\"%s%s",
 							mime_eol, mime_eol);
-		B64_write_PKCS7(bio, p7);
+		B64_write_PKCS7(bio, p7, NULL, 0);
 		BIO_printf(bio,"%s------%s--%s%s", mime_eol, bound,
 							mime_eol, mime_eol);
 		return 1;
@@ -297,6 +344,8 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 		else
 			msg_type = "certs-only";
 		}
+	else
+		flags &= ~PKCS7_STREAM;
 	/* MIME headers */
 	BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
 	BIO_printf(bio, "Content-Disposition: attachment;");
@@ -307,7 +356,7 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 	BIO_printf(bio, " name=\"smime.p7m\"%s", mime_eol);
 	BIO_printf(bio, "Content-Transfer-Encoding: base64%s%s",
 						mime_eol, mime_eol);
-	B64_write_PKCS7(bio, p7);
+	B64_write_PKCS7(bio, p7, data, flags);
 	BIO_printf(bio, "%s", mime_eol);
 	return 1;
 }
@@ -463,22 +512,38 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 /* Copy text from one BIO to another making the output CRLF at EOL */
 int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
 {
+	BIO *bf;
 	char eol;
 	int len;
 	char linebuf[MAX_SMLEN];
-	if(flags & PKCS7_BINARY) {
+	/* Buffer output so we don't write one line at a time. This is
+	 * useful when streaming as we don't end up with one OCTET STRING
+	 * per line.
+	 */
+	bf = BIO_new(BIO_f_buffer());
+	if (!bf)
+		return 0;
+	out = BIO_push(bf, out);
+	if(flags & PKCS7_BINARY)
+		{
 		while((len = BIO_read(in, linebuf, MAX_SMLEN)) > 0)
 						BIO_write(out, linebuf, len);
-		return 1;
-	}
-	if(flags & PKCS7_TEXT)
-		BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
-	while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
-		eol = strip_eol(linebuf, &len);
-		if (len)
-			BIO_write(out, linebuf, len);
-		if(eol) BIO_write(out, "\r\n", 2);
-	}
+		}
+	else
+		{
+		if(flags & PKCS7_TEXT)
+			BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
+		while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0)
+			{
+			eol = strip_eol(linebuf, &len);
+			if (len)
+				BIO_write(out, linebuf, len);
+			if(eol) BIO_write(out, "\r\n", 2);
+			}
+		}
+	BIO_flush(out);
+	BIO_pop(out);
+	BIO_free(bf);
 	return 1;
 }
 

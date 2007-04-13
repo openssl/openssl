@@ -287,6 +287,8 @@ int i2d_PKCS7_fp(FILE *fp,PKCS7 *p7);
 PKCS7 *PKCS7_dup(PKCS7 *p7);
 PKCS7 *d2i_PKCS7_bio(BIO *bp,PKCS7 **p7);
 int i2d_PKCS7_bio(BIO *bp,PKCS7 *p7);
+int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
+int PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags);
 
 DECLARE_ASN1_FUNCTIONS(PKCS7_SIGNER_INFO)
 DECLARE_ASN1_FUNCTIONS(PKCS7_RECIP_INFO)

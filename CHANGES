@@ -4,6 +4,11 @@
 
  Changes between 0.9.8f and 0.9.9  [xx XXX xxxx]
 
+  *) Add option -stream to use PKCS#7 streaming in smime utility. New
+     function i2d_PKCS7_bio_stream() and PEM_write_PKCS7_bio_stream()
+     to output in BER and PEM format.
+     [Steve Henson]
+
   *) Experimental support for use of HMAC via EVP_PKEY interface. This
      allows HMAC to be handled via the EVP_DigestSign*() interface. The
      EVP_PKEY "key" in this case is the HMAC key, potentially allowing
