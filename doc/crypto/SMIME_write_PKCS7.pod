@@ -15,10 +15,9 @@ SMIME_write_PKCS7 - convert PKCS#7 structure to S/MIME format.
 SMIME_write_PKCS7() adds the appropriate MIME headers to a PKCS#7
 structure to produce an S/MIME message.
 
-B<out> is the BIO to write the data to. B<p7> is the appropriate
-B<PKCS7> structure. If cleartext signing (B<multipart/signed>) is
-being used then the signed data must be supplied in the B<data> 
-argument. B<flags> is an optional set of flags.
+B<out> is the BIO to write the data to. B<p7> is the appropriate B<PKCS7>
+structure. If streaming is enabled then the content must be supplied in the
+B<data> argument. B<flags> is an optional set of flags.
 
 =head1 NOTES
 
@@ -32,14 +31,19 @@ If the B<PKCS7_TEXT> flag is set MIME headers for type B<text/plain>
 are added to the content, this only makes sense if B<PKCS7_DETACHED>
 is also set.
 
-If the B<PKCS7_PARTSIGN> flag is set the signed data is finalized
-and output along with the content. This flag should only be set
-if B<PKCS7_DETACHED> is also set and the previous call to PKCS7_sign()
-also set these flags.
+If the B<PKCS7_STREAM> flag is set streaming is performed. This flag should
+only be set if B<PKCS7_STREAM> was also set in the previous call to
+PKCS7_sign() or B<PKCS7_encrypt()>.
 
-If cleartext signing is being used and B<PKCS7_PARTSIGN> not set then
+If cleartext signing is being used and B<PKCS7_STREAM> not set then
 the data must be read twice: once to compute the signature in PKCS7_sign()
 and once to output the S/MIME message.
+
+=head1 NOTES
+
+If streaming is performed the content is output in BER format using indefinite
+length constructuted encoding except in the case of signed data with detached
+content where the content is absent and DER format is used.
 
 =head1 BUGS
 
