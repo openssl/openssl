@@ -158,6 +158,7 @@ static int B64_write_PKCS7(BIO *out, PKCS7 *p7, BIO *in, int flags)
 	 */
 	out = BIO_push(b64, out);
 	r = i2d_PKCS7_bio_stream(out, p7, in, flags);
+	BIO_flush(out);
 	BIO_pop(out);
 	BIO_free(b64);
 	return r;
