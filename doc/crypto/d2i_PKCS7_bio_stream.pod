@@ -12,7 +12,7 @@ d2i_PKCS7_bio_stream - output PKCS7 structure in BER format.
 
 =head1 DESCRIPTION
 
-d2i_PKCS7_bio_stream() outputs a PKCS7 structure structure in BER format.
+d2i_PKCS7_bio_stream() outputs a PKCS7 structure in BER format.
 
 It is otherwise identical to the function SMIME_write_PKCS7().
 
