@@ -618,6 +618,7 @@ X) -> 0x%08X\n",
 			rm->neg = neg;
 		bn_check_top(rm);
 		}
+	bn_correct_top(res);
 	BN_CTX_end(ctx);
 	return(1);
 err:
