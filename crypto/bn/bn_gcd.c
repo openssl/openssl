@@ -640,7 +640,7 @@ BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
 		}
 	else
 		{
-		BNerr(BN_F_BN_MOD_INVERSE,BN_R_NO_INVERSE);
+		BNerr(BN_F_BN_MOD_INVERSE_NO_BRANCH,BN_R_NO_INVERSE);
 		goto err;
 		}
 	ret=R;

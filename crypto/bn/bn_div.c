@@ -422,7 +422,7 @@ int BN_div_no_branch(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
 
 	if (BN_is_zero(divisor))
 		{
-		BNerr(BN_F_BN_DIV,BN_R_DIV_BY_ZERO);
+		BNerr(BN_F_BN_DIV_NO_BRANCH,BN_R_DIV_BY_ZERO);
 		return(0);
 		}
 
