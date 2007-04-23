@@ -127,11 +127,10 @@
 #define SSL_ENC_NULL_IDX	6
 #define SSL_ENC_AES128_IDX	7
 #define SSL_ENC_AES256_IDX	8
-#define SSL_ENC_NUM_IDX		9
 #define SSL_ENC_CAMELLIA128_IDX	9
 #define SSL_ENC_CAMELLIA256_IDX	10
-#undef  SSL_ENC_NUM_IDX
-#define SSL_ENC_NUM_IDX		11
+#define SSL_ENC_SEED_IDX    	11
+#define SSL_ENC_NUM_IDX		12
 
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
@@ -196,10 +195,11 @@ static const SSL_CIPHER cipher_aliases[]={
 #ifndef OPENSSL_NO_IDEA
 	{0,SSL_TXT_IDEA,0,SSL_IDEA,  0,0,0,0,SSL_ENC_MASK,0},
 #endif
+	{0,SSL_TXT_SEED,0,SSL_SEED,  0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_eNULL,0,SSL_eNULL,0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_eFZA,0,SSL_eFZA,  0,0,0,0,SSL_ENC_MASK,0},
 	{0,SSL_TXT_AES,	0,SSL_AES,   0,0,0,0,SSL_ENC_MASK,0},
-	{0,SSL_TXT_CAMELLIA,	0,SSL_CAMELLIA,   0,0,0,0,SSL_ENC_MASK,0},
+	{0,SSL_TXT_CAMELLIA,0,SSL_CAMELLIA, 0,0,0,0,SSL_ENC_MASK,0},
 
 	{0,SSL_TXT_MD5,	0,SSL_MD5,   0,0,0,0,SSL_MAC_MASK,0},
 	{0,SSL_TXT_SHA1,0,SSL_SHA1,  0,0,0,0,SSL_MAC_MASK,0},
@@ -248,6 +248,8 @@ void ssl_load_ciphers(void)
 	  EVP_get_cipherbyname(SN_camellia_128_cbc);
 	ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX]=
 	  EVP_get_cipherbyname(SN_camellia_256_cbc);
+	ssl_cipher_methods[SSL_ENC_SEED_IDX]=
+	  EVP_get_cipherbyname(SN_seed_cbc);
 
 	ssl_digest_methods[SSL_MD_MD5_IDX]=
 		EVP_get_digestbyname(SN_md5);
@@ -374,6 +376,9 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		default: i=-1; break;
 			}
 		break;
+	case SSL_SEED:
+		i=SSL_ENC_SEED_IDX;
+		break;
 
 	default:
 		i= -1;
@@ -471,6 +476,7 @@ static struct disabled_masks ssl_cipher_get_disabled(void)
 	mask |= (ssl_cipher_methods[SSL_ENC_RC2_IDX ] == NULL) ? SSL_RC2 :0;
 	mask |= (ssl_cipher_methods[SSL_ENC_IDEA_IDX] == NULL) ? SSL_IDEA:0;
 	mask |= (ssl_cipher_methods[SSL_ENC_eFZA_IDX] == NULL) ? SSL_eFZA:0;
+	mask |= (ssl_cipher_methods[SSL_ENC_SEED_IDX] == NULL) ? SSL_SEED:0;
 
 	mask |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
 	mask |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;
@@ -1200,7 +1206,10 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 		default: enc="Camellia(?""?""?)"; break;
 			}
 		break;
-		
+	case SSL_SEED:
+		enc="SEED(128)";
+		break;
+
 	default:
 		enc="unknown";
 		break;

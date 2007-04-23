@@ -281,6 +281,7 @@ extern "C" {
 #define SSL_TXT_RC4		"RC4"
 #define SSL_TXT_RC2		"RC2"
 #define SSL_TXT_IDEA		"IDEA"
+#define SSL_TXT_SEED		"SEED"
 #define SSL_TXT_AES		"AES"
 #define SSL_TXT_CAMELLIA	"CAMELLIA"
 #define SSL_TXT_MD5		"MD5"

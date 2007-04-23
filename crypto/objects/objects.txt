@@ -1091,3 +1091,13 @@ camellia 44		: CAMELLIA-256-CFB		: camellia-256-cfb
 			: CAMELLIA-192-CFB8		: camellia-192-cfb8
 			: CAMELLIA-256-CFB8		: camellia-256-cfb8
 
+
+# Definitions for SEED cipher - ECB, CBC, OFB mode
+
+member-body 410 200004  : KISA          : kisa
+kisa 1 3                : SEED-ECB      : seed-ecb
+kisa 1 4                : SEED-CBC      : seed-cbc
+!Cname seed-cfb128
+kisa 1 5                : SEED-CFB      : seed-cfb
+!Cname seed-ofb128
+kisa 1 6                : SEED-OFB      : seed-ofb

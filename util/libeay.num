@@ -3512,3 +3512,14 @@ d2i_ASIdOrRange                         3904	EXIST::FUNCTION:RFC3779
 i2d_ASIdentifiers                       3905	EXIST::FUNCTION:RFC3779
 BN_div_no_branch                        3906	EXIST::FUNCTION:
 BN_mod_inverse_no_branch                3907	EXIST::FUNCTION:
+SEED_decrypt                            3908	EXIST::FUNCTION:SEED
+SEED_encrypt                            3909	EXIST::FUNCTION:SEED
+SEED_cbc_encrypt                        3910	EXIST::FUNCTION:SEED
+EVP_seed_ofb                            3911	EXIST::FUNCTION:SEED
+SEED_cfb128_encrypt                     3912	EXIST::FUNCTION:SEED
+SEED_ofb128_encrypt                     3913	EXIST::FUNCTION:SEED
+EVP_seed_cbc                            3914	EXIST::FUNCTION:SEED
+SEED_ecb_encrypt                        3915	EXIST::FUNCTION:SEED
+EVP_seed_ecb                            3916	EXIST::FUNCTION:SEED
+SEED_set_key                            3917	EXIST::FUNCTION:SEED
+EVP_seed_cfb128                         3918	EXIST::FUNCTION:SEED

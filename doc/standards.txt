@@ -100,6 +100,15 @@ PKCS#12: Personal Information Exchange Syntax Standard, version 1.0.
      (TLS). S. Moriai, A. Kato, M. Kanda. July 2005. (Format: TXT=13590
      bytes) (Status: PROPOSED STANDARD)
 
+4162 Addition of SEED Cipher Suites to Transport Layer Security (TLS).
+     H.J. Lee, J.H. Yoon, J.I. Lee. August 2005. (Format: TXT=10578 bytes)
+     (Status: PROPOSED STANDARD)
+
+4269 The SEED Encryption Algorithm. H.J. Lee, S.J. Lee, J.H. Yoon,
+     D.H. Cheon, J.I. Lee. December 2005. (Format: TXT=34390 bytes)
+     (Obsoletes RFC4009) (Status: INFORMATIONAL)
+
+
 Related:
 --------
 

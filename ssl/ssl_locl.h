@@ -278,7 +278,7 @@
 #define SSL_FZA			(SSL_aFZA|SSL_kFZA|SSL_eFZA)
 #define SSL_KRB5                (SSL_kKRB5|SSL_aKRB5)
 
-#define SSL_ENC_MASK		0x0C3F8000L
+#define SSL_ENC_MASK		0x1C3F8000L
 #define SSL_DES			0x00008000L
 #define SSL_3DES		0x00010000L
 #define SSL_RC4			0x00020000L
@@ -288,6 +288,7 @@
 #define SSL_eNULL		0x00200000L
 #define SSL_AES			0x04000000L
 #define SSL_CAMELLIA		0x08000000L
+#define SSL_SEED          	0x10000000L
 
 #define SSL_MAC_MASK		0x00c00000L
 #define SSL_MD5			0x00400000L
@@ -299,7 +300,7 @@
 #define SSL_SSLV3		0x02000000L
 #define SSL_TLSV1		SSL_SSLV3	/* for now */
 
-/* we have used 0fffffff - 4 bits left to go. */
+/* we have used 1fffffff - 3 bits left to go. */
 
 /*
  * Export and cipher strength information. For each cipher we have to decide

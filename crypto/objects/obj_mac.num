@@ -769,3 +769,11 @@ camellia_256_ofb128		768
 subject_directory_attributes		769
 issuing_distribution_point		770
 certificate_issuer		771
+korea		772
+kisa		773
+kftc		774
+npki_alg		775
+seed_ecb		776
+seed_cbc		777
+seed_ofb128		778
+seed_cfb128		779
