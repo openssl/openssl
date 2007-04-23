@@ -107,6 +107,15 @@ void OpenSSL_add_all_ciphers(void)
 	EVP_add_cipher_alias(SN_idea_cbc,"idea");
 #endif
 
+#ifndef OPENSSL_NO_SEED
+	EVP_add_cipher(EVP_seed_ecb());
+	EVP_add_cipher(EVP_seed_cfb());
+	EVP_add_cipher(EVP_seed_ofb());
+	EVP_add_cipher(EVP_seed_cbc());
+	EVP_add_cipher_alias(SN_seed_cbc,"SEED");
+	EVP_add_cipher_alias(SN_seed_cbc,"seed");
+#endif
+
 #ifndef OPENSSL_NO_RC2
 	EVP_add_cipher(EVP_rc2_ecb());
 	EVP_add_cipher(EVP_rc2_cfb());

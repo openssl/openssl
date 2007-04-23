@@ -834,3 +834,8 @@ dsa_with_SHA224		833
 dsa_with_SHA256		834
 gost89_cnt		835
 hmac		836
+kisa		837
+seed_ecb		838
+seed_cbc		839
+seed_cfb128		840
+seed_ofb128		841

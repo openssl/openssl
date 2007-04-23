@@ -1,4 +1,53 @@
-/* ssl/ssl_algs.c */
+/* crypto/seed/seed_ofb.c -*- mode:C; c-file-style: "eay" -*- */
+/* ====================================================================
+ * Copyright (c) 1998-2007 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    openssl-core@openssl.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ */
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
  *
@@ -56,76 +105,24 @@
  * [including the GNU Public Licence.]
  */
 
-#include <stdio.h>
-#include <openssl/objects.h>
-#include <openssl/lhash.h>
-#include "ssl_locl.h"
+#include "seed_locl.h"
+#include <string.h>
 
-int SSL_library_init(void)
+void SEED_ofb128_encrypt(const unsigned char *in, unsigned char *out,
+                         size_t len, const SEED_KEY_SCHEDULE *ks,
+                         unsigned char ivec[SEED_BLOCK_SIZE], int *num)
 	{
+	int n;
 
-#ifndef OPENSSL_NO_DES
-	EVP_add_cipher(EVP_des_cbc());
-	EVP_add_cipher(EVP_des_ede3_cbc());
-#endif
-#ifndef OPENSSL_NO_IDEA
-	EVP_add_cipher(EVP_idea_cbc());
-#endif
-#ifndef OPENSSL_NO_RC4
-	EVP_add_cipher(EVP_rc4());
-#endif  
-#ifndef OPENSSL_NO_RC2
-	EVP_add_cipher(EVP_rc2_cbc());
-#endif
-#ifndef OPENSSL_NO_AES
-	EVP_add_cipher(EVP_aes_128_cbc());
-	EVP_add_cipher(EVP_aes_192_cbc());
-	EVP_add_cipher(EVP_aes_256_cbc());
-#endif
-#ifndef OPENSSL_NO_CAMELLIA
-	EVP_add_cipher(EVP_camellia_128_cbc());
-	EVP_add_cipher(EVP_camellia_256_cbc());
-#endif
+	n = *num;
+	
+	while (len--)
+		{
+		if (n == 0)
+			SEED_encrypt(ivec, ivec, ks);
+		*(out++) = *(in++) ^ ivec[n];
+		n = (n+1) % SEED_BLOCK_SIZE;
+		}
 
-#ifndef OPENSSL_NO_SEED
-	EVP_add_cipher(EVP_seed_cbc());
-#endif
-  
-#ifndef OPENSSL_NO_MD2
-	EVP_add_digest(EVP_md2());
-#endif
-#ifndef OPENSSL_NO_MD5
-	EVP_add_digest(EVP_md5());
-	EVP_add_digest_alias(SN_md5,"ssl2-md5");
-	EVP_add_digest_alias(SN_md5,"ssl3-md5");
-#endif
-#ifndef OPENSSL_NO_SHA
-	EVP_add_digest(EVP_sha1()); /* RSA with sha1 */
-	EVP_add_digest_alias(SN_sha1,"ssl3-sha1");
-	EVP_add_digest_alias(SN_sha1WithRSAEncryption,SN_sha1WithRSA);
-#endif
-#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_DSA)
-	EVP_add_digest(EVP_dss1()); /* DSA with sha1 */
-	EVP_add_digest_alias(SN_dsaWithSHA1,SN_dsaWithSHA1_2);
-	EVP_add_digest_alias(SN_dsaWithSHA1,"DSS1");
-	EVP_add_digest_alias(SN_dsaWithSHA1,"dss1");
-#endif
-#ifndef OPENSSL_NO_ECDSA
-	EVP_add_digest(EVP_ecdsa());
-#endif
-	/* If you want support for phased out ciphers, add the following */
-#if 0
-	EVP_add_digest(EVP_sha());
-	EVP_add_digest(EVP_dss());
-#endif
-#ifndef OPENSSL_NO_COMP
-	/* This will initialise the built-in compression algorithms.
-	   The value returned is a STACK_OF(SSL_COMP), but that can
-	   be discarded safely */
-	(void)SSL_COMP_get_compression_methods();
-#endif
-	/* initialize cipher/digest methods table */
-	ssl_load_ciphers();
-	return(1);
+	*num = n;
 	}
-

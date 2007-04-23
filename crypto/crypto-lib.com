@@ -78,7 +78,7 @@ $!
 $ ENCRYPT_TYPES = "Basic,"+ -
 		  "OBJECTS,"+ -
 		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,"+ -
-		  "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,"+ -
+		  "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,"+ -
 		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
 		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
@@ -185,6 +185,7 @@ $ LIB_BF = "bf_skey,bf_ecb,bf_enc,bf_cfb64,bf_ofb64"
 $ LIB_CAST = "c_skey,c_ecb,c_enc,c_cfb64,c_ofb64"
 $ LIB_CAMELLIA = "camellia,cmll_misc,cmll_ecb,cmll_cbc,cmll_ofb,"+ -
 	"cmll_cfb,cmll_ctr"
+$ LIB_SEED = "seed,seed_cbc,seed_ecb,seed_cfb,seed_ofb"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
 $ IF F$TRNLNM("OPENSSL_NO_ASM").OR.ARCH.EQS."AXP" THEN LIB_BN_ASM = "bn_asm"
 $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
@@ -229,7 +230,7 @@ $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
 $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err,obj_xref"
 $ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,"+ -
-	"e_des,e_bf,e_idea,e_des3,e_camellia,"+ -
+	"e_des,e_bf,e_idea,e_des3,e_camellia,e_seed,"+ -
 	"e_rc4,e_aes,names,"+ -
 	"e_xcbc_d,e_rc2,e_cast,e_rc5"
 $ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wp," + -

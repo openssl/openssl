@@ -388,6 +388,12 @@ asn_pack.o: ../../include/openssl/opensslconf.h
 asn_pack.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 asn_pack.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 asn_pack.o: ../../include/openssl/symhacks.h ../cryptlib.h asn_pack.c
+bio_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+bio_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+bio_asn1.o: ../../include/openssl/opensslconf.h
+bio_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+bio_asn1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bio_asn1.o: ../../include/openssl/symhacks.h bio_asn1.c
 d2i_pr.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 d2i_pr.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 d2i_pr.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

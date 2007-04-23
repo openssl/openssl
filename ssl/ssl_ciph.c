@@ -156,7 +156,8 @@
 #define SSL_ENC_CAMELLIA128_IDX	8
 #define SSL_ENC_CAMELLIA256_IDX	9
 #define SSL_ENC_GOST89_IDX	10
-#define SSL_ENC_NUM_IDX		11
+#define SSL_ENC_SEED_IDX    	11
+#define SSL_ENC_NUM_IDX		12
 
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
@@ -252,6 +253,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_RC4,0,     0,0,SSL_RC4,   0,0,0,0,0,0},
 	{0,SSL_TXT_RC2,0,     0,0,SSL_RC2,   0,0,0,0,0,0},
 	{0,SSL_TXT_IDEA,0,    0,0,SSL_IDEA,  0,0,0,0,0,0},
+	{0,SSL_TXT_SEED,0,    0,0,SSL_SEED,  0,0,0,0,0,0},
 	{0,SSL_TXT_eNULL,0,   0,0,SSL_eNULL, 0,0,0,0,0,0},
 	{0,SSL_TXT_AES128,0,  0,0,SSL_AES128,0,0,0,0,0,0},
 	{0,SSL_TXT_AES256,0,  0,0,SSL_AES256,0,0,0,0,0,0},
@@ -307,7 +309,9 @@ void ssl_load_ciphers(void)
 	ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX]=
 	  EVP_get_cipherbyname(SN_camellia_256_cbc);
 	ssl_cipher_methods[SSL_ENC_GOST89_IDX]=
-		EVP_get_cipherbyname(SN_gost89_cnt);
+	  EVP_get_cipherbyname(SN_gost89_cnt);
+	ssl_cipher_methods[SSL_ENC_SEED_IDX]=
+	  EVP_get_cipherbyname(SN_seed_cbc);
 
 	ssl_digest_methods[SSL_MD_MD5_IDX]=
 		EVP_get_digestbyname(SN_md5);
@@ -433,6 +437,9 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	case SSL_eGOST2814789CNT:
 		i=SSL_ENC_GOST89_IDX;
 		break;
+	case SSL_SEED:
+		i=SSL_ENC_SEED_IDX;
+		break;
 	default:
 		i= -1;
 		break;
@@ -556,6 +563,7 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, un
 	*enc |= (ssl_cipher_methods[SSL_ENC_CAMELLIA128_IDX] == NULL) ? SSL_CAMELLIA128:0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_CAMELLIA256_IDX] == NULL) ? SSL_CAMELLIA256:0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_GOST89_IDX] == NULL) ? SSL_eGOST2814789CNT:0;
+	*enc |= (ssl_cipher_methods[SSL_ENC_SEED_IDX] == NULL) ? SSL_SEED:0;
 
 	*mac |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
 	*mac |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;
@@ -1443,6 +1451,9 @@ char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_CAMELLIA256:
 		enc="Camellia(256)";
+		break;
+	case SSL_SEED:
+		enc="SEED(128)";
 		break;
 	default:
 		enc="unknown";

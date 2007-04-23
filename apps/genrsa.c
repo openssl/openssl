@@ -160,6 +160,10 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-idea") == 0)
 			enc=EVP_idea_cbc();
 #endif
+#ifndef OPENSSL_NO_SEED
+		else if (strcmp(*argv,"-seed") == 0)
+			enc=EVP_seed_cbc();
+#endif
 #ifndef OPENSSL_NO_AES
 		else if (strcmp(*argv,"-aes128") == 0)
 			enc=EVP_aes_128_cbc();
@@ -194,6 +198,10 @@ bad:
 		BIO_printf(bio_err," -des3           encrypt the generated key with DES in ede cbc mode (168 bit key)\n");
 #ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea           encrypt the generated key with IDEA in cbc mode\n");
+#endif
+#ifndef OPENSSL_NO_SEED
+		BIO_printf(bio_err," -seed\n");
+		BIO_printf(bio_err,"                 encrypt PEM output with cbc seed\n");
 #endif
 #ifndef OPENSSL_NO_AES
 		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");

@@ -159,6 +159,9 @@
 #ifndef OPENSSL_NO_IDEA
 #include <openssl/idea.h>
 #endif
+#ifndef OPENSSL_NO_SEED
+#include <openssl/seed.h>
+#endif
 #ifndef OPENSSL_NO_BF
 #include <openssl/blowfish.h>
 #endif
@@ -201,7 +204,7 @@ static void print_result(int alg,int run_no,int count,double time_used);
 static int do_multi(int multi);
 #endif
 
-#define ALGOR_NUM	25
+#define ALGOR_NUM	26
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
@@ -211,7 +214,7 @@ static int do_multi(int multi);
 
 static const char *names[ALGOR_NUM]={
   "md2","mdc2","md4","md5","hmac(md5)","sha1","rmd160","rc4",
-  "des cbc","des ede3","idea cbc",
+  "des cbc","des ede3","idea cbc","seed cbc",
   "rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc",
   "aes-128 cbc","aes-192 cbc","aes-256 cbc",
   "camellia-128 cbc","camellia-192 cbc","camellia-256 cbc",
@@ -370,6 +373,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_IDEA
 	IDEA_KEY_SCHEDULE idea_ks;
 #endif
+#ifndef OPENSSL_NO_SEED
+	SEED_KEY_SCHEDULE seed_ks;
+#endif
 #ifndef OPENSSL_NO_BF
 	BF_KEY bf_ks;
 #endif
@@ -434,20 +440,21 @@ int MAIN(int argc, char **argv)
 #define	D_CBC_DES	8
 #define	D_EDE3_DES	9
 #define	D_CBC_IDEA	10
-#define	D_CBC_RC2	11
-#define	D_CBC_RC5	12
-#define	D_CBC_BF	13
-#define	D_CBC_CAST	14
-#define D_CBC_128_AES	15
-#define D_CBC_192_AES	16
-#define D_CBC_256_AES	17
-#define D_CBC_128_CML   18 
-#define D_CBC_192_CML   19
-#define D_CBC_256_CML   20 
-#define D_EVP		21
-#define D_SHA256	22	
-#define D_SHA512	23
-#define D_WHIRLPOOL	24
+#define	D_CBC_SEED	11
+#define	D_CBC_RC2	12
+#define	D_CBC_RC5	13
+#define	D_CBC_BF	14
+#define	D_CBC_CAST	15
+#define D_CBC_128_AES	16
+#define D_CBC_192_AES	17
+#define D_CBC_256_AES	18
+#define D_CBC_128_CML   19 
+#define D_CBC_192_CML   20
+#define D_CBC_256_CML   21 
+#define D_EVP		22
+#define D_SHA256	23	
+#define D_SHA512	24
+#define D_WHIRLPOOL	25
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 #define	R_DSA_512	0
@@ -841,6 +848,11 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"idea") == 0) doit[D_CBC_IDEA]=1;
 		else
 #endif
+#ifndef OPENSSL_NO_SEED
+		     if (strcmp(*argv,"seed-cbc") == 0) doit[D_CBC_SEED]=1;
+		else if (strcmp(*argv,"seed") == 0) doit[D_CBC_SEED]=1;
+		else
+#endif
 #ifndef OPENSSL_NO_BF
 		     if (strcmp(*argv,"bf-cbc") == 0) doit[D_CBC_BF]=1;
 		else if (strcmp(*argv,"blowfish") == 0) doit[D_CBC_BF]=1;
@@ -990,6 +1002,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err,"idea-cbc ");
 #endif
+#ifndef OPENSSL_NO_SEED
+			BIO_printf(bio_err,"seed-cbc ");
+#endif
 #ifndef OPENSSL_NO_RC2
 			BIO_printf(bio_err,"rc2-cbc  ");
 #endif
@@ -999,7 +1014,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_BF
 			BIO_printf(bio_err,"bf-cbc");
 #endif
-#if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_RC2) || \
+#if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_SEED) || !defined(OPENSSL_NO_RC2) || \
     !defined(OPENSSL_NO_BF) || !defined(OPENSSL_NO_RC5)
 			BIO_printf(bio_err,"\n");
 #endif
@@ -1041,6 +1056,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_IDEA
 			BIO_printf(bio_err,"idea     ");
 #endif
+#ifndef OPENSSL_NO_SEED
+			BIO_printf(bio_err,"seed     ");
+#endif
 #ifndef OPENSSL_NO_RC2
 			BIO_printf(bio_err,"rc2      ");
 #endif
@@ -1059,10 +1077,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_BF
 			BIO_printf(bio_err,"blowfish");
 #endif
-#if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_RC2) || \
-    !defined(OPENSSL_NO_DES) || !defined(OPENSSL_NO_RSA) || \
-    !defined(OPENSSL_NO_BF) || !defined(OPENSSL_NO_AES) || \
-    !defined(OPENSSL_NO_CAMELLIA) 
+#if !defined(OPENSSL_NO_IDEA) || !defined(OPENSSL_NO_SEED) || \
+    !defined(OPENSSL_NO_RC2) || !defined(OPENSSL_NO_DES) || \
+    !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_BF) || \
+    !defined(OPENSSL_NO_AES) || !defined(OPENSSL_NO_CAMELLIA)
 			BIO_printf(bio_err,"\n");
 #endif
 
@@ -1159,6 +1177,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_IDEA
 	idea_set_encrypt_key(key16,&idea_ks);
 #endif
+#ifndef OPENSSL_NO_SEED
+	SEED_set_key(key16,&seed_ks);
+#endif
 #ifndef OPENSSL_NO_RC4
 	RC4_set_key(&rc4_ks,16,key16);
 #endif
@@ -1202,6 +1223,7 @@ int MAIN(int argc, char **argv)
 	c[D_CBC_DES][0]=count;
 	c[D_EDE3_DES][0]=count/3;
 	c[D_CBC_IDEA][0]=count;
+	c[D_CBC_SEED][0]=count;
 	c[D_CBC_RC2][0]=count;
 	c[D_CBC_RC5][0]=count;
 	c[D_CBC_BF][0]=count;
@@ -1239,6 +1261,7 @@ int MAIN(int argc, char **argv)
 		c[D_CBC_DES][i]=c[D_CBC_DES][i-1]*l0/l1;
 		c[D_EDE3_DES][i]=c[D_EDE3_DES][i-1]*l0/l1;
 		c[D_CBC_IDEA][i]=c[D_CBC_IDEA][i-1]*l0/l1;
+		c[D_CBC_SEED][i]=c[D_CBC_SEED][i-1]*l0/l1;
 		c[D_CBC_RC2][i]=c[D_CBC_RC2][i-1]*l0/l1;
 		c[D_CBC_RC5][i]=c[D_CBC_RC5][i-1]*l0/l1;
 		c[D_CBC_BF][i]=c[D_CBC_BF][i-1]*l0/l1;
@@ -1718,6 +1741,21 @@ int MAIN(int argc, char **argv)
 					iv,IDEA_ENCRYPT);
 			d=Time_F(STOP);
 			print_result(D_CBC_IDEA,j,count,d);
+			}
+		}
+#endif
+#ifndef OPENSSL_NO_SEED
+	if (doit[D_CBC_SEED])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_CBC_SEED],c[D_CBC_SEED][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_CBC_SEED][j]); count++)
+				SEED_cbc_encrypt(buf,buf,
+					(unsigned long)lengths[j],&seed_ks,iv,1);
+			d=Time_F(STOP);
+			print_result(D_CBC_SEED,j,count,d);
 			}
 		}
 #endif

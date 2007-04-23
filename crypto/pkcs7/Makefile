@@ -95,6 +95,12 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+bio_pk7.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+bio_pk7.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+bio_pk7.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+bio_pk7.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
+bio_pk7.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bio_pk7.o: ../../include/openssl/symhacks.h bio_pk7.c
 pk7_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
 pk7_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 pk7_asn1.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

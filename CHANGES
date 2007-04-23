@@ -501,6 +501,20 @@
 
  Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
 
+  *) Add the Korean symmetric 128-bit cipher SEED (see
+     http://www.kisa.or.kr/kisa/seed/jsp/seed_eng.jsp) and
+     add SEED ciphersuites from RFC 4162:
+
+        TLS_RSA_WITH_SEED_CBC_SHA      =  "SEED-SHA"
+        TLS_DHE_DSS_WITH_SEED_CBC_SHA  =  "DHE-DSS-SEED-SHA"
+        TLS_DHE_RSA_WITH_SEED_CBC_SHA  =  "DHE-RSA-SEED-SHA"
+        TLS_DH_anon_WITH_SEED_CBC_SHA  =  "ADH-SEED-SHA"
+
+     To minimize changes between patchlevels in the OpenSSL 0.9.8
+     series, SEED remains excluded from compilation unless OpenSSL
+     is configured with 'enable-seed'.
+     [KISA, Bodo Moeller]
+
   *) Mitigate branch prediction attacks, which can be practical if a
      single processor is shared, allowing a spy process to extract
      information.  For detailed background information, see

@@ -1453,6 +1453,107 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	},
 #endif  /* OPENSSL_NO_PSK */
 
+#ifndef OPENSSL_NO_SEED
+	/* SEED ciphersuites from RFC4162 */
+
+	/* Cipher 96 */
+	{
+	1,
+	TLS1_TXT_RSA_WITH_SEED_SHA,
+	TLS1_CK_RSA_WITH_SEED_SHA,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_SEED,
+	SSL_SHA1,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	},
+
+	/* Cipher 97 */
+	{
+	0, /* not implemented (non-ephemeral DH) */
+	TLS1_TXT_DH_DSS_WITH_SEED_SHA,
+	TLS1_CK_DH_DSS_WITH_SEED_SHA,
+	SSL_kDHd,
+	SSL_aDH,
+	SSL_SEED,
+	SSL_SHA1,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	},
+
+	/* Cipher 98 */
+	{
+	0, /* not implemented (non-ephemeral DH) */
+	TLS1_TXT_DH_RSA_WITH_SEED_SHA,
+	TLS1_CK_DH_RSA_WITH_SEED_SHA,
+	SSL_kDHr,
+	SSL_aDH,
+	SSL_SEED,
+	SSL_SHA1,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	},
+
+	/* Cipher 99 */
+	{
+	1,
+	TLS1_TXT_DHE_DSS_WITH_SEED_SHA,
+	TLS1_CK_DHE_DSS_WITH_SEED_SHA,
+	SSL_kEDH,
+	SSL_aDSS,
+	SSL_SEED,
+	SSL_SHA1,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	},
+
+	/* Cipher 9A */
+	{
+	1,
+	TLS1_TXT_DHE_RSA_WITH_SEED_SHA,
+	TLS1_CK_DHE_RSA_WITH_SEED_SHA,
+	SSL_kEDH,
+	SSL_aRSA,
+	SSL_SEED,
+	SSL_SHA1,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	},
+
+	/* Cipher 9B */
+	{
+	1,
+	TLS1_TXT_ADH_WITH_SEED_SHA,
+	TLS1_CK_ADH_WITH_SEED_SHA,
+	SSL_kEDH,
+	SSL_aNULL,
+	SSL_SEED,
+	SSL_SHA1,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	},
+
+#endif /* OPENSSL_NO_SEED */
+
 #ifndef OPENSSL_NO_ECDH
 	/* Cipher C001 */
 	{
