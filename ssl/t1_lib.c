@@ -702,7 +702,7 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 		if (s->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->tlsext_ecpointformatlist);
 		if ((s->tlsext_ecpointformatlist = OPENSSL_malloc(3)) == NULL)
 			{
-			SSLerr(SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
+			SSLerr(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
 			return -1;
 			}
 		s->tlsext_ecpointformatlist_length = 3;
@@ -716,7 +716,7 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 		if ((s->tlsext_ellipticcurvelist = OPENSSL_malloc(s->tlsext_ellipticcurvelist_length)) == NULL)
 			{
 			s->tlsext_ellipticcurvelist_length = 0;
-			SSLerr(SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
+			SSLerr(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
 			return -1;
 			}
 		for (i = 1, j = s->tlsext_ellipticcurvelist; i <= sizeof(nid_list)/sizeof(nid_list[0]); i++)
@@ -744,7 +744,7 @@ int ssl_prepare_serverhello_tlsext(SSL *s)
 		if (s->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->tlsext_ecpointformatlist);
 		if ((s->tlsext_ecpointformatlist = OPENSSL_malloc(3)) == NULL)
 			{
-			SSLerr(SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
+			SSLerr(SSL_F_SSL_PREPARE_SERVERHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
 			return -1;
 			}
 		s->tlsext_ecpointformatlist_length = 3;
@@ -812,7 +812,7 @@ int ssl_check_serverhello_tlsext(SSL *s)
 		int found_uncompressed = 0;
 		if ((s->session->tlsext_ecpointformatlist == NULL) || (s->session->tlsext_ecpointformatlist_length == 0))
 			{
-			SSLerr(SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT,SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
+			SSLerr(SSL_F_SSL_CHECK_SERVERHELLO_TLSEXT,SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
 			return -1;
 			}
 		list = s->session->tlsext_ecpointformatlist;
@@ -826,7 +826,7 @@ int ssl_check_serverhello_tlsext(SSL *s)
 			}
 		if (!found_uncompressed)
 			{
-			SSLerr(SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT,SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
+			SSLerr(SSL_F_SSL_CHECK_SERVERHELLO_TLSEXT,SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
 			return -1;
 			}
 		}

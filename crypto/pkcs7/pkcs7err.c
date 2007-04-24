@@ -1,6 +1,6 @@
 /* crypto/pkcs7/pkcs7err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -81,6 +81,7 @@ static ERR_STRING_DATA PKCS7_str_functs[]=
 {ERR_FUNC(PKCS7_F_PKCS7_ADD_SIGNATURE),	"PKCS7_add_signature"},
 {ERR_FUNC(PKCS7_F_PKCS7_ADD_SIGNER),	"PKCS7_add_signer"},
 {ERR_FUNC(PKCS7_F_PKCS7_BIO_ADD_DIGEST),	"PKCS7_BIO_ADD_DIGEST"},
+{ERR_FUNC(PKCS7_F_PKCS7_BIO_STREAM),	"PKCS7_BIO_STREAM"},
 {ERR_FUNC(PKCS7_F_PKCS7_COPY_EXISTING_DIGEST),	"PKCS7_COPY_EXISTING_DIGEST"},
 {ERR_FUNC(PKCS7_F_PKCS7_CTRL),	"PKCS7_ctrl"},
 {ERR_FUNC(PKCS7_F_PKCS7_DATADECODE),	"PKCS7_dataDecode"},

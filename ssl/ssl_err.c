@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -177,6 +177,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL_CERT_INSTANTIATE),	"SSL_CERT_INSTANTIATE"},
 {ERR_FUNC(SSL_F_SSL_CERT_NEW),	"SSL_CERT_NEW"},
 {ERR_FUNC(SSL_F_SSL_CHECK_PRIVATE_KEY),	"SSL_check_private_key"},
+{ERR_FUNC(SSL_F_SSL_CHECK_SERVERHELLO_TLSEXT),	"SSL_CHECK_SERVERHELLO_TLSEXT"},
 {ERR_FUNC(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG),	"SSL_CHECK_SRVR_ECC_CERT_AND_ALG"},
 {ERR_FUNC(SSL_F_SSL_CIPHER_PROCESS_RULESTR),	"SSL_CIPHER_PROCESS_RULESTR"},
 {ERR_FUNC(SSL_F_SSL_CIPHER_STRENGTH_SORT),	"SSL_CIPHER_STRENGTH_SORT"},
@@ -211,6 +212,8 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL_LOAD_CLIENT_CA_FILE),	"SSL_load_client_CA_file"},
 {ERR_FUNC(SSL_F_SSL_NEW),	"SSL_new"},
 {ERR_FUNC(SSL_F_SSL_PEEK),	"SSL_peek"},
+{ERR_FUNC(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT),	"SSL_PREPARE_CLIENTHELLO_TLSEXT"},
+{ERR_FUNC(SSL_F_SSL_PREPARE_SERVERHELLO_TLSEXT),	"SSL_PREPARE_SERVERHELLO_TLSEXT"},
 {ERR_FUNC(SSL_F_SSL_READ),	"SSL_read"},
 {ERR_FUNC(SSL_F_SSL_RSA_PRIVATE_DECRYPT),	"SSL_RSA_PRIVATE_DECRYPT"},
 {ERR_FUNC(SSL_F_SSL_RSA_PUBLIC_ENCRYPT),	"SSL_RSA_PUBLIC_ENCRYPT"},

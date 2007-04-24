@@ -833,7 +833,7 @@ int ssl3_get_server_hello(SSL *s)
 			}
 		if (ssl_check_serverhello_tlsext(s) <= 0)
 			{
-			SSLerr(SSL_F_SSL3_CONNECT,SSL_R_SERVERHELLO_TLSEXT);
+			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_SERVERHELLO_TLSEXT);
 				goto err;
 			}
 		}

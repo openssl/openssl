@@ -1,6 +1,6 @@
 /* crypto/ts/ts_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,6 +76,7 @@ static ERR_STRING_DATA TS_str_functs[]=
 {ERR_FUNC(TS_F_ESS_ADD_SIGNING_CERT),	"ESS_ADD_SIGNING_CERT"},
 {ERR_FUNC(TS_F_ESS_CERT_ID_NEW_INIT),	"ESS_CERT_ID_NEW_INIT"},
 {ERR_FUNC(TS_F_ESS_SIGNING_CERT_NEW_INIT),	"ESS_SIGNING_CERT_NEW_INIT"},
+{ERR_FUNC(TS_F_INT_TS_RESP_VERIFY_TOKEN),	"INT_TS_RESP_VERIFY_TOKEN"},
 {ERR_FUNC(TS_F_PKCS7_TO_TS_TST_INFO),	"PKCS7_to_TS_TST_INFO"},
 {ERR_FUNC(TS_F_TS_ACCURACY_SET_MICROS),	"TS_ACCURACY_set_micros"},
 {ERR_FUNC(TS_F_TS_ACCURACY_SET_MILLIS),	"TS_ACCURACY_set_millis"},
@@ -106,6 +107,7 @@ static ERR_STRING_DATA TS_str_functs[]=
 {ERR_FUNC(TS_F_TS_RESP_GET_POLICY),	"TS_RESP_GET_POLICY"},
 {ERR_FUNC(TS_F_TS_RESP_SET_GENTIME_WITH_PRECISION),	"TS_RESP_SET_GENTIME_WITH_PRECISION"},
 {ERR_FUNC(TS_F_TS_RESP_SET_STATUS_INFO),	"TS_RESP_set_status_info"},
+{ERR_FUNC(TS_F_TS_RESP_SET_TST_INFO),	"TS_RESP_set_tst_info"},
 {ERR_FUNC(TS_F_TS_RESP_SIGN),	"TS_RESP_SIGN"},
 {ERR_FUNC(TS_F_TS_RESP_VERIFY_SIGNATURE),	"TS_RESP_verify_signature"},
 {ERR_FUNC(TS_F_TS_RESP_VERIFY_TOKEN),	"TS_RESP_verify_token"},

@@ -187,18 +187,18 @@ static int ts_resp_set_tst_info(TS_RESP *a)
 
 	if (a->token) {
 		if (status != 0 && status != 1) {
-			TSerr(TS_F_D2I_TS_RESP, TS_R_TOKEN_PRESENT);
+			TSerr(TS_F_TS_RESP_SET_TST_INFO, TS_R_TOKEN_PRESENT);
 			return 0;
 		}
 		if (a->tst_info != NULL)
 			TS_TST_INFO_free(a->tst_info);
 		a->tst_info = PKCS7_to_TS_TST_INFO(a->token);
 		if (!a->tst_info) {
-			TSerr(TS_F_D2I_TS_RESP, TS_R_PKCS7_TO_TS_TST_INFO_FAILED);
+			TSerr(TS_F_TS_RESP_SET_TST_INFO, TS_R_PKCS7_TO_TS_TST_INFO_FAILED);
 			return 0;
 		}
 	} else if (status == 0 || status == 1) {
-		TSerr(TS_F_D2I_TS_RESP, TS_R_TOKEN_NOT_PRESENT);
+		TSerr(TS_F_TS_RESP_SET_TST_INFO, TS_R_TOKEN_NOT_PRESENT);
 		return 0;
 	}
 

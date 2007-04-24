@@ -350,7 +350,7 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
 		*sk=sk_X509_CRL_new_null();
 	if (*sk == NULL)
 		{
-		PKCS7err(PKCS7_F_PKCS7_ADD_CERTIFICATE,ERR_R_MALLOC_FAILURE);
+		PKCS7err(PKCS7_F_PKCS7_ADD_CRL,ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 

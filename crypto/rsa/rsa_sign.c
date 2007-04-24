@@ -197,7 +197,7 @@ int int_rsa_verify(int dtype, const unsigned char *m,
 		/* Excess data can be used to create forgeries */
 		if(p != s+i)
 			{
-			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			RSAerr(RSA_F_INT_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
 			goto err;
 			}
 
@@ -206,7 +206,7 @@ int int_rsa_verify(int dtype, const unsigned char *m,
 		if(sig->algor->parameter
 		   && ASN1_TYPE_get(sig->algor->parameter) != V_ASN1_NULL)
 			{
-			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			RSAerr(RSA_F_INT_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
 			goto err;
 			}
 

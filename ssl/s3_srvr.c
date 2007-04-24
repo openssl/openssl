@@ -944,7 +944,7 @@ int ssl3_get_client_hello(SSL *s)
 			}
 		}
 		if (ssl_check_clienthello_tlsext(s) <= 0) {
-			SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLSEXT);
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
 			goto err;
 		}
 #endif

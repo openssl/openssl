@@ -70,7 +70,7 @@ static int TS_check_signing_certs(PKCS7_SIGNER_INFO *si, STACK_OF(X509) *chain);
 static ESS_SIGNING_CERT *ESS_get_signing_cert(PKCS7_SIGNER_INFO *si);
 static int TS_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert);
 static int TS_issuer_serial_cmp(ESS_ISSUER_SERIAL *is, X509_CINF *cinfo);
-static int _TS_RESP_verify_token(TS_VERIFY_CTX *ctx, 
+static int int_TS_RESP_verify_token(TS_VERIFY_CTX *ctx, 
 				 PKCS7 *token, TS_TST_INFO *tst_info);
 static int TS_check_status_info(TS_RESP *response);
 static char *TS_get_status_text(STACK_OF(ASN1_UTF8STRING) *text);
@@ -369,7 +369,7 @@ int TS_RESP_verify_response(TS_VERIFY_CTX *ctx, TS_RESP *response)
 	if (!TS_check_status_info(response)) goto err;
 
 	/* Check the contents of the time stamp token. */
-	if (!_TS_RESP_verify_token(ctx, token, tst_info))
+	if (!int_TS_RESP_verify_token(ctx, token, tst_info))
 		goto err;
 
 	ret = 1;
@@ -379,7 +379,7 @@ int TS_RESP_verify_response(TS_VERIFY_CTX *ctx, TS_RESP *response)
 
 /*
  * Tries to extract a TS_TST_INFO structure from the PKCS7 token and
- * calls the internal _TS_RESP_verify_token function for verifying it.
+ * calls the internal int_TS_RESP_verify_token function for verifying it.
  */
 int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
 	{
@@ -387,7 +387,7 @@ int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
 	int ret = 0;
 	if (tst_info)
 		{
-		ret = _TS_RESP_verify_token(ctx, token, tst_info);
+		ret = int_TS_RESP_verify_token(ctx, token, tst_info);
 		TS_TST_INFO_free(tst_info);
 		}
 	return ret;
@@ -405,7 +405,7 @@ int TS_RESP_verify_token(TS_VERIFY_CTX *ctx, PKCS7 *token)
  *	- Check if the TSA name matches the signer.
  *	- Check if the TSA name is the expected TSA.
  */
-static int _TS_RESP_verify_token(TS_VERIFY_CTX *ctx, 
+static int int_TS_RESP_verify_token(TS_VERIFY_CTX *ctx, 
 				 PKCS7 *token, TS_TST_INFO *tst_info)
 	{
 	X509 *signer = NULL;
@@ -425,7 +425,7 @@ static int _TS_RESP_verify_token(TS_VERIFY_CTX *ctx,
 	if ((ctx->flags & TS_VFY_VERSION)
 	    && TS_TST_INFO_get_version(tst_info) != 1)
 		{
-		TSerr(TS_F_TS_RESP_VERIFY_TOKEN, TS_R_UNSUPPORTED_VERSION);
+		TSerr(TS_F_INT_TS_RESP_VERIFY_TOKEN, TS_R_UNSUPPORTED_VERSION);
 		goto err;
 		}
 
@@ -456,7 +456,7 @@ static int _TS_RESP_verify_token(TS_VERIFY_CTX *ctx,
 	if ((ctx->flags & TS_VFY_SIGNER)
 	    && tsa_name && !TS_check_signer_name(tsa_name, signer))
 		{
-		TSerr(TS_F_TS_RESP_VERIFY_TOKEN, TS_R_TSA_NAME_MISMATCH);
+		TSerr(TS_F_INT_TS_RESP_VERIFY_TOKEN, TS_R_TSA_NAME_MISMATCH);
 		goto err;
 		}
 
@@ -464,7 +464,7 @@ static int _TS_RESP_verify_token(TS_VERIFY_CTX *ctx,
 	if ((ctx->flags & TS_VFY_TSA_NAME)
 	    && !TS_check_signer_name(ctx->tsa_name, signer))
 		{
-		TSerr(TS_F_TS_RESP_VERIFY_TOKEN, TS_R_TSA_UNTRUSTED);
+		TSerr(TS_F_INT_TS_RESP_VERIFY_TOKEN, TS_R_TSA_UNTRUSTED);
 		goto err;
 		}
 
