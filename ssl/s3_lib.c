@@ -542,11 +542,8 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 #endif
 
 #ifndef OPENSSL_NO_KRB5
-/* The Kerberos ciphers
-** 20000107 VRS: And the first shall be last,
-** in hopes of avoiding the lynx ssl renegotiation problem.
-*/
-/* Cipher 1E VRS */
+/* The Kerberos ciphers */
+/* Cipher 1E */
 	{
 	1,
 	SSL3_TXT_KRB5_DES_64_CBC_SHA,
@@ -560,7 +557,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 1F VRS */
+/* Cipher 1F */
 	{
 	1,
 	SSL3_TXT_KRB5_DES_192_CBC3_SHA,
@@ -574,7 +571,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 20 VRS */
+/* Cipher 20 */
 	{
 	1,
 	SSL3_TXT_KRB5_RC4_128_SHA,
@@ -588,7 +585,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 21 VRS */
+/* Cipher 21 */
 	{
 	1,
 	SSL3_TXT_KRB5_IDEA_128_CBC_SHA,
@@ -602,7 +599,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 22 VRS */
+/* Cipher 22 */
 	{
 	1,
 	SSL3_TXT_KRB5_DES_64_CBC_MD5,
@@ -616,7 +613,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 23 VRS */
+/* Cipher 23 */
 	{
 	1,
 	SSL3_TXT_KRB5_DES_192_CBC3_MD5,
@@ -630,7 +627,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 24 VRS */
+/* Cipher 24 */
 	{
 	1,
 	SSL3_TXT_KRB5_RC4_128_MD5,
@@ -644,7 +641,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 25 VRS */
+/* Cipher 25 */
 	{
 	1,
 	SSL3_TXT_KRB5_IDEA_128_CBC_MD5,
@@ -658,7 +655,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 26 VRS */
+/* Cipher 26 */
 	{
 	1,
 	SSL3_TXT_KRB5_DES_40_CBC_SHA,
@@ -672,7 +669,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 27 VRS */
+/* Cipher 27 */
 	{
 	1,
 	SSL3_TXT_KRB5_RC2_40_CBC_SHA,
@@ -686,7 +683,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 28 VRS */
+/* Cipher 28 */
 	{
 	1,
 	SSL3_TXT_KRB5_RC4_40_SHA,
@@ -700,7 +697,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 29 VRS */
+/* Cipher 29 */
 	{
 	1,
 	SSL3_TXT_KRB5_DES_40_CBC_MD5,
@@ -714,7 +711,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 2A VRS */
+/* Cipher 2A */
 	{
 	1,
 	SSL3_TXT_KRB5_RC2_40_CBC_MD5,
@@ -728,7 +725,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 
-/* Cipher 2B VRS */
+/* Cipher 2B */
 	{
 	1,
 	SSL3_TXT_KRB5_RC4_40_MD5,
@@ -742,8 +739,8 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 #endif	/* OPENSSL_NO_KRB5 */
-/* New AES ciphersuites */
 
+/* New AES ciphersuites */
 /* Cipher 2F */
 	{
 	1,
@@ -1164,6 +1161,95 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	SSL_ALL_STRENGTHS
 	},
 #endif /* OPENSSL_NO_CAMELLIA */
+
+#ifndef OPENSSL_NO_SEED
+	/* SEED ciphersuites from RFC4162 */
+
+	/* Cipher 96 */
+	{
+	1,
+	TLS1_TXT_RSA_WITH_SEED_SHA,
+	TLS1_CK_RSA_WITH_SEED_SHA,
+	SSL_kRSA|SSL_aRSA|SSL_SEED|SSL_SHA1|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+	/* Cipher 97 */
+	{
+	0, /* not implemented (non-ephemeral DH) */
+	TLS1_TXT_DH_DSS_WITH_SEED_SHA,
+	TLS1_CK_DH_DSS_WITH_SEED_SHA,
+	SSL_kDHd|SSL_aDH|SSL_SEED|SSL_SHA1|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+	/* Cipher 98 */
+	{
+	0, /* not implemented (non-ephemeral DH) */
+	TLS1_TXT_DH_RSA_WITH_SEED_SHA,
+	TLS1_CK_DH_RSA_WITH_SEED_SHA,
+	SSL_kDHr|SSL_aDH|SSL_SEED|SSL_SHA1|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+	/* Cipher 99 */
+	{
+	1,
+	TLS1_TXT_DHE_DSS_WITH_SEED_SHA,
+	TLS1_CK_DHE_DSS_WITH_SEED_SHA,
+	SSL_kEDH|SSL_aDSS|SSL_SEED|SSL_SHA1|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+	/* Cipher 9A */
+	{
+	1,
+	TLS1_TXT_DHE_RSA_WITH_SEED_SHA,
+	TLS1_CK_DHE_RSA_WITH_SEED_SHA,
+	SSL_kEDH|SSL_aRSA|SSL_SEED|SSL_SHA1|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+	/* Cipher 9B */
+	{
+	1,
+	TLS1_TXT_ADH_WITH_SEED_SHA,
+	TLS1_CK_ADH_WITH_SEED_SHA,
+	SSL_kEDH|SSL_aNULL|SSL_SEED|SSL_SHA1|SSL_TLSV1,
+	SSL_NOT_EXP|SSL_MEDIUM,
+	0,
+	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+
+#endif /* OPENSSL_NO_SEED */
 
 #ifndef OPENSSL_NO_ECDH
 	/* Cipher C001 */

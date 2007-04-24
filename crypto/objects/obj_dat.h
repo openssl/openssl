@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 772
-#define NUM_SN 768
-#define NUM_LN 768
-#define NUM_OBJ 724
+#define NUM_NID 780
+#define NUM_SN 773
+#define NUM_LN 773
+#define NUM_OBJ 729
 
-static unsigned char lvalues[5116]={
+static unsigned char lvalues[5154]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -792,6 +792,11 @@ static unsigned char lvalues[5116]={
 0x55,0x1D,0x09,                              /* [5106] OBJ_subject_directory_attributes */
 0x55,0x1D,0x1C,                              /* [5109] OBJ_issuing_distribution_point */
 0x55,0x1D,0x1D,                              /* [5112] OBJ_certificate_issuer */
+0x2A,0x83,0x1A,0x8C,0x9A,0x44,               /* [5115] OBJ_kisa */
+0x2A,0x83,0x1A,0x8C,0x9A,0x44,0x01,0x03,     /* [5121] OBJ_seed_ecb */
+0x2A,0x83,0x1A,0x8C,0x9A,0x44,0x01,0x04,     /* [5129] OBJ_seed_cbc */
+0x2A,0x83,0x1A,0x8C,0x9A,0x44,0x01,0x06,     /* [5137] OBJ_seed_ofb128 */
+0x2A,0x83,0x1A,0x8C,0x9A,0x44,0x01,0x05,     /* [5145] OBJ_seed_cfb128 */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1996,6 +2001,14 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_issuing_distribution_point,3,&(lvalues[5109]),0},
 {"certificateIssuer","X509v3 Certificate Issuer",
 	NID_certificate_issuer,3,&(lvalues[5112]),0},
+{NULL,NULL,NID_undef,0,NULL,0},
+{"KISA","kisa",NID_kisa,6,&(lvalues[5115]),0},
+{NULL,NULL,NID_undef,0,NULL,0},
+{NULL,NULL,NID_undef,0,NULL,0},
+{"SEED-ECB","seed-ecb",NID_seed_ecb,8,&(lvalues[5121]),0},
+{"SEED-CBC","seed-cbc",NID_seed_cbc,8,&(lvalues[5129]),0},
+{"SEED-OFB","seed-ofb",NID_seed_ofb128,8,&(lvalues[5137]),0},
+{"SEED-CFB","seed-cfb",NID_seed_cfb128,8,&(lvalues[5145]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2085,6 +2098,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[183]),/* "ISO-US" */
 &(nid_objs[645]),/* "ITU-T" */
 &(nid_objs[646]),/* "JOINT-ISO-ITU-T" */
+&(nid_objs[773]),/* "KISA" */
 &(nid_objs[15]),/* "L" */
 &(nid_objs[ 3]),/* "MD2" */
 &(nid_objs[257]),/* "MD4" */
@@ -2147,6 +2161,10 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[668]),/* "RSA-SHA256" */
 &(nid_objs[669]),/* "RSA-SHA384" */
 &(nid_objs[670]),/* "RSA-SHA512" */
+&(nid_objs[777]),/* "SEED-CBC" */
+&(nid_objs[779]),/* "SEED-CFB" */
+&(nid_objs[776]),/* "SEED-ECB" */
+&(nid_objs[778]),/* "SEED-OFB" */
 &(nid_objs[41]),/* "SHA" */
 &(nid_objs[64]),/* "SHA1" */
 &(nid_objs[675]),/* "SHA224" */
@@ -3221,6 +3239,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[492]),/* "janetMailbox" */
 &(nid_objs[646]),/* "joint-iso-itu-t" */
 &(nid_objs[150]),/* "keyBag" */
+&(nid_objs[773]),/* "kisa" */
 &(nid_objs[477]),/* "lastModifiedBy" */
 &(nid_objs[476]),/* "lastModifiedTime" */
 &(nid_objs[157]),/* "localKeyID" */
@@ -3371,6 +3390,10 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[733]),/* "sect571k1" */
 &(nid_objs[734]),/* "sect571r1" */
 &(nid_objs[635]),/* "secure device signature" */
+&(nid_objs[777]),/* "seed-cbc" */
+&(nid_objs[779]),/* "seed-cfb" */
+&(nid_objs[776]),/* "seed-ecb" */
+&(nid_objs[778]),/* "seed-ofb" */
 &(nid_objs[105]),/* "serialNumber" */
 &(nid_objs[625]),/* "set-addPolicy" */
 &(nid_objs[515]),/* "set-attr" */
@@ -3811,6 +3834,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[745]),/* OBJ_wap_wsg_idm_ecid_wtls12      2 23 43 13 4 12 */
 &(nid_objs[124]),/* OBJ_rle_compression              1 1 1 1 666 1 */
 &(nid_objs[125]),/* OBJ_zlib_compression             1 1 1 1 666 2 */
+&(nid_objs[773]),/* OBJ_kisa                         1 2 410 200004 */
 &(nid_objs[ 1]),/* OBJ_rsadsi                       1 2 840 113549 */
 &(nid_objs[185]),/* OBJ_X9cm                         1 2 840 10040 4 */
 &(nid_objs[127]),/* OBJ_id_pkix                      1 3 6 1 5 5 7 */
@@ -3861,6 +3885,10 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[768]),/* OBJ_camellia_256_ofb128          0 3 4401 5 3 1 9 43 */
 &(nid_objs[759]),/* OBJ_camellia_256_cfb128          0 3 4401 5 3 1 9 44 */
 &(nid_objs[437]),/* OBJ_pilot                        0 9 2342 19200300 100 */
+&(nid_objs[776]),/* OBJ_seed_ecb                     1 2 410 200004 1 3 */
+&(nid_objs[777]),/* OBJ_seed_cbc                     1 2 410 200004 1 4 */
+&(nid_objs[779]),/* OBJ_seed_cfb128                  1 2 410 200004 1 5 */
+&(nid_objs[778]),/* OBJ_seed_ofb128                  1 2 410 200004 1 6 */
 &(nid_objs[186]),/* OBJ_pkcs1                        1 2 840 113549 1 1 */
 &(nid_objs[27]),/* OBJ_pkcs3                        1 2 840 113549 1 3 */
 &(nid_objs[187]),/* OBJ_pkcs5                        1 2 840 113549 1 5 */

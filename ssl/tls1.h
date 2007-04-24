@@ -140,6 +140,14 @@ extern "C" {
 #define TLS1_CK_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA	0x03000088
 #define TLS1_CK_ADH_WITH_CAMELLIA_256_CBC_SHA		0x03000089
 
+/* SEED ciphersuites from RFC4162 */
+#define TLS1_CK_RSA_WITH_SEED_SHA                       0x03000096
+#define TLS1_CK_DH_DSS_WITH_SEED_SHA                    0x03000097
+#define TLS1_CK_DH_RSA_WITH_SEED_SHA                    0x03000098
+#define TLS1_CK_DHE_DSS_WITH_SEED_SHA                   0x03000099
+#define TLS1_CK_DHE_RSA_WITH_SEED_SHA                   0x0300009A
+#define TLS1_CK_ADH_WITH_SEED_SHA                	0x0300009B
+
 /* ECC ciphersuites from draft-ietf-tls-ecc-12.txt with changes soon to be in draft 13 */
 #define TLS1_CK_ECDH_ECDSA_WITH_NULL_SHA                0x0300C001
 #define TLS1_CK_ECDH_ECDSA_WITH_RC4_128_SHA             0x0300C002
@@ -232,7 +240,7 @@ extern "C" {
 #define TLS1_TXT_ECDH_anon_WITH_AES_128_CBC_SHA         "AECDH-AES128-SHA"
 #define TLS1_TXT_ECDH_anon_WITH_AES_256_CBC_SHA         "AECDH-AES256-SHA"
 
-/* Camellia ciphersuites form RFC4132 */
+/* Camellia ciphersuites from RFC4132 */
 #define TLS1_TXT_RSA_WITH_CAMELLIA_128_CBC_SHA		"CAMELLIA128-SHA"
 #define TLS1_TXT_DH_DSS_WITH_CAMELLIA_128_CBC_SHA	"DH-DSS-CAMELLIA128-SHA"
 #define TLS1_TXT_DH_RSA_WITH_CAMELLIA_128_CBC_SHA	"DH-RSA-CAMELLIA128-SHA"
@@ -247,6 +255,13 @@ extern "C" {
 #define TLS1_TXT_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA	"DHE-RSA-CAMELLIA256-SHA"
 #define TLS1_TXT_ADH_WITH_CAMELLIA_256_CBC_SHA		"ADH-CAMELLIA256-SHA"
 
+/* SEED ciphersuites from RFC4162 */
+#define TLS1_TXT_RSA_WITH_SEED_SHA                      "SEED-SHA"
+#define TLS1_TXT_DH_DSS_WITH_SEED_SHA                   "DH-DSS-SEED-SHA"
+#define TLS1_TXT_DH_RSA_WITH_SEED_SHA                   "DH-RSA-SEED-SHA"
+#define TLS1_TXT_DHE_DSS_WITH_SEED_SHA                  "DHE-DSS-SEED-SHA"
+#define TLS1_TXT_DHE_RSA_WITH_SEED_SHA                  "DHE-RSA-SEED-SHA"
+#define TLS1_TXT_ADH_WITH_SEED_SHA                      "ADH-SEED-SHA"
 
 #define TLS_CT_RSA_SIGN			1
 #define TLS_CT_DSS_SIGN			2

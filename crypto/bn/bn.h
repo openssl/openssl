@@ -809,6 +809,7 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_CTX_NEW					 106
 #define BN_F_BN_CTX_START				 129
 #define BN_F_BN_DIV					 107
+#define BN_F_BN_DIV_NO_BRANCH				 138
 #define BN_F_BN_DIV_RECP				 130
 #define BN_F_BN_EXP					 123
 #define BN_F_BN_EXPAND2					 108
@@ -827,6 +828,7 @@ void ERR_load_BN_strings(void);
 #define BN_F_BN_MOD_EXP_RECP				 125
 #define BN_F_BN_MOD_EXP_SIMPLE				 126
 #define BN_F_BN_MOD_INVERSE				 110
+#define BN_F_BN_MOD_INVERSE_NO_BRANCH			 139
 #define BN_F_BN_MOD_LSHIFT_QUICK			 119
 #define BN_F_BN_MOD_MUL_RECIPROCAL			 111
 #define BN_F_BN_MOD_SQRT				 121

@@ -424,6 +424,13 @@ int main(int argc,char **argv)
 		continue;
 		}
 #endif
+#ifdef OPENSSL_NO_SEED
+	    if (strstr(cipher, "SEED") == cipher)
+		{
+		fprintf(stdout, "Cipher disabled, skipping %s\n", cipher); 
+		continue;
+		}
+#endif
 	    fprintf(stderr,"Can't find %s\n",cipher);
 	    EXIT(3);
 	    }

@@ -1,6 +1,6 @@
 /* crypto/bn/bn_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -82,6 +82,7 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_FUNC(BN_F_BN_CTX_NEW),	"BN_CTX_new"},
 {ERR_FUNC(BN_F_BN_CTX_START),	"BN_CTX_start"},
 {ERR_FUNC(BN_F_BN_DIV),	"BN_div"},
+{ERR_FUNC(BN_F_BN_DIV_NO_BRANCH),	"BN_div_no_branch"},
 {ERR_FUNC(BN_F_BN_DIV_RECP),	"BN_div_recp"},
 {ERR_FUNC(BN_F_BN_EXP),	"BN_exp"},
 {ERR_FUNC(BN_F_BN_EXPAND2),	"bn_expand2"},
@@ -100,6 +101,7 @@ static ERR_STRING_DATA BN_str_functs[]=
 {ERR_FUNC(BN_F_BN_MOD_EXP_RECP),	"BN_mod_exp_recp"},
 {ERR_FUNC(BN_F_BN_MOD_EXP_SIMPLE),	"BN_mod_exp_simple"},
 {ERR_FUNC(BN_F_BN_MOD_INVERSE),	"BN_mod_inverse"},
+{ERR_FUNC(BN_F_BN_MOD_INVERSE_NO_BRANCH),	"BN_mod_inverse_no_branch"},
 {ERR_FUNC(BN_F_BN_MOD_LSHIFT_QUICK),	"BN_mod_lshift_quick"},
 {ERR_FUNC(BN_F_BN_MOD_MUL_RECIPROCAL),	"BN_mod_mul_reciprocal"},
 {ERR_FUNC(BN_F_BN_MOD_SQRT),	"BN_mod_sqrt"},
