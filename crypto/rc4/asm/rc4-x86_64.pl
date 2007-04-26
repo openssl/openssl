@@ -2,8 +2,9 @@
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
 # 2.22x RC4 tune-up:-) It should be noted though that my hand [as in
@@ -58,7 +59,13 @@
 # this CPU.
 
 $output=shift;
-open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
+die "can't locate x86_64-xlate.pl";
+
+open STDOUT,"| $^X $xlate $output";
 
 $dat="%rdi";	    # arg1
 $len="%rsi";	    # arg2
@@ -345,7 +352,7 @@ RC4_options:
 .asciz	"rc4(8x,int)"
 .asciz	"rc4(8x,char)"
 .asciz	"rc4(1x,char)"
-.asciz	"RC4 for x86_64, OpenSSL project"
+.asciz	"RC4 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
 .size	RC4_options,.-RC4_options
 ___
