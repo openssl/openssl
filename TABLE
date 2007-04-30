@@ -3080,6 +3080,34 @@ $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
 
+*** linux-s390x
+$cc           = gcc
+$cflags       = -m64 -DB_ENDIAN -DTERMIO -O3 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL
+$cpuid_obj    = 
+$bn_obj       = s390x-mont.o
+$des_obj      = 
+$aes_obj      = aes_core.o aes_cbc.o aes-s390x.o
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = sha1-s390x.o sha256-s390x.o sha512-s390x.o
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = -m64
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
 *** linux-sparcv8
 $cc           = gcc
 $cflags       = -mv8 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -DBN_DIV2W

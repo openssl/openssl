@@ -64,23 +64,28 @@ sha256-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
 sha512-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
-sha1-x86_64.s: asm/sha1-x86_64.pl
-	$(PERL) asm/sha1-x86_64.pl $@
-sha256-x86_64.s: asm/sha512-x86_64.pl
-	$(PERL) asm/sha512-x86_64.pl $@
-sha512-x86_64.s: asm/sha512-x86_64.pl
-	$(PERL) asm/sha512-x86_64.pl $@
 
+# Solaris make has to be explicitly told
+sha1-x86_64.s:	asm/sha1-x86_64.pl;	$(PERL) asm/sha1-x86_64.pl $@
+sha256-x86_64.s:asm/sha512-x86_64.pl;	$(PERL) asm/sha512-x86_64.pl $@
+sha512-x86_64.s:asm/sha512-x86_64.pl;	$(PERL) asm/sha512-x86_64.pl $@
+
+# AIX make has to be explicitly told
 sha1-ppc_aix32.s: asm/sha1-ppc.pl;	$(PERL) asm/sha1-ppc.pl $@
 sha1-ppc_aix64.s: asm/sha1-ppc.pl;	$(PERL) asm/sha1-ppc.pl $@
 sha256-ppc_aix32.s: asm/sha512-ppc.pl;	$(PERL) asm/sha512-ppc.pl $@
 sha256-ppc_aix64.s: asm/sha512-ppc.pl;	$(PERL) asm/sha512-ppc.pl $@
 sha512-ppc_aix32.s: asm/sha512-ppc.pl;	$(PERL) asm/sha512-ppc.pl $@
 sha512-ppc_aix64.s: asm/sha512-ppc.pl;	$(PERL) asm/sha512-ppc.pl $@
-# non-AIX targets are believed to be armed with GNU make
+
+# non-AIX ppc targets are believed to be armed with GNU make
 sha1-ppc_%.s:	asm/sha1-ppc.pl;	$(PERL) $< $@
 sha256-ppc_%.s:	asm/sha512-ppc.pl;	$(PERL) $< $@
 sha512-ppc_%.s:	asm/sha512-ppc.pl;	$(PERL) $< $@
+# GNU make "catch all"
+sha1-%.s:	asm/sha1-%.pl;		$(PERL) $< $@
+sha256-%.s:	asm/sha512-%.pl;	$(PERL) $< $@
+sha512-%.s:	asm/sha512-%.pl;	$(PERL) $< $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

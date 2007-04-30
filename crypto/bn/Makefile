@@ -132,6 +132,9 @@ osx_ppc64-mont.s: asm/ppc-mont.pl;	$(PERL) $< $@
 alpha-mont.s:	asm/alpha-mont.pl
 	$(PERL) $< | $(CC) -E - > $@
 
+# GNU make "catch all"
+%-mont.s:	asm/%-mont.pl;	$(PERL) $< $(CFLAGS) > $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 

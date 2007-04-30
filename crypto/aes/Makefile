@@ -63,6 +63,9 @@ aes-x86_64.s: asm/aes-x86_64.pl
 aes-sparcv9.s: asm/aes-sparcv9.pl
 	$(PERL) asm/aes-sparcv9.pl $(CFLAGS) > $@
 
+# GNU make "catch all"
+aes-%.s:	asm/aes-%.pl;	$(PERL) $< $(CFLAGS) > $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
