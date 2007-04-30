@@ -534,7 +534,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
 	  const char *file,BIO *bmd)
 	{
-	unsigned int len;
+	size_t len;
 	int i;
 
 	for (;;)
@@ -572,7 +572,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 		{
 		EVP_MD_CTX *ctx;
 		BIO_get_md_ctx(bp, &ctx);
-		if(!EVP_DigestSignFinal(ctx, buf, (unsigned int *)&len)) 
+		if(!EVP_DigestSignFinal(ctx, buf, &len)) 
 			{
 			BIO_printf(bio_err, "Error Signing Data\n");
 			ERR_print_errors(bio_err);
