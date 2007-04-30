@@ -64,8 +64,7 @@
  * HASH_CBLOCK
  *	size of a unit chunk HASH_BLOCK operates on.
  * HASH_LONG
- *	has to be at lest 32 bit wide, if it's wider, then
- *	HASH_LONG_LOG2 *has to* be defined along
+ *	has to be at lest 32 bit wide.
  * HASH_CTX
  *	context structure that at least contains following
  *	members:
@@ -73,8 +72,8 @@
  *			...
  *			HASH_LONG	Nl,Nh;
  *			either {
- *			HASH_LONG	data[HASH_LBLOCK];
- *			unsigned char	data[HASH_CBLOCK];
+ *			  HASH_LONG	data[HASH_LBLOCK];
+ *			  unsigned char	data[HASH_CBLOCK];
  *			};
  *			unsigned int	num;
  *			...
@@ -98,7 +97,6 @@
  *	#define DATA_ORDER_IS_LITTLE_ENDIAN
  *
  *	#define HASH_LONG		MD5_LONG
- *	#define HASH_LONG_LOG2		MD5_LONG_LOG2
  *	#define HASH_CTX		MD5_CTX
  *	#define HASH_CBLOCK		MD5_CBLOCK
  *	#define HASH_UPDATE		MD5_Update
@@ -178,11 +176,11 @@
 				: "r"(a), "I"(n));	\
 			   ret;				\
 			})
-#  elif defined(__s390__) || defined(__s390x__)
+#  elif defined(__s390x__)
 #   define ROTATE(a,n) ({ register unsigned int ret;	\
 				asm ("rll %0,%1,%2"	\
 				: "=r"(ret)		\
-				: "r"(a), "I"(n):"cc");	\
+				: "r"(a), "I"(n));	\
 			  ret;				\
 			})
 #  endif
