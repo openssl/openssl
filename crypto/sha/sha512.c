@@ -52,7 +52,7 @@
 
 const char SHA512_version[]="SHA-512" OPENSSL_VERSION_PTEXT;
 
-#if defined(__i386) || defined(__i386__) || defined(_M_IX87) || \
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || \
     defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64) || \
     defined(__s390__) || defined(__s390x__)
 #define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
