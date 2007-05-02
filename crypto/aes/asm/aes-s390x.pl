@@ -23,7 +23,7 @@
 # for CBC is not utilized, nor multiple blocks are ever processed.
 # Then software key schedule can be postponed till hardware support
 # detection... Performance improvement over assembler is reportedly
-# ~2.5x, but can reach >15x [naturally on larger chunks] if proper
+# ~2.5x, but can reach >8x [naturally on larger chunks] if proper
 # support is implemented.
 
 $t1="%r0";

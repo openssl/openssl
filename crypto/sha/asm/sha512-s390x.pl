@@ -16,7 +16,7 @@
 # "pathologically" high, in particular in comparison to other SHA
 # modules). But the real twist is that it detects if hardware support
 # for SHA256 is available and in such case utilizes it. Then the
-# performance can reach >12x of assembler one for larger chunks.
+# performance can reach >6.5x of assembler one for larger chunks.
 #
 # sha512_block_data_order is ~70% faster than gcc 3.3 generated code.
 
@@ -219,6 +219,7 @@ $code.=<<___ if ($kimdfunc);
 	lgr	%r2,$inp
 	sllg	%r3,$len,`log(16*$SZ)/log(2)`
 	.long	0xb93e0002	# kimd %r0,%r2
+	brc	1,.-4		# pay attention to "partial completion"
 	br	%r14
 .Lsoftware:
 ___

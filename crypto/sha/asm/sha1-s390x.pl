@@ -13,7 +13,7 @@
 #
 # Performance is >30% better than gcc 3.3 generated code. But the real
 # twist is that SHA1 hardware support is detected and utilized. In
-# which case performance can reach further >8x for larger chunks.
+# which case performance can reach further >4.5x for larger chunks.
 
 $kimdfunc=1;	# magic function code for kimd instruction
 
@@ -160,6 +160,7 @@ $code.=<<___ if ($kimdfunc);
 	lgr	%r2,$inp
 	sllg	%r3,$len,6
 	.long	0xb93e0002	# kimd %r0,%r2
+	brc	1,.-4		# pay attention to "partial completion"
 	br	%r14
 .Lsoftware:
 ___
