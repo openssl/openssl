@@ -143,7 +143,7 @@ AES_encrypt:
 	la	%r4,0($out)
 	lghi	%r3,16		# single block length
 	.long	0xb92e0042	# km %r4,%r2
-	br	%r14
+	bcr	8,%r14
 .Lesoft:
 	stmg	%r3,%r15,24($sp)
 
@@ -452,7 +452,7 @@ AES_decrypt:
 	la	%r4,0($out)
 	lghi	%r3,16		# single block length
 	.long	0xb92e0042	# km %r4,%r2
-	br	%r14
+	bcr	8,%r14
 .Ldsoft:
 	stmg	%r3,%r15,24($sp)
 
