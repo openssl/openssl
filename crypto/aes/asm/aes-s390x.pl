@@ -139,11 +139,13 @@ AES_encrypt:
 	jz	.Lesoft
 	lghi	%r0,`0x00|0x12`	# encrypt AES-128
 	la	%r1,0($key)
-	la	%r2,0($inp)
+	#la	%r2,0($inp)
 	la	%r4,0($out)
 	lghi	%r3,16		# single block length
 	.long	0xb92e0042	# km %r4,%r2
 	bcr	8,%r14
+	la	$out,0(%r4)	# restore arguments
+	la	$key,0(%r1)
 .Lesoft:
 	stmg	%r3,%r15,24($sp)
 
@@ -448,11 +450,14 @@ AES_decrypt:
 	jz	.Ldsoft
 	lghi	%r0,`0x80|0x12`	# decrypt AES-128
 	la	%r1,160($key)
-	la	%r2,0($inp)
+	#la	%r2,0($inp)
 	la	%r4,0($out)
 	lghi	%r3,16		# single block length
 	.long	0xb92e0042	# km %r4,%r2
 	bcr	8,%r14
+	la	$out,0(%r4)	# restore arguments
+	lghi	$key,-160
+	la	$key,0($key,%r1)
 .Ldsoft:
 	stmg	%r3,%r15,24($sp)
 
