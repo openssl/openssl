@@ -69,6 +69,9 @@ sha512-ia64.s: asm/sha512-ia64.pl
 sha1-x86_64.s:	asm/sha1-x86_64.pl;	$(PERL) asm/sha1-x86_64.pl $@
 sha256-x86_64.s:asm/sha512-x86_64.pl;	$(PERL) asm/sha512-x86_64.pl $@
 sha512-x86_64.s:asm/sha512-x86_64.pl;	$(PERL) asm/sha512-x86_64.pl $@
+sha1-sparcv9.s:	asm/sha1-sparcv9.pl;	$(PERL) asm/sha1-sparcv9.pl $@ $(CFLAGS)
+sha256-sparcv9.s:asm/sha512-sparcv9.pl;	$(PERL) asm/sha512-sparcv9.pl $@ $(CFLAGS)
+sha512-sparcv9.s:asm/sha512-sparcv9.pl;	$(PERL) asm/sha512-sparcv9.pl $@ $(CFLAGS)
 
 # AIX make has to be explicitly told
 sha1-ppc_aix32.s: asm/sha1-ppc.pl;	$(PERL) asm/sha1-ppc.pl $@
