@@ -605,7 +605,7 @@ case "$GUESSOS" in
         fi ;;
   *-*-linux1) OUT="linux-aout" ;;
   *-*-linux2) OUT="linux-generic32" ;;
-  sun4u*-*-solaris2)
+  sun4[uv]*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
 	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
 	if [ "$ISA64" != "" ]; then
