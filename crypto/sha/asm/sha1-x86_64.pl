@@ -26,7 +26,8 @@
 #
 #		gcc 3.4		32-bit asm	cycles/byte
 # Opteron	+45%		+20%		6.8
-# Xeon		+65%		+0%		9.9
+# Xeon P4	+65%		+0%		9.9
+# Core2		+60%		+10%		8.8
 
 $output=shift;
 
