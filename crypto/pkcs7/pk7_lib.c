@@ -665,8 +665,3 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
 
 	return 1;
 	}
-
-
-
-
-

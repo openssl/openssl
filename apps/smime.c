@@ -688,15 +688,22 @@ int MAIN(int argc, char **argv)
 	else if (operation & SMIME_SIGNERS)
 		{
 		int i;
-		/* If detached data and SMIME output enable partial
-		 * signing.
+		/* If detached data content we only enable streaming if
+		 * S/MIME output format.
 		 */
 		if (operation == SMIME_SIGN)
 			{
-			if (indef || (flags & PKCS7_DETACHED))
+			if (flags & PKCS7_DETACHED)
+				{
+				if (outformat == FORMAT_SMIME)
+					flags |= PKCS7_STREAM;
+				}
+			else if (indef)
 				flags |= PKCS7_STREAM;
 			flags |= PKCS7_PARTIAL;
 			p7 = PKCS7_sign(NULL, NULL, other, in, flags);
+			if (!p7)
+				goto end;
 			}
 		else
 			flags |= PKCS7_REUSE_DIGEST;

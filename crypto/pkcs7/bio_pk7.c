@@ -114,13 +114,17 @@ BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7)
 
 	out = BIO_push(asn_bio, out);
 
+	if (!p7aux || !asn_bio || !out)
+		goto err;
+
 	BIO_asn1_set_prefix(asn_bio, pkcs7_prefix, pkcs7_prefix_free);
 	BIO_asn1_set_suffix(asn_bio, pkcs7_suffix, pkcs7_suffix_free);
 
 	/* Now initialize BIO for PKCS#7 output */
 
 	p7bio = PKCS7_dataInit(p7, out);
-	PKCS7_stream(&boundary, p7);
+	if (!p7bio || !PKCS7_stream(&boundary, p7))
+		goto err;
 
 	p7aux->p7 = p7;
 	p7aux->p7bio = p7bio;
@@ -131,6 +135,14 @@ BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7)
 
 	return p7bio;
 
+	err:
+	if (p7bio)
+		BIO_free(p7bio);
+	if (asn_bio)
+		BIO_free(asn_bio);
+	if (p7aux)
+		OPENSSL_free(p7aux);
+	return NULL;
 	}
 
 static int pkcs7_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
