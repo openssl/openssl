@@ -38,6 +38,9 @@ B<openssl> B<smime>
 [B<-from ad>]
 [B<-subject s>]
 [B<-text>]
+[B<-indef>]
+[B<-noindef>]
+[B<-stream>]
 [B<-rand file(s)>]
 [B<-md digest>]
 [cert.pem]...
@@ -49,7 +52,7 @@ verify S/MIME messages.
 
 =head1 COMMAND OPTIONS
 
-There are five operation options that set the type of operation to be performed.
+There are six operation options that set the type of operation to be performed.
 The meaning of the other options varies according to the operation type.
 
 =over 4
@@ -111,6 +114,21 @@ format change this to write PEM and DER format PKCS#7 structures
 instead. This currently only affects the output format of the PKCS#7
 structure, if no PKCS#7 structure is being output (for example with
 B<-verify> or B<-decrypt>) this option has no effect.
+
+=item B<-stream -indef -noindef>
+
+the B<-stream> and B<-indef> options are equivalent and enable streaming I/O
+for encoding operations. This permits single pass processing of data without
+the need to hold the entire contents in memory, potentially supporting very
+large files. Streaming is automatically set for S/MIME signing with detached
+data if the output format is B<SMIME> it is currently off by default for all
+other operations.
+
+=item B<-noindef>
+
+disable streaming I/O where it would produce and indefinite length constructed
+encoding. This option currently has no effect. In future streaming will be
+enabled by default on all relevant operations and this option will disable it.
 
 =item B<-content filename>
 
@@ -281,6 +299,15 @@ encrypted data is used for other purposes.
 The B<-resign> option uses an existing message digest when adding a new
 signer. This means that attributes must be present in at least one existing
 signer using the same message digest or this operation will fail.
+
+The B<-stream> and B<-indef> options enable experimental streaming I/O support.
+As a result the encoding is BER using indefinite length constructed encoding
+and no longer DER. Streaming is supported for the B<-encrypt> operation and the
+B<-sign> operation if the content is not detached.
+
+Streaming is always used for the B<-sign> operation with detached data but
+since the content is no longer part of the PKCS#7 structure the encoding
+remains DER.
 
 =head1 EXIT CODES
 
