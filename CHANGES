@@ -4,6 +4,9 @@
 
  Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
 
+  *) AES IGE mode speedup.
+     [Dean Gaudet (Google)]
+
   *) Add the Korean symmetric 128-bit cipher SEED (see
      http://www.kisa.or.kr/kisa/seed/jsp/seed_eng.jsp) and
      add SEED ciphersuites from RFC 4162:
