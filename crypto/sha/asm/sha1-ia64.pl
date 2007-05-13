@@ -15,7 +15,7 @@
 # is >50% better than HP C and >2x better than gcc.
 
 $code=<<___;
-.ident  \"sha1-ia64.s, version 1.1\"
+.ident  \"sha1-ia64.s, version 1.2\"
 .ident  \"IA-64 ISA artwork by Andy Polyakov <appro\@fy.chalmers.se>\"
 .explicit
 
@@ -51,63 +51,55 @@ else {
 
 sub BODY_00_15 {
 local	*code=shift;
-local	($i,$a,$b,$c,$d,$e,$f,$unaligned)=@_;
+local	($i,$a,$b,$c,$d,$e,$f)=@_;
 
-if ($unaligned) {
-	$code.=<<___;
-{ .mmi;	ld1	tmp0=[inp],2		    // MSB
-	ld1	tmp1=[tmp3],2		};;
-{ .mmi;	ld1	tmp2=[inp],2
-	ld1	$X[$i&0xf]=[tmp3],2	    // LSB
-	dep	tmp1=tmp0,tmp1,8,8	};;
-{ .mii;	cmp.ne	p16,p0=r0,r0		    // no misaligned prefetch
-	dep	$X[$i&0xf]=tmp2,$X[$i&0xf],8,8;;
-	dep	$X[$i&0xf]=tmp1,$X[$i&0xf],16,16	};;
-{ .mmi;	nop.m	0
+$code.=<<___ if ($i==0);
+{ .mmi;	ld1	$X[$i&0xf]=[inp],2	    // MSB
+	ld1	tmp2=[tmp3],2		};;
+{ .mmi;	ld1	tmp0=[inp],2
+	ld1	tmp4=[tmp3],2		    // LSB
+	dep	$X[$i&0xf]=$X[$i&0xf],tmp2,8,8	};;
 ___
-	}
-elsif ($i<15) {
-	$code.=<<___;
-{ .mmi;	ld4	$X[($i+1)&0xf]=[inp],4	// prefetch
-___
-	}
-else	{
-	$code.=<<___;
-{ .mmi;	nop.m	0
-___
-	}
 if ($i<15) {
 	$code.=<<___;
-	and	tmp0=$c,$b
-	dep.z	tmp5=$a,5,27		}   // a<<5
+{ .mmi;	ld1	$X[($i+1)&0xf]=[inp],2	    // +1
+	dep	tmp1=tmp0,tmp4,8,8	};;
+{ .mmi;	ld1	tmp2=[tmp3],2		    // +1
+	and	tmp4=$c,$b
+	dep	$X[$i&0xf]=$X[$i&0xf],tmp1,16,16	} //;;
 { .mmi;	andcm	tmp1=$d,$b
-	add	tmp4=$e,$K_00_19	};;
-{ .mmi;	or	tmp0=tmp0,tmp1		    // F_00_19(b,c,d)=(b&c)|(~b&d)
-	add	$f=tmp4,$X[$i&0xf]	    // f=xi+e+K_00_19
+	add	tmp0=$e,$K_00_19
+	dep.z	tmp5=$a,5,27		};; // a<<5
+{ .mmi;	or	tmp4=tmp4,tmp1		    // F_00_19(b,c,d)=(b&c)|(~b&d)
+	add	$f=tmp0,$X[$i&0xf]	    // f=xi+e+K_00_19
 	extr.u	tmp1=$a,27,5		};; // a>>27
-{ .mib;	add	$f=$f,tmp0		    // f+=F_00_19(b,c,d)
+{ .mmi;	ld1	tmp0=[inp],2		    // +1
+	add	$f=$f,tmp4		    // f+=F_00_19(b,c,d)
 	shrp	$b=tmp6,tmp6,2		}   // b=ROTATE(b,30)
-{ .mib;	or	tmp1=tmp1,tmp5		    // ROTATE(a,5)
+{ .mmi;	ld1	tmp4=[tmp3],2		    // +1
+	or	tmp5=tmp1,tmp5		    // ROTATE(a,5)
 	mux2	tmp6=$a,0x44		};; // see b in next iteration
-{ .mii;	add	$f=$f,tmp1		    // f+=ROTATE(a,5)
-	mux2	$X[$i&0xf]=$X[$i&0xf],0x44
-	nop.i	0			};;
+{ .mii;	add	$f=$f,tmp5		    // f+=ROTATE(a,5)
+	dep	$X[($i+1)&0xf]=$X[($i+1)&0xf],tmp2,8,8	// +1
+	mux2	$X[$i&0xf]=$X[$i&0xf],0x44	} //;;
 
 ___
 	}
 else	{
 	$code.=<<___;
-	and	tmp0=$c,$b
-	dep.z	tmp5=$a,5,27		}   // a<<5 ;;?
+{ .mii;	and	tmp3=$c,$b
+	dep	tmp1=tmp0,tmp4,8,8;;
+	dep	$X[$i&0xf]=$X[$i&0xf],tmp1,16,16	} //;;
 { .mmi;	andcm	tmp1=$d,$b
-	add	tmp4=$e,$K_00_19	};;
-{ .mmi;	or	tmp0=tmp0,tmp1		    // F_00_19(b,c,d)=(b&c)|(~b&d)
-	add	$f=tmp4,$X[$i&0xf]	    // f=xi+e+K_00_19
+	add	tmp0=$e,$K_00_19
+	dep.z	tmp5=$a,5,27		};; // a<<5
+{ .mmi;	or	tmp4=tmp3,tmp1		    // F_00_19(b,c,d)=(b&c)|(~b&d)
+	add	$f=tmp0,$X[$i&0xf]	    // f=xi+e+K_00_19
 	extr.u	tmp1=$a,27,5		}   // a>>27
 { .mmi;	xor	tmp2=$X[($i+0+1)&0xf],$X[($i+2+1)&0xf]	// +1
 	xor	tmp3=$X[($i+8+1)&0xf],$X[($i+13+1)&0xf] // +1
 	nop.i	0			};;
-{ .mmi;	add	$f=$f,tmp0		    // f+=F_00_19(b,c,d)
+{ .mmi;	add	$f=$f,tmp4		    // f+=F_00_19(b,c,d)
 	xor	tmp2=tmp2,tmp3		    // +1
 	shrp	$b=tmp6,tmp6,2		}   // b=ROTATE(b,30)
 { .mmi; or	tmp1=tmp1,tmp5		    // ROTATE(a,5)
@@ -283,7 +275,7 @@ ___
 
 { my $i,@V=($A,$B,$C,$D,$E,$T);
 
-	for($i=0;$i<16;$i++)	{ &BODY_00_15(\$code,$i,@V,1); unshift(@V,pop(@V)); }
+	for($i=0;$i<16;$i++)	{ &BODY_00_15(\$code,$i,@V); unshift(@V,pop(@V)); }
 	for(;$i<20;$i++)	{ &BODY_16_19(\$code,$i,@V); unshift(@V,pop(@V)); }
 	for(;$i<40;$i++)	{ &BODY_20_39(\$code,$i,@V); unshift(@V,pop(@V)); }
 	for(;$i<60;$i++)	{ &BODY_40_59(\$code,$i,@V); unshift(@V,pop(@V)); }
@@ -307,6 +299,7 @@ $code.=<<___;
 	mov	pr=r2,0x1ffff
 	br.ret.sptk.many	b0	};;
 .endp	sha1_block_data_order#
+stringz	"SHA1 block transform for IA64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
 print $code;
