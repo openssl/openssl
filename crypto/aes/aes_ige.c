@@ -70,6 +70,24 @@ static void hexdump(FILE *f,const char *title,const unsigned char *s,int l)
     }
 */
 
+#define N_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
+typedef struct {
+        unsigned long data[N_WORDS];
+} aes_block_t;
+
+// XXX: probably some better way to do this
+#if defined(__i386__) || defined(__x86_64__)
+#define UNALIGNED_MEMOPS_ARE_FAST 1
+#endif
+
+#ifdef UNALIGNED_MEMOPS_ARE_FAST
+#define load_block(d, s)        (d) = *(const aes_block_t *)(s)
+#define store_block(d, s)       *(aes_block_t *)(d) = (s)
+#else
+#define load_block(d, s)        memcpy((d).data, (s), AES_BLOCK_SIZE)
+#define store_block(d, s)       memcpy((d), (s).data, AES_BLOCK_SIZE)
+#endif
+
 /* N.B. The IV for this mode is _twice_ the block size */
 
 void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
@@ -77,68 +95,73 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
 					 unsigned char *ivec, const int enc)
 	{
 	unsigned long n;
-	unsigned long len = length;
-	unsigned char tmp[AES_BLOCK_SIZE];
-	unsigned char tmp2[AES_BLOCK_SIZE];
-	unsigned char prev[AES_BLOCK_SIZE];
-	const unsigned char *iv = ivec;
-	const unsigned char *iv2 = ivec + AES_BLOCK_SIZE;
+        unsigned long len;
+        aes_block_t tmp, tmp2;
+        aes_block_t iv;
+        aes_block_t iv2;
 
 	OPENSSL_assert(in && out && key && ivec);
 	OPENSSL_assert((AES_ENCRYPT == enc)||(AES_DECRYPT == enc));
 	OPENSSL_assert((length%AES_BLOCK_SIZE) == 0);
 
+        len = length / AES_BLOCK_SIZE;
+        load_block(iv, ivec);
+        load_block(iv2, ivec + AES_BLOCK_SIZE);
+
 	if (AES_ENCRYPT == enc)
 		{
 		/* XXX: Do a separate case for when in != out (strictly should
 		   check for overlap, too) */
-		while (len >= AES_BLOCK_SIZE)
+		while (len)
 			{
+                        load_block(tmp, in);
 			/*			hexdump(stdout, "in", in, AES_BLOCK_SIZE); */
 			/*			hexdump(stdout, "iv", iv, AES_BLOCK_SIZE); */
-			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
-				out[n] = in[n] ^ iv[n];
+                        for(n=0 ; n < N_WORDS; ++n)
+                                tmp2.data[n] = tmp.data[n] ^ iv.data[n];
 			/*			hexdump(stdout, "in ^ iv", out, AES_BLOCK_SIZE); */
-			AES_encrypt(out, out, key);
+			AES_encrypt((unsigned char *)tmp2.data, (unsigned char *)tmp2.data, key);
 			/*			hexdump(stdout,"enc", out, AES_BLOCK_SIZE); */
 			/*			hexdump(stdout,"iv2", iv2, AES_BLOCK_SIZE); */
-			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
-				out[n] ^= iv2[n];
+			for(n=0 ; n < N_WORDS; ++n)
+                                tmp2.data[n] ^= iv2.data[n];
+                        store_block(out, tmp2);
 			/*			hexdump(stdout,"out", out, AES_BLOCK_SIZE); */
-			iv = out;
-			memcpy(prev, in, AES_BLOCK_SIZE);
-			iv2 = prev;
-			len -= AES_BLOCK_SIZE;
+                        iv = tmp2;
+                        iv2 = tmp;
+			--len;
 			in += AES_BLOCK_SIZE;
 			out += AES_BLOCK_SIZE;
 			}
-		memcpy(ivec, iv, AES_BLOCK_SIZE);
-		memcpy(ivec + AES_BLOCK_SIZE, iv2, AES_BLOCK_SIZE);
+		memcpy(ivec, iv.data, AES_BLOCK_SIZE);
+		memcpy(ivec + AES_BLOCK_SIZE, iv2.data, AES_BLOCK_SIZE);
 		}
 	else
 		{
-		while (len >= AES_BLOCK_SIZE)
+		while (len)
 			{
-			memcpy(tmp, in, AES_BLOCK_SIZE);
-			memcpy(tmp2, in, AES_BLOCK_SIZE);
+                        load_block(tmp, in);
+                        tmp2 = tmp;
 			/*			hexdump(stdout, "in", in, AES_BLOCK_SIZE); */
 			/*			hexdump(stdout, "iv2", iv2, AES_BLOCK_SIZE); */
-			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
-				tmp[n] ^= iv2[n];
+			for(n=0 ; n < N_WORDS; ++n)
+                                tmp.data[n] ^= iv2.data[n];
 			/*			hexdump(stdout, "in ^ iv2", tmp, AES_BLOCK_SIZE); */
-			AES_decrypt(tmp, out, key);
+			AES_decrypt((unsigned char *)tmp.data, (unsigned char *)tmp.data, key);
 			/*			hexdump(stdout, "dec", out, AES_BLOCK_SIZE); */
-			/*			hexdump(stdout, "iv", ivec, AES_BLOCK_SIZE); */
-			for(n=0 ; n < AES_BLOCK_SIZE ; ++n)
-				out[n] ^= ivec[n];
+			/*			hexdump(stdout, "iv", iv, AES_BLOCK_SIZE); */
+			for(n=0 ; n < N_WORDS; ++n)
+				tmp.data[n] ^= iv.data[n];
+                        store_block(out, tmp);
 			/*			hexdump(stdout, "out", out, AES_BLOCK_SIZE); */
-			memcpy(ivec, tmp2, AES_BLOCK_SIZE);
-			iv2 = out;
-			len -= AES_BLOCK_SIZE;
+                        iv = tmp2;
+                        iv2 = tmp;
+			--len;
 			in += AES_BLOCK_SIZE;
 			out += AES_BLOCK_SIZE;
 			}
-		memcpy(ivec + AES_BLOCK_SIZE, iv2, AES_BLOCK_SIZE);
+                memcpy(ivec, iv.data, AES_BLOCK_SIZE);
+		memcpy(ivec + AES_BLOCK_SIZE, iv2.data, AES_BLOCK_SIZE);
 		}
 	}
 
