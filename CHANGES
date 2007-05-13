@@ -4,6 +4,9 @@
 
  Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
 
+  *) Squeeze another 10% out of IGE mode when in != out.
+     [Ben Laurie]
+
   *) AES IGE mode speedup.
      [Dean Gaudet (Google)]
 

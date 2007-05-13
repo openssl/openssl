@@ -1843,7 +1843,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_IGE_128_AES],c[D_IGE_128_AES][j],lengths[j]);
 			Time_F(START);
 			for (count=0,run=1; COND(c[D_IGE_128_AES][j]); count++)
-				AES_ige_encrypt(buf,buf,
+				AES_ige_encrypt(buf,buf2,
 					(unsigned long)lengths[j],&aes_ks1,
 					iv,AES_ENCRYPT);
 			d=Time_F(STOP);
@@ -1857,7 +1857,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_IGE_192_AES],c[D_IGE_192_AES][j],lengths[j]);
 			Time_F(START);
 			for (count=0,run=1; COND(c[D_IGE_192_AES][j]); count++)
-				AES_ige_encrypt(buf,buf,
+				AES_ige_encrypt(buf,buf2,
 					(unsigned long)lengths[j],&aes_ks2,
 					iv,AES_ENCRYPT);
 			d=Time_F(STOP);
@@ -1871,7 +1871,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_IGE_256_AES],c[D_IGE_256_AES][j],lengths[j]);
 			Time_F(START);
 			for (count=0,run=1; COND(c[D_IGE_256_AES][j]); count++)
-				AES_ige_encrypt(buf,buf,
+				AES_ige_encrypt(buf,buf2,
 					(unsigned long)lengths[j],&aes_ks3,
 					iv,AES_ENCRYPT);
 			d=Time_F(STOP);
