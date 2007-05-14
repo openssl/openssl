@@ -232,6 +232,54 @@ _sparcv9_rdtick:
 .type	_sparcv9_rdtick,#function
 .size	_sparcv9_rdtick,.-_sparcv9_rdtick
 
+.global	OPENSSL_cleanse
+.align	32
+OPENSSL_cleanse:
+	cmp	%o1,6
+	nop
+#ifdef ABI64
+	bgu	%xcc,.Lot
+#else
+	bgu	.Lot
+#endif
+	nop
+
+.Little:
+	stb	%g0,[%o0]
+	subcc	%o1,1,%o1
+	bnz	.Little
+	add	%o0,1,%o0
+	retl
+	nop
+.align	32
+.Lot:
+	andcc	%o0,3,%g0
+	bz	.Laligned
+	nop
+	stb	%g0,[%o0]
+	sub	%o1,1,%o1
+	ba	.Lot
+	add	%o0,1,%o0
+	nop
+.Laligned:
+	st	%g0,[%o0]
+	sub	%o1,4,%o1
+	andcc	%o1,-4,%g0
+#ifdef ABI64
+	bnz	%xcc,.Laligned
+#else
+	bnz	.Laligned
+#endif
+	add	%o0,4,%o0
+
+	cmp	%o1,0
+	bne	.Little
+	nop
+	retl
+	nop
+.type	OPENSSL_cleanse,#function
+.size	OPENSSL_cleanse,.-OPENSSL_cleanse
+
 .section	".init",#alloc,#execinstr
 	call	OPENSSL_cpuid_setup
 	nop

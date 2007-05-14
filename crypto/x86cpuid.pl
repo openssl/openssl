@@ -216,6 +216,37 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	}
 &function_end_B("OPENSSL_indirect_call");
 
+&function_begin_B("OPENSSL_cleanse");
+	&mov	("edx",&wparam(0));
+	&mov	("ecx",&wparam(1));
+	&xor	("eax","eax");
+	&cmp	("ecx",7);
+	&jae	(&label("lot"));
+&set_label("little");
+	&mov	(&BP(0,"edx"),"al");
+	&sub	("ecx",1);
+	&lea	("edx",&DWP(1,"edx"));
+	&jnz	(&label("little"));
+	&ret	();
+
+&set_label("lot",16);
+	&test	("edx",3);
+	&jz	(&label("aligned"));
+	&mov	(&BP(0,"edx"),"al");
+	&lea	("ecx",&DWP(-1,"ecx"));
+	&lea	("edx",&DWP(1,"edx"));
+	&jmp	(&label("lot"));
+&set_label("aligned");
+	&mov	(&DWP(0,"edx"),"eax");
+	&lea	("ecx",&DWP(-4,"ecx"));
+	&test	("ecx",-4);
+	&lea	("edx",&DWP(4,"edx"));
+	&jnz	(&label("aligned"));
+	&cmp	("ecx",0);
+	&jne	(&label("little"));
+	&ret	();
+&function_end_B("OPENSSL_cleanse");
+
 &initseg("OPENSSL_cpuid_setup");
 
 &asm_finish();

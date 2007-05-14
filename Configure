@@ -1209,6 +1209,7 @@ $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /bn86/);
 
 $cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /\-mont|mo86\-/);
 
+$cpuid_obj="mem_clr.o"	unless ($cpuid_obj =~ /\.o$/);
 $des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
 $cast_obj=$cast_enc	unless ($cast_obj =~ /\.o$/);
@@ -1481,7 +1482,7 @@ print OUT "#ifdef OPENSSL_ALGORITHM_DEFINES\n";
 print OUT $openssl_algorithm_defines_trans;
 print OUT "#endif\n\n";
 
-print OUT "#define OPENSSL_CPUID_OBJ\n\n" if ($cpuid_obj);
+print OUT "#define OPENSSL_CPUID_OBJ\n\n" if ($cpuid_obj ne "mem_clr.o");
 
 while (<IN>)
 	{

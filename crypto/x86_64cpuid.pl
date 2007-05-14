@@ -155,4 +155,36 @@ OPENSSL_ia32_cpuid:
 	or	%rcx,%rax
 	ret
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
+
+.globl  OPENSSL_cleanse
+.type   OPENSSL_cleanse,\@function,2
+.align  16
+OPENSSL_cleanse:
+	xor	%rax,%rax
+	cmp	\$15,%rsi
+	jae	.Lot
+.Little:
+	mov	%al,(%rdi)
+	sub	\$1,%rsi
+	lea	1(%rdi),%rdi
+	jnz	.Little
+	ret
+.align	16
+.Lot:
+	test	\$7,%rdi
+	jz	.Laligned
+	mov	%al,(%rdi)
+	lea	-1(%rsi),%rsi
+	lea	1(%rdi),%rdi
+	jmp	.Lot
+.Laligned:
+	mov	%rax,(%rdi)
+	lea	-8(%rsi),%rsi
+	test	\$-8,%rsi
+	lea	8(%rdi),%rdi
+	jnz	.Laligned
+	cmp	\$0,%rsi
+	jne	.Little
+	ret
+.size	OPENSSL_cleanse,.-OPENSSL_cleanse
 ___
