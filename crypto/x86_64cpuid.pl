@@ -1,19 +1,12 @@
 #!/usr/bin/env perl
 
 $output=shift;
-$win64a=1 if ($output =~ /win64a\.[s|asm]/);
+$masm=1 if ($output =~ /\.asm/);
 open STDOUT,">$output" || die "can't open $output: $!";
 
-print<<___ if(defined($win64a));
+print<<___ if(defined($masm));
 _TEXT	SEGMENT
 PUBLIC	OPENSSL_rdtsc
-ALIGN	16
-OPENSSL_rdtsc	PROC
-	rdtsc
-	shl	rdx,32
-	or	rax,rdx
-	ret
-OPENSSL_rdtsc	ENDP
 
 PUBLIC	OPENSSL_atomic_add
 ALIGN	16
@@ -45,64 +38,16 @@ OPENSSL_wipe_cpu	PROC
 	lea	rax,QWORD PTR[rsp+8]
 	ret
 OPENSSL_wipe_cpu	ENDP
-
-OPENSSL_ia32_cpuid	PROC
-	mov	r8,rbx
-
-	xor	eax,eax
-	cpuid
-	xor	eax,eax
-	cmp	ebx,0756e6547h
-	setne	al
-	mov	r9d,eax
-	cmp	edx,049656e69h
-	setne	al
-	or	r9d,eax
-	cmp	ecx,06c65746eh
-	setne	al
-	or	r9d,eax
-
-	mov	eax,1
-	cpuid
-	bt	edx,28
-	jnc	\$Ldone
-	cmp	r9,0
-	jne	\$Lnotintel
-	or	edx,000100000h
-	and	ah,15
-	cmp	ah,15
-	je	\$Lnotintel
-	or	edx,040000000h
-\$Lnotintel:
-	shr	ebx,16
-	cmp	bl,1
-	ja	\$Ldone
-	and	edx,0efffffffh
-\$Ldone:
-	shl	rcx,32
-	mov	eax,edx
-	mov	rbx,r8
-	or	rax,rcx
-	ret
-OPENSSL_ia32_cpuid	ENDP
 _TEXT	ENDS
 
 CRT\$XIU	SEGMENT
 EXTRN	OPENSSL_cpuid_setup:PROC
 DQ	OPENSSL_cpuid_setup
 CRT\$XIU	ENDS
-END
+
 ___
-print<<___ if(!defined($win64a));
+print<<___ if(!defined($masm));
 .text
-.globl	OPENSSL_rdtsc
-.align	16
-OPENSSL_rdtsc:
-	rdtsc
-	shlq	\$32,%rdx
-	orq	%rdx,%rax
-	ret
-.size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
 
 .globl	OPENSSL_atomic_add
 .type	OPENSSL_atomic_add,\@function
@@ -149,10 +94,30 @@ OPENSSL_wipe_cpu:
 	ret
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 
+.section	.init
+	call	OPENSSL_cpuid_setup
+
+___
+
+open STDOUT,"| $^X perlasm/x86_64-xlate.pl $output";
+print<<___;
+.text
+
+.globl	OPENSSL_rdtsc
+.type	OPENSSL_rdtsc,\@abi-omnipotent
+.align	16
+OPENSSL_rdtsc:
+	rdtsc
+	shl	\$32,%rdx
+	or	%rdx,%rax
+	ret
+.size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
+
 .globl	OPENSSL_ia32_cpuid
+.type	OPENSSL_ia32_cpuid,\@abi-omnipotent
 .align	16
 OPENSSL_ia32_cpuid:
-	movq	%rbx,%r8
+	mov	%rbx,%r8
 
 	xor	%eax,%eax
 	cpuid
@@ -167,11 +132,11 @@ OPENSSL_ia32_cpuid:
 	setne	%al
 	or	%eax,%r9d
 
-	movl	\$1,%eax
+	mov	\$1,%eax
 	cpuid
 	bt	\$28,%edx		# test hyper-threading bit
 	jnc	.Ldone
-	cmp	\$0,%r9
+	cmp	\$0,%r9d
 	jne	.Lnotintel
 	or	\$1<<20,%edx		# use reserved bit to engage RC4_CHAR
 	and	\$15,%ah
@@ -182,15 +147,12 @@ OPENSSL_ia32_cpuid:
 	shr	\$16,%ebx
 	cmp	\$1,%bl			# see if cache is shared
 	ja	.Ldone
-	and	\$~(1<<28),%edx
+	and	\$0xefffffff,%edx	# ~(1<<28)
 .Ldone:
-	shlq	\$32,%rcx
-	movl	%edx,%eax
-	movq	%r8,%rbx
-	orq	%rcx,%rax
+	shl	\$32,%rcx
+	mov	%edx,%eax
+	mov	%r8,%rbx
+	or	%rcx,%rax
 	ret
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
-
-.section	.init
-	call	OPENSSL_cpuid_setup
 ___

@@ -57,7 +57,13 @@
 #		lea		.Label-.Lpic_point(%rcx),%rbp
 
 my $output = shift;
-open STDOUT,">$output" || die "can't open $output: $!";
+
+{ my ($stddev,$stdino,@junk)=stat(STDOUT);
+  my ($outdev,$outino,@junk)=stat($output);
+
+    open STDOUT,">$output" || die "can't open $output: $!"
+	if ($stddev!=$outdev || $stdino!=$outino);
+}
 
 my $masm=1 if ($output =~ /\.asm/);
 
@@ -70,7 +76,7 @@ my $current_function;
 	local	*line = shift;
 	undef	$ret;
 
-	if ($line =~ /^([a-z]+)/i) {
+	if ($line =~ /^([a-z][a-z0-9]*)/i) {
 	    $self->{op} = $1;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
@@ -95,8 +101,10 @@ my $current_function;
     sub out {
 	my $self = shift;
 	if (!$masm) {
-	    if ($self->{op} eq "movz") {	# movz in pain...
+	    if ($self->{op} eq "movz") {	# movz is pain...
 		sprintf "%s%s%s",$self->{op},$self->{sz},shift;
+	    } elsif ($self->{op} =~ /^set/) { 
+		"$self->{op}";
 	    } elsif ($self->{op} eq "ret") {
 	    	".byte	0xf3,0xc3";
 	    } else {
@@ -198,6 +206,8 @@ my $current_function;
 					$self->{label},
 					$self->{index},$self->{scale},
 					$self->{base};
+	    } elsif ($self->{base} eq "rip") {
+		sprintf "%s PTR %s",$szmap{$sz},$self->{label};
 	    } else {
 		sprintf "%s PTR %s[%s]",$szmap{$sz},
 					$self->{label},$self->{base};
@@ -325,6 +335,8 @@ my $current_function;
 		    $self->{value} = sprintf "\t.long\t0x%x,0x90000000",$opcode{$1};
 		} elsif ($line =~ /\.asciz\s+"(.*)"$/) {
 		    $self->{value} = ".byte\t".join(",",unpack("C*",$1),0);
+		} elsif ($line =~ /\.extern/) {
+		    $self->{value} = ""; # swallow extern
 		} else {
 		    $self->{value} = $line;
 		}
@@ -346,6 +358,7 @@ my $current_function;
 				    $self->{value} = $v;
 				    last;
 				  };
+		/\.extern/  && do { $self->{value} = "EXTRN\t".$line; last;  };
 		/\.globl/   && do { $self->{value} = "PUBLIC\t".$line; last; };
 		/\.type/    && do { ($sym,$type,$narg) = split(',',$line);
 				    if ($type eq "\@function") {
