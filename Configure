@@ -123,7 +123,7 @@ my $x86_out_asm="x86cpuid-out.o:bn86-out.o co86-out.o mo86-out.o:dx86-out.o yx86
 my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o::aes-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o::rc4-x86_64.o:::wp-x86_64.o";
 my $ia64_asm="ia64cpuid.o:bn-ia64.o::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o::rc4-ia64.o rc4_skey.o:::";
 my $sparcv9_asm="sparcv9cap.o sparccpuid.o:bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o:des_enc-sparc.o fcrypt_b.o:aes_core.o aes_cbc.o aes-sparcv9.o:::sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o:::::";
-my $alpha_asm=":bn_asm.o alpha-mont.o::::::::::";
+my $alpha_asm="alphacpuid.o:bn_asm.o alpha-mont.o::::::::::";
 my $s390x_asm=":bn_asm.o s390x-mont.o::aes_core.o aes_cbc.o aes-s390x.o:::sha1-s390x.o sha256-s390x.o sha512-s390x.o:::::";
 my $no_asm=":::::::::::";
 
