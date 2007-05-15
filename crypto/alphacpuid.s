@@ -2,6 +2,14 @@
 
 .set	noat
 
+.globl	OPENSSL_cpuid_setup
+.ent	OPENSSL_cpuid_setup
+OPENSSL_cpuid_setup:
+	.frame	$30,0,$26
+	.prologue 0
+	ret	($26)
+.end	OPENSSL_cpuid_setup
+
 .globl	OPENSSL_wipe_cpu
 .ent	OPENSSL_wipe_cpu
 OPENSSL_wipe_cpu:
