@@ -84,6 +84,19 @@ static void hmac_key_free(EVP_PKEY *pkey)
 	}
 
 
+static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+	{
+	switch (op)
+		{
+		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
+		*(int *)arg2 = NID_sha1;
+		return 1;
+
+		default:
+		return -2;
+		}
+	}
+
 #ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
 /* A bogus private key format for test purposes. This is simply the
  * HMAC key with "HMAC PRIVATE KEY" in the headers. When enabled the
@@ -143,7 +156,7 @@ const EVP_PKEY_ASN1_METHOD hmac_asn1_meth =
 	0,0,0,0,0,0,
 
 	hmac_key_free,
-	0,
+	hmac_pkey_ctrl,
 #ifdef HMAC_TEST_PRIVATE_KEY_FORMAT
 	old_hmac_decode,
 	old_hmac_encode

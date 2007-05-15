@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,6 +73,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_AES_INIT_KEY),	"AES_INIT_KEY"},
 {ERR_FUNC(EVP_F_CAMELLIA_INIT_KEY),	"CAMELLIA_INIT_KEY"},
 {ERR_FUNC(EVP_F_D2I_PKEY),	"D2I_PKEY"},
+{ERR_FUNC(EVP_F_DO_SIGVER_INIT),	"DO_SIGVER_INIT"},
 {ERR_FUNC(EVP_F_DSAPKEY2PKCS8),	"DSAPKEY2PKCS8"},
 {ERR_FUNC(EVP_F_DSA_PKEY2PKCS8),	"DSA_PKEY2PKCS8"},
 {ERR_FUNC(EVP_F_ECDSA_PKEY2PKCS8),	"ECDSA_PKEY2PKCS8"},
@@ -169,6 +170,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_METHOD_NOT_SUPPORTED)  ,"method not supported"},
 {ERR_REASON(EVP_R_MISSING_PARAMETERS)    ,"missing parameters"},
 {ERR_REASON(EVP_R_NO_CIPHER_SET)         ,"no cipher set"},
+{ERR_REASON(EVP_R_NO_DEFAULT_DIGEST)     ,"no default digest"},
 {ERR_REASON(EVP_R_NO_DIGEST_SET)         ,"no digest set"},
 {ERR_REASON(EVP_R_NO_DSA_PARAMETERS)     ,"no dsa parameters"},
 {ERR_REASON(EVP_R_NO_KEY_SET)            ,"no key set"},

@@ -941,6 +941,8 @@ int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *pkey_base_id, int *ppkey_flags,
 
 EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 					const char *pem_str, const char *info);
+void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst, 
+			const EVP_PKEY_ASN1_METHOD *src);
 void EVP_PKEY_asn1_free(EVP_PKEY_ASN1_METHOD *ameth);
 void EVP_PKEY_asn1_set_public(EVP_PKEY_ASN1_METHOD *ameth,
 		int (*pub_decode)(EVP_PKEY *pk, X509_PUBKEY *pub),
@@ -1156,6 +1158,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_AES_INIT_KEY				 133
 #define EVP_F_CAMELLIA_INIT_KEY				 159
 #define EVP_F_D2I_PKEY					 100
+#define EVP_F_DO_SIGVER_INIT				 161
 #define EVP_F_DSAPKEY2PKCS8				 134
 #define EVP_F_DSA_PKEY2PKCS8				 135
 #define EVP_F_ECDSA_PKEY2PKCS8				 129
@@ -1249,6 +1252,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_METHOD_NOT_SUPPORTED			 144
 #define EVP_R_MISSING_PARAMETERS			 103
 #define EVP_R_NO_CIPHER_SET				 131
+#define EVP_R_NO_DEFAULT_DIGEST				 158
 #define EVP_R_NO_DIGEST_SET				 139
 #define EVP_R_NO_DSA_PARAMETERS				 116
 #define EVP_R_NO_KEY_SET				 154
@@ -1273,7 +1277,6 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_UNSUPPORTED_SALT_TYPE			 126
 #define EVP_R_WRONG_FINAL_BLOCK_LENGTH			 109
 #define EVP_R_WRONG_PUBLIC_KEY_TYPE			 110
-#define EVP_R_SEED_KEY_SETUP_FAILED			 162
 
 #ifdef  __cplusplus
 }

@@ -301,7 +301,7 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 		if (!ameth->pem_str)
 			goto err;
 		}
-	
+
 	ameth->pub_decode = 0;
 	ameth->pub_encode = 0;
 	ameth->pub_cmp = 0;
@@ -333,6 +333,37 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 
 	EVP_PKEY_asn1_free(ameth);
 	return NULL;
+
+	}
+
+void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst, 
+			const EVP_PKEY_ASN1_METHOD *src)
+	{
+
+	dst->pub_decode = src->pub_decode;
+	dst->pub_encode = src->pub_encode;
+	dst->pub_cmp = src->pub_cmp;
+	dst->pub_print = src->pub_print;
+
+	dst->priv_decode = src->priv_decode;
+	dst->priv_encode = src->priv_encode;
+	dst->priv_print = src->priv_print;
+
+	dst->old_priv_encode = src->old_priv_encode;
+	dst->old_priv_decode = src->old_priv_decode;
+
+	dst->pkey_size = src->pkey_size;
+	dst->pkey_bits = src->pkey_bits;
+
+	dst->param_decode = src->param_decode;
+	dst->param_encode = src->param_encode;
+	dst->param_missing = src->param_missing;
+	dst->param_copy = src->param_copy;
+	dst->param_cmp = src->param_cmp;
+	dst->param_print = src->param_print;
+
+	dst->pkey_free = src->pkey_free;
+	dst->pkey_ctrl = src->pkey_ctrl;
 
 	}
 
