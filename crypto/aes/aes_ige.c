@@ -59,7 +59,7 @@ typedef struct {
         unsigned long data[N_WORDS];
 } aes_block_t;
 
-// XXX: probably some better way to do this
+/* XXX: probably some better way to do this */
 #if defined(__i386__) || defined(__x86_64__)
 #define UNALIGNED_MEMOPS_ARE_FAST 1
 #endif
