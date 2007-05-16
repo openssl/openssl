@@ -58,23 +58,14 @@
 #ifndef OPENSSL_NO_OCSP
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#define _XOPEN_SOURCE_EXTENDED	1 /* Or fd_set, select() and so on won't be
-				     declared properly on Compaq platforms
-				     (at least with DEC C).
-				  */
-#ifdef OPENSSL_SYS_VMS
-# include <time.h>
-#else
-# include <sys/time.h>
-# include <sys/select.h>
-#endif
-#include "apps.h"
-#include <openssl/pem.h>
+#include <openssl/e_os2.h>
+#include <openssl/bio.h>
 #include <openssl/ocsp.h>
-#include <openssl/err.h>
+#include <openssl/txt_db.h>
 #include <openssl/ssl.h>
-#include <openssl/bn.h>
+#include "apps.h"
 
 /* Maximum leeway in validity period: default 5 minutes */
 #define MAX_VALIDITY_PERIOD	(5 * 60)
