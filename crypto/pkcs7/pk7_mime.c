@@ -121,7 +121,7 @@ int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
 		bio = BIO_new_PKCS7(out, p7);
 		if (!bio)
 			{
-			PKCS7err(PKCS7_F_PKCS7_BIO_STREAM,ERR_R_MALLOC_FAILURE);
+			PKCS7err(PKCS7_F_I2D_PKCS7_BIO_STREAM,ERR_R_MALLOC_FAILURE);
 			return 0;
 			}
 		SMIME_crlf_copy(in, bio, flags);
