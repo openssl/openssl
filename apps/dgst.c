@@ -231,8 +231,6 @@ int MAIN(int argc, char **argv)
 		argv++;
 		}
 
-	if (md == NULL)
-		md=EVP_md5();
 
 	if(do_verify && !sigfile) {
 		BIO_printf(bio_err, "No signature to verify: use the -signature option\n");
@@ -447,11 +445,16 @@ int MAIN(int argc, char **argv)
 			}
 		}
 	/* we use md as a filter, reading from 'in' */
-	else if (!BIO_set_md(bmd,md))
+	else
 		{
-		BIO_printf(bio_err, "Error setting digest %s\n", pname);
-		ERR_print_errors(bio_err);
-		goto end;
+		if (md == NULL)
+			md = EVP_md5(); 
+		if (!BIO_set_md(bmd,md))
+			{
+			BIO_printf(bio_err, "Error setting digest %s\n", pname);
+			ERR_print_errors(bio_err);
+			goto end;
+			}
 		}
 
 	if(sigfile && sigkey) {
@@ -475,6 +478,13 @@ int MAIN(int argc, char **argv)
 		}
 	}
 	inp=BIO_push(bmd,in);
+
+	if (md == NULL)
+		{
+		EVP_MD_CTX *tctx;
+		BIO_get_md_ctx(bmd, &tctx);
+		md = EVP_MD_CTX_md(tctx);
+		}
 
 	if (argc == 0)
 		{
