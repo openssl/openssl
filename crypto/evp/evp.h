@@ -939,6 +939,7 @@ int EVP_PKEY_asn1_get0_info(int *ppkey_id, int *pkey_base_id, int *ppkey_flags,
 				const char **pinfo, const char **ppem_str,
 					const EVP_PKEY_ASN1_METHOD *ameth);
 
+const EVP_PKEY_ASN1_METHOD* EVP_PKEY_get0_asn1(EVP_PKEY *pkey);
 EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 					const char *pem_str, const char *info);
 void EVP_PKEY_asn1_copy(EVP_PKEY_ASN1_METHOD *dst, 

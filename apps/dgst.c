@@ -75,7 +75,8 @@
 #define PROG	dgst_main
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
-	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
+	  EVP_PKEY *key, unsigned char *sigin, int siglen,
+	  const char *sig_name, const char *md_name,
 	  const char *file,BIO *bmd);
 
 int MAIN(int, char **);
@@ -89,7 +90,6 @@ int MAIN(int argc, char **argv)
 	BIO *in=NULL,*inp;
 	BIO *bmd=NULL;
 	BIO *out = NULL;
-	const char *name;
 #define PROG_NAME_SIZE  39
 	char pname[PROG_NAME_SIZE+1];
 	int separator=0;
@@ -490,37 +490,42 @@ int MAIN(int argc, char **argv)
 		{
 		BIO_set_fp(in,stdin,BIO_NOCLOSE);
 		err=do_fp(out, buf,inp,separator, out_bin, sigkey, sigbuf,
-			  siglen,"","(stdin)",bmd);
+			  siglen,NULL,NULL,"stdin",bmd);
 		}
 	else
 		{
-		name=OBJ_nid2sn(md->type);
+		const char *md_name, *sig_name;
+		if(out_bin)
+			{
+			md_name = NULL;
+			sig_name = NULL;
+			}
+		else
+			{
+			if (sigkey)
+				{
+				const EVP_PKEY_ASN1_METHOD *ameth;
+				ameth = EVP_PKEY_get0_asn1(sigkey);
+				if (ameth)
+					EVP_PKEY_asn1_get0_info(NULL, NULL,
+						NULL, NULL, &sig_name, ameth);
+				}
+			md_name = EVP_MD_name(md);
+			}
 		for (i=0; i<argc; i++)
 			{
-			char *tmp,*tofree=NULL;
 			int r;
-
 			if (BIO_read_filename(in,argv[i]) <= 0)
 				{
 				perror(argv[i]);
 				err++;
 				continue;
 				}
-			if(!out_bin)
-				{
-				size_t len = strlen(name)+strlen(argv[i])+(hmac_key ? 5 : 0)+5;
-				tmp=tofree=OPENSSL_malloc(len);
-				BIO_snprintf(tmp,len,"%s%s(%s)= ",
-							 hmac_key ? "HMAC-" : "",name,argv[i]);
-				}
 			else
-				tmp="";
 			r=do_fp(out,buf,inp,separator,out_bin,sigkey,sigbuf,
-				siglen,tmp,argv[i],bmd);
+				siglen,sig_name,md_name, argv[i],bmd);
 			if(r)
 			    err=r;
-			if(tofree)
-				OPENSSL_free(tofree);
 			(void)BIO_reset(bmd);
 			}
 		}
@@ -546,7 +551,8 @@ end:
 	}
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
-	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
+	  EVP_PKEY *key, unsigned char *sigin, int siglen,
+	  const char *sig_name, const char *md_name,
 	  const char *file,BIO *bmd)
 	{
 	size_t len;
@@ -600,7 +606,12 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	if(binout) BIO_write(out, buf, len);
 	else 
 		{
-		BIO_write(out,title,strlen(title));
+		if (sig_name)
+			BIO_printf(out, "%s-%s(%s)=", sig_name, md_name, file);
+		else if (md_name)
+			BIO_printf(out, "%s(%s)=", md_name, file);
+		else
+			BIO_printf(out, "(%s)=", file);
 		for (i=0; i<(int)len; i++)
 			{
 			if (sep && (i != 0))
