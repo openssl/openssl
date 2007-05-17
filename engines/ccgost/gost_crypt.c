@@ -551,7 +551,9 @@ int gost_imit_init_vizir(EVP_MD_CTX *ctx)
 int gost_imit_init_cpa(EVP_MD_CTX *ctx)
 	{
 	struct ossl_gost_imit_ctx *c = ctx->md_data;
-	memset(c,0,sizeof(struct ossl_gost_imit_ctx));
+	memset(c->buffer,0,16);
+	c->count = 0;
+	c->bytes_left=0;
 	c->key_meshing=1;
 	gost_init(&(c->cctx),&Gost28147_CryptoProParamSetA);
 	return 1;

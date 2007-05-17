@@ -131,6 +131,7 @@ errors:
 		$(PERL) ../util/mkerr.pl -conf e_$$l.ec \
 			-nostatic -staticloader -write e_$$l.c; \
 	done
+	(cd ccgost; $(MAKE) PERL=$(PERL) errors)
 
 tests:
 

@@ -59,12 +59,15 @@ int gost_digest_final(EVP_MD_CTX *ctx,unsigned char *md)
 
 int gost_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from) 
 	{
+	if (to->md_data && from->md_data) 
 	memcpy(to->md_data,from->md_data,sizeof(struct ossl_gost_digest_ctx));
+
 	return 1;
 	}		
 
 int gost_digest_cleanup(EVP_MD_CTX *ctx) 
 	{
+	if (ctx->md_data)
 	memset(ctx->md_data,0,sizeof(struct ossl_gost_digest_ctx));
 	return 1;
 	}	

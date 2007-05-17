@@ -35,14 +35,25 @@
 	int register_pmeth_gost (int id, EVP_PKEY_METHOD **pmeth, int flags);
 
 /* Gost-specific pmeth control-function parameters */
+/* For GOST R34.10 parameters */
 #define param_ctrl_string "paramset"
 #define EVP_PKEY_CTRL_GOST_PARAMSET (EVP_PKEY_ALG_CTRL+1)
+/* For GOST 28147 MAC */
+#define key_ctrl_string "key"
+#define hexkey_ctrl_string "hexkey"
+#define EVP_PKEY_CTRL_GOST_MAC_HEXKEY (EVP_PKEY_ALG_CTRL+3)
 /* Pmeth internal representation */
 	struct gost_pmeth_data {
    	    int sign_param_nid; /* Should be set whenever parameters are filled */
 		EVP_PKEY *eph_seckey;
 		EVP_MD *md;
 	};
+
+	struct gost_mac_pmeth_data {
+		int key_set;
+		EVP_MD *md;
+		unsigned char key[32];
+	}	;
 /* GOST-specific ASN1 structures */
 
 
@@ -146,6 +157,8 @@ extern EVP_CIPHER cipher_gost_cpacnt;
 extern EVP_MD imit_gost_vizir;
 extern EVP_MD imit_gost_cpa;
 #endif
+#define EVP_MD_CTRL_KEY_LEN (EVP_MD_CTRL_ALG_CTRL+3)
+#define EVP_MD_CTRL_SET_KEY (EVP_MD_CTRL_ALG_CTRL+4)
 /* EVP_PKEY_METHOD key encryption callbacks */
 /* From gost94_keyx.c */
 int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen, const unsigned char* key, size_t key_len );
