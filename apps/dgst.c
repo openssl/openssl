@@ -412,13 +412,18 @@ int MAIN(int argc, char **argv)
 		{
 		EVP_MD_CTX *mctx = NULL;
 		EVP_PKEY_CTX *pctx = NULL;
+		int r;
 		if (!BIO_get_md_ctx(bmd, &mctx))
 			{
 			BIO_printf(bio_err, "Error getting context\n");
 			ERR_print_errors(bio_err);
 			goto end;
 			}
-		if (!EVP_DigestSignInit(mctx, &pctx, md, e, sigkey))
+		if (do_verify)
+			r = EVP_DigestVerifyInit(mctx, &pctx, md, e, sigkey);
+		else
+			r = EVP_DigestSignInit(mctx, &pctx, md, e, sigkey);
+		if (!r)
 			{
 			BIO_printf(bio_err, "Error setting context\n");
 			ERR_print_errors(bio_err);
