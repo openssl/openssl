@@ -114,7 +114,8 @@ struct ossl_gost_digest_ctx {
 };	
 /* EVP_MD structure for GOST R 34.11 */
 extern EVP_MD digest_gost;
-
+/* EVP_MD structure for GOST 28147 in MAC mode */
+extern EVP_MD imit_gost_cpa;
 /* Cipher context used for EVP_CIPHER operation */
 struct ossl_gost_cipher_ctx {
 	int paramNID;
@@ -128,7 +129,6 @@ struct gost_cipher_info {
 	gost_subst_block *sblock;
 	int key_meshing;
 };
-#ifdef USE_SSL
 /* Context for MAC */
 struct ossl_gost_imit_ctx {
 	gost_ctx cctx;
@@ -139,7 +139,6 @@ struct ossl_gost_imit_ctx {
 	int bytes_left;
 	int key_set;
 };	
-#endif
 /* Table which maps parameter NID to S-blocks */
 extern struct gost_cipher_info gost_cipher_list[];
 /* Find encryption params from ASN1_OBJECT */

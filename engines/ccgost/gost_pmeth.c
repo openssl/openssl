@@ -545,7 +545,7 @@ static int pkey_gost_mac_ctrl (EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		{
 		case EVP_PKEY_CTRL_MD:
 		{
-		if (EVP_MD_type((const EVP_MD *)p2) != NID_id_Gost28147_89_MAC)
+		if (p2 != NULL)
 			{
 			GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL, GOST_R_INVALID_DIGEST_TYPE);
 			return 0;
@@ -591,7 +591,7 @@ static int pkey_gost_mac_ctrl (EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 				} else {
 				key = &(data->key);
 				}
-			return mctx->digest->md_ctrl(mctx,EVP_MD_CTRL_SET_KEY,32,key);
+			return imit_gost_vizir.md_ctrl(mctx,EVP_MD_CTRL_SET_KEY,32,key);
 			}  
 		}	
 	return -2;
@@ -646,27 +646,7 @@ static int pkey_gost_mac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 
 static int pkey_gost_mac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 	{
-	void *key;
-	struct gost_mac_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
-	if (!mctx->digest)  return 1;
-	if (!data->key_set)
-		{ 
-		EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
-		if (!pkey) 
-			{
-			GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL,GOST_R_MAC_KEY_NOT_SET);
-			return 0;
-			}
-		key = EVP_PKEY_get0(pkey);
-		if (!key) 
-			{
-			GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL,GOST_R_MAC_KEY_NOT_SET);
-			return 0;
-			}
-		} else {
-		key = &(data->key);
-		}
-		return mctx->digest->md_ctrl(mctx,EVP_MD_CTRL_SET_KEY,32,key);
+	return 1;
 }
 
 static int pkey_gost_mac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen, EVP_MD_CTX *mctx)

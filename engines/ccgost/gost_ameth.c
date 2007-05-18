@@ -714,69 +714,12 @@ static void  mackey_free_gost(EVP_PKEY *pk)
 			OPENSSL_free(pk->pkey.ptr);
 		}	
 	}
-static int	priv_decode_mac(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
-	{	
-		X509_ALGOR *palg = NULL;
-		int priv_len = 0;
-		ASN1_OBJECT *palg_obj = NULL;
-		ASN1_OCTET_STRING *s=NULL;
-		const unsigned char *pkey_buf = NULL, *p = NULL;
-		unsigned char *keybuf=NULL;
-		if (!PKCS8_pkey_get0(&palg_obj,&pkey_buf,&priv_len,&palg,p8inf)) 
-			{
-			return 0;
-			}
-		p = pkey_buf;
-		if (V_ASN1_OCTET_STRING != *p) 
-			{
-			GOSTerr(GOST_F_PRIV_DECODE_MAC,
-				GOST_R_DECODE_ERROR);
-			return 0;	
-			}	
-		s = d2i_ASN1_OCTET_STRING(NULL,&p,priv_len);
-		if (!s || s->length!=32) 
-			{
-			GOSTerr(GOST_F_PRIV_DECODE_MAC,
-				GOST_R_DECODE_ERROR);
-			return 0;	
-			}	
-		keybuf = OPENSSL_malloc(32);
-		memcpy(keybuf,s->data,32);
-		EVP_PKEY_assign(pk,EVP_PKEY_base_id(pk),keybuf);
-		ASN1_STRING_free(s);
-		return 1;
-	}
-	
-static int	priv_encode_mac(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk)
-	{
-	ASN1_OBJECT *algobj = OBJ_nid2obj(EVP_PKEY_base_id(pk));
-	ASN1_STRING *key = ASN1_STRING_new();
-	unsigned char *priv_buf=NULL, *data = EVP_PKEY_get0((EVP_PKEY *)pk);
-	int priv_len;
-	
-	ASN1_STRING_set(key, data, 32);
-	priv_len = i2d_ASN1_OCTET_STRING(key,&priv_buf);
-	ASN1_STRING_free(key);
-	return PKCS8_pkey_set0(p8,algobj,0,V_ASN1_NULL,NULL,priv_buf,priv_len);
-	}
-
-static int	priv_print_mac(BIO *out,const EVP_PKEY *pkey, int indent,
-	ASN1_PCTX *pctx)
-	{
-		unsigned char *data = EVP_PKEY_get0((EVP_PKEY *)pkey);
-		int i;
-		if (!BIO_indent(out, indent,128)) return 0;
-		for (i=0; i<32;i++) {
-			BIO_printf(out,"%02x",data[i]);
-		}
-		return 1;
-	}	
 static int mac_ctrl_gost(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
 	switch (op)
 		{
 		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-			*(int *)arg2 = NID_id_Gost28147_89_MAC;
+			*(int *)arg2 = NID_undef;
 			return 2;
 		}
 	return -2;
@@ -825,8 +768,6 @@ int register_ameth_gost (int nid, EVP_PKEY_ASN1_METHOD **ameth, const char* pems
 			break;
 		case NID_id_Gost28147_89_MAC:
 			EVP_PKEY_asn1_set_free(*ameth, mackey_free_gost);
-			EVP_PKEY_asn1_set_private(*ameth, priv_decode_mac,
-				priv_encode_mac, priv_print_mac);
 			EVP_PKEY_asn1_set_ctrl(*ameth,mac_ctrl_gost);	
 			break;
 		}		

@@ -234,6 +234,7 @@ int pkey_GOST94cc_encrypt (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen
 	/* create DH structure filling parameters from passed pub_key */
 	DH *dh = NULL;
 	GOST_KEY_TRANSPORT *gkt = NULL;
+	const struct gost_cipher_info *cipher_info;
 	gost_ctx cctx;
 	EVP_PKEY *newkey=NULL;
 	unsigned char shared_key[32],encrypted_key[32],hmac[4],
@@ -254,7 +255,8 @@ int pkey_GOST94cc_encrypt (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen
 		goto err;
 		}	
 	/* encrypt session key */
-	gost_init(&cctx, &GostR3411_94_CryptoProParamSet);
+	cipher_info = get_encryption_params(NULL);
+	gost_init(&cctx, cipher_info->sblock);
 	gost_key(&cctx,shared_key);
 	encrypt_cryptocom_key(key,key_len,encrypted_key,&cctx);
 	/* compute hmac of session key */
@@ -293,7 +295,7 @@ int pkey_GOST94cc_encrypt (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen
 		goto err;
 		}	
 	ASN1_OBJECT_free(gkt->key_agreement_info->cipher);
-	gkt->key_agreement_info->cipher = OBJ_nid2obj(NID_id_Gost28147_89_cc);
+	gkt->key_agreement_info->cipher = OBJ_nid2obj(cipher_info->nid);
 	*outlen = i2d_GOST_KEY_TRANSPORT(gkt,&out);
 	err:
 	if (gkt) GOST_KEY_TRANSPORT_free(gkt);
@@ -374,6 +376,7 @@ int pkey_GOST94cc_decrypt (EVP_PKEY_CTX *pctx, unsigned char *key, size_t *key_l
 	unsigned char hmac[4],hmac_comp[4];
 	unsigned char iv[8];
 	int i;
+	const struct gost_cipher_info *cipher_info;
 	gost_ctx ctx;
 	DH *dh = DH_new();
 	EVP_PKEY *eph_key;
@@ -415,7 +418,8 @@ int pkey_GOST94cc_decrypt (EVP_PKEY_CTX *pctx, unsigned char *key, size_t *key_l
 		return 0;
 		}
 	/* Decrypt session key */
-	gost_init(&ctx, &GostR3411_94_CryptoProParamSet);
+	cipher_info = get_encryption_params(gkt->key_agreement_info->cipher);
+	gost_init(&ctx, cipher_info->sblock);
 	gost_key(&ctx,shared_key);
 	
 	if (!decrypt_cryptocom_key(key,*key_len,gkt->key_info->encrypted_key->data, 

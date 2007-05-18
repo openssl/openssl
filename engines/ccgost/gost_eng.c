@@ -34,7 +34,7 @@ static int gost_cipher_nids[] =
     {NID_id_Gost28147_89, NID_gost89_cnt,0};
 
 static int gost_digest_nids[] =
-	{NID_id_GostR3411_94, 0};
+	{NID_id_GostR3411_94,NID_id_Gost28147_89_MAC, 0};
 
 static int gost_pkey_meth_nids[] = 
 	{NID_id_GostR3410_94_cc, NID_id_GostR3410_94, NID_id_GostR3410_2001_cc,
@@ -137,6 +137,7 @@ static int bind_gost (ENGINE *e,const char *id)
 		|| ! EVP_add_cipher(&cipher_gost)
 		|| ! EVP_add_cipher(&cipher_gost_cpacnt)
 		|| ! EVP_add_digest(&digest_gost)
+		|| ! EVP_add_digest(&imit_gost_cpa)
 		)
 		{
 		goto end;
@@ -160,14 +161,18 @@ static int gost_digests(ENGINE *e, const EVP_MD **digest,
 	if (!digest) 
 		{
 		*nids = gost_digest_nids;
-		return 1; 
+		return 2; 
 		}
 	/*printf("Digest no %d requested\n",nid);*/
 	if(nid == NID_id_GostR3411_94) 
 		{
 		*digest = &digest_gost;
 		}
-	else 
+	else if (nid == NID_id_Gost28147_89_MAC) 
+		{
+		*digest = &imit_gost_cpa;
+		}
+	else
 		{
 		ok =0;
 		*digest = NULL;

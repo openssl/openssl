@@ -88,10 +88,12 @@ static EVP_CIPHER cipher_gost_vizircfb =
 	gost_cipher_ctl,
 	NULL,
 	};
-
+#endif
 /* Implementation of GOST 28147-89 in MAC (imitovstavka) mode */
 /* Init functions which set specific parameters */
+#ifdef USE_SSL
 static int gost_imit_init_vizir(EVP_MD_CTX *ctx);
+#endif
 static int gost_imit_init_cpa(EVP_MD_CTX *ctx);
 /* process block of data */
 static int gost_imit_update(EVP_MD_CTX *ctx, const void *data, size_t count);
@@ -102,6 +104,8 @@ static int gost_imit_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from);
 static int gost_imit_cleanup(EVP_MD_CTX *ctx);
 /* Control function, knows how to set MAC key.*/
 static int gost_imit_ctrl(EVP_MD_CTX *ctx,int type, int arg, void *ptr);
+
+#ifdef USE_SSL
 
 EVP_MD imit_gost_vizir =
 	{
@@ -121,27 +125,26 @@ EVP_MD imit_gost_vizir =
 	8,
 	sizeof(struct ossl_gost_imit_ctx) 
 	};
-
+#endif
 EVP_MD imit_gost_cpa =
 	{
-	NID_undef,
+	NID_id_Gost28147_89_MAC,
 	NID_undef,
 	4,
-	EVP_MD_FLAG_NEEDS_KEY,
+	0,
 	gost_imit_init_cpa,
 	gost_imit_update,
 	gost_imit_final,
 	gost_imit_copy,
 	gost_imit_cleanup,
-	gost_imit_ctrl,
 	NULL,
 	NULL,
 	{0,0,0,0,0},
 	8,
-	sizeof(struct ossl_gost_imit_ctx) 
+	sizeof(struct ossl_gost_imit_ctx), 
+	gost_imit_ctrl
 	};
 
-#endif
 /* 
  * Correspondence between gost parameter OIDs and substitution blocks
  * NID field is filed by register_gost_NID function in engine.c
@@ -233,7 +236,7 @@ static int gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	gost_init(&(c->cctx),&Gost28147_CryptoProParamSetA);
 	c->key_meshing=1;
 	c->count=0;
-	gost_key(&(c->cctx),key);
+	if(key) gost_key(&(c->cctx),key);
 	if(iv) memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
 	memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
 	return 1;
@@ -547,6 +550,7 @@ int gost_imit_init_vizir(EVP_MD_CTX *ctx)
 	gost_init(&(c->cctx),&GostR3411_94_CryptoProParamSet);
 	return 1;
 	}
+#endif
 
 int gost_imit_init_cpa(EVP_MD_CTX *ctx)
 	{
@@ -559,7 +563,7 @@ int gost_imit_init_cpa(EVP_MD_CTX *ctx)
 	return 1;
 	}
 
-static void mac_block_mesh(struct ossl_gost_imit_ctx *c,unsigned char *data)
+static void mac_block_mesh(struct ossl_gost_imit_ctx *c,const unsigned char *data)
 	{
 	char buffer[8];
 	/* We are using local buffer for iv because CryptoPro doesn't 
@@ -579,7 +583,10 @@ int gost_imit_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 	struct ossl_gost_imit_ctx *c = ctx->md_data;
 	const unsigned char *p = data;
 	size_t bytes = count,i;
-	if (!(c->key_set)) return 0;
+	if (!(c->key_set)) {
+		GOSTerr(GOST_F_GOST_IMIT_UPDATE, GOST_R_MAC_KEY_NOT_SET);
+		return 0;
+	}
 	if (c->bytes_left)
 		{
 		for (i=c->bytes_left;i<8&&bytes>0;bytes--,i++,p++)
@@ -623,6 +630,7 @@ int gost_imit_final(EVP_MD_CTX *ctx,unsigned char *md)
 		mac_block_mesh(c,c->partial_block);
 		}
 	get_mac(c->buffer,32,md);
+	if (!c->key_set) return 0;
 	return 1;
 	}
 
@@ -630,13 +638,19 @@ int gost_imit_ctrl(EVP_MD_CTX *ctx,int type, int arg, void *ptr)
 	{
 	switch (type)
 		{
-		case EVP_MD_CTRL_GET_TLS_MAC_KEY_LENGTH:
+		case EVP_MD_CTRL_KEY_LEN:
 			*((unsigned int*)(ptr)) = 32;
 			return 1;
 		case EVP_MD_CTRL_SET_KEY:
 		{
+		if (arg!=32) {
+			GOSTerr(GOST_F_GOST_IMIT_CTRL, GOST_R_INVALID_MAC_KEY_LENGTH);
+			return 0;
+		}
+
 		gost_key(&(((struct ossl_gost_imit_ctx*)(ctx->md_data))->cctx),ptr)	;
 		((struct ossl_gost_imit_ctx*)(ctx->md_data))->key_set = 1;
+		return 1;
 
 		}
 		default:
@@ -657,4 +671,3 @@ int gost_imit_cleanup(EVP_MD_CTX *ctx)
 	return 1;
 	}
 
-#endif
