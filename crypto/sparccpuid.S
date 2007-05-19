@@ -235,7 +235,7 @@ _sparcv9_rdtick:
 .global	OPENSSL_cleanse
 .align	32
 OPENSSL_cleanse:
-	cmp	%o1,6
+	cmp	%o1,14
 	nop
 #ifdef ABI64
 	bgu	%xcc,.Lot
@@ -253,23 +253,53 @@ OPENSSL_cleanse:
 	nop
 .align	32
 .Lot:
-	andcc	%o0,3,%g0
-	bz	.Laligned
+#ifndef ABI64
+	subcc	%g0,1,%g1
+	! see above for explanation
+	.word	0x83408000	!rd	%ccr,%g1
+	cmp	%g1,0x99
+	bne	.v8lot
+	nop
+#endif
+
+.v9lot:	andcc	%o0,7,%g0
+	bz	.v9aligned
 	nop
 	stb	%g0,[%o0]
 	sub	%o1,1,%o1
-	ba	.Lot
+	ba	.v9lot
+	add	%o0,1,%o0
+.align	16,0x01000000
+.v9aligned:
+	.word	0xc0720000	!stx	%g0,[%o0]
+	sub	%o1,8,%o1
+	andcc	%o1,-8,%g0
+#ifdef ABI64
+	.word	0x126ffffd	!bnz	%xcc,.v9aligned
+#else
+	.word	0x124ffffd	!bnz	%icc,.v9aligned
+#endif
+	add	%o0,8,%o0
+
+	cmp	%o1,0
+	bne	.Little
+	nop
+	retl
+	nop
+#ifndef ABI64
+.v8lot:	andcc	%o0,3,%g0
+	bz	.v8aligned
+	nop
+	stb	%g0,[%o0]
+	sub	%o1,1,%o1
+	ba	.v8lot
 	add	%o0,1,%o0
 	nop
-.Laligned:
+.v8aligned:
 	st	%g0,[%o0]
 	sub	%o1,4,%o1
 	andcc	%o1,-4,%g0
-#ifdef ABI64
-	bnz	%xcc,.Laligned
-#else
-	bnz	.Laligned
-#endif
+	bnz	.v8aligned
 	add	%o0,4,%o0
 
 	cmp	%o1,0
@@ -277,6 +307,7 @@ OPENSSL_cleanse:
 	nop
 	retl
 	nop
+#endif
 .type	OPENSSL_cleanse,#function
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
