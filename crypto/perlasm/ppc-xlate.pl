@@ -7,7 +7,7 @@ open STDOUT,">$output" || die "can't open $output: $!";
 
 my $flavour = $output;
 my %GLOBALS;
-my $dotinlocallabels=0;
+my $dotinlocallabels=($flavour=~/linux/)?1:0;
 
 ################################################################
 # directives which need special treatment on different platforms
@@ -29,7 +29,6 @@ my $globl = sub {
 			      };
 	/linux.*32/	&& do {	$ret .= ".globl	$name\n";
 				$ret .= ".type	$name,\@function";
-				$dotinlocallabels = 1;
 				last;
 			      };
 	/linux.*64/	&& do {	$ret .= ".globl	.$name\n";
@@ -43,7 +42,6 @@ my $globl = sub {
 				$ret .= ".previous\n";
 
 				$name = ".$name";
-				$dotinlocallabels = 1;
 				last;
 			      };
     }
