@@ -249,23 +249,28 @@ link_o.cygwin:
 	@ $(CALC_VERSIONS); \
 	INHIBIT_SYMLINKS=yes; \
 	SHLIB=cyg$(LIBNAME); \
-	expr $(PLATFORM) : 'mingw' > /dev/null && SHLIB=$(LIBNAME); \
+	base=-Wl,--enable-auto-image-base; \
+	if expr $(PLATFORM) : 'mingw' > /dev/null; then \
+		 SHLIB=$(LIBNAME); base=; \
+	fi; \
 	SHLIB_SUFFIX=.dll; \
 	LIBVERSION="$(LIBVERSION)"; \
 	SHLIB_SOVER=${LIBVERSION:+"-$(LIBVERSION)"}; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -Wl,-s,-Bsymbolic"; \
+	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-s,-Bsymbolic"; \
 	$(LINK_SO_O)
 link_a.cygwin:
 	@ $(CALC_VERSIONS); \
 	INHIBIT_SYMLINKS=yes; \
 	SHLIB=cyg$(LIBNAME); SHLIB_SOVER=-$(LIBVERSION); SHLIB_SUFFIX=.dll; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; extras=; \
+	base=-Wl,--enable-auto-image-base; \
 	if expr $(PLATFORM) : 'mingw' > /dev/null; then \
 		SHLIB=$(LIBNAME); SHLIB_SOVER=32; \
 		extras="$(LIBNAME).def"; \
 		$(PERL) util/mkdef.pl 32 $(LIBNAME) > $$extras; \
+		base=; [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x63000000; \
 	fi; \
 	dll_name=$$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX; \
 	$(PERL) util/mkrc.pl $$dll_name | \
@@ -273,7 +278,6 @@ link_a.cygwin:
 	extras="$$extras rc.o"; \
 	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	NOALLSYMSFLAGS='-Wl,--no-whole-archive'; \
-	base=;  [ $(LIBNAME) = "crypto" ] && base=-Wl,--image-base,0x63000000; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared $$base -Wl,-s,-Bsymbolic -Wl,--out-implib,lib$(LIBNAME).dll.a $$extras"; \
 	[ -f apps/$$dll_name ] && rm apps/$$dll_name; \
 	[ -f test/$$dll_name ] && rm test/$$dll_name; \
