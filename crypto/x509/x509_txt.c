@@ -129,7 +129,7 @@ const char *X509_verify_cert_error_string(long n)
 	case X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED:
 		return("proxy path length constraint exceeded");
 	case X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED:
-		return("proxy cerificates not allowed, please set the appropriate flag");
+		return("proxy certificates not allowed, please set the appropriate flag");
 	case X509_V_ERR_INVALID_PURPOSE:
 		return ("unsupported certificate purpose");
 	case X509_V_ERR_CERT_UNTRUSTED:
