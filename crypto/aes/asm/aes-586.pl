@@ -512,11 +512,11 @@ sub declast()
 	if($i==3)   {	&mov	($key,&DWP(12,"esp"));		}
 	else        {	&mov	($out,$s[0]);			}
 			&and	($out,0xFF);
-			&movz	($out,&DWP(2048,$td,$out,1));
+			&movz	($out,&BP(2048,$td,$out,1));
 
 	if ($i==3)  {	$tmp=$s[1];				}
 			&movz	($tmp,&HB($s[1]));
-			&movz	($tmp,&DWP(2048,$td,$tmp,1));
+			&movz	($tmp,&BP(2048,$td,$tmp,1));
 			&shl	($tmp,8);
 			&xor	($out,$tmp);
 
@@ -524,14 +524,14 @@ sub declast()
 	else        {	mov	($tmp,$s[2]);			}
 			&shr	($tmp,16);
 			&and	($tmp,0xFF);
-			&movz	($tmp,&DWP(2048,$td,$tmp,1));
+			&movz	($tmp,&BP(2048,$td,$tmp,1));
 			&shl	($tmp,16);
 			&xor	($out,$tmp);
 
 	if ($i==3)  {	$tmp=$s[3]; &mov ($s[2],&DWP(8,"esp"));	}
 	else        {	&mov	($tmp,$s[3]);			}
 			&shr	($tmp,24);
-			&movz	($tmp,&DWP(2048,$td,$tmp,1));
+			&movz	($tmp,&BP(2048,$td,$tmp,1));
 			&shl	($tmp,24);
 			&xor	($out,$tmp);
 	if ($i<2)   {	&mov	(&DWP(4+4*$i,"esp"),$out);	}
