@@ -43,7 +43,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&shr	("ebx",16);
 	&cmp	(&LB("ebx"),1);		# see if cache is shared(*)
 	&ja	(&label("nocpuid"));
-	&and	("edx",~(1<<28));	# clear hyper-threading bit if not
+	&and	("edx",0xefffffff);	# clear hyper-threading bit if not
 &set_label("nocpuid");
 	&mov	("eax","edx");
 	&mov	("edx","ecx");

@@ -51,6 +51,7 @@ sub ::generic
     if ($#_==0)				{ &::emit($opcode);		}
     elsif ($opcode =~ m/^j/o && $#_==1)	{ &::emit($opcode,@arg);	}
     elsif ($opcode eq "call" && $#_==1)	{ &::emit($opcode,@arg);	}
+    elsif ($opcode =~ m/^set/&& $#_==1)	{ &::emit($opcode,@arg);	}
     else				{ &::emit($opcode.$suffix,@arg);}
 
   1;
