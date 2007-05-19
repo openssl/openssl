@@ -87,8 +87,8 @@ $acc14="r30";
 $acc15="r31";
 
 # stay away from TLS pointer
-if ($SIZE_T==8)	{ $t1="r0";		}
-else		{ $Tbl3=$t0; $t="r0";	}
+if ($SIZE_T==8)	{ die if ($t1 ne "r13");  $t1="r0";		}
+else		{ die if ($Tbl3 ne "r2"); $Tbl3=$t0; $t0="r0";	}
 $mask80=$Tbl2;
 $mask1b=$Tbl3;
 
