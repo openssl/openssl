@@ -1952,7 +1952,7 @@ $arflags      =
 
 *** debug-solaris-sparcv9-gcc
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -march=ultrasparc -Wall -DB_ENDIAN
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG_ALL -O -g -mcpu=ultrasparc -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3302,7 +3302,7 @@ $arflags      =
 
 *** linux-ppc64
 $cc           = gcc
-$cflags       = -bpowerpc64-linux -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -m64 -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3320,7 +3320,7 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
 $shared_cflag = -fPIC
-$shared_ldflag = -bpowerpc64-linux
+$shared_ldflag = -m64
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
@@ -3452,7 +3452,7 @@ $arflags      =
 
 *** linux-sparcv9
 $cc           = gcc
-$cflags       = -march=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DBN_DIV2W
+$cflags       = -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall -Wa,-Av8plus -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -3502,7 +3502,7 @@ $arflags      =
 
 *** linux64-sparcv9
 $cc           = gcc
-$cflags       = -m64 -march=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
+$cflags       = -m64 -mcpu=ultrasparc -DB_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -3977,7 +3977,7 @@ $arflags      =
 
 *** solaris-sparcv9-gcc
 $cc           = gcc
-$cflags       = -m32 -march=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
+$cflags       = -m32 -mcpu=ultrasparc -O3 -fomit-frame-pointer -Wall -DB_ENDIAN -DBN_DIV2W
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -4102,7 +4102,7 @@ $arflags      =
 
 *** solaris64-sparcv9-gcc
 $cc           = gcc
-$cflags       = -m64 -march=ultrasparc -O3 -Wall -DB_ENDIAN
+$cflags       = -m64 -mcpu=ultrasparc -O3 -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
@@ -4127,7 +4127,7 @@ $arflags      =
 
 *** solaris64-sparcv9-gcc31
 $cc           = gcc
-$cflags       = -march=ultrasparc -m64 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN
+$cflags       = -mcpu=ultrasparc -m64 -O3 -fomit-frame-pointer -Wall -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = ULTRASPARC
