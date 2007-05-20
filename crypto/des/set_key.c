@@ -65,7 +65,7 @@
  */
 #include "des_locl.h"
 
-OPENSSL_IMPLEMENT_GLOBAL(int,DES_check_key);	/* defaults to false */
+OPENSSL_IMPLEMENT_GLOBAL(int,DES_check_key,0)	/* defaults to false */
 
 static const unsigned char odd_parity[256]={
   1,  1,  2,  2,  4,  4,  7,  7,  8,  8, 11, 11, 13, 13, 14, 14,

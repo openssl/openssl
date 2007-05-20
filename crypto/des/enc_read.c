@@ -63,7 +63,7 @@
 
 /* This has some uglies in it but it works - even over sockets. */
 /*extern int errno;*/
-OPENSSL_IMPLEMENT_GLOBAL(int,DES_rw_mode)=DES_PCBC_MODE;
+OPENSSL_IMPLEMENT_GLOBAL(int,DES_rw_mode,DES_PCBC_MODE)
 
 
 /*
