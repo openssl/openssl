@@ -286,7 +286,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
 			SN_whirlpool,SN_whirlpool);
 #endif
-		err=1;
+		goto end;
 		}
 
 	in=BIO_new(BIO_s_file());
