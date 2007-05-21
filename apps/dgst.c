@@ -85,7 +85,7 @@ int MAIN(int argc, char **argv)
 	{
 	ENGINE *e = NULL;
 	unsigned char *buf=NULL;
-	int i,err=0;
+	int i,err=1;
 	const EVP_MD *md=NULL,*m;
 	BIO *in=NULL,*inp;
 	BIO *bmd=NULL;
@@ -234,7 +234,6 @@ int MAIN(int argc, char **argv)
 
 	if(do_verify && !sigfile) {
 		BIO_printf(bio_err, "No signature to verify: use the -signature option\n");
-		err = 1; 
 		goto end;
 	}
 
@@ -288,7 +287,6 @@ int MAIN(int argc, char **argv)
 			SN_whirlpool,SN_whirlpool);
 #endif
 		err=1;
-		goto end;
 		}
 
 	in=BIO_new(BIO_s_file());
@@ -313,8 +311,10 @@ int MAIN(int argc, char **argv)
 		}
 
 	if(out_bin == -1) {
-		if(keyfile) out_bin = 1;
-		else out_bin = 0;
+		if(keyfile)
+			out_bin = 1;
+		else
+			out_bin = 0;
 	}
 
 	if(randfile)
@@ -494,13 +494,8 @@ int MAIN(int argc, char **argv)
 		}
 	else
 		{
-		const char *md_name, *sig_name;
-		if(out_bin)
-			{
-			md_name = NULL;
-			sig_name = NULL;
-			}
-		else
+		const char *md_name = NULL, *sig_name = NULL;
+		if(!out_bin)
 			{
 			if (sigkey)
 				{
@@ -512,6 +507,7 @@ int MAIN(int argc, char **argv)
 				}
 			md_name = EVP_MD_name(md);
 			}
+		err = 0;
 		for (i=0; i<argc; i++)
 			{
 			int r;
@@ -608,11 +604,11 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	else 
 		{
 		if (sig_name)
-			BIO_printf(out, "%s-%s(%s)=", sig_name, md_name, file);
+			BIO_printf(out, "%s-%s(%s)= ", sig_name, md_name, file);
 		else if (md_name)
-			BIO_printf(out, "%s(%s)=", md_name, file);
+			BIO_printf(out, "%s(%s)= ", md_name, file);
 		else
-			BIO_printf(out, "(%s)=", file);
+			BIO_printf(out, "(%s)= ", file);
 		for (i=0; i<(int)len; i++)
 			{
 			if (sep && (i != 0))
