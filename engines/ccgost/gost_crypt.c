@@ -565,7 +565,7 @@ int gost_imit_init_cpa(EVP_MD_CTX *ctx)
 
 static void mac_block_mesh(struct ossl_gost_imit_ctx *c,const unsigned char *data)
 	{
-	char buffer[8];
+	unsigned char buffer[8];
 	/* We are using local buffer for iv because CryptoPro doesn't 
 	 * interpret internal state of MAC algorithm as iv during keymeshing
 	 * (but does initialize internal state from iv in key transport

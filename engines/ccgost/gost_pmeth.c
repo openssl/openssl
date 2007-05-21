@@ -591,7 +591,7 @@ static int pkey_gost_mac_ctrl (EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 				} else {
 				key = &(data->key);
 				}
-			return imit_gost_vizir.md_ctrl(mctx,EVP_MD_CTRL_SET_KEY,32,key);
+			return mctx->digest->md_ctrl(mctx,EVP_MD_CTRL_SET_KEY,32,key);
 			}  
 		}	
 	return -2;
