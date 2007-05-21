@@ -220,6 +220,23 @@ static int run_test_vectors(void)
 
 			++errs;
 			}
+
+		// try with in == out
+		memcpy(iv, v->iv, sizeof iv);
+		memcpy(buf, v->in, v->length);
+		AES_ige_encrypt(buf, buf, v->length, &key, iv, v->encrypt);
+
+		if(memcmp(v->out, buf, v->length))
+			{
+			printf("IGE test vector %d failed (with in == out)\n", n);
+			hexdump(stdout, "key", v->key, sizeof v->key);
+			hexdump(stdout, "iv", v->iv, sizeof v->iv);
+			hexdump(stdout, "in", v->in, v->length);
+			hexdump(stdout, "expected", v->out, v->length);
+			hexdump(stdout, "got", buf, v->length);
+
+			++errs;
+			}
 		}
 
 	for(n=0 ; n < sizeof(bi_ige_test_vectors)/sizeof(bi_ige_test_vectors[0])

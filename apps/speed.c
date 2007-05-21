@@ -275,7 +275,7 @@ static void print_result(int alg,int run_no,int count,double time_used);
 static int do_multi(int multi);
 #endif
 
-#define ALGOR_NUM	25
+#define ALGOR_NUM	28
 #define SIZE_NUM	5
 #define RSA_NUM		4
 #define DSA_NUM		3
@@ -289,7 +289,8 @@ static const char *names[ALGOR_NUM]={
   "rc2 cbc","rc5-32/12 cbc","blowfish cbc","cast cbc",
   "aes-128 cbc","aes-192 cbc","aes-256 cbc",
   "camellia-128 cbc","camellia-192 cbc","camellia-256 cbc",
-  "evp","sha256","sha512"};
+  "evp","sha256","sha512",
+  "aes-128 ige","aes-192 ige","aes-256 ige"};
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
 static double rsa_results[RSA_NUM][2];
@@ -617,6 +618,9 @@ int MAIN(int argc, char **argv)
 #define D_EVP		22
 #define D_SHA256	23	
 #define D_SHA512	24
+#define D_IGE_128_AES   25
+#define D_IGE_192_AES   26
+#define D_IGE_256_AES   27
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 #define	R_DSA_512	0
@@ -957,7 +961,10 @@ int MAIN(int argc, char **argv)
 			if (strcmp(*argv,"aes-128-cbc") == 0) doit[D_CBC_128_AES]=1;
 		else	if (strcmp(*argv,"aes-192-cbc") == 0) doit[D_CBC_192_AES]=1;
 		else	if (strcmp(*argv,"aes-256-cbc") == 0) doit[D_CBC_256_AES]=1;
-		else
+		else    if (strcmp(*argv,"aes-128-ige") == 0) doit[D_IGE_128_AES]=1;
+		else	if (strcmp(*argv,"aes-192-ige") == 0) doit[D_IGE_192_AES]=1;
+		else	if (strcmp(*argv,"aes-256-ige") == 0) doit[D_IGE_256_AES]=1;
+                else
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 			if (strcmp(*argv,"camellia-128-cbc") == 0) doit[D_CBC_128_CML]=1;
@@ -1177,6 +1184,7 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_AES
 			BIO_printf(bio_err,"aes-128-cbc aes-192-cbc aes-256-cbc ");
+			BIO_printf(bio_err,"aes-128-ige aes-192-ige aes-256-ige ");
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 			BIO_printf(bio_err,"\n");
@@ -1395,6 +1403,9 @@ int MAIN(int argc, char **argv)
 	c[D_CBC_256_CML][0]=count;
 	c[D_SHA256][0]=count;
 	c[D_SHA512][0]=count;
+	c[D_IGE_128_AES][0]=count;
+	c[D_IGE_192_AES][0]=count;
+	c[D_IGE_256_AES][0]=count;
 
 	for (i=1; i<SIZE_NUM; i++)
 		{
@@ -1429,6 +1440,9 @@ int MAIN(int argc, char **argv)
  		c[D_CBC_128_CML][i]=c[D_CBC_128_CML][i-1]*l0/l1;
 		c[D_CBC_192_CML][i]=c[D_CBC_192_CML][i-1]*l0/l1;
 		c[D_CBC_256_CML][i]=c[D_CBC_256_CML][i-1]*l0/l1;
+		c[D_IGE_128_AES][i]=c[D_IGE_128_AES][i-1]*l0/l1;
+		c[D_IGE_192_AES][i]=c[D_IGE_192_AES][i-1]*l0/l1;
+		c[D_IGE_256_AES][i]=c[D_IGE_256_AES][i-1]*l0/l1;
 		}
 #ifndef OPENSSL_NO_RSA
 	rsa_c[R_RSA_512][0]=count/2000;
@@ -1822,6 +1836,48 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
+	if (doit[D_IGE_128_AES])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_IGE_128_AES],c[D_IGE_128_AES][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_IGE_128_AES][j]); count++)
+				AES_ige_encrypt(buf,buf2,
+					(unsigned long)lengths[j],&aes_ks1,
+					iv,AES_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_IGE_128_AES,j,count,d);
+			}
+		}
+	if (doit[D_IGE_192_AES])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_IGE_192_AES],c[D_IGE_192_AES][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_IGE_192_AES][j]); count++)
+				AES_ige_encrypt(buf,buf2,
+					(unsigned long)lengths[j],&aes_ks2,
+					iv,AES_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_IGE_192_AES,j,count,d);
+			}
+		}
+	if (doit[D_IGE_256_AES])
+		{
+		for (j=0; j<SIZE_NUM; j++)
+			{
+			print_message(names[D_IGE_256_AES],c[D_IGE_256_AES][j],lengths[j]);
+			Time_F(START);
+			for (count=0,run=1; COND(c[D_IGE_256_AES][j]); count++)
+				AES_ige_encrypt(buf,buf2,
+					(unsigned long)lengths[j],&aes_ks3,
+					iv,AES_ENCRYPT);
+			d=Time_F(STOP);
+			print_result(D_IGE_256_AES,j,count,d);
+			}
+		}
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 	if (doit[D_CBC_128_CML])
