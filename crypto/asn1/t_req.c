@@ -244,7 +244,7 @@ get_next:
 				}
 			}
 		}
-	if(!(cflag & X509_FLAG_NO_ATTRIBUTES))
+	if(!(cflag & X509_FLAG_NO_EXTENSIONS))
 		{
 		exts = X509_REQ_get_extensions(x);
 		if(exts)
@@ -262,7 +262,7 @@ get_next:
 				j=X509_EXTENSION_get_critical(ex);
 				if (BIO_printf(bp,": %s\n",j?"critical":"") <= 0)
 					goto err;
-				if(!X509V3_EXT_print(bp, ex, 0, 16))
+				if(!X509V3_EXT_print(bp, ex, cflag, 16))
 					{
 					BIO_printf(bp, "%16s", "");
 					M_ASN1_OCTET_STRING_print(bp,ex->value);
