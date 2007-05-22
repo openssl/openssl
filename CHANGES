@@ -501,6 +501,10 @@
 
  Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
 
+  *) Fix crypto/ec/ec_mult.c to work properly with scalars of value 0
+     (which previously caused an internal error).
+     [Bodo Moeller]
+
   *) Squeeze another 10% out of IGE mode when in != out.
      [Ben Laurie]
 
