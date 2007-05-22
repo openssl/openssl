@@ -1,6 +1,6 @@
 /* crypto/ec/ec_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -170,6 +170,7 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_FUNC(EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP),	"EC_POINT_set_Jprojective_coordinates_GFp"},
 {ERR_FUNC(EC_F_EC_POINT_SET_TO_INFINITY),	"EC_POINT_set_to_infinity"},
 {ERR_FUNC(EC_F_EC_PRE_COMP_DUP),	"EC_PRE_COMP_DUP"},
+{ERR_FUNC(EC_F_EC_PRE_COMP_NEW),	"EC_PRE_COMP_NEW"},
 {ERR_FUNC(EC_F_EC_WNAF_MUL),	"ec_wNAF_mul"},
 {ERR_FUNC(EC_F_EC_WNAF_PRECOMPUTE_MULT),	"ec_wNAF_precompute_mult"},
 {ERR_FUNC(EC_F_I2D_ECPARAMETERS),	"i2d_ECParameters"},
