@@ -80,11 +80,14 @@ static int pkey_hmac_init(EVP_PKEY_CTX *ctx)
 		return 0;
 	hctx->md = NULL;
 	hctx->ktmp.data = NULL;
+	hctx->ktmp.length = 0;
+	hctx->ktmp.flags = 0;
+	hctx->ktmp.type = V_ASN1_OCTET_STRING;
 	HMAC_CTX_init(&hctx->ctx);
 
 	ctx->data = hctx;
 	ctx->keygen_info_count = 0;
-	
+
 	return 1;
 	}
 
