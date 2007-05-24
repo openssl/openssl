@@ -3928,3 +3928,5 @@ EVP_seed_ecb                            4308	EXIST::FUNCTION:SEED
 SEED_set_key                            4309	EXIST::FUNCTION:SEED
 EVP_seed_cfb128                         4310	EXIST::FUNCTION:SEED
 BIO_new_PKCS7                           4311	EXIST::FUNCTION:
+EVP_PKEY_get0_asn1                      4312	EXIST::FUNCTION:
+EVP_PKEY_asn1_copy                      4313	EXIST::FUNCTION:
