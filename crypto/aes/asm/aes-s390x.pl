@@ -57,7 +57,7 @@ $code=<<___;
 .text
 
 .type	AES_Te,\@object
-.align	128
+.align	64
 AES_Te:
 ___
 &_data_word(
@@ -383,7 +383,7 @@ ___
 
 $code.=<<___;
 .type	AES_Td,\@object
-.align	128
+.align	64
 AES_Td:
 ___
 &_data_word(
