@@ -10,13 +10,17 @@
 # AES for ARMv4
 
 # January 2007.
-
-# Code uses single 1K S-box and >2 times faster than code compiled
-# with gcc-3.4.1. This is thanks to unique feature of ARMv4 ISA, which
+#
+# Code uses single 1K S-box and is >2 times faster than code generated
+# by gcc-3.4.1. This is thanks to unique feature of ARMv4 ISA, which
 # allows to merge logical or arithmetic operation with shift or rotate
 # in one instruction and emit combined result every cycle. The module
 # is endian-neutral. The performance is ~42 cycles/byte for 128-bit
 # key.
+
+# May 2007.
+#
+# AES_set_[en|de]crypt_key is added.
 
 $s0="r0";
 $s1="r1";
@@ -104,6 +108,43 @@ AES_Te:
 .word	0x65bfbfda, 0xd7e6e631, 0x844242c6, 0xd06868b8
 .word	0x824141c3, 0x299999b0, 0x5a2d2d77, 0x1e0f0f11
 .word	0x7bb0b0cb, 0xa85454fc, 0x6dbbbbd6, 0x2c16163a
+@ Te4[256]
+.byte	0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5
+.byte	0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76
+.byte	0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0
+.byte	0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0
+.byte	0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc
+.byte	0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15
+.byte	0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a
+.byte	0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75
+.byte	0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0
+.byte	0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84
+.byte	0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b
+.byte	0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf
+.byte	0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85
+.byte	0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8
+.byte	0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5
+.byte	0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2
+.byte	0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17
+.byte	0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73
+.byte	0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88
+.byte	0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb
+.byte	0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c
+.byte	0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79
+.byte	0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9
+.byte	0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08
+.byte	0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6
+.byte	0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a
+.byte	0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e
+.byte	0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e
+.byte	0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94
+.byte	0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf
+.byte	0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68
+.byte	0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
+@ rcon[]
+.word	0x01000000, 0x02000000, 0x04000000, 0x08000000
+.word	0x10000000, 0x20000000, 0x40000000, 0x80000000
+.word	0x1B000000, 0x36000000, 0, 0, 0, 0, 0, 0
 .size	AES_Te,.-AES_Te
 
 @ void AES_encrypt(const unsigned char *in, unsigned char *out,
@@ -116,7 +157,8 @@ AES_encrypt:
 	stmdb   sp!,{r1,r4-r12,lr}
 	mov	$rounds,r0		@ inp
 	mov	$key,r2
-	sub	$tbl,r3,#1024		@ Te
+	sub	$tbl,r3,#AES_encrypt-AES_Te	@ Te
+
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...
 	ldrb	$t2,[$rounds,#1]
@@ -325,6 +367,336 @@ _armv4_AES_encrypt:
 	mov	pc,lr			@ return
 .size	_armv4_AES_encrypt,.-_armv4_AES_encrypt
 
+.global AES_set_encrypt_key
+.type   AES_set_encrypt_key,%function
+.align	5
+AES_set_encrypt_key:
+	sub	r3,pc,#8		@ AES_set_encrypt_key
+	teq	r0,#0
+	moveq	r0,#-1
+	beq	.Labrt
+	teq	r2,#0
+	moveq	r0,#-1
+	beq	.Labrt
+
+	teq	r1,#128
+	beq	.Lok
+	teq	r1,#192
+	beq	.Lok
+	teq	r1,#256
+	movne	r0,#-1
+	bne	.Labrt
+
+.Lok:	stmdb   sp!,{r4-r12,lr}
+	sub	$tbl,r3,#AES_set_encrypt_key-AES_Te-1024	@ Te4
+
+	mov	$rounds,r0		@ inp
+	mov	lr,r1			@ bits
+	mov	$key,r2			@ key
+
+	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
+	ldrb	$t1,[$rounds,#2]	@ manner...
+	ldrb	$t2,[$rounds,#1]
+	ldrb	$t3,[$rounds,#0]
+	orr	$s0,$s0,$t1,lsl#8
+	orr	$s0,$s0,$t2,lsl#16
+	orr	$s0,$s0,$t3,lsl#24
+	ldrb	$s1,[$rounds,#7]
+	ldrb	$t1,[$rounds,#6]
+	ldrb	$t2,[$rounds,#5]
+	ldrb	$t3,[$rounds,#4]
+	orr	$s1,$s1,$t1,lsl#8
+	orr	$s1,$s1,$t2,lsl#16
+	orr	$s1,$s1,$t3,lsl#24
+	ldrb	$s2,[$rounds,#11]
+	ldrb	$t1,[$rounds,#10]
+	ldrb	$t2,[$rounds,#9]
+	ldrb	$t3,[$rounds,#8]
+	orr	$s2,$s2,$t1,lsl#8
+	orr	$s2,$s2,$t2,lsl#16
+	orr	$s2,$s2,$t3,lsl#24
+	ldrb	$s3,[$rounds,#15]
+	ldrb	$t1,[$rounds,#14]
+	ldrb	$t2,[$rounds,#13]
+	ldrb	$t3,[$rounds,#12]
+	orr	$s3,$s3,$t1,lsl#8
+	orr	$s3,$s3,$t2,lsl#16
+	orr	$s3,$s3,$t3,lsl#24
+	str	$s0,[$key],#16
+	str	$s1,[$key,#-12]
+	str	$s2,[$key,#-8]
+	str	$s3,[$key,#-4]
+
+	teq	lr,#128
+	bne	.Lnot128
+	mov	$rounds,#10
+	str	$rounds,[$key,#240-16]
+	add	$t3,$tbl,#256			@ rcon
+	mov	lr,#255
+
+.L128_loop:
+	and	$t2,lr,$s3,lsr#24
+	and	$i1,lr,$s3,lsr#16
+	and	$i2,lr,$s3,lsr#8
+	and	$i3,lr,$s3
+	ldrb	$t2,[$tbl,$t2]
+	ldrb	$i1,[$tbl,$i1]
+	ldrb	$i2,[$tbl,$i2]
+	ldrb	$i3,[$tbl,$i3]
+	ldr	$t1,[$t3],#4			@ rcon[i++]
+	orr	$t2,$t2,$i1,lsl#24
+	orr	$t2,$t2,$i2,lsl#16
+	orr	$t2,$t2,$i3,lsl#8
+	eor	$t2,$t2,$t1
+	eor	$s0,$s0,$t2			@ rk[4]=rk[0]^...
+	eor	$s1,$s1,$s0			@ rk[5]=rk[1]^rk[4]
+	eor	$s2,$s2,$s1			@ rk[6]=rk[2]^rk[5]
+	eor	$s3,$s3,$s2			@ rk[7]=rk[3]^rk[6]
+	str	$s0,[$key],#16
+	str	$s1,[$key,#-12]
+	str	$s2,[$key,#-8]
+	str	$s3,[$key,#-4]
+
+	subs	$rounds,$rounds,#1
+	bne	.L128_loop
+	sub	r2,$key,#176
+	b	.Ldone
+
+.Lnot128:
+	ldrb	$i2,[$rounds,#19]
+	ldrb	$t1,[$rounds,#18]
+	ldrb	$t2,[$rounds,#17]
+	ldrb	$t3,[$rounds,#16]
+	orr	$i2,$i2,$t1,lsl#8
+	orr	$i2,$i2,$t2,lsl#16
+	orr	$i2,$i2,$t3,lsl#24
+	ldrb	$i3,[$rounds,#23]
+	ldrb	$t1,[$rounds,#22]
+	ldrb	$t2,[$rounds,#21]
+	ldrb	$t3,[$rounds,#20]
+	orr	$i3,$i3,$t1,lsl#8
+	orr	$i3,$i3,$t2,lsl#16
+	orr	$i3,$i3,$t3,lsl#24
+	str	$i2,[$key],#8
+	str	$i3,[$key,#-4]
+
+	teq	lr,#192
+	bne	.Lnot192
+	mov	$rounds,#12
+	str	$rounds,[$key,#240-24]
+	add	$t3,$tbl,#256			@ rcon
+	mov	lr,#255
+	mov	$rounds,#8
+
+.L192_loop:
+	and	$t2,lr,$i3,lsr#24
+	and	$i1,lr,$i3,lsr#16
+	and	$i2,lr,$i3,lsr#8
+	and	$i3,lr,$i3
+	ldrb	$t2,[$tbl,$t2]
+	ldrb	$i1,[$tbl,$i1]
+	ldrb	$i2,[$tbl,$i2]
+	ldrb	$i3,[$tbl,$i3]
+	ldr	$t1,[$t3],#4			@ rcon[i++]
+	orr	$t2,$t2,$i1,lsl#24
+	orr	$t2,$t2,$i2,lsl#16
+	orr	$t2,$t2,$i3,lsl#8
+	eor	$i3,$t2,$t1
+	eor	$s0,$s0,$i3			@ rk[6]=rk[0]^...
+	eor	$s1,$s1,$s0			@ rk[7]=rk[1]^rk[6]
+	eor	$s2,$s2,$s1			@ rk[8]=rk[2]^rk[7]
+	eor	$s3,$s3,$s2			@ rk[9]=rk[3]^rk[8]
+	str	$s0,[$key],#24
+	str	$s1,[$key,#-20]
+	str	$s2,[$key,#-16]
+	str	$s3,[$key,#-12]
+
+	subs	$rounds,$rounds,#1
+	subeq	r2,$key,#216
+	beq	.Ldone
+
+	ldr	$i1,[$key,#-32]
+	ldr	$i2,[$key,#-28]
+	eor	$i1,$i1,$s3			@ rk[10]=rk[4]^rk[9]
+	eor	$i3,$i2,$i1			@ rk[11]=rk[5]^rk[10]
+	str	$i1,[$key,#-8]
+	str	$i3,[$key,#-4]
+	b	.L192_loop
+
+.Lnot192:
+	ldrb	$i2,[$rounds,#27]
+	ldrb	$t1,[$rounds,#26]
+	ldrb	$t2,[$rounds,#25]
+	ldrb	$t3,[$rounds,#24]
+	orr	$i2,$i2,$t1,lsl#8
+	orr	$i2,$i2,$t2,lsl#16
+	orr	$i2,$i2,$t3,lsl#24
+	ldrb	$i3,[$rounds,#31]
+	ldrb	$t1,[$rounds,#30]
+	ldrb	$t2,[$rounds,#29]
+	ldrb	$t3,[$rounds,#28]
+	orr	$i3,$i3,$t1,lsl#8
+	orr	$i3,$i3,$t2,lsl#16
+	orr	$i3,$i3,$t3,lsl#24
+	str	$i2,[$key],#8
+	str	$i3,[$key,#-4]
+
+	mov	$rounds,#14
+	str	$rounds,[$key,#240-32]
+	add	$t3,$tbl,#256			@ rcon
+	mov	lr,#255
+	mov	$rounds,#7
+
+.L256_loop:
+	and	$t2,lr,$i3,lsr#24
+	and	$i1,lr,$i3,lsr#16
+	and	$i2,lr,$i3,lsr#8
+	and	$i3,lr,$i3
+	ldrb	$t2,[$tbl,$t2]
+	ldrb	$i1,[$tbl,$i1]
+	ldrb	$i2,[$tbl,$i2]
+	ldrb	$i3,[$tbl,$i3]
+	ldr	$t1,[$t3],#4			@ rcon[i++]
+	orr	$t2,$t2,$i1,lsl#24
+	orr	$t2,$t2,$i2,lsl#16
+	orr	$t2,$t2,$i3,lsl#8
+	eor	$i3,$t2,$t1
+	eor	$s0,$s0,$i3			@ rk[8]=rk[0]^...
+	eor	$s1,$s1,$s0			@ rk[9]=rk[1]^rk[8]
+	eor	$s2,$s2,$s1			@ rk[10]=rk[2]^rk[9]
+	eor	$s3,$s3,$s2			@ rk[11]=rk[3]^rk[10]
+	str	$s0,[$key],#32
+	str	$s1,[$key,#-28]
+	str	$s2,[$key,#-24]
+	str	$s3,[$key,#-20]
+
+	subs	$rounds,$rounds,#1
+	subeq	r2,$key,#256
+	beq	.Ldone
+
+	and	$t2,lr,$s3
+	and	$i1,lr,$s3,lsr#8
+	and	$i2,lr,$s3,lsr#16
+	and	$i3,lr,$s3,lsr#24
+	ldrb	$t2,[$tbl,$t2]
+	ldrb	$i1,[$tbl,$i1]
+	ldrb	$i2,[$tbl,$i2]
+	ldrb	$i3,[$tbl,$i3]
+	orr	$t2,$t2,$i1,lsl#8
+	orr	$t2,$t2,$i2,lsl#16
+	orr	$t2,$t2,$i3,lsl#24
+
+	ldr	$t1,[$key,#-48]
+	ldr	$i1,[$key,#-44]
+	ldr	$i2,[$key,#-40]
+	ldr	$i3,[$key,#-36]
+	eor	$t1,$t1,$t2			@ rk[12]=rk[4]^...
+	eor	$i1,$i1,$t1			@ rk[13]=rk[5]^rk[12]
+	eor	$i2,$i2,$i1			@ rk[14]=rk[6]^rk[13]
+	eor	$i3,$i3,$i2			@ rk[15]=rk[7]^rk[14]
+	str	$t1,[$key,#-16]
+	str	$i1,[$key,#-12]
+	str	$i2,[$key,#-8]
+	str	$i3,[$key,#-4]
+	b	.L256_loop
+
+.Ldone:	mov	r0,#0
+	ldmia   sp!,{r4-r12,lr}
+.Labrt:	tst	lr,#1
+	moveq	pc,lr			@ be binary compatible with V4, yet
+	bx	lr			@ interoperable with Thumb ISA:-)
+.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+
+.global AES_set_decrypt_key
+.type   AES_set_decrypt_key,%function
+.align	5
+AES_set_decrypt_key:
+	str	lr,[sp,#-4]!            @ push lr
+	bl	AES_set_encrypt_key
+	teq	r0,#0
+	ldrne	lr,[sp],#4              @ pop lr
+	bne	.Labrt
+
+	stmdb   sp!,{r4-r12}
+
+	ldr	$rounds,[r2,#240]	@ AES_set_encrypt_key preserves r2,
+	mov	$key,r2			@ which is AES_KEY *key
+	mov	$i1,r2
+	add	$i2,r2,$rounds,lsl#4
+
+.Linv:	ldr	$s0,[$i1]
+	ldr	$s1,[$i1,#4]
+	ldr	$s2,[$i1,#8]
+	ldr	$s3,[$i1,#12]
+	ldr	$t1,[$i2]
+	ldr	$t2,[$i2,#4]
+	ldr	$t3,[$i2,#8]
+	ldr	$i3,[$i2,#12]
+	str	$s0,[$i2],#-16
+	str	$s1,[$i2,#16+4]
+	str	$s2,[$i2,#16+8]
+	str	$s3,[$i2,#16+12]
+	str	$t1,[$i1],#16
+	str	$t2,[$i1,#-12]
+	str	$t3,[$i1,#-8]
+	str	$i3,[$i1,#-4]
+	teq	$i1,$i2
+	bne	.Linv
+___
+$mask80=$i1;
+$mask1b=$i2;
+$mask7f=$i3;
+$code.=<<___;
+	ldr	$s0,[$key,#16]!		@ prefetch tp1
+	mov	$mask80,#0x80
+	mov	$mask1b,#0x1b
+	orr	$mask80,$mask80,#0x8000
+	orr	$mask1b,$mask1b,#0x1b00
+	orr	$mask80,$mask80,$mask80,lsl#16
+	orr	$mask1b,$mask1b,$mask1b,lsl#16
+	sub	$rounds,$rounds,#1
+	mvn	$mask7f,$mask80
+	mov	$rounds,$rounds,lsl#2	@ (rounds-1)*4
+
+.Lmix:	and	$t1,$s0,$mask80
+	and	$s1,$s0,$mask7f
+	sub	$t1,$t1,$t1,lsr#7
+	and	$t1,$t1,$mask1b
+	eor	$s1,$t1,$s1,lsl#1	@ tp2
+
+	and	$t1,$s1,$mask80
+	and	$s2,$s1,$mask7f
+	sub	$t1,$t1,$t1,lsr#7
+	and	$t1,$t1,$mask1b
+	eor	$s2,$t1,$s2,lsl#1	@ tp4
+
+	and	$t1,$s2,$mask80
+	and	$s3,$s2,$mask7f
+	sub	$t1,$t1,$t1,lsr#7
+	and	$t1,$t1,$mask1b
+	eor	$s3,$t1,$s3,lsl#1	@ tp8
+
+	eor	$t1,$s1,$s2
+	eor	$t2,$s0,$s3		@ tp9
+	eor	$t1,$t1,$s3		@ tpe
+	eor	$t1,$t1,$s1,ror#24
+	eor	$t1,$t1,$t2,ror#24	@ ^= ROTATE(tpb=tp9^tp2,8)
+	eor	$t1,$t1,$s2,ror#16
+	eor	$t1,$t1,$t2,ror#16	@ ^= ROTATE(tpd=tp9^tp4,16)
+	eor	$t1,$t1,$t2,ror#8	@ ^= ROTATE(tp9,24)
+
+	ldr	$s0,[$key,#4]		@ prefetch tp1
+	str	$t1,[$key],#4
+	subs	$rounds,$rounds,#1
+	bne	.Lmix
+
+	mov	r0,#0
+	ldmia   sp!,{r4-r12,lr}
+	tst	lr,#1
+	moveq	pc,lr			@ be binary compatible with V4, yet
+	bx	lr			@ interoperable with Thumb ISA:-)
+.size	AES_set_decrypt_key,.-AES_set_decrypt_key
+
 .type	AES_Td,%object
 .align	5
 AES_Td:
@@ -392,7 +764,7 @@ AES_Td:
 .word	0x161dc372, 0xbce2250c, 0x283c498b, 0xff0d9541
 .word	0x39a80171, 0x080cb3de, 0xd8b4e49c, 0x6456c190
 .word	0x7bcb8461, 0xd532b670, 0x486c5c74, 0xd0b85742
-
+@ Td4[256]
 .byte	0x52, 0x09, 0x6a, 0xd5, 0x30, 0x36, 0xa5, 0x38
 .byte	0xbf, 0x40, 0xa3, 0x9e, 0x81, 0xf3, 0xd7, 0xfb
 .byte	0x7c, 0xe3, 0x39, 0x82, 0x9b, 0x2f, 0xff, 0x87
@@ -437,7 +809,8 @@ AES_decrypt:
 	stmdb   sp!,{r1,r4-r12,lr}
 	mov	$rounds,r0		@ inp
 	mov	$key,r2
-	sub	$tbl,r3,#1280		@ Td
+	sub	$tbl,r3,#AES_decrypt-AES_Td		@ Td
+
 	ldrb	$s0,[$rounds,#3]	@ load input data in endian-neutral
 	ldrb	$t1,[$rounds,#2]	@ manner...
 	ldrb	$t2,[$rounds,#1]
