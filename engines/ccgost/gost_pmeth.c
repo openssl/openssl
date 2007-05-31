@@ -651,12 +651,16 @@ static int pkey_gost_mac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 
 static int pkey_gost_mac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen, EVP_MD_CTX *mctx)
 	{
+		unsigned int tmpsiglen=*siglen; /* for platforms where sizeof(int)!=sizeof(size_t)*/
+		int ret;
 		if (!sig) 
 			{
 			*siglen = 4;
 			return 1;
 			}
-		return EVP_DigestFinal_ex(mctx,sig,siglen);
+		ret=EVP_DigestFinal_ex(mctx,sig,&tmpsiglen);
+		*siglen = tmpsiglen;
+		return ret;
 	}
 /* ----------------------------------------------------------------*/
 int register_pmeth_gost(int id, EVP_PKEY_METHOD **pmeth,int flags)
