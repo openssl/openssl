@@ -255,11 +255,15 @@ int EVP_MD_pkey_type(const EVP_MD *md)
 
 int EVP_MD_size(const EVP_MD *md)
 	{
+	if (!md)
+		return -1;
 	return md->md_size;
 	}
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 	{
+	if (!ctx)
+		return NULL;
 	return ctx->digest;
 	}
 
