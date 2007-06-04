@@ -148,8 +148,8 @@ int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
 							cb, u);
 
 	BIO_snprintf(pem_str, 80, "%s PRIVATE KEY", x->ameth->pem_str);
-	return PEM_ASN1_write_bio((i2d_of_void *)openssl_fcast(i2d_PrivateKey),
-				pem_str,bp,(char *)x,enc,kstr,klen,cb,u);
+	return PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey,
+				pem_str,bp,x,enc,kstr,klen,cb,u);
 	}
 
 EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
@@ -201,8 +201,8 @@ int PEM_write_bio_Parameters(BIO *bp, EVP_PKEY *x)
 
 	BIO_snprintf(pem_str, 80, "%s PARAMETERS", x->ameth->pem_str);
 	return PEM_ASN1_write_bio(
-		(i2d_of_void *)openssl_fcast(x->ameth->param_encode),
-				pem_str,bp,(char *)x,NULL,NULL,0,0,NULL);
+		(i2d_of_void *)x->ameth->param_encode,
+				pem_str,bp,x,NULL,NULL,0,0,NULL);
 	}
 
 #ifndef OPENSSL_NO_FP_API

@@ -301,7 +301,7 @@ err:
 
 #ifndef OPENSSL_NO_FP_API
 int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
-		   char *x, const EVP_CIPHER *enc, unsigned char *kstr,
+		   void *x, const EVP_CIPHER *enc, unsigned char *kstr,
 		   int klen, pem_password_cb *callback, void *u)
         {
         BIO *b;
@@ -320,7 +320,7 @@ int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
 #endif
 
 int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
-		       char *x, const EVP_CIPHER *enc, unsigned char *kstr,
+		       void *x, const EVP_CIPHER *enc, unsigned char *kstr,
 		       int klen, pem_password_cb *callback, void *u)
 	{
 	EVP_CIPHER_CTX ctx;
