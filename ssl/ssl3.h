@@ -382,8 +382,10 @@ typedef struct ssl3_state_st
 	int delay_buf_pop_ret;
 
 	unsigned char read_sequence[8];
+	int read_mac_secret_size;
 	unsigned char read_mac_secret[EVP_MAX_MD_SIZE];
 	unsigned char write_sequence[8];
+	int write_mac_secret_size;
 	unsigned char write_mac_secret[EVP_MAX_MD_SIZE];
 
 	unsigned char server_random[SSL3_RANDOM_SIZE];
@@ -480,6 +482,8 @@ typedef struct ssl3_state_st
 
 		const EVP_CIPHER *new_sym_enc;
 		const EVP_MD *new_hash;
+		int new_mac_pkey_type;
+		int new_mac_secret_size;
 #ifndef OPENSSL_NO_COMP
 		const SSL_COMP *new_compression;
 #else

@@ -143,6 +143,7 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
+#include <openssl/engine.h>
 #include "ssl_locl.h"
 
 #define SSL_ENC_DES_IDX		0
@@ -172,9 +173,22 @@ static STACK_OF(SSL_COMP) *ssl_comp_methods=NULL;
 
 #define SSL_MD_MD5_IDX	0
 #define SSL_MD_SHA1_IDX	1
-#define SSL_MD_NUM_IDX	2
+#define SSL_MD_GOST94_IDX 2
+#define SSL_MD_GOST89MAC_IDX 3
+#define SSL_MD_NUM_IDX	4
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX]={
-	NULL,NULL,
+	NULL,NULL,NULL,NULL
+	};
+/* PKEY_TYPE for GOST89MAC is known in advance, but, because
+ * implementation is engine-provided, we'll fill it only if
+ * corresponding EVP_PKEY_METHOD is found 
+ */
+static int  ssl_mac_pkey_id[SSL_MD_NUM_IDX]={
+	EVP_PKEY_HMAC,EVP_PKEY_HMAC,EVP_PKEY_HMAC,NID_undef
+	};
+
+static int ssl_mac_secret_size[SSL_MD_NUM_IDX]={
+	0,0,0,0
 	};
 
 #define CIPHER_ADD	1
@@ -266,6 +280,8 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_MD5,0,     0,0,0,SSL_MD5,   0,0,0,0,0},
 	{0,SSL_TXT_SHA1,0,    0,0,0,SSL_SHA1,  0,0,0,0,0},
 	{0,SSL_TXT_SHA,0,     0,0,0,SSL_SHA1,  0,0,0,0,0},
+	{0,SSL_TXT_GOST94,0,     0,0,0,SSL_GOST94,  0,0,0,0,0},
+	{0,SSL_TXT_GOST89MAC,0,     0,0,0,SSL_GOST89MAC,  0,0,0,0,0},
 
 	/* protocol version aliases */
 	{0,SSL_TXT_SSLV2,0,   0,0,0,0,SSL_SSLV2, 0,0,0,0},
@@ -315,11 +331,36 @@ void ssl_load_ciphers(void)
 
 	ssl_digest_methods[SSL_MD_MD5_IDX]=
 		EVP_get_digestbyname(SN_md5);
+	ssl_mac_secret_size[SSL_MD_MD5_IDX]=
+		EVP_MD_size(ssl_digest_methods[SSL_MD_MD5_IDX]);
 	ssl_digest_methods[SSL_MD_SHA1_IDX]=
 		EVP_get_digestbyname(SN_sha1);
+	ssl_mac_secret_size[SSL_MD_SHA1_IDX]=
+		EVP_MD_size(ssl_digest_methods[SSL_MD_SHA1_IDX]);
+	ssl_digest_methods[SSL_MD_GOST94_IDX]=
+		EVP_get_digestbyname(SN_id_GostR3411_94);
+	if (ssl_digest_methods[SSL_MD_GOST94_IDX])
+		{	
+		ssl_mac_secret_size[SSL_MD_GOST94_IDX]=
+			EVP_MD_size(ssl_digest_methods[SSL_MD_GOST94_IDX]);
+		}
+	ssl_digest_methods[SSL_MD_GOST89MAC_IDX]=
+		EVP_get_digestbyname(SN_id_Gost28147_89_MAC);
+		{
+		const EVP_PKEY_ASN1_METHOD *ameth;
+		ENGINE *tmpeng = NULL;
+		int pkey_id;
+		ameth = EVP_PKEY_asn1_find_str(&tmpeng,"gost-mac",-1);
+		if (ameth) 
+			{
+			EVP_PKEY_asn1_get0_info(&pkey_id, NULL,NULL,NULL,NULL,ameth);
+			ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX]= pkey_id;
+			ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX]=32;
+			}		
+		if (tmpeng) ENGINE_finish(tmpeng);	
+		}
+
 	}
-
-
 #ifndef OPENSSL_NO_COMP
 
 static int sk_comp_cmp(const SSL_COMP * const *a,
@@ -374,7 +415,7 @@ static void load_builtin_compressions(void)
 #endif
 
 int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
-	     const EVP_MD **md, SSL_COMP **comp)
+	     const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size,SSL_COMP **comp)
 	{
 	int i;
 	SSL_CIPHER *c;
@@ -463,16 +504,31 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	case SSL_SHA1:
 		i=SSL_MD_SHA1_IDX;
 		break;
+	case SSL_GOST94:
+		i = SSL_MD_GOST94_IDX;
+		break;
+	case SSL_GOST89MAC:
+		i = SSL_MD_GOST89MAC_IDX;
+		break;
 	default:
 		i= -1;
 		break;
 		}
 	if ((i < 0) || (i > SSL_MD_NUM_IDX))
-		*md=NULL;
-	else
-		*md=ssl_digest_methods[i];
+	{
+		*md=NULL; 
+		if (mac_pkey_type!=NULL) *mac_pkey_type = NID_undef;
+		if (mac_secret_size!=NULL) *mac_secret_size = 0;
 
-	if ((*enc != NULL) && (*md != NULL))
+	}
+	else
+	{
+		*md=ssl_digest_methods[i];
+		if (mac_pkey_type!=NULL) *mac_pkey_type = ssl_mac_pkey_id[i];
+		if (mac_secret_size!=NULL) *mac_secret_size = ssl_mac_secret_size[i];
+	}	
+
+	if ((*enc != NULL) && (*md != NULL) && (!mac_pkey_type||*mac_pkey_type != NID_undef))
 		return(1);
 	else
 		return(0);
@@ -567,6 +623,9 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, un
 
 	*mac |= (ssl_digest_methods[SSL_MD_MD5_IDX ] == NULL) ? SSL_MD5 :0;
 	*mac |= (ssl_digest_methods[SSL_MD_SHA1_IDX] == NULL) ? SSL_SHA1:0;
+	*mac |= (ssl_digest_methods[SSL_MD_GOST94_IDX] == NULL) ? SSL_GOST94:0;
+	*mac |= (ssl_digest_methods[SSL_MD_GOST89MAC_IDX] == NULL || ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX]==NID_undef)? SSL_GOST89MAC:0;
+
 	}
 
 static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,

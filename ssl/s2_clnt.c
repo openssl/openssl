@@ -621,7 +621,7 @@ static int client_master_key(SSL *s)
 	if (s->state == SSL2_ST_SEND_CLIENT_MASTER_KEY_A)
 		{
 
-		if (!ssl_cipher_get_evp(s->session,&c,&md,NULL))
+		if (!ssl_cipher_get_evp(s->session,&c,&md,NULL,NULL,NULL))
 			{
 			ssl2_return_error(s,SSL2_PE_NO_CIPHER);
 			SSLerr(SSL_F_CLIENT_MASTER_KEY,SSL_R_PROBLEMS_MAPPING_CIPHER_FUNCTIONS);

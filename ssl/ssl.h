@@ -286,6 +286,8 @@ extern "C" {
 #define SSL_TXT_MD5		"MD5"
 #define SSL_TXT_SHA1		"SHA1"
 #define SSL_TXT_SHA		"SHA" /* same as "SHA1" */
+#define SSL_TXT_GOST94		"GOST94" 
+#define SSL_TXT_GOST89MAC		"GOST89MAC" 
 
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
@@ -884,6 +886,9 @@ const char *SSL_get_psk_identity(const SSL *s);
 #define SSL_want_write(s)	(SSL_want(s) == SSL_WRITING)
 #define SSL_want_x509_lookup(s)	(SSL_want(s) == SSL_X509_LOOKUP)
 
+#define SSL_MAC_FLAG_READ_MAC_STREAM 1
+#define SSL_MAC_FLAG_WRITE_MAC_STREAM 2
+
 struct ssl_st
 	{
 	/* protocol version
@@ -975,9 +980,9 @@ struct ssl_st
 
 	/* These are the ones being used, the ones in SSL_SESSION are
 	 * the ones to be 'copied' into these ones */
-
+	int mac_flags; 
 	EVP_CIPHER_CTX *enc_read_ctx;		/* cryptographic state */
-	const EVP_MD *read_hash;		/* used for mac generation */
+	EVP_MD_CTX *read_hash;		/* used for mac generation */
 #ifndef OPENSSL_NO_COMP
 	COMP_CTX *expand;			/* uncompress */
 #else
@@ -985,7 +990,7 @@ struct ssl_st
 #endif
 
 	EVP_CIPHER_CTX *enc_write_ctx;		/* cryptographic state */
-	const EVP_MD *write_hash;		/* used for mac generation */
+	EVP_MD_CTX *write_hash;		/* used for mac generation */
 #ifndef OPENSSL_NO_COMP
 	COMP_CTX *compress;			/* compression */
 #else

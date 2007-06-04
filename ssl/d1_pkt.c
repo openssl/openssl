@@ -426,7 +426,7 @@ printf("\n");
 
 	if (!clear)
 		{
-		mac_size=EVP_MD_size(s->read_hash);
+		mac_size=EVP_MD_CTX_size(s->read_hash);
 
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+mac_size)
 			{
@@ -1335,13 +1335,13 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 
 	if (	(sess == NULL) ||
 		(s->enc_write_ctx == NULL) ||
-		(s->write_hash == NULL))
+		(EVP_MD_CTX_md(s->write_hash) == NULL))
 		clear=1;
 
 	if (clear)
 		mac_size=0;
 	else
-		mac_size=EVP_MD_size(s->write_hash);
+		mac_size=EVP_MD_CTX_size(s->write_hash);
 
 	/* DTLS implements explicit IV, so no need for empty fragments */
 #if 0

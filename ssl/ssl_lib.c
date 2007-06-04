@@ -225,6 +225,8 @@ int SSL_clear(SSL *s)
 		}
 
 	ssl_clear_cipher_ctx(s);
+	ssl_clear_hash_ctx(&s->read_hash);
+	ssl_clear_hash_ctx(&s->write_hash);
 
 	s->first_packet=0;
 
@@ -523,6 +525,8 @@ void SSL_free(SSL *s)
 		}
 
 	ssl_clear_cipher_ctx(s);
+	ssl_clear_hash_ctx(&s->read_hash);
+	ssl_clear_hash_ctx(&s->write_hash);
 
 	if (s->cert != NULL) ssl_cert_free(s->cert);
 	/* Free up if allocated */
@@ -2203,6 +2207,8 @@ void SSL_set_accept_state(SSL *s)
 	s->handshake_func=s->method->ssl_accept;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
+	ssl_clear_hash_ctx(&s->read_hash);
+	ssl_clear_hash_ctx(&s->write_hash);
 	}
 
 void SSL_set_connect_state(SSL *s)
@@ -2213,6 +2219,8 @@ void SSL_set_connect_state(SSL *s)
 	s->handshake_func=s->method->ssl_connect;
 	/* clear the current cipher */
 	ssl_clear_cipher_ctx(s);
+	ssl_clear_hash_ctx(&s->read_hash);
+	ssl_clear_hash_ctx(&s->write_hash);
 	}
 
 int ssl_undefined_function(SSL *s)
@@ -2836,7 +2844,25 @@ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int con
 	SSL_callback_ctrl(ssl, SSL_CTRL_SET_MSG_CALLBACK, (void (*)(void))cb);
 	}
 
+/* Allocates new EVP_MD_CTX and sets pointer to it into given pointer
+ * vairable, freeing  EVP_MD_CTX previously stored in that variable, if
+ * any. If EVP_MD pointer is passed, initializes ctx with this md
+ * Returns newly allocated ctx;
+ */ 
 
+EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) 
+{
+	ssl_clear_hash_ctx(hash);
+	*hash = EVP_MD_CTX_create();
+	if (md) EVP_DigestInit_ex(*hash,md,NULL);
+	return *hash;
+}
+void ssl_clear_hash_ctx(EVP_MD_CTX **hash) 
+{
+
+	if (*hash) EVP_MD_CTX_destroy(*hash);
+	*hash=NULL;
+}
 
 #if defined(_WINDLL) && defined(OPENSSL_SYS_WIN16)
 #include "../crypto/bio/bss_file.c"

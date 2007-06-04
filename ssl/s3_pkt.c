@@ -399,12 +399,12 @@ printf("\n");
 	/* r->length is now the compressed data plus mac */
 	if (	(sess == NULL) ||
 		(s->enc_read_ctx == NULL) ||
-		(s->read_hash == NULL))
+		(EVP_MD_CTX_md(s->read_hash) == NULL))
 		clear=1;
 
 	if (!clear)
 		{
-		mac_size=EVP_MD_size(s->read_hash);
+		mac_size=EVP_MD_CTX_size(s->read_hash);
 
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+extra+mac_size)
 			{
@@ -629,13 +629,13 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 	if (	(sess == NULL) ||
 		(s->enc_write_ctx == NULL) ||
-		(s->write_hash == NULL))
+		(EVP_MD_CTX_md(s->write_hash) == NULL))
 		clear=1;
 
 	if (clear)
 		mac_size=0;
 	else
-		mac_size=EVP_MD_size(s->write_hash);
+		mac_size=EVP_MD_CTX_size(s->write_hash);
 
 	/* 'create_empty_fragment' is true only when this function calls itself */
 	if (!clear && !create_empty_fragment && !s->s3->empty_fragment_done)

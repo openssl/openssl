@@ -4,6 +4,11 @@
 
  Changes between 0.9.8f and 0.9.9  [xx XXX xxxx]
 
+  *) Update SSL library to use new EVP_PKEY MAC API. Include generic MAC
+     support including streaming MAC support: this is required for GOST
+     ciphersuite support.
+     [Victor B. Wagner <vitus@cryptocom.ru>, Steve Henson]
+
   *) Add option -stream to use PKCS#7 streaming in smime utility. New
      function i2d_PKCS7_bio_stream() and PEM_write_PKCS7_bio_stream()
      to output in BER and PEM format.

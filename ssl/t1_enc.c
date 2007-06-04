@@ -261,12 +261,17 @@ int tls1_change_cipher_state(SSL *s, int which)
 	const SSL_COMP *comp;
 #endif
 	const EVP_MD *m;
+	int mac_type;
+	int *mac_secret_size;
+	EVP_MD_CTX *mac_ctx;
+	EVP_PKEY *mac_key;
 	int is_export,n,i,j,k,exp_label_len,cl;
 	int reuse_dd = 0;
 
 	is_export=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	c=s->s3->tmp.new_sym_enc;
 	m=s->s3->tmp.new_hash;
+	mac_type = s->s3->tmp.new_mac_pkey_type;
 #ifndef OPENSSL_NO_COMP
 	comp=s->s3->tmp.new_compression;
 #endif
@@ -291,6 +296,11 @@ int tls1_change_cipher_state(SSL *s, int which)
 
 	if (which & SSL3_CC_READ)
 		{
+		if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+			s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
+			else
+			s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
+
 		if (s->enc_read_ctx != NULL)
 			reuse_dd = 1;
 		else if ((s->enc_read_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
@@ -299,7 +309,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 			/* make sure it's intialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_read_ctx);
 		dd= s->enc_read_ctx;
-		s->read_hash=m;
+		mac_ctx=ssl_replace_hash(&s->read_hash,NULL);
 #ifndef OPENSSL_NO_COMP
 		if (s->expand != NULL)
 			{
@@ -325,9 +335,14 @@ int tls1_change_cipher_state(SSL *s, int which)
  		if (s->version != DTLS1_VERSION)
 			memset(&(s->s3->read_sequence[0]),0,8);
 		mac_secret= &(s->s3->read_mac_secret[0]);
+		mac_secret_size=&(s->s3->read_mac_secret_size);
 		}
 	else
 		{
+		if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
+			s->mac_flags |= SSL_MAC_FLAG_WRITE_MAC_STREAM;
+			else
+			s->mac_flags &= ~SSL_MAC_FLAG_WRITE_MAC_STREAM;
 		if (s->enc_write_ctx != NULL)
 			reuse_dd = 1;
 		else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
@@ -336,7 +351,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 			/* make sure it's intialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_write_ctx);
 		dd= s->enc_write_ctx;
-		s->write_hash=m;
+		mac_ctx = ssl_replace_hash(&s->write_hash,NULL);
 #ifndef OPENSSL_NO_COMP
 		if (s->compress != NULL)
 			{
@@ -357,13 +372,15 @@ int tls1_change_cipher_state(SSL *s, int which)
  		if (s->version != DTLS1_VERSION)
 			memset(&(s->s3->write_sequence[0]),0,8);
 		mac_secret= &(s->s3->write_mac_secret[0]);
+		mac_secret_size = &(s->s3->write_mac_secret_size);
 		}
 
 	if (reuse_dd)
 		EVP_CIPHER_CTX_cleanup(dd);
 
 	p=s->s3->tmp.key_block;
-	i=EVP_MD_size(m);
+	i=*mac_secret_size=s->s3->tmp.new_mac_secret_size;
+
 	cl=EVP_CIPHER_key_length(c);
 	j=is_export ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
 	               cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
@@ -399,6 +416,10 @@ int tls1_change_cipher_state(SSL *s, int which)
 		}
 
 	memcpy(mac_secret,ms,i);
+	mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
+			mac_secret,*mac_secret_size);
+	EVP_DigestSignInit(mac_ctx,NULL,m,NULL,mac_key);
+	EVP_PKEY_free(mac_key);
 #ifdef TLS_DEBUG
 printf("which = %04X\nmac key=",which);
 { int z; for (z=0; z<i; z++) printf("%02X%c",ms[z],((z+1)%16)?' ':'\n'); }
@@ -477,6 +498,7 @@ int tls1_setup_key_block(SSL *s)
 	const EVP_MD *hash;
 	int num;
 	SSL_COMP *comp;
+	int mac_type= NID_undef,mac_secret_size=0;
 
 #ifdef KSSL_DEBUG
 	printf ("tls1_setup_key_block()\n");
@@ -485,7 +507,7 @@ int tls1_setup_key_block(SSL *s)
 	if (s->s3->tmp.key_block_length != 0)
 		return(1);
 
-	if (!ssl_cipher_get_evp(s->session,&c,&hash,&comp))
+	if (!ssl_cipher_get_evp(s->session,&c,&hash,&mac_type,&mac_secret_size,&comp))
 		{
 		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 		return(0);
@@ -493,8 +515,9 @@ int tls1_setup_key_block(SSL *s)
 
 	s->s3->tmp.new_sym_enc=c;
 	s->s3->tmp.new_hash=hash;
-
-	num=EVP_CIPHER_key_length(c)+EVP_MD_size(hash)+EVP_CIPHER_iv_length(c);
+	s->s3->tmp.new_mac_pkey_type = mac_type;
+	s->s3->tmp.new_mac_secret_size = mac_secret_size;
+	num=EVP_CIPHER_key_length(c)+mac_secret_size+EVP_CIPHER_iv_length(c);
 	num*=2;
 
 	ssl3_cleanup_key_block(s);
@@ -559,8 +582,8 @@ int tls1_enc(SSL *s, int send)
 
 	if (send)
 		{
-		if (s->write_hash != NULL)
-			n=EVP_MD_size(s->write_hash);
+		if (EVP_MD_CTX_md(s->write_hash))
+			n=EVP_MD_CTX_size(s->write_hash);
 		ds=s->enc_write_ctx;
 		rec= &(s->s3->wrec);
 		if (s->enc_write_ctx == NULL)
@@ -570,8 +593,8 @@ int tls1_enc(SSL *s, int send)
 		}
 	else
 		{
-		if (s->read_hash != NULL)
-			n=EVP_MD_size(s->read_hash);
+		if (EVP_MD_CTX_md(s->read_hash))
+			n=EVP_MD_CTX_size(s->read_hash);
 		ds=s->enc_read_ctx;
 		rec= &(s->s3->rrec);
 		if (s->enc_read_ctx == NULL)
@@ -742,12 +765,12 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	{
 	SSL3_RECORD *rec;
 	unsigned char *mac_sec,*seq;
-	const EVP_MD *hash;
-	unsigned int md_size;
+	EVP_MD_CTX *hash;
+	size_t md_size;
 	int i;
-	HMAC_CTX hmac;
+	EVP_MD_CTX hmac, *mac_ctx;
 	unsigned char buf[5]; 
-
+	int stream_mac = (send?(ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM):(ssl->mac_flags&SSL_MAC_FLAG_READ_MAC_STREAM));
 	if (send)
 		{
 		rec= &(ssl->s3->wrec);
@@ -763,7 +786,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 		hash=ssl->read_hash;
 		}
 
-	md_size=EVP_MD_size(hash);
+	md_size=EVP_MD_CTX_size(hash);
 
 	buf[0]=rec->type;
 	buf[1]=TLS1_VERSION_MAJOR;
@@ -772,14 +795,21 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	buf[4]=rec->length&0xff;
 
 	/* I should fix this up TLS TLS TLS TLS TLS XXXXXXXX */
-	HMAC_CTX_init(&hmac);
-	HMAC_Init_ex(&hmac,mac_sec,EVP_MD_size(hash),hash,NULL);
-	HMAC_Update(&hmac,seq,8);
-	HMAC_Update(&hmac,buf,5);
-	HMAC_Update(&hmac,rec->input,rec->length);
-	HMAC_Final(&hmac,md,&md_size);
-	HMAC_CTX_cleanup(&hmac);
-
+	if (stream_mac) 
+		{
+			mac_ctx = hash;
+		}
+		else
+		{
+			EVP_MD_CTX_copy(&hmac,hash);
+			mac_ctx = &hmac;
+		}	
+	EVP_DigestSignUpdate(mac_ctx,seq,8);
+	EVP_DigestSignUpdate(mac_ctx,buf,5);
+	EVP_DigestSignUpdate(mac_ctx,rec->input,rec->length);
+	if (stream_mac) EVP_MD_CTX_copy(&hmac,hash);
+	EVP_DigestSignFinal(&hmac,md,&md_size);
+	EVP_MD_CTX_cleanup(&hmac);
 #ifdef TLS_DEBUG
 printf("sec=");
 {unsigned int z; for (z=0; z<md_size; z++) printf("%02X ",mac_sec[z]); printf("\n"); }

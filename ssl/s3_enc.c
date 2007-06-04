@@ -251,7 +251,8 @@ int ssl3_change_cipher_state(SSL *s, int which)
 			/* make sure it's intialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_read_ctx);
 		dd= s->enc_read_ctx;
-		s->read_hash=m;
+
+		ssl_replace_hash(&s->read_hash,m);
 #ifndef OPENSSL_NO_COMP
 		/* COMPRESS */
 		if (s->expand != NULL)
@@ -287,7 +288,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 			/* make sure it's intialized in case we exit later with an error */
 			EVP_CIPHER_CTX_init(s->enc_write_ctx);
 		dd= s->enc_write_ctx;
-		s->write_hash=m;
+		ssl_replace_hash(&s->write_hash,m);
 #ifndef OPENSSL_NO_COMP
 		/* COMPRESS */
 		if (s->compress != NULL)
@@ -394,7 +395,7 @@ int ssl3_setup_key_block(SSL *s)
 	if (s->s3->tmp.key_block_length != 0)
 		return(1);
 
-	if (!ssl_cipher_get_evp(s->session,&c,&hash,&comp))
+	if (!ssl_cipher_get_evp(s->session,&c,&hash,NULL,NULL,&comp))
 		{
 		SSLerr(SSL_F_SSL3_SETUP_KEY_BLOCK,SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
 		return(0);
@@ -581,7 +582,6 @@ static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
 
 	EVP_MD_CTX_init(&ctx);
 	EVP_MD_CTX_copy_ex(&ctx,in_ctx);
-
 	n=EVP_MD_CTX_size(&ctx);
 	npad=(48/n)*n;
 
@@ -609,7 +609,7 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	SSL3_RECORD *rec;
 	unsigned char *mac_sec,*seq;
 	EVP_MD_CTX md_ctx;
-	const EVP_MD *hash;
+	const EVP_MD_CTX *hash;
 	unsigned char *p,rec_char;
 	unsigned int md_size;
 	int npad;
@@ -629,13 +629,13 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		hash=ssl->read_hash;
 		}
 
-	md_size=EVP_MD_size(hash);
+	md_size=EVP_MD_CTX_size(hash);
 	npad=(48/md_size)*md_size;
 
 	/* Chop the digest off the end :-) */
 	EVP_MD_CTX_init(&md_ctx);
 
-	EVP_DigestInit_ex(  &md_ctx,hash, NULL);
+	EVP_MD_CTX_copy_ex( &md_ctx,hash);
 	EVP_DigestUpdate(&md_ctx,mac_sec,md_size);
 	EVP_DigestUpdate(&md_ctx,ssl3_pad_1,npad);
 	EVP_DigestUpdate(&md_ctx,seq,8);
@@ -647,7 +647,7 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	EVP_DigestUpdate(&md_ctx,rec->input,rec->length);
 	EVP_DigestFinal_ex( &md_ctx,md,NULL);
 
-	EVP_DigestInit_ex(  &md_ctx,hash, NULL);
+	EVP_MD_CTX_copy_ex( &md_ctx,hash);
 	EVP_DigestUpdate(&md_ctx,mac_sec,md_size);
 	EVP_DigestUpdate(&md_ctx,ssl3_pad_2,npad);
 	EVP_DigestUpdate(&md_ctx,md,md_size);
