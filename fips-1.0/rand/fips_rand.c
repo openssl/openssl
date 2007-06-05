@@ -226,6 +226,8 @@ static void fips_get_dt(FIPS_PRNG_CTX *ctx)
 	buf[10] = (unsigned char) ((ctx->counter >> 16) & 0xff);
 	buf[11] = (unsigned char) ((ctx->counter >> 24) & 0xff);
 
+	ctx->counter++;
+
 
 #ifndef GETPID_IS_MEANINGLESS
 	pid=(unsigned long)getpid();
