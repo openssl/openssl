@@ -414,13 +414,9 @@ int PEM_bytes_read_bio(unsigned char **pdata, long *plen, char **pnm, const char
 	     pem_password_cb *cb, void *u);
 void *	PEM_ASN1_read_bio(d2i_of_void *d2i, const char *name, BIO *bp,
 			  void **x, pem_password_cb *cb, void *u);
-#define PEM_ASN1_read_bio_of(type,d2i,name,bp,x,cb,u) \
-((type *(*)(D2I_OF(type),const char *,BIO *,type **,pem_password_cb *,void *))openssl_fcast(PEM_ASN1_read_bio))(d2i,name,bp,x,cb,u)
 int	PEM_ASN1_write_bio(i2d_of_void *i2d,const char *name,BIO *bp, void *x,
 			   const EVP_CIPHER *enc,unsigned char *kstr,int klen,
 			   pem_password_cb *cb, void *u);
-#define PEM_ASN1_write_bio_of(type,i2d,name,bp,x,enc,kstr,klen,cb,u) \
-	((int (*)(I2D_OF(type),const char *,BIO *,type *, const EVP_CIPHER *,unsigned char *,int, pem_password_cb *,void *))openssl_fcast(PEM_ASN1_write_bio))(i2d,name,bp,x,enc,kstr,klen,cb,u)
 
 STACK_OF(X509_INFO) *	PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u);
 int	PEM_X509_INFO_write_bio(BIO *bp,X509_INFO *xi, EVP_CIPHER *enc,

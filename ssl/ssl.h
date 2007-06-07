@@ -1182,14 +1182,8 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 
 #define d2i_SSL_SESSION_bio(bp,s_id) ASN1_d2i_bio_of(SSL_SESSION,SSL_SESSION_new,d2i_SSL_SESSION,bp,s_id)
 #define i2d_SSL_SESSION_bio(bp,s_id) ASN1_i2d_bio_of(SSL_SESSION,i2d_SSL_SESSION,bp,s_id)
-#define PEM_read_SSL_SESSION(fp,x,cb,u) (SSL_SESSION *)PEM_ASN1_read( \
-	(char *(*)())d2i_SSL_SESSION,PEM_STRING_SSL_SESSION,fp,(char **)x,cb,u)
-#define PEM_read_bio_SSL_SESSION(bp,x,cb,u) PEM_ASN1_read_bio_of(SSL_SESSION,d2i_SSL_SESSION,PEM_STRING_SSL_SESSION,bp,x,cb,u)
-#define PEM_write_SSL_SESSION(fp,x) \
-	PEM_ASN1_write((int (*)())i2d_SSL_SESSION, \
-		PEM_STRING_SSL_SESSION,fp, (char *)x, NULL,NULL,0,NULL,NULL)
-#define PEM_write_bio_SSL_SESSION(bp,x) \
-	PEM_ASN1_write_bio_of(SSL_SESSION,i2d_SSL_SESSION,PEM_STRING_SSL_SESSION,bp,x,NULL,NULL,0,NULL,NULL)
+
+DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 
 #define SSL_AD_REASON_OFFSET		1000 /* offset to get SSL_R_... value from SSL_AD_... */
 

@@ -822,11 +822,11 @@ static int ubsec_dsa_verify(const unsigned char *dgst, int dgst_len,
 	int v_len, d_len;
 	int to_return = 0;
 	int fd;
-	BIGNUM v;
+	BIGNUM v, *pv = &v;
 
 	BN_init(&v);
 
-	if(!bn_wexpand(&v, dsa->p->top)) {
+	if(!bn_wexpand(pv, dsa->p->top)) {
 		UBSECerr(UBSEC_F_UBSEC_DSA_VERIFY, UBSEC_R_BN_EXPAND_FAIL);
 		goto err;
 	}

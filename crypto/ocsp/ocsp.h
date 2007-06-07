@@ -471,11 +471,6 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
 			X509 *signer, EVP_PKEY *key, const EVP_MD *dgst,
 			STACK_OF(X509) *certs, unsigned long flags);
 
-ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, i2d_of_void *i2d,
-				void *data, STACK_OF(ASN1_OBJECT) *sk);
-#define ASN1_STRING_encode_of(type,s,i2d,data,sk) \
-((ASN1_STRING *(*)(ASN1_STRING *,I2D_OF(type),type *,STACK_OF(ASN1_OBJECT) *))openssl_fcast(ASN1_STRING_encode))(s,i2d,data,sk)
-
 X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim);
 
 X509_EXTENSION *OCSP_accept_responses_new(char **oids);

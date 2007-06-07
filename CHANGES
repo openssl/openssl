@@ -4,6 +4,10 @@
 
  Changes between 0.9.8f and 0.9.9  [xx XXX xxxx]
 
+  *) Final changes to avoid use of pointer pointer casts in OpenSSL.
+     OpenSSL should now compile cleanly on gcc 4.2
+     [Peter Hartley <pdh@utter.chaos.org.uk>, Steve Henson]
+
   *) Update SSL library to use new EVP_PKEY MAC API. Include generic MAC
      support including streaming MAC support: this is required for GOST
      ciphersuite support.

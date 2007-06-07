@@ -60,35 +60,25 @@
 #include <stdlib.h>
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
+ASN1_ITEM_TEMPLATE(X509_ALGORS) = 
+	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
+ASN1_ITEM_TEMPLATE_END(X509_ALGORS)
+
 int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)
 {
 	ASN1_STRING *seq;
-	unsigned char *p, *pp;
-	int len;
-	len=i2d_ASN1_SET_OF_X509_ALGOR(cap,NULL,i2d_X509_ALGOR,
-				       V_ASN1_SEQUENCE,V_ASN1_UNIVERSAL,
-				       IS_SEQUENCE);
-	if(!(pp=(unsigned char *)OPENSSL_malloc(len))) {
-		PKCS7err(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP,ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	p=pp;
-	i2d_ASN1_SET_OF_X509_ALGOR(cap,&p,i2d_X509_ALGOR, V_ASN1_SEQUENCE,
-				   V_ASN1_UNIVERSAL, IS_SEQUENCE);
 	if(!(seq = ASN1_STRING_new())) {
 		PKCS7err(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
-	if(!ASN1_STRING_set (seq, pp, len)) {
-		PKCS7err(PKCS7_F_PKCS7_ADD_ATTRIB_SMIMECAP,ERR_R_MALLOC_FAILURE);
-		return 0;
-	}
-	OPENSSL_free (pp);
+	seq->length = ASN1_item_i2d((ASN1_VALUE *)cap,&seq->data,
+				ASN1_ITEM_rptr(X509_ALGORS));
         return PKCS7_add_signed_attribute(si, NID_SMIMECapabilities,
 							V_ASN1_SEQUENCE, seq);
 }
@@ -102,10 +92,9 @@ STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
 	if (!cap || (cap->type != V_ASN1_SEQUENCE))
 		return NULL;
 	p = cap->value.sequence->data;
-	return d2i_ASN1_SET_OF_X509_ALGOR(NULL, &p,
-					  cap->value.sequence->length,
-					  d2i_X509_ALGOR, X509_ALGOR_free,
-					  V_ASN1_SEQUENCE, V_ASN1_UNIVERSAL);
+	return (STACK_OF(X509_ALGOR) *)
+		ASN1_item_d2i(NULL, &p, cap->value.sequence->length,
+				ASN1_ITEM_rptr(X509_ALGORS));
 	}
 
 /* Basic smime-capabilities OID and optional integer arg */

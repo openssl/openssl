@@ -979,3 +979,4 @@ void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx,
 	ctx->app_verify_cookie_cb=cb;
 	}
 
+IMPLEMENT_PEM_rw(SSL_SESSION, SSL_SESSION, PEM_STRING_SSL_SESSION, SSL_SESSION)

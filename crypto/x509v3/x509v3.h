@@ -657,6 +657,7 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 						unsigned long chtype);
 
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
+DECLARE_STACK_OF(X509_POLICY_NODE)
 
 #ifndef OPENSSL_NO_RFC3779
 

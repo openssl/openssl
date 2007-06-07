@@ -72,8 +72,6 @@
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 
-DECLARE_STACK_OF(BY_DIR_HASH)
-DECLARE_STACK_OF(BY_DIR_ENTRY)
 
 typedef struct lookup_dir_hashes_st
 	{
@@ -94,6 +92,8 @@ typedef struct lookup_dir_st
 	STACK_OF(BY_DIR_ENTRY) *dirs;
 	} BY_DIR;
 
+DECLARE_STACK_OF(BY_DIR_HASH)
+DECLARE_STACK_OF(BY_DIR_ENTRY)
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 	char **ret);
