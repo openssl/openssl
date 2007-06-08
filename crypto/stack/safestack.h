@@ -57,10 +57,14 @@
 
 #include <openssl/stack.h>
 
-#ifdef OPENSSL_NO_FCAST
+#ifndef OPENSSL_ALLOW_FCAST
 
 #ifndef OPENSSL_INLINE
-#define OPENSSL_INLINE static inline
+#ifdef OPENSSL_SYSNAME_WIN32
+#define OPENSSL_INLINE __inline static
+#else
+#define OPENSSL_INLINE inline static
+#endif
 #endif
 
 #define STACK_OF(type) struct stack_st_##type
@@ -74,7 +78,7 @@ STACK_OF(type) \
     }; \
 OPENSSL_INLINE STACK_OF(type) *sk_##type##_new( \
 	int (*cmp)(const type * const *, const type *const *)) \
-    { return (STACK_OF(type) *)sk_new((int (*)())cmp); } \
+    { return (STACK_OF(type) *)sk_new((int (*)(const char * const *, const char * const *))cmp); } \
 OPENSSL_INLINE STACK_OF(type) *sk_##type##_new_null() \
     { return (STACK_OF(type) *)sk_new_null(); } \
 OPENSSL_INLINE void sk_##type##_free(STACK_OF(type) *sk) \
