@@ -240,20 +240,67 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 			}
 		}
 	bn_correct_top(r);
-	
-	/* mont->ri will be a multiple of the word size */
-#if 0
-	BN_rshift(ret,r,mont->ri);
-#else
+
+	/* mont->ri will be a multiple of the word size and below code
+	 * is kind of BN_rshift(ret,r,mont->ri) equivalent */
 	if (r->top < ri)
 		{
 		ret->top=0;
 		return(1);
 		}
 	al=r->top-ri;
-	if (bn_wexpand(ret,al) == NULL) return(0);
+
+#define BRANCH_FREE 1
+#if BRANCH_FREE
+	if (bn_wexpand(ret,ri) == NULL) return(0);
+	x=0-(((al-ri)>>(sizeof(al)*8-1))&1);
+	ret->top=x=(ri&~x)|(al&x);	/* min(ri,al) */
 	ret->neg=r->neg;
+
+	rp=ret->d;
+	ap=&(r->d[ri]);
+	nrp=ap;
+
+	/* This 'if' denotes violation of 2*M<r^(n-1) boundary condition
+	 * formulated by C.D.Walter in "Montgomery exponentiation needs
+	 * no final subtractions." Incurred branch can disclose only
+	 * information about modulus length, which is not really secret. */
+	if ((mont->N.d[ri-1]>>(BN_BITS2-2))!=0)
+		{
+		size_t m1,m2;
+
+		v=bn_sub_words(rp,ap,mont->N.d,ri);
+		/* if (al==ri && !v) || al>ri)	nrp=rp; */
+		/* in other words if subtraction result is real, then
+		 * trick unconditional memcpy below to make "refresh"
+		 * instead of real copy. */
+		m1=0-(size_t)(((al-ri)>>(sizeof(al)*8-1))&1);	/* al<ri */
+		m2=0-(size_t)(((ri-al)>>(sizeof(al)*8-1))&1);	/* al>ri */
+		m1=~(m1|m2);		/* (al==ri) */
+		m1&=~(0-(size_t)v);	/* (al==ri && !v) */
+		m1|=m2;			/* (al==ri && !v) || al>ri */
+		nrp=(BN_ULONG *)(((size_t)rp&m1)|((size_t)ap&~m1));
+		}
+
+	for (i=0,ri-=4; i<ri; i+=4)
+		{
+		BN_ULONG t1,t2,t3,t4;
+		
+		t1=nrp[i+0];
+		t2=nrp[i+1];
+		t3=nrp[i+2];	ap[i+0]=0;
+		t4=nrp[i+3];	ap[i+1]=0;
+		rp[i+0]=t1;	ap[i+2]=0;
+		rp[i+1]=t2;	ap[i+3]=0;
+		rp[i+2]=t3;
+		rp[i+3]=t4;
+		}
+	for (ri+=4; i<ri; i++)
+		rp[i]=nrp[i], ap[i]=0;
+#else
+	if (bn_wexpand(ret,al) == NULL) return(0);
 	ret->top=al;
+	ret->neg=r->neg;
 
 	rp=ret->d;
 	ap=&(r->d[ri]);
@@ -274,12 +321,12 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 	al+=4;
 	for (; i<al; i++)
 		rp[i]=ap[i];
-#endif
 
 	if (BN_ucmp(ret, &(mont->N)) >= 0)
 		{
 		if (!BN_usub(ret,ret,&(mont->N))) return(0);
 		}
+#endif
 	bn_check_top(ret);
 
 	return(1);
