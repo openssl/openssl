@@ -169,13 +169,15 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 #endif /* OPENSSL_NO_ASM */
 
 
-/* BN_div computes  dv := num / divisor,  rounding towards zero, and sets up
- * rm  such that  dv*divisor + rm = num  holds.
+/* BN_div[_no_branch] computes  dv := num / divisor,  rounding towards
+ * zero, and sets up rm  such that  dv*divisor + rm = num  holds.
  * Thus:
  *     dv->neg == num->neg ^ divisor->neg  (unless the result is zero)
  *     rm->neg == num->neg                 (unless the remainder is zero)
  * If 'dv' or 'rm' is NULL, the respective value is not returned.
  */
+static int BN_div_no_branch(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
+        const BIGNUM *divisor, BN_CTX *ctx);
 int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	   BN_CTX *ctx)
 	{
@@ -406,7 +408,7 @@ err:
 /* BN_div_no_branch is a special version of BN_div. It does not contain
  * branches that may leak sensitive information.
  */
-int BN_div_no_branch(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, 
+static int BN_div_no_branch(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, 
 	const BIGNUM *divisor, BN_CTX *ctx)
 	{
 	int norm_shift,i,loop;
