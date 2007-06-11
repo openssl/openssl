@@ -270,18 +270,24 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 		size_t m1,m2;
 
 		v=bn_sub_words(rp,ap,mont->N.d,ri);
-		/* if (al==ri && !v) || al>ri)	nrp=rp; */
+		/* this -----------------------^^ works even in al<ri case
+		 * thanks to zealous zeroing of top of the vector in the
+		 * beginning. */
+
+		/* if (al==ri && !v) || al>ri) nrp=rp; else nrp=ap; */
 		/* in other words if subtraction result is real, then
-		 * trick unconditional memcpy below to make "refresh"
-		 * instead of real copy. */
+		 * trick unconditional memcpy below to perform in-place
+		 * "refresh" instead of actual copy. */
 		m1=0-(size_t)(((al-ri)>>(sizeof(al)*8-1))&1);	/* al<ri */
 		m2=0-(size_t)(((ri-al)>>(sizeof(al)*8-1))&1);	/* al>ri */
-		m1=~(m1|m2);		/* (al==ri) */
-		m1&=~(0-(size_t)v);	/* (al==ri && !v) */
-		m1|=m2;			/* (al==ri && !v) || al>ri */
-		nrp=(BN_ULONG *)(((size_t)rp&m1)|((size_t)ap&~m1));
+		m1|=m2;			/* (al!=ri) */
+		m1|=(0-(size_t)v);	/* (al!=ri || v) */
+		m1&=~m2;		/* (al!=ri || v) && !al>ri */
+		nrp=(BN_ULONG *)(((size_t)rp&~m1)|((size_t)ap&m1));
 		}
 
+	/* 'i<ri' is chosen to eliminate dependency on input data, even
+	 * though it results in redundant copy in al<ri case. */
 	for (i=0,ri-=4; i<ri; i+=4)
 		{
 		BN_ULONG t1,t2,t3,t4;
