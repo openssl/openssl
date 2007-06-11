@@ -446,8 +446,6 @@ void	BN_set_negative(BIGNUM *b, int n);
 
 int	BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	BN_CTX *ctx);
-int	BN_div_no_branch(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
-	const BIGNUM *d, BN_CTX *ctx);
 #define BN_mod(rem,m,d,ctx) BN_div(NULL,(rem),(m),(d),(ctx))
 int	BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx);
 int	BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m, BN_CTX *ctx);
@@ -517,8 +515,6 @@ int	BN_gcd(BIGNUM *r,const BIGNUM *a,const BIGNUM *b,BN_CTX *ctx);
 int	BN_kronecker(const BIGNUM *a,const BIGNUM *b,BN_CTX *ctx); /* returns -2 for error */
 BIGNUM *BN_mod_inverse(BIGNUM *ret,
 	const BIGNUM *a, const BIGNUM *n,BN_CTX *ctx);
-BIGNUM *BN_mod_inverse_no_branch(BIGNUM *ret,
-	const BIGNUM *A, const BIGNUM *n,BN_CTX *ctx);
 BIGNUM *BN_mod_sqrt(BIGNUM *ret,
 	const BIGNUM *a, const BIGNUM *n,BN_CTX *ctx);
 

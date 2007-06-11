@@ -3909,8 +3909,6 @@ BIO_f_asn1                              4289	EXIST::FUNCTION:
 BIO_asn1_set_suffix                     4290	EXIST::FUNCTION:
 BIO_asn1_get_suffix                     4291	EXIST::FUNCTION:
 PKCS7_stream                            4292	EXIST::FUNCTION:
-BN_div_no_branch                        4293	EXIST::FUNCTION:
-BN_mod_inverse_no_branch                4294	EXIST::FUNCTION:
 SEED_decrypt                            4295	EXIST::FUNCTION:SEED
 SEED_encrypt                            4296	EXIST::FUNCTION:SEED
 SEED_cbc_encrypt                        4297	EXIST::FUNCTION:SEED
