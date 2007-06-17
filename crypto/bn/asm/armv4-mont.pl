@@ -61,7 +61,7 @@ bn_mul_mont:
 	cmp	$num,#2
 	movlt	r0,#0
 	addlt	sp,sp,#2*4
-	blt	.Labort
+	blt	.Labrt
 
 	stmdb	sp!,{r4-r12,lr}		@ save 10 registers
 
@@ -160,27 +160,13 @@ bn_mul_mont:
 	add	$num,$num,#4		@ $num to point at &tp[num]
 	sub	$aj,$num,sp		@ "original" num value
 	mov	$tp,sp			@ "rewind" $tp
+	mov	$ap,$tp			@ "borrow" $ap
 	sub	$np,$np,$aj		@ "rewind" $np to &np[0]
 
-	cmp	$nhi,#0			@ upmost carry
-	bne	.Lsub
-	cmp	$nlo,$nj		@ tp[num-1]-np[num-1]
-	bhs	.Lsub
+	movs	$tj,$nj,lsr#30		@ boundary condition...
+	beq	.Lcopy			@ ... is met
 
-.Lcopy:	ldr	$tj,[$tp]
-	str	sp,[$tp],#4		@ zap tp
-	str	$tj,[$rp],#4
-	cmp	$tp,$num
-	bne	.Lcopy
-
-.Lexit:	add	sp,$num,#4		@ skip over tp[num+1]
-	ldmia	sp!,{r4-r12,lr}		@ restore registers
-	add	sp,sp,#2*4		@ skip over {r0,r2}
-	mov	r0,#1
-.Labort:tst	lr,#1
-	moveq	pc,lr			@ be binary compatible with V4, yet
-	bx	lr			@ interoperable with Thumb ISA:-)
-
+	subs	$tj,$tj,$tj		@ "clear" carry flag
 .Lsub:	ldr	$tj,[$tp],#4
 	ldr	$nj,[$np],#4
 	sbcs	$tj,$tj,$nj		@ tp[j]-np[j]
@@ -190,12 +176,24 @@ bn_mul_mont:
 	sbcs	$nhi,$nhi,#0		@ upmost carry
 	mov	$tp,sp			@ "rewind" $tp
 	sub	$rp,$rp,$aj		@ "rewind" $rp
-	blo	.Lcopy			@ tp was less after all
 
-.Lzap:	str	sp,[$tp],#4
+	and	$ap,$tp,$nhi
+	bic	$np,$rp,$nhi
+	orr	$ap,$ap,$np		@ ap=borrow?tp:rp
+
+.Lcopy:	ldr	$tj,[$ap],#4		@ copy or in-place refresh
+	str	sp,[$tp],#4		@ zap tp
+	str	$tj,[$rp],#4
 	cmp	$tp,$num
-	bne	.Lzap
-	bal	.Lexit
+	bne	.Lcopy
+
+	add	sp,$num,#4		@ skip over tp[num+1]
+	ldmia	sp!,{r4-r12,lr}		@ restore registers
+	add	sp,sp,#2*4		@ skip over {r0,r2}
+	mov	r0,#1
+.Labrt:	tst	lr,#1
+	moveq	pc,lr			@ be binary compatible with V4, yet
+	bx	lr			@ interoperable with Thumb ISA:-)
 .size	bn_mul_mont,.-bn_mul_mont
 .asciz	"Montgomery multiplication for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
 ___

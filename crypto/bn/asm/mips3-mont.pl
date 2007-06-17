@@ -265,27 +265,50 @@ bn_mul_mont:
 	addu	$i,8
 	sltu	s7,$i,$num
 	bnez	s7,.Louter
-
+
 	.set	noreorder
-	PTR_ADD	$ap,sp,$num
+	PTR_ADD	$tj,sp,$num	# &tp[num]
 	move	$tp,sp
+	move	$ap,sp
 
-	bnez	$hi1,.Lsub
-	li	$hi0,0
-	sgeu	AT,$lo1,$nj
-	beqz	AT,.Lsub
-	nop
+	dsrl	AT,$nj,62	# boundary condition...
+	beqz	AT,.Lcopy	# ... is met
+	li	$hi0,0		# clear borrow bit
 
 .align	4
-.Lcopy:	ld	AT,($tp)
+.Lsub:	ld	$lo0,($tp)
+	ld	$lo1,($np)
 	PTR_ADD	$tp,8
-	sd	AT,($rp)
-	sltu	AT,$tp,$ap
+	PTR_ADD	$np,8
+	dsubu	$lo1,$lo0,$lo1	# tp[i]-np[i]
+	sgtu	AT,$lo1,$lo0
+	dsubu	$lo0,$lo1,$hi0
+	sgtu	$hi0,$lo0,$lo1
+	sd	$lo0,($rp)
+	or	$hi0,AT
+	sltu	AT,$tp,$tj
+	bnez	AT,.Lsub
+	PTR_ADD	$rp,8
+
+	dsubu	$hi0,$hi1,$hi0	# handle upmost overflow bit
+	move	$tp,sp
+	PTR_SUB	$rp,$num	# restore rp
+	not	$hi1,$hi0
+
+	and	$ap,$hi0,sp
+	and	$bp,$hi1,$rp
+	or	$ap,$ap,$bp	# ap=borrow?tp:rp
+
+.align	4
+.Lcopy:	ld	$aj,($ap)
+	PTR_ADD	$ap,8
+	PTR_ADD	$tp,8
 	sd	zero,-8($tp)
+	sltu	AT,$tp,$tj
+	sd	$aj,($rp)
 	bnez	AT,.Lcopy
 	PTR_ADD	$rp,8
 
-.Lexit:
 	ld	s0,0($fp)
 	ld	s1,8($fp)
 	ld	s2,16($fp)
@@ -297,34 +320,6 @@ bn_mul_mont:
 	li	v0,1
 	jr	ra
 	PTR_ADD	sp,$fp,64
-
-.align	4
-.Lsub:	ld	$lo0,($tp)
-	ld	$lo1,($np)
-	dsubu	$lo1,$lo0,$lo1
-	sgtu	AT,$lo1,$lo0
-	dsubu	$lo0,$lo1,$hi0
-	sgtu	$hi0,$lo0,$lo1
-	PTR_ADD	$tp,8
-	or	$hi0,AT
-	PTR_ADD	$np,8
-	sd	$lo0,($rp)
-	sltu	AT,$tp,$ap
-	bnez	AT,.Lsub
-	PTR_ADD	$rp,8
-
-	dsubu	$hi0,$hi1,$hi0
-	move	$tp,sp
-	sgtu	AT,$hi0,$hi1
-	bnez	AT,.Lcopy
-	PTR_SUB	$rp,$num
-.align	4
-.Lzap:	sd	zero,($tp)
-	sltu	AT,$tp,$ap
-	bnez	AT,.Lzap
-	PTR_ADD	$tp,8
-	b	.Lexit
-	nop
 	.set	reorder
 END(bn_mul_mont)
 .rdata

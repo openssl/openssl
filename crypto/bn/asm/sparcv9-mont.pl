@@ -2,8 +2,9 @@
 
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
 # December 2005
@@ -254,43 +255,35 @@ $fname:
 .Ltail:
 	add	$np,$num,$np
 	add	$rp,$num,$rp
-
-	cmp	$car2,0			! clears %icc.c
-	bne,pn	%icc,.Lsub
+	mov	$tp,$ap
 	sub	%g0,$num,%o7		! k=-num
 
-	cmp	$car1,$npj		! compare top-most $tp and $np words
-	bcs,pt	%icc,.Lcopy		! %icc.c is clean if not taken
-	nop
+	srl	$npj,30,%o0		! boundary condition...
+	brz,pn	%o0,.Lcopy		! ... is met
+	subcc	%g0,%g0,%g0		! clear %icc.c
 
 .align	16,0x1000000
 .Lsub:
 	ld	[$tp+%o7],%o0
 	ld	[$np+%o7],%o1
-	subccc	%o0,%o1,%o1
+	subccc	%o0,%o1,%o1		! tp[j]-np[j]
 	st	%o1,[$rp+%o7]
 	add	%o7,4,%o7
 	brnz	%o7,.Lsub
 	nop
-	subccc	$car2,0,$car2
-	bcc	%icc,.Lzap
+	subc	$car2,0,$car2		! handle upmost overflow bit
+	and	$tp,$car2,$ap
+	andn	$rp,$car2,$np
+	or	$ap,$np,$ap
 	sub	%g0,$num,%o7
 
 .align	16,0x1000000
 .Lcopy:
-	ld	[$tp+%o7],%o0
+	ld	[$ap+%o7],%o0		! copy or in-place refresh
+	st	%g0,[$tp+%o7]		! zap tp
 	st	%o0,[$rp+%o7]
 	add	%o7,4,%o7
 	brnz	%o7,.Lcopy
-	nop
-	ba	.Lzap
-	sub	%g0,$num,%o7
-
-.align	32
-.Lzap:
-	st	%g0,[$tp+%o7]
-	add	%o7,4,%o7
-	brnz	%o7,.Lzap
 	nop
 	mov	1,%i0
 	ret
@@ -609,6 +602,7 @@ $code.=<<___;
 	add	$tp,8,$tp
 .type	$fname,#function
 .size	$fname,(.-$fname)
+.asciz	"Montgomery Multipltication for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 print $code;

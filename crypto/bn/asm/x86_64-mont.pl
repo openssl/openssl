@@ -59,6 +59,7 @@ bn_mul_mont:
 	neg	%rax
 	lea	(%rsp,%rax,8),%rsp	# tp=alloca(8*(num+2))
 	and	\$-1024,%rsp		# minimize TLB usage
+
 	mov	%rbp,8(%rsp,$num,8)	# tp[num+1]=%rsp
 	mov	%rdx,$bp		# $bp reassigned, remember?
 
@@ -166,22 +167,38 @@ bn_mul_mont:
 	cmp	$num,$i
 	jl	.Louter
 
-	xor	$i,$i			# i=0
+	mov	-8($np,$num,8),%rax	# np[num-1]
+	lea	(%rsp),$ap		# borrow ap for tp
+	shr	\$62,%rax		# check for boundary condition
+	jz	.Lcopy
+
+	mov	($ap),%rax		# tp[0]
 	lea	-1($num),$j		# j=num-1
-	cmp	\$0,%rdx		# %rdx still holds upmost overflow bit
-	jnz	.Lsub			# CF is cleared by compare with 0
-	mov	(%rsp,$j,8),%rax
-	cmp	($np,$j,8),%rax		# tp[num-1]-np[num-1]
-	jae	.Lsub			# if taken CF was cleared by above cmp
-.align	4
-.Lcopy:
-	mov	(%rsp,$j,8),%rax
+	xor	$i,$i			# i=0 and clear CF!
+	jmp	.Lsub
+.align	16
+.Lsub:	sbb	($np,$i,8),%rax
+	mov	%rax,($rp,$i,8)		# rp[i]=tp[i]-np[i]
+	dec	$j			# doesn't affect CF!
+	mov	8($ap,$i,8),%rax	# tp[i+1]
+	lea	1($i),$i		# i++
+	jge	.Lsub
+
+	sbb	\$0,%rax		# handle upmost overflow bit
+	and	%rax,$ap
+	not	%rax
+	mov	$rp,$np
+	and	%rax,$np
+	lea	-1($num),$j
+	or	$np,$ap			# ap=borrow?tp:rp
+.align	16
+.Lcopy:					# copy or in-place refresh
+	mov	($ap,$j,8),%rax
 	mov	%rax,($rp,$j,8)		# rp[i]=tp[i]
 	mov	$i,(%rsp,$j,8)		# zap temporary vector
 	dec	$j
 	jge	.Lcopy
-.align	4
-.Lexit:
+	
 	mov	8(%rsp,$num,8),%rsp	# restore %rsp
 	mov	\$1,%rax
 	pop	%r15
@@ -191,22 +208,6 @@ bn_mul_mont:
 	pop	%rbp
 	pop	%rbx
 	ret
-
-.align	16
-.Lsub:	mov	(%rsp,$i,8),%rax
-	sbb	($np,$i,8),%rax
-	mov	%rax,($rp,$i,8)		# rp[i]=tp[i]-np[j]
-	lea	1($i),$i		# i++
-	dec	$j			# doesn't affect CF!
-	jge	.Lsub
-	lea	-1($num),$j		# j=num-1
-	sbb	\$0,%rdx
-	jc	.Lcopy			# tp was less than np
-.align	4
-.Lzap:	mov	$i,(%rsp,$j,8)		# zap temporary vector
-	dec	$j
-	jge	.Lzap
-	jmp	.Lexit
 .size	bn_mul_mont,.-bn_mul_mont
 .asciz	"Montgomery Multiplication for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 ___

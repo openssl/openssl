@@ -176,45 +176,45 @@ bn_mul_mont:
 ___
 
 undef $bi;
-$count=$ap; undef $ap;
+$count=$bp; undef $bp;
 
 $code.=<<___;
 	lg	$rp,16+16($fp)	# reincarnate rp
+	la	$ap,8($fp)
 	lgr	$j,$num
-	ltgr	$AHI,$AHI
-	jnz	.Lsub		# upmost overflow bit is not zero
-	#slg	$NHI,-8($np)	# tp[num-1]-np[num-1]
+
+	#lg	$nhi,-8($np)		# buggy assembler
 	lghi	$count,-8		# buggy assembler
-	slg	$NHI,0($count,$np)	# buggy assembler
-	jnle	.Lsub		# branch if not borrow 
+	lg	$nhi,0($count,$np)	# buggy assembler
+	srag	$nhi,$nhi,62	# boundary condition...
+	jz	.Lcopy		# ... is met
 
-.Lcopy:	lg	$alo,8($j,$fp)
-	stg	$j,8($j,$fp)
-	stg	$alo,0($j,$rp)
-	aghi	$j,8
-	jnz	.Lcopy
-.Lexit:
-	lmg	%r6,%r15,16+48($fp)
-	lghi	%r2,1		# signal "processed"
-	br	%r14
-
-.Lsub:	lcgr	$count,$num
+	lcgr	$count,$num
 	sra	$count,3	# incidentally clears "borrow"
-.Lsubloop:
-	lg	$alo,8($j,$fp)
+.Lsub:	lg	$alo,0($j,$ap)
 	slbg	$alo,0($j,$np)
 	stg	$alo,0($j,$rp)
 	la	$j,8($j)
-	brct	$count,.Lsubloop
+	brct	$count,.Lsub
 	lghi	$ahi,0
-	slbgr	$AHI,$ahi
-	lgr	$j,$num
-	jle	.Lcopy		# branch if borrow
+	slbgr	$AHI,$ahi	# handle upmost carry
 
-.Lzap:	stg	$j,8($j,$fp)
+	ngr	$ap,$AHI
+	lghi	$np,-1
+	xgr	$np,$AHI
+	ngr	$np,$rp
+	ogr	$ap,$np		# ap=borrow?tp:rp
+	lgr	$j,$num
+
+.Lcopy:	lg	$alo,0($j,$ap)	# copy or in-place refresh
+	stg	$j,8($j,$fp)	# zap tp
+	stg	$alo,0($j,$rp)
 	aghi	$j,8
-	jnz	.Lzap
-	j	.Lexit
+	jnz	.Lcopy
+
+	lmg	%r6,%r15,16+48($fp)
+	lghi	%r2,1		# signal "processed"
+	br	%r14
 .size	bn_mul_mont,.-bn_mul_mont
 .string	"Montgomery Multiplication for s390x, CRYPTOGAMS by <appro\@openssl.org>"
 ___

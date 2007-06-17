@@ -77,7 +77,8 @@
 # - in terms of absolute performance it delivers approximately as much
 #   as modern out-of-order 32-bit cores [again, for longer keys].
 
-push(@INC,".","../../perlasm");
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],"via-mont.pl");
@@ -100,7 +101,7 @@ $sp=&DWP(28,"esp");
 # &DWP(64+(4*$num+$pad)*0,"esp")	# padded tp[num]
 # &DWP(64+(4*$num+$pad)*1,"esp")	# padded copy of ap[num]
 # &DWP(64+(4*$num+$pad)*2,"esp")	# padded copy of bp[num]
-# &DWP(64+(4*$num+$pad)*2,"esp")	# padded copy of np[num]
+# &DWP(64+(4*$num+$pad)*3,"esp")	# padded copy of np[num]
 # Note that SDK suggests to unconditionally allocate 2K per vector. This
 # has quite an impact on performance. It naturally depends on key length,
 # but to give an example 1024 bit private RSA key operations suffer >30%
@@ -115,7 +116,7 @@ $sp=&DWP(28,"esp");
 	&jnz	(&label("leave"));	# num % 4 != 0
 	&cmp	("ecx",8);
 	&jb	(&label("leave"));	# num < 8
-	&cmp	("ecx",256);
+	&cmp	("ecx",1024);
 	&ja	(&label("leave"));	# num > 1024
 
 	&pushf	();
@@ -148,74 +149,91 @@ $sp=&DWP(28,"esp");
 	&lea	("ebp",&DWP(-$pad,"ecx"));
 	&shr	("ebp",2);		# restore original num value in ebp
 
-	&add	("ecx",32/4);		# (4 vectors + 32 byte scratch)/4
 	&xor	("eax","eax");
+
+	&mov	("ecx","ebp");
+	&lea	("ecx",&DWP((32+$pad)/4,"ecx"));# padded tp + scratch
 	&data_byte(0xf3,0xab);		# rep stosl, bzero
 
 	&mov	("ecx","ebp");
 	&lea	("edi",&DWP(64+$pad,"esp","ecx",4));# pointer to ap copy
 	&mov	($A,"edi");
 	&data_byte(0xf3,0xa5);		# rep movsl, memcpy
+	&mov	("ecx",$pad/4);
+	&data_byte(0xf3,0xab);		# rep stosl, bzero pad
+	# edi points at the end of padded ap copy...
 
-	# edi points at the end of ap copy...
 	&mov	("ecx","ebp");
-	&add	("edi",$pad);		# skip padding to point at bp copy
 	&mov	("esi","ebx");
 	&mov	($B,"edi");
 	&data_byte(0xf3,0xa5);		# rep movsl, memcpy
+	&mov	("ecx",$pad/4);
+	&data_byte(0xf3,0xab);		# rep stosl, bzero pad
+	# edi points at the end of padded bp copy...
 
-	# edi points at the end of bp copy...
 	&mov	("ecx","ebp");
-	&add	("edi",$pad);		# skip padding to point at np copy
 	&mov	("esi","edx");
 	&mov	($M,"edi");
 	&data_byte(0xf3,0xa5);		# rep movsl, memcpy
+	&mov	("ecx",$pad/4);
+	&data_byte(0xf3,0xab);		# rep stosl, bzero pad
+	# edi points at the end of padded np copy...
 
 	# let magic happen...
 	&mov	("ecx","ebp");
 	&mov	("esi","esp");
-	&xor	("eax","eax");
 	&shl	("ecx",5);		# convert word counter to bit counter
 	&align	(4);
 	&data_byte(0xf3,0x0f,0xa6,0xc0);# rep montmul
 
 	&mov	("ecx","ebp");
-	&xor	("edx","edx");		# i=0
-	&lea	("esi",&DWP(64,"esp"));	# tp
-	# edi still points at the end of np copy...
+	&xor	("edx","edx");			# i=0
+	&lea	("esi",&DWP(64,"esp"));		# tp
+	# edi still points at the end of padded np copy...
+	&mov	("eax",&DWP(-4-$pad,"edi"));	# np[num-1]
 	&neg	("ebp");
-	&lea	("ebp",&DWP(0,"edi","ebp",4));	# so just "rewind"
-	&mov	("edi",$rp);		# restore rp
+	&lea	("ebp",&DWP(-$pad,"edi","ebp",4));	# so just "rewind"
+	&mov	("edi",$rp);			# restore rp
 
-	&mov	("ebx",&DWP(0,"esi","ecx",4));	# upmost overflow bit
-	&cmp	("ebx",0);			# clears CF unconfitionally
-	&jnz	(&label("sub"));
-	&mov	("eax",&DWP(-4,"esi","ecx",4));
-	&cmp	("eax",&DWP(-4,"ebp","ecx",4));	# tp[num-1]-np[num-1]?
-	&jae	(&label("sub"));		# if taken CF is cleared
+	&shr	("eax",30);			# boundary condition...
+	&jz	(&label("copy"));		# ... is met
+	&xor	("edx","edx");			# clear CF
 
-&set_label("copy",4);
-	&mov	("ebx","ecx");
-	&data_byte(0xf3,0xa5);			# rep movsl
-	&mov	("ecx","ebx");
-	&jmp	(&label("zap"));
-
-&set_label("sub",16);
+&set_label("sub",8);
 	&mov	("eax",&DWP(0,"esi","edx",4));
 	&sbb	("eax",&DWP(0,"ebp","edx",4));
 	&mov	(&DWP(0,"edi","edx",4),"eax");	# rp[i]=tp[i]-np[i]
 	&lea	("edx",&DWP(1,"edx"));		# i++
-	&dec	("ecx");			# doesn't affect CF!
-	&jg	(&label("sub"));
-	&sbb	("ebx",0);			# upmost overflow is still there
-	&mov	("ecx","edx");
-	&jc	(&label("copy"));
+	&loop	(&label("sub"));		# doesn't affect CF!
 
-&set_label("zap",4);
+	&mov	("eax",&DWP(0,"esi","edx",4));	# upmost overflow bit
+	&sbb	("eax",0);
+	&and	("esi","eax");
+	&not	("eax");
+	&mov	("ebp","edi");
+	&and	("ebp","eax");
+	&or	("esi","ebp");			# tp=carry?tp:rp
+
+	&mov	("ecx","edx");			# num
+	&xor	("edx","edx");			# i=0
+
+&set_label("copy",8);
+	&mov	("eax",&DWP(0,"esi","edx",4));
+	&mov	(&DWP(64,"esp","edx",4),"ecx");	# zap tp
+	&mov	(&DWP(0,"edi","edx",4),"eax");
+	&lea	("edx",&DWP(1,"edx"));		# i++
+	&loop	(&label("copy"));
+
 	&mov	("ebp",$sp);
 	&xor	("eax","eax");
-	&lea	("ecx",&DWP(64/4+$pad,"","ecx",4));# size of frame divided by 4
-	&mov	("edi","esp");
+
+	&mov	("ecx",64/4);
+	&mov	("edi","esp");		# zap frame including scratch area
+	&data_byte(0xf3,0xab);		# rep stosl, bzero
+
+	# zap copies of ap, bp and np
+	&lea	("edi",&DWP(64+$pad,"esp","edx",4));# pointer to ap
+	&lea	("ecx",&DWP(3*$pad/4,"edx","edx",2));
 	&data_byte(0xf3,0xab);		# rep stosl, bzero
 
 	&mov	("esp","ebp");
@@ -223,5 +241,7 @@ $sp=&DWP(28,"esp");
 	&popf	();
 &set_label("leave");
 &function_end($func);
+
+&asciz("Padlock Montgomery Multiplication, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();

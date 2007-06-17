@@ -258,56 +258,48 @@ bn_mul_mont:
 	stq	$hi1,16($tp)
 	bne	$tj,.Louter
 
-	s8addq	$num,sp,$ap
-	mov	$rp,$bp
+	s8addq	$num,sp,$tj	# &tp[num]
+	mov	$rp,$bp		# put rp aside
 	mov	sp,$tp
-	mov	0,$hi0
-
-	bne	$hi1,.Lsub
-	cmpult	$nj,$lo1,AT
-	bne	AT,.Lsub
-
-.align	4
-.Lcopy:	ldq	AT,($tp)
-	lda	$tp,8($tp)
-	stq	AT,($rp)
-	cmpult	$tp,$ap,AT
-	stq	zero,-8($tp)
-	nop
-	lda	$rp,8($rp)
-	bne	AT,.Lcopy
-	mov	1,v0
-	br	.Lexit
+	mov	sp,$ap
+	srl	$nj,62,AT	# boundary condition...
+	beq	AT,.Lcopy	# ... is met
+	mov	0,$hi0		# clear borrow bit
 
 .align	4
 .Lsub:	ldq	$lo0,($tp)
 	ldq	$lo1,($np)
-	subq	$lo0,$lo1,$lo1
+	lda	$tp,8($tp)
+	lda	$np,8($np)
+	subq	$lo0,$lo1,$lo1	# tp[i]-np[i]
 	cmpult	$lo0,$lo1,AT
 	subq	$lo1,$hi0,$lo0
 	cmpult	$lo1,$lo0,$hi0
-	lda	$tp,8($tp)
 	or	$hi0,AT,$hi0
-	lda	$np,8($np)
 	stq	$lo0,($rp)
-	cmpult	$tp,$ap,v0
+	cmpult	$tp,$tj,v0
 	lda	$rp,8($rp)
 	bne	v0,.Lsub
 
-	subq	$hi1,$hi0,$hi0
+	subq	$hi1,$hi0,$hi0	# handle upmost overflow bit
 	mov	sp,$tp
-	cmpule	$hi1,$hi0,AT
-	mov	$bp,$rp
-	bne	AT,.Lcopy
+	mov	$bp,$rp		# restore rp
+
+	and	sp,$hi0,$ap
+	bic	$bp,$hi0,$bp
+	bis	$bp,$ap,$ap	# ap=borrow?tp:rp
 
 .align	4
-.Lzap:	stq	zero,($tp)
-	cmpult	$tp,$ap,AT
+.Lcopy:	ldq	$aj,($ap)	# copy or in-place refresh
 	lda	$tp,8($tp)
-	bne	AT,.Lzap
+	lda	$rp,8($rp)
+	lda	$ap,8($ap)
+	stq	zero,-8($tp)	# zap tp
+	cmpult	$tp,$tj,AT
+	stq	$aj,-8($rp)
+	bne	AT,.Lcopy
 	mov	1,v0
 
-.align	4
 .Lexit:
 	.set	noreorder
 	mov	fp,sp

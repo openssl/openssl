@@ -2,8 +2,9 @@
 
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
 # April 2006
@@ -42,6 +43,7 @@ if ($output =~ /32\-mont\.s/) {
 	$UMULL=	"mullw";	# unsigned multiply low
 	$UMULH=	"mulhwu";	# unsigned multiply high
 	$UCMP=	"cmplw";	# unsigned compare
+	$SHRI=	"srwi";		# unsigned shift right by immediate	
 	$PUSH=	$ST;
 	$POP=	$LD;
 } elsif ($output =~ /64\-mont\.s/) {
@@ -62,6 +64,7 @@ if ($output =~ /32\-mont\.s/) {
 	$UMULL=	"mulld";	# unsigned multiply low
 	$UMULH=	"mulhdu";	# unsigned multiply high
 	$UCMP=	"cmpld";	# unsigned compare
+	$SHRI=	"srdi";		# unsigned shift right by immediate	
 	$PUSH=	$ST;
 	$POP=	$LD;
 } else { die "nonsense $output"; }
@@ -264,24 +267,37 @@ Linner:
 	addi	$i,$i,$BNSZ
 	ble-	Louter
 
+	$SHRI.	$nj,$nj,$BITS-2	; check boundary condition
 	addi	$num,$num,2	; restore $num
+	subfc	$j,$j,$j	; j=0 and "clear" XER[CA]
 	addi	$tp,$sp,$FRAME
+	addi	$ap,$sp,$FRAME
 	mtctr	$num
-	li	$j,0
+	beq	Lcopy		; boundary condition is met
 
-	subfc.	$ovf,$j,$ovf	; sets XER[CA]
-	bne	Lsub
-	$UCMP	$hi1,$nj
-	bge	Lsub
 .align	4
-Lcopy:
-	$LDX	$tj,$tp,$j
+Lsub:	$LDX	$tj,$tp,$j
+	$LDX	$nj,$np,$j
+	subfe	$aj,$nj,$tj	; tp[j]-np[j]
+	$STX	$aj,$rp,$j
+	addi	$j,$j,$BNSZ
+	bdnz-	Lsub
+
+	li	$j,0
+	mtctr	$num
+	subfe	$ovf,$j,$ovf	; handle upmost overflow bit
+	and	$ap,$tp,$ovf
+	andc	$np,$rp,$ovf
+	or	$ap,$ap,$np	; ap=borrow?tp:rp
+
+.align	4
+Lcopy:				; copy or in-place refresh
+	$LDX	$tj,$ap,$j
 	$STX	$tj,$rp,$j
 	$STX	$j,$tp,$j	; zap at once
 	addi	$j,$j,$BNSZ
 	bdnz-	Lcopy
 
-Lexit:
 	$POP	r14,`4*$SIZE_T`($sp)
 	$POP	r15,`5*$SIZE_T`($sp)
 	$POP	r16,`6*$SIZE_T`($sp)
@@ -298,22 +314,7 @@ Lexit:
 	li	r3,1
 	blr
 	.long	0
-.align	4
-Lsub:	$LDX	$tj,$tp,$j
-	$LDX	$nj,$np,$j
-	subfe	$tj,$nj,$tj	; tp[j]-np[j]
-	$STX	$tj,$rp,$j
-	addi	$j,$j,$BNSZ
-	bdnz-	Lsub
-	li	$j,0
-	subfe.	$ovf,$j,$ovf
-	mtctr	$num
-	bne	Lcopy
-.align	4
-Lzap:	$STX	$j,$tp,$j
-	addi	$j,$j,$BNSZ
-	bdnz-	Lzap
-	b	Lexit
+.asciz  "Montgomery Multiplication for PPC, CRYPTOGAMS by <appro\@fy.chalmers.se>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

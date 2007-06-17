@@ -121,7 +121,6 @@ $nhia="%f56"; $nhib="%f58"; $nhic="%f60"; $nhid="%f62";
 $ASI_FL16_P=0xD2;	# magic ASI value to engage 16-bit FP load
 
 $code=<<___;
-.ident		"UltraSPARC Montgomery multiply by <appro\@fy.chalmers.se>"
 .section	".text",#alloc,#execinstr
 
 .global $fname
@@ -799,17 +798,14 @@ $fname:
 	bnz	%icc,.Louter
 	nop
 
-	sub	%g0,$num,%o7		! n=-num
-	cmp	$carry,0		! clears %icc.c
-	bne,pn	%icc,.Lsub
-	add	$tp,8,$tp		! adjust tp to point at the end
-
-	ld	[$tp-8],%o0
 	ld	[$np-4],%o1
-	cmp	%o0,%o1			! compare topmost words
-	bcs,pt	%icc,.Lcopy		! %icc.c is clean if not taken
-	nop
-
+	subcc	%g0,%g0,%g0		! clear %icc.c
+	add	$tp,8,$tp		! adjust tp to point at the end
+	srl	%o1,30,%o1		! boundary condition...
+	orn	%g0,%g0,%g4
+	brz,pn	%o1,.Lcopy		! ... is met
+	sub	%g0,$num,%o7		! n=-num
+	
 .align	32,0x1000000
 .Lsub:
 	ldx	[$tp+%o7],%o0
@@ -824,24 +820,30 @@ $fname:
 	add	%o7,8,%o7
 	brnz,pt	%o7,.Lsub
 	st	%o3,[%g1+4]
-	subccc	$carry,0,$carry
-	bcc,pt	%icc,.Lzap
+	subc	$carry,0,%g4
 	sub	%g0,$num,%o7		! n=-num
 
-.align	16,0x1000000
+.align	32,0x1000000
 .Lcopy:
 	ldx	[$tp+%o7],%o0
-	srlx	%o0,32,%o1
 	add	$rp,%o7,%g1
+	ld	[%g1+0],%o2
+	ld	[%g1+4],%o3
+	stx	%g0,[$tp+%o7]
+	and	%o0,%g4,%o0
+	srlx	%o0,32,%o1
+	andn	%o2,%g4,%o2
+	andn	%o3,%g4,%o3
+	or	%o2,%o0,%o0
+	or	%o3,%o1,%o1
 	st	%o0,[%g1+0]
 	add	%o7,8,%o7
 	brnz,pt	%o7,.Lcopy
 	st	%o1,[%g1+4]
 	sub	%g0,$num,%o7		! n=-num
 
-.align	32
+.align	32,0x1000000
 .Lzap:
-	stx	%g0,[$tp+%o7]
 	stx	%g0,[$ap_l+%o7]
 	stx	%g0,[$ap_h+%o7]
 	stx	%g0,[$np_l+%o7]

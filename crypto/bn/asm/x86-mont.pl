@@ -41,7 +41,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 $i="edx";
 $j="ecx";
-$ap="esi";
+$ap="esi";	$tp="esi";		# overlapping variables!!!
 $rp="edi";	$bp="edi";		# overlapping variables!!!
 $np="ebp";
 $num="ebx";
@@ -551,41 +551,39 @@ $sbit=$num;
 }
 
 &set_label("common_tail",16);
-	&mov	($np,$_np);
-	&mov	("esi",&DWP($frame+4,"esp",$num,4));# load upmost overflow bit
+	&mov	($np,$_np);			# load modulus pointer
 	&mov	($rp,$_rp);			# load result pointer
-						# [$ap and $bp are zapped]
-	&xor	($i,$i);			# i=0
+	&lea	($tp,&DWP($frame,"esp"));	# [$ap and $bp are zapped]
+	&mov	("eax",&DWP(0,$np,$num,4));	# np[num-1]
+	&shr	("eax",30);			# check for boundary condition
+	&jz	(&label("copy"));
+
+	&mov	("eax",&DWP(0,$tp));		# tp[0]
 	&mov	($j,$num);			# j=num-1
-	&cmp	("esi",0);			# clears CF unconditionally
-	&jnz	(&label("sub"));
-	&mov	("eax",&DWP($frame,"esp",$j,4));
-	&cmp	("eax",&DWP(0,$np,$j,4));	# tp[num-1]-np[num-1]?
-	&jae	(&label("sub"));		# if taken CF is cleared
-&set_label("copy",16);
-	&mov	("eax",&DWP($frame,"esp",$j,4));
-	&mov	(&DWP(0,$rp,$j,4),"eax");	# rp[i]=tp[i]
-	&mov	(&DWP($frame,"esp",$j,4),$j);	# zap temporary vector
-	&dec	($j);
-	&jge	(&label("copy"));
-	&jmp	(&label("exit"));
+	&xor	($i,$i);			# i=0 and clear CF!
 
 &set_label("sub",16);
-	&mov	("eax",&DWP($frame,"esp",$i,4));
 	&sbb	("eax",&DWP(0,$np,$i,4));
 	&mov	(&DWP(0,$rp,$i,4),"eax");	# rp[i]=tp[i]-np[i]
-	&lea	($i,&DWP(1,$i));		# i++
 	&dec	($j);				# doesn't affect CF!
+	&mov	("eax",&DWP(4,$tp,$i,4));	# tp[i+1]
+	&lea	($i,&DWP(1,$i));		# i++
 	&jge	(&label("sub"));
-	&mov	($j,$num);			# j=num-1
-	&sbb	("esi",0);			# esi holds upmost overflow bit
-	&jc	(&label("copy"));
-&set_label("zap",8);
-	&mov	(&DWP($frame,"esp",$j,4),$i);	# zap temporary vector
-	&dec	($j);
-	&jge	(&label("zap"));
 
-&set_label("exit",8);
+	&sbb	("eax",0);			# handle upmost overflow bit
+	&and	($tp,"eax");
+	&not	("eax");
+	&mov	($np,$rp);
+	&and	($np,"eax");
+	&or	($tp,$np);			# tp=carry?tp:rp
+
+&set_label("copy",16);				# copy or in-place refresh
+	&mov	("eax",&DWP(0,$tp,$num,4));
+	&mov	(&DWP(0,$rp,$num,4),"eax");	# rp[i]=tp[i]
+	&mov	(&DWP($frame,"esp",$num,4),$j);	# zap temporary vector
+	&dec	($num);
+	&jge	(&label("copy"));
+
 	&mov	("esp",$_sp);		# pull saved stack pointer
 	&mov	("eax",1);
 &set_label("just_leave");
