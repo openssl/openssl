@@ -1,2 +1,3 @@
 lib
 w86mmx-elf.s
+wp-x86_64.s

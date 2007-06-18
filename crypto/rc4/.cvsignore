@@ -3,3 +3,4 @@ Makefile.save
 *.flc
 semantic.cache
 rx86-elf.s
+rc4-x86_64.s

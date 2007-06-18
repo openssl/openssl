@@ -3,3 +3,4 @@ Makefile.save
 *.flc
 semantic.cache
 ax86-elf.s
+aes-x86_64.s

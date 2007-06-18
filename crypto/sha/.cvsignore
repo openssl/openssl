@@ -4,3 +4,6 @@ Makefile.save
 semantic.cache
 sx86-elf.s
 s512sse2-elf.s
+sha1-x86_64.s
+sha256-x86_64.s
+sha512-x86_64.s
