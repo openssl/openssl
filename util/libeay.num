@@ -2834,7 +2834,7 @@ FIPS_selftest_sha1                      3274	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_selftest_rsa                       3275	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_corrupt_sha1                       3276	EXIST:OPENSSL_FIPS:FUNCTION:
 EVP_des_cfb1                            3277	EXIST::FUNCTION:DES
-FIPS_dsa_check                          3278	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_dsa_check                          3278	NOEXIST::FUNCTION:
 AES_cfb1_encrypt                        3279	EXIST::FUNCTION:AES
 EVP_des_ede3_cfb1                       3280	EXIST::FUNCTION:DES
 FIPS_rand_check                         3281	EXIST:OPENSSL_FIPS:FUNCTION:

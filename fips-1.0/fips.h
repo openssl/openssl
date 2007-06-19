@@ -63,7 +63,6 @@ int FIPS_mode_set(int onoff);
 int FIPS_mode(void);
 const void *FIPS_rand_check(void);
 int FIPS_selftest_failed(void);
-int FIPS_dsa_check(struct dsa_st *dsa);
 void FIPS_corrupt_sha1(void);
 int FIPS_selftest_sha1(void);
 void FIPS_corrupt_aes(void);
