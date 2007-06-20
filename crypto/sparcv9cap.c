@@ -41,6 +41,7 @@ unsigned long OPENSSL_rdtsc(void)
 
 #include <dlfcn.h>
 #include <libdevinfo.h>
+#include <sys/systeminfo.h>
 
 typedef di_node_t (*di_init_t)(const char *,uint_t);
 typedef void      (*di_fini_t)(di_node_t);
@@ -79,7 +80,7 @@ static int walk_nodename(di_node_t node, di_node_name_t di_node_name)
 void OPENSSL_cpuid_setup(void)
 	{
 	void *h;
-	char *e;
+	char *e,si[256];
 	static int trigger=0;
 
 	if (trigger) return;
@@ -89,6 +90,25 @@ void OPENSSL_cpuid_setup(void)
 		{
 		OPENSSL_sparcv9cap_P=strtoul(e,NULL,0);
 		return;
+		}
+
+	if (sysinfo(SI_MACHINE,si,sizeof(si))>0)
+		{
+		if (strcmp(si,"sun4v"))
+			/* FPU is preferred for all CPUs, but US-T1/2 */
+			OPENSSL_sparcv9cap_P |= SPARCV9_PREFER_FPU;
+		}
+
+	if (sysinfo(SI_ISALIST,si,sizeof(si))>0)
+		{
+		if (strstr(si,"+vis"))
+			OPENSSL_sparcv9cap_P |= SPARCV9_VIS1;
+		if (strstr(si,"+vis2"))
+			{
+			OPENSSL_sparcv9cap_P |= SPARCV9_VIS2;
+			OPENSSL_sparcv9cap_P &= ~SPARCV9_TICK_PRIVILEGED;
+			return;
+			}
 		}
 
 	if ((h = dlopen("libdevinfo.so.1",RTLD_LAZY))) do
