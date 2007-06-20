@@ -353,7 +353,7 @@ $fname:
 	bz,pn	%icc,.L1stskip
 	std	$nlod,[%sp+$bias+$frame+24]
 
-.align	32,0x1000000
+.align	32			! incidentally already aligned !
 .L1st:
 	add	$ap,$j,%o4
 	add	$np,$j,%o5
@@ -805,8 +805,10 @@ $fname:
 	orn	%g0,%g0,%g4
 	brz,pn	%o1,.Lcopy		! ... is met
 	sub	%g0,$num,%o7		! n=-num
-	
-.align	32,0x1000000
+	ba	.Lsub
+	nop
+
+.align	32
 .Lsub:
 	ldx	[$tp+%o7],%o0
 	add	$np,%o7,%g1
@@ -822,8 +824,10 @@ $fname:
 	st	%o3,[%g1+4]
 	subc	$carry,0,%g4
 	sub	%g0,$num,%o7		! n=-num
+	ba	.Lcopy
+	nop
 
-.align	32,0x1000000
+.align	32
 .Lcopy:
 	ldx	[$tp+%o7],%o0
 	add	$rp,%o7,%g1
@@ -842,7 +846,6 @@ $fname:
 	st	%o1,[%g1+4]
 	sub	%g0,$num,%o7		! n=-num
 
-.align	32,0x1000000
 .Lzap:
 	stx	%g0,[$ap_l+%o7]
 	stx	%g0,[$ap_h+%o7]
@@ -862,6 +865,7 @@ $fname:
 .type   $fname,#function
 .size	$fname,(.-$fname)
 .asciz	"Montgomery Multipltication for UltraSPARC, CRYPTOGAMS by <appro\@openssl.org>"
+.align	32
 ___
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;

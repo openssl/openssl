@@ -260,24 +260,25 @@ $fname:
 
 	srl	$npj,30,%o0		! boundary condition...
 	brz,pn	%o0,.Lcopy		! ... is met
-	subcc	%g0,%g0,%g0		! clear %icc.c
+	nop
 
-.align	16,0x1000000
+	ba	.Lsub
+	subcc	%g0,%g0,%g0		! clear %icc.c
+.align	16
 .Lsub:
 	ld	[$tp+%o7],%o0
 	ld	[$np+%o7],%o1
 	subccc	%o0,%o1,%o1		! tp[j]-np[j]
-	st	%o1,[$rp+%o7]
+	add	$rp,%o7,$i
 	add	%o7,4,%o7
 	brnz	%o7,.Lsub
-	nop
+	st	%o1,[$i]
 	subc	$car2,0,$car2		! handle upmost overflow bit
 	and	$tp,$car2,$ap
 	andn	$rp,$car2,$np
 	or	$ap,$np,$ap
 	sub	%g0,$num,%o7
 
-.align	16,0x1000000
 .Lcopy:
 	ld	[$ap+%o7],%o0		! copy or in-place refresh
 	st	%g0,[$tp+%o7]		! zap tp
@@ -603,6 +604,7 @@ $code.=<<___;
 .type	$fname,#function
 .size	$fname,(.-$fname)
 .asciz	"Montgomery Multipltication for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
+.align	32
 ___
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 print $code;
