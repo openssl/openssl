@@ -221,7 +221,7 @@ static int run_test_vectors(void)
 			++errs;
 			}
 
-		// try with in == out
+		/* try with in == out */
 		memcpy(iv, v->iv, sizeof iv);
 		memcpy(buf, v->in, v->length);
 		AES_ige_encrypt(buf, buf, v->length, &key, iv, v->encrypt);
