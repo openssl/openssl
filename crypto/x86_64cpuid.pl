@@ -188,3 +188,4 @@ OPENSSL_cleanse:
 	ret
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 ___
+close STDOUT;	# flush
