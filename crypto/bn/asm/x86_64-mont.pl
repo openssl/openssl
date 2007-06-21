@@ -170,10 +170,10 @@ bn_mul_mont:
 	mov	-8($np,$num,8),%rax	# np[num-1]
 	lea	(%rsp),$ap		# borrow ap for tp
 	shr	\$62,%rax		# check for boundary condition
+	lea	-1($num),$j		# j=num-1
 	jz	.Lcopy
 
 	mov	($ap),%rax		# tp[0]
-	lea	-1($num),$j		# j=num-1
 	xor	$i,$i			# i=0 and clear CF!
 	jmp	.Lsub
 .align	16
