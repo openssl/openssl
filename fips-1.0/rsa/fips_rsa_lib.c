@@ -80,6 +80,8 @@ RSA *FIPS_rsa_new(void)
 
 void FIPS_rsa_free(RSA *r)
 	{
+	if (!r)
+		return;
 	if (r->meth->finish)
 		r->meth->finish(r);
 	if (r->n != NULL) BN_clear_free(r->n);

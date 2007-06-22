@@ -94,7 +94,8 @@ void pqg()
 		unsigned long h;
 		dsa = FIPS_dsa_new();
 
-		DSA_generate_parameters_ex(dsa, nmod,seed,0,&counter,&h,NULL);
+		if (!DSA_generate_parameters_ex(dsa, nmod,seed,0,&counter,&h,NULL))
+			do_print_errors();
 		pbn("P",dsa->p);
 		pbn("Q",dsa->q);
 		pbn("G",dsa->g);
@@ -132,7 +133,8 @@ void keypair()
 
 	    printf("[mod = %d]\n\n",nmod);
 	    dsa = FIPS_dsa_new();
-	    DSA_generate_parameters_ex(dsa, nmod,NULL,0,NULL,NULL,NULL);
+	    if (!DSA_generate_parameters_ex(dsa, nmod,NULL,0,NULL,NULL,NULL))
+		do_print_errors();
 	    pbn("P",dsa->p);
 	    pbn("Q",dsa->q);
 	    pbn("G",dsa->g);
@@ -140,7 +142,9 @@ void keypair()
 
 	    while(n--)
 		{
-		DSA_generate_key(dsa);
+		if (!DSA_generate_key(dsa))
+			do_print_errors();
+			
 
 		pbn("X",dsa->priv_key);
 		pbn("Y",dsa->pub_key);
@@ -169,9 +173,11 @@ void siggen()
 	    {
 	    nmod=atoi(value);
 	    printf("[mod = %d]\n\n",nmod);
-
+	    if (dsa)
+		FIPS_dsa_free(dsa);
 	    dsa = FIPS_dsa_new();
-	    DSA_generate_parameters_ex(dsa, nmod,NULL,0,NULL,NULL,NULL);
+	    if (!DSA_generate_parameters_ex(dsa, nmod,NULL,0,NULL,NULL,NULL))
+		do_print_errors();
 	    pbn("P",dsa->p);
 	    pbn("Q",dsa->q);
 	    pbn("G",dsa->g);
@@ -191,7 +197,8 @@ void siggen()
 	    n=hex2bin(value,msg);
 	    pv("Msg",msg,n);
 
-	    DSA_generate_key(dsa);
+	    if (!DSA_generate_key(dsa))
+		do_print_errors();
 	    pk.type = EVP_PKEY_DSA;
 	    pk.pkey.dsa = dsa;
 	    pbn("Y",dsa->pub_key);
@@ -206,10 +213,12 @@ void siggen()
 	    pbn("R",sig->r);
 	    pbn("S",sig->s);
 	    putc('\n',stdout);
+	    DSA_SIG_free(sig);
 	    EVP_MD_CTX_cleanup(&mctx);
-	    FIPS_dsa_free(dsa);
 	    }
 	}
+	if (dsa)
+		FIPS_dsa_free(dsa);
     }
 
 void sigver()

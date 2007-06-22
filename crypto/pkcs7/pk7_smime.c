@@ -426,7 +426,7 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
 
 	SMIME_crlf_copy(in, p7bio, flags);
 
-	BIO_flush(p7bio);
+	(void)BIO_flush(p7bio);
 
         if (!PKCS7_dataFinal(p7,p7bio)) {
 		PKCS7err(PKCS7_F_PKCS7_ENCRYPT,PKCS7_R_PKCS7_DATAFINAL_ERROR);

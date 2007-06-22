@@ -59,7 +59,7 @@
 #include <string.h>
 #include <openssl/dsa.h>
 
-/* Minimal FIPS versions of FIPS_rsa_new() and FIPS_rsa_free: to
+/* Minimal FIPS versions of FIPS_dsa_new() and FIPS_dsa_free: to
  * reduce external dependencies. 
  */
 
@@ -71,7 +71,7 @@ DSA *FIPS_dsa_new(void)
 		return NULL;
 	memset(ret, 0, sizeof(DSA));
 	ret->meth = DSA_OpenSSL();
-	if (ret->meth->finish)
+	if (ret->meth->init)
 		ret->meth->init(ret);
 	return ret;
 	}
