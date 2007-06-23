@@ -79,7 +79,7 @@ STACK_OF(type) \
 OPENSSL_INLINE STACK_OF(type) *sk_##type##_new( \
 	int (*cmp)(const type * const *, const type *const *)) \
     { return (STACK_OF(type) *)sk_new((int (*)(const char * const *, const char * const *))cmp); } \
-OPENSSL_INLINE STACK_OF(type) *sk_##type##_new_null() \
+OPENSSL_INLINE STACK_OF(type) *sk_##type##_new_null(void) \
     { return (STACK_OF(type) *)sk_new_null(); } \
 OPENSSL_INLINE void sk_##type##_free(STACK_OF(type) *sk) \
     { sk_free((STACK *)sk); } \
