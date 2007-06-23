@@ -208,7 +208,8 @@ sub test_line
 			else
 				{
 				print OUT <<END;
-${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd $_
+${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd $_ || { echo $tcmd failure ; exit 1 
+}
 END
 				}
 			}
@@ -226,7 +227,7 @@ END
 		my $req = "$tvdir/$tdir/req/$fprefix.req";
 		my $rsp = "$tvdir/$tdir/rsp/$fprefix.rsp";
 		print OUT <<END;
-if [ -f $req ] ; then ${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd < $req > $rsp; fi
+if [ -f $req ] ; then ${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd < $req > $rsp || { echo $tcmd failure ; exit 1; } ; fi
 END
 		}
 	}
