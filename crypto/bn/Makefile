@@ -130,7 +130,7 @@ osx_ppc32-mont.s: asm/ppc-mont.pl;	$(PERL) $< $@
 osx_ppc64-mont.s: asm/ppc-mont.pl;	$(PERL) $< $@
 
 alpha-mont.s:	asm/alpha-mont.pl
-	$(PERL) $< | $(CC) -E - > $@
+	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
 
 # GNU make "catch all"
 %-mont.s:	asm/%-mont.pl;	$(PERL) $< $(CFLAGS) > $@
