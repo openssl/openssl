@@ -167,11 +167,8 @@ bn_mul_mont:
 	cmp	$num,$i
 	jl	.Louter
 
-	mov	-8($np,$num,8),%rax	# np[num-1]
 	lea	(%rsp),$ap		# borrow ap for tp
-	shr	\$62,%rax		# check for boundary condition
 	lea	-1($num),$j		# j=num-1
-	jz	.Lcopy
 
 	mov	($ap),%rax		# tp[0]
 	xor	$i,$i			# i=0 and clear CF!
@@ -198,7 +195,7 @@ bn_mul_mont:
 	mov	$i,(%rsp,$j,8)		# zap temporary vector
 	dec	$j
 	jge	.Lcopy
-	
+
 	mov	8(%rsp,$num,8),%rsp	# restore %rsp
 	mov	\$1,%rax
 	pop	%r15

@@ -183,12 +183,6 @@ $code.=<<___;
 	la	$ap,8($fp)
 	lgr	$j,$num
 
-	#lg	$nhi,-8($np)		# buggy assembler
-	lghi	$count,-8		# buggy assembler
-	lg	$nhi,0($count,$np)	# buggy assembler
-	srag	$nhi,$nhi,62	# boundary condition...
-	jz	.Lcopy		# ... is met
-
 	lcgr	$count,$num
 	sra	$count,3	# incidentally clears "borrow"
 .Lsub:	lg	$alo,0($j,$ap)

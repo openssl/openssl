@@ -554,9 +554,6 @@ $sbit=$num;
 	&mov	($np,$_np);			# load modulus pointer
 	&mov	($rp,$_rp);			# load result pointer
 	&lea	($tp,&DWP($frame,"esp"));	# [$ap and $bp are zapped]
-	&mov	("eax",&DWP(0,$np,$num,4));	# np[num-1]
-	&shr	("eax",30);			# check for boundary condition
-	&jz	(&label("copy"));
 
 	&mov	("eax",&DWP(0,$tp));		# tp[0]
 	&mov	($j,$num);			# j=num-1

@@ -270,9 +270,6 @@ bn_mul_mont:
 	PTR_ADD	$tj,sp,$num	# &tp[num]
 	move	$tp,sp
 	move	$ap,sp
-
-	dsrl	AT,$nj,62	# boundary condition...
-	beqz	AT,.Lcopy	# ... is met
 	li	$hi0,0		# clear borrow bit
 
 .align	4

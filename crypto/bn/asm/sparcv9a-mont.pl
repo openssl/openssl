@@ -798,15 +798,11 @@ $fname:
 	bnz	%icc,.Louter
 	nop
 
-	ld	[$np-4],%o1
-	subcc	%g0,%g0,%g0		! clear %icc.c
 	add	$tp,8,$tp		! adjust tp to point at the end
-	srl	%o1,30,%o1		! boundary condition...
 	orn	%g0,%g0,%g4
-	brz,pn	%o1,.Lcopy		! ... is met
 	sub	%g0,$num,%o7		! n=-num
 	ba	.Lsub
-	nop
+	subcc	%g0,%g0,%g0		! clear %icc.c
 
 .align	32
 .Lsub:

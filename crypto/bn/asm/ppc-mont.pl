@@ -267,13 +267,11 @@ Linner:
 	addi	$i,$i,$BNSZ
 	ble-	Louter
 
-	$SHRI.	$nj,$nj,$BITS-2	; check boundary condition
 	addi	$num,$num,2	; restore $num
 	subfc	$j,$j,$j	; j=0 and "clear" XER[CA]
 	addi	$tp,$sp,$FRAME
 	addi	$ap,$sp,$FRAME
 	mtctr	$num
-	beq	Lcopy		; boundary condition is met
 
 .align	4
 Lsub:	$LDX	$tj,$tp,$j

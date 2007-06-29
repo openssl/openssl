@@ -257,11 +257,6 @@ $fname:
 	add	$rp,$num,$rp
 	mov	$tp,$ap
 	sub	%g0,$num,%o7		! k=-num
-
-	srl	$npj,30,%o0		! boundary condition...
-	brz,pn	%o0,.Lcopy		! ... is met
-	nop
-
 	ba	.Lsub
 	subcc	%g0,%g0,%g0		! clear %icc.c
 .align	16

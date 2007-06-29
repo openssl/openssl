@@ -262,8 +262,6 @@ bn_mul_mont:
 	mov	$rp,$bp		# put rp aside
 	mov	sp,$tp
 	mov	sp,$ap
-	srl	$nj,62,AT	# boundary condition...
-	beq	AT,.Lcopy	# ... is met
 	mov	0,$hi0		# clear borrow bit
 
 .align	4

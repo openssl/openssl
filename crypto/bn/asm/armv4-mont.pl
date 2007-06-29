@@ -163,9 +163,6 @@ bn_mul_mont:
 	mov	$ap,$tp			@ "borrow" $ap
 	sub	$np,$np,$aj		@ "rewind" $np to &np[0]
 
-	movs	$tj,$nj,lsr#30		@ boundary condition...
-	beq	.Lcopy			@ ... is met
-
 	subs	$tj,$tj,$tj		@ "clear" carry flag
 .Lsub:	ldr	$tj,[$tp],#4
 	ldr	$nj,[$np],#4

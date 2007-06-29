@@ -187,17 +187,12 @@ $sp=&DWP(28,"esp");
 	&data_byte(0xf3,0x0f,0xa6,0xc0);# rep montmul
 
 	&mov	("ecx","ebp");
-	&xor	("edx","edx");			# i=0
 	&lea	("esi",&DWP(64,"esp"));		# tp
 	# edi still points at the end of padded np copy...
-	&mov	("eax",&DWP(-4-$pad,"edi"));	# np[num-1]
 	&neg	("ebp");
 	&lea	("ebp",&DWP(-$pad,"edi","ebp",4));	# so just "rewind"
 	&mov	("edi",$rp);			# restore rp
-
-	&shr	("eax",30);			# boundary condition...
-	&jz	(&label("copy"));		# ... is met
-	&xor	("edx","edx");			# clear CF
+	&xor	("edx","edx");			# i=0 and clear CF
 
 &set_label("sub",8);
 	&mov	("eax",&DWP(0,"esi","edx",4));
