@@ -246,32 +246,26 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 
 	rp=ret->d;
 	ap=&(r->d[ri]);
-	nrp=ap;
 
-	/* This 'if' denotes violation of 2*M<r^(n-1) boundary condition
-	 * formulated by C.D.Walter in "Montgomery exponentiation needs
-	 * no final subtractions." Incurred branch can disclose only
-	 * information about modulus length, which is not really secret. */
-	if ((mont->N.d[ri-1]>>(BN_BITS2-2))!=0)
-		{
-		size_t m1,m2;
+	{
+	size_t m1,m2;
 
-		v=bn_sub_words(rp,ap,mont->N.d,ri);
-		/* this -----------------------^^ works even in al<ri case
-		 * thanks to zealous zeroing of top of the vector in the
-		 * beginning. */
+	v=bn_sub_words(rp,ap,np,ri);
+	/* this ----------------^^ works even in al<ri case
+	 * thanks to zealous zeroing of top of the vector in the
+	 * beginning. */
 
-		/* if (al==ri && !v) || al>ri) nrp=rp; else nrp=ap; */
-		/* in other words if subtraction result is real, then
-		 * trick unconditional memcpy below to perform in-place
-		 * "refresh" instead of actual copy. */
-		m1=0-(size_t)(((al-ri)>>(sizeof(al)*8-1))&1);	/* al<ri */
-		m2=0-(size_t)(((ri-al)>>(sizeof(al)*8-1))&1);	/* al>ri */
-		m1|=m2;			/* (al!=ri) */
-		m1|=(0-(size_t)v);	/* (al!=ri || v) */
-		m1&=~m2;		/* (al!=ri || v) && !al>ri */
-		nrp=(BN_ULONG *)(((size_t)rp&~m1)|((size_t)ap&m1));
-		}
+	/* if (al==ri && !v) || al>ri) nrp=rp; else nrp=ap; */
+	/* in other words if subtraction result is real, then
+	 * trick unconditional memcpy below to perform in-place
+	 * "refresh" instead of actual copy. */
+	m1=0-(size_t)(((al-ri)>>(sizeof(al)*8-1))&1);	/* al<ri */
+	m2=0-(size_t)(((ri-al)>>(sizeof(al)*8-1))&1);	/* al>ri */
+	m1|=m2;			/* (al!=ri) */
+	m1|=(0-(size_t)v);	/* (al!=ri || v) */
+	m1&=~m2;		/* (al!=ri || v) && !al>ri */
+	nrp=(BN_ULONG *)(((size_t)rp&~m1)|((size_t)ap&m1));
+	}
 
 	/* 'i<ri' is chosen to eliminate dependency on input data, even
 	 * though it results in redundant copy in al<ri case. */
