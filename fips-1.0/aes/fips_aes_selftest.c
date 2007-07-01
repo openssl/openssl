@@ -50,7 +50,7 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
-#include <openssl/aes.h>
+#include <openssl/evp.h>
 
 #ifdef OPENSSL_FIPS
 static struct
@@ -78,35 +78,24 @@ void FIPS_corrupt_aes()
 int FIPS_selftest_aes()
     {
     int n;
+    int ret = 0;
+    EVP_CIPHER_CTX ctx;
+    EVP_CIPHER_CTX_init(&ctx);
 
-    /* Encrypt and check against known ciphertext */
     for(n=0 ; n < 1 ; ++n)
 	{
-	AES_KEY key;
-	unsigned char buf[16];
-
-	AES_set_encrypt_key(tests[n].key,128,&key);
-	AES_encrypt(tests[n].plaintext,buf,&key);
-	if(memcmp(buf,tests[n].ciphertext,sizeof buf))
-	    {
-	    FIPSerr(FIPS_F_FIPS_SELFTEST_AES,FIPS_R_SELFTEST_FAILED);
-	    return 0;
-	    }
+	if (fips_cipher_test(&ctx, EVP_aes_128_ecb(),
+				tests[n].key, NULL,
+				tests[n].plaintext,
+				tests[n].ciphertext,
+				16) <= 0)
+		goto err;
 	}
-    /* Decrypt and check against known plaintext */
-    for(n=0 ; n < 1 ; ++n)
-	{
-	AES_KEY key;
-	unsigned char buf[16];
-
-	AES_set_decrypt_key(tests[n].key,128,&key);
-	AES_decrypt(tests[n].ciphertext,buf,&key);
-	if(memcmp(buf,tests[n].plaintext,sizeof buf))
-	    {
+    ret = 1;
+    err:
+    EVP_CIPHER_CTX_cleanup(&ctx);
+    if (ret == 0)
 	    FIPSerr(FIPS_F_FIPS_SELFTEST_AES,FIPS_R_SELFTEST_FAILED);
-	    return 0;
-	    }
-	}
-    return 1;
+    return ret;
     }
 #endif

@@ -8,7 +8,7 @@
      automatically use EVP_CIPHER_{get,set}_asn1_iv and avoid the
      need for any ASN1 dependencies in FIPS library. Move AES and 3DES
      cipher definitions to fips library and modify AES and 3DES algorithm
-     tests to use EVP.
+     tests and self tests to use EVP.
      [Steve Henson]
 
   *) Move EVP cipher code into enc_min.c to support a minimal implementation

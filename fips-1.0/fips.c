@@ -462,4 +462,32 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 	return 1;
 	}
 
+/* Generalized symmetric cipher test routine. Encrypt data, verify result
+ * against known answer, decrypt and compare with original plaintext.
+ */
+
+int fips_cipher_test(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+			const unsigned char *key,
+			const unsigned char *iv,
+			const unsigned char *plaintext,
+			const unsigned char *ciphertext,
+			int len)
+	{
+	unsigned char pltmp[FIPS_MAX_CIPHER_TEST_SIZE];
+	unsigned char citmp[FIPS_MAX_CIPHER_TEST_SIZE];
+	OPENSSL_assert(len <= FIPS_MAX_CIPHER_TEST_SIZE);
+	if (EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 1) <= 0)
+		return 0;
+	EVP_Cipher(ctx, citmp, plaintext, len);
+	if (memcmp(citmp, ciphertext, len))
+		return 0;
+	if (EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0) <= 0)
+		return 0;
+	EVP_Cipher(ctx, pltmp, citmp, len);
+	if (memcmp(pltmp, plaintext, len))
+		return 0;
+	return 1;
+	}
+
+
 #endif
