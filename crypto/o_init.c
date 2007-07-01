@@ -75,6 +75,7 @@ void OPENSSL_init(void)
 #endif
 #ifdef OPENSSL_ENGINE
 		int_EVP_MD_init_engine_callbacks();
+		int_EVP_CIPHER_init_engine_callbacks();
 		int_RAND_init_engine_callbacks();
 #endif
 		done = 1;

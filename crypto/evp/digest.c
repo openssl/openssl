@@ -171,11 +171,13 @@ static const EVP_MD bad_md =
 
 #endif
 
+#ifndef OPENSSL_NO_ENGINE
+
 #ifdef OPENSSL_FIPS
 
 static int do_engine_null(ENGINE *impl) { return 0;}
 static int do_evp_md_engine_null(EVP_MD_CTX *ctx,
-				const EVP_MD *type, ENGINE *impl)
+				const EVP_MD **ptype, ENGINE *impl)
 	{ return 1; }
 
 static int (*do_engine_init)(ENGINE *impl)
@@ -185,14 +187,14 @@ static int (*do_engine_finish)(ENGINE *impl)
 		= do_engine_null;
 
 static int (*do_evp_md_engine)
-	(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+	(EVP_MD_CTX *ctx, const EVP_MD **ptype, ENGINE *impl)
 		= do_evp_md_engine_null;
 
 void int_EVP_MD_set_engine_callbacks(
 	int (*eng_md_init)(ENGINE *impl),
 	int (*eng_md_fin)(ENGINE *impl),
 	int (*eng_md_evp)
-		(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl))
+		(EVP_MD_CTX *ctx, const EVP_MD **ptype, ENGINE *impl))
 	{
 	do_engine_init = eng_md_init;
 	do_engine_finish = eng_md_fin;
@@ -204,9 +206,9 @@ void int_EVP_MD_set_engine_callbacks(
 #define do_engine_init	ENGINE_init
 #define do_engine_finish ENGINE_finish
 
-static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD **ptype, ENGINE *impl)
 	{
-	if (type)
+	if (*ptype)
 		{
 		/* Ensure an ENGINE left lying around from last time is cleared
 		 * (the previous check attempted to avoid this if the same
@@ -223,11 +225,11 @@ static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			}
 		else
 			/* Ask if an ENGINE is reserved for this job */
-			impl = ENGINE_get_digest_engine(type->type);
+			impl = ENGINE_get_digest_engine((*ptype)->type);
 		if(impl)
 			{
 			/* There's an ENGINE for this job ... (apparently) */
-			const EVP_MD *d = ENGINE_get_digest(impl, type->type);
+			const EVP_MD *d = ENGINE_get_digest(impl, (*ptype)->type);
 			if(!d)
 				{
 				/* Same comment from evp_enc.c */
@@ -235,7 +237,7 @@ static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 				return 0;
 				}
 			/* We'll use the ENGINE's private digest definition */
-			type = d;
+			*ptype = d;
 			/* Store the ENGINE functional reference so we know
 			 * 'type' came from an ENGINE and we need to release
 			 * it when done. */
@@ -255,6 +257,8 @@ static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 
 #endif
 
+#endif
+
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 	{
 	M_EVP_MD_CTX_clear_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
@@ -266,7 +270,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 	if (ctx->engine && ctx->digest && (!type ||
 			(type && (type->type == ctx->digest->type))))
 		goto skip_to_init;
-	if (!do_evp_md_engine(ctx, type, impl))
+	if (!do_evp_md_engine(ctx, &type, impl))
 		return 0;
 #endif
 	if (ctx->digest != type)

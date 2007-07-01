@@ -21,7 +21,7 @@ LIB=$(TOP)/libcrypto.a
 LIBSRC= encode.c digest.c dig_eng.c evp_enc.c evp_key.c evp_acnf.c evp_cnf.c \
 	e_des.c e_bf.c e_idea.c e_des3.c e_camellia.c\
 	e_rc4.c e_aes.c names.c e_seed.c \
-	e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c \
+	e_xcbc_d.c e_rc2.c e_cast.c e_rc5.c enc_min.c \
 	m_null.c m_md2.c m_md4.c m_md5.c m_sha.c m_sha1.c \
 	m_dss.c m_dss1.c m_mdc2.c m_ripemd.c m_ecdsa.c\
 	p_open.c p_seal.c p_sign.c p_verify.c p_lib.c p_enc.c p_dec.c \
@@ -33,7 +33,7 @@ LIBSRC= encode.c digest.c dig_eng.c evp_enc.c evp_key.c evp_acnf.c evp_cnf.c \
 LIBOBJ=	encode.o digest.o dig_eng.o evp_enc.o evp_key.o evp_acnf.o evp_cnf.o \
 	e_des.o e_bf.o e_idea.o e_des3.o e_camellia.o\
 	e_rc4.o e_aes.o names.o e_seed.o \
-	e_xcbc_d.o e_rc2.o e_cast.o e_rc5.o \
+	e_xcbc_d.o e_rc2.o e_cast.o e_rc5.o enc_min.o \
 	m_null.o m_md2.o m_md4.o m_md5.o m_sha.o m_sha1.o \
 	m_dss.o m_dss1.o m_mdc2.o m_ripemd.o m_ecdsa.o\
 	p_open.o p_seal.o p_sign.o p_verify.o p_lib.o p_enc.o p_dec.o \

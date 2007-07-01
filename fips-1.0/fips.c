@@ -134,6 +134,19 @@ int FIPS_selftest_failed(void)
     return ret;
     }
 
+/* Selftest failure fatal exit routine. This will be called
+ * during *any* cryptographic operation. It has the minimum
+ * overhead possible to avoid too big a performance hit.
+ */
+
+void FIPS_selftest_check(void)
+    {
+    if (fips_selftest_fail)
+	{
+	OpenSSLDie(__FILE__,__LINE__, "FATAL FIPS SELFTEST FAILURE");
+	}
+    }
+
 int FIPS_selftest()
     {
 

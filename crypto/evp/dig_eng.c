@@ -122,9 +122,9 @@
 
 #ifdef OPENSSL_FIPS
 
-static int do_evp_md_engine_full(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
+static int do_evp_md_engine_full(EVP_MD_CTX *ctx, const EVP_MD **ptype, ENGINE *impl)
 	{
-	if (type)
+	if (*ptype)
 		{
 		/* Ensure an ENGINE left lying around from last time is cleared
 		 * (the previous check attempted to avoid this if the same
@@ -141,11 +141,11 @@ static int do_evp_md_engine_full(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *im
 			}
 		else
 			/* Ask if an ENGINE is reserved for this job */
-			impl = ENGINE_get_digest_engine(type->type);
+			impl = ENGINE_get_digest_engine((*ptype)->type);
 		if(impl)
 			{
 			/* There's an ENGINE for this job ... (apparently) */
-			const EVP_MD *d = ENGINE_get_digest(impl, type->type);
+			const EVP_MD *d = ENGINE_get_digest(impl, (*ptype)->type);
 			if(!d)
 				{
 				/* Same comment from evp_enc.c */
@@ -153,7 +153,7 @@ static int do_evp_md_engine_full(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *im
 				return 0;
 				}
 			/* We'll use the ENGINE's private digest definition */
-			type = d;
+			*ptype = d;
 			/* Store the ENGINE functional reference so we know
 			 * 'type' came from an ENGINE and we need to release
 			 * it when done. */

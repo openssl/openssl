@@ -4,6 +4,10 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+  *) Move EVP cipher code into enc_min.c to support a minimal implementation
+     for use by FIPS applications.
+     [Steve Henson]
+
   *) Add algorithm config module. Currently just handles setting FIPS mode.
      [Steve Henson]
 

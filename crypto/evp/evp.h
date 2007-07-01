@@ -929,8 +929,13 @@ void int_EVP_MD_set_engine_callbacks(
 	int (*eng_md_init)(ENGINE *impl),
 	int (*eng_md_fin)(ENGINE *impl),
 	int (*eng_md_evp)
-		(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl));
+		(EVP_MD_CTX *ctx, const EVP_MD **ptype, ENGINE *impl));
 void int_EVP_MD_init_engine_callbacks(void);
+void int_EVP_CIPHER_set_engine_callbacks(
+	int (*eng_ciph_fin)(ENGINE *impl),
+	int (*eng_ciph_evp)
+		(EVP_CIPHER_CTX *ctx, const EVP_CIPHER **pciph, ENGINE *impl));
+void int_EVP_CIPHER_init_engine_callbacks(void);
 #endif
 #endif
 

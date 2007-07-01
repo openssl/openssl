@@ -178,11 +178,6 @@ int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
 	return ctx->cipher->block_size;
 	}
 
-int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl)
-	{
-	return ctx->cipher->do_cipher(ctx,out,in,inl);
-	}
-
 const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 	{
 	return ctx->cipher;
@@ -191,11 +186,6 @@ const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher)
 	{
 	return cipher->flags;
-	}
-
-unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
-	{
-	return ctx->cipher->flags;
 	}
 
 void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
@@ -213,11 +203,6 @@ int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 	return cipher->iv_len;
 	}
 
-int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
-	{
-	return ctx->cipher->iv_len;
-	}
-
 int EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
 	{
 	return cipher->key_len;
@@ -226,11 +211,6 @@ int EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
 	{
 	return ctx->key_len;
-	}
-
-int EVP_CIPHER_nid(const EVP_CIPHER *cipher)
-	{
-	return cipher->nid;
 	}
 
 int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
