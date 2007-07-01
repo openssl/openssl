@@ -300,6 +300,7 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cbc.o \
 	../crypto/evp/digest.o \
 	../crypto/evp/enc_min.o \
 	../crypto/evp/e_aes.o \
+	../crypto/evp/e_des3.o \
 	../crypto/evp/p_sign.o \
 	../crypto/evp/p_verify.o \
 	../crypto/mem_clr.o \

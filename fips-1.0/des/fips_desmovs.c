@@ -87,142 +87,28 @@ int main(int argc, char *argv[])
 
 #define VERBOSE 0
 
-typedef struct
-	{
-	DES_key_schedule ks1, ks2, ks3;
-	unsigned char tiv[DES_BLOCK_SIZE];
-	int dir, cmode, cbits, num, akeysz;
-	} DES_CTX;
-
-/*-----------------------------------------------*/
-
-int DES_Cipher(DES_CTX *ctx,
-		unsigned char *out,
-		unsigned char *in,
-		int inl)
-	{
-
-	unsigned long len = inl;
-
-	DES_cblock *iv = (DES_cblock *)ctx->tiv;
-
-	switch(ctx->cmode)
-		{
-		case EVP_CIPH_ECB_MODE:
-		while (len > 0)
-			{
-			if (ctx->akeysz == 64)
-				DES_ecb_encrypt((DES_cblock *)in,
-						(DES_cblock *)out,
-							&ctx->ks1, ctx->dir);
-			else
-				DES_ecb3_encrypt((const_DES_cblock *)in,
-					(DES_cblock *)out,
-					&ctx->ks1,
-					&ctx->ks2,
-					&ctx->ks3,
-					ctx->dir);
-			in += DES_BLOCK_SIZE;
-			out += DES_BLOCK_SIZE;
-			len -= DES_BLOCK_SIZE;
-			}
-		break;
-
-		case EVP_CIPH_CBC_MODE:
-		if (ctx->akeysz == 64)
-			DES_ncbc_encrypt(in, out, len, &ctx->ks1, iv, ctx->dir);
-		else
-			DES_ede3_cbc_encrypt(in, out, len,
-				&ctx->ks1, &ctx->ks2, &ctx->ks3,
-				iv, ctx->dir);
-		break;
-
-		case EVP_CIPH_CFB_MODE:
-#if 0
-		if (ctx->cbits == 1)
-			{
-			if (ctx->akeysz == 64)
-				DES_cfb64_encrypt(in, out, len,
-						&ctx->ks1, iv,
-						&ctx->num, ctx->dir);
-			else
-				DES_ede3_cfb64_encrypt(in, out, len,
-						&ctx->ks1,
-						&ctx->ks2,
-						&ctx->ks3, iv,
-						&ctx->num, ctx->dir);
-			}
-		else
-#endif
-		if (ctx->cbits == 8)
-			{
-			if (ctx->akeysz == 64)
-				DES_cfb_encrypt(in, out, 8, len,
-						&ctx->ks1, iv, ctx->dir);
-			else
-				DES_ede3_cfb_encrypt(in, out, 8, len,
-						&ctx->ks1,
-						&ctx->ks2,
-						&ctx->ks3, iv, ctx->dir);
-			}
-		else if (ctx->cbits == 64)
-			{
-			if (ctx->akeysz == 64)
-				DES_cfb64_encrypt(in, out, len,
-						&ctx->ks1, iv,
-						&ctx->num, ctx->dir);
-			else
-				DES_ede3_cfb64_encrypt(in, out, len,
-						&ctx->ks1,
-						&ctx->ks2,
-						&ctx->ks3, iv,
-						&ctx->num, ctx->dir);
-			}
-		break;
-
-		case EVP_CIPH_OFB_MODE:
-		if (ctx->akeysz == 64)
-			DES_ofb64_encrypt(in, out, len, &ctx->ks1, iv,
-								&ctx->num);
-		else
-			DES_ede3_ofb64_encrypt(in, out, len,
-					&ctx->ks1, &ctx->ks2, &ctx->ks3,
-					iv, &ctx->num);
-
-		break;
-
-		default:
-		return 0;
-
-		}
-
-	return 1;
-
-	}
-
-int DESTest(DES_CTX *ctx,
+int DESTest(EVP_CIPHER_CTX *ctx,
 	    char *amode, int akeysz, unsigned char *aKey, 
 	    unsigned char *iVec, 
 	    int dir,  /* 0 = decrypt, 1 = encrypt */
 	    unsigned char *out, unsigned char *in, int len)
     {
-    DES_cblock *deskey = (DES_cblock *)aKey;
-    ctx->cmode = -1;
-    ctx->cbits = -1;
-    ctx->dir = dir;
-    ctx->num = 0;
+    const EVP_CIPHER *cipher = NULL;
+
+    if (akeysz != 192)
+	{
+	printf("Invalid key size: %d\n", akeysz);
+	EXIT(1);
+	}
 
     if (strcasecmp(amode, "CBC") == 0)
-	ctx->cmode = EVP_CIPH_CBC_MODE;
+	cipher = EVP_des_ede3_cbc();
     else if (strcasecmp(amode, "ECB") == 0)
-	ctx->cmode = EVP_CIPH_ECB_MODE;
+	cipher = EVP_des_ede3_ecb();
     else if (strcasecmp(amode, "CFB64") == 0)
-	{
-	ctx->cbits = 64;
-	ctx->cmode = EVP_CIPH_CFB_MODE;
-	}
+	cipher = EVP_des_ede3_cfb64();
     else if (strncasecmp(amode, "OFB", 3) == 0)
-	ctx->cmode = EVP_CIPH_OFB_MODE;
+	cipher = EVP_des_ede3_ofb();
 #if 0
     else if(!strcasecmp(amode,"CFB1"))
 	{
@@ -231,33 +117,17 @@ int DESTest(DES_CTX *ctx,
 	}
 #endif
     else if(!strcasecmp(amode,"CFB8"))
-	{
-	ctx->cbits = 8;
-	ctx->cmode = EVP_CIPH_CFB_MODE;
-	}
+	cipher = EVP_des_ede3_cfb8();
     else
 	{
 	printf("Unknown mode: %s\n", amode);
 	EXIT(1);
 	}
-    if (akeysz != 64 && akeysz != 192)
-	{
-	printf("Invalid key size: %d\n", akeysz);
-	EXIT(1);
-	}
-    else
-	{
-	ctx->akeysz = akeysz;
-	DES_set_key_unchecked(deskey, &ctx->ks1);
-	if(ctx->akeysz == 192)
-		{
-		DES_set_key_unchecked(deskey + 1, &ctx->ks2);
-		DES_set_key_unchecked(deskey + 2, &ctx->ks3);
-		}
-	if (iVec)
-		memcpy(ctx->tiv, iVec, DES_BLOCK_SIZE);
-	DES_Cipher(ctx, out, in, len);
-	}
+
+    if (EVP_CipherInit_ex(ctx, cipher, NULL, aKey, iVec, dir) <= 0)
+	return 0;
+    EVP_Cipher(ctx, out, in, len);
+
     return 1;
     }
 
@@ -311,9 +181,10 @@ void do_mct(char *amode,
 	{
 	int j;
 	int n;
-	DES_CTX ctx;
 	int kp=akeysz/64;
 	unsigned char old_iv[8];
+	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX_init(&ctx);
 
 	fprintf(rfp,"\nCOUNT = %d\n",i);
 	if(kp == 1)
@@ -347,8 +218,8 @@ void do_mct(char *amode,
 		}
 	    else
 		{
-		memcpy(old_iv,ctx.tiv,8);
-		DES_Cipher(&ctx,text,text,len);
+		memcpy(old_iv,ctx.iv,8);
+		EVP_Cipher(&ctx,text,text,len);
 		}
 	    if(j == 9999)
 		{
@@ -384,7 +255,7 @@ void do_mct(char *amode,
 	DES_set_odd_parity((DES_cblock *)akey);
 	DES_set_odd_parity((DES_cblock *)(akey+8));
 	DES_set_odd_parity((DES_cblock *)(akey+16));
-	memcpy(ivec,ctx.tiv,8);
+	memcpy(ivec,ctx.iv,8);
 
 	/* pointless exercise - the final text doesn't depend on the
 	   initial text in OFB mode, so who cares what it is? (Who
@@ -409,8 +280,9 @@ int proc_file(char *rqfile)
     unsigned char plaintext[2048];
     unsigned char ciphertext[2048];
     char *rp;
-    DES_CTX ctx;
+    EVP_CIPHER_CTX ctx;
     int numkeys=1;
+    EVP_CIPHER_CTX_init(&ctx);
 
     if (!rqfile || !(*rqfile))
 	{
