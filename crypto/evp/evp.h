@@ -376,6 +376,8 @@ struct evp_cipher_st
 #define		EVP_CIPH_FLAG_FIPS		0x400
 /* Allow non FIPS cipher in FIPS mode */
 #define		EVP_CIPH_FLAG_NON_FIPS_ALLOW	0x800
+/* Allow use default ASN1 get/set iv */
+#define		EVP_CIPH_FLAG_DEFAULT_ASN1	0x1000
 
 /* ctrl() values */
 

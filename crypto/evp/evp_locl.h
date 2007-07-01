@@ -230,10 +230,8 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 	BLOCK_CIPHER_func_cfb(cipher##_##keysize,cprefix,cbits,kstruct,ksched) \
 	BLOCK_CIPHER_def_cfb(cipher##_##keysize,kstruct, \
 			     NID_##cipher##_##keysize, keysize/8, iv_len, cbits, \
-			     fl, cipher##_init_key, NULL, \
-			     EVP_CIPHER_set_asn1_iv, \
-			     EVP_CIPHER_get_asn1_iv, \
-			     NULL)
+			     (fl)|EVP_CIPH_FLAG_DEFAULT_ASN1, \
+			     cipher##_init_key, NULL, NULL, NULL, NULL)
 
 #ifdef OPENSSL_FIPS
 #define RC2_set_key	private_RC2_set_key
