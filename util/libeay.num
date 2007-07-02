@@ -3557,3 +3557,7 @@ FIPS_rsa_free                           3950	EXIST:OPENSSL_FIPS:FUNCTION:RSA
 FIPS_dsa_sig_encode                     3951	EXIST:OPENSSL_FIPS:FUNCTION:DSA
 CRYPTO_dbg_remove_all_info              3952	EXIST::FUNCTION:
 OPENSSL_init                            3953	EXIST::FUNCTION:
+FIPS_selftest_check                     3954	EXIST:OPENSSL_FIPS:FUNCTION:
+fips_cipher_test                        3955	EXIST:OPENSSL_FIPS:FUNCTION:
+int_EVP_CIPHER_set_engine_callbacks     3956	EXIST:OPENSSL_FIPS:FUNCTION:ENGINE
+int_EVP_CIPHER_init_engine_callbacks    3957	EXIST:OPENSSL_FIPS:FUNCTION:ENGINE
