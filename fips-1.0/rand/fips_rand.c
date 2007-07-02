@@ -76,6 +76,7 @@
 # endif
 #endif
 #include <string.h>
+#include <openssl/fips.h>
 
 #ifdef OPENSSL_FIPS
 
@@ -120,6 +121,7 @@ void fips_rand_prng_reset(FIPS_PRNG_CTX *ctx)
 static int fips_set_prng_key(FIPS_PRNG_CTX *ctx,
 			const unsigned char *key, FIPS_RAND_SIZE_T keylen)
 	{
+	FIPS_selftest_check();
 	if (keylen != 16 && keylen != 24 && keylen != 32)
 		{
 		/* error: invalid key size */
