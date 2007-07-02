@@ -120,6 +120,9 @@
 
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 	{
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
 	memset(ctx,'\0',sizeof *ctx);
 	}
 

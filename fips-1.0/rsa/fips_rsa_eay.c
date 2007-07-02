@@ -891,6 +891,7 @@ err:
 
 static int RSA_eay_init(RSA *rsa)
 	{
+	FIPS_selftest_check();
 	rsa->flags|=RSA_FLAG_CACHE_PUBLIC|RSA_FLAG_CACHE_PRIVATE;
 	return(1);
 	}

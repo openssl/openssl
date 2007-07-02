@@ -377,6 +377,7 @@ static int dsa_do_verify(const unsigned char *dgst, FIPS_DSA_SIZE_T dgst_len, DS
 
 static int dsa_init(DSA *dsa)
 {
+	FIPS_selftest_check();
 	dsa->flags|=DSA_FLAG_CACHE_MONT_P;
 	return(1);
 }

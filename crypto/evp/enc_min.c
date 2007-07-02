@@ -68,6 +68,9 @@
 
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
 	{
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
 	memset(ctx,0,sizeof(EVP_CIPHER_CTX));
 	/* ctx->cipher=NULL; */
 	}

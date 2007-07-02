@@ -4,6 +4,10 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+  *) Check for selftest status in all crypto operations and exit with a
+     fatal error if selftest failed.
+     [Steve Henson]
+
   *) New flag in EVP_CIPHER: EVP_CIPH_FLAG_DEFAULT_ASN1. This will
      automatically use EVP_CIPHER_{get,set}_asn1_iv and avoid the
      need for any ASN1 dependencies in FIPS library. Move AES and 3DES

@@ -64,6 +64,7 @@
 #endif
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#include <openssl/fips.h>
 
 #ifdef OPENSSL_FIPS
 
@@ -241,6 +242,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 
 static int dh_init(DH *dh)
 	{
+	FIPS_selftest_check();
 	dh->flags |= DH_FLAG_CACHE_MONT_P;
 	return(1);
 	}
