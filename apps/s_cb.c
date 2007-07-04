@@ -573,5 +573,5 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 			BIO_printf(bio, " ...");
 		BIO_printf(bio, "\n");
 		}
-	BIO_flush(bio);
+	(void)BIO_flush(bio);
 	}

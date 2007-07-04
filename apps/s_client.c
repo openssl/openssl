@@ -668,7 +668,7 @@ re_start:
 			goto end;
 			}
 
-		BIO_ctrl_set_connected(sbio, 1, &peer);
+		(void)BIO_ctrl_set_connected(sbio, 1, &peer);
 
 		if ( enable_timeouts)
 			{
@@ -752,7 +752,7 @@ re_start:
 		while (mbuf_len>3 && mbuf[3]=='-');
 		/* STARTTLS command requires EHLO... */
 		BIO_printf(fbio,"EHLO openssl.client.net\r\n");
-		BIO_flush(fbio);
+		(void)BIO_flush(fbio);
 		/* wait for multi-line response to end EHLO SMTP response */
 		do
 			{
@@ -761,7 +761,7 @@ re_start:
 				foundit=1;
 			}
 		while (mbuf_len>3 && mbuf[3]=='-');
-		BIO_flush(fbio);
+		(void)BIO_flush(fbio);
 		BIO_pop(fbio);
 		BIO_free(fbio);
 		if (!foundit)
@@ -785,7 +785,7 @@ re_start:
 		BIO_gets(fbio,mbuf,BUFSIZZ);
 		/* STARTTLS command requires CAPABILITY... */
 		BIO_printf(fbio,". CAPABILITY\r\n");
-		BIO_flush(fbio);
+		(void)BIO_flush(fbio);
 		/* wait for multi-line CAPABILITY response */
 		do
 			{
@@ -794,7 +794,7 @@ re_start:
 				foundit=1;
 			}
 		while (mbuf_len>3 && mbuf[0]!='.');
-		BIO_flush(fbio);
+		(void)BIO_flush(fbio);
 		BIO_pop(fbio);
 		BIO_free(fbio);
 		if (!foundit)
@@ -814,7 +814,7 @@ re_start:
 			mbuf_len = BIO_gets(fbio,mbuf,BUFSIZZ);
 			}
 		while (mbuf_len>3 && mbuf[3]=='-');
-		BIO_flush(fbio);
+		(void)BIO_flush(fbio);
 		BIO_pop(fbio);
 		BIO_free(fbio);
 		BIO_printf(sbio,"AUTH TLS\r\n");
@@ -1303,6 +1303,6 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	if (peer != NULL)
 		X509_free(peer);
 	/* flush, or debugging output gets mixed with http response */
-	BIO_flush(bio);
+	(void)BIO_flush(bio);
 	}
 

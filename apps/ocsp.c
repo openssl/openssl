@@ -1227,7 +1227,7 @@ static int send_ocsp_response(BIO *cbio, OCSP_RESPONSE *resp)
 		return 0;
 	BIO_printf(cbio, http_resp, i2d_OCSP_RESPONSE(resp, NULL));
 	i2d_OCSP_RESPONSE_bio(cbio, resp);
-	BIO_flush(cbio);
+	(void)BIO_flush(cbio);
 	return 1;
 	}
 
