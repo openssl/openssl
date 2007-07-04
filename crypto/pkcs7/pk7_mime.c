@@ -121,7 +121,7 @@ static int B64_write_PKCS7(BIO *bio, PKCS7 *p7)
 	}
 	bio = BIO_push(b64, bio);
 	i2d_PKCS7_bio(bio, p7);
-	BIO_flush(bio);
+	(void)BIO_flush(bio);
 	bio = BIO_pop(bio);
 	BIO_free(b64);
 	return 1;
@@ -138,7 +138,7 @@ static PKCS7 *B64_read_PKCS7(BIO *bio)
 	bio = BIO_push(b64, bio);
 	if(!(p7 = d2i_PKCS7_bio(bio, NULL))) 
 		PKCS7err(PKCS7_F_B64_READ_PKCS7,PKCS7_R_DECODE_ERROR);
-	BIO_flush(bio);
+	(void)BIO_flush(bio);
 	bio = BIO_pop(bio);
 	BIO_free(b64);
 	return p7;

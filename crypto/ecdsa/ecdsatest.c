@@ -203,13 +203,13 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 	if (!EC_KEY_generate_key(key))
 		goto x962_int_err;
 	BIO_printf(out, ".");
-	BIO_flush(out);
+	(void)BIO_flush(out);
 	/* create the signature */
 	signature = ECDSA_do_sign(digest, 20, key);
 	if (signature == NULL)
 		goto x962_int_err;
 	BIO_printf(out, ".");
-	BIO_flush(out);
+	(void)BIO_flush(out);
 	/* compare the created signature with the expected signature */
 	if ((r = BN_new()) == NULL || (s = BN_new()) == NULL)
 		goto x962_int_err;
@@ -219,12 +219,12 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 	if (BN_cmp(signature->r ,r) || BN_cmp(signature->s, s))
 		goto x962_int_err;
 	BIO_printf(out, ".");
-	BIO_flush(out);
+	(void)BIO_flush(out);
 	/* verify the signature */
 	if (ECDSA_do_verify(digest, 20, signature, key) != 1)
 		goto x962_int_err;
 	BIO_printf(out, ".");
-	BIO_flush(out);
+	(void)BIO_flush(out);
 
 	BIO_printf(out, " ok\n");
 	ret = 1;
@@ -369,7 +369,7 @@ int test_builtin(BIO *out)
 			}
 
 		BIO_printf(out, ".");
-		BIO_flush(out);
+		(void)BIO_flush(out);
 		/* check key */
 		if (!EC_KEY_check_key(eckey))
 			{
@@ -377,7 +377,7 @@ int test_builtin(BIO *out)
 			goto builtin_err;
 			}
 		BIO_printf(out, ".");
-		BIO_flush(out);
+		(void)BIO_flush(out);
 		/* create signature */
 		sig_len = ECDSA_size(eckey);
 		if ((signature = OPENSSL_malloc(sig_len)) == NULL)
@@ -388,7 +388,7 @@ int test_builtin(BIO *out)
 			goto builtin_err;
 			}
 		BIO_printf(out, ".");
-		BIO_flush(out);
+		(void)BIO_flush(out);
 		/* verify signature */
 		if (ECDSA_verify(0, digest, 20, signature, sig_len, eckey) != 1)
 			{
@@ -396,7 +396,7 @@ int test_builtin(BIO *out)
 			goto builtin_err;
 			}
 		BIO_printf(out, ".");
-		BIO_flush(out);
+		(void)BIO_flush(out);
 		/* verify signature with the wrong key */
 		if (ECDSA_verify(0, digest, 20, signature, sig_len, 
 			wrong_eckey) == 1)
@@ -405,7 +405,7 @@ int test_builtin(BIO *out)
 			goto builtin_err;
 			}
 		BIO_printf(out, ".");
-		BIO_flush(out);
+		(void)BIO_flush(out);
 		/* wrong digest */
 		if (ECDSA_verify(0, wrong_digest, 20, signature, sig_len,
 			eckey) == 1)
@@ -414,7 +414,7 @@ int test_builtin(BIO *out)
 			goto builtin_err;
 			}
 		BIO_printf(out, ".");
-		BIO_flush(out);
+		(void)BIO_flush(out);
 		/* modify a single byte of the signature */
 		offset = signature[10] % sig_len;
 		dirt   = signature[11];
@@ -425,7 +425,7 @@ int test_builtin(BIO *out)
 			goto builtin_err;
 			}
 		BIO_printf(out, ".");
-		BIO_flush(out);
+		(void)BIO_flush(out);
 		
 		BIO_printf(out, " ok\n");
 		/* cleanup */
