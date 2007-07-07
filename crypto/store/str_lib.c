@@ -236,7 +236,7 @@ const STORE_METHOD *STORE_set_method(STORE *store, const STORE_METHOD *meth)
 #define check_store(s,fncode,fnname,fnerrcode) \
 	do \
 		{ \
-		if ((s) == NULL || (s)->meth) \
+		if ((s) == NULL || (s)->meth == NULL) \
 			{ \
 			STOREerr((fncode), ERR_R_PASSED_NULL_PARAMETER); \
 			return 0; \
