@@ -940,7 +940,6 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 
 	&cmp	($mark,0);		# was the key schedule copied?
 	&mov	("edi",$_key);
-	&mov	("esp",$_esp);
 	&je	(&label("skip_ezero"));
 	# zero copy of key schedule
 	&mov	("ecx",240/4);
@@ -948,6 +947,7 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 	&align	(4);
 	&data_word(0xABF3F689);	# rep stosd
 	&set_label("skip_ezero")
+	&mov	("esp",$_esp);
 	&popf	();
     &set_label("enc_out");
 	&function_end_A();
@@ -1197,7 +1197,6 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
     &set_label("dec_out");
     &cmp	($mark,0);		# was the key schedule copied?
     &mov	("edi",$_key);
-    &mov	("esp",$_esp);
     &je		(&label("skip_dzero"));
     # zero copy of key schedule
     &mov	("ecx",240/4);
@@ -1205,6 +1204,7 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
     &align	(4);
     &data_word(0xABF3F689);	# rep stosd
     &set_label("skip_dzero")
+    &mov	("esp",$_esp);
     &popf	();
 &function_end("AES_cbc_encrypt");
 }
