@@ -92,7 +92,7 @@ static int cname##_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const uns
 #define BLOCK_CIPHER_func_cfb(cname, cprefix, cbits, kstruct, ksched) \
 static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
 {\
-	cprefix##_cfb##cbits##_encrypt(in, out, (long)inl, &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, &ctx->num, ctx->encrypt);\
+	cprefix##_cfb##cbits##_encrypt(in, out, (long)(cbits==1?inl*8:inl), &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, &ctx->num, ctx->encrypt);\
 	return 1;\
 }
 
