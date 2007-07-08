@@ -655,16 +655,16 @@ void bn_mul_part_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n,
 				for (;;)
 					{
 					i/=2;
-					if (i < tna && i < tnb)
+					if (i <= tna && tna == tnb)
 						{
-						bn_mul_part_recursive(&(r[n2]),
+						bn_mul_recursive(&(r[n2]),
 							&(a[n]),&(b[n]),
 							i,tna-i,tnb-i,p);
 						break;
 						}
-					else if (i <= tna && i <= tnb)
+					else if (i < tna || i < tnb)
 						{
-						bn_mul_recursive(&(r[n2]),
+						bn_mul_part_recursive(&(r[n2]),
 							&(a[n]),&(b[n]),
 							i,tna-i,tnb-i,p);
 						break;
