@@ -92,8 +92,8 @@ fips_rand.o: ../../e_os.h ../../include/openssl/aes.h
 fips_rand.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 fips_rand.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 fips_rand.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_rand.o: ../../include/openssl/fips_rand.h ../../include/openssl/lhash.h
-fips_rand.o: ../../include/openssl/opensslconf.h
+fips_rand.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
+fips_rand.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 fips_rand.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 fips_rand.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 fips_rand.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h

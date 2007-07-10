@@ -197,6 +197,7 @@ fips.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
 fips.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 fips.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 fips.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
-fips.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-fips.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-fips.o: ../include/openssl/ui_compat.h fips.c fips_locl.h
+fips.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+fips.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h fips.c
+fips.o: fips_locl.h

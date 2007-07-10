@@ -83,28 +83,19 @@ clean:
 	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-fips_des_enc.o: ../../e_os.h ../../include/openssl/des.h
-fips_des_enc.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
-fips_des_enc.o: ../../include/openssl/fips.h
-fips_des_enc.o: ../../include/openssl/opensslconf.h
-fips_des_enc.o: ../../include/openssl/ossl_typ.h
-fips_des_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_des_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-fips_des_enc.o: ../../include/openssl/ui_compat.h fips_des_enc.c
-fips_des_enc.o: fips_des_locl.h
-fips_des_selftest.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-fips_des_selftest.o: ../../include/openssl/des.h
-fips_des_selftest.o: ../../include/openssl/des_old.h
+fips_des_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+fips_des_selftest.o: ../../include/openssl/crypto.h
 fips_des_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_des_selftest.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_des_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_des_selftest.o: ../../include/openssl/lhash.h
+fips_des_selftest.o: ../../include/openssl/obj_mac.h
+fips_des_selftest.o: ../../include/openssl/objects.h
 fips_des_selftest.o: ../../include/openssl/opensslconf.h
 fips_des_selftest.o: ../../include/openssl/opensslv.h
 fips_des_selftest.o: ../../include/openssl/ossl_typ.h
 fips_des_selftest.o: ../../include/openssl/safestack.h
 fips_des_selftest.o: ../../include/openssl/stack.h
-fips_des_selftest.o: ../../include/openssl/symhacks.h
-fips_des_selftest.o: ../../include/openssl/ui.h
-fips_des_selftest.o: ../../include/openssl/ui_compat.h fips_des_selftest.c
+fips_des_selftest.o: ../../include/openssl/symhacks.h fips_des_selftest.c
 fips_desmovs.o: ../../e_os.h ../../include/openssl/asn1.h
 fips_desmovs.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 fips_desmovs.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
@@ -118,12 +109,3 @@ fips_desmovs.o: ../../include/openssl/ossl_typ.h
 fips_desmovs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 fips_desmovs.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 fips_desmovs.o: ../../include/openssl/ui_compat.h ../fips_utl.h fips_desmovs.c
-fips_set_key.o: ../../e_os.h ../../include/openssl/des.h
-fips_set_key.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
-fips_set_key.o: ../../include/openssl/fips.h
-fips_set_key.o: ../../include/openssl/opensslconf.h
-fips_set_key.o: ../../include/openssl/ossl_typ.h
-fips_set_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_set_key.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-fips_set_key.o: ../../include/openssl/ui_compat.h fips_des_locl.h
-fips_set_key.o: fips_set_key.c

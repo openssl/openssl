@@ -156,7 +156,7 @@ des_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 des_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 des_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 des_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
-des_enc.o: des_enc.c des_locl.h
+des_enc.o: des_enc.c des_locl.h ncbc_enc.c
 des_lib.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 des_lib.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 des_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h

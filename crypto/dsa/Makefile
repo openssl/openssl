@@ -80,8 +80,8 @@ dsa_asn1.o: ../../e_os.h ../../include/openssl/asn1.h
 dsa_asn1.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 dsa_asn1.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dsa_asn1.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-dsa_asn1.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-dsa_asn1.o: ../../include/openssl/opensslconf.h
+dsa_asn1.o: ../../include/openssl/err.h ../../include/openssl/fips.h
+dsa_asn1.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 dsa_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 dsa_asn1.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 dsa_asn1.o: ../../include/openssl/symhacks.h ../cryptlib.h dsa_asn1.c

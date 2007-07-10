@@ -107,7 +107,9 @@ fips_rsa_eay.o: fips_rsa_eay.c
 fips_rsa_gen.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_rsa_gen.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 fips_rsa_gen.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_rsa_gen.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_rsa_gen.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_rsa_gen.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+fips_rsa_gen.o: ../../include/openssl/objects.h
 fips_rsa_gen.o: ../../include/openssl/opensslconf.h
 fips_rsa_gen.o: ../../include/openssl/opensslv.h
 fips_rsa_gen.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
@@ -126,9 +128,11 @@ fips_rsa_lib.o: ../../include/openssl/symhacks.h fips_rsa_lib.c
 fips_rsa_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_rsa_selftest.o: ../../include/openssl/crypto.h
 fips_rsa_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_rsa_selftest.o: ../../include/openssl/fips.h
+fips_rsa_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
 fips_rsa_selftest.o: ../../include/openssl/fips_sha.h
 fips_rsa_selftest.o: ../../include/openssl/lhash.h
+fips_rsa_selftest.o: ../../include/openssl/obj_mac.h
+fips_rsa_selftest.o: ../../include/openssl/objects.h
 fips_rsa_selftest.o: ../../include/openssl/opensslconf.h
 fips_rsa_selftest.o: ../../include/openssl/opensslv.h
 fips_rsa_selftest.o: ../../include/openssl/ossl_typ.h
@@ -145,7 +149,7 @@ fips_rsa_sign.o: ../../include/openssl/objects.h
 fips_rsa_sign.o: ../../include/openssl/opensslconf.h
 fips_rsa_sign.o: ../../include/openssl/opensslv.h
 fips_rsa_sign.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
-fips_rsa_sign.o: ../../include/openssl/safestack.h
+fips_rsa_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 fips_rsa_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_rsa_sign.o: fips_rsa_sign.c
 fips_rsa_x931g.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h

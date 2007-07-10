@@ -99,7 +99,7 @@ fips_dh_gen.o: ../../include/openssl/symhacks.h fips_dh_gen.c
 fips_dh_key.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 fips_dh_key.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
 fips_dh_key.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_dh_key.o: ../../include/openssl/lhash.h
+fips_dh_key.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
 fips_dh_key.o: ../../include/openssl/opensslconf.h
 fips_dh_key.o: ../../include/openssl/opensslv.h
 fips_dh_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h

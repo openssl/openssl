@@ -86,14 +86,13 @@ clean:
 	rm -f *.o asm/*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff testlist
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-fips_aes_core.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
-fips_aes_core.o: ../../include/openssl/fips.h
-fips_aes_core.o: ../../include/openssl/opensslconf.h fips_aes_core.c
-fips_aes_core.o: fips_aes_locl.h
-fips_aes_selftest.o: ../../include/openssl/aes.h ../../include/openssl/bio.h
+fips_aes_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_aes_selftest.o: ../../include/openssl/crypto.h
 fips_aes_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_aes_selftest.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_aes_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_aes_selftest.o: ../../include/openssl/lhash.h
+fips_aes_selftest.o: ../../include/openssl/obj_mac.h
+fips_aes_selftest.o: ../../include/openssl/objects.h
 fips_aes_selftest.o: ../../include/openssl/opensslconf.h
 fips_aes_selftest.o: ../../include/openssl/opensslv.h
 fips_aes_selftest.o: ../../include/openssl/ossl_typ.h
