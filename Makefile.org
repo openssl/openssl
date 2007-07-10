@@ -87,8 +87,6 @@ PROCESSOR=
 # CPUID module collects small commonly used assembler snippets
 CPUID_OBJ= 
 BN_ASM= bn_asm.o
-FIPS_DES_ENC= des_enc.o fcrypt_b.o
-FIPS_AES_ENC= fips_aes_core.o
 DES_ENC= des_enc.o fcrypt_b.o
 AES_ASM_OBJ=aes_core.o aes_cbc.o
 BF_ENC= bf_enc.o
@@ -96,7 +94,6 @@ CAST_ENC= c_enc.o
 RC4_ENC= rc4_enc.o
 RC5_ENC= rc5_enc.o
 MD5_ASM_OBJ= 
-FIPS_SHA1_ASM_OBJ= 
 SHA1_ASM_OBJ= 
 RMD160_ASM_OBJ= 
 
@@ -222,9 +219,6 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
 		MD5_ASM_OBJ='${MD5_ASM_OBJ}'			\
 		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'		\
-		FIPS_SHA1_ASM_OBJ='${FIPS_SHA1_ASM_OBJ}'	\
-		FIPS_DES_ENC='${FIPS_DES_ENC}'		 	\
-		FIPS_AES_ENC='${FIPS_AES_ENC}'		 	\
 		FIPSLIBDIR='${FIPSLIBDIR}' FIPSCANLIB='${FIPSCANLIB}' \
 		FIPSCANISTERINTERNAL='${FIPSCANISTERINTERNAL}'	\
 		FIPS_EX_OBJ='${FIPS_EX_OBJ}'	\
@@ -259,8 +253,7 @@ BUILD_ONE_CMD=\
 reflect:
 	@[ -n "$(THIS)" ] && $(CLEARENV) && $(MAKE) $(THIS) -e $(BUILDENV)
 
-FIPS_EX_OBJ= ../crypto/aes/aes_cbc.o \
-	../crypto/aes/aes_cfb.o \
+FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/aes/aes_ecb.o \
 	../crypto/aes/aes_ofb.o \
 	../crypto/bn/bn_add.o \
@@ -286,13 +279,12 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cbc.o \
 	../crypto/des/cfb64ede.o \
 	../crypto/des/cfb64enc.o \
 	../crypto/des/cfb_enc.o \
-	../crypto/des/des_enc.o \
 	../crypto/des/ecb3_enc.o \
 	../crypto/des/ecb_enc.o \
 	../crypto/des/ofb64ede.o \
 	../crypto/des/ofb64enc.o \
-	../crypto/des/fcrypt_b.o \
 	../crypto/des/fcrypt.o \
+	../crypto/des/set_key.o \
 	../crypto/dsa/dsa_utl.o \
 	../crypto/dsa/dsa_sign.o \
 	../crypto/dsa/dsa_vrf.o \
@@ -319,6 +311,9 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cbc.o \
 	../crypto/rsa/rsa_pss.o \
 	../crypto/rsa/rsa_ssl.o \
 	../crypto/rsa/rsa_x931.o \
+	../crypto/sha/sha1dgst.o \
+	../crypto/sha/sha256.o \
+	../crypto/sha/sha512.o \
 	../crypto/uid.o
 
 sub_all: build_all
@@ -328,7 +323,7 @@ build_libs: build_crypto build_fips build_ssl build_engines
 
 build_crypto:
 	if [ -n "$(FIPSCANLIB)" ]; then \
-		EXCL_OBJ='$(BN_ASM) $(CPUID_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
+		EXCL_OBJ='$(AES_ASM_OBJ) $(BN_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
 		ARX='$(PERL) $${TOP}/util/arx.pl $(AR)' ; \
 	else \
 		ARX='${AR}' ; \

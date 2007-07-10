@@ -18,8 +18,6 @@ AR=		ar r
 ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
-FIPS_DES_ENC=fips_des_enc.o
-
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
@@ -27,8 +25,8 @@ TEST= fips_desmovs.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_des_enc.c asm/fips-dx86-elf.s fips_des_selftest.c fips_set_key.c
-LIBOBJ=$(FIPS_DES_ENC) fips_des_selftest.o fips_set_key.o
+LIBSRC=fips_des_selftest.c
+LIBOBJ=fips_des_selftest.o
 
 SRC= $(LIBSRC)
 

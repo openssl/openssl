@@ -190,7 +190,7 @@ static int FIPS_sha1_test()
     unsigned char md[SHA_DIGEST_LENGTH];
 
     ERR_clear_error();
-    if (!SHA1(str,sizeof(str) - 1,md)) return 0;
+    if (!EVP_Digest(str,sizeof(str) - 1,md, NULL, EVP_sha1(), NULL)) return 0;
     if (memcmp(md,digest,sizeof(md)))
         return 0;
     return 1;

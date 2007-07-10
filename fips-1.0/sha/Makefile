@@ -28,10 +28,8 @@ APPS=
 EXE= fips_standalone_sha1$(EXE_EXT)
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_sha1dgst.c fips_sha1_selftest.c asm/fips-sx86-elf.s \
-	fips_sha256.c fips_sha512.c
-LIBOBJ=fips_sha1dgst.o fips_sha1_selftest.o $(FIPS_SHA1_ASM_OBJ) \
-	fips_sha256.o fips_sha512.o
+LIBSRC=fips_sha1_selftest.c
+LIBOBJ=fips_sha1_selftest.o
 
 SRC= $(LIBSRC) fips_standalone_sha1.c
 
@@ -48,9 +46,10 @@ all:	fips_standalone_sha1$(EXE_EXT) lib
 lib:	$(LIBOBJ)
 	@echo $(LIBOBJ) > lib
 
-fips_standalone_sha1$(EXE_EXT): fips_standalone_sha1.o fips_sha1dgst.o $(FIPS_SHA1_ASM_OBJ)
+fips_standalone_sha1$(EXE_EXT): fips_standalone_sha1.o
+	FIPS_SHA_ASM=""; for i in $(SHA1_ASM_OBJ) ; do FIPS_SHA_ASM="$$FIPS_SHA_ASM ../../crypto/sha/$$i" ; done; \
 	$(CC) -o fips_standalone_sha1$(EXE_EXT) $(CFLAGS) \
-		fips_standalone_sha1.o fips_sha1dgst.o $(FIPS_SHA1_ASM_OBJ)
+		fips_standalone_sha1.o ../crypto/sha/sha1dgst.o $$FIPS_SHA_ASM
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

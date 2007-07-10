@@ -50,7 +50,8 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
-#include <openssl/fips_sha.h>
+#include <openssl/evp.h>
+#include <openssl/sha.h>
 
 #ifdef OPENSSL_FIPS
 static char test[][60]=
@@ -83,7 +84,7 @@ int FIPS_selftest_sha1()
 	{
 	unsigned char md[SHA_DIGEST_LENGTH];
 
-	SHA1((unsigned char*)test[n],strlen(test[n]),md);
+	EVP_Digest(test[n],strlen(test[n]),md, NULL, EVP_sha1(), NULL);
 	if(memcmp(md,ret[n],sizeof md))
 	    {
 	    FIPSerr(FIPS_F_FIPS_SELFTEST_SHA,FIPS_R_SELFTEST_FAILED);

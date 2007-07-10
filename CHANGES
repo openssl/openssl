@@ -4,6 +4,11 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+  *) Use standard implementations of SHAx, DES, AES under crypto/ in FIPS
+     mode to avoid having to maintain two versions. This will also make use
+     of appropriate assembly language optimizations.
+     [Steve Henson]
+
   *) Check for selftest status in all crypto operations and exit with a
      fatal error if selftest failed.
      [Steve Henson]

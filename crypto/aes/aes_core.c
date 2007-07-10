@@ -39,8 +39,6 @@
 #include <openssl/aes.h>
 #include "aes_locl.h"
 
-#ifndef OPENSSL_FIPS
-
 /*
 Te0[x] = S [x].[02, 01, 01, 03];
 Te1[x] = S [x].[03, 02, 01, 01];
@@ -633,6 +631,10 @@ int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
    	int i = 0;
 	u32 temp;
 
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
+
 	if (!userKey || !key)
 		return -1;
 	if (bits != 128 && bits != 192 && bits != 256)
@@ -1159,5 +1161,3 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 }
 
 #endif /* AES_ASM */
-
-#endif

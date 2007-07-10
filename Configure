@@ -1223,24 +1223,8 @@ $bn_obj = $bn_asm unless $bn_obj ne "";
 $cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($bn_obj =~ /bn86/);
 $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /bn86/);
 
-my $fips_des_obj;
-my $fips_aes_obj;
-my $fips_sha1_obj;
 if ($fips)
 	{
-	if ($des_obj =~ /\-elf\.o$/)
-		{
-		$fips_des_obj='asm/fips-dx86-elf.o';
-		$openssl_other_defines.="#define OPENSSL_FIPS_DES_ASM\n";
-		$fips_aes_obj='asm/fips-ax86-elf.o';
-		$openssl_other_defines.="#define OPENSSL_FIPS_AES_ASM\n";
-		}
-	else	{
-		$fips_des_obj=$fips_des_enc;
-		$fips_aes_obj='fips_aes_core.o';
-		}
-	$fips_sha1_obj='asm/fips-sx86-elf.o' if ($sha1_obj =~ /\-elf\.o$/);
-	$des_obj=$sha1_obj=$aes_obj="";
 	$openssl_other_defines.="#define OPENSSL_FIPS\n";
 	}
 
@@ -1354,8 +1338,6 @@ while (<IN>)
 	s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
 	s/^CPUID_OBJ=.*$/CPUID_OBJ= $cpuid_obj/;
 	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
-	s/^FIPS_DES_ENC=.*$/FIPS_DES_ENC= $fips_des_obj/;
-	s/^FIPS_AES_ENC=.*$/FIPS_AES_ENC= $fips_aes_obj/;
 	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
 	s/^AES_ASM_OBJ=.*$/AES_ASM_OBJ= $aes_obj/;
 	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
@@ -1364,7 +1346,6 @@ while (<IN>)
 	s/^RC5_ENC=.*$/RC5_ENC= $rc5_obj/;
 	s/^MD5_ASM_OBJ=.*$/MD5_ASM_OBJ= $md5_obj/;
 	s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $sha1_obj/;
-	s/^FIPS_SHA1_ASM_OBJ=.*$/FIPS_SHA1_ASM_OBJ= $fips_sha1_obj/;
 	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
 	s/^RANLIB=.*/RANLIB= $ranlib/;

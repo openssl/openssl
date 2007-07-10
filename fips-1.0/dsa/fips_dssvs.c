@@ -230,7 +230,6 @@ void sigver()
     int n;
     char *keyword, *value;
     int nmod=0;
-    unsigned char hash[20];
     DSA_SIG sg, *sig = &sg;
 
     sig->r = NULL;
@@ -266,10 +265,8 @@ void sigver()
 	    }
 	else if(!strcmp(keyword,"Msg"))
 	    {
-
 	    n=hex2bin(value,msg);
 	    pv("Msg",msg,n);
-	    SHA1(msg,n,hash);
 	    }
 	else if(!strcmp(keyword,"Y"))
 	    dsa->pub_key=hex2bn(value);

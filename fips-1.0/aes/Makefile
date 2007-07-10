@@ -15,8 +15,6 @@ MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 MAKEFILE=	Makefile
 AR=		ar r
 
-FIPS_AES_ENC=fips_aes_core.o
-
 ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
@@ -28,8 +26,8 @@ TESTDATA=fips_aes_data
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_aes_core.c asm/fips-ax86-elf.s fips_aes_selftest.c
-LIBOBJ=$(FIPS_AES_ENC) fips_aes_selftest.o
+LIBSRC=fips_aes_selftest.c
+LIBOBJ=fips_aes_selftest.o
 
 SRC= $(LIBSRC)
 
@@ -44,7 +42,6 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	echo FIPS_AES_ENC: $(FIPS_AES_ENC)
 	@echo $(LIBOBJ) > lib
 
 files:

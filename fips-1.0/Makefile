@@ -81,13 +81,16 @@ all:
 # vendor compiler drivers...
 
 fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
-	@FIPS_BN_ASM=""; for i in $(BN_ASM) ; do FIPS_BN_ASM="$$FIPS_BN_ASM ../crypto/bn/$$i" ; done; \
+	FIPS_ASM=""; for i in $(BN_ASM) ; do FIPS_ASM="$$FIPS_ASM ../crypto/bn/$$i" ; done; \
+	for i in $(AES_ASM_OBJ) ; do FIPS_ASM="$$FIPS_ASM ../crypto/aes/$$i" ; done; \
+	for i in $(DES_ENC) ; do FIPS_ASM="$$FIPS_ASM ../crypto/des/$$i" ; done; \
+	for i in $(SHA1_ASM_OBJ) ; do FIPS_ASM="$$FIPS_ASM ../crypto/sha/$$i" ; done; \
 	if [ -n "$(CPUID_OBJ)" ]; then \
 		CPUID=../crypto/$(CPUID_OBJ) ; \
 	else \
 		CPUID="" ; \
 	fi ; \
-	objs="fips_start.o $(LIBOBJ) $(FIPS_EX_OBJ) $$CPUID $$FIPS_BN_ASM"; \
+	objs="fips_start.o $(LIBOBJ) $(FIPS_EX_OBJ) $$CPUID $$FIPS_ASM"; \
 	for i in $(FIPS_OBJ_LISTS); do \
 		dir=`dirname $$i`; script="s|^|$$dir/|;s| | $$dir/|g"; \
 		objs="$$objs `sed "$$script" $$i`"; \
