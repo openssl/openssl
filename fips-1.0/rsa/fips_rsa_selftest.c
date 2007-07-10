@@ -52,7 +52,6 @@
 #include <openssl/fips.h>
 #include <openssl/rsa.h>
 #include <openssl/evp.h>
-#include <openssl/fips_sha.h>
 #include <openssl/opensslconf.h>
 
 #ifdef OPENSSL_FIPS

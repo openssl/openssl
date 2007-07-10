@@ -151,9 +151,6 @@ FIPS_NON_FIPS_MD_Init(SHA)
 int HASH_INIT (SHA_CTX *c)
 #endif
 	{
-#if defined(SHA_1) && defined(OPENSSL_FIPS)
-	FIPS_selftest_check();
-#endif
 	c->h0=INIT_DATA_h0;
 	c->h1=INIT_DATA_h1;
 	c->h2=INIT_DATA_h2;

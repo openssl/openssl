@@ -129,7 +129,6 @@ fips_rsa_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_rsa_selftest.o: ../../include/openssl/crypto.h
 fips_rsa_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 fips_rsa_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_rsa_selftest.o: ../../include/openssl/fips_sha.h
 fips_rsa_selftest.o: ../../include/openssl/lhash.h
 fips_rsa_selftest.o: ../../include/openssl/obj_mac.h
 fips_rsa_selftest.o: ../../include/openssl/objects.h

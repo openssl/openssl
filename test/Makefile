@@ -671,12 +671,11 @@ fips_dssvs.o: ../include/openssl/bio.h ../include/openssl/bn.h
 fips_dssvs.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
 fips_dssvs.o: ../include/openssl/e_os2.h ../include/openssl/err.h
 fips_dssvs.o: ../include/openssl/evp.h ../include/openssl/fips.h
-fips_dssvs.o: ../include/openssl/fips_sha.h ../include/openssl/lhash.h
-fips_dssvs.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-fips_dssvs.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-fips_dssvs.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-fips_dssvs.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-fips_dssvs.o: fips_dssvs.c
+fips_dssvs.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+fips_dssvs.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+fips_dssvs.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+fips_dssvs.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+fips_dssvs.o: ../include/openssl/symhacks.h fips_dssvs.c
 fips_hmactest.o: ../fips-1.0/fips_utl.h ../include/openssl/asn1.h
 fips_hmactest.o: ../include/openssl/bio.h ../include/openssl/buffer.h
 fips_hmactest.o: ../include/openssl/conf.h ../include/openssl/crypto.h
@@ -785,9 +784,9 @@ fips_test_suite.o: ../include/openssl/bn.h ../include/openssl/crypto.h
 fips_test_suite.o: ../include/openssl/des.h ../include/openssl/des_old.h
 fips_test_suite.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
 fips_test_suite.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_test_suite.o: ../include/openssl/fips.h ../include/openssl/fips_sha.h
-fips_test_suite.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
-fips_test_suite.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+fips_test_suite.o: ../include/openssl/fips.h ../include/openssl/hmac.h
+fips_test_suite.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+fips_test_suite.o: ../include/openssl/objects.h
 fips_test_suite.o: ../include/openssl/opensslconf.h
 fips_test_suite.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 fips_test_suite.o: ../include/openssl/rand.h ../include/openssl/rsa.h

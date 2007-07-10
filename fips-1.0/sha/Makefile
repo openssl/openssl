@@ -47,9 +47,9 @@ lib:	$(LIBOBJ)
 	@echo $(LIBOBJ) > lib
 
 fips_standalone_sha1$(EXE_EXT): fips_standalone_sha1.o
-	FIPS_SHA_ASM=""; for i in $(SHA1_ASM_OBJ) ; do FIPS_SHA_ASM="$$FIPS_SHA_ASM ../../crypto/sha/$$i" ; done; \
+	FIPS_SHA_ASM=""; for i in $(SHA1_ASM_OBJ) sha1dgst.o ; do FIPS_SHA_ASM="$$FIPS_SHA_ASM ../../crypto/sha/$$i" ; done; \
 	$(CC) -o fips_standalone_sha1$(EXE_EXT) $(CFLAGS) \
-		fips_standalone_sha1.o ../crypto/sha/sha1dgst.o $$FIPS_SHA_ASM
+		fips_standalone_sha1.o $$FIPS_SHA_ASM
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
@@ -149,7 +149,6 @@ fips_standalone_sha1.o: ../../include/openssl/crypto.h
 fips_standalone_sha1.o: ../../include/openssl/e_os2.h
 fips_standalone_sha1.o: ../../include/openssl/evp.h
 fips_standalone_sha1.o: ../../include/openssl/fips.h
-fips_standalone_sha1.o: ../../include/openssl/fips_sha.h
 fips_standalone_sha1.o: ../../include/openssl/hmac.h
 fips_standalone_sha1.o: ../../include/openssl/obj_mac.h
 fips_standalone_sha1.o: ../../include/openssl/objects.h
@@ -157,5 +156,6 @@ fips_standalone_sha1.o: ../../include/openssl/opensslconf.h
 fips_standalone_sha1.o: ../../include/openssl/opensslv.h
 fips_standalone_sha1.o: ../../include/openssl/ossl_typ.h
 fips_standalone_sha1.o: ../../include/openssl/safestack.h
+fips_standalone_sha1.o: ../../include/openssl/sha.h
 fips_standalone_sha1.o: ../../include/openssl/stack.h
 fips_standalone_sha1.o: ../../include/openssl/symhacks.h fips_standalone_sha1.c

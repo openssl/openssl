@@ -91,14 +91,14 @@ fips_dsa_gen.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_dsa_gen.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 fips_dsa_gen.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
 fips_dsa_gen.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_dsa_gen.o: ../../include/openssl/fips.h ../../include/openssl/fips_sha.h
-fips_dsa_gen.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-fips_dsa_gen.o: ../../include/openssl/objects.h
+fips_dsa_gen.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_dsa_gen.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 fips_dsa_gen.o: ../../include/openssl/opensslconf.h
 fips_dsa_gen.o: ../../include/openssl/opensslv.h
 fips_dsa_gen.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-fips_dsa_gen.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_dsa_gen.o: ../../include/openssl/symhacks.h fips_dsa_gen.c
+fips_dsa_gen.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+fips_dsa_gen.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_dsa_gen.o: fips_dsa_gen.c
 fips_dsa_key.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_dsa_key.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 fips_dsa_key.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
@@ -168,9 +168,8 @@ fips_dssvs.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_dssvs.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 fips_dssvs.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
 fips_dssvs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_dssvs.o: ../../include/openssl/fips.h ../../include/openssl/fips_sha.h
-fips_dssvs.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-fips_dssvs.o: ../../include/openssl/objects.h
+fips_dssvs.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_dssvs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 fips_dssvs.o: ../../include/openssl/opensslconf.h
 fips_dssvs.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 fips_dssvs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h

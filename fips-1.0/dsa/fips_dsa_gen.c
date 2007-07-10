@@ -80,7 +80,7 @@
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
-#include <openssl/fips_sha.h>
+#include <openssl/sha.h>
 #include <openssl/err.h>
 
 #ifdef OPENSSL_FIPS

@@ -21,11 +21,11 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/hmac.h>
-#include <openssl/fips_sha.h>
 #include <openssl/err.h>
 #include <openssl/fips.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
+#include <openssl/sha.h>
 
 
 #ifndef OPENSSL_FIPS
