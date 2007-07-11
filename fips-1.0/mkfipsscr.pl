@@ -220,7 +220,6 @@ END
 		my $req = "$tvprefix$tvdir\\$tdir\\req\\$fprefix.req";
 		my $rsp = "$tvprefix$tvdir\\$tdir\\rsp\\$fprefix.rsp";
 	print OUT "$tprefix$tcmd < $req > $rsp\n";
-END
 		}
 	else
 		{
