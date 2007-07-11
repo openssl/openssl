@@ -33,8 +33,8 @@ LIBOBJ=fips_sha1_selftest.o
 
 SRC= $(LIBSRC) fips_standalone_sha1.c
 
-EXHEADER=fips_sha.h
-HEADER=	$(EXHEADER) fips_sha_locl.h fips_md32_common.h
+EXHEADER=
+HEADER=	
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

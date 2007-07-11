@@ -32,7 +32,7 @@ LIBOBJ=fips_aes_selftest.o
 SRC= $(LIBSRC)
 
 EXHEADER=
-HEADER=	$(EXHEADER) fips_aes_locl.h
+HEADER=
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

@@ -37,6 +37,7 @@
 
 #include <stdlib.h>
 #include <openssl/aes.h>
+#include <openssl/fips.h>
 #include "aes_locl.h"
 
 /*

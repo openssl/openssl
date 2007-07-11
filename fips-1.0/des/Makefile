@@ -31,7 +31,7 @@ LIBOBJ=fips_des_selftest.o
 SRC= $(LIBSRC)
 
 EXHEADER=
-HEADER=	$(EXHEADER) fips_des_locl.h
+HEADER=
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

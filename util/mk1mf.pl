@@ -763,9 +763,6 @@ if ($fips)
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_standalone_sha1$obj",
 		"fips-1.0${o}sha${o}fips_standalone_sha1.c",
 		"\$(SHLIB_CFLAGS)");
-	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_sha1dgst$obj",
-		"fips-1.0${o}sha${o}fips_sha1dgst.c",
-		"\$(SHLIB_CFLAGS)") unless $fipscanisterbuild;
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
 		"fips-1.0${o}fips_premain.c",
 		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)");
@@ -920,7 +917,7 @@ if ($fips)
 	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj", "\$(FIPSOBJ)", "\$(OBJ_D)${o}fips_end$obj", "\$(FIPS_SHA1_EXE)", "") if $fipscanisterbuild;
 	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
 	
-	$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}fips_sha1dgst$obj","","", 1);
+	$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}sha1dgst$obj","","", 1);
 	}
 
 $rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)",0);
