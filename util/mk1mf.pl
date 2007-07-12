@@ -373,6 +373,10 @@ if ($fips)
 		}
 
 	$fips_exclude_obj{"bn_asm"} = 1;
+	$fips_exclude_obj{"des_enc"} = 1;
+	$fips_exclude_obj{"fcrypt_b"} = 1;
+	$fips_exclude_obj{"aes_core"} = 1;
+	$fips_exclude_obj{"aes_cbc"} = 1;
 
 	my @ltmp = split " ", $lib_obj{"CRYPTO"};
 
@@ -530,6 +534,8 @@ LFLAGS=$lflags
 RSC=$rsc
 FIPSLINK=\$(PERL) util${o}fipslink.pl
 
+AES_ASM_OBJ=$aes_asm_obj
+AES_ASM_SRC=$aes_asm_src
 BN_ASM_OBJ=$bn_asm_obj
 BN_ASM_SRC=$bn_asm_src
 BNCO_ASM_OBJ=$bnco_asm_obj
@@ -779,21 +785,35 @@ foreach (values %lib_nam)
 		next;
 		}
 
-	if (($bn_asm_obj ne "") && ($_ eq "CRYPTO"))
+	if ((!$fips && ($_ eq "CRYPTO")) || ($fips && ($_ eq "FIPS")))
 		{
-		$lib_obj =~ s/\s\S*\/bn_asm\S*/ \$(BN_ASM_OBJ)/;
-		$rules.=&do_asm_rule($bn_asm_obj,$bn_asm_src);
-		}
-	if (($bnco_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj .= "\$(BNCO_ASM_OBJ)";
-		$rules.=&do_asm_rule($bnco_asm_obj,$bnco_asm_src);
-		}
-	if (($des_enc_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s\S*des_enc\S*/ \$(DES_ENC_OBJ)/;
-		$lib_obj =~ s/\s\S*\/fcrypt_b\S*\s*/ /;
-		$rules.=&do_asm_rule($des_enc_obj,$des_enc_src);
+		if ($aes_asm_obj ne "")
+			{
+			$lib_obj =~ s/\s(\S*\/aes_core\S*)/ \$(AES_ASM_OBJ)/;
+			$lib_obj =~ s/\s\S*\/aes_cbc\S*//;
+			$rules.=&do_asm_rule($aes_asm_obj,$aes_asm_src);
+			}
+		if ($sha1_asm_obj ne "")
+			{
+			$lib_obj =~ s/\s(\S*\/sha1dgst\S*)/ $1 \$(SHA1_ASM_OBJ)/;
+			$rules.=&do_asm_rule($sha1_asm_obj,$sha1_asm_src);
+			}
+		if ($bn_asm_obj ne "")
+			{
+			$lib_obj =~ s/\s\S*\/bn_asm\S*/ \$(BN_ASM_OBJ)/;
+			$rules.=&do_asm_rule($bn_asm_obj,$bn_asm_src);
+			}
+		if ($bnco_asm_obj ne "")
+			{
+			$lib_obj .= "\$(BNCO_ASM_OBJ)";
+			$rules.=&do_asm_rule($bnco_asm_obj,$bnco_asm_src);
+			}
+		if ($des_enc_obj ne "")
+			{
+			$lib_obj =~ s/\s\S*des_enc\S*/ \$(DES_ENC_OBJ)/;
+			$lib_obj =~ s/\s\S*\/fcrypt_b\S*\s*/ /;
+			$rules.=&do_asm_rule($des_enc_obj,$des_enc_src);
+			}
 		}
 	if (($bf_enc_obj ne "") && ($_ eq "CRYPTO"))
 		{
@@ -819,11 +839,6 @@ foreach (values %lib_nam)
 		{
 		$lib_obj =~ s/\s(\S*\/md5_dgst\S*)/ $1 \$(MD5_ASM_OBJ)/;
 		$rules.=&do_asm_rule($md5_asm_obj,$md5_asm_src);
-		}
-	if (($sha1_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s(\S*\/sha1dgst\S*)/ $1 \$(SHA1_ASM_OBJ)/;
-		$rules.=&do_asm_rule($sha1_asm_obj,$sha1_asm_src);
 		}
 	if (($rmd160_asm_obj ne "") && ($_ eq "CRYPTO"))
 		{
@@ -858,9 +873,19 @@ EOF
 $defs.=&do_defs("T_EXE",$test,"\$(TEST_D)",$exep);
 foreach (split(/\s+/,$test))
 	{
+	my $t_libs;
 	$t=&bname($_);
+	if ($fipsdso && /fips-1.0/)
+		{
+		$t_libs = "\$(L_FIPS)";
+		}
+	else
+		{
+		$t_libs = "\$(L_LIBS)";
+		}
+	
 	$tt="\$(OBJ_D)${o}$t${obj}";
-	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
+	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","$t_libs \$(EX_LIBS)");
 	}
 
 $defs.=&do_defs("E_SHLIB",$engines,"\$(ENG_D)",$shlibp);
@@ -917,7 +942,7 @@ if ($fips)
 	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj", "\$(FIPSOBJ)", "\$(OBJ_D)${o}fips_end$obj", "\$(FIPS_SHA1_EXE)", "") if $fipscanisterbuild;
 	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
 	
-	$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}sha1dgst$obj","","", 1);
+	$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}sha1dgst$obj \$(SHA1_ASM_OBJ)","","", 1);
 	}
 
 $rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)",0);
@@ -1067,6 +1092,7 @@ sub do_defs
 		elsif ($_ =~ /RC5_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /MD5_ASM/)	{ $t="$_ "; }
 		elsif ($_ =~ /SHA1_ASM/){ $t="$_ "; }
+		elsif ($_ =~ /AES_ASM/){ $t="$_ "; }
 		elsif ($_ =~ /RMD160_ASM/){ $t="$_ "; }
 		elsif ($_ =~ /CPUID_ASM/){ $t="$_ "; }
 		else	{ $t="$location${o}$_$pf "; }

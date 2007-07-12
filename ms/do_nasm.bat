@@ -7,6 +7,11 @@ cd crypto\bn\asm
 perl x86.pl win32n > bn_win32.asm
 cd ..\..\..
 
+echo AES
+cd crypto\aes\asm
+perl aes-586.pl win32n > a_win32.asm
+cd ..\..\..
+
 echo DES
 cd crypto\des\asm
 perl des-586.pl win32n > d_win32.asm

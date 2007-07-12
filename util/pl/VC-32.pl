@@ -180,6 +180,7 @@ if ($nasm) {
 	$afile='/Fo';
 }
 
+$aes_asm_obj='';
 $bn_asm_obj='';
 $bn_asm_src='';
 $des_enc_obj='';
@@ -187,8 +188,10 @@ $des_enc_src='';
 $bf_enc_obj='';
 $bf_enc_src='';
 
-if (!$no_asm && !$fips)
+if (!$no_asm)
 	{
+	$aes_asm_obj='crypto\aes\asm\a_win32.obj';
+	$aes_asm_src='crypto\aes\asm\a_win32.asm';
 	$bn_asm_obj='crypto\bn\asm\bn_win32.obj';
 	$bn_asm_src='crypto\bn\asm\bn_win32.asm';
 	$des_enc_obj='crypto\des\asm\d_win32.obj crypto\des\asm\y_win32.obj';
@@ -207,7 +210,7 @@ if (!$no_asm && !$fips)
 	$sha1_asm_src='crypto\sha\asm\s1_win32.asm';
 	$rmd160_asm_obj='crypto\ripemd\asm\rm_win32.obj';
 	$rmd160_asm_src='crypto\ripemd\asm\rm_win32.asm';
-	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DRMD160_ASM";
+	$cflags.=" -DAES_ASM -DBN_ASM -DMD5_ASM -DSHA1_ASM -DRMD160_ASM";
 	}
 
 if ($shlib && $FLAVOR !~ /CE/)
