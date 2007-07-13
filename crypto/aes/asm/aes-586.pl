@@ -2,8 +2,9 @@
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
 # Version 4.3.
@@ -105,6 +106,7 @@
 # P4		56[60]		84[100]		23
 # AMD K8	48[44]		70[79]		18
 # PIII		41[50]		61[91]		24
+# Core 2	32[38]		45[70]		18.5
 # Pentium	120		160		77
 #
 # Version 4.1 switches to compact S-box even in key schedule setup.
@@ -184,7 +186,8 @@
 # Current implementation accesses *all* cache-lines within ~50 cycles
 # window, which is actually *less* than RDTSC latency on Intel P4!
 
-push(@INC,"perlasm","../../perlasm");
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],"aes-586.pl",$x86only = $ARGV[$#ARGV] eq "386");
@@ -474,11 +477,10 @@ sub enctransform()
 	&mov	($acc,$s[$i]);
 	&and	($acc,0x80808080);
 	&mov	($tmp,$acc);
-	&mov	($r2,$s[$i]);
 	&shr	($tmp,7);
-	&and	($r2,0x7f7f7f7f);
+	&lea	($r2,&DWP(0,$s[$i],$s[$i]));
 	&sub	($acc,$tmp);
-	&lea	($r2,&DWP(0,$r2,$r2));
+	&and	($r2,0xfefefefe);
 	&and	($acc,0x1b1b1b1b);
 	&mov	($tmp,$s[$i]);
 	&xor	($acc,$r2);	# r2
@@ -1273,54 +1275,51 @@ sub dectransform()
 	&mov	($acc,$s[$i]);
 	&and	($acc,0x80808080);
 	&mov	($tmp,$acc);
-	&mov	($tp2,$s[$i]);
 	&shr	($tmp,7);
-	&and	($tp2,0x7f7f7f7f);
+	&lea	($tp2,&DWP(0,$s[$i],$s[$i]));
 	&sub	($acc,$tmp);
-	&add	($tp2,$tp2);
+	&and	($tp2,0xfefefefe);
 	&and	($acc,0x1b1b1b1b);
 	&xor	($acc,$tp2);
 	&mov	($tp2,$acc);
 
 	&and	($acc,0x80808080);
 	&mov	($tmp,$acc);
-	&mov	($tp4,$tp2);
-	 &xor	($tp2,$s[$i]);	# tp2^tp1
 	&shr	($tmp,7);
-	&and	($tp4,0x7f7f7f7f);
+	&lea	($tp4,&DWP(0,$tp2,$tp2));
 	&sub	($acc,$tmp);
-	&add	($tp4,$tp4);
+	&and	($tp4,0xfefefefe);
 	&and	($acc,0x1b1b1b1b);
+	 &xor	($tp2,$s[$i]);	# tp2^tp1
 	&xor	($acc,$tp4);
 	&mov	($tp4,$acc);
 
 	&and	($acc,0x80808080);
 	&mov	($tmp,$acc);
-	&mov	($tp8,$tp4);
-	 &xor	($tp4,$s[$i]);	# tp4^tp1
 	&shr	($tmp,7);
-	&and	($tp8,0x7f7f7f7f);
+	&lea	($tp8,&DWP(0,$tp4,$tp4));
 	&sub	($acc,$tmp);
-	&add	($tp8,$tp8);
+	&and	($tp8,0xfefefefe);
 	&and	($acc,0x1b1b1b1b);
+	 &xor	($tp4,$s[$i]);	# tp4^tp1
 	 &rotl	($s[$i],8);	# = ROTATE(tp1,8)
 	&xor	($tp8,$acc);
 
 	&xor	($s[$i],$tp2);
 	&xor	($tp2,$tp8);
-	&xor	($s[$i],$tp4);
 	&rotl	($tp2,24);
+	&xor	($s[$i],$tp4);
 	&xor	($tp4,$tp8);
-	&xor	($s[$i],$tp8);	# ^= tp8^(tp4^tp1)^(tp2^tp1)
 	&rotl	($tp4,16);
-	&xor	($s[$i],$tp2);	# ^= ROTATE(tp8^tp2^tp1,24)
+	&xor	($s[$i],$tp8);	# ^= tp8^(tp4^tp1)^(tp2^tp1)
 	&rotl	($tp8,8);
+	&xor	($s[$i],$tp2);	# ^= ROTATE(tp8^tp2^tp1,24)
 	&xor	($s[$i],$tp4);	# ^= ROTATE(tp8^tp4^tp1,16)
+	 &mov	($s[0],$__s0)			if($i==2); #prefetch $s0
+	 &mov	($s[1],$__s1)			if($i==3); #prefetch $s1
+	 &mov	($s[2],$__s2)			if($i==1);
 	&xor	($s[$i],$tp8);	# ^= ROTATE(tp8,8)
 
-	&mov	($s[0],$__s0)			if($i==2); #prefetch $s0
-	&mov	($s[1],$__s1)			if($i==3); #prefetch $s1
-	&mov	($s[2],$__s2)			if($i==1);
 	&mov	($s[3],$__s3)			if($i==1);
 	&mov	(&DWP(4+4*$i,"esp"),$s[$i])	if($i>=2);
 }
@@ -2872,35 +2871,32 @@ sub deckey()
 	&mov	($acc,$tp1);
 	&and	($acc,0x80808080);
 	&mov	($tmp,$acc);
-	&mov	($tp2,$tp1);
 	&shr	($tmp,7);
-	&and	($tp2,0x7f7f7f7f);
+	&lea	($tp2,&DWP(0,$tp1,$tp1));
 	&sub	($acc,$tmp);
-	&add	($tp2,$tp2);
+	&and	($tp2,0xfefefefe);
 	&and	($acc,0x1b1b1b1b);
 	&xor	($acc,$tp2);
 	&mov	($tp2,$acc);
 
 	&and	($acc,0x80808080);
 	&mov	($tmp,$acc);
-	&mov	($tp4,$tp2);
-	 &xor	($tp2,$tp1);	# tp2^tp1
 	&shr	($tmp,7);
-	&and	($tp4,0x7f7f7f7f);
+	&lea	($tp4,&DWP(0,$tp2,$tp2));
 	&sub	($acc,$tmp);
-	&add	($tp4,$tp4);
+	&and	($tp4,0xfefefefe);
 	&and	($acc,0x1b1b1b1b);
+	 &xor	($tp2,$tp1);	# tp2^tp1
 	&xor	($acc,$tp4);
 	&mov	($tp4,$acc);
 
 	&and	($acc,0x80808080);
 	&mov	($tmp,$acc);
-	&mov	($tp8,$tp4);
-	 &xor	($tp4,$tp1);	# tp4^tp1
 	&shr	($tmp,7);
-	&and	($tp8,0x7f7f7f7f);
+	&lea	($tp8,&DWP(0,$tp4,$tp4));
+	 &xor	($tp4,$tp1);	# tp4^tp1
 	&sub	($acc,$tmp);
-	&add	($tp8,$tp8);
+	&and	($tp8,0xfefefefe);
 	&and	($acc,0x1b1b1b1b);
 	 &rotl	($tp1,8);	# = ROTATE(tp1,8)
 	&xor	($tp8,$acc);
@@ -2992,5 +2988,6 @@ sub deckey()
 
 	&xor	("eax","eax");			# return success
 &function_end("AES_set_decrypt_key");
+&asciz("AES for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();

@@ -738,14 +738,8 @@ AES_set_encrypt_key:
 	tmhl	%r0,`0x8000>>2`
 	jz	.Lekey_internal
 
-	l	$t1,0($inp)	# just copy 128 bits...
-	l	$t2,4($inp)
-	l	$bits,8($inp)
-	l	$inp,12($inp)
-	st	$t1,0($key)
-	st	$t2,4($key)
-	st	$bits,8($key)
-	st	$inp,12($key)
+	lmg	$t1,$t2,0($inp)	# just copy 128 bits...
+	stmg	$t1,$t2,0($key)
 	lghi	$t1,10
 	st	$t1,236($key)	# ... postpone key setup
 	st	$t1,240($key)
@@ -754,7 +748,7 @@ AES_set_encrypt_key:
 
 .align	16
 .Lekey_internal:
-	stmg	%r6,%r13,48($sp)	# all volatile regs, but $ra!
+	stmg	%r6,%r13,48($sp)	# all non-volatile regs
 
 	bras	$tbl,1f
 1:	aghi	$tbl,AES_Te+2048-.
@@ -949,7 +943,7 @@ AES_set_encrypt_key:
 .align	16
 AES_set_decrypt_key:
 	stg	$key,32($sp)		# I rely on AES_set_encrypt_key to
-	stg	$ra,112($sp)		# save [other] volatile registers!
+	stg	$ra,112($sp)		# save non-volatile registers!
 	bras	$ra,AES_set_encrypt_key
 	lg	$key,32($sp)
 	lg	$ra,112($sp)
@@ -963,14 +957,8 @@ AES_set_decrypt_key:
 	c	$t1,236($key)
 	je	.Lgo
 
-	l	$t1,0($key)		# just copy 128 bits otherwise
-	l	$t2,4($key)
-	l	$t3,8($key)
-	l	$bits,12($key)
-	st	$t1,160($key)
-	st	$t2,164($key)
-	st	$t3,168($key)
-	st	$bits,172($key)
+	lmg	$t1,$t2,0($key)		# just copy 128 bits otherwise
+	stmg	$t1,$t2,160($key)
 	lghi	%r2,0
 	br	$ra
 
@@ -983,27 +971,16 @@ AES_set_decrypt_key:
 	lg	$ra,40($sp)
 
 .Lgo:	llgf	$rounds,240($key)
-	lghi	$i1,0
+	la	$i1,0($key)
 	sllg	$i2,$rounds,4
+	la	$i2,0($i2,$key)
 	srl	$rounds,1
 
 .align	8
-.Linv:	l	$s0,0($i1,$key)
-	l	$s1,4($i1,$key)
-	l	$s2,8($i1,$key)
-	l	$s3,12($i1,$key)
-	l	$t1,0($i2,$key)
-	l	$t2,4($i2,$key)
-	l	$t3,8($i2,$key)
-	l	$i3,12($i2,$key)
-	st	$s0,0($i2,$key)
-	st	$s1,4($i2,$key)
-	st	$s2,8($i2,$key)
-	st	$s3,12($i2,$key)
-	st	$t1,0($i1,$key)
-	st	$t2,4($i1,$key)
-	st	$t3,8($i1,$key)
-	st	$i3,12($i1,$key)
+.Linv:	lmg	$s0,$s1,0($i1)
+	lmg	$s2,$s3,0($i2)
+	stmg	$s0,$s1,0($i2)
+	stmg	$s2,$s3,0($i1)
 	aghi	$i1,16
 	aghi	$i2,-16
 	brct	$rounds,.Linv
@@ -1070,7 +1047,7 @@ $code.=<<___;
 	la	$key,4($key)
 	brct	$rounds,.Lmix
 
-	lmg	%r6,%r13,48($sp)# this was saved by AES_set_encrypt_key!
+	lmg	%r6,%r13,48($sp)# as was saved by AES_set_encrypt_key!
 	lghi	%r2,0
 	br	$ra
 .size	AES_set_decrypt_key,.-AES_set_decrypt_key
