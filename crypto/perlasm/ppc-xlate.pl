@@ -66,7 +66,7 @@ my $asciz = sub {
     shift;
     my $line = join(",",@_);
     if ($line =~ /^"(.*)"$/)
-    {	".byte	" . join(",",unpack("C*",$1),0);	}
+    {	".byte	" . join(",",unpack("C*",$1),0) . "\n.align	2";	}
     else
     {	"";	}
 };
