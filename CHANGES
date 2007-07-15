@@ -4,6 +4,10 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+  *) Tolerate DigestInfo structure with absent parameters in FIPS mode
+     (as required by several standards).
+     [Steve Henson]
+
   *) Enhance mkfipsscr.pl to cope with different directory layouts. It now
      relies on the filename and makes no assumptions about the pathname.
      In the case of PSS it scans the file to determine the salt length.

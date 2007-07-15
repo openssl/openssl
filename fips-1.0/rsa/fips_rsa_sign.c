@@ -69,6 +69,8 @@
  * pregenerated encodings all ASN1 dependencies can be avoided
  */
 
+/* Standard encodings including NULL parameter */
+
 static const unsigned char sha1_bin[] = {
   0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x05,
   0x00, 0x04, 0x14
@@ -92,6 +94,35 @@ static const unsigned char sha384_bin[] = {
 static const unsigned char sha512_bin[] = {
   0x30, 0x51, 0x30, 0x0d, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03,
   0x04, 0x02, 0x03, 0x05, 0x00, 0x04, 0x40
+};
+
+/* Alternate encodings with absent parameters. We don't generate signature
+ * using this format but do tolerate received signatures of this form.
+ */
+
+static unsigned char sha1_nn_bin[] = {
+  0x30, 0x1f, 0x30, 0x07, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02, 0x1a, 0x04,
+  0x14
+};
+
+static unsigned char sha224_nn_bin[] = {
+  0x30, 0x2b, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03,
+  0x04, 0x02, 0x04, 0x04, 0x1c
+};
+
+static unsigned char sha256_nn_bin[] = {
+  0x30, 0x2f, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03,
+  0x04, 0x02, 0x01, 0x04, 0x20
+};
+
+static unsigned char sha384_nn_bin[] = {
+  0x30, 0x3f, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03,
+  0x04, 0x02, 0x02, 0x04, 0x30
+};
+
+static unsigned char sha512_nn_bin[] = {
+  0x30, 0x4f, 0x30, 0x0b, 0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03,
+  0x04, 0x02, 0x03, 0x04, 0x40
 };
 
 
@@ -119,6 +150,37 @@ static const unsigned char *fips_digestinfo_encoding(int nid, unsigned int *len)
 		case NID_sha512:
 		*len = sizeof(sha512_bin);
 		return sha512_bin;
+
+		default:
+		return NULL;
+
+		}
+	}
+
+static const unsigned char *fips_digestinfo_nn_encoding(int nid, unsigned int *len)
+	{
+	switch (nid)
+		{
+
+		case NID_sha1:
+		*len = sizeof(sha1_nn_bin);
+		return sha1_nn_bin;
+
+		case NID_sha224:
+		*len = sizeof(sha224_nn_bin);
+		return sha224_nn_bin;
+
+		case NID_sha256:
+		*len = sizeof(sha256_nn_bin);
+		return sha256_nn_bin;
+
+		case NID_sha384:
+		*len = sizeof(sha384_nn_bin);
+		return sha384_nn_bin;
+
+		case NID_sha512:
+		*len = sizeof(sha512_nn_bin);
+		return sha512_nn_bin;
 
 		default:
 		return NULL;
@@ -318,14 +380,18 @@ static int fips_rsa_verify(int dtype,
 		/* Compare, DigestInfo length, DigestInfo header and finally
 		 * digest value itself
 		 */
+
+		/* If length mismatch try alternate encoding */
+		if (i != (int)(dlen + diglen))
+			der = fips_digestinfo_nn_encoding(dtype, &dlen);
+
 		if ((i != (int)(dlen + diglen)) || memcmp(der, s, dlen)
 			|| memcmp(s + dlen, dig, diglen))
 			{
 			RSAerr(RSA_F_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
 			goto err;
 			}
-		else
-			ret = 1;
+		ret = 1;
 
 		}
 	else if (pad_mode == EVP_MD_CTX_FLAG_PAD_PSS)
