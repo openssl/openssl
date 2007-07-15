@@ -647,12 +647,14 @@ int proc_file(char *rqfile)
 			strncpy(amode, xp+1, n);
 			amode[n] = '\0';
 			/* amode[3] = '\0'; */
-			printf("Test = %s, Mode = %s\n", atest, amode);
+			if (VERBOSE)
+				printf("Test = %s, Mode = %s\n", atest, amode);
 			}
 		    else if (strncasecmp(pp, "Key Length : ", 13) == 0)
 			{
 			akeysz = atoi(pp+13);
-			printf("Key size = %d\n", akeysz);
+			if (VERBOSE)
+				printf("Key size = %d\n", akeysz);
 			}
 		    }
 		}
@@ -899,7 +901,8 @@ int main(int argc, char **argv)
 	    {
 	    strtok(fn, "\r\n");
 	    strcpy(rfn, fn);
-	    printf("Processing: %s\n", rfn);
+	    if (VERBOSE)
+		printf("Processing: %s\n", rfn);
 	    if (proc_file(rfn))
 		{
 		printf(">>> Processing failed for: %s <<<\n", rfn);
@@ -910,7 +913,8 @@ int main(int argc, char **argv)
 	}
     else /* single file */
 	{
-	printf("Processing: %s\n", fn);
+	if (VERBOSE)
+	    printf("Processing: %s\n", fn);
 	if (proc_file(fn))
 	    {
 	    printf(">>> Processing failed for: %s <<<\n", fn);

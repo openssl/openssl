@@ -379,7 +379,8 @@ int proc_file(char *rqfile)
 			strncpy(amode, xp+1, n);
 			amode[n] = '\0';
 			/* amode[3] = '\0'; */
-			printf("Test=%s, Mode=%s\n",atest,amode);
+			if (VERBOSE)
+				printf("Test=%s, Mode=%s\n",atest,amode);
 			}
 		    }
 		}
@@ -682,7 +683,8 @@ int main(int argc, char **argv)
 	}
     else /* single file */
 	{
-	printf("Processing: %s\n", fn);
+	if (VERBOSE)
+		printf("Processing: %s\n", fn);
 	if (proc_file(fn))
 	    {
 	    printf(">>> Processing failed for: %s <<<\n", fn);

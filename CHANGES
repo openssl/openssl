@@ -4,6 +4,12 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+  *) Enhance mkfipsscr.pl to cope with different directory layouts. It now
+     relies on the filename and makes no assumptions about the pathname.
+     In the case of PSS it scans the file to determine the salt length.
+     Paths can be filtered. Also reports duplicate and missing files.
+     [Steve Henson]
+
   *) Updates to WIN32 build system. Make use of AES assembly language routines.
      Use assembly language routines in FIPS compilation.
      [Steve Henson]
