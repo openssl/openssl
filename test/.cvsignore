@@ -1,4 +1,9 @@
 *test
+fips_test_suite
+fips_rngvs
+fips_dssvs
+fips_desmovs
+fips_aesavs
 demoCA
 certCA.srl
 .rnd
