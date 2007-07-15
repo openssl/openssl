@@ -419,11 +419,12 @@ sub test_dir
 	if ($win32)
 		{
 		$rsp =~ tr|/|\\|;
+		$req =~ tr|/|\\|;
 		print OUT <<END;
 
 echo Running tests in $req
 if exist "$rsp" rd /s /q "$rsp"
-md $rsp
+md "$rsp"
 END
 		}
 	else
