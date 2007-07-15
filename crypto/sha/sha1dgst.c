@@ -63,6 +63,7 @@
 #define SHA_1
 
 #include <openssl/opensslv.h>
+#include <openssl/fips.h>
 
 const char SHA1_version[]="SHA1" OPENSSL_VERSION_PTEXT;
 
