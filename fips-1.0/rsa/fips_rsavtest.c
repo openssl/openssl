@@ -193,7 +193,7 @@ int rsa_test(FILE *out, FILE *in, int Saltlen)
 		/* If no = or starts with [ (for [foo = bar] line) just copy */
 		if (!p || *keyword=='[')
 			{
-			if (!fputs(olinebuf, out))
+			if (fputs(olinebuf, out) < 0)
 				goto error;
 			continue;
 			}

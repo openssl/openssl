@@ -176,7 +176,7 @@ int hmac_test(const EVP_MD *md, FILE *out, FILE *in)
 		/* If no = or starts with [ (for [L=20] line) just copy */
 		if (!p)
 			{
-			if (!fputs(olinebuf, out))
+			if (fputs(olinebuf, out) < 0)
 				goto error;
 			continue;
 			}

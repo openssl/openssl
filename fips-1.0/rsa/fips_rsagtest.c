@@ -120,7 +120,7 @@ int main(int argc, char **argv)
 
 	if (!rsa_test(out, in))
 		{
-		fprintf(stderr, "FATAL RSAVTEST file processing error\n");
+		fprintf(stderr, "FATAL RSAGTEST file processing error\n");
 		goto end;
 		}
 	else
@@ -174,7 +174,7 @@ int rsa_test(FILE *out, FILE *in)
 		/* If no = or starts with [ (for [foo = bar] line) just copy */
 		if (!p || *keyword=='[')
 			{
-			if (!fputs(olinebuf, out))
+			if (fputs(olinebuf, out) < 0)
 				goto error;
 			continue;
 			}

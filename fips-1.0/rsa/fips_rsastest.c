@@ -135,7 +135,7 @@ int main(int argc, char **argv)
 
 	if (!rsa_stest(out, in, Saltlen))
 		{
-		fprintf(stderr, "FATAL RSAVTEST file processing error\n");
+		fprintf(stderr, "FATAL RSASTEST file processing error\n");
 		goto end;
 		}
 	else
@@ -190,7 +190,7 @@ int rsa_stest(FILE *out, FILE *in, int Saltlen)
 		/* If no = just copy */
 		if (!p)
 			{
-			if (!fputs(olinebuf, out))
+			if (fputs(olinebuf, out) < 0)
 				goto error;
 			continue;
 			}
