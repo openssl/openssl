@@ -95,6 +95,10 @@ static void *instruction_pointer(void)
 			"mfspr	%0,8\n\t"	/* mflr ret */
 			"mtspr	8,%1"		/* restore lr */
 			: "=r"(ret),"=r"(scratch) );
+# elif	defined(__s390__) || defined(__s390x__)
+#   define INSTRUCTION_POINTER_IMPLEMENTED
+    __asm __volatile (	"bras	%0,1f\n1:" : "=r"(ret) );
+    ret = (void *)((size_t)ret&~3UL);
 # elif	defined(__sparc) || defined(__sparc__) || defined(__sparcv9)
 #   define INSTRUCTION_POINTER_IMPLEMENTED
     void *scratch;

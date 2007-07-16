@@ -79,7 +79,7 @@ extern unsigned int        FIPS_incore_fingerprint(unsigned char *,unsigned int)
  */
 void FINGERPRINT_premain(void)
 { unsigned char sig[sizeof(FIPS_signature)];
-  const unsigned char *p=FINGERPRINT_ascii_value;
+  const unsigned char * volatile p=FINGERPRINT_ascii_value;
   unsigned int len=sizeof(sig),i;
 
     /* "volatilization" is done to disengage unwanted optimization... */
