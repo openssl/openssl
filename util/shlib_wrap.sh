@@ -22,16 +22,20 @@ SunOS|IRIX*)
 	# variables depending on target ABI...
 	rld_var=LD_LIBRARY_PATH
 	case "`(/usr/bin/file "$LIBCRYPTOSO") 2>/dev/null`" in
-	*ELF\ 64*SPARC*)
+	*ELF\ 64*SPARC*|*ELF\ 64*AMD64*)
 		[ -n "$LD_LIBRARY_PATH_64" ] && rld_var=LD_LIBRARY_PATH_64
+		LD_PRELOAD_64="$LIBCRYPTOSO $LIBSSLSO"; export LD_PRELOAD_64
+		preload_var=LD_PRELOAD_64
 		;;
 	*ELF\ N32*MIPS*)
 		[ -n "$LD_LIBRARYN32_PATH" ] && rld_var=LD_LIBRARYN32_PATH
 		_RLDN32_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLDN32_LIST
+		preload_var=_RLDN32_LIST
 		;;
 	*ELF\ 64*MIPS*)
 		[ -n "$LD_LIBRARY64_PATH"  ] && rld_var=LD_LIBRARY64_PATH
 		_RLD64_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLD64_LIST
+		preload_var=_RLD64_LIST
 		;;
 	esac
 	eval $rld_var=\"${THERE}:'$'$rld_var\"; export $rld_var
@@ -52,7 +56,7 @@ SunOS|IRIX*)
 	;;
 esac
 
-if [ -f "$LIBCRYPTOSO" ]; then
+if [ -f "$LIBCRYPTOSO" -a -z "$preload_var" ]; then
 	# Following three lines are major excuse for isolating them into
 	# this wrapper script. Original reason for setting LD_PRELOAD
 	# was to make it possible to pass 'make test' when user linked
@@ -64,7 +68,8 @@ if [ -f "$LIBCRYPTOSO" ]; then
 	*)	LD_PRELOAD="$LIBCRYPTOSO $LIBSSLSO" ;;	# SunOS, Linux, ELF HP-UX
 	esac
 	_RLD_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"	# Tru64, o32 IRIX
-	export LD_PRELOAD _RLD_LIST
+	DYLD_INSERT_LIBRARIES="$LIBCRYPTOSO:$LIBSSLSO"	# MacOS X
+	export LD_PRELOAD _RLD_LIST DYLD_INSERT_LIBRARIES
 fi
 
 exec "$@"
