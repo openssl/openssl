@@ -249,3 +249,7 @@ SSL_get_servername                      297	EXIST::FUNCTION:TLSEXT
 SSL_get_servername_type                 298	EXIST::FUNCTION:TLSEXT
 SSL_CTX_set_psk_server_callback         299	EXIST::FUNCTION:PSK
 SSL_get_psk_identity                    300	EXIST::FUNCTION:PSK
+PEM_write_bio_SSL_SESSION               301	EXIST::FUNCTION:
+PEM_read_SSL_SESSION                    302	EXIST:!WIN16:FUNCTION:
+PEM_read_bio_SSL_SESSION                303	EXIST::FUNCTION:
+PEM_write_SSL_SESSION                   304	EXIST:!WIN16:FUNCTION:

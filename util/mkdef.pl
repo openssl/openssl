@@ -1226,8 +1226,6 @@ EOO
 
 LIBRARY         $libname	$liboptions
 
-DESCRIPTION     '$description'
-
 EOF
 
 	if ($W16) {

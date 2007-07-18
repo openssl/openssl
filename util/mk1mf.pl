@@ -646,6 +646,7 @@ foreach (values %lib_nam)
 	if (($rc4_enc_obj ne "") && ($_ eq "CRYPTO"))
 		{
 		$lib_obj =~ s/\s\S*\/rc4_enc\S*/ \$(RC4_ENC_OBJ)/;
+		$lib_obj =~ s/\s\S*\/rc4_skey\S*//;
 		$rules.=&do_asm_rule($rc4_enc_obj,$rc4_enc_src);
 		}
 	if (($rc5_enc_obj ne "") && ($_ eq "CRYPTO"))
