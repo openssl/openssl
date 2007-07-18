@@ -204,16 +204,17 @@ sub main'pand	{ &out2("pand",@_); }
 sub out2
 	{
 	local($name,$p1,$p2)=@_;
-	local($l,$t);
+	local($l,$t,$line);
 
-	push(@out,"\t$name\t");
+	$line="\t$name\t";
 	$t=&conv($p1).",";
 	$l=length($t);
-	push(@out,$t);
+	$line.="$t";
 	$l=4-($l+9)/8;
-	push(@out,"\t" x $l);
-	push(@out,&conv($p2));
-	push(@out,"\n");
+	$line.="\t" x $l;
+	$line.=&conv($p2);
+	if ($line=~/\bxmm[0-7]\b/i) { $line=~s/\b[A-Z]+WORD PTR/XMMWORD PTR/i; }
+	push(@out,$line."\n");
 	}
 
 sub out0
