@@ -1313,15 +1313,12 @@ AES_set_encrypt_key:
 	jmp	.Lexit
 
 .L10rounds:
-	mov	0(%rsi),%eax			# copy first 4 dwords
-	mov	4(%rsi),%ebx
-	mov	8(%rsi),%ecx
-	mov	12(%rsi),%edx
-	mov	%eax,0(%rdi)
-	mov	%ebx,4(%rdi)
-	mov	%ecx,8(%rdi)
-	mov	%edx,12(%rdi)
+	mov	0(%rsi),%rax			# copy first 4 dwords
+	mov	8(%rsi),%rdx
+	mov	%rax,0(%rdi)
+	mov	%rdx,8(%rdi)
 
+	shr	\$32,%rdx
 	xor	%ecx,%ecx
 	jmp	.L10shortcut
 .align	4
@@ -1349,19 +1346,14 @@ $code.=<<___;
 	jmp	.Lexit
 
 .L12rounds:
-	mov	0(%rsi),%eax			# copy first 6 dwords
-	mov	4(%rsi),%ebx
-	mov	8(%rsi),%ecx
-	mov	12(%rsi),%edx
-	mov	%eax,0(%rdi)
-	mov	%ebx,4(%rdi)
-	mov	%ecx,8(%rdi)
-	mov	%edx,12(%rdi)
-	mov	16(%rsi),%ecx
-	mov	20(%rsi),%edx
-	mov	%ecx,16(%rdi)
-	mov	%edx,20(%rdi)
+	mov	0(%rsi),%rax			# copy first 6 dwords
+	mov	8(%rsi),%rbx
+	mov	16(%rsi),%rdx
+	mov	%rax,0(%rdi)
+	mov	%rbx,8(%rdi)
+	mov	%rdx,16(%rdi)
 
+	shr	\$32,%rdx
 	xor	%ecx,%ecx
 	jmp	.L12shortcut
 .align	4
@@ -1397,30 +1389,23 @@ $code.=<<___;
 	jmp	.Lexit
 
 .L14rounds:		
-	mov	0(%rsi),%eax			# copy first 8 dwords
-	mov	4(%rsi),%ebx
-	mov	8(%rsi),%ecx
-	mov	12(%rsi),%edx
-	mov	%eax,0(%rdi)
-	mov	%ebx,4(%rdi)
-	mov	%ecx,8(%rdi)
-	mov	%edx,12(%rdi)
-	mov	16(%rsi),%eax
-	mov	20(%rsi),%ebx
-	mov	24(%rsi),%ecx
-	mov	28(%rsi),%edx
-	mov	%eax,16(%rdi)
-	mov	%ebx,20(%rdi)
-	mov	%ecx,24(%rdi)
-	mov	%edx,28(%rdi)
+	mov	0(%rsi),%rax			# copy first 8 dwords
+	mov	8(%rsi),%rbx
+	mov	16(%rsi),%rcx
+	mov	24(%rsi),%rdx
+	mov	%rax,0(%rdi)
+	mov	%rbx,8(%rdi)
+	mov	%rcx,16(%rdi)
+	mov	%rdx,24(%rdi)
 
+	shr	\$32,%rdx
 	xor	%ecx,%ecx
 	jmp	.L14shortcut
 .align	4
 .L14loop:
+		mov	0(%rdi),%eax			# rk[0]
 		mov	28(%rdi),%edx			# rk[4]
 .L14shortcut:
-		mov	0(%rdi),%eax			# rk[0]
 ___
 		&enckey	();
 $code.=<<___;
