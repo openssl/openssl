@@ -354,7 +354,7 @@ ___
 
 # it's possible to implement this by shifting tN by 8, filling least
 # significant byte with byte load and finally bswap-ing at the end,
-# but partial byte load kills Core 2...
+# but such partial register load kills Core 2...
 sub enccompactvert()
 { my ($t3,$t4,$t5)=("%r8d","%r9d","%r13d");
 
@@ -525,15 +525,18 @@ $code.=<<___;
 	rol	\$24,$s3
 	xor	$r20,$s2
 	xor	$r21,$s3
+	mov	0($sbox),$acc0			# prefetch Te4
 	ror	\$16,$t2
 	ror	\$16,$t3
+	mov	64($sbox),$acc1
 	xor	$t2,$s2
 	xor	$t3,$s3
+	mov	128($sbox),$r20
 	ror	\$8,$t2
 	ror	\$8,$t3
+	mov	192($sbox),$r21
 	xor	$t2,$s2
 	xor	$t3,$s3
-
 ___
 }
 
@@ -541,38 +544,34 @@ $code.=<<___;
 .type	_x86_64_AES_encrypt_compact,\@abi-omnipotent
 .align	16
 _x86_64_AES_encrypt_compact:
-	lea	128($sbox),$acc0		# size optimization
-	mov	0-128($acc0),$acc1		# prefetch Te4
-	mov	32-128($acc0),$acc2
-	mov	64-128($acc0),$t0
-	mov	96-128($acc0),$t1
-	mov	128-128($acc0),$acc1
-	mov	160-128($acc0),$acc2
-	mov	192-128($acc0),$t0
-	mov	224-128($acc0),$t1
-
-	xor	0($key),$s0			# xor with key
-	xor	4($key),$s1
-	xor	8($key),$s2
-	xor	12($key),$s3
-	lea	16($key),$key
+	lea	128($sbox),$inp			# size optimization
+	mov	0-128($inp),$acc1		# prefetch Te4
+	mov	32-128($inp),$acc2
+	mov	64-128($inp),$t0
+	mov	96-128($inp),$t1
+	mov	128-128($inp),$acc1
+	mov	160-128($inp),$acc2
+	mov	192-128($inp),$t0
+	mov	224-128($inp),$t1
 	jmp	.Lenc_loop_compact
 .align	16
 .Lenc_loop_compact:
-___
-		&enccompactvert();
-		&enctransform();
-$code.=<<___;
-		xor	0($key),$s0
+		xor	0($key),$s0		# xor with key
 		xor	4($key),$s1
 		xor	8($key),$s2
 		xor	12($key),$s3
 		lea	16($key),$key
-		cmp	16(%rsp),$key
-	jne	.Lenc_loop_compact
 ___
-	&enccompactvert();
+		&enccompactvert();
 $code.=<<___;
+		cmp	16(%rsp),$key
+		je	.Lenc_compact_done
+___
+		&enctransform();
+$code.=<<___;
+	jmp	.Lenc_loop_compact
+.align	16
+.Lenc_compact_done:
 	xor	0($key),$s0
 	xor	4($key),$s1
 	xor	8($key),$s2
@@ -1003,6 +1002,7 @@ ___
 sub dectransform()
 { my ($tp10,$tp20,$tp40,$tp80,$acc0)=("%rax","%r8", "%r9", "%r10","%rbx");
   my ($tp18,$tp28,$tp48,$tp88,$acc8)=("%rcx","%r11","%r12","%r13","%rdx");
+  my $prefetch = shift;
 
 $code.=<<___;
 	mov	$tp10,$acc0
@@ -1107,17 +1107,21 @@ $code.=<<___;
 	xor	`&LO("$tp80")`,`&LO("$acc0")`
 	xor	`&LO("$tp88")`,`&LO("$acc8")`
 
+	`"mov	0($sbox),$mask80"	if ($prefetch)`
 	shr	\$32,$tp20
 	shr	\$32,$tp28
+	`"mov	64($sbox),$maskfe"	if ($prefetch)`
 	rol	\$16,`&LO("$tp40")`	# ROTATE(tp4^tp1^tp8,16)
 	rol	\$16,`&LO("$tp48")`	# ROTATE(tp4^tp1^tp8,16)
+	`"mov	128($sbox),$mask1b"	if ($prefetch)`
 	rol	\$16,`&LO("$tp20")`	# ROTATE(tp4^tp1^tp8,16)
 	rol	\$16,`&LO("$tp28")`	# ROTATE(tp4^tp1^tp8,16)
+	`"mov	192($sbox),$tp80"	if ($prefetch)`
 	xor	`&LO("$tp40")`,`&LO("$tp10")`
 	xor	`&LO("$tp48")`,`&LO("$tp18")`
+	`"mov	256($sbox),$tp88"	if ($prefetch)`
 	xor	`&LO("$tp20")`,`&LO("$acc0")`
 	xor	`&LO("$tp28")`,`&LO("$acc8")`
-
 ___
 }
 
@@ -1125,28 +1129,30 @@ $code.=<<___;
 .type	_x86_64_AES_decrypt_compact,\@abi-omnipotent
 .align	16
 _x86_64_AES_decrypt_compact:
-	lea	128($sbox),$acc0		# size optimization
-	mov	0-128($acc0),$acc1		# prefetch Td4
-	mov	32-128($acc0),$acc2
-	mov	64-128($acc0),$t0
-	mov	96-128($acc0),$t1
-	mov	128-128($acc0),$acc1
-	mov	160-128($acc0),$acc2
-	mov	192-128($acc0),$t0
-	mov	224-128($acc0),$t1
+	lea	128($sbox),$inp			# size optimization
+	mov	0-128($inp),$acc1		# prefetch Td4
+	mov	32-128($inp),$acc2
+	mov	64-128($inp),$t0
+	mov	96-128($inp),$t1
+	mov	128-128($inp),$acc1
+	mov	160-128($inp),$acc2
+	mov	192-128($inp),$t0
+	mov	224-128($inp),$t1
+	jmp	.Ldec_loop_compact
 
-	xor	0($key),$s0			# xor with key
-	xor	4($key),$s1
-	xor	8($key),$s2
-	xor	12($key),$s3
-	lea	16($key),$key
-
-	jmp	.Ldec_compact_loop
 .align	16
-.Ldec_compact_loop:
+.Ldec_loop_compact:
+		xor	0($key),$s0		# xor with key
+		xor	4($key),$s1
+		xor	8($key),$s2
+		xor	12($key),$s3
+		lea	16($key),$key
 ___
 		&deccompactvert();
 $code.=<<___;
+		cmp	16(%rsp),$key
+		je	.Ldec_compact_done
+
 		mov	256+0($sbox),$mask80
 		shl	\$32,%rbx
 		shl	\$32,%rdx
@@ -1155,18 +1161,11 @@ $code.=<<___;
 		or	%rdx,%rcx
 		mov	256+16($sbox),$mask1b
 ___
-		&dectransform();
+		&dectransform(1);
 $code.=<<___;
-		xor	0($key),$s0
-		xor	4($key),$s1
-		xor	8($key),$s2
-		xor	12($key),$s3
-		lea	16($key),$key
-		cmp	16(%rsp),$key
-	jne	.Ldec_compact_loop
-___
-	&deccompactvert();
-$code.=<<___;
+	jmp	.Ldec_loop_compact
+.align	16
+.Ldec_compact_done:
 	xor	0($key),$s0
 	xor	4($key),$s1
 	xor	8($key),$s2
