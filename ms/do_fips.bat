@@ -58,24 +58,52 @@ cd ..\..\..
 echo RIPEMD160
 cd crypto\ripemd\asm
 perl rmd-586.pl win32n %ASMOPTS% > rm_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo RC5\32
 cd crypto\rc5\asm
 perl rc5-586.pl win32n %ASMOPTS% > r5_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo CPU-ID
 cd crypto
 perl x86cpuid.pl win32n %ASMOPTS% > cpu_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..
 
 echo on
 
 perl util\mkfiles.pl >MINFO
+@if ERRORLEVEL 1 goto error
 perl util\mk1mf.pl dll nasm VC-WIN32 >ms\ntdll.mak
+@if ERRORLEVEL 1 goto error
 
 perl util\mkdef.pl 32 libeay > ms\libeay32.def
+@if ERRORLEVEL 1 goto error
 perl util\mkdef.pl 32 ssleay > ms\ssleay32.def
+@if ERRORLEVEL 1 goto error
 
 nmake -f ms\ntdll.mak
+@if ERRORLEVEL 1 goto error
+
+@echo.
+@echo.
+@echo.
+@echo ***************************
+@echo ****FIPS BUILD SUCCESS*****
+@echo ***************************
+
+@goto end
+
+:error
+
+@echo.
+@echo.
+@echo.
+@echo ***************************
+@echo ****FIPS BUILD FAILURE*****
+@echo ***************************
+
+:end
