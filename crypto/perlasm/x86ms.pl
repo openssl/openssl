@@ -213,7 +213,7 @@ sub out2
 	$l=4-($l+9)/8;
 	$line.="\t" x $l;
 	$line.=&conv($p2);
-	if ($line=~/\bxmm[0-7]\b/i) { $line=~s/\b[A-Z]+WORD PTR/XMMWORD PTR/i; }
+	if ($line=~/\bxmm[0-7]\b/i) { $line=~s/\b[A-Z]+WORD\s+PTR/XMMWORD PTR/i; }
 	push(@out,$line."\n");
 	}
 
@@ -339,11 +339,8 @@ EOF
 sub main'file_end
 	{
 	# try to detect if SSE2 or MMX extensions were used...
-	if (grep {/xmm[0-7]\s*,/i} @out) {
+	if (grep {/\b[x]?mm[0-7]\b,/i} @out) {
 		grep {s/\.[3-7]86/\.686\n\t\.XMM/} @out;
-		}
-	elsif (grep {/mm[0-7]\s*,/i} @out) {
-		grep {s/\.[3-7]86/\.686\n\t\.MMX/} @out;
 		}
 	push(@out,"_TEXT\$	ENDS\n");
 	push(@out,"END\n");
