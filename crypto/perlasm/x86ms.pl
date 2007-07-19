@@ -204,16 +204,17 @@ sub main'pand	{ &out2("pand",@_); }
 sub out2
 	{
 	local($name,$p1,$p2)=@_;
-	local($l,$t);
+	local($l,$t,$line);
 
-	push(@out,"\t$name\t");
+	$line="\t$name\t";
 	$t=&conv($p1).",";
 	$l=length($t);
-	push(@out,$t);
+	$line.="$t";
 	$l=4-($l+9)/8;
-	push(@out,"\t" x $l);
-	push(@out,&conv($p2));
-	push(@out,"\n");
+	$line.="\t" x $l;
+	$line.=&conv($p2);
+	if ($line=~/\bxmm[0-7]\b/i) { $line=~s/\b[A-Z]+WORD\s+PTR/XMMWORD PTR/i; }
+	push(@out,$line."\n");
 	}
 
 sub out0
@@ -338,11 +339,8 @@ EOF
 sub main'file_end
 	{
 	# try to detect if SSE2 or MMX extensions were used...
-	if (grep {/xmm[0-7]\s*,/i} @out) {
+	if (grep {/\b[x]?mm[0-7]\b,/i} @out) {
 		grep {s/\.[3-7]86/\.686\n\t\.XMM/} @out;
-		}
-	elsif (grep {/mm[0-7]\s*,/i} @out) {
-		grep {s/\.[3-7]86/\.686\n\t\.MMX/} @out;
 		}
 	push(@out,"_TEXT\$	ENDS\n");
 	push(@out,"END\n");

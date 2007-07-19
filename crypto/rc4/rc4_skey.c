@@ -128,7 +128,12 @@ FIPS_NON_FIPS_VCIPHER_Init(RC4)
 		 * module...
 		 *				<appro@fy.chalmers.se>
 		 */
+#ifdef OPENSSL_FIPS
+		unsigned long *ia32cap_ptr = OPENSSL_ia32cap_loc();
+		if (ia32cap_ptr && (*ia32cap_ptr & (1<<28))) {
+#else
 		if (OPENSSL_ia32cap_P & (1<<28)) {
+#endif
 			unsigned char *cp=(unsigned char *)d;
 
 			for (i=0;i<256;i++) cp[i]=i;

@@ -372,6 +372,7 @@ if ($fips)
 		$fips_exclude_obj{$1} = 1 if (/\/([^\/]*)$/);
 		}
 
+	$fips_exclude_obj{"cpu_win32"} = 1;
 	$fips_exclude_obj{"bn_asm"} = 1;
 	$fips_exclude_obj{"des_enc"} = 1;
 	$fips_exclude_obj{"fcrypt_b"} = 1;
@@ -787,6 +788,11 @@ foreach (values %lib_nam)
 
 	if ((!$fips && ($_ eq "CRYPTO")) || ($fips && ($_ eq "FIPS")))
 		{
+		if ($cpuid_asm_obj ne "")
+			{
+			$lib_obj =~ s/\s(\S*\/cryptlib\S*)/ $1 \$(CPUID_ASM_OBJ)/;
+			$rules.=&do_asm_rule($cpuid_asm_obj,$cpuid_asm_src);
+			}
 		if ($aes_asm_obj ne "")
 			{
 			$lib_obj =~ s/\s(\S*\/aes_core\S*)/ \$(AES_ASM_OBJ)/;
@@ -844,11 +850,6 @@ foreach (values %lib_nam)
 		{
 		$lib_obj =~ s/\s(\S*\/rmd_dgst\S*)/ $1 \$(RMD160_ASM_OBJ)/;
 		$rules.=&do_asm_rule($rmd160_asm_obj,$rmd160_asm_src);
-		}
-	if (($cpuid_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s(\S*\/cversion\S*)/ $1 \$(CPUID_ASM_OBJ)/;
-		$rules.=&do_asm_rule($cpuid_asm_obj,$cpuid_asm_src);
 		}
 	$defs.=&do_defs(${_}."OBJ",$lib_obj,"\$(OBJ_D)",$obj);
 	$lib=($slib)?" \$(SHLIB_CFLAGS)".$shlib_ex_cflags{$_}:" \$(LIB_CFLAGS)";
