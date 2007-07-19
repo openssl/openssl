@@ -5,7 +5,7 @@
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
   *) Add SSE2 instruction support to WIN32 build. These will be compiled
-     by default and used it an appopriate CPU is detected. Some older versions
+     by default and used if an appopriate CPU is detected. Some older versions
      of NASM or MASM which don't support SSE2 will need to be updated. 
      [Steve Henson]
 
