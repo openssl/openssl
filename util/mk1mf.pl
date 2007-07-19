@@ -395,6 +395,8 @@ LINK=$link
 LFLAGS=$lflags
 RSC=$rsc
 
+AES_ASM_OBJ=$aes_asm_obj
+AES_ASM_SRC=$aes_asm_src
 BN_ASM_OBJ=$bn_asm_obj
 BN_ASM_SRC=$bn_asm_src
 BNCO_ASM_OBJ=$bnco_asm_obj
@@ -608,7 +610,12 @@ foreach (values %lib_nam)
 		$rules.="\$(O_SSL):\n\n"; 
 		next;
 		}
-
+	if (($aes_asm_obj ne "") && ($_ eq "CRYPTO"))
+		{
+		$lib_obj =~ s/\s(\S*\/aes_core\S*)/ \$(AES_ASM_OBJ)/;
+		$lib_obj =~ s/\s\S*\/aes_cbc\S*//;
+		$rules.=&do_asm_rule($aes_asm_obj,$aes_asm_src);
+		}
 	if (($bn_asm_obj ne "") && ($_ eq "CRYPTO"))
 		{
 		$lib_obj =~ s/\s\S*\/bn_asm\S*/ \$(BN_ASM_OBJ)/;
@@ -850,6 +857,7 @@ sub do_defs
 		elsif ($_ =~ /RC5_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /MD5_ASM/)	{ $t="$_ "; }
 		elsif ($_ =~ /SHA1_ASM/){ $t="$_ "; }
+		elsif ($_ =~ /AES_ASM/){ $t="$_ "; }
 		elsif ($_ =~ /RMD160_ASM/){ $t="$_ "; }
 		elsif ($_ =~ /CPUID_ASM/){ $t="$_ "; }
 		else	{ $t="$location${o}$_$pf "; }

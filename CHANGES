@@ -4,6 +4,9 @@
 
  Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
 
+  *) Add AES and SSE2 assembly language support to VC++ build.
+     [Steve Henson]
+
   *) Mitigate attack on final subtraction in Montgomery reduction.
      [Andy Polyakov]
 
