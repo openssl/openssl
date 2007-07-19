@@ -528,17 +528,16 @@ Lppc_AES_encrypt_compact:
 	addi	$Tbl1,$Tbl0,2048
 	lis	$mask80,0x8080
 	lis	$mask1b,0x1b1b
-	addi	$acc00,$acc00,-1
 	addi	$key,$key,16
 	ori	$mask80,$mask80,0x8080
 	ori	$mask1b,$mask1b,0x1b1b
+	mtctr	$acc00
+.align	4
+Lenc_compact_loop:
 	xor	$s0,$s0,$t0
 	xor	$s1,$s1,$t1
 	xor	$s2,$s2,$t2
 	xor	$s3,$s3,$t3
-	mtctr	$acc00
-.align	4
-Lenc_compact_loop:
 	rlwinm	$acc00,$s0,`32-24`,24,31
 	rlwinm	$acc01,$s1,`32-24`,24,31
 	rlwinm	$acc02,$s2,`32-24`,24,31
@@ -591,6 +590,9 @@ Lenc_compact_loop:
 	or	$s1,$s1,$acc13
 	or	$s2,$s2,$acc14
 	or	$s3,$s3,$acc15
+
+	addi	$key,$key,16
+	bdz	Lenc_compact_done
 
 	and	$acc00,$s0,$mask80	# r1=r0&0x80808080
 	and	$acc01,$s1,$mask80
@@ -650,66 +652,9 @@ Lenc_compact_loop:
 	xor	$s2,$s2,$acc10
 	xor	$s3,$s3,$acc11
 
-	xor	$s0,$s0,$t0
-	xor	$s1,$s1,$t1
-	xor	$s2,$s2,$t2
-	xor	$s3,$s3,$t3
-
-	addi	$key,$key,16
-	bdnz-	Lenc_compact_loop
-
-	rlwinm	$acc00,$s0,`32-24`,24,31
-	rlwinm	$acc01,$s1,`32-24`,24,31
-	rlwinm	$acc02,$s2,`32-24`,24,31
-	rlwinm	$acc03,$s3,`32-24`,24,31
-	lwz	$t0,0($key)
-	lwz	$t1,4($key)
-	lwz	$t2,8($key)
-	lwz	$t3,12($key)
-	rlwinm	$acc04,$s1,`32-16`,24,31
-	rlwinm	$acc05,$s2,`32-16`,24,31
-	rlwinm	$acc06,$s3,`32-16`,24,31
-	rlwinm	$acc07,$s0,`32-16`,24,31
-	lbzx	$acc00,$Tbl1,$acc00
-	lbzx	$acc01,$Tbl1,$acc01
-	lbzx	$acc02,$Tbl1,$acc02
-	lbzx	$acc03,$Tbl1,$acc03
-	rlwinm	$acc08,$s2,`32-8`,24,31
-	rlwinm	$acc09,$s3,`32-8`,24,31
-	rlwinm	$acc10,$s0,`32-8`,24,31
-	rlwinm	$acc11,$s1,`32-8`,24,31
-	lbzx	$acc04,$Tbl1,$acc04
-	lbzx	$acc05,$Tbl1,$acc05
-	lbzx	$acc06,$Tbl1,$acc06
-	lbzx	$acc07,$Tbl1,$acc07
-	rlwinm	$acc12,$s3,`0`,24,31
-	rlwinm	$acc13,$s0,`0`,24,31
-	rlwinm	$acc14,$s1,`0`,24,31
-	rlwinm	$acc15,$s2,`0`,24,31
-	lbzx	$acc08,$Tbl1,$acc08
-	lbzx	$acc09,$Tbl1,$acc09
-	lbzx	$acc10,$Tbl1,$acc10
-	lbzx	$acc11,$Tbl1,$acc11
-	rlwinm	$s0,$acc00,24,0,7
-	rlwinm	$s1,$acc01,24,0,7
-	rlwinm	$s2,$acc02,24,0,7
-	rlwinm	$s3,$acc03,24,0,7
-	lbzx	$acc12,$Tbl1,$acc12
-	lbzx	$acc13,$Tbl1,$acc13
-	lbzx	$acc14,$Tbl1,$acc14
-	lbzx	$acc15,$Tbl1,$acc15
-	rlwimi	$s0,$acc04,16,8,15
-	rlwimi	$s1,$acc05,16,8,15
-	rlwimi	$s2,$acc06,16,8,15
-	rlwimi	$s3,$acc07,16,8,15
-	rlwimi	$s0,$acc08,8,16,23
-	rlwimi	$s1,$acc09,8,16,23
-	rlwimi	$s2,$acc10,8,16,23
-	rlwimi	$s3,$acc11,8,16,23
-	or	$s0,$s0,$acc12
-	or	$s1,$s1,$acc13
-	or	$s2,$s2,$acc14
-	or	$s3,$s3,$acc15
+	b	Lenc_compact_loop
+.align	4
+Lenc_compact_done:
 	xor	$s0,$s0,$t0
 	xor	$s1,$s1,$t1
 	xor	$s2,$s2,$t2
@@ -932,17 +877,16 @@ Lppc_AES_decrypt_compact:
 	addi	$Tbl1,$Tbl0,2048
 	lis	$mask80,0x8080
 	lis	$mask1b,0x1b1b
-	addi	$acc00,$acc00,-1
 	addi	$key,$key,16
 	ori	$mask80,$mask80,0x8080
 	ori	$mask1b,$mask1b,0x1b1b
+	mtctr	$acc00
+.align	4
+Ldec_compact_loop:
 	xor	$s0,$s0,$t0
 	xor	$s1,$s1,$t1
 	xor	$s2,$s2,$t2
 	xor	$s3,$s3,$t3
-	mtctr	$acc00
-.align	4
-Ldec_compact_loop:
 	rlwinm	$acc00,$s0,`32-24`,24,31
 	rlwinm	$acc01,$s1,`32-24`,24,31
 	rlwinm	$acc02,$s2,`32-24`,24,31
@@ -995,6 +939,9 @@ Ldec_compact_loop:
 	or	$s1,$s1,$acc13
 	or	$s2,$s2,$acc14
 	or	$s3,$s3,$acc15
+
+	addi	$key,$key,16
+	bdz	Ldec_compact_done
 
 	and	$acc00,$s0,$mask80	# r1=r0&0x80808080
 	and	$acc01,$s1,$mask80
@@ -1140,66 +1087,9 @@ Ldec_compact_loop:
 	xor	$s2,$s2,$acc10	
 	xor	$s3,$s3,$acc11	
 
-	xor	$s0,$s0,$t0
-	xor	$s1,$s1,$t1
-	xor	$s2,$s2,$t2
-	xor	$s3,$s3,$t3
-
-	addi	$key,$key,16
-	bdnz-	Ldec_compact_loop
-
-	rlwinm	$acc00,$s0,`32-24`,24,31
-	rlwinm	$acc01,$s1,`32-24`,24,31
-	rlwinm	$acc02,$s2,`32-24`,24,31
-	rlwinm	$acc03,$s3,`32-24`,24,31
-	lwz	$t0,0($key)
-	lwz	$t1,4($key)
-	lwz	$t2,8($key)
-	lwz	$t3,12($key)
-	rlwinm	$acc04,$s3,`32-16`,24,31
-	rlwinm	$acc05,$s0,`32-16`,24,31
-	rlwinm	$acc06,$s1,`32-16`,24,31
-	rlwinm	$acc07,$s2,`32-16`,24,31
-	lbzx	$acc00,$Tbl1,$acc00
-	lbzx	$acc01,$Tbl1,$acc01
-	lbzx	$acc02,$Tbl1,$acc02
-	lbzx	$acc03,$Tbl1,$acc03
-	rlwinm	$acc08,$s2,`32-8`,24,31
-	rlwinm	$acc09,$s3,`32-8`,24,31
-	rlwinm	$acc10,$s0,`32-8`,24,31
-	rlwinm	$acc11,$s1,`32-8`,24,31
-	lbzx	$acc04,$Tbl1,$acc04
-	lbzx	$acc05,$Tbl1,$acc05
-	lbzx	$acc06,$Tbl1,$acc06
-	lbzx	$acc07,$Tbl1,$acc07
-	rlwinm	$acc12,$s1,`0`,24,31
-	rlwinm	$acc13,$s2,`0`,24,31
-	rlwinm	$acc14,$s3,`0`,24,31
-	rlwinm	$acc15,$s0,`0`,24,31
-	lbzx	$acc08,$Tbl1,$acc08
-	lbzx	$acc09,$Tbl1,$acc09
-	lbzx	$acc10,$Tbl1,$acc10
-	lbzx	$acc11,$Tbl1,$acc11
-	rlwinm	$s0,$acc00,24,0,7
-	rlwinm	$s1,$acc01,24,0,7
-	rlwinm	$s2,$acc02,24,0,7
-	rlwinm	$s3,$acc03,24,0,7
-	lbzx	$acc12,$Tbl1,$acc12
-	lbzx	$acc13,$Tbl1,$acc13
-	lbzx	$acc14,$Tbl1,$acc14
-	lbzx	$acc15,$Tbl1,$acc15
-	rlwimi	$s0,$acc04,16,8,15
-	rlwimi	$s1,$acc05,16,8,15
-	rlwimi	$s2,$acc06,16,8,15
-	rlwimi	$s3,$acc07,16,8,15
-	rlwimi	$s0,$acc08,8,16,23
-	rlwimi	$s1,$acc09,8,16,23
-	rlwimi	$s2,$acc10,8,16,23
-	rlwimi	$s3,$acc11,8,16,23
-	or	$s0,$s0,$acc12
-	or	$s1,$s1,$acc13
-	or	$s2,$s2,$acc14
-	or	$s3,$s3,$acc15
+	b	Ldec_compact_loop
+.align	4
+Ldec_compact_done:
 	xor	$s0,$s0,$t0
 	xor	$s1,$s1,$t1
 	xor	$s2,$s2,$t2
