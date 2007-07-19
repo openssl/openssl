@@ -274,7 +274,7 @@ int rsa_stest(FILE *out, FILE *in, int Saltlen)
 			bn_e = BN_new();
 			if (!bn_e || !BN_set_word(bn_e, 0x1001))
 				goto error;
-			if (!RSA_generate_key_ex(rsa, keylen, bn_e, NULL))
+			if (!RSA_X931_generate_key_ex(rsa, keylen, bn_e, NULL))
 				goto error;
 			BN_free(bn_e);
 			fputs("n = ", out);
