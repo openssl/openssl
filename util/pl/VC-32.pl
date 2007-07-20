@@ -5,8 +5,6 @@
 
 $ssl=	"ssleay32";
 
-my $mwex =" \$(FIPSLIB_D)${o}_chkstk.o \$(FIPSLIB_D)${o}_udivdi3.o \$(FIPSLIB_D)${o}_umoddi3.o";
-
 if ($fips && !$shlib)
 	{
 	$crypto="libeayfips32";
@@ -291,7 +289,6 @@ sub do_lib_rule
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
 		$ex =' ';
 		$ret.="$target: $objs\n";
-		$ex.= $mwex if $fips && !$fipscanisterbuild && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
 		}
 	else
@@ -374,13 +371,13 @@ sub do_link_rule
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
 	$ret.="$target: $files $dep_libs\n";
-	if ($standalone)
+	if ($standalone == 1)
 		{
 		$ret.="  \$(LINK) \$(LFLAGS) $efile$target @<<\n\t";
 		$ret.= "$mwex advapi32.lib " if ($files =~ /O_FIPSCANISTER/ && !$fipscanisterbuild);
 		$ret.="$files $libs\n<<\n";
 		}
-	elsif ($fips && !$shlib)
+	elsif ($standalone == 2)
 		{
 		$ret.="\tSET FIPS_LINK=\$(LINK)\n";
 		$ret.="\tSET FIPS_CC=\$(CC)\n";

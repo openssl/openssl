@@ -4,6 +4,13 @@
 
  Changes between 0.9.8e and 0.9.8f-fips  [xx XXX xxxx]
 
+
+  *) Add option --with-fipslibdir to specify location of fipscanister.lib
+     and friends. When combined with fips build option fipscanister.lib is
+     not built but linked from the supplied directory. Always link fips
+     utilities against fiscanister.lib only except in fipsdso builds.
+     [Steve Henson]
+
   *) Add SSE2 instruction support to WIN32 build. These will be compiled
      by default and used if an appopriate CPU is detected. Some older versions
      of NASM or MASM which don't support SSE2 will need to be updated. 

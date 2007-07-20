@@ -792,6 +792,14 @@ PROCESS_ARGS:
 				{
 				$withargs{"zlib-include"}="-I$1";
 				}
+			elsif (/^--with-fipslibdir=(.*)$/)
+				{
+				$fipslibdir="$1/";
+				}
+			elsif (/^--with-baseaddr=(.*)$/)
+				{
+				$baseaddr="$1";
+				}
 			else
 				{
 				print STDERR $usage;

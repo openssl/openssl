@@ -354,7 +354,11 @@ for (;;)
 		}
 
 	if ($key eq "FIPSLIBDIR")
-		{ $fipslibdir=$val;}
+		{
+		$fipslibdir=$val;
+		$fipslibdir =~ s/\/$//;
+		$fipslibdir =~ s/\//$o/g;
+		}
 
 	if ($key eq "BASEADDR")
 		{ $baseaddr=$val;}
@@ -403,14 +407,14 @@ if ($fips)
 
 if ($fipscanisterbuild)
 	{
-	$fips_canister_path = "\$(LIB_D)${o}fipscanister.o" if $fips_canister_path eq "";
+	$fips_canister_path = "\$(LIB_D)${o}fipscanister.lib" if $fips_canister_path eq "";
 	$fips_premain_c_path = "\$(LIB_D)${o}fips_premain.c";
 	}
 else
 	{
 	if ($fips_canister_path eq "")
 		{
-		$fips_canister_path = "\$(FIPSLIB_D)${o}fipscanister.o";
+		$fips_canister_path = "\$(FIPSLIB_D)${o}fipscanister.lib";
 		}
 
 	if ($fips_premain_c_path eq "")
@@ -463,7 +467,7 @@ if ($fips)
 			close IN;
 			}
 		fips_check_files($fipslibdir,
-				"fipscanister.o", "fipscanister.o.sha1",
+				"fipscanister.lib", "fipscanister.lib.sha1",
 				"fips_premain.c", "fips_premain.c.sha1");
 		}
 	}
@@ -876,17 +880,32 @@ foreach (split(/\s+/,$test))
 	{
 	my $t_libs;
 	$t=&bname($_);
-	if ($fipsdso && /fips-1.0/)
+	my $ltype;
+	# Check to see if test program is FIPS
+	if (/fips-1.0/)
 		{
-		$t_libs = "\$(L_FIPS)";
+		# If fipsdso link to libosslfips.dll 
+		# otherwise perform static link to 
+		# $(O_FIPSCANISTER)
+		if ($fipsdso)
+			{
+			$t_libs = "\$(L_FIPS)";
+			$ltype = 0;
+			}
+		else
+			{
+			$t_libs = "\$(O_FIPSCANISTER)";
+			$ltype = 2;
+			}
 		}
 	else
 		{
 		$t_libs = "\$(L_LIBS)";
+		$ltype = 0;
 		}
-	
+
 	$tt="\$(OBJ_D)${o}$t${obj}";
-	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","$t_libs \$(EX_LIBS)");
+	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","$t_libs \$(EX_LIBS)", $ltype);
 	}
 
 $defs.=&do_defs("E_SHLIB",$engines,"\$(ENG_D)",$shlibp);
@@ -940,13 +959,29 @@ if ($fips)
 
 if ($fips)
 	{
-	$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)", "\$(OBJ_D)${o}fips_start$obj", "\$(FIPSOBJ)", "\$(OBJ_D)${o}fips_end$obj", "\$(FIPS_SHA1_EXE)", "") if $fipscanisterbuild;
+	if ($fipscanisterbuild)
+		{
+		$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)",
+					"\$(OBJ_D)${o}fips_start$obj",
+					"\$(FIPSOBJ)",
+					"\$(OBJ_D)${o}fips_end$obj",
+					"\$(FIPS_SHA1_EXE)", "");
+		$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)",
+					"\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}sha1dgst$obj \$(SHA1_ASM_OBJ)",
+					"","", 1);
+		}
+	else
+		{
+		$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)",
+					"\$(OBJ_D)${o}fips_standalone_sha1$obj \$(O_FIPSCANISTER)",
+					"","", 1);
+
+		}
 	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
 	
-	$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)","\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}sha1dgst$obj \$(SHA1_ASM_OBJ)","","", 1);
 	}
 
-$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)",0);
+$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)", ($fips && !$shlib) ? 2 : 0);
 
 print $defs;
 
