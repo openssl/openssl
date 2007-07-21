@@ -7,7 +7,7 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
-# Version 2.0.
+# Version 2.1.
 #
 # aes-*-cbc benchmarks are improved by >70% [compared to gcc 3.3.2 on
 # Opteron 240 CPU] plus all the bells-n-whistles from 32-bit version
@@ -20,11 +20,14 @@
 #
 #		ECB encrypt	ECB decrypt	CBC large chunk
 # AMD64		33		41		13.0
-# EM64T		38		59		18.6
-# Core 2	30		43		14.5
+# EM64T		38		59		18.6(*)
+# Core 2	30		43		14.5(*)
+#
+# (*) with hyper-threading off
 
 $verticalspin=1;	# unlike 32-bit version $verticalspin performs
 			# ~15% better on both AMD and Intel cores
+$speed_limit=512;	# see aes-586.pl for details
 $output=shift;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -145,22 +148,17 @@ $code.=<<___;
 	movzb	`&lo("$s0")`,$acc0
 	movzb	`&lo("$s1")`,$acc1
 	movzb	`&lo("$s2")`,$acc2
-	mov	2($sbox,$acc0,8),$t0
-	mov	2($sbox,$acc1,8),$t1
-	mov	2($sbox,$acc2,8),$t2
-
-	and	\$0x000000ff,$t0
-	and	\$0x000000ff,$t1
-	and	\$0x000000ff,$t2
+	movzb	2($sbox,$acc0,8),$t0
+	movzb	2($sbox,$acc1,8),$t1
+	movzb	2($sbox,$acc2,8),$t2
 
 	movzb	`&lo("$s3")`,$acc0
 	movzb	`&hi("$s1")`,$acc1
 	movzb	`&hi("$s2")`,$acc2
-	mov	2($sbox,$acc0,8),$t3
+	movzb	2($sbox,$acc0,8),$t3
 	mov	0($sbox,$acc1,8),$acc1	#$t0
 	mov	0($sbox,$acc2,8),$acc2	#$t1
 
-	and	\$0x000000ff,$t3
 	and	\$0x0000ff00,$acc1
 	and	\$0x0000ff00,$acc2
 
@@ -621,7 +619,7 @@ AES_encrypt:
 	# pick Te4 copy which can't "overlap" with stack frame or key schedule
 	.picmeup	$sbox
 	lea	AES_Te+2048-.($sbox),$sbox
-	lea	768-32(%rsp),%rbp
+	lea	768(%rsp),%rbp
 	sub	$sbox,%rbp
 	and	\$0x300,%rbp
 	lea	($sbox,%rbp),$sbox
@@ -1215,7 +1213,7 @@ AES_decrypt:
 	# pick Td4 copy which can't "overlap" with stack frame or key schedule
 	.picmeup	$sbox
 	lea	AES_Td+2048-.($sbox),$sbox
-	lea	768-32(%rsp),%rbp
+	lea	768(%rsp),%rbp
 	sub	$sbox,%rbp
 	and	\$0x300,%rbp
 	lea	($sbox,%rbp),$sbox
@@ -1603,19 +1601,23 @@ ___
 {
 # stack frame layout
 # -8(%rsp)		return address
-my $_rsp="0(%rsp)";		# saved %rsp
-my $_len="8(%rsp)";		# copy of 3rd parameter, length
-my $_key="16(%rsp)";		# copy of 4th parameter, key
-my $_ivp="24(%rsp)";		# copy of 5th parameter, ivp
-my $keyp="32(%rsp)";		# one to pass as $key
-my $ivec="40(%rsp)";		# ivec[16]
-my $aes_key="56(%rsp)";		# copy of aes_key
-my $mark="56+240(%rsp)";	# copy of aes_key->rounds
+my $keyp="0(%rsp)";		# one to pass as $key
+my $keyend="8(%rsp)";		# &(keyp->rd_key[4*keyp->rounds])
+my $_rsp="16(%rsp)";		# saved %rsp
+my $_inp="24(%rsp)";		# copy of 1st parameter, inp
+my $_out="32(%rsp)";		# copy of 2nd parameter, out
+my $_len="40(%rsp)";		# copy of 3rd parameter, length
+my $_key="48(%rsp)";		# copy of 4th parameter, key
+my $_ivp="56(%rsp)";		# copy of 5th parameter, ivp
+my $ivec="64(%rsp)";		# ivec[16]
+my $aes_key="80(%rsp)";		# copy of aes_key
+my $mark="80+240(%rsp)";	# copy of aes_key->rounds
 
 $code.=<<___;
 .globl	AES_cbc_encrypt
 .type	AES_cbc_encrypt,\@function,6
 .align	16
+.extern	OPENSSL_ia32cap_P
 AES_cbc_encrypt:
 	cmp	\$0,%rdx	# check length
 	je	.Lcbc_just_ret
@@ -1629,20 +1631,27 @@ AES_cbc_encrypt:
 	cld
 
 	.picmeup $sbox
-.Lcbc_pic_point:
-
+	lea	AES_Te-.($sbox),$sbox
 	cmp	\$0,%r9
-	je	.LDECRYPT
+	jne	.Lcbc_picked_te
+	lea	AES_Td-AES_Te($sbox),$sbox
+.Lcbc_picked_te:
 
-	lea	AES_Te-.Lcbc_pic_point($sbox),$sbox
+	mov	OPENSSL_ia32cap_P(%rip),%eax
+	cmp	\$$speed_limit,%rdx
+	jb	.Lcbc_slow_way
+	test	\$15,%rdx
+	jnz	.Lcbc_slow_way
+	bt	\$28,%eax
+	jc	.Lcbc_slow_way
 
 	# allocate aligned stack frame...
-	lea	-64-248(%rsp),$key
+	lea	-88-248(%rsp),$key
 	and	\$-64,$key
 
-	# ... and make it doesn't alias with AES_Te modulo 4096
+	# ... and make sure it doesn't alias with AES_T[ed] modulo 4096
 	mov	$sbox,%r10
-	lea	2048($sbox),%r11
+	lea	2304($sbox),%r11
 	mov	$key,%r12
 	and	\$0xFFF,%r10	# s = $sbox&0xfff
 	and	\$0xFFF,%r11	# e = ($sbox+2048)&0xfff
@@ -1664,20 +1673,24 @@ AES_cbc_encrypt:
 	xchg	%rsp,$key
 	add	\$8,%rsp	# reserve for return address!
 	mov	$key,$_rsp	# save %rsp
+	mov	%rdi,$_inp	# save copy of inp
+	mov	%rsi,$_out	# save copy of out
 	mov	%rdx,$_len	# save copy of len
 	mov	%rcx,$_key	# save copy of key
 	mov	%r8,$_ivp	# save copy of ivp
 	movl	\$0,$mark	# copy of aes_key->rounds = 0;
 	mov	%r8,%rbp	# rearrange input arguments
+	mov	%r9,%rbx
 	mov	%rsi,$out
 	mov	%rdi,$inp
 	mov	%rcx,$key
 
+	mov	240($key),%eax		# key->rounds
 	# do we copy key schedule to stack?
 	mov	$key,%r10
 	sub	$sbox,%r10
 	and	\$0xfff,%r10
-	cmp	\$2048,%r10
+	cmp	\$2304,%r10
 	jb	.Lcbc_do_ecopy
 	cmp	\$4096-248,%r10
 	jb	.Lcbc_skip_ecopy
@@ -1688,12 +1701,11 @@ AES_cbc_encrypt:
 		lea	$aes_key,$key
 		mov	\$240/8,%ecx
 		.long	0x90A548F3	# rep movsq
-		mov	(%rsi),%eax	# copy aes_key->rounds
-		mov	%eax,(%rdi)
+		mov	%eax,(%rdi)	# copy aes_key->rounds
 .Lcbc_skip_ecopy:
 	mov	$key,$keyp	# save key pointer
 
-	mov	\$16,%ecx
+	mov	\$18,%ecx
 .align	4
 .Lcbc_prefetch_te:
 		mov	0($sbox),%r10
@@ -1703,42 +1715,41 @@ AES_cbc_encrypt:
 		lea	128($sbox),$sbox
 		sub	\$1,%ecx
 	jnz	.Lcbc_prefetch_te
-	sub	\$2048,$sbox
+	lea	-2304($sbox),$sbox
 
-	test	\$-16,%rdx		# check upon length
-	mov	%rdx,%r10
+	cmp	\$0,%rbx
+	je	.LFAST_DECRYPT
+
+#----------------------------- ENCRYPT -----------------------------#
 	mov	0(%rbp),$s0		# load iv
 	mov	4(%rbp),$s1
 	mov	8(%rbp),$s2
 	mov	12(%rbp),$s3
-	jz	.Lcbc_enc_tail		# short input...
 
 .align	4
-.Lcbc_enc_loop:
+.Lcbc_fast_enc_loop:
 		xor	0($inp),$s0
 		xor	4($inp),$s1
 		xor	8($inp),$s2
 		xor	12($inp),$s3
-		mov	$inp,$ivec	# if ($verticalspin) save inp
-
 		mov	$keyp,$key	# restore key
+		mov	$inp,$_inp	# if ($verticalspin) save inp
+
 		call	_x86_64_AES_encrypt
 
-		mov	$ivec,$inp	# if ($verticalspin) restore inp
+		mov	$_inp,$inp	# if ($verticalspin) restore inp
+		mov	$_len,%r10
 		mov	$s0,0($out)
 		mov	$s1,4($out)
 		mov	$s2,8($out)
 		mov	$s3,12($out)
 
-		mov	$_len,%r10
 		lea	16($inp),$inp
 		lea	16($out),$out
 		sub	\$16,%r10
 		test	\$-16,%r10
 		mov	%r10,$_len
-	jnz	.Lcbc_enc_loop
-	test	\$15,%r10
-	jnz	.Lcbc_enc_tail
+	jnz	.Lcbc_fast_enc_loop
 	mov	$_ivp,%rbp	# restore ivp
 	mov	$s0,0(%rbp)	# save ivec
 	mov	$s1,4(%rbp)
@@ -1749,12 +1760,12 @@ AES_cbc_encrypt:
 .Lcbc_cleanup:
 	cmpl	\$0,$mark	# was the key schedule copied?
 	lea	$aes_key,%rdi
-	mov	$_rsp,%rsp
 	je	.Lcbc_exit
 		mov	\$240/8,%ecx
 		xor	%rax,%rax
 		.long	0x90AB48F3	# rep stosq
 .Lcbc_exit:
+	mov	$_rsp,%rsp
 	popfq
 	pop	%r15
 	pop	%r14
@@ -1764,122 +1775,35 @@ AES_cbc_encrypt:
 	pop	%rbx
 .Lcbc_just_ret:
 	ret
-.align	4
-.Lcbc_enc_tail:
-	cmp	$inp,$out
-	je	.Lcbc_enc_in_place
-	mov	%r10,%rcx
-	mov	$inp,%rsi
-	mov	$out,%rdi
-	.long	0xF689A4F3		# rep movsb
-.Lcbc_enc_in_place:
-	mov	\$16,%rcx		# zero tail
-	sub	%r10,%rcx
-	xor	%rax,%rax
-	.long	0xF689AAF3		# rep stosb
-	mov	$out,$inp		# this is not a mistake!
-	movq	\$16,$_len		# len=16
-	jmp	.Lcbc_enc_loop		# one more spin...
+
 #----------------------------- DECRYPT -----------------------------#
 .align	16
-.LDECRYPT:
-	lea	AES_Td-.Lcbc_pic_point($sbox),$sbox
-
-	# allocate aligned stack frame...
-	lea	-64-248(%rsp),$key
-	and	\$-64,$key
-
-	# ... and make it doesn't alias with AES_Td modulo 4096
-	mov	$sbox,%r10
-	lea	2304($sbox),%r11
-	mov	$key,%r12
-	and	\$0xFFF,%r10	# s = $sbox&0xfff
-	and	\$0xFFF,%r11	# e = ($sbox+2048+256)&0xfff
-	and	\$0xFFF,%r12	# p = %rsp&0xfff
-
-	cmp	%r11,%r12	# if (p=>e) %rsp =- (p-e);
-	jb	.Lcbc_td_break_out
-	sub	%r11,%r12
-	sub	%r12,$key
-	jmp	.Lcbc_td_ok
-.Lcbc_td_break_out:		# else %rsp -= (p-s)&0xfff + framesz
-	sub	%r10,%r12
-	and	\$0xFFF,%r12
-	add	\$320,%r12
-	sub	%r12,$key
-.align	4
-.Lcbc_td_ok:
-
-	xchg	%rsp,$key
-	add	\$8,%rsp	# reserve for return address!
-	mov	$key,$_rsp	# save %rsp
-	mov	%rdx,$_len	# save copy of len
-	mov	%rcx,$_key	# save copy of key
-	mov	%r8,$_ivp	# save copy of ivp
-	movl	\$0,$mark	# copy of aes_key->rounds = 0;
-	mov	%r8,%rbp	# rearrange input arguments
-	mov	%rsi,$out
-	mov	%rdi,$inp
-	mov	%rcx,$key
-
-	# do we copy key schedule to stack?
-	mov	$key,%r10
-	sub	$sbox,%r10
-	and	\$0xfff,%r10
-	cmp	\$2304,%r10
-	jb	.Lcbc_do_dcopy
-	cmp	\$4096-248,%r10
-	jb	.Lcbc_skip_dcopy
-.align	4
-.Lcbc_do_dcopy:
-		mov	$key,%rsi
-		lea	$aes_key,%rdi
-		lea	$aes_key,$key
-		mov	\$240/8,%ecx
-		.long	0x90A548F3	# rep movsq
-		mov	(%rsi),%eax	# copy aes_key->rounds
-		mov	%eax,(%rdi)
-.Lcbc_skip_dcopy:
-	mov	$key,$keyp	# save key pointer
-
-	mov	\$18,%ecx
-.align	4
-.Lcbc_prefetch_td:
-		mov	0($sbox),%r10
-		mov	32($sbox),%r11
-		mov	64($sbox),%r12
-		mov	96($sbox),%r13
-		lea	128($sbox),$sbox
-		sub	\$1,%ecx
-	jnz	.Lcbc_prefetch_td
-	sub	\$2304,$sbox
-
+.LFAST_DECRYPT:
 	cmp	$inp,$out
-	je	.Lcbc_dec_in_place
+	je	.Lcbc_fast_dec_in_place
 
 	mov	%rbp,$ivec
 .align	4
-.Lcbc_dec_loop:
-		mov	0($inp),$s0		# read input
+.Lcbc_fast_dec_loop:
+		mov	0($inp),$s0	# read input
 		mov	4($inp),$s1
 		mov	8($inp),$s2
 		mov	12($inp),$s3
-		mov	$inp,8+$ivec	# if ($verticalspin) save inp
-
 		mov	$keyp,$key	# restore key
+		mov	$inp,$_inp	# if ($verticalspin) save inp
+
 		call	_x86_64_AES_decrypt
 
 		mov	$ivec,%rbp	# load ivp
-		mov	8+$ivec,$inp	# if ($verticalspin) restore inp
+		mov	$_inp,$inp	# if ($verticalspin) restore inp
+		mov	$_len,%r10	# load len
 		xor	0(%rbp),$s0	# xor iv
 		xor	4(%rbp),$s1
 		xor	8(%rbp),$s2
 		xor	12(%rbp),$s3
 		mov	$inp,%rbp	# current input, next iv
 
-		mov	$_len,%r10	# load len
 		sub	\$16,%r10
-		jc	.Lcbc_dec_partial
 		mov	%r10,$_len	# update len
 		mov	%rbp,$ivec	# update ivp
 
@@ -1890,8 +1814,7 @@ AES_cbc_encrypt:
 
 		lea	16($inp),$inp
 		lea	16($out),$out
-	jnz	.Lcbc_dec_loop
-.Lcbc_dec_end:
+	jnz	.Lcbc_fast_dec_loop
 	mov	$_ivp,%r12		# load user ivp
 	mov	0(%rbp),%r10		# load iv
 	mov	8(%rbp),%r11
@@ -1899,64 +1822,239 @@ AES_cbc_encrypt:
 	mov	%r11,8(%r12)
 	jmp	.Lcbc_cleanup
 
-.align	4
-.Lcbc_dec_partial:
-	mov	$s0,0+$ivec		# dump output to stack
-	mov	$s1,4+$ivec
-	mov	$s2,8+$ivec
-	mov	$s3,12+$ivec
-	mov	$out,%rdi
-	lea	$ivec,%rsi
-	mov	\$16,%rcx
-	add	%r10,%rcx		# number of bytes to copy
-	.long	0xF689A4F3		# rep movsb
-	jmp	.Lcbc_dec_end
-
 .align	16
-.Lcbc_dec_in_place:
+.Lcbc_fast_dec_in_place:
+	mov	0(%rbp),%r10		# copy iv to stack
+	mov	8(%rbp),%r11
+	mov	%r10,0+$ivec
+	mov	%r11,8+$ivec
+.align	4
+.Lcbc_fast_dec_in_place_loop:
 		mov	0($inp),$s0	# load input
 		mov	4($inp),$s1
 		mov	8($inp),$s2
 		mov	12($inp),$s3
+		mov	$keyp,$key	# restore key
+		mov	$inp,$_inp	# if ($verticalspin) save inp
 
-		mov	$inp,$ivec	# if ($verticalspin) save inp
-		mov	$keyp,$key
 		call	_x86_64_AES_decrypt
 
-		mov	$ivec,$inp	# if ($verticalspin) restore inp
-		mov	$_ivp,%rbp
-		xor	0(%rbp),$s0
-		xor	4(%rbp),$s1
-		xor	8(%rbp),$s2
-		xor	12(%rbp),$s3
+		mov	$_inp,$inp	# if ($verticalspin) restore inp
+		mov	$_len,%r10
+		xor	0+$ivec,$s0
+		xor	4+$ivec,$s1
+		xor	8+$ivec,$s2
+		xor	12+$ivec,$s3
 
-		mov	0($inp),%r10	# copy input to iv
-		mov	8($inp),%r11
-		mov	%r10,0(%rbp)
-		mov	%r11,8(%rbp)
+		mov	0($inp),%r11	# load input
+		mov	8($inp),%r12
+		sub	\$16,%r10
+		jz	.Lcbc_fast_dec_in_place_done
+
+		mov	%r11,0+$ivec	# copy input to iv
+		mov	%r12,8+$ivec
 
 		mov	$s0,0($out)	# save output [zaps input]
 		mov	$s1,4($out)
 		mov	$s2,8($out)
 		mov	$s3,12($out)
 
-		mov	$_len,%rcx
 		lea	16($inp),$inp
 		lea	16($out),$out
-		sub	\$16,%rcx
-		jc	.Lcbc_dec_in_place_partial
-		mov	%rcx,$_len
-	jnz	.Lcbc_dec_in_place
+		mov	%r10,$_len
+	jmp	.Lcbc_fast_dec_in_place_loop
+.Lcbc_fast_dec_in_place_done:
+	mov	$_ivp,%rdi
+	mov	%r11,0(%rdi)	# copy iv back to user
+	mov	%r12,8(%rdi)
+
+	mov	$s0,0($out)	# save output [zaps input]
+	mov	$s1,4($out)
+	mov	$s2,8($out)
+	mov	$s3,12($out)
+
 	jmp	.Lcbc_cleanup
 
+#--------------------------- SLOW ROUTINE ---------------------------#
+.align	16
+.Lcbc_slow_way:
+	# allocate aligned stack frame...
+	lea	-80(%rsp),%rbp
+	and	\$-64,%rbp
+	# ... just "above" key schedule
+	lea	-80-63(%rcx),%rax
+	sub	%rbp,%rax
+	neg	%rax
+	and	\$0x3c0,%rax
+	sub	%rax,%rbp
+
+	xchg	%rsp,%rbp
+	add	\$8,%rsp	# reserve for return address!
+	mov	%rbp,$_rsp	# save %rsp
+	mov	%rdi,$_inp	# save copy of inp
+	mov	%rsi,$_out	# save copy of out
+	mov	%rdx,$_len	# save copy of len
+	#mov	%rcx,$_key	# save copy of key
+	mov	%r8,$_ivp	# save copy of ivp
+	mov	%r8,%rbp	# rearrange input arguments
+	mov	%r9,%rbx
+	mov	%rsi,$out
+	mov	%rdi,$inp
+	mov	%rcx,$key
+
+	mov	240($key),%eax
+	mov	$key,$keyp	# save key pointer
+	shl	\$4,%eax
+	lea	($key,%rax),%rax
+	mov	%rax,$keyend
+
+	# pick Te4 copy which can't "overlap" with stack frame or key scdedule
+	lea	2048($sbox),$sbox
+	lea	768-8(%rsp),%rax
+	sub	$sbox,%rax
+	and	\$0x300,%rax
+	lea	($sbox,%rax),$sbox
+
+	cmp	\$0,%rbx
+	je	.LSLOW_DECRYPT
+
+#--------------------------- SLOW ENCRYPT ---------------------------#
+	test	\$-16,%rdx		# check upon length
+	mov	%rdx,%r10
+	mov	0(%rbp),$s0		# load iv
+	mov	4(%rbp),$s1
+	mov	8(%rbp),$s2
+	mov	12(%rbp),$s3
+	jz	.Lcbc_slow_enc_tail	# short input...
+
 .align	4
-.Lcbc_dec_in_place_partial:
-	# one can argue if this is actually required
-	lea	($out,%rcx),%rdi
-	lea	(%rbp,%rcx),%rsi
-	neg	%rcx
-	.long	0xF689A4F3	# rep movsb	# restore tail
-	jmp	.Lcbc_cleanup
+.Lcbc_slow_enc_loop:
+		xor	0($inp),$s0
+		xor	4($inp),$s1
+		xor	8($inp),$s2
+		xor	12($inp),$s3
+		mov	$keyp,$key	# restore key
+		mov	$inp,$_inp	# save inp
+		mov	$out,$_out	# save out
+
+		call	_x86_64_AES_encrypt_compact
+
+		mov	$_inp,$inp	# restore inp
+		mov	$_out,$out	# restore out
+		mov	$_len,%r10
+		mov	$s0,0($out)
+		mov	$s1,4($out)
+		mov	$s2,8($out)
+		mov	$s3,12($out)
+
+		lea	16($inp),$inp
+		lea	16($out),$out
+		sub	\$16,%r10
+		test	\$-16,%r10
+		mov	%r10,$_len
+	jnz	.Lcbc_slow_enc_loop
+	test	\$15,%r10
+	jnz	.Lcbc_slow_enc_tail
+	mov	$_ivp,%rbp	# restore ivp
+	mov	$s0,0(%rbp)	# save ivec
+	mov	$s1,4(%rbp)
+	mov	$s2,8(%rbp)
+	mov	$s3,12(%rbp)
+
+	jmp	.Lcbc_exit
+.align	4
+.Lcbc_slow_enc_tail:
+	cmp	$inp,$out
+	je	.Lcbc_slow_enc_in_place
+	mov	%r10,%rcx
+	mov	$inp,%rsi
+	mov	$out,%rdi
+	.long	0xF689A4F3		# rep movsb
+.Lcbc_slow_enc_in_place:
+	mov	\$16,%rcx		# zero tail
+	sub	%r10,%rcx
+	xor	%rax,%rax
+	.long	0xF689AAF3		# rep stosb
+	mov	$out,$inp		# this is not a mistake!
+	movq	\$16,$_len		# len=16
+	jmp	.Lcbc_slow_enc_loop	# one more spin...
+#--------------------------- SLOW DECRYPT ---------------------------#
+.align	16
+.LSLOW_DECRYPT:
+	shr	\$3,%rax
+	add	%rax,$sbox		# recall "magic" constants!
+
+	mov	0(%rbp),%r10		# copy iv to stack
+	mov	8(%rbp),%r11
+	mov	%r10,0+$ivec
+	mov	%r11,8+$ivec
+
+.align	4
+.Lcbc_slow_dec_loop:
+		mov	0($inp),$s0	# load input
+		mov	4($inp),$s1
+		mov	8($inp),$s2
+		mov	12($inp),$s3
+		mov	$keyp,$key	# restore key
+		mov	$inp,$_inp	# save inp
+		mov	$out,$_out	# save out
+
+		call	_x86_64_AES_decrypt_compact
+
+		mov	$_inp,$inp	# restore inp
+		mov	$_out,$out	# restore out
+		mov	$_len,%r10
+		xor	0+$ivec,$s0
+		xor	4+$ivec,$s1
+		xor	8+$ivec,$s2
+		xor	12+$ivec,$s3
+
+		mov	0($inp),%r11	# load input
+		mov	8($inp),%r12
+		sub	\$16,%r10
+		jc	.Lcbc_slow_dec_partial
+		jz	.Lcbc_slow_dec_done
+
+		mov	%r11,0+$ivec	# copy input to iv
+		mov	%r12,8+$ivec
+
+		mov	$s0,0($out)	# save output [can zap input]
+		mov	$s1,4($out)
+		mov	$s2,8($out)
+		mov	$s3,12($out)
+
+		lea	16($inp),$inp
+		lea	16($out),$out
+		mov	%r10,$_len
+	jmp	.Lcbc_slow_dec_loop
+.Lcbc_slow_dec_done:
+	mov	$_ivp,%rdi
+	mov	%r11,0(%rdi)		# copy iv back to user
+	mov	%r12,8(%rdi)
+
+	mov	$s0,0($out)		# save output [can zap input]
+	mov	$s1,4($out)
+	mov	$s2,8($out)
+	mov	$s3,12($out)
+
+	jmp	.Lcbc_exit
+
+.align	4
+.Lcbc_slow_dec_partial:
+	mov	$_ivp,%rdi
+	mov	%r11,0(%rdi)		# copy iv back to user
+	mov	%r12,8(%rdi)
+
+	mov	$s0,0+$ivec		# save output to stack
+	mov	$s1,4+$ivec
+	mov	$s2,8+$ivec
+	mov	$s3,12+$ivec
+
+	mov	$out,%rdi
+	lea	$ivec,%rsi
+	lea	16(%r10),%rcx
+	.long	0xF689A4F3	# rep movsb
+	jmp	.Lcbc_exit
 .size	AES_cbc_encrypt,.-AES_cbc_encrypt
 ___
 }
@@ -2385,6 +2483,7 @@ $code.=<<___;
 	.long	0x80808080, 0x80808080, 0xfefefefe, 0xfefefefe
 	.long	0x1b1b1b1b, 0x1b1b1b1b, 0, 0
 .asciz  "AES for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.align	64
 ___
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
