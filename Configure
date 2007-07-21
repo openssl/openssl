@@ -903,6 +903,11 @@ print "Configuring for $target\n";
 
 &usage if (!defined($table{$target}));
 
+if ($fips && ($disabled{"shared"} eq "default"))
+	{
+	delete $disabled{"shared"};
+	}
+
 
 foreach (sort (keys %disabled))
 	{
@@ -1179,7 +1184,7 @@ if ($zlib)
 my $shared_mark = "";
 if ($shared_target eq "")
 	{
-	$no_shared_warn = 1 if !$no_shared;
+	$no_shared_warn = 1 if !$no_shared && !$fips;
 	$no_shared = 1;
 	}
 if (!$no_shared)

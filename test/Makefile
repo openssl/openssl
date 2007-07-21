@@ -397,7 +397,7 @@ $(SHA512TEST)$(EXE_EXT): $(SHA512TEST).o $(DLIBCRYPTO)
 FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	if [ -z "$(SHARED_LIBS)" -o "$${shlib_target}" = "darwin-shared" ] ; then \
+	if [ "$(FIPSCANLIB)" != "libfips" -o -z "$(SHARED_LIBS)" -o "$${shlib_target}" = "darwin-shared" ] ; then \
 		LIBRARIES=""; \
 		if [ -n "$(FIPSCANLIB)" ]; then \
 			FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; FIPSLD_NPT="y" \
