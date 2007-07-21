@@ -564,7 +564,7 @@ my $prefix="";
 my $openssldir="";
 my $exe_ext="";
 my $install_prefix="";
-my $fipslibdir="/usr/local/ssl/lib/";
+my $fipslibdir="/usr/local/ssl/lib/fips-1.0/";
 my $nofipscanistercheck=0;
 my $fipsdso=0;
 my $fipscanisterinternal="n";
@@ -968,7 +968,17 @@ $no_shared = 0 if ($fipsdso && !$IsMK1MF);
 
 $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target eq "mingw");
 $exe_ext=".pm"  if ($target =~ /vos/);
-$openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
+if ($openssldir eq "" and $prefix eq "")
+	{
+	if ($fips)
+		{
+		$openssldir="/usr/local/ssl/fips-1.0";
+		}
+	else
+		{
+		$openssldir="/usr/local/ssl";
+		}
+	}
 $prefix=$openssldir if $prefix eq "";
 
 $default_ranlib= &which("ranlib") or $default_ranlib="true";
