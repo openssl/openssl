@@ -134,8 +134,6 @@ OPENSSL_ia32_cpuid:
 
 	mov	\$1,%eax
 	cpuid
-	bt	\$28,%edx		# test hyper-threading bit
-	jnc	.Ldone
 	cmp	\$0,%r9d
 	jne	.Lnotintel
 	or	\$1<<20,%edx		# use reserved bit to engage RC4_CHAR
@@ -144,6 +142,8 @@ OPENSSL_ia32_cpuid:
 	je	.Lnotintel
 	or	\$1<<30,%edx		# use reserved bit to skip unrolled loop
 .Lnotintel:
+	bt	\$28,%edx		# test hyper-threading bit
+	jnc	.Ldone
 	shr	\$16,%ebx
 	cmp	\$1,%bl			# see if cache is shared
 	ja	.Ldone
