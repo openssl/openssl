@@ -27,7 +27,12 @@
 # endif
   void FINGERPRINT_premain(void);
   static int premain_wrapper(void) { FINGERPRINT_premain(); return 0; }
+# ifdef _WIN64
+# pragma section(".CRT$XCU",read)
+  __declspec(allocate(".CRT$XCU"))
+# else
 # pragma data_seg(".CRT$XCU")
+# endif
   static int (*p)(void) = premain_wrapper;
   /* This results in pointer to premain to appear in .CRT segment,
    * which is traversed by Visual C run-time initialization code.

@@ -968,7 +968,7 @@ if ($fips)
 					"\$(FIPS_SHA1_EXE)", "");
 		$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)",
 					"\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}sha1dgst$obj \$(SHA1_ASM_OBJ)",
-					"","", 1);
+					"","\$(EX_LIBS)", 1);
 		}
 	else
 		{
