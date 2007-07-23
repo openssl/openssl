@@ -95,6 +95,9 @@ x86_64-gcc.o:	asm/x86_64-gcc.c
 bn-ia64.s:	asm/ia64.S
 	$(CC) $(CFLAGS) -E asm/ia64.S > $@
 
+bn-s390x.s:	asm/s390x.S
+	$(CC) $(CFLAGS) -E asm/s390x.S > $@
+
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
 pa-risc2W.o: asm/pa-risc2W.s

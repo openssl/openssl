@@ -589,7 +589,7 @@ case "$GUESSOS" in
   sh*-*-linux2)  OUT="linux-generic32"; options="$options -DL_ENDIAN" ;;
   m68k*-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
   s390-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN -DNO_ASM" ;;
-  s390x-*-linux2) OUT="linux-generic64"; options="$options -DB_ENDIAN" ;;
+  s390x-*-linux2) OUT="linux-s390x" ;;
   x86_64-*-linux?) OUT="linux-x86_64" ;;
   *86-*-linux2) OUT="linux-elf"
 	if [ "$GCCVER" -gt 28 ]; then

@@ -122,6 +122,7 @@ my $x86_out_asm="x86cpuid-out.o:bn86-out.o co86-out.o:dx86-out.o yx86-out.o:ax86
 
 my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o::aes-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o::rc4-x86_64.o::";
 my $ia64_asm=":bn-ia64.o::aes_core.o aes_cbc.o aes-ia64.o:::sha1-ia64.o sha256-ia64.o sha512-ia64.o::rc4-ia64.o::";
+my $s390x_asm=":bn-s390x.o::aes_cbc.o aes-s390x.o:::sha1-s390x.o sha256-s390x.o sha512-s390x.o::::";
 
 my $no_asm="::::::::::";
 
@@ -328,6 +329,7 @@ my %table=(
 "linux-ia64-ecc","ecc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-ia64-icc","icc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-x86_64",	"gcc:-m64 -DL_ENDIAN -DTERMIO -O3 -Wall -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:${x86_64_asm}:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-s390x",  "gcc:-m64 -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:${s390x_asm}:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 #### SPARC Linux setups
 # Ray Miller <ray.miller@computing-services.oxford.ac.uk> has patiently
 # assisted with debugging of following two configs.
