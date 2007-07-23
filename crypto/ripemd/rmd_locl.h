@@ -72,32 +72,20 @@
  */
 #ifdef RMD160_ASM
 # if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
-#  if !defined(B_ENDIAN)
-#   define ripemd160_block_host_order ripemd160_block_asm_host_order
-#  endif
+#  define ripemd160_block_host_order ripemd160_block_asm_data_order
 # endif
 #endif
 
-void ripemd160_block_host_order (RIPEMD160_CTX *c, const void *p,size_t num);
 void ripemd160_block_data_order (RIPEMD160_CTX *c, const void *p,size_t num);
-
-#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__)
-# if !defined(B_ENDIAN)
-#  define ripemd160_block_data_order ripemd160_block_host_order
-# endif
-#endif
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN
 
 #define HASH_LONG               RIPEMD160_LONG
-#define HASH_LONG_LOG2          RIPEMD160_LONG_LOG2
 #define HASH_CTX                RIPEMD160_CTX
 #define HASH_CBLOCK             RIPEMD160_CBLOCK
-#define HASH_LBLOCK             RIPEMD160_LBLOCK
 #define HASH_UPDATE             RIPEMD160_Update
 #define HASH_TRANSFORM          RIPEMD160_Transform
 #define HASH_FINAL              RIPEMD160_Final
-#define HASH_BLOCK_HOST_ORDER   ripemd160_block_host_order
 #define	HASH_MAKE_STRING(c,s)	do {	\
 	unsigned long ll;		\
 	ll=(c)->A; HOST_l2c(ll,(s));	\
@@ -106,9 +94,7 @@ void ripemd160_block_data_order (RIPEMD160_CTX *c, const void *p,size_t num);
 	ll=(c)->D; HOST_l2c(ll,(s));	\
 	ll=(c)->E; HOST_l2c(ll,(s));	\
 	} while (0)
-#if !defined(L_ENDIAN) || defined(ripemd160_block_data_order)
 #define HASH_BLOCK_DATA_ORDER   ripemd160_block_data_order
-#endif
 
 #include "md32_common.h"
 

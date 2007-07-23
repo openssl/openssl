@@ -2,8 +2,9 @@
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
 # SHA256/512_Transform for Itanium.
@@ -71,7 +72,7 @@ if ($output =~ /512.*\.[s|asm]/) {
 	$ADD="add";
 	$SHRU="shr.u";
 	$TABLE="K512";
-	$func="sha512_block";
+	$func="sha512_block_data_order";
 	@Sigma0=(28,34,39);
 	@Sigma1=(14,18,41);
 	@sigma0=(1,  8, 7);
@@ -85,7 +86,7 @@ if ($output =~ /512.*\.[s|asm]/) {
 	$ADD="padd4";
 	$SHRU="pshr4.u";
 	$TABLE="K256";
-	$func="sha256_block";
+	$func="sha256_block_data_order";
 	@Sigma0=( 2,13,22);
 	@Sigma1=( 6,11,25);
 	@sigma0=( 7,18, 3);
@@ -105,11 +106,13 @@ if (!defined($big_endian))
              {	$big_endian=(unpack('L',pack('N',1))==1);  }
 
 $code=<<___;
-.ident  \"$output, version 1.0\"
+.ident  \"$output, version 1.1\"
 .ident  \"IA-64 ISA artwork by Andy Polyakov <appro\@fy.chalmers.se>\"
 .explicit
 .text
 
+pfssave=r2;
+lcsave=r3;
 prsave=r14;
 K=r15;
 A=r16;	B=r17;	C=r18;	D=r19;
@@ -121,6 +124,8 @@ ctx=r31;	// 1st arg
 input=r48;	// 2nd arg
 num=r49;	// 3rd arg
 sgm0=r50;	sgm1=r51;	// small constants
+A_=r54;	B_=r55;	C_=r56;	D_=r57;
+E_=r58;	F_=r59;	G_=r60;	H_=r61;
 
 // void $func (SHA_CTX *ctx, const void *in,size_t num[,int host])
 .global	$func#
@@ -128,82 +133,319 @@ sgm0=r50;	sgm1=r51;	// small constants
 .align	32
 $func:
 	.prologue
-	.fframe	0
-	.save	ar.pfs,r2
-	.save	ar.lc,r3
-	.save	pr,prsave
-{ .mmi;	alloc	r2=ar.pfs,3,17,0,16
+	.save	ar.pfs,pfssave
+{ .mmi;	alloc	pfssave=ar.pfs,3,27,0,16
 	$ADDP	ctx=0,r32		// 1st arg
-	mov	r3=ar.lc	}
+	.save	ar.lc,lcsave
+	mov	lcsave=ar.lc	}
 { .mmi;	$ADDP	input=0,r33		// 2nd arg
-	addl	Ktbl=\@ltoff($TABLE#),gp
+	mov	num=r34			// 3rd arg
+	.save	pr,prsave
 	mov	prsave=pr	};;
 
 	.body
-{ .mii;	ld8	Ktbl=[Ktbl]
-	mov	num=r34		};;	// 3rd arg
-
 { .mib;	add	r8=0*$SZ,ctx
 	add	r9=1*$SZ,ctx
-	brp.loop.imp	.L_first16,.L_first16_ctop
-				}
+	brp.loop.imp	.L_first16,.L_first16_end-16	}
 { .mib;	add	r10=2*$SZ,ctx
 	add	r11=3*$SZ,ctx
-	brp.loop.imp	.L_rest,.L_rest_ctop
-				};;
-// load A-H
-{ .mmi;	$LDW	A=[r8],4*$SZ
-	$LDW	B=[r9],4*$SZ
-	mov	sgm0=$sigma0[2]	}
-{ .mmi;	$LDW	C=[r10],4*$SZ
-	$LDW	D=[r11],4*$SZ
-	mov	sgm1=$sigma1[2]	};;
-{ .mmi;	$LDW	E=[r8]
-	$LDW	F=[r9]		}
-{ .mmi;	$LDW	G=[r10]
-	$LDW	H=[r11]
-	cmp.ne	p15,p14=0,r35	};;	// used in sha256_block
+	brp.loop.imp	.L_rest,.L_rest_end-16		};;
 
+// load A-H
+.Lpic_point:
+{ .mmi;	$LDW	A_=[r8],4*$SZ
+	$LDW	B_=[r9],4*$SZ
+	mov	Ktbl=ip		}
+{ .mmi;	$LDW	C_=[r10],4*$SZ
+	$LDW	D_=[r11],4*$SZ
+	mov	sgm0=$sigma0[2]	};;
+{ .mmi;	$LDW	E_=[r8]
+	$LDW	F_=[r9]
+	add	Ktbl=($TABLE#-.Lpic_point),Ktbl		}
+{ .mmi;	$LDW	G_=[r10]
+	$LDW	H_=[r11]
+	cmp.ne	p0,p16=0,r0	};;	// used in sha256_block
+___
+$code.=<<___ if ($BITS==64);
+{ .mii;	and	r8=7,input
+	and	input=~7,input;;
+	cmp.eq	p9,p0=1,r8	}
+{ .mmi;	cmp.eq	p10,p0=2,r8
+	cmp.eq	p11,p0=3,r8
+	cmp.eq	p12,p0=4,r8	}
+{ .mmi;	cmp.eq	p13,p0=5,r8
+	cmp.eq	p14,p0=6,r8
+	cmp.eq	p15,p0=7,r8	};;
+___
+$code.=<<___;
 .L_outer:
-{ .mii;	mov	ar.lc=15
-	mov	ar.ec=1		};;
-.align	32
-.L_first16:
 .rotr	X[16]
+{ .mmi;	mov	A=A_
+	mov	B=B_
+	mov	ar.lc=14	}
+{ .mmi;	mov	C=C_
+	mov	D=D_
+	mov	E=E_		}
+{ .mmi;	mov	F=F_
+	mov	G=G_
+	mov	ar.ec=2		}
+{ .mmi;	ld1	X[15]=[input],$SZ		// eliminated in 64-bit
+	mov	H=H_
+	mov	sgm1=$sigma1[2]	};;
+
 ___
 $t0="t0", $t1="t1", $code.=<<___ if ($BITS==32);
-{ .mib;	(p14)	add	r9=1,input
-	(p14)	add	r10=2,input	}
-{ .mib;	(p14)	add	r11=3,input
-	(p15)	br.dptk.few	.L_host	};;
-{ .mmi;	(p14)	ld1	r8=[input],$SZ
-	(p14)	ld1	r9=[r9]		}
-{ .mmi;	(p14)	ld1	r10=[r10]
-	(p14)	ld1	r11=[r11]	};;
-{ .mii;	(p14)	dep	r9=r8,r9,8,8
-	(p14)	dep	r11=r10,r11,8,8	};;
-{ .mib;	(p14)	dep	X[15]=r9,r11,16,16 };;
-.L_host:
-{ .mib;	(p15)	$LDW	X[15]=[input],$SZ	// X[i]=*input++
+.align	32
+.L_first16:
+{ .mmi;		add	r9=1-$SZ,input
+		add	r10=2-$SZ,input
+		add	r11=3-$SZ,input	};;
+{ .mmi;		ld1	r9=[r9]
+		ld1	r10=[r10]
 		dep.z	$t1=E,32,32	}
-{ .mib;		$LDW	K=[Ktbl],$SZ
+{ .mmi;		$LDW	K=[Ktbl],$SZ
+		ld1	r11=[r11]
 		zxt4	E=E		};;
-{ .mmi;		or	$t1=$t1,E
-		and	T1=F,E
-		and	T2=A,B		}
+{ .mii;		or	$t1=$t1,E
+		dep	X[15]=X[15],r9,8,8
+		dep	r11=r10,r11,8,8	};;
+{ .mmi;		and	T1=F,E
+		and	T2=A,B
+		dep	X[15]=X[15],r11,16,16	}
 { .mmi;		andcm	r8=G,E
 		and	r9=A,C
 		mux2	$t0=A,0x44	};;	// copy lower half to upper
-{ .mib;		xor	T1=T1,r8		// T1=((e & f) ^ (~e & g))
+{ .mmi;	(p16)	ld1	X[15-1]=[input],$SZ	// prefetch
+		xor	T1=T1,r8		// T1=((e & f) ^ (~e & g))
 		_rotr	r11=$t1,$Sigma1[0] }	// ROTR(e,14)
 { .mib;		and	r10=B,C
 		xor	T2=T2,r9	};;
 ___
 $t0="A", $t1="E", $code.=<<___ if ($BITS==64);
-{ .mmi;		$LDW	X[15]=[input],$SZ	// X[i]=*input++
+// in 64-bit mode I load whole X[16] at once and take care of alignment...
+{ .mmi;	add	r8=1*$SZ,input
+	add	r9=2*$SZ,input
+	add	r10=3*$SZ,input		};;
+{ .mmb;	$LDW	X[15]=[input],4*$SZ
+	$LDW	X[14]=[r8],4*$SZ
+(p9)	br.cond.dpnt.many	.L1byte	};;
+{ .mmb;	$LDW	X[13]=[r9],4*$SZ
+	$LDW	X[12]=[r10],4*$SZ
+(p10)	br.cond.dpnt.many	.L2byte	};;
+{ .mmb;	$LDW	X[11]=[input],4*$SZ
+	$LDW	X[10]=[r8],4*$SZ
+(p11)	br.cond.dpnt.many	.L3byte	};;
+{ .mmb;	$LDW	X[ 9]=[r9],4*$SZ
+	$LDW	X[ 8]=[r10],4*$SZ
+(p12)	br.cond.dpnt.many	.L4byte	};;
+{ .mmb;	$LDW	X[ 7]=[input],4*$SZ
+	$LDW	X[ 6]=[r8],4*$SZ
+(p13)	br.cond.dpnt.many	.L5byte	};;
+{ .mmb;	$LDW	X[ 5]=[r9],4*$SZ
+	$LDW	X[ 4]=[r10],4*$SZ
+(p14)	br.cond.dpnt.many	.L6byte	};;
+{ .mmb;	$LDW	X[ 3]=[input],4*$SZ
+	$LDW	X[ 2]=[r8],4*$SZ
+(p15)	br.cond.dpnt.many	.L7byte	};;
+{ .mmb;	$LDW	X[ 1]=[r9],4*$SZ
+	$LDW	X[ 0]=[r10],4*$SZ
+	br.many	.L_first16		};;
+.L1byte:
+{ .mmi;	$LDW	X[13]=[r9],4*$SZ
+	$LDW	X[12]=[r10],4*$SZ
+	shrp	X[15]=X[15],X[14],56	};;
+{ .mmi;	$LDW	X[11]=[input],4*$SZ
+	$LDW	X[10]=[r8],4*$SZ
+	shrp	X[14]=X[14],X[13],56	}
+{ .mmi;	$LDW	X[ 9]=[r9],4*$SZ
+	$LDW	X[ 8]=[r10],4*$SZ
+	shrp	X[13]=X[13],X[12],56	};;
+{ .mmi;	$LDW	X[ 7]=[input],4*$SZ
+	$LDW	X[ 6]=[r8],4*$SZ
+	shrp	X[12]=X[12],X[11],56	}
+{ .mmi;	$LDW	X[ 5]=[r9],4*$SZ
+	$LDW	X[ 4]=[r10],4*$SZ
+	shrp	X[11]=X[11],X[10],56	};;
+{ .mmi;	$LDW	X[ 3]=[input],4*$SZ
+	$LDW	X[ 2]=[r8],4*$SZ
+	shrp	X[10]=X[10],X[ 9],56	}
+{ .mmi;	$LDW	X[ 1]=[r9],4*$SZ
+	$LDW	X[ 0]=[r10],4*$SZ
+	shrp	X[ 9]=X[ 9],X[ 8],56	};;
+{ .mii;	$LDW	T1=[input]
+	shrp	X[ 8]=X[ 8],X[ 7],56
+	shrp	X[ 7]=X[ 7],X[ 6],56	}
+{ .mii;	shrp	X[ 6]=X[ 6],X[ 5],56
+	shrp	X[ 5]=X[ 5],X[ 4],56	};;
+{ .mii;	shrp	X[ 4]=X[ 4],X[ 3],56
+	shrp	X[ 3]=X[ 3],X[ 2],56	}
+{ .mii;	shrp	X[ 2]=X[ 2],X[ 1],56
+	shrp	X[ 1]=X[ 1],X[ 0],56	}
+{ .mib;	shrp	X[ 0]=X[ 0],T1,56
+	br.many	.L_first16		};;
+.L2byte:
+{ .mmi;	$LDW	X[11]=[input],4*$SZ
+	$LDW	X[10]=[r8],4*$SZ
+	shrp	X[15]=X[15],X[14],48	}
+{ .mmi;	$LDW	X[ 9]=[r9],4*$SZ
+	$LDW	X[ 8]=[r10],4*$SZ
+	shrp	X[14]=X[14],X[13],48	};;
+{ .mmi;	$LDW	X[ 7]=[input],4*$SZ
+	$LDW	X[ 6]=[r8],4*$SZ
+	shrp	X[13]=X[13],X[12],48	}
+{ .mmi;	$LDW	X[ 5]=[r9],4*$SZ
+	$LDW	X[ 4]=[r10],4*$SZ
+	shrp	X[12]=X[12],X[11],48	};;
+{ .mmi;	$LDW	X[ 3]=[input],4*$SZ
+	$LDW	X[ 2]=[r8],4*$SZ
+	shrp	X[11]=X[11],X[10],48	}
+{ .mmi;	$LDW	X[ 1]=[r9],4*$SZ
+	$LDW	X[ 0]=[r10],4*$SZ
+	shrp	X[10]=X[10],X[ 9],48	};;
+{ .mii;	$LDW	T1=[input]
+	shrp	X[ 9]=X[ 9],X[ 8],48
+	shrp	X[ 8]=X[ 8],X[ 7],48	}
+{ .mii;	shrp	X[ 7]=X[ 7],X[ 6],48
+	shrp	X[ 6]=X[ 6],X[ 5],48	};;
+{ .mii;	shrp	X[ 5]=X[ 5],X[ 4],48
+	shrp	X[ 4]=X[ 4],X[ 3],48	}
+{ .mii;	shrp	X[ 3]=X[ 3],X[ 2],48
+	shrp	X[ 2]=X[ 2],X[ 1],48	}
+{ .mii;	shrp	X[ 1]=X[ 1],X[ 0],48
+	shrp	X[ 0]=X[ 0],T1,48	}
+{ .mfb;	br.many	.L_first16		};;
+.L3byte:
+{ .mmi;	$LDW	X[ 9]=[r9],4*$SZ
+	$LDW	X[ 8]=[r10],4*$SZ
+	shrp	X[15]=X[15],X[14],40	};;
+{ .mmi;	$LDW	X[ 7]=[input],4*$SZ
+	$LDW	X[ 6]=[r8],4*$SZ
+	shrp	X[14]=X[14],X[13],40	}
+{ .mmi;	$LDW	X[ 5]=[r9],4*$SZ
+	$LDW	X[ 4]=[r10],4*$SZ
+	shrp	X[13]=X[13],X[12],40	};;
+{ .mmi;	$LDW	X[ 3]=[input],4*$SZ
+	$LDW	X[ 2]=[r8],4*$SZ
+	shrp	X[12]=X[12],X[11],40	}
+{ .mmi;	$LDW	X[ 1]=[r9],4*$SZ
+	$LDW	X[ 0]=[r10],4*$SZ
+	shrp	X[11]=X[11],X[10],40	};;
+{ .mii;	$LDW	T1=[input]
+	shrp	X[10]=X[10],X[ 9],40
+	shrp	X[ 9]=X[ 9],X[ 8],40	}
+{ .mii;	shrp	X[ 8]=X[ 8],X[ 7],40
+	shrp	X[ 7]=X[ 7],X[ 6],40	};;
+{ .mii;	shrp	X[ 6]=X[ 6],X[ 5],40
+	shrp	X[ 5]=X[ 5],X[ 4],40	}
+{ .mii;	shrp	X[ 4]=X[ 4],X[ 3],40
+	shrp	X[ 3]=X[ 3],X[ 2],40	}
+{ .mii;	shrp	X[ 2]=X[ 2],X[ 1],40
+	shrp	X[ 1]=X[ 1],X[ 0],40	}
+{ .mib;	shrp	X[ 0]=X[ 0],T1,40
+	br.many	.L_first16		};;
+.L4byte:
+{ .mmi;	$LDW	X[ 7]=[input],4*$SZ
+	$LDW	X[ 6]=[r8],4*$SZ
+	shrp	X[15]=X[15],X[14],32	}
+{ .mmi;	$LDW	X[ 5]=[r9],4*$SZ
+	$LDW	X[ 4]=[r10],4*$SZ
+	shrp	X[14]=X[14],X[13],32	};;
+{ .mmi;	$LDW	X[ 3]=[input],4*$SZ
+	$LDW	X[ 2]=[r8],4*$SZ
+	shrp	X[13]=X[13],X[12],32	}
+{ .mmi;	$LDW	X[ 1]=[r9],4*$SZ
+	$LDW	X[ 0]=[r10],4*$SZ
+	shrp	X[12]=X[12],X[11],32	};;
+{ .mii;	$LDW	T1=[input]
+	shrp	X[11]=X[11],X[10],32
+	shrp	X[10]=X[10],X[ 9],32	}
+{ .mii;	shrp	X[ 9]=X[ 9],X[ 8],32
+	shrp	X[ 8]=X[ 8],X[ 7],32	};;
+{ .mii;	shrp	X[ 7]=X[ 7],X[ 6],32
+	shrp	X[ 6]=X[ 6],X[ 5],32	}
+{ .mii;	shrp	X[ 5]=X[ 5],X[ 4],32
+	shrp	X[ 4]=X[ 4],X[ 3],32	}
+{ .mii;	shrp	X[ 3]=X[ 3],X[ 2],32
+	shrp	X[ 2]=X[ 2],X[ 1],32	}
+{ .mii;	shrp	X[ 1]=X[ 1],X[ 0],32
+	shrp	X[ 0]=X[ 0],T1,32	}
+{ .mfb;	br.many	.L_first16		};;
+.L5byte:
+{ .mmi;	$LDW	X[ 5]=[r9],4*$SZ
+	$LDW	X[ 4]=[r10],4*$SZ
+	shrp	X[15]=X[15],X[14],24	};;
+{ .mmi;	$LDW	X[ 3]=[input],4*$SZ
+	$LDW	X[ 2]=[r8],4*$SZ
+	shrp	X[14]=X[14],X[13],24	}
+{ .mmi;	$LDW	X[ 1]=[r9],4*$SZ
+	$LDW	X[ 0]=[r10],4*$SZ
+	shrp	X[13]=X[13],X[12],24	};;
+{ .mii;	$LDW	T1=[input]
+	shrp	X[12]=X[12],X[11],24
+	shrp	X[11]=X[11],X[10],24	}
+{ .mii;	shrp	X[10]=X[10],X[ 9],24
+	shrp	X[ 9]=X[ 9],X[ 8],24	};;
+{ .mii;	shrp	X[ 8]=X[ 8],X[ 7],24
+	shrp	X[ 7]=X[ 7],X[ 6],24	}
+{ .mii;	shrp	X[ 6]=X[ 6],X[ 5],24
+	shrp	X[ 5]=X[ 5],X[ 4],24	}
+{ .mii;	shrp	X[ 4]=X[ 4],X[ 3],24
+	shrp	X[ 3]=X[ 3],X[ 2],24	}
+{ .mii;	shrp	X[ 2]=X[ 2],X[ 1],24
+	shrp	X[ 1]=X[ 1],X[ 0],24	}
+{ .mib;	shrp	X[ 0]=X[ 0],T1,24
+	br.many	.L_first16		};;
+.L6byte:
+{ .mmi;	$LDW	X[ 3]=[input],4*$SZ
+	$LDW	X[ 2]=[r8],4*$SZ
+	shrp	X[15]=X[15],X[14],16	}
+{ .mmi;	$LDW	X[ 1]=[r9],4*$SZ
+	$LDW	X[ 0]=[r10],4*$SZ
+	shrp	X[14]=X[14],X[13],16	};;
+{ .mii;	$LDW	T1=[input]
+	shrp	X[13]=X[13],X[12],16
+	shrp	X[12]=X[12],X[11],16	}
+{ .mii;	shrp	X[11]=X[11],X[10],16
+	shrp	X[10]=X[10],X[ 9],16	};;
+{ .mii;	shrp	X[ 9]=X[ 9],X[ 8],16
+	shrp	X[ 8]=X[ 8],X[ 7],16	}
+{ .mii;	shrp	X[ 7]=X[ 7],X[ 6],16
+	shrp	X[ 6]=X[ 6],X[ 5],16	}
+{ .mii;	shrp	X[ 5]=X[ 5],X[ 4],16
+	shrp	X[ 4]=X[ 4],X[ 3],16	}
+{ .mii;	shrp	X[ 3]=X[ 3],X[ 2],16
+	shrp	X[ 2]=X[ 2],X[ 1],16	}
+{ .mii;	shrp	X[ 1]=X[ 1],X[ 0],16
+	shrp	X[ 0]=X[ 0],T1,16	}
+{ .mfb;	br.many	.L_first16		};;
+.L7byte:
+{ .mmi;	$LDW	X[ 1]=[r9],4*$SZ
+	$LDW	X[ 0]=[r10],4*$SZ
+	shrp	X[15]=X[15],X[14],8	};;
+{ .mii;	$LDW	T1=[input]
+	shrp	X[14]=X[14],X[13],8
+	shrp	X[13]=X[13],X[12],8	}
+{ .mii;	shrp	X[12]=X[12],X[11],8
+	shrp	X[11]=X[11],X[10],8	};;
+{ .mii;	shrp	X[10]=X[10],X[ 9],8
+	shrp	X[ 9]=X[ 9],X[ 8],8	}
+{ .mii;	shrp	X[ 8]=X[ 8],X[ 7],8
+	shrp	X[ 7]=X[ 7],X[ 6],8	}
+{ .mii;	shrp	X[ 6]=X[ 6],X[ 5],8
+	shrp	X[ 5]=X[ 5],X[ 4],8	}
+{ .mii;	shrp	X[ 4]=X[ 4],X[ 3],8
+	shrp	X[ 3]=X[ 3],X[ 2],8	}
+{ .mii;	shrp	X[ 2]=X[ 2],X[ 1],8
+	shrp	X[ 1]=X[ 1],X[ 0],8	}
+{ .mib;	shrp	X[ 0]=X[ 0],T1,8
+	br.many	.L_first16		};;
+
+.align	32
+.L_first16:
+{ .mmi;		$LDW	K=[Ktbl],$SZ
 		and	T1=F,E
 		and	T2=A,B		}
-{ .mmi;		$LDW	K=[Ktbl],$SZ
+{ .mmi;		//$LDW	X[15]=[input],$SZ	// X[i]=*input++
 		andcm	r8=G,E
 		and	r9=A,C		};;
 { .mmi;		xor	T1=T1,r8		//T1=((e & f) ^ (~e & g))
@@ -236,13 +478,14 @@ $code.=<<___;
 { .mmi;		xor	r10=r8,r10		// r10=Sigma0(a)
 		mov	B=A
 		add	A=T1,T2		};;
-.L_first16_ctop:
 { .mib;		add	E=E,T1
 		add	A=A,r10			// T2=Maj(a,b,c)+Sigma0(a)
 	br.ctop.sptk	.L_first16	};;
+.L_first16_end:
 
-{ .mib;	mov	ar.lc=$rounds-17	}
-{ .mib;	mov	ar.ec=1			};;
+{ .mii;	mov	ar.lc=$rounds-17
+	mov	ar.ec=1			};;
+
 .align	32
 .L_rest:
 .rotr	X[16]
@@ -311,46 +554,38 @@ $code.=<<___;
 { .mmi;		xor	r10=r8,r10		// r10=Sigma0(a)
 		mov	B=A
 		add	A=T1,T2		};;
-.L_rest_ctop:
 { .mib;		add	E=E,T1
 		add	A=A,r10			// T2=Maj(a,b,c)+Sigma0(a)
 	br.ctop.sptk	.L_rest	};;
+.L_rest_end:
+
+{ .mmi;	add	A_=A_,A
+	add	B_=B_,B
+	add	C_=C_,C			}
+{ .mmi;	add	D_=D_,D
+	add	E_=E_,E
+	cmp.ltu	p16,p0=1,num		};;
+{ .mmi;	add	F_=F_,F
+	add	G_=G_,G
+	add	H_=H_,H			}
+{ .mmb;	add	Ktbl=-$SZ*$rounds,Ktbl
+(p16)	add	num=-1,num
+(p16)	br.dptk.many	.L_outer	};;
 
 { .mib;	add	r8=0*$SZ,ctx
 	add	r9=1*$SZ,ctx		}
 { .mib;	add	r10=2*$SZ,ctx
 	add	r11=3*$SZ,ctx		};;
-{ .mmi;	$LDW	r32=[r8],4*$SZ
-	$LDW	r33=[r9],4*$SZ		}
-{ .mmi;	$LDW	r34=[r10],4*$SZ
-	$LDW	r35=[r11],4*$SZ
-	cmp.ltu	p6,p7=1,num		};;
-{ .mmi;	$LDW	r36=[r8],-4*$SZ
-	$LDW	r37=[r9],-4*$SZ
-(p6)	add	Ktbl=-$SZ*$rounds,Ktbl	}
-{ .mmi;	$LDW	r38=[r10],-4*$SZ
-	$LDW	r39=[r11],-4*$SZ
-(p7)	mov	ar.lc=r3		};;
-{ .mmi;	add	A=A,r32
-	add	B=B,r33
-	add	C=C,r34			}
-{ .mmi;	add	D=D,r35
-	add	E=E,r36
-	add	F=F,r37			};;
-{ .mmi;	$STW	[r8]=A,4*$SZ
-	$STW	[r9]=B,4*$SZ
-	add	G=G,r38			}
-{ .mmi;	$STW	[r10]=C,4*$SZ
-	$STW	[r11]=D,4*$SZ
-	add	H=H,r39			};;
-{ .mmi;	$STW	[r8]=E
-	$STW	[r9]=F
-(p6)	add	num=-1,num		}
-{ .mmb;	$STW	[r10]=G
-	$STW	[r11]=H
-(p6)	br.dptk.many	.L_outer	};;
-
-{ .mib;	mov	pr=prsave,0x1ffff
+{ .mmi;	$STW	[r8]=A_,4*$SZ
+	$STW	[r9]=B_,4*$SZ
+	mov	ar.lc=lcsave		}
+{ .mmi;	$STW	[r10]=C_,4*$SZ
+	$STW	[r11]=D_,4*$SZ
+	mov	pr=prsave,0x1ffff	};;
+{ .mmb;	$STW	[r8]=E_
+	$STW	[r9]=F_			}
+{ .mmb;	$STW	[r10]=G_
+	$STW	[r11]=H_
 	br.ret.sptk.many	b0	};;
 .endp	$func#
 ___
@@ -359,7 +594,10 @@ $code =~ s/\`([^\`]*)\`/eval $1/gem;
 $code =~ s/_rotr(\s+)([^=]+)=([^,]+),([0-9]+)/shrp$1$2=$3,$3,$4/gm;
 if ($BITS==64) {
     $code =~ s/mux2(\s+)\S+/nop.i$1 0x0/gm;
-    $code =~ s/mux1(\s+)\S+/nop.i$1 0x0/gm if ($big_endian);
+    $code =~ s/mux1(\s+)\S+/nop.i$1 0x0/gm	if ($big_endian);
+    $code =~ s/(shrp\s+X\[[^=]+)=([^,]+),([^,]+),([1-9]+)/$1=$3,$2,64-$4/gm
+    						if (!$big_endian);
+    $code =~ s/ld1(\s+)X\[\S+/nop.m$1 0x0/gm;
 }
 
 print $code;
@@ -384,6 +622,7 @@ K256:	data4	0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5
 	data4	0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208
 	data4	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
 .size	K256#,$SZ*$rounds
+stringz	"SHA256 block transform for IA64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 print<<___ if ($BITS==64);
 .align	64
@@ -429,4 +668,5 @@ K512:	data8	0x428a2f98d728ae22,0x7137449123ef65cd
 	data8	0x4cc5d4becb3e42b6,0x597f299cfc657e2a
 	data8	0x5fcb6fab3ad6faec,0x6c44198c4a475817
 .size	K512#,$SZ*$rounds
+stringz	"SHA512 block transform for IA64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
