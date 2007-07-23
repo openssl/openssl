@@ -31,6 +31,8 @@
 # Implement AES_set_[en|de]crypt_key. Key schedule setup is avoided
 # for 128-bit keys, if hardware support is detected.
 
+$softonly=0;	# allow hardware support
+
 $t1="%r0";
 $t2="%r1";
 $t3="%r2";	$inp="%r2";
@@ -171,6 +173,8 @@ $code.=<<___;
 .type	AES_encrypt,\@function
 AES_encrypt:
 	stg	$ra,112($sp)
+___
+$code.=<<___ if (!$softonly);
 	lghi	%r0,10
 	c	%r0,240($key)
 	jne	.Lesoft
@@ -199,10 +203,11 @@ AES_encrypt:
 	bras	$ra,.Lekey_internal	# postponed key schedule setup
 	lmg	$inp,$key,16($sp)
 .Lesoft:
+___
+$code.=<<___;
 	stmg	%r3,%r13,24($sp)
 
-	bras	$tbl,1f
-1:	aghi	$tbl,AES_Te-.
+	larl	$tbl,AES_Te
 
 	llgf	$s0,0($inp)
 	llgf	$s1,4($inp)
@@ -493,6 +498,8 @@ $code.=<<___;
 .type	AES_decrypt,\@function
 AES_decrypt:
 	stg	$ra,112($sp)
+___
+$code.=<<___ if (!$softonly);
 	lghi	%r0,10
 	c	%r0,240($key)
 	jne	.Ldsoft
@@ -522,10 +529,11 @@ AES_decrypt:
 	bras	$ra,.Ldkey_internal	# postponed key schedule setup
 	lmg	$inp,$key,16($sp)
 .Ldsoft:
+___
+$code.=<<___;
 	stmg	%r3,%r13,24($sp)
 
-	bras	$tbl,1f
-1:	aghi	$tbl,AES_Td-.
+	larl	$tbl,AES_Td
 
 	llgf	$s0,0($inp)
 	llgf	$s1,4($inp)
@@ -731,6 +739,8 @@ AES_set_encrypt_key:
 
 .align	4
 .Lproceed128:
+___
+$code.=<<___ if (!$softonly);
 	lghi	%r0,0		# query capability vector
 	la	%r1,16($sp)
 	.long	0xb92e0042	# km %r4,%r2
@@ -745,13 +755,13 @@ AES_set_encrypt_key:
 	st	$t1,240($key)
 	lghi	%r2,0
 	br	%r14
-
+___
+$code.=<<___;
 .align	16
 .Lekey_internal:
 	stmg	%r6,%r13,48($sp)	# all non-volatile regs
 
-	bras	$tbl,1f
-1:	aghi	$tbl,AES_Te+2048-.
+	larl	$tbl,AES_Te+2048
 
 	llgf	$s0,0($inp)
 	llgf	$s1,4($inp)
@@ -914,7 +924,7 @@ AES_set_encrypt_key:
 	la	$i1,0($i1,$tbl)
 	la	$i2,0($i2,$tbl)
 	la	$i3,0($i3,$tbl)
-	icm	$t2,1,0($t2)		# Te4[rk[11]>>0]
+	llgc	$t2,0($t2)		# Te4[rk[11]>>0]
 	icm	$t2,2,0($i1)		# Te4[rk[11]>>8]<<8
 	icm	$t2,4,0($i2)		# Te4[rk[11]>>16]<<16
 	icm	$t2,8,0($i3)		# Te4[rk[11]>>24]<<24
@@ -949,7 +959,8 @@ AES_set_decrypt_key:
 	lg	$ra,112($sp)
 	ltgr	%r2,%r2
 	bnzr	$ra
-
+___
+$code.=<<___ if (!$softonly);
 	lghi	$t1,10
 	c	$t1,240($key)
 	jne	.Lgo
@@ -969,6 +980,8 @@ AES_set_decrypt_key:
 	bras	$ra,.Lekey_internal
 	lg	$key,32($sp)
 	lg	$ra,40($sp)
+___
+$code.=<<___;
 
 .Lgo:	llgf	$rounds,240($key)
 	la	$i1,0($key)
