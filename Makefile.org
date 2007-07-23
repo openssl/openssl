@@ -323,7 +323,7 @@ build_libs: build_crypto build_fips build_ssl build_engines
 
 build_crypto:
 	if [ -n "$(FIPSCANLIB)" ]; then \
-		EXCL_OBJ='$(AES_ASM_OBJ) $(BN_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
+		EXCL_OBJ='$(AES_ASM_OBJ) $(BN_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA1_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
 		ARX='$(PERL) $${TOP}/util/arx.pl $(AR)' ; \
 	else \
 		ARX='${AR}' ; \
