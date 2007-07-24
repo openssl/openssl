@@ -1221,7 +1221,7 @@ if ($sha1_obj =~ /\.o$/)
 	$cflags.=" -DSHA1_ASM"   if ($sha1_obj =~ /sx86/ || $sha1_obj =~ /sha1/);
 	$cflags.=" -DSHA256_ASM" if ($sha1_obj =~ /sha256/);
 	$cflags.=" -DSHA512_ASM" if ($sha1_obj =~ /sha512/);
-	if ($sha1_obj =~ /sx86/)
+	if ($sha1_obj =~ /sse2/)
 	    {	if ($no_sse2)
 		{   $sha1_obj =~ s/\S*sse2\S+//;        }
 		elsif ($cflags !~ /OPENSSL_IA32_SSE2/)
