@@ -1248,6 +1248,8 @@ $bn_obj = $bn_asm unless $bn_obj ne "";
 $cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($bn_obj =~ /bn86/);
 $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /bn86/);
 
+$cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /\-mont|mo86\-/);
+
 if ($fips)
 	{
 	$openssl_other_defines.="#define OPENSSL_FIPS\n";

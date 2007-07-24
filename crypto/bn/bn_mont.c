@@ -127,6 +127,21 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	{
 	BIGNUM *tmp;
 	int ret=0;
+#if defined(OPENSSL_BN_ASM_MONT) && defined(MONT_WORD)
+	int num = mont->N.top;
+
+	if (num>1 && a->top==num && b->top==num)
+		{
+		if (bn_wexpand(r,num) == NULL) return(0);
+		if (bn_mul_mont(r->d,a->d,b->d,mont->N.d,&mont->n0,num))
+			{
+			r->neg = a->neg^b->neg;
+			r->top = num;
+			bn_correct_top(r);
+			return(1);
+			}
+		}
+#endif
 
 	BN_CTX_start(ctx);
 	tmp = BN_CTX_get(ctx);
