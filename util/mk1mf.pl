@@ -794,7 +794,7 @@ foreach (values %lib_nam)
 		{
 		if ($cpuid_asm_obj ne "")
 			{
-			$lib_obj =~ s/\s(\S*\/cryptlib\S*)/ $1 \$(CPUID_ASM_OBJ)/;
+			$lib_obj =~ s/(\S*\/cryptlib\S*)/$1 \$(CPUID_ASM_OBJ)/;
 			$rules.=&do_asm_rule($cpuid_asm_obj,$cpuid_asm_src);
 			}
 		if ($aes_asm_obj ne "")
@@ -882,7 +882,7 @@ foreach (split(/\s+/,$test))
 	$t=&bname($_);
 	my $ltype;
 	# Check to see if test program is FIPS
-	if (/fips-1.0/)
+	if ($fips && /fips-1.0/)
 		{
 		# If fipsdso link to libosslfips.dll 
 		# otherwise perform static link to 

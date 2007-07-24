@@ -190,8 +190,8 @@ if (!$no_asm)
 	{
 	$aes_asm_obj='crypto\aes\asm\a_win32.obj';
 	$aes_asm_src='crypto\aes\asm\a_win32.asm';
-	$bn_asm_obj='crypto\bn\asm\bn_win32.obj';
-	$bn_asm_src='crypto\bn\asm\bn_win32.asm';
+	$bn_asm_obj='crypto\bn\asm\bn_win32.obj crypto\bn\asm\mt_win32.obj';
+	$bn_asm_src='crypto\bn\asm\bn_win32.asm crypto\bn\asm\mt_win32.asm';
 	$bnco_asm_obj='crypto\bn\asm\co_win32.obj';
 	$bnco_asm_src='crypto\bn\asm\co_win32.asm';
 	$des_enc_obj='crypto\des\asm\d_win32.obj crypto\des\asm\y_win32.obj';
@@ -212,7 +212,7 @@ if (!$no_asm)
 	$rmd160_asm_src='crypto\ripemd\asm\rm_win32.asm';
 	$cpuid_asm_obj='crypto\cpu_win32.obj';
 	$cpuid_asm_src='crypto\cpu_win32.asm';
-	$cflags.=" -DOPENSSL_CPUID_OBJ -DOPENSSL_IA32_SSE2 -DAES_ASM -DBN_ASM -DOPENSSL_BN_ASM_PART_WORDS -DMD5_ASM -DSHA1_ASM -DRMD160_ASM";
+	$cflags.=" -DOPENSSL_CPUID_OBJ -DOPENSSL_IA32_SSE2 -DAES_ASM -DBN_ASM -DOPENSSL_BN_ASM_PART_WORDS -DOPENSSL_BN_ASM_MONT -DMD5_ASM -DSHA1_ASM -DRMD160_ASM";
 	}
 
 if ($shlib && $FLAVOR !~ /CE/)
