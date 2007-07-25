@@ -5,8 +5,6 @@ package x86unix;	# GAS actually...
 *out=\@::out;
 
 $label="L000";
-$const="";
-$constl=0;
 
 $align=($::aout)?"4":"16";
 $under=($::aout or $::coff)?"_":"";
@@ -189,24 +187,20 @@ sub ::set_label
 
 sub ::file_end
 {   # try to detect if SSE2 or MMX extensions were used on ELF platform...
-    if ($::elf && grep {/%[x]?mm[0-7]/i} @out){
-	my $tmp;
+    if ($::elf && grep {/\b%[x]?mm[0-7]\b|OPENSSL_ia32cap_P\b/i} @out) {
 
 	push (@out,"\n.section\t.bss\n");
 	push (@out,".comm\t${under}OPENSSL_ia32cap_P,4,4\n");
 
+	return;	# below is not needed in OpenSSL context
+
 	push (@out,".section\t.init\n");
-	# One can argue that it's wasteful to craft every
-	# SSE/MMX module with this snippet... Well, it's 72
-	# bytes long and for the moment we have two modules.
-	# Let's argue when we have 7 modules or so...
-	#
+	&::picmeup("edx","OPENSSL_ia32cap_P");
 	# $1<<10 sets a reserved bit to signal that variable
 	# was initialized already...
-	&::picmeup("edx","OPENSSL_ia32cap_P");
-	$tmp=<<___;
+	my $code=<<___;
 	cmpl	\$0,(%edx)
-	jne	1f
+	jne	3f
 	movl	\$1<<10,(%edx)
 	pushf
 	popl	%eax
@@ -218,27 +212,47 @@ sub ::file_end
 	popl	%eax
 	xorl	%ecx,%eax
 	btl	\$21,%eax
-	jnc	1f
+	jnc	3f
+	pushl	%ebp
 	pushl	%edi
 	pushl	%ebx
 	movl	%edx,%edi
-	movl	\$1,%eax
+	xor	%eax,%eax
 	.byte	0x0f,0xa2
-	orl	\$1<<10,%edx
+	xorl	%eax,%eax
+	cmpl	$1970169159,%ebx
+	setne	%al
+	movl	%eax,%ebp
+	cmpl	$1231384169,%edx
+	setne	%al
+	orl	%eax,%ebp
+	cmpl	$1818588270,%ecx
+	setne	%al
+	orl	%eax,%ebp
+	movl	$1,%eax
+	.byte	0x0f,0xa2
+	cmpl	$0,%ebp
+	jne	1f
+	andb	$15,%ah
+	cmpb	$15,%ah
+	jne	1f
+	orl	$1048576,%edx
+1:	btl	$28,%edx
+	jnc	2f
+	shrl	$16,%ebx
+	cmpb	$1,%bl
+	ja	2f
+	andl	$4026531839,%edx
+2:	orl	\$1<<10,%edx
 	movl	%edx,0(%edi)
 	popl	%ebx
 	popl	%edi
-	jmp	1f
+	popl	%ebp
+	jmp	3f
 	.align	$align
-	1:
+	3:
 ___
-	push (@out,$tmp);
-    }
-
-    if ($const ne "")
-    {	push(@out,".section .rodata\n");
-	push(@out,$const);
-	$const="";
+	push (@out,$code);
     }
 }
 
