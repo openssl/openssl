@@ -7,6 +7,7 @@ package x86nasm;
 $lprfx="\@L";
 $label="000";
 $under=($::netware)?'':'_';
+$initseg="";
 
 sub ::generic
 { my $opcode=shift;
@@ -117,15 +118,10 @@ sub ::function_end_B
 
 sub ::file_end
 {   # try to detect if SSE2 or MMX extensions were used on Win32...
-    if ($::win32 && grep {/\s+[x]*mm[0-7]/i} @out)
-    {	# One can argue that it's wasteful to craft every
-	# SSE/MMX module with this snippet... Well, it's 72
-	# bytes long and for the moment we have two modules.
-	# Let's argue when we have 7 modules or so...
-	#
-	# $1<<10 sets a reserved bit to signal that variable
+    if ($::win32 && grep {/\b[x]?mm[0-7]\b|OPENSSL_ia32cap_P\b/i} @out)
+    {	# $1<<10 sets a reserved bit to signal that variable
 	# was initialized already...
-	my $tmp=<<___;
+	my $code=<<___;
 align	16
 ${lprfx}OPENSSL_ia32cap_init:
 	lea	edx,[${under}OPENSSL_ia32cap_P]
@@ -143,27 +139,60 @@ ${lprfx}OPENSSL_ia32cap_init:
 	xor	eax,ecx
 	bt	eax,21
 	jnc	NEAR ${lprfx}nocpuid
+	push	ebp
 	push	edi
 	push	ebx
 	mov	edi,edx
+	xor	eax,eax
+	cpuid
+	xor	eax,eax
+	cmp	ebx,'Genu'
+	setne	al
+	mov	ebp,eax
+	cmp	edx,'ineI'
+	setne	al
+	or	ebp,eax
+	cmp	eax,'ntel'
+	setne	al
+	or	ebp,eax
 	mov	eax,1
 	cpuid
+	cmp	ebp,0
+	jne	${lprfx}notP4
+	and	ah,15
+	cmp	ah,15
+	jne	${lprfx}notP4
+	or	edx,1<<20
+${lprfx}notP4:
+	bt	edx,28
+	jnc	${lprfx}done
+	shr	ebx,16
+	cmp	bl,1
+	ja	${lprfx}done
+	and	edx,0xefffffff
+${lprfx}done:
 	or	edx,1<<10
 	mov	DWORD [edi],edx
 	pop	ebx
 	pop	edi
+	pop	ebp
 ${lprfx}nocpuid:
 	ret
-
 segment	.CRT\$XCU data align=4
 dd	${lprfx}OPENSSL_ia32cap_init
+___
+	my $data=<<___;
 segment	.bss
 common	${under}OPENSSL_ia32cap_P 4
 ___
+
+	#<not needed in OpenSSL context>#push (@out,$code);
+
 	# comment out OPENSSL_ia32cap_P declarations
 	grep {s/(^extern\s+${under}OPENSSL_ia32cap_P)/\;$1/} @out;
-	push (@out,$tmp);		
+	push (@out,$data)
     }
+    push (@out,$initseg) if ($initseg);		
 }
 
 sub ::comment {   foreach (@_) { push(@out,"\t; $_\n"); }   }
@@ -216,12 +245,11 @@ sub ::picmeup
 sub ::initseg
 { my($f)=$under.shift;
     if ($::win32)
-    { my($tmp)=<<___;
-segment	.CRT\$XCU rdata align=4
+    {	$initseg=<<___;
+segment	.CRT\$XCU data align=4
 extern	$f
 dd	$f
 ___
-	push(@out,$tmp);
     }
 }
 
