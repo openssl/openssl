@@ -1,59 +1,123 @@
 
 @echo off
 
-perl Configure VC-WIN32 fipscanisterbuild
-pause
 SET ASMOPTS=-DOPENSSL_IA32_SSE2
+SET ASM=no-asm
+
+if NOT X%PROCESSOR_ARCHITECTURE% == X goto defined 
+
+echo Processor Architecture Undefined: defaulting to X86
+
+goto X86
+
+:defined
+
+if %PROCESSOR_ARCHITECTURE% == x86 goto X86
+
+if %PROCESSOR_ARCHITECTURE% == IA64 goto IA64
+
+if %PROCESSOR_ARCHITECTURE% == AMD64 goto AMD64
+
+echo Processor Architecture Unrecognized: defaulting to X86
+
+:X86
+echo Auto Configuring for X86
+
+SET TARGET=VC-WIN32
+
+if NOT x%1% == xno-asm SET ASM=nasm
+
+goto compile
+
+:IA64
+
+echo Auto Configuring for IA64
+SET TARGET=VC-WIN64I
+perl ms\uplink.pl win64i > ms\uptable.asm
+if ERRORLEVEL 1 goto error
+ias -o ms\uptable.obj ms\uptable.asm
+if ERRORLEVEL 1 goto error
+
+goto compile
+
+:AMD64
+
+echo Auto Configuring for AMD64
+SET TARGET=VC-WIN64A
+perl ms\uplink.pl win64a > ms\uptable.asm
+if ERRORLEVEL 1 goto error
+ml64 -c -Foms\uptable.obj ms\uptable.asm
+if ERRORLEVEL 1 goto error
+
+
+:compile
+
+perl Configure %TARGET% fipscanisterbuild
+pause
+
+if %ASM% == no-asm goto skipasm
 echo Generating x86 for NASM assember
 
 echo Bignum
 cd crypto\bn\asm
 perl bn-586.pl win32n %ASMOPTS% > bn_win32.asm
+if ERRORLEVEL 1 goto error
 perl co-586.pl win32n %ASMOPTS% > co_win32.asm
+if ERRORLEVEL 1 goto error
 perl x86-mont.pl win32n %ASMOPTS% > mt_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo AES
 cd crypto\aes\asm
 perl aes-586.pl win32n %ASMOPTS% > a_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo DES
 cd crypto\des\asm
 perl des-586.pl win32n %ASMOPTS% > d_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo "crypt(3)"
 
 cd crypto\des\asm
 perl crypt586.pl win32n %ASMOPTS% > y_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo Blowfish
 
 cd crypto\bf\asm
 perl bf-586.pl win32n %ASMOPTS% > b_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo CAST5
 cd crypto\cast\asm
 perl cast-586.pl win32n %ASMOPTS% > c_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo RC4
 cd crypto\rc4\asm
 perl rc4-586.pl win32n %ASMOPTS% > r4_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo MD5
 cd crypto\md5\asm
 perl md5-586.pl win32n %ASMOPTS% > m5_win32.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo SHA1
 cd crypto\sha\asm
 perl sha1-586.pl win32n %ASMOPTS% > s1_win32.asm
+if ERRORLEVEL 1 goto error
 perl sha512-sse2.pl win32n %ASMOPTS% > sha512-sse2.asm
+if ERRORLEVEL 1 goto error
 cd ..\..\..
 
 echo RIPEMD160
@@ -74,11 +138,13 @@ perl x86cpuid.pl win32n %ASMOPTS% > cpu_win32.asm
 if ERRORLEVEL 1 goto error
 cd ..
 
+:skipasm
+
 echo on
 
 perl util\mkfiles.pl >MINFO
 @if ERRORLEVEL 1 goto error
-perl util\mk1mf.pl dll nasm VC-WIN32 >ms\ntdll.mak
+perl util\mk1mf.pl dll %ASM% %TARGET% >ms\ntdll.mak
 @if ERRORLEVEL 1 goto error
 
 perl util\mkdef.pl 32 libeay > ms\libeay32.def
@@ -86,6 +152,7 @@ perl util\mkdef.pl 32 libeay > ms\libeay32.def
 perl util\mkdef.pl 32 ssleay > ms\ssleay32.def
 @if ERRORLEVEL 1 goto error
 
+nmake -f ms\ntdll.mak clean
 nmake -f ms\ntdll.mak
 @if ERRORLEVEL 1 goto error
 
