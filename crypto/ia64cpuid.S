@@ -130,6 +130,9 @@ OPENSSL_wipe_cpu:
 .global	OPENSSL_cleanse#
 .proc	OPENSSL_cleanse#
 OPENSSL_cleanse:
+#if defined(_HPUX_SOURCE) && !defined(_LP64)
+{ .mmi;	addp4		r32=0,r32	};;
+#endif
 { .mib;	and		r2=7,r32
 	cmp.leu		p6,p0=15,r33	    // len>=15
 (p6)	br.cond.dptk	.Lot		};;
