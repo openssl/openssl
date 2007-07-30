@@ -1879,10 +1879,10 @@ AES_cbc_encrypt:
 .align	16
 .Lcbc_slow_way:
 	# allocate aligned stack frame...
-	lea	-80(%rsp),%rbp
+	lea	-88(%rsp),%rbp
 	and	\$-64,%rbp
 	# ... just "above" key schedule
-	lea	-80-63(%rcx),%rax
+	lea	-88-63(%rcx),%rax
 	sub	%rbp,%rax
 	neg	%rax
 	and	\$0x3c0,%rax
@@ -1891,9 +1891,9 @@ AES_cbc_encrypt:
 	xchg	%rsp,%rbp
 	add	\$8,%rsp	# reserve for return address!
 	mov	%rbp,$_rsp	# save %rsp
-	mov	%rdi,$_inp	# save copy of inp
-	mov	%rsi,$_out	# save copy of out
-	mov	%rdx,$_len	# save copy of len
+	#mov	%rdi,$_inp	# save copy of inp
+	#mov	%rsi,$_out	# save copy of out
+	#mov	%rdx,$_len	# save copy of len
 	#mov	%rcx,$_key	# save copy of key
 	mov	%r8,$_ivp	# save copy of ivp
 	mov	%r8,%rbp	# rearrange input arguments
@@ -1901,6 +1901,7 @@ AES_cbc_encrypt:
 	mov	%rsi,$out
 	mov	%rdi,$inp
 	mov	%rcx,$key
+	mov	%rdx,%r10
 
 	mov	240($key),%eax
 	mov	$key,$keyp	# save key pointer
@@ -1919,8 +1920,7 @@ AES_cbc_encrypt:
 	je	.LSLOW_DECRYPT
 
 #--------------------------- SLOW ENCRYPT ---------------------------#
-	test	\$-16,%rdx		# check upon length
-	mov	%rdx,%r10
+	test	\$-16,%r10		# check upon length
 	mov	0(%rbp),$s0		# load iv
 	mov	4(%rbp),$s1
 	mov	8(%rbp),$s2
@@ -1936,12 +1936,13 @@ AES_cbc_encrypt:
 		mov	$keyp,$key	# restore key
 		mov	$inp,$_inp	# save inp
 		mov	$out,$_out	# save out
+		mov	%r10,$_len	# save len
 
 		call	_x86_64_AES_encrypt_compact
 
 		mov	$_inp,$inp	# restore inp
 		mov	$_out,$out	# restore out
-		mov	$_len,%r10
+		mov	$_len,%r10	# restore len
 		mov	$s0,0($out)
 		mov	$s1,4($out)
 		mov	$s2,8($out)
@@ -1951,7 +1952,6 @@ AES_cbc_encrypt:
 		lea	16($out),$out
 		sub	\$16,%r10
 		test	\$-16,%r10
-		mov	%r10,$_len
 	jnz	.Lcbc_slow_enc_loop
 	test	\$15,%r10
 	jnz	.Lcbc_slow_enc_tail
@@ -1969,12 +1969,12 @@ AES_cbc_encrypt:
 	mov	%r10,%rcx
 	mov	$inp,%rsi
 	mov	$out,%rdi
-	.long	0xF689A4F3		# rep movsb
+	.long	0x9066A4F3		# rep movsb
 .Lcbc_slow_enc_in_place:
 	mov	\$16,%rcx		# zero tail
 	sub	%r10,%rcx
 	xor	%rax,%rax
-	.long	0xF689AAF3		# rep stosb
+	.long	0x9066AAF3		# rep stosb
 	mov	$out,$inp		# this is not a mistake!
 	movq	\$16,$_len		# len=16
 	jmp	.Lcbc_slow_enc_loop	# one more spin...
@@ -1984,10 +1984,10 @@ AES_cbc_encrypt:
 	shr	\$3,%rax
 	add	%rax,$sbox		# recall "magic" constants!
 
-	mov	0(%rbp),%r10		# copy iv to stack
-	mov	8(%rbp),%r11
-	mov	%r10,0+$ivec
-	mov	%r11,8+$ivec
+	mov	0(%rbp),%r11		# copy iv to stack
+	mov	8(%rbp),%r12
+	mov	%r11,0+$ivec
+	mov	%r12,8+$ivec
 
 .align	4
 .Lcbc_slow_dec_loop:
@@ -1998,6 +1998,7 @@ AES_cbc_encrypt:
 		mov	$keyp,$key	# restore key
 		mov	$inp,$_inp	# save inp
 		mov	$out,$_out	# save out
+		mov	%r10,$_len	# save len
 
 		call	_x86_64_AES_decrypt_compact
 
@@ -2025,7 +2026,6 @@ AES_cbc_encrypt:
 
 		lea	16($inp),$inp
 		lea	16($out),$out
-		mov	%r10,$_len
 	jmp	.Lcbc_slow_dec_loop
 .Lcbc_slow_dec_done:
 	mov	$_ivp,%rdi
@@ -2053,7 +2053,7 @@ AES_cbc_encrypt:
 	mov	$out,%rdi
 	lea	$ivec,%rsi
 	lea	16(%r10),%rcx
-	.long	0xF689A4F3	# rep movsb
+	.long	0x9066A4F3	# rep movsb
 	jmp	.Lcbc_exit
 .size	AES_cbc_encrypt,.-AES_cbc_encrypt
 ___
