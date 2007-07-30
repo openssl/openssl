@@ -60,11 +60,14 @@
 #ifndef OPENSSL_ALLOW_FCAST
 
 #ifndef OPENSSL_INLINE
-#ifdef OPENSSL_SYSNAME_WIN32
-#define OPENSSL_INLINE __inline static
-#else
-#define OPENSSL_INLINE inline static
-#endif
+# if defined(__SUNPRO_C)
+#  if __SUNPRO_C>0x520
+#    define __inline inline
+#  else
+#    define __inline
+#  endif
+# endif
+# define OPENSSL_INLINE __inline static
 #endif
 
 #define STACK_OF(type) struct stack_st_##type
