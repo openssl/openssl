@@ -77,7 +77,9 @@ x86_64cpuid.s: x86_64cpuid.pl
 	$(PERL) x86_64cpuid.pl $@
 ia64cpuid.s: ia64cpuid.S
 	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
-ppccpuid_%.s:	ppccpuid.pl;	$(PERL) $< $@
+ppccpuid_%.s:		ppccpuid.pl;	$(PERL) $< $@
+ppccpuid_aix32.s:	ppccpuid.pl;	$(PERL) ppccpuid.pl $@
+ppccpuid_aix64.s:	ppccpuid.pl;	$(PERL) ppccpuid.pl $@
 
 testapps:
 	[ -z "$(THIS)" ] || (	if echo ${SDIRS} | fgrep ' des '; \
