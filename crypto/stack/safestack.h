@@ -60,7 +60,7 @@
 #ifndef OPENSSL_ALLOW_FCAST
 
 #ifndef OPENSSL_INLINE
-# if defined(__SUNPRO_C)
+# if defined(__SUNPRO_C) && !defined(__inline)
 #  if __SUNPRO_C>0x520
 #    define __inline inline
 #  else
