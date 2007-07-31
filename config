@@ -525,7 +525,17 @@ case "$GUESSOS" in
 	OUT="irix-mips3-$CC"
 	;;
   ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
-  ppc-apple-darwin*) OUT="darwin-ppc-cc" ;;
+  ppc-apple-darwin*)
+	ISA64=`(sysctl -n hw.optional.64bitops) 2>/dev/null`
+	if [ "$ISA64" = "1" ]; then
+	    echo "WARNING! If you wish to build 64-bit library, then you have to"
+	    echo "         invoke './Configure darwin64-ppc-cc' *manually*."
+	    if [ "$TEST" = "false" -a -t 1 ]; then
+	      echo "         You have about 5 seconds to press Ctrl-C to abort."
+	      (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	    fi
+	fi
+	OUT="darwin-ppc-cc" ;;
   i386-apple-darwin*) OUT="darwin-i386-cc" ;;
   alpha-*-linux2)
         ISA=`awk '/cpu model/{print$4;exit(0);}' /proc/cpuinfo`
