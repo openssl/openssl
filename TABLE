@@ -951,7 +951,7 @@ $cflags       = -O3 -fomit-frame-pointer -fno-common
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
-$lflags       = 
+$lflags       = -Wl,-search_paths_first%
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $cpuid_obj    = 
 $bn_obj       = 
@@ -978,7 +978,7 @@ $cflags       = -O3 -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
-$lflags       = -Wl,-search_paths_first
+$lflags       = -Wl,-search_paths_first%
 $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $cpuid_obj    = 
 $bn_obj       = osx_ppc32.o
@@ -1649,7 +1649,7 @@ $arflags      =
 
 *** debug-steve
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -march=i486 -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe
+$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -m32 -g -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
