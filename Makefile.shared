@@ -200,8 +200,10 @@ link_app.bsd:
 # to use native NSModule(3) API and refers to dlfcn as termporary hack.
 link_o.darwin:
 	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME); \
-	SHLIB_SUFFIX=.so; \
+	SHLIB=`expr "$$THIS" : '.*/\([^/\.]*\)\.'`; \
+	SHLIB=$${SHLIB:-lib$(LIBNAME)}; \
+	SHLIB_SUFFIX=`expr "$$THIS" : '.*\(\.[^\.]*\)$$'`; \
+	SHLIB_SUFFIX=$${SHLIB_SUFFIX:-.so}; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS)"; \
