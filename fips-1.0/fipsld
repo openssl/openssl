@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (c) 2005 The OpenSSL Project.
+# Copyright (c) 2005-2007 The OpenSSL Project.
 #
 # Depending on output file name, the script either embeds fingerprint
 # into libcrypto.so or static application. "Static" refers to static
@@ -18,54 +18,51 @@ CC=${FIPSLD_CC:-${CC}}
 # Initially -c wasn't intended to be interpreted here, but it might
 # make life easier for those who want to build FIPS-ified applications
 # with minimal [if any] modifications to their Makefiles...
-(   while [ "x$1" != "x" -a "x$1" != "x-c" ]; do shift; done;
+(   while [ "x$1" != "x" -a "x$1" != "x-c" -a "x$1" != "x-E" ]; do shift; done;
     [ $# -ge 1 ]
 ) && exec ${CC} "$@"
 
+TARGET=`(while [ "x$1" != "x" -a "x$1" != "x-o" ]; do shift; done; echo $2)`
+
 # If using an auto-tooled (autoconf/automake/libtool) project,
 # configure will fail when testing the compiler or even performing
-# simple checks.  Pass-thru to compiler directly if not linking
-# to libcrypto, allowing auto-tooled applications to utilize fipsld
-# (e.g.  CC=/usr/local/ssl/bin/fipsld FIPSLD_CC=gcc ./configure && make )
-# If FIPSLD_NPT is set never call the pass-thru: the standalone fips commands
-# need this because they don't link to libcrypto
-[ -z "$FIPSLD_NPT" -a -z "$FIPSLD_LIBFIPS" ] && {
-case "$*" in
-	*libcrypto.a*)
-	;;
-	*-lcrypto*)
-	;;
-	*)
-		exec ${CC} $*
-	;;
+# simple checks. Pass-through to compiler directly if application is
+# is not being linked with libcrypto, allowing auto-tooled applications
+# to utilize fipsld (e.g. CC=/usr/local/ssl/bin/fipsld FIPSLD_CC=gcc
+# ./configure && make). But keep in mind[!] that if certified code
+# resides in a shared library, then fipsld *may not* be used and
+# end-developer should not modify application configuration and build
+# procedures. This is because in-core fingerprint and associated
+# procedures are already embedded into and executed in shared library
+# context.
+case `basename "${TARGET}"` in
+libcrypto*|libfips*|*.dll)		;;
+*)	case "$*" in
+	*libcrypto.a*|*-lcrypto*)	;;
+	*)	exec ${CC} "$@"		;;
+	esac
 esac
-}
+
+[ -n "${TARGET}" ] || { echo 'no -o specified'; exit 1; }
 
 # Turn on debugging output?
 (   while [ "x$1" != "x" -a "x$1" != "x-DDEBUG_FINGERPRINT_PREMAIN" ]; do shift; done;
     [ $# -ge 1 ]
 ) && set -x
 
-TARGET=`(while [ "x$1" != "x" -a "x$1" != "x-o" ]; do shift; done; echo $2)`
-[ -n "${TARGET}" ] || { echo 'no -o specified'; exit 1; }
-
 THERE="`echo $0 | sed -e 's|[^/]*$||'`"..
 
-# FIPSCANLIB is the library containing fipscanister.o by default it is
-# libcrypto.a
-
-FIPSCANLIB=${FIPSCANLIB:-libcrypto}
-
-# FIPSLIBDIR is location of installed validated FIPS module
-# if FIPSCANISTERINTERNAL="y" link against internally generated fipscanister.o
-if [ "x$FIPSCANISTERINTERNAL" != "xy" ]; then
-	FIPSLIBDIR=${FIPSLIBDIR:-/usr/local/ssl/lib}
-else
-	FIPSLIBDIR=${THERE}/fips-1.0
+# If set, FIPSLIBDIR is location of installed validated FIPS module
+if [ -n "${FIPSLIBDIR}" ]; then
+	CANISTER_O="${FIPSLIBDIR}"
+elif [ -f "${THERE}/fips-1.0/fipscanister.o" ]; then
+	CANISTER_O="${THERE}/fips-1.0/fipscanister.o"
+elif [ -f "${THERE}/lib/fipscanister.o" ]; then
+	CANISTER_O="${THERE}/lib/fipscanister.o"
 fi
+[ -f ${CANISTER_O} ] || { echo "unable to find ${CANISTER_O}"; exit 1; }
 
-[ -f "${FIPSLIBDIR}/fipscanister.o" ] ||
-	{ echo "fipscanister.o not found"; exit 1; }
+PREMAIN_C=`dirname "${CANISTER_O}"`/fips_premain.c
 
 HMAC_KEY="etaonrishdlcupfm"
 
@@ -82,78 +79,90 @@ case "${TARGET}" in
 [!/]*)	TARGET=./${TARGET} ;;
 esac
 
-case "${TARGET}" in
-*${FIPSCANLIB}*|*.dll)	# must be linking a shared lib...
-	# Shared lib creation can be taking place in the source
+case `basename "${TARGET}"` in
+libfips*|*fips.dll)
+	# libfips.so creation can be taking place in the source
 	# directory only!!!
-	FINGERTYPE="${THERE}/fips-1.0/sha/fips_standalone_sha1"
-	CANISTER_O="${FIPSLIBDIR}/fipscanister.o"
-	PREMAIN_C="${FIPSLIBDIR}/fips_premain.c"
-echo Canister: $CANISTER_O
+	FINGERTYPE="${THERE}/fips-1.0/fips_standalone_sha1"
+	# fipscanister.o should be specified on command line...
+	CANISTER_O=`(while [ "x$1" != "x" ]; do case "$1" in *fipscanister.o) echo $1; exit;; esac; shift; done)`
+	[ -n "$CANISTER_O" ] || { echo "fipscanister.o is not found"; exit 1; }
+	PREMAIN_C=`dirname "${CANISTER_O}"`/fips_premain.c
 
 	# verify fipspremain.c against its detached signature...
 	${FINGERTYPE} "${PREMAIN_C}" | sed "s/(.*\//(/" | \
 		diff -w "${PREMAIN_C}.sha1" - || \
 	{ echo "${PREMAIN_C} fingerprint mismatch"; exit 1; }
-	# Special case: if FIPSLD_LIBFIPS is asserted we are building
-	# libfips shared library and fipscanister.o is already present
-	# in libfips.a
-	if [ -n "$FIPSLD_LIBFIPS" ] ; then
-		${CC}  "${PREMAIN_C}" \
-			${_WL_PREMAIN} "$@"
-	else
+	# verify fipscanister.o against its detached signature...
+	${FINGERTYPE} "${CANISTER_O}" | sed "s/(.*\//(/" | \
+		diff -w "${CANISTER_O}.sha1" - || \
+	{ echo "${CANISTER_O} fingerprint mismatch"; exit 1; }
 
-		# verify fipscanister.o against its detached signature...
-		${FINGERTYPE} "${CANISTER_O}" | sed "s/(.*\//(/" | \
-			diff -w "${CANISTER_O}.sha1" - || \
-		{ echo "${CANISTER_O} fingerprint mismatch"; exit 1; }
-
-		# Temporarily remove fipscanister.o from library!
-		# We are required to use the standalone copy...
-		trap	'ar r "${THERE}/$FIPSCANLIB.a" "${CANISTER_O}";
-			 (ranlib "${THERE}/$FIPSCANLIB.a") 2>/dev/null;
-			 sleep 1;
-			 touch -c "${TARGET}"' 0
-
-		ar d "${THERE}/$FIPSCANLIB.a" fipscanister.o 2>&1 > /dev/null || :
-		(ranlib "${THERE}/$FIPSCANLIB.a") 2>/dev/null || :
-
-		${CC}	"${CANISTER_O}" \
-			"${PREMAIN_C}" \
-			${_WL_PREMAIN} "$@"
-	fi
+	/bin/rm -f "${TARGET}"
+	${CC} "${PREMAIN_C}" ${_WL_PREMAIN} "$@"
 
 	# generate signature...
-	SIG=`("${THERE}/fips-1.0/fips_premain_dso" "${TARGET}" || rm "${TARGET}")`
+	SIG=`"${THERE}/fips-1.0/fips_premain_dso" "${TARGET}"`
+	/bin/rm -f "${TARGET}"
 	if [ -z "${SIG}" ]; then
 	   echo "unable to collect signature"; exit 1
 	fi
 
-	if [ -n "$FIPSLD_LIBFIPS" ] ; then
-		${CC}  -DHMAC_SHA1_SIG=\"${SIG}\" "${PREMAIN_C}" \
-			${_WL_PREMAIN} "$@"
-	else
+	# recompile with signature...
+	${CC} -DHMAC_SHA1_SIG=\"${SIG}\" "${PREMAIN_C}" ${_WL_PREMAIN} "$@"
+	;;
+libcrypto*|*.dll)	# must be linking a shared lib...
+	# Shared lib creation can be taking place in the source
+	# directory only, but fipscanister.o can reside elsewhere...
+	FINGERTYPE="${THERE}/fips-1.0/fips_standalone_sha1"
 
-		# recompile with signature...
-		${CC}	"${CANISTER_O}" \
-			-DHMAC_SHA1_SIG=\"${SIG}\" "${PREMAIN_C}" \
-			${_WL_PREMAIN} "$@"
+	# verify fipspremain.c against its detached signature...
+	${FINGERTYPE} "${PREMAIN_C}" | sed "s/(.*\//(/" | \
+		diff -w "${PREMAIN_C}.sha1" - || \
+	{ echo "${PREMAIN_C} fingerprint mismatch"; exit 1; }
+	# verify fipscanister.o against its detached signature...
+	${FINGERTYPE} "${CANISTER_O}" | sed "s/(.*\//(/" | \
+		diff -w "${CANISTER_O}.sha1" - || \
+	{ echo "${CANISTER_O} fingerprint mismatch"; exit 1; }
+
+	# Temporarily remove fipscanister.o from libcrypto.a!
+	# We are required to use the standalone copy...
+	trap	'ar r "${THERE}/libcrypto.a" "${CANISTER_O}";
+		 (ranlib "${THERE}/libcrypto.a") 2>/dev/null;
+		 sleep 1;
+		 touch -c "${TARGET}"' 0
+
+	ar d "${THERE}/libcrypto.a" fipscanister.o 2>&1 > /dev/null || :
+	(ranlib "${THERE}/libcrypto.a") 2>/dev/null || :
+
+	/bin/rm -f "${TARGET}"
+	${CC}	"${CANISTER_O}" \
+		"${PREMAIN_C}" \
+		${_WL_PREMAIN} "$@"
+
+	# generate signature...
+	SIG=`"${THERE}/fips-1.0/fips_premain_dso" "${TARGET}"`
+	/bin/rm -f "${TARGET}"
+	if [ -z "${SIG}" ]; then
+	   echo "unable to collect signature"; exit 1
 	fi
+
+	# recompile with signature...
+	${CC}	"${CANISTER_O}" \
+		-DHMAC_SHA1_SIG=\"${SIG}\" "${PREMAIN_C}" \
+		${_WL_PREMAIN} "$@"
 	;;
 
 *)	# must be linking statically...
 	# Static linking can be taking place either in the source
 	# directory or off the installed binary target destination.
-	if [ -x "${THERE}/fips-1.0/sha/fips_standalone_sha1" ]; then
-		FINGERTYPE="${THERE}/fips-1.0/sha/fips_standalone_sha1"
+	if [ -x "${THERE}/fips-1.0/fips_standalone_sha1" ]; then
+		FINGERTYPE="${THERE}/fips-1.0/fips_standalone_sha1"
 	else	# Installed tree is expected to contain
 		# lib/fipscanister.o, lib/fipscanister.o.sha1 and
 		# lib/fips_premain.c [not to mention bin/openssl].
 		FINGERTYPE="${THERE}/bin/openssl sha1 -hmac ${HMAC_KEY}"
 	fi
-
-	CANISTER_O="${FIPSLIBDIR}/fipscanister.o"
-	PREMAIN_C="${FIPSLIBDIR}/fips_premain.c"
 
 	# verify fipscanister.o against its detached signature...
 	${FINGERTYPE} "${CANISTER_O}" | sed "s/(.*\//(/" | \
@@ -161,16 +170,18 @@ echo Canister: $CANISTER_O
 	{ echo "${CANISTER_O} fingerprint mismatch"; exit 1; }
 
 	# verify fips_premain.c against its detached signature...
-#	${FINGERTYPE} "${PREMAIN_C}" | sed "s/(.*\//(/" | \
-#		diff -w "${PREMAIN_C}.sha1" - || \
-#	{ echo "${PREMAIN_C} fingerprint mismatch"; exit 1; }
+	${FINGERTYPE} "${PREMAIN_C}" | sed "s/(.*\//(/" | \
+		diff -w "${PREMAIN_C}.sha1" - || \
+	{ echo "${PREMAIN_C} fingerprint mismatch"; exit 1; }
 
+	/bin/rm -f "${TARGET}"
 	${CC}	"${CANISTER_O}" \
 		"${PREMAIN_C}" \
 		${_WL_PREMAIN} "$@"
 
 	# generate signature...
-	SIG=`("${TARGET}" || /bin/rm "${TARGET}")`
+	SIG=`"${TARGET}"`
+	/bin/rm -f "${TARGET}"
 	if [ -z "${SIG}" ]; then
 	   echo "unable to collect signature"; exit 1
 	fi

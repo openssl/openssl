@@ -354,11 +354,8 @@ $(DLIBCRYPTO):
 BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	if [ "$${shlib_target}" = "hpux-shared" -o "$${shlib_target}" = "darwin-shared" ] ; then \
-		LIBRARIES="$(DLIBSSL) $(DLIBCRYPTO) $(LIBKRB5)"; \
-	else \
-		LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
-	fi; \
+	LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
+	[ "$(FIPSCANLIB)" = "libfips" ] && LIBRARIES="$$LIBRARIES -lfips"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
@@ -397,15 +394,11 @@ $(SHA512TEST)$(EXE_EXT): $(SHA512TEST).o $(DLIBCRYPTO)
 FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	if [ "$(FIPSCANLIB)" != "libfips" -o -z "$(SHARED_LIBS)" -o "$${shlib_target}" = "darwin-shared" ] ; then \
-		LIBRARIES=""; \
-		if [ -n "$(FIPSCANLIB)" ]; then \
-			FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; FIPSLD_NPT="y" \
-			export CC FIPSLD_CC FIPSLD_NPT ; \
-		fi; \
-	else \
-		LIBRARIES="$(LIBFIPS)"; \
+	LIBRARIES="$(LIBCRYPTO) $(LIBKRB5)"; \
+	if [ -z "$(SHARED_LIBS)" ] ; then \
+		FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; export CC FIPSLD_CC; \
 	fi; \
+	[ "$(FIPSCANLIB)" = "libfips" ] && LIBRARIES="-L$(TOP) -lfips"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		CC=$${CC} APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
@@ -414,15 +407,11 @@ FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 FIPS_CRYPTO_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	fi; \
-	if [ -z "$(SHARED_LIBS)" -o "$${shlib_target}" = "darwin-shared" ] ; then \
-		LIBRARIES="$(DLIBSSL) $(DLIBCRYPTO) $(LIBKRB5)"; \
-		if [ -n "$(FIPSCANLIB)" ]; then \
-			FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; FIPSLD_NPT="y" \
-			export CC FIPSLD_CC FIPSLD_NPT ; \
-		fi; \
-	else \
-		LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
+	LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
+	if [ -z "$(SHARED_LIBS)" ] ; then \
+		FIPSLD_CC=$(CC); CC=$(TOP)/fips-1.0/fipsld; export CC FIPSLD_CC; \
 	fi; \
+	[ "$(FIPSCANLIB)" = "libfips" ] && LIBRARIES="$$LIBRARIES -lfips"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
 		CC=$${CC} APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \

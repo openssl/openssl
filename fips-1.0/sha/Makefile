@@ -41,15 +41,14 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	(cd $(TOP); $(MAKE) DIRS=fips-1.0 SDIRS=$(DIR) sub_all)
 
-all:	fips_standalone_sha1$(EXE_EXT) lib
+all:	../fips_standalone_sha1$(EXE_EXT) lib
 
 lib:	$(LIBOBJ)
 	@echo $(LIBOBJ) > lib
 
-fips_standalone_sha1$(EXE_EXT): fips_standalone_sha1.o
+../fips_standalone_sha1$(EXE_EXT): fips_standalone_sha1.o
 	FIPS_SHA_ASM=""; for i in $(SHA1_ASM_OBJ) sha1dgst.o ; do FIPS_SHA_ASM="$$FIPS_SHA_ASM ../../crypto/sha/$$i" ; done; \
-	$(CC) -o fips_standalone_sha1$(EXE_EXT) $(CFLAGS) \
-		fips_standalone_sha1.o $$FIPS_SHA_ASM
+	$(CC) -o $@ $(CFLAGS) fips_standalone_sha1.o $$FIPS_SHA_ASM
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

@@ -61,8 +61,10 @@ testapps:
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 all:
-	@if [ -n "$(FIPSCANLIB)" ]; then \
-		$(MAKE) -e subdirs lib shared; \
+	@if [ -z "$(FIPSLIBDIR)" ]; then \
+		$(MAKE) -e subdirs lib fips_premain_dso$(EXE_EXT); \
+	else \
+		$(MAKE) -e lib fips_premain_dso$(EXE_EXT) fips_standalone_sha1$(EXE_EXT); \
 	fi
 
 # Idea behind fipscanister.o is to "seize" the sequestered code between
@@ -97,16 +99,17 @@ fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
 		objs="$$objs `sed "$$script" $$i`"; \
 	done; \
 	objs="$$objs fips_end.o" ; \
+	os="`(uname -s) 2>/dev/null`"; cflags="$(CFLAGS)"; \
+	[ "$$os" = "AIX" ] && cflags="$$cflags -Wl,-bnoobjreorder"; \
 	if [ -n "${FIPS_SITE_LD}" ]; then \
 		set -x; ${FIPS_SITE_LD} -r -o $@ $$objs; \
 	elif $(CC) -dumpversion >/dev/null 2>&1; then \
-		set -x; $(CC) $(CFLAGS) -r -nostdlib -o $@ $$objs ; \
-	else case "`(uname -s) 2>/dev/null`" in \
+		set -x; $(CC) $$cflags -r -nostdlib -o $@ $$objs ; \
+	else case "$$os" in \
 		HP-UX|OSF1|SunOS) set -x; /usr/ccs/bin/ld -r -o $@ $$objs ;; \
-		AIX) set -x; $(CC) $(CFLAGS) -Wl,-bnoobjreorder -r -o $@ $$objs ;; \
-		*) set -x; $(CC) $(CFLAGS) -r -o $@ $$objs ;; \
+		*) set -x; $(CC) $$cflags -r -o $@ $$objs ;; \
 	esac fi
-	sha/fips_standalone_sha1 fipscanister.o > fipscanister.o.sha1
+	./fips_standalone_sha1 fipscanister.o > fipscanister.o.sha1
 
 # If another exception is immediately required, assign approprite
 # site-specific ld command to FIPS_SITE_LD environment variable.
@@ -117,7 +120,10 @@ fips_end.o: fips_canister.c
 	$(CC) $(CFLAGS) -DFIPS_END -c -o $@ fips_canister.c
 fips_premain_dso$(EXE_EXT): fips_premain.c
 	$(CC) $(CFLAGS) -DFINGERPRINT_PREMAIN_DSO_LOAD -o $@ fips_premain.c \
-		../libcrypto.a $(EX_LIBS)
+		$(FIPSLIBDIR)fipscanister.o ../libcrypto.a $(EX_LIBS)
+# this is executed only when linking with external fipscanister.o
+fips_standalone_sha1$(EXE_EXT):	sha/fips_standalone_sha1.c
+	$(CC) $(CFLAGS) -DFIPSCANISTER_O -o $@ sha/fips_standalone_sha1.c $(FIPSLIBDIR)fipscanister.o
 
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)
@@ -132,8 +138,12 @@ links:
 	@target=links; $(RECURSIVE_MAKE)
 
 # lib: and $(LIB): are splitted to avoid end-less loop
-lib:	$(FIPSCANLIB) $(FIPSCANLOC)
+lib:	$(LIB)
 	@touch lib
+
+$(LIB):	$(FIPSLIBDIR)fipscanister.o
+	$(AR) $(LIB) $(FIPSLIBDIR)fipscanister.o
+	$(RANLIB) $(LIB) || echo Never mind.
 
 $(FIPSCANLIB):	$(FIPSCANLOC)
 	$(AR) ../$(FIPSCANLIB).a $(FIPSCANLOC)
@@ -182,7 +192,7 @@ depend:
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 clean:
-	rm -f fipscanister.o.sha1 fips_premain_dso$(EXE_EXT) \
+	rm -f fipscanister.o.sha1 fips_premain_dso$(EXE_EXT) fips_standalone_sha1$(EXE_EXT) \
 		*.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 	@target=clean; $(RECURSIVE_MAKE)
 

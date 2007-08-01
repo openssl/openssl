@@ -54,9 +54,11 @@
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 
+#ifndef FIPSCANISTER_O
 int FIPS_selftest_failed() { return 0; }
 void FIPS_selftest_check() {}
 void OPENSSL_cleanse(void *p,size_t len) {}
+#endif
 
 #ifdef OPENSSL_FIPS
 

@@ -319,7 +319,7 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
 
-build_libs: build_crypto build_fips build_ssl build_engines
+build_libs: build_crypto build_fips build_ssl build_shared build_engines
 
 build_crypto:
 	if [ -n "$(FIPSCANLIB)" ]; then \
@@ -330,7 +330,7 @@ build_crypto:
 	fi ; export ARX ; \
 		dir=crypto; target=all; $(BUILD_ONE_CMD)
 build_fips:
-	@dir=fips-1.0; target=all; $(BUILD_ONE_CMD)
+	@dir=fips-1.0; target=all; [ -z "$(FIPSCANLIB)" ] || $(BUILD_ONE_CMD)
 build_ssl:
 	@dir=ssl; target=all; $(BUILD_ONE_CMD)
 build_engines:
@@ -346,43 +346,48 @@ all_testapps: build_libs build_testapps
 build_testapps:
 	@dir=crypto; target=testapps; $(BUILD_ONE_CMD)
 
+build_shared:	$(SHARED_LIBS)
 libcrypto$(SHLIB_EXT): libcrypto.a $(SHARED_FIPS)
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
 		if [ "$(FIPSCANLIB)" = "libfips" ]; then \
-			( dir=fips-1.0; target=all; $(BUILD_ONE_CMD) ) ; \
 			$(ARD) libcrypto.a fipscanister.o ; \
 			$(MAKE) SHLIBDIRS='crypto' SHLIBDEPS='-lfips' build-shared; \
 			$(AR) libcrypto.a fips-1.0/fipscanister.o ; \
 		else \
 			if [ "$(FIPSCANLIB)" = "libcrypto" ]; then \
 				FIPSLD_CC=$(CC); CC=fips-1.0/fipsld; \
-				FIPSLD_NPT="y"; FIPSLD_LIBFIPS=y; \
-				export CC FIPSLD_CC FIPSLD_NPT FIPSLD_LIBFIPS; \
+				export CC FIPSLD_CC; \
 			fi; \
 			$(MAKE) -e SHLIBDIRS='crypto' build-shared; \
 		fi \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
+		exit 1; \
 	fi
 
 libssl$(SHLIB_EXT): libcrypto$(SHLIB_EXT) libssl.a
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
-		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS='-lcrypto' build-shared; \
+		shlibdeps=-lcrypto; \
+		[ "$(FIPSCANLIB)" = "libfips" ] && shlibdeps="$$shlibdeps -lfips"; \
+		$(MAKE) SHLIBDIRS=ssl SHLIBDEPS="$$shlibdeps" build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2 ; \
 		exit 1; \
 	fi
 
-libfips$(SHLIB_EXT): libfips.a
+fips-1.0/fipscanister.o:	build_fips
+libfips$(SHLIB_EXT):		fips-1.0/fipscanister.o
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
-		if [ "$(FIPSCANLIB)" = "libfips" ]; then \
-			FIPSLD_CC=$(CC); CC=fips-1.0/fipsld; FIPSLD_NPT="y"; \
-			FIPSLD_LIBFIPS=y; \
-			export CC FIPSLD_CC FIPSLD_NPT FIPSLD_LIBFIPS; \
-		fi; \
-		$(MAKE) -e SHLIBDIRS=fips build-shared; \
+		FIPSLD_CC=$(CC); CC=fips-1.0/fipsld; export CC FIPSLD_CC; \
+		$(MAKE) -f Makefile.shared -e $(BUILDENV) \
+			CC=$${CC} LIBNAME=fips THIS=$@ \
+			LIBEXTRAS=fips-1.0/fipscanister.o \
+			LIBDEPS="$(EX_LIBS)" \
+			LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
+			link_o.$(SHLIB_TARGET) || { rm -f $@; exit 1; } \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
+		exit 1; \
 	fi
 
 libfips.a:
