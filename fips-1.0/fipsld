@@ -54,7 +54,7 @@ THERE="`echo $0 | sed -e 's|[^/]*$||'`"..
 
 # If set, FIPSLIBDIR is location of installed validated FIPS module
 if [ -n "${FIPSLIBDIR}" ]; then
-	CANISTER_O="${FIPSLIBDIR}"
+	CANISTER_O="${FIPSLIBDIR}/fipscanister.o"
 elif [ -f "${THERE}/fips-1.0/fipscanister.o" ]; then
 	CANISTER_O="${THERE}/fips-1.0/fipscanister.o"
 elif [ -f "${THERE}/lib/fipscanister.o" ]; then
