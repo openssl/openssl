@@ -501,20 +501,7 @@ case "$GUESSOS" in
 	OUT="irix-mips3-$CC"
 	;;
   mips4-sgi-irix64)
-	echo "WARNING! If you wish to build 64-bit library, then you have to"
-	echo "         invoke './Configure irix64-mips4-$CC' *manually*."
-	if [ "$TEST" = "false" -a -t 1 ]; then
-	  echo "         You have about 5 seconds to press Ctrl-C to abort."
-	  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-	fi
-        #CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
-        #CPU=${CPU:-0}
-        #if [ $CPU -ge 5000 ]; then
-        #        options="$options -mips4"
-        #else
-        #        options="$options -mips3"
-        #fi
-	OUT="irix-mips3-$CC"
+	OUT="irix64-mips4-$CC"
 	;;
   ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
   ppc-apple-darwin*) OUT="darwin-ppc-cc" ;;
@@ -534,25 +521,12 @@ case "$GUESSOS" in
 	fi
 	;;
   ppc64-*-linux2)
-	echo "WARNING! If you wish to build 64-bit library, then you have to"
-	echo "         invoke './Configure linux-ppc64' *manually*."
-	if [ "$TEST" = "false" -a -t 1 ]; then
-	    echo "         You have about 5 seconds to press Ctrl-C to abort."
-	    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-	fi
-	OUT="linux-ppc"
+	OUT="linux-ppc64"
 	;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   ia64-*-linux?) OUT="linux-ia64" ;;
   sparc64-*-linux2)
-	echo "WARNING! If you *know* that your GNU C supports 64-bit/V9 ABI"
-	echo "         and wish to build 64-bit library, then you have to"
-	echo "         invoke './Configure linux64-sparcv9' *manually*."
-	if [ "$TEST" = "false" -a -t 1 ]; then
-	  echo "          You have about 5 seconds to press Ctrl-C to abort."
-	  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-	fi
-	OUT="linux-sparcv9" ;;
+	OUT="linux64-sparcv9" ;;
   sparc-*-linux2)
 	KARCH=`awk '/^type/{print$3;exit(0);}' /proc/cpuinfo`
 	case ${KARCH:-sun4} in
@@ -610,32 +584,13 @@ case "$GUESSOS" in
 	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
 	if [ "$ISA64" != "" ]; then
 	    if [ "$CC" = "cc" -a $CCVER -ge 50 ]; then
-		echo "WARNING! If you wish to build 64-bit library, then you have to"
-		echo "         invoke './Configure solaris64-sparcv9-cc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
-		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
+		OUT="solaris64-sparcv9-cc"
 	    elif [ "$CC" = "gcc" -a "$GCC_ARCH" = "-m64" ]; then
 		# $GCC_ARCH denotes default ABI chosen by compiler driver
 		# (first one found on the $PATH). I assume that user
 		# expects certain consistency with the rest of his builds
 		# and therefore switch over to 64-bit. <appro>
 		OUT="solaris64-sparcv9-gcc"
-		echo "WARNING! If you wish to build 32-bit library, then you have to"
-		echo "         invoke './Configure solaris-sparcv9-gcc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
-		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
-	    elif [ "$GCC_ARCH" = "-m32" ]; then
-		echo "NOTICE! If you *know* that your GNU C supports 64-bit/V9 ABI"
-		echo "        and wish to build 64-bit library, then you have to"
-		echo "        invoke './Configure solaris64-sparcv9-gcc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
-		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
 	    fi
 	fi
 	;;
@@ -702,23 +657,11 @@ case "$GUESSOS" in
 	CPU_VERSION=${CPU_VERSION:-0}
 	# See <sys/unistd.h> for further info on CPU_VERSION.
 	if   [ $CPU_VERSION -ge 768 ]; then	# IA-64 CPU
-	     echo "WARNING! 64-bit ABI is the default configured ABI on HP-UXi."
-	     echo "         If you wish to build 32-bit library, the you have to"
-	     echo "         invoke './Configure hpux-ia64-cc' *manually*."
-	     if [ "$TEST" = "false" -a -t 1 ]; then
-		echo "         You have about 5 seconds to press Ctrl-C to abort."
-		(trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-	     fi
 	     OUT="hpux64-ia64-cc"
 	elif [ $CPU_VERSION -ge 532 ]; then	# PA-RISC 2.x CPU
 	     OUT=${OUT:-"hpux-parisc2-${CC}"}
 	     if [ $KERNEL_BITS -eq 64 -a "$CC" = "cc" ]; then
-		echo "WARNING! If you wish to build 64-bit library then you have to"
-		echo "         invoke './Configure hpux64-parisc2-cc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
-		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
+		OUT="hpux64-parisc2-${CC}"
 	     fi
 	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
 	     OUT="hpux-parisc-${CC}"
@@ -741,12 +684,7 @@ case "$GUESSOS" in
 	else
 	    OUT="aix-cc"
 	    if [ $KERNEL_BITS -eq 64 ]; then
-		echo "WARNING! If you wish to build 64-bit kit, then you have to"
-		echo "         invoke './Configure aix64-cc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
-		    echo "         You have ~5 seconds to press Ctrl-C to abort."
-		    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
+		OUT="aix64-cc"
 	    fi
 	fi
 	if (lsattr -E -O -l `lsdev -c processor|awk '{print$1;exit}'` | grep -i powerpc) >/dev/null 2>&1; then
