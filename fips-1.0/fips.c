@@ -255,6 +255,16 @@ int FIPS_mode_set(int onoff)
 	    goto end;
 	    }
 
+#ifdef OPENSSL_IA32_SSE2
+	if ((OPENSSL_ia32cap & (1<<25|1<<26)) != (1<<25|1<<26))
+	    {
+	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_UNSUPPORTED_PLATFORM);
+	    fips_selftest_fail = 1;
+	    ret = 0;
+	    goto end;
+	    }
+#endif
+
 	if(fips_signature_witness() != FIPS_signature)
 	    {
 	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_CONTRADICTING_EVIDENCE);
