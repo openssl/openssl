@@ -111,9 +111,15 @@
 
 #include <stdio.h>
 #include <openssl/objects.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include "ssl_locl.h"
 
 const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
+
+static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
+				const unsigned char *sess_id, int sesslen,
+				SSL_SESSION **psess);
 
 SSL3_ENC_METHOD TLSv1_enc_data={
 	tls1_enc,
@@ -164,6 +170,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	ret+=2;
 
 	if (ret>=limit) return NULL; /* this really never occurs, but ... */
+
  	if (s->tlsext_hostname != NULL)
 		{ 
 		/* Add TLS extension servername to the Client Hello message */
@@ -243,6 +250,27 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 #endif /* OPENSSL_NO_EC */
 
+	if (!(SSL_get_options(s) & SSL_OP_NO_TICKET))
+		{
+		int ticklen;
+		if (s->session && s->session->tlsext_tick)
+			ticklen = s->session->tlsext_ticklen;
+		else
+			ticklen = 0;
+		/* Check for enough room 2 for extension type, 2 for len
+ 		 * rest for ticket
+  		 */
+		if (limit - p - 4 - ticklen < 0)
+			return NULL;
+		s2n(TLSEXT_TYPE_session_ticket,ret); 
+		s2n(ticklen,ret);
+		if (ticklen)
+			{
+			memcpy(ret, s->session->tlsext_tick, ticklen);
+			ret += ticklen;
+			}
+		}
+
 	if ((extdatalen = ret-p-2)== 0) 
 		return p;
 
@@ -289,6 +317,14 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	/* Currently the server should not respond with a SupportedCurves extension */
 #endif /* OPENSSL_NO_EC */
 	
+	if (s->tlsext_ticket_expected
+		&& !(SSL_get_options(s) & SSL_OP_NO_TICKET)) 
+		{ 
+		if (limit - p - 4 < 0) return NULL; 
+		s2n(TLSEXT_TYPE_session_ticket,ret);
+		s2n(0,ret);
+		}
+		
 	if ((extdatalen = ret-p-2)== 0) 
 		return p;
 
@@ -318,7 +354,10 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 		if (data+size > (d+n))
 	   		return 1;
-		
+
+		if (s->tlsext_debug_cb)
+			s->tlsext_debug_cb(s, 0, type, data, size,
+						s->tlsext_debug_arg);
 /* The servername extension is treated as follows:
 
    - Only the hostname type is supported with a maximum length of 255.
@@ -472,9 +511,10 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 #endif
 			}
 #endif /* OPENSSL_NO_EC */
-		data+=size;		
+		/* session ticket processed earlier */
+		data+=size;
 		}
-
+				
 	*p = data;
 	return 1;
 	}
@@ -500,6 +540,10 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 		if (data+size > (d+n))
 	   		return 1;
+
+		if (s->tlsext_debug_cb)
+			s->tlsext_debug_cb(s, 1, type, data, size,
+						s->tlsext_debug_arg);
 
 		if (type == TLSEXT_TYPE_server_name)
 			{
@@ -540,6 +584,17 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 #endif
 			}
 #endif /* OPENSSL_NO_EC */
+
+		else if (type == TLSEXT_TYPE_session_ticket)
+			{
+			if ((SSL_get_options(s) & SSL_OP_NO_TICKET)
+				|| (size > 0))
+				{
+				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
+				return 0;
+				}
+			s->tlsext_ticket_expected = 1;
+			}
 		data+=size;		
 		}
 
@@ -854,5 +909,144 @@ int ssl_check_serverhello_tlsext(SSL *s)
 		return 1;
 		}
 	}
-#endif
 
+/* Since the server cache lookup is done early on in the processing of client
+ * hello and other operations depend on the result we need to handle any TLS
+ * session ticket extension at the same time.
+ */
+
+int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
+				const unsigned char *limit, SSL_SESSION **ret)
+	{
+	/* Point after session ID in client hello */
+	const unsigned char *p = session_id + len;
+	unsigned short i;
+	if ((s->version <= SSL3_VERSION) || !limit)
+		return 1;
+	if (p >= limit)
+		return -1;
+	/* Skip past cipher list */
+	n2s(p, i);
+	p+= i;
+	if (p >= limit)
+		return -1;
+	/* Skip past compression algorithm list */
+	i = *(p++);
+	p += i;
+	if (p > limit)
+		return -1;
+	/* Now at start of extensions */
+	if ((p + 2) >= limit)
+		return 1;
+	n2s(p, i);
+	while ((p + 4) <= limit)
+		{
+		unsigned short type, size;
+		n2s(p, type);
+		n2s(p, size);
+		if (p + size > limit)
+			return 1;
+		if (type == TLSEXT_TYPE_session_ticket)
+			{
+			/* If tickets disabled indicate cache miss which will
+ 			 * trigger a full handshake
+ 			 */
+			if (SSL_get_options(s) & SSL_OP_NO_TICKET)
+				return 0;
+			/* If zero length not client will accept a ticket
+ 			 * and indicate cache miss to trigger full handshake
+ 			 */
+			if (size == 0)
+				{
+				s->tlsext_ticket_expected = 1;
+				return 0;	/* Cache miss */
+				}
+			return tls_decrypt_ticket(s, p, size, session_id, len,
+									ret);
+			}
+		p += size;
+		}
+	return 1;
+	}
+
+static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
+				const unsigned char *sess_id, int sesslen,
+				SSL_SESSION **psess)
+	{
+	SSL_SESSION *sess;
+	unsigned char *sdec;
+	const unsigned char *p;
+	int slen, mlen;
+	unsigned char tick_hmac[EVP_MAX_MD_SIZE];
+	HMAC_CTX hctx;
+	EVP_CIPHER_CTX ctx;
+	/* Attempt to process session ticket, first conduct sanity and
+ 	 * integrity checks on ticket.
+ 	 */
+	mlen = EVP_MD_size(EVP_sha1());
+	eticklen -= mlen;
+	/* Need at least keyname + iv + some encrypted data */
+	if (eticklen < 48)
+		goto tickerr;
+	/* Check key name matches */
+	if (memcmp(etick, s->ctx->tlsext_tick_key_name, 16))
+		goto tickerr;
+fprintf(stderr, "Ticket match OK\n");
+	/* Check HMAC of encrypted ticket */
+	HMAC_CTX_init(&hctx);
+	HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
+				EVP_sha1(), NULL);
+	HMAC_Update(&hctx, etick, eticklen);
+	HMAC_Final(&hctx, tick_hmac, NULL);
+	HMAC_CTX_cleanup(&hctx);
+	if (memcmp(tick_hmac, etick + eticklen, mlen))
+		goto tickerr;
+fprintf(stderr, "HMAC match OK\n");
+	/* Set p to start of IV */
+	p = etick + 16;
+	EVP_CIPHER_CTX_init(&ctx);
+	/* Attempt to decrypt session data */
+	EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+					s->ctx->tlsext_tick_aes_key, p);
+	/* Move p after IV to start of encrypted ticket, update length */
+	p += 16;
+	eticklen -= 32;
+	sdec = OPENSSL_malloc(eticklen);
+	if (!sdec)
+		{
+		EVP_CIPHER_CTX_cleanup(&ctx);
+		return -1;
+		}
+	EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen);
+	if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0)
+		goto tickerr;
+fprintf(stderr, "Decrypt OK\n");
+	slen += mlen;
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	p = sdec;
+		
+	sess = d2i_SSL_SESSION(NULL, &p, slen);
+	OPENSSL_free(sdec);
+	if (sess)
+		{
+		/* The session ID if non-empty is used by some clients to
+ 		 * detect that the ticket has been accepted. So we copy it to
+ 		 * the session structure. If it is empty set length to zero
+ 		 * as required by standard.
+ 		 */
+		if (sesslen)
+			memcpy(sess->session_id, sess_id, sesslen);
+		sess->session_id_length = sesslen;
+		*psess = sess;
+		return 1;
+		}
+	/* If session decrypt failure indicate a cache miss and set state to
+ 	 * send a new ticket
+ 	 */
+	tickerr:	
+	s->tlsext_ticket_expected = 1;
+	return 0;
+	}
+	
+
+#endif

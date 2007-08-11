@@ -192,6 +192,7 @@ extern "C" {
 #define TLSEXT_TYPE_status_request		5
 #define TLSEXT_TYPE_elliptic_curves		10
 #define TLSEXT_TYPE_ec_point_formats		11
+#define TLSEXT_TYPE_session_ticket		35
 
 /* NameType value from RFC 3546 */
 #define TLSEXT_NAMETYPE_host_name 0
@@ -212,6 +213,12 @@ int SSL_get_servername_type(const SSL *s) ;
 
 #define SSL_set_tlsext_host_name(s,name) \
 SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
+
+#define SSL_set_tlsext_debug_callback(ssl, cb) \
+SSL_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_CB,(void (*)(void))cb)
+
+#define SSL_set_tlsext_debug_arg(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_ARG,0, (void *)arg)
 
 #define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
 SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)

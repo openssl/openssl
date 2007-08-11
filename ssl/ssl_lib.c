@@ -151,6 +151,7 @@
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
+#include <openssl/rand.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
@@ -336,6 +337,9 @@ SSL *SSL_new(SSL_CTX *ctx)
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->ctx=ctx;
 #ifndef OPENSSL_NO_TLSEXT
+	s->tlsext_debug_cb = 0;
+	s->tlsext_debug_arg = NULL;
+	s->tlsext_ticket_expected = 0;
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->initial_ctx=ctx;
 #endif
@@ -1545,6 +1549,12 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 #ifndef OPENSSL_NO_TLSEXT
 	ret->tlsext_servername_callback = 0;
 	ret->tlsext_servername_arg = NULL;
+	/* Setup RFC4507 ticket keys */
+	if ((RAND_pseudo_bytes(ret->tlsext_tick_key_name, 16) <= 0)
+		|| (RAND_bytes(ret->tlsext_tick_hmac_key, 16) <= 0)
+		|| (RAND_bytes(ret->tlsext_tick_aes_key, 16) <= 0))
+		ret->options |= SSL_OP_NO_TICKET;
+
 #endif
 #ifndef OPENSSL_NO_PSK
 	ret->psk_identity_hint=NULL;

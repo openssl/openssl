@@ -106,6 +106,8 @@ typedef struct ssl_session_asn1_st
 	ASN1_INTEGER verify_result;
 #ifndef OPENSSL_NO_TLSEXT
 	ASN1_OCTET_STRING tlsext_hostname;
+	ASN1_INTEGER tlsext_tick_lifetime;
+	ASN1_OCTET_STRING tlsext_tick;
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	ASN1_OCTET_STRING psk_identity_hint;
@@ -116,9 +118,10 @@ typedef struct ssl_session_asn1_st
 int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
-	int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0,v7=0,v8=0;
+	int v1=0,v2=0,v3=0,v4=0,v5=0,v6=0,v7=0,v8=0,v9=0,v10=0;
 	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2],ibuf5[LSIZE2];
+	unsigned char ibuf6[LSIZE2];
 	long l;
 	SSL_SESSION_ASN1 a;
 	M_ASN1_I2D_vars(in);
@@ -217,7 +220,25 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
                 a.tlsext_hostname.length=strlen(in->tlsext_hostname);
                 a.tlsext_hostname.type=V_ASN1_OCTET_STRING;
                 a.tlsext_hostname.data=(unsigned char *)in->tlsext_hostname;
-                }                
+                }
+	if (in->tlsext_tick)
+                {
+                a.tlsext_tick.length= in->tlsext_ticklen;
+                a.tlsext_tick.type=V_ASN1_OCTET_STRING;
+                a.tlsext_tick.data=(unsigned char *)in->tlsext_tick;
+		/* If we have a ticket set session ID to empty because
+		 * it will be bogus. 
+		 */
+		if (in->tlsext_ticklen)
+			a.session_id.length=0;
+                }
+	if (in->tlsext_tick_lifetime_hint != 0)
+		{
+		a.tlsext_tick_lifetime.length=LSIZE2;
+		a.tlsext_tick_lifetime.type=V_ASN1_INTEGER;
+		a.tlsext_tick_lifetime.data=ibuf6;
+		ASN1_INTEGER_set(&a.tlsext_tick_lifetime,in->tlsext_tick_lifetime_hint);
+		}
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint)
@@ -256,6 +277,10 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		M_ASN1_I2D_len_EXP_opt(&(a.verify_result),i2d_ASN1_INTEGER,5,v5);
 
 #ifndef OPENSSL_NO_TLSEXT
+	if (in->tlsext_tick_lifetime_hint)
+      	 	M_ASN1_I2D_len_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER,9,v9);
+	if (in->tlsext_tick)
+        	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING,10,v10);
 	if (in->tlsext_hostname)
         	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
 #endif /* OPENSSL_NO_TLSEXT */
@@ -299,6 +324,12 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->psk_identity)
 		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,8,v8);
 #endif /* OPENSSL_NO_PSK */
+#ifndef OPENSSL_NO_TLSEXT
+	if (in->tlsext_tick_lifetime_hint)
+      	 	M_ASN1_I2D_put_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER,9,v9);
+	if (in->tlsext_tick)
+        	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING,10,v10);
+#endif /* OPENSSL_NO_TLSEXT */
 	M_ASN1_I2D_finish();
 	}
 
@@ -488,7 +519,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 #ifndef OPENSSL_NO_PSK
 	os.length=0;
 	os.data=NULL;
-	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,9);
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,7);
 	if (os.data)
 		{
 		ret->psk_identity_hint = BUF_strndup((char *)os.data, os.length);
@@ -498,20 +529,44 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		}
 	else
 		ret->psk_identity_hint=NULL;
+#endif /* OPENSSL_NO_PSK */
 
+#ifndef OPENSSL_NO_TLSEXT
+	ai.length=0;
+	M_ASN1_D2I_get_EXP_opt(aip,d2i_ASN1_INTEGER,9);
+	if (ai.data != NULL)
+		{
+		ret->tlsext_tick_lifetime_hint=ASN1_INTEGER_get(aip);
+		OPENSSL_free(ai.data); ai.data=NULL; ai.length=0;
+		}
+	else
+		ret->tlsext_tick_lifetime_hint=0;
 	os.length=0;
 	os.data=NULL;
 	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,10);
 	if (os.data)
 		{
-		ret->psk_identity = BUF_strndup((char *)os.data, os.length);
-		OPENSSL_free(os.data);
+		ret->tlsext_tick = os.data;
+		ret->tlsext_ticklen = os.length;
 		os.data = NULL;
 		os.length = 0;
+#if 0
+		/* There are two ways to detect a resumed ticket sesion.
+		 * One is to set a random session ID and then the server
+		 * must return a match in ServerHello. This allows the normal
+		 * client session ID matching to work.
+		 */ 
+		if (ret->session_id_length == 0)
+			{
+			ret->session_id_length=SSL3_MAX_SSL_SESSION_ID_LENGTH;
+			RAND_pseudo_bytes(ret->session_id,
+						ret->session_id_length);
+			}
+#endif
 		}
 	else
-		ret->psk_identity=NULL;
-#endif /* OPENSSL_NO_KRB5 */
+		ret->tlsext_tick=NULL;
+#endif /* OPENSSL_NO_TLSEXT */
 
 	M_ASN1_D2I_Finish(a,SSL_SESSION_free,SSL_F_D2I_SSL_SESSION);
 	}

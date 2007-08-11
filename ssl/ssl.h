@@ -500,6 +500,10 @@ typedef struct ssl_session_st
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist; /* peer's list */
 #endif /* OPENSSL_NO_EC */
+	/* RFC4507 info */
+	unsigned char *tlsext_tick;	/* Session ticket */
+	size_t	tlsext_ticklen;		/* Session ticket length */	
+	long tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */
 #endif
 	} SSL_SESSION;
 
@@ -529,6 +533,8 @@ typedef struct ssl_session_st
 #define SSL_OP_NO_QUERY_MTU                 0x00001000L
 /* Turn on Cookie Exchange (on relevant for servers) */
 #define SSL_OP_COOKIE_EXCHANGE              0x00002000L
+/* Don't use RFC4507 ticket extension */
+#define SSL_OP_NO_TICKET	            0x00004000L
 
 /* As server, disallow session resumption on renegotiation */
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
@@ -789,6 +795,10 @@ struct ssl_ctx_st
 	/* TLS extensions servername callback */
 	int (*tlsext_servername_callback)(SSL*, int *, void *);
 	void *tlsext_servername_arg;
+	/* RFC 4507 session ticket keys */
+	unsigned char tlsext_tick_key_name[16];
+	unsigned char tlsext_tick_hmac_key[16];
+	unsigned char tlsext_tick_aes_key[16];
 #endif
 #ifndef OPENSSL_NO_PSK
 	char *psk_identity_hint;
@@ -1057,12 +1067,19 @@ struct ssl_st
 				 * SSLv3/TLS rollback check */
 	unsigned int max_send_fragment;
 #ifndef OPENSSL_NO_TLSEXT
+	/* TLS extension debug callback */
+	void (*tlsext_debug_cb)(SSL *s, int client_server, int type,
+					unsigned char *data, int len,
+					void *arg);
+	void *tlsext_debug_arg;
 	char *tlsext_hostname;
 	int servername_done;   /* no further mod of servername 
 	                          0 : call the servername extension callback.
 	                          1 : prepare 2, allow last ack just after in server callback.
 	                          2 : don't call servername callback, no ack in server hello
 	                       */
+	/* RFC4507 session ticket expected to be received or sent */
+	int tlsext_ticket_expected;
 #ifndef OPENSSL_NO_EC
 	size_t tlsext_ecpointformatlist_length;
 	unsigned char *tlsext_ecpointformatlist; /* our list */
@@ -1283,6 +1300,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB	53
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG	54
 #define SSL_CTRL_SET_TLSEXT_HOSTNAME		55
+#define SSL_CTRL_SET_TLSEXT_DEBUG_CB		56
+#define SSL_CTRL_SET_TLSEXT_DEBUG_ARG		57
 #endif
 
 #define SSL_session_reused(ssl) \
@@ -1739,10 +1758,12 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL3_GET_FINISHED				 140
 #define SSL_F_SSL3_GET_KEY_EXCHANGE			 141
 #define SSL_F_SSL3_GET_MESSAGE				 142
+#define SSL_F_SSL3_GET_NEW_SESSION_TICKET		 283
 #define SSL_F_SSL3_GET_RECORD				 143
 #define SSL_F_SSL3_GET_SERVER_CERTIFICATE		 144
 #define SSL_F_SSL3_GET_SERVER_DONE			 145
 #define SSL_F_SSL3_GET_SERVER_HELLO			 146
+#define SSL_F_SSL3_NEW_SESSION_TICKET			 284
 #define SSL_F_SSL3_OUTPUT_CERT_CHAIN			 147
 #define SSL_F_SSL3_PEEK					 235
 #define SSL_F_SSL3_READ_BYTES				 148

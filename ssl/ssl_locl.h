@@ -740,7 +740,7 @@ SESS_CERT *ssl_sess_cert_new(void);
 void ssl_sess_cert_free(SESS_CERT *sc);
 int ssl_set_peer_cert_type(SESS_CERT *c, int type);
 int ssl_get_new_session(SSL *s, int session);
-int ssl_get_prev_session(SSL *s, unsigned char *session,int len);
+int ssl_get_prev_session(SSL *s, unsigned char *session,int len, const unsigned char *limit);
 int ssl_cipher_id_cmp(const SSL_CIPHER *a,const SSL_CIPHER *b);
 int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
 			const SSL_CIPHER * const *bp);
@@ -800,6 +800,7 @@ SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c,unsigned char *p);
 void ssl3_init_finished_mac(SSL *s);
 int ssl3_send_server_certificate(SSL *s);
+int ssl3_send_newsession_ticket(SSL *s);
 int ssl3_get_finished(SSL *s,int state_a,int state_b);
 int ssl3_setup_key_block(SSL *s);
 int ssl3_send_change_cipher_spec(SSL *s,int state_a,int state_b);
@@ -890,6 +891,7 @@ long dtls1_default_timeout(void);
 int ssl3_client_hello(SSL *s);
 int ssl3_get_server_hello(SSL *s);
 int ssl3_get_certificate_request(SSL *s);
+int ssl3_get_new_session_ticket(SSL *s);
 int ssl3_get_server_done(SSL *s);
 int ssl3_send_client_verify(SSL *s);
 int ssl3_send_client_certificate(SSL *s);
@@ -985,6 +987,8 @@ int ssl_prepare_clienthello_tlsext(SSL *s);
 int ssl_prepare_serverhello_tlsext(SSL *s);
 int ssl_check_clienthello_tlsext(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
+int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
+				const unsigned char *limit, SSL_SESSION **ret);
 EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) ;
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
 #endif

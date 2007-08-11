@@ -194,6 +194,9 @@ static int c_nbio=0;
 #endif
 static int c_Pause=0;
 static int c_debug=0;
+#ifndef OPENSSL_NO_TLSEXT
+static int c_tlsextdebug=0;
+#endif
 static int c_msg=0;
 static int c_showcerts=0;
 
@@ -406,6 +409,8 @@ int MAIN(int argc, char **argv)
         tlsextctx tlsextcbp = 
         {NULL,0};
 #endif
+	char *sess_in = NULL;
+	char *sess_out = NULL;
 	struct sockaddr peer;
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0 ;
@@ -480,6 +485,16 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			cert_file= *(++argv);
 			}
+		else if	(strcmp(*argv,"-sess_out") == 0)
+			{
+			if (--argc < 1) goto bad;
+			sess_out = *(++argv);
+			}
+		else if	(strcmp(*argv,"-sess_in") == 0)
+			{
+			if (--argc < 1) goto bad;
+			sess_in = *(++argv);
+			}
 		else if	(strcmp(*argv,"-certform") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -506,6 +521,10 @@ int MAIN(int argc, char **argv)
 			c_Pause=1;
 		else if	(strcmp(*argv,"-debug") == 0)
 			c_debug=1;
+#ifndef OPENSSL_NO_TLSEXT
+		else if	(strcmp(*argv,"-tlsextdebug") == 0)
+			c_tlsextdebug=1;
+#endif
 #ifdef WATT32
 		else if (strcmp(*argv,"-wdebug") == 0)
 			dbug_init();
@@ -604,6 +623,10 @@ int MAIN(int argc, char **argv)
 			off|=SSL_OP_NO_SSLv2;
 		else if	(strcmp(*argv,"-no_comp") == 0)
 			{ off|=SSL_OP_NO_COMPRESSION; }
+#ifndef OPENSSL_NO_TLSEXT
+		else if	(strcmp(*argv,"-no_ticket") == 0)
+			{ off|=SSL_OP_NO_TICKET; }
+#endif
 		else if (strcmp(*argv,"-serverpref") == 0)
 			off|=SSL_OP_CIPHER_SERVER_PREFERENCE;
 		else if	(strcmp(*argv,"-cipher") == 0)
@@ -791,6 +814,29 @@ bad:
 #endif
 
 	con=SSL_new(ctx);
+	if (sess_in)
+		{
+		SSL_SESSION *sess;
+		BIO *stmp = BIO_new_file(sess_in, "r");
+		if (!stmp)
+			{
+			BIO_printf(bio_err, "Can't open session file %s\n",
+						sess_in);
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		sess = PEM_read_bio_SSL_SESSION(stmp, NULL, 0, NULL);
+		BIO_free(stmp);
+		if (!sess)
+			{
+			BIO_printf(bio_err, "Can't open session file %s\n",
+						sess_in);
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		SSL_set_session(con, sess);
+		SSL_SESSION_free(sess);
+		}
 #ifndef OPENSSL_NO_TLSEXT
 	if (servername != NULL)
 		{
@@ -893,6 +939,13 @@ re_start:
 		SSL_set_msg_callback(con, msg_cb);
 		SSL_set_msg_callback_arg(con, bio_c_out);
 		}
+#ifndef OPENSSL_NO_TLSEXT
+	if (c_tlsextdebug)
+		{
+		SSL_set_tlsext_debug_callback(con, tlsext_cb);
+		SSL_set_tlsext_debug_arg(con, bio_c_out);
+		}
+#endif
 
 	SSL_set_bio(con,sbio,sbio);
 	SSL_set_connect_state(con);
@@ -1022,6 +1075,17 @@ re_start:
 					BIO_printf(bio_c_out,"Server did %sacknowledge servername extension.\n",tlsextcbp.ack?"":"not ");
 					}
 #endif
+				if (sess_out)
+					{
+					BIO *stmp = BIO_new_file(sess_out, "w");
+					if (stmp)
+						{
+						PEM_write_bio_SSL_SESSION(stmp, SSL_get_session(con));
+						BIO_free(stmp);
+						}
+					else 
+						BIO_printf(bio_err, "Error writing session file %s\n", sess_out);
+					}
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
 

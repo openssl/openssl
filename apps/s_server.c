@@ -281,6 +281,9 @@ static int www=0;
 
 static BIO *bio_s_out=NULL;
 static int s_debug=0;
+#ifndef OPENSSL_NO_TLSEXT
+static int s_tlsextdebug=0;
+#endif
 static int s_msg=0;
 static int s_quiet=0;
 
@@ -869,6 +872,10 @@ int MAIN(int argc, char *argv[])
 			}
 		else if	(strcmp(*argv,"-debug") == 0)
 			{ s_debug=1; }
+#ifndef OPENSSL_NO_TLSEXT
+		else if	(strcmp(*argv,"-tlsextdebug") == 0)
+			s_tlsextdebug=1;
+#endif
 		else if	(strcmp(*argv,"-msg") == 0)
 			{ s_msg=1; }
 		else if	(strcmp(*argv,"-hack") == 0)
@@ -922,6 +929,10 @@ int MAIN(int argc, char *argv[])
 			{ off|=SSL_OP_NO_TLSv1; }
 		else if	(strcmp(*argv,"-no_comp") == 0)
 			{ off|=SSL_OP_NO_COMPRESSION; }
+#ifndef OPENSSL_NO_TLSEXT
+		else if	(strcmp(*argv,"-no_ticket") == 0)
+			{ off|=SSL_OP_NO_TICKET; }
+#endif
 #ifndef OPENSSL_NO_SSL2
 		else if	(strcmp(*argv,"-ssl2") == 0)
 			{ meth=SSLv2_server_method(); }
@@ -1541,6 +1552,13 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 
 	if (con == NULL) {
 		con=SSL_new(ctx);
+#ifndef OPENSSL_NO_TLSEXT
+	if (s_tlsextdebug)
+		{
+		SSL_set_tlsext_debug_callback(con, tlsext_cb);
+		SSL_set_tlsext_debug_arg(con, bio_s_out);
+		}
+#endif
 #ifndef OPENSSL_NO_KRB5
 		if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
                         {
@@ -1610,6 +1628,13 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		SSL_set_msg_callback(con, msg_cb);
 		SSL_set_msg_callback_arg(con, bio_s_out);
 		}
+#ifndef OPENSSL_NO_TLSEXT
+	if (s_tlsextdebug)
+		{
+		SSL_set_tlsext_debug_callback(con, tlsext_cb);
+		SSL_set_tlsext_debug_arg(con, bio_s_out);
+		}
+#endif
 
 	width=s+1;
 	for (;;)
@@ -1989,6 +2014,13 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	if (!BIO_set_write_buffer_size(io,bufsize)) goto err;
 
 	if ((con=SSL_new(ctx)) == NULL) goto err;
+#ifndef OPENSSL_NO_TLSEXT
+		if (s_tlsextdebug)
+			{
+			SSL_set_tlsext_debug_callback(con, tlsext_cb);
+			SSL_set_tlsext_debug_arg(con, bio_s_out);
+			}
+#endif
 #ifndef OPENSSL_NO_KRB5
 	if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
 		{

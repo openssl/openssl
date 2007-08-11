@@ -4,6 +4,24 @@
 
  Changes between 0.9.8f and 0.9.9  [xx XXX xxxx]
 
+  *) Add RFC4507 support to OpenSSL. This includes the corrections in
+     RFC4507bis. The encrypted ticket format is an encrypted encoded
+     SSL_SESSION structure, that way new session features are automatically
+     supported.
+
+     If a client application caches session in an SSL_SESSION support it
+     should automatically be supported because an extension includes the
+     ticket in the structure. The SSL_CTX structure automatically generates
+     keys for ticket protection in servers so again support should be possible
+     with no application modification.
+
+     If a client or server wishes to disable RFC4507 support then the option
+     SSL_OP_NO_TICKET can be set.
+
+     Add a TLS extension debugging callback to allow the contents of any client
+     or server extensions to be examined.
+     [Steve Henson]
+
   *) Final changes to avoid use of pointer pointer casts in OpenSSL.
      OpenSSL should now compile cleanly on gcc 4.2
      [Peter Hartley <pdh@utter.chaos.org.uk>, Steve Henson]

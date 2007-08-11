@@ -2338,6 +2338,9 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			}
 		s->options |= SSL_OP_NO_SSLv2; /* can't use extension w/ SSL 2.0 format */
  		break;
+	case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
+		s->tlsext_debug_arg=parg;
+		break;
 #endif /* !OPENSSL_NO_TLSEXT */
 	default:
 		break;
@@ -2388,6 +2391,12 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 		{
 		s->cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		}
+		break;
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
+		s->tlsext_debug_cb=(void (*)(SSL *,int ,int,
+					unsigned char *, int, void *))fp;
 		break;
 #endif
 	default:
