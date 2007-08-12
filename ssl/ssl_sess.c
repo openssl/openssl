@@ -122,6 +122,9 @@ SSL_SESSION *SSL_SESSION_new(void)
 	ss->prev=NULL;
 	ss->next=NULL;
 	ss->compress_meth=0;
+#ifndef OPENSSL_NO_TLSEXT
+	ss->tlsext_hostname = NULL; 
+#endif
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_SSL_SESSION, ss, &ss->ex_data);
 	return(ss);
 	}
@@ -216,6 +219,14 @@ int ssl_get_new_session(SSL *s, int session)
 			SSL_SESSION_free(ss);
 			return(0);
 			}
+#ifndef OPENSSL_NO_TLSEXT
+		/* If RFC4507 ticket use empty session ID */
+		if (s->tlsext_ticket_expected)
+			{
+			ss->session_id_length = 0;
+			goto sess_id_done;
+			}
+#endif
 		/* Choose which callback will set the session ID */
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 		if(s->generate_session_id)
@@ -257,6 +268,17 @@ int ssl_get_new_session(SSL *s, int session)
 			SSL_SESSION_free(ss);
 			return(0);
 			}
+#ifndef OPENSSL_NO_TLSEXT
+		sess_id_done:
+		if (s->tlsext_hostname) {
+			ss->tlsext_hostname = BUF_strdup(s->tlsext_hostname);
+			if (ss->tlsext_hostname == NULL) {
+				SSLerr(SSL_F_SSL_GET_NEW_SESSION, ERR_R_INTERNAL_ERROR);
+				SSL_SESSION_free(ss);
+				return 0;
+				}
+			}
+#endif
 		}
 	else
 		{
@@ -278,21 +300,39 @@ int ssl_get_new_session(SSL *s, int session)
 	return(1);
 	}
 
-int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len)
+int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
+			const unsigned char *limit)
 	{
 	/* This is used only by servers. */
 
-	SSL_SESSION *ret=NULL,data;
+	SSL_SESSION *ret=NULL;
 	int fatal = 0;
-
-	data.ssl_version=s->version;
-	data.session_id_length=len;
+#ifndef OPENSSL_NO_TLSEXT
+	int r;
+#endif
+  
 	if (len > SSL_MAX_SSL_SESSION_ID_LENGTH)
 		goto err;
-	memcpy(data.session_id,session_id,len);
-
-	if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
+#ifndef OPENSSL_NO_TLSEXT
+ 	r = tls1_process_ticket(s, session_id, len, limit, &ret);
+	if (r == -1)
 		{
+		fatal = 1;
+ 		goto err;
+		}
+	else if (r == 0)
+		goto err;
+	else if (!ret && !(s->session_ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
+#else
+	if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
+#endif
+		{
+		SSL_SESSION data;
+		data.ssl_version=s->version;
+		data.session_id_length=len;
+		if (len == 0)
+			return 0;
+ 		memcpy(data.session_id,session_id,len);
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 		ret=(SSL_SESSION *)lh_retrieve(s->ctx->sessions,&data);
 		if (ret != NULL)
@@ -548,6 +588,10 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 	if (ss->sess_cert != NULL) ssl_sess_cert_free(ss->sess_cert);
 	if (ss->peer != NULL) X509_free(ss->peer);
 	if (ss->ciphers != NULL) sk_SSL_CIPHER_free(ss->ciphers);
+#ifndef OPENSSL_NO_TLSEXT
+	if (ss->tlsext_hostname != NULL) OPENSSL_free(ss->tlsext_hostname);
+	if (ss->tlsext_tick != NULL) OPENSSL_free(ss->tlsext_tick);
+#endif
 	OPENSSL_cleanse(ss,sizeof(*ss));
 	OPENSSL_free(ss);
 	}

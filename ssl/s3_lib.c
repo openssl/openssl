@@ -1904,6 +1904,39 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		}
 		break;
 #endif /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_HOSTNAME:
+ 		if (larg == TLSEXT_NAMETYPE_host_name)
+			{
+			if (s->tlsext_hostname != NULL) 
+				OPENSSL_free(s->tlsext_hostname);
+			s->tlsext_hostname = NULL;
+
+			ret = 1;
+			if (parg == NULL) 
+				break;
+			if (strlen((char *)parg) > TLSEXT_MAXLEN_host_name)
+				{
+				SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
+				return 0;
+				}
+			if ((s->tlsext_hostname = BUF_strdup((char *)parg)) == NULL)
+				{
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_INTERNAL_ERROR);
+				return 0;
+				}
+			}
+		else
+			{
+			SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
+			return 0;
+			}
+		s->options |= SSL_OP_NO_SSLv2; /* can't use extension w/ SSL 2.0 format */
+ 		break;
+	case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
+		s->tlsext_debug_arg=parg;
+		break;
+#endif /* !OPENSSL_NO_TLSEXT */
 	default:
 		break;
 		}
@@ -1953,6 +1986,12 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 		{
 		s->cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		}
+		break;
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
+		s->tlsext_debug_cb=(void (*)(SSL *,int ,int,
+					unsigned char *, int, void *))fp;
 		break;
 #endif
 	default:
@@ -2088,6 +2127,11 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		}
 		break;
 #endif /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
+		ctx->tlsext_servername_arg=parg;
+		break;
+#endif /* !OPENSSL_NO_TLSEXT */
 	/* A Thawte special :-) */
 	case SSL_CTRL_EXTRA_CHAIN_CERT:
 		if (ctx->extra_certs == NULL)
@@ -2131,6 +2175,11 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		{
 		cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		}
+		break;
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
+		ctx->tlsext_servername_callback=(int (*)(SSL *,int *,void *))fp;
 		break;
 #endif
 	default:
@@ -2178,6 +2227,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	SSL_CIPHER *c,*ret=NULL;
 	STACK_OF(SSL_CIPHER) *prio, *allow;
 	int i,j,ok;
+
 	CERT *cert;
 	unsigned long alg,mask,emask;
 

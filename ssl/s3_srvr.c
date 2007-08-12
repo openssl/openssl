@@ -132,6 +132,7 @@
 #include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <openssl/x509.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
@@ -143,7 +144,6 @@
 #include <openssl/md5.h>
 
 static SSL_METHOD *ssl3_get_server_method(int ver);
-
 #ifndef OPENSSL_NO_ECDH
 static int nid2curve_id(int nid);
 #endif
@@ -494,10 +494,25 @@ int ssl3_accept(SSL *s)
 			if (ret <= 0) goto end;
 			if (s->hit)
 				s->state=SSL_ST_OK;
+#ifndef OPENSSL_NO_TLSEXT
+			else if (s->tlsext_ticket_expected)
+				s->state=SSL3_ST_SW_SESSION_TICKET_A;
+#endif
 			else
 				s->state=SSL3_ST_SW_CHANGE_A;
 			s->init_num=0;
 			break;
+
+#ifndef OPENSSL_NO_TLSEXT
+		case SSL3_ST_SW_SESSION_TICKET_A:
+		case SSL3_ST_SW_SESSION_TICKET_B:
+			ret=ssl3_send_newsession_ticket(s);
+			if (ret <= 0) goto end;
+			s->state=SSL3_ST_SW_CHANGE_A;
+			s->init_num=0;
+			break;
+
+#endif
 
 		case SSL3_ST_SW_CHANGE_A:
 		case SSL3_ST_SW_CHANGE_B:
@@ -727,14 +742,14 @@ int ssl3_get_client_hello(SSL *s)
 	 * might be written that become totally unsecure when compiled with
 	 * an earlier library version)
 	 */
-	if (j == 0 || (s->new_session && (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION)))
+	if ((s->new_session && (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION)))
 		{
 		if (!ssl_get_new_session(s,1))
 			goto err;
 		}
 	else
 		{
-		i=ssl_get_prev_session(s,p,j);
+		i=ssl_get_prev_session(s, p, j, d + n);
 		if (i == 1)
 			{ /* previous session */
 			s->hit=1;
@@ -897,6 +912,22 @@ int ssl3_get_client_hello(SSL *s)
 		goto f_err;
 		}
 
+#ifndef OPENSSL_NO_TLSEXT
+	/* TLS extensions*/
+	if (s->version > SSL3_VERSION)
+		{
+		if (!ssl_parse_clienthello_tlsext(s,&p,d,n, &al))
+			{
+			/* 'al' set by ssl_parse_clienthello_tlsext */
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_PARSE_TLSEXT);
+			goto f_err;
+			}
+		}
+		if (ssl_check_clienthello_tlsext(s) <= 0) {
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
+			goto err;
+		}
+#endif
 	/* Worst case, we will use the NULL compression, but if we have other
 	 * options, we will now look for them.  We have i-1 compression
 	 * algorithms from the client, starting at q. */
@@ -1088,7 +1119,13 @@ int ssl3_send_server_hello(SSL *s)
 		else
 			*(p++)=s->s3->tmp.new_compression->id;
 #endif
-
+#ifndef OPENSSL_NO_TLSEXT
+		if ((p = ssl_add_serverhello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+			{
+			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,ERR_R_INTERNAL_ERROR);
+			return -1;
+			}
+#endif
 		/* do the header */
 		l=(p-d);
 		d=buf;
@@ -2614,4 +2651,91 @@ static int nid2curve_id(int nid)
 		return 0;
 	}
 }
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+int ssl3_send_newsession_ticket(SSL *s)
+	{
+	if (s->state == SSL3_ST_SW_SESSION_TICKET_A)
+		{
+		unsigned char *p, *senc, *macstart;
+		int len, slen;
+		unsigned int hlen;
+		EVP_CIPHER_CTX ctx;
+		HMAC_CTX hctx;
+
+		/* get session encoding length */
+		slen = i2d_SSL_SESSION(s->session, NULL);
+		/* Some length values are 16 bits, so forget it if session is
+ 		 * too long
+ 		 */
+		if (slen > 0xFF00)
+			return -1;
+		/* Grow buffer if need be: the length calculation is as
+ 		 * follows 1 (size of message name) + 3 (message length
+ 		 * bytes) + 4 (ticket lifetime hint) + 2 (ticket length) +
+ 		 * 16 (key name) + max_iv_len (iv length) +
+ 		 * session_length + max_enc_block_size (max encrypted session
+ 		 * length) + max_md_size (HMAC).
+ 		 */
+		if (!BUF_MEM_grow(s->init_buf,
+			26 + EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
+			EVP_MAX_MD_SIZE + slen))
+			return -1;
+		senc = OPENSSL_malloc(slen);
+		if (!senc)
+			return -1;
+		p = senc;
+		i2d_SSL_SESSION(s->session, &p);
+
+		p=(unsigned char *)s->init_buf->data;
+		/* do the header */
+		*(p++)=SSL3_MT_NEWSESSION_TICKET;
+		/* Skip message length for now */
+		p += 3;
+		l2n(s->session->tlsext_tick_lifetime_hint, p);
+		/* Skip ticket length for now */
+		p += 2;
+		/* Output key name */
+		macstart = p;
+		memcpy(p, s->ctx->tlsext_tick_key_name, 16);
+		p += 16;
+		/* Generate and output IV */
+		RAND_pseudo_bytes(p, 16);
+		EVP_CIPHER_CTX_init(&ctx);
+		/* Encrypt session data */
+		EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+					s->ctx->tlsext_tick_aes_key, p);
+		p += 16;
+		EVP_EncryptUpdate(&ctx, p, &len, senc, slen);
+		p += len;
+		EVP_EncryptFinal(&ctx, p, &len);
+		p += len;
+		EVP_CIPHER_CTX_cleanup(&ctx);
+
+		HMAC_CTX_init(&hctx);
+		HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
+				EVP_sha1(), NULL);
+		HMAC_Update(&hctx, macstart, p - macstart);
+		HMAC_Final(&hctx, p, &hlen);
+		HMAC_CTX_cleanup(&hctx);
+
+		p += hlen;
+		/* Now write out lengths: p points to end of data written */
+		/* Total length */
+		len = p - (unsigned char *)s->init_buf->data;
+		p=(unsigned char *)s->init_buf->data + 1;
+		l2n3(len - 4, p); /* Message length */
+		p += 4;
+		s2n(len - 10, p);  /* Ticket length */
+
+		/* number of bytes to write */
+		s->init_num= len;
+		s->state=SSL3_ST_SW_SESSION_TICKET_B;
+		s->init_off=0;
+		OPENSSL_free(senc);
+		}
+
+	/* SSL3_ST_SW_SESSION_TICKET_B */
+	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
+	}
 #endif

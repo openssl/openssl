@@ -125,6 +125,7 @@
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
+#include <openssl/rand.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
@@ -306,7 +307,13 @@ SSL *SSL_new(SSL_CTX *ctx)
 
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->ctx=ctx;
-
+#ifndef OPENSSL_NO_TLSEXT
+	s->tlsext_debug_cb = 0;
+	s->tlsext_debug_arg = NULL;
+	s->tlsext_ticket_expected = 0;
+	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
+	s->initial_ctx=ctx;
+#endif
 	s->verify_result=X509_V_OK;
 
 	s->method=ctx->method;
@@ -492,7 +499,9 @@ void SSL_free(SSL *s)
 	/* Free up if allocated */
 
 	if (s->ctx) SSL_CTX_free(s->ctx);
-
+#ifndef OPENSSL_NO_TLSEXT
+	if (s->initial_ctx) SSL_CTX_free(s->initial_ctx);
+#endif
 	if (s->client_CA != NULL)
 		sk_X509_NAME_pop_free(s->client_CA,X509_NAME_free);
 
@@ -1304,6 +1313,29 @@ err:
 	return(NULL);
 	}
 
+#ifndef OPENSSL_NO_TLSEXT
+/** return a servername extension value if provided in Client Hello, or NULL.
+ * So far, only host_name types are defined (RFC 3546).
+ */
+
+const char *SSL_get_servername(const SSL *s, const int type)
+	{
+	if (type != TLSEXT_NAMETYPE_host_name)
+		return NULL;
+
+	return s->session && !s->tlsext_hostname ?
+		s->session->tlsext_hostname :
+		s->tlsext_hostname;
+	}
+
+int SSL_get_servername_type(const SSL *s)
+	{
+	if (s->session && (!s->tlsext_hostname ? s->session->tlsext_hostname : s->tlsext_hostname))
+		return TLSEXT_NAMETYPE_host_name;
+	return -1;
+	}
+#endif
+
 unsigned long SSL_SESSION_hash(const SSL_SESSION *a)
 	{
 	unsigned long l;
@@ -1452,6 +1484,17 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 
 	ret->extra_certs=NULL;
 	ret->comp_methods=SSL_COMP_get_compression_methods();
+
+#ifndef OPENSSL_NO_TLSEXT
+	ret->tlsext_servername_callback = 0;
+	ret->tlsext_servername_arg = NULL;
+	/* Setup RFC4507 ticket keys */
+	if ((RAND_pseudo_bytes(ret->tlsext_tick_key_name, 16) <= 0)
+		|| (RAND_bytes(ret->tlsext_tick_hmac_key, 16) <= 0)
+		|| (RAND_bytes(ret->tlsext_tick_aes_key, 16) <= 0))
+		ret->options |= SSL_OP_NO_TICKET;
+
+#endif
 
 	return(ret);
 err:
@@ -2399,6 +2442,24 @@ int SSL_version(const SSL *s)
 
 SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 	{
+	return(ssl->ctx);
+	}
+
+SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
+	{
+	if (ssl->ctx == ctx)
+		return ssl->ctx;
+#ifndef OPENSSL_NO_TLSEXT
+	if (ctx == NULL)
+		ctx = ssl->initial_ctx;
+#endif
+	if (ssl->cert != NULL)
+		ssl_cert_free(ssl->cert);
+	ssl->cert = ssl_cert_dup(ctx->cert);
+	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
+	if (ssl->ctx != NULL)
+		SSL_CTX_free(ssl->ctx); /* decrement reference count */
+	ssl->ctx = ctx;
 	return(ssl->ctx);
 	}
 

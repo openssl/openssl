@@ -607,6 +607,7 @@ my %disabled = ( # "what"         => "comment"
                  "rfc3779"        => "default",
                  "seed"           => "default",
                  "shared"         => "default",
+                 "tlsext"         => "default",
                  "zlib"           => "default",
                  "zlib-dynamic"   => "default"
                );
@@ -838,6 +839,10 @@ if (defined($disabled{"md5"}) || defined($disabled{"sha"})
 	$disabled{"tls1"} = "forced";
 	}
 
+if (defined($disabled{"tls1"}))
+	{
+	$disabled{"tlsext"} = "forced";
+	}
 
 if ($target eq "TABLE") {
 	foreach $target (sort keys %table) {

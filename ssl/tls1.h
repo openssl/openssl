@@ -96,6 +96,55 @@ extern "C" {
 #define TLS1_AD_INTERNAL_ERROR		80	/* fatal */
 #define TLS1_AD_USER_CANCELLED		90
 #define TLS1_AD_NO_RENEGOTIATION	100
+/* codes 110-114 are from RFC3546 */
+#define TLS1_AD_UNSUPPORTED_EXTENSION	110
+#define TLS1_AD_CERTIFICATE_UNOBTAINABLE 111
+#define TLS1_AD_UNRECOGNIZED_NAME 	112
+#define TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE 113
+#define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 114
+#define TLS1_AD_UNKNOWN_PSK_IDENTITY	115	/* fatal */
+
+/* ExtensionType values from RFC 3546 */
+#define TLSEXT_TYPE_server_name			0
+#define TLSEXT_TYPE_max_fragment_length		1
+#define TLSEXT_TYPE_client_certificate_url	2
+#define TLSEXT_TYPE_trusted_ca_keys		3
+#define TLSEXT_TYPE_truncated_hmac		4
+#define TLSEXT_TYPE_status_request		5
+#define TLSEXT_TYPE_elliptic_curves		10
+#define TLSEXT_TYPE_ec_point_formats		11
+#define TLSEXT_TYPE_session_ticket		35
+
+/* NameType value from RFC 3546 */
+#define TLSEXT_NAMETYPE_host_name 0
+
+#ifndef OPENSSL_NO_TLSEXT
+
+#define TLSEXT_MAXLEN_host_name 255
+
+const char *SSL_get_servername(const SSL *s, const int type) ;
+int SSL_get_servername_type(const SSL *s) ;
+
+#define SSL_set_tlsext_host_name(s,name) \
+SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)
+
+#define SSL_set_tlsext_debug_callback(ssl, cb) \
+SSL_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_CB,(void (*)(void))cb)
+
+#define SSL_set_tlsext_debug_arg(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_ARG,0, (void *)arg)
+
+#define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
+SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)
+
+#define SSL_TLSEXT_ERR_OK 0    
+#define SSL_TLSEXT_ERR_ALERT_WARNING 1  
+#define SSL_TLSEXT_ERR_ALERT_FATAL 2 
+#define SSL_TLSEXT_ERR_NOACK 3
+
+#define SSL_CTX_set_tlsext_servername_arg(ctx, arg) \
+SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
+#endif
 
 /* Additional TLS ciphersuites from draft-ietf-tls-56-bit-ciphersuites-00.txt
  * (available if TLS1_ALLOW_EXPERIMENTAL_CIPHERSUITES is defined, see
