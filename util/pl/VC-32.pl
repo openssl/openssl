@@ -285,7 +285,7 @@ sub do_lib_rule
 			}
 		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
 		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
-        $ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;2\n\n";
+        $ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;2\n\n";
 		}
 	$ret.="\n";
 	return($ret);
@@ -301,7 +301,7 @@ sub do_link_rule
 	$ret.="$target: $files $dep_libs\n";
 	$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
 	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
-    $ret.="\tIF EXIST \$@.manifest mt -manifest \$@.manifest -outputresource:\$@;1\n\n";
+    $ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n";
 	return($ret);
 	}
 

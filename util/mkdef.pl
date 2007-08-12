@@ -198,6 +198,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-hw$/)	{ $no_hw=1; }
 	elsif (/^no-gmp$/)	{ $no_gmp=1; }
 	elsif (/^no-rfc3779$/)	{ $no_rfc3779=1; }
+	elsif (/^no-tlsext$/)	{ $no_tlsext=1; }
 	}
 
 
