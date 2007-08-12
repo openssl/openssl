@@ -1458,7 +1458,7 @@ bad:
 		}
 
 	BIO_printf(bio_s_out,"ACCEPT\n");
-	BIO_flush(bio_s_out);
+	(void)BIO_flush(bio_s_out);
 	if (www)
 		do_server(port,socket_type,&accept_socket,www_body, context);
 	else

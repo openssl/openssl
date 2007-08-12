@@ -1141,7 +1141,7 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
         SSL3_RT_CHANGE_CIPHER_SPEC : SSL3_RT_HANDSHAKE);
     s->d1->retransmitting = 0;
 
-    BIO_flush(SSL_get_wbio(s));
+    (void)BIO_flush(SSL_get_wbio(s));
     return ret;
     }
 

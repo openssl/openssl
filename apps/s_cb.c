@@ -590,7 +590,7 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 			BIO_printf(bio, " ...");
 		BIO_printf(bio, "\n");
 		}
-	BIO_flush(bio);
+	(void)BIO_flush(bio);
 	}
 
 void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
@@ -648,6 +648,6 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 	BIO_printf(bio, "TLS %s extension \"%s\" (id=%d), len=%d\n",
 			client_server ? "server": "client",
 			extname, type, len);
-	BIO_dump(bio, data, len);
+	BIO_dump(bio, (char *)data, len);
 	BIO_flush(bio);
 	}

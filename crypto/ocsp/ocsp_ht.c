@@ -279,7 +279,7 @@ int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx)
 
 		rctx->state = OHS_ASN1_FLUSH;
 
-		BIO_reset(rctx->mem);
+		(void)BIO_reset(rctx->mem);
 
 		case OHS_ASN1_FLUSH:
 

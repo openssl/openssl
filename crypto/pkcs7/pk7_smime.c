@@ -124,7 +124,7 @@ int PKCS7_final(PKCS7 *p7, BIO *data, int flags)
 
 	SMIME_crlf_copy(data, p7bio, flags);
 
-	BIO_flush(p7bio);
+	(void)BIO_flush(p7bio);
 
 
         if (!PKCS7_dataFinal(p7,p7bio))

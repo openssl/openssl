@@ -1648,7 +1648,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr, int *pkey_type,
 		if (!param)
 			{
 			X509 *x;
-			BIO_reset(pbio);
+			(void)BIO_reset(pbio);
 			x = PEM_read_bio_X509(pbio, NULL, NULL, NULL);
 			if (x)
 				{

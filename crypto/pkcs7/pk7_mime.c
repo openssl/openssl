@@ -125,7 +125,7 @@ int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
 			return 0;
 			}
 		SMIME_crlf_copy(in, bio, flags);
-		BIO_flush(bio);
+		(void)BIO_flush(bio);
 		/* Free up successive BIOs until we hit the old output BIO */
 		do
 			{
@@ -158,7 +158,7 @@ static int B64_write_PKCS7(BIO *out, PKCS7 *p7, BIO *in, int flags)
 	 */
 	out = BIO_push(b64, out);
 	r = i2d_PKCS7_bio_stream(out, p7, in, flags);
-	BIO_flush(out);
+	(void)BIO_flush(out);
 	BIO_pop(out);
 	BIO_free(b64);
 	return r;
@@ -175,7 +175,7 @@ static PKCS7 *B64_read_PKCS7(BIO *bio)
 	bio = BIO_push(b64, bio);
 	if(!(p7 = d2i_PKCS7_bio(bio, NULL))) 
 		PKCS7err(PKCS7_F_B64_READ_PKCS7,PKCS7_R_DECODE_ERROR);
-	BIO_flush(bio);
+	(void)BIO_flush(bio);
 	bio = BIO_pop(bio);
 	BIO_free(b64);
 	return p7;
@@ -542,7 +542,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
 			if(eol) BIO_write(out, "\r\n", 2);
 			}
 		}
-	BIO_flush(out);
+	(void)BIO_flush(out);
 	BIO_pop(out);
 	BIO_free(bf);
 	return 1;
