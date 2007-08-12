@@ -991,7 +991,6 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	/* Check key name matches */
 	if (memcmp(etick, s->ctx->tlsext_tick_key_name, 16))
 		goto tickerr;
-fprintf(stderr, "Ticket match OK\n");
 	/* Check HMAC of encrypted ticket */
 	HMAC_CTX_init(&hctx);
 	HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
@@ -1001,7 +1000,6 @@ fprintf(stderr, "Ticket match OK\n");
 	HMAC_CTX_cleanup(&hctx);
 	if (memcmp(tick_hmac, etick + eticklen, mlen))
 		goto tickerr;
-fprintf(stderr, "HMAC match OK\n");
 	/* Set p to start of IV */
 	p = etick + 16;
 	EVP_CIPHER_CTX_init(&ctx);
@@ -1020,7 +1018,6 @@ fprintf(stderr, "HMAC match OK\n");
 	EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen);
 	if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0)
 		goto tickerr;
-fprintf(stderr, "Decrypt OK\n");
 	slen += mlen;
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	p = sdec;
@@ -1047,6 +1044,5 @@ fprintf(stderr, "Decrypt OK\n");
 	s->tlsext_ticket_expected = 1;
 	return 0;
 	}
-	
 
 #endif

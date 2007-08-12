@@ -2730,7 +2730,7 @@ int ssl3_send_server_certificate(SSL *s)
 	/* SSL3_ST_SW_CERT_B */
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
-#ifndef OPENSSLP_NO_TLSEXT
+#ifndef OPENSSL_NO_TLSEXT
 int ssl3_send_newsession_ticket(SSL *s)
 	{
 	if (s->state == SSL3_ST_SW_SESSION_TICKET_A)
