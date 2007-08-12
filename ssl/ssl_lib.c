@@ -1372,7 +1372,7 @@ err:
 	}
 
 
-#ifndef OPENSSL_TLSEXT
+#ifndef OPENSSL_NO_TLSEXT
 /** return a servername extension value if provided in Client Hello, or NULL.
  * So far, only host_name types are defined (RFC 3546).
  */
