@@ -989,7 +989,7 @@ int ssl_check_clienthello_tlsext(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
 int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 				const unsigned char *limit, SSL_SESSION **ret);
+#endif
 EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) ;
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
-#endif
 #endif

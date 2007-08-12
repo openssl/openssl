@@ -2632,8 +2632,8 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	SSL_CIPHER *c,*ret=NULL;
 	STACK_OF(SSL_CIPHER) *prio, *allow;
 	int i,ii,ok;
-	unsigned int j;
 #ifndef OPENSSL_NO_TLSEXT
+	unsigned int j;
 #ifndef OPENSSL_NO_EC
 	int ec_ok, ec_nid;
 	unsigned char ec_search1 = 0, ec_search2 = 0;

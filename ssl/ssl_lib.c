@@ -2573,8 +2573,10 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
 	{
 	if (ssl->ctx == ctx)
 		return ssl->ctx;
+#ifndef OPENSSL_NO_TLSEXT
 	if (ctx == NULL)
 		ctx = ssl->initial_ctx;
+#endif
 	if (ssl->cert != NULL)
 		ssl_cert_free(ssl->cert);
 	ssl->cert = ssl_cert_dup(ctx->cert);

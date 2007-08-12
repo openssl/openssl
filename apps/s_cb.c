@@ -649,5 +649,5 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 			client_server ? "server": "client",
 			extname, type, len);
 	BIO_dump(bio, (char *)data, len);
-	BIO_flush(bio);
+	(void)BIO_flush(bio);
 	}
