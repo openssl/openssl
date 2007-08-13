@@ -132,6 +132,12 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, FIPS_DSA_SIZE_T dlen, DSA
 	    return NULL;
 	    }
 
+	if (FIPS_mode() && (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
+		{
+		DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_KEY_SIZE_TOO_SMALL);
+		return NULL;
+		}
+
 	BN_init(&m);
 	BN_init(&xr);
 
@@ -306,6 +312,12 @@ static int dsa_do_verify(const unsigned char *dgst, FIPS_DSA_SIZE_T dgst_len, DS
 	if (BN_num_bits(dsa->p) > OPENSSL_DSA_MAX_MODULUS_BITS)
 		{
 		DSAerr(DSA_F_DSA_DO_VERIFY,DSA_R_MODULUS_TOO_LARGE);
+		return -1;
+		}
+
+	if (FIPS_mode() && (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
+		{
+		DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_KEY_SIZE_TOO_SMALL);
 		return -1;
 		}
 

@@ -116,15 +116,15 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	int bitsp,bitsq,ok= -1,n=0;
 	BN_CTX *ctx=NULL;
 
-	if (bits < 512)
-	    {
-	    FIPSerr(FIPS_F_RSA_GENERATE_KEY,FIPS_R_KEY_TOO_SHORT);
-	    return 0;
-	    }
-
 	if(FIPS_selftest_failed())
 	    {
 	    FIPSerr(FIPS_F_RSA_GENERATE_KEY,FIPS_R_FIPS_SELFTEST_FAILED);
+	    return 0;
+	    }
+
+	if (FIPS_mode() && (bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
+	    {
+	    FIPSerr(FIPS_F_RSA_GENERATE_KEY,FIPS_R_KEY_TOO_SHORT);
 	    return 0;
 	    }
 

@@ -194,7 +194,13 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 		DHerr(DH_F_COMPUTE_KEY,DH_R_MODULUS_TOO_LARGE);
 		goto err;
 		}
-	
+
+	if (FIPS_mode() && (BN_num_bits(dh->p) < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
+		{
+		DHerr(DH_F_COMPUTE_KEY, DH_R_KEY_SIZE_TOO_SMALL);
+		goto err;
+		}
+
 	if (dh->priv_key == NULL)
 		{
 		DHerr(DH_F_DH_COMPUTE_KEY,DH_R_NO_PRIVATE_VALUE);

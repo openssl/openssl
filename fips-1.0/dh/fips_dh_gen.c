@@ -115,6 +115,12 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB 
 		return 0;
 		}
 
+	if (FIPS_mode() && (prime_len < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
+		{
+		DHerr(DH_F_GENERATE_PARAMETERS, DH_R_KEY_SIZE_TOO_SMALL);
+		goto err;
+		}
+
 	ctx=BN_CTX_new();
 	if (ctx == NULL) goto err;
 	BN_CTX_start(ctx);

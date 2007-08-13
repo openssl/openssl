@@ -175,6 +175,12 @@ static int RSA_eay_public_encrypt(int flen, const unsigned char *from,
 		goto err;
 		}
 
+	if (FIPS_mode() && (BN_num_bits(rsa->n) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
+		{
+		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
+		return -1;
+		}
+
 	if (BN_num_bits(rsa->n) > OPENSSL_RSA_MAX_MODULUS_BITS)
 		{
 		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_MODULUS_TOO_LARGE);
@@ -374,6 +380,12 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 		goto err;
 		}
 
+	if (FIPS_mode() && (BN_num_bits(rsa->n) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
+		{
+		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
+		return -1;
+		}
+
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 	BN_CTX_start(ctx);
 	f   = BN_CTX_get(ctx);
@@ -511,6 +523,12 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		goto err;
 		}
 
+	if (FIPS_mode() && (BN_num_bits(rsa->n) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
+		{
+		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
+		return -1;
+		}
+
 	if((ctx = BN_CTX_new()) == NULL) goto err;
 	BN_CTX_start(ctx);
 	f   = BN_CTX_get(ctx);
@@ -642,6 +660,12 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 		{
 		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
 		goto err;
+		}
+
+	if (FIPS_mode() && (BN_num_bits(rsa->n) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
+		{
+		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
+		return -1;
 		}
 
 	if (BN_num_bits(rsa->n) > OPENSSL_RSA_MAX_MODULUS_BITS)

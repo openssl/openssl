@@ -75,6 +75,7 @@ static ERR_STRING_DATA DSA_str_functs[]=
 {ERR_FUNC(DSA_F_DSAPARAMS_PRINT_FP),	"DSAparams_print_fp"},
 {ERR_FUNC(DSA_F_DSA_DO_SIGN),	"DSA_do_sign"},
 {ERR_FUNC(DSA_F_DSA_DO_VERIFY),	"DSA_do_verify"},
+{ERR_FUNC(DSA_F_DSA_GENERATE_PARAMETERS),	"DSA_generate_parameters"},
 {ERR_FUNC(DSA_F_DSA_NEW_METHOD),	"DSA_new_method"},
 {ERR_FUNC(DSA_F_DSA_PRINT),	"DSA_print"},
 {ERR_FUNC(DSA_F_DSA_PRINT_FP),	"DSA_print_fp"},
@@ -93,6 +94,7 @@ static ERR_STRING_DATA DSA_str_reasons[]=
 	{
 {ERR_REASON(DSA_R_BAD_Q_VALUE)           ,"bad q value"},
 {ERR_REASON(DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE),"data too large for key size"},
+{ERR_REASON(DSA_R_KEY_SIZE_TOO_SMALL)    ,"key size too small"},
 {ERR_REASON(DSA_R_MISSING_PARAMETERS)    ,"missing parameters"},
 {ERR_REASON(DSA_R_MODULUS_TOO_LARGE)     ,"modulus too large"},
 {ERR_REASON(DSA_R_NON_FIPS_METHOD)       ,"non fips method"},

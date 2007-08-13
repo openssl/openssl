@@ -124,6 +124,12 @@ static int dsa_builtin_paramgen(DSA *ret, int bits,
 	    goto err;
 	    }
 
+	if (FIPS_mode() && (bits < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
+		{
+		DSAerr(DSA_F_DSA_GENERATE_PARAMETERS, DSA_R_KEY_SIZE_TOO_SMALL);
+		goto err;
+		}
+
 	if (bits < 512) bits=512;
 	bits=(bits+63)/64*64;
 
