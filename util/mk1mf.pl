@@ -677,7 +677,7 @@ foreach (values %lib_nam)
 		}
 	if (($cpuid_asm_obj ne "") && ($_ eq "CRYPTO"))
 		{
-		$lib_obj =~ s/\s(\S*\/cversion\S*)/ $1 \$(CPUID_ASM_OBJ)/;
+		$lib_obj =~ s/\s\S*\/mem_clr\S*/ \$(CPUID_ASM_OBJ)/;
 		$rules.=&do_asm_rule($cpuid_asm_obj,$cpuid_asm_src);
 		}
 	$defs.=&do_defs(${_}."OBJ",$lib_obj,"\$(OBJ_D)",$obj);
