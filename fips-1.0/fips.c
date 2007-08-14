@@ -208,7 +208,7 @@ int FIPS_check_incore_fingerprint(void)
 
     if (FIPS_text_start()==NULL)
 	{
-	FIPSerr(FIPS_F_FIPS_CHECK_FINGERPRINT,FIPS_R_UNSUPPORTED_PLATFORM);
+	FIPSerr(FIPS_F_FIPS_CHECK_INCORE_FINGERPRINT,FIPS_R_UNSUPPORTED_PLATFORM);
 	return 0;
 	}
 
@@ -218,11 +218,11 @@ int FIPS_check_incore_fingerprint(void)
 	memcmp(FIPS_signature,sig,sizeof(FIPS_signature)))
 	{
 	if (FIPS_signature>=FIPS_rodata_start && FIPS_signature<FIPS_rodata_end)
-	    FIPSerr(FIPS_F_FIPS_CHECK_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH_SEGMENT_ALIASING);
+	    FIPSerr(FIPS_F_FIPS_CHECK_INCORE_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH_SEGMENT_ALIASING);
 	else if (OPENSSL_NONPIC_relocated)
-	    FIPSerr(FIPS_F_FIPS_CHECK_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH_NONPIC_RELOCATED);
+	    FIPSerr(FIPS_F_FIPS_CHECK_INCORE_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH_NONPIC_RELOCATED);
 	else
-	    FIPSerr(FIPS_F_FIPS_CHECK_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH);
+	    FIPSerr(FIPS_F_FIPS_CHECK_INCORE_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH);
 	return 0;
 	}
 
@@ -324,15 +324,6 @@ end:
     return ret;
     }
 
-#if 0
-/* here just to cause error codes to exist */
-static void dummy()
-    {
-    FIPSerr(FIPS_F_HASH_FINAL,FIPS_F_NON_FIPS_METHOD);
-    FIPSerr(FIPS_F_HASH_FINAL,FIPS_R_FIPS_SELFTEST_FAILED);
-    }
-#endif
-
 void fips_w_lock(void)		{ CRYPTO_w_lock(CRYPTO_LOCK_FIPS); }
 void fips_w_unlock(void)	{ CRYPTO_w_unlock(CRYPTO_LOCK_FIPS); }
 void fips_r_lock(void)		{ CRYPTO_r_lock(CRYPTO_LOCK_FIPS); }
@@ -431,7 +422,7 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 		sig = OPENSSL_malloc(RSA_size(pkey->pkey.rsa));
 		if (!sig)
 			{
-			FIPSerr(FIPS_F_FIPS_CHECK_PK_SIG,ERR_R_MALLOC_FAILURE);
+			FIPSerr(FIPS_F_FIPS_PKEY_SIGNATURE_TEST,ERR_R_MALLOC_FAILURE);
 			return 0;
 			}
 		}

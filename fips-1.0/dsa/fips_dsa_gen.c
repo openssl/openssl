@@ -119,14 +119,14 @@ static int dsa_builtin_paramgen(DSA *ret, int bits,
 
 	if(FIPS_selftest_failed())
 	    {
-	    FIPSerr(FIPS_F_DSA_GENERATE_PARAMETERS,
+	    FIPSerr(FIPS_F_DSA_BUILTIN_PARAMGEN,
 		    FIPS_R_FIPS_SELFTEST_FAILED);
 	    goto err;
 	    }
 
 	if (FIPS_mode() && (bits < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
 		{
-		DSAerr(DSA_F_DSA_GENERATE_PARAMETERS, DSA_R_KEY_SIZE_TOO_SMALL);
+		DSAerr(DSA_F_DSA_BUILTIN_PARAMGEN, DSA_R_KEY_SIZE_TOO_SMALL);
 		goto err;
 		}
 

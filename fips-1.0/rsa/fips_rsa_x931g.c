@@ -207,21 +207,21 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e, BN_GENCB *cb)
 	BIGNUM *Xp = NULL, *Xq = NULL;
 	BN_CTX *ctx = NULL;
 	
-	if (bits < 1024)
+	if (bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS)
 	    {
-	    FIPSerr(FIPS_F_RSA_X931_GENERATE_KEY,FIPS_R_KEY_TOO_SHORT);
+	    FIPSerr(FIPS_F_RSA_X931_GENERATE_KEY_EX,FIPS_R_KEY_TOO_SHORT);
 	    return 0;
 	    }
 
 	if (bits & 0xff)
 	    {
-	    FIPSerr(FIPS_F_RSA_X931_GENERATE_KEY,FIPS_R_INVALID_KEY_LENGTH);
+	    FIPSerr(FIPS_F_RSA_X931_GENERATE_KEY_EX,FIPS_R_INVALID_KEY_LENGTH);
 	    return 0;
 	    }
 
 	if(FIPS_selftest_failed())
 	    {
-	    FIPSerr(FIPS_F_RSA_X931_GENERATE_KEY,FIPS_R_FIPS_SELFTEST_FAILED);
+	    FIPSerr(FIPS_F_RSA_X931_GENERATE_KEY_EX,FIPS_R_FIPS_SELFTEST_FAILED);
 	    return 0;
 	    }
 

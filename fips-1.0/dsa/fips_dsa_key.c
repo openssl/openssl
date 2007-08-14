@@ -80,7 +80,7 @@ int fips_check_dsa(DSA *dsa)
 	if (!fips_pkey_signature_test(&pk, tbs, -1,
 					NULL, 0, EVP_dss1(), 0, NULL))
 		{
-		FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
+		FIPSerr(FIPS_F_FIPS_CHECK_DSA,FIPS_R_PAIRWISE_TEST_FAILED);
 		return 0;
 		}
 	return 1;

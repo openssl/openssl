@@ -134,7 +134,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, FIPS_DSA_SIZE_T dlen, DSA
 
 	if (FIPS_mode() && (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
 		{
-		DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_KEY_SIZE_TOO_SMALL);
+		DSAerr(DSA_F_DSA_DO_SIGN, DSA_R_KEY_SIZE_TOO_SMALL);
 		return NULL;
 		}
 

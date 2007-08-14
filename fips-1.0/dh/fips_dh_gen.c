@@ -111,13 +111,13 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB 
 
 	if(FIPS_selftest_failed())
 		{
-		FIPSerr(FIPS_F_DH_GENERATE_PARAMETERS,FIPS_R_FIPS_SELFTEST_FAILED);
+		FIPSerr(FIPS_F_DH_BUILTIN_GENPARAMS,FIPS_R_FIPS_SELFTEST_FAILED);
 		return 0;
 		}
 
 	if (FIPS_mode() && (prime_len < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
 		{
-		DHerr(DH_F_GENERATE_PARAMETERS, DH_R_KEY_SIZE_TOO_SMALL);
+		DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_KEY_SIZE_TOO_SMALL);
 		goto err;
 		}
 

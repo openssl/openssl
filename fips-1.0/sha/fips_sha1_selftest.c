@@ -87,7 +87,7 @@ int FIPS_selftest_sha1()
 	EVP_Digest(test[n],strlen(test[n]),md, NULL, EVP_sha1(), NULL);
 	if(memcmp(md,ret[n],sizeof md))
 	    {
-	    FIPSerr(FIPS_F_FIPS_SELFTEST_SHA,FIPS_R_SELFTEST_FAILED);
+	    FIPSerr(FIPS_F_FIPS_SELFTEST_SHA1,FIPS_R_SELFTEST_FAILED);
 	    return 0;
 	    }
 	}

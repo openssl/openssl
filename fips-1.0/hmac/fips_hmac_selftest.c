@@ -126,7 +126,7 @@ int FIPS_selftest_hmac()
 
 	if(memcmp(out,t->kaval,outlen))
 	    {
-	    FIPSerr(FIPS_F_FIPS_SELFTEST_SHA,FIPS_R_SELFTEST_FAILED);
+	    FIPSerr(FIPS_F_FIPS_SELFTEST_HMAC,FIPS_R_SELFTEST_FAILED);
 	    return 0;
 	    }
 	}

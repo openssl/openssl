@@ -376,13 +376,13 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 
 	if(FIPS_selftest_failed())
 		{
-		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
+		FIPSerr(FIPS_F_RSA_EAY_PRIVATE_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
 		goto err;
 		}
 
 	if (FIPS_mode() && (BN_num_bits(rsa->n) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
 		{
-		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
+		RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
 		return -1;
 		}
 
@@ -519,13 +519,13 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 
 	if(FIPS_selftest_failed())
 		{
-		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
+		FIPSerr(FIPS_F_RSA_EAY_PRIVATE_DECRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
 		goto err;
 		}
 
 	if (FIPS_mode() && (BN_num_bits(rsa->n) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
 		{
-		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
+		RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
 		return -1;
 		}
 
@@ -658,13 +658,13 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 
 	if(FIPS_selftest_failed())
 		{
-		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
+		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_DECRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
 		goto err;
 		}
 
 	if (FIPS_mode() && (BN_num_bits(rsa->n) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
 		{
-		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
+		RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
 		return -1;
 		}
 

@@ -118,13 +118,13 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 
 	if(FIPS_selftest_failed())
 	    {
-	    FIPSerr(FIPS_F_RSA_GENERATE_KEY,FIPS_R_FIPS_SELFTEST_FAILED);
+	    FIPSerr(FIPS_F_RSA_BUILTIN_KEYGEN,FIPS_R_FIPS_SELFTEST_FAILED);
 	    return 0;
 	    }
 
 	if (FIPS_mode() && (bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
 	    {
-	    FIPSerr(FIPS_F_RSA_GENERATE_KEY,FIPS_R_KEY_TOO_SHORT);
+	    FIPSerr(FIPS_F_RSA_BUILTIN_KEYGEN,FIPS_R_KEY_TOO_SHORT);
 	    return 0;
 	    }
 
