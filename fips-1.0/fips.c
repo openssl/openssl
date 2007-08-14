@@ -490,5 +490,15 @@ int fips_cipher_test(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	return 1;
 	}
 
+#if 0
+/* The purpose of this is to ensure the error code exists and the function
+ * name is to keep the error checking script quiet
+ */
+void hash_final(void)
+	{
+	FIPSerr(FIPS_F_HASH_FINAL,FIPS_R_NON_FIPS_METHOD);
+	}
+#endif
+
 
 #endif

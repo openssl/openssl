@@ -139,7 +139,9 @@ void ERR_load_RAND_strings(void);
 /* Function codes. */
 #define RAND_F_FIPS_RAND				 103
 #define RAND_F_FIPS_RAND_BYTES				 102
+#define RAND_F_FIPS_RAND_SET_DT				 106
 #define RAND_F_FIPS_SET_DT				 104
+#define RAND_F_FIPS_SET_PRNG_SEED			 107
 #define RAND_F_FIPS_SET_TEST_MODE			 105
 #define RAND_F_RAND_GET_RAND_METHOD			 101
 #define RAND_F_SSLEAY_RAND_BYTES			 100
@@ -154,6 +156,7 @@ void ERR_load_RAND_strings(void);
 #define RAND_R_PRNG_NOT_REKEYED				 102
 #define RAND_R_PRNG_NOT_RESEEDED			 103
 #define RAND_R_PRNG_NOT_SEEDED				 100
+#define RAND_R_PRNG_SEED_MUST_NOT_MATCH_KEY		 110
 #define RAND_R_PRNG_STUCK				 104
 
 #ifdef  __cplusplus

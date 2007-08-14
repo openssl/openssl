@@ -406,6 +406,8 @@ void ERR_load_RSA_strings(void);
 /* Error codes for the RSA functions. */
 
 /* Function codes. */
+#define RSA_F_FIPS_RSA_SIGN				 140
+#define RSA_F_FIPS_RSA_VERIFY				 141
 #define RSA_F_MEMORY_LOCK				 100
 #define RSA_F_RSA_BUILTIN_KEYGEN			 129
 #define RSA_F_RSA_CHECK_KEY				 123
