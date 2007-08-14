@@ -91,7 +91,7 @@ static const RAND_METHOD *fips_RAND_get_rand_method(const RAND_METHOD **pmeth)
 	if(FIPS_mode()
 		&& *pmeth != FIPS_rand_check())
 	    {
-	    RANDerr(RAND_F_RAND_GET_RAND_METHOD,RAND_R_NON_FIPS_METHOD);
+	    RANDerr(RAND_F_FIPS_RAND_GET_RAND_METHOD,RAND_R_NON_FIPS_METHOD);
 	    return 0;
 	    }
 

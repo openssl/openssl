@@ -152,7 +152,7 @@ static int do_evp_enc_engine(EVP_CIPHER_CTX *ctx, const EVP_CIPHER **pcipher, EN
 		{
 		if (!ENGINE_init(impl))
 			{
-			EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+			EVPerr(EVP_F_DO_EVP_ENC_ENGINE, EVP_R_INITIALIZATION_ERROR);
 			return 0;
 			}
 		}
@@ -169,7 +169,7 @@ static int do_evp_enc_engine(EVP_CIPHER_CTX *ctx, const EVP_CIPHER **pcipher, EN
 			 * control history, is that we should at least
 			 * be able to avoid using US mispellings of
 			 * "initialisation"? */
-			EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+			EVPerr(EVP_F_DO_EVP_ENC_ENGINE, EVP_R_INITIALIZATION_ERROR);
 			return 0;
 			}
 		/* We'll use the ENGINE's private cipher definition */
@@ -295,7 +295,7 @@ skip_to_init:
 		if (!(ctx->cipher->flags & EVP_CIPH_FLAG_FIPS)
 			& !(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW))
 			{
-			EVPerr(EVP_F_EVP_CIPHERINIT, EVP_R_DISABLED_FOR_FIPS);
+			EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_DISABLED_FOR_FIPS);
 #if 0
 			ERR_add_error_data(2, "cipher=",
 						EVP_CIPHER_name(ctx->cipher));

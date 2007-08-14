@@ -443,6 +443,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_PUBLIC_DECRYPT			 138
 #define RSA_F_RSA_SETUP_BLINDING			 136
 #define RSA_F_RSA_SET_DEFAULT_METHOD			 139
+#define RSA_F_RSA_SET_METHOD				 142
 #define RSA_F_RSA_SIGN					 117
 #define RSA_F_RSA_SIGN_ASN1_OCTET_STRING		 118
 #define RSA_F_RSA_VERIFY				 119

@@ -121,7 +121,7 @@ int RSA_set_method(RSA *rsa, const RSA_METHOD *meth)
 #ifdef OPENSSL_FIPS
 	if (FIPS_mode() && !(meth->flags & RSA_FLAG_FIPS_METHOD))
 		{
-		RSAerr(RSA_F_RSA_SET_DEFAULT_METHOD, RSA_R_NON_FIPS_METHOD);
+		RSAerr(RSA_F_RSA_SET_METHOD, RSA_R_NON_FIPS_METHOD);
 		return 0;
 		}
 #endif
@@ -180,7 +180,7 @@ RSA *RSA_new_method(ENGINE *engine)
 #ifdef OPENSSL_FIPS
 	if (FIPS_mode() && !(ret->meth->flags & RSA_FLAG_FIPS_METHOD))
 		{
-		RSAerr(RSA_F_RSA_SET_DEFAULT_METHOD, RSA_R_NON_FIPS_METHOD);
+		RSAerr(RSA_F_RSA_NEW_METHOD, RSA_R_NON_FIPS_METHOD);
 #ifndef OPENSSL_NO_ENGINE
 		if (ret->engine)
 			ENGINE_finish(ret->engine);

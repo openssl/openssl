@@ -222,7 +222,7 @@ static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD **ptype, ENGINE *impl)
 			{
 			if (!ENGINE_init(impl))
 				{
-				EVPerr(EVP_F_EVP_DIGESTINIT_EX,EVP_R_INITIALIZATION_ERROR);
+				EVPerr(EVP_F_DO_EVP_MD_ENGINE,EVP_R_INITIALIZATION_ERROR);
 				return 0;
 				}
 			}
@@ -236,7 +236,7 @@ static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD **ptype, ENGINE *impl)
 			if(!d)
 				{
 				/* Same comment from evp_enc.c */
-				EVPerr(EVP_F_EVP_DIGESTINIT_EX,EVP_R_INITIALIZATION_ERROR);
+				EVPerr(EVP_F_DO_EVP_MD_ENGINE,EVP_R_INITIALIZATION_ERROR);
 				return 0;
 				}
 			/* We'll use the ENGINE's private digest definition */
@@ -252,7 +252,7 @@ static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD **ptype, ENGINE *impl)
 	else
 	if(!ctx->digest)
 		{
-		EVPerr(EVP_F_EVP_DIGESTINIT_EX,EVP_R_NO_DIGEST_SET);
+		EVPerr(EVP_F_DO_EVP_MD_ENGINE,EVP_R_NO_DIGEST_SET);
 		return 0;
 		}
 	return 1;
@@ -284,7 +284,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 			if (!(type->flags & EVP_MD_FLAG_FIPS) 
 			 && !(ctx->flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW))
 				{
-				EVPerr(EVP_F_EVP_DIGESTINIT, EVP_R_DISABLED_FOR_FIPS);
+				EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_DISABLED_FOR_FIPS);
 				ctx->digest = &bad_md;
 				return 0;
 				}

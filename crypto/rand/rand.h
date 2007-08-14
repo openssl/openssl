@@ -137,8 +137,10 @@ void ERR_load_RAND_strings(void);
 /* Error codes for the RAND functions. */
 
 /* Function codes. */
+#define RAND_F_ENG_RAND_GET_RAND_METHOD			 108
 #define RAND_F_FIPS_RAND				 103
 #define RAND_F_FIPS_RAND_BYTES				 102
+#define RAND_F_FIPS_RAND_GET_RAND_METHOD		 109
 #define RAND_F_FIPS_RAND_SET_DT				 106
 #define RAND_F_FIPS_SET_DT				 104
 #define RAND_F_FIPS_SET_PRNG_SEED			 107

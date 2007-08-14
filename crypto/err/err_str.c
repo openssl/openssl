@@ -223,7 +223,7 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
  * others will be displayed numerically by ERR_error_string.
  * It is crucial that we have something for each reason code
  * that occurs in ERR_str_reasons, or bogus reason strings
- * will be returned for SYSerr(), which always gets an errno
+ * will be returned for SYSerr, which always gets an errno
  * value and never one of those 'standard' reason codes. */
 
 static void build_SYS_str_reasons(void)
