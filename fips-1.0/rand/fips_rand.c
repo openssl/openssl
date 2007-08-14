@@ -97,6 +97,8 @@ typedef struct
 	unsigned long counter;
 	AES_KEY ks;
 	int vpos;
+	/* Temporary storage for key if it equals seed length */
+	unsigned char tmp_key[AES_BLOCK_LENGTH];
 	unsigned char V[AES_BLOCK_LENGTH];
 	unsigned char DT[AES_BLOCK_LENGTH];
 	unsigned char last[AES_BLOCK_LENGTH];
@@ -128,7 +130,13 @@ static int fips_set_prng_key(FIPS_PRNG_CTX *ctx,
 		return 0;
 		}
 	AES_set_encrypt_key(key, keylen << 3, &ctx->ks);
-	ctx->keyed = 1;
+	if (keylen == 16)
+		{
+		memcpy(ctx->tmp_key, key, 16);
+		ctx->keyed = 2;
+		}
+	else
+		ctx->keyed = 1;
 	ctx->seeded = 0;
 	ctx->second = 0;
 	return 1;
@@ -156,6 +164,20 @@ static int fips_set_prng_seed(FIPS_PRNG_CTX *ctx,
 		if (ctx->vpos == AES_BLOCK_LENGTH)
 			{
 			ctx->vpos = 0;
+			/* Special case if first seed and key length equals
+ 			 * block size check key and seed do not match.
+ 			 */ 
+			if (ctx->keyed == 2)
+				{
+				if (!memcmp(ctx->tmp_key, ctx->V, 16))
+					{
+					RANDerr(RAND_F_FIPS_SET_PRNG_SEED,
+						RAND_R_PRNG_SEED_MUST_NOT_MATCH_KEY);
+					return 0;
+					}
+				OPENSSL_cleanse(ctx->tmp_key, 16);
+				ctx->keyed = 1;
+				}
 			ctx->seeded = 1;
 			}
 		}
@@ -182,7 +204,7 @@ int FIPS_rand_set_dt(unsigned char *dt)
 	{
 	if (!sctx.test_mode)
 		{
-		RANDerr(RAND_F_FIPS_SET_DT,RAND_R_NOT_IN_TEST_MODE);
+		RANDerr(RAND_F_FIPS_RAND_SET_DT,RAND_R_NOT_IN_TEST_MODE);
 		return 0;
 		}
 	memcpy(sctx.DT, dt, AES_BLOCK_LENGTH);
