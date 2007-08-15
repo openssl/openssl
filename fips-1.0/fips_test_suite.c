@@ -100,7 +100,7 @@ static int FIPS_dsa_test()
     dsa = FIPS_dsa_new();
     if (!dsa)
 	goto end;
-    if (!DSA_generate_parameters_ex(dsa, 512,NULL,0,NULL,NULL,NULL))
+    if (!DSA_generate_parameters_ex(dsa, 1024,NULL,0,NULL,NULL,NULL))
 	goto end;
     if (!DSA_generate_key(dsa))
 	goto end;
@@ -354,7 +354,7 @@ static int dh_test()
     dh = FIPS_dh_new();
     if (!dh)
 	return 0;
-    if (!DH_generate_parameters_ex(dh, 256, 2, NULL))
+    if (!DH_generate_parameters_ex(dh, 1024, 2, NULL))
 	return 0;
     FIPS_dh_free(dh);
     return 1;

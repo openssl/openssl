@@ -147,6 +147,11 @@ void FIPS_selftest_check(void)
 	}
     }
 
+void fips_set_selftest_fail(void)
+    {
+    fips_selftest_fail = 1;
+    }
+
 int FIPS_selftest()
     {
 

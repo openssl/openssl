@@ -191,12 +191,12 @@ static const unsigned char *fips_digestinfo_nn_encoding(int nid, unsigned int *l
 static int fips_rsa_sign(int type, const unsigned char *x, unsigned int y,
 	     unsigned char *sigret, unsigned int *siglen, EVP_MD_SVCTX *sv)
 	{
-	int i,j,ret=0;
+	int i=0,j,ret=0;
 	unsigned int dlen;
 	const unsigned char *der;
 	unsigned int m_len;
 	int pad_mode = sv->mctx->flags & EVP_MD_CTX_FLAG_PAD_MASK;
-	int rsa_pad_mode;
+	int rsa_pad_mode = 0;
 	RSA *rsa = sv->key;
 	/* Largest DigestInfo: 19 (max encoding) + max MD */
 	unsigned char tmpdinfo[19 + EVP_MAX_MD_SIZE];
@@ -301,7 +301,7 @@ static int fips_rsa_verify(int dtype,
 	int i,ret=0;
 	unsigned int dlen, diglen;
 	int pad_mode = sv->mctx->flags & EVP_MD_CTX_FLAG_PAD_MASK;
-	int rsa_pad_mode;
+	int rsa_pad_mode = 0;
 	unsigned char *s;
 	const unsigned char *der;
 	unsigned char dig[EVP_MAX_MD_SIZE];

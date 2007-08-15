@@ -65,6 +65,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/fips.h>
+#include "fips_locl.h"
 
 #ifdef OPENSSL_FIPS
 
@@ -81,6 +82,7 @@ int fips_check_dsa(DSA *dsa)
 					NULL, 0, EVP_dss1(), 0, NULL))
 		{
 		FIPSerr(FIPS_F_FIPS_CHECK_DSA,FIPS_R_PAIRWISE_TEST_FAILED);
+		fips_set_selftest_fail();
 		return 0;
 		}
 	return 1;

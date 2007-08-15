@@ -71,27 +71,66 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/fips.h>
+#include "fips_locl.h"
 
 #ifdef OPENSSL_FIPS
 
 int fips_check_rsa(RSA *rsa)
 	{
 	const unsigned char tbs[] = "RSA Pairwise Check Data";
+	unsigned char *ctbuf = NULL, *ptbuf = NULL;
+	int len, ret = 0;
 	EVP_PKEY pk;
     	pk.type = EVP_PKEY_RSA;
     	pk.pkey.rsa = rsa;
 
+	/* Perform pairwise consistency signature test */
 	if (!fips_pkey_signature_test(&pk, tbs, -1,
 			NULL, 0, EVP_sha1(), EVP_MD_CTX_FLAG_PAD_PKCS1, NULL)
 		|| !fips_pkey_signature_test(&pk, tbs, -1,
 			NULL, 0, EVP_sha1(), EVP_MD_CTX_FLAG_PAD_X931, NULL)
 		|| !fips_pkey_signature_test(&pk, tbs, -1,
 			NULL, 0, EVP_sha1(), EVP_MD_CTX_FLAG_PAD_PSS, NULL))
+		goto err;
+	/* Now perform pairwise consistency encrypt/decrypt test */
+	ctbuf = OPENSSL_malloc(RSA_size(rsa));
+	if (!ctbuf)
+		goto err;
+
+	len = RSA_public_encrypt(sizeof(tbs) - 1, tbs, ctbuf, rsa, RSA_PKCS1_PADDING);
+	if (len <= 0)
+		goto err;
+	/* Check ciphertext doesn't match plaintext */
+	if ((len == (sizeof(tbs) - 1)) && !memcmp(tbs, ctbuf, len))
+		goto err;
+	ptbuf = OPENSSL_malloc(RSA_size(rsa));
+
+	if (!ptbuf)
+		goto err;
+	len = RSA_private_decrypt(len, ctbuf, ptbuf, rsa, RSA_PKCS1_PADDING);
+	if (len != (sizeof(tbs) - 1))
+		goto err;
+	if (memcmp(ptbuf, tbs, len))
+		goto err;
+
+	ret = 1;
+
+	if (!ptbuf)
+		goto err;
+	
+	err:
+	if (ret == 0)
 		{
+		fips_set_selftest_fail();
 		FIPSerr(FIPS_F_FIPS_CHECK_RSA,FIPS_R_PAIRWISE_TEST_FAILED);
-		return 0;
 		}
-	return 1;
+
+	if (ctbuf)
+		OPENSSL_free(ctbuf);
+	if (ptbuf)
+		OPENSSL_free(ptbuf);
+
+	return ret;
 	}
 
 static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb);

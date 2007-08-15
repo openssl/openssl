@@ -77,6 +77,7 @@
 #endif
 #include <string.h>
 #include <openssl/fips.h>
+#include "fips_locl.h"
 
 #ifdef OPENSSL_FIPS
 
@@ -294,12 +295,14 @@ static int fips_rand(FIPS_PRNG_CTX *ctx,
 		for (i = 0; i < AES_BLOCK_LENGTH; i++)
 			tmp[i] = R[i] ^ I[i];
 		AES_encrypt(tmp, ctx->V, &ctx->ks);
+		/* Continuouse PRNG test */
 		if (ctx->second)
 			{
 			if (!memcmp(R, ctx->last, AES_BLOCK_LENGTH))
 				{
 	    			RANDerr(RAND_F_FIPS_RAND,RAND_R_PRNG_STUCK);
 				ctx->error = 1;
+				fips_set_selftest_fail();
 				return 0;
 				}
 			}
