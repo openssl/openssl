@@ -766,16 +766,16 @@ if ($fips)
 	if ($fipscanisterbuild)
 		{
 		$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_start$obj",
-			"fips-1.0${o}fips_canister.c",
+			"fips${o}fips_canister.c",
 			"-DFIPS_START \$(SHLIB_CFLAGS)");
 		$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_end$obj",
-			"fips-1.0${o}fips_canister.c", "\$(SHLIB_CFLAGS)");
+			"fips${o}fips_canister.c", "\$(SHLIB_CFLAGS)");
 		}
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_standalone_sha1$obj",
-		"fips-1.0${o}sha${o}fips_standalone_sha1.c",
+		"fips${o}sha${o}fips_standalone_sha1.c",
 		"\$(SHLIB_CFLAGS)");
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
-		"fips-1.0${o}fips_premain.c",
+		"fips${o}fips_premain.c",
 		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)");
 	}
 
@@ -882,7 +882,7 @@ foreach (split(/\s+/,$test))
 	$t=&bname($_);
 	my $ltype;
 	# Check to see if test program is FIPS
-	if ($fips && /fips-1.0/)
+	if ($fips && /fips/)
 		{
 		# If fipsdso link to libosslfips.dll 
 		# otherwise perform static link to 

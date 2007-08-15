@@ -31,7 +31,7 @@ L COMP		crypto/comp/comp.h		crypto/comp/comp_err.c
 L ECDSA		crypto/ecdsa/ecdsa.h		crypto/ecdsa/ecs_err.c
 L ECDH		crypto/ecdh/ecdh.h		crypto/ecdh/ech_err.c
 L STORE		crypto/store/store.h		crypto/store/str_err.c
-L FIPS		fips-1.0/fips.h			crypto/fips_err.h
+L FIPS		fips/fips.h			crypto/fips_err.h
 
 # additional header files to be scanned for function names
 L NONE		crypto/x509/x509_vfy.h		NONE
