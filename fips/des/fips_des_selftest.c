@@ -54,24 +54,6 @@
 #include <openssl/opensslconf.h>
 
 #ifdef OPENSSL_FIPS
-static struct
-    {
-    unsigned char key[8];
-    unsigned char plaintext[8];
-    unsigned char ciphertext[8];
-    } tests[]=
-	{
-	{
-	{ 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 },
-	{ 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00 },
-	{ 0x8C,0xA6,0x4D,0xE9,0xC1,0xB1,0x23,0xA7 }
-	},
-	{
-	{ 0xFE,0xDC,0xBA,0x98,0x76,0x54,0x32,0x10 },
-	{ 0x01,0x23,0x45,0x67,0x89,0xAB,0xCD,0xEF },
-	{ 0xED,0x39,0xD9,0x50,0xFA,0x74,0xBC,0xC4 },
-	},
-	};
 
 static struct
     {
@@ -119,7 +101,7 @@ static struct
 
 void FIPS_corrupt_des()
     {
-    tests[0].plaintext[0]++;
+    tests2[0].plaintext[0]++;
     }
 
 int FIPS_selftest_des()
@@ -127,16 +109,6 @@ int FIPS_selftest_des()
     int n, ret = 0;
     EVP_CIPHER_CTX ctx;
     EVP_CIPHER_CTX_init(&ctx);
-#if 0
-    /* Encrypt/decrypt with DES and compare to known answers */
-    for(n=0 ; n < 2 ; ++n)
-	{
-	if (!fips_cipher_test(&ctx, EVP_des_ecb(),
-				tests[n].key, NULL,
-				tests[n].plaintext, tests[n].ciphertext, 8))
-		goto err;
-	}
-#endif
     /* Encrypt/decrypt with 2-key 3DES and compare to known answers */
     for(n=0 ; n < 2 ; ++n)
 	{
