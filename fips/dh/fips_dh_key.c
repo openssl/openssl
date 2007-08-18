@@ -112,6 +112,12 @@ static int generate_key(DH *dh)
 	BN_MONT_CTX *mont=NULL;
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
 
+	if (FIPS_mode() && (BN_num_bits(dh->p) < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
+		{
+		DHerr(DH_F_GENERATE_KEY, DH_R_KEY_SIZE_TOO_SMALL);
+		goto err;
+		}
+
 	ctx = BN_CTX_new();
 	if (ctx == NULL) goto err;
 
