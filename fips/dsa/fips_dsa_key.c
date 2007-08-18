@@ -101,6 +101,12 @@ static int dsa_builtin_keygen(DSA *dsa)
 	BN_CTX *ctx=NULL;
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
 
+	if (FIPS_mode() && (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
+		{
+		DSAerr(DSA_F_DSA_BUILTIN_KEYGEN, DSA_R_KEY_SIZE_TOO_SMALL);
+		goto err;
+		}
+
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 
 	if (dsa->priv_key == NULL)
