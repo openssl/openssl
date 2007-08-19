@@ -66,6 +66,14 @@
 #endif
 #include "evp_locl.h"
 
+#ifdef OPENSSL_FIPS
+	#define M_do_cipher(ctx, out, in, inl) \
+		EVP_Cipher(ctx,out,in,inl)
+#else
+	#define M_do_cipher(ctx, out, in, inl) \
+		ctx->cipher->do_cipher(ctx,out,in,inl)
+#endif
+
 const char EVP_version[]="EVP" OPENSSL_VERSION_PTEXT;
 
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
@@ -138,7 +146,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	OPENSSL_assert(inl > 0);
 	if(ctx->buf_len == 0 && (inl&(ctx->block_mask)) == 0)
 		{
-		if(ctx->cipher->do_cipher(ctx,out,in,inl))
+		if(M_do_cipher(ctx,out,in,inl))
 			{
 			*outl=inl;
 			return 1;
@@ -165,7 +173,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 			{
 			j=bl-i;
 			memcpy(&(ctx->buf[i]),in,j);
-			if(!ctx->cipher->do_cipher(ctx,out,ctx->buf,bl)) return 0;
+			if(!M_do_cipher(ctx,out,ctx->buf,bl)) return 0;
 			inl-=j;
 			in+=j;
 			out+=bl;
@@ -178,7 +186,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	inl-=i;
 	if (inl > 0)
 		{
-		if(!ctx->cipher->do_cipher(ctx,out,in,inl)) return 0;
+		if(!M_do_cipher(ctx,out,in,inl)) return 0;
 		*outl+=inl;
 		}
 
@@ -222,7 +230,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	n=b-bl;
 	for (i=bl; i<b; i++)
 		ctx->buf[i]=n;
-	ret=ctx->cipher->do_cipher(ctx,out,ctx->buf,b);
+	ret=M_do_cipher(ctx,out,ctx->buf,b);
 
 
 	if(ret)

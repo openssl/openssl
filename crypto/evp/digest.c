@@ -120,9 +120,6 @@
 
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 	{
-#ifdef OPENSSL_FIPS
-	FIPS_selftest_check();
-#endif
 	memset(ctx,'\0',sizeof *ctx);
 	}
 
@@ -265,6 +262,14 @@ static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD **ptype, ENGINE *impl)
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 	{
 	M_EVP_MD_CTX_clear_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
+#ifdef OPENSSL_FIPS
+	if(FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_EVP_DIGESTINIT_EX,FIPS_R_FIPS_SELFTEST_FAILED);
+		ctx->digest = &bad_md;
+		return 0;
+		}
+#endif
 #ifndef OPENSSL_NO_ENGINE
 	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
 	 * so this context may already have an ENGINE! Try to avoid releasing
@@ -305,6 +310,9 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data,
 	     size_t count)
 	{
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
 	return ctx->digest->update(ctx,data,count);
 	}
 
@@ -321,6 +329,9 @@ int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	{
 	int ret;
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
 
 	OPENSSL_assert(ctx->digest->md_size <= EVP_MAX_MD_SIZE);
 	ret=ctx->digest->final(ctx,md);

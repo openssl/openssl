@@ -199,6 +199,14 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 			enc = 1;
 		ctx->encrypt = enc;
 		}
+#ifdef OPENSSL_NO_FIPS
+	if(FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_EVP_CIPHERINIT_EX,FIPS_R_FIPS_SELFTEST_FAILED);
+		ctx->cipher = &bad_cipher;
+		return 0;
+		}
+#endif
 #ifndef OPENSSL_NO_ENGINE
 	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
 	 * so this context may already have an ENGINE! Try to avoid releasing
@@ -339,6 +347,9 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 
 int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl)
 	{
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
 	return ctx->cipher->do_cipher(ctx,out,in,inl);
 	}
 
