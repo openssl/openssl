@@ -958,6 +958,11 @@ int ssl_prepare_clienthello_tlsext(SSL *s);
 int ssl_prepare_serverhello_tlsext(SSL *s);
 int ssl_check_clienthello_tlsext(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
+#ifdef OPENSSL_NO_SHA256
+#define tlsext_tick_md	EVP_sha1
+#else
+#define tlsext_tick_md	EVP_sha256
+#endif
 int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 				const unsigned char *limit, SSL_SESSION **ret);
 EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) ;

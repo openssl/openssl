@@ -565,7 +565,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	/* Attempt to process session ticket, first conduct sanity and
  	 * integrity checks on ticket.
  	 */
-	mlen = EVP_MD_size(EVP_sha1());
+	mlen = EVP_MD_size(tlsext_tick_md());
 	eticklen -= mlen;
 	/* Need at least keyname + iv + some encrypted data */
 	if (eticklen < 48)
@@ -576,7 +576,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	/* Check HMAC of encrypted ticket */
 	HMAC_CTX_init(&hctx);
 	HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
-				EVP_sha1(), NULL);
+				tlsext_tick_md(), NULL);
 	HMAC_Update(&hctx, etick, eticklen);
 	HMAC_Final(&hctx, tick_hmac, NULL);
 	HMAC_CTX_cleanup(&hctx);

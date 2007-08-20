@@ -2714,7 +2714,7 @@ int ssl3_send_newsession_ticket(SSL *s)
 
 		HMAC_CTX_init(&hctx);
 		HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
-				EVP_sha1(), NULL);
+				tlsext_tick_md(), NULL);
 		HMAC_Update(&hctx, macstart, p - macstart);
 		HMAC_Final(&hctx, p, &hlen);
 		HMAC_CTX_cleanup(&hctx);
