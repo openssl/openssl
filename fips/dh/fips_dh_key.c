@@ -115,7 +115,7 @@ static int generate_key(DH *dh)
 	if (FIPS_mode() && (BN_num_bits(dh->p) < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
 		{
 		DHerr(DH_F_GENERATE_KEY, DH_R_KEY_SIZE_TOO_SMALL);
-		goto err;
+		return 0;
 		}
 
 	ctx = BN_CTX_new();
