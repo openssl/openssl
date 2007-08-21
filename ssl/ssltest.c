@@ -413,7 +413,7 @@ int main(int argc, char *argv[])
 	long bytes=256L;
 #ifndef OPENSSL_NO_DH
 	DH *dh;
-	int dhe1024 = 0, dhe1024dsa = 0;
+	int dhe1024 = 1, dhe1024dsa = 0;
 #endif
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY *ecdh = NULL;
