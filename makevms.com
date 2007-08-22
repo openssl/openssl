@@ -307,7 +307,12 @@ $   WRITE H_FILE "#define THIRTY_TWO_BIT"
 $   WRITE H_FILE "#undef SIXTEEN_BIT"
 $   WRITE H_FILE "#undef EIGHT_BIT"
 $   WRITE H_FILE "#endif"
-$
+$!
+$   WRITE H_FILE "#if defined(HEADER_SHA_H)"
+$   WRITE H_FILE "#undef OPENSSL_NO_SHA512"
+$   WRITE H_FILE "#define OPENSSL_NO_SHA512"
+$   WRITE H_FILE "#endif"
+$!
 $   WRITE H_FILE "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $   WRITE H_FILE "#define OPENSSL_EXPORT_VAR_AS_FUNCTION"
 $!
