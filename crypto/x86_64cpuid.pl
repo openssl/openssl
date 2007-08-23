@@ -136,11 +136,11 @@ OPENSSL_ia32_cpuid:
 	cpuid
 	cmp	\$0,%r9d
 	jne	.Lnotintel
-	or	\$1<<20,%edx		# use reserved bit to engage RC4_CHAR
+	or	\$0x00100000,%edx	# use reserved 20th bit to engage RC4_CHAR
 	and	\$15,%ah
 	cmp	\$15,%ah		# examine Family ID
 	je	.Lnotintel
-	or	\$1<<30,%edx		# use reserved bit to skip unrolled loop
+	or	\$0x40000000,%edx	# use reserved bit to skip unrolled loop
 .Lnotintel:
 	bt	\$28,%edx		# test hyper-threading bit
 	jnc	.Ldone

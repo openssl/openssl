@@ -626,14 +626,13 @@ AES_encrypt:
 
 	call	_x86_64_AES_encrypt_compact
 
-	lea	16(%rsp),%rsp
-	pop	$out		# restore out
+	mov	16(%rsp),$out	# restore out
+	mov	24(%rsp),%rsp
 	mov	$s0,0($out)	# write output vector
 	mov	$s1,4($out)
 	mov	$s2,8($out)
 	mov	$s3,12($out)
 
-	mov	(%rsp),%rsp
 	pop	%r15
 	pop	%r14
 	pop	%r13
@@ -1217,19 +1216,18 @@ AES_decrypt:
 	sub	$sbox,%rbp
 	and	\$0x300,%rbp
 	lea	($sbox,%rbp),$sbox
-	shr	\$3,%rbp		# recall "magic" constants!
+	shr	\$3,%rbp	# recall "magic" constants!
 	add	%rbp,$sbox
 
 	call	_x86_64_AES_decrypt_compact
 
-	lea	16(%rsp),%rsp
-	pop	$out	# restore out
-	mov	$s0,0($out)
+	mov	16(%rsp),$out	# restore out
+	mov	24(%rsp),%rsp
+	mov	$s0,0($out)	# write output vector
 	mov	$s1,4($out)
 	mov	$s2,8($out)
 	mov	$s3,12($out)
 
-	mov	(%rsp),%rsp
 	pop	%r15
 	pop	%r14
 	pop	%r13
@@ -1275,6 +1273,13 @@ $code.=<<___;
 .type	AES_set_encrypt_key,\@function,3
 .align	16
 AES_set_encrypt_key:
+	call	_x86_64_AES_set_encrypt_key
+	ret
+.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+
+.type	_x86_64_AES_set_encrypt_key,\@abi-omnipotent
+.align	16
+_x86_64_AES_set_encrypt_key:
 	push	%rbx
 	push	%rbp
 
@@ -1461,8 +1466,8 @@ $code.=<<___;
 .Lexit:
 	pop	%rbp
 	pop	%rbx
-	ret
-.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+	.byte	0xf3,0xc3			# rep ret
+.size	_x86_64_AES_set_encrypt_key,.-_x86_64_AES_set_encrypt_key
 ___
 
 sub deckey_ref()
@@ -1527,7 +1532,7 @@ $code.=<<___;
 .align	16
 AES_set_decrypt_key:
 	push	%rdx			# save key schedule
-	call	AES_set_encrypt_key
+	call	_x86_64_AES_set_encrypt_key
 	cmp	\$0,%eax
 	pop	%r8			# restore key schedule
 	jne	.Labort

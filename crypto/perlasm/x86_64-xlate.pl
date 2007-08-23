@@ -85,6 +85,8 @@ my $current_function;
 	    if ($self->{op} =~ /(movz)b.*/) {	# movz is pain...
 		$self->{op} = $1;
 		$self->{sz} = "b";
+	    } elsif ($self->{op} =~ /call/) {
+		$self->{sz} = ""
 	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])/) {
 		$self->{op} = $1;
 		$self->{sz} = $2;
@@ -358,7 +360,7 @@ my $current_function;
 				    $self->{value} = $v;
 				    last;
 				  };
-		/\.extern/  && do { $self->{value} = "EXTRN\t".$line; last;  };
+		/\.extern/  && do { $self->{value} = "EXTRN\t".$line.":BYTE"; last;  };
 		/\.globl/   && do { $self->{value} = "PUBLIC\t".$line; last; };
 		/\.type/    && do { ($sym,$type,$narg) = split(',',$line);
 				    if ($type eq "\@function") {
@@ -394,8 +396,15 @@ my $current_function;
 				    last;
 				  };
 		/\.asciz/   && do { if ($line =~ /^"(.*)"$/) {
-					$self->{value} = "DB\t"
-						.join(",",unpack("C*",$1),0);
+					my @str=unpack("C*",$1);
+					push @str,0;
+					while ($#str>15) {
+					    $self->{value}.="DB\t"
+						.join(",",@str[0..15])."\n";
+					    foreach (0..15) { shift @str; }
+					}
+					$self->{value}.="DB\t"
+						.join(",",@str) if (@str);
 				    }
 				    last;
 				  };
