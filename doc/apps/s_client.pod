@@ -38,6 +38,10 @@ B<openssl> B<s_client>
 [B<-cipher cipherlist>]
 [B<-starttls protocol>]
 [B<-engine id>]
+[B<-tlsextdebug>]
+[B<-no_ticket>]
+[B<-sess_out filename>]
+[B<-sess_in filename>]
 [B<-rand file(s)>]
 
 =head1 DESCRIPTION
@@ -186,6 +190,26 @@ send the protocol-specific message(s) to switch to TLS for communication.
 B<protocol> is a keyword for the intended protocol.  Currently, the only
 supported keywords are "smtp", "pop3", "imap", and "ftp".
 
+=item B<-tlsextdebug>
+
+print out a hex dump of any TLS extensions received from the server. Note: this
+option is only available if extension support is explicitly enabled at compile
+time
+
+=item B<-no_ticket>
+
+disable RFC4507bis session ticket support. Note: this option is only available
+if extension support is explicitly enabled at compile time
+
+=item B<-sess_out filename>
+
+output SSL session to B<filename>
+
+=item B<-sess_in sess.pem>
+
+load SSL session from B<filename>. The client will attempt to resume a
+connection from this session.
+
 =item B<-engine id>
 
 specifying an engine (by it's unique B<id> string) will cause B<s_client>
@@ -245,6 +269,13 @@ on the command line is no guarantee that the certificate works.
 
 If there are problems verifying a server certificate then the
 B<-showcerts> option can be used to show the whole chain.
+
+Since the SSLv23 client hello cannot include compression methods or extensions
+these will only be supported if its use is disabled, for example by using the
+B<-no_sslv2> option.
+
+TLS extensions are only supported in OpenSSL 0.9.8 if they are explictly
+enabled at compile time using for example the B<enable-tlsext> switch.
 
 =head1 BUGS
 

@@ -48,6 +48,8 @@ B<openssl> B<s_server>
 [B<-WWW>]
 [B<-HTTP>]
 [B<-engine id>]
+[B<-tlsextdebug>]
+[B<-no_ticket>]
 [B<-id_prefix arg>]
 [B<-rand file(s)>]
 
@@ -205,6 +207,14 @@ also included in the server list is used. Because the client specifies
 the preference order, the order of the server cipherlist irrelevant. See
 the B<ciphers> command for more information.
 
+=item B<-tlsextdebug>
+
+print out a hex dump of any TLS extensions received from the server.
+
+=item B<-no_ticket>
+
+disable RFC4507bis session ticket support. 
+
 =item B<-www>
 
 sends a status message back to the client when it connects. This includes
@@ -306,6 +316,9 @@ is strictly speaking a protocol violation, some SSL clients interpret this to
 mean any CA is acceptable. This is useful for debugging purposes.
 
 The session parameters can printed out using the B<sess_id> program.
+
+TLS extensions are only supported in OpenSSL 0.9.8 if they are explictly
+enabled at compile time using for example the B<enable-tlsext> switch.
 
 =head1 BUGS
 
