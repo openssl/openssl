@@ -234,6 +234,8 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 #endif
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
+	BIO_printf(bio_err," -sess_out arg - file to write SSL session to\n");
+	BIO_printf(bio_err," -sess_in arg  - file to read SSL session from\n");
 #ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err," -servername host  - Set TLS extension servername in ClientHello\n");
 	BIO_printf(bio_err," -tlsextdebug      - hex dump of all TLS extensions received\n");
