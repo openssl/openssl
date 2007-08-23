@@ -201,6 +201,14 @@ When performing renegotiation as a server, always start a new session
 (i.e., session resumption requests are only accepted in the initial
 handshake).  This option is not needed for clients.
 
+=item SSL_OP_NO_TICKET
+
+Normally clients and servers will, where possible, transparently make use
+of RFC4507bis tickets for stateless session resumption.
+
+If this option is set this functionality is disabled and tickets will
+not be used by clients or servers.
+
 =back
 
 =head1 RETURN VALUES
