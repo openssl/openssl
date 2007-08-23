@@ -9,10 +9,12 @@
      SSL_SESSION structure, that way new session features are automatically
      supported.
 
-     If a client application caches session in an SSL_SESSION support it
-     should automatically be supported because an extension includes the
-     ticket in the structure. The SSL_CTX structure automatically generates
-     keys for ticket protection in servers so again support should be possible
+     If a client application caches session in an SSL_SESSION structure
+     support is transparent because tickets are now stored in the encoded
+     SSL_SESSION.
+     
+     The SSL_CTX structure automatically generates keys for ticket
+     protection in servers so again support should be possible
      with no application modification.
 
      If a client or server wishes to disable RFC4507 support then the option
