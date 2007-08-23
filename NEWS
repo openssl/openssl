@@ -5,6 +5,13 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8e and OpenSSL 0.9.8f:
+
+      o Add support for AES and SSE2 assembly lanugauge optimization
+        for VC++ build.
+      o Support for RFC4507bis and server name extensions if explicitly 
+        selected at compile time.
+
   Major changes between OpenSSL 0.9.8d and OpenSSL 0.9.8e:
 
       o Various ciphersuite selection fixes.
