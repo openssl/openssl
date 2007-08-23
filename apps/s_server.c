@@ -474,6 +474,8 @@ static void sv_usage(void)
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT2);
 	BIO_printf(bio_err," -key2 arg     - Private Key file to use for servername, in cert file if\n");
 	BIO_printf(bio_err,"                 not specified (default is %s)\n",TEST_CERT2);
+	BIO_printf(bio_err," -tlsextdebug  - hex dump of all TLS extensions received\n");
+	BIO_printf(bio_err," -no_ticket    - disable use of RFC4507bis session tickets\n");
 #endif
 	}
 

@@ -48,6 +48,8 @@ B<openssl> B<s_server>
 [B<-WWW>]
 [B<-HTTP>]
 [B<-engine id>]
+[B<-tlsextdebug>]
+[B<-no_ticket>]
 [B<-id_prefix arg>]
 [B<-rand file(s)>]
 
@@ -214,6 +216,14 @@ the client sends a list of supported ciphers the first client cipher
 also included in the server list is used. Because the client specifies
 the preference order, the order of the server cipherlist irrelevant. See
 the B<ciphers> command for more information.
+
+=item B<-tlsextdebug>
+
+print out a hex dump of any TLS extensions received from the server.
+
+=item B<-no_ticket>
+
+disable RFC4507bis session ticket support. 
 
 =item B<-www>
 
