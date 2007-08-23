@@ -1,8 +1,6 @@
-
 @echo off
 
-SET ASMOPTS=-DOPENSSL_IA32_SSE2
-SET ASM=no-asm
+SET ASM=%1
 
 if NOT X%PROCESSOR_ARCHITECTURE% == X goto defined 
 
@@ -25,38 +23,10 @@ echo Auto Configuring for X86
 
 SET TARGET=VC-WIN32
 
-if NOT x%1% == xno-asm SET ASM=nasm
-
-goto compile
-
-:IA64
-
-echo Auto Configuring for IA64
-SET TARGET=VC-WIN64I
-perl ms\uplink.pl win64i > ms\uptable.asm
-if ERRORLEVEL 1 goto error
-ias -o ms\uptable.obj ms\uptable.asm
-if ERRORLEVEL 1 goto error
-
-goto compile
-
-:AMD64
-
-echo Auto Configuring for AMD64
-SET TARGET=VC-WIN64A
-perl ms\uplink.pl win64a > ms\uptable.asm
-if ERRORLEVEL 1 goto error
-ml64 -c -Foms\uptable.obj ms\uptable.asm
-if ERRORLEVEL 1 goto error
-
-
-:compile
-
-perl Configure %TARGET% fipscanisterbuild
-pause
-
-if %ASM% == no-asm goto skipasm
+if x%ASM% == xno-asm goto compile
 echo Generating x86 for NASM assember
+SET ASM=nasm
+SET ASMOPTS=-DOPENSSL_IA32_SSE2
 
 echo Bignum
 cd crypto\bn\asm
@@ -138,7 +108,64 @@ perl x86cpuid.pl win32n %ASMOPTS% > cpu_win32.asm
 if ERRORLEVEL 1 goto error
 cd ..
 
-:skipasm
+goto compile
+
+:IA64
+
+echo Auto Configuring for IA64
+SET TARGET=VC-WIN64I
+perl ms\uplink.pl win64i > ms\uptable.asm
+if ERRORLEVEL 1 goto error
+ias -o ms\uptable.obj ms\uptable.asm
+if ERRORLEVEL 1 goto error
+
+goto compile
+
+:AMD64
+
+echo Auto Configuring for AMD64
+SET TARGET=VC-WIN64A
+perl ms\uplink.pl win64a > ms\uptable.asm
+if ERRORLEVEL 1 goto error
+ml64 -c -Foms\uptable.obj ms\uptable.asm
+if ERRORLEVEL 1 goto error
+
+if x%ASM% == xno-asm goto compile
+echo Generating x86_64 for ML64 assember
+SET ASM=ml64
+
+echo Bignum
+cd crypto\bn\asm
+perl x86_64-mont.pl x86_64-mont.asm
+if ERRORLEVEL 1 goto error
+cd ..\..\..
+
+echo AES
+cd crypto\aes\asm
+perl aes-x86_64.pl aes-x86_64.asm
+if ERRORLEVEL 1 goto error
+cd ..\..\..
+
+echo SHA
+cd crypto\sha\asm
+perl sha1-x86_64.pl sha1-x86_64.asm
+if ERRORLEVEL 1 goto error
+perl sha512-x86_64.pl sha256-x86_64.asm
+if ERRORLEVEL 1 goto error
+perl sha512-x86_64.pl sha512-x86_64.asm
+if ERRORLEVEL 1 goto error
+cd ..\..\..
+
+echo CPU-ID
+cd crypto
+perl x86_64cpuid.pl cpuid-x86_64.asm
+if ERRORLEVEL 1 goto error
+cd ..
+
+:compile
+
+perl Configure %TARGET% fipscanisterbuild
+pause
 
 echo on
 

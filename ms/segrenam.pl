@@ -9,6 +9,7 @@ $suffix=(@ARGV[0]=~/^\$/) ? shift(@ARGV) : "\$m";
 #################################################################
 # rename segments in COFF modules according to %map table below	#
 %map=(	".text" => "fipstx$suffix",				#
+	".text\$"=> "fipstx$suffix",				#
 	".rdata"=> "fipsrd$suffix",				#
 	".data" => "fipsda$suffix"	);			#
 #################################################################

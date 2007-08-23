@@ -172,6 +172,10 @@ $app_ex_obj="setargv.obj" if ($FLAVOR !~ /CE/);
 if ($nasm) {
 	$asm='nasmw -f win32';
 	$afile='-o ';
+} elsif ($ml64) {
+	$asm='ml64 /c /Cp /Cx';
+	$asm.=' /Zi' if $debug;
+	$afile='/Fo';
 } else {
 	$asm='ml /Cp /coff /c /Cx';
 	$asm.=" /Zi" if $debug;
@@ -187,6 +191,8 @@ $bf_enc_obj='';
 $bf_enc_src='';
 
 if (!$no_asm)
+    {
+    if ($FLAVOR =~ "WIN32")
 	{
 	$aes_asm_obj='crypto\aes\asm\a_win32.obj';
 	$aes_asm_src='crypto\aes\asm\a_win32.asm';
@@ -214,6 +220,19 @@ if (!$no_asm)
 	$cpuid_asm_src='crypto\cpu_win32.asm';
 	$cflags.=" -DOPENSSL_CPUID_OBJ -DOPENSSL_IA32_SSE2 -DAES_ASM -DBN_ASM -DOPENSSL_BN_ASM_PART_WORDS -DOPENSSL_BN_ASM_MONT -DMD5_ASM -DSHA1_ASM -DRMD160_ASM";
 	}
+    elsif ($FLAVOR =~ "WIN64A")
+	{
+	$aes_asm_obj='$(OBJ_D)\aes-x86_64.obj';
+	$aes_asm_src='crypto\aes\asm\aes-x86_64.asm';
+	$bn_asm_obj='$(OBJ_D)\x86_64-mont.obj $(OBJ_D)\bn_asm.obj';
+	$bn_asm_src='crypto\bn\asm\x86_64-mont.asm';
+	$sha1_asm_obj='$(OBJ_D)\sha1-x86_64.obj $(OBJ_D)\sha256-x86_64.obj $(OBJ_D)\sha512-x86_64.obj';
+	$sha1_asm_src='crypto\sha\asm\sha1-x86_64.asm crypto\sha\asm\sha256-x86_64.asm crypto\sha\asm\sha512-x86_64.asm';
+	$cpuid_asm_obj='$(OBJ_D)\cpuid-x86_64.obj';
+	$cpuid_asm_src='crypto\cpuid-x86_64.asm';
+	$cflags.=" -DOPENSSL_CPUID_OBJ -DAES_ASM -DOPENSSL_BN_ASM_MONT -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM";
+	}
+    }
 
 if ($shlib && $FLAVOR !~ /CE/)
 	{

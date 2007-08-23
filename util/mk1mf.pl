@@ -1277,6 +1277,7 @@ sub read_options
 		"no-hmac" => \$no_hmac,
 		"no-asm" => \$no_asm,
 		"nasm" => \$nasm,
+		"ml64" => \$ml64,
 		"nw-nasm" => \$nw_nasm,
 		"nw-mwasm" => \$nw_mwasm,
 		"gaswin" => \$gaswin,
