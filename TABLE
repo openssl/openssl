@@ -2578,7 +2578,7 @@ $arflags      =
 
 *** irix-mips3-cc
 $cc           = cc
-$cflags       = -n32 -mips3 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -n32 -mips3 -O2 -use_readonly_const -G0 -rdata_shared -DTERMIOS -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
@@ -2634,7 +2634,7 @@ $arflags      =
 
 *** irix64-mips4-cc
 $cc           = cc
-$cflags       = -64 -mips4 -O2 -use_readonly_const -DTERMIOS -DB_ENDIAN -DBN_DIV3W
+$cflags       = -64 -mips4 -O2 -use_readonly_const -G0 -rdata_shared -DTERMIOS -DB_ENDIAN -DBN_DIV3W
 $unistd       = 
 $thread_cflag = -D_SGI_MP_SOURCE
 $sys_id       = 
