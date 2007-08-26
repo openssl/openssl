@@ -38,7 +38,7 @@ TARGET=`(while [ "x$1" != "x" -a "x$1" != "x-o" ]; do shift; done; echo $2)`
 case `basename "${TARGET}"` in
 libcrypto*|libfips*|*.dll)		;;
 *)	case "$*" in
-	*libcrypto.a*|*-lcrypto*)	;;
+	*libcrypto.a*|*-lcrypto*|*fipscanister.o*)	;;
 	*)	exec ${CC} "$@"		;;
 	esac
 esac
@@ -52,13 +52,18 @@ esac
 
 THERE="`echo $0 | sed -e 's|[^/]*$||'`"..
 
-# If set, FIPSLIBDIR is location of installed validated FIPS module
-if [ -n "${FIPSLIBDIR}" ]; then
-	CANISTER_O="${FIPSLIBDIR}/fipscanister.o"
-elif [ -f "${THERE}/fips/fipscanister.o" ]; then
-	CANISTER_O="${THERE}/fips/fipscanister.o"
-elif [ -f "${THERE}/lib/fipscanister.o" ]; then
-	CANISTER_O="${THERE}/lib/fipscanister.o"
+# fipscanister.o can appear in command line
+CANISTER_O=`(while [ "x$1" != "x" ]; do case "$1" in *fipscanister.o) echo $1; exit;; esac; shift; done)`
+if [ -z "${CANISTER_O}" ]; then
+	# If set, FIPSLIBDIR is location of installed validated FIPS module
+	if [ -n "${FIPSLIBDIR}" ]; then
+		CANISTER_O="${FIPSLIBDIR}/fipscanister.o"
+	elif [ -f "${THERE}/fips/fipscanister.o" ]; then
+		CANISTER_O="${THERE}/fips/fipscanister.o"
+	elif [ -f "${THERE}/lib/fipscanister.o" ]; then
+		CANISTER_O="${THERE}/lib/fipscanister.o"
+	fi
+	CANISTER_O_CMD="${CANISTER_O}"
 fi
 [ -f ${CANISTER_O} ] || { echo "unable to find ${CANISTER_O}"; exit 1; }
 
@@ -80,38 +85,7 @@ case "${TARGET}" in
 esac
 
 case `basename "${TARGET}"` in
-libfips*|*fips.dll)
-	# libfips.so creation can be taking place in the source
-	# directory only!!!
-	FINGERTYPE="${THERE}/fips/fips_standalone_sha1"
-	# fipscanister.o should be specified on command line...
-	CANISTER_O=`(while [ "x$1" != "x" ]; do case "$1" in *fipscanister.o) echo $1; exit;; esac; shift; done)`
-	[ -n "$CANISTER_O" ] || { echo "fipscanister.o is not found"; exit 1; }
-	PREMAIN_C=`dirname "${CANISTER_O}"`/fips_premain.c
-
-	# verify fipspremain.c against its detached signature...
-	${FINGERTYPE} "${PREMAIN_C}" | sed "s/(.*\//(/" | \
-		diff -w "${PREMAIN_C}.sha1" - || \
-	{ echo "${PREMAIN_C} fingerprint mismatch"; exit 1; }
-	# verify fipscanister.o against its detached signature...
-	${FINGERTYPE} "${CANISTER_O}" | sed "s/(.*\//(/" | \
-		diff -w "${CANISTER_O}.sha1" - || \
-	{ echo "${CANISTER_O} fingerprint mismatch"; exit 1; }
-
-	/bin/rm -f "${TARGET}"
-	${CC} "${PREMAIN_C}" ${_WL_PREMAIN} "$@"
-
-	# generate signature...
-	SIG=`"${THERE}/fips/fips_premain_dso" "${TARGET}"`
-	/bin/rm -f "${TARGET}"
-	if [ -z "${SIG}" ]; then
-	   echo "unable to collect signature"; exit 1
-	fi
-
-	# recompile with signature...
-	${CC} -DHMAC_SHA1_SIG=\"${SIG}\" "${PREMAIN_C}" ${_WL_PREMAIN} "$@"
-	;;
-libcrypto*|*.dll)	# must be linking a shared lib...
+lib*|*.dll)	# must be linking a shared lib...
 	# Shared lib creation can be taking place in the source
 	# directory only, but fipscanister.o can reside elsewhere...
 	FINGERTYPE="${THERE}/fips/fips_standalone_sha1"
@@ -127,16 +101,18 @@ libcrypto*|*.dll)	# must be linking a shared lib...
 
 	# Temporarily remove fipscanister.o from libcrypto.a!
 	# We are required to use the standalone copy...
-	trap	'ar r "${THERE}/libcrypto.a" "${CANISTER_O}";
-		 (ranlib "${THERE}/libcrypto.a") 2>/dev/null || :;
-		 sleep 1;
-		 touch -c "${TARGET}"' 0
-
-	ar d "${THERE}/libcrypto.a" fipscanister.o 2>&1 > /dev/null || :
-	(ranlib "${THERE}/libcrypto.a") 2>/dev/null || :
+	if [ -f "${THERE}/libcrypto.a" ]; then
+	    if ar d "${THERE}/libcrypto.a" fipscanister.o; then
+		(ranlib "${THERE}/libcrypto.a") 2>/dev/null || :
+		trap	'ar r "${THERE}/libcrypto.a" "${CANISTER_O}";
+			 (ranlib "${THERE}/libcrypto.a") 2>/dev/null || :;
+			 sleep 1;
+			 touch -c "${TARGET}"' 0
+	    fi
+	fi
 
 	/bin/rm -f "${TARGET}"
-	${CC}	"${CANISTER_O}" \
+	${CC}	${CANISTER_O_CMD:+"${CANISTER_O_CMD}"} \
 		"${PREMAIN_C}" \
 		${_WL_PREMAIN} "$@"
 
@@ -148,7 +124,7 @@ libcrypto*|*.dll)	# must be linking a shared lib...
 	fi
 
 	# recompile with signature...
-	${CC}	"${CANISTER_O}" \
+	${CC}	${CANISTER_O_CMD:+"${CANISTER_O_CMD}"} \
 		-DHMAC_SHA1_SIG=\"${SIG}\" "${PREMAIN_C}" \
 		${_WL_PREMAIN} "$@"
 	;;
@@ -175,7 +151,7 @@ libcrypto*|*.dll)	# must be linking a shared lib...
 	{ echo "${PREMAIN_C} fingerprint mismatch"; exit 1; }
 
 	/bin/rm -f "${TARGET}"
-	${CC}	"${CANISTER_O}" \
+	${CC}	${CANISTER_O_CMD:+"${CANISTER_O_CMD}"} \
 		"${PREMAIN_C}" \
 		${_WL_PREMAIN} "$@"
 
@@ -187,7 +163,7 @@ libcrypto*|*.dll)	# must be linking a shared lib...
 	fi
 
 	# recompile with signature...
-	${CC}	"${CANISTER_O}" \
+	${CC}	${CANISTER_O_CMD:+"${CANISTER_O_CMD}"} \
 		-DHMAC_SHA1_SIG=\"${SIG}\" "${PREMAIN_C}" \
 		${_WL_PREMAIN} "$@"
 	;;
