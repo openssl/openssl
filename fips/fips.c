@@ -209,7 +209,11 @@ int FIPS_check_incore_fingerprint(void)
     {
     unsigned char sig[EVP_MAX_MD_SIZE];
     unsigned int len;
+#if defined(__sgi) && (defined(__mips) || defined(mips))
+    extern int __dso_displacement[];
+#else
     extern int OPENSSL_NONPIC_relocated;
+#endif
 
     if (FIPS_text_start()==NULL)
 	{
@@ -224,7 +228,11 @@ int FIPS_check_incore_fingerprint(void)
 	{
 	if (FIPS_signature>=FIPS_rodata_start && FIPS_signature<FIPS_rodata_end)
 	    FIPSerr(FIPS_F_FIPS_CHECK_INCORE_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH_SEGMENT_ALIASING);
+#if defined(__sgi) && (defined(__mips) || defined(mips))
+	else if (__dso_displacement!=NULL)
+#else
 	else if (OPENSSL_NONPIC_relocated)
+#endif
 	    FIPSerr(FIPS_F_FIPS_CHECK_INCORE_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH_NONPIC_RELOCATED);
 	else
 	    FIPSerr(FIPS_F_FIPS_CHECK_INCORE_FINGERPRINT,FIPS_R_FINGERPRINT_DOES_NOT_MATCH);
