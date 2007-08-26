@@ -128,7 +128,7 @@ libcrypto*|*.dll)	# must be linking a shared lib...
 	# Temporarily remove fipscanister.o from libcrypto.a!
 	# We are required to use the standalone copy...
 	trap	'ar r "${THERE}/libcrypto.a" "${CANISTER_O}";
-		 (ranlib "${THERE}/libcrypto.a") 2>/dev/null;
+		 (ranlib "${THERE}/libcrypto.a") 2>/dev/null || :;
 		 sleep 1;
 		 touch -c "${TARGET}"' 0
 
