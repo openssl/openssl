@@ -27,6 +27,12 @@ SunOS|IRIX*)
 		LD_PRELOAD_64="$LIBCRYPTOSO $LIBSSLSO"; export LD_PRELOAD_64
 		preload_var=LD_PRELOAD_64
 		;;
+	# Why are newly built .so's preloaded anyway? Because run-time
+	# .so lookup path embedded into application takes precedence
+	# over LD_LIBRARY_PATH and as result application ends up linking
+	# to previously installed .so's. On IRIX instead of preloading
+	# newly built .so's we trick run-time linker to fail to find
+	# the installed .so by setting _RLD_ROOT variable.
 	*ELF\ 32*MIPS*)
 		#_RLD_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLD_LIST
 		_RLD_ROOT=/no/such/dir; export _RLD_ROOT
