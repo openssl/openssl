@@ -936,7 +936,9 @@ my $arflags = $fields[$idx_arflags];
 if ($fips)
 	{
 	delete $disabled{"shared"} if ($disabled{"shared"} eq "default");
-	$disabled{"asm"}="forced"  if ("$cpuid_obj:$bn_obj:$aes_obj:$des_obj:$sha1_obj" eq "::::");
+	$disabled{"asm"}="forced"
+		if ($target !~ "VC\-.*" &&
+		    "$cpuid_obj:$bn_obj:$aes_obj:$des_obj:$sha1_obj" eq "::::");
 	}
 
 
