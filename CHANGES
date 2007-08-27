@@ -22,6 +22,8 @@
 
      Add a TLS extension debugging callback to allow the contents of any client
      or server extensions to be examined.
+
+     This work was sponsored by Google.
      [Steve Henson]
 
   *) Final changes to avoid use of pointer pointer casts in OpenSSL.
