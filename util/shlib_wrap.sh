@@ -27,18 +27,28 @@ SunOS|IRIX*)
 		LD_PRELOAD_64="$LIBCRYPTOSO $LIBSSLSO"; export LD_PRELOAD_64
 		preload_var=LD_PRELOAD_64
 		;;
+	*ELF\ 32*MIPS*)
+		#_RLD_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLD_LIST
+		_RLD_ROOT=/no/such/dir; export _RLD_ROOT
+		eval $rld_var=\"/usr/lib'${'$rld_var':+:$'$rld_var'}'\"
+		preload_var=_RLD_LIST
+		;;
 	*ELF\ N32*MIPS*)
 		[ -n "$LD_LIBRARYN32_PATH" ] && rld_var=LD_LIBRARYN32_PATH
-		_RLDN32_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLDN32_LIST
+		#_RLDN32_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLDN32_LIST
+		_RLDN32_ROOT=/no/such/dir; export _RLDN32_ROOT
+		eval $rld_var=\"/usr/lib32'${'$rld_var':+:$'$rld_var'}'\"
 		preload_var=_RLDN32_LIST
 		;;
 	*ELF\ 64*MIPS*)
 		[ -n "$LD_LIBRARY64_PATH"  ] && rld_var=LD_LIBRARY64_PATH
-		_RLD64_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLD64_LIST
+		#_RLD64_LIST="$LIBCRYPTOSO:$LIBSSLSO:DEFAULT"; export _RLD64_LIST
+		_RLD64_ROOT=/no/such/dir; export _RLD64_ROOT
+		eval $rld_var=\"/usr/lib64'${'$rld_var':+:$'$rld_var'}'\"
 		preload_var=_RLD64_LIST
 		;;
 	esac
-	eval $rld_var=\"${THERE}:'$'$rld_var\"; export $rld_var
+	eval $rld_var=\"${THERE}'${'$rld_var':+:$'$rld_var'}'\"; export $rld_var
 	unset rld_var
 	;;
 *)	LD_LIBRARY_PATH="${THERE}:$LD_LIBRARY_PATH"	# Linux, ELF HP-UX
