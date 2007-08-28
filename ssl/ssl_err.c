@@ -338,6 +338,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_INVALID_CHALLENGE_LENGTH),"invalid challenge length"},
 {ERR_REASON(SSL_R_INVALID_COMMAND)       ,"invalid command"},
 {ERR_REASON(SSL_R_INVALID_PURPOSE)       ,"invalid purpose"},
+{ERR_REASON(SSL_R_INVALID_TICKET_KEYS_LENGTH),"invalid ticket keys length"},
 {ERR_REASON(SSL_R_INVALID_TRUST)         ,"invalid trust"},
 {ERR_REASON(SSL_R_KEY_ARG_TOO_LONG)      ,"key arg too long"},
 {ERR_REASON(SSL_R_KRB5)                  ,"krb5"},
