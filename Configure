@@ -1351,7 +1351,7 @@ while (<IN>)
 	s/^CPUID_OBJ=.*$/CPUID_OBJ= $cpuid_obj/;
 	s/^BN_ASM=.*$/BN_ASM= $bn_obj/;
 	s/^DES_ENC=.*$/DES_ENC= $des_obj/;
-	s/^AES_ASM_OBJ=.*$/AES_ASM_OBJ= $aes_obj/;
+	s/^AES_ENC=.*$/AES_ENC= $aes_obj/;
 	s/^BF_ENC=.*$/BF_ENC= $bf_obj/;
 	s/^CAST_ENC=.*$/CAST_ENC= $cast_obj/;
 	s/^RC4_ENC=.*$/RC4_ENC= $rc4_obj/;
@@ -1403,7 +1403,7 @@ print "EX_LIBS       =$lflags\n";
 print "CPUID_OBJ     =$cpuid_obj\n";
 print "BN_ASM        =$bn_obj\n";
 print "DES_ENC       =$des_obj\n";
-print "AES_ASM_OBJ   =$aes_obj\n";
+print "AES_ENC       =$aes_obj\n";
 print "BF_ENC        =$bf_obj\n";
 print "CAST_ENC      =$cast_obj\n";
 print "RC4_ENC       =$rc4_obj\n";

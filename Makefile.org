@@ -88,7 +88,7 @@ PROCESSOR=
 CPUID_OBJ= 
 BN_ASM= bn_asm.o
 DES_ENC= des_enc.o fcrypt_b.o
-AES_ASM_OBJ=aes_core.o aes_cbc.o
+AES_ENC= aes_core.o aes_cbc.o
 BF_ENC= bf_enc.o
 CAST_ENC= c_enc.o
 RC4_ENC= rc4_enc.o
@@ -192,7 +192,7 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}'	\
 		CPUID_OBJ='${CPUID_OBJ}'			\
 		BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' 	\
-		AES_ASM_OBJ='${AES_ASM_OBJ}'			\
+		AES_ENC='${AES_ENC}' CMLL_ENC='${CMLL_ENC}'	\
 		BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}'	\
 		RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}'	\
 		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
