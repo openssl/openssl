@@ -144,6 +144,11 @@ SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)
 
 #define SSL_CTX_set_tlsext_servername_arg(ctx, arg) \
 SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
+
+#define SSL_CTX_get_tlsext_ticket_keys(ctx, keys, keylen) \
+	SSL_CTX_ctrl((ctx),SSL_CTRL_GET_TLXEXT_TICKET_KEYS,(keylen),(keys))
+#define SSL_CTX_set_tlsext_ticket_keys(ctx, keys, keylen) \
+	SSL_CTX_ctrl((ctx),SSL_CTRL_SET_TLXEXT_TICKET_KEYS,(keylen),(keys))
 #endif
 
 /* Additional TLS ciphersuites from draft-ietf-tls-56-bit-ciphersuites-00.txt

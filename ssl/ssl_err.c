@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -327,6 +327,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_INVALID_CHALLENGE_LENGTH),"invalid challenge length"},
 {ERR_REASON(SSL_R_INVALID_COMMAND)       ,"invalid command"},
 {ERR_REASON(SSL_R_INVALID_PURPOSE)       ,"invalid purpose"},
+{ERR_REASON(SSL_R_INVALID_TICKET_KEYS_LENGTH),"invalid ticket keys length"},
 {ERR_REASON(SSL_R_INVALID_TRUST)         ,"invalid trust"},
 {ERR_REASON(SSL_R_KEY_ARG_TOO_LONG)      ,"key arg too long"},
 {ERR_REASON(SSL_R_KRB5)                  ,"krb5"},

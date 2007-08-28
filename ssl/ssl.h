@@ -1223,6 +1223,8 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_CTRL_SET_TLSEXT_HOSTNAME		55
 #define SSL_CTRL_SET_TLSEXT_DEBUG_CB		56
 #define SSL_CTRL_SET_TLSEXT_DEBUG_ARG		57
+#define SSL_CTRL_GET_TLSEXT_TICKET_KEYS		58
+#define SSL_CTRL_SET_TLSEXT_TICKET_KEYS		59
 #endif
 
 #define SSL_session_reused(ssl) \
@@ -1851,6 +1853,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
 #define SSL_R_INVALID_COMMAND				 280
 #define SSL_R_INVALID_PURPOSE				 278
+#define SSL_R_INVALID_TICKET_KEYS_LENGTH		 275
 #define SSL_R_INVALID_TRUST				 279
 #define SSL_R_KEY_ARG_TOO_LONG				 284
 #define SSL_R_KRB5					 285
