@@ -11,7 +11,7 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-CAMELLIA_ASM_OBJ=
+CMLL_ENC= camellia.o cmll_misc.o cmll_cbc.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
@@ -25,8 +25,7 @@ LIB=$(TOP)/libcrypto.a
 LIBSRC=camellia.c cmll_misc.c cmll_ecb.c cmll_cbc.c cmll_ofb.c \
 	   cmll_cfb.c cmll_ctr.c 
 
-LIBOBJ= camellia.o cmll_misc.o cmll_ecb.o cmll_cbc.o cmll_ofb.o \
-		cmll_cfb.o cmll_ctr.o $(CAMELLIA_ASM_OBJ)
+LIBOBJ= cmll_ecb.o cmll_ofb.o cmll_cfb.o cmll_ctr.o $(CMLL_ENC)
 
 SRC= $(LIBSRC)
 
