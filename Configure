@@ -1165,6 +1165,8 @@ if ($no_asm)
 	{
 	$cpuid_obj=$bn_obj=$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj="";
 	$sha1_obj=$md5_obj=$rmd160_obj="";
+	$cflags=~s/\-D[BL]_ENDIAN//		if ($fips);
+	$thread_cflags=~s/\-D[BL]_ENDIAN//	if ($fips);
 	}
 
 if (!$no_shared)
