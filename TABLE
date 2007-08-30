@@ -1075,7 +1075,7 @@ $arflags      =
 
 *** darwin-i386-cc
 $cc           = cc
-$cflags       = -O3 -fomit-frame-pointer -DL_ENDIAN
+$cflags       = -arch i386 -O3 -fomit-frame-pointer -DL_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
@@ -1097,14 +1097,14 @@ $cmll_obj     =
 $dso_scheme   = dlfcn
 $shared_target= darwin-shared
 $shared_cflag = -fPIC -fno-common
-$shared_ldflag = -dynamiclib
+$shared_ldflag = -arch i386 -dynamiclib
 $shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
 $arflags      = 
 
 *** darwin-ppc-cc
 $cc           = cc
-$cflags       = -O3 -DB_ENDIAN
+$cflags       = -arch ppc -O3 -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
@@ -1126,14 +1126,14 @@ $cmll_obj     =
 $dso_scheme   = dlfcn
 $shared_target= darwin-shared
 $shared_cflag = -fPIC -fno-common
-$shared_ldflag = -dynamiclib
+$shared_ldflag = -arch ppc -dynamiclib
 $shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
 $arflags      = 
 
 *** darwin64-ppc-cc
 $cc           = cc
-$cflags       = -m64 -O3 -DB_ENDIAN
+$cflags       = -arch ppc64 -O3 -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
@@ -1155,7 +1155,36 @@ $cmll_obj     =
 $dso_scheme   = dlfcn
 $shared_target= darwin-shared
 $shared_cflag = -fPIC -fno-common
-$shared_ldflag = -m64 -dynamiclib
+$shared_ldflag = -arch ppc64 -dynamiclib
+$shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
+$ranlib       = 
+$arflags      = 
+
+*** darwin64-x86_64-cc
+$cc           = cc
+$cflags       = -arch x86_64 -O3 -fomit-frame-pointer -DL_ENDIAN -DMD32_REG_T=int -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = MACOSX
+$lflags       = -Wl,-search_paths_first%
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL
+$cpuid_obj    = 
+$bn_obj       = 
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$dso_scheme   = dlfcn
+$shared_target= darwin-shared
+$shared_cflag = -fPIC -fno-common
+$shared_ldflag = -arch x86_64 -dynamiclib
 $shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
 $arflags      = 
