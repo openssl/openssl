@@ -446,6 +446,7 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CR_SESSION_TICKET_A:
 		case SSL3_ST_CR_SESSION_TICKET_B:
 			ret=ssl3_get_new_session_ticket(s);
+			if (ret <= 0) goto end;
 			s->state=SSL3_ST_CR_FINISHED_A;
 			s->init_num=0;
 		break;
