@@ -286,7 +286,7 @@
 #define SSL_kECDHe		0x00000040L /* ECDH cert, ECDSA CA cert */
 #define SSL_kEECDH		0x00000080L /* ephemeral ECDH */
 #define SSL_kPSK		0x00000100L /* PSK */
-
+#define SSL_kGOST       0x00000200L /* GOST key exchange */
 
 /* Bits for algorithm_auth (server authentication) */
 #define SSL_aRSA		0x00000001L /* RSA auth */
@@ -297,6 +297,8 @@
 #define SSL_aKRB5               0x00000020L /* KRB5 auth */
 #define SSL_aECDSA              0x00000040L /* ECDSA auth*/
 #define SSL_aPSK                0x00000080L /* PSK auth */
+#define SSL_aGOST94				0x00000100L /* GOST R 34.10-94 signature auth */
+#define SSL_aGOST01 			0x00000200L /* GOST R 34.10-2001 signature auth */
 
 
 /* Bits for algorithm_enc (symmetric encryption) */
@@ -328,7 +330,24 @@
 #define SSL_SSLV3		0x00000002L
 #define SSL_TLSV1		SSL_SSLV3	/* for now */
 
+/* Bits for algorithm2 (handshake digests) */
 
+#define SSL_HANDSHAKE_MAC_MD5 0x10
+#define SSL_HANDSHAKE_MAC_SHA 0x20
+#define SSL_HANDSHAKE_MAC_GOST94 0x40
+#define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
+
+
+/* When adding new digest in the ssl_ciph.c and increment SSM_MD_NUM_IDX
+ * make sure to update this constant too */
+#define SSL_MAX_DIGEST 4
+
+
+#define TLS1_PRF_DGST_SHIFT 8
+#define TLS1_PRF_MD5 (SSL_HANDSHAKE_MAC_MD5 << TLS1_PRF_DGST_SHIFT)
+#define TLS1_PRF_SHA1 (SSL_HANDSHAKE_MAC_SHA << TLS1_PRF_DGST_SHIFT)
+#define TLS1_PRF_GOST94 (SSL_HANDSHAKE_MAC_GOST94 << TLS1_PRF_DGST_SHIFT)
+#define TLS1_PRF (TLS1_PRF_MD5 | TLS1_PRF_SHA1)
 /*
  * Export and cipher strength information. For each cipher we have to decide
  * whether it is exportable or not. This information is likely to change
@@ -398,7 +417,9 @@
 #define SSL_PKEY_DH_RSA		3
 #define SSL_PKEY_DH_DSA		4
 #define SSL_PKEY_ECC            5
-#define SSL_PKEY_NUM		6
+#define SSL_PKEY_GOST94		6
+#define SSL_PKEY_GOST01		7
+#define SSL_PKEY_NUM		8
 
 /* SSL_kRSA <- RSA_ENC | (RSA_TMP & RSA_SIGN) |
  * 	    <- (EXPORT & (RSA_ENC | RSA_TMP) & RSA_SIGN)
@@ -516,9 +537,9 @@ typedef struct ssl3_enc_method
 	int (*setup_key_block)(SSL *);
 	int (*generate_master_secret)(SSL *, unsigned char *, unsigned char *, int);
 	int (*change_cipher_state)(SSL *, int);
-	int (*final_finish_mac)(SSL *, EVP_MD_CTX *, EVP_MD_CTX *, const char *, int, unsigned char *);
+	int (*final_finish_mac)(SSL *,  const char *, int, unsigned char *);
 	int finish_mac_length;
-	int (*cert_verify_mac)(SSL *, EVP_MD_CTX *, unsigned char *);
+	int (*cert_verify_mac)(SSL *, int, unsigned char *);
 	const char *client_finished_label;
 	int client_finished_label_len;
 	const char *server_finished_label;
@@ -755,6 +776,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
 void ssl_update_cache(SSL *s, int mode);
 int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
 		       const EVP_MD **md,int *mac_pkey_type,int *mac_secret_size, SSL_COMP **comp);
+int ssl_get_handshake_digest(int i,long *mask,const EVP_MD **md);			   
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
 int ssl_undefined_function(SSL *s);
 int ssl_undefined_void_function(void);
@@ -820,16 +842,17 @@ int ssl3_renegotiate_check(SSL *ssl);
 int ssl3_dispatch_alert(SSL *s);
 int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek);
 int ssl3_write_bytes(SSL *s, int type, const void *buf, int len);
-int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *ctx1, EVP_MD_CTX *ctx2,
-	const char *sender, int slen,unsigned char *p);
-int ssl3_cert_verify_mac(SSL *s, EVP_MD_CTX *in, unsigned char *p);
+int ssl3_final_finish_mac(SSL *s, const char *sender, int slen,unsigned char *p);
+int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p);
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len);
 int ssl3_enc(SSL *s, int send_data);
 int ssl3_mac(SSL *ssl, unsigned char *md, int send_data);
+void ssl3_free_digest_list(SSL *s);
 unsigned long ssl3_output_cert_chain(SSL *s, X509 *x);
 SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,STACK_OF(SSL_CIPHER) *clnt,
 			       STACK_OF(SSL_CIPHER) *srvr);
 int	ssl3_setup_buffers(SSL *s);
+void ssl3_digest_cached_records(SSL *s);
 int	ssl3_new(SSL *s);
 void	ssl3_free(SSL *s);
 int	ssl3_accept(SSL *s);
@@ -957,9 +980,9 @@ void ssl_free_wbio_buffer(SSL *s);
 int tls1_change_cipher_state(SSL *s, int which);
 int tls1_setup_key_block(SSL *s);
 int tls1_enc(SSL *s, int snd);
-int tls1_final_finish_mac(SSL *s, EVP_MD_CTX *in1_ctx, EVP_MD_CTX *in2_ctx,
+int tls1_final_finish_mac(SSL *s,
 	const char *str, int slen, unsigned char *p);
-int tls1_cert_verify_mac(SSL *s, EVP_MD_CTX *in, unsigned char *p);
+int tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *p);
 int tls1_mac(SSL *ssl, unsigned char *md, int snd);
 int tls1_generate_master_secret(SSL *s, unsigned char *out,
 	unsigned char *p, int len);

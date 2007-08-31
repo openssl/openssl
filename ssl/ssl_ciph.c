@@ -175,7 +175,10 @@ static STACK_OF(SSL_COMP) *ssl_comp_methods=NULL;
 #define SSL_MD_SHA1_IDX	1
 #define SSL_MD_GOST94_IDX 2
 #define SSL_MD_GOST89MAC_IDX 3
-#define SSL_MD_NUM_IDX	4
+/*Constant SSL_MAX_DIGEST equal to size of digests array should be 
+ * defined in the
+ * ssl_locl.h */
+#define SSL_MD_NUM_IDX	SSL_MAX_DIGEST 
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX]={
 	NULL,NULL,NULL,NULL
 	};
@@ -189,6 +192,11 @@ static int  ssl_mac_pkey_id[SSL_MD_NUM_IDX]={
 
 static int ssl_mac_secret_size[SSL_MD_NUM_IDX]={
 	0,0,0,0
+	};
+
+static int ssl_handshake_digest_flag[SSL_MD_NUM_IDX]={
+	SSL_HANDSHAKE_MAC_MD5,SSL_HANDSHAKE_MAC_SHA,
+	SSL_HANDSHAKE_MAC_GOST94,0
 	};
 
 #define CIPHER_ADD	1
@@ -299,6 +307,22 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_MEDIUM,0,  0,0,0,0,0,SSL_MEDIUM,0,0,0},
 	{0,SSL_TXT_HIGH,0,    0,0,0,0,0,SSL_HIGH,  0,0,0},
 	};
+/* Search for public key algorithm with given name and 
+ * return its pkey_id if it is available. Otherwise return 0
+ */
+static int get_optional_pkey_id(const char *pkey_name)
+	{
+	const EVP_PKEY_ASN1_METHOD *ameth;
+	ENGINE *tmpeng = NULL;
+	int pkey_id=0;
+	ameth = EVP_PKEY_asn1_find_str(&tmpeng,pkey_name,-1);
+	if (ameth) 
+		{
+		EVP_PKEY_asn1_get0_info(&pkey_id, NULL,NULL,NULL,NULL,ameth);
+		}		
+	if (tmpeng) ENGINE_finish(tmpeng);	
+	return pkey_id;
+	}
 
 void ssl_load_ciphers(void)
 	{
@@ -346,19 +370,10 @@ void ssl_load_ciphers(void)
 		}
 	ssl_digest_methods[SSL_MD_GOST89MAC_IDX]=
 		EVP_get_digestbyname(SN_id_Gost28147_89_MAC);
-		{
-		const EVP_PKEY_ASN1_METHOD *ameth;
-		ENGINE *tmpeng = NULL;
-		int pkey_id;
-		ameth = EVP_PKEY_asn1_find_str(&tmpeng,"gost-mac",-1);
-		if (ameth) 
-			{
-			EVP_PKEY_asn1_get0_info(&pkey_id, NULL,NULL,NULL,NULL,ameth);
-			ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX]= pkey_id;
+		ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX] = get_optional_pkey_id("gost-mac");
+		if (ssl_mac_pkey_id[SSL_MD_GOST89MAC_IDX]) {
 			ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX]=32;
-			}		
-		if (tmpeng) ENGINE_finish(tmpeng);	
-		}
+		}		
 
 	}
 #ifndef OPENSSL_NO_COMP
@@ -534,6 +549,18 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		return(0);
 	}
 
+int ssl_get_handshake_digest(int idx, long *mask, const EVP_MD **md) 
+{
+	if (idx <0||idx>=SSL_MD_NUM_IDX) 
+		{
+		return 0;
+		}
+	if (ssl_handshake_digest_flag[idx]==0) return 0;
+	*mask = ssl_handshake_digest_flag[idx];
+	*md = ssl_digest_methods[idx];
+	return 1;
+}
+
 #define ITEM_SEP(a) \
 	(((a) == ':') || ((a) == ' ') || ((a) == ';') || ((a) == ','))
 
@@ -605,9 +632,23 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, un
 	*mkey |= SSL_kPSK;
 	*auth |= SSL_aPSK;
 #endif
+	/* Check for presence of GOST 34.10 algorithms, and if they
+	 * do not present, disable  appropriate auth and key exchange */
+	if (!get_optional_pkey_id("gost94")) {
+		*auth |= SSL_aGOST94;
+	}
+	if (!get_optional_pkey_id("gost2001")) {
+		*auth |= SSL_aGOST01;
+	}
+	/* Disable GOST key exchange if no GOST signature algs are available * */
+	if ((*auth & (SSL_aGOST94|SSL_aGOST01)) == (SSL_aGOST94|SSL_aGOST01)) {
+		*mkey |= SSL_kGOST;
+	}	
 #ifdef SSL_FORBID_ENULL
 	*enc |= SSL_eNULL;
 #endif
+		
+
 
 	*enc |= (ssl_cipher_methods[SSL_ENC_DES_IDX ] == NULL) ? SSL_DES :0;
 	*enc |= (ssl_cipher_methods[SSL_ENC_3DES_IDX] == NULL) ? SSL_3DES:0;

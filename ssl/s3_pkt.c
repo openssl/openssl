@@ -1307,8 +1307,6 @@ int ssl3_do_change_cipher_spec(SSL *s)
 		}
 
 	s->s3->tmp.peer_finish_md_len = s->method->ssl3_enc->final_finish_mac(s,
-		&(s->s3->finish_dgst1),
-		&(s->s3->finish_dgst2),
 		sender,slen,s->s3->tmp.peer_finish_md);
 
 	return(1);

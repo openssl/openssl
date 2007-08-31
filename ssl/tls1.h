@@ -420,6 +420,7 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
 /* Stream MAC for GOST ciphersuites from cryptopro draft */
 #define TLS1_STREAM_MAC 0x04
 
+
 #define TLS_CT_RSA_SIGN			1
 #define TLS_CT_DSS_SIGN			2
 #define TLS_CT_RSA_FIXED_DH		3

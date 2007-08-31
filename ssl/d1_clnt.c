@@ -998,14 +998,16 @@ int dtls1_send_client_verify(SSL *s)
 		p= &(d[DTLS1_HM_HEADER_LENGTH]);
 		pkey=s->cert->key->privatekey;
 
-		s->method->ssl3_enc->cert_verify_mac(s,&(s->s3->finish_dgst2),
+		s->method->ssl3_enc->cert_verify_mac(s,
+		NID_sha1,
 			&(data[MD5_DIGEST_LENGTH]));
 
 #ifndef OPENSSL_NO_RSA
 		if (pkey->type == EVP_PKEY_RSA)
 			{
 			s->method->ssl3_enc->cert_verify_mac(s,
-				&(s->s3->finish_dgst1),&(data[0]));
+				NID_md5,
+				&(data[0]));
 			if (RSA_sign(NID_md5_sha1, data,
 					 MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH,
 					&(p[2]), &u, pkey->pkey.rsa) <= 0 )

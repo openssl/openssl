@@ -839,3 +839,5 @@ seed_ecb		838
 seed_cbc		839
 seed_cfb128		840
 seed_ofb128		841
+id_Gost28147_89_MAC		842
+id_Gost28147_89_MAC					843

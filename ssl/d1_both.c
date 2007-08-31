@@ -768,8 +768,6 @@ int dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		p= &(d[DTLS1_HM_HEADER_LENGTH]);
 
 		i=s->method->ssl3_enc->final_finish_mac(s,
-			&(s->s3->finish_dgst1),
-			&(s->s3->finish_dgst2),
 			sender,slen,s->s3->tmp.finish_md);
 		s->s3->tmp.finish_md_len = i;
 		memcpy(p, s->s3->tmp.finish_md, i);

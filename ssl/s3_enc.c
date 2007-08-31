@@ -155,10 +155,8 @@ static unsigned char ssl3_pad_2[48]={
 	0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,
 	0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,
 	0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c,0x5c };
-
-static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
+static int ssl3_handshake_mac(SSL *s, int md_nid,
 	const char *sender, int len, unsigned char *p);
-
 static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 	{
 	EVP_MD_CTX m5;
@@ -545,46 +543,116 @@ int ssl3_enc(SSL *s, int send)
 
 void ssl3_init_finished_mac(SSL *s)
 	{
-	EVP_DigestInit_ex(&(s->s3->finish_dgst1),s->ctx->md5, NULL);
-	EVP_DigestInit_ex(&(s->s3->finish_dgst2),s->ctx->sha1, NULL);
+	if (s->s3->handshake_buffer) BIO_free(s->s3->handshake_buffer);
+	if (s->s3->handshake_dgst) ssl3_free_digest_list(s);
+    s->s3->handshake_buffer=BIO_new(BIO_s_mem());	
+	BIO_set_close(s->s3->handshake_buffer,BIO_CLOSE);
 	}
+
+void ssl3_free_digest_list(SSL *s) 
+	{
+	int i;
+	if (!s->s3->handshake_dgst) return;
+	for (i=0;i<SSL_MAX_DIGEST;i++) 
+		{
+		if (s->s3->handshake_dgst[i])
+			EVP_MD_CTX_destroy(s->s3->handshake_dgst[i]);
+		}
+	OPENSSL_free(s->s3->handshake_dgst);
+	s->s3->handshake_dgst=NULL;
+	}	
+		
+
 
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 	{
-	EVP_DigestUpdate(&(s->s3->finish_dgst1),buf,len);
-	EVP_DigestUpdate(&(s->s3->finish_dgst2),buf,len);
+	if (s->s3->handshake_buffer) 
+		{
+		BIO_write (s->s3->handshake_buffer,(void *)buf,len);
+		} 
+	else 
+		{
+		int i;
+		for (i=0;i< SSL_MAX_DIGEST;i++) 
+			{
+			if (s->s3->handshake_dgst[i]!= NULL)
+			EVP_DigestUpdate(s->s3->handshake_dgst[i],buf,len);
+			}
+		}	
 	}
-
-int ssl3_cert_verify_mac(SSL *s, EVP_MD_CTX *ctx, unsigned char *p)
+void ssl3_digest_cached_records(SSL *s)
 	{
-	return(ssl3_handshake_mac(s,ctx,NULL,0,p));
-	}
+		int i;
+		long mask;
+		const EVP_MD *md;
+		long hdatalen;
+		void *hdata;
+		/* Allocate handshake_dgst array */
+		ssl3_free_digest_list(s);
+		s->s3->handshake_dgst = OPENSSL_malloc(SSL_MAX_DIGEST * sizeof(EVP_MD_CTX *));
+		memset(s->s3->handshake_dgst,0,SSL_MAX_DIGEST *sizeof(EVP_MD_CTX *));
+		hdatalen = BIO_get_mem_data(s->s3->handshake_buffer,&hdata);
+		/* Loop through bitso of algorithm2 field and create MD_CTX-es */
+		for (i=0;ssl_get_handshake_digest(i,&mask,&md); i++) 
+			{
+				if ((mask & s->s3->tmp.new_cipher->algorithm2) && md) 
+				{
+					s->s3->handshake_dgst[i]=EVP_MD_CTX_create();
+					EVP_DigestInit_ex(s->s3->handshake_dgst[i],md,NULL);
+					EVP_DigestUpdate(s->s3->handshake_dgst[i],hdata,hdatalen);
+				} 
+				else 
+				{	
+					s->s3->handshake_dgst[i]=NULL;
+				}
+			}
+		/* Free handshake_buffer BIO */
+		BIO_free(s->s3->handshake_buffer);
+		s->s3->handshake_buffer = NULL;
 
-int ssl3_final_finish_mac(SSL *s, EVP_MD_CTX *ctx1, EVP_MD_CTX *ctx2,
+	}
+int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p)
+	{
+	return(ssl3_handshake_mac(s,md_nid,NULL,0,p));
+	}
+int ssl3_final_finish_mac(SSL *s, 
 	     const char *sender, int len, unsigned char *p)
 	{
 	int ret;
-
-	ret=ssl3_handshake_mac(s,ctx1,sender,len,p);
+	ret=ssl3_handshake_mac(s,NID_md5,sender,len,p);
 	p+=ret;
-	ret+=ssl3_handshake_mac(s,ctx2,sender,len,p);
+	ret+=ssl3_handshake_mac(s,NID_sha1,sender,len,p);
 	return(ret);
 	}
-
-static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
+static int ssl3_handshake_mac(SSL *s, int md_nid,
 	     const char *sender, int len, unsigned char *p)
 	{
 	unsigned int ret;
 	int npad,n;
 	unsigned int i;
 	unsigned char md_buf[EVP_MAX_MD_SIZE];
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX ctx,*d=NULL;
+	if (s->s3->handshake_buffer) 
+		ssl3_digest_cached_records(s);
 
+	/* Search for djgest of specified type  in the handshake_dgst
+	 * array*/
+	for (i=0;i<SSL_MAX_DIGEST;i++) 
+		{
+		  if (s->s3->handshake_dgst[i]&&EVP_MD_CTX_type(s->s3->handshake_dgst[i])==md_nid) 
+		  	{
+		  	d=s->s3->handshake_dgst[i];
+			break;
+			}
+		}
+	if (!d) {
+		SSLerr(SSL_F_SSL3_HANDSHAKE_MAC,SSL_R_NO_REQUIRED_DIGEST);
+		return 0;
+	}	
 	EVP_MD_CTX_init(&ctx);
-	EVP_MD_CTX_copy_ex(&ctx,in_ctx);
+	EVP_MD_CTX_copy_ex(&ctx,d);
 	n=EVP_MD_CTX_size(&ctx);
 	npad=(48/n)*n;
-
 	if (sender != NULL)
 		EVP_DigestUpdate(&ctx,sender,len);
 	EVP_DigestUpdate(&ctx,s->session->master_key,

@@ -3422,10 +3422,10 @@
 #define SN_gost89_cnt		"gost89-cnt"
 #define NID_gost89_cnt		835
 
-#define SN_id_Gost28147_89_MAC		"id-Gost28147-89-MAC"
-#define LN_id_Gost28147_89_MAC		"GOST 28147-89 MAC"
-#define NID_id_Gost28147_89_MAC		787
-#define OBJ_id_Gost28147_89_MAC		OBJ_cryptopro,22L
+#define SN_id_Gost28147_89_MAC					"gost-mac"
+#define LN_id_Gost28147_89_MAC					"GOST 28147-89 MAC"
+#define NID_id_Gost28147_89_MAC					843
+#define OBJ_id_Gost28147_89_MAC					OBJ_cryptopro,22L
 
 #define SN_id_GostR3411_94_prf		"prf-gostr3411-94"
 #define LN_id_GostR3411_94_prf		"GOST R 34.11-94 PRF"

@@ -502,12 +502,15 @@ int ssl3_accept(SSL *s)
 
 				/* We need to get hashes here so if there is
 				 * a client cert, it can be verified
+				 * FIXME - digest processing for CertificateVerify
+				 * should be generalized. But it is next step
 				 */
+								
 				s->method->ssl3_enc->cert_verify_mac(s,
-				    &(s->s3->finish_dgst1),
+					NID_md5,
 				    &(s->s3->tmp.cert_verify_md[0]));
 				s->method->ssl3_enc->cert_verify_mac(s,
-				    &(s->s3->finish_dgst2),
+					NID_sha1,
 				    &(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]));
 				}
 			break;
@@ -1026,6 +1029,7 @@ int ssl3_get_client_hello(SSL *s)
 			goto f_err;
 			}
 		s->s3->tmp.new_cipher=c;
+		ssl3_digest_cached_records(s);
 		}
 	else
 		{
@@ -1056,6 +1060,9 @@ int ssl3_get_client_hello(SSL *s)
 		else
 #endif
 		s->s3->tmp.new_cipher=s->session->cipher;
+		/* Clear cached handshake records */
+		BIO_free(s->s3->handshake_buffer);
+		s->s3->handshake_buffer = NULL;
 		}
 	
 	/* we now have the following setup. 

@@ -160,8 +160,6 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		p= &(d[4]);
 
 		i=s->method->ssl3_enc->final_finish_mac(s,
-			&(s->s3->finish_dgst1),
-			&(s->s3->finish_dgst2),
 			sender,slen,s->s3->tmp.finish_md);
 		s->s3->tmp.finish_md_len = i;
 		memcpy(p, s->s3->tmp.finish_md, i);
@@ -518,9 +516,16 @@ int ssl_cert_type(X509 *x, EVP_PKEY *pkey)
 	else if (i == EVP_PKEY_EC)
 		{
 		ret = SSL_PKEY_ECC;
-		}
+		}	
 #endif
-
+	else if (i == NID_id_GostR3410_94 || i == NID_id_GostR3410_94_cc) 
+		{
+		ret = SSL_PKEY_GOST94;
+		}
+	else if (i == NID_id_GostR3410_2001 || i == NID_id_GostR3410_2001_cc) 
+		{
+		ret = SSL_PKEY_GOST01;
+		}
 err:
 	if(!pkey) EVP_PKEY_free(pk);
 	return(ret);

@@ -255,6 +255,10 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT),	"TLS1_PREPARE_SERVERHELLO_TLSEXT"},
 {ERR_FUNC(SSL_F_TLS1_SETUP_KEY_BLOCK),	"TLS1_SETUP_KEY_BLOCK"},
 {ERR_FUNC(SSL_F_WRITE_PENDING),	"WRITE_PENDING"},
+{ERR_FUNC(SSL_F_TLS1_FINAL_FINISH_MAC),"tls1_final_finish_mac"},
+{ERR_FUNC(SSL_F_TLS1_PRF),"tls1_prf"},
+{ERR_FUNC(SSL_F_SSL3_HANDSHAKE_MAC),"ssl3_handshake_mac"},
+{ERR_FUNC(SSL_F_TLS1_CERT_VERIFY_MAC),"tls1_cert_verify_mac"},
 {0,NULL}
 	};
 
@@ -513,6 +517,8 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_WRONG_VERSION_NUMBER)  ,"wrong version number"},
 {ERR_REASON(SSL_R_X509_LIB)              ,"x509 lib"},
 {ERR_REASON(SSL_R_X509_VERIFICATION_SETUP_PROBLEMS),"x509 verification setup problems"},
+{ERR_REASON(SSL_R_UNSUPPORTED_DIGEST_TYPE),"unsupported digest type"},
+{ERR_REASON(SSL_R_NO_REQUIRED_DIGEST),"digest requred for handshake isn't computed"},
 {0,NULL}
 	};
 

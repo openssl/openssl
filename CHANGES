@@ -4,6 +4,11 @@
 
  Changes between 0.9.8f and 0.9.9  [xx XXX xxxx]
 
+  *) Update ssl code to support digests other than SHA1+MD5 for handshake
+     MAC. 
+
+     [Victor B. Wagner <vitus@cryptocom.ru>]
+
   *) Add RFC4507 support to OpenSSL. This includes the corrections in
      RFC4507bis. The encrypted ticket format is an encrypted encoded
      SSL_SESSION structure, that way new session features are automatically
