@@ -466,11 +466,11 @@ static int get_server_hello(SSL *s)
 			return(-1);
 			}
 
-		sk_SSL_CIPHER_set_cmp_func(sk,ssl_cipher_ptr_id_cmp);
+		(void)sk_SSL_CIPHER_set_cmp_func(sk,ssl_cipher_ptr_id_cmp);
 
 		/* get the array of ciphers we will accept */
 		cl=SSL_get_ciphers(s);
-		sk_SSL_CIPHER_set_cmp_func(cl,ssl_cipher_ptr_id_cmp);
+		(void)sk_SSL_CIPHER_set_cmp_func(cl,ssl_cipher_ptr_id_cmp);
 
 		/*
 		 * If server preference flag set, choose the first

@@ -277,7 +277,7 @@ int CRYPTO_get_new_dynlockid(void)
 	else
 		/* If we found a place with a NULL pointer, put our pointer
 		   in it.  */
-		sk_CRYPTO_dynlock_set(dyn_locks,i,pointer);
+		(void)sk_CRYPTO_dynlock_set(dyn_locks,i,pointer);
 	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
 
 	if (i == -1)
@@ -319,7 +319,7 @@ void CRYPTO_destroy_dynlockid(int i)
 #endif
 			if (pointer->references <= 0)
 				{
-				sk_CRYPTO_dynlock_set(dyn_locks, i, NULL);
+				(void)sk_CRYPTO_dynlock_set(dyn_locks, i, NULL);
 				}
 			else
 				pointer = NULL;

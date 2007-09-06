@@ -385,7 +385,7 @@ int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param)
 			{
 			ptmp = sk_X509_VERIFY_PARAM_value(param_table, idx);
 			X509_VERIFY_PARAM_free(ptmp);
-			sk_X509_VERIFY_PARAM_delete(param_table, idx);
+			(void)sk_X509_VERIFY_PARAM_delete(param_table, idx);
 			}
 		}
 	if (!sk_X509_VERIFY_PARAM_push(param_table, param))

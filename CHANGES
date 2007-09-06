@@ -3,6 +3,10 @@
  _______________
 
  Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
+
+  *) Changes to avoid need for function casts in OpenSSL: some compilers
+     (gcc 4.2 and later) reject their use.NB: safestack not reimplemented yet.
+     [Kurt Roeckx <kurt@roeckx.be>, Peter Hartley <pdh@utter.chaos.org.uk>]
   
   *) Add RFC4507 support to OpenSSL. This includes the corrections in
      RFC4507bis. The encrypted ticket format is an encrypted encoded
