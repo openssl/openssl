@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 0.9.8e and OpenSSL 0.9.8f:
 
+      o Add gcc 4.2 support.
       o Add support for AES and SSE2 assembly lanugauge optimization
         for VC++ build.
       o Support for RFC4507bis and server name extensions if explicitly 
