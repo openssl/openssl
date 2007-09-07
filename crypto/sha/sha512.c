@@ -388,6 +388,9 @@ static const SHA_LONG64 K512[80] = {
 #define Ch(x,y,z)	(((x) & (y)) ^ ((~(x)) & (z)))
 #define Maj(x,y,z)	(((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
+
+#if defined(__i386) || defined(__i386__) || defined(_M_IX86)
+
 #if defined(OPENSSL_IA32_SSE2) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
 #define	GO_FOR_SSE2(ctx,in,num)		do {		\
 	void	sha512_block_sse2(void *,const void *,size_t);	\
@@ -396,7 +399,62 @@ static const SHA_LONG64 K512[80] = {
 					} while (0)
 #endif
 
-#ifdef OPENSSL_SMALL_FOOTPRINT
+static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num)
+	{
+	const SHA_LONG64 *W=in;
+	SHA_LONG64	T1;
+	SHA_LONG64	X[9+80],*F;
+	int i;
+
+#ifdef GO_FOR_SSE2
+	GO_FOR_SSE2(ctx,in,num);
+#endif
+
+			while (num--) {
+
+	F = X+80;
+	F[0] = ctx->h[0];	F[1] = ctx->h[1];
+	F[2] = ctx->h[2];	F[3] = ctx->h[3];
+	F[4] = ctx->h[4];	F[5] = ctx->h[5];
+	F[6] = ctx->h[6];	F[7] = ctx->h[7];
+
+	for (i=0;i<16;i++,F--)
+		{
+#ifdef B_ENDIAN
+		T1 = W[i];
+#else
+		T1 = PULL64(W[i]);
+#endif
+		F[8]  = T1;
+		T1   += F[7] + Sigma1(F[4]) + Ch(F[4],F[5],F[6]) + K512[i];
+		F[3] += T1;
+		T1   += Sigma0(F[0]) + Maj(F[0],F[1],F[2]);
+		F[-1] = T1;
+		}
+
+	for (;i<80;i++,F--)
+		{
+		T1    = sigma0(F[8+16-1]);
+		T1   += sigma1(F[8+16-14]);
+
+		T1   += F[8+16] + F[8+16-9];
+		F[8]  = T1;
+		T1   += F[7] + Sigma1(F[4]) + Ch(F[4],F[5],F[6]) + K512[i];
+		F[3] += T1;
+		T1   += Sigma0(F[0]) + Maj(F[0],F[1],F[2]);
+		F[-1] = T1;
+		}
+
+	ctx->h[0] += F[0];	ctx->h[1] += F[1];
+	ctx->h[2] += F[2];	ctx->h[3] += F[3];
+	ctx->h[4] += F[4];	ctx->h[5] += F[5];
+	ctx->h[6] += F[6];	ctx->h[7] += F[7];
+
+			W+=SHA_LBLOCK;
+			}
+	}
+
+#elif defined(OPENSSL_SMALL_FOOTPRINT)
 
 static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num)
 	{
@@ -404,10 +462,6 @@ static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num
 	SHA_LONG64	a,b,c,d,e,f,g,h,s0,s1,T1,T2;
 	SHA_LONG64	X[16];
 	int i;
-
-#ifdef GO_FOR_SSE2
-	GO_FOR_SSE2(ctx,in,num);
-#endif
 
 			while (num--) {
 
@@ -453,11 +507,11 @@ static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num
 	h = Sigma0(a) + Maj(a,b,c);			\
 	d += T1;	h += T1;		} while (0)
 
-#define	ROUND_16_80(i,a,b,c,d,e,f,g,h,X)	do {	\
-	s0 = X[(i+1)&0x0f];	s0 = sigma0(s0);	\
-	s1 = X[(i+14)&0x0f];	s1 = sigma1(s1);	\
-	T1 = X[(i)&0x0f] += s0 + s1 + X[(i+9)&0x0f];	\
-	ROUND_00_15(i,a,b,c,d,e,f,g,h);		} while (0)
+#define	ROUND_16_80(i,j,a,b,c,d,e,f,g,h,X)	do {	\
+	s0 = X[(j+1)&0x0f];	s0 = sigma0(s0);	\
+	s1 = X[(j+14)&0x0f];	s1 = sigma1(s1);	\
+	T1 = X[(j)&0x0f] += s0 + s1 + X[(j+9)&0x0f];	\
+	ROUND_00_15(i+j,a,b,c,d,e,f,g,h);		} while (0)
 
 static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num)
 	{
@@ -465,10 +519,6 @@ static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num
 	SHA_LONG64	a,b,c,d,e,f,g,h,s0,s1,T1;
 	SHA_LONG64	X[16];
 	int i;
-
-#ifdef GO_FOR_SSE2
-	GO_FOR_SSE2(ctx,in,num);
-#endif
 
 			while (num--) {
 
@@ -511,16 +561,24 @@ static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num
 	T1 = X[15] = PULL64(W[15]);	ROUND_00_15(15,b,c,d,e,f,g,h,a);
 #endif
 
-	for (i=16;i<80;i+=8)
+	for (i=16;i<80;i+=16)
 		{
-		ROUND_16_80(i+0,a,b,c,d,e,f,g,h,X);
-		ROUND_16_80(i+1,h,a,b,c,d,e,f,g,X);
-		ROUND_16_80(i+2,g,h,a,b,c,d,e,f,X);
-		ROUND_16_80(i+3,f,g,h,a,b,c,d,e,X);
-		ROUND_16_80(i+4,e,f,g,h,a,b,c,d,X);
-		ROUND_16_80(i+5,d,e,f,g,h,a,b,c,X);
-		ROUND_16_80(i+6,c,d,e,f,g,h,a,b,X);
-		ROUND_16_80(i+7,b,c,d,e,f,g,h,a,X);
+		ROUND_16_80(i, 0,a,b,c,d,e,f,g,h,X);
+		ROUND_16_80(i, 1,h,a,b,c,d,e,f,g,X);
+		ROUND_16_80(i, 2,g,h,a,b,c,d,e,f,X);
+		ROUND_16_80(i, 3,f,g,h,a,b,c,d,e,X);
+		ROUND_16_80(i, 4,e,f,g,h,a,b,c,d,X);
+		ROUND_16_80(i, 5,d,e,f,g,h,a,b,c,X);
+		ROUND_16_80(i, 6,c,d,e,f,g,h,a,b,X);
+		ROUND_16_80(i, 7,b,c,d,e,f,g,h,a,X);
+		ROUND_16_80(i, 8,a,b,c,d,e,f,g,h,X);
+		ROUND_16_80(i, 9,h,a,b,c,d,e,f,g,X);
+		ROUND_16_80(i,10,g,h,a,b,c,d,e,f,X);
+		ROUND_16_80(i,11,f,g,h,a,b,c,d,e,X);
+		ROUND_16_80(i,12,e,f,g,h,a,b,c,d,X);
+		ROUND_16_80(i,13,d,e,f,g,h,a,b,c,X);
+		ROUND_16_80(i,14,c,d,e,f,g,h,a,b,X);
+		ROUND_16_80(i,15,b,c,d,e,f,g,h,a,X);
 		}
 
 	ctx->h[0] += a;	ctx->h[1] += b;	ctx->h[2] += c;	ctx->h[3] += d;
