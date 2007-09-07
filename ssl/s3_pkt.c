@@ -129,7 +129,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 	 * (If s->read_ahead is set, 'max' bytes may be stored in rbuf
 	 * [plus s->packet_length bytes if extend == 1].)
 	 */
-	int i,len,left,align=0;
+	int i,len,left;
+	long align=0;
 	unsigned char *pkt;
 	SSL3_BUFFER *rb;
 
@@ -138,7 +139,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 	rb    = &(s->s3->rbuf);
 	left  = rb->left;
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-	align = (int)rb->buf + SSL3_RT_HEADER_LENGTH;
+	align = (long)rb->buf + SSL3_RT_HEADER_LENGTH;
 	align = (-align)&(SSL3_ALIGN_PAYLOAD-1);
 #endif
 
@@ -602,7 +603,8 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	{
 	unsigned char *p,*plen;
 	int i,mac_size,clear=0;
-	int prefix_len=0,align=0;
+	int prefix_len=0;
+	long align=0;
 	SSL3_RECORD *wr;
 	SSL3_BUFFER *wb=&(s->s3->wbuf);
 	SSL_SESSION *sess;
@@ -672,7 +674,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 		 * which would be multiple of SSL3_ALIGN_PAYLOAD, so
 		 * if we want to align the real payload, then we can
 		 * just pretent we simply have two headers. */
-		align = (int)wb->buf + 2*SSL3_RT_HEADER_LENGTH;
+		align = (long)wb->buf + 2*SSL3_RT_HEADER_LENGTH;
 		align = (-align)&(SSL3_ALIGN_PAYLOAD-1);
 #endif
 		p = wb->buf + align;
@@ -685,7 +687,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	else
 		{
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-		align = (int)wb->buf + SSL3_RT_HEADER_LENGTH;
+		align = (long)wb->buf + SSL3_RT_HEADER_LENGTH;
 		align = (-align)&(SSL3_ALIGN_PAYLOAD-1);
 #endif
 		p = wb->buf + align;

@@ -167,7 +167,7 @@ SSL3_ENC_METHOD ssl3_undef_enc_method={
 	(int (*)(SSL*, int))ssl_undefined_function,
 	(int (*)(SSL *,  const char*, int, unsigned char *))ssl_undefined_function,
 	0,	/* finish_mac_length */
-	(int (*)(SSL *, const EVP_MD *, unsigned char *))ssl_undefined_function,
+	(int (*)(SSL *, int, unsigned char *))ssl_undefined_function,
 	NULL,	/* client_finished_label */
 	0,	/* client_finished_label_len */
 	NULL,	/* server_finished_label */
