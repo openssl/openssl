@@ -125,9 +125,7 @@
 
   *) Initial incomplete changes to avoid need for function casts in OpenSSL
      some compilers (gcc 4.2 and later) reject their use. Safestack is
-     reimplemented using inline functions: tests show that these calls are
-     typically optimized away by compilers so they have no additional overhead.
-     Update ASN1 to avoid use of legacy functions. 
+     reimplemented.  Update ASN1 to avoid use of legacy functions. 
      [Steve Henson]
 
   *) Win32/64 targets are linked with Winsock2.

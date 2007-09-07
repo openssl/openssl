@@ -657,7 +657,7 @@ static int get_client_hello(SSL *s)
 			{
 			if (sk_SSL_CIPHER_find(allow,sk_SSL_CIPHER_value(prio,z)) < 0)
 				{
-				sk_SSL_CIPHER_delete(prio,z);
+				(void)sk_SSL_CIPHER_delete(prio,z);
 				z--;
 				}
 			}

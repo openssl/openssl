@@ -147,7 +147,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 			lh_insert(&(*table)->piles, fnd);
 			}
 		/* A registration shouldn't add duplciate entries */
-		sk_ENGINE_delete_ptr(fnd->sk, e);
+		(void)sk_ENGINE_delete_ptr(fnd->sk, e);
 		/* if 'setdefault', this ENGINE goes to the head of the list */
 		if(!sk_ENGINE_push(fnd->sk, e))
 			goto end;
@@ -178,7 +178,7 @@ static void int_unregister_cb(ENGINE_PILE *pile, ENGINE *e)
 	/* Iterate the 'c->sk' stack removing any occurance of 'e' */
 	while((n = sk_ENGINE_find(pile->sk, e)) >= 0)
 		{
-		sk_ENGINE_delete(pile->sk, n);
+		(void)sk_ENGINE_delete(pile->sk, n);
 		/* "touch" this ENGINE_CIPHER */
 		pile->uptodate = 1;
 		}

@@ -432,7 +432,7 @@ void CONF_modules_unload(int all)
 		if (((md->links > 0) || !md->dso) && !all)
 			continue;
 		/* Since we're working in reverse this is OK */
-		sk_CONF_MODULE_delete(supported_modules, i);
+		(void)sk_CONF_MODULE_delete(supported_modules, i);
 		module_free(md);
 		}
 	if (sk_CONF_MODULE_num(supported_modules) == 0)

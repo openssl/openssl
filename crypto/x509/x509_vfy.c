@@ -166,7 +166,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 					goto end;
 					}
 				CRYPTO_add(&xtmp->references,1,CRYPTO_LOCK_X509);
-				sk_X509_delete_ptr(sktmp,xtmp);
+				(void)sk_X509_delete_ptr(sktmp,xtmp);
 				ctx->last_untrusted++;
 				x=xtmp;
 				num++;

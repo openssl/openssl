@@ -422,6 +422,9 @@ errors:
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
 	$(PERL) util/ck_errf.pl */*.c */*/*.c
 
+stacks:
+	$(PERL) util/mkstack.pl -write
+
 util/libeay.num::
 	$(PERL) util/mkdef.pl crypto update
 
@@ -446,7 +449,7 @@ TABLE: Configure
 	(echo 'Output of `Configure TABLE'"':"; \
 	$(PERL) Configure TABLE) > TABLE
 
-update: errors util/libeay.num util/ssleay.num crypto/objects/obj_dat.h crypto/objects/obj_xref.h apps/openssl-vms.cnf crypto/bn/bn_prime.h TABLE depend
+update: errors stacks util/libeay.num util/ssleay.num crypto/objects/obj_dat.h crypto/objects/obj_xref.h apps/openssl-vms.cnf crypto/bn/bn_prime.h TABLE depend
 
 # Build distribution tar-file. As the list of files returned by "find" is
 # pretty long, on several platforms a "too many arguments" error or similar
