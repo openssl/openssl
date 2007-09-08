@@ -2602,7 +2602,7 @@ double app_tminterval(int stop,int usertime)
 	struct timeval	now;
 	static struct timeval tmstart;
 
-	if (usertime)		getrusage(RUSAGE_SELF,&rus), now = rus.ru_time;
+	if (usertime)		getrusage(RUSAGE_SELF,&rus), now = rus.ru_utime;
 	else			gettimeofday(&now,NULL);
 
 	if (stop==TM_START)	tmstart = now;
