@@ -40,52 +40,57 @@ int main(int argc, char *argv[])
 
 /* AES: encrypt and decrypt known plaintext, verify result matches original plaintext
 */
-static int FIPS_aes_test()
-    {
-    unsigned char userkey[16] = { 0xde, 0xad, 0xbe, 0xef, 0xfe, 0xed, 0xf0, 0x0d };
-    unsigned char plaintext[16] = "etaonrishdlcu";
-    unsigned char ciphertext[16];
-    unsigned char buf[16];
-    AES_KEY key;
-    AES_KEY dkey;
+static int FIPS_aes_test(void)
+	{
+	int ret = 0;
+	unsigned char pltmp[16];
+	unsigned char citmp[16];
+	unsigned char key[16] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+	unsigned char plaintext[16] = "etaonrishdlcu";
+	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX_init(&ctx);
+	if (EVP_CipherInit_ex(&ctx, EVP_aes_128_ecb(),NULL, key, NULL, 1) <= 0)
+		goto err;
+	EVP_Cipher(&ctx, citmp, plaintext, 16);
+	if (EVP_CipherInit_ex(&ctx, EVP_aes_128_ecb(),NULL, key, NULL, 0) <= 0)
+		goto err;
+	EVP_Cipher(&ctx, pltmp, citmp, 16);
+	if (memcmp(pltmp, plaintext, 16))
+		goto err;
+	ret = 1;
+	err:
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	return ret;
+	}
 
-    ERR_clear_error();
-    if (AES_set_encrypt_key( userkey, 128, &key ))
-	return 0;
-    AES_encrypt( plaintext, ciphertext, &key);
-    if (AES_set_decrypt_key( userkey, 128, &dkey ))
-        return 0;
-    AES_decrypt( ciphertext, buf, &dkey);
-    if (memcmp(buf, plaintext, sizeof(buf)))
-        return 0;
-    return 1;
-    }
-
-/* DES: encrypt and decrypt known plaintext, verify result matches original plaintext
-*/
-static int FIPS_des_test()
-    {
-    DES_cblock userkey = { 0xde, 0xad, 0xbe, 0xef, 0xfe, 0xed, 0xf0, 0x0d };
-    DES_cblock plaintext = { 'e', 't', 'a', 'o', 'n', 'r', 'i', 's' };
-
-    DES_key_schedule key;
-    DES_cblock ciphertext;
-    DES_cblock buf;
-
-    ERR_clear_error();
-    if (DES_set_key(&userkey, &key) < 0)
-        return 0;
-    DES_ecb_encrypt( &plaintext, &ciphertext, &key, 1);
-    DES_ecb_encrypt( &ciphertext, &buf, &key, 0);
-    if (memcmp(buf, plaintext, sizeof(buf)))
-        return 0;
-    return 1;
-    }
+static int FIPS_des3_test(void)
+	{
+	int ret = 0;
+	unsigned char pltmp[8];
+	unsigned char citmp[8];
+    	unsigned char key[] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,
+		              19,20,21,22,23,24};
+    	unsigned char plaintext[] = { 'e', 't', 'a', 'o', 'n', 'r', 'i', 's' };
+	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX_init(&ctx);
+	if (EVP_CipherInit_ex(&ctx, EVP_des_ede3_ecb(),NULL, key, NULL, 1) <= 0)
+		goto err;
+	EVP_Cipher(&ctx, citmp, plaintext, 8);
+	if (EVP_CipherInit_ex(&ctx, EVP_des_ede3_ecb(),NULL, key, NULL, 0) <= 0)
+		goto err;
+	EVP_Cipher(&ctx, pltmp, citmp, 8);
+	if (memcmp(pltmp, plaintext, 8))
+		goto err;
+	ret = 1;
+	err:
+	EVP_CIPHER_CTX_cleanup(&ctx);
+	return ret;
+	}
 
 /*
  * DSA: generate keys and sign, verify input plaintext.
  */
-static int FIPS_dsa_test()
+static int FIPS_dsa_test(int bad)
     {
     DSA *dsa = NULL;
     EVP_PKEY pk;
@@ -104,6 +109,8 @@ static int FIPS_dsa_test()
 	goto end;
     if (!DSA_generate_key(dsa))
 	goto end;
+    if (bad)
+	    BN_add_word(dsa->pub_key, 1);
 
     pk.type = EVP_PKEY_DSA;
     pk.pkey.dsa = dsa;
@@ -132,7 +139,7 @@ static int FIPS_dsa_test()
 /*
  * RSA: generate keys and sign, verify input plaintext.
  */
-static int FIPS_rsa_test()
+static int FIPS_rsa_test(int bad)
     {
     RSA *key;
     unsigned char input_ptext[] = "etaonrishdlc";
@@ -153,6 +160,8 @@ static int FIPS_rsa_test()
     if (!RSA_generate_key_ex(key, 1024,bn,NULL))
 	return 0;
     BN_free(bn);
+    if (bad)
+	    BN_add_word(key->n, 1);
 
     pk.type = EVP_PKEY_RSA;
     pk.pkey.rsa = key;
@@ -209,7 +218,7 @@ static int FIPS_sha256_test()
     unsigned char md[SHA256_DIGEST_LENGTH];
 
     ERR_clear_error();
-    if (!SHA256(str,sizeof(str) - 1,md)) return 0;
+    if (!EVP_Digest(str,sizeof(str) - 1,md, NULL, EVP_sha256(), NULL)) return 0;
     if (memcmp(md,digest,sizeof(md)))
         return 0;
     return 1;
@@ -230,7 +239,7 @@ static int FIPS_sha512_test()
     unsigned char md[SHA512_DIGEST_LENGTH];
 
     ERR_clear_error();
-    if (!SHA512(str,sizeof(str) - 1,md)) return 0;
+    if (!EVP_Digest(str,sizeof(str) - 1,md, NULL, EVP_sha512(), NULL)) return 0;
     if (memcmp(md,digest,sizeof(md)))
         return 0;
     return 1;
@@ -401,12 +410,18 @@ static int Zeroize()
 static int Error;
 const char * Fail(const char *msg)
     {
+    do_print_errors();
     Error++;
     return msg; 
     }
 
 int main(int argc,char **argv)
     {
+
+    int do_corrupt_rsa_keygen = 0, do_corrupt_dsa_keygen = 0;
+    int bad_rsa = 0, bad_dsa = 0;
+    int do_rng_stick = 0;
+    int no_exit = 0;
 
     printf("\tFIPS-mode test application\n\n");
 
@@ -420,31 +435,51 @@ int main(int argc,char **argv)
             printf("AES encryption/decryption with corrupted KAT...\n");
         } else if (!strcmp(argv[1], "des")) {
             FIPS_corrupt_des();
-            printf("DES-ECB encryption/decryption with corrupted KAT...\n");
+            printf("DES3-ECB encryption/decryption with corrupted KAT...\n");
         } else if (!strcmp(argv[1], "dsa")) {
             FIPS_corrupt_dsa();
             printf("DSA key generation and signature validation with corrupted KAT...\n");
         } else if (!strcmp(argv[1], "rsa")) {
             FIPS_corrupt_rsa();
-            printf("RSA key generation and encryption/decryption with corrupted KAT...\n");
+            printf("RSA key generation and signature validation with corrupted KAT...\n");
+        } else if (!strcmp(argv[1], "rsakey")) {
+            printf("RSA key generation and signature validation with corrupted key...\n");
+	    bad_rsa = 1;
+	    no_exit = 1;
+        } else if (!strcmp(argv[1], "rsakeygen")) {
+	    do_corrupt_rsa_keygen = 1;
+	    no_exit = 1;
+            printf("RSA key generation and signature validation with corrupted keygen...\n");
+        } else if (!strcmp(argv[1], "dsakey")) {
+            printf("DSA key generation and signature validation with corrupted key...\n");
+	    bad_dsa = 1;
+	    no_exit = 1;
+        } else if (!strcmp(argv[1], "dsakeygen")) {
+	    do_corrupt_dsa_keygen = 1;
+	    no_exit = 1;
+            printf("DSA key generation and signature validation with corrupted keygen...\n");
         } else if (!strcmp(argv[1], "sha1")) {
             FIPS_corrupt_sha1();
             printf("SHA-1 hash with corrupted KAT...\n");
 	} else if (!strcmp(argv[1], "rng")) {
 	    FIPS_corrupt_rng();
-	    printf("RNG test with corrupted KAT...\n");
+	} else if (!strcmp(argv[1], "rngstick")) {
+	    do_rng_stick = 1;
+	    no_exit = 1;
+	    printf("RNG test with stuck continuous test...\n");
         } else {
             printf("Bad argument \"%s\"\n", argv[1]);
             exit(1);
         }
-        if (!FIPS_mode_set(1))
-   	    {
-	    do_print_errors();
-            printf("Power-up self test failed\n");
-	    exit(1);
+	if (!no_exit) {
+        	if (!FIPS_mode_set(1)) {
+ 		    do_print_errors();
+        	    printf("Power-up self test failed\n");
+		    exit(1);
+		}
+        	printf("Power-up self test successful\n");
+        	exit(0);
 	}
-        printf("Power-up self test successful\n");
-        exit(0);
     }
 
     /* Non-Approved cryptographic operation
@@ -464,6 +499,12 @@ int main(int argc,char **argv)
 	exit(1);
 	}
     printf("successful\n");
+    if (do_corrupt_dsa_keygen)
+            FIPS_corrupt_dsa_keygen();
+    if (do_corrupt_rsa_keygen)
+            FIPS_corrupt_rsa_keygen();
+    if (do_rng_stick)
+            FIPS_rng_stick();
 
     /* AES encryption/decryption
     */
@@ -473,17 +514,17 @@ int main(int argc,char **argv)
     /* RSA key generation and encryption/decryption
     */
     printf("4. RSA key generation and encryption/decryption...");
-    printf( FIPS_rsa_test() ? "successful\n" :  Fail("FAILED!\n") );
+    printf( FIPS_rsa_test(bad_rsa) ? "successful\n" :  Fail("FAILED!\n") );
 
     /* DES-CBC encryption/decryption
     */
     printf("5. DES-ECB encryption/decryption...");
-    printf( FIPS_des_test() ? "successful\n" :  Fail("FAILED!\n") );
+    printf( FIPS_des3_test() ? "successful\n" :  Fail("FAILED!\n") );
 
     /* DSA key generation and signature validation
     */
     printf("6. DSA key generation and signature validation...");
-    printf( FIPS_dsa_test() ? "successful\n" :  Fail("FAILED!\n") );
+    printf( FIPS_dsa_test(bad_dsa) ? "successful\n" :  Fail("FAILED!\n") );
 
     /* SHA-1 hash
     */

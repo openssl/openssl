@@ -73,10 +73,13 @@ int FIPS_selftest_aes(void);
 void FIPS_corrupt_des(void);
 int FIPS_selftest_des(void);
 void FIPS_corrupt_rsa(void);
+void FIPS_corrupt_rsa_keygen(void);
 int FIPS_selftest_rsa(void);
 void FIPS_corrupt_dsa(void);
+void FIPS_corrupt_dsa_keygen(void);
 int FIPS_selftest_dsa(void);
 void FIPS_corrupt_rng(void);
+void FIPS_rng_stick(void);
 int FIPS_selftest_rng(void);
 int FIPS_selftest_hmac(void);
 

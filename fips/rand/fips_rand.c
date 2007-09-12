@@ -107,6 +107,13 @@ typedef struct
 
 static FIPS_PRNG_CTX sctx;
 
+static int fips_prng_fail = 0;
+
+void FIPS_rng_stick(void)
+	{
+	fips_prng_fail = 1;
+	}
+
 void fips_rand_prng_reset(FIPS_PRNG_CTX *ctx)
 	{
 	ctx->seeded = 0;
@@ -295,9 +302,11 @@ static int fips_rand(FIPS_PRNG_CTX *ctx,
 		for (i = 0; i < AES_BLOCK_LENGTH; i++)
 			tmp[i] = R[i] ^ I[i];
 		AES_encrypt(tmp, ctx->V, &ctx->ks);
-		/* Continuouse PRNG test */
+		/* Continuous PRNG test */
 		if (ctx->second)
 			{
+			if (fips_prng_fail)
+				memcpy(ctx->last, R, AES_BLOCK_LENGTH);
 			if (!memcmp(R, ctx->last, AES_BLOCK_LENGTH))
 				{
 	    			RANDerr(RAND_F_FIPS_RAND,RAND_R_PRNG_STUCK);

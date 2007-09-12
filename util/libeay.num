@@ -3561,3 +3561,6 @@ FIPS_selftest_check                     3954	EXIST:OPENSSL_FIPS:FUNCTION:
 fips_cipher_test                        3955	EXIST:OPENSSL_FIPS:FUNCTION:
 int_EVP_CIPHER_set_engine_callbacks     3956	EXIST:OPENSSL_FIPS:FUNCTION:ENGINE
 int_EVP_CIPHER_init_engine_callbacks    3957	EXIST:OPENSSL_FIPS:FUNCTION:ENGINE
+FIPS_corrupt_rsa_keygen                 3958	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_corrupt_dsa_keygen                 3959	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_rng_stick                          3960	EXIST:OPENSSL_FIPS:FUNCTION:

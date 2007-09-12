@@ -75,6 +75,13 @@
 
 #ifdef OPENSSL_FIPS
 
+static int fips_rsa_pairwise_fail = 0;
+
+void FIPS_corrupt_rsa_keygen(void)
+	{
+	fips_rsa_pairwise_fail = 1;
+	}
+
 int fips_check_rsa(RSA *rsa)
 	{
 	const unsigned char tbs[] = "RSA Pairwise Check Data";
@@ -277,6 +284,9 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	else
 		p = rsa->p;
 	if (!BN_mod_inverse(rsa->iqmp,rsa->q,p,ctx)) goto err;
+
+	if (fips_rsa_pairwise_fail)
+		BN_add_word(rsa->n, 1);
 
 	if(!fips_check_rsa(rsa))
 	    goto err;

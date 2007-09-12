@@ -69,6 +69,13 @@
 
 #ifdef OPENSSL_FIPS
 
+static int fips_dsa_pairwise_fail = 0;
+
+void FIPS_corrupt_dsa_keygen(void)
+	{
+	fips_dsa_pairwise_fail = 1;
+	}
+
 static int dsa_builtin_keygen(DSA *dsa);
 
 int fips_check_dsa(DSA *dsa)
@@ -145,6 +152,8 @@ static int dsa_builtin_keygen(DSA *dsa)
 
 	dsa->priv_key=priv_key;
 	dsa->pub_key=pub_key;
+	if (fips_dsa_pairwise_fail)
+		BN_add_word(dsa->pub_key, 1);
 	if(!fips_check_dsa(dsa))
 	    goto err;
 	ok=1;
