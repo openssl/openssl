@@ -94,7 +94,10 @@ void pqg()
 		dsa = FIPS_dsa_new();
 
 		if (!DSA_generate_parameters_ex(dsa, nmod,seed,0,&counter,&h,NULL))
+			{
 			do_print_errors();
+			exit(1);
+			}
 		pbn("P",dsa->p);
 		pbn("Q",dsa->q);
 		pbn("G",dsa->g);
@@ -133,7 +136,10 @@ void keypair()
 	    printf("[mod = %d]\n\n",nmod);
 	    dsa = FIPS_dsa_new();
 	    if (!DSA_generate_parameters_ex(dsa, nmod,NULL,0,NULL,NULL,NULL))
+		{
 		do_print_errors();
+		exit(1);
+		}
 	    pbn("P",dsa->p);
 	    pbn("Q",dsa->q);
 	    pbn("G",dsa->g);
@@ -142,8 +148,10 @@ void keypair()
 	    while(n--)
 		{
 		if (!DSA_generate_key(dsa))
+			{
 			do_print_errors();
-			
+			exit(1);
+			}
 
 		pbn("X",dsa->priv_key);
 		pbn("Y",dsa->pub_key);
@@ -176,7 +184,10 @@ void siggen()
 		FIPS_dsa_free(dsa);
 	    dsa = FIPS_dsa_new();
 	    if (!DSA_generate_parameters_ex(dsa, nmod,NULL,0,NULL,NULL,NULL))
+		{
 		do_print_errors();
+		exit(1);
+		}
 	    pbn("P",dsa->p);
 	    pbn("Q",dsa->q);
 	    pbn("G",dsa->g);
@@ -197,7 +208,10 @@ void siggen()
 	    pv("Msg",msg,n);
 
 	    if (!DSA_generate_key(dsa))
+		{
 		do_print_errors();
+		exit(1);
+		}
 	    pk.type = EVP_PKEY_DSA;
 	    pk.pkey.dsa = dsa;
 	    pbn("Y",dsa->pub_key);
