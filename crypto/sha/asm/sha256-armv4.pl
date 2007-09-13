@@ -7,9 +7,11 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
-# SHA256 block procedure for ARMv4.
+# SHA256 block procedure for ARMv4. May 2007.
 
-# Performance is ~2x better than gcc 3.4 generated code.
+# Performance is ~2x better than gcc 3.4 generated code and in "abso-
+# lute" terms is ~2250 cycles per 64-byte block or ~35 cycles per
+# byte.
 
 $ctx="r0";	$t0="r0";
 $inp="r1";
@@ -165,7 +167,7 @@ $code.=<<___;
 	tst	lr,#1
 	moveq	pc,lr			@ be binary compatible with V4, yet
 	bx	lr			@ interoperable with Thumb ISA:-)
-.size   sha256_block_data_order,.-sha1_block_data_order
+.size   sha256_block_data_order,.-sha256_block_data_order
 .asciz  "SHA256 block transform for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 

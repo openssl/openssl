@@ -16,6 +16,7 @@
 # 			-m64	-m32	|	-m64	-m32
 # --------------------------------------+-----------------------
 # PPC970,gcc-4.0.0	+50%	+38%	|	+40%	+410%(*)
+# Power6,xlc-7		+150%	+90%	|	+100%	+430%(*)
 #
 # (*)	64-bit code in 32-bit application context, which actually is
 #	on TODO list. It should be noted that for safe deployment in

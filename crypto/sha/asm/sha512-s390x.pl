@@ -12,7 +12,7 @@
 # April 2007.
 #
 # sha256_block_data_order is reportedly >3 times faster than gcc 3.3
-# generated code (must to be a bug in compiler, as improvement is
+# generated code (must be a bug in compiler, as improvement is
 # "pathologically" high, in particular in comparison to other SHA
 # modules). But the real twist is that it detects if hardware support
 # for SHA256 is available and in such case utilizes it. Then the
