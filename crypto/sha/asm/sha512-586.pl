@@ -38,6 +38,11 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],"sha512-586.pl",$ARGV[$#ARGV] eq "386");
 
+$sse2=0;
+for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
+
+&external_label("OPENSSL_ia32cap_P") if ($sse2);
+
 $Tlo=&DWP(0,"esp");	$Thi=&DWP(4,"esp");
 $Alo=&DWP(8,"esp");	$Ahi=&DWP(8+4,"esp");
 $Blo=&DWP(16,"esp");	$Bhi=&DWP(16+4,"esp");
@@ -70,7 +75,7 @@ sub BODY_00_15_sse2 {
 	&movq	("mm1",$E);			# %mm1 is sliding right
 	&movq	("mm2",$E);			# %mm2 is sliding left
 	&psrlq	("mm1",14);
-	&movq	($Esse2,$E);			# module-scheduled save e
+	&movq	($Esse2,$E);			# modulo-scheduled save e
 	&psllq	("mm2",23);
 	&movq	("mm3","mm1");			# %mm3 is T1
 	&psrlq	("mm1",4);
@@ -109,7 +114,7 @@ sub BODY_00_15_sse2 {
 	&pxor	("mm7","mm6");
 	&psllq	("mm6",6);
 	&pxor	("mm7","mm5");
-	&movq	(&QWP(0,"esp"),$A);		# module-scheduled save a
+	&movq	(&QWP(0,"esp"),$A);		# modulo-scheduled save a
 	&pxor	("mm7","mm6");			# T2=Sigma0_512(a)
 
 	&movq	("mm5",$A);			# %mm5=a
@@ -274,7 +279,8 @@ sub BODY_00_15_x86 {
 	&mov	(&DWP(8,"esp"),"eax");	# inp+num*128
 	&mov	(&DWP(12,"esp"),"ebx");	# saved sp
 
-	&picmeup("edx","OPENSSL_ia32cap_P",$K512,&label("pic_point"));
+if ($sse2) {
+	&picmeup("edx","OPENSSL_ia32cap_P",$K512,&label("K512"));
 	&bt	(&DWP(0,"edx"),26);
 	&jnc	(&label("loop_x86"));
 
@@ -403,7 +409,7 @@ sub BODY_00_15_x86 {
 	&emms	();
 	&mov	("esp",&DWP(8*10+12,"esp"));	# restore sp
 &function_end_A();
-
+}
 &set_label("loop_x86",16);
     # copy input block to stack reversing byte and qword order
     for ($i=0;$i<8;$i++) {

@@ -45,18 +45,24 @@ lib:    $(LIBOBJ)
 # ELF
 sx86-elf.s: asm/sha1-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha1-586.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
-s512sse2-elf.s:	asm/sha512-sse2.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha512-sse2.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
+sha256x86-elf.s:	asm/sha256-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha256-586.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
+sha512x86-elf.s:	asm/sha512-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha512-586.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
 # COFF
 sx86-cof.s: asm/sha1-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha1-586.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
-s512sse2-cof.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha512-sse2.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
+sha256x86-cof.s:	asm/sha256-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha256-586.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
+sha512x86-cof.s:	asm/sha512-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha512-586.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
 # a.out
 sx86-out.s: asm/sha1-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha1-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
-s512sse2-out.s:     asm/sha512-sse2.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) sha512-sse2.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
+sha256x86-out.s:	asm/sha256-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha256-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
+sha512x86-out.s:	asm/sha512-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha512-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
 
 sha1-ia64.s:   asm/sha1-ia64.pl
 	(cd asm; $(PERL) sha1-ia64.pl $(CFLAGS) ) > $@
