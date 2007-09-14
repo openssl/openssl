@@ -320,6 +320,12 @@ static int x509_name_canon(X509_NAME *a)
 		OPENSSL_free(a->canon_enc);
 		a->canon_enc = NULL;
 		}
+	/* Special case: empty X509_NAME => null encoding */
+	if (sk_X509_NAME_ENTRY_num(a->entries) == 0)
+		{
+		a->canon_enclen = 0;
+		return 1;
+		}
 	intname = sk_new_null();
 	if(!intname)
 		goto err;
