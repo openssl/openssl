@@ -390,64 +390,57 @@ static const SHA_LONG64 K512[80] = {
 
 
 #if defined(__i386) || defined(__i386__) || defined(_M_IX86)
-
-#if defined(OPENSSL_IA32_SSE2) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
-#define	GO_FOR_SSE2(ctx,in,num)		do {		\
-	void	sha512_block_sse2(void *,const void *,size_t);	\
-	if (!(OPENSSL_ia32cap_P & (1<<26))) break;	\
-	sha512_block_sse2(ctx->h,in,num); return;	\
-					} while (0)
-#endif
-
+/*
+ * This code should give better results on 32-bit CPU with less than
+ * ~24 registers, both size and performance wise...
+ */
 static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num)
 	{
 	const SHA_LONG64 *W=in;
-	SHA_LONG64	T1;
+	SHA_LONG64	A,E,T;
 	SHA_LONG64	X[9+80],*F;
 	int i;
 
-#ifdef GO_FOR_SSE2
-	GO_FOR_SSE2(ctx,in,num);
-#endif
-
 			while (num--) {
 
-	F = X+80;
-	F[0] = ctx->h[0];	F[1] = ctx->h[1];
+	F    = X+80;
+	A    = ctx->h[0];	F[1] = ctx->h[1];
 	F[2] = ctx->h[2];	F[3] = ctx->h[3];
-	F[4] = ctx->h[4];	F[5] = ctx->h[5];
+	E    = ctx->h[4];	F[5] = ctx->h[5];
 	F[6] = ctx->h[6];	F[7] = ctx->h[7];
 
 	for (i=0;i<16;i++,F--)
 		{
 #ifdef B_ENDIAN
-		T1 = W[i];
+		T = W[i];
 #else
-		T1 = PULL64(W[i]);
+		T = PULL64(W[i]);
 #endif
-		F[8]  = T1;
-		T1   += F[7] + Sigma1(F[4]) + Ch(F[4],F[5],F[6]) + K512[i];
-		F[3] += T1;
-		T1   += Sigma0(F[0]) + Maj(F[0],F[1],F[2]);
-		F[-1] = T1;
+		F[0] = A;
+		F[4] = E;
+		F[8] = T;
+		T   += F[7] + Sigma1(E) + Ch(E,F[5],F[6]) + K512[i];
+		E    = F[3] + T;
+		A    = T + Sigma0(A) + Maj(A,F[1],F[2]);
 		}
 
 	for (;i<80;i++,F--)
 		{
-		T1    = sigma0(F[8+16-1]);
-		T1   += sigma1(F[8+16-14]);
+		T    = sigma0(F[8+16-1]);
+		T   += sigma1(F[8+16-14]);
+		T   += F[8+16] + F[8+16-9];
 
-		T1   += F[8+16] + F[8+16-9];
-		F[8]  = T1;
-		T1   += F[7] + Sigma1(F[4]) + Ch(F[4],F[5],F[6]) + K512[i];
-		F[3] += T1;
-		T1   += Sigma0(F[0]) + Maj(F[0],F[1],F[2]);
-		F[-1] = T1;
+		F[0] = A;
+		F[4] = E;
+		F[8] = T;
+		T   += F[7] + Sigma1(E) + Ch(E,F[5],F[6]) + K512[i];
+		E    = F[3] + T;
+		A    = T + Sigma0(A) + Maj(A,F[1],F[2]);
 		}
 
-	ctx->h[0] += F[0];	ctx->h[1] += F[1];
+	ctx->h[0] += A;		ctx->h[1] += F[1];
 	ctx->h[2] += F[2];	ctx->h[3] += F[3];
-	ctx->h[4] += F[4];	ctx->h[5] += F[5];
+	ctx->h[4] += E;		ctx->h[5] += F[5];
 	ctx->h[6] += F[6];	ctx->h[7] += F[7];
 
 			W+=SHA_LBLOCK;
