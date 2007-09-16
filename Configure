@@ -1181,8 +1181,10 @@ if (!$IsMK1MF)
 
 $cpuid_obj.=" uplink.o uplink-cof.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
 
-# Compiler fix-ups
-if ($target =~ /icc$/)
+#
+# Platform fix-ups
+#
+if ($target =~ /\-icc$/)	# Intel C compiler
 	{
 	my $iccver=0;
 	if (open(FD,"$cc -V 2>&1 |"))
@@ -1206,6 +1208,19 @@ if ($target =~ /icc$/)
 		{
 		$cflags=~s/\-i\-static/-static-intel/;
 		}
+	}
+
+# Unlike other OSes (like Solaris, Linux, Tru64, IRIX) BSD run-time
+# linkers (tested OpenBSD, NetBSD and FreeBSD) "demand" RPATH set on
+# .so objects. Apparently application RPATH is not global and does
+# not apply to .so linked with other .so. Problem manifests itself
+# when libssl.so fails to load libcrypto.so. One can argue that we
+# should engrave this into Makefile.shared rules or into BSD-* config
+# lines above. Meanwhile let's try to be cautious and pass -rpath to
+# linker only when --prefix is not /usr.
+if ($target =~ /^BSD\-/)
+	{
+	$shared_ldflag.=" -Wl,-rpath,\$(LIBRPATH)" if ($prefix !~ m|^/usr[/]*$|);
 	}
 
 if ($sys_id ne "")
