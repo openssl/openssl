@@ -45,13 +45,17 @@ $Xoff=&DWP(32,"esp");
 $K256="ebp";
 
 sub BODY_00_15() {
+    my $in_16_64=shift;
+
 	&mov	("ecx",$E);
+	 &add	($T,&DWP(4*(8+15+16-9),"esp"))	if ($in_16_64);	# T += X[-7]
 	&ror	("ecx",6);
 	&mov	("edi",$E);
 	&ror	("edi",11);
 	 &mov	("esi",$Foff);
 	&xor	("ecx","edi");
 	&ror	("edi",25-11);
+	 &mov	(&DWP(4*(8+15),"esp"),$T)	if ($in_16_64);	# save X[0]
 	&xor	("ecx","edi");	# Sigma1(e)
 	 &mov	("edi",$Goff);
 	&add	($T,"ecx");	# T += Sigma1(e)
@@ -88,6 +92,7 @@ sub BODY_00_15() {
 
 	&add	($K256,4);
 	&add	($A,$T);	# h += T
+	 &mov	($T,&DWP(4*(8+15+16-1),"esp"))	if ($in_16_64);	# preload T
 	&add	($E,"esi");	# d += K256[i]
 	&add	($A,"esi");	# h += K256[i]
 }
@@ -159,10 +164,10 @@ sub BODY_00_15() {
 	&cmp	("esi",0xc19bf174);
 	&jne	(&label("00_15"));
 
+	&mov	($T,&DWP(4*(8+15+16-1),"esp"));	# preloaded in BODY_00_15(1)
 &set_label("16_63",16);
-	&mov	($T,&DWP(4*(8+15+16-1),"esp"));
-	 &mov	("ecx",&DWP(4*(8+15+16-14),"esp"));
 	&mov	("esi",$T);
+	 &mov	("ecx",&DWP(4*(8+15+16-14),"esp"));
 	&shr	($T,3);
 	&ror	("esi",7);
 	&xor	($T,"esi");
@@ -176,13 +181,13 @@ sub BODY_00_15() {
 	&xor	("ecx","edi");
 	&ror	("edi",19-17);
 	 &add	($T,"esi");			# T += X[-16]
-	&xor	("ecx","edi")			# sigma1(X[-2])
+	&xor	("edi","ecx")			# sigma1(X[-2])
 
-	&add	($T,"ecx");			# T += sigma1(X[-2])
-	&add	($T,&DWP(4*(8+15+16-9),"esp"));	# T += X[-7]
-	&mov	(&DWP(4*(8+15),"esp"),$T);	# save X[0]
+	&add	($T,"edi");			# T += sigma1(X[-2])
+	# &add	($T,&DWP(4*(8+15+16-9),"esp"));	# T += X[-7], moved to BODY_00_15(1)
+	# &mov	(&DWP(4*(8+15),"esp"),$T);	# save X[0]
 
-	&BODY_00_15();
+	&BODY_00_15(1);
 
 	&cmp	("esi",0xc67178f2);
 	&jne	(&label("16_63"));

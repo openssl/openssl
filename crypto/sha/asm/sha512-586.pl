@@ -68,6 +68,8 @@ $E="mm4";	# F-H are commonly loaded to respectively mm1-mm3 and
 		# mm5-mm7, but it's done on on-demand basis...
 
 sub BODY_00_15_sse2 {
+    my $prefetch=shift;
+
 	&movq	("mm5",$Fsse2);			# load f
 	&movq	("mm6",$Gsse2);			# load g
 	&movq	("mm7",$Hsse2);			# load h
@@ -96,7 +98,7 @@ sub BODY_00_15_sse2 {
 	&pxor	("mm5","mm6");			# f^=g
 	&movq	($E,$Dsse2);			# e = load d
 	&paddq	("mm3","mm5");			# T1+=Ch(e,f,g)
-
+	&movq	(&QWP(0,"esp"),$A);		# modulo-scheduled save a
 	&paddq	("mm3","mm7");			# T1+=h
 
 	&movq	("mm5",$A);			# %mm5 is sliding right
@@ -114,15 +116,16 @@ sub BODY_00_15_sse2 {
 	&pxor	("mm7","mm6");
 	&psllq	("mm6",6);
 	&pxor	("mm7","mm5");
-	&movq	(&QWP(0,"esp"),$A);		# modulo-scheduled save a
+	&sub	("esp",8);
 	&pxor	("mm7","mm6");			# T2=Sigma0_512(a)
 
 	&movq	("mm5",$A);			# %mm5=a
 	&por	($A,"mm2");			# a=a|c
+	&movq	("mm6",&QWP(8*(9+16-14),"esp"))	if ($prefetch);
 	&pand	("mm5","mm2");			# %mm5=a&c
 	&pand	($A,"mm1");			# a=(a|c)&b
+	&movq	("mm2",&QWP(8*(9+16-1),"esp"))	if ($prefetch);
 	&por	("mm5",$A);			# %mm5=(a&c)|((a|c)&b)
-	&sub	("esp",8);
 	&paddq	("mm7","mm5");			# T2+=Maj(a,b,c)
 	&movq	($A,"mm3");			# a=T1
 
@@ -327,48 +330,48 @@ if ($sse2) {
 	&cmp	(&LB("edx"),0x35);
 	&jne	(&label("00_14_sse2"));
 
-	&BODY_00_15_sse2();
+	&BODY_00_15_sse2(1);
 
 &set_label("16_79_sse2",16);
-	&movq	("mm3",&QWP(8*(9+16-1),"esp"));
-	&movq	("mm6",&QWP(8*(9+16-14),"esp"));
-	&movq	("mm1","mm3");
+	#&movq	("mm2",&QWP(8*(9+16-1),"esp"));	#prefetched in BODY_00_15 
+	#&movq	("mm6",&QWP(8*(9+16-14),"esp"));
+	&movq	("mm1","mm2");
 
-	&psrlq	("mm3",1);
+	&psrlq	("mm2",1);
 	&movq	("mm7","mm6");
 	&psrlq	("mm6",6);
-	&movq	("mm2","mm3");
+	&movq	("mm3","mm2");
 
-	&psrlq	("mm3",7-1);
+	&psrlq	("mm2",7-1);
 	&movq	("mm5","mm6");
 	&psrlq	("mm6",19-6);
-	&pxor	("mm2","mm3");
+	&pxor	("mm3","mm2");
 
-	&psrlq	("mm3",8-7);
+	&psrlq	("mm2",8-7);
 	&pxor	("mm5","mm6");
 	&psrlq	("mm6",61-19);
-	&pxor	("mm2","mm3");
+	&pxor	("mm3","mm2");
 
-	&movq	("mm3",&QWP(8*(9+16),"esp"));
+	&movq	("mm2",&QWP(8*(9+16),"esp"));
 
 	&psllq	("mm1",56);
 	&pxor	("mm5","mm6");
 	&psllq	("mm7",3);
-	&pxor	("mm2","mm1");
+	&pxor	("mm3","mm1");
 
-	&paddq	("mm3",&QWP(8*(9+16-9),"esp"));
+	&paddq	("mm2",&QWP(8*(9+16-9),"esp"));
 
 	&psllq	("mm1",63-56);
 	&pxor	("mm5","mm7");
 	&psllq	("mm7",45-3);
-	&pxor	("mm2","mm1");
+	&pxor	("mm3","mm1");
 	&pxor	("mm5","mm7");
 
-	&paddq	("mm2","mm5");
-	&paddq	("mm2","mm3");
-	&movq	(&QWP(8*9,"esp"),"mm2");
+	&paddq	("mm3","mm5");
+	&paddq	("mm3","mm2");
+	&movq	(&QWP(8*9,"esp"),"mm3");
 
-	&BODY_00_15_sse2();
+	&BODY_00_15_sse2(1);
 
 	&cmp	(&LB("edx"),0x17);
 	&jne	(&label("16_79_sse2"));
