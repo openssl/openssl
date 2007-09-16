@@ -463,9 +463,6 @@ int BIO_sock_init(void)
 		{
 		int err;
 	  
-#ifdef SIGINT
-		signal(SIGINT,(void (*)(int))BIO_sock_cleanup);
-#endif
 		wsa_init_done=1;
 		memset(&wsa_state,0,sizeof(wsa_state));
 		/* Not making wsa_state available to the rest of the
@@ -496,11 +493,6 @@ int BIO_sock_init(void)
 
     if (!wsa_init_done)
     {
-   
-# ifdef SIGINT
-        signal(SIGINT,(void (*)(int))BIO_sock_cleanup);
-# endif
-
         wsa_init_done=1;
         wVerReq = MAKEWORD( 2, 0 );
         err = WSAStartup(wVerReq,&wsaData);
@@ -522,7 +514,7 @@ void BIO_sock_cleanup(void)
 	if (wsa_init_done)
 		{
 		wsa_init_done=0;
-#ifndef OPENSSL_SYS_WINCE
+#if 0		/* this call is claimed to be non-present in Winsock2 */
 		WSACancelBlockingCall();
 #endif
 		WSACleanup();
