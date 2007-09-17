@@ -1009,6 +1009,7 @@ int dtls1_send_certificate_request(SSL *s)
 	STACK_OF(X509_NAME) *sk=NULL;
 	X509_NAME *name;
 	BUF_MEM *buf;
+	unsigned int msg_len;
 
 	if (s->state == SSL3_ST_SW_CERT_REQ_A)
 		{
@@ -1086,6 +1087,10 @@ int dtls1_send_certificate_request(SSL *s)
 #endif
 
 		/* XDTLS:  set message header ? */
+		msg_len = s->init_num - DTLS1_HM_HEADER_LENGTH;
+		dtls1_set_message_header(s, s->init_buf->data,
+			SSL3_MT_CERTIFICATE_REQUEST, msg_len, 0, msg_len);
+
 		/* buffer the message to handle re-xmits */
 		dtls1_buffer_message(s, 0);
 
