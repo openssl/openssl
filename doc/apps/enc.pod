@@ -227,6 +227,14 @@ Blowfish and RC5 algorithms use a 128 bit key.
  rc5-ecb            RC5 cipher in ECB mode
  rc5-ofb            RC5 cipher in OFB mode
 
+ aes-[128|192|256]-cbc	128/192/256 bit AES in CBC mode
+ aes-[128|192|256]	Alias for aes-[128|192|256]-cbc
+ aes-[128|192|256]-cfb	128/192/256 bit AES in 128 bit CFB mode
+ aes-[128|192|256]-cfb1	128/192/256 bit AES in 1 bit CFB mode
+ aes-[128|192|256]-cfb8	128/192/256 bit AES in 8 bit CFB mode
+ aes-[128|192|256]-ecb	128/192/256 bit AES in ECB mode
+ aes-[128|192|256]-ofb	128/192/256 bit AES in OFB mode
+
 =head1 EXAMPLES
 
 Just base64 encode a binary file:
