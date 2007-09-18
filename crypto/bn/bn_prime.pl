@@ -101,10 +101,12 @@ for ($i=0; $i <= $#primes; $i++)
 
 printf "#ifndef EIGHT_BIT\n";
 printf "#define NUMPRIMES %d\n",$num;
+printf "typedef unsigned short prime_t;\n";
 printf "#else\n";
 printf "#define NUMPRIMES %d\n",$eight;
+printf "typedef unsigned char prime_t;\n";
 printf "#endif\n";
-print "static const unsigned int primes[NUMPRIMES]=\n\t{\n\t";
+print "static const prime_t primes[NUMPRIMES]=\n\t{\n\t";
 $init=0;
 for ($i=0; $i <= $#primes; $i++)
 	{
