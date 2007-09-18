@@ -52,10 +52,6 @@ mx86-cof.s: asm/md5-586.pl ../perlasm/x86asm.pl
 mx86-out.s: asm/md5-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) md5-586.pl a.out $(CFLAGS) > ../$@)
 
-md5-sparcv9.o: asm/md5-sparcv9.S
-	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -c \
-		-o md5-sparcv9.o asm/md5-sparcv9.S
-
 md5-x86_64.s:	asm/md5-x86_64.pl;	$(PERL) asm/md5-x86_64.pl $@
 
 md5-ia64.s: asm/md5-ia64.S
