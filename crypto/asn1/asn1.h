@@ -208,7 +208,7 @@ typedef struct asn1_object_st
 	const char *sn,*ln;
 	int nid;
 	int length;
-	unsigned char *data;
+	const unsigned char *data;	/* data remains const after init */
 	int flags;	/* Should we free this one */
 	} ASN1_OBJECT;
 

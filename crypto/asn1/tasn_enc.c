@@ -569,7 +569,8 @@ int asn1_ex_i2c(ASN1_VALUE **pval, unsigned char *cout, int *putype,
 	ASN1_STRING *strtmp;
 	ASN1_OBJECT *otmp;
 	int utype;
-	unsigned char *cont, c;
+	const unsigned char *cont;
+	unsigned char c;
 	int len;
 	const ASN1_PRIMITIVE_FUNCS *pf;
 	pf = it->funcs;
