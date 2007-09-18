@@ -297,6 +297,8 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 		}
 	for (ri+=4; i<ri; i++)
 		rp[i]=nrp[i], ap[i]=0;
+	bn_correct_top(r);
+	bn_correct_top(ret);
 #else
 	if (bn_wexpand(ret,al) == NULL) return(0);
 	ret->top=al;
