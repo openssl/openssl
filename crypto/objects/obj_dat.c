@@ -73,11 +73,11 @@
 #define NUM_SN 0
 #define NUM_LN 0
 #define NUM_OBJ 0
-static unsigned char lvalues[1];
-static ASN1_OBJECT nid_objs[1];
-static ASN1_OBJECT *sn_objs[1];
-static ASN1_OBJECT *ln_objs[1];
-static ASN1_OBJECT *obj_objs[1];
+static const unsigned char lvalues[1];
+static const ASN1_OBJECT nid_objs[1];
+static const unsigned int sn_objs[1];
+static const unsigned int ln_objs[1];
+static const unsigned int obj_objs[1];
 #endif
 
 static int sn_cmp(const void *a, const void *b);
@@ -99,14 +99,16 @@ static LHASH *added=NULL;
 
 static int sn_cmp(const void *a, const void *b)
 	{
-	const ASN1_OBJECT * const *ap = a, * const *bp = b;
-	return(strcmp((*ap)->sn,(*bp)->sn));
+	const ASN1_OBJECT * const *ap = a;
+	const unsigned int *bp = b;
+	return(strcmp((*ap)->sn,nid_objs[*bp].sn));
 	}
 
 static int ln_cmp(const void *a, const void *b)
 	{ 
-	const ASN1_OBJECT * const *ap = a, * const *bp = b;
-	return(strcmp((*ap)->ln,(*bp)->ln));
+	const ASN1_OBJECT * const *ap = a;
+	const unsigned int *bp = b;
+	return(strcmp((*ap)->ln,nid_objs[*bp].ln));
 	}
 
 /* static unsigned long add_hash(ADDED_OBJ *ca) */
@@ -386,7 +388,7 @@ const char *OBJ_nid2ln(int n)
 
 int OBJ_obj2nid(const ASN1_OBJECT *a)
 	{
-	ASN1_OBJECT **op;
+	const unsigned int *op;
 	ADDED_OBJ ad,*adp;
 
 	if (a == NULL)
@@ -401,11 +403,11 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
 		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=(ASN1_OBJECT **)OBJ_bsearch((const char *)&a,(const char *)obj_objs,
-		NUM_OBJ, sizeof(ASN1_OBJECT *),obj_cmp);
+	op=(const unsigned int *)OBJ_bsearch((const char *)&a,(const char *)obj_objs,
+		NUM_OBJ, sizeof(obj_objs[0]),obj_cmp);
 	if (op == NULL)
 		return(NID_undef);
-	return((*op)->nid);
+	return(nid_objs[*op].nid);
 	}
 
 /* Convert an object name into an ASN1_OBJECT
@@ -458,7 +460,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 	int i,n=0,len,nid, first, use_bn;
 	BIGNUM *bl;
 	unsigned long l;
-	unsigned char *p;
+	const unsigned char *p;
 	char tbuf[DECIMAL_SIZE(i)+DECIMAL_SIZE(l)+2];
 
 	if ((a == NULL) || (a->data == NULL)) {
@@ -624,8 +626,9 @@ int OBJ_txt2nid(const char *s)
 
 int OBJ_ln2nid(const char *s)
 	{
-	ASN1_OBJECT o,*oo= &o,**op;
+	ASN1_OBJECT o,*oo= &o;
 	ADDED_OBJ ad,*adp;
+	const unsigned int *op;
 
 	o.ln=s;
 	if (added != NULL)
@@ -635,16 +638,17 @@ int OBJ_ln2nid(const char *s)
 		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=(ASN1_OBJECT **)OBJ_bsearch((char *)&oo,(char *)ln_objs, NUM_LN,
-		sizeof(ASN1_OBJECT *),ln_cmp);
+	op=(const unsigned int*)OBJ_bsearch((char *)&oo,(char *)ln_objs, NUM_LN,
+		sizeof(ln_objs[0]),ln_cmp);
 	if (op == NULL) return(NID_undef);
-	return((*op)->nid);
+	return(nid_objs[*op].nid);
 	}
 
 int OBJ_sn2nid(const char *s)
 	{
-	ASN1_OBJECT o,*oo= &o,**op;
+	ASN1_OBJECT o,*oo= &o;
 	ADDED_OBJ ad,*adp;
+	const unsigned int *op;
 
 	o.sn=s;
 	if (added != NULL)
@@ -654,17 +658,17 @@ int OBJ_sn2nid(const char *s)
 		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=(ASN1_OBJECT **)OBJ_bsearch((char *)&oo,(char *)sn_objs,NUM_SN,
-		sizeof(ASN1_OBJECT *),sn_cmp);
+	op=(const unsigned int *)OBJ_bsearch((char *)&oo,(char *)sn_objs,NUM_SN,
+		sizeof(sn_objs[0]),sn_cmp);
 	if (op == NULL) return(NID_undef);
-	return((*op)->nid);
+	return(nid_objs[*op].nid);
 	}
 
 static int obj_cmp(const void *ap, const void *bp)
 	{
 	int j;
 	const ASN1_OBJECT *a= *(ASN1_OBJECT * const *)ap;
-	const ASN1_OBJECT *b= *(ASN1_OBJECT * const *)bp;
+	const ASN1_OBJECT *b= &nid_objs[*((const unsigned int *)bp)];
 
 	j=(a->length - b->length);
         if (j) return(j);
