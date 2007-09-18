@@ -45,17 +45,17 @@ $Xoff=&DWP(32,"esp");
 $K256="ebp";
 
 sub BODY_00_15() {
-    my $in_16_64=shift;
+    my $in_16_63=shift;
 
 	&mov	("ecx",$E);
-	 &add	($T,&DWP(4*(8+15+16-9),"esp"))	if ($in_16_64);	# T += X[-7]
+	 &add	($T,&DWP(4*(8+15+16-9),"esp"))	if ($in_16_63);	# T += X[-7]
 	&ror	("ecx",6);
 	&mov	("edi",$E);
 	&ror	("edi",11);
 	 &mov	("esi",$Foff);
 	&xor	("ecx","edi");
 	&ror	("edi",25-11);
-	 &mov	(&DWP(4*(8+15),"esp"),$T)	if ($in_16_64);	# save X[0]
+	 &mov	(&DWP(4*(8+15),"esp"),$T)	if ($in_16_63);	# save X[0]
 	&xor	("ecx","edi");	# Sigma1(e)
 	 &mov	("edi",$Goff);
 	&add	($T,"ecx");	# T += Sigma1(e)
@@ -92,7 +92,7 @@ sub BODY_00_15() {
 
 	&add	($K256,4);
 	&add	($A,$T);	# h += T
-	 &mov	($T,&DWP(4*(8+15+16-1),"esp"))	if ($in_16_64);	# preload T
+	 &mov	($T,&DWP(4*(8+15+16-1),"esp"))	if ($in_16_63);	# preload T
 	&add	($E,"esi");	# d += K256[i]
 	&add	($A,"esi");	# h += K256[i]
 }

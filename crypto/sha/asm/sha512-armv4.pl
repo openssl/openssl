@@ -104,7 +104,7 @@ $code.=<<___;
 	orreq	$Ktbl,$Ktbl,#1
 
 	ldr	$t2,[sp,#$Boff+0]	@ b.lo
-	ldr	$t3,[sp,#$Coff+0]		@ c.lo
+	ldr	$t3,[sp,#$Coff+0]	@ c.lo
 	@ Sigma0(x)	(ROTR((x),28) ^ ROTR((x),34) ^ ROTR((x),39))
 	@ LO		lo>>28^hi<<4  ^ hi>>2^lo<<30 ^ hi>>7^lo<<25
 	@ HI		hi>>28^lo<<4  ^ lo>>2^hi<<30 ^ lo>>7^hi<<25
