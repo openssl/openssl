@@ -130,8 +130,8 @@ extern "C" {
 /* dgram BIO stuff */
 #define BIO_CTRL_DGRAM_CONNECT       31  /* BIO dgram special */
 #define BIO_CTRL_DGRAM_SET_CONNECTED 32  /* allow for an externally
-										  * connected socket to be
-										  * passed in */ 
+					  * connected socket to be
+					  * passed in */ 
 #define BIO_CTRL_DGRAM_SET_RECV_TIMEOUT 33 /* setsockopt, essentially */
 #define BIO_CTRL_DGRAM_GET_RECV_TIMEOUT 34 /* getsockopt, essentially */
 #define BIO_CTRL_DGRAM_SET_SEND_TIMEOUT 35 /* setsockopt, essentially */
@@ -147,14 +147,14 @@ extern "C" {
 #define BIO_CTRL_DGRAM_QUERY_MTU          40 /* as kernel for current MTU */
 #define BIO_CTRL_DGRAM_GET_MTU            41 /* get cached value for MTU */
 #define BIO_CTRL_DGRAM_SET_MTU            42 /* set cached value for
-											  * MTU. want to use this
-                                              * if asking the kernel
-                                              * fails */
+					      * MTU. want to use this
+					      * if asking the kernel
+					      * fails */
 
 #define BIO_CTRL_DGRAM_MTU_EXCEEDED       43 /* check whether the MTU
-											  * was exceed in the
-											  * previous write
-											  * operation */
+					      * was exceed in the
+					      * previous write
+					      * operation */
 
 #define BIO_CTRL_DGRAM_SET_PEER           44 /* Destination for the data */
 
