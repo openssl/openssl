@@ -37,7 +37,11 @@ foreach $file (sort keys %files) {
     $file=~s/^\.\///;
     push @{$files{$file}},$origfile;
     my $prevdep="";
-    foreach $dep (sort @{$files{$file}}) {
+
+    # Remove leading ./ before sorting
+    my @deps = map { $_ =~ s/^\.\///; $_ } @{$files{$file}};
+
+    foreach $dep (sort @deps) {
 	$dep=~s/^\.\///;
 	next if $prevdep eq $dep; # to exterminate duplicates...
 	$prevdep = $dep;

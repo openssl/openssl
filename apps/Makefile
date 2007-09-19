@@ -505,12 +505,11 @@ nseq.o: ../include/openssl/sha.h ../include/openssl/stack.h
 nseq.o: ../include/openssl/symhacks.h ../include/openssl/txt_db.h
 nseq.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h apps.h nseq.c
 ocsp.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-ocsp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-ocsp.o: ../include/openssl/comp.h ../include/openssl/conf.h
-ocsp.o: ../include/openssl/crypto.h ../include/openssl/dtls1.h
-ocsp.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-ocsp.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-ocsp.o: ../include/openssl/engine.h ../include/openssl/err.h
+ocsp.o: ../include/openssl/buffer.h ../include/openssl/comp.h
+ocsp.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+ocsp.o: ../include/openssl/dtls1.h ../include/openssl/e_os2.h
+ocsp.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+ocsp.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
 ocsp.o: ../include/openssl/evp.h ../include/openssl/kssl.h
 ocsp.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 ocsp.o: ../include/openssl/objects.h ../include/openssl/ocsp.h

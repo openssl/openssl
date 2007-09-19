@@ -114,13 +114,14 @@ pk7_asn1.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 pk7_asn1.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 pk7_asn1.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 pk7_asn1.o: ../../include/openssl/x509_vfy.h ../cryptlib.h pk7_asn1.c
-pk7_attr.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-pk7_attr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-pk7_attr.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-pk7_attr.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-pk7_attr.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-pk7_attr.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-pk7_attr.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+pk7_attr.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
+pk7_attr.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+pk7_attr.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+pk7_attr.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+pk7_attr.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+pk7_attr.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+pk7_attr.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+pk7_attr.o: ../../include/openssl/opensslconf.h
 pk7_attr.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 pk7_attr.o: ../../include/openssl/pem.h ../../include/openssl/pem2.h
 pk7_attr.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
