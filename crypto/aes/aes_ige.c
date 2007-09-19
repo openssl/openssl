@@ -62,9 +62,11 @@ typedef struct {
 /* XXX: probably some better way to do this */
 #if defined(__i386__) || defined(__x86_64__)
 #define UNALIGNED_MEMOPS_ARE_FAST 1
+#else
+#define UNALIGNED_MEMOPS_ARE_FAST 0
 #endif
 
-#ifdef UNALIGNED_MEMOPS_ARE_FAST
+#if UNALIGNED_MEMOPS_ARE_FAST
 #define load_block(d, s)        (d) = *(const aes_block_t *)(s)
 #define store_block(d, s)       *(aes_block_t *)(d) = (s)
 #else
@@ -89,7 +91,8 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
 
 	if (AES_ENCRYPT == enc)
 		{
-		if (in != out)
+		if (in != out &&
+		    (UNALIGNED_MEMOPS_ARE_FAST || ((size_t)in|(size_t)out|(size_t)ivec)%sizeof(long)==0))
 			{
 			aes_block_t *ivp = (aes_block_t *)ivec;
 			aes_block_t *iv2p = (aes_block_t *)(ivec + AES_BLOCK_SIZE);
@@ -143,7 +146,8 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
 		}
 	else
 		{
-		if(in != out)
+		if (in != out &&
+		    (UNALIGNED_MEMOPS_ARE_FAST || ((size_t)in|(size_t)out|(size_t)ivec)%sizeof(long)==0))
 			{
 			aes_block_t *ivp = (aes_block_t *)ivec;
 			aes_block_t *iv2p = (aes_block_t *)(ivec + AES_BLOCK_SIZE);

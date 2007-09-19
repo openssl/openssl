@@ -152,7 +152,7 @@ The final BIT STRING contains the actual signature. It can be extracted with:
 
 The certificate public key can be extracted with:
  
- openssl x509 -in test/testx509.pem -pubout -noout >pubkey.pem
+ openssl x509 -in test/testx509.pem -pubkey -noout >pubkey.pem
 
 The signature can be analysed with:
 

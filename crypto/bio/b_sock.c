@@ -456,9 +456,6 @@ int BIO_sock_init(void)
 		{
 		int err;
 	  
-#ifdef SIGINT
-		signal(SIGINT,(void (*)(int))BIO_sock_cleanup);
-#endif
 		wsa_init_done=1;
 		memset(&wsa_state,0,sizeof(wsa_state));
 		if (WSAStartup(0x0101,&wsa_state)!=0)
@@ -484,11 +481,6 @@ int BIO_sock_init(void)
 
     if (!wsa_init_done)
     {
-   
-# ifdef SIGINT
-        signal(SIGINT,(void (*)(int))BIO_sock_cleanup);
-# endif
-
         wsa_init_done=1;
         wVerReq = MAKEWORD( 2, 0 );
         err = WSAStartup(wVerReq,&wsaData);
@@ -511,7 +503,7 @@ void BIO_sock_cleanup(void)
 		{
 		wsa_init_done=0;
 #ifndef OPENSSL_SYS_WINCE
-		WSACancelBlockingCall();
+		WSACancelBlockingCall();	/* Winsock 1.1 specific */
 #endif
 		WSACleanup();
 		}

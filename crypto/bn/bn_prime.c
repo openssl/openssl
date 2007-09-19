@@ -377,14 +377,14 @@ static int witness(BIGNUM *w, const BIGNUM *a, const BIGNUM *a1,
 static int probable_prime(BIGNUM *rnd, int bits)
 	{
 	int i;
-	BN_ULONG mods[NUMPRIMES];
+	prime_t mods[NUMPRIMES];
 	BN_ULONG delta,maxdelta;
 
 again:
 	if (!BN_rand(rnd,bits,1,1)) return(0);
 	/* we now have a random number 'rand' to test. */
 	for (i=1; i<NUMPRIMES; i++)
-		mods[i]=BN_mod_word(rnd,(BN_ULONG)primes[i]);
+		mods[i]=(prime_t)BN_mod_word(rnd,(BN_ULONG)primes[i]);
 	maxdelta=BN_MASK2 - primes[NUMPRIMES-1];
 	delta=0;
 	loop: for (i=1; i<NUMPRIMES; i++)

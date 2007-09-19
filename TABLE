@@ -947,7 +947,7 @@ $arflags      =
 
 *** darwin-i386-cc
 $cc           = cc
-$cflags       = -O3 -fomit-frame-pointer -fno-common
+$cflags       = -arch i386 -O3 -fomit-frame-pointer -fno-common
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
@@ -967,14 +967,14 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= darwin-shared
 $shared_cflag = -fPIC -fno-common
-$shared_ldflag = -dynamiclib
+$shared_ldflag = -arch i386 -dynamiclib
 $shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
 $arflags      = 
 
 *** darwin-ppc-cc
 $cc           = cc
-$cflags       = -O3 -DB_ENDIAN
+$cflags       = -arch ppc -O3 -DB_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
@@ -994,7 +994,61 @@ $rc5_obj      =
 $dso_scheme   = dlfcn
 $shared_target= darwin-shared
 $shared_cflag = -fPIC -fno-common
-$shared_ldflag = -dynamiclib
+$shared_ldflag = -arch ppc -dynamiclib
+$shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
+$ranlib       = 
+$arflags      = 
+
+*** darwin64-ppc-cc
+$cc           = cc
+$cflags       = -arch ppc64 -O3 -DB_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = MACOSX
+$lflags       = -Wl,-search_paths_first%
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
+$cpuid_obj    = ppccpuid_osx64.o
+$bn_obj       = osx_ppc64.o osx_ppc64-mont.o
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = sha1-ppc_osx64.o sha256-ppc_osx64.o sha512-ppc_osx64.o
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = dlfcn
+$shared_ldflag = darwin-shared
+$shared_extension = -fPIC -fno-common
+$ranlib       = -arch ppc64 -dynamiclib
+$arflags      = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
+
+*** darwin64-x86_64-cc
+$cc           = cc
+$cflags       = -arch x86_64 -O3 -fomit-frame-pointer -DL_ENDIAN -DMD32_REG_T=int -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = MACOSX
+$lflags       = -Wl,-search_paths_first%
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL
+$cpuid_obj    = 
+$bn_obj       = 
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = dlfcn
+$shared_target= darwin-shared
+$shared_cflag = -fPIC -fno-common
+$shared_ldflag = -arch x86_64 -dynamiclib
 $shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
 $arflags      = 

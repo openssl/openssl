@@ -1227,15 +1227,28 @@ $cpuid_obj.=" uplink.o uplink-cof.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
 #
 if ($target =~ /\-icc$/)	# Intel C compiler
 	{
-	my($iccver)=`$cc -V 2>&1`;
-	if ($iccver =~ /Version ([0-9]+)\./)	{ $iccver=$1; }
-	else					{ $iccver=0;  }
+	my $iccver=0;
+	if (open(FD,"$cc -V 2>&1 |"))
+		{
+		while(<FD>) { $iccver=$1 if (/Version ([0-9]+)\./); }
+		close(FD);
+		}
+
 	if ($iccver>=8)
 		{
 		# Eliminate unnecessary dependency from libirc.a. This is
 		# essential for shared library support, as otherwise
 		# apps/openssl can end up in endless loop upon startup...
 		$cflags.=" -Dmemcpy=__builtin_memcpy -Dmemset=__builtin_memset";
+		}
+	if ($iccver>=9)
+		{
+		$cflags.=" -i-static";
+		$cflags=~s/\-no_cpprt/-no-cpprt/;
+		}
+	if ($iccver>=10)
+		{
+		$cflags=~s/\-i\-static/-static-intel/;
 		}
 	}
 
