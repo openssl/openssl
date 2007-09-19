@@ -1090,7 +1090,7 @@ int dtls1_send_certificate_request(SSL *s)
 
 		/* XDTLS:  set message header ? */
 		msg_len = s->init_num - DTLS1_HM_HEADER_LENGTH;
-		dtls1_set_message_header(s, s->init_buf->data,
+		dtls1_set_message_header(s, (void *)s->init_buf->data,
 			SSL3_MT_CERTIFICATE_REQUEST, msg_len, 0, msg_len);
 
 		/* buffer the message to handle re-xmits */
