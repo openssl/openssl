@@ -25,7 +25,7 @@ tags:
 	ctags $(SRC)
 
 errors:
-	$(PERL) ../../util/mkerr.pl -conf gost.ec -nostatic -debug -write $(SRC)
+	$(PERL) ../../util/mkerr.pl -conf gost.ec -nostatic -write $(SRC)
 
 lib: $(LIBOBJ)
 	if [ -n "$(SHARED_LIBS)" ]; then \
