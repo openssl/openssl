@@ -901,10 +901,10 @@ When OpenSSL's PRNG routines are called to generate random numbers the supplied
 buffer contents are mixed into the entropy pool: so it technically does not
 matter whether the buffer is initialized at this point or not.  Valgrind (and
 other test tools) will complain about this. When using Valgrind, make sure the
-OpenSSL library has been compiled with the PEDANTIC macro defined (-DPEDANTIC)
-to get rid of these warnings.  Compling with -DPURIFY will help as well.
+OpenSSL library has been compiled with the PURIFY macro defined (-DPURIFY)
+to get rid of these warnings
 
-The use of PEDANTIC with the PRNG was added in OpenSSL 0.9.8f.
+The use of PURIFY with the PRNG was added in OpenSSL 0.9.8f.
 
 
 ===============================================================================

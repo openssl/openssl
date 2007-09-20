@@ -154,7 +154,7 @@ void RAND_add(const void *buf, int num, double entropy)
 int RAND_bytes(unsigned char *buf, int num)
 	{
 	const RAND_METHOD *meth = RAND_get_rand_method();
-#ifdef PEDANTIC
+#ifdef PURIFY
 	memset(buf, 0, num);
 #endif
 	if (meth && meth->bytes)
@@ -165,7 +165,7 @@ int RAND_bytes(unsigned char *buf, int num)
 int RAND_pseudo_bytes(unsigned char *buf, int num)
 	{
 	const RAND_METHOD *meth = RAND_get_rand_method();
-#ifdef PEDANTIC
+#ifdef PURIFY
 	memset(buf, 0, num);
 #endif
 	if (meth && meth->pseudorand)
