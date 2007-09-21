@@ -904,8 +904,6 @@ other test tools) will complain about this. When using Valgrind, make sure the
 OpenSSL library has been compiled with the PURIFY macro defined (-DPURIFY)
 to get rid of these warnings
 
-The use of PURIFY with the PRNG was added in OpenSSL 0.9.8f.
-
 
 ===============================================================================
 

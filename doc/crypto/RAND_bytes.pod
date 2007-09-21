@@ -26,7 +26,7 @@ certain purposes in cryptographic protocols, but usually not for key
 generation etc.
 
 The contents of B<buf> is mixed into the entropy pool before retrieving
-the new pseudo-random bytes unless disabled at compile time.
+the new pseudo-random bytes unless disabled at compile time (see FAQ).
 
 =head1 RETURN VALUES
 
