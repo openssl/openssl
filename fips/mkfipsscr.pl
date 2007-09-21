@@ -286,6 +286,7 @@ my $tprefix;
 my $shwrap_prefix;
 my $debug = 0;
 my $quiet = 0;
+my $rspdir = "rsp";
 
 foreach (@ARGV)
 	{
@@ -308,7 +309,10 @@ foreach (@ARGV)
 	elsif (/--dir=(.*)$/)
 		{
 		$tvdir = $1;
-		#	$tvdir .= "/" unless $tvdir =~ /\/$/;
+		}
+	elsif (/--rspdir=(.*)$/)
+		{
+		$rspdir = $1;
 		}
 	elsif (/--tprefix=(.*)$/)
 		{
@@ -433,7 +437,7 @@ sub test_dir
 	{
 	my ($win32, $req) = @_;
 	my $rsp = $req;
-	$rsp =~ s/req$/rsp/;
+	$rsp =~ s/req$/$rspdir/;
 	if ($win32)
 		{
 		$rsp =~ tr|/|\\|;
@@ -460,17 +464,19 @@ END
 sub test_line
 	{
 	my ($win32, $req, $tprefix, $tcmd) = @_;
+	my $rsp = $req;
+	$rsp =~ s/req\/([^\/]*).req$/$rspdir\/$1.rsp/;
 	if ($tcmd =~ /-f$/)
 		{
 		if ($win32)
 			{
 			$req =~ tr|/|\\|;
-			print OUT "$tprefix$tcmd \"$req\"\n";
+			print OUT "$tprefix$tcmd \"$req\" \"$rsp\"\n";
 			}
 		else
 			{
 			print OUT <<END;
-${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd "$req" || { echo "$req failure" ; exit 1 
+${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd "$req" "$rsp" || { echo "$req failure" ; exit 1 
 }
 END
 			}
@@ -497,8 +503,6 @@ END
 			}
 		}
 		
-	my $rsp = $req;
-	$rsp =~ s/req\/([^\/]*).req$/rsp\/$1.rsp/;
 	if ($win32)
 		{
 		$req =~ tr|/|\\|;
