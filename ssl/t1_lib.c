@@ -150,7 +150,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		   + hostname length 
 		*/
 		   
-		if ((lenmax = limit - p - 9) < 0 
+		if ((lenmax = limit - ret - 9) < 0 
 		|| (size_str = strlen(s->tlsext_hostname)) > (unsigned long)lenmax) 
 			return NULL;
 			
@@ -179,7 +179,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		/* Check for enough room 2 for extension type, 2 for len
  		 * rest for ticket
   		 */
-		if (limit - p - 4 - ticklen < 0)
+		if (limit - ret - 4 - ticklen < 0)
 			return NULL;
 		s2n(TLSEXT_TYPE_session_ticket,ret); 
 		s2n(ticklen,ret);

@@ -1935,6 +1935,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
  		break;
 	case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
 		s->tlsext_debug_arg=parg;
+		ret = 1;
 		break;
 #endif /* !OPENSSL_NO_TLSEXT */
 	default:
