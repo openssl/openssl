@@ -471,6 +471,7 @@ sub test_line
 		if ($win32)
 			{
 			$req =~ tr|/|\\|;
+			$rsp =~ tr|/|\\|;
 			print OUT "$tprefix$tcmd \"$req\" \"$rsp\"\n";
 			}
 		else
