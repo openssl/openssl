@@ -859,6 +859,11 @@ bad:
 		}
 #endif	/* OPENSSL_NO_KRB5  */
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */
+#if 0
+#ifdef TLSEXT_TYPE_opaque_prf_input
+	SSL_set_tlsext_opaque_prf_input(con, "Test client", 1);
+#endif
+#endif
 
 re_start:
 
@@ -1073,11 +1078,13 @@ re_start:
 			if (in_init)
 				{
 				in_init=0;
+#if 0 /* This test doesn't really work as intended (needs to be fixed) */
 #ifndef OPENSSL_NO_TLSEXT
 				if (servername != NULL && !SSL_session_reused(con))
 					{
 					BIO_printf(bio_c_out,"Server did %sacknowledge servername extension.\n",tlsextcbp.ack?"":"not ");
 					}
+#endif
 #endif
 				if (sess_out)
 					{

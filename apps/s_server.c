@@ -1575,6 +1575,11 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 						 strlen((char *)context));
 	}
 	SSL_clear(con);
+#if 0
+#ifdef TLSEXT_TYPE_opaque_prf_input
+	SSL_set_tlsext_opaque_prf_input(con, "Test server", 1);
+#endif
+#endif
 
 	if (SSL_version(con) == DTLS1_VERSION)
 		{

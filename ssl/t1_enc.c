@@ -142,8 +142,14 @@
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
 
+/* seed1 through seed5 are virtually concatenated */
 static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
-			int sec_len, unsigned char *seed, int seed_len,
+			int sec_len,
+			const void *seed1, int seed1_len,
+			const void *seed2, int seed2_len,
+			const void *seed3, int seed3_len,
+			const void *seed4, int seed4_len,
+			const void *seed5, int seed5_len,
 			unsigned char *out, int olen)
 	{
 	int chunk,n;
@@ -159,7 +165,11 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 	HMAC_CTX_init(&ctx_tmp);
 	HMAC_Init_ex(&ctx,sec,sec_len,md, NULL);
 	HMAC_Init_ex(&ctx_tmp,sec,sec_len,md, NULL);
-	HMAC_Update(&ctx,seed,seed_len);
+	if (seed1 != NULL) HMAC_Update(&ctx,seed1,seed1_len);
+	if (seed2 != NULL) HMAC_Update(&ctx,seed2,seed2_len);
+	if (seed3 != NULL) HMAC_Update(&ctx,seed3,seed3_len);
+	if (seed4 != NULL) HMAC_Update(&ctx,seed4,seed4_len);
+	if (seed5 != NULL) HMAC_Update(&ctx,seed5,seed5_len);
 	HMAC_Final(&ctx,A1,&A1_len);
 
 	n=0;
@@ -169,7 +179,11 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 		HMAC_Init_ex(&ctx_tmp,NULL,0,NULL,NULL); /* re-init */
 		HMAC_Update(&ctx,A1,A1_len);
 		HMAC_Update(&ctx_tmp,A1,A1_len);
-		HMAC_Update(&ctx,seed,seed_len);
+		if (seed1 != NULL) HMAC_Update(&ctx,seed1,seed1_len);
+		if (seed2 != NULL) HMAC_Update(&ctx,seed2,seed2_len);
+		if (seed3 != NULL) HMAC_Update(&ctx,seed3,seed3_len);
+		if (seed4 != NULL) HMAC_Update(&ctx,seed4,seed4_len);
+		if (seed5 != NULL) HMAC_Update(&ctx,seed5,seed5_len);
 
 		if (olen > chunk)
 			{
@@ -190,9 +204,15 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 	OPENSSL_cleanse(A1,sizeof(A1));
 	}
 
+/* seed1 through seed5 are virtually concatenated */
 static void tls1_PRF(long digest_mask,
-		     unsigned char *label, int label_len,
-		     const unsigned char *sec, int slen, unsigned char *out1,
+		     const void *seed1, int seed1_len,
+		     const void *seed2, int seed2_len,
+		     const void *seed3, int seed3_len,
+		     const void *seed4, int seed4_len,
+		     const void *seed5, int seed5_len,
+		     const unsigned char *sec, int slen,
+		     unsigned char *out1,
 		     unsigned char *out2, int olen)
 	{
 	int len,i,idx,count;
@@ -200,7 +220,7 @@ static void tls1_PRF(long digest_mask,
 	long m;
 	const EVP_MD *md;
 
-	/* Count number of digests and divide sec evenly */
+	/* Count number of digests and partition sec evenly */
 	count=0;
 	for (idx=0;ssl_get_handshake_digest(idx,&m,&md);idx++) {
 		if ((m<<TLS1_PRF_DGST_SHIFT) & digest_mask) count++;
@@ -215,7 +235,9 @@ static void tls1_PRF(long digest_mask,
 				SSL_R_UNSUPPORTED_DIGEST_TYPE);
 				return;				
 			}
-			tls1_P_hash(md ,S1,len+(slen&1),label,label_len,out2,olen);
+			tls1_P_hash(md ,S1,len+(slen&1),
+			            seed1,seed1_len,seed2,seed2_len,seed3,seed3_len,seed4,seed4_len,seed5,seed5_len,
+			            out2,olen);
 			S1+=len;
 			for (i=0; i<olen; i++)
 			{
@@ -228,20 +250,11 @@ static void tls1_PRF(long digest_mask,
 static void tls1_generate_key_block(SSL *s, unsigned char *km,
 	     unsigned char *tmp, int num)
 	{
-	unsigned char *p;
-	unsigned char buf[SSL3_RANDOM_SIZE*2+
-		TLS_MD_MAX_CONST_SIZE];
-	p=buf;
-
-	memcpy(p,TLS_MD_KEY_EXPANSION_CONST,
-		TLS_MD_KEY_EXPANSION_CONST_SIZE);
-	p+=TLS_MD_KEY_EXPANSION_CONST_SIZE;
-	memcpy(p,s->s3->server_random,SSL3_RANDOM_SIZE);
-	p+=SSL3_RANDOM_SIZE;
-	memcpy(p,s->s3->client_random,SSL3_RANDOM_SIZE);
-	p+=SSL3_RANDOM_SIZE;
-
-	tls1_PRF(s->s3->tmp.new_cipher->algorithm2,buf,(int)(p-buf),
+	tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+		 TLS_MD_KEY_EXPANSION_CONST,TLS_MD_KEY_EXPANSION_CONST_SIZE,
+		 s->s3->server_random,SSL3_RANDOM_SIZE,
+		 s->s3->client_random,SSL3_RANDOM_SIZE,
+		 NULL,0,NULL,0,
 		 s->session->master_key,s->session->master_key_length,
 		 km,tmp,num);
 #ifdef KSSL_DEBUG
@@ -261,8 +274,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 	{
 	static const unsigned char empty[]="";
 	unsigned char *p,*key_block,*mac_secret;
-	unsigned char *exp_label,buf[TLS_MD_MAX_CONST_SIZE+
-		SSL3_RANDOM_SIZE*2];
+	unsigned char *exp_label;
 	unsigned char tmp1[EVP_MAX_KEY_LENGTH];
 	unsigned char tmp2[EVP_MAX_KEY_LENGTH];
 	unsigned char iv1[EVP_MAX_IV_LENGTH*2];
@@ -443,29 +455,22 @@ printf("which = %04X\nmac key=",which);
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).
 		 */
-		p=buf;
-		memcpy(p,exp_label,exp_label_len);
-		p+=exp_label_len;
-		memcpy(p,s->s3->client_random,SSL3_RANDOM_SIZE);
-		p+=SSL3_RANDOM_SIZE;
-		memcpy(p,s->s3->server_random,SSL3_RANDOM_SIZE);
-		p+=SSL3_RANDOM_SIZE;
-		tls1_PRF(s->s3->tmp.new_cipher->algorithm2,buf,(int)(p-buf),key,j,
-			 tmp1,tmp2,EVP_CIPHER_key_length(c));
+		tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+			 exp_label,exp_label_len,
+			 s->s3->client_random,SSL3_RANDOM_SIZE,
+			 s->s3->server_random,SSL3_RANDOM_SIZE,
+			 NULL,0,NULL,0,
+			 key,j,tmp1,tmp2,EVP_CIPHER_key_length(c));
 		key=tmp1;
 
 		if (k > 0)
 			{
-			p=buf;
-			memcpy(p,TLS_MD_IV_BLOCK_CONST,
-				TLS_MD_IV_BLOCK_CONST_SIZE);
-			p+=TLS_MD_IV_BLOCK_CONST_SIZE;
-			memcpy(p,s->s3->client_random,SSL3_RANDOM_SIZE);
-			p+=SSL3_RANDOM_SIZE;
-			memcpy(p,s->s3->server_random,SSL3_RANDOM_SIZE);
-			p+=SSL3_RANDOM_SIZE;
-			tls1_PRF(s->s3->tmp.new_cipher->algorithm2,buf,p-buf,empty,0,
-				 iv1,iv2,k*2);
+			tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+				 TLS_MD_IV_BLOCK_CONST,TLS_MD_IV_BLOCK_CONST_SIZE,
+				 s->s3->client_random,SSL3_RANDOM_SIZE,
+				 s->s3->server_random,SSL3_RANDOM_SIZE,
+				 NULL,0,NULL,0,
+				 empty,0,iv1,iv2,k*2);
 			if (client_write)
 				iv=iv1;
 			else
@@ -767,35 +772,51 @@ int tls1_final_finish_mac(SSL *s,
 	{
 	unsigned int i;
 	EVP_MD_CTX ctx;
-	unsigned char buf[TLS_MD_MAX_CONST_SIZE+MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH];
+	unsigned char buf[2*EVP_MAX_MD_SIZE];
 	unsigned char *q,buf2[12];
 	int idx;
 	long mask;
+	int err=0;
 	const EVP_MD *md; 
 
 	q=buf;
-	memcpy(q,str,slen);
-	q+=slen;
 
 	EVP_MD_CTX_init(&ctx);
 
 	if (s->s3->handshake_buffer) 
 		ssl3_digest_cached_records(s);
 
-	for (idx=0;ssl_get_handshake_digest(idx,&mask,&md);idx++) {
-		if (mask & s->s3->tmp.new_cipher->algorithm2) {
-			EVP_MD_CTX_copy_ex(&ctx,s->s3->handshake_dgst[idx]);
-			EVP_DigestFinal_ex(&ctx,q,&i);
-			q+=i;
+	for (idx=0;ssl_get_handshake_digest(idx,&mask,&md);idx++)
+		{
+		if (mask & s->s3->tmp.new_cipher->algorithm2)
+			{
+			int hashsize = EVP_MD_size(md);
+			if ((size_t)hashsize > (sizeof buf - (size_t)(q-buf)))
+				{
+				/* internal error: 'buf' is too small for this cipersuite! */
+				err = 1;
+				}
+			else
+				{
+				EVP_MD_CTX_copy_ex(&ctx,s->s3->handshake_dgst[idx]);
+				EVP_DigestFinal_ex(&ctx,q,&i);
+				if (i != hashsize) /* can't really happen */
+					err = 1;
+				q+=i;
+				}
+			}
 		}
-	}
-
-	tls1_PRF(s->s3->tmp.new_cipher->algorithm2,buf,(int)(q-buf),
-		s->session->master_key,s->session->master_key_length,
-		out,buf2,sizeof buf2);
+		
+	tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+		 str,slen, buf,(int)(q-buf), NULL,0, NULL,0, NULL,0,
+		 s->session->master_key,s->session->master_key_length,
+		 out,buf2,sizeof buf2);
 	EVP_MD_CTX_cleanup(&ctx);
 
-	return sizeof buf2;
+	if (err)
+		return 0;
+	else
+		return sizeof buf2;
 	}
 
 int tls1_mac(SSL *ssl, unsigned char *md, int send)
@@ -876,23 +897,35 @@ printf("rec=");
 int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	     int len)
 	{
-	unsigned char buf[SSL3_RANDOM_SIZE*2+TLS_MD_MASTER_SECRET_CONST_SIZE];
 	unsigned char buff[SSL_MAX_MASTER_KEY_LENGTH];
+	const void *co = NULL, *so = NULL;
+	int col = 0, sol = NULL;
 
 #ifdef KSSL_DEBUG
 	printf ("tls1_generate_master_secret(%p,%p, %p, %d)\n", s,out, p,len);
 #endif	/* KSSL_DEBUG */
 
-	/* Setup the stuff to munge */
-	memcpy(buf,TLS_MD_MASTER_SECRET_CONST,
-		TLS_MD_MASTER_SECRET_CONST_SIZE);
-	memcpy(&(buf[TLS_MD_MASTER_SECRET_CONST_SIZE]),
-		s->s3->client_random,SSL3_RANDOM_SIZE);
-	memcpy(&(buf[SSL3_RANDOM_SIZE+TLS_MD_MASTER_SECRET_CONST_SIZE]),
-		s->s3->server_random,SSL3_RANDOM_SIZE);
+#ifdef TLSEXT_TYPE_opaque_prf_input
+	if (s->s3->client_opaque_prf_input != NULL && s->s3->server_opaque_prf_input != NULL &&
+	    s->s3->client_opaque_prf_input_len > 0 &&
+	    s->s3->client_opaque_prf_input_len == s->s3->server_opaque_prf_input_len)
+		{
+		co = s->s3->client_opaque_prf_input;
+		col = s->s3->server_opaque_prf_input_len;
+		so = s->s3->server_opaque_prf_input;
+		sol = s->s3->client_opaque_prf_input_len; /* must be same as col (see draft-rescorla-tls-opaque-prf-input-00.txt, section 3.1) */
+		}
+#endif
+
 	tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
-		buf,TLS_MD_MASTER_SECRET_CONST_SIZE+SSL3_RANDOM_SIZE*2,p,len,
+		TLS_MD_MASTER_SECRET_CONST,TLS_MD_MASTER_SECRET_CONST_SIZE,
+		s->s3->client_random,SSL3_RANDOM_SIZE,
+		co, col,
+		s->s3->server_random,SSL3_RANDOM_SIZE,
+		so, sol,
+		p,len,
 		s->session->master_key,buff,sizeof buff);
+
 #ifdef KSSL_DEBUG
 	printf ("tls1_generate_master_secret() complete\n");
 #endif	/* KSSL_DEBUG */

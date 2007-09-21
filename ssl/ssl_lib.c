@@ -542,6 +542,7 @@ void SSL_free(SSL *s)
 	if (s->tlsext_ecpointformatlist) OPENSSL_free(s->tlsext_ecpointformatlist);
 	if (s->tlsext_ellipticcurvelist) OPENSSL_free(s->tlsext_ellipticcurvelist);
 #endif /* OPENSSL_NO_EC */
+	if (s->tlsext_opaque_prf_input) OPENSSL_free(s->tlsext_opaque_prf_input);
 #endif
 
 	if (s->client_CA != NULL)

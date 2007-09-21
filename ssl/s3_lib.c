@@ -2083,6 +2083,13 @@ void ssl3_free(SSL *s)
 	if(s == NULL)
 	    return;
 
+#ifdef TLSEXT_TYPE_opaque_prf_input
+	if (s->s3->client_opaque_prf_input != NULL)
+		OPENSSL_free(s->s3->client_opaque_prf_input);
+	if (s->s3->server_opaque_prf_input != NULL)
+		OPENSSL_free(s->s3->server_opaque_prf_input);
+#endif
+
 	ssl3_cleanup_key_block(s);
 	if (s->s3->rbuf.buf != NULL)
 		OPENSSL_free(s->s3->rbuf.buf);
@@ -2114,6 +2121,15 @@ void ssl3_clear(SSL *s)
 	{
 	unsigned char *rp,*wp;
 	size_t rlen, wlen;
+
+#ifdef TLSEXT_TYPE_opaque_prf_input
+	if (s->s3->client_opaque_prf_input != NULL)
+		OPENSSL_free(s->s3->client_opaque_prf_input);
+	s->s3->client_opaque_prf_input = NULL;
+	if (s->s3->server_opaque_prf_input != NULL)
+		OPENSSL_free(s->s3->server_opaque_prf_input);
+	s->s3->server_opaque_prf_input = NULL;
+#endif
 
 	ssl3_cleanup_key_block(s);
 	if (s->s3->tmp.ca_names != NULL)
@@ -2337,11 +2353,33 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
 			return 0;
 			}
-		s->options |= SSL_OP_NO_SSLv2; /* can't use extension w/ SSL 2.0 format */
  		break;
 	case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
 		s->tlsext_debug_arg=parg;
+		ret = 1;
 		break;
+
+#ifdef TLSEXT_TYPE_opaque_prf_input
+	case SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT:
+		if (larg > 12288) /* actual internal limit is 2^16 for the complete hello message
+		                   * (including the cert chain and everything) */
+			{
+			SSLerr(SSL_F_SSL3_CTRL, SSL_R_OPAQUE_PRF_INPUT_TOO_LONG);
+			break;
+			}
+		if (s->tlsext_opaque_prf_input != NULL)
+			OPENSSL_free(s->tlsext_opaque_prf_input);
+		s->tlsext_opaque_prf_input = BUF_memdup(parg, (size_t)larg);
+		if (s->tlsext_opaque_prf_input != NULL)
+			{
+			s->tlsext_opaque_prf_input_len = (size_t)larg;
+			ret = 1;
+			}
+		else
+			s->tlsext_opaque_prf_input_len = 0;
+		break;
+#endif
+
 #endif /* !OPENSSL_NO_TLSEXT */
 	default:
 		break;
@@ -2562,7 +2600,15 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			}
 		return 1;
 		}
+
+#ifdef TLSEXT_TYPE_opaque_prf_input
+	case SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG:
+		ctx->tlsext_opaque_prf_input_callback_arg = parg;
+		return 1;
+#endif
+
 #endif /* !OPENSSL_NO_TLSEXT */
+
 	/* A Thawte special :-) */
 	case SSL_CTRL_EXTRA_CHAIN_CERT:
 		if (ctx->extra_certs == NULL)
@@ -2612,6 +2658,13 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
 		ctx->tlsext_servername_callback=(int (*)(SSL *,int *,void *))fp;
 		break;
+
+#ifdef TLSEXT_TYPE_opaque_prf_input
+	case SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB:
+		ctx->tlsext_opaque_prf_input_callback = (int (*)(SSL *,void *, size_t, void *))fp;
+		break;
+#endif
+
 #endif
 	default:
 		return(0);

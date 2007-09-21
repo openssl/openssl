@@ -277,6 +277,19 @@ static int ssl23_client_hello(SSL *s)
 		version = SSL2_VERSION;
 		}
 
+	if (version != SSL2_VERSION)
+		{
+		/* have to disable SSL 2.0 compatibility if we need TLS extensions */
+
+		if (s->tlsext_hostname != NULL)
+			ssl2_compat = 0;
+		
+#ifdef TLSEXT_TYPE_opaque_prf_input
+		if (s->ctx->tlsext_opaque_prf_input_callback != 0 || s->tlsext_opaque_prf_input != NULL)
+			ssl2_compat = 0;
+#endif
+		}
+
 	buf=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL23_ST_CW_CLNT_HELLO_A)
 		{
@@ -420,6 +433,12 @@ static int ssl23_client_hello(SSL *s)
 			*(p++)=0; /* Add the NULL method */
 
 #ifndef OPENSSL_NO_TLSEXT
+			/* TLS extensions*/
+			if (ssl_prepare_clienthello_tlsext(s) <= 0)
+				{
+				SSLerr(SSL_F_SSL23_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
+				return -1;
+				}
 			if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
 				{
 				SSLerr(SSL_F_SSL23_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);

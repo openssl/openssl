@@ -656,7 +656,9 @@ int ssl3_client_hello(SSL *s)
 			}
 #endif
 		*(p++)=0; /* Add the NULL method */
+
 #ifndef OPENSSL_NO_TLSEXT
+		/* TLS extensions*/
 		if (ssl_prepare_clienthello_tlsext(s) <= 0)
 			{
 			SSLerr(SSL_F_SSL3_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
@@ -853,6 +855,7 @@ int ssl3_get_server_hello(SSL *s)
 		s->s3->tmp.new_compression=comp;
 		}
 #endif
+
 #ifndef OPENSSL_NO_TLSEXT
 	/* TLS extensions*/
 	if (s->version > SSL3_VERSION)
@@ -1768,7 +1771,7 @@ int ssl3_get_new_session_ticket(SSL *s)
 	if (ticklen + 6 != n)
 		{
 		al = SSL3_AL_FATAL,SSL_AD_DECODE_ERROR;
-		SSLerr(SSL_F_SSL3_NEW_SESSION_TICKET,SSL_R_LENGTH_MISMATCH);
+		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 		}
 	if (s->session->tlsext_tick)
@@ -1779,7 +1782,7 @@ int ssl3_get_new_session_ticket(SSL *s)
 	s->session->tlsext_tick = OPENSSL_malloc(ticklen);
 	if (!s->session->tlsext_tick)
 		{
-		SSLerr(SSL_F_SSL3_NEW_SESSION_TICKET,ERR_R_MALLOC_FAILURE);
+		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 	memcpy(s->session->tlsext_tick, p, ticklen);

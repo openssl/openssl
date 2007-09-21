@@ -799,7 +799,12 @@ struct ssl_ctx_st
 	unsigned char tlsext_tick_key_name[16];
 	unsigned char tlsext_tick_hmac_key[16];
 	unsigned char tlsext_tick_aes_key[16];
+
+	/* draft-rescorla-tls-opaque-prf-input-00.txt information */
+	int (*tlsext_opaque_prf_input_callback)(SSL *, void *peerinput, size_t len, void *arg);
+	void *tlsext_opaque_prf_input_callback_arg;
 #endif
+
 #ifndef OPENSSL_NO_PSK
 	char *psk_identity_hint;
 	unsigned int (*psk_client_callback)(SSL *ssl, const char *hint, char *identity,
@@ -1086,11 +1091,16 @@ struct ssl_st
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist; /* our list */
 #endif /* OPENSSL_NO_EC */
+
+	/* draft-rescorla-tls-opaque-prf-input-00.txt information to be used for handshakes */
+	void *tlsext_opaque_prf_input;
+	size_t tlsext_opaque_prf_input_len;
+
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 #define session_ctx initial_ctx
 #else
 #define session_ctx ctx
-#endif
+#endif /* OPENSSL_NO_TLSEXT */
 	};
 
 #ifdef __cplusplus
@@ -1304,6 +1314,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_TLSEXT_DEBUG_ARG		57
 #define SSL_CTRL_GET_TLSEXT_TICKET_KEYS		58
 #define SSL_CTRL_SET_TLSEXT_TICKET_KEYS		59
+#define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT	60
+#define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB	61
+#define SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG 62
 #endif
 
 #define SSL_session_reused(ssl) \
@@ -2009,6 +2022,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_NULL_SSL_METHOD_PASSED			 196
 #define SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED		 197
 #define SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE		 297
+#define SSL_R_OPAQUE_PRF_INPUT_TOO_LONG			 327
 #define SSL_R_PACKET_LENGTH_TOO_LONG			 198
 #define SSL_R_PARSE_TLSEXT				 227
 #define SSL_R_PATH_TOO_LONG				 270

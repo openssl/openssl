@@ -330,24 +330,30 @@
 #define SSL_SSLV3		0x00000002L
 #define SSL_TLSV1		SSL_SSLV3	/* for now */
 
-/* Bits for algorithm2 (handshake digests) */
+
+/* Bits for algorithm2 (handshake digests and other extra flags) */
 
 #define SSL_HANDSHAKE_MAC_MD5 0x10
 #define SSL_HANDSHAKE_MAC_SHA 0x20
 #define SSL_HANDSHAKE_MAC_GOST94 0x40
 #define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
 
-
 /* When adding new digest in the ssl_ciph.c and increment SSM_MD_NUM_IDX
  * make sure to update this constant too */
 #define SSL_MAX_DIGEST 4
-
 
 #define TLS1_PRF_DGST_SHIFT 8
 #define TLS1_PRF_MD5 (SSL_HANDSHAKE_MAC_MD5 << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF_SHA1 (SSL_HANDSHAKE_MAC_SHA << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF_GOST94 (SSL_HANDSHAKE_MAC_GOST94 << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF (TLS1_PRF_MD5 | TLS1_PRF_SHA1)
+
+/* Stream MAC for GOST ciphersuites from cryptopro draft
+ * (currently this also goes into algorithm2) */
+#define TLS1_STREAM_MAC 0x04
+
+
+
 /*
  * Export and cipher strength information. For each cipher we have to decide
  * whether it is exportable or not. This information is likely to change

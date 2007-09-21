@@ -183,16 +183,23 @@ extern "C" {
 #define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 114
 #define TLS1_AD_UNKNOWN_PSK_IDENTITY	115	/* fatal */
 
-/* ExtensionType values from RFC 3546 */
+/* ExtensionType values from RFC3546 / RFC4366 */
 #define TLSEXT_TYPE_server_name			0
 #define TLSEXT_TYPE_max_fragment_length		1
 #define TLSEXT_TYPE_client_certificate_url	2
 #define TLSEXT_TYPE_trusted_ca_keys		3
 #define TLSEXT_TYPE_truncated_hmac		4
 #define TLSEXT_TYPE_status_request		5
+/* ExtensionType values from RFC4492 */
 #define TLSEXT_TYPE_elliptic_curves		10
 #define TLSEXT_TYPE_ec_point_formats		11
 #define TLSEXT_TYPE_session_ticket		35
+/* ExtensionType value from draft-rescorla-tls-opaque-prf-input-00.txt */
+#if 0 /* will have to be provided externally for now ,
+       * i.e. build with -DTLSEXT_TYPE_opaque_prf_input=38183
+       * using whatever extension number you'd like to try */
+# define TLSEXT_TYPE_opaque_prf_input		?? */
+#endif
 
 /* NameType value from RFC 3546 */
 #define TLSEXT_NAMETYPE_host_name 0
@@ -235,6 +242,14 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
 	SSL_CTX_ctrl((ctx),SSL_CTRL_GET_TLXEXT_TICKET_KEYS,(keylen),(keys))
 #define SSL_CTX_set_tlsext_ticket_keys(ctx, keys, keylen) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_SET_TLXEXT_TICKET_KEYS,(keylen),(keys))
+
+#define SSL_set_tlsext_opaque_prf_input(s, src, len) \
+SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT, len, src)
+#define SSL_CTX_set_tlsext_opaque_prf_input_callback(ctx, cb) \
+SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB, (void (*)(void))cb)
+#define SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(ctx, arg) \
+SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG, 0, arg)
+
 #endif
 
 /* PSK ciphersuites from 4279 */
@@ -415,10 +430,6 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
 #define TLS1_TXT_DHE_DSS_WITH_SEED_SHA                  "DHE-DSS-SEED-SHA"
 #define TLS1_TXT_DHE_RSA_WITH_SEED_SHA                  "DHE-RSA-SEED-SHA"
 #define TLS1_TXT_ADH_WITH_SEED_SHA                      "ADH-SEED-SHA"
-
-/* Flags for SSL_CIPHER.algorithm2 field */
-/* Stream MAC for GOST ciphersuites from cryptopro draft */
-#define TLS1_STREAM_MAC 0x04
 
 
 #define TLS_CT_RSA_SIGN			1

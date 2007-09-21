@@ -4,6 +4,64 @@
 
  Changes between 0.9.8f and 0.9.9  [xx XXX xxxx]
 
+  *) Implement Opaque PRF Input TLS extension as specified in
+     draft-rescorla-tls-opaque-prf-input-00.txt.  Since this is not an
+     official specification yet and no extension type assignment by
+     IANA exists, this extension (for now) will have to be explicitly
+     enabled when building OpenSSL by providing the extension number
+     to use.  For example, specify an option
+
+         -DTLSEXT_TYPE_opaque_prf_input=0x9527
+
+     to the "config" or "Configure" script to enable the extension,
+     assuming extension number 0x9527 (which is a completely arbitrary
+     and unofficial assignment based on the MD5 hash of the Internet
+     Draft).  Note that by doing so, you potentially lose
+     interoperability with other TLS implementations since these might
+     be using the same extension number for other purposes.
+
+     SSL_set_tlsext_opaque_prf_input(ssl, src, len) is used to set the
+     opaque PRF input value to use in the handshake.  This will create
+     an interal copy of the length-'len' string at 'src', and will
+     return non-zero for success.
+
+     To get more control and flexibility, provide a callback function
+     by using
+
+          SSL_CTX_set_tlsext_opaque_prf_input_callback(ctx, cb)
+          SSL_CTX_set_tlsext_opaque_prf_input_callback_arg(ctx, arg)
+
+     where
+
+          int (*cb)(SSL *, void *peerinput, size_t len, void *arg);
+          void *arg;
+
+     Callback function 'cb' will be called in handshakes, and is
+     expected to use SSL_set_tlsext_opaque_prf_input() as appropriate.
+     Argument 'arg' is for application purposes (the value as given to
+     SSL_CTX_set_tlsext_opaque_prf_input_callback_arg() will directly
+     be provided to the callback function).  The callback function
+     has to return non-zero to report success: usually 1 to use opaque
+     PRF input just if possible, or 2 to enforce use of the opaque PRF
+     input.  In the latter case, the library will abort the handshake
+     if opaque PRF input is not successfully negotiated.
+
+     Arguments 'peerinput' and 'len' given to the callback function
+     will always be NULL and 0 in the case of a client.  A server will
+     see the client's opaque PRF input through these variables if
+     available (NULL and 0 otherwise).  Note that if the server
+     provides an opaque PRF input, the length must be the same as the
+     length of the client's opaque PRF input.
+
+     Note that the callback function will only be called when creating
+     a new session (session resumption can resume whatever was
+     previously negotiated), and will not be called in SSL 2.0
+     handshakes; thus, SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv2) or
+     SSL_set_options(ssl, SSL_OP_NO_SSLv2) is especially recommended
+     for applications that need to enforce opaque PRF input.
+
+     [Bodo Moeller]
+
   *) Update ssl code to support digests other than SHA1+MD5 for handshake
      MAC. 
 
