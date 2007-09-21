@@ -1931,7 +1931,6 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
 			return 0;
 			}
-		s->options |= SSL_OP_NO_SSLv2; /* can't use extension w/ SSL 2.0 format */
  		break;
 	case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
 		s->tlsext_debug_arg=parg;

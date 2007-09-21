@@ -207,7 +207,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 	if (!s->hit && s->servername_done == 1 && s->session->tlsext_hostname != NULL)
 		{ 
-		if (limit - p - 4 < 0) return NULL; 
+		if (limit - ret - 4 < 0) return NULL; 
 
 		s2n(TLSEXT_TYPE_server_name,ret);
 		s2n(0,ret);
@@ -216,7 +216,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	if (s->tlsext_ticket_expected
 		&& !(SSL_get_options(s) & SSL_OP_NO_TICKET)) 
 		{ 
-		if (limit - p - 4 < 0) return NULL; 
+		if (limit - ret - 4 < 0) return NULL; 
 		s2n(TLSEXT_TYPE_session_ticket,ret);
 		s2n(0,ret);
 		}
