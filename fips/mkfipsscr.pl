@@ -336,7 +336,17 @@ $tvdir = "." unless defined $tvdir;
 
 if ($win32)
 	{
-	$tprefix = ".\\" unless defined $tprefix;
+	if (!defined $tprefix)
+		{
+		if ($onedir)
+			{
+			$tprefix = ".\\";
+			}
+		else
+			{
+			$tprefix = "..\\out32dll\\";
+			}
+		}
 	$outfile = "fipstests.bat" unless defined $outfile;
 	open(OUT, ">$outfile");
 
@@ -416,7 +426,7 @@ sub recurse_test
 				$fips_found{$1}++;
 				test_line($win32, $_, $tprefix, $fips_tests{$1});
 				}
-			else
+			elsif (! /SHAmix\.req$/)
 				{
 				print STDERR "WARNING: unrecognized filename $_\n";
 				}
