@@ -861,7 +861,7 @@ bad:
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */
 #if 0
 #ifdef TLSEXT_TYPE_opaque_prf_input
-	SSL_set_tlsext_opaque_prf_input(con, "Test client", 1);
+	SSL_set_tlsext_opaque_prf_input(con, "Test client", 11);
 #endif
 #endif
 
