@@ -25,6 +25,9 @@ unpredictable. They can be used for non-cryptographic purposes and for
 certain purposes in cryptographic protocols, but usually not for key
 generation etc.
 
+The contents of B<buf> is mixed into the entropy pool before retrieving
+the new pseudo-random bytes unless disabled at compile time (see FAQ).
+
 =head1 RETURN VALUES
 
 RAND_bytes() returns 1 on success, 0 otherwise. The error code can be

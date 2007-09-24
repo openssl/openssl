@@ -67,6 +67,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why doesn't my server application receive a client certificate?
 * Why does compilation fail due to an undefined symbol NID_uniqueIdentifier?
 * I think I've detected a memory leak, is this a bug?
+* Why does Valgrind complain about the use of uninitialized data?
 * Why doesn't a memory BIO work when a file does?
 
 ===============================================================================
@@ -915,6 +916,16 @@ thread-safe):
 "Brutal" (thread-unsafe) Application-global cleanup functions:
 
   ERR_free_strings(), EVP_cleanup() and CRYPTO_cleanup_all_ex_data().
+
+
+* Why does Valgrind complain about the use of uninitialized data?
+
+When OpenSSL's PRNG routines are called to generate random numbers the supplied
+buffer contents are mixed into the entropy pool: so it technically does not
+matter whether the buffer is initialized at this point or not.  Valgrind (and
+other test tools) will complain about this. When using Valgrind, make sure the
+OpenSSL library has been compiled with the PURIFY macro defined (-DPURIFY)
+to get rid of these warnings.
 
 
 * Why doesn't a memory BIO work when a file does?
