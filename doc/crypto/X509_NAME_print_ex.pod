@@ -86,10 +86,10 @@ is equivalent to:
  B<ASN1_STRFLGS_RFC2253 | XN_FLAG_SEP_COMMA_PLUS | XN_FLAG_DN_REV | XN_FLAG_FN_SN | XN_FLAG_DUMP_UNKNOWN_FIELDS>
 
 
-B<XN_FLAG_ONELINE> is a more readable one line format it is the same as:
+B<XN_FLAG_ONELINE> is a more readable one line format which is the same as:
  B<ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE | XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_SPC_EQ | XN_FLAG_FN_SN>
 
-B<XN_FLAG_MULTILINE> is a multiline format is is the same as:
+B<XN_FLAG_MULTILINE> is a multiline format which is the same as:
  B<ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_ESC_MSB | XN_FLAG_SEP_MULTILINE | XN_FLAG_SPC_EQ | XN_FLAG_FN_LN | XN_FLAG_FN_ALIGN>
 
 B<XN_FLAG_COMPAT> uses a format identical to X509_NAME_print(): in fact it calls X509_NAME_print() internally.
