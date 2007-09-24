@@ -902,7 +902,7 @@ buffer contents are mixed into the entropy pool: so it technically does not
 matter whether the buffer is initialized at this point or not.  Valgrind (and
 other test tools) will complain about this. When using Valgrind, make sure the
 OpenSSL library has been compiled with the PURIFY macro defined (-DPURIFY)
-to get rid of these warnings
+to get rid of these warnings.
 
 
 ===============================================================================
