@@ -12,12 +12,15 @@
 # This code is ~4.5 (four and a half) times faster than code generated
 # by gcc 3.4 and it spends ~72 clock cycles per byte. 
 
-# This module currently has dependency on byte order, namely *dword*
-# order in ctx->h[0-9]. I have to think of a way to reliably detect
-# "endianness" [and flip below two constants] or arrange given dword
-# order in C.
-$lo=0;	# this denotes little-endian platform.
-$hi=4;
+# Byte order [in]dependence. =========================================
+#
+# Caller is expected to maintain specific *dword* order in h[0-7],
+# namely with most significant dword at *lower* address, which is
+# reflected in below two parameters. *Byte* order within these dwords
+# in turn is whatever *native* byte order on current platform.
+$hi=0;
+$lo=4;
+# ====================================================================
 
 $ctx="r0";
 $inp="r1";
