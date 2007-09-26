@@ -120,7 +120,6 @@ int MAIN(int argc, char **argv)
 	long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
 	char *CAfile = NULL, *CApath = NULL;
 	X509_STORE *store = NULL;
-	SSL_CTX *ctx = NULL;
 	STACK_OF(X509) *sign_other = NULL, *verify_other = NULL, *rother = NULL;
 	char *sign_certfile = NULL, *verify_certfile = NULL, *rcertfile = NULL;
 	unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
@@ -723,48 +722,14 @@ int MAIN(int argc, char **argv)
 	else if (host)
 		{
 #ifndef OPENSSL_NO_SOCK
-		cbio = BIO_new_connect(host);
+		resp = process_responder(bio_err, req, host, path,
+						port, use_ssl, req_timeout);
+		if (!resp)
+			goto end;
 #else
 		BIO_printf(bio_err, "Error creating connect BIO - sockets not supported.\n");
 		goto end;
 #endif
-		if (!cbio)
-			{
-			BIO_printf(bio_err, "Error creating connect BIO\n");
-			goto end;
-			}
-		if (port) BIO_set_conn_port(cbio, port);
-		if (use_ssl == 1)
-			{
-			BIO *sbio;
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
-			ctx = SSL_CTX_new(SSLv23_client_method());
-#elif !defined(OPENSSL_NO_SSL3)
-			ctx = SSL_CTX_new(SSLv3_client_method());
-#elif !defined(OPENSSL_NO_SSL2)
-			ctx = SSL_CTX_new(SSLv2_client_method());
-#else
-			BIO_printf(bio_err, "SSL is disabled\n");
-			goto end;
-#endif
-			if (ctx == NULL)
-				{
-				BIO_printf(bio_err, "Error creating SSL context.\n");
-				goto end;
-				}
-			SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
-			sbio = BIO_new_ssl(ctx, 1);
-			cbio = BIO_push(sbio, cbio);
-			}
-
-		resp = query_responder(bio_err, cbio, path, req, req_timeout);
-		BIO_free_all(cbio);
-		cbio = NULL;
-		if (!resp)
-			{
-			BIO_printf(bio_err, "Error querying OCSP responsder\n");
-			goto end;
-			}
 		}
 	else if (respin)
 		{
@@ -913,7 +878,6 @@ end:
 		OPENSSL_free(host);
 		OPENSSL_free(port);
 		OPENSSL_free(path);
-		SSL_CTX_free(ctx);
 		}
 
 	OPENSSL_EXIT(ret);
@@ -1332,6 +1296,53 @@ static OCSP_RESPONSE *query_responder(BIO *err, BIO *cbio, char *path,
 		OCSP_REQ_CTX_free(ctx);
 
 	return rsp;
+	}
+
+OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
+			char *host, char *path, char *port, int use_ssl,
+			int req_timeout)
+	{
+	BIO *cbio = NULL;
+	SSL_CTX *ctx = NULL;
+	OCSP_RESPONSE *resp = NULL;
+	cbio = BIO_new_connect(host);
+	if (!cbio)
+		{
+		BIO_printf(err, "Error creating connect BIO\n");
+		goto end;
+		}
+	if (port) BIO_set_conn_port(cbio, port);
+	if (use_ssl == 1)
+		{
+		BIO *sbio;
+#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
+		ctx = SSL_CTX_new(SSLv23_client_method());
+#elif !defined(OPENSSL_NO_SSL3)
+		ctx = SSL_CTX_new(SSLv3_client_method());
+#elif !defined(OPENSSL_NO_SSL2)
+		ctx = SSL_CTX_new(SSLv2_client_method());
+#else
+		BIO_printf(err, "SSL is disabled\n");
+			goto end;
+#endif
+		if (ctx == NULL)
+			{
+			BIO_printf(err, "Error creating SSL context.\n");
+			goto end;
+			}
+		SSL_CTX_set_mode(ctx, SSL_MODE_AUTO_RETRY);
+		sbio = BIO_new_ssl(ctx, 1);
+		cbio = BIO_push(sbio, cbio);
+		}
+	resp = query_responder(err, cbio, path, req, req_timeout);
+	if (!resp)
+		BIO_printf(bio_err, "Error querying OCSP responsder\n");
+	end:
+	if (ctx)
+		SSL_CTX_free(ctx);
+	if (cbio)
+		BIO_free_all(cbio);
+	return resp;
 	}
 
 #endif

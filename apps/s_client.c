@@ -161,6 +161,7 @@ typedef unsigned int u_int;
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
+#include <openssl/ocsp.h>
 #include "s_apps.h"
 #include "timeouts.h"
 
@@ -196,12 +197,14 @@ static int c_Pause=0;
 static int c_debug=0;
 #ifndef OPENSSL_NO_TLSEXT
 static int c_tlsextdebug=0;
+static int c_status_req=0;
 #endif
 static int c_msg=0;
 static int c_showcerts=0;
 
 static void sc_usage(void);
 static void print_stuff(BIO *berr,SSL *con,int full);
+static int ocsp_resp_cb(SSL *s, void *arg);
 static BIO *bio_c_out=NULL;
 static int c_quiet=0;
 static int c_ign_eof=0;
@@ -329,6 +332,7 @@ static void sc_usage(void)
 #ifndef OPENSSL_NO_TLSEXT
 	BIO_printf(bio_err," -servername host  - Set TLS extension servername in ClientHello\n");
 	BIO_printf(bio_err," -tlsextdebug      - hex dump of all TLS extensions received\n");
+	BIO_printf(bio_err," -status           - request certificate status from server\n");
 	BIO_printf(bio_err," -no_ticket        - disable use of RFC4507bis session tickets\n");
 #endif
 	}
@@ -528,6 +532,8 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_TLSEXT
 		else if	(strcmp(*argv,"-tlsextdebug") == 0)
 			c_tlsextdebug=1;
+		else if	(strcmp(*argv,"-status") == 0)
+			c_status_req=1;
 #endif
 #ifdef WATT32
 		else if (strcmp(*argv,"-wdebug") == 0)
@@ -953,6 +959,23 @@ re_start:
 		{
 		SSL_set_tlsext_debug_callback(con, tlsext_cb);
 		SSL_set_tlsext_debug_arg(con, bio_c_out);
+		}
+	if (c_status_req)
+		{
+		SSL_set_tlsext_status_type(con, TLSEXT_STATUSTYPE_ocsp);
+		SSL_CTX_set_tlsext_status_cb(ctx, ocsp_resp_cb);
+		SSL_CTX_set_tlsext_status_arg(ctx, bio_c_out);
+#if 0
+{
+STACK_OF(OCSP_RESPID) *ids = sk_OCSP_RESPID_new_null();
+OCSP_RESPID *id = OCSP_RESPID_new();
+id->value.byKey = ASN1_OCTET_STRING_new();
+id->type = V_OCSP_RESPID_KEY;
+ASN1_STRING_set(id->value.byKey, "Hello World", -1);
+sk_OCSP_RESPID_push(ids, id);
+SSL_set_tlsext_status_ids(con, ids);
+}
+#endif
 		}
 #endif
 
@@ -1592,3 +1615,28 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	(void)BIO_flush(bio);
 	}
 
+static int ocsp_resp_cb(SSL *s, void *arg)
+	{
+	const unsigned char *p;
+	int len;
+	OCSP_RESPONSE *rsp;
+	len = SSL_get_tlsext_status_ocsp_resp(s, &p);
+	BIO_puts(arg, "OCSP response: ");
+	if (!p)
+		{
+		BIO_puts(arg, "no response sent\n");
+		return 1;
+		}
+	rsp = d2i_OCSP_RESPONSE(NULL, &p, len);
+	if (!rsp)
+		{
+		BIO_puts(arg, "response parse error\n");
+		BIO_dump_indent(arg, (char *)p, len, 4);
+		return 0;
+		}
+	BIO_puts(arg, "\n======================================\n");
+	OCSP_RESPONSE_print(arg, rsp, 0);
+	BIO_puts(arg, "======================================\n");
+	OCSP_RESPONSE_free(rsp);
+	return 1;
+	}

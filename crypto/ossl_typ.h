@@ -188,5 +188,7 @@ typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, CRYPTO_EX_DATA *from, void *from_d
 					int idx, long argl, void *argp);
 
 typedef struct ocsp_req_ctx_st OCSP_REQ_CTX;
+typedef struct ocsp_response_st OCSP_RESPONSE;
+typedef struct ocsp_responder_id_st OCSP_RESPID;
 
 #endif /* def HEADER_OPENSSL_TYPES_H */

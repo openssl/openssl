@@ -67,10 +67,6 @@
 #include <openssl/buffer.h>
 #include <openssl/pem.h>
 
-ASN1_ITEM_TEMPLATE(X509_EXTENSIONS) = 
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, Extension, X509_EXTENSION)
-ASN1_ITEM_TEMPLATE_END(X509_EXTENSIONS)
-
 X509_REQ *X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 	{
 	X509_REQ *ret;

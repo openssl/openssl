@@ -307,10 +307,23 @@ int ssl3_connect(SSL *s)
 				{
 				ret=ssl3_get_server_certificate(s);
 				if (ret <= 0) goto end;
+#ifndef OPENSSL_NO_TLSEXT
+				if (s->tlsext_status_expected)
+					s->state=SSL3_ST_CR_CERT_STATUS_A;
+				else
+					s->state=SSL3_ST_CR_KEY_EXCH_A;
 				}
 			else
+				{
+				skip = 1;
+				s->state=SSL3_ST_CR_KEY_EXCH_A;
+				}
+#else
+			else
 				skip=1;
+
 			s->state=SSL3_ST_CR_KEY_EXCH_A;
+#endif
 			s->init_num=0;
 			break;
 
@@ -471,6 +484,14 @@ int ssl3_connect(SSL *s)
 			ret=ssl3_get_new_session_ticket(s);
 			if (ret <= 0) goto end;
 			s->state=SSL3_ST_CR_FINISHED_A;
+			s->init_num=0;
+		break;
+
+		case SSL3_ST_CR_CERT_STATUS_A:
+		case SSL3_ST_CR_CERT_STATUS_B:
+			ret=ssl3_get_cert_status(s);
+			if (ret <= 0) goto end;
+			s->state=SSL3_ST_CR_KEY_EXCH_A;
 			s->init_num=0;
 		break;
 #endif
@@ -1793,6 +1814,75 @@ int ssl3_get_new_session_ticket(SSL *s)
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
 err:
+	return(-1);
+	}
+
+int ssl3_get_cert_status(SSL *s)
+	{
+	int ok, al;
+	unsigned long resplen;
+	long n;
+	const unsigned char *p;
+
+	n=s->method->ssl_get_message(s,
+		SSL3_ST_CR_CERT_STATUS_A,
+		SSL3_ST_CR_CERT_STATUS_B,
+		SSL3_MT_CERTIFICATE_STATUS,
+		16384,
+		&ok);
+
+	if (!ok) return((int)n);
+	if (n < 4)
+		{
+		/* need at least status type + length */
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_SSL3_GET_CERT_STATUS,SSL_R_LENGTH_MISMATCH);
+		goto f_err;
+		}
+	p = (unsigned char *)s->init_msg;
+	if (*p++ != TLSEXT_STATUSTYPE_ocsp)
+		{
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_SSL3_GET_CERT_STATUS,SSL_R_UNSUPPORTED_STATUS_TYPE);
+		goto f_err;
+		}
+	n2l3(p, resplen);
+	if (resplen + 4 != n)
+		{
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_SSL3_GET_CERT_STATUS,SSL_R_LENGTH_MISMATCH);
+		goto f_err;
+		}
+	if (s->tlsext_ocsp_resp)
+		OPENSSL_free(s->tlsext_ocsp_resp);
+	s->tlsext_ocsp_resp = BUF_memdup(p, resplen);
+	if (!s->tlsext_ocsp_resp)
+		{
+		al = SSL_AD_INTERNAL_ERROR;
+		SSLerr(SSL_F_SSL3_GET_CERT_STATUS,ERR_R_MALLOC_FAILURE);
+		goto f_err;
+		}
+	s->tlsext_ocsp_resplen = resplen;
+	if (s->ctx->tlsext_status_cb)
+		{
+		int ret;
+		ret = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+		if (ret == 0)
+			{
+			al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
+			SSLerr(SSL_F_SSL3_GET_CERT_STATUS,SSL_R_INVALID_STATUS_RESPONSE);
+			goto f_err;
+			}
+		if (ret < 0)
+			{
+			al = SSL_AD_INTERNAL_ERROR;
+			SSLerr(SSL_F_SSL3_GET_CERT_STATUS,ERR_R_MALLOC_FAILURE);
+			goto f_err;
+			}
+		}
+	return 1;
+f_err:
+	ssl3_send_alert(s,SSL3_AL_FATAL,al);
 	return(-1);
 	}
 #endif

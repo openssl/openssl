@@ -179,6 +179,7 @@ typedef unsigned int u_int;
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
+#include <openssl/ocsp.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
@@ -283,6 +284,8 @@ static BIO *bio_s_out=NULL;
 static int s_debug=0;
 #ifndef OPENSSL_NO_TLSEXT
 static int s_tlsextdebug=0;
+static int s_tlsextstatus=0;
+static int cert_status_cb(SSL *s, void *arg);
 #endif
 static int s_msg=0;
 static int s_quiet=0;
@@ -664,6 +667,152 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 		}
 	return SSL_TLSEXT_ERR_OK;
 }
+
+/* Structure passed to cert status callback */
+
+typedef struct tlsextstatusctx_st {
+   /* Default responder to use */
+   char *host, *path, *port;
+   int use_ssl;
+   int timeout;
+   BIO *err;
+   int verbose;
+} tlsextstatusctx;
+
+static tlsextstatusctx tlscstatp = {NULL, NULL, NULL, 0, -1, NULL, 0};
+
+/* Certificate Status callback. This is called when a client includes a
+ * certificate status request extension.
+ *
+ * This is a simplified version. It examines certificates each time and
+ * makes one OCSP responder query for each request.
+ *
+ * A full version would store details such as the OCSP certificate IDs and
+ * minimise the number of OCSP responses by caching them until they were
+ * considered "expired".
+ */
+
+static int cert_status_cb(SSL *s, void *arg)
+	{
+	tlsextstatusctx *srctx = arg;
+	BIO *err = srctx->err;
+	char *host, *port, *path;
+	int use_ssl;
+	unsigned char *rspder = NULL;
+	int rspderlen;
+	STACK *aia = NULL;
+	X509 *x = NULL;
+	X509_STORE_CTX inctx;
+	X509_OBJECT obj;
+	OCSP_REQUEST *req = NULL;
+	OCSP_RESPONSE *resp = NULL;
+	OCSP_CERTID *id = NULL;
+	STACK_OF(X509_EXTENSION) *exts;
+	int ret = SSL_TLSEXT_ERR_NOACK;
+	int i;
+#if 0
+STACK_OF(OCSP_RESPID) *ids;
+SSL_get_tlsext_status_ids(s, &ids);
+BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
+#endif
+	if (srctx->verbose)
+		BIO_puts(err, "cert_status: callback called\n");
+	/* Build up OCSP query from server certificate */
+	x = SSL_get_certificate(s);
+	aia = X509_get1_ocsp(x);
+	if (aia)
+		{
+		if (!OCSP_parse_url(sk_value(aia, 0),
+			&host, &port, &path, &use_ssl))
+			{
+			BIO_puts(err, "cert_status: can't parse AIA URL\n");
+			goto err;
+			}
+		if (srctx->verbose)
+			BIO_printf(err, "cert_status: AIA URL: %s\n",
+					sk_value(aia, 0));
+		}
+	else
+		{
+		if (!srctx->host)
+			{
+			BIO_puts(srctx->err, "cert_status: no AIA and no default responder URL\n");
+			goto done;
+			}
+		host = srctx->host;
+		path = srctx->path;
+		port = srctx->port;
+		use_ssl = srctx->use_ssl;
+		}
+		
+	if (!X509_STORE_CTX_init(&inctx,
+				SSL_CTX_get_cert_store(SSL_get_SSL_CTX(s)),
+				NULL, NULL))
+		goto err;
+	if (X509_STORE_get_by_subject(&inctx,X509_LU_X509,
+				X509_get_issuer_name(x),&obj) <= 0)
+		{
+		BIO_puts(err, "cert_status: Can't retrieve issuer certificate.\n");
+		X509_STORE_CTX_cleanup(&inctx);
+		goto done;
+		}
+	req = OCSP_REQUEST_new();
+	if (!req)
+		goto err;
+	id = OCSP_cert_to_id(NULL, x, obj.data.x509);
+	X509_free(obj.data.x509);
+	X509_STORE_CTX_cleanup(&inctx);
+	if (!id)
+		goto err;
+	if (!OCSP_request_add0_id(req, id))
+		goto err;
+	id = NULL;
+	/* Add any extensions to the request */
+	SSL_get_tlsext_status_exts(s, &exts);
+	for (i = 0; i < sk_X509_EXTENSION_num(exts); i++)
+		{
+		X509_EXTENSION *ext = sk_X509_EXTENSION_value(exts, i);
+		if (!OCSP_REQUEST_add_ext(req, ext, -1))
+			goto err;
+		}
+	resp = process_responder(err, req, host, path, port, use_ssl,
+					srctx->timeout);
+	if (!resp)
+		{
+		BIO_puts(err, "cert_status: error querying responder\n");
+		goto done;
+		}
+	rspderlen = i2d_OCSP_RESPONSE(resp, &rspder);
+	if (rspderlen <= 0)
+		goto err;
+	SSL_set_tlsext_status_ocsp_resp(s, rspder, rspderlen);
+	if (srctx->verbose)
+		{
+		BIO_puts(err, "cert_status: ocsp response sent:\n");
+		OCSP_RESPONSE_print(err, resp, 2);
+		}
+	ret = SSL_TLSEXT_ERR_OK;
+	done:
+	if (ret != SSL_TLSEXT_ERR_OK)
+		ERR_print_errors(err);
+	if (aia)
+		{
+		OPENSSL_free(host);
+		OPENSSL_free(path);
+		OPENSSL_free(port);
+		X509_email_free(aia);
+		}
+	if (id)
+		OCSP_CERTID_free(id);
+	if (req)
+		OCSP_REQUEST_free(req);
+	if (resp)
+		OCSP_RESPONSE_free(resp);
+	return ret;
+	err:
+	ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+	goto done;
+	}
 #endif
 
 int MAIN(int, char **);
@@ -877,6 +1026,33 @@ int MAIN(int argc, char *argv[])
 #ifndef OPENSSL_NO_TLSEXT
 		else if	(strcmp(*argv,"-tlsextdebug") == 0)
 			s_tlsextdebug=1;
+		else if	(strcmp(*argv,"-status") == 0)
+			s_tlsextstatus=1;
+		else if	(strcmp(*argv,"-status_verbose") == 0)
+			{
+			s_tlsextstatus=1;
+			tlscstatp.verbose = 1;
+			}
+		else if (!strcmp(*argv, "-status_timeout"))
+			{
+			s_tlsextstatus=1;
+                        if (--argc < 1) goto bad;
+			tlscstatp.timeout = atoi(*(++argv));
+			}
+		else if (!strcmp(*argv, "-status_url"))
+			{
+			s_tlsextstatus=1;
+                        if (--argc < 1) goto bad;
+			if (!OCSP_parse_url(*(++argv),
+					&tlscstatp.host,
+					&tlscstatp.port,
+					&tlscstatp.path,
+					&tlscstatp.use_ssl))
+				{
+				BIO_printf(bio_err, "Error parsing URL\n");
+				goto bad;
+				}
+			}
 #endif
 		else if	(strcmp(*argv,"-msg") == 0)
 			{ s_msg=1; }
@@ -1559,6 +1735,12 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		{
 		SSL_set_tlsext_debug_callback(con, tlsext_cb);
 		SSL_set_tlsext_debug_arg(con, bio_s_out);
+		}
+	if (s_tlsextstatus);
+		{
+		SSL_CTX_set_tlsext_status_cb(ctx, cert_status_cb);
+		tlscstatp.err = bio_err;
+		SSL_CTX_set_tlsext_status_arg(ctx, &tlscstatp);
 		}
 #endif
 #ifndef OPENSSL_NO_KRB5

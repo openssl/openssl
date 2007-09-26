@@ -899,7 +899,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	{
 	unsigned char buff[SSL_MAX_MASTER_KEY_LENGTH];
 	const void *co = NULL, *so = NULL;
-	int col = 0, sol = NULL;
+	int col = 0, sol = 0;
 
 #ifdef KSSL_DEBUG
 	printf ("tls1_generate_master_secret(%p,%p, %p, %d)\n", s,out, p,len);

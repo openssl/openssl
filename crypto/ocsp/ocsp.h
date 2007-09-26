@@ -187,11 +187,11 @@ typedef struct ocsp_resp_bytes_st
  *      responseStatus         OCSPResponseStatus,
  *      responseBytes          [0] EXPLICIT ResponseBytes OPTIONAL }
  */
-typedef struct ocsp_response_st
+struct ocsp_response_st
 	{
 	ASN1_ENUMERATED *responseStatus;
 	OCSP_RESPBYTES  *responseBytes;
-	} OCSP_RESPONSE;
+	};
 
 /*   ResponderID ::= CHOICE {
  *      byName   [1] Name,
@@ -199,14 +199,18 @@ typedef struct ocsp_response_st
  */
 #define V_OCSP_RESPID_NAME 0
 #define V_OCSP_RESPID_KEY  1
-typedef struct ocsp_responder_id_st
+struct ocsp_responder_id_st
 	{
 	int type;
 	union   {
 		X509_NAME* byName;
         	ASN1_OCTET_STRING *byKey;
 		} value;
-	} OCSP_RESPID;
+	};
+
+DECLARE_STACK_OF(OCSP_RESPID)
+DECLARE_ASN1_FUNCTIONS(OCSP_RESPID)
+
 /*   KeyHash ::= OCTET STRING --SHA-1 hash of responder's public key
  *                            --(excluding the tag and length fields)
  */
