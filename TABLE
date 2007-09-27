@@ -2958,6 +2958,35 @@ $shared_extension =
 $ranlib       = 
 $arflags      = 
 
+*** linux-armv4
+$cc           = gcc
+$cflags       = -march=armv4 -DTERMIO -O3 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR
+$cpuid_obj    = 
+$bn_obj       = bn_asm.o armv4-mont.o
+$des_obj      = 
+$aes_obj      = aes_cbc.o aes-armv4.o
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = sha1-armv4-large.o sha256-armv4.o sha512-armv4.o
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
 *** linux-elf
 $cc           = gcc
 $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
