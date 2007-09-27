@@ -880,6 +880,12 @@ Lppc_AES_decrypt_compact:
 	addi	$key,$key,16
 	ori	$mask80,$mask80,0x8080
 	ori	$mask1b,$mask1b,0x1b1b
+___
+$code.=<<___ if ($SIZE_T==8);
+	insrdi	$mask80,$mask80,32,0
+	insrdi	$mask1b,$mask1b,32,0
+___
+$code.=<<___;
 	mtctr	$acc00
 .align	4
 Ldec_compact_loop:
@@ -942,7 +948,70 @@ Ldec_compact_loop:
 
 	addi	$key,$key,16
 	bdz	Ldec_compact_done
+___
+$code.=<<___ if ($SIZE_T==8);
+	# vectorized permutation improves decrypt performance by 10%
+	insrdi	$s0,$s1,32,0
+	insrdi	$s2,$s3,32,0
 
+	and	$acc00,$s0,$mask80	# r1=r0&0x80808080
+	and	$acc02,$s2,$mask80
+	srdi	$acc04,$acc00,7		# r1>>7
+	srdi	$acc06,$acc02,7
+	andc	$acc08,$s0,$mask80	# r0&0x7f7f7f7f
+	andc	$acc10,$s2,$mask80
+	sub	$acc00,$acc00,$acc04	# r1-(r1>>7)
+	sub	$acc02,$acc02,$acc06
+	add	$acc08,$acc08,$acc08	# (r0&0x7f7f7f7f)<<1
+	add	$acc10,$acc10,$acc10
+	and	$acc00,$acc00,$mask1b	# (r1-(r1>>7))&0x1b1b1b1b
+	and	$acc02,$acc02,$mask1b
+	xor	$acc00,$acc00,$acc08	# r2
+	xor	$acc02,$acc02,$acc10
+
+	and	$acc04,$acc00,$mask80	# r1=r2&0x80808080
+	and	$acc06,$acc02,$mask80
+	srdi	$acc08,$acc04,7		# r1>>7
+	srdi	$acc10,$acc06,7
+	andc	$acc12,$acc00,$mask80	# r2&0x7f7f7f7f
+	andc	$acc14,$acc02,$mask80
+	sub	$acc04,$acc04,$acc08	# r1-(r1>>7)
+	sub	$acc06,$acc06,$acc10
+	add	$acc12,$acc12,$acc12	# (r2&0x7f7f7f7f)<<1
+	add	$acc14,$acc14,$acc14
+	and	$acc04,$acc04,$mask1b	# (r1-(r1>>7))&0x1b1b1b1b
+	and	$acc06,$acc06,$mask1b
+	xor	$acc04,$acc04,$acc12	# r4
+	xor	$acc06,$acc06,$acc14
+
+	and	$acc08,$acc04,$mask80	# r1=r4&0x80808080
+	and	$acc10,$acc06,$mask80
+	srdi	$acc12,$acc08,7		# r1>>7
+	srdi	$acc14,$acc10,7
+	sub	$acc08,$acc08,$acc12	# r1-(r1>>7)
+	sub	$acc10,$acc10,$acc14
+	andc	$acc12,$acc04,$mask80	# r4&0x7f7f7f7f
+	andc	$acc14,$acc06,$mask80
+	add	$acc12,$acc12,$acc12	# (r4&0x7f7f7f7f)<<1
+	add	$acc14,$acc14,$acc14
+	and	$acc08,$acc08,$mask1b	# (r1-(r1>>7))&0x1b1b1b1b
+	and	$acc10,$acc10,$mask1b
+	xor	$acc08,$acc08,$acc12	# r8
+	xor	$acc10,$acc10,$acc14
+
+	xor	$acc00,$acc00,$s0	# r2^r0
+	xor	$acc02,$acc02,$s2
+	xor	$acc04,$acc04,$s0	# r4^r0
+	xor	$acc06,$acc06,$s2
+
+	extrdi	$acc01,$acc00,0,32
+	extrdi	$acc03,$acc02,0,32
+	extrdi	$acc05,$acc04,0,32
+	extrdi	$acc07,$acc06,0,32
+	extrdi	$acc09,$acc08,0,32
+	extrdi	$acc11,$acc10,0,32
+___
+$code.=<<___ if ($SIZE_T==4);
 	and	$acc00,$s0,$mask80	# r1=r0&0x80808080
 	and	$acc01,$s1,$mask80
 	and	$acc02,$s2,$mask80
@@ -1038,6 +1107,8 @@ Ldec_compact_loop:
 	xor	$acc05,$acc05,$s1
 	xor	$acc06,$acc06,$s2
 	xor	$acc07,$acc07,$s3
+___
+$code.=<<___;
 	rotrwi	$s0,$s0,8		# = ROTATE(r0,8)
 	rotrwi	$s1,$s1,8
 	rotrwi	$s2,$s2,8
