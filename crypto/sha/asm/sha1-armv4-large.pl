@@ -226,5 +226,6 @@ $code.=<<___;
 .asciz	"SHA1 block transform for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
+$code =~ s/\bbx\s+lr\b/.word\t0xe12fff1e/gm;	# make it possible to compile with -march=armv4
 print $code;
 close STDOUT; # enforce flush

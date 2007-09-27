@@ -1026,4 +1026,5 @@ _armv4_AES_decrypt:
 .asciz	"AES for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
+$code =~ s/\bbx\s+lr\b/.word\t0xe12fff1e/gm;	# make it possible to compile with -march=armv4
 print $code;
