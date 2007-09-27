@@ -13,6 +13,9 @@
 # lute" terms is ~2250 cycles per 64-byte block or ~35 cycles per
 # byte.
 
+$output=shift;
+open STDOUT,">$output";
+
 $ctx="r0";	$t0="r0";
 $inp="r1";
 $len="r2";	$t1="r2";
@@ -173,3 +176,4 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
+close STDOUT; # enforce flush

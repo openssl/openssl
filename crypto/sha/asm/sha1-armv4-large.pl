@@ -38,6 +38,9 @@
 #	the same job in Thumb, therefore the code is never twice as
 #	small and always slower.
 
+$output=shift;
+open STDOUT,">$output";
+
 $ctx="r0";
 $inp="r1";
 $len="r2";
@@ -224,3 +227,4 @@ $code.=<<___;
 ___
 
 print $code;
+close STDOUT; # enforce flush

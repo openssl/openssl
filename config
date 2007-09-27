@@ -611,8 +611,8 @@ case "$GUESSOS" in
 
 	options="$options -DB_ENDIAN -mschedule=$CPUSCHEDULE -march=$CPUARCH"
 	OUT="linux-generic32" ;;
-  arm*b-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
-  arm*l-*-linux2) OUT="linux-generic32"; options="$options -DL_ENDIAN" ;;
+  arm[1-3]*-*-linux2) OUT="linux-generic32" ;;
+  arm*-*-linux2) OUT="linux-armv4" ;;
   sh*b-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
   sh*-*-linux2)  OUT="linux-generic32"; options="$options -DL_ENDIAN" ;;
   m68k*-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;

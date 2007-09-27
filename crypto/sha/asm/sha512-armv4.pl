@@ -22,6 +22,9 @@ $hi=0;
 $lo=4;
 # ====================================================================
 
+$output=shift;
+open STDOUT,">$output";
+
 $ctx="r0";
 $inp="r1";
 $len="r2";
@@ -391,3 +394,4 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
+close STDOUT; # enforce flush
