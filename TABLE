@@ -2960,7 +2960,7 @@ $arflags      =
 
 *** linux-armv4
 $cc           = gcc
-$cflags       = -march=armv4 -DTERMIO -O3 -Wall
+$cflags       = -DTERMIO -O3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 

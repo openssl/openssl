@@ -611,8 +611,10 @@ case "$GUESSOS" in
 
 	options="$options -DB_ENDIAN -mschedule=$CPUSCHEDULE -march=$CPUARCH"
 	OUT="linux-generic32" ;;
-  arm[1-3]*-*-linux2) OUT="linux-generic32" ;;
-  arm*-*-linux2) OUT="linux-armv4" ;;
+  armv[1-3]*-*-linux2) OUT="linux-generic32" ;;
+  # -march=armv4t is expected to generate code binary compatible with
+  # vanilla armv4 but interoperable with armv4t.
+  arm*-*-linux2) OUT="linux-armv4"; options="$options -march=armv4t" ;;
   sh*b-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
   sh*-*-linux2)  OUT="linux-generic32"; options="$options -DL_ENDIAN" ;;
   m68k*-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
