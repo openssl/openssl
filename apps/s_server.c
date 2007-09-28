@@ -1736,7 +1736,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		SSL_set_tlsext_debug_callback(con, tlsext_cb);
 		SSL_set_tlsext_debug_arg(con, bio_s_out);
 		}
-	if (s_tlsextstatus);
+	if (s_tlsextstatus)
 		{
 		SSL_CTX_set_tlsext_status_cb(ctx, cert_status_cb);
 		tlscstatp.err = bio_err;
