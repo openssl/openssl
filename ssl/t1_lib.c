@@ -992,35 +992,6 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			}
 		}
 
-	/* If we've requested certificate status and we wont get one
- 	 * tell the callback
- 	 */
-	if ((s->tlsext_status_type != -1) && !(s->tlsext_status_expected)
-			&& s->ctx->tlsext_status_cb)
-		{
-		int r;
-		/* Set resp to NULL, resplen to -1 so callback knows
- 		 * there is no response.
- 		 */
-		if (s->tlsext_ocsp_resp)
-			{
-			OPENSSL_free(s->tlsext_ocsp_resp);
-			s->tlsext_ocsp_resp = NULL;
-			}
-		s->tlsext_ocsp_resplen = -1;
-		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
-		if (r == 0)
-			{
-			*al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
-			return 0;
-			}
-		if (r < 0)
-			{
-			*al = SSL_AD_INTERNAL_ERROR;
-			return 0;
-			}
-		}
-
 	*p = data;
 	return 1;
 	}
@@ -1339,6 +1310,35 @@ int ssl_check_serverhello_tlsext(SSL *s)
 			}
 		}
 #endif
+
+	/* If we've requested certificate status and we wont get one
+ 	 * tell the callback
+ 	 */
+	if ((s->tlsext_status_type != -1) && !(s->tlsext_status_expected)
+			&& s->ctx->tlsext_status_cb)
+		{
+		int r;
+		/* Set resp to NULL, resplen to -1 so callback knows
+ 		 * there is no response.
+ 		 */
+		if (s->tlsext_ocsp_resp)
+			{
+			OPENSSL_free(s->tlsext_ocsp_resp);
+			s->tlsext_ocsp_resp = NULL;
+			}
+		s->tlsext_ocsp_resplen = -1;
+		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+		if (r == 0)
+			{
+			al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
+			ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+			}
+		if (r < 0)
+			{
+			al = SSL_AD_INTERNAL_ERROR;
+			ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+			}
+		}
 
 	switch (ret)
 		{
