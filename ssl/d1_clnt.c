@@ -219,6 +219,8 @@ int dtls1_connect(SSL *s)
 			s->state=SSL3_ST_CW_CLNT_HELLO_A;
 			s->ctx->stats.sess_connect++;
 			s->init_num=0;
+			/* mark client_random uninitialized */
+			memset(s->s3->client_random,0,sizeof(s->s3->client_random));
 			break;
 
 		case SSL3_ST_CW_CLNT_HELLO_A:
@@ -422,6 +424,9 @@ int dtls1_connect(SSL *s)
 				s->s3->tmp.next_state=SSL3_ST_CR_FINISHED_A;
 				}
 			s->init_num=0;
+			/* mark client_random uninitialized */
+			memset (s->s3->client_random,0,sizeof(s->s3->client_random));
+
 			break;
 
 		case SSL3_ST_CR_FINISHED_A:
@@ -544,9 +549,15 @@ int dtls1_client_hello(SSL *s)
 		/* else use the pre-loaded session */
 
 		p=s->s3->client_random;
-		Time=(unsigned long)time(NULL);			/* Time */
-		l2n(Time,p);
-		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-sizeof(Time));
+		/* if client_random is initialized, reuse it, we are
+		 * required to use same upon reply to HelloVerify */
+		for (i=0;p[i]=='\0' && i<sizeof(s->s3->client_random);i++) ;
+		if (i==sizeof(s->s3->client_random))
+			{
+			Time=(unsigned long)time(NULL);	/* Time */
+			l2n(Time,p);
+			RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4);
+			}
 
 		/* Do the message type and length last */
 		d=p= &(buf[DTLS1_HM_HEADER_LENGTH]);
