@@ -774,7 +774,8 @@ int ssl3_get_client_hello(SSL *s)
 	s->client_version=(((int)p[0])<<8)|(int)p[1];
 	p+=2;
 
-	if (s->client_version < s->version)
+	if ((s->version == DTLS1_VERSION && s->client_version > s->version) ||
+	    (s->version != DTLS1_VERSION && s->client_version < s->version))
 		{
 		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_WRONG_VERSION_NUMBER);
 		if ((s->client_version>>8) == SSL3_VERSION_MAJOR)
@@ -825,7 +826,7 @@ int ssl3_get_client_hello(SSL *s)
 
 	p+=j;
 
-	if (SSL_version(s) == DTLS1_VERSION)
+	if (s->version == DTLS1_VERSION)
 		{
 		/* cookie stuff */
 		cookie_len = *(p++);
@@ -1821,7 +1822,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 			rsa=pkey->pkey.rsa;
 			}
 
-		/* TLS */
+		/* TLS and [incidentally] DTLS{0xFEFF} */
 		if (s->version > SSL3_VERSION)
 			{
 			n2s(p,i);

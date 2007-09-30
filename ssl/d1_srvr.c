@@ -121,7 +121,6 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/md5.h>
-#include <openssl/bn.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
@@ -626,15 +625,16 @@ int dtls1_send_hello_verify_request(SSL *s)
 		*(p++) = s->version & 0xFF;
 
 		*(p++) = (unsigned char) s->d1->cookie_len;
-	if (s->ctx->app_gen_cookie_cb != NULL &&
-	    s->ctx->app_gen_cookie_cb(s, s->d1->cookie, 
-		&(s->d1->cookie_len)) == 0)
-		{
-		SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,ERR_R_INTERNAL_ERROR);
-		return 0;
-		}
-	/* else the cookie is assumed to have 
-	 * been initialized by the application */
+
+		if (s->ctx->app_gen_cookie_cb != NULL &&
+		    s->ctx->app_gen_cookie_cb(s, s->d1->cookie, 
+			&(s->d1->cookie_len)) == 0)
+			{
+			SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,ERR_R_INTERNAL_ERROR);
+			return 0;
+			}
+		/* else the cookie is assumed to have 
+		 * been initialized by the application */
 
 		memcpy(p, s->d1->cookie, s->d1->cookie_len);
 		p += s->d1->cookie_len;
