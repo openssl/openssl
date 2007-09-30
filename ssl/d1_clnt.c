@@ -213,8 +213,6 @@ int dtls1_connect(SSL *s)
 
 			/* don't push the buffering BIO quite yet */
 
-			ssl3_init_finished_mac(s);
-
 			s->state=SSL3_ST_CW_CLNT_HELLO_A;
 			s->ctx->stats.sess_connect++;
 			s->init_num=0;
@@ -226,6 +224,10 @@ int dtls1_connect(SSL *s)
 		case SSL3_ST_CW_CLNT_HELLO_B:
 
 			s->shutdown=0;
+
+			/* every DTLS ClientHello resets Finished MAC */
+			ssl3_init_finished_mac(s);
+
 			ret=dtls1_client_hello(s);
 			if (ret <= 0) goto end;
 
