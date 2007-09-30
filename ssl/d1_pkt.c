@@ -486,9 +486,9 @@ int dtls1_get_record(SSL *s)
 	SSL3_RECORD *rr;
 	SSL_SESSION *sess;
 	unsigned char *p;
-	short version;
+	unsigned short version;
 	DTLS1_BITMAP *bitmap;
-    unsigned int is_next_epoch;
+	unsigned int is_next_epoch;
 
 	rr= &(s->s3->rrec);
 	sess=s->session;
@@ -524,7 +524,7 @@ again:
 		ssl_minor= *(p++);
 		version=(ssl_major<<8)|ssl_minor;
 
-        /* sequence number is 64 bits, with top 2 bytes = epoch */ 
+		/* sequence number is 64 bits, with top 2 bytes = epoch */ 
 		n2s(p,rr->epoch);
 
 		memcpy(&(s->s3->read_sequence[2]), p, 6);
@@ -535,7 +535,7 @@ again:
 		/* Lets check version */
 		if (!s->first_packet)
 			{
-			if (version != s->version)
+			if (version != s->version && version != DTLS1_BAD_VER)
 				{
 				SSLerr(SSL_F_DTLS1_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
 				/* Send back error using their
@@ -546,7 +546,8 @@ again:
 				}
 			}
 
-		if ((version & 0xff00) != (DTLS1_VERSION & 0xff00))
+		if ((version & 0xff00) != (DTLS1_VERSION & 0xff00) &&
+		    (version & 0xff00) != (DTLS1_BAD_VER & 0xff00))
 			{
 			SSLerr(SSL_F_DTLS1_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
 			goto err;
@@ -1341,8 +1342,12 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 	*(p++)=type&0xff;
 	wr->type=type;
 
-	*(p++)=(s->version>>8);
-	*(p++)=s->version&0xff;
+	if (s->client_version == DTLS1_BAD_VER)
+		*(p++) = DTLS1_BAD_VER>>8,
+		*(p++) = DTLS1_BAD_VER&0xff;
+	else
+		*(p++)=(s->version>>8),
+		*(p++)=s->version&0xff;
 
 	/* field where we are to write out packet epoch, seq num and len */
 	pseq=p; 

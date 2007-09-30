@@ -732,7 +732,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 			s->session->master_key_length=sizeof tmp_buf;
 
 			q=p;
-			/* Fix buf for TLS and beyond */
+			/* Fix buf for TLS and [incidentally] DTLS */
 			if (s->version > SSL3_VERSION)
 				p+=2;
 			n=RSA_public_encrypt(sizeof tmp_buf,
@@ -747,7 +747,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 				goto err;
 				}
 
-			/* Fix buf for TLS and beyond */
+			/* Fix buf for TLS and [incidentally] DTLS */
 			if (s->version > SSL3_VERSION)
 				{
 				s2n(n,q);

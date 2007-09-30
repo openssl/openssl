@@ -620,19 +620,24 @@ int dtls1_send_hello_verify_request(SSL *s)
 		buf = (unsigned char *)s->init_buf->data;
 
 		msg = p = &(buf[DTLS1_HM_HEADER_LENGTH]);
-		*(p++) = s->version >> 8;
-		*(p++) = s->version & 0xFF;
+		if (s->client_version == DTLS1_BAD_VER)
+			*(p++) = DTLS1_BAD_VER>>8,
+			*(p++) = DTLS1_BAD_VER&0xff;
+		else
+			*(p++) = s->version >> 8,
+			*(p++) = s->version & 0xFF;
 
 		*(p++) = (unsigned char) s->d1->cookie_len;
-        if ( s->ctx->app_gen_cookie_cb != NULL &&
-            s->ctx->app_gen_cookie_cb(s, s->d1->cookie, 
-                &(s->d1->cookie_len)) == 0)
-            {
+
+		if (s->ctx->app_gen_cookie_cb != NULL &&
+		    s->ctx->app_gen_cookie_cb(s, s->d1->cookie, 
+		    &(s->d1->cookie_len)) == 0)
+			{
 			SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,ERR_R_INTERNAL_ERROR);
-            return 0;
-            }
-        /* else the cookie is assumed to have 
-         * been initialized by the application */
+			return 0;
+			}
+		/* else the cookie is assumed to have 
+		 * been initialized by the application */
 
 		memcpy(p, s->d1->cookie, s->d1->cookie_len);
 		p += s->d1->cookie_len;
@@ -672,8 +677,12 @@ int dtls1_send_server_hello(SSL *s)
 		/* Do the message type and length last */
 		d=p= &(buf[DTLS1_HM_HEADER_LENGTH]);
 
-		*(p++)=s->version>>8;
-		*(p++)=s->version&0xff;
+		if (s->client_version == DTLS1_BAD_VER)
+			*(p++)=DTLS1_BAD_VER>>8,
+			*(p++)=DTLS1_BAD_VER&0xff;
+		else
+			*(p++)=s->version>>8,
+			*(p++)=s->version&0xff;
 
 		/* Random stuff */
 		memcpy(p,s->s3->server_random,SSL3_RANDOM_SIZE);
