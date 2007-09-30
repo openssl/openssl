@@ -816,9 +816,14 @@ int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 		*p++=SSL3_MT_CCS;
 		s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
 		s->d1->next_handshake_write_seq++;
-		s2n(s->d1->handshake_write_seq,p);
-
 		s->init_num=DTLS1_CCS_HEADER_LENGTH;
+
+		if (s->client_version == DTLS1_BAD_VER)
+			{
+			s2n(s->d1->handshake_write_seq,p);
+			s->init_num+=2;
+			}
+
 		s->init_off=0;
 
 		dtls1_set_message_header_int(s, SSL3_MT_CCS, 0, 
@@ -1056,7 +1061,7 @@ dtls1_buffer_message(SSL *s, int is_ccs)
     if ( is_ccs)
         {
         OPENSSL_assert(s->d1->w_msg_hdr.msg_len + 
-            DTLS1_CCS_HEADER_LENGTH == (unsigned int)s->init_num);
+            DTLS1_CCS_HEADER_LENGTH <= (unsigned int)s->init_num);
         }
     else
         {
@@ -1259,5 +1264,4 @@ dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr)
     memset(ccs_hdr, 0x00, sizeof(struct ccs_header_st));
     
     ccs_hdr->type = *(data++);
-    n2s(data, ccs_hdr->seq);
 }
