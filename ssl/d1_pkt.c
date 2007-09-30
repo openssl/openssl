@@ -1014,47 +1014,39 @@ start:
 		}
 
 	if (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC)
-        {
-        struct ccs_header_st ccs_hdr;
+		{
+		struct ccs_header_st ccs_hdr;
 
 		dtls1_get_ccs_header(rr->data, &ccs_hdr);
 
-		if ( ccs_hdr.seq == s->d1->handshake_read_seq)
+		/* 'Change Cipher Spec' is just a single byte, so we know
+		 * exactly what the record payload has to look like */
+		/* XDTLS: check that epoch is consistent */
+		if (	(rr->length != DTLS1_CCS_HEADER_LENGTH) || 
+			(rr->off != 0) || (rr->data[0] != SSL3_MT_CCS))
 			{
-			/* 'Change Cipher Spec' is just a single byte, so we know
-			 * exactly what the record payload has to look like */
-			/* XDTLS: check that epoch is consistent */
-			if (	(rr->length != DTLS1_CCS_HEADER_LENGTH) || 
-				(rr->off != 0) || (rr->data[0] != SSL3_MT_CCS))
-				{
-				i=SSL_AD_ILLEGAL_PARAMETER;
-				SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_BAD_CHANGE_CIPHER_SPEC);
-				goto err;
-				}
-			
-			rr->length=0;
-			
-			if (s->msg_callback)
-				s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC, 
-					rr->data, 1, s, s->msg_callback_arg);
-			
-			s->s3->change_cipher_spec=1;
-			if (!ssl3_do_change_cipher_spec(s))
-				goto err;
-			
-			/* do this whenever CCS is processed */
-			dtls1_reset_seq_numbers(s, SSL3_CC_READ);
-			
-			/* handshake read seq is reset upon handshake completion */
-			s->d1->handshake_read_seq++;
-			
-			goto start;
+			i=SSL_AD_ILLEGAL_PARAMETER;
+			SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_BAD_CHANGE_CIPHER_SPEC);
+			goto err;
 			}
-		else
-			{
-			rr->length = 0;
-			goto start;
-			}
+
+		rr->length=0;
+
+		if (s->msg_callback)
+			s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC, 
+				rr->data, 1, s, s->msg_callback_arg);
+
+		s->s3->change_cipher_spec=1;
+		if (!ssl3_do_change_cipher_spec(s))
+			goto err;
+
+		/* do this whenever CCS is processed */
+		dtls1_reset_seq_numbers(s, SSL3_CC_READ);
+
+		/* handshake read seq is reset upon handshake completion */
+		s->d1->handshake_read_seq++;
+
+		goto start;
 		}
 
 	/* Unexpected handshake message (Client Hello, or protocol violation) */
