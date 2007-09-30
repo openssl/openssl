@@ -285,6 +285,10 @@ int dtls1_accept(SSL *s)
 			s->d1->send_cookie = 0;
 			s->state=SSL3_ST_SW_FLUSH;
 			s->s3->tmp.next_state=SSL3_ST_SR_CLNT_HELLO_A;
+
+			/* HelloVerifyRequests resets Finished MAC */
+			if (s->client_version != DTLS1_BAD_VER)
+				ssl3_init_finished_mac(s);
 			break;
 			
 		case SSL3_ST_SW_SRVR_HELLO_A:
