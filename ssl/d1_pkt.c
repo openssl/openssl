@@ -120,6 +120,7 @@
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
+#include <openssl/rand.h>
 
 static int have_handshake_fragment(SSL *s, int type, unsigned char *buf, 
 	int len, int peek);
@@ -1395,8 +1396,14 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 
 
 	/* ssl3_enc can only have an error on read */
-	wr->length += bs;  /* bs != 0 in case of CBC.  The enc fn provides
-						* the randomness */ 
+	if (bs)	/* bs != 0 in case of CBC */
+		{
+		RAND_pseudo_bytes(p,bs);
+		/* master IV and last CBC residue stand for
+		 * the rest of randomness */
+		wr->length += bs;
+		}
+
 	s->method->ssl3_enc->enc(s,1);
 
 	/* record length after mac and block padding */
