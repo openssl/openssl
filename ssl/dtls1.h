@@ -82,7 +82,7 @@ extern "C" {
 #define DTLS1_HM_BAD_FRAGMENT                   -2
 #define DTLS1_HM_FRAGMENT_RETRY                 -3
 
-#define DTLS1_CCS_HEADER_LENGTH                  3
+#define DTLS1_CCS_HEADER_LENGTH                  1
 
 #define DTLS1_AL_HEADER_LENGTH                   7
 
