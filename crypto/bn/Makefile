@@ -99,6 +99,9 @@ bn-mips3.o:	asm/mips3.s
 		as -$$ABI -O -o $@ asm/mips3.s; \
 	else	$(CC) -c $(CFLAGS) -o $@ asm/mips3.s; fi
 
+bn-s390x.o:	asm/s390x.S
+	$(CC) $(CFLAGS) -c -o $@ asm/s390x.S
+
 x86_64-gcc.o:	asm/x86_64-gcc.c
 	$(CC) $(CFLAGS) -c -o $@ asm/x86_64-gcc.c
 x86_64-mont.s:	asm/x86_64-mont.pl

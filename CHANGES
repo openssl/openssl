@@ -4,6 +4,9 @@
 
  Changes between 0.9.8f and 0.9.9  [xx XXX xxxx]
 
+  *) s390x assembler pack.
+     [Andy Polyakov]
+
   *) ARMv4 assembler pack. ARMv4 refers to v4 and later ISA, not CPU
      "family."
      [Andy Polyakov]
