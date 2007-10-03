@@ -561,6 +561,7 @@ again:
 			goto f_err;
 			}
 
+		s->client_version = version;
 		/* now s->rstate == SSL_ST_READ_BODY */
 		}
 
