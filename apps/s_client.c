@@ -187,7 +187,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -port port     - use -connect instead\n");
 	BIO_printf(bio_err," -connect host:port - who to connect to (default is %s:%s)\n",SSL_HOST_NAME,PORT_STR);
 
-	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
+	BIO_printf(bio_err," -verify depth - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");
 	BIO_printf(bio_err," -key arg      - Private key file to use, PEM format assumed, in cert file if\n");
 	BIO_printf(bio_err,"                 not specified but cert file is.\n");
