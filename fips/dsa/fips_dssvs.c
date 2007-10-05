@@ -112,6 +112,83 @@ void pqg()
 	}
     }
 
+
+void pqgver()
+    {
+    char buf[1024];
+    char lbuf[1024];
+    char *keyword, *value;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    int counter, counter2;
+    unsigned long h, h2;
+    DSA *dsa=NULL;
+    int nmod=0;
+    unsigned char seed[1024];
+
+    while(fgets(buf,sizeof buf,stdin) != NULL)
+	{
+	if (!parse_line(&keyword, &value, lbuf, buf))
+		{
+		fputs(buf,stdout);
+		continue;
+		}
+	if(!strcmp(keyword,"[mod"))
+	    nmod=atoi(value);
+	else if(!strcmp(keyword,"P"))
+	    p=hex2bn(value);
+	else if(!strcmp(keyword,"Q"))
+	    q=hex2bn(value);
+	else if(!strcmp(keyword,"G"))
+	    g=hex2bn(value);
+	else if(!strcmp(keyword,"Seed"))
+	    {
+	    int slen = hex2bin(value, seed);
+	    if (slen != 20)
+		{
+		fprintf(stderr, "Seed parse length error\n");
+		exit (1);
+		}
+	    }
+	else if(!strcmp(keyword,"c"))
+	    counter =atoi(buf+4);
+	else if(!strcmp(keyword,"H"))
+	    {
+	    h = atoi(value);
+	    if (!p || !q || !g)
+		{
+		fprintf(stderr, "Parse Error\n");
+		exit (1);
+		}
+	    pbn("P",p);
+	    pbn("Q",q);
+	    pbn("G",g);
+	    pv("Seed",seed,20);
+	    printf("c = %d\n",counter);
+	    printf("H = %lx\n",h);
+	    dsa = FIPS_dsa_new();
+	    if (!DSA_generate_parameters_ex(dsa, nmod,seed,20 ,&counter2,&h2,NULL))
+			{
+			do_print_errors();
+			exit(1);
+			}
+            if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) || BN_cmp(dsa->g, g)
+		|| (counter != counter2) || (h != h2))
+	    	printf("Result = F\n");
+	    else
+	    	printf("Result = T\n");
+	    BN_free(p);
+	    BN_free(q);
+	    BN_free(g);
+	    p = NULL;
+	    q = NULL;
+	    g = NULL;
+	    FIPS_dsa_free(dsa);
+	    dsa = NULL;
+	    }
+	}
+    }
+
+
 void keypair()
     {
     char buf[1024];
@@ -329,6 +406,8 @@ int main(int argc,char **argv)
 	primes();
     else if(!strcmp(argv[1],"pqg"))
 	pqg();
+    else if(!strcmp(argv[1],"pqgver"))
+	pqgver();
     else if(!strcmp(argv[1],"keypair"))
 	keypair();
     else if(!strcmp(argv[1],"siggen"))
