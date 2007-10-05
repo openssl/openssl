@@ -746,7 +746,7 @@ const SSL_METHOD *func_name(void)  \
 		ssl3_put_cipher_by_char, \
 		ssl3_pending, \
 		ssl3_num_ciphers, \
-		ssl3_get_cipher, \
+		dtls1_get_cipher, \
 		s_get_meth, \
 		dtls1_default_timeout, \
 		&DTLSv1_enc_data, \
@@ -915,6 +915,7 @@ void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
 void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
 long dtls1_default_timeout(void);
+SSL_CIPHER *dtls1_get_cipher(unsigned int u);
 
 
 /* some client-only functions */
