@@ -326,11 +326,13 @@ int ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 	{
 	ASN1_TYPE *typ;
 	int utype;
-	const ASN1_PRIMITIVE_FUNCS *pf;
-	pf = it->funcs;
 
-	if (pf && pf->prim_new)
-		return pf->prim_new(pval, it);
+	if (it && it->funcs)
+		{
+		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
+		if (pf->prim_new)
+			return pf->prim_new(pval, it);
+		}
 
 	if (!it || (it->itype == ASN1_ITYPE_MSTRING))
 		utype = -1;
@@ -374,10 +376,9 @@ int ASN1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
 void asn1_primitive_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
 	{
 	int utype;
-	const ASN1_PRIMITIVE_FUNCS *pf;
-	pf = it->funcs;
-	if (pf)
+	if (it && it->funcs)
 		{
+		const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
 		if (pf->prim_clear)
 			pf->prim_clear(pval, it);
 		else 

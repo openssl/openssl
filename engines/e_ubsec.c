@@ -64,9 +64,15 @@
 #include <openssl/buffer.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 #include <openssl/bn.h>
 
 #ifndef OPENSSL_NO_HW
@@ -463,6 +469,7 @@ static int ubsec_init(ENGINE *e)
 err:
 	if(ubsec_dso)
 		DSO_free(ubsec_dso);
+	ubsec_dso = NULL;
 	p_UBSEC_ubsec_bytes_to_bits = NULL;
 	p_UBSEC_ubsec_bits_to_bytes = NULL;
 	p_UBSEC_ubsec_open = NULL;

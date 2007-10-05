@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/txt_db/Makefile
+# OpenSSL/crypto/txt_db/Makefile
 #
 
 DIR=	txt_db
@@ -33,7 +33,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 

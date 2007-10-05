@@ -105,7 +105,7 @@ The following is a list of all permitted cipher strings and their meanings.
 =item B<DEFAULT>
 
 the default cipher list. This is determined at compile time and is normally
-B<ALL:!ADH:RC4+RSA:+SSLv2:@STRENGTH>. This must be the first cipher string
+B<AES:ALL:!aNULL:!eNULL:+RC4:@STRENGTH>. This must be the first cipher string
 specified.
 
 =item B<COMPLEMENTOFDEFAULT>
@@ -125,11 +125,11 @@ the cipher suites not enabled by B<ALL>, currently being B<eNULL>.
 =item B<HIGH>
 
 "high" encryption cipher suites. This currently means those with key lengths larger
-than 128 bits.
+than 128 bits, and some cipher suites with 128-bit keys.
 
 =item B<MEDIUM>
 
-"medium" encryption cipher suites, currently those using 128 bit encryption.
+"medium" encryption cipher suites, currently some of those using 128 bit encryption.
 
 =item B<LOW>
 
@@ -146,7 +146,9 @@ export encryption algorithms. Including 40 and 56 bits algorithms.
 
 =item B<EXPORT56>
 
-56 bit export encryption algorithms.
+56 bit export encryption algorithms. In OpenSSL 0.9.8c and later the set of
+56 bit export ciphers is empty unless OpenSSL has been explicitly configured
+with support for experimental ciphers.
 
 =item B<eNULL>, B<NULL>
 
@@ -207,6 +209,10 @@ anonymous DH cipher suites.
 
 cipher suites using AES.
 
+=item B<CAMELLIA>
+
+cipher suites using Camellia.
+
 =item B<3DES>
 
 cipher suites using triple DES.
@@ -226,6 +232,10 @@ cipher suites using RC2.
 =item B<IDEA>
 
 cipher suites using IDEA.
+
+=item B<SEED>
+
+cipher suites using SEED.
 
 =item B<MD5>
 
@@ -317,10 +327,10 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
  TLS_RSA_WITH_AES_128_CBC_SHA            AES128-SHA
  TLS_RSA_WITH_AES_256_CBC_SHA            AES256-SHA
 
- TLS_DH_DSS_WITH_AES_128_CBC_SHA         DH-DSS-AES128-SHA
- TLS_DH_DSS_WITH_AES_256_CBC_SHA         DH-DSS-AES256-SHA
- TLS_DH_RSA_WITH_AES_128_CBC_SHA         DH-RSA-AES128-SHA
- TLS_DH_RSA_WITH_AES_256_CBC_SHA         DH-RSA-AES256-SHA
+ TLS_DH_DSS_WITH_AES_128_CBC_SHA         Not implemented.
+ TLS_DH_DSS_WITH_AES_256_CBC_SHA         Not implemented.
+ TLS_DH_RSA_WITH_AES_128_CBC_SHA         Not implemented.
+ TLS_DH_RSA_WITH_AES_256_CBC_SHA         Not implemented.
 
  TLS_DHE_DSS_WITH_AES_128_CBC_SHA        DHE-DSS-AES128-SHA
  TLS_DHE_DSS_WITH_AES_256_CBC_SHA        DHE-DSS-AES256-SHA
@@ -329,6 +339,36 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
 
  TLS_DH_anon_WITH_AES_128_CBC_SHA        ADH-AES128-SHA
  TLS_DH_anon_WITH_AES_256_CBC_SHA        ADH-AES256-SHA
+
+=head2 Camellia ciphersuites from RFC4132, extending TLS v1.0
+
+ TLS_RSA_WITH_CAMELLIA_128_CBC_SHA      CAMELLIA128-SHA
+ TLS_RSA_WITH_CAMELLIA_256_CBC_SHA      CAMELLIA256-SHA
+
+ TLS_DH_DSS_WITH_CAMELLIA_128_CBC_SHA   Not implemented.
+ TLS_DH_DSS_WITH_CAMELLIA_256_CBC_SHA   Not implemented.
+ TLS_DH_RSA_WITH_CAMELLIA_128_CBC_SHA   Not implemented.
+ TLS_DH_RSA_WITH_CAMELLIA_256_CBC_SHA   Not implemented.
+
+ TLS_DHE_DSS_WITH_CAMELLIA_128_CBC_SHA  DHE-DSS-CAMELLIA128-SHA
+ TLS_DHE_DSS_WITH_CAMELLIA_256_CBC_SHA  DHE-DSS-CAMELLIA256-SHA
+ TLS_DHE_RSA_WITH_CAMELLIA_128_CBC_SHA  DHE-RSA-CAMELLIA128-SHA
+ TLS_DHE_RSA_WITH_CAMELLIA_256_CBC_SHA  DHE-RSA-CAMELLIA256-SHA
+
+ TLS_DH_anon_WITH_CAMELLIA_128_CBC_SHA  ADH-CAMELLIA128-SHA
+ TLS_DH_anon_WITH_CAMELLIA_256_CBC_SHA  ADH-CAMELLIA256-SHA
+
+=head2 SEED ciphersuites from RFC4162, extending TLS v1.0
+
+ TLS_RSA_WITH_SEED_CBC_SHA              SEED-SHA
+
+ TLS_DH_DSS_WITH_SEED_CBC_SHA           Not implemented.
+ TLS_DH_RSA_WITH_SEED_CBC_SHA           Not implemented.
+
+ TLS_DHE_DSS_WITH_SEED_CBC_SHA          DHE-DSS-SEED-SHA
+ TLS_DHE_RSA_WITH_SEED_CBC_SHA          DHE-RSA-SEED-SHA
+
+ TLS_DH_anon_WITH_SEED_CBC_SHA          ADH-SEED-SHA
 
 =head2 Additional Export 1024 and other cipher suites
 

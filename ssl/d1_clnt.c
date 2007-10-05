@@ -115,11 +115,15 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
+#include "kssl_lcl.h"
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
+#endif
 
 static SSL_METHOD *dtls1_get_client_method(int ver);
 static int dtls1_get_hello_verify(SSL *s);
@@ -132,33 +136,15 @@ static SSL_METHOD *dtls1_get_client_method(int ver)
 		return(NULL);
 	}
 
-SSL_METHOD *DTLSv1_client_method(void)
-	{
-	static int init=1;
-	static SSL_METHOD DTLSv1_client_data;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
-
-		if (init)
-			{
-			memcpy((char *)&DTLSv1_client_data,(char *)dtlsv1_base_method(),
-				sizeof(SSL_METHOD));
-			DTLSv1_client_data.ssl_connect=dtls1_connect;
-			DTLSv1_client_data.get_ssl_method=dtls1_get_client_method;
-			init=0;
-			}
-		
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
-		}
-	return(&DTLSv1_client_data);
-	}
+IMPLEMENT_dtls1_meth_func(DTLSv1_client_method,
+			ssl_undefined_function,
+			dtls1_connect,
+			dtls1_get_client_method)
 
 int dtls1_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
-	unsigned long Time=time(NULL),l;
+	unsigned long Time=(unsigned long)time(NULL),l;
 	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
@@ -385,11 +371,15 @@ int dtls1_connect(SSL *s)
 			s->init_num=0;
 
 			s->session->cipher=s->s3->tmp.new_cipher;
+#ifdef OPENSSL_NO_COMP
+			s->session->compress_meth=0;
+#else
 			if (s->s3->tmp.new_compression == NULL)
 				s->session->compress_meth=0;
 			else
 				s->session->compress_meth=
 					s->s3->tmp.new_compression->id;
+#endif
 			if (!s->method->ssl3_enc->setup_key_block(s))
 				{
 				ret= -1;
@@ -537,7 +527,7 @@ int dtls1_client_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
-	int i,j;
+	unsigned int i,j;
 	unsigned long Time,l;
 	SSL_COMP *comp;
 
@@ -554,7 +544,7 @@ int dtls1_client_hello(SSL *s)
 		/* else use the pre-loaded session */
 
 		p=s->s3->client_random;
-		Time=time(NULL);			/* Time */
+		Time=(unsigned long)time(NULL);			/* Time */
 		l2n(Time,p);
 		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-sizeof(Time));
 

@@ -63,6 +63,7 @@
 #ifdef OPENSSL_NO_MD2
 #error MD2 is disabled.
 #endif
+#include <stddef.h>
 
 #define MD2_DIGEST_LENGTH	16
 #define MD2_BLOCK       	16
@@ -80,6 +81,9 @@ typedef struct MD2state_st
 	} MD2_CTX;
 
 const char *MD2_options(void);
+#ifdef OPENSSL_FIPS
+int private_MD2_Init(MD2_CTX *c);
+#endif
 int MD2_Init(MD2_CTX *c);
 int MD2_Update(MD2_CTX *c, const unsigned char *data, size_t len);
 int MD2_Final(unsigned char *md, MD2_CTX *c);

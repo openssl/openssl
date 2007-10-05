@@ -49,7 +49,7 @@ if (open(IN,"<Makefile")) {
 }
 
 $cversion=`$cc -v 2>&1`;
-$cversion=`$cc -V 2>&1` if $cversion =~ "usage";
+$cversion=`$cc -V 2>&1` if $cversion =~ "[Uu]sage";
 $cversion=`$cc -V |head -1` if $cversion =~ "Error";
 $cversion=`$cc --version` if $cversion eq "";
 $cversion =~ s/Reading specs.*\n//;
@@ -130,15 +130,21 @@ if (system("make 2>&1 | tee make.log") > 255) {
     goto err;
 }
 
-$_=$options;
-s/no-asm//;
-s/no-shared//;
-s/no-krb5//;
-if (/no-/)
-{
-    print OUT "Test skipped.\n";
-    goto err;
-}
+# Not sure why this is here.  The tests themselves can detect if their
+# particular feature isn't included, and should therefore skip themselves.
+# To skip *all* tests just because one algorithm isn't included is like
+# shooting mosquito with an elephant gun...
+#                   -- Richard Levitte, inspired by problem report 1089
+#
+#$_=$options;
+#s/no-asm//;
+#s/no-shared//;
+#s/no-krb5//;
+#if (/no-/)
+#{
+#    print OUT "Test skipped.\n";
+#    goto err;
+#}
 
 print "Running make test...\n";
 if (system("make test 2>&1 | tee maketest.log") > 255)

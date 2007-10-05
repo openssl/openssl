@@ -116,6 +116,10 @@
 extern "C" {
 #endif
 
+#ifdef _
+#undef _
+#endif
+
 typedef unsigned char _ossl_old_des_cblock[8];
 typedef struct _ossl_old_des_ks_struct
 	{
@@ -171,9 +175,9 @@ typedef struct _ossl_old_des_ks_struct
 	DES_enc_write((f),(b),(l),&(k),(iv))
 #define des_fcrypt(b,s,r)\
 	DES_fcrypt((b),(s),(r))
+#if 0
 #define des_crypt(b,s)\
 	DES_crypt((b),(s))
-#if 0
 #if !defined(PERL5) && !defined(__FreeBSD__) && !defined(NeXT) && !defined(__OpenBSD__)
 #define crypt(b,s)\
 	DES_crypt((b),(s))

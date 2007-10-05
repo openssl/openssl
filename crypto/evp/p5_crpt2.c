@@ -156,10 +156,15 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	const EVP_CIPHER *cipher;
 	PBKDF2PARAM *kdf = NULL;
 
+	if (param == NULL || param->type != V_ASN1_SEQUENCE ||
+	    param->value.sequence == NULL) {
+		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
+		return 0;
+	}
+
 	pbuf = param->value.sequence->data;
 	plen = param->value.sequence->length;
-	if(!param || (param->type != V_ASN1_SEQUENCE) ||
-				   !(pbe2 = d2i_PBE2PARAM(NULL, &pbuf, plen))) {
+	if(!(pbe2 = d2i_PBE2PARAM(NULL, &pbuf, plen))) {
 		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
 		return 0;
 	}
@@ -196,11 +201,16 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
 	/* Now decode key derivation function */
 
+	if(!pbe2->keyfunc->parameter ||
+		 (pbe2->keyfunc->parameter->type != V_ASN1_SEQUENCE))
+		{
+		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
+		goto err;
+		}
+
 	pbuf = pbe2->keyfunc->parameter->value.sequence->data;
 	plen = pbe2->keyfunc->parameter->value.sequence->length;
-	if(!pbe2->keyfunc->parameter ||
-		 (pbe2->keyfunc->parameter->type != V_ASN1_SEQUENCE) ||
-				!(kdf = d2i_PBKDF2PARAM(NULL, &pbuf, plen)) ) {
+	if(!(kdf = d2i_PBKDF2PARAM(NULL, &pbuf, plen)) ) {
 		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,EVP_R_DECODE_ERROR);
 		goto err;
 	}

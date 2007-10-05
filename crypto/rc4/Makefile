@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/rc4/Makefile
+# OpenSSL/crypto/rc4/Makefile
 #
 
 DIR=	rc4
@@ -37,7 +37,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -54,7 +54,11 @@ rx86-out.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 rc4-x86_64.s: asm/rc4-x86_64.pl;	$(PERL) asm/rc4-x86_64.pl $@
 
 rc4-ia64.s: asm/rc4-ia64.S
-	$(CC) $(CFLAGS) -E asm/rc4-ia64.S > $@
+	@case `awk '/^#define RC4_INT/{print$$NF}' $(TOP)/include/openssl/opensslconf.h` in \
+	int)	set -x; $(CC) $(CFLAGS) -DSZ=4 -E asm/rc4-ia64.S > $@ ;; \
+	char)	set -x; $(CC) $(CFLAGS) -DSZ=1 -E asm/rc4-ia64.S > $@ ;; \
+	*)	exit 1 ;; \
+	esac
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
@@ -104,7 +108,8 @@ rc4_enc.o: ../cryptlib.h rc4_enc.c rc4_locl.h
 rc4_skey.o: ../../e_os.h ../../include/openssl/bio.h
 rc4_skey.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 rc4_skey.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-rc4_skey.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+rc4_skey.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+rc4_skey.o: ../../include/openssl/opensslconf.h
 rc4_skey.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rc4_skey.o: ../../include/openssl/rc4.h ../../include/openssl/safestack.h
 rc4_skey.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h

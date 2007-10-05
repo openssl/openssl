@@ -285,7 +285,12 @@ int X509_supported_extension(X509_EXTENSION *ex)
         	NID_key_usage,		/* 83 */
 		NID_subject_alt_name,	/* 85 */
 		NID_basic_constraints,	/* 87 */
+		NID_certificate_policies, /* 89 */
         	NID_ext_key_usage,	/* 126 */
+#ifndef OPENSSL_NO_RFC3779
+		NID_sbgp_ipAddrBlock,	/* 290 */
+		NID_sbgp_autonomousSysNum, /* 291 */
+#endif
 		NID_proxyCertInfo	/* 661 */
 	};
 
@@ -410,6 +415,11 @@ static void x509v3_cache_extensions(X509 *x)
 	}
 	x->skid =X509_get_ext_d2i(x, NID_subject_key_identifier, NULL, NULL);
 	x->akid =X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
+#ifndef OPENSSL_NO_RFC3779
+	x->rfc3779_addr =X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, NULL, NULL);
+	x->rfc3779_asid =X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum,
+					  NULL, NULL);
+#endif
 	for (i = 0; i < X509_get_ext_count(x); i++)
 		{
 		ex = X509_get_ext(x, i);

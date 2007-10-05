@@ -20,6 +20,9 @@ B<openssl> B<smime>
 [B<-aes128>]
 [B<-aes192>]
 [B<-aes256>]
+[B<-camellia128>]
+[B<-camellia192>]
+[B<-camellia256>]
 [B<-in file>]
 [B<-certfile file>]
 [B<-signer file>]
@@ -129,10 +132,10 @@ B<-verify>. This directory must be a standard certificate directory: that
 is a hash of each subject name (using B<x509 -hash>) should be linked
 to each certificate.
 
-=item B<-des -des3 -rc2-40 -rc2-64 -rc2-128 -aes128 -aes192 -aes256>
+=item B<-des -des3 -rc2-40 -rc2-64 -rc2-128 -aes128 -aes192 -aes256 -camellia128 -camellia192 -camellia256>
 
 the encryption algorithm to use. DES (56 bits), triple DES (168 bits),
-40, 64 or 128 bit RC2 or 128, 192 or 256 bit AES respectively.  If not
+40, 64 or 128 bit RC2, 128, 192 or 256 bit AES, or 128, 192 or 256 bit Camellia respectively.  If not
 specified 40 bit RC2 is used. Only used with B<-encrypt>.
 
 =item B<-nointern>
@@ -353,6 +356,10 @@ and using the command,
 alternatively you can base64 decode the signature and use
 
  openssl smime -verify -inform DER -in signature.der -content content.txt
+
+Create an encrypted message using 128 bit Camellia:
+
+ openssl smime -encrypt -in plain.txt -camellia128 -out mail.msg cert.pem
 
 =head1 BUGS
 

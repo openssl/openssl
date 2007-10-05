@@ -1,9 +1,15 @@
 
- OpenSSL 0.9.8-dev XX xxx XXXX
+ OpenSSL 0.9.8f-fips-dev test version
 
- Copyright (c) 1998-2005 The OpenSSL Project
+ Copyright (c) 1998-2007 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
  All rights reserved.
+
+ WARNING
+ -------
+
+ This version of OpenSSL is an initial port of the FIPS 140-2 code to OpenSSL
+ 0.9.8. See the file README.FIPS for brief usage details.
 
  DESCRIPTION
  -----------
@@ -36,12 +42,13 @@
      actually logically part of it. It includes routines for the following:
 
      Ciphers
-        libdes - EAY's libdes DES encryption package which has been floating
-                 around the net for a few years.  It includes 15
-                 'modes/variations' of DES (1, 2 and 3 key versions of ecb,
-                 cbc, cfb and ofb; pcbc and a more general form of cfb and
-                 ofb) including desx in cbc mode, a fast crypt(3), and
-                 routines to read passwords from the keyboard.
+        libdes - EAY's libdes DES encryption package which was floating
+                 around the net for a few years, and was then relicensed by
+                 him as part of SSLeay.  It includes 15 'modes/variations'
+                 of DES (1, 2 and 3 key versions of ecb, cbc, cfb and ofb;
+                 pcbc and a more general form of cfb and ofb) including desx
+                 in cbc mode, a fast crypt(3), and routines to read
+                 passwords from the keyboard.
         RC4 encryption,
         RC2 encryption      - 4 different modes, ecb, cbc, cfb and ofb.
         Blowfish encryption - 4 different modes, ecb, cbc, cfb and ofb.
@@ -112,6 +119,10 @@
  http://www.ascom.ch/.
 
  The MDC2 algorithm is patented by IBM.
+
+ NTT and Mitsubishi have patents and pending patents on the Camellia
+ algorithm, but allow use at no charge without requiring an explicit
+ licensing agreement: http://info.isl.ntt.co.jp/crypt/eng/info/chiteki.html
 
  INSTALLATION
  ------------

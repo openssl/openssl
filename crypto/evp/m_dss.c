@@ -61,9 +61,12 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
 
 #ifndef OPENSSL_NO_SHA
+
 static int init(EVP_MD_CTX *ctx)
 	{ return SHA1_Init(ctx->md_data); }
 
@@ -78,7 +81,7 @@ static const EVP_MD dsa_md=
 	NID_dsaWithSHA,
 	NID_dsaWithSHA,
 	SHA_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_FIPS,
 	init,
 	update,
 	final,

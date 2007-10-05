@@ -59,6 +59,7 @@
 #include <openssl/aes.h>
 #include "aes_locl.h"
 
+#if !defined(OPENSSL_FIPS_AES_ASM)
 void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 		     const unsigned long length, const AES_KEY *key,
 		     unsigned char *ivec, const int enc) {
@@ -129,3 +130,4 @@ void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
 		}
 	}
 }
+#endif

@@ -252,8 +252,16 @@ long CRYPTO_dbg_get_options(void)
 /* static int mem_cmp(MEM *a, MEM *b) */
 static int mem_cmp(const void *a_void, const void *b_void)
 	{
+#ifdef _WIN64
+	const char *a=(const char *)((const MEM *)a_void)->addr,
+		   *b=(const char *)((const MEM *)b_void)->addr;
+	if (a==b)	return 0;
+	else if (a>b)	return 1;
+	else		return -1;
+#else
 	return((const char *)((const MEM *)a_void)->addr
 		- (const char *)((const MEM *)b_void)->addr);
+#endif
 	}
 
 /* static unsigned long mem_hash(MEM *a) */
@@ -322,7 +330,7 @@ static APP_INFO *pop_info(void)
 	return(ret);
 	}
 
-int CRYPTO_push_info_(const char *info, const char *file, int line)
+int CRYPTO_dbg_push_info(const char *info, const char *file, int line)
 	{
 	APP_INFO *ami, *amim;
 	int ret=0;
@@ -372,7 +380,7 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 	return(ret);
 	}
 
-int CRYPTO_pop_info(void)
+int CRYPTO_dbg_pop_info(void)
 	{
 	int ret=0;
 
@@ -387,7 +395,7 @@ int CRYPTO_pop_info(void)
 	return(ret);
 	}
 
-int CRYPTO_remove_all_info(void)
+int CRYPTO_dbg_remove_all_info(void)
 	{
 	int ret=0;
 
@@ -784,4 +792,18 @@ void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb)
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
 	lh_doall_arg(mh, LHASH_DOALL_ARG_FN(cb_leak), &cb);
 	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
+	}
+
+void CRYPTO_malloc_debug_init(void)
+	{
+	CRYPTO_set_mem_debug_functions(
+		CRYPTO_dbg_malloc,
+		CRYPTO_dbg_realloc,
+		CRYPTO_dbg_free,
+		CRYPTO_dbg_set_options,
+		CRYPTO_dbg_get_options);
+	CRYPTO_set_mem_info_functions(
+		CRYPTO_dbg_push_info,
+		CRYPTO_dbg_pop_info,
+		CRYPTO_dbg_remove_all_info);
 	}

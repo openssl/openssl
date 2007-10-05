@@ -61,11 +61,9 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
-const char *dtls1_version_str="DTLSv1" OPENSSL_VERSION_PTEXT;
+const char dtls1_version_str[]="DTLSv1" OPENSSL_VERSION_PTEXT;
 
-static long dtls1_default_timeout(void);
-
-static SSL3_ENC_METHOD DTLSv1_enc_data={
+SSL3_ENC_METHOD DTLSv1_enc_data={
     dtls1_enc,
 	tls1_mac,
 	tls1_setup_key_block,
@@ -79,49 +77,17 @@ static SSL3_ENC_METHOD DTLSv1_enc_data={
 	tls1_alert_code,
 	};
 
-static SSL_METHOD DTLSv1_data= {
-	DTLS1_VERSION,
-	dtls1_new,
-	dtls1_clear,
-	dtls1_free,
-	ssl_undefined_function,
-	ssl_undefined_function,
-	ssl3_read,
-	ssl3_peek,
-	ssl3_write,
-	ssl3_shutdown,
-	ssl3_renegotiate,
-	ssl3_renegotiate_check,
-	dtls1_get_message,
-	dtls1_read_bytes,
-	dtls1_write_app_data_bytes,
-	dtls1_dispatch_alert,
-	ssl3_ctrl,
-	ssl3_ctx_ctrl,
-	ssl3_get_cipher_by_char,
-	ssl3_put_cipher_by_char,
-	ssl3_pending,
-	ssl3_num_ciphers,
-	ssl3_get_cipher,
-	ssl_bad_method,
-	dtls1_default_timeout,
-	&DTLSv1_enc_data,
-	ssl_undefined_void_function,
-	ssl3_callback_ctrl,
-	ssl3_ctx_callback_ctrl,
-	};
-
-static long dtls1_default_timeout(void)
+long dtls1_default_timeout(void)
 	{
 	/* 2 hours, the 24 hours mentioned in the DTLSv1 spec
 	 * is way too long for http, the cache would over fill */
 	return(60*60*2);
 	}
 
-SSL_METHOD *dtlsv1_base_method(void)
-	{
-	return(&DTLSv1_data);
-	}
+IMPLEMENT_dtls1_meth_func(dtlsv1_base_method,
+			ssl_undefined_function,
+			ssl_undefined_function,
+			ssl_bad_method)
 
 int dtls1_new(SSL *s)
 	{
@@ -132,10 +98,20 @@ int dtls1_new(SSL *s)
 	memset(d1,0, sizeof *d1);
 
 	/* d1->handshake_epoch=0; */
+#if defined(OPENSSL_SYS_VMS) || defined(VMS_TEST)
+	d1->bitmap.length=64;
+#else
 	d1->bitmap.length=sizeof(d1->bitmap.map) * 8;
+#endif
+	pq_64bit_init(&(d1->bitmap.map));
+	pq_64bit_init(&(d1->bitmap.max_seq_num));
+	
+	pq_64bit_init(&(d1->next_bitmap.map));
+	pq_64bit_init(&(d1->next_bitmap.max_seq_num));
+
 	d1->unprocessed_rcds.q=pqueue_new();
-    d1->processed_rcds.q=pqueue_new();
-    d1->buffered_messages = pqueue_new();
+	d1->processed_rcds.q=pqueue_new();
+	d1->buffered_messages = pqueue_new();
 	d1->sent_messages=pqueue_new();
 
 	if ( s->server)
@@ -197,6 +173,12 @@ void dtls1_free(SSL *s)
         pitem_free(item);
         }
 	pqueue_free(s->d1->sent_messages);
+
+	pq_64bit_free(&(s->d1->bitmap.map));
+	pq_64bit_free(&(s->d1->bitmap.max_seq_num));
+
+	pq_64bit_free(&(s->d1->next_bitmap.map));
+	pq_64bit_free(&(s->d1->next_bitmap.max_seq_num));
 
 	OPENSSL_free(s->d1);
 	}

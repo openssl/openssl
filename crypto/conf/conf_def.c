@@ -88,7 +88,7 @@ static int def_dump(const CONF *conf, BIO *bp);
 static int def_is_number(const CONF *conf, char c);
 static int def_to_int(const CONF *conf, char c);
 
-const char *CONF_def_version="CONF_def" OPENSSL_VERSION_PTEXT;
+const char CONF_def_version[]="CONF_def" OPENSSL_VERSION_PTEXT;
 
 static CONF_METHOD default_method = {
 	"OpenSSL default",
@@ -613,13 +613,13 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
 				e++;
 				}
 			/* So at this point we have
-			 * ns which is the start of the name string which is
+			 * np which is the start of the name string which is
 			 *   '\0' terminated. 
-			 * cs which is the start of the section string which is
+			 * cp which is the start of the section string which is
 			 *   '\0' terminated.
 			 * e is the 'next point after'.
-			 * r and s are the chars replaced by the '\0'
-			 * rp and sp is where 'r' and 's' came from.
+			 * r and rr are the chars replaced by the '\0'
+			 * rp and rrp is where 'r' and 'rr' came from.
 			 */
 			p=_CONF_get_string(conf,cp,np);
 			if (rrp != NULL) *rrp=rr;
@@ -638,6 +638,11 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
 			   points at.  /RL */
 			len -= e-from;
 			from=e;
+
+			/* In case there were no braces or parenthesis around
+			   the variable reference, we have to put back the
+			   character that was replaced with a '\0'.  /RL */
+			*rp = r;
 			}
 		else
 			buf->data[to++]= *(from++);

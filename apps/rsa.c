@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_RSA
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,9 +81,13 @@
  * -des		- encrypt output if PEM format with DES in cbc mode
  * -des3	- encrypt output if PEM format
  * -idea	- encrypt output if PEM format
+ * -seed	- encrypt output if PEM format
  * -aes128	- encrypt output if PEM format
  * -aes192	- encrypt output if PEM format
  * -aes256	- encrypt output if PEM format
+ * -camellia128 - encrypt output if PEM format
+ * -camellia192 - encrypt output if PEM format
+ * -camellia256 - encrypt output if PEM format
  * -text	- print a text version
  * -modulus	- print the RSA key modulus
  * -check	- verify key consistency
@@ -207,9 +212,16 @@ bad:
 #ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea           encrypt PEM output with cbc idea\n");
 #endif
+#ifndef OPENSSL_NO_SEED
+		BIO_printf(bio_err," -seed           encrypt PEM output with cbc seed\n");
+#endif
 #ifndef OPENSSL_NO_AES
 		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");
 		BIO_printf(bio_err,"                 encrypt PEM output with cbc aes\n");
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+		BIO_printf(bio_err," -camellia128, -camellia192, -camellia256\n");
+		BIO_printf(bio_err,"                 encrypt PEM output with cbc camellia\n");
 #endif
 		BIO_printf(bio_err," -text           print the key in text\n");
 		BIO_printf(bio_err," -noout          don't print key out\n");

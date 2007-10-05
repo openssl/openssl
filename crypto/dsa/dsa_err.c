@@ -1,6 +1,6 @@
 /* crypto/dsa/dsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -73,11 +73,16 @@ static ERR_STRING_DATA DSA_str_functs[]=
 {ERR_FUNC(DSA_F_D2I_DSA_SIG),	"d2i_DSA_SIG"},
 {ERR_FUNC(DSA_F_DSAPARAMS_PRINT),	"DSAparams_print"},
 {ERR_FUNC(DSA_F_DSAPARAMS_PRINT_FP),	"DSAparams_print_fp"},
+{ERR_FUNC(DSA_F_DSA_BUILTIN_KEYGEN),	"DSA_BUILTIN_KEYGEN"},
+{ERR_FUNC(DSA_F_DSA_BUILTIN_PARAMGEN),	"DSA_BUILTIN_PARAMGEN"},
 {ERR_FUNC(DSA_F_DSA_DO_SIGN),	"DSA_do_sign"},
 {ERR_FUNC(DSA_F_DSA_DO_VERIFY),	"DSA_do_verify"},
+{ERR_FUNC(DSA_F_DSA_GENERATE_PARAMETERS),	"DSA_generate_parameters"},
 {ERR_FUNC(DSA_F_DSA_NEW_METHOD),	"DSA_new_method"},
 {ERR_FUNC(DSA_F_DSA_PRINT),	"DSA_print"},
 {ERR_FUNC(DSA_F_DSA_PRINT_FP),	"DSA_print_fp"},
+{ERR_FUNC(DSA_F_DSA_SET_DEFAULT_METHOD),	"DSA_set_default_method"},
+{ERR_FUNC(DSA_F_DSA_SET_METHOD),	"DSA_set_method"},
 {ERR_FUNC(DSA_F_DSA_SIGN),	"DSA_sign"},
 {ERR_FUNC(DSA_F_DSA_SIGN_SETUP),	"DSA_sign_setup"},
 {ERR_FUNC(DSA_F_DSA_SIG_NEW),	"DSA_SIG_new"},
@@ -89,8 +94,13 @@ static ERR_STRING_DATA DSA_str_functs[]=
 
 static ERR_STRING_DATA DSA_str_reasons[]=
 	{
+{ERR_REASON(DSA_R_BAD_Q_VALUE)           ,"bad q value"},
 {ERR_REASON(DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE),"data too large for key size"},
+{ERR_REASON(DSA_R_KEY_SIZE_TOO_SMALL)    ,"key size too small"},
 {ERR_REASON(DSA_R_MISSING_PARAMETERS)    ,"missing parameters"},
+{ERR_REASON(DSA_R_MODULUS_TOO_LARGE)     ,"modulus too large"},
+{ERR_REASON(DSA_R_NON_FIPS_METHOD)       ,"non fips method"},
+{ERR_REASON(DSA_R_OPERATION_NOT_ALLOWED_IN_FIPS_MODE),"operation not allowed in fips mode"},
 {0,NULL}
 	};
 
@@ -98,15 +108,12 @@ static ERR_STRING_DATA DSA_str_reasons[]=
 
 void ERR_load_DSA_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(DSA_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,DSA_str_functs);
 		ERR_load_strings(0,DSA_str_reasons);
-#endif
-
 		}
+#endif
 	}

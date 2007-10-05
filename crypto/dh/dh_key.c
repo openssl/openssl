@@ -62,6 +62,8 @@
 #include <openssl/rand.h>
 #include <openssl/dh.h>
 
+#ifndef OPENSSL_FIPS
+
 static int generate_key(DH *dh);
 static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh);
 static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
@@ -148,8 +150,9 @@ static int generate_key(DH *dh)
 
 		if ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) == 0)
 			{
+			BN_init(&local_prk);
 			prk = &local_prk;
-			BN_with_flags(prk, priv_key, BN_FLG_EXP_CONSTTIME);
+			BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
 			}
 		else
 			prk = priv_key;
@@ -172,10 +175,17 @@ err:
 
 static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	{
-	BN_CTX *ctx;
+	BN_CTX *ctx=NULL;
 	BN_MONT_CTX *mont=NULL;
 	BIGNUM *tmp;
 	int ret= -1;
+        int check_result;
+
+	if (BN_num_bits(dh->p) > OPENSSL_DH_MAX_MODULUS_BITS)
+		{
+		DHerr(DH_F_COMPUTE_KEY,DH_R_MODULUS_TOO_LARGE);
+		goto err;
+		}
 
 	ctx = BN_CTX_new();
 	if (ctx == NULL) goto err;
@@ -195,10 +205,16 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 		if ((dh->flags & DH_FLAG_NO_EXP_CONSTTIME) == 0)
 			{
 			/* XXX */
-			BN_set_flags(dh->priv_key, BN_FLG_EXP_CONSTTIME);
+			BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);
 			}
 		if (!mont)
 			goto err;
+		}
+
+        if (!DH_check_pub_key(dh, pub_key, &check_result) || check_result)
+		{
+		DHerr(DH_F_COMPUTE_KEY,DH_R_INVALID_PUBKEY);
+		goto err;
 		}
 
 	if (!dh->meth->bn_mod_exp(dh, tmp, pub_key, dh->priv_key,dh->p,ctx,mont))
@@ -209,8 +225,11 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 
 	ret=BN_bn2bin(tmp,key);
 err:
-	BN_CTX_end(ctx);
-	BN_CTX_free(ctx);
+	if (ctx != NULL)
+		{
+		BN_CTX_end(ctx);
+		BN_CTX_free(ctx);
+		}
 	return(ret);
 	}
 
@@ -244,3 +263,5 @@ static int dh_finish(DH *dh)
 		BN_MONT_CTX_free(dh->method_mont_p);
 	return(1);
 	}
+
+#endif

@@ -183,7 +183,7 @@ $ WRITE H_FILE "# define OPENSSL_SYS_VMS"
 $ WRITE H_FILE "#endif"
 $ CONFIG_LOGICALS := NO_ASM,NO_RSA,NO_DSA,NO_DH,NO_MD2,NO_MD5,NO_RIPEMD,-
 	NO_SHA,NO_SHA0,NO_SHA1,NO_DES/NO_MDC2;NO_MDC2,NO_RC2,NO_RC4,NO_RC5,-
-	NO_IDEA,NO_BF,NO_CAST,NO_HMAC,NO_SSL2
+	NO_IDEA,NO_BF,NO_CAST,NO_CAMELLIA,NO_SEED,NO_HMAC,NO_SSL2
 $ CONFIG_LOG_I = 0
 $ CONFIG_LOG_LOOP:
 $   CONFIG_LOG_E1 = F$ELEMENT(CONFIG_LOG_I,",",CONFIG_LOGICALS)
@@ -424,11 +424,11 @@ $!
 $ SDIRS := ,-
    OBJECTS,-
    MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
-   DES,RC2,RC4,RC5,IDEA,BF,CAST,-
+   DES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,-
    BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,-
    EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,-
-   STORE
+   STORE,PQUEUE
 $ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,-
 		ossl_typ.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
@@ -446,6 +446,8 @@ $ EXHEADER_RC5 := rc5.h
 $ EXHEADER_IDEA := idea.h
 $ EXHEADER_BF := blowfish.h
 $ EXHEADER_CAST := cast.h
+$ EXHEADER_CAMELLIA := camellia.h
+$ EXHEADER_SEED := seed.h
 $ EXHEADER_BN := bn.h
 $ EXHEADER_EC := ec.h
 $ EXHEADER_RSA := rsa.h
@@ -477,6 +479,7 @@ $ EXHEADER_UI := ui.h,ui_compat.h
 $ EXHEADER_KRB5 := krb5_asn.h
 $!EXHEADER_STORE := store.h,str_compat.h
 $ EXHEADER_STORE := store.h
+$ EXHEADER_PQUEUE := pqueue.h,pq_compat.h
 $
 $ I = 0
 $ LOOP_SDIRS: 
@@ -495,7 +498,7 @@ $ LOOP_SDIRS_END:
 $!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
-$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,kssl.h
+$ EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,dtls1.h,kssl.h
 $ COPY SYS$DISK:[.SSL]'EXHEADER' SYS$DISK:[.INCLUDE.OPENSSL]
 $!
 $! Purge all doubles

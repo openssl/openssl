@@ -84,7 +84,7 @@ if [ "x$XREL" != "x" ]; then
 	    4.2)
 		echo "whatever-whatever-unixware1"; exit 0
 		;;
-	    5)
+	    5*)
 		case "x${VERSION}" in
 		    # We hardcode i586 in place of ${MACHINE} for the
 		    # following reason. The catch is that even though Pentium
@@ -93,8 +93,7 @@ if [ "x$XREL" != "x" ]; then
 		    # with i386 is that it makes ./config pass 386 to
 		    # ./Configure, which in turn makes make generate
 		    # inefficient SHA-1 (for this moment) code.
-		    x7*)  echo "i586-sco-unixware7";           exit 0 ;;
-		    x8*)  echo "i586-unkn-OpenUNIX${VERSION}"; exit 0 ;;
+		    x[678]*)  echo "i586-sco-unixware7"; exit 0 ;;
 		esac
 		;;
 	esac
@@ -407,7 +406,7 @@ if [ "$GCCVER" != "" ]; then
   CC=gcc
   # then strip off whatever prefix egcs prepends the number with...
   # Hopefully, this will work for any future prefixes as well.
-  GCCVER=`echo $GCCVER | sed 's/^[a-zA-Z]*\-//'`
+  GCCVER=`echo $GCCVER | LC_ALL=C sed 's/^[a-zA-Z]*\-//'`
   # Since gcc 3.1 gcc --version behaviour has changed.  gcc -dumpversion
   # does give us what we want though, so we use that.  We just just the
   # major and minor version numbers.
@@ -452,8 +451,6 @@ if [ "$SYSTEM" = "SunOS" ]; then
       echo "         patch #107357-01 or later applied."
       sleep 5
     fi
-  elif [ "$CC" = "cc" -a $CCVER -gt 0 ]; then
-    CC=sc3
   fi
 fi
 
@@ -504,20 +501,7 @@ case "$GUESSOS" in
 	OUT="irix-mips3-$CC"
 	;;
   mips4-sgi-irix64)
-	echo "WARNING! If you wish to build 64-bit library, then you have to"
-	echo "         invoke './Configure irix64-mips4-$CC' *manually*."
-	if [ "$TEST" = "false" -a -t 1 ]; then
-	  echo "         You have about 5 seconds to press Ctrl-C to abort."
-	  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-	fi
-        #CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
-        #CPU=${CPU:-0}
-        #if [ $CPU -ge 5000 ]; then
-        #        options="$options -mips4"
-        #else
-        #        options="$options -mips3"
-        #fi
-	OUT="irix-mips3-$CC"
+	OUT="irix64-mips4-$CC"
 	;;
   ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
   ppc-apple-darwin*) OUT="darwin-ppc-cc" ;;
@@ -537,25 +521,12 @@ case "$GUESSOS" in
 	fi
 	;;
   ppc64-*-linux2)
-	echo "WARNING! If you wish to build 64-bit library, then you have to"
-	echo "         invoke './Configure linux-ppc64' *manually*."
-	if [ "$TEST" = "false" -a -t 1 ]; then
-	    echo "         You have about 5 seconds to press Ctrl-C to abort."
-	    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-	fi
-	OUT="linux-ppc"
+	OUT="linux-ppc64"
 	;;
   ppc-*-linux2) OUT="linux-ppc" ;;
   ia64-*-linux?) OUT="linux-ia64" ;;
   sparc64-*-linux2)
-	echo "WARNING! If you *know* that your GNU C supports 64-bit/V9 ABI"
-	echo "         and wish to build 64-bit library, then you have to"
-	echo "         invoke './Configure linux64-sparcv9' *manually*."
-	if [ "$TEST" = "false" -a -t 1 ]; then
-	  echo "          You have about 5 seconds to press Ctrl-C to abort."
-	  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-	fi
-	OUT="linux-sparcv9" ;;
+	OUT="linux64-sparcv9" ;;
   sparc-*-linux2)
 	KARCH=`awk '/^type/{print$3;exit(0);}' /proc/cpuinfo`
 	case ${KARCH:-sun4} in
@@ -588,53 +559,38 @@ case "$GUESSOS" in
 	OUT="linux-generic32" ;;
   arm*b-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
   arm*l-*-linux2) OUT="linux-generic32"; options="$options -DL_ENDIAN" ;;
-  s390*-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN -DNO_ASM" ;;
+  sh*b-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
+  sh*-*-linux2)  OUT="linux-generic32"; options="$options -DL_ENDIAN" ;;
+  m68k*-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
+  s390-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN -DNO_ASM" ;;
+  s390x-*-linux2) OUT="linux-s390x" ;;
   x86_64-*-linux?) OUT="linux-x86_64" ;;
   *86-*-linux2) OUT="linux-elf"
 	if [ "$GCCVER" -gt 28 ]; then
           if grep '^model.*Pentium' /proc/cpuinfo >/dev/null ; then
-	    options="$options -mcpu=pentium"
+	    options="$options -march=pentium"
           fi
           if grep '^model.*Pentium Pro' /proc/cpuinfo >/dev/null ; then
-	    options="$options -mcpu=pentiumpro"
+	    options="$options -march=pentiumpro"
           fi
           if grep '^model.*K6' /proc/cpuinfo >/dev/null ; then
-	    options="$options -mcpu=k6"
+	    options="$options -march=k6"
           fi
         fi ;;
   *-*-linux1) OUT="linux-aout" ;;
   *-*-linux2) OUT="linux-generic32" ;;
-  sun4u*-*-solaris2)
+  sun4[uv]*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
 	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
 	if [ "$ISA64" != "" ]; then
 	    if [ "$CC" = "cc" -a $CCVER -ge 50 ]; then
-		echo "WARNING! If you wish to build 64-bit library, then you have to"
-		echo "         invoke './Configure solaris64-sparcv9-cc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
-		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
+		OUT="solaris64-sparcv9-cc"
 	    elif [ "$CC" = "gcc" -a "$GCC_ARCH" = "-m64" ]; then
 		# $GCC_ARCH denotes default ABI chosen by compiler driver
 		# (first one found on the $PATH). I assume that user
 		# expects certain consistency with the rest of his builds
 		# and therefore switch over to 64-bit. <appro>
 		OUT="solaris64-sparcv9-gcc"
-		echo "WARNING! If you wish to build 32-bit library, then you have to"
-		echo "         invoke './Configure solaris-sparcv9-gcc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
-		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
-	    elif [ "$GCC_ARCH" = "-m32" ]; then
-		echo "NOTICE! If you *know* that your GNU C supports 64-bit/V9 ABI"
-		echo "        and wish to build 64-bit library, then you have to"
-		echo "        invoke './Configure solaris64-sparcv9-gcc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
-		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
 	    fi
 	fi
 	;;
@@ -647,34 +603,43 @@ case "$GUESSOS" in
 	    OUT="solaris64-x86_64-$CC"
 	else
 	    OUT="solaris-x86-$CC"
+	    if [ `uname -r | sed -e 's/5\.//'` -lt 10 ]; then
+		options="$options no-sse2"
+	    fi
 	fi
 	;;
   *-*-sunos4)		OUT="sunos-$CC" ;;
 
-  *86*-*-bsdi4)		OUT="bsdi-elf-gcc" ;;
-  alpha*-*-*bsd*)	OUT="BSD-generic64; options="$options -DL_ENDIAN" ;;
-  powerpc64-*-*bsd*)	OUT="BSD-generic64; options="$options -DB_ENDIAN" ;;
+  *86*-*-bsdi4)		OUT="BSD-x86-elf"; options="$options no-sse2 -ldl" ;;
+  alpha*-*-*bsd*)	OUT="BSD-generic64"; options="$options -DL_ENDIAN" ;;
+  powerpc64-*-*bsd*)	OUT="BSD-generic64"; options="$options -DB_ENDIAN" ;;
   sparc64-*-*bsd*)	OUT="BSD-sparc64" ;;
   ia64-*-*bsd*)		OUT="BSD-ia64" ;;
   amd64-*-*bsd*)	OUT="BSD-x86_64" ;;
-  *86*-*-*bsd*)		case "`(file -L /usr/lib/libc.so.*) 2>/dev/null`" in
+  *86*-*-*bsd*)		# mimic ld behaviour when it's looking for libc...
+			if [ -L /usr/lib/libc.so ]; then	# [Free|Net]BSD
+			    libc=/usr/lib/libc.so
+			else					# OpenBSD
+			    # ld searches for highest libc.so.* and so do we
+			    libc=`(ls /usr/lib/libc.so.* | tail -1) 2>/dev/null`
+			fi
+			case "`(file -L $libc) 2>/dev/null`" in
 			*ELF*)	OUT="BSD-x86-elf" ;;
-			*)	OUT="BSD-x86" ;;
+			*)	OUT="BSD-x86"; options="$options no-sse2" ;;
 			esac ;;
   *-*-*bsd*)		OUT="BSD-generic32" ;;
 
   *-*-osf)		OUT="osf1-alpha-cc" ;;
   *-*-tru64)		OUT="tru64-alpha-cc" ;;
-  *-*-OpenUNIX*)
+  *-*-[Uu]nix[Ww]are7)
 	if [ "$CC" = "gcc" ]; then
-	  OUT="OpenUNIX-8-gcc" 
+	  OUT="unixware-7-gcc" ; options="$options no-sse2"
 	else    
-	  OUT="OpenUNIX-8" 
+	  OUT="unixware-7" ; options="$options no-sse2 -D__i386__"
 	fi
 	;;
-  *-*-[Uu]nix[Ww]are7) OUT="unixware-7" ;;
-  *-*-[Uu]nix[Ww]are20*) OUT="unixware-2.0" ;;
-  *-*-[Uu]nix[Ww]are21*) OUT="unixware-2.1" ;;
+  *-*-[Uu]nix[Ww]are20*) OUT="unixware-2.0"; options="$options no-sse2 no-sha512" ;;
+  *-*-[Uu]nix[Ww]are21*) OUT="unixware-2.1"; options="$options no-sse2 no-sha512" ;;
   *-*-vos)
 	options="$options no-threads no-shared no-asm no-dso"
 	EXE=".pm"
@@ -692,28 +657,16 @@ case "$GUESSOS" in
 	CPU_VERSION=${CPU_VERSION:-0}
 	# See <sys/unistd.h> for further info on CPU_VERSION.
 	if   [ $CPU_VERSION -ge 768 ]; then	# IA-64 CPU
-	     echo "WARNING! 64-bit ABI is the default configured ABI on HP-UXi."
-	     echo "         If you wish to build 32-bit library, the you have to"
-	     echo "         invoke './Configure hpux-ia64-cc' *manually*."
-	     if [ "$TEST" = "false" -a -t 1 ]; then
-		echo "         You have about 5 seconds to press Ctrl-C to abort."
-		(trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-	     fi
 	     OUT="hpux64-ia64-cc"
 	elif [ $CPU_VERSION -ge 532 ]; then	# PA-RISC 2.x CPU
 	     OUT=${OUT:-"hpux-parisc2-${CC}"}
 	     if [ $KERNEL_BITS -eq 64 -a "$CC" = "cc" ]; then
-		echo "WARNING! If you wish to build 64-bit library then you have to"
-		echo "         invoke './Configure hpux64-parisc2-cc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
-		  echo "         You have about 5 seconds to press Ctrl-C to abort."
-		  (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
+		OUT="hpux64-parisc2-${CC}"
 	     fi
 	elif [ $CPU_VERSION -ge 528 ]; then	# PA-RISC 1.1+ CPU
-	     OUT="hpux-parisc-${CC}
+	     OUT="hpux-parisc-${CC}"
 	elif [ $CPU_VERSION -ge 523 ]; then	# PA-RISC 1.0 CPU
-	     OUT="hpux-parisc-${CC}
+	     OUT="hpux-parisc-${CC}"
 	else					# Motorola(?) CPU
 	     OUT="hpux-$CC"
 	fi
@@ -731,13 +684,13 @@ case "$GUESSOS" in
 	else
 	    OUT="aix-cc"
 	    if [ $KERNEL_BITS -eq 64 ]; then
-		echo "WARNING! If you wish to build 64-bit kit, then you have to"
-		echo "         invoke './Configure aix64-cc' *manually*."
-		if [ "$TEST" = "false" -a -t 1 ]; then
-		    echo "         You have ~5 seconds to press Ctrl-C to abort."
-		    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-		fi
+		OUT="aix64-cc"
 	    fi
+	fi
+	if (lsattr -E -O -l `lsdev -c processor|awk '{print$1;exit}'` | grep -i powerpc) >/dev/null 2>&1; then
+	    :	# this applies even to Power3 and later, as they return PowerPC_POWER[345]
+	else
+	    options="$options no-asm"
 	fi
 	;;
   # these are all covered by the catchall below
@@ -763,7 +716,7 @@ esac
 #  options="$options -DATALLA"
 #fi
 
-# gcc < 2.8 does not support -mcpu=ultrasparc
+# gcc < 2.8 does not support -march=ultrasparc
 if [ "$OUT" = solaris-sparcv9-gcc -a $GCCVER -lt 28 ]
 then
   echo "WARNING! Falling down to 'solaris-sparcv8-gcc'."
@@ -783,7 +736,7 @@ case "$GUESSOS" in
   i386-*) options="$options 386" ;;
 esac
 
-for i in bf cast des dh dsa ec hmac idea md2 md5 mdc2 rc2 rc4 rc5 aes ripemd rsa sha
+for i in aes bf camellia cast des dh dsa ec hmac idea md2 md5 mdc2 rc2 rc4 rc5 ripemd rsa seed sha
 do
   if [ ! -d crypto/$i ]
   then

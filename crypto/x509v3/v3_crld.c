@@ -68,7 +68,7 @@ static STACK_OF(CONF_VALUE) *i2v_crld(X509V3_EXT_METHOD *method,
 static STACK_OF(DIST_POINT) *v2i_crld(X509V3_EXT_METHOD *method,
 				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 
-X509V3_EXT_METHOD v3_crld = {
+const X509V3_EXT_METHOD v3_crld = {
 NID_crl_distribution_points, X509V3_EXT_MULTILINE, ASN1_ITEM_ref(CRL_DIST_POINTS),
 0,0,0,0,
 0,0,

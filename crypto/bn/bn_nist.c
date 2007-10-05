@@ -172,6 +172,7 @@ const BIGNUM *BN_get0_nist_prime_521(void)
 	}
 
 /* some misc internal functions */
+#if BN_BITS2 != 64
 static BN_ULONG _256_data[BN_NIST_256_TOP*6];
 static int _is_set_256_data = 0;
 static void _init_256_data(void);
@@ -179,6 +180,7 @@ static void _init_256_data(void);
 static BN_ULONG _384_data[BN_NIST_384_TOP*8];
 static int _is_set_384_data = 0;
 static void _init_384_data(void);
+#endif
 
 #define BN_NIST_ADD_ONE(a)	while (!(++(*(a)))) ++(a);
 
@@ -282,6 +284,11 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	nist_cp_bn_0(buf, a_d + BN_NIST_192_TOP, top - BN_NIST_192_TOP, BN_NIST_192_TOP);
 
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma message save
+# pragma message disable BADSUBSCRIPT
+#endif
+
 	nist_set_192(t_d, buf, 0, 3, 3);
 	if (bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP))
 		++carry;
@@ -289,6 +296,10 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	nist_set_192(t_d, buf, 4, 4, 0);
 	if (bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP))
 		++carry;
+
+#if defined(OPENSSL_SYS_VMS) && defined(__DECC)
+# pragma message restore
+#endif
 
 	nist_set_192(t_d, buf, 5, 5, 5)
 	if (bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP))
@@ -396,6 +407,7 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #endif
 	}
 
+#if BN_BITS2 != 64
 static void _init_256_data(void)
 	{
 	int	i;
@@ -413,6 +425,7 @@ static void _init_256_data(void)
 		}
 	_is_set_256_data = 1;
 	}
+#endif
 
 #define nist_set_256(to, from, a1, a2, a3, a4, a5, a6, a7, a8) \
 	{ \
@@ -546,6 +559,7 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #endif
 	}
 
+#if BN_BITS2 != 64
 static void _init_384_data(void)
 	{
 	int	i;
@@ -563,6 +577,7 @@ static void _init_384_data(void)
 		}
 	_is_set_384_data = 1;
 	}
+#endif
 
 #define nist_set_384(to,from,a1,a2,a3,a4,a5,a6,a7,a8,a9,a10,a11,a12) \
 	{ \

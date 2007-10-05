@@ -66,14 +66,23 @@
 #endif
 #include "evp_locl.h"
 
-const char *EVP_version="EVP" OPENSSL_VERSION_PTEXT;
+#ifdef OPENSSL_FIPS
+	#define M_do_cipher(ctx, out, in, inl) \
+		EVP_Cipher(ctx,out,in,inl)
+#else
+	#define M_do_cipher(ctx, out, in, inl) \
+		ctx->cipher->do_cipher(ctx,out,in,inl)
+#endif
 
-void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
+const char EVP_version[]="EVP" OPENSSL_VERSION_PTEXT;
+
+EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
 	{
-	memset(ctx,0,sizeof(EVP_CIPHER_CTX));
-	/* ctx->cipher=NULL; */
+	EVP_CIPHER_CTX *ctx=OPENSSL_malloc(sizeof *ctx);
+	if (ctx)
+		EVP_CIPHER_CTX_init(ctx);
+	return ctx;
 	}
-
 
 int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     const unsigned char *key, const unsigned char *iv, int enc)
@@ -81,144 +90,6 @@ int EVP_CipherInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	if (cipher)
 		EVP_CIPHER_CTX_init(ctx);
 	return EVP_CipherInit_ex(ctx,cipher,NULL,key,iv,enc);
-	}
-
-int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *impl,
-	     const unsigned char *key, const unsigned char *iv, int enc)
-	{
-	if (enc == -1)
-		enc = ctx->encrypt;
-	else
-		{
-		if (enc)
-			enc = 1;
-		ctx->encrypt = enc;
-		}
-#ifndef OPENSSL_NO_ENGINE
-	/* Whether it's nice or not, "Inits" can be used on "Final"'d contexts
-	 * so this context may already have an ENGINE! Try to avoid releasing
-	 * the previous handle, re-querying for an ENGINE, and having a
-	 * reinitialisation, when it may all be unecessary. */
-	if (ctx->engine && ctx->cipher && (!cipher ||
-			(cipher && (cipher->nid == ctx->cipher->nid))))
-		goto skip_to_init;
-#endif
-	if (cipher)
-		{
-		/* Ensure a context left lying around from last time is cleared
-		 * (the previous check attempted to avoid this if the same
-		 * ENGINE and EVP_CIPHER could be used). */
-		EVP_CIPHER_CTX_cleanup(ctx);
-
-		/* Restore encrypt field: it is zeroed by cleanup */
-		ctx->encrypt = enc;
-#ifndef OPENSSL_NO_ENGINE
-		if(impl)
-			{
-			if (!ENGINE_init(impl))
-				{
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
-				return 0;
-				}
-			}
-		else
-			/* Ask if an ENGINE is reserved for this job */
-			impl = ENGINE_get_cipher_engine(cipher->nid);
-		if(impl)
-			{
-			/* There's an ENGINE for this job ... (apparently) */
-			const EVP_CIPHER *c = ENGINE_get_cipher(impl, cipher->nid);
-			if(!c)
-				{
-				/* One positive side-effect of US's export
-				 * control history, is that we should at least
-				 * be able to avoid using US mispellings of
-				 * "initialisation"? */
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
-				return 0;
-				}
-			/* We'll use the ENGINE's private cipher definition */
-			cipher = c;
-			/* Store the ENGINE functional reference so we know
-			 * 'cipher' came from an ENGINE and we need to release
-			 * it when done. */
-			ctx->engine = impl;
-			}
-		else
-			ctx->engine = NULL;
-#endif
-
-		ctx->cipher=cipher;
-		if (ctx->cipher->ctx_size)
-			{
-			ctx->cipher_data=OPENSSL_malloc(ctx->cipher->ctx_size);
-			if (!ctx->cipher_data)
-				{
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX, ERR_R_MALLOC_FAILURE);
-				return 0;
-				}
-			}
-		else
-			{
-			ctx->cipher_data = NULL;
-			}
-		ctx->key_len = cipher->key_len;
-		ctx->flags = 0;
-		if(ctx->cipher->flags & EVP_CIPH_CTRL_INIT)
-			{
-			if(!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_INIT, 0, NULL))
-				{
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
-				return 0;
-				}
-			}
-		}
-	else if(!ctx->cipher)
-		{
-		EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_NO_CIPHER_SET);
-		return 0;
-		}
-#ifndef OPENSSL_NO_ENGINE
-skip_to_init:
-#endif
-	/* we assume block size is a power of 2 in *cryptUpdate */
-	OPENSSL_assert(ctx->cipher->block_size == 1
-	    || ctx->cipher->block_size == 8
-	    || ctx->cipher->block_size == 16);
-
-	if(!(EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_CUSTOM_IV)) {
-		switch(EVP_CIPHER_CTX_mode(ctx)) {
-
-			case EVP_CIPH_STREAM_CIPHER:
-			case EVP_CIPH_ECB_MODE:
-			break;
-
-			case EVP_CIPH_CFB_MODE:
-			case EVP_CIPH_OFB_MODE:
-
-			ctx->num = 0;
-
-			case EVP_CIPH_CBC_MODE:
-
-			OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) <=
-					(int)sizeof(ctx->iv));
-			if(iv) memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
-			memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
-			break;
-
-			default:
-			return 0;
-			break;
-		}
-	}
-
-	if(key || (ctx->cipher->flags & EVP_CIPH_ALWAYS_CALL_INIT)) {
-		if(!ctx->cipher->init(ctx,key,iv,enc)) return 0;
-	}
-	ctx->buf_len=0;
-	ctx->final_used=0;
-	ctx->block_mask=ctx->cipher->block_size-1;
-	return 1;
 	}
 
 int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
@@ -275,7 +146,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	OPENSSL_assert(inl > 0);
 	if(ctx->buf_len == 0 && (inl&(ctx->block_mask)) == 0)
 		{
-		if(ctx->cipher->do_cipher(ctx,out,in,inl))
+		if(M_do_cipher(ctx,out,in,inl))
 			{
 			*outl=inl;
 			return 1;
@@ -302,7 +173,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 			{
 			j=bl-i;
 			memcpy(&(ctx->buf[i]),in,j);
-			if(!ctx->cipher->do_cipher(ctx,out,ctx->buf,bl)) return 0;
+			if(!M_do_cipher(ctx,out,ctx->buf,bl)) return 0;
 			inl-=j;
 			in+=j;
 			out+=bl;
@@ -315,7 +186,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	inl-=i;
 	if (inl > 0)
 		{
-		if(!ctx->cipher->do_cipher(ctx,out,in,inl)) return 0;
+		if(!M_do_cipher(ctx,out,in,inl)) return 0;
 		*outl+=inl;
 		}
 
@@ -359,7 +230,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	n=b-bl;
 	for (i=bl; i<b; i++)
 		ctx->buf[i]=n;
-	ret=ctx->cipher->do_cipher(ctx,out,ctx->buf,b);
+	ret=M_do_cipher(ctx,out,ctx->buf,b);
 
 
 	if(ret)
@@ -449,7 +320,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 			}
 		OPENSSL_assert(b <= sizeof ctx->final);
 		n=ctx->final[b-1];
-		if (n > (int)b)
+		if (n == 0 || n > (int)b)
 			{
 			EVPerr(EVP_F_EVP_DECRYPTFINAL_EX,EVP_R_BAD_DECRYPT);
 			return(0);
@@ -472,26 +343,13 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	return(1);
 	}
 
-int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
+void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
 	{
-	if (c->cipher != NULL)
+	if (ctx)
 		{
-		if(c->cipher->cleanup && !c->cipher->cleanup(c))
-			return 0;
-		/* Cleanse cipher context data */
-		if (c->cipher_data)
-			OPENSSL_cleanse(c->cipher_data, c->cipher->ctx_size);
+		EVP_CIPHER_CTX_cleanup(ctx);
+		OPENSSL_free(ctx);
 		}
-	if (c->cipher_data)
-		OPENSSL_free(c->cipher_data);
-#ifndef OPENSSL_NO_ENGINE
-	if (c->engine)
-		/* The EVP_CIPHER we used belongs to an ENGINE, release the
-		 * functional reference we held for this reason. */
-		ENGINE_finish(c->engine);
-#endif
-	memset(c,0,sizeof(EVP_CIPHER_CTX));
-	return 1;
 	}
 
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
@@ -515,27 +373,6 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
 	return 1;
 	}
 
-int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
-{
-	int ret;
-	if(!ctx->cipher) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
-		return 0;
-	}
-
-	if(!ctx->cipher->ctrl) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_CTRL_NOT_IMPLEMENTED);
-		return 0;
-	}
-
-	ret = ctx->cipher->ctrl(ctx, type, arg, ptr);
-	if(ret == -1) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
-		return 0;
-	}
-	return ret;
-}
-
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 	{
 	if (ctx->cipher->flags & EVP_CIPH_RAND_KEY)
@@ -545,3 +382,54 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 	return 1;
 	}
 
+#ifndef OPENSSL_NO_ENGINE
+
+#ifdef OPENSSL_FIPS
+
+static int do_evp_enc_engine_full(EVP_CIPHER_CTX *ctx, const EVP_CIPHER **pcipher, ENGINE *impl)
+	{
+	if(impl)
+		{
+		if (!ENGINE_init(impl))
+			{
+			EVPerr(EVP_F_DO_EVP_ENC_ENGINE_FULL, EVP_R_INITIALIZATION_ERROR);
+			return 0;
+			}
+		}
+	else
+		/* Ask if an ENGINE is reserved for this job */
+		impl = ENGINE_get_cipher_engine((*pcipher)->nid);
+	if(impl)
+		{
+		/* There's an ENGINE for this job ... (apparently) */
+		const EVP_CIPHER *c = ENGINE_get_cipher(impl, (*pcipher)->nid);
+		if(!c)
+			{
+			/* One positive side-effect of US's export
+			 * control history, is that we should at least
+			 * be able to avoid using US mispellings of
+			 * "initialisation"? */
+			EVPerr(EVP_F_DO_EVP_ENC_ENGINE_FULL, EVP_R_INITIALIZATION_ERROR);
+			return 0;
+			}
+		/* We'll use the ENGINE's private cipher definition */
+		*pcipher = c;
+		/* Store the ENGINE functional reference so we know
+		 * 'cipher' came from an ENGINE and we need to release
+		 * it when done. */
+		ctx->engine = impl;
+		}
+	else
+		ctx->engine = NULL;
+	return 1;
+	}
+
+void int_EVP_CIPHER_init_engine_callbacks(void)
+	{
+	int_EVP_CIPHER_set_engine_callbacks(
+		ENGINE_finish, do_evp_enc_engine_full);
+	}
+
+#endif
+
+#endif

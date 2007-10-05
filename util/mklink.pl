@@ -15,12 +15,22 @@
 # Apart from this, this script should be able to handle even the most
 # pathological cases.
 
+my $pwd;
+eval 'use Cwd;';
+if ($@)
+	{
+	$pwd = `pwd`;
+	}
+else
+	{
+	$pwd = getcwd();
+	}
+
 my $from = shift;
 my @files = @ARGV;
 
 my @from_path = split(/[\\\/]/, $from);
-my $pwd = `pwd`;
-chop($pwd);
+chomp($pwd);
 my @pwd_path = split(/[\\\/]/, $pwd);
 
 my @to_path = ();

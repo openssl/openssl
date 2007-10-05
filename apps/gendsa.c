@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/opensslconf.h>	/* for OPENSSL_NO_DSA */
 #ifndef OPENSSL_NO_DSA
 #include <stdio.h>
 #include <string.h>
@@ -139,6 +140,10 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-idea") == 0)
 			enc=EVP_idea_cbc();
 #endif
+#ifndef OPENSSL_NO_SEED
+		else if (strcmp(*argv,"-seed") == 0)
+			enc=EVP_seed_cbc();
+#endif
 #ifndef OPENSSL_NO_AES
 		else if (strcmp(*argv,"-aes128") == 0)
 			enc=EVP_aes_128_cbc();
@@ -146,6 +151,14 @@ int MAIN(int argc, char **argv)
 			enc=EVP_aes_192_cbc();
 		else if (strcmp(*argv,"-aes256") == 0)
 			enc=EVP_aes_256_cbc();
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+		else if (strcmp(*argv,"-camellia128") == 0)
+			enc=EVP_camellia_128_cbc();
+		else if (strcmp(*argv,"-camellia192") == 0)
+			enc=EVP_camellia_192_cbc();
+		else if (strcmp(*argv,"-camellia256") == 0)
+			enc=EVP_camellia_256_cbc();
 #endif
 		else if (**argv != '-' && dsaparams == NULL)
 			{
@@ -169,9 +182,17 @@ bad:
 #ifndef OPENSSL_NO_IDEA
 		BIO_printf(bio_err," -idea     - encrypt the generated key with IDEA in cbc mode\n");
 #endif
+#ifndef OPENSSL_NO_SEED
+		BIO_printf(bio_err," -seed\n");
+		BIO_printf(bio_err,"                 encrypt PEM output with cbc seed\n");
+#endif
 #ifndef OPENSSL_NO_AES
 		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");
 		BIO_printf(bio_err,"                 encrypt PEM output with cbc aes\n");
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+		BIO_printf(bio_err," -camellia128, -camellia192, -camellia256\n");
+		BIO_printf(bio_err,"                 encrypt PEM output with cbc camellia\n");
 #endif
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," -engine e - use engine e, possibly a hardware device.\n");

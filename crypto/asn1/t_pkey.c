@@ -81,8 +81,10 @@
 
 static int print(BIO *fp,const char *str, const BIGNUM *num,
 		unsigned char *buf,int off);
+#ifndef OPENSSL_NO_EC
 static int print_bin(BIO *fp, const char *str, const unsigned char *num,
 		size_t len, int off);
+#endif
 #ifndef OPENSSL_NO_RSA
 #ifndef OPENSSL_NO_FP_API
 int RSA_print_fp(FILE *fp, const RSA *x, int off)
@@ -107,7 +109,7 @@ int RSA_print(BIO *bp, const RSA *x, int off)
 	char str[128];
 	const char *s;
 	unsigned char *m=NULL;
-	int ret=0;
+	int ret=0, mod_len = 0;
 	size_t buf_len=0, i;
 
 	if (x->n)
@@ -141,27 +143,37 @@ int RSA_print(BIO *bp, const RSA *x, int off)
 		goto err;
 		}
 
+	if (x->n != NULL)
+		mod_len = BN_num_bits(x->n);
+
 	if (x->d != NULL)
 		{
 		if(!BIO_indent(bp,off,128))
 		   goto err;
-		if (BIO_printf(bp,"Private-Key: (%d bit)\n",BN_num_bits(x->n))
+		if (BIO_printf(bp,"Private-Key: (%d bit)\n", mod_len)
 			<= 0) goto err;
 		}
 
 	if (x->d == NULL)
-		BIO_snprintf(str,sizeof str,"Modulus (%d bit):",BN_num_bits(x->n));
+		BIO_snprintf(str,sizeof str,"Modulus (%d bit):", mod_len);
 	else
 		BUF_strlcpy(str,"modulus:",sizeof str);
 	if (!print(bp,str,x->n,m,off)) goto err;
 	s=(x->d == NULL)?"Exponent:":"publicExponent:";
-	if (!print(bp,s,x->e,m,off)) goto err;
-	if (!print(bp,"privateExponent:",x->d,m,off)) goto err;
-	if (!print(bp,"prime1:",x->p,m,off)) goto err;
-	if (!print(bp,"prime2:",x->q,m,off)) goto err;
-	if (!print(bp,"exponent1:",x->dmp1,m,off)) goto err;
-	if (!print(bp,"exponent2:",x->dmq1,m,off)) goto err;
-	if (!print(bp,"coefficient:",x->iqmp,m,off)) goto err;
+	if ((x->e != NULL) && !print(bp,s,x->e,m,off))
+		goto err;
+	if ((x->d != NULL) && !print(bp,"privateExponent:",x->d,m,off))
+		goto err;
+	if ((x->p != NULL) && !print(bp,"prime1:",x->p,m,off))
+		goto err;
+	if ((x->q != NULL) && !print(bp,"prime2:",x->q,m,off))
+		goto err;
+	if ((x->dmp1 != NULL) && !print(bp,"exponent1:",x->dmp1,m,off))
+		goto err;
+	if ((x->dmq1 != NULL) && !print(bp,"exponent2:",x->dmq1,m,off))
+		goto err;
+	if ((x->iqmp != NULL) && !print(bp,"coefficient:",x->iqmp,m,off))
+		goto err;
 	ret=1;
 err:
 	if (m != NULL) OPENSSL_free(m);
@@ -196,6 +208,11 @@ int DSA_print(BIO *bp, const DSA *x, int off)
 
 	if (x->p)
 		buf_len = (size_t)BN_num_bytes(x->p);
+	else
+		{
+		DSAerr(DSA_F_DSA_PRINT,DSA_R_MISSING_PARAMETERS);
+		goto err;
+		}
 	if (x->q)
 		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
 			buf_len = i;
@@ -601,6 +618,7 @@ static int print(BIO *bp, const char *number, const BIGNUM *num, unsigned char *
 	return(1);
 	}
 
+#ifndef OPENSSL_NO_EC
 static int print_bin(BIO *fp, const char *name, const unsigned char *buf,
 		size_t len, int off)
 	{
@@ -638,6 +656,7 @@ static int print_bin(BIO *fp, const char *name, const unsigned char *buf,
 
 	return 1;
 	}
+#endif
 
 #ifndef OPENSSL_NO_DH
 #ifndef OPENSSL_NO_FP_API
@@ -666,6 +685,11 @@ int DHparams_print(BIO *bp, const DH *x)
 
 	if (x->p)
 		buf_len = (size_t)BN_num_bytes(x->p);
+	else
+		{
+		reason = ERR_R_PASSED_NULL_PARAMETER;
+		goto err;
+		}
 	if (x->g)
 		if (buf_len < (i = (size_t)BN_num_bytes(x->g)))
 			buf_len = i;
@@ -719,11 +743,16 @@ int DSAparams_print_fp(FILE *fp, const DSA *x)
 int DSAparams_print(BIO *bp, const DSA *x)
 	{
 	unsigned char *m=NULL;
-	int reason=ERR_R_BUF_LIB,ret=0;
+	int ret=0;
 	size_t buf_len=0,i;
 
 	if (x->p)
 		buf_len = (size_t)BN_num_bytes(x->p);
+	else
+		{
+		DSAerr(DSA_F_DSAPARAMS_PRINT,DSA_R_MISSING_PARAMETERS);
+		goto err;
+		}
 	if (x->q)
 		if (buf_len < (i = (size_t)BN_num_bytes(x->q)))
 			buf_len = i;
@@ -733,7 +762,7 @@ int DSAparams_print(BIO *bp, const DSA *x)
 	m=(unsigned char *)OPENSSL_malloc(buf_len+10);
 	if (m == NULL)
 		{
-		reason=ERR_R_MALLOC_FAILURE;
+		DSAerr(DSA_F_DSAPARAMS_PRINT,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
@@ -741,12 +770,11 @@ int DSAparams_print(BIO *bp, const DSA *x)
 		BN_num_bits(x->p)) <= 0)
 		goto err;
 	if (!print(bp,"p:",x->p,m,4)) goto err;
-	if (!print(bp,"q:",x->q,m,4)) goto err;
-	if (!print(bp,"g:",x->g,m,4)) goto err;
+	if ((x->q != NULL) && !print(bp,"q:",x->q,m,4)) goto err;
+	if ((x->g != NULL) && !print(bp,"g:",x->g,m,4)) goto err;
 	ret=1;
 err:
 	if (m != NULL) OPENSSL_free(m);
-	DSAerr(DSA_F_DSAPARAMS_PRINT,reason);
 	return(ret);
 	}
 

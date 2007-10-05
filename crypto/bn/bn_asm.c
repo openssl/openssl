@@ -237,7 +237,7 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 	if (d == 0) return(BN_MASK2);
 
 	i=BN_num_bits_word(d);
-	assert((i == BN_BITS2) || (h > (BN_ULONG)1<<i));
+	assert((i == BN_BITS2) || (h <= (BN_ULONG)1<<i));
 
 	i=BN_BITS2-i;
 	if (h >= d) h-=d;
@@ -457,6 +457,34 @@ BN_ULONG bn_sub_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b, int n)
 	c1=(c1+t2)&BN_MASK2; if ((c1) < t2) c2++;
 
 #define sqr_add_c2(a,i,j,c0,c1,c2) \
+	mul_add_c2((a)[i],(a)[j],c0,c1,c2)
+
+#elif defined(BN_UMULT_LOHI)
+
+#define mul_add_c(a,b,c0,c1,c2)	{	\
+	BN_ULONG ta=(a),tb=(b);		\
+	BN_UMULT_LOHI(t1,t2,ta,tb);	\
+	c0 += t1; t2 += (c0<t1)?1:0;	\
+	c1 += t2; c2 += (c1<t2)?1:0;	\
+	}
+
+#define mul_add_c2(a,b,c0,c1,c2) {	\
+	BN_ULONG ta=(a),tb=(b),t0;	\
+	BN_UMULT_LOHI(t0,t1,ta,tb);	\
+	t2 = t1+t1; c2 += (t2<t1)?1:0;	\
+	t1 = t0+t0; t2 += (t1<t0)?1:0;	\
+	c0 += t1; t2 += (c0<t1)?1:0;	\
+	c1 += t2; c2 += (c1<t2)?1:0;	\
+	}
+
+#define sqr_add_c(a,i,c0,c1,c2)	{	\
+	BN_ULONG ta=(a)[i];		\
+	BN_UMULT_LOHI(t1,t2,ta,ta);	\
+	c0 += t1; t2 += (c0<t1)?1:0;	\
+	c1 += t2; c2 += (c1<t2)?1:0;	\
+	}
+
+#define sqr_add_c2(a,i,j,c0,c1,c2)	\
 	mul_add_c2((a)[i],(a)[j],c0,c1,c2)
 
 #elif defined(BN_UMULT_HIGH)

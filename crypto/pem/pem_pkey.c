@@ -125,6 +125,7 @@ p8err:
 		PEMerr(PEM_F_PEM_READ_BIO_PRIVATEKEY,ERR_R_ASN1_LIB);
 err:
 	OPENSSL_free(nm);
+	OPENSSL_cleanse(data, len);
 	OPENSSL_free(data);
 	return(ret);
 	}

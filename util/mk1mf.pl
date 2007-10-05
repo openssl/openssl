@@ -10,6 +10,24 @@ $OPTIONS="";
 $ssl_version="";
 $banner="\t\@echo Building OpenSSL";
 
+my $no_static_engine = 0;
+my $engines = "";
+local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
+local $zlib_lib = "";
+
+local $fips_canister_path = "";
+my $fips_premain_dso_exe_path = "";
+my $fips_premain_c_path = "";
+my $fips_sha1_exe_path = "";
+
+local $fipscanisterbuild = 0;
+local $fipsdso = 0;
+
+my $fipslibdir = "";
+my $baseaddr = "";
+
+my $ex_l_libs = "";
+
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
     $ssl_version=$1 if (/^VERSION=(.*)$/);
@@ -24,6 +42,8 @@ $infile="MINFO";
 
 %ops=(
 	"VC-WIN32",   "Microsoft Visual C++ [4-6] - Windows NT or 9X",
+	"VC-WIN64I",  "Microsoft C/C++ - Win64/IA-64",
+	"VC-WIN64A",  "Microsoft C/C++ - Win64/x64",
 	"VC-CE",   "Microsoft eMbedded Visual C++ 3.0 - Windows CE ONLY",
 	"VC-NT",   "Microsoft Visual C++ [4-6] - Windows NT ONLY",
 	"Mingw32", "GNU C++ - Windows NT or 9x",
@@ -33,8 +53,9 @@ $infile="MINFO";
 	"ultrix-mips","DEC mips ultrix",
 	"FreeBSD","FreeBSD distribution",
 	"OS2-EMX", "EMX GCC OS/2",
-	"netware-clib", "CodeWarrior for NetWare - CLib",
-	"netware-libc", "CodeWarrior for NetWare - LibC",
+	"netware-clib", "CodeWarrior for NetWare - CLib - with WinSock Sockets",
+	"netware-libc", "CodeWarrior for NetWare - LibC - with WinSock Sockets",
+	"netware-libc-bsdsock", "CodeWarrior for NetWare - LibC - with BSD Sockets",
 	"default","cc under unix",
 	);
 
@@ -54,7 +75,7 @@ and [options] can be one of
 	no-md2 no-md4 no-md5 no-sha no-mdc2	- Skip this digest
 	no-ripemd
 	no-rc2 no-rc4 no-rc5 no-idea no-des     - Skip this symetric cipher
-	no-bf no-cast no-aes
+	no-bf no-cast no-aes no-camellia no-seed
 	no-rsa no-dsa no-dh			- Skip this public key cipher
 	no-ssl2 no-ssl3				- Skip this version of SSL
 	just-ssl				- remove all non-ssl keys/digest
@@ -92,6 +113,8 @@ foreach (grep(!/^$/, split(/ /, $OPTIONS)))
 	print STDERR "unknown option - $_\n" if !&read_options;
 	}
 
+$no_static_engine = 0 if (!$shlib);
+
 $no_mdc2=1 if ($no_des);
 
 $no_ssl3=1 if ($no_md5 || $no_sha);
@@ -104,7 +127,9 @@ $out_def="out";
 $inc_def="outinc";
 $tmp_def="tmp";
 
-$mkdir="-mkdir";
+$perl="perl" unless defined $perl;
+$mkdir="-mkdir" unless defined $mkdir;
+$mkcanister="ld -r -o";
 
 ($ssl,$crypto)=("ssl","crypto");
 $ranlib="echo ranlib";
@@ -119,14 +144,11 @@ $bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
 $NT=0;
 
 push(@INC,"util/pl","pl");
-if (($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
+if (($platform =~ /VC-(.+)/))
 	{
-	$NT = 1 if $platform eq "VC-NT";
+	$FLAVOR=$1;
+	$NT = 1 if $1 eq "NT";
 	require 'VC-32.pl';
-	}
-elsif ($platform eq "VC-CE")
-	{
-	require 'VC-CE.pl';
 	}
 elsif ($platform eq "Mingw32")
 	{
@@ -163,9 +185,11 @@ elsif ($platform eq "OS2-EMX")
 	$wc=1;
 	require 'OS2-EMX.pl';
 	}
-elsif (($platform eq "netware-clib") || ($platform eq "netware-libc"))
+elsif (($platform eq "netware-clib") || ($platform eq "netware-libc") ||
+       ($platform eq "netware-libc-bsdsock"))
 	{
-   $LIBC=1 if $platform eq "netware-libc";
+	$LIBC=1 if $platform eq "netware-libc" || $platform eq "netware-libc-bsdsock";
+	$BSDSOCK=1 if $platform eq "netware-libc-bsdsock";
 	require 'netware.pl';
 	}
 else
@@ -186,6 +210,8 @@ $cflags= "$xcflags$cflags" if $xcflags ne "";
 
 $cflags.=" -DOPENSSL_NO_IDEA" if $no_idea;
 $cflags.=" -DOPENSSL_NO_AES"  if $no_aes;
+$cflags.=" -DOPENSSL_NO_CAMELLIA"  if $no_camellia;
+$cflags.=" -DOPENSSL_NO_SEED" if $no_seed;
 $cflags.=" -DOPENSSL_NO_RC2"  if $no_rc2;
 $cflags.=" -DOPENSSL_NO_RC4"  if $no_rc4;
 $cflags.=" -DOPENSSL_NO_RC5"  if $no_rc5;
@@ -212,6 +238,20 @@ $cflags.=" -DOPENSSL_NO_ECDSA" if $no_ecdsa;
 $cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
+$cflags.=" -DOPENSSL_FIPS"    if $fips;
+
+$cflags.= " -DZLIB" if $zlib_opt;
+$cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
+
+if ($no_static_engine)
+	{
+	$cflags .= " -DOPENSSL_NO_STATIC_ENGINE";
+	}
+else
+	{
+	$cflags .= " -DOPENSSL_NO_DYNAMIC_ENGINE";
+	}
+
 #$cflags.=" -DRSAref"  if $rsaref ne "";
 
 ## if ($unix)
@@ -222,7 +262,8 @@ $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 $ex_libs="$l_flags$ex_libs" if ($l_flags ne "");
 
 %shlib_ex_cflags=("SSL" => " -DOPENSSL_BUILD_SHLIBSSL",
-		  "CRYPTO" => " -DOPENSSL_BUILD_SHLIBCRYPTO");
+		  "CRYPTO" => " -DOPENSSL_BUILD_SHLIBCRYPTO",
+		  "FIPS" => " -DOPENSSL_BUILD_SHLIBCRYPTO");
 
 if ($msdos)
 	{
@@ -250,11 +291,21 @@ for (;;)
 		{
 		if ($lib ne "")
 			{
-			$uc=$lib;
-			$uc =~ s/^lib(.*)\.a/$1/;
-			$uc =~ tr/a-z/A-Z/;
-			$lib_nam{$uc}=$uc;
-			$lib_obj{$uc}.=$libobj." ";
+ 			if ($fips && $dir =~ /^fips/)
+ 				{
+ 				$uc = "FIPS";
+ 				}
+ 			else
+ 				{
+ 				$uc=$lib;
+ 				$uc =~ s/^lib(.*)\.a/$1/;
+ 				$uc =~ tr/a-z/A-Z/;
+				}
+			if (($uc ne "FIPS") || $fipscanisterbuild)
+				{
+				$lib_nam{$uc}=$uc;
+				$lib_obj{$uc}.=$libobj." ";
+				}
 			}
 		last if ($val eq "FINISHED");
 		$lib="";
@@ -265,14 +316,20 @@ for (;;)
 	if ($key eq "KRB5_INCLUDES")
 		{ $cflags .= " $val";}
 
+	if ($key eq "ZLIB_INCLUDE")
+		{ $cflags .= " $val" if $val ne "";}
+
+	if ($key eq "LIBZLIB")
+		{ $zlib_lib = "$val" if $val ne "";}
+
 	if ($key eq "LIBKRB5")
-		{ $ex_libs .= " $val";}
+		{ $ex_libs .= " $val" if $val ne "";}
 
 	if ($key eq "TEST")
-		{ $test.=&var_add($dir,$val); }
+		{ $test.=&var_add($dir,$val, 0); }
 
 	if (($key eq "PROGS") || ($key eq "E_OBJ"))
-		{ $e_exe.=&var_add($dir,$val); }
+		{ $e_exe.=&var_add($dir,$val, 0); }
 
 	if ($key eq "LIB")
 		{
@@ -281,18 +338,164 @@ for (;;)
 		}
 
 	if ($key eq "EXHEADER")
-		{ $exheader.=&var_add($dir,$val); }
+		{ $exheader.=&var_add($dir,$val, 1); }
 
 	if ($key eq "HEADER")
-		{ $header.=&var_add($dir,$val); }
+		{ $header.=&var_add($dir,$val, 1); }
 
-	if ($key eq "LIBOBJ")
-		{ $libobj=&var_add($dir,$val); }
+	if ($key eq "LIBOBJ" && ($dir ne "engines" || !$no_static_engine))
+		{ $libobj=&var_add($dir,$val, 0); }
+	if ($key eq "LIBNAMES" && $dir eq "engines" && $no_static_engine)
+ 		{ $engines.=$val }
+
+	if ($key eq "FIPS_EX_OBJ")
+		{ 
+		$fips_ex_obj=&var_add("crypto",$val,0);
+		}
+
+	if ($key eq "FIPSLIBDIR")
+		{
+		$fipslibdir=$val;
+		$fipslibdir =~ s/\/$//;
+		$fipslibdir =~ s/\//$o/g;
+		}
+
+	if ($key eq "BASEADDR")
+		{ $baseaddr=$val;}
 
 	if (!($_=<IN>))
 		{ $_="RELATIVE_DIRECTORY=FINISHED\n"; }
 	}
 close(IN);
+
+if ($fips)
+	{
+	 
+	foreach (split " ", $fips_ex_obj)
+		{
+		$fips_exclude_obj{$1} = 1 if (/\/([^\/]*)$/);
+		}
+
+	$fips_exclude_obj{"cpu_win32"} = 1;
+	$fips_exclude_obj{"bn_asm"} = 1;
+	$fips_exclude_obj{"des_enc"} = 1;
+	$fips_exclude_obj{"fcrypt_b"} = 1;
+	$fips_exclude_obj{"aes_core"} = 1;
+	$fips_exclude_obj{"aes_cbc"} = 1;
+
+	my @ltmp = split " ", $lib_obj{"CRYPTO"};
+
+
+	$lib_obj{"CRYPTO"} = "";
+
+	foreach(@ltmp)
+		{
+		if (/\/([^\/]*)$/ && exists $fips_exclude_obj{$1})
+			{
+			if ($fipscanisterbuild)
+				{
+				$lib_obj{"FIPS"} .= "$_ ";
+				}
+			}
+		else
+			{
+			$lib_obj{"CRYPTO"} .= "$_ ";
+			}
+		}
+
+	}
+
+if ($fipscanisterbuild)
+	{
+	$fips_canister_path = "\$(LIB_D)${o}fipscanister.lib" if $fips_canister_path eq "";
+	$fips_premain_c_path = "\$(LIB_D)${o}fips_premain.c";
+	}
+else
+	{
+	if ($fips_canister_path eq "")
+		{
+		$fips_canister_path = "\$(FIPSLIB_D)${o}fipscanister.lib";
+		}
+
+	if ($fips_premain_c_path eq "")
+		{
+		$fips_premain_c_path = "\$(FIPSLIB_D)${o}fips_premain.c";
+		}
+	}
+
+if ($fips)
+	{
+	if ($fips_sha1_exe_path eq "")
+		{
+		$fips_sha1_exe_path =
+			"\$(BIN_D)${o}fips_standalone_sha1$exep";
+		}
+	}
+	else
+	{
+	$fips_sha1_exe_path = "";
+	}
+
+if ($fips_premain_dso_exe_path eq "")
+	{
+	$fips_premain_dso_exe_path = "\$(BIN_D)${o}fips_premain_dso$exep";
+	}
+
+#	$ex_build_targets .= "\$(BIN_D)${o}\$(E_PREMAIN_DSO)$exep" if ($fips);
+
+#$ex_l_libs .= " \$(L_FIPS)" if $fipsdso;
+
+if ($fips)
+	{
+	if (!$shlib)
+		{
+		$ex_build_targets .= " \$(LIB_D)$o$crypto_compat \$(PREMAIN_DSO_EXE)";
+		$ex_l_libs .= " \$(O_FIPSCANISTER)";
+		$ex_libs_dep .= " \$(O_FIPSCANISTER)" if $fipscanisterbuild;
+		}
+	if ($fipscanisterbuild)
+		{
+		$fipslibdir = "\$(LIB_D)";
+		}
+	else
+		{
+		if ($fipslibdir eq "")
+			{
+			open (IN, "util/fipslib_path.txt") || fipslib_error();
+			$fipslibdir = <IN>;
+			chomp $fipslibdir;
+			close IN;
+			}
+		fips_check_files($fipslibdir,
+				"fipscanister.lib", "fipscanister.lib.sha1",
+				"fips_premain.c", "fips_premain.c.sha1");
+		}
+	}
+
+if ($shlib)
+	{
+	$extra_install= <<"EOF";
+	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}bin
+	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}bin
+	\$(CP) \$(L_SSL) \$(INSTALLTOP)${o}lib
+	\$(CP) \$(L_CRYPTO) \$(INSTALLTOP)${o}lib
+EOF
+	if ($no_static_engine)
+		{
+		$extra_install .= <<"EOF"
+	\$(MKDIR) \$(INSTALLTOP)${o}lib${o}engines
+	\$(CP) \$(E_SHLIB) \$(INSTALLTOP)${o}lib${o}engines
+EOF
+		}
+	}
+else
+	{
+	$extra_install= <<"EOF";
+	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}lib
+	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}lib
+EOF
+	$ex_libs .= " $zlib_lib" if $zlib_opt == 1;
+	}
 
 $defs= <<"EOF";
 # This makefile has been automatically generated from the OpenSSL distribution.
@@ -311,14 +514,6 @@ $defs= <<"EOF";
 EOF
 
 $defs .= $preamble if defined $preamble;
-
-if ($platform eq "VC-CE")
-	{
-	$defs.= <<"EOF";
-!INCLUDE <\$(WCECOMPAT)/wcedefs.mak>
-
-EOF
-	}
 
 $defs.= <<"EOF";
 INSTALLTOP=$INSTALLTOP
@@ -342,7 +537,10 @@ SRC_D=$src_dir
 LINK=$link
 LFLAGS=$lflags
 RSC=$rsc
+FIPSLINK=\$(PERL) util${o}fipslink.pl
 
+AES_ASM_OBJ=$aes_asm_obj
+AES_ASM_SRC=$aes_asm_src
 BN_ASM_OBJ=$bn_asm_obj
 BN_ASM_SRC=$bn_asm_src
 BNCO_ASM_OBJ=$bnco_asm_obj
@@ -363,6 +561,8 @@ SHA1_ASM_OBJ=$sha1_asm_obj
 SHA1_ASM_SRC=$sha1_asm_src
 RMD160_ASM_OBJ=$rmd160_asm_obj
 RMD160_ASM_SRC=$rmd160_asm_src
+CPUID_ASM_OBJ=$cpuid_asm_obj
+CPUID_ASM_SRC=$cpuid_asm_src
 
 # The output directory for everything intersting
 OUT_D=$out_dir
@@ -372,6 +572,7 @@ TMP_D=$tmp_dir
 INC_D=$inc_dir
 INCO_D=$inc_dir${o}openssl
 
+PERL=$perl
 CP=$cp
 RM=$rm
 RANLIB=$ranlib
@@ -379,6 +580,18 @@ MKDIR=$mkdir
 MKLIB=$bin_dir$mklib
 MLFLAGS=$mlflags
 ASM=$bin_dir$asm
+MKCANISTER=$mkcanister
+
+# FIPS validated module and support file locations
+
+E_PREMAIN_DSO=fips_premain_dso
+
+FIPSLIB_D=$fipslibdir
+BASEADDR=$baseaddr
+FIPS_PREMAIN_SRC=$fips_premain_c_path
+O_FIPSCANISTER=$fips_canister_path
+FIPS_SHA1_EXE=$fips_sha1_exe_path
+PREMAIN_DSO_EXE=$fips_premain_dso_exe_path
 
 ######################################################
 # You should not need to touch anything below this point
@@ -387,16 +600,19 @@ ASM=$bin_dir$asm
 E_EXE=openssl
 SSL=$ssl
 CRYPTO=$crypto
+LIBFIPS=libosslfips
 
 # BIN_D  - Binary output directory
 # TEST_D - Binary test file output directory
 # LIB_D  - library output directory
+# ENG_D  - dynamic engine output directory
 # Note: if you change these point to different directories then uncomment out
 # the lines around the 'NB' comment below.
 # 
 BIN_D=\$(OUT_D)
 TEST_D=\$(OUT_D)
 LIB_D=\$(OUT_D)
+ENG_D=\$(OUT_D)
 
 # INCL_D - local library directory
 # OBJ_D  - temp object file directory
@@ -405,12 +621,14 @@ INCL_D=\$(TMP_D)
 
 O_SSL=     \$(LIB_D)$o$plib\$(SSL)$shlibp
 O_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$shlibp
+O_FIPS=    \$(LIB_D)$o$plib\$(LIBFIPS)$shlibp
 SO_SSL=    $plib\$(SSL)$so_shlibp
 SO_CRYPTO= $plib\$(CRYPTO)$so_shlibp
 L_SSL=     \$(LIB_D)$o$plib\$(SSL)$libp
 L_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$libp
+L_FIPS=    \$(LIB_D)$o$plib\$(LIBFIPS)$libp
 
-L_LIBS= \$(L_SSL) \$(L_CRYPTO)
+L_LIBS= \$(L_SSL) \$(L_CRYPTO) $ex_l_libs
 
 ######################################################
 # Don't touch anything below this point
@@ -420,13 +638,13 @@ INC=-I\$(INC_D) -I\$(INCL_D)
 APP_CFLAGS=\$(INC) \$(CFLAG) \$(APP_CFLAG)
 LIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG)
 SHLIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG) \$(SHLIB_CFLAG)
-LIBS_DEP=\$(O_CRYPTO) \$(O_SSL)
+LIBS_DEP=\$(O_CRYPTO) \$(O_SSL) $ex_libs_dep
 
 #############################################
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers \$(FIPS_SHA1_EXE) lib exe $ex_build_targets
 
 banner:
 $banner
@@ -452,11 +670,11 @@ $banner
 headers: \$(HEADER) \$(EXHEADER)
 	@
 
-lib: \$(LIBS_DEP)
+lib: \$(LIBS_DEP) \$(E_SHLIB)
 
 exe: \$(T_EXE) \$(BIN_D)$o\$(E_EXE)$exep
 
-install:
+install: all
 	\$(MKDIR) \$(INSTALLTOP)
 	\$(MKDIR) \$(INSTALLTOP)${o}bin
 	\$(MKDIR) \$(INSTALLTOP)${o}include
@@ -464,8 +682,13 @@ install:
 	\$(MKDIR) \$(INSTALLTOP)${o}lib
 	\$(CP) \$(INCO_D)${o}*.\[ch\] \$(INSTALLTOP)${o}include${o}openssl
 	\$(CP) \$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin
-	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}lib
-	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}lib
+	\$(CP) apps${o}openssl.cnf \$(INSTALLTOP)
+$extra_install
+
+
+test: \$(T_EXE)
+	cd \$(BIN_D)
+	..${o}ms${o}test
 
 clean:
 	\$(RM) \$(TMP_D)$o*.*
@@ -524,17 +747,37 @@ foreach (split(/\s+/,$exheader)){ $h{$_}=1; }
 foreach (split(/\s+/,$header))	{ $h.=$_." " unless $h{$_}; }
 chop($h); $header=$h;
 
-$defs.=&do_defs("HEADER",$header,"\$(INCL_D)",".h");
-$rules.=&do_copy_rule("\$(INCL_D)",$header,".h");
+$defs.=&do_defs("HEADER",$header,"\$(INCL_D)","");
+$rules.=&do_copy_rule("\$(INCL_D)",$header,"");
 
-$defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)",".h");
-$rules.=&do_copy_rule("\$(INCO_D)",$exheader,".h");
+$defs.=&do_defs("EXHEADER",$exheader,"\$(INCO_D)","");
+$rules.=&do_copy_rule("\$(INCO_D)",$exheader,"");
 
 $defs.=&do_defs("T_OBJ",$test,"\$(OBJ_D)",$obj);
 $rules.=&do_compile_rule("\$(OBJ_D)",$test,"\$(APP_CFLAGS)");
 
 $defs.=&do_defs("E_OBJ",$e_exe,"\$(OBJ_D)",$obj);
 $rules.=&do_compile_rule("\$(OBJ_D)",$e_exe,'-DMONOLITH $(APP_CFLAGS)');
+
+# Special case rules for fips_start and fips_end fips_premain_dso
+
+if ($fips)
+	{
+	if ($fipscanisterbuild)
+		{
+		$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_start$obj",
+			"fips${o}fips_canister.c",
+			"-DFIPS_START \$(SHLIB_CFLAGS)");
+		$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_end$obj",
+			"fips${o}fips_canister.c", "\$(SHLIB_CFLAGS)");
+		}
+	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_standalone_sha1$obj",
+		"fips${o}sha${o}fips_standalone_sha1.c",
+		"\$(SHLIB_CFLAGS)");
+	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
+		"fips${o}fips_premain.c",
+		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)");
+	}
 
 foreach (values %lib_nam)
 	{
@@ -547,21 +790,40 @@ foreach (values %lib_nam)
 		next;
 		}
 
-	if (($bn_asm_obj ne "") && ($_ eq "CRYPTO"))
+	if ((!$fips && ($_ eq "CRYPTO")) || ($fips && ($_ eq "FIPS")))
 		{
-		$lib_obj =~ s/\s\S*\/bn_asm\S*/ \$(BN_ASM_OBJ)/;
-		$rules.=&do_asm_rule($bn_asm_obj,$bn_asm_src);
-		}
-	if (($bnco_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj .= "\$(BNCO_ASM_OBJ)";
-		$rules.=&do_asm_rule($bnco_asm_obj,$bnco_asm_src);
-		}
-	if (($des_enc_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s\S*des_enc\S*/ \$(DES_ENC_OBJ)/;
-		$lib_obj =~ s/\s\S*\/fcrypt_b\S*\s*/ /;
-		$rules.=&do_asm_rule($des_enc_obj,$des_enc_src);
+		if ($cpuid_asm_obj ne "")
+			{
+			$lib_obj =~ s/(\S*\/cryptlib\S*)/$1 \$(CPUID_ASM_OBJ)/;
+			$rules.=&do_asm_rule($cpuid_asm_obj,$cpuid_asm_src);
+			}
+		if ($aes_asm_obj ne "")
+			{
+			$lib_obj =~ s/\s(\S*\/aes_core\S*)/ \$(AES_ASM_OBJ)/;
+			$lib_obj =~ s/\s\S*\/aes_cbc\S*//;
+			$rules.=&do_asm_rule($aes_asm_obj,$aes_asm_src);
+			}
+		if ($sha1_asm_obj ne "")
+			{
+			$lib_obj =~ s/\s(\S*\/sha1dgst\S*)/ $1 \$(SHA1_ASM_OBJ)/;
+			$rules.=&do_asm_rule($sha1_asm_obj,$sha1_asm_src);
+			}
+		if ($bn_asm_obj ne "")
+			{
+			$lib_obj =~ s/\s\S*\/bn_asm\S*/ \$(BN_ASM_OBJ)/;
+			$rules.=&do_asm_rule($bn_asm_obj,$bn_asm_src);
+			}
+		if ($bnco_asm_obj ne "")
+			{
+			$lib_obj .= "\$(BNCO_ASM_OBJ)";
+			$rules.=&do_asm_rule($bnco_asm_obj,$bnco_asm_src);
+			}
+		if ($des_enc_obj ne "")
+			{
+			$lib_obj =~ s/\s\S*des_enc\S*/ \$(DES_ENC_OBJ)/;
+			$lib_obj =~ s/\s\S*\/fcrypt_b\S*\s*/ /;
+			$rules.=&do_asm_rule($des_enc_obj,$des_enc_src);
+			}
 		}
 	if (($bf_enc_obj ne "") && ($_ eq "CRYPTO"))
 		{
@@ -588,11 +850,6 @@ foreach (values %lib_nam)
 		$lib_obj =~ s/\s(\S*\/md5_dgst\S*)/ $1 \$(MD5_ASM_OBJ)/;
 		$rules.=&do_asm_rule($md5_asm_obj,$md5_asm_src);
 		}
-	if (($sha1_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s(\S*\/sha1dgst\S*)/ $1 \$(SHA1_ASM_OBJ)/;
-		$rules.=&do_asm_rule($sha1_asm_obj,$sha1_asm_src);
-		}
 	if (($rmd160_asm_obj ne "") && ($_ eq "CRYPTO"))
 		{
 		$lib_obj =~ s/\s(\S*\/rmd_dgst\S*)/ $1 \$(RMD160_ASM_OBJ)/;
@@ -612,21 +869,119 @@ if (($platform eq "VC-WIN32") || ($platform eq "VC-NT")) {
 \$(OBJ_D)\\\$(SSL).res: ms\\version32.rc
 	\$(RSC) /fo"\$(OBJ_D)\\\$(SSL).res" /d SSL ms\\version32.rc
 
+\$(OBJ_D)\\\$(LIBFIPS).res: ms\\version32.rc
+	\$(RSC) /fo"\$(OBJ_D)\\\$(LIBFIPS).res" /d FIPS ms\\version32.rc
+
 EOF
 }
 
 $defs.=&do_defs("T_EXE",$test,"\$(TEST_D)",$exep);
 foreach (split(/\s+/,$test))
 	{
+	my $t_libs;
 	$t=&bname($_);
+	my $ltype;
+	# Check to see if test program is FIPS
+	if ($fips && /fips/)
+		{
+		# If fipsdso link to libosslfips.dll 
+		# otherwise perform static link to 
+		# $(O_FIPSCANISTER)
+		if ($fipsdso)
+			{
+			$t_libs = "\$(L_FIPS)";
+			$ltype = 0;
+			}
+		else
+			{
+			$t_libs = "\$(O_FIPSCANISTER)";
+			$ltype = 2;
+			}
+		}
+	else
+		{
+		$t_libs = "\$(L_LIBS)";
+		$ltype = 0;
+		}
+
 	$tt="\$(OBJ_D)${o}$t${obj}";
-	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
+	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","$t_libs \$(EX_LIBS)", $ltype);
 	}
 
-$rules.= &do_lib_rule("\$(SSLOBJ)","\$(O_SSL)",$ssl,$shlib,"\$(SO_SSL)");
-$rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)");
+$defs.=&do_defs("E_SHLIB",$engines,"\$(ENG_D)",$shlibp);
 
-$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
+foreach (split(/\s+/,$engines))
+	{
+	$rules.=&do_compile_rule("\$(OBJ_D)","engines${o}e_$_",$lib);
+	$rules.= &do_lib_rule("\$(OBJ_D)${o}e_${_}.obj","\$(ENG_D)$o$_$shlibp","",$shlib,"");
+	}
+
+
+
+$rules.= &do_lib_rule("\$(SSLOBJ)","\$(O_SSL)",$ssl,$shlib,"\$(SO_SSL)");
+
+if ($fips)
+	{
+	if ($shlib)
+		{
+		if ($fipsdso)
+			{
+			$rules.= &do_lib_rule("\$(CRYPTOOBJ)",
+					"\$(O_CRYPTO)", "$crypto",
+					$shlib, "", "");
+			$rules.= &do_lib_rule(
+				"\$(O_FIPSCANISTER)",
+				"\$(O_FIPS)", "\$(LIBFIPS)",
+				$shlib, "\$(SO_CRYPTO)", "\$(BASEADDR)");
+			$rules.= &do_sdef_rule();
+			}
+		else
+			{
+			$rules.= &do_lib_rule(
+				"\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
+				"\$(O_CRYPTO)", "$crypto",
+				$shlib, "\$(SO_CRYPTO)", "\$(BASEADDR)");
+			}
+		}
+	else
+		{
+		$rules.= &do_lib_rule("\$(CRYPTOOBJ)",
+			"\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)", "");
+		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(FIPSOBJ)",
+			"\$(LIB_D)$o$crypto_compat",$crypto,$shlib,"\$(SO_CRYPTO)", "");
+		}
+	}
+	else
+	{
+	$rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,
+							"\$(SO_CRYPTO)");
+	}
+
+if ($fips)
+	{
+	if ($fipscanisterbuild)
+		{
+		$rules.= &do_rlink_rule("\$(O_FIPSCANISTER)",
+					"\$(OBJ_D)${o}fips_start$obj",
+					"\$(FIPSOBJ)",
+					"\$(OBJ_D)${o}fips_end$obj",
+					"\$(FIPS_SHA1_EXE)", "");
+		$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)",
+					"\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}sha1dgst$obj \$(SHA1_ASM_OBJ)",
+					"","\$(EX_LIBS)", 1);
+		}
+	else
+		{
+		$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)",
+					"\$(OBJ_D)${o}fips_standalone_sha1$obj \$(O_FIPSCANISTER)",
+					"","", 1);
+
+		}
+	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
+	
+	}
+
+$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)", ($fips && !$shlib) ? 2 : 0);
 
 print $defs;
 
@@ -646,13 +1001,15 @@ print $rules;
 # directories
 sub var_add
 	{
-	local($dir,$val)=@_;
+	local($dir,$val,$keepext)=@_;
 	local(@a,$_,$ret);
 
 	return("") if $no_engine && $dir =~ /\/engine/;
 	return("") if $no_hw   && $dir =~ /\/hw/;
 	return("") if $no_idea && $dir =~ /\/idea/;
 	return("") if $no_aes  && $dir =~ /\/aes/;
+	return("") if $no_camellia  && $dir =~ /\/camellia/;
+	return("") if $no_seed && $dir =~ /\/seed/;
 	return("") if $no_rc2  && $dir =~ /\/rc2/;
 	return("") if $no_rc4  && $dir =~ /\/rc4/;
 	return("") if $no_rc5  && $dir =~ /\/rc5/;
@@ -675,7 +1032,7 @@ sub var_add
 
 	$val =~ s/^\s*(.*)\s*$/$1/;
 	@a=split(/\s+/,$val);
-	grep(s/\.[och]$//,@a);
+	grep(s/\.[och]$//,@a) unless $keepext;
 
 	@a=grep(!/^e_.*_3d$/,@a) if $no_des;
 	@a=grep(!/^e_.*_d$/,@a) if $no_des;
@@ -686,6 +1043,8 @@ sub var_add
 	@a=grep(!/^e_.*_bf$/,@a) if $no_bf;
 	@a=grep(!/^e_.*_c$/,@a) if $no_cast;
 	@a=grep(!/^e_rc4$/,@a) if $no_rc4;
+	@a=grep(!/^e_camellia$/,@a) if $no_camellia;
+	@a=grep(!/^e_seed$/,@a) if $no_seed;
 
 	@a=grep(!/(^s2_)|(^s23_)/,@a) if $no_ssl2;
 	@a=grep(!/(^s3_)|(^s23_)/,@a) if $no_ssl3;
@@ -769,21 +1128,23 @@ sub do_defs
 		elsif ($_ =~ /RC5_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /MD5_ASM/)	{ $t="$_ "; }
 		elsif ($_ =~ /SHA1_ASM/){ $t="$_ "; }
+		elsif ($_ =~ /AES_ASM/){ $t="$_ "; }
 		elsif ($_ =~ /RMD160_ASM/){ $t="$_ "; }
+		elsif ($_ =~ /CPUID_ASM/){ $t="$_ "; }
 		else	{ $t="$location${o}$_$pf "; }
 
 		$Vars{$var}.="$t ";
 		$ret.=$t;
 		}
 	# hack to add version info on MSVC
-	if ($shlib && ($platform eq "VC-WIN32") || ($platform eq "VC-NT"))
+	if ($shlib && (($platform eq "VC-WIN32") || ($platform eq "VC-NT")))
 		{
 		if ($var eq "CRYPTOOBJ")
 			{ $ret.="\$(OBJ_D)\\\$(CRYPTO).res "; }
 		elsif ($var eq "SSLOBJ")
 			{ $ret.="\$(OBJ_D)\\\$(SSL).res "; }
 		}
-	chop($ret);
+	chomp($ret);
 	$ret.="\n\n";
 	return($ret);
 	}
@@ -896,6 +1257,8 @@ sub read_options
 		"no-rc5" => \$no_rc5,
 		"no-idea" => \$no_idea,
 		"no-aes" => \$no_aes,
+		"no-camellia" => \$no_camellia,
+		"no-seed" => \$no_seed,
 		"no-des" => \$no_des,
 		"no-bf" => \$no_bf,
 		"no-cast" => \$no_cast,
@@ -912,9 +1275,9 @@ sub read_options
 		"no-dsa" => \$no_dsa,
 		"no-dh" => \$no_dh,
 		"no-hmac" => \$no_hmac,
-		"no-aes" => \$no_aes,
 		"no-asm" => \$no_asm,
 		"nasm" => \$nasm,
+		"ml64" => \$ml64,
 		"nw-nasm" => \$nw_nasm,
 		"nw-mwasm" => \$nw_mwasm,
 		"gaswin" => \$gaswin,
@@ -932,7 +1295,7 @@ sub read_options
 			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
 			  \$no_md2, \$no_sha, \$no_mdc2, \$no_dsa, \$no_dh,
 			  \$no_ssl2, \$no_err, \$no_ripemd, \$no_rc5,
-			  \$no_aes],
+			  \$no_aes, \$no_camellia, \$no_seed],
 		"rsaref" => 0,
 		"gcc" => \$gcc,
 		"debug" => \$debug,
@@ -941,9 +1304,13 @@ sub read_options
 		"dll" => \$shlib,
 		"shared" => 0,
 		"no-gmp" => 0,
+		"no-rfc3779" => 0,
 		"no-shared" => 0,
 		"no-zlib" => 0,
 		"no-zlib-dynamic" => 0,
+		"fips" => \$fips,
+		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
+		"fipsdso" => [\$fips, \$fipscanisterbuild, \$fipsdso],
 		);
 
 	if (exists $valid_options{$_})
@@ -960,10 +1327,19 @@ sub read_options
 				}
 			}
 		}
-	elsif (/^enable-zlib$/) { $xcflags = "-DZLIB $xcflags"; }
+	elsif (/^no-comp$/) { $xcflags = "-DOPENSSL_NO_COMP $xcflags"; }
+	elsif (/^enable-zlib$/) { $zlib_opt = 1 if $zlib_opt == 0 }
 	elsif (/^enable-zlib-dynamic$/)
 		{
-		$xcflags = "-DZLIB_SHARED -DZLIB $xcflags";
+		$zlib_opt = 2;
+		}
+	elsif (/^no-static-engine/)
+		{
+		$no_static_engine = 1;
+		}
+	elsif (/^enable-static-engine/)
+		{
+		$no_static_engine = 0;
 		}
 	# There are also enable-xxx options which correspond to
 	# the no-xxx. Since the scalars are enabled by default
@@ -998,4 +1374,32 @@ sub read_options
 		{ $c_flags.="$_ "; }
 	else { return(0); }
 	return(1);
+	}
+
+sub fipslib_error
+	{
+	print STDERR "***FIPS module directory sanity check failed***\n";
+	print STDERR "FIPS module build failed, or was deleted\n";
+	print STDERR "Please rebuild FIPS module.\n"; 
+	exit 1;
+	}
+
+sub fips_check_files
+	{
+	my $dir = shift @_;
+	my $ret = 1;
+	if (!-d $dir)
+		{
+		print STDERR "FIPS module directory $dir does not exist\n";
+		fipslib_error();
+		}
+	foreach (@_)
+		{
+		if (!-f "$dir${o}$_")
+			{
+			print STDERR "FIPS module file $_ does not exist!\n";
+			$ret = 0;
+			}
+		}
+	fipslib_error() if ($ret == 0);
 	}

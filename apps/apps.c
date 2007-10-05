@@ -125,7 +125,9 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
 #include <openssl/bn.h>
 
 #define NON_MAIN
@@ -374,10 +376,17 @@ int chopup_args(ARGS *arg, char *buf, int *argc, char **argv[])
 		/* The start of something good :-) */
 		if (num >= arg->count)
 			{
-			arg->count+=20;
-			arg->data=(char **)OPENSSL_realloc(arg->data,
-				sizeof(char *)*arg->count);
-			if (argc == 0) return(0);
+			char **tmp_p;
+			int tlen = arg->count + 20;
+			tmp_p = (char **)OPENSSL_realloc(arg->data,
+				sizeof(char *)*tlen);
+			if (tmp_p == NULL)
+				return 0;
+			arg->data  = tmp_p;
+			arg->count = tlen;
+			/* initialize newly allocated data */
+			for (i = num; i < arg->count; i++)
+				arg->data[i] = NULL;
 			}
 		arg->data[num++]=p;
 
@@ -1604,8 +1613,9 @@ int rotate_serial(char *serialfile, char *new_suffix, char *old_suffix)
 		{
 		if (errno != ENOENT 
 #ifdef ENOTDIR
-			&& errno != ENOTDIR)
+			&& errno != ENOTDIR
 #endif
+		   )
 			goto err;
 		}
 	else
@@ -1893,8 +1903,9 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 		{
 		if (errno != ENOENT 
 #ifdef ENOTDIR
-			&& errno != ENOTDIR)
+			&& errno != ENOTDIR
 #endif
+		   )
 			goto err;
 		}
 	else
@@ -1929,8 +1940,9 @@ int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suf
 		{
 		if (errno != ENOENT 
 #ifdef ENOTDIR
-			&& errno != ENOTDIR)
+			&& errno != ENOTDIR
 #endif
+		   )
 			goto err;
 		}
 	else

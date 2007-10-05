@@ -132,33 +132,15 @@ static SSL_METHOD *ssl23_get_server_method(int ver)
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv23_server_method(void)
-	{
-	static int init=1;
-	static SSL_METHOD SSLv23_server_data;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
-
-		if (init)
-			{
-			memcpy((char *)&SSLv23_server_data,
-				(char *)sslv23_base_method(),sizeof(SSL_METHOD));
-			SSLv23_server_data.ssl_accept=ssl23_accept;
-			SSLv23_server_data.get_ssl_method=ssl23_get_server_method;
-			init=0;
-			}
-
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
-		}
-	return(&SSLv23_server_data);
-	}
+IMPLEMENT_ssl23_meth_func(SSLv23_server_method,
+			ssl23_accept,
+			ssl_undefined_function,
+			ssl23_get_server_method)
 
 int ssl23_accept(SSL *s)
 	{
 	BUF_MEM *buf;
-	unsigned long Time=time(NULL);
+	unsigned long Time=(unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state;
@@ -268,9 +250,6 @@ int ssl23_get_client_hello(SSL *s)
 	int n=0,j;
 	int type=0;
 	int v[2];
-#ifndef OPENSSL_NO_RSA
-	int use_sslv2_strong=0;
-#endif
 
 	if (s->state ==	SSL23_ST_SR_CLNT_HELLO_A)
 		{
@@ -407,6 +386,15 @@ int ssl23_get_client_hello(SSL *s)
 			}
 		}
 
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && (s->version < TLS1_VERSION))
+		{
+		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,
+					SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+		goto err;
+		}
+#endif
+
 	if (s->state == SSL23_ST_SR_CLNT_HELLO_B)
 		{
 		/* we have SSLv3/TLSv1 in an SSLv2 header
@@ -519,9 +507,7 @@ int ssl23_get_client_hello(SSL *s)
 			}
 
 		s->state=SSL2_ST_GET_CLIENT_HELLO_A;
-		if ((s->options & SSL_OP_MSIE_SSLV2_RSA_PADDING) ||
-			use_sslv2_strong ||
-			(s->options & SSL_OP_NO_TLSv1 && s->options & SSL_OP_NO_SSLv3))
+		if (s->options & SSL_OP_NO_TLSv1 && s->options & SSL_OP_NO_SSLv3)
 			s->s2->ssl2_rollback=0;
 		else
 			/* reject SSL 2.0 session if client supports SSL 3.0 or TLS 1.0
@@ -588,7 +574,6 @@ int ssl23_get_client_hello(SSL *s)
 	s->init_num=0;
 
 	if (buf != buf_space) OPENSSL_free(buf);
-	s->first_packet=1;
 	return(SSL_accept(s));
 err:
 	if (buf != buf_space) OPENSSL_free(buf);

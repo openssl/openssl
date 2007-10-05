@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 /* ====================================================================
- * Copyright (c) 1998-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2006 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -147,6 +147,7 @@ char *default_config_file=NULL;
 #ifdef MONOLITH
 CONF *config=NULL;
 BIO *bio_err=NULL;
+int in_FIPS_mode=0;
 #endif
 
 
@@ -231,6 +232,19 @@ int main(int Argc, char *Argv[])
  
 	arg.data=NULL;
 	arg.count=0;
+
+	in_FIPS_mode = 0;
+
+#ifdef OPENSSL_FIPS
+	if(getenv("OPENSSL_FIPS")) {
+		if (!FIPS_mode_set(1)) {
+			ERR_load_crypto_strings();
+			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+			EXIT(1);
+		}
+		in_FIPS_mode = 1;
+		}
+#endif
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
@@ -445,7 +459,11 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 		for (fp=functions; fp->name != NULL; fp++)
 			{
 			nl=0;
+#ifdef OPENSSL_NO_CAMELLIA
 			if (((i++) % 5) == 0)
+#else
+			if (((i++) % 4) == 0)
+#endif
 				{
 				BIO_printf(bio_err,"\n");
 				nl=1;
@@ -466,7 +484,11 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 					BIO_printf(bio_err,"\nCipher commands (see the `enc' command for more details)\n");
 					}
 				}
+#ifdef OPENSSL_NO_CAMELLIA
 			BIO_printf(bio_err,"%-15s",fp->name);
+#else
+			BIO_printf(bio_err,"%-18s",fp->name);
+#endif
 			}
 		BIO_printf(bio_err,"\n\n");
 		ret=0;

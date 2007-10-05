@@ -74,10 +74,11 @@
 #endif
 #include <openssl/err.h>
 
-const char *ECDH_version="ECDH" OPENSSL_VERSION_PTEXT;
+const char ECDH_version[]="ECDH" OPENSSL_VERSION_PTEXT;
 
 static const ECDH_METHOD *default_ECDH_method = NULL;
 
+static void *ecdh_data_new(void);
 static void *ecdh_data_dup(void *);
 static void  ecdh_data_free(void *);
 
@@ -167,7 +168,7 @@ static ECDH_DATA *ECDH_DATA_new_method(ENGINE *engine)
 	return(ret);
 	}
 
-void *ecdh_data_new(void)
+static void *ecdh_data_new(void)
 	{
 	return (void *)ECDH_DATA_new_method(NULL);
 	}

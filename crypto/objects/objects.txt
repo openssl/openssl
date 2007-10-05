@@ -434,9 +434,9 @@ id-pe 3			: qcStatements
 id-pe 4			: ac-auditEntity
 id-pe 5			: ac-targeting
 id-pe 6			: aaControls
-id-pe 7			: sbqp-ipAddrBlock
-id-pe 8			: sbqp-autonomousSysNum
-id-pe 9			: sbqp-routerIdentifier
+id-pe 7			: sbgp-ipAddrBlock
+id-pe 8			: sbgp-autonomousSysNum
+id-pe 9			: sbgp-routerIdentifier
 id-pe 10		: ac-proxying
 !Cname sinfo-access
 id-pe 11		: subjectInfoAccess	: Subject Information Access
@@ -657,6 +657,8 @@ X500algorithms 3 100	: RSA-MDC2		: mdc2WithRSA
 X500algorithms 3 101	: MDC2			: mdc2
 
 X500 29			: id-ce
+!Cname subject-directory-attributes
+id-ce 9			: subjectDirectoryAttributes : X509v3 Subject Directory Attributes
 !Cname subject-key-identifier
 id-ce 14		: subjectKeyIdentifier	: X509v3 Subject Key Identifier
 !Cname key-usage
@@ -677,6 +679,10 @@ id-ce 21		: CRLReason		: X509v3 CRL Reason Code
 id-ce 24		: invalidityDate	: Invalidity Date
 !Cname delta-crl
 id-ce 27		: deltaCRL		: X509v3 Delta CRL Indicator
+!Cname issuing-distribution-point
+id-ce 28		: issuingDistributionPoint : X509v3 Issuing Distrubution Point
+!Cname certificate-issuer
+id-ce 29		: certificateIssuer	: X509v3 Certificate Issuer
 !Cname name-constraints
 id-ce 30		: nameConstraints	: X509v3 Name Constraints
 !Cname crl-distribution-points
@@ -1047,3 +1053,51 @@ rsadsi 1 1 6		: rsaOAEPEncryptionSET
 
 			: Oakley-EC2N-3		: ipsec3
 			: Oakley-EC2N-4		: ipsec4
+
+
+# Definitions for Camellia cipher - CBC MODE
+1 2 392 200011 61 1 1 1 2 : CAMELLIA-128-CBC		: camellia-128-cbc
+1 2 392 200011 61 1 1 1 3 : CAMELLIA-192-CBC		: camellia-192-cbc
+1 2 392 200011 61 1 1 1 4 : CAMELLIA-256-CBC		: camellia-256-cbc
+
+# Definitions for Camellia cipher - ECB, CFB, OFB MODE
+!Alias ntt-ds 0 3 4401 5
+!Alias camellia ntt-ds 3 1 9 
+
+camellia 1		: CAMELLIA-128-ECB		: camellia-128-ecb
+!Cname camellia-128-ofb128
+camellia 3		: CAMELLIA-128-OFB		: camellia-128-ofb
+!Cname camellia-128-cfb128
+camellia 4		: CAMELLIA-128-CFB		: camellia-128-cfb
+
+camellia 21		: CAMELLIA-192-ECB		: camellia-192-ecb
+!Cname camellia-192-ofb128
+camellia 23		: CAMELLIA-192-OFB		: camellia-192-ofb
+!Cname camellia-192-cfb128
+camellia 24		: CAMELLIA-192-CFB		: camellia-192-cfb
+
+camellia 41		: CAMELLIA-256-ECB		: camellia-256-ecb
+!Cname camellia-256-ofb128
+camellia 43		: CAMELLIA-256-OFB		: camellia-256-ofb
+!Cname camellia-256-cfb128
+camellia 44		: CAMELLIA-256-CFB		: camellia-256-cfb
+
+# There are no OIDs for these modes...
+
+			: CAMELLIA-128-CFB1		: camellia-128-cfb1
+			: CAMELLIA-192-CFB1		: camellia-192-cfb1
+			: CAMELLIA-256-CFB1		: camellia-256-cfb1
+			: CAMELLIA-128-CFB8		: camellia-128-cfb8
+			: CAMELLIA-192-CFB8		: camellia-192-cfb8
+			: CAMELLIA-256-CFB8		: camellia-256-cfb8
+
+
+# Definitions for SEED cipher - ECB, CBC, OFB mode
+
+member-body 410 200004  : KISA          : kisa
+kisa 1 3                : SEED-ECB      : seed-ecb
+kisa 1 4                : SEED-CBC      : seed-cbc
+!Cname seed-cfb128
+kisa 1 5                : SEED-CFB      : seed-cfb
+!Cname seed-ofb128
+kisa 1 6                : SEED-OFB      : seed-ofb

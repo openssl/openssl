@@ -65,6 +65,24 @@
 #ifndef HEADER_BSS_FILE_C
 #define HEADER_BSS_FILE_C
 
+#if defined(__linux) || defined(__sun) || defined(__hpux)
+/* Following definition aliases fopen to fopen64 on above mentioned
+ * platforms. This makes it possible to open and sequentially access
+ * files larger than 2GB from 32-bit application. It does not allow to
+ * traverse them beyond 2GB with fseek/ftell, but on the other hand *no*
+ * 32-bit platform permits that, not with fseek/ftell. Not to mention
+ * that breaking 2GB limit for seeking would require surgery to *our*
+ * API. But sequential access suffices for practical cases when you
+ * can run into large files, such as fingerprinting, so we can let API
+ * alone. For reference, the list of 32-bit platforms which allow for
+ * sequential access of large files without extra "magic" comprise *BSD,
+ * Darwin, IRIX...
+ */
+#ifndef _FILE_OFFSET_BITS
+#define _FILE_OFFSET_BITS 64
+#endif
+#endif
+
 #include <stdio.h>
 #include <errno.h>
 #include "cryptlib.h"
@@ -110,7 +128,10 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 		return(NULL);
 		}
 	if ((ret=BIO_new(BIO_s_file_internal())) == NULL)
+		{
+		fclose(file);
 		return(NULL);
+		}
 
 	BIO_clear_flags(ret,BIO_FLAGS_UPLINK); /* we did fopen -> we disengage UPLINK */
 	BIO_set_fp(ret,file,BIO_CLOSE);
@@ -236,11 +257,16 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 		b->shutdown=(int)num&BIO_CLOSE;
 		b->ptr=ptr;
 		b->init=1;
-#if BIO_FLAGS_UPLINK!=0 && defined(_IOB_ENTRIES)
+#if BIO_FLAGS_UPLINK!=0
+#if defined(__MINGW32__) && defined(__MSVCRT__) && !defined(_IOB_ENTRIES)
+#define _IOB_ENTRIES 20
+#endif
+#if defined(_IOB_ENTRIES)
 		/* Safety net to catch purely internal BIO_set_fp calls */
 		if ((size_t)ptr >= (size_t)stdin &&
 		    (size_t)ptr <  (size_t)(stdin+_IOB_ENTRIES))
 			BIO_clear_flags(b,BIO_FLAGS_UPLINK);
+#endif
 #endif
 #ifdef UP_fsetmode
 		if (b->flags&BIO_FLAGS_UPLINK)
@@ -373,7 +399,10 @@ static int MS_CALLBACK file_gets(BIO *bp, char *buf, int size)
 	int ret=0;
 
 	buf[0]='\0';
-	fgets(buf,size,(FILE *)bp->ptr);
+	if (bp->flags&BIO_FLAGS_UPLINK)
+		UP_fgets(buf,size,bp->ptr);
+	else
+		fgets(buf,size,(FILE *)bp->ptr);
 	if (buf[0] != '\0')
 		ret=strlen(buf);
 	return(ret);

@@ -1100,7 +1100,8 @@ static const ec_list_element curve_list[] = {
 	{ NID_X9_62_c2tnb359v1, &_EC_X9_62_CHAR2_359V1},
 	{ NID_X9_62_c2pnb368w1, &_EC_X9_62_CHAR2_368W1},
 	{ NID_X9_62_c2tnb431r1, &_EC_X9_62_CHAR2_431R1},
-	/* the WAP/WTLS curves */
+	/* the WAP/WTLS curves
+	 * [unlike SECG, spec has its own OIDs for curves from X9.62] */
 	{ NID_wap_wsg_idm_ecid_wtls1, &_EC_WTLS_1},
 	{ NID_wap_wsg_idm_ecid_wtls3, &_EC_NIST_CHAR2_163K},
 	{ NID_wap_wsg_idm_ecid_wtls4, &_EC_SECG_CHAR2_113R1},

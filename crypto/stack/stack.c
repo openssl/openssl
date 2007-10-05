@@ -73,7 +73,7 @@
 #undef MIN_NODES
 #define MIN_NODES	4
 
-const char *STACK_version="Stack" OPENSSL_VERSION_PTEXT;
+const char STACK_version[]="Stack" OPENSSL_VERSION_PTEXT;
 
 #include <errno.h>
 

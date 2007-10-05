@@ -31,6 +31,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does my browser give a warning about a mismatched hostname?
 * How do I install a CA certificate into a browser?
 * Why is OpenSSL x509 DN output not conformant to RFC2253?
+* What is a "128 bit certificate"? Can I create one with OpenSSL?
 
 [BUILD] Questions about building and testing OpenSSL
 
@@ -46,6 +47,9 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL test suite fail on MacOS X?
 * Why does the OpenSSL test suite fail in BN_sqr test [on a 64-bit platform]?
 * Why does OpenBSD-i386 build fail on des-586.s with "Unimplemented segment type"?
+* Why does the OpenSSL test suite fail in sha512t on x86 CPU?
+* Why does compiler fail to compile sha512.c?
+* Test suite still fails, what to do?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -70,7 +74,7 @@ OpenSSL  -  Frequently Asked Questions
 * Which is the current version of OpenSSL?
 
 The current version is available from <URL: http://www.openssl.org>.
-OpenSSL 0.9.7g was released on April 11, 2005.
+OpenSSL 0.9.8e was released on February 23rd, 2007.
 
 In addition to the current stable release, you can also access daily
 snapshots of the OpenSSL development version at <URL:
@@ -141,8 +145,8 @@ less Unix-centric, it might have been used much earlier.
 
 With version 0.9.6 OpenSSL was extended to interface to external crypto
 hardware. This was realized in a special release '0.9.6-engine'. With
-version 0.9.7 (not yet released) the changes were merged into the main
-development line, so that the special release is no longer necessary.
+version 0.9.7 the changes were merged into the main development line,
+so that the special release is no longer necessary.
 
 * How do I check the authenticity of the OpenSSL distribution?
 
@@ -384,6 +388,43 @@ interface, the "-nameopt" option could be introduded. See the manual
 page of the "openssl x509" commandline tool for details. The old behaviour
 has however been left as default for the sake of compatibility.
 
+* What is a "128 bit certificate"? Can I create one with OpenSSL?
+
+The term "128 bit certificate" is a highly misleading marketing term. It does
+*not* refer to the size of the public key in the certificate! A certificate
+containing a 128 bit RSA key would have negligible security.
+
+There were various other names such as "magic certificates", "SGC
+certificates", "step up certificates" etc.
+
+You can't generally create such a certificate using OpenSSL but there is no
+need to any more. Nowadays web browsers using unrestricted strong encryption
+are generally available.
+
+When there were tight export restrictions on the export of strong encryption
+software from the US only weak encryption algorithms could be freely exported
+(initially 40 bit and then 56 bit). It was widely recognised that this was
+inadequate. A relaxation the rules allowed the use of strong encryption but
+only to an authorised server.
+
+Two slighly different techniques were developed to support this, one used by
+Netscape was called "step up", the other used by MSIE was called "Server Gated
+Cryptography" (SGC). When a browser initially connected to a server it would
+check to see if the certificate contained certain extensions and was issued by
+an authorised authority. If these test succeeded it would reconnect using
+strong encryption.
+
+Only certain (initially one) certificate authorities could issue the
+certificates and they generally cost more than ordinary certificates.
+
+Although OpenSSL can create certificates containing the appropriate extensions
+the certificate would not come from a permitted authority and so would not
+be recognized.
+
+The export laws were later changed to allow almost unrestricted use of strong
+encryption so these certificates are now obsolete.
+
+
 [BUILD] =======================================================================
 
 * Why does the linker complain about undefined symbols?
@@ -598,6 +639,35 @@ Reportedly elder *BSD a.out platforms also suffer from this problem and
 remedy should be same. Provided binary is statically linked and should be
 working across wider range of *BSD branches, not just OpenBSD.
 
+* Why does the OpenSSL test suite fail in sha512t on x86 CPU?
+
+If the test program in question fails withs SIGILL, Illegal Instruction
+exception, then you more than likely to run SSE2-capable CPU, such as
+Intel P4, under control of kernel which does not support SSE2
+instruction extentions. See accompanying INSTALL file and
+OPENSSL_ia32cap(3) documentation page for further information.
+
+* Why does compiler fail to compile sha512.c?
+
+OpenSSL SHA-512 implementation depends on compiler support for 64-bit
+integer type. Few elder compilers [ULTRIX cc, SCO compiler to mention a
+couple] lack support for this and therefore are incapable of compiling
+the module in question. The recommendation is to disable SHA-512 by
+adding no-sha512 to ./config [or ./Configure] command line. Another
+possible alternative might be to switch to GCC.
+
+* Test suite still fails, what to do?
+
+Another common reason for failure to complete some particular test is
+simply bad code generated by a buggy component in toolchain or deficiency
+in run-time environment. There are few cases documented in PROBLEMS file,
+consult it for possible workaround before you beat the drum. Even if you
+don't find solution or even mention there, do reserve for possibility of
+a compiler bug. Compiler bugs might appear in rather bizarre ways, they
+never make sense, and tend to emerge when you least expect them. In order
+to identify one, drop optimization level, e.g. by editing CFLAG line in
+top-level Makefile, recompile and re-run the test.
+
 [PROG] ========================================================================
 
 * Is OpenSSL thread-safe?
@@ -609,8 +679,9 @@ libraries.  If your platform is not one of these, consult the INSTALL
 file.
 
 Multi-threaded applications must provide two callback functions to
-OpenSSL.  This is described in the threads(3) manpage.
-
+OpenSSL by calling CRYPTO_set_locking_callback() and
+CRYPTO_set_id_callback().  This is described in the threads(3)
+manpage.
 
 * I've compiled a program under Windows and it crashes: why?
 
@@ -630,10 +701,10 @@ your application must link  against the same by which OpenSSL was
 built.  If you are using MS Visual C++ (Studio) this can be changed
 by:
 
-1.  Select Settings... from the Project Menu.
-2.  Select the C/C++ Tab.
-3.  Select "Code Generation from the "Category" drop down list box
-4.  Select the Appropriate library (see table below) from the "Use
+ 1. Select Settings... from the Project Menu.
+ 2. Select the C/C++ Tab.
+ 3. Select "Code Generation from the "Category" drop down list box
+ 4. Select the Appropriate library (see table below) from the "Use
     run-time library" drop down list box.  Perform this step for both
     your debug and release versions of your application (look at the
     top left of the settings panel to change between the two)
@@ -652,6 +723,20 @@ by:
 Note that debug and release libraries are NOT interchangeable.  If you
 built OpenSSL with /MD your application must use /MD and cannot use /MDd.
 
+As per 0.9.8 the above limitation is eliminated for .DLLs. OpenSSL
+.DLLs compiled with some specific run-time option [we insist on the
+default /MD] can be deployed with application compiled with different
+option or even different compiler. But there is a catch! Instead of
+re-compiling OpenSSL toolkit, as you would have to with prior versions,
+you have to compile small C snippet with compiler and/or options of
+your choice. The snippet gets installed as
+<install-root>/include/openssl/applink.c and should be either added to
+your application project or simply #include-d in one [and only one]
+of your application source files. Failure to link this shim module
+into your application manifests itself as fatal "no OPENSSL_Applink"
+run-time error. An explicit reminder is due that in this situation
+[mixing compiler options] it is as important to add CRYPTO_malloc_init
+prior first call to OpenSSL.
 
 * How do I read or write a DER encoded buffer using the ASN1 functions?
 

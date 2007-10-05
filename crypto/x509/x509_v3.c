@@ -147,7 +147,13 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
 	int n;
 	STACK_OF(X509_EXTENSION) *sk=NULL;
 
-	if ((x != NULL) && (*x == NULL))
+	if (x == NULL)
+		{
+		X509err(X509_F_X509V3_ADD_EXT,ERR_R_PASSED_NULL_PARAMETER);
+		goto err2;
+		}
+
+	if (*x == NULL)
 		{
 		if ((sk=sk_X509_EXTENSION_new_null()) == NULL)
 			goto err;
@@ -163,7 +169,7 @@ STACK_OF(X509_EXTENSION) *X509v3_add_ext(STACK_OF(X509_EXTENSION) **x,
 		goto err2;
 	if (!sk_X509_EXTENSION_insert(sk,new_ex,loc))
 		goto err;
-	if ((x != NULL) && (*x == NULL))
+	if (*x == NULL)
 		*x=sk;
 	return(sk);
 err:

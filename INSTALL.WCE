@@ -11,8 +11,11 @@
  You also need Perl for Win32.  You will need ActiveState Perl, available
  from http://www.activestate.com/ActivePerl.
 
- Windows CE support in OpenSSL relies on wcecompat.  All Windows CE specific
- issues should be directed to www.essemer.com.au.
+ Windows CE support in OpenSSL relies on wcecompat and therefore it's
+ appropriate to check http://www.essemer.com.au/windowsce/ for updates in
+ case of compilation problems. As for the moment of this writing version
+ 1.1 is available and actually required for WCE 4.2 and newer platforms.
+ All Windows CE specific issues should be directed to www.essemer.com.au.
 
  The C Runtime Library implementation for Windows CE that is included with
  Microsoft eMbedded Visual C++ 3.0 is incomplete and in some places

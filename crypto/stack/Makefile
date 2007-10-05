@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/stack/Makefile
+# OpenSSL/crypto/stack/Makefile
 #
 
 DIR=	stack
@@ -33,7 +33,7 @@ top:
 all:	lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 

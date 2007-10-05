@@ -242,6 +242,11 @@ int X509_REQ_add_extensions_nid(X509_REQ *req, STACK_OF(X509_EXTENSION) *exts,
 	at = NULL;
 	attr->single = 0;
 	attr->object = OBJ_nid2obj(nid);
+	if (!req->req_info->attributes)
+		{
+		if (!(req->req_info->attributes = sk_X509_ATTRIBUTE_new_null()))
+			goto err;
+		}
 	if(!sk_X509_ATTRIBUTE_push(req->req_info->attributes, attr)) goto err;
 	return 1;
 	err:

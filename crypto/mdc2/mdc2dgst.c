@@ -61,6 +61,8 @@
 #include <string.h>
 #include <openssl/des.h>
 #include <openssl/mdc2.h>
+#include <openssl/err.h>
+#include <openssl/fips.h>
 
 #undef c2l
 #define c2l(c,l)	(l =((DES_LONG)(*((c)++)))    , \
@@ -75,7 +77,7 @@
 			*((c)++)=(unsigned char)(((l)>>24L)&0xff))
 
 static void mdc2_body(MDC2_CTX *c, const unsigned char *in, size_t len);
-int MDC2_Init(MDC2_CTX *c)
+FIPS_NON_FIPS_MD_Init(MDC2)
 	{
 	c->num=0;
 	c->pad_type=1;

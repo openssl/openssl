@@ -73,10 +73,10 @@
 
 #include "../e_os.h"
 
+#include <openssl/opensslconf.h>	/* for OPENSSL_NO_ECDH */
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
-#include <openssl/ec.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
@@ -89,6 +89,7 @@ int main(int argc, char *argv[])
     return(0);
 }
 #else
+#include <openssl/ec.h>
 #include <openssl/ecdh.h>
 
 #ifdef OPENSSL_SYS_WIN16
@@ -147,7 +148,7 @@ static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 #ifdef NOISY
 	BIO_puts(out,"\n");
 #else
-	BIO_flush(out);
+	(void)BIO_flush(out);
 #endif
 
 	if (!EC_KEY_generate_key(a)) goto err;
@@ -172,7 +173,7 @@ static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 	BIO_puts(out,"\n");
 #else
 	BIO_printf(out," .");
-	BIO_flush(out);
+	(void)BIO_flush(out);
 #endif
 
 	if (!EC_KEY_generate_key(b)) goto err;
@@ -198,7 +199,7 @@ static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 	BIO_puts(out,"\n");
 #else
 	BIO_printf(out,".");
-	BIO_flush(out);
+	(void)BIO_flush(out);
 #endif
 
 	alen=KDF1_SHA1_len;
@@ -215,7 +216,7 @@ static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 	BIO_puts(out,"\n");
 #else
 	BIO_printf(out,".");
-	BIO_flush(out);
+	(void)BIO_flush(out);
 #endif
 
 	blen=KDF1_SHA1_len;
@@ -232,7 +233,7 @@ static int test_ecdh_curve(int nid, const char *text, BN_CTX *ctx, BIO *out)
 	BIO_puts(out,"\n");
 #else
 	BIO_printf(out,".");
-	BIO_flush(out);
+	(void)BIO_flush(out);
 #endif
 
 	if ((aout < 4) || (bout != aout) || (memcmp(abuf,bbuf,aout) != 0))

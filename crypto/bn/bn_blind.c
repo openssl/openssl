@@ -131,7 +131,7 @@ struct bn_blinding_st
 			  BN_MONT_CTX *m_ctx);
 	};
 
-BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
+BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, /* const */ BIGNUM *mod)
 	{
 	BN_BLINDING *ret=NULL;
 
@@ -151,7 +151,12 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 		{
 		if ((ret->Ai = BN_dup(Ai)) == NULL) goto err;
 		}
-	ret->mod = mod;
+
+	/* save a copy of mod in the BN_BLINDING structure */
+	if ((ret->mod = BN_dup(mod)) == NULL) goto err;
+	if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
+		BN_set_flags(ret->mod, BN_FLG_CONSTTIME);
+
 	ret->counter = BN_BLINDING_COUNTER;
 	return(ret);
 err:
@@ -167,6 +172,7 @@ void BN_BLINDING_free(BN_BLINDING *r)
 	if (r->A  != NULL) BN_free(r->A );
 	if (r->Ai != NULL) BN_free(r->Ai);
 	if (r->e  != NULL) BN_free(r->e );
+	if (r->mod != NULL) BN_free(r->mod); 
 	OPENSSL_free(r);
 	}
 
@@ -207,6 +213,8 @@ int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
 
 int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 	{
+	int ret = 1;
+
 	bn_check_top(n);
 
 	if ((b->A == NULL) || (b->Ai == NULL))
@@ -216,9 +224,13 @@ int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *ctx)
 		}
 
 	if (r != NULL)
-		BN_copy(r, b->Ai);
+		{
+		if (!BN_copy(r, b->Ai)) ret=0;
+		}
 
-	return BN_mod_mul(n,n,b->A,b->mod,ctx);
+	if (!BN_mod_mul(n,n,b->A,b->mod,ctx)) ret=0;
+	
+	return ret;
 	}
 
 int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx)
@@ -272,7 +284,7 @@ void BN_BLINDING_set_flags(BN_BLINDING *b, unsigned long flags)
 	}
 
 BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
-	const BIGNUM *e, BIGNUM *m, BN_CTX *ctx,
+	const BIGNUM *e, /* const */ BIGNUM *m, BN_CTX *ctx,
 	int (*bn_mod_exp)(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 			  const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx),
 	BN_MONT_CTX *m_ctx)
@@ -351,4 +363,3 @@ err:
 
 	return ret;
 }
-

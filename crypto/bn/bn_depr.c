@@ -109,4 +109,26 @@ int BN_is_prime_fasttest(const BIGNUM *a, int checks,
 	return BN_is_prime_fasttest_ex(a, checks, ctx_passed,
 				do_trial_division, &cb);
 	}
+
+int BN_X931_derive_prime(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
+			void (*callback)(int, int, void *), void *cb_arg,
+			const BIGNUM *Xp, const BIGNUM *Xp1, const BIGNUM *Xp2,
+			const BIGNUM *e, BN_CTX *ctx)
+	{
+	BN_GENCB cb;
+	BN_GENCB_set_old(&cb, callback, cb_arg);
+	return BN_X931_derive_prime_ex(p, p1, p2, Xp, Xp1, Xp2, e, ctx, &cb);
+	}
+
+int BN_X931_generate_prime(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
+			BIGNUM *Xp1, BIGNUM *Xp2,
+			const BIGNUM *Xp,
+			const BIGNUM *e, BN_CTX *ctx,
+			void (*callback)(int, int, void *), void *cb_arg)
+	{
+	BN_GENCB cb;
+	BN_GENCB_set_old(&cb, callback, cb_arg);
+	return BN_X931_generate_prime_ex(p, p1, p2, Xp1, Xp2, Xp, e, ctx, &cb);
+	}
+
 #endif

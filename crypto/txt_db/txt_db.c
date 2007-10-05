@@ -66,7 +66,7 @@
 #undef BUFSIZE
 #define BUFSIZE	512
 
-const char *TXT_DB_version="TXT_DB" OPENSSL_VERSION_PTEXT;
+const char TXT_DB_version[]="TXT_DB" OPENSSL_VERSION_PTEXT;
 
 TXT_DB *TXT_DB_read(BIO *in, int num)
 	{
@@ -179,10 +179,13 @@ err:
 #if !defined(OPENSSL_NO_STDIO) && !defined(OPENSSL_SYS_WIN16)
 		if (er == 1) fprintf(stderr,"OPENSSL_malloc failure\n");
 #endif
-		if (ret->data != NULL) sk_free(ret->data);
-		if (ret->index != NULL) OPENSSL_free(ret->index);
-		if (ret->qual != NULL) OPENSSL_free(ret->qual);
-		if (ret != NULL) OPENSSL_free(ret);
+		if (ret != NULL)
+			{
+			if (ret->data != NULL) sk_free(ret->data);
+			if (ret->index != NULL) OPENSSL_free(ret->index);
+			if (ret->qual != NULL) OPENSSL_free(ret->qual);
+			if (ret != NULL) OPENSSL_free(ret);
+			}
 		return(NULL);
 		}
 	else

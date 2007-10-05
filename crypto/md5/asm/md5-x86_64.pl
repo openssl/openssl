@@ -111,9 +111,9 @@ $code .= <<EOF;
 .text
 .align 16
 
-.globl md5_block_asm_host_order
-.type md5_block_asm_host_order,\@function,3
-md5_block_asm_host_order:
+.globl md5_block_asm_data_order
+.type md5_block_asm_data_order,\@function,3
+md5_block_asm_data_order:
 	push	%rbp
 	push	%rbx
 	push	%r14
@@ -237,7 +237,7 @@ $code .= <<EOF;
 	pop	%rbx
 	pop	%rbp
 	ret
-.size md5_block_asm_host_order,.-md5_block_asm_host_order
+.size md5_block_asm_data_order,.-md5_block_asm_data_order
 EOF
 
 print $code;

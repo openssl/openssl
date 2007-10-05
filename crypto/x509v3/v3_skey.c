@@ -62,7 +62,7 @@
 #include <openssl/x509v3.h>
 
 static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method, X509V3_CTX *ctx, char *str);
-X509V3_EXT_METHOD v3_skey_id = { 
+const X509V3_EXT_METHOD v3_skey_id = { 
 NID_subject_key_identifier, 0, ASN1_ITEM_ref(ASN1_OCTET_STRING),
 0,0,0,0,
 (X509V3_EXT_I2S)i2s_ASN1_OCTET_STRING,

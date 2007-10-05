@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/Makefile
+# OpenSSL/crypto/Makefile
 #
 
 DIR=		crypto
@@ -15,6 +15,11 @@ MAKEFILE=       Makefile
 RM=             rm -f
 AR=		ar r
 
+RECURSIVE_MAKE=	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
+		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
+		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='${INCLUDES}' $$target ) || exit 1; \
+		done;
+
 PEX_LIBS=
 EX_LIBS=
  
@@ -24,20 +29,12 @@ AFLAGS=$(ASFLAGS)
 
 LIBS=
 
-SDIRS=	objects \
-	md2 md4 md5 sha mdc2 hmac ripemd \
-	des rc2 rc4 rc5 idea bf cast \
-	bn ec rsa dsa ecdsa ecdh dh dso engine aes \
-	buffer bio stack lhash rand err \
-	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5 \
-	store pqueue
-
 GENERAL=Makefile README crypto-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= libcrypto$(SHLIB_EXT)
-LIBSRC=	cryptlib.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c tmdiff.c cpt_err.c ebcdic.c uid.c o_time.c o_str.c o_dir.c
-LIBOBJ= cryptlib.o mem.o mem_clr.o mem_dbg.o cversion.o ex_data.o tmdiff.o cpt_err.o ebcdic.o uid.o o_time.o o_str.o o_dir.o $(CPUID_OBJ)
+LIBSRC=	cryptlib.c dyn_lck.c mem.c mem_clr.c mem_dbg.c cversion.c ex_data.c tmdiff.c cpt_err.c ebcdic.c uid.c o_time.c o_str.c o_dir.c o_init.c fips_err.c 
+LIBOBJ= cryptlib.o dyn_lck.o mem.o mem_clr.o mem_dbg.o cversion.o ex_data.o tmdiff.o cpt_err.o ebcdic.o uid.o o_time.o o_str.o o_dir.o o_init.o fips_err.o $(CPUID_OBJ)
 
 SRC= $(LIBSRC)
 
@@ -50,7 +47,7 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all: shared
+all: lib
 
 buildinf.h: ../Makefile
 	( echo "#ifndef MK1MF_BUILD"; \
@@ -67,45 +64,42 @@ x86cpuid-cof.s: x86cpuid.pl perlasm/x86asm.pl
 x86cpuid-out.s: x86cpuid.pl perlasm/x86asm.pl
 	$(PERL) x86cpuid.pl a.out $(CFLAGS) $(PROCESSOR) > $@
 
+uplink.o:	../ms/uplink.c
+	$(CC) $(CFLAGS) -c -o $@ ../ms/uplink.c
+
+uplink-cof.s:	../ms/uplink.pl
+	$(PERL) ../ms/uplink.pl coff > $@
+
 x86_64cpuid.s: x86_64cpuid.pl
 	$(PERL) x86_64cpuid.pl $@
 ia64cpuid.s: ia64cpuid.S
 	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
 
 testapps:
-	[ -z "$(THIS)" ] || ( if echo ${SDIRS} | fgrep ' des '; \
-	then cd des && $(MAKE) des; fi )
-	[ -z "$(THIS)" ] || ( cd pkcs7 && $(MAKE) testapps );
+	[ -z "$(THIS)" ] || (	if echo ${SDIRS} | fgrep ' des '; \
+				then cd des && $(MAKE) -e des; fi )
+	[ -z "$(THIS)" ] || ( cd pkcs7 && $(MAKE) -e testapps );
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 subdirs:
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making all in crypto/$$i..." && \
-	$(MAKE) INCLUDES='${INCLUDES}' all ) || exit 1; \
-	done;
+	@target=all; $(RECURSIVE_MAKE)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making 'files' in crypto/$$i..." && \
-	$(MAKE) files ); \
-	done;
+	@target=files; $(RECURSIVE_MAKE)
 
 links:
 	@$(PERL) $(TOP)/util/mklink.pl ../include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl ../test $(TEST)
 	@$(PERL) $(TOP)/util/mklink.pl ../apps $(APPS)
-	@for i in $(SDIRS); do \
-	    (cd $$i && echo "making links in crypto/$$i..." && \
-	    $(MAKE) links ); \
-	done;
+	@target=links; $(RECURSIVE_MAKE)
 
-lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
-	$(RANLIB) $(LIB) || echo Never mind.
+# lib: and $(LIB): are splitted to avoid end-less loop
+lib:	buildinf.h $(LIB) subdirs
 	@touch lib
+$(LIB):	$(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
+	$(RANLIB) $(LIB) || echo Never mind.
 
 shared: buildinf.h lib subdirs
 	if [ -n "$(SHARED_LIBS)" ]; then \
@@ -113,19 +107,7 @@ shared: buildinf.h lib subdirs
 	fi
 
 libs:
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making libs in crypto/$$i..." && \
-	$(MAKE) lib );
-	done;
-
-tests:
-	@[ -z "$(THIS)" ] || (for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making tests in crypto/$$i..." && \
-	$(MAKE) tests ); \
-	done; )
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
+	@target=lib; $(RECURSIVE_MAKE)
 
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
@@ -134,47 +116,26 @@ install:
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making install in crypto/$$i..." && \
-	$(MAKE) install ); \
-	done;
+	@target=install; $(RECURSIVE_MAKE)
 
 lint:
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making lint in crypto/$$i..." && \
-	$(MAKE) lint ); \
-	done;
+	@target=lint; $(RECURSIVE_MAKE)
 
 depend:
-	[ -z "$(THIS)" -o -f buildinf.h ] || touch buildinf.h # fake buildinf.h if it does not exist
-	[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
-	[ -z "$(THIS)" -o -s buildinf.h ] || rm buildinf.h
-	@[ -z "$(THIS)" ] || (set -e; \
-	for i in $(SDIRS) ; do \
-	    (	cd $$i && echo "making depend in crypto/$$i..." && \
-		$(MAKE) INCLUDES='${INCLUDES}' depend \
-	    ); \
-	done; )
+	@[ -z "$(THIS)" -o -f buildinf.h ] || touch buildinf.h # fake buildinf.h if it does not exist
+	@[ -z "$(THIS)" ] || $(MAKEDEPEND) -- $(CFLAG) $(INCLUDE) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
+	@[ -z "$(THIS)" -o -s buildinf.h ] || rm buildinf.h
+	@[ -z "$(THIS)" ] || (set -e; target=depend; $(RECURSIVE_MAKE) )
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 clean:
 	rm -f buildinf.h *.s *.o */*.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making clean in crypto/$$i..." && \
-	$(MAKE) clean ); \
-	done;
+	@target=clean; $(RECURSIVE_MAKE)
 
 dclean:
 	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
 	mv -f Makefile.new $(MAKEFILE)
-	@for i in $(SDIRS) ;\
-	do \
-	(cd $$i && echo "making dclean in crypto/$$i..." && \
-	$(MAKE) dclean ); \
-	done;
+	@target=dclean; $(RECURSIVE_MAKE)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
@@ -198,6 +159,13 @@ cversion.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 cversion.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 cversion.o: ../include/openssl/stack.h ../include/openssl/symhacks.h buildinf.h
 cversion.o: cryptlib.h cversion.c
+dyn_lck.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
+dyn_lck.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+dyn_lck.o: ../include/openssl/err.h ../include/openssl/lhash.h
+dyn_lck.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+dyn_lck.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+dyn_lck.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
+dyn_lck.o: dyn_lck.c
 ebcdic.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h ebcdic.c
 ex_data.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 ex_data.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
@@ -206,6 +174,13 @@ ex_data.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 ex_data.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 ex_data.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 ex_data.o: ex_data.c
+fips_err.o: ../include/openssl/bio.h ../include/openssl/crypto.h
+fips_err.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+fips_err.o: ../include/openssl/fips.h ../include/openssl/lhash.h
+fips_err.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+fips_err.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+fips_err.o: ../include/openssl/stack.h ../include/openssl/symhacks.h fips_err.c
+fips_err.o: fips_err.h
 mem.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 mem.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem.o: ../include/openssl/err.h ../include/openssl/lhash.h
@@ -226,6 +201,12 @@ mem_dbg.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 mem_dbg.o: mem_dbg.c
 o_dir.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 o_dir.o: LPdir_unix.c o_dir.c o_dir.h
+o_init.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/crypto.h
+o_init.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+o_init.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+o_init.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+o_init.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+o_init.o: ../include/openssl/symhacks.h o_init.c
 o_str.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 o_str.o: o_str.c o_str.h
 o_time.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h o_time.c

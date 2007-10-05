@@ -213,7 +213,7 @@ int MAIN(int argc, char **argv)
 		BIO_write(out, buf, chunk);
 		num -= chunk;
 		}
-	BIO_flush(out);
+	(void)BIO_flush(out);
 
 	app_RAND_write_file(NULL, bio_err);
 	ret = 0;

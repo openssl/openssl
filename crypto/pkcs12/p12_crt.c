@@ -59,6 +59,7 @@
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/pkcs12.h>
+#include <openssl/fips.h>
 
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags, PKCS12_SAFEBAG *bag);
@@ -77,7 +78,14 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	/* Set defaults */
 	if (!nid_cert)
+		{
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			nid_cert = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+		else
+#endif
 		nid_cert = NID_pbe_WithSHA1And40BitRC2_CBC;
+		}
 	if (!nid_key)
 		nid_key = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
 	if (!iter)

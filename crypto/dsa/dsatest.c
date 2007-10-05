@@ -74,6 +74,7 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/bn.h>
 
 #ifdef OPENSSL_NO_DSA
 int main(int argc, char *argv[])

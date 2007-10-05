@@ -77,10 +77,6 @@ void RC4(RC4_KEY *key, unsigned long len, const unsigned char *indata,
         x=key->x;     
         y=key->y;     
         d=key->data; 
-#if defined(__ia64) || defined(__ia64__) || defined(_M_IA64)
-	/* see crypto/rc4/asm/rc4-ia64.S for further details... */
-	d=(RC4_INT *)(((size_t)(d+255))&~(sizeof(key->data)-1));
-#endif
 
 #if defined(RC4_CHUNK)
 	/*
@@ -161,7 +157,7 @@ void RC4(RC4_KEY *key, unsigned long len, const unsigned char *indata,
 		if (!is_endian.little)
 			{	/* BIG-ENDIAN CASE */
 # define BESHFT(c)	(((sizeof(RC4_CHUNK)-(c)-1)*8)&(sizeof(RC4_CHUNK)*8-1))
-			for (;len&-sizeof(RC4_CHUNK);len-=sizeof(RC4_CHUNK))
+			for (;len&~(sizeof(RC4_CHUNK)-1);len-=sizeof(RC4_CHUNK))
 				{
 				ichunk  = *(RC4_CHUNK *)indata;
 				otp  = RC4_STEP<<BESHFT(0);
@@ -214,7 +210,7 @@ void RC4(RC4_KEY *key, unsigned long len, const unsigned char *indata,
 		else
 			{	/* LITTLE-ENDIAN CASE */
 # define LESHFT(c)	(((c)*8)&(sizeof(RC4_CHUNK)*8-1))
-			for (;len&-sizeof(RC4_CHUNK);len-=sizeof(RC4_CHUNK))
+			for (;len&~(sizeof(RC4_CHUNK)-1);len-=sizeof(RC4_CHUNK))
 				{
 				ichunk  = *(RC4_CHUNK *)indata;
 				otp  = RC4_STEP;

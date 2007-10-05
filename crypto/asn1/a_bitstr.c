@@ -183,9 +183,11 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 	iv= ~v;
 	if (!value) v=0;
 
+	if (a == NULL)
+		return 0;
+
 	a->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07); /* clear, set on write */
 
-	if (a == NULL) return(0);
 	if ((a->length < (w+1)) || (a->data == NULL))
 		{
 		if (!value) return(1); /* Don't need to set */

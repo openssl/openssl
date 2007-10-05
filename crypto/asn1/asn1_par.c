@@ -88,7 +88,10 @@ static int asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
 		BIO_snprintf(str,sizeof str,"cont [ %d ]",tag);
 	else if ((xclass & V_ASN1_APPLICATION) == V_ASN1_APPLICATION)
 		BIO_snprintf(str,sizeof str,"appl [ %d ]",tag);
-	else p = ASN1_tag2str(tag);
+	else if (tag > 30)
+		BIO_snprintf(str,sizeof str,"<ASN1 %d>",tag);
+	else
+		p = ASN1_tag2str(tag);
 
 	if (p2 != NULL)
 		{
@@ -419,7 +422,7 @@ end:
 
 const char *ASN1_tag2str(int tag)
 {
-	const static char *tag2str[] = {
+	static const char *tag2str[] = {
 	 "EOC", "BOOLEAN", "INTEGER", "BIT STRING", "OCTET STRING", /* 0-4 */
 	 "NULL", "OBJECT", "OBJECT DESCRIPTOR", "EXTERNAL", "REAL", /* 5-9 */
 	 "ENUMERATED", "<ASN1 11>", "UTF8STRING", "<ASN1 13>", 	    /* 10-13 */

@@ -188,7 +188,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -port port     - use -connect instead\n");
 	BIO_printf(bio_err," -connect host:port - who to connect to (default is %s:%s)\n",SSL_HOST_NAME,PORT_STR);
 
-	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
+	BIO_printf(bio_err," -verify depth - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");
 	BIO_printf(bio_err," -certform arg - certificate format (PEM or DER) PEM default\n");
 	BIO_printf(bio_err," -key arg      - Private key file to use, in cert file if\n");
@@ -226,13 +226,22 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -starttls prot - use the STARTTLS command before starting TLS\n");
 	BIO_printf(bio_err,"                 for those protocols that support it, where\n");
 	BIO_printf(bio_err,"                 'prot' defines which one to assume.  Currently,\n");
-	BIO_printf(bio_err,"                 only \"smtp\" and \"pop3\" are supported.\n");
+	BIO_printf(bio_err,"                 only \"smtp\", \"pop3\", \"imap\", and \"ftp\" are supported.\n");
 #ifndef OPENSSL_NO_ENGINE
 	BIO_printf(bio_err," -engine id    - Initialise and use the specified engine\n");
 #endif
 	BIO_printf(bio_err," -rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 
 	}
+
+enum
+{
+	PROTO_OFF	= 0,
+	PROTO_SMTP,
+	PROTO_POP3,
+	PROTO_IMAP,
+	PROTO_FTP
+};
 
 int MAIN(int, char **);
 
@@ -260,12 +269,16 @@ int MAIN(int argc, char **argv)
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
-	int starttls_proto = 0;
+	int starttls_proto = PROTO_OFF;
 	int prexit = 0, vflags = 0;
 	SSL_METHOD *meth=NULL;
+#ifdef sock_type
+#undef sock_type
+#endif
 	int sock_type=SOCK_STREAM;
 	BIO *sbio;
 	char *inrand=NULL;
+	int mbuf_len=0;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine_id=NULL;
 	ENGINE *e=NULL;
@@ -463,9 +476,13 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			++argv;
 			if (strcmp(*argv,"smtp") == 0)
-				starttls_proto = 1;
+				starttls_proto = PROTO_SMTP;
 			else if (strcmp(*argv,"pop3") == 0)
-				starttls_proto = 2;
+				starttls_proto = PROTO_POP3;
+			else if (strcmp(*argv,"imap") == 0)
+				starttls_proto = PROTO_IMAP;
+			else if (strcmp(*argv,"ftp") == 0)
+				starttls_proto = PROTO_FTP;
 			else
 				goto bad;
 			}
@@ -651,7 +668,7 @@ re_start:
 			goto end;
 			}
 
-		BIO_ctrl_set_connected(sbio, 1, &peer);
+		(void)BIO_ctrl_set_connected(sbio, 1, &peer);
 
 		if ( enable_timeouts)
 			{
@@ -690,7 +707,7 @@ re_start:
 		{
 		con->debug=1;
 		BIO_set_callback(sbio,bio_dump_callback);
-		BIO_set_callback_arg(sbio,bio_c_out);
+		BIO_set_callback_arg(sbio,(char *)bio_c_out);
 		}
 	if (c_msg)
 		{
@@ -716,16 +733,91 @@ re_start:
 	sbuf_off=0;
 
 	/* This is an ugly hack that does a lot of assumptions */
-	if (starttls_proto == 1)
+	/* We do have to handle multi-line responses which may come
+ 	   in a single packet or not. We therefore have to use
+	   BIO_gets() which does need a buffering BIO. So during
+	   the initial chitchat we do push a buffering BIO into the
+	   chain that is removed again later on to not disturb the
+	   rest of the s_client operation. */
+	if (starttls_proto == PROTO_SMTP)
 		{
-		BIO_read(sbio,mbuf,BUFSIZZ);
+		int foundit=0;
+		BIO *fbio = BIO_new(BIO_f_buffer());
+		BIO_push(fbio, sbio);
+		/* wait for multi-line response to end from SMTP */
+		do
+			{
+			mbuf_len = BIO_gets(fbio,mbuf,BUFSIZZ);
+			}
+		while (mbuf_len>3 && mbuf[3]=='-');
+		/* STARTTLS command requires EHLO... */
+		BIO_printf(fbio,"EHLO openssl.client.net\r\n");
+		(void)BIO_flush(fbio);
+		/* wait for multi-line response to end EHLO SMTP response */
+		do
+			{
+			mbuf_len = BIO_gets(fbio,mbuf,BUFSIZZ);
+			if (strstr(mbuf,"STARTTLS"))
+				foundit=1;
+			}
+		while (mbuf_len>3 && mbuf[3]=='-');
+		(void)BIO_flush(fbio);
+		BIO_pop(fbio);
+		BIO_free(fbio);
+		if (!foundit)
+			BIO_printf(bio_err,
+				   "didn't found starttls in server response,"
+				   " try anyway...\n");
 		BIO_printf(sbio,"STARTTLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}
-	if (starttls_proto == 2)
+	else if (starttls_proto == PROTO_POP3)
 		{
 		BIO_read(sbio,mbuf,BUFSIZZ);
 		BIO_printf(sbio,"STLS\r\n");
+		BIO_read(sbio,sbuf,BUFSIZZ);
+		}
+	else if (starttls_proto == PROTO_IMAP)
+		{
+		int foundit=0;
+		BIO *fbio = BIO_new(BIO_f_buffer());
+		BIO_push(fbio, sbio);
+		BIO_gets(fbio,mbuf,BUFSIZZ);
+		/* STARTTLS command requires CAPABILITY... */
+		BIO_printf(fbio,". CAPABILITY\r\n");
+		(void)BIO_flush(fbio);
+		/* wait for multi-line CAPABILITY response */
+		do
+			{
+			mbuf_len = BIO_gets(fbio,mbuf,BUFSIZZ);
+			if (strstr(mbuf,"STARTTLS"))
+				foundit=1;
+			}
+		while (mbuf_len>3 && mbuf[0]!='.');
+		(void)BIO_flush(fbio);
+		BIO_pop(fbio);
+		BIO_free(fbio);
+		if (!foundit)
+			BIO_printf(bio_err,
+				   "didn't found STARTTLS in server response,"
+				   " try anyway...\n");
+		BIO_printf(sbio,". STARTTLS\r\n");
+		BIO_read(sbio,sbuf,BUFSIZZ);
+		}
+	else if (starttls_proto == PROTO_FTP)
+		{
+		BIO *fbio = BIO_new(BIO_f_buffer());
+		BIO_push(fbio, sbio);
+		/* wait for multi-line response to end from FTP */
+		do
+			{
+			mbuf_len = BIO_gets(fbio,mbuf,BUFSIZZ);
+			}
+		while (mbuf_len>3 && mbuf[3]=='-');
+		(void)BIO_flush(fbio);
+		BIO_pop(fbio);
+		BIO_free(fbio);
+		BIO_printf(sbio,"AUTH TLS\r\n");
 		BIO_read(sbio,sbuf,BUFSIZZ);
 		}
 
@@ -752,7 +844,7 @@ re_start:
 					{
 					BIO_printf(bio_err,"%s",mbuf);
 					/* We don't need to know any more */
-					starttls_proto = 0;
+					starttls_proto = PROTO_OFF;
 					}
 
 				if (reconnect)
@@ -1093,7 +1185,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	SSL_CIPHER *c;
 	X509_NAME *xn;
 	int j,i;
+#ifndef OPENSSL_NO_COMP
 	const COMP_METHOD *comp, *expansion;
+#endif
 
 	if (full)
 		{
@@ -1196,17 +1290,19 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 							 EVP_PKEY_bits(pktmp));
 		EVP_PKEY_free(pktmp);
 	}
+#ifndef OPENSSL_NO_COMP
 	comp=SSL_get_current_compression(s);
 	expansion=SSL_get_current_expansion(s);
 	BIO_printf(bio,"Compression: %s\n",
 		comp ? SSL_COMP_get_name(comp) : "NONE");
 	BIO_printf(bio,"Expansion: %s\n",
 		expansion ? SSL_COMP_get_name(expansion) : "NONE");
+#endif
 	SSL_SESSION_print(bio,SSL_get_session(s));
 	BIO_printf(bio,"---\n");
 	if (peer != NULL)
 		X509_free(peer);
 	/* flush, or debugging output gets mixed with http response */
-	BIO_flush(bio);
+	(void)BIO_flush(bio);
 	}
 

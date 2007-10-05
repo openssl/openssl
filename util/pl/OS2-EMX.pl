@@ -68,6 +68,7 @@ if (!$no_asm)
 	$sha1_asm_src="crypto/sha/asm/s1-os2.asm";
 	$rmd160_asm_obj="crypto/ripemd/asm/rm-os2$obj";
 	$rmd160_asm_src="crypto/ripemd/asm/rm-os2.asm";
+	$cflags.=" -DBN_ASM -DMD5_ASM -DSHA1_ASM -DOPENSSL_BN_ASM_PART_WORDS";
 	}
 
 if ($shlib)

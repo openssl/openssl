@@ -88,6 +88,7 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_FUNC(EC_F_EC_ASN1_GROUP2PKPARAMETERS),	"EC_ASN1_GROUP2PKPARAMETERS"},
 {ERR_FUNC(EC_F_EC_ASN1_PARAMETERS2GROUP),	"EC_ASN1_PARAMETERS2GROUP"},
 {ERR_FUNC(EC_F_EC_ASN1_PKPARAMETERS2GROUP),	"EC_ASN1_PKPARAMETERS2GROUP"},
+{ERR_FUNC(EC_F_EC_EX_DATA_SET_DATA),	"EC_EX_DATA_set_data"},
 {ERR_FUNC(EC_F_EC_GF2M_MONTGOMERY_POINT_MULTIPLY),	"EC_GF2M_MONTGOMERY_POINT_MULTIPLY"},
 {ERR_FUNC(EC_F_EC_GF2M_SIMPLE_GROUP_CHECK_DISCRIMINANT),	"ec_GF2m_simple_group_check_discriminant"},
 {ERR_FUNC(EC_F_EC_GF2M_SIMPLE_GROUP_SET_CURVE),	"ec_GF2m_simple_group_set_curve"},
@@ -131,14 +132,13 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_FUNC(EC_F_EC_GROUP_GET_ORDER),	"EC_GROUP_get_order"},
 {ERR_FUNC(EC_F_EC_GROUP_GET_PENTANOMIAL_BASIS),	"EC_GROUP_get_pentanomial_basis"},
 {ERR_FUNC(EC_F_EC_GROUP_GET_TRINOMIAL_BASIS),	"EC_GROUP_get_trinomial_basis"},
-{ERR_FUNC(EC_F_EC_GROUP_GROUP2NID),	"EC_GROUP_GROUP2NID"},
 {ERR_FUNC(EC_F_EC_GROUP_NEW),	"EC_GROUP_new"},
 {ERR_FUNC(EC_F_EC_GROUP_NEW_BY_CURVE_NAME),	"EC_GROUP_new_by_curve_name"},
 {ERR_FUNC(EC_F_EC_GROUP_NEW_FROM_DATA),	"EC_GROUP_NEW_FROM_DATA"},
 {ERR_FUNC(EC_F_EC_GROUP_PRECOMPUTE_MULT),	"EC_GROUP_precompute_mult"},
 {ERR_FUNC(EC_F_EC_GROUP_SET_CURVE_GF2M),	"EC_GROUP_set_curve_GF2m"},
 {ERR_FUNC(EC_F_EC_GROUP_SET_CURVE_GFP),	"EC_GROUP_set_curve_GFp"},
-{ERR_FUNC(EC_F_EC_GROUP_SET_EXTRA_DATA),	"EC_GROUP_set_extra_data"},
+{ERR_FUNC(EC_F_EC_GROUP_SET_EXTRA_DATA),	"EC_GROUP_SET_EXTRA_DATA"},
 {ERR_FUNC(EC_F_EC_GROUP_SET_GENERATOR),	"EC_GROUP_set_generator"},
 {ERR_FUNC(EC_F_EC_KEY_CHECK_KEY),	"EC_KEY_check_key"},
 {ERR_FUNC(EC_F_EC_KEY_COPY),	"EC_KEY_copy"},
@@ -188,6 +188,7 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {ERR_REASON(EC_R_D2I_ECPKPARAMETERS_FAILURE),"d2i ecpkparameters failure"},
 {ERR_REASON(EC_R_DISCRIMINANT_IS_ZERO)   ,"discriminant is zero"},
 {ERR_REASON(EC_R_EC_GROUP_NEW_BY_NAME_FAILURE),"ec group new by name failure"},
+{ERR_REASON(EC_R_FIELD_TOO_LARGE)        ,"field too large"},
 {ERR_REASON(EC_R_GROUP2PKPARAMETERS_FAILURE),"group2pkparameters failure"},
 {ERR_REASON(EC_R_I2D_ECPKPARAMETERS_FAILURE),"i2d ecpkparameters failure"},
 {ERR_REASON(EC_R_INCOMPATIBLE_OBJECTS)   ,"incompatible objects"},
@@ -198,7 +199,9 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {ERR_REASON(EC_R_INVALID_FIELD)          ,"invalid field"},
 {ERR_REASON(EC_R_INVALID_FORM)           ,"invalid form"},
 {ERR_REASON(EC_R_INVALID_GROUP_ORDER)    ,"invalid group order"},
+{ERR_REASON(EC_R_INVALID_PENTANOMIAL_BASIS),"invalid pentanomial basis"},
 {ERR_REASON(EC_R_INVALID_PRIVATE_KEY)    ,"invalid private key"},
+{ERR_REASON(EC_R_INVALID_TRINOMIAL_BASIS),"invalid trinomial basis"},
 {ERR_REASON(EC_R_MISSING_PARAMETERS)     ,"missing parameters"},
 {ERR_REASON(EC_R_MISSING_PRIVATE_KEY)    ,"missing private key"},
 {ERR_REASON(EC_R_NOT_A_NIST_PRIME)       ,"not a NIST prime"},
@@ -224,15 +227,12 @@ static ERR_STRING_DATA EC_str_reasons[]=
 
 void ERR_load_EC_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(EC_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,EC_str_functs);
 		ERR_load_strings(0,EC_str_reasons);
-#endif
-
 		}
+#endif
 	}

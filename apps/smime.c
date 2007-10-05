@@ -145,6 +145,10 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp (*args, "-des")) 
 				cipher = EVP_des_cbc();
 #endif
+#ifndef OPENSSL_NO_SEED
+		else if (!strcmp (*args, "-seed")) 
+				cipher = EVP_seed_cbc();
+#endif
 #ifndef OPENSSL_NO_RC2
 		else if (!strcmp (*args, "-rc2-40")) 
 				cipher = EVP_rc2_40_cbc();
@@ -160,6 +164,14 @@ int MAIN(int argc, char **argv)
 				cipher = EVP_aes_192_cbc();
 		else if (!strcmp(*args,"-aes256"))
 				cipher = EVP_aes_256_cbc();
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+		else if (!strcmp(*args,"-camellia128"))
+				cipher = EVP_camellia_128_cbc();
+		else if (!strcmp(*args,"-camellia192"))
+				cipher = EVP_camellia_192_cbc();
+		else if (!strcmp(*args,"-camellia256"))
+				cipher = EVP_camellia_256_cbc();
 #endif
 		else if (!strcmp (*args, "-text")) 
 				flags |= PKCS7_TEXT;
@@ -384,9 +396,9 @@ int MAIN(int argc, char **argv)
 		}
 	else if (operation == SMIME_DECRYPT)
 		{
-		if (!recipfile)
+		if (!recipfile && !keyfile)
 			{
-			BIO_printf(bio_err, "No recipient certificate and key specified\n");
+			BIO_printf(bio_err, "No recipient certificate or key specified\n");
 			badarg = 1;
 			}
 		}
@@ -415,6 +427,9 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-des3          encrypt with triple DES\n");
 		BIO_printf (bio_err, "-des           encrypt with DES\n");
 #endif
+#ifndef OPENSSL_NO_SEED
+		BIO_printf (bio_err, "-seed          encrypt with SEED\n");
+#endif
 #ifndef OPENSSL_NO_RC2
 		BIO_printf (bio_err, "-rc2-40        encrypt with RC2-40 (default)\n");
 		BIO_printf (bio_err, "-rc2-64        encrypt with RC2-64\n");
@@ -423,6 +438,10 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_AES
 		BIO_printf (bio_err, "-aes128, -aes192, -aes256\n");
 		BIO_printf (bio_err, "               encrypt PEM output with cbc aes\n");
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+		BIO_printf (bio_err, "-camellia128, -camellia192, -camellia256\n");
+		BIO_printf (bio_err, "               encrypt PEM output with cbc camellia\n");
 #endif
 		BIO_printf (bio_err, "-nointern      don't search certificates in message for signer\n");
 		BIO_printf (bio_err, "-nosigs        don't verify message signature\n");
@@ -638,12 +657,6 @@ int MAIN(int argc, char **argv)
 		if ((flags & PKCS7_DETACHED) && (outformat == FORMAT_SMIME))
 			flags |= PKCS7_STREAM;
 		p7 = PKCS7_sign(signer, key, other, in, flags);
-		/* Don't need to rewind for partial signing */
-		if (!(flags & PKCS7_STREAM) && (BIO_reset(in) != 0))
-			{
-			BIO_printf(bio_err, "Can't rewind input file\n");
-			goto end;
-			}
 		}
 	else
 		{

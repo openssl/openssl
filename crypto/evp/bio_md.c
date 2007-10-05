@@ -192,11 +192,12 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ret=0;
 		break;
 	case BIO_C_GET_MD_CTX:
+		pctx=ptr;
+		*pctx=ctx;
+		break;
+	case BIO_C_SET_MD_CTX:
 		if (b->init)
-			{
-			pctx=ptr;
-			*pctx=ctx;
-			}
+			b->ptr=ptr;
 		else
 			ret=0;
 		break;

@@ -128,7 +128,7 @@
 #define USE_SOCKETS
 #include "e_os.h"
 
-#define _XOPEN_SOURCE 1		/* Or isascii won't be declared properly on
+#define _XOPEN_SOURCE 500	/* Or isascii won't be declared properly on
 				   VMS (at least with DECompHP C).  */
 #include <ctype.h>
 
@@ -143,9 +143,15 @@
 #endif
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 #include <openssl/bn.h>
 
 #define _XOPEN_SOURCE_EXTENDED	1 /* Or gethostname won't be declared properly
@@ -218,10 +224,14 @@ static const char rnd_seed[] = "string to make the random number generator think
 
 int doit_biopair(SSL *s_ssl,SSL *c_ssl,long bytes,clock_t *s_time,clock_t *c_time);
 int doit(SSL *s_ssl,SSL *c_ssl,long bytes);
+static int do_test_cipherlist(void);
 static void sv_usage(void)
 	{
 	fprintf(stderr,"usage: ssltest [args ...]\n");
 	fprintf(stderr,"\n");
+#ifdef OPENSSL_FIPS
+	fprintf(stderr,"-F             - run test in FIPS mode\n");
+#endif
 	fprintf(stderr," -server_auth  - check server certificate\n");
 	fprintf(stderr," -client_auth  - do client authentication\n");
 	fprintf(stderr," -proxy        - allow proxy certificates\n");
@@ -266,6 +276,7 @@ static void sv_usage(void)
 	               "                 Use \"openssl ecparam -list_curves\" for all names\n"  \
 	               "                 (default is sect163r2).\n");
 #endif
+	fprintf(stderr," -test_cipherlist - verifies the order of the ssl cipher lists\n");
 	}
 
 static void print_details(SSL *c_ssl, const char *prefix)
@@ -375,6 +386,7 @@ static void lock_dbg_cb(int mode, int type, const char *file, int line)
 		}
 	}
 
+
 int main(int argc, char *argv[])
 	{
 	char *CApath=NULL,*CAfile=NULL;
@@ -390,7 +402,9 @@ int main(int argc, char *argv[])
 	char *server_key=NULL;
 	char *client_cert=TEST_CLIENT_CERT;
 	char *client_key=NULL;
+#ifndef OPENSSL_NO_ECDH
 	char *named_curve = NULL;
+#endif
 	SSL_CTX *s_ctx=NULL;
 	SSL_CTX *c_ctx=NULL;
 	SSL_METHOD *meth=NULL;
@@ -399,7 +413,7 @@ int main(int argc, char *argv[])
 	long bytes=256L;
 #ifndef OPENSSL_NO_DH
 	DH *dh;
-	int dhe1024 = 0, dhe1024dsa = 0;
+	int dhe1024 = 1, dhe1024dsa = 0;
 #endif
 #ifndef OPENSSL_NO_ECDH
 	EC_KEY *ecdh = NULL;
@@ -409,8 +423,14 @@ int main(int argc, char *argv[])
 	int print_time = 0;
 	clock_t s_time = 0, c_time = 0;
 	int comp = 0;
+#ifndef OPENSSL_NO_COMP
 	COMP_METHOD *cm = NULL;
+#endif
 	STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
+	int test_cipherlist = 0;
+#ifdef OPENSSL_FIPS
+	int fips_mode=0;
+#endif
 
 	verbose = 0;
 	debug = 0;
@@ -442,7 +462,16 @@ int main(int argc, char *argv[])
 
 	while (argc >= 1)
 		{
-		if	(strcmp(*argv,"-server_auth") == 0)
+		if(!strcmp(*argv,"-F"))
+			{
+#ifdef OPENSSL_FIPS
+			fips_mode=1;
+#else
+			fprintf(stderr,"not compiled with FIPS support, so exitting without running.\n");
+			EXIT(0);
+#endif
+			}
+		else if	(strcmp(*argv,"-server_auth") == 0)
 			server_auth=1;
 		else if	(strcmp(*argv,"-client_auth") == 0)
 			client_auth=1;
@@ -586,6 +615,10 @@ int main(int argc, char *argv[])
 			{
 			app_verify_arg.allow_proxy_certs = 1;
 			}
+		else if (strcmp(*argv,"-test_cipherlist") == 0)
+			{
+			test_cipherlist = 1;
+			}
 		else
 			{
 			fprintf(stderr,"unknown option %s\n",*argv);
@@ -602,6 +635,15 @@ bad:
 		goto end;
 		}
 
+	if (test_cipherlist == 1)
+		{
+		/* ensure that the cipher list are correctly sorted and exit */
+		if (do_test_cipherlist() == 0)
+			EXIT(1);
+		ret = 0;
+		goto end;
+		}
+
 	if (!ssl2 && !ssl3 && !tls1 && number > 1 && !reuse && !force)
 		{
 		fprintf(stderr, "This case cannot work.  Use -f to perform "
@@ -610,6 +652,20 @@ bad:
 			"to avoid protocol mismatch.\n");
 		EXIT(1);
 		}
+
+#ifdef OPENSSL_FIPS
+	if(fips_mode)
+		{
+		if(!FIPS_mode_set(1))
+			{
+			ERR_load_crypto_strings();
+			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+			EXIT(1);
+			}
+		else
+			fprintf(stderr,"*** IN FIPS MODE ***\n");
+		}
+#endif
 
 	if (print_time)
 		{
@@ -627,6 +683,7 @@ bad:
 	SSL_library_init();
 	SSL_load_error_strings();
 
+#ifndef OPENSSL_NO_COMP
 	if (comp == COMP_ZLIB) cm = COMP_zlib();
 	if (comp == COMP_RLE) cm = COMP_rle();
 	if (cm != NULL)
@@ -663,6 +720,7 @@ bad:
 			fprintf(stderr, "  %d: %s\n", c->id, c->name);
 			}
 	}
+#endif
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	if (ssl2)
@@ -885,6 +943,7 @@ end:
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL) BIO_free(bio_err);
 	EXIT(ret);
+	return ret;
 	}
 
 int doit_biopair(SSL *s_ssl, SSL *c_ssl, long count,
@@ -1694,7 +1753,7 @@ static int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 					fprintf(stderr, "  Certificate proxy rights = %*.*s", i, i, s);
 					while(i-- > 0)
 						{
-						char c = *s++;
+						int c = *s++;
 						if (isascii(c) && isalpha(c))
 							{
 							if (islower(c))
@@ -1755,11 +1814,11 @@ static int process_proxy_cond_adders(unsigned int letters[26],
 static int process_proxy_cond_val(unsigned int letters[26],
 	const char *cond, const char **cond_end, int *pos, int indent)
 	{
-	char c;
+	int c;
 	int ok = 1;
 	int negate = 0;
 
-	while(isspace(*cond))
+	while(isspace((int)*cond))
 		{
 		cond++; (*pos)++;
 		}
@@ -1774,7 +1833,7 @@ static int process_proxy_cond_val(unsigned int letters[26],
 		{
 		negate = !negate;
 		cond++; (*pos)++;
-		while(isspace(*cond))
+		while(isspace((int)*cond))
 			{
 			cond++; (*pos)++;
 			}
@@ -1789,7 +1848,7 @@ static int process_proxy_cond_val(unsigned int letters[26],
 		cond = *cond_end;
 		if (ok < 0)
 			goto end;
-		while(isspace(*cond))
+		while(isspace((int)*cond))
 			{
 			cond++; (*pos)++;
 			}
@@ -1849,7 +1908,7 @@ static int process_proxy_cond_multipliers(unsigned int letters[26],
 
 	while(ok >= 0)
 		{
-		while(isspace(*cond))
+		while(isspace((int)*cond))
 			{
 			cond++; (*pos)++;
 			}
@@ -1916,7 +1975,7 @@ static int process_proxy_cond_adders(unsigned int letters[26],
 
 	while(ok >= 0)
 		{
-		while(isspace(*cond))
+		while(isspace((int)*cond))
 			{
 			cond++; (*pos)++;
 			}
@@ -1999,7 +2058,7 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 			letters[i] = 0;
 		for(sp = cb_arg->proxy_auth; *sp; sp++)
 			{
-			char c = *sp;
+			int c = *sp;
 			if (isascii(c) && isalpha(c))
 				{
 				if (islower(c))
@@ -2029,15 +2088,7 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 		}
 
 #ifndef OPENSSL_NO_X509_VERIFY
-# ifdef OPENSSL_FIPS
-	if(s->version == TLS1_VERSION)
-		FIPS_allow_md5(1);
-# endif
 	ok = X509_verify_cert(ctx);
-# ifdef OPENSSL_FIPS
-	if(s->version == TLS1_VERSION)
-		FIPS_allow_md5(0);
-# endif
 #endif
 
 	if (cb_arg->proxy_auth)
@@ -2205,3 +2256,60 @@ static DH *get_dh1024dsa()
 	return(dh);
 	}
 #endif
+
+static int do_test_cipherlist(void)
+	{
+	int i = 0;
+	const SSL_METHOD *meth;
+	SSL_CIPHER *ci, *tci = NULL;
+
+#ifndef OPENSSL_NO_SSL2
+	fprintf(stderr, "testing SSLv2 cipher list order: ");
+	meth = SSLv2_method();
+	while ((ci = meth->get_cipher(i++)) != NULL)
+		{
+		if (tci != NULL)
+			if (ci->id >= tci->id)
+				{
+				fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
+				return 0;
+				}
+		tci = ci;
+		}
+	fprintf(stderr, "ok\n");
+#endif
+#ifndef OPENSSL_NO_SSL3
+	fprintf(stderr, "testing SSLv3 cipher list order: ");
+	meth = SSLv3_method();
+	tci = NULL;
+	while ((ci = meth->get_cipher(i++)) != NULL)
+		{
+		if (tci != NULL)
+			if (ci->id >= tci->id)
+				{
+				fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
+				return 0;
+				}
+		tci = ci;
+		}
+	fprintf(stderr, "ok\n");
+#endif
+#ifndef OPENSSL_NO_TLS1
+	fprintf(stderr, "testing TLSv1 cipher list order: ");
+	meth = TLSv1_method();
+	tci = NULL;
+	while ((ci = meth->get_cipher(i++)) != NULL)
+		{
+		if (tci != NULL)
+			if (ci->id >= tci->id)
+				{
+				fprintf(stderr, "failed %lx vs. %lx\n", ci->id, tci->id);
+				return 0;
+				}
+		tci = ci;
+		}
+	fprintf(stderr, "ok\n");
+#endif
+
+	return 1;
+	}

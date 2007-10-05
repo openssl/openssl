@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/bn/Makefile
+# OpenSSL/crypto/bn/Makefile
 #
 
 DIR=	bn
@@ -28,13 +28,13 @@ LIBSRC=	bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c bn_mod.c \
 	bn_print.c bn_rand.c bn_shift.c bn_word.c bn_blind.c \
 	bn_kron.c bn_sqrt.c bn_gcd.c bn_prime.c bn_err.c bn_sqr.c bn_asm.c \
 	bn_recp.c bn_mont.c bn_mpi.c bn_exp2.c bn_gf2m.c bn_nist.c \
-	bn_depr.c
+	bn_depr.c bn_const.c bn_x931p.c bn_opt.c
 
 LIBOBJ=	bn_add.o bn_div.o bn_exp.o bn_lib.o bn_ctx.o bn_mul.o bn_mod.o \
 	bn_print.o bn_rand.o bn_shift.o bn_word.o bn_blind.o \
 	bn_kron.o bn_sqrt.o bn_gcd.o bn_prime.o bn_err.o bn_sqr.o $(BN_ASM) \
 	bn_recp.o bn_mont.o bn_mpi.o bn_exp2.o bn_gf2m.o bn_nist.o \
-	bn_depr.o
+	bn_depr.o bn_const.o bn_x931p.o bn_opt.o
 
 SRC= $(LIBSRC)
 
@@ -58,7 +58,7 @@ bnbug: bnbug.c ../../libcrypto.a top
 	cc -g -I../../include bnbug.c -o bnbug ../../libcrypto.a
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -67,29 +67,44 @@ bn86-elf.s:	asm/bn-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) bn-586.pl elf $(CFLAGS) > ../$@)
 co86-elf.s:	asm/co-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) co-586.pl elf $(CFLAGS) > ../$@)
+mo86-elf.s:	asm/x86-mont.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) x86-mont.pl elf $(CFLAGS) > ../$@)
 # COFF
 bn86-cof.s: asm/bn-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) bn-586.pl coff $(CFLAGS) > ../$@)
 co86-cof.s: asm/co-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) co-586.pl coff $(CFLAGS) > ../$@)
+mo86-cof.s: asm/x86-mont.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) x86-mont.pl coff $(CFLAGS) > ../$@)
 # a.out
 bn86-out.s: asm/bn-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) bn-586.pl a.out $(CFLAGS) > ../$@)
 co86-out.s: asm/co-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) co-586.pl a.out $(CFLAGS) > ../$@)
+mo86-out.s: asm/x86-mont.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) x86-mont.pl a.out $(CFLAGS) > ../$@)
 
 sparcv8.o:	asm/sparcv8.S
-
+	$(CC) $(CFLAGS) -c asm/sparcv8.S
 sparcv8plus.o:	asm/sparcv8plus.S
 	$(CC) $(CFLAGS) -c asm/sparcv8plus.S
 
-mips3.o:	asm/mips3.s
+bn-mips3.o:	asm/mips3.s
+	@if [ "$(CC)" = "gcc" ]; then \
+		ABI=`expr "$(CFLAGS)" : ".*-mabi=\([n3264]*\)"` && \
+		as -$$ABI -O -o $@ asm/mips3.s; \
+	else	$(CC) -c $(CFLAGS) -o $@ asm/mips3.s; fi
 
 x86_64-gcc.o:	asm/x86_64-gcc.c
 	$(CC) $(CFLAGS) -c -o $@ asm/x86_64-gcc.c
+x86_64-mont.s:	asm/x86_64-mont.pl
+	$(PERL) asm/x86_64-mont.pl $@
 
 bn-ia64.s:	asm/ia64.S
 	$(CC) $(CFLAGS) -E asm/ia64.S > $@
+
+bn-s390x.s:	asm/s390x.S
+	$(CC) $(CFLAGS) -E asm/s390x.S > $@
 
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
@@ -104,6 +119,9 @@ linux_ppc64.s: asm/ppc.pl;	$(PERL) $< $@
 aix_ppc32.s: asm/ppc.pl;	$(PERL) asm/ppc.pl $@
 aix_ppc64.s: asm/ppc.pl;	$(PERL) asm/ppc.pl $@
 osx_ppc32.s: asm/ppc.pl;	$(PERL) $< $@
+
+# GNU make "catch all"
+%-mont.s:	asm/%-mont.pl;  $(PERL) $< $(CFLAGS) > $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
@@ -171,6 +189,8 @@ bn_blind.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_blind.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_blind.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_blind.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_blind.c bn_lcl.h
+bn_const.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+bn_const.o: ../../include/openssl/ossl_typ.h bn.h bn_const.c
 bn_ctx.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_ctx.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_ctx.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -277,6 +297,13 @@ bn_nist.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_nist.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_nist.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_nist.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_nist.c
+bn_opt.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
+bn_opt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+bn_opt.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+bn_opt.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+bn_opt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+bn_opt.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bn_opt.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_opt.c
 bn_prime.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 bn_prime.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 bn_prime.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -335,3 +362,6 @@ bn_word.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_word.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_word.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_word.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_word.c
+bn_x931p.o: ../../include/openssl/bn.h ../../include/openssl/e_os2.h
+bn_x931p.o: ../../include/openssl/opensslconf.h
+bn_x931p.o: ../../include/openssl/ossl_typ.h bn_x931p.c

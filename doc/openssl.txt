@@ -778,7 +778,7 @@ called.
 
 The X509V3_EXT_METHOD structure is described below.
 
-strut {
+struct {
 int ext_nid;
 int ext_flags;
 X509V3_EXT_NEW ext_new;

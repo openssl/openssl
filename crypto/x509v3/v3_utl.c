@@ -71,7 +71,6 @@ static STACK *get_email(X509_NAME *name, GENERAL_NAMES *gens);
 static void str_free(void *str);
 static int append_ia5(STACK **sk, ASN1_IA5STRING *email);
 
-static int a2i_ipadd(unsigned char *ipout, const char *ipasc);
 static int ipv4_from_asc(unsigned char *v4, const char *in);
 static int ipv6_from_asc(unsigned char *v6, const char *in);
 static int ipv6_cb(const char *elem, int len, void *usr);
@@ -366,7 +365,7 @@ char *hex_to_string(unsigned char *buffer, long len)
 	char *tmp, *q;
 	unsigned char *p;
 	int i;
-	static char hexdig[] = "0123456789ABCDEF";
+	const static char hexdig[] = "0123456789ABCDEF";
 	if(!buffer || !len) return NULL;
 	if(!(tmp = OPENSSL_malloc(len * 3 + 1))) {
 		X509V3err(X509V3_F_HEX_TO_STRING,ERR_R_MALLOC_FAILURE);
@@ -615,7 +614,7 @@ ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc)
 	}
 	
 
-static int a2i_ipadd(unsigned char *ipout, const char *ipasc)
+int a2i_ipadd(unsigned char *ipout, const char *ipasc)
 	{
 	/* If string contains a ':' assume IPv6 */
 
@@ -826,13 +825,13 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE)*dn_sk,
 				break;
 				}
 #ifndef CHARSET_EBCDIC
-			if (*p == '+')
+		if (*type == '+')
 #else
-			if (*p == os_toascii['+'])
+		if (*type == os_toascii['+'])
 #endif
 			{
 			mval = -1;
-			p++;
+			type++;
 			}
 		else
 			mval = 0;

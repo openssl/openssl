@@ -237,7 +237,7 @@ static void *dlfcn_bind_var(DSO *dso, const char *symname)
 static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
 	{
 	void *ptr;
-	DSO_FUNC_TYPE sym;
+	DSO_FUNC_TYPE sym, *tsym = &sym;
 
 	if((dso == NULL) || (symname == NULL))
 		{
@@ -255,7 +255,7 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
 		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_NULL_HANDLE);
 		return(NULL);
 		}
-	*(void **)(&sym) = dlsym(ptr, symname);
+	*(void **)(tsym) = dlsym(ptr, symname);
 	if(sym == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_SYM_FAILURE);

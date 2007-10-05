@@ -129,8 +129,8 @@ extern "C" {
 /* dgram BIO stuff */
 #define BIO_CTRL_DGRAM_CONNECT       31  /* BIO dgram special */
 #define BIO_CTRL_DGRAM_SET_CONNECTED 32  /* allow for an externally
-										  * connected socket to be
-										  * passed in */ 
+					  * connected socket to be
+					  * passed in */ 
 #define BIO_CTRL_DGRAM_SET_RECV_TIMEOUT 33 /* setsockopt, essentially */
 #define BIO_CTRL_DGRAM_GET_RECV_TIMEOUT 34 /* getsockopt, essentially */
 #define BIO_CTRL_DGRAM_SET_SEND_TIMEOUT 35 /* setsockopt, essentially */
@@ -146,14 +146,14 @@ extern "C" {
 #define BIO_CTRL_DGRAM_QUERY_MTU          40 /* as kernel for current MTU */
 #define BIO_CTRL_DGRAM_GET_MTU            41 /* get cached value for MTU */
 #define BIO_CTRL_DGRAM_SET_MTU            42 /* set cached value for
-											  * MTU. want to use this
-                                              * if asking the kernel
-                                              * fails */
+					      * MTU. want to use this
+					      * if asking the kernel
+					      * fails */
 
 #define BIO_CTRL_DGRAM_MTU_EXCEEDED       43 /* check whether the MTU
-											  * was exceed in the
-											  * previous write
-											  * operation */
+					      * was exceed in the
+					      * previous write
+					      * operation */
 
 #define BIO_CTRL_DGRAM_SET_PEER           44 /* Destination for the data */
 
@@ -196,28 +196,32 @@ extern "C" {
  */
 #define BIO_FLAGS_MEM_RDONLY	0x200
 
-#define BIO_set_flags(b,f) ((b)->flags|=(f))
-#define BIO_get_flags(b) ((b)->flags)
+typedef struct bio_st BIO;
+
+void BIO_set_flags(BIO *b, int flags);
+int  BIO_test_flags(const BIO *b, int flags);
+void BIO_clear_flags(BIO *b, int flags);
+
+#define BIO_get_flags(b) BIO_test_flags(b, ~(0x0))
 #define BIO_set_retry_special(b) \
-		((b)->flags|=(BIO_FLAGS_IO_SPECIAL|BIO_FLAGS_SHOULD_RETRY))
+		BIO_set_flags(b, (BIO_FLAGS_IO_SPECIAL|BIO_FLAGS_SHOULD_RETRY))
 #define BIO_set_retry_read(b) \
-		((b)->flags|=(BIO_FLAGS_READ|BIO_FLAGS_SHOULD_RETRY))
+		BIO_set_flags(b, (BIO_FLAGS_READ|BIO_FLAGS_SHOULD_RETRY))
 #define BIO_set_retry_write(b) \
-		((b)->flags|=(BIO_FLAGS_WRITE|BIO_FLAGS_SHOULD_RETRY))
+		BIO_set_flags(b, (BIO_FLAGS_WRITE|BIO_FLAGS_SHOULD_RETRY))
 
 /* These are normally used internally in BIOs */
-#define BIO_clear_flags(b,f) ((b)->flags&= ~(f))
 #define BIO_clear_retry_flags(b) \
-		((b)->flags&= ~(BIO_FLAGS_RWS|BIO_FLAGS_SHOULD_RETRY))
+		BIO_clear_flags(b, (BIO_FLAGS_RWS|BIO_FLAGS_SHOULD_RETRY))
 #define BIO_get_retry_flags(b) \
-		((b)->flags&(BIO_FLAGS_RWS|BIO_FLAGS_SHOULD_RETRY))
+		BIO_test_flags(b, (BIO_FLAGS_RWS|BIO_FLAGS_SHOULD_RETRY))
 
 /* These should be used by the application to tell why we should retry */
-#define BIO_should_read(a)		((a)->flags & BIO_FLAGS_READ)
-#define BIO_should_write(a)		((a)->flags & BIO_FLAGS_WRITE)
-#define BIO_should_io_special(a)	((a)->flags & BIO_FLAGS_IO_SPECIAL)
-#define BIO_retry_type(a)		((a)->flags & BIO_FLAGS_RWS)
-#define BIO_should_retry(a)		((a)->flags & BIO_FLAGS_SHOULD_RETRY)
+#define BIO_should_read(a)		BIO_test_flags(a, BIO_FLAGS_READ)
+#define BIO_should_write(a)		BIO_test_flags(a, BIO_FLAGS_WRITE)
+#define BIO_should_io_special(a)	BIO_test_flags(a, BIO_FLAGS_IO_SPECIAL)
+#define BIO_retry_type(a)		BIO_test_flags(a, BIO_FLAGS_RWS)
+#define BIO_should_retry(a)		BIO_test_flags(a, BIO_FLAGS_SHOULD_RETRY)
 
 /* The next three are used in conjunction with the
  * BIO_should_io_special() condition.  After this returns true,
@@ -246,14 +250,14 @@ extern "C" {
 #define BIO_cb_pre(a)	(!((a)&BIO_CB_RETURN))
 #define BIO_cb_post(a)	((a)&BIO_CB_RETURN)
 
-#define BIO_set_callback(b,cb)		((b)->callback=(cb))
-#define BIO_set_callback_arg(b,arg)	((b)->cb_arg=(char *)(arg))
-#define BIO_get_callback_arg(b)		((b)->cb_arg)
-#define BIO_get_callback(b)		((b)->callback)
-#define BIO_method_name(b)		((b)->method->name)
-#define BIO_method_type(b)		((b)->method->type)
+long (*BIO_get_callback(const BIO *b)) (struct bio_st *,int,const char *,int, long,long);
+void BIO_set_callback(BIO *b, 
+	long (*callback)(struct bio_st *,int,const char *,int, long,long));
+char *BIO_get_callback_arg(const BIO *b);
+void BIO_set_callback_arg(BIO *b, char *arg);
 
-typedef struct bio_st BIO;
+const char * BIO_method_name(const BIO *b);
+int BIO_method_type(const BIO *b);
 
 typedef void bio_info_cb(struct bio_st *, int, const char *, int, long, long);
 
@@ -386,6 +390,7 @@ typedef struct bio_f_buffer_ctx_struct
 #define BIO_C_NWRITE0				145
 #define BIO_C_NWRITE				146
 #define BIO_C_RESET_READ_REQUEST		147
+#define BIO_C_SET_MD_CTX			148
 
 
 #define BIO_set_app_data(s,arg)		BIO_set_ex_data(s,0,arg)
@@ -676,17 +681,20 @@ void BIO_copy_next_retry(BIO *b);
 
 /*long BIO_ghbn_ctrl(int cmd,int iarg,char *parg);*/
 
-#ifndef __GNUC__
-#define __attribute__(x)
+#ifdef __GNUC__
+#  define __bio_h__attr__ __attribute__
+#else
+#  define __bio_h__attr__(x)
 #endif
 int BIO_printf(BIO *bio, const char *format, ...)
-	__attribute__((__format__(__printf__,2,3)));
+	__bio_h__attr__((__format__(__printf__,2,3)));
 int BIO_vprintf(BIO *bio, const char *format, va_list args)
-	__attribute__((__format__(__printf__,2,0)));
+	__bio_h__attr__((__format__(__printf__,2,0)));
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
-	__attribute__((__format__(__printf__,3,4)));
+	__bio_h__attr__((__format__(__printf__,3,4)));
 int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
-	__attribute__((__format__(__printf__,3,0)));
+	__bio_h__attr__((__format__(__printf__,3,0)));
+#undef __bio_h__attr__
 
 /* BEGIN ERROR CODES */
 /* The following lines are auto generated by the script mkerr.pl. Any changes

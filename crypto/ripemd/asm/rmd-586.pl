@@ -1,7 +1,7 @@
 #!/usr/local/bin/perl
 
 # Normal is the
-# ripemd160_block_asm_host_order(RIPEMD160_CTX *c, ULONG *X,int blocks);
+# ripemd160_block_asm_data_order(RIPEMD160_CTX *c, ULONG *X,int blocks);
 
 $normal=0;
 
@@ -56,7 +56,7 @@ $KR3=0x7A6D76E9;
 	 8, 5,12, 9,12, 5,14, 6, 8,13, 6, 5,15,13,11,11,
  	);
 
-&ripemd160_block("ripemd160_block_asm_host_order");
+&ripemd160_block("ripemd160_block_asm_data_order");
 &asm_finish();
 
 sub Xv

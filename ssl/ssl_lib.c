@@ -125,7 +125,9 @@
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
@@ -136,7 +138,14 @@ SSL3_ENC_METHOD ssl3_undef_enc_method={
 	ssl_undefined_function,
 	(int (*)(SSL *, unsigned char *, unsigned char *, int))ssl_undefined_function,
 	(int (*)(SSL*, int))ssl_undefined_function,
-	(int (*)(SSL *, EVP_MD_CTX *, EVP_MD_CTX *, const char*, int, unsigned char *))ssl_undefined_function
+	(int (*)(SSL *, EVP_MD_CTX *, EVP_MD_CTX *, const char*, int, unsigned char *))ssl_undefined_function,
+	0,	/* finish_mac_length */
+	(int (*)(SSL *, EVP_MD_CTX *, unsigned char *))ssl_undefined_function,
+	NULL,	/* client_finished_label */
+	0,	/* client_finished_label_len */
+	NULL,	/* server_finished_label */
+	0,	/* server_finished_label_len */
+	(int (*)(int))ssl_undefined_function
 	};
 
 int SSL_clear(SSL *s)
@@ -1153,8 +1162,21 @@ int SSL_CTX_set_cipher_list(SSL_CTX *ctx, const char *str)
 	
 	sk=ssl_create_cipher_list(ctx->method,&ctx->cipher_list,
 		&ctx->cipher_list_by_id,str);
-/* XXXX */
-	return((sk == NULL)?0:1);
+	/* ssl_create_cipher_list may return an empty stack if it
+	 * was unable to find a cipher matching the given rule string
+	 * (for example if the rule string specifies a cipher which
+	 * has been disabled). This is not an error as far as 
+	 * ssl_create_cipher_list is concerned, and hence 
+	 * ctx->cipher_list and ctx->cipher_list_by_id has been
+	 * updated. */
+	if (sk == NULL)
+		return 0;
+	else if (sk_SSL_CIPHER_num(sk) == 0)
+		{
+		SSLerr(SSL_F_SSL_CTX_SET_CIPHER_LIST, SSL_R_NO_CIPHER_MATCH);
+		return 0;
+		}
+	return 1;
 	}
 
 /** specify the ciphers to be used by the SSL */
@@ -1164,8 +1186,15 @@ int SSL_set_cipher_list(SSL *s,const char *str)
 	
 	sk=ssl_create_cipher_list(s->ctx->method,&s->cipher_list,
 		&s->cipher_list_by_id,str);
-/* XXXX */
-	return((sk == NULL)?0:1);
+	/* see comment in SSL_CTX_set_cipher_list */
+	if (sk == NULL)
+		return 0;
+	else if (sk_SSL_CIPHER_num(sk) == 0)
+		{
+		SSLerr(SSL_F_SSL_SET_CIPHER_LIST, SSL_R_NO_CIPHER_MATCH);
+		return 0;
+		}
+	return 1;
 	}
 
 /* works well for SSLv2, not so good for SSLv3 */
@@ -1190,7 +1219,7 @@ char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 		c=sk_SSL_CIPHER_value(sk,i);
 		for (cp=c->name; *cp; )
 			{
-			if (len-- == 0)
+			if (len-- <= 0)
 				{
 				*p='\0';
 				return(buf);
@@ -1318,6 +1347,14 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 		return(NULL);
 		}
 
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && (meth->version < TLS1_VERSION))	
+		{
+		SSLerr(SSL_F_SSL_CTX_NEW, SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+		return NULL;
+		}
+#endif
+
 	if (SSL_get_ex_data_X509_STORE_CTX_idx() < 0)
 		{
 		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_X509_VERIFICATION_SETUP_PROBLEMS);
@@ -1377,8 +1414,8 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	ret->default_passwd_callback=0;
 	ret->default_passwd_callback_userdata=NULL;
 	ret->client_cert_cb=0;
-    ret->app_gen_cookie_cb=0;
-    ret->app_verify_cookie_cb=0;
+	ret->app_gen_cookie_cb=0;
+	ret->app_verify_cookie_cb=0;
 
 	ret->sessions=lh_new(LHASH_HASH_FN(SSL_SESSION_hash),
 			LHASH_COMP_FN(SSL_SESSION_cmp));
@@ -1531,7 +1568,10 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	int rsa_enc_export,dh_rsa_export,dh_dsa_export;
 	int rsa_tmp_export,dh_tmp_export,kl;
 	unsigned long mask,emask;
-	int have_ecc_cert, have_ecdh_tmp, ecdh_ok, ecdsa_ok, ecc_pkey_size;
+	int have_ecc_cert, ecdh_ok, ecdsa_ok, ecc_pkey_size;
+#ifndef OPENSSL_NO_ECDH
+	int have_ecdh_tmp;
+#endif
 	X509 *x = NULL;
 	EVP_PKEY *ecc_pkey = NULL;
 	int signature_nid = 0;
@@ -1869,7 +1909,7 @@ void ssl_update_cache(SSL *s,int mode)
 			?s->ctx->stats.sess_connect_good
 			:s->ctx->stats.sess_accept_good) & 0xff) == 0xff)
 			{
-			SSL_CTX_flush_sessions(s->ctx,time(NULL));
+			SSL_CTX_flush_sessions(s->ctx,(unsigned long)time(NULL));
 			}
 		}
 	}
@@ -2214,6 +2254,7 @@ void ssl_clear_cipher_ctx(SSL *s)
 		OPENSSL_free(s->enc_write_ctx);
 		s->enc_write_ctx=NULL;
 		}
+#ifndef OPENSSL_NO_COMP
 	if (s->expand != NULL)
 		{
 		COMP_CTX_free(s->expand);
@@ -2224,6 +2265,7 @@ void ssl_clear_cipher_ctx(SSL *s)
 		COMP_CTX_free(s->compress);
 		s->compress=NULL;
 		}
+#endif
 	}
 
 /* Fix this function so that it takes an optional type parameter */
@@ -2250,6 +2292,16 @@ SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
 		return(s->session->cipher);
 	return(NULL);
 	}
+#ifdef OPENSSL_NO_COMP
+const void *SSL_get_current_compression(SSL *s)
+	{
+	return NULL;
+	}
+const void *SSL_get_current_expansion(SSL *s)
+	{
+	return NULL;
+	}
+#else
 
 const COMP_METHOD *SSL_get_current_compression(SSL *s)
 	{
@@ -2264,6 +2316,7 @@ const COMP_METHOD *SSL_get_current_expansion(SSL *s)
 		return(s->expand->meth);
 	return(NULL);
 	}
+#endif
 
 int ssl_init_wbio_buffer(SSL *s,int push)
 	{
@@ -2371,12 +2424,14 @@ int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
 #endif
 
 void SSL_set_info_callback(SSL *ssl,
-			   void (*cb)(const SSL *ssl,int type,int val))
+	void (*cb)(const SSL *ssl,int type,int val))
 	{
 	ssl->info_callback=cb;
 	}
 
-void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl,int type,int val)
+/* One compiler (Diab DCC) doesn't like argument names in returned
+   function pointer.  */
+void (*SSL_get_info_callback(const SSL *ssl))(const SSL * /*ssl*/,int /*type*/,int /*val*/) 
 	{
 	return ssl->info_callback;
 	}

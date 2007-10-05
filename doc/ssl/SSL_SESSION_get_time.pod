@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_SESSION_get_time, SSL_SESSION_set_time, SSL_SESSION_get_timeout, SSL_SESSION_get_timeout - retrieve and manipulate session time and timeout settings
+SSL_SESSION_get_time, SSL_SESSION_set_time, SSL_SESSION_get_timeout, SSL_SESSION_set_timeout - retrieve and manipulate session time and timeout settings
 
 =head1 SYNOPSIS
 

@@ -95,6 +95,11 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
+#if defined(_MSC_VER) && defined(_MIPS_) && (_MSC_VER/100==12)
+/* suppress "too big too optimize" warning */
+#pragma warning(disable:4959)
+#endif
+
 #define ABORT do { \
 	fflush(stdout); \
 	fprintf(stderr, "%s:%d: ABORT\n", __FILE__, __LINE__); \
@@ -226,7 +231,7 @@ void prime_field_tests()
 		EC_GROUP *tmp;
 		tmp = EC_GROUP_new(EC_GROUP_method_of(group));
 		if (!tmp) ABORT;
-		if (!EC_GROUP_copy(tmp, group));
+		if (!EC_GROUP_copy(tmp, group)) ABORT;
 		EC_GROUP_free(group);
 		group = tmp;
 	}
@@ -427,7 +432,9 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
+#if 0
 	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+#endif
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -471,7 +478,9 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
+#if 0
 	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+#endif
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -516,7 +525,9 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
+#if 0
 	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+#endif
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -566,7 +577,9 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
+#if 0
 	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+#endif
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -622,7 +635,9 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, ".");
 	fflush(stdout);
+#if 0
 	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+#endif
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
 	fprintf(stdout, " ok\n");
@@ -786,7 +801,7 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT; \
 	fprintf(stdout, "."); \
 	fflush(stdout); \
-	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT; \
+	/* if (!EC_GROUP_precompute_mult(group, ctx)) ABORT; */ \
 	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT; \
 	if (!EC_POINT_is_at_infinity(group, Q)) ABORT; \
 	fprintf(stdout, " ok\n"); \
@@ -829,7 +844,7 @@ void char2_field_tests()
 		EC_GROUP *tmp;
 		tmp = EC_GROUP_new(EC_GROUP_method_of(group));
 		if (!tmp) ABORT;
-		if (!EC_GROUP_copy(tmp, group));
+		if (!EC_GROUP_copy(tmp, group)) ABORT;
 		EC_GROUP_free(group);
 		group = tmp;
 	}

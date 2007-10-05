@@ -271,16 +271,23 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
 	if (!j) /* we need to add another algorithm */
 		{
 		if(!(alg=X509_ALGOR_new())
-			|| !(alg->parameter = ASN1_TYPE_new())) {
+			|| !(alg->parameter = ASN1_TYPE_new()))
+			{
+			X509_ALGOR_free(alg);
 			PKCS7err(PKCS7_F_PKCS7_ADD_SIGNER,ERR_R_MALLOC_FAILURE);
 			return(0);
-		}
+			}
 		alg->algorithm=OBJ_nid2obj(nid);
 		alg->parameter->type = V_ASN1_NULL;
-		sk_X509_ALGOR_push(md_sk,alg);
+		if (!sk_X509_ALGOR_push(md_sk,alg))
+			{
+			X509_ALGOR_free(alg);
+			return 0;
+			}
 		}
 
-	sk_PKCS7_SIGNER_INFO_push(signer_sk,psi);
+	if (!sk_PKCS7_SIGNER_INFO_push(signer_sk,psi))
+		return 0;
 	return(1);
 	}
 
@@ -305,8 +312,17 @@ int PKCS7_add_certificate(PKCS7 *p7, X509 *x509)
 
 	if (*sk == NULL)
 		*sk=sk_X509_new_null();
+	if (*sk == NULL)
+		{
+		PKCS7err(PKCS7_F_PKCS7_ADD_CERTIFICATE,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 	CRYPTO_add(&x509->references,1,CRYPTO_LOCK_X509);
-	sk_X509_push(*sk,x509);
+	if (!sk_X509_push(*sk,x509))
+		{
+		X509_free(x509);
+		return 0;
+		}
 	return(1);
 	}
 
@@ -331,9 +347,18 @@ int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)
 
 	if (*sk == NULL)
 		*sk=sk_X509_CRL_new_null();
+	if (*sk == NULL)
+		{
+		PKCS7err(PKCS7_F_PKCS7_ADD_CRL,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 
 	CRYPTO_add(&crl->references,1,CRYPTO_LOCK_X509_CRL);
-	sk_X509_CRL_push(*sk,crl);
+	if (!sk_X509_CRL_push(*sk,crl))
+		{
+		X509_CRL_free(crl);
+		return 0;
+		}
 	return(1);
 	}
 
@@ -424,6 +449,7 @@ PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
 	if (!PKCS7_add_signer(p7,si)) goto err;
 	return(si);
 err:
+	PKCS7_SIGNER_INFO_free(si);
 	return(NULL);
 	}
 
@@ -468,6 +494,7 @@ PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509)
 	if (!PKCS7_add_recipient_info(p7,ri)) goto err;
 	return(ri);
 err:
+	PKCS7_RECIP_INFO_free(ri);
 	return(NULL);
 	}
 
@@ -490,7 +517,8 @@ int PKCS7_add_recipient_info(PKCS7 *p7, PKCS7_RECIP_INFO *ri)
 		return(0);
 		}
 
-	sk_PKCS7_RECIP_INFO_push(sk,ri);
+	if (!sk_PKCS7_RECIP_INFO_push(sk,ri))
+		return 0;
 	return(1);
 	}
 

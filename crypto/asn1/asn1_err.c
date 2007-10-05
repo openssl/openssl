@@ -111,6 +111,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_FUNC(ASN1_F_ASN1_MBSTRING_NCOPY),	"ASN1_mbstring_ncopy"},
 {ERR_FUNC(ASN1_F_ASN1_OBJECT_NEW),	"ASN1_OBJECT_new"},
 {ERR_FUNC(ASN1_F_ASN1_PACK_STRING),	"ASN1_pack_string"},
+{ERR_FUNC(ASN1_F_ASN1_PCTX_NEW),	"ASN1_PCTX_NEW"},
 {ERR_FUNC(ASN1_F_ASN1_PKCS5_PBE_SET),	"ASN1_PKCS5_PBE_SET"},
 {ERR_FUNC(ASN1_F_ASN1_SEQ_PACK),	"ASN1_seq_pack"},
 {ERR_FUNC(ASN1_F_ASN1_SEQ_UNPACK),	"ASN1_seq_unpack"},
@@ -286,15 +287,12 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 
 void ERR_load_ASN1_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(ASN1_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,ASN1_str_functs);
 		ERR_load_strings(0,ASN1_str_reasons);
-#endif
-
 		}
+#endif
 	}

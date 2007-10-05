@@ -11,10 +11,10 @@ SHA1, SHA1_Init, SHA1_Update, SHA1_Final - Secure Hash Algorithm
  unsigned char *SHA1(const unsigned char *d, unsigned long n,
                   unsigned char *md);
 
- void SHA1_Init(SHA_CTX *c);
- void SHA1_Update(SHA_CTX *c, const void *data,
+ int SHA1_Init(SHA_CTX *c);
+ int SHA1_Update(SHA_CTX *c, const void *data,
                   unsigned long len);
- void SHA1_Final(unsigned char *md, SHA_CTX *c);
+ int SHA1_Final(unsigned char *md, SHA_CTX *c);
 
 =head1 DESCRIPTION
 
@@ -48,7 +48,7 @@ used only when backward compatibility is required.
 
 SHA1() returns a pointer to the hash value. 
 
-SHA1_Init(), SHA1_Update() and SHA1_Final() do not return values.
+SHA1_Init(), SHA1_Update() and SHA1_Final() return 1 for success, 0 otherwise.
 
 =head1 CONFORMING TO
 

@@ -146,6 +146,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 #endif
 	k=0;
 	EVP_MD_CTX_init(&m5);
+	EVP_MD_CTX_set_flags(&m5, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	EVP_MD_CTX_init(&s1);
 	for (i=0; (int)i<num; i+=MD5_DIGEST_LENGTH)
 		{
@@ -196,7 +197,9 @@ int ssl3_change_cipher_state(SSL *s, int which)
 	unsigned char *ms,*key,*iv,*er1,*er2;
 	EVP_CIPHER_CTX *dd;
 	const EVP_CIPHER *c;
+#ifndef OPENSSL_NO_COMP
 	COMP_METHOD *comp;
+#endif
 	const EVP_MD *m;
 	EVP_MD_CTX md;
 	int is_exp,n,i,j,k,cl;
@@ -205,10 +208,12 @@ int ssl3_change_cipher_state(SSL *s, int which)
 	is_exp=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
 	c=s->s3->tmp.new_sym_enc;
 	m=s->s3->tmp.new_hash;
+#ifndef OPENSSL_NO_COMP
 	if (s->s3->tmp.new_compression == NULL)
 		comp=NULL;
 	else
 		comp=s->s3->tmp.new_compression->method;
+#endif
 	key_block=s->s3->tmp.key_block;
 
 	if (which & SSL3_CC_READ)
@@ -217,8 +222,12 @@ int ssl3_change_cipher_state(SSL *s, int which)
 			reuse_dd = 1;
 		else if ((s->enc_read_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
+		else
+			/* make sure it's intialized in case we exit later with an error */
+			EVP_CIPHER_CTX_init(s->enc_read_ctx);
 		dd= s->enc_read_ctx;
 		s->read_hash=m;
+#ifndef OPENSSL_NO_COMP
 		/* COMPRESS */
 		if (s->expand != NULL)
 			{
@@ -239,6 +248,7 @@ int ssl3_change_cipher_state(SSL *s, int which)
 			if (s->s3->rrec.comp == NULL)
 				goto err;
 			}
+#endif
 		memset(&(s->s3->read_sequence[0]),0,8);
 		mac_secret= &(s->s3->read_mac_secret[0]);
 		}
@@ -248,8 +258,12 @@ int ssl3_change_cipher_state(SSL *s, int which)
 			reuse_dd = 1;
 		else if ((s->enc_write_ctx=OPENSSL_malloc(sizeof(EVP_CIPHER_CTX))) == NULL)
 			goto err;
+		else
+			/* make sure it's intialized in case we exit later with an error */
+			EVP_CIPHER_CTX_init(s->enc_write_ctx);
 		dd= s->enc_write_ctx;
 		s->write_hash=m;
+#ifndef OPENSSL_NO_COMP
 		/* COMPRESS */
 		if (s->compress != NULL)
 			{
@@ -265,13 +279,13 @@ int ssl3_change_cipher_state(SSL *s, int which)
 				goto err2;
 				}
 			}
+#endif
 		memset(&(s->s3->write_sequence[0]),0,8);
 		mac_secret= &(s->s3->write_mac_secret[0]);
 		}
 
 	if (reuse_dd)
 		EVP_CIPHER_CTX_cleanup(dd);
-	EVP_CIPHER_CTX_init(dd);
 
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
@@ -363,7 +377,11 @@ int ssl3_setup_key_block(SSL *s)
 
 	s->s3->tmp.new_sym_enc=c;
 	s->s3->tmp.new_hash=hash;
+#ifdef OPENSSL_NO_COMP
+	s->s3->tmp.new_compression=NULL;
+#else
 	s->s3->tmp.new_compression=comp;
+#endif
 
 	num=EVP_CIPHER_key_length(c)+EVP_MD_size(hash)+EVP_CIPHER_iv_length(c);
 	num*=2;
@@ -501,6 +519,8 @@ int ssl3_enc(SSL *s, int send)
 
 void ssl3_init_finished_mac(SSL *s)
 	{
+	EVP_MD_CTX_set_flags(&(s->s3->finish_dgst1),
+		EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	EVP_DigestInit_ex(&(s->s3->finish_dgst1),s->ctx->md5, NULL);
 	EVP_DigestInit_ex(&(s->s3->finish_dgst2),s->ctx->sha1, NULL);
 	}
@@ -537,6 +557,7 @@ static int ssl3_handshake_mac(SSL *s, EVP_MD_CTX *in_ctx,
 	EVP_MD_CTX ctx;
 
 	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	EVP_MD_CTX_copy_ex(&ctx,in_ctx);
 
 	n=EVP_MD_CTX_size(&ctx);

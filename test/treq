@@ -8,7 +8,7 @@ else
 	t=testreq.pem
 fi
 
-if $cmd -in $t -inform p -noout -text | fgrep 'Unknown Public Key'; then
+if $cmd -in $t -inform p -noout -text 2>&1 | fgrep -i 'Unknown Public Key'; then
   echo "skipping req conversion test for $t"
   exit 0
 fi

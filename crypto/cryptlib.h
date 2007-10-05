@@ -66,7 +66,7 @@
 
 #ifdef OPENSSL_USE_APPLINK
 #define BIO_FLAGS_UPLINK 0x8000
-#include "uplink.h"
+#include "ms/uplink.h"
 #endif
 
 #include <openssl/crypto.h>
@@ -103,6 +103,7 @@ extern unsigned long OPENSSL_ia32cap_P;
 void OPENSSL_showfatal(const char *,...);
 void *OPENSSL_stderr(void);
 extern int OPENSSL_NONPIC_relocated;
+int OPENSSL_isservice(void);
 
 #ifdef  __cplusplus
 }

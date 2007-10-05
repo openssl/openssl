@@ -90,9 +90,9 @@ extern "C" {
 
 typedef struct dtls1_bitmap_st
 	{
-	BN_ULLONG map;
+	PQ_64BIT map;
 	unsigned long length;     /* sizeof the bitmap in bits */
-	BN_ULLONG max_seq_num;  /* max record number seen so far */
+	PQ_64BIT max_seq_num;  /* max record number seen so far */
 	} DTLS1_BITMAP;
 
 struct hm_header_st
@@ -161,9 +161,6 @@ typedef struct dtls1_state_st
 	unsigned short next_handshake_write_seq;
 
 	unsigned short handshake_read_seq;
-
-	/* only matters for handshake messages */  
-	BN_ULLONG next_expected_seq_num; 
 
 	/* Received handshake records (processed and unprocessed) */
 	record_pqueue unprocessed_rcds;

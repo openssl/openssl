@@ -367,7 +367,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *st
 		return 0;
 		}
 	gen = req->tbsRequest->requestorName;
-	if (gen->type != GEN_DIRNAME)
+	if (!gen || gen->type != GEN_DIRNAME)
 		{
 		OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY, OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE);
 		return 0;

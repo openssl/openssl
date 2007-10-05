@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
 #else
 #include <openssl/des.h>
 
-#define crypt(c,s) (des_crypt((c),(s)))
+#define crypt(c,s) (DES_crypt((c),(s)))
 
 /* tisk tisk - the test keys don't all have odd parity :-( */
 /* test data */

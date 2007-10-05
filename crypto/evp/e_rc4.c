@@ -64,6 +64,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/rc4.h>
+#include "evp_locl.h"
 
 /* FIXME: surely this is available elsewhere? */
 #define EVP_RC4_KEY_SIZE		16
@@ -90,6 +91,7 @@ static const EVP_CIPHER r4_cipher=
 	sizeof(EVP_RC4_KEY),
 	NULL,
 	NULL,
+	NULL,
 	NULL
 	};
 
@@ -103,6 +105,7 @@ static const EVP_CIPHER r4_40_cipher=
 	NULL,
 	sizeof(EVP_RC4_KEY),
 	NULL, 
+	NULL,
 	NULL,
 	NULL
 	};

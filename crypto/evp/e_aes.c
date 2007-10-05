@@ -69,32 +69,29 @@ typedef struct
 
 IMPLEMENT_BLOCK_CIPHER(aes_128, ks, AES, EVP_AES_KEY,
 		       NID_aes_128, 16, 16, 16, 128,
-		       0, aes_init_key, NULL, 
-		       EVP_CIPHER_set_asn1_iv,
-		       EVP_CIPHER_get_asn1_iv,
-		       NULL)
+		       EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1,
+		       aes_init_key,
+		       NULL, NULL, NULL, NULL)
 IMPLEMENT_BLOCK_CIPHER(aes_192, ks, AES, EVP_AES_KEY,
 		       NID_aes_192, 16, 24, 16, 128,
-		       0, aes_init_key, NULL, 
-		       EVP_CIPHER_set_asn1_iv,
-		       EVP_CIPHER_get_asn1_iv,
-		       NULL)
+		       EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1,
+		       aes_init_key,
+		       NULL, NULL, NULL, NULL)
 IMPLEMENT_BLOCK_CIPHER(aes_256, ks, AES, EVP_AES_KEY,
 		       NID_aes_256, 16, 32, 16, 128,
-		       0, aes_init_key, NULL, 
-		       EVP_CIPHER_set_asn1_iv,
-		       EVP_CIPHER_get_asn1_iv,
-		       NULL)
+		       EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1,
+		       aes_init_key,
+		       NULL, NULL, NULL, NULL)
 
-#define IMPLEMENT_AES_CFBR(ksize,cbits)	IMPLEMENT_CFBR(aes,AES,EVP_AES_KEY,ks,ksize,cbits,16)
+#define IMPLEMENT_AES_CFBR(ksize,cbits,flags)	IMPLEMENT_CFBR(aes,AES,EVP_AES_KEY,ks,ksize,cbits,16,flags)
 
-IMPLEMENT_AES_CFBR(128,1)
-IMPLEMENT_AES_CFBR(192,1)
-IMPLEMENT_AES_CFBR(256,1)
+IMPLEMENT_AES_CFBR(128,1,EVP_CIPH_FLAG_FIPS)
+IMPLEMENT_AES_CFBR(192,1,EVP_CIPH_FLAG_FIPS)
+IMPLEMENT_AES_CFBR(256,1,EVP_CIPH_FLAG_FIPS)
 
-IMPLEMENT_AES_CFBR(128,8)
-IMPLEMENT_AES_CFBR(192,8)
-IMPLEMENT_AES_CFBR(256,8)
+IMPLEMENT_AES_CFBR(128,8,EVP_CIPH_FLAG_FIPS)
+IMPLEMENT_AES_CFBR(192,8,EVP_CIPH_FLAG_FIPS)
+IMPLEMENT_AES_CFBR(256,8,EVP_CIPH_FLAG_FIPS)
 
 static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		   const unsigned char *iv, int enc)

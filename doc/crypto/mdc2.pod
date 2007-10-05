@@ -11,10 +11,10 @@ MDC2, MDC2_Init, MDC2_Update, MDC2_Final - MDC2 hash function
  unsigned char *MDC2(const unsigned char *d, unsigned long n,
                   unsigned char *md);
 
- void MDC2_Init(MDC2_CTX *c);
- void MDC2_Update(MDC2_CTX *c, const unsigned char *data,
+ int MDC2_Init(MDC2_CTX *c);
+ int MDC2_Update(MDC2_CTX *c, const unsigned char *data,
                   unsigned long len);
- void MDC2_Final(unsigned char *md, MDC2_CTX *c);
+ int MDC2_Final(unsigned char *md, MDC2_CTX *c);
 
 =head1 DESCRIPTION
 
@@ -46,7 +46,7 @@ hash functions directly.
 
 MDC2() returns a pointer to the hash value. 
 
-MDC2_Init(), MDC2_Update() and MDC2_Final() do not return values.
+MDC2_Init(), MDC2_Update() and MDC2_Final() return 1 for success, 0 otherwise.
 
 =head1 CONFORMING TO
 

@@ -149,6 +149,7 @@ extern "C" {
 #define B_ASN1_UTF8STRING	0x2000
 #define B_ASN1_UTCTIME		0x4000
 #define B_ASN1_GENERALIZEDTIME	0x8000
+#define B_ASN1_SEQUENCE		0x10000
 
 /* For use with ASN1_mbstring_copy() */
 #define MBSTRING_FLAG		0x1000
@@ -594,6 +595,7 @@ typedef struct BIT_STRING_BITNAME_st {
 			B_ASN1_UNIVERSALSTRING|\
 			B_ASN1_BMPSTRING|\
 			B_ASN1_UTF8STRING|\
+			B_ASN1_SEQUENCE|\
 			B_ASN1_UNKNOWN
 
 #define B_ASN1_DIRECTORYSTRING \
@@ -932,7 +934,7 @@ int ASN1_i2d_bio(i2d_of_void *i2d,BIO *out, unsigned char *x);
 #define ASN1_i2d_bio_of(type,i2d,out,x) \
 	((int (*)(I2D_OF(type),BIO *,type *))openssl_fcast(ASN1_i2d_bio))(i2d,out,x)
 #define ASN1_i2d_bio_of_const(type,i2d,out,x) \
-	((int (*)(I2D_OF_const(type),BIO *,type *))openssl_fcast(ASN1_i2d_bio))(i2d,out,x)
+	((int (*)(I2D_OF_const(type),BIO *,const type *))openssl_fcast(ASN1_i2d_bio))(i2d,out,x)
 int ASN1_item_i2d_bio(const ASN1_ITEM *it, BIO *out, void *x);
 int ASN1_UTCTIME_print(BIO *fp,ASN1_UTCTIME *a);
 int ASN1_GENERALIZEDTIME_print(BIO *fp,ASN1_GENERALIZEDTIME *a);
@@ -1045,7 +1047,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_ASN1_I2D_FP				 117
 #define ASN1_F_ASN1_INTEGER_SET				 118
 #define ASN1_F_ASN1_INTEGER_TO_BN			 119
-#define ASN1_F_ASN1_ITEM_D2I_FP				 190
+#define ASN1_F_ASN1_ITEM_D2I_FP				 206
 #define ASN1_F_ASN1_ITEM_DUP				 191
 #define ASN1_F_ASN1_ITEM_EX_COMBINE_NEW			 121
 #define ASN1_F_ASN1_ITEM_EX_D2I				 120
@@ -1058,6 +1060,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_ASN1_MBSTRING_NCOPY			 122
 #define ASN1_F_ASN1_OBJECT_NEW				 123
 #define ASN1_F_ASN1_PACK_STRING				 124
+#define ASN1_F_ASN1_PCTX_NEW				 205
 #define ASN1_F_ASN1_PKCS5_PBE_SET			 125
 #define ASN1_F_ASN1_SEQ_PACK				 126
 #define ASN1_F_ASN1_SEQ_UNPACK				 127

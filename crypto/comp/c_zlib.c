@@ -31,6 +31,24 @@ static int zlib_stateful_compress_block(COMP_CTX *ctx, unsigned char *out,
 static int zlib_stateful_expand_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen);
 
+
+/* memory allocations functions for zlib intialization */
+static void* zlib_zalloc(void* opaque, unsigned int no, unsigned int size)
+{
+	void *p;
+	
+	p=OPENSSL_malloc(no*size);
+	if (p)
+		memset(p, 0, no*size);
+	return p;
+}
+
+
+static void zlib_zfree(void* opaque, void* address)
+{
+	OPENSSL_free(address);
+}
+
 #if 0
 static int zlib_compress_block(COMP_CTX *ctx, unsigned char *out,
 	unsigned int olen, unsigned char *in, unsigned int ilen);
@@ -67,44 +85,25 @@ static COMP_METHOD zlib_stateful_method={
  * When OpenSSL is built on Windows, we do not want to require that
  * the ZLIB.DLL be available in order for the OpenSSL DLLs to
  * work.  Therefore, all ZLIB routines are loaded at run time
- * and we do not link to a .LIB file.
+ * and we do not link to a .LIB file when ZLIB_SHARED is set.
  */
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 # include <windows.h>
-
-# define Z_CALLCONV _stdcall
-# define ZLIB_SHARED
-#else
-# define Z_CALLCONV
 #endif /* !(OPENSSL_SYS_WINDOWS || OPENSSL_SYS_WIN32) */
 
 #ifdef ZLIB_SHARED
 #include <openssl/dso.h>
 
-/* Prototypes for built in stubs */
-#if 0
-static int stub_compress(Bytef *dest,uLongf *destLen,
-	const Bytef *source, uLong sourceLen);
-#endif
-static int stub_inflateEnd(z_streamp strm);
-static int stub_inflate(z_streamp strm, int flush);
-static int stub_inflateInit_(z_streamp strm, const char * version,
-	int stream_size);
-static int stub_deflateEnd(z_streamp strm);
-static int stub_deflate(z_streamp strm, int flush);
-static int stub_deflateInit_(z_streamp strm, int level,
-	const char * version, int stream_size);
-
 /* Function pointers */
-typedef int (Z_CALLCONV *compress_ft)(Bytef *dest,uLongf *destLen,
+typedef int (*compress_ft)(Bytef *dest,uLongf *destLen,
 	const Bytef *source, uLong sourceLen);
-typedef int (Z_CALLCONV *inflateEnd_ft)(z_streamp strm);
-typedef int (Z_CALLCONV *inflate_ft)(z_streamp strm, int flush);
-typedef int (Z_CALLCONV *inflateInit__ft)(z_streamp strm,
+typedef int (*inflateEnd_ft)(z_streamp strm);
+typedef int (*inflate_ft)(z_streamp strm, int flush);
+typedef int (*inflateInit__ft)(z_streamp strm,
 	const char * version, int stream_size);
-typedef int (Z_CALLCONV *deflateEnd_ft)(z_streamp strm);
-typedef int (Z_CALLCONV *deflate_ft)(z_streamp strm, int flush);
-typedef int (Z_CALLCONV *deflateInit__ft)(z_streamp strm, int level,
+typedef int (*deflateEnd_ft)(z_streamp strm);
+typedef int (*deflate_ft)(z_streamp strm, int flush);
+typedef int (*deflateInit__ft)(z_streamp strm, int level,
 	const char * version, int stream_size);
 static compress_ft	p_compress=NULL;
 static inflateEnd_ft	p_inflateEnd=NULL;
@@ -117,13 +116,13 @@ static deflateInit__ft	p_deflateInit_=NULL;
 static int zlib_loaded = 0;     /* only attempt to init func pts once */
 static DSO *zlib_dso = NULL;
 
-#define compress                stub_compress
-#define inflateEnd              stub_inflateEnd
-#define inflate                 stub_inflate
-#define inflateInit_            stub_inflateInit_
-#define deflateEnd              stub_deflateEnd
-#define deflate                 stub_deflate
-#define deflateInit_            stub_deflateInit_
+#define compress                p_compress
+#define inflateEnd              p_inflateEnd
+#define inflate                 p_inflate
+#define inflateInit_            p_inflateInit_
+#define deflateEnd              p_deflateEnd
+#define deflate                 p_deflate
+#define deflateInit_            p_deflateInit_
 #endif /* ZLIB_SHARED */
 
 struct zlib_state
@@ -152,8 +151,8 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	if (state == NULL)
 		goto err;
 
-	state->istream.zalloc = Z_NULL;
-	state->istream.zfree = Z_NULL;
+	state->istream.zalloc = zlib_zalloc;
+	state->istream.zfree = zlib_zfree;
 	state->istream.opaque = Z_NULL;
 	state->istream.next_in = Z_NULL;
 	state->istream.next_out = Z_NULL;
@@ -164,8 +163,8 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 	if (err != Z_OK)
 		goto err;
 
-	state->ostream.zalloc = Z_NULL;
-	state->ostream.zfree = Z_NULL;
+	state->ostream.zalloc = zlib_zalloc;
+	state->ostream.zfree = zlib_zfree;
 	state->ostream.opaque = Z_NULL;
 	state->ostream.next_in = Z_NULL;
 	state->ostream.next_out = Z_NULL;
@@ -177,17 +176,6 @@ static int zlib_stateful_init(COMP_CTX *ctx)
 		goto err;
 
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_COMP,ctx,&ctx->ex_data);
-	if (zlib_stateful_ex_idx == -1)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_COMP);
-		if (zlib_stateful_ex_idx == -1)
-			zlib_stateful_ex_idx =
-				CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
-					0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
-		CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
-		if (zlib_stateful_ex_idx == -1)
-			goto err;
-		}
 	CRYPTO_set_ex_data(&ctx->ex_data,zlib_stateful_ex_idx,state);
 	return 1;
  err:
@@ -359,16 +347,6 @@ COMP_METHOD *COMP_zlib(void)
 		{
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 		zlib_dso = DSO_load(NULL, "ZLIB1", NULL, 0);
-		if (!zlib_dso)
-			{
-			zlib_dso = DSO_load(NULL, "ZLIB", NULL, 0);
-			if (zlib_dso)
-				{
-				/* Clear the errors from the first failed
-				   DSO_load() */
-				ERR_clear_error();
-				}
-			}
 #else
 		zlib_dso = DSO_load(NULL, "z", NULL, 0);
 #endif
@@ -395,84 +373,40 @@ COMP_METHOD *COMP_zlib(void)
 			p_deflateInit_
 				= (deflateInit__ft) DSO_bind_func(zlib_dso,
 					"deflateInit_");
-			zlib_loaded++;
+
+			if (p_compress && p_inflateEnd && p_inflate
+				&& p_inflateInit_ && p_deflateEnd
+				&& p_deflate && p_deflateInit_)
+				zlib_loaded++;
 			}
 		}
 
 #endif
+#ifdef ZLIB_SHARED
+	if (zlib_loaded)
+#endif
 #if defined(ZLIB) || defined(ZLIB_SHARED)
-	meth = &zlib_stateful_method;
+		{
+		/* init zlib_stateful_ex_idx here so that in a multi-process
+		 * application it's enough to intialize openssl before forking
+		 * (idx will be inherited in all the children) */
+		if (zlib_stateful_ex_idx == -1)
+			{
+			CRYPTO_w_lock(CRYPTO_LOCK_COMP);
+			if (zlib_stateful_ex_idx == -1)
+				zlib_stateful_ex_idx =
+					CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_COMP,
+						0,NULL,NULL,NULL,zlib_stateful_free_ex_data);
+			CRYPTO_w_unlock(CRYPTO_LOCK_COMP);
+			if (zlib_stateful_ex_idx == -1)
+				goto err;
+			}
+		
+		meth = &zlib_stateful_method;
+		}
+err:	
 #endif
 
 	return(meth);
 	}
 
-#ifdef ZLIB_SHARED
-#if 0
-/* Stubs for each function to be dynamicly loaded */
-static int 
-stub_compress(Bytef *dest,uLongf *destLen,const Bytef *source, uLong sourceLen)
-	{
-	if (p_compress)
-		return(p_compress(dest,destLen,source,sourceLen));
-	else
-		return(Z_MEM_ERROR);
-	}
-#endif
-
-static int
-stub_inflateEnd(z_streamp strm)
-	{
-	if ( p_inflateEnd )
-		return(p_inflateEnd(strm));
-	else
-		return(Z_MEM_ERROR);
-	}
-
-static int
-stub_inflate(z_streamp strm, int flush)
-	{
-	if ( p_inflate )
-		return(p_inflate(strm,flush));
-	else
-		return(Z_MEM_ERROR);
-	}
-
-static int
-stub_inflateInit_(z_streamp strm, const char * version, int stream_size)
-	{
-	if ( p_inflateInit_ )
-		return(p_inflateInit_(strm,version,stream_size));
-	else
-		return(Z_MEM_ERROR);
-	}
-
-static int
-stub_deflateEnd(z_streamp strm)
-	{
-	if ( p_deflateEnd )
-		return(p_deflateEnd(strm));
-	else
-		return(Z_MEM_ERROR);
-	}
-
-static int
-stub_deflate(z_streamp strm, int flush)
-	{
-	if ( p_deflate )
-		return(p_deflate(strm,flush));
-	else
-		return(Z_MEM_ERROR);
-	}
-
-static int
-stub_deflateInit_(z_streamp strm, int level,
-	const char * version, int stream_size)
-	{
-	if ( p_deflateInit_ )
-		return(p_deflateInit_(strm,level,version,stream_size));
-	else
-		return(Z_MEM_ERROR);
-	}
-
-#endif /* ZLIB_SHARED */

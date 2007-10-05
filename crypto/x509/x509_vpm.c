@@ -172,6 +172,15 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
 	x509_verify_param_copy(trust, 0);
 	x509_verify_param_copy(depth, -1);
 
+	/* If overwrite or check time not set, copy across */
+
+	if (to_overwrite || !(dest->flags & X509_V_FLAG_USE_CHECK_TIME))
+		{
+		dest->check_time = src->check_time;
+		dest->flags &= ~X509_V_FLAG_USE_CHECK_TIME;
+		/* Don't need to copy flag: that is done below */
+		}
+
 	if (inh_flags & X509_VP_FLAG_RESET_FLAGS)
 		dest->flags = 0;
 
@@ -209,6 +218,17 @@ int X509_VERIFY_PARAM_set_flags(X509_VERIFY_PARAM *param, unsigned long flags)
 	if (flags & X509_V_FLAG_POLICY_MASK)
 		param->flags |= X509_V_FLAG_POLICY_CHECK;
 	return 1;
+	}
+
+int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param, unsigned long flags)
+	{
+	param->flags &= ~flags;
+	return 1;
+	}
+
+unsigned long X509_VERIFY_PARAM_get_flags(X509_VERIFY_PARAM *param)
+	{
+	return param->flags;
 	}
 
 int X509_VERIFY_PARAM_set_purpose(X509_VERIFY_PARAM *param, int purpose)

@@ -56,6 +56,10 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/opensslconf.h>
+#include <openssl/crypto.h>
+#include <openssl/fips.h>
+#include <openssl/err.h>
 #if !defined(OPENSSL_NO_SHA0) && !defined(OPENSSL_NO_SHA)
 
 #undef  SHA_1
@@ -63,7 +67,7 @@
 
 #include <openssl/opensslv.h>
 
-const char *SHA_version="SHA" OPENSSL_VERSION_PTEXT;
+const char SHA_version[]="SHA" OPENSSL_VERSION_PTEXT;
 
 /* The implementation is in ../md32_common.h */
 

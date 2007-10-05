@@ -226,3 +226,15 @@ DTLSv1_server_method                    275	EXIST::FUNCTION:
 SSL_COMP_get_compression_methods        276	EXIST:!VMS:FUNCTION:COMP
 SSL_COMP_get_compress_methods           276	EXIST:VMS:FUNCTION:COMP
 SSL_SESSION_get_id                      277	EXIST::FUNCTION:
+SSL_CTX_sess_set_new_cb                 278	EXIST::FUNCTION:
+SSL_CTX_sess_get_get_cb                 279	EXIST::FUNCTION:
+SSL_CTX_sess_set_get_cb                 280	EXIST::FUNCTION:
+SSL_CTX_set_cookie_verify_cb            281	EXIST::FUNCTION:
+SSL_CTX_get_info_callback               282	EXIST::FUNCTION:
+SSL_CTX_set_cookie_generate_cb          283	EXIST::FUNCTION:
+SSL_CTX_set_client_cert_cb              284	EXIST::FUNCTION:
+SSL_CTX_sess_set_remove_cb              285	EXIST::FUNCTION:
+SSL_CTX_set_info_callback               286	EXIST::FUNCTION:
+SSL_CTX_sess_get_new_cb                 287	EXIST::FUNCTION:
+SSL_CTX_get_client_cert_cb              288	EXIST::FUNCTION:
+SSL_CTX_sess_get_remove_cb              289	EXIST::FUNCTION:

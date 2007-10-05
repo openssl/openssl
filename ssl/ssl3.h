@@ -123,6 +123,7 @@
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
+#include <openssl/pq_compat.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -253,7 +254,11 @@ extern "C" {
 #endif
 
 #define SSL3_RT_MAX_PLAIN_LENGTH		16384
+#ifdef OPENSSL_NO_COMP
+#define SSL3_RT_MAX_COMPRESSED_LENGTH	SSL3_RT_MAX_PLAIN_LENGTH
+#else
 #define SSL3_RT_MAX_COMPRESSED_LENGTH	(1024+SSL3_RT_MAX_PLAIN_LENGTH)
+#endif
 #define SSL3_RT_MAX_ENCRYPTED_LENGTH	(1024+SSL3_RT_MAX_COMPRESSED_LENGTH)
 #define SSL3_RT_MAX_PACKET_SIZE		(SSL3_RT_MAX_ENCRYPTED_LENGTH+SSL3_RT_HEADER_LENGTH)
 #define SSL3_RT_MAX_DATA_SIZE			(1024*1024)
@@ -295,7 +300,7 @@ typedef struct ssl3_record_st
 /*rw*/	unsigned char *input;   /* where the decode bytes are */
 /*r */	unsigned char *comp;    /* only used with decompression - malloc()ed */
 /*r */  unsigned long epoch;    /* epoch number, needed by DTLS1 */
-/*r */  BN_ULLONG seq_num; /* sequence number, needed by DTLS1 */
+/*r */  PQ_64BIT seq_num;       /* sequence number, needed by DTLS1 */
 	} SSL3_RECORD;
 
 typedef struct ssl3_buffer_st

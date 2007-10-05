@@ -63,11 +63,11 @@
 #include <openssl/evp.h>
 #include <openssl/md5.h>
 
-static long ssl2_default_timeout(void );
-const char *ssl2_version_str="SSLv2" OPENSSL_VERSION_PTEXT;
+const char ssl2_version_str[]="SSLv2" OPENSSL_VERSION_PTEXT;
 
 #define SSL2_NUM_CIPHERS (sizeof(ssl2_ciphers)/sizeof(SSL_CIPHER))
 
+/* list of available SSLv2 ciphers (sorted by id) */
 OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 /* NULL_WITH_MD5 v3 */
 #if 0
@@ -84,19 +84,6 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 #endif
-/* RC4_128_EXPORT40_WITH_MD5 */
-	{
-	1,
-	SSL2_TXT_RC4_128_EXPORT40_WITH_MD5,
-	SSL2_CK_RC4_128_EXPORT40_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_SSLV2,
-	SSL_EXPORT|SSL_EXP40,
-	SSL2_CF_5_BYTE_ENC,
-	40,
-	128,
-	SSL_ALL_CIPHERS,
-	SSL_ALL_STRENGTHS,
-	},
 /* RC4_128_WITH_MD5 */
 	{
 	1,
@@ -110,12 +97,12 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	SSL_ALL_CIPHERS,
 	SSL_ALL_STRENGTHS,
 	},
-/* RC2_128_CBC_EXPORT40_WITH_MD5 */
+/* RC4_128_EXPORT40_WITH_MD5 */
 	{
 	1,
-	SSL2_TXT_RC2_128_CBC_EXPORT40_WITH_MD5,
-	SSL2_CK_RC2_128_CBC_EXPORT40_WITH_MD5,
-	SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_SSLV2,
+	SSL2_TXT_RC4_128_EXPORT40_WITH_MD5,
+	SSL2_CK_RC4_128_EXPORT40_WITH_MD5,
+	SSL_kRSA|SSL_aRSA|SSL_RC4|SSL_MD5|SSL_SSLV2,
 	SSL_EXPORT|SSL_EXP40,
 	SSL2_CF_5_BYTE_ENC,
 	40,
@@ -132,6 +119,19 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	SSL_NOT_EXP|SSL_MEDIUM,
 	0,
 	128,
+	128,
+	SSL_ALL_CIPHERS,
+	SSL_ALL_STRENGTHS,
+	},
+/* RC2_128_CBC_EXPORT40_WITH_MD5 */
+	{
+	1,
+	SSL2_TXT_RC2_128_CBC_EXPORT40_WITH_MD5,
+	SSL2_CK_RC2_128_CBC_EXPORT40_WITH_MD5,
+	SSL_kRSA|SSL_aRSA|SSL_RC2|SSL_MD5|SSL_SSLV2,
+	SSL_EXPORT|SSL_EXP40,
+	SSL2_CF_5_BYTE_ENC,
+	40,
 	128,
 	SSL_ALL_CIPHERS,
 	SSL_ALL_STRENGTHS,
@@ -178,7 +178,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 	SSL_ALL_STRENGTHS,
 	},
 /* RC4_64_WITH_MD5 */
-#if 1
+#if 0
 	{
 	1,
 	SSL2_TXT_RC4_64_WITH_MD5,
@@ -211,47 +211,15 @@ OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
 /* end of list :-) */
 	};
 
-static SSL_METHOD SSLv2_data= {
-	SSL2_VERSION,
-	ssl2_new,	/* local */
-	ssl2_clear,	/* local */
-	ssl2_free,	/* local */
-	ssl_undefined_function,
-	ssl_undefined_function,
-	ssl2_read,
-	ssl2_peek,
-	ssl2_write,
-	ssl2_shutdown,
-	ssl_ok,	/* NULL - renegotiate */
-	ssl_ok,	/* NULL - check renegotiate */
-	NULL, /* NULL - ssl_get_message */
-	NULL, /* NULL - ssl_get_record */
-	NULL, /* NULL - ssl_write_bytes */
-	NULL, /* NULL - dispatch_alert */
-	ssl2_ctrl,	/* local */
-	ssl2_ctx_ctrl,	/* local */
-	ssl2_get_cipher_by_char,
-	ssl2_put_cipher_by_char,
-	ssl2_pending,
-	ssl2_num_ciphers,
-	ssl2_get_cipher,
-	ssl_bad_method,
-	ssl2_default_timeout,
-	&ssl3_undef_enc_method,
-	ssl_undefined_void_function,
-	ssl2_callback_ctrl,	/* local */
-	ssl2_ctx_callback_ctrl,	/* local */
-	};
-
-static long ssl2_default_timeout(void)
+long ssl2_default_timeout(void)
 	{
 	return(300);
 	}
 
-SSL_METHOD *sslv2_base_method(void)
-	{
-	return(&SSLv2_data);
-	}
+IMPLEMENT_ssl2_meth_func(sslv2_base_method,
+			ssl_undefined_function,
+			ssl_undefined_function,
+			ssl_bad_method)
 
 int ssl2_num_ciphers(void)
 	{
@@ -371,42 +339,20 @@ long ssl2_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
  * available */
 SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
 	{
-	static int init=1;
-	static SSL_CIPHER *sorted[SSL2_NUM_CIPHERS];
-	SSL_CIPHER c,*cp= &c,**cpp;
+	SSL_CIPHER c,*cp;
 	unsigned long id;
-	unsigned int i;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL);
-
-		if (init)
-			{
-			for (i=0; i<SSL2_NUM_CIPHERS; i++)
-				sorted[i]= &(ssl2_ciphers[i]);
-
-			qsort((char *)sorted,
-				SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-				FP_ICC ssl_cipher_ptr_id_cmp);
-
-			init=0;
-			}
-			
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL);
-		}
 
 	id=0x02000000L|((unsigned long)p[0]<<16L)|
 		((unsigned long)p[1]<<8L)|(unsigned long)p[2];
 	c.id=id;
-	cpp=(SSL_CIPHER **)OBJ_bsearch((char *)&cp,
-		(char *)sorted,
-		SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER *),
-		FP_ICC ssl_cipher_ptr_id_cmp);
-	if ((cpp == NULL) || !(*cpp)->valid)
-		return(NULL);
+	cp = (SSL_CIPHER *)OBJ_bsearch((char *)&c,
+		(char *)ssl2_ciphers,
+		SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER),
+		FP_ICC ssl_cipher_id_cmp);
+	if ((cp == NULL) || (cp->valid == 0))
+		return NULL;
 	else
-		return(*cpp);
+		return cp;
 	}
 
 int ssl2_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)

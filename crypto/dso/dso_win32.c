@@ -68,6 +68,45 @@ DSO_METHOD *DSO_METHOD_win32(void)
 	}
 #else
 
+#ifdef _WIN32_WCE
+# if _WIN32_WCE < 300
+static FARPROC GetProcAddressA(HMODULE hModule,LPCSTR lpProcName)
+	{
+	WCHAR lpProcNameW[64];
+	int i;
+
+	for (i=0;lpProcName[i] && i<64;i++)
+		lpProcNameW[i] = (WCHAR)lpProcName[i];
+	if (i==64) return NULL;
+	lpProcNameW[i] = 0;
+
+	return GetProcAddressW(hModule,lpProcNameW);
+	}
+# endif
+# undef GetProcAddress
+# define GetProcAddress GetProcAddressA
+
+static HINSTANCE LoadLibraryA(LPCSTR lpLibFileName)
+	{
+	WCHAR *fnamw;
+	size_t len_0=strlen(lpLibFileName)+1,i;
+
+#ifdef _MSC_VER
+	fnamw = (WCHAR *)_alloca (len_0*sizeof(WCHAR));
+#else
+	fnamw = (WCHAR *)alloca (len_0*sizeof(WCHAR));
+#endif
+	if (fnamw == NULL) return NULL;
+
+#if defined(_WIN32_WCE) && _WIN32_WCE>=101
+	if (!MultiByteToWideChar(CP_ACP,0,lpLibFileName,len_0,fnamw,len_0))
+#endif
+		for (i=0;i<len_0;i++) fnamw[i]=(WCHAR)lpLibFileName[i];
+
+	return LoadLibraryW(fnamw);
+	}
+#endif
+
 /* Part of the hack in "win32_load" ... */
 #define DSO_MAX_TRANSLATED_SIZE 256
 
@@ -127,7 +166,7 @@ static int win32_load(DSO *dso)
 		DSOerr(DSO_F_WIN32_LOAD,DSO_R_NO_FILENAME);
 		goto err;
 		}
-	h = LoadLibrary(filename);
+	h = LoadLibraryA(filename);
 	if(h == NULL)
 		{
 		DSOerr(DSO_F_WIN32_LOAD,DSO_R_LOAD_FAILED);
@@ -268,6 +307,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 	struct file_st *result = NULL;
 	enum { IN_NODE, IN_DEVICE, IN_FILE } position;
 	const char *start = filename;
+	char last;
 
 	if (!filename)
 		{
@@ -298,7 +338,8 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 
 	do
 		{
-		switch(filename[0])
+		last = filename[0];
+		switch(last)
 			{
 		case ':':
 			if(position != IN_DEVICE)
@@ -323,10 +364,19 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 				start = ++filename;
 				result->dir = start;
 				}
+			else if(position == IN_DEVICE)
+				{
+				position = IN_FILE;
+				filename++;
+				result->dir = start;
+				result->dirlen = filename - start;
+				start = filename;
+				}
 			else
 				{
 				filename++;
 				result->dirlen += filename - start;
+				start = filename;
 				}
 			break;
 		case '\0':
@@ -340,12 +390,19 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 					{
 					if (assume_last_is_dir)
 						{
-						result->devicelen += filename - start;
+						if (position == IN_DEVICE)
+							{
+							result->dir = start;
+							result->dirlen = 0;
+							}
+						result->dirlen +=
+							filename - start;
 						}
 					else
 						{
 						result->file = start;
-						result->filelen = filename - start;
+						result->filelen =
+							filename - start;
 						}
 					}
 				}
@@ -355,7 +412,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 			break;
 			}
 		}
-	while(*filename);
+	while(last);
 
 	if(!result->nodelen) result->node = NULL;
 	if(!result->devicelen) result->device = NULL;
@@ -443,10 +500,13 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
 		result[offset] = '\\'; offset++;
 		start = end + 1;
 		}
+#if 0 /* Not needed, since the directory converter above already appeneded
+	 a backslash */
 	if(file_split->predir && (file_split->dir || file_split->file))
 		{
 		result[offset] = '\\'; offset++;
 		}
+#endif
 	start = file_split->dir;
 	while(file_split->dirlen > (start - file_split->dir))
 		{
@@ -461,10 +521,13 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
 		result[offset] = '\\'; offset++;
 		start = end + 1;
 		}
+#if 0 /* Not needed, since the directory converter above already appeneded
+	 a backslash */
 	if(file_split->dir && file_split->file)
 		{
 		result[offset] = '\\'; offset++;
 		}
+#endif
 	strncpy(&result[offset], file_split->file,
 		file_split->filelen); offset += file_split->filelen;
 	result[offset] = '\0';
@@ -507,15 +570,15 @@ static char *win32_merger(DSO *dso, const char *filespec1, const char *filespec2
 		}
 	else
 		{
-		filespec1_split = win32_splitter(dso, filespec1, 1);
+		filespec1_split = win32_splitter(dso, filespec1, 0);
 		if (!filespec1_split)
 			{
 			DSOerr(DSO_F_WIN32_MERGER,
 				ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
-		filespec2_split = win32_splitter(dso, filespec2, 0);
-		if (!filespec1_split)
+		filespec2_split = win32_splitter(dso, filespec2, 1);
+		if (!filespec2_split)
 			{
 			DSOerr(DSO_F_WIN32_MERGER,
 				ERR_R_MALLOC_FAILURE);

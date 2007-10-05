@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- CONF_modules_free, CONF_modules_load, CONF_modules_unload -
+ CONF_modules_free, CONF_modules_finish, CONF_modules_unload -
  OpenSSL configuration cleanup functions
 
 =head1 SYNOPSIS
@@ -10,8 +10,8 @@
  #include <openssl/conf.h>
 
  void CONF_modules_free(void);
- void CONF_modules_unload(int all);
  void CONF_modules_finish(void);
+ void CONF_modules_unload(int all);
 
 =head1 DESCRIPTION
 

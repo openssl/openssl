@@ -63,6 +63,7 @@
  * 1.1 added norm_expand_bits
  * 1.0 First working version
  */
+#include <openssl/fips.h>
 #include "des_locl.h"
 
 OPENSSL_IMPLEMENT_GLOBAL(int,DES_check_key);	/* defaults to false */
@@ -115,7 +116,7 @@ int DES_check_key_parity(const_DES_cblock *key)
  * (and actual cblock values).
  */
 #define NUM_WEAK_KEY	16
-static DES_cblock weak_keys[NUM_WEAK_KEY]={
+static const DES_cblock weak_keys[NUM_WEAK_KEY]={
 	/* weak keys */
 	{0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x01},
 	{0xFE,0xFE,0xFE,0xFE,0xFE,0xFE,0xFE,0xFE},
@@ -349,6 +350,10 @@ void DES_set_key_unchecked(const_DES_cblock *key, DES_key_schedule *schedule)
 	k = &schedule->ks->deslong[0];
 	in = &(*key)[0];
 
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
+
 	c2l(in,c);
 	c2l(in,d);
 
@@ -405,3 +410,4 @@ void des_fixup_key_parity(des_cblock *key)
 	des_set_odd_parity(key);
 	}
 */
+

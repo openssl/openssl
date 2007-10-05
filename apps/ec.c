@@ -56,6 +56,7 @@
  *
  */
 
+#include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_EC
 #include <stdio.h>
 #include <stdlib.h>
@@ -346,7 +347,10 @@ bad:
 			}
 
 	if (noout) 
+		{
+		ret = 0;
 		goto end;
+		}
 
 	BIO_printf(bio_err, "writing EC key\n");
 	if (outformat == FORMAT_ASN1) 

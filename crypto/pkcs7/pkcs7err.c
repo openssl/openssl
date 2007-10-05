@@ -124,6 +124,7 @@ static ERR_STRING_DATA PKCS7_str_reasons[]=
 {ERR_REASON(PKCS7_R_NO_MULTIPART_BODY_FAILURE),"no multipart body failure"},
 {ERR_REASON(PKCS7_R_NO_MULTIPART_BOUNDARY),"no multipart boundary"},
 {ERR_REASON(PKCS7_R_NO_RECIPIENT_MATCHES_CERTIFICATE),"no recipient matches certificate"},
+{ERR_REASON(PKCS7_R_NO_RECIPIENT_MATCHES_KEY),"no recipient matches key"},
 {ERR_REASON(PKCS7_R_NO_SIGNATURES_ON_DATA),"no signatures on data"},
 {ERR_REASON(PKCS7_R_NO_SIGNERS)          ,"no signers"},
 {ERR_REASON(PKCS7_R_NO_SIG_CONTENT_TYPE) ,"no sig content type"},
@@ -155,15 +156,12 @@ static ERR_STRING_DATA PKCS7_str_reasons[]=
 
 void ERR_load_PKCS7_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(PKCS7_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,PKCS7_str_functs);
 		ERR_load_strings(0,PKCS7_str_reasons);
-#endif
-
 		}
+#endif
 	}

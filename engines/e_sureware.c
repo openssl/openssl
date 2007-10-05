@@ -57,9 +57,15 @@
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 #include <openssl/rand.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
+#ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+#endif
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 #include <openssl/bn.h>
 
 #ifndef OPENSSL_NO_HW
@@ -82,10 +88,12 @@ static int surewarehk_modexp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 	const BIGNUM *m, BN_CTX *ctx);
 
 /* RSA stuff */
+#ifndef OPENSSL_NO_RSA
 static int surewarehk_rsa_priv_dec(int flen,const unsigned char *from,unsigned char *to,
 			RSA *rsa,int padding);
 static int surewarehk_rsa_sign(int flen,const unsigned char *from,unsigned char *to,
 			    RSA *rsa,int padding);
+#endif
 
 /* RAND stuff */
 static int surewarehk_rand_bytes(unsigned char *buf, int num);
@@ -968,11 +976,13 @@ static	DSA_SIG * surewarehk_dsa_do_sign(const unsigned char *from, int flen, DSA
 	if (!p_surewarehk_Dsa_Sign)
 	{
 		SUREWAREerr(SUREWARE_F_SUREWAREHK_DSA_DO_SIGN,ENGINE_R_NOT_INITIALISED);
+		goto err;
 	}
 	/* extract ref to private key */
 	else if (!(hptr=DSA_get_ex_data(dsa, dsaHndidx)))
 	{
 		SUREWAREerr(SUREWARE_F_SUREWAREHK_DSA_DO_SIGN,SUREWARE_R_MISSING_KEY_COMPONENTS);
+		goto err;
 	}
 	else
 	{

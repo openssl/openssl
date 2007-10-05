@@ -130,7 +130,10 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
+#include <openssl/fips.h>
+#ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+#endif
 #include <openssl/bn.h>
 
 static SSL_METHOD *ssl3_get_client_method(int ver);
@@ -149,33 +152,15 @@ static SSL_METHOD *ssl3_get_client_method(int ver)
 		return(NULL);
 	}
 
-SSL_METHOD *SSLv3_client_method(void)
-	{
-	static int init=1;
-	static SSL_METHOD SSLv3_client_data;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
-
-		if (init)
-			{
-			memcpy((char *)&SSLv3_client_data,(char *)sslv3_base_method(),
-				sizeof(SSL_METHOD));
-			SSLv3_client_data.ssl_connect=ssl3_connect;
-			SSLv3_client_data.get_ssl_method=ssl3_get_client_method;
-			init=0;
-			}
-
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
-		}
-	return(&SSLv3_client_data);
-	}
+IMPLEMENT_ssl3_meth_func(SSLv3_client_method,
+			ssl_undefined_function,
+			ssl3_connect,
+			ssl3_get_client_method)
 
 int ssl3_connect(SSL *s)
 	{
 	BUF_MEM *buf=NULL;
-	unsigned long Time=time(NULL),l;
+	unsigned long Time=(unsigned long)time(NULL),l;
 	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
@@ -385,11 +370,15 @@ int ssl3_connect(SSL *s)
 			s->init_num=0;
 
 			s->session->cipher=s->s3->tmp.new_cipher;
+#ifdef OPENSSL_NO_COMP
+			s->session->compress_meth=0;
+#else
 			if (s->s3->tmp.new_compression == NULL)
 				s->session->compress_meth=0;
 			else
 				s->session->compress_meth=
 					s->s3->tmp.new_compression->id;
+#endif
 			if (!s->method->ssl3_enc->setup_key_block(s))
 				{
 				ret= -1;
@@ -533,9 +522,12 @@ int ssl3_client_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
-	int i,j;
+	int i;
 	unsigned long Time,l;
+#ifndef OPENSSL_NO_COMP
+	int j;
 	SSL_COMP *comp;
+#endif
 
 	buf=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL3_ST_CW_CLNT_HELLO_A)
@@ -550,7 +542,7 @@ int ssl3_client_hello(SSL *s)
 		/* else use the pre-loaded session */
 
 		p=s->s3->client_random;
-		Time=time(NULL);			/* Time */
+		Time=(unsigned long)time(NULL);			/* Time */
 		l2n(Time,p);
 		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			goto err;
@@ -594,6 +586,9 @@ int ssl3_client_hello(SSL *s)
 		p+=i;
 
 		/* COMPRESSION */
+#ifdef OPENSSL_NO_COMP
+		*(p++)=1;
+#else
 		if (s->ctx->comp_methods == NULL)
 			j=0;
 		else
@@ -604,6 +599,7 @@ int ssl3_client_hello(SSL *s)
 			comp=sk_SSL_COMP_value(s->ctx->comp_methods,i);
 			*(p++)=comp->id;
 			}
+#endif
 		*(p++)=0; /* Add the NULL method */
 		
 		l=(p-d);
@@ -631,7 +627,9 @@ int ssl3_get_server_hello(SSL *s)
 	int i,al,ok;
 	unsigned int j;
 	long n;
+#ifndef OPENSSL_NO_COMP
 	SSL_COMP *comp;
+#endif
 
 	n=s->method->ssl_get_message(s,
 		SSL3_ST_CR_SRVR_HELLO_A,
@@ -762,6 +760,14 @@ int ssl3_get_server_hello(SSL *s)
 
 	/* lets get the compression algorithm */
 	/* COMPRESSION */
+#ifdef OPENSSL_NO_COMP
+	if (*(p++) != 0)
+		{
+		al=SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
+		goto f_err;
+		}
+#else
 	j= *(p++);
 	if (j == 0)
 		comp=NULL;
@@ -778,6 +784,7 @@ int ssl3_get_server_hello(SSL *s)
 		{
 		s->s3->tmp.new_compression=comp;
 		}
+#endif
 
 	if (p != (d+n))
 		{
@@ -815,7 +822,9 @@ int ssl3_get_server_certificate(SSL *s)
 
 	if (!ok) return((int)n);
 
-	if (s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE)
+	if ((s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) ||
+		((s->s3->tmp.new_cipher->algorithms & SSL_aKRB5) && 
+		(s->s3->tmp.message_type == SSL3_MT_SERVER_DONE)))
 		{
 		s->s3->tmp.reuse_message=1;
 		return(1);
@@ -1205,12 +1214,12 @@ int ssl3_get_key_exchange(SSL *s)
 		 */
 
 		/* XXX: For now we only support named (not generic) curves
-		 * and the ECParameters in this case is just two bytes.
+		 * and the ECParameters in this case is just three bytes.
 		 */
-		param_len=2;
+		param_len=3;
 		if ((param_len > n) ||
 		    (*p != NAMED_CURVE_TYPE) || 
-		    ((curve_nid = curve_id2nid(*(p + 1))) == 0)) 
+		    ((curve_nid = curve_id2nid(*(p + 2))) == 0)) 
 			{
 			al=SSL_AD_INTERNAL_ERROR;
 			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNABLE_TO_FIND_ECDH_PARAMETERS);
@@ -1240,7 +1249,7 @@ int ssl3_get_key_exchange(SSL *s)
 			goto f_err;
 			}
 
-		p+=2;
+		p+=3;
 
 		/* Next, get the encoded ECPoint */
 		if (((srvr_ecpoint = EC_POINT_new(group)) == NULL) ||
@@ -1327,6 +1336,8 @@ int ssl3_get_key_exchange(SSL *s)
 			q=md_buf;
 			for (num=2; num > 0; num--)
 				{
+				EVP_MD_CTX_set_flags(&md_ctx,
+					EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 				EVP_DigestInit_ex(&md_ctx,(num == 2)
 					?s->ctx->md5:s->ctx->sha1, NULL);
 				EVP_DigestUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
@@ -1608,20 +1619,6 @@ int ssl3_get_server_done(SSL *s)
 	}
 
 
-static const int KDF1_SHA1_len = 20;
-static void *KDF1_SHA1(const void *in, size_t inlen, void *out, size_t *outlen)
-	{
-#ifndef OPENSSL_NO_SHA
-	if (*outlen < SHA_DIGEST_LENGTH)
-		return NULL;
-	else
-		*outlen = SHA_DIGEST_LENGTH;
-	return SHA1(in, inlen, out);
-#else
-	return NULL;
-#endif
-	}
-
 int ssl3_send_client_key_exchange(SSL *s)
 	{
 	unsigned char *p,*d;
@@ -1804,8 +1801,10 @@ int ssl3_send_client_key_exchange(SSL *s)
 				n+=2;
 				}
  
-			if (RAND_bytes(tmp_buf,sizeof tmp_buf) <= 0)
-			    goto err;
+			    tmp_buf[0]=s->client_version>>8;
+			    tmp_buf[1]=s->client_version&0xff;
+			    if (RAND_bytes(&(tmp_buf[2]),sizeof tmp_buf-2) <= 0)
+				goto err;
 
 			/*  20010420 VRS.  Tried it this way; failed.
 			**	EVP_EncryptInit_ex(&ciph_ctx,enc, NULL,NULL);
@@ -2019,14 +2018,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 				       ERR_R_ECDH_LIB);
 				goto err;
 				}
-			/* If field size is not more than 24 octets, then use SHA-1 hash of result;
-			 * otherwise, use result (see section 4.8 of draft-ietf-tls-ecc-03.txt;
-			 * this is new with this version of the Internet Draft).
-			 */
-			if (field_size <= 24 * 8)
-				n=ECDH_compute_key(p, KDF1_SHA1_len, srvr_ecpoint, clnt_ecdh, KDF1_SHA1);
-			else
-				n=ECDH_compute_key(p, (field_size+7)/8, srvr_ecpoint, clnt_ecdh, NULL);
+			n=ECDH_compute_key(p, (field_size+7)/8, srvr_ecpoint, clnt_ecdh, NULL);
 			if (n <= 0)
 				{
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE, 
@@ -2132,7 +2124,7 @@ int ssl3_send_client_verify(SSL *s)
 	unsigned u=0;
 #endif
 	unsigned long n;
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
 	int j;
 #endif
 
@@ -2305,17 +2297,17 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 
 	sc=s->session->sess_cert;
 
-	if (sc == NULL)
-		{
-		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,ERR_R_INTERNAL_ERROR);
-		goto err;
-		}
-
 	algs=s->s3->tmp.new_cipher->algorithms;
 
 	/* we don't have a certificate */
 	if (algs & (SSL_aDH|SSL_aNULL|SSL_aKRB5))
 		return(1);
+
+	if (sc == NULL)
+		{
+		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,ERR_R_INTERNAL_ERROR);
+		goto err;
+		}
 
 #ifndef OPENSSL_NO_RSA
 	rsa=s->session->sess_cert->peer_rsa_tmp;

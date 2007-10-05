@@ -47,6 +47,14 @@ function doc_install()
   create_cygwin_readme
 }
 
+function certs_install()
+{
+  CERTS_DIR=${INSTALL_PREFIX}/usr/ssl/certs
+
+  mkdir -p ${CERTS_DIR}
+  cp -rp certs/* ${CERTS_DIR}
+}
+
 function create_cygwin_readme()
 {
   README_DIR=${INSTALL_PREFIX}/usr/share/doc/Cygwin
@@ -104,19 +112,25 @@ base_install
 
 doc_install
 
+certs_install
+
 create_cygwin_readme
 
 create_profile_files
 
 cd ${INSTALL_PREFIX}
-strip usr/bin/*.exe usr/bin/*.dll
+chmod u+w usr/lib/engines/*.so
+strip usr/bin/*.exe usr/bin/*.dll usr/lib/engines/*.so
+chmod u-w usr/lib/engines/*.so
 
 # Runtime package
-find etc usr/bin usr/share/doc usr/ssl/certs usr/ssl/man/man[157] \
-     usr/ssl/misc usr/ssl/openssl.cnf usr/ssl/private -empty -o \! -type d |
+find etc usr/bin usr/lib/engines usr/share/doc usr/ssl/certs \
+     usr/ssl/man/man[157] usr/ssl/misc usr/ssl/openssl.cnf usr/ssl/private \
+     -empty -o \! -type d |
 tar cjfT openssl-${VERSION}-${SUBVERSION}.tar.bz2 -
 # Development package
-find usr/include usr/lib usr/ssl/man/man3 -empty -o \! -type d |
+find usr/include usr/lib/*.a usr/lib/pkgconfig usr/ssl/man/man3 \
+     -empty -o \! -type d |
 tar cjfT openssl-devel-${VERSION}-${SUBVERSION}.tar.bz2 -
 
 ls -l openssl-${VERSION}-${SUBVERSION}.tar.bz2

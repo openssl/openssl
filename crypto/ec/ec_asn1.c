@@ -529,6 +529,8 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
 				ECerr(EC_F_EC_ASN1_GROUP2CURVE, ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
+		curve->seed->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
+		curve->seed->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 		if (!ASN1_BIT_STRING_set(curve->seed, group->seed, 
 		                         (int)group->seed_len))
 			{
@@ -741,6 +743,7 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 	EC_GROUP		*ret = NULL;
 	BIGNUM			*p = NULL, *a = NULL, *b = NULL;
 	EC_POINT		*point=NULL;
+	long    		field_bits;
 
 	if (!params->fieldID || !params->fieldID->fieldType || 
 	    !params->fieldID->p.ptr)
@@ -779,6 +782,13 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 
 		char_two = params->fieldID->p.char_two;
 
+		field_bits = char_two->m;
+		if (field_bits > OPENSSL_ECC_MAX_FIELD_BITS)
+			{
+			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_FIELD_TOO_LARGE);
+			goto err;
+			}
+
 		if ((p = BN_new()) == NULL)
 			{
 			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_MALLOC_FAILURE);
@@ -799,6 +809,13 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 				}
 
 			tmp_long = ASN1_INTEGER_get(char_two->p.tpBasis);
+
+			if (!(char_two->m > tmp_long && tmp_long > 0))
+				{
+				ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_INVALID_TRINOMIAL_BASIS);
+				goto err;
+				}
+			
 			/* create the polynomial */
 			if (!BN_set_bit(p, (int)char_two->m))
 				goto err;
@@ -817,6 +834,13 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 				ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_ASN1_ERROR);
 				goto err;
 				}
+
+			if (!(char_two->m > penta->k3 && penta->k3 > penta->k2 && penta->k2 > penta->k1 && penta->k1 > 0))
+				{
+				ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_INVALID_PENTANOMIAL_BASIS);
+				goto err;
+				}
+			
 			/* create the polynomial */
 			if (!BN_set_bit(p, (int)char_two->m)) goto err;
 			if (!BN_set_bit(p, (int)penta->k1)) goto err;
@@ -837,11 +861,6 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 
 		/* create the EC_GROUP structure */
 		ret = EC_GROUP_new_curve_GF2m(p, a, b, NULL);
-		if (ret == NULL)
-			{
-			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_EC_LIB);
-			goto err;
-			}
 		}
 	else if (tmp == NID_X9_62_prime_field)
 		{
@@ -858,13 +877,33 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_ASN1_LIB);
 			goto err;
 			}
-		/* create the EC_GROUP structure */
-		ret = EC_GROUP_new_curve_GFp(p, a, b, NULL);
-		if (ret == NULL)
+
+		if (BN_is_negative(p) || BN_is_zero(p))
 			{
-			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_EC_LIB);
+			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_INVALID_FIELD);
 			goto err;
 			}
+
+		field_bits = BN_num_bits(p);
+		if (field_bits > OPENSSL_ECC_MAX_FIELD_BITS)
+			{
+			ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_FIELD_TOO_LARGE);
+			goto err;
+			}
+
+		/* create the EC_GROUP structure */
+		ret = EC_GROUP_new_curve_GFp(p, a, b, NULL);
+		}
+	else
+		{
+		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_INVALID_FIELD);
+		goto err;
+		}
+
+	if (ret == NULL)
+		{
+		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_EC_LIB);
+		goto err;
 		}
 
 	/* extract seed (optional) */
@@ -907,6 +946,16 @@ static EC_GROUP *ec_asn1_parameters2group(const ECPARAMETERS *params)
 	if ((a = ASN1_INTEGER_to_BN(params->order, a)) == NULL)
 		{
 		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, ERR_R_ASN1_LIB);
+		goto err;
+		}
+	if (BN_is_negative(a) || BN_is_zero(a))
+		{
+		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_INVALID_GROUP_ORDER);
+		goto err;
+		}
+	if (BN_num_bits(a) > (int)field_bits + 1) /* Hasse bound */
+		{
+		ECerr(EC_F_EC_ASN1_PARAMETERS2GROUP, EC_R_INVALID_GROUP_ORDER);
 		goto err;
 		}
 	
@@ -1244,6 +1293,8 @@ int	i2d_ECPrivateKey(EC_KEY *a, unsigned char **out)
 			goto err;
 			}
 
+		priv_key->publicKey->flags &= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
+		priv_key->publicKey->flags |= ASN1_STRING_FLAG_BITS_LEFT;
 		if (!M_ASN1_BIT_STRING_set(priv_key->publicKey, buffer, 
 				buf_len))
 			{

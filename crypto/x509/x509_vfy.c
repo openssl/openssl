@@ -79,7 +79,7 @@ static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
 static int internal_verify(X509_STORE_CTX *ctx);
-const char *X509_version="X.509" OPENSSL_VERSION_PTEXT;
+const char X509_version[]="X.509" OPENSSL_VERSION_PTEXT;
 
 
 static int null_callback(int ok, X509_STORE_CTX *e)
@@ -311,6 +311,14 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	else
 		ok=internal_verify(ctx);
 	if(!ok) goto end;
+
+#ifndef OPENSSL_NO_RFC3779
+	/* RFC 3779 path validation, now that CRL check has been done */
+	ok = v3_asid_validate_path(ctx);
+	if (!ok) goto end;
+	ok = v3_addr_validate_path(ctx);
+	if (!ok) goto end;
+#endif
 
 	/* If we get this far evaluate policies */
 	if (!bad_chain && (ctx->param->flags & X509_V_FLAG_POLICY_CHECK))
@@ -776,7 +784,8 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 			}
 		}
 
-	if (!check_crl_time(ctx, crl, 1))
+	ok = check_crl_time(ctx, crl, 1);
+	if (!ok)
 		goto err;
 
 	ok = 1;
@@ -1006,7 +1015,8 @@ static int internal_verify(X509_STORE_CTX *ctx)
 
 		xs->valid = 1;
 
-		if (!check_cert_time(ctx, xs))
+		ok = check_cert_time(ctx, xs);
+		if (!ok)
 			goto end;
 
 		/* The last error (if any) is still in the error value */
@@ -1079,7 +1089,7 @@ int X509_cmp_time(ASN1_TIME *ctm, time_t *cmp_time)
 		offset=0;
 	else
 		{
-		if ((*str != '+') && (str[5] != '-'))
+		if ((*str != '+') && (*str != '-'))
 			return 0;
 		offset=((str[1]-'0')*10+(str[2]-'0'))*60;
 		offset+=(str[3]-'0')*10+(str[4]-'0');
@@ -1458,9 +1468,16 @@ void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk)
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 	{
 	if (ctx->cleanup) ctx->cleanup(ctx);
-	X509_VERIFY_PARAM_free(ctx->param);
-	if (ctx->tree)
+	if (ctx->param != NULL)
+		{
+		X509_VERIFY_PARAM_free(ctx->param);
+		ctx->param=NULL;
+		}
+	if (ctx->tree != NULL)
+		{
 		X509_policy_tree_free(ctx->tree);
+		ctx->tree=NULL;
+		}
 	if (ctx->chain != NULL)
 		{
 		sk_X509_pop_free(ctx->chain,X509_free);

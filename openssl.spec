@@ -1,15 +1,15 @@
 %define libmaj 0
 %define libmin 9
 %define librel 8
-#%define librev a
+%define librev f
 Release: 1
 
 %define openssldir /var/ssl
 
 Summary: Secure Sockets Layer and cryptography libraries and tools
 Name: openssl
-Version: %{libmaj}.%{libmin}.%{librel}
-#Version: %{libmaj}.%{libmin}.%{librel}%{librev}
+#Version: %{libmaj}.%{libmin}.%{librel}
+Version: %{libmaj}.%{libmin}.%{librel}%{librev}
 Source0: ftp://ftp.openssl.org/source/%{name}-%{version}.tar.gz
 Copyright: Freely distributable
 Group: System Environment/Libraries
@@ -121,7 +121,6 @@ rm -rf $RPM_BUILD_ROOT
 
 %config %attr(0644,root,root) %{openssldir}/openssl.cnf 
 %dir %attr(0755,root,root) %{openssldir}/certs
-%dir %attr(0755,root,root) %{openssldir}/lib
 %dir %attr(0755,root,root) %{openssldir}/misc
 %dir %attr(0750,root,root) %{openssldir}/private
 
@@ -146,6 +145,8 @@ ldconfig
 ldconfig
 
 %changelog
+* Sun Jun  6 2005 Richard Levitte <richard@levitte.org>
+- Remove the incorrect installation of '%{openssldir}/lib'.
 * Wed May  7 2003 Richard Levitte <richard@levitte.org>
 - Add /usr/lib/pkgconfig/openssl.pc to the development section.
 * Thu Mar 22 2001 Richard Levitte <richard@levitte.org>

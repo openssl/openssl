@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/opensslconf.h>	/* for OPENSSL_NO_DSA */
 #ifndef OPENSSL_NO_DSA
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,6 +84,10 @@
  * -aes128	- encrypt output if PEM format
  * -aes192	- encrypt output if PEM format
  * -aes256	- encrypt output if PEM format
+ * -camellia128 - encrypt output if PEM format
+ * -camellia192 - encrypt output if PEM format
+ * -camellia256 - encrypt output if PEM format
+ * -seed        - encrypt output if PEM format
  * -text	- print a text version
  * -modulus	- print the DSA public key
  */
@@ -210,6 +215,13 @@ bad:
 #ifndef OPENSSL_NO_AES
 		BIO_printf(bio_err," -aes128, -aes192, -aes256\n");
 		BIO_printf(bio_err,"                 encrypt PEM output with cbc aes\n");
+#endif
+#ifndef OPENSSL_NO_CAMELLIA
+		BIO_printf(bio_err," -camellia128, -camellia192, -camellia256\n");
+		BIO_printf(bio_err,"                 encrypt PEM output with cbc camellia\n");
+#endif
+#ifndef OPENSSL_NO_SEED
+		BIO_printf(bio_err," -seed           encrypt PEM output with cbc seed\n");
 #endif
 		BIO_printf(bio_err," -text           print the key in text\n");
 		BIO_printf(bio_err," -noout          don't print key out\n");

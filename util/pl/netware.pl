@@ -2,19 +2,25 @@
 #
 
 # The import files and other misc imports needed to link
+@misc_imports = ("GetProcessSwitchCount", "RunningProcess",  
+                 "GetSuperHighResolutionTimer");
 if ($LIBC)
 {
-   @import_files = ("libc.imp", "ws2nlm.imp");
+   @import_files = ("libc.imp");
    @module_files = ("libc");
 }
 else
 {
    # clib build
-   @import_files = ("clib.imp", "ws2nlm.imp");
+   @import_files = ("clib.imp");
    @module_files = ("clib");
+   push(@misc_imports, "_rt_modu64%16", "_rt_divu64%16");
 }
-@misc_imports = ("GetProcessSwitchCount", "RunningProcess",  
-                 "GetSuperHighResolutionTimer" );
+if (!$BSDSOCK)
+{
+   push(@import_files, "ws2nlm.imp");
+}
+		 
 
 # The "IMPORTS" environment variable must be set and point to the location
 # where import files (*.imp) can be found.
@@ -82,10 +88,12 @@ else
 #        paths for each subdirectory a recursive include directive
 #        is used ( -ir crypto ).
 #
+#        A similar issue exists for the engines and apps subdirectories.
+#
 #        Turned off the "possible" warnings ( -w nopossible ).  Metrowerks
 #        complained a lot about various stuff.  May want to turn back
 #        on for further development.
-$cflags="-ir crypto -msgstyle gcc -align 4 -processor pentium \\
+$cflags="-ir crypto -ir engines -ir apps -msgstyle gcc -align 4 -processor pentium \\
          -char unsigned -w on -w nolargeargs -w nopossible -w nounusedarg \\
          -w noimplicitconv -relax_pointers -nosyspath -DL_ENDIAN \\
          -DOPENSSL_SYSNAME_NETWARE -U_WIN32 -maxerrors 20 ";
@@ -118,6 +126,12 @@ else
 {
    $cflags.=" -DNETWARE_CLIB";
    $lflags.=" -entry _Prelude -exit _Stop";
+}
+
+# If BSD Socket support is requested, set a define for the compiler
+if ($BSDSOCK)
+{
+   $cflags.=" -DNETWARE_BSDSOCK";
 }
 
 

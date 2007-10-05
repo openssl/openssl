@@ -72,7 +72,7 @@ static int do_i2r_name_constraints(X509V3_EXT_METHOD *method,
 					BIO *bp, int ind, char *name);
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip);
 
-X509V3_EXT_METHOD v3_name_constraints = {
+const X509V3_EXT_METHOD v3_name_constraints = {
 	NID_name_constraints, 0,
 	ASN1_ITEM_ref(NAME_CONSTRAINTS),
 	0,0,0,0,

@@ -94,13 +94,10 @@
 #include <openssl/ui.h>
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
+#include <openssl/fips.h>
 
 void ERR_load_crypto_strings(void)
 	{
-	static int done=0;
-
-	if (done) return;
-	done=1;
 #ifndef OPENSSL_NO_ERR
 	ERR_load_ERR_strings(); /* include error strings for SYSerr */
 	ERR_load_BN_strings();
@@ -142,5 +139,8 @@ void ERR_load_crypto_strings(void)
 #endif
 	ERR_load_OCSP_strings();
 	ERR_load_UI_strings();
+#ifdef OPENSSL_FIPS
+	ERR_load_FIPS_strings();
+#endif
 #endif
 	}

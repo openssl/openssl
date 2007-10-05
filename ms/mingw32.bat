@@ -60,6 +60,10 @@ echo RC5\32
 cd crypto\rc5\asm
 perl rc5-586.pl gaswin > r5-win32.s
 cd ..\..\..
+echo CPUID
+cd crypto
+perl x86cpuid.pl gaswin > cpu-win32.s
+cd ..
 
 :noasm
 

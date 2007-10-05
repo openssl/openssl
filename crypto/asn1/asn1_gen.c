@@ -658,6 +658,8 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
 			ASN1err(ASN1_F_ASN1_STR2TYPE, ASN1_R_NOT_ASCII_FORMAT);
 			goto bad_form;
 			}
+		vtmp.name = NULL;
+		vtmp.section = NULL;
 		vtmp.value = (char *)str;
 		if (!X509V3_get_value_bool(&vtmp, &atmp->value.boolean))
 			{

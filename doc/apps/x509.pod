@@ -404,13 +404,13 @@ B<sep_comma_plus>, B<dn_rev> and B<sname>.
 
 a oneline format which is more readable than RFC2253. It is equivalent to
 specifying the  B<esc_2253>, B<esc_ctrl>, B<esc_msb>, B<utf8>, B<dump_nostr>,
-B<dump_der>, B<use_quote>, B<sep_comma_plus_spc>, B<spc_eq> and B<sname>
+B<dump_der>, B<use_quote>, B<sep_comma_plus_space>, B<space_eq> and B<sname>
 options.
 
 =item B<multiline>
 
 a multiline format. It is equivalent B<esc_ctrl>, B<esc_msb>, B<sep_multiline>,
-B<spc_eq>, B<lname> and B<align>.
+B<space_eq>, B<lname> and B<align>.
 
 =item B<esc_2253>
 
@@ -510,7 +510,7 @@ diagnostic purpose.
 align field values for a more readable output. Only usable with
 B<sep_multiline>.
 
-=item B<spc_eq>
+=item B<space_eq>
 
 places spaces round the B<=> character which follows the field
 name.
@@ -620,7 +620,7 @@ Display the certificate subject name in RFC2253 form:
 Display the certificate subject name in oneline form on a terminal
 supporting UTF8:
 
- openssl x509 -in cert.pem -noout -subject -nameopt oneline,-escmsb
+ openssl x509 -in cert.pem -noout -subject -nameopt oneline,-esc_msb
 
 Display the certificate MD5 fingerprint:
 

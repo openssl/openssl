@@ -14,12 +14,10 @@ ecdsa - Elliptic Curve Digital Signature Algorithm
  ECDSA_SIG*	d2i_ECDSA_SIG(ECDSA_SIG **sig, const unsigned char **pp, 
 		long len);
 
- ECDSA_DATA*	ECDSA_DATA_new(void);
- ECDSA_DATA*	ECDSA_DATA_new_method(ENGINE *eng);
- void		ECDSA_DATA_free(ECDSA_DATA *data);
- ECDSA_DATA*	ecdsa_check(EC_KEY *eckey);
-
  ECDSA_SIG*	ECDSA_do_sign(const unsigned char *dgst, int dgst_len,
+			EC_KEY *eckey);
+ ECDSA_SIG*	ECDSA_do_sign_ex(const unsigned char *dgst, int dgstlen, 
+			const BIGNUM *kinv, const BIGNUM *rp,
 			EC_KEY *eckey);
  int		ECDSA_do_verify(const unsigned char *dgst, int dgst_len,
 			const ECDSA_SIG *sig, EC_KEY* eckey);
@@ -28,6 +26,10 @@ ecdsa - Elliptic Curve Digital Signature Algorithm
  int		ECDSA_sign(int type, const unsigned char *dgst,
 			int dgstlen, unsigned char *sig,
 			unsigned int *siglen, EC_KEY *eckey);
+ int		ECDSA_sign_ex(int type, const unsigned char *dgst,
+			int dgstlen, unsigned char *sig,
+			unsigned int *siglen, const BIGNUM *kinv, 
+			const BIGNUM *rp, EC_KEY *eckey);
  int		ECDSA_verify(int type, const unsigned char *dgst,
 			int dgstlen, const unsigned char *sig,
 			int siglen, EC_KEY *eckey);
@@ -72,35 +74,6 @@ the decoded signature in a newly allocated B<ECDSA_SIG> structure.
 B<*sig> points to the buffer containing the DER encoded signature
 of size B<len>.
 
-The B<ECDSA_DATA> structure extends the B<EC_KEY_METH_DATA>
-structure with ECDSA specific data.
-
- struct
-	{
-	/* EC_KEY_METH_DATA part */
-	int  (*init)(EC_KEY *);
-	void (*finish)(EC_KEY *);
-	/* method (ECDSA) specific part */
-	BIGNUM	*kinv;	/* signing pre-calc */
-	BIGNUM	*r;	/* signing pre-calc */
-	...
-	} 
- ECDSA_DATA;
-
-B<kinv> and B<r> are used to store precomputed values (see
-B<ECDSA_sign_setup>). 
-
-ECDSA_DATA_new() returns a newly allocated and initialized
-B<ECDSA_DATA> structure (or NULL on error). 
-
-ECDSA_DATA_free() frees the B<ECDSA_DATA> structure B<data>.
-
-ecdsa_check() returns the pointer to the B<ECDSA_DATA>
-structure in B<EC_KEY-E<gt>meth_data> (if B<EC_KEY-E<gt>meth_data>
-is not a pointer to a B<ECDSA_DATA> structure then the old
-data is freed and a new B<ECDSA_DATA> structure is allocated
-using B<ECDSA_DATA_new>).
-
 ECDSA_size() returns the maximum length of a DER encoded
 ECDSA signature created with the private EC key B<eckey>.
 
@@ -108,13 +81,15 @@ ECDSA_sign_setup() may be used to precompute parts of the
 signing operation. B<eckey> is the private EC key and B<ctx>
 is a pointer to B<BN_CTX> structure (or NULL). The precomputed
 values or returned in B<kinv> and B<rp> and can be used in a
-later call to B<ECDSA_sign> or B<ECDSA_do_sign> when placed in
-B<ECDSA_DATA-E<gt>kinv> and B<ECDSA_DATA-E<gt>r>.
+later call to B<ECDSA_sign_ex> or B<ECDSA_do_sign_ex>.
 
-ECDSA_sign() computes a digital signature of the B<dgstlen> bytes
-hash value B<dgst> using the private EC key B<eckey> and places
-the DER encoding of the created signature in B<sig>. The length
-of the created signature is returned in B<sig_len>. Note: B<sig>
+ECDSA_sign() is wrapper function for ECDSA_sign_ex with B<kinv>
+and B<rp> set to NULL.
+
+ECDSA_sign_ex() computes a digital signature of the B<dgstlen> bytes
+hash value B<dgst> using the private EC key B<eckey> and the optional
+pre-computed values B<kinv> and B<rp>. The DER encoded signatures is
+stored in B<sig> and it's length is returned in B<sig_len>. Note: B<sig>
 must point to B<ECDSA_size> bytes of memory. The parameter B<type>
 is ignored.
 
@@ -123,10 +98,13 @@ B<siglen> is a valid ECDSA signature of the hash value
 value B<dgst> of size B<dgstlen> using the public key B<eckey>.
 The parameter B<type> is ignored.
 
-ECDSA_do_sign() computes a digital signature of the B<dgst_len>
-bytes hash value B<dgst> using the private key B<eckey> and 
-returns the signature in a newly allocated B<ECDSA_SIG> structure
-(or NULL on error).
+ECDSA_do_sign() is wrapper function for ECDSA_do_sign_ex with B<kinv>
+and B<rp> set to NULL.
+
+ECDSA_do_sign_ex() computes a digital signature of the B<dgst_len>
+bytes hash value B<dgst> using the private key B<eckey> and the
+optional pre-computed values B<kinv> and B<rp>. The signature is
+returned in a newly allocated B<ECDSA_SIG> structure (or NULL on error).
 
 ECDSA_do_verify() verifies that the signature B<sig> is a valid
 ECDSA signature of the hash value B<dgst> of size B<dgst_len>

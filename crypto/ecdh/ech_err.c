@@ -71,7 +71,7 @@
 static ERR_STRING_DATA ECDH_str_functs[]=
 	{
 {ERR_FUNC(ECDH_F_ECDH_COMPUTE_KEY),	"ECDH_compute_key"},
-{ERR_FUNC(ECDH_F_ECDH_DATA_NEW_METHOD),	"ECDH_DATA_new_method"},
+{ERR_FUNC(ECDH_F_ECDH_DATA_NEW_METHOD),	"ECDH_DATA_NEW_METHOD"},
 {0,NULL}
 	};
 
@@ -87,15 +87,12 @@ static ERR_STRING_DATA ECDH_str_reasons[]=
 
 void ERR_load_ECDH_strings(void)
 	{
-	static int init=1;
-
-	if (init)
-		{
-		init=0;
 #ifndef OPENSSL_NO_ERR
+
+	if (ERR_func_error_string(ECDH_str_functs[0].error) == NULL)
+		{
 		ERR_load_strings(0,ECDH_str_functs);
 		ERR_load_strings(0,ECDH_str_reasons);
-#endif
-
 		}
+#endif
 	}

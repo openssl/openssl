@@ -3,6 +3,7 @@
  ----------------------------------
 
  [Instructions for building for Windows CE can be found in INSTALL.WCE]
+ [Instructions for building for Win64 can be found in INSTALL.W64]
 
  Heres a few comments about building OpenSSL in Windows environments.  Most
  of this is tested on Win32 but it may also work in Win 3.1 with some
@@ -48,7 +49,9 @@
 
  Firstly you should run Configure:
 
- > perl Configure VC-WIN32
+ > perl Configure VC-WIN32 --prefix=c:/some/openssl/dir
+
+Where the prefix argument specifies where OpenSSL will be installed to.
 
  Next you need to build the Makefiles and optionally the assembly language
  files:
@@ -76,8 +79,12 @@
  If all is well it should compile and you will have some DLLs and executables
  in out32dll. If you want to try the tests then do:
  
- > cd out32dll
- > ..\ms\test
+ > nmake -f ms\ntdll.mak test
+
+
+To install OpenSSL to the specified location do:
+
+> nmake -f ms\ntdll.mak install
 
  Tweaks:
 
@@ -86,6 +93,12 @@
  to the mk1mf.pl lines in the do_* batch file then debugging symbols will be
  compiled in. Note that mk1mf.pl expects the platform to be the last argument
  on the command line, so 'debug' must appear before that, as all other options.
+
+
+ By default in 0.9.8 OpenSSL will compile builtin ENGINES into the libeay32.dll
+ shared library. If you specify the "no-static-engine" option on the command
+ line to Configure the shared library build (ms\ntdll.mak) will compile the
+ engines as separate DLLs.
 
  The default Win32 environment is to leave out any Windows NT specific
  features.
@@ -96,6 +109,8 @@
 
  You can also build a static version of the library using the Makefile
  ms\nt.mak
+
+
 
  Borland C++ builder 5
  ---------------------
@@ -286,3 +301,21 @@
  (e.g. fopen()), and OpenSSL cannot change these; so in general you cannot
  rely on CRYPTO_malloc_init() solving your problem, and you should
  consistently use the multithreaded library.
+
+ Linking your application
+ ------------------------
+
+ If you link with static OpenSSL libraries [those built with ms/nt.mak],
+ then you're expected to additionally link your application with
+ WSOCK32.LIB, ADVAPI32.LIB, GDI32.LIB and USER32.LIB. Those developing
+ non-interactive service applications might feel concerned about linking
+ with latter two, as they are justly associated with interactive desktop,
+ which is not available to service processes. The toolkit is designed
+ to detect in which context it's currently executed, GUI, console app
+ or service, and act accordingly, namely whether or not to actually make
+ GUI calls.
+
+ If you link with OpenSSL .DLLs, then you're expected to include into
+ your application code small "shim" snippet, which provides glue between
+ OpenSSL BIO layer and your compiler run-time. Look up OPENSSL_Applink
+ reference page for further details.

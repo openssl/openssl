@@ -105,10 +105,10 @@ OPENSSL_DECLARE_EXIT
 #ifndef HZ
 #ifndef CLK_TCK
 #define HZ	100.0
-#endif
-#else /* CLK_TCK */
+#else	/* CLK_TCK */
 #define HZ ((double)CLK_TCK)
-#endif
+#endif	/* CLK_TCK */
+#endif	/* HZ */
 
 #define BUFSIZE	((long)1024)
 long run=0;

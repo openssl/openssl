@@ -121,6 +121,9 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/md5.h>
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
+#endif
 
 static SSL_METHOD *dtls1_get_server_method(int ver);
 static int dtls1_send_hello_verify_request(SSL *s);
@@ -133,33 +136,15 @@ static SSL_METHOD *dtls1_get_server_method(int ver)
 		return(NULL);
 	}
 
-SSL_METHOD *DTLSv1_server_method(void)
-	{
-	static int init=1;
-	static SSL_METHOD DTLSv1_server_data;
-
-	if (init)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_SSL_METHOD);
-
-		if (init)
-			{
-			memcpy((char *)&DTLSv1_server_data,(char *)dtlsv1_base_method(),
-				sizeof(SSL_METHOD));
-			DTLSv1_server_data.ssl_accept=dtls1_accept;
-			DTLSv1_server_data.get_ssl_method=dtls1_get_server_method;
-			init=0;
-			}
-			
-		CRYPTO_w_unlock(CRYPTO_LOCK_SSL_METHOD);
-		}
-	return(&DTLSv1_server_data);
-	}
+IMPLEMENT_dtls1_meth_func(DTLSv1_server_method,
+			dtls1_accept,
+			ssl_undefined_function,
+			dtls1_get_server_method)
 
 int dtls1_accept(SSL *s)
 	{
 	BUF_MEM *buf;
-	unsigned long l,Time=time(NULL);
+	unsigned long l,Time=(unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	long num1;
 	int ret= -1;
@@ -673,14 +658,15 @@ int dtls1_send_server_hello(SSL *s)
 	{
 	unsigned char *buf;
 	unsigned char *p,*d;
-	int i,sl;
+	int i;
+	unsigned int sl;
 	unsigned long l,Time;
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A)
 		{
 		buf=(unsigned char *)s->init_buf->data;
 		p=s->s3->server_random;
-		Time=time(NULL);			/* Time */
+		Time=(unsigned long)time(NULL);			/* Time */
 		l2n(Time,p);
 		RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-sizeof(Time));
 		/* Do the message type and length last */
@@ -719,10 +705,14 @@ int dtls1_send_server_hello(SSL *s)
 		p+=i;
 
 		/* put the compression method */
+#ifdef OPENSSL_NO_COMP
+		*(p++)=0;
+#else
 		if (s->s3->tmp.new_compression == NULL)
 			*(p++)=0;
 		else
 			*(p++)=s->s3->tmp.new_compression->id;
+#endif
 
 		/* do the header */
 		l=(p-d);
@@ -1019,6 +1009,7 @@ int dtls1_send_certificate_request(SSL *s)
 	STACK_OF(X509_NAME) *sk=NULL;
 	X509_NAME *name;
 	BUF_MEM *buf;
+	unsigned int msg_len;
 
 	if (s->state == SSL3_ST_SW_CERT_REQ_A)
 		{
@@ -1075,7 +1066,7 @@ int dtls1_send_certificate_request(SSL *s)
 		d=(unsigned char *)buf->data;
 		*(d++)=SSL3_MT_CERTIFICATE_REQUEST;
 		l2n3(n,d);
-		l2n(s->d1->handshake_write_seq,d);
+		s2n(s->d1->handshake_write_seq,d);
 		s->d1->handshake_write_seq++;
 
 		/* we should now have things packed up, so lets send
@@ -1096,6 +1087,10 @@ int dtls1_send_certificate_request(SSL *s)
 #endif
 
 		/* XDTLS:  set message header ? */
+		msg_len = s->init_num - DTLS1_HM_HEADER_LENGTH;
+		dtls1_set_message_header(s, s->init_buf->data,
+			SSL3_MT_CERTIFICATE_REQUEST, msg_len, 0, msg_len);
+
 		/* buffer the message to handle re-xmits */
 		dtls1_buffer_message(s, 0);
 

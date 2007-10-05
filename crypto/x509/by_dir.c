@@ -114,7 +114,7 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 	{
 	int ret=0;
 	BY_DIR *ld;
-	char *dir;
+	char *dir = NULL;
 
 	ld=(BY_DIR *)ctx->method_data;
 
@@ -123,16 +123,15 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
 	case X509_L_ADD_DIR:
 		if (argl == X509_FILETYPE_DEFAULT)
 			{
-			ret=add_cert_dir(ld,X509_get_default_cert_dir(),
-				X509_FILETYPE_PEM);
+			dir=(char *)Getenv(X509_get_default_cert_dir_env());
+			if (dir)
+				ret=add_cert_dir(ld,dir,X509_FILETYPE_PEM);
+			else
+				ret=add_cert_dir(ld,X509_get_default_cert_dir(),
+					X509_FILETYPE_PEM);
 			if (!ret)
 				{
 				X509err(X509_F_DIR_CTRL,X509_R_LOADING_CERT_DIR);
-				}
-			else
-				{
-				dir=(char *)Getenv(X509_get_default_cert_dir_env());
-				ret=add_cert_dir(ld,dir,X509_FILETYPE_PEM);
 				}
 			}
 		else
@@ -190,7 +189,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 
 	s=dir;
 	p=s;
-	for (;;)
+	for (;;p++)
 		{
 		if ((*p == LIST_SEPARATOR_CHAR) || (*p == '\0'))
 			{
@@ -199,8 +198,11 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 			len=(int)(p-ss);
 			if (len == 0) continue;
 			for (j=0; j<ctx->num_dirs; j++)
-				if (strncmp(ctx->dirs[j],ss,(unsigned int)len) == 0)
-					continue;
+				if (strlen(ctx->dirs[j]) == (size_t)len &&
+				    strncmp(ctx->dirs[j],ss,(unsigned int)len) == 0)
+					break;
+			if (j<ctx->num_dirs)
+				continue;
 			if (ctx->num_dirs_alloced < (ctx->num_dirs+1))
 				{
 				ctx->num_dirs_alloced+=10;
@@ -232,7 +234,6 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 			ctx->num_dirs++;
 			}
 		if (*p == '\0') break;
-		p++;
 		}
 	return(1);
 	}

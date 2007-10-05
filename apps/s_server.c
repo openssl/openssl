@@ -153,6 +153,12 @@ typedef unsigned int u_int;
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
+#ifndef OPENSSL_NO_DH
+#include <openssl/dh.h>
+#endif
+#ifndef OPENSSL_NO_RSA
+#include <openssl/rsa.h>
+#endif
 #include "s_apps.h"
 #include "timeouts.h"
 
@@ -262,6 +268,9 @@ static char *engine_id=NULL;
 static const char *session_id_prefix=NULL;
 
 static int enable_timeouts = 0;
+#ifdef mtu
+#undef mtu
+#endif
 static long mtu;
 static int cert_chain = 0;
 
@@ -527,13 +536,18 @@ int MAIN(int argc, char *argv[])
 	char *CApath=NULL,*CAfile=NULL;
 	unsigned char *context = NULL;
 	char *dhfile = NULL;
+#ifndef OPENSSL_NO_ECDH
 	char *named_curve = NULL;
+#endif
 	int badop=0,bugs=0;
 	int ret=1;
 	int off=0;
 	int no_tmp_rsa=0,no_dhe=0,no_ecdhe=0,nocert=0;
 	int state=0;
 	SSL_METHOD *meth=NULL;
+#ifdef sock_type
+#undef sock_type
+#endif
     int sock_type=SOCK_STREAM;
 #ifndef OPENSSL_NO_ENGINE
 	ENGINE *e=NULL;
@@ -818,21 +832,24 @@ bad:
 	if (s_key_file == NULL)
 		s_key_file = s_cert_file;
 
-	s_key = load_key(bio_err, s_key_file, s_key_format, 0, pass, e,
-		       "server certificate private key file");
-	if (!s_key)
+	if (nocert == 0)
 		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
+		s_key = load_key(bio_err, s_key_file, s_key_format, 0, pass, e,
+		       "server certificate private key file");
+		if (!s_key)
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
 
-	s_cert = load_cert(bio_err,s_cert_file,s_cert_format,
+		s_cert = load_cert(bio_err,s_cert_file,s_cert_format,
 			NULL, e, "server certificate file");
 
-	if (!s_cert)
-		{
-		ERR_print_errors(bio_err);
-		goto end;
+		if (!s_cert)
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
 		}
 
 	if (s_dcert_file)
@@ -1217,7 +1234,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		{
 		con->debug=1;
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
-		BIO_set_callback_arg(SSL_get_rbio(con),bio_s_out);
+		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
 		}
 	if (s_msg)
 		{
@@ -1621,7 +1638,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 		{
 		con->debug=1;
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
-		BIO_set_callback_arg(SSL_get_rbio(con),bio_s_out);
+		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
 		}
 	if (s_msg)
 		{

@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/md5/Makefile
+# OpenSSL/crypto/md5/Makefile
 #
 
 DIR=    md5
@@ -38,7 +38,7 @@ top:
 all:    lib
 
 lib:    $(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
@@ -51,24 +51,6 @@ mx86-cof.s: asm/md5-586.pl ../perlasm/x86asm.pl
 # a.out
 mx86-out.s: asm/md5-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) md5-586.pl a.out $(CFLAGS) > ../$@)
-
-md5-sparcv8plus.o: asm/md5-sparcv9.S
-	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -c \
-		-o md5-sparcv8plus.o asm/md5-sparcv9.S
-
-# Old GNU assembler doesn't understand V9 instructions, so we
-# hire /usr/ccs/bin/as to do the job. Note that option is called
-# *-gcc27, but even gcc 2>=8 users may experience similar problem
-# if they didn't bother to upgrade GNU assembler. Such users should
-# not choose this option, but be adviced to *remove* GNU assembler
-# or upgrade it.
-md5-sparcv8plus-gcc27.o: asm/md5-sparcv9.S
-	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -E asm/md5-sparcv9.S | \
-		/usr/ccs/bin/as -xarch=v8plus - -o md5-sparcv8plus-gcc27.o
-
-md5-sparcv9.o: asm/md5-sparcv9.S
-	$(CC) $(ASFLAGS) -DMD5_BLOCK_DATA_ORDER -c \
-		-o md5-sparcv9.o asm/md5-sparcv9.S
 
 md5-x86_64.s:	asm/md5-x86_64.pl;	$(PERL) asm/md5-x86_64.pl $@
 
@@ -109,9 +91,13 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-md5_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/md5.h
-md5_dgst.o: ../../include/openssl/opensslconf.h
-md5_dgst.o: ../../include/openssl/opensslv.h ../md32_common.h md5_dgst.c
+md5_dgst.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+md5_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+md5_dgst.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+md5_dgst.o: ../../include/openssl/md5.h ../../include/openssl/opensslconf.h
+md5_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+md5_dgst.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+md5_dgst.o: ../../include/openssl/symhacks.h ../md32_common.h md5_dgst.c
 md5_dgst.o: md5_locl.h
 md5_one.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 md5_one.o: ../../include/openssl/md5.h ../../include/openssl/opensslconf.h

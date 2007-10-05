@@ -60,6 +60,7 @@
 #define HEADER_SHA_H
 
 #include <openssl/e_os2.h>
+#include <stddef.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -105,6 +106,9 @@ typedef struct SHAstate_st
 	} SHA_CTX;
 
 #ifndef OPENSSL_NO_SHA0
+#ifdef OPENSSL_FIPS
+int private_SHA_Init(SHA_CTX *c);
+#endif
 int SHA_Init(SHA_CTX *c);
 int SHA_Update(SHA_CTX *c, const void *data, size_t len);
 int SHA_Final(unsigned char *md, SHA_CTX *c);
@@ -148,6 +152,7 @@ void SHA256_Transform(SHA256_CTX *c, const unsigned char *data);
 #define SHA384_DIGEST_LENGTH	48
 #define SHA512_DIGEST_LENGTH	64
 
+#ifndef OPENSSL_NO_SHA512
 /*
  * Unlike 32-bit digest algorithms, SHA-512 *relies* on SHA_LONG64
  * being exactly 64-bit wide. See Implementation Notes in sha512.c
@@ -177,6 +182,7 @@ typedef struct SHA512state_st
 	} u;
 	unsigned int num,md_len;
 	} SHA512_CTX;
+#endif
 
 #ifndef OPENSSL_NO_SHA512
 int SHA384_Init(SHA512_CTX *c);

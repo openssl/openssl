@@ -147,7 +147,7 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 
 	if (group->meth->group_clear_finish != 0)
 		group->meth->group_clear_finish(group);
-	else if (group->meth != NULL && group->meth->group_finish != 0)
+	else if (group->meth->group_finish != 0)
 		group->meth->group_finish(group);
 
 	EC_EX_DATA_clear_free_all_data(&group->extra_data);
@@ -558,7 +558,7 @@ int EC_EX_DATA_set_data(EC_EXTRA_DATA **ex_data, void *data,
 		{
 		if (d->dup_func == dup_func && d->free_func == free_func && d->clear_free_func == clear_free_func)
 			{
-			ECerr(EC_F_EC_GROUP_SET_EXTRA_DATA, EC_R_SLOT_FULL);
+			ECerr(EC_F_EC_EX_DATA_SET_DATA, EC_R_SLOT_FULL);
 			return 0;
 			}
 		}
@@ -622,7 +622,7 @@ void EC_EX_DATA_free_data(EC_EXTRA_DATA **ex_data,
 	}
 
 /* this has 'package' visibility */
-void EC_EX_DATA_clear_free_extra_data(EC_EXTRA_DATA **ex_data,
+void EC_EX_DATA_clear_free_data(EC_EXTRA_DATA **ex_data,
 	void *(*dup_func)(void *), void (*free_func)(void *), void (*clear_free_func)(void *))
 	{
 	EC_EXTRA_DATA **p;

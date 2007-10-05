@@ -1,5 +1,5 @@
 #
-# SSLeay/crypto/objects/Makefile
+# OpenSSL/crypto/objects/Makefile
 #
 
 DIR=	objects
@@ -34,7 +34,7 @@ top:
 all:	obj_dat.h lib
 
 lib:	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 

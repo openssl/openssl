@@ -121,274 +121,16 @@
 static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 #endif
 
-DECLARE_STACK_OF(CRYPTO_dynlock)
-IMPLEMENT_STACK_OF(CRYPTO_dynlock)
-
-/* real #defines in crypto.h, keep these upto date */
-static const char* lock_names[CRYPTO_NUM_LOCKS] =
-	{
-	"<<ERROR>>",
-	"err",
-	"ex_data",
-	"x509",
-	"x509_info",
-	"x509_pkey",
-	"x509_crl",
-	"x509_req",
-	"dsa",
-	"rsa",
-	"evp_pkey",
-	"x509_store",
-	"ssl_ctx",
-	"ssl_cert",
-	"ssl_session",
-	"ssl_sess_cert",
-	"ssl",
-	"ssl_method",
-	"rand",
-	"rand2",
-	"debug_malloc",
-	"BIO",
-	"gethostbyname",
-	"getservbyname",
-	"readdir",
-	"RSA_blinding",
-	"dh",
-	"debug_malloc2",
-	"dso",
-	"dynlock",
-	"engine",
-	"ui",
-	"ecdsa",
-	"ec",
-	"ecdh",
-	"bn",
-	"ec_pre_comp",
-	"store",
-	"comp",
-#if CRYPTO_NUM_LOCKS != 39
-# error "Inconsistency between crypto.h and cryptlib.c"
-#endif
-	};
-
-/* This is for applications to allocate new type names in the non-dynamic
-   array of lock names.  These are numbered with positive numbers.  */
-static STACK *app_locks=NULL;
-
-/* For applications that want a more dynamic way of handling threads, the
-   following stack is used.  These are externally numbered with negative
-   numbers.  */
-static STACK_OF(CRYPTO_dynlock) *dyn_locks=NULL;
-
-
 static void (MS_FAR *locking_callback)(int mode,int type,
 	const char *file,int line)=NULL;
 static int (MS_FAR *add_lock_callback)(int *pointer,int amount,
 	int type,const char *file,int line)=NULL;
 static unsigned long (MS_FAR *id_callback)(void)=NULL;
-static struct CRYPTO_dynlock_value *(MS_FAR *dynlock_create_callback)
-	(const char *file,int line)=NULL;
-static void (MS_FAR *dynlock_lock_callback)(int mode,
-	struct CRYPTO_dynlock_value *l, const char *file,int line)=NULL;
-static void (MS_FAR *dynlock_destroy_callback)(struct CRYPTO_dynlock_value *l,
-	const char *file,int line)=NULL;
-
-int CRYPTO_get_new_lockid(char *name)
-	{
-	char *str;
-	int i;
-
-#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WIN16)
-	/* A hack to make Visual C++ 5.0 work correctly when linking as
-	 * a DLL using /MT. Without this, the application cannot use
-	 * and floating point printf's.
-	 * It also seems to be needed for Visual C 1.5 (win16) */
-	SSLeay_MSVC5_hack=(double)name[0]*(double)name[1];
-#endif
-
-	if ((app_locks == NULL) && ((app_locks=sk_new_null()) == NULL))
-		{
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID,ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	if ((str=BUF_strdup(name)) == NULL)
-		{
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID,ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	i=sk_push(app_locks,str);
-	if (!i)
-		OPENSSL_free(str);
-	else
-		i+=CRYPTO_NUM_LOCKS; /* gap of one :-) */
-	return(i);
-	}
 
 int CRYPTO_num_locks(void)
 	{
 	return CRYPTO_NUM_LOCKS;
 	}
-
-int CRYPTO_get_new_dynlockid(void)
-	{
-	int i = 0;
-	CRYPTO_dynlock *pointer = NULL;
-
-	if (dynlock_create_callback == NULL)
-		{
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,CRYPTO_R_NO_DYNLOCK_CREATE_CALLBACK);
-		return(0);
-		}
-	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
-	if ((dyn_locks == NULL)
-		&& ((dyn_locks=sk_CRYPTO_dynlock_new_null()) == NULL))
-		{
-		CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-
-	pointer = (CRYPTO_dynlock *)OPENSSL_malloc(sizeof(CRYPTO_dynlock));
-	if (pointer == NULL)
-		{
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-	pointer->references = 1;
-	pointer->data = dynlock_create_callback(__FILE__,__LINE__);
-	if (pointer->data == NULL)
-		{
-		OPENSSL_free(pointer);
-		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_DYNLOCKID,ERR_R_MALLOC_FAILURE);
-		return(0);
-		}
-
-	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
-	/* First, try to find an existing empty slot */
-	i=sk_CRYPTO_dynlock_find(dyn_locks,NULL);
-	/* If there was none, push, thereby creating a new one */
-	if (i == -1)
-		/* Since sk_push() returns the number of items on the
-		   stack, not the location of the pushed item, we need
-		   to transform the returned number into a position,
-		   by decreasing it.  */
-		i=sk_CRYPTO_dynlock_push(dyn_locks,pointer) - 1;
-	else
-		/* If we found a place with a NULL pointer, put our pointer
-		   in it.  */
-		sk_CRYPTO_dynlock_set(dyn_locks,i,pointer);
-	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-
-	if (i == -1)
-		{
-		dynlock_destroy_callback(pointer->data,__FILE__,__LINE__);
-		OPENSSL_free(pointer);
-		}
-	else
-		i += 1; /* to avoid 0 */
-	return -i;
-	}
-
-void CRYPTO_destroy_dynlockid(int i)
-	{
-	CRYPTO_dynlock *pointer = NULL;
-	if (i)
-		i = -i-1;
-	if (dynlock_destroy_callback == NULL)
-		return;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
-
-	if (dyn_locks == NULL || i >= sk_CRYPTO_dynlock_num(dyn_locks))
-		{
-		CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-		return;
-		}
-	pointer = sk_CRYPTO_dynlock_value(dyn_locks, i);
-	if (pointer != NULL)
-		{
-		--pointer->references;
-#ifdef REF_CHECK
-		if (pointer->references < 0)
-			{
-			fprintf(stderr,"CRYPTO_destroy_dynlockid, bad reference count\n");
-			abort();
-			}
-		else
-#endif
-			if (pointer->references <= 0)
-				{
-				sk_CRYPTO_dynlock_set(dyn_locks, i, NULL);
-				}
-			else
-				pointer = NULL;
-		}
-	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-
-	if (pointer)
-		{
-		dynlock_destroy_callback(pointer->data,__FILE__,__LINE__);
-		OPENSSL_free(pointer);
-		}
-	}
-
-struct CRYPTO_dynlock_value *CRYPTO_get_dynlock_value(int i)
-	{
-	CRYPTO_dynlock *pointer = NULL;
-	if (i)
-		i = -i-1;
-
-	CRYPTO_w_lock(CRYPTO_LOCK_DYNLOCK);
-
-	if (dyn_locks != NULL && i < sk_CRYPTO_dynlock_num(dyn_locks))
-		pointer = sk_CRYPTO_dynlock_value(dyn_locks, i);
-	if (pointer)
-		pointer->references++;
-
-	CRYPTO_w_unlock(CRYPTO_LOCK_DYNLOCK);
-
-	if (pointer)
-		return pointer->data;
-	return NULL;
-	}
-
-struct CRYPTO_dynlock_value *(*CRYPTO_get_dynlock_create_callback(void))
-	(const char *file,int line)
-	{
-	return(dynlock_create_callback);
-	}
-
-void (*CRYPTO_get_dynlock_lock_callback(void))(int mode,
-	struct CRYPTO_dynlock_value *l, const char *file,int line)
-	{
-	return(dynlock_lock_callback);
-	}
-
-void (*CRYPTO_get_dynlock_destroy_callback(void))
-	(struct CRYPTO_dynlock_value *l, const char *file,int line)
-	{
-	return(dynlock_destroy_callback);
-	}
-
-void CRYPTO_set_dynlock_create_callback(struct CRYPTO_dynlock_value *(*func)
-	(const char *file, int line))
-	{
-	dynlock_create_callback=func;
-	}
-
-void CRYPTO_set_dynlock_lock_callback(void (*func)(int mode,
-	struct CRYPTO_dynlock_value *l, const char *file, int line))
-	{
-	dynlock_lock_callback=func;
-	}
-
-void CRYPTO_set_dynlock_destroy_callback(void (*func)
-	(struct CRYPTO_dynlock_value *l, const char *file, int line))
-	{
-	dynlock_destroy_callback=func;
-	}
-
 
 void (*CRYPTO_get_locking_callback(void))(int mode,int type,const char *file,
 		int line)
@@ -445,6 +187,14 @@ unsigned long CRYPTO_thread_id(void)
 	return(ret);
 	}
 
+static void (*do_dynlock_cb)(int mode, int type, const char *file, int line);
+
+void int_CRYPTO_set_do_dynlock_callback(
+	void (*dyn_cb)(int mode, int type, const char *file, int line))
+	{
+	do_dynlock_cb = dyn_cb;
+	}
+
 void CRYPTO_lock(int mode, int type, const char *file, int line)
 	{
 #ifdef LOCK_DEBUG
@@ -472,17 +222,8 @@ void CRYPTO_lock(int mode, int type, const char *file, int line)
 #endif
 	if (type < 0)
 		{
-		if (dynlock_lock_callback != NULL)
-			{
-			struct CRYPTO_dynlock_value *pointer
-				= CRYPTO_get_dynlock_value(type);
-
-			OPENSSL_assert(pointer != NULL);
-
-			dynlock_lock_callback(mode, pointer, file, line);
-
-			CRYPTO_destroy_dynlockid(type);
-			}
+		if (do_dynlock_cb)
+			do_dynlock_cb(mode, type, file, line);
 		}
 	else
 		if (locking_callback != NULL)
@@ -527,25 +268,12 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 	return(ret);
 	}
 
-const char *CRYPTO_get_lock_name(int type)
-	{
-	if (type < 0)
-		return("dynamic");
-	else if (type < CRYPTO_NUM_LOCKS)
-		return(lock_names[type]);
-	else if (type-CRYPTO_NUM_LOCKS > sk_num(app_locks))
-		return("ERROR");
-	else
-		return(sk_value(app_locks,type-CRYPTO_NUM_LOCKS));
-	}
-
 #if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
 	defined(__INTEL__) || \
-	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64)
+	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 
 unsigned long  OPENSSL_ia32cap_P=0;
 unsigned long *OPENSSL_ia32cap_loc(void) { return &OPENSSL_ia32cap_P; }
-int OPENSSL_NONPIC_relocated=0;
 
 #if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
 #define OPENSSL_CPUID_SETUP
@@ -572,11 +300,68 @@ void OPENSSL_cpuid_setup(void)
 #else
 unsigned long *OPENSSL_ia32cap_loc(void) { return NULL; }
 #endif
+int OPENSSL_NONPIC_relocated = 0;
 #if !defined(OPENSSL_CPUID_SETUP)
 void OPENSSL_cpuid_setup(void) {}
 #endif
 
 #if (defined(_WIN32) || defined(__CYGWIN__)) && defined(_WINDLL)
+
+#ifdef OPENSSL_FIPS
+
+#include <tlhelp32.h>
+#if defined(__GNUC__) && __GNUC__>=2
+static int DllInit(void) __attribute__((constructor));
+#elif defined(_MSC_VER)
+static int DllInit(void);
+# ifdef _WIN64
+# pragma section(".CRT$XCU",read)
+  __declspec(allocate(".CRT$XCU"))
+# else
+# pragma data_seg(".CRT$XCU")
+# endif
+  static int (*p)(void) = DllInit;
+# pragma data_seg()
+#endif
+
+static int DllInit(void)
+{
+#if defined(_WIN32_WINNT)
+	union	{ int(*f)(void); BYTE *p; } t = { DllInit };
+        HANDLE	hModuleSnap = INVALID_HANDLE_VALUE;
+	IMAGE_DOS_HEADER *dos_header;
+	IMAGE_NT_HEADERS *nt_headers;
+	MODULEENTRY32 me32 = {sizeof(me32)};
+
+	hModuleSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE,0);
+	if (hModuleSnap != INVALID_HANDLE_VALUE &&
+	    Module32First(hModuleSnap,&me32)) do
+		{
+		if (t.p >= me32.modBaseAddr &&
+		    t.p <  me32.modBaseAddr+me32.modBaseSize)
+			{
+			dos_header=(IMAGE_DOS_HEADER *)me32.modBaseAddr;
+			if (dos_header->e_magic==IMAGE_DOS_SIGNATURE)
+				{
+				nt_headers=(IMAGE_NT_HEADERS *)
+					((BYTE *)dos_header+dos_header->e_lfanew);
+				if (nt_headers->Signature==IMAGE_NT_SIGNATURE &&
+				    me32.modBaseAddr!=(BYTE*)nt_headers->OptionalHeader.ImageBase)
+					OPENSSL_NONPIC_relocated=1;
+				}
+			break;
+			}
+		} while (Module32Next(hModuleSnap,&me32));
+
+	if (hModuleSnap != INVALID_HANDLE_VALUE)
+		CloseHandle(hModuleSnap);
+#endif
+	OPENSSL_cpuid_setup();
+	return 0;
+}
+
+#else
+
 #ifdef __CYGWIN__
 /* pick DLL_[PROCESS|THREAD]_[ATTACH|DETACH] definitions */
 #include <windows.h>
@@ -620,11 +405,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 	}
 #endif
 
+#endif
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <tchar.h>
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
-static int IsService(void)
+int OPENSSL_isservice(void)
 { HWINSTA h;
   DWORD len;
   WCHAR *name;
@@ -661,12 +448,15 @@ static int IsService(void)
 #endif
     else				return 0;
 }
+#else
+int OPENSSL_isservice(void) { return 0; }
 #endif
 
 void OPENSSL_showfatal (const char *fmta,...)
 { va_list ap;
   TCHAR buf[256];
   const TCHAR *fmt;
+#ifdef STD_ERROR_HANDLE	/* what a dirty trick! */
   HANDLE h;
 
     if ((h=GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
@@ -677,9 +467,10 @@ void OPENSSL_showfatal (const char *fmta,...)
 	va_end (ap);
 	return;
     }
+#endif
 
     if (sizeof(TCHAR)==sizeof(char))
-	fmt=fmta;
+	fmt=(const TCHAR *)fmta;
     else do
     { int    keepgoing;
       size_t len_0=strlen(fmta)+1,i;
@@ -722,7 +513,7 @@ void OPENSSL_showfatal (const char *fmta,...)
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
     /* this -------------v--- guards NT-specific calls */
-    if (GetVersion() < 0x80000000 && IsService())
+    if (GetVersion() < 0x80000000 && OPENSSL_isservice())
     {	HANDLE h = RegisterEventSource(0,_T("OPENSSL"));
 	const TCHAR *pmsg=buf;
 	ReportEvent(h,EVENTLOG_ERROR_TYPE,0,0,0,1,0,&pmsg,0);
@@ -730,21 +521,7 @@ void OPENSSL_showfatal (const char *fmta,...)
     }
     else
 #endif
-    {	MSGBOXPARAMS         m;
-
-	m.cbSize             = sizeof(m);
-	m.hwndOwner          = NULL;
-	m.lpszCaption        = _T("OpenSSL: FATAL");
-	m.dwStyle            = MB_OK;
-	m.hInstance          = NULL;
-	m.lpszIcon           = IDI_ERROR;
-	m.dwContextHelpId    = 0;
-	m.lpfnMsgBoxCallback = NULL;
-	m.dwLanguageId       = MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US);
-	m.lpszText           = buf;
-
-	MessageBoxIndirect (&m);
-    }
+	MessageBox (NULL,buf,_T("OpenSSL: FATAL"),MB_OK|MB_ICONSTOP);
 }
 #else
 void OPENSSL_showfatal (const char *fmta,...)
@@ -754,6 +531,7 @@ void OPENSSL_showfatal (const char *fmta,...)
     vfprintf (stderr,fmta,ap);
     va_end (ap);
 }
+int OPENSSL_isservice (void) { return 0; }
 #endif
 
 void OpenSSLDie(const char *file,int line,const char *assertion)

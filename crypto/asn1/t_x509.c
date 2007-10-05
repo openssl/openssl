@@ -445,9 +445,9 @@ err:
 int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 	{
 	char *s,*c,*b;
-	int ret=0,l,ll,i,first=1;
+	int ret=0,l,i;
 
-	ll=80-2-obase;
+	l=80-2-obase;
 
 	b=s=X509_NAME_oneline(name,NULL,0);
 	if (!*s)
@@ -457,7 +457,6 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 		}
 	s++; /* skip the first slash */
 
-	l=ll;
 	c=s;
 	for (;;)
 		{
@@ -479,16 +478,6 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 			(*s == '\0'))
 #endif
 			{
-			if ((l <= 0) && !first)
-				{
-				first=0;
-				if (BIO_write(bp,"\n",1) != 1) goto err;
-				for (i=0; i<obase; i++)
-					{
-					if (BIO_write(bp," ",1) != 1) goto err;
-					}
-				l=ll;
-				}
 			i=s-c;
 			if (BIO_write(bp,c,i) != i) goto err;
 			c+=i;

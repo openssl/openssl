@@ -43,9 +43,9 @@ interprets UTF8 sequences.
 
 Escaping takes several forms.
 
-If the character being escaped is a 16 bit character then the form "\WXXXX" is used
+If the character being escaped is a 16 bit character then the form "\UXXXX" is used
 using exactly four characters for the hex representation. If it is 32 bits then
-"\UXXXXXXXX" is used using eight characters of its hex representation. These forms
+"\WXXXXXXXX" is used using eight characters of its hex representation. These forms
 will only be used if UTF8 conversion is not set (see below).
 
 Printable characters are normally escaped using the backslash '\' character. If
