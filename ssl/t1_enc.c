@@ -829,6 +829,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	EVP_MD_CTX hmac, *mac_ctx;
 	unsigned char buf[5]; 
 	int stream_mac = (send?(ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM):(ssl->mac_flags&SSL_MAC_FLAG_READ_MAC_STREAM));
+
 	if (send)
 		{
 		rec= &(ssl->s3->wrec);
@@ -847,8 +848,8 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	md_size=EVP_MD_CTX_size(hash);
 
 	buf[0]=rec->type;
-	buf[1]=TLS1_VERSION_MAJOR;
-	buf[2]=TLS1_VERSION_MINOR;
+	buf[1]=(unsigned char)(ssl->version>>8);
+	buf[2]=(unsigned char)(ssl->version);
 	buf[3]=rec->length>>8;
 	buf[4]=rec->length&0xff;
 
@@ -861,8 +862,20 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 		{
 			EVP_MD_CTX_copy(&hmac,hash);
 			mac_ctx = &hmac;
-		}	
-	EVP_DigestSignUpdate(mac_ctx,seq,8);
+		}
+
+	if (ssl->version == DTLS1_VERSION)
+		{
+		unsigned char dtlsseq[8],*p=dtlsseq;
+
+		s2n(send?ssl->d1->w_epoch:ssl->d1->r_epoch, p);
+		memcpy (p,&seq[2],6);
+
+		EVP_DigestSignUpdate(mac_ctx,dtlsseq,8);
+		}
+	else
+		EVP_DigestSignUpdate(mac_ctx,seq,8);
+
 	EVP_DigestSignUpdate(mac_ctx,buf,5);
 	EVP_DigestSignUpdate(mac_ctx,rec->input,rec->length);
 	if (stream_mac) EVP_MD_CTX_copy(&hmac,hash);
@@ -879,8 +892,8 @@ printf("rec=");
 {unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",buf[z]); printf("\n"); }
 #endif
 
-    if ( SSL_version(ssl) != DTLS1_VERSION)
-	    {
+	if (ssl->version != DTLS1_VERSION)
+		{
 		for (i=7; i>=0; i--)
 			{
 			++seq[i];
