@@ -89,10 +89,10 @@ void BUF_MEM_free(BUF_MEM *a)
 	OPENSSL_free(a);
 	}
 
-int BUF_MEM_grow(BUF_MEM *str, int len)
+int BUF_MEM_grow(BUF_MEM *str, size_t len)
 	{
 	char *ret;
-	unsigned int n;
+	size_t n;
 
 	if (str->length >= len)
 		{
@@ -125,10 +125,10 @@ int BUF_MEM_grow(BUF_MEM *str, int len)
 	return(len);
 	}
 
-int BUF_MEM_grow_clean(BUF_MEM *str, int len)
+int BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 	{
 	char *ret;
-	unsigned int n;
+	size_t n;
 
 	if (str->length >= len)
 		{
