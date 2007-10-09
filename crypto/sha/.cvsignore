@@ -7,3 +7,5 @@ s512sse2-elf.s
 sha1-x86_64.s
 sha256-x86_64.s
 sha512-x86_64.s
+sha256x86-elf.s
+sha512x86-elf.s
