@@ -627,8 +627,6 @@ int dtls1_send_hello_verify_request(SSL *s)
 		*(p++) = s->version >> 8;
 		*(p++) = s->version & 0xFF;
 
-		*(p++) = (unsigned char) s->d1->cookie_len;
-
 		if (s->ctx->app_gen_cookie_cb != NULL &&
 		    s->ctx->app_gen_cookie_cb(s, s->d1->cookie, 
 			&(s->d1->cookie_len)) == 0)
@@ -639,6 +637,7 @@ int dtls1_send_hello_verify_request(SSL *s)
 		/* else the cookie is assumed to have 
 		 * been initialized by the application */
 
+		*(p++) = (unsigned char) s->d1->cookie_len;
 		memcpy(p, s->d1->cookie, s->d1->cookie_len);
 		p += s->d1->cookie_len;
 		msg_len = p - msg;
