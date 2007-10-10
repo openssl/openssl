@@ -103,7 +103,7 @@ install:
 	 chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
 	 mv -f  $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new \
 	 	$(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i; \
-	) done;
+	); done
 	@for i in $(SCRIPTS); \
 	do  \
 	(echo installing $$i; \
