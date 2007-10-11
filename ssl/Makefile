@@ -238,13 +238,13 @@ d1_pkt.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 d1_pkt.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
 d1_pkt.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 d1_pkt.o: ../include/openssl/pq_compat.h ../include/openssl/pqueue.h
-d1_pkt.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-d1_pkt.o: ../include/openssl/sha.h ../include/openssl/ssl.h
-d1_pkt.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
-d1_pkt.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-d1_pkt.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
-d1_pkt.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h d1_pkt.c
-d1_pkt.o: ssl_locl.h
+d1_pkt.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+d1_pkt.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+d1_pkt.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+d1_pkt.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
+d1_pkt.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+d1_pkt.o: ../include/openssl/tls1.h ../include/openssl/x509.h
+d1_pkt.o: ../include/openssl/x509_vfy.h d1_pkt.c ssl_locl.h
 d1_srvr.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 d1_srvr.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 d1_srvr.o: ../include/openssl/comp.h ../include/openssl/crypto.h

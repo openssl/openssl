@@ -4,6 +4,16 @@
 
  Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
 
+  *) DTLS Handshake overhaul. There were longstanding issues with
+     OpenSSL DTLS implementation, which were making it impossible for
+     RFC 4347 compliant client to communicate with OpenSSL server.
+     Unfortunately just fixing these incompatibilities would "cut off"
+     pre-0.9.8f clients. To allow for hassle free upgrade post-0.9.8e
+     server keeps tolerating non RFC compliant syntax. The opposite is
+     not true, 0.9.8f client can not communicate with earlier server.
+     This update even addresses CVE-2007-4995.
+     [Andy Polyakov]
+
   *) Changes to avoid need for function casts in OpenSSL: some compilers
      (gcc 4.2 and later) reject their use.
      [Kurt Roeckx <kurt@roeckx.be>, Peter Hartley <pdh@utter.chaos.org.uk>,
