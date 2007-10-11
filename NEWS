@@ -12,6 +12,9 @@
         for VC++ build.
       o Support for RFC4507bis and server name extensions if explicitly 
         selected at compile time.
+      o DTLS improvements.
+      o RFC4507bis support.
+      o TLS Extensions support.
 
   Major changes between OpenSSL 0.9.8d and OpenSSL 0.9.8e:
 

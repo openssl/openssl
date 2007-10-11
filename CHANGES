@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
+ Changes between 0.9.8e and 0.9.8f  [11 Oct 2007]
 
   *) DTLS Handshake overhaul. There were longstanding issues with
      OpenSSL DTLS implementation, which were making it impossible for
