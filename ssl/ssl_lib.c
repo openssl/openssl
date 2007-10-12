@@ -126,6 +126,7 @@
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
+#include <openssl/ocsp.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
@@ -311,6 +312,12 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->tlsext_debug_cb = 0;
 	s->tlsext_debug_arg = NULL;
 	s->tlsext_ticket_expected = 0;
+	s->tlsext_status_type = -1;
+	s->tlsext_status_expected = 0;
+	s->tlsext_ocsp_ids = NULL;
+	s->tlsext_ocsp_exts = NULL;
+	s->tlsext_ocsp_resp = NULL;
+	s->tlsext_ocsp_resplen = -1;
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->initial_ctx=ctx;
 #endif
@@ -501,6 +508,13 @@ void SSL_free(SSL *s)
 	if (s->ctx) SSL_CTX_free(s->ctx);
 #ifndef OPENSSL_NO_TLSEXT
 	if (s->initial_ctx) SSL_CTX_free(s->initial_ctx);
+	if (s->tlsext_ocsp_exts)
+		sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
+						X509_EXTENSION_free);
+	if (s->tlsext_ocsp_ids)
+		sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
+	if (s->tlsext_ocsp_resp)
+		OPENSSL_free(s->tlsext_ocsp_resp);
 #endif
 	if (s->client_CA != NULL)
 		sk_X509_NAME_pop_free(s->client_CA,X509_NAME_free);
@@ -1493,6 +1507,9 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 		|| (RAND_bytes(ret->tlsext_tick_hmac_key, 16) <= 0)
 		|| (RAND_bytes(ret->tlsext_tick_aes_key, 16) <= 0))
 		ret->options |= SSL_OP_NO_TICKET;
+
+	ret->tlsext_status_cb = 0;
+	ret->tlsext_status_arg = NULL;
 
 #endif
 

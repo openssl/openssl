@@ -617,6 +617,7 @@ int X509_PURPOSE_get_id(X509_PURPOSE *);
 STACK *X509_get1_email(X509 *x);
 STACK *X509_REQ_get1_email(X509_REQ *x);
 void X509_email_free(STACK *sk);
+STACK *X509_get1_ocsp(X509 *x);
 
 ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc);
 ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc);

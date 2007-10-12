@@ -122,6 +122,9 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#ifndef OPENSSL_NO_OCSP
+#include <openssl/ocsp.h>
+#endif
 #include <openssl/ossl_typ.h>
 
 int app_RAND_load_file(const char *file, BIO *bio_e, int dont_warn);
@@ -228,6 +231,12 @@ extern BIO *bio_err;
 #  endif
 #endif
 
+#ifdef OPENSSL_SYSNAME_WIN32
+#  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
+#else
+#  define openssl_fdset(a,b) FD_SET(a, b)
+#endif
+
 typedef struct args_st
 	{
 	char **data;
@@ -273,6 +282,12 @@ STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
 X509_STORE *setup_verify(BIO *bp, char *CAfile, char *CApath);
 #ifndef OPENSSL_NO_ENGINE
 ENGINE *setup_engine(BIO *err, const char *engine, int debug);
+#endif
+
+#ifndef OPENSSL_NO_OCSP
+OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
+			char *host, char *path, char *port, int use_ssl,
+			int req_timeout);
 #endif
 
 int load_config(BIO *err, CONF *cnf);

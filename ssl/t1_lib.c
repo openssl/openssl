@@ -60,6 +60,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/ocsp.h>
 #include "ssl_locl.h"
 
 const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
@@ -190,6 +191,54 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			}
 		}
 
+	if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp)
+		{
+		int i;
+		long extlen, idlen, itmp;
+		OCSP_RESPID *id;
+
+		idlen = 0;
+		for (i = 0; i < sk_OCSP_RESPID_num(s->tlsext_ocsp_ids); i++)
+			{
+			id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
+			itmp = i2d_OCSP_RESPID(id, NULL);
+			if (itmp <= 0)
+				return NULL;
+			idlen += itmp + 2;
+			}
+
+		if (s->tlsext_ocsp_exts)
+			{
+			extlen = i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, NULL);
+			if (extlen < 0)
+				return NULL;
+			}
+		else
+			extlen = 0;
+			
+		if ((long)(limit - ret - 7 - extlen - idlen) < 0) return NULL;
+		s2n(TLSEXT_TYPE_status_request, ret);
+		if (extlen + idlen > 0xFFF0)
+			return NULL;
+		s2n(extlen + idlen + 5, ret);
+		*(ret++) = TLSEXT_STATUSTYPE_ocsp;
+		s2n(idlen, ret);
+		for (i = 0; i < sk_OCSP_RESPID_num(s->tlsext_ocsp_ids); i++)
+			{
+			/* save position of id len */
+			unsigned char *q = ret;
+			id = sk_OCSP_RESPID_value(s->tlsext_ocsp_ids, i);
+			/* skip over id len */
+			ret += 2;
+			itmp = i2d_OCSP_RESPID(id, &ret);
+			/* write id len */
+			s2n(itmp, q);
+			}
+		s2n(extlen, ret);
+		if (extlen > 0)
+			i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &ret);
+		}
+
 	if ((extdatalen = ret-p-2)== 0) 
 		return p;
 
@@ -220,7 +269,14 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		s2n(TLSEXT_TYPE_session_ticket,ret);
 		s2n(0,ret);
 		}
-		
+
+	if (s->tlsext_status_expected)
+		{ 
+		if ((long)(limit - ret - 4) < 0) return NULL; 
+		s2n(TLSEXT_TYPE_status_request,ret);
+		s2n(0,ret);
+		}
+
 	if ((extdatalen = ret-p-2)== 0) 
 		return p;
 
@@ -235,6 +291,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	unsigned short len;
 	unsigned char *data = *p;
 	s->servername_done = 0;
+	s->tlsext_status_type = -1;
 
 	if (data >= (d+n-2))
 		return 1;
@@ -349,6 +406,106 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				}
 
 			}
+		else if (type == TLSEXT_TYPE_status_request
+						&& s->ctx->tlsext_status_cb)
+			{
+		
+			if (size < 5) 
+				{
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				}
+
+			s->tlsext_status_type = *data++;
+			size--;
+			if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp)
+				{
+				const unsigned char *sdata;
+				int dsize;
+				/* Read in responder_id_list */
+				n2s(data,dsize);
+				size -= 2;
+				if (dsize > size  ) 
+					{
+					*al = SSL_AD_DECODE_ERROR;
+					return 0;
+					}
+				while (dsize > 0)
+					{
+					OCSP_RESPID *id;
+					int idsize;
+					if (dsize < 4)
+						{
+						*al = SSL_AD_DECODE_ERROR;
+						return 0;
+						}
+					n2s(data, idsize);
+					dsize -= 2 + idsize;
+					if (dsize < 0)
+						{
+						*al = SSL_AD_DECODE_ERROR;
+						return 0;
+						}
+					sdata = data;
+					data += idsize;
+					id = d2i_OCSP_RESPID(NULL,
+								&sdata, idsize);
+					if (!id)
+						{
+						*al = SSL_AD_DECODE_ERROR;
+						return 0;
+						}
+					if (data != sdata)
+						{
+						OCSP_RESPID_free(id);
+						*al = SSL_AD_DECODE_ERROR;
+						return 0;
+						}
+					if (!s->tlsext_ocsp_ids
+						&& !(s->tlsext_ocsp_ids =
+						sk_OCSP_RESPID_new_null()))
+						{
+						OCSP_RESPID_free(id);
+						*al = SSL_AD_INTERNAL_ERROR;
+						return 0;
+						}
+					if (!sk_OCSP_RESPID_push(
+							s->tlsext_ocsp_ids, id))
+						{
+						OCSP_RESPID_free(id);
+						*al = SSL_AD_INTERNAL_ERROR;
+						return 0;
+						}
+					}
+
+				/* Read in request_extensions */
+				n2s(data,dsize);
+				size -= 2;
+				if (dsize > size) 
+					{
+					*al = SSL_AD_DECODE_ERROR;
+					return 0;
+					}
+				sdata = data;
+				if (dsize > 0)
+					{
+					s->tlsext_ocsp_exts =
+						d2i_X509_EXTENSIONS(NULL,
+							&sdata, dsize);
+					if (!s->tlsext_ocsp_exts
+						|| (data + dsize != sdata))
+						{
+						*al = SSL_AD_DECODE_ERROR;
+						return 0;
+						}
+					}
+				}
+				/* We don't know what to do with any other type
+ 			 	* so ignore it.
+ 			 	*/
+				else
+					s->tlsext_status_type = -1;
+			}
 		/* session ticket processed earlier */
 
 		data+=size;		
@@ -403,6 +560,19 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				}
 			s->tlsext_ticket_expected = 1;
 			}
+		else if (type == TLSEXT_TYPE_status_request)
+			{
+			/* MUST be empty and only sent if we've requested
+			 * a status request message.
+			 */ 
+			if ((s->tlsext_status_type == -1) || (size > 0))
+				{
+				*al = TLS1_AD_UNSUPPORTED_EXTENSION;
+				return 0;
+				}
+			/* Set flag to expect CertificateStatus message */
+			s->tlsext_status_expected = 1;
+			}
 
 		data+=size;		
 		}
@@ -448,6 +618,37 @@ int ssl_check_clienthello_tlsext(SSL *s)
 	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0) 		
 		ret = s->initial_ctx->tlsext_servername_callback(s, &al, s->initial_ctx->tlsext_servername_arg);
 
+	/* If status request then ask callback what to do.
+ 	 * Note: this must be called after servername callbacks in case 
+ 	 * the certificate has changed.
+ 	 */
+	if ((s->tlsext_status_type != -1) && s->ctx->tlsext_status_cb)
+		{
+		int r;
+		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+		switch (r)
+			{
+			/* We don't want to send a status request response */
+			case SSL_TLSEXT_ERR_NOACK:
+				s->tlsext_status_expected = 0;
+				break;
+			/* status request response should be sent */
+			case SSL_TLSEXT_ERR_OK:
+				if (s->tlsext_ocsp_resp)
+					s->tlsext_status_expected = 1;
+				else
+					s->tlsext_status_expected = 0;
+				break;
+			/* something bad happened */
+			case SSL_TLSEXT_ERR_ALERT_FATAL:
+				ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+				al = SSL_AD_INTERNAL_ERROR;
+				goto err;
+			}
+		}
+	else
+		s->tlsext_status_expected = 0;
+	err:
 	switch (ret)
 		{
 		case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -474,6 +675,35 @@ int ssl_check_serverhello_tlsext(SSL *s)
 		ret = s->ctx->tlsext_servername_callback(s, &al, s->ctx->tlsext_servername_arg);
 	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0) 		
 		ret = s->initial_ctx->tlsext_servername_callback(s, &al, s->initial_ctx->tlsext_servername_arg);
+
+	/* If we've requested certificate status and we wont get one
+ 	 * tell the callback
+ 	 */
+	if ((s->tlsext_status_type != -1) && !(s->tlsext_status_expected)
+			&& s->ctx->tlsext_status_cb)
+		{
+		int r;
+		/* Set resp to NULL, resplen to -1 so callback knows
+ 		 * there is no response.
+ 		 */
+		if (s->tlsext_ocsp_resp)
+			{
+			OPENSSL_free(s->tlsext_ocsp_resp);
+			s->tlsext_ocsp_resp = NULL;
+			}
+		s->tlsext_ocsp_resplen = -1;
+		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+		if (r == 0)
+			{
+			al = SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE;
+			ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+			}
+		if (r < 0)
+			{
+			al = SSL_AD_INTERNAL_ERROR;
+			ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+			}
+		}
 
 	switch (ret)
 		{

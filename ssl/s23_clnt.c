@@ -230,6 +230,8 @@ static int ssl23_client_hello(SSL *s)
 
 		if (s->tlsext_hostname != NULL)
 			ssl2_compat = 0;
+		if (s->tlsext_status_type != -1)
+			ssl2_compat = 0;
 		}
 #endif
 

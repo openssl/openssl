@@ -3521,3 +3521,11 @@ SEED_ecb_encrypt                        3915	EXIST::FUNCTION:SEED
 EVP_seed_ecb                            3916	EXIST::FUNCTION:SEED
 SEED_set_key                            3917	EXIST::FUNCTION:SEED
 EVP_seed_cfb128                         3918	EXIST::FUNCTION:SEED
+X509_EXTENSIONS_it                      3919	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+X509_EXTENSIONS_it                      3919	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+X509_get1_ocsp                          3920	EXIST::FUNCTION:
+OCSP_REQ_CTX_free                       3921	EXIST::FUNCTION:
+i2d_X509_EXTENSIONS                     3922	EXIST::FUNCTION:
+OCSP_sendreq_nbio                       3923	EXIST::FUNCTION:
+OCSP_sendreq_new                        3924	EXIST::FUNCTION:
+d2i_X509_EXTENSIONS                     3925	EXIST::FUNCTION:

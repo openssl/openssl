@@ -117,6 +117,8 @@ extern "C" {
 
 /* NameType value from RFC 3546 */
 #define TLSEXT_NAMETYPE_host_name 0
+/* status request value from RFC 3546 */
+#define TLSEXT_STATUSTYPE_ocsp 1
 
 #ifndef OPENSSL_NO_TLSEXT
 
@@ -134,12 +136,33 @@ SSL_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_CB,(void (*)(void))cb)
 #define SSL_set_tlsext_debug_arg(ssl, arg) \
 SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_DEBUG_ARG,0, (void *)arg)
 
+#define SSL_set_tlsext_status_type(ssl, type) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE,type, NULL)
+
+#define SSL_get_tlsext_status_exts(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS,0, (void *)arg)
+
+#define SSL_set_tlsext_status_exts(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS,0, (void *)arg)
+
+#define SSL_get_tlsext_status_ids(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS,0, (void *)arg)
+
+#define SSL_set_tlsext_status_ids(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS,0, (void *)arg)
+
+#define SSL_get_tlsext_status_ocsp_resp(ssl, arg) \
+SSL_ctrl(ssl,SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP,0, (void *)arg)
+
+#define SSL_set_tlsext_status_ocsp_resp(ssl, arg, arglen) \
+SSL_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP,arglen, (void *)arg)
+
 #define SSL_CTX_set_tlsext_servername_callback(ctx, cb) \
 SSL_CTX_callback_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_CB,(void (*)(void))cb)
 
-#define SSL_TLSEXT_ERR_OK 0    
-#define SSL_TLSEXT_ERR_ALERT_WARNING 1  
-#define SSL_TLSEXT_ERR_ALERT_FATAL 2 
+#define SSL_TLSEXT_ERR_OK 0
+#define SSL_TLSEXT_ERR_ALERT_WARNING 1
+#define SSL_TLSEXT_ERR_ALERT_FATAL 2
 #define SSL_TLSEXT_ERR_NOACK 3
 
 #define SSL_CTX_set_tlsext_servername_arg(ctx, arg) \
@@ -149,6 +172,13 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG,0, (void *)arg)
 	SSL_CTX_ctrl((ctx),SSL_CTRL_GET_TLXEXT_TICKET_KEYS,(keylen),(keys))
 #define SSL_CTX_set_tlsext_ticket_keys(ctx, keys, keylen) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_SET_TLXEXT_TICKET_KEYS,(keylen),(keys))
+
+#define SSL_CTX_set_tlsext_status_cb(ssl, cb) \
+SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB,(void (*)(void))cb)
+
+#define SSL_CTX_set_tlsext_status_arg(ssl, arg) \
+SSL_CTX_ctrl(ssl,SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG,0, (void *)arg)
+
 #endif
 
 /* Additional TLS ciphersuites from draft-ietf-tls-56-bit-ciphersuites-00.txt

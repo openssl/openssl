@@ -767,6 +767,11 @@ struct ssl_ctx_st
 	unsigned char tlsext_tick_key_name[16];
 	unsigned char tlsext_tick_hmac_key[16];
 	unsigned char tlsext_tick_aes_key[16];
+  
+	/* certificate status request info */
+	/* Callback for status request */
+	int (*tlsext_status_cb)(SSL *ssl, void *arg);
+	void *tlsext_status_arg;
 #endif
 
 	};
@@ -1003,6 +1008,18 @@ struct ssl_st
 	                          1 : prepare 2, allow last ack just after in server callback.
 	                          2 : don't call servername callback, no ack in server hello
 	                       */
+	/* certificate status request info */
+	/* Status type or -1 if no status type */
+	int tlsext_status_type;
+	/* Expect OCSP CertificateStatus message */
+	int tlsext_status_expected;
+	/* OCSP status request only */
+	STACK_OF(OCSP_RESPID) *tlsext_ocsp_ids;
+	X509_EXTENSIONS *tlsext_ocsp_exts;
+	/* OCSP response received or to be sent */
+	unsigned char *tlsext_ocsp_resp;
+	int tlsext_ocsp_resplen;
+
 	/* RFC4507 session ticket expected to be received or sent */
 	int tlsext_ticket_expected;
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
@@ -1158,6 +1175,7 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_AD_UNSUPPORTED_EXTENSION	TLS1_AD_UNSUPPORTED_EXTENSION
 #define SSL_AD_CERTIFICATE_UNOBTAINABLE TLS1_AD_CERTIFICATE_UNOBTAINABLE
 #define SSL_AD_UNRECOGNIZED_NAME	TLS1_AD_UNRECOGNIZED_NAME
+#define SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE
 
 #define SSL_ERROR_NONE			0
 #define SSL_ERROR_SSL			1
@@ -1225,6 +1243,16 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_CTRL_SET_TLSEXT_DEBUG_ARG		57
 #define SSL_CTRL_GET_TLSEXT_TICKET_KEYS		58
 #define SSL_CTRL_SET_TLSEXT_TICKET_KEYS		59
+
+#define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB	63
+#define SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG	64
+#define SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE	65
+#define SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS	66
+#define SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS	67
+#define SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS	68
+#define SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS	69
+#define SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP	70
+#define SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP	71
 #endif
 
 #define SSL_session_reused(ssl) \
@@ -1670,6 +1698,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL3_ENC					 134
 #define SSL_F_SSL3_GENERATE_KEY_BLOCK			 238
 #define SSL_F_SSL3_GET_CERTIFICATE_REQUEST		 135
+#define SSL_F_SSL3_GET_CERT_STATUS			 288
 #define SSL_F_SSL3_GET_CERT_VERIFY			 136
 #define SSL_F_SSL3_GET_CLIENT_CERTIFICATE		 137
 #define SSL_F_SSL3_GET_CLIENT_HELLO			 138
@@ -1854,6 +1883,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
 #define SSL_R_INVALID_COMMAND				 280
 #define SSL_R_INVALID_PURPOSE				 278
+#define SSL_R_INVALID_STATUS_RESPONSE			 316
 #define SSL_R_INVALID_TICKET_KEYS_LENGTH		 275
 #define SSL_R_INVALID_TRUST				 279
 #define SSL_R_KEY_ARG_TOO_LONG				 284
@@ -2010,6 +2040,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_UNSUPPORTED_ELLIPTIC_CURVE		 315
 #define SSL_R_UNSUPPORTED_PROTOCOL			 258
 #define SSL_R_UNSUPPORTED_SSL_VERSION			 259
+#define SSL_R_UNSUPPORTED_STATUS_TYPE			 329
 #define SSL_R_WRITE_BIO_NOT_SET				 260
 #define SSL_R_WRONG_CIPHER_RETURNED			 261
 #define SSL_R_WRONG_MESSAGE_TYPE			 262
