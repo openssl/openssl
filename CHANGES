@@ -11,13 +11,6 @@
      "family."
      [Andy Polyakov]
 
-  *) Implement certificate status request TLS extension defined in RFC3546.
-     A client can set the appropriate parameters and receive the encoded
-     OCSP response via a callback. A server can query the supplied parameters
-     and set the encoded OCSP response in the callback. Add simplified examples
-     to s_client and s_server.
-     [Steve Henson]
-
   *) Implement Opaque PRF Input TLS extension as specified in
      draft-rescorla-tls-opaque-prf-input-00.txt.  Since this is not an
      official specification yet and no extension type assignment by
@@ -605,7 +598,16 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
- Changes between 0.9.8e and 0.9.8f  [xx XXX xxxx]
+ Changes between 0.9.8f and 0.9.8g  [xx XXX xxxx]
+
+  *) Implement certificate status request TLS extension defined in RFC3546.
+     A client can set the appropriate parameters and receive the encoded
+     OCSP response via a callback. A server can query the supplied parameters
+     and set the encoded OCSP response in the callback. Add simplified examples
+     to s_client and s_server.
+     [Steve Henson]
+
+ Changes between 0.9.8e and 0.9.8f  [11 Oct 2007]
 
   *) Mitigate attack on final subtraction in Montgomery reduction.
      [Andy Polyakov]
