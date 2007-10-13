@@ -297,9 +297,9 @@ int dtls1_do_write(SSL *s, int type)
 				{
 				/* should not be done for 'Hello Request's, but in that case
 				 * we'll ignore the result anyway */
-				unsigned char *p = &s->init_buf->data[s->init_off];
+				unsigned char *p = (unsigned char *)&s->init_buf->data[s->init_off];
 				const struct hm_header_st *msg_hdr = &s->d1->w_msg_hdr;
-				int len;
+				int xlen;
 
 				if (frag_off == 0)
 					{
@@ -311,15 +311,15 @@ int dtls1_do_write(SSL *s, int type)
 					l2n3(0,p);
 					l2n3(msg_hdr->msg_len,p);
 					p  -= DTLS1_HM_HEADER_LENGTH;
-					len = ret;
+					xlen = ret;
 					}
 				else
 					{
 					p  += DTLS1_HM_HEADER_LENGTH;
-					len = ret - DTLS1_HM_HEADER_LENGTH;
+					xlen = ret - DTLS1_HM_HEADER_LENGTH;
 					}
 
-				ssl3_finish_mac(s, p, len);
+				ssl3_finish_mac(s, p, xlen);
 				}
 
 			if (ret == s->init_num)
@@ -398,7 +398,7 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		 * the potential damage caused by malformed overlaps. */
 		if ((unsigned int)s->init_num >= msg_hdr->msg_len)
 			{
-			unsigned char *p = s->init_buf->data;
+			unsigned char *p = (unsigned char *)s->init_buf->data;
 			unsigned long msg_len = msg_hdr->msg_len;
 
 			/* reconstruct message header as if it was
@@ -524,7 +524,7 @@ dtls1_retrieve_buffered_fragment(SSL *s, long max, int *ok)
 
 		if (al==0) /* no alert */
 			{
-			unsigned char *p = s->init_buf->data+DTLS1_HM_HEADER_LENGTH;
+			unsigned char *p = (unsigned char *)s->init_buf->data+DTLS1_HM_HEADER_LENGTH;
 			memcpy(&p[frag->msg_header.frag_off],
 				frag->fragment,frag->msg_header.frag_len);
 			}
@@ -682,7 +682,7 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 
 	if ( frag_len > 0)
 		{
-		unsigned char *p=s->init_buf->data+DTLS1_HM_HEADER_LENGTH;
+		unsigned char *p=(unsigned char *)s->init_buf->data+DTLS1_HM_HEADER_LENGTH;
 
 		i=s->method->ssl_read_bytes(s,SSL3_RT_HANDSHAKE,
 			&p[frag_off],frag_len,0);
