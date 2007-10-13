@@ -149,7 +149,7 @@ static int mem_read(BIO *b, char *out, int outl)
 
 	bm=(BUF_MEM *)b->ptr;
 	BIO_clear_retry_flags(b);
-	ret=(outl >=0 && (size_t)outl > bm->length)?bm->length:outl;
+	ret=(outl >=0 && (size_t)outl > bm->length)?(int)bm->length:outl;
 	if ((out != NULL) && (ret > 0)) {
 		memcpy(out,bm->data,ret);
 		bm->length-=ret;

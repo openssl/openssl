@@ -543,9 +543,9 @@ DECLARE_ASN1_FUNCTIONS(OCSP_REQINFO)
 DECLARE_ASN1_FUNCTIONS(OCSP_CRLID)
 DECLARE_ASN1_FUNCTIONS(OCSP_SERVICELOC)
 
-char *OCSP_response_status_str(long s);
-char *OCSP_cert_status_str(long s);
-char *OCSP_crl_reason_str(long s);
+const char *OCSP_response_status_str(long s);
+const char *OCSP_cert_status_str(long s);
+const char *OCSP_crl_reason_str(long s);
 
 int OCSP_REQUEST_print(BIO *bp, OCSP_REQUEST* a, unsigned long flags);
 int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags);

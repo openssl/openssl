@@ -120,7 +120,7 @@ void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx)
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
 								int maxline)
 	{
-	static char post_hdr[] = "POST %s HTTP/1.0\r\n"
+	static const char post_hdr[] = "POST %s HTTP/1.0\r\n"
 	"Content-Type: application/ocsp-request\r\n"
 	"Content-Length: %d\r\n\r\n";
 

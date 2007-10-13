@@ -158,7 +158,7 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in,
 
 /* This table must be kept in NID order */
 
-static ASN1_STRING_TABLE tbl_standard[] = {
+static const ASN1_STRING_TABLE tbl_standard[] = {
 {NID_commonName,		1, ub_common_name, DIRSTRING_TYPE, 0},
 {NID_countryName,		2, 2, B_ASN1_PRINTABLESTRING, STABLE_NO_MASK},
 {NID_localityName,		1, ub_locality_name, DIRSTRING_TYPE, 0},

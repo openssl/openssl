@@ -175,7 +175,7 @@ static int MS_CALLBACK slg_write(BIO *b, const char *in, int inl)
 	char* buf;
 	char* pp;
 	int priority, i;
-	static struct
+	static const struct
 		{
 		int strl;
 		char str[10];

@@ -538,7 +538,7 @@ static int append_exp(tag_exp_arg *arg, int exp_tag, int exp_class, int exp_cons
 static int asn1_str2tag(const char *tagstr, int len)
 	{
 	unsigned int i;
-	static struct tag_name_st *tntmp, tnst [] = {
+	static const struct tag_name_st *tntmp, tnst [] = {
 		ASN1_GEN_STR("BOOL", V_ASN1_BOOLEAN),
 		ASN1_GEN_STR("BOOLEAN", V_ASN1_BOOLEAN),
 		ASN1_GEN_STR("NULL", V_ASN1_NULL),
