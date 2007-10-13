@@ -182,9 +182,10 @@ bn_add_words:
 	mov		r3=ar.lc
 	brp.loop.imp	.L_bn_add_words_ctop,.L_bn_add_words_cend-16
 					}
-	.body
 { .mib;	ADDP		r14=0,r32		// rp
+	.save	pr,r9
 	mov		r9=pr		};;
+	.body
 { .mii;	ADDP		r15=0,r33		// ap
 	mov		ar.lc=r10
 	mov		ar.ec=6		}
@@ -234,9 +235,10 @@ bn_sub_words:
 	mov		r3=ar.lc
 	brp.loop.imp	.L_bn_sub_words_ctop,.L_bn_sub_words_cend-16
 					}
-	.body
 { .mib;	ADDP		r14=0,r32		// rp
+	.save	pr,r9
 	mov		r9=pr		};;
+	.body
 { .mii;	ADDP		r15=0,r33		// ap
 	mov		ar.lc=r10
 	mov		ar.ec=6		}
@@ -294,6 +296,7 @@ bn_mul_words:
 { .mii;	sub	r10=r34,r0,1
 	.save	ar.lc,r3
 	mov	r3=ar.lc
+	.save	pr,r9
 	mov	r9=pr			};;
 
 	.body
@@ -403,12 +406,12 @@ bn_mul_add_words:
 	sub		r10=r34,r0,1
 (p6)	br.ret.spnt.many	b0	};;
 
-	.body
 { .mib;	setf.sig	f8=r35		// w
 	.save	pr,r9
 	mov		r9=pr
 	brp.loop.imp	.L_bn_mul_add_words_ctop,.L_bn_mul_add_words_cend-16
 					}
+	.body
 { .mmi;	ADDP		r14=0,r32	// rp
 	ADDP		r15=0,r33	// ap
 	mov		ar.lc=r10	}
@@ -1407,6 +1410,7 @@ bn_div_words:
 { .mii;	alloc		r2=ar.pfs,3,5,0,8
 	.save	b0,r3
 	mov		r3=b0
+	.save	pr,r10
 	mov		r10=pr		};;
 { .mmb;	cmp.eq		p6,p0=r34,r0
 	mov		r8=-1
