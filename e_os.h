@@ -277,6 +277,14 @@ static unsigned int _strlen31(const char *str)
 	}
 #    endif
 #    include <malloc.h>
+#    if defined(_MSC_VER) && _MSC_VER<=1200 && defined(_MT) && defined(isspace)
+       /* compensate for bug is VC6 ctype.h */
+#      undef isspace
+#      undef isdigit
+#      undef isalnum
+#      undef isupper
+#      undef isxdigit
+#    endif
 #  endif
 #  include <io.h>
 #  include <fcntl.h>
