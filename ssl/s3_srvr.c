@@ -318,6 +318,7 @@ int ssl3_accept(SSL *s)
 				s->state=SSL3_ST_SW_KEY_EXCH_A;
 				}
 #else
+				}
 			else
 				skip=1;
 

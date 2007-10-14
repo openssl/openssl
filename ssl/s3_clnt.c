@@ -295,6 +295,7 @@ int ssl3_connect(SSL *s)
 				s->state=SSL3_ST_CR_KEY_EXCH_A;
 				}
 #else
+				}
 			else
 				skip=1;
 
