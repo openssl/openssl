@@ -56,7 +56,7 @@
  *
  */
 #ifndef OPENSSL_NO_OCSP
-
+#define USE_SOCKETS
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
