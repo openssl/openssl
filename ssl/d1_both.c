@@ -777,11 +777,11 @@ int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 		p=(unsigned char *)s->init_buf->data;
 		*p++=SSL3_MT_CCS;
 		s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
-		s->d1->next_handshake_write_seq++;
 		s->init_num=DTLS1_CCS_HEADER_LENGTH;
 
 		if (s->client_version == DTLS1_BAD_VER)
 			{
+			s->d1->next_handshake_write_seq++;
 			s2n(s->d1->handshake_write_seq,p);
 			s->init_num+=2;
 			}
@@ -974,6 +974,7 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	pitem *item;
 	hm_fragment *frag;
 	PQ_64BIT seq64;
+	unsigned int epoch = s->d1->w_epoch;
 
 	/* this function is called immediately after a message has 
 	 * been serialized */
@@ -987,6 +988,7 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 		{
 		OPENSSL_assert(s->d1->w_msg_hdr.msg_len + 
 			DTLS1_CCS_HEADER_LENGTH <= (unsigned int)s->init_num);
+		epoch++;
 		}
 	else
 		{
@@ -1002,7 +1004,7 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	frag->msg_header.is_ccs = is_ccs;
 
 	pq_64bit_init(&seq64);
-	pq_64bit_assign_word(&seq64, frag->msg_header.seq);
+	pq_64bit_assign_word(&seq64, epoch<<16 | frag->msg_header.seq);
 
 	item = pitem_new(seq64, frag);
 	pq_64bit_free(&seq64);
