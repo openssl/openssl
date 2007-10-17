@@ -230,12 +230,13 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
                 a.tlsext_tick.type=V_ASN1_OCTET_STRING;
                 a.tlsext_tick.data=(unsigned char *)in->tlsext_tick;
 		/* If we have a ticket set session ID to empty because
-		 * it will be bogus. 
+		 * it will be bogus. If liftime hint is -1 treat as a special
+		 * case because the session is being used as a container
 		 */
-		if (in->tlsext_ticklen)
+		if (in->tlsext_ticklen && (in->tlsext_tick_lifetime_hint != -1))
 			a.session_id.length=0;
                 }
-	if (in->tlsext_tick_lifetime_hint != 0)
+	if (in->tlsext_tick_lifetime_hint > 0)
 		{
 		a.tlsext_tick_lifetime.length=LSIZE2;
 		a.tlsext_tick_lifetime.type=V_ASN1_INTEGER;
@@ -280,7 +281,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		M_ASN1_I2D_len_EXP_opt(&(a.verify_result),i2d_ASN1_INTEGER,5,v5);
 
 #ifndef OPENSSL_NO_TLSEXT
-	if (in->tlsext_tick_lifetime_hint)
+	if (in->tlsext_tick_lifetime_hint > 0)
       	 	M_ASN1_I2D_len_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER,9,v9);
 	if (in->tlsext_tick)
         	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING,10,v10);
@@ -328,7 +329,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		M_ASN1_I2D_put_EXP_opt(&(a.psk_identity), i2d_ASN1_OCTET_STRING,8,v8);
 #endif /* OPENSSL_NO_PSK */
 #ifndef OPENSSL_NO_TLSEXT
-	if (in->tlsext_tick_lifetime_hint)
+	if (in->tlsext_tick_lifetime_hint > 0)
       	 	M_ASN1_I2D_put_EXP_opt(&a.tlsext_tick_lifetime, i2d_ASN1_INTEGER,9,v9);
 	if (in->tlsext_tick)
         	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING,10,v10);
@@ -542,6 +543,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		ret->tlsext_tick_lifetime_hint=ASN1_INTEGER_get(aip);
 		OPENSSL_free(ai.data); ai.data=NULL; ai.length=0;
 		}
+	else if (ret->tlsext_ticklen && ret->session_id_length)
+		ret->tlsext_tick_lifetime_hint = -1;
 	else
 		ret->tlsext_tick_lifetime_hint=0;
 	os.length=0;
