@@ -995,7 +995,6 @@ struct ssl_st
 	int first_packet;
 	int client_version;	/* what was passed, used for
 				 * SSLv3/TLS rollback check */
-	unsigned int max_send_fragment;
 #ifndef OPENSSL_NO_TLSEXT
 	/* TLS extension debug callback */
 	void (*tlsext_debug_cb)(SSL *s, int client_server, int type,
