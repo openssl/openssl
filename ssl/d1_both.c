@@ -774,8 +774,6 @@ int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 		p=(unsigned char *)s->init_buf->data;
 		*p++=SSL3_MT_CCS;
 		s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
-		s->d1->next_handshake_write_seq++;
-
 		s->init_num=DTLS1_CCS_HEADER_LENGTH;
 		s->init_off=0;
 
@@ -965,6 +963,7 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	pitem *item;
 	hm_fragment *frag;
 	unsigned char seq64be[8];
+	unsigned int epoch = s->d1->w_epoch;
 
 	/* this function is called immediately after a message has 
 	 * been serialized */
@@ -978,6 +977,7 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 		{
 		OPENSSL_assert(s->d1->w_msg_hdr.msg_len + 
 			DTLS1_CCS_HEADER_LENGTH == (unsigned int)s->init_num);
+		epoch++;
 		}
 	else
 		{
@@ -993,6 +993,8 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	frag->msg_header.is_ccs = is_ccs;
 
 	memset(seq64be,0,sizeof(seq64be));
+	seq64be[0] = (unsigned char)(epoch>>8);
+	seq64be[1] = (unsigned char)(epoch);
 	seq64be[6] = (unsigned char)(frag->msg_header.seq>>8);
 	seq64be[7] = (unsigned char)(frag->msg_header.seq);
 
