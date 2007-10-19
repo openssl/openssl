@@ -1006,8 +1006,8 @@ start:
 		/* do this whenever CCS is processed */
 		dtls1_reset_seq_numbers(s, SSL3_CC_READ);
 
-		/* handshake read seq is reset upon handshake completion */
-		s->d1->handshake_read_seq++;
+		if (s->client_version == DTLS1_BAD_VER)
+			s->d1->handshake_read_seq++;
 
 		goto start;
 		}
