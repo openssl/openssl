@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8f and 0.9.8g  [xx XXX xxxx]
+ Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
   *) Implement certificate status request TLS extension defined in RFC3546.
      A client can set the appropriate parameters and receive the encoded
@@ -10,6 +10,15 @@
      and set the encoded OCSP response in the callback. Add simplified examples
      to s_client and s_server.
      [Steve Henson]
+
+ Changes between 0.9.8f and 0.9.8g  [19 Oct 2007]
+
+  *) Fix various bugs:
+     + Binary incompatibility of ssl_ctx_st structure
+     + DTLS interoperation with non-compliant servers
+     + Don't call get_session_cb() without proposed session
+     + Fix ia64 assembler code
+     [Andy Polyakov, Steve Henson]
 
  Changes between 0.9.8e and 0.9.8f  [11 Oct 2007]
 
