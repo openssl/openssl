@@ -2,6 +2,15 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8f and 0.9.8g  [19 Oct 2007]
+
+  *) Fix various bugs:
+     + Binary incompatibility of ssl_ctx_st structure
+     + DTLS interoperation with non-compliant servers
+     + Don't call get_session_cb() without proposed session
+     + Fix ia64 assembler code
+     [Andy Polyakov, Steve Henson]
+
  Changes between 0.9.8e and 0.9.8f  [11 Oct 2007]
 
   *) DTLS Handshake overhaul. There were longstanding issues with
