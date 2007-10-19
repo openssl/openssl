@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8f and OpenSSL 0.9.8g:
+
+      o Fixes for bugs introduced with 0.9.8f.
+
   Major changes between OpenSSL 0.9.8e and OpenSSL 0.9.8f:
 
       o Add gcc 4.2 support.
