@@ -4,6 +4,10 @@
 
  Changes between 0.9.8g and 0.9.9  [xx XXX xxxx]
 
+  *) Implement remaining functionality needed to support GOST ciphersuites.
+     Interop testing has been performed using CryptoPro implementations.
+     [Victor B. Wagner <vitus@cryptocom.ru>]
+
   *) s390x assembler pack.
      [Andy Polyakov]
 

@@ -511,6 +511,8 @@ int ssl3_accept(SSL *s)
 				}
 			else
 				{
+				int offset=0;
+				int dgst_num;
 				s->state=SSL3_ST_SR_CERT_VRFY_A;
 				s->init_num=0;
 
@@ -519,13 +521,14 @@ int ssl3_accept(SSL *s)
 				 * FIXME - digest processing for CertificateVerify
 				 * should be generalized. But it is next step
 				 */
-								
-				s->method->ssl3_enc->cert_verify_mac(s,
-					NID_md5,
-				    &(s->s3->tmp.cert_verify_md[0]));
-				s->method->ssl3_enc->cert_verify_mac(s,
-					NID_sha1,
-				    &(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]));
+				if (s->s3->handshake_buffer)
+					ssl3_digest_cached_records(s);
+				for (dgst_num=0; dgst_num<SSL_MAX_DIGEST;dgst_num++)	
+					if (s->s3->handshake_dgst[dgst_num]) 
+						{
+						s->method->ssl3_enc->cert_verify_mac(s,EVP_MD_CTX_type(s->s3->handshake_dgst[dgst_num]),&(s->s3->tmp.cert_verify_md[offset]));
+						offset+=EVP_MD_CTX_size(s->s3->handshake_dgst[dgst_num]);
+						}		
 				}
 			break;
 
@@ -1181,7 +1184,6 @@ int ssl3_send_server_hello(SSL *s)
 			return -1;
 			}
 #endif
-
 		/* do the header */
 		l=(p-d);
 		d=buf;
@@ -2398,6 +2400,35 @@ int ssl3_get_client_key_exchange(SSL *s)
 			}
 		else
 #endif
+		if (alg_k & SSL_kGOST) 
+		{
+			EVP_PKEY_CTX *pkey_ctx;
+			unsigned char premaster_secret[32];
+			size_t outlen;			
+
+			/* Get our certificate privatec key*/
+			pkey_ctx = EVP_PKEY_CTX_new(s->cert->key->privatekey,NULL);	
+			EVP_PKEY_decrypt_init(pkey_ctx);
+			/* Decrypt session key */
+			if ((*p!=( V_ASN1_SEQUENCE| V_ASN1_CONSTRUCTED)) || p[1]!=0x81 ) 
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_DECRYPTION_FAILED);
+				goto err;
+				}	
+			if (EVP_PKEY_decrypt(pkey_ctx,premaster_secret,&outlen,p+3,p[2]) <0) 
+
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_DECRYPTION_FAILED);
+				goto err;
+				}
+			/* Generate master secret */
+			EVP_PKEY_CTX_free(pkey_ctx);
+			s->session->master_key_length=
+				s->method->ssl3_enc->generate_master_secret(s,
+					s->session->master_key,premaster_secret,32);
+
+		}
+		else
 		{
 		al=SSL_AD_HANDSHAKE_FAILURE;
 		SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
@@ -2487,15 +2518,25 @@ int ssl3_get_cert_verify(SSL *s)
 
 	/* we now have a signature that we need to verify */
 	p=(unsigned char *)s->init_msg;
-	n2s(p,i);
-	n-=2;
-	if (i > n)
+	/* Check for broken implementations of GOST ciphersuites */
+	/* If key is GOST and n is exactly 64, it is bare
+	 * signature without length field */
+	if (n==64 && (pkey->type==NID_id_GostR3410_94 ||
+		pkey->type == NID_id_GostR3410_2001) )
 		{
-		SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_LENGTH_MISMATCH);
-		al=SSL_AD_DECODE_ERROR;
-		goto f_err;
-		}
-
+		i=64;
+		} 
+	else 
+		{	
+		n2s(p,i);
+		n-=2;
+		if (i > n)
+			{
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_LENGTH_MISMATCH);
+			al=SSL_AD_DECODE_ERROR;
+			goto f_err;
+			}
+    	}
 	j=EVP_PKEY_size(pkey);
 	if ((i > j) || (n > j) || (n <= 0))
 		{
@@ -2558,6 +2599,28 @@ int ssl3_get_cert_verify(SSL *s)
 		}
 	else
 #endif
+	if (pkey->type == NID_id_GostR3410_94 || pkey->type == NID_id_GostR3410_2001)
+		{   unsigned char signature[64];
+			int idx;
+			EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey,NULL);
+			EVP_PKEY_verify_init(pctx);
+			if (i!=64) {
+				fprintf(stderr,"GOST signature length is %d",i);
+			}	
+			for (idx=0;idx<64;idx++) {
+				signature[63-idx]=p[idx];
+			}	
+			j=EVP_PKEY_verify(pctx,signature,64,s->s3->tmp.cert_verify_md,32);
+			EVP_PKEY_CTX_free(pctx);
+			if (j<=0) 
+				{
+				al=SSL_AD_DECRYPT_ERROR;
+				SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,
+					SSL_R_BAD_ECDSA_SIGNATURE);
+				goto f_err;
+				}	
+		}
+	else	
 		{
 		SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,ERR_R_INTERNAL_ERROR);
 		al=SSL_AD_UNSUPPORTED_CERTIFICATE;

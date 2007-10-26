@@ -514,6 +514,20 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		ret += sol;
 		}
 #endif
+	if (((s->s3->tmp.new_cipher->id & 0xFFFF)==0x80 || (s->s3->tmp.new_cipher->id & 0xFFFF)==0x81) 
+		&& (SSL_get_options(s) & SSL_OP_CRYPTOPRO_TLSEXT_BUG))
+		{ const unsigned char cryptopro_ext[36] = {
+			0xfd, 0xe8, /*65000*/
+			0x00, 0x20, /*32 bytes length*/
+			0x30, 0x1e, 0x30, 0x08, 0x06, 0x06, 0x2a, 0x85, 
+			0x03,   0x02, 0x02, 0x09, 0x30, 0x08, 0x06, 0x06, 
+			0x2a, 0x85, 0x03, 0x02, 0x02, 0x16, 0x30, 0x08, 
+			0x06, 0x06, 0x2a, 0x85, 0x03, 0x02, 0x02, 0x17};
+			if (limit-ret<36) return NULL;
+			memcpy(ret,cryptopro_ext,36);
+			ret+=36;
+
+		}
 
 	if ((extdatalen = ret-p-2)== 0) 
 		return p;
@@ -545,7 +559,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 		if (data+size > (d+n))
 	   		return 1;
-
+		fprintf(stderr,"Received extension type %d size %d\n",type,size);
 		if (s->tlsext_debug_cb)
 			s->tlsext_debug_cb(s, 0, type, data, size,
 						s->tlsext_debug_arg);

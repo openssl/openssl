@@ -1742,11 +1742,24 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 	emask_k=0;
 	emask_a=0;
 
+	
+
 #ifdef CIPHER_DEBUG
 	printf("rt=%d rte=%d dht=%d ecdht=%d re=%d ree=%d rs=%d ds=%d dhr=%d dhd=%d\n",
 	        rsa_tmp,rsa_tmp_export,dh_tmp,have_ecdh_tmp,
 		rsa_enc,rsa_enc_export,rsa_sign,dsa_sign,dh_rsa,dh_dsa);
 #endif
+	
+	cpk = &(c->pkeys[SSL_PKEY_GOST01]);
+	if (cpk->x509 != NULL && cpk->privatekey !=NULL) {
+		mask_k |= SSL_kGOST;
+		mask_a |= SSL_aGOST01;
+	}
+	cpk = &(c->pkeys[SSL_PKEY_GOST94]);
+	if (cpk->x509 != NULL && cpk->privatekey !=NULL) {
+		mask_k |= SSL_kGOST;
+		mask_a |= SSL_aGOST94;
+	}
 
 	if (rsa_enc || (rsa_tmp && rsa_sign))
 		mask_k|=SSL_kRSA;
@@ -2015,6 +2028,10 @@ X509 *ssl_get_server_send_cert(SSL *s)
 		/* VRS something else here? */
 		return(NULL);
 		}
+	else if (alg_a & SSL_aGOST94) 
+		i=SSL_PKEY_GOST94;
+	else if (alg_a & SSL_aGOST01)
+		i=SSL_PKEY_GOST01;
 	else /* if (alg_a & SSL_aNULL) */
 		{
 		SSLerr(SSL_F_SSL_GET_SERVER_SEND_CERT,ERR_R_INTERNAL_ERROR);

@@ -1287,6 +1287,62 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	128,
 	},
 #endif
+	{
+	1,
+	"GOST94-GOST89-GOST89",
+	0x3000080,
+	SSL_kGOST,
+	SSL_aGOST94,
+	SSL_eGOST2814789CNT,
+	SSL_GOST89MAC,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	SSL_HANDSHAKE_MAC_GOST94|TLS1_PRF_GOST94|TLS1_STREAM_MAC,
+	256,
+	256
+	},
+	{
+	1,
+	"GOST2001-GOST89-GOST89",
+	0x3000081,
+	SSL_kGOST,
+	SSL_aGOST01,
+	SSL_eGOST2814789CNT,
+	SSL_GOST89MAC,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH,
+	SSL_HANDSHAKE_MAC_GOST94|TLS1_PRF_GOST94|TLS1_STREAM_MAC,
+	256,
+	256
+	},
+	{
+	1,
+	"GOST94-NULL-GOST94",
+	0x3000082,
+	SSL_kGOST,
+	SSL_aGOST94,
+	SSL_eNULL,
+	SSL_GOST94,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_STRONG_NONE,
+	SSL_HANDSHAKE_MAC_GOST94|TLS1_PRF_GOST94,
+	0,
+	0
+	},
+	{
+	1,
+	"GOST2001-NULL-GOST94",
+	0x3000083,
+	SSL_kGOST,
+	SSL_aGOST01,
+	SSL_eNULL,
+	SSL_GOST94,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_STRONG_NONE,
+	SSL_HANDSHAKE_MAC_GOST94|TLS1_PRF_GOST94,
+	0,
+	0
+	},
 
 #ifndef OPENSSL_NO_CAMELLIA
 	/* Camellia ciphersuites from RFC4132 (256-bit portion) */
@@ -2820,7 +2876,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		emask_a = cert->export_mask_a;
 			
 #ifdef KSSL_DEBUG
-		printf("ssl3_choose_cipher %d alg= %lx\n", i,c->algorithms);
+/*		printf("ssl3_choose_cipher %d alg= %lx\n", i,c->algorithms);*/
 #endif    /* KSSL_DEBUG */
 
 		alg_k=c->algorithm_mkey;

@@ -390,6 +390,11 @@ EVP_PKEY *EVP_PKEY_CTX_get0_pkey(EVP_PKEY_CTX *ctx)
 	return ctx->pkey;
 	}
 
+EVP_PKEY *EVP_PKEY_CTX_get0_peerkey(EVP_PKEY_CTX *ctx)
+	{
+	return ctx->peerkey;
+	}
+	
 void EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data)
 	{
 	ctx->app_data = data;

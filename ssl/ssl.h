@@ -249,6 +249,7 @@ extern "C" {
 #define SSL_TXT_kECDH		"kECDH"
 #define SSL_TXT_kEECDH		"kEECDH"
 #define SSL_TXT_kPSK            "kPSK"
+#define SSL_TXT_kGOST		"kGOST"
 
 #define	SSL_TXT_aRSA		"aRSA"
 #define	SSL_TXT_aDSS		"aDSS"
@@ -257,6 +258,9 @@ extern "C" {
 #define SSL_TXT_aKRB5     	"aKRB5"
 #define SSL_TXT_aECDSA		"aECDSA"
 #define SSL_TXT_aPSK            "aPSK"
+#define SSL_TXT_aGOST94	"aGOST94"
+#define SSL_TXT_aGOST01 "aGOST01"
+#define SSL_TXT_aGOST  "aGOST"
 
 #define	SSL_TXT_DSS		"DSS"
 #define SSL_TXT_DH		"DH"
@@ -527,7 +531,7 @@ typedef struct ssl_session_st
 
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless.
  *             This used to be 0x000FFFFFL before 0.9.7. */
-#define SSL_OP_ALL					0x00000FFFL
+#define SSL_OP_ALL					0x80000FFFL
 
 /* DTLS options */
 #define SSL_OP_NO_QUERY_MTU                 0x00001000L
@@ -566,7 +570,11 @@ typedef struct ssl_session_st
 #define SSL_OP_PKCS1_CHECK_2				0x10000000L
 #define SSL_OP_NETSCAPE_CA_DN_BUG			0x20000000L
 #define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG		0x40000000L
-
+/* Make server add server-hello extension from early version of
+ * cryptopro draft, when GOST ciphersuite is negotiated. 
+ * Required for interoperability with CryptoPro CSP 3.x 
+ */
+#define SSL_OP_CRYPTOPRO_TLSEXT_BUG			0x80000000L
 
 /* Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success
  * when just a single record has been written): */
@@ -1912,7 +1920,10 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_TLS1_PRF					 284
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
-
+#define SSL_F_TLS1_FINAL_FINISH_MAC		283
+#define SSL_F_TLS1_PRF				284
+#define SSL_F_SSL3_HANDSHAKE_MAC    285
+#define SSL_F_TLS1_CERT_VERIFY_MAC  286
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
 #define SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT 272
@@ -2172,7 +2183,8 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_WRONG_VERSION_NUMBER			 267
 #define SSL_R_X509_LIB					 268
 #define SSL_R_X509_VERIFICATION_SETUP_PROBLEMS		 269
-
+#define SSL_R_NO_REQUIRED_DIGEST 324
+#define SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER 330
 #ifdef  __cplusplus
 }
 #endif

@@ -37,15 +37,15 @@ static int gost_digest_nids[] =
 	{NID_id_GostR3411_94,NID_id_Gost28147_89_MAC, 0};
 
 static int gost_pkey_meth_nids[] = 
-	{NID_id_GostR3410_94_cc, NID_id_GostR3410_94, NID_id_GostR3410_2001_cc,
+	{NID_id_GostR3410_94,
 	 NID_id_GostR3410_2001, NID_id_Gost28147_89_MAC, 0};
 
-static EVP_PKEY_METHOD *pmeth_GostR3410_94_cc = NULL, *pmeth_GostR3410_94 = NULL,
-	*pmeth_GostR3410_2001_cc = NULL, *pmeth_GostR3410_2001 = NULL,
+static EVP_PKEY_METHOD *pmeth_GostR3410_94 = NULL,
+	 *pmeth_GostR3410_2001 = NULL,
 	*pmeth_Gost28147_MAC = NULL;
 
-static EVP_PKEY_ASN1_METHOD *ameth_GostR3410_94_cc = NULL, *ameth_GostR3410_94 = NULL,
-	*ameth_GostR3410_2001_cc = NULL, *ameth_GostR3410_2001 = NULL,
+static EVP_PKEY_ASN1_METHOD *ameth_GostR3410_94 = NULL,
+	*ameth_GostR3410_2001 = NULL,
 	*ameth_Gost28147_MAC = NULL;
 
 
@@ -61,6 +61,7 @@ static int gost_engine_finish(ENGINE *e)
 
 static int gost_engine_destroy(ENGINE *e)
 	{ 
+	gost_param_free();
 	return 1;
 	}
 
@@ -117,16 +118,12 @@ static int bind_gost (ENGINE *e,const char *id)
 		goto end;
 		}
 
-	if (!register_ameth_gost(NID_id_GostR3410_94_cc, &ameth_GostR3410_94_cc, "GOST94CC", "GOST R 34.10-94, Cryptocom LTD implementation")) goto end;
 	if (!register_ameth_gost(NID_id_GostR3410_94, &ameth_GostR3410_94, "GOST94", "GOST R 34.10-94")) goto end;
-	if (!register_ameth_gost(NID_id_GostR3410_2001_cc, &ameth_GostR3410_2001_cc, "GOST2001CC", "GOST R 34.10-2001, Cryptocom LTD implementation")) goto end;
 	if (!register_ameth_gost(NID_id_GostR3410_2001, &ameth_GostR3410_2001, "GOST2001", "GOST R 34.10-2001")) goto end;
 	if (!register_ameth_gost(NID_id_Gost28147_89_MAC, &ameth_Gost28147_MAC,
 		"GOST-MAC", "GOST 28147-89 MAC")) goto end;
 
-	if (!register_pmeth_gost(NID_id_GostR3410_94_cc, &pmeth_GostR3410_94_cc, 0)) goto end;
 	if (!register_pmeth_gost(NID_id_GostR3410_94, &pmeth_GostR3410_94, 0)) goto end;
-	if (!register_pmeth_gost(NID_id_GostR3410_2001_cc, &pmeth_GostR3410_2001_cc, 0)) goto end;
 	if (!register_pmeth_gost(NID_id_GostR3410_2001, &pmeth_GostR3410_2001, 0)) goto end;
 	if (!register_pmeth_gost(NID_id_Gost28147_89_MAC, &pmeth_Gost28147_MAC, 0))
 		goto end;
@@ -212,14 +209,12 @@ static int gost_pkey_meths (ENGINE *e, EVP_PKEY_METHOD **pmeth,
 	if (!pmeth) 
 		{
 		*nids = gost_pkey_meth_nids;
-		return 5;
+		return 3;
 		}
 
 	switch (nid) 
 		{
-		case NID_id_GostR3410_94_cc: *pmeth = pmeth_GostR3410_94_cc; return 1;
 		case NID_id_GostR3410_94: *pmeth = pmeth_GostR3410_94; return 1;
-		case NID_id_GostR3410_2001_cc: *pmeth = pmeth_GostR3410_2001_cc; return 1;
 		case NID_id_GostR3410_2001: *pmeth = pmeth_GostR3410_2001; return 1;
 		case NID_id_Gost28147_89_MAC: *pmeth = pmeth_Gost28147_MAC; return 1;
 		default:;
@@ -235,13 +230,11 @@ static int gost_pkey_asn1_meths (ENGINE *e, EVP_PKEY_ASN1_METHOD **ameth,
 	if (!ameth) 
 		{
 		*nids = gost_pkey_meth_nids;
-		return 5;
+		return 3;
 		}
 	switch (nid) 
 		{
-		case NID_id_GostR3410_94_cc: *ameth = ameth_GostR3410_94_cc; return 1;
 		case NID_id_GostR3410_94: *ameth = ameth_GostR3410_94; return 1;
-		case NID_id_GostR3410_2001_cc: *ameth = ameth_GostR3410_2001_cc; return 1;
 		case NID_id_GostR3410_2001: *ameth = ameth_GostR3410_2001; return 1;
 		case NID_id_Gost28147_89_MAC: *ameth = ameth_Gost28147_MAC; return 1;
 	

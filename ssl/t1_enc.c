@@ -141,6 +141,9 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
+#ifdef KSSL_DEBUG
+#include <openssl/des.h>
+#endif
 
 /* seed1 through seed5 are virtually concatenated */
 static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
@@ -878,9 +881,8 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 
 	EVP_DigestSignUpdate(mac_ctx,buf,5);
 	EVP_DigestSignUpdate(mac_ctx,rec->input,rec->length);
-	if (stream_mac) EVP_MD_CTX_copy(&hmac,hash);
-	EVP_DigestSignFinal(&hmac,md,&md_size);
-	EVP_MD_CTX_cleanup(&hmac);
+	EVP_DigestSignFinal(mac_ctx,md,&md_size);
+	if (!stream_mac) EVP_MD_CTX_cleanup(&hmac);
 #ifdef TLS_DEBUG
 printf("sec=");
 {unsigned int z; for (z=0; z<md_size; z++) printf("%02X ",mac_sec[z]); printf("\n"); }

@@ -285,13 +285,13 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 	{
 	int ret;
-	if (!ctx || !ctx->pmeth || !ctx->pmeth->derive || !ctx->pmeth->ctrl)
+	if (!ctx || !ctx->pmeth || !(ctx->pmeth->derive||ctx->pmeth->encrypt) || !ctx->pmeth->ctrl)
 		{
 		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
 			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 		}
-	if (ctx->operation != EVP_PKEY_OP_DERIVE)
+	if (ctx->operation != EVP_PKEY_OP_DERIVE && ctx->operation != EVP_PKEY_OP_ENCRYPT)
 		{
 		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
 					EVP_R_OPERATON_NOT_INITIALIZED);

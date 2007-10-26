@@ -1016,7 +1016,11 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 
 #define EVP_PKEY_CTRL_DIGESTINIT	7
 
+/* Used by GOST key encryption in TLS */
+#define EVP_PKEY_CTRL_SET_IV 		8
+
 #define EVP_PKEY_ALG_CTRL		0x1000
+
 
 #define EVP_PKEY_FLAG_AUTOARGLEN	2
 
@@ -1044,6 +1048,8 @@ EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
 void EVP_PKEY_CTX_set_data(EVP_PKEY_CTX *ctx, void *data);
 void *EVP_PKEY_CTX_get_data(EVP_PKEY_CTX *ctx);
 EVP_PKEY *EVP_PKEY_CTX_get0_pkey(EVP_PKEY_CTX *ctx);
+
+EVP_PKEY *EVP_PKEY_CTX_get0_peerkey(EVP_PKEY_CTX *ctx);
 
 void EVP_PKEY_CTX_set_app_data(EVP_PKEY_CTX *ctx, void *data);
 void *EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx);

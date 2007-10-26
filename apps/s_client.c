@@ -1278,6 +1278,7 @@ SSL_set_tlsext_status_ids(con, ids);
 				if (cbuf_len != 0)
 					{
 					BIO_printf(bio_c_out,"shutdown\n");
+					ret = 0;
 					goto shut;
 					}
 				else
@@ -1320,6 +1321,7 @@ SSL_set_tlsext_status_ids(con, ids);
 			if (i <= 0)
 				{
 				BIO_printf(bio_c_out,"DONE\n");
+				ret = 0;
 				goto shut;
 				/* goto end; */
 				}
@@ -1374,10 +1376,12 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				BIO_printf(bio_c_out,"read X BLOCK\n");
 				break;
 			case SSL_ERROR_SYSCALL:
-				BIO_printf(bio_err,"read:errno=%d\n",get_last_socket_error());
+				ret=get_last_socket_error();
+				BIO_printf(bio_err,"read:errno=%d\n",ret);
 				goto shut;
 			case SSL_ERROR_ZERO_RETURN:
 				BIO_printf(bio_c_out,"closed\n");
+				ret=0;
 				goto shut;
 			case SSL_ERROR_SSL:
 				ERR_print_errors(bio_err);
@@ -1428,6 +1432,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 			if ((!c_ign_eof) && ((i <= 0) || (cbuf[0] == 'Q')))
 				{
 				BIO_printf(bio_err,"DONE\n");
+				ret=0;
 				goto shut;
 				}
 
@@ -1450,12 +1455,13 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 			read_tty=0;
 			}
 		}
+
+	ret=0;
 shut:
 	if (in_init)
 		print_stuff(bio_c_out,con,full_log);
 	SSL_shutdown(con);
 	SHUTDOWN(SSL_get_fd(con));
-	ret=0;
 end:
 	if (con != NULL)
 		{

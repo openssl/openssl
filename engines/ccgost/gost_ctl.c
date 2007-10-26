@@ -34,6 +34,17 @@ const ENGINE_CMD_DEFN gost_cmds[]=
 {0,NULL,NULL,0}
 	};
 
+void gost_param_free() 
+{
+	int i;
+	for (i=0;i<=GOST_PARAM_MAX;i++) 
+		if (gost_params[i]!=NULL) 
+			{
+			OPENSSL_free(gost_params[i]);
+			gost_params[i]=NULL;
+			}
+		
+}
 
 int gost_control_func(ENGINE *e,int cmd,long i, void *p, void (*f)(void))
 	{
@@ -55,6 +66,7 @@ const char *get_gost_engine_param(int param)
 	tmp = getenv(gost_envnames[param]);
 	if (tmp) 
 		{
+		if (gost_params[param]) OPENSSL_free(gost_params[param]);
 		gost_params[param] = BUF_strdup(tmp);
 		return gost_params[param];
 		}	
@@ -68,7 +80,7 @@ int gost_set_default_param(int param, const char *value)
 	tmp = getenv(gost_envnames[param]);
 	/* if there is value in the environment, use it, else -passed string * */
 	if (!tmp) tmp=value;
-	if (gost_params[param]) free(gost_params[param]);
+	if (gost_params[param]) OPENSSL_free(gost_params[param]);
 	gost_params[param] = BUF_strdup(tmp);
 
 	return 1;

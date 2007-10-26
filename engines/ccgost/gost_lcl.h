@@ -28,6 +28,7 @@
 	int gost_control_func(ENGINE *e,int cmd, long i, void *p, void (*f)(void));
 	const char *get_gost_engine_param(int param);	
 	int gost_set_default_param(int param, const char *value); 
+	void gost_param_free(void);
 
 /* method registration */
 
@@ -45,8 +46,8 @@
 /* Pmeth internal representation */
 	struct gost_pmeth_data {
    	    int sign_param_nid; /* Should be set whenever parameters are filled */
-		EVP_PKEY *eph_seckey;
 		EVP_MD *md;
+		unsigned char *shared_ukm;
 	};
 
 	struct gost_mac_pmeth_data {
@@ -146,37 +147,22 @@ const struct gost_cipher_info *get_encryption_params(ASN1_OBJECT *obj);
 /* Implementation of GOST 28147-89 cipher in CFB and CNT modes */
 extern EVP_CIPHER cipher_gost;
 extern EVP_CIPHER cipher_gost_cpacnt;
-#ifdef USE_SSL
-#define EVP_MD_FLAG_NEEDS_KEY 0x20
-#define EVP_MD_CTRL_GET_TLS_MAC_KEY_LENGTH (EVP_MD_CTRL_ALG_CTRL+1)
-#define EVP_MD_CTRL_SET_KEY (EVP_MD_CTRL_ALG_CTRL+2)
-/* Ciphers and MACs specific for GOST TLS draft */
-extern EVP_CIPHER cipher_gost_vizircfb;
-extern EVP_CIPHER cipher_gost_cpacnt;
-extern EVP_MD imit_gost_vizir;
-extern EVP_MD imit_gost_cpa;
-#endif
 #define EVP_MD_CTRL_KEY_LEN (EVP_MD_CTRL_ALG_CTRL+3)
 #define EVP_MD_CTRL_SET_KEY (EVP_MD_CTRL_ALG_CTRL+4)
 /* EVP_PKEY_METHOD key encryption callbacks */
 /* From gost94_keyx.c */
 int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen, const unsigned char* key, size_t key_len );
-int pkey_GOST94cc_encrypt (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,  const unsigned char *   key,size_t key_len);
 
 int pkey_GOST94cp_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen, const unsigned char* in, size_t in_len );
-int pkey_GOST94cc_decrypt (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,  const unsigned char *   in,size_t in_len);
 /* From gost2001_keyx.c */
 int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen, const unsigned char* key, size_t key_len );
-int pkey_GOST01cc_encrypt (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,  const unsigned char *   key,size_t key_len);
 
 int pkey_GOST01cp_decrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen, const unsigned char* in, size_t in_len );
-int pkey_GOST01cc_decrypt (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen, const unsigned char *   in,size_t in_len);
-
-/* Internal functions to make error processing happy */
-int decrypt_cryptocom_key(unsigned char *sess_key,int max_key_len,
-		const unsigned char *crypted_key,int crypted_key_len, gost_ctx *ctx);
-int encrypt_cryptocom_key(const unsigned char *sess_key,int key_len,
-		unsigned char *crypted_key, gost_ctx *ctx);
+/* derive functions */
+/* From gost2001_keyx.c */
+int pkey_gost2001_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
+/* From gost94_keyx.c */
+int pkey_gost94_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
 /* Internal functions for signature algorithms */
 int fill_GOST94_params(DSA *dsa,int nid);
 int fill_GOST2001_params(EC_KEY *eckey, int nid);
@@ -201,17 +187,14 @@ BIGNUM *hashsum2bn(const unsigned char *dgst) ;
 int store_bignum(BIGNUM *bn, unsigned char *buf,int len);
 /* Read bignum, which can have few MSB all-zeros    from buffer*/ 
 BIGNUM *getbnfrombuf(const unsigned char *buf,size_t len);
-/* Pack GOST R 34.10 signature according to CryptoCom rules */
-int pack_sign_cc(DSA_SIG *s,int order,unsigned char *sig, size_t *siglen);
 /* Pack GOST R 34.10 signature according to CryptoPro rules */
 int pack_sign_cp(DSA_SIG *s,int order,unsigned char *sig, size_t *siglen); 
-/* Unpack GOST R 34.10 signature according to CryptoCom rules */
-DSA_SIG *unpack_cc_signature(const unsigned char *sig,size_t siglen) ;
 /* Unpack GOST R 34.10 signature according to CryptoPro rules */
 DSA_SIG *unpack_cp_signature(const unsigned char *sig,size_t siglen) ;
 /* from ameth.c */
 /* Get private key as BIGNUM from both R 34.10-94 and R 34.10-2001  keys*/
-BIGNUM* gost_get_priv_key(const EVP_PKEY *pkey) ;
+/* Returns pointer into EVP_PKEY structure */
+BIGNUM* gost_get0_priv_key(const EVP_PKEY *pkey) ;
 /* Find NID by GOST 94 parameters */
 int gost94_nid_by_params(DSA *p) ;
 

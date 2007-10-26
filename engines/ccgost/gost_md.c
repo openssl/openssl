@@ -59,9 +59,11 @@ int gost_digest_final(EVP_MD_CTX *ctx,unsigned char *md)
 
 int gost_digest_copy(EVP_MD_CTX *to,const EVP_MD_CTX *from) 
 	{
-	if (to->md_data && from->md_data) 
-	memcpy(to->md_data,from->md_data,sizeof(struct ossl_gost_digest_ctx));
-
+	struct ossl_gost_digest_ctx *md_ctx=to->md_data;
+	if (to->md_data && from->md_data) {
+		memcpy(to->md_data,from->md_data,sizeof(struct ossl_gost_digest_ctx));
+		md_ctx->dctx.cipher_ctx=&(md_ctx->cctx);
+	}
 	return 1;
 	}		
 

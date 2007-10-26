@@ -120,7 +120,9 @@
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
 #include <openssl/rand.h>
-
+#ifdef KSSL_DEBUG
+#include <openssl/des.h>
+#endif
 
 int dtls1_enc(SSL *s, int send)
 	{

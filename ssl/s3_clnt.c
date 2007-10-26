@@ -2378,6 +2378,84 @@ int ssl3_send_client_key_exchange(SSL *s)
 			EVP_PKEY_free(srvr_pub_pkey);
 			}
 #endif /* !OPENSSL_NO_ECDH */
+		else if (alg_k & SSL_kGOST) 
+			{
+			/* GOST key exchange message creation */
+			EVP_PKEY_CTX *pkey_ctx;
+			X509 *peer_cert; 
+			size_t msglen;
+			unsigned int md_len;
+			int keytype;
+			unsigned char premaster_secret[32],shared_ukm[32];
+			EVP_MD_CTX *ukm_hash;
+			EVP_PKEY *pub_key;
+
+			/* Get server sertificate PKEY and create ctx from it */
+			peer_cert=s->session->sess_cert->peer_pkeys[(keytype=SSL_PKEY_GOST01)].x509;
+			if (!peer_cert) 
+				peer_cert=s->session->sess_cert->peer_pkeys[(keytype=SSL_PKEY_GOST94)].x509;
+			if (!peer_cert)		{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER);
+					goto err;
+				}	
+				
+			pkey_ctx=EVP_PKEY_CTX_new(pub_key=X509_get_pubkey(peer_cert),NULL);
+			/* If we have send a certificate, and certificate key
+
+			 * parameters match those of server certificate, use
+			 * certificate key for key exchange
+			 */
+
+			 /* Otherwise, generate ephemeral key pair */
+					
+			EVP_PKEY_encrypt_init(pkey_ctx);
+			  /* Generate session key */	
+		    RAND_bytes(premaster_secret,32);
+			/* If we have client certificate, use its secret as peer key */
+			if (s->cert->key->privatekey) {
+				if (EVP_PKEY_derive_set_peer(pkey_ctx,s->cert->key->privatekey) <0) {
+					/* If there was an error - just ignore it. Ephemeral key
+					* would be used
+					*/
+					ERR_clear_error();
+				} else {
+					/* Set flag "client cert key is used for key
+					 * exchange"*/
+				}	
+			}			
+			/* Compute shared IV and store it in algorithm-specific
+			 * context data */
+			ukm_hash = EVP_MD_CTX_create();
+			EVP_DigestInit(ukm_hash,EVP_get_digestbynid(NID_id_GostR3411_94));
+			EVP_DigestUpdate(ukm_hash,s->s3->client_random,SSL3_RANDOM_SIZE);
+			EVP_DigestUpdate(ukm_hash,s->s3->server_random,SSL3_RANDOM_SIZE);
+			EVP_DigestFinal_ex(ukm_hash, shared_ukm, &md_len);
+			EVP_MD_CTX_destroy(ukm_hash);
+			if (EVP_PKEY_CTX_ctrl(pkey_ctx,-1,EVP_PKEY_OP_ENCRYPT,EVP_PKEY_CTRL_SET_IV,
+				8,shared_ukm)<0) {
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+						SSL_R_LIBRARY_BUG);
+					goto err;
+				}	
+			/* Make GOST keytransport blob message */
+			/*Encapsulate it into sequence */
+			*(p++)=V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED;
+			*(p++)=0x81;
+			msglen=256;
+			if (EVP_PKEY_encrypt(pkey_ctx,(unsigned char *)p+1,&msglen,premaster_secret,32)<0) {
+			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+					SSL_R_LIBRARY_BUG);
+				goto err;
+			}	
+			*(p++)= msglen & 0xff;
+			n=msglen+3;
+			EVP_PKEY_CTX_free(pkey_ctx);
+			s->session->master_key_length=
+				s->method->ssl3_enc->generate_master_secret(s,
+					s->session->master_key,premaster_secret,32);
+			EVP_PKEY_free(pub_key);
+
+			}
 #ifndef OPENSSL_NO_PSK
 		else if (alg_k & SSL_kPSK)
 			{
@@ -2496,6 +2574,7 @@ int ssl3_send_client_verify(SSL *s)
 	unsigned char *p,*d;
 	unsigned char data[MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH];
 	EVP_PKEY *pkey;
+	EVP_PKEY_CTX *pctx=NULL;
 #ifndef OPENSSL_NO_RSA
 	unsigned u=0;
 #endif
@@ -2509,11 +2588,19 @@ int ssl3_send_client_verify(SSL *s)
 		d=(unsigned char *)s->init_buf->data;
 		p= &(d[4]);
 		pkey=s->cert->key->privatekey;
-
-		s->method->ssl3_enc->cert_verify_mac(s,
-			NID_sha1,
-			&(data[MD5_DIGEST_LENGTH]));
-
+/* Create context from key and test if sha1 is allowed as digest */
+		pctx = EVP_PKEY_CTX_new(pkey,NULL);
+		EVP_PKEY_sign_init(pctx);
+		if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1())>0)
+			{
+			s->method->ssl3_enc->cert_verify_mac(s,
+						NID_sha1,
+						&(data[MD5_DIGEST_LENGTH]));
+			}
+		else
+			{
+			ERR_clear_error();
+			}
 #ifndef OPENSSL_NO_RSA
 		if (pkey->type == EVP_PKEY_RSA)
 			{
@@ -2565,10 +2652,30 @@ int ssl3_send_client_verify(SSL *s)
 			}
 		else
 #endif
-			{
+		if (pkey->type == NID_id_GostR3410_94 || pkey->type == NID_id_GostR3410_2001) 
+		{
+		unsigned char signbuf[64];
+		int i;
+		size_t sigsize;
+		s->method->ssl3_enc->cert_verify_mac(s,
+			NID_id_GostR3411_94,
+			data);
+		if (!EVP_PKEY_sign(pctx,signbuf,&sigsize,data,32)) {
+			SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
+			ERR_R_INTERNAL_ERROR);
+			goto err;
+		}
+		for (i=63,j=0; i>=0; j++, i--) {
+			p[2+j]=signbuf[i];
+		}	
+		s2n(j,p);
+		n=j+2;
+		}
+		else
+		{
 			SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,ERR_R_INTERNAL_ERROR);
 			goto err;
-			}
+		}
 		*(d++)=SSL3_MT_CERTIFICATE_VERIFY;
 		l2n3(n,d);
 
@@ -2576,8 +2683,10 @@ int ssl3_send_client_verify(SSL *s)
 		s->init_num=(int)n+4;
 		s->init_off=0;
 		}
+	EVP_PKEY_CTX_free(pctx);
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 err:
+	EVP_PKEY_CTX_free(pctx);
 	return(-1);
 	}
 

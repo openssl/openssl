@@ -116,7 +116,8 @@ static void pkey_hmac_cleanup(EVP_PKEY_CTX *ctx)
 	HMAC_CTX_cleanup(&hctx->ctx);
 	if (hctx->ktmp.data)
 		{
-		OPENSSL_cleanse(hctx->ktmp.data, hctx->ktmp.length);
+		if (hctx->ktmp.length)
+			OPENSSL_cleanse(hctx->ktmp.data, hctx->ktmp.length);
 		OPENSSL_free(hctx->ktmp.data);
 		hctx->ktmp.data = NULL;
 		}

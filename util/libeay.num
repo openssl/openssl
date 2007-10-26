@@ -3933,3 +3933,4 @@ TS_TST_INFO_get_ext_by_critical         4314	EXIST::FUNCTION:
 EVP_PKEY_CTX_new_id                     4315	EXIST::FUNCTION:
 TS_REQ_get_ext_by_OBJ                   4316	EXIST::FUNCTION:
 TS_CONF_set_signer_cert                 4317	EXIST::FUNCTION:
+EVP_PKEY_CTX_get0_peerkey               4318	EXIST::FUNCTION:
