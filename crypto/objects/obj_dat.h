@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 844
-#define NUM_SN 838
-#define NUM_LN 838
-#define NUM_OBJ 792
+#define NUM_NID 851
+#define NUM_SN 843
+#define NUM_LN 843
+#define NUM_OBJ 797
 
-static const unsigned char lvalues[5598]={
+static const unsigned char lvalues[5640]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -859,7 +859,12 @@ static const unsigned char lvalues[5598]={
 0x2A,0x83,0x1A,0x8C,0x9A,0x44,0x01,0x04,     /* [5567] OBJ_seed_cbc */
 0x2A,0x83,0x1A,0x8C,0x9A,0x44,0x01,0x05,     /* [5575] OBJ_seed_cfb128 */
 0x2A,0x83,0x1A,0x8C,0x9A,0x44,0x01,0x06,     /* [5583] OBJ_seed_ofb128 */
-0x2A,0x85,0x03,0x02,0x02,0x16,               /* [5591] OBJ_id_Gost28147_89_MAC */
+0x2B,0x06,0x01,0x05,0x05,0x08,0x01,0x01,     /* [5591] OBJ_hmac_md5 */
+0x2B,0x06,0x01,0x05,0x05,0x08,0x01,0x02,     /* [5599] OBJ_hmac_sha1 */
+0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x0D,/* [5607] OBJ_id_PasswordBasedMAC */
+0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x1E,/* [5616] OBJ_id_DHBasedMac */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x10,     /* [5625] OBJ_id_it_suppLangTags */
+0x2A,0x85,0x03,0x02,0x02,0x16,               /* [5633] OBJ_id_Gost28147_89_MAC */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2220,8 +2225,18 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"SEED-CFB","seed-cfb",NID_seed_cfb128,8,&(lvalues[5575]),0},
 {"SEED-OFB","seed-ofb",NID_seed_ofb128,8,&(lvalues[5583]),0},
 {NULL,NULL,NID_undef,0,NULL,0},
+{NULL,NULL,NID_undef,0,NULL,0},
+{"HMAC-MD5","hmac-md5",NID_hmac_md5,8,&(lvalues[5591]),0},
+{"HMAC-SHA1","hmac-sha1",NID_hmac_sha1,8,&(lvalues[5599]),0},
+{"id-PasswordBasedMAC","password based MAC",NID_id_PasswordBasedMAC,9,
+	&(lvalues[5607]),0},
+{"id-DHBasedMac","Diffie-Hellman based MAC",NID_id_DHBasedMac,9,
+	&(lvalues[5616]),0},
+{NULL,NULL,NID_undef,0,NULL,0},
+{"id-it-suppLangTags","id-it-suppLangTags",NID_id_it_suppLangTags,8,
+	&(lvalues[5625]),0},
 {"gost-mac","GOST 28147-89 MAC",NID_id_Gost28147_89_MAC,6,
-	&(lvalues[5591]),0},
+	&(lvalues[5633]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2303,6 +2318,8 @@ static const unsigned int sn_objs[NUM_SN]={
 297,	/* "DVCS" */
 99,	/* "GN" */
 836,	/* "HMAC" */
+844,	/* "HMAC-MD5" */
+845,	/* "HMAC-SHA1" */
 381,	/* "IANA" */
 34,	/* "IDEA-CBC" */
 35,	/* "IDEA-CFB" */
@@ -2500,7 +2517,7 @@ static const unsigned int sn_objs[NUM_SN]={
 490,	/* "friendlyCountryName" */
 156,	/* "friendlyName" */
 509,	/* "generationQualifier" */
-843,	/* "gost-mac" */
+850,	/* "gost-mac" */
 784,	/* "gost2001" */
 823,	/* "gost2001cc" */
 786,	/* "gost89" */
@@ -2521,6 +2538,7 @@ static const unsigned int sn_objs[NUM_SN]={
 473,	/* "homeTelephoneNumber" */
 466,	/* "host" */
 442,	/* "iA5StringSyntax" */
+847,	/* "id-DHBasedMac" */
 796,	/* "id-Gost28147-89-CryptoPro-A-ParamSet" */
 797,	/* "id-Gost28147-89-CryptoPro-B-ParamSet" */
 798,	/* "id-Gost28147-89-CryptoPro-C-ParamSet" */
@@ -2560,6 +2578,7 @@ static const unsigned int sn_objs[NUM_SN]={
 781,	/* "id-GostR3411-94-with-GostR3410-94" */
 824,	/* "id-GostR3411-94-with-GostR3410-94-cc" */
 783,	/* "id-HMACGostR3411-94" */
+846,	/* "id-PasswordBasedMAC" */
 266,	/* "id-aca" */
 355,	/* "id-aca-accessIdentity" */
 354,	/* "id-aca-authenticationInfo" */
@@ -2618,6 +2637,7 @@ static const unsigned int sn_objs[NUM_SN]={
 299,	/* "id-it-signKeyPairTypes" */
 305,	/* "id-it-subscriptionRequest" */
 306,	/* "id-it-subscriptionResponse" */
+849,	/* "id-it-suppLangTags" */
 304,	/* "id-it-unsupportedOIDs" */
 128,	/* "id-kp" */
 280,	/* "id-mod-attribute-cert" */
@@ -3075,6 +3095,7 @@ static const unsigned int ln_objs[NUM_LN]={
 285,	/* "Biometric Info" */
 179,	/* "CA Issuers" */
 131,	/* "Code Signing" */
+847,	/* "Diffie-Hellman based MAC" */
 382,	/* "Directory" */
 392,	/* "Domain" */
 132,	/* "E-mail Protection" */
@@ -3084,7 +3105,7 @@ static const unsigned int ln_objs[NUM_LN]={
 172,	/* "Extension Request" */
 786,	/* "GOST 28147-89" */
 821,	/* "GOST 28147-89 Cryptocom ParamSet" */
-843,	/* "GOST 28147-89 MAC" */
+850,	/* "GOST 28147-89 MAC" */
 823,	/* "GOST 34.10-2001 Cryptocom" */
 822,	/* "GOST 34.10-94 Cryptocom" */
 784,	/* "GOST R 34.10-2001" */
@@ -3356,6 +3377,8 @@ static const unsigned int ln_objs[NUM_LN]={
 99,	/* "givenName" */
 835,	/* "gost89-cnt" */
 836,	/* "hmac" */
+844,	/* "hmac-md5" */
+845,	/* "hmac-sha1" */
 772,	/* "hmacWithMD5" */
 163,	/* "hmacWithSHA1" */
 773,	/* "hmacWithSHA224" */
@@ -3455,6 +3478,7 @@ static const unsigned int ln_objs[NUM_LN]={
 299,	/* "id-it-signKeyPairTypes" */
 305,	/* "id-it-subscriptionRequest" */
 306,	/* "id-it-subscriptionResponse" */
+849,	/* "id-it-suppLangTags" */
 304,	/* "id-it-unsupportedOIDs" */
 128,	/* "id-kp" */
 280,	/* "id-mod-attribute-cert" */
@@ -3614,6 +3638,7 @@ static const unsigned int ln_objs[NUM_LN]={
 18,	/* "organizationalUnitName" */
 475,	/* "otherMailbox" */
 489,	/* "pagerTelephoneNumber" */
+846,	/* "password based MAC" */
 374,	/* "path" */
 621,	/* "payment gateway capabilities" */
  9,	/* "pbeWithMD2AndDES-CBC" */
@@ -4188,7 +4213,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 784,	/* OBJ_id_GostR3410_2001            1 2 643 2 2 19 */
 785,	/* OBJ_id_GostR3410_94              1 2 643 2 2 20 */
 786,	/* OBJ_id_Gost28147_89              1 2 643 2 2 21 */
-843,	/* OBJ_id_Gost28147_89_MAC          1 2 643 2 2 22 */
+850,	/* OBJ_id_Gost28147_89_MAC          1 2 643 2 2 22 */
 788,	/* OBJ_id_GostR3411_94_prf          1 2 643 2 2 23 */
 789,	/* OBJ_id_GostR3410_2001DH          1 2 643 2 2 98 */
 790,	/* OBJ_id_GostR3410_94DH            1 2 643 2 2 99 */
@@ -4391,6 +4416,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 310,	/* OBJ_id_it_implicitConfirm        1 3 6 1 5 5 7 4 13 */
 311,	/* OBJ_id_it_confirmWaitTime        1 3 6 1 5 5 7 4 14 */
 312,	/* OBJ_id_it_origPKIMessage         1 3 6 1 5 5 7 4 15 */
+849,	/* OBJ_id_it_suppLangTags           1 3 6 1 5 5 7 4 16 */
 313,	/* OBJ_id_regCtrl                   1 3 6 1 5 5 7 5 1 */
 314,	/* OBJ_id_regInfo                   1 3 6 1 5 5 7 5 2 */
 323,	/* OBJ_id_alg_des40                 1 3 6 1 5 5 7 6 1 */
@@ -4440,6 +4466,8 @@ static const unsigned int obj_objs[NUM_OBJ]={
 179,	/* OBJ_ad_ca_issuers                1 3 6 1 5 5 7 48 2 */
 363,	/* OBJ_ad_timeStamping              1 3 6 1 5 5 7 48 3 */
 364,	/* OBJ_ad_dvcs                      1 3 6 1 5 5 7 48 4 */
+844,	/* OBJ_hmac_md5                     1 3 6 1 5 5 8 1 1 */
+845,	/* OBJ_hmac_sha1                    1 3 6 1 5 5 8 1 2 */
 58,	/* OBJ_netscape_cert_extension      2 16 840 1 113730 1 */
 59,	/* OBJ_netscape_data_type           2 16 840 1 113730 2 */
 438,	/* OBJ_pilotAttributeType           0 9 2342 19200300 100 1 */
@@ -4448,6 +4476,8 @@ static const unsigned int obj_objs[NUM_OBJ]={
 441,	/* OBJ_pilotGroups                  0 9 2342 19200300 100 10 */
 108,	/* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */
 112,	/* OBJ_pbeWithMD5AndCast5_CBC       1 2 840 113533 7 66 12 */
+846,	/* OBJ_id_PasswordBasedMAC          1 2 840 113533 7 66 13 */
+847,	/* OBJ_id_DHBasedMac                1 2 840 113533 7 66 30 */
  6,	/* OBJ_rsaEncryption                1 2 840 113549 1 1 1 */
  7,	/* OBJ_md2WithRSAEncryption         1 2 840 113549 1 1 2 */
 396,	/* OBJ_md4WithRSAEncryption         1 2 840 113549 1 1 3 */

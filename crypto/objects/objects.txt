@@ -11,6 +11,10 @@ iso 2			: member-body		: ISO Member Body
 
 iso 3			: identified-organization
 
+# HMAC OIDs
+identified-organization 6 1 5 5 8 1 1	: HMAC-MD5	: hmac-md5
+identified-organization 6 1 5 5 8 1 2	: HMAC-SHA1	: hmac-sha1
+
 identified-organization 132	: certicom-arc
 
 joint-iso-itu-t 23	: international-organizations	: International Organizations
@@ -146,6 +150,10 @@ ISO-US 113533 7 66 10	: CAST5-CBC		: cast5-cbc
 			: CAST5-OFB		: cast5-ofb
 !Cname pbeWithMD5AndCast5-CBC
 ISO-US 113533 7 66 12	:			: pbeWithMD5AndCast5CBC
+
+# Macs for CMP and CRMF
+ISO-US 113533 7 66 13	: id-PasswordBasedMAC	: password based MAC
+ISO-US 113533 7 66 30	: id-DHBasedMac		: Diffie-Hellman based MAC
 
 ISO-US 113549		: rsadsi		: RSA Data Security, Inc.
 
@@ -498,6 +506,7 @@ id-it 12		: id-it-revPassphrase
 id-it 13		: id-it-implicitConfirm
 id-it 14		: id-it-confirmWaitTime
 id-it 15		: id-it-origPKIMessage
+id-it 16		: id-it-suppLangTags
 
 # CRMF registration
 id-pkip 1		: id-regCtrl

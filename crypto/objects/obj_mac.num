@@ -840,4 +840,11 @@ seed_cbc		839
 seed_cfb128		840
 seed_ofb128		841
 id_Gost28147_89_MAC		842
-id_Gost28147_89_MAC					843
+id_Gost28147_89_MAC		843
+hmac_md5		844
+hmac_sha1		845
+id_PasswordBasedMAC		846
+id_DHBasedMac		847
+id_Gost28147_89_MAC		848
+id_it_suppLangTags		849
+id_Gost28147_89_MAC					850
