@@ -273,7 +273,10 @@ int ssl3_connect(SSL *s)
 			if (ret == 2)
 				{
 				s->hit = 1;
-				s->state=SSL3_ST_CR_FINISHED_A;
+				if (s->tlsext_ticket_expected)
+					s->state=SSL3_ST_CR_SESSION_TICKET_A;
+				else
+					s->state=SSL3_ST_CR_FINISHED_A;
 				s->init_num=0;
 				break;
 				}
