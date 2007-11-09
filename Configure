@@ -567,7 +567,7 @@ my $prefix="";
 my $openssldir="";
 my $exe_ext="";
 my $install_prefix="";
-my $fipslibdir="/usr/local/ssl/lib/fips-1.0/";
+my $fipslibdir="/usr/local/ssl/lib/fips/";
 my $nofipscanistercheck=0;
 my $fipsdso=0;
 my $fipscanisterinternal="n";
@@ -1010,7 +1010,7 @@ if ($openssldir eq "" and $prefix eq "")
 	{
 	if ($fips)
 		{
-		$openssldir="/usr/local/ssl/fips-1.0";
+		$openssldir="/usr/local/ssl/fips";
 		}
 	else
 		{
