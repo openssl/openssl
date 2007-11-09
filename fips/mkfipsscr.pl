@@ -598,7 +598,7 @@ END
 		my $saltlen;
 		while (<IN>)
 			{
-			if (/^\s*#\s*salt\s+len:\s+(\d+)\s+$/i)
+			if (/^\s*#\s*salt\s+len:\s+(\d+)\s*$/i)
 				{
 				my $sl = $1;
 				print STDERR "$req salt length $sl\n" if $debug;
