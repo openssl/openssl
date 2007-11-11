@@ -82,79 +82,6 @@ int MD4_Init(MD4_CTX *c)
 	return 1;
 	}
 
-#ifndef md4_block_host_order
-void md4_block_host_order (MD4_CTX *c, const void *data, size_t num)
-	{
-	const MD4_LONG *X=data;
-	register unsigned MD32_REG_T A,B,C,D;
-
-	A=c->A;
-	B=c->B;
-	C=c->C;
-	D=c->D;
-
-	for (;num--;X+=HASH_LBLOCK)
-		{
-	/* Round 0 */
-	R0(A,B,C,D,X[ 0], 3,0);
-	R0(D,A,B,C,X[ 1], 7,0);
-	R0(C,D,A,B,X[ 2],11,0);
-	R0(B,C,D,A,X[ 3],19,0);
-	R0(A,B,C,D,X[ 4], 3,0);
-	R0(D,A,B,C,X[ 5], 7,0);
-	R0(C,D,A,B,X[ 6],11,0);
-	R0(B,C,D,A,X[ 7],19,0);
-	R0(A,B,C,D,X[ 8], 3,0);
-	R0(D,A,B,C,X[ 9], 7,0);
-	R0(C,D,A,B,X[10],11,0);
-	R0(B,C,D,A,X[11],19,0);
-	R0(A,B,C,D,X[12], 3,0);
-	R0(D,A,B,C,X[13], 7,0);
-	R0(C,D,A,B,X[14],11,0);
-	R0(B,C,D,A,X[15],19,0);
-	/* Round 1 */
-	R1(A,B,C,D,X[ 0], 3,0x5A827999L);
-	R1(D,A,B,C,X[ 4], 5,0x5A827999L);
-	R1(C,D,A,B,X[ 8], 9,0x5A827999L);
-	R1(B,C,D,A,X[12],13,0x5A827999L);
-	R1(A,B,C,D,X[ 1], 3,0x5A827999L);
-	R1(D,A,B,C,X[ 5], 5,0x5A827999L);
-	R1(C,D,A,B,X[ 9], 9,0x5A827999L);
-	R1(B,C,D,A,X[13],13,0x5A827999L);
-	R1(A,B,C,D,X[ 2], 3,0x5A827999L);
-	R1(D,A,B,C,X[ 6], 5,0x5A827999L);
-	R1(C,D,A,B,X[10], 9,0x5A827999L);
-	R1(B,C,D,A,X[14],13,0x5A827999L);
-	R1(A,B,C,D,X[ 3], 3,0x5A827999L);
-	R1(D,A,B,C,X[ 7], 5,0x5A827999L);
-	R1(C,D,A,B,X[11], 9,0x5A827999L);
-	R1(B,C,D,A,X[15],13,0x5A827999L);
-	/* Round 2 */
-	R2(A,B,C,D,X[ 0], 3,0x6ED9EBA1);
-	R2(D,A,B,C,X[ 8], 9,0x6ED9EBA1);
-	R2(C,D,A,B,X[ 4],11,0x6ED9EBA1);
-	R2(B,C,D,A,X[12],15,0x6ED9EBA1);
-	R2(A,B,C,D,X[ 2], 3,0x6ED9EBA1);
-	R2(D,A,B,C,X[10], 9,0x6ED9EBA1);
-	R2(C,D,A,B,X[ 6],11,0x6ED9EBA1);
-	R2(B,C,D,A,X[14],15,0x6ED9EBA1);
-	R2(A,B,C,D,X[ 1], 3,0x6ED9EBA1);
-	R2(D,A,B,C,X[ 9], 9,0x6ED9EBA1);
-	R2(C,D,A,B,X[ 5],11,0x6ED9EBA1);
-	R2(B,C,D,A,X[13],15,0x6ED9EBA1);
-	R2(A,B,C,D,X[ 3], 3,0x6ED9EBA1);
-	R2(D,A,B,C,X[11], 9,0x6ED9EBA1);
-	R2(C,D,A,B,X[ 7],11,0x6ED9EBA1);
-	R2(B,C,D,A,X[15],15,0x6ED9EBA1);
-
-	A = c->A += A;
-	B = c->B += B;
-	C = c->C += C;
-	D = c->D += D;
-		}
-	}
-#endif
-
 #ifndef md4_block_data_order
 #ifdef X
 #undef X
@@ -237,22 +164,6 @@ void md4_block_data_order (MD4_CTX *c, const void *data_, size_t num)
 	B = c->B += B;
 	C = c->C += C;
 	D = c->D += D;
-		}
-	}
-#endif
-
-#ifdef undef
-int printit(unsigned long *l)
-	{
-	int i,ii;
-
-	for (i=0; i<2; i++)
-		{
-		for (ii=0; ii<8; ii++)
-			{
-			fprintf(stderr,"%08lx ",l[i*8+ii]);
-			}
-		fprintf(stderr,"\n");
 		}
 	}
 #endif

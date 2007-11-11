@@ -66,53 +66,19 @@
 #endif
 
 #ifdef MD5_ASM
-# if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || defined(__x86_64) || defined(__x86_64__)
-#  if !defined(B_ENDIAN)
-#   define md5_block_host_order md5_block_asm_host_order
-#  endif
-# elif defined(__sparc) && defined(OPENSSL_SYS_ULTRASPARC)
-   void md5_block_asm_data_order_aligned (MD5_CTX *c, const MD5_LONG *p,size_t num);
-#  define HASH_BLOCK_DATA_ORDER_ALIGNED md5_block_asm_data_order_aligned
+# if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || \
+     defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
+#  define md5_block_data_order md5_block_asm_data_order
 # endif
 #endif
 
-void md5_block_host_order (MD5_CTX *c, const void *p,size_t num);
 void md5_block_data_order (MD5_CTX *c, const void *p,size_t num);
-
-#if defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__INTEL__) || defined(__x86_64) || defined(__x86_64__)
-# if !defined(B_ENDIAN)
-/*
- * *_block_host_order is expected to handle aligned data while
- * *_block_data_order - unaligned. As algorithm and host (x86)
- * are in this case of the same "endianness" these two are
- * otherwise indistinguishable. But normally you don't want to
- * call the same function because unaligned access in places
- * where alignment is expected is usually a "Bad Thing". Indeed,
- * on RISCs you get punished with BUS ERROR signal or *severe*
- * performance degradation. Intel CPUs are in turn perfectly
- * capable of loading unaligned data without such drastic side
- * effect. Yes, they say it's slower than aligned load, but no
- * exception is generated and therefore performance degradation
- * is *incomparable* with RISCs. What we should weight here is
- * costs of unaligned access against costs of aligning data.
- * According to my measurements allowing unaligned access results
- * in ~9% performance improvement on Pentium II operating at
- * 266MHz. I won't be surprised if the difference will be higher
- * on faster systems:-)
- *
- *				<appro@fy.chalmers.se>
- */
-# define md5_block_data_order md5_block_host_order
-# endif
-#endif
 
 #define DATA_ORDER_IS_LITTLE_ENDIAN
 
 #define HASH_LONG		MD5_LONG
-#define HASH_LONG_LOG2		MD5_LONG_LOG2
 #define HASH_CTX		MD5_CTX
 #define HASH_CBLOCK		MD5_CBLOCK
-#define HASH_LBLOCK		MD5_LBLOCK
 #define HASH_UPDATE		MD5_Update
 #define HASH_TRANSFORM		MD5_Transform
 #define HASH_FINAL		MD5_Final
@@ -123,21 +89,7 @@ void md5_block_data_order (MD5_CTX *c, const void *p,size_t num);
 	ll=(c)->C; HOST_l2c(ll,(s));	\
 	ll=(c)->D; HOST_l2c(ll,(s));	\
 	} while (0)
-#define HASH_BLOCK_HOST_ORDER	md5_block_host_order
-#if !defined(L_ENDIAN) || defined(md5_block_data_order)
 #define	HASH_BLOCK_DATA_ORDER	md5_block_data_order
-/*
- * Little-endians (Intel and Alpha) feel better without this.
- * It looks like memcpy does better job than generic
- * md5_block_data_order on copying-n-aligning input data.
- * But frankly speaking I didn't expect such result on Alpha.
- * On the other hand I've got this with egcs-1.0.2 and if
- * program is compiled with another (better?) compiler it
- * might turn out other way around.
- *
- *				<appro@fy.chalmers.se>
- */
-#endif
 
 #include "md32_common.h"
 
