@@ -541,50 +541,13 @@ sub main'set_label
 sub main'file_end
 	{
 	# try to detect if SSE2 or MMX extensions were used on ELF platform...
-	if ($main'elf && grep {/%[x]*mm[0-7]/i} @out) {
+	if ($main'elf && grep {/\b%[x]*mm[0-7]\b|OPENSSL_ia32cap_P\b/i} @out) {
 		local($tmp);
 
 		push (@out,"\n.section\t.bss\n");
 		push (@out,".comm\t${under}OPENSSL_ia32cap_P,4,4\n");
 
-		push (@out,".section\t.init\n");
-		# One can argue that it's wasteful to craft every
-		# SSE/MMX module with this snippet... Well, it's 72
-		# bytes long and for the moment we have two modules.
-		# Let's argue when we have 7 modules or so...
-		#
-		# $1<<10 sets a reserved bit to signal that variable
-		# was initialized already...
-		&main'picmeup("edx","OPENSSL_ia32cap_P");
-		$tmp=<<___;
-		cmpl	\$0,(%edx)
-		jne	1f
-		movl	\$1<<10,(%edx)
-		pushf
-		popl	%eax
-		movl	%eax,%ecx
-		xorl	\$1<<21,%eax
-		pushl	%eax
-		popf
-		pushf
-		popl	%eax
-		xorl	%ecx,%eax
-		btl	\$21,%eax
-		jnc	1f
-		pushl	%edi
-		pushl	%ebx
-		movl	%edx,%edi
-		movl	\$1,%eax
-		.byte	0x0f,0xa2
-		orl	\$1<<10,%edx
-		movl	%edx,0(%edi)
-		popl	%ebx
-		popl	%edi
-		jmp	1f
-	.align	$align
-	1:
-___
-		push (@out,$tmp);
+		return;
 	}
 
 	if ($const ne "")
