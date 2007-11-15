@@ -181,7 +181,9 @@ static int c_showcerts=0;
 
 static void sc_usage(void);
 static void print_stuff(BIO *berr,SSL *con,int full);
+#ifndef OPENSSL_NO_TLSEXT
 static int ocsp_resp_cb(SSL *s, void *arg);
+#endif
 static BIO *bio_c_out=NULL;
 static int c_quiet=0;
 static int c_ign_eof=0;
@@ -1453,6 +1455,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	(void)BIO_flush(bio);
 	}
 
+#ifndef OPENSSL_NO_TLSEXT
+
 static int ocsp_resp_cb(SSL *s, void *arg)
 	{
 	const unsigned char *p;
@@ -1478,3 +1482,4 @@ static int ocsp_resp_cb(SSL *s, void *arg)
 	OCSP_RESPONSE_free(rsp);
 	return 1;
 	}
+#endif  /* ndef OPENSSL_NO_TLSEXT */
