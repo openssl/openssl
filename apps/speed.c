@@ -414,7 +414,7 @@ int MAIN(int argc, char **argv)
 #define MAX_BLOCK_SIZE 64
 #endif
 	unsigned char DES_iv[8];
-	unsigned char iv[MAX_BLOCK_SIZE/8];
+	unsigned char iv[2*MAX_BLOCK_SIZE/8];
 #ifndef OPENSSL_NO_DES
 	DES_cblock *buf_as_des_cblock = NULL;
 	static DES_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
