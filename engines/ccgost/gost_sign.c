@@ -100,7 +100,7 @@ DSA_SIG *gost_do_sign(const unsigned char *dgst,int dlen, DSA *dsa)
  * Packs signature according to Cryptocom rules
  * and frees up DSA_SIG structure
  */
-
+/*
 int pack_sign_cc(DSA_SIG *s,int order,unsigned char *sig, size_t *siglen)
 	{
 	*siglen = 2*order;
@@ -111,6 +111,7 @@ int pack_sign_cc(DSA_SIG *s,int order,unsigned char *sig, size_t *siglen)
 	DSA_SIG_free(s);
 	return 1;
 	}
+*/
 /*
  * Packs signature according to Cryptopro rules
  * and frees up DSA_SIG structure
@@ -246,7 +247,7 @@ int gost_sign_keygen(DSA *dsa)
 	}
 
 /* Unpack signature according to cryptocom rules  */
-
+/*
 DSA_SIG *unpack_cc_signature(const unsigned char *sig,size_t siglen)
 	{
 	DSA_SIG *s;
@@ -260,7 +261,7 @@ DSA_SIG *unpack_cc_signature(const unsigned char *sig,size_t siglen)
 	s->s = getbnfrombuf(sig + siglen/2, siglen/2);
 	return s;
 	}
-
+*/
 /* Unpack signature according to cryptopro rules  */
 DSA_SIG *unpack_cp_signature(const unsigned char *sig,size_t siglen)
 	{

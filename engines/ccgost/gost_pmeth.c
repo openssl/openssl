@@ -368,7 +368,7 @@ static int pkey_gost_encrypt_init(EVP_PKEY_CTX *ctx)
 	return 1;
 	}
 /* --------------- Derive init ------------------------------------*/
-int pkey_gost_derive_init(EVP_PKEY_CTX *ctx)
+static int pkey_gost_derive_init(EVP_PKEY_CTX *ctx)
 {
 	return 1;
 }
