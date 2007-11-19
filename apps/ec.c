@@ -244,7 +244,7 @@ bad:
 				" the ec parameters are encoded\n");
 		BIO_printf(bio_err, "                 in the asn1 der "
 				"encoding\n");
-		BIO_printf(bio_err, "                 possilbe values:"
+		BIO_printf(bio_err, "                 possible values:"
 				" named_curve (default)\n");
 		BIO_printf(bio_err,"                                  "
 				"explicit\n");

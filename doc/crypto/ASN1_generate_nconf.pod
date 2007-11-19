@@ -28,7 +28,11 @@ The actual data encoded is determined by the string B<str> and
 the configuration information. The general format of the string
 is:
 
- B<[modifier,]type[:value]>
+=over 2
+
+=item B<[modifier,]type[:value]>
+
+=back
 
 That is zero or more comma separated modifiers followed by a type
 followed by an optional colon and a value. The formats of B<type>,
@@ -81,13 +85,13 @@ the format B<YYYYMMDDHHMMSSZ>.
 
 =item B<OCTETSTRING>, B<OCT>
 
-Emcodes an ASN1 B<OCTET STRING>. B<value> represents the contents
+Encodes an ASN1 B<OCTET STRING>. B<value> represents the contents
 of this structure, the format strings B<ASCII> and B<HEX> can be
 used to specify the format of B<value>.
 
-=item B<BITSRING>, B<BITSTR>
+=item B<BITSTRING>, B<BITSTR>
 
-Emcodes an ASN1 B<BIT STRING>. B<value> represents the contents
+Encodes an ASN1 B<BIT STRING>. B<value> represents the contents
 of this structure, the format strings B<ASCII>, B<HEX> and B<BITLIST>
 can be used to specify the format of B<value>.
 
@@ -171,13 +175,13 @@ An IA5String explicitly tagged using APPLICATION tagging:
 A more complex example using a config file to produce a
 SEQUENCE consiting of a BOOL an OID and a UTF8String:
 
-asn1 = SEQUENCE:seq_section
+ asn1 = SEQUENCE:seq_section
 
-[seq_section]
+ [seq_section]
 
-field1 = BOOLEAN:TRUE
-field2 = OID:commonName
-field3 = UTF8:Third field
+ field1 = BOOLEAN:TRUE
+ field2 = OID:commonName
+ field3 = UTF8:Third field
 
 This example produces an RSAPrivateKey structure, this is the
 key contained in the file client.pem in all OpenSSL distributions
