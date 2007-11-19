@@ -36,7 +36,7 @@ structures created later. B<NB>: This is true only whilst no ENGINE has
 been set as a default for DSA, so this function is no longer recommended.
 
 DSA_get_default_method() returns a pointer to the current default
-DSA_METHOD. However, the meaningfulness of this result is dependant on
+DSA_METHOD. However, the meaningfulness of this result is dependent on
 whether the ENGINE API is being used, so this function is no longer 
 recommended.
 

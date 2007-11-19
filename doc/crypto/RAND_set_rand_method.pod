@@ -30,7 +30,7 @@ true only whilst no ENGINE has been set as a default for RAND, so this function
 is no longer recommended.
 
 RAND_get_default_method() returns a pointer to the current RAND_METHOD.
-However, the meaningfulness of this result is dependant on whether the ENGINE
+However, the meaningfulness of this result is dependent on whether the ENGINE
 API is being used, so this function is no longer recommended.
 
 =head1 THE RAND_METHOD STRUCTURE
