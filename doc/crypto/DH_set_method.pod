@@ -36,7 +36,7 @@ structures created later. B<NB>: This is true only whilst no ENGINE has been set
 as a default for DH, so this function is no longer recommended.
 
 DH_get_default_method() returns a pointer to the current default DH_METHOD.
-However, the meaningfulness of this result is dependant on whether the ENGINE
+However, the meaningfulness of this result is dependent on whether the ENGINE
 API is being used, so this function is no longer recommended.
 
 DH_set_method() selects B<meth> to perform all operations using the key B<dh>.

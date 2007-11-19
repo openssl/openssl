@@ -183,7 +183,7 @@ Due to the modular nature of the ENGINE API, pointers to ENGINEs need to be
 treated as handles - ie. not only as pointers, but also as references to
 the underlying ENGINE object. Ie. one should obtain a new reference when
 making copies of an ENGINE pointer if the copies will be used (and
-released) independantly.
+released) independently.
 
 ENGINE objects have two levels of reference-counting to match the way in
 which the objects are used. At the most basic level, each ENGINE pointer is
@@ -200,7 +200,7 @@ B<functional> reference. This kind of reference can be considered a
 specialised form of structural reference, because each functional reference
 implicitly contains a structural reference as well - however to avoid
 difficult-to-find programming bugs, it is recommended to treat the two
-kinds of reference independantly. If you have a functional reference to an
+kinds of reference independently. If you have a functional reference to an
 ENGINE, you have a guarantee that the ENGINE has been initialised ready to
 perform cryptographic operations and will remain uninitialised
 until after you have released your reference.
@@ -587,7 +587,7 @@ extension).
 The ENGINE API and internal architecture is currently being reviewed. Slated for
 possible release in 0.9.8 is support for transparent loading of "dynamic"
 ENGINEs (built as self-contained shared-libraries). This would allow ENGINE
-implementations to be provided independantly of OpenSSL libraries and/or
+implementations to be provided independently of OpenSSL libraries and/or
 OpenSSL-based applications, and would also remove any requirement for
 applications to explicitly use the "dynamic" ENGINE to bind to shared-library
 implementations.
