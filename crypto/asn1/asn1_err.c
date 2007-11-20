@@ -1,6 +1,6 @@
 /* crypto/asn1/asn1_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -147,6 +147,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_FUNC(ASN1_F_D2I_ASN1_TYPE_BYTES),	"d2i_ASN1_type_bytes"},
 {ERR_FUNC(ASN1_F_D2I_ASN1_UINTEGER),	"d2i_ASN1_UINTEGER"},
 {ERR_FUNC(ASN1_F_D2I_ASN1_UTCTIME),	"D2I_ASN1_UTCTIME"},
+{ERR_FUNC(ASN1_F_D2I_AUTOPRIVATEKEY),	"d2i_AutoPrivateKey"},
 {ERR_FUNC(ASN1_F_D2I_NETSCAPE_RSA),	"d2i_Netscape_RSA"},
 {ERR_FUNC(ASN1_F_D2I_NETSCAPE_RSA_2),	"D2I_NETSCAPE_RSA_2"},
 {ERR_FUNC(ASN1_F_D2I_PRIVATEKEY),	"d2i_PrivateKey"},

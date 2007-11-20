@@ -64,6 +64,7 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include "asn1_locl.h"
 
@@ -101,9 +102,22 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
 	if (!ret->ameth->old_priv_decode ||
 			!ret->ameth->old_priv_decode(ret, pp, length))
 		{
-		ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_ASN1_LIB);
-		goto err;
-		}
+		if (ret->ameth->priv_decode) 
+			{
+			PKCS8_PRIV_KEY_INFO *p8=NULL;
+			p8=d2i_PKCS8_PRIV_KEY_INFO(NULL,pp,length);
+			if (!p8) goto err;
+			EVP_PKEY_free(ret);
+			ret = EVP_PKCS82PKEY(p8);
+			PKCS8_PRIV_KEY_INFO_free(p8);
+
+			} 
+		else 
+			{
+			ASN1err(ASN1_F_D2I_PRIVATEKEY,ERR_R_ASN1_LIB);
+			goto err;
+			}
+		}	
 	if (a != NULL) (*a)=ret;
 	return(ret);
 err:
@@ -132,6 +146,24 @@ EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
 		keytype = EVP_PKEY_DSA;
 	else if (sk_ASN1_TYPE_num(inkey) == 4)
 		keytype = EVP_PKEY_EC;
+	else if (sk_ASN1_TYPE_num(inkey) == 3)  
+		{ /* This seems to be PKCS8, not traditional format */
+			PKCS8_PRIV_KEY_INFO *p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL,pp,length);
+			EVP_PKEY *ret;
+
+			sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
+			if (!p8) 
+				{
+				ASN1err(ASN1_F_D2I_AUTOPRIVATEKEY,ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+				return NULL;
+				}
+			ret = EVP_PKCS82PKEY(p8);
+			PKCS8_PRIV_KEY_INFO_free(p8);
+			if (a) {
+				*a = ret;
+			}	
+			return ret;
+		}
 	else keytype = EVP_PKEY_RSA;
 	sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
 	return d2i_PrivateKey(keytype, a, pp, length);
