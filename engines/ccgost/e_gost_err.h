@@ -106,6 +106,7 @@ void ERR_GOST_error(int function, int reason, char *file, int line);
 #define GOST_F_PKEY_GOST_MAC_CTRL			 140
 #define GOST_F_PKEY_GOST_MAC_CTRL_STR			 141
 #define GOST_F_PKEY_GOST_MAC_KEYGEN			 142
+#define GOST_F_PRINT_GOST_01				 146
 #define GOST_F_PRIV_DECODE_GOST_94			 117
 #define GOST_F_PRIV_DECODE_MAC				 143
 #define GOST_F_PUB_DECODE_GOST01			 136
