@@ -76,6 +76,14 @@ struct st_engine_table
 	LHASH piles;
 	}; /* ENGINE_TABLE */
 
+
+typedef struct st_engine_pile_doall
+	{
+	engine_table_doall_cb *cb;
+	void *arg;
+	} ENGINE_PILE_DOALL;
+	
+
 /* Global flags (ENGINE_TABLE_FLAG_***). */
 static unsigned int table_flags = 0;
 
@@ -312,4 +320,22 @@ end:
 	 * context, so clear our error state. */
 	ERR_clear_error();
 	return ret;
+	}
+
+/* Table enumeration */
+
+static void int_doall_cb(ENGINE_PILE *pile, ENGINE_PILE_DOALL *dall)
+	{
+	dall->cb(pile->nid, pile->sk, pile->funct, dall->arg);
+	}
+
+static IMPLEMENT_LHASH_DOALL_ARG_FN(int_doall_cb,ENGINE_PILE *,ENGINE_PILE_DOALL *)
+void engine_table_doall(ENGINE_TABLE *table, engine_table_doall_cb *cb,
+								void *arg)
+	{
+	ENGINE_PILE_DOALL dall;
+	dall.cb = cb;
+	dall.arg = arg;
+	lh_doall_arg(&table->piles,
+			LHASH_DOALL_ARG_FN(int_doall_cb), &dall);
 	}

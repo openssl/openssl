@@ -193,3 +193,53 @@ const EVP_PKEY_ASN1_METHOD *ENGINE_get_pkey_asn1_meth_str(ENGINE *e,
 		}
 	return NULL;
 	}
+
+typedef struct 
+	{
+	ENGINE *e;
+	const EVP_PKEY_ASN1_METHOD *ameth;
+	const char *str;
+	int len;
+	} ENGINE_FIND_STR;
+
+static void look_str_cb(int nid, STACK_OF(ENGINE) *sk, ENGINE *def, void *arg)
+	{
+	ENGINE_FIND_STR *lk = arg;
+	int i;
+	if (lk->ameth)
+		return;
+	for (i = 0; i < sk_ENGINE_num(sk); i++)
+		{
+		ENGINE *e = sk_ENGINE_value(sk, i);
+		EVP_PKEY_ASN1_METHOD *ameth;
+		e->pkey_asn1_meths(e, &ameth, NULL, nid);
+		if (((int)strlen(ameth->pem_str) == lk->len) && 
+				!strncasecmp(ameth->pem_str, lk->str, lk->len))
+			{
+			lk->e = e;
+			lk->ameth = ameth;
+			return;
+			}
+		}
+	}
+
+const EVP_PKEY_ASN1_METHOD *ENGINE_pkey_asn1_find_str(ENGINE **pe,
+					const char *str, int len)
+	{
+	ENGINE_FIND_STR fstr;
+	fstr.e = NULL;
+	fstr.ameth = NULL;
+	fstr.str = str;
+	fstr.len = len;
+	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
+	engine_table_doall(pkey_asn1_meth_table, look_str_cb, &fstr);
+	/* If found obtain a structural reference to engine */
+	if (fstr.e)
+		{
+		fstr.e->struct_ref++;
+		engine_ref_debug(fstr.e, 0, 1)
+		}
+	*pe = fstr.e;
+	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
+	return fstr.ameth;
+	}

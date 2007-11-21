@@ -203,20 +203,17 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_find_str(ENGINE **pe,
 		{
 #ifndef OPENSSL_NO_ENGINE
 		ENGINE *e;
-		for (e = ENGINE_get_first(); e; e = ENGINE_get_next(e))
+		ameth = ENGINE_pkey_asn1_find_str(&e, str, len);
+		if (ameth)
 			{
-			ameth = ENGINE_get_pkey_asn1_meth_str(e, str, len);
-			if (ameth)
-				{
-				/* Convert structural into
-				 * functional reference
-				 */
-				if (!ENGINE_init(e))
-					ameth = NULL;
-				ENGINE_free(e);
-				*pe = e;
-				return ameth;
-				}
+			/* Convert structural into
+			 * functional reference
+			 */
+			if (!ENGINE_init(e))
+				ameth = NULL;
+			ENGINE_free(e);
+			*pe = e;
+			return ameth;
 			}
 #endif
 		*pe = NULL;
