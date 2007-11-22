@@ -115,12 +115,14 @@ sub ::file
 
 sub ::function_begin_B
 { my($func,$extra)=@_;
-  my $tmp;
+  my $begin;
 
     &::external_label($func);
+    $label{$func} = $begin = "${dot}L_${func}_begin";
     $func=$under.$func;
 
-    push(@out,".text\n.globl\t$func\n");
+    push(@out,".text\n");
+    push(@out,".globl\t$func\n") if ($func !~ /^${under}_/);
     if ($::coff)
     {	push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
     elsif ($::aout and !$::pic)
@@ -129,18 +131,19 @@ sub ::function_begin_B
     {	push(@out,".type	$func,\@function\n"); }
     push(@out,".align\t$align\n");
     push(@out,"$func:\n");
+    push(@out,"$begin:\n");
     $::stack=4;
 }
 
 sub ::function_end_B
 { my($func)=@_;
+  my $i;
 
-    $func=$under.$func;
     push(@out,"${dot}L_${func}_end:\n");
     if ($::elf)
-    {	push(@out,".size\t$func,${dot}L_${func}_end-$func\n"); }
+    {	push(@out,".size\t$under$func,${dot}L_${func}_end-${dot}L_${func}_begin\n"); }
     $::stack=0;
-    %label=();
+    foreach $i (keys %label) { delete $label{$i} if ($label{$i} =~ /^${dot}L[0-9]{3}/); }
 }
 
 sub ::comment
@@ -162,8 +165,8 @@ sub ::comment
 
 sub islabel	# see is argument is a known label
 { my $i;
-    foreach $i (%label) { return $label{$i} if ($label{$i} eq $_[0]); }
-  undef;
+    foreach $i (values %label) { return $i if ($i eq $_[0]); }
+  $label{$_[0]};	# can be undef
 }
 
 sub ::external_label { push(@labels,@_); }

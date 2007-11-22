@@ -2657,12 +2657,10 @@ sub enckey()
 	&xor	("eax",&DWP(1024-128,$tbl,"ecx",4));	# rcon
 }
 
-# int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
-#                        AES_KEY *key)
 &public_label("AES_Te");
-&function_begin("AES_set_encrypt_key");
-	&mov	("esi",&wparam(0));		# user supplied key
-	&mov	("edi",&wparam(2));		# private key schedule
+&function_begin("_x86_AES_set_encrypt_key");
+	&mov	("esi",&wparam(1));		# user supplied key
+	&mov	("edi",&wparam(3));		# private key schedule
 
 	&test	("esi",-1);
 	&jz	(&label("badpointer"));
@@ -2685,7 +2683,7 @@ sub enckey()
 	&mov	("ecx",&DWP(192-128,$tbl));
 	&mov	("edx",&DWP(224-128,$tbl));
 
-	&mov	("ecx",&wparam(1));		# number of bits in key
+	&mov	("ecx",&wparam(2));		# number of bits in key
 	&cmp	("ecx",128);
 	&je	(&label("10rounds"));
 	&cmp	("ecx",192);
@@ -2862,7 +2860,14 @@ sub enckey()
     &set_label("badpointer");
 	&mov	("eax",-1);
     &set_label("exit");
-&function_end("AES_set_encrypt_key");
+&function_end("_x86_AES_set_encrypt_key");
+
+# int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+#                        AES_KEY *key)
+&function_begin_B("AES_set_encrypt_key");
+	&call	("_x86_AES_set_encrypt_key");
+	&ret	();
+&function_end_B("AES_set_encrypt_key");
 
 sub deckey()
 { my ($i,$key,$tp1,$tp2,$tp4,$tp8) = @_;
@@ -2921,18 +2926,8 @@ sub deckey()
 
 # int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
 #                        AES_KEY *key)
-&public_label("AES_Td");
-&public_label("AES_Te");
 &function_begin_B("AES_set_decrypt_key");
-	&mov	("eax",&wparam(0));
-	&mov	("ecx",&wparam(1));
-	&mov	("edx",&wparam(2));
-	&sub	("esp",12);
-	&mov	(&DWP(0,"esp"),"eax");
-	&mov	(&DWP(4,"esp"),"ecx");
-	&mov	(&DWP(8,"esp"),"edx");
-	&call	("AES_set_encrypt_key");
-	&add	("esp",12);
+	&call	("_x86_AES_set_encrypt_key");
 	&cmp	("eax",0);
 	&je	(&label("proceed"));
 	&ret	();
