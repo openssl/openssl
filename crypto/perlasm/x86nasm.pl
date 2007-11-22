@@ -101,18 +101,21 @@ ___
 }
 
 sub ::function_begin_B
-{ my $func=$under.shift;
+{ my $func=shift;
+  my $begin="${lprfx}_${func}_begin";
   my $tmp=<<___;
 global	$func
 align	16
-$func:
+$under$func:
+$begin:
 ___
+    $label{$func}=$begin;
     push(@out,$tmp);
     $::stack=4;
 }
 sub ::function_end_B
 { my $i;
-    foreach $i (%label) { undef $label{$i} if ($label{$i} =~ /^$prfx/);  }
+    foreach $i (keys %label) { delete $label{$i} if ($label{$i} =~ /^${lprfx}[0-9]{3}/);  }
     $::stack=0;
 }
 
@@ -199,8 +202,8 @@ sub ::comment {   foreach (@_) { push(@out,"\t; $_\n"); }   }
 
 sub islabel	# see is argument is known label
 { my $i;
-    foreach $i (%label) { return $label{$i} if ($label{$i} eq $_[0]); }
-  undef;
+    foreach $i (values %label) { return $i if ($i eq $_[0]); }
+  $label{$_[0]};	# can be undef
 }
 
 sub ::external_label
