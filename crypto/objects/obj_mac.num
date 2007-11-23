@@ -782,3 +782,4 @@ hmac_sha1		781
 id_PasswordBasedMAC		782
 id_DHBasedMac		783
 id_it_suppLangTags		784
+caRepository		785

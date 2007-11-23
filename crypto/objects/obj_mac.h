@@ -1772,6 +1772,11 @@
 #define NID_ad_dvcs		364
 #define OBJ_ad_dvcs		OBJ_id_ad,4L
 
+#define SN_caRepository		"caRepository"
+#define LN_caRepository		"CA Respository"
+#define NID_caRepository		785
+#define OBJ_caRepository		OBJ_id_ad,4L
+
 #define OBJ_id_pkix_OCSP		OBJ_ad_OCSP
 
 #define SN_id_pkix_OCSP_basic		"basicOCSPResponse"

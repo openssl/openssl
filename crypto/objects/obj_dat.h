@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 785
-#define NUM_SN 778
-#define NUM_LN 778
-#define NUM_OBJ 734
+#define NUM_NID 786
+#define NUM_SN 779
+#define NUM_LN 779
+#define NUM_OBJ 735
 
-static unsigned char lvalues[5196]={
+static unsigned char lvalues[5204]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -802,6 +802,7 @@ static unsigned char lvalues[5196]={
 0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x0D,/* [5169] OBJ_id_PasswordBasedMAC */
 0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x1E,/* [5178] OBJ_id_DHBasedMac */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x10,     /* [5187] OBJ_id_it_suppLangTags */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x04,     /* [5195] OBJ_caRepository */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2022,6 +2023,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5178]),0},
 {"id-it-suppLangTags","id-it-suppLangTags",NID_id_it_suppLangTags,8,
 	&(lvalues[5187]),0},
+{"caRepository","CA Respository",NID_caRepository,8,&(lvalues[5195]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2242,6 +2244,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[703]),/* "c2tnb431r1" */
 &(nid_objs[483]),/* "cNAMERecord" */
 &(nid_objs[179]),/* "caIssuers" */
+&(nid_objs[785]),/* "caRepository" */
 &(nid_objs[443]),/* "caseIgnoreIA5StringSyntax" */
 &(nid_objs[152]),/* "certBag" */
 &(nid_objs[677]),/* "certicom-arc" */
@@ -2814,6 +2817,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[365]),/* "Basic OCSP Response" */
 &(nid_objs[285]),/* "Biometric Info" */
 &(nid_objs[179]),/* "CA Issuers" */
+&(nid_objs[785]),/* "CA Respository" */
 &(nid_objs[131]),/* "Code Signing" */
 &(nid_objs[783]),/* "Diffie-Hellman based MAC" */
 &(nid_objs[382]),/* "Directory" */
@@ -4060,6 +4064,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[179]),/* OBJ_ad_ca_issuers                1 3 6 1 5 5 7 48 2 */
 &(nid_objs[363]),/* OBJ_ad_timeStamping              1 3 6 1 5 5 7 48 3 */
 &(nid_objs[364]),/* OBJ_ad_dvcs                      1 3 6 1 5 5 7 48 4 */
+&(nid_objs[785]),/* OBJ_caRepository                 1 3 6 1 5 5 7 48 4 */
 &(nid_objs[780]),/* OBJ_hmac_md5                     1 3 6 1 5 5 8 1 1 */
 &(nid_objs[781]),/* OBJ_hmac_sha1                    1 3 6 1 5 5 8 1 2 */
 &(nid_objs[58]),/* OBJ_netscape_cert_extension      2 16 840 1 113730 1 */
