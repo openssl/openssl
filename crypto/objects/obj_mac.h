@@ -1775,7 +1775,7 @@
 #define SN_caRepository		"caRepository"
 #define LN_caRepository		"CA Respository"
 #define NID_caRepository		785
-#define OBJ_caRepository		OBJ_id_ad,4L
+#define OBJ_caRepository		OBJ_id_ad,5L
 
 #define OBJ_id_pkix_OCSP		OBJ_ad_OCSP
 

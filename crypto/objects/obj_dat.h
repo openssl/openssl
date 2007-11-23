@@ -802,7 +802,7 @@ static unsigned char lvalues[5204]={
 0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x0D,/* [5169] OBJ_id_PasswordBasedMAC */
 0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x1E,/* [5178] OBJ_id_DHBasedMac */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x10,     /* [5187] OBJ_id_it_suppLangTags */
-0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x04,     /* [5195] OBJ_caRepository */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x05,     /* [5195] OBJ_caRepository */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -4064,7 +4064,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[179]),/* OBJ_ad_ca_issuers                1 3 6 1 5 5 7 48 2 */
 &(nid_objs[363]),/* OBJ_ad_timeStamping              1 3 6 1 5 5 7 48 3 */
 &(nid_objs[364]),/* OBJ_ad_dvcs                      1 3 6 1 5 5 7 48 4 */
-&(nid_objs[785]),/* OBJ_caRepository                 1 3 6 1 5 5 7 48 4 */
+&(nid_objs[785]),/* OBJ_caRepository                 1 3 6 1 5 5 7 48 5 */
 &(nid_objs[780]),/* OBJ_hmac_md5                     1 3 6 1 5 5 8 1 1 */
 &(nid_objs[781]),/* OBJ_hmac_sha1                    1 3 6 1 5 5 8 1 2 */
 &(nid_objs[58]),/* OBJ_netscape_cert_extension      2 16 840 1 113730 1 */
