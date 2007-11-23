@@ -807,7 +807,7 @@ id_GostR3410_2001		806
 id_GostR3410_94		807
 id_Gost28147_89		808
 gost89_cnt		809
-id_Gost28147_89_MAC		810
+id_Gost28147_89_MAC					810
 id_GostR3411_94_prf		811
 id_GostR3410_2001DH		812
 id_GostR3410_94DH		813
@@ -848,4 +848,3 @@ id_GostR3411_94_with_GostR3410_94_cc		847
 id_GostR3411_94_with_GostR3410_2001_cc		848
 id_GostR3410_2001_ParamSet_cc		849
 hmac		850
-id_Gost28147_89_MAC					851

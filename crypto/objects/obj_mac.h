@@ -3453,7 +3453,7 @@
 
 #define SN_id_Gost28147_89_MAC					"gost-mac"
 #define LN_id_Gost28147_89_MAC					"GOST 28147-89 MAC"
-#define NID_id_Gost28147_89_MAC					851
+#define NID_id_Gost28147_89_MAC					810
 #define OBJ_id_Gost28147_89_MAC					OBJ_cryptopro,22L
 
 #define SN_id_GostR3411_94_prf		"prf-gostr3411-94"
