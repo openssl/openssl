@@ -2023,7 +2023,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5178]),0},
 {"id-it-suppLangTags","id-it-suppLangTags",NID_id_it_suppLangTags,8,
 	&(lvalues[5187]),0},
-{"caRepository","CA Respository",NID_caRepository,8,&(lvalues[5195]),0},
+{"caRepository","CA Repository",NID_caRepository,8,&(lvalues[5195]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2817,7 +2817,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[365]),/* "Basic OCSP Response" */
 &(nid_objs[285]),/* "Biometric Info" */
 &(nid_objs[179]),/* "CA Issuers" */
-&(nid_objs[785]),/* "CA Respository" */
+&(nid_objs[785]),/* "CA Repository" */
 &(nid_objs[131]),/* "Code Signing" */
 &(nid_objs[783]),/* "Diffie-Hellman based MAC" */
 &(nid_objs[382]),/* "Directory" */

@@ -579,7 +579,7 @@ id-ad 2			: caIssuers		: CA Issuers
 id-ad 3			: ad_timestamping	: AD Time Stamping
 !Cname ad-dvcs
 id-ad 4			: AD_DVCS		: ad dvcs
-id-ad 5			: caRepository		: CA Respository
+id-ad 5			: caRepository		: CA Repository
 
 
 !Alias id-pkix-OCSP ad-OCSP

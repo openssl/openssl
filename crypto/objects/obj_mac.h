@@ -1773,7 +1773,7 @@
 #define OBJ_ad_dvcs		OBJ_id_ad,4L
 
 #define SN_caRepository		"caRepository"
-#define LN_caRepository		"CA Respository"
+#define LN_caRepository		"CA Repository"
 #define NID_caRepository		785
 #define OBJ_caRepository		OBJ_id_ad,5L
 
