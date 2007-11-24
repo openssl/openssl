@@ -4,9 +4,11 @@ package x86nasm;
 
 *out=\@::out;
 
-$lprfx="\@L";
+$lbdecor="\@L";			# local label decoration
+$nmdecor=$::netware?"":"_";	# external name decoration
+$drdecor=$::mwerks?".":"";	# directive decoration
+
 $label="000";
-$under=($::netware)?'':'_';
 $initseg="";
 
 sub ::generic
@@ -29,7 +31,7 @@ sub ::movz	{ &::movzx(@_);		}
 sub ::pushf	{ &::pushfd;		}
 sub ::popf	{ &::popfd;		}
 
-sub ::call	{ &::emit("call",(&islabel($_[0]) or "$under$_[0]")); }
+sub ::call	{ &::emit("call",(&islabel($_[0]) or "$nmdecor$_[0]")); }
 sub ::call_ptr	{ &::emit("call",@_);	}
 sub ::jmp_ptr	{ &::emit("jmp",@_);	}
 
@@ -58,7 +60,7 @@ sub get_mem
 
     $addr =~ s/^\s+//;
     # prepend global references with optional underscore
-    $addr =~ s/^([^\+\-0-9][^\+\-]*)/islabel($1) or "$under$1"/ige;
+    $addr =~ s/^([^\+\-0-9][^\+\-]*)/islabel($1) or "$nmdecor$1"/ige;
     # put address arithmetic expression in parenthesis
     $addr="($addr)" if ($addr =~ /^.+[\-\+].+$/);
 
@@ -102,20 +104,22 @@ ___
 
 sub ::function_begin_B
 { my $func=shift;
-  my $begin="${lprfx}_${func}_begin";
-  my $tmp=<<___;
-global	$func
-align	16
-$under$func:
-$begin:
-___
-    $label{$func}=$begin;
-    push(@out,$tmp);
+  my $global=($func !~ /^_/);
+  my $begin="${lbdecor}_${func}_begin";
+
+    $label{$func}=$global?"$begin":"$nmdecor$func";
+    $func=$nmdecor.$func;
+
+    push(@out,"${drdecor}global	$func\n")	if ($global);
+    push(@out,"${drdecor}align	16\n");
+    push(@out,"$func:\n");
+    push(@out,"$begin:\n")			if ($global);
     $::stack=4;
 }
 sub ::function_end_B
 { my $i;
-    foreach $i (keys %label) { delete $label{$i} if ($label{$i} =~ /^${lprfx}[0-9]{3}/);  }
+    foreach $i (keys %label)
+    {	delete $label{$i} if ($label{$i} =~ /^${lbdecor}[0-9]{3}/);	}
     $::stack=0;
 }
 
@@ -126,10 +130,10 @@ sub ::file_end
 	# was initialized already...
 	my $code=<<___;
 align	16
-${lprfx}OPENSSL_ia32cap_init:
-	lea	edx,[${under}OPENSSL_ia32cap_P]
+${lbdecor}OPENSSL_ia32cap_init:
+	lea	edx,[${nmdecor}OPENSSL_ia32cap_P]
 	cmp	DWORD [edx],0
-	jne	NEAR ${lprfx}nocpuid
+	jne	NEAR ${lbdecor}nocpuid
 	mov	DWORD [edx],1<<10
 	pushfd
 	pop	eax
@@ -141,7 +145,7 @@ ${lprfx}OPENSSL_ia32cap_init:
 	pop	eax
 	xor	eax,ecx
 	bt	eax,21
-	jnc	NEAR ${lprfx}nocpuid
+	jnc	NEAR ${lbdecor}nocpuid
 	push	ebp
 	push	edi
 	push	ebx
@@ -161,38 +165,38 @@ ${lprfx}OPENSSL_ia32cap_init:
 	mov	eax,1
 	cpuid
 	cmp	ebp,0
-	jne	${lprfx}notP4
+	jne	${lbdecor}notP4
 	and	ah,15
 	cmp	ah,15
-	jne	${lprfx}notP4
+	jne	${lbdecor}notP4
 	or	edx,1<<20
-${lprfx}notP4:
+${lbdecor}notP4:
 	bt	edx,28
-	jnc	${lprfx}done
+	jnc	${lbdecor}done
 	shr	ebx,16
 	cmp	bl,1
-	ja	${lprfx}done
+	ja	${lbdecor}done
 	and	edx,0xefffffff
-${lprfx}done:
+${lbdecor}done:
 	or	edx,1<<10
 	mov	DWORD [edi],edx
 	pop	ebx
 	pop	edi
 	pop	ebp
-${lprfx}nocpuid:
+${lbdecor}nocpuid:
 	ret
 segment	.CRT\$XCU data align=4
-dd	${lprfx}OPENSSL_ia32cap_init
+dd	${lbdecor}OPENSSL_ia32cap_init
 ___
 	my $data=<<___;
 segment	.bss
-common	${under}OPENSSL_ia32cap_P 4
+common	${nmdecor}OPENSSL_ia32cap_P 4
 ___
 
 	#<not needed in OpenSSL context>#push (@out,$code);
 
 	# comment out OPENSSL_ia32cap_P declarations
-	grep {s/(^extern\s+${under}OPENSSL_ia32cap_P)/\;$1/} @out;
+	grep {s/(^extern\s+${nmdecor}OPENSSL_ia32cap_P)/\;$1/} @out;
 	push (@out,$data)
     }
     push (@out,$initseg) if ($initseg);		
@@ -209,19 +213,17 @@ sub islabel	# see is argument is known label
 sub ::external_label
 {   push(@labels,@_);
     foreach (@_)
-    {	push(@out,".") if ($::mwerks);
-	push(@out, "extern\t${under}$_\n");
-    }
+    {	push(@out, "${drdecor}extern\t${nmdecor}$_\n");	}
 }
 
 sub ::public_label
-{   $label{$_[0]}="${under}${_[0]}" if (!defined($label{$_[0]}));
-    push(@out,"global\t$label{$_[0]}\n");
+{   $label{$_[0]}="${nmdecor}${_[0]}" if (!defined($label{$_[0]}));
+    push(@out,"${drdecor}global\t$label{$_[0]}\n");
 }
 
 sub ::label
 {   if (!defined($label{$_[0]}))
-    {	$label{$_[0]}="${lprfx}${label}${_[0]}"; $label++;   }
+    {	$label{$_[0]}="${lbdecor}${label}${_[0]}"; $label++;   }
   $label{$_[0]};
 }
 
@@ -238,7 +240,7 @@ sub ::data_word
 {   push(@out,(($::mwerks)?".long\t":"dd\t").join(',',@_)."\n");	}
 
 sub ::align
-{   push(@out,".") if ($::mwerks); push(@out,"align\t$_[0]\n");	}
+{   push(@out,"${drdecor}align\t$_[0]\n");	}
 
 sub ::picmeup
 { my($dst,$sym)=@_;
@@ -246,7 +248,7 @@ sub ::picmeup
 }
 
 sub ::initseg
-{ my($f)=$under.shift;
+{ my($f)=$nmdecor.shift;
     if ($::win32)
     {	$initseg=<<___;
 segment	.CRT\$XCU data align=4

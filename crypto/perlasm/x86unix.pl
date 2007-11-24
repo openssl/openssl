@@ -4,11 +4,13 @@ package x86unix;	# GAS actually...
 
 *out=\@::out;
 
-$label="L000";
+$lbdecor=$::aout?"L":".L";		# local label decoration
+$nmdecor=($::aout or $::coff)?"_":"";	# external name decoration
 
-$align=($::aout)?"4":"16";
-$under=($::aout or $::coff)?"_":"";
-$dot=($::aout)?"":".";
+$label="000";
+
+$align=16;
+$align=log($align)/log(2) if ($::aout);
 $com_start="#" if ($::aout or $::coff);
 
 sub opsize()
@@ -63,7 +65,7 @@ sub ::popf	{ &::popfl;			}
 sub ::cpuid	{ &::emit(".byte\t0x0f,0xa2");	}
 sub ::rdtsc	{ &::emit(".byte\t0x0f,0x31");	}
 
-sub ::call	{ &::emit("call",(&islabel($_[0]) or "$under$_[0]")); }
+sub ::call	{ &::emit("call",(&islabel($_[0]) or "$nmdecor$_[0]")); }
 sub ::call_ptr	{ &::generic("call","*$_[0]");	}
 sub ::jmp_ptr	{ &::generic("jmp","*$_[0]");	}
 
@@ -89,7 +91,7 @@ sub ::DWP
 
     $addr =~ s/^\s+//;
     # prepend global references with optional underscore
-    $addr =~ s/^([^\+\-0-9][^\+\-]*)/islabel($1) or "$under$1"/ige;
+    $addr =~ s/^([^\+\-0-9][^\+\-]*)/islabel($1) or "$nmdecor$1"/ige;
 
     $reg1 = "%$reg1" if ($reg1);
     $reg2 = "%$reg2" if ($reg2);
@@ -115,14 +117,15 @@ sub ::file
 
 sub ::function_begin_B
 { my($func,$extra)=@_;
-  my $begin;
+  my $global=($func !~ /^_/);
+  my $begin="${lbdecor}_${func}_begin";
 
     &::external_label($func);
-    $label{$func} = $begin = "${dot}L_${func}_begin";
-    $func=$under.$func;
+    $label{$func} = $global?"$begin":"$nmdecor$func";
+    $func=$nmdecor.$func;
 
     push(@out,".text\n");
-    push(@out,".globl\t$func\n") if ($func !~ /^${under}_/);
+    push(@out,".globl\t$func\n")	if ($global);
     if ($::coff)
     {	push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
     elsif ($::aout and !$::pic)
@@ -131,7 +134,7 @@ sub ::function_begin_B
     {	push(@out,".type	$func,\@function\n"); }
     push(@out,".align\t$align\n");
     push(@out,"$func:\n");
-    push(@out,"$begin:\n");
+    push(@out,"$begin:\n")		if ($global);
     $::stack=4;
 }
 
@@ -139,11 +142,10 @@ sub ::function_end_B
 { my($func)=@_;
   my $i;
 
-    push(@out,"${dot}L_${func}_end:\n");
-    if ($::elf)
-    {	push(@out,".size\t$under$func,${dot}L_${func}_end-${dot}L_${func}_begin\n"); }
+    push(@out,".size\t$nmdecor$func,.-$label{$func}\n") if ($::elf);
+    foreach $i (keys %label)
+    {	delete $label{$i} if ($label{$i} =~ /^${lbdecor}[0-9]{3}/);	}
     $::stack=0;
-    foreach $i (keys %label) { delete $label{$i} if ($label{$i} =~ /^${dot}L[0-9]{3}/); }
 }
 
 sub ::comment
@@ -172,13 +174,13 @@ sub islabel	# see is argument is a known label
 sub ::external_label { push(@labels,@_); }
 
 sub ::public_label
-{   $label{$_[0]}="${under}${_[0]}"	if (!defined($label{$_[0]}));
+{   $label{$_[0]}="${nmdecor}${_[0]}"	if (!defined($label{$_[0]}));
     push(@out,".globl\t$label{$_[0]}\n");
 }
 
 sub ::label
 {   if (!defined($label{$_[0]}))
-    {	$label{$_[0]}="${dot}${label}${_[0]}"; $label++;   }
+    {	$label{$_[0]}="${lbdecor}${label}${_[0]}"; $label++;   }
   $label{$_[0]};
 }
 
@@ -193,7 +195,7 @@ sub ::file_end
     if ($::elf && grep {/\b%[x]?mm[0-7]\b|OPENSSL_ia32cap_P\b/i} @out) {
 
 	push (@out,"\n.section\t.bss\n");
-	push (@out,".comm\t${under}OPENSSL_ia32cap_P,4,4\n");
+	push (@out,".comm\t${nmdecor}OPENSSL_ia32cap_P,4,4\n");
 
 	return;	# below is not needed in OpenSSL context
 
@@ -280,14 +282,14 @@ sub ::picmeup
 	{   &::call(&::label("PIC_me_up"));
 	    &::set_label("PIC_me_up");
 	    &::blindpop($dst);
-	    &::add($dst,"\$${under}_GLOBAL_OFFSET_TABLE_+[.-".
+	    &::add($dst,"\$${nmdecor}_GLOBAL_OFFSET_TABLE_+[.-".
 			    &::label("PIC_me_up") . "]");
 	}
 	else
-	{   &::lea($dst,&::DWP("${under}_GLOBAL_OFFSET_TABLE_+[.-$reflabel]",
+	{   &::lea($dst,&::DWP("${nmdecor}_GLOBAL_OFFSET_TABLE_+[.-$reflabel]",
 			    $base));
 	}
-	&::mov($dst,&::DWP($under.$sym."\@GOT",$dst));
+	&::mov($dst,&::DWP("$nmdecor$sym\@GOT",$dst));
     }
     else
     {	&::lea($dst,&::DWP($sym));	}
@@ -300,7 +302,7 @@ sub ::initseg
     if ($::elf)
     {	$tmp=<<___;
 .section	.init
-	call	$under$f
+	call	$nmdecor$f
 	jmp	.Linitalign
 .align	$align
 .Linitalign:
@@ -309,18 +311,18 @@ ___
     elsif ($::coff)
     {   $tmp=<<___;	# applies to both Cygwin and Mingw
 .section	.ctors
-.long	$under$f
+.long	$nmdecor$f
 ___
     }
     elsif ($::aout)
-    {	$ctor="${under}_GLOBAL_\$I\$$f";
+    {	$ctor="${nmdecor}_GLOBAL_\$I\$$f";
 	$tmp=".text\n";
 	$tmp.=".type	$ctor,\@function\n" if ($::pic);
 	$tmp.=<<___;	# OpenBSD way...
 .globl	$ctor
 .align	2
 $ctor:
-	jmp	$under$f
+	jmp	$nmdecor$f
 ___
     }
     push(@out,$tmp) if ($tmp);
