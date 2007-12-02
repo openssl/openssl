@@ -143,7 +143,7 @@ sub RC4_loop {
 		&movz	($ty,&BP(0,$dat,$ty));
 		&add	(&LB($xx),1);
 		&xor	(&LB($ty),&BP(0,$inp));
-		&lea	($inp,&BP(1,$inp));
+		&lea	($inp,&DWP(1,$inp));
 		&movz	($tx,&BP(0,$dat,$xx));
 		&cmp	($inp,&wparam(1));
 		&mov	(&BP(-1,$out,$inp),&LB($ty));
