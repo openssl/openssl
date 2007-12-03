@@ -5,7 +5,11 @@
 #
 
 SH="/bin/sh"
-PATH=../../apps:$PATH
+if test "$OSTYPE" = msdosdjgpp; then
+    PATH="../apps\;$PATH"
+else
+    PATH="../apps:$PATH"
+fi
 export SH PATH
 
 OPENSSL_CONF="../CAtsa.cnf"

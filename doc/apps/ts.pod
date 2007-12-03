@@ -370,7 +370,7 @@ See L<ca(1)|ca(1)> for description. (Optional)
 
 The name of the file containing the hexadecimal serial number of the
 last time stamp response created. This number is incremented by 1 for
-each response. If the file does not exit at the time of response
+each response. If the file does not exist at the time of response
 generation a new file is created with serial number 1. (Mandatory)
 
 =item B<crypto_device>

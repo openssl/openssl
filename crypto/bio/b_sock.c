@@ -800,7 +800,7 @@ int BIO_accept(int sock, char **addr)
 	if (addr == NULL) goto end;
 
 #ifdef EAI_FAMILY
-# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_BEOS_BONE)
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_BEOS_BONE) || defined(OPENSSL_SYS_MSDOS)
 #  define SOCKLEN_T size_t
 # else
 #  define SOCKLEN_T socklen_t
