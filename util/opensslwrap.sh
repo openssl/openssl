@@ -3,6 +3,10 @@
 HERE="`echo $0 | sed -e 's|[^/]*$||'`"
 OPENSSL="${HERE}../apps/openssl"
 
+if [ -d "${HERE}../engines" -a "x$OPENSSL_ENGINES" = "x" ]; then
+	OPENSSL_ENGINES="${HERE}../engines"; export OPENSSL_ENGINES
+fi
+
 if [ -x "${OPENSSL}.exe" ]; then
 	# The original reason for this script existence is to work around
 	# certain caveats in run-time linker behaviour. On Windows platforms
