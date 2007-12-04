@@ -316,7 +316,7 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
 			return -1;
 		if (memcmp(md, cid->issuerNameHash->data, mdlen))
 			return 0;
-		X509_pubkey_digest(cert, EVP_sha1(), md, NULL);
+		X509_pubkey_digest(cert, dgst, md, NULL);
 		if (memcmp(md, cid->issuerKeyHash->data, mdlen))
 			return 0;
 

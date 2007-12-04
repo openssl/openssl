@@ -51,6 +51,7 @@ B<openssl> B<ocsp>
 [B<-ndays n>]
 [B<-resp_key_id>]
 [B<-nrequest n>]
+[B<-md5|-sha1|...>]
 
 =head1 DESCRIPTION
 
@@ -205,6 +206,11 @@ If the B<notAfter> time is omitted from a response then this means that new stat
 information is immediately available. In this case the age of the B<notBefore> field
 is checked to see it is not older than B<age> seconds old. By default this additional
 check is not performed.
+
+=item B<-md5|-sha1|-sha256|-ripemod160|...>
+
+this option sets digest algorithm to use for certificate identification
+in the OCSP request. By default SHA-1 is used. 
 
 =back
 

@@ -65,14 +65,15 @@
 #include <openssl/ocsp.h>
 #include <openssl/txt_db.h>
 #include <openssl/ssl.h>
+#include <openssl/evp.h>
 #include "apps.h"
 
 /* Maximum leeway in validity period: default 5 minutes */
 #define MAX_VALIDITY_PERIOD	(5 * 60)
 
-static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
+static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, const EVP_MD *cert_id_md, X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids);
-static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, X509 *issuer,
+static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, const EVP_MD * cert_id_md, X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids);
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 				STACK *names, STACK_OF(OCSP_CERTID) *ids,
@@ -136,6 +137,7 @@ int MAIN(int argc, char **argv)
 	char *rca_filename = NULL;
 	CA_DB *rdb = NULL;
 	int nmin = 0, ndays = -1;
+	const EVP_MD *cert_id_md = NULL;
 
 	if (bio_err == NULL) bio_err = BIO_new_fp(stderr, BIO_NOCLOSE);
 
@@ -403,7 +405,8 @@ int MAIN(int argc, char **argv)
 				cert = load_cert(bio_err, *args, FORMAT_PEM,
 					NULL, e, "certificate");
 				if(!cert) goto end;
-				if(!add_ocsp_cert(&req, cert, issuer, ids))
+				if (!cert_id_md) cert_id_md = EVP_sha1();
+				if(!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids))
 					goto end;
 				if(!sk_push(reqnames, *args))
 					goto end;
@@ -415,7 +418,8 @@ int MAIN(int argc, char **argv)
 			if (args[1])
 				{
 				args++;
-				if(!add_ocsp_serial(&req, *args, issuer, ids))
+				if (!cert_id_md) cert_id_md = EVP_sha1();
+				if(!add_ocsp_serial(&req, *args, cert_id_md, issuer, ids))
 					goto end;
 				if(!sk_push(reqnames, *args))
 					goto end;
@@ -517,7 +521,10 @@ int MAIN(int argc, char **argv)
 				}
 			else badarg = 1;
 			}
-		else badarg = 1;
+		else if ((cert_id_md = EVP_get_digestbyname((*args)+1))==NULL)
+			{
+			badarg = 1;
+			}
 		args++;
 		}
 
@@ -573,6 +580,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-ndays n	 	 number of days before next update\n");
 		BIO_printf (bio_err, "-resp_key_id       identify reponse by signing certificate key ID\n");
 		BIO_printf (bio_err, "-nrequest n        number of requests to accept (default unlimited)\n");
+		BIO_printf (bio_err, "-<dgst alg>     use specified digest in the request");
 		goto end;
 		}
 
@@ -679,7 +687,8 @@ int MAIN(int argc, char **argv)
 			"signer private key");
 		if (!key)
 			goto end;
-		if (!OCSP_request_sign(req, signer, key, EVP_sha1(), sign_other, sign_flags))
+
+		if (!OCSP_request_sign(req, signer, key, NULL, sign_other, sign_flags))
 			{
 			BIO_printf(bio_err, "Error signing OCSP request\n");
 			goto end;
@@ -883,7 +892,7 @@ end:
 	OPENSSL_EXIT(ret);
 }
 
-static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
+static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, const EVP_MD *cert_id_md,X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids)
 	{
 	OCSP_CERTID *id;
@@ -894,7 +903,7 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
 		}
 	if(!*req) *req = OCSP_REQUEST_new();
 	if(!*req) goto err;
-	id = OCSP_cert_to_id(NULL, cert, issuer);
+	id = OCSP_cert_to_id(cert_id_md, cert, issuer);
 	if(!id || !sk_OCSP_CERTID_push(ids, id)) goto err;
 	if(!OCSP_request_add0_id(*req, id)) goto err;
 	return 1;
@@ -904,7 +913,7 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, X509 *issuer,
 	return 0;
 	}
 
-static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, X509 *issuer,
+static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,const EVP_MD *cert_id_md, X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids)
 	{
 	OCSP_CERTID *id;
@@ -926,7 +935,7 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, X509 *issuer,
 		BIO_printf(bio_err, "Error converting serial number %s\n", serial);
 		return 0;
 		}
-	id = OCSP_cert_id_new(EVP_sha1(), iname, ikey, sno);
+	id = OCSP_cert_id_new(cert_id_md, iname, ikey, sno);
 	ASN1_INTEGER_free(sno);
 	if(!id || !sk_OCSP_CERTID_push(ids, id)) goto err;
 	if(!OCSP_request_add0_id(*req, id)) goto err;
@@ -1012,7 +1021,6 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 	OCSP_BASICRESP *bs = NULL;
 	int i, id_count, ret = 1;
 
-
 	id_count = OCSP_request_onereq_count(req);
 
 	if (id_count <= 0)
@@ -1080,8 +1088,8 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 		}
 
 	OCSP_copy_nonce(bs, req);
-		
-	OCSP_basic_sign(bs, rcert, rkey, EVP_sha1(), rother, flags);
+	
+	OCSP_basic_sign(bs, rcert, rkey, NULL, rother, flags);
 
 	*resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, bs);
 
