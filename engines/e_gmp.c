@@ -57,10 +57,10 @@
  */
 
 /* This engine is not (currently) compiled in by default. Do enable it,
- * reconfigure OpenSSL with "-DOPENSSL_USE_GMP -lgmp". The GMP libraries and
+ * reconfigure OpenSSL with "enable-gmp -lgmp". The GMP libraries and
  * headers must reside in one of the paths searched by the compiler/linker,
  * otherwise paths must be specified - eg. try configuring with
- * "-DOPENSSL_USE_GMP -I<includepath> -L<libpath> -lgmp". YMMV. */
+ * "enable-gmp -I<includepath> -L<libpath> -lgmp". YMMV. */
 
 /* As for what this does - it's a largely unoptimised implementation of an
  * ENGINE that uses the GMP library to perform RSA private key operations. To
@@ -87,7 +87,7 @@
 #include <openssl/engine.h>
 
 #ifndef OPENSSL_NO_HW
-#if defined(OPENSSL_USE_GMP) && !defined(OPENSSL_NO_HW_GMP)
+#ifndef OPENSSL_NO_GMP
 
 #include <gmp.h>
 
@@ -430,6 +430,6 @@ IMPLEMENT_DYNAMIC_CHECK_FN()
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
 #endif /* ENGINE_DYNAMIC_SUPPORT */
 
-#endif /* !OPENSSL_NO_HW_GMP */
+#endif /* !OPENSSL_NO_GMP */
 #endif /* !OPENSSL_NO_HW */
 
