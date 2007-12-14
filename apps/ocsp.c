@@ -1029,7 +1029,6 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 		goto end;
 		}
 
-	ca_id = OCSP_cert_to_id(EVP_sha1(), NULL, ca);
 
 	bs = OCSP_BASICRESP_new();
 	thisupd = X509_gmtime_adj(NULL, 0);
@@ -1042,8 +1041,23 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 		OCSP_ONEREQ *one;
 		ASN1_INTEGER *serial;
 		char **inf;
+		ASN1_OBJECT *cert_id_md_oid;
+		const EVP_MD *cert_id_md;
 		one = OCSP_request_onereq_get0(req, i);
 		cid = OCSP_onereq_get0_id(one);
+
+		OCSP_id_get0_info(NULL,&cert_id_md_oid, NULL,NULL, cid);
+
+		cert_id_md = EVP_get_digestbyobj(cert_id_md_oid);	
+		if (! cert_id_md) 
+			{
+			*resp = OCSP_response_create(OCSP_RESPONSE_STATUS_INTERNALERROR,
+				NULL);
+				goto end;
+			}	
+		if (ca_id) OCSP_CERTID_free(ca_id);
+		ca_id = OCSP_cert_to_id(cert_id_md, NULL, ca);
+
 		/* Is this request about our CA? */
 		if (OCSP_id_issuer_cmp(ca_id, cid))
 			{
