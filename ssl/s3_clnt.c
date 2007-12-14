@@ -2659,7 +2659,7 @@ int ssl3_send_client_verify(SSL *s)
 		{
 		unsigned char signbuf[64];
 		int i;
-		size_t sigsize;
+		size_t sigsize=64;
 		s->method->ssl3_enc->cert_verify_mac(s,
 			NID_id_GostR3411_94,
 			data);
