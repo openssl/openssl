@@ -1,9 +1,9 @@
 
 Brief instructions on using OpenSSL 0.9.8 FIPS test branch.
 
-To avoid any confusion that this might generate a validate library just
+To avoid any confusion that this might generate a validated library just
 supplying "fips" on the command line wont work. Additional options are
-needed...
+needed... Also a prominent warning message is output.
 
 To build fipscanister and produce a usable distribution the configuration
 option "fipscanisterbuild" is used to either the config or Configure scripts.
@@ -11,23 +11,16 @@ For example:
 
 ./config fipscanisterbuild
 
-This builds static libraries in a way similar to the FIPS 1.1.1 distro.
-
-To build the shared library fipscanister version use the configuration
-options "fipsdso".
+This builds and shared libraries and the fipscanister.o module.
 
 Note that the fipscanister.o file is totally incompatible with the version
 produced by the FIPS 1.1.1 distribution and cannot be made to work with
 it.
 
-Both options should also work under Windows and VC++. With this version the
-use of MinGW is unnecessary and the normal VC++ build procedure can be
-followed *except* the GNU linker "ld.exe" (for example from MinGW) must be
-accessible somewhere on the PATH. For example:
+With this version neither MinGW nor ld.exe are required for a Win32 VC++ build.
+To build from a VC++ environment simply run:
 
-perl Configure VC-WIN32 fipsdso
-ms\do_masm
-nmake -f ms\ntdll.mak
+ms\do_fips
 
 Note that any warnings from a Windows version of "tar" about being unable to
 create symbolic links can be ignored.
