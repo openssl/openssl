@@ -186,11 +186,11 @@ typedef struct ocsp_resp_bytes_st
  *      responseStatus         OCSPResponseStatus,
  *      responseBytes          [0] EXPLICIT ResponseBytes OPTIONAL }
  */
-typedef struct ocsp_response_st
+struct ocsp_response_st
 	{
 	ASN1_ENUMERATED *responseStatus;
 	OCSP_RESPBYTES  *responseBytes;
-	} OCSP_RESPONSE;
+	};
 
 /*   ResponderID ::= CHOICE {
  *      byName   [1] Name,
@@ -198,14 +198,18 @@ typedef struct ocsp_response_st
  */
 #define V_OCSP_RESPID_NAME 0
 #define V_OCSP_RESPID_KEY  1
-typedef struct ocsp_responder_id_st
+struct ocsp_responder_id_st
 	{
 	int type;
 	union   {
 		X509_NAME* byName;
         	ASN1_OCTET_STRING *byKey;
 		} value;
-	} OCSP_RESPID;
+	};
+
+DECLARE_STACK_OF(OCSP_RESPID)
+DECLARE_ASN1_FUNCTIONS(OCSP_RESPID)
+
 /*   KeyHash ::= OCTET STRING --SHA-1 hash of responder's public key
  *                            --(excluding the tag and length fields)
  */
@@ -397,6 +401,10 @@ typedef struct ocsp_service_locator_st
 		(char *(*)())d2i_OCSP_CERTSTATUS,(char *)(cs))
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req);
+OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
+								int maxline);
+int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx);
+void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx);
 
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, X509 *subject, X509 *issuer);
 
@@ -469,7 +477,7 @@ int OCSP_basic_sign(OCSP_BASICRESP *brsp,
 ASN1_STRING *ASN1_STRING_encode(ASN1_STRING *s, i2d_of_void *i2d,
 				void *data, STACK_OF(ASN1_OBJECT) *sk);
 #define ASN1_STRING_encode_of(type,s,i2d,data,sk) \
-((ASN1_STRING *(*)(ASN1_STRING *,I2D_OF(type),type *,STACK_OF(ASN1_OBJECT) *))openssl_fcast(ASN1_STRING_encode))(s,i2d,data,sk)
+	ASN1_STRING_encode(s, CHECKED_I2D_OF(type, i2d), data, sk)
 
 X509_EXTENSION *OCSP_crlID_new(char *url, long *n, char *tim);
 
@@ -574,6 +582,7 @@ void ERR_load_OCSP_strings(void);
 #define OCSP_F_OCSP_REQUEST_VERIFY			 116
 #define OCSP_F_OCSP_RESPONSE_GET1_BASIC			 111
 #define OCSP_F_OCSP_SENDREQ_BIO				 112
+#define OCSP_F_PARSE_HTTP_LINE1				 117
 #define OCSP_F_REQUEST_VERIFY				 113
 
 /* Reason codes. */

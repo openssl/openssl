@@ -125,6 +125,8 @@
 #include <openssl/objects.h>
 #include <openssl/lhash.h>
 #include <openssl/x509v3.h>
+#include <openssl/rand.h>
+#include <openssl/ocsp.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
@@ -306,7 +308,19 @@ SSL *SSL_new(SSL_CTX *ctx)
 
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->ctx=ctx;
-
+#ifndef OPENSSL_NO_TLSEXT
+	s->tlsext_debug_cb = 0;
+	s->tlsext_debug_arg = NULL;
+	s->tlsext_ticket_expected = 0;
+	s->tlsext_status_type = -1;
+	s->tlsext_status_expected = 0;
+	s->tlsext_ocsp_ids = NULL;
+	s->tlsext_ocsp_exts = NULL;
+	s->tlsext_ocsp_resp = NULL;
+	s->tlsext_ocsp_resplen = -1;
+	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
+	s->initial_ctx=ctx;
+#endif
 	s->verify_result=X509_V_OK;
 
 	s->method=ctx->method;
@@ -492,7 +506,16 @@ void SSL_free(SSL *s)
 	/* Free up if allocated */
 
 	if (s->ctx) SSL_CTX_free(s->ctx);
-
+#ifndef OPENSSL_NO_TLSEXT
+	if (s->initial_ctx) SSL_CTX_free(s->initial_ctx);
+	if (s->tlsext_ocsp_exts)
+		sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
+						X509_EXTENSION_free);
+	if (s->tlsext_ocsp_ids)
+		sk_OCSP_RESPID_pop_free(s->tlsext_ocsp_ids, OCSP_RESPID_free);
+	if (s->tlsext_ocsp_resp)
+		OPENSSL_free(s->tlsext_ocsp_resp);
+#endif
 	if (s->client_CA != NULL)
 		sk_X509_NAME_pop_free(s->client_CA,X509_NAME_free);
 
@@ -1201,7 +1224,6 @@ int SSL_set_cipher_list(SSL *s,const char *str)
 char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 	{
 	char *p;
-	const char *cp;
 	STACK_OF(SSL_CIPHER) *sk;
 	SSL_CIPHER *c;
 	int i;
@@ -1214,20 +1236,21 @@ char *SSL_get_shared_ciphers(const SSL *s,char *buf,int len)
 	sk=s->session->ciphers;
 	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
-		/* Decrement for either the ':' or a '\0' */
-		len--;
+		int n;
+
 		c=sk_SSL_CIPHER_value(sk,i);
-		for (cp=c->name; *cp; )
+		n=strlen(c->name);
+		if (n+1 > len)
 			{
-			if (len-- <= 0)
-				{
-				*p='\0';
-				return(buf);
-				}
-			else
-				*(p++)= *(cp++);
+			if (p != buf)
+				--p;
+			*p='\0';
+			return buf;
 			}
+		strcpy(p,c->name);
+		p+=n;
 		*(p++)=':';
+		len-=n+1;
 		}
 	p[-1]='\0';
 	return(buf);
@@ -1303,6 +1326,29 @@ err:
 		sk_SSL_CIPHER_free(sk);
 	return(NULL);
 	}
+
+#ifndef OPENSSL_NO_TLSEXT
+/** return a servername extension value if provided in Client Hello, or NULL.
+ * So far, only host_name types are defined (RFC 3546).
+ */
+
+const char *SSL_get_servername(const SSL *s, const int type)
+	{
+	if (type != TLSEXT_NAMETYPE_host_name)
+		return NULL;
+
+	return s->session && !s->tlsext_hostname ?
+		s->session->tlsext_hostname :
+		s->tlsext_hostname;
+	}
+
+int SSL_get_servername_type(const SSL *s)
+	{
+	if (s->session && (!s->tlsext_hostname ? s->session->tlsext_hostname : s->tlsext_hostname))
+		return TLSEXT_NAMETYPE_host_name;
+	return -1;
+	}
+#endif
 
 unsigned long SSL_SESSION_hash(const SSL_SESSION *a)
 	{
@@ -1460,6 +1506,20 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 
 	ret->extra_certs=NULL;
 	ret->comp_methods=SSL_COMP_get_compression_methods();
+
+#ifndef OPENSSL_NO_TLSEXT
+	ret->tlsext_servername_callback = 0;
+	ret->tlsext_servername_arg = NULL;
+	/* Setup RFC4507 ticket keys */
+	if ((RAND_pseudo_bytes(ret->tlsext_tick_key_name, 16) <= 0)
+		|| (RAND_bytes(ret->tlsext_tick_hmac_key, 16) <= 0)
+		|| (RAND_bytes(ret->tlsext_tick_aes_key, 16) <= 0))
+		ret->options |= SSL_OP_NO_TICKET;
+
+	ret->tlsext_status_cb = 0;
+	ret->tlsext_status_arg = NULL;
+
+#endif
 
 	return(ret);
 err:
@@ -2407,6 +2467,24 @@ int SSL_version(const SSL *s)
 
 SSL_CTX *SSL_get_SSL_CTX(const SSL *ssl)
 	{
+	return(ssl->ctx);
+	}
+
+SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX* ctx)
+	{
+	if (ssl->ctx == ctx)
+		return ssl->ctx;
+#ifndef OPENSSL_NO_TLSEXT
+	if (ctx == NULL)
+		ctx = ssl->initial_ctx;
+#endif
+	if (ssl->cert != NULL)
+		ssl_cert_free(ssl->cert);
+	ssl->cert = ssl_cert_dup(ctx->cert);
+	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
+	if (ssl->ctx != NULL)
+		SSL_CTX_free(ssl->ctx); /* decrement reference count */
+	ssl->ctx = ctx;
 	return(ssl->ctx);
 	}
 

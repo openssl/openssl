@@ -1049,6 +1049,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_UNSUPPORTED_SALT_TYPE			 126
 #define EVP_R_WRONG_FINAL_BLOCK_LENGTH			 109
 #define EVP_R_WRONG_PUBLIC_KEY_TYPE			 110
+#define EVP_R_SEED_KEY_SETUP_FAILED			 162
 
 #ifdef  __cplusplus
 }

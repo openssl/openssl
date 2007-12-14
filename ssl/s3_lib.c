@@ -1904,6 +1904,77 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		}
 		break;
 #endif /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_HOSTNAME:
+ 		if (larg == TLSEXT_NAMETYPE_host_name)
+			{
+			if (s->tlsext_hostname != NULL) 
+				OPENSSL_free(s->tlsext_hostname);
+			s->tlsext_hostname = NULL;
+
+			ret = 1;
+			if (parg == NULL) 
+				break;
+			if (strlen((char *)parg) > TLSEXT_MAXLEN_host_name)
+				{
+				SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME);
+				return 0;
+				}
+			if ((s->tlsext_hostname = BUF_strdup((char *)parg)) == NULL)
+				{
+				SSLerr(SSL_F_SSL3_CTRL, ERR_R_INTERNAL_ERROR);
+				return 0;
+				}
+			}
+		else
+			{
+			SSLerr(SSL_F_SSL3_CTRL, SSL_R_SSL3_EXT_INVALID_SERVERNAME_TYPE);
+			return 0;
+			}
+ 		break;
+	case SSL_CTRL_SET_TLSEXT_DEBUG_ARG:
+		s->tlsext_debug_arg=parg;
+		ret = 1;
+		break;
+  
+	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_TYPE:
+		s->tlsext_status_type=larg;
+		ret = 1;
+		break;
+
+	case SSL_CTRL_GET_TLSEXT_STATUS_REQ_EXTS:
+		*(STACK_OF(X509_EXTENSION) **)parg = s->tlsext_ocsp_exts;
+		ret = 1;
+		break;
+
+	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_EXTS:
+		s->tlsext_ocsp_exts = parg;
+		ret = 1;
+		break;
+
+	case SSL_CTRL_GET_TLSEXT_STATUS_REQ_IDS:
+		*(STACK_OF(OCSP_RESPID) **)parg = s->tlsext_ocsp_ids;
+		ret = 1;
+		break;
+
+	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS:
+		s->tlsext_ocsp_ids = parg;
+		ret = 1;
+		break;
+
+	case SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP:
+		*(unsigned char **)parg = s->tlsext_ocsp_resp;
+		return s->tlsext_ocsp_resplen;
+		
+	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP:
+		if (s->tlsext_ocsp_resp)
+			OPENSSL_free(s->tlsext_ocsp_resp);
+		s->tlsext_ocsp_resp = parg;
+		s->tlsext_ocsp_resplen = larg;
+		ret = 1;
+		break;
+
+#endif /* !OPENSSL_NO_TLSEXT */
 	default:
 		break;
 		}
@@ -1953,6 +2024,12 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 		{
 		s->cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		}
+		break;
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_DEBUG_CB:
+		s->tlsext_debug_cb=(void (*)(SSL *,int ,int,
+					unsigned char *, int, void *))fp;
 		break;
 #endif
 	default:
@@ -2088,6 +2165,42 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		}
 		break;
 #endif /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_SERVERNAME_ARG:
+		ctx->tlsext_servername_arg=parg;
+		break;
+	case SSL_CTRL_SET_TLSEXT_TICKET_KEYS:
+	case SSL_CTRL_GET_TLSEXT_TICKET_KEYS:
+		{
+		unsigned char *keys = parg;
+		if (!keys)
+			return 48;
+		if (larg != 48)
+			{
+			SSLerr(SSL_F_SSL3_CTX_CTRL, SSL_R_INVALID_TICKET_KEYS_LENGTH);
+			return 0;
+			}
+		if (cmd == SSL_CTRL_SET_TLSEXT_TICKET_KEYS)
+			{
+			memcpy(ctx->tlsext_tick_key_name, keys, 16);
+			memcpy(ctx->tlsext_tick_hmac_key, keys + 16, 16);
+			memcpy(ctx->tlsext_tick_aes_key, keys + 32, 16);
+			}
+		else
+			{
+			memcpy(keys, ctx->tlsext_tick_key_name, 16);
+			memcpy(keys + 16, ctx->tlsext_tick_hmac_key, 16);
+			memcpy(keys + 32, ctx->tlsext_tick_aes_key, 16);
+			}
+		return 1;
+		}
+  
+	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB_ARG:
+		ctx->tlsext_status_arg=parg;
+		return 1;
+		break;
+
+#endif /* !OPENSSL_NO_TLSEXT */
 	/* A Thawte special :-) */
 	case SSL_CTRL_EXTRA_CHAIN_CERT:
 		if (ctx->extra_certs == NULL)
@@ -2132,6 +2245,16 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		cert->ecdh_tmp_cb = (EC_KEY *(*)(SSL *, int, int))fp;
 		}
 		break;
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+	case SSL_CTRL_SET_TLSEXT_SERVERNAME_CB:
+		ctx->tlsext_servername_callback=(int (*)(SSL *,int *,void *))fp;
+		break;
+  
+	case SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB:
+		ctx->tlsext_status_cb=(int (*)(SSL *,void *))fp;
+		break;
+
 #endif
 	default:
 		return(0);
@@ -2178,6 +2301,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	SSL_CIPHER *c,*ret=NULL;
 	STACK_OF(SSL_CIPHER) *prio, *allow;
 	int i,j,ok;
+
 	CERT *cert;
 	unsigned long alg,mask,emask;
 

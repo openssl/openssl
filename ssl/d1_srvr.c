@@ -285,6 +285,10 @@ int dtls1_accept(SSL *s)
 			s->d1->send_cookie = 0;
 			s->state=SSL3_ST_SW_FLUSH;
 			s->s3->tmp.next_state=SSL3_ST_SR_CLNT_HELLO_A;
+
+			/* HelloVerifyRequests resets Finished MAC */
+			if (s->client_version != DTLS1_BAD_VER)
+				ssl3_init_finished_mac(s);
 			break;
 			
 		case SSL3_ST_SW_SRVR_HELLO_A:
@@ -620,20 +624,24 @@ int dtls1_send_hello_verify_request(SSL *s)
 		buf = (unsigned char *)s->init_buf->data;
 
 		msg = p = &(buf[DTLS1_HM_HEADER_LENGTH]);
-		*(p++) = s->version >> 8;
-		*(p++) = s->version & 0xFF;
+		if (s->client_version == DTLS1_BAD_VER)
+			*(p++) = DTLS1_BAD_VER>>8,
+			*(p++) = DTLS1_BAD_VER&0xff;
+		else
+			*(p++) = s->version >> 8,
+			*(p++) = s->version & 0xFF;
+
+		if (s->ctx->app_gen_cookie_cb != NULL &&
+		    s->ctx->app_gen_cookie_cb(s, s->d1->cookie, 
+		    &(s->d1->cookie_len)) == 0)
+			{
+			SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,ERR_R_INTERNAL_ERROR);
+			return 0;
+			}
+		/* else the cookie is assumed to have 
+		 * been initialized by the application */
 
 		*(p++) = (unsigned char) s->d1->cookie_len;
-        if ( s->ctx->app_gen_cookie_cb != NULL &&
-            s->ctx->app_gen_cookie_cb(s, s->d1->cookie, 
-                &(s->d1->cookie_len)) == 0)
-            {
-			SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,ERR_R_INTERNAL_ERROR);
-            return 0;
-            }
-        /* else the cookie is assumed to have 
-         * been initialized by the application */
-
 		memcpy(p, s->d1->cookie, s->d1->cookie_len);
 		p += s->d1->cookie_len;
 		msg_len = p - msg;
@@ -672,8 +680,12 @@ int dtls1_send_server_hello(SSL *s)
 		/* Do the message type and length last */
 		d=p= &(buf[DTLS1_HM_HEADER_LENGTH]);
 
-		*(p++)=s->version>>8;
-		*(p++)=s->version&0xff;
+		if (s->client_version == DTLS1_BAD_VER)
+			*(p++)=DTLS1_BAD_VER>>8,
+			*(p++)=DTLS1_BAD_VER&0xff;
+		else
+			*(p++)=s->version>>8,
+			*(p++)=s->version&0xff;
 
 		/* Random stuff */
 		memcpy(p,s->s3->server_random,SSL3_RANDOM_SIZE);
@@ -1088,7 +1100,7 @@ int dtls1_send_certificate_request(SSL *s)
 
 		/* XDTLS:  set message header ? */
 		msg_len = s->init_num - DTLS1_HM_HEADER_LENGTH;
-		dtls1_set_message_header(s, s->init_buf->data,
+		dtls1_set_message_header(s, (void *)s->init_buf->data,
 			SSL3_MT_CERTIFICATE_REQUEST, msg_len, 0, msg_len);
 
 		/* buffer the message to handle re-xmits */

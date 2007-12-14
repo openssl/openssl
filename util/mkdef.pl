@@ -96,6 +96,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "STATIC_ENGINE", "ENGINE", "HW", "GMP",
 			 # RFC3779 support 
 			 "RFC3779",
+			 # TLS extension support
+			 "TLSEXT",
 			 # Deprecated functions
 			 "DEPRECATED" );
 
@@ -116,7 +118,7 @@ my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw; my $no_camellia;
 my $no_seed;
 my $no_fp_api; my $no_static_engine; my $no_gmp; my $no_deprecated;
-my $no_rfc3779;
+my $no_rfc3779; my $no_tlsext;
 my $fips;
 
 
@@ -196,6 +198,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-engine$/)	{ $no_engine=1; }
 	elsif (/^no-hw$/)	{ $no_hw=1; }
 	elsif (/^no-gmp$/)	{ $no_gmp=1; }
+	elsif (/^no-tlsext$/)	{ $no_tlsext=1; }
 	elsif (/^no-rfc3779$/)	{ $no_rfc3779=1; }
 	}
 
@@ -232,6 +235,7 @@ $max_crypto = $max_num;
 
 my $ssl="ssl/ssl.h";
 $ssl.=" ssl/kssl.h";
+$ssl.=" ssl/tls1.h";
 
 my $crypto ="crypto/crypto.h";
 $crypto.=" crypto/o_dir.h";
@@ -1121,6 +1125,7 @@ sub is_valid
 			if ($keyword eq "STATIC_ENGINE" && $no_static_engine) { return 0; }
 			if ($keyword eq "GMP" && $no_gmp) { return 0; }
 			if ($keyword eq "RFC3779" && $no_rfc3779) { return 0; }
+			if ($keyword eq "TLSEXT" && $no_tlsext) { return 0; }
 			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }
 
 			# Nothing recognise as true

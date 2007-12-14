@@ -57,10 +57,19 @@
 
 #include <openssl/stack.h>
 
-typedef void (*openssl_fptr)(void);
-#define openssl_fcast(f) ((openssl_fptr)f)
-
 #ifdef DEBUG_SAFESTACK
+
+#ifndef CHECKED_PTR_OF
+#define CHECKED_PTR_OF(type, p) \
+    ((void*) (1 ? p : (type*)0))
+#endif
+
+#define CHECKED_SK_FREE_FUNC(type, p) \
+    ((void (*)(void *)) ((1 ? p : (void (*)(type *))0)))
+
+#define CHECKED_SK_CMP_FUNC(type, p) \
+    ((int (*)(const char * const *, const char * const *)) \
+	((1 ? p : (int (*)(const type * const *, const type * const *))0)))
 
 #define STACK_OF(type) struct stack_st_##type
 #define PREDECLARE_STACK_OF(type) STACK_OF(type);
@@ -76,76 +85,71 @@ STACK_OF(type) \
 /* SKM_sk_... stack macros are internal to safestack.h:
  * never use them directly, use sk_<type>_... instead */
 #define SKM_sk_new(type, cmp) \
-	((STACK_OF(type) * (*)(int (*)(const type * const *, const type * const *)))openssl_fcast(sk_new))(cmp)
+	((STACK_OF(type) *)sk_new(CHECKED_SK_CMP_FUNC(type, cmp)))
 #define SKM_sk_new_null(type) \
-	((STACK_OF(type) * (*)(void))openssl_fcast(sk_new_null))()
+	((STACK_OF(type) *)sk_new_null())
 #define SKM_sk_free(type, st) \
-	((void (*)(STACK_OF(type) *))openssl_fcast(sk_free))(st)
+	sk_free(CHECKED_PTR_OF(STACK_OF(type), st))
 #define SKM_sk_num(type, st) \
-	((int (*)(const STACK_OF(type) *))openssl_fcast(sk_num))(st)
+	sk_num(CHECKED_PTR_OF(STACK_OF(type), st))
 #define SKM_sk_value(type, st,i) \
-	((type * (*)(const STACK_OF(type) *, int))openssl_fcast(sk_value))(st, i)
+	((type *)sk_value(CHECKED_PTR_OF(STACK_OF(type), st), i))
 #define SKM_sk_set(type, st,i,val) \
-	((type * (*)(STACK_OF(type) *, int, type *))openssl_fcast(sk_set))(st, i, val)
+	sk_set(CHECKED_PTR_OF(STACK_OF(type), st), i, CHECKED_PTR_OF(type, val))
 #define SKM_sk_zero(type, st) \
-	((void (*)(STACK_OF(type) *))openssl_fcast(sk_zero))(st)
+	sk_zero(CHECKED_PTR_OF(STACK_OF(type), st))
 #define SKM_sk_push(type, st,val) \
-	((int (*)(STACK_OF(type) *, type *))openssl_fcast(sk_push))(st, val)
+	sk_push(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_PTR_OF(type, val))
 #define SKM_sk_unshift(type, st,val) \
-	((int (*)(STACK_OF(type) *, type *))openssl_fcast(sk_unshift))(st, val)
+	sk_unshift(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_PTR_OF(type, val))
 #define SKM_sk_find(type, st,val) \
-	((int (*)(STACK_OF(type) *, type *))openssl_fcast(sk_find))(st, val)
+	sk_find(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_PTR_OF(type, val))
 #define SKM_sk_delete(type, st,i) \
-	((type * (*)(STACK_OF(type) *, int))openssl_fcast(sk_delete))(st, i)
+	(type *)sk_delete(CHECKED_PTR_OF(STACK_OF(type), st), i)
 #define SKM_sk_delete_ptr(type, st,ptr) \
-	((type * (*)(STACK_OF(type) *, type *))openssl_fcast(sk_delete_ptr))(st, ptr)
+	(type *)sk_delete_ptr(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_PTR_OF(type, ptr))
 #define SKM_sk_insert(type, st,val,i) \
-	((int (*)(STACK_OF(type) *, type *, int))openssl_fcast(sk_insert))(st, val, i)
+	sk_insert(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_PTR_OF(type, val), i)
 #define SKM_sk_set_cmp_func(type, st,cmp) \
-	((int (*(*)(STACK_OF(type) *, int (*)(const type * const *, const type * const *))) \
-	  (const type * const *, const type * const *))openssl_fcast(sk_set_cmp_func))\
-	(st, cmp)
+	((int (*)(const type * const *,const type * const *)) \
+	sk_set_cmp_func(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_SK_CMP_FUNC(type, cmp)))
 #define SKM_sk_dup(type, st) \
-	((STACK_OF(type) *(*)(STACK_OF(type) *))openssl_fcast(sk_dup))(st)
+	(STACK_OF(type) *)sk_dup(CHECKED_PTR_OF(STACK_OF(type), st))
 #define SKM_sk_pop_free(type, st,free_func) \
-	((void (*)(STACK_OF(type) *, void (*)(type *)))openssl_fcast(sk_pop_free))\
-	(st, free_func)
+	sk_pop_free(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_SK_FREE_FUNC(type, free_func))
 #define SKM_sk_shift(type, st) \
-	((type * (*)(STACK_OF(type) *))openssl_fcast(sk_shift))(st)
+	(type *)sk_shift(CHECKED_PTR_OF(STACK_OF(type), st))
 #define SKM_sk_pop(type, st) \
-	((type * (*)(STACK_OF(type) *))openssl_fcast(sk_pop))(st)
+	(type *)sk_pop(CHECKED_PTR_OF(STACK_OF(type), st))
 #define SKM_sk_sort(type, st) \
-	((void (*)(STACK_OF(type) *))openssl_fcast(sk_sort))(st)
+	sk_sort(CHECKED_PTR_OF(STACK_OF(type), st))
 #define SKM_sk_is_sorted(type, st) \
-	((int (*)(const STACK_OF(type) *))openssl_fcast(sk_is_sorted))(st)
+	sk_is_sorted(CHECKED_PTR_OF(STACK_OF(type), st))
 
 #define	SKM_ASN1_SET_OF_d2i(type, st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
-((STACK_OF(type) * (*) (STACK_OF(type) **,const unsigned char **, long , \
-                         type *(*)(type **, const unsigned char **,long), \
-                                void (*)(type *), int ,int )) openssl_fcast(d2i_ASN1_SET)) \
-			(st,pp,length, d2i_func, free_func, ex_tag,ex_class)
+	(STACK_OF(type) *)d2i_ASN1_SET(CHECKED_PTR_OF(STACK_OF(type), st), \
+				pp, length, \
+				CHECKED_D2I_OF(type, d2i_func), \
+				CHECKED_SK_FREE_FUNC(type, free_func), \
+				ex_tag, ex_class)
+
 #define	SKM_ASN1_SET_OF_i2d(type, st, pp, i2d_func, ex_tag, ex_class, is_set) \
-	((int (*)(STACK_OF(type) *,unsigned char **, \
-        int (*)(type *,unsigned char **), int , int , int)) openssl_fcast(i2d_ASN1_SET)) \
-						(st,pp,i2d_func,ex_tag,ex_class,is_set)
+	i2d_ASN1_SET(CHECKED_PTR_OF(STACK_OF(type), st), pp, \
+				CHECKED_I2D_OF(type, i2d_func), \
+				ex_tag, ex_class, is_set)
 
 #define	SKM_ASN1_seq_pack(type, st, i2d_func, buf, len) \
-	((unsigned char *(*)(STACK_OF(type) *, \
-        int (*)(type *,unsigned char **), unsigned char **,int *)) openssl_fcast(ASN1_seq_pack)) \
-				(st, i2d_func, buf, len)
+	ASN1_seq_pack(CHECKED_PTR_OF(STACK_OF(type), st), \
+			CHECKED_I2D_OF(type, i2d_func), buf, len)
+
 #define	SKM_ASN1_seq_unpack(type, buf, len, d2i_func, free_func) \
-	((STACK_OF(type) * (*)(const unsigned char *,int, \
-                              type *(*)(type **,const unsigned char **, long), \
-                              void (*)(type *)))openssl_fcast(ASN1_seq_unpack)) \
-					(buf,len,d2i_func, free_func)
+	(STACK_OF(type) *)ASN1_seq_unpack(buf, len, CHECKED_D2I_OF(type, d2i_func), CHECKED_SK_FREE_FUNC(type, free_func))
 
 #define SKM_PKCS12_decrypt_d2i(type, algor, d2i_func, free_func, pass, passlen, oct, seq) \
-	((STACK_OF(type) * (*)(X509_ALGOR *, \
-            		type *(*)(type **, const unsigned char **, long), \
-				void (*)(type *), \
-                                const char *, int, \
-                                ASN1_STRING *, int))PKCS12_decrypt_d2i) \
-				(algor,d2i_func,free_func,pass,passlen,oct,seq)
+	(STACK_OF(type) *)PKCS12_decrypt_d2i(algor, \
+				CHECKED_D2I_OF(type, d2i_func), \
+				CHECKED_SK_FREE_FUNC(type, free_func), \
+				pass, passlen, oct, seq)
 
 #else
 
@@ -959,6 +963,28 @@ STACK_OF(type) \
 #define sk_OCSP_ONEREQ_pop(st) SKM_sk_pop(OCSP_ONEREQ, (st))
 #define sk_OCSP_ONEREQ_sort(st) SKM_sk_sort(OCSP_ONEREQ, (st))
 #define sk_OCSP_ONEREQ_is_sorted(st) SKM_sk_is_sorted(OCSP_ONEREQ, (st))
+
+#define sk_OCSP_RESPID_new(st) SKM_sk_new(OCSP_RESPID, (st))
+#define sk_OCSP_RESPID_new_null() SKM_sk_new_null(OCSP_RESPID)
+#define sk_OCSP_RESPID_free(st) SKM_sk_free(OCSP_RESPID, (st))
+#define sk_OCSP_RESPID_num(st) SKM_sk_num(OCSP_RESPID, (st))
+#define sk_OCSP_RESPID_value(st, i) SKM_sk_value(OCSP_RESPID, (st), (i))
+#define sk_OCSP_RESPID_set(st, i, val) SKM_sk_set(OCSP_RESPID, (st), (i), (val))
+#define sk_OCSP_RESPID_zero(st) SKM_sk_zero(OCSP_RESPID, (st))
+#define sk_OCSP_RESPID_push(st, val) SKM_sk_push(OCSP_RESPID, (st), (val))
+#define sk_OCSP_RESPID_unshift(st, val) SKM_sk_unshift(OCSP_RESPID, (st), (val))
+#define sk_OCSP_RESPID_find(st, val) SKM_sk_find(OCSP_RESPID, (st), (val))
+#define sk_OCSP_RESPID_find_ex(st, val) SKM_sk_find_ex(OCSP_RESPID, (st), (val))
+#define sk_OCSP_RESPID_delete(st, i) SKM_sk_delete(OCSP_RESPID, (st), (i))
+#define sk_OCSP_RESPID_delete_ptr(st, ptr) SKM_sk_delete_ptr(OCSP_RESPID, (st), (ptr))
+#define sk_OCSP_RESPID_insert(st, val, i) SKM_sk_insert(OCSP_RESPID, (st), (val), (i))
+#define sk_OCSP_RESPID_set_cmp_func(st, cmp) SKM_sk_set_cmp_func(OCSP_RESPID, (st), (cmp))
+#define sk_OCSP_RESPID_dup(st) SKM_sk_dup(OCSP_RESPID, st)
+#define sk_OCSP_RESPID_pop_free(st, free_func) SKM_sk_pop_free(OCSP_RESPID, (st), (free_func))
+#define sk_OCSP_RESPID_shift(st) SKM_sk_shift(OCSP_RESPID, (st))
+#define sk_OCSP_RESPID_pop(st) SKM_sk_pop(OCSP_RESPID, (st))
+#define sk_OCSP_RESPID_sort(st) SKM_sk_sort(OCSP_RESPID, (st))
+#define sk_OCSP_RESPID_is_sorted(st) SKM_sk_is_sorted(OCSP_RESPID, (st))
 
 #define sk_OCSP_SINGLERESP_new(st) SKM_sk_new(OCSP_SINGLERESP, (st))
 #define sk_OCSP_SINGLERESP_new_null() SKM_sk_new_null(OCSP_SINGLERESP)

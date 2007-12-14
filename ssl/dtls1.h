@@ -67,9 +67,8 @@
 extern "C" {
 #endif
 
-#define DTLS1_VERSION			0x0100
-#define DTLS1_VERSION_MAJOR		0x01
-#define DTLS1_VERSION_MINOR		0x00
+#define DTLS1_VERSION			0xFEFF
+#define DTLS1_BAD_VER			0x0100
 
 #define DTLS1_AD_MISSING_HANDSHAKE_MESSAGE    110
 
@@ -83,7 +82,7 @@ extern "C" {
 #define DTLS1_HM_BAD_FRAGMENT                   -2
 #define DTLS1_HM_FRAGMENT_RETRY                 -3
 
-#define DTLS1_CCS_HEADER_LENGTH                  3
+#define DTLS1_CCS_HEADER_LENGTH                  1
 
 #define DTLS1_AL_HEADER_LENGTH                   7
 

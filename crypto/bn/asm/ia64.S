@@ -171,21 +171,21 @@
 .skip	32	// makes the loop body aligned at 64-byte boundary
 bn_add_words:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
 { .mii;	alloc		r2=ar.pfs,4,12,0,16
 	cmp4.le		p6,p0=r35,r0	};;
 { .mfb;	mov		r8=r0			// return value
 (p6)	br.ret.spnt.many	b0	};;
 
-	.save	ar.lc,r3
 { .mib;	sub		r10=r35,r0,1
+	.save	ar.lc,r3
 	mov		r3=ar.lc
 	brp.loop.imp	.L_bn_add_words_ctop,.L_bn_add_words_cend-16
 					}
-	.body
 { .mib;	ADDP		r14=0,r32		// rp
+	.save	pr,r9
 	mov		r9=pr		};;
+	.body
 { .mii;	ADDP		r15=0,r33		// ap
 	mov		ar.lc=r10
 	mov		ar.ec=6		}
@@ -224,21 +224,21 @@ bn_add_words:
 .skip	32	// makes the loop body aligned at 64-byte boundary
 bn_sub_words:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
 { .mii;	alloc		r2=ar.pfs,4,12,0,16
 	cmp4.le		p6,p0=r35,r0	};;
 { .mfb;	mov		r8=r0			// return value
 (p6)	br.ret.spnt.many	b0	};;
 
-	.save	ar.lc,r3
 { .mib;	sub		r10=r35,r0,1
+	.save	ar.lc,r3
 	mov		r3=ar.lc
 	brp.loop.imp	.L_bn_sub_words_ctop,.L_bn_sub_words_cend-16
 					}
-	.body
 { .mib;	ADDP		r14=0,r32		// rp
+	.save	pr,r9
 	mov		r9=pr		};;
+	.body
 { .mii;	ADDP		r15=0,r33		// ap
 	mov		ar.lc=r10
 	mov		ar.ec=6		}
@@ -283,7 +283,6 @@ bn_sub_words:
 .skip	32	// makes the loop body aligned at 64-byte boundary
 bn_mul_words:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
 #ifdef XMA_TEMPTATION
 { .mfi;	alloc		r2=ar.pfs,4,0,0,0	};;
@@ -294,9 +293,10 @@ bn_mul_words:
 	cmp4.le		p6,p0=r34,r0
 (p6)	br.ret.spnt.many	b0		};;
 
-	.save	ar.lc,r3
 { .mii;	sub	r10=r34,r0,1
+	.save	ar.lc,r3
 	mov	r3=ar.lc
+	.save	pr,r9
 	mov	r9=pr			};;
 
 	.body
@@ -397,22 +397,21 @@ bn_mul_words:
 .skip	48	// makes the loop body aligned at 64-byte boundary
 bn_mul_add_words:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
-	.save	ar.lc,r3
-	.save	pr,r9
 { .mmi;	alloc		r2=ar.pfs,4,4,0,8
 	cmp4.le		p6,p0=r34,r0
+	.save	ar.lc,r3
 	mov		r3=ar.lc	};;
 { .mib;	mov		r8=r0		// return value
 	sub		r10=r34,r0,1
 (p6)	br.ret.spnt.many	b0	};;
 
-	.body
 { .mib;	setf.sig	f8=r35		// w
+	.save	pr,r9
 	mov		r9=pr
 	brp.loop.imp	.L_bn_mul_add_words_ctop,.L_bn_mul_add_words_cend-16
 					}
+	.body
 { .mmi;	ADDP		r14=0,r32	// rp
 	ADDP		r15=0,r33	// ap
 	mov		ar.lc=r10	}
@@ -466,7 +465,6 @@ bn_mul_add_words:
 .skip	32	// makes the loop body aligned at 64-byte boundary 
 bn_sqr_words:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
 { .mii;	alloc		r2=ar.pfs,3,0,0,0
 	sxt4		r34=r34		};;
@@ -476,9 +474,10 @@ bn_sqr_words:
 	nop.f		0x0
 (p6)	br.ret.spnt.many	b0	};;
 
-	.save	ar.lc,r3
 { .mii;	sub	r10=r34,r0,1
+	.save	ar.lc,r3
 	mov	r3=ar.lc
+	.save	pr,r9
 	mov	r9=pr			};;
 
 	.body
@@ -545,7 +544,6 @@ bn_sqr_words:
 .align	64
 bn_sqr_comba8:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
 #if defined(_HPUX_SOURCE) && !defined(_LP64)
 { .mii;	alloc	r2=ar.pfs,2,1,0,0
@@ -617,7 +615,6 @@ bn_sqr_comba8:
 .align	64
 bn_mul_comba8:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
 #if defined(_HPUX_SOURCE) && !defined(_LP64)
 { .mii;	alloc	r2=ar.pfs,3,0,0,0
@@ -1175,7 +1172,6 @@ bn_mul_comba8:
 .align	64
 bn_sqr_comba4:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
 #if defined(_HPUX_SOURCE) && !defined(_LP64)
 { .mii;	alloc   r2=ar.pfs,2,1,0,0
@@ -1208,7 +1204,6 @@ bn_sqr_comba4:
 .align	64
 bn_mul_comba4:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
 #if defined(_HPUX_SOURCE) && !defined(_LP64)
 { .mii;	alloc   r2=ar.pfs,3,0,0,0
@@ -1411,11 +1406,11 @@ equ=p24
 .align	64
 bn_div_words:
 	.prologue
-	.fframe	0
 	.save	ar.pfs,r2
-	.save	b0,r3
 { .mii;	alloc		r2=ar.pfs,3,5,0,8
+	.save	b0,r3
 	mov		r3=b0
+	.save	pr,r10
 	mov		r10=pr		};;
 { .mmb;	cmp.eq		p6,p0=r34,r0
 	mov		r8=-1

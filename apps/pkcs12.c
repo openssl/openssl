@@ -484,7 +484,7 @@ int MAIN(int argc, char **argv)
 					X509_keyid_set1(ucert, NULL, 0);
 					X509_alias_set1(ucert, NULL, 0);
 					/* Remove from list */
-					sk_X509_delete(certs, i);
+					(void)sk_X509_delete(certs, i);
 					break;
 					}
 				}

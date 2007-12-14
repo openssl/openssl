@@ -130,7 +130,7 @@ ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval,
 	ASN1_VALUE *ptmpval = NULL;
 	if (!pval)
 		pval = &ptmpval;
-	asn1_tlc_clear(&c);
+	c.valid = 0;
 	if (ASN1_item_ex_d2i(pval, in, len, it, -1, 0, 0, &c) > 0) 
 		return *pval;
 	return NULL;
@@ -140,7 +140,7 @@ int ASN1_template_d2i(ASN1_VALUE **pval,
 		const unsigned char **in, long len, const ASN1_TEMPLATE *tt)
 	{
 	ASN1_TLC c;
-	asn1_tlc_clear(&c);
+	c.valid = 0;
 	return asn1_template_ex_d2i(pval, in, len, tt, 0, &c);
 	}
 

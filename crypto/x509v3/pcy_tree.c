@@ -345,7 +345,7 @@ static int tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
 			{
 			node->parent->nchild--;
 			OPENSSL_free(node);
-			sk_X509_POLICY_NODE_delete(curr->nodes, i);
+			(void)sk_X509_POLICY_NODE_delete(curr->nodes, i);
 			}
 		}
 
@@ -358,7 +358,7 @@ static int tree_prune(X509_POLICY_TREE *tree, X509_POLICY_LEVEL *curr)
 				{
 				node->parent->nchild--;
 				OPENSSL_free(node);
-				sk_X509_POLICY_NODE_delete(curr->nodes, i);
+				(void)sk_X509_POLICY_NODE_delete(curr->nodes, i);
 				}
 			}
 		if (curr->anyPolicy && !curr->anyPolicy->nchild)

@@ -777,3 +777,9 @@ seed_ecb		776
 seed_cbc		777
 seed_ofb128		778
 seed_cfb128		779
+hmac_md5		780
+hmac_sha1		781
+id_PasswordBasedMAC		782
+id_DHBasedMac		783
+id_it_suppLangTags		784
+caRepository		785

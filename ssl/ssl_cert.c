@@ -762,7 +762,7 @@ err:
 	if(x != NULL)
 		X509_free(x);
 	
-	sk_X509_NAME_set_cmp_func(stack,oldcmp);
+	(void)sk_X509_NAME_set_cmp_func(stack,oldcmp);
 
 	return ret;
 	}

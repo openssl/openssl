@@ -740,15 +740,35 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	md_size=EVP_MD_size(hash);
 
 	buf[0]=rec->type;
-	buf[1]=TLS1_VERSION_MAJOR;
-	buf[2]=TLS1_VERSION_MINOR;
+	if (ssl->version == DTLS1_VERSION && ssl->client_version == DTLS1_BAD_VER)
+		{
+		buf[1]=TLS1_VERSION_MAJOR;
+		buf[2]=TLS1_VERSION_MINOR;
+		}
+	else	{
+		buf[1]=(unsigned char)(ssl->version>>8);
+		buf[2]=(unsigned char)(ssl->version);
+		}
+
 	buf[3]=rec->length>>8;
 	buf[4]=rec->length&0xff;
 
 	/* I should fix this up TLS TLS TLS TLS TLS XXXXXXXX */
 	HMAC_CTX_init(&hmac);
 	HMAC_Init_ex(&hmac,mac_sec,EVP_MD_size(hash),hash,NULL);
-	HMAC_Update(&hmac,seq,8);
+
+	if (ssl->version == DTLS1_VERSION && ssl->client_version != DTLS1_BAD_VER)
+		{
+		unsigned char dtlsseq[8],*p=dtlsseq;
+
+		s2n(send?ssl->d1->w_epoch:ssl->d1->r_epoch, p);
+		memcpy (p,&seq[2],6);
+
+		HMAC_Update(&hmac,dtlsseq,8);
+		}
+	else
+		HMAC_Update(&hmac,seq,8);
+
 	HMAC_Update(&hmac,buf,5);
 	HMAC_Update(&hmac,rec->input,rec->length);
 	HMAC_Final(&hmac,md,&md_size);
@@ -765,8 +785,8 @@ printf("rec=");
 {unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",buf[z]); printf("\n"); }
 #endif
 
-    if ( SSL_version(ssl) != DTLS1_VERSION)
-	    {
+	if ( SSL_version(ssl) != DTLS1_VERSION)
+		{
 		for (i=7; i>=0; i--)
 			{
 			++seq[i];

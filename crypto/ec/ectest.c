@@ -659,13 +659,15 @@ void prime_field_tests()
 	if (!EC_POINT_is_at_infinity(group, R)) ABORT; /* R = P + 2Q */
 
 	{
-		const EC_POINT *points[3];
-		const BIGNUM *scalars[3];
+		const EC_POINT *points[4];
+		const BIGNUM *scalars[4];
+		BIGNUM scalar3;
 	
 		if (EC_POINT_is_at_infinity(group, Q)) ABORT;
 		points[0] = Q;
 		points[1] = Q;
 		points[2] = Q;
+		points[3] = Q;
 
 		if (!BN_add(y, z, BN_value_one())) ABORT;
 		if (BN_is_odd(y)) ABORT;
@@ -704,10 +706,16 @@ void prime_field_tests()
 		scalars[1] = y;
 		scalars[2] = z; /* z = -(x+y) */
 
-		if (!EC_POINTs_mul(group, P, NULL, 3, points, scalars, ctx)) ABORT;
+		BN_init(&scalar3);
+		BN_zero(&scalar3);
+		scalars[3] = &scalar3;
+
+		if (!EC_POINTs_mul(group, P, NULL, 4, points, scalars, ctx)) ABORT;
 		if (!EC_POINT_is_at_infinity(group, P)) ABORT;
 
 		fprintf(stdout, " ok\n\n");
+
+		BN_free(&scalar3);
 	}
 
 

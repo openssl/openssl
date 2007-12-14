@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 780
-#define NUM_SN 773
-#define NUM_LN 773
-#define NUM_OBJ 729
+#define NUM_NID 786
+#define NUM_SN 779
+#define NUM_LN 779
+#define NUM_OBJ 735
 
-static unsigned char lvalues[5154]={
+static unsigned char lvalues[5204]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -797,6 +797,12 @@ static unsigned char lvalues[5154]={
 0x2A,0x83,0x1A,0x8C,0x9A,0x44,0x01,0x04,     /* [5129] OBJ_seed_cbc */
 0x2A,0x83,0x1A,0x8C,0x9A,0x44,0x01,0x06,     /* [5137] OBJ_seed_ofb128 */
 0x2A,0x83,0x1A,0x8C,0x9A,0x44,0x01,0x05,     /* [5145] OBJ_seed_cfb128 */
+0x2B,0x06,0x01,0x05,0x05,0x08,0x01,0x01,     /* [5153] OBJ_hmac_md5 */
+0x2B,0x06,0x01,0x05,0x05,0x08,0x01,0x02,     /* [5161] OBJ_hmac_sha1 */
+0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x0D,/* [5169] OBJ_id_PasswordBasedMAC */
+0x2A,0x86,0x48,0x86,0xF6,0x7D,0x07,0x42,0x1E,/* [5178] OBJ_id_DHBasedMac */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x10,     /* [5187] OBJ_id_it_suppLangTags */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x30,0x05,     /* [5195] OBJ_caRepository */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2009,6 +2015,15 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"SEED-CBC","seed-cbc",NID_seed_cbc,8,&(lvalues[5129]),0},
 {"SEED-OFB","seed-ofb",NID_seed_ofb128,8,&(lvalues[5137]),0},
 {"SEED-CFB","seed-cfb",NID_seed_cfb128,8,&(lvalues[5145]),0},
+{"HMAC-MD5","hmac-md5",NID_hmac_md5,8,&(lvalues[5153]),0},
+{"HMAC-SHA1","hmac-sha1",NID_hmac_sha1,8,&(lvalues[5161]),0},
+{"id-PasswordBasedMAC","password based MAC",NID_id_PasswordBasedMAC,9,
+	&(lvalues[5169]),0},
+{"id-DHBasedMac","Diffie-Hellman based MAC",NID_id_DHBasedMac,9,
+	&(lvalues[5178]),0},
+{"id-it-suppLangTags","id-it-suppLangTags",NID_id_it_suppLangTags,8,
+	&(lvalues[5187]),0},
+{"caRepository","CA Repository",NID_caRepository,8,&(lvalues[5195]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2089,6 +2104,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[67]),/* "DSA-old" */
 &(nid_objs[297]),/* "DVCS" */
 &(nid_objs[99]),/* "GN" */
+&(nid_objs[780]),/* "HMAC-MD5" */
+&(nid_objs[781]),/* "HMAC-SHA1" */
 &(nid_objs[381]),/* "IANA" */
 &(nid_objs[34]),/* "IDEA-CBC" */
 &(nid_objs[35]),/* "IDEA-CFB" */
@@ -2227,6 +2244,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[703]),/* "c2tnb431r1" */
 &(nid_objs[483]),/* "cNAMERecord" */
 &(nid_objs[179]),/* "caIssuers" */
+&(nid_objs[785]),/* "caRepository" */
 &(nid_objs[443]),/* "caseIgnoreIA5StringSyntax" */
 &(nid_objs[152]),/* "certBag" */
 &(nid_objs[677]),/* "certicom-arc" */
@@ -2285,6 +2303,8 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[473]),/* "homeTelephoneNumber" */
 &(nid_objs[466]),/* "host" */
 &(nid_objs[442]),/* "iA5StringSyntax" */
+&(nid_objs[783]),/* "id-DHBasedMac" */
+&(nid_objs[782]),/* "id-PasswordBasedMAC" */
 &(nid_objs[266]),/* "id-aca" */
 &(nid_objs[355]),/* "id-aca-accessIdentity" */
 &(nid_objs[354]),/* "id-aca-authenticationInfo" */
@@ -2343,6 +2363,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[299]),/* "id-it-signKeyPairTypes" */
 &(nid_objs[305]),/* "id-it-subscriptionRequest" */
 &(nid_objs[306]),/* "id-it-subscriptionResponse" */
+&(nid_objs[784]),/* "id-it-suppLangTags" */
 &(nid_objs[304]),/* "id-it-unsupportedOIDs" */
 &(nid_objs[128]),/* "id-kp" */
 &(nid_objs[280]),/* "id-mod-attribute-cert" */
@@ -2796,7 +2817,9 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[365]),/* "Basic OCSP Response" */
 &(nid_objs[285]),/* "Biometric Info" */
 &(nid_objs[179]),/* "CA Issuers" */
+&(nid_objs[785]),/* "CA Repository" */
 &(nid_objs[131]),/* "Code Signing" */
+&(nid_objs[783]),/* "Diffie-Hellman based MAC" */
 &(nid_objs[382]),/* "Directory" */
 &(nid_objs[392]),/* "Domain" */
 &(nid_objs[132]),/* "E-mail Protection" */
@@ -3049,6 +3072,8 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[509]),/* "generationQualifier" */
 &(nid_objs[601]),/* "generic cryptogram" */
 &(nid_objs[99]),/* "givenName" */
+&(nid_objs[780]),/* "hmac-md5" */
+&(nid_objs[781]),/* "hmac-sha1" */
 &(nid_objs[163]),/* "hmacWithSHA1" */
 &(nid_objs[486]),/* "homePostalAddress" */
 &(nid_objs[473]),/* "homeTelephoneNumber" */
@@ -3113,6 +3138,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[299]),/* "id-it-signKeyPairTypes" */
 &(nid_objs[305]),/* "id-it-subscriptionRequest" */
 &(nid_objs[306]),/* "id-it-subscriptionResponse" */
+&(nid_objs[784]),/* "id-it-suppLangTags" */
 &(nid_objs[304]),/* "id-it-unsupportedOIDs" */
 &(nid_objs[128]),/* "id-kp" */
 &(nid_objs[280]),/* "id-mod-attribute-cert" */
@@ -3272,6 +3298,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[18]),/* "organizationalUnitName" */
 &(nid_objs[475]),/* "otherMailbox" */
 &(nid_objs[489]),/* "pagerTelephoneNumber" */
+&(nid_objs[782]),/* "password based MAC" */
 &(nid_objs[374]),/* "path" */
 &(nid_objs[621]),/* "payment gateway capabilities" */
 &(nid_objs[ 9]),/* "pbeWithMD2AndDES-CBC" */
@@ -3987,6 +4014,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[310]),/* OBJ_id_it_implicitConfirm        1 3 6 1 5 5 7 4 13 */
 &(nid_objs[311]),/* OBJ_id_it_confirmWaitTime        1 3 6 1 5 5 7 4 14 */
 &(nid_objs[312]),/* OBJ_id_it_origPKIMessage         1 3 6 1 5 5 7 4 15 */
+&(nid_objs[784]),/* OBJ_id_it_suppLangTags           1 3 6 1 5 5 7 4 16 */
 &(nid_objs[313]),/* OBJ_id_regCtrl                   1 3 6 1 5 5 7 5 1 */
 &(nid_objs[314]),/* OBJ_id_regInfo                   1 3 6 1 5 5 7 5 2 */
 &(nid_objs[323]),/* OBJ_id_alg_des40                 1 3 6 1 5 5 7 6 1 */
@@ -4036,6 +4064,9 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[179]),/* OBJ_ad_ca_issuers                1 3 6 1 5 5 7 48 2 */
 &(nid_objs[363]),/* OBJ_ad_timeStamping              1 3 6 1 5 5 7 48 3 */
 &(nid_objs[364]),/* OBJ_ad_dvcs                      1 3 6 1 5 5 7 48 4 */
+&(nid_objs[785]),/* OBJ_caRepository                 1 3 6 1 5 5 7 48 5 */
+&(nid_objs[780]),/* OBJ_hmac_md5                     1 3 6 1 5 5 8 1 1 */
+&(nid_objs[781]),/* OBJ_hmac_sha1                    1 3 6 1 5 5 8 1 2 */
 &(nid_objs[58]),/* OBJ_netscape_cert_extension      2 16 840 1 113730 1 */
 &(nid_objs[59]),/* OBJ_netscape_data_type           2 16 840 1 113730 2 */
 &(nid_objs[438]),/* OBJ_pilotAttributeType           0 9 2342 19200300 100 1 */
@@ -4044,6 +4075,8 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[441]),/* OBJ_pilotGroups                  0 9 2342 19200300 100 10 */
 &(nid_objs[108]),/* OBJ_cast5_cbc                    1 2 840 113533 7 66 10 */
 &(nid_objs[112]),/* OBJ_pbeWithMD5AndCast5_CBC       1 2 840 113533 7 66 12 */
+&(nid_objs[782]),/* OBJ_id_PasswordBasedMAC          1 2 840 113533 7 66 13 */
+&(nid_objs[783]),/* OBJ_id_DHBasedMac                1 2 840 113533 7 66 30 */
 &(nid_objs[ 6]),/* OBJ_rsaEncryption                1 2 840 113549 1 1 1 */
 &(nid_objs[ 7]),/* OBJ_md2WithRSAEncryption         1 2 840 113549 1 1 2 */
 &(nid_objs[396]),/* OBJ_md4WithRSAEncryption         1 2 840 113549 1 1 3 */

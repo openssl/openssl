@@ -251,8 +251,16 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_EC_LIB);
 		goto err;
 	}
-	if (dgst_len > BN_num_bytes(order))
+	if (8 * dgst_len > BN_num_bits(order))
 	{
+		/* XXX
+		 * 
+		 * Should provide for optional hash truncation:
+		 * Keep the BN_num_bits(order) leftmost bits of dgst
+		 * (see March 2006 FIPS 186-3 draft, which has a few
+		 * confusing errors in this part though)
+		 */
+
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN,
 			ECDSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		goto err;
@@ -374,6 +382,21 @@ static int ecdsa_do_verify(const unsigned char *dgst, int dgst_len,
 	if (!EC_GROUP_get_order(group, order, ctx))
 	{
 		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY, ERR_R_EC_LIB);
+		goto err;
+	}
+	if (8 * dgst_len > BN_num_bits(order))
+	{
+		/* XXX
+		 * 
+		 * Should provide for optional hash truncation:
+		 * Keep the BN_num_bits(order) leftmost bits of dgst
+		 * (see March 2006 FIPS 186-3 draft, which has a few
+		 * confusing errors in this part though)
+		 */
+
+		ECDSAerr(ECDSA_F_ECDSA_DO_VERIFY,
+			ECDSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+		ret = 0;
 		goto err;
 	}
 

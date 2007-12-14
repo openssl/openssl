@@ -97,6 +97,16 @@
 #define NID_identified_organization		676
 #define OBJ_identified_organization		OBJ_iso,3L
 
+#define SN_hmac_md5		"HMAC-MD5"
+#define LN_hmac_md5		"hmac-md5"
+#define NID_hmac_md5		780
+#define OBJ_hmac_md5		OBJ_identified_organization,6L,1L,5L,5L,8L,1L,1L
+
+#define SN_hmac_sha1		"HMAC-SHA1"
+#define LN_hmac_sha1		"hmac-sha1"
+#define NID_hmac_sha1		781
+#define OBJ_hmac_sha1		OBJ_identified_organization,6L,1L,5L,5L,8L,1L,2L
+
 #define SN_certicom_arc		"certicom-arc"
 #define NID_certicom_arc		677
 #define OBJ_certicom_arc		OBJ_identified_organization,132L
@@ -497,6 +507,16 @@
 #define LN_pbeWithMD5AndCast5_CBC		"pbeWithMD5AndCast5CBC"
 #define NID_pbeWithMD5AndCast5_CBC		112
 #define OBJ_pbeWithMD5AndCast5_CBC		OBJ_ISO_US,113533L,7L,66L,12L
+
+#define SN_id_PasswordBasedMAC		"id-PasswordBasedMAC"
+#define LN_id_PasswordBasedMAC		"password based MAC"
+#define NID_id_PasswordBasedMAC		782
+#define OBJ_id_PasswordBasedMAC		OBJ_ISO_US,113533L,7L,66L,13L
+
+#define SN_id_DHBasedMac		"id-DHBasedMac"
+#define LN_id_DHBasedMac		"Diffie-Hellman based MAC"
+#define NID_id_DHBasedMac		783
+#define OBJ_id_DHBasedMac		OBJ_ISO_US,113533L,7L,66L,30L
 
 #define SN_rsadsi		"rsadsi"
 #define LN_rsadsi		"RSA Data Security, Inc."
@@ -1513,6 +1533,10 @@
 #define NID_id_it_origPKIMessage		312
 #define OBJ_id_it_origPKIMessage		OBJ_id_it,15L
 
+#define SN_id_it_suppLangTags		"id-it-suppLangTags"
+#define NID_id_it_suppLangTags		784
+#define OBJ_id_it_suppLangTags		OBJ_id_it,16L
+
 #define SN_id_regCtrl		"id-regCtrl"
 #define NID_id_regCtrl		313
 #define OBJ_id_regCtrl		OBJ_id_pkip,1L
@@ -1747,6 +1771,11 @@
 #define LN_ad_dvcs		"ad dvcs"
 #define NID_ad_dvcs		364
 #define OBJ_ad_dvcs		OBJ_id_ad,4L
+
+#define SN_caRepository		"caRepository"
+#define LN_caRepository		"CA Repository"
+#define NID_caRepository		785
+#define OBJ_caRepository		OBJ_id_ad,5L
 
 #define OBJ_id_pkix_OCSP		OBJ_ad_OCSP
 
