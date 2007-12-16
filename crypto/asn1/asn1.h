@@ -522,6 +522,7 @@ typedef struct asn1_type_st
 		 * contain the set or sequence bytes */
 		ASN1_STRING *		set;
 		ASN1_STRING *		sequence;
+		ASN1_VALUE  *		asn1_value;
 		} value;
 	} ASN1_TYPE;
 

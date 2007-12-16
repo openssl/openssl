@@ -106,7 +106,7 @@ static char *pt(unsigned char *md);
 int main(int argc, char *argv[])
 	{
 	int i,err=0;
-	unsigned char **P,**R;
+	char **P,**R;
 	static unsigned char buf[1000];
 	char *p,*r;
 	EVP_MD_CTX c;
@@ -118,8 +118,8 @@ int main(int argc, char *argv[])
 #endif
 
 	EVP_MD_CTX_init(&c);
-	P=(unsigned char **)test;
-	R=(unsigned char **)ret;
+	P=test;
+	R=ret;
 	i=1;
 	while (*P != NULL)
 		{
