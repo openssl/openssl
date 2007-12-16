@@ -17,7 +17,7 @@ NOT specify any alternative options at this stage.
 make
 make install
 
-This will buils and install the test 1.2 module and binaries under
+This will build and install the test 1.2 module and binaries under
 /usr/local/fips-1.0
 
 For Windows you need VC++, perl and NASM installed. This is now a pure VC++
