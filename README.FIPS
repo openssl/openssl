@@ -1,28 +1,78 @@
+Brief instructions on using OpenSSL 0.9.8 FIPS 140-2 test branch.
 
-Brief instructions on using OpenSSL 0.9.8 FIPS test branch.
+NOTE: this distribution is NOT FIPS140-2 validated. These instructions are
+intended for people who wish to test the OpenSSL FIPS 140-2 1.2 module. More
+complete instructions will be made available after validation.
 
-To avoid any confusion that this might generate a validated library just
-supplying "fips" on the command line wont work. Additional options are
-needed... Also a prominent warning message is output.
+1. Build from test tarball.
 
-To build fipscanister and produce a usable distribution the configuration
-option "fipscanisterbuild" is used to either the config or Configure scripts.
-For example:
+Download the OpenSSL test 1.2 source tree. The current version has the CVS tag
+FIPS_098_TEST_8. Ignore any instructions in that tree: they are likely to be
+out of date.
+
+If you are using a Unix like environment run the following commands. You may
+NOT specify any alternative options at this stage.
 
 ./config fipscanisterbuild
+make
+make install
 
-This builds and shared libraries and the fipscanister.o module.
+This will buils and install the test 1.2 module and binaries under
+/usr/local/fips-1.0
 
-Note that the fipscanister.o file is totally incompatible with the version
-produced by the FIPS 1.1.1 distribution and cannot be made to work with
-it.
-
-With this version neither MinGW nor ld.exe are required for a Win32 VC++ build.
-To build from a VC++ environment simply run:
+For Windows you need VC++, perl and NASM installed. This is now a pure VC++
+build: no alternative compilers or tools are required. From a VC++ environment
+do:
 
 ms\do_fips
 
-Note that any warnings from a Windows version of "tar" about being unable to
-create symbolic links can be ignored.
+It should report that the compile was successful.
 
+This will compile binaries into the out32dll directory. They can be copied to
+a more convenient location.
+
+2. Link test module to a more recent version of OpenSSL.
+
+Once the test module has been installed it can be linked against a more recent
+version of OpenSSL. Currently only versions from the 0.9.8-fips stable branch
+can be used. It has the CVS tag OpenSSL-fips-0_9_8-stable.
+
+For a Unix build the standrd build procedure is followed and the option "fips"
+is passed to either the config or Configure scripts. The fipscanisterbuild
+option MUST NOT be used. Any other options may be included. Static libraries
+can be built using the no-shared option.
+
+For example:
+
+./config fips
+
+./config fips no-shared
+
+For Windows builds the options "fips" and --with-fipslibdir=<path> are passed
+to the Configure script where <path> is whever the module was installed
+For example:
+
+perl Configure fips --with-fipslibdir=C:\some\path\fips
+
+Then the build process continues in the normal way for example:
+
+ms\do_nasm
+nmake -f ms\ntdll.mak
+
+for DLLs or
+
+ms\do_nasm
+nmake -f ms\nt.mak
+
+for static builds.
+
+3. Test new version of OpenSSL.
+
+The new test FIPS enabled OpenSSL can now be tested in the usual way.
+
+Additionally binary compatibility tests against OpenSSL 0.9.8x would be
+MOST welcomed. This will help avoid any major issues when the 0.9.8-fips
+branch is merged into 0.9.8 branch.
+
+Any problems should be reported to the openssl-dev mailing list.
 
