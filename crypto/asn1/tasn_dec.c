@@ -944,7 +944,7 @@ int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 		if (utype != typ->type)
 			ASN1_TYPE_set(typ, utype, NULL);
 		opval = pval;
-		pval = (ASN1_VALUE **)&typ->value.ptr;
+		pval = &typ->value.asn1_value;
 		}
 	switch(utype)
 		{
