@@ -1018,13 +1018,13 @@ $cast_obj     =
 $rc4_obj      = 
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = dlfcn
-$shared_ldflag = darwin-shared
-$shared_extension = -fPIC -fno-common
-$ranlib       = -arch ppc64 -dynamiclib
-$arflags      = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
+$dso_scheme   = dlfcn
+$shared_target= darwin-shared
+$shared_cflag = -fPIC -fno-common
+$shared_ldflag = -arch ppc64 -dynamiclib
+$shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
+$ranlib       = 
+$arflags      = 
 
 *** darwin64-x86_64-cc
 $cc           = cc
