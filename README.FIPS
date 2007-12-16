@@ -7,11 +7,14 @@ complete instructions will be made available after validation.
 1. Build from test tarball.
 
 Download the OpenSSL test 1.2 source tree. The current version has the CVS tag
-FIPS_098_TEST_8. Ignore any instructions in that tree: they are likely to be
-out of date.
+FIPS_098_TEST_8 or can be downloaded from:
+
+ftp://ftp.openssl.org/snapshot/openssl-fips-test-1.2.0.tar.gz
+
+Ignore any instructions in that tree: they are likely to be out of date.
 
 If you are using a Unix like environment run the following commands. You may
-NOT specify any alternative options at this stage.
+NOT specify ANY other options at this stage.
 
 ./config fipscanisterbuild
 make
@@ -35,7 +38,10 @@ a more convenient location.
 
 Once the test module has been installed it can be linked against a more recent
 version of OpenSSL. Currently only versions from the 0.9.8-fips stable branch
-can be used. It has the CVS tag OpenSSL-fips-0_9_8-stable.
+can be used. It has the CVS tag OpenSSL-fips-0_9_8-stable daily snaphots can
+also be downloaded as:
+
+ftp://ftp.openssl.org/snapshot/openssl-0.9.8-fips-test-SNAP-YYMMDD.tar.gz
 
 For a Unix build the standrd build procedure is followed and the option "fips"
 is passed to either the config or Configure scripts. The fipscanisterbuild
@@ -49,7 +55,7 @@ For example:
 ./config fips no-shared
 
 For Windows builds the options "fips" and --with-fipslibdir=<path> are passed
-to the Configure script where <path> is whever the module was installed
+to the Configure script where <path> is wherever the module was installed
 For example:
 
 perl Configure fips --with-fipslibdir=C:\some\path\fips
