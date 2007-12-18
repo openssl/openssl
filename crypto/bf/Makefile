@@ -53,6 +53,8 @@ bx86-cof.s: asm/bf-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 # a.out
 bx86-out.s: asm/bf-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	(cd asm; $(PERL) bf-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
+bx86-macosx.s: asm/bf-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) bf-586.pl macosx $(CFLAGS) $(PROCESSOR) > ../$@)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

@@ -51,6 +51,8 @@ rm86-cof.s: asm/rmd-586.pl ../perlasm/x86asm.pl
 # a.out
 rm86-out.s: asm/rmd-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) rmd-586.pl a.out $(CFLAGS) > ../$@)
+rm86-macosx.s:	asm/rmd-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) rmd-586.pl macosx $(CFLAGS) > ../$@)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

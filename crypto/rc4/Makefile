@@ -50,6 +50,8 @@ rx86-cof.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 # a.out
 rx86-out.s: asm/rc4-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) rc4-586.pl a.out $(CFLAGS) > ../$@)
+rx86-macosx.s: asm/rc4-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) rc4-586.pl macosx $(CFLAGS) > ../$@)
 
 rc4-x86_64.s: asm/rc4-x86_64.pl;	$(PERL) asm/rc4-x86_64.pl $@
 

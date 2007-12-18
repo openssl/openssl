@@ -48,6 +48,8 @@ w86mmx-cof.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) wp-mmx.pl coff $(CFLAGS) $(PROCESSOR)) > $@
 w86mmx-out.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) wp-mmx.pl a.out $(CFLAGS) $(PROCESSOR)) > $@
+w86mmx-macosx.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) wp-mmx.pl macosx $(CFLAGS) $(PROCESSOR)) > $@
 
 wp-x86_64.s: asm/wp-x86_64.pl
 	$(PERL) asm/wp-x86_64.pl $@

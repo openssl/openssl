@@ -79,6 +79,10 @@ dx86-out.s: asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	(cd asm; $(PERL) des-586.pl a.out $(CFLAGS) > ../$@)
 yx86-out.s: asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	(cd asm; $(PERL) crypt586.pl a.out $(CFLAGS) > ../$@)
+dx86-macosx.s: asm/des-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) des-586.pl macosx $(CFLAGS) > ../$@)
+yx86-macosx.s:	asm/crypt586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) crypt586.pl macosx $(CFLAGS) > ../$@)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

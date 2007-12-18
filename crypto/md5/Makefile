@@ -51,6 +51,8 @@ mx86-cof.s: asm/md5-586.pl ../perlasm/x86asm.pl
 # a.out
 mx86-out.s: asm/md5-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) md5-586.pl a.out $(CFLAGS) > ../$@)
+mx86-macosx.s: asm/md5-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) md5-586.pl macosx $(CFLAGS) > ../$@)
 
 md5-x86_64.s:	asm/md5-x86_64.pl;	$(PERL) asm/md5-x86_64.pl $@
 

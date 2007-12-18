@@ -51,6 +51,8 @@ cx86-cof.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 # a.out
 cx86-out.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
 	(cd asm; $(PERL) cast-586.pl a.out $(CLAGS) $(PROCESSOR) > ../$@)
+cx86-macosx.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	(cd asm; $(PERL) cast-586.pl macosx $(CLAGS) $(PROCESSOR) > ../$@)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

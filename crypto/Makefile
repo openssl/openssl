@@ -64,6 +64,8 @@ x86cpuid-cof.s: x86cpuid.pl perlasm/x86asm.pl
 	$(PERL) x86cpuid.pl coff $(CFLAGS) $(PROCESSOR) > $@
 x86cpuid-out.s: x86cpuid.pl perlasm/x86asm.pl
 	$(PERL) x86cpuid.pl a.out $(CFLAGS) $(PROCESSOR) > $@
+x86cpuid-macosx.s: x86cpuid.pl perlasm/x86asm.pl
+	$(PERL) x86cpuid.pl macosx $(CFLAGS) $(PROCESSOR) > $@
 
 applink.o:	$(TOP)/ms/applink.c
 	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/applink.c

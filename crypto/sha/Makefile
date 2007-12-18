@@ -64,6 +64,13 @@ sha256x86-out.s:	asm/sha256-586.pl ../perlasm/x86asm.pl
 sha512x86-out.s:	asm/sha512-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) sha512-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
 
+sx86-macosx.s:	asm/sha1-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha1-586.pl macosx $(CFLAGS) $(PROCESSOR) > ../$@)
+sha256x86-macosx.s:	asm/sha256-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha256-586.pl macosx $(CFLAGS) $(PROCESSOR) > ../$@)
+sha512x86-macosx.s:	asm/sha512-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) sha512-586.pl macosx $(CFLAGS) $(PROCESSOR) > ../$@)
+
 sha1-ia64.s:   asm/sha1-ia64.pl
 	(cd asm; $(PERL) sha1-ia64.pl $(CFLAGS) ) > $@
 sha256-ia64.s: asm/sha512-ia64.pl

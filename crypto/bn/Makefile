@@ -83,6 +83,12 @@ co86-out.s: asm/co-586.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) co-586.pl a.out $(CFLAGS) > ../$@)
 mo86-out.s: asm/x86-mont.pl ../perlasm/x86asm.pl
 	(cd asm; $(PERL) x86-mont.pl a.out $(CFLAGS) > ../$@)
+bn86-macosx.s: asm/bn-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) bn-586.pl macosx $(CFLAGS) > ../$@)
+co86-macosx.s: asm/co-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) co-586.pl macosx $(CFLAGS) > ../$@)
+mo86-macosx.s: asm/bn-586.pl ../perlasm/x86asm.pl
+	(cd asm; $(PERL) x86-mont.pl macosx $(CFLAGS) > ../$@)
 
 sparcv8.o:	asm/sparcv8.S
 	$(CC) $(CFLAGS) -c asm/sparcv8.S
