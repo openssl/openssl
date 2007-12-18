@@ -125,7 +125,7 @@ sub ::function_begin_B
     push(@out,".globl\t$func\n")	if ($global);
     if ($::coff)
     {	push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
-    elsif ($::aout and !$::pic)
+    elsif (($::aout and !$::pic) or $::macosx)
     { }
     else
     {	push(@out,".type	$func,\@function\n"); }
@@ -171,6 +171,14 @@ sub ::file_end
 	if ($::elf)	{ push (@out,"$tmp,4\n"); }
 	else		{ push (@out,"$tmp\n"); }
     }
+    if ($::macosx)
+    {	grep {s/^\.extern\s+.*$//} @out;
+	if (%non_lazy_ptr)
+    	{   push(@out,".section __IMPORT,__pointers,non_lazy_symbol_pointers\n");
+	    foreach $i (keys %non_lazy_ptr)
+	    {	push(@out,"$non_lazy_ptr{$i}:\n.indirect_symbol\t$i\n.long\t0\n");   }
+	}
+    }
     push(@out,$initseg) if ($initseg);
 }
 
@@ -195,14 +203,19 @@ sub ::picmeup
 	{   &::call(&::label("PIC_me_up"));
 	    &::set_label("PIC_me_up");
 	    &::blindpop($dst);
-	    &::add($dst,"\$${nmdecor}_GLOBAL_OFFSET_TABLE_+[.-".
-			    &::label("PIC_me_up") . "]");
+	    $base=$dst;
+	    $reflabel=&::label("PIC_me_up");
+	}
+	if ($::macosx)
+	{   my $indirect=&::static_label("$nmdecor$sym\$non_lazy_ptr");
+	    &::mov($dst,&::DWP("$indirect-$reflabel",$base));
+	    $non_lazy_ptr{"$nmdecor$sym"}=$indirect;
 	}
 	else
 	{   &::lea($dst,&::DWP("${nmdecor}_GLOBAL_OFFSET_TABLE_+[.-$reflabel]",
 			    $base));
+	    &::mov($dst,&::DWP("$nmdecor$sym\@GOT",$dst));
 	}
-	&::mov($dst,&::DWP("$nmdecor$sym\@GOT",$dst));
     }
     else
     {	&::lea($dst,&::DWP($sym));	}
@@ -224,6 +237,13 @@ ___
     {   $initseg.=<<___;	# applies to both Cygwin and Mingw
 .section	.ctors
 .long	$f
+___
+    }
+    elsif ($::macosx)
+    {	$initseg.=<<___;
+.mod_init_func
+.align 2
+.long   $f
 ___
     }
     elsif ($::aout)
