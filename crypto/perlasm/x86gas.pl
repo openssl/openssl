@@ -1,13 +1,13 @@
 #!/usr/bin/env perl
 
-package x86unix;	# GAS actually...
+package x86gas;
 
 *out=\@::out;
 
-$lbdecor=$::aout?"L":".L";		# local label decoration
+$::lbdecor=$::aout?"L":".L";		# local label decoration
 $nmdecor=($::aout or $::coff)?"_":"";	# external name decoration
 
-$label="000";
+$initseg="";
 
 $align=16;
 $align=log($align)/log(2) if ($::aout);
@@ -59,31 +59,30 @@ sub ::generic
 #
 # opcodes not covered by ::generic above, mostly inconsistent namings...
 #
-sub ::movz	{ &::movzb(@_);			}
-sub ::pushf	{ &::pushfl;			}
-sub ::popf	{ &::popfl;			}
+sub ::movzx	{ &::movzb(@_);			}
+sub ::pushfd	{ &::pushfl;			}
+sub ::popfd	{ &::popfl;			}
 sub ::cpuid	{ &::emit(".byte\t0x0f,0xa2");	}
 sub ::rdtsc	{ &::emit(".byte\t0x0f,0x31");	}
 
-sub ::call	{ &::emit("call",(&islabel($_[0]) or "$nmdecor$_[0]")); }
+sub ::call	{ &::emit("call",(&::islabel($_[0]) or "$nmdecor$_[0]")); }
 sub ::call_ptr	{ &::generic("call","*$_[0]");	}
 sub ::jmp_ptr	{ &::generic("jmp","*$_[0]");	}
 
 *::bswap = sub	{ &::emit("bswap","%$_[0]");	} if (!$::i386);
 
-# chosen SSE instructions
-sub ::movq
-{ my($p1,$p2,$optimize)=@_;
-    if ($optimize && $p1=~/^mm[0-7]$/ && $p2=~/^mm[0-7]$/)
-    # movq between mmx registers can sink Intel CPUs
-    {	&::pshufw($p1,$p2,0xe4);	}
-    else
-    {	&::generic("movq",@_);	}
-}
-sub ::pshufw
+*::pshufw = sub
 { my($dst,$src,$magic)=@_;
     &::emit("pshufw","\$$magic","%$src","%$dst");
-}
+};
+*::shld = sub
+{ my($dst,$src,$bits)=@_;
+    &::emit("shldl",$bit eq "cl"?"%cl":"\$$bits","%$src","%$dst");
+};
+*::shrd = sub
+{ my($dst,$src,$bits)=@_;
+    &::emit("shrdl",$bit eq "cl"?"%cl":"\$$bits","%$src","%$dst");
+};
 
 sub ::DWP
 { my($addr,$reg1,$reg2,$idx)=@_;
@@ -91,7 +90,7 @@ sub ::DWP
 
     $addr =~ s/^\s+//;
     # prepend global references with optional underscore
-    $addr =~ s/^([^\+\-0-9][^\+\-]*)/islabel($1) or "$nmdecor$1"/ige;
+    $addr =~ s/^([^\+\-0-9][^\+\-]*)/&::islabel($1) or "$nmdecor$1"/ige;
 
     $reg1 = "%$reg1" if ($reg1);
     $reg2 = "%$reg2" if ($reg2);
@@ -113,18 +112,16 @@ sub ::BC	{ @_;		}
 sub ::DWC	{ @_;		}
 
 sub ::file
-{   push(@out,".file\t\"$_[0].s\"\n");	}
+{   push(@out,".file\t\"$_[0].s\"\n.text\n");	}
 
 sub ::function_begin_B
-{ my($func,$extra)=@_;
+{ my $func=shift;
   my $global=($func !~ /^_/);
-  my $begin="${lbdecor}_${func}_begin";
+  my $begin="${::lbdecor}_${func}_begin";
 
-    &::external_label($func);
-    $label{$func} = $global?"$begin":"$nmdecor$func";
+    &::LABEL($func,$global?"$begin":"$nmdecor$func");
     $func=$nmdecor.$func;
 
-    push(@out,".text\n");
     push(@out,".globl\t$func\n")	if ($global);
     if ($::coff)
     {	push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
@@ -139,13 +136,10 @@ sub ::function_begin_B
 }
 
 sub ::function_end_B
-{ my($func)=@_;
-  my $i;
-
-    push(@out,".size\t$nmdecor$func,.-$label{$func}\n") if ($::elf);
-    foreach $i (keys %label)
-    {	delete $label{$i} if ($label{$i} =~ /^${lbdecor}[0-9]{3}/);	}
+{ my $func=shift;
+    push(@out,".size\t$nmdecor$func,.-".&::LABEL($func)."\n") if ($::elf);
     $::stack=0;
+    &::wipe_labels();
 }
 
 sub ::comment
@@ -165,100 +159,19 @@ sub ::comment
 		}
 	}
 
-sub islabel	# see is argument is a known label
-{ my $i;
-    foreach $i (values %label) { return $i if ($i eq $_[0]); }
-  $label{$_[0]};	# can be undef
-}
-
-sub ::external_label { push(@labels,@_); }
+sub ::external_label
+{   push(@out,".extern\t".&::LABEL($_[0],$nmdecor.$_[0])."\n");   }
 
 sub ::public_label
-{   $label{$_[0]}="${nmdecor}${_[0]}"	if (!defined($label{$_[0]}));
-    push(@out,".globl\t$label{$_[0]}\n");
-}
-
-sub ::label
-{   if (!defined($label{$_[0]}))
-    {	$label{$_[0]}="${lbdecor}${label}${_[0]}"; $label++;   }
-  $label{$_[0]};
-}
-
-sub ::set_label
-{ my $label=&::label($_[0]);
-    &::align($_[1]) if ($_[1]>1);
-    push(@out,"$label:\n");
-}
+{   push(@out,".globl\t".&::LABEL($_[0],$nmdecor.$_[0])."\n");   }
 
 sub ::file_end
-{   # try to detect if SSE2 or MMX extensions were used on ELF platform...
-    if ($::elf && grep {/\b%[x]?mm[0-7]\b|OPENSSL_ia32cap_P\b/i} @out) {
-
-	push (@out,"\n.section\t.bss\n");
-	push (@out,".comm\t${nmdecor}OPENSSL_ia32cap_P,4,4\n");
-
-	return;	# below is not needed in OpenSSL context
-
-	push (@out,".section\t.init\n");
-	&::picmeup("edx","OPENSSL_ia32cap_P");
-	# $1<<10 sets a reserved bit to signal that variable
-	# was initialized already...
-	my $code=<<___;
-	cmpl	\$0,(%edx)
-	jne	3f
-	movl	\$1<<10,(%edx)
-	pushf
-	popl	%eax
-	movl	%eax,%ecx
-	xorl	\$1<<21,%eax
-	pushl	%eax
-	popf
-	pushf
-	popl	%eax
-	xorl	%ecx,%eax
-	btl	\$21,%eax
-	jnc	3f
-	pushl	%ebp
-	pushl	%edi
-	pushl	%ebx
-	movl	%edx,%edi
-	xor	%eax,%eax
-	.byte	0x0f,0xa2
-	xorl	%eax,%eax
-	cmpl	$1970169159,%ebx
-	setne	%al
-	movl	%eax,%ebp
-	cmpl	$1231384169,%edx
-	setne	%al
-	orl	%eax,%ebp
-	cmpl	$1818588270,%ecx
-	setne	%al
-	orl	%eax,%ebp
-	movl	$1,%eax
-	.byte	0x0f,0xa2
-	cmpl	$0,%ebp
-	jne	1f
-	andb	$15,%ah
-	cmpb	$15,%ah
-	jne	1f
-	orl	$1048576,%edx
-1:	btl	$28,%edx
-	jnc	2f
-	shrl	$16,%ebx
-	cmpb	$1,%bl
-	ja	2f
-	andl	$4026531839,%edx
-2:	orl	\$1<<10,%edx
-	movl	%edx,0(%edi)
-	popl	%ebx
-	popl	%edi
-	popl	%ebp
-	jmp	3f
-	.align	$align
-	3:
-___
-	push (@out,$code);
+{   if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out) {
+	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,4";
+	if ($::elf)	{ push (@out,"$tmp,4\n"); }
+	else		{ push (@out,"$tmp\n"); }
     }
+    push(@out,$initseg) if ($initseg);
 }
 
 sub ::data_byte	{   push(@out,".byte\t".join(',',@_)."\n");   }
@@ -296,36 +209,34 @@ sub ::picmeup
 }
 
 sub ::initseg
-{ my($f)=@_;
-  my($tmp,$ctor);
+{ my $f=$nmdecor.shift;
 
     if ($::elf)
-    {	$tmp=<<___;
+    {	$initseg.=<<___;
 .section	.init
-	call	$nmdecor$f
+	call	$f
 	jmp	.Linitalign
 .align	$align
 .Linitalign:
 ___
     }
     elsif ($::coff)
-    {   $tmp=<<___;	# applies to both Cygwin and Mingw
+    {   $initseg.=<<___;	# applies to both Cygwin and Mingw
 .section	.ctors
-.long	$nmdecor$f
+.long	$f
 ___
     }
     elsif ($::aout)
-    {	$ctor="${nmdecor}_GLOBAL_\$I\$$f";
-	$tmp=".text\n";
-	$tmp.=".type	$ctor,\@function\n" if ($::pic);
-	$tmp.=<<___;	# OpenBSD way...
+    {	my $ctor="${nmdecor}_GLOBAL_\$I\$$f";
+	$initseg.=".text\n";
+	$initseg.=".type	$ctor,\@function\n" if ($::pic);
+	$initseg.=<<___;	# OpenBSD way...
 .globl	$ctor
 .align	2
 $ctor:
-	jmp	$nmdecor$f
+	jmp	$f
 ___
     }
-    push(@out,$tmp) if ($tmp);
 }
 
 1;
