@@ -181,8 +181,8 @@ sub ::asm_init
     {	$win32=1;		require "x86nasm.pl";	}
     elsif (($type eq "nw-nasm"))
     {	$netware=1;		require "x86nasm.pl";	}
-    elsif (($type eq "nw-mwasm"))
-    {	$netware=1; $mwerks=1;	require "x86nasm.pl";	}
+    #elsif (($type eq "nw-mwasm"))
+    #{	$netware=1; $mwerks=1;	require "x86nasm.pl";	}
     elsif (($type eq "win32"))
     {	$win32=1;		require "x86masm.pl";	}
     else
@@ -193,7 +193,6 @@ Pick one target type from
 	coff	- GAS/COFF such as Win32 targets
 	win32n	- Windows 95/Windows NT NASM format
 	nw-nasm - NetWare NASM format
-	nw-mwasm- NetWare Metrowerks Assembler
 EOF
 	exit(1);
     }
