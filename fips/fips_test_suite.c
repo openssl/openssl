@@ -148,7 +148,7 @@ static int FIPS_rsa_test(int bad)
     BIGNUM *bn;
     EVP_MD_CTX mctx;
     EVP_PKEY pk;
-    int r;
+    int r = 0;
 
     ERR_clear_error();
     EVP_MD_CTX_init(&mctx);
