@@ -394,7 +394,7 @@ int main(int argc,char **argv)
     {
     if(argc != 2)
 	{
-	fprintf(stderr,"%s [prime|pqg]\n",argv[0]);
+	fprintf(stderr,"%s [prime|pqg|pqgver|keypair|siggen|sigver]\n",argv[0]);
 	exit(1);
 	}
     if(!FIPS_mode_set(1))
