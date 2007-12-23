@@ -215,6 +215,8 @@ ERR_load_crypto_strings();
 			debug=1;
 		else if (strcmp(*argv,"-non-fips-allow") == 0)
 			non_fips_allow=1;
+		else if (!strcmp(*argv,"-fips-fingerprint"))
+			hmac_key = "etaonrishdlcupfm";
 		else if (!strcmp(*argv,"-hmac"))
 			{
 			if (--argc < 1)
