@@ -305,7 +305,7 @@ my %fips_tests = (
 my %verify_special = (
     "PQGGen" => "fips_dssvs pqgver",
 
-    #"KeyPair" => "fips_dssvs pgqver",
+    "KeyPair"	    => "fips_dssvs keyver",
     "SigGen"        => "fips_dssvs sigver",
     "SigGen15"      => "fips_rsavtest",
     "SigGenRSA"     => "fips_rsavtest -x931",
