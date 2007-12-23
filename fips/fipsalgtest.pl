@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl -w
+#!/usr/bin/perl -w
 # Perl utility to run or verify FIPS 140-2 CMVP algorithm tests based on the
 # pathnames of input algorithm test files actually present (the unqualified
 # file names are consistent but the pathnames are not).
@@ -394,7 +394,10 @@ else {
     }
 }
 
+
 sanity_check_exe( $win32, $tprefix, $shwrap_prefix );
+
+my $cmd_prefix = $win32 ? "" : "${shwrap_prefix}shlib_wrap.sh ";
 
 my %fips_files;
 
@@ -472,6 +475,7 @@ sub sanity_check_exe {
     }
     if ($bad) {
         print STDERR "FATAL ERROR: executables missing\n";
+	exit (1);
     }
     elsif ($debug) {
         print STDERR "Executable sanity check passed OK\n";
@@ -588,7 +592,7 @@ sub run_tests {
             next;
         }
         my $tcmd = $fips_tests{$tname};
-        my $cmd  = "${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd ";
+        my $cmd = "$cmd_prefix$tprefix$tcmd ";
         if ( $tcmd =~ /-f$/ ) {
             $cmd .= "$req $out";
         }
@@ -606,7 +610,7 @@ sub run_tests {
                 my $vout = $rsp;
                 $vout =~ s/\.rsp$/.ver/;
                 $tcmd = $verify_special{$tname};
-                $cmd  = "${shwrap_prefix}shlib_wrap.sh $tprefix$tcmd ";
+                $cmd  = "$cmd_prefix$tprefix$tcmd ";
                 $cmd .= "<$out >$vout";
                 system($cmd);
                 if ( $? != 0 ) {
