@@ -321,11 +321,12 @@ my $tprefix;
 my $shwrap_prefix;
 my $debug          = 0;
 my $quiet          = 0;
+my $notest         = 0;
 my $verify         = 1;
 my $rspdir         = "rsp";
 my $ignore_missing = 0;
+my $ignore_bogus   = 1;
 my $rspignore      = 0;
-my @bogus          = ();      # list of unmatched *.rsp files
 my $bufout         = '';
 
 foreach (@ARGV) {
@@ -341,8 +342,14 @@ foreach (@ARGV) {
     elsif ( $_ eq "--ignore-missing" ) {
         $ignore_missing = 1;
     }
+    elsif ( $_ eq "--ignore-bogus" ) {
+        $ignore_bogus = 1;
+    }
     elsif ( $_ eq "--generate" ) {
         $verify = 0;
+    }
+    elsif ( $_ eq "--notest" ) {
+        $notest = 1;
     }
     elsif ( $_ eq "--quiet" ) {
         $quiet = 1;
@@ -412,6 +419,8 @@ sanity_check_files();
 my ( $runerr, $cmperr, $cmpok, $scheckrunerr, $scheckerr, $scheckok, $skipcnt )
   = ( 0, 0, 0, 0, 0, 0 );
 
+exit (0) if $notest;
+
 run_tests( $verify, $win32, $tprefix, $filter, $tvdir );
 
 if ($verify) {
@@ -420,7 +429,7 @@ if ($verify) {
     print "Algorithm test program execution failures: $runerr\n";
     print "Test comparisons successful:               $cmpok\n";
     print "Test comparisons failed:                   $cmperr\n";
-    print "Test sanity checks succeessul:             $scheckok\n";
+    print "Test sanity checks successful:             $scheckok\n";
     print "Test sanity checks failed:                 $scheckerr\n";
     print "Sanity check program execution failures:   $scheckrunerr\n";
 
@@ -442,9 +451,9 @@ $cmd: generate run CMVP algorithm tests
 	--filter=<regexp>
 	--onedir <dirname>          Assume all components in current directory
 	--rspdir=<dirname>          Name of subdirectories containing *.rsp files, default "resp"
-	--rspignore                 Ignore any bogus *.rsp files
 	--shwrap_prefix=<prefix>
 	--tprefix=<prefix>
+	--ignore-bogus              Ignore duplicate or bogus files
 	--ignore-missing            Ignore missing test files
 	--quiet                     Shhh....
 	--generate                  Generate algorithm test output
@@ -495,21 +504,35 @@ sub find_files {
             if (/\/([^\/]*)\.rsp$/) {
                 $testname = fix_pss( $1, $_ );
                 if ( exists $fips_tests{$testname} ) {
-                    $fips_files{$testname}->[1] = $_;
+                    if ($fips_files{$testname}->[1] eq "") {
+                        $fips_files{$testname}->[1] = $_;
+		    }
+		    else {
+                        print STDERR "WARNING: duplicate response file $_ for test $testname\n";
+			$nbogus++;
+		    }
                 }
                 else {
-                    print STDERR "ERROR: bogus file $_\n";
-                    push @bogus, $_;
+                    print STDERR "WARNING: bogus file $_\n";
+                    $nbogus++;
                 }
             }
             next unless /$filter.*\.req$/i;
             if (/\/([^\/]*)\.req$/) {
                 $testname = fix_pss( $1, $_ );
                 if ( exists $fips_tests{$testname} ) {
-                    $fips_files{$testname}->[0] = $_;
+                    if ($fips_files{$testname}->[0] eq "") {
+                        $fips_files{$testname}->[0] = $_;
+		    }
+		    else {
+                        print STDERR "WARNING: duplicate request file $_ for test $testname\n";
+			$nbogus++;
+		    }
+			
                 }
                 elsif ( !/SHAmix\.req$/ ) {
                     print STDERR "WARNING: unrecognized filename $_\n";
+                    $nbogus++;
                 }
             }
         }
@@ -564,7 +587,11 @@ sub sanity_check_files {
         print STDERR "ERROR: test vector file set not complete\n";
         exit(1) unless $ignore_missing;
     }
-    elsif ($debug) {
+    if ($nbogus) {
+	print STDERR "ERROR: $nbogus bogus or duplicate request and response files\n";
+        exit(1) unless $ignore_bogus;
+    }
+    if ($debug && !$nbogus && !$bad) {
         print STDERR "test vector file set complete\n";
     }
 }
@@ -639,7 +666,7 @@ sub run_tests {
                 if ( $fcount || $debug ) {
                     print STDERR "DEBUG: $tname, Pass=$pcount, Fail=$fcount\n";
                 }
-                if ($fcount) {
+                if ($fcount || !$pcount) {
                     $scheckerr++;
                 }
                 else {
@@ -662,8 +689,14 @@ sub cmp_file {
     my ( $tname, $rsp, $tst ) = @_;
     my ( $rspf,    $tstf );
     my ( $rspline, $tstline );
-    open $rspf, $rsp;
-    open $tstf, $tst;
+    if (!open ($rspf, $rsp)) {
+	print STDERR "ERROR: can't open request file $rsp\n";
+	return 0;
+    }
+    if (!open ($tstf, $tst)) {
+	print STDERR "ERROR: can't open output file $tst\n";
+	return 0;
+    }
     for ( ; ; ) {
         $rspline = next_line($rspf);
         $tstline = next_line($tstf);
