@@ -303,13 +303,11 @@ my %fips_tests = (
 #
 
 my %verify_special = (
-    "PQGGen" => "fips_dssvs pqgver",
-
-    "KeyPair"	    => "fips_dssvs keyver",
+    "PQGGen"        => "fips_dssvs pqgver",
+    "KeyPair"       => "fips_dssvs keyver",
     "SigGen"        => "fips_dssvs sigver",
     "SigGen15"      => "fips_rsavtest",
     "SigGenRSA"     => "fips_rsavtest -x931",
-    "SigGenPSS(0)"  => "fips_rsavtest -saltlen 0",
     "SigGenPSS(62)" => "fips_rsavtest -saltlen 62",
 );
 
@@ -326,7 +324,6 @@ my $verify         = 1;
 my $rspdir         = "rsp";
 my $ignore_missing = 0;
 my $ignore_bogus   = 1;
-my $rspignore      = 0;
 my $bufout         = '';
 
 foreach (@ARGV) {
@@ -359,9 +356,6 @@ foreach (@ARGV) {
     }
     elsif (/--rspdir=(.*)$/) {
         $rspdir = $1;
-    }
-    elsif (/--rspignore$/) {
-        $rspignore = 1;
     }
     elsif (/--tprefix=(.*)$/) {
         $tprefix = $1;
@@ -401,7 +395,6 @@ else {
     }
 }
 
-
 sanity_check_exe( $win32, $tprefix, $shwrap_prefix );
 
 my $cmd_prefix = $win32 ? "" : "${shwrap_prefix}shlib_wrap.sh ";
@@ -419,12 +412,12 @@ sanity_check_files();
 my ( $runerr, $cmperr, $cmpok, $scheckrunerr, $scheckerr, $scheckok, $skipcnt )
   = ( 0, 0, 0, 0, 0, 0 );
 
-exit (0) if $notest;
+exit(0) if $notest;
 
 run_tests( $verify, $win32, $tprefix, $filter, $tvdir );
 
 if ($verify) {
-    print "TEST SUMMARY REPORT:\n";
+    print "ALGORITHM TEST VERIFY SUMMARY REPORT:\n";
     print "Tests skipped due to missing files:        $skipcnt\n";
     print "Algorithm test program execution failures: $runerr\n";
     print "Test comparisons successful:               $cmpok\n";
@@ -434,6 +427,18 @@ if ($verify) {
     print "Sanity check program execution failures:   $scheckrunerr\n";
 
     if ( $runerr || $cmperr || $scheckrunerr || $scheckerr ) {
+        print "***TEST FAILURE***\n";
+    }
+    else {
+        print "***ALL TESTS SUCCESSFUL***\n";
+    }
+}
+else {
+    print "ALGORITHM TEST SUMMARY REPORT:\n";
+    print "Tests skipped due to missing files:        $skipcnt\n";
+    print "Algorithm test program execution failures: $runerr\n";
+
+    if ($runerr) {
         print "***TEST FAILURE***\n";
     }
     else {
@@ -457,7 +462,7 @@ $cmd: generate run CMVP algorithm tests
 	--ignore-missing            Ignore missing test files
 	--quiet                     Shhh....
 	--generate                  Generate algorithm test output
-	--win32                     Generate script for Win32 environment
+	--win32                     Win32 environment
 EOF
 }
 
@@ -484,7 +489,7 @@ sub sanity_check_exe {
     }
     if ($bad) {
         print STDERR "FATAL ERROR: executables missing\n";
-	exit (1);
+        exit(1);
     }
     elsif ($debug) {
         print STDERR "Executable sanity check passed OK\n";
@@ -504,13 +509,14 @@ sub find_files {
             if (/\/([^\/]*)\.rsp$/) {
                 $testname = fix_pss( $1, $_ );
                 if ( exists $fips_tests{$testname} ) {
-                    if ($fips_files{$testname}->[1] eq "") {
+                    if ( $fips_files{$testname}->[1] eq "" ) {
                         $fips_files{$testname}->[1] = $_;
-		    }
-		    else {
-                        print STDERR "WARNING: duplicate response file $_ for test $testname\n";
-			$nbogus++;
-		    }
+                    }
+                    else {
+                        print STDERR
+"WARNING: duplicate response file $_ for test $testname\n";
+                        $nbogus++;
+                    }
                 }
                 else {
                     print STDERR "WARNING: bogus file $_\n";
@@ -521,14 +527,15 @@ sub find_files {
             if (/\/([^\/]*)\.req$/) {
                 $testname = fix_pss( $1, $_ );
                 if ( exists $fips_tests{$testname} ) {
-                    if ($fips_files{$testname}->[0] eq "") {
+                    if ( $fips_files{$testname}->[0] eq "" ) {
                         $fips_files{$testname}->[0] = $_;
-		    }
-		    else {
-                        print STDERR "WARNING: duplicate request file $_ for test $testname\n";
-			$nbogus++;
-		    }
-			
+                    }
+                    else {
+                        print STDERR
+"WARNING: duplicate request file $_ for test $testname\n";
+                        $nbogus++;
+                    }
+
                 }
                 elsif ( !/SHAmix\.req$/ ) {
                     print STDERR "WARNING: unrecognized filename $_\n";
@@ -588,10 +595,11 @@ sub sanity_check_files {
         exit(1) unless $ignore_missing;
     }
     if ($nbogus) {
-	print STDERR "ERROR: $nbogus bogus or duplicate request and response files\n";
+        print STDERR
+          "ERROR: $nbogus bogus or duplicate request and response files\n";
         exit(1) unless $ignore_bogus;
     }
-    if ($debug && !$nbogus && !$bad) {
+    if ( $debug && !$nbogus && !$bad ) {
         print STDERR "test vector file set complete\n";
     }
 }
@@ -618,17 +626,33 @@ sub run_tests {
             $skipcnt++;
             next;
         }
+        elsif ( !$verify ) {
+            if ( $rsp ne "" ) {
+                print STDERR "WARNING: Response file for $tname deleted\n";
+                unlink $rsp;
+            }
+            $out = $req;
+            $out =~ s|/req/(\S+)\.req|/$rspdir/$1.rsp|;
+            my $outdir = $out;
+            $outdir =~ s|/[^/]*$||;
+            if ( !-d $outdir ) {
+                print STDERR "DEBUG: Creating directory $outdir\n" if $debug;
+                mkdir($outdir) || die "Can't create directory $outdir";
+            }
+        }
         my $tcmd = $fips_tests{$tname};
-        my $cmd = "$cmd_prefix$tprefix$tcmd ";
+        my $cmd  = "$cmd_prefix$tprefix$tcmd ";
         if ( $tcmd =~ /-f$/ ) {
             $cmd .= "$req $out";
         }
         else {
             $cmd .= "<$req >$out";
         }
+        print STDERR "DEBUG: running test $tname\n" if ( $debug && !$verify );
         system($cmd);
         if ( $? != 0 ) {
-            print STDERR "WARNING: error executing test $tname\n";
+            print STDERR
+              "WARNING: error executing test $tname for command: $cmd\n";
             $runerr++;
             next;
         }
@@ -666,7 +690,7 @@ sub run_tests {
                 if ( $fcount || $debug ) {
                     print STDERR "DEBUG: $tname, Pass=$pcount, Fail=$fcount\n";
                 }
-                if ($fcount || !$pcount) {
+                if ( $fcount || !$pcount ) {
                     $scheckerr++;
                 }
                 else {
@@ -689,13 +713,13 @@ sub cmp_file {
     my ( $tname, $rsp, $tst ) = @_;
     my ( $rspf,    $tstf );
     my ( $rspline, $tstline );
-    if (!open ($rspf, $rsp)) {
-	print STDERR "ERROR: can't open request file $rsp\n";
-	return 0;
+    if ( !open( $rspf, $rsp ) ) {
+        print STDERR "ERROR: can't open request file $rsp\n";
+        return 0;
     }
-    if (!open ($tstf, $tst)) {
-	print STDERR "ERROR: can't open output file $tst\n";
-	return 0;
+    if ( !open( $tstf, $tst ) ) {
+        print STDERR "ERROR: can't open output file $tst\n";
+        return 0;
     }
     for ( ; ; ) {
         $rspline = next_line($rspf);
