@@ -212,6 +212,8 @@ int AESTest(EVP_CIPHER_CTX *ctx,
 	}
     if (EVP_CipherInit_ex(ctx, cipher, NULL, aKey, iVec, dir) <= 0)
 	return 0;
+    if(!strcasecmp(amode,"CFB1"))
+	M_EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS);
     if (dir)
 		EVP_Cipher(ctx, ciphertext, plaintext, len);
 	else
@@ -377,9 +379,11 @@ int do_mct(char *amode,
 	    case CFB1:
 		if(j == 0)
 		    {
+#if 0
 		    /* compensate for wrong endianness of input file */
 		    if(i == 0)
 			ptext[0][0]<<=7;
+#endif
 		    ret = AESTest(&ctx,amode,akeysz,key[i],iv[i],dir,
 				ptext[j], ctext[j], len);
 		    }

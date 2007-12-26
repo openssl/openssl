@@ -4,6 +4,10 @@
 
  Changes between 0.9.8g and 0.9.8h-fips  [xx XXX xxxx]
 
+  *) Add flag EVP_CIPH_FLAG_LENGTH_BITS to indicate that input buffer length
+     is in bits not bytes. The Monte Carlo FIPS140-2 CFB1 tests require this.
+     [Steve Henson]
+
   *) Add option --with-fipslibdir to specify location of fipscanister.lib
      and friends. When combined with fips build option fipscanister.lib is
      not built but linked from the supplied directory. Always link fips

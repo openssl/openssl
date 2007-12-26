@@ -378,6 +378,8 @@ struct evp_cipher_st
 #define		EVP_CIPH_FLAG_NON_FIPS_ALLOW	0x800
 /* Allow use default ASN1 get/set iv */
 #define		EVP_CIPH_FLAG_DEFAULT_ASN1	0x1000
+/* Buffer length in bits not bytes: CFB1 mode only */
+#define		EVP_CIPH_FLAG_LENGTH_BITS	0x2000
 
 /* ctrl() values */
 
@@ -470,6 +472,7 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define M_EVP_MD_CTX_type(e)		M_EVP_MD_type(M_EVP_MD_CTX_md(e))
 #define M_EVP_MD_CTX_md(e)			((e)->digest)
 
+#define M_EVP_CIPHER_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
 
 int EVP_MD_type(const EVP_MD *md);
 #define EVP_MD_nid(e)			EVP_MD_type(e)
