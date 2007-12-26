@@ -139,7 +139,7 @@ links:
 
 # lib: and $(LIB): are splitted to avoid end-less loop
 lib:	$(LIB)
-	[ "$(FIPSCANISTERINTERNAL)" = "n" ] && $(AR) ../$(FIPSCANLIB).a $(FIPSCANLOC)
+	if [ "$(FIPSCANISTERINTERNAL)" = "n" ]; then $(AR) ../$(FIPSCANLIB).a $(FIPSCANLOC); fi
 	@touch lib
 
 $(LIB):	$(FIPSLIBDIR)fipscanister.o
