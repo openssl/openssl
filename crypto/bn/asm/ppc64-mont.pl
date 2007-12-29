@@ -267,12 +267,12 @@ $code=<<___;
 	fcfid	$nb,$nb
 	fcfid	$nc,$nc
 	fcfid	$nd,$nd
+	addi	$j,$j,-1
 
 	addi	$tp,$sp,`$FRAME+$TRANSFER-8`
 	li	$carry,0
 	mtctr	$j
-.align	4
-L1st:
+
 	lwz	$t0,4($ap)		; load a[j] as 32-bit word pair
 	lwz	$t1,0($ap)
 	lwz	$t2,4($np)		; load n[j] as 32-bit word pair
@@ -370,6 +370,8 @@ L1st:
 	stfd	$T2b,`$FRAME+40`($sp)
 	stfd	$T3a,`$FRAME+48`($sp)
 	stfd	$T3b,`$FRAME+56`($sp)
+.align	4
+L1st:
 	ld	$t0,`$FRAME+0`($sp)
 	ld	$t1,`$FRAME+8`($sp)
 	ld	$t2,`$FRAME+16`($sp)
@@ -405,7 +407,141 @@ L1st:
 
 	std	$t0,8($tp)		; tp[j-1]
 	stdu	$t4,16($tp)		; tp[j]
+
+	lwz	$t0,4($ap)		; load a[j] as 32-bit word pair
+	lwz	$t1,0($ap)
+	lwz	$t2,4($np)		; load n[j] as 32-bit word pair
+	lwz	$t3,0($np)
+	std	$t0,`$FRAME+0`($sp)
+	std	$t1,`$FRAME+8`($sp)
+	std	$t2,`$FRAME+16`($sp)
+	std	$t3,`$FRAME+24`($sp)
+	lfd	$A0,`$FRAME+0`($sp)
+	lfd	$A1,`$FRAME+8`($sp)
+	lfd	$N0,`$FRAME+16`($sp)
+	lfd	$N1,`$FRAME+24`($sp)
+	fcfid	$A0,$A0
+	fcfid	$A1,$A1
+	fcfid	$N0,$N0
+	fcfid	$N1,$N1
+	stfdu	$A0,8($ap_l)		; save a[j] in double format
+	stfdu	$A1,8($ap_h)
+	stfdu	$N0,8($np_l)		; save n[j] in double format
+	stfdu	$N1,8($np_h)
+
+	lwz	$t4,12($ap)		; load a[j+1] as 32-bit word pair
+	lwz	$t5,8($ap)
+	lwz	$t6,12($np)		; load n[j+1] as 32-bit word pair
+	lwz	$t7,8($np)
+	std	$t4,`$FRAME+32`($sp)
+	std	$t5,`$FRAME+40`($sp)
+	std	$t6,`$FRAME+48`($sp)
+	std	$t7,`$FRAME+56`($sp)
+	lfd	$A2,`$FRAME+32`($sp)
+	lfd	$A3,`$FRAME+40`($sp)
+	lfd	$N2,`$FRAME+48`($sp)
+	lfd	$N3,`$FRAME+56`($sp)
+	fcfid	$A2,$A2
+	fcfid	$A3,$A3
+	fcfid	$N2,$N2
+	fcfid	$N3,$N3
+	stfdu	$A2,8($ap_l)		; save a[j+1] in double format
+	stfdu	$A3,8($ap_h)
+	stfdu	$N2,8($np_l)		; save n[j+1] in double format
+	stfdu	$N3,8($np_h)
+	addi	$ap,$ap,16
+	addi	$np,$np,16
+
+	fmadd	$T0a,$A0,$ba,$dota
+	fmadd	$T0b,$A0,$bb,$dotb
+	fmul	$T1a,$A1,$ba
+	fmul	$T1b,$A1,$bb
+	fmul	$T2a,$A2,$ba
+	fmul	$T2b,$A2,$bb
+	fmul	$T3a,$A3,$ba
+	fmul	$T3b,$A3,$bb
+
+	fmadd	$T1a,$A0,$bc,$T1a
+	fmadd	$T1b,$A0,$bd,$T1b
+	fmadd	$T2a,$A1,$bc,$T2a
+	fmadd	$T2b,$A1,$bd,$T2b
+	fmadd	$T3a,$A2,$bc,$T3a
+	fmadd	$T3b,$A2,$bd,$T3b
+	fmul	$dota,$A3,$bc
+	fmul	$dotb,$A3,$bd
+
+	fmadd	$T0a,$N0,$na,$T0a
+	fmadd	$T0b,$N0,$nb,$T0b
+	fmadd	$T1a,$N1,$na,$T1a
+	fmadd	$T1b,$N1,$nb,$T1b
+	fmadd	$T2a,$N2,$na,$T2a
+	fmadd	$T2b,$N2,$nb,$T2b
+	fmadd	$T3a,$N3,$na,$T3a
+	fmadd	$T3b,$N3,$nb,$T3b
+
+	fmadd	$T1a,$N0,$nc,$T1a
+	fmadd	$T1b,$N0,$nd,$T1b
+	fmadd	$T2a,$N1,$nc,$T2a
+	fmadd	$T2b,$N1,$nd,$T2b
+	fmadd	$T3a,$N2,$nc,$T3a
+	fmadd	$T3b,$N2,$nd,$T3b
+	fmadd	$dota,$N3,$nc,$dota
+	fmadd	$dotb,$N3,$nd,$dotb
+
+	fctid	$T0a,$T0a
+	fctid	$T0b,$T0b
+	fctid	$T1a,$T1a
+	fctid	$T1b,$T1b
+	fctid	$T2a,$T2a
+	fctid	$T2b,$T2b
+	fctid	$T3a,$T3a
+	fctid	$T3b,$T3b
+
+	stfd	$T0a,`$FRAME+0`($sp)
+	stfd	$T0b,`$FRAME+8`($sp)
+	stfd	$T1a,`$FRAME+16`($sp)
+	stfd	$T1b,`$FRAME+24`($sp)
+	stfd	$T2a,`$FRAME+32`($sp)
+	stfd	$T2b,`$FRAME+40`($sp)
+	stfd	$T3a,`$FRAME+48`($sp)
+	stfd	$T3b,`$FRAME+56`($sp)
 	bdnz-	L1st
+
+	ld	$t0,`$FRAME+0`($sp)
+	ld	$t1,`$FRAME+8`($sp)
+	ld	$t2,`$FRAME+16`($sp)
+	ld	$t3,`$FRAME+24`($sp)
+	ld	$t4,`$FRAME+32`($sp)
+	ld	$t5,`$FRAME+40`($sp)
+	ld	$t6,`$FRAME+48`($sp)
+	ld	$t7,`$FRAME+56`($sp)
+
+	add	$t0,$t0,$carry		; can not overflow
+	srdi	$carry,$t0,16
+	add	$t1,$t1,$carry
+	srdi	$carry,$t1,16
+	add	$t2,$t2,$carry
+	srdi	$carry,$t2,16
+	add	$t3,$t3,$carry
+	srdi	$carry,$t3,16
+	add	$t4,$t4,$carry
+	srdi	$carry,$t4,16
+	add	$t5,$t5,$carry
+	srdi	$carry,$t5,16
+	add	$t6,$t6,$carry
+	srdi	$carry,$t6,16
+	add	$t7,$t7,$carry
+
+	insrdi	$t0,$t1,16,32
+	insrdi	$t0,$t2,16,16
+	insrdi	$t0,$t3,16,0		; 0..63 bits
+	insrdi	$t4,$t5,16,32
+	insrdi	$t4,$t6,16,16
+	insrdi	$t4,$t7,16,0		; 64..127 bits
+	srdi	$carry,$t7,16		; upper 33 bits
+
+	std	$t0,8($tp)		; tp[j-1]
+	stdu	$t4,16($tp)		; tp[j]
 
 	fctid	$dota,$dota
 	fctid	$dotb,$dotb
@@ -475,8 +611,7 @@ Louter:
 	fsub	$dotb,$dotb,$dotb
 	li	$carry,0
 	mtctr	$j
-.align	4
-Linner:
+
 	lfdu	$A0,8($ap_l)		; load a[j] in double format
 	lfdu	$A1,8($ap_h)
 	lfdu	$N0,8($np_l)		; load n[j] in double format
@@ -539,6 +674,8 @@ Linner:
 	stfd	$T2b,`$FRAME+40`($sp)
 	stfd	$T3a,`$FRAME+48`($sp)
 	stfd	$T3b,`$FRAME+56`($sp)
+.align	4
+Linner:
 	ld	$t0,`$FRAME+0`($sp)
 	ld	$t1,`$FRAME+8`($sp)
 	ld	$t2,`$FRAME+16`($sp)
@@ -581,7 +718,113 @@ Linner:
 
 	std	$t3,-16($tp)		; tp[j-1]
 	std	$t5,-8($tp)		; tp[j]
+
+	lfdu	$A0,8($ap_l)		; load a[j] in double format
+	lfdu	$A1,8($ap_h)
+	lfdu	$N0,8($np_l)		; load n[j] in double format
+	lfdu	$N1,8($np_h)
+	lfdu	$A2,8($ap_l)		; load a[j+1] in double format
+	lfdu	$A3,8($ap_h)
+	lfdu	$N2,8($np_l)		; load n[j+1] in double format
+	lfdu	$N3,8($np_h)
+
+	fmadd	$T0a,$A0,$ba,$dota
+	fmadd	$T0b,$A0,$bb,$dotb
+	fmul	$T1a,$A1,$ba
+	fmul	$T1b,$A1,$bb
+	fmul	$T2a,$A2,$ba
+	fmul	$T2b,$A2,$bb
+	fmul	$T3a,$A3,$ba
+	fmul	$T3b,$A3,$bb
+
+	fmadd	$T1a,$A0,$bc,$T1a
+	fmadd	$T1b,$A0,$bd,$T1b
+	fmadd	$T2a,$A1,$bc,$T2a
+	fmadd	$T2b,$A1,$bd,$T2b
+	fmadd	$T3a,$A2,$bc,$T3a
+	fmadd	$T3b,$A2,$bd,$T3b
+	fmul	$dota,$A3,$bc
+	fmul	$dotb,$A3,$bd
+
+	fmadd	$T0a,$N0,$na,$T0a
+	fmadd	$T0b,$N0,$nb,$T0b
+	fmadd	$T1a,$N1,$na,$T1a
+	fmadd	$T1b,$N1,$nb,$T1b
+	fmadd	$T2a,$N2,$na,$T2a
+	fmadd	$T2b,$N2,$nb,$T2b
+	fmadd	$T3a,$N3,$na,$T3a
+	fmadd	$T3b,$N3,$nb,$T3b
+
+	fmadd	$T1a,$N0,$nc,$T1a
+	fmadd	$T1b,$N0,$nd,$T1b
+	fmadd	$T2a,$N1,$nc,$T2a
+	fmadd	$T2b,$N1,$nd,$T2b
+	fmadd	$T3a,$N2,$nc,$T3a
+	fmadd	$T3b,$N2,$nd,$T3b
+	fmadd	$dota,$N3,$nc,$dota
+	fmadd	$dotb,$N3,$nd,$dotb
+
+	fctid	$T0a,$T0a
+	fctid	$T0b,$T0b
+	fctid	$T1a,$T1a
+	fctid	$T1b,$T1b
+	fctid	$T2a,$T2a
+	fctid	$T2b,$T2b
+	fctid	$T3a,$T3a
+	fctid	$T3b,$T3b
+
+	stfd	$T0a,`$FRAME+0`($sp)
+	stfd	$T0b,`$FRAME+8`($sp)
+	stfd	$T1a,`$FRAME+16`($sp)
+	stfd	$T1b,`$FRAME+24`($sp)
+	stfd	$T2a,`$FRAME+32`($sp)
+	stfd	$T2b,`$FRAME+40`($sp)
+	stfd	$T3a,`$FRAME+48`($sp)
+	stfd	$T3b,`$FRAME+56`($sp)
 	bdnz-	Linner
+
+	ld	$t0,`$FRAME+0`($sp)
+	ld	$t1,`$FRAME+8`($sp)
+	ld	$t2,`$FRAME+16`($sp)
+	ld	$t3,`$FRAME+24`($sp)
+	ld	$t4,`$FRAME+32`($sp)
+	ld	$t5,`$FRAME+40`($sp)
+	ld	$t6,`$FRAME+48`($sp)
+	ld	$t7,`$FRAME+56`($sp)
+
+	add	$t0,$t0,$carry		; can not overflow
+	srdi	$carry,$t0,16
+	add	$t1,$t1,$carry
+	srdi	$carry,$t1,16
+	add	$t2,$t2,$carry
+	srdi	$carry,$t2,16
+	add	$t3,$t3,$carry
+	srdi	$carry,$t3,16
+	add	$t4,$t4,$carry
+	srdi	$carry,$t4,16
+	add	$t5,$t5,$carry
+	srdi	$carry,$t5,16
+	add	$t6,$t6,$carry
+	srdi	$carry,$t6,16
+	add	$t7,$t7,$carry
+
+	insrdi	$t0,$t1,16,32
+	insrdi	$t0,$t2,16,16
+	insrdi	$t0,$t3,16,0		; 0..63 bits
+	insrdi	$t4,$t5,16,32
+	insrdi	$t4,$t6,16,16
+	insrdi	$t4,$t7,16,0		; 64..127 bits
+	srdi	$carry,$t7,16		; upper 33 bits
+
+	ld	$t1,8($tp)		; tp[j]
+	ldu	$t2,16($tp)		; tp[j+1]
+
+	addc	$t3,$t0,$t1
+	adde	$t5,$t4,$t2
+	addze	$carry,$carry
+
+	std	$t3,-16($tp)		; tp[j-1]
+	std	$t5,-8($tp)		; tp[j]
 
 	fctid	$dota,$dota
 	fctid	$dotb,$dotb
@@ -611,6 +854,7 @@ Linner:
 	addi	$t4,$sp,`$FRAME+$TRANSFER+16`
 	addi	$t5,$np,8
 	addi	$t6,$rp,8
+	addi	$j,$j,1
 	mtctr	$j
 
 .align	4
