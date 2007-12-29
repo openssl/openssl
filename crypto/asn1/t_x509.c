@@ -437,13 +437,13 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 
 	l=80-2-obase;
 
-	b=s=X509_NAME_oneline(name,NULL,0);
-	if (!*s)
+	b=X509_NAME_oneline(name,NULL,0);
+	if (!*b)
 		{
 		OPENSSL_free(b);
 		return 1;
 		}
-	s++; /* skip the first slash */
+	s=b+1; /* skip the first slash */
 
 	c=s;
 	for (;;)
@@ -468,8 +468,7 @@ int X509_NAME_print(BIO *bp, X509_NAME *name, int obase)
 			{
 			i=s-c;
 			if (BIO_write(bp,c,i) != i) goto err;
-			c+=i;
-			c++;
+			c=s+1;	/* skip following slash */
 			if (*s != '\0')
 				{
 				if (BIO_write(bp,", ",2) != 2) goto err;
