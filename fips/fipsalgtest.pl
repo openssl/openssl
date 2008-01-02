@@ -5,292 +5,267 @@
 #
 
 # List of all the unqualified file names we expect and command lines to run
-my %fips_tests = (
+my @fips_test_list = (
 
     # FIPS test definitions
 
     # DSA tests
 
-    "PQGGen"  => "fips_dssvs pqg",
-    "KeyPair" => "fips_dssvs keypair",
-    "SigGen"  => "fips_dssvs siggen",
-    "SigVer"  => "fips_dssvs sigver",
+    "DSA",
 
-    # SHA tests
-
-    "SHA1LongMsg"    => "fips_shatest",
-    "SHA1Monte"      => "fips_shatest",
-    "SHA1ShortMsg"   => "fips_shatest",
-    "SHA224LongMsg"  => "fips_shatest",
-    "SHA224Monte"    => "fips_shatest",
-    "SHA224ShortMsg" => "fips_shatest",
-    "SHA256LongMsg"  => "fips_shatest",
-    "SHA256Monte"    => "fips_shatest",
-    "SHA256ShortMsg" => "fips_shatest",
-    "SHA384LongMsg"  => "fips_shatest",
-    "SHA384Monte"    => "fips_shatest",
-    "SHA384ShortMsg" => "fips_shatest",
-    "SHA512LongMsg"  => "fips_shatest",
-    "SHA512Monte"    => "fips_shatest",
-    "SHA512ShortMsg" => "fips_shatest",
-
-    # HMAC
-
-    "HMAC" => "fips_hmactest",
-
-    # RAND tests
-
-    "ANSI931_AES128MCT" => "fips_rngvs mct",
-    "ANSI931_AES192MCT" => "fips_rngvs mct",
-    "ANSI931_AES256MCT" => "fips_rngvs mct",
-    "ANSI931_AES128VST" => "fips_rngvs vst",
-    "ANSI931_AES192VST" => "fips_rngvs vst",
-    "ANSI931_AES256VST" => "fips_rngvs vst",
+    [ "PQGGen",  "fips_dssvs pqg" ],
+    [ "KeyPair", "fips_dssvs keypair" ],
+    [ "SigGen",  "fips_dssvs siggen" ],
+    [ "SigVer",  "fips_dssvs sigver" ],
 
     # RSA tests
 
-    "SigGen15"  => "fips_rsastest",
-    "SigVer15"  => "fips_rsavtest",
-    "SigVerRSA" => "fips_rsavtest -x931",
-    "KeyGenRSA" => "fips_rsagtest",
-    "SigGenRSA" => "fips_rsastest -x931",
+    "RSA",
+
+    [ "SigGen15",  "fips_rsastest" ],
+    [ "SigVer15",  "fips_rsavtest" ],
+    [ "SigVerRSA", "fips_rsavtest -x931" ],
+    [ "KeyGenRSA", "fips_rsagtest" ],
+    [ "SigGenRSA", "fips_rsastest -x931" ],
 
     # Special cases for PSS. The filename itself is
     # not sufficient to determine the test. Addditionally we
     # need to examine the file contents to determine the salt length
     # In these cases the test filename has (saltlen) appended.
 
-    "SigGenPSS(0)"  => "fips_rsastest -saltlen 0",
-    "SigVerPSS(0)"  => "fips_rsavtest -saltlen 0",
-    "SigGenPSS(62)" => "fips_rsastest -saltlen 62",
-    "SigVerPSS(62)" => "fips_rsavtest -saltlen 62",
+    [ "SigGenPSS(0)",  "fips_rsastest -saltlen 0" ],
+    [ "SigVerPSS(0)",  "fips_rsavtest -saltlen 0" ],
+    [ "SigGenPSS(62)", "fips_rsastest -saltlen 62" ],
+    [ "SigVerPSS(62)", "fips_rsavtest -saltlen 62" ],
+
+    # SHA tests
+
+    "SHA",
+
+    [ "SHA1LongMsg",    "fips_shatest" ],
+    [ "SHA1Monte",      "fips_shatest" ],
+    [ "SHA1ShortMsg",   "fips_shatest" ],
+    [ "SHA224LongMsg",  "fips_shatest" ],
+    [ "SHA224Monte",    "fips_shatest" ],
+    [ "SHA224ShortMsg", "fips_shatest" ],
+    [ "SHA256LongMsg",  "fips_shatest" ],
+    [ "SHA256Monte",    "fips_shatest" ],
+    [ "SHA256ShortMsg", "fips_shatest" ],
+    [ "SHA384LongMsg",  "fips_shatest" ],
+    [ "SHA384Monte",    "fips_shatest" ],
+    [ "SHA384ShortMsg", "fips_shatest" ],
+    [ "SHA512LongMsg",  "fips_shatest" ],
+    [ "SHA512Monte",    "fips_shatest" ],
+    [ "SHA512ShortMsg", "fips_shatest" ],
+
+    # HMAC
+
+    "HMAC",
+
+    [ "HMAC", "fips_hmactest" ],
+
+    # RAND tests
+
+    "RAND",
+
+    [ "ANSI931_AES128MCT", "fips_rngvs mct" ],
+    [ "ANSI931_AES192MCT", "fips_rngvs mct" ],
+    [ "ANSI931_AES256MCT", "fips_rngvs mct" ],
+    [ "ANSI931_AES128VST", "fips_rngvs vst" ],
+    [ "ANSI931_AES192VST", "fips_rngvs vst" ],
+    [ "ANSI931_AES256VST", "fips_rngvs vst" ],
 
     # AES tests
 
-    "CBCGFSbox128"     => "fips_aesavs -f",
-    "CBCGFSbox192"     => "fips_aesavs -f",
-    "CBCGFSbox256"     => "fips_aesavs -f",
-    "CBCKeySbox128"    => "fips_aesavs -f",
-    "CBCKeySbox192"    => "fips_aesavs -f",
-    "CBCKeySbox256"    => "fips_aesavs -f",
-    "CBCMCT128"        => "fips_aesavs -f",
-    "CBCMCT192"        => "fips_aesavs -f",
-    "CBCMCT256"        => "fips_aesavs -f",
-    "CBCMMT128"        => "fips_aesavs -f",
-    "CBCMMT192"        => "fips_aesavs -f",
-    "CBCMMT256"        => "fips_aesavs -f",
-    "CBCVarKey128"     => "fips_aesavs -f",
-    "CBCVarKey192"     => "fips_aesavs -f",
-    "CBCVarKey256"     => "fips_aesavs -f",
-    "CBCVarTxt128"     => "fips_aesavs -f",
-    "CBCVarTxt192"     => "fips_aesavs -f",
-    "CBCVarTxt256"     => "fips_aesavs -f",
-    "CFB128GFSbox128"  => "fips_aesavs -f",
-    "CFB128GFSbox192"  => "fips_aesavs -f",
-    "CFB128GFSbox256"  => "fips_aesavs -f",
-    "CFB128KeySbox128" => "fips_aesavs -f",
-    "CFB128KeySbox192" => "fips_aesavs -f",
-    "CFB128KeySbox256" => "fips_aesavs -f",
-    "CFB128MCT128"     => "fips_aesavs -f",
-    "CFB128MCT192"     => "fips_aesavs -f",
-    "CFB128MCT256"     => "fips_aesavs -f",
-    "CFB128MMT128"     => "fips_aesavs -f",
-    "CFB128MMT192"     => "fips_aesavs -f",
-    "CFB128MMT256"     => "fips_aesavs -f",
-    "CFB128VarKey128"  => "fips_aesavs -f",
-    "CFB128VarKey192"  => "fips_aesavs -f",
-    "CFB128VarKey256"  => "fips_aesavs -f",
-    "CFB128VarTxt128"  => "fips_aesavs -f",
-    "CFB128VarTxt192"  => "fips_aesavs -f",
-    "CFB128VarTxt256"  => "fips_aesavs -f",
-    "CFB8GFSbox128"    => "fips_aesavs -f",
-    "CFB8GFSbox192"    => "fips_aesavs -f",
-    "CFB8GFSbox256"    => "fips_aesavs -f",
-    "CFB8KeySbox128"   => "fips_aesavs -f",
-    "CFB8KeySbox192"   => "fips_aesavs -f",
-    "CFB8KeySbox256"   => "fips_aesavs -f",
-    "CFB8MCT128"       => "fips_aesavs -f",
-    "CFB8MCT192"       => "fips_aesavs -f",
-    "CFB8MCT256"       => "fips_aesavs -f",
-    "CFB8MMT128"       => "fips_aesavs -f",
-    "CFB8MMT192"       => "fips_aesavs -f",
-    "CFB8MMT256"       => "fips_aesavs -f",
-    "CFB8VarKey128"    => "fips_aesavs -f",
-    "CFB8VarKey192"    => "fips_aesavs -f",
-    "CFB8VarKey256"    => "fips_aesavs -f",
-    "CFB8VarTxt128"    => "fips_aesavs -f",
-    "CFB8VarTxt192"    => "fips_aesavs -f",
-    "CFB8VarTxt256"    => "fips_aesavs -f",
+    "AES",
 
-    #"CFB1GFSbox128" => "fips_aesavs -f",
-    #"CFB1GFSbox192" => "fips_aesavs -f",
-    #"CFB1GFSbox256" => "fips_aesavs -f",
-    #"CFB1KeySbox128" => "fips_aesavs -f",
-    #"CFB1KeySbox192" => "fips_aesavs -f",
-    #"CFB1KeySbox256" => "fips_aesavs -f",
-    #"CFB1MCT128" => "fips_aesavs -f",
-    #"CFB1MCT192" => "fips_aesavs -f",
-    #"CFB1MCT256" => "fips_aesavs -f",
-    #"CFB1MMT128" => "fips_aesavs -f",
-    #"CFB1MMT192" => "fips_aesavs -f",
-    #"CFB1MMT256" => "fips_aesavs -f",
-    #"CFB1VarKey128" => "fips_aesavs -f",
-    #"CFB1VarKey192" => "fips_aesavs -f",
-    #"CFB1VarKey256" => "fips_aesavs -f",
-    #"CFB1VarTxt128" => "fips_aesavs -f",
-    #"CFB1VarTxt192" => "fips_aesavs -f",
-    #"CFB1VarTxt256" => "fips_aesavs -f",
-    "ECBGFSbox128"  => "fips_aesavs -f",
-    "ECBGFSbox192"  => "fips_aesavs -f",
-    "ECBGFSbox256"  => "fips_aesavs -f",
-    "ECBKeySbox128" => "fips_aesavs -f",
-    "ECBKeySbox192" => "fips_aesavs -f",
-    "ECBKeySbox256" => "fips_aesavs -f",
-    "ECBMCT128"     => "fips_aesavs -f",
-    "ECBMCT192"     => "fips_aesavs -f",
-    "ECBMCT256"     => "fips_aesavs -f",
-    "ECBMMT128"     => "fips_aesavs -f",
-    "ECBMMT192"     => "fips_aesavs -f",
-    "ECBMMT256"     => "fips_aesavs -f",
-    "ECBVarKey128"  => "fips_aesavs -f",
-    "ECBVarKey192"  => "fips_aesavs -f",
-    "ECBVarKey256"  => "fips_aesavs -f",
-    "ECBVarTxt128"  => "fips_aesavs -f",
-    "ECBVarTxt192"  => "fips_aesavs -f",
-    "ECBVarTxt256"  => "fips_aesavs -f",
-    "OFBGFSbox128"  => "fips_aesavs -f",
-    "OFBGFSbox192"  => "fips_aesavs -f",
-    "OFBGFSbox256"  => "fips_aesavs -f",
-    "OFBKeySbox128" => "fips_aesavs -f",
-    "OFBKeySbox192" => "fips_aesavs -f",
-    "OFBKeySbox256" => "fips_aesavs -f",
-    "OFBMCT128"     => "fips_aesavs -f",
-    "OFBMCT192"     => "fips_aesavs -f",
-    "OFBMCT256"     => "fips_aesavs -f",
-    "OFBMMT128"     => "fips_aesavs -f",
-    "OFBMMT192"     => "fips_aesavs -f",
-    "OFBMMT256"     => "fips_aesavs -f",
-    "OFBVarKey128"  => "fips_aesavs -f",
-    "OFBVarKey192"  => "fips_aesavs -f",
-    "OFBVarKey256"  => "fips_aesavs -f",
-    "OFBVarTxt128"  => "fips_aesavs -f",
-    "OFBVarTxt192"  => "fips_aesavs -f",
-    "OFBVarTxt256"  => "fips_aesavs -f",
+    [ "CBCGFSbox128",     "fips_aesavs -f" ],
+    [ "CBCGFSbox192",     "fips_aesavs -f" ],
+    [ "CBCGFSbox256",     "fips_aesavs -f" ],
+    [ "CBCKeySbox128",    "fips_aesavs -f" ],
+    [ "CBCKeySbox192",    "fips_aesavs -f" ],
+    [ "CBCKeySbox256",    "fips_aesavs -f" ],
+    [ "CBCMCT128",        "fips_aesavs -f" ],
+    [ "CBCMCT192",        "fips_aesavs -f" ],
+    [ "CBCMCT256",        "fips_aesavs -f" ],
+    [ "CBCMMT128",        "fips_aesavs -f" ],
+    [ "CBCMMT192",        "fips_aesavs -f" ],
+    [ "CBCMMT256",        "fips_aesavs -f" ],
+    [ "CBCVarKey128",     "fips_aesavs -f" ],
+    [ "CBCVarKey192",     "fips_aesavs -f" ],
+    [ "CBCVarKey256",     "fips_aesavs -f" ],
+    [ "CBCVarTxt128",     "fips_aesavs -f" ],
+    [ "CBCVarTxt192",     "fips_aesavs -f" ],
+    [ "CBCVarTxt256",     "fips_aesavs -f" ],
+    [ "CFB128GFSbox128",  "fips_aesavs -f" ],
+    [ "CFB128GFSbox192",  "fips_aesavs -f" ],
+    [ "CFB128GFSbox256",  "fips_aesavs -f" ],
+    [ "CFB128KeySbox128", "fips_aesavs -f" ],
+    [ "CFB128KeySbox192", "fips_aesavs -f" ],
+    [ "CFB128KeySbox256", "fips_aesavs -f" ],
+    [ "CFB128MCT128",     "fips_aesavs -f" ],
+    [ "CFB128MCT192",     "fips_aesavs -f" ],
+    [ "CFB128MCT256",     "fips_aesavs -f" ],
+    [ "CFB128MMT128",     "fips_aesavs -f" ],
+    [ "CFB128MMT192",     "fips_aesavs -f" ],
+    [ "CFB128MMT256",     "fips_aesavs -f" ],
+    [ "CFB128VarKey128",  "fips_aesavs -f" ],
+    [ "CFB128VarKey192",  "fips_aesavs -f" ],
+    [ "CFB128VarKey256",  "fips_aesavs -f" ],
+    [ "CFB128VarTxt128",  "fips_aesavs -f" ],
+    [ "CFB128VarTxt192",  "fips_aesavs -f" ],
+    [ "CFB128VarTxt256",  "fips_aesavs -f" ],
+    [ "CFB8GFSbox128",    "fips_aesavs -f" ],
+    [ "CFB8GFSbox192",    "fips_aesavs -f" ],
+    [ "CFB8GFSbox256",    "fips_aesavs -f" ],
+    [ "CFB8KeySbox128",   "fips_aesavs -f" ],
+    [ "CFB8KeySbox192",   "fips_aesavs -f" ],
+    [ "CFB8KeySbox256",   "fips_aesavs -f" ],
+    [ "CFB8MCT128",       "fips_aesavs -f" ],
+    [ "CFB8MCT192",       "fips_aesavs -f" ],
+    [ "CFB8MCT256",       "fips_aesavs -f" ],
+    [ "CFB8MMT128",       "fips_aesavs -f" ],
+    [ "CFB8MMT192",       "fips_aesavs -f" ],
+    [ "CFB8MMT256",       "fips_aesavs -f" ],
+    [ "CFB8VarKey128",    "fips_aesavs -f" ],
+    [ "CFB8VarKey192",    "fips_aesavs -f" ],
+    [ "CFB8VarKey256",    "fips_aesavs -f" ],
+    [ "CFB8VarTxt128",    "fips_aesavs -f" ],
+    [ "CFB8VarTxt192",    "fips_aesavs -f" ],
+    [ "CFB8VarTxt256",    "fips_aesavs -f" ],
+
+    [ "ECBGFSbox128",  "fips_aesavs -f" ],
+    [ "ECBGFSbox192",  "fips_aesavs -f" ],
+    [ "ECBGFSbox256",  "fips_aesavs -f" ],
+    [ "ECBKeySbox128", "fips_aesavs -f" ],
+    [ "ECBKeySbox192", "fips_aesavs -f" ],
+    [ "ECBKeySbox256", "fips_aesavs -f" ],
+    [ "ECBMCT128",     "fips_aesavs -f" ],
+    [ "ECBMCT192",     "fips_aesavs -f" ],
+    [ "ECBMCT256",     "fips_aesavs -f" ],
+    [ "ECBMMT128",     "fips_aesavs -f" ],
+    [ "ECBMMT192",     "fips_aesavs -f" ],
+    [ "ECBMMT256",     "fips_aesavs -f" ],
+    [ "ECBVarKey128",  "fips_aesavs -f" ],
+    [ "ECBVarKey192",  "fips_aesavs -f" ],
+    [ "ECBVarKey256",  "fips_aesavs -f" ],
+    [ "ECBVarTxt128",  "fips_aesavs -f" ],
+    [ "ECBVarTxt192",  "fips_aesavs -f" ],
+    [ "ECBVarTxt256",  "fips_aesavs -f" ],
+    [ "OFBGFSbox128",  "fips_aesavs -f" ],
+    [ "OFBGFSbox192",  "fips_aesavs -f" ],
+    [ "OFBGFSbox256",  "fips_aesavs -f" ],
+    [ "OFBKeySbox128", "fips_aesavs -f" ],
+    [ "OFBKeySbox192", "fips_aesavs -f" ],
+    [ "OFBKeySbox256", "fips_aesavs -f" ],
+    [ "OFBMCT128",     "fips_aesavs -f" ],
+    [ "OFBMCT192",     "fips_aesavs -f" ],
+    [ "OFBMCT256",     "fips_aesavs -f" ],
+    [ "OFBMMT128",     "fips_aesavs -f" ],
+    [ "OFBMMT192",     "fips_aesavs -f" ],
+    [ "OFBMMT256",     "fips_aesavs -f" ],
+    [ "OFBVarKey128",  "fips_aesavs -f" ],
+    [ "OFBVarKey192",  "fips_aesavs -f" ],
+    [ "OFBVarKey256",  "fips_aesavs -f" ],
+    [ "OFBVarTxt128",  "fips_aesavs -f" ],
+    [ "OFBVarTxt192",  "fips_aesavs -f" ],
+    [ "OFBVarTxt256",  "fips_aesavs -f" ],
 
     # Triple DES tests
 
-    "TCBCinvperm"   => "fips_desmovs -f",
-    "TCBCMMT1"      => "fips_desmovs -f",
-    "TCBCMMT2"      => "fips_desmovs -f",
-    "TCBCMMT3"      => "fips_desmovs -f",
-    "TCBCMonte1"    => "fips_desmovs -f",
-    "TCBCMonte2"    => "fips_desmovs -f",
-    "TCBCMonte3"    => "fips_desmovs -f",
-    "TCBCpermop"    => "fips_desmovs -f",
-    "TCBCsubtab"    => "fips_desmovs -f",
-    "TCBCvarkey"    => "fips_desmovs -f",
-    "TCBCvartext"   => "fips_desmovs -f",
-    "TCFB64invperm" => "fips_desmovs -f",
-    "TCFB64MMT1"    => "fips_desmovs -f",
-    "TCFB64MMT2"    => "fips_desmovs -f",
-    "TCFB64MMT3"    => "fips_desmovs -f",
-    "TCFB64Monte1"  => "fips_desmovs -f",
-    "TCFB64Monte2"  => "fips_desmovs -f",
-    "TCFB64Monte3"  => "fips_desmovs -f",
-    "TCFB64permop"  => "fips_desmovs -f",
-    "TCFB64subtab"  => "fips_desmovs -f",
-    "TCFB64varkey"  => "fips_desmovs -f",
-    "TCFB64vartext" => "fips_desmovs -f",
-    "TCFB8invperm"  => "fips_desmovs -f",
-    "TCFB8MMT1"     => "fips_desmovs -f",
-    "TCFB8MMT2"     => "fips_desmovs -f",
-    "TCFB8MMT3"     => "fips_desmovs -f",
-    "TCFB8Monte1"   => "fips_desmovs -f",
-    "TCFB8Monte2"   => "fips_desmovs -f",
-    "TCFB8Monte3"   => "fips_desmovs -f",
-    "TCFB8permop"   => "fips_desmovs -f",
-    "TCFB8subtab"   => "fips_desmovs -f",
-    "TCFB8varkey"   => "fips_desmovs -f",
-    "TCFB8vartext"  => "fips_desmovs -f",
-    "TECBinvperm"   => "fips_desmovs -f",
-    "TECBMMT1"      => "fips_desmovs -f",
-    "TECBMMT2"      => "fips_desmovs -f",
-    "TECBMMT3"      => "fips_desmovs -f",
-    "TECBMonte1"    => "fips_desmovs -f",
-    "TECBMonte2"    => "fips_desmovs -f",
-    "TECBMonte3"    => "fips_desmovs -f",
-    "TECBpermop"    => "fips_desmovs -f",
-    "TECBsubtab"    => "fips_desmovs -f",
-    "TECBvarkey"    => "fips_desmovs -f",
-    "TECBvartext"   => "fips_desmovs -f",
-    "TOFBinvperm"   => "fips_desmovs -f",
-    "TOFBMMT1"      => "fips_desmovs -f",
-    "TOFBMMT2"      => "fips_desmovs -f",
-    "TOFBMMT3"      => "fips_desmovs -f",
-    "TOFBMonte1"    => "fips_desmovs -f",
-    "TOFBMonte2"    => "fips_desmovs -f",
-    "TOFBMonte3"    => "fips_desmovs -f",
-    "TOFBpermop"    => "fips_desmovs -f",
-    "TOFBsubtab"    => "fips_desmovs -f",
-    "TOFBvarkey"    => "fips_desmovs -f",
-    "TOFBvartext"   => "fips_desmovs -f",
-    "TCBCinvperm"   => "fips_desmovs -f",
-    "TCBCMMT1"      => "fips_desmovs -f",
-    "TCBCMMT2"      => "fips_desmovs -f",
-    "TCBCMMT3"      => "fips_desmovs -f",
-    "TCBCMonte1"    => "fips_desmovs -f",
-    "TCBCMonte2"    => "fips_desmovs -f",
-    "TCBCMonte3"    => "fips_desmovs -f",
-    "TCBCpermop"    => "fips_desmovs -f",
-    "TCBCsubtab"    => "fips_desmovs -f",
-    "TCBCvarkey"    => "fips_desmovs -f",
-    "TCBCvartext"   => "fips_desmovs -f",
-    "TCFB64invperm" => "fips_desmovs -f",
-    "TCFB64MMT1"    => "fips_desmovs -f",
-    "TCFB64MMT2"    => "fips_desmovs -f",
-    "TCFB64MMT3"    => "fips_desmovs -f",
-    "TCFB64Monte1"  => "fips_desmovs -f",
-    "TCFB64Monte2"  => "fips_desmovs -f",
-    "TCFB64Monte3"  => "fips_desmovs -f",
-    "TCFB64permop"  => "fips_desmovs -f",
-    "TCFB64subtab"  => "fips_desmovs -f",
-    "TCFB64varkey"  => "fips_desmovs -f",
-    "TCFB64vartext" => "fips_desmovs -f",
-    "TCFB8invperm"  => "fips_desmovs -f",
-    "TCFB8MMT1"     => "fips_desmovs -f",
-    "TCFB8MMT2"     => "fips_desmovs -f",
-    "TCFB8MMT3"     => "fips_desmovs -f",
-    "TCFB8Monte1"   => "fips_desmovs -f",
-    "TCFB8Monte2"   => "fips_desmovs -f",
-    "TCFB8Monte3"   => "fips_desmovs -f",
-    "TCFB8permop"   => "fips_desmovs -f",
-    "TCFB8subtab"   => "fips_desmovs -f",
-    "TCFB8varkey"   => "fips_desmovs -f",
-    "TCFB8vartext"  => "fips_desmovs -f",
-    "TECBinvperm"   => "fips_desmovs -f",
-    "TECBMMT1"      => "fips_desmovs -f",
-    "TECBMMT2"      => "fips_desmovs -f",
-    "TECBMMT3"      => "fips_desmovs -f",
-    "TECBMonte1"    => "fips_desmovs -f",
-    "TECBMonte2"    => "fips_desmovs -f",
-    "TECBMonte3"    => "fips_desmovs -f",
-    "TECBpermop"    => "fips_desmovs -f",
-    "TECBsubtab"    => "fips_desmovs -f",
-    "TECBvarkey"    => "fips_desmovs -f",
-    "TECBvartext"   => "fips_desmovs -f",
-    "TOFBinvperm"   => "fips_desmovs -f",
-    "TOFBMMT1"      => "fips_desmovs -f",
-    "TOFBMMT2"      => "fips_desmovs -f",
-    "TOFBMMT3"      => "fips_desmovs -f",
-    "TOFBMonte1"    => "fips_desmovs -f",
-    "TOFBMonte2"    => "fips_desmovs -f",
-    "TOFBMonte3"    => "fips_desmovs -f",
-    "TOFBpermop"    => "fips_desmovs -f",
-    "TOFBsubtab"    => "fips_desmovs -f",
-    "TOFBvarkey"    => "fips_desmovs -f",
-    "TOFBvartext"   => "fips_desmovs -f"
+    "Triple DES",
+
+    [ "TCBCinvperm",   "fips_desmovs -f" ],
+    [ "TCBCMMT1",      "fips_desmovs -f" ],
+    [ "TCBCMMT2",      "fips_desmovs -f" ],
+    [ "TCBCMMT3",      "fips_desmovs -f" ],
+    [ "TCBCMonte1",    "fips_desmovs -f" ],
+    [ "TCBCMonte2",    "fips_desmovs -f" ],
+    [ "TCBCMonte3",    "fips_desmovs -f" ],
+    [ "TCBCpermop",    "fips_desmovs -f" ],
+    [ "TCBCsubtab",    "fips_desmovs -f" ],
+    [ "TCBCvarkey",    "fips_desmovs -f" ],
+    [ "TCBCvartext",   "fips_desmovs -f" ],
+    [ "TCFB64invperm", "fips_desmovs -f" ],
+    [ "TCFB64MMT1",    "fips_desmovs -f" ],
+    [ "TCFB64MMT2",    "fips_desmovs -f" ],
+    [ "TCFB64MMT3",    "fips_desmovs -f" ],
+    [ "TCFB64Monte1",  "fips_desmovs -f" ],
+    [ "TCFB64Monte2",  "fips_desmovs -f" ],
+    [ "TCFB64Monte3",  "fips_desmovs -f" ],
+    [ "TCFB64permop",  "fips_desmovs -f" ],
+    [ "TCFB64subtab",  "fips_desmovs -f" ],
+    [ "TCFB64varkey",  "fips_desmovs -f" ],
+    [ "TCFB64vartext", "fips_desmovs -f" ],
+    [ "TCFB8invperm",  "fips_desmovs -f" ],
+    [ "TCFB8MMT1",     "fips_desmovs -f" ],
+    [ "TCFB8MMT2",     "fips_desmovs -f" ],
+    [ "TCFB8MMT3",     "fips_desmovs -f" ],
+    [ "TCFB8Monte1",   "fips_desmovs -f" ],
+    [ "TCFB8Monte2",   "fips_desmovs -f" ],
+    [ "TCFB8Monte3",   "fips_desmovs -f" ],
+    [ "TCFB8permop",   "fips_desmovs -f" ],
+    [ "TCFB8subtab",   "fips_desmovs -f" ],
+    [ "TCFB8varkey",   "fips_desmovs -f" ],
+    [ "TCFB8vartext",  "fips_desmovs -f" ],
+    [ "TECBinvperm",   "fips_desmovs -f" ],
+    [ "TECBMMT1",      "fips_desmovs -f" ],
+    [ "TECBMMT2",      "fips_desmovs -f" ],
+    [ "TECBMMT3",      "fips_desmovs -f" ],
+    [ "TECBMonte1",    "fips_desmovs -f" ],
+    [ "TECBMonte2",    "fips_desmovs -f" ],
+    [ "TECBMonte3",    "fips_desmovs -f" ],
+    [ "TECBpermop",    "fips_desmovs -f" ],
+    [ "TECBsubtab",    "fips_desmovs -f" ],
+    [ "TECBvarkey",    "fips_desmovs -f" ],
+    [ "TECBvartext",   "fips_desmovs -f" ],
+    [ "TOFBinvperm",   "fips_desmovs -f" ],
+    [ "TOFBMMT1",      "fips_desmovs -f" ],
+    [ "TOFBMMT2",      "fips_desmovs -f" ],
+    [ "TOFBMMT3",      "fips_desmovs -f" ],
+    [ "TOFBMonte1",    "fips_desmovs -f" ],
+    [ "TOFBMonte2",    "fips_desmovs -f" ],
+    [ "TOFBMonte3",    "fips_desmovs -f" ],
+    [ "TOFBpermop",    "fips_desmovs -f" ],
+    [ "TOFBsubtab",    "fips_desmovs -f" ],
+    [ "TOFBvarkey",    "fips_desmovs -f" ],
+    [ "TOFBvartext",   "fips_desmovs -f" ],
 
 );
+
+my @fips_cfb1_tests = (
+
+    # AES CFB1 tests
+
+    [ "CFB1GFSbox128",  "fips_aesavs -f" ],
+    [ "CFB1GFSbox192",  "fips_aesavs -f" ],
+    [ "CFB1GFSbox256",  "fips_aesavs -f" ],
+    [ "CFB1KeySbox128", "fips_aesavs -f" ],
+    [ "CFB1KeySbox192", "fips_aesavs -f" ],
+    [ "CFB1KeySbox256", "fips_aesavs -f" ],
+    [ "CFB1MCT128",     "fips_aesavs -f" ],
+    [ "CFB1MCT192",     "fips_aesavs -f" ],
+    [ "CFB1MCT256",     "fips_aesavs -f" ],
+    [ "CFB1MMT128",     "fips_aesavs -f" ],
+    [ "CFB1MMT192",     "fips_aesavs -f" ],
+    [ "CFB1MMT256",     "fips_aesavs -f" ],
+    [ "CFB1VarKey128",  "fips_aesavs -f" ],
+    [ "CFB1VarKey192",  "fips_aesavs -f" ],
+    [ "CFB1VarKey256",  "fips_aesavs -f" ],
+    [ "CFB1VarTxt128",  "fips_aesavs -f" ],
+    [ "CFB1VarTxt192",  "fips_aesavs -f" ],
+    [ "CFB1VarTxt256",  "fips_aesavs -f" ]
+
+);
+
+foreach (@fips_test_list) {
+    next unless ref($_);
+    my $nm = $_->[0];
+    $_->[2] = "";
+    $_->[3] = "";
+    print STDERR "Duplicate test $nm\n" if exists $fips_tests{$nm};
+    $fips_tests{$nm} = $_;
+}
 
 # Verification special cases.
 # In most cases the output of a test is deterministic and
@@ -399,12 +374,6 @@ sanity_check_exe( $win32, $tprefix, $shwrap_prefix );
 
 my $cmd_prefix = $win32 ? "" : "${shwrap_prefix}shlib_wrap.sh ";
 
-my %fips_files;
-
-foreach ( keys %fips_tests ) {
-    $fips_files{$_} = [ "", "" ];
-}
-
 find_files( $filter, $tvdir );
 
 sanity_check_files();
@@ -473,12 +442,13 @@ sub sanity_check_exe {
     my %exe_list;
     my $bad = 0;
     $exe_list{ $shwrap_prefix . "shlib_wrap.sh" } = 1 unless $win32;
-    foreach ( values %fips_tests ) {
-        my $tval = $_;
-        $tval =~ s/ .*$//;
-        $tval = $tprefix . $tval;
-        $tval .= ".exe" if $win32;
-        $exe_list{$tval} = 1;
+    foreach (@fips_test_list) {
+        next unless ref($_);
+        my $cmd = $_->[1];
+        $cmd =~ s/ .*$//;
+        $cmd = $tprefix . $cmd;
+        $cmd .= ".exe" if $win32;
+        $exe_list{$cmd} = 1;
     }
 
     foreach ( sort keys %exe_list ) {
@@ -509,8 +479,8 @@ sub find_files {
             if (/\/([^\/]*)\.rsp$/) {
                 $testname = fix_pss( $1, $_ );
                 if ( exists $fips_tests{$testname} ) {
-                    if ( $fips_files{$testname}->[1] eq "" ) {
-                        $fips_files{$testname}->[1] = $_;
+                    if ( $fips_tests{$testname}->[3] eq "" ) {
+                        $fips_tests{$testname}->[3] = $_;
                     }
                     else {
                         print STDERR
@@ -527,8 +497,8 @@ sub find_files {
             if (/\/([^\/]*)\.req$/) {
                 $testname = fix_pss( $1, $_ );
                 if ( exists $fips_tests{$testname} ) {
-                    if ( $fips_files{$testname}->[0] eq "" ) {
-                        $fips_files{$testname}->[0] = $_;
+                    if ( $fips_tests{$testname}->[2] eq "" ) {
+                        $fips_tests{$testname}->[2] = $_;
                     }
                     else {
                         print STDERR
@@ -575,15 +545,18 @@ sub fix_pss {
 
 sub sanity_check_files {
     my $bad = 0;
-    foreach ( keys %fips_files ) {
-        my ( $req, $resp ) = @{ $fips_files{$_} };
+    foreach (@fips_test_list) {
+        next unless ref($_);
+        my ( $tst, $cmd, $req, $resp ) = @$_;
+
+        #print STDERR "FILES $tst, $cmd, $req, $resp\n";
         if ( $req eq "" ) {
-            print STDERR "WARNING: missing request file for $_\n";
+            print STDERR "WARNING: missing request file for $tst\n";
             $bad = 1;
             next;
         }
         if ( $verify && $resp eq "" ) {
-            print STDERR "WARNING: no response file for test $_\n";
+            print STDERR "WARNING: no response file for test $tst\n";
             $bad = 1;
         }
         elsif ( !$verify && $resp ne "" ) {
@@ -608,8 +581,12 @@ sub run_tests {
     my ( $verify, $win32, $tprefix, $filter, $tvdir ) = @_;
     my ( $tname, $tref );
     my $bad = 0;
-    while ( ( $tname, $fref ) = each %fips_files ) {
-        my ( $req, $rsp ) = @$fref;
+    foreach (@fips_test_list) {
+        if ( !ref($_) ) {
+            print "Running $_ tests\n" unless $quiet;
+            next;
+        }
+        my ( $tname, $tcmd, $req, $rsp ) = @$_;
         my $out = $rsp;
         if ($verify) {
             $out =~ s/\.rsp$/.tst/;
@@ -640,8 +617,7 @@ sub run_tests {
                 mkdir($outdir) || die "Can't create directory $outdir";
             }
         }
-        my $tcmd = $fips_tests{$tname};
-        my $cmd  = "$cmd_prefix$tprefix$tcmd ";
+        my $cmd = "$cmd_prefix$tprefix$tcmd ";
         if ( $tcmd =~ /-f$/ ) {
             $cmd .= "$req $out";
         }
