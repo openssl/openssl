@@ -811,7 +811,8 @@ int proc_file(char *rqfile, char *rspfile)
 		    else if (strncasecmp(pp, "Key Length : ", 13) == 0)
 			{
 			akeysz = atoi(pp+13);
-			printf("Key size = %d\n", akeysz);
+			if (VERBOSE)
+			    printf("Key size = %d\n", akeysz);
 			}
 		    }
 		}
