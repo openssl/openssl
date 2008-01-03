@@ -4,21 +4,24 @@
 # file names are consistent but the pathnames are not).
 #
 
+# FIPS test definitions
 # List of all the unqualified file names we expect and command lines to run
-my @fips_test_list = (
 
-    # FIPS test definitions
-
-    # DSA tests
+# DSA tests
+my @fips_dsa_test_list = (
 
     "DSA",
 
     [ "PQGGen",  "fips_dssvs pqg" ],
     [ "KeyPair", "fips_dssvs keypair" ],
     [ "SigGen",  "fips_dssvs siggen" ],
-    [ "SigVer",  "fips_dssvs sigver" ],
+    [ "SigVer",  "fips_dssvs sigver" ]
 
-    # RSA tests
+);
+
+# RSA tests
+
+my @fips_rsa_test_list = (
 
     "RSA",
 
@@ -26,19 +29,35 @@ my @fips_test_list = (
     [ "SigVer15",  "fips_rsavtest" ],
     [ "SigVerRSA", "fips_rsavtest -x931" ],
     [ "KeyGenRSA", "fips_rsagtest" ],
-    [ "SigGenRSA", "fips_rsastest -x931" ],
+    [ "SigGenRSA", "fips_rsastest -x931" ]
 
-    # Special cases for PSS. The filename itself is
-    # not sufficient to determine the test. Addditionally we
-    # need to examine the file contents to determine the salt length
-    # In these cases the test filename has (saltlen) appended.
+);
 
-    [ "SigGenPSS(0)",  "fips_rsastest -saltlen 0" ],
-    [ "SigVerPSS(0)",  "fips_rsavtest -saltlen 0" ],
+# Special cases for PSS. The filename itself is
+# not sufficient to determine the test. Addditionally we
+# need to examine the file contents to determine the salt length
+# In these cases the test filename has (saltlen) appended.
+
+# RSA PSS salt length 0 tests
+
+my @fips_rsa_pss0_test_list = (
+
+    [ "SigGenPSS(0)", "fips_rsastest -saltlen 0" ],
+    [ "SigVerPSS(0)", "fips_rsavtest -saltlen 0" ]
+
+);
+
+# RSA PSS salt length 62 tests
+
+my @fips_rsa_pss62_test_list = (
     [ "SigGenPSS(62)", "fips_rsastest -saltlen 62" ],
-    [ "SigVerPSS(62)", "fips_rsavtest -saltlen 62" ],
+    [ "SigVerPSS(62)", "fips_rsavtest -saltlen 62" ]
 
-    # SHA tests
+);
+
+# SHA tests
+
+my @fips_sha_test_list = (
 
     "SHA",
 
@@ -56,26 +75,38 @@ my @fips_test_list = (
     [ "SHA384ShortMsg", "fips_shatest" ],
     [ "SHA512LongMsg",  "fips_shatest" ],
     [ "SHA512Monte",    "fips_shatest" ],
-    [ "SHA512ShortMsg", "fips_shatest" ],
+    [ "SHA512ShortMsg", "fips_shatest" ]
 
-    # HMAC
+);
+
+# HMAC
+
+my @fips_hmac_test_list = (
 
     "HMAC",
 
-    [ "HMAC", "fips_hmactest" ],
+    [ "HMAC", "fips_hmactest" ]
 
-    # RAND tests
+);
 
-    "RAND",
+# RAND tests, AES version
+
+my @fips_rand_aes_test_list = (
+
+    "RAND (AES)",
 
     [ "ANSI931_AES128MCT", "fips_rngvs mct" ],
     [ "ANSI931_AES192MCT", "fips_rngvs mct" ],
     [ "ANSI931_AES256MCT", "fips_rngvs mct" ],
     [ "ANSI931_AES128VST", "fips_rngvs vst" ],
     [ "ANSI931_AES192VST", "fips_rngvs vst" ],
-    [ "ANSI931_AES256VST", "fips_rngvs vst" ],
+    [ "ANSI931_AES256VST", "fips_rngvs vst" ]
 
-    # AES tests
+);
+
+# AES tests
+
+my @fips_aes_test_list = (
 
     "AES",
 
@@ -169,9 +200,38 @@ my @fips_test_list = (
     [ "OFBVarKey256",  "fips_aesavs -f" ],
     [ "OFBVarTxt128",  "fips_aesavs -f" ],
     [ "OFBVarTxt192",  "fips_aesavs -f" ],
-    [ "OFBVarTxt256",  "fips_aesavs -f" ],
+    [ "OFBVarTxt256",  "fips_aesavs -f" ]
 
-    # Triple DES tests
+);
+
+my @fips_aes_cfb1_test_list = (
+
+    # AES CFB1 tests
+
+    [ "CFB1GFSbox128",  "fips_aesavs -f" ],
+    [ "CFB1GFSbox192",  "fips_aesavs -f" ],
+    [ "CFB1GFSbox256",  "fips_aesavs -f" ],
+    [ "CFB1KeySbox128", "fips_aesavs -f" ],
+    [ "CFB1KeySbox192", "fips_aesavs -f" ],
+    [ "CFB1KeySbox256", "fips_aesavs -f" ],
+    [ "CFB1MCT128",     "fips_aesavs -f" ],
+    [ "CFB1MCT192",     "fips_aesavs -f" ],
+    [ "CFB1MCT256",     "fips_aesavs -f" ],
+    [ "CFB1MMT128",     "fips_aesavs -f" ],
+    [ "CFB1MMT192",     "fips_aesavs -f" ],
+    [ "CFB1MMT256",     "fips_aesavs -f" ],
+    [ "CFB1VarKey128",  "fips_aesavs -f" ],
+    [ "CFB1VarKey192",  "fips_aesavs -f" ],
+    [ "CFB1VarKey256",  "fips_aesavs -f" ],
+    [ "CFB1VarTxt128",  "fips_aesavs -f" ],
+    [ "CFB1VarTxt192",  "fips_aesavs -f" ],
+    [ "CFB1VarTxt256",  "fips_aesavs -f" ]
+
+);
+
+# Triple DES tests
+
+my @fips_des3_test_list = (
 
     "Triple DES",
 
@@ -229,43 +289,9 @@ my @fips_test_list = (
     [ "TOFBpermop",    "fips_desmovs -f" ],
     [ "TOFBsubtab",    "fips_desmovs -f" ],
     [ "TOFBvarkey",    "fips_desmovs -f" ],
-    [ "TOFBvartext",   "fips_desmovs -f" ],
+    [ "TOFBvartext",   "fips_desmovs -f" ]
 
 );
-
-my @fips_cfb1_tests = (
-
-    # AES CFB1 tests
-
-    [ "CFB1GFSbox128",  "fips_aesavs -f" ],
-    [ "CFB1GFSbox192",  "fips_aesavs -f" ],
-    [ "CFB1GFSbox256",  "fips_aesavs -f" ],
-    [ "CFB1KeySbox128", "fips_aesavs -f" ],
-    [ "CFB1KeySbox192", "fips_aesavs -f" ],
-    [ "CFB1KeySbox256", "fips_aesavs -f" ],
-    [ "CFB1MCT128",     "fips_aesavs -f" ],
-    [ "CFB1MCT192",     "fips_aesavs -f" ],
-    [ "CFB1MCT256",     "fips_aesavs -f" ],
-    [ "CFB1MMT128",     "fips_aesavs -f" ],
-    [ "CFB1MMT192",     "fips_aesavs -f" ],
-    [ "CFB1MMT256",     "fips_aesavs -f" ],
-    [ "CFB1VarKey128",  "fips_aesavs -f" ],
-    [ "CFB1VarKey192",  "fips_aesavs -f" ],
-    [ "CFB1VarKey256",  "fips_aesavs -f" ],
-    [ "CFB1VarTxt128",  "fips_aesavs -f" ],
-    [ "CFB1VarTxt192",  "fips_aesavs -f" ],
-    [ "CFB1VarTxt256",  "fips_aesavs -f" ]
-
-);
-
-foreach (@fips_test_list) {
-    next unless ref($_);
-    my $nm = $_->[0];
-    $_->[2] = "";
-    $_->[3] = "";
-    print STDERR "Duplicate test $nm\n" if exists $fips_tests{$nm};
-    $fips_tests{$nm} = $_;
-}
 
 # Verification special cases.
 # In most cases the output of a test is deterministic and
@@ -298,8 +324,22 @@ my $notest         = 0;
 my $verify         = 1;
 my $rspdir         = "rsp";
 my $ignore_missing = 0;
-my $ignore_bogus   = 1;
+my $ignore_bogus   = 0;
 my $bufout         = '';
+my $list_tests     = 0;
+
+my %fips_enabled = (
+    dsa         => 1,
+    rsa         => 1,
+    "rsa-pss0"  => 0,
+    "rsa-pss62" => 1,
+    sha         => 1,
+    hmac        => 1,
+    "rand-aes"  => 1,
+    aes         => 1,
+    "aes-cfb1"  => 0,
+    des3        => 1
+);
 
 foreach (@ARGV) {
     if ( $_ eq "--win32" ) {
@@ -338,13 +378,60 @@ foreach (@ARGV) {
     elsif (/--shwrap_prefix=(.*)$/) {
         $shwrap_prefix = $1;
     }
+    elsif (/^--(enable|disable)-(.*)$/) {
+        if ( !exists $fips_enabled{$2} ) {
+            print STDERR "Unknown test $2\n";
+        }
+        if ( $1 eq "enable" ) {
+            $fips_enabled{$2} = 1;
+        }
+        else {
+            $fips_enabled{$2} = 0;
+        }
+    }
     elsif (/--filter=(.*)$/) {
         $filter = $1;
+    }
+    elsif (/^--list-tests$/) {
+        $list_tests = 1;
     }
     else {
         Help();
         exit(1);
     }
+}
+
+my @fips_test_list;
+
+push @fips_test_list, @fips_dsa_test_list       if $fips_enabled{"dsa"};
+push @fips_test_list, @fips_rsa_test_list       if $fips_enabled{"rsa"};
+push @fips_test_list, @fips_rsa_pss0_test_list  if $fips_enabled{"rsa-pss0"};
+push @fips_test_list, @fips_rsa_pss62_test_list if $fips_enabled{"rsa-pss62"};
+push @fips_test_list, @fips_sha_test_list       if $fips_enabled{"sha"};
+push @fips_test_list, @fips_hmac_test_list      if $fips_enabled{"hmac"};
+push @fips_test_list, @fips_rand_aes_test_list  if $fips_enabled{"rand-aes"};
+push @fips_test_list, @fips_aes_test_list       if $fips_enabled{"aes"};
+push @fips_test_list, @fips_aes_cfb1_test_list  if $fips_enabled{"aes-cfb1"};
+push @fips_test_list, @fips_des3_test_list      if $fips_enabled{"des3"};
+
+if ($list_tests) {
+    my ( $test, $en );
+    print "=====TEST LIST=====\n";
+    foreach $test ( sort keys %fips_enabled ) {
+        $en = $fips_enabled{$test};
+        $test =~ tr/[a-z]/[A-Z]/;
+        printf "%-10s %s\n", $test, $en ? "enabled" : "disabled";
+    }
+    exit(0);
+}
+
+foreach (@fips_test_list) {
+    next unless ref($_);
+    my $nm = $_->[0];
+    $_->[2] = "";
+    $_->[3] = "";
+    print STDERR "Duplicate test $nm\n" if exists $fips_tests{$nm};
+    $fips_tests{$nm} = $_;
 }
 
 $tvdir = "." unless defined $tvdir;
@@ -379,7 +466,7 @@ find_files( $filter, $tvdir );
 sanity_check_files();
 
 my ( $runerr, $cmperr, $cmpok, $scheckrunerr, $scheckerr, $scheckok, $skipcnt )
-  = ( 0, 0, 0, 0, 0, 0 );
+  = ( 0, 0, 0, 0, 0, 0, 0 );
 
 exit(0) if $notest;
 
