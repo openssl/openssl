@@ -104,6 +104,17 @@ my @fips_rand_aes_test_list = (
 
 );
 
+# RAND tests, DES2 version
+
+my @fips_rand_des2_test_list = (
+
+    "RAND (DES2)",
+
+    [ "ANSI931_TDES2MCT", "fips_rngvs mct" ],
+    [ "ANSI931_TDES2VST", "fips_rngvs vst" ]
+
+);
+
 # AES tests
 
 my @fips_aes_test_list = (
@@ -309,6 +320,7 @@ my %verify_special = (
     "SigGen"        => "fips_dssvs sigver",
     "SigGen15"      => "fips_rsavtest",
     "SigGenRSA"     => "fips_rsavtest -x931",
+    "SigGenPSS(0)"  => "fips_rsavtest -saltlen 0",
     "SigGenPSS(62)" => "fips_rsavtest -saltlen 62",
 );
 
@@ -336,6 +348,7 @@ my %fips_enabled = (
     sha         => 1,
     hmac        => 1,
     "rand-aes"  => 1,
+    "rand-des2" => 0,
     aes         => 1,
     "aes-cfb1"  => 0,
     des3        => 1
@@ -410,6 +423,7 @@ push @fips_test_list, @fips_rsa_pss62_test_list if $fips_enabled{"rsa-pss62"};
 push @fips_test_list, @fips_sha_test_list       if $fips_enabled{"sha"};
 push @fips_test_list, @fips_hmac_test_list      if $fips_enabled{"hmac"};
 push @fips_test_list, @fips_rand_aes_test_list  if $fips_enabled{"rand-aes"};
+push @fips_test_list, @fips_rand_des2_test_list if $fips_enabled{"rand-des2"};
 push @fips_test_list, @fips_aes_test_list       if $fips_enabled{"aes"};
 push @fips_test_list, @fips_aes_cfb1_test_list  if $fips_enabled{"aes-cfb1"};
 push @fips_test_list, @fips_des3_test_list      if $fips_enabled{"des3"};
@@ -799,6 +813,12 @@ sub cmp_file {
             print STDERR "ERROR: $tname EOF on $tstf\n";
             return 0;
         }
+
+        # Workaround for bug in RAND des2 test output */
+        if ( $tstline =~ /^Key2 =/ && $rspline =~ /^Key1 =/ ) {
+            $rspline =~ s/^Key1/Key2/;
+        }
+
         if ( $tstline ne $rspline ) {
             print STDERR "ERROR: $tname mismatch:\n";
             print STDERR "\t $tstline != $rspline\n";
