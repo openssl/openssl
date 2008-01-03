@@ -558,7 +558,7 @@ void do_mct(char *amode,
 	}
     }
     
-int proc_file(char *rqfile)
+int proc_file(char *rqfile, char *rspfile)
     {
     char afn[256], rfn[256];
     FILE *afp = NULL, *rfp = NULL;
@@ -588,13 +588,21 @@ int proc_file(char *rqfile)
 	       afn, strerror(errno));
 	return -1;
 	}
-    strcpy(rfn,afn);
-    rp=strstr(rfn,"req/");
-    assert(rp);
-    memcpy(rp,"rsp",3);
-    rp = strstr(rfn, ".req");
-    memcpy(rp, ".rsp", 4);
-    if ((rfp = fopen(rfn, "w")) == NULL)
+    if (!rspfile)
+	{
+	strcpy(rfn,afn);
+	rp=strstr(rfn,"req/");
+#ifdef OPENSSL_SYS_WIN32
+	if (!rp)
+	    rp=strstr(rfn,"req\\");
+#endif
+	assert(rp);
+	memcpy(rp,"rsp",3);
+	rp = strstr(rfn, ".req");
+	memcpy(rp, ".rsp", 4);
+	rspfile = rfn;
+	}
+    if ((rfp = fopen(rspfile, "w")) == NULL)
 	{
 	printf("Cannot open file: %s, %s\n", 
 	       rfn, strerror(errno));
@@ -666,7 +674,8 @@ int proc_file(char *rqfile)
 			strncpy(amode, xp+1, n);
 			amode[n] = '\0';
 			/* amode[3] = '\0'; */
-			printf("Test=%s, Mode=%s\n",atest,amode);
+			if (VERBOSE)
+				printf("Test=%s, Mode=%s\n",atest,amode);
 			}
 		    }
 		}
@@ -909,7 +918,7 @@ int proc_file(char *rqfile)
 --------------------------------------------------*/
 int main(int argc, char **argv)
     {
-    char *rqlist = "req.txt";
+    char *rqlist = "req.txt", *rspfile = NULL;
     FILE *fp = NULL;
     char fn[250] = "", rfn[256] = "";
     int f_opt = 0, d_opt = 1;
@@ -945,7 +954,10 @@ int main(int argc, char **argv)
 	if (d_opt)
 	    rqlist = argv[2];
 	else
+	    {
 	    strcpy(fn, argv[2]);
+	    rspfile = argv[3];
+	    }
 	}
     if (d_opt)
 	{ /* list of files (directory) */
@@ -958,8 +970,9 @@ int main(int argc, char **argv)
 	    {
 	    strtok(fn, "\r\n");
 	    strcpy(rfn, fn);
-	    printf("Processing: %s\n", rfn);
-	    if (proc_file(rfn))
+	    if (VERBOSE)
+	    	printf("Processing: %s\n", rfn);
+	    if (proc_file(rfn, rspfile))
 		{
 		printf(">>> Processing failed for: %s <<<\n", rfn);
 		EXIT(1);
@@ -969,8 +982,9 @@ int main(int argc, char **argv)
 	}
     else /* single file */
 	{
-	printf("Processing: %s\n", fn);
-	if (proc_file(fn))
+	if (VERBOSE)
+	    printf("Processing: %s\n", fn);
+	if (proc_file(fn, rspfile))
 	    {
 	    printf(">>> Processing failed for: %s <<<\n", fn);
 	    }

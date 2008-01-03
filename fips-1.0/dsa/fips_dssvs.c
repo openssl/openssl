@@ -274,6 +274,122 @@ void pqgver()
 	}
     }
 
+/* Keypair verification routine. NB: this isn't part of the stndard FIPS140-2
+ * algorithm tests. It is an additional test to perform sanity checks on the
+ * output of the KeyPair test.
+ */
+
+static int dss_paramcheck(int nmod, BIGNUM *p, BIGNUM *q, BIGNUM *g,
+							BN_CTX *ctx)
+    {
+    BIGNUM *rem = NULL;
+    if (BN_num_bits(p) != nmod)
+	return 0;
+    if (BN_num_bits(q) != 160)
+	return 0;
+    if (BN_is_prime(p, BN_prime_checks, NULL, NULL, NULL) != 1)
+	return 0;
+    if (BN_is_prime(q, BN_prime_checks, NULL, NULL, NULL) != 1)
+	return 0;
+    rem = BN_new();
+    if (!BN_mod(rem, p, q, ctx) || !BN_is_one(rem)
+    	|| (BN_cmp(g, BN_value_one()) <= 0)
+	|| !BN_mod_exp(rem, g, q, p, ctx) || !BN_is_one(rem))
+	{
+	BN_free(rem);
+	return 0;
+	}
+    BN_free(rem);
+    return 1;
+    }
+
+void keyver()
+    {
+    char buf[1024];
+    char lbuf[1024];
+    char *keyword, *value;
+    BIGNUM *p = NULL, *q = NULL, *g = NULL, *X = NULL, *Y = NULL;
+    BIGNUM *Y2;
+    BN_CTX *ctx = NULL;
+    int nmod=0, paramcheck = 0;
+
+    ctx = BN_CTX_new();
+    Y2 = BN_new();
+
+    while(fgets(buf,sizeof buf,stdin) != NULL)
+	{
+	if (!parse_line(&keyword, &value, lbuf, buf))
+		{
+		fputs(buf,stdout);
+		continue;
+		}
+	if(!strcmp(keyword,"[mod"))
+	    {
+	    if (p)
+		BN_free(p);
+	    p = NULL;
+	    if (q)
+		BN_free(q);
+	    q = NULL;
+	    if (g)
+		BN_free(g);
+	    g = NULL;
+	    paramcheck = 0;
+	    nmod=atoi(value);
+	    }
+	else if(!strcmp(keyword,"P"))
+	    p=hex2bn(value);
+	else if(!strcmp(keyword,"Q"))
+	    q=hex2bn(value);
+	else if(!strcmp(keyword,"G"))
+	    g=hex2bn(value);
+	else if(!strcmp(keyword,"X"))
+	    X=hex2bn(value);
+	else if(!strcmp(keyword,"Y"))
+	    {
+	    Y=hex2bn(value);
+	    if (!p || !q || !g || !X || !Y)
+		{
+		fprintf(stderr, "Parse Error\n");
+		exit (1);
+		}
+	    pbn("P",p);
+	    pbn("Q",q);
+	    pbn("G",g);
+	    pbn("X",X);
+	    pbn("Y",Y);
+	    if (!paramcheck)
+		{
+		if (dss_paramcheck(nmod, p, q, g, ctx))
+			paramcheck = 1;
+		else
+			paramcheck = -1;
+		}
+	    if (paramcheck != 1)
+	   	printf("Result = F\n");
+	    else
+		{
+		if (!BN_mod_exp(Y2, g, X, p, ctx) || BN_cmp(Y2, Y))
+	    		printf("Result = F\n");
+	        else
+	    		printf("Result = T\n");
+		}
+	    BN_free(X);
+	    BN_free(Y);
+	    X = NULL;
+	    Y = NULL;
+	    }
+	}
+	if (p)
+	    BN_free(p);
+	if (q)
+	    BN_free(q);
+	if (g)
+	    BN_free(g);
+	if (Y2)
+	    BN_free(Y2);
+    }
+
 void keypair()
     {
     char buf[1024];
@@ -451,6 +567,8 @@ int main(int argc,char **argv)
 	pqgver();
     else if(!strcmp(argv[1],"keypair"))
 	keypair();
+    else if(!strcmp(argv[1],"keyver"))
+	keyver();
     else if(!strcmp(argv[1],"siggen"))
 	siggen();
     else if(!strcmp(argv[1],"sigver"))
