@@ -333,24 +333,24 @@ close(IN);
 if ($shlib)
 	{
 	$extra_install= <<"EOF";
-	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}bin
-	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}bin
-	\$(CP) \$(L_SSL) \$(INSTALLTOP)${o}lib
-	\$(CP) \$(L_CRYPTO) \$(INSTALLTOP)${o}lib
+	\$(CP) \"\$(O_SSL)\" \"\$(INSTALLTOP)${o}bin\"
+	\$(CP) \"\$(O_CRYPTO)\" \"\$(INSTALLTOP)${o}bin\"
+	\$(CP) \"\$(L_SSL)\" \"\$(INSTALLTOP)${o}lib\"
+	\$(CP) \"\$(L_CRYPTO)\" \"\$(INSTALLTOP)${o}lib\"
 EOF
 	if ($no_static_engine)
 		{
 		$extra_install .= <<"EOF"
-	\$(MKDIR) \$(INSTALLTOP)${o}lib${o}engines
-	\$(CP) \$(E_SHLIB) \$(INSTALLTOP)${o}lib${o}engines
+	\$(MKDIR) \"\$(INSTALLTOP)${o}lib${o}engines\"
+	\$(CP) \"\$(E_SHLIB)\" \"\$(INSTALLTOP)${o}lib${o}engines\"
 EOF
 		}
 	}
 else
 	{
 	$extra_install= <<"EOF";
-	\$(CP) \$(O_SSL) \$(INSTALLTOP)${o}lib
-	\$(CP) \$(O_CRYPTO) \$(INSTALLTOP)${o}lib
+	\$(CP) \"\$(O_SSL)\" \"\$(INSTALLTOP)${o}lib\"
+	\$(CP) \"\$(O_CRYPTO)\" \"\$(INSTALLTOP)${o}lib\"
 EOF
 	$ex_libs .= " $zlib_lib" if $zlib_opt == 1;
 	}
@@ -492,7 +492,7 @@ banner:
 $banner
 
 \$(TMP_D):
-	\$(MKDIR) \$(TMP_D)
+	\$(MKDIR) \"\$(TMP_D)\"
 # NB: uncomment out these lines if BIN_D, TEST_D and LIB_D are different
 #\$(BIN_D):
 #	\$(MKDIR) \$(BIN_D)
@@ -501,13 +501,13 @@ $banner
 #	\$(MKDIR) \$(TEST_D)
 
 \$(LIB_D):
-	\$(MKDIR) \$(LIB_D)
+	\$(MKDIR) \"\$(LIB_D)\"
 
 \$(INCO_D): \$(INC_D)
-	\$(MKDIR) \$(INCO_D)
+	\$(MKDIR) \"\$(INCO_D)\"
 
 \$(INC_D):
-	\$(MKDIR) \$(INC_D)
+	\$(MKDIR) \"\$(INC_D)\"
 
 headers: \$(HEADER) \$(EXHEADER)
 	@
@@ -517,14 +517,14 @@ lib: \$(LIBS_DEP) \$(E_SHLIB)
 exe: \$(T_EXE) \$(BIN_D)$o\$(E_EXE)$exep
 
 install: all
-	\$(MKDIR) \$(INSTALLTOP)
-	\$(MKDIR) \$(INSTALLTOP)${o}bin
-	\$(MKDIR) \$(INSTALLTOP)${o}include
-	\$(MKDIR) \$(INSTALLTOP)${o}include${o}openssl
-	\$(MKDIR) \$(INSTALLTOP)${o}lib
-	\$(CP) \$(INCO_D)${o}*.\[ch\] \$(INSTALLTOP)${o}include${o}openssl
-	\$(CP) \$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin
-	\$(CP) apps${o}openssl.cnf \$(INSTALLTOP)
+	\$(MKDIR) \"\$(INSTALLTOP)\"
+	\$(MKDIR) \"\$(INSTALLTOP)${o}bin\"
+	\$(MKDIR) \"\$(INSTALLTOP)${o}include\"
+	\$(MKDIR) \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(MKDIR) \"\$(INSTALLTOP)${o}lib\"
+	\$(CP) \"\$(INCO_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep\" \"\$(INSTALLTOP)${o}bin\"
+	\$(CP) \"apps${o}openssl.cnf\" \"\$(INSTALLTOP)\"
 $extra_install
 
 
@@ -969,7 +969,7 @@ sub do_copy_rule
 		if ($n =~ /bss_file/)
 			{ $pp=".c"; }
 		else	{ $pp=$p; }
-		$ret.="$to${o}$n$pp: \$(SRC_D)$o$_$pp\n\t\$(CP) \$(SRC_D)$o$_$pp $to${o}$n$pp\n\n";
+		$ret.="$to${o}$n$pp: \$(SRC_D)$o$_$pp\n\t\$(CP) \"\$(SRC_D)$o$_$pp\" \"$to${o}$n$pp\"\n\n";
 		}
 	return($ret);
 	}
