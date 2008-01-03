@@ -164,7 +164,6 @@ if ($nasm) {
 	my $vew=`nasmw -v`;
 	# pick newest version
 	$asm=($ver gt $vew?"nasm":"nasmw")." -f win32";
-	$asm='nasmw -f win32';
 	$afile='-o ';
 } else {
 	$asm='ml /Cp /coff /c /Cx';
