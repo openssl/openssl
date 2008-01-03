@@ -16,6 +16,10 @@ sub ::generic
     $arg[0] =~ s/0x([0-9a-f]+)/0$1h/oi	if (defined($arg[0]));
     $arg[1] =~ s/0x([0-9a-f]+)/0$1h/oi	if (defined($arg[1]));
 
+    # fix xmm references
+    $arg[0] =~ s/\b[A-Z]+WORD\s+PTR/XMMWORD PTR/i if ($arg[1]=~/\bxmm[0-7]\b/i);
+    $arg[1] =~ s/\b[A-Z]+WORD\s+PTR/XMMWORD PTR/i if ($arg[0]=~/\bxmm[0-7]\b/i);
+
     &::emit($opcode,@arg);
   1;
 }
@@ -132,7 +136,9 @@ sub ::comment {   foreach (@_) { push(@out,"\t; $_\n"); }   }
 { my $l=shift; push(@out,$l.($l=~/^\Q${::lbdecor}\E[0-9]{3}/?":\n":"::\n")); };
 
 sub ::external_label
-{   push(@out, "EXTERN\t".&::LABEL($_[0],$nmdecor.$_[0]).":NEAR\n");   }
+{   foreach(@_)
+    {	push(@out, "EXTERN\t".&::LABEL($_,$nmdecor.$_).":NEAR\n");   }
+}
 
 sub ::public_label
 {   push(@out,"PUBLIC\t".&::LABEL($_[0],$nmdecor.$_[0])."\n");   }
@@ -155,7 +161,7 @@ sub ::initseg
 { my $f=$nmdecor.shift;
 
     $initseg.=<<___;
-.CRT\$XCU	SEGMENT DWORD PUBLIC DATA
+.CRT\$XCU	SEGMENT DWORD PUBLIC 'DATA'
 EXTERN	$f:NEAR
 DD	$f
 .CRT\$XCU	ENDS

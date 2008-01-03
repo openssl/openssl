@@ -123,7 +123,9 @@ ___
 sub ::comment {   foreach (@_) { push(@out,"\t; $_\n"); }   }
 
 sub ::external_label
-{   push(@out,"${drdecor}extern\t".&::LABEL($_[0],$nmdecor.$_[0])."\n");   }
+{   foreach(@_)
+    {	push(@out,"${drdecor}extern\t".&::LABEL($_,$nmdecor.$_)."\n");   }
+}
 
 sub ::public_label
 {   push(@out,"${drdecor}global\t".&::LABEL($_[0],$nmdecor.$_[0])."\n");  }

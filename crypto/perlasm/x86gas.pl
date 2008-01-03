@@ -160,7 +160,9 @@ sub ::comment
 	}
 
 sub ::external_label
-{   push(@out,".extern\t".&::LABEL($_[0],$nmdecor.$_[0])."\n");   }
+{   foreach(@_)
+    {	push(@out,".extern\t".&::LABEL($_,$nmdecor.$_)."\n");   }
+}
 
 sub ::public_label
 {   push(@out,".globl\t".&::LABEL($_[0],$nmdecor.$_[0])."\n");   }
