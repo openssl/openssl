@@ -496,15 +496,20 @@ my %table=(
 "Cygwin", "gcc:-DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall:::CYGWIN32::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_coff_asm}:dlfcn:cygwin-shared:-D_WINDLL:-shared:.dll.a",
 "debug-Cygwin", "gcc:-DTERMIOS -DL_ENDIAN -march=i486 -Wall -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -g -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations -Werror:::CYGWIN32:::${no_asm}:dlfcn:cygwin-shared:-D_WINDLL:-shared:.dll.a",
 
-# NetWare from David Ward (dsward@novell.com) - requires MetroWerks NLM development tools
+# NetWare from David Ward (dsward@novell.com)
+# requires either MetroWerks NLM development tools, or gcc / nlmconv
+# NetWare defaults socket bio to WinSock sockets. However,
+# the builds can be configured to use BSD sockets instead.
 # netware-clib => legacy CLib c-runtime support
-"netware-clib", "mwccnlm::::::BN_LLONG ${x86_gcc_opts}::",
+"netware-clib", "mwccnlm::::::${x86_gcc_opts}::",
+"netware-clib-bsdsock", "mwccnlm::::::${x86_gcc_opts}::",
+"netware-clib-gcc", "i586-netware-gcc:-nostdinc -I/ndk/nwsdk/include/nlm -I/ndk/ws295sdk/include -DL_ENDIAN -DNETWARE_CLIB -DOPENSSL_SYSNAME_NETWARE -O2 -Wall:::::${x86_gcc_opts}::",
+"netware-clib-bsdsock-gcc", "i586-netware-gcc:-nostdinc -I/ndk/nwsdk/include/nlm -DNETWARE_BSDSOCK -DNETDB_USE_INTERNET -DL_ENDIAN -DNETWARE_CLIB -DOPENSSL_SYSNAME_NETWARE -O2 -Wall:::::${x86_gcc_opts}::",
 # netware-libc => LibC/NKS support
-# NetWare defaults socket bio to WinSock sockets. However, the LibC build can be
-# configured to use BSD sockets instead.
 "netware-libc", "mwccnlm::::::BN_LLONG ${x86_gcc_opts}::",
 "netware-libc-bsdsock", "mwccnlm::::::BN_LLONG ${x86_gcc_opts}::",
 "netware-libc-gcc", "i586-netware-gcc:-nostdinc -I/ndk/libc/include -I/ndk/libc/include/winsock -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYSNAME_NETWARE -DTERMIO -O2 -Wall:::::BN_LLONG ${x86_gcc_opts}::",
+"netware-libc-bsdsock-gcc", "i586-netware-gcc:-nostdinc -I/ndk/libc/include -DNETWARE_BSDSOCK -DL_ENDIAN -DNETWARE_LIBC -DOPENSSL_SYSNAME_NETWARE -DTERMIO -O2 -Wall:::::BN_LLONG ${x86_gcc_opts}::",
 
 # DJGPP
 "DJGPP", "gcc:-I/dev/env/WATT_ROOT/inc -DTERMIOS -DL_ENDIAN -fomit-frame-pointer -O2 -Wall:::MSDOS:-L/dev/env/WATT_ROOT/lib -lwatt:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}:",
@@ -549,7 +554,9 @@ my %table=(
 
 my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A
 		    VC-NT VC-CE VC-WIN32
-		    BC-32 OS2-EMX netware-clib netware-libc netware-libc-bsdsock);
+		    BC-32 OS2-EMX
+		    netware-clib netware-clib-bsdsock
+		    netware-libc netware-libc-bsdsock);
 
 my $idx = 0;
 my $idx_cc = $idx++;
@@ -952,6 +959,7 @@ foreach (sort (keys %disabled))
 my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
 
 $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target eq "mingw");
+$exe_ext=".nlm" if ($target =~ /netware/);
 $exe_ext=".pm"  if ($target =~ /vos/);
 $openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
 $prefix=$openssldir if $prefix eq "";
@@ -1669,7 +1677,7 @@ EOF
 }
 
 # create the ms/version32.rc file if needed
-if ($IsMK1MF) {
+if ($IsMK1MF && ($target !~ /^netware/)) {
 	my ($v1, $v2, $v3, $v4);
 	if ($version_num =~ /(^[0-9a-f]{1})([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i) {
 		$v1=hex $1;

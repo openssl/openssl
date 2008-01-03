@@ -60,7 +60,9 @@
 #include <openssl/pkcs7.h>
 #include <openssl/bio.h>
 
+#ifndef OPENSSL_SYSNAME_NETWARE
 #include <memory.h>
+#endif
 #include <stdio.h>
 
 /* Highly experiemental PKCS#7 BIO support routines */

@@ -60,14 +60,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "apps.h" /* needs to be included before the openssl headers! */
 #include <openssl/e_os2.h>
-#include <openssl/bio.h>
-#include <openssl/ocsp.h>
-#include <openssl/txt_db.h>
 #include <openssl/ssl.h>
 #include <openssl/evp.h>
-#include "apps.h"
 
+#if defined(NETWARE_CLIB)
+#  ifdef NETWARE_BSDSOCK
+#    include <sys/socket.h>
+#    include <sys/bsdskt.h>
+#  else
+#    include <novsock2.h>
+#  endif
+#elif defined(NETWARE_LIBC)
+#  ifdef NETWARE_BSDSOCK
+#    include <sys/select.h>
+#  else
+#    include <novsock2.h>
+#  endif
+#endif
+  
 /* Maximum leeway in validity period: default 5 minutes */
 #define MAX_VALIDITY_PERIOD	(5 * 60)
 

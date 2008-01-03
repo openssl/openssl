@@ -208,9 +208,13 @@ static int dgram_write(BIO *b, const char *in, int inl)
 	clear_socket_error();
 
     if ( data->connected )
-        ret=send(b->num,in,inl,0);
+        ret=writesocket(b->num,in,inl);
     else
+#if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
+        ret=sendto(b->num, (char *)in, inl, 0, &data->peer, sizeof(data->peer));
+#else
         ret=sendto(b->num, in, inl, 0, &data->peer, sizeof(data->peer));
+#endif
 
 	BIO_clear_retry_flags(b);
 	if (ret <= 0)

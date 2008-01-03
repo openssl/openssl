@@ -65,6 +65,11 @@
 typedef int pid_t;
 #endif
 
+#if defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_CLIB)
+#define getpid GetThreadID
+extern int GetThreadID(void);
+#endif
+
 #include <openssl/crypto.h>
 #include <openssl/dso.h>
 #include <openssl/engine.h>

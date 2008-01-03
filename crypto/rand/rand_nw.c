@@ -117,9 +117,15 @@
 
 #if defined(NETWARE_LIBC)
 #include <nks/thread.h>
+#else
+#include <nwthread.h>
 #endif
 
-extern long RunningProcess;
+extern int GetProcessSwitchCount(void);
+#if !defined(NETWARE_LIBC) || (CURRENT_NDK_THRESHOLD < 509220000)
+extern void *RunningProcess; /* declare here same as found in newer NDKs */
+extern unsigned long GetSuperHighResolutionTimer(void);
+#endif
 
    /* the FAQ indicates we need to provide at least 20 bytes (160 bits) of seed
    */
@@ -142,7 +148,8 @@ int RAND_poll(void)
    l = GetProcessSwitchCount();
    RAND_add(&l,sizeof(l),1);
    
-   l=RunningProcess;
+   /* need to cast the void* to unsigned long here */
+   l = (unsigned long)RunningProcess;
    RAND_add(&l,sizeof(l),1);
 
    for( i=2; i<ENTROPY_NEEDED; i++)

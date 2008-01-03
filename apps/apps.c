@@ -2484,7 +2484,7 @@ double app_tminterval(int stop,int usertime)
 	return (ret);
 	}
 
-#elif defined(OPENSSL_SYSTEM_NETWARE)
+#elif defined(OPENSSL_SYS_NETWARE)
 #include <time.h>
 
 double app_tminterval(int stop,int usertime)

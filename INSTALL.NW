@@ -8,58 +8,62 @@ Notes about building OpenSSL for NetWare.
 BUILD PLATFORM:
 ---------------
 The build scripts (batch files, perl scripts, etc) have been developed and
-tested on W2K.  The scripts should run fine on other Windows
-platforms (NT, Win9x, WinXP) but they haven't been tested.  They may require 
-some modifications.
+tested on W2K.  The scripts should run fine on other Windows platforms
+(NT, Win9x, WinXP) but they have not been tested.  They may require some
+modifications.
 
 
 Supported NetWare Platforms - NetWare 5.x, NetWare 6.x:
-------------------------------------------
-OpenSSL uses the WinSock interfaces introduced in NetWare 5.  Therefore,
-previous versions of NetWare, 4.x and 3.x, are not supported.
+-------------------------------------------------------
+OpenSSL can either use the WinSock interfaces introduced in NetWare 5,
+or the BSD socket interface.  Previous versions of NetWare, 4.x and 3.x,
+are only supported if OpenSSL is build for CLIB and BSD sockets;
+WinSock builds only support NetWare 5 and up.
 
 On NetWare there are two c-runtime libraries.  There is the legacy CLIB 
-interfaces and the newer LibC interfaces.  Being ANSI-C libraries, the 
-functionality in CLIB and LibC is similar but the LibC interfaces are built 
+interfaces and the newer LIBC interfaces.  Being ANSI-C libraries, the 
+functionality in CLIB and LIBC is similar but the LIBC interfaces are built 
 using Novell Kernal Services (NKS) which is designed to leverage 
 multi-processor environments.
 
-The NetWare port of OpenSSL can configured to build using CLIB or LibC.  The 
-CLIB build was developed and tested using NetWare 5.0 sp6.0a.  The LibC 
+The NetWare port of OpenSSL can be configured to build using CLIB or LIBC.
+The CLIB build was developed and tested using NetWare 5.0 sp6.0a.  The LIBC 
 build was developed and tested using the NetWare 6.0 FCS.  
 
-The necessary LibC functionality ships with NetWare 6.  However, earlier 
-NetWare 5.x versions will require updates in order to run the OpenSSL LibC
-build.
+The necessary LIBC functionality ships with NetWare 6.  However, earlier 
+NetWare 5.x versions will require updates in order to run the OpenSSL LIBC
+build (NetWare 5.1 SP8 is known to work).
 
-As of June 2005, the LibC build can be configured to use BSD sockets instead
+As of June 2005, the LIBC build can be configured to use BSD sockets instead
 of WinSock sockets. Call Configure (usually through netware\build.bat) using
 a target of "netware-libc-bsdsock" instead of "netware-libc".
 
+As of June 2007, support for CLIB and BSD sockets is also now available
+using a target of "netware-clib-bsdsock" instead of "netware-clib";
+also gcc builds are now supported on both Linux and Win32 (post 0.9.8e).
 
 REQUIRED TOOLS:
 ---------------
 Based upon the configuration and build options used, some or all of the
 following tools may be required:
 
-
 * Perl for Win32 - required (http://www.activestate.com/ActivePerl)
    Used to run the various perl scripts on the build platform.
-
 
 * Perl 5.8.0 for NetWare v3.20 (or later) - required 
    (http://developer.novell.com) Used to run the test script on NetWare 
    after building.
 
+* Compiler / Linker - required:
+   Metrowerks CodeWarrior PDK 2.1 (or later) for NetWare (commercial):
+      Provides command line tools used for building.
+      Tools:
+      mwccnlm.exe  - C/C++ Compiler for NetWare
+      mwldnlm.exe  - Linker for NetWare
+      mwasmnlm.exe - x86 assembler for NetWare (if using assembly option)
 
-* Metrowerks CodeWarrior PDK 2.1 (or later) for NetWare - required:
-   Provides command line tools used for building.
-
-   Tools:
-   mwccnlm.exe  - C/C++ Compiler for NetWare
-   mwldnlm.exe  - Linker for NetWare
-   mwasmnlm.exe - x86 assembler for NetWare (if using assembly option)
-
+   gcc / nlmconv Cross-Compiler, available from Novell Forge (free):
+         http://forge.novell.com/modules/xfmod/project/?aunixnw
 
 * Assemblers - optional:
    If you intend to build using the assembly options you will need an
@@ -79,11 +83,11 @@ following tools may be required:
    In order to build you will need a make tool.  Two make tools are
    supported, GNU make (gmake.exe) or Microsoft nmake.exe.
 
-   gmake.exe - GNU make for Windows (version 3.75 used for development)
-         http://www.gnu.org/software/make/make.html
+   make.exe - GNU make for Windows (version 3.75 used for development)
+         http://gnuwin32.sourceforge.net/packages/make.htm
 
    nmake.exe - Microsoft make (Version 6.00.8168.0 used for development)
-
+         http://support.microsoft.com/kb/132084/EN-US/
 
 * Novell Developer Kit (NDK) - required: (http://developer.novell.com)
 
@@ -123,14 +127,14 @@ following tools may be required:
 
    LIBC - BUILDS:
    
-      Libraries for C (LibC) - LibC headers and import files
-         If you are going to build a LibC version of OpenSSL, you will
-         need the LibC headers and imports.  The March 14, 2002 NDK release or
+      Libraries for C (LIBC) - LIBC headers and import files
+         If you are going to build a LIBC version of OpenSSL, you will
+         need the LIBC headers and imports.  The March 14, 2002 NDK release or
          later is required.  
          
-         NOTE: The LibC SDK includes the necessary WinSock2 support.  It
-         It is not necessary to download the WinSock2 Developer when building
-         for LibC. The LibC SDK also includes the appropriate BSD socket support
+         NOTE: The LIBC SDK includes the necessary WinSock2 support.
+         It is not necessary to download the WinSock2 NDK when building for
+         LIBC. The LIBC SDK also includes the appropriate BSD socket support
          if configuring to use BSD sockets.
 
 
@@ -143,33 +147,36 @@ The set_env.bat file is a template you can use to set up the path
 and environment variables you will need to build.  Modify the
 various lines to point to YOUR tools and run set_env.bat.
 
-   netware\set_env.bat [target]
+   netware\set_env.bat <target> [compiler]
 
-      target        - "netware-clib" - CLib NetWare build
-                    - "netware-libc" - LibC NetWare build
+      target        - "netware-clib" - CLIB NetWare build
+                    - "netware-libc" - LIBC NetWare build
+
+      compiler      - "gnuc"         - GNU GCC Compiler
+                    - "codewarrior"  - MetroWerks CodeWarrior (default)
 
 If you don't use set_env.bat, you will need to set up the following
 environment variables:
 
-   path - Set path to point to the tools you will use.
+   PATH - Set PATH to point to the tools you will use.
 
-   MWCIncludes - The location of the NDK include files.
+   INCLUDE - The location of the NDK include files.
          
-            CLIB ex: set MWCIncludes=c:\ndk\nwsdk\include\nlm
-            LibC ex: set MWCIncludes=c:\ndk\libc\include
+            CLIB ex: set INCLUDE=c:\ndk\nwsdk\include\nlm
+            LIBC ex: set INCLUDE=c:\ndk\libc\include
 
    PRELUDE - The absolute path of the prelude object to link with.  For
             a CLIB build it is recommended you use the "clibpre.o" files shipped
-            with the Metrowerks PDK for NetWare.  For a LibC build you should 
-            use the "libcpre.o" file delivered with the LibC NDK components.
+            with the Metrowerks PDK for NetWare.  For a LIBC build you should 
+            use the "libcpre.o" file delivered with the LIBC NDK components.
 
             CLIB ex: set PRELUDE=c:\ndk\nwsdk\imports\clibpre.o
-            LibC ex: set PRELUDE=c:\ndk\libc\imports\libcpre.o
+            LIBC ex: set PRELUDE=c:\ndk\libc\imports\libcpre.o
 
    IMPORTS - The locaton of the NDK import files.
 
             CLIB ex: set IMPORTS=c:\ndk\nwsdk\imports
-            LibC ex: set IMPORTS=c:\ndk\libc\imports
+            LIBC ex: set IMPORTS=c:\ndk\libc\imports
 
 
 In order to build, you need to run the Perl scripts to configure the build
@@ -182,9 +189,10 @@ the assembly code.  Always run build.bat from the "openssl" directory.
 
    netware\build [target] [debug opts] [assembly opts] [configure opts]
 
-      target        - "netware-clib" - CLib NetWare build (WinSock Sockets)
-                    - "netware-libc" - LibC NetWare build (WinSock Sockets)
-                    - "netware-libc-bsdsock" - LibC NetWare build (BSD Sockets)
+      target        - "netware-clib" - CLIB NetWare build (WinSock Sockets)
+                    - "netware-clib-bsdsock" - CLIB NetWare build (BSD Sockets)
+                    - "netware-libc" - LIBC NetWare build (WinSock Sockets)
+                    - "netware-libc-bsdsock" - LIBC NetWare build (BSD Sockets)
  
       debug opts    - "debug"  - build debug
 
@@ -193,25 +201,27 @@ the assembly code.  Always run build.bat from the "openssl" directory.
                       "no-asm"   - don't use assembly
 
       configure opts- all unrecognized arguments are passed to the
-                      perl configure script
+                      perl 'configure' script. See that script for
+                      internal documentation regarding options that
+                      are available.
 
    examples:
 
       CLIB build, debug, without assembly:
          netware\build.bat netware-clib debug no-asm
 
-      LibC build, non-debug, using NASM assembly:
-         netware\build.bat netware-libc nw-nasm
+      LIBC build, non-debug, using NASM assembly, add mdc2 support:
+         netware\build.bat netware-libc nw-nasm enable-mdc2
 
-      LibC build, BSD sockets, non-debug, without assembly:
+      LIBC build, BSD sockets, non-debug, without assembly:
          netware\build.bat netware-libc-bsdsock no-asm
 
 Running build.bat generates a make file to be processed by your make 
 tool (gmake or nmake):
 
    CLIB ex: gmake -f netware\nlm_clib_dbg.mak 
-   LibC ex: gmake -f netware\nlm_libc.mak 
-   LibC ex: gmake -f netware\nlm_libc_bsdsock.mak 
+   LIBC ex: gmake -f netware\nlm_libc.mak 
+   LIBC ex: gmake -f netware\nlm_libc_bsdsock.mak 
 
 
 You can also run the build scripts manually if you do not want to use the
@@ -220,7 +230,7 @@ subdirectory (in the order listed below):
 
    perl configure no-asm [other config opts] [netware-clib|netware-libc|netware-libc-bsdsock]
       configures no assembly build for specified netware environment
-      (CLIB or LibC).
+      (CLIB or LIBC).
 
    perl util\mkfiles.pl >MINFO
       generates a listing of source files (used by mk1mf)
@@ -250,12 +260,12 @@ The output from the build is placed in the following directories:
       tmp_nw_clib         - temporary build files
       outinc_nw_clib      - necesary include files
 
-   LibC Debug build:
+   LIBC Debug build:
       out_nw_libc.dbg     - static libs & test nlm(s)
       tmp_nw_libc.dbg     - temporary build files
       outinc_nw_libc      - necessary include files
 
-   LibC Non-debug build:
+   LIBC Non-debug build:
       out_nw_libc         - static libs & test nlm(s)
       tmp_nw_libc         - temporary build files
       outinc_nw_libc      - necesary include files
@@ -281,7 +291,7 @@ To run cpy_tests.bat:
       NetWare drive    - drive letter of mapped drive
 
       CLIB ex: netware\cpy_tests out_nw_clib m:
-      LibC ex: netware\cpy_tests out_nw_libc m:
+      LIBC ex: netware\cpy_tests out_nw_libc m:
 
 
 The Perl script, "do_tests.pl", in the "OpenSSL" directory on the server
@@ -356,9 +366,9 @@ clean up the resources!
 
 Multi-threaded Development
 ---------------------------
-The NetWare version of OpenSSL is thread-safe however, multi-threaded
+The NetWare version of OpenSSL is thread-safe, however multi-threaded
 applications must provide the necessary locking function callbacks.  This
-is described in doc\threads.doc.  The file "openssl\crypto\threads\mttest.c"
+is described in doc\threads.doc.  The file "openssl-x.x.x\crypto\threads\mttest.c"
 is a multi-threaded test program and demonstrates the locking functions.
 
 
@@ -428,7 +438,7 @@ Makefile "vclean"
 ------------------
 The generated makefile has a "vclean" target which cleans up the build
 directories.  If you have been building successfully and suddenly
-experience problems, use "vclean" (gmake -f netware\nlm.mak vclean) and retry.
+experience problems, use "vclean" (gmake -f netware\nlm_xxxx.mak vclean) and retry.
 
 
 "Undefined Symbol" Linker errors

@@ -77,6 +77,8 @@ sub ::file
     { my $tmp=<<___;
 %ifdef __omf__
 section	code	use32 class=code align=64
+%elifdef __coff__
+section	.text	code
 %else
 section	.text	code align=64
 %endif
