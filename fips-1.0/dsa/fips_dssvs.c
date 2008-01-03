@@ -274,7 +274,7 @@ void pqgver()
 	}
     }
 
-/* Keypair verification routine. NB: this isn't part of the stndard FIPS140-2
+/* Keypair verification routine. NB: this isn't part of the standard FIPS140-2
  * algorithm tests. It is an additional test to perform sanity checks on the
  * output of the KeyPair test.
  */
