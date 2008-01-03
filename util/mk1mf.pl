@@ -530,7 +530,7 @@ install: all
 	\$(MKDIR) \"\$(INSTALLTOP)${o}include\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}lib\"
-	\$(CP) \"\$(INCO_D)${o}*.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"\$(INCO_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin\"
 	\$(MKDIR) \"\$(OPENSSLDIR)\"
 	\$(CP) apps${o}openssl.cnf \"\$(OPENSSLDIR)\"

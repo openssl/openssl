@@ -4,26 +4,6 @@
 
  Changes between 0.9.8g and 0.9.9  [xx XXX xxxx]
 
-  *) Netware support:
-
-     - fixed wrong usage of ioctlsocket() when build for LIBC BSD sockets
-     - fixed do_tests.pl to run the test suite with CLIB builds too (CLIB_OPT)
-     - added some more tests to do_tests.pl
-     - fixed RunningProcess usage so that it works with newer LIBC NDKs too
-     - removed usage of BN_LLONG for CLIB builds to avoid runtime dependency
-     - added new Configure targets netware-clib-bsdsock, netware-clib-gcc,
-       netware-clib-bsdsock-gcc, netware-libc-bsdsock-gcc
-     - various changes to netware.pl to enable gcc-cross builds on Win32
-       platform
-     - changed crypto/bio/b_sock.c to work with macro functions (CLIB BSD)
-     - various changes to fix missing prototype warnings
-     - fixed x86nasm.pl to create correct asm files for NASM COFF output
-     - added AES, WHIRLPOOL and CPUID assembler code to build files
-     - added missing AES assembler make rules to mk1mf.pl
-     - fixed order of includes in apps/ocsp.c so that e_os.h settings apply
-     [Guenter Knauf <eflash@gmx.net>]
-
-
   *) Implement remaining functionality needed to support GOST ciphersuites.
      Interop testing has been performed using CryptoPro implementations.
      [Victor B. Wagner <vitus@cryptocom.ru>]
@@ -623,6 +603,25 @@
      [NTT]
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
+
+  *) Netware support:
+
+     - fixed wrong usage of ioctlsocket() when build for LIBC BSD sockets
+     - fixed do_tests.pl to run the test suite with CLIB builds too (CLIB_OPT)
+     - added some more tests to do_tests.pl
+     - fixed RunningProcess usage so that it works with newer LIBC NDKs too
+     - removed usage of BN_LLONG for CLIB builds to avoid runtime dependency
+     - added new Configure targets netware-clib-bsdsock, netware-clib-gcc,
+       netware-clib-bsdsock-gcc, netware-libc-bsdsock-gcc
+     - various changes to netware.pl to enable gcc-cross builds on Win32
+       platform
+     - changed crypto/bio/b_sock.c to work with macro functions (CLIB BSD)
+     - various changes to fix missing prototype warnings
+     - fixed x86nasm.pl to create correct asm files for NASM COFF output
+     - added AES, WHIRLPOOL and CPUID assembler code to build files
+     - added missing AES assembler make rules to mk1mf.pl
+     - fixed order of includes in apps/ocsp.c so that e_os.h settings apply
+     [Guenter Knauf <eflash@gmx.net>]
 
   *) Implement certificate status request TLS extension defined in RFC3546.
      A client can set the appropriate parameters and receive the encoded
