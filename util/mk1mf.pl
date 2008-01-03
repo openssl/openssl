@@ -42,6 +42,7 @@ $infile="MINFO";
 	"FreeBSD","FreeBSD distribution",
 	"OS2-EMX", "EMX GCC OS/2",
 	"netware-clib", "CodeWarrior for NetWare - CLib - with WinSock Sockets",
+	"netware-clib-bsdsock", "CodeWarrior for NetWare - CLib - with BSD Sockets",
 	"netware-libc", "CodeWarrior for NetWare - LibC - with WinSock Sockets",
 	"netware-libc-bsdsock", "CodeWarrior for NetWare - LibC - with BSD Sockets",
 	"default","cc under unix",
@@ -76,7 +77,7 @@ and [options] can be one of
 	no-hw					- No hw
 	nasm 					- Use NASM for x86 asm
 	nw-nasm					- Use NASM x86 asm for NetWare
-	nw-mwasm					- Use Metrowerks x86 asm for NetWare
+	nw-mwasm				- Use Metrowerks x86 asm for NetWare
 	gaswin					- Use GNU as with Mingw32
 	no-socks				- No socket code
 	no-err					- No error strings
@@ -173,10 +174,10 @@ elsif ($platform eq "OS2-EMX")
 	require 'OS2-EMX.pl';
 	}
 elsif (($platform eq "netware-clib") || ($platform eq "netware-libc") ||
-       ($platform eq "netware-libc-bsdsock"))
+       ($platform eq "netware-clib-bsdsock") || ($platform eq "netware-libc-bsdsock"))
 	{
 	$LIBC=1 if $platform eq "netware-libc" || $platform eq "netware-libc-bsdsock";
-	$BSDSOCK=1 if $platform eq "netware-libc-bsdsock";
+	$BSDSOCK=1 if ($platform eq "netware-libc-bsdsock") || ($platform eq "netware-clib-bsdsock");
 	require 'netware.pl';
 	}
 else

@@ -34,12 +34,17 @@ sub main()
    # delete all the output files in the output directory
    unlink <$output_path\\*.*>;
 
-   # open the main log file 
+   # open the main log file
    open(OUT, ">$log_file") || die "unable to open $log_file\n";
 
-   
+   print( OUT "========================================================\n");
+   my $outFile = "$output_path\\version.out";
+   system("openssl2 version (CLIB_OPT)/>$outFile");
+   log_output("CHECKING FOR OPENSSL VERSION:", $outFile);
+
    algorithm_tests();
    encryption_tests();
+   evp_tests();
    pem_tests();
    verify_tests();
    ca_tests();
@@ -56,9 +61,10 @@ sub algorithm_tests
 {
    my $i;
    my $outFile;
-   my @tests = ( rsa_test, destest, ideatest, bftest, shatest, sha1test,
-                 md5test, dsatest, md2test, mdc2test, rc2test, rc4test, randtest,
-                 dhtest, exptest );
+   my @tests = ( rsa_test, destest, ideatest, bftest, bntest, shatest, sha1test,
+                 sha256t, sha512t, dsatest, md2test, md4test, md5test, mdc2test,
+                 rc2test, rc4test, rc5test, randtest, rmdtest, dhtest, ecdhtest,
+                 ecdsatest, ectest, exptest, casttest, hmactest );
 
    print( "\nRUNNING CRYPTO ALGORITHM TESTS:\n\n");
 
@@ -68,16 +74,16 @@ sub algorithm_tests
    foreach $i (@tests)
    {
       if (-e "$base_path\\$i.nlm")
-	  {
+      {
          $outFile = "$output_path\\$i.out";
-         system("$i > $outFile");
+         system("$i (CLIB_OPT)/>$outFile");
          log_desc("Test: $i\.nlm:");
          log_output("", $outFile );
-	  }
-	  else
-	  {
+      }
+      else
+      {
          log_desc("Test: $i\.nlm: file not found");
-	  }
+      }
    }
 }
 
@@ -109,24 +115,24 @@ sub encryption_tests
 
       # do encryption
       $outFile = "$output_path\\enc.out";
-      system("openssl2 $i -e -bufsize 113 -k test -in $input -out $cipher > $outFile" );
+      system("openssl2 $i -e -bufsize 113 -k test -in $input -out $cipher (CLIB_OPT)/>$outFile" );
       log_output("Encrypting: $input --> $cipher", $outFile);
 
       # do decryption
       $outFile = "$output_path\\dec.out";
-      system("openssl2 $i -d -bufsize 157 -k test -in $cipher -out $clear > $outFile");
+      system("openssl2 $i -d -bufsize 157 -k test -in $cipher -out $clear (CLIB_OPT)/>$outFile");
       log_output("Decrypting: $cipher --> $clear", $outFile);
 
       # compare files
       $x = compare_files( $input, $clear, 1);
       if ( $x == 0 )
       {
-         print( "SUCCESS - files match: $input, $clear\n");
+         print( "\rSUCCESS - files match: $input, $clear\n");
          print( OUT "SUCCESS - files match: $input, $clear\n");
       }
       else
       {
-         print( "ERROR: files don't match\n");
+         print( "\rERROR: files don't match\n");
          print( OUT "ERROR: files don't match\n");
       }
 
@@ -136,24 +142,24 @@ sub encryption_tests
 
       # do encryption B64
       $outFile = "$output_path\\B64enc.out";
-      system("openssl2 $i -a -e -bufsize 113 -k test -in $input -out $cipher > $outFile");
+      system("openssl2 $i -a -e -bufsize 113 -k test -in $input -out $cipher (CLIB_OPT)/>$outFile");
       log_output("Encrypting(B64): $cipher --> $clear", $outFile);
 
       # do decryption B64
       $outFile = "$output_path\\B64dec.out";
-      system("openssl2 $i -a -d -bufsize 157 -k test -in $cipher -out $clear > $outFile");
+      system("openssl2 $i -a -d -bufsize 157 -k test -in $cipher -out $clear (CLIB_OPT)/>$outFile");
       log_output("Decrypting(B64): $cipher --> $clear", $outFile);
 
       # compare files
       $x = compare_files( $input, $clear, 1);
       if ( $x == 0 )
       {
-         print( "SUCCESS - files match: $input, $clear\n");
+         print( "\rSUCCESS - files match: $input, $clear\n");
          print( OUT "SUCCESS - files match: $input, $clear\n");
       }
       else
       {
-         print( "ERROR: files don't match\n");
+         print( "\rERROR: files don't match\n");
          print( OUT "ERROR: files don't match\n");
       }
 
@@ -199,24 +205,24 @@ sub pem_tests
 
       if ($i ne "req" )
       {
-         system("openssl2 $i -in $input -out $tmp_out > $outFile");
+         system("openssl2 $i -in $input -out $tmp_out (CLIB_OPT)/>$outFile");
          log_output( "openssl2 $i -in $input -out $tmp_out", $outFile);
       }
       else
       {
-         system("openssl2 $i -in $input -out $tmp_out -config $OpenSSL_config > $outFile");
+         system("openssl2 $i -in $input -out $tmp_out -config $OpenSSL_config (CLIB_OPT)/>$outFile");
          log_output( "openssl2 $i -in $input -out $tmp_out -config $OpenSSL_config", $outFile );
       }
 
       $x = compare_files( $input, $tmp_out);
       if ( $x == 0 )
       {
-         print( "SUCCESS - files match: $input, $tmp_out\n");
+         print( "\rSUCCESS - files match: $input, $tmp_out\n");
          print( OUT "SUCCESS - files match: $input, $tmp_out\n");
       }
       else
       {
-         print( "ERROR: files don't match\n");
+         print( "\rERROR: files don't match\n");
          print( OUT "ERROR: files don't match\n");
       }
       do_wait();
@@ -231,7 +237,8 @@ sub verify_tests
    my $i;
    my $outFile = "$output_path\\verify.out";
 
-   my @cert_files = <$cert_path\\*.pem>;
+   $cert_path =~ s/\\/\//g;
+   my @cert_files = <$cert_path/*.pem>;
 
    print( "\nRUNNING VERIFY TESTS:\n\n");
 
@@ -242,7 +249,7 @@ sub verify_tests
 
    foreach $i (@cert_files)
    {
-      system("openssl2 verify -CAfile $tmp_cert $i >$outFile");
+      system("openssl2 verify -CAfile $tmp_cert $i (CLIB_OPT)/>$outFile");
       log_desc("Verifying cert: $i");
       log_output("openssl2 verify -CAfile $tmp_cert $i", $outFile);
    }
@@ -263,103 +270,103 @@ sub ssl_tests
    print( OUT "\n========================================================\n");
    print( OUT "SSL TESTS:\n\n");
 
-   system("ssltest -ssl2 >$outFile");
+   system("ssltest -ssl2 (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2:");
    log_output("ssltest -ssl2", $outFile);
 
-   system("$ssltest -ssl2 -server_auth >$outFile");
+   system("$ssltest -ssl2 -server_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2 with server authentication:");
    log_output("$ssltest -ssl2 -server_auth", $outFile);
 
-   system("$ssltest -ssl2 -client_auth >$outFile");
+   system("$ssltest -ssl2 -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2 with client authentication:");
    log_output("$ssltest -ssl2 -client_auth", $outFile);
 
-   system("$ssltest -ssl2 -server_auth -client_auth >$outFile");
+   system("$ssltest -ssl2 -server_auth -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2 with both client and server authentication:");
    log_output("$ssltest -ssl2 -server_auth -client_auth", $outFile);
 
-   system("ssltest -ssl3 >$outFile");
+   system("ssltest -ssl3 (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv3:");
    log_output("ssltest -ssl3", $outFile);
 
-   system("$ssltest -ssl3 -server_auth >$outFile");
+   system("$ssltest -ssl3 -server_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv3 with server authentication:");
    log_output("$ssltest -ssl3 -server_auth", $outFile);
 
-   system("$ssltest -ssl3 -client_auth >$outFile");
+   system("$ssltest -ssl3 -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv3 with client authentication:");
    log_output("$ssltest -ssl3 -client_auth", $outFile);
 
-   system("$ssltest -ssl3 -server_auth -client_auth >$outFile");
+   system("$ssltest -ssl3 -server_auth -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv3 with both client and server authentication:");
    log_output("$ssltest -ssl3 -server_auth -client_auth", $outFile);
 
-   system("ssltest >$outFile");
+   system("ssltest (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2/sslv3:");
    log_output("ssltest", $outFile);
 
-   system("$ssltest -server_auth >$outFile");
+   system("$ssltest -server_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2/sslv3 with server authentication:");
    log_output("$ssltest -server_auth", $outFile);
 
-   system("$ssltest -client_auth >$outFile");
+   system("$ssltest -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2/sslv3 with client authentication:");
    log_output("$ssltest -client_auth ", $outFile);
 
-   system("$ssltest -server_auth -client_auth >$outFile");
+   system("$ssltest -server_auth -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2/sslv3 with both client and server authentication:");
    log_output("$ssltest -server_auth -client_auth", $outFile);
 
-   system("ssltest -bio_pair -ssl2 >$outFile");
+   system("ssltest -bio_pair -ssl2 (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2 via BIO pair:");
    log_output("ssltest -bio_pair -ssl2", $outFile);
 
-   system("ssltest -bio_pair -dhe1024dsa -v >$outFile");
+   system("ssltest -bio_pair -dhe1024dsa -v (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2/sslv3 with 1024 bit DHE via BIO pair:");
    log_output("ssltest -bio_pair -dhe1024dsa -v", $outFile);
 
-   system("$ssltest -bio_pair -ssl2 -server_auth >$outFile");
+   system("$ssltest -bio_pair -ssl2 -server_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2 with server authentication via BIO pair:");
    log_output("$ssltest -bio_pair -ssl2 -server_auth", $outFile);
 
-   system("$ssltest -bio_pair -ssl2 -client_auth >$outFile");
+   system("$ssltest -bio_pair -ssl2 -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2 with client authentication via BIO pair:");
    log_output("$ssltest -bio_pair -ssl2 -client_auth", $outFile);
 
-   system("$ssltest -bio_pair -ssl2 -server_auth -client_auth >$outFile");
+   system("$ssltest -bio_pair -ssl2 -server_auth -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2 with both client and server authentication via BIO pair:");
    log_output("$ssltest -bio_pair -ssl2 -server_auth -client_auth", $outFile);
 
-   system("ssltest -bio_pair -ssl3 >$outFile");
+   system("ssltest -bio_pair -ssl3 (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv3 via BIO pair:");
    log_output("ssltest -bio_pair -ssl3", $outFile);
 
-   system("$ssltest -bio_pair -ssl3 -server_auth >$outFile");
+   system("$ssltest -bio_pair -ssl3 -server_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv3 with server authentication via BIO pair:");
    log_output("$ssltest -bio_pair -ssl3 -server_auth", $outFile);
 
-   system("$ssltest -bio_pair -ssl3 -client_auth >$outFile");
+   system("$ssltest -bio_pair -ssl3 -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv3 with client authentication  via BIO pair:");
    log_output("$ssltest -bio_pair -ssl3 -client_auth", $outFile);
 
-   system("$ssltest -bio_pair -ssl3 -server_auth -client_auth >$outFile");
+   system("$ssltest -bio_pair -ssl3 -server_auth -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv3 with both client and server authentication via BIO pair:");
    log_output("$ssltest -bio_pair -ssl3 -server_auth -client_auth", $outFile);
 
-   system("ssltest -bio_pair >$outFile");
+   system("ssltest -bio_pair (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2/sslv3 via BIO pair:");
    log_output("ssltest -bio_pair", $outFile);
 
-   system("$ssltest -bio_pair -server_auth >$outFile");
+   system("$ssltest -bio_pair -server_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2/sslv3 with server authentication via BIO pair:");
    log_output("$ssltest -bio_pair -server_auth", $outFile);
 
-   system("$ssltest -bio_pair -client_auth >$outFile");
+   system("$ssltest -bio_pair -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2/sslv3 with client authentication via BIO pair:");
    log_output("$ssltest -bio_pair -client_auth", $outFile);
 
-   system("$ssltest -bio_pair -server_auth -client_auth >$outFile");
+   system("$ssltest -bio_pair -server_auth -client_auth (CLIB_OPT)/>$outFile");
    log_desc("Testing sslv2/sslv3 with both client and server authentication via BIO pair:");
    log_output("$ssltest -bio_pair -server_auth -client_auth", $outFile);
 }
@@ -389,43 +396,43 @@ sub ca_tests
    print( OUT "\n========================================================\n");
    print( OUT "CA TESTS:\n");
 
-   system("openssl2 req -config $CAconf -out $CAreq -keyout $CAkey -new >$outFile");
+   system("openssl2 req -config $CAconf -out $CAreq -keyout $CAkey -new (CLIB_OPT)/>$outFile");
    log_desc("Make a certificate request using req:");
    log_output("openssl2 req -config $CAconf -out $CAreq -keyout $CAkey -new", $outFile);
 
-   system("openssl2 x509 -CAcreateserial -in $CAreq -days 30 -req -out $CAcert -signkey $CAkey >$outFile");
+   system("openssl2 x509 -CAcreateserial -in $CAreq -days 30 -req -out $CAcert -signkey $CAkey (CLIB_OPT)/>$outFile");
    log_desc("Convert the certificate request into a self signed certificate using x509:");
    log_output("openssl2 x509 -CAcreateserial -in $CAreq -days 30 -req -out $CAcert -signkey $CAkey", $outFile);
 
-   system("openssl2 x509 -in $CAcert -x509toreq -signkey $CAkey -out $CAreq2 >$outFile");
+   system("openssl2 x509 -in $CAcert -x509toreq -signkey $CAkey -out $CAreq2 (CLIB_OPT)/>$outFile");
    log_desc("Convert a certificate into a certificate request using 'x509':");
    log_output("openssl2 x509 -in $CAcert -x509toreq -signkey $CAkey -out $CAreq2", $outFile);
 
-   system("openssl2 req -config $OpenSSL_config -verify -in $CAreq -noout >$outFile");
+   system("openssl2 req -config $OpenSSL_config -verify -in $CAreq -noout (CLIB_OPT)/>$outFile");
    log_output("openssl2 req -config $OpenSSL_config -verify -in $CAreq -noout", $outFile);
 
-   system("openssl2 req -config $OpenSSL_config -verify -in $CAreq2 -noout >$outFile");
+   system("openssl2 req -config $OpenSSL_config -verify -in $CAreq2 -noout (CLIB_OPT)/>$outFile");
    log_output( "openssl2 req -config $OpenSSL_config -verify -in $CAreq2 -noout", $outFile);
 
-   system("openssl2 verify -CAfile $CAcert $CAcert >$outFile");
+   system("openssl2 verify -CAfile $CAcert $CAcert (CLIB_OPT)/>$outFile");
    log_output("openssl2 verify -CAfile $CAcert $CAcert", $outFile);
 
-   system("openssl2 req -config $Uconf -out $Ureq -keyout $Ukey -new >$outFile");
+   system("openssl2 req -config $Uconf -out $Ureq -keyout $Ukey -new (CLIB_OPT)/>$outFile");
    log_desc("Make another certificate request using req:");
    log_output("openssl2 req -config $Uconf -out $Ureq -keyout $Ukey -new", $outFile);
 
-   system("openssl2 x509 -CAcreateserial -in $Ureq -days 30 -req -out $Ucert -CA $CAcert -CAkey $CAkey -CAserial $CAserial >$outFile");
+   system("openssl2 x509 -CAcreateserial -in $Ureq -days 30 -req -out $Ucert -CA $CAcert -CAkey $CAkey -CAserial $CAserial (CLIB_OPT)/>$outFile");
    log_desc("Sign certificate request with the just created CA via x509:");
    log_output("openssl2 x509 -CAcreateserial -in $Ureq -days 30 -req -out $Ucert -CA $CAcert -CAkey $CAkey -CAserial $CAserial", $outFile);
 
-   system("openssl2 verify -CAfile $CAcert $Ucert >$outFile");
+   system("openssl2 verify -CAfile $CAcert $Ucert (CLIB_OPT)/>$outFile");
    log_output("openssl2 verify -CAfile $CAcert $Ucert", $outFile);
 
-   system("openssl2 x509 -subject -issuer -startdate -enddate -noout -in $Ucert >$outFile");
+   system("openssl2 x509 -subject -issuer -startdate -enddate -noout -in $Ucert (CLIB_OPT)/>$outFile");
    log_desc("Certificate details");
    log_output("openssl2 x509 -subject -issuer -startdate -enddate -noout -in $Ucert", $outFile);
 
-   print(OUT "-- \n");
+   print(OUT "--\n");
    print(OUT "The generated CA certificate is $CAcert\n");
    print(OUT "The generated CA private key is $CAkey\n");
    print(OUT "The current CA signing serial number is in $CAserial\n");
@@ -433,6 +440,29 @@ sub ca_tests
    print(OUT "The generated user certificate is $Ucert\n");
    print(OUT "The generated user private key is $Ukey\n");
    print(OUT "--\n");
+}
+
+############################################################################
+sub evp_tests
+{
+   my $i = 'evp_test';
+
+   print( "\nRUNNING EVP TESTS:\n\n");
+
+   print( OUT "\n========================================================\n");
+   print( OUT "EVP TESTS:\n\n");
+
+   if (-e "$base_path\\$i.nlm")
+   {
+       my $outFile = "$output_path\\$i.out";
+       system("$i $test_path\\evptests.txt (CLIB_OPT)/>$outFile");
+       log_desc("Test: $i\.nlm:");
+       log_output("", $outFile );
+   }
+   else
+   {
+       log_desc("Test: $i\.nlm: file not found");
+   }
 }
 
 ############################################################################
@@ -445,7 +475,7 @@ sub log_output( $ $ )
 
    if ($desc)
    {
-      print("$desc\n");
+      print("\r$desc\n");
       print(OUT "$desc\n");
    }
 
@@ -457,8 +487,8 @@ sub log_output( $ $ )
       # copy test output to log file
    open(IN, "<$file");
    while (<IN>)
-   { 
-      print(OUT $_); 
+   {
+      print(OUT $_);
       if ( $_ =~ /ERROR/ )
       {
          $error = 1;
@@ -485,13 +515,13 @@ sub log_output( $ $ )
       $key = getc;
       print("\n");
    }
-      
-      # Several of the testing scripts run a loop loading the 
+
+      # Several of the testing scripts run a loop loading the
       # same NLM with different options.
-      # On slow NetWare machines there appears to be some delay in the 
+      # On slow NetWare machines there appears to be some delay in the
       # OS actually unloading the test nlms and the OS complains about.
-      # the NLM already being loaded.  This additional pause is to 
-      # to help provide a little more time for unloading before trying to 
+      # the NLM already being loaded.  This additional pause is to
+      # to help provide a little more time for unloading before trying to
       # load again.
    sleep(1);
 }
@@ -562,7 +592,7 @@ sub do_wait()
 ############################################################################
 sub make_tmp_cert_file()
 {
-   my @cert_files = <$cert_path\\*.pem>;
+   my @cert_files = <$cert_path/*.pem>;
 
       # delete the file if it already exists
    unlink($tmp_cert);
@@ -570,7 +600,7 @@ sub make_tmp_cert_file()
    open( TMP_CERT, ">$tmp_cert") || die "\nunable to open $tmp_cert\n";
 
    print("building temporary cert file\n");
-   
+
    # create a temporary cert file that contains all the certs
    foreach $i (@cert_files)
    {

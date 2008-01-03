@@ -7,8 +7,9 @@ rem   usage:
 rem      build [target] [debug opts] [assembly opts] [configure opts]
 rem
 rem      target        - "netware-clib" - CLib NetWare build (WinSock Sockets)
-rem                    - "netware-libc" - LibC NKS NetWare build (WinSock Sockets)
-rem                    - "netware-libc-bsdsock" - LibC NKS NetWare build (BSD Sockets)
+rem                    - "netware-clib-bsdsock" - CLib NetWare build (BSD Sockets)
+rem                    - "netware-libc" - LibC NetWare build (WinSock Sockets)
+rem                    - "netware-libc-bsdsock" - LibC NetWare build (BSD Sockets)
 rem 
 rem      debug opts    - "debug"  - build debug
 rem
@@ -71,10 +72,12 @@ if "%1" == "nw-nasm"  set NO_ASM=
 if "%1" == "nw-nasm"  set ARG_PROCESSED=YES
 if "%1" == "nw-mwasm" set ASM_MODE=nw-mwasm
 if "%1" == "nw-mwasm" set ASSEMBLER=Metrowerks
-if "%1" == "nw-mwasm"  set NO_ASM=
+if "%1" == "nw-mwasm" set NO_ASM=
 if "%1" == "nw-mwasm" set ARG_PROCESSED=YES
 if "%1" == "netware-clib" set BLD_TARGET=netware-clib
 if "%1" == "netware-clib" set ARG_PROCESSED=YES
+if "%1" == "netware-clib-bsdsock" set BLD_TARGET=netware-clib-bsdsock
+if "%1" == "netware-clib-bsdsock" set ARG_PROCESSED=YES
 if "%1" == "netware-libc" set BLD_TARGET=netware-libc
 if "%1" == "netware-libc" set ARG_PROCESSED=YES
 if "%1" == "netware-libc-bsdsock" set BLD_TARGET=netware-libc-bsdsock
@@ -94,6 +97,7 @@ if "%BLD_TARGET%" == "no_target" goto no_target
 rem build the nlm make file name which includes target and debug info
 set NLM_MAKE=
 if "%BLD_TARGET%" == "netware-clib" set NLM_MAKE=netware\nlm_clib
+if "%BLD_TARGET%" == "netware-clib-bsdsock" set NLM_MAKE=netware\nlm_clib_bsdsock
 if "%BLD_TARGET%" == "netware-libc" set NLM_MAKE=netware\nlm_libc
 if "%BLD_TARGET%" == "netware-libc-bsdsock" set NLM_MAKE=netware\nlm_libc_bsdsock
 if "%DEBUG%" == "" set NLM_MAKE=%NLM_MAKE%.mak
@@ -110,7 +114,14 @@ echo Generating x86 for %ASSEMBLER% assembler
 
 echo Bignum
 cd crypto\bn\asm
-perl x86.pl %ASM_MODE% > bn-nw.asm
+rem perl x86.pl %ASM_MODE% > bn-nw.asm
+perl bn-586.pl %ASM_MODE% > bn-nw.asm
+perl co-586.pl %ASM_MODE% > co-nw.asm
+cd ..\..\..
+
+echo AES
+cd crypto\aes\asm
+perl aes-586.pl %ASM_MODE% > a-nw.asm
 cd ..\..\..
 
 echo DES
@@ -160,6 +171,11 @@ cd crypto\rc5\asm
 perl rc5-586.pl %ASM_MODE% > r5-nw.asm
 cd ..\..\..
 
+echo CPUID
+cd crypto
+perl x86cpuid.pl %ASM_MODE% > x86cpuid-nw.asm
+cd ..\
+
 rem ===============================================================
 rem
 :do_config
@@ -176,8 +192,10 @@ echo mk1mf.pl options: %DEBUG% %ASM_MODE% %CONFIG_OPTS% %BLD_TARGET%
 echo .
 perl util\mk1mf.pl %DEBUG% %ASM_MODE% %CONFIG_OPTS% %BLD_TARGET% >%NLM_MAKE%
 
+make -f %NLM_MAKE% vclean
+echo .
 echo The makefile "%NLM_MAKE%" has been created use your maketool to
-echo build (ex: gmake -f %NLM_MAKE%)
+echo build (ex: make -f %NLM_MAKE%)
 goto end
 
 rem ===============================================================
@@ -189,8 +207,9 @@ echo .
 echo .  usage: build [target] [debug opts] [assembly opts] [configure opts]
 echo .
 echo .     target        - "netware-clib" - CLib NetWare build (WinSock Sockets)
-echo .                   - "netware-libc" - LibC NKS NetWare build (WinSock Sockets)
-echo .                   - "netware-libc-bsdsock" - LibC NKS NetWare build (BSD Sockets)
+echo .                   - "netware-clib-bsdsock" - CLib NetWare build (BSD Sockets)
+echo .                   - "netware-libc" - LibC NetWare build (WinSock Sockets)
+echo .                   - "netware-libc-bsdsock" - LibC NetWare build (BSD Sockets)
 echo .
 echo .     debug opts    - "debug"  - build debug
 echo .

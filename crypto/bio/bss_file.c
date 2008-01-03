@@ -89,6 +89,10 @@
 #include "bio_lcl.h"
 #include <openssl/err.h>
 
+#if defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_CLIB)
+#include <nwfileio.h>
+#endif
+
 #if !defined(OPENSSL_NO_STDIO)
 
 static int MS_CALLBACK file_write(BIO *h, const char *buf, int num);
@@ -285,9 +289,9 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
          /* Under CLib there are differences in file modes
          */
 		if (num & BIO_FP_TEXT)
-			_setmode(fd,O_TEXT);
+			setmode(fd,O_TEXT);
 		else
-			_setmode(fd,O_BINARY);
+			setmode(fd,O_BINARY);
 #elif defined(OPENSSL_SYS_MSDOS)
 		int fd = fileno((FILE*)ptr);
 		/* Set correct text/binary mode */

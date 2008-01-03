@@ -281,6 +281,7 @@ sub main'function_begin
 	my($func,$extra)=@_;
 
 	push(@labels,$func);
+	push(@out,".") if ($main'mwerks);
 	my($tmp)=<<"EOF";
 global	$under$func
 $under$func:
@@ -296,6 +297,7 @@ EOF
 sub main'function_begin_B
 	{
 	my($func,$extra)=@_;
+	push(@out,".") if ($main'mwerks);
 	my($tmp)=<<"EOF";
 global	$under$func
 $under$func:
@@ -375,6 +377,7 @@ sub main'comment
 sub main'public_label
 	{
 	$label{$_[0]}="${under}${_[0]}"	if (!defined($label{$_[0]}));
+	push(@out,".") if ($main'mwerks);
 	push(@out,"global\t$label{$_[0]}\n");
 	}
 

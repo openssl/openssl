@@ -2882,13 +2882,22 @@ int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str)
 	p=(char *)str->data;
 	for (j=str->length; j>0; j--)
 		{
+#ifdef CHARSET_EBCDIC
+		if ((*p >= 0x20) && (*p <= 0x7e))
+			BIO_printf(bp,"%c",os_toebcdic[*p]);
+#else
 		if ((*p >= ' ') && (*p <= '~'))
 			BIO_printf(bp,"%c",*p);
+#endif
 		else if (*p & 0x80)
 			BIO_printf(bp,"\\0x%02X",*p);
 		else if ((unsigned char)*p == 0xf7)
 			BIO_printf(bp,"^?");
+#ifdef CHARSET_EBCDIC
+		else	BIO_printf(bp,"^%c",os_toebcdic[*p+0x40]);
+#else
 		else	BIO_printf(bp,"^%c",*p+'@');
+#endif
 		p++;
 		}
 	BIO_printf(bp,"'\n");

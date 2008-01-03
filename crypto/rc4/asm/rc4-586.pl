@@ -216,7 +216,7 @@ sub RC4
 		&movz	($tx,&BP(0,$d,$x));
 		&cmp	($in,&swtmp(2));
 		&movb	(&BP(0,$out),&LB($ty));
-		&lea	($out,&BP(1,$out));
+		&lea	($out,&DWP(1,$out));
 	&jb	(&label("RC4_CHAR_loop"));
 
 	&set_label("finished");

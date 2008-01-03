@@ -126,6 +126,9 @@ void ENGINE_load_padlock (void)
 #ifdef _MSC_VER
 # include <malloc.h>
 # define alloca _alloca
+#elif defined(NETWARE_CLIB) && defined(__GNUC__)
+  void *alloca(size_t);
+# define alloca(s) __builtin_alloca(s)
 #else
 # include <stdlib.h>
 #endif
