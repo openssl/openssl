@@ -209,7 +209,10 @@ if (!$no_asm)
 	$whirlpool_asm_src='crypto\whrlpool\asm\wp_win32.asm';
 	$cpuid_asm_obj='crypto\cpu_win32.obj';
 	$cpuid_asm_src='crypto\cpu_win32.asm';
-	$cflags.=" -DOPENSSL_CPUID_OBJ -DOPENSSL_IA32_SSE2 -DAES_ASM -DOPENSSL_BN_ASM_PART_WORDS -DBN_ASM -DMD5_ASM -DSHA1_ASM -DRMD160_ASM -DWHIRLPOOL_ASM";
+	$cflags.=" -DOPENSSL_CPUID_OBJ -DOPENSSL_IA32_SSE2";
+	$cflags.=" -DAES_ASM -DOPENSSL_BN_ASM_PART_WORDS -DBN_ASM -DMD5_ASM";
+        $cflags.=" -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM";
+	$cflags.=" -DRMD160_ASM -DWHIRLPOOL_ASM";
 	}
 
 if ($shlib && $FLAVOR !~ /CE/)
