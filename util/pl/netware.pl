@@ -131,13 +131,14 @@ else
 # assembler
 if ($nw_nasm)
 {
+   $asm=(`nasm -v 2>NUL` gt `nasmw -v 2>NUL`?"nasm":"nasmw");
    if ($gnuc)
    {
-      $asm="nasmw -s -f elf";
+      $asm.=" -s -f elf";
    }
    else
    {
-      $asm="nasmw -s -f coff -d __coff__";
+      $asm.=" -s -f coff -d __coff__";
    }
    $afile="-o ";
    $asm.=" -g" if $debug;
@@ -323,8 +324,8 @@ if (!$no_asm)
    $rc5_enc_src="crypto${o}rc5${o}asm${o}r5-nw.asm";
    $md5_asm_obj="\$(OBJ_D)${o}m5-nw${obj}";
    $md5_asm_src="crypto${o}md5${o}asm${o}m5-nw.asm";
-   $sha1_asm_obj="\$(OBJ_D)${o}s1-nw${obj}";
-   $sha1_asm_src="crypto${o}sha${o}asm${o}s1-nw.asm";
+   $sha1_asm_obj="\$(OBJ_D)${o}s1-nw${obj} \$(OBJ_D)${o}sha256-nw${obj} \$(OBJ_D)${o}sha512-nw${obj}";
+   $sha1_asm_src="crypto${o}sha${o}asm${o}s1-nw.asm crypto${o}sha${o}asm${o}sha256-nw.asm crypto${o}sha${o}asm${o}sha512-nw.asm";
    $rmd160_asm_obj="\$(OBJ_D)${o}rm-nw${obj}";
    $rmd160_asm_src="crypto${o}ripemd${o}asm${o}rm-nw.asm";
    $whirlpool_asm_obj="\$(OBJ_D)${o}wp-nw${obj}";
