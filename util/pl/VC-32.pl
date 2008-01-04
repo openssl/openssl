@@ -160,8 +160,8 @@ $lfile='/out:';
 $shlib_ex_obj="";
 $app_ex_obj="setargv.obj" if ($FLAVOR !~ /CE/);
 if ($nasm) {
-	my $ver=`nasm -v`;
-	my $vew=`nasmw -v`;
+	my $ver=`nasm -v 2>NUL`;
+	my $vew=`nasmw -v 2>NUL`;
 	# pick newest version
 	$asm=($ver gt $vew?"nasm":"nasmw")." -f win32";
 	$afile='-o ';
