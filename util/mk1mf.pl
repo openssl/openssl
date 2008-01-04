@@ -868,6 +868,7 @@ sub do_defs
 		else	{ $pf=$postfix; }
 		if ($_ =~ /BN_ASM/)	{ $t="$_ "; }
 		elsif ($_ =~ /BNCO_ASM/){ $t="$_ "; }
+		elsif ($_ =~ /AES_ASM/){ $t="$_ "; }
 		elsif ($_ =~ /DES_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /BF_ENC/)	{ $t="$_ "; }
 		elsif ($_ =~ /CAST_ENC/){ $t="$_ "; }
