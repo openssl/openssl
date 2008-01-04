@@ -185,7 +185,7 @@ int hash_block(gost_hash_ctx *ctx,const byte *block, size_t length)
 	if (ctx->left)
 		{
 		/*There are some bytes from previous step*/
-		int add_bytes = 32-ctx->left;
+		unsigned int add_bytes = 32-ctx->left;
 		if (add_bytes>length)
 			{
 			add_bytes = length;

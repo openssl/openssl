@@ -251,8 +251,8 @@ int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	{
 	const unsigned char *in_ptr=in;
 	unsigned char *out_ptr=out;
-	int i=0;
-	int j=0;
+	unsigned int i=0;
+	unsigned int j=0;
 /* process partial block if any */
 	if (ctx->num) 
 		{
@@ -313,8 +313,8 @@ static int gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	{
 	const unsigned char *in_ptr=in;
 	unsigned char *out_ptr=out;
-	int i=0;
-	int j;
+	unsigned int i=0;
+	unsigned int j;
 /* process partial block if any */
 	if (ctx->num) 
 		{

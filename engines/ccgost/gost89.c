@@ -354,7 +354,7 @@ int gost_mac(gost_ctx *ctx,int mac_len,const unsigned char *data,
 	{
 	byte buffer[8]={0,0,0,0,0,0,0,0};
 	byte buf2[8];
-	int i;
+	unsigned int i;
 	for (i=0;i+8<=data_len;i+=8) 
 		mac_block(ctx,buffer,data+i);
 	if (i<data_len)
@@ -373,7 +373,7 @@ int gost_mac_iv(gost_ctx *ctx,int mac_len,const unsigned char *iv,const unsigned
 	{
 	byte buffer[8];
 	byte buf2[8];
-	int i;
+	unsigned int i;
 	memcpy (buffer,iv,8);
 	for (i=0;i+8<=data_len;i+=8) 
 		mac_block(ctx,buffer,data+i);

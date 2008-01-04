@@ -16,7 +16,6 @@
 #include <openssl/x509.h>
 #include <openssl/engine.h>
 #include <openssl/ec.h>
-#include <unistd.h>
 #include "gost89.h"
 #include "gosthash.h"
 /* Control commands */
