@@ -160,9 +160,7 @@ sub ::comment
 	}
 
 sub ::external_label
-{   foreach(@_)
-    {	push(@out,".extern\t".&::LABEL($_,$nmdecor.$_)."\n");   }
-}
+{   foreach(@_) { &::LABEL($_,$nmdecor.$_); }   }
 
 sub ::public_label
 {   push(@out,".globl\t".&::LABEL($_[0],$nmdecor.$_[0])."\n");   }
@@ -174,8 +172,7 @@ sub ::file_end
 	else		{ push (@out,"$tmp\n"); }
     }
     if ($::macosx)
-    {	grep {s/^\.extern\s+.*$//} @out;
-	if (%non_lazy_ptr)
+    {	if (%non_lazy_ptr)
     	{   push(@out,".section __IMPORT,__pointers,non_lazy_symbol_pointers\n");
 	    foreach $i (keys %non_lazy_ptr)
 	    {	push(@out,"$non_lazy_ptr{$i}:\n.indirect_symbol\t$i\n.long\t0\n");   }
@@ -214,9 +211,9 @@ sub ::picmeup
 	    $non_lazy_ptr{"$nmdecor$sym"}=$indirect;
 	}
 	else
-	{   &::lea($dst,&::DWP("${nmdecor}_GLOBAL_OFFSET_TABLE_+[.-$reflabel]",
+	{   &::lea($dst,&::DWP("_GLOBAL_OFFSET_TABLE_+[.-$reflabel]",
 			    $base));
-	    &::mov($dst,&::DWP("$nmdecor$sym\@GOT",$dst));
+	    &::mov($dst,&::DWP("$sym\@GOT",$dst));
 	}
     }
     else
