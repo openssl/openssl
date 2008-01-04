@@ -64,7 +64,6 @@
 # ifndef _GNU_SOURCE
 #  define _GNU_SOURCE	/* make sure dladdr is declared */
 # endif
-# define HAVE_DLINFO 1
 #endif
 
 #include <stdio.h>
@@ -79,8 +78,13 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 #else
 
 #ifdef HAVE_DLFCN_H
-
-#include <dlfcn.h>
+# include <dlfcn.h>
+# define HAVE_DLINFO 1
+# if defined(_AIX) || defined(__CYGWIN__) || \
+     defined(__SCO_VERSION__) || defined(_SCO_ELF) || \
+     (defined(__OpenBSD__) && !defined(RTLD_SELF))
+#  undef HAVE_DLINFO
+# endif
 #endif
 
 /* Part of the hack in "dlfcn_load" ... */
@@ -134,7 +138,6 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
  * be hacked further relatively easily to deal with cases as we find
  * them. Initially this is to cope with OpenBSD. */
 #if defined(__OpenBSD__) || defined(__NetBSD__)
-#	define HAVE_DLINFO 1
 #	ifdef DL_LAZY
 #		define DLOPEN_FLAG DL_LAZY
 #	else
@@ -146,7 +149,6 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 #	endif
 #else
 #	ifdef OPENSSL_SYS_SUNOS
-#		define HAVE_DLINFO 1
 #		define DLOPEN_FLAG 1
 #	else
 #		define DLOPEN_FLAG RTLD_NOW /* Hope this works everywhere else */
@@ -397,7 +399,6 @@ This is a quote from IRIX manual for dladdr(3c):
      intention to change this interface, so on a practical level, the code
      below is safe to use on IRIX.
 */
-#define HAVE_DLINFO 1
 #include <rld_interface.h>
 #ifndef _RLD_INTERFACE_DLFCN_H_DLADDR
 #define _RLD_INTERFACE_DLFCN_H_DLADDR
