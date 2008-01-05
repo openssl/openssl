@@ -332,7 +332,8 @@ if (!$no_asm)
    $whirlpool_asm_src="crypto${o}whrlpool${o}asm${o}wp-nw.asm";
    $cpuid_asm_obj="\$(OBJ_D)${o}x86cpuid-nw${obj}";
    $cpuid_asm_src="crypto${o}x86cpuid-nw.asm";
-   $cflags.=" -DOPENSSL_CPUID_OBJ -DBN_ASM -DOPENSSL_BN_ASM_PART_WORDS -DMD5_ASM -DSHA1_ASM -DWHIRLPOOL_ASM";
+   $cflags.=" -DOPENSSL_CPUID_OBJ -DBN_ASM -DOPENSSL_BN_ASM_PART_WORDS -DMD5_ASM -DWHIRLPOOL_ASM";
+   $cflags.=" -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM";
    $cflags.=" -DAES_ASM -DRMD160_ASM";
 }
 else
