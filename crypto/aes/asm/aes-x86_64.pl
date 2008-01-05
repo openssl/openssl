@@ -1634,6 +1634,7 @@ AES_cbc_encrypt:
 	push	%r15
 	pushfq
 	cld
+	mov	%r9d,%r9d	# clear upper half of enc
 
 	.picmeup $sbox
 	lea	AES_Te-.($sbox),$sbox
