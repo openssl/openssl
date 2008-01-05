@@ -60,6 +60,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include "apps.h" /* needs to be included before the openssl headers! */
 #include <openssl/e_os2.h>
 #include <openssl/ssl.h>
