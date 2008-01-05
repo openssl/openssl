@@ -1824,8 +1824,7 @@ err:
 int ssl3_get_cert_status(SSL *s)
 	{
 	int ok, al;
-	unsigned long resplen;
-	long n;
+	unsigned long resplen,n;
 	const unsigned char *p;
 
 	n=s->method->ssl_get_message(s,

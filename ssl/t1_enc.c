@@ -793,8 +793,8 @@ int tls1_final_finish_mac(SSL *s,
 		{
 		if (mask & s->s3->tmp.new_cipher->algorithm2)
 			{
-			int hashsize = EVP_MD_size(md);
-			if ((size_t)hashsize > (sizeof buf - (size_t)(q-buf)))
+			unsigned int hashsize = EVP_MD_size(md);
+			if (hashsize > (sizeof buf - (size_t)(q-buf)))
 				{
 				/* internal error: 'buf' is too small for this cipersuite! */
 				err = 1;
