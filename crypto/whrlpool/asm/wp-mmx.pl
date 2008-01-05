@@ -45,7 +45,8 @@
 #	non-MMX implementation would actually pay off, but till
 #	opposite is proved "unlikely" is assumed.
 
-push(@INC,"../../perlasm");
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],"wp-mmx.pl");

@@ -4,7 +4,8 @@
 # Svend Olaf Mikkelsen <svolaf@inet.uni-c.dk>
 #
 
-push(@INC,"perlasm","../../perlasm");
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 require "cbc.pl";
 require "desboth.pl";
