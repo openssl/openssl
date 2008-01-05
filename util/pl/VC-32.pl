@@ -185,8 +185,8 @@ if (!$no_asm)
 	{
 	$aes_asm_obj='crypto\aes\asm\a_win32.obj';
 	$aes_asm_src='crypto\aes\asm\a_win32.asm';
-	$bn_asm_obj='crypto\bn\asm\bn_win32.obj';
-	$bn_asm_src='crypto\bn\asm\bn_win32.asm';
+	$bn_asm_obj='crypto\bn\asm\bn_win32.obj crypto\bn\asm\mo_win32.obj';
+	$bn_asm_src='crypto\bn\asm\bn_win32.asm crypto\bn\asm\mo_win32.asm';
 	$bnco_asm_obj='crypto\bn\asm\co_win32.obj';
 	$bnco_asm_src='crypto\bn\asm\co_win32.asm';
 	$des_enc_obj='crypto\des\asm\d_win32.obj crypto\des\asm\y_win32.obj';
@@ -210,8 +210,8 @@ if (!$no_asm)
 	$cpuid_asm_obj='crypto\cpu_win32.obj';
 	$cpuid_asm_src='crypto\cpu_win32.asm';
 	$cflags.=" -DOPENSSL_CPUID_OBJ -DOPENSSL_IA32_SSE2";
-	$cflags.=" -DAES_ASM -DOPENSSL_BN_ASM_PART_WORDS -DBN_ASM -DMD5_ASM";
-        $cflags.=" -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM";
+	$cflags.=" -DOPENSSL_BN_ASM_PART_WORDS -DBN_ASM -DOPENSSL_BN_ASM_MONT";
+        $cflags.=" -DAES_ASM -DMD5_ASM -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM";
 	$cflags.=" -DRMD160_ASM -DWHIRLPOOL_ASM";
 	}
 
