@@ -191,6 +191,8 @@ push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],"aes-586.pl",$x86only = $ARGV[$#ARGV] eq "386");
+&static_label("AES_Te");
+&static_label("AES_Td");
 
 $s0="eax";
 $s1="ebx";
@@ -494,7 +496,6 @@ sub enctransform()
 	&xor	($s[$i],$tmp);
 }
 
-&public_label("AES_Te");
 &function_begin_B("_x86_AES_encrypt_compact");
 	# note that caller is expected to allocate stack frame for me!
 	&mov	($__key,$key);			# save key
@@ -688,7 +689,6 @@ sub sse_enccompact()
 }
 
 					if (!$x86only) {
-&public_label("AES_Te");
 &function_begin_B("_sse_AES_encrypt_compact");
 	&pxor	("mm0",&QWP(0,$key));	#  7, 6, 5, 4, 3, 2, 1, 0
 	&pxor	("mm4",&QWP(8,$key));	# 15,14,13,12,11,10, 9, 8
@@ -836,7 +836,6 @@ sub enclast()
 	if ($i==3)  {	&mov	($s[3],$acc);			}
 }
 
-&public_label("AES_Te");
 &function_begin_B("_x86_AES_encrypt");
 	if ($vertical_spin) {
 		# I need high parts of volatile registers to be accessible...
@@ -1158,7 +1157,6 @@ sub enclast()
 &function_end_B("_x86_AES_encrypt");
 
 # void AES_encrypt (const void *inp,void *out,const AES_KEY *key);
-&public_label("AES_Te");
 &function_begin("AES_encrypt");
 	&mov	($acc,&wparam(0));		# load inp
 	&mov	($key,&wparam(2));		# load key
@@ -1324,7 +1322,6 @@ sub dectransform()
 	&mov	(&DWP(4+4*$i,"esp"),$s[$i])	if($i>=2);
 }
 
-&public_label("AES_Td");
 &function_begin_B("_x86_AES_decrypt_compact");
 	# note that caller is expected to allocate stack frame for me!
 	&mov	($__key,$key);			# save key
@@ -1477,7 +1474,6 @@ sub sse_deccompact()
 }
 
 					if (!$x86only) {
-&public_label("AES_Td");
 &function_begin_B("_sse_AES_decrypt_compact");
 	&pxor	("mm0",&QWP(0,$key));	#  7, 6, 5, 4, 3, 2, 1, 0
 	&pxor	("mm4",&QWP(8,$key));	# 15,14,13,12,11,10, 9, 8
@@ -1662,7 +1658,6 @@ sub declast()
 			&lea	($td,&DWP(-2048,$td));		}
 }
 
-&public_label("AES_Td");
 &function_begin_B("_x86_AES_decrypt");
 	# note that caller is expected to allocate stack frame for me!
 	&mov	($__key,$key);			# save key
@@ -1951,7 +1946,6 @@ sub declast()
 &function_end_B("_x86_AES_decrypt");
 
 # void AES_decrypt (const void *inp,void *out,const AES_KEY *key);
-&public_label("AES_Td");
 &function_begin("AES_decrypt");
 	&mov	($acc,&wparam(0));		# load inp
 	&mov	($key,&wparam(2));		# load key
@@ -2035,8 +2029,6 @@ my $ivec=&DWP(60,"esp");	# ivec[16]
 my $aes_key=&DWP(76,"esp");	# copy of aes_key
 my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 
-&public_label("AES_Te");
-&public_label("AES_Td");
 &function_begin("AES_cbc_encrypt");
 	&mov	($s2 eq "ecx"? $s2 : "",&wparam(2));	# load len
 	&cmp	($s2,0);
@@ -2657,7 +2649,6 @@ sub enckey()
 	&xor	("eax",&DWP(1024-128,$tbl,"ecx",4));	# rcon
 }
 
-&public_label("AES_Te");
 &function_begin("_x86_AES_set_encrypt_key");
 	&mov	("esi",&wparam(1));		# user supplied key
 	&mov	("edi",&wparam(3));		# private key schedule
