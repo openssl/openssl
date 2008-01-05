@@ -233,13 +233,19 @@ static void gost_cnt_next (void *ctx, unsigned char *iv, unsigned char *buf)
 		}	
 	g = buf1[0]|(buf1[1]<<8)|(buf1[2]<<16)|(buf1[3]<<24);
 	g += 0x01010101;
-	buf1[0]=g&0xff; buf1[1]=(g>>8)&0xff; buf1[2]=(g>>16)&0xff; buf1[3]=(g>>24)&0xff;
+	buf1[0]=(unsigned char)(g&0xff);
+	buf1[1]=(unsigned char)((g>>8)&0xff);
+	buf1[2]=(unsigned char)((g>>16)&0xff);
+	buf1[3]=(unsigned char)((g>>24)&0xff);
 	g = buf1[4]|(buf1[5]<<8)|(buf1[6]<<16)|(buf1[7]<<24);
 	go = g;
 	g += 0x01010104;
 	if (go > g)      /*  overflow*/
 		g++;
-	buf1[4]=g&0xff; buf1[5]=(g>>8)&0xff; buf1[6]=(g>>16)&0xff; buf1[7]=(g>>24)&0xff;
+	buf1[4]=(unsigned char)(g&0xff);
+	buf1[5]=(unsigned char)((g>>8)&0xff);
+	buf1[6]=(unsigned char)((g>>16)&0xff);
+	buf1[7]=(unsigned char)((g>>24)&0xff);
 	memcpy(iv,buf1,8);
 	gostcrypt(&(c->cctx),buf1,buf);
 	c->count +=8;

@@ -228,7 +228,7 @@ int finish_hash(gost_hash_ctx *ctx,byte *hashval)
 	byte buf[32];
 	byte H[32];
 	byte S[32];
-	long long fin_len=ctx->len;
+	ghosthash_len fin_len=ctx->len;
 	byte *bptr;
 	memcpy(H,ctx->H,32);
 	memcpy(S,ctx->S,32);
@@ -245,7 +245,7 @@ int finish_hash(gost_hash_ctx *ctx,byte *hashval)
 	fin_len<<=3; /* Hash length in BITS!!*/
 	while(fin_len>0)
 		{
-		*(bptr++)=fin_len&0xFF;
+		*(bptr++)=(byte)(fin_len&0xFF);
 		fin_len>>=8;
 		};
 	hash_step(ctx->cipher_ctx,H,buf);

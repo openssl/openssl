@@ -164,8 +164,10 @@ void gostcrypt(gost_ctx *c, const byte *in, byte *out)
 	n2 ^= f(c,n1+c->k[3]); n1 ^= f(c,n2+c->k[2]);
 	n2 ^= f(c,n1+c->k[1]); n1 ^= f(c,n2+c->k[0]);
  
-	out[0] = (n2&0xff);  out[1] = (n2>>8)&0xff; out[2]=(n2>>16)&0xff; out[3]=n2>>24; 
-	out[4] = (n1&0xff);  out[5] = (n1>>8)&0xff; out[6]=(n1>>16)&0xff; out[7]=n1>>24;
+	out[0] = (byte)(n2&0xff);  out[1] = (byte)((n2>>8)&0xff);
+	out[2] = (byte)((n2>>16)&0xff); out[3]=(byte)(n2>>24); 
+	out[4] = (byte)(n1&0xff);  out[5] = (byte)((n1>>8)&0xff);
+	out[6] = (byte)((n1>>16)&0xff); out[7] = (byte)(n1>>24);
 	} 
 /* Low-level decryption routine. Decrypts one 64-bit block */
 void gostdecrypt(gost_ctx *c, const byte *in,byte *out)
@@ -193,8 +195,11 @@ void gostdecrypt(gost_ctx *c, const byte *in,byte *out)
 	n2 ^= f(c,n1+c->k[5]); n1 ^= f(c,n2+c->k[4]);
 	n2 ^= f(c,n1+c->k[3]); n1 ^= f(c,n2+c->k[2]);
 	n2 ^= f(c,n1+c->k[1]); n1 ^= f(c,n2+c->k[0]);
-	out[0] = (n2&0xff);  out[1] = (n2>>8)&0xff; out[2]=(n2>>16)&0xff; out[3]=n2>>24;
-	out[4] = (n1&0xff);  out[5] = (n1>>8)&0xff; out[6]=(n1>>16)&0xff; out[7]=n1>>24;
+
+	out[0] = (byte)(n2&0xff);  out[1] = (byte)((n2>>8)&0xff);
+	out[2] = (byte)((n2>>16)&0xff); out[3]=(byte)(n2>>24);
+	out[4] = (byte)(n1&0xff);  out[5] = (byte)((n1>>8)&0xff);
+	out[6] = (byte)((n1>>16)&0xff); out[7] = (byte)(n1>>24);
 	} 
 
 /* Encrypts several blocks in ECB mode */
@@ -280,10 +285,10 @@ void gost_get_key(gost_ctx *c, byte *k)
 	int i,j; 
 	for(i=0,j=0;i<8;i++,j+=4)
 		{
-		k[j]=c->k[i]& 0xFF;
-		k[j+1]=(c->k[i]>>8 )&0xFF;
-		k[j+2]=(c->k[i]>>16) &0xFF;
-		k[j+3]=(c->k[i]>>24) &0xFF;
+		k[j]=(byte)(c->k[i]& 0xFF);
+		k[j+1]=(byte)((c->k[i]>>8 )&0xFF);
+		k[j+2]=(byte)((c->k[i]>>16) &0xFF);
+		k[j+3]=(byte)((c->k[i]>>24) &0xFF);
 		}		
 	}
 
@@ -332,8 +337,10 @@ void mac_block(gost_ctx *c,byte *buffer,const  byte *block)
 	n2 ^= f(c,n1+c->k[4]); n1 ^= f(c,n2+c->k[5]);
 	n2 ^= f(c,n1+c->k[6]); n1 ^= f(c,n2+c->k[7]);
 
-	buffer[0] = (n1&0xff);  buffer[1] = (n1>>8)&0xff; buffer[2]=(n1>>16)&0xff; buffer[3]=n1>>24;
-	buffer[4] = (n2&0xff);  buffer[5] = (n2>>8)&0xff; buffer[6]=(n2>>16)&0xff; buffer[7]=n2>>24;
+	buffer[0] = (byte)(n1&0xff);  buffer[1] = (byte)((n1>>8)&0xff);
+	buffer[2] = (byte)((n1>>16)&0xff); buffer[3] = (byte)(n1>>24);
+	buffer[4] = (byte)(n2&0xff);  buffer[5] = (byte)((n2>>8)&0xff);
+	buffer[6] = (byte)((n2>>16)&0xff); buffer[7] = (byte)(n2>>24);
 	}
 
 /* Get mac with specified number of bits from MAC state buffer */

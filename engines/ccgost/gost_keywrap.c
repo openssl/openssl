@@ -44,8 +44,14 @@ void keyDiversifyCryptoPro(gost_ctx *ctx,const unsigned char *inputKey, const un
 				s2+=k;
 				}
 			}
-		S[0]=s1&0xff; S[1]=(s1>>8)&0xff; S[2]=(s1>>16)&0xff; S[3]=(s1>>24)&0xff; 
-		S[4]=s2&0xff; S[5]=(s2>>8)&0xff; S[6]=(s2>>16)&0xff; S[7]=(s2>>24)&0xff; 
+		S[0]=(unsigned char)(s1&0xff);
+		S[1]=(unsigned char)((s1>>8)&0xff);
+		S[2]=(unsigned char)((s1>>16)&0xff);
+		S[3]=(unsigned char)((s1>>24)&0xff); 
+		S[4]=(unsigned char)(s2&0xff);
+		S[5]=(unsigned char)((s2>>8)&0xff);
+		S[6]=(unsigned char)((s2>>16)&0xff);
+		S[7]=(unsigned char)((s2>>24)&0xff); 
 		gost_key(ctx,outputKey);
 		gost_enc_cfb(ctx,S,outputKey,outputKey,4);
 		}

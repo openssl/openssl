@@ -10,8 +10,17 @@
 #define GOSTHASH_H
 #include "gost89.h"
 #include <stdlib.h>
+
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
+typedef __int64 ghosthash_len;
+#elif defined(__arch64__)
+typedef long ghosthash_len;
+#else
+typedef long long ghosthash_len;
+#endif
+
 typedef struct gost_hash_ctx {
-		long long len;
+		ghosthash_len len;
 		gost_ctx *cipher_ctx;
 		int left;
 		byte H[32];
