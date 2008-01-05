@@ -390,7 +390,7 @@ rehash: rehash.time
 rehash.time: certs apps
 	@if [ -z "$(CROSS_COMPILE_PREFIX)" ]; then \
 		(OPENSSL="`pwd`/util/opensslwrap.sh"; \
-		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe"; \
+		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe" || :; \
 		OPENSSL_DEBUG_MEMORY=on; \
 		export OPENSSL OPENSSL_DEBUG_MEMORY; \
 		$(PERL) tools/c_rehash certs) && \
