@@ -95,9 +95,7 @@ elsif ($FLAVOR =~ /CE/)
     }
 else	# Win32
     {
-    $base_cflags=' /W3 /WX /Gs0 /GF /Gy /nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
-    $base_cflags.=' -D_CRT_SECURE_NO_DEPRECATE';	# shut up VC8
-    $base_cflags.=' -D_CRT_NONSTDC_NO_DEPRECATE';	# shut up VC8
+    $base_cflags= " $mf_cflag";
     my $f = $shlib?' /MD':' /MT';
     $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
     $opt_cflags=$f.' /Ox /O2 /Ob2';
@@ -122,6 +120,7 @@ else
 	}
 
 $obj='.obj';
+$asm_suffix='.asm';
 $ofile="/Fo";
 
 # EXE linking stuff
@@ -167,11 +166,13 @@ if ($nasm) {
 	my $vew=`nasmw -v 2>NUL`;
 	# pick newest version
 	$asm=($ver gt $vew?"nasm":"nasmw")." -f win32";
+	$asmtype="win32n";
 	$afile='-o ';
 } else {
 	$asm='ml /Cp /coff /c /Cx';
 	$asm.=" /Zi" if $debug;
 	$afile='/Fo';
+	$asmtype="win32";
 }
 
 $bn_asm_obj='';
@@ -183,36 +184,19 @@ $bf_enc_src='';
 
 if (!$no_asm)
 	{
-	$aes_asm_obj='crypto\aes\asm\a_win32.obj';
-	$aes_asm_src='crypto\aes\asm\a_win32.asm';
-	$bn_asm_obj='crypto\bn\asm\bn_win32.obj crypto\bn\asm\mo_win32.obj';
-	$bn_asm_src='crypto\bn\asm\bn_win32.asm crypto\bn\asm\mo_win32.asm';
-	$bnco_asm_obj='crypto\bn\asm\co_win32.obj';
-	$bnco_asm_src='crypto\bn\asm\co_win32.asm';
-	$des_enc_obj='crypto\des\asm\d_win32.obj crypto\des\asm\y_win32.obj';
-	$des_enc_src='crypto\des\asm\d_win32.asm crypto\des\asm\y_win32.asm';
-	$bf_enc_obj='crypto\bf\asm\b_win32.obj';
-	$bf_enc_src='crypto\bf\asm\b_win32.asm';
-	$cast_enc_obj='crypto\cast\asm\c_win32.obj';
-	$cast_enc_src='crypto\cast\asm\c_win32.asm';
-	$rc4_enc_obj='crypto\rc4\asm\r4_win32.obj';
-	$rc4_enc_src='crypto\rc4\asm\r4_win32.asm';
-	$rc5_enc_obj='crypto\rc5\asm\r5_win32.obj';
-	$rc5_enc_src='crypto\rc5\asm\r5_win32.asm';
-	$md5_asm_obj='crypto\md5\asm\m5_win32.obj';
-	$md5_asm_src='crypto\md5\asm\m5_win32.asm';
-	$sha1_asm_obj='crypto\sha\asm\s1_win32.obj crypto\sha\asm\sha256_win32.obj crypto\sha\asm\sha512_win32.obj';
-	$sha1_asm_src='crypto\sha\asm\s1_win32.asm crypto\sha\asm\sha256_win32.asm crypto\sha\asm\sha512_win32.asm';
-	$rmd160_asm_obj='crypto\ripemd\asm\rm_win32.obj';
-	$rmd160_asm_src='crypto\ripemd\asm\rm_win32.asm';
-	$whirlpool_asm_obj='crypto\whrlpool\asm\wp_win32.obj';
-	$whirlpool_asm_src='crypto\whrlpool\asm\wp_win32.asm';
-	$cpuid_asm_obj='crypto\cpu_win32.obj';
-	$cpuid_asm_src='crypto\cpu_win32.asm';
-	$cflags.=" -DOPENSSL_CPUID_OBJ -DOPENSSL_IA32_SSE2";
-	$cflags.=" -DOPENSSL_BN_ASM_PART_WORDS -DBN_ASM -DOPENSSL_BN_ASM_MONT";
-        $cflags.=" -DAES_ASM -DMD5_ASM -DSHA1_ASM -DSHA256_ASM -DSHA512_ASM";
-	$cflags.=" -DRMD160_ASM -DWHIRLPOOL_ASM";
+	win32_import_asm($mf_bn_asm, "bn", \$bn_asm_obj, \$bn_asm_src);
+	win32_import_asm($mf_aes_asm, "aes", \$aes_asm_obj, \$aes_asm_src);
+	win32_import_asm($mf_des_asm, "des", \$des_enc_obj, \$des_enc_src);
+	win32_import_asm($mf_bf_asm, "bf", \$bf_enc_obj, \$bf_enc_src);
+	win32_import_asm($mf_cast_asm, "cast", \$cast_enc_obj, \$cast_enc_src);
+	win32_import_asm($mf_rc4_asm, "rc4", \$rc4_enc_obj, \$rc4_enc_src);
+	win32_import_asm($mf_rc5_asm, "rc5", \$rc5_enc_obj, \$rc5_enc_src);
+	win32_import_asm($mf_md5_asm, "md5", \$md5_asm_obj, \$md5_asm_src);
+	win32_import_asm($mf_sha_asm, "sha", \$sha1_asm_obj, \$sha1_asm_src);
+	win32_import_asm($mf_rmd_asm, "ripemd", \$rmd160_asm_obj, \$rmd160_asm_src);
+	win32_import_asm($mf_wp_asm, "whrlpool", \$whirlpool_asm_obj, \$whirlpool_asm_src);
+	win32_import_asm($mf_cpuid_asm, "", \$cpuid_asm_obj, \$cpuid_asm_src);
+	$perl_asm = 1;
 	}
 
 if ($shlib && $FLAVOR !~ /CE/)
@@ -317,5 +301,32 @@ sub do_link_rule
     $ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n";
 	return($ret);
 	}
+
+sub win32_import_asm
+	{
+	my ($mf_var, $asm_name, $oref, $sref) = @_;
+	my $asm_dir;
+	if ($asm_name eq "")
+		{
+		$asm_dir = "crypto\\";
+		}
+	else
+		{
+		$asm_dir = "crypto\\$asm_name\\asm\\";
+		}
+
+	$$oref = "";
+	$mf_var =~ s/\.o/.obj/g;
+
+	foreach (split(/ /, $mf_var))
+		{
+		$$oref .= $asm_dir . $_ . " ";
+		}
+	$$oref =~ s/ $//;
+	$$sref = $$oref;
+	$$sref =~ s/\.obj/.asm/g;
+
+	}
+
 
 1;

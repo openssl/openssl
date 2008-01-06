@@ -121,6 +121,8 @@ my $x86_coff_asm="x86cpuid-cof.o:bn86-cof.o co86-cof.o mo86-cof.o:dx86-cof.o yx8
 my $x86_out_asm="x86cpuid-out.o:bn86-out.o co86-out.o mo86-out.o:dx86-out.o yx86-out.o:ax86-out.o:bx86-out.o:mx86-out.o:sx86-out.o sha256x86-out.o sha512x86-out.o:cx86-out.o:rx86-out.o:rm86-out.o:r586-out.o:wp_block.o w86mmx-out.o:";
 my $x86_macosx_asm="x86cpuid-macosx.o:bn86-macosx.o co86-macosx.o mo86-macosx.o:dx86-macosx.o yx86-macosx.o:ax86-macosx.o:bx86-macosx.o:mx86-macosx.o:sx86-macosx.o sha256x86-macosx.o sha512x86-macosx.o:cx86-macosx.o:rx86-macosx.o:rm86-macosx.o:r586-macosx.o:wp_block.o w86mmx-macosx.o:";
 
+my $x86_win32_asm="x86cpuid.o:bn-586.o co-586.o x86-mont.o:des-586.o crypt586.o:aes-586.o:bf-586.o:md5-586.o:sha1-586.o sha256-586.o sha512-586.o:cast-586.o:rc4-586.o:rmd-586.o:rc5-586.o:wp-mmx.o:";
+
 my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o::aes-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o::rc4-x86_64.o:::wp-x86_64.o:";
 my $ia64_asm="ia64cpuid.o:bn-ia64.o::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o::rc4-ia64.o rc4_skey.o::::";
 my $sparcv9_asm="sparcv9cap.o sparccpuid.o:bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o:des_enc-sparc.o fcrypt_b.o:aes_core.o aes_cbc.o aes-sparcv9.o:::sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o::::::";
@@ -480,7 +482,7 @@ my %table=(
 # Visual C targets
 "VC-NT","cl::::WINNT::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
 "VC-CE","cl::::WINCE::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
-"VC-WIN32","cl::::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${no_asm}:win32",
+"VC-WIN32","cl:-W3 -WX -Gs0 -GF -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE:::WIN32::BN_LLONG RC4_INDEX EXPORT_VAR_AS_FN ${x86_gcc_opts}:${x86_win32_asm}:win32",
 
 # Borland C++ 4.5
 "BC-32","bcc32::::WIN32::BN_LLONG DES_PTR RC4_INDEX EXPORT_VAR_AS_FN:${no_asm}:win32",
@@ -1256,7 +1258,7 @@ $cpuid_obj="" if ($processor eq "386");
 
 $bn_obj = $bn_asm unless $bn_obj ne "";
 # bn86* is the only one implementing bn_*_part_words
-$cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($bn_obj =~ /bn86/);
+$cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($bn_obj =~ /bn(86|-586)/);
 $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /bn86/);
 
 $cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /\-mont|mo86\-/);

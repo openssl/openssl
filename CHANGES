@@ -4,6 +4,12 @@
 
  Changes between 0.9.8g and 0.9.9  [xx XXX xxxx]
 
+  *) Extend mk1mf to support importing of options and assembly language
+     files from Configure script, currently only included in VC-WIN32.
+     The assembly language rules can now optionally generate the source
+     files from the associated perl scripts.
+     [Steve Henson]
+
   *) Implement remaining functionality needed to support GOST ciphersuites.
      Interop testing has been performed using CryptoPro implementations.
      [Victor B. Wagner <vitus@cryptocom.ru>]

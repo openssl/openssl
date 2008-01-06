@@ -15,14 +15,42 @@ my $no_static_engine = 1;
 my $engines = "";
 local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
 local $zlib_lib = "";
+local $perl_asm = 0;	# 1 to autobuild asm files from perl scripts
+
+# Options to import from top level Makefile
+
+my %mf_import = (
+	VERSION	       => \$ssl_version,
+	OPTIONS        => \$OPTIONS,
+	INSTALLTOP     => \$INSTALLTOP,
+	OPENSSLDIR     => \$OPENSSLDIR,
+	PLATFORM       => \$mf_platform,
+	CFLAG	       => \$mf_cflag,
+	DEPFLAG	       => \$mf_depflag,
+	CPUID_OBJ      => \$mf_cpuid_asm,
+	BN_ASM	       => \$mf_bn_asm,
+	DES_ENC	       => \$mf_des_asm,
+	AES_ENC        => \$mf_aes_asm,
+	BF_ENC	       => \$mf_bf_asm,
+	CAST_ENC       => \$mf_cast_asm,
+	RC4_ENC	       => \$mf_rc4_asm,
+	RC5_ENC        => \$mf_rc5_asm,
+	MD5_ASM_OBJ    => \$mf_md5_asm,
+	SHA1_ASM_OBJ   => \$mf_sha_asm,
+	RMD160_ASM_OBJ => \$mf_rmd_asm,
+	WP_ASM_OBJ     => \$mf_wp_asm,
+	CMLL_ENC       => \$mf_cm_asm
+);
 
 
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
 while(<IN>) {
-    $ssl_version=$1 if (/^VERSION=(.*)$/);
-    $OPTIONS=$1 if (/^OPTIONS=(.*)$/);
-    $INSTALLTOP=$1 if (/^INSTALLTOP=(.*$)/);
-    $OPENSSLDIR=$1 if (/^OPENSSLDIR=(.*$)/);
+    my ($mf_opt, $mf_ref);
+    while (($mf_opt, $mf_ref) = each %mf_import) {
+    	if (/^$mf_opt\s*=\s*(.*)$/) {
+	   $$mf_ref = $1;
+	}
+    }
 }
 close(IN);
 
@@ -48,6 +76,7 @@ $infile="MINFO";
 	"netware-libc", "CodeWarrior for NetWare - LibC - with WinSock Sockets",
 	"netware-libc-bsdsock", "CodeWarrior for NetWare - LibC - with BSD Sockets",
 	"default","cc under unix",
+	"auto", "auto detect from top level Makefile"
 	);
 
 $platform="";
@@ -134,6 +163,12 @@ $bin_dir=(defined($VARS{'BIN'}))?$VARS{'BIN'}:'';
 $NT=0;
 
 push(@INC,"util/pl","pl");
+
+if ($platform eq "auto") {
+	$platform = $mf_platform;
+	print STDERR "Imported platform $mf_platform\n";
+}
+
 if (($platform =~ /VC-(.+)/))
 	{
 	$FLAVOR=$1;
@@ -947,13 +982,25 @@ sub do_asm_rule
 	$target =~ s/\//$o/g if $o ne "/";
 	$src =~ s/\//$o/g if $o ne "/";
 
-	@s=split(/\s+/,$src);
 	@t=split(/\s+/,$target);
+	@s=split(/\s+/,$src);
+
 
 	for ($i=0; $i<=$#s; $i++)
 		{
-		$ret.="$t[$i]: $s[$i]\n";
-		$ret.="\t\$(ASM) $afile$t[$i] \$(SRC_D)$o$s[$i]\n\n";
+		my $objfile = $t[$i];
+		my $srcfile = $s[$i];
+
+		if ($perl_asm == 1)
+			{
+			my $plasm = $objfile;
+			$plasm =~ s/${obj}/.pl/;
+			$ret.="$srcfile: $plasm\n";
+			$ret.="\t\$(PERL) $plasm $asmtype \$(CFLAG) >$srcfile\n\n";
+			}
+
+		$ret.="$objfile: $srcfile\n";
+		$ret.="\t\$(ASM) $afile$objfile \$(SRC_D)$o$srcfile\n\n";
 		}
 	return($ret);
 	}
