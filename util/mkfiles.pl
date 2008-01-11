@@ -67,6 +67,8 @@ my @dirs = (
 "tools"
 );
 
+%top;
+
 foreach (@dirs) {
 	&files_dir ($_, "Makefile");
 }
@@ -110,8 +112,8 @@ while (<IN>)
 		$o =~ s/\s+$//;
 		$o =~ s/\s+/ /g;
 
-		$o =~ s/\$[({]([^)}]+)[)}]/$sym{$1}/g;
-		$sym{$s}=$o;
+		$o =~ s/\$[({]([^)}]+)[)}]/$top{$1} or $sym{$1}/ge;
+		$sym{$s}=($top{$s} or $o);
 		}
 	}
 
@@ -121,6 +123,15 @@ foreach (sort keys %sym)
 	{
 	print "$_=$sym{$_}\n";
 	}
+if ($dir eq "." && defined($sym{"BUILDENV"}))
+	{
+	foreach (split(' ',$sym{"BUILDENV"}))
+		{
+		/^(.+)=/;
+		$top{$1}=$sym{$1};
+		}
+	}
+
 print "RELATIVE_DIRECTORY=\n";
 
 close (IN);

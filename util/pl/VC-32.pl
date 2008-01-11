@@ -316,7 +316,7 @@ sub win32_import_asm
 		}
 
 	$$oref = "";
-	$mf_var =~ s/\.o/.obj/g;
+	$mf_var =~ s/\.o$/.obj/g;
 
 	foreach (split(/ /, $mf_var))
 		{

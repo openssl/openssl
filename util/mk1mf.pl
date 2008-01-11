@@ -437,33 +437,6 @@ LINK=$link
 LFLAGS=$lflags
 RSC=$rsc
 
-AES_ASM_OBJ=$aes_asm_obj
-AES_ASM_SRC=$aes_asm_src
-BN_ASM_OBJ=$bn_asm_obj
-BN_ASM_SRC=$bn_asm_src
-BNCO_ASM_OBJ=$bnco_asm_obj
-BNCO_ASM_SRC=$bnco_asm_src
-DES_ENC_OBJ=$des_enc_obj
-DES_ENC_SRC=$des_enc_src
-BF_ENC_OBJ=$bf_enc_obj
-BF_ENC_SRC=$bf_enc_src
-CAST_ENC_OBJ=$cast_enc_obj
-CAST_ENC_SRC=$cast_enc_src
-RC4_ENC_OBJ=$rc4_enc_obj
-RC4_ENC_SRC=$rc4_enc_src
-RC5_ENC_OBJ=$rc5_enc_obj
-RC5_ENC_SRC=$rc5_enc_src
-MD5_ASM_OBJ=$md5_asm_obj
-MD5_ASM_SRC=$md5_asm_src
-SHA1_ASM_OBJ=$sha1_asm_obj
-SHA1_ASM_SRC=$sha1_asm_src
-RMD160_ASM_OBJ=$rmd160_asm_obj
-RMD160_ASM_SRC=$rmd160_asm_src
-WHIRLPOOL_ASM_OBJ=$whirlpool_asm_obj
-WHIRLPOOL_ASM_SRC=$whirlpool_asm_src
-CPUID_ASM_OBJ=$cpuid_asm_obj
-CPUID_ASM_SRC=$cpuid_asm_src
-
 # The output directory for everything intersting
 OUT_D=$out_dir
 # The output directory for all the temporary muck
@@ -656,74 +629,6 @@ foreach (values %lib_nam)
 		next;
 		}
 
-	if (($aes_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s(\S*\/aes_core\S*)/ \$(AES_ASM_OBJ)/;
-		$lib_obj =~ s/\s\S*\/aes_cbc\S*//;
-		$rules.=&do_asm_rule($aes_asm_obj,$aes_asm_src);
-		}
-	if (($bn_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s\S*\/bn_asm\S*/ \$(BN_ASM_OBJ)/;
-		$rules.=&do_asm_rule($bn_asm_obj,$bn_asm_src);
-		}
-	if (($bnco_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj .= "\$(BNCO_ASM_OBJ)";
-		$rules.=&do_asm_rule($bnco_asm_obj,$bnco_asm_src);
-		}
-	if (($des_enc_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s\S*des_enc\S*/ \$(DES_ENC_OBJ)/;
-		$lib_obj =~ s/\s\S*\/fcrypt_b\S*\s*/ /;
-		$rules.=&do_asm_rule($des_enc_obj,$des_enc_src);
-		}
-	if (($bf_enc_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s\S*\/bf_enc\S*/ \$(BF_ENC_OBJ)/;
-		$rules.=&do_asm_rule($bf_enc_obj,$bf_enc_src);
-		}
-	if (($cast_enc_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/(\s\S*\/c_enc\S*)/ \$(CAST_ENC_OBJ)/;
-		$rules.=&do_asm_rule($cast_enc_obj,$cast_enc_src);
-		}
-	if (($rc4_enc_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s\S*\/rc4_enc\S*/ \$(RC4_ENC_OBJ)/;
-		$lib_obj =~ s/\s\S*\/rc4_skey\S*//;
-		$rules.=&do_asm_rule($rc4_enc_obj,$rc4_enc_src);
-		}
-	if (($rc5_enc_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s\S*\/rc5_enc\S*/ \$(RC5_ENC_OBJ)/;
-		$rules.=&do_asm_rule($rc5_enc_obj,$rc5_enc_src);
-		}
-	if (($md5_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s(\S*\/md5_dgst\S*)/ $1 \$(MD5_ASM_OBJ)/;
-		$rules.=&do_asm_rule($md5_asm_obj,$md5_asm_src);
-		}
-	if (($sha1_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s(\S*\/sha1dgst\S*)/ $1 \$(SHA1_ASM_OBJ)/;
-		$rules.=&do_asm_rule($sha1_asm_obj,$sha1_asm_src);
-		}
-	if (($rmd160_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s(\S*\/rmd_dgst\S*)/ $1 \$(RMD160_ASM_OBJ)/;
-		$rules.=&do_asm_rule($rmd160_asm_obj,$rmd160_asm_src);
-		}
-	if (($whirlpool_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s(\S*\/wp_dgst\S*)/ $1 \$(WHIRLPOOL_ASM_OBJ)/;
-		$rules.=&do_asm_rule($whirlpool_asm_obj,$whirlpool_asm_src);
-		}
-	if (($cpuid_asm_obj ne "") && ($_ eq "CRYPTO"))
-		{
-		$lib_obj =~ s/\s\S*\/mem_clr\S*/ \$(CPUID_ASM_OBJ)/;
-		$rules.=&do_asm_rule($cpuid_asm_obj,$cpuid_asm_src);
-		}
 	$defs.=&do_defs(${_}."OBJ",$lib_obj,"\$(OBJ_D)",$obj);
 	$lib=($slib)?" \$(SHLIB_CFLAGS)".$shlib_ex_cflags{$_}:" \$(LIB_CFLAGS)";
 	$rules.=&do_compile_rule("\$(OBJ_D)",$lib_obj{$_},$lib);
@@ -940,6 +845,13 @@ sub bname
 	return($ret);
 	}
 
+# return the leading path
+sub dname
+	{
+	my $ret=shift;
+	$ret =~ s/(^.*)[\\\/][^\\\/]+$/$1/;
+	return($ret);
+	}
 
 ##############################################################
 # do a rule for each file that says 'compile' to new direcory
@@ -947,19 +859,60 @@ sub bname
 sub do_compile_rule
 	{
 	local($to,$files,$ex)=@_;
-	local($ret,$_,$n);
-	
+	local($ret,$_,$n,$d,$s);
+
 	$files =~ s/\//$o/g if $o ne '/';
 	foreach (split(/\s+/,$files))
 		{
 		$n=&bname($_);
-		$ret.=&cc_compile_target("$to${o}$n$obj","${_}.c",$ex)
+		$d=&dname($_);
+		if (-f "${_}.c")
+			{
+			$ret.=&cc_compile_target("$to${o}$n$obj","${_}.c",$ex)
+			}
+		elsif (-f ($s="${d}${o}asm${o}${n}.pl") or
+		       -f ($s="${d}${o}${n}.pl"))
+			{
+			$ret.=&perlasm_compile_target("$to${o}$n$obj",$s,$n);
+			}
+		elsif (-f ($s="${d}${o}asm${o}${n}.S") or
+		       -f ($s="${d}${o}${n}.S"))
+			{
+			$ret.=&Sasm_compile_target("$to${o}$n$obj",$s,$n);
+			}
+		else	{ die "no rule for $_"; }
 		}
 	return($ret);
 	}
 
 ##############################################################
 # do a rule for each file that says 'compile' to new direcory
+sub perlasm_compile_target
+	{
+	my($target,$source,$bname)=@_;
+	my($ret);
+
+	$bname =~ s/(.*)\.[^\.]$/$1/;
+	$ret ="\$(TMP_D)$o$bname.asm: $source\n";
+	$ret.="\t\$(PERL) $source $asmtype \$(CFLAG) >\$\@\n\n";
+	$ret.="$target: \$(TMP_D)$o$bname.asm\n";
+	$ret.="\t\$(ASM) $afile\$\@ \$(TMP_D)$o$bname.asm\n\n";
+	return($ret);
+	}
+
+sub Sasm_compile_target
+	{
+	my($target,$source,$bname)=@_;
+	my($ret);
+
+	$bname =~ s/(.*)\.[^\.]$/$1/;
+	$ret ="\$(TMP_D)$o$bname.asm: $source\n";
+	$ret.="\t\$(CC) -E \$(CFLAG) $source >\$\@\n\n";
+	$ret.="$target: \$(TMP_D)$o$bname.asm\n";
+	$ret.="\t\$(ASM) $afile\$\@ \$(TMP_D)$o$bname.asm\n\n";
+	return($ret);
+	}
+
 sub cc_compile_target
 	{
 	local($target,$source,$ex_flags)=@_;
