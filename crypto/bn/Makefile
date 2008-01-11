@@ -62,33 +62,12 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-# ELF
-bn86-elf.s:	asm/bn-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) bn-586.pl elf $(CFLAGS) > ../$@)
-co86-elf.s:	asm/co-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) co-586.pl elf $(CFLAGS) > ../$@)
-mo86-elf.s:	asm/x86-mont.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) x86-mont.pl elf $(CFLAGS) > ../$@)
-# COFF
-bn86-cof.s: asm/bn-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) bn-586.pl coff $(CFLAGS) > ../$@)
-co86-cof.s: asm/co-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) co-586.pl coff $(CFLAGS) > ../$@)
-mo86-cof.s: asm/x86-mont.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) x86-mont.pl coff $(CFLAGS) > ../$@)
-# a.out
-bn86-out.s: asm/bn-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) bn-586.pl a.out $(CFLAGS) > ../$@)
-co86-out.s: asm/co-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) co-586.pl a.out $(CFLAGS) > ../$@)
-mo86-out.s: asm/x86-mont.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) x86-mont.pl a.out $(CFLAGS) > ../$@)
-bn86-macosx.s: asm/bn-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) bn-586.pl macosx $(CFLAGS) > ../$@)
-co86-macosx.s: asm/co-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) co-586.pl macosx $(CFLAGS) > ../$@)
-mo86-macosx.s: asm/bn-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) x86-mont.pl macosx $(CFLAGS) > ../$@)
+bn-586.s:	asm/bn-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/bn-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+co-586.s:	asm/co-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/co-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+x86-mont.s:	asm/x86-mont.pl ../perlasm/x86asm.pl
+	$(PERL) asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 sparcv8.o:	asm/sparcv8.S
 	$(CC) $(CFLAGS) -c asm/sparcv8.S

@@ -42,17 +42,8 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-# ELF
-cx86-elf.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	(cd asm; $(PERL) cast-586.pl elf $(CLAGS) $(PROCESSOR) > ../$@)
-# COFF
-cx86-cof.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	(cd asm; $(PERL) cast-586.pl coff $(CLAGS) $(PROCESSOR) > ../$@)
-# a.out
-cx86-out.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	(cd asm; $(PERL) cast-586.pl a.out $(CLAGS) $(PROCESSOR) > ../$@)
-cx86-macosx.s: asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
-	(cd asm; $(PERL) cast-586.pl macosx $(CLAGS) $(PROCESSOR) > ../$@)
+cast-586.s:	asm/cast-586.pl ../perlasm/x86asm.pl ../perlasm/cbc.pl
+	$(PERL)	asm/cast-586.pl $(PERLASM_SCHEME) $(CLAGS) $(PROCESSOR) > $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

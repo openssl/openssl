@@ -50,14 +50,8 @@ $(LIBOBJ): $(LIBSRC)
 aes-ia64.s: asm/aes-ia64.S
 	$(CC) $(CFLAGS) -E asm/aes-ia64.S > $@
 
-ax86-elf.s: asm/aes-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) aes-586.pl elf $(CFLAGS) $(PROCESSOR) > ../$@)
-ax86-cof.s: asm/aes-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) aes-586.pl coff $(CFLAGS) $(PROCESSOR) > ../$@)
-ax86-out.s: asm/aes-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) aes-586.pl a.out $(CFLAGS) $(PROCESSOR) > ../$@)
-ax86-macosx.s: asm/aes-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) aes-586.pl macosx $(CFLAGS) $(PROCESSOR) > ../$@)
+aes-586.s:	asm/aes-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/aes-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 aes-x86_64.s: asm/aes-x86_64.pl
 	$(PERL) asm/aes-x86_64.pl $@

@@ -42,14 +42,8 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-w86mmx-elf.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) wp-mmx.pl elf $(CFLAGS) $(PROCESSOR)) > $@
-w86mmx-cof.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) wp-mmx.pl coff $(CFLAGS) $(PROCESSOR)) > $@
-w86mmx-out.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) wp-mmx.pl a.out $(CFLAGS) $(PROCESSOR)) > $@
-w86mmx-macosx.s: asm/wp-mmx.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) wp-mmx.pl macosx $(CFLAGS) $(PROCESSOR)) > $@
+wp-mmx.s:	asm/wp-mmx.pl ../perlasm/x86asm.pl
+	$(PERL) asm/wp-mmx.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 wp-x86_64.s: asm/wp-x86_64.pl
 	$(PERL) asm/wp-x86_64.pl $@

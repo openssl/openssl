@@ -42,17 +42,8 @@ lib:    $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-# ELF
-mx86-elf.s: asm/md5-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) md5-586.pl elf $(CFLAGS) > ../$@)
-# COFF
-mx86-cof.s: asm/md5-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) md5-586.pl coff $(CFLAGS) > ../$@)
-# a.out
-mx86-out.s: asm/md5-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) md5-586.pl a.out $(CFLAGS) > ../$@)
-mx86-macosx.s: asm/md5-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) md5-586.pl macosx $(CFLAGS) > ../$@)
+md5-586.s:	asm/md5-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
 
 md5-x86_64.s:	asm/md5-x86_64.pl;	$(PERL) asm/md5-x86_64.pl $@
 

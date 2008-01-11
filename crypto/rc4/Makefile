@@ -41,17 +41,8 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-# ELF
-rx86-elf.s: asm/rc4-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) rc4-586.pl elf $(CFLAGS) > ../$@)
-# COFF
-rx86-cof.s: asm/rc4-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) rc4-586.pl coff $(CFLAGS) > ../$@)
-# a.out
-rx86-out.s: asm/rc4-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) rc4-586.pl a.out $(CFLAGS) > ../$@)
-rx86-macosx.s: asm/rc4-586.pl ../perlasm/x86asm.pl
-	(cd asm; $(PERL) rc4-586.pl macosx $(CFLAGS) > ../$@)
+rc4-586.s:	asm/rc4-586.pl ../perlasm/x86asm.pl
+	$(PERL) asm/rc4-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
 
 rc4-x86_64.s: asm/rc4-x86_64.pl;	$(PERL) asm/rc4-x86_64.pl $@
 
