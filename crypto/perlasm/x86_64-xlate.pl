@@ -82,12 +82,12 @@ my $current_function;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
 	    undef $self->{sz};
-	    if ($self->{op} =~ /(movz)b.*/) {	# movz is pain...
+	    if ($self->{op} =~ /^(movz)b.*/) {	# movz is pain...
 		$self->{op} = $1;
 		$self->{sz} = "b";
 	    } elsif ($self->{op} =~ /call/) {
 		$self->{sz} = ""
-	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])/) {
+	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])$/) {
 		$self->{op} = $1;
 		$self->{sz} = $2;
 	    }
@@ -113,7 +113,7 @@ my $current_function;
 		"$self->{op}$self->{sz}";
 	    }
 	} else {
-	    $self->{op} =~ s/movz/movzx/;
+	    $self->{op} =~ s/^movz/movzx/;
 	    if ($self->{op} eq "ret") {
 		$self->{op} = "";
 		if ($current_function->{abi} eq "svr4") {
