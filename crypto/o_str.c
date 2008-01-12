@@ -60,6 +60,10 @@
 #include <e_os.h>
 #include "o_str.h"
 
+#ifndef OPENSSL_IMPLEMENTS_strncasecmp
+# include <strings.h>
+#endif
+
 int OPENSSL_strncasecmp(const char *str1, const char *str2, size_t n)
 	{
 #if defined(OPENSSL_IMPLEMENTS_strncasecmp)
