@@ -99,7 +99,9 @@ OPENSSL_wipe_cpu:
 
 ___
 
-open STDOUT,"| $^X perlasm/x86_64-xlate.pl $output";
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+open STDOUT,"| $^X $dir/perlasm/x86_64-xlate.pl $output";
+
 print<<___;
 .text
 

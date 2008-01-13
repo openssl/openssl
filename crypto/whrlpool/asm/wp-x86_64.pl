@@ -31,7 +31,13 @@
 # operand.
 
 $output=shift;
-open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1; my $xlate;
+( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
+die "can't locate x86_64-xlate.pl";
+
+open STDOUT,"| $^X $xlate $output";
 
 sub L() { $code.=".byte	".join(',',@_)."\n"; }
 sub LL(){ $code.=".byte	".join(',',@_).",".join(',',@_)."\n"; }
