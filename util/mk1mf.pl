@@ -871,6 +871,7 @@ sub do_compile_rule
 			$ret.=&cc_compile_target("$to${o}$n$obj","${_}.c",$ex)
 			}
 		elsif (-f ($s="${d}${o}asm${o}${n}.pl") or
+		       ($s=~s/sha256/sha512/ and -f $s) or
 		       -f ($s="${d}${o}${n}.pl"))
 			{
 			$ret.=&perlasm_compile_target("$to${o}$n$obj",$s,$n);

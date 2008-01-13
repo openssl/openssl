@@ -28,14 +28,27 @@ if ($FLAVOR =~ /WIN64/)
     # per 0.9.8 release remaining warnings were explicitly examined and
     # considered safe to ignore.
     # 
-    $base_cflags=' /W3 /Gs0 /GF /Gy /nologo -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32 -DOPENSSL_SYSNAME_WIN32 -DOPENSSL_SYSNAME_WINNT -DUNICODE -D_UNICODE';
-    $base_cflags.=' -D_CRT_SECURE_NO_DEPRECATE';	# shut up VC8
-    $base_cflags.=' -D_CRT_NONSTDC_NO_DEPRECATE';	# shut up VC8
+    $base_cflags= " $mf_cflag";
     my $f = $shlib?' /MD':' /MT';
     $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
     $opt_cflags=$f.' /Ox';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
+
+    *::perlasm_compile_target = sub {
+	my ($target,$source,$bname)=@_;
+	my $ret;
+
+	$bname =~ s/(.*)\.[^\.]$/$1/;
+	$ret=<<___;
+\$(TMP_D)$o$bname.asm: $source
+	\$(PERL) $source \$\@
+
+$target: \$(TMP_D)$o$bname.asm
+	\$(ASM) $afile\$\@ \$(TMP_D)$o$bname.asm
+
+___
+	}
     }
 elsif ($FLAVOR =~ /CE/)
     {
@@ -142,15 +155,11 @@ else
 	{
 	$ex_libs.=' gdi32.lib advapi32.lib user32.lib';
 	$ex_libs.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
+	# WIN32 UNICODE build gets linked with unicows.lib for
+	# backward compatibility with Win9x.
+	$ex_libs="unicows.lib $ex_libs" if ($FLAVOR =~ /WIN32/ and $cflags =~ /\-DUNICODE/);
 	}
 
-# As native NT API is pure UNICODE, our WIN-NT build defaults to UNICODE,
-# but gets linked with unicows.lib to ensure backward compatibility.
-if ($FLAVOR =~ /NT/)
-	{
-	$cflags.=" -DOPENSSL_SYSNAME_WINNT -DUNICODE -D_UNICODE";
-	$ex_libs="unicows.lib $ex_libs";
-	}
 # static library stuff
 $mklib='lib';
 $ranlib='';
@@ -161,7 +170,15 @@ $lfile='/out:';
 
 $shlib_ex_obj="";
 $app_ex_obj="setargv.obj" if ($FLAVOR !~ /CE/);
-if ($nasm) {
+if ($FLAVOR =~ /WIN64A/) {
+	$asm='ml64 /c /Cp /Cx';
+	$asm.=" /Zi" if $debug;
+	$afile='/Fo';
+} elsif ($FLAVOR =~ /WIN64I/) {
+	$asm='ias';
+	$asm.=" -d debug" if $debug;
+	$afile="-o ";
+} elsif ($nasm) {
 	my $ver=`nasm -v 2>NUL`;
 	my $vew=`nasmw -v 2>NUL`;
 	# pick newest version
