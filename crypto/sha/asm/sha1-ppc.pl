@@ -20,29 +20,28 @@
 # PPC970,gcc-4.0.0	+76%	+59%
 # Power6,xlc-7		+68%	+33%
 
-$output = shift;
+$flavour = shift;
 
-if ($output =~ /64\.s/) {
+if ($flavour =~ /64/) {
 	$SIZE_T	=8;
 	$UCMP	="cmpld";
 	$STU	="stdu";
 	$POP	="ld";
 	$PUSH	="std";
-} elsif ($output =~ /32\.s/) {
+} elsif ($flavour =~ /32/) {
 	$SIZE_T	=4;
 	$UCMP	="cmplw";
 	$STU	="stwu";
 	$POP	="lwz";
 	$PUSH	="stw";
-} else { die "nonsense $output"; }
+} else { die "nonsense $flavour"; }
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-( defined shift || open STDOUT,"| $^X $xlate $output" ) ||
-	die "can't call $xlate: $!";
+open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
 
 $FRAME=24*$SIZE_T;
 

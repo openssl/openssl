@@ -132,6 +132,8 @@ my $alpha_asm="alphacpuid.o:bn_asm.o alpha-mont.o::::::::::::void";
 my $mips3_asm=":bn-mips3.o::::::::::::void";
 my $s390x_asm=":bn-s390x.o::aes_cbc.o aes-s390x.o:::sha1-s390x.o sha256-s390x.o sha512-s390x.o:::::::void";
 my $armv4_asm=":bn_asm.o armv4-mont.o::aes_cbc.o aes-armv4.o:::sha1-armv4-large.o sha256-armv4.o sha512-armv4.o:::::::void";
+my $ppc32_asm="ppccpuid.o:bn-ppc.o::aes_core.o aes_cbc.o aes-ppc.o:::sha1-ppc.o sha256-ppc.o::::::";
+my $ppc64_asm="ppccpuid.o:bn-ppc.o ppc-mont.o::aes_core.o aes_cbc.o aes-ppc.o:::sha1-ppc.o sha256-ppc.o sha512-ppc.o::::::";
 my $no_asm=":::::::::::::void";
 
 # As for $BSDthreads. Idea is to maintain "collective" set of flags,
@@ -327,7 +329,7 @@ my %table=(
 # *-generic* is endian-neutral target, but ./config is free to
 # throw in -D[BL]_ENDIAN, whichever appropriate...
 "linux-generic32","gcc:-DTERMIO -O3 -fomit-frame-pointer -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-ppc",	"gcc:-DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:ppccpuid_linux32.o:linux_ppc32.o linux_ppc32-mont.o:::::sha1-ppc_linux32.o sha256-ppc_linux32.o:::::::void:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-ppc",	"gcc:-DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:${ppc32_asm}:linux32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 # It's believed that majority of ARM toolchains predefine appropriate -march.
 # If you compiler does not, do complement config command line with one!
 "linux-armv4",	"gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -337,7 +339,7 @@ my %table=(
 "linux-aout",	"gcc:-DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -march=i486 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_out_asm}",
 ####
 "linux-generic64","gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${no_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-"linux-ppc64",	"gcc:-m64 -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:ppccpuid_linux64.o:linux_ppc64.o linux_ppc64-mont.o:::::sha1-ppc_linux64.o sha256-ppc_linux64.o sha512-ppc_linux64.o:::::::void:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"linux-ppc64",	"gcc:-m64 -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_RISC1 DES_UNROLL:${ppc64_asm}:linux64:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-ia64",	"gcc:-DL_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_UNROLL DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-ia64-ecc","ecc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-ia64-icc","icc:-DL_ENDIAN -DTERMIO -O2 -Wall -no_cpprt::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_RISC1 DES_INT:${ia64_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -423,12 +425,12 @@ my %table=(
 
 #### IBM's AIX.
 "aix3-cc",  "cc:-O -DB_ENDIAN -qmaxmem=16384::(unknown):AIX::BN_LLONG RC4_CHAR:::",
-"aix-gcc",  "gcc:-O -DB_ENDIAN::-D_THREAD_SAFE:AIX::BN_LLONG RC4_CHAR:ppccpuid_aix32.o:aix_ppc32.o aix_ppc32-mont.o:::::sha1-ppc_aix32.o sha256-ppc_aix32.o:::::::void:dlfcn:aix-shared:::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
-"aix64-gcc","gcc:-maix64 -O -DB_ENDIAN::-D_THREAD_SAFE:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:ppccpuid_aix64.o:aix_ppc64.o aix_ppc64-mont.o:::::sha1-ppc_aix64.o sha256-ppc_aix64.o sha512-ppc_aix64.o:::::::void:dlfcn:aix-shared::-maix64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X64",
+"aix-gcc",  "gcc:-O -DB_ENDIAN::-D_THREAD_SAFE:AIX::BN_LLONG RC4_CHAR:${ppc32_asm}:aix32:dlfcn:aix-shared:::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
+"aix64-gcc","gcc:-maix64 -O -DB_ENDIAN::-D_THREAD_SAFE:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:${ppc64_asm}:aix64:dlfcn:aix-shared::-maix64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X64",
 # Below targets assume AIX 5. Idea is to effectively disregard $OBJECT_MODE
 # at build time. $OBJECT_MODE is respected at ./config stage!
-"aix-cc",   "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded:AIX::BN_LLONG RC4_CHAR:ppccpuid_aix32.o:aix_ppc32.o aix_ppc32-mont.o:::::sha1-ppc_aix32.o sha256-ppc_aix32.o:::::::void:dlfcn:aix-shared::-q32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
-"aix64-cc", "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:ppccpuid_aix64.o:aix_ppc64.o aix_ppc64-mont.o:::::sha1-ppc_aix64.o sha256-ppc_aix64.o sha512-ppc_aix64.o:::::::void:dlfcn:aix-shared::-q64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
+"aix-cc",   "cc:-q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded:AIX::BN_LLONG RC4_CHAR:${ppc32_asm}:aix32:dlfcn:aix-shared::-q32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 32",
+"aix64-cc", "cc:-q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst::-qthreaded:AIX::SIXTY_FOUR_BIT_LONG RC4_CHAR:${ppc64_asm}:aix64:dlfcn:aix-shared::-q64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)::-X 64",
 
 #
 # Cray T90 and similar (SDSC)
@@ -527,11 +529,11 @@ my %table=(
 
 ##### MacOS X (a.k.a. Rhapsody or Darwin) setup
 "rhapsody-ppc-cc","cc:-O3 -DB_ENDIAN::(unknown):MACOSX_RHAPSODY::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${no_asm}::",
-"darwin-ppc-cc","cc:-arch ppc -O3 -DB_ENDIAN::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:ppccpuid_osx32.o:osx_ppc32.o osx_ppc32-mont.o:::::sha1-ppc_osx32.o sha256-ppc_osx32.o:::::::void:dlfcn:darwin-shared:-fPIC -fno-common:-arch ppc -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
-"darwin64-ppc-cc","cc:-arch ppc64 -O3 -DB_ENDIAN::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:ppccpuid_osx64.o:osx_ppc64.o osx_ppc64-mont.o:::::sha1-ppc_osx64.o sha256-ppc_osx64.o sha512-ppc_osx64.o:::::::void:dlfcn:darwin-shared:-fPIC -fno-common:-arch ppc64 -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"darwin-ppc-cc","cc:-arch ppc -O3 -DB_ENDIAN::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${ppc32_asm}:osx32:dlfcn:darwin-shared:-fPIC -fno-common:-arch ppc -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"darwin64-ppc-cc","cc:-arch ppc64 -O3 -DB_ENDIAN::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${ppc64_asm}:osx64:dlfcn:darwin-shared:-fPIC -fno-common:-arch ppc64 -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 "darwin-i386-cc","cc:-arch i386 -O3 -fomit-frame-pointer -DL_ENDIAN::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:BN_LLONG RC4_INT RC4_CHUNK DES_UNROLL BF_PTR:${x86_macosx_asm}:dlfcn:darwin-shared:-fPIC -fno-common:-arch i386 -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 "darwin64-x86_64-cc","cc:-arch x86_64 -O3 -fomit-frame-pointer -DL_ENDIAN -DMD32_REG_T=int -Wall::-D_REENTRANT:MACOSX:-Wl,-search_paths_first%:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL:${no_asm}:dlfcn:darwin-shared:-fPIC -fno-common:-arch x86_64 -dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
-"debug-darwin-ppc-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DB_ENDIAN -g -Wall -O::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR::osx_ppc32.o osx_ppc32-mont.o:::::sha1-ppc_osx32.o:::::::void:dlfcn:darwin-shared:-fPIC:-dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
+"debug-darwin-ppc-cc","cc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DB_ENDIAN -g -Wall -O::-D_REENTRANT:MACOSX::BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:${ppc32_asm}:osx32:dlfcn:darwin-shared:-fPIC:-dynamiclib:.\$(SHLIB_MAJOR).\$(SHLIB_MINOR).dylib",
 
 ##### A/UX
 "aux3-gcc","gcc:-O2 -DTERMIO::(unknown):AUX:-lbsd:RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR:::",

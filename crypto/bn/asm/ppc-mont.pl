@@ -24,9 +24,9 @@
 # 2048-bit	+18%
 # 4096-bit	+4%
 
-$output = shift;
+$flavour = shift;
 
-if ($output =~ /32\-mont\.s/) {
+if ($flavour =~ /32/) {
 	$BITS=	32;
 	$BNSZ=	$BITS/8;
 	$SIZE_T=4;
@@ -46,7 +46,7 @@ if ($output =~ /32\-mont\.s/) {
 	$SHRI=	"srwi";		# unsigned shift right by immediate	
 	$PUSH=	$ST;
 	$POP=	$LD;
-} elsif ($output =~ /64\-mont\.s/) {
+} elsif ($flavour =~ /64/) {
 	$BITS=	64;
 	$BNSZ=	$BITS/8;
 	$SIZE_T=8;
@@ -67,10 +67,14 @@ if ($output =~ /32\-mont\.s/) {
 	$SHRI=	"srdi";		# unsigned shift right by immediate	
 	$PUSH=	$ST;
 	$POP=	$LD;
-} else { die "nonsense $output"; }
+} else { die "nonsense $flavour"; }
 
-( defined shift || open STDOUT,"| $^X ../perlasm/ppc-xlate.pl $output" ) ||
-	die "can't call ../perlasm/ppc-xlate.pl: $!";
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
+die "can't locate ppc-xlate.pl";
+
+open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
 
 $sp="r1";
 $toc="r2";
@@ -270,7 +274,6 @@ Linner:
 	addi	$num,$num,2	; restore $num
 	subfc	$j,$j,$j	; j=0 and "clear" XER[CA]
 	addi	$tp,$sp,$FRAME
-	addi	$ap,$sp,$FRAME
 	mtctr	$num
 
 .align	4

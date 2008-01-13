@@ -100,9 +100,9 @@
 #	me a note at schari@us.ibm.com
 #
 
-$opf = shift;
+$flavour = shift;
 
-if ($opf =~ /32\.s/) {
+if ($flavour =~ /32/) {
 	$BITS=	32;
 	$BNSZ=	$BITS/8;
 	$ISA=	"\"ppc\"";
@@ -125,7 +125,7 @@ if ($opf =~ /32\.s/) {
 	$INSR=	"insrwi";	# insert right
 	$ROTL=	"rotlwi";	# rotate left by immediate
 	$TR=	"tw";		# conditional trap
-} elsif ($opf =~ /64\.s/) {
+} elsif ($flavour =~ /64/) {
 	$BITS=	64;
 	$BNSZ=	$BITS/8;
 	$ISA=	"\"ppc64\"";
@@ -149,15 +149,14 @@ if ($opf =~ /32\.s/) {
 	$INSR=	"insrdi";	# insert right 
 	$ROTL=	"rotldi";	# rotate left by immediate
 	$TR=	"td";		# conditional trap
-} else { die "nonsense $opf"; }
+} else { die "nonsense $flavour"; }
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-( defined shift || open STDOUT,"| $^X $xlate $opf" ) ||
-	die "can't call $xlate: $!";
+open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
 
 $data=<<EOF;
 #--------------------------------------------------------------------

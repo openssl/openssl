@@ -59,6 +59,9 @@ aes-x86_64.s: asm/aes-x86_64.pl
 aes-sparcv9.s: asm/aes-sparcv9.pl
 	$(PERL) asm/aes-sparcv9.pl $(CFLAGS) > $@
 
+aes-ppc.s:	asm/aes-ppc.pl
+	$(PERL) asm/aes-ppc.pl $(PERLASM_SCHEME) $@
+
 # GNU make "catch all"
 aes-%.s:	asm/aes-%.pl;	$(PERL) $< $(CFLAGS) > $@
 

@@ -1,16 +1,15 @@
 #!/usr/bin/env perl
 
-$output = shift;
+$flavour = shift;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}perlasm/ppc-xlate.pl" and -f $xlate) or
 die "can't locate ppc-xlate.pl";
 
-( defined shift || open STDOUT,"| $^X $xlate $output" ) ||
-	die "can't call $xlate: $!";
+open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
 
-if ($output=~/64/) {
+if ($flavour=~/64/) {
     $CMPLI="cmpldi";
     $SHRLI="srdi";
     $SIGNX="extsw";

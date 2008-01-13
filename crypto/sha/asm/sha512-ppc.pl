@@ -35,26 +35,31 @@
 # block signals prior calling this routine. For the record, in 32-bit
 # context R2 serves as TLS pointer, while in 64-bit context - R13.
 
-$output=shift;
+$flavour=shift;
+$output =shift;
 
-if ($output =~ /64/) {
+if ($flavour =~ /64/) {
 	$SIZE_T=8;
 	$STU="stdu";
 	$UCMP="cmpld";
 	$SHL="sldi";
 	$POP="ld";
 	$PUSH="std";
-} elsif ($output =~ /32/) {
+} elsif ($flavour =~ /32/) {
 	$SIZE_T=4;
 	$STU="stwu";
 	$UCMP="cmplw";
 	$SHL="slwi";
 	$POP="lwz";
 	$PUSH="stw";
-} else { die "nonsense $output"; }
+} else { die "nonsense $flavour"; }
 
-( defined shift || open STDOUT,"| $^X ../perlasm/ppc-xlate.pl $output" ) ||
-	die "can't call ../perlasm/ppc-xlate.pl: $!";
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}ppc-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/ppc-xlate.pl" and -f $xlate) or
+die "can't locate ppc-xlate.pl";
+
+open STDOUT,"| $^X $xlate $flavour $output" || die "can't call $xlate: $!";
 
 if ($output =~ /512/) {
 	$func="sha512_block_data_order";

@@ -2,10 +2,10 @@
 
 # PowerPC assembler distiller by <appro>.
 
+my $flavour = shift;
 my $output = shift;
 open STDOUT,">$output" || die "can't open $output: $!";
 
-my $flavour = $output;
 my %GLOBALS;
 my $dotinlocallabels=($flavour=~/linux/)?1:0;
 
