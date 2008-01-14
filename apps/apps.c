@@ -116,7 +116,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef OPENSSL_SYSNAME_WIN32
 #include <strings.h>
+#endif
 #include <sys/types.h>
 #include <ctype.h>
 #include <errno.h>

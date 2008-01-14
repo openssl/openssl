@@ -60,7 +60,7 @@
 #include <e_os.h>
 #include "o_str.h"
 
-#ifndef OPENSSL_IMPLEMENTS_strncasecmp
+#if !defined(OPENSSL_IMPLEMENTS_strncasecmp) && !defined(OPENSSL_SYSNAME_WIN32)
 # include <strings.h>
 #endif
 
