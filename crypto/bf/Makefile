@@ -12,8 +12,6 @@ MAKEFILE=	Makefile
 AR=		ar r
 
 BF_ENC=		bf_enc.o
-# or use
-#DES_ENC=	bx86-elf.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)

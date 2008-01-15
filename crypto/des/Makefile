@@ -12,8 +12,6 @@ MAKEFILE=	Makefile
 AR=		ar r
 RANLIB=		ranlib
 DES_ENC=	des_enc.o fcrypt_b.o
-# or use
-#DES_ENC=	dx86-elf.o yx86-elf.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)

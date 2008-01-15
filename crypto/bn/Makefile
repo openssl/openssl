@@ -12,8 +12,6 @@ MAKEFILE=	Makefile
 AR=		ar r
 
 BN_ASM=		bn_asm.o
-# or use
-#BN_ASM=	bn86-elf.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
