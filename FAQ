@@ -823,11 +823,11 @@ code itself (the hex digits after the second colon).
 
 * Why do I get errors about unknown algorithms?
 
-This can happen under several circumstances such as reading in an
-encrypted private key or attempting to decrypt a PKCS#12 file. The cause
-is forgetting to load OpenSSL's table of algorithms with
-OpenSSL_add_all_algorithms(). See the manual page for more information.
-
+The cause is forgetting to load OpenSSL's table of algorithms with
+OpenSSL_add_all_algorithms(). See the manual page for more information. This
+can cause several problems such as being unable to read in an encrypted
+PEM file, unable to decrypt a PKCS#12 file or signature failure when
+verifying certificates.
 
 * Why can't the OpenSSH configure script detect OpenSSL?
 
