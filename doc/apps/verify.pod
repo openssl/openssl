@@ -169,7 +169,7 @@ the operation was successful.
 the issuer certificate could not be found: this occurs if the issuer certificate
 of an untrusted certificate cannot be found.
 
-=item B<3 X509_V_ERR_UNABLE_TO_GET_CRL unable to get certificate CRL>
+=item B<3 X509_V_ERR_UNABLE_TO_GET_CRL: unable to get certificate CRL>
 
 the CRL of a certificate could not be found. Unused.
 
