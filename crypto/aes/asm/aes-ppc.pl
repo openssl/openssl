@@ -396,42 +396,42 @@ Lppc_AES_encrypt:
 Lenc_loop:
 	rlwinm	$acc00,$s0,`32-24+3`,21,28
 	rlwinm	$acc01,$s1,`32-24+3`,21,28
-	rlwinm	$acc02,$s2,`32-24+3`,21,28
-	rlwinm	$acc03,$s3,`32-24+3`,21,28
 	lwz	$t0,0($key)
 	lwz	$t1,4($key)
+	rlwinm	$acc02,$s2,`32-24+3`,21,28
+	rlwinm	$acc03,$s3,`32-24+3`,21,28
 	lwz	$t2,8($key)
 	lwz	$t3,12($key)
 	rlwinm	$acc04,$s1,`32-16+3`,21,28
 	rlwinm	$acc05,$s2,`32-16+3`,21,28
-	rlwinm	$acc06,$s3,`32-16+3`,21,28
-	rlwinm	$acc07,$s0,`32-16+3`,21,28
 	lwzx	$acc00,$Tbl0,$acc00
 	lwzx	$acc01,$Tbl0,$acc01
+	rlwinm	$acc06,$s3,`32-16+3`,21,28
+	rlwinm	$acc07,$s0,`32-16+3`,21,28
 	lwzx	$acc02,$Tbl0,$acc02
 	lwzx	$acc03,$Tbl0,$acc03
 	rlwinm	$acc08,$s2,`32-8+3`,21,28
 	rlwinm	$acc09,$s3,`32-8+3`,21,28
-	rlwinm	$acc10,$s0,`32-8+3`,21,28
-	rlwinm	$acc11,$s1,`32-8+3`,21,28
 	lwzx	$acc04,$Tbl1,$acc04
 	lwzx	$acc05,$Tbl1,$acc05
+	rlwinm	$acc10,$s0,`32-8+3`,21,28
+	rlwinm	$acc11,$s1,`32-8+3`,21,28
 	lwzx	$acc06,$Tbl1,$acc06
 	lwzx	$acc07,$Tbl1,$acc07
 	rlwinm	$acc12,$s3,`0+3`,21,28
 	rlwinm	$acc13,$s0,`0+3`,21,28
-	rlwinm	$acc14,$s1,`0+3`,21,28
-	rlwinm	$acc15,$s2,`0+3`,21,28
 	lwzx	$acc08,$Tbl2,$acc08
 	lwzx	$acc09,$Tbl2,$acc09
+	rlwinm	$acc14,$s1,`0+3`,21,28
+	rlwinm	$acc15,$s2,`0+3`,21,28
 	lwzx	$acc10,$Tbl2,$acc10
 	lwzx	$acc11,$Tbl2,$acc11
 	xor	$t0,$t0,$acc00
 	xor	$t1,$t1,$acc01
-	xor	$t2,$t2,$acc02
-	xor	$t3,$t3,$acc03
 	lwzx	$acc12,$Tbl3,$acc12
 	lwzx	$acc13,$Tbl3,$acc13
+	xor	$t2,$t2,$acc02
+	xor	$t3,$t3,$acc03
 	lwzx	$acc14,$Tbl3,$acc14
 	lwzx	$acc15,$Tbl3,$acc15
 	xor	$t0,$t0,$acc04
@@ -461,42 +461,42 @@ Lenc_loop:
 	lwz	$acc11,`2048+224`($Tbl0)
 	rlwinm	$acc00,$s0,`32-24`,24,31
 	rlwinm	$acc01,$s1,`32-24`,24,31
-	rlwinm	$acc02,$s2,`32-24`,24,31
-	rlwinm	$acc03,$s3,`32-24`,24,31
 	lwz	$t0,0($key)
 	lwz	$t1,4($key)
+	rlwinm	$acc02,$s2,`32-24`,24,31
+	rlwinm	$acc03,$s3,`32-24`,24,31
 	lwz	$t2,8($key)
 	lwz	$t3,12($key)
 	rlwinm	$acc04,$s1,`32-16`,24,31
 	rlwinm	$acc05,$s2,`32-16`,24,31
-	rlwinm	$acc06,$s3,`32-16`,24,31
-	rlwinm	$acc07,$s0,`32-16`,24,31
 	lbzx	$acc00,$Tbl2,$acc00
 	lbzx	$acc01,$Tbl2,$acc01
+	rlwinm	$acc06,$s3,`32-16`,24,31
+	rlwinm	$acc07,$s0,`32-16`,24,31
 	lbzx	$acc02,$Tbl2,$acc02
 	lbzx	$acc03,$Tbl2,$acc03
 	rlwinm	$acc08,$s2,`32-8`,24,31
 	rlwinm	$acc09,$s3,`32-8`,24,31
-	rlwinm	$acc10,$s0,`32-8`,24,31
-	rlwinm	$acc11,$s1,`32-8`,24,31
 	lbzx	$acc04,$Tbl2,$acc04
 	lbzx	$acc05,$Tbl2,$acc05
+	rlwinm	$acc10,$s0,`32-8`,24,31
+	rlwinm	$acc11,$s1,`32-8`,24,31
 	lbzx	$acc06,$Tbl2,$acc06
 	lbzx	$acc07,$Tbl2,$acc07
 	rlwinm	$acc12,$s3,`0`,24,31
 	rlwinm	$acc13,$s0,`0`,24,31
-	rlwinm	$acc14,$s1,`0`,24,31
-	rlwinm	$acc15,$s2,`0`,24,31
 	lbzx	$acc08,$Tbl2,$acc08
 	lbzx	$acc09,$Tbl2,$acc09
+	rlwinm	$acc14,$s1,`0`,24,31
+	rlwinm	$acc15,$s2,`0`,24,31
 	lbzx	$acc10,$Tbl2,$acc10
 	lbzx	$acc11,$Tbl2,$acc11
 	rlwinm	$s0,$acc00,24,0,7
 	rlwinm	$s1,$acc01,24,0,7
-	rlwinm	$s2,$acc02,24,0,7
-	rlwinm	$s3,$acc03,24,0,7
 	lbzx	$acc12,$Tbl2,$acc12
 	lbzx	$acc13,$Tbl2,$acc13
+	rlwinm	$s2,$acc02,24,0,7
+	rlwinm	$s3,$acc03,24,0,7
 	lbzx	$acc14,$Tbl2,$acc14
 	lbzx	$acc15,$Tbl2,$acc15
 	rlwimi	$s0,$acc04,16,8,15
@@ -541,42 +541,38 @@ Lenc_compact_loop:
 	rlwinm	$acc01,$s1,`32-24`,24,31
 	rlwinm	$acc02,$s2,`32-24`,24,31
 	rlwinm	$acc03,$s3,`32-24`,24,31
-	lwz	$t0,0($key)
-	lwz	$t1,4($key)
-	lwz	$t2,8($key)
-	lwz	$t3,12($key)
-	rlwinm	$acc04,$s1,`32-16`,24,31
-	rlwinm	$acc05,$s2,`32-16`,24,31
-	rlwinm	$acc06,$s3,`32-16`,24,31
-	rlwinm	$acc07,$s0,`32-16`,24,31
 	lbzx	$acc00,$Tbl1,$acc00
 	lbzx	$acc01,$Tbl1,$acc01
+	rlwinm	$acc04,$s1,`32-16`,24,31
+	rlwinm	$acc05,$s2,`32-16`,24,31
 	lbzx	$acc02,$Tbl1,$acc02
 	lbzx	$acc03,$Tbl1,$acc03
-	rlwinm	$acc08,$s2,`32-8`,24,31
-	rlwinm	$acc09,$s3,`32-8`,24,31
-	rlwinm	$acc10,$s0,`32-8`,24,31
-	rlwinm	$acc11,$s1,`32-8`,24,31
+	rlwinm	$acc06,$s3,`32-16`,24,31
+	rlwinm	$acc07,$s0,`32-16`,24,31
 	lbzx	$acc04,$Tbl1,$acc04
 	lbzx	$acc05,$Tbl1,$acc05
+	rlwinm	$acc08,$s2,`32-8`,24,31
+	rlwinm	$acc09,$s3,`32-8`,24,31
 	lbzx	$acc06,$Tbl1,$acc06
 	lbzx	$acc07,$Tbl1,$acc07
-	rlwinm	$acc12,$s3,`0`,24,31
-	rlwinm	$acc13,$s0,`0`,24,31
-	rlwinm	$acc14,$s1,`0`,24,31
-	rlwinm	$acc15,$s2,`0`,24,31
+	rlwinm	$acc10,$s0,`32-8`,24,31
+	rlwinm	$acc11,$s1,`32-8`,24,31
 	lbzx	$acc08,$Tbl1,$acc08
 	lbzx	$acc09,$Tbl1,$acc09
+	rlwinm	$acc12,$s3,`0`,24,31
+	rlwinm	$acc13,$s0,`0`,24,31
 	lbzx	$acc10,$Tbl1,$acc10
 	lbzx	$acc11,$Tbl1,$acc11
-	rlwinm	$s0,$acc00,24,0,7
-	rlwinm	$s1,$acc01,24,0,7
-	rlwinm	$s2,$acc02,24,0,7
-	rlwinm	$s3,$acc03,24,0,7
+	rlwinm	$acc14,$s1,`0`,24,31
+	rlwinm	$acc15,$s2,`0`,24,31
 	lbzx	$acc12,$Tbl1,$acc12
 	lbzx	$acc13,$Tbl1,$acc13
+	rlwinm	$s0,$acc00,24,0,7
+	rlwinm	$s1,$acc01,24,0,7
 	lbzx	$acc14,$Tbl1,$acc14
 	lbzx	$acc15,$Tbl1,$acc15
+	rlwinm	$s2,$acc02,24,0,7
+	rlwinm	$s3,$acc03,24,0,7
 	rlwimi	$s0,$acc04,16,8,15
 	rlwimi	$s1,$acc05,16,8,15
 	rlwimi	$s2,$acc06,16,8,15
@@ -585,8 +581,12 @@ Lenc_compact_loop:
 	rlwimi	$s1,$acc09,8,16,23
 	rlwimi	$s2,$acc10,8,16,23
 	rlwimi	$s3,$acc11,8,16,23
+	lwz	$t0,0($key)
+	lwz	$t1,4($key)
 	or	$s0,$s0,$acc12
 	or	$s1,$s1,$acc13
+	lwz	$t2,8($key)
+	lwz	$t3,12($key)
 	or	$s2,$s2,$acc14
 	or	$s3,$s3,$acc15
 
@@ -745,42 +745,42 @@ Lppc_AES_decrypt:
 Ldec_loop:
 	rlwinm	$acc00,$s0,`32-24+3`,21,28
 	rlwinm	$acc01,$s1,`32-24+3`,21,28
-	rlwinm	$acc02,$s2,`32-24+3`,21,28
-	rlwinm	$acc03,$s3,`32-24+3`,21,28
 	lwz	$t0,0($key)
 	lwz	$t1,4($key)
+	rlwinm	$acc02,$s2,`32-24+3`,21,28
+	rlwinm	$acc03,$s3,`32-24+3`,21,28
 	lwz	$t2,8($key)
 	lwz	$t3,12($key)
 	rlwinm	$acc04,$s3,`32-16+3`,21,28
 	rlwinm	$acc05,$s0,`32-16+3`,21,28
-	rlwinm	$acc06,$s1,`32-16+3`,21,28
-	rlwinm	$acc07,$s2,`32-16+3`,21,28
 	lwzx	$acc00,$Tbl0,$acc00
 	lwzx	$acc01,$Tbl0,$acc01
+	rlwinm	$acc06,$s1,`32-16+3`,21,28
+	rlwinm	$acc07,$s2,`32-16+3`,21,28
 	lwzx	$acc02,$Tbl0,$acc02
 	lwzx	$acc03,$Tbl0,$acc03
 	rlwinm	$acc08,$s2,`32-8+3`,21,28
 	rlwinm	$acc09,$s3,`32-8+3`,21,28
-	rlwinm	$acc10,$s0,`32-8+3`,21,28
-	rlwinm	$acc11,$s1,`32-8+3`,21,28
 	lwzx	$acc04,$Tbl1,$acc04
 	lwzx	$acc05,$Tbl1,$acc05
+	rlwinm	$acc10,$s0,`32-8+3`,21,28
+	rlwinm	$acc11,$s1,`32-8+3`,21,28
 	lwzx	$acc06,$Tbl1,$acc06
 	lwzx	$acc07,$Tbl1,$acc07
 	rlwinm	$acc12,$s1,`0+3`,21,28
 	rlwinm	$acc13,$s2,`0+3`,21,28
-	rlwinm	$acc14,$s3,`0+3`,21,28
-	rlwinm	$acc15,$s0,`0+3`,21,28
 	lwzx	$acc08,$Tbl2,$acc08
 	lwzx	$acc09,$Tbl2,$acc09
+	rlwinm	$acc14,$s3,`0+3`,21,28
+	rlwinm	$acc15,$s0,`0+3`,21,28
 	lwzx	$acc10,$Tbl2,$acc10
 	lwzx	$acc11,$Tbl2,$acc11
 	xor	$t0,$t0,$acc00
 	xor	$t1,$t1,$acc01
-	xor	$t2,$t2,$acc02
-	xor	$t3,$t3,$acc03
 	lwzx	$acc12,$Tbl3,$acc12
 	lwzx	$acc13,$Tbl3,$acc13
+	xor	$t2,$t2,$acc02
+	xor	$t3,$t3,$acc03
 	lwzx	$acc14,$Tbl3,$acc14
 	lwzx	$acc15,$Tbl3,$acc15
 	xor	$t0,$t0,$acc04
@@ -810,42 +810,42 @@ Ldec_loop:
 	lwz	$acc11,`2048+224`($Tbl0)
 	rlwinm	$acc00,$s0,`32-24`,24,31
 	rlwinm	$acc01,$s1,`32-24`,24,31
-	rlwinm	$acc02,$s2,`32-24`,24,31
-	rlwinm	$acc03,$s3,`32-24`,24,31
 	lwz	$t0,0($key)
 	lwz	$t1,4($key)
+	rlwinm	$acc02,$s2,`32-24`,24,31
+	rlwinm	$acc03,$s3,`32-24`,24,31
 	lwz	$t2,8($key)
 	lwz	$t3,12($key)
 	rlwinm	$acc04,$s3,`32-16`,24,31
 	rlwinm	$acc05,$s0,`32-16`,24,31
-	rlwinm	$acc06,$s1,`32-16`,24,31
-	rlwinm	$acc07,$s2,`32-16`,24,31
 	lbzx	$acc00,$Tbl2,$acc00
 	lbzx	$acc01,$Tbl2,$acc01
+	rlwinm	$acc06,$s1,`32-16`,24,31
+	rlwinm	$acc07,$s2,`32-16`,24,31
 	lbzx	$acc02,$Tbl2,$acc02
 	lbzx	$acc03,$Tbl2,$acc03
 	rlwinm	$acc08,$s2,`32-8`,24,31
 	rlwinm	$acc09,$s3,`32-8`,24,31
-	rlwinm	$acc10,$s0,`32-8`,24,31
-	rlwinm	$acc11,$s1,`32-8`,24,31
 	lbzx	$acc04,$Tbl2,$acc04
 	lbzx	$acc05,$Tbl2,$acc05
+	rlwinm	$acc10,$s0,`32-8`,24,31
+	rlwinm	$acc11,$s1,`32-8`,24,31
 	lbzx	$acc06,$Tbl2,$acc06
 	lbzx	$acc07,$Tbl2,$acc07
 	rlwinm	$acc12,$s1,`0`,24,31
 	rlwinm	$acc13,$s2,`0`,24,31
-	rlwinm	$acc14,$s3,`0`,24,31
-	rlwinm	$acc15,$s0,`0`,24,31
 	lbzx	$acc08,$Tbl2,$acc08
 	lbzx	$acc09,$Tbl2,$acc09
+	rlwinm	$acc14,$s3,`0`,24,31
+	rlwinm	$acc15,$s0,`0`,24,31
 	lbzx	$acc10,$Tbl2,$acc10
 	lbzx	$acc11,$Tbl2,$acc11
 	rlwinm	$s0,$acc00,24,0,7
 	rlwinm	$s1,$acc01,24,0,7
-	rlwinm	$s2,$acc02,24,0,7
-	rlwinm	$s3,$acc03,24,0,7
 	lbzx	$acc12,$Tbl2,$acc12
 	lbzx	$acc13,$Tbl2,$acc13
+	rlwinm	$s2,$acc02,24,0,7
+	rlwinm	$s3,$acc03,24,0,7
 	lbzx	$acc14,$Tbl2,$acc14
 	lbzx	$acc15,$Tbl2,$acc15
 	rlwimi	$s0,$acc04,16,8,15
@@ -896,42 +896,38 @@ Ldec_compact_loop:
 	rlwinm	$acc01,$s1,`32-24`,24,31
 	rlwinm	$acc02,$s2,`32-24`,24,31
 	rlwinm	$acc03,$s3,`32-24`,24,31
-	lwz	$t0,0($key)
-	lwz	$t1,4($key)
-	lwz	$t2,8($key)
-	lwz	$t3,12($key)
-	rlwinm	$acc04,$s3,`32-16`,24,31
-	rlwinm	$acc05,$s0,`32-16`,24,31
-	rlwinm	$acc06,$s1,`32-16`,24,31
-	rlwinm	$acc07,$s2,`32-16`,24,31
 	lbzx	$acc00,$Tbl1,$acc00
 	lbzx	$acc01,$Tbl1,$acc01
+	rlwinm	$acc04,$s3,`32-16`,24,31
+	rlwinm	$acc05,$s0,`32-16`,24,31
 	lbzx	$acc02,$Tbl1,$acc02
 	lbzx	$acc03,$Tbl1,$acc03
-	rlwinm	$acc08,$s2,`32-8`,24,31
-	rlwinm	$acc09,$s3,`32-8`,24,31
-	rlwinm	$acc10,$s0,`32-8`,24,31
-	rlwinm	$acc11,$s1,`32-8`,24,31
+	rlwinm	$acc06,$s1,`32-16`,24,31
+	rlwinm	$acc07,$s2,`32-16`,24,31
 	lbzx	$acc04,$Tbl1,$acc04
 	lbzx	$acc05,$Tbl1,$acc05
+	rlwinm	$acc08,$s2,`32-8`,24,31
+	rlwinm	$acc09,$s3,`32-8`,24,31
 	lbzx	$acc06,$Tbl1,$acc06
 	lbzx	$acc07,$Tbl1,$acc07
-	rlwinm	$acc12,$s1,`0`,24,31
-	rlwinm	$acc13,$s2,`0`,24,31
-	rlwinm	$acc14,$s3,`0`,24,31
-	rlwinm	$acc15,$s0,`0`,24,31
+	rlwinm	$acc10,$s0,`32-8`,24,31
+	rlwinm	$acc11,$s1,`32-8`,24,31
 	lbzx	$acc08,$Tbl1,$acc08
 	lbzx	$acc09,$Tbl1,$acc09
+	rlwinm	$acc12,$s1,`0`,24,31
+	rlwinm	$acc13,$s2,`0`,24,31
 	lbzx	$acc10,$Tbl1,$acc10
 	lbzx	$acc11,$Tbl1,$acc11
-	rlwinm	$s0,$acc00,24,0,7
-	rlwinm	$s1,$acc01,24,0,7
-	rlwinm	$s2,$acc02,24,0,7
-	rlwinm	$s3,$acc03,24,0,7
+	rlwinm	$acc14,$s3,`0`,24,31
+	rlwinm	$acc15,$s0,`0`,24,31
 	lbzx	$acc12,$Tbl1,$acc12
 	lbzx	$acc13,$Tbl1,$acc13
+	rlwinm	$s0,$acc00,24,0,7
+	rlwinm	$s1,$acc01,24,0,7
 	lbzx	$acc14,$Tbl1,$acc14
 	lbzx	$acc15,$Tbl1,$acc15
+	rlwinm	$s2,$acc02,24,0,7
+	rlwinm	$s3,$acc03,24,0,7
 	rlwimi	$s0,$acc04,16,8,15
 	rlwimi	$s1,$acc05,16,8,15
 	rlwimi	$s2,$acc06,16,8,15
@@ -940,8 +936,12 @@ Ldec_compact_loop:
 	rlwimi	$s1,$acc09,8,16,23
 	rlwimi	$s2,$acc10,8,16,23
 	rlwimi	$s3,$acc11,8,16,23
+	lwz	$t0,0($key)
+	lwz	$t1,4($key)
 	or	$s0,$s0,$acc12
 	or	$s1,$s1,$acc13
+	lwz	$t2,8($key)
+	lwz	$t3,12($key)
 	or	$s2,$s2,$acc14
 	or	$s3,$s3,$acc15
 
@@ -1003,12 +1003,12 @@ $code.=<<___ if ($SIZE_T==8);
 	xor	$acc04,$acc04,$s0	# r4^r0
 	xor	$acc06,$acc06,$s2
 
-	extrdi	$acc01,$acc00,0,32
-	extrdi	$acc03,$acc02,0,32
-	extrdi	$acc05,$acc04,0,32
-	extrdi	$acc07,$acc06,0,32
-	extrdi	$acc09,$acc08,0,32
-	extrdi	$acc11,$acc10,0,32
+	extrdi	$acc01,$acc00,32,0
+	extrdi	$acc03,$acc02,32,0
+	extrdi	$acc05,$acc04,32,0
+	extrdi	$acc07,$acc06,32,0
+	extrdi	$acc09,$acc08,32,0
+	extrdi	$acc11,$acc10,32,0
 ___
 $code.=<<___ if ($SIZE_T==4);
 	and	$acc00,$s0,$mask80	# r1=r0&0x80808080
