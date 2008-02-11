@@ -193,6 +193,22 @@ STACK_OF(X509_ATTRIBUTE) *X509at_add1_attr_by_txt(STACK_OF(X509_ATTRIBUTE) **x,
 	return ret;
 }
 
+void *X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x,
+				ASN1_OBJECT *obj, int lastpos, int type)
+{
+	int i;
+	X509_ATTRIBUTE *at;
+	i = X509at_get_attr_by_OBJ(x, obj, lastpos);
+	if (i == -1)
+		return NULL;
+	if ((lastpos <= -2) && (X509at_get_attr_by_OBJ(x, obj, i) != -1))
+		return NULL;
+	at = X509at_get_attr(x, i);
+	if (lastpos <= -3 && (X509_ATTRIBUTE_count(at) != 1))
+		return NULL;
+	return X509_ATTRIBUTE_get0_data(at, type, 0, NULL);
+}
+
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
 	     int atrtype, const void *data, int len)
 {
