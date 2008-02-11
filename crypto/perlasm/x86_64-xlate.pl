@@ -65,7 +65,10 @@ my $output = shift;
 	if ($stddev!=$outdev || $stdino!=$outino);
 }
 
-my $masm=1 if ($output =~ /\.asm/);
+my $masmref=8 + 50727*2**-32;	# 8.00.50727 shipped with VS2005
+my $masm=$masmref if ($output =~ /\.asm/);
+if ($masm && `ml64 2>&1` =~ m/Version ([0-9]+)\.([0-9]+)(\.([0-9]+))?/)
+{   $masm=$1 + $2*2**-16 + $4*2**-32;   }
 
 my $current_segment;
 my $current_function;
@@ -82,12 +85,12 @@ my $current_function;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
 	    undef $self->{sz};
-	    if ($self->{op} =~ /(movz)b.*/) {	# movz is pain...
+	    if ($self->{op} =~ /^(movz)b.*/) {	# movz is pain...
 		$self->{op} = $1;
 		$self->{sz} = "b";
 	    } elsif ($self->{op} =~ /call/) {
 		$self->{sz} = ""
-	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])/) {
+	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])$/) {
 		$self->{op} = $1;
 		$self->{sz} = $2;
 	    }
@@ -113,7 +116,7 @@ my $current_function;
 		"$self->{op}$self->{sz}";
 	    }
 	} else {
-	    $self->{op} =~ s/movz/movzx/;
+	    $self->{op} =~ s/^movz/movzx/;
 	    if ($self->{op} eq "ret") {
 		$self->{op} = "";
 		if ($current_function->{abi} eq "svr4") {
@@ -356,7 +359,9 @@ my $current_function;
 				    $v="$current_segment\tENDS\n" if ($current_segment);
 				    $current_segment = "_$1\$";
 				    $current_segment =~ tr/[a-z]/[A-Z]/;
-				    $v.="$current_segment\tSEGMENT ALIGN(64) 'CODE'";
+				    $v.="$current_segment\tSEGMENT ";
+				    $v.=$masm>=$masmref ? "ALIGN(64)" : "PAGE";
+				    $v.=" 'CODE'";
 				    $self->{value} = $v;
 				    last;
 				  };
