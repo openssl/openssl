@@ -77,9 +77,36 @@ void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value)
 		ASN1_primitive_free((ASN1_VALUE **)tmp_a, NULL);
 		}
 	a->type=type;
-	a->value.ptr=value;
+	if (type == V_ASN1_BOOLEAN)
+		a->value.boolean = value ? 0xff : 0;
+	else
+		a->value.ptr=value;
 	}
 
+int ASN1_TYPE_set1(ASN1_TYPE *a, int type, const void *value)
+	{
+	if (!value || (type == V_ASN1_BOOLEAN))
+		{
+		ASN1_TYPE_set(a, type, (void *)value);
+		}
+	else if (type == V_ASN1_OBJECT)
+		{
+		ASN1_OBJECT *odup;
+		odup = OBJ_dup(value);
+		if (!odup)
+			return 0;
+		ASN1_TYPE_set(a, type, odup);
+		}
+	else
+		{
+		ASN1_STRING *sdup;
+		sdup = ASN1_STRING_dup(sdup);
+		if (!sdup)
+			return 0;
+		ASN1_TYPE_set(a, type, sdup);
+		}
+	return 1;
+	}
 
 IMPLEMENT_STACK_OF(ASN1_TYPE)
 IMPLEMENT_ASN1_SET_OF(ASN1_TYPE)

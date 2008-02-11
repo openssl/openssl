@@ -281,16 +281,22 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *dat
 			return 0;
 		}
 		atype = stmp->type;
-	} else {
+	} else if (len != -1){
 		if(!(stmp = ASN1_STRING_type_new(attrtype))) goto err;
 		if(!ASN1_STRING_set(stmp, data, len)) goto err;
 		atype = attrtype;
 	}
 	if(!(attr->value.set = sk_ASN1_TYPE_new_null())) goto err;
 	if(!(ttmp = ASN1_TYPE_new())) goto err;
+	if (len == -1)
+		{
+		if (!ASN1_TYPE_set1(ttmp, attrtype, data))
+			goto err;
+		}
+	else
+		ASN1_TYPE_set(ttmp, atype, stmp);
 	if(!sk_ASN1_TYPE_push(attr->value.set, ttmp)) goto err;
 	attr->single = 0;
-	ASN1_TYPE_set(ttmp, atype, stmp);
 	return 1;
 	err:
 	X509err(X509_F_X509_ATTRIBUTE_SET1_DATA, ERR_R_MALLOC_FAILURE);
