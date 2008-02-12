@@ -206,7 +206,7 @@ void *X509at_get0_data_by_OBJ(STACK_OF(X509_ATTRIBUTE) *x,
 	at = X509at_get_attr(x, i);
 	if (lastpos <= -3 && (X509_ATTRIBUTE_count(at) != 1))
 		return NULL;
-	return X509_ATTRIBUTE_get0_data(at, type, 0, NULL);
+	return X509_ATTRIBUTE_get0_data(at, 0, type, NULL);
 }
 
 X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_NID(X509_ATTRIBUTE **attr, int nid,
