@@ -829,6 +829,10 @@
 #define NID_id_smime_ct_DVCSResponseData		211
 #define OBJ_id_smime_ct_DVCSResponseData		OBJ_id_smime_ct,8L
 
+#define SN_id_smime_ct_compressedData		"id-smime-ct-compressedData"
+#define NID_id_smime_ct_compressedData		851
+#define OBJ_id_smime_ct_compressedData		OBJ_id_smime_ct,9L
+
 #define SN_id_smime_aa_receiptRequest		"id-smime-aa-receiptRequest"
 #define NID_id_smime_aa_receiptRequest		212
 #define OBJ_id_smime_aa_receiptRequest		OBJ_id_smime_aa,1L
@@ -972,6 +976,10 @@
 #define SN_id_smime_alg_CMSRC2wrap		"id-smime-alg-CMSRC2wrap"
 #define NID_id_smime_alg_CMSRC2wrap		247
 #define OBJ_id_smime_alg_CMSRC2wrap		OBJ_id_smime_alg,7L
+
+#define SN_id_smime_alg_zlibCompress		"id-smime-alg-zlibCompress"
+#define NID_id_smime_alg_zlibCompress		852
+#define OBJ_id_smime_alg_zlibCompress		OBJ_id_smime_alg,8L
 
 #define SN_id_smime_cd_ldap		"id-smime-cd-ldap"
 #define NID_id_smime_cd_ldap		248
@@ -3453,7 +3461,7 @@
 
 #define SN_id_Gost28147_89_MAC					"gost-mac"
 #define LN_id_Gost28147_89_MAC					"GOST 28147-89 MAC"
-#define NID_id_Gost28147_89_MAC					810
+#define NID_id_Gost28147_89_MAC					853
 #define OBJ_id_Gost28147_89_MAC					OBJ_cryptopro,22L
 
 #define SN_id_GostR3411_94_prf		"prf-gostr3411-94"

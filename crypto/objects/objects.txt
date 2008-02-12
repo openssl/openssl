@@ -251,6 +251,7 @@ id-smime-ct 5		: id-smime-ct-TDTInfo
 id-smime-ct 6		: id-smime-ct-contentInfo
 id-smime-ct 7		: id-smime-ct-DVCSRequestData
 id-smime-ct 8		: id-smime-ct-DVCSResponseData
+id-smime-ct 9		: id-smime-ct-compressedData
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
@@ -297,6 +298,7 @@ id-smime-alg 4		: id-smime-alg-RC2wrap
 id-smime-alg 5		: id-smime-alg-ESDH
 id-smime-alg 6		: id-smime-alg-CMS3DESwrap
 id-smime-alg 7		: id-smime-alg-CMSRC2wrap
+id-smime-alg 8		: id-smime-alg-zlibCompress
 
 # S/MIME Certificate Distribution
 id-smime-cd 1		: id-smime-cd-ldap
