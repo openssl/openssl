@@ -390,11 +390,15 @@ my $current_function;
 			    && do { my @arr = split(',',$line);
 				    my $sz  = substr($1,0,1);
 				    my $last = pop(@arr);
+				    my $conv = sub  {	my $var=shift;
+							if ($var=~s/0x([0-9a-f]+)/0$1h/i) { $var; }
+							else { sprintf"0%Xh",$var; }
+						    };  
 
 				    $sz =~ tr/bvlq/BWDQ/;
 				    $self->{value} = "\tD$sz\t";
-				    for (@arr) { $self->{value} .= sprintf"0%Xh,",oct; }
-				    $self->{value} .= sprintf"0%Xh",oct($last);
+				    for (@arr) { $self->{value} .= &$conv($_).","; }
+				    $self->{value} .= &$conv($last);
 				    last;
 				  };
 		/\.picmeup/ && do { $self->{value} = sprintf"\tDD\t 0%Xh,090000000h",$opcode{$line};
