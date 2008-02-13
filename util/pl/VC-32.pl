@@ -42,6 +42,7 @@ if ($FLAVOR =~ /WIN64/)
 	$bname =~ s/(.*)\.[^\.]$/$1/;
 	$ret=<<___;
 \$(TMP_D)$o$bname.asm: $source
+	set ASM=\$(ASM)
 	\$(PERL) $source \$\@
 
 $target: \$(TMP_D)$o$bname.asm
@@ -171,9 +172,15 @@ $lfile='/out:';
 $shlib_ex_obj="";
 $app_ex_obj="setargv.obj" if ($FLAVOR !~ /CE/);
 if ($FLAVOR =~ /WIN64A/) {
-	$asm='ml64 /c /Cp /Cx';
-	$asm.=" /Zi" if $debug;
-	$afile='/Fo';
+	if (`nasm -v` =~ /NASM version ([0-9]+\.[0-9]+)/ && $1 >= 2.0) {
+		$asm='nasm -f win64';
+		$asm.=' -g' if $debug;
+		$afile='-o ';
+	} else {
+		$asm='ml64 /c /Cp /Cx';
+		$asm.=" /Zi" if $debug;
+		$afile='/Fo';
+	}
 } elsif ($FLAVOR =~ /WIN64I/) {
 	$asm='ias';
 	$asm.=" -d debug" if $debug;

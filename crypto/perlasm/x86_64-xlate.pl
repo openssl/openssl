@@ -65,10 +65,20 @@ my $output = shift;
 	if ($stddev!=$outdev || $stdino!=$outino);
 }
 
+my $win64=1 if ($output =~ /\.asm/);
+
 my $masmref=8 + 50727*2**-32;	# 8.00.50727 shipped with VS2005
-my $masm=$masmref if ($output =~ /\.asm/);
-if ($masm && `ml64 2>&1` =~ m/Version ([0-9]+)\.([0-9]+)(\.([0-9]+))?/)
-{   $masm=$1 + $2*2**-16 + $4*2**-32;   }
+my $masm=$masmref;
+my $PTR=" PTR";
+
+my $nasm=0;
+
+if ($win64)
+{   if ($ENV{ASM} =~ m/nasm/)
+    {	$nasm = 1; $PTR="";   }
+    elsif (`ml64 2>&1` =~ m/Version ([0-9]+)\.([0-9]+)(\.([0-9]+))?/)
+    {	$masm = $1 + $2*2**-16 + $4*2**-32;   }
+}
 
 my $current_segment;
 my $current_function;
@@ -105,7 +115,7 @@ my $current_function;
     }
     sub out {
 	my $self = shift;
-	if (!$masm) {
+	if (!$win64) {
 	    if ($self->{op} eq "movz") {	# movz is pain...
 		sprintf "%s%s%s",$self->{op},$self->{sz},shift;
 	    } elsif ($self->{op} =~ /^set/) { 
@@ -120,14 +130,17 @@ my $current_function;
 	    if ($self->{op} eq "ret") {
 		$self->{op} = "";
 		if ($current_function->{abi} eq "svr4") {
-		    $self->{op} = "mov	rdi,QWORD PTR 8[rsp]\t;WIN64 epilogue\n\t".
-				  "mov	rsi,QWORD PTR 16[rsp]\n\t";
+		    $self->{op} = "mov	rdi,QWORD${PTR}[8+rsp]\t;WIN64 epilogue\n\t".
+				  "mov	rsi,QWORD${PTR}[16+rsp]\n\t";
 	    	}
 		$self->{op} .= "DB\t0F3h,0C3h\t\t;repret";
+	    } elsif ($self->{op} =~ /^j/ && $nasm) {
+		$self->{op} .= " NEAR";
 	    }
 	    $self->{op};
 	}
     }
+    sub mnemonic { shift->{op}; }
 }
 { package const;	# pick up constants, which start with $
     sub re {
@@ -145,7 +158,7 @@ my $current_function;
     sub out {
     	my $self = shift;
 
-	if (!$masm) {
+	if (!$win64) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{value}
 	    $self->{value} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/egi;
@@ -186,7 +199,7 @@ my $current_function;
 	$self->{index} =~ s/^[er](.?[0-9xpi])[d]?$/r\1/;
 	$self->{base}  =~ s/^[er](.?[0-9xpi])[d]?$/r\1/;
 
-	if (!$masm) {
+	if (!$win64) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{label}
 	    $self->{label} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/egi;
@@ -200,22 +213,23 @@ my $current_function;
 		sprintf "%s(%%%s)",	$self->{label},$self->{base};
 	    }
 	} else {
-	    %szmap = ( b=>"BYTE", w=>"WORD", l=>"DWORD", q=>"QWORD" );
+	    %szmap = ( b=>"BYTE$PTR", w=>"WORD$PTR", l=>"DWORD$PTR", q=>"QWORD$PTR" );
 
 	    $self->{label} =~ s/\./\$/g;
 	    $self->{label} =~ s/0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
 
 	    if (defined($self->{index})) {
-		sprintf "%s PTR %s[%s*%d+%s]",$szmap{$sz},
-					$self->{label},
+		sprintf "%s[%s%s*%d+%s]",$szmap{$sz},
+					$self->{label}?"$self->{label}+":"",
 					$self->{index},$self->{scale},
 					$self->{base};
 	    } elsif ($self->{base} eq "rip") {
-		sprintf "%s PTR %s",$szmap{$sz},$self->{label};
+		sprintf "%s[%s]",$szmap{$sz},$self->{label};
 	    } else {
-		sprintf "%s PTR %s[%s]",$szmap{$sz},
-					$self->{label},$self->{base};
+		sprintf "%s[%s%s]",$szmap{$sz},
+					$self->{label}?"$self->{label}+":"",
+					$self->{base};
 	    }
 	}
     }
@@ -252,7 +266,7 @@ my $current_function;
     }
     sub out {
     	my $self = shift;
-	sprintf $masm?"%s":"%%%s",$self->{value};
+	sprintf $win64?"%s":"%%%s",$self->{value};
     }
 }
 { package label;	# pick up labels, which end with :
@@ -266,32 +280,32 @@ my $current_function;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
-	    $self->{value} =~ s/\.L/\$L/ if ($masm);
+	    $self->{value} =~ s/\.L/\$L/ if ($win64);
 	}
 	$ret;
     }
     sub out {
 	my $self = shift;
 
-	if (!$masm) {
+	if (!$win64) {
 	    $self->{value};
 	} elsif ($self->{value} ne "$current_function->{name}:") {
 	    $self->{value};
 	} elsif ($current_function->{abi} eq "svr4") {
-	    my $func =	"$current_function->{name}	PROC\n".
-			"	mov	QWORD PTR 8[rsp],rdi\t;WIN64 prologue\n".
-			"	mov	QWORD PTR 16[rsp],rsi\n";
+	    my $func =	"$current_function->{name}".($nasm?":":"\tPROC")."\n".
+			"	mov	QWORD${PTR}[8+rsp],rdi\t;WIN64 prologue\n".
+			"	mov	QWORD${PTR}[16+rsp],rsi\n";
 	    my $narg = $current_function->{narg};
 	    $narg=6 if (!defined($narg));
 	    $func .= "	mov	rdi,rcx\n" if ($narg>0);
 	    $func .= "	mov	rsi,rdx\n" if ($narg>1);
 	    $func .= "	mov	rdx,r8\n"  if ($narg>2);
 	    $func .= "	mov	rcx,r9\n"  if ($narg>3);
-	    $func .= "	mov	r8,QWORD PTR 40[rsp]\n" if ($narg>4);
-	    $func .= "	mov	r9,QWORD PTR 48[rsp]\n" if ($narg>5);
+	    $func .= "	mov	r8,QWORD${PTR}[40+rsp]\n" if ($narg>4);
+	    $func .= "	mov	r9,QWORD${PTR}[48+rsp]\n" if ($narg>5);
 	    $func .= "\n";
 	} else {
-	   "$current_function->{name}	PROC";
+	   "$current_function->{name}".($nasm?":":"\tPROC");
 	}
     }
 }
@@ -306,7 +320,7 @@ my $current_function;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
-	    $self->{value} =~ s/\.L/\$L/g if ($masm);
+	    $self->{value} =~ s/\.L/\$L/g if ($win64);
 	}
 	$ret;
     }
@@ -332,7 +346,7 @@ my $current_function;
 			"%r14"=>0x01358d4c,	"%r15"=>0x013d8d4c	);
 
 	if ($line =~ /^\s*(\.\w+)/) {
-	    if (!$masm) {
+	    if (!$win64) {
 		$self->{value} = $1;
 		$line =~ s/\@abi\-omnipotent/\@function/;
 		$line =~ s/\@function.*/\@function/;
@@ -356,16 +370,25 @@ my $current_function;
 	    SWITCH: for ($dir) {
 		/\.(text)/
 			    && do { my $v=undef;
-				    $v="$current_segment\tENDS\n" if ($current_segment);
-				    $current_segment = "_$1\$";
-				    $current_segment =~ tr/[a-z]/[A-Z]/;
-				    $v.="$current_segment\tSEGMENT ";
-				    $v.=$masm>=$masmref ? "ALIGN(64)" : "PAGE";
-				    $v.=" 'CODE'";
+				    if ($nasm) {
+					$v ="section	.$1 code align=64\n";
+					$v.="default	rel\n";
+					$v.="%define	PUBLIC global";
+				    } else {
+					$v="$current_segment\tENDS\n" if ($current_segment);
+					$current_segment = "_$1\$";
+					$current_segment =~ tr/[a-z]/[A-Z]/;
+					$v.="$current_segment\tSEGMENT ";
+					$v.=$masm>=$masmref ? "ALIGN(64)" : "PAGE";
+					$v.=" 'CODE'";
+				    }
 				    $self->{value} = $v;
 				    last;
 				  };
-		/\.extern/  && do { $self->{value} = "EXTRN\t".$line.":BYTE"; last;  };
+		/\.extern/  && do { $self->{value}  = "EXTERN\t".$line;
+				    $self->{value} .= ":BYTE" if (!$nasm);
+				    last;
+				  };
 		/\.globl/   && do { $self->{value} = "PUBLIC\t".$line; last; };
 		/\.type/    && do { ($sym,$type,$narg) = split(',',$line);
 				    if ($type eq "\@function") {
@@ -380,7 +403,7 @@ my $current_function;
 				    last;
 				  };
 		/\.size/    && do { if (defined($current_function)) {
-					$self->{value}="$current_function->{name}\tENDP";
+					$self->{value}="$current_function->{name}\tENDP" if(!$nasm);
 					undef $current_function;
 				    }
 				    last;
@@ -390,14 +413,18 @@ my $current_function;
 			    && do { my @arr = split(',',$line);
 				    my $sz  = substr($1,0,1);
 				    my $last = pop(@arr);
+				    my $conv = sub  {	my $var=shift;
+							if ($var=~s/0x([0-9a-f]+)/0$1h/i) { $var; }
+							else { sprintf"0%Xh",$var; }
+						    };  
 
 				    $sz =~ tr/bvlq/BWDQ/;
 				    $self->{value} = "\tD$sz\t";
-				    for (@arr) { $self->{value} .= sprintf"0%Xh,",oct; }
-				    $self->{value} .= sprintf"0%Xh",oct($last);
+				    for (@arr) { $self->{value} .= &$conv($_).","; }
+				    $self->{value} .= &$conv($last);
 				    last;
 				  };
-		/\.picmeup/ && do { $self->{value} = sprintf"\tDD\t 0%Xh,090000000h",$opcode{$line};
+		/\.picmeup/ && do { $self->{value} = sprintf"\tDD\t0%Xh,090000000h",$opcode{$line};
 				    last;
 				  };
 		/\.asciz/   && do { if ($line =~ /^"(.*)"$/) {
@@ -463,10 +490,11 @@ while($line=<>) {
 	$sz=opcode->size();
 
 	if (defined($dst)) {
-	    if (!$masm) {
+	    if (!$win64) {
 		printf "\t%s\t%s,%s",	$opcode->out($dst->size()),
 					$src->out($sz),$dst->out($sz);
 	    } else {
+		undef $sz if ($nasm && $opcode->mnemonic() eq "lea");
 		printf "\t%s\t%s,%s",	$opcode->out(),
 					$dst->out($sz),$src->out($sz);
 	    }
@@ -480,7 +508,7 @@ while($line=<>) {
     print $line,"\n";
 }
 
-print "\n$current_segment\tENDS\nEND\n" if ($masm);
+print "\n$current_segment\tENDS\nEND\n" if ($current_segment);
 
 close STDOUT;
 
