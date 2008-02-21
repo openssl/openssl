@@ -20,6 +20,7 @@
 
 (c-add-style "eay"
 	     '((c-basic-offset . 8)
+	       (indent-tabs-mode . t)
 	       (c-comment-only-line-offset . 0)
 	       (c-hanging-braces-alist)
 	       (c-offsets-alist	. ((defun-open . +)
