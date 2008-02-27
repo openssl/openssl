@@ -54,6 +54,7 @@ bn_mul_mont:
 	push	%r14
 	push	%r15
 
+	mov	${num}d,${num}d
 	lea	2($num),%rax
 	mov	%rsp,%rbp
 	neg	%rax
