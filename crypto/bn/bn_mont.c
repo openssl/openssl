@@ -425,6 +425,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		BIGNUM tmod;
 		BN_ULONG buf[2];
 
+		BN_init(&tmod);
 		tmod.d=buf;
 		tmod.dmax=2;
 		tmod.neg=0;

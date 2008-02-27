@@ -610,6 +610,10 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Fix BN flag handling in RSA_eay_mod_exp() and BN_MONT_CTX_set()
+     to get the expected BN_FLG_CONSTTIME behavior.
+     [Bodo Moeller (Google)]
+  
   *) Netware support:
 
      - fixed wrong usage of ioctlsocket() when build for LIBC BSD sockets
