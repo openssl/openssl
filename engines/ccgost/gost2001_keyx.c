@@ -114,7 +114,7 @@ int pkey_gost2001_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
  * Implementation of GOST2001 key transport, cryptopo variation 
  */
 
-int pkey_GOST01cp_encrypt (EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_len, const unsigned char *key,size_t key_len) 
+int pkey_GOST01cp_encrypt(EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_len, const unsigned char *key,size_t key_len) 
 	{
 	GOST_KEY_TRANSPORT *gkt=NULL; 
 	EVP_PKEY *pubk = EVP_PKEY_CTX_get0_pkey(pctx);
@@ -195,7 +195,7 @@ int pkey_GOST01cp_encrypt (EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_l
 	if (key_is_ephemeral) {	
 		if (!X509_PUBKEY_set(&gkt->key_agreement_info->ephem_key,out?sec_key:pubk))
 			{
-			GOSTerr(GOST_F_MAKE_RFC4490_KEYTRANSPORT_2001,
+			GOSTerr(GOST_F_PKEY_GOST01CP_ENCRYPT,
 					GOST_R_CANNOT_PACK_EPHEMERAL_KEY);
 			goto err;
 			}	
@@ -215,7 +215,7 @@ int pkey_GOST01cp_encrypt (EVP_PKEY_CTX *pctx, unsigned char *out, size_t *out_l
  * EVP_PKEY_METHOD callback decrypt  
  * Implementation of GOST2001 key transport, cryptopo variation 
  */
-int pkey_GOST01cp_decrypt (EVP_PKEY_CTX *pctx, unsigned char *key, size_t * key_len, const unsigned char *in, size_t in_len)
+int pkey_GOST01cp_decrypt(EVP_PKEY_CTX *pctx, unsigned char *key, size_t * key_len, const unsigned char *in, size_t in_len)
 	{
 	const unsigned char *p = in;
 	EVP_PKEY *priv = EVP_PKEY_CTX_get0_pkey(pctx);
@@ -236,7 +236,7 @@ int pkey_GOST01cp_decrypt (EVP_PKEY_CTX *pctx, unsigned char *key, size_t * key_
 		in_len);
 	if (!gkt)
 		{
-		GOSTerr(GOST_F_PKCS7_GOST94CP_KEY_TRANSPORT_DECRYPT,GOST_R_ERROR_PARSING_KEY_TRANSPORT_INFO);
+		GOSTerr(GOST_F_PKEY_GOST01CP_DECRYPT,GOST_R_ERROR_PARSING_KEY_TRANSPORT_INFO);
 		return -1;
 		}	
     
@@ -244,7 +244,7 @@ int pkey_GOST01cp_decrypt (EVP_PKEY_CTX *pctx, unsigned char *key, size_t * key_
 	if (!eph_key) {
 		eph_key = EVP_PKEY_CTX_get0_peerkey(pctx);
 		if (! eph_key) {
-			GOSTerr(GOST_F_PKEY_GOST94CP_DECRYPT,
+			GOSTerr(GOST_F_PKEY_GOST01CP_DECRYPT,
 				GOST_R_NO_PEER_KEY);
 			goto err;
 		}
@@ -264,7 +264,7 @@ int pkey_GOST01cp_decrypt (EVP_PKEY_CTX *pctx, unsigned char *key, size_t * key_
 		EVP_PKEY_get0(priv),wrappedKey);
 	if (!keyUnwrapCryptoPro(&ctx,sharedKey,wrappedKey,key))
 		{
-		GOSTerr(GOST_F_PKCS7_GOST94CP_KEY_TRANSPORT_DECRYPT,
+		GOSTerr(GOST_F_PKEY_GOST01CP_DECRYPT,
 			GOST_R_ERROR_COMPUTING_SHARED_KEY);
 		goto err;
 		}	

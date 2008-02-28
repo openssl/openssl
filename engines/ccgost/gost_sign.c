@@ -197,7 +197,7 @@ int gost94_compute_public(DSA *dsa)
 	BN_CTX *ctx = BN_CTX_new();
 	if (!dsa->g)
 		{
-		GOSTerr(GOST_F_GOST_COMPUTE_PUBLIC,GOST_R_KEY_IS_NOT_INITALIZED);
+		GOSTerr(GOST_F_GOST94_COMPUTE_PUBLIC,GOST_R_KEY_IS_NOT_INITALIZED);
 		return 0;
 		}	
 	/* Compute public key  y = a^x mod p */

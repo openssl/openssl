@@ -205,7 +205,7 @@ int gost2001_do_verify(const unsigned char *dgst,int dgst_len,
 	if (BN_is_zero(sig->s) || BN_is_zero(sig->r) ||
 		(BN_cmp(sig->s,order)>=1) || (BN_cmp(sig->r,order)>=1)) 
 		{
-		GOSTerr(GOST_F_GOST_DO_VERIFY,GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q);
+		GOSTerr(GOST_F_GOST2001_DO_VERIFY,GOST_R_SIGNATURE_PARTS_GREATER_THAN_Q);
 		goto err;
 
 		}
@@ -325,7 +325,7 @@ int gost2001_keygen(EC_KEY *ec)
 		{
 		if (!BN_rand_range(d,order)) 
 			{
-			GOSTerr(GOST_F_GOST2001_DO_SIGN,GOST_R_RANDOM_NUMBER_GENERATOR_FAILED);
+			GOSTerr(GOST_F_GOST2001_KEYGEN,GOST_R_RANDOM_NUMBER_GENERATOR_FAILED);
 			BN_free(d);
 			BN_free(order);
 			return 0;

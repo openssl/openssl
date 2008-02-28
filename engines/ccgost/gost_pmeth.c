@@ -55,7 +55,7 @@ static void pkey_gost_cleanup (EVP_PKEY_CTX *ctx)
 	}	
 
 /* --------------------- control functions  ------------------------------*/
-static int pkey_gost_ctrl (EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+static int pkey_gost_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	{
 	struct gost_pmeth_data *pctx = (struct gost_pmeth_data*)EVP_PKEY_CTX_get_data(ctx);
 	switch (type)
@@ -241,13 +241,13 @@ static int pkey_gost_ctrl01_str(EVP_PKEY_CTX *ctx,
 
 
 /* Generates Gost_R3410_94_cp key */
-static int pkey_gost94cp_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+static int pkey_gost94cp_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 	DSA *dsa=NULL;
 	if (data->sign_param_nid == NID_undef)
 		{
-			GOSTerr(GOST_F_PKEY_GOST94_KEYGEN,
+			GOSTerr(GOST_F_PKEY_GOST94CP_KEYGEN,
 				GOST_R_NO_PARAMETERS_SET);
 			return 0;
 		}
@@ -263,13 +263,13 @@ static int pkey_gost94cp_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	}
 
 /* Generates GOST_R3410 2001 key and assigns it using specified type */
-static int pkey_gost01cp_keygen (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+static int pkey_gost01cp_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 	EC_KEY *ec=NULL;
 	if (data->sign_param_nid == NID_undef)
 		{
-			GOSTerr(GOST_F_PKEY_GOST01_KEYGEN,
+			GOSTerr(GOST_F_PKEY_GOST01CP_KEYGEN,
 				GOST_R_NO_PARAMETERS_SET);
 			return 0;
 		}
@@ -400,7 +400,7 @@ static int pkey_gost_mac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 	return 1;
 	}
 	
-static int pkey_gost_mac_ctrl (EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+static int pkey_gost_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 	{
 	struct gost_mac_pmeth_data *data =
 (struct gost_mac_pmeth_data*)EVP_PKEY_CTX_get_data(ctx);

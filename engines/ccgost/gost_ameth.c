@@ -294,7 +294,7 @@ static int priv_decode_gost( EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
 		ASN1_OCTET_STRING *s = d2i_ASN1_OCTET_STRING(NULL,&p,priv_len);
 		if (!s||s->length !=32) 
 			{
-			GOSTerr(GOST_F_PRIV_DECODE_GOST_94,
+			GOSTerr(GOST_F_PRIV_DECODE_GOST,
 				EVP_R_DECODE_ERROR);
 			return 0;	
 			}
@@ -313,7 +313,7 @@ static int priv_decode_gost( EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf)
 		ASN1_INTEGER_free(priv_key);
 		if (!ret)
 			{
-			GOSTerr(GOST_F_PRIV_DECODE_GOST_94,
+			GOSTerr(GOST_F_PRIV_DECODE_GOST,
 				EVP_R_DECODE_ERROR);
 			return 0;	
 			}
@@ -528,7 +528,7 @@ static int param_copy_gost01(EVP_PKEY *to, const EVP_PKEY *from)
 		}	
 	if (!efrom) 
 		{
-		GOSTerr(GOST_F_PARAM_COPY_GOST94,
+		GOSTerr(GOST_F_PARAM_COPY_GOST01,
 			GOST_R_KEY_PARAMETERS_MISSING);
 		return 0;
 		}	
@@ -653,7 +653,7 @@ static int pub_decode_gost01(EVP_PKEY *pk,X509_PUBKEY *pub)
 	octet = d2i_ASN1_OCTET_STRING(NULL,&pubkey_buf,pub_len);
 	if (!octet) 
 		{
-		GOSTerr(GOST_F_PUB_DECODE_GOST94,ERR_R_MALLOC_FAILURE);
+		GOSTerr(GOST_F_PUB_DECODE_GOST01,ERR_R_MALLOC_FAILURE);
 		return 0;
 		}	
 	databuf = OPENSSL_malloc(octet->length);

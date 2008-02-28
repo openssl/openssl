@@ -198,7 +198,7 @@ int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 /* EVP_PLEY_METHOD callback decrypt for
  * GOST R 34.10-94 cryptopro modification
  */
-int pkey_GOST94cp_decrypt (EVP_PKEY_CTX *ctx, unsigned char *key, size_t *key_len,const unsigned char *in, size_t in_len) {
+int pkey_GOST94cp_decrypt(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *key_len,const unsigned char *in, size_t in_len) {
 	const unsigned char *p = in;
 	GOST_KEY_TRANSPORT *gkt = NULL;
 	unsigned char wrappedKey[44];
