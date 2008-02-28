@@ -199,6 +199,10 @@
      authentication-only ciphersuites.
      [Bodo Moeller]
 
+  *) Update the SSL_get_shared_ciphers() fix CVE-2006-3738 which was
+     not complete and could lead to a possible single byte overflow
+     (CVE-2007-5135) [Ben Laurie]
+
  Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
 
   *) Since AES128 and AES256 (and similarly Camellia128 and
