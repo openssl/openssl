@@ -354,7 +354,7 @@ static int def_add_index(EX_CLASS_ITEM *item, long argl, void *argp,
 			}
 		}
 	toret = item->meth_num++;
-	sk_CRYPTO_EX_DATA_FUNCS_set(item->meth, toret, a);
+	(void)sk_CRYPTO_EX_DATA_FUNCS_set(item->meth, toret, a);
 err:
 	CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
 	return toret;

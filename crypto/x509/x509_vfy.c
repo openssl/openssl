@@ -216,7 +216,7 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 				 */
 				X509_free(x);
 				x = xtmp;
-				sk_X509_set(ctx->chain, i - 1, x);
+				(void)sk_X509_set(ctx->chain, i - 1, x);
 				ctx->last_untrusted=0;
 				}
 			}
