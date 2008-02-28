@@ -100,7 +100,7 @@ int ASN1_TYPE_set1(ASN1_TYPE *a, int type, const void *value)
 	else
 		{
 		ASN1_STRING *sdup;
-		sdup = ASN1_STRING_dup(sdup);
+		sdup = ASN1_STRING_dup(value);
 		if (!sdup)
 			return 0;
 		ASN1_TYPE_set(a, type, sdup);

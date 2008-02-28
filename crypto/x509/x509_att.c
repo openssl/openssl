@@ -286,8 +286,8 @@ int X509_ATTRIBUTE_set1_object(X509_ATTRIBUTE *attr, const ASN1_OBJECT *obj)
 int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *data, int len)
 {
 	ASN1_TYPE *ttmp;
-	ASN1_STRING *stmp;
-	int atype;
+	ASN1_STRING *stmp = NULL;
+	int atype = 0;
 	if (!attr) return 0;
 	if(attrtype & MBSTRING_FLAG) {
 		stmp = ASN1_STRING_set_by_NID(NULL, data, len, attrtype,
