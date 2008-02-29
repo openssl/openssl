@@ -849,5 +849,4 @@ id_GostR3411_94_with_GostR3410_2001_cc		848
 id_GostR3410_2001_ParamSet_cc		849
 hmac		850
 id_smime_ct_compressedData		851
-id_smime_alg_zlibCompress		852
-id_Gost28147_89_MAC					853
+id_Gost28147_89_MAC					852

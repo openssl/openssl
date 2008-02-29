@@ -298,7 +298,6 @@ id-smime-alg 4		: id-smime-alg-RC2wrap
 id-smime-alg 5		: id-smime-alg-ESDH
 id-smime-alg 6		: id-smime-alg-CMS3DESwrap
 id-smime-alg 7		: id-smime-alg-CMSRC2wrap
-id-smime-alg 8		: id-smime-alg-zlibCompress
 
 # S/MIME Certificate Distribution
 id-smime-cd 1		: id-smime-cd-ldap
@@ -794,7 +793,7 @@ mime-mhs-headings 2	: id-hex-multipart-message : id-hex-multipart-message
 !Cname rle-compression
 1 1 1 1 666 1		: RLE			: run length compression
 !Cname zlib-compression
-1 1 1 1 666 2		: ZLIB			: zlib compression
+id-smime-alg 8		: ZLIB			: zlib compression
 
 # AES aka Rijndael
 

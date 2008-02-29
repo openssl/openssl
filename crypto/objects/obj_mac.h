@@ -977,10 +977,6 @@
 #define NID_id_smime_alg_CMSRC2wrap		247
 #define OBJ_id_smime_alg_CMSRC2wrap		OBJ_id_smime_alg,7L
 
-#define SN_id_smime_alg_zlibCompress		"id-smime-alg-zlibCompress"
-#define NID_id_smime_alg_zlibCompress		852
-#define OBJ_id_smime_alg_zlibCompress		OBJ_id_smime_alg,8L
-
 #define SN_id_smime_cd_ldap		"id-smime-cd-ldap"
 #define NID_id_smime_cd_ldap		248
 #define OBJ_id_smime_cd_ldap		OBJ_id_smime_cd,1L
@@ -2404,7 +2400,7 @@
 #define SN_zlib_compression		"ZLIB"
 #define LN_zlib_compression		"zlib compression"
 #define NID_zlib_compression		125
-#define OBJ_zlib_compression		1L,1L,1L,1L,666L,2L
+#define OBJ_zlib_compression		OBJ_id_smime_alg,8L
 
 #define OBJ_csor		2L,16L,840L,1L,101L,3L
 
@@ -3461,7 +3457,7 @@
 
 #define SN_id_Gost28147_89_MAC					"gost-mac"
 #define LN_id_Gost28147_89_MAC					"GOST 28147-89 MAC"
-#define NID_id_Gost28147_89_MAC					853
+#define NID_id_Gost28147_89_MAC					852
 #define OBJ_id_Gost28147_89_MAC					OBJ_cryptopro,22L
 
 #define SN_id_GostR3411_94_prf		"prf-gostr3411-94"
