@@ -527,6 +527,29 @@ evp_acnf.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 evp_acnf.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 evp_acnf.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 evp_acnf.o: ../../include/openssl/ui_compat.h ../cryptlib.h evp_acnf.c
+evp_cnf.o: ../../e_os.h ../../include/openssl/aes.h
+evp_cnf.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+evp_cnf.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
+evp_cnf.o: ../../include/openssl/buffer.h ../../include/openssl/cast.h
+evp_cnf.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+evp_cnf.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+evp_cnf.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+evp_cnf.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
+evp_cnf.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+evp_cnf.o: ../../include/openssl/fips.h ../../include/openssl/idea.h
+evp_cnf.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
+evp_cnf.o: ../../include/openssl/md4.h ../../include/openssl/md5.h
+evp_cnf.o: ../../include/openssl/mdc2.h ../../include/openssl/obj_mac.h
+evp_cnf.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+evp_cnf.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+evp_cnf.o: ../../include/openssl/pkcs7.h ../../include/openssl/rc2.h
+evp_cnf.o: ../../include/openssl/rc4.h ../../include/openssl/rc5.h
+evp_cnf.o: ../../include/openssl/ripemd.h ../../include/openssl/rsa.h
+evp_cnf.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+evp_cnf.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+evp_cnf.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+evp_cnf.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+evp_cnf.o: ../../include/openssl/x509v3.h ../cryptlib.h evp_cnf.c
 evp_enc.o: ../../e_os.h ../../include/openssl/aes.h
 evp_enc.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 evp_enc.o: ../../include/openssl/blowfish.h ../../include/openssl/bn.h
