@@ -66,10 +66,6 @@
 #include <openssl/x509.h>
 #include <openssl/err.h>
 
-ASN1_ITEM_TEMPLATE(X509_ALGORS) = 
-	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
-ASN1_ITEM_TEMPLATE_END(X509_ALGORS)
-
 int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si, STACK_OF(X509_ALGOR) *cap)
 {
 	ASN1_STRING *seq;

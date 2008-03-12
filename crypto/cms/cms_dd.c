@@ -1,9 +1,9 @@
-/* p5_pbe.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+/* crypto/cms/cms_dd.c */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,100 +49,103 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
 
-#include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/rand.h>
+#include <openssl/pem.h>
+#include <openssl/x509v3.h>
+#include <openssl/err.h>
+#include <openssl/cms.h>
+#include "cms_lcl.h"
+#include "asn1_locl.h"
 
-/* PKCS#5 password based encryption structure */
+DECLARE_ASN1_ITEM(CMS_DigestedData)
 
-ASN1_SEQUENCE(PBEPARAM) = {
-	ASN1_SIMPLE(PBEPARAM, salt, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(PBEPARAM, iter, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(PBEPARAM)
+/* CMS DigestedData Utilities */
 
-IMPLEMENT_ASN1_FUNCTIONS(PBEPARAM)
-
-
-/* Set an algorithm identifier for a PKCS#5 PBE algorithm */
-
-int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
-				const unsigned char *salt, int saltlen)
+CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
 	{
-	PBEPARAM *pbe=NULL;
-	ASN1_STRING *pbe_str=NULL;
-	unsigned char *sstr;
+	CMS_ContentInfo *cms;
+	CMS_DigestedData *dd;
+	cms = CMS_ContentInfo_new();
+	if (!cms)
+		return NULL;
 
-	pbe = PBEPARAM_new();
-	if (!pbe)
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	if(iter <= 0)
-		iter = PKCS5_DEFAULT_ITER;
-	if (!ASN1_INTEGER_set(pbe->iter, iter))
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	if (!saltlen)
-		saltlen = PKCS5_SALT_LEN;
-	if (!ASN1_STRING_set(pbe->salt, NULL, saltlen))
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	sstr = ASN1_STRING_data(pbe->salt);
-	if (salt)
-		memcpy(sstr, salt, saltlen);
-	else if (RAND_pseudo_bytes(sstr, saltlen) < 0)
+	dd = M_ASN1_new_of(CMS_DigestedData);
+
+	if (!dd)
 		goto err;
 
-	if(!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str))
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
+	cms->contentType = OBJ_nid2obj(NID_pkcs7_digest);
+	cms->d.digestedData = dd;
 
-	PBEPARAM_free(pbe);
-	pbe = NULL;
+	dd->version = 0;
+	dd->encapContentInfo->eContentType = OBJ_nid2obj(NID_pkcs7_data);
 
-	if (X509_ALGOR_set0(algor, OBJ_nid2obj(alg), V_ASN1_SEQUENCE, pbe_str))
-		return 1;
+	cms_DigestAlgorithm_set(dd->digestAlgorithm, md);
 
-err:
-	if (pbe != NULL)
-		PBEPARAM_free(pbe);
-	if (pbe_str != NULL)
-		ASN1_STRING_free(pbe_str);
-	return 0;
+	return cms;
+
+	err:
+
+	if (cms)
+		CMS_ContentInfo_free(cms);
+
+	return NULL;
 	}
 
-/* Return an algorithm identifier for a PKCS#5 PBE algorithm */
-
-X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
-				const unsigned char *salt, int saltlen)
+BIO *cms_DigestedData_init_bio(CMS_ContentInfo *cms)
 	{
-	X509_ALGOR *ret;
-	ret = X509_ALGOR_new();
-	if (!ret)
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
+	CMS_DigestedData *dd;
+	if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_digest)
 		return NULL;
+	dd = cms->d.digestedData;
+	return cms_DigestAlgorithm_init_bio(dd->digestAlgorithm);
+	}
+
+int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
+	{
+	EVP_MD_CTX mctx;
+	unsigned char md[EVP_MAX_MD_SIZE];
+	unsigned int mdlen;
+	int r = 0;
+	CMS_DigestedData *dd;
+	EVP_MD_CTX_init(&mctx);
+
+	dd = cms->d.digestedData;
+
+	if (!cms_DigestAlgorithm_find_ctx(&mctx, chain, dd->digestAlgorithm))
+		goto err;
+
+	if (EVP_DigestFinal_ex(&mctx, md, &mdlen) <= 0)
+		goto err;
+
+	if (verify)
+		{
+		if (mdlen != dd->digest->length)
+			{
+			CMSerr(CMS_F_CMS_DIGESTEDDATA_DO_FINAL,
+				CMS_R_MESSAGEDIGEST_WRONG_LENGTH);
+			goto err;
+			}
+
+		if (memcmp(md, dd->digest->data, mdlen))
+			CMSerr(CMS_F_CMS_DIGESTEDDATA_DO_FINAL,
+				CMS_R_VERIFICATION_FAILURE);
+		else
+			r = 1;
+		}
+	else
+		{
+		if (!ASN1_STRING_set(dd->digest, md, mdlen))
+			goto err;
+		r = 1;
 		}
 
-	if (PKCS5_pbe_set0_algor(ret, alg, iter, salt, saltlen)) 
-		return ret;
+	err:
+	EVP_MD_CTX_cleanup(&mctx);
 
-	X509_ALGOR_free(ret);
-	return NULL;
+	return r;
+
 	}

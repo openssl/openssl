@@ -235,6 +235,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		case EVP_PKEY_CTRL_PEER_KEY:
 		/* Default behaviour is OK */
 		case EVP_PKEY_CTRL_PKCS7_SIGN:
+		case EVP_PKEY_CTRL_CMS_SIGN:
 		return 1;
 
 		default:

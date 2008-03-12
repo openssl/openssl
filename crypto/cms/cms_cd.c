@@ -1,9 +1,9 @@
-/* p5_pbe.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+/* crypto/cms/cms_cd.c */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,100 +49,87 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
 
-#include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/rand.h>
+#include <openssl/pem.h>
+#include <openssl/x509v3.h>
+#include <openssl/err.h>
+#include <openssl/cms.h>
+#include <openssl/bio.h>
+#include <openssl/comp.h>
+#include "cms_lcl.h"
+#include "asn1_locl.h"
 
-/* PKCS#5 password based encryption structure */
+DECLARE_ASN1_ITEM(CMS_CompressedData)
 
-ASN1_SEQUENCE(PBEPARAM) = {
-	ASN1_SIMPLE(PBEPARAM, salt, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(PBEPARAM, iter, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(PBEPARAM)
+#ifdef ZLIB
 
-IMPLEMENT_ASN1_FUNCTIONS(PBEPARAM)
+/* CMS CompressedData Utilities */
 
-
-/* Set an algorithm identifier for a PKCS#5 PBE algorithm */
-
-int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
-				const unsigned char *salt, int saltlen)
+CMS_ContentInfo *cms_CompressedData_create(int comp_nid)
 	{
-	PBEPARAM *pbe=NULL;
-	ASN1_STRING *pbe_str=NULL;
-	unsigned char *sstr;
-
-	pbe = PBEPARAM_new();
-	if (!pbe)
+	CMS_ContentInfo *cms;
+	CMS_CompressedData *cd;
+	/* Will need something cleverer if there is ever more than one
+	 * compression algorithm or parameters have some meaning...
+	 */
+	if (comp_nid != NID_zlib_compression)
 		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	if(iter <= 0)
-		iter = PKCS5_DEFAULT_ITER;
-	if (!ASN1_INTEGER_set(pbe->iter, iter))
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	if (!saltlen)
-		saltlen = PKCS5_SALT_LEN;
-	if (!ASN1_STRING_set(pbe->salt, NULL, saltlen))
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	sstr = ASN1_STRING_data(pbe->salt);
-	if (salt)
-		memcpy(sstr, salt, saltlen);
-	else if (RAND_pseudo_bytes(sstr, saltlen) < 0)
-		goto err;
-
-	if(!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str))
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-
-	PBEPARAM_free(pbe);
-	pbe = NULL;
-
-	if (X509_ALGOR_set0(algor, OBJ_nid2obj(alg), V_ASN1_SEQUENCE, pbe_str))
-		return 1;
-
-err:
-	if (pbe != NULL)
-		PBEPARAM_free(pbe);
-	if (pbe_str != NULL)
-		ASN1_STRING_free(pbe_str);
-	return 0;
-	}
-
-/* Return an algorithm identifier for a PKCS#5 PBE algorithm */
-
-X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
-				const unsigned char *salt, int saltlen)
-	{
-	X509_ALGOR *ret;
-	ret = X509_ALGOR_new();
-	if (!ret)
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
+		CMSerr(CMS_F_CMS_COMPRESSEDDATA_CREATE,
+				CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
 		return NULL;
 		}
+	cms = CMS_ContentInfo_new();
+	if (!cms)
+		return NULL;
 
-	if (PKCS5_pbe_set0_algor(ret, alg, iter, salt, saltlen)) 
-		return ret;
+	cd = M_ASN1_new_of(CMS_CompressedData);
 
-	X509_ALGOR_free(ret);
+	if (!cd)
+		goto err;
+
+	cms->contentType = OBJ_nid2obj(NID_id_smime_ct_compressedData);
+	cms->d.compressedData = cd;
+
+	cd->version = 0;
+
+	X509_ALGOR_set0(cd->compressionAlgorithm,
+			OBJ_nid2obj(NID_zlib_compression),
+			V_ASN1_UNDEF, NULL);
+
+	cd->encapContentInfo->eContentType = OBJ_nid2obj(NID_pkcs7_data);
+
+	return cms;
+
+	err:
+
+	if (cms)
+		CMS_ContentInfo_free(cms);
+
 	return NULL;
 	}
+
+BIO *cms_CompressedData_init_bio(CMS_ContentInfo *cms)
+	{
+	CMS_CompressedData *cd;
+	ASN1_OBJECT *compoid;
+	if (OBJ_obj2nid(cms->contentType) != NID_id_smime_ct_compressedData)
+		{
+		CMSerr(CMS_F_CMS_COMPRESSEDDATA_INIT_BIO,
+				CMS_R_CONTENT_TYPE_NOT_COMPRESSED_DATA);
+		return NULL;
+		}
+	cd = cms->d.compressedData;
+	X509_ALGOR_get0(&compoid, NULL, NULL, cd->compressionAlgorithm);
+	if (OBJ_obj2nid(compoid) != NID_zlib_compression)
+		{
+		CMSerr(CMS_F_CMS_COMPRESSEDDATA_INIT_BIO,
+				CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
+		return NULL;
+		}
+	return BIO_new(BIO_f_zlib());
+	}
+
+#endif

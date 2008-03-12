@@ -927,6 +927,8 @@ void EVP_PBE_cleanup(void);
 #define ASN1_PKEY_CTRL_PKCS7_SIGN	0x1
 #define ASN1_PKEY_CTRL_PKCS7_ENCRYPT	0x2
 #define ASN1_PKEY_CTRL_DEFAULT_MD_NID	0x3
+#define ASN1_PKEY_CTRL_CMS_SIGN		0x5
+#define ASN1_PKEY_CTRL_CMS_ENVELOPE	0x7
 
 int EVP_PKEY_asn1_get_count(void);
 const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx);
@@ -1018,6 +1020,10 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 
 /* Used by GOST key encryption in TLS */
 #define EVP_PKEY_CTRL_SET_IV 		8
+
+#define EVP_PKEY_CTRL_CMS_ENCRYPT	9
+#define EVP_PKEY_CTRL_CMS_DECRYPT	10
+#define EVP_PKEY_CTRL_CMS_SIGN		11
 
 #define EVP_PKEY_ALG_CTRL		0x1000
 

@@ -256,6 +256,14 @@ static int check_pem(const char *nm, const char *name)
 	if(!strcmp(nm, PEM_STRING_X509) &&
 		!strcmp(name, PEM_STRING_PKCS7)) return 1;
 
+#ifndef OPENSSL_NO_CMS
+	if(!strcmp(nm, PEM_STRING_X509) &&
+		!strcmp(name, PEM_STRING_CMS)) return 1;
+	/* Allow CMS to be read from PKCS#7 headers */
+	if(!strcmp(nm, PEM_STRING_PKCS7) &&
+		!strcmp(name, PEM_STRING_CMS)) return 1;
+#endif
+
 	return 0;
 }
 

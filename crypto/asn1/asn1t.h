@@ -169,6 +169,9 @@ extern "C" {
 #define ASN1_NDEF_SEQUENCE(tname) \
 	ASN1_SEQUENCE(tname)
 
+#define ASN1_NDEF_SEQUENCE_cb(tname, cb) \
+	ASN1_SEQUENCE_cb(tname, cb)
+
 #define ASN1_SEQUENCE_cb(tname, cb) \
 	static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
 	ASN1_SEQUENCE(tname)
@@ -207,6 +210,18 @@ extern "C" {
 	;\
 	ASN1_ITEM_start(tname) \
 		ASN1_ITYPE_SEQUENCE,\
+		V_ASN1_SEQUENCE,\
+		tname##_seq_tt,\
+		sizeof(tname##_seq_tt) / sizeof(ASN1_TEMPLATE),\
+		&tname##_aux,\
+		sizeof(stname),\
+		#stname \
+	ASN1_ITEM_end(tname)
+
+#define ASN1_NDEF_SEQUENCE_END_cb(stname, tname) \
+	;\
+	ASN1_ITEM_start(tname) \
+		ASN1_ITYPE_NDEF_SEQUENCE,\
 		V_ASN1_SEQUENCE,\
 		tname##_seq_tt,\
 		sizeof(tname##_seq_tt) / sizeof(ASN1_TEMPLATE),\
@@ -720,6 +735,16 @@ typedef struct ASN1_PRINT_ARG_st {
 	const ASN1_PCTX *pctx;
 } ASN1_PRINT_ARG;
 
+/* For streaming related callbacks exarg points to this structure */
+typedef struct ASN1_STREAM_ARG_st {
+	/* BIO to stream through */
+	BIO *out;
+	/* BIO with filters appended */
+	BIO *ndef_bio;
+	/* Streaming I/O boundary */
+	unsigned char **boundary;
+} ASN1_STREAM_ARG;
+
 /* Flags in ASN1_AUX */
 
 /* Use a reference count */
@@ -741,6 +766,10 @@ typedef struct ASN1_PRINT_ARG_st {
 #define ASN1_OP_I2D_POST	7
 #define ASN1_OP_PRINT_PRE	8
 #define ASN1_OP_PRINT_POST	9
+#define ASN1_OP_STREAM_PRE	8
+#define ASN1_OP_STREAM_POST	9
+#define ASN1_OP_DETACHED_PRE	10
+#define ASN1_OP_DETACHED_POST	11
 
 /* Macro to implement a primitive type */
 #define IMPLEMENT_ASN1_TYPE(stname) IMPLEMENT_ASN1_TYPE_ex(stname, stname, 0)

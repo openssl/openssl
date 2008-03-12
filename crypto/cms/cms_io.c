@@ -1,9 +1,9 @@
-/* p5_pbe.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
- * project 1999.
+/* crypto/cms/cms_io.c */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project.
  */
 /* ====================================================================
- * Copyright (c) 1999 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,100 +49,98 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
 
-#include <stdio.h>
-#include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include <openssl/rand.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include "cms.h"
+#include "cms_lcl.h"
 
-/* PKCS#5 password based encryption structure */
-
-ASN1_SEQUENCE(PBEPARAM) = {
-	ASN1_SIMPLE(PBEPARAM, salt, ASN1_OCTET_STRING),
-	ASN1_SIMPLE(PBEPARAM, iter, ASN1_INTEGER)
-} ASN1_SEQUENCE_END(PBEPARAM)
-
-IMPLEMENT_ASN1_FUNCTIONS(PBEPARAM)
-
-
-/* Set an algorithm identifier for a PKCS#5 PBE algorithm */
-
-int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
-				const unsigned char *salt, int saltlen)
+int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 	{
-	PBEPARAM *pbe=NULL;
-	ASN1_STRING *pbe_str=NULL;
-	unsigned char *sstr;
-
-	pbe = PBEPARAM_new();
-	if (!pbe)
+	ASN1_OCTET_STRING **pos;
+	pos = CMS_get0_content(cms);
+	if (!pos)
+		return 0;
+	if (!*pos)
+		*pos = ASN1_OCTET_STRING_new();
+	if (*pos)
 		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	if(iter <= 0)
-		iter = PKCS5_DEFAULT_ITER;
-	if (!ASN1_INTEGER_set(pbe->iter, iter))
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	if (!saltlen)
-		saltlen = PKCS5_SALT_LEN;
-	if (!ASN1_STRING_set(pbe->salt, NULL, saltlen))
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-	sstr = ASN1_STRING_data(pbe->salt);
-	if (salt)
-		memcpy(sstr, salt, saltlen);
-	else if (RAND_pseudo_bytes(sstr, saltlen) < 0)
-		goto err;
-
-	if(!ASN1_item_pack(pbe, ASN1_ITEM_rptr(PBEPARAM), &pbe_str))
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR,ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-
-	PBEPARAM_free(pbe);
-	pbe = NULL;
-
-	if (X509_ALGOR_set0(algor, OBJ_nid2obj(alg), V_ASN1_SEQUENCE, pbe_str))
+		(*pos)->flags |= ASN1_STRING_FLAG_NDEF;
+		(*pos)->flags &= ~ASN1_STRING_FLAG_CONT;
+		*boundary = &(*pos)->data;
 		return 1;
-
-err:
-	if (pbe != NULL)
-		PBEPARAM_free(pbe);
-	if (pbe_str != NULL)
-		ASN1_STRING_free(pbe_str);
+		}
+	CMSerr(CMS_F_CMS_STREAM, ERR_R_MALLOC_FAILURE);
 	return 0;
 	}
 
-/* Return an algorithm identifier for a PKCS#5 PBE algorithm */
-
-X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
-				const unsigned char *salt, int saltlen)
+CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms)
 	{
-	X509_ALGOR *ret;
-	ret = X509_ALGOR_new();
-	if (!ret)
-		{
-		ASN1err(ASN1_F_PKCS5_PBE_SET,ERR_R_MALLOC_FAILURE);
-		return NULL;
-		}
-
-	if (PKCS5_pbe_set0_algor(ret, alg, iter, salt, saltlen)) 
-		return ret;
-
-	X509_ALGOR_free(ret);
-	return NULL;
+	return ASN1_item_d2i_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
 	}
+
+int i2d_CMS_bio(BIO *bp, CMS_ContentInfo *cms)
+	{
+	return ASN1_item_i2d_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
+	}
+
+IMPLEMENT_PEM_rw_const(CMS, CMS_ContentInfo, PEM_STRING_CMS, CMS_ContentInfo)
+
+#if 0
+/* Streaming encode support for CMS */
+
+static BIO *cmsbio_init(ASN1_VALUE *val, BIO *out)
+	{
+	return CMS_dataInit((CMS_ContentInfo *)val, out);
+	}
+
+static int cmsbio_final(ASN1_VALUE *val, BIO *cmsbio)
+	{
+	return CMS_dataFinal((CMS_ContentInfo *)val, cmsbio);
+	}
+#endif
+
+BIO *BIO_new_CMS(BIO *out, CMS_ContentInfo *cms) 
+	{
+	return BIO_new_NDEF(out, (ASN1_VALUE *)cms,
+				ASN1_ITEM_rptr(CMS_ContentInfo));
+	}
+
+/* CMS wrappers round generalised stream and MIME routines */
+
+int i2d_CMS_bio_stream(BIO *out, CMS_ContentInfo *cms, BIO *in, int flags)
+	{
+	return i2d_ASN1_bio_stream(out, (ASN1_VALUE *)cms, in, flags,
+					ASN1_ITEM_rptr(CMS_ContentInfo));
+	}
+
+int PEM_write_bio_CMS_stream(BIO *out, CMS_ContentInfo *cms, BIO *in, int flags)
+	{
+	return PEM_write_bio_ASN1_stream(out, (ASN1_VALUE *) cms, in, flags,
+					"CMS",
+					ASN1_ITEM_rptr(CMS_ContentInfo));
+	}
+
+int SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags)
+	{
+	STACK_OF(X509_ALGOR) *mdalgs;
+	int ctype_nid = OBJ_obj2nid(cms->contentType);
+	if (ctype_nid == NID_pkcs7_signed)
+		mdalgs = cms->d.signedData->digestAlgorithms;
+	else
+		mdalgs = NULL;
+
+	return SMIME_write_ASN1(bio, (ASN1_VALUE *)cms, data, flags,
+					ctype_nid, mdalgs,
+					ASN1_ITEM_rptr(CMS_ContentInfo));	
+	}
+
+CMS_ContentInfo *SMIME_read_CMS(BIO *bio, BIO **bcont)
+	{
+	return (CMS_ContentInfo *)SMIME_read_asn1(bio, bcont,
+					ASN1_ITEM_rptr(CMS_ContentInfo));
+	}
+

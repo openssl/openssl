@@ -119,7 +119,7 @@ SDIRS=  \
 	bn ec rsa dsa ecdsa dh ecdh dso engine \
 	buffer bio stack lhash rand err \
 	evp asn1 pem x509 x509v3 conf txt_db pkcs7 pkcs12 comp ocsp ui krb5 \
-	store pqueue ts
+	store cms pqueue ts 
 # keep in mind that the above list is adjusted by ./Configure
 # according to no-xxx arguments...
 

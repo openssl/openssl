@@ -61,6 +61,9 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/rsa.h>
+#ifndef OPENSSL_NO_CMS
+#include <openssl/cms.h>
+#endif
 #include "asn1_locl.h"
 
 static int rsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
@@ -286,6 +289,17 @@ static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 							V_ASN1_NULL, 0);
 			}
 		return 1;
+#ifndef OPENSSL_NO_CMS
+		case ASN1_PKEY_CTRL_CMS_SIGN:
+		if (arg1 == 0)
+			{
+			X509_ALGOR *alg;
+			CMS_SignerInfo_get0_algs(arg2, NULL, NULL, NULL, &alg);
+			X509_ALGOR_set0(alg, OBJ_nid2obj(NID_rsaEncryption),
+							V_ASN1_NULL, 0);
+			}
+		return 1;
+#endif
 
 		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
 		*(int *)arg2 = NID_sha1;

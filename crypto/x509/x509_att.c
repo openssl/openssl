@@ -67,8 +67,7 @@
 
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x)
 {
-	if (!x) return 0;
-	return(sk_X509_ATTRIBUTE_num(x));
+	return sk_X509_ATTRIBUTE_num(x);
 }
 
 int X509at_get_attr_by_NID(const STACK_OF(X509_ATTRIBUTE) *x, int nid,

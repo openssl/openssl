@@ -146,8 +146,9 @@ struct X509_algor_st
 	ASN1_TYPE *parameter;
 	} /* X509_ALGOR */;
 
-DECLARE_STACK_OF(X509_ALGOR)
 DECLARE_ASN1_SET_OF(X509_ALGOR)
+
+typedef STACK_OF(X509_ALGOR) X509_ALGORS;
 
 typedef struct X509_val_st
 	{
@@ -768,6 +769,7 @@ X509_REQ *	X509_to_X509_REQ(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
 X509 *		X509_REQ_to_X509(X509_REQ *r, int days,EVP_PKEY *pkey);
 
 DECLARE_ASN1_FUNCTIONS(X509_ALGOR)
+DECLARE_ASN1_ENCODE_FUNCTIONS(X509_ALGORS, X509_ALGORS, X509_ALGORS)
 DECLARE_ASN1_FUNCTIONS(X509_VAL)
 
 DECLARE_ASN1_FUNCTIONS(X509_PUBKEY)
@@ -1125,7 +1127,11 @@ DECLARE_ASN1_FUNCTIONS(PBEPARAM)
 DECLARE_ASN1_FUNCTIONS(PBE2PARAM)
 DECLARE_ASN1_FUNCTIONS(PBKDF2PARAM)
 
-X509_ALGOR *PKCS5_pbe_set(int alg, int iter, unsigned char *salt, int saltlen);
+int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
+				const unsigned char *salt, int saltlen);
+
+X509_ALGOR *PKCS5_pbe_set(int alg, int iter,
+				const unsigned char *salt, int saltlen);
 X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
 					 unsigned char *salt, int saltlen);
 X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,

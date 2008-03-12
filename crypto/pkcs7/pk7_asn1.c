@@ -77,10 +77,42 @@ ASN1_ADB(PKCS7) = {
 	ADB_ENTRY(NID_pkcs7_encrypted, ASN1_NDEF_EXP_OPT(PKCS7, d.encrypted, PKCS7_ENCRYPT, 0))
 } ASN1_ADB_END(PKCS7, 0, type, 0, &p7default_tt, NULL);
 
-ASN1_NDEF_SEQUENCE(PKCS7) = {
+/* PKCS#7 streaming support */
+static int pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+							void *exarg)
+{
+	ASN1_STREAM_ARG *sarg = exarg;
+	PKCS7 *p7;
+	if (pval)
+		p7 = (PKCS7 *)*pval;
+	else
+		p7 = NULL;
+	switch(operation)
+		{
+
+		case ASN1_OP_STREAM_PRE:
+		if (PKCS7_stream(&sarg->boundary, p7) <= 0)
+			return 0;
+		case ASN1_OP_DETACHED_PRE:
+		sarg->ndef_bio = PKCS7_dataInit(p7, sarg->out);
+		if (!sarg->ndef_bio)
+			return 0;
+		break;
+
+		case ASN1_OP_STREAM_POST:
+		case ASN1_OP_DETACHED_POST:
+		if (PKCS7_dataFinal(p7, sarg->ndef_bio) <= 0)
+			return 0;
+		break;
+
+		}
+	return 1;
+}
+
+ASN1_NDEF_SEQUENCE_cb(PKCS7, pk7_cb) = {
 	ASN1_SIMPLE(PKCS7, type, ASN1_OBJECT),
 	ASN1_ADB_OBJECT(PKCS7)
-}ASN1_NDEF_SEQUENCE_END(PKCS7)
+}ASN1_NDEF_SEQUENCE_END_cb(PKCS7, PKCS7)
 
 IMPLEMENT_ASN1_FUNCTIONS(PKCS7)
 IMPLEMENT_ASN1_NDEF_FUNCTION(PKCS7)

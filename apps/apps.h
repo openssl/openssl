@@ -182,7 +182,7 @@ extern BIO *bio_err;
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			OBJ_cleanup(); EVP_cleanup(); ENGINE_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_state(0); \
-			ERR_free_strings(); } while(0)
+			ERR_free_strings(); COMP_zlib_cleanup();} while(0)
 #  else
 #    define apps_startup() \
 			do { do_pipe_sig(); CRYPTO_malloc_init(); \
