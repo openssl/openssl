@@ -255,6 +255,9 @@ struct CMS_KEKRecipientInfo_st
  	CMS_KEKIdentifier *kekid;
  	X509_ALGOR *keyEncryptionAlgorithm;
  	ASN1_OCTET_STRING *encryptedKey;
+	/* Extra Info symmetric key to use */
+	unsigned char *key;
+	size_t keylen;
 	};
 
 struct CMS_KEKIdentifier_st
