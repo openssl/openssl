@@ -427,6 +427,25 @@ IMPLEMENT_PEM_rw_const(DHparams, DH, PEM_STRING_DHPARAMS, DHparams)
 
 #ifdef OPENSSL_FIPS
 
+static const char *pkey_str(EVP_PKEY *x)
+	{
+	switch (x->type)
+		{
+		case EVP_PKEY_RSA:
+		return PEM_STRING_RSA;
+
+		case EVP_PKEY_DSA:
+		return PEM_STRING_DSA;
+
+		case EVP_PKEY_EC:
+		return PEM_STRING_ECPRIVATEKEY;
+
+		default:
+		return NULL;
+		}
+	}
+
+
 int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
                                                unsigned char *kstr, int klen,
                                                pem_password_cb *cb, void *u)
@@ -436,8 +455,7 @@ int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
 						(char *)kstr, klen, cb, u);
 		else
                 	return PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey,
-                (((x)->type == EVP_PKEY_DSA)?PEM_STRING_DSA:PEM_STRING_RSA),
-                        bp,(char *)x,enc,kstr,klen,cb,u);
+			pkey_str(x), bp,(char *)x,enc,kstr,klen,cb,u);
 	}
 
 #ifndef OPENSSL_NO_FP_API
@@ -450,8 +468,7 @@ int PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
 						(char *)kstr, klen, cb, u);
 		else
                 	return PEM_ASN1_write((i2d_of_void *)i2d_PrivateKey,
-                (((x)->type == EVP_PKEY_DSA)?PEM_STRING_DSA:PEM_STRING_RSA),
-                        fp,(char *)x,enc,kstr,klen,cb,u);
+			pkey_str(x), fp,(char *)x,enc,kstr,klen,cb,u);
 	}
 #endif
 
