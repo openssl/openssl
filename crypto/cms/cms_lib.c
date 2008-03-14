@@ -139,6 +139,10 @@ BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 		break;
 #endif
 
+		case NID_pkcs7_encrypted:
+		cmsbio = BIO_new(BIO_f_cipher());
+		break;
+
 		default:
 		CMSerr(CMS_F_CMS_DATAINIT, CMS_R_UNSUPPORTED_TYPE);
 		return NULL;
@@ -152,7 +156,7 @@ BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 	return NULL;
 
 	}
-		
+
 int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
 	{
 	ASN1_OCTET_STRING **pos = CMS_get0_content(cms);

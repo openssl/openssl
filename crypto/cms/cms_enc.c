@@ -132,18 +132,11 @@ int cms_bio_to_EncryptedContent(CMS_EncryptedContentInfo *ec,
 
 /* Return BIO based on EncryptedContentInfo and key */
 
-BIO *cms_EncryptedContent_to_bio(CMS_EncryptedContentInfo *ec,
+int cms_EncryptedContent_to_bio(BIO *b, CMS_EncryptedContentInfo *ec,
 					const unsigned char *key, int keylen)
 	{
-	BIO *b;
 	EVP_CIPHER_CTX *ctx;
 	const EVP_CIPHER *ciph;
-	b = BIO_new(BIO_f_cipher());
-	if (!b)
-		{
-		CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_TO_BIO, ERR_R_MALLOC_FAILURE);
-		return NULL;
-		}
 	BIO_get_cipher_ctx(b, &ctx);
 
 	ciph = EVP_get_cipherbyobj(ec->contentEncryptionAlgorithm->algorithm);
@@ -187,10 +180,18 @@ BIO *cms_EncryptedContent_to_bio(CMS_EncryptedContentInfo *ec,
 				CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
 			goto err;
 			}
-	return b;
+	return 1;
 
 	err:
-	BIO_free(b);
-	return NULL;
+	return 0;
 	}
 
+int CMS_EncryptedData_set1_key(BIO *b, CMS_ContentInfo *cms,
+				const unsigned char *key, size_t keylen)
+	{
+	CMS_EncryptedContentInfo *ec;
+	if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_encrypted)
+		return 0;
+	ec = cms->d.encryptedData->encryptedContentInfo;
+	return cms_EncryptedContent_to_bio(b, ec, key, keylen);
+	}

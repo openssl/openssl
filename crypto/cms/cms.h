@@ -138,6 +138,13 @@ int CMS_digest_verify(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
 CMS_ContentInfo *CMS_digest_create(BIO *in, const EVP_MD *md,
 							unsigned int flags);
 
+int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
+				const unsigned char *key, size_t keylen,
+				BIO *dcont, BIO *out, unsigned int flags);
+
+int CMS_EncryptedData_set1_key(BIO *b, CMS_ContentInfo *cms,
+				const unsigned char *key, size_t keylen);
+
 int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 		 X509_STORE *store, BIO *dcont, BIO *out, unsigned int flags);
 
@@ -255,6 +262,8 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_DIGESTEDDATA_DO_FINAL			 112
 #define CMS_F_CMS_DIGEST_VERIFY				 113
 #define CMS_F_CMS_ENCRYPTEDCONTENT_TO_BIO		 138
+#define CMS_F_CMS_ENCRYPTEDDATA_DECRYPT			 140
+#define CMS_F_CMS_ENCRYPTED_DATA_DECRYPT		 139
 #define CMS_F_CMS_ENVELOPED_DATA_INIT			 114
 #define CMS_F_CMS_FINAL					 115
 #define CMS_F_CMS_GET0_CERTIFICATE_CHOICES		 116
@@ -315,6 +324,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_TYPE_NOT_COMPRESSED_DATA			 128
 #define CMS_R_TYPE_NOT_DATA				 129
 #define CMS_R_TYPE_NOT_DIGESTED_DATA			 130
+#define CMS_R_TYPE_NOT_ENCRYPTED_DATA			 142
 #define CMS_R_UNABLE_TO_FINALIZE_CONTEXT		 131
 #define CMS_R_UNKNOWN_CIPHER				 141
 #define CMS_R_UNKNOWN_DIGEST_ALGORIHM			 132

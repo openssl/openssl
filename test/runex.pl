@@ -77,9 +77,11 @@ my @test_list = (
 ["5.1.bin"	=> "encode"],
 ["5.2.bin"	=> "encode"],
 ["6.0.bin"	=> "encode, digest, cont"],
-["7.1.bin"	=> "encode"],
-["7.2.bin"	=> "encode"]
+["7.1.bin"	=> "encode, encrypted, cont"],
+["7.2.bin"	=> "encode, encrypted, cont"]
 );
+
+my $secretkey = "73:7c:79:1f:25:ea:d0:e0:46:29:25:43:52:f7:dc:62:91:e5:cb:26:91:7a:da:32";
 
 	if (!-d $exdir)
 		{
@@ -110,6 +112,10 @@ foreach (@test_list) {
 	if ($tlist =~ /digest/)
 		{
 		run_digest_test($exdir, $tlist, $file);
+		}
+	if ($tlist =~ /encrypted/)
+		{
+		run_encrypted_test($exdir, $tlist, $file, $secretkey);
 		}
 
 }
@@ -231,6 +237,32 @@ sub run_digest_test
 	else
 		{
 		print "\tDigest verify passed\n" if $verbose;
+		}
+	}
+
+sub run_encrypted_test
+	{
+	my ($cmsdir, $tlist, $tfile, $key) = @_;
+	unlink "tmp.txt";
+
+	system ("$cmscmd -EncrypedData_decrypt -inform DER" .
+		" -secretkey $key" .
+		" -in $cmsdir/$tfile -out tmp.txt");
+
+	if ($?)
+		{
+		print "\tEncrypted Data command FAILED!!\n";
+		$badtest++;
+		}
+	elsif ($tlist =~ /cont/ &&
+		!cmp_files("$cmsdir/ExContent.bin", "tmp.txt"))
+		{
+		print "\tEncrypted Data content compare FAILED!!\n";
+		$badtest++;
+		}
+	else
+		{
+		print "\tEncryptedData verify passed\n" if $verbose;
 		}
 	}
 

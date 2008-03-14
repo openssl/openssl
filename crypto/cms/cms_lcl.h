@@ -411,6 +411,12 @@ void cms_DigestAlgorithm_set(X509_ALGOR *alg, const EVP_MD *md);
 BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm);
 int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
 					X509_ALGOR *mdalg);
+
+int cms_bio_to_EncryptedContent(CMS_EncryptedContentInfo *ec,
+					const unsigned char *key, int keylen,
+					BIO *b);
+int cms_EncryptedContent_to_bio(BIO *b, CMS_EncryptedContentInfo *ec,
+					const unsigned char *key, int keylen);
 	
 #ifdef  __cplusplus
 }

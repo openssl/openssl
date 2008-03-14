@@ -86,6 +86,7 @@ static int smime_cb(int ok, X509_STORE_CTX *ctx);
 #define SMIME_DIGEST_CREATE	(10 | SMIME_OP)
 #define SMIME_UNCOMPRESS	(11 | SMIME_IP)
 #define SMIME_COMPRESS		(12 | SMIME_OP)
+#define SMIME_ENCRYPTED_DECRYPT	(13 | SMIME_IP)
 
 int MAIN(int, char **);
 
@@ -121,6 +122,8 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
+	unsigned char *secret_key = NULL;
+	size_t secret_keylen;
 
 	X509_VERIFY_PARAM *vpm = NULL;
 
@@ -164,6 +167,8 @@ int MAIN(int argc, char **argv)
 			operation = SMIME_COMPRESS;
 		else if (!strcmp (*args, "-uncompress"))
 			operation = SMIME_UNCOMPRESS;
+		else if (!strcmp (*args, "-EncrypedData_decrypt"))
+			operation = SMIME_ENCRYPTED_DECRYPT;
 #ifndef OPENSSL_NO_DES
 		else if (!strcmp (*args, "-des3")) 
 				cipher = EVP_des_ede3_cbc();
@@ -233,6 +238,20 @@ int MAIN(int argc, char **argv)
 				flags |= CMS_NOOLDMIMETYPE;
 		else if (!strcmp (*args, "-crlfeol"))
 				flags |= CMS_CRLFEOL;
+		else if (!strcmp(*args,"-secretkey"))
+			{
+			long ltmp;
+			if (!args[1])
+				goto argerr;
+			args++;
+			secret_key = string_to_hex(*args, &ltmp);
+			if (!secret_key)
+				{
+				BIO_printf(bio_err, "Invalid key %s\n", *args);
+				goto argerr;
+				}
+			secret_keylen = (size_t)ltmp;
+			}
 		else if (!strcmp(*args,"-rand"))
 			{
 			if (!args[1])
@@ -810,6 +829,12 @@ int MAIN(int argc, char **argv)
 			goto end;
 			}
 		}
+	else if (operation == SMIME_ENCRYPTED_DECRYPT)
+		{
+		if (!CMS_EncryptedData_decrypt(cms, secret_key, secret_keylen,
+						indata, out, flags))
+			goto end;
+		}
 	else if (operation == SMIME_VERIFY)
 		{
 		if (CMS_verify(cms, other, store, indata, out, flags) > 0)
@@ -878,6 +903,8 @@ end:
 		sk_free(sksigners);
 	if (skkeys)
 		sk_free(skkeys);
+	if (secret_key)
+		OPENSSL_free(secret_key);
 	X509_STORE_free(store);
 	X509_free(cert);
 	X509_free(recip);

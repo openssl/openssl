@@ -188,6 +188,40 @@ CMS_ContentInfo *CMS_digest_create(BIO *in, const EVP_MD *md,
 	return NULL;
 	}
 
+int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
+				const unsigned char *key, size_t keylen,
+				BIO *dcont, BIO *out, unsigned int flags)
+	{
+	BIO *cont;
+	int r;
+	if (OBJ_obj2nid(CMS_get0_type(cms)) != NID_pkcs7_encrypted)
+		{
+		CMSerr(CMS_F_CMS_ENCRYPTEDDATA_DECRYPT,
+					CMS_R_TYPE_NOT_ENCRYPTED_DATA);
+		return 0;
+		}
+
+	if (!dcont)
+		{
+		ASN1_OCTET_STRING **pos = CMS_get0_content(cms);
+		if (!pos || !*pos)
+			{
+			CMSerr(CMS_F_CMS_ENCRYPTEDDATA_DECRYPT,
+					CMS_R_NO_CONTENT);
+			return 0;
+			}
+		}
+
+	cont = CMS_dataInit(cms, dcont);
+	if (!cont)
+		return 0;
+	r = CMS_EncryptedData_set1_key(cont, cms, key, keylen);
+	if (r)
+		r = cms_copy_content(out, cont, flags);
+	BIO_free_all(cont);
+	return r;
+	}
+
 static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
 					X509_STORE *store,
 					STACK_OF(X509) *certs,
