@@ -68,12 +68,6 @@ DECLARE_ASN1_ITEM(CMS_RevocationInfoChoice)
 DECLARE_STACK_OF(CMS_CertificateChoices)
 DECLARE_STACK_OF(CMS_RevocationInfoChoice)
 
-#if 0
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(CMS_CertificateChoices)
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(CMS_RevocationInfoChoice)
-#endif
-
-
 const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms)
 	{
 	return cms->contentType;
@@ -140,7 +134,7 @@ BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 #endif
 
 		case NID_pkcs7_encrypted:
-		cmsbio = BIO_new(BIO_f_cipher());
+		cmsbio = cms_EncryptedData_init_bio(cms);
 		break;
 
 		default:

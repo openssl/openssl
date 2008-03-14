@@ -142,7 +142,7 @@ int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
 				const unsigned char *key, size_t keylen,
 				BIO *dcont, BIO *out, unsigned int flags);
 
-int CMS_EncryptedData_set1_key(BIO *b, CMS_ContentInfo *cms,
+int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
 				const unsigned char *key, size_t keylen);
 
 int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
@@ -249,6 +249,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_ADD1_SIGNER				 100
 #define CMS_F_CMS_ADD1_SIGNINGTIME			 101
 #define CMS_F_CMS_BIO_TO_ENCRYPTEDCONTENT		 137
+#define CMS_F_CMS_BIO_TO_ENCRYPTEDCONTENT_BIO		 142
 #define CMS_F_CMS_COMPRESS				 102
 #define CMS_F_CMS_COMPRESSEDDATA_CREATE			 103
 #define CMS_F_CMS_COMPRESSEDDATA_INIT_BIO		 104
@@ -257,12 +258,19 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_DATA					 107
 #define CMS_F_CMS_DATAFINAL				 108
 #define CMS_F_CMS_DATAINIT				 109
+#define CMS_F_CMS_DECRYPTEDCONTENT_DECRYPT_BIO		 145
+#define CMS_F_CMS_DECRYPTEDCONTENT_ENCRYPT_BIO		 143
 #define CMS_F_CMS_DIGESTALGORITHM_FIND_CTX		 110
 #define CMS_F_CMS_DIGESTALGORITHM_INIT_BIO		 111
 #define CMS_F_CMS_DIGESTEDDATA_DO_FINAL			 112
 #define CMS_F_CMS_DIGEST_VERIFY				 113
+#define CMS_F_CMS_ENCRYPTEDCONTENT_DECRYPT_BIO		 146
+#define CMS_F_CMS_ENCRYPTEDCONTENT_ENCRYPT_BIO		 144
+#define CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO		 148
 #define CMS_F_CMS_ENCRYPTEDCONTENT_TO_BIO		 138
 #define CMS_F_CMS_ENCRYPTEDDATA_DECRYPT			 140
+#define CMS_F_CMS_ENCRYPTEDDATA_INIT_BIO		 147
+#define CMS_F_CMS_ENCRYPTEDDATA_SET1_KEY		 141
 #define CMS_F_CMS_ENCRYPTED_DATA_DECRYPT		 139
 #define CMS_F_CMS_ENVELOPED_DATA_INIT			 114
 #define CMS_F_CMS_FINAL					 115
@@ -307,6 +315,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_MD_BIO_INIT_ERROR				 111
 #define CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH	 112
 #define CMS_R_MESSAGEDIGEST_WRONG_LENGTH		 113
+#define CMS_R_NOT_ENCRYPTED_DATA			 143
 #define CMS_R_NOT_KEY_TRANSPORT				 114
 #define CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE		 115
 #define CMS_R_NO_CONTENT				 116

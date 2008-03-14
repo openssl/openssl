@@ -169,6 +169,10 @@ struct CMS_EncryptedContentInfo_st
 	ASN1_OBJECT *contentType;
 	X509_ALGOR *contentEncryptionAlgorithm;
 	ASN1_OCTET_STRING *encryptedContent;
+	/* Content encryption algorithm and key */
+	const EVP_CIPHER *cipher;
+	unsigned char *key;
+	size_t keylen;
 	};
 
 struct CMS_RecipientInfo_st
@@ -255,7 +259,7 @@ struct CMS_KEKRecipientInfo_st
  	CMS_KEKIdentifier *kekid;
  	X509_ALGOR *keyEncryptionAlgorithm;
  	ASN1_OCTET_STRING *encryptedKey;
-	/* Extra Info symmetric key to use */
+	/* Extra info: symmetric key to use */
 	unsigned char *key;
 	size_t keylen;
 	};
@@ -412,11 +416,9 @@ BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm);
 int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
 					X509_ALGOR *mdalg);
 
-int cms_bio_to_EncryptedContent(CMS_EncryptedContentInfo *ec,
-					const unsigned char *key, int keylen,
-					BIO *b);
-int cms_EncryptedContent_to_bio(BIO *b, CMS_EncryptedContentInfo *ec,
-					const unsigned char *key, int keylen);
+BIO *cms_EncryptedContent_encrypt_bio(CMS_EncryptedContentInfo *ec);
+BIO *cms_EncryptedContent_decrypt_bio(CMS_EncryptedContentInfo *ec);
+BIO *cms_EncryptedData_init_bio(CMS_ContentInfo *cms);
 	
 #ifdef  __cplusplus
 }
