@@ -120,8 +120,8 @@ foreach (@test_list) {
 
 }
 
-#unlink "cms.out";
-#unlink "cms.err";
+unlink "cms.out";
+unlink "cms.err";
 unlink "tmp.der";
 unlink "tmp.txt";
 
