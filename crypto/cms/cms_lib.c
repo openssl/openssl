@@ -180,6 +180,7 @@ int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
 		{
 
 		case NID_pkcs7_data:
+		case NID_pkcs7_encrypted:
 		case NID_id_smime_ct_compressedData:
 		/* Nothing to do */
 		return 1;

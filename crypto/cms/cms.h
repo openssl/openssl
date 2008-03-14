@@ -142,6 +142,10 @@ int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
 				const unsigned char *key, size_t keylen,
 				BIO *dcont, BIO *out, unsigned int flags);
 
+CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
+					const unsigned char *key, size_t keylen,
+					unsigned int flags);
+
 int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
 				const unsigned char *key, size_t keylen);
 

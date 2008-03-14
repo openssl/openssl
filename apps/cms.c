@@ -87,6 +87,7 @@ static int smime_cb(int ok, X509_STORE_CTX *ctx);
 #define SMIME_UNCOMPRESS	(11 | SMIME_IP)
 #define SMIME_COMPRESS		(12 | SMIME_OP)
 #define SMIME_ENCRYPTED_DECRYPT	(13 | SMIME_IP)
+#define SMIME_ENCRYPTED_ENCRYPT	(14 | SMIME_OP)
 
 int MAIN(int, char **);
 
@@ -169,6 +170,8 @@ int MAIN(int argc, char **argv)
 			operation = SMIME_UNCOMPRESS;
 		else if (!strcmp (*args, "-EncryptedData_decrypt"))
 			operation = SMIME_ENCRYPTED_DECRYPT;
+		else if (!strcmp (*args, "-EncryptedData_encrypt"))
+			operation = SMIME_ENCRYPTED_ENCRYPT;
 #ifndef OPENSSL_NO_DES
 		else if (!strcmp (*args, "-des3")) 
 				cipher = EVP_des_ede3_cbc();
@@ -744,6 +747,14 @@ int MAIN(int argc, char **argv)
 		if (indef)
 			flags |= CMS_STREAM;
 		cms = CMS_encrypt(encerts, in, cipher, flags);
+		}
+	else if (operation == SMIME_ENCRYPTED_ENCRYPT)
+		{
+		if (indef)
+			flags |= CMS_STREAM;
+		cms = CMS_EncryptedData_encrypt(in, cipher,
+						secret_key, secret_keylen,
+						flags);
 		}
 	else if (operation & SMIME_SIGNERS)
 		{

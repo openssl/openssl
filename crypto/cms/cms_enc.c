@@ -75,6 +75,8 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
 	unsigned char iv[EVP_MAX_IV_LENGTH], *piv = NULL;
 
+	int ok = 0;
+
 	int enc;
 
 	enc = ec->cipher ? 1 : 0;
@@ -90,7 +92,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	BIO_get_cipher_ctx(b, &ctx);
 
 	if (enc)
-		calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_type(ctx));
+		ciph = ec->cipher;
 	else
 		{
 		ciph = EVP_get_cipherbyobj(calg->algorithm);
@@ -109,6 +111,9 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 				CMS_R_CIPHER_INITIALISATION_ERROR);
 		goto err;
 		}
+
+	if (enc)
+		calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_type(ctx));
 
 	/* If necessary set key length */
 
@@ -164,9 +169,17 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 			goto err;
 			}
 		}
-	return b;
+	ok = 1;
 
 	err:
+	if (ec->key)
+		{
+		OPENSSL_cleanse(ec->key, ec->keylen);
+		OPENSSL_free(ec->key);
+		ec->key = NULL;
+		}
+	if (ok)
+		return b;
 	BIO_free(b);
 	return NULL;
 	}
