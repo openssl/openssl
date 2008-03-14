@@ -120,8 +120,8 @@ foreach (@test_list) {
 
 }
 
-unlink "cms.out";
-unlink "cms.err";
+#unlink "cms.out";
+#unlink "cms.err";
 unlink "tmp.der";
 unlink "tmp.txt";
 
@@ -245,7 +245,7 @@ sub run_encrypted_test
 	my ($cmsdir, $tlist, $tfile, $key) = @_;
 	unlink "tmp.txt";
 
-	system ("$cmscmd -EncrypedData_decrypt -inform DER" .
+	system ("$cmscmd -EncryptedData_decrypt -inform DER" .
 		" -secretkey $key" .
 		" -in $cmsdir/$tfile -out tmp.txt");
 

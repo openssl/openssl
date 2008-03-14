@@ -167,7 +167,7 @@ int MAIN(int argc, char **argv)
 			operation = SMIME_COMPRESS;
 		else if (!strcmp (*args, "-uncompress"))
 			operation = SMIME_UNCOMPRESS;
-		else if (!strcmp (*args, "-EncrypedData_decrypt"))
+		else if (!strcmp (*args, "-EncryptedData_decrypt"))
 			operation = SMIME_ENCRYPTED_DECRYPT;
 #ifndef OPENSSL_NO_DES
 		else if (!strcmp (*args, "-des3")) 
