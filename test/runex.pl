@@ -56,8 +56,8 @@
 my $badttest = 0;
 my $verbose = 1;
 
-my $cmscmd = "../apps/openssl cms";
-my $convcmd = "../apps/openssl x509 -inform DER";
+my $cmscmd = "../util/shlib_wrap.sh ../apps/openssl cms";
+my $convcmd = "../util/shlib_wrap.sh ../apps/openssl x509 -inform DER";
 my $exdir = "examples";
 
 my @test_list = (

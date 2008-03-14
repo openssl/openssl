@@ -216,7 +216,7 @@ ASN1_SEQUENCE(CMS_OtherRecipientInfo) = {
 static int cms_ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 							void *exarg)
 	{
-	if(operation == ASN1_OP_FREE_POST)
+	if(operation == ASN1_OP_FREE_PRE)
 		{
 		CMS_RecipientInfo *ri = (CMS_RecipientInfo *)*pval;
 		if (ri->type == CMS_RECIPINFO_TRANS)

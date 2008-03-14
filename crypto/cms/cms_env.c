@@ -57,6 +57,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
+#include <openssl/rand.h>
 #include "cms_lcl.h"
 #include "asn1_locl.h"
 
@@ -65,12 +66,6 @@
 DECLARE_ASN1_ITEM(CMS_EnvelopedData)
 DECLARE_ASN1_ITEM(CMS_RecipientInfo)
 DECLARE_ASN1_ITEM(CMS_KeyTransRecipientInfo)
-
-#if 0
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(CMS_EnvelopedData)
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(CMS_RecipientInfo)
-IMPLEMENT_ASN1_ALLOC_FUNCTIONS(CMS_KeyTransRecipientInfo)
-#endif
 
 DECLARE_STACK_OF(CMS_RecipientInfo)
 
