@@ -101,6 +101,20 @@ static CMS_EnvelopedData *cms_enveloped_data_init(CMS_ContentInfo *cms)
 	return cms_get0_enveloped(cms);
 	}
 
+STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms)
+	{
+	CMS_EnvelopedData *env;
+	env = cms_enveloped_data_init(cms);
+	if (!env)
+		return NULL;
+	return env->recipientInfos;
+	}
+
+int CMS_RecipientInfo_type(CMS_RecipientInfo *ri)
+	{
+	return ri->type;
+	}
+
 /* Add a recipient certificate. For now only handle key transport.
  * If we ever handle key agreement will need updating.
  */
@@ -229,6 +243,7 @@ int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
 			CMS_R_NOT_KEY_TRANSPORT);
 		return 0;
 		}
+	ktri = ri->d.ktri;
 
 	return cms_SignerIdentifier_get0_signer_id(ktri->rid,
 							keyid, issuer, sno);
@@ -236,13 +251,86 @@ int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
 
 int CMS_RecipientInfo_ktri_cert_cmp(CMS_RecipientInfo *ri, X509 *cert)
 	{
-	CMS_KeyTransRecipientInfo *ktri;
 	if (ri->type != CMS_RECIPINFO_TRANS)
 		{
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_CERT_CMP,
 			CMS_R_NOT_KEY_TRANSPORT);
-		return 0;
+		return -2;
 		}
 
-	return cms_SignerIdentifier_cert_cmp(ktri->rid, cert);
+	return cms_SignerIdentifier_cert_cmp(ri->d.ktri->rid, cert);
+	}
+
+int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
+			       EVP_PKEY *pkey)
+	{
+	CMS_KeyTransRecipientInfo *ktri;
+	EVP_PKEY_CTX *pctx = NULL;
+	unsigned char *ek = NULL;
+	size_t eklen;
+
+	int ret = 0;
+
+	if (ri->type != CMS_RECIPINFO_TRANS)
+		{
+		CMSerr(CMS_F_CMS_RECIPIENTINFO_DECRYPT,
+			CMS_R_NOT_KEY_TRANSPORT);
+		return 0;
+		}
+	ktri = ri->d.ktri;
+
+	pctx = EVP_PKEY_CTX_new(pkey, NULL);
+	if (!pctx)
+		return 0;
+
+	if (EVP_PKEY_decrypt_init(pctx) <= 0)
+		goto err;
+
+	if (EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DECRYPT,
+				EVP_PKEY_CTRL_CMS_DECRYPT, 0, ri) <= 0)
+		{
+		CMSerr(CMS_F_CMS_RECIPIENTINFO_DECRYPT, CMS_R_CTRL_ERROR);
+		goto err;
+		}
+
+	if (EVP_PKEY_decrypt(pctx, NULL, &eklen,
+				ktri->encryptedKey->data,
+				ktri->encryptedKey->length) <= 0)
+		goto err;
+
+	ek = OPENSSL_malloc(eklen);
+
+	if (ek == NULL)
+		{
+		CMSerr(CMS_F_CMS_RECIPIENTINFO_DECRYPT, ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
+
+	if (EVP_PKEY_decrypt(pctx, ek, &eklen,
+				ktri->encryptedKey->data,
+				ktri->encryptedKey->length) <= 0)
+		{
+		CMSerr(CMS_F_CMS_RECIPIENTINFO_DECRYPT, CMS_R_CMS_LIB);
+		goto err;
+		}
+
+	ret = 1;
+
+	cms->d.envelopedData->encryptedContentInfo->key = ek;
+	cms->d.envelopedData->encryptedContentInfo->keylen = eklen;
+
+	err:
+	if (pctx)
+		EVP_PKEY_CTX_free(pctx);
+	if (!ret && ek)
+		OPENSSL_free(ek);
+
+	return ret;
+	}
+
+BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
+	{
+	CMS_EncryptedContentInfo *ec;
+	ec = cms->d.envelopedData->encryptedContentInfo;
+	return cms_EncryptedContent_init_bio(ec);
 	}

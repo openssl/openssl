@@ -814,7 +814,7 @@ int MAIN(int argc, char **argv)
 	ret = 4;
 	if (operation == SMIME_DECRYPT)
 		{
-		if (!CMS_decrypt(cms, key, recip, out, flags))
+		if (!CMS_decrypt(cms, key, recip, indata, out, flags))
 			{
 			BIO_printf(bio_err, "Error decrypting CMS structure\n");
 			goto end;

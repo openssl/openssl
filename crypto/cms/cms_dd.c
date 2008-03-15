@@ -98,8 +98,6 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
 BIO *cms_DigestedData_init_bio(CMS_ContentInfo *cms)
 	{
 	CMS_DigestedData *dd;
-	if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_digest)
-		return NULL;
 	dd = cms->d.digestedData;
 	return cms_DigestAlgorithm_init_bio(dd->digestAlgorithm);
 	}

@@ -91,7 +91,6 @@ typedef struct CMS_KEKIdentifier_st CMS_KEKIdentifier;
 typedef struct CMS_KEKRecipientInfo_st CMS_KEKRecipientInfo;
 typedef struct CMS_PasswordRecipientInfo_st CMS_PasswordRecipientInfo;
 typedef struct CMS_OtherRecipientInfo_st CMS_OtherRecipientInfo;
-typedef struct CMS_RecipientInfo_st CMS_RecipientInfo;
 
 struct CMS_ContentInfo_st
 	{
@@ -186,12 +185,6 @@ struct CMS_RecipientInfo_st
 		CMS_OtherRecipientInfo *ori;
 		} d;
 	};
-
-#define CMS_RECIPINFO_TRANS		0
-#define CMS_RECIPINFO_AGREE		1
-#define CMS_RECIPINFO_KEK		2
-#define CMS_RECIPINFO_PASS		3
-#define CMS_RECIPINFO_OTHER		4
 
 typedef CMS_SignerIdentifier CMS_RecipientIdentifier;
 
@@ -416,9 +409,10 @@ BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm);
 int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
 					X509_ALGOR *mdalg);
 
-BIO *cms_EncryptedContent_encrypt_bio(CMS_EncryptedContentInfo *ec);
-BIO *cms_EncryptedContent_decrypt_bio(CMS_EncryptedContentInfo *ec);
+BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec);
 BIO *cms_EncryptedData_init_bio(CMS_ContentInfo *cms);
+
+BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms);
 	
 #ifdef  __cplusplus
 }

@@ -70,6 +70,7 @@ typedef struct CMS_ContentInfo_st CMS_ContentInfo;
 typedef struct CMS_SignerInfo_st CMS_SignerInfo;
 typedef struct CMS_CertificateChoices CMS_CertificateChoices;
 typedef struct CMS_RevocationInfoChoice_st CMS_RevocationInfoChoice;
+typedef struct CMS_RecipientInfo_st CMS_RecipientInfo;
 
 DECLARE_STACK_OF(CMS_SignerInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
@@ -77,6 +78,12 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 
 #define CMS_SIGNERINFO_ISSUER_SERIAL	0
 #define CMS_SIGNERINFO_KEYIDENTIFIER	1
+
+#define CMS_RECIPINFO_TRANS		0
+#define CMS_RECIPINFO_AGREE		1
+#define CMS_RECIPINFO_KEK		2
+#define CMS_RECIPINFO_PASS		3
+#define CMS_RECIPINFO_OTHER		4
 
 /* S/MIME related flags */
 
@@ -157,9 +164,23 @@ STACK_OF(X509) *CMS_get0_signers(CMS_ContentInfo *cms);
 CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *in,
 				const EVP_CIPHER *cipher, unsigned int flags);
 
-int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert, BIO *data,
+int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
+				BIO *data, BIO *dcont,
 				unsigned int flags);
 
+STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
+int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
+int CMS_RecipientInfo_ktri_cert_cmp(CMS_RecipientInfo *ri, X509 *cert);
+int CMS_RecipientInfo_ktri_get0_algs(CMS_RecipientInfo *ri,
+					EVP_PKEY **pk, X509 **recip,
+					X509_ALGOR **palg);
+int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
+					ASN1_OCTET_STRING **keyid,
+					X509_NAME **issuer, ASN1_INTEGER **sno);
+
+int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
+			       EVP_PKEY *pkey);
+	
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
 							unsigned int flags);
 CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags);
@@ -249,6 +270,7 @@ void ERR_load_CMS_strings(void);
 /* Error codes for the CMS functions. */
 
 /* Function codes. */
+#define CMS_F_CHECK_CONTENT				 151
 #define CMS_F_CMS_ADD1_RECIPIENT_CERT			 99
 #define CMS_F_CMS_ADD1_SIGNER				 100
 #define CMS_F_CMS_ADD1_SIGNINGTIME			 101
@@ -262,6 +284,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_DATA					 107
 #define CMS_F_CMS_DATAFINAL				 108
 #define CMS_F_CMS_DATAINIT				 109
+#define CMS_F_CMS_DECRYPT				 152
 #define CMS_F_CMS_DECRYPTEDCONTENT_DECRYPT_BIO		 145
 #define CMS_F_CMS_DECRYPTEDCONTENT_ENCRYPT_BIO		 143
 #define CMS_F_CMS_DIGESTALGORITHM_FIND_CTX		 110
@@ -285,6 +308,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_GET0_ENVELOPED			 119
 #define CMS_F_CMS_GET0_REVOCATION_CHOICES		 120
 #define CMS_F_CMS_GET0_SIGNED				 121
+#define CMS_F_CMS_RECIPIENTINFO_DECRYPT			 150
 #define CMS_F_CMS_RECIPIENTINFO_KTRI_CERT_CMP		 122
 #define CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_ALGS		 123
 #define CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_SIGNER_ID	 124
@@ -307,6 +331,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_CIPHER_INITIALISATION_ERROR		 138
 #define CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR	 139
 #define CMS_R_CMS_DATAFINAL_ERROR			 101
+#define CMS_R_CMS_LIB					 145
 #define CMS_R_CONTENT_NOT_FOUND				 102
 #define CMS_R_CONTENT_TYPE_NOT_COMPRESSED_DATA		 103
 #define CMS_R_CONTENT_TYPE_NOT_ENVELOPED_DATA		 104
@@ -328,6 +353,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_NO_DEFAULT_DIGEST				 117
 #define CMS_R_NO_DIGEST_SET				 118
 #define CMS_R_NO_MATCHING_DIGEST			 119
+#define CMS_R_NO_MATCHING_RECIPIENT			 147
 #define CMS_R_NO_PRIVATE_KEY				 120
 #define CMS_R_NO_PUBLIC_KEY				 121
 #define CMS_R_NO_SIGNERS				 122
@@ -340,6 +366,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_TYPE_NOT_DATA				 129
 #define CMS_R_TYPE_NOT_DIGESTED_DATA			 130
 #define CMS_R_TYPE_NOT_ENCRYPTED_DATA			 142
+#define CMS_R_TYPE_NOT_ENVELOPED_DATA			 146
 #define CMS_R_UNABLE_TO_FINALIZE_CONTEXT		 131
 #define CMS_R_UNKNOWN_CIPHER				 141
 #define CMS_R_UNKNOWN_DIGEST_ALGORIHM			 132

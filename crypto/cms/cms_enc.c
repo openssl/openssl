@@ -227,13 +227,8 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
 
 BIO *cms_EncryptedData_init_bio(CMS_ContentInfo *cms)
 	{
-	CMS_EncryptedContentInfo *ec;
-	if (OBJ_obj2nid(cms->contentType) != NID_pkcs7_encrypted)
-		{
-		CMSerr(CMS_F_CMS_ENCRYPTEDDATA_INIT_BIO,
-						CMS_R_NOT_ENCRYPTED_DATA);
-		return NULL;
-		}
-	ec = cms->d.encryptedData->encryptedContentInfo;
-	return cms_EncryptedContent_init_bio(ec);
+	CMS_EncryptedData *enc = cms->d.encryptedData;
+	if (enc->unprotectedAttrs)
+		enc->version = 2;
+	return cms_EncryptedContent_init_bio(enc->encryptedContentInfo);
 	}

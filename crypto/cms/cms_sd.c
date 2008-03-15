@@ -798,9 +798,9 @@ BIO *cms_SignedData_init_bio(CMS_ContentInfo *cms)
 	CMS_SignedData *sd;
 	BIO *chain = NULL;
 	sd = cms_get0_signed(cms);
-	cms_sd_set_version(sd);
 	if (!sd)
 		return NULL;
+	cms_sd_set_version(sd);
 	for (i = 0; i < sk_X509_ALGOR_num(sd->digestAlgorithms); i++)
 		{
 		X509_ALGOR *digestAlgorithm;

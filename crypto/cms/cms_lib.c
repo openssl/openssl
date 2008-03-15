@@ -137,6 +137,10 @@ BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 		cmsbio = cms_EncryptedData_init_bio(cms);
 		break;
 
+		case NID_pkcs7_enveloped:
+		cmsbio = cms_EnvelopedData_init_bio(cms);
+		break;
+
 		default:
 		CMSerr(CMS_F_CMS_DATAINIT, CMS_R_UNSUPPORTED_TYPE);
 		return NULL;
