@@ -58,6 +58,7 @@ my $verbose = 1;
 
 my $cmscmd = "../util/shlib_wrap.sh ../apps/openssl cms";
 my $convcmd = "../util/shlib_wrap.sh ../apps/openssl x509 -inform DER";
+my $pconvcmd = "../util/shlib_wrap.sh ../apps/openssl rsa -inform DER";
 my $exdir = "examples";
 
 my @test_list = (
@@ -74,8 +75,9 @@ my @test_list = (
 ["4.9.eml"	=> "verifymime, dss"],
 ["4.10.bin"	=> "encode, verifyder, cont, dss"],
 ["4.11.bin"	=> "encode"],
-["5.1.bin"	=> "encode"],
-["5.2.bin"	=> "encode"],
+["5.1.bin"	=> "encode, envelopeder, cont"],
+["5.2.bin"	=> "encode, envelopeder, cont"],
+["5.3.eml"	=> "envelopemime, cont"],
 ["6.0.bin"	=> "encode, digest, cont"],
 ["7.1.bin"	=> "encode, encrypted, cont"],
 ["7.2.bin"	=> "encode, encrypted, cont"]
@@ -91,8 +93,8 @@ my $secretkey = "73:7c:79:1f:25:ea:d0:e0:46:29:25:43:52:f7:dc:62:91:e5:cb:26:91:
 
 	system ("$convcmd -in $exdir/CarlDSSSelf.cer -out $exdir/CarlDSSSelf.pem");
 	system ("$convcmd -in $exdir/CarlRSASelf.cer -out $exdir/CarlRSASelf.pem");
-
-	$cafile = "$cmsdir/CarlRSASelf.pem" if $tlist =~ /rsa/;
+	system ("$convcmd -in $exdir/BobRSASignByCarl.cer -out $exdir/BobRSASignByCarl.pem");
+	system ("$pconvcmd -in $exdir/BobPrivRSAEncrypt.pri -out $exdir/BobPrivRSAEncrypt.pem");
 
 foreach (@test_list) {
 	my ($file, $tlist) = @$_;
@@ -116,6 +118,10 @@ foreach (@test_list) {
 	if ($tlist =~ /encrypted/)
 		{
 		run_encrypted_test($exdir, $tlist, $file, $secretkey);
+		}
+	if ($tlist =~ /envelope/)
+		{
+		run_envelope_test($exdir, $tlist, $file);
 		}
 
 }
@@ -194,7 +200,7 @@ sub run_verify_test
 		" -CAfile $cafile" .
 		" -in $cmsdir/$tfile -out tmp.txt";
 
-	$cmd .= " -content $cmsdir/ExContent.bin" if $tlist =~ /cont_extern/;	
+ 	$cmd .= " -content $cmsdir/ExContent.bin" if $tlist =~ /cont_extern/;	
 
 	system ("$cmd 2>cms.err 1>cms.out");
 
@@ -215,13 +221,47 @@ sub run_verify_test
 		}
 	}
 
+sub run_envelope_test
+	{
+	my ($cmsdir, $tlist, $tfile) = @_;
+	unlink "tmp.txt";
+
+	$form = "DER" if $tlist =~ /envelopeder/;
+	$form = "SMIME" if $tlist =~ /envelopemime/;
+
+	$cmd = "$cmscmd -decrypt -inform $form" .
+		" -recip $cmsdir/BobRSASignByCarl.pem" .
+		" -inkey $cmsdir/BobPrivRSAEncrypt.pem" .
+		" -in $cmsdir/$tfile -out tmp.txt";
+
+	system ("$cmd 2>cms.err 1>cms.out");
+
+	if ($?)
+		{
+		print "\tDecrypt command FAILED!!\n";
+		$badtest++;
+		}
+	elsif ($tlist =~ /cont/ &&
+		!cmp_files("$cmsdir/ExContent.bin", "tmp.txt"))
+		{
+		print "\tDecrypt content compare FAILED!!\n";
+		$badtest++;
+		}
+	else
+		{
+		print "\tDecrypt passed\n" if $verbose;
+		}
+	}
+
 sub run_digest_test
 	{
 	my ($cmsdir, $tlist, $tfile) = @_;
 	unlink "tmp.txt";
 
-	system ("$cmscmd -digest_verify -inform DER" .
-		" -in $cmsdir/$tfile -out tmp.txt");
+	my $cmd = "$cmscmd -digest_verify -inform DER" .
+		" -in $cmsdir/$tfile -out tmp.txt";
+
+	system ("$cmd 2>cms.err 1>cms.out");
 
 	if ($?)
 		{
