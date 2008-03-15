@@ -77,12 +77,20 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
 	else
 		tmpout = out;
 
-	/* Read all content through chain to determine content digests */
+	/* Read all content through chain to process digest, decrypt etc */
 	for (;;)
 	{
 		i=BIO_read(in,buf,sizeof(buf));
 		if (i <= 0)
+			{
+			if (BIO_method_type(in) == BIO_TYPE_CIPHER)
+				{
+				if (!BIO_get_cipher_status(in))
+					goto err;
+				}
 			break;
+			}
+				
 		if (tmpout)
 			BIO_write(tmpout, buf, i);
 	}

@@ -115,18 +115,6 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	if (enc)
 		calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_type(ctx));
 
-	/* If necessary set key length */
-
-	if (ec->keylen != EVP_CIPHER_CTX_key_length(ctx))
-		{
-		if (EVP_CIPHER_CTX_set_key_length(ctx, ec->keylen) <= 0)
-			{
-			CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
-				CMS_R_INVALID_KEY_LENGTH);
-			goto err;
-			}
-		}
-
 	if (enc)
 		{
 		int ivlen;
@@ -145,6 +133,18 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 				CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
 			goto err;
 			}
+
+	/* If necessary set key length */
+
+	if (ec->keylen != EVP_CIPHER_CTX_key_length(ctx))
+		{
+		if (EVP_CIPHER_CTX_set_key_length(ctx, ec->keylen) <= 0)
+			{
+			CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
+				CMS_R_INVALID_KEY_LENGTH);
+			goto err;
+			}
+		}
 
 	if (EVP_CipherInit_ex(ctx, NULL, NULL, ec->key, piv, enc) <= 0)
 		{
