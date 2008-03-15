@@ -6,9 +6,9 @@
 
   *) Initial support for Cryptographic Message Syntax (aka CMS) based
      on RFC3850, RFC3851 and RFC3852. New cms directory and cms utility,
-     support for data, signedData, compressedData types currently included,
-     more to come. Scripts to check against RFC4134 examples draft and internal
-     consistency.
+     support for data, signedData, compressedData, digestedData and
+     encryptedData types currently included, more to come. Scripts to
+     check against RFC4134 examples draft.
      [Steve Henson]
 
   *) Zlib compression BIO. This is a filter BIO which compressed and
