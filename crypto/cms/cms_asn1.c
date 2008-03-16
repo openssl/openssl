@@ -309,6 +309,8 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 	CMS_ContentInfo *cms;
 	if (pval)
 		cms = (CMS_ContentInfo *)*pval;
+	else
+		return 1;
 	switch(operation)
 		{
 

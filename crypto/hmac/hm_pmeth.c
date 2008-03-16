@@ -206,8 +206,9 @@ static int pkey_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
 		}
 	if (!strcmp(type, "key"))
 		{
+		void *p = (void *)value;
 		return pkey_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY,
-				-1, (void *)value);
+				-1, p);
 		}
 	if (!strcmp(type, "hexkey"))
 		{

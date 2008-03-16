@@ -226,7 +226,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 static int do_revoke(X509 *x509, CA_DB *db, int ext, char *extval);
 static int get_certificate_status(const char *ser_status, CA_DB *db);
 static int do_updatedb(CA_DB *db);
-static int check_time_format(char *str);
+static int check_time_format(const char *str);
 char *make_revocation_str(int rev_type, char *rev_arg);
 int make_revoked(X509_REVOKED *rev, const char *str);
 int old_entry_print(BIO *bp, ASN1_OBJECT *obj, ASN1_STRING *str);
@@ -2384,7 +2384,7 @@ static int fix_data(int nid, int *type)
 	return(1);
 	}
 
-static int check_time_format(char *str)
+static int check_time_format(const char *str)
 	{
 	ASN1_UTCTIME tm;
 

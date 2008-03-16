@@ -124,7 +124,7 @@ int MAIN(int argc, char **argv)
 	char *engine=NULL;
 #endif
 	unsigned char *secret_key = NULL;
-	size_t secret_keylen;
+	size_t secret_keylen = 0;
 
 	X509_VERIFY_PARAM *vpm = NULL;
 
