@@ -2589,7 +2589,11 @@ double app_tminterval(int stop,int usertime)
 	if (usertime)		now = rus.tms_utime;
 
 	if (stop==TM_START)	tmstart = now;
-	else			ret = (now - tmstart)/(double)sysconf(_SC_CLK_TCK);
+	else
+		{
+		long int tck = sysconf(_SC_CLK_TCK);
+		ret = (now - tmstart)/(double)tck;
+		}
 
 	return (ret);
 	}
