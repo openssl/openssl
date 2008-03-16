@@ -109,7 +109,6 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 #define CMS_USE_KEYID			0x10000
 
 const ASN1_OBJECT *CMS_get0_type(CMS_ContentInfo *cms);
-CMS_ContentInfo *CMS_Data_Create(void);
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont);
 int CMS_dataFinal(CMS_ContentInfo *cms, BIO *bio);

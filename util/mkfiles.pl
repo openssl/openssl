@@ -46,6 +46,7 @@ my @dirs = (
 "crypto/pem",
 "crypto/x509",
 "crypto/x509v3",
+"crypto/cms",
 "crypto/conf",
 "crypto/txt_db",
 "crypto/pkcs7",
