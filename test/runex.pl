@@ -58,9 +58,22 @@ use MIME::Base64;
 my $badttest = 0;
 my $verbose  = 1;
 
-my $cmscmd = "../util/shlib_wrap.sh ../apps/openssl cms";
+my $cmscmd;
 my $exdir  = "./";
 my $exfile = "./rfc4134.txt";
+
+if (-f "../apps/openssl")
+	{
+	$cmscmd = "../util/shlib_wrap.sh ../apps/openssl cms";
+	}
+elsif (-f "..\\out32dll\\openssl.exe")
+	{
+	$cmscmd = "..\\out32dll\\openssl.exe cms";
+	}
+elsif (-f "..\\out32\\openssl.exe")
+	{
+	$cmscmd = "..\\out32\\openssl.exe cms";
+	}
 
 my @test_list = (
     [ "3.1.bin"  => "dataout" ],
