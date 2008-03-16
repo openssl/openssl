@@ -1,4 +1,4 @@
-# test/cms-examples.pl
+# test/runex.pl
 # Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
 # project.
 #
@@ -131,11 +131,6 @@ while (<IN>) {
 
 my $secretkey =
   "73:7c:79:1f:25:ea:d0:e0:46:29:25:43:52:f7:dc:62:91:e5:cb:26:91:7a:da:32";
-
-if ( !-d $exdir ) {
-    print STDERR "FATAL ERROR: examples directory missing!!\n";
-    exit 1;
-}
 
 foreach (@test_list) {
     my ( $file, $tlist ) = @$_;
