@@ -451,7 +451,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 
 	}
 
-int CMS_add1_signingTime(CMS_SignerInfo *si, ASN1_TIME *t)
+static int cms_add1_signingTime(CMS_SignerInfo *si, ASN1_TIME *t)
 	{
 	ASN1_TIME *tt;
 	int r = 0;
@@ -608,7 +608,7 @@ void CMS_SignerInfo_get0_algs(CMS_SignerInfo *si, EVP_PKEY **pk, X509 **signer,
 		*psig = si->signatureAlgorithm;
 	}
 
-int cms_SignerInfo_content_sign(CMS_SignerInfo *si, BIO *chain)
+static int cms_SignerInfo_content_sign(CMS_SignerInfo *si, BIO *chain)
 	{
 	EVP_MD_CTX mctx;
 	int r = 0;
@@ -699,7 +699,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 
 	if (CMS_signed_get_attr_by_NID(si, NID_pkcs9_signingTime, -1) < 0)
 		{
-		if (!CMS_add1_signingTime(si, NULL))
+		if (!cms_add1_signingTime(si, NULL))
 			goto err;
 		}
 
@@ -856,7 +856,7 @@ int CMS_SignerInfo_verify_content(CMS_SignerInfo *si, BIO *chain)
 				CMS_R_UNABLE_TO_FINALIZE_CONTEXT);
 			goto err;
 			}
-		if (mlen != os->length)
+		if (mlen != (unsigned int)os->length)
 			{
 			CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT,
 				CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH);

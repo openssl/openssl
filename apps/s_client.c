@@ -162,6 +162,7 @@ typedef unsigned int u_int;
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
+#include <openssl/bn.h>
 #include "s_apps.h"
 #include "timeouts.h"
 

@@ -58,6 +58,8 @@
 
 #include <string.h>
 
+#include <openssl/crypto.h>
+#include "cryptlib.h"
 #include <openssl/pem.h>
 #include <openssl/engine.h>
 #include <openssl/ts.h>

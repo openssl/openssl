@@ -151,7 +151,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 			goto err;
 		keep_key = 1;
 		}
-	else if (ec->keylen != EVP_CIPHER_CTX_key_length(ctx))
+	else if (ec->keylen != (unsigned int)EVP_CIPHER_CTX_key_length(ctx))
 		{
 		/* If necessary set key length */
 		if (EVP_CIPHER_CTX_set_key_length(ctx, ec->keylen) <= 0)
@@ -200,7 +200,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	return NULL;
 	}
 
-int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec, 
+static int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec, 
 				const EVP_CIPHER *cipher,
 				const unsigned char *key, size_t keylen)
 	{

@@ -121,7 +121,7 @@ int cms_DigestedData_do_final(CMS_ContentInfo *cms, BIO *chain, int verify)
 
 	if (verify)
 		{
-		if (mdlen != dd->digest->length)
+		if (mdlen != (unsigned int)dd->digest->length)
 			{
 			CMSerr(CMS_F_CMS_DIGESTEDDATA_DO_FINAL,
 				CMS_R_MESSAGEDIGEST_WRONG_LENGTH);

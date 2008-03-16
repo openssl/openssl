@@ -120,6 +120,7 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/md5.h>
+#include <openssl/bn.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif

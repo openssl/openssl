@@ -196,7 +196,9 @@ static int nid_list[] =
 int tls1_ec_curve_id2nid(int curve_id)
 	{
 	/* ECC curves from draft-ietf-tls-ecc-12.txt (Oct. 17, 2005) */
-	if ((curve_id < 1) || (curve_id > sizeof(nid_list)/sizeof(nid_list[0]))) return 0;
+	if ((curve_id < 1) || ((unsigned int)curve_id >
+				sizeof(nid_list)/sizeof(nid_list[0])))
+		return 0;
 	return nid_list[curve_id-1];
 	}
 
@@ -1058,7 +1060,8 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 			SSLerr(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
 			return -1;
 			}
-		for (i = 1, j = s->tlsext_ellipticcurvelist; i <= sizeof(nid_list)/sizeof(nid_list[0]); i++)
+		for (i = 1, j = s->tlsext_ellipticcurvelist; (unsigned int)i <=
+				sizeof(nid_list)/sizeof(nid_list[0]); i++)
 			s2n(i,j);
 		}
 #endif /* OPENSSL_NO_EC */

@@ -62,6 +62,9 @@
 #include "cryptlib.h"
 #include <openssl/pem.h>
 #include <openssl/rand.h>
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/rsa.h>
 
 /* Utility function: read a DWORD (4 byte unsigned integer) in little endian
  * format

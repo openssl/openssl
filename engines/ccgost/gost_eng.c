@@ -8,6 +8,8 @@
  *          Requires OpenSSL 0.9.9 for compilation                    *
  **********************************************************************/
 #include <string.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/engine.h>
 #include <openssl/obj_mac.h>

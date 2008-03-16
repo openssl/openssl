@@ -8,6 +8,8 @@
  **********************************************************************/            
 #include <stdlib.h>
 #include <string.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/engine.h>
 #include <openssl/buffer.h>
 #include "gost_lcl.h"

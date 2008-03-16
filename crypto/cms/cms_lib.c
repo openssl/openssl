@@ -414,7 +414,7 @@ int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
 		}
 	}
 
-STACK_OF(CMS_CertificateChoices) **cms_get0_certificate_choices(CMS_ContentInfo *cms)
+static STACK_OF(CMS_CertificateChoices) **cms_get0_certificate_choices(CMS_ContentInfo *cms)
 	{
 	switch (OBJ_obj2nid(cms->contentType))
 		{
@@ -492,7 +492,7 @@ int CMS_add1_cert(CMS_ContentInfo *cms, X509 *cert)
 	return r;
 	}
 
-STACK_OF(CMS_RevocationInfoChoice) **cms_get0_revocation_choices(CMS_ContentInfo *cms)
+static STACK_OF(CMS_RevocationInfoChoice) **cms_get0_revocation_choices(CMS_ContentInfo *cms)
 	{
 	switch (OBJ_obj2nid(cms->contentType))
 		{

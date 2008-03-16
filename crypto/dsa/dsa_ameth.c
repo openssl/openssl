@@ -60,6 +60,7 @@
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/dsa.h>
+#include <openssl/bn.h>
 #ifndef OPENSSL_NO_CMS
 #include <openssl/cms.h>
 #endif

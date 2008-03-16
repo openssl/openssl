@@ -7,10 +7,12 @@
  *       for OpenSSL                                                  *
  *          Requires OpenSSL 0.9.9 for compilation                    *
  **********************************************************************/
+#include <string.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/asn1.h>
-#include <string.h>
 #include "gost_params.h"
 #include "gost_lcl.h"
 #include "e_gost_err.h"

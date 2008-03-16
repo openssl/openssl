@@ -65,6 +65,7 @@
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/ts.h>
+#include <openssl/bn.h>
 
 #undef PROG
 #define PROG	ts_main

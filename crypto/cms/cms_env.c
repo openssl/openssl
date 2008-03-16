@@ -118,7 +118,7 @@ int CMS_RecipientInfo_type(CMS_RecipientInfo *ri)
 /* Add a recipient certificate. For now only handle key transport.
  * If we ever handle key agreement will need updating.
  */
-
+#if 0 /* currently unused/undeclared */
 CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
 					X509 *recip, unsigned int flags)
 	{
@@ -208,6 +208,7 @@ CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
 	return NULL;
 
 	}
+#endif
 
 int CMS_RecipientInfo_ktri_get0_algs(CMS_RecipientInfo *ri,
 					EVP_PKEY **pk, X509 **recip,

@@ -223,7 +223,7 @@ static int rc2_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 			return 1;
 			}
 		return 0;
-#if PBE_PRF_TEST
+#ifdef PBE_PRF_TEST
 	case EVP_CTRL_PBE_PRF_NID:
 		*(int *)ptr = NID_hmacWithMD5;
 		return 1;
