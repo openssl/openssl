@@ -155,6 +155,7 @@ static ERR_STRING_DATA CMS_str_reasons[]=
 {ERR_REASON(CMS_R_NO_CONTENT)            ,"no content"},
 {ERR_REASON(CMS_R_NO_DEFAULT_DIGEST)     ,"no default digest"},
 {ERR_REASON(CMS_R_NO_DIGEST_SET)         ,"no digest set"},
+{ERR_REASON(CMS_R_NO_KEY)                ,"no key"},
 {ERR_REASON(CMS_R_NO_MATCHING_DIGEST)    ,"no matching digest"},
 {ERR_REASON(CMS_R_NO_MATCHING_RECIPIENT) ,"no matching recipient"},
 {ERR_REASON(CMS_R_NO_PRIVATE_KEY)        ,"no private key"},

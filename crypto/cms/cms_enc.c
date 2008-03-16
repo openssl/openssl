@@ -77,7 +77,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 
 	int ok = 0;
 
-	int enc;
+	int enc, keep_key = 0;
 
 	enc = ec->cipher ? 1 : 0;
 
@@ -134,10 +134,26 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 			goto err;
 			}
 
-	/* If necessary set key length */
 
-	if (ec->keylen != EVP_CIPHER_CTX_key_length(ctx))
+	if (enc && !ec->key)
 		{
+		/* Generate random key */
+		if (!ec->keylen)
+			ec->keylen = EVP_CIPHER_CTX_key_length(ctx);
+		ec->key = OPENSSL_malloc(ec->keylen);
+		if (!ec->key)
+			{
+			CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
+							ERR_R_MALLOC_FAILURE);
+			goto err;
+			}
+		if (EVP_CIPHER_CTX_rand_key(ctx, ec->key) <= 0)
+			goto err;
+		keep_key = 1;
+		}
+	else if (ec->keylen != EVP_CIPHER_CTX_key_length(ctx))
+		{
+		/* If necessary set key length */
 		if (EVP_CIPHER_CTX_set_key_length(ctx, ec->keylen) <= 0)
 			{
 			CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
@@ -172,7 +188,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	ok = 1;
 
 	err:
-	if (ec->key)
+	if (ec->key && !keep_key)
 		{
 		OPENSSL_cleanse(ec->key, ec->keylen);
 		OPENSSL_free(ec->key);
@@ -189,13 +205,16 @@ int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
 				const unsigned char *key, size_t keylen)
 	{
 	ec->cipher = cipher;
-	ec->key = OPENSSL_malloc(keylen);
-	if (!ec->key)
-		return 0;
+	if (key)
+		{
+		ec->key = OPENSSL_malloc(keylen);
+		if (!ec->key)
+			return 0;
+		memcpy(ec->key, key, keylen);
+		}
+	ec->keylen = keylen;
 	if (cipher)
 		ec->contentType = OBJ_nid2obj(NID_pkcs7_data);
-	memcpy(ec->key, key, keylen);
-	ec->keylen = keylen;
 	return 1;
 	}
 
@@ -203,6 +222,11 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
 				const unsigned char *key, size_t keylen)
 	{
 	CMS_EncryptedContentInfo *ec;
+	if (!key || !keylen)
+		{
+		CMSerr(CMS_F_CMS_ENCRYPTEDDATA_SET1_KEY, CMS_R_NO_KEY);
+		return 0;
+		}
 	if (ciph)
 		{
 		cms->d.encryptedData = M_ASN1_new_of(CMS_EncryptedData);

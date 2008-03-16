@@ -352,6 +352,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_NO_CONTENT				 116
 #define CMS_R_NO_DEFAULT_DIGEST				 117
 #define CMS_R_NO_DIGEST_SET				 118
+#define CMS_R_NO_KEY					 148
 #define CMS_R_NO_MATCHING_DIGEST			 119
 #define CMS_R_NO_MATCHING_RECIPIENT			 147
 #define CMS_R_NO_PRIVATE_KEY				 120
