@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 853
-#define NUM_SN 845
-#define NUM_LN 845
-#define NUM_OBJ 799
+#define NUM_NID 857
+#define NUM_SN 848
+#define NUM_LN 848
+#define NUM_OBJ 802
 
-static const unsigned char lvalues[5664]={
+static const unsigned char lvalues[5691]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -866,7 +866,10 @@ static const unsigned char lvalues[5664]={
 0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x04,     /* [5630] OBJ_id_GostR3411_94_with_GostR3410_2001_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x08,0x01,     /* [5638] OBJ_id_GostR3410_2001_ParamSet_cc */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x09,/* [5646] OBJ_id_smime_ct_compressedData */
-0x2A,0x85,0x03,0x02,0x02,0x16,               /* [5657] OBJ_id_Gost28147_89_MAC */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x05,/* [5657] OBJ_id_aes128_wrap */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x19,/* [5666] OBJ_id_aes192_wrap */
+0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2D,/* [5675] OBJ_id_aes256_wrap */
+0x2A,0x85,0x03,0x02,0x02,0x16,               /* [5684] OBJ_id_Gost28147_89_MAC */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2240,8 +2243,15 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"HMAC","hmac",NID_hmac,0,NULL,0},
 {"id-smime-ct-compressedData","id-smime-ct-compressedData",
 	NID_id_smime_ct_compressedData,11,&(lvalues[5646]),0},
-{"gost-mac","GOST 28147-89 MAC",NID_id_Gost28147_89_MAC,6,
+{NULL,NULL,NID_undef,0,NULL,0},
+{"id-aes128-wrap","id-aes128-wrap",NID_id_aes128_wrap,9,
 	&(lvalues[5657]),0},
+{"id-aes192-wrap","id-aes192-wrap",NID_id_aes192_wrap,9,
+	&(lvalues[5666]),0},
+{"id-aes256-wrap","id-aes256-wrap",NID_id_aes256_wrap,9,
+	&(lvalues[5675]),0},
+{"gost-mac","GOST 28147-89 MAC",NID_id_Gost28147_89_MAC,6,
+	&(lvalues[5684]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2523,7 +2533,7 @@ static const unsigned int sn_objs[NUM_SN]={
 490,	/* "friendlyCountryName" */
 156,	/* "friendlyName" */
 509,	/* "generationQualifier" */
-852,	/* "gost-mac" */
+856,	/* "gost-mac" */
 806,	/* "gost2001" */
 846,	/* "gost2001cc" */
 808,	/* "gost89" */
@@ -2593,6 +2603,9 @@ static const unsigned int sn_objs[NUM_SN]={
 357,	/* "id-aca-group" */
 358,	/* "id-aca-role" */
 176,	/* "id-ad" */
+853,	/* "id-aes128-wrap" */
+854,	/* "id-aes192-wrap" */
+855,	/* "id-aes256-wrap" */
 262,	/* "id-alg" */
 323,	/* "id-alg-des40" */
 326,	/* "id-alg-dh-pop" */
@@ -3113,7 +3126,7 @@ static const unsigned int ln_objs[NUM_LN]={
 172,	/* "Extension Request" */
 808,	/* "GOST 28147-89" */
 844,	/* "GOST 28147-89 Cryptocom ParamSet" */
-852,	/* "GOST 28147-89 MAC" */
+856,	/* "GOST 28147-89 MAC" */
 846,	/* "GOST 34.10-2001 Cryptocom" */
 845,	/* "GOST 34.10-94 Cryptocom" */
 806,	/* "GOST R 34.10-2001" */
@@ -3436,6 +3449,9 @@ static const unsigned int ln_objs[NUM_LN]={
 357,	/* "id-aca-group" */
 358,	/* "id-aca-role" */
 176,	/* "id-ad" */
+853,	/* "id-aes128-wrap" */
+854,	/* "id-aes192-wrap" */
+855,	/* "id-aes256-wrap" */
 262,	/* "id-alg" */
 323,	/* "id-alg-des40" */
 326,	/* "id-alg-dh-pop" */
@@ -4221,7 +4237,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 806,	/* OBJ_id_GostR3410_2001            1 2 643 2 2 19 */
 807,	/* OBJ_id_GostR3410_94              1 2 643 2 2 20 */
 808,	/* OBJ_id_Gost28147_89              1 2 643 2 2 21 */
-852,	/* OBJ_id_Gost28147_89_MAC          1 2 643 2 2 22 */
+856,	/* OBJ_id_Gost28147_89_MAC          1 2 643 2 2 22 */
 811,	/* OBJ_id_GostR3411_94_prf          1 2 643 2 2 23 */
 812,	/* OBJ_id_GostR3410_2001DH          1 2 643 2 2 98 */
 813,	/* OBJ_id_GostR3410_94DH            1 2 643 2 2 99 */
@@ -4556,14 +4572,17 @@ static const unsigned int obj_objs[NUM_OBJ]={
 419,	/* OBJ_aes_128_cbc                  2 16 840 1 101 3 4 1 2 */
 420,	/* OBJ_aes_128_ofb128               2 16 840 1 101 3 4 1 3 */
 421,	/* OBJ_aes_128_cfb128               2 16 840 1 101 3 4 1 4 */
+853,	/* OBJ_id_aes128_wrap               2 16 840 1 101 3 4 1 5 */
 422,	/* OBJ_aes_192_ecb                  2 16 840 1 101 3 4 1 21 */
 423,	/* OBJ_aes_192_cbc                  2 16 840 1 101 3 4 1 22 */
 424,	/* OBJ_aes_192_ofb128               2 16 840 1 101 3 4 1 23 */
 425,	/* OBJ_aes_192_cfb128               2 16 840 1 101 3 4 1 24 */
+854,	/* OBJ_id_aes192_wrap               2 16 840 1 101 3 4 1 25 */
 426,	/* OBJ_aes_256_ecb                  2 16 840 1 101 3 4 1 41 */
 427,	/* OBJ_aes_256_cbc                  2 16 840 1 101 3 4 1 42 */
 428,	/* OBJ_aes_256_ofb128               2 16 840 1 101 3 4 1 43 */
 429,	/* OBJ_aes_256_cfb128               2 16 840 1 101 3 4 1 44 */
+855,	/* OBJ_id_aes256_wrap               2 16 840 1 101 3 4 1 45 */
 672,	/* OBJ_sha256                       2 16 840 1 101 3 4 2 1 */
 673,	/* OBJ_sha384                       2 16 840 1 101 3 4 2 2 */
 674,	/* OBJ_sha512                       2 16 840 1 101 3 4 2 3 */

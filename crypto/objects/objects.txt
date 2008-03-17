@@ -835,6 +835,10 @@ aes 44			: AES-256-CFB		: aes-256-cfb
 			: DES-EDE3-CFB1		: des-ede3-cfb1
 			: DES-EDE3-CFB8		: des-ede3-cfb8
 
+aes 5			: id-aes128-wrap 
+aes 25			: id-aes192-wrap 
+aes 45			: id-aes256-wrap 
+
 # OIDs for SHA224, SHA256, SHA385 and SHA512, according to x9.84.
 !Alias nist_hashalgs nistAlgorithms 2
 nist_hashalgs 1		: SHA256		: sha256
