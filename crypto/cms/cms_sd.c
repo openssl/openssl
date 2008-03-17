@@ -87,6 +87,7 @@ static CMS_SignedData *cms_signed_data_init(CMS_ContentInfo *cms)
 		cms->d.signedData->version = 1;
 		cms->d.signedData->encapContentInfo->eContentType =
 						OBJ_nid2obj(NID_pkcs7_data);
+		cms->d.signedData->encapContentInfo->partial = 1;
 		ASN1_OBJECT_free(cms->contentType);
 		cms->contentType = OBJ_nid2obj(NID_pkcs7_signed);
 		return cms->d.signedData;
@@ -679,6 +680,7 @@ int cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain)
 		if (!cms_SignerInfo_content_sign(si, chain))
 			return 0;
 		}
+	cms->d.signedData->encapContentInfo->partial = 0;
 	return 1;
 	}
 
@@ -800,7 +802,8 @@ BIO *cms_SignedData_init_bio(CMS_ContentInfo *cms)
 	sd = cms_get0_signed(cms);
 	if (!sd)
 		return NULL;
-	cms_sd_set_version(sd);
+	if (cms->d.signedData->encapContentInfo->partial)
+		cms_sd_set_version(sd);
 	for (i = 0; i < sk_X509_ALGOR_num(sd->digestAlgorithms); i++)
 		{
 		X509_ALGOR *digestAlgorithm;

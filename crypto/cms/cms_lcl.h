@@ -123,6 +123,8 @@ struct CMS_EncapsulatedContentInfo_st
 	{
 	ASN1_OBJECT *eContentType;
 	ASN1_OCTET_STRING *eContent;
+	/* Set to 1 if incomplete structure only part set up */
+	int partial;
 	};
 
 struct CMS_SignerInfo_st
@@ -411,6 +413,9 @@ int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
 
 BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec);
 BIO *cms_EncryptedData_init_bio(CMS_ContentInfo *cms);
+int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec, 
+				const EVP_CIPHER *cipher,
+				const unsigned char *key, size_t keylen);
 
 BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms);
 	

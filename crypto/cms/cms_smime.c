@@ -459,11 +459,38 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 	return NULL;
 	}
 
-/* Placeholder for now... */
-
-CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *in,
+CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *data,
 				const EVP_CIPHER *cipher, unsigned int flags)
 	{
+	CMS_ContentInfo *cms;
+	int i;
+	X509 *recip;
+	cms = CMS_EnvelopedData_create(cipher);
+	if (!cms)
+		goto merr;
+	for (i = 0; i < sk_X509_num(certs); i++)
+		{
+		recip = sk_X509_value(certs, i);
+		if (!CMS_add1_recipient_cert(cms, recip, flags))
+			{
+			CMSerr(CMS_F_CMS_ENCRYPT, CMS_R_RECIPIENT_ERROR);
+			goto err;
+			}
+		}
+
+	if(!(flags & CMS_DETACHED))
+		CMS_set_detached(cms, 0);
+
+	if ((flags & (CMS_STREAM|CMS_PARTIAL)) || CMS_final(cms, data, flags))
+		return cms;
+
+	return cms;
+
+	merr:
+	CMSerr(CMS_F_CMS_ENCRYPT, ERR_R_MALLOC_FAILURE);
+	err:
+	if (cms)
+		CMS_ContentInfo_free(cms);
 	return NULL;
 	}
 	
@@ -488,15 +515,15 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
 		ri = sk_CMS_RecipientInfo_value(ris, i);
 		if (CMS_RecipientInfo_type(ri) != CMS_RECIPINFO_TRANS)
 			continue;
-		if (cert)
+		/* If we have a cert try matching RecipientInfo otherwise
+		 * try them all.
+		 */
+		if (!cert || (CMS_RecipientInfo_ktri_cert_cmp(ri, cert) == 0))
 			{
-			if (CMS_RecipientInfo_ktri_cert_cmp(ri, cert) == 0)
-				{
-				if (CMS_RecipientInfo_decrypt(cms, ri, pk) <=0)
-					return 0;
-				else
-					break;
-				}
+			if (CMS_RecipientInfo_decrypt(cms, ri, pk) > 0)
+				break;
+			else if (cert)
+				return 0;
 			}
 		}
 

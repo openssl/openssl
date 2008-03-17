@@ -169,6 +169,9 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
 
 STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
 int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
+CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
+CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
+					X509 *recip, unsigned int flags);
 int CMS_RecipientInfo_ktri_cert_cmp(CMS_RecipientInfo *ri, X509 *cert);
 int CMS_RecipientInfo_ktri_get0_algs(CMS_RecipientInfo *ri,
 					EVP_PKEY **pk, X509 **recip,
@@ -290,6 +293,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_DIGESTALGORITHM_INIT_BIO		 111
 #define CMS_F_CMS_DIGESTEDDATA_DO_FINAL			 112
 #define CMS_F_CMS_DIGEST_VERIFY				 113
+#define CMS_F_CMS_ENCRYPT				 154
 #define CMS_F_CMS_ENCRYPTEDCONTENT_DECRYPT_BIO		 146
 #define CMS_F_CMS_ENCRYPTEDCONTENT_ENCRYPT_BIO		 144
 #define CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO		 148
@@ -299,6 +303,8 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_ENCRYPTEDDATA_INIT_BIO		 147
 #define CMS_F_CMS_ENCRYPTEDDATA_SET1_KEY		 141
 #define CMS_F_CMS_ENCRYPTED_DATA_DECRYPT		 139
+#define CMS_F_CMS_ENVELOPEDDATA_CREATE			 153
+#define CMS_F_CMS_ENVELOPEDDATA_INIT_BIO		 156
 #define CMS_F_CMS_ENVELOPED_DATA_INIT			 114
 #define CMS_F_CMS_FINAL					 115
 #define CMS_F_CMS_GET0_CERTIFICATE_CHOICES		 116
@@ -309,6 +315,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_GET0_SIGNED				 121
 #define CMS_F_CMS_RECIPIENTINFO_DECRYPT			 150
 #define CMS_F_CMS_RECIPIENTINFO_KTRI_CERT_CMP		 122
+#define CMS_F_CMS_RECIPIENTINFO_KTRI_ENCRYPT		 155
 #define CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_ALGS		 123
 #define CMS_F_CMS_RECIPIENTINFO_KTRI_GET0_SIGNER_ID	 124
 #define CMS_F_CMS_SET1_SIGNERIDENTIFIER			 125
@@ -340,6 +347,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_CTRL_FAILURE				 108
 #define CMS_R_ERROR_GETTING_PUBLIC_KEY			 109
 #define CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE	 110
+#define CMS_R_ERROR_SETTING_RECIPIENTINFO		 150
 #define CMS_R_INVALID_KEY_LENGTH			 140
 #define CMS_R_MD_BIO_INIT_ERROR				 111
 #define CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH	 112
@@ -358,6 +366,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_NO_PUBLIC_KEY				 121
 #define CMS_R_NO_SIGNERS				 122
 #define CMS_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE	 123
+#define CMS_R_RECIPIENT_ERROR				 149
 #define CMS_R_SIGNER_CERTIFICATE_NOT_FOUND		 124
 #define CMS_R_SIGNFINAL_ERROR				 125
 #define CMS_R_SMIME_TEXT_ERROR				 126
@@ -373,6 +382,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_UNKNOWN_ID				 133
 #define CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM		 134
 #define CMS_R_UNSUPPORTED_CONTENT_TYPE			 135
+#define CMS_R_UNSUPPORTED_RECIPIENT_TYPE		 151
 #define CMS_R_UNSUPPORTED_TYPE				 136
 #define CMS_R_VERIFICATION_FAILURE			 137
 

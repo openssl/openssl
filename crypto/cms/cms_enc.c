@@ -92,7 +92,14 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	BIO_get_cipher_ctx(b, &ctx);
 
 	if (enc)
+		{
 		ciph = ec->cipher;
+		/* If not keeping key set cipher to NULL so subsequent calls
+		 * decrypt.
+		 */
+		if (ec->key)
+			ec->cipher = NULL;
+		}
 	else
 		{
 		ciph = EVP_get_cipherbyobj(calg->algorithm);
@@ -113,11 +120,9 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 		}
 
 	if (enc)
-		calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_type(ctx));
-
-	if (enc)
 		{
 		int ivlen;
+		calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_type(ctx));
 		/* Generate a random IV if we need one */
 		ivlen = EVP_CIPHER_CTX_iv_length(ctx);
 		if (ivlen > 0)
@@ -128,11 +133,11 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 			}
 		}
 	else if (EVP_CIPHER_asn1_to_param(ctx, calg->parameter) <= 0)
-			{
-			CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
+		{
+		CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
 				CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
-			goto err;
-			}
+		goto err;
+		}
 
 
 	if (enc && !ec->key)
@@ -200,7 +205,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 	return NULL;
 	}
 
-static int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec, 
+int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec, 
 				const EVP_CIPHER *cipher,
 				const unsigned char *key, size_t keylen)
 	{
@@ -252,7 +257,7 @@ int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
 BIO *cms_EncryptedData_init_bio(CMS_ContentInfo *cms)
 	{
 	CMS_EncryptedData *enc = cms->d.encryptedData;
-	if (enc->unprotectedAttrs)
+	if (enc->encryptedContentInfo->cipher && enc->unprotectedAttrs)
 		enc->version = 2;
 	return cms_EncryptedContent_init_bio(enc->encryptedContentInfo);
 	}
