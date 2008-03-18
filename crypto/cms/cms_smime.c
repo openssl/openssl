@@ -498,8 +498,6 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
 				BIO *dcont, BIO *out,
 				unsigned int flags)
 	{
-	STACK_OF(CMS_RecipientInfo) *ris;
-	CMS_RecipientInfo *ri;
 	int i, r;
 	BIO *cont;
 	if (OBJ_obj2nid(CMS_get0_type(cms)) != NID_pkcs7_enveloped)
@@ -509,28 +507,37 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
 		}
 	if (!dcont && !check_content(cms))
 		return 0;
-	ris = CMS_get0_RecipientInfos(cms);
-	for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++)
+	if (pk)
 		{
-		ri = sk_CMS_RecipientInfo_value(ris, i);
-		if (CMS_RecipientInfo_type(ri) != CMS_RECIPINFO_TRANS)
-			continue;
-		/* If we have a cert try matching RecipientInfo otherwise
-		 * try them all.
-		 */
-		if (!cert || (CMS_RecipientInfo_ktri_cert_cmp(ri, cert) == 0))
+		STACK_OF(CMS_RecipientInfo) *ris;
+		CMS_RecipientInfo *ri;
+		ris = CMS_get0_RecipientInfos(cms);
+		for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++)
 			{
-			if (CMS_RecipientInfo_decrypt(cms, ri, pk) > 0)
-				break;
-			else if (cert)
-				return 0;
+			ri = sk_CMS_RecipientInfo_value(ris, i);
+			if (CMS_RecipientInfo_type(ri) != CMS_RECIPINFO_TRANS)
+				continue;
+			/* If we have a cert try matching RecipientInfo
+			 * otherwise try them all.
+			 */
+			if (!cert ||
+			(CMS_RecipientInfo_ktri_cert_cmp(ri, cert) == 0))
+				{
+				CMS_RecipientInfo_set0_pkey(ri, pk);
+				r = CMS_RecipientInfo_decrypt(cms, ri);
+				CMS_RecipientInfo_set0_pkey(ri, NULL);
+				if (r > 0)
+					break;
+				if (cert)
+					return 0;
+				}
 			}
-		}
 
-	if (i == sk_CMS_RecipientInfo_num(ris))
-		{
-		CMSerr(CMS_F_CMS_DECRYPT, CMS_R_NO_MATCHING_RECIPIENT);
-		return 0;
+		if (i == sk_CMS_RecipientInfo_num(ris))
+			{
+			CMSerr(CMS_F_CMS_DECRYPT, CMS_R_NO_MATCHING_RECIPIENT);
+			return 0;
+			}
 		}
 	cont = CMS_dataInit(cms, dcont);
 	if (!cont)
