@@ -53,11 +53,25 @@
 # CMS, PKCS7 consistency test script. Run extensive tests on
 # OpenSSL PKCS#7 and CMS implementations.
 
+my $ossl_path;
 
-my $ossl_path = "../apps/openssl";
-my $cmd       = "$ossl_path cms ";
-my $cmd2      = "$ossl_path smime ";
-my $smdir     = "smime-certs";
+if ( -f "../apps/openssl" ) {
+    $ossl_path = "../util/shlib_wrap.sh ../apps/openssl";
+}
+elsif ( -f "..\\out32dll\\openssl.exe" ) {
+    $ossl_path = "..\\out32dll\\openssl.exe";
+}
+elsif ( -f "..\\out32\\openssl.exe" ) {
+    $ossl_path = "..\\out32\\openssl.exe";
+}
+else {
+    die "Can't find OpenSSL executable";
+}
+
+my $pk7cmd   = "$ossl_path smime ";
+my $cmscmd   = "$ossl_path cms ";
+my $smdir    = "smime-certs";
+my $halt_err = 1;
 
 my $badcmd = 0;
 
@@ -68,12 +82,11 @@ my @smime_pkcs7_tests = (
         "-sign -in smcont.txt -outform DER -nodetach"
           . " -signer $smdir/smrsa1.pem -out test.cms",
         "-verify -in test.cms -inform DER "
-	  . " -CAfile $smdir/smroot.pem -out smtst.txt"
+          . " -CAfile $smdir/smroot.pem -out smtst.txt"
     ],
 
     [
         "signed detached content DER format, RSA key",
-
         "-sign -in smcont.txt -outform DER"
           . " -signer $smdir/smrsa1.pem -out test.cms",
         "-verify -in test.cms -inform DER "
@@ -85,7 +98,7 @@ my @smime_pkcs7_tests = (
         "-sign -in smcont.txt -outform DER -nodetach"
           . " -stream -signer $smdir/smrsa1.pem -out test.cms",
         "-verify -in test.cms -inform DER "
-	  . " -CAfile $smdir/smroot.pem -out smtst.txt"
+          . " -CAfile $smdir/smroot.pem -out smtst.txt"
     ],
 
     [
@@ -93,12 +106,11 @@ my @smime_pkcs7_tests = (
         "-sign -in smcont.txt -outform DER -nodetach"
           . " -signer $smdir/smdsa1.pem -out test.cms",
         "-verify -in test.cms -inform DER "
-	  . " -CAfile $smdir/smroot.pem -out smtst.txt"
+          . " -CAfile $smdir/smroot.pem -out smtst.txt"
     ],
 
     [
         "signed detached content DER format, DSA key",
-
         "-sign -in smcont.txt -outform DER"
           . " -signer $smdir/smdsa1.pem -out test.cms",
         "-verify -in test.cms -inform DER "
@@ -107,7 +119,6 @@ my @smime_pkcs7_tests = (
 
     [
         "signed detached content DER format, add RSA signer",
-
         "-resign -inform DER -in test.cms -outform DER"
           . " -signer $smdir/smrsa1.pem -out test2.cms",
         "-verify -in test2.cms -inform DER "
@@ -119,7 +130,7 @@ my @smime_pkcs7_tests = (
         "-sign -in smcont.txt -outform DER -nodetach"
           . " -stream -signer $smdir/smdsa1.pem -out test.cms",
         "-verify -in test.cms -inform DER "
-	  . " -CAfile $smdir/smroot.pem -out smtst.txt"
+          . " -CAfile $smdir/smroot.pem -out smtst.txt"
     ],
 
     [
@@ -129,7 +140,7 @@ my @smime_pkcs7_tests = (
           . " -signer $smdir/smdsa1.pem -signer $smdir/smdsa2.pem"
           . " -stream -out test.cms",
         "-verify -in test.cms -inform DER "
-	  . " -CAfile $smdir/smroot.pem -out smtst.txt"
+          . " -CAfile $smdir/smroot.pem -out smtst.txt"
     ],
 
     [
@@ -139,7 +150,7 @@ my @smime_pkcs7_tests = (
           . " -signer $smdir/smdsa1.pem -signer $smdir/smdsa2.pem"
           . " -stream -out test.cms",
         "-verify -in test.cms -inform DER "
-	  . " -CAfile $smdir/smroot.pem -out smtst.txt"
+          . " -CAfile $smdir/smroot.pem -out smtst.txt"
     ],
 
     [
@@ -148,8 +159,7 @@ my @smime_pkcs7_tests = (
           . " -signer $smdir/smrsa1.pem -signer $smdir/smrsa2.pem"
           . " -signer $smdir/smdsa1.pem -signer $smdir/smdsa2.pem"
           . " -stream -out test.cms",
-        "-verify -in test.cms "
-	  . " -CAfile $smdir/smroot.pem -out smtst.txt"
+        "-verify -in test.cms " . " -CAfile $smdir/smroot.pem -out smtst.txt"
     ],
 
     [
@@ -158,8 +168,7 @@ my @smime_pkcs7_tests = (
           . " -signer $smdir/smrsa1.pem -signer $smdir/smrsa2.pem"
           . " -signer $smdir/smdsa1.pem -signer $smdir/smdsa2.pem"
           . " -stream -out test.cms",
-        "-verify -in test.cms "
-	  . " -CAfile $smdir/smroot.pem -out smtst.txt"
+        "-verify -in test.cms " . " -CAfile $smdir/smroot.pem -out smtst.txt"
     ],
 
     [
@@ -205,7 +214,7 @@ my @smime_cms_tests = (
           . " -signer $smdir/smdsa1.pem -signer $smdir/smdsa2.pem"
           . " -stream -out test.cms",
         "-verify -in test.cms -inform DER "
-	  . " -CAfile $smdir/smroot.pem -out smtst.txt"
+          . " -CAfile $smdir/smroot.pem -out smtst.txt"
     ],
 
     [
@@ -215,7 +224,7 @@ my @smime_cms_tests = (
           . " -signer $smdir/smdsa1.pem -signer $smdir/smdsa2.pem"
           . " -stream -out test.cms",
         "-verify -in test.cms -inform PEM "
-	  . " -CAfile $smdir/smroot.pem -out smtst.txt"
+          . " -CAfile $smdir/smroot.pem -out smtst.txt"
     ],
 
     [
@@ -277,19 +286,19 @@ my @smime_cms_comp_tests = (
 
 print "CMS => PKCS#7 compatibility tests\n";
 
-run_smime_tests( \$badcmd, \@smime_pkcs7_tests, $cmd, $cmd2 );
+run_smime_tests( \$badcmd, \@smime_pkcs7_tests, $cmscmd, $pk7cmd );
 
 print "CMS <= PKCS#7 compatibility tests\n";
 
-run_smime_tests( \$badcmd, \@smime_pkcs7_tests, $cmd2, $cmd );
+run_smime_tests( \$badcmd, \@smime_pkcs7_tests, $pk7cmd, $cmscmd );
 
 print "CMS <=> CMS consistency tests\n";
 
-run_smime_tests( \$badcmd, \@smime_pkcs7_tests, $cmd, $cmd );
-run_smime_tests( \$badcmd, \@smime_cms_tests,   $cmd, $cmd );
+run_smime_tests( \$badcmd, \@smime_pkcs7_tests, $cmscmd, $cmscmd );
+run_smime_tests( \$badcmd, \@smime_cms_tests,   $cmscmd, $cmscmd );
 
 if ( `$ossl_path version -f` =~ /ZLIB/ ) {
-    run_smime_tests( \$badcmd, \@smime_cms_comp_tests, $cmd, $cmd );
+    run_smime_tests( \$badcmd, \@smime_cms_comp_tests, $cmscmd, $cmscmd );
 }
 else {
     print "Zlib not supported: compression tests skipped\n";
@@ -311,12 +320,14 @@ sub run_smime_tests {
         if ($?) {
             print "$tnam: generation error\n";
             $$rv++;
+            exit 1 if $halt_err;
             next;
         }
         system( $vcmd . $rvcmd );
         if ($?) {
             print "$tnam: verify error\n";
             $$rv++;
+            exit 1 if $halt_err;
             next;
         }
         print "$tnam: OK\n";
