@@ -441,6 +441,7 @@ int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri,
 		CMSerr(CMS_F_CMS_RECIPIENTINFO_SET0_KEY, CMS_R_NOT_KEK);
 		return 0;
 		}
+	kekri = ri->d.kekri;
 	wrap_nid = OBJ_obj2nid(kekri->keyEncryptionAlgorithm->algorithm);
 	if (aes_wrap_keylen(wrap_nid) != keylen)
 		{
@@ -525,7 +526,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 	EVP_PKEY_CTX *pctx = NULL;
 	unsigned char *ek = NULL;
 	size_t eklen;
-	int ret;
+	int ret = 0;
 
 	if (ktri->pkey == NULL)
 		{
