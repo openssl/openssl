@@ -228,6 +228,14 @@ my @smime_cms_tests = (
     ],
 
     [
+        "enveloped content test streaming S/MIME format, 3 recipients, keyid",
+        "-encrypt -in smcont.txt"
+          . " -stream -out test.cms -keyid"
+          . " $smdir/smrsa1.pem $smdir/smrsa2.pem $smdir/smrsa3.pem ",
+        "-decrypt -recip $smdir/smrsa1.pem -in test.cms -out smtst.txt"
+    ],
+
+    [
         "data content test streaming PEM format",
         "-data_create -in smcont.txt -outform PEM -nodetach"
           . " -stream -out test.cms",
