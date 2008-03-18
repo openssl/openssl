@@ -319,26 +319,77 @@ else {
     print "ALL TESTS SUCCESSFUL.\n";
 }
 
+unlink "test.cms";
+unlink "test2.cms";
+unlink "smtst.txt";
+
 sub run_smime_tests {
     my ( $rv, $aref, $scmd, $vcmd ) = @_;
 
     foreach $smtst (@$aref) {
         my ( $tnam, $rscmd, $rvcmd ) = @$smtst;
-        system( $scmd . $rscmd );
+        system("$scmd$rscmd 2>cms.err 1>cms.out");
         if ($?) {
             print "$tnam: generation error\n";
             $$rv++;
             exit 1 if $halt_err;
             next;
         }
-        system( $vcmd . $rvcmd );
+        system("$vcmd$rvcmd 2>cms.err 1>cms.out");
         if ($?) {
             print "$tnam: verify error\n";
             $$rv++;
             exit 1 if $halt_err;
             next;
         }
+	if (!cmp_files("smtst.txt", "smcont.txt")) {
+            print "$tnam: content verify error\n";
+            $$rv++;
+            exit 1 if $halt_err;
+            next;
+	}
         print "$tnam: OK\n";
     }
+}
+
+sub cmp_files {
+    my ( $f1, $f2 ) = @_;
+    my ( $fp1, $fp2 );
+
+    my ( $rd1, $rd2 );
+
+    if ( !open( $fp1, "<$f1" ) ) {
+        print STDERR "Can't Open file $f1\n";
+        return 0;
+    }
+
+    if ( !open( $fp2, "<$f2" ) ) {
+        print STDERR "Can't Open file $f2\n";
+        return 0;
+    }
+
+    binmode $fp1;
+    binmode $fp2;
+
+    my $ret = 0;
+
+    for ( ; ; ) {
+        $n1 = sysread $fp1, $rd1, 4096;
+        $n2 = sysread $fp2, $rd2, 4096;
+        last if ( $n1 != $n2 );
+        last if ( $rd1 ne $rd2 );
+
+        if ( $n1 == 0 ) {
+            $ret = 1;
+            last;
+        }
+
+    }
+
+    close $fp1;
+    close $fp2;
+
+    return $ret;
+
 }
 
