@@ -322,6 +322,8 @@ else {
 unlink "test.cms";
 unlink "test2.cms";
 unlink "smtst.txt";
+unlink "cms.out";
+unlink "cms.err";
 
 sub run_smime_tests {
     my ( $rv, $aref, $scmd, $vcmd ) = @_;
