@@ -447,8 +447,8 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 
 	if ((flags & (CMS_STREAM|CMS_PARTIAL)) || CMS_final(cms, data, flags))
 		return cms;
-
-	return cms;
+	else
+		goto err;
 
 	merr:
 	CMSerr(CMS_F_CMS_SIGN, ERR_R_MALLOC_FAILURE);
@@ -483,8 +483,8 @@ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *data,
 
 	if ((flags & (CMS_STREAM|CMS_PARTIAL)) || CMS_final(cms, data, flags))
 		return cms;
-
-	return cms;
+	else
+		goto err;
 
 	merr:
 	CMSerr(CMS_F_CMS_ENCRYPT, ERR_R_MALLOC_FAILURE);
@@ -530,6 +530,7 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
 					break;
 				if (cert)
 					return 0;
+				ERR_clear_error();
 				}
 			}
 

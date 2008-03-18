@@ -89,20 +89,6 @@ int i2d_CMS_bio(BIO *bp, CMS_ContentInfo *cms)
 
 IMPLEMENT_PEM_rw_const(CMS, CMS_ContentInfo, PEM_STRING_CMS, CMS_ContentInfo)
 
-#if 0
-/* Streaming encode support for CMS */
-
-static BIO *cmsbio_init(ASN1_VALUE *val, BIO *out)
-	{
-	return CMS_dataInit((CMS_ContentInfo *)val, out);
-	}
-
-static int cmsbio_final(ASN1_VALUE *val, BIO *cmsbio)
-	{
-	return CMS_dataFinal((CMS_ContentInfo *)val, cmsbio);
-	}
-#endif
-
 BIO *BIO_new_CMS(BIO *out, CMS_ContentInfo *cms) 
 	{
 	return BIO_new_NDEF(out, (ASN1_VALUE *)cms,

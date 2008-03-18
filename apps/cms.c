@@ -116,7 +116,6 @@ int MAIN(int argc, char **argv)
 	char *passargin = NULL, *passin = NULL;
 	char *inrand = NULL;
 	int need_rand = 0;
-	int indef = 0;
 	const EVP_MD *sign_md = NULL;
 	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
         int keyform = FORMAT_PEM;
@@ -232,11 +231,11 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp (*args, "-no_attr_verify"))
 				flags |= CMS_NO_ATTR_VERIFY;
 		else if (!strcmp (*args, "-stream"))
-				indef = 1;
+				flags |= CMS_STREAM;
 		else if (!strcmp (*args, "-indef"))
-				indef = 1;
+				flags |= CMS_STREAM;
 		else if (!strcmp (*args, "-noindef"))
-				indef = 0;
+				flags &= ~CMS_STREAM;
 		else if (!strcmp (*args, "-nooldmime"))
 				flags |= CMS_NOOLDMIMETYPE;
 		else if (!strcmp (*args, "-crlfeol"))
@@ -726,32 +725,22 @@ int MAIN(int argc, char **argv)
 
 	if (operation == SMIME_DATA_CREATE)
 		{
-		if (indef)
-			flags |= CMS_STREAM;
 		cms = CMS_data_create(in, flags);
 		}
 	else if (operation == SMIME_DIGEST_CREATE)
 		{
-		if (indef)
-			flags |= CMS_STREAM;
 		cms = CMS_digest_create(in, sign_md, flags);
 		}
 	else if (operation == SMIME_COMPRESS)
 		{
-		if (indef)
-			flags |= CMS_STREAM;
 		cms = CMS_compress(in, -1, flags);
 		}
 	else if (operation == SMIME_ENCRYPT)
 		{
-		if (indef)
-			flags |= CMS_STREAM;
 		cms = CMS_encrypt(encerts, in, cipher, flags);
 		}
 	else if (operation == SMIME_ENCRYPTED_ENCRYPT)
 		{
-		if (indef)
-			flags |= CMS_STREAM;
 		cms = CMS_EncryptedData_encrypt(in, cipher,
 						secret_key, secret_keylen,
 						flags);
@@ -766,11 +755,9 @@ int MAIN(int argc, char **argv)
 			{
 			if (flags & CMS_DETACHED)
 				{
-				if (outformat == FORMAT_SMIME)
-					flags |= CMS_STREAM;
+				if (outformat != FORMAT_SMIME)
+					flags &= ~CMS_STREAM;
 				}
-			else if (indef)
-				flags |= CMS_STREAM;
 			flags |= CMS_PARTIAL;
 			cms = CMS_sign(NULL, NULL, other, in, flags);
 			if (!cms)
