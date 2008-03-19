@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 855
-#define NUM_SN 848
-#define NUM_LN 848
-#define NUM_OBJ 802
+#define NUM_NID 856
+#define NUM_SN 849
+#define NUM_LN 849
+#define NUM_OBJ 803
 
-static const unsigned char lvalues[5691]={
+static const unsigned char lvalues[5702]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -870,6 +870,7 @@ static const unsigned char lvalues[5691]={
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x05,/* [5663] OBJ_id_aes128_wrap */
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x19,/* [5672] OBJ_id_aes192_wrap */
 0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x01,0x2D,/* [5681] OBJ_id_aes256_wrap */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x01,0x1B,/* [5690] OBJ_id_ct_asciiTextWithCRLF */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2250,6 +2251,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5672]),0},
 {"id-aes256-wrap","id-aes256-wrap",NID_id_aes256_wrap,9,
 	&(lvalues[5681]),0},
+{"id-ct-asciiTextWithCRLF","id-ct-asciiTextWithCRLF",
+	NID_id_ct_asciiTextWithCRLF,11,&(lvalues[5690]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2636,6 +2639,7 @@ static const unsigned int sn_objs[NUM_SN]={
 332,	/* "id-cmc-senderNonce" */
 327,	/* "id-cmc-statusInfo" */
 331,	/* "id-cmc-transactionId" */
+855,	/* "id-ct-asciiTextWithCRLF" */
 408,	/* "id-ecPublicKey" */
 508,	/* "id-hex-multipart-message" */
 507,	/* "id-hex-partial-message" */
@@ -3482,6 +3486,7 @@ static const unsigned int ln_objs[NUM_LN]={
 332,	/* "id-cmc-senderNonce" */
 327,	/* "id-cmc-statusInfo" */
 331,	/* "id-cmc-transactionId" */
+855,	/* "id-ct-asciiTextWithCRLF" */
 408,	/* "id-ecPublicKey" */
 508,	/* "id-hex-multipart-message" */
 507,	/* "id-hex-partial-message" */
@@ -4704,6 +4709,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 210,	/* OBJ_id_smime_ct_DVCSRequestData  1 2 840 113549 1 9 16 1 7 */
 211,	/* OBJ_id_smime_ct_DVCSResponseData 1 2 840 113549 1 9 16 1 8 */
 851,	/* OBJ_id_smime_ct_compressedData   1 2 840 113549 1 9 16 1 9 */
+855,	/* OBJ_id_ct_asciiTextWithCRLF      1 2 840 113549 1 9 16 1 27 */
 212,	/* OBJ_id_smime_aa_receiptRequest   1 2 840 113549 1 9 16 2 1 */
 213,	/* OBJ_id_smime_aa_securityLabel    1 2 840 113549 1 9 16 2 2 */
 214,	/* OBJ_id_smime_aa_mlExpandHistory  1 2 840 113549 1 9 16 2 3 */

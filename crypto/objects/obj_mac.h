@@ -833,6 +833,10 @@
 #define NID_id_smime_ct_compressedData		851
 #define OBJ_id_smime_ct_compressedData		OBJ_id_smime_ct,9L
 
+#define SN_id_ct_asciiTextWithCRLF		"id-ct-asciiTextWithCRLF"
+#define NID_id_ct_asciiTextWithCRLF		855
+#define OBJ_id_ct_asciiTextWithCRLF		OBJ_id_smime_ct,27L
+
 #define SN_id_smime_aa_receiptRequest		"id-smime-aa-receiptRequest"
 #define NID_id_smime_aa_receiptRequest		212
 #define OBJ_id_smime_aa_receiptRequest		OBJ_id_smime_aa,1L

@@ -852,3 +852,4 @@ id_smime_ct_compressedData		851
 id_aes128_wrap		852
 id_aes192_wrap		853
 id_aes256_wrap		854
+id_ct_asciiTextWithCRLF		855

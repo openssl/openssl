@@ -125,6 +125,8 @@ int MAIN(int argc, char **argv)
 	unsigned char *secret_key = NULL, *secret_keyid = NULL;
 	size_t secret_keylen = 0, secret_keyidlen = 0;
 
+	ASN1_OBJECT *econtent_type = NULL;
+
 	X509_VERIFY_PARAM *vpm = NULL;
 
 	args = argv + 1;
@@ -267,6 +269,18 @@ int MAIN(int argc, char **argv)
 				goto argerr;
 				}
 			secret_keyidlen = (size_t)ltmp;
+			}
+		else if (!strcmp(*args,"-econtent_type"))
+			{
+			if (!args[1])
+				goto argerr;
+			args++;
+			econtent_type = OBJ_txt2obj(*args, 0);
+			if (!econtent_type)
+				{
+				BIO_printf(bio_err, "Invalid OID %s\n", *args);
+				goto argerr;
+				}
 			}
 		else if (!strcmp(*args,"-rand"))
 			{
@@ -797,6 +811,8 @@ int MAIN(int argc, char **argv)
 				}
 			flags |= CMS_PARTIAL;
 			cms = CMS_sign(NULL, NULL, other, in, flags);
+			if (econtent_type)
+				CMS_set1_eContentType(cms, econtent_type);
 			if (!cms)
 				goto end;
 			}
@@ -965,6 +981,8 @@ end:
 		OPENSSL_free(secret_key);
 	if (secret_keyid)
 		OPENSSL_free(secret_keyid);
+	if (econtent_type)
+		ASN1_OBJECT_free(econtent_type);
 	X509_STORE_free(store);
 	X509_free(cert);
 	X509_free(recip);

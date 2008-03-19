@@ -226,6 +226,12 @@ int cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert, int type)
 		break;
 
 		case CMS_SIGNERINFO_KEYIDENTIFIER:
+		if (!cert->skid)
+			{
+			CMSerr(CMS_F_CMS_SET1_SIGNERIDENTIFIER,
+					CMS_R_CERTIFICATE_HAS_NO_KEYID);
+			return 0;
+			}
 		sid->d.subjectKeyIdentifier = ASN1_STRING_dup(cert->skid);
 		if (!sid->d.subjectKeyIdentifier)
 			goto merr;

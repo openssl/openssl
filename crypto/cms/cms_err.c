@@ -135,6 +135,7 @@ static ERR_STRING_DATA CMS_str_functs[]=
 static ERR_STRING_DATA CMS_str_reasons[]=
 	{
 {ERR_REASON(CMS_R_ADD_SIGNER_ERROR)      ,"add signer error"},
+{ERR_REASON(CMS_R_CERTIFICATE_HAS_NO_KEYID),"certificate has no keyid"},
 {ERR_REASON(CMS_R_CERTIFICATE_VERIFY_ERROR),"certificate verify error"},
 {ERR_REASON(CMS_R_CIPHER_INITIALISATION_ERROR),"cipher initialisation error"},
 {ERR_REASON(CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR),"cipher parameter initialisation error"},

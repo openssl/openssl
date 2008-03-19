@@ -252,6 +252,7 @@ id-smime-ct 6		: id-smime-ct-contentInfo
 id-smime-ct 7		: id-smime-ct-DVCSRequestData
 id-smime-ct 8		: id-smime-ct-DVCSResponseData
 id-smime-ct 9		: id-smime-ct-compressedData
+id-smime-ct 27		: id-ct-asciiTextWithCRLF
 
 # S/MIME Attributes
 id-smime-aa 1		: id-smime-aa-receiptRequest
