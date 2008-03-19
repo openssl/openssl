@@ -139,9 +139,12 @@ CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher)
 	return NULL;
 	}
 
+/* Key Transport Recipient Info (KTRI) routines */
+
 /* Add a recipient certificate. For now only handle key transport.
  * If we ever handle key agreement will need updating.
  */
+
 CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
 					X509 *recip, unsigned int flags)
 	{
@@ -230,144 +233,6 @@ CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
 
 	}
 
-int CMS_RecipientInfo_kekri_get0_id(CMS_RecipientInfo *ri,
-					X509_ALGOR **palg,
-					ASN1_OCTET_STRING **pid,
-					ASN1_GENERALIZEDTIME **pdate,
-					ASN1_OBJECT **potherid,
-					ASN1_TYPE **pothertype)
-	{
-	CMS_KEKIdentifier *rkid;
-	if (ri->type != CMS_RECIPINFO_KEK)
-		{
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_GET0_ID, CMS_R_NOT_KEK);
-		return 0;
-		}
-	rkid =  ri->d.kekri->kekid;
-	if (palg)
-		*palg = ri->d.kekri->keyEncryptionAlgorithm;
-	if (pid)
-		*pid = rkid->keyIdentifier;
-	if (pdate)
-		*pdate = rkid->date;
-	if (potherid)
-		{
-		if (rkid->other)
-			*potherid = rkid->other->keyAttrId;
-		else
-			*potherid = NULL;
-		}
-	if (pothertype)
-		{
-		if (rkid->other)
-			*pothertype = rkid->other->keyAttr;
-		else
-			*pothertype = NULL;
-		}
-	return 1;
-	}
-
-/* For now hard code AES key wrap info */
-
-static int aes_wrap_keylen(int nid)
-	{
-	switch (nid)
-		{
-		case NID_id_aes128_wrap:
-		return 16;
-
-		case NID_id_aes192_wrap:
-		return  24;
-
-		case NID_id_aes256_wrap:
-		return  32;
-
-		default:
-		return 0;
-		}
-	}
-
-
-CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
-					unsigned char *key, size_t keylen,
-					unsigned char *id, size_t idlen,
-					ASN1_GENERALIZEDTIME *date,
-					ASN1_OBJECT *otherTypeId,
-					ASN1_TYPE *otherType)
-	{
-	CMS_RecipientInfo *ri = NULL;
-	CMS_EnvelopedData *env;
-	CMS_KEKRecipientInfo *kekri;
-	size_t exp_keylen = 0;
-	env = cms_get0_enveloped(cms);
-	if (!env)
-		goto err;
-
-	exp_keylen = aes_wrap_keylen(nid);
-
-	if (!exp_keylen)
-		{
-		CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY,
-				CMS_R_UNSUPPORTED_KEK_ALGORITHM);
-		goto err;
-		}
-
-	if (keylen != exp_keylen)
-		{
-		CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY, CMS_R_INVALID_KEY_LENGTH);
-		goto err;
-		}
-
-	/* Initialize recipient info */
-	ri = M_ASN1_new_of(CMS_RecipientInfo);
-	if (!ri)
-		goto merr;
-
-	ri->d.kekri = M_ASN1_new_of(CMS_KEKRecipientInfo);
-	if (!ri->d.kekri)
-		goto merr;
-	ri->type = CMS_RECIPINFO_KEK;
-
-	kekri = ri->d.kekri;
-
-	if (otherTypeId)
-		{
-		kekri->kekid->other = M_ASN1_new_of(CMS_OtherKeyAttribute);
-		if (kekri->kekid->other == NULL)
-			goto merr;
-		}
-
-	if (!sk_CMS_RecipientInfo_push(env->recipientInfos, ri))
-		goto merr;
-
-	/* After this point no calls can fail */
-
-	kekri->version = 4;
-
-	kekri->key = key;
-	kekri->keylen = keylen;
-
-	ASN1_STRING_set0(kekri->kekid->keyIdentifier, id, idlen);
-
-	kekri->kekid->date = date;
-
-	kekri->kekid->other->keyAttrId = otherTypeId;
-	kekri->kekid->other->keyAttr = otherType;
-
-	X509_ALGOR_set0(kekri->keyEncryptionAlgorithm,
-				OBJ_nid2obj(nid), V_ASN1_UNDEF, NULL);
-
-	return ri;
-
-	merr:
-	CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY, ERR_R_MALLOC_FAILURE);
-	err:
-	if (ri)
-		M_ASN1_free_of(ri, CMS_RecipientInfo);
-	return NULL;
-
-	}
-
 int CMS_RecipientInfo_ktri_get0_algs(CMS_RecipientInfo *ri,
 					EVP_PKEY **pk, X509 **recip,
 					X509_ALGOR **palg)
@@ -431,29 +296,6 @@ int CMS_RecipientInfo_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pkey)
 	return 1;
 	}
 
-int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri, 
-				unsigned char *key, size_t keylen)
-	{
-	CMS_KEKRecipientInfo *kekri;
-	int wrap_nid;
-	if (ri->type != CMS_RECIPINFO_KEK)
-		{
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_SET0_KEY, CMS_R_NOT_KEK);
-		return 0;
-		}
-	kekri = ri->d.kekri;
-	wrap_nid = OBJ_obj2nid(kekri->keyEncryptionAlgorithm->algorithm);
-	if (aes_wrap_keylen(wrap_nid) != keylen)
-		{
-		CMSerr(CMS_F_CMS_RECIPIENTINFO_SET0_KEY,
-			CMS_R_INVALID_KEY_LENGTH);
-		return 0;
-		}
-	kekri->key = key;
-	kekri->keylen = keylen;
-	return 1;
-	}
-			
 /* Encrypt content key in key transport recipient info */
 
 static int cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms,
@@ -518,6 +360,8 @@ static int cms_RecipientInfo_ktri_encrypt(CMS_ContentInfo *cms,
 	return ret;
 
 	}
+
+/* Decrypt content key from KTRI */
 
 static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 							CMS_RecipientInfo *ri)
@@ -585,6 +429,201 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 	return ret;
 	}
 
+/* Key Encrypted Key (KEK) RecipientInfo routines */
+
+/* For now hard code AES key wrap info */
+
+static size_t aes_wrap_keylen(int nid)
+	{
+	switch (nid)
+		{
+		case NID_id_aes128_wrap:
+		return 16;
+
+		case NID_id_aes192_wrap:
+		return  24;
+
+		case NID_id_aes256_wrap:
+		return  32;
+
+		default:
+		return 0;
+		}
+	}
+
+CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
+					unsigned char *key, size_t keylen,
+					unsigned char *id, size_t idlen,
+					ASN1_GENERALIZEDTIME *date,
+					ASN1_OBJECT *otherTypeId,
+					ASN1_TYPE *otherType)
+	{
+	CMS_RecipientInfo *ri = NULL;
+	CMS_EnvelopedData *env;
+	CMS_KEKRecipientInfo *kekri;
+	env = cms_get0_enveloped(cms);
+	if (!env)
+		goto err;
+
+	if (nid == NID_undef)
+		{
+		switch (keylen)
+			{
+			case 16:
+			nid = NID_id_aes128_wrap;
+			break;
+
+			case  24:
+			nid = NID_id_aes192_wrap;
+			break;
+
+			case  32:
+			nid = NID_id_aes256_wrap;
+			break;
+
+			default:
+			CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY,
+						CMS_R_INVALID_KEY_LENGTH);
+			goto err;
+			}
+
+		}
+	else
+		{
+
+		size_t exp_keylen = aes_wrap_keylen(nid);
+
+		if (!exp_keylen)
+			{
+			CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY,
+					CMS_R_UNSUPPORTED_KEK_ALGORITHM);
+			goto err;
+			}
+
+		if (keylen != exp_keylen)
+			{
+			CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY,
+					CMS_R_INVALID_KEY_LENGTH);
+			goto err;
+			}
+
+		}
+
+	/* Initialize recipient info */
+	ri = M_ASN1_new_of(CMS_RecipientInfo);
+	if (!ri)
+		goto merr;
+
+	ri->d.kekri = M_ASN1_new_of(CMS_KEKRecipientInfo);
+	if (!ri->d.kekri)
+		goto merr;
+	ri->type = CMS_RECIPINFO_KEK;
+
+	kekri = ri->d.kekri;
+
+	if (otherTypeId)
+		{
+		kekri->kekid->other = M_ASN1_new_of(CMS_OtherKeyAttribute);
+		if (kekri->kekid->other == NULL)
+			goto merr;
+		}
+
+	if (!sk_CMS_RecipientInfo_push(env->recipientInfos, ri))
+		goto merr;
+
+
+	/* After this point no calls can fail */
+
+	kekri->version = 4;
+
+	kekri->key = key;
+	kekri->keylen = keylen;
+
+	ASN1_STRING_set0(kekri->kekid->keyIdentifier, id, idlen);
+
+	kekri->kekid->date = date;
+
+	if (kekri->kekid->other)
+		{
+		kekri->kekid->other->keyAttrId = otherTypeId;
+		kekri->kekid->other->keyAttr = otherType;
+		}
+
+	X509_ALGOR_set0(kekri->keyEncryptionAlgorithm,
+				OBJ_nid2obj(nid), V_ASN1_UNDEF, NULL);
+
+	return ri;
+
+	merr:
+	CMSerr(CMS_F_CMS_ADD0_RECIPIENT_KEY, ERR_R_MALLOC_FAILURE);
+	err:
+	if (ri)
+		M_ASN1_free_of(ri, CMS_RecipientInfo);
+	return NULL;
+
+	}
+
+int CMS_RecipientInfo_kekri_get0_id(CMS_RecipientInfo *ri,
+					X509_ALGOR **palg,
+					ASN1_OCTET_STRING **pid,
+					ASN1_GENERALIZEDTIME **pdate,
+					ASN1_OBJECT **potherid,
+					ASN1_TYPE **pothertype)
+	{
+	CMS_KEKIdentifier *rkid;
+	if (ri->type != CMS_RECIPINFO_KEK)
+		{
+		CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_GET0_ID, CMS_R_NOT_KEK);
+		return 0;
+		}
+	rkid =  ri->d.kekri->kekid;
+	if (palg)
+		*palg = ri->d.kekri->keyEncryptionAlgorithm;
+	if (pid)
+		*pid = rkid->keyIdentifier;
+	if (pdate)
+		*pdate = rkid->date;
+	if (potherid)
+		{
+		if (rkid->other)
+			*potherid = rkid->other->keyAttrId;
+		else
+			*potherid = NULL;
+		}
+	if (pothertype)
+		{
+		if (rkid->other)
+			*pothertype = rkid->other->keyAttr;
+		else
+			*pothertype = NULL;
+		}
+	return 1;
+	}
+
+
+int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri, 
+				unsigned char *key, size_t keylen)
+	{
+	CMS_KEKRecipientInfo *kekri;
+	int wrap_nid;
+	if (ri->type != CMS_RECIPINFO_KEK)
+		{
+		CMSerr(CMS_F_CMS_RECIPIENTINFO_SET0_KEY, CMS_R_NOT_KEK);
+		return 0;
+		}
+	kekri = ri->d.kekri;
+	wrap_nid = OBJ_obj2nid(kekri->keyEncryptionAlgorithm->algorithm);
+	if (aes_wrap_keylen(wrap_nid) != keylen)
+		{
+		CMSerr(CMS_F_CMS_RECIPIENTINFO_SET0_KEY,
+			CMS_R_INVALID_KEY_LENGTH);
+		return 0;
+		}
+	kekri->key = key;
+	kekri->keylen = keylen;
+	return 1;
+	}
+
 
 /* Encrypt content key in KEK recipient info */
 
@@ -645,6 +684,8 @@ static int cms_RecipientInfo_kekri_encrypt(CMS_ContentInfo *cms,
 	return r;
 
 	}
+
+/* Decrypt content key in KEK recipient info */
 
 static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 					CMS_RecipientInfo *ri)
@@ -751,6 +792,8 @@ BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms)
 
 	if (!ret || !ec->cipher)
 		return ret;
+
+	/* Now encrypt content key according to each RecipientInfo type */
 
 	rinfos = cms->d.envelopedData->recipientInfos;
 

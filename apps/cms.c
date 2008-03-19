@@ -122,8 +122,8 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
-	unsigned char *secret_key = NULL;
-	size_t secret_keylen = 0;
+	unsigned char *secret_key = NULL, *secret_keyid = NULL;
+	size_t secret_keylen = 0, secret_keyidlen = 0;
 
 	X509_VERIFY_PARAM *vpm = NULL;
 
@@ -253,6 +253,20 @@ int MAIN(int argc, char **argv)
 				goto argerr;
 				}
 			secret_keylen = (size_t)ltmp;
+			}
+		else if (!strcmp(*args,"-secretkeyid"))
+			{
+			long ltmp;
+			if (!args[1])
+				goto argerr;
+			args++;
+			secret_keyid = string_to_hex(*args, &ltmp);
+			if (!secret_keyid)
+				{
+				BIO_printf(bio_err, "Invalid id %s\n", *args);
+				goto argerr;
+				}
+			secret_keyidlen = (size_t)ltmp;
 			}
 		else if (!strcmp(*args,"-rand"))
 			{
@@ -459,7 +473,7 @@ int MAIN(int argc, char **argv)
 		}
 	else if (operation == SMIME_ENCRYPT)
 		{
-		if (!*args)
+		if (!*args && !secret_key)
 			{
 			BIO_printf(bio_err, "No recipient(s) certificate(s) specified\n");
 			badarg = 1;
@@ -592,17 +606,20 @@ int MAIN(int argc, char **argv)
 			goto end;
 #endif
 			}
-		encerts = sk_X509_new_null();
+
+		if (secret_key && !secret_keyid)
+			{
+			BIO_printf(bio_err, "No sectre key id\n");
+			goto end;
+			}
+
+		if (*args)
+			encerts = sk_X509_new_null();
 		while (*args)
 			{
 			if (!(cert = load_cert(bio_err,*args,FORMAT_PEM,
 				NULL, e, "recipient certificate file")))
-				{
-#if 0				/* An appropriate message is already printed */
-				BIO_printf(bio_err, "Can't read recipient certificate file %s\n", *args);
-#endif
 				goto end;
-				}
 			sk_X509_push(encerts, cert);
 			cert = NULL;
 			args++;
@@ -737,13 +754,33 @@ int MAIN(int argc, char **argv)
 		}
 	else if (operation == SMIME_ENCRYPT)
 		{
+		flags |= CMS_PARTIAL;
 		cms = CMS_encrypt(encerts, in, cipher, flags);
+		if (!cms)
+			goto end;
+		if (secret_key)
+			{
+			if (!CMS_add0_recipient_key(cms, NID_undef, 
+						secret_key, secret_keylen,
+						secret_keyid, secret_keyidlen,
+						NULL, NULL, NULL))
+				goto end;
+			/* NULL these because call absorbs them */
+			secret_key = NULL;
+			secret_keyid = NULL;
+			}
+		if (!(flags & CMS_STREAM))
+			{
+			if (!CMS_final(cms, in, flags))
+				goto end;
+			}
 		}
 	else if (operation == SMIME_ENCRYPTED_ENCRYPT)
 		{
 		cms = CMS_EncryptedData_encrypt(in, cipher,
 						secret_key, secret_keylen,
 						flags);
+
 		}
 	else if (operation & SMIME_SIGNERS)
 		{
@@ -903,6 +940,8 @@ end:
 		sk_free(skkeys);
 	if (secret_key)
 		OPENSSL_free(secret_key);
+	if (secret_keyid)
+		OPENSSL_free(secret_keyid);
 	X509_STORE_free(store);
 	X509_free(cert);
 	X509_free(recip);

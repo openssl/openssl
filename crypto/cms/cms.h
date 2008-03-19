@@ -181,6 +181,13 @@ int CMS_RecipientInfo_ktri_get0_signer_id(CMS_RecipientInfo *ri,
 					ASN1_OCTET_STRING **keyid,
 					X509_NAME **issuer, ASN1_INTEGER **sno);
 
+CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
+					unsigned char *key, size_t keylen,
+					unsigned char *id, size_t idlen,
+					ASN1_GENERALIZEDTIME *date,
+					ASN1_OBJECT *otherTypeId,
+					ASN1_TYPE *otherType);
+	
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 	
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
