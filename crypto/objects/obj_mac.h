@@ -2509,15 +2509,15 @@
 #define NID_des_ede3_cfb8		659
 
 #define SN_id_aes128_wrap		"id-aes128-wrap"
-#define NID_id_aes128_wrap		853
+#define NID_id_aes128_wrap		852
 #define OBJ_id_aes128_wrap		OBJ_aes,5L
 
 #define SN_id_aes192_wrap		"id-aes192-wrap"
-#define NID_id_aes192_wrap		854
+#define NID_id_aes192_wrap		853
 #define OBJ_id_aes192_wrap		OBJ_aes,25L
 
 #define SN_id_aes256_wrap		"id-aes256-wrap"
-#define NID_id_aes256_wrap		855
+#define NID_id_aes256_wrap		854
 #define OBJ_id_aes256_wrap		OBJ_aes,45L
 
 #define OBJ_nist_hashalgs		OBJ_nistAlgorithms,2L
@@ -3467,10 +3467,10 @@
 #define SN_gost89_cnt		"gost89-cnt"
 #define NID_gost89_cnt		809
 
-#define SN_id_Gost28147_89_MAC					"gost-mac"
-#define LN_id_Gost28147_89_MAC					"GOST 28147-89 MAC"
-#define NID_id_Gost28147_89_MAC					856
-#define OBJ_id_Gost28147_89_MAC					OBJ_cryptopro,22L
+#define SN_id_Gost28147_89_MAC		"gost-mac"
+#define LN_id_Gost28147_89_MAC		"GOST 28147-89 MAC"
+#define NID_id_Gost28147_89_MAC		810
+#define OBJ_id_Gost28147_89_MAC		OBJ_cryptopro,22L
 
 #define SN_id_GostR3411_94_prf		"prf-gostr3411-94"
 #define LN_id_GostR3411_94_prf		"GOST R 34.11-94 PRF"
