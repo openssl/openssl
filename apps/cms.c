@@ -465,7 +465,7 @@ int MAIN(int argc, char **argv)
 		}
 	else if (operation == SMIME_DECRYPT)
 		{
-		if (!recipfile && !keyfile)
+		if (!recipfile && !keyfile && !secret_key)
 			{
 			BIO_printf(bio_err, "No recipient certificate or key specified\n");
 			badarg = 1;
@@ -838,7 +838,30 @@ int MAIN(int argc, char **argv)
 	ret = 4;
 	if (operation == SMIME_DECRYPT)
 		{
-		if (!CMS_decrypt(cms, key, recip, indata, out, flags))
+
+		if (secret_key)
+			{
+			if (!CMS_decrypt_set1_key(cms,
+						secret_key, secret_keylen,
+						secret_keyid, secret_keyidlen))
+				{
+				BIO_puts(bio_err,
+					"Error decrypting CMS using secret key\n");
+				goto end;
+				}
+			}
+
+		if (key)
+			{
+			if (!CMS_decrypt_set1_pkey(cms, key, recip))
+				{
+				BIO_puts(bio_err,
+					"Error decrypting CMS using private key\n");
+				goto end;
+				}
+			}
+
+		if (!CMS_decrypt(cms, NULL, NULL, indata, out, flags))
 			{
 			BIO_printf(bio_err, "Error decrypting CMS structure\n");
 			goto end;

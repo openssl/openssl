@@ -166,6 +166,11 @@ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *in,
 int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
 				BIO *data, BIO *dcont,
 				unsigned int flags);
+	
+int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert);
+int CMS_decrypt_set1_key(CMS_ContentInfo *cms, 
+				unsigned char *key, size_t keylen,
+				unsigned char *id, size_t idlen);
 
 STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
 int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
@@ -187,7 +192,13 @@ CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
 					ASN1_GENERALIZEDTIME *date,
 					ASN1_OBJECT *otherTypeId,
 					ASN1_TYPE *otherType);
-	
+
+int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri, 
+				unsigned char *key, size_t keylen);
+
+int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri, 
+					const unsigned char *id, size_t idlen);
+
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 	
 int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
@@ -297,6 +308,8 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_DECRYPT				 152
 #define CMS_F_CMS_DECRYPTEDCONTENT_DECRYPT_BIO		 145
 #define CMS_F_CMS_DECRYPTEDCONTENT_ENCRYPT_BIO		 143
+#define CMS_F_CMS_DECRYPT_SET1_KEY			 167
+#define CMS_F_CMS_DECRYPT_SET1_PKEY			 168
 #define CMS_F_CMS_DIGESTALGORITHM_FIND_CTX		 110
 #define CMS_F_CMS_DIGESTALGORITHM_INIT_BIO		 111
 #define CMS_F_CMS_DIGESTEDDATA_DO_FINAL			 112
@@ -322,9 +335,12 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_GET0_REVOCATION_CHOICES		 120
 #define CMS_F_CMS_GET0_SIGNED				 121
 #define CMS_F_CMS_RECIPIENTINFO_DECRYPT			 150
+#define CMS_F_CMS_RECIPIENTINFO_KEKI_KEY_CMP		 164
 #define CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT		 161
 #define CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT		 162
 #define CMS_F_CMS_RECIPIENTINFO_KEKRI_GET0_ID		 158
+#define CMS_F_CMS_RECIPIENTINFO_KEKRI_ID_CMP		 166
+#define CMS_F_CMS_RECIPIENTINFO_KEKRI_KEY_CMP		 165
 #define CMS_F_CMS_RECIPIENTINFO_KTRI_CERT_CMP		 122
 #define CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT		 160
 #define CMS_F_CMS_RECIPIENTINFO_KTRI_ENCRYPT		 155
@@ -359,6 +375,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_CONTENT_VERIFY_ERROR			 106
 #define CMS_R_CTRL_ERROR				 107
 #define CMS_R_CTRL_FAILURE				 108
+#define CMS_R_DECRYPT_ERROR				 159
 #define CMS_R_ERROR_GETTING_PUBLIC_KEY			 109
 #define CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE	 110
 #define CMS_R_ERROR_SETTING_KEY				 155

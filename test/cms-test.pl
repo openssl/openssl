@@ -236,6 +236,27 @@ my @smime_cms_tests = (
     ],
 
     [
+        "enveloped content test streaming PEM format, KEK",
+        "-encrypt -in smcont.txt -outform PEM -aes128"
+          . " -stream -out test.cms "
+          . " -secretkey 000102030405060708090A0B0C0D0E0F "
+          . " -secretkeyid C0FEE0",
+        "-decrypt -in test.cms -out smtst.txt -inform PEM"
+          . " -secretkey 000102030405060708090A0B0C0D0E0F "
+          . " -secretkeyid C0FEE0"
+    ],
+
+    [
+        "enveloped content test streaming PEM format, KEK, key only",
+        "-encrypt -in smcont.txt -outform PEM -aes128"
+          . " -stream -out test.cms "
+          . " -secretkey 000102030405060708090A0B0C0D0E0F "
+          . " -secretkeyid C0FEE0",
+        "-decrypt -in test.cms -out smtst.txt -inform PEM"
+          . " -secretkey 000102030405060708090A0B0C0D0E0F "
+    ],
+
+    [
         "data content test streaming PEM format",
         "-data_create -in smcont.txt -outform PEM -nodetach"
           . " -stream -out test.cms",
