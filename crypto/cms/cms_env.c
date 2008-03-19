@@ -581,6 +581,7 @@ CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
 
 	}
 
+#if 0
 int CMS_RecipientInfo_kekri_get0_id(CMS_RecipientInfo *ri,
 					X509_ALGOR **palg,
 					ASN1_OCTET_STRING **pid,
@@ -617,6 +618,7 @@ int CMS_RecipientInfo_kekri_get0_id(CMS_RecipientInfo *ri,
 		}
 	return 1;
 	}
+#endif
 
 
 int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri, 
