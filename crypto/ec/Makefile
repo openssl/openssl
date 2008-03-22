@@ -96,7 +96,8 @@ ec2_smpl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec2_smpl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ec2_smpl.o: ../../include/openssl/symhacks.h ec2_smpl.c ec_lcl.h
 ec_ameth.o: ../../e_os.h ../../include/openssl/asn1.h
-ec_ameth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+ec_ameth.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+ec_ameth.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
 ec_ameth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 ec_ameth.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
 ec_ameth.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
@@ -195,15 +196,15 @@ ec_print.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ec_print.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ec_print.o: ../../include/openssl/symhacks.h ec_lcl.h ec_print.c
 eck_prn.o: ../../e_os.h ../../include/openssl/asn1.h
-eck_prn.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-eck_prn.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-eck_prn.o: ../../include/openssl/ec.h ../../include/openssl/err.h
-eck_prn.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-eck_prn.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-eck_prn.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-eck_prn.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-eck_prn.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-eck_prn.o: ../cryptlib.h eck_prn.c
+eck_prn.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+eck_prn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+eck_prn.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+eck_prn.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+eck_prn.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+eck_prn.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+eck_prn.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+eck_prn.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+eck_prn.o: ../../include/openssl/symhacks.h ../cryptlib.h eck_prn.c
 ecp_mont.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ecp_mont.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ecp_mont.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

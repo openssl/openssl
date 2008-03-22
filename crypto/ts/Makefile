@@ -100,12 +100,13 @@ ts_asn1.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ts_asn1.o: ../../include/openssl/ts.h ../../include/openssl/x509.h
 ts_asn1.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
 ts_asn1.o: ts_asn1.c
-ts_conf.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ts_conf.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
-ts_conf.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
-ts_conf.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-ts_conf.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-ts_conf.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+ts_conf.o: ../../e_os.h ../../include/openssl/asn1.h
+ts_conf.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+ts_conf.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+ts_conf.o: ../../include/openssl/dh.h ../../include/openssl/dsa.h
+ts_conf.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+ts_conf.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+ts_conf.o: ../../include/openssl/engine.h ../../include/openssl/err.h
 ts_conf.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 ts_conf.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 ts_conf.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
@@ -115,7 +116,7 @@ ts_conf.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 ts_conf.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 ts_conf.o: ../../include/openssl/symhacks.h ../../include/openssl/ts.h
 ts_conf.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-ts_conf.o: ../../include/openssl/x509v3.h ts_conf.c
+ts_conf.o: ../../include/openssl/x509v3.h ../cryptlib.h ts_conf.c
 ts_err.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ts_err.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
 ts_err.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h

@@ -201,10 +201,12 @@ eng_table.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 eng_table.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 eng_table.o: ../../include/openssl/symhacks.h ../cryptlib.h eng_int.h
 eng_table.o: eng_table.c
-tb_asnmth.o: ../../e_os.h ../../include/openssl/bio.h
-tb_asnmth.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-tb_asnmth.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-tb_asnmth.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+tb_asnmth.o: ../../e_os.h ../../include/openssl/asn1.h
+tb_asnmth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+tb_asnmth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+tb_asnmth.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+tb_asnmth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+tb_asnmth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 tb_asnmth.o: ../../include/openssl/opensslconf.h
 tb_asnmth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tb_asnmth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
@@ -260,10 +262,12 @@ tb_ecdsa.o: ../../include/openssl/opensslconf.h
 tb_ecdsa.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tb_ecdsa.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 tb_ecdsa.o: ../../include/openssl/symhacks.h ../cryptlib.h eng_int.h tb_ecdsa.c
-tb_pkmeth.o: ../../e_os.h ../../include/openssl/bio.h
-tb_pkmeth.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-tb_pkmeth.o: ../../include/openssl/e_os2.h ../../include/openssl/engine.h
-tb_pkmeth.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+tb_pkmeth.o: ../../e_os.h ../../include/openssl/asn1.h
+tb_pkmeth.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+tb_pkmeth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+tb_pkmeth.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+tb_pkmeth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+tb_pkmeth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
 tb_pkmeth.o: ../../include/openssl/opensslconf.h
 tb_pkmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 tb_pkmeth.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h

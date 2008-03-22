@@ -242,7 +242,8 @@ pem_xaux.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 pem_xaux.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 pem_xaux.o: ../../include/openssl/x509_vfy.h ../cryptlib.h pem_xaux.c
 pvkfmt.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
-pvkfmt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+pvkfmt.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+pvkfmt.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
 pvkfmt.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
 pvkfmt.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
 pvkfmt.o: ../../include/openssl/err.h ../../include/openssl/evp.h
@@ -251,7 +252,7 @@ pvkfmt.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 pvkfmt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 pvkfmt.o: ../../include/openssl/pem.h ../../include/openssl/pem2.h
 pvkfmt.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
-pvkfmt.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-pvkfmt.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-pvkfmt.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-pvkfmt.o: ../cryptlib.h pvkfmt.c
+pvkfmt.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+pvkfmt.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+pvkfmt.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+pvkfmt.o: ../../include/openssl/x509_vfy.h ../cryptlib.h pvkfmt.c
