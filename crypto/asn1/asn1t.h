@@ -766,10 +766,10 @@ typedef struct ASN1_STREAM_ARG_st {
 #define ASN1_OP_I2D_POST	7
 #define ASN1_OP_PRINT_PRE	8
 #define ASN1_OP_PRINT_POST	9
-#define ASN1_OP_STREAM_PRE	8
-#define ASN1_OP_STREAM_POST	9
-#define ASN1_OP_DETACHED_PRE	10
-#define ASN1_OP_DETACHED_POST	11
+#define ASN1_OP_STREAM_PRE	10
+#define ASN1_OP_STREAM_POST	11
+#define ASN1_OP_DETACHED_PRE	12
+#define ASN1_OP_DETACHED_POST	13
 
 /* Macro to implement a primitive type */
 #define IMPLEMENT_ASN1_TYPE(stname) IMPLEMENT_ASN1_TYPE_ex(stname, stname, 0)
