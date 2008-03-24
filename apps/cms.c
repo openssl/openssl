@@ -110,7 +110,7 @@ int MAIN(int argc, char **argv)
 	STACK_OF(X509) *encerts = NULL, *other = NULL;
 	BIO *in = NULL, *out = NULL, *indata = NULL;
 	int badarg = 0;
-	int flags = CMS_DETACHED;
+	int flags = CMS_DETACHED, noout = 0, print = 0;
 	char *to = NULL, *from = NULL, *subject = NULL;
 	char *CAfile = NULL, *CApath = NULL;
 	char *passargin = NULL, *passin = NULL;
@@ -242,6 +242,13 @@ int MAIN(int argc, char **argv)
 				flags |= CMS_NOOLDMIMETYPE;
 		else if (!strcmp (*args, "-crlfeol"))
 				flags |= CMS_CRLFEOL;
+		else if (!strcmp (*args, "-noout"))
+				noout = 1;
+		else if (!strcmp (*args, "-print"))
+				{
+				noout = 1;
+				print = 1;
+				}
 		else if (!strcmp(*args,"-secretkey"))
 			{
 			long ltmp;
@@ -935,7 +942,12 @@ int MAIN(int argc, char **argv)
 		}
 	else
 		{
-		if (outformat == FORMAT_SMIME) 
+		if (noout)
+			{
+			if (print)
+				CMS_ContentInfo_print_ctx(out, cms, 0, NULL);
+			}
+		else if (outformat == FORMAT_SMIME)
 			{
 			if (to)
 				BIO_printf(out, "To: %s\n", to);
