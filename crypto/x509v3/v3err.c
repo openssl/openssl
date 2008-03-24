@@ -1,6 +1,6 @@
 /* crypto/x509v3/v3err.c */
 /* ====================================================================
- * Copyright (c) 1999-2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,6 +70,7 @@
 
 static ERR_STRING_DATA X509V3_str_functs[]=
 	{
+{ERR_FUNC(X509V3_F_A2I_GENERAL_NAME),	"A2I_GENERAL_NAME"},
 {ERR_FUNC(X509V3_F_ASIDENTIFIERCHOICE_CANONIZE),	"ASIDENTIFIERCHOICE_CANONIZE"},
 {ERR_FUNC(X509V3_F_ASIDENTIFIERCHOICE_IS_CANONICAL),	"ASIDENTIFIERCHOICE_IS_CANONICAL"},
 {ERR_FUNC(X509V3_F_COPY_EMAIL),	"COPY_EMAIL"},
@@ -205,6 +206,7 @@ static ERR_STRING_DATA X509V3_str_reasons[]=
 {ERR_REASON(X509V3_R_UNKNOWN_EXTENSION_NAME),"unknown extension name"},
 {ERR_REASON(X509V3_R_UNKNOWN_OPTION)     ,"unknown option"},
 {ERR_REASON(X509V3_R_UNSUPPORTED_OPTION) ,"unsupported option"},
+{ERR_REASON(X509V3_R_UNSUPPORTED_TYPE)   ,"unsupported type"},
 {ERR_REASON(X509V3_R_USER_TOO_LONG)      ,"user too long"},
 {0,NULL}
 	};

@@ -53,6 +53,7 @@
 
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
+#include <openssl/x509v3.h>
 #include "cms.h"
 #include "cms_lcl.h"
 
@@ -356,4 +357,16 @@ ASN1_ITEM_TEMPLATE(CMS_Attributes_Verify) =
 	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF | ASN1_TFLG_IMPTAG | ASN1_TFLG_UNIVERSAL,
 				V_ASN1_SET, CMS_ATTRIBUTES, X509_ATTRIBUTE)
 ASN1_ITEM_TEMPLATE_END(CMS_Attributes_Verify)
+
+
+
+ASN1_CHOICE(CMS_ReceiptsFrom) = {
+  ASN1_IMP(CMS_ReceiptsFrom, d.allOrFirstTier, LONG, 0),
+  ASN1_IMP_SEQUENCE_OF(CMS_ReceiptsFrom, d.receiptList, GENERAL_NAME, 1)
+} ASN1_CHOICE_END(CMS_ReceiptsFrom)
+
+ASN1_SEQUENCE(CMS_ReceiptRequest) = {
+  ASN1_SIMPLE(CMS_ReceiptRequest, signedContentIdentifier, ASN1_OCTET_STRING),
+  ASN1_SIMPLE(CMS_ReceiptRequest, receiptsFrom, CMS_ReceiptsFrom)
+} ASN1_SEQUENCE_END(CMS_ReceiptRequest)
 

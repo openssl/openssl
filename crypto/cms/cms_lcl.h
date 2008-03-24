@@ -91,6 +91,7 @@ typedef struct CMS_KEKIdentifier_st CMS_KEKIdentifier;
 typedef struct CMS_KEKRecipientInfo_st CMS_KEKRecipientInfo;
 typedef struct CMS_PasswordRecipientInfo_st CMS_PasswordRecipientInfo;
 typedef struct CMS_OtherRecipientInfo_st CMS_OtherRecipientInfo;
+typedef struct CMS_ReceiptsFrom_st CMS_ReceiptsFrom;
 
 struct CMS_ContentInfo_st
 	{
@@ -372,6 +373,37 @@ struct CMS_OtherKeyAttribute_st
 	{
 	ASN1_OBJECT *keyAttrId;
  	ASN1_TYPE *keyAttr;
+	};
+
+/* ESS structures */
+
+#ifdef HEADER_X509V3_H
+
+struct CMS_ReceiptRequest_st
+	{
+	ASN1_OCTET_STRING *signedContentIdentifier;
+	CMS_ReceiptsFrom *receiptsFrom;
+	GENERAL_NAMES *receiptsTo;
+	};
+
+
+struct CMS_ReceiptsFrom_st
+	{
+	int type;
+	union
+		{
+		long allOrFirstTier;
+		GENERAL_NAMES *receiptList;
+		} d;
+	};
+#endif
+
+struct CMS_Receipt_st
+	{
+	long version;
+	ASN1_OBJECT *contentType;
+	ASN1_OCTET_STRING *signedContentIdentifier;
+	ASN1_OCTET_STRING *originatorSignatureValue;
 	};
 
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)

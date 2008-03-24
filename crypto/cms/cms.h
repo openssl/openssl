@@ -71,6 +71,8 @@ typedef struct CMS_SignerInfo_st CMS_SignerInfo;
 typedef struct CMS_CertificateChoices CMS_CertificateChoices;
 typedef struct CMS_RevocationInfoChoice_st CMS_RevocationInfoChoice;
 typedef struct CMS_RecipientInfo_st CMS_RecipientInfo;
+typedef struct CMS_ReceiptRequest_st CMS_ReceiptRequest;
+typedef struct CMS_Receipt_st CMS_Receipt;
 
 DECLARE_STACK_OF(CMS_SignerInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
