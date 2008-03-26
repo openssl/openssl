@@ -383,7 +383,7 @@ struct CMS_ReceiptRequest_st
 	{
 	ASN1_OCTET_STRING *signedContentIdentifier;
 	CMS_ReceiptsFrom *receiptsFrom;
-	GENERAL_NAMES *receiptsTo;
+	STACK_OF(GENERAL_NAMES) *receiptsTo;
 	};
 
 
@@ -393,7 +393,7 @@ struct CMS_ReceiptsFrom_st
 	union
 		{
 		long allOrFirstTier;
-		GENERAL_NAMES *receiptList;
+		STACK_OF(GENERAL_NAMES) *receiptList;
 		} d;
 	};
 #endif

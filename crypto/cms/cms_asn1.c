@@ -362,11 +362,12 @@ ASN1_ITEM_TEMPLATE_END(CMS_Attributes_Verify)
 
 ASN1_CHOICE(CMS_ReceiptsFrom) = {
   ASN1_IMP(CMS_ReceiptsFrom, d.allOrFirstTier, LONG, 0),
-  ASN1_IMP_SEQUENCE_OF(CMS_ReceiptsFrom, d.receiptList, GENERAL_NAME, 1)
+  ASN1_IMP_SEQUENCE_OF(CMS_ReceiptsFrom, d.receiptList, GENERAL_NAMES, 1)
 } ASN1_CHOICE_END(CMS_ReceiptsFrom)
 
 ASN1_SEQUENCE(CMS_ReceiptRequest) = {
   ASN1_SIMPLE(CMS_ReceiptRequest, signedContentIdentifier, ASN1_OCTET_STRING),
-  ASN1_SIMPLE(CMS_ReceiptRequest, receiptsFrom, CMS_ReceiptsFrom)
+  ASN1_SIMPLE(CMS_ReceiptRequest, receiptsFrom, CMS_ReceiptsFrom),
+  ASN1_SEQUENCE_OF(CMS_ReceiptRequest, receiptsTo, GENERAL_NAMES)
 } ASN1_SEQUENCE_END(CMS_ReceiptRequest)
 
