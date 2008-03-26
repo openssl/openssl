@@ -197,6 +197,13 @@ CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
 					ASN1_OBJECT *otherTypeId,
 					ASN1_TYPE *otherType);
 
+int CMS_RecipientInfo_kekri_get0_id(CMS_RecipientInfo *ri,
+					X509_ALGOR **palg,
+					ASN1_OCTET_STRING **pid,
+					ASN1_GENERALIZEDTIME **pdate,
+					ASN1_OBJECT **potherid,
+					ASN1_TYPE **pothertype);
+
 int CMS_RecipientInfo_set0_key(CMS_RecipientInfo *ri, 
 				unsigned char *key, size_t keylen);
 
@@ -288,11 +295,11 @@ void *CMS_unsigned_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
 #ifdef HEADER_X509V3_H
 
 int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr);
-int CMS_add1_ReceiptRequest(CMS_SignerInfo *si,
-				unsigned char *id, int idlen,
+CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
 				int allorfirst,
 				STACK_OF(GENERAL_NAMES) *receiptList,
 				STACK_OF(GENERAL_NAMES) *receiptsTo);
+int CMS_add1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest *rr);
 void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,
 					ASN1_STRING **pcid,
 					int *pallorfirst,
@@ -346,6 +353,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_GET0_ENVELOPED			 131
 #define CMS_F_CMS_GET0_REVOCATION_CHOICES		 132
 #define CMS_F_CMS_GET0_SIGNED				 133
+#define CMS_F_CMS_RECEIPTREQUEST_CREATE0		 159
 #define CMS_F_CMS_RECIPIENTINFO_DECRYPT			 134
 #define CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT		 135
 #define CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT		 136

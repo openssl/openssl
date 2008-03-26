@@ -89,26 +89,18 @@ int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr)
 	return 1;
 	}
 
-int CMS_add1_ReceiptRequest(CMS_SignerInfo *si,
-				unsigned char *id, int idlen,
+CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
 				int allorfirst,
 				STACK_OF(GENERAL_NAMES) *receiptList,
 				STACK_OF(GENERAL_NAMES) *receiptsTo)
 	{
 	CMS_ReceiptRequest *rr = NULL;
-	STACK_OF(GENERAL_NAMES) *tmpto = NULL;
-	unsigned char *rrder = NULL;
-	int rrderlen;
-	int r = 0;
 
 	rr = CMS_ReceiptRequest_new();
 	if (!rr)
 		goto merr;
 	if (id)
-		{
-		if (!ASN1_STRING_set(rr->signedContentIdentifier, id, idlen))
-			goto merr;
-		}
+		ASN1_STRING_set0(rr->signedContentIdentifier, id, idlen);
 	else
 		{
 		if (!ASN1_STRING_set(rr->signedContentIdentifier, NULL, 32))
@@ -118,7 +110,7 @@ int CMS_add1_ReceiptRequest(CMS_SignerInfo *si,
 			goto err;
 		}
 
-	tmpto = rr->receiptsTo;
+	sk_GENERAL_NAMES_pop_free(rr->receiptsTo, GENERAL_NAMES_free);
 	rr->receiptsTo = receiptsTo;
 
 	if (receiptList)
@@ -132,21 +124,38 @@ int CMS_add1_ReceiptRequest(CMS_SignerInfo *si,
 		rr->receiptsFrom->d.allOrFirstTier = allorfirst;
 		}
 
-	rrderlen = i2d_CMS_ReceiptRequest(rr, &rrder);
-
-	r = CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_receiptRequest,
-					V_ASN1_SEQUENCE, rrder, rrderlen);
+	return rr;
 
 	merr:
-	CMSerr(CMS_F_CMS_ADD1_RECEIPTREQUEST, ERR_R_MALLOC_FAILURE);
+	CMSerr(CMS_F_CMS_RECEIPTREQUEST_CREATE0, ERR_R_MALLOC_FAILURE);
 
 	err:
 	if (rr)
-		{
-		rr->receiptsTo = tmpto;
-		rr->receiptsFrom->type = 0;
 		CMS_ReceiptRequest_free(rr);
-		}
+
+	return NULL;
+	
+	}
+
+int CMS_add1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest *rr)
+	{
+	unsigned char *rrder = NULL;
+	int rrderlen, r = 0;
+
+	rrderlen = i2d_CMS_ReceiptRequest(rr, &rrder);
+	if (rrderlen < 0)
+		goto merr;
+
+	if (!CMS_signed_add1_attr_by_NID(si, NID_id_smime_aa_receiptRequest,
+					V_ASN1_SEQUENCE, rrder, rrderlen))
+		goto merr;
+
+	r = 1;
+
+	merr:
+	if (!r)
+		CMSerr(CMS_F_CMS_ADD1_RECEIPTREQUEST, ERR_R_MALLOC_FAILURE);
+
 	if (rrder)
 		OPENSSL_free(rrder);
 

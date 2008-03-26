@@ -71,6 +71,8 @@
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int smime_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(BIO *out, CMS_ContentInfo *cms);
+static CMS_ReceiptRequest *make_receipt_request(STACK *rr_to, int rr_allorfirst,
+								STACK *rr_from);
 
 #define SMIME_OP	0x10
 #define SMIME_IP	0x20
@@ -112,7 +114,9 @@ int MAIN(int argc, char **argv)
 	BIO *in = NULL, *out = NULL, *indata = NULL;
 	int badarg = 0;
 	int flags = CMS_DETACHED, noout = 0, print = 0;
-	int rr_print = 0;
+	int rr_print = 0, rr_allorfirst = -1;
+	STACK *rr_to = NULL, *rr_from = NULL;
+	CMS_ReceiptRequest *rr = NULL;
 	char *to = NULL, *from = NULL, *subject = NULL;
 	char *CAfile = NULL, *CApath = NULL;
 	char *passargin = NULL, *passin = NULL;
@@ -248,6 +252,28 @@ int MAIN(int argc, char **argv)
 				noout = 1;
 		else if (!strcmp (*args, "-receipt_request_print"))
 				rr_print = 1;
+		else if (!strcmp (*args, "-receipt_request_all"))
+				rr_allorfirst = 0;
+		else if (!strcmp (*args, "-receipt_request_first"))
+				rr_allorfirst = 1;
+		else if (!strcmp(*args,"-receipt_request_from"))
+			{
+			if (!args[1])
+				goto argerr;
+			args++;
+			if (!rr_from)
+				rr_from = sk_new_null();
+			sk_push(rr_from, *args);
+			}
+		else if (!strcmp(*args,"-receipt_request_to"))
+			{
+			if (!args[1])
+				goto argerr;
+			args++;
+			if (!rr_to)
+				rr_to = sk_new_null();
+			sk_push(rr_to, *args);
+			}
 		else if (!strcmp (*args, "-print"))
 				{
 				noout = 1;
@@ -454,6 +480,17 @@ int MAIN(int argc, char **argv)
 		args++;
 		}
 
+	if (((rr_allorfirst != -1) || rr_from) && !rr_to)
+		{
+		BIO_puts(bio_err, "No Signed Receipts Recipients\n");
+		goto argerr;
+		}
+
+	if (!(operation & SMIME_SIGNERS)  && (rr_to || rr_from))
+		{
+		BIO_puts(bio_err, "Signed receipts only allowed with -sign\n");
+		goto argerr;
+		}
 	if (!(operation & SMIME_SIGNERS) && (skkeys || sksigners))
 		{
 		BIO_puts(bio_err, "Multiple signers or keys not allowed\n");
@@ -462,12 +499,12 @@ int MAIN(int argc, char **argv)
 
 	if (operation & SMIME_SIGNERS)
 		{
-		/* Check to see if any final signer needs to be appended */
 		if (keyfile && !signerfile)
 			{
 			BIO_puts(bio_err, "Illegal -inkey without -signer\n");
 			goto argerr;
 			}
+		/* Check to see if any final signer needs to be appended */
 		if (signerfile)
 			{
 			if (!sksigners)
@@ -810,27 +847,41 @@ int MAIN(int argc, char **argv)
 	else if (operation & SMIME_SIGNERS)
 		{
 		int i;
-		/* If detached data content we only enable streaming if
+		/* If detached data content we enable streaming if
 		 * S/MIME output format.
 		 */
 		if (operation == SMIME_SIGN)
 			{
+				
 			if (flags & CMS_DETACHED)
 				{
-				if (outformat != FORMAT_SMIME)
-					flags &= ~CMS_STREAM;
+				if (outformat == FORMAT_SMIME)
+					flags |= CMS_STREAM;
 				}
 			flags |= CMS_PARTIAL;
 			cms = CMS_sign(NULL, NULL, other, in, flags);
-			if (econtent_type)
-				CMS_set1_eContentType(cms, econtent_type);
 			if (!cms)
 				goto end;
+			if (econtent_type)
+				CMS_set1_eContentType(cms, econtent_type);
+
+			if (rr_to)
+				{
+				rr = make_receipt_request(rr_to, rr_allorfirst,
+								rr_from);
+				if (!rr)
+					{
+					BIO_puts(bio_err,
+				"Signed Receipt Request Creation Error\n");
+					goto end;
+					}
+				}
 			}
 		else
 			flags |= CMS_REUSE_DIGEST;
 		for (i = 0; i < sk_num(sksigners); i++)
 			{
+			CMS_SignerInfo *si;
 			signerfile = sk_value(sksigners, i);
 			keyfile = sk_value(skkeys, i);
 			signer = load_cert(bio_err, signerfile,FORMAT_PEM, NULL,
@@ -841,7 +892,10 @@ int MAIN(int argc, char **argv)
 			       "signing key file");
 			if (!key)
 				goto end;
-			if (!CMS_add1_signer(cms, signer, key, sign_md, flags))
+			si = CMS_add1_signer(cms, signer, key, sign_md, flags);
+			if (!si)
+				goto end;
+			if (rr && !CMS_add1_ReceiptRequest(si, rr))
 				goto end;
 			X509_free(signer);
 			signer = NULL;
@@ -1002,6 +1056,12 @@ end:
 		OPENSSL_free(secret_keyid);
 	if (econtent_type)
 		ASN1_OBJECT_free(econtent_type);
+	if (rr)
+		CMS_ReceiptRequest_free(rr);
+	if (rr_to)
+		sk_free(rr_to);
+	if (rr_from)
+		sk_free(rr_from);
 	X509_STORE_free(store);
 	X509_free(cert);
 	X509_free(recip);
@@ -1117,6 +1177,68 @@ static void receipt_request_print(BIO *out, CMS_ContentInfo *cms)
 		if (rr)
 			CMS_ReceiptRequest_free(rr);
 		}
+	}
+
+static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK *ns)
+	{
+	int i;
+	STACK_OF(GENERAL_NAMES) *ret;
+	GENERAL_NAMES *gens = NULL;
+	GENERAL_NAME *gen = NULL;
+	ret = sk_GENERAL_NAMES_new_null();
+	if (!ret)
+		goto err;
+	for (i = 0; i < sk_num(ns); i++)
+		{
+		char *str = sk_value(ns, i);
+		gen = a2i_GENERAL_NAME(NULL, NULL, NULL, GEN_EMAIL, str, 0);
+		if (!gen)
+			goto err;
+		gens = GENERAL_NAMES_new();
+		if (!gens)
+			goto err;
+		if (!sk_GENERAL_NAME_push(gens, gen))
+			goto err;
+		gen = NULL;
+		if (!sk_GENERAL_NAMES_push(ret, gens))
+			goto err;
+		gens = NULL;
+		}
+
+	return ret;
+
+	err:
+	if (ret)
+		sk_GENERAL_NAMES_pop_free(ret, GENERAL_NAMES_free);
+	if (gens)
+		GENERAL_NAMES_free(gens);
+	if (gen)
+		GENERAL_NAME_free(gen);
+	return NULL;
+	}
+
+
+static CMS_ReceiptRequest *make_receipt_request(STACK *rr_to, int rr_allorfirst,
+								STACK *rr_from)
+	{
+	STACK_OF(GENERAL_NAMES) *rct_to, *rct_from;
+	CMS_ReceiptRequest *rr;
+	rct_to = make_names_stack(rr_to);
+	if (!rct_to)
+		goto err;
+	if (rr_from)
+		{
+		rct_from = make_names_stack(rr_from);
+		if (!rct_from)
+			goto err;
+		}
+	else
+		rct_from = NULL;
+	rr = CMS_ReceiptRequest_create0(NULL, -1, rr_allorfirst, rct_from,
+						rct_to);
+	return rr;
+	err:
+	return NULL;
 	}
 
 #endif
