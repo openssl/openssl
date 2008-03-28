@@ -371,3 +371,10 @@ ASN1_SEQUENCE(CMS_ReceiptRequest) = {
   ASN1_SEQUENCE_OF(CMS_ReceiptRequest, receiptsTo, GENERAL_NAMES)
 } ASN1_SEQUENCE_END(CMS_ReceiptRequest)
 
+ASN1_SEQUENCE(CMS_Receipt) = {
+  ASN1_SIMPLE(CMS_Receipt, version, LONG),
+  ASN1_SIMPLE(CMS_Receipt, contentType, ASN1_OBJECT),
+  ASN1_SIMPLE(CMS_Receipt, signedContentIdentifier, ASN1_OCTET_STRING),
+  ASN1_SIMPLE(CMS_Receipt, originatorSignatureValue, ASN1_OCTET_STRING)
+} ASN1_SEQUENCE_END(CMS_Receipt)
+

@@ -449,6 +449,8 @@ int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
 				const EVP_CIPHER *cipher,
 				const unsigned char *key, size_t keylen);
 
+int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms);
+
 BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms);
 	
 #ifdef  __cplusplus

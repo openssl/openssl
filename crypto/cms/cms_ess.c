@@ -62,6 +62,7 @@
 #include "asn1_locl.h"
 
 DECLARE_ASN1_ITEM(CMS_ReceiptRequest)
+DECLARE_ASN1_ITEM(CMS_Receipt)
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 
@@ -189,5 +190,161 @@ void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,
 		*prto = rr->receiptsTo;
 	}
 
+static int cms_msgSigDigest(CMS_SignerInfo *si,
+				unsigned char *dig, unsigned int *diglen)
+	{
+	const EVP_MD *md;
+	md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
+	if (md == NULL)
+		return 0;
+	if (!ASN1_item_digest(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
+						si->signedAttrs, dig, diglen))
+		return 0;
+	return 1;
+	}
 
+/* Verify signed receipt after it has already passed normal CMS verify */
 
+int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
+	{
+	int r = 0, i;
+	CMS_ReceiptRequest *rr = NULL;
+	CMS_Receipt *rct = NULL;
+	STACK_OF(CMS_SignerInfo) *sis, *osis;
+	CMS_SignerInfo *si, *osi;
+	ASN1_OCTET_STRING *msig, **pcont;
+	ASN1_OBJECT *octype;
+	unsigned char dig[EVP_MAX_MD_SIZE];
+	unsigned int diglen;
+
+	/* Get SignerInfos, also checks SignedData content type */
+	osis = CMS_get0_SignerInfos(req_cms);
+	sis = CMS_get0_SignerInfos(cms);
+	if (!osis || !sis)
+		goto err;
+
+	if (sk_CMS_SignerInfo_num(sis) != 1)
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NEED_ONE_SIGNER);
+		goto err;
+		}
+
+	/* Check receipt content type */
+	if (OBJ_obj2nid(CMS_get0_eContentType(cms)) != NID_id_smime_ct_receipt)
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NOT_A_SIGNED_RECEIPT);
+		goto err;
+		}
+
+	/* Extract and decode receipt content */
+	pcont = CMS_get0_content(cms);
+	if (!pcont || !*pcont)
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NO_CONTENT);
+		goto err;
+		}
+
+	rct = ASN1_item_unpack(*pcont, ASN1_ITEM_rptr(CMS_Receipt));
+
+	if (!rct)	
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_RECEIPT_DECODE_ERROR);
+		goto err;
+		}
+
+	/* Locate original request */
+
+	for (i = 0; i < sk_CMS_SignerInfo_num(osis); i++)
+		{
+		osi = sk_CMS_SignerInfo_value(osis, i);
+		if (!ASN1_STRING_cmp(osi->signature,
+					rct->originatorSignatureValue))
+			break;
+		}
+
+	if (i == sk_CMS_SignerInfo_num(osis))
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NO_MATCHING_SIGNATURE);
+		goto err;
+		}
+
+	si = sk_CMS_SignerInfo_value(sis, 0);
+
+	/* Get msgSigDigest value and compare */
+
+	msig = CMS_signed_get0_data_by_OBJ(si,
+				OBJ_nid2obj(NID_id_smime_aa_msgSigDigest),
+					-3, V_ASN1_OCTET_STRING);
+
+	if (!msig)
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NO_MSGSIGDIGEST);
+		goto err;
+		}
+
+	if (!cms_msgSigDigest(osi, dig, &diglen))
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_MSGSIGDIGEST_ERROR);
+		goto err;
+		}
+
+	if (diglen != (unsigned int)msig->length)
+			{
+			CMSerr(CMS_F_CMS_RECEIPT_VERIFY,
+				CMS_R_MSGSIGDIGEST_WRONG_LENGTH);
+			goto err;
+			}
+
+	if (memcmp(dig, msig->data, diglen))
+			{
+			CMSerr(CMS_F_CMS_RECEIPT_VERIFY,
+				CMS_R_MSGSIGDIGEST_VERIFICATION_FAILURE);
+			goto err;
+			}
+
+	/* Compare content types */
+
+	octype = CMS_signed_get0_data_by_OBJ(osi,
+				OBJ_nid2obj(NID_pkcs9_contentType),
+					-3, V_ASN1_OBJECT);
+	if (!octype)
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NO_CONTENT_TYPE);
+		goto err;
+		}
+
+	/* Compare details in receipt request */
+
+	if (OBJ_cmp(octype, rct->contentType))
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_CONTENT_TYPE_MISMATCH);
+		goto err;
+		}
+
+	/* Get original receipt request details */
+
+	if (!CMS_get1_ReceiptRequest(osi, &rr))
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NO_RECEIPT_REQUEST);
+		goto err;
+		}
+
+	if (ASN1_STRING_cmp(rr->signedContentIdentifier,
+					rct->signedContentIdentifier))
+		{
+		CMSerr(CMS_F_CMS_RECEIPT_VERIFY,
+					CMS_R_CONTENTIDENTIFIER_MISMATCH);
+		goto err;
+		}
+
+	r = 1;
+
+	err:
+	if (rr)
+		CMS_ReceiptRequest_free(rr);
+	if (rct)
+		M_ASN1_free_of(rct, CMS_Receipt);
+
+	return r;
+
+	}

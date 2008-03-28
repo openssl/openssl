@@ -91,6 +91,8 @@ static CMS_ReceiptRequest *make_receipt_request(STACK *rr_to, int rr_allorfirst,
 #define SMIME_COMPRESS		(12 | SMIME_OP)
 #define SMIME_ENCRYPTED_DECRYPT	(13 | SMIME_IP)
 #define SMIME_ENCRYPTED_ENCRYPT	(14 | SMIME_OP)
+#define SMIME_SIGN_RECEIPT	(15 | SMIME_OP | SMIME_IP)
+#define SMIME_VERIFY_RECEIPT	(16 | SMIME_IP)
 
 int MAIN(int, char **);
 
@@ -101,17 +103,17 @@ int MAIN(int argc, char **argv)
 	int ret = 0;
 	char **args;
 	const char *inmode = "r", *outmode = "w";
-	char *infile = NULL, *outfile = NULL;
+	char *infile = NULL, *outfile = NULL, *rctfile = NULL;
 	char *signerfile = NULL, *recipfile = NULL;
 	STACK *sksigners = NULL, *skkeys = NULL;
 	char *certfile = NULL, *keyfile = NULL, *contfile=NULL;
 	const EVP_CIPHER *cipher = NULL;
-	CMS_ContentInfo *cms = NULL;
+	CMS_ContentInfo *cms = NULL, *rcms = NULL;
 	X509_STORE *store = NULL;
 	X509 *cert = NULL, *recip = NULL, *signer = NULL;
 	EVP_PKEY *key = NULL;
 	STACK_OF(X509) *encerts = NULL, *other = NULL;
-	BIO *in = NULL, *out = NULL, *indata = NULL;
+	BIO *in = NULL, *out = NULL, *indata = NULL, *rctin = NULL;
 	int badarg = 0;
 	int flags = CMS_DETACHED, noout = 0, print = 0;
 	int rr_print = 0, rr_allorfirst = -1;
@@ -124,7 +126,7 @@ int MAIN(int argc, char **argv)
 	int need_rand = 0;
 	const EVP_MD *sign_md = NULL;
 	int informat = FORMAT_SMIME, outformat = FORMAT_SMIME;
-        int keyform = FORMAT_PEM;
+        int rctformat = FORMAT_SMIME, keyform = FORMAT_PEM;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
@@ -161,6 +163,14 @@ int MAIN(int argc, char **argv)
 			operation = SMIME_RESIGN;
 		else if (!strcmp (*args, "-verify"))
 			operation = SMIME_VERIFY;
+		else if (!strcmp(*args,"-verify_receipt"))
+			{
+			operation = SMIME_VERIFY_RECEIPT;
+			if (!args[1])
+				goto argerr;
+			args++;
+			rctfile = *args;
+			}
 		else if (!strcmp (*args, "-cmsout"))
 			operation = SMIME_CMSOUT;
 		else if (!strcmp (*args, "-data_out"))
@@ -424,6 +434,12 @@ int MAIN(int argc, char **argv)
 			if (!args[1])
 				goto argerr;
 			keyform = str2fmt(*++args);
+			}
+		else if (!strcmp (*args, "-rctform"))
+			{
+			if (!args[1])
+				goto argerr;
+			rctformat = str2fmt(*++args);
 			}
 		else if (!strcmp (*args, "-certfile"))
 			{
@@ -770,6 +786,35 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
+	if (rctfile)
+		{
+		char *rctmode = (rctformat == FORMAT_ASN1) ? "rb" : "r";
+		if (!(rctin = BIO_new_file(rctfile, rctmode)))
+			{
+			BIO_printf (bio_err,
+				 "Can't open receipt file %s\n", rctfile);
+			goto end;
+			}
+		
+		if (rctformat == FORMAT_SMIME) 
+			rcms = SMIME_read_CMS(rctin, NULL);
+		else if (rctformat == FORMAT_PEM) 
+			rcms = PEM_read_bio_CMS(rctin, NULL, NULL, NULL);
+		else if (rctformat == FORMAT_ASN1) 
+			rcms = d2i_CMS_bio(rctin, NULL);
+		else
+			{
+			BIO_printf(bio_err, "Bad input format for receipt\n");
+			goto end;
+			}
+
+		if (!rcms)
+			{
+			BIO_printf(bio_err, "Error reading receipt\n");
+			goto end;
+			}
+		}
+
 	if (outfile)
 		{
 		if (!(out = BIO_new_file(outfile, outmode)))
@@ -790,7 +835,7 @@ int MAIN(int argc, char **argv)
 #endif
 		}
 
-	if (operation == SMIME_VERIFY)
+	if ((operation == SMIME_VERIFY) || (operation == SMIME_VERIFY_RECEIPT))
 		{
 		if (!(store = setup_verify(bio_err, CAfile, CApath)))
 			goto end;
@@ -1001,6 +1046,16 @@ int MAIN(int argc, char **argv)
 			receipt_request_print(bio_err, cms);
 					
 		}
+	else if (operation == SMIME_VERIFY_RECEIPT)
+		{
+		if (CMS_verify_receipt(rcms, cms, other, store, flags) > 0)
+			BIO_printf(bio_err, "Verification successful\n");
+		else
+			{
+			BIO_printf(bio_err, "Verification failure\n");
+			goto end;
+			}
+		}
 	else
 		{
 		if (noout)
@@ -1068,6 +1123,8 @@ end:
 	X509_free(signer);
 	EVP_PKEY_free(key);
 	CMS_ContentInfo_free(cms);
+	CMS_ContentInfo_free(rcms);
+	BIO_free(rctin);
 	BIO_free(in);
 	BIO_free(indata);
 	BIO_free_all(out);

@@ -65,17 +65,18 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
 	int r = 0, i;
 	BIO *tmpout = NULL;
 
-	if(flags & CMS_TEXT)
-		{
+	if (out == NULL)
+		tmpout = BIO_new(BIO_s_null());
+	else if (flags & CMS_TEXT)
 		tmpout = BIO_new(BIO_s_mem());
-		if(!tmpout)
-			{
-			CMSerr(CMS_F_CMS_COPY_CONTENT,ERR_R_MALLOC_FAILURE);
-			goto err;
-			}
-		}
 	else
 		tmpout = out;
+
+	if(!tmpout)
+		{
+		CMSerr(CMS_F_CMS_COPY_CONTENT,ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
 
 	/* Read all content through chain to process digest, decrypt etc */
 	for (;;)
@@ -417,6 +418,17 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 		sk_X509_CRL_pop_free(crls, X509_CRL_free);
 
 	return ret;
+	}
+
+int CMS_verify_receipt(CMS_ContentInfo *rcms, CMS_ContentInfo *ocms,
+			STACK_OF(X509) *certs,
+			X509_STORE *store, unsigned int flags)
+	{
+	int r;
+	r = CMS_verify(rcms, certs, store, NULL, NULL, flags);
+	if (r <= 0)
+		return r;
+	return cms_Receipt_verify(rcms, ocms);
 	}
 
 CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
