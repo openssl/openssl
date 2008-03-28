@@ -140,6 +140,11 @@ int CMS_final(CMS_ContentInfo *cms, BIO *data, int flags);
 CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 						BIO *data, unsigned int flags);
 
+CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
+					X509 *signcert, EVP_PKEY *pkey,
+					STACK_OF(X509) *certs,
+					unsigned int flags);
+
 int CMS_data(CMS_ContentInfo *cms, BIO *out, unsigned int flags);
 CMS_ContentInfo *CMS_data_create(BIO *in, unsigned int flags);
 
@@ -342,6 +347,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_DIGESTALGORITHM_INIT_BIO		 116
 #define CMS_F_CMS_DIGESTEDDATA_DO_FINAL			 117
 #define CMS_F_CMS_DIGEST_VERIFY				 118
+#define CMS_F_CMS_ENCODE_RECEIPT			 161
 #define CMS_F_CMS_ENCRYPT				 119
 #define CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO		 120
 #define CMS_F_CMS_ENCRYPTEDDATA_DECRYPT			 121
@@ -357,6 +363,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_GET0_ENVELOPED			 131
 #define CMS_F_CMS_GET0_REVOCATION_CHOICES		 132
 #define CMS_F_CMS_GET0_SIGNED				 133
+#define CMS_F_CMS_MSGSIGDIGEST_ADD1			 162
 #define CMS_F_CMS_RECEIPTREQUEST_CREATE0		 159
 #define CMS_F_CMS_RECEIPT_VERIFY			 160
 #define CMS_F_CMS_RECIPIENTINFO_DECRYPT			 134
@@ -380,6 +387,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_F_CMS_SIGNERINFO_VERIFY			 152
 #define CMS_F_CMS_SIGNERINFO_VERIFY_CERT		 153
 #define CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT		 154
+#define CMS_F_CMS_SIGN_RECEIPT				 163
 #define CMS_F_CMS_STREAM				 155
 #define CMS_F_CMS_UNCOMPRESS				 156
 #define CMS_F_CMS_VERIFY				 157
@@ -427,6 +435,7 @@ void ERR_load_CMS_strings(void);
 #define CMS_R_NO_DEFAULT_DIGEST				 128
 #define CMS_R_NO_DIGEST_SET				 129
 #define CMS_R_NO_KEY					 130
+#define CMS_R_NO_KEY_OR_CERT				 174
 #define CMS_R_NO_MATCHING_DIGEST			 131
 #define CMS_R_NO_MATCHING_RECIPIENT			 132
 #define CMS_R_NO_MATCHING_SIGNATURE			 166

@@ -190,6 +190,8 @@ void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,
 		*prto = rr->receiptsTo;
 	}
 
+/* Digest a SignerInfo structure for msgSigDigest attribute processing */
+
 static int cms_msgSigDigest(CMS_SignerInfo *si,
 				unsigned char *dig, unsigned int *diglen)
 	{
@@ -200,6 +202,26 @@ static int cms_msgSigDigest(CMS_SignerInfo *si,
 	if (!ASN1_item_digest(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
 						si->signedAttrs, dig, diglen))
 		return 0;
+	return 1;
+	}
+
+/* Add a msgSigDigest attribute to a SignerInfo */
+
+int cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src)
+	{
+	unsigned char dig[EVP_MAX_MD_SIZE];
+	unsigned int diglen;
+	if (!cms_msgSigDigest(src, dig, &diglen))
+		{
+		CMSerr(CMS_F_CMS_MSGSIGDIGEST_ADD1, CMS_R_MSGSIGDIGEST_ERROR);
+		return 0;
+		}
+	if (!CMS_signed_add1_attr_by_NID(dest, NID_id_smime_aa_msgSigDigest,
+					V_ASN1_OCTET_STRING, dig, diglen))
+		{
+		CMSerr(CMS_F_CMS_MSGSIGDIGEST_ADD1, ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 	return 1;
 	}
 
@@ -348,3 +370,52 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
 	return r;
 
 	}
+
+/* Encode a Receipt into an OCTET STRING read for including into content of
+ * a SignedData ContentInfo.
+ */
+
+ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
+	{
+	CMS_Receipt rct;
+	CMS_ReceiptRequest *rr = NULL;
+	ASN1_OBJECT *ctype;
+	ASN1_OCTET_STRING *os = NULL;
+
+	/* Get original receipt request */
+
+	/* Get original receipt request details */
+
+	if (!CMS_get1_ReceiptRequest(si, &rr))
+		{
+		CMSerr(CMS_F_CMS_ENCODE_RECEIPT, CMS_R_NO_RECEIPT_REQUEST);
+		goto err;
+		}
+
+	/* Get original content type */
+
+	ctype = CMS_signed_get0_data_by_OBJ(si,
+				OBJ_nid2obj(NID_pkcs9_contentType),
+					-3, V_ASN1_OBJECT);
+	if (!ctype)
+		{
+		CMSerr(CMS_F_CMS_ENCODE_RECEIPT, CMS_R_NO_CONTENT_TYPE);
+		goto err;
+		}
+
+	rct.version = 1;
+	rct.contentType = ctype;
+	rct.signedContentIdentifier = rr->signedContentIdentifier;
+	rct.originatorSignatureValue = si->signature;
+
+	os = ASN1_item_pack(&rct, ASN1_ITEM_rptr(CMS_Receipt), NULL);
+
+	err:
+	if (rr)
+		CMS_ReceiptRequest_free(rr);
+
+	return os;
+
+	}
+
+

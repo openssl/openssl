@@ -450,6 +450,8 @@ int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
 				const unsigned char *key, size_t keylen);
 
 int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms);
+int cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src);
+ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si);
 
 BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms);
 	

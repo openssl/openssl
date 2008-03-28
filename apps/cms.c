@@ -91,7 +91,7 @@ static CMS_ReceiptRequest *make_receipt_request(STACK *rr_to, int rr_allorfirst,
 #define SMIME_COMPRESS		(12 | SMIME_OP)
 #define SMIME_ENCRYPTED_DECRYPT	(13 | SMIME_IP)
 #define SMIME_ENCRYPTED_ENCRYPT	(14 | SMIME_OP)
-#define SMIME_SIGN_RECEIPT	(15 | SMIME_OP | SMIME_IP)
+#define SMIME_SIGN_RECEIPT	(15 | SMIME_IP | SMIME_OP)
 #define SMIME_VERIFY_RECEIPT	(16 | SMIME_IP)
 
 int MAIN(int, char **);
@@ -159,6 +159,8 @@ int MAIN(int argc, char **argv)
 			operation = SMIME_DECRYPT;
 		else if (!strcmp (*args, "-sign"))
 			operation = SMIME_SIGN;
+		else if (!strcmp (*args, "-sign_receipt"))
+			operation = SMIME_SIGN_RECEIPT;
 		else if (!strcmp (*args, "-resign"))
 			operation = SMIME_RESIGN;
 		else if (!strcmp (*args, "-verify"))
@@ -541,6 +543,7 @@ int MAIN(int argc, char **argv)
 		keyfile = NULL;
 		need_rand = 1;
 		}
+
 	else if (operation == SMIME_DECRYPT)
 		{
 		if (!recipfile && !keyfile && !secret_key)
@@ -724,12 +727,22 @@ int MAIN(int argc, char **argv)
 			}
 		}
 
+	if (operation == SMIME_SIGN_RECEIPT)
+		{
+		if (!(signer = load_cert(bio_err,signerfile,FORMAT_PEM,NULL,
+			e, "receipt signer certificate file")))
+			{
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		}
+
 	if (operation == SMIME_DECRYPT)
 		{
 		if (!keyfile)
 			keyfile = recipfile;
 		}
-	else if (operation == SMIME_SIGN)
+	else if ((operation == SMIME_SIGN) || (operation == SMIME_SIGN_RECEIPT))
 		{
 		if (!keyfile)
 			keyfile = signerfile;
@@ -888,6 +901,21 @@ int MAIN(int argc, char **argv)
 						secret_key, secret_keylen,
 						flags);
 
+		}
+	else if (operation == SMIME_SIGN_RECEIPT)
+		{
+		CMS_ContentInfo *srcms = NULL;
+		STACK_OF(CMS_SignerInfo) *sis;
+		CMS_SignerInfo *si;
+		sis = CMS_get0_SignerInfos(cms);
+		if (!sis)
+			goto end;
+		si = sk_CMS_SignerInfo_value(sis, 0);
+		srcms = CMS_sign_receipt(si, signer, key, other, flags);
+		if (!srcms)
+			goto end;
+		CMS_ContentInfo_free(cms);
+		cms = srcms;
 		}
 	else if (operation & SMIME_SIGNERS)
 		{
