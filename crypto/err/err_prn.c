@@ -72,8 +72,10 @@ void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),
 	const char *file,*data;
 	int line,flags;
 	unsigned long es;
+	CRYPTO_THREADID tid;
 
-	es=CRYPTO_thread_id();
+	CRYPTO_THREADID_set(&tid);
+	es = CRYPTO_THREADID_hash(&tid);
 	while ((l=ERR_get_error_line_data(&file,&line,&data,&flags)) != 0)
 		{
 		ERR_error_string_n(l, buf, sizeof buf);

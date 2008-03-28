@@ -975,50 +975,47 @@ static int err_cmp(const void *a_void, const void *b_void)
 /* static unsigned long pid_hash(ERR_STATE *a) */
 static unsigned long pid_hash(const void *a_void)
 	{
-	return((((const ERR_STATE *)a_void)->pid + (unsigned long)((const ERR_STATE *)a_void)->pidptr)*13);
+	return CRYPTO_THREADID_hash(&((const ERR_STATE *)a_void)->tid);
 	}
 
 /* static int pid_cmp(ERR_STATE *a, ERR_STATE *b) */
 static int pid_cmp(const void *a_void, const void *b_void)
 	{
-	return (((const ERR_STATE *)a_void)->pid != ((const ERR_STATE *)b_void)->pid)
-	       || (((const ERR_STATE *)a_void)->pidptr != ((const ERR_STATE *)b_void)->pidptr);
+	return CRYPTO_THREADID_cmp(&((const ERR_STATE *)a_void)->tid,
+				&((const ERR_STATE *)b_void)->tid);
 	}
 
-void ERR_remove_state(unsigned long pid)
+void ERR_remove_thread_state(CRYPTO_THREADID *tid)
 	{
 	ERR_STATE tmp;
-	void *pidptr;
 
-	err_fns_check();
-	if (pid != 0)
-		pidptr = &errno;
+	if (tid)
+		CRYPTO_THREADID_cpy(&tmp.tid, tid);
 	else
-		{
-		pid = CRYPTO_thread_id();
-		pidptr = CRYPTO_thread_idptr();
-		}
-	
-	tmp.pid=pid;
-	tmp.pidptr=pidptr;
+		CRYPTO_THREADID_set(&tmp.tid);
+	err_fns_check();
 	/* thread_del_item automatically destroys the LHASH if the number of
 	 * items reaches zero. */
 	ERRFN(thread_del_item)(&tmp);
 	}
 
+#ifndef OPENSSL_NO_DEPRECATED
+void ERR_remove_state(unsigned long pid)
+	{
+	ERR_remove_thread_state(NULL);
+	}
+#endif
+
 ERR_STATE *ERR_get_state(void)
 	{
 	static ERR_STATE fallback;
+	CRYPTO_THREADID tid;
 	ERR_STATE *ret,tmp,*tmpp=NULL;
 	int i;
-	unsigned long pid;
-	void *pidptr;
 
 	err_fns_check();
-	pid = CRYPTO_thread_id();
-	pidptr = CRYPTO_thread_idptr();
-	tmp.pid = pid;
-	tmp.pidptr = pidptr;
+	CRYPTO_THREADID_set(&tid);
+	CRYPTO_THREADID_cpy(&tmp.tid, &tid);
 	ret=ERRFN(thread_get_item)(&tmp);
 
 	/* ret == the error state, if NULL, make a new one */
@@ -1026,8 +1023,7 @@ ERR_STATE *ERR_get_state(void)
 		{
 		ret=(ERR_STATE *)OPENSSL_malloc(sizeof(ERR_STATE));
 		if (ret == NULL) return(&fallback);
-		ret->pid=pid;
-		ret->pidptr=pidptr;
+		CRYPTO_THREADID_cpy(&ret->tid, &tid);
 		ret->top=0;
 		ret->bottom=0;
 		for (i=0; i<ERR_NUM_ERRORS; i++)

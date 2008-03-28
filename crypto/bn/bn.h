@@ -129,6 +129,7 @@
 #ifndef OPENSSL_NO_FP_API
 #include <stdio.h> /* FILE */
 #endif
+#include <openssl/crypto.h>
 #include <openssl/ossl_typ.h>
 
 #ifdef  __cplusplus
@@ -563,10 +564,12 @@ int BN_BLINDING_convert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 int BN_BLINDING_invert(BIGNUM *n, BN_BLINDING *b, BN_CTX *ctx);
 int BN_BLINDING_convert_ex(BIGNUM *n, BIGNUM *r, BN_BLINDING *b, BN_CTX *);
 int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *);
+#ifndef OPENSSL_NO_DEPRECATED
 unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
 void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
-void *BN_BLINDING_get_thread_idptr(const BN_BLINDING *);
-void BN_BLINDING_set_thread_idptr(BN_BLINDING *, void *);
+#endif
+void BN_BLINDING_set_thread(BN_BLINDING *);
+int BN_BLINDING_cmp_thread(const BN_BLINDING *, const CRYPTO_THREADID *);
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
 void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
 BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,

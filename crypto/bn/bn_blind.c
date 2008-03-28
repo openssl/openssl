@@ -121,10 +121,13 @@ struct bn_blinding_st
 	BIGNUM *Ai;
 	BIGNUM *e;
 	BIGNUM *mod; /* just a reference */
+/* FIXME: should really try to remove these, but the deprecated APIs that are
+ * using them would need to be fudged somehow. */
+#ifndef OPENSSL_NO_DEPRECATED
 	unsigned long thread_id; /* added in OpenSSL 0.9.6j and 0.9.7b;
 				  * used only by crypto/rsa/rsa_eay.c, rsa_lib.c */
-	void *thread_idptr; /* added in OpenSSL 0.9.9;
-			     * used only by crypto/rsa/rsa_eay.c, rsa_lib.c */
+#endif
+	CRYPTO_THREADID tid;
 	unsigned int  counter;
 	unsigned long flags;
 	BN_MONT_CTX *m_ctx;
@@ -265,6 +268,7 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *ct
 	return(ret);
 	}
 
+#ifndef OPENSSL_NO_DEPRECATED
 unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *b)
 	{
 	return b->thread_id;
@@ -274,15 +278,16 @@ void BN_BLINDING_set_thread_id(BN_BLINDING *b, unsigned long n)
 	{
 	b->thread_id = n;
 	}
+#endif
 
-void *BN_BLINDING_get_thread_idptr(const BN_BLINDING *b)
+void BN_BLINDING_set_thread(BN_BLINDING *b)
 	{
-	return b->thread_idptr;
+	CRYPTO_THREADID_set(&b->tid);
 	}
 
-void BN_BLINDING_set_thread_idptr(BN_BLINDING *b, void *p)
+int BN_BLINDING_cmp_thread(const BN_BLINDING *b, const CRYPTO_THREADID *tid)
 	{
-	b->thread_idptr = p;
+	return CRYPTO_THREADID_cmp(&b->tid, tid);
 	}
 
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *b)

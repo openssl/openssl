@@ -4,7 +4,7 @@
 
 BN_BLINDING_new, BN_BLINDING_free, BN_BLINDING_update, BN_BLINDING_convert, 
 BN_BLINDING_invert, BN_BLINDING_convert_ex, BN_BLINDING_invert_ex, 
-BN_BLINDING_get_thread_id, BN_BLINDING_set_thread_id, BN_BLINDING_get_flags,
+BN_BLINDING_set_thread, BN_BLINDING_cmp_thread, BN_BLINDING_get_flags,
 BN_BLINDING_set_flags, BN_BLINDING_create_param - blinding related BIGNUM
 functions.
 
@@ -22,8 +22,10 @@ functions.
 	BN_CTX *ctx);
  int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
 	BN_CTX *ctx);
- unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
- void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
+
+ void BN_BLINDING_set_thread(BN_BLINDING *);
+ int BN_BLINDING_cmp_thread(const BN_BLINDING *,
+        const CRYPTO_THREADID *);
  unsigned long BN_BLINDING_get_flags(const BN_BLINDING *);
  void BN_BLINDING_set_flags(BN_BLINDING *, unsigned long);
  BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
@@ -54,11 +56,10 @@ BN_BLINDING_convert() and BN_BLINDING_invert() are wrapper
 functions for BN_BLINDING_convert_ex() and BN_BLINDING_invert_ex()
 with B<r> set to NULL.
 
-BN_BLINDING_set_thread_id() and BN_BLINDING_get_thread_id()
-set and get the "thread id" value of the B<BN_BLINDING> structure,
-a field provided to users of B<BN_BLINDING> structure to help them
-provide proper locking if needed for multi-threaded use. The 
-"thread id" of a newly allocated B<BN_BLINDING> structure is zero.
+BN_BLINDING_set_thread() and BN_BLINDING_cmp_thread()
+set and compare the "thread id" of the B<BN_BLINDING> structure,
+allowing users of the B<BN_BLINDING> structure to
+provide proper locking if needed for multi-threaded use.
 
 BN_BLINDING_get_flags() returns the BN_BLINDING flags. Currently
 there are two supported flags: B<BN_BLINDING_NO_UPDATE> and
@@ -85,6 +86,12 @@ success and 0 if an error occured.
 
 BN_BLINDING_get_thread_id() returns the thread id (a B<unsigned long>
 value) or 0 if not set.
+BN_BLINDING_cmp_thread() returns 0 if the thread id associated with the
+B<BN_BLINDING> structure equals the provided thread id (which can be
+obtained by CRYPTO_THREADID_set()), otherwise it returns -1 or +1
+to indicate the thread ids are different (if the target architecture
+supports ordering of thread ids, this follows the traditional "cmp"
+semantics of memcmp() or strcmp()).
 
 BN_BLINDING_get_flags() returns the currently set B<BN_BLINDING> flags
 (a B<unsigned long> value).
@@ -101,6 +108,14 @@ L<bn(3)|bn(3)>
 BN_BLINDING_convert_ex, BN_BLINDIND_invert_ex, BN_BLINDING_get_thread_id,
 BN_BLINDING_set_thread_id, BN_BLINDING_set_flags, BN_BLINDING_get_flags
 and BN_BLINDING_create_param were first introduced in OpenSSL 0.9.8
+
+BN_BLINDING_get_thread_idptr, BN_BLINDING_set_thread_idptr were first
+introduced in OpenSSL 0.9.9
+
+BN_BLINDING_get_thread_id, BN_BLINDING_set_thread_id,
+BN_BLINDING_get_thread_idptr, BN_BLINDING_set_thread_idptr were all
+deprecated in favour of BN_BLINDING_set_thread, BN_BLINDING_cmp_thread
+which were introduced in OpenSSL 0.9.9
 
 =head1 AUTHOR
 

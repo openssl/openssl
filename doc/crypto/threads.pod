@@ -76,9 +76,7 @@ below).
 
 idptr_function(void) is a function that similarly returns a thread ID,
 but of type void *.  This is not needed on platforms where &errno is
-different for each thread.  OpenSSL assumes that it is in the same
-thread iff both the numerical and the pointer thread ID agree, so it
-suffices to define one of these two callback functions appropriately.
+different for each thread.
 
 Additionally, OpenSSL supports dynamic locks, and sometimes, some parts
 of OpenSSL need it for better performance.  To enable this, the following
@@ -166,7 +164,9 @@ There is still the issue of platforms where pthread_self() returns
 something other than an integer.  It is for cases like this that
 CRYPTO_set_idptr_callback() comes in handy.  (E.g., call malloc(1)
 once in each thread, and have idptr_function() return a pointer to
-this object.)
+this object.) Note that if neither id_function() or idptr_function()
+are provided, OpenSSL will use (&errno) as a fallback (as this
+usually returns a unique address for each thread).
 
 =head1 EXAMPLES
 

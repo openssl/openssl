@@ -300,6 +300,17 @@ typedef struct crypto_ex_data_func_st
 
 DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
 
+/* This structure is exposed to allow it to be used without dynamic allocation,
+ * however it exists to encapsulate the different ways of representing "thread
+ * ID"s (given that applications provide the thread implementation via
+ * callbacks). So treat this type as opaque if you don't want your code to fall
+ * apart when someone decides to extend this in some way. */
+typedef struct crypto_threadid
+	{
+	void *ptr;
+	unsigned long ulong;
+	} CRYPTO_THREADID;
+
 /* Per class, we have a STACK of CRYPTO_EX_DATA_FUNCS for each CRYPTO_EX_DATA
  * entry.
  */
@@ -420,12 +431,27 @@ void CRYPTO_set_add_lock_callback(int (*func)(int *num,int mount,int type,
 					      const char *file, int line));
 int (*CRYPTO_get_add_lock_callback(void))(int *num,int mount,int type,
 					  const char *file,int line);
+/* Implement "thread ID" via callback, choose the prototype that matches your
+ * thread implementation. */
 void CRYPTO_set_id_callback(unsigned long (*func)(void));
+void CRYPTO_set_idptr_callback(void *(*func)(void));
+/* Records the thread ID of the currently executing thread */
+void CRYPTO_THREADID_set(CRYPTO_THREADID *id);
+/* Compares two thread IDs. If the underlying notion of thread ID is linear,
+ * this returns -1, 0, or +1 to imply strict-ordering (as other ***_cmp()
+ * functions do). Otherwise, zero means equal, non-zero means not equal. */
+int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *id1, const CRYPTO_THREADID *id2);
+/* When you need "a number", eg. for hashing, use this. */
+unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
+/* Copy a threadid */
+void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dst, const CRYPTO_THREADID *src);
+#ifndef OPENSSL_NO_DEPRECATED
+/* Deprecated interfaces - these presume you know exactly what's going on under
+ * the covers. Better to migrate to the CRYPTO_THREADID_***() form. */
 unsigned long (*CRYPTO_get_id_callback(void))(void);
 unsigned long CRYPTO_thread_id(void);
-void CRYPTO_set_idptr_callback(void *(*func)(void));
-void *(*CRYPTO_get_idptr_callback(void))(void);
-void *CRYPTO_thread_idptr(void);
+#endif
+
 const char *CRYPTO_get_lock_name(int type);
 int CRYPTO_add_lock(int *pointer,int amount,int type, const char *file,
 		    int line);
