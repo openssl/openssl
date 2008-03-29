@@ -80,17 +80,19 @@ clean:
 
 cms_asn1.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_asn1.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-cms_asn1.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-cms_asn1.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-cms_asn1.o: ../../include/openssl/ecdsa.h ../../include/openssl/evp.h
-cms_asn1.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-cms_asn1.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+cms_asn1.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+cms_asn1.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+cms_asn1.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+cms_asn1.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+cms_asn1.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+cms_asn1.o: ../../include/openssl/opensslconf.h
 cms_asn1.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 cms_asn1.o: ../../include/openssl/pem.h ../../include/openssl/pem2.h
 cms_asn1.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 cms_asn1.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 cms_asn1.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-cms_asn1.o: ../../include/openssl/x509_vfy.h cms.h cms_asn1.c cms_lcl.h
+cms_asn1.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+cms_asn1.o: cms.h cms_asn1.c cms_lcl.h
 cms_att.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_att.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cms_att.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
@@ -121,8 +123,7 @@ cms_cd.o: ../../include/openssl/pem2.h ../../include/openssl/pkcs7.h
 cms_cd.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 cms_cd.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 cms_cd.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-cms_cd.o: ../../include/openssl/x509v3.h ../asn1/asn1_locl.h ../cryptlib.h
-cms_cd.o: cms_cd.c cms_lcl.h
+cms_cd.o: ../../include/openssl/x509v3.h ../cryptlib.h cms_cd.c cms_lcl.h
 cms_dd.o: ../../e_os.h ../../include/openssl/asn1.h
 cms_dd.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 cms_dd.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
@@ -138,7 +139,7 @@ cms_dd.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 cms_dd.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 cms_dd.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 cms_dd.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-cms_dd.o: ../asn1/asn1_locl.h ../cryptlib.h cms_dd.c cms_lcl.h
+cms_dd.o: ../cryptlib.h cms_dd.c cms_lcl.h
 cms_enc.o: ../../e_os.h ../../include/openssl/asn1.h
 cms_enc.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 cms_enc.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
@@ -154,8 +155,7 @@ cms_enc.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
 cms_enc.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 cms_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 cms_enc.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-cms_enc.o: ../../include/openssl/x509v3.h ../asn1/asn1_locl.h ../cryptlib.h
-cms_enc.o: cms_enc.c cms_lcl.h
+cms_enc.o: ../../include/openssl/x509v3.h ../cryptlib.h cms_enc.c cms_lcl.h
 cms_env.o: ../../e_os.h ../../include/openssl/aes.h
 cms_env.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_env.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
@@ -186,6 +186,22 @@ cms_err.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 cms_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 cms_err.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 cms_err.o: cms_err.c
+cms_ess.o: ../../e_os.h ../../include/openssl/asn1.h
+cms_ess.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+cms_ess.o: ../../include/openssl/buffer.h ../../include/openssl/cms.h
+cms_ess.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+cms_ess.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+cms_ess.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+cms_ess.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+cms_ess.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+cms_ess.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+cms_ess.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+cms_ess.o: ../../include/openssl/pem.h ../../include/openssl/pem2.h
+cms_ess.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+cms_ess.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+cms_ess.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+cms_ess.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+cms_ess.o: ../../include/openssl/x509v3.h ../cryptlib.h cms_ess.c cms_lcl.h
 cms_io.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 cms_io.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 cms_io.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
