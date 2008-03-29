@@ -10,9 +10,32 @@ B<openssl> B<cms>
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-sign>]
-[B<-resign>]
 [B<-verify>]
 [B<-cmsout>]
+[B<-resign>]
+[B<-data_create>]
+[B<-data_out>]
+[B<-digest_create>]
+[B<-digest_verify>]
+[B<-compress>]
+[B<-uncompress>]
+[B<-EncryptedData_encrypt>]
+[B<-sign_receipt>]
+[B<-verify_receipt receipt>]
+[B<-in filename>]
+[B<-inform SMIME|PEM|DER>]
+[B<-rctform SMIME|PEM|DER>]
+[B<-out filename>]
+[B<-outform SMIME|PEM|DER>]
+[B<-stream -indef -noindef>]
+[B<-noindef>]
+[B<-content filename>]
+[B<-text>]
+[B<-noout>]
+[B<-print>]
+[B<-CAfile file>]
+[B<-CApath dir>]
+[B<-md digest>]
 [B<-des>]
 [B<-des3>]
 [B<-rc2-40>]
@@ -24,25 +47,31 @@ B<openssl> B<cms>
 [B<-camellia128>]
 [B<-camellia192>]
 [B<-camellia256>]
-[B<-in file>]
+[B<-nointern>]
+[B<-no_signer_cert_verify>]
+[B<-nocerts>]
+[B<-noattr>]
+[B<-nosmimecap>]
+[B<-binary>]
+[B<-nodetach>]
 [B<-certfile file>]
 [B<-signer file>]
-[B<-recip  file>]
-[B<-inform SMIME|PEM|DER>]
-[B<-passin arg>]
+[B<-recip file>]
+[B<-keyid>]
+[B<-receipt_request_all -receipt_request_first>]
+[B<-receipt_request_from emailaddress>]
+[B<-receipt_request_to emailaddress>]
+[B<-receipt_request_print>]
+[B<-secretkey key>]
+[B<-secretkeyid id>]
+[B<-econtent_type type>]
 [B<-inkey file>]
-[B<-out file>]
-[B<-outform SMIME|PEM|DER>]
-[B<-content file>]
-[B<-to addr>]
-[B<-from ad>]
-[B<-subject s>]
-[B<-text>]
-[B<-indef>]
-[B<-noindef>]
-[B<-stream>]
+[B<-passin arg>]
 [B<-rand file(s)>]
-[B<-md digest>]
+[B<cert.pem...>]
+[B<-to addr>]
+[B<-from addr>]
+[B<-subject subj>]
 [cert.pem]...
 
 =head1 DESCRIPTION
@@ -52,8 +81,8 @@ verify, compress and uncompress S/MIME messages.
 
 =head1 COMMAND OPTIONS
 
-There are twelve operation options that set the type of operation to be
-performed.  The meaning of the other options varies according to the operation
+There are fourteen operation options that set the type of operation to be
+performed. The meaning of the other options varies according to the operation
 type.
 
 =over 4
@@ -121,10 +150,22 @@ output an error.
 Encrypt suppled content using supplied symmetric key and algorithm using a CMS
 B<EncrytedData> type and output the content.
 
+=item B<-sign_receipt>
+
+Generate and output a signed receipt for the supplied message. The input 
+message B<must> contain a signed receipt request. Functionality is otherwise
+similar to the B<-sign> operation.
+
+=item B<-verify_receipt receipt>
+
+Verify a signed receipt in filename B<receipt>. The input message B<must> 
+contain the original receipt request. Functionality is otherwise similar
+to the B<-verify> operation.
+
 =item B<-in filename>
 
-the input message to be encrypted or signed or the MIME message to
-be decrypted or verified.
+the input message to be encrypted or signed or the message to be decrypted
+or verified.
 
 =item B<-inform SMIME|PEM|DER>
 
@@ -135,6 +176,11 @@ instead. This currently only affects the input format of the CMS
 structure, if no CMS structure is being input (for example with
 B<-encrypt> or B<-sign>) this option has no effect.
 
+=item B<-rctform SMIME|PEM|DER>
+
+specify the format for a signed receipt for use with the B<-receipt_verify>
+operation.
+
 =item B<-out filename>
 
 the message text that has been decrypted or verified or the output MIME
@@ -143,7 +189,7 @@ format message that has been signed or verified.
 =item B<-outform SMIME|PEM|DER>
 
 this specifies the output format for the CMS structure. The default
-is B<SMIME> which write an S/MIME format message. B<PEM> and B<DER>
+is B<SMIME> which writes an S/MIME format message. B<PEM> and B<DER>
 format change this to write PEM and DER format CMS structures
 instead. This currently only affects the output format of the CMS
 structure, if no CMS structure is being output (for example with
@@ -179,6 +225,17 @@ message if encrypting or signing. If decrypting or verifying it strips
 off text headers: if the decrypted or verified message is not of MIME 
 type text/plain then an error occurs.
 
+=item B<-noout>
+
+for the B<-cmsout> operation do not output the parsed CMS structure. This
+is useful when combined with the B<-print> option or if the syntax of the CMS
+structure is being checked.
+
+=item B<-print>
+
+for the B<-cmsout> operation print out all fields of the CMS structure. This
+is mainly useful for testing purposes.
+
 =item B<-CAfile file>
 
 a file containing trusted CA certificates, only used with B<-verify>.
@@ -213,7 +270,7 @@ the message are searched for the signing certificate. With this option
 only the certificates specified in the B<-certfile> option are used.
 The supplied certificates can still be used as untrusted CAs however.
 
-=item B<-noverify>
+=item B<-no_signer_cert_verify>
 
 do not verify the signers certificate of a signed message.
 
@@ -272,6 +329,27 @@ must match one of the recipients of the message or an error occurs.
 use subject key identifier to identify certificates instead of issuer name and
 serial number. The supplied certificate B<must> include a subject key
 identifier extension. Supported by B<-sign> and B<-encrypt> options.
+
+=item B<-receipt_request_all -receipt_request_first>
+
+for B<-sign> option include a signed receipt request. Indicate requests should
+be provided by all receipient or first tier recipients (those mailed directly
+and not from a mailing list). Ignored it B<-receipt_request_from> is included.
+
+=item B<-receipt_request_from emailaddress>
+
+for B<-sign> option include a signed receipt request. Add an explicit email
+address where receipts should be supplied.
+
+=item B<-receipt_request_to emailaddress>
+
+Add an explicit email address where signed receipts should be sent to. This 
+option B<must> but supplied if a signed receipt it requested.
+
+=item B<-receipt_request_print>
+
+For the B<-verify> operation print out the contents of any signed receipt
+requests.
 
 =item B<-secretkey key>
 
