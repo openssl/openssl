@@ -59,7 +59,6 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_lcl.h"
-#include "asn1_locl.h"
 
 DECLARE_ASN1_ITEM(CMS_ReceiptRequest)
 DECLARE_ASN1_ITEM(CMS_Receipt)

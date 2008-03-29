@@ -59,7 +59,6 @@
 #include <openssl/cms.h>
 #include <openssl/rand.h>
 #include "cms_lcl.h"
-#include "asn1_locl.h"
 
 /* CMS EncryptedData Utilities */
 

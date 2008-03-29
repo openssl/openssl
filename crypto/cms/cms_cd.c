@@ -60,7 +60,6 @@
 #include <openssl/bio.h>
 #include <openssl/comp.h>
 #include "cms_lcl.h"
-#include "asn1_locl.h"
 
 DECLARE_ASN1_ITEM(CMS_CompressedData)
 
