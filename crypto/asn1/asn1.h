@@ -323,8 +323,8 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 	int i2d_##name##_NDEF(name *a, unsigned char **out);
 
 #define DECLARE_ASN1_FUNCTIONS_const(name) \
-	name *name##_new(void); \
-	void name##_free(name *a); \
+	DECLARE_ASN1_ALLOC_FUNCTIONS(name) \
+	DECLATE_ASN1_ENCODE_FUNCTIONS_const(name)
 
 #define DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
 	type *name##_new(void); \
