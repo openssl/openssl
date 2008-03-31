@@ -114,19 +114,20 @@ int SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags)
 	{
 	STACK_OF(X509_ALGOR) *mdalgs;
 	int ctype_nid = OBJ_obj2nid(cms->contentType);
+	int econt_nid = OBJ_obj2nid(CMS_get0_eContentType(cms));
 	if (ctype_nid == NID_pkcs7_signed)
 		mdalgs = cms->d.signedData->digestAlgorithms;
 	else
 		mdalgs = NULL;
 
 	return SMIME_write_ASN1(bio, (ASN1_VALUE *)cms, data, flags,
-					ctype_nid, mdalgs,
+					ctype_nid, econt_nid, mdalgs,
 					ASN1_ITEM_rptr(CMS_ContentInfo));	
 	}
 
 CMS_ContentInfo *SMIME_read_CMS(BIO *bio, BIO **bcont)
 	{
-	return (CMS_ContentInfo *)SMIME_read_asn1(bio, bcont,
+	return (CMS_ContentInfo *)SMIME_read_ASN1(bio, bcont,
 					ASN1_ITEM_rptr(CMS_ContentInfo));
 	}
 

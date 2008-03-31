@@ -324,7 +324,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 #define DECLARE_ASN1_FUNCTIONS_const(name) \
 	name *name##_new(void); \
-	void name##_free(name *a);
+	void name##_free(name *a); \
 
 #define DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
 	type *name##_new(void); \
@@ -1126,10 +1126,10 @@ int PEM_write_bio_ASN1_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
 				const char *hdr,
 				const ASN1_ITEM *it);
 int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
-				int ctype_nid,
+				int ctype_nid, int econt_nid,
 				STACK_OF(X509_ALGOR) *mdalgs,
 				const ASN1_ITEM *it);
-ASN1_VALUE *SMIME_read_asn1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
+ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
 int SMIME_crlf_copy(BIO *in, BIO *out, int flags);
 int SMIME_text(BIO *in, BIO *out);
 

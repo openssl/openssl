@@ -87,11 +87,11 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 
 
 	return SMIME_write_ASN1(bio, (ASN1_VALUE *)p7, data, flags,
-					ctype_nid, mdalgs,
+					ctype_nid, NID_undef, mdalgs,
 					ASN1_ITEM_rptr(PKCS7));	
 	}
 
 PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 	{
-	return (PKCS7 *)SMIME_read_asn1(bio, bcont, ASN1_ITEM_rptr(PKCS7));
+	return (PKCS7 *)SMIME_read_ASN1(bio, bcont, ASN1_ITEM_rptr(PKCS7));
 	}

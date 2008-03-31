@@ -74,6 +74,7 @@ my $smdir    = "smime-certs";
 my $halt_err = 1;
 
 my $badcmd = 0;
+my $ossl8 = `$ossl_path version -v` =~ /0\.9\.8/;
 
 my @smime_pkcs7_tests = (
 
@@ -333,6 +334,8 @@ else {
     print "Zlib not supported: compression tests skipped\n";
 }
 
+print "Running modified tests for OpenSSL 0.9.8 cms backport\n" if($ossl8);
+
 if ($badcmd) {
     print "$badcmd TESTS FAILED!!\n";
 }
@@ -351,6 +354,15 @@ sub run_smime_tests {
 
     foreach $smtst (@$aref) {
         my ( $tnam, $rscmd, $rvcmd ) = @$smtst;
+	if ($ossl8)
+		{
+		# Skip smime resign: 0.9.8 smime doesn't support -resign	
+		next if ($scmd =~ /smime/ && $rscmd =~ /-resign/);
+		# Disable streaming: option not supported in 0.9.8
+		$tnam =~ s/streaming//;	
+		$rscmd =~ s/-stream//;	
+		$rvcmd =~ s/-stream//;
+		}
         system("$scmd$rscmd 2>cms.err 1>cms.out");
         if ($?) {
             print "$tnam: generation error\n";

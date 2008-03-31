@@ -276,7 +276,7 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
 /* SMIME sender */
 
 int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
-				int ctype_nid,
+				int ctype_nid, int econt_nid,
 				STACK_OF(X509_ALGOR) *mdalgs,
 				const ASN1_ITEM *it)
 {
@@ -340,7 +340,9 @@ int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
 		msg_type = "enveloped-data";
 	else if (ctype_nid == NID_pkcs7_signed)
 		{
-		if (sk_X509_ALGOR_num(mdalgs) >= 0)
+		if (econt_nid == NID_id_smime_ct_receipt)
+			msg_type = "signed-receipt";
+		else if (sk_X509_ALGOR_num(mdalgs) >= 0)
 			msg_type = "signed-data";
 		else
 			msg_type = "certs-only";
@@ -423,7 +425,7 @@ static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
  * pointed to by "bcont". In opaque this is set to NULL
  */
 
-ASN1_VALUE *SMIME_read_asn1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
+ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
 {
 	BIO *asnin;
 	STACK_OF(MIME_HEADER) *headers = NULL;
