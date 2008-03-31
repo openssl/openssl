@@ -324,7 +324,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 #define DECLARE_ASN1_FUNCTIONS_const(name) \
 	DECLARE_ASN1_ALLOC_FUNCTIONS(name) \
-	DECLATE_ASN1_ENCODE_FUNCTIONS_const(name)
+	DECLARE_ASN1_ENCODE_FUNCTIONS_const(name, name)
 
 #define DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
 	type *name##_new(void); \
