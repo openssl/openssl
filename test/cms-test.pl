@@ -229,6 +229,24 @@ my @smime_cms_tests = (
     ],
 
     [
+        "signed content MIME format, RSA key, signed receipt request",
+        "-sign -in smcont.txt -signer $smdir/smrsa1.pem -nodetach"
+          . " -receipt_request_to test@openssl.org -receipt_request_all"
+          . " -out test.cms",
+        "-verify -in test.cms "
+          . " -CAfile $smdir/smroot.pem -out smtst.txt"
+    ],
+
+    [
+        "signed receipt MIME format, RSA key",
+        "-sign_receipt -in test.cms"
+          . " -signer $smdir/smrsa2.pem"
+          . " -out test2.cms",
+        "-verify_receipt test2.cms -in test.cms"
+          . " -CAfile $smdir/smroot.pem"
+    ],
+
+    [
         "enveloped content test streaming S/MIME format, 3 recipients, keyid",
         "-encrypt -in smcont.txt"
           . " -stream -out test.cms -keyid"
