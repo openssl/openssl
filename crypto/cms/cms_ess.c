@@ -232,7 +232,7 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
 	CMS_ReceiptRequest *rr = NULL;
 	CMS_Receipt *rct = NULL;
 	STACK_OF(CMS_SignerInfo) *sis, *osis;
-	CMS_SignerInfo *si, *osi;
+	CMS_SignerInfo *si, *osi = NULL;
 	ASN1_OCTET_STRING *msig, **pcont;
 	ASN1_OBJECT *octype;
 	unsigned char dig[EVP_MAX_MD_SIZE];
