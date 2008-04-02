@@ -63,6 +63,7 @@
 #include "apps.h" /* needs to be included before the openssl headers! */
 #include <openssl/e_os2.h>
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 
 /* Maximum leeway in validity period: default 5 minutes */
 #define MAX_VALIDITY_PERIOD	(5 * 60)
