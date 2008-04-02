@@ -4,6 +4,10 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Add AES_wrap_key() and AES_unwrap_key() functions to implement
+     RFC3394 compatible AES key wrapping.
+     [Steve Henson]
+
   *) Add utility functions to handle ASN1 structures. ASN1_STRING_set0():
      sets string data without copying. X509_ALGOR_set0() and
      X509_ALGOR_get0(): set and retrieve X509_ALGOR (AlgorithmIdentifier)
