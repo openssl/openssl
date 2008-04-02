@@ -805,6 +805,14 @@
 #define NID_id_smime_ct_DVCSResponseData		211
 #define OBJ_id_smime_ct_DVCSResponseData		OBJ_id_smime_ct,8L
 
+#define SN_id_smime_ct_compressedData		"id-smime-ct-compressedData"
+#define NID_id_smime_ct_compressedData		786
+#define OBJ_id_smime_ct_compressedData		OBJ_id_smime_ct,9L
+
+#define SN_id_ct_asciiTextWithCRLF		"id-ct-asciiTextWithCRLF"
+#define NID_id_ct_asciiTextWithCRLF		787
+#define OBJ_id_ct_asciiTextWithCRLF		OBJ_id_smime_ct,27L
+
 #define SN_id_smime_aa_receiptRequest		"id-smime-aa-receiptRequest"
 #define NID_id_smime_aa_receiptRequest		212
 #define OBJ_id_smime_aa_receiptRequest		OBJ_id_smime_aa,1L
@@ -2352,7 +2360,7 @@
 #define SN_zlib_compression		"ZLIB"
 #define LN_zlib_compression		"zlib compression"
 #define NID_zlib_compression		125
-#define OBJ_zlib_compression		1L,1L,1L,1L,666L,2L
+#define OBJ_zlib_compression		OBJ_id_smime_alg,8L
 
 #define OBJ_csor		2L,16L,840L,1L,101L,3L
 
@@ -2459,6 +2467,18 @@
 #define SN_des_ede3_cfb8		"DES-EDE3-CFB8"
 #define LN_des_ede3_cfb8		"des-ede3-cfb8"
 #define NID_des_ede3_cfb8		659
+
+#define SN_id_aes128_wrap		"id-aes128-wrap"
+#define NID_id_aes128_wrap		788
+#define OBJ_id_aes128_wrap		OBJ_aes,5L
+
+#define SN_id_aes192_wrap		"id-aes192-wrap"
+#define NID_id_aes192_wrap		789
+#define OBJ_id_aes192_wrap		OBJ_aes,25L
+
+#define SN_id_aes256_wrap		"id-aes256-wrap"
+#define NID_id_aes256_wrap		790
+#define OBJ_id_aes256_wrap		OBJ_aes,45L
 
 #define OBJ_nist_hashalgs		OBJ_nistAlgorithms,2L
 
