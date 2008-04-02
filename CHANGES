@@ -4,6 +4,15 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Add utility functions to handle ASN1 structures. ASN1_STRING_set0():
+     sets string data without copying. X509_ALGOR_set0() and
+     X509_ALGOR_get0(): set and retrieve X509_ALGOR (AlgorithmIdentifier)
+     data. Attribute function X509at_get0_data_by_OBJ(): retrieves data
+     from an X509_ATTRIBUTE structure optionally checking it occurs only
+     once. ASN1_TYPE_set1(): set and ASN1_TYPE structure copying supplied
+     data.
+     [Steve Henson]
+
   *) Fix BN flag handling in RSA_eay_mod_exp() and BN_MONT_CTX_set()
      to get the expected BN_FLG_CONSTTIME behavior.
      [Bodo Moeller (Google)]

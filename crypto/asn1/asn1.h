@@ -159,6 +159,7 @@ extern "C" {
 #define MBSTRING_UNIV		(MBSTRING_FLAG|4)
 
 struct X509_algor_st;
+DECLARE_STACK_OF(X509_ALGOR)
 
 #define DECLARE_ASN1_SET_OF(type) /* filled in by mkstack.pl */
 #define IMPLEMENT_ASN1_SET_OF(type) /* nothing, no longer needed */
@@ -311,8 +312,8 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 	int i2d_##name##_NDEF(name *a, unsigned char **out);
 
 #define DECLARE_ASN1_FUNCTIONS_const(name) \
-	name *name##_new(void); \
-	void name##_free(name *a);
+	DECLARE_ASN1_ALLOC_FUNCTIONS(name) \
+	DECLARE_ASN1_ENCODE_FUNCTIONS_const(name, name)
 
 #define DECLARE_ASN1_ALLOC_FUNCTIONS_name(type, name) \
 	type *name##_new(void); \
@@ -753,6 +754,7 @@ DECLARE_ASN1_FUNCTIONS_fname(ASN1_TYPE, ASN1_ANY, ASN1_TYPE)
 
 int ASN1_TYPE_get(ASN1_TYPE *a);
 void ASN1_TYPE_set(ASN1_TYPE *a, int type, void *value);
+int ASN1_TYPE_set1(ASN1_TYPE *a, int type, const void *value);
 
 ASN1_OBJECT *	ASN1_OBJECT_new(void );
 void		ASN1_OBJECT_free(ASN1_OBJECT *a);
@@ -775,6 +777,7 @@ int 		ASN1_STRING_cmp(ASN1_STRING *a, ASN1_STRING *b);
   /* Since this is used to store all sorts of things, via macros, for now, make
      its data void * */
 int 		ASN1_STRING_set(ASN1_STRING *str, const void *data, int len);
+void		ASN1_STRING_set0(ASN1_STRING *str, void *data, int len);
 int ASN1_STRING_length(ASN1_STRING *x);
 void ASN1_STRING_length_set(ASN1_STRING *x, int n);
 int ASN1_STRING_type(ASN1_STRING *x);
@@ -926,6 +929,12 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, char *x);
 		     CHECKED_PTR_OF(const type, x)))
 
 void *ASN1_item_dup(const ASN1_ITEM *it, void *x);
+
+/* ASN1 alloc/free macros for when a type is only used internally */
+
+#define M_ASN1_new_of(type) (type *)ASN1_item_new(ASN1_ITEM_rptr(type))
+#define M_ASN1_free_of(x, type) \
+		ASN1_item_free(CHECKED_PTR_OF(type, x), ASN1_ITEM_rptr(type))
 
 #ifndef OPENSSL_NO_FP_API
 void *ASN1_d2i_fp(void *(*xnew)(void), d2i_of_void *d2i, FILE *in, void **x);
