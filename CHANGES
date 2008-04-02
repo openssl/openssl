@@ -5,8 +5,7 @@
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
   *) Zlib compression BIO. This is a filter BIO which compressed and
-     uncompresses any data passed through it. Add options to enc utility
-     to support it.
+     uncompresses any data passed through it.
      [Steve Henson]
 
   *) Add AES_wrap_key() and AES_unwrap_key() functions to implement
