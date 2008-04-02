@@ -3529,3 +3529,16 @@ i2d_X509_EXTENSIONS                     3922	EXIST::FUNCTION:
 OCSP_sendreq_nbio                       3923	EXIST::FUNCTION:
 OCSP_sendreq_new                        3924	EXIST::FUNCTION:
 d2i_X509_EXTENSIONS                     3925	EXIST::FUNCTION:
+X509_ALGORS_it                          3926	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
+X509_ALGORS_it                          3926	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
+X509_ALGOR_get0                         3927	EXIST::FUNCTION:
+X509_ALGOR_set0                         3928	EXIST::FUNCTION:
+AES_unwrap_key                          3929	EXIST::FUNCTION:AES
+AES_wrap_key                            3930	EXIST::FUNCTION:AES
+X509at_get0_data_by_OBJ                 3931	EXIST::FUNCTION:
+ASN1_TYPE_set1                          3932	EXIST::FUNCTION:
+ASN1_STRING_set0                        3933	EXIST::FUNCTION:
+i2d_X509_ALGORS                         3934	EXIST::FUNCTION:
+BIO_f_zlib                              3935	EXIST:ZLIB:FUNCTION:
+COMP_zlib_cleanup                       3936	EXIST::FUNCTION:
+d2i_X509_ALGORS                         3937	EXIST::FUNCTION:
