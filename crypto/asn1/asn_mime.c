@@ -1,9 +1,9 @@
-/* pk7_mime.c */
-/* Written by Dr Stephen N Henson (shenson@bigfoot.com) for the OpenSSL
+/* asn_mime.c */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,10 +50,6 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
 
 #include <stdio.h>
@@ -61,8 +57,12 @@
 #include "cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/x509.h>
+#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 
-/* MIME and related routines */
+/* Generalised MIME like utilities for streaming ASN1. Although many
+ * have a PKCS7/CMS like flavour others are more general purpose.
+ */
 
 /* MIME format structures
  * Note that all are translated to lower case apart from
@@ -86,9 +86,6 @@ STACK_OF(MIME_PARAM) *params;		/* Zero or more parameters */
 DECLARE_STACK_OF(MIME_HEADER)
 IMPLEMENT_STACK_OF(MIME_HEADER)
 
-static int pkcs7_output_data(BIO *bio, BIO *data, PKCS7 *p7, int flags);
-static int B64_write_PKCS7(BIO *bio, PKCS7 *p7);
-static PKCS7 *B64_read_PKCS7(BIO *bio);
 static char * strip_ends(char *name);
 static char * strip_start(char *name);
 static char * strip_end(char *name);
@@ -110,57 +107,136 @@ static void mime_hdr_free(MIME_HEADER *hdr);
 #define MAX_SMLEN 1024
 #define mime_debug(x) /* x */
 
-/* Base 64 read and write of PKCS#7 structure */
+/* Base 64 read and write of ASN1 structure */
 
-static int B64_write_PKCS7(BIO *bio, PKCS7 *p7)
+static int B64_write_ASN1(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
+				const ASN1_ITEM *it)
+	{
+	BIO *b64;
+	int r;
+	b64 = BIO_new(BIO_f_base64());
+	if(!b64)
+		{
+		ASN1err(ASN1_F_B64_WRITE_ASN1,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+	/* prepend the b64 BIO so all data is base64 encoded.
+	 */
+	out = BIO_push(b64, out);
+	r = ASN1_item_i2d_bio(it, out, val);
+	(void)BIO_flush(out);
+	BIO_pop(out);
+	BIO_free(b64);
+	return r;
+	}
+
+/* Streaming ASN1 PEM write */
+
+int PEM_write_bio_ASN1_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
+				const char *hdr,
+				const ASN1_ITEM *it)
+	{
+	int r;
+	BIO_printf(out, "-----BEGIN %s-----\n", hdr);
+	r = B64_write_ASN1(out, val, in, flags, it);
+	BIO_printf(out, "-----END %s-----\n", hdr);
+	return r;
+	}
+
+static ASN1_VALUE *b64_read_asn1(BIO *bio, const ASN1_ITEM *it)
 {
 	BIO *b64;
+	ASN1_VALUE *val;
 	if(!(b64 = BIO_new(BIO_f_base64()))) {
-		PKCS7err(PKCS7_F_B64_WRITE_PKCS7,ERR_R_MALLOC_FAILURE);
+		ASN1err(ASN1_F_B64_READ_ASN1,ERR_R_MALLOC_FAILURE);
 		return 0;
 	}
 	bio = BIO_push(b64, bio);
-	i2d_PKCS7_bio(bio, p7);
+	val = ASN1_item_d2i_bio(it, bio, NULL);
+	if(!val)
+		ASN1err(ASN1_F_B64_READ_ASN1,ASN1_R_DECODE_ERROR);
 	(void)BIO_flush(bio);
 	bio = BIO_pop(bio);
 	BIO_free(b64);
+	return val;
+}
+
+/* Generate the MIME "micalg" parameter from RFC3851, RFC4490 */
+
+static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
+	{
+	const EVP_MD *md;
+	int i, have_unknown = 0, write_comma, md_nid;
+	have_unknown = 0;
+	write_comma = 0;
+	for (i = 0; i < sk_X509_ALGOR_num(mdalgs); i++)
+		{
+		if (write_comma)
+			BIO_write(out, ",", 1);
+		write_comma = 1;
+		md_nid = OBJ_obj2nid(sk_X509_ALGOR_value(mdalgs, i)->algorithm);
+		md = EVP_get_digestbynid(md_nid);
+		switch(md_nid)
+			{
+			case NID_sha1:
+			BIO_puts(out, "sha1");
+			break;
+
+			case NID_md5:
+			BIO_puts(out, "md5");
+			break;
+
+			case NID_sha256:
+			BIO_puts(out, "sha-256");
+			break;
+
+			case NID_sha384:
+			BIO_puts(out, "sha-384");
+			break;
+
+			case NID_sha512:
+			BIO_puts(out, "sha-512");
+			break;
+
+			default:
+			if (have_unknown)
+				write_comma = 0;
+			else
+				{
+				BIO_puts(out, "unknown");
+				have_unknown = 1;
+				}
+			break;
+
+			}
+		}
+
 	return 1;
-}
 
-static PKCS7 *B64_read_PKCS7(BIO *bio)
-{
-	BIO *b64;
-	PKCS7 *p7;
-	if(!(b64 = BIO_new(BIO_f_base64()))) {
-		PKCS7err(PKCS7_F_B64_READ_PKCS7,ERR_R_MALLOC_FAILURE);
-		return 0;
 	}
-	bio = BIO_push(b64, bio);
-	if(!(p7 = d2i_PKCS7_bio(bio, NULL))) 
-		PKCS7err(PKCS7_F_B64_READ_PKCS7,PKCS7_R_DECODE_ERROR);
-	(void)BIO_flush(bio);
-	bio = BIO_pop(bio);
-	BIO_free(b64);
-	return p7;
-}
 
 /* SMIME sender */
 
-int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
+int int_smime_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
+				int ctype_nid, int econt_nid,
+				STACK_OF(X509_ALGOR) *mdalgs,
+				asn1_output_data_fn *data_fn,
+				const ASN1_ITEM *it)
 {
 	char bound[33], c;
 	int i;
-	char *mime_prefix, *mime_eol, *msg_type=NULL;
-	if (flags & PKCS7_NOOLDMIMETYPE)
-		mime_prefix = "application/pkcs7-";
-	else
+	const char *mime_prefix, *mime_eol, *cname = "smime.p7m";
+	const char *msg_type=NULL;
+	if (flags & SMIME_OLDMIME)
 		mime_prefix = "application/x-pkcs7-";
+	else
+		mime_prefix = "application/pkcs7-";
 
-	if (flags & PKCS7_CRLFEOL)
+	if (flags & SMIME_CRLFEOL)
 		mime_eol = "\r\n";
 	else
 		mime_eol = "\n";
-	if((flags & PKCS7_DETACHED) && data) {
+	if((flags & SMIME_DETACHED) && data) {
 	/* We want multipart/signed */
 		/* Generate a random boundary */
 		RAND_pseudo_bytes((unsigned char *)bound, 32);
@@ -174,13 +250,16 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 		BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
 		BIO_printf(bio, "Content-Type: multipart/signed;");
 		BIO_printf(bio, " protocol=\"%ssignature\";", mime_prefix);
-		BIO_printf(bio, " micalg=sha1; boundary=\"----%s\"%s%s",
+		BIO_puts(bio, " micalg=\"");
+		asn1_write_micalg(bio, mdalgs);
+		BIO_printf(bio, "\"; boundary=\"----%s\"%s%s",
 						bound, mime_eol, mime_eol);
 		BIO_printf(bio, "This is an S/MIME signed message%s%s",
 						mime_eol, mime_eol);
 		/* Now write out the first part */
 		BIO_printf(bio, "------%s%s", bound, mime_eol);
-		pkcs7_output_data(bio, data, p7, flags);
+		if (!data_fn(bio, data, val, flags, it))
+			return 0;
 		BIO_printf(bio, "%s------%s%s", mime_eol, bound, mime_eol);
 
 		/* Headers for signature */
@@ -192,7 +271,7 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 		BIO_printf(bio, "Content-Disposition: attachment;");
 		BIO_printf(bio, " filename=\"smime.p7s\"%s%s",
 							mime_eol, mime_eol);
-		B64_write_PKCS7(bio, p7);
+		B64_write_ASN1(bio, val, NULL, 0, it);
 		BIO_printf(bio,"%s------%s--%s%s", mime_eol, bound,
 							mime_eol, mime_eol);
 		return 1;
@@ -200,100 +279,119 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 
 	/* Determine smime-type header */
 
-	if (PKCS7_type_is_enveloped(p7))
+	if (ctype_nid == NID_pkcs7_enveloped)
 		msg_type = "enveloped-data";
-	else if (PKCS7_type_is_signed(p7))
+	else if (ctype_nid == NID_pkcs7_signed)
 		{
-		/* If we have any signers it is signed-data othewise 
-		 * certs-only.
-		 */
-		STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
-		sinfos = PKCS7_get_signer_info(p7);
-		if (sk_PKCS7_SIGNER_INFO_num(sinfos) > 0)
+		if (econt_nid == NID_id_smime_ct_receipt)
+			msg_type = "signed-receipt";
+		else if (sk_X509_ALGOR_num(mdalgs) >= 0)
 			msg_type = "signed-data";
 		else
 			msg_type = "certs-only";
 		}
+	else if (ctype_nid == NID_id_smime_ct_compressedData)
+		{
+		msg_type = "compressed-data";
+		cname = "smime.p7z";
+		}
 	/* MIME headers */
 	BIO_printf(bio, "MIME-Version: 1.0%s", mime_eol);
 	BIO_printf(bio, "Content-Disposition: attachment;");
-	BIO_printf(bio, " filename=\"smime.p7m\"%s", mime_eol);
+	BIO_printf(bio, " filename=\"%s\"%s", cname, mime_eol);
 	BIO_printf(bio, "Content-Type: %smime;", mime_prefix);
 	if (msg_type)
 		BIO_printf(bio, " smime-type=%s;", msg_type);
-	BIO_printf(bio, " name=\"smime.p7m\"%s", mime_eol);
+	BIO_printf(bio, " name=\"%s\"%s", cname, mime_eol);
 	BIO_printf(bio, "Content-Transfer-Encoding: base64%s%s",
 						mime_eol, mime_eol);
-	B64_write_PKCS7(bio, p7);
+	if (!B64_write_ASN1(bio, val, data, flags, it))
+		return 0;
 	BIO_printf(bio, "%s", mime_eol);
 	return 1;
 }
 
-/* Handle output of PKCS#7 data */
+#if 0
+
+/* Handle output of ASN1 data */
 
 
-static int pkcs7_output_data(BIO *out, BIO *data, PKCS7 *p7, int flags)
+static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
+					const ASN1_ITEM *it)
 	{
-	BIO *tmpbio, *p7bio;
+	BIO *tmpbio;
+	const ASN1_AUX *aux = it->funcs;
+	ASN1_STREAM_ARG sarg;
 
-	if (!(flags & PKCS7_STREAM))
+	if (!(flags & SMIME_DETACHED))
 		{
 		SMIME_crlf_copy(data, out, flags);
 		return 1;
 		}
 
-	/* Partial sign operation */
+	if (!aux || !aux->asn1_cb)
+		{
+		ASN1err(ASN1_F_ASN1_OUTPUT_DATA,
+					ASN1_R_STREAMING_NOT_SUPPORTED);
+		return 0;
+		}
 
-	/* Initialize sign operation */
-	p7bio = PKCS7_dataInit(p7, out);
+	sarg.out = out;
+	sarg.ndef_bio = NULL;
+	sarg.boundary = NULL;
 
-	/* Copy data across, computing digests etc */
-	SMIME_crlf_copy(data, p7bio, flags);
+	/* Let ASN1 code prepend any needed BIOs */
 
-	/* Must be detached */
-	PKCS7_set_detached(p7, 1);
+	if (aux->asn1_cb(ASN1_OP_DETACHED_PRE, &val, it, &sarg) <= 0)
+		return 0;
 
-	/* Finalize signatures */
-	PKCS7_dataFinal(p7, p7bio);
+	/* Copy data across, passing through filter BIOs for processing */
+	SMIME_crlf_copy(data, sarg.ndef_bio, flags);
+
+	/* Finalize structure */
+	if (aux->asn1_cb(ASN1_OP_DETACHED_POST, &val, it, &sarg) <= 0)
+		return 0;
 
 	/* Now remove any digests prepended to the BIO */
 
-	while (p7bio != out)
+	while (sarg.ndef_bio != out)
 		{
-		tmpbio = BIO_pop(p7bio);
-		BIO_free(p7bio);
-		p7bio = tmpbio;
+		tmpbio = BIO_pop(sarg.ndef_bio);
+		BIO_free(sarg.ndef_bio);
+		sarg.ndef_bio = tmpbio;
 		}
 
 	return 1;
 
 	}
+
+#endif
 
 /* SMIME reader: handle multipart/signed and opaque signing.
  * in multipart case the content is placed in a memory BIO
  * pointed to by "bcont". In opaque this is set to NULL
  */
 
-PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
+ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it)
 {
-	BIO *p7in;
+	BIO *asnin;
 	STACK_OF(MIME_HEADER) *headers = NULL;
 	STACK_OF(BIO) *parts = NULL;
 	MIME_HEADER *hdr;
 	MIME_PARAM *prm;
-	PKCS7 *p7;
+	ASN1_VALUE *val;
 	int ret;
 
 	if(bcont) *bcont = NULL;
 
 	if (!(headers = mime_parse_hdr(bio))) {
-		PKCS7err(PKCS7_F_SMIME_READ_PKCS7,PKCS7_R_MIME_PARSE_ERROR);
+		ASN1err(ASN1_F_SMIME_READ_ASN1,ASN1_R_MIME_PARSE_ERROR);
 		return NULL;
 	}
 
 	if(!(hdr = mime_hdr_find(headers, "content-type")) || !hdr->value) {
 		sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
-		PKCS7err(PKCS7_F_SMIME_READ_PKCS7, PKCS7_R_NO_CONTENT_TYPE);
+		ASN1err(ASN1_F_SMIME_READ_ASN1, ASN1_R_NO_CONTENT_TYPE);
 		return NULL;
 	}
 
@@ -304,22 +402,22 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 		prm = mime_param_find(hdr, "boundary");
 		if(!prm || !prm->param_value) {
 			sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
-			PKCS7err(PKCS7_F_SMIME_READ_PKCS7, PKCS7_R_NO_MULTIPART_BOUNDARY);
+			ASN1err(ASN1_F_SMIME_READ_ASN1, ASN1_R_NO_MULTIPART_BOUNDARY);
 			return NULL;
 		}
 		ret = multi_split(bio, prm->param_value, &parts);
 		sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
 		if(!ret || (sk_BIO_num(parts) != 2) ) {
-			PKCS7err(PKCS7_F_SMIME_READ_PKCS7, PKCS7_R_NO_MULTIPART_BODY_FAILURE);
+			ASN1err(ASN1_F_SMIME_READ_ASN1, ASN1_R_NO_MULTIPART_BODY_FAILURE);
 			sk_BIO_pop_free(parts, BIO_vfree);
 			return NULL;
 		}
 
 		/* Parse the signature piece */
-		p7in = sk_BIO_value(parts, 1);
+		asnin = sk_BIO_value(parts, 1);
 
-		if (!(headers = mime_parse_hdr(p7in))) {
-			PKCS7err(PKCS7_F_SMIME_READ_PKCS7,PKCS7_R_MIME_SIG_PARSE_ERROR);
+		if (!(headers = mime_parse_hdr(asnin))) {
+			ASN1err(ASN1_F_SMIME_READ_ASN1,ASN1_R_MIME_SIG_PARSE_ERROR);
 			sk_BIO_pop_free(parts, BIO_vfree);
 			return NULL;
 		}
@@ -329,39 +427,39 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 		if(!(hdr = mime_hdr_find(headers, "content-type")) ||
 								 !hdr->value) {
 			sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
-			PKCS7err(PKCS7_F_SMIME_READ_PKCS7, PKCS7_R_NO_SIG_CONTENT_TYPE);
+			ASN1err(ASN1_F_SMIME_READ_ASN1, ASN1_R_NO_SIG_CONTENT_TYPE);
 			return NULL;
 		}
 
 		if(strcmp(hdr->value, "application/x-pkcs7-signature") &&
 			strcmp(hdr->value, "application/pkcs7-signature")) {
 			sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
-			PKCS7err(PKCS7_F_SMIME_READ_PKCS7,PKCS7_R_SIG_INVALID_MIME_TYPE);
+			ASN1err(ASN1_F_SMIME_READ_ASN1,ASN1_R_SIG_INVALID_MIME_TYPE);
 			ERR_add_error_data(2, "type: ", hdr->value);
 			sk_BIO_pop_free(parts, BIO_vfree);
 			return NULL;
 		}
 		sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
-		/* Read in PKCS#7 */
-		if(!(p7 = B64_read_PKCS7(p7in))) {
-			PKCS7err(PKCS7_F_SMIME_READ_PKCS7,PKCS7_R_PKCS7_SIG_PARSE_ERROR);
+		/* Read in ASN1 */
+		if(!(val = b64_read_asn1(asnin, it))) {
+			ASN1err(ASN1_F_SMIME_READ_ASN1,ASN1_R_ASN1_SIG_PARSE_ERROR);
 			sk_BIO_pop_free(parts, BIO_vfree);
 			return NULL;
 		}
 
 		if(bcont) {
 			*bcont = sk_BIO_value(parts, 0);
-			BIO_free(p7in);
+			BIO_free(asnin);
 			sk_BIO_free(parts);
 		} else sk_BIO_pop_free(parts, BIO_vfree);
-		return p7;
+		return val;
 	}
 		
 	/* OK, if not multipart/signed try opaque signature */
 
 	if (strcmp (hdr->value, "application/x-pkcs7-mime") &&
 	    strcmp (hdr->value, "application/pkcs7-mime")) {
-		PKCS7err(PKCS7_F_SMIME_READ_PKCS7,PKCS7_R_INVALID_MIME_TYPE);
+		ASN1err(ASN1_F_SMIME_READ_ASN1,ASN1_R_INVALID_MIME_TYPE);
 		ERR_add_error_data(2, "type: ", hdr->value);
 		sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
 		return NULL;
@@ -369,12 +467,79 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 
 	sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
 	
-	if(!(p7 = B64_read_PKCS7(bio))) {
-		PKCS7err(PKCS7_F_SMIME_READ_PKCS7, PKCS7_R_PKCS7_PARSE_ERROR);
+	if(!(val = b64_read_asn1(bio, it))) {
+		ASN1err(ASN1_F_SMIME_READ_ASN1, ASN1_R_ASN1_PARSE_ERROR);
 		return NULL;
 	}
-	return p7;
+	return val;
 
+}
+
+/* Copy text from one BIO to another making the output CRLF at EOL */
+int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
+{
+	BIO *bf;
+	char eol;
+	int len;
+	char linebuf[MAX_SMLEN];
+	/* Buffer output so we don't write one line at a time. This is
+	 * useful when streaming as we don't end up with one OCTET STRING
+	 * per line.
+	 */
+	bf = BIO_new(BIO_f_buffer());
+	if (!bf)
+		return 0;
+	out = BIO_push(bf, out);
+	if(flags & SMIME_BINARY)
+		{
+		while((len = BIO_read(in, linebuf, MAX_SMLEN)) > 0)
+						BIO_write(out, linebuf, len);
+		}
+	else
+		{
+		if(flags & SMIME_TEXT)
+			BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
+		while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0)
+			{
+			eol = strip_eol(linebuf, &len);
+			if (len)
+				BIO_write(out, linebuf, len);
+			if(eol) BIO_write(out, "\r\n", 2);
+			}
+		}
+	(void)BIO_flush(out);
+	BIO_pop(out);
+	BIO_free(bf);
+	return 1;
+}
+
+/* Strip off headers if they are text/plain */
+int SMIME_text(BIO *in, BIO *out)
+{
+	char iobuf[4096];
+	int len;
+	STACK_OF(MIME_HEADER) *headers;
+	MIME_HEADER *hdr;
+
+	if (!(headers = mime_parse_hdr(in))) {
+		ASN1err(ASN1_F_SMIME_TEXT,ASN1_R_MIME_PARSE_ERROR);
+		return 0;
+	}
+	if(!(hdr = mime_hdr_find(headers, "content-type")) || !hdr->value) {
+		ASN1err(ASN1_F_SMIME_TEXT,ASN1_R_MIME_NO_CONTENT_TYPE);
+		sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
+		return 0;
+	}
+	if (strcmp (hdr->value, "text/plain")) {
+		ASN1err(ASN1_F_SMIME_TEXT,ASN1_R_INVALID_MIME_TYPE);
+		ERR_add_error_data(2, "type: ", hdr->value);
+		sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
+		return 0;
+	}
+	sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
+	while ((len = BIO_read(in, iobuf, sizeof(iobuf))) > 0)
+						BIO_write(out, iobuf, len);
+	return 1;
 }
 
 /* Split a multipart/XXX message body into component parts: result is

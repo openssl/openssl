@@ -28,6 +28,7 @@ extern int speed_main(int argc,char *argv[]);
 extern int s_time_main(int argc,char *argv[]);
 extern int version_main(int argc,char *argv[]);
 extern int pkcs7_main(int argc,char *argv[]);
+extern int cms_main(int argc,char *argv[]);
 extern int crl2pkcs7_main(int argc,char *argv[]);
 extern int sess_id_main(int argc,char *argv[]);
 extern int ciphers_main(int argc,char *argv[]);
@@ -109,6 +110,9 @@ FUNCTION functions[] = {
 #endif
 	{FUNC_TYPE_GENERAL,"version",version_main},
 	{FUNC_TYPE_GENERAL,"pkcs7",pkcs7_main},
+#ifndef OPENSSL_NO_CMS
+	{FUNC_TYPE_GENERAL,"cms",cms_main},
+#endif
 	{FUNC_TYPE_GENERAL,"crl2pkcs7",crl2pkcs7_main},
 	{FUNC_TYPE_GENERAL,"sess_id",sess_id_main},
 #if !defined(OPENSSL_NO_SOCK) && !(defined(OPENSSL_NO_SSL2) && defined(OPENSSL_NO_SSL3))

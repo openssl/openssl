@@ -613,6 +613,7 @@ my $perl;
 
 my %disabled = ( # "what"         => "comment"
                  "camellia"       => "default",
+                 "cms"            => "default",
                  "gmp"            => "default",
                  "mdc2"           => "default",
                  "rc5"            => "default",

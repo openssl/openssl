@@ -4,6 +4,20 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Backport of CMS code to OpenSSL 0.9.8. This differs from the 0.9.9
+     implemention in the following ways:
+
+     Lack of EVP_PKEY_ASN1_METHOD means algorithm parameters have to be
+     hard coded.
+
+     Lack of BER streaming support means one pass streaming processing is
+     only supported if data is detached: setting the streaming flag is
+     ignored for embedded content.
+
+     CMS support is disabled by default and must be explicitly enabled
+     with the enable-cms configuration option.
+     [Steve Henson]
+
   *) Zlib compression BIO. This is a filter BIO which compressed and
      uncompresses any data passed through it.
      [Steve Henson]
