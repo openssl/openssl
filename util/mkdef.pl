@@ -1130,6 +1130,7 @@ sub is_valid
 			if ($keyword eq "GMP" && $no_gmp) { return 0; }
 			if ($keyword eq "RFC3779" && $no_rfc3779) { return 0; }
 			if ($keyword eq "TLSEXT" && $no_tlsext) { return 0; }
+			if ($keyword eq "CMS" && $no_cms) { return 0; }
 			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }
 
 			# Nothing recognise as true
