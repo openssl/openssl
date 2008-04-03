@@ -98,6 +98,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "RFC3779",
 			 # TLS extension support
 			 "TLSEXT",
+			 # CMS
+			 "CMS",
 			 # Deprecated functions
 			 "DEPRECATED" );
 
@@ -118,7 +120,7 @@ my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw; my $no_camellia;
 my $no_seed;
 my $no_fp_api; my $no_static_engine; my $no_gmp; my $no_deprecated;
-my $no_rfc3779; my $no_tlsext;
+my $no_rfc3779; my $no_tlsext; my $no_cms;
 
 
 foreach (@ARGV, split(/ /, $options))
@@ -203,6 +205,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-gmp$/)	{ $no_gmp=1; }
 	elsif (/^no-rfc3779$/)	{ $no_rfc3779=1; }
 	elsif (/^no-tlsext$/)	{ $no_tlsext=1; }
+	elsif (/^no-cms$/)	{ $no_cms=1; }
 	}
 
 
@@ -298,6 +301,7 @@ $crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/tmdiff.h";
 $crypto.=" crypto/store/store.h";
 $crypto.=" crypto/pqueue/pqueue.h";
+$crypto.=" crypto/cms/cms.h";
 
 my $symhacks="crypto/symhacks.h";
 
