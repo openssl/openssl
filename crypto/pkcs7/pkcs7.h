@@ -382,7 +382,6 @@ int PKCS7_add1_attrib_digest(PKCS7_SIGNER_INFO *si,
 				const unsigned char *md, int mdlen);
 
 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags);
-ASN1_VALUE *SMIME_read_asn1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
 PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont);
 int SMIME_crlf_copy(BIO *in, BIO *out, int flags);
 int SMIME_text(BIO *in, BIO *out);
