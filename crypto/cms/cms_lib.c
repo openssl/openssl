@@ -472,8 +472,11 @@ int CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
 		if (cch->type == CMS_CERTCHOICE_CERT)
 			{
 			if (!X509_cmp(cch->d.certificate, cert))
-				return -1;
-				
+				{
+				CMSerr(CMS_F_CMS_ADD0_CERT, 
+					CMS_R_CERTIFICTATE_ALREADY_PRESENT);
+				return 0;
+				}
 			}
 		}
 	cch = CMS_add0_CertificateChoices(cms);

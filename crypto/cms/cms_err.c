@@ -71,6 +71,7 @@
 static ERR_STRING_DATA CMS_str_functs[]=
 	{
 {ERR_FUNC(CMS_F_CHECK_CONTENT),	"CHECK_CONTENT"},
+{ERR_FUNC(CMS_F_CMS_ADD0_CERT),	"CMS_add0_cert"},
 {ERR_FUNC(CMS_F_CMS_ADD0_RECIPIENT_KEY),	"CMS_add0_recipient_key"},
 {ERR_FUNC(CMS_F_CMS_ADD1_RECEIPTREQUEST),	"CMS_add1_ReceiptRequest"},
 {ERR_FUNC(CMS_F_CMS_ADD1_RECIPIENT_CERT),	"CMS_add1_recipient_cert"},
@@ -131,7 +132,7 @@ static ERR_STRING_DATA CMS_str_functs[]=
 {ERR_FUNC(CMS_F_CMS_SIGNERINFO_VERIFY),	"CMS_SignerInfo_verify"},
 {ERR_FUNC(CMS_F_CMS_SIGNERINFO_VERIFY_CERT),	"CMS_SIGNERINFO_VERIFY_CERT"},
 {ERR_FUNC(CMS_F_CMS_SIGNERINFO_VERIFY_CONTENT),	"CMS_SignerInfo_verify_content"},
-{ERR_FUNC(CMS_F_CMS_SIGN_RECEIPT),	"CMS_SIGN_RECEIPT"},
+{ERR_FUNC(CMS_F_CMS_SIGN_RECEIPT),	"CMS_sign_receipt"},
 {ERR_FUNC(CMS_F_CMS_STREAM),	"CMS_stream"},
 {ERR_FUNC(CMS_F_CMS_UNCOMPRESS),	"CMS_uncompress"},
 {ERR_FUNC(CMS_F_CMS_VERIFY),	"CMS_verify"},
@@ -143,6 +144,7 @@ static ERR_STRING_DATA CMS_str_reasons[]=
 {ERR_REASON(CMS_R_ADD_SIGNER_ERROR)      ,"add signer error"},
 {ERR_REASON(CMS_R_CERTIFICATE_HAS_NO_KEYID),"certificate has no keyid"},
 {ERR_REASON(CMS_R_CERTIFICATE_VERIFY_ERROR),"certificate verify error"},
+{ERR_REASON(CMS_R_CERTIFICTATE_ALREADY_PRESENT),"certifictate already present"},
 {ERR_REASON(CMS_R_CIPHER_INITIALISATION_ERROR),"cipher initialisation error"},
 {ERR_REASON(CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR),"cipher parameter initialisation error"},
 {ERR_REASON(CMS_R_CMS_DATAFINAL_ERROR)   ,"cms datafinal error"},
