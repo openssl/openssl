@@ -483,7 +483,7 @@ int CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert)
 			if (!X509_cmp(cch->d.certificate, cert))
 				{
 				CMSerr(CMS_F_CMS_ADD0_CERT, 
-					CMS_R_CERTIFICTATE_ALREADY_PRESENT);
+					CMS_R_CERTIFICATE_ALREADY_PRESENT);
 				return 0;
 				}
 			}
