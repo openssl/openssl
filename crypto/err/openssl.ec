@@ -38,6 +38,8 @@ L CMS		crypto/cms/cms.h		crypto/cms/cms_err.c
 # additional header files to be scanned for function names
 L NONE		crypto/x509/x509_vfy.h		NONE
 L NONE		crypto/ec/ec_lcl.h		NONE
+L NONE		crypto/asn1/asn_lcl.h		NONE
+L NONE		crypto/cms/cms_lcl.h		NONE
 
 
 F RSAREF_F_RSA_BN2BIN
