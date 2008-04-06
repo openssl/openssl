@@ -404,16 +404,17 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 
 	if (!(flags & CMS_NOATTR))
 		{
-		/* Copy content type across */
-		ASN1_OBJECT *ctype =
-				OBJ_dup(sd->encapContentInfo->eContentType); 
-		if (!ctype)
-			goto merr;
-		i = CMS_signed_add1_attr_by_NID(si, NID_pkcs9_contentType,
-						V_ASN1_OBJECT, ctype, -1);
-		ASN1_OBJECT_free(ctype);
-		if (i <= 0)
-			goto merr;
+		/* Initialialize signed attributes strutucture so other
+		 * attributes such as signing time etc are added later
+		 * even if we add none here.
+		 */
+		if (!si->signedAttrs)
+			{
+			si->signedAttrs = sk_X509_ATTRIBUTE_new_null();
+			if (!si->signedAttrs)
+				goto merr;
+			}
+
 		if (!(flags & CMS_NOSMIMECAP))
 			{
 			STACK_OF(X509_ALGOR) *smcap = NULL;
@@ -615,7 +616,8 @@ void CMS_SignerInfo_get0_algs(CMS_SignerInfo *si, EVP_PKEY **pk, X509 **signer,
 		*psig = si->signatureAlgorithm;
 	}
 
-static int cms_SignerInfo_content_sign(CMS_SignerInfo *si, BIO *chain)
+static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
+					CMS_SignerInfo *si, BIO *chain)
 	{
 	EVP_MD_CTX mctx;
 	int r = 0;
@@ -635,12 +637,18 @@ static int cms_SignerInfo_content_sign(CMS_SignerInfo *si, BIO *chain)
 
 	if (CMS_signed_get_attr_count(si) >= 0)
 		{
+		ASN1_OBJECT *ctype =
+			cms->d.signedData->encapContentInfo->eContentType; 
 		unsigned char md[EVP_MAX_MD_SIZE];
 		unsigned int mdlen;
 		EVP_DigestFinal_ex(&mctx, md, &mdlen);
 		if (!CMS_signed_add1_attr_by_NID(si, NID_pkcs9_messageDigest,
 						V_ASN1_OCTET_STRING,
 						md, mdlen))
+			goto err;
+		/* Copy content type across */
+		if (CMS_signed_add1_attr_by_NID(si, NID_pkcs9_contentType,
+					V_ASN1_OBJECT, ctype, -1) <= 0)
 			goto err;
 		if (!CMS_SignerInfo_sign(si))
 			goto err;
@@ -683,7 +691,7 @@ int cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain)
 	for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++)
 		{
 		si = sk_CMS_SignerInfo_value(sinfos, i);
-		if (!cms_SignerInfo_content_sign(si, chain))
+		if (!cms_SignerInfo_content_sign(cms, si, chain))
 			return 0;
 		}
 	cms->d.signedData->encapContentInfo->partial = 0;
