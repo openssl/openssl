@@ -1,6 +1,6 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2007/10/19 08:26:03 $
+  ______________                           $Date: 2008/04/07 06:37:05 $
 
   DEVELOPMENT STATE
 
@@ -45,7 +45,7 @@
     o  OpenSSL 0.9.2b: Released on March     22th, 1999
     o  OpenSSL 0.9.1c: Released on December  23th, 1998
 
-  [See also http://www.openssl.org/support/rt2.html]
+  [See also http://www.openssl.org/support/rt.html]
 
   RELEASE SHOWSTOPPERS
 

@@ -158,7 +158,7 @@
      standard headers).  If it is a problem with OpenSSL itself, please
      report the problem to <openssl-bugs@openssl.org> (note that your
      message will be recorded in the request tracker publicly readable
-     via http://www.openssl.org/support/rt2.html and will be forwarded to a
+     via http://www.openssl.org/support/rt.html and will be forwarded to a
      public mailing list). Include the output of "make report" in your message.
      Please check out the request tracker. Maybe the bug was already
      reported or has already been fixed.
@@ -180,7 +180,7 @@
      in Makefile.ssl and run "make clean; make". Please send a bug
      report to <openssl-bugs@openssl.org>, including the output of
      "make report" in order to be added to the request tracker at
-     http://www.openssl.org/support/rt2.html.
+     http://www.openssl.org/support/rt.html.
 
   4. If everything tests ok, install OpenSSL with
 
