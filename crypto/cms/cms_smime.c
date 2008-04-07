@@ -336,7 +336,8 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 	if (!(flags & CMS_NO_SIGNER_CERT_VERIFY))
 		{
 		cms_certs = CMS_get1_certs(cms);
-		crls = CMS_get1_crls(cms);
+		if (!(flags & CMS_NOCRL))
+			crls = CMS_get1_crls(cms);
 		for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++)
 			{
 			si = sk_CMS_SignerInfo_value(sinfos, i);
