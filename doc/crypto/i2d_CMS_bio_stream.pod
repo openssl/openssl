@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-d2i_CMS_bio_stream - output CMS_ContentInfo structure in BER format.
+i2d_CMS_bio_stream - output CMS_ContentInfo structure in BER format.
 
 =head1 SYNOPSIS
 
@@ -39,6 +39,6 @@ L<PEM_write_bio_CMS_stream(3)|PEM_write_bio_CMS_stream(3)>
 
 =head1 HISTORY
 
-d2i_CMS_bio_stream() was added to OpenSSL 0.9.9
+i2d_CMS_bio_stream() was added to OpenSSL 0.9.9
 
 =cut

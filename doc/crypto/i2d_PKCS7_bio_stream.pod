@@ -2,17 +2,17 @@
 
 =head1 NAME
 
-d2i_PKCS7_bio_stream - output PKCS7 structure in BER format.
+i2d_PKCS7_bio_stream - output PKCS7 structure in BER format.
 
 =head1 SYNOPSIS
 
  #include <openssl/pkcs7.h>
 
- int d2i_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *data, int flags);
+ int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *data, int flags);
 
 =head1 DESCRIPTION
 
-d2i_PKCS7_bio_stream() outputs a PKCS7 structure in BER format.
+i2d_PKCS7_bio_stream() outputs a PKCS7 structure in BER format.
 
 It is otherwise identical to the function SMIME_write_PKCS7().
 
@@ -27,7 +27,7 @@ The prefix "d2i" is arguably wrong because the function outputs BER format.
 
 =head1 RETURN VALUES
 
-d2i_PKCS7_bio_stream() returns 1 for success or 0 for failure.
+i2d_PKCS7_bio_stream() returns 1 for success or 0 for failure.
 
 =head1 SEE ALSO
 
@@ -39,6 +39,6 @@ L<PEM_write_bio_PKCS7_stream(3)|PEM_write_bio_PKCS7_stream(3)>
 
 =head1 HISTORY
 
-d2i_PKCS7_bio_stream() was added to OpenSSL 0.9.9
+i2d_PKCS7_bio_stream() was added to OpenSSL 0.9.9
 
 =cut

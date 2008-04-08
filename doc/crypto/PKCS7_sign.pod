@@ -72,7 +72,7 @@ If the flag B<PKCS7_STREAM> is set the returned B<PKCS7> structure is B<not>
 complete and outputting its contents via a function that does not properly
 finalize the B<PKCS7> structure will give unpredictable results.
 
-Several functions including SMIME_write_PKCS7(), d2i_PKCS7_bio_stream(),
+Several functions including SMIME_write_PKCS7(), i2d_PKCS7_bio_stream(),
 PEM_write_bio_PKCS7_stream() finalize the structure. Alternatively finalization
 can be performed by obtaining the streaming ASN1 B<BIO> directly using
 BIO_new_PKCS7().

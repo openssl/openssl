@@ -71,7 +71,7 @@ B<not> complete and outputting its contents via a function that does not
 properly finalize the B<CMS_ContentInfo> structure will give unpredictable
 results.
 
-Several functions including SMIME_write_CMS(), d2i_CMS_bio_stream(),
+Several functions including SMIME_write_CMS(), i2d_CMS_bio_stream(),
 PEM_write_bio_CMS_stream() finalize the structure. Alternatively finalization
 can be performed by obtaining the streaming ASN1 B<BIO> directly using
 BIO_new_CMS().
