@@ -50,7 +50,7 @@ The error can be obtained from ERR_get_error(3)
 
 =head1 BUGS
 
-The lack of single pass processing and need to hold all data in memory as
+The lack of single pass processing and the need to hold all data in memory as
 mentioned in CMS_verify() also applies to CMS_decrypt().
 
 =head1 SEE ALSO
