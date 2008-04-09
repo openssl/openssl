@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CMS_verify - verify a CMS signedData structure
+CMS_verify - verify a CMS SignedData structure
 
 =head1 SYNOPSIS
 
@@ -14,7 +14,7 @@ CMS_verify - verify a CMS signedData structure
 
 =head1 DESCRIPTION
 
-CMS_verify() verifies a CMS signedData structure. B<cms> is the CMS_ContentInfo
+CMS_verify() verifies a CMS SignedData structure. B<cms> is the CMS_ContentInfo
 structure to verify. B<certs> is a set of certificates in which to search for
 the signer's certificate. B<store> is a trusted certficate store (used for
 chain verification). B<indata> is the signed data if the content is not
@@ -32,7 +32,7 @@ be called after a succeful CMS_verify() operation.
 Normally the verify process proceeds as follows.
 
 Initially some sanity checks are performed on B<cms>. The type of B<cms> must
-be signedData. There must be at least one signature on the data and if
+be SignedData. There must be at least one signature on the data and if
 the content is detached B<indata> cannot be B<NULL>.
 
 An attempt is made to locate all the signer's certificates, first looking in

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CMS_sign - create a CMS signedData structure
+CMS_sign - create a CMS SignedData structure
 
 =head1 SYNOPSIS
 
@@ -12,7 +12,7 @@ CMS_sign - create a CMS signedData structure
 
 =head1 DESCRIPTION
 
-CMS_sign() creates and returns a CMS signedData structure. B<signcert> is
+CMS_sign() creates and returns a CMS SignedData structure. B<signcert> is
 the certificate to sign with, B<pkey> is the corresponsding private key.
 B<certs> is an optional additional set of certificates to include in the CMS
 structure (for example any intermediate CAs in the chain). Any or all of
@@ -47,7 +47,7 @@ required by the S/MIME specifications) if B<CMS_BINARY> is set no translation
 occurs. This option should be used if the supplied data is in binary format
 otherwise the translation will corrupt it.
 
-The signedData structure includes several CMS signedAttributes including the
+The SignedData structure includes several CMS signedAttributes including the
 signing time, the CMS content type and the supported list of ciphers in an
 SMIMECapabilities attribute. If B<CMS_NOATTR> is set then no signedAttributes
 will be used. If B<CMS_NOSMIMECAP> is set then just the SMIMECapabilities are
