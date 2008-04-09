@@ -53,6 +53,9 @@ PEM_write_bio_CMS_stream() finalize the structure. Alternatively finalization
 can be performed by obtaining the streaming ASN1 B<BIO> directly using
 BIO_new_CMS().
 
+Additional compression parameters such as the zlib compression level cannot
+currently be set.
+
 =head1 RETURN VALUES
 
 CMS_compress() returns either a CMS_ContentInfo structure or NULL if an error
