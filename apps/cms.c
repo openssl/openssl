@@ -69,7 +69,7 @@
 #undef PROG
 #define PROG cms_main
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
-static int smime_cb(int ok, X509_STORE_CTX *ctx);
+static int cms_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(BIO *out, CMS_ContentInfo *cms);
 static CMS_ReceiptRequest *make_receipt_request(STACK *rr_to, int rr_allorfirst,
 								STACK *rr_from);
@@ -566,7 +566,7 @@ int MAIN(int argc, char **argv)
 	if (badarg)
 		{
 		argerr:
-		BIO_printf (bio_err, "Usage smime [options] cert.pem ...\n");
+		BIO_printf (bio_err, "Usage cms [options] cert.pem ...\n");
 		BIO_printf (bio_err, "where options are\n");
 		BIO_printf (bio_err, "-encrypt       encrypt message\n");
 		BIO_printf (bio_err, "-decrypt       decrypt encrypted message\n");
@@ -851,7 +851,7 @@ int MAIN(int argc, char **argv)
 		{
 		if (!(store = setup_verify(bio_err, CAfile, CApath)))
 			goto end;
-		X509_STORE_set_verify_cb_func(store, smime_cb);
+		X509_STORE_set_verify_cb_func(store, cms_cb);
 		if (vpm)
 			X509_STORE_set1_param(store, vpm);
 		}
@@ -1171,7 +1171,7 @@ static int save_certs(char *signerfile, STACK_OF(X509) *signers)
 
 /* Minimal callback just to output policy info (if any) */
 
-static int smime_cb(int ok, X509_STORE_CTX *ctx)
+static int cms_cb(int ok, X509_STORE_CTX *ctx)
 	{
 	int error;
 
