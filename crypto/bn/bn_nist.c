@@ -593,7 +593,15 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		}
 	carry = bn_add_words(r_d+(128/BN_BITS2), r_d+(128/BN_BITS2), 
 		t_d, BN_NIST_256_TOP);
-	/* this is equivalent to if (result >= module) */
+	/*
+	 * we need if (result>=modulus) subtract(result,modulus);
+	 * in n-bit space this can be expressed as
+	 * if (carry || result>=modulus) subtract(result,modulus);
+	 * the catch is that comparison implies subtraction and
+	 * therefore one can write tmp=subtract(result,modulus);
+	 * and then if(carry || !borrow) result=tmp; this's what
+	 * happens below, but without explicit if:-) a.
+	 */
 	mask = 0-(size_t)bn_sub_words(c_d,r_d,_nist_p_384,BN_NIST_384_TOP);
 	mask = ~mask | (0-(size_t)carry);
 	res = (BN_ULONG *)(((size_t)c_d&mask) | ((size_t)r_d&~mask));
