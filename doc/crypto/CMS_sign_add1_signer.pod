@@ -96,6 +96,6 @@ L<CMS_final(3)|CMS_final(3)>,
 
 =head1 HISTORY
 
-PEM_sign_add_signer() was added to OpenSSL 0.9.9
+CMS_sign_add1_signer() was added to OpenSSL 0.9.8
 
 =cut
