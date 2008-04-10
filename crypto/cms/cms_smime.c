@@ -149,7 +149,7 @@ CMS_ContentInfo *CMS_data_create(BIO *in, unsigned int flags)
 	if (!cms)
 		return NULL;
 
-	if ((flags & CMS_STREAM) || CMS_final(cms, in, flags))
+	if ((flags & CMS_STREAM) || CMS_final(cms, in, NULL, flags))
 		return cms;
 
 	CMS_ContentInfo_free(cms);
@@ -194,7 +194,7 @@ CMS_ContentInfo *CMS_digest_create(BIO *in, const EVP_MD *md,
 	if(!(flags & CMS_DETACHED))
 		CMS_set_detached(cms, 0);
 
-	if ((flags & CMS_STREAM) || CMS_final(cms, in, flags))
+	if ((flags & CMS_STREAM) || CMS_final(cms, in, NULL, flags))
 		return cms;
 
 	CMS_ContentInfo_free(cms);
@@ -246,7 +246,8 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
 	if(!(flags & CMS_DETACHED))
 		CMS_set_detached(cms, 0);
 
-	if ((flags & (CMS_STREAM|CMS_PARTIAL)) || CMS_final(cms, in, flags))
+	if ((flags & (CMS_STREAM|CMS_PARTIAL))
+		|| CMS_final(cms, in, NULL, flags))
 		return cms;
 
 	CMS_ContentInfo_free(cms);
@@ -459,7 +460,8 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 	if(!(flags & CMS_DETACHED))
 		CMS_set_detached(cms, 0);
 
-	if ((flags & (CMS_STREAM|CMS_PARTIAL)) || CMS_final(cms, data, flags))
+	if ((flags & (CMS_STREAM|CMS_PARTIAL))
+		|| CMS_final(cms, data, NULL, flags))
 		return cms;
 	else
 		goto err;
@@ -526,7 +528,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 		goto err;
 
 	/* Finalize structure */
-	if (!CMS_final(cms, rct_cont, flags))
+	if (!CMS_final(cms, rct_cont, NULL, flags))
 		goto err;
 
 	/* Set embedded content */
@@ -567,7 +569,8 @@ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *data,
 	if(!(flags & CMS_DETACHED))
 		CMS_set_detached(cms, 0);
 
-	if ((flags & (CMS_STREAM|CMS_PARTIAL)) || CMS_final(cms, data, flags))
+	if ((flags & (CMS_STREAM|CMS_PARTIAL))
+		|| CMS_final(cms, data, NULL, flags))
 		return cms;
 	else
 		goto err;
@@ -679,11 +682,11 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
 	return r;
 	}
 
-int CMS_final(CMS_ContentInfo *cms, BIO *data, int flags)
+int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags)
 	{
 	BIO *cmsbio;
 	int ret = 0;
-	if (!(cmsbio = CMS_dataInit(cms, NULL)))
+	if (!(cmsbio = CMS_dataInit(cms, dcont)))
 		{
 		CMSerr(CMS_F_CMS_FINAL,ERR_R_MALLOC_FAILURE);
 		return 0;

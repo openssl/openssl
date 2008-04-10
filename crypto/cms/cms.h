@@ -135,7 +135,7 @@ int PEM_write_bio_CMS_stream(BIO *out, CMS_ContentInfo *cms, BIO *in, int flags)
 CMS_ContentInfo *SMIME_read_CMS(BIO *bio, BIO **bcont);
 int SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags);
 
-int CMS_final(CMS_ContentInfo *cms, BIO *data, int flags);
+int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags);
 
 CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 						BIO *data, unsigned int flags);
