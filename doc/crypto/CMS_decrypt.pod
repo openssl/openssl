@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CMS_decrypt - decrypt content from a CMS envelopedData structure
+ CMS_decrypt - decrypt content from a CMS envelopedData structure
 
 =head1 SYNOPSIS
 
@@ -12,9 +12,9 @@ CMS_decrypt - decrypt content from a CMS envelopedData structure
 
 =head1 DESCRIPTION
 
-CMS_decrypt() extracts and decrypts the content from a CMS envelopedData
+CMS_decrypt() extracts and decrypts the content from a CMS EnvelopedData
 structure. B<pkey> is the private key of the recipient, B<cert> is the
-recipients certificate, B<data> is a BIO to write the content to and
+recipient's certificate, B<data> is a BIO to write the content to and
 B<flags> is an optional set of flags.
 
 The B<dcont> parameter is used in the rare case where the encrypted content
@@ -34,8 +34,9 @@ example looking them up in a database) and setting them in the CMS structure
 in advance using the CMS utility functions such as CMS_set1_pkey(). In this
 case both B<cert> and B<pkey> should be set to NULL.
 
-To process KEKRecipientInfo types CMS_set1_key() should be used and B<cert>
-and B<pkey> set to NULL.
+To process KEKRecipientInfo types CMS_set1_key() or CMS_RecipientInfo_set0_key()
+and CMS_ReceipientInfo_decrypt() should be called before CMS_decrypt() and
+B<cert> and B<pkey> set to NULL.
 
 The following flags can be passed in the B<flags> parameter.
 

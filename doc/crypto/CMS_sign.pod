@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CMS_sign - create a CMS SignedData structure
+ CMS_sign - create a CMS SignedData structure
 
 =head1 SYNOPSIS
 
@@ -54,8 +54,10 @@ will be used. If B<CMS_NOSMIMECAP> is set then just the SMIMECapabilities are
 omitted.
 
 If present the SMIMECapabilities attribute indicates support for the following
-algorithms: triple DES, 128 bit RC2, 64 bit RC2, DES and 40 bit RC2. If any of
-these algorithms is disabled then it will not be included.
+algorithms in preference order: 256 bit AES, Gost R3411-94, Gost 28147-89, 192
+bit AES, 128 bit AES, triple DES, 128 bit RC2, 64 bit RC2, DES and 40 bit RC2.
+If any of these algorithms is not available then it will not be included: for example the GOST algorithms will not be included if the GOST ENGINE is
+not loaded.
 
 OpenSSL will by default identify signing certificates using issuer name
 and serial number. If B<CMS_USE_KEYID> is set it will use the subject key
@@ -92,18 +94,18 @@ The function CMS_sign() is a basic CMS signing function whose output will be
 suitable for many purposes. For finer control of the output format the
 B<certs>, B<signcert> and B<pkey> parameters can all be B<NULL> and the
 B<CMS_PARTIAL> flag set. Then one or more signers can be added using the
-function B<CMS_sign_add1_signer()>, non default digests set and custom
+function CMS_sign_add1_signer(), non default digests can be used and custom
 attributes added. B<CMS_final()> must then be called to finalize the
 structure if streaming is not enabled. 
 
 =head1 BUGS
 
-Some advanced attributes such as counter signatures are not supported.
+Some attributes such as counter signatures are not supported.
 
 =head1 RETURN VALUES
 
 CMS_sign() returns either a valid CMS_ContentInfo structure or NULL if an error
-occurred.  The error can be obtained from ERR_get_error(3).
+occurred. The error can be obtained from ERR_get_error(3).
 
 =head1 SEE ALSO
 

@@ -14,7 +14,7 @@ CMS_compress - create a CMS CompressedData structure
 
 CMS_compress() creates and returns a CMS CompressedData structure. B<comp_nid>
 is the compression algorithm to use or B<NID_undef> to use the default
-algorithms (zlib compression). B<in> is the content to be compressed.
+algorithm (zlib compression). B<in> is the content to be compressed.
 B<flags> is an optional set of flags.
 
 =head1 NOTES
@@ -22,7 +22,7 @@ B<flags> is an optional set of flags.
 The only currently supported compression algorithm is zlib using the NID
 NID_zlib_compression.
 
-If zlib support is not compiled into OpenSSL this CMS_compress() will return
+If zlib support is not compiled into OpenSSL then CMS_compress() will return
 an error.
 
 If the B<CMS_TEXT> flag is set MIME headers for type B<text/plain> are

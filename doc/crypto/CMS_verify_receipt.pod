@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CMS_verify - verify a CMS signed receipt
+ CMS_verify_receipt - verify a CMS signed receipt
 
 =head1 SYNOPSIS
 
@@ -14,8 +14,8 @@ CMS_verify - verify a CMS signed receipt
 
 CMS_verify_receipt() verifies a CMS signed receipt. B<rcms> is the signed
 receipt to verify. B<ocms> is the original SignedData structure containing the
-receipt request B<certs> is a set of certificates in which to search for the
-signer's certificate. B<store> is a trusted certificate store (used for chain
+receipt request. B<certs> is a set of certificates in which to search for the
+signing certificate. B<store> is a trusted certificate store (used for chain
 verification). 
 
 B<flags> is an optional set of flags, which can be used to modify the verify
@@ -42,6 +42,6 @@ L<CMS_verify(3)|CMS_verify(3)>,
 
 =head1 HISTORY
 
-CMS_verify() was added to OpenSSL 0.9.8
+CMS_verify_receipt() was added to OpenSSL 0.9.8
 
 =cut

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-i2d_CMS_bio_stream - output CMS_ContentInfo structure in BER format.
+ i2d_CMS_bio_stream - output CMS_ContentInfo structure in BER format.
 
 =head1 SYNOPSIS
 

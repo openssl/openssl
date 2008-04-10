@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CMS_uncompress - uncompress a CMS CompressedData structure
+ CMS_uncompress - uncompress a CMS CompressedData structure
 
 =head1 SYNOPSIS
 
@@ -21,8 +21,8 @@ is detached. It will normally be set to NULL.
 
 =head1 NOTES
 
-The only currently supported compression algorithm is zlib if the structure
-indicates the use of any other algorithm and error is returned.
+The only currently supported compression algorithm is zlib: if the structure
+indicates the use of any other algorithm an error is returned.
 
 If zlib support is not compiled into OpenSSL then CMS_uncompress() will always
 return an error.

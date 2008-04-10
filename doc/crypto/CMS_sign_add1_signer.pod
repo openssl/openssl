@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CMS_sign_add_signer, CMS_SignerInfo_sign - add a signer to a CMS_ContentInfo signed data structure.
+ CMS_sign_add_signer, CMS_SignerInfo_sign - add a signer to a CMS_ContentInfo signed data structure.
 
 =head1 SYNOPSIS
 
@@ -10,18 +10,18 @@ CMS_sign_add_signer, CMS_SignerInfo_sign - add a signer to a CMS_ContentInfo sig
 
  CMS_SignerInfo *CMS_sign_add1_signer(CMS_ContentInfo *cms, X509 *signcert, EVP_PKEY *pkey, const EVP_MD *md, unsigned int flags);
 
-int CMS_SignerInfo_sign(CMS_SignerInfo *si);
+ int CMS_SignerInfo_sign(CMS_SignerInfo *si);
 
 
 =head1 DESCRIPTION
 
 CMS_sign_add1_signer() adds a signer with certificate B<signcert> and private
-key B<pkey> using message digest B<md> to CMS_ContentInfo signed data
+key B<pkey> using message digest B<md> to CMS_ContentInfo SignedData
 structure B<cms>.
 
 The CMS_ContentInfo structure should be obtained from an initial call to
 CMS_sign() with the flag B<CMS_PARTIAL> set or in the case or re-signing a
-valid CMS_ContentInfo signed data structure.
+valid CMS_ContentInfo SignedData structure.
 
 If the B<md> parameter is B<NULL> then the default digest for the public
 key algorithm will be used.
@@ -36,7 +36,7 @@ are both set.
 
 =head1 NOTES
 
-The main purpose of this CMS_sign_add1_signer() is to provide finer control
+The main purpose of CMS_sign_add1_signer() is to provide finer control
 over a CMS signed data structure where the simpler CMS_sign() function defaults
 are not appropriate. For example if multiple signers or non default digest
 algorithms are needed. New attributes can also be added using the returned
@@ -63,7 +63,7 @@ the B<signcert> parameter though. This can reduce the size of the signature if
 the signers certificate can be obtained by other means: for example a
 previously signed message.
 
-The signedData structure includes several CMS signedAttributes including the
+The SignedData structure includes several CMS signedAttributes including the
 signing time, the CMS content type and the supported list of ciphers in an
 SMIMECapabilities attribute. If B<CMS_NOATTR> is set then no signedAttributes
 will be used. If B<CMS_NOSMIMECAP> is set then just the SMIMECapabilities are

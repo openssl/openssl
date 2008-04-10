@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CMS_encrypt - create a CMS envelopedData structure
+ CMS_encrypt - create a CMS envelopedData structure
 
 =head1 SYNOPSIS
 
@@ -12,22 +12,18 @@ CMS_encrypt - create a CMS envelopedData structure
 
 =head1 DESCRIPTION
 
-CMS_encrypt() creates and returns a CMS envelopedData structure. B<certs>
+CMS_encrypt() creates and returns a CMS EnvelopedData structure. B<certs>
 is a list of recipient certificates. B<in> is the content to be encrypted.
 B<cipher> is the symmetric cipher to use. B<flags> is an optional set of flags.
 
 =head1 NOTES
 
-Only certificates carrying RSA keys are supported in CMS and envelopedData so
-the recipient certificates supplied to this function must all contain RSA
-public keys, though they do not have to be signed using the RSA algorithm.
+Only certificates carrying RSA keys are supported so the recipient certificates
+supplied to this function must all contain RSA public keys, though they do not
+have to be signed using the RSA algorithm.
 
 EVP_des_ede3_cbc() (triple DES) is the algorithm of choice for S/MIME use
 because most clients will support it.
-
-Some old "export grade" clients may only support weak encryption using 40 or 64
-bit RC2. These can be used by passing EVP_rc2_40_cbc() and EVP_rc2_64_cbc()
-respectively.
 
 The algorithm passed in the B<cipher> parameter must support ASN1 encoding of
 its parameters. 

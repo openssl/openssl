@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-BIO_new_CMS - CMS streaming filter BIO
+ BIO_new_CMS - CMS streaming filter BIO
 
 =head1 SYNOPSIS
 
@@ -13,28 +13,30 @@ BIO_new_CMS - CMS streaming filter BIO
 =head1 DESCRIPTION
 
 BIO_new_CMS() returns a streaming filter BIO chain based on B<cms>. The output
-of the filter is written to B<out>. Any data written to the returned BIO
-is automatically translated to a BER format CMS structure.
+of the filter is written to B<out>. Any data written to the chain is
+automatically translated to a BER format CMS structure of the appropriate type.
 
 =head1 NOTES
 
-The BIO returned by this functions behaves like a standard filter BIO. It
-supports non blocking I/O. Content is processes and streamed on the fly and not
+The chain returned by this function behaves like a standard filter BIO. It
+supports non blocking I/O. Content is processed and streamed on the fly and not
 all held in memory at once: so it is possible to encode very large structures.
-After all content has been written through the BIO BIO_flush() must be called
+After all content has been written through the chain BIO_flush() must be called
 to finalise the structure.
 
 The B<CMS_STREAM> flag must be included in the corresponding B<flags>
 parameter of the B<cms> creation function.
 
-After use BIOs should be removed from the filter using BIO_pop() until
-the output BIO B<out> is reached.
+If an application wishes to write additional data to B<out> BIOs should be
+removed from the chain using BIO_pop() and freed with BIO_free() until B<out>
+is reached. If no additional data needs to be written BIO_free_all() can be
+called to free up the whole chain.
 
-Any content written through the filter is uses "as-is" and no canonical
+Any content written through the filter is used verbatim: no canonical
 translation is performed.
 
-It is possible to chain multiple BIOs to for example create a triple wrapped
-signed, enveloped signed structure. In this case it is the applications
+It is possible to chain multiple BIOs to, for example, create a triple wrapped
+signed, enveloped, signed structure. In this case it is the applications
 responsibility to set the inner content type of any outer CMS_ContentInfo
 structures.
 

@@ -18,15 +18,22 @@
 
 =head1 DESCRIPTION
 
-CMS_add0_cert() and CMS_add1_cert() add certificate B<cert> to B<cms> which
+CMS_add0_cert() and CMS_add1_cert() add certificate B<cert> to B<cms>.
 must be of type signed data or enveloped data. 
 
 CMS_get1_certs() returns all certificates in B<cms>.
 
-CMS_add0_crl() adds CRL B<crl> to B<cms> which must be of type signed data or
-enveloped data. CMS_get1_crls() returns any CRLs in B<cms>.
+CMS_add0_crl() adds CRL B<crl> to B<cms>. CMS_get1_crls() returns any CRLs in
+B<cms>.
 
 =head1 NOTES
+
+The CMS_ContentInfo structure B<cms> must be of type signed data or enveloped
+data or an error will be returned.
+
+For signed data certificates and CRLs are added to the B<certificates> and
+B<crls> fields of SignedData structure. For enveloped data they are added to
+B<OriginatorInfo>.
 
 As the B<0> implies CMS_add0_cert() adds B<cert> internally to B<cms> and it
 must not be freed up after the call as opposed to CMS_add1_cert() where B<cert>
@@ -34,10 +41,6 @@ must be freed up.
 
 The same certificate or CRL must not be added to the same cms structure more
 than once.
-
-For signed data CMS types certificates and CRLs are added to the
-B<certificates> and B<crls> fields of the SignedData structure. For enveloped
-data they are added to B<OriginatorInfo>.
 
 =head1 RETURN VALUES
 
@@ -50,7 +53,9 @@ in practice is if the B<cms> type is invalid.
 
 =head1 SEE ALSO
 
-L<ERR_get_error(3)|ERR_get_error(3)>
+L<ERR_get_error(3)|ERR_get_error(3)>,
+L<CMS_sign(3)|CMS_sign(3)>,
+L<CMS_encrypt(3)|CMS_encrypt(3)>
 
 =head1 HISTORY
 

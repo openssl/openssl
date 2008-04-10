@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-CMS_get0_RecipientInfos, CMS_RecipientInfo_type, CMS_RecipientInfo_ktri_get0_signer_id,CMS_RecipientInfo_ktri_cert_cmp, CMS_RecipientInfo_set0_pkey, CMS_RecipientInfo_kekri_get0_id, CMS_RecipientInfo_kekri_id_cmp, CMS_RecipientInfo_set0_key, CMS_RecipientInfo_decrypt - CMS envelopedData RecipientInfo routines
+ CMS_get0_RecipientInfos, CMS_RecipientInfo_type, CMS_RecipientInfo_ktri_get0_signer_id,CMS_RecipientInfo_ktri_cert_cmp, CMS_RecipientInfo_set0_pkey, CMS_RecipientInfo_kekri_get0_id, CMS_RecipientInfo_kekri_id_cmp, CMS_RecipientInfo_set0_key, CMS_RecipientInfo_decrypt - CMS envelopedData RecipientInfo routines
 
 =head1 SYNOPSIS
 
@@ -24,7 +24,7 @@ CMS_get0_RecipientInfos, CMS_RecipientInfo_type, CMS_RecipientInfo_ktri_get0_sig
 =head1 DESCRIPTION
 
 The function CMS_get0_RecipientInfos() returns all the CMS_RecipientInfo
-structures associated with a CMS envelopedData structure.
+structures associated with a CMS EnvelopedData structure.
 
 CMS_RecipientInfo_type() returns the type of CMS_RecipientInfo structure B<ri>.
 It will currently return CMS_RECIPINFO_TRANS, CMS_RECIPINFO_AGREE,
@@ -76,7 +76,7 @@ In typical usage and application will retrieve all CMS_RecipientInfo structures
 using CMS_get0_RecipientInfos() and check the type of each using
 CMS_RecpientInfo_type(). Depending on the type the CMS_RecipientInfo structure
 can be ignored or its key identifier data retrieved using an appropriate
-function.  Then if the corresponding secret or private key can be obtained by
+function. Then if the corresponding secret or private key can be obtained by
 any appropriate means it can then associated with the structure and
 CMS_RecpientInfo_decrypt() called. If successful CMS_decrypt() can be called
 with a NULL key to decrypt the enveloped content.
