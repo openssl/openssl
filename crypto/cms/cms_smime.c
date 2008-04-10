@@ -426,6 +426,7 @@ int CMS_verify_receipt(CMS_ContentInfo *rcms, CMS_ContentInfo *ocms,
 			X509_STORE *store, unsigned int flags)
 	{
 	int r;
+	flags &= ~(CMS_DETACHED|CMS_TEXT);
 	r = CMS_verify(rcms, certs, store, NULL, NULL, flags);
 	if (r <= 0)
 		return r;
@@ -483,7 +484,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 	BIO *rct_cont = NULL;
 	int r = 0;
 
-	flags &= ~CMS_STREAM;
+	flags &= ~(CMS_STREAM|CMS_TEXT);
 	/* Not really detached but avoids content being allocated */
 	flags |= CMS_PARTIAL|CMS_BINARY|CMS_DETACHED;
 	if (!pkey || !signcert)
