@@ -30,7 +30,7 @@ needed to locate the appropriate (of possible several) recipients in the CMS
 structure. If B<cert> is set to NULL all possible recipients are tried.
 
 It is possible to determine the correct recipient key by other means (for
-example looking them up in a database) and settin them in the CMS strutucre
+example looking them up in a database) and setting them in the CMS structure
 in advance using the CMS utility functions such as CMS_set1_pkey(). In this
 case both B<cert> and B<pkey> should be set to NULL.
 

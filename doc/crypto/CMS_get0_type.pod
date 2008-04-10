@@ -16,11 +16,11 @@
 
 CMS_get0_type() returns the content type of a CMS_ContentInfo structure as
 and ASN1_OBJECT pointer. An application can then decide how to process the
-CMS_ContentInfo strutucture based on this value.
+CMS_ContentInfo structure based on this value.
 
 CMS_set1_eContentType() sets the embedded content type of a CMS_ContentInfo
 structure. It should be called with CMS functions with the B<CMS_PARTIAL>
-flag and B<before> the strutucre is finalised, otherwise the results are
+flag and B<before> the structure is finalised, otherwise the results are
 undefined.
 
 ASN1_OBJECT *CMS_get0_eContentType() returns a pointer to the embedded

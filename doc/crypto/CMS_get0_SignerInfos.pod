@@ -26,7 +26,7 @@ associated with a specific CMS_SignerInfo structure B<si>. Either the
 keyidentifier will be set in B<keyid> or B<both> issuer name and serial number
 in B<issuer> and B<sno>.
 
-CMS_SignerInfo_cert_cmp() compares the cerificate B<cert> against the signer
+CMS_SignerInfo_cert_cmp() compares the certificate B<cert> against the signer
 identifier B<si>. It returns zero if the comparison is successful and non zero
 if not.
 

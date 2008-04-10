@@ -76,7 +76,7 @@ PEM_write_bio_CMS_stream() finalize the structure. Alternatively finalization
 can be performed by obtaining the streaming ASN1 B<BIO> directly using
 BIO_new_CMS().
 
-The receipients specified in B<certs> use a CMS KeyTransRecipientInfo info
+The recipients specified in B<certs> use a CMS KeyTransRecipientInfo info
 structure. KEKRecipientInfo is also supported using the flag B<CMS_PARTIAL>
 and CMS_add0_recipient_key().
 

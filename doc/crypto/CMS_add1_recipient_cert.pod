@@ -20,7 +20,7 @@ structure.
 
 CMS_add0_recipient_key() adds symmetric key B<key> of length B<keylen> using
 wrapping algorithm B<nid>, identifier B<id> or length B<idlen> and optional
-values B<date>, B<otherTypeId> abd B<otherType> to CMS_ContentInfo enveloped
+values B<date>, B<otherTypeId> and B<otherType> to CMS_ContentInfo enveloped
 data structure B<cms> as a KEKRecipientInfo structure.
 
 The CMS_ContentInfo structure should be obtained from an initial call to

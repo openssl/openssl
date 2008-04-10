@@ -35,7 +35,7 @@ identifier associated with a specific CMS_RecipientInfo structure B<ri>, which
 must be of type CMS_RECIPINFO_TRANS. Either the keyidentifier will be set in
 B<keyid> or B<both> issuer name and serial number in B<issuer> and B<sno>. 
 
-CMS_RecipientInfo_ktri_cert_cmp() compares the cerificate B<cert> against the
+CMS_RecipientInfo_ktri_cert_cmp() compares the certificate B<cert> against the
 CMS_RecipientInfo structure B<ri>, which must be of type CMS_RECIPINFO_TRANS.
 It returns zero if the comparison is successful and non zero if not.
 
@@ -91,7 +91,7 @@ CMS_RecipientInfo_kekri_get0_id(), CMS_RecipientInfo_set0_key() and
 CMS_RecipientInfo_decrypt() return 1 for success or 0 if an error occurs.
 
 CMS_RecipientInfo_ktri_cert_cmp() and CMS_RecipientInfo_kekri_cmp() return 0
-for a successul comparison and non zero otherwise.
+for a successful comparison and non zero otherwise.
 
 Any error can be obtained from L<ERR_get_error(3)|ERR_get_error(3)>.
 

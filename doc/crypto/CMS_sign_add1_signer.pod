@@ -40,14 +40,14 @@ The main purpose of this CMS_sign_add1_signer() is to provide finer control
 over a CMS signed data structure where the simpler CMS_sign() function defaults
 are not appropriate. For example if multiple signers or non default digest
 algorithms are needed. New attributes can also be added using the returned
-CMS_SignerInfo struture and the CMS attribute utility functions or the
+CMS_SignerInfo structure and the CMS attribute utility functions or the
 CMS signed receipt request functions.
 
 Any of the following flags (ored together) can be passed in the B<flags>
 parameter.
 
 If B<CMS_REUSE_DIGEST> is set then an attempt is made to copy the content
-digest value from the CMS_ContentInfo struture: to add a signer to an existing
+digest value from the CMS_ContentInfo structure: to add a signer to an existing
 structure.  An error occurs if a matching digest value cannot be found to copy.
 The returned CMS_ContentInfo structure will be valid and finalized when this
 flag is set.

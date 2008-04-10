@@ -16,7 +16,7 @@ CMS_verify - verify a CMS SignedData structure
 
 CMS_verify() verifies a CMS SignedData structure. B<cms> is the CMS_ContentInfo
 structure to verify. B<certs> is a set of certificates in which to search for
-the signer's certificate. B<store> is a trusted certficate store (used for
+the signer's certificate. B<store> is a trusted certificate store (used for
 chain verification). B<indata> is the signed data if the content is not
 present in B<cms> (that is it is detached). The content is written to B<out>
 if it is not NULL.
@@ -25,7 +25,7 @@ B<flags> is an optional set of flags, which can be used to modify the verify
 operation.
 
 CMS_get0_signers() retrieves the signer's certificate(s) from B<cms>, it must
-be called after a succeful CMS_verify() operation.
+be called after a successful CMS_verify() operation.
 
 =head1 VERIFY PROCESS
 
@@ -101,7 +101,7 @@ timestamp).
 =head1 RETURN VALUES
 
 CMS_verify() returns 1 for a successful verification and zero if an error
-occured.
+occurred.
 
 CMS_get0_signers() returns all signers or B<NULL> if an error occurred.
 

@@ -13,7 +13,7 @@ CMS_sign - create a CMS SignedData structure
 =head1 DESCRIPTION
 
 CMS_sign() creates and returns a CMS SignedData structure. B<signcert> is
-the certificate to sign with, B<pkey> is the corresponsding private key.
+the certificate to sign with, B<pkey> is the corresponding private key.
 B<certs> is an optional additional set of certificates to include in the CMS
 structure (for example any intermediate CAs in the chain). Any or all of
 these parameters can be B<NULL>, see B<NOTES> below.
@@ -114,6 +114,6 @@ L<ERR_get_error(3)|ERR_get_error(3)>, L<CMS_verify(3)|CMS_verify(3)>
 CMS_sign() was added to OpenSSL 0.9.8
 
 The B<CMS_STREAM> flag is only supported for detached data in OpenSSL 0.9.8,
-it is supportd for embedded data in OpenSSL 0.9.9 and later.
+it is supported for embedded data in OpenSSL 0.9.9 and later.
 
 =cut

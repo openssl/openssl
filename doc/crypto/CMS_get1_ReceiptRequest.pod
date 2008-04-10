@@ -24,7 +24,7 @@ option in B<receiptsFrom> is used. The B<receiptsTo> parameter specifies the
 B<receiptsTo> field value.
 
 The CMS_add1_ReceiptRequest() function adds a signed receipt request B<rr>
-to SignerInfo strutucre B<si>.
+to SignerInfo structure B<si>.
 
 int CMS_get1_ReceiptRequest() looks for a signed receipt request in B<si>, if
 any is found it is decoded and written to B<prr>.
