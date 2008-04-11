@@ -1,4 +1,4 @@
-/* Simple S/MIME signing example */
+/* Simple S/MIME decryption example */
 #include <openssl/pem.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
@@ -77,7 +77,3 @@ int main(int argc, char **argv)
 	return ret;
 
 	}
-
-
-
-

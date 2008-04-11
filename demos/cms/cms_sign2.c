@@ -1,4 +1,4 @@
-/* S/MIME signing example: 2 signers. OpenSSL 0.9.9 only */
+/* S/MIME signing example: 2 signers */
 #include <openssl/pem.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
@@ -101,7 +101,3 @@ int main(int argc, char **argv)
 	return ret;
 
 	}
-
-
-
-
