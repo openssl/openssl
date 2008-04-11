@@ -433,7 +433,7 @@ $ SDIRS := ,-
    BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,-
    EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,-
-   STORE,PQUEUE
+   STORE,CMS,PQUEUE
 $ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,-
 		ossl_typ.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
@@ -484,6 +484,7 @@ $ EXHEADER_UI := ui.h,ui_compat.h
 $ EXHEADER_KRB5 := krb5_asn.h
 $!EXHEADER_STORE := store.h,str_compat.h
 $ EXHEADER_STORE := store.h
+$ EXHEADER_CMS := cms.h
 $ EXHEADER_PQUEUE := pqueue.h,pq_compat.h
 $
 $ I = 0

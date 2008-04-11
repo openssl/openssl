@@ -83,7 +83,7 @@ $ ENCRYPT_TYPES = "Basic,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
 		  "EVP,EVP_2,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
-		  "STORE,PQUEUE"
+		  "STORE,CMS,PQUEUE"
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -282,6 +282,8 @@ $!
 $! Setup exceptional compilations
 $!
 $ ! Add definitions for no threads on OpenVMS 7.1 and higher
+$ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
+	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess"
 $ COMPILEWITH_CC3 = ",bss_rtcp,"
 $ ! Disable the DOLLARID warning
 $ COMPILEWITH_CC4 = ",a_utctm,bss_log,o_time,o_dir"
