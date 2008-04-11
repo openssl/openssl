@@ -725,7 +725,7 @@ int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags)
 
 #ifdef ZLIB
 
-int CMS_uncompress(CMS_ContentInfo *cms, BIO *out, BIO *dcont,
+int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
 							unsigned int flags)
 	{
 	BIO *cont;
