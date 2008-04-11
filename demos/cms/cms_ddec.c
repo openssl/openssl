@@ -1,11 +1,13 @@
-/* Simple S/MIME decryption example */
+/* S/MIME detached data decrypt example: rarely done but
+ * should the need arise this is an example....
+ */
 #include <openssl/pem.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
 
 int main(int argc, char **argv)
 	{
-	BIO *in = NULL, *out = NULL, *tbio = NULL;
+	BIO *in = NULL, *out = NULL, *tbio = NULL, *dcont = NULL;
 	X509 *rcert = NULL;
 	EVP_PKEY *rkey = NULL;
 	CMS_ContentInfo *cms = NULL;
@@ -29,25 +31,31 @@ int main(int argc, char **argv)
 	if (!rcert || !rkey)
 		goto err;
 
-	/* Open S/MIME message to decrypt */
+	/* Open PEM file containing enveloped data */
 
-	in = BIO_new_file("smencr.txt", "r");
+	in = BIO_new_file("smencr.pem", "r");
 
 	if (!in)
 		goto err;
 
-	/* Parse message */
-	cms = SMIME_read_CMS(in, NULL);
+	/* Parse PEM content */
+	cms = PEM_read_bio_CMS(in, NULL, 0, NULL);
 
 	if (!cms)
 		goto err;
 
-	out = BIO_new_file("decout.txt", "w");
+	/* Open file containing detached content */
+	dcont = BIO_new_file("smencr.out", "rb");
+
+	if (!in)
+		goto err;
+
+	out = BIO_new_file("encrout.txt", "w");
 	if (!out)
 		goto err;
 
 	/* Decrypt S/MIME message */
-	if (!CMS_decrypt(cms, rkey, rcert, out, NULL, 0))
+	if (!CMS_decrypt(cms, rkey, rcert, dcont, out, 0))
 		goto err;
 
 	ret = 0;
@@ -73,6 +81,8 @@ int main(int argc, char **argv)
 		BIO_free(out);
 	if (tbio)
 		BIO_free(tbio);
+	if (dcont)
+		BIO_free(dcont);
 
 	return ret;
 
