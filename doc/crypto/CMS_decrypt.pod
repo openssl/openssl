@@ -8,13 +8,13 @@
 
  #include <openssl/cms.h>
 
- int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert, BIO *data, BIO *dcont, unsigned int flags);
+ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert, BIO *dcont, BIO *out, unsigned int flags);
 
 =head1 DESCRIPTION
 
 CMS_decrypt() extracts and decrypts the content from a CMS EnvelopedData
 structure. B<pkey> is the private key of the recipient, B<cert> is the
-recipient's certificate, B<data> is a BIO to write the content to and
+recipient's certificate, B<out> is a BIO to write the content to and
 B<flags> is an optional set of flags.
 
 The B<dcont> parameter is used in the rare case where the encrypted content
