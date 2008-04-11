@@ -130,7 +130,7 @@ int i2d_CMS_bio(BIO *bp, CMS_ContentInfo *cms);
 CMS_ContentInfo *SMIME_read_CMS(BIO *bio, BIO **bcont);
 int SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags);
 
-int CMS_final(CMS_ContentInfo *cms, BIO *data, int flags);
+int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags);
 
 CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
 						BIO *data, unsigned int flags);
@@ -216,7 +216,7 @@ int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
 
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 	
-int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
+int CMS_uncompress(CMS_ContentInfo *cms, BIO *out, BIO *dcont,
 							unsigned int flags);
 CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags);
 

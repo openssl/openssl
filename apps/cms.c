@@ -890,7 +890,7 @@ int MAIN(int argc, char **argv)
 			}
 		if (!(flags & CMS_STREAM))
 			{
-			if (!CMS_final(cms, in, flags))
+			if (!CMS_final(cms, in, NULL, flags))
 				goto end;
 			}
 		}
@@ -977,7 +977,7 @@ int MAIN(int argc, char **argv)
 		/* If not streaming or resigning finalize structure */
 		if ((operation == SMIME_SIGN) && !(flags & CMS_STREAM))
 			{
-			if (!CMS_final(cms, in, flags))
+			if (!CMS_final(cms, in, NULL, flags))
 				goto end;
 			}
 		}
@@ -1027,7 +1027,7 @@ int MAIN(int argc, char **argv)
 		}
 	else if (operation == SMIME_UNCOMPRESS)
 		{
-		if (!CMS_uncompress(cms, indata, out, flags))
+		if (!CMS_uncompress(cms, out, indata, flags))
 			goto end;
 		}
 	else if (operation == SMIME_DIGEST_VERIFY)
