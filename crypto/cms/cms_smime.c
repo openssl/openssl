@@ -125,6 +125,23 @@ static int check_content(CMS_ContentInfo *cms)
 	return 1;
 	}
 
+static void do_free_upto(BIO *f, BIO *upto)
+	{
+	if (upto)
+		{
+		BIO *tbio;
+		do 
+			{
+			tbio = BIO_pop(f);
+			BIO_free(f);
+			f = tbio;
+			}
+		while (f != upto);
+		}
+	else
+		BIO_free_all(f);
+	}
+
 int CMS_data(CMS_ContentInfo *cms, BIO *out, unsigned int flags)
 	{
 	BIO *cont;
@@ -177,7 +194,7 @@ int CMS_digest_verify(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
 	r = cms_copy_content(out, cont, flags);
 	if (r)
 		r = cms_DigestedData_do_final(cms, cont, 1);
-	BIO_free_all(cont);
+	do_free_upto(cont, dcont);
 	return r;
 	}
 
@@ -223,7 +240,7 @@ int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
 	if (!cont)
 		return 0;
 	r = cms_copy_content(out, cont, flags);
-	BIO_free_all(cont);
+	do_free_upto(cont, dcont);
 	return r;
 	}
 
@@ -411,8 +428,9 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 	err:
 	
 	if (dcont && (tmpin == dcont))
-		BIO_pop(cmsbio);
-	BIO_free_all(cmsbio);
+		do_free_upto(cmsbio, dcont);
+	else
+		BIO_free_all(cmsbio);
 
 	if (cms_certs)
 		sk_X509_pop_free(cms_certs, X509_free);
@@ -678,7 +696,7 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
 	if (!cont)
 		return 0;
 	r = cms_copy_content(out, cont, flags);
-	BIO_free_all(cont);
+	do_free_upto(cont, dcont);
 	return r;
 	}
 
@@ -706,7 +724,7 @@ int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont, unsigned int flags)
 	ret = 1;
 
 	err:
-	BIO_free_all(cmsbio);
+	do_free_upto(cmsbio, dcont);
 
 	return ret;
 
@@ -733,7 +751,7 @@ int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
 	if (!cont)
 		return 0;
 	r = cms_copy_content(out, cont, flags);
-	BIO_free_all(cont);
+	do_free_upto(cont, dcont);
 	return r;
 	}
 

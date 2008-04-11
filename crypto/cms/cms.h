@@ -177,7 +177,7 @@ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *in,
 				const EVP_CIPHER *cipher, unsigned int flags);
 
 int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
-				BIO *data, BIO *dcont,
+				BIO *dcont, BIO *out,
 				unsigned int flags);
 	
 int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert);
