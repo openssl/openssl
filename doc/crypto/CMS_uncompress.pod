@@ -8,7 +8,7 @@
 
  #include <openssl/cms.h>
 
- int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out, unsigned int flags);
+ int CMS_uncompress(CMS_ContentInfo *cms, BIO *out, BIO *dcont, unsigned int flags);
 
 =head1 DESCRIPTION
 

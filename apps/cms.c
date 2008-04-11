@@ -1028,7 +1028,7 @@ int MAIN(int argc, char **argv)
 		}
 	else if (operation == SMIME_UNCOMPRESS)
 		{
-		if (!CMS_uncompress(cms, indata, out, flags))
+		if (!CMS_uncompress(cms, out, indata, flags))
 			goto end;
 		}
 	else if (operation == SMIME_DIGEST_VERIFY)

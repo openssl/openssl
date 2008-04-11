@@ -221,7 +221,7 @@ int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
 
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
 	
-int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
+int CMS_uncompress(CMS_ContentInfo *cms, BIO *out, BIO *dcont,
 							unsigned int flags);
 CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags);
 
