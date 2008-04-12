@@ -93,7 +93,7 @@ $	EXHEADER_KRB5 := krb5_asn.h
 $!	EXHEADER_STORE := store.h,str_compat.h
 $	EXHEADER_STORE := store.h
 $	EXHEADER_CMS := cms.h
-$	EXHEADER_PQUEUE := pqueue.h,pq_compat.h
+$	EXHEADER_PQUEUE := pqueue.h
 $	EXHEADER_TS := ts.h
 $	LIBS := LIBCRYPTO
 $
