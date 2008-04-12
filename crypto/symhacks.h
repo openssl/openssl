@@ -342,6 +342,20 @@
 #undef STORE_method_get_unlock_store_function
 #define STORE_method_get_unlock_store_function	STORE_meth_get_unlock_store_fn
 
+/* Hack some long CMS names */
+#undef CMS_RecipientInfo_ktri_get0_algs
+#define CMS_RecipientInfo_ktri_get0_algs	CMS_RecipInfo_ktri_get0_algs
+#undef CMS_RecipientInfo_ktri_get0_signer_id
+#define CMS_RecipientInfo_ktri_get0_signer_id	CMS_RecipInfo_ktri_get0_sigr_id
+#undef CMS_OtherRevocationInfoFormat_it
+#define CMS_OtherRevocationInfoFormat_it	CMS_OtherRevocInfoFormat_it
+#undef CMS_KeyAgreeRecipientIdentifier_it
+#define CMS_KeyAgreeRecipientIdentifier_it	CMS_KeyAgreeRecipIdentifier_it
+#undef CMS_OriginatorIdentifierOrKey_it
+#define CMS_OriginatorIdentifierOrKey_it	CMS_OriginatorIdOrKey_it
+#undef cms_SignerIdentifier_get0_signer_id
+#define cms_SignerIdentifier_get0_signer_id	cms_SignerId_get0_signer_id
+
 #endif /* defined OPENSSL_SYS_VMS */
 
 
@@ -381,3 +395,6 @@
 
 
 #endif /* ! defined HEADER_VMS_IDHACKS_H */
+/* This one clashes with CMS_data_create */
+#undef cms_Data_create
+#define cms_Data_create				priv_cms_Data_create
