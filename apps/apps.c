@@ -2030,7 +2030,7 @@ int parse_yesno(const char *str, int def)
 		case 'y': /* yes */
 		case 'Y': /* YES */
 		case '1': /* 1 */
-			ret = 0;
+			ret = 1;
 			break;
 		default:
 			ret = def;
