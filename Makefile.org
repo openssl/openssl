@@ -534,6 +534,16 @@ install_sw:
 					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
 				fi ); \
+				if expr $(PLATFORM) : 'mingw' > /dev/null; then \
+				(	case $$i in \
+						*crypto*) i=libeay32.dll;; \
+						*ssl*)    i=ssleay32.dll;; \
+					esac; \
+					echo installing $$i; \
+	 				cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+	 				chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new; \
+	 				mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$i ); \
+				fi; \
 			fi; \
 		done; \
 		(	here="`pwd`"; \

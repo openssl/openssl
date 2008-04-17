@@ -2,10 +2,6 @@ lib
 Makefile.save
 *.flc
 semantic.cache
-sx86-elf.s
-s512sse2-elf.s
-sha1-x86_64.s
-sha256-x86_64.s
-sha512-x86_64.s
-sha256x86-elf.s
-sha512x86-elf.s
+sha1-*.s
+sha256-*.s
+sha512-*.s

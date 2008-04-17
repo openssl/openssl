@@ -44,20 +44,22 @@ install:
 	if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		echo installing $(LIBNAME); \
+		pfx=lib; \
 		if [ "$(PLATFORM)" != "Cygwin" ]; then \
 			case "$(CFLAGS)" in \
-			*DSO_BEOS*) sfx="so";; \
-			*DSO_DLFCN*) sfx="so";; \
-			*DSO_DL*) sfx="sl";; \
-			*) sfx="bad";; \
+			*DSO_BEOS*) sfx=".so";; \
+			*DSO_DLFCN*) sfx=".so";; \
+			*DSO_DL*) sfx=".sl";; \
+			*DSO_WIN32*)	sfx="eay32.dll"; pfx=;;	\
+			*) sfx=".bad";; \
 			esac; \
-			cp lib$(LIBNAME).$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$(LIBNAME).$$sfx.new; \
+			cp $${pfx}$(LIBNAME)$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new; \
 		else \
 			sfx="so"; \
-			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$(LIBNAME).$$sfx.new; \
+			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new; \
 		fi; \
-		chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$(LIBNAME).$$sfx.new; \
-		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$(LIBNAME).$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$(LIBNAME).$$sfx; \
+		chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new; \
+		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx; \
 	fi
 
 links:

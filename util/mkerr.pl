@@ -377,6 +377,10 @@ foreach $lib (keys %csrc)
 "#ifndef HEADER_${lib}_ERR_H\n",
 "#define HEADER_${lib}_ERR_H\n",
 "\n",
+"#ifdef  __cplusplus\n",
+"extern \"C\" {\n",
+"#endif\n",
+"\n",
 "/* BEGIN ERROR CODES */\n";
 	}
 	open (OUT, ">$hfile") || die "Can't Open File $hfile for writing\n";

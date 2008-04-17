@@ -99,26 +99,29 @@ links:
 # for shared libraries as well as for Cygwin which uses the
 # dlfcn_name_converter and therefore stores the engines with .so suffix, too.
 # XXXXX This was extended to HP-UX dl targets, which use .sl suffix.
+# XXXXX This was extended to mingw targets, which use eay32.dll suffix without lib as prefix.
 install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
+			  pfx=lib; \
 			  if [ "$(PLATFORM)" != "Cygwin" ]; then \
 				case "$(CFLAGS)" in \
-				*DSO_BEOS*)	sfx="so";;	\
-				*DSO_DLFCN*)	sfx="so";;	\
-				*DSO_DL*)	sfx="sl";;	\
-				*)		sfx="bad";;	\
+				*DSO_BEOS*)	sfx=".so";;	\
+				*DSO_DLFCN*)	sfx=".so";;	\
+				*DSO_DL*)	sfx=".sl";;	\
+				*DSO_WIN32*)	sfx="eay32.dll"; pfx=;;	\
+				*)		sfx=".bad";;	\
 				esac; \
-				cp lib$$l.$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
+				cp $$pfx$$l$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$$pfx$$l$$sfx.new; \
 			  else \
-			  	sfx="so"; \
-				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
+				sfx=".so"; \
+				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$$pfx$$l$$sfx.new; \
 			  fi; \
-			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
-			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx ); \
+			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$$pfx$$l$$sfx.new; \
+			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$$pfx$$l$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$$pfx$$l$$sfx ); \
 		done; \
 	fi
 	@target=install; $(RECURSIVE_MAKE)

@@ -2,5 +2,4 @@ lib
 Makefile.save
 *.flc
 semantic.cache
-mx86-elf.s
-md5-x86_64.s
+md5-*.s

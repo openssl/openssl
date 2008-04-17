@@ -55,7 +55,7 @@ $link='${CC}';
 $lflags='${CFLAGS}';
 $efile='-o ';
 $exep='';
-$ex_libs="-lwsock32 -lgdi32";
+$ex_libs="-lws2_32 -lgdi32";
 
 # static library stuff
 $mklib='ar r';

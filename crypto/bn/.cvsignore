@@ -2,7 +2,6 @@ lib
 Makefile.save
 *.flc
 semantic.cache
-co86-elf.s
-bn86-elf.s
-mo86-elf.s
-x86_64-mont.s
+co-*.s
+bn-*.s
+*-mont.s

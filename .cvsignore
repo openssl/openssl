@@ -20,3 +20,4 @@ libssl.pc
 *.flc
 semantic.cache
 Makefile
+*.dll*
