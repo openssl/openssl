@@ -211,7 +211,7 @@ $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"tb_cipher,tb_digest,"+ -
 	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev,eng_padlock"
 $ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,"+ -
-	"aes_ctr,aes_ige"
+	"aes_ctr,aes_ige,aes_wrap"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
@@ -245,7 +245,7 @@ $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"tasn_new,tasn_fre,tasn_enc,tasn_dec,tasn_utl,tasn_typ,"+ -
 	"f_int,f_string,n_pkey,"+ -
-	"f_enum,a_hdr,x_pkey,a_bool,x_exten,"+ -
+	"f_enum,a_hdr,x_pkey,a_bool,x_exten,asn_mime,"+ -
 	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_meth,a_bytes,a_strnid,"+ -
 	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey,asn_moid"
 $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
@@ -277,13 +277,13 @@ $ LIB_UI_COMPAT = ",ui_compat"
 $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
 $ LIB_KRB5 = "krb5_asn"
 $ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
+$ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
+	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess"
 $ LIB_PQUEUE = "pqueue"
 $!
 $! Setup exceptional compilations
 $!
 $ ! Add definitions for no threads on OpenVMS 7.1 and higher
-$ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
-	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess"
 $ COMPILEWITH_CC3 = ",bss_rtcp,"
 $ ! Disable the DOLLARID warning
 $ COMPILEWITH_CC4 = ",a_utctm,bss_log,o_time,o_dir"
