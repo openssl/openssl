@@ -214,7 +214,7 @@ $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"tb_cipher,tb_digest,tb_pkmeth,tb_asnmth,"+ -
 	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev"
 $ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,"+ -
-	"aes_ctr,aes_ige"
+	"aes_ctr,aes_ige,aes_wrap"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
@@ -250,7 +250,7 @@ $ LIB_ASN1_2 = "t_req,t_x509,t_x509a,t_crl,t_pkey,t_spki,t_bitst,"+ -
 	"tasn_new,tasn_fre,tasn_enc,tasn_dec,tasn_utl,tasn_typ,"+ -
 	"tasn_prn,ameth_lib,"+ -
 	"f_int,f_string,n_pkey,"+ -
-	"f_enum,x_pkey,a_bool,x_exten,bio_asn1,"+ -
+	"f_enum,x_pkey,a_bool,x_exten,bio_asn1,bio_ndef,asn_mime,"+ -
 	"asn1_gen,asn1_par,asn1_lib,asn1_err,a_bytes,a_strnid,"+ -
 	"evp_asn1,asn_pack,p5_pbe,p5_pbev2,p8_pkey,asn_moid"
 $ LIB_PEM = "pem_sign,pem_seal,pem_info,pem_lib,pem_all,pem_err,"+ -
