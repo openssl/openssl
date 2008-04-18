@@ -81,6 +81,7 @@ my @smime_pkcs7_tests = (
     [
         "signed content DER format, RSA key",
         "-sign -in smcont.txt -outform DER -nodetach"
+          . " -certfile $smdir/smroot.pem"
           . " -signer $smdir/smrsa1.pem -out test.cms",
         "-verify -in test.cms -inform DER "
           . " -CAfile $smdir/smroot.pem -out smtst.txt"
