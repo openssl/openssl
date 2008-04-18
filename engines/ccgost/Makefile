@@ -39,7 +39,7 @@ lib: $(LIBOBJ)
 	fi
 	@touch lib
 
-install: 	
+install:
 	[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
@@ -50,7 +50,7 @@ install:
 			*DSO_BEOS*) sfx=".so";; \
 			*DSO_DLFCN*) sfx=".so";; \
 			*DSO_DL*) sfx=".sl";; \
-			*DSO_WIN32*)	sfx="eay32.dll"; pfx=;;	\
+			*DSO_WIN32*) sfx="eay32.dll"; pfx=;; \
 			*) sfx=".bad";; \
 			esac; \
 			cp $${pfx}$(LIBNAME)$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new; \
