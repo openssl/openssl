@@ -318,19 +318,19 @@ static const SHA_LONG64 K512[80] = {
 #  elif (defined(__i386) || defined(__i386__)) && !defined(B_ENDIAN)
 #   if defined(I386_ONLY)
 #    define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
-			unsigned int hi,lo;			\
+			 unsigned int hi=p[0],lo=p[1];		\
 				asm("xchgb %%ah,%%al;xchgb %%dh,%%dl;"\
 				    "roll $16,%%eax; roll $16,%%edx; "\
 				    "xchgb %%ah,%%al;xchgb %%dh,%%dl;" \
 				: "=a"(lo),"=d"(hi)		\
-				: "0"(p[1]),"1"(p[0]) : "cc");	\
+				: "0"(lo),"1"(hi) : "cc");	\
 				((SHA_LONG64)hi)<<32|lo;	})
 #   else
 #    define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
-			unsigned int hi,lo;			\
+			 unsigned int hi=p[0],lo=p[1];		\
 				asm ("bswapl %0; bswapl %1;"	\
 				: "=r"(lo),"=r"(hi)		\
-				: "0"(p[1]),"1"(p[0]));		\
+				: "0"(lo),"1"(hi));		\
 				((SHA_LONG64)hi)<<32|lo;	})
 #   endif
 #  elif (defined(_ARCH_PPC) && defined(__64BIT__)) || defined(_ARCH_PPC64)
