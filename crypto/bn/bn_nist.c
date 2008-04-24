@@ -76,7 +76,7 @@ static const BN_ULONG _nist_p_224[][BN_NIST_224_TOP] = {
 	{0x0000000000000001ULL,0xFFFFFFFF00000000ULL,
 	 0xFFFFFFFFFFFFFFFFULL,0x00000000FFFFFFFFULL},
 	{0x0000000000000002ULL,0xFFFFFFFE00000000ULL,
-	 0xFFFFFFFFFFFFFFFFULL,0x00000000FFFFFFFFULL}
+	 0xFFFFFFFFFFFFFFFFULL,0x00000001FFFFFFFFULL} /* this one is "carry-full" */
 	};
 static const BN_ULONG _nist_p_256[][BN_NIST_256_TOP] = {
 	{0xFFFFFFFFFFFFFFFFULL,0x00000000FFFFFFFFULL,
@@ -148,6 +148,8 @@ static const BN_ULONG _nist_p_521[] = {0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
 	0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
 	0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
 	0xFFFFFFFF,0x000001FF};
+#else
+#error "unsupported BN_BITS2"
 #endif
 
 const BIGNUM *BN_get0_nist_prime_192(void)
@@ -321,7 +323,6 @@ typedef BN_ULONG (*bn_addsub_f)(BN_ULONG *,const BN_ULONG *,const BN_ULONG *,int
 int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	BN_CTX *ctx)
 	{
-#if BN_BITS2 == 32
 	int	top = a->top, i;
 	int	carry;
 	BN_ULONG *r_d, *a_d = a->d;
@@ -354,8 +355,16 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	else
 		r_d = a_d;
 
+#if BN_BITS2==64
+	/* copy upper 256 bits of 448 bit number ... */
+	nist_cp_bn_0(t_d, a_d + (BN_NIST_224_TOP-1), top - (BN_NIST_224_TOP-1), BN_NIST_224_TOP);
+	/* ... and right shift by 32 to obtain upper 224 bits */
+	nist_set_224(buf, t_d, 14, 13, 12, 11, 10, 9, 8);
+	/* truncate lower part to 224 bits too */
+	r_d[BN_NIST_224_TOP-1] &= BN_MASK2l;
+#else
 	nist_cp_bn_0(buf, a_d + BN_NIST_224_TOP, top - BN_NIST_224_TOP, BN_NIST_224_TOP);
-
+#endif
 	nist_set_224(t_d, buf, 10, 9, 8, 7, 0, 0, 0);
 	carry = bn_add_words(r_d, r_d, t_d, BN_NIST_224_TOP);
 	nist_set_224(t_d, buf, 0, 13, 12, 11, 0, 0, 0);
@@ -365,9 +374,17 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	nist_set_224(t_d, buf, 0, 0, 0, 0, 13, 12, 11);
 	carry -= bn_sub_words(r_d, r_d, t_d, BN_NIST_224_TOP);
 
+#if BN_BITS2==64
+	carry = (int)(r_d[BN_NIST_224_TOP-1]>>32);
+#endif
 	u.f = bn_sub_words;
 	if (carry > 0)
+		{
 		carry = bn_sub_words(r_d,r_d,_nist_p_224[carry-1],BN_NIST_224_TOP);
+#if BN_BITS2==64
+		carry=(int)(~(r_d[BN_NIST_224_TOP-1]>>32))&1;
+#endif
+		}
 	else if (carry < 0)
 		{
 		/* it's a bit more comlicated logic in this case.
@@ -392,9 +409,6 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	bn_correct_top(r);
 
 	return 1;
-#else	/* BN_BITS!=32 */
-	return 0;
-#endif
 	}
 
 #define nist_set_256(to, from, a1, a2, a3, a4, a5, a6, a7, a8) \
