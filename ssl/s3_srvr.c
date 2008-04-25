@@ -1145,8 +1145,16 @@ int ssl3_send_server_hello(SSL *s)
 		 * session-id if we want it to be single use.
 		 * Currently I will not implement the '0' length session-id
 		 * 12-Jan-98 - I'll now support the '0' length stuff.
+		 *
+		 * We also have an additional case where stateless session
+		 * resumption is successful: we always send back the old
+		 * session id. In this case s->hit is non zero: this can
+		 * only happen if stateless session resumption is succesful
+		 * if session caching is disabled so existing functionality
+		 * is unaffected.
 		 */
-		if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_SERVER))
+		if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
+			&& !s->hit)
 			s->session->session_id_length=0;
 
 		sl=s->session->session_id_length;
