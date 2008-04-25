@@ -561,7 +561,9 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 		if (data+size > (d+n))
 	   		return 1;
+#if 0
 		fprintf(stderr,"Received extension type %d size %d\n",type,size);
+#endif
 		if (s->tlsext_debug_cb)
 			s->tlsext_debug_cb(s, 0, type, data, size,
 						s->tlsext_debug_arg);
