@@ -681,6 +681,11 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Update the GMP engine glue to do direct copies between BIGNUM and
+     mpz_t when openssl and GMP use the same limb size. Otherwise the
+     existing "conversion via a text string export" trick is still used.
+     [Paul Sheer <paulsheer@gmail.com>, Geoff Thorpe]
+
   *) Zlib compression BIO. This is a filter BIO which compressed and
      uncompresses any data passed through it.
      [Steve Henson]
