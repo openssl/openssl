@@ -4,6 +4,18 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Reverse ENGINE-internal logic for caching default ENGINE handles.
+     This was broken until now in 0.9.8 releases, such that the only way
+     a registered ENGINE could be used (assuming it initialises
+     successfully on the host) was to explicitly set it as the default
+     for the relevant algorithms. This is in contradiction with 0.9.7
+     behaviour and the documentation. With this fix, when an ENGINE is
+     registered into a given algorithm's table of implementations, the
+     'uptodate' flag is reset so that auto-discovery will be used next
+     time a new context for that algorithm attempts to select an
+     implementation.
+     [Ian Lister (tweaked by Geoff Thorpe)]
+
   *) Backport of CMS code to OpenSSL 0.9.8. This differs from the 0.9.9
      implemention in the following ways:
 

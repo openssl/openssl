@@ -135,7 +135,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 			{
 			fnd = OPENSSL_malloc(sizeof(ENGINE_PILE));
 			if(!fnd) goto end;
-			fnd->uptodate = 0;
+			fnd->uptodate = 1;
 			fnd->nid = *nids;
 			fnd->sk = sk_ENGINE_new_null();
 			if(!fnd->sk)
@@ -152,7 +152,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 		if(!sk_ENGINE_push(fnd->sk, e))
 			goto end;
 		/* "touch" this ENGINE_PILE */
-		fnd->uptodate = 1;
+		fnd->uptodate = 0;
 		if(setdefault)
 			{
 			if(!engine_unlocked_init(e))
@@ -164,6 +164,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 			if(fnd->funct)
 				engine_unlocked_finish(fnd->funct, 0);
 			fnd->funct = e;
+			fnd->uptodate = 1;
 			}
 		nids++;
 		}
@@ -179,8 +180,7 @@ static void int_unregister_cb(ENGINE_PILE *pile, ENGINE *e)
 	while((n = sk_ENGINE_find(pile->sk, e)) >= 0)
 		{
 		(void)sk_ENGINE_delete(pile->sk, n);
-		/* "touch" this ENGINE_CIPHER */
-		pile->uptodate = 1;
+		pile->uptodate = 0;
 		}
 	if(pile->funct == e)
 		{
