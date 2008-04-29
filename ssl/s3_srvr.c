@@ -290,9 +290,18 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SW_SRVR_HELLO_B:
 			ret=ssl3_send_server_hello(s);
 			if (ret <= 0) goto end;
-
+#ifndef OPENSSL_NO_TLSEXT
 			if (s->hit)
-				s->state=SSL3_ST_SW_CHANGE_A;
+				{
+				if (s->tlsext_ticket_expected)
+					s->state=SSL3_ST_SW_SESSION_TICKET_A;
+				else
+					s->state=SSL3_ST_SW_CHANGE_A;
+				}
+#else
+			if (s->hit)
+					s->state=SSL3_ST_SW_CHANGE_A;
+#endif
 			else
 				s->state=SSL3_ST_SW_CERT_A;
 			s->init_num=0;
