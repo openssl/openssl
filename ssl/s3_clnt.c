@@ -2918,7 +2918,11 @@ static int ssl3_check_finished(SSL *s)
 	{
 	int ok;
 	long n;
-	if (!s->session->tlsext_tick)
+	/* If we have no ticket or session ID is non-zero length (a match of
+	 * a non-zero session length would never reach here) it cannot be a
+	 * resumed session.
+	 */
+	if (!s->session->tlsext_tick || s->session->session_id_length)
 		return 1;
 	/* this function is called when we really expect a Certificate
 	 * message, so permit appropriate message length */
