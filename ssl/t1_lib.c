@@ -1501,9 +1501,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 			memcpy(sess->session_id, sess_id, sesslen);
 		sess->session_id_length = sesslen;
 		*psess = sess;
-		/*** TEST ***/
-		s->tlsext_ticket_expected = 1;
-		/*s->tlsext_ticket_expected = 0;*/
+		s->tlsext_ticket_expected = 0;
 		return 1;
 		}
 	/* If session decrypt failure indicate a cache miss and set state to
