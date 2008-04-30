@@ -788,39 +788,53 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	SSL_SESSION *sess;
 	unsigned char *sdec;
 	const unsigned char *p;
-	int slen, mlen;
+	int slen, mlen, renew_ticket = 0;
 	unsigned char tick_hmac[EVP_MAX_MD_SIZE];
 	HMAC_CTX hctx;
 	EVP_CIPHER_CTX ctx;
-	/* Attempt to process session ticket, first conduct sanity and
- 	 * integrity checks on ticket.
- 	 */
-	mlen = EVP_MD_size(tlsext_tick_md());
-	eticklen -= mlen;
 	/* Need at least keyname + iv + some encrypted data */
 	if (eticklen < 48)
 		goto tickerr;
-	/* Check key name matches */
-	if (memcmp(etick, s->ctx->tlsext_tick_key_name, 16))
-		goto tickerr;
-	/* Check HMAC of encrypted ticket */
+	/* Initialize session ticket encryption and HMAC contexts */
 	HMAC_CTX_init(&hctx);
-	HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
-				tlsext_tick_md(), NULL);
+	EVP_CIPHER_CTX_init(&ctx);
+	if (s->ctx->tlsext_ticket_key_cb)
+		{
+		unsigned char *nctick = (unsigned char *)etick;
+		int rv = s->ctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
+							&ctx, &hctx, 0);
+		if (rv < 0)
+			return -1;
+		if (rv == 0)
+			goto tickerr;
+		if (rv == 2)
+			renew_ticket = 1;
+		}
+	else
+		{
+		/* Check key name matches */
+		if (memcmp(etick, s->ctx->tlsext_tick_key_name, 16))
+			goto tickerr;
+		HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
+					tlsext_tick_md(), NULL);
+		EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+				s->ctx->tlsext_tick_aes_key, etick + 16);
+		}
+	/* Attempt to process session ticket, first conduct sanity and
+ 	 * integrity checks on ticket.
+ 	 */
+	mlen = HMAC_size(&hctx);
+	eticklen -= mlen;
+	/* Check HMAC of encrypted ticket */
 	HMAC_Update(&hctx, etick, eticklen);
 	HMAC_Final(&hctx, tick_hmac, NULL);
 	HMAC_CTX_cleanup(&hctx);
 	if (memcmp(tick_hmac, etick + eticklen, mlen))
 		goto tickerr;
-	/* Set p to start of IV */
-	p = etick + 16;
-	EVP_CIPHER_CTX_init(&ctx);
 	/* Attempt to decrypt session data */
-	EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-					s->ctx->tlsext_tick_aes_key, p);
 	/* Move p after IV to start of encrypted ticket, update length */
-	p += 16;
-	eticklen -= 32;
+	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
+	eticklen -= 16 + EVP_CIPHER_CTX_iv_length(&ctx);
 	sdec = OPENSSL_malloc(eticklen);
 	if (!sdec)
 		{
@@ -847,7 +861,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 			memcpy(sess->session_id, sess_id, sesslen);
 		sess->session_id_length = sesslen;
 		*psess = sess;
-		s->tlsext_ticket_expected = 0;
+		s->tlsext_ticket_expected = renew_ticket;
 		return 1;
 		}
 	/* If session decrypt failure indicate a cache miss and set state to
