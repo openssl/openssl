@@ -680,6 +680,12 @@
      [NTT]
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
+  
+  *) Add TLS session ticket callback. This allows an application to set
+     TLS ticket cipher and HMAC keys rather than relying on hardcoded fixed
+     values. This is useful for key rollover for example where several key
+     sets may exist with different names.
+     [Steve Henson]
 
   *) Reverse ENGINE-internal logic for caching default ENGINE handles.
      This was broken until now in 0.9.8 releases, such that the only way

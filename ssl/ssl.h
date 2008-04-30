@@ -160,6 +160,7 @@
 #include <openssl/buffer.h>
 #endif
 #include <openssl/pem.h>
+#include <openssl/hmac.h>
 
 #include <openssl/kssl.h>
 #include <openssl/safestack.h>
@@ -807,6 +808,11 @@ struct ssl_ctx_st
 	unsigned char tlsext_tick_key_name[16];
 	unsigned char tlsext_tick_hmac_key[16];
 	unsigned char tlsext_tick_aes_key[16];
+	/* Callback to support customisation of ticket key setting */
+	int (*tlsext_ticket_key_cb)(SSL *ssl,
+					unsigned char *name, unsigned char *iv,
+					EVP_CIPHER_CTX *ectx,
+ 					HMAC_CTX *hctx, int enc);
 
 	/* certificate status request info */
 	/* Callback for status request */
@@ -1351,6 +1357,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS	69
 #define SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP	70
 #define SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP	71
+
+#define SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB	72
 #endif
 
 #define SSL_session_reused(ssl) \

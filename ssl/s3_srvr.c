@@ -2853,6 +2853,8 @@ int ssl3_send_newsession_ticket(SSL *s)
 		unsigned int hlen;
 		EVP_CIPHER_CTX ctx;
 		HMAC_CTX hctx;
+		unsigned char iv[EVP_MAX_IV_LENGTH];
+		unsigned char key_name[16];
 
 		/* get session encoding length */
 		slen = i2d_SSL_SESSION(s->session, NULL);
@@ -2883,29 +2885,47 @@ int ssl3_send_newsession_ticket(SSL *s)
 		*(p++)=SSL3_MT_NEWSESSION_TICKET;
 		/* Skip message length for now */
 		p += 3;
+		EVP_CIPHER_CTX_init(&ctx);
+		HMAC_CTX_init(&hctx);
+		/* Initialize HMAC and cipher contexts. If callback present
+		 * it does all the work otherwise use generated values
+		 * from parent ctx.
+		 */
+		if (s->ctx->tlsext_ticket_key_cb)
+			{
+			if (s->ctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
+							 &hctx, 1) < 0)
+				{
+				OPENSSL_free(senc);
+				return -1;
+				}
+			}
+		else
+			{
+			RAND_pseudo_bytes(iv, 16);
+			EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+					s->ctx->tlsext_tick_aes_key, iv);
+			HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
+					tlsext_tick_md(), NULL);
+			memcpy(key_name, s->ctx->tlsext_tick_key_name, 16);
+			}
 		l2n(s->session->tlsext_tick_lifetime_hint, p);
 		/* Skip ticket length for now */
 		p += 2;
 		/* Output key name */
 		macstart = p;
-		memcpy(p, s->ctx->tlsext_tick_key_name, 16);
+		memcpy(p, key_name, 16);
 		p += 16;
-		/* Generate and output IV */
-		RAND_pseudo_bytes(p, 16);
-		EVP_CIPHER_CTX_init(&ctx);
+		/* output IV */
+		memcpy(p, iv, EVP_CIPHER_CTX_iv_length(&ctx));
+		p += EVP_CIPHER_CTX_iv_length(&ctx);
 		/* Encrypt session data */
-		EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-					s->ctx->tlsext_tick_aes_key, p);
-		p += 16;
 		EVP_EncryptUpdate(&ctx, p, &len, senc, slen);
 		p += len;
 		EVP_EncryptFinal(&ctx, p, &len);
 		p += len;
 		EVP_CIPHER_CTX_cleanup(&ctx);
 
-		HMAC_CTX_init(&hctx);
-		HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
-				tlsext_tick_md(), NULL);
 		HMAC_Update(&hctx, macstart, p - macstart);
 		HMAC_Final(&hctx, p, &hlen);
 		HMAC_CTX_cleanup(&hctx);
