@@ -303,7 +303,14 @@ struct bn_mont_ctx_st
 	BIGNUM N;      /* The modulus */
 	BIGNUM Ni;     /* R*(1/R mod N) - N*Ni = 1
 	                * (Ni is only stored for bignum algorithm) */
+#if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)
+	/* Non-default compile (can only happen with "enable-montasm"),
+	 * uses the new type from 0.9.9 to accomodate two words: */
+	BN_ULONG n0[2];/* least significant word(s) of Ni */
+#else
+	/* By default, use old type: */
 	BN_ULONG n0;   /* least significant word of Ni */
+#endif
 	int flags;
 	};
 

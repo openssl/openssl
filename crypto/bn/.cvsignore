@@ -4,3 +4,4 @@ Makefile.save
 semantic.cache
 co86-elf.s
 bn86-elf.s
+mo86-elf.s

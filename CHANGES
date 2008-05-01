@@ -4,6 +4,28 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Partial backport from 0.9.9-dev:
+
+     New candidate for BIGNUM assembler implementation, bn_mul_mont,
+     dedicated Montgomery multiplication procedure, is introduced.
+     While 0.9.9-dev has assembler for various architectures, here
+     in the 0.9.8 branch, only x86_64 is available by default.
+
+     With Configure option "enable-montasm" (which exists only for
+     this backport), the 32-bit x86 assembler implementation can be
+     activated at compile-time.  In 0.9.9-dev, BN_MONT_CTX is modified
+     to allow bn_mul_mont to reach for higher "64-bit" performance on
+     certain 32-bit targets.  With "enable-montasm", this BN_MONT_CTX
+     change is activated in the 0.9.8 branch.
+
+     Warning: Using "enable-montasm" thus means losing binary
+     compatibility between patchlevels!  (I.e., applications will
+     have to be recompiled to match the particular library.)
+     So you may want to avoid this setting for shared libraries.
+     Use at your own risk.
+
+     [Andy Polyakov (32-bit x86 backport: Bodo Moeller)]
+
   *) Add TLS session ticket callback. This allows an application to set
      TLS ticket cipher and HMAC keys rather than relying on hardcoded fixed
      values. This is useful for key rollover for example where several key

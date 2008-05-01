@@ -154,6 +154,7 @@ sub main'exch	{ &out2("xchg",@_); }
 sub main'cmp	{ &out2("cmp",@_); }
 sub main'lea	{ &out2("lea",@_); }
 sub main'mul	{ &out1("mul",@_); }
+sub main'imul	{ &out2("imul",@_); }
 sub main'div	{ &out1("div",@_); }
 sub main'dec	{ &out1("dec",@_); }
 sub main'inc	{ &out1("inc",@_); }

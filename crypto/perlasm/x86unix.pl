@@ -171,6 +171,7 @@ sub main'exch	{ &out2($_[0]=~/%[a-d][lh]/?"xchgb":"xchgl",@_); }
 sub main'cmp	{ &out2("cmpl",@_); }
 sub main'lea	{ &out2("leal",@_); }
 sub main'mul	{ &out1("mull",@_); }
+sub main'imul	{ &out2("imull",@_); }
 sub main'div	{ &out1("divl",@_); }
 sub main'jmp	{ &out1("jmp",@_); }
 sub main'jmp_ptr { &out1p("jmp",@_); }

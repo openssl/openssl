@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [enable-montasm] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -54,6 +54,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lx
 # [no-]zlib     [don't] compile support for zlib compression.
 # zlib-dynamic	Like "zlib", but the zlib library is expected to be a shared
 #		library and will be loaded in run-time by the OpenSSL library.
+# enable-montasm 0.9.8 branch only: enable Montgomery x86 assembler backport
+#               from 0.9.9
 # 386           generate 80386 code
 # no-sse2	disables IA-32 SSE2 code, above option implies no-sse2
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
@@ -114,9 +116,9 @@ my $tlib="-lnsl -lsocket";
 my $bits1="THIRTY_TWO_BIT ";
 my $bits2="SIXTY_FOUR_BIT ";
 
-my $x86_elf_asm="x86cpuid-elf.o:bn86-elf.o co86-elf.o:dx86-elf.o yx86-elf.o:ax86-elf.o:bx86-elf.o:mx86-elf.o:sx86-elf.o s512sse2-elf.o:cx86-elf.o:rx86-elf.o rc4_skey.o:rm86-elf.o:r586-elf.o";
-my $x86_coff_asm="x86cpuid-cof.o:bn86-cof.o co86-cof.o:dx86-cof.o yx86-cof.o:ax86-cof.o:bx86-cof.o:mx86-cof.o:sx86-cof.o s512sse2-cof.o:cx86-cof.o:rx86-cof.o rc4_skey.o:rm86-cof.o:r586-cof.o";
-my $x86_out_asm="x86cpuid-out.o:bn86-out.o co86-out.o:dx86-out.o yx86-out.o:ax86-out.o:bx86-out.o:mx86-out.o:sx86-out.o s512sse2-out.o:cx86-out.o:rx86-out.o rc4_skey.o:rm86-out.o:r586-out.o";
+my $x86_elf_asm="x86cpuid-elf.o:bn86-elf.o co86-elf.o MAYBE-MO86-elf.o:dx86-elf.o yx86-elf.o:ax86-elf.o:bx86-elf.o:mx86-elf.o:sx86-elf.o s512sse2-elf.o:cx86-elf.o:rx86-elf.o rc4_skey.o:rm86-elf.o:r586-elf.o";
+my $x86_coff_asm="x86cpuid-cof.o:bn86-cof.o co86-cof.o MAYBE-MO86-cof.o:dx86-cof.o yx86-cof.o:ax86-cof.o:bx86-cof.o:mx86-cof.o:sx86-cof.o s512sse2-cof.o:cx86-cof.o:rx86-cof.o rc4_skey.o:rm86-cof.o:r586-cof.o";
+my $x86_out_asm="x86cpuid-out.o:bn86-out.o co86-out.o MAYBE-MO86-out.o:dx86-out.o yx86-out.o:ax86-out.o:bx86-out.o:mx86-out.o:sx86-out.o s512sse2-out.o:cx86-out.o:rx86-out.o rc4_skey.o:rm86-out.o:r586-out.o";
 
 my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o::aes-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o::rc4-x86_64.o::";
 my $ia64_asm=":bn-ia64.o::aes_core.o aes_cbc.o aes-ia64.o:::sha1-ia64.o sha256-ia64.o sha512-ia64.o::rc4-ia64.o rc4_skey.o::";
@@ -580,6 +582,7 @@ my $no_shared=0; # but "no-shared" is default
 my $zlib=1;      # but "no-zlib" is default
 my $no_krb5=0;   # but "no-krb5" is implied unless "--with-krb5-..." is used
 my $no_rfc3779=1; # but "no-rfc3779" is default
+my $montasm=1;   # but "no-montasm" is default
 my $no_asm=0;
 my $no_dso=0;
 my $no_gmp=0;
@@ -616,6 +619,7 @@ my %disabled = ( # "what"         => "comment"
                  "cms"            => "default",
                  "gmp"            => "default",
                  "mdc2"           => "default",
+                 "montasm"        => "default", # explicit option in 0.9.8 only (implicitly enabled in 0.9.9)
                  "rc5"            => "default",
                  "rfc3779"        => "default",
                  "seed"           => "default",
@@ -895,6 +899,8 @@ foreach (sort (keys %disabled))
 		{ $no_shared = 1; }
 	elsif (/^zlib$/)
 		{ $zlib = 0; }
+	elsif (/^montasm$/)
+		{ $montasm = 0; }
 	elsif (/^static-engine$/)
 		{ }
 	elsif (/^zlib-dynamic$/)
@@ -1120,6 +1126,14 @@ if ($no_asm)
 	{
 	$cpuid_obj=$bn_obj=$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj="";
 	$sha1_obj=$md5_obj=$rmd160_obj="";
+	}
+if ($montasm)
+	{
+	$bn_obj =~ s/MAYBE-MO86-/mo86-/;
+	}
+else
+	{
+	$bn_obj =~ s/MAYBE-MO86-[a-z.]*//;
 	}
 
 if (!$no_shared)
