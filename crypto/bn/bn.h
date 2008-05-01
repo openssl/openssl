@@ -315,7 +315,8 @@ struct bn_mont_ctx_st
 	BIGNUM N;      /* The modulus */
 	BIGNUM Ni;     /* R*(1/R mod N) - N*Ni = 1
 	                * (Ni is only stored for bignum algorithm) */
-	BN_ULONG n0[2];/* least significant word(s) of Ni */
+	BN_ULONG n0[2];/* least significant word(s) of Ni;
+	                  (type changed with 0.9.9, was "BN_ULONG n0;" before) */
 	int flags;
 	};
 

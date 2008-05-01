@@ -1268,11 +1268,11 @@ if ($ranlib eq "")
 $cpuid_obj="" if ($processor eq "386");
 
 $bn_obj = $bn_asm unless $bn_obj ne "";
-# bn86* is the only one implementing bn_*_part_words
-$cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($bn_obj =~ /bn(86|-586)/);
+# bn-586 is the only one implementing bn_*_part_words
+$cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($bn_obj =~ /bn-586/);
 $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /86/);
 
-$cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /\-mont|mo86\-/);
+$cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /-mont/);
 
 $cpuid_obj="mem_clr.o"	unless ($cpuid_obj =~ /\.o$/);
 $des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
