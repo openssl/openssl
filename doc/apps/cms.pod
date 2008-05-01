@@ -315,7 +315,7 @@ the signers certificates. The certificates should be in PEM format.
 
 =item B<-certsout file>
 
-any certificates contained in to the message are written to B<file>.
+any certificates contained in the message are written to B<file>.
 
 =item B<-signer file>
 
