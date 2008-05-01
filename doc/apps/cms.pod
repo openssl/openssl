@@ -55,6 +55,7 @@ B<openssl> B<cms>
 [B<-binary>]
 [B<-nodetach>]
 [B<-certfile file>]
+[B<-certsout file>]
 [B<-signer file>]
 [B<-recip file>]
 [B<-keyid>]
@@ -311,6 +312,10 @@ the MIME type multipart/signed is used.
 allows additional certificates to be specified. When signing these will
 be included with the message. When verifying these will be searched for
 the signers certificates. The certificates should be in PEM format.
+
+=item B<-certsout file>
+
+any certificates contained in to the message are written to B<file>.
 
 =item B<-signer file>
 
