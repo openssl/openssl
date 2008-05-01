@@ -107,6 +107,7 @@ int MAIN(int argc, char **argv)
 	char *signerfile = NULL, *recipfile = NULL;
 	STACK *sksigners = NULL, *skkeys = NULL;
 	char *certfile = NULL, *keyfile = NULL, *contfile=NULL;
+	char *certsoutfile = NULL;
 	const EVP_CIPHER *cipher = NULL;
 	CMS_ContentInfo *cms = NULL, *rcms = NULL;
 	X509_STORE *store = NULL;
@@ -396,6 +397,12 @@ int MAIN(int argc, char **argv)
 				goto argerr;
 			recipfile = *++args;
 			}
+		else if (!strcmp (*args, "-certsout"))
+			{
+			if (!args[1])
+				goto argerr;
+			certsoutfile = *++args;
+			}
 		else if (!strcmp (*args, "-md"))
 			{
 			if (!args[1])
@@ -601,6 +608,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-noattr        don't include any signed attributes\n");
 		BIO_printf (bio_err, "-binary        don't translate message to text\n");
 		BIO_printf (bio_err, "-certfile file other certificates file\n");
+		BIO_printf (bio_err, "-certsout file certificate output file\n");
 		BIO_printf (bio_err, "-signer file   signer certificate file\n");
 		BIO_printf (bio_err, "-recip  file   recipient certificate file for decryption\n");
 		BIO_printf (bio_err, "-skeyid        use subject key identifier\n");
@@ -795,6 +803,20 @@ int MAIN(int argc, char **argv)
 				BIO_printf(bio_err, "Can't read content file %s\n", contfile);
 				goto end;
 				}
+			}
+		if (certsoutfile)
+			{
+			STACK_OF(X509) *allcerts;
+			allcerts = CMS_get1_certs(cms);
+			if (!save_certs(certsoutfile, allcerts))
+				{
+				BIO_printf(bio_err,
+						"Error writing certs to %s\n",
+								certsoutfile);
+				ret = 5;
+				goto end;
+				}
+			sk_X509_pop_free(allcerts, X509_free);
 			}
 		}
 

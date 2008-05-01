@@ -78,17 +78,17 @@ elsif (-f "..\\out32\\openssl.exe")
 my @test_list = (
     [ "3.1.bin"  => "dataout" ],
     [ "3.2.bin"  => "encode, dataout" ],
-    [ "4.1.bin"  => "encode, verifyder, content, dss" ],
+    [ "4.1.bin"  => "encode, verifyder, cont, dss" ],
     [ "4.2.bin"  => "encode, verifyder, cont, rsa" ],
     [ "4.3.bin"  => "encode, verifyder, cont_extern, dss" ],
     [ "4.4.bin"  => "encode, verifyder, cont, dss" ],
-    [ "4.5.bin"  => "verifyder, content, rsa" ],
+    [ "4.5.bin"  => "verifyder, cont, rsa" ],
     [ "4.6.bin"  => "encode, verifyder, cont, dss" ],
     [ "4.7.bin"  => "encode, verifyder, cont, dss" ],
     [ "4.8.eml"  => "verifymime, dss" ],
     [ "4.9.eml"  => "verifymime, dss" ],
     [ "4.10.bin" => "encode, verifyder, cont, dss" ],
-    [ "4.11.bin" => "encode" ],
+    [ "4.11.bin" => "encode, certsout" ],
     [ "5.1.bin"  => "encode, envelopeder, cont" ],
     [ "5.2.bin"  => "encode, envelopeder, cont" ],
     [ "5.3.eml"  => "envelopemime, cont" ],
@@ -150,6 +150,9 @@ foreach (@test_list) {
     print "Example file $file:\n";
     if ( $tlist =~ /encode/ ) {
         run_reencode_test( $exdir, $file );
+    }
+    if ( $tlist =~ /certsout/ ) {
+        run_certsout_test( $exdir, $file );
     }
     if ( $tlist =~ /dataout/ ) {
         run_dataout_test( $exdir, $file );
@@ -213,6 +216,23 @@ sub run_reencode_test {
     }
     else {
         print "\tReencode passed\n" if $verbose;
+    }
+}
+
+sub run_certsout_test {
+    my ( $cmsdir, $tfile ) = @_;
+    unlink "tmp.der";
+    unlink "tmp.pem";
+
+    system( "$cmscmd -cmsout -inform DER -certsout tmp.pem"
+          . " -in $cmsdir/$tfile -out tmp.der" );
+
+    if ($?) {
+        print "\tCertificate output command FAILED!!\n";
+        $badtest++;
+    }
+    else {
+        print "\tCertificate output passed\n" if $verbose;
     }
 }
 
