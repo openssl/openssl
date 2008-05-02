@@ -433,6 +433,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		rctx->md = p2;
 		return 1;
 
+		case EVP_PKEY_CTRL_DIGESTINIT:
 		case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
 		case EVP_PKEY_CTRL_PKCS7_DECRYPT:
 		case EVP_PKEY_CTRL_PKCS7_SIGN:

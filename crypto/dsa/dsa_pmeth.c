@@ -195,6 +195,7 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		dctx->md = p2;
 		return 1;
 
+		case EVP_PKEY_CTRL_DIGESTINIT:
 		case EVP_PKEY_CTRL_PKCS7_SIGN:
 		case EVP_PKEY_CTRL_CMS_SIGN:
 		return 1;
