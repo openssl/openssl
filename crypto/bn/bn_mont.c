@@ -434,6 +434,11 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		mont->ri=(BN_num_bits(mod)+(BN_BITS2-1))/BN_BITS2*BN_BITS2;
 
 #if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)
+		/* Only certain BN_BITS2<=32 platforms actually make use of
+		 * n0[1], and we could use the #else case (with a shorter R
+		 * value) for the others.  However, currently only the assembler
+		 * files do know which is which. */
+
 		BN_zero(R);
 		if (!(BN_set_bit(R,2*BN_BITS2))) goto err;
 
