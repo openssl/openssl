@@ -548,6 +548,15 @@ int CMS_add0_crl(CMS_ContentInfo *cms, X509_CRL *crl)
 	return 1;
 	}
 
+int CMS_add1_crl(CMS_ContentInfo *cms, X509_CRL *crl)
+	{
+	int r;
+	r = CMS_add0_crl(cms, crl);
+	if (r > 0)
+		CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
+	return r;
+	}
+
 STACK_OF(X509) *CMS_get1_certs(CMS_ContentInfo *cms)
 	{
 	STACK_OF(X509) *certs = NULL;

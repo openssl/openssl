@@ -235,6 +235,7 @@ STACK_OF(X509) *CMS_get1_certs(CMS_ContentInfo *cms);
 
 CMS_RevocationInfoChoice *CMS_add0_RevocationInfoChoice(CMS_ContentInfo *cms);
 int CMS_add0_crl(CMS_ContentInfo *cms, X509_CRL *crl);
+int CMS_add1_crl(CMS_ContentInfo *cms, X509_CRL *crl);
 STACK_OF(X509_CRL) *CMS_get1_crls(CMS_ContentInfo *cms);
 
 int CMS_SignedData_init(CMS_ContentInfo *cms);

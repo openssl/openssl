@@ -13,6 +13,7 @@
  STACK_OF(X509) *CMS_get1_certs(CMS_ContentInfo *cms);
 
  int CMS_add0_crl(CMS_ContentInfo *cms, X509_CRL *crl);
+ int CMS_add1_crl(CMS_ContentInfo *cms, X509_CRL *crl);
  STACK_OF(X509_CRL) *CMS_get1_crls(CMS_ContentInfo *cms);
 
 
@@ -23,8 +24,8 @@ must be of type signed data or enveloped data.
 
 CMS_get1_certs() returns all certificates in B<cms>.
 
-CMS_add0_crl() adds CRL B<crl> to B<cms>. CMS_get1_crls() returns any CRLs in
-B<cms>.
+CMS_add0_crl() and CMS_add1_crl() add CRL B<crl> to B<cms>. CMS_get1_crls()
+returns any CRLs in B<cms>.
 
 =head1 NOTES
 
@@ -44,8 +45,8 @@ than once.
 
 =head1 RETURN VALUES
 
-CMS_add0_cert(), CMS_add1_cert() and CMS_add0_crl() return 1 for success and
-0 for failure. 
+CMS_add0_cert(), CMS_add1_cert() and CMS_add0_crl() and CMS_add1_crl() return
+1 for success and 0 for failure. 
 
 CMS_get1_certs() and CMS_get1_crls() return the STACK of certificates or CRLs
 or NULL if there are none or an error occurs. The only error which will occur
