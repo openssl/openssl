@@ -123,6 +123,20 @@
 #define MONT_WORD /* use the faster word-based algorithm */
 
 #if defined(MONT_WORD) && defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)
+/* This condition means we have a specific non-default build:
+ * In the 0.9.8 branch, OPENSSL_BN_ASM_MONT is normally not set for any
+ * BN_BITS2<=32 platform; an explicit "enable-montasm" is required.
+ * I.e., if we are here, the user intentionally deviates from the
+ * normal stable build to get better Montgomery performance from
+ * the 0.9.9-dev backport.
+ *
+ * In this case only, we also enable BN_from_montgomery_word()
+ * (another non-stable feature from 0.9.9-dev).
+ */
+#define MONT_FROM_WORD___NON_DEFAULT_0_9_8_BUILD
+#endif
+
+#ifdef MONT_FROM_WORD___NON_DEFAULT_0_9_8_BUILD
 static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont);
 #endif
 
@@ -139,7 +153,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 	if (num>1 && a->top==num && b->top==num)
 		{
 		if (bn_wexpand(r,num) == NULL) return(0);
-#if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32) /* non-default compile */
+#if 0 /* for OpenSSL 0.9.9 mont->n0 */
 		if (bn_mul_mont(r->d,a->d,b->d,mont->N.d,mont->n0,num))
 #else
 		if (bn_mul_mont(r->d,a->d,b->d,mont->N.d,&mont->n0,num))
@@ -167,7 +181,7 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 		if (!BN_mul(tmp,a,b,ctx)) goto err;
 		}
 	/* reduce from aRR to aR */
-#if defined(MONT_WORD) && defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)
+#ifdef MONT_FROM_WORD___NON_DEFAULT_0_9_8_BUILD
 	if (!BN_from_montgomery_word(r,tmp,mont)) goto err;
 #else
 	if (!BN_from_montgomery(r,tmp,mont,ctx)) goto err;
@@ -179,7 +193,7 @@ err:
 	return(ret);
 	}
 
-#if defined(MONT_WORD) && defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)
+#ifdef MONT_FROM_WORD___NON_DEFAULT_0_9_8_BUILD
 static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 	{
 	BIGNUM *n;
@@ -207,7 +221,11 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 		r->d[i]=0;
 
 	r->top=max;
+#if 0 /* for OpenSSL 0.9.9 mont->n0 */
 	n0=mont->n0[0];
+#else
+	n0=mont->n0;
+#endif
 
 #ifdef BN_COUNT
 	fprintf(stderr,"word BN_from_montgomery_word %d * %d\n",nl,nl);
@@ -316,7 +334,8 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 	BN_CTX_end(ctx);
 	return retn;
 	}
-#else
+
+#else /* !MONT_FROM_WORD___NON_DEFAULT_0_9_8_BUILD */
 
 int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 	     BN_CTX *ctx)
@@ -510,7 +529,7 @@ int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
 	BN_CTX_end(ctx);
 	return(retn);
 	}
-#endif /* defined(MONT_WORD) && defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32) */
+#endif /* MONT_FROM_WORD___NON_DEFAULT_0_9_8_BUILD */
 
 BN_MONT_CTX *BN_MONT_CTX_new(void)
 	{
@@ -530,7 +549,7 @@ void BN_MONT_CTX_init(BN_MONT_CTX *ctx)
 	BN_init(&(ctx->RR));
 	BN_init(&(ctx->N));
 	BN_init(&(ctx->Ni));
-#if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32) /* non-default compile */
+#if 0 /* for OpenSSL 0.9.9 mont->n0 */
 	ctx->n0[0] = ctx->n0[1] = 0;
 #else
 	ctx->n0 = 0;
@@ -568,7 +587,8 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 
 		mont->ri=(BN_num_bits(mod)+(BN_BITS2-1))/BN_BITS2*BN_BITS2;
 		BN_zero(R);
-#if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32) /* non-default compile */
+#if 0 /* for OpenSSL 0.9.9 mont->n0, would be "#if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)",
+         only certain BN_BITS2<=32 platforms actually need this */
 		if (!(BN_set_bit(R,2*BN_BITS2))) goto err;	/* R */
 #else
 		if (!(BN_set_bit(R,BN_BITS2))) goto err;	/* R */
@@ -583,7 +603,8 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		tmod.dmax=2;
 		tmod.neg=0;
 
-#if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)
+#if 0 /* for OpenSSL 0.9.9 mont->n0, would be "#if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32)";
+         only certain BN_BITS2<=32 platforms actually need this */
 								tmod.top=0;
 		if ((buf[0] = mod->d[0]))			tmod.top=1;
 		if ((buf[1] = mod->top>1 ? mod->d[1] : 0))	tmod.top=2;
@@ -626,7 +647,12 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
 		if (!BN_div(Ri,NULL,Ri,&tmod,ctx)) goto err;
 		/* Ni = (R*Ri-1)/N,
 		 * keep only least significant word: */
+# if 0 /* for OpenSSL 0.9.9 mont->n0 */
+		mont->n0[0] = (Ri->top > 0) ? Ri->d[0] : 0;
+		mont->n0[1] = 0;
+# else
 		mont->n0 = (Ri->top > 0) ? Ri->d[0] : 0;
+# endif
 #endif
 		}
 #else /* !MONT_WORD */
@@ -663,7 +689,7 @@ BN_MONT_CTX *BN_MONT_CTX_copy(BN_MONT_CTX *to, BN_MONT_CTX *from)
 	if (!BN_copy(&(to->N),&(from->N))) return NULL;
 	if (!BN_copy(&(to->Ni),&(from->Ni))) return NULL;
 	to->ri=from->ri;
-#if defined(OPENSSL_BN_ASM_MONT) && (BN_BITS2<=32) /* non-default compile */
+#if 0 /* for OpenSSL 0.9.9 mont->n0 */
 	to->n0[0]=from->n0[0];
 	to->n0[1]=from->n0[1];
 #else

@@ -6,25 +6,22 @@
 
   *) Partial backport from 0.9.9-dev:
 
-     New candidate for BIGNUM assembler implementation, bn_mul_mont,
-     dedicated Montgomery multiplication procedure, is introduced.
-     While 0.9.9-dev has assembler for various architectures, here
-     in the 0.9.8 branch, only x86_64 is available by default.
+     Introduce bn_mul_mont (dedicated Montgomery multiplication
+     procedure) as a candidate for BIGNUM assembler implementation.
+     While 0.9.9-dev uses assembler for various architectures, only
+     x86_64 is available by default here in the 0.9.8 branch, and
+     32-bit x86 is available through a compile-time setting.
 
-     With Configure option "enable-montasm" (which exists only for
-     this backport), the 32-bit x86 assembler implementation can be
-     activated at compile-time.  In 0.9.9-dev, BN_MONT_CTX is modified
-     to allow bn_mul_mont to reach for higher "64-bit" performance on
-     certain 32-bit targets.  With "enable-montasm", this BN_MONT_CTX
-     change is activated in the 0.9.8 branch.
+     To try the 32-bit x86 assembler implementation, use Configure
+     option "enable-montasm" (which exists only for this backport).
 
-     Warning: Using "enable-montasm" thus means losing binary
-     compatibility between patchlevels!  (I.e., applications will
-     have to be recompiled to match the particular library.)
-     So you may want to avoid this setting for shared libraries.
-     Use at your own risk.
+     As "enable-montasm" for 32-bit x86 disclaims code stability
+     anyway, in this constellation we activate additional code
+     backported from 0.9.9-dev for further performance improvements,
+     namely BN_from_montgomery_word.  (To enable this otherwise,
+     e.g. x86_64, try "-DMONT_FROM_WORD___NON_DEFAULT_0_9_8_BUILD".)
 
-     [Andy Polyakov (32-bit x86 backport: Bodo Moeller)]
+     [Andy Polyakov (backport partially by Bodo Moeller)]
 
   *) Add TLS session ticket callback. This allows an application to set
      TLS ticket cipher and HMAC keys rather than relying on hardcoded fixed
