@@ -576,3 +576,120 @@ close STDOUT;
 #	movq	16(%rsp),%rsi
 # endif
 #	ret
+#
+#################################################
+# Unlike on Unix systems(*) lack of Win64 stack unwinding information
+# has undesired side-effect at run-time: if an exception is raised in
+# assembler subroutine such as those in question (basically we're
+# referring to segmentation violations caused by malformed input
+# parameters), the application is briskly terminated without invoking
+# any exception handlers, most notably without generating memory dump
+# or any user notification whatsoever. This poses a problem. It's
+# possible to address it by registering custom language-specific
+# handler that would restore processor context to the state at
+# subroutine entry point and return "exception is not handled, keep
+# unwinding" code. Writing such handler can be a challenge... But it's
+# doable, though requires certain coding convention. Consider following
+# snippet:
+#
+# function:
+#	movq	%rsp,%rax	# copy rsp to volatile register
+#	pushq	%r15		# save non-volatile registers
+#	pushq	%rbx
+#	pushq	%rbp
+#	movq	%rsp,%r11
+#	subq	%rdi,%r11	# prepare [variable] stack frame
+#	andq	$-64,%r11
+#	movq	%rax,0(%r11)	# check for exceptions
+#	movq	%r11,%rsp	# allocate [variable] stack frame
+#	movq	%rax,0(%rsp)	# save original rsp value
+# magic_point:
+#	...
+#	movq	0(%rsp),%rcx	# pull original rsp value
+#	movq	-24(%rcx),%rbp	# restore non-volatile registers
+#	movq	-16(%rcx),%rbx
+#	movq	-8(%rcx),%r15
+#	movq	%rcx,%rsp	# restore original rsp
+#	ret
+#
+# The key is that up to magic_point copy of original rsp value remains
+# in chosen volatile register and no non-volatile register, except for
+# rsp, is modified. While past magic_point rsp remains constant till
+# the very end of the function. In this case custom language-specific
+# exception handler would look like this:
+#
+# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
+#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
+# {	ULONG64 *rsp;
+#	if (context->Rip<magic_point)
+#	    rsp = (ULONG64 *)context->Rax;
+#	else
+#	{   rsp = ((ULONG64 **)context->Rsp)[0];
+#	    context->Rbp = rsp[-3];
+#	    context->Rbx = rsp[-2];
+#	    context->R15 = rsp[-1];
+#	}
+#	context->Rsp = (ULONG64)rsp;
+#	context->Rdi = rsp[1];
+#	context->Rsi = rsp[2];
+#
+#	memcpy (disp->ContextRecord,context,sizeof(CONTEXT));
+#	RtlVirtualUnwind(UNW_FLAG_NHANDLER,disp->ImageBase,
+#		dips->ControlPc,disp->FunctionEntry,disp->ContextRecord,
+#		&disp->HandlerData,&disp->EstablisherFrame,NULL);
+#	return ExceptionContinueSearch;
+# }
+#
+# It's appropriate to implement this handler in assembler, directly in
+# function's module. In order to do that one has to know members'
+# offsets in CONTEXT and DISPATCHER_CONTEXT structures and some constant
+# values. Here they are:
+#
+#	CONTEXT.Rax				120
+#	CONTEXT.Rcx				128
+#	CONTEXT.Rdx				136
+#	CONTEXT.Rbx				144
+#	CONTEXT.Rsp				152
+#	CONTEXT.Rbp				160
+#	CONTEXT.Rsi				168
+#	CONTEXT.Rdi				176
+#	CONTEXT.R8				184
+#	CONTEXT.R9				192
+#	CONTEXT.R10				200
+#	CONTEXT.R11				208
+#	CONTEXT.R12				216
+#	CONTEXT.R13				224
+#	CONTEXT.R14				232
+#	CONTEXT.R15				240
+#	CONTEXT.Rip				248
+#	sizeof(CONTEXT)				1232
+#	DISPATCHER_CONTEXT.ControlPc		0
+#	DISPATCHER_CONTEXT.ImageBase		8
+#	DISPATCHER_CONTEXT.FunctionEntry	16
+#	DISPATCHER_CONTEXT.EstablisherFrame	24
+#	DISPATCHER_CONTEXT.TargetIp		32
+#	DISPATCHER_CONTEXT.ContextRecord	40
+#	DISPATCHER_CONTEXT.LanguageHandler	48
+#	DISPATCHER_CONTEXT.HandlerData		56
+#	UNW_FLAG_NHANDLER			0
+#	ExceptionContinueSearch			1
+#
+# UNWIND_INFO structure for .xdata segment would be
+#	DB	9,0,0,0
+#	DD	imagerel handler
+# denoting exception handler for a function with zero-length prologue,
+# no stack frame or frame register.
+#
+# P.S.	Attentive reader can notice that effectively no exceptions are
+#	expected in "gear" prologue and epilogue [discussed in "ABI
+#	cross-reference" above]. No, there are not. This is because if
+#	memory area used by them was subject to segmentation violation,
+#	then exception would be raised upon call to our function and be
+#	accounted to caller and unwound from its frame, which is not a
+#	problem.
+#
+# (*)	Note that we're talking about run-time, not debug-time. Lack of
+#	unwind information makes debugging hard on both Windows and
+#	Unix. "Unlike" referes to the fact that on Unix signal handler
+#	will always be invoked, core dumped and appropriate exit code
+#	returned to parent (for user notification).
