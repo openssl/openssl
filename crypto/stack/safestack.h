@@ -175,7 +175,7 @@ STACK_OF(type) \
 #define SKM_sk_push(type, st,val) \
 	sk_push(st, (char *)val)
 #define SKM_sk_unshift(type, st,val) \
-	sk_unshift(st, val)
+	sk_unshift(st, (char *)val)
 #define SKM_sk_find(type, st,val) \
 	sk_find(st, (char *)val)
 #define SKM_sk_delete(type, st,i) \
