@@ -719,8 +719,7 @@ bad:
 			   message */
 			goto end;
 			}
-		if (EVP_PKEY_type(pkey->type) == EVP_PKEY_DSA || 
-			EVP_PKEY_type(pkey->type) == EVP_PKEY_EC)
+		else
 			{
 			char *randfile = NCONF_get_string(req_conf,SECTION,"RANDFILE");
 			if (randfile == NULL)
