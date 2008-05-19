@@ -992,7 +992,7 @@ int MAIN(int argc, char *argv[])
 			{
 			vflags |= X509_V_FLAG_CRL_CHECK;
 			}
-		else if (strcmp(*argv,"-crl_check") == 0)
+		else if (strcmp(*argv,"-crl_check_all") == 0)
 			{
 			vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
 			}
