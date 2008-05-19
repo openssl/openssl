@@ -4,6 +4,14 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) RSA OAEP patches to fix two separate invalid memory reads.
+     The first one involves inputs when 'lzero' is greater than
+     'SHA_DIGEST_LENGTH' (it would read about SHA_DIGEST_LENGTH bytes
+     before the beginning of from). The second one involves inputs where
+     the 'db' section contains nothing but zeroes (there is a one-byte
+     invalid read after the end of 'db').
+     [Ivan Nesterlode <inestlerode@us.ibm.com>]
+
   *) Partial backport from 0.9.9-dev:
 
      Introduce bn_mul_mont (dedicated Montgomery multiplication
