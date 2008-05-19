@@ -12,6 +12,8 @@ B<openssl> B<s_server>
 [B<-context id>]
 [B<-verify depth>]
 [B<-Verify depth>]
+[B<-crl_check>]
+[B<-crl_check_all>]
 [B<-cert filename>]
 [B<-certform DER|PEM>]
 [B<-key keyfile>]
@@ -141,6 +143,12 @@ client certificate chain and makes the server request a certificate from
 the client. With the B<-verify> option a certificate is requested but the
 client does not have to send one, with the B<-Verify> option the client
 must supply a certificate or an error occurs.
+
+=item B<-crl_check>, B<-crl_check_all>
+
+Check the peer certificate has not been revoked by its CA.
+The CRL(s) are appended to the certificate file. With the B<-crl_check_all>
+option all CRLs of all CAs in the chain are checked.
 
 =item B<-CApath directory>
 
