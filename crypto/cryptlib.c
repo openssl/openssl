@@ -434,29 +434,30 @@ void CRYPTO_set_idptr_callback(void *(*func)(void))
 
 void CRYPTO_THREADID_set(CRYPTO_THREADID *id)
 	{
-	memset(id, 0, sizeof(*id));
+	if (id_callback)
+		id->ulong = id_callback();
+	else
+		id->ulong = 0;
+
 	if (idptr_callback)
 		id->ptr = idptr_callback();
-	else if (id_callback)
-		id->ulong = id_callback();
 	else
 		id->ptr = &errno;
 	}
 
 int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *id1, const CRYPTO_THREADID *id2)
 	{
+	if (id1->ulong != id2->ulong)
+		return ((id1->ulong < id2->ulong) ? -1 : 1);
 	if (id1->ptr != id2->ptr)
 		return ((id1->ptr < id2->ptr) ? -1 : 1);
-	if (id1->ulong != id2->ulong)
-		return ((id1->ulong < id2->ulong ) ? -1 : 1);
 	return 0;
 	}
 
 unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
 	{
-	if (idptr_callback || !id_callback)
-		return (unsigned long)id->ptr;
-	return id->ulong;
+	/* will need further processing to arrive at a good hash (mem_dbg.c uses this) */
+	return id->ulong + (unsigned long)id->ptr;
 	}
 
 void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dst, const CRYPTO_THREADID *src)

@@ -4,7 +4,12 @@
 
  Changes between 0.9.8g and 0.9.9  [xx XXX xxxx]
 
-  *) To support arbitrarily-typed thread IDs, deprecate the existing
+  *) Not all of this is true any longer.
+     Will have to be updated to reflect all subsequent changes to cryptlib.c.
+                                                                       --bodo
+
+
+     To support arbitrarily-typed thread IDs, deprecate the existing
      type-specific APIs for a general purpose CRYPTO_THREADID
      interface. Applications can choose the thread ID
      callback type it wishes to register, as before;

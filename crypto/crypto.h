@@ -307,8 +307,8 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
  * apart when someone decides to extend this in some way. */
 typedef struct crypto_threadid
 	{
-	void *ptr;
 	unsigned long ulong;
+	void *ptr;
 	} CRYPTO_THREADID;
 
 /* Per class, we have a STACK of CRYPTO_EX_DATA_FUNCS for each CRYPTO_EX_DATA
