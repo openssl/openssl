@@ -60,6 +60,7 @@
 
 /* RSA's DESX */
 
+#if 0 /* broken code, preserved just in case anyone specifically looks for this */
 static unsigned char desx_white_in2out[256]={
 0xBD,0x56,0xEA,0xF2,0xA2,0xF1,0xAC,0x2A,0xB0,0x93,0xD1,0x9C,0x1B,0x33,0xFD,0xD0,
 0x30,0x04,0xB6,0xDC,0x7D,0xDF,0x32,0x4B,0xF7,0xCB,0x45,0x9B,0x31,0xBB,0x21,0x5A,
@@ -98,7 +99,7 @@ void DES_xwhite_in2out(const_DES_cblock *des_key, const_DES_cblock *in_white,
 		}
 
 	out0=out[0];
-	out1=out[i];
+	out1=out[i]; /* BUG: out-of-bounds read */
 	for (i=0; i<8; i++)
 		{
 		out[i]=in[i]^desx_white_in2out[out0^out1];
@@ -106,6 +107,7 @@ void DES_xwhite_in2out(const_DES_cblock *des_key, const_DES_cblock *in_white,
 		out1=(int)out[i&0x07];
 		}
 	}
+#endif
 
 void DES_xcbc_encrypt(const unsigned char *in, unsigned char *out,
 		      long length, DES_key_schedule *schedule,
