@@ -10,7 +10,7 @@
      before the beginning of from). The second one involves inputs where
      the 'db' section contains nothing but zeroes (there is a one-byte
      invalid read after the end of 'db').
-     [Ivan Nesterlode <inestlerode@us.ibm.com>]
+     [Ivan Nestlerlode <inestlerode@us.ibm.com>]
 
   *) Partial backport from 0.9.9-dev:
 
