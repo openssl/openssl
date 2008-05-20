@@ -130,19 +130,6 @@ static int B64_write_ASN1(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
 	return r;
 	}
 
-/* Streaming ASN1 PEM write */
-
-int PEM_write_bio_ASN1_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
-				const char *hdr,
-				const ASN1_ITEM *it)
-	{
-	int r;
-	BIO_printf(out, "-----BEGIN %s-----\n", hdr);
-	r = B64_write_ASN1(out, val, in, flags, it);
-	BIO_printf(out, "-----END %s-----\n", hdr);
-	return r;
-	}
-
 static ASN1_VALUE *b64_read_asn1(BIO *bio, const ASN1_ITEM *it)
 {
 	BIO *b64;
