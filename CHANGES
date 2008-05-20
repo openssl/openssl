@@ -692,7 +692,7 @@
      before the beginning of from). The second one involves inputs where
      the 'db' section contains nothing but zeroes (there is a one-byte
      invalid read after the end of 'db').
-     [Ivan Nesterlode <inestlerode@us.ibm.com>]
+     [Ivan Nestlerlode <inestlerode@us.ibm.com>]
   
   *) Add TLS session ticket callback. This allows an application to set
      TLS ticket cipher and HMAC keys rather than relying on hardcoded fixed
