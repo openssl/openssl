@@ -1039,6 +1039,7 @@ sub read_options
 		"shared" => 0,
 		"no-gmp" => 0,
 		"no-rfc3779" => 0,
+		"no-montasm" => 0,
 		"no-shared" => 0,
 		"no-zlib" => 0,
 		"no-zlib-dynamic" => 0,
