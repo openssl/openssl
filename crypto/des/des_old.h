@@ -364,9 +364,10 @@ void _ossl_old_des_ede3_cfb64_encrypt(unsigned char *in, unsigned char *out,
 void _ossl_old_des_ede3_ofb64_encrypt(unsigned char *in, unsigned char *out,
 	long length, _ossl_old_des_key_schedule ks1, _ossl_old_des_key_schedule ks2,
 	_ossl_old_des_key_schedule ks3, _ossl_old_des_cblock *ivec, int *num);
-
+#if 0
 void _ossl_old_des_xwhite_in2out(_ossl_old_des_cblock (*des_key), _ossl_old_des_cblock (*in_white),
 	_ossl_old_des_cblock (*out_white));
+#endif
 
 int _ossl_old_des_enc_read(int fd,char *buf,int len,_ossl_old_des_key_schedule sched,
 	_ossl_old_des_cblock *iv);
