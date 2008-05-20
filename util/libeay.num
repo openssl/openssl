@@ -802,7 +802,7 @@ DES_set_odd_parity                      809	EXIST::FUNCTION:DES
 DES_string_to_2keys                     810	EXIST::FUNCTION:DES
 DES_string_to_key                       811	EXIST::FUNCTION:DES
 DES_xcbc_encrypt                        812	EXIST::FUNCTION:DES
-DES_xwhite_in2out                       813	EXIST::FUNCTION:DES
+DES_xwhite_in2out                       813	NOEXIST::FUNCTION:
 fcrypt_body                             814	NOEXIST::FUNCTION:
 i2a_ASN1_INTEGER                        815	EXIST::FUNCTION:BIO
 i2a_ASN1_OBJECT                         816	EXIST::FUNCTION:BIO
@@ -2089,7 +2089,7 @@ OCSP_BASICRESP_get_ext_by_crit          2646	EXIST:VMS:FUNCTION:
 OCSP_cert_status_str                    2647	EXIST::FUNCTION:
 d2i_OCSP_REQUEST                        2648	EXIST::FUNCTION:
 UI_dup_info_string                      2649	EXIST::FUNCTION:
-_ossl_old_des_xwhite_in2out             2650	EXIST::FUNCTION:DES
+_ossl_old_des_xwhite_in2out             2650	NOEXIST::FUNCTION:
 PKCS12_it                               2651	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 PKCS12_it                               2651	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
 OCSP_SINGLERESP_get_ext_by_critical     2652	EXIST:!VMS:FUNCTION:
@@ -3567,7 +3567,8 @@ CMS_unsigned_get0_data_by_OBJ           3959	EXIST::FUNCTION:CMS
 PEM_write_bio_CMS                       3960	EXIST::FUNCTION:CMS
 CMS_unsigned_get_attr                   3961	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_ktri_cert_cmp         3962	EXIST::FUNCTION:CMS
-CMS_RecipientInfo_ktri_get0_algs        3963	EXIST::FUNCTION:CMS
+CMS_RecipientInfo_ktri_get0_algs        3963	EXIST:!VMS:FUNCTION:CMS
+CMS_RecipInfo_ktri_get0_algs            3963	EXIST:VMS:FUNCTION:CMS
 CMS_ContentInfo_free                    3964	EXIST::FUNCTION:CMS
 CMS_final                               3965	EXIST::FUNCTION:CMS
 CMS_add_simple_smimecap                 3966	EXIST::FUNCTION:CMS
@@ -3638,7 +3639,8 @@ CMS_get1_certs                          4028	EXIST::FUNCTION:CMS
 CMS_signed_add1_attr_by_NID             4029	EXIST::FUNCTION:CMS
 CMS_unsigned_add1_attr_by_txt           4030	EXIST::FUNCTION:CMS
 CMS_dataFinal                           4031	EXIST::FUNCTION:CMS
-CMS_RecipientInfo_ktri_get0_signer_id   4032	EXIST::FUNCTION:CMS
+CMS_RecipientInfo_ktri_get0_signer_id   4032	EXIST:!VMS:FUNCTION:CMS
+CMS_RecipInfo_ktri_get0_sigr_id         4032	EXIST:VMS:FUNCTION:CMS
 i2d_CMS_ReceiptRequest                  4033	EXIST::FUNCTION:CMS
 CMS_add1_recipient_cert                 4034	EXIST::FUNCTION:CMS
 CMS_dataInit                            4035	EXIST::FUNCTION:CMS
@@ -4071,3 +4073,4 @@ TS_TST_INFO_get_ext_by_critical         4449	EXIST::FUNCTION:
 EVP_PKEY_CTX_new_id                     4450	EXIST::FUNCTION:
 TS_REQ_get_ext_by_OBJ                   4451	EXIST::FUNCTION:
 TS_CONF_set_signer_cert                 4452	EXIST::FUNCTION:
+CMS_add1_crl                            4453	EXIST::FUNCTION:CMS
