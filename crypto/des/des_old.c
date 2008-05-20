@@ -169,11 +169,13 @@ void _ossl_old_des_ede3_ofb64_encrypt(unsigned char *in, unsigned char *out,
 		(DES_key_schedule *)ks3, ivec, num);
 	}
 
+#if 0 /* broken code, preserved just in case anyone specifically looks for this */
 void _ossl_old_des_xwhite_in2out(_ossl_old_des_cblock (*des_key), _ossl_old_des_cblock (*in_white),
 	_ossl_old_des_cblock (*out_white))
 	{
 	DES_xwhite_in2out(des_key, in_white, out_white);
 	}
+#endif
 
 int _ossl_old_des_enc_read(int fd,char *buf,int len,des_key_schedule sched,
 	_ossl_old_des_cblock *iv)
