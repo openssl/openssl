@@ -392,6 +392,7 @@ page of the "openssl x509" commandline tool for details. The old behaviour
 has however been left as default for the sake of compatibility.
 
 * What is a "128 bit certificate"? Can I create one with OpenSSL?
+* How can I set up a bundle of commercial root CA certificates?
 
 The term "128 bit certificate" is a highly misleading marketing term. It does
 *not* refer to the size of the public key in the certificate! A certificate
@@ -445,6 +446,20 @@ issuer name and serial number of B.
 It is often wrongly assumed that it should contain the subject name of B. If it
 did this would be redundant information because it would duplicate the issuer
 name of C.
+
+
+* How can I set up a bundle of commercial root CA certificates?
+
+The OpenSSL software is shipped without any root CA certificate as the
+OpenSSL project does not have any policy on including or excluding
+any specific CA and does not intend to set up such a policy. Deciding
+about which CAs to support is up to application developers or
+administrators.
+
+Other projects do have other policies so you can for example extract the CA
+bundle used by Mozilla and/or modssl as described in this article:
+
+  http://www.mail-archive.com/modssl-users@modssl.org/msg16980.html
 
 
 [BUILD] =======================================================================

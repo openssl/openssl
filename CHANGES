@@ -686,6 +686,14 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Remove root CA certificates of commercial CAs:
+
+     The OpenSSL project does not recommend any specific CA and does not
+     have any policy with respect to including or excluding any CA.
+     Therefore it does not make any sense to ship an arbitrary selection
+     of root CA certificates with the OpenSSL software.
+     [Lutz Jaenicke]
+
   *) RSA OAEP patches to fix two separate invalid memory reads.
      The first one involves inputs when 'lzero' is greater than
      'SHA_DIGEST_LENGTH' (it would read about SHA_DIGEST_LENGTH bytes
