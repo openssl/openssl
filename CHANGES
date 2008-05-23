@@ -4,6 +4,12 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Clear error queue in SSL_CTX_use_certificate_chain_file()
+
+     Clear the error queue to ensure that error entries left from
+     older function calls do not interfere with the correct operation.
+     [Lutz Jaenicke, Erik de Castro Lopo]
+
   *) Remove root CA certificates of commercial CAs:
 
      The OpenSSL project does not recommend any specific CA and does not
