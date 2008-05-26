@@ -708,11 +708,7 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
 	int ret=0;
 	X509 *x=NULL;
 
-	ERR_clear_error(); /* This function needs to check the error stack
-			      even if the return code(s) of called functions
-			      indicate success.
-			      The error stack must therefore be cleared
-			      before starting. */
+	ERR_clear_error(); /* clear error stack for SSL_CTX_use_certificate() */
 
 	in=BIO_new(BIO_s_file_internal());
 	if (in == NULL)
