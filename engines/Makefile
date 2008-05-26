@@ -226,10 +226,12 @@ e_cswift.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 e_cswift.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 e_cswift.o: ../include/openssl/stack.h ../include/openssl/symhacks.h e_cswift.c
 e_cswift.o: e_cswift_err.c e_cswift_err.h vendor_defns/cswift.h
-e_gmp.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-e_gmp.o: ../include/openssl/e_os2.h ../include/openssl/engine.h
-e_gmp.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_gmp.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+e_gmp.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+e_gmp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+e_gmp.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+e_gmp.o: ../include/openssl/engine.h ../include/openssl/opensslconf.h
+e_gmp.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+e_gmp.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 e_gmp.o: ../include/openssl/stack.h ../include/openssl/symhacks.h e_gmp.c
 e_nuron.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_nuron.o: ../include/openssl/bn.h ../include/openssl/buffer.h

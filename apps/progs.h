@@ -59,6 +59,7 @@ typedef struct {
 	const char *name;
 	int (*func)(int argc,char *argv[]);
 	} FUNCTION;
+DECLARE_LHASH_OF(FUNCTION);
 
 FUNCTION functions[] = {
 	{FUNC_TYPE_GENERAL,"verify",verify_main},

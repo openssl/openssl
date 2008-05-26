@@ -90,9 +90,9 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
 	ret->qual=NULL;
 	if ((ret->data=sk_new_null()) == NULL)
 		goto err;
-	if ((ret->index=(LHASH **)OPENSSL_malloc(sizeof(LHASH *)*num)) == NULL)
+	if ((ret->index=OPENSSL_malloc(sizeof(*ret->index)*num)) == NULL)
 		goto err;
-	if ((ret->qual=(int (**)(char **))OPENSSL_malloc(sizeof(int (**)(char **))*num)) == NULL)
+	if ((ret->qual=OPENSSL_malloc(sizeof(*(ret->qual))*num)) == NULL)
 		goto err;
 	for (i=0; i<num; i++)
 		{
@@ -192,10 +192,10 @@ err:
 		return(ret);
 	}
 
-char **TXT_DB_get_by_index(TXT_DB *db, int idx, char **value)
+STRING *TXT_DB_get_by_index(TXT_DB *db, int idx, STRING *value)
 	{
-	char **ret;
-	LHASH *lh;
+	STRING *ret;
+	LHASH_OF(STRING) *lh;
 
 	if (idx >= db->num_fields)
 		{
@@ -208,16 +208,16 @@ char **TXT_DB_get_by_index(TXT_DB *db, int idx, char **value)
 		db->error=DB_ERROR_NO_INDEX;
 		return(NULL);
 		}
-	ret=(char **)lh_retrieve(lh,value);
+	ret=lh_STRING_retrieve(lh,value);
 	db->error=DB_ERROR_OK;
 	return(ret);
 	}
 
-int TXT_DB_create_index(TXT_DB *db, int field, int (*qual)(char **),
-		LHASH_HASH_FN_TYPE hash, LHASH_COMP_FN_TYPE cmp)
+int TXT_DB_create_index(TXT_DB *db, int field, int (*qual)(STRING *),
+			LHASH_HASH_FN_TYPE hash, LHASH_COMP_FN_TYPE cmp)
 	{
-	LHASH *idx;
-	char **r;
+	LHASH_OF(STRING) *idx;
+	STRING *r;
 	int i,n;
 
 	if (field >= db->num_fields)
@@ -225,7 +225,8 @@ int TXT_DB_create_index(TXT_DB *db, int field, int (*qual)(char **),
 		db->error=DB_ERROR_INDEX_OUT_OF_RANGE;
 		return(0);
 		}
-	if ((idx=lh_new(hash,cmp)) == NULL)
+	/* FIXME: we lose type checking at this point */
+	if ((idx=(LHASH_OF(STRING) *)lh_new(hash,cmp)) == NULL)
 		{
 		db->error=DB_ERROR_MALLOC;
 		return(0);
@@ -233,18 +234,18 @@ int TXT_DB_create_index(TXT_DB *db, int field, int (*qual)(char **),
 	n=sk_num(db->data);
 	for (i=0; i<n; i++)
 		{
-		r=(char **)sk_value(db->data,i);
+		r=(STRING *)sk_value(db->data,i);
 		if ((qual != NULL) && (qual(r) == 0)) continue;
-		if ((r=lh_insert(idx,r)) != NULL)
+		if ((r=lh_STRING_insert(idx,r)) != NULL)
 			{
 			db->error=DB_ERROR_INDEX_CLASH;
 			db->arg1=sk_find(db->data,(char *)r);
 			db->arg2=i;
-			lh_free(idx);
+			lh_STRING_free(idx);
 			return(0);
 			}
 		}
-	if (db->index[field] != NULL) lh_free(db->index[field]);
+	if (db->index[field] != NULL) lh_STRING_free(db->index[field]);
 	db->index[field]=idx;
 	db->qual[field]=qual;
 	return(1);
@@ -298,10 +299,10 @@ err:
 	return(ret);
 	}
 
-int TXT_DB_insert(TXT_DB *db, char **row)
+int TXT_DB_insert(TXT_DB *db, STRING *row)
 	{
 	int i;
-	char **r;
+	STRING *r;
 
 	for (i=0; i<db->num_fields; i++)
 		{
@@ -309,7 +310,7 @@ int TXT_DB_insert(TXT_DB *db, char **row)
 			{
 			if ((db->qual[i] != NULL) &&
 				(db->qual[i](row) == 0)) continue;
-			r=(char **)lh_retrieve(db->index[i],row);
+			r=lh_STRING_retrieve(db->index[i],row);
 			if (r != NULL)
 				{
 				db->error=DB_ERROR_INDEX_CLASH;
@@ -332,7 +333,7 @@ int TXT_DB_insert(TXT_DB *db, char **row)
 			{
 			if ((db->qual[i] != NULL) &&
 				(db->qual[i](row) == 0)) continue;
-			lh_insert(db->index[i],row);
+			lh_STRING_insert(db->index[i],row);
 			}
 		}
 	return(1);
@@ -351,7 +352,7 @@ void TXT_DB_free(TXT_DB *db)
 	if (db->index != NULL)
 		{
 		for (i=db->num_fields-1; i>=0; i--)
-			if (db->index[i] != NULL) lh_free(db->index[i]);
+			if (db->index[i] != NULL) lh_STRING_free(db->index[i]);
 		OPENSSL_free(db->index);
 		}
 	if (db->qual != NULL)

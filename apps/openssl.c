@@ -135,12 +135,8 @@
  * type of "FUNCTION*"). This removes the necessity for macro-generated wrapper
  * functions. */
 
-/* static unsigned long MS_CALLBACK hash(FUNCTION *a); */
-static unsigned long MS_CALLBACK hash(const void *a_void);
-/* static int MS_CALLBACK cmp(FUNCTION *a,FUNCTION *b); */
-static int MS_CALLBACK cmp(const void *a_void,const void *b_void);
-static LHASH *prog_init(void );
-static int do_cmd(LHASH *prog,int argc,char *argv[]);
+static LHASH_OF(FUNCTION) *prog_init(void );
+static int do_cmd(LHASH_OF(FUNCTION) *prog,int argc,char *argv[]);
 static void list_pkey(BIO *out);
 static void list_cipher(BIO *out);
 static void list_md(BIO *out);
@@ -229,7 +225,7 @@ int main(int Argc, char *Argv[])
 	int n,i,ret=0;
 	int argc;
 	char **argv,*p;
-	LHASH *prog=NULL;
+	LHASH_OF(FUNCTION) *prog=NULL;
 	long errline;
  
 	arg.data=NULL;
@@ -287,7 +283,7 @@ int main(int Argc, char *Argv[])
 	program_name(Argv[0],pname,sizeof pname);
 
 	f.name=pname;
-	fp=(FUNCTION *)lh_retrieve(prog,&f);
+	fp=lh_FUNCTION_retrieve(prog,&f);
 	if (fp != NULL)
 		{
 		Argv[0]=pname;
@@ -353,7 +349,7 @@ end:
 		NCONF_free(config);
 		config=NULL;
 		}
-	if (prog != NULL) lh_free(prog);
+	if (prog != NULL) lh_FUNCTION_free(prog);
 	if (arg.data != NULL) OPENSSL_free(arg.data);
 
 	apps_shutdown();
@@ -375,7 +371,7 @@ end:
 #define LIST_PUBLIC_KEY_ALGORITHMS "list-public-key-algorithms"
 
 
-static int do_cmd(LHASH *prog, int argc, char *argv[])
+static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
 	{
 	FUNCTION f,*fp;
 	int i,ret=1,tp,nl;
@@ -383,7 +379,7 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 	if ((argc <= 0) || (argv[0] == NULL))
 		{ ret=0; goto end; }
 	f.name=argv[0];
-	fp=(FUNCTION *)lh_retrieve(prog,&f);
+	fp=lh_FUNCTION_retrieve(prog,&f);
 	if (fp != NULL)
 		{
 		ret=fp->func(argc,argv);
@@ -398,7 +394,7 @@ static int do_cmd(LHASH *prog, int argc, char *argv[])
 		}
 #endif
 		f.name=argv[0]+3;
-		ret = (lh_retrieve(prog,&f) != NULL);
+		ret = (lh_FUNCTION_retrieve(prog,&f) != NULL);
 		if (!ret)
 			BIO_printf(bio_stdout, "%s\n", argv[0]);
 		else
@@ -595,9 +591,21 @@ static void list_md(BIO *out)
 	EVP_MD_do_all_sorted(list_md_fn, out);
 	}
 
-static LHASH *prog_init(void)
+static int MS_CALLBACK function_cmp(const FUNCTION *a, const FUNCTION *b)
 	{
-	LHASH *ret;
+	return strncmp(a->name,b->name,8);
+	}
+static IMPLEMENT_LHASH_COMP_FN(function, FUNCTION);
+
+static unsigned long MS_CALLBACK function_hash(const FUNCTION *a)
+	{
+	return lh_strhash(a->name);
+	}	
+static IMPLEMENT_LHASH_HASH_FN(function, FUNCTION);
+
+static LHASH_OF(FUNCTION) *prog_init(void)
+	{
+	LHASH_OF(FUNCTION) *ret;
 	FUNCTION *f;
 	size_t i;
 
@@ -606,23 +614,11 @@ static LHASH *prog_init(void)
 	    ;
 	qsort(functions,i,sizeof *functions,SortFnByName);
 
-	if ((ret=lh_new(hash, cmp)) == NULL)
+	if ((ret=lh_FUNCTION_new()) == NULL)
 		return(NULL);
 
 	for (f=functions; f->name != NULL; f++)
-		lh_insert(ret,f);
+		lh_FUNCTION_insert(ret,f);
 	return(ret);
 	}
 
-/* static int MS_CALLBACK cmp(FUNCTION *a, FUNCTION *b) */
-static int MS_CALLBACK cmp(const void *a_void, const void *b_void)
-	{
-	return(strncmp(((const FUNCTION *)a_void)->name,
-			((const FUNCTION *)b_void)->name,8));
-	}
-
-/* static unsigned long MS_CALLBACK hash(FUNCTION *a) */
-static unsigned long MS_CALLBACK hash(const void *a_void)
-	{
-	return(lh_strhash(((const FUNCTION *)a_void)->name));
-	}

@@ -94,9 +94,10 @@ typedef struct added_obj_st
 	int type;
 	ASN1_OBJECT *obj;
 	} ADDED_OBJ;
+DECLARE_LHASH_OF(ADDED_OBJ);
 
 static int new_nid=NUM_NID;
-static LHASH *added=NULL;
+static LHASH_OF(ADDED_OBJ) *added=NULL;
 
 static int sn_cmp(const void *a, const void *b)
 	{
@@ -112,14 +113,12 @@ static int ln_cmp(const void *a, const void *b)
 	return(strcmp((*ap)->ln,nid_objs[*bp].ln));
 	}
 
-/* static unsigned long add_hash(ADDED_OBJ *ca) */
-static unsigned long add_hash(const void *ca_void)
+static unsigned long added_obj_hash(const ADDED_OBJ *ca)
 	{
 	const ASN1_OBJECT *a;
 	int i;
 	unsigned long ret=0;
 	unsigned char *p;
-	const ADDED_OBJ *ca = (const ADDED_OBJ *)ca_void;
 
 	a=ca->obj;
 	switch (ca->type)
@@ -147,14 +146,12 @@ static unsigned long add_hash(const void *ca_void)
 	ret|=ca->type<<30L;
 	return(ret);
 	}
+static IMPLEMENT_LHASH_HASH_FN(added_obj, ADDED_OBJ)
 
-/* static int add_cmp(ADDED_OBJ *ca, ADDED_OBJ *cb) */
-static int add_cmp(const void *ca_void, const void *cb_void)
+static int added_obj_cmp(const ADDED_OBJ *ca, const ADDED_OBJ *cb)
 	{
 	ASN1_OBJECT *a,*b;
 	int i;
-	const ADDED_OBJ *ca = (const ADDED_OBJ *)ca_void;
-	const ADDED_OBJ *cb = (const ADDED_OBJ *)cb_void;
 
 	i=ca->type-cb->type;
 	if (i) return(i);
@@ -181,15 +178,16 @@ static int add_cmp(const void *ca_void, const void *cb_void)
 		return 0;
 		}
 	}
+static IMPLEMENT_LHASH_COMP_FN(added_obj, ADDED_OBJ)
 
 static int init_added(void)
 	{
 	if (added != NULL) return(1);
-	added=lh_new(add_hash,add_cmp);
+	added=lh_ADDED_OBJ_new();
 	return(added != NULL);
 	}
 
-static void cleanup1(ADDED_OBJ *a)
+static void cleanup1_doall(ADDED_OBJ *a)
 	{
 	a->obj->nid=0;
 	a->obj->flags|=ASN1_OBJECT_FLAG_DYNAMIC|
@@ -197,19 +195,19 @@ static void cleanup1(ADDED_OBJ *a)
 			ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 	}
 
-static void cleanup2(ADDED_OBJ *a)
+static void cleanup2_doall(ADDED_OBJ *a)
 	{ a->obj->nid++; }
 
-static void cleanup3(ADDED_OBJ *a)
+static void cleanup3_doall(ADDED_OBJ *a)
 	{
 	if (--a->obj->nid == 0)
 		ASN1_OBJECT_free(a->obj);
 	OPENSSL_free(a);
 	}
 
-static IMPLEMENT_LHASH_DOALL_FN(cleanup1, ADDED_OBJ *)
-static IMPLEMENT_LHASH_DOALL_FN(cleanup2, ADDED_OBJ *)
-static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ *)
+static IMPLEMENT_LHASH_DOALL_FN(cleanup1, ADDED_OBJ)
+static IMPLEMENT_LHASH_DOALL_FN(cleanup2, ADDED_OBJ)
+static IMPLEMENT_LHASH_DOALL_FN(cleanup3, ADDED_OBJ)
 
 /* The purpose of obj_cleanup_defer is to avoid EVP_cleanup() attempting
  * to use freed up OIDs. If neccessary the actual freeing up of OIDs is
@@ -232,11 +230,11 @@ void OBJ_cleanup(void)
 		return ;
 		}
 	if (added == NULL) return;
-	added->down_load=0;
-	lh_doall(added,LHASH_DOALL_FN(cleanup1)); /* zero counters */
-	lh_doall(added,LHASH_DOALL_FN(cleanup2)); /* set counters */
-	lh_doall(added,LHASH_DOALL_FN(cleanup3)); /* free objects */
-	lh_free(added);
+	lh_ADDED_OBJ_down_load(added) = 0;
+	lh_ADDED_OBJ_doall(added,LHASH_DOALL_FN(cleanup1)); /* zero counters */
+	lh_ADDED_OBJ_doall(added,LHASH_DOALL_FN(cleanup2)); /* set counters */
+	lh_ADDED_OBJ_doall(added,LHASH_DOALL_FN(cleanup3)); /* free objects */
+	lh_ADDED_OBJ_free(added);
 	added=NULL;
 	}
 
@@ -272,7 +270,7 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
 			{
 			ao[i]->type=i;
 			ao[i]->obj=o;
-			aop=(ADDED_OBJ *)lh_insert(added,ao[i]);
+			aop=lh_ADDED_OBJ_insert(added,ao[i]);
 			/* memory leak, buit should not normally matter */
 			if (aop != NULL)
 				OPENSSL_free(aop);
@@ -312,7 +310,7 @@ ASN1_OBJECT *OBJ_nid2obj(int n)
 		ad.type=ADDED_NID;
 		ad.obj= &ob;
 		ob.nid=n;
-		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
+		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL)
 			return(adp->obj);
 		else
@@ -344,7 +342,7 @@ const char *OBJ_nid2sn(int n)
 		ad.type=ADDED_NID;
 		ad.obj= &ob;
 		ob.nid=n;
-		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
+		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL)
 			return(adp->obj->sn);
 		else
@@ -376,7 +374,7 @@ const char *OBJ_nid2ln(int n)
 		ad.type=ADDED_NID;
 		ad.obj= &ob;
 		ob.nid=n;
-		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
+		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL)
 			return(adp->obj->ln);
 		else
@@ -401,7 +399,7 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
 		{
 		ad.type=ADDED_DATA;
 		ad.obj=(ASN1_OBJECT *)a; /* XXX: ugly but harmless */
-		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
+		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
 	op=(const unsigned int *)OBJ_bsearch((const char *)&a,(const char *)obj_objs,
@@ -636,7 +634,7 @@ int OBJ_ln2nid(const char *s)
 		{
 		ad.type=ADDED_LNAME;
 		ad.obj= &o;
-		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
+		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
 	op=(const unsigned int*)OBJ_bsearch((char *)&oo,(char *)ln_objs, NUM_LN,
@@ -656,7 +654,7 @@ int OBJ_sn2nid(const char *s)
 		{
 		ad.type=ADDED_SNAME;
 		ad.obj= &o;
-		adp=(ADDED_OBJ *)lh_retrieve(added,&ad);
+		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
 	op=(const unsigned int *)OBJ_bsearch((char *)&oo,(char *)sn_objs,NUM_SN,

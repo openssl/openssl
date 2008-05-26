@@ -129,7 +129,7 @@ static CONF *def_create(CONF_METHOD *meth)
 	{
 	CONF *ret;
 
-	ret = (CONF *)OPENSSL_malloc(sizeof(CONF) + sizeof(unsigned short *));
+	ret = OPENSSL_malloc(sizeof(CONF) + sizeof(unsigned short *));
 	if (ret)
 		if (meth->init(ret) == 0)
 			{
@@ -145,7 +145,7 @@ static int def_init_default(CONF *conf)
 		return 0;
 
 	conf->meth = &default_method;
-	conf->meth_data = (void *)CONF_type_default;
+	conf->meth_data = CONF_type_default;
 	conf->data = NULL;
 
 	return 1;
@@ -722,7 +722,7 @@ static char *scan_dquote(CONF *conf, char *p)
 	return(p);
 	}
 
-static void dump_value(CONF_VALUE *a, BIO *out)
+static void dump_value_doall_arg(CONF_VALUE *a, BIO *out)
 	{
 	if (a->name)
 		BIO_printf(out, "[%s] %s=%s\n", a->section, a->name, a->value);
@@ -730,11 +730,12 @@ static void dump_value(CONF_VALUE *a, BIO *out)
 		BIO_printf(out, "[[%s]]\n", a->section);
 	}
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(dump_value, CONF_VALUE *, BIO *)
+static IMPLEMENT_LHASH_DOALL_ARG_FN(dump_value, CONF_VALUE, BIO)
 
 static int def_dump(const CONF *conf, BIO *out)
 	{
-	lh_doall_arg(conf->data, LHASH_DOALL_ARG_FN(dump_value), out);
+	lh_CONF_VALUE_doall_arg(conf->data, LHASH_DOALL_ARG_FN(dump_value),
+				BIO, out);
 	return 1;
 	}
 

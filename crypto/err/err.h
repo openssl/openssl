@@ -358,9 +358,9 @@ void ERR_remove_state(unsigned long pid); /* if zero we look it up */
 ERR_STATE *ERR_get_state(void);
 
 #ifndef OPENSSL_NO_LHASH
-LHASH *ERR_get_string_table(void);
-LHASH *ERR_get_err_state_table(void);
-void ERR_release_err_state_table(LHASH **hash);
+LHASH_OF(ERR_STRING_DATA) *ERR_get_string_table(void);
+LHASH_OF(ERR_STATE) *ERR_get_err_state_table(void);
+void ERR_release_err_state_table(LHASH_OF(ERR_STATE) **hash);
 #endif
 
 int ERR_get_next_error_library(void);

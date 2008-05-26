@@ -1477,7 +1477,7 @@ char *make_config_name()
 	return p;
 	}
 
-static unsigned long index_serial_hash(const char **a)
+static unsigned long index_serial_hash(const STRING *a)
 	{
 	const char *n;
 
@@ -1486,7 +1486,7 @@ static unsigned long index_serial_hash(const char **a)
 	return(lh_strhash(n));
 	}
 
-static int index_serial_cmp(const char **a, const char **b)
+static int index_serial_cmp(const STRING *a, const STRING *b)
 	{
 	const char *aa,*bb;
 
@@ -1498,17 +1498,16 @@ static int index_serial_cmp(const char **a, const char **b)
 static int index_name_qual(char **a)
 	{ return(a[0][0] == 'V'); }
 
-static unsigned long index_name_hash(const char **a)
+static unsigned long index_name_hash(const STRING *a)
 	{ return(lh_strhash(a[DB_name])); }
 
-int index_name_cmp(const char **a, const char **b)
-	{ return(strcmp(a[DB_name],
-	     b[DB_name])); }
+int index_name_cmp(const STRING *a, const STRING *b)
+	{ return(strcmp(a[DB_name], b[DB_name])); }
 
-static IMPLEMENT_LHASH_HASH_FN(index_serial_hash,const char **)
-static IMPLEMENT_LHASH_COMP_FN(index_serial_cmp,const char **)
-static IMPLEMENT_LHASH_HASH_FN(index_name_hash,const char **)
-static IMPLEMENT_LHASH_COMP_FN(index_name_cmp,const char **)
+static IMPLEMENT_LHASH_HASH_FN(index_serial, STRING)
+static IMPLEMENT_LHASH_COMP_FN(index_serial, STRING)
+static IMPLEMENT_LHASH_HASH_FN(index_name, STRING)
+static IMPLEMENT_LHASH_COMP_FN(index_name, STRING)
 
 #undef BSIZE
 #define BSIZE 256
@@ -1802,8 +1801,8 @@ CA_DB *load_index(char *dbfile, DB_ATTR *db_attr)
 int index_index(CA_DB *db)
 	{
 	if (!TXT_DB_create_index(db->db, DB_serial, NULL,
-				LHASH_HASH_FN(index_serial_hash),
-				LHASH_COMP_FN(index_serial_cmp)))
+				LHASH_HASH_FN(index_serial),
+				LHASH_COMP_FN(index_serial)))
 		{
 		BIO_printf(bio_err,
 		  "error creating serial number index:(%ld,%ld,%ld)\n",
@@ -1813,8 +1812,8 @@ int index_index(CA_DB *db)
 
 	if (db->attributes.unique_subject
 		&& !TXT_DB_create_index(db->db, DB_name, index_name_qual,
-			LHASH_HASH_FN(index_name_hash),
-			LHASH_COMP_FN(index_name_cmp)))
+			LHASH_HASH_FN(index_name),
+			LHASH_COMP_FN(index_name)))
 		{
 		BIO_printf(bio_err,"error creating name index:(%ld,%ld,%ld)\n",
 			db->db->error,db->db->arg1,db->db->arg2);

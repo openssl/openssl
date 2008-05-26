@@ -4,6 +4,10 @@
 
  Changes between 0.9.8g and 0.9.9  [xx XXX xxxx]
 
+  *) Revamp of LHASH to provide stronger type-checking. Still to come:
+     STACK, TXT_DB, bsearch, qsort.
+     [Ben Laurie]
+
   *) Not all of this is true any longer.
      Will have to be updated to reflect all subsequent changes to cryptlib.c.
                                                                        --bodo

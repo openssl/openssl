@@ -659,6 +659,7 @@ typedef struct ssl_comp_st
 	} SSL_COMP;
 
 DECLARE_STACK_OF(SSL_COMP)
+DECLARE_LHASH_OF(SSL_SESSION);
 
 struct ssl_ctx_st
 	{
@@ -669,7 +670,7 @@ struct ssl_ctx_st
 	STACK_OF(SSL_CIPHER) *cipher_list_by_id;
 
 	struct x509_store_st /* X509_STORE */ *cert_store;
-	struct lhash_st /* LHASH */ *sessions;	/* a set of SSL_SESSIONs */
+	LHASH_OF(SSL_SESSION) *sessions;
 	/* Most session-ids that will be cached, default is
 	 * SSL_SESSION_CACHE_MAX_SIZE_DEFAULT. 0 is unlimited. */
 	unsigned long session_cache_size;
@@ -845,7 +846,7 @@ struct ssl_ctx_st
 #define SSL_SESS_CACHE_NO_INTERNAL \
 	(SSL_SESS_CACHE_NO_INTERNAL_LOOKUP|SSL_SESS_CACHE_NO_INTERNAL_STORE)
 
-  struct lhash_st *SSL_CTX_sessions(SSL_CTX *ctx);
+LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx);
 #define SSL_CTX_sess_number(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SESS_NUMBER,0,NULL)
 #define SSL_CTX_sess_connect(ctx) \
@@ -1484,9 +1485,8 @@ long	SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
 void	SSL_copy_session_id(SSL *to,const SSL *from);
 
 SSL_SESSION *SSL_SESSION_new(void);
-unsigned long SSL_SESSION_hash(const SSL_SESSION *a);
-int	SSL_SESSION_cmp(const SSL_SESSION *a,const SSL_SESSION *b);
-const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len);
+const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
+					unsigned int *len);
 #ifndef OPENSSL_NO_FP_API
 int	SSL_SESSION_print_fp(FILE *fp,const SSL_SESSION *ses);
 #endif

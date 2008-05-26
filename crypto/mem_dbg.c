@@ -134,8 +134,11 @@ static int mh_mode=CRYPTO_MEM_CHECK_OFF;
  */
 
 static unsigned long order = 0; /* number of memory requests */
-static LHASH *mh=NULL; /* hash-table of memory requests (address as key);
-                        * access requires MALLOC2 lock */
+
+DECLARE_LHASH_OF(MEM);
+static LHASH_OF(MEM) *mh=NULL; /* hash-table of memory requests
+				* (address as key); access requires
+				* MALLOC2 lock */
 
 
 typedef struct app_mem_info_st
@@ -157,10 +160,13 @@ typedef struct app_mem_info_st
 
 static void app_info_free(APP_INFO *);
 
-static LHASH *amih=NULL; /* hash-table with those app_mem_info_st's
-                          * that are at the top of their thread's stack
-                          * (with `thread' as key);
-                          * access requires MALLOC2 lock */
+DECLARE_LHASH_OF(APP_INFO);
+static LHASH_OF(APP_INFO) *amih=NULL; /* hash-table with those
+				       * app_mem_info_st's that are at
+				       * the top of their thread's
+				       * stack (with `thread' as key);
+				       * access requires MALLOC2
+				       * lock */
 
 typedef struct mem_st
 /* memory-block description */
@@ -306,31 +312,30 @@ long CRYPTO_dbg_get_options(void)
 	return options;
 	}
 
-/* static int mem_cmp(MEM *a, MEM *b) */
-static int mem_cmp(const void *a_void, const void *b_void)
+static int mem_cmp(const MEM *a, const MEM *b)
 	{
 #ifdef _WIN64
-	const char *a=(const char *)((const MEM *)a_void)->addr,
-		   *b=(const char *)((const MEM *)b_void)->addr;
+	const char *a=(const char *)a->addr,
+		   *b=(const char *)b->addr;
 	if (a==b)	return 0;
 	else if (a>b)	return 1;
 	else		return -1;
 #else
-	return((const char *)((const MEM *)a_void)->addr
-		- (const char *)((const MEM *)b_void)->addr);
+	return (const char *)a->addr - (const char *)b->addr;
 #endif
 	}
+static IMPLEMENT_LHASH_COMP_FN(mem, MEM)
 
-/* static unsigned long mem_hash(MEM *a) */
-static unsigned long mem_hash(const void *a_void)
+static unsigned long mem_hash(const MEM *a)
 	{
 	unsigned long ret;
 
-	ret=(unsigned long)((const MEM *)a_void)->addr;
+	ret=(unsigned long)a->addr;
 
 	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
 	return(ret);
 	}
+static IMPLEMENT_LHASH_HASH_FN(mem, MEM)
 
 /* static int app_info_cmp(APP_INFO *a, APP_INFO *b) */
 static int app_info_cmp(const void *a_void, const void *b_void)
@@ -338,15 +343,16 @@ static int app_info_cmp(const void *a_void, const void *b_void)
 	return CRYPTO_THREADID_cmp(&((const APP_INFO *)a_void)->threadid,
 				&((const APP_INFO *)b_void)->threadid);
 	}
+static IMPLEMENT_LHASH_COMP_FN(app_info, APP_INFO)
 
-/* static unsigned long app_info_hash(APP_INFO *a) */
-static unsigned long app_info_hash(const void *a_void)
+static unsigned long app_info_hash(const APP_INFO *a)
 	{
 	unsigned long ret;
-	ret = CRYPTO_THREADID_hash(&((const APP_INFO *)a_void)->threadid);
+	ret = CRYPTO_THREADID_hash(&a->threadid);
 	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
 	return(ret);
 	}
+static IMPLEMENT_LHASH_HASH_FN(app_info, APP_INFO)
 
 static APP_INFO *pop_info(void)
 	{
@@ -356,14 +362,14 @@ static APP_INFO *pop_info(void)
 	if (amih != NULL)
 		{
 		CRYPTO_THREADID_set(&tmp.threadid);
-		if ((ret=(APP_INFO *)lh_delete(amih,&tmp)) != NULL)
+		if ((ret=lh_APP_INFO_delete(amih,&tmp)) != NULL)
 			{
 			APP_INFO *next=ret->next;
 
 			if (next != NULL)
 				{
 				next->references++;
-				lh_insert(amih,(char *)next);
+				lh_APP_INFO_insert(amih,next);
 				}
 #ifdef LEVITTE_DEBUG_MEM
 			if (CRYPTO_THREADID_cmp(&ret->threadid, &tmp.threadid))
@@ -402,7 +408,7 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 			}
 		if (amih == NULL)
 			{
-			if ((amih=lh_new(app_info_hash, app_info_cmp)) == NULL)
+			if ((amih=lh_APP_INFO_new()) == NULL)
 				{
 				OPENSSL_free(ami);
 				ret=0;
@@ -417,7 +423,7 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 		ami->references=1;
 		ami->next=NULL;
 
-		if ((amim=(APP_INFO *)lh_insert(amih,(char *)ami)) != NULL)
+		if ((amim=lh_APP_INFO_insert(amih,ami)) != NULL)
 			{
 #ifdef LEVITTE_DEBUG_MEM
 			if (CRYPTO_THREADID_cmp(&ami->threadid, &amim->threadid))
@@ -496,7 +502,7 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 				}
 			if (mh == NULL)
 				{
-				if ((mh=lh_new(mem_hash, mem_cmp)) == NULL)
+				if ((mh=lh_MEM_new()) == NULL)
 					{
 					OPENSSL_free(addr);
 					OPENSSL_free(m);
@@ -531,13 +537,13 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 			CRYPTO_THREADID_set(&m->threadid);
 			m->app_info=NULL;
 			if (amih != NULL
-				&& (amim=(APP_INFO *)lh_retrieve(amih,(char *)&tmp)) != NULL)
+			    && (amim=lh_APP_INFO_retrieve(amih,&tmp)) != NULL)
 				{
 				m->app_info = amim;
 				amim->references++;
 				}
 
-			if ((mm=(MEM *)lh_insert(mh,(char *)m)) != NULL)
+			if ((mm=lh_MEM_insert(mh, m)) != NULL)
 				{
 				/* Not good, but don't sweat it */
 				if (mm->app_info != NULL)
@@ -570,7 +576,7 @@ void CRYPTO_dbg_free(void *addr, int before_p)
 			MemCheck_off(); /* make sure we hold MALLOC2 lock */
 
 			m.addr=addr;
-			mp=(MEM *)lh_delete(mh,(char *)&m);
+			mp=lh_MEM_delete(mh,&m);
 			if (mp != NULL)
 				{
 #ifdef LEVITTE_DEBUG_MEM
@@ -620,7 +626,7 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 			MemCheck_off(); /* make sure we hold MALLOC2 lock */
 
 			m.addr=addr1;
-			mp=(MEM *)lh_delete(mh,(char *)&m);
+			mp=lh_MEM_delete(mh,&m);
 			if (mp != NULL)
 				{
 #ifdef LEVITTE_DEBUG_MEM
@@ -631,7 +637,7 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 #endif
 				mp->addr=addr2;
 				mp->num=num;
-				lh_insert(mh,(char *)mp);
+				lh_MEM_insert(mh,mp);
 				}
 
 			MemCheck_on(); /* release MALLOC2 lock
@@ -650,7 +656,7 @@ typedef struct mem_leak_st
 	long bytes;
 	} MEM_LEAK;
 
-static void print_leak(const MEM *m, MEM_LEAK *l)
+static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 	{
 	char buf[1024];
 	char *bufp = buf;
@@ -739,7 +745,7 @@ static void print_leak(const MEM *m, MEM_LEAK *l)
 #endif
 	}
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(print_leak, const MEM *, MEM_LEAK *)
+static IMPLEMENT_LHASH_DOALL_ARG_FN(print_leak, const MEM, MEM_LEAK)
 
 void CRYPTO_mem_leaks(BIO *b)
 	{
@@ -754,8 +760,8 @@ void CRYPTO_mem_leaks(BIO *b)
 	ml.bytes=0;
 	ml.chunks=0;
 	if (mh != NULL)
-		lh_doall_arg(mh, LHASH_DOALL_ARG_FN(print_leak),
-				(char *)&ml);
+		lh_MEM_doall_arg(mh, LHASH_DOALL_ARG_FN(print_leak), MEM_LEAK,
+				 &ml);
 	if (ml.chunks != 0)
 		{
 		BIO_printf(b,"%ld bytes leaked in %d chunks\n",
@@ -789,14 +795,14 @@ void CRYPTO_mem_leaks(BIO *b)
 
 		if (mh != NULL)
 			{
-			lh_free(mh);
+			lh_MEM_free(mh);
 			mh = NULL;
 			}
 		if (amih != NULL)
 			{
-			if (lh_num_items(amih) == 0) 
+			if (lh_APP_INFO_num_items(amih) == 0) 
 				{
-				lh_free(amih);
+				lh_APP_INFO_free(amih);
 				amih = NULL;
 				}
 			}
@@ -834,17 +840,18 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
 /* NB: The prototypes have been typedef'd to CRYPTO_MEM_LEAK_CB inside crypto.h
  * If this code is restructured, remove the callback type if it is no longer
  * needed. -- Geoff Thorpe */
-static void cb_leak(const MEM *m, CRYPTO_MEM_LEAK_CB **cb)
+static void cb_leak_doall_arg(const MEM *m, CRYPTO_MEM_LEAK_CB *cb)
 	{
-	(**cb)(m->order,m->file,m->line,m->num,m->addr);
+	cb(m->order,m->file,m->line,m->num,m->addr);
 	}
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(cb_leak, const MEM *, CRYPTO_MEM_LEAK_CB **)
+static IMPLEMENT_LHASH_DOALL_ARG_FN(cb_leak, const MEM, CRYPTO_MEM_LEAK_CB)
 
 void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb)
 	{
 	if (mh == NULL) return;
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
-	lh_doall_arg(mh, LHASH_DOALL_ARG_FN(cb_leak), &cb);
+	lh_MEM_doall_arg(mh, LHASH_DOALL_ARG_FN(cb_leak), CRYPTO_MEM_LEAK_CB,
+			 cb);
 	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
 	}

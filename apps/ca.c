@@ -1678,7 +1678,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	int ok= -1,i,j,last,nid;
 	const char *p;
 	CONF_VALUE *cv;
-	char *row[DB_NUMBER],**rrow=NULL,**irow=NULL;
+	STRING row[DB_NUMBER];
+	STRING *irow=NULL;
+	STRING *rrow=NULL;
 	char buf[25];
 
 	tmptm=ASN1_UTCTIME_new();
@@ -1920,7 +1922,9 @@ again2:
 
 	if (db->attributes.unique_subject)
 		{
-		rrow=TXT_DB_get_by_index(db->db,DB_name,row);
+		STRING *crow=row;
+
+		rrow=TXT_DB_get_by_index(db->db,DB_name,crow);
 		if (rrow != NULL)
 			{
 			BIO_printf(bio_err,
@@ -2221,7 +2225,7 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 	     unsigned long nameopt, int default_op, int ext_copy)
 	{
 	STACK_OF(CONF_VALUE) *sk=NULL;
-	LHASH *parms=NULL;
+	LHASH_OF(CONF_VALUE) *parms=NULL;
 	X509_REQ *req=NULL;
 	CONF_VALUE *cv=NULL;
 	NETSCAPE_SPKI *spki = NULL;
@@ -2477,7 +2481,7 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 		goto err;
 
 		}
-	else if (index_name_cmp((const char **)row,(const char **)rrow))
+	else if (index_name_cmp(row,rrow))
 		{
 		BIO_printf(bio_err,"ERROR:name does not match %s\n",
 			   row[DB_name]);

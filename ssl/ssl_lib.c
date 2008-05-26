@@ -457,7 +457,7 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
 		}
 
 	CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-	p = (SSL_SESSION *)lh_retrieve(ssl->ctx->sessions, &r);
+	p = lh_SSL_SESSION_retrieve(ssl->ctx->sessions, &r);
 	CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
 	return (p != NULL);
 	}
@@ -1062,7 +1062,7 @@ long SSL_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 		}
 	}
 
-struct lhash_st *SSL_CTX_sessions(SSL_CTX *ctx)
+LHASH_OF(SSL_SESSION) *SSL_CTX_sessions(SSL_CTX *ctx)
 	{
 	return ctx->sessions;
 	}
@@ -1105,7 +1105,7 @@ long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,void *parg)
 		return(ctx->session_cache_mode);
 
 	case SSL_CTRL_SESS_NUMBER:
-		return(ctx->sessions->num_items);
+		return(lh_SSL_SESSION_num_items(ctx->sessions));
 	case SSL_CTRL_SESS_CONNECT:
 		return(ctx->stats.sess_connect);
 	case SSL_CTRL_SESS_CONNECT_GOOD:
@@ -1410,7 +1410,7 @@ int SSL_get_servername_type(const SSL *s)
 	}
 #endif
 
-unsigned long SSL_SESSION_hash(const SSL_SESSION *a)
+static unsigned long ssl_session_hash(const SSL_SESSION *a)
 	{
 	unsigned long l;
 
@@ -1427,7 +1427,7 @@ unsigned long SSL_SESSION_hash(const SSL_SESSION *a)
  * SSL_CTX_has_matching_session_id() is checked accordingly. It relies on being
  * able to construct an SSL_SESSION that will collide with any existing session
  * with a matching session ID. */
-int SSL_SESSION_cmp(const SSL_SESSION *a,const SSL_SESSION *b)
+static int ssl_session_cmp(const SSL_SESSION *a,const SSL_SESSION *b)
 	{
 	if (a->ssl_version != b->ssl_version)
 		return(1);
@@ -1440,8 +1440,8 @@ int SSL_SESSION_cmp(const SSL_SESSION *a,const SSL_SESSION *b)
  * SSL_SESSION_hash and SSL_SESSION_cmp for void* types and casting each
  * variable. The reason is that the functions aren't static, they're exposed via
  * ssl.h. */
-static IMPLEMENT_LHASH_HASH_FN(SSL_SESSION_hash, SSL_SESSION *)
-static IMPLEMENT_LHASH_COMP_FN(SSL_SESSION_cmp, SSL_SESSION *)
+static IMPLEMENT_LHASH_HASH_FN(ssl_session, SSL_SESSION)
+static IMPLEMENT_LHASH_COMP_FN(ssl_session, SSL_SESSION)
 
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	{
@@ -1515,8 +1515,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	ret->app_gen_cookie_cb=0;
 	ret->app_verify_cookie_cb=0;
 
-	ret->sessions=lh_new(LHASH_HASH_FN(SSL_SESSION_hash),
-			LHASH_COMP_FN(SSL_SESSION_cmp));
+	ret->sessions=lh_SSL_SESSION_new();
 	if (ret->sessions == NULL) goto err;
 	ret->cert_store=X509_STORE_new();
 	if (ret->cert_store == NULL) goto err;
@@ -1629,7 +1628,7 @@ void SSL_CTX_free(SSL_CTX *a)
 	CRYPTO_free_ex_data(CRYPTO_EX_INDEX_SSL_CTX, a, &a->ex_data);
 
 	if (a->sessions != NULL)
-		lh_free(a->sessions);
+		lh_SSL_SESSION_free(a->sessions);
 
 	if (a->cert_store != NULL)
 		X509_STORE_free(a->cert_store);

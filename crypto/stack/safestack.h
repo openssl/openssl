@@ -2118,6 +2118,240 @@ STACK_OF(type) \
 
 #define PKCS12_decrypt_d2i_PKCS7(algor, d2i_func, free_func, pass, passlen, oct, seq) \
 	SKM_PKCS12_decrypt_d2i(PKCS7, (algor), (d2i_func), (free_func), (pass), (passlen), (oct), (seq))
+
+#define lh_ADDED_OBJ_new() LHM_lh_new(ADDED_OBJ,added_obj)
+#define lh_ADDED_OBJ_insert(lh,inst) LHM_lh_insert(ADDED_OBJ,lh,inst)
+#define lh_ADDED_OBJ_retrieve(lh,inst) LHM_lh_retrieve(ADDED_OBJ,lh,inst)
+#define lh_ADDED_OBJ_delete(lh,inst) LHM_lh_delete(ADDED_OBJ,lh,inst)
+#define lh_ADDED_OBJ_doall(lh,fn) LHM_lh_doall(ADDED_OBJ,lh,fn)
+#define lh_ADDED_OBJ_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(ADDED_OBJ,lh,fn,arg_type,arg)
+#define lh_ADDED_OBJ_error(lh) LHM_lh_error(ADDED_OBJ,lh)
+#define lh_ADDED_OBJ_num_items(lh) LHM_lh_num_items(ADDED_OBJ,lh)
+#define lh_ADDED_OBJ_down_load(lh) LHM_lh_down_load(ADDED_OBJ,lh)
+#define lh_ADDED_OBJ_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(ADDED_OBJ,lh,out)
+#define lh_ADDED_OBJ_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(ADDED_OBJ,lh,out)
+#define lh_ADDED_OBJ_stats_bio(lh,out) \
+  LHM_lh_stats_bio(ADDED_OBJ,lh,out)
+#define lh_ADDED_OBJ_free(lh) LHM_lh_free(ADDED_OBJ,lh)
+
+#define lh_APP_INFO_new() LHM_lh_new(APP_INFO,app_info)
+#define lh_APP_INFO_insert(lh,inst) LHM_lh_insert(APP_INFO,lh,inst)
+#define lh_APP_INFO_retrieve(lh,inst) LHM_lh_retrieve(APP_INFO,lh,inst)
+#define lh_APP_INFO_delete(lh,inst) LHM_lh_delete(APP_INFO,lh,inst)
+#define lh_APP_INFO_doall(lh,fn) LHM_lh_doall(APP_INFO,lh,fn)
+#define lh_APP_INFO_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(APP_INFO,lh,fn,arg_type,arg)
+#define lh_APP_INFO_error(lh) LHM_lh_error(APP_INFO,lh)
+#define lh_APP_INFO_num_items(lh) LHM_lh_num_items(APP_INFO,lh)
+#define lh_APP_INFO_down_load(lh) LHM_lh_down_load(APP_INFO,lh)
+#define lh_APP_INFO_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(APP_INFO,lh,out)
+#define lh_APP_INFO_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(APP_INFO,lh,out)
+#define lh_APP_INFO_stats_bio(lh,out) \
+  LHM_lh_stats_bio(APP_INFO,lh,out)
+#define lh_APP_INFO_free(lh) LHM_lh_free(APP_INFO,lh)
+
+#define lh_CONF_VALUE_new() LHM_lh_new(CONF_VALUE,conf_value)
+#define lh_CONF_VALUE_insert(lh,inst) LHM_lh_insert(CONF_VALUE,lh,inst)
+#define lh_CONF_VALUE_retrieve(lh,inst) LHM_lh_retrieve(CONF_VALUE,lh,inst)
+#define lh_CONF_VALUE_delete(lh,inst) LHM_lh_delete(CONF_VALUE,lh,inst)
+#define lh_CONF_VALUE_doall(lh,fn) LHM_lh_doall(CONF_VALUE,lh,fn)
+#define lh_CONF_VALUE_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(CONF_VALUE,lh,fn,arg_type,arg)
+#define lh_CONF_VALUE_error(lh) LHM_lh_error(CONF_VALUE,lh)
+#define lh_CONF_VALUE_num_items(lh) LHM_lh_num_items(CONF_VALUE,lh)
+#define lh_CONF_VALUE_down_load(lh) LHM_lh_down_load(CONF_VALUE,lh)
+#define lh_CONF_VALUE_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(CONF_VALUE,lh,out)
+#define lh_CONF_VALUE_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(CONF_VALUE,lh,out)
+#define lh_CONF_VALUE_stats_bio(lh,out) \
+  LHM_lh_stats_bio(CONF_VALUE,lh,out)
+#define lh_CONF_VALUE_free(lh) LHM_lh_free(CONF_VALUE,lh)
+
+#define lh_CSTRING_new() LHM_lh_new(CSTRING,cstring)
+#define lh_CSTRING_insert(lh,inst) LHM_lh_insert(CSTRING,lh,inst)
+#define lh_CSTRING_retrieve(lh,inst) LHM_lh_retrieve(CSTRING,lh,inst)
+#define lh_CSTRING_delete(lh,inst) LHM_lh_delete(CSTRING,lh,inst)
+#define lh_CSTRING_doall(lh,fn) LHM_lh_doall(CSTRING,lh,fn)
+#define lh_CSTRING_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(CSTRING,lh,fn,arg_type,arg)
+#define lh_CSTRING_error(lh) LHM_lh_error(CSTRING,lh)
+#define lh_CSTRING_num_items(lh) LHM_lh_num_items(CSTRING,lh)
+#define lh_CSTRING_down_load(lh) LHM_lh_down_load(CSTRING,lh)
+#define lh_CSTRING_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(CSTRING,lh,out)
+#define lh_CSTRING_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(CSTRING,lh,out)
+#define lh_CSTRING_stats_bio(lh,out) \
+  LHM_lh_stats_bio(CSTRING,lh,out)
+#define lh_CSTRING_free(lh) LHM_lh_free(CSTRING,lh)
+
+#define lh_ENGINE_PILE_new() LHM_lh_new(ENGINE_PILE,engine_pile)
+#define lh_ENGINE_PILE_insert(lh,inst) LHM_lh_insert(ENGINE_PILE,lh,inst)
+#define lh_ENGINE_PILE_retrieve(lh,inst) LHM_lh_retrieve(ENGINE_PILE,lh,inst)
+#define lh_ENGINE_PILE_delete(lh,inst) LHM_lh_delete(ENGINE_PILE,lh,inst)
+#define lh_ENGINE_PILE_doall(lh,fn) LHM_lh_doall(ENGINE_PILE,lh,fn)
+#define lh_ENGINE_PILE_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(ENGINE_PILE,lh,fn,arg_type,arg)
+#define lh_ENGINE_PILE_error(lh) LHM_lh_error(ENGINE_PILE,lh)
+#define lh_ENGINE_PILE_num_items(lh) LHM_lh_num_items(ENGINE_PILE,lh)
+#define lh_ENGINE_PILE_down_load(lh) LHM_lh_down_load(ENGINE_PILE,lh)
+#define lh_ENGINE_PILE_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(ENGINE_PILE,lh,out)
+#define lh_ENGINE_PILE_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(ENGINE_PILE,lh,out)
+#define lh_ENGINE_PILE_stats_bio(lh,out) \
+  LHM_lh_stats_bio(ENGINE_PILE,lh,out)
+#define lh_ENGINE_PILE_free(lh) LHM_lh_free(ENGINE_PILE,lh)
+
+#define lh_ERR_STATE_new() LHM_lh_new(ERR_STATE,err_state)
+#define lh_ERR_STATE_insert(lh,inst) LHM_lh_insert(ERR_STATE,lh,inst)
+#define lh_ERR_STATE_retrieve(lh,inst) LHM_lh_retrieve(ERR_STATE,lh,inst)
+#define lh_ERR_STATE_delete(lh,inst) LHM_lh_delete(ERR_STATE,lh,inst)
+#define lh_ERR_STATE_doall(lh,fn) LHM_lh_doall(ERR_STATE,lh,fn)
+#define lh_ERR_STATE_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(ERR_STATE,lh,fn,arg_type,arg)
+#define lh_ERR_STATE_error(lh) LHM_lh_error(ERR_STATE,lh)
+#define lh_ERR_STATE_num_items(lh) LHM_lh_num_items(ERR_STATE,lh)
+#define lh_ERR_STATE_down_load(lh) LHM_lh_down_load(ERR_STATE,lh)
+#define lh_ERR_STATE_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(ERR_STATE,lh,out)
+#define lh_ERR_STATE_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(ERR_STATE,lh,out)
+#define lh_ERR_STATE_stats_bio(lh,out) \
+  LHM_lh_stats_bio(ERR_STATE,lh,out)
+#define lh_ERR_STATE_free(lh) LHM_lh_free(ERR_STATE,lh)
+
+#define lh_ERR_STRING_DATA_new() LHM_lh_new(ERR_STRING_DATA,err_string_data)
+#define lh_ERR_STRING_DATA_insert(lh,inst) LHM_lh_insert(ERR_STRING_DATA,lh,inst)
+#define lh_ERR_STRING_DATA_retrieve(lh,inst) LHM_lh_retrieve(ERR_STRING_DATA,lh,inst)
+#define lh_ERR_STRING_DATA_delete(lh,inst) LHM_lh_delete(ERR_STRING_DATA,lh,inst)
+#define lh_ERR_STRING_DATA_doall(lh,fn) LHM_lh_doall(ERR_STRING_DATA,lh,fn)
+#define lh_ERR_STRING_DATA_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(ERR_STRING_DATA,lh,fn,arg_type,arg)
+#define lh_ERR_STRING_DATA_error(lh) LHM_lh_error(ERR_STRING_DATA,lh)
+#define lh_ERR_STRING_DATA_num_items(lh) LHM_lh_num_items(ERR_STRING_DATA,lh)
+#define lh_ERR_STRING_DATA_down_load(lh) LHM_lh_down_load(ERR_STRING_DATA,lh)
+#define lh_ERR_STRING_DATA_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(ERR_STRING_DATA,lh,out)
+#define lh_ERR_STRING_DATA_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(ERR_STRING_DATA,lh,out)
+#define lh_ERR_STRING_DATA_stats_bio(lh,out) \
+  LHM_lh_stats_bio(ERR_STRING_DATA,lh,out)
+#define lh_ERR_STRING_DATA_free(lh) LHM_lh_free(ERR_STRING_DATA,lh)
+
+#define lh_EX_CLASS_ITEM_new() LHM_lh_new(EX_CLASS_ITEM,ex_class_item)
+#define lh_EX_CLASS_ITEM_insert(lh,inst) LHM_lh_insert(EX_CLASS_ITEM,lh,inst)
+#define lh_EX_CLASS_ITEM_retrieve(lh,inst) LHM_lh_retrieve(EX_CLASS_ITEM,lh,inst)
+#define lh_EX_CLASS_ITEM_delete(lh,inst) LHM_lh_delete(EX_CLASS_ITEM,lh,inst)
+#define lh_EX_CLASS_ITEM_doall(lh,fn) LHM_lh_doall(EX_CLASS_ITEM,lh,fn)
+#define lh_EX_CLASS_ITEM_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(EX_CLASS_ITEM,lh,fn,arg_type,arg)
+#define lh_EX_CLASS_ITEM_error(lh) LHM_lh_error(EX_CLASS_ITEM,lh)
+#define lh_EX_CLASS_ITEM_num_items(lh) LHM_lh_num_items(EX_CLASS_ITEM,lh)
+#define lh_EX_CLASS_ITEM_down_load(lh) LHM_lh_down_load(EX_CLASS_ITEM,lh)
+#define lh_EX_CLASS_ITEM_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(EX_CLASS_ITEM,lh,out)
+#define lh_EX_CLASS_ITEM_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(EX_CLASS_ITEM,lh,out)
+#define lh_EX_CLASS_ITEM_stats_bio(lh,out) \
+  LHM_lh_stats_bio(EX_CLASS_ITEM,lh,out)
+#define lh_EX_CLASS_ITEM_free(lh) LHM_lh_free(EX_CLASS_ITEM,lh)
+
+#define lh_FUNCTION_new() LHM_lh_new(FUNCTION,function)
+#define lh_FUNCTION_insert(lh,inst) LHM_lh_insert(FUNCTION,lh,inst)
+#define lh_FUNCTION_retrieve(lh,inst) LHM_lh_retrieve(FUNCTION,lh,inst)
+#define lh_FUNCTION_delete(lh,inst) LHM_lh_delete(FUNCTION,lh,inst)
+#define lh_FUNCTION_doall(lh,fn) LHM_lh_doall(FUNCTION,lh,fn)
+#define lh_FUNCTION_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(FUNCTION,lh,fn,arg_type,arg)
+#define lh_FUNCTION_error(lh) LHM_lh_error(FUNCTION,lh)
+#define lh_FUNCTION_num_items(lh) LHM_lh_num_items(FUNCTION,lh)
+#define lh_FUNCTION_down_load(lh) LHM_lh_down_load(FUNCTION,lh)
+#define lh_FUNCTION_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(FUNCTION,lh,out)
+#define lh_FUNCTION_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(FUNCTION,lh,out)
+#define lh_FUNCTION_stats_bio(lh,out) \
+  LHM_lh_stats_bio(FUNCTION,lh,out)
+#define lh_FUNCTION_free(lh) LHM_lh_free(FUNCTION,lh)
+
+#define lh_MEM_new() LHM_lh_new(MEM,mem)
+#define lh_MEM_insert(lh,inst) LHM_lh_insert(MEM,lh,inst)
+#define lh_MEM_retrieve(lh,inst) LHM_lh_retrieve(MEM,lh,inst)
+#define lh_MEM_delete(lh,inst) LHM_lh_delete(MEM,lh,inst)
+#define lh_MEM_doall(lh,fn) LHM_lh_doall(MEM,lh,fn)
+#define lh_MEM_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(MEM,lh,fn,arg_type,arg)
+#define lh_MEM_error(lh) LHM_lh_error(MEM,lh)
+#define lh_MEM_num_items(lh) LHM_lh_num_items(MEM,lh)
+#define lh_MEM_down_load(lh) LHM_lh_down_load(MEM,lh)
+#define lh_MEM_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(MEM,lh,out)
+#define lh_MEM_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(MEM,lh,out)
+#define lh_MEM_stats_bio(lh,out) \
+  LHM_lh_stats_bio(MEM,lh,out)
+#define lh_MEM_free(lh) LHM_lh_free(MEM,lh)
+
+#define lh_OBJ_NAME_new() LHM_lh_new(OBJ_NAME,obj_name)
+#define lh_OBJ_NAME_insert(lh,inst) LHM_lh_insert(OBJ_NAME,lh,inst)
+#define lh_OBJ_NAME_retrieve(lh,inst) LHM_lh_retrieve(OBJ_NAME,lh,inst)
+#define lh_OBJ_NAME_delete(lh,inst) LHM_lh_delete(OBJ_NAME,lh,inst)
+#define lh_OBJ_NAME_doall(lh,fn) LHM_lh_doall(OBJ_NAME,lh,fn)
+#define lh_OBJ_NAME_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(OBJ_NAME,lh,fn,arg_type,arg)
+#define lh_OBJ_NAME_error(lh) LHM_lh_error(OBJ_NAME,lh)
+#define lh_OBJ_NAME_num_items(lh) LHM_lh_num_items(OBJ_NAME,lh)
+#define lh_OBJ_NAME_down_load(lh) LHM_lh_down_load(OBJ_NAME,lh)
+#define lh_OBJ_NAME_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(OBJ_NAME,lh,out)
+#define lh_OBJ_NAME_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(OBJ_NAME,lh,out)
+#define lh_OBJ_NAME_stats_bio(lh,out) \
+  LHM_lh_stats_bio(OBJ_NAME,lh,out)
+#define lh_OBJ_NAME_free(lh) LHM_lh_free(OBJ_NAME,lh)
+
+#define lh_SSL_SESSION_new() LHM_lh_new(SSL_SESSION,ssl_session)
+#define lh_SSL_SESSION_insert(lh,inst) LHM_lh_insert(SSL_SESSION,lh,inst)
+#define lh_SSL_SESSION_retrieve(lh,inst) LHM_lh_retrieve(SSL_SESSION,lh,inst)
+#define lh_SSL_SESSION_delete(lh,inst) LHM_lh_delete(SSL_SESSION,lh,inst)
+#define lh_SSL_SESSION_doall(lh,fn) LHM_lh_doall(SSL_SESSION,lh,fn)
+#define lh_SSL_SESSION_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(SSL_SESSION,lh,fn,arg_type,arg)
+#define lh_SSL_SESSION_error(lh) LHM_lh_error(SSL_SESSION,lh)
+#define lh_SSL_SESSION_num_items(lh) LHM_lh_num_items(SSL_SESSION,lh)
+#define lh_SSL_SESSION_down_load(lh) LHM_lh_down_load(SSL_SESSION,lh)
+#define lh_SSL_SESSION_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(SSL_SESSION,lh,out)
+#define lh_SSL_SESSION_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(SSL_SESSION,lh,out)
+#define lh_SSL_SESSION_stats_bio(lh,out) \
+  LHM_lh_stats_bio(SSL_SESSION,lh,out)
+#define lh_SSL_SESSION_free(lh) LHM_lh_free(SSL_SESSION,lh)
+
+#define lh_STRING_new() LHM_lh_new(STRING,string)
+#define lh_STRING_insert(lh,inst) LHM_lh_insert(STRING,lh,inst)
+#define lh_STRING_retrieve(lh,inst) LHM_lh_retrieve(STRING,lh,inst)
+#define lh_STRING_delete(lh,inst) LHM_lh_delete(STRING,lh,inst)
+#define lh_STRING_doall(lh,fn) LHM_lh_doall(STRING,lh,fn)
+#define lh_STRING_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(STRING,lh,fn,arg_type,arg)
+#define lh_STRING_error(lh) LHM_lh_error(STRING,lh)
+#define lh_STRING_num_items(lh) LHM_lh_num_items(STRING,lh)
+#define lh_STRING_down_load(lh) LHM_lh_down_load(STRING,lh)
+#define lh_STRING_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(STRING,lh,out)
+#define lh_STRING_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(STRING,lh,out)
+#define lh_STRING_stats_bio(lh,out) \
+  LHM_lh_stats_bio(STRING,lh,out)
+#define lh_STRING_free(lh) LHM_lh_free(STRING,lh)
 /* End of util/mkstack.pl block, you may now edit :-) */
 
 #endif /* !defined HEADER_SAFESTACK_H */

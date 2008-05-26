@@ -451,7 +451,7 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 			return 0;
 		memcpy(data.session_id,session_id,len);
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
-		ret=(SSL_SESSION *)lh_retrieve(s->session_ctx->sessions,&data);
+		ret=lh_SSL_SESSION_retrieve(s->session_ctx->sessions,&data);
 		if (ret != NULL)
 		    /* don't allow other threads to steal it: */
 		    CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
@@ -589,7 +589,7 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 	/* if session c is in already in cache, we take back the increment later */
 
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-	s=(SSL_SESSION *)lh_insert(ctx->sessions,c);
+	s=lh_SSL_SESSION_insert(ctx->sessions,c);
 	
 	/* s != NULL iff we already had a session with the given PID.
 	 * In this case, s == c should hold (then we did not really modify
@@ -655,10 +655,10 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
 	if ((c != NULL) && (c->session_id_length != 0))
 		{
 		if(lck) CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-		if ((r = (SSL_SESSION *)lh_retrieve(ctx->sessions,c)) == c)
+		if ((r = lh_SSL_SESSION_retrieve(ctx->sessions,c)) == c)
 			{
 			ret=1;
-			r=(SSL_SESSION *)lh_delete(ctx->sessions,c);
+			r=lh_SSL_SESSION_delete(ctx->sessions,c);
 			SSL_SESSION_list_remove(ctx,c);
 			}
 
@@ -835,16 +835,16 @@ typedef struct timeout_param_st
 	{
 	SSL_CTX *ctx;
 	long time;
-	LHASH *cache;
+	LHASH_OF(SSL_SESSION) *cache;
 	} TIMEOUT_PARAM;
 
-static void timeout(SSL_SESSION *s, TIMEOUT_PARAM *p)
+static void timeout_doall_arg(SSL_SESSION *s, TIMEOUT_PARAM *p)
 	{
 	if ((p->time == 0) || (p->time > (s->time+s->timeout))) /* timeout */
 		{
 		/* The reason we don't call SSL_CTX_remove_session() is to
 		 * save on locking overhead */
-		lh_delete(p->cache,s);
+		lh_SSL_SESSION_delete(p->cache,s);
 		SSL_SESSION_list_remove(p->ctx,s);
 		s->not_resumable=1;
 		if (p->ctx->remove_session_cb != NULL)
@@ -853,7 +853,7 @@ static void timeout(SSL_SESSION *s, TIMEOUT_PARAM *p)
 		}
 	}
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(timeout, SSL_SESSION *, TIMEOUT_PARAM *)
+static IMPLEMENT_LHASH_DOALL_ARG_FN(timeout, SSL_SESSION, TIMEOUT_PARAM)
 
 void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 	{
@@ -865,10 +865,11 @@ void SSL_CTX_flush_sessions(SSL_CTX *s, long t)
 	if (tp.cache == NULL) return;
 	tp.time=t;
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
-	i=tp.cache->down_load;
-	tp.cache->down_load=0;
-	lh_doall_arg(tp.cache, LHASH_DOALL_ARG_FN(timeout), &tp);
-	tp.cache->down_load=i;
+	i=CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load;
+	CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load=0;
+	lh_SSL_SESSION_doall_arg(tp.cache, LHASH_DOALL_ARG_FN(timeout),
+				 TIMEOUT_PARAM, &tp);
+	CHECKED_LHASH_OF(SSL_SESSION, tp.cache)->down_load=i;
 	CRYPTO_w_unlock(CRYPTO_LOCK_SSL_CTX);
 	}
 

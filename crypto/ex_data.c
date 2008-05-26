@@ -245,18 +245,21 @@ typedef struct st_ex_class_item {
 static int ex_class = CRYPTO_EX_INDEX_USER;
 
 /* The global hash table of EX_CLASS_ITEM items */
-static LHASH *ex_data = NULL;
+DECLARE_LHASH_OF(EX_CLASS_ITEM);
+static LHASH_OF(EX_CLASS_ITEM) *ex_data = NULL;
 
 /* The callbacks required in the "ex_data" hash table */
-static unsigned long ex_hash_cb(const void *a_void)
+static unsigned long ex_class_item_hash(const EX_CLASS_ITEM *a)
 	{
-	return ((const EX_CLASS_ITEM *)a_void)->class_index;
+	return a->class_index;
 	}
-static int ex_cmp_cb(const void *a_void, const void *b_void)
+static IMPLEMENT_LHASH_HASH_FN(ex_class_item, EX_CLASS_ITEM);
+
+static int ex_class_item_cmp(const EX_CLASS_ITEM *a, const EX_CLASS_ITEM *b)
 	{
-	return (((const EX_CLASS_ITEM *)a_void)->class_index -
-		((const EX_CLASS_ITEM *)b_void)->class_index);
+	return a->class_index - b->class_index;
 	}
+static IMPLEMENT_LHASH_COMP_FN(ex_class_item, EX_CLASS_ITEM);
 
 /* Internal functions used by the "impl_default" implementation to access the
  * state */
@@ -265,7 +268,8 @@ static int ex_data_check(void)
 	{
 	int toret = 1;
 	CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
-	if(!ex_data && ((ex_data = lh_new(ex_hash_cb, ex_cmp_cb)) == NULL))
+	if(!ex_data
+	   && (ex_data = lh_EX_CLASS_ITEM_new()) == NULL)
 		toret = 0;
 	CRYPTO_w_unlock(CRYPTO_LOCK_EX_DATA);
 	return toret;
@@ -298,7 +302,7 @@ static EX_CLASS_ITEM *def_get_class(int class_index)
 	EX_DATA_CHECK(return NULL;)
 	d.class_index = class_index;
 	CRYPTO_w_lock(CRYPTO_LOCK_EX_DATA);
-	p = lh_retrieve(ex_data, &d);
+	p = lh_EX_CLASS_ITEM_retrieve(ex_data, &d);
 	if(!p)
 		{
 		gen = OPENSSL_malloc(sizeof(EX_CLASS_ITEM));
@@ -313,7 +317,7 @@ static EX_CLASS_ITEM *def_get_class(int class_index)
 				{
 				/* Because we're inside the ex_data lock, the
 				 * return value from the insert will be NULL */
-				lh_insert(ex_data, gen);
+				lh_EX_CLASS_ITEM_insert(ex_data, gen);
 				p = gen;
 				}
 			}
@@ -375,8 +379,8 @@ static int int_new_class(void)
 static void int_cleanup(void)
 	{
 	EX_DATA_CHECK(return;)
-	lh_doall(ex_data, def_cleanup_cb);
-	lh_free(ex_data);
+	lh_EX_CLASS_ITEM_doall(ex_data, def_cleanup_cb);
+	lh_EX_CLASS_ITEM_free(ex_data);
 	ex_data = NULL;
 	impl = NULL;
 	}
