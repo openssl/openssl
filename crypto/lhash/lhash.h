@@ -194,7 +194,7 @@ void lh_node_stats_bio(const _LHASH *lh, BIO *out);
 void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
 #endif
 
-// Type checking...
+/* Type checking... */
 
 #define LHASH_OF(type) struct lhash_st_##type
 
@@ -203,7 +203,7 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
 #define CHECKED_LHASH_OF(type,lh) \
   ((_LHASH *)CHECKED_PTR_OF(LHASH_OF(type),lh))
 
-// Define wrapper functions.
+/* Define wrapper functions. */
 #define LHM_lh_new(type, name) \
   ((LHASH_OF(type) *)lh_new(LHASH_HASH_FN(name), LHASH_COMP_FN(name)))
 #define LHM_lh_error(type, lh) \
