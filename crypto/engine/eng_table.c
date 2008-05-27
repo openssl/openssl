@@ -110,8 +110,8 @@ static int engine_pile_cmp(const ENGINE_PILE *a, const ENGINE_PILE *b)
 	{
 	return a->nid - b->nid;
 	}
-static IMPLEMENT_LHASH_HASH_FN(engine_pile, const ENGINE_PILE)
-static IMPLEMENT_LHASH_COMP_FN(engine_pile, const ENGINE_PILE)
+static IMPLEMENT_LHASH_HASH_FN(engine_pile, ENGINE_PILE)
+static IMPLEMENT_LHASH_COMP_FN(engine_pile, ENGINE_PILE)
 
 static int int_table_check(ENGINE_TABLE **t, int create)
 	{
