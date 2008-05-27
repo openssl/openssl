@@ -57,12 +57,12 @@
 
 #include <openssl/stack.h>
 
-#ifdef DEBUG_SAFESTACK
-
 #ifndef CHECKED_PTR_OF
 #define CHECKED_PTR_OF(type, p) \
     ((void*) (1 ? p : (type*)0))
 #endif
+
+#ifdef DEBUG_SAFESTACK
 
 #define CHECKED_SK_FREE_FUNC(type, p) \
     ((void (*)(void *)) ((1 ? p : (void (*)(type *))0)))

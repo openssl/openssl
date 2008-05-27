@@ -198,7 +198,7 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
 
 #define LHASH_OF(type) struct lhash_st_##type
 
-#define DECLARE_LHASH_OF(type) LHASH_OF(type) { }
+#define DECLARE_LHASH_OF(type) LHASH_OF(type) { int dummy; }
 
 #define CHECKED_LHASH_OF(type,lh) \
   ((_LHASH *)CHECKED_PTR_OF(LHASH_OF(type),lh))
