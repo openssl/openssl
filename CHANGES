@@ -688,7 +688,7 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
- Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
+ Changes between 0.9.8g and 0.9.8h  [28 May 2008]
 
   *) Fix flaw if 'Server Key exchange message' is omitted from a TLS
      handshake which could lead to a cilent crash as found using the

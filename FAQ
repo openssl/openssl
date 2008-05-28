@@ -33,6 +33,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why is OpenSSL x509 DN output not conformant to RFC2253?
 * What is a "128 bit certificate"? Can I create one with OpenSSL?
 * Why does OpenSSL set the authority key identifier extension incorrectly?
+* How can I set up a bundle of commercial root CA certificates?
 
 [BUILD] Questions about building and testing OpenSSL
 
@@ -77,7 +78,7 @@ OpenSSL  -  Frequently Asked Questions
 * Which is the current version of OpenSSL?
 
 The current version is available from <URL: http://www.openssl.org>.
-OpenSSL 0.9.8g was released on October 19th, 2007.
+OpenSSL 0.9.8h was released on May 28th, 2008.
 
 In addition to the current stable release, you can also access daily
 snapshots of the OpenSSL development version at <URL:
@@ -392,7 +393,6 @@ page of the "openssl x509" commandline tool for details. The old behaviour
 has however been left as default for the sake of compatibility.
 
 * What is a "128 bit certificate"? Can I create one with OpenSSL?
-* How can I set up a bundle of commercial root CA certificates?
 
 The term "128 bit certificate" is a highly misleading marketing term. It does
 *not* refer to the size of the public key in the certificate! A certificate
@@ -965,4 +965,3 @@ See the manual pages for more details.
 
 
 ===============================================================================
-
