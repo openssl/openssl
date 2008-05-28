@@ -2,6 +2,8 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8h and 0.9.8i  [xx XXX xxxx]
+
  Changes between 0.9.8g and 0.9.8h  [28 May 2008]
 
   *) Fix flaw if 'Server Key exchange message' is omitted from a TLS
