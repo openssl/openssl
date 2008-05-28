@@ -4,6 +4,10 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Fix double free in TLS server name extensions which could lead to
+     a remote crash found by Codenomicon TLS test suite (CVE-2008-0891) 
+     [Joe Orton]
+
   *) Clear error queue in SSL_CTX_use_certificate_chain_file()
 
      Clear the error queue to ensure that error entries left from
