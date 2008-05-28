@@ -690,6 +690,11 @@
 
  Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
 
+  *) Fix flaw if 'Server Key exchange message' is omitted from a TLS
+     handshake which could lead to a cilent crash as found using the
+     Codenomicon TLS test suite (CVE-2008-1672) 
+     [Steve Henson, Mark Cox]
+
   *) Fix double free in TLS server name extensions which could lead to
      a remote crash found by Codenomicon TLS test suite (CVE-2008-0891) 
      [Joe Orton]
