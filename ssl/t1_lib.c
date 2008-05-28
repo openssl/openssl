@@ -637,6 +637,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 						s->session->tlsext_hostname[len]='\0';
 						if (strlen(s->session->tlsext_hostname) != len) {
 							OPENSSL_free(s->session->tlsext_hostname);
+							s->session->tlsext_hostname = NULL;
 							*al = TLS1_AD_UNRECOGNIZED_NAME;
 							return 0;
 						}
