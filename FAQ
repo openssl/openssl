@@ -32,6 +32,7 @@ OpenSSL  -  Frequently Asked Questions
 * How do I install a CA certificate into a browser?
 * Why is OpenSSL x509 DN output not conformant to RFC2253?
 * What is a "128 bit certificate"? Can I create one with OpenSSL?
+* Why does OpenSSL set the authority key identifier extension incorrectly?
 * How can I set up a bundle of commercial root CA certificates?
 
 [BUILD] Questions about building and testing OpenSSL
@@ -68,6 +69,7 @@ OpenSSL  -  Frequently Asked Questions
 * Why does compilation fail due to an undefined symbol NID_uniqueIdentifier?
 * I think I've detected a memory leak, is this a bug?
 * Why does Valgrind complain about the use of uninitialized data?
+* Why doesn't a memory BIO work when a file does?
 
 ===============================================================================
 
@@ -403,10 +405,10 @@ You can't generally create such a certificate using OpenSSL but there is no
 need to any more. Nowadays web browsers using unrestricted strong encryption
 are generally available.
 
-When there were tight export restrictions on the export of strong encryption
+When there were tight restrictions on the export of strong encryption
 software from the US only weak encryption algorithms could be freely exported
 (initially 40 bit and then 56 bit). It was widely recognised that this was
-inadequate. A relaxation the rules allowed the use of strong encryption but
+inadequate. A relaxation of the rules allowed the use of strong encryption but
 only to an authorised server.
 
 Two slighly different techniques were developed to support this, one used by
@@ -425,6 +427,25 @@ be recognized.
 
 The export laws were later changed to allow almost unrestricted use of strong
 encryption so these certificates are now obsolete.
+
+
+* Why does OpenSSL set the authority key identifier (AKID) extension incorrectly?
+
+It doesn't: this extension is often the cause of confusion.
+
+Consider a certificate chain A->B->C so that A signs B and B signs C. Suppose
+certificate C contains AKID.
+
+The purpose of this extension is to identify the authority certificate B. This
+can be done either by including the subject key identifier of B or its issuer
+name and serial number.
+
+In this latter case because it is identifying certifcate B it must contain the
+issuer name and serial number of B.
+
+It is often wrongly assumed that it should contain the subject name of B. If it
+did this would be redundant information because it would duplicate the issuer
+name of C.
 
 
 * How can I set up a bundle of commercial root CA certificates?
@@ -920,5 +941,25 @@ OpenSSL library has been compiled with the PURIFY macro defined (-DPURIFY)
 to get rid of these warnings.
 
 
-===============================================================================
+* Why doesn't a memory BIO work when a file does?
 
+This can occur in several cases for example reading an S/MIME email message.
+The reason is that a memory BIO can do one of two things when all the data
+has been read from it.
+
+The default behaviour is to indicate that no more data is available and that
+the call should be retried, this is to allow the application to fill up the BIO
+again if necessary.
+
+Alternatively it can indicate that no more data is available and that EOF has
+been reached.
+
+If a memory BIO is to behave in the same way as a file this second behaviour
+is needed. This must be done by calling:
+
+   BIO_set_mem_eof_return(bio, 0);
+
+See the manual pages for more details.
+
+
+===============================================================================
