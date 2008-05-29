@@ -324,14 +324,14 @@ static RSA_METHOD capi_rsa_method =
 static void capi_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
         int ind,long argl, void *argp)
 	{
-//fprintf(stderr, "Called capi_ex_free obj=%lx, idx=%d, item=%lx\n", obj, ind, item);
+/*fprintf(stderr, "Called capi_ex_free obj=%lx, idx=%d, item=%lx\n", obj, ind, item);*/
 	capi_ctx_free(item);
 	}
 
 static void capi_rsa_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
         int ind,long argl, void *argp)
 	{
-//fprintf(stderr, "Called capi_rsa_free_key\n");
+/*fprintf(stderr, "Called capi_rsa_free_key\n");*/
 
 	capi_free_key(item);
 	}
