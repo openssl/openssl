@@ -259,7 +259,6 @@ sub do_lib_rule
 		$name =~ tr/a-z/A-Z/;
 		$name = "/def:ms/${name}.def";
 		}
-
 #	$target="\$(LIB_D)$o$target";
 	$ret.="$target: $objs\n";
 	if (!$shlib)
@@ -274,6 +273,7 @@ sub do_lib_rule
 		if ($name eq "")
 			{
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
+			$ex.=' crypt32.lib advapi32.lib' if ($target =~ /capi/);
 			}
 		elsif ($FLAVOR =~ /CE/)
 			{
