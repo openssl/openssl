@@ -100,6 +100,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "TLSEXT",
 			 # CMS
 			 "CMS",
+			 # CryptoAPI Engine
+			 "CAPIENG",
 			 # Deprecated functions
 			 "DEPRECATED" );
 
@@ -120,7 +122,7 @@ my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw; my $no_camellia;
 my $no_seed;
 my $no_fp_api; my $no_static_engine; my $no_gmp; my $no_deprecated;
-my $no_rfc3779; my $no_tlsext; my $no_cms;
+my $no_rfc3779; my $no_tlsext; my $no_cms; my $no_capieng;
 
 
 foreach (@ARGV, split(/ /, $options))
@@ -206,6 +208,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-rfc3779$/)	{ $no_rfc3779=1; }
 	elsif (/^no-tlsext$/)	{ $no_tlsext=1; }
 	elsif (/^no-cms$/)	{ $no_cms=1; }
+	elsif (/^no-capieng$/)	{ $no_capieng=1; }
 	}
 
 
@@ -1131,6 +1134,7 @@ sub is_valid
 			if ($keyword eq "RFC3779" && $no_rfc3779) { return 0; }
 			if ($keyword eq "TLSEXT" && $no_tlsext) { return 0; }
 			if ($keyword eq "CMS" && $no_cms) { return 0; }
+			if ($keyword eq "CAPIENG" && $no_capieng) { return 0; }
 			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }
 
 			# Nothing recognise as true
