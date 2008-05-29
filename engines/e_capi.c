@@ -392,11 +392,8 @@ struct CAPI_KEY_st
 	HCRYPTKEY key;
 	};
 
-
-static int capi_bind_fn(ENGINE *e, const char *id)
+static int bind_capi(ENGINE *e)
 	{
-	if (id && strcmp(id, engine_capi_id))
-		return 0;
 	if (!ENGINE_set_id(e, engine_capi_id)
 		|| !ENGINE_set_name(e, engine_capi_name)
 		|| !ENGINE_set_init_function(e, capi_init)
@@ -413,9 +410,41 @@ static int capi_bind_fn(ENGINE *e, const char *id)
 
 	}
 
-
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+static int bind_helper(ENGINE *e, const char *id)
+	{
+	if(id && (strcmp(id, engine_capi_id) != 0))
+		return 0;
+	if(!bind_capi(e))
+		return 0;
+	return 1;
+	}       
 IMPLEMENT_DYNAMIC_CHECK_FN()
-IMPLEMENT_DYNAMIC_BIND_FN(capi_bind_fn)
+IMPLEMENT_DYNAMIC_BIND_FN(bind_helper)
+#else
+static ENGINE *engine_capi(void)
+	{
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!bind_capi(ret))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
+	return ret;
+	}
+
+void ENGINE_load_capi(void)
+	{
+	/* Copied from eng_[openssl|dyn].c */
+	ENGINE *toadd = engine_capi();
+	if(!toadd) return;
+	ENGINE_add(toadd);
+	ENGINE_free(toadd);
+	ERR_clear_error();
+	}
+#endif
 
 static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 	UI_METHOD *ui_method, void *callback_data)
