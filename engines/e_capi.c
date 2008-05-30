@@ -322,26 +322,11 @@ static RSA_METHOD capi_rsa_method =
 	0				/* rsa_verify */
 	};
 
-static void capi_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-        int ind,long argl, void *argp)
-	{
-/*fprintf(stderr, "Called capi_ex_free obj=%lx, idx=%d, item=%lx\n", obj, ind, item);*/
-	capi_ctx_free(item);
-	}
-
-static void capi_rsa_ex_free(void *obj, void *item, CRYPTO_EX_DATA *ad,
-        int ind,long argl, void *argp)
-	{
-/*fprintf(stderr, "Called capi_rsa_free_key\n");*/
-
-	capi_free_key(item);
-	}
-
 static int capi_init(ENGINE *e)
 	{
 	CAPI_CTX *ctx;
 	const RSA_METHOD *ossl_meth;
-	capi_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, /*capi_ex_free*/ 0);
+	capi_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
 
 	ctx = capi_ctx_new();
 	if (!ctx || (capi_idx < 0))
@@ -349,8 +334,8 @@ static int capi_init(ENGINE *e)
 
 	ENGINE_set_ex_data(e, capi_idx, ctx);
 	/* Setup RSA_METHOD */
-	rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, /*capi_rsa_ex_free*/ 0);
-	dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, /*capi_rsa_ex_free*/ 0);
+	rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
+	dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
 	ossl_meth = RSA_PKCS1_SSLeay();
 	capi_rsa_method.rsa_pub_enc = ossl_meth->rsa_pub_enc;
 	capi_rsa_method.rsa_pub_dec = ossl_meth->rsa_pub_dec;
