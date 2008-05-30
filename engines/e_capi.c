@@ -865,6 +865,10 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
 		ret = DSA_SIG_new();
 		if (!ret)
 			goto err;
+		ret->r = BN_new();
+		ret->s = BN_new();
+		if (!ret->r || !ret->s)
+			goto err;
 		if (!lend_tobn(ret->r, csigbuf, 20)
 			|| !lend_tobn(ret->s, csigbuf + 20, 20))
 			{
@@ -879,7 +883,6 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
 err:
 	OPENSSL_cleanse(csigbuf, 40);
 	CryptDestroyHash(hash);
-
 	return ret;
 	}
 
