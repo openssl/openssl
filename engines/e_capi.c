@@ -105,6 +105,10 @@ static int capi_rsa_priv_dec(int flen, const unsigned char *from,
                 unsigned char *to, RSA *rsa, int padding);
 static int capi_rsa_free(RSA *rsa);
 
+static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
+							DSA *dsa);
+static int capi_dsa_free(DSA *dsa);
+	
 /* This structure contains CAPI ENGINE specific data:
  * it contains various global options and affects how
  * other functions behave.
@@ -310,22 +314,39 @@ static RSA_METHOD capi_rsa_method =
 	"CryptoAPI RSA method",
 	0,				/* pub_enc */
 	0,				/* pub_dec */
-	capi_rsa_priv_enc,	/* priv_enc */
-	capi_rsa_priv_dec,	/* priv_dec */
+	capi_rsa_priv_enc,		/* priv_enc */
+	capi_rsa_priv_dec,		/* priv_dec */
 	0,				/* rsa_mod_exp */
 	0,				/* bn_mod_exp */
 	0,				/* init	*/
-	capi_rsa_free,	/* finish */
-	RSA_FLAG_SIGN_VER, /* flags */
-	NULL,			/* app_data */
-	capi_rsa_sign,	/* rsa_sign */
+	capi_rsa_free,			/* finish */
+	RSA_FLAG_SIGN_VER, 		/* flags */
+	NULL,				/* app_data */
+	capi_rsa_sign,			/* rsa_sign */
 	0				/* rsa_verify */
+	};
+
+static DSA_METHOD capi_dsa_method =
+	{
+	"CryptoAPI DSA method",
+	capi_dsa_do_sign,		/* dsa_do_sign */
+	0,				/* dsa_sign_setup */
+	0,				/* dsa_do_verify */
+	0,				/* dsa_mod_exp */
+	0,				/* bn_mod_exp */
+	0,				/* init	*/
+	capi_dsa_free,			/* finish */
+	0, 				/* flags */
+	NULL,				/* app_data */
+	0,				/* dsa_paramgen */
+	0				/* dsa_keygen */
 	};
 
 static int capi_init(ENGINE *e)
 	{
 	CAPI_CTX *ctx;
-	const RSA_METHOD *ossl_meth;
+	const RSA_METHOD *ossl_rsa_meth;
+	const DSA_METHOD *ossl_dsa_meth;
 	capi_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
 
 	ctx = capi_ctx_new();
@@ -335,12 +356,18 @@ static int capi_init(ENGINE *e)
 	ENGINE_set_ex_data(e, capi_idx, ctx);
 	/* Setup RSA_METHOD */
 	rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
+	ossl_rsa_meth = RSA_PKCS1_SSLeay();
+	capi_rsa_method.rsa_pub_enc = ossl_rsa_meth->rsa_pub_enc;
+	capi_rsa_method.rsa_pub_dec = ossl_rsa_meth->rsa_pub_dec;
+	capi_rsa_method.rsa_mod_exp = ossl_rsa_meth->rsa_mod_exp;
+	capi_rsa_method.bn_mod_exp = ossl_rsa_meth->bn_mod_exp;
+
+	/* Setup DSA Method */
 	dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
-	ossl_meth = RSA_PKCS1_SSLeay();
-	capi_rsa_method.rsa_pub_enc = ossl_meth->rsa_pub_enc;
-	capi_rsa_method.rsa_pub_dec = ossl_meth->rsa_pub_dec;
-	capi_rsa_method.rsa_mod_exp = ossl_meth->rsa_mod_exp;
-	capi_rsa_method.bn_mod_exp = ossl_meth->bn_mod_exp;
+	ossl_dsa_meth = DSA_OpenSSL();
+	capi_dsa_method.dsa_do_verify = ossl_dsa_meth->dsa_do_verify;
+	capi_dsa_method.dsa_mod_exp = ossl_dsa_meth->dsa_mod_exp;
+	capi_dsa_method.bn_mod_exp = ossl_dsa_meth->bn_mod_exp;
 
 	return 1;
 
@@ -775,6 +802,21 @@ static int capi_rsa_free(RSA *rsa)
 	capi_key = RSA_get_ex_data(rsa, rsa_capi_idx);
 	capi_free_key(capi_key);
 	RSA_set_ex_data(rsa, rsa_capi_idx, 0);
+	return 1;
+	}
+
+static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
+								DSA *dsa)
+	{
+	return NULL;
+	}
+
+static int capi_dsa_free(DSA *dsa)
+	{
+	CAPI_KEY *capi_key;
+	capi_key = DSA_get_ex_data(dsa, dsa_capi_idx);
+	capi_free_key(capi_key);
+	DSA_set_ex_data(dsa, dsa_capi_idx, 0);
 	return 1;
 	}
 
