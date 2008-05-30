@@ -492,40 +492,57 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 		}
 
 	bh = (BLOBHEADER *)pubkey;
-	rp = (RSAPUBKEY *)(bh + 1);
-	rsa_modulus = (unsigned char *)(rp + 1);
-	rkey = RSA_new_method(eng);
-	if (!rkey)
-		goto memerr;
-
-	rkey->e = BN_new();
-	rkey->n = BN_new();
-
-	if (!rkey->e || !rkey->n)
-		goto memerr;
-
-	if (!BN_set_word(rkey->e, rp->pubexp))
-		goto memerr;
-
-	rsa_modlen = rp->bitlen / 8;
-
-	for(i = 0; i < rsa_modlen / 2; i++)
+	if (bh->bType != PUBLICKEYBLOB)
 		{
-		unsigned char c;
-		c = rsa_modulus[i];
-		rsa_modulus[i] = rsa_modulus[rsa_modlen - i - 1];
-		rsa_modulus[rsa_modlen - i - 1] = c;
+		/* FIXME */
+		fprintf(stderr, "Invalid public key blob\n");
+		goto err;
 		}
+	if (bh->aiKeyAlg == CALG_RSA_SIGN || bh->aiKeyAlg == CALG_RSA_KEYX)
+		{
+		rp = (RSAPUBKEY *)(bh + 1);
+		rsa_modulus = (unsigned char *)(rp + 1);
+		rkey = RSA_new_method(eng);
+		if (!rkey)
+			goto memerr;
 
-	if (!BN_bin2bn(rsa_modulus, rsa_modlen, rkey->n))
-		goto memerr;
+		rkey->e = BN_new();
+		rkey->n = BN_new();
 
-	RSA_set_ex_data(rkey, rsa_capi_idx, key);
+		if (!rkey->e || !rkey->n)
+			goto memerr;
 
-	if (!(ret = EVP_PKEY_new()))
-		goto memerr;
+		if (!BN_set_word(rkey->e, rp->pubexp))
+			goto memerr;
 
-	EVP_PKEY_assign_RSA(ret, rkey);
+		rsa_modlen = rp->bitlen / 8;
+
+		for(i = 0; i < rsa_modlen / 2; i++)
+			{
+			unsigned char c;
+			c = rsa_modulus[i];
+			rsa_modulus[i] = rsa_modulus[rsa_modlen - i - 1];
+			rsa_modulus[rsa_modlen - i - 1] = c;
+			}
+
+		if (!BN_bin2bn(rsa_modulus, rsa_modlen, rkey->n))
+			goto memerr;
+
+		RSA_set_ex_data(rkey, rsa_capi_idx, key);
+
+		if (!(ret = EVP_PKEY_new()))
+			goto memerr;
+
+		EVP_PKEY_assign_RSA(ret, rkey);
+
+
+		}
+	else
+		{
+		fprintf(stderr, "Unsupported Key Algorithm %x\n",
+					bh->aiKeyAlg);
+		goto err;
+		}
 
 	err:
 	if (pubkey)
