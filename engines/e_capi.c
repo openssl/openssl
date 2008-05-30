@@ -527,8 +527,10 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 		rp = (RSAPUBKEY *)(bh + 1);
 		if (rp->magic != 0x31415352)
 			{
-			fprintf(stderr, "Invalid blob Magic %x\n",
-						rp->magic);
+			char magstr[10];
+			BIO_snprintf(10, magstr, "%lx", rp->magic);
+			CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_INVALID_RSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER);
+			ERR_add_error_data(2, "magic=0x", magstr);
 			goto err;
 			}
 		rsa_modulus = (unsigned char *)(rp + 1);
@@ -566,8 +568,10 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 		dp = (DSSPUBKEY *)(bh + 1);
 		if (dp->magic != 0x31535344)
 			{
-			fprintf(stderr, "Invalid blob Magic %x\n",
-						dp->magic);
+			char magstr[10];
+			BIO_snprintf(10, magstr, "%lx", rp->magic);
+			CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_INVALID_DSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER);
+			ERR_add_error_data(2, "magic=0x", magstr);
 			goto err;
 			}
 		dsa_plen = dp->bitlen / 8;
@@ -604,8 +608,10 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 		}
 	else
 		{
-BIO_dump_fp(stderr, pubkey, len);
+		char algstr[10];
+		BIO_snprintf(10, algstr, "%lx", bh->aiKeyAlg);
 		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_UNSUPPORTED_PUBLIC_KEY_ALGORITHM);
+		ERR_add_error_data(2, "aiKeyAlg=0x", algstr);
 		goto err;
 		}
 
@@ -676,7 +682,7 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 	default:
 		{
 		char algstr[10];
-		sprintf(algstr, "%lx", dtype);
+		BIO_snprintf(10, algstr, "%lx", dtype);
 		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_UNSUPPORTED_ALGORITHM_NID);
 		ERR_add_error_data(2, "NID=0x", algstr);
 		return -1;
@@ -749,7 +755,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
 	if(padding != RSA_PKCS1_PADDING)
 		{
 		char errstr[10];
-		sprintf(errstr, "%d", padding);
+		BIO_snprintf(10, errstr, "%d", padding);
 		CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, CAPI_R_UNSUPPORTED_PADDING);
 		ERR_add_error_data(2, "padding=", errstr);
 		return -1;
@@ -814,7 +820,7 @@ static void capi_addlasterror(void)
 static void capi_adderror(DWORD err)
 	{
 	char errstr[10];
-	sprintf(errstr, "%lX", err);
+	BIO_snprintf(10, errstr, "%lX", err);
 	ERR_add_error_data(2, "Error code= 0x", errstr);
 	}
 
