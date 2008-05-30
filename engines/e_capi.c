@@ -494,8 +494,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 	bh = (BLOBHEADER *)pubkey;
 	if (bh->bType != PUBLICKEYBLOB)
 		{
-		/* FIXME */
-		fprintf(stderr, "Invalid public key blob\n");
+		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_INVALID_PUBLIC_KEY_BLOB);
 		goto err;
 		}
 	if (bh->aiKeyAlg == CALG_RSA_SIGN || bh->aiKeyAlg == CALG_RSA_KEYX)
@@ -539,8 +538,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 		}
 	else
 		{
-		fprintf(stderr, "Unsupported Key Algorithm %x\n",
-					bh->aiKeyAlg);
+		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_UNSUPPORTED_PUBLIC_KEY_ALGORITHM);
 		goto err;
 		}
 
@@ -675,7 +673,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
 	capi_key = RSA_get_ex_data(rsa, rsa_capi_idx);
 	if (!capi_key)
 		{
-		CAPIerr(CAPI_F_CAPI_RSA_DECRYPT, CAPI_R_CANT_GET_KEY);
+		CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, CAPI_R_CANT_GET_KEY);
 		return -1;
 		}
 
@@ -683,7 +681,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
 		{
 		char errstr[10];
 		sprintf(errstr, "%d", padding);
-		CAPIerr(CAPI_F_CAPI_RSA_DECRYPT, CAPI_R_UNSUPPORTED_PADDING);
+		CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, CAPI_R_UNSUPPORTED_PADDING);
 		ERR_add_error_data(2, "padding=", errstr);
 		return -1;
 		}
@@ -691,7 +689,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
 	/* Create temp reverse order version of input */
 	if(!(tmpbuf = OPENSSL_malloc(flen)) ) 
 		{
-		CAPIerr(CAPI_F_CAPI_RSA_DECRYPT, ERR_R_MALLOC_FAILURE);
+		CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, ERR_R_MALLOC_FAILURE);
 		return -1;
 		}
 	for(i = 0; i < flen; i++) tmpbuf[flen - i - 1] = from[i];
@@ -699,7 +697,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
 	/* Finally decrypt it */
 	if(!CryptDecrypt(capi_key->key, 0, TRUE, 0, tmpbuf, &flen))
 		{
-		CAPIerr(CAPI_F_CAPI_RSA_DECRYPT, CAPI_R_DECRYPT_ERROR);
+		CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, CAPI_R_DECRYPT_ERROR);
 		capi_addlasterror();
 		OPENSSL_free(tmpbuf);
 		return -1;
