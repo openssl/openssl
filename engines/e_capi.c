@@ -827,35 +827,36 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
 
 	if (!capi_key)
 		{
-		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_GET_KEY);
+		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_CANT_GET_KEY);
 		return NULL;
 		}
 
 	if (dlen != 20)
 		{
-		/* Invalid signature length */
+		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_INVALID_DIGEST_LENGTH);
+		return NULL;
 		}
 
 	/* Create the hash object */
 	if(!CryptCreateHash(capi_key->hprov, CALG_SHA1, 0, 0, &hash)) {
-		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_CREATE_HASH_OBJECT);
+		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_CANT_CREATE_HASH_OBJECT);
 		capi_addlasterror();
 		return NULL;
 	}
 
 	/* Set the hash value to the value passed */
 	if(!CryptSetHashParam(hash, HP_HASHVAL, (unsigned char *)digest, 0)) {
-		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_SET_HASH_VALUE);
+		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_CANT_SET_HASH_VALUE);
 		capi_addlasterror();
 		goto err;
 	}
 
 
 	/* Finally sign it */
-	slen = 40;
+	slen = sizeof(csigbuf);
 	if(!CryptSignHash(hash, AT_SIGNATURE, NULL, 0, csigbuf, &slen))
 		{
-		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_ERROR_SIGNING_HASH);
+		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_ERROR_SIGNING_HASH);
 		capi_addlasterror();
 		goto err;
 		}

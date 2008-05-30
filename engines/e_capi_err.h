@@ -71,6 +71,7 @@ static void ERR_CAPI_error(int function, int reason, char *file, int line);
 #define CAPI_F_CAPI_CTRL				 100
 #define CAPI_F_CAPI_CTX_NEW				 101
 #define CAPI_F_CAPI_CTX_SET_PROVNAME			 102
+#define CAPI_F_CAPI_DSA_DO_SIGN				 114
 #define CAPI_F_CAPI_GET_KEY				 103
 #define CAPI_F_CAPI_GET_PROVNAME			 104
 #define CAPI_F_CAPI_GET_PROV_INFO			 105
@@ -99,6 +100,7 @@ static void ERR_CAPI_error(int function, int reason, char *file, int line);
 #define CAPI_R_ERROR_SIGNING_HASH			 111
 #define CAPI_R_FUNCTION_NOT_SUPPORTED			 112
 #define CAPI_R_GETUSERKEY_ERROR				 113
+#define CAPI_R_INVALID_DIGEST_LENGTH			 124
 #define CAPI_R_INVALID_DSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER	 122
 #define CAPI_R_INVALID_LOOKUP_METHOD			 114
 #define CAPI_R_INVALID_PUBLIC_KEY_BLOB			 115
