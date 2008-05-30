@@ -528,7 +528,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 		if (rp->magic != 0x31415352)
 			{
 			char magstr[10];
-			BIO_snprintf(10, magstr, "%lx", rp->magic);
+			BIO_snprintf(magstr, 10, "%lx", rp->magic);
 			CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_INVALID_RSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER);
 			ERR_add_error_data(2, "magic=0x", magstr);
 			goto err;
@@ -569,7 +569,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 		if (dp->magic != 0x31535344)
 			{
 			char magstr[10];
-			BIO_snprintf(10, magstr, "%lx", rp->magic);
+			BIO_snprintf(magstr, 10, "%lx", dp->magic);
 			CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_INVALID_DSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER);
 			ERR_add_error_data(2, "magic=0x", magstr);
 			goto err;
@@ -609,7 +609,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 	else
 		{
 		char algstr[10];
-		BIO_snprintf(10, algstr, "%lx", bh->aiKeyAlg);
+		BIO_snprintf(algstr, 10, "%lx", bh->aiKeyAlg);
 		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_UNSUPPORTED_PUBLIC_KEY_ALGORITHM);
 		ERR_add_error_data(2, "aiKeyAlg=0x", algstr);
 		goto err;
@@ -682,7 +682,7 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 	default:
 		{
 		char algstr[10];
-		BIO_snprintf(10, algstr, "%lx", dtype);
+		BIO_snprintf(algstr, 10, "%lx", dtype);
 		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_UNSUPPORTED_ALGORITHM_NID);
 		ERR_add_error_data(2, "NID=0x", algstr);
 		return -1;
@@ -755,7 +755,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
 	if(padding != RSA_PKCS1_PADDING)
 		{
 		char errstr[10];
-		BIO_snprintf(10, errstr, "%d", padding);
+		BIO_snprintf(errstr, 10, "%d", padding);
 		CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, CAPI_R_UNSUPPORTED_PADDING);
 		ERR_add_error_data(2, "padding=", errstr);
 		return -1;
@@ -820,7 +820,7 @@ static void capi_addlasterror(void)
 static void capi_adderror(DWORD err)
 	{
 	char errstr[10];
-	BIO_snprintf(10, errstr, "%lX", err);
+	BIO_snprintf(errstr, 10, "%lX", err);
 	ERR_add_error_data(2, "Error code= 0x", errstr);
 	}
 
