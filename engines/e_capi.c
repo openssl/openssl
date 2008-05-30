@@ -223,6 +223,7 @@ static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 
 static int capi_idx = -1;
 static int rsa_capi_idx = -1;
+static int dsa_capi_idx = -1;
 
 static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 {
@@ -349,6 +350,7 @@ static int capi_init(ENGINE *e)
 	ENGINE_set_ex_data(e, capi_idx, ctx);
 	/* Setup RSA_METHOD */
 	rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, /*capi_rsa_ex_free*/ 0);
+	dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, /*capi_rsa_ex_free*/ 0);
 	ossl_meth = RSA_PKCS1_SSLeay();
 	capi_rsa_method.rsa_pub_enc = ossl_meth->rsa_pub_enc;
 	capi_rsa_method.rsa_pub_dec = ossl_meth->rsa_pub_dec;
@@ -446,6 +448,27 @@ void ENGINE_load_capi(void)
 	}
 #endif
 
+
+static int lend_tobn(BIGNUM *bn, unsigned char *bin, int binlen)
+	{
+	int i;
+	/* Reverse buffer in place: since this is a keyblob structure
+	 * that will be freed up after conversion anyway it doesn't 
+	 * matter if we change it.
+	 */
+	for(i = 0; i < binlen / 2; i++)
+		{
+		unsigned char c;
+		c = bin[i];
+		bin[i] = bin[binlen - i - 1];
+		bin[binlen - i - 1] = c;
+		}
+
+	if (!BN_bin2bn(bin, binlen, bn))
+		return 0;
+	return 1;
+	}
+
 static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 	UI_METHOD *ui_method, void *callback_data)
 	{
@@ -453,11 +476,10 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 	CAPI_CTX *ctx;
 	CAPI_KEY *key;
 	unsigned char *pubkey = NULL;
-	DWORD len, i, rsa_modlen;
+	DWORD len;
 	BLOBHEADER *bh;
-	RSAPUBKEY *rp;
-	unsigned char *rsa_modulus;
 	RSA *rkey = NULL;
+	DSA *dkey = NULL;
 	ctx = ENGINE_get_ex_data(eng, capi_idx);
 
 	if (!ctx)
@@ -499,7 +521,16 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 		}
 	if (bh->aiKeyAlg == CALG_RSA_SIGN || bh->aiKeyAlg == CALG_RSA_KEYX)
 		{
+		RSAPUBKEY *rp;
+		DWORD rsa_modlen;
+		unsigned char *rsa_modulus;
 		rp = (RSAPUBKEY *)(bh + 1);
+		if (rp->magic != 0x31415352)
+			{
+			fprintf(stderr, "Invalid blob Magic %x\n",
+						rp->magic);
+			goto err;
+			}
 		rsa_modulus = (unsigned char *)(rp + 1);
 		rkey = RSA_new_method(eng);
 		if (!rkey)
@@ -515,16 +546,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 			goto memerr;
 
 		rsa_modlen = rp->bitlen / 8;
-
-		for(i = 0; i < rsa_modlen / 2; i++)
-			{
-			unsigned char c;
-			c = rsa_modulus[i];
-			rsa_modulus[i] = rsa_modulus[rsa_modlen - i - 1];
-			rsa_modulus[rsa_modlen - i - 1] = c;
-			}
-
-		if (!BN_bin2bn(rsa_modulus, rsa_modlen, rkey->n))
+		if (!lend_tobn(rkey->n, rsa_modulus, rsa_modlen))
 			goto memerr;
 
 		RSA_set_ex_data(rkey, rsa_capi_idx, key);
@@ -533,11 +555,56 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 			goto memerr;
 
 		EVP_PKEY_assign_RSA(ret, rkey);
+		rkey = NULL;
 
+		}
+	else if (bh->aiKeyAlg == CALG_DSS_SIGN)
+		{
+		DSSPUBKEY *dp;
+		DWORD dsa_plen;
+		unsigned char *btmp;
+		dp = (DSSPUBKEY *)(bh + 1);
+		if (dp->magic != 0x31535344)
+			{
+			fprintf(stderr, "Invalid blob Magic %x\n",
+						dp->magic);
+			goto err;
+			}
+		dsa_plen = dp->bitlen / 8;
+		btmp = (unsigned char *)(dp + 1);
+		dkey = DSA_new();
+		if (!dkey)
+			goto memerr;
+		dkey->p = BN_new();
+		dkey->q = BN_new();
+		dkey->g = BN_new();
+		dkey->pub_key = BN_new();
+		if (!dkey->p || !dkey->q || !dkey->g || !dkey->pub_key)
+			goto memerr;
+		if (!lend_tobn(dkey->p, btmp, dsa_plen))
+			goto memerr;
+		btmp += dsa_plen;
+		if (!lend_tobn(dkey->q, btmp, 20))
+			goto memerr;
+		btmp += 20;
+		if (!lend_tobn(dkey->g, btmp, dsa_plen))
+			goto memerr;
+		btmp += dsa_plen;
+		if (!lend_tobn(dkey->pub_key, btmp, dsa_plen))
+			goto memerr;
+		btmp += dsa_plen;
 
+		DSA_set_ex_data(dkey, dsa_capi_idx, key);
+
+		if (!(ret = EVP_PKEY_new()))
+			goto memerr;
+
+		EVP_PKEY_assign_DSA(ret, dkey);
+		dkey = NULL;
 		}
 	else
 		{
+BIO_dump_fp(stderr, pubkey, len);
 		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_UNSUPPORTED_PUBLIC_KEY_ALGORITHM);
 		goto err;
 		}
@@ -549,6 +616,8 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 		{
 		if (rkey)
 			RSA_free(rkey);
+		if (dkey)
+			DSA_free(dkey);
 		if (key)
 			capi_free_key(key);
 		}
