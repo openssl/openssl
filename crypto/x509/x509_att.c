@@ -303,7 +303,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *dat
 	}
 	if(!(attr->value.set = sk_ASN1_TYPE_new_null())) goto err;
 	if(!(ttmp = ASN1_TYPE_new())) goto err;
-	if (len == -1)
+	if ((len == -1) && !(attrtype & MBSTRING_FLAG))
 		{
 		if (!ASN1_TYPE_set1(ttmp, attrtype, data))
 			goto err;
