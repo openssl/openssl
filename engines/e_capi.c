@@ -414,6 +414,7 @@ static int bind_capi(ENGINE *e)
 		|| !ENGINE_set_finish_function(e, capi_finish)
 		|| !ENGINE_set_destroy_function(e, capi_destroy)
 		|| !ENGINE_set_RSA(e, &capi_rsa_method)
+		|| !ENGINE_set_DSA(e, &capi_dsa_method)
 		|| !ENGINE_set_load_privkey_function(e, capi_load_privkey)
 		|| !ENGINE_set_cmd_defns(e, capi_cmd_defns)
 		|| !ENGINE_set_ctrl_function(e, capi_ctrl))
@@ -588,7 +589,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 			}
 		dsa_plen = dp->bitlen / 8;
 		btmp = (unsigned char *)(dp + 1);
-		dkey = DSA_new();
+		dkey = DSA_new_method(eng);
 		if (!dkey)
 			goto memerr;
 		dkey->p = BN_new();
@@ -779,7 +780,8 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
 		CAPIerr(CAPI_F_CAPI_RSA_PRIV_DEC, ERR_R_MALLOC_FAILURE);
 		return -1;
 		}
-	for(i = 0; i < flen; i++) tmpbuf[flen - i - 1] = from[i];
+	for(i = 0; i < flen; i++)
+		tmpbuf[flen - i - 1] = from[i];
 	
 	/* Finally decrypt it */
 	if(!CryptDecrypt(capi_key->key, 0, TRUE, 0, tmpbuf, &flen))
@@ -805,10 +807,79 @@ static int capi_rsa_free(RSA *rsa)
 	return 1;
 	}
 
+/* CryptoAPI DSA operations */
+
 static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
 								DSA *dsa)
 	{
-	return NULL;
+	HCRYPTHASH hash;
+	DWORD slen;
+	DSA_SIG *ret = NULL;
+	CAPI_KEY *capi_key;
+	CAPI_CTX *ctx;
+	unsigned char csigbuf[40];
+
+	ctx = ENGINE_get_ex_data(dsa->engine, capi_idx);
+
+	CAPI_trace(ctx, "Called CAPI_dsa_do_sign()\n");
+
+	capi_key = DSA_get_ex_data(dsa, dsa_capi_idx);
+
+	if (!capi_key)
+		{
+		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_GET_KEY);
+		return NULL;
+		}
+
+	if (dlen != 20)
+		{
+		/* Invalid signature length */
+		}
+
+	/* Create the hash object */
+	if(!CryptCreateHash(capi_key->hprov, CALG_SHA1, 0, 0, &hash)) {
+		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_CREATE_HASH_OBJECT);
+		capi_addlasterror();
+		return NULL;
+	}
+
+	/* Set the hash value to the value passed */
+	if(!CryptSetHashParam(hash, HP_HASHVAL, (unsigned char *)digest, 0)) {
+		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_SET_HASH_VALUE);
+		capi_addlasterror();
+		goto err;
+	}
+
+
+	/* Finally sign it */
+	slen = 40;
+	if(!CryptSignHash(hash, AT_SIGNATURE, NULL, 0, csigbuf, &slen))
+		{
+		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_ERROR_SIGNING_HASH);
+		capi_addlasterror();
+		goto err;
+		}
+	else
+		{
+		ret = DSA_SIG_new();
+		if (!ret)
+			goto err;
+		if (!lend_tobn(ret->r, csigbuf, 20)
+			|| !lend_tobn(ret->s, csigbuf + 20, 20))
+			{
+			DSA_SIG_free(ret);
+			ret = NULL;
+			goto err;
+			}
+		}
+
+	/* Now cleanup */
+
+err:
+	OPENSSL_cleanse(csigbuf, 40);
+	CryptDestroyHash(hash);
+
+	return ret;
 	}
 
 static int capi_dsa_free(DSA *dsa)
