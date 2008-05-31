@@ -109,6 +109,9 @@ void ENGINE_load_builtin_engines(void)
 	ENGINE_load_gmp();
 #endif
 #endif
+#if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
+	ENGINE_load_capi();
+#endif
 	}
 
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
