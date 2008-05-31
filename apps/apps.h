@@ -294,7 +294,7 @@ int index_index(CA_DB *db);
 int save_index(const char *dbfile, const char *suffix, CA_DB *db);
 int rotate_index(const char *dbfile, const char *new_suffix, const char *old_suffix);
 void free_index(CA_DB *db);
-int index_name_cmp(const STRING *a, const STRING *b);
+int index_name_cmp(const CSTRING *a, const CSTRING *b);
 int parse_yesno(const char *str, int def);
 
 X509_NAME *parse_name(char *str, long chtype, int multirdn);
