@@ -253,13 +253,13 @@ static unsigned long ex_class_item_hash(const EX_CLASS_ITEM *a)
 	{
 	return a->class_index;
 	}
-static IMPLEMENT_LHASH_HASH_FN(ex_class_item, EX_CLASS_ITEM);
+static IMPLEMENT_LHASH_HASH_FN(ex_class_item, EX_CLASS_ITEM)
 
 static int ex_class_item_cmp(const EX_CLASS_ITEM *a, const EX_CLASS_ITEM *b)
 	{
 	return a->class_index - b->class_index;
 	}
-static IMPLEMENT_LHASH_COMP_FN(ex_class_item, EX_CLASS_ITEM);
+static IMPLEMENT_LHASH_COMP_FN(ex_class_item, EX_CLASS_ITEM)
 
 /* Internal functions used by the "impl_default" implementation to access the
  * state */

@@ -78,7 +78,7 @@ typedef struct
 	char *value;
 	} CONF_VALUE;
 
-DECLARE_STACK_OF(CONF_VALUE);
+DECLARE_STACK_OF(CONF_VALUE)
 DECLARE_LHASH_OF(CONF_VALUE);
 
 struct conf_st;

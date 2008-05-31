@@ -595,13 +595,13 @@ static int MS_CALLBACK function_cmp(const FUNCTION *a, const FUNCTION *b)
 	{
 	return strncmp(a->name,b->name,8);
 	}
-static IMPLEMENT_LHASH_COMP_FN(function, FUNCTION);
+static IMPLEMENT_LHASH_COMP_FN(function, FUNCTION)
 
 static unsigned long MS_CALLBACK function_hash(const FUNCTION *a)
 	{
 	return lh_strhash(a->name);
 	}	
-static IMPLEMENT_LHASH_HASH_FN(function, FUNCTION);
+static IMPLEMENT_LHASH_HASH_FN(function, FUNCTION)
 
 static LHASH_OF(FUNCTION) *prog_init(void)
 	{

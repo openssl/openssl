@@ -337,14 +337,14 @@ static unsigned long err_string_data_hash(const ERR_STRING_DATA *a)
 	ret=l^ERR_GET_LIB(l)^ERR_GET_FUNC(l);
 	return(ret^ret%19*13);
 	}
-static IMPLEMENT_LHASH_HASH_FN(err_string_data, ERR_STRING_DATA);
+static IMPLEMENT_LHASH_HASH_FN(err_string_data, ERR_STRING_DATA)
 
 static int err_string_data_cmp(const ERR_STRING_DATA *a,
 			       const ERR_STRING_DATA *b)
 	{
 	return (int)(a->error - b->error);
 	}
-static IMPLEMENT_LHASH_COMP_FN(err_string_data, ERR_STRING_DATA);
+static IMPLEMENT_LHASH_COMP_FN(err_string_data, ERR_STRING_DATA)
 
 static LHASH_OF(ERR_STRING_DATA) *int_err_get(int create)
 	{
@@ -430,13 +430,13 @@ static unsigned long err_state_hash(const ERR_STATE *a)
 	{
 	return CRYPTO_THREADID_hash(&a->tid);
 	}
-static IMPLEMENT_LHASH_HASH_FN(err_state, ERR_STATE);
+static IMPLEMENT_LHASH_HASH_FN(err_state, ERR_STATE)
 
 static int err_state_cmp(const ERR_STATE *a, const ERR_STATE *b)
 	{
 	return CRYPTO_THREADID_cmp(&a->tid, &b->tid);
 	}
-static IMPLEMENT_LHASH_COMP_FN(err_state, ERR_STATE);
+static IMPLEMENT_LHASH_COMP_FN(err_state, ERR_STATE)
 
 static LHASH_OF(ERR_STATE) *int_thread_get(int create)
 	{
