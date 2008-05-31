@@ -879,6 +879,7 @@ sub do_defs
 			s/\{\}/\(\)/gs;
 
 			s/STACK_OF\(\)/void/gs;
+			s/LHASH_OF\(\)/void/gs;
 
 			print STDERR "DEBUG: \$_ = \"$_\"\n" if $debug;
 			if (/^\#INFO:([^:]*):(.*)$/) {
