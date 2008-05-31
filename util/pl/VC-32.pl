@@ -154,7 +154,7 @@ if ($FLAVOR =~ /CE/)
 	}
 else
 	{
-	$ex_libs.=' gdi32.lib advapi32.lib user32.lib';
+	$ex_libs.=' gdi32.lib advapi32.lib crypt32.lib user32.lib';
 	$ex_libs.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 	# WIN32 UNICODE build gets linked with unicows.lib for
 	# backward compatibility with Win9x.
