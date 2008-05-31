@@ -291,6 +291,7 @@ sub do_lib_rule
 		if ($name eq "")
 			{
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
+			$ex.=' crypt32.lib advapi32.lib' if ($target =~ /capi/);
 			}
 		elsif ($FLAVOR =~ /CE/)
 			{
