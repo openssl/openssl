@@ -169,7 +169,6 @@ int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
 	STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **ppkey,
 	UI_METHOD *ui_method, void *callback_data)
 	{
-	int ret;
 
 	if(e == NULL)
 		{
