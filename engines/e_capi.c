@@ -855,7 +855,7 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
 
 	/* Finally sign it */
 	slen = sizeof(csigbuf);
-	if(!CryptSignHash(hash, AT_SIGNATURE, NULL, 0, csigbuf, &slen))
+	if(!CryptSignHash(hash, capi_key->keyspec, NULL, 0, csigbuf, &slen))
 		{
 		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_ERROR_SIGNING_HASH);
 		capi_addlasterror();
