@@ -156,6 +156,9 @@
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
@@ -1652,6 +1655,10 @@ void SSL_CTX_free(SSL_CTX *a)
 #ifndef OPENSSL_NO_PSK
 	if (a->psk_identity_hint)
 		OPENSSL_free(a->psk_identity_hint);
+#endif
+#ifndef OPENSSL_NO_ENGINE
+	if (a->client_cert_engine)
+		ENGINE_finish(a->client_cert_engine);
 #endif
 	OPENSSL_free(a);
 	}
