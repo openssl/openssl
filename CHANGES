@@ -4,6 +4,9 @@
 
  Changes between 0.9.8g and 0.9.9  [xx XXX xxxx]
 
+  *) Expand ENGINE to support engine supplied SSL client certificate functions.
+     [Steve Henson]
+
   *) Revamp of LHASH to provide stronger type-checking. Still to come:
      STACK, TXT_DB, bsearch, qsort.
      [Ben Laurie]
