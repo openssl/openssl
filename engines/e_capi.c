@@ -404,6 +404,7 @@ struct CAPI_KEY_st
 	{
 	HCRYPTPROV hprov;
 	HCRYPTKEY key;
+	DWORD keyspec;
 	};
 
 static int bind_capi(ENGINE *e)
@@ -721,7 +722,7 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 
 /* Finally sign it */
 	slen = RSA_size(rsa);
-	if(!CryptSignHash(hash, AT_KEYEXCHANGE, NULL, 0, sigret, &slen)) {
+	if(!CryptSignHash(hash, capi_key->keyspec, NULL, 0, sigret, &slen)) {
 		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_ERROR_SIGNING_HASH);
 		capi_addlasterror();
 		goto err;
@@ -1289,6 +1290,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const char *contname, char *provnam
 		CryptReleaseContext(key->hprov, 0);
 		goto err;
 		}
+	key->keyspec = keyspec;
 	return key;
 
 	err:
