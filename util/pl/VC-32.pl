@@ -303,6 +303,7 @@ sub do_lib_rule
 			{
 			$ex.=' unicows.lib' if ($FLAVOR =~ /NT/);
 			$ex.=' ws2_32.lib gdi32.lib advapi32.lib user32.lib';
+			$ex.=' crypt32.lib';
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 			}
 		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
