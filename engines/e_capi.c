@@ -170,6 +170,7 @@ static int capi_ctx_set_provname_idx(CAPI_CTX *ctx, int idx);
 #define CAPI_CMD_LIST_CONTAINERS	(ENGINE_CMD_BASE + 9)
 #define CAPI_CMD_LIST_OPTIONS		(ENGINE_CMD_BASE + 10)
 #define CAPI_CMD_LOOKUP_METHOD		(ENGINE_CMD_BASE + 11)
+#define CAPI_CMD_STORE_NAME		(ENGINE_CMD_BASE + 12)
 
 static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 	{CAPI_CMD_LIST_CERTS,
@@ -221,6 +222,10 @@ static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 		"lookup_method",
 		"Set key lookup method (1=substring, 2=friendlyname, 3=container name)",
 		ENGINE_CMD_FLAG_NUMERIC},
+	{CAPI_CMD_STORE_NAME,
+		"store_name",
+		"certificate store name, default \"MY\"",
+		ENGINE_CMD_FLAG_STRING},
 
 	{0, NULL, NULL, 0}
 	};
@@ -257,6 +262,11 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 
 		case CAPI_CMD_LIST_CONTAINERS:
 		ret = capi_list_containers(ctx, out);
+		break;
+
+		case CAPI_CMD_STORE_NAME:
+		ctx->storename = BUF_strdup(p);
+		CAPI_trace(ctx, "Setting store name to %s\n", p);
 		break;
 
 		case CAPI_CMD_DEBUG_LEVEL:
