@@ -265,6 +265,8 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 		break;
 
 		case CAPI_CMD_STORE_NAME:
+		if (ctx->storename)
+			OPENSSL_free(ctx->storename);
 		ctx->storename = BUF_strdup(p);
 		CAPI_trace(ctx, "Setting store name to %s\n", p);
 		break;
