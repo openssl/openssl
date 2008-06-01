@@ -2959,7 +2959,7 @@ int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 		{
 		i = ENGINE_load_ssl_client_cert(s->ctx->client_cert_engine, s,
 						SSL_get_client_CA_list(s),
-						px509, ppkey, NULL, NULL);
+						px509, ppkey, NULL, NULL, NULL);
 		if (i != 0)
 			return i;
 		}

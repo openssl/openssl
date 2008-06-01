@@ -167,7 +167,7 @@ EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
 
 int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
 	STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **ppkey,
-	UI_METHOD *ui_method, void *callback_data)
+	STACK_OF(X509) **pother, UI_METHOD *ui_method, void *callback_data)
 	{
 
 	if(e == NULL)
@@ -191,6 +191,6 @@ int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
 			ENGINE_R_NO_LOAD_FUNCTION);
 		return 0;
 		}
-	return e->load_ssl_client_cert(e, s, ca_dn, pcert, ppkey,
+	return e->load_ssl_client_cert(e, s, ca_dn, pcert, ppkey, pother,
 					ui_method, callback_data);
 	}
