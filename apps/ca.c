@@ -2481,7 +2481,7 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 		goto err;
 
 		}
-	else if (index_name_cmp((CSTRING *)row, (CSTRING *)rrow))
+	else if (index_name_cmp_noconst(row, rrow))
 		{
 		BIO_printf(bio_err,"ERROR:name does not match %s\n",
 			   row[DB_name]);
