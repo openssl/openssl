@@ -2398,9 +2398,6 @@ static int check_time_format(const char *str)
 	return(ASN1_UTCTIME_check(&tm));
 	}
 
-static int index_name_cmp_nc(STRING *a, STRING *b)
-	{ return index_name_cmp(a, b); }
-
 static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 	{
 	ASN1_UTCTIME *tm=NULL;
@@ -2484,7 +2481,7 @@ static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
 		goto err;
 
 		}
-	else if (index_name_cmp_nc(row, rrow))
+	else if (index_name_cmp((CSTRING *)row, (CSTRING *)rrow))
 		{
 		BIO_printf(bio_err,"ERROR:name does not match %s\n",
 			   row[DB_name]);
