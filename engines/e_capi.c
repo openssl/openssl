@@ -235,7 +235,7 @@ static int rsa_capi_idx = -1;
 static int dsa_capi_idx = -1;
 
 static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
-{
+	{
 	int ret = 1;
 	CAPI_CTX *ctx;
 	BIO *out;
@@ -319,7 +319,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	BIO_free(out);
 	return ret;
 
-}
+	}
 
 static RSA_METHOD capi_rsa_method =
 	{
@@ -392,7 +392,6 @@ static int capi_init(ENGINE *e)
 
 static int capi_destroy(ENGINE *e)
 	{
-
 	ERR_unload_CAPI_strings();
 	return 1;
 	}
@@ -693,7 +692,8 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 		return -1;
 		}
 /* Convert the signature type to a CryptoAPI algorithm ID */
-	switch(dtype) {
+	switch(dtype)
+		{
 	case NID_sha1:
 		alg = CALG_SHA1;
 		break;
@@ -718,37 +718,43 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 
 
 /* Create the hash object */
-	if(!CryptCreateHash(capi_key->hprov, alg, 0, 0, &hash)) {
+	if(!CryptCreateHash(capi_key->hprov, alg, 0, 0, &hash))
+		{
 		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_CREATE_HASH_OBJECT);
 		capi_addlasterror();
 		return -1;
-	}
+		}
 /* Set the hash value to the value passed */
 
-	if(!CryptSetHashParam(hash, HP_HASHVAL, (unsigned char *)m, 0)) {
+	if(!CryptSetHashParam(hash, HP_HASHVAL, (unsigned char *)m, 0))
+		{
 		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_SET_HASH_VALUE);
 		capi_addlasterror();
 		goto err;
-	}
+		}
 
 
 /* Finally sign it */
 	slen = RSA_size(rsa);
-	if(!CryptSignHash(hash, capi_key->keyspec, NULL, 0, sigret, &slen)) {
+	if(!CryptSignHash(hash, capi_key->keyspec, NULL, 0, sigret, &slen))
+		{
 		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_ERROR_SIGNING_HASH);
 		capi_addlasterror();
 		goto err;
-	} else {
+		}
+	else
+		{
 		ret = 1;
 		/* Inplace byte reversal of signature */
-		for(i = 0; i < slen / 2; i++) {
+		for(i = 0; i < slen / 2; i++)
+			{
 			unsigned char c;
 			c = sigret[i];
 			sigret[i] = sigret[slen - i - 1];
 			sigret[slen - i - 1] = c;
-		}
+			}
 		*siglen = slen;
-	}
+		}
 
 
 	/* Now cleanup */
@@ -757,11 +763,11 @@ err:
 	CryptDestroyHash(hash);
 
 	return ret;
-}
+	}
 
 int capi_rsa_priv_dec(int flen, const unsigned char *from,
                 unsigned char *to, RSA *rsa, int padding)
-{
+	{
 	int i;
 	unsigned char *tmpbuf;
 	CAPI_KEY *capi_key;
@@ -809,7 +815,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
 	OPENSSL_free(tmpbuf);
 
 	return flen;
-}
+	}
 
 static int capi_rsa_free(RSA *rsa)
 	{
@@ -851,18 +857,20 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
 		}
 
 	/* Create the hash object */
-	if(!CryptCreateHash(capi_key->hprov, CALG_SHA1, 0, 0, &hash)) {
+	if(!CryptCreateHash(capi_key->hprov, CALG_SHA1, 0, 0, &hash))
+		{
 		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_CANT_CREATE_HASH_OBJECT);
 		capi_addlasterror();
 		return NULL;
-	}
+		}
 
 	/* Set the hash value to the value passed */
-	if(!CryptSetHashParam(hash, HP_HASHVAL, (unsigned char *)digest, 0)) {
+	if(!CryptSetHashParam(hash, HP_HASHVAL, (unsigned char *)digest, 0))
+		{
 		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_CANT_SET_HASH_VALUE);
 		capi_addlasterror();
 		goto err;
-	}
+		}
 
 
 	/* Finally sign it */
@@ -1035,29 +1043,29 @@ static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
 
 	for (idx = 0;;idx++)
 		{
-			clen = buflen;
-			cname[0] = 0;
+		clen = buflen;
+		cname[0] = 0;
 
-			if (idx == 0)
-				flags = CRYPT_FIRST;
-			else
-				flags = 0;
-			if(!CryptGetProvParam(hprov, PP_ENUMCONTAINERS, cname, &clen, flags))
-				{
-				err = GetLastError();
-				if (err == ERROR_NO_MORE_ITEMS)
-					goto done;
-				CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, CAPI_R_ENUMCONTAINERS_ERROR);
-				capi_adderror(err);
-				goto err;
-				}
-			CAPI_trace(ctx, "Container name %s, len=%d, index=%d, flags=%d\n", cname, clen, idx, flags);
-			if (!cname[0] && (clen == buflen))
-				{
-				CAPI_trace(ctx, "Enumerate bug: using workaround\n");
+		if (idx == 0)
+			flags = CRYPT_FIRST;
+		else
+			flags = 0;
+		if(!CryptGetProvParam(hprov, PP_ENUMCONTAINERS, cname, &clen, flags))
+			{
+			err = GetLastError();
+			if (err == ERROR_NO_MORE_ITEMS)
 				goto done;
-				}
-			BIO_printf(out, "%d. %s\n", idx, cname);
+			CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, CAPI_R_ENUMCONTAINERS_ERROR);
+			capi_adderror(err);
+			goto err;
+			}
+		CAPI_trace(ctx, "Container name %s, len=%d, index=%d, flags=%d\n", cname, clen, idx, flags);
+		if (!cname[0] && (clen == buflen))
+			{
+			CAPI_trace(ctx, "Enumerate bug: using workaround\n");
+			goto done;
+			}
+		BIO_printf(out, "%d. %s\n", idx, cname);
 		}
 	err:
 
@@ -1258,8 +1266,9 @@ static PCCERT_CONTEXT capi_find_cert(CAPI_CTX *ctx, const char *id, HCERTSTORE h
 	switch(ctx->lookup_method)
 		{
 		case CAPI_LU_SUBSTR:
-			return CertFindCertificateInStore(hstore, X509_ASN_ENCODING, 0, 
-											CERT_FIND_SUBJECT_STR_A, id, NULL);
+			return CertFindCertificateInStore(hstore,
+					X509_ASN_ENCODING, 0,
+					CERT_FIND_SUBJECT_STR_A, id, NULL);
 		case CAPI_LU_FNAME:
 			for(;;)
 				{
@@ -1288,7 +1297,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const char *contname, char *provnam
 	CAPI_KEY *key;
 	key = OPENSSL_malloc(sizeof(CAPI_KEY));
 	CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n", 
-															contname, provname, ptype);
+						contname, provname, ptype);
 	if (!CryptAcquireContext(&key->hprov, contname, provname, ptype, 0))
 		{
 		CAPIerr(CAPI_F_CAPI_GET_KEY, CAPI_R_CRYPTACQUIRECONTEXT_ERROR);
@@ -1323,7 +1332,8 @@ static CAPI_KEY *capi_get_cert_key(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
 	if (!provname || !contname)
 		return 0;
 
-	key = capi_get_key(ctx, contname, provname, pinfo->dwProvType, pinfo->dwKeySpec);
+	key = capi_get_key(ctx, contname, provname,
+				pinfo->dwProvType, pinfo->dwKeySpec);
 
 	err:
 	if (pinfo)
@@ -1357,7 +1367,8 @@ CAPI_KEY *capi_find_key(CAPI_CTX *ctx, const char *id)
 		break;
 
 		case CAPI_LU_CONTNAME:
-		key = capi_get_key(ctx, id, ctx->cspname, ctx->csptype, ctx->keytype);
+		key = capi_get_key(ctx, id, ctx->cspname, ctx->csptype,
+							ctx->keytype);
 		break;
 		}
 
@@ -1416,7 +1427,8 @@ static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type, int che
 	if (check)
 		{
 		HCRYPTPROV hprov;
-		if (!CryptAcquireContext(&hprov, NULL, pname, type, CRYPT_VERIFYCONTEXT))
+		if (!CryptAcquireContext(&hprov, NULL, pname, type,
+						CRYPT_VERIFYCONTEXT))
 			{
 			CAPIerr(CAPI_F_CAPI_CTX_SET_PROVNAME, CAPI_R_CRYPTACQUIRECONTEXT_ERROR);
 			capi_addlasterror();
