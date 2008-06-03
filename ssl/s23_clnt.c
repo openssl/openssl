@@ -640,6 +640,9 @@ static int ssl23_get_server_hello(SSL *s)
 		 * for SSLv3 */
 		s->rstate=SSL_ST_READ_HEADER;
 		s->packet_length=n;
+		if (s->s3->rbuf.buf == NULL)
+			if (!ssl3_setup_read_buffer(s))
+				goto err;
 		s->packet= &(s->s3->rbuf.buf[0]);
 		memcpy(s->packet,buf,n);
 		s->s3->rbuf.left=n;

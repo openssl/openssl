@@ -137,6 +137,10 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 	if (n <= 0) return n;
 
 	rb    = &(s->s3->rbuf);
+	if (rb->buf == NULL)
+		if (!ssl3_setup_read_buffer(s))
+			return -1;
+
 	left  = rb->left;
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
 	align = (long)rb->buf + SSL3_RT_HEADER_LENGTH;
@@ -234,6 +238,11 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		if (i <= 0)
 			{
 			rb->left = left;
+#ifndef OPENSSL_NO_RELEASE_BUFFERS
+			if (len+left == 0 &&
+			    (s->mode & SSL_MODE_RELEASE_BUFFERS))
+				ssl3_release_read_buffer(s);
+#endif
 			return(i);
 			}
 		left+=i;
@@ -609,6 +618,10 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	SSL3_BUFFER *wb=&(s->s3->wbuf);
 	SSL_SESSION *sess;
 
+ 	if (wb->buf == NULL)
+		if (!ssl3_setup_write_buffer(s))
+			return -1;
+
 	/* first check if there is a SSL3_BUFFER still being written
 	 * out.  This will happen with non blocking IO */
 	if (wb->left != 0)
@@ -812,6 +825,10 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			{
 			wb->left=0;
 			wb->offset+=i;
+#ifndef OPENSSL_NO_RELEASE_BUFFERS
+			if (s->mode & SSL_MODE_RELEASE_BUFFERS)
+				ssl3_release_write_buffer(s);
+#endif
 			s->rwstate=SSL_NOTHING;
 			return(s->s3->wpend_ret);
 			}
@@ -857,7 +874,7 @@ int ssl3_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 	void (*cb)(const SSL *ssl,int type2,int val)=NULL;
 
 	if (s->s3->rbuf.buf == NULL) /* Not initialized yet */
-		if (!ssl3_setup_buffers(s))
+		if (!ssl3_setup_read_buffer(s))
 			return(-1);
 
 	if ((type && (type != SSL3_RT_APPLICATION_DATA) && (type != SSL3_RT_HANDSHAKE) && type) ||
@@ -966,6 +983,10 @@ start:
 				{
 				s->rstate=SSL_ST_READ_HEADER;
 				rr->off=0;
+#ifndef OPENSSL_NO_RELEASE_BUFFERS
+				if ((s->mode & SSL_MODE_RELEASE_BUFFERS))
+					ssl3_release_read_buffer(s);
+#endif
 				}
 			}
 		return(n);

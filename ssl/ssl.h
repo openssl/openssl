@@ -587,7 +587,10 @@ typedef struct ssl_session_st
 #define SSL_MODE_AUTO_RETRY 0x00000004L
 /* Don't attempt to automatically build certificate chain */
 #define SSL_MODE_NO_AUTO_CHAIN 0x00000008L
-
+/* Save RAM by releasing read and write buffers when they're empty. (SSL3 and
+ * TLS only.)  "Released" buffers are put onto a free-list in the context
+ * or just freed (depending on the context's setting for freelist_max_len). */
+#define SSL_MODE_RELEASE_BUFFERS 0x00000010L
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
@@ -835,6 +838,13 @@ struct ssl_ctx_st
 		unsigned int max_psk_len);
 	unsigned int (*psk_server_callback)(SSL *ssl, const char *identity,
 		unsigned char *psk, unsigned int max_psk_len);
+#endif
+
+#if !defined(OPENSSL_NO_BUF_FREELISTS) || !defined(OPENSSL_NO_RELEASE_BUFFERS)
+#define SSL_MAX_BUF_FREELIST_LEN_DEFAULT 32
+	unsigned int freelist_max_len;
+	struct ssl3_buf_freelist_st *wbuf_freelist;
+	struct ssl3_buf_freelist_st *rbuf_freelist;
 #endif
 	};
 

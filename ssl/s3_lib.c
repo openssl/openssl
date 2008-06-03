@@ -2148,9 +2148,9 @@ void ssl3_free(SSL *s)
 
 	ssl3_cleanup_key_block(s);
 	if (s->s3->rbuf.buf != NULL)
-		OPENSSL_free(s->s3->rbuf.buf);
+		ssl3_release_read_buffer(s);
 	if (s->s3->wbuf.buf != NULL)
-		OPENSSL_free(s->s3->wbuf.buf);
+		ssl3_release_write_buffer(s);
 	if (s->s3->rrec.comp != NULL)
 		OPENSSL_free(s->s3->rrec.comp);
 #ifndef OPENSSL_NO_DH

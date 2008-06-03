@@ -1449,7 +1449,7 @@ static IMPLEMENT_LHASH_COMP_FN(ssl_session, SSL_SESSION)
 SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	{
 	SSL_CTX *ret=NULL;
-	
+
 	if (meth == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_NEW,SSL_R_NULL_SSL_METHOD_PASSED);
@@ -1581,6 +1581,24 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	ret->psk_client_callback=NULL;
 	ret->psk_server_callback=NULL;
 #endif
+#if !defined(OPENSSL_NO_BUF_FREELISTS) && !defined(OPENSSL_NO_RELEASE_BUFFERS)
+	ret->freelist_max_len = SSL_MAX_BUF_FREELIST_LEN_DEFAULT;
+	ret->rbuf_freelist = OPENSSL_malloc(sizeof(SSL3_BUF_FREELIST));
+	if (!ret->rbuf_freelist)
+		goto err;
+	ret->rbuf_freelist->chunklen = 0;
+	ret->rbuf_freelist->len = 0;
+	ret->rbuf_freelist->head = NULL;
+	ret->wbuf_freelist = OPENSSL_malloc(sizeof(SSL3_BUF_FREELIST));
+	if (!ret->wbuf_freelist)
+		{
+		OPENSSL_free(ret->rbuf_freelist);
+		goto err;
+		}
+	ret->wbuf_freelist->chunklen = 0;
+	ret->wbuf_freelist->len = 0;
+	ret->wbuf_freelist->head = NULL;
+#endif
 	return(ret);
 err:
 	SSLerr(SSL_F_SSL_CTX_NEW,ERR_R_MALLOC_FAILURE);
@@ -1592,6 +1610,20 @@ err2:
 #if 0
 static void SSL_COMP_free(SSL_COMP *comp)
     { OPENSSL_free(comp); }
+#endif
+
+#if !defined(OPENSSL_NO_BUF_FREELISTS) && !defined(OPENSSL_NO_RELEASE_BUFFERS)
+static void
+ssl_buf_freelist_free(SSL3_BUF_FREELIST *list)
+	{
+	SSL3_BUF_FREELIST_ENTRY *ent, *next;
+	for (ent = list->head; ent; ent = next)
+		{
+		next = ent->next;
+		OPENSSL_free(ent);
+		}
+	OPENSSL_free(list);
+	}
 #endif
 
 void SSL_CTX_free(SSL_CTX *a)
@@ -1660,6 +1692,14 @@ void SSL_CTX_free(SSL_CTX *a)
 	if (a->client_cert_engine)
 		ENGINE_finish(a->client_cert_engine);
 #endif
+
+#if !defined(OPENSSL_NO_BUF_FREELISTS) && !defined(OPENSSL_NO_RELEASE_BUFFERS)
+	if (a->wbuf_freelist)
+		ssl_buf_freelist_free(a->wbuf_freelist);
+	if (a->rbuf_freelist)
+		ssl_buf_freelist_free(a->rbuf_freelist);
+#endif
+
 	OPENSSL_free(a);
 	}
 
@@ -2901,7 +2941,7 @@ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int con
  * vairable, freeing  EVP_MD_CTX previously stored in that variable, if
  * any. If EVP_MD pointer is passed, initializes ctx with this md
  * Returns newly allocated ctx;
- */ 
+ */
 
 EVP_MD_CTX *ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) 
 {

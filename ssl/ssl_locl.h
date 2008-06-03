@@ -561,6 +561,20 @@ typedef struct ssl3_comp_st
 	COMP_METHOD *method; /* The method :-) */
 	} SSL3_COMP;
 
+#if !defined(OPENSSL_NO_BUF_FREELISTS) && !defined(OPENSSL_NO_RELEASE_BUFFERS)
+typedef struct ssl3_buf_freelist_st
+	{
+	size_t chunklen;
+	int len;
+	struct ssl3_buf_freelist_entry_st *head;
+	} SSL3_BUF_FREELIST;
+
+typedef struct ssl3_buf_freelist_entry_st
+	{
+	struct ssl3_buf_freelist_entry_st *next;
+	} SSL3_BUF_FREELIST_ENTRY;
+#endif
+
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 OPENSSL_EXTERN SSL_CIPHER ssl2_ciphers[];
 OPENSSL_EXTERN SSL_CIPHER ssl3_ciphers[];
@@ -859,6 +873,10 @@ unsigned long ssl3_output_cert_chain(SSL *s, X509 *x);
 SSL_CIPHER *ssl3_choose_cipher(SSL *ssl,STACK_OF(SSL_CIPHER) *clnt,
 			       STACK_OF(SSL_CIPHER) *srvr);
 int	ssl3_setup_buffers(SSL *s);
+int	ssl3_setup_read_buffer(SSL *s);
+int	ssl3_setup_write_buffer(SSL *s);
+int	ssl3_release_read_buffer(SSL *s);
+int	ssl3_release_write_buffer(SSL *s);
 void ssl3_digest_cached_records(SSL *s);
 int	ssl3_new(SSL *s);
 void	ssl3_free(SSL *s);
