@@ -73,6 +73,7 @@ static void ERR_CAPI_error(int function, int reason, char *file, int line);
 #define CAPI_F_CAPI_CTX_SET_PROVNAME			 102
 #define CAPI_F_CAPI_DSA_DO_SIGN				 114
 #define CAPI_F_CAPI_GET_KEY				 103
+#define CAPI_F_CAPI_GET_PKEY				 115
 #define CAPI_F_CAPI_GET_PROVNAME			 104
 #define CAPI_F_CAPI_GET_PROV_INFO			 105
 #define CAPI_F_CAPI_INIT				 106

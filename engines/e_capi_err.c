@@ -1,6 +1,6 @@
 /* e_capi_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,6 +76,7 @@ static ERR_STRING_DATA CAPI_str_functs[]=
 {ERR_FUNC(CAPI_F_CAPI_CTX_SET_PROVNAME),	"CAPI_CTX_SET_PROVNAME"},
 {ERR_FUNC(CAPI_F_CAPI_DSA_DO_SIGN),	"CAPI_DSA_DO_SIGN"},
 {ERR_FUNC(CAPI_F_CAPI_GET_KEY),	"CAPI_GET_KEY"},
+{ERR_FUNC(CAPI_F_CAPI_GET_PKEY),	"CAPI_GET_PKEY"},
 {ERR_FUNC(CAPI_F_CAPI_GET_PROVNAME),	"CAPI_GET_PROVNAME"},
 {ERR_FUNC(CAPI_F_CAPI_GET_PROV_INFO),	"CAPI_GET_PROV_INFO"},
 {ERR_FUNC(CAPI_F_CAPI_INIT),	"CAPI_INIT"},
