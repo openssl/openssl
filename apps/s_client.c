@@ -404,7 +404,8 @@ int MAIN(int argc, char **argv)
 	int mbuf_len=0;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine_id=NULL;
-	ENGINE *e=NULL;
+	char *ssl_client_engine_id=NULL;
+	ENGINE *e=NULL, *ssl_client_engine=NULL;
 #endif
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
 	struct timeval tv;
@@ -670,6 +671,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			engine_id = *(++argv);
 			}
+		else if	(strcmp(*argv,"-ssl_client_engine") == 0)
+			{
+			if (--argc < 1) goto bad;
+			ssl_client_engine_id = *(++argv);
+			}
 #endif
 		else if (strcmp(*argv,"-rand") == 0)
 			{
@@ -705,6 +711,17 @@ bad:
 
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine_id, 1);
+	if (ssl_client_engine_id)
+		{
+		ssl_client_engine = ENGINE_by_id(ssl_client_engine_id);
+		if (!ssl_client_engine)
+			{
+			BIO_printf(bio_err,
+					"Error getting client auth engine\n");
+			goto end;
+			}
+		}
+
 #endif
 	if (!app_passwd(bio_err, passarg, NULL, &pass, NULL))
 		{
@@ -771,6 +788,20 @@ bad:
 		ERR_print_errors(bio_err);
 		goto end;
 		}
+
+#ifndef OPENSSL_NO_ENGINE
+	if (ssl_client_engine)
+		{
+		if (!SSL_CTX_set_client_cert_engine(ctx, ssl_client_engine))
+			{
+			BIO_puts(bio_err, "Error setting client auth engine\n");
+			ERR_print_errors(bio_err);
+			ENGINE_free(ssl_client_engine);
+			goto end;
+			}
+		ENGINE_free(ssl_client_engine);
+		}
+#endif
 
 #ifndef OPENSSL_NO_PSK
 	if (psk_key != NULL)
