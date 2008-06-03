@@ -774,7 +774,6 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 		*siglen = slen;
 		}
 
-
 	/* Now cleanup */
 
 err:
@@ -1475,6 +1474,9 @@ static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x)
 	{
 	int i;
 	X509_NAME *nm;
+	/* Special case: empty list: match anything */
+	if (sk_X509_NAME_num(ca_dn) <= 0)
+		return 1;
 	for (i = 0; i < sk_X509_NAME_num(ca_dn); i++)
 		{
 		nm = sk_X509_NAME_value(ca_dn, i);
