@@ -565,7 +565,7 @@ typedef struct ssl3_comp_st
 typedef struct ssl3_buf_freelist_st
 	{
 	size_t chunklen;
-	int len;
+	unsigned int len;
 	struct ssl3_buf_freelist_entry_st *head;
 	} SSL3_BUF_FREELIST;
 
