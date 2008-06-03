@@ -238,6 +238,7 @@ static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 static int capi_idx = -1;
 static int rsa_capi_idx = -1;
 static int dsa_capi_idx = -1;
+static int cert_capi_idx = -1;
 
 static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	{
@@ -365,6 +366,7 @@ static int capi_init(ENGINE *e)
 	const RSA_METHOD *ossl_rsa_meth;
 	const DSA_METHOD *ossl_dsa_meth;
 	capi_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
+	cert_capi_idx = X509_get_ex_new_index(0, NULL, NULL, NULL, 0);
 
 	ctx = capi_ctx_new();
 	if (!ctx || (capi_idx < 0))
@@ -418,6 +420,8 @@ static int capi_finish(ENGINE *e)
 
 struct CAPI_KEY_st
 	{
+	/* Associated certificate context (if any) */
+	PCERT_CONTEXT pcert;
 	HCRYPTPROV hprov;
 	HCRYPTKEY key;
 	DWORD keyspec;
@@ -1329,6 +1333,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const char *contname, char *provnam
 		goto err;
 		}
 	key->keyspec = keyspec;
+	key->pcert = NULL;
 	return key;
 
 	err:
@@ -1398,6 +1403,8 @@ void capi_free_key(CAPI_KEY *key)
 		return;
 	CryptDestroyKey(key->key);
 	CryptReleaseContext(key->hprov, 0);
+	if (key->pcert)
+		CertFreeCertificateContext(key->pcert);
 	OPENSSL_free(key);
 	}
 
@@ -1486,23 +1493,25 @@ static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x)
 	return 0;
 	}
 
+static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
+	{
+fprintf(stderr, "%d certificates\n", sk_X509_num(certs));
+	return 0;
+	}
+
 static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 	STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **pkey,
 	STACK_OF(X509) **pother, UI_METHOD *ui_method, void *callback_data)
 	{
-#if 0
-	/* For now just one matching key/cert */
 	STACK_OF(X509) *certs = NULL;
-	STACK_OF(EVP_PKEY) *keys = NULL;
-#endif
 	X509 *x;
-	EVP_PKEY *pk;
 	char *storename;
 	const char *p;
-	int i;
+	int i, client_cert_idx;
 	HCERTSTORE hstore;
-	PCCERT_CONTEXT cert = NULL;
+	PCCERT_CONTEXT cert = NULL, excert = NULL;
 	CAPI_CTX *ctx;
+	CAPI_KEY *key;
 	ctx = ENGINE_get_ex_data(e, capi_idx);
 
 	*pcert = NULL;
@@ -1516,7 +1525,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 	if (!hstore)
 		return 0;
 	/* Enumerate all certificates looking for a match */
-	for(i = 0;!*pcert;i++)
+	for(i = 0;;i++)
 		{
 		cert = CertEnumCertificatesInStore(hstore, cert);
 		if (!cert)
@@ -1530,9 +1539,17 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 			}
 		if (cert_issuer_match(ca_dn, x))
 			{
-			CAPI_KEY *key = capi_get_cert_key(ctx, cert);
+			key = capi_get_cert_key(ctx, cert);
 			if (!key)
 				continue;
+			excert = CertDuplicateCertificateContext(cert);
+			X509_set_ex_data(x, cert_capi_idx, key);
+
+			if (!certs)
+				certs = sk_X509_new_null();
+
+			sk_X509_push(certs, x);
+#if 0
 			pk = capi_get_pkey(e, key);
 			if (!pk)
 				{
@@ -1541,6 +1558,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 				}
 			*pcert = x;
 			*pkey = pk;
+#endif
 			}
 		else
 			X509_free(x);
@@ -1550,10 +1568,34 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 	if (cert)
 		CertFreeCertificateContext(cert);
 
-	if (*pcert)
-		return 1;
-	else
+	if (!certs)
 		return 0;
+
+	client_cert_idx = client_cert_select(e, ssl, certs);
+
+	for(i = 0; i < sk_X509_num(certs); i++)
+		{
+		x = sk_X509_value(certs, i);
+		if (i == client_cert_idx)
+			*pcert = x;
+		else
+			{
+			key = X509_get_ex_data(x, cert_capi_idx);
+			capi_free_key(key);
+			X509_free(x);
+			}
+		}
+
+	sk_X509_free(certs);
+
+	if (!*pcert)
+		return 0;
+
+	key = X509_get_ex_data(*pcert, cert_capi_idx);
+	*pkey = capi_get_pkey(e, key);
+	X509_set_ex_data(*pcert, cert_capi_idx, NULL);
+
+	return 1;
 
 	}
 
