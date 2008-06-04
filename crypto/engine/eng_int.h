@@ -170,6 +170,8 @@ struct engine_st
 	ENGINE_LOAD_KEY_PTR load_privkey;
 	ENGINE_LOAD_KEY_PTR load_pubkey;
 
+	ENGINE_SSL_CLIENT_CERT_PTR load_ssl_client_cert;
+
 	const ENGINE_CMD_DEFN *cmd_defns;
 	int flags;
 	/* reference count on the structure itself */

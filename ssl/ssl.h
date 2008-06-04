@@ -361,9 +361,6 @@ typedef struct ssl_cipher_st
 
 DECLARE_STACK_OF(SSL_CIPHER)
 
-typedef struct ssl_st SSL;
-typedef struct ssl_ctx_st SSL_CTX;
-
 /* Used to hold functions for SSLv2 or SSLv3/TLSv1 functions */
 typedef struct ssl_method_st
 	{
