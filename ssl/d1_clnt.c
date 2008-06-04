@@ -1095,8 +1095,7 @@ int dtls1_send_client_certificate(SSL *s)
 		 * ssl->rwstate=SSL_X509_LOOKUP; return(-1);
 		 * We then get retied later */
 		i=0;
-		if (s->ctx->client_cert_cb != NULL)
-			i=s->ctx->client_cert_cb(s,&(x509),&(pkey));
+		i = ssl_do_client_cert_cb(s, &x509, &pkey);
 		if (i < 0)
 			{
 			s->rwstate=SSL_X509_LOOKUP;

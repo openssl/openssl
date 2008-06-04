@@ -134,6 +134,9 @@
 #include <openssl/dh.h>
 #endif
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 
 static SSL_METHOD *ssl3_get_client_method(int ver);
 static int ca_dn_cmp(const X509_NAME * const *a,const X509_NAME * const *b);
@@ -2448,8 +2451,7 @@ int ssl3_send_client_certificate(SSL *s)
 		 * ssl->rwstate=SSL_X509_LOOKUP; return(-1);
 		 * We then get retied later */
 		i=0;
-		if (s->ctx->client_cert_cb != NULL)
-			i=s->ctx->client_cert_cb(s,&(x509),&(pkey));
+		i = ssl_do_client_cert_cb(s, &x509, &pkey);
 		if (i < 0)
 			{
 			s->rwstate=SSL_X509_LOOKUP;
@@ -2716,3 +2718,21 @@ static int ssl3_check_finished(SSL *s)
 	return 1;
 	}
 #endif
+
+int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
+	{
+	int i = 0;
+#ifndef OPENSSL_NO_ENGINE
+	if (s->ctx->client_cert_engine)
+		{
+		i = ENGINE_load_ssl_client_cert(s->ctx->client_cert_engine, s,
+						SSL_get_client_CA_list(s),
+						px509, ppkey, NULL, NULL, NULL);
+		if (i != 0)
+			return i;
+		}
+#endif
+	if (s->ctx->client_cert_cb)
+		i = s->ctx->client_cert_cb(s,px509,ppkey);
+	return i;
+	}
