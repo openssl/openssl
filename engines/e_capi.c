@@ -1618,6 +1618,9 @@ static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 
 #include <cryptuiapi.h>
 
+#define dlg_title L"OpenSSL Application SSL Client Certificate Selection"
+#define dlg_prompt L"Select a certificate to use for authentication"
+
 static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 	{
 	X509 *x;
@@ -1625,6 +1628,7 @@ static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 	PCCERT_CONTEXT cert;
 	CAPI_CTX *ctx;
 	CAPI_KEY *key;
+	HWND hwnd;
 	int i, idx = -1;
 	ctx = ENGINE_get_ex_data(e, capi_idx);
 	/* Create an in memory store of certificates */
@@ -1651,8 +1655,12 @@ static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 			}
 
 		}
+	hwnd = GetActiveWindow();
+	if (!hwnd)
+		hwnd = GetConsoleWindow();
 	/* Call dialog to select one */
-	cert = CryptUIDlgSelectCertificateFromStore(dstore, NULL,NULL, NULL,
+	cert = CryptUIDlgSelectCertificateFromStore(dstore, hwnd,
+							dlg_title, dlg_prompt,
 							0, 0, NULL);
 
 	/* Find matching cert from list */
