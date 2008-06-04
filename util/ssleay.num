@@ -117,8 +117,8 @@ SSL_CIPHER_get_bits                     128	EXIST::FUNCTION:
 SSL_CIPHER_get_version                  129	EXIST::FUNCTION:
 SSL_CIPHER_get_name                     130	EXIST::FUNCTION:
 BIO_ssl_shutdown                        131	EXIST::FUNCTION:BIO
-SSL_SESSION_cmp                         132	EXIST::FUNCTION:
-SSL_SESSION_hash                        133	EXIST::FUNCTION:
+SSL_SESSION_cmp                         132	NOEXIST::FUNCTION:
+SSL_SESSION_hash                        133	NOEXIST::FUNCTION:
 SSL_SESSION_get_time                    134	EXIST::FUNCTION:
 SSL_SESSION_set_time                    135	EXIST::FUNCTION:
 SSL_SESSION_get_timeout                 136	EXIST::FUNCTION:
@@ -253,3 +253,4 @@ PEM_write_bio_SSL_SESSION               301	EXIST::FUNCTION:
 PEM_read_SSL_SESSION                    302	EXIST:!WIN16:FUNCTION:
 PEM_read_bio_SSL_SESSION                303	EXIST::FUNCTION:
 PEM_write_SSL_SESSION                   304	EXIST:!WIN16:FUNCTION:
+SSL_CTX_set_client_cert_engine          305	EXIST::FUNCTION:ENGINE
