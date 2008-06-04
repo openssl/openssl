@@ -1620,6 +1620,8 @@ static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 
 #define dlg_title L"OpenSSL Application SSL Client Certificate Selection"
 #define dlg_prompt L"Select a certificate to use for authentication"
+#define dlg_columns	 CRYPTUI_SELECT_LOCATION_COLUMN \
+			|CRYPTUI_SELECT_INTENDEDUSE_COLUMN
 
 static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 	{
@@ -1661,7 +1663,7 @@ static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 	/* Call dialog to select one */
 	cert = CryptUIDlgSelectCertificateFromStore(dstore, hwnd,
 							dlg_title, dlg_prompt,
-							0, 0, NULL);
+							dlg_columns, 0, NULL);
 
 	/* Find matching cert from list */
 	if (cert)
