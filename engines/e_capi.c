@@ -71,6 +71,8 @@
 #include <windows.h>
 #include <wincrypt.h>
 
+#undef X509_NAME
+
 #include "e_capi_err.h"
 #include "e_capi_err.c"
 
