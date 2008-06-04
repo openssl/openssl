@@ -1526,7 +1526,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 	hstore = capi_open_store(ctx, storename);
 	if (!hstore)
 		return 0;
-	/* Enumerate all certificates looking for a match */
+	/* Enumerate all certificates collect any matches */
 	for(i = 0;;i++)
 		{
 		cert = CertEnumCertificatesInStore(hstore, cert);
@@ -1544,6 +1544,9 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 			key = capi_get_cert_key(ctx, cert);
 			if (!key)
 				continue;
+			/* Match found: attach extra data to it so
+			 * we can retrieve the key later.
+			 */
 			excert = CertDuplicateCertificateContext(cert);
 			X509_set_ex_data(x, cert_capi_idx, key);
 
@@ -1551,16 +1554,6 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 				certs = sk_X509_new_null();
 
 			sk_X509_push(certs, x);
-#if 0
-			pk = capi_get_pkey(e, key);
-			if (!pk)
-				{
-				capi_free_key(key);
-				continue;
-				}
-			*pcert = x;
-			*pkey = pk;
-#endif
 			}
 		else
 			X509_free(x);
@@ -1573,7 +1566,12 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 	if (!certs)
 		return 0;
 
+
+	/* Select the appropriate certificate */
+
 	client_cert_idx = client_cert_select(e, ssl, certs);
+
+	/* Set the selected certificate and free the rest */
 
 	for(i = 0; i < sk_X509_num(certs); i++)
 		{
@@ -1592,6 +1590,8 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 
 	if (!*pcert)
 		return 0;
+
+	/* Setup key for selected certificate */
 
 	key = X509_get_ex_data(*pcert, cert_capi_idx);
 	*pkey = capi_get_pkey(e, key);
