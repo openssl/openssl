@@ -1608,7 +1608,6 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	{
 	ENGINE *eng;
 	eng = ENGINE_by_id(eng_str(OPENSSL_SSL_CLIENT_ENGINE_AUTO));
-fprintf(stderr, "Engine is %p\n", eng);
 	if (!eng || !SSL_CTX_set_client_cert_engine(ret, eng))
 		ERR_clear_error();
 	}
