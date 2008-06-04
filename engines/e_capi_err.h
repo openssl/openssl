@@ -83,6 +83,7 @@ static void ERR_CAPI_error(int function, int reason, char *file, int line);
 #define CAPI_F_CAPI_RSA_PRIV_DEC			 110
 #define CAPI_F_CAPI_RSA_PRIV_ENC			 111
 #define CAPI_F_CAPI_RSA_SIGN				 112
+#define CAPI_F_CLIENT_CERT_SELECT			 116
 #define CAPI_F_WIDE_TO_ASC				 113
 
 /* Reason codes. */
@@ -95,6 +96,8 @@ static void ERR_CAPI_error(int function, int reason, char *file, int line);
 #define CAPI_R_DECRYPT_ERROR				 105
 #define CAPI_R_ENGINE_NOT_INITIALIZED			 106
 #define CAPI_R_ENUMCONTAINERS_ERROR			 107
+#define CAPI_R_ERROR_ADDING_CERT			 125
+#define CAPI_R_ERROR_CREATING_STORE			 126
 #define CAPI_R_ERROR_GETTING_FRIENDLY_NAME		 108
 #define CAPI_R_ERROR_GETTING_KEY_PROVIDER_INFO		 109
 #define CAPI_R_ERROR_OPENING_STORE			 110

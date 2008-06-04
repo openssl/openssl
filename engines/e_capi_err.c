@@ -1,6 +1,6 @@
 /* e_capi_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,6 +86,7 @@ static ERR_STRING_DATA CAPI_str_functs[]=
 {ERR_FUNC(CAPI_F_CAPI_RSA_PRIV_DEC),	"CAPI_RSA_PRIV_DEC"},
 {ERR_FUNC(CAPI_F_CAPI_RSA_PRIV_ENC),	"CAPI_RSA_PRIV_ENC"},
 {ERR_FUNC(CAPI_F_CAPI_RSA_SIGN),	"CAPI_RSA_SIGN"},
+{ERR_FUNC(CAPI_F_CLIENT_CERT_SELECT),	"CLIENT_CERT_SELECT"},
 {ERR_FUNC(CAPI_F_WIDE_TO_ASC),	"WIDE_TO_ASC"},
 {0,NULL}
 	};
@@ -101,6 +102,8 @@ static ERR_STRING_DATA CAPI_str_reasons[]=
 {ERR_REASON(CAPI_R_DECRYPT_ERROR)        ,"decrypt error"},
 {ERR_REASON(CAPI_R_ENGINE_NOT_INITIALIZED),"engine not initialized"},
 {ERR_REASON(CAPI_R_ENUMCONTAINERS_ERROR) ,"enumcontainers error"},
+{ERR_REASON(CAPI_R_ERROR_ADDING_CERT)    ,"error adding cert"},
+{ERR_REASON(CAPI_R_ERROR_CREATING_STORE) ,"error creating store"},
 {ERR_REASON(CAPI_R_ERROR_GETTING_FRIENDLY_NAME),"error getting friendly name"},
 {ERR_REASON(CAPI_R_ERROR_GETTING_KEY_PROVIDER_INFO),"error getting key provider info"},
 {ERR_REASON(CAPI_R_ERROR_OPENING_STORE)  ,"error opening store"},

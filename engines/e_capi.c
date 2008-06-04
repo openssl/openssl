@@ -92,6 +92,7 @@ static int capi_list_providers(CAPI_CTX *ctx, BIO *out);
 static int capi_list_containers(CAPI_CTX *ctx, BIO *out);
 int capi_list_certs(CAPI_CTX *ctx, BIO *out, char *storename);
 void capi_free_key(CAPI_KEY *key);
+static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
 
 static PCCERT_CONTEXT capi_find_cert(CAPI_CTX *ctx, const char *id, HCERTSTORE hstore);
 
@@ -423,7 +424,7 @@ static int capi_finish(ENGINE *e)
 struct CAPI_KEY_st
 	{
 	/* Associated certificate context (if any) */
-	PCERT_CONTEXT pcert;
+	PCCERT_CONTEXT pcert;
 	HCRYPTPROV hprov;
 	HCRYPTKEY key;
 	DWORD keyspec;
@@ -1495,11 +1496,7 @@ static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x)
 	return 0;
 	}
 
-static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
-	{
-fprintf(stderr, "%d certificates\n", sk_X509_num(certs));
-	return 0;
-	}
+
 
 static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 	STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **pkey,
@@ -1548,6 +1545,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 			 * we can retrieve the key later.
 			 */
 			excert = CertDuplicateCertificateContext(cert);
+			key->pcert = excert;
 			X509_set_ex_data(x, cert_capi_idx, key);
 
 			if (!certs)
@@ -1562,6 +1560,8 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 
 	if (cert)
 		CertFreeCertificateContext(cert);
+	if (hstore)
+		CertCloseStore(hstore, 0);
 
 	if (!certs)
 		return 0;
@@ -1600,6 +1600,86 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 	return 1;
 
 	}
+
+#ifndef OPENSSL_CAPIENG_DIALOG
+
+/* Simple client cert selection function: always select first */
+
+static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
+	{
+	return 0;
+	}
+
+#else
+
+/* More complex cert selection function, using standard function
+ * CryptUIDlgSelectCertificateFromStore() to produce a dialog box.
+ */
+
+#include <cryptuiapi.h>
+
+static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
+	{
+	X509 *x;
+	HCERTSTORE dstore;
+	PCCERT_CONTEXT cert;
+	CAPI_CTX *ctx;
+	CAPI_KEY *key;
+	int i, idx = -1;
+	ctx = ENGINE_get_ex_data(e, capi_idx);
+	/* Create an in memory store of certificates */
+	dstore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+					CERT_STORE_CREATE_NEW_FLAG, NULL);
+	if (!dstore)
+		{
+		CAPIerr(CAPI_F_CLIENT_CERT_SELECT, CAPI_R_ERROR_CREATING_STORE);
+		capi_addlasterror();
+		goto err;
+		}
+	/* Add all certificates to store */
+	for(i = 0; i < sk_X509_num(certs); i++)
+		{
+		x = sk_X509_value(certs, i);
+		key = X509_get_ex_data(x, cert_capi_idx);
+
+		if (!CertAddCertificateContextToStore(dstore, key->pcert,
+						CERT_STORE_ADD_NEW, NULL))
+			{
+			CAPIerr(CAPI_F_CLIENT_CERT_SELECT, CAPI_R_ERROR_ADDING_CERT);
+			capi_addlasterror();
+			goto err;
+			}
+
+		}
+	/* Call dialog to select one */
+	cert = CryptUIDlgSelectCertificateFromStore(dstore, NULL,NULL, NULL,
+							0, 0, NULL);
+
+	/* Find matching cert from list */
+	if (cert)
+		{
+		for(i = 0; i < sk_X509_num(certs); i++)
+			{
+			x = sk_X509_value(certs, i);
+			key = X509_get_ex_data(x, cert_capi_idx);
+			if (CertCompareCertificate(
+				X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+					cert->pCertInfo,
+					key->pcert->pCertInfo))
+				{
+				idx = i;
+				break;
+				}
+			}
+		}
+
+	err:
+	if (dstore)
+		CertCloseStore(dstore, 0);
+	return idx;
+
+	}
+#endif
 
 #endif
 #endif
