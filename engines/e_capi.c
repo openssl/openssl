@@ -71,6 +71,8 @@
 #include <windows.h>
 #include <wincrypt.h>
 
+#undef X509_NAME
+
 #include "e_capi_err.h"
 #include "e_capi_err.c"
 
@@ -90,6 +92,7 @@ static int capi_list_providers(CAPI_CTX *ctx, BIO *out);
 static int capi_list_containers(CAPI_CTX *ctx, BIO *out);
 int capi_list_certs(CAPI_CTX *ctx, BIO *out, char *storename);
 void capi_free_key(CAPI_KEY *key);
+static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
 
 static PCCERT_CONTEXT capi_find_cert(CAPI_CTX *ctx, const char *id, HCERTSTORE hstore);
 
@@ -108,6 +111,10 @@ static int capi_rsa_free(RSA *rsa);
 static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
 							DSA *dsa);
 static int capi_dsa_free(DSA *dsa);
+
+static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
+	STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **pkey,
+	STACK_OF(X509) **pother, UI_METHOD *ui_method, void *callback_data);
 	
 /* This structure contains CAPI ENGINE specific data:
  * it contains various global options and affects how
@@ -126,6 +133,7 @@ struct CAPI_CTX_st {
 	DWORD csptype;
 	/* Certificate store name to use */
 	LPTSTR storename;
+	LPTSTR ssl_client_store;
 
 /* Lookup string meanings in load_private_key */
 /* Substring of subject: uses "storename" */
@@ -158,18 +166,19 @@ static void capi_ctx_free(CAPI_CTX *ctx);
 static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type, int check);
 static int capi_ctx_set_provname_idx(CAPI_CTX *ctx, int idx);
 
-#define CAPI_CMD_LIST_CERTS			ENGINE_CMD_BASE
+#define CAPI_CMD_LIST_CERTS		ENGINE_CMD_BASE
 #define CAPI_CMD_LOOKUP_CERT		(ENGINE_CMD_BASE + 1)
 #define CAPI_CMD_DEBUG_LEVEL		(ENGINE_CMD_BASE + 2)
-#define CAPI_CMD_DEBUG_FILE			(ENGINE_CMD_BASE + 3)
-#define CAPI_CMD_KEYTYPE			(ENGINE_CMD_BASE + 4)
-#define CAPI_CMD_LIST_CSPS			(ENGINE_CMD_BASE + 5)
+#define CAPI_CMD_DEBUG_FILE		(ENGINE_CMD_BASE + 3)
+#define CAPI_CMD_KEYTYPE		(ENGINE_CMD_BASE + 4)
+#define CAPI_CMD_LIST_CSPS		(ENGINE_CMD_BASE + 5)
 #define CAPI_CMD_SET_CSP_IDX		(ENGINE_CMD_BASE + 6)
 #define CAPI_CMD_SET_CSP_NAME		(ENGINE_CMD_BASE + 7)
 #define CAPI_CMD_SET_CSP_TYPE		(ENGINE_CMD_BASE + 8)
 #define CAPI_CMD_LIST_CONTAINERS	(ENGINE_CMD_BASE + 9)
 #define CAPI_CMD_LIST_OPTIONS		(ENGINE_CMD_BASE + 10)
 #define CAPI_CMD_LOOKUP_METHOD		(ENGINE_CMD_BASE + 11)
+#define CAPI_CMD_STORE_NAME		(ENGINE_CMD_BASE + 12)
 
 static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 	{CAPI_CMD_LIST_CERTS,
@@ -221,6 +230,10 @@ static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 		"lookup_method",
 		"Set key lookup method (1=substring, 2=friendlyname, 3=container name)",
 		ENGINE_CMD_FLAG_NUMERIC},
+	{CAPI_CMD_STORE_NAME,
+		"store_name",
+		"certificate store name, default \"MY\"",
+		ENGINE_CMD_FLAG_STRING},
 
 	{0, NULL, NULL, 0}
 	};
@@ -228,9 +241,10 @@ static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 static int capi_idx = -1;
 static int rsa_capi_idx = -1;
 static int dsa_capi_idx = -1;
+static int cert_capi_idx = -1;
 
 static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
-{
+	{
 	int ret = 1;
 	CAPI_CTX *ctx;
 	BIO *out;
@@ -257,6 +271,13 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 
 		case CAPI_CMD_LIST_CONTAINERS:
 		ret = capi_list_containers(ctx, out);
+		break;
+
+		case CAPI_CMD_STORE_NAME:
+		if (ctx->storename)
+			OPENSSL_free(ctx->storename);
+		ctx->storename = BUF_strdup(p);
+		CAPI_trace(ctx, "Setting store name to %s\n", p);
 		break;
 
 		case CAPI_CMD_DEBUG_LEVEL:
@@ -307,7 +328,7 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 	BIO_free(out);
 	return ret;
 
-}
+	}
 
 static RSA_METHOD capi_rsa_method =
 	{
@@ -348,6 +369,7 @@ static int capi_init(ENGINE *e)
 	const RSA_METHOD *ossl_rsa_meth;
 	const DSA_METHOD *ossl_dsa_meth;
 	capi_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
+	cert_capi_idx = X509_get_ex_new_index(0, NULL, NULL, NULL, 0);
 
 	ctx = capi_ctx_new();
 	if (!ctx || (capi_idx < 0))
@@ -380,7 +402,6 @@ static int capi_init(ENGINE *e)
 
 static int capi_destroy(ENGINE *e)
 	{
-
 	ERR_unload_CAPI_strings();
 	return 1;
 	}
@@ -402,8 +423,11 @@ static int capi_finish(ENGINE *e)
 
 struct CAPI_KEY_st
 	{
+	/* Associated certificate context (if any) */
+	PCCERT_CONTEXT pcert;
 	HCRYPTPROV hprov;
 	HCRYPTKEY key;
+	DWORD keyspec;
 	};
 
 static int bind_capi(ENGINE *e)
@@ -416,6 +440,8 @@ static int bind_capi(ENGINE *e)
 		|| !ENGINE_set_RSA(e, &capi_rsa_method)
 		|| !ENGINE_set_DSA(e, &capi_dsa_method)
 		|| !ENGINE_set_load_privkey_function(e, capi_load_privkey)
+		|| !ENGINE_set_load_ssl_client_cert_function(e,
+						capi_load_ssl_client_cert)
 		|| !ENGINE_set_cmd_defns(e, capi_cmd_defns)
 		|| !ENGINE_set_ctrl_function(e, capi_ctrl))
 			return 0;
@@ -482,34 +508,19 @@ static int lend_tobn(BIGNUM *bn, unsigned char *bin, int binlen)
 	return 1;
 	}
 
-static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
-	UI_METHOD *ui_method, void *callback_data)
+/* Given a CAPI_KEY get an EVP_PKEY structure */
+
+static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY *key)
 	{
-	EVP_PKEY *ret = NULL;
-	CAPI_CTX *ctx;
-	CAPI_KEY *key;
 	unsigned char *pubkey = NULL;
 	DWORD len;
 	BLOBHEADER *bh;
 	RSA *rkey = NULL;
 	DSA *dkey = NULL;
-	ctx = ENGINE_get_ex_data(eng, capi_idx);
-
-	if (!ctx)
-		{
-		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_CANT_FIND_CAPI_CONTEXT);
-		return NULL;
-		}
-
-	key = capi_find_key(ctx, key_id);
-
-	if (!key)
-		return NULL;
-
-	len = 0;
+	EVP_PKEY *ret = NULL;
 	if (!CryptExportKey(key->key, 0, PUBLICKEYBLOB, 0, NULL, &len))
 		{
-		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_PUBKEY_EXPORT_LENGTH_ERROR);
+		CAPIerr(CAPI_F_CAPI_GET_PKEY, CAPI_R_PUBKEY_EXPORT_LENGTH_ERROR);
 		capi_addlasterror();
 		return NULL;
 		}
@@ -521,7 +532,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 
 	if (!CryptExportKey(key->key, 0, PUBLICKEYBLOB, 0, pubkey, &len))
 		{
-		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_PUBKEY_EXPORT_ERROR);
+		CAPIerr(CAPI_F_CAPI_GET_PKEY, CAPI_R_PUBKEY_EXPORT_ERROR);
 		capi_addlasterror();
 		goto err;
 		}
@@ -529,7 +540,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 	bh = (BLOBHEADER *)pubkey;
 	if (bh->bType != PUBLICKEYBLOB)
 		{
-		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_INVALID_PUBLIC_KEY_BLOB);
+		CAPIerr(CAPI_F_CAPI_GET_PKEY, CAPI_R_INVALID_PUBLIC_KEY_BLOB);
 		goto err;
 		}
 	if (bh->aiKeyAlg == CALG_RSA_SIGN || bh->aiKeyAlg == CALG_RSA_KEYX)
@@ -542,7 +553,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 			{
 			char magstr[10];
 			BIO_snprintf(magstr, 10, "%lx", rp->magic);
-			CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_INVALID_RSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER);
+			CAPIerr(CAPI_F_CAPI_GET_PKEY, CAPI_R_INVALID_RSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER);
 			ERR_add_error_data(2, "magic=0x", magstr);
 			goto err;
 			}
@@ -583,7 +594,7 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 			{
 			char magstr[10];
 			BIO_snprintf(magstr, 10, "%lx", dp->magic);
-			CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_INVALID_DSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER);
+			CAPIerr(CAPI_F_CAPI_GET_PKEY, CAPI_R_INVALID_DSA_PUBLIC_KEY_BLOB_MAGIC_NUMBER);
 			ERR_add_error_data(2, "magic=0x", magstr);
 			goto err;
 			}
@@ -623,10 +634,11 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 		{
 		char algstr[10];
 		BIO_snprintf(algstr, 10, "%lx", bh->aiKeyAlg);
-		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_UNSUPPORTED_PUBLIC_KEY_ALGORITHM);
+		CAPIerr(CAPI_F_CAPI_GET_PKEY, CAPI_R_UNSUPPORTED_PUBLIC_KEY_ALGORITHM);
 		ERR_add_error_data(2, "aiKeyAlg=0x", algstr);
 		goto err;
 		}
+
 
 	err:
 	if (pubkey)
@@ -637,8 +649,6 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 			RSA_free(rkey);
 		if (dkey)
 			DSA_free(dkey);
-		if (key)
-			capi_free_key(key);
 		}
 
 	return ret;
@@ -646,6 +656,33 @@ static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
 memerr:
 	CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, ERR_R_MALLOC_FAILURE);
 	goto err;
+
+	}
+
+static EVP_PKEY *capi_load_privkey(ENGINE *eng, const char *key_id,
+	UI_METHOD *ui_method, void *callback_data)
+	{
+	CAPI_CTX *ctx;
+	CAPI_KEY *key;
+	EVP_PKEY *ret;
+	ctx = ENGINE_get_ex_data(eng, capi_idx);
+
+	if (!ctx)
+		{
+		CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, CAPI_R_CANT_FIND_CAPI_CONTEXT);
+		return NULL;
+		}
+
+	key = capi_find_key(ctx, key_id);
+
+	if (!key)
+		return NULL;
+
+	ret = capi_get_pkey(eng, key);
+
+	if (!ret)
+		capi_free_key(key);
+	return ret;
 
 	}
 
@@ -680,7 +717,8 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 		return -1;
 		}
 /* Convert the signature type to a CryptoAPI algorithm ID */
-	switch(dtype) {
+	switch(dtype)
+		{
 	case NID_sha1:
 		alg = CALG_SHA1;
 		break;
@@ -705,38 +743,43 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 
 
 /* Create the hash object */
-	if(!CryptCreateHash(capi_key->hprov, alg, 0, 0, &hash)) {
+	if(!CryptCreateHash(capi_key->hprov, alg, 0, 0, &hash))
+		{
 		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_CREATE_HASH_OBJECT);
 		capi_addlasterror();
 		return -1;
-	}
+		}
 /* Set the hash value to the value passed */
 
-	if(!CryptSetHashParam(hash, HP_HASHVAL, (unsigned char *)m, 0)) {
+	if(!CryptSetHashParam(hash, HP_HASHVAL, (unsigned char *)m, 0))
+		{
 		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_CANT_SET_HASH_VALUE);
 		capi_addlasterror();
 		goto err;
-	}
+		}
 
 
 /* Finally sign it */
 	slen = RSA_size(rsa);
-	if(!CryptSignHash(hash, AT_KEYEXCHANGE, NULL, 0, sigret, &slen)) {
+	if(!CryptSignHash(hash, capi_key->keyspec, NULL, 0, sigret, &slen))
+		{
 		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_ERROR_SIGNING_HASH);
 		capi_addlasterror();
 		goto err;
-	} else {
+		}
+	else
+		{
 		ret = 1;
 		/* Inplace byte reversal of signature */
-		for(i = 0; i < slen / 2; i++) {
+		for(i = 0; i < slen / 2; i++)
+			{
 			unsigned char c;
 			c = sigret[i];
 			sigret[i] = sigret[slen - i - 1];
 			sigret[slen - i - 1] = c;
-		}
+			}
 		*siglen = slen;
-	}
-
+		}
 
 	/* Now cleanup */
 
@@ -744,11 +787,11 @@ err:
 	CryptDestroyHash(hash);
 
 	return ret;
-}
+	}
 
 int capi_rsa_priv_dec(int flen, const unsigned char *from,
                 unsigned char *to, RSA *rsa, int padding)
-{
+	{
 	int i;
 	unsigned char *tmpbuf;
 	CAPI_KEY *capi_key;
@@ -796,7 +839,7 @@ int capi_rsa_priv_dec(int flen, const unsigned char *from,
 	OPENSSL_free(tmpbuf);
 
 	return flen;
-}
+	}
 
 static int capi_rsa_free(RSA *rsa)
 	{
@@ -838,23 +881,25 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
 		}
 
 	/* Create the hash object */
-	if(!CryptCreateHash(capi_key->hprov, CALG_SHA1, 0, 0, &hash)) {
+	if(!CryptCreateHash(capi_key->hprov, CALG_SHA1, 0, 0, &hash))
+		{
 		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_CANT_CREATE_HASH_OBJECT);
 		capi_addlasterror();
 		return NULL;
-	}
+		}
 
 	/* Set the hash value to the value passed */
-	if(!CryptSetHashParam(hash, HP_HASHVAL, (unsigned char *)digest, 0)) {
+	if(!CryptSetHashParam(hash, HP_HASHVAL, (unsigned char *)digest, 0))
+		{
 		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_CANT_SET_HASH_VALUE);
 		capi_addlasterror();
 		goto err;
-	}
+		}
 
 
 	/* Finally sign it */
 	slen = sizeof(csigbuf);
-	if(!CryptSignHash(hash, AT_SIGNATURE, NULL, 0, csigbuf, &slen))
+	if(!CryptSignHash(hash, capi_key->keyspec, NULL, 0, csigbuf, &slen))
 		{
 		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_ERROR_SIGNING_HASH);
 		capi_addlasterror();
@@ -1022,29 +1067,29 @@ static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
 
 	for (idx = 0;;idx++)
 		{
-			clen = buflen;
-			cname[0] = 0;
+		clen = buflen;
+		cname[0] = 0;
 
-			if (idx == 0)
-				flags = CRYPT_FIRST;
-			else
-				flags = 0;
-			if(!CryptGetProvParam(hprov, PP_ENUMCONTAINERS, cname, &clen, flags))
-				{
-				err = GetLastError();
-				if (err == ERROR_NO_MORE_ITEMS)
-					goto done;
-				CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, CAPI_R_ENUMCONTAINERS_ERROR);
-				capi_adderror(err);
-				goto err;
-				}
-			CAPI_trace(ctx, "Container name %s, len=%d, index=%d, flags=%d\n", cname, clen, idx, flags);
-			if (!cname[0] && (clen == buflen))
-				{
-				CAPI_trace(ctx, "Enumerate bug: using workaround\n");
+		if (idx == 0)
+			flags = CRYPT_FIRST;
+		else
+			flags = 0;
+		if(!CryptGetProvParam(hprov, PP_ENUMCONTAINERS, cname, &clen, flags))
+			{
+			err = GetLastError();
+			if (err == ERROR_NO_MORE_ITEMS)
 				goto done;
-				}
-			BIO_printf(out, "%d. %s\n", idx, cname);
+			CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, CAPI_R_ENUMCONTAINERS_ERROR);
+			capi_adderror(err);
+			goto err;
+			}
+		CAPI_trace(ctx, "Container name %s, len=%d, index=%d, flags=%d\n", cname, clen, idx, flags);
+		if (!cname[0] && (clen == buflen))
+			{
+			CAPI_trace(ctx, "Enumerate bug: using workaround\n");
+			goto done;
+			}
+		BIO_printf(out, "%d. %s\n", idx, cname);
 		}
 	err:
 
@@ -1245,8 +1290,9 @@ static PCCERT_CONTEXT capi_find_cert(CAPI_CTX *ctx, const char *id, HCERTSTORE h
 	switch(ctx->lookup_method)
 		{
 		case CAPI_LU_SUBSTR:
-			return CertFindCertificateInStore(hstore, X509_ASN_ENCODING, 0, 
-											CERT_FIND_SUBJECT_STR_A, id, NULL);
+			return CertFindCertificateInStore(hstore,
+					X509_ASN_ENCODING, 0,
+					CERT_FIND_SUBJECT_STR_A, id, NULL);
 		case CAPI_LU_FNAME:
 			for(;;)
 				{
@@ -1275,7 +1321,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const char *contname, char *provnam
 	CAPI_KEY *key;
 	key = OPENSSL_malloc(sizeof(CAPI_KEY));
 	CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n", 
-															contname, provname, ptype);
+						contname, provname, ptype);
 	if (!CryptAcquireContext(&key->hprov, contname, provname, ptype, 0))
 		{
 		CAPIerr(CAPI_F_CAPI_GET_KEY, CAPI_R_CRYPTACQUIRECONTEXT_ERROR);
@@ -1289,6 +1335,8 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const char *contname, char *provnam
 		CryptReleaseContext(key->hprov, 0);
 		goto err;
 		}
+	key->keyspec = keyspec;
+	key->pcert = NULL;
 	return key;
 
 	err:
@@ -1309,7 +1357,8 @@ static CAPI_KEY *capi_get_cert_key(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
 	if (!provname || !contname)
 		return 0;
 
-	key = capi_get_key(ctx, contname, provname, pinfo->dwProvType, pinfo->dwKeySpec);
+	key = capi_get_key(ctx, contname, provname,
+				pinfo->dwProvType, pinfo->dwKeySpec);
 
 	err:
 	if (pinfo)
@@ -1343,7 +1392,8 @@ CAPI_KEY *capi_find_key(CAPI_CTX *ctx, const char *id)
 		break;
 
 		case CAPI_LU_CONTNAME:
-		key = capi_get_key(ctx, id, ctx->cspname, ctx->csptype, ctx->keytype);
+		key = capi_get_key(ctx, id, ctx->cspname, ctx->csptype,
+							ctx->keytype);
 		break;
 		}
 
@@ -1356,6 +1406,8 @@ void capi_free_key(CAPI_KEY *key)
 		return;
 	CryptDestroyKey(key->key);
 	CryptReleaseContext(key->hprov, 0);
+	if (key->pcert)
+		CertFreeCertificateContext(key->pcert);
 	OPENSSL_free(key);
 	}
 
@@ -1376,6 +1428,7 @@ static CAPI_CTX *capi_ctx_new()
 	ctx->dump_flags = CAPI_DMP_SUMMARY|CAPI_DMP_FNAME;
 	ctx->keytype = AT_KEYEXCHANGE;
 	ctx->storename = NULL;
+	ctx->ssl_client_store = NULL;
 	ctx->lookup_method = CAPI_LU_SUBSTR;
 	ctx->debug_level = 0;
 	ctx->debug_file = NULL;
@@ -1393,6 +1446,8 @@ static void capi_ctx_free(CAPI_CTX *ctx)
 		OPENSSL_free(ctx->debug_file);
 	if (ctx->storename)
 		OPENSSL_free(ctx->storename);
+	if (ctx->ssl_client_store)
+		OPENSSL_free(ctx->ssl_client_store);
 	OPENSSL_free(ctx);
 	}
 
@@ -1402,7 +1457,8 @@ static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type, int che
 	if (check)
 		{
 		HCRYPTPROV hprov;
-		if (!CryptAcquireContext(&hprov, NULL, pname, type, CRYPT_VERIFYCONTEXT))
+		if (!CryptAcquireContext(&hprov, NULL, pname, type,
+						CRYPT_VERIFYCONTEXT))
 			{
 			CAPIerr(CAPI_F_CAPI_CTX_SET_PROVNAME, CAPI_R_CRYPTACQUIRECONTEXT_ERROR);
 			capi_addlasterror();
@@ -1423,6 +1479,215 @@ static int capi_ctx_set_provname_idx(CAPI_CTX *ctx, int idx)
 		return 0;
 	return capi_ctx_set_provname(ctx, pname, type, 0);
 	}
+
+static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x)
+	{
+	int i;
+	X509_NAME *nm;
+	/* Special case: empty list: match anything */
+	if (sk_X509_NAME_num(ca_dn) <= 0)
+		return 1;
+	for (i = 0; i < sk_X509_NAME_num(ca_dn); i++)
+		{
+		nm = sk_X509_NAME_value(ca_dn, i);
+		if (!X509_NAME_cmp(nm, X509_get_issuer_name(x)))
+				return 1;
+		}
+	return 0;
+	}
+
+
+
+static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
+	STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **pkey,
+	STACK_OF(X509) **pother, UI_METHOD *ui_method, void *callback_data)
+	{
+	STACK_OF(X509) *certs = NULL;
+	X509 *x;
+	char *storename;
+	const char *p;
+	int i, client_cert_idx;
+	HCERTSTORE hstore;
+	PCCERT_CONTEXT cert = NULL, excert = NULL;
+	CAPI_CTX *ctx;
+	CAPI_KEY *key;
+	ctx = ENGINE_get_ex_data(e, capi_idx);
+
+	*pcert = NULL;
+	*pkey = NULL;
+
+	storename = ctx->ssl_client_store;
+	if (!storename)
+		storename = "MY";
+
+	hstore = capi_open_store(ctx, storename);
+	if (!hstore)
+		return 0;
+	/* Enumerate all certificates collect any matches */
+	for(i = 0;;i++)
+		{
+		cert = CertEnumCertificatesInStore(hstore, cert);
+		if (!cert)
+			break;
+		p = cert->pbCertEncoded;
+		x = d2i_X509(NULL, &p, cert->cbCertEncoded);
+		if (!x)
+			{
+			CAPI_trace(ctx, "Can't Parse Certificate %d\n", i);
+			continue;
+			}
+		if (cert_issuer_match(ca_dn, x))
+			{
+			key = capi_get_cert_key(ctx, cert);
+			if (!key)
+				continue;
+			/* Match found: attach extra data to it so
+			 * we can retrieve the key later.
+			 */
+			excert = CertDuplicateCertificateContext(cert);
+			key->pcert = excert;
+			X509_set_ex_data(x, cert_capi_idx, key);
+
+			if (!certs)
+				certs = sk_X509_new_null();
+
+			sk_X509_push(certs, x);
+			}
+		else
+			X509_free(x);
+
+		}
+
+	if (cert)
+		CertFreeCertificateContext(cert);
+	if (hstore)
+		CertCloseStore(hstore, 0);
+
+	if (!certs)
+		return 0;
+
+
+	/* Select the appropriate certificate */
+
+	client_cert_idx = client_cert_select(e, ssl, certs);
+
+	/* Set the selected certificate and free the rest */
+
+	for(i = 0; i < sk_X509_num(certs); i++)
+		{
+		x = sk_X509_value(certs, i);
+		if (i == client_cert_idx)
+			*pcert = x;
+		else
+			{
+			key = X509_get_ex_data(x, cert_capi_idx);
+			capi_free_key(key);
+			X509_free(x);
+			}
+		}
+
+	sk_X509_free(certs);
+
+	if (!*pcert)
+		return 0;
+
+	/* Setup key for selected certificate */
+
+	key = X509_get_ex_data(*pcert, cert_capi_idx);
+	*pkey = capi_get_pkey(e, key);
+	X509_set_ex_data(*pcert, cert_capi_idx, NULL);
+
+	return 1;
+
+	}
+
+#ifndef OPENSSL_CAPIENG_DIALOG
+
+/* Simple client cert selection function: always select first */
+
+static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
+	{
+	return 0;
+	}
+
+#else
+
+/* More complex cert selection function, using standard function
+ * CryptUIDlgSelectCertificateFromStore() to produce a dialog box.
+ */
+
+#include <cryptuiapi.h>
+
+#define dlg_title L"OpenSSL Application SSL Client Certificate Selection"
+#define dlg_prompt L"Select a certificate to use for authentication"
+
+static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
+	{
+	X509 *x;
+	HCERTSTORE dstore;
+	PCCERT_CONTEXT cert;
+	CAPI_CTX *ctx;
+	CAPI_KEY *key;
+	HWND hwnd;
+	int i, idx = -1;
+	ctx = ENGINE_get_ex_data(e, capi_idx);
+	/* Create an in memory store of certificates */
+	dstore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
+					CERT_STORE_CREATE_NEW_FLAG, NULL);
+	if (!dstore)
+		{
+		CAPIerr(CAPI_F_CLIENT_CERT_SELECT, CAPI_R_ERROR_CREATING_STORE);
+		capi_addlasterror();
+		goto err;
+		}
+	/* Add all certificates to store */
+	for(i = 0; i < sk_X509_num(certs); i++)
+		{
+		x = sk_X509_value(certs, i);
+		key = X509_get_ex_data(x, cert_capi_idx);
+
+		if (!CertAddCertificateContextToStore(dstore, key->pcert,
+						CERT_STORE_ADD_NEW, NULL))
+			{
+			CAPIerr(CAPI_F_CLIENT_CERT_SELECT, CAPI_R_ERROR_ADDING_CERT);
+			capi_addlasterror();
+			goto err;
+			}
+
+		}
+	hwnd = GetActiveWindow();
+	if (!hwnd)
+		hwnd = GetConsoleWindow();
+	/* Call dialog to select one */
+	cert = CryptUIDlgSelectCertificateFromStore(dstore, hwnd,
+							dlg_title, dlg_prompt,
+							0, 0, NULL);
+
+	/* Find matching cert from list */
+	if (cert)
+		{
+		for(i = 0; i < sk_X509_num(certs); i++)
+			{
+			x = sk_X509_value(certs, i);
+			key = X509_get_ex_data(x, cert_capi_idx);
+			if (CertCompareCertificate(
+				X509_ASN_ENCODING | PKCS_7_ASN_ENCODING,
+					cert->pCertInfo,
+					key->pcert->pCertInfo))
+				{
+				idx = i;
+				break;
+				}
+			}
+		}
+
+	err:
+	if (dstore)
+		CertCloseStore(dstore, 0);
+	return idx;
+
+	}
+#endif
 
 #endif
 #endif
