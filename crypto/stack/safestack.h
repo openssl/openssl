@@ -62,8 +62,6 @@
     ((void*) (1 ? p : (type*)0))
 #endif
 
-#ifdef DEBUG_SAFESTACK
-
 #define CHECKED_SK_FREE_FUNC(type, p) \
     ((void (*)(void *)) ((1 ? p : (void (*)(type *))0)))
 
@@ -196,70 +194,6 @@ DECLARE_SPECIAL_STACK_OF(BLOCK, void)
 				CHECKED_D2I_OF(type, d2i_func), \
 				CHECKED_SK_FREE_FUNC(type, free_func), \
 				pass, passlen, oct, seq)
-
-#else
-
-#define STACK_OF(type) STACK
-#define PREDECLARE_STACK_OF(type) /* nada */
-#define DECLARE_STACK_OF(type)    /* nada */
-#define IMPLEMENT_STACK_OF(type)  /* nada */
-
-#define SKM_sk_new(type, cmp) \
-	sk_new((int (*)(const char * const *, const char * const *))(cmp))
-#define SKM_sk_new_null(type) \
-	sk_new_null()
-#define SKM_sk_free(type, st) \
-	sk_free(st)
-#define SKM_sk_num(type, st) \
-	sk_num(st)
-#define SKM_sk_value(type, st,i) \
-	((type *)sk_value(st, i))
-#define SKM_sk_set(type, st,i,val) \
-	((type *)sk_set(st, i,(char *)val))
-#define SKM_sk_zero(type, st) \
-	sk_zero(st)
-#define SKM_sk_push(type, st,val) \
-	sk_push(st, (char *)val)
-#define SKM_sk_unshift(type, st,val) \
-	sk_unshift(st, (char *)val)
-#define SKM_sk_find(type, st,val) \
-	sk_find(st, (char *)val)
-#define SKM_sk_delete(type, st,i) \
-	((type *)sk_delete(st, i))
-#define SKM_sk_delete_ptr(type, st,ptr) \
-	((type *)sk_delete_ptr(st,(char *)ptr))
-#define SKM_sk_insert(type, st,val,i) \
-	sk_insert(st, (char *)val, i)
-#define SKM_sk_set_cmp_func(type, st,cmp) \
-	((int (*)(const type * const *,const type * const *)) \
-	sk_set_cmp_func(st, (int (*)(const char * const *, const char * const *))(cmp)))
-#define SKM_sk_dup(type, st) \
-	sk_dup(st)
-#define SKM_sk_pop_free(type, st,free_func) \
-	sk_pop_free(st, (void (*)(void *))free_func)
-#define SKM_sk_shift(type, st) \
-	((type *)sk_shift(st))
-#define SKM_sk_pop(type, st) \
-	((type *)sk_pop(st))
-#define SKM_sk_sort(type, st) \
-	sk_sort(st)
-#define SKM_sk_is_sorted(type, st) \
-	sk_is_sorted(st)
-
-#define	SKM_ASN1_SET_OF_d2i(type, st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
-	d2i_ASN1_SET(st,pp,length, (void *(*)(void ** ,const unsigned char ** ,long))d2i_func, (void (*)(void *))free_func, ex_tag,ex_class)
-#define	SKM_ASN1_SET_OF_i2d(type, st, pp, i2d_func, ex_tag, ex_class, is_set) \
-	i2d_ASN1_SET(st,pp,(int (*)(void *, unsigned char **))i2d_func,ex_tag,ex_class,is_set)
-
-#define	SKM_ASN1_seq_pack(type, st, i2d_func, buf, len) \
-	ASN1_seq_pack(st, (int (*)(void *, unsigned char **))i2d_func, buf, len)
-#define	SKM_ASN1_seq_unpack(type, buf, len, d2i_func, free_func) \
-	ASN1_seq_unpack(buf,len,(void *(*)(void **,const unsigned char **,long))d2i_func, (void(*)(void *))free_func)
-
-#define SKM_PKCS12_decrypt_d2i(type, algor, d2i_func, free_func, pass, passlen, oct, seq) \
-	((STACK *)PKCS12_decrypt_d2i(algor,(char *(*)())d2i_func, (void(*)(void *))free_func,pass,passlen,oct,seq))
-
-#endif
 
 /* This block of defines is updated by util/mkstack.pl, please do not touch! */
 #define sk_ACCESS_DESCRIPTION_new(cmp) SKM_sk_new(ACCESS_DESCRIPTION, (cmp))
