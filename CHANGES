@@ -4,6 +4,14 @@
 
  Changes between 0.9.8g and 0.9.9  [xx XXX xxxx]
 
+  *) Removed effectively defunct crypto/store from the build.
+     [Ben Laurie]
+
+  *) Revamp of STACK to provide stronger type-checking. Still to come:
+     TXT_DB, bsearch(?), OBJ_bsearch, qsort, CRYPTO_EX_DATA, ASN1_VALUE,
+     ASN1_STRING, CONF_VALUE.
+     [Ben Laurie]
+
   *) Add a new SSL_MODE_RELEASE_BUFFERS mode flag to release unused buffer
      RAM on SSL connections.  This option can save about 34k per idle SSL.
      [Nick Mathewson]

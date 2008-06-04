@@ -71,12 +71,10 @@
 
 static void value_free_hash_doall_arg(CONF_VALUE *a,
 				      LHASH_OF(CONF_VALUE) *conf);
-static void value_free_stack_doall_arg(CONF_VALUE *a,
-				       LHASH_OF(CONF_VALUE) *conf);
+static void value_free_stack_doall(CONF_VALUE *a);
 static IMPLEMENT_LHASH_DOALL_ARG_FN(value_free_hash, CONF_VALUE,
 				    LHASH_OF(CONF_VALUE))
-static IMPLEMENT_LHASH_DOALL_ARG_FN(value_free_stack, CONF_VALUE,
-				    LHASH_OF(CONF_VALUE))
+static IMPLEMENT_LHASH_DOALL_FN(value_free_stack, CONF_VALUE)
 
 /* Up until OpenSSL 0.9.5a, this was get_section */
 CONF_VALUE *_CONF_get_section(const CONF *conf, const char *section)
@@ -229,15 +227,14 @@ void _CONF_free_data(CONF *conf)
 	lh_CONF_VALUE_down_load(conf->data)=0; /* evil thing to make
 				  * sure the 'OPENSSL_free()' works as
 				  * expected */
-	lh_CONF_VALUE_doall_arg(conf->data, LHASH_DOALL_ARG_FN(value_free_hash),
+	lh_CONF_VALUE_doall_arg(conf->data,
+				LHASH_DOALL_ARG_FN(value_free_hash),
 				LHASH_OF(CONF_VALUE), conf->data);
 
 	/* We now have only 'section' entries in the hash table.
 	 * Due to problems with */
 
-	lh_CONF_VALUE_doall_arg(conf->data,
-				LHASH_DOALL_ARG_FN(value_free_stack),
-				LHASH_OF(CONF_VALUE), conf->data);
+	lh_CONF_VALUE_doall(conf->data, LHASH_DOALL_FN(value_free_stack));
 	lh_CONF_VALUE_free(conf->data);
 	}
 
@@ -247,24 +244,23 @@ static void value_free_hash_doall_arg(CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf)
 		lh_CONF_VALUE_delete(conf,a);
 	}
 
-static void value_free_stack_doall_arg(CONF_VALUE *a,
-				       LHASH_OF(CONF_VALUE) *conf)
+static void value_free_stack_doall(CONF_VALUE *a)
 	{
 	CONF_VALUE *vv;
-	STACK *sk;
+	STACK_OF(CONF_VALUE) *sk;
 	int i;
 
 	if (a->name != NULL) return;
 
-	sk=(STACK *)a->value;
-	for (i=sk_num(sk)-1; i>=0; i--)
+	sk=(STACK_OF(CONF_VALUE) *)a->value;
+	for (i=sk_CONF_VALUE_num(sk)-1; i>=0; i--)
 		{
-		vv=(CONF_VALUE *)sk_value(sk,i);
+		vv=sk_CONF_VALUE_value(sk,i);
 		OPENSSL_free(vv->value);
 		OPENSSL_free(vv->name);
 		OPENSSL_free(vv);
 		}
-	if (sk != NULL) sk_free(sk);
+	if (sk != NULL) sk_CONF_VALUE_free(sk);
 	OPENSSL_free(a->section);
 	OPENSSL_free(a);
 	}
@@ -272,16 +268,16 @@ static void value_free_stack_doall_arg(CONF_VALUE *a,
 /* Up until OpenSSL 0.9.5a, this was new_section */
 CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
 	{
-	STACK *sk=NULL;
+	STACK_OF(CONF_VALUE) *sk=NULL;
 	int ok=0,i;
 	CONF_VALUE *v=NULL,*vv;
 
-	if ((sk=sk_new_null()) == NULL)
+	if ((sk=sk_CONF_VALUE_new_null()) == NULL)
 		goto err;
-	if ((v=(CONF_VALUE *)OPENSSL_malloc(sizeof(CONF_VALUE))) == NULL)
+	if ((v=OPENSSL_malloc(sizeof(CONF_VALUE))) == NULL)
 		goto err;
 	i=strlen(section)+1;
-	if ((v->section=(char *)OPENSSL_malloc(i)) == NULL)
+	if ((v->section=OPENSSL_malloc(i)) == NULL)
 		goto err;
 
 	memcpy(v->section,section,i);
@@ -294,7 +290,7 @@ CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
 err:
 	if (!ok)
 		{
-		if (sk != NULL) sk_free(sk);
+		if (sk != NULL) sk_CONF_VALUE_free(sk);
 		if (v != NULL) OPENSSL_free(v);
 		v=NULL;
 		}

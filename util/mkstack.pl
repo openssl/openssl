@@ -32,6 +32,9 @@ foreach $file (@source) {
 		if (/^DECLARE_STACK_OF\(([^)]+)\)/) {
 			push @stacklst, $1;
 		}
+	        if (/^DECLARE_SPECIAL_STACK_OF\(([^,\s]+)\s*,\s*([^>\s]+)\)/) {
+		    	push @sstacklst, [$1, $2];
+		}
 		if (/^DECLARE_ASN1_SET_OF\(([^)]+)\)/) {
 			push @asn1setlst, $1;
 		}
@@ -70,7 +73,7 @@ while(<IN>) {
 	foreach $type_thing (sort @stacklst) {
 		$new_stackfile .= <<EOF;
 
-#define sk_${type_thing}_new(st) SKM_sk_new($type_thing, (st))
+#define sk_${type_thing}_new(cmp) SKM_sk_new($type_thing, (cmp))
 #define sk_${type_thing}_new_null() SKM_sk_new_null($type_thing)
 #define sk_${type_thing}_free(st) SKM_sk_free($type_thing, (st))
 #define sk_${type_thing}_num(st) SKM_sk_num($type_thing, (st))
@@ -87,12 +90,31 @@ while(<IN>) {
 #define sk_${type_thing}_set_cmp_func(st, cmp) SKM_sk_set_cmp_func($type_thing, (st), (cmp))
 #define sk_${type_thing}_dup(st) SKM_sk_dup($type_thing, st)
 #define sk_${type_thing}_pop_free(st, free_func) SKM_sk_pop_free($type_thing, (st), (free_func))
+#define sk_${type_thing}_free(st) SKM_sk_free($type_thing, (st))
 #define sk_${type_thing}_shift(st) SKM_sk_shift($type_thing, (st))
 #define sk_${type_thing}_pop(st) SKM_sk_pop($type_thing, (st))
 #define sk_${type_thing}_sort(st) SKM_sk_sort($type_thing, (st))
 #define sk_${type_thing}_is_sorted(st) SKM_sk_is_sorted($type_thing, (st))
 EOF
 	}
+
+	foreach $type_thing (sort @sstacklst) {
+	    my $t1 = $type_thing->[0];
+	    my $t2 = $type_thing->[1];
+	    $new_stackfile .= <<EOF;
+
+#define sk_${t1}_new(cmp) ((STACK_OF($t1) *)sk_new(CHECKED_SK_CMP_FUNC($t2, cmp)))
+#define sk_${t1}_new_null() ((STACK_OF($t1) *)sk_new_null())
+#define sk_${t1}_push(st, val) sk_push(CHECKED_PTR_OF(STACK_OF($t1), st), CHECKED_PTR_OF($t2, val))
+#define sk_${t1}_find(st, val) sk_find(CHECKED_PTR_OF(STACK_OF($t1), st), CHECKED_PTR_OF($t2, val))
+#define sk_${t1}_value(st, i) (($t1)sk_value(CHECKED_PTR_OF(STACK_OF($t1), st), i))
+#define sk_${t1}_num(st) SKM_sk_num($t1, st)
+#define sk_${t1}_pop_free(st, free_func) sk_pop_free(CHECKED_PTR_OF(STACK_OF($t1), st), CHECKED_SK_FREE_FUNC2($t1, free_func))
+#define sk_${t1}_insert(st, val, i) sk_insert(CHECKED_PTR_OF(STACK_OF($t1), st), CHECKED_PTR_OF($t2, val), i)
+#define sk_${t1}_free(st) SKM_sk_free(${t1}, st)
+EOF
+	}
+
 	foreach $type_thing (sort @asn1setlst) {
 		$new_stackfile .= <<EOF;
 

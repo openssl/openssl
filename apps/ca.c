@@ -306,7 +306,8 @@ int MAIN(int argc, char **argv)
 	ASN1_TIME *tmptm;
 	ASN1_INTEGER *tmpser;
 	char *f;
-	const char *p, **pp;
+	const char *p;
+	char * const *pp;
 	int i,j;
 	const EVP_MD *dgst=NULL;
 	STACK_OF(CONF_VALUE) *attribs=NULL;
@@ -555,8 +556,10 @@ bad:
 
 	if (badops)
 		{
-		for (pp=ca_usage; (*pp != NULL); pp++)
-			BIO_printf(bio_err,"%s",*pp);
+		const char **pp2;
+
+		for (pp2=ca_usage; (*pp2 != NULL); pp2++)
+			BIO_printf(bio_err,"%s",*pp2);
 		goto err;
 		}
 
@@ -876,9 +879,9 @@ bad:
 	if (db == NULL) goto err;
 
 	/* Lets check some fields */
-	for (i=0; i<sk_num(db->db->data); i++)
+	for (i=0; i<sk_PSTRING_num(db->db->data); i++)
 		{
-		pp=(const char **)sk_value(db->db->data,i);
+		pp=sk_PSTRING_value(db->db->data,i);
 		if ((pp[DB_type][0] != DB_TYPE_REV) &&
 			(pp[DB_rev_date][0] != '\0'))
 			{
@@ -931,7 +934,7 @@ bad:
 #endif
 		TXT_DB_write(out,db->db);
 		BIO_printf(bio_err,"%d entries loaded from the database\n",
-			db->db->data->num);
+			   sk_PSTRING_num(db->db->data));
 		BIO_printf(bio_err,"generating index\n");
 		}
 	
@@ -1401,9 +1404,9 @@ bad:
 
 		ASN1_TIME_free(tmptm);
 
-		for (i=0; i<sk_num(db->db->data); i++)
+		for (i=0; i<sk_PSTRING_num(db->db->data); i++)
 			{
-			pp=(const char **)sk_value(db->db->data,i);
+			pp=sk_PSTRING_value(db->db->data,i);
 			if (pp[DB_type][0] == DB_TYPE_REV)
 				{
 				if ((r=X509_REVOKED_new()) == NULL) goto err;
@@ -2630,9 +2633,9 @@ static int do_updatedb (CA_DB *db)
 	else
 		a_y2k = 0;
 
-	for (i = 0; i < sk_num(db->db->data); i++)
+	for (i = 0; i < sk_PSTRING_num(db->db->data); i++)
 		{
-		rrow = (char **) sk_value(db->db->data, i);
+		rrow = sk_PSTRING_value(db->db->data, i);
 
 		if (rrow[DB_type][0] == 'V')
 		 	{

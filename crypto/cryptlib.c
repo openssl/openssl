@@ -122,7 +122,6 @@ static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 #endif
 
 DECLARE_STACK_OF(CRYPTO_dynlock)
-IMPLEMENT_STACK_OF(CRYPTO_dynlock)
 
 /* real #defines in crypto.h, keep these upto date */
 static const char* const lock_names[CRYPTO_NUM_LOCKS] =
@@ -173,7 +172,7 @@ static const char* const lock_names[CRYPTO_NUM_LOCKS] =
 
 /* This is for applications to allocate new type names in the non-dynamic
    array of lock names.  These are numbered with positive numbers.  */
-static STACK *app_locks=NULL;
+static STACK_OF(STRING) *app_locks=NULL;
 
 /* For applications that want a more dynamic way of handling threads, the
    following stack is used.  These are externally numbered with negative
@@ -207,7 +206,7 @@ int CRYPTO_get_new_lockid(char *name)
 	SSLeay_MSVC5_hack=(double)name[0]*(double)name[1];
 #endif
 
-	if ((app_locks == NULL) && ((app_locks=sk_new_null()) == NULL))
+	if ((app_locks == NULL) && ((app_locks=sk_STRING_new_null()) == NULL))
 		{
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID,ERR_R_MALLOC_FAILURE);
 		return(0);
@@ -217,7 +216,7 @@ int CRYPTO_get_new_lockid(char *name)
 		CRYPTOerr(CRYPTO_F_CRYPTO_GET_NEW_LOCKID,ERR_R_MALLOC_FAILURE);
 		return(0);
 		}
-	i=sk_push(app_locks,str);
+	i=sk_STRING_push(app_locks,str);
 	if (!i)
 		OPENSSL_free(str);
 	else
@@ -587,10 +586,10 @@ const char *CRYPTO_get_lock_name(int type)
 		return("dynamic");
 	else if (type < CRYPTO_NUM_LOCKS)
 		return(lock_names[type]);
-	else if (type-CRYPTO_NUM_LOCKS > sk_num(app_locks))
+	else if (type-CRYPTO_NUM_LOCKS > sk_STRING_num(app_locks))
 		return("ERROR");
 	else
-		return(sk_value(app_locks,type-CRYPTO_NUM_LOCKS));
+		return(sk_STRING_value(app_locks,type-CRYPTO_NUM_LOCKS));
 	}
 
 #if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \

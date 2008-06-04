@@ -107,7 +107,7 @@ DSO *DSO_new_method(DSO_METHOD *meth)
 		return(NULL);
 		}
 	memset(ret, 0, sizeof(DSO));
-	ret->meth_data = sk_new_null();
+	ret->meth_data = sk_void_new_null();
 	if(ret->meth_data == NULL)
 		{
 		/* sk_new doesn't generate any errors so we do */
@@ -163,7 +163,7 @@ int DSO_free(DSO *dso)
 		return(0);
 		}
 	
-	sk_free(dso->meth_data);
+	sk_void_free(dso->meth_data);
 	if(dso->filename != NULL)
 		OPENSSL_free(dso->filename);
 	if(dso->loaded_filename != NULL)

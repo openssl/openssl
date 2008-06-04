@@ -59,19 +59,20 @@
 #include <openssl/objects.h>
 #include "obj_xref.h"
 
-STACK *sig_app, *sigx_app;
+DECLARE_STACK_OF(nid_triple);
+STACK_OF(nid_triple) *sig_app, *sigx_app;
 
 static int cmp_sig(const nid_triple *a, const nid_triple *b)
 	{
 	return **a - **b;
 	}
 
-static int cmp_sig_sk(const nid_triple **a, const nid_triple **b)
+static int cmp_sig_sk(const nid_triple * const *a, const nid_triple * const *b)
 	{
 	return ***a - ***b;
 	}
 
-static int cmp_sigx(const nid_triple **a, const nid_triple **b)
+static int cmp_sigx(const nid_triple * const *a, const nid_triple * const *b)
 	{
 	int ret;
 	ret = (**a)[1] - (**b)[1];
@@ -88,9 +89,9 @@ int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 
 	if (sig_app)
 		{
-		int idx = sk_find(sig_app, (char *)&tmp);
+		int idx = sk_nid_triple_find(sig_app, &tmp);
 		if (idx >= 0)
-			rv = (nid_triple *)sk_value(sig_app, idx);
+			rv = sk_nid_triple_value(sig_app, idx);
 		}
 
 #ifndef OBJ_XREF_TEST2
@@ -118,10 +119,10 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 
 	if (sigx_app)
 		{
-		int idx = sk_find(sigx_app, (char *)&tmp);
+		int idx = sk_nid_triple_find(sigx_app, &tmp);
 		if (idx >= 0)
 			{
-			t = (nid_triple *)sk_value(sigx_app, idx);
+			t = sk_nid_triple_value(sigx_app, idx);
 			rv = &t;
 			}
 		}
@@ -142,17 +143,15 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 	return 1;
 	}
 
-typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);
-
 int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 	{
 	nid_triple *ntr;
 	if (!sig_app)
-		sig_app = sk_new((sk_cmp_fn_type *)cmp_sig_sk);
+		sig_app = sk_nid_triple_new(cmp_sig_sk);
 	if (!sig_app)
 		return 0;
 	if (!sigx_app)
-		sigx_app = sk_new((sk_cmp_fn_type *)cmp_sigx);
+		sigx_app = sk_nid_triple_new(cmp_sigx);
 	if (!sigx_app)
 		return 0;
 	ntr = OPENSSL_malloc(sizeof(int) * 3);
@@ -162,24 +161,23 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 	(*ntr)[1] = dig_id;
 	(*ntr)[2] = pkey_id;
 
-	if (!sk_push(sig_app, (char *)ntr))
+	if (!sk_nid_triple_push(sig_app, ntr))
 		{
 		OPENSSL_free(ntr);
 		return 0;
 		}
 
-	if (!sk_push(sigx_app, (char *)ntr))
+	if (!sk_nid_triple_push(sigx_app, ntr))
 		return 0;
 
-	sk_sort(sig_app);
-	sk_sort(sigx_app);
+	sk_nid_triple_sort(sig_app);
+	sk_nid_triple_sort(sigx_app);
 
 	return 1;
 	}
 
-static void sid_free(void *x)
+static void sid_free(nid_triple *tt)
 	{
-	nid_triple *tt = (nid_triple *)x;
 	OPENSSL_free(tt);
 	}
 
@@ -187,12 +185,12 @@ void OBJ_sigid_free(void)
 	{
 	if (sig_app)
 		{
-		sk_pop_free(sig_app, sid_free);
+		sk_nid_triple_pop_free(sig_app, sid_free);
 		sig_app = NULL;
 		}
 	if (sigx_app)
 		{
-		sk_free(sigx_app);
+		sk_nid_triple_free(sigx_app);
 		sigx_app = NULL;
 		}
 	}

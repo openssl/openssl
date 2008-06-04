@@ -92,8 +92,9 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert, const EVP_MD *cert_id_m
 static int add_ocsp_serial(OCSP_REQUEST **req, char *serial, const EVP_MD * cert_id_md, X509 *issuer,
 				STACK_OF(OCSP_CERTID) *ids);
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
-				STACK *names, STACK_OF(OCSP_CERTID) *ids,
-				long nsec, long maxage);
+			      STACK_OF(STRING) *names,
+			      STACK_OF(OCSP_CERTID) *ids, long nsec,
+			      long maxage);
 
 static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db,
 			X509 *ca, X509 *rcert, EVP_PKEY *rkey,
@@ -145,7 +146,7 @@ int MAIN(int argc, char **argv)
 	int badarg = 0;
 	int i;
 	int ignore_err = 0;
-	STACK *reqnames = NULL;
+	STACK_OF(STRING) *reqnames = NULL;
 	STACK_OF(OCSP_CERTID) *ids = NULL;
 
 	X509 *rca_cert = NULL;
@@ -162,7 +163,7 @@ int MAIN(int argc, char **argv)
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
 	args = argv + 1;
-	reqnames = sk_new_null();
+	reqnames = sk_STRING_new_null();
 	ids = sk_OCSP_CERTID_new_null();
 	while (!badarg && *args && *args[0] == '-')
 		{
@@ -424,7 +425,7 @@ int MAIN(int argc, char **argv)
 				if (!cert_id_md) cert_id_md = EVP_sha1();
 				if(!add_ocsp_cert(&req, cert, cert_id_md, issuer, ids))
 					goto end;
-				if(!sk_push(reqnames, *args))
+				if(!sk_STRING_push(reqnames, *args))
 					goto end;
 				}
 			else badarg = 1;
@@ -437,7 +438,7 @@ int MAIN(int argc, char **argv)
 				if (!cert_id_md) cert_id_md = EVP_sha1();
 				if(!add_ocsp_serial(&req, *args, cert_id_md, issuer, ids))
 					goto end;
-				if(!sk_push(reqnames, *args))
+				if(!sk_STRING_push(reqnames, *args))
 					goto end;
 				}
 			else badarg = 1;
@@ -893,7 +894,7 @@ end:
 	OCSP_REQUEST_free(req);
 	OCSP_RESPONSE_free(resp);
 	OCSP_BASICRESP_free(bs);
-	sk_free(reqnames);
+	sk_STRING_free(reqnames);
 	sk_OCSP_CERTID_free(ids);
 	sk_X509_pop_free(sign_other, X509_free);
 	sk_X509_pop_free(verify_other, X509_free);
@@ -963,8 +964,9 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,const EVP_MD *cert_i
 	}
 
 static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
-					STACK *names, STACK_OF(OCSP_CERTID) *ids,
-					long nsec, long maxage)
+			      STACK_OF(STRING) *names,
+			      STACK_OF(OCSP_CERTID) *ids, long nsec,
+			      long maxage)
 	{
 	OCSP_CERTID *id;
 	char *name;
@@ -974,13 +976,13 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 
 	ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
 
-	if (!bs || !req || !sk_num(names) || !sk_OCSP_CERTID_num(ids))
+	if (!bs || !req || !sk_STRING_num(names) || !sk_OCSP_CERTID_num(ids))
 		return 1;
 
 	for (i = 0; i < sk_OCSP_CERTID_num(ids); i++)
 		{
 		id = sk_OCSP_CERTID_value(ids, i);
-		name = sk_value(names, i);
+		name = sk_STRING_value(names, i);
 		BIO_printf(out, "%s: ", name);
 
 		if(!OCSP_resp_find_status(bs, id, &status, &reason,

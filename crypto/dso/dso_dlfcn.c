@@ -183,7 +183,7 @@ static int dlfcn_load(DSO *dso)
 		ERR_add_error_data(4, "filename(", filename, "): ", dlerror());
 		goto err;
 		}
-	if(!sk_push(dso->meth_data, (char *)ptr))
+	if(!sk_void_push(dso->meth_data, (char *)ptr))
 		{
 		DSOerr(DSO_F_DLFCN_LOAD,DSO_R_STACK_ERROR);
 		goto err;
@@ -208,15 +208,15 @@ static int dlfcn_unload(DSO *dso)
 		DSOerr(DSO_F_DLFCN_UNLOAD,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-	if(sk_num(dso->meth_data) < 1)
+	if(sk_void_num(dso->meth_data) < 1)
 		return(1);
-	ptr = (void *)sk_pop(dso->meth_data);
+	ptr = sk_void_pop(dso->meth_data);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_UNLOAD,DSO_R_NULL_HANDLE);
 		/* Should push the value back onto the stack in
 		 * case of a retry. */
-		sk_push(dso->meth_data, (char *)ptr);
+		sk_void_push(dso->meth_data, ptr);
 		return(0);
 		}
 	/* For now I'm not aware of any errors associated with dlclose() */
@@ -233,12 +233,12 @@ static void *dlfcn_bind_var(DSO *dso, const char *symname)
 		DSOerr(DSO_F_DLFCN_BIND_VAR,ERR_R_PASSED_NULL_PARAMETER);
 		return(NULL);
 		}
-	if(sk_num(dso->meth_data) < 1)
+	if(sk_void_num(dso->meth_data) < 1)
 		{
 		DSOerr(DSO_F_DLFCN_BIND_VAR,DSO_R_STACK_ERROR);
 		return(NULL);
 		}
-	ptr = (void *)sk_value(dso->meth_data, sk_num(dso->meth_data) - 1);
+	ptr = sk_void_value(dso->meth_data, sk_void_num(dso->meth_data) - 1);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_BIND_VAR,DSO_R_NULL_HANDLE);
@@ -264,12 +264,12 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
 		DSOerr(DSO_F_DLFCN_BIND_FUNC,ERR_R_PASSED_NULL_PARAMETER);
 		return(NULL);
 		}
-	if(sk_num(dso->meth_data) < 1)
+	if(sk_void_num(dso->meth_data) < 1)
 		{
 		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_STACK_ERROR);
 		return(NULL);
 		}
-	ptr = (void *)sk_value(dso->meth_data, sk_num(dso->meth_data) - 1);
+	ptr = sk_void_value(dso->meth_data, sk_void_num(dso->meth_data) - 1);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_NULL_HANDLE);

@@ -282,9 +282,10 @@ typedef struct bio_st BIO_dummy;
 
 struct crypto_ex_data_st
 	{
-	STACK *sk;
+	STACK_OF(void) *sk;
 	int dummy; /* gcc is screwing up this data structure :-( */
 	};
+DECLARE_STACK_OF(void)
 
 /* This stuff is basically class callback functions
  * The current classes are SSL_CTX, SSL, SSL_SESSION, and a few more */

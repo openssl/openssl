@@ -668,11 +668,12 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 		else
 			{
 			/* We've got a valid STACK: free up any items present */
-			STACK *sktmp = (STACK *)*val;
+			STACK_OF(ASN1_VALUE) *sktmp
+			    = (STACK_OF(ASN1_VALUE) *)*val;
 			ASN1_VALUE *vtmp;
-			while(sk_num(sktmp) > 0)
+			while(sk_ASN1_VALUE_num(sktmp) > 0)
 				{
-				vtmp = (ASN1_VALUE *)sk_pop(sktmp);
+				vtmp = sk_ASN1_VALUE_pop(sktmp);
 				ASN1_item_ex_free(&vtmp,
 						ASN1_ITEM_ptr(tt->item));
 				}
@@ -713,7 +714,8 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 				goto err;
 				}
 			len -= p - q;
-			if (!sk_push((STACK *)*val, (char *)skfield))
+			if (!sk_ASN1_VALUE_push((STACK_OF(ASN1_VALUE) *)*val,
+						skfield))
 				{
 				ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I,
 						ERR_R_MALLOC_FAILURE);

@@ -456,7 +456,7 @@ static int int_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
 		return 0;
 	CRYPTO_r_lock(CRYPTO_LOCK_EX_DATA);
 	mx = sk_CRYPTO_EX_DATA_FUNCS_num(item->meth);
-	j = sk_num(from->sk);
+	j = sk_void_num(from->sk);
 	if(j < mx)
 		mx = j;
 	if(mx > 0)
@@ -527,7 +527,7 @@ skip:
 		OPENSSL_free(storage);
 	if(ad->sk)
 		{
-		sk_free(ad->sk);
+		sk_void_free(ad->sk);
 		ad->sk=NULL;
 		}
 	}
@@ -600,24 +600,24 @@ int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
 
 	if (ad->sk == NULL)
 		{
-		if ((ad->sk=sk_new_null()) == NULL)
+		if ((ad->sk=sk_void_new_null()) == NULL)
 			{
 			CRYPTOerr(CRYPTO_F_CRYPTO_SET_EX_DATA,ERR_R_MALLOC_FAILURE);
 			return(0);
 			}
 		}
-	i=sk_num(ad->sk);
+	i=sk_void_num(ad->sk);
 
 	while (i <= idx)
 		{
-		if (!sk_push(ad->sk,NULL))
+		if (!sk_void_push(ad->sk,NULL))
 			{
 			CRYPTOerr(CRYPTO_F_CRYPTO_SET_EX_DATA,ERR_R_MALLOC_FAILURE);
 			return(0);
 			}
 		i++;
 		}
-	sk_set(ad->sk,idx,val);
+	sk_void_set(ad->sk,idx,val);
 	return(1);
 	}
 
@@ -627,10 +627,10 @@ void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx)
 	{
 	if (ad->sk == NULL)
 		return(0);
-	else if (idx >= sk_num(ad->sk))
+	else if (idx >= sk_void_num(ad->sk))
 		return(0);
 	else
-		return(sk_value(ad->sk,idx));
+		return(sk_void_value(ad->sk,idx));
 	}
 
 IMPLEMENT_STACK_OF(CRYPTO_EX_DATA_FUNCS)

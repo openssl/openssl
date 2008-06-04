@@ -94,7 +94,8 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] =
 	};
 
 typedef int sk_cmp_fn_type(const char * const *a, const char * const *b);
-static STACK *app_methods = NULL;
+DECLARE_STACK_OF(EVP_PKEY_ASN1_METHOD);
+static STACK_OF(EVP_PKEY_ASN1_METHOD) *app_methods = NULL;
 
 
 
@@ -121,7 +122,7 @@ int EVP_PKEY_asn1_get_count(void)
 	{
 	int num = sizeof(standard_methods)/sizeof(EVP_PKEY_ASN1_METHOD *);
 	if (app_methods)
-		num += sk_num(app_methods);
+		num += sk_EVP_PKEY_ASN1_METHOD_num(app_methods);
 	return num;
 	}
 
@@ -133,7 +134,7 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
 	if (idx < num)
 		return standard_methods[idx];
 	idx -= num;
-	return (const EVP_PKEY_ASN1_METHOD *)sk_value(app_methods, idx);
+	return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
 	}
 
 static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
@@ -143,10 +144,9 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 	if (app_methods)
 		{
 		int idx;
-		idx = sk_find(app_methods, (char *)&tmp);
+		idx = sk_EVP_PKEY_ASN1_METHOD_find(app_methods, &tmp);
 		if (idx >= 0)
-			return (EVP_PKEY_ASN1_METHOD *)
-				sk_value(app_methods, idx);
+			return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
 		}
 	ret = (EVP_PKEY_ASN1_METHOD **) OBJ_bsearch((char *)&t,
         		(char *)standard_methods,
@@ -234,13 +234,13 @@ int EVP_PKEY_asn1_add0(const EVP_PKEY_ASN1_METHOD *ameth)
 	{
 	if (app_methods == NULL)
 		{
-		app_methods = sk_new((sk_cmp_fn_type *)ameth_cmp);
+		app_methods = sk_EVP_PKEY_ASN1_METHOD_new(ameth_cmp);
 		if (!app_methods)
 			return 0;
 		}
-	if (!sk_push(app_methods, (char *)ameth))
+	if (!sk_EVP_PKEY_ASN1_METHOD_push(app_methods, ameth))
 		return 0;
-	sk_sort(app_methods);
+	sk_EVP_PKEY_ASN1_METHOD_sort(app_methods);
 	return 1;
 	}
 

@@ -77,10 +77,13 @@
 extern "C" {
 #endif
 
+typedef STRING *PSTRING;
+DECLARE_SPECIAL_STACK_OF(PSTRING, STRING)
+
 typedef struct txt_db_st
 	{
 	int num_fields;
-	STACK /* char ** */ *data;
+	STACK_OF(PSTRING) *data;
 	LHASH_OF(STRING) **index;
 	int (**qual)(STRING *);
 	long error;

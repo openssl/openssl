@@ -354,6 +354,8 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 		{
 		char *tname;
 		ASN1_VALUE *skitem;
+		STACK_OF(ASN1_VALUE) *stack;
+
 		/* SET OF, SEQUENCE OF */
 		if (fname)
 			{
@@ -371,12 +373,13 @@ int asn1_template_print_ctx(BIO *out, ASN1_VALUE **fld, int indent,
 					fname) <= 0)
 				return 0;
 			}
-		for(i = 0; i < sk_num((STACK *)*fld); i++)
+		stack = (STACK_OF(ASN1_VALUE) *)*fld;
+		for(i = 0; i < sk_ASN1_VALUE_num(stack); i++)
 			{
 			if ((i > 0) && (BIO_puts(out, "\n") <= 0))
 				return 0;
 
-			skitem = (ASN1_VALUE *)sk_value((STACK *)*fld, i);
+			skitem = sk_ASN1_VALUE_value(stack, i);
 			if (!asn1_item_print_ctx(out, &skitem, indent + 2,
 				ASN1_ITEM_ptr(tt->item), NULL, NULL, 1, pctx))
 				return 0;

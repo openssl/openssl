@@ -88,13 +88,14 @@
 #include <openssl/ecdsa.h>
 #endif
 #include <openssl/rand.h>
-#include <openssl/store.h>
 #include <openssl/ui.h>
 #include <openssl/err.h>
 #endif
 
 #include <openssl/ossl_typ.h>
 #include <openssl/symhacks.h>
+
+#include <openssl/x509.h>
 
 #ifdef  __cplusplus
 extern "C" {

@@ -230,24 +230,7 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
   lh_stats_bio(CHECKED_LHASH_OF(type, lh), out)
 #define LHM_lh_free(type, lh) lh_free(CHECKED_LHASH_OF(type, lh))
 
-
-/* Strings are special: normally an lhash entry will point to a single
- * (somewhat) mutable object. In the case of strings:
- *
- * a) Instead of a single char, there is an array of chars, NUL-terminated.
- * b) The string may have be immutable.
- *
- * So, they need their own declarations. Especially important for
- * type-checking tools, such as Deputy.
- *
- * In practice, however, it appears to be hard to have a const
- * string. For now, I'm settling for dealing with the fact it is a
- * string at all.
- */
-typedef char *STRING;
 DECLARE_LHASH_OF(STRING);
-
-typedef const char *CSTRING;
 DECLARE_LHASH_OF(CSTRING);
 
 #ifdef  __cplusplus

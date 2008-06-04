@@ -64,7 +64,8 @@
 
 /* Password based encryption (PBE) functions */
 
-static STACK *pbe_algs;
+DECLARE_STACK_OF(EVP_PBE_CTL);
+static STACK_OF(EVP_PBE_CTL) *pbe_algs;
 
 /* Setup a cipher context from a PBE algorithm */
 
@@ -147,7 +148,7 @@ int main(int argc, char **argv)
 
 
 int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
-	     ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de)
+		       ASN1_TYPE *param, EVP_CIPHER_CTX *ctx, int en_de)
 	{
 	const EVP_CIPHER *cipher;
 	const EVP_MD *md;
@@ -199,25 +200,23 @@ static int pbe_cmp2(const void *a, const void *b)
 		return pbe1->pbe_nid - pbe2->pbe_nid;
 	}
 
-static int pbe_cmp(const char * const *a, const char * const *b)
+static int pbe_cmp(const EVP_PBE_CTL * const *a, const EVP_PBE_CTL * const *b)
 	{
-	const EVP_PBE_CTL * const *pbe1 = (const EVP_PBE_CTL * const *) a,
-			* const *pbe2 = (const EVP_PBE_CTL * const *)b;
-	int ret = (*pbe1)->pbe_type - (*pbe2)->pbe_type;
+	int ret = (*a)->pbe_type - (*b)->pbe_type;
 	if (ret)
 		return ret;
 	else
-		return (*pbe1)->pbe_nid - (*pbe2)->pbe_nid;
+		return (*a)->pbe_nid - (*b)->pbe_nid;
 	}
 
 /* Add a PBE algorithm */
 
 int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
-	     EVP_PBE_KEYGEN *keygen)
+			 EVP_PBE_KEYGEN *keygen)
 	{
 	EVP_PBE_CTL *pbe_tmp;
 	if (!pbe_algs)
-		pbe_algs = sk_new(pbe_cmp);
+		pbe_algs = sk_EVP_PBE_CTL_new(pbe_cmp);
 	if (!(pbe_tmp = (EVP_PBE_CTL*) OPENSSL_malloc (sizeof(EVP_PBE_CTL))))
 		{
 		EVPerr(EVP_F_EVP_PBE_ALG_ADD_TYPE,ERR_R_MALLOC_FAILURE);
@@ -230,12 +229,12 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid, int md_nid,
 	pbe_tmp->keygen = keygen;
 
 
-	sk_push (pbe_algs, (char *)pbe_tmp);
+	sk_EVP_PBE_CTL_push (pbe_algs, pbe_tmp);
 	return 1;
 	}
 
 int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
-	     EVP_PBE_KEYGEN *keygen)
+		    EVP_PBE_KEYGEN *keygen)
 	{
 	int cipher_nid, md_nid;
 	if (cipher)
@@ -252,7 +251,7 @@ int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
 	}
 
 int EVP_PBE_find(int type, int pbe_nid,
-			int *pcnid, int *pmnid, EVP_PBE_KEYGEN **pkeygen)
+		 int *pcnid, int *pmnid, EVP_PBE_KEYGEN **pkeygen)
 	{
 	EVP_PBE_CTL *pbetmp = NULL, pbelu;
 	int i;
@@ -264,9 +263,9 @@ int EVP_PBE_find(int type, int pbe_nid,
 
 	if (pbe_algs)
 		{
-		i = sk_find(pbe_algs, (char *)&pbelu);
+		i = sk_EVP_PBE_CTL_find(pbe_algs, &pbelu);
 		if (i != -1)
-			pbetmp = (EVP_PBE_CTL *)sk_value (pbe_algs, i);
+			pbetmp = sk_EVP_PBE_CTL_value (pbe_algs, i);
 		}
 	if (pbetmp == NULL)
 		{
@@ -286,11 +285,14 @@ int EVP_PBE_find(int type, int pbe_nid,
 		*pkeygen = pbetmp->keygen;
 	return 1;
 	}
-		
 
+static void free_evp_pbe_ctl(EVP_PBE_CTL *pbe)
+	 {
+	 OPENSSL_freeFunc(pbe);
+	 }
 
 void EVP_PBE_cleanup(void)
 	{
-	sk_pop_free(pbe_algs, OPENSSL_freeFunc);
+	sk_EVP_PBE_CTL_pop_free(pbe_algs, free_evp_pbe_ctl);
 	pbe_algs = NULL;
 	}

@@ -738,13 +738,14 @@ bad:
 			else if ((email == i) || (ocsp_uri == i))
 				{
 				int j;
-				STACK *emlst;
+				STACK_OF(STRING) *emlst;
 				if (email == i)
 					emlst = X509_get1_email(x);
 				else
 					emlst = X509_get1_ocsp(x);
-				for (j = 0; j < sk_num(emlst); j++)
-					BIO_printf(STDout, "%s\n", sk_value(emlst, j));
+				for (j = 0; j < sk_STRING_num(emlst); j++)
+					BIO_printf(STDout, "%s\n",
+						   sk_STRING_value(emlst, j));
 				X509_email_free(emlst);
 				}
 			else if (aliasout == i)

@@ -188,7 +188,7 @@ struct dso_st
 	 * for use in the dso_bind handler. All in all, let each
 	 * method control its own destiny. "Handles" and such go in
 	 * a STACK. */
-	STACK *meth_data;
+	STACK_OF(void) *meth_data;
 	int references;
 	int flags;
 	/* For use by applications etc ... use this for your bits'n'pieces,

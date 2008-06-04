@@ -71,8 +71,9 @@
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(BIO *out, CMS_ContentInfo *cms);
-static CMS_ReceiptRequest *make_receipt_request(STACK *rr_to, int rr_allorfirst,
-								STACK *rr_from);
+static CMS_ReceiptRequest *make_receipt_request(STACK_OF(STRING) *rr_to,
+						int rr_allorfirst,
+						STACK_OF(STRING) *rr_from);
 
 #define SMIME_OP	0x10
 #define SMIME_IP	0x20
@@ -105,7 +106,7 @@ int MAIN(int argc, char **argv)
 	const char *inmode = "r", *outmode = "w";
 	char *infile = NULL, *outfile = NULL, *rctfile = NULL;
 	char *signerfile = NULL, *recipfile = NULL;
-	STACK *sksigners = NULL, *skkeys = NULL;
+	STACK_OF(STRING) *sksigners = NULL, *skkeys = NULL;
 	char *certfile = NULL, *keyfile = NULL, *contfile=NULL;
 	char *certsoutfile = NULL;
 	const EVP_CIPHER *cipher = NULL;
@@ -118,7 +119,7 @@ int MAIN(int argc, char **argv)
 	int badarg = 0;
 	int flags = CMS_DETACHED, noout = 0, print = 0;
 	int rr_print = 0, rr_allorfirst = -1;
-	STACK *rr_to = NULL, *rr_from = NULL;
+	STACK_OF(STRING) *rr_to = NULL, *rr_from = NULL;
 	CMS_ReceiptRequest *rr = NULL;
 	char *to = NULL, *from = NULL, *subject = NULL;
 	char *CAfile = NULL, *CApath = NULL;
@@ -275,8 +276,8 @@ int MAIN(int argc, char **argv)
 				goto argerr;
 			args++;
 			if (!rr_from)
-				rr_from = sk_new_null();
-			sk_push(rr_from, *args);
+				rr_from = sk_STRING_new_null();
+			sk_STRING_push(rr_from, *args);
 			}
 		else if (!strcmp(*args,"-receipt_request_to"))
 			{
@@ -284,8 +285,8 @@ int MAIN(int argc, char **argv)
 				goto argerr;
 			args++;
 			if (!rr_to)
-				rr_to = sk_new_null();
-			sk_push(rr_to, *args);
+				rr_to = sk_STRING_new_null();
+			sk_STRING_push(rr_to, *args);
 			}
 		else if (!strcmp (*args, "-print"))
 				{
@@ -381,13 +382,13 @@ int MAIN(int argc, char **argv)
 			if (signerfile)
 				{
 				if (!sksigners)
-					sksigners = sk_new_null();
-				sk_push(sksigners, signerfile);
+					sksigners = sk_STRING_new_null();
+				sk_STRING_push(sksigners, signerfile);
 				if (!keyfile)
 					keyfile = signerfile;
 				if (!skkeys)
-					skkeys = sk_new_null();
-				sk_push(skkeys, keyfile);
+					skkeys = sk_STRING_new_null();
+				sk_STRING_push(skkeys, keyfile);
 				keyfile = NULL;
 				}
 			signerfile = *++args;
@@ -429,12 +430,12 @@ int MAIN(int argc, char **argv)
 					goto argerr;
 					}
 				if (!sksigners)
-					sksigners = sk_new_null();
-				sk_push(sksigners, signerfile);
+					sksigners = sk_STRING_new_null();
+				sk_STRING_push(sksigners, signerfile);
 				signerfile = NULL;
 				if (!skkeys)
-					skkeys = sk_new_null();
-				sk_push(skkeys, keyfile);
+					skkeys = sk_STRING_new_null();
+				sk_STRING_push(skkeys, keyfile);
 				}
 			keyfile = *++args;
 			}
@@ -533,13 +534,13 @@ int MAIN(int argc, char **argv)
 		if (signerfile)
 			{
 			if (!sksigners)
-				sksigners = sk_new_null();
-			sk_push(sksigners, signerfile);
+				sksigners = sk_STRING_new_null();
+			sk_STRING_push(sksigners, signerfile);
 			if (!skkeys)
-				skkeys = sk_new_null();
+				skkeys = sk_STRING_new_null();
 			if (!keyfile)
 				keyfile = signerfile;
-			sk_push(skkeys, keyfile);
+			sk_STRING_push(skkeys, keyfile);
 			}
 		if (!sksigners)
 			{
@@ -974,11 +975,11 @@ int MAIN(int argc, char **argv)
 			}
 		else
 			flags |= CMS_REUSE_DIGEST;
-		for (i = 0; i < sk_num(sksigners); i++)
+		for (i = 0; i < sk_STRING_num(sksigners); i++)
 			{
 			CMS_SignerInfo *si;
-			signerfile = sk_value(sksigners, i);
-			keyfile = sk_value(skkeys, i);
+			signerfile = sk_STRING_value(sksigners, i);
+			keyfile = sk_STRING_value(skkeys, i);
 			signer = load_cert(bio_err, signerfile,FORMAT_PEM, NULL,
 					e, "signer certificate");
 			if (!signer)
@@ -1152,9 +1153,9 @@ end:
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
 	if (sksigners)
-		sk_free(sksigners);
+		sk_STRING_free(sksigners);
 	if (skkeys)
-		sk_free(skkeys);
+		sk_STRING_free(skkeys);
 	if (secret_key)
 		OPENSSL_free(secret_key);
 	if (secret_keyid)
@@ -1164,9 +1165,9 @@ end:
 	if (rr)
 		CMS_ReceiptRequest_free(rr);
 	if (rr_to)
-		sk_free(rr_to);
+		sk_STRING_free(rr_to);
 	if (rr_from)
-		sk_free(rr_from);
+		sk_STRING_free(rr_from);
 	X509_STORE_free(store);
 	X509_free(cert);
 	X509_free(recip);
@@ -1286,7 +1287,7 @@ static void receipt_request_print(BIO *out, CMS_ContentInfo *cms)
 		}
 	}
 
-static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK *ns)
+static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(STRING) *ns)
 	{
 	int i;
 	STACK_OF(GENERAL_NAMES) *ret;
@@ -1295,9 +1296,9 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK *ns)
 	ret = sk_GENERAL_NAMES_new_null();
 	if (!ret)
 		goto err;
-	for (i = 0; i < sk_num(ns); i++)
+	for (i = 0; i < sk_STRING_num(ns); i++)
 		{
-		char *str = sk_value(ns, i);
+		char *str = sk_STRING_value(ns, i);
 		gen = a2i_GENERAL_NAME(NULL, NULL, NULL, GEN_EMAIL, str, 0);
 		if (!gen)
 			goto err;
@@ -1325,8 +1326,9 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK *ns)
 	}
 
 
-static CMS_ReceiptRequest *make_receipt_request(STACK *rr_to, int rr_allorfirst,
-								STACK *rr_from)
+static CMS_ReceiptRequest *make_receipt_request(STACK_OF(STRING) *rr_to,
+						int rr_allorfirst,
+						STACK_OF(STRING) *rr_from)
 	{
 	STACK_OF(GENERAL_NAMES) *rct_to, *rct_from;
 	CMS_ReceiptRequest *rr;

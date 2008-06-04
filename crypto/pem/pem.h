@@ -183,11 +183,8 @@ typedef struct pem_ctx_st
 	int num_recipient;
 	PEM_USER **recipient;
 
-#ifndef OPENSSL_NO_STACK
-	STACK *x509_chain;	/* certificate chain */
-#else
-	char *x509_chain;	/* certificate chain */
-#endif
+	/* XXX(ben): don#t think this is used! 
+		STACK *x509_chain;	/ * certificate chain */
 	EVP_MD *md;		/* signature type */
 
 	int md_enc;		/* is the md encrypted or not? */
