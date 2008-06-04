@@ -56,7 +56,7 @@ my @dirs = (
 "crypto/ocsp",
 "crypto/ui",
 "crypto/krb5",
-"crypto/store",
+#"crypto/store",
 "crypto/pqueue",
 "crypto/whrlpool",
 "crypto/ts",
