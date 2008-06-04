@@ -1513,6 +1513,21 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 
 #endif
 
+#ifndef OPENSSL_NO_ENGINE
+	ret->client_cert_engine = NULL;
+#ifdef OPENSSL_SSL_CLIENT_ENGINE_AUTO
+#define eng_strx(x)	#x
+#define eng_str(x)	eng_strx(x)
+	/* Use specific client engine automatically... ignore errors */
+	{
+	ENGINE *eng;
+	eng = ENGINE_by_id(eng_str(OPENSSL_SSL_CLIENT_ENGINE_AUTO));
+	if (!eng || !SSL_CTX_set_client_cert_engine(ret, eng))
+		ERR_clear_error();
+	}
+#endif
+#endif
+
 	return(ret);
 err:
 	SSLerr(SSL_F_SSL_CTX_NEW,ERR_R_MALLOC_FAILURE);
@@ -1582,6 +1597,10 @@ void SSL_CTX_free(SSL_CTX *a)
 		sk_SSL_COMP_pop_free(a->comp_methods,SSL_COMP_free);
 #else
 	a->comp_methods = NULL;
+#endif
+#ifndef OPENSSL_NO_ENGINE
+	if (a->client_cert_engine)
+		ENGINE_finish(a->client_cert_engine);
 #endif
 	OPENSSL_free(a);
 	}
