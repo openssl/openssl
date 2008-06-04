@@ -188,7 +188,7 @@ static int win32_load(DSO *dso)
 		goto err;
 		}
 	*p = h;
-	if(!sk_push(dso->meth_data, (char *)p))
+	if(!sk_void_push(dso->meth_data, p))
 		{
 		DSOerr(DSO_F_WIN32_LOAD,DSO_R_STACK_ERROR);
 		goto err;
@@ -215,9 +215,9 @@ static int win32_unload(DSO *dso)
 		DSOerr(DSO_F_WIN32_UNLOAD,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-	if(sk_num(dso->meth_data) < 1)
+	if(sk_void_num(dso->meth_data) < 1)
 		return(1);
-	p = (HINSTANCE *)sk_pop(dso->meth_data);
+	p = sk_void_pop(dso->meth_data);
 	if(p == NULL)
 		{
 		DSOerr(DSO_F_WIN32_UNLOAD,DSO_R_NULL_HANDLE);
@@ -228,7 +228,7 @@ static int win32_unload(DSO *dso)
 		DSOerr(DSO_F_WIN32_UNLOAD,DSO_R_UNLOAD_FAILED);
 		/* We should push the value back onto the stack in
 		 * case of a retry. */
-		sk_push(dso->meth_data, (char *)p);
+		sk_void_push(dso->meth_data, p);
 		return(0);
 		}
 	/* Cleanup */
@@ -248,12 +248,12 @@ static void *win32_bind_var(DSO *dso, const char *symname)
 		DSOerr(DSO_F_WIN32_BIND_VAR,ERR_R_PASSED_NULL_PARAMETER);
 		return(NULL);
 		}
-	if(sk_num(dso->meth_data) < 1)
+	if(sk_void_num(dso->meth_data) < 1)
 		{
 		DSOerr(DSO_F_WIN32_BIND_VAR,DSO_R_STACK_ERROR);
 		return(NULL);
 		}
-	ptr = (HINSTANCE *)sk_value(dso->meth_data, sk_num(dso->meth_data) - 1);
+	ptr = sk_void_value(dso->meth_data, sk_void_num(dso->meth_data) - 1);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_WIN32_BIND_VAR,DSO_R_NULL_HANDLE);
@@ -279,12 +279,12 @@ static DSO_FUNC_TYPE win32_bind_func(DSO *dso, const char *symname)
 		DSOerr(DSO_F_WIN32_BIND_FUNC,ERR_R_PASSED_NULL_PARAMETER);
 		return(NULL);
 		}
-	if(sk_num(dso->meth_data) < 1)
+	if(sk_void_num(dso->meth_data) < 1)
 		{
 		DSOerr(DSO_F_WIN32_BIND_FUNC,DSO_R_STACK_ERROR);
 		return(NULL);
 		}
-	ptr = (HINSTANCE *)sk_value(dso->meth_data, sk_num(dso->meth_data) - 1);
+	ptr = sk_void_value(dso->meth_data, sk_void_num(dso->meth_data) - 1);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_WIN32_BIND_FUNC,DSO_R_NULL_HANDLE);
