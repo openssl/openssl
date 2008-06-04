@@ -673,6 +673,20 @@ bad:
 		goto end;
 		}
 
+#ifndef OPENSSL_NO_ENGINE
+	if (ssl_client_engine)
+		{
+		if (!SSL_CTX_set_client_cert_engine(ctx, ssl_client_engine))
+			{
+			BIO_puts(bio_err, "Error setting client auth engine\n");
+			ERR_print_errors(bio_err);
+			ENGINE_free(ssl_client_engine);
+			goto end;
+			}
+		ENGINE_free(ssl_client_engine);
+		}
+#endif
+
 	if (bugs)
 		SSL_CTX_set_options(ctx,SSL_OP_ALL|off);
 	else
