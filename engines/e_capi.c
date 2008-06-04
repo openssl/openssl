@@ -54,8 +54,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <windows.h>
-#include <wincrypt.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/engine.h>
@@ -70,6 +68,8 @@
 #define _WIN32_WINNT 0x400
 #endif
 
+#include <windows.h>
+#include <wincrypt.h>
 
 #include "e_capi_err.h"
 #include "e_capi_err.c"
