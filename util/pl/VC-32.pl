@@ -155,7 +155,6 @@ if ($FLAVOR =~ /CE/)
 else
 	{
 	$ex_libs.=' gdi32.lib advapi32.lib crypt32.lib user32.lib';
-	$ex_libs.=' cryptui.lib' if $cflags =~ /-DOPENSSL_CAPIENG_DIALOG/;
 	$ex_libs.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 	# WIN32 UNICODE build gets linked with unicows.lib for
 	# backward compatibility with Win9x.
@@ -295,10 +294,6 @@ sub do_lib_rule
 			if ($target =~ /capi/)
 				{
 				$ex.=' crypt32.lib advapi32.lib';
-				if ($cflags =~ /-DOPENSSL_CAPIENG_DIALOG/)
-					{
-					$ex.=' cryptui.lib';
-					}
 				}
 			}
 		elsif ($FLAVOR =~ /CE/)
