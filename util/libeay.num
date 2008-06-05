@@ -3652,3 +3652,7 @@ CMS_set1_eContentType                   4040	EXIST::FUNCTION:CMS
 CMS_ReceiptRequest_create0              4041	EXIST::FUNCTION:CMS
 CMS_add1_signer                         4042	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_set0_pkey             4043	EXIST::FUNCTION:CMS
+ENGINE_set_load_ssl_client_cert_function 4044	EXIST::FUNCTION:ENGINE
+ENGINE_get_ssl_client_cert_function     4045	EXIST::FUNCTION:ENGINE
+ENGINE_load_ssl_client_cert             4046	EXIST::FUNCTION:ENGINE
+ENGINE_load_capi                        4047	EXIST::FUNCTION:CAPIENG,ENGINE
