@@ -130,6 +130,9 @@
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 
 const char *SSL_version_str=OPENSSL_VERSION_TEXT;
 
