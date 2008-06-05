@@ -139,6 +139,7 @@ if ($FLAVOR =~ /CE/)
 else
 	{
 	$ex_libs.=' gdi32.lib advapi32.lib user32.lib';
+	$ex_libs.=' cryptui.lib' if $cflags =~ /-DOPENSSL_CAPIENG_DIALOG/;
 	$ex_libs.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 	}
 
@@ -273,7 +274,14 @@ sub do_lib_rule
 		if ($name eq "")
 			{
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
-			$ex.=' crypt32.lib advapi32.lib' if ($target =~ /capi/);
+			if ($target =~ /capi/)
+				{
+				$ex.=' crypt32.lib advapi32.lib';
+				if ($cflags =~ /-DOPENSSL_CAPIENG_DIALOG/)
+					{
+					$ex.=' cryptui.lib';
+					}
+				}
 			}
 		elsif ($FLAVOR =~ /CE/)
 			{
@@ -284,6 +292,7 @@ sub do_lib_rule
 			$ex.=' unicows.lib' if ($FLAVOR =~ /NT/);
 			$ex.=' wsock32.lib gdi32.lib advapi32.lib user32.lib';
 			$ex.=' crypt32.lib';
+			$ex.=' cryptui.lib' if $cflags =~ /-DOPENSSL_CAPIENG_DIALOG/;
 			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 			}
 		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
