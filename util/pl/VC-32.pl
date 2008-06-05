@@ -138,8 +138,8 @@ if ($FLAVOR =~ /CE/)
 	}
 else
 	{
-	$ex_libs.=' gdi32.lib advapi32.lib user32.lib';
-	$ex_libs.=' cryptui.lib' if $cflags =~ /-DOPENSSL_CAPIENG_DIALOG/;
+	$ex_libs.=' gdi32.lib crypt32.lib advapi32.lib user32.lib';
+	$ex_libs.=' cryptui.lib' if $OPTIONS =~ /-DOPENSSL_CAPIENG_DIALOG/;
 	$ex_libs.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
 	}
 
