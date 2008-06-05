@@ -3652,10 +3652,10 @@ CMS_set1_eContentType                   4040	EXIST::FUNCTION:CMS
 CMS_ReceiptRequest_create0              4041	EXIST::FUNCTION:CMS
 CMS_add1_signer                         4042	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_set0_pkey             4043	EXIST::FUNCTION:CMS
-TS_RESP_CTX_free                        4044	EXIST::FUNCTION:
-i2d_TS_ACCURACY                         4045	EXIST::FUNCTION:
-i2d_TS_MSG_IMPRINT_fp                   4046	EXIST::FUNCTION:
-i2d_TS_MSG_IMPRINT                      4047	EXIST::FUNCTION:
+ENGINE_set_load_ssl_client_cert_function 4044	EXIST::FUNCTION:ENGINE
+ENGINE_get_ssl_client_cert_function     4045	EXIST::FUNCTION:ENGINE
+ENGINE_load_ssl_client_cert             4046	EXIST::FUNCTION:ENGINE
+ENGINE_load_capi                        4047	EXIST::FUNCTION:CAPIENG,ENGINE,STATIC_ENGINE
 EVP_PKEY_print_public                   4048	EXIST::FUNCTION:
 EVP_PKEY_CTX_new                        4049	EXIST::FUNCTION:
 i2d_TS_TST_INFO                         4050	EXIST::FUNCTION:
@@ -4074,7 +4074,7 @@ EVP_PKEY_CTX_new_id                     4450	EXIST::FUNCTION:
 TS_REQ_get_ext_by_OBJ                   4451	EXIST::FUNCTION:
 TS_CONF_set_signer_cert                 4452	EXIST::FUNCTION:
 CMS_add1_crl                            4453	EXIST::FUNCTION:CMS
-ENGINE_set_load_ssl_client_cert_function 4454	EXIST::FUNCTION:ENGINE
-ENGINE_get_ssl_client_cert_function     4455	EXIST::FUNCTION:ENGINE
-ENGINE_load_ssl_client_cert             4456	EXIST::FUNCTION:ENGINE
-ENGINE_load_capi                        4457	EXIST::FUNCTION:CAPIENG,ENGINE,STATIC_ENGINE
+TS_RESP_CTX_free                        4454	EXIST::FUNCTION:
+i2d_TS_ACCURACY                         4455	EXIST::FUNCTION:
+i2d_TS_MSG_IMPRINT_fp                   4456	EXIST::FUNCTION:
+i2d_TS_MSG_IMPRINT                      4457	EXIST::FUNCTION:
