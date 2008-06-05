@@ -1632,6 +1632,8 @@ static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 	CAPI_KEY *key;
 	HWND hwnd;
 	int i, idx = -1;
+	if (sk_X509_num(certs) == 1)
+		return 0;
 	ctx = ENGINE_get_ex_data(e, capi_idx);
 	/* Create an in memory store of certificates */
 	dstore = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
