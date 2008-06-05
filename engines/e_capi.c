@@ -56,22 +56,24 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
-#include <openssl/engine.h>
 #include <openssl/rsa.h>
 #include <openssl/bn.h>
-#include <openssl/pem.h>
 
 #ifdef OPENSSL_SYS_WIN32
 #ifndef OPENSSL_NO_CAPIENG
 
-#ifndef _WIN32_WINNT
-#define _WIN32_WINNT 0x400
+#if _WIN32_WINNT < 0x0500
+#define _WIN32_WINNT 0x0500
 #endif
 
 #include <windows.h>
 #include <wincrypt.h>
 
-#undef X509_NAME
+#undef X509_EXTENSIONS
+#undef X509_CERT_PAIR
+
+#include <openssl/engine.h>
+#include <openssl/pem.h>
 
 #include "e_capi_err.h"
 #include "e_capi_err.c"
@@ -1616,6 +1618,7 @@ static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
  * CryptUIDlgSelectCertificateFromStore() to produce a dialog box.
  */
 
+#include <PrSht.h>
 #include <cryptuiapi.h>
 
 #define dlg_title L"OpenSSL Application SSL Client Certificate Selection"
