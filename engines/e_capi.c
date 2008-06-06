@@ -62,10 +62,6 @@
 #ifdef OPENSSL_SYS_WIN32
 #ifndef OPENSSL_NO_CAPIENG
 
-#if _WIN32_WINNT < 0x0500
-#define _WIN32_WINNT 0x0500
-#endif
-
 #include <windows.h>
 #include <wincrypt.h>
 
@@ -94,7 +90,6 @@ static int capi_list_providers(CAPI_CTX *ctx, BIO *out);
 static int capi_list_containers(CAPI_CTX *ctx, BIO *out);
 int capi_list_certs(CAPI_CTX *ctx, BIO *out, char *storename);
 void capi_free_key(CAPI_KEY *key);
-static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
 
 static PCCERT_CONTEXT capi_find_cert(CAPI_CTX *ctx, const char *id, HCERTSTORE hstore);
 
@@ -117,7 +112,17 @@ static int capi_dsa_free(DSA *dsa);
 static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 	STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **pkey,
 	STACK_OF(X509) **pother, UI_METHOD *ui_method, void *callback_data);
-	
+
+static int cert_select_simple(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
+#ifdef OPENSSL_CAPIENG_DIALOG
+static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
+#endif
+
+typedef PCCERT_CONTEXT (WINAPI *CERTDLG)(HCERTSTORE, HWND, LPCWSTR,
+						LPCWSTR, DWORD, DWORD,
+						void *);
+typedef HWND (WINAPI *GETCONSWIN)(void);
+
 /* This structure contains CAPI ENGINE specific data:
  * it contains various global options and affects how
  * other functions behave.
@@ -160,6 +165,10 @@ struct CAPI_CTX_st {
 #define CAPI_DMP_PKEYINFO	0x20
 
 	DWORD dump_flags;
+	int (*client_cert_select)(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs);
+
+	CERTDLG certselectdlg;
+	GETCONSWIN getconswindow;
 };
 
 
@@ -392,6 +401,20 @@ static int capi_init(ENGINE *e)
 	capi_dsa_method.dsa_do_verify = ossl_dsa_meth->dsa_do_verify;
 	capi_dsa_method.dsa_mod_exp = ossl_dsa_meth->dsa_mod_exp;
 	capi_dsa_method.bn_mod_exp = ossl_dsa_meth->bn_mod_exp;
+
+#ifdef OPENSSL_CAPIENG_DIALOG
+	{
+	HMODULE cryptui = LoadLibrary(TEXT("CRYPTUI.DLL"));
+	HMODULE kernel = LoadLibrary(TEXT("KERNEL32.DLL"));
+	if (cryptui)
+		ctx->certselectdlg = (CERTDLG)GetProcAddress(cryptui, "CryptUIDlgSelectCertificateFromStore");
+	if (kernel)
+		ctx->getconswindow = (GETCONSWIN)GetProcAddress(kernel, "GetConsoleWindow");
+	if (cryptui && !OPENSSL_isservice())
+		ctx->client_cert_select = cert_select_dialog;
+	}
+#endif
+		
 
 	return 1;
 
@@ -1434,6 +1457,7 @@ static CAPI_CTX *capi_ctx_new()
 	ctx->lookup_method = CAPI_LU_SUBSTR;
 	ctx->debug_level = 0;
 	ctx->debug_file = NULL;
+	ctx->client_cert_select = cert_select_simple;
 	return ctx;
 	}
 
@@ -1571,7 +1595,7 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 
 	/* Select the appropriate certificate */
 
-	client_cert_idx = client_cert_select(e, ssl, certs);
+	client_cert_idx = ctx->client_cert_select(e, ssl, certs);
 
 	/* Set the selected certificate and free the rest */
 
@@ -1603,16 +1627,15 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 
 	}
 
-#ifndef OPENSSL_CAPIENG_DIALOG
 
 /* Simple client cert selection function: always select first */
 
-static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
+static int cert_select_simple(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 	{
 	return 0;
 	}
 
-#else
+#ifdef OPENSSL_CAPIENG_DIALOG
 
 /* More complex cert selection function, using standard function
  * CryptUIDlgSelectCertificateFromStore() to produce a dialog box.
@@ -1626,7 +1649,7 @@ static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 #define dlg_columns	 CRYPTUI_SELECT_LOCATION_COLUMN \
 			|CRYPTUI_SELECT_INTENDEDUSE_COLUMN
 
-static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
+static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 	{
 	X509 *x;
 	HCERTSTORE dstore;
@@ -1663,12 +1686,11 @@ static int client_cert_select(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 
 		}
 	hwnd = GetActiveWindow();
-	if (!hwnd)
-		hwnd = GetConsoleWindow();
+	if (!hwnd && ctx->getconswindow)
+		hwnd = ctx->getconswindow();
 	/* Call dialog to select one */
-	cert = CryptUIDlgSelectCertificateFromStore(dstore, hwnd,
-							dlg_title, dlg_prompt,
-							dlg_columns, 0, NULL);
+	cert = ctx->certselectdlg(dstore, hwnd, dlg_title, dlg_prompt,
+						dlg_columns, 0, NULL);
 
 	/* Find matching cert from list */
 	if (cert)
