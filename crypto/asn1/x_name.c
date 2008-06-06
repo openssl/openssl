@@ -244,6 +244,11 @@ static void local_sk_X509_NAME_ENTRY_free(STACK_OF(X509_NAME_ENTRY) *ne)
 	sk_X509_NAME_ENTRY_free(ne);
 	}
 
+static void local_sk_X509_NAME_ENTRY_pop_free(STACK_OF(X509_NAME_ENTRY) *ne)
+	{
+	sk_X509_NAME_ENTRY_pop_free(ne, X509_NAME_ENTRY_free);
+	}
+
 static int x509_name_encode(X509_NAME *a)
 {
 	union { STACK_OF(STACK_OF_X509_NAME_ENTRY) *s;
@@ -372,7 +377,7 @@ static int x509_name_canon(X509_NAME *a)
 		X509_NAME_ENTRY_free(tmpentry);
 	if (intname)
 		sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname,
-						local_sk_X509_NAME_ENTRY_free);
+					local_sk_X509_NAME_ENTRY_pop_free);
 	return ret;
 	}
 
