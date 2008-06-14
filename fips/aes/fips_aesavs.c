@@ -63,10 +63,9 @@
 #include <errno.h>
 #include <assert.h>
 #include <ctype.h>
-
 #include <openssl/aes.h>
 #include <openssl/evp.h>
-#include <openssl/fips.h>
+
 #include <openssl/err.h>
 #include "e_os.h"
 
@@ -80,6 +79,7 @@ int main(int argc, char *argv[])
 
 #else
 
+#include <openssl/fips.h>
 #include "fips_utl.h"
 
 #define AES_BLOCK_SIZE 16

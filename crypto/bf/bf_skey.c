@@ -60,7 +60,10 @@
 #include <string.h>
 #include <openssl/blowfish.h>
 #include <openssl/crypto.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 #include "bf_locl.h"
 #include "bf_pi.h"
 

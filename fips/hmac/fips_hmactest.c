@@ -63,7 +63,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/err.h>
-#include <openssl/fips.h>
+
 #include <openssl/x509v3.h>
 
 #ifndef OPENSSL_FIPS
@@ -76,6 +76,7 @@ int main(int argc, char *argv[])
 
 #else
 
+#include <openssl/fips.h>
 #include "fips_utl.h"
 
 static int hmac_test(const EVP_MD *md, FILE *out, FILE *in);

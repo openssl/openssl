@@ -68,8 +68,6 @@
 
 #include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_NO_KRB5
-
 #define _XOPEN_SOURCE 500 /* glibc2 needs this to declare strptime() */
 #include <time.h>
 #if 0 /* experimental */
@@ -83,6 +81,8 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/krb5_asn.h>
+
+#ifndef OPENSSL_NO_KRB5
 
 #ifndef ENOMEM
 #define ENOMEM KRB5KRB_ERR_GENERIC
@@ -2196,7 +2196,7 @@ krb5_error_code  kssl_build_principal_2(
 #else /* !OPENSSL_NO_KRB5 */
 
 #if defined(PEDANTIC) || defined(OPENSSL_SYS_VMS)
-static int dummy=(int)&dummy;
+static void *dummy=&dummy;
 #endif
 
 #endif	/* !OPENSSL_NO_KRB5	*/

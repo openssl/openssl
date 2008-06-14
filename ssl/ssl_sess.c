@@ -59,6 +59,9 @@
 #include <stdio.h>
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
+#ifndef OPENSSL_NO_ENGINE
+#include <openssl/engine.h>
+#endif
 #include "ssl_locl.h"
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
@@ -869,6 +872,25 @@ int (*SSL_CTX_get_client_cert_cb(SSL_CTX *ctx))(SSL * ssl, X509 ** x509 , EVP_PK
 	{
 	return ctx->client_cert_cb;
 	}
+
+#ifndef OPENSSL_NO_ENGINE
+int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e)
+	{
+	if (!ENGINE_init(e))
+		{
+		SSLerr(SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE, ERR_R_ENGINE_LIB);
+		return 0;
+		}
+	if(!ENGINE_get_ssl_client_cert_function(e))
+		{
+		SSLerr(SSL_F_SSL_CTX_SET_CLIENT_CERT_ENGINE, SSL_R_NO_CLIENT_CERT_METHOD);
+		ENGINE_finish(e);
+		return 0;
+		}
+	ctx->client_cert_engine = e;
+	return 1;
+	}
+#endif
 
 void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx,
 	int (*cb)(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len))

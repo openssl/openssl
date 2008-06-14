@@ -94,7 +94,13 @@
 #include <openssl/ui.h>
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
+#ifndef OPENSSL_NO_CMS
+#include <openssl/cms.h>
+#endif
 
 void ERR_load_crypto_strings(void)
 	{
@@ -141,6 +147,9 @@ void ERR_load_crypto_strings(void)
 	ERR_load_UI_strings();
 #ifdef OPENSSL_FIPS
 	ERR_load_FIPS_strings();
+#endif
+#ifndef OPENSSL_NO_CMS
+	ERR_load_CMS_strings();
 #endif
 #endif
 	}

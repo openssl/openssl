@@ -73,6 +73,7 @@ copy %loc%\test\testsid.pem   %2\openssl\test\
 copy %loc%\test\testx509.pem  %2\openssl\test\
 copy %loc%\test\v3-cert1.pem  %2\openssl\test\
 copy %loc%\test\v3-cert2.pem  %2\openssl\test\
+copy %loc%\crypto\evp\evptests.txt %2\openssl\test\
 
 rem   copy the apps directory stuff
 copy %loc%\apps\client.pem    %2\openssl\apps\

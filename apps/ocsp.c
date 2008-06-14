@@ -60,12 +60,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "apps.h" /* needs to be included before the openssl headers! */
 #include <openssl/e_os2.h>
-#include <openssl/bio.h>
-#include <openssl/ocsp.h>
-#include <openssl/txt_db.h>
 #include <openssl/ssl.h>
-#include "apps.h"
+#include <openssl/err.h>
 
 /* Maximum leeway in validity period: default 5 minutes */
 #define MAX_VALIDITY_PERIOD	(5 * 60)

@@ -2255,6 +2255,13 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		ctx->tlsext_status_cb=(int (*)(SSL *,void *))fp;
 		break;
 
+	case SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB:
+		ctx->tlsext_ticket_key_cb=(int (*)(SSL *,unsigned char  *,
+						unsigned char *,
+						EVP_CIPHER_CTX *,
+						HMAC_CTX *, int))fp;
+		break;
+
 #endif
 	default:
 		return(0);

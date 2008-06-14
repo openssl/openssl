@@ -63,7 +63,10 @@
  * 1.1 added norm_expand_bits
  * 1.0 First working version
  */
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 #include "des_locl.h"
 
 OPENSSL_IMPLEMENT_GLOBAL(int,DES_check_key);	/* defaults to false */

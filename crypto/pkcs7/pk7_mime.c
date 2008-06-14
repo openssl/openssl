@@ -377,57 +377,6 @@ PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 
 }
 
-/* Copy text from one BIO to another making the output CRLF at EOL */
-int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
-{
-	char eol;
-	int len;
-	char linebuf[MAX_SMLEN];
-	if(flags & PKCS7_BINARY) {
-		while((len = BIO_read(in, linebuf, MAX_SMLEN)) > 0)
-						BIO_write(out, linebuf, len);
-		return 1;
-	}
-	if(flags & PKCS7_TEXT)
-		BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
-	while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
-		eol = strip_eol(linebuf, &len);
-		if (len)
-			BIO_write(out, linebuf, len);
-		if(eol) BIO_write(out, "\r\n", 2);
-	}
-	return 1;
-}
-
-/* Strip off headers if they are text/plain */
-int SMIME_text(BIO *in, BIO *out)
-{
-	char iobuf[4096];
-	int len;
-	STACK_OF(MIME_HEADER) *headers;
-	MIME_HEADER *hdr;
-
-	if (!(headers = mime_parse_hdr(in))) {
-		PKCS7err(PKCS7_F_SMIME_TEXT,PKCS7_R_MIME_PARSE_ERROR);
-		return 0;
-	}
-	if(!(hdr = mime_hdr_find(headers, "content-type")) || !hdr->value) {
-		PKCS7err(PKCS7_F_SMIME_TEXT,PKCS7_R_MIME_NO_CONTENT_TYPE);
-		sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
-		return 0;
-	}
-	if (strcmp (hdr->value, "text/plain")) {
-		PKCS7err(PKCS7_F_SMIME_TEXT,PKCS7_R_INVALID_MIME_TYPE);
-		ERR_add_error_data(2, "type: ", hdr->value);
-		sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
-		return 0;
-	}
-	sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
-	while ((len = BIO_read(in, iobuf, sizeof(iobuf))) > 0)
-						BIO_write(out, iobuf, len);
-	return 1;
-}
-
 /* Split a multipart/XXX message body into component parts: result is
  * canonical parts in a STACK of bios
  */

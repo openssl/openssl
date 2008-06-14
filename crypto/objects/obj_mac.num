@@ -783,3 +783,8 @@ id_PasswordBasedMAC		782
 id_DHBasedMac		783
 id_it_suppLangTags		784
 caRepository		785
+id_smime_ct_compressedData		786
+id_ct_asciiTextWithCRLF		787
+id_aes128_wrap		788
+id_aes192_wrap		789
+id_aes256_wrap		790

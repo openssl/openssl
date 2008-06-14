@@ -62,7 +62,10 @@
 #include <openssl/md2.h>
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 #include <openssl/err.h>
 
 const char MD2_version[]="MD2" OPENSSL_VERSION_PTEXT;

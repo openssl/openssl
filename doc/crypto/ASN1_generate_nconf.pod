@@ -151,10 +151,11 @@ bits is set to zero.
 This specifies the format of the ultimate value. It should be followed
 by a colon and one of the strings B<ASCII>, B<UTF8>, B<HEX> or B<BITLIST>.
 
-If no format specifier is included then B<ASCII> is used. If B<UTF8> is specified
-then the value string must be a valid B<UTF8> string. For B<HEX> the output must
-be a set of hex digits. B<BITLIST> (which is only valid for a BIT STRING) is a
-comma separated list of set bits.
+If no format specifier is included then B<ASCII> is used. If B<UTF8> is
+specified then the value string must be a valid B<UTF8> string. For B<HEX> the
+output must be a set of hex digits. B<BITLIST> (which is only valid for a BIT
+STRING) is a comma separated list of the indices of the set bits, all other
+bits are zero.
 
 =back
 
@@ -171,6 +172,10 @@ An IA5String explicitly tagged:
 An IA5String explicitly tagged using APPLICATION tagging:
 
  EXPLICIT:0A,IA5STRING:Hello World
+
+A BITSTRING with bits 1 and 5 set and all others zero:
+
+ FORMAT=BITLIST,BITSTRING:1,5
 
 A more complex example using a config file to produce a
 SEQUENCE consiting of a BOOL an OID and a UTF8String:

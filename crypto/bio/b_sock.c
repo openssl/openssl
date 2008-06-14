@@ -63,7 +63,11 @@
 #include "cryptlib.h"
 #include <openssl/bio.h>
 #if defined(OPENSSL_SYS_NETWARE) && defined(NETWARE_BSDSOCK)
-#include "netdb.h"
+#include <netdb.h>
+#if defined(NETWARE_CLIB)
+#include <sys/ioctl.h>
+NETDB_DEFINE_CONTEXT
+#endif
 #endif
 
 #ifndef OPENSSL_NO_SOCK
@@ -178,11 +182,11 @@ int BIO_get_port(const char *str, unsigned short *port_ptr)
 		/* Note: under VMS with SOCKETSHR, it seems like the first
 		 * parameter is 'char *', instead of 'const char *'
 		 */
- 		s=getservbyname(
 #ifndef CONST_STRICT
-		    (char *)
+		s=getservbyname((char *)str,"tcp");
+#else
+		s=getservbyname(str,"tcp");
 #endif
-		    str,"tcp");
 		if(s != NULL)
 			*port_ptr=ntohs((unsigned short)s->s_port);
 		CRYPTO_w_unlock(CRYPTO_LOCK_GETSERVBYNAME);
@@ -360,7 +364,11 @@ struct hostent *BIO_gethostbyname(const char *name)
 #if 1
 	/* Caching gethostbyname() results forever is wrong,
 	 * so we have to let the true gethostbyname() worry about this */
+#if (defined(NETWARE_BSDSOCK) && !defined(__NOVELL_LIBC__))
+	return gethostbyname((char*)name);
+#else
 	return gethostbyname(name);
+#endif
 #else
 	struct hostent *ret;
 	int i,lowi=0,j;
@@ -400,11 +408,11 @@ struct hostent *BIO_gethostbyname(const char *name)
 		/* Note: under VMS with SOCKETSHR, it seems like the first
 		 * parameter is 'char *', instead of 'const char *'
 		 */
-		ret=gethostbyname(
 #  ifndef CONST_STRICT
-		    (char *)
+		ret=gethostbyname((char *)name);
+#  else
+		ret=gethostbyname(name);
 #  endif
-		    name);
 
 		if (ret == NULL)
 			goto end;

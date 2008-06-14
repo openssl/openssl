@@ -64,7 +64,10 @@
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/asn1.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 #include <openssl/asn1_mac.h>
 
 int DSA_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,

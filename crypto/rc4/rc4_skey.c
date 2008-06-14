@@ -60,7 +60,10 @@
 #include "rc4_locl.h"
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 
 const char RC4_version[]="RC4" OPENSSL_VERSION_PTEXT;
 

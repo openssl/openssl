@@ -140,7 +140,7 @@ OPENSSL_ia32_cpuid:
 	and	\$15,%ah
 	cmp	\$15,%ah		# examine Family ID
 	je	.Lnotintel
-	or	\$0x40000000,%edx	# use reserved 30th bit to skip unrolled loop
+	or	\$0x40000000,%edx	# use reserved bit to skip unrolled loop
 .Lnotintel:
 	bt	\$28,%edx		# test hyper-threading bit
 	jnc	.Ldone

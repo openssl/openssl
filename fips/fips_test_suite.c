@@ -22,7 +22,7 @@
 #include <openssl/dsa.h>
 #include <openssl/hmac.h>
 #include <openssl/err.h>
-#include <openssl/fips.h>
+
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
     }
 #else
 
+#include <openssl/fips.h>
 #include "fips_utl.h"
 
 /* AES: encrypt and decrypt known plaintext, verify result matches original plaintext

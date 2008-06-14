@@ -60,7 +60,10 @@
 #include "rmd_locl.h"
 #include <openssl/opensslv.h>
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 
 const char RMD160_version[]="RIPE-MD160" OPENSSL_VERSION_PTEXT;
 

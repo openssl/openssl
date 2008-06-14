@@ -60,7 +60,10 @@
 #include "md4_locl.h"
 #include <openssl/opensslv.h>
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 
 const char MD4_version[]="MD4" OPENSSL_VERSION_PTEXT;
 

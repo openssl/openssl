@@ -2,8 +2,9 @@
 #
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
-# project. Rights for redistribution and usage in source and binary
-# forms are granted according to the OpenSSL license.
+# project. The module is, however, dual licensed under OpenSSL and
+# CRYPTOGAMS licenses depending on where you obtain it. For further
+# details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
 # 2.22x RC4 tune-up:-) It should be noted though that my hand [as in
@@ -49,8 +50,22 @@
 # is not implemented, then this final RC4_CHAR code-path should be
 # preferred, as it provides better *all-round* performance].
 
+# Intel Core2 was observed to perform poorly on both code paths:-( It
+# apparently suffers from some kind of partial register stall, which
+# occurs in 64-bit mode only [as virtually identical 32-bit loop was
+# observed to outperform 64-bit one by almost 50%]. Adding two movzb to
+# cloop1 boosts its performance by 80%! This loop appears to be optimal
+# fit for Core2 and therefore the code was modified to skip cloop8 on
+# this CPU.
+
 $output=shift;
-open STDOUT,"| $^X ../perlasm/x86_64-xlate.pl $output";
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
+die "can't locate x86_64-xlate.pl";
+
+open STDOUT,"| $^X $xlate $output";
 
 $dat="%rdi";	    # arg1
 $len="%rsi";	    # arg2
@@ -152,6 +167,8 @@ $code.=<<___;
 	movzb	($dat,$XX[0]),$TX[0]#d
 	test	\$-8,$len
 	jz	.Lcloop1
+	cmp	\$0,260($dat)
+	jnz	.Lcloop1
 	push	%rbx
 	jmp	.Lcloop8
 .align	16
@@ -221,6 +238,8 @@ $code.=<<___;
 	movb	$TY#b,($dat,$XX[0])
 	add	$TX[0]#b,$TY#b
 	add	\$1,$XX[0]#b
+	movzb	$TY#b,$TY#d
+	movzb	$XX[0]#b,$XX[0]#d
 	movzb	($dat,$TY),$TY#d
 	movzb	($dat,$XX[0]),$TX[0]#d
 	xorb	($inp),$TY#b
@@ -231,6 +250,111 @@ $code.=<<___;
 	jnz	.Lcloop1
 	jmp	.Lexit
 .size	RC4,.-RC4
+___
+
+$idx="%r8";
+$ido="%r9";
+
+$code.=<<___;
+.extern	OPENSSL_ia32cap_P
+.globl	RC4_set_key
+.type	RC4_set_key,\@function,3
+.align	16
+RC4_set_key:
+	lea	8($dat),$dat
+	lea	($inp,$len),$inp
+	neg	$len
+	mov	$len,%rcx
+	xor	%eax,%eax
+	xor	$ido,$ido
+	xor	%r10,%r10
+	xor	%r11,%r11
+
+	mov	OPENSSL_ia32cap_P(%rip),$idx#d
+	bt	\$20,$idx#d
+	jnc	.Lw1stloop
+	bt	\$30,$idx#d
+	setc	$ido#b
+	mov	$ido#d,260($dat)
+	jmp	.Lc1stloop
+
+.align	16
+.Lw1stloop:
+	mov	%eax,($dat,%rax,4)
+	add	\$1,%al
+	jnc	.Lw1stloop
+
+	xor	$ido,$ido
+	xor	$idx,$idx
+.align	16
+.Lw2ndloop:
+	mov	($dat,$ido,4),%r10d
+	add	($inp,$len,1),$idx#b
+	add	%r10b,$idx#b
+	add	\$1,$len
+	mov	($dat,$idx,4),%r11d
+	cmovz	%rcx,$len
+	mov	%r10d,($dat,$idx,4)
+	mov	%r11d,($dat,$ido,4)
+	add	\$1,$ido#b
+	jnc	.Lw2ndloop
+	jmp	.Lexit_key
+
+.align	16
+.Lc1stloop:
+	mov	%al,($dat,%rax)
+	add	\$1,%al
+	jnc	.Lc1stloop
+
+	xor	$ido,$ido
+	xor	$idx,$idx
+.align	16
+.Lc2ndloop:
+	mov	($dat,$ido),%r10b
+	add	($inp,$len),$idx#b
+	add	%r10b,$idx#b
+	add	\$1,$len
+	mov	($dat,$idx),%r11b
+	jnz	.Lcnowrap
+	mov	%rcx,$len
+.Lcnowrap:
+	mov	%r10b,($dat,$idx)
+	mov	%r11b,($dat,$ido)
+	add	\$1,$ido#b
+	jnc	.Lc2ndloop
+	movl	\$-1,256($dat)
+
+.align	16
+.Lexit_key:
+	xor	%eax,%eax
+	mov	%eax,-8($dat)
+	mov	%eax,-4($dat)
+	ret
+.size	RC4_set_key,.-RC4_set_key
+
+.globl	RC4_options
+.type	RC4_options,\@function,0
+.align	16
+RC4_options:
+	.picmeup %rax
+	lea	.Lopts-.(%rax),%rax
+	mov	OPENSSL_ia32cap_P(%rip),%edx
+	bt	\$20,%edx
+	jnc	.Ldone
+	add	\$12,%rax
+	bt	\$30,%edx
+	jnc	.Ldone
+	add	\$13,%rax
+.Ldone:
+	ret
+.align	64
+.Lopts:
+.asciz	"rc4(8x,int)"
+.asciz	"rc4(8x,char)"
+.asciz	"rc4(1x,char)"
+.asciz	"RC4 for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.align	64
+.size	RC4_options,.-RC4_options
 ___
 
 $code =~ s/#([bwd])/$1/gm;

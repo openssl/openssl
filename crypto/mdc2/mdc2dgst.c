@@ -62,7 +62,10 @@
 #include <openssl/des.h>
 #include <openssl/mdc2.h>
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 
 #undef c2l
 #define c2l(c,l)	(l =((DES_LONG)(*((c)++)))    , \

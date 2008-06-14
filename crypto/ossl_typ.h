@@ -140,6 +140,8 @@ typedef struct X509_crl_st X509_CRL;
 typedef struct X509_name_st X509_NAME;
 typedef struct x509_store_st X509_STORE;
 typedef struct x509_store_ctx_st X509_STORE_CTX;
+typedef struct ssl_st SSL;
+typedef struct ssl_ctx_st SSL_CTX;
 
 typedef struct v3_ext_ctx X509V3_CTX;
 typedef struct conf_st CONF;

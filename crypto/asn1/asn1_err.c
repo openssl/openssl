@@ -1,6 +1,6 @@
 /* crypto/asn1/asn1_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -110,6 +110,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_FUNC(ASN1_F_ASN1_ITEM_VERIFY),	"ASN1_item_verify"},
 {ERR_FUNC(ASN1_F_ASN1_MBSTRING_NCOPY),	"ASN1_mbstring_ncopy"},
 {ERR_FUNC(ASN1_F_ASN1_OBJECT_NEW),	"ASN1_OBJECT_new"},
+{ERR_FUNC(ASN1_F_ASN1_OUTPUT_DATA),	"ASN1_OUTPUT_DATA"},
 {ERR_FUNC(ASN1_F_ASN1_PACK_STRING),	"ASN1_pack_string"},
 {ERR_FUNC(ASN1_F_ASN1_PCTX_NEW),	"ASN1_PCTX_NEW"},
 {ERR_FUNC(ASN1_F_ASN1_PKCS5_PBE_SET),	"ASN1_PKCS5_PBE_SET"},
@@ -129,6 +130,8 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_FUNC(ASN1_F_ASN1_UNPACK_STRING),	"ASN1_unpack_string"},
 {ERR_FUNC(ASN1_F_ASN1_UTCTIME_SET),	"ASN1_UTCTIME_set"},
 {ERR_FUNC(ASN1_F_ASN1_VERIFY),	"ASN1_verify"},
+{ERR_FUNC(ASN1_F_B64_READ_ASN1),	"B64_READ_ASN1"},
+{ERR_FUNC(ASN1_F_B64_WRITE_ASN1),	"B64_WRITE_ASN1"},
 {ERR_FUNC(ASN1_F_BITSTR_CB),	"BITSTR_CB"},
 {ERR_FUNC(ASN1_F_BN_TO_ASN1_ENUMERATED),	"BN_to_ASN1_ENUMERATED"},
 {ERR_FUNC(ASN1_F_BN_TO_ASN1_INTEGER),	"BN_to_ASN1_INTEGER"},
@@ -169,6 +172,8 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_FUNC(ASN1_F_PARSE_TAGGING),	"PARSE_TAGGING"},
 {ERR_FUNC(ASN1_F_PKCS5_PBE2_SET),	"PKCS5_pbe2_set"},
 {ERR_FUNC(ASN1_F_PKCS5_PBE_SET),	"PKCS5_pbe_set"},
+{ERR_FUNC(ASN1_F_SMIME_READ_ASN1),	"SMIME_read_ASN1"},
+{ERR_FUNC(ASN1_F_SMIME_TEXT),	"SMIME_text"},
 {ERR_FUNC(ASN1_F_X509_CINF_NEW),	"X509_CINF_NEW"},
 {ERR_FUNC(ASN1_F_X509_CRL_ADD0_REVOKED),	"X509_CRL_add0_revoked"},
 {ERR_FUNC(ASN1_F_X509_INFO_NEW),	"X509_INFO_new"},
@@ -183,6 +188,8 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 static ERR_STRING_DATA ASN1_str_reasons[]=
 	{
 {ERR_REASON(ASN1_R_ADDING_OBJECT)        ,"adding object"},
+{ERR_REASON(ASN1_R_ASN1_PARSE_ERROR)     ,"asn1 parse error"},
+{ERR_REASON(ASN1_R_ASN1_SIG_PARSE_ERROR) ,"asn1 sig parse error"},
 {ERR_REASON(ASN1_R_AUX_ERROR)            ,"aux error"},
 {ERR_REASON(ASN1_R_BAD_CLASS)            ,"bad class"},
 {ERR_REASON(ASN1_R_BAD_OBJECT_HEADER)    ,"bad object header"},
@@ -229,6 +236,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_INTEGER_TOO_LARGE_FOR_LONG),"integer too large for long"},
 {ERR_REASON(ASN1_R_INVALID_BMPSTRING_LENGTH),"invalid bmpstring length"},
 {ERR_REASON(ASN1_R_INVALID_DIGIT)        ,"invalid digit"},
+{ERR_REASON(ASN1_R_INVALID_MIME_TYPE)    ,"invalid mime type"},
 {ERR_REASON(ASN1_R_INVALID_MODIFIER)     ,"invalid modifier"},
 {ERR_REASON(ASN1_R_INVALID_NUMBER)       ,"invalid number"},
 {ERR_REASON(ASN1_R_INVALID_SEPARATOR)    ,"invalid separator"},
@@ -238,6 +246,9 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_IV_TOO_LARGE)         ,"iv too large"},
 {ERR_REASON(ASN1_R_LENGTH_ERROR)         ,"length error"},
 {ERR_REASON(ASN1_R_LIST_ERROR)           ,"list error"},
+{ERR_REASON(ASN1_R_MIME_NO_CONTENT_TYPE) ,"mime no content type"},
+{ERR_REASON(ASN1_R_MIME_PARSE_ERROR)     ,"mime parse error"},
+{ERR_REASON(ASN1_R_MIME_SIG_PARSE_ERROR) ,"mime sig parse error"},
 {ERR_REASON(ASN1_R_MISSING_EOC)          ,"missing eoc"},
 {ERR_REASON(ASN1_R_MISSING_SECOND_NUMBER),"missing second number"},
 {ERR_REASON(ASN1_R_MISSING_VALUE)        ,"missing value"},
@@ -247,7 +258,11 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_NON_HEX_CHARACTERS)   ,"non hex characters"},
 {ERR_REASON(ASN1_R_NOT_ASCII_FORMAT)     ,"not ascii format"},
 {ERR_REASON(ASN1_R_NOT_ENOUGH_DATA)      ,"not enough data"},
+{ERR_REASON(ASN1_R_NO_CONTENT_TYPE)      ,"no content type"},
 {ERR_REASON(ASN1_R_NO_MATCHING_CHOICE_TYPE),"no matching choice type"},
+{ERR_REASON(ASN1_R_NO_MULTIPART_BODY_FAILURE),"no multipart body failure"},
+{ERR_REASON(ASN1_R_NO_MULTIPART_BOUNDARY),"no multipart boundary"},
+{ERR_REASON(ASN1_R_NO_SIG_CONTENT_TYPE)  ,"no sig content type"},
 {ERR_REASON(ASN1_R_NULL_IS_WRONG_LENGTH) ,"null is wrong length"},
 {ERR_REASON(ASN1_R_OBJECT_NOT_ASCII_FORMAT),"object not ascii format"},
 {ERR_REASON(ASN1_R_ODD_NUMBER_OF_CHARS)  ,"odd number of chars"},
@@ -257,6 +272,8 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_SEQUENCE_NOT_CONSTRUCTED),"sequence not constructed"},
 {ERR_REASON(ASN1_R_SEQUENCE_OR_SET_NEEDS_CONFIG),"sequence or set needs config"},
 {ERR_REASON(ASN1_R_SHORT_LINE)           ,"short line"},
+{ERR_REASON(ASN1_R_SIG_INVALID_MIME_TYPE),"sig invalid mime type"},
+{ERR_REASON(ASN1_R_STREAMING_NOT_SUPPORTED),"streaming not supported"},
 {ERR_REASON(ASN1_R_STRING_TOO_LONG)      ,"string too long"},
 {ERR_REASON(ASN1_R_STRING_TOO_SHORT)     ,"string too short"},
 {ERR_REASON(ASN1_R_TAG_VALUE_TOO_HIGH)   ,"tag value too high"},

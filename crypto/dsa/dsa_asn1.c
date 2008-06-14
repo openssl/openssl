@@ -61,7 +61,10 @@
 #include <openssl/dsa.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 
 /* Override the default new methods */
 static int sig_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it)

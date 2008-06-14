@@ -126,6 +126,9 @@ void ENGINE_load_padlock (void)
 #ifdef _MSC_VER
 # include <malloc.h>
 # define alloca _alloca
+#elif defined(NETWARE_CLIB) && defined(__GNUC__)
+  void *alloca(size_t);
+# define alloca(s) __builtin_alloca(s)
 #else
 # include <stdlib.h>
 #endif
@@ -231,8 +234,8 @@ padlock_bind_fn(ENGINE *e, const char *id)
 	return 1;
 }
 
-IMPLEMENT_DYNAMIC_CHECK_FN ()
-IMPLEMENT_DYNAMIC_BIND_FN (padlock_bind_fn)
+IMPLEMENT_DYNAMIC_CHECK_FN()
+IMPLEMENT_DYNAMIC_BIND_FN(padlock_bind_fn)
 #endif /* DYNAMIC_ENGINE */
 
 /* ===== Here comes the "real" engine ===== */

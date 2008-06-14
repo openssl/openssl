@@ -93,6 +93,8 @@
 #include <openssl/err.h>
 #endif
 
+#include <openssl/x509.h>
+
 #include <openssl/ossl_typ.h>
 #include <openssl/symhacks.h>
 
@@ -278,6 +280,9 @@ typedef int (*ENGINE_CTRL_FUNC_PTR)(ENGINE *, int, long, void *, void (*f)(void)
 /* Generic load_key function pointer */
 typedef EVP_PKEY * (*ENGINE_LOAD_KEY_PTR)(ENGINE *, const char *,
 	UI_METHOD *ui_method, void *callback_data);
+typedef int (*ENGINE_SSL_CLIENT_CERT_PTR)(ENGINE *, SSL *ssl,
+	STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **pkey,
+	STACK_OF(X509) **pother, UI_METHOD *ui_method, void *callback_data);
 /* These callback types are for an ENGINE's handler for cipher and digest logic.
  * These handlers have these prototypes;
  *   int foo(ENGINE *e, const EVP_CIPHER **cipher, const int **nids, int nid);
@@ -334,6 +339,9 @@ void ENGINE_load_ubsec(void);
 void ENGINE_load_cryptodev(void);
 void ENGINE_load_padlock(void);
 void ENGINE_load_builtin_engines(void);
+#ifndef OPENSSL_NO_CAPIENG
+void ENGINE_load_capi(void);
+#endif
 
 /* Get and set global flags (ENGINE_TABLE_FLAG_***) for the implementation
  * "registry" handling. */
@@ -459,6 +467,8 @@ int ENGINE_set_finish_function(ENGINE *e, ENGINE_GEN_INT_FUNC_PTR finish_f);
 int ENGINE_set_ctrl_function(ENGINE *e, ENGINE_CTRL_FUNC_PTR ctrl_f);
 int ENGINE_set_load_privkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpriv_f);
 int ENGINE_set_load_pubkey_function(ENGINE *e, ENGINE_LOAD_KEY_PTR loadpub_f);
+int ENGINE_set_load_ssl_client_cert_function(ENGINE *e,
+				ENGINE_SSL_CLIENT_CERT_PTR loadssl_f);
 int ENGINE_set_ciphers(ENGINE *e, ENGINE_CIPHERS_PTR f);
 int ENGINE_set_digests(ENGINE *e, ENGINE_DIGESTS_PTR f);
 int ENGINE_set_flags(ENGINE *e, int flags);
@@ -494,6 +504,7 @@ ENGINE_GEN_INT_FUNC_PTR ENGINE_get_finish_function(const ENGINE *e);
 ENGINE_CTRL_FUNC_PTR ENGINE_get_ctrl_function(const ENGINE *e);
 ENGINE_LOAD_KEY_PTR ENGINE_get_load_privkey_function(const ENGINE *e);
 ENGINE_LOAD_KEY_PTR ENGINE_get_load_pubkey_function(const ENGINE *e);
+ENGINE_SSL_CLIENT_CERT_PTR ENGINE_get_ssl_client_cert_function(const ENGINE *e);
 ENGINE_CIPHERS_PTR ENGINE_get_ciphers(const ENGINE *e);
 ENGINE_DIGESTS_PTR ENGINE_get_digests(const ENGINE *e);
 const EVP_CIPHER *ENGINE_get_cipher(ENGINE *e, int nid);
@@ -528,6 +539,10 @@ int ENGINE_finish(ENGINE *e);
 EVP_PKEY *ENGINE_load_private_key(ENGINE *e, const char *key_id,
 	UI_METHOD *ui_method, void *callback_data);
 EVP_PKEY *ENGINE_load_public_key(ENGINE *e, const char *key_id,
+	UI_METHOD *ui_method, void *callback_data);
+int ENGINE_load_ssl_client_cert(ENGINE *e, SSL *s,
+	STACK_OF(X509_NAME) *ca_dn, X509 **pcert, EVP_PKEY **ppkey,
+	STACK_OF(X509) **pother,
 	UI_METHOD *ui_method, void *callback_data);
 
 /* This returns a pointer for the current ENGINE structure that
@@ -723,6 +738,7 @@ void ERR_load_ENGINE_strings(void);
 #define ENGINE_F_ENGINE_LIST_REMOVE			 121
 #define ENGINE_F_ENGINE_LOAD_PRIVATE_KEY		 150
 #define ENGINE_F_ENGINE_LOAD_PUBLIC_KEY			 151
+#define ENGINE_F_ENGINE_LOAD_SSL_CLIENT_CERT		 192
 #define ENGINE_F_ENGINE_NEW				 122
 #define ENGINE_F_ENGINE_REMOVE				 123
 #define ENGINE_F_ENGINE_SET_DEFAULT_STRING		 189

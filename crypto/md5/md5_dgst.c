@@ -60,7 +60,10 @@
 #include "md5_locl.h"
 #include <openssl/opensslv.h>
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 
 const char MD5_version[]="MD5" OPENSSL_VERSION_PTEXT;
 

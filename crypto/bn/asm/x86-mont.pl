@@ -1,5 +1,18 @@
 #!/usr/bin/env perl
 
+# This is crypto/bn/asm/x86-mont.pl (with asciz from crypto/perlasm/x86asm.pl)
+# from OpenSSL 0.9.9-dev 
+
+sub ::asciz
+{ my @str=unpack("C*",shift);
+    push @str,0;
+    while ($#str>15) {
+	&data_byte(@str[0..15]);
+	foreach (0..15) { shift @str; }
+    }
+    &data_byte(@str) if (@str);
+}
+
 # ====================================================================
 # Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
@@ -26,8 +39,7 @@
 # Integer-only code [being equipped with dedicated squaring procedure]
 # gives ~40% on rsa512 sign benchmark...
 
-$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-push(@INC,"${dir}","${dir}../../perlasm");
+push(@INC,"perlasm","../../perlasm");
 require "x86asm.pl";
 
 &asm_init($ARGV[0],$0);

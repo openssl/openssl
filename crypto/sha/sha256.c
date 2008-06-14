@@ -12,7 +12,10 @@
 
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 #include <openssl/opensslv.h>
 
 const char SHA256_version[]="SHA-256" OPENSSL_VERSION_PTEXT;

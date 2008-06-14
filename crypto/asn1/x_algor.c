@@ -66,8 +66,65 @@ ASN1_SEQUENCE(X509_ALGOR) = {
 	ASN1_OPT(X509_ALGOR, parameter, ASN1_ANY)
 } ASN1_SEQUENCE_END(X509_ALGOR)
 
+ASN1_ITEM_TEMPLATE(X509_ALGORS) = 
+	ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0, algorithms, X509_ALGOR)
+ASN1_ITEM_TEMPLATE_END(X509_ALGORS)
+
 IMPLEMENT_ASN1_FUNCTIONS(X509_ALGOR)
+IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(X509_ALGORS, X509_ALGORS, X509_ALGORS)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_ALGOR)
 
 IMPLEMENT_STACK_OF(X509_ALGOR)
 IMPLEMENT_ASN1_SET_OF(X509_ALGOR)
+
+int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval)
+	{
+	if (!alg)
+		return 0;
+	if (ptype != V_ASN1_UNDEF)
+		{
+		if (alg->parameter == NULL)
+			alg->parameter = ASN1_TYPE_new();
+		if (alg->parameter == NULL)
+			return 0;
+		}
+	if (alg)
+		{
+		if (alg->algorithm)
+			ASN1_OBJECT_free(alg->algorithm);
+		alg->algorithm = aobj;
+		}
+	if (ptype == 0)
+		return 1;	
+	if (ptype == V_ASN1_UNDEF)
+		{
+		if (alg->parameter)
+			{
+			ASN1_TYPE_free(alg->parameter);
+			alg->parameter = NULL;
+			}
+		}
+	else
+		ASN1_TYPE_set(alg->parameter, ptype, pval);
+	return 1;
+	}
+
+void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
+						X509_ALGOR *algor)
+	{
+	if (paobj)
+		*paobj = algor->algorithm;
+	if (pptype)
+		{
+		if (algor->parameter == NULL)
+			{
+			*pptype = V_ASN1_UNDEF;
+			return;
+			}
+		else
+			*pptype = algor->parameter->type;
+		if (ppval)
+			*ppval = algor->parameter->value.ptr;
+		}
+	}
+

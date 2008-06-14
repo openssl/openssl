@@ -147,6 +147,7 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_ENGINE,0,0)		,"engine routines"},
 {ERR_PACK(ERR_LIB_OCSP,0,0)		,"OCSP routines"},
 {ERR_PACK(ERR_LIB_FIPS,0,0)		,"FIPS routines"},
+{ERR_PACK(ERR_LIB_CMS,0,0)		,"CMS routines"},
 {0,NULL},
 	};
 

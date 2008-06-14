@@ -195,9 +195,10 @@ void DES_ede3_ofb64_encrypt(const unsigned char *in,unsigned char *out,
 			    long length,DES_key_schedule *ks1,
 			    DES_key_schedule *ks2,DES_key_schedule *ks3,
 			    DES_cblock *ivec,int *num);
-
+#if 0
 void DES_xwhite_in2out(const_DES_cblock *DES_key,const_DES_cblock *in_white,
 		       DES_cblock *out_white);
+#endif
 
 int DES_enc_read(int fd,void *buf,int len,DES_key_schedule *sched,
 		 DES_cblock *iv);

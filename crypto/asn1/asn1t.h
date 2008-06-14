@@ -169,6 +169,9 @@ extern "C" {
 #define ASN1_NDEF_SEQUENCE(tname) \
 	ASN1_SEQUENCE(tname)
 
+#define ASN1_NDEF_SEQUENCE_cb(tname, cb) \
+	ASN1_SEQUENCE_cb(tname, cb)
+
 #define ASN1_SEQUENCE_cb(tname, cb) \
 	static const ASN1_AUX tname##_aux = {NULL, 0, 0, 0, cb, 0}; \
 	ASN1_SEQUENCE(tname)
@@ -367,6 +370,10 @@ extern "C" {
 
 #define ASN1_EXP_SEQUENCE_OF_OPT(stname, field, type, tag) \
 			ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_SEQUENCE_OF|ASN1_TFLG_OPTIONAL)
+
+/* EXPLICIT using indefinite length constructed form */
+#define ASN1_NDEF_EXP(stname, field, type, tag) \
+			ASN1_EXP_EX(stname, field, type, tag, ASN1_TFLG_NDEF)
 
 /* EXPLICIT OPTIONAL using indefinite length constructed form */
 #define ASN1_NDEF_EXP_OPT(stname, field, type, tag) \

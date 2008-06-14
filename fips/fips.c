@@ -47,7 +47,7 @@
  *
  */
 
-#include <openssl/fips.h>
+
 #include <openssl/rand.h>
 #include <openssl/fips_rand.h>
 #include <openssl/err.h>
@@ -59,6 +59,8 @@
 #include "fips_locl.h"
 
 #ifdef OPENSSL_FIPS
+
+#include <openssl/fips.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 1024

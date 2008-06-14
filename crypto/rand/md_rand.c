@@ -126,7 +126,10 @@
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#endif
+
 
 #ifdef BN_DEBUG
 # define PREDICT
