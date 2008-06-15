@@ -241,3 +241,4 @@ SSL_CTX_sess_get_remove_cb              289	EXIST::FUNCTION:
 SSL_set_SSL_CTX                         290	EXIST::FUNCTION:
 SSL_get_servername                      291	EXIST::FUNCTION:TLSEXT
 SSL_get_servername_type                 292	EXIST::FUNCTION:TLSEXT
+SSL_CTX_set_client_cert_engine          293	EXIST::FUNCTION:ENGINE
