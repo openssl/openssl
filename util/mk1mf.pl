@@ -1023,6 +1023,7 @@ sub var_add
 	return("") if $no_dh   && $dir =~ /\/dh/;
 	return("") if $no_ec   && $dir =~ /\/ec/;
 	return("") if $no_cms  && $dir =~ /\/cms/;
+	return("") if !$fips   && $dir =~ /^fips/;
 	if ($no_des && $dir =~ /\/des/)
 		{
 		if ($val =~ /read_pwd/)
