@@ -2843,7 +2843,7 @@ FIPS_selftest_failed                    3284	NOEXIST::FUNCTION:
 sk_is_sorted                            3285	EXIST::FUNCTION:
 X509_check_ca                           3286	EXIST::FUNCTION:
 private_idea_set_encrypt_key            3287	NOEXIST::FUNCTION:
-HMAC_CTX_set_flags                      3288	NOEXIST::FUNCTION:
+HMAC_CTX_set_flags                      3288	EXIST::FUNCTION:HMAC
 private_SHA_Init                        3289	NOEXIST::FUNCTION:
 private_CAST_set_key                    3290	NOEXIST::FUNCTION:
 private_RIPEMD160_Init                  3291	NOEXIST::FUNCTION:

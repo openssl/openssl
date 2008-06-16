@@ -222,6 +222,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_LOW,   0, 0,   SSL_LOW, 0,0,0,0,SSL_STRONG_MASK},
 	{0,SSL_TXT_MEDIUM,0, 0,SSL_MEDIUM, 0,0,0,0,SSL_STRONG_MASK},
 	{0,SSL_TXT_HIGH,  0, 0,  SSL_HIGH, 0,0,0,0,SSL_STRONG_MASK},
+	{0,SSL_TXT_FIPS,  0, 0,  SSL_FIPS, 0,0,0,0,SSL_FIPS|SSL_STRONG_NONE},
 	};
 
 void ssl_load_ciphers(void)
@@ -515,7 +516,12 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 		c = ssl_method->get_cipher(i);
 #define IS_MASKED(c) ((c)->algorithms & (((c)->alg_bits == 256) ? m256 : mask))
 		/* drop those that use any of that is not available */
+#ifdef OPENSSL_FIPS
+		if ((c != NULL) && c->valid && !IS_MASKED(c)
+			&& (!FIPS_mode() || (c->algo_strength & SSL_FIPS)))
+#else
 		if ((c != NULL) && c->valid && !IS_MASKED(c))
+#endif
 			{
 			co_list[co_list_num].cipher = c;
 			co_list[co_list_num].next = NULL;
@@ -1054,7 +1060,11 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	for (curr = head; curr != NULL; curr = curr->next)
 		{
+#ifdef OPENSSL_FIPS
+		if (curr->active && (!FIPS_mode() || curr->cipher->algo_strength & SSL_FIPS))
+#else
 		if (curr->active)
+#endif
 			{
 			sk_SSL_CIPHER_push(cipherstack, curr->cipher);
 #ifdef CIPHER_DEBUG

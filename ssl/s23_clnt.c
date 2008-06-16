@@ -257,6 +257,14 @@ static int ssl23_client_hello(SSL *s)
 			version_major = TLS1_VERSION_MAJOR;
 			version_minor = TLS1_VERSION_MINOR;
 			}
+#ifdef OPENSSL_FIPS
+		else if(FIPS_mode())
+			{
+			SSLerr(SSL_F_SSL23_CLIENT_HELLO,
+					SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+			return -1;
+			}
+#endif
 		else if (version == SSL3_VERSION)
 			{
 			version_major = SSL3_VERSION_MAJOR;
@@ -536,6 +544,14 @@ static int ssl23_get_server_hello(SSL *s)
 		if ((p[2] == SSL3_VERSION_MINOR) &&
 			!(s->options & SSL_OP_NO_SSLv3))
 			{
+#ifdef OPENSSL_FIPS
+			if(FIPS_mode())
+				{
+				SSLerr(SSL_F_SSL23_GET_SERVER_HELLO,
+					SSL_R_ONLY_TLS_ALLOWED_IN_FIPS_MODE);
+				goto err;
+				}
+#endif
 			s->version=SSL3_VERSION;
 			s->method=SSLv3_client_method();
 			}

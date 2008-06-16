@@ -330,6 +330,7 @@
 #define SSL_LOW			0x00000020L
 #define SSL_MEDIUM		0x00000040L
 #define SSL_HIGH		0x00000080L
+#define SSL_FIPS		0x00000100L
 
 /* we have used 000000ff - 24 bits left to go */
 

@@ -1540,6 +1540,8 @@ int ssl3_send_server_key_exchange(SSL *s)
 				j=0;
 				for (num=2; num > 0; num--)
 					{
+					EVP_MD_CTX_set_flags(&md_ctx,
+						EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 					EVP_DigestInit_ex(&md_ctx,(num == 2)
 						?s->ctx->md5:s->ctx->sha1, NULL);
 					EVP_DigestUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);

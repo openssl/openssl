@@ -303,6 +303,8 @@ struct env_md_ctx_st
 						* cleaned */
 #define EVP_MD_CTX_FLAG_REUSE		0x0004 /* Don't free up ctx->md_data
 						* in EVP_MD_CTX_cleanup */
+#define EVP_MD_CTX_FLAG_NON_FIPS_ALLOW	0x0008	/* Allow use of non FIPS digest
+						 * in FIPS mode */
 
 struct evp_cipher_st
 	{
