@@ -141,6 +141,8 @@ struct CAPI_CTX_st {
 	/* Certificate store name to use */
 	LPTSTR storename;
 	LPTSTR ssl_client_store;
+	/* System store flags */
+	DWORD store_flags;
 
 /* Lookup string meanings in load_private_key */
 /* Substring of subject: uses "storename" */
@@ -190,6 +192,7 @@ static int capi_ctx_set_provname_idx(CAPI_CTX *ctx, int idx);
 #define CAPI_CMD_LIST_OPTIONS		(ENGINE_CMD_BASE + 10)
 #define CAPI_CMD_LOOKUP_METHOD		(ENGINE_CMD_BASE + 11)
 #define CAPI_CMD_STORE_NAME		(ENGINE_CMD_BASE + 12)
+#define CAPI_CMD_STORE_FLAGS		(ENGINE_CMD_BASE + 13)
 
 static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 	{CAPI_CMD_LIST_CERTS,
@@ -245,6 +248,10 @@ static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 		"store_name",
 		"certificate store name, default \"MY\"",
 		ENGINE_CMD_FLAG_STRING},
+	{CAPI_CMD_STORE_FLAGS,
+		"store_flags",
+		"Certificate store flags: 1 = system store",
+		ENGINE_CMD_FLAG_NUMERIC},
 
 	{0, NULL, NULL, 0}
 	};
@@ -289,6 +296,20 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 			OPENSSL_free(ctx->storename);
 		ctx->storename = BUF_strdup(p);
 		CAPI_trace(ctx, "Setting store name to %s\n", p);
+		break;
+
+		case CAPI_CMD_STORE_FLAGS:
+		if (i & 1)
+			{
+			ctx->store_flags |= CERT_SYSTEM_STORE_LOCAL_MACHINE;
+			ctx->store_flags &= ~CERT_SYSTEM_STORE_CURRENT_USER;
+			}
+		else
+			{
+			ctx->store_flags |= CERT_SYSTEM_STORE_CURRENT_USER;
+			ctx->store_flags &= ~CERT_SYSTEM_STORE_LOCAL_MACHINE;
+			}
+		CAPI_trace(ctx, "Setting flags to %d\n", i);
 		break;
 
 		case CAPI_CMD_DEBUG_LEVEL:
@@ -410,8 +431,7 @@ static int capi_init(ENGINE *e)
 		ctx->certselectdlg = (CERTDLG)GetProcAddress(cryptui, "CryptUIDlgSelectCertificateFromStore");
 	if (kernel)
 		ctx->getconswindow = (GETCONSWIN)GetProcAddress(kernel, "GetConsoleWindow");
-	if (cryptui)
-//	if (cryptui && !OPENSSL_isservice())
+	if (cryptui && !OPENSSL_isservice())
 		ctx->client_cert_select = cert_select_dialog;
 	}
 #endif
@@ -1255,7 +1275,8 @@ HCERTSTORE capi_open_store(CAPI_CTX *ctx, char *storename)
 		storename = "MY";
 	CAPI_trace(ctx, "Opening certificate store %s\n", storename);
 
-	hstore = CertOpenSystemStore(0, storename);
+	hstore = CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, 0, 
+				ctx->store_flags, storename);
 	if (!hstore)
 		{
 		CAPIerr(CAPI_F_CAPI_OPEN_STORE, CAPI_R_ERROR_OPENING_STORE);
@@ -1346,6 +1367,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const char *contname, char *provnam
 	{
 	CAPI_KEY *key;
 	key = OPENSSL_malloc(sizeof(CAPI_KEY));
+						contname, provname, ptype);
 	CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n", 
 						contname, provname, ptype);
 	if (!CryptAcquireContext(&key->hprov, contname, provname, ptype, 0))
@@ -1372,7 +1394,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const char *contname, char *provnam
 
 static CAPI_KEY *capi_get_cert_key(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
 	{
-	CAPI_KEY *key;
+	CAPI_KEY *key = NULL;
 	CRYPT_KEY_PROV_INFO *pinfo = NULL;
 	char *provname = NULL, *contname = NULL;
 	pinfo = capi_get_prov_info(ctx, cert);
@@ -1381,8 +1403,7 @@ static CAPI_KEY *capi_get_cert_key(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
 	provname = wide_to_asc(pinfo->pwszProvName);
 	contname = wide_to_asc(pinfo->pwszContainerName);
 	if (!provname || !contname)
-		return 0;
-
+		goto err;
 	key = capi_get_key(ctx, contname, provname,
 				pinfo->dwProvType, pinfo->dwKeySpec);
 
@@ -1455,6 +1476,9 @@ static CAPI_CTX *capi_ctx_new()
 	ctx->keytype = AT_KEYEXCHANGE;
 	ctx->storename = NULL;
 	ctx->ssl_client_store = NULL;
+	ctx->store_flags = CERT_STORE_OPEN_EXISTING_FLAG |
+				CERT_STORE_READONLY_FLAG |
+				CERT_SYSTEM_STORE_CURRENT_USER;
 	ctx->lookup_method = CAPI_LU_SUBSTR;
 	ctx->debug_level = 0;
 	ctx->debug_file = NULL;
