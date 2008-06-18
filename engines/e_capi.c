@@ -70,6 +70,7 @@
 
 #include <openssl/engine.h>
 #include <openssl/pem.h>
+#include <openssl/x509v3.h>
 
 #include "e_capi_err.h"
 #include "e_capi_err.c"
@@ -1367,7 +1368,6 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const char *contname, char *provnam
 	{
 	CAPI_KEY *key;
 	key = OPENSSL_malloc(sizeof(CAPI_KEY));
-						contname, provname, ptype);
 	CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n", 
 						contname, provname, ptype);
 	if (!CryptAcquireContext(&key->hprov, contname, provname, ptype, 0))
@@ -1587,11 +1587,15 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 			CAPI_trace(ctx, "Can't Parse Certificate %d\n", i);
 			continue;
 			}
-		if (cert_issuer_match(ca_dn, x))
+		if (cert_issuer_match(ca_dn, x)
+			&& X509_check_purpose(x, X509_PURPOSE_SSL_CLIENT, 0))
 			{
 			key = capi_get_cert_key(ctx, cert);
 			if (!key)
+				{
+				X509_free(x);
 				continue;
+				}
 			/* Match found: attach extra data to it so
 			 * we can retrieve the key later.
 			 */
