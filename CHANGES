@@ -4,12 +4,16 @@
 
  Changes between 0.9.8h and 0.9.8i  [xx XXX xxxx]
 
+  *) Fix BN_GF2m_mod_arr() top-bit cleanup code.
+     [Huang Ying]
+
   *) Expand ENGINE to support engine supplied SSL client certificate functions.
 
      This work was sponsored by Logica.
      [Steve Henson]
 
-  *) Add CryptoAPI ENGINE to support use of RSA and DSA keys held in Windows         keystores. Support for SSL/TLS client authentication too.
+  *) Add CryptoAPI ENGINE to support use of RSA and DSA keys held in Windows
+     keystores. Support for SSL/TLS client authentication too.
      Not compiled unless enable-capieng specified to Configure.
 
      This work was sponsored by Logica.
