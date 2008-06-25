@@ -62,11 +62,26 @@
 #ifdef OPENSSL_SYS_WIN32
 #ifndef OPENSSL_NO_CAPIENG
 
+
 #include <windows.h>
+
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0400
+#endif
+
 #include <wincrypt.h>
 
 #undef X509_EXTENSIONS
 #undef X509_CERT_PAIR
+
+/* Definitions which may be missing from earlier version of headers */
+#ifndef CERT_STORE_OPEN_EXISTING_FLAG
+#define CERT_STORE_OPEN_EXISTING_FLAG                   0x00004000
+#endif
+
+#ifndef CERT_STORE_CREATE_NEW_FLAG
+#define CERT_STORE_CREATE_NEW_FLAG                      0x00002000
+#endif
 
 #include <openssl/engine.h>
 #include <openssl/pem.h>
@@ -1670,8 +1685,14 @@ static int cert_select_simple(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
  * CryptUIDlgSelectCertificateFromStore() to produce a dialog box.
  */
 
-#include <PrSht.h>
-#include <cryptuiapi.h>
+/* Definitions which are in cryptuiapi.h but this is not present in older
+ * versions of headers.
+ */
+
+#ifndef CRYPTUI_SELECT_LOCATION_COLUMN
+#define CRYPTUI_SELECT_LOCATION_COLUMN                   0x000000010
+#define CRYPTUI_SELECT_INTENDEDUSE_COLUMN                0x000000004
+#endif
 
 #define dlg_title L"OpenSSL Application SSL Client Certificate Selection"
 #define dlg_prompt L"Select a certificate to use for authentication"
@@ -1714,7 +1735,9 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 			}
 
 		}
-	hwnd = GetActiveWindow();
+	hwnd = GetForegroundWindow();
+	if (!hwnd)
+		hwnd = GetActiveWindow();
 	if (!hwnd && ctx->getconswindow)
 		hwnd = ctx->getconswindow();
 	/* Call dialog to select one */
