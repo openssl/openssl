@@ -853,3 +853,4 @@ id_GostR3411_94_with_GostR3410_94_cc		852
 id_GostR3411_94_with_GostR3410_2001_cc		853
 id_GostR3410_2001_ParamSet_cc		854
 hmac		855
+LocalKeySet		856

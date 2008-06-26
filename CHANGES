@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8g and 0.9.9  [xx XXX xxxx]
+ Changes between 0.9.8i and 0.9.9  [xx XXX xxxx]
 
   *) Removed effectively defunct crypto/store from the build.
      [Ben Laurie]
@@ -701,6 +701,9 @@
      [NTT]
 
  Changes between 0.9.8h and 0.9.8i  [xx XXX xxxx]
+
+  *) Add support for Local Machine Keyset attribute in PKCS#12 files.
+     [Steve Henson]
 
   *) Fix BN_GF2m_mod_arr() top-bit cleanup code.
      [Huang Ying]

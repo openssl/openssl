@@ -1030,6 +1030,11 @@
 #define NID_ms_csp_name		417
 #define OBJ_ms_csp_name		1L,3L,6L,1L,4L,1L,311L,17L,1L
 
+#define SN_LocalKeySet		"LocalKeySet"
+#define LN_LocalKeySet		"Microsoft Local Key set"
+#define NID_LocalKeySet		856
+#define OBJ_LocalKeySet		1L,3L,6L,1L,4L,1L,311L,17L,2L
+
 #define OBJ_certTypes		OBJ_pkcs9,22L
 
 #define LN_x509Certificate		"x509Certificate"

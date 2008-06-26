@@ -245,7 +245,7 @@ X509_ATTRIBUTE *X509_ATTRIBUTE_create_by_OBJ(X509_ATTRIBUTE **attr,
 		goto err;
 	if (!X509_ATTRIBUTE_set1_data(ret,atrtype,data,len))
 		goto err;
-	
+
 	if ((attr != NULL) && (*attr == NULL)) *attr=ret;
 	return(ret);
 err:
@@ -302,6 +302,13 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *dat
 		atype = attrtype;
 	}
 	if(!(attr->value.set = sk_ASN1_TYPE_new_null())) goto err;
+	attr->single = 0;
+	/* This is a bit naughty because the attribute should really have
+	 * at least one value but some types use and zero length SET and
+	 * require this.
+	 */
+	if (attrtype == 0)
+		return 1;
 	if(!(ttmp = ASN1_TYPE_new())) goto err;
 	if ((len == -1) && !(attrtype & MBSTRING_FLAG))
 		{
@@ -311,7 +318,6 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype, const void *dat
 	else
 		ASN1_TYPE_set(ttmp, atype, stmp);
 	if(!sk_ASN1_TYPE_push(attr->value.set, ttmp)) goto err;
-	attr->single = 0;
 	return 1;
 	err:
 	X509err(X509_F_X509_ATTRIBUTE_SET1_DATA, ERR_R_MALLOC_FAILURE);
