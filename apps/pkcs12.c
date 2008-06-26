@@ -100,6 +100,7 @@ int MAIN(int argc, char **argv)
     char **args;
     char *name = NULL;
     char *csp_name = NULL;
+    int add_lmk = 0;
     PKCS12 *p12 = NULL;
     char pass[50], macpass[50];
     int export_cert = 0;
@@ -224,7 +225,9 @@ int MAIN(int argc, char **argv)
 			args++;	
 			name = *args;
 		    } else badarg = 1;
-		} else if (!strcmp (*args, "-CSP")) {
+		} else if (!strcmp (*args, "-LMK"))
+			add_lmk = 1;
+		else if (!strcmp (*args, "-CSP")) {
 		    if (args[1]) {
 			args++;	
 			csp_name = *args;
@@ -338,6 +341,8 @@ int MAIN(int argc, char **argv)
 	BIO_printf(bio_err,  "-rand file%cfile%c...\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
 	BIO_printf(bio_err,  "              load the file (or the files in the directory) into\n");
 	BIO_printf(bio_err,  "              the random number generator\n");
+  	BIO_printf(bio_err,  "-CSP name     Microsoft CSP name\n");
+ 	BIO_printf(bio_err,  "-LMK          Add local machine keyset attribute to private key\n");
     	goto end;
     }
 
@@ -562,7 +567,9 @@ int MAIN(int argc, char **argv)
 	if (csp_name && key)
 		EVP_PKEY_add1_attr_by_NID(key, NID_ms_csp_name,
 				MBSTRING_ASC, (unsigned char *)csp_name, -1);
-		
+
+	if (add_lmk && key)
+		EVP_PKEY_add1_attr_by_NID(key, NID_LocalKeySet, 0, NULL, -1);
 
 #ifdef CRYPTO_MDEBUG
 	CRYPTO_pop_info();

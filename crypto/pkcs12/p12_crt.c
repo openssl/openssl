@@ -63,6 +63,19 @@
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags, PKCS12_SAFEBAG *bag);
 
+static int copy_bag_attr(PKCS12_SAFEBAG *bag, EVP_PKEY *pkey, int nid)
+	{
+	int idx;
+	X509_ATTRIBUTE *attr;
+	idx = EVP_PKEY_get_attr_by_NID(pkey, nid, -1);
+	if (idx < 0)
+		return 1;
+	attr = EVP_PKEY_get_attr(pkey, idx);
+	if (!X509at_add1_attr(&bag->attrib, attr))
+		return 0;
+	return 1;
+	}
+
 PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 	     STACK_OF(X509) *ca, int nid_key, int nid_cert, int iter, int mac_iter,
 	     int keytype)
@@ -122,20 +135,15 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	if (pkey)
 		{
-		int cspidx;
 		bag = PKCS12_add_key(&bags, pkey, keytype, iter, nid_key, pass);
 
 		if (!bag)
 			goto err;
 
-		cspidx = EVP_PKEY_get_attr_by_NID(pkey, NID_ms_csp_name, -1);
-		if (cspidx >= 0)
-			{
-			X509_ATTRIBUTE *cspattr;
-			cspattr = EVP_PKEY_get_attr(pkey, cspidx);
-			if (!X509at_add1_attr(&bag->attrib, cspattr))
-				goto err;
-			}
+		if (!copy_bag_attr(bag, pkey, NID_ms_csp_name))
+			goto err;
+		if (!copy_bag_attr(bag, pkey, NID_LocalKeySet))
+			goto err;
 
 		if(name && !PKCS12_add_friendlyname(bag, name, -1))
 			goto err;

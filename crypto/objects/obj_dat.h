@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 856
-#define NUM_SN 849
-#define NUM_LN 849
-#define NUM_OBJ 803
+#define NUM_NID 857
+#define NUM_SN 850
+#define NUM_LN 850
+#define NUM_OBJ 804
 
-static unsigned char lvalues[5702]={
+static unsigned char lvalues[5711]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -871,6 +871,7 @@ static unsigned char lvalues[5702]={
 0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x03,     /* [5677] OBJ_id_GostR3411_94_with_GostR3410_94_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x04,     /* [5685] OBJ_id_GostR3411_94_with_GostR3410_2001_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x08,0x01,     /* [5693] OBJ_id_GostR3410_2001_ParamSet_cc */
+0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x11,0x02,/* [5701] OBJ_LocalKeySet */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2253,6 +2254,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	"GOST R 3410-2001 Parameter Set Cryptocom",
 	NID_id_GostR3410_2001_ParamSet_cc,8,&(lvalues[5693]),0},
 {"HMAC","hmac",NID_hmac,0,NULL,0},
+{"LocalKeySet","Microsoft Local Key set",NID_LocalKeySet,9,
+	&(lvalues[5701]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2347,6 +2350,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[646]),/* "JOINT-ISO-ITU-T" */
 &(nid_objs[773]),/* "KISA" */
 &(nid_objs[15]),/* "L" */
+&(nid_objs[856]),/* "LocalKeySet" */
 &(nid_objs[ 3]),/* "MD2" */
 &(nid_objs[257]),/* "MD4" */
 &(nid_objs[ 4]),/* "MD5" */
@@ -3165,6 +3169,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[138]),/* "Microsoft Encrypted File System" */
 &(nid_objs[171]),/* "Microsoft Extension Request" */
 &(nid_objs[134]),/* "Microsoft Individual Code Signing" */
+&(nid_objs[856]),/* "Microsoft Local Key set" */
 &(nid_objs[137]),/* "Microsoft Server Gated Crypto" */
 &(nid_objs[648]),/* "Microsoft Smartcardlogin" */
 &(nid_objs[136]),/* "Microsoft Trust List Signing" */
@@ -4550,6 +4555,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[682]),/* OBJ_X9_62_tpBasis                1 2 840 10045 1 2 3 2 */
 &(nid_objs[683]),/* OBJ_X9_62_ppBasis                1 2 840 10045 1 2 3 3 */
 &(nid_objs[417]),/* OBJ_ms_csp_name                  1 3 6 1 4 1 311 17 1 */
+&(nid_objs[856]),/* OBJ_LocalKeySet                  1 3 6 1 4 1 311 17 2 */
 &(nid_objs[390]),/* OBJ_dcObject                     1 3 6 1 4 1 1466 344 */
 &(nid_objs[91]),/* OBJ_bf_cbc                       1 3 6 1 4 1 3029 1 2 */
 &(nid_objs[315]),/* OBJ_id_regCtrl_regToken          1 3 6 1 5 5 7 5 1 1 */
