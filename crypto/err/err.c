@@ -429,13 +429,13 @@ static ERR_STRING_DATA *int_err_del_item(ERR_STRING_DATA *d)
 
 static unsigned long err_state_hash(const ERR_STATE *a)
 	{
-	return CRYPTO_THREADID_hash(&a->tid);
+	return (a->pid + (unsigned long)a->pidptr) * 13;
 	}
 static IMPLEMENT_LHASH_HASH_FN(err_state, ERR_STATE)
 
 static int err_state_cmp(const ERR_STATE *a, const ERR_STATE *b)
 	{
-	return CRYPTO_THREADID_cmp(&a->tid, &b->tid);
+	return (a->pid != b->pid) || (a->pidptr != b->pidptr);
 	}
 static IMPLEMENT_LHASH_COMP_FN(err_state, ERR_STATE)
 
@@ -980,37 +980,40 @@ const char *ERR_reason_error_string(unsigned long e)
 	return((p == NULL)?NULL:p->string);
 	}
 
-void ERR_remove_thread_state(CRYPTO_THREADID *tid)
+void ERR_remove_state(unsigned long pid)
 	{
 	ERR_STATE tmp;
+	void *pidptr;
 
-	if (tid)
-		CRYPTO_THREADID_cpy(&tmp.tid, tid);
-	else
-		CRYPTO_THREADID_set(&tmp.tid);
 	err_fns_check();
+	if (pid != 0)
+		pidptr = &errno;
+	else
+		{
+		pid = CRYPTO_thread_id();
+		pidptr = CRYPTO_thread_idptr();
+		}
+	
+	tmp.pid=pid;
+	tmp.pidptr=pidptr;
 	/* thread_del_item automatically destroys the LHASH if the number of
 	 * items reaches zero. */
 	ERRFN(thread_del_item)(&tmp);
 	}
 
-#ifndef OPENSSL_NO_DEPRECATED
-void ERR_remove_state(unsigned long pid)
-	{
-	ERR_remove_thread_state(NULL);
-	}
-#endif
-
 ERR_STATE *ERR_get_state(void)
 	{
 	static ERR_STATE fallback;
-	CRYPTO_THREADID tid;
 	ERR_STATE *ret,tmp,*tmpp=NULL;
 	int i;
+	unsigned long pid;
+	void *pidptr;
 
 	err_fns_check();
-	CRYPTO_THREADID_set(&tid);
-	CRYPTO_THREADID_cpy(&tmp.tid, &tid);
+	pid = CRYPTO_thread_id();
+	pidptr = CRYPTO_thread_idptr();
+	tmp.pid = pid;
+	tmp.pidptr = pidptr;
 	ret=ERRFN(thread_get_item)(&tmp);
 
 	/* ret == the error state, if NULL, make a new one */
@@ -1018,7 +1021,8 @@ ERR_STATE *ERR_get_state(void)
 		{
 		ret=(ERR_STATE *)OPENSSL_malloc(sizeof(ERR_STATE));
 		if (ret == NULL) return(&fallback);
-		CRYPTO_THREADID_cpy(&ret->tid, &tid);
+		ret->pid=pid;
+		ret->pidptr=pidptr;
 		ret->top=0;
 		ret->bottom=0;
 		for (i=0; i<ERR_NUM_ERRORS; i++)

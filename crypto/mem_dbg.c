@@ -150,7 +150,8 @@ typedef struct app_mem_info_st
  *   CRYPTO_remove_all_info()    to pop all entries.
  */
 	{
-	CRYPTO_THREADID threadid;
+	unsigned long thread_id;
+	void *thread_idptr;
 	const char *file;
 	int line;
 	const char *info;
@@ -175,7 +176,8 @@ typedef struct mem_st
 	int num;
 	const char *file;
 	int line;
-	CRYPTO_THREADID threadid;
+	unsigned long thread_id;
+	void *thread_idptr;
 	unsigned long order;
 	time_t time;
 	APP_INFO *app_info;
@@ -196,9 +198,12 @@ static unsigned int num_disable = 0; /* num_disable > 0
                                       * mh_mode == CRYPTO_MEM_CHECK_ON (w/o ..._ENABLE)
                                       */
 
-/* Valid iff num_disable > 0.  CRYPTO_LOCK_MALLOC2 is locked exactly in this
- * case (by the thread named in disabling_threadid). */
-static CRYPTO_THREADID disabling_threadid;
+/* The following two variables, disabling_thread_id and disabling_thread_idptr,
+ * are valid iff num_disable > 0.  CRYPTO_LOCK_MALLOC2 is locked exactly in
+ * this case (by the thread named in disabling_thread_id / disabling_thread_idptr).
+ */
+static unsigned long disabling_thread_id = 0;
+static void *disabling_thread_idptr = NULL;
 
 static void app_info_free(APP_INFO *inf)
 	{
@@ -235,10 +240,9 @@ int CRYPTO_mem_ctrl(int mode)
 	case CRYPTO_MEM_CHECK_DISABLE: /* aka MemCheck_off() */
 		if (mh_mode & CRYPTO_MEM_CHECK_ON)
 			{
-			CRYPTO_THREADID tid;
-			CRYPTO_THREADID_set(&tid);
-			if (!num_disable || CRYPTO_THREADID_cmp(&tid,
-						&disabling_threadid))
+			if (!num_disable
+			    || (disabling_thread_id != CRYPTO_thread_id())
+			    || (disabling_thread_idptr != CRYPTO_thread_idptr())) /* otherwise we already have the MALLOC2 lock */
 				{
 				/* Long-time lock CRYPTO_LOCK_MALLOC2 must not be claimed while
 				 * we're holding CRYPTO_LOCK_MALLOC, or we'll deadlock if
@@ -256,7 +260,8 @@ int CRYPTO_mem_ctrl(int mode)
 				CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
 				CRYPTO_w_lock(CRYPTO_LOCK_MALLOC);
 				mh_mode &= ~CRYPTO_MEM_CHECK_ENABLE;
-				CRYPTO_THREADID_set(&disabling_threadid);
+				disabling_thread_id=CRYPTO_thread_id();
+				disabling_thread_idptr=CRYPTO_thread_idptr();
 				}
 			num_disable++;
 			}
@@ -289,12 +294,11 @@ int CRYPTO_is_mem_check_on(void)
 
 	if (mh_mode & CRYPTO_MEM_CHECK_ON)
 		{
-		CRYPTO_THREADID tid;
-		CRYPTO_THREADID_set(&tid);
 		CRYPTO_r_lock(CRYPTO_LOCK_MALLOC);
 
-		ret = (mh_mode & CRYPTO_MEM_CHECK_ENABLE) ||
-			CRYPTO_THREADID_cmp(&tid, &disabling_threadid);
+		ret = (mh_mode & CRYPTO_MEM_CHECK_ENABLE)
+		        || (disabling_thread_id != CRYPTO_thread_id())
+		        || (disabling_thread_idptr != CRYPTO_thread_idptr());
 
 		CRYPTO_r_unlock(CRYPTO_LOCK_MALLOC);
 		}
@@ -340,15 +344,20 @@ static IMPLEMENT_LHASH_HASH_FN(mem, MEM)
 /* static int app_info_cmp(APP_INFO *a, APP_INFO *b) */
 static int app_info_cmp(const void *a_void, const void *b_void)
 	{
-	return CRYPTO_THREADID_cmp(&((const APP_INFO *)a_void)->threadid,
-				&((const APP_INFO *)b_void)->threadid);
+	return (((const APP_INFO *)a_void)->thread_id != ((const APP_INFO *)b_void)->thread_id)
+	       || (((const APP_INFO *)a_void)->thread_idptr != ((const APP_INFO *)b_void)->thread_idptr);
 	}
 static IMPLEMENT_LHASH_COMP_FN(app_info, APP_INFO)
 
 static unsigned long app_info_hash(const APP_INFO *a)
 	{
+	unsigned long id1, id2;
 	unsigned long ret;
-	ret = CRYPTO_THREADID_hash(&a->threadid);
+
+	id1=(unsigned long)a->thread_id;
+	id2=(unsigned long)a->thread_idptr;
+	ret = id1 + id2;
+
 	ret=ret*17851+(ret>>14)*7+(ret>>4)*251;
 	return(ret);
 	}
@@ -361,7 +370,8 @@ static APP_INFO *pop_info(void)
 
 	if (amih != NULL)
 		{
-		CRYPTO_THREADID_set(&tmp.threadid);
+		tmp.thread_id=CRYPTO_thread_id();
+		tmp.thread_idptr=CRYPTO_thread_idptr();
 		if ((ret=lh_APP_INFO_delete(amih,&tmp)) != NULL)
 			{
 			APP_INFO *next=ret->next;
@@ -372,11 +382,10 @@ static APP_INFO *pop_info(void)
 				lh_APP_INFO_insert(amih,next);
 				}
 #ifdef LEVITTE_DEBUG_MEM
-			if (CRYPTO_THREADID_cmp(&ret->threadid, &tmp.threadid))
+			if (ret->thread_id != tmp.thread_id || ret->thread_idptr != tmp.thread_idptr)
 				{
-				fprintf(stderr, "pop_info(): deleted info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
-					CRYPTO_THREADID_hash(&ret->threadid),
-					CRYPTO_THREADID_hash(&tmp.threadid));
+				fprintf(stderr, "pop_info(): deleted info has other thread ID (%lu/%p) than the current thread (%lu/%p)!!!!\n",
+					ret->thread_id, ret->thread_idptr, tmp.thread_id, tmp.thread_idptr);
 				abort();
 				}
 #endif
@@ -416,7 +425,8 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 				}
 			}
 
-		CRYPTO_THREADID_set(&ami->threadid);
+		ami->thread_id=CRYPTO_thread_id();
+		ami->thread_idptr=CRYPTO_thread_idptr();
 		ami->file=file;
 		ami->line=line;
 		ami->info=info;
@@ -426,11 +436,10 @@ int CRYPTO_push_info_(const char *info, const char *file, int line)
 		if ((amim=lh_APP_INFO_insert(amih,ami)) != NULL)
 			{
 #ifdef LEVITTE_DEBUG_MEM
-			if (CRYPTO_THREADID_cmp(&ami->threadid, &amim->threadid))
+			if (ami->thread_id != amim->thread_id || ami->thread_idptr != amim->thread_idptr)
 				{
-				fprintf(stderr, "CRYPTO_push_info(): previous info has other thread ID (%lu) than the current thread (%lu)!!!!\n",
-					CRYPTO_THREADID_hash(&amim->threadid),
-					CRYPTO_THREADID_hash(&ami->threadid));
+				fprintf(stderr, "CRYPTO_push_info(): previous info has other thread ID (%lu/%p) than the current thread (%lu/%p)!!!!\n",
+					amim->thread_id, amim->thread_idptr, ami->thread_id, ami->thread_idptr);
 				abort();
 				}
 #endif
@@ -515,7 +524,16 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 			m->file=file;
 			m->line=line;
 			m->num=num;
-			CRYPTO_THREADID_set(&m->threadid);
+			if (options & V_CRYPTO_MDEBUG_THREAD)
+				{
+				m->thread_id=CRYPTO_thread_id();
+				m->thread_idptr=CRYPTO_thread_idptr();
+				}
+			else
+				{
+				m->thread_id=0;
+				m->thread_idptr=NULL;
+				}
 
 			if (order == break_order_num)
 				{
@@ -534,7 +552,8 @@ void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
 			else
 				m->time=0;
 
-			CRYPTO_THREADID_set(&m->threadid);
+			tmp.thread_id=CRYPTO_thread_id();
+			tmp.thread_idptr=CRYPTO_thread_idptr();
 			m->app_info=NULL;
 			if (amih != NULL
 			    && (amim=lh_APP_INFO_retrieve(amih,&tmp)) != NULL)
@@ -663,7 +682,8 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 	APP_INFO *amip;
 	int ami_cnt;
 	struct tm *lcl = NULL;
-	CRYPTO_THREADID tid;
+	unsigned long ti;
+	void *tip;
 
 #define BUF_REMAIN (sizeof buf - (size_t)(bufp - buf))
 
@@ -685,8 +705,7 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 
 	if (options & V_CRYPTO_MDEBUG_THREAD)
 		{
-		BIO_snprintf(bufp, BUF_REMAIN, "thread=%lu, ",
-			CRYPTO_THREADID_hash(&m->threadid));
+		BIO_snprintf(bufp, BUF_REMAIN, "thread=%lu/%p, ", m->thread_id, m->thread_idptr);
 		bufp += strlen(bufp);
 		}
 
@@ -703,7 +722,8 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 	ami_cnt=0;
 	if (!amip)
 		return;
-	CRYPTO_THREADID_set(&tid);
+	ti=amip->thread_id;
+	tip=amip->thread_idptr;
 	
 	do
 		{
@@ -713,8 +733,8 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 		ami_cnt++;
 		memset(buf,'>',ami_cnt);
 		BIO_snprintf(buf + ami_cnt, sizeof buf - ami_cnt,
-			" thread=%lu, file=%s, line=%d, info=\"",
-			CRYPTO_THREADID_hash(&amip->threadid), amip->file, amip->line);
+			" thread=%lu/%p, file=%s, line=%d, info=\"",
+			amip->thread_id, amip->thread_idptr, amip->file, amip->line);
 		buf_len=strlen(buf);
 		info_len=strlen(amip->info);
 		if (128 - buf_len - 3 < info_len)
@@ -734,7 +754,7 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 
 		amip = amip->next;
 		}
-	while(amip && !CRYPTO_THREADID_cmp(&amip->threadid, &tid));
+	while(amip && amip->thread_id == ti && amip->thread_idptr == tip);
 
 #ifdef LEVITTE_DEBUG_MEM
 	if (amip)

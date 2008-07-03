@@ -20,63 +20,6 @@
      STACK, TXT_DB, bsearch, qsort.
      [Ben Laurie]
 
-  *) Not all of this is true any longer.
-     Will have to be updated to reflect all subsequent changes to cryptlib.c.
-                                                                       --bodo
-
-
-     To support arbitrarily-typed thread IDs, deprecate the existing
-     type-specific APIs for a general purpose CRYPTO_THREADID
-     interface. Applications can choose the thread ID
-     callback type it wishes to register, as before;
-
-        void CRYPTO_set_id_callback(unsigned long (*func)(void));
-        void CRYPTO_set_idptr_callback(void *(*func)(void));
-
-     but retrieval, copies, and comparisons of thread IDs are via
-     type-independent interfaces;
-
-        void CRYPTO_THREADID_set(CRYPTO_THREADID *id);
-        void CRYPTO_THREADID_cmp(const CRYPTO_THREADID *id1,
-                                 const CRYPTO_THREADID *id2);
-        void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dst,
-                                 const CRYPTO_THREADID *src);
-
-     Also, for code that needs a thread ID "value" for use in
-     hash-tables or logging, a "hash" is available by;
-
-        unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
-
-     This hash value is likely to be the thread ID anyway, but
-     otherwise it will be unique if possible or as collision-free as
-     possible if uniqueness can't be guaranteed on the target
-     architecture.
-
-     The following functions are deprecated;
-        unsigned long (*CRYPTO_get_id_callback(void))(void);
-        unsigned long CRYPTO_thread_id(void);
-
-     As a consequence of the above, there are similar deprecations of
-     BN_BLINDING functions in favour of CRYPTO_THREADID-based
-     alternatives;
-
-        #ifndef OPENSSL_NO_DEPRECATED
-        unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *);
-        void BN_BLINDING_set_thread_id(BN_BLINDING *, unsigned long);
-        #endif
-        void BN_BLINDING_set_thread(BN_BLINDING *);
-        int BN_BLINDING_cmp_thread(const BN_BLINDING *, const
-                                   CRYPTO_THREADID *);
-
-     Also, the ERR_remove_state(int pid) API has been deprecated;
-
-        #ifndef OPENSSL_NO_DEPRECATED
-        void ERR_remove_state(unsigned long pid)
-        #endif
-        void ERR_remove_thread_state(CRYPTO_THREADID *tid);
-
-     [Geoff Thorpe]
-
   *) Initial support for Cryptographic Message Syntax (aka CMS) based
      on RFC3850, RFC3851 and RFC3852. New cms directory and cms utility,
      support for data, signedData, compressedData, digestedData and
@@ -382,14 +325,6 @@
      CRYPTO_thread_idptr() if the application has not provided its own
      callback is &errno.
      [Bodo Moeller]
-
-     -- NOTE -- this change has been reverted and replaced with a
-     type-independent wrapper (ie. applications do not have to check
-     two type-specific thread ID representations as implied in this
-     change note). However, the "idptr" callback form described here
-     can still be registered. Please see the more recent CHANGES note
-     regarding CRYPTO_THREADID. [Geoff Thorpe]
-     -- NOTE --
 
   *) Change the array representation of binary polynomials: the list
      of degrees of non-zero coefficients is now terminated with -1.

@@ -417,7 +417,8 @@ BN_BLINDING *RSA_setup_blinding(RSA *rsa, BN_CTX *in_ctx)
 		RSAerr(RSA_F_RSA_SETUP_BLINDING, ERR_R_BN_LIB);
 		goto err;
 		}
-	BN_BLINDING_set_thread(ret);
+	BN_BLINDING_set_thread_id(ret, CRYPTO_thread_id());
+	BN_BLINDING_set_thread_idptr(ret, CRYPTO_thread_idptr());
 err:
 	BN_CTX_end(ctx);
 	if (in_ctx == NULL)

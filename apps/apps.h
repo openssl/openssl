@@ -181,7 +181,7 @@ extern BIO *bio_err;
 #    define apps_shutdown() \
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			OBJ_cleanup(); EVP_cleanup(); ENGINE_cleanup(); \
-			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
+			CRYPTO_cleanup_all_ex_data(); ERR_remove_state(0); \
 			ERR_free_strings(); COMP_zlib_cleanup();} while(0)
 #  else
 #    define apps_startup() \
@@ -191,7 +191,7 @@ extern BIO *bio_err;
 #    define apps_shutdown() \
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			OBJ_cleanup(); EVP_cleanup(); \
-			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
+			CRYPTO_cleanup_all_ex_data(); ERR_remove_state(0); \
 			ERR_free_strings(); } while(0)
 #  endif
 #endif

@@ -1014,7 +1014,7 @@ end:
 #endif
 	CRYPTO_cleanup_all_ex_data();
 	ERR_free_strings();
-	ERR_remove_thread_state(NULL);
+	ERR_remove_state(0);
 	EVP_cleanup();
 	CRYPTO_mem_leaks(bio_err);
 	if (bio_err != NULL) BIO_free(bio_err);
