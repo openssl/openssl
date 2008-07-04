@@ -64,7 +64,7 @@
 #include "asn1_locl.h"
 
 typedef STACK_OF(X509_NAME_ENTRY) STACK_OF_X509_NAME_ENTRY;
-DECLARE_STACK_OF(STACK_OF_X509_NAME_ENTRY);
+DECLARE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 
 static int x509_name_ex_d2i(ASN1_VALUE **val,
 				const unsigned char **in, long len,

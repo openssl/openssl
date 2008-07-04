@@ -241,7 +241,7 @@ void _CONF_free_data(CONF *conf)
 static void value_free_hash_doall_arg(CONF_VALUE *a, LHASH_OF(CONF_VALUE) *conf)
 	{
 	if (a->name != NULL)
-		lh_CONF_VALUE_delete(conf,a);
+		(void)lh_CONF_VALUE_delete(conf,a);
 	}
 
 static void value_free_stack_doall(CONF_VALUE *a)

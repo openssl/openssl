@@ -379,7 +379,7 @@ static APP_INFO *pop_info(void)
 			if (next != NULL)
 				{
 				next->references++;
-				lh_APP_INFO_insert(amih,next);
+				(void)lh_APP_INFO_insert(amih,next);
 				}
 #ifdef LEVITTE_DEBUG_MEM
 			if (ret->thread_id != tmp.thread_id || ret->thread_idptr != tmp.thread_idptr)
@@ -656,7 +656,7 @@ void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
 #endif
 				mp->addr=addr2;
 				mp->num=num;
-				lh_MEM_insert(mh,mp);
+				(void)lh_MEM_insert(mh,mp);
 				}
 
 			MemCheck_on(); /* release MALLOC2 lock
@@ -860,18 +860,26 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
 /* NB: The prototypes have been typedef'd to CRYPTO_MEM_LEAK_CB inside crypto.h
  * If this code is restructured, remove the callback type if it is no longer
  * needed. -- Geoff Thorpe */
-static void cb_leak_doall_arg(const MEM *m, CRYPTO_MEM_LEAK_CB *cb)
+
+/* Can't pass CRYPTO_MEM_LEAK_CB directly to lh_MEM_doall_arg because it
+ * is a function pointer and conversion to void * is prohibited. Instead
+ * pass its address
+ */
+
+typedef CRYPTO_MEM_LEAK_CB *PCRYPTO_MEM_LEAK_CB;
+
+static void cb_leak_doall_arg(const MEM *m, PCRYPTO_MEM_LEAK_CB *cb)
 	{
-	cb(m->order,m->file,m->line,m->num,m->addr);
+	(*cb)(m->order,m->file,m->line,m->num,m->addr);
 	}
 
-static IMPLEMENT_LHASH_DOALL_ARG_FN(cb_leak, const MEM, CRYPTO_MEM_LEAK_CB)
+static IMPLEMENT_LHASH_DOALL_ARG_FN(cb_leak, const MEM, PCRYPTO_MEM_LEAK_CB)
 
 void CRYPTO_mem_leaks_cb(CRYPTO_MEM_LEAK_CB *cb)
 	{
 	if (mh == NULL) return;
 	CRYPTO_w_lock(CRYPTO_LOCK_MALLOC2);
-	lh_MEM_doall_arg(mh, LHASH_DOALL_ARG_FN(cb_leak), CRYPTO_MEM_LEAK_CB,
-			 cb);
+	lh_MEM_doall_arg(mh, LHASH_DOALL_ARG_FN(cb_leak), PCRYPTO_MEM_LEAK_CB,
+			 &cb);
 	CRYPTO_w_unlock(CRYPTO_LOCK_MALLOC2);
 	}

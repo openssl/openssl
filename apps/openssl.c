@@ -618,7 +618,7 @@ static LHASH_OF(FUNCTION) *prog_init(void)
 		return(NULL);
 
 	for (f=functions; f->name != NULL; f++)
-		lh_FUNCTION_insert(ret,f);
+		(void)lh_FUNCTION_insert(ret,f);
 	return(ret);
 	}
 

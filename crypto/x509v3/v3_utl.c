@@ -554,7 +554,7 @@ static int append_ia5(STACK_OF(STRING) **sk, ASN1_IA5STRING *email)
 	if(!*sk) return 0;
 	/* Don't add duplicates */
 	if(sk_STRING_find(*sk, (char *)email->data) != -1) return 1;
-	emtmp = BUF_strdup(email->data);
+	emtmp = BUF_strdup((char *)email->data);
 	if(!emtmp || !sk_STRING_push(*sk, emtmp)) {
 		X509_email_free(*sk);
 		*sk = NULL;

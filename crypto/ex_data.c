@@ -317,7 +317,7 @@ static EX_CLASS_ITEM *def_get_class(int class_index)
 				{
 				/* Because we're inside the ex_data lock, the
 				 * return value from the insert will be NULL */
-				lh_EX_CLASS_ITEM_insert(ex_data, gen);
+				(void)lh_EX_CLASS_ITEM_insert(ex_data, gen);
 				p = gen;
 				}
 			}

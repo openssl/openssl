@@ -64,7 +64,7 @@
 
 /* Password based encryption (PBE) functions */
 
-DECLARE_STACK_OF(EVP_PBE_CTL);
+DECLARE_STACK_OF(EVP_PBE_CTL)
 static STACK_OF(EVP_PBE_CTL) *pbe_algs;
 
 /* Setup a cipher context from a PBE algorithm */

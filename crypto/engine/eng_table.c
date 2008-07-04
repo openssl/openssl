@@ -157,7 +157,7 @@ int engine_table_register(ENGINE_TABLE **table, ENGINE_CLEANUP_CB *cleanup,
 				goto end;
 				}
 			fnd->funct = NULL;
-			lh_ENGINE_PILE_insert(&(*table)->piles, fnd);
+			(void)lh_ENGINE_PILE_insert(&(*table)->piles, fnd);
 			}
 		/* A registration shouldn't add duplciate entries */
 		(void)sk_ENGINE_delete_ptr(fnd->sk, e);

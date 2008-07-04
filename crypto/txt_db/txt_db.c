@@ -334,7 +334,7 @@ int TXT_DB_insert(TXT_DB *db, STRING *row)
 			{
 			if ((db->qual[i] != NULL) &&
 				(db->qual[i](row) == 0)) continue;
-			lh_STRING_insert(db->index[i],row);
+			(void)lh_STRING_insert(db->index[i],row);
 			}
 		}
 	return(1);

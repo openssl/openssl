@@ -59,7 +59,7 @@
 #include <openssl/objects.h>
 #include "obj_xref.h"
 
-DECLARE_STACK_OF(nid_triple);
+DECLARE_STACK_OF(nid_triple)
 STACK_OF(nid_triple) *sig_app, *sigx_app;
 
 static int cmp_sig(const nid_triple *a, const nid_triple *b)
