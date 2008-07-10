@@ -1557,9 +1557,17 @@ print OUT "#define OPENSSL_CPUID_OBJ\n\n" if ($cpuid_obj ne "mem_clr.o");
 while (<IN>)
 	{
 	if	(/^#define\s+OPENSSLDIR/)
-		{ print OUT "#define OPENSSLDIR \"$openssldir\"\n"; }
+		{
+		my $foo = $openssldir;
+		$foo =~ s/\\/\\\\/g;
+		print OUT "#define OPENSSLDIR \"$foo\"\n";
+		}
 	elsif	(/^#define\s+ENGINESDIR/)
-		{ print OUT "#define ENGINESDIR \"$prefix/lib/engines\"\n"; }
+		{
+		my $foo = "$prefix/lib/engines";
+		$foo =~ s/\\/\\\\/g;
+		print OUT "#define ENGINESDIR \"$foo\"\n";
+		}
 	elsif	(/^#((define)|(undef))\s+OPENSSL_EXPORT_VAR_AS_FUNCTION/)
 		{ printf OUT "#undef OPENSSL_EXPORT_VAR_AS_FUNCTION\n"
 			if $export_var_as_fn;
