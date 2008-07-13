@@ -203,7 +203,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 		else
 			{
 			any_skip--;
-			if ((cache->any_skip > 0)
+			if ((cache->any_skip >= 0)
 				&& (cache->any_skip < any_skip))
 				any_skip = cache->any_skip;
 			}
@@ -213,7 +213,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 		else
 			{
 			map_skip--;
-			if ((cache->map_skip > 0)
+			if ((cache->map_skip >= 0)
 				&& (cache->map_skip < map_skip))
 				map_skip = cache->map_skip;
 			}
