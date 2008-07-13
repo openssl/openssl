@@ -388,6 +388,8 @@ struct ISSUING_DIST_POINT_st
 #define EXFLAG_NSCERT		0x8
 
 #define EXFLAG_CA		0x10
+/* Really self issued not necessarily self signed */
+#define EXFLAG_SI		0x20
 #define EXFLAG_SS		0x20
 #define EXFLAG_V1		0x40
 #define EXFLAG_INVALID		0x80

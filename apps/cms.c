@@ -95,6 +95,8 @@ static CMS_ReceiptRequest *make_receipt_request(STACK_OF(STRING) *rr_to,
 #define SMIME_SIGN_RECEIPT	(15 | SMIME_IP | SMIME_OP)
 #define SMIME_VERIFY_RECEIPT	(16 | SMIME_IP)
 
+int verify_err = 0;
+
 int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
@@ -118,6 +120,7 @@ int MAIN(int argc, char **argv)
 	BIO *in = NULL, *out = NULL, *indata = NULL, *rctin = NULL;
 	int badarg = 0;
 	int flags = CMS_DETACHED, noout = 0, print = 0;
+	int verify_retcode = 0;
 	int rr_print = 0, rr_allorfirst = -1;
 	STACK_OF(STRING) *rr_to = NULL, *rr_from = NULL;
 	CMS_ReceiptRequest *rr = NULL;
@@ -167,6 +170,8 @@ int MAIN(int argc, char **argv)
 			operation = SMIME_RESIGN;
 		else if (!strcmp (*args, "-verify"))
 			operation = SMIME_VERIFY;
+		else if (!strcmp (*args, "-verify_retcode"))
+			verify_retcode = 1;
 		else if (!strcmp(*args,"-verify_receipt"))
 			{
 			operation = SMIME_VERIFY_RECEIPT;
@@ -1077,6 +1082,8 @@ int MAIN(int argc, char **argv)
 		else
 			{
 			BIO_printf(bio_err, "Verification failure\n");
+			if (verify_retcode)
+				ret = verify_err + 32;
 			goto end;
 			}
 		if (signerfile)
@@ -1205,6 +1212,8 @@ static int cms_cb(int ok, X509_STORE_CTX *ctx)
 	int error;
 
 	error = X509_STORE_CTX_get_error(ctx);
+
+	verify_err = error;
 
 	if ((error != X509_V_ERR_NO_EXPLICIT_POLICY)
 		&& ((error != X509_V_OK) || (ok != 2)))

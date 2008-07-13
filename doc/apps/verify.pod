@@ -171,7 +171,7 @@ of an untrusted certificate cannot be found.
 
 =item B<3 X509_V_ERR_UNABLE_TO_GET_CRL: unable to get certificate CRL>
 
-the CRL of a certificate could not be found. Unused.
+the CRL of a certificate could not be found.
 
 =item B<4 X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE: unable to decrypt certificate's signature>
 
@@ -194,7 +194,7 @@ the signature of the certificate is invalid.
 
 =item B<8 X509_V_ERR_CRL_SIGNATURE_FAILURE: CRL signature failure>
 
-the signature of the certificate is invalid. Unused.
+the signature of the certificate is invalid.
 
 =item B<9 X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid>
 
@@ -206,11 +206,11 @@ the certificate has expired: that is the notAfter date is before the current tim
 
 =item B<11 X509_V_ERR_CRL_NOT_YET_VALID: CRL is not yet valid>
 
-the CRL is not yet valid. Unused.
+the CRL is not yet valid.
 
 =item B<12 X509_V_ERR_CRL_HAS_EXPIRED: CRL has expired>
 
-the CRL has expired. Unused.
+the CRL has expired.
 
 =item B<13 X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD: format error in certificate's notBefore field>
 
@@ -222,11 +222,11 @@ the certificate notAfter field contains an invalid time.
 
 =item B<15 X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD: format error in CRL's lastUpdate field>
 
-the CRL lastUpdate field contains an invalid time. Unused.
+the CRL lastUpdate field contains an invalid time.
 
 =item B<16 X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD: format error in CRL's nextUpdate field>
 
-the CRL nextUpdate field contains an invalid time. Unused.
+the CRL nextUpdate field contains an invalid time.
 
 =item B<17 X509_V_ERR_OUT_OF_MEM: out of memory>
 
@@ -258,7 +258,7 @@ the certificate chain length is greater than the supplied maximum depth. Unused.
 
 =item B<23 X509_V_ERR_CERT_REVOKED: certificate revoked>
 
-the certificate has been revoked. Unused.
+the certificate has been revoked.
 
 =item B<24 X509_V_ERR_INVALID_CA: invalid CA certificate>
 
