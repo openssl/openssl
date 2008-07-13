@@ -294,7 +294,8 @@ int X509_supported_extension(X509_EXTENSION *ex)
 		NID_sbgp_autonomousSysNum, /* 291 */
 #endif
 		NID_policy_constraints,	/* 401 */
-		NID_proxyCertInfo	/* 663 */
+		NID_proxyCertInfo,	/* 663 */
+		NID_inhibit_any_policy	/* 748 */
 	};
 
 	int ex_nid;
