@@ -4,7 +4,7 @@ package x86nasm;
 
 *out=\@::out;
 
-$::lbdecor="\@L";		# local label decoration
+$::lbdecor="L\$";		# local label decoration
 $nmdecor=$::netware?"":"_";	# external name decoration
 $drdecor=$::mwerks?".":"";	# directive decoration
 
@@ -75,12 +75,13 @@ sub ::file
 {   if ($::mwerks)	{ push(@out,".section\t.text,64\n"); }
     else
     { my $tmp=<<___;
-%ifdef __omf__
+%ifidn __OUTPUT_FORMAT__,obj
 section	code	use32 class=code align=64
-%elifdef __coff__
-section	.text	code
-%else
+%elifidn __OUTPUT_FORMAT__,win32
+\$\@feat.00 equ 1
 section	.text	code align=64
+%else
+section	.text	code
 %endif
 ___
 	push(@out,$tmp);
