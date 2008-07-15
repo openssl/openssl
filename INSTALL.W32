@@ -25,9 +25,9 @@
   * Borland C
   * GNU C (Cygwin or MinGW)
 
-- even though optional for non-gcc builds, Netwide Assembler, a.k.a.
-  NASM, available from http://sourceforge.net/projects/nasm is
-  recommended.
+- Netwide Assembler, a.k.a. NASM, available from http://nasm.sourceforge.net/
+  is required if you intend to utilize assembler modules. Note that NASM
+  is the only supported assembler.
 
  If you are compiling from a tarball or a CVS snapshot then the Win32 files
  may well be not up to date. This may mean that some "tweaking" is required to
@@ -39,7 +39,7 @@
 
  If you want to compile in the assembly language routines with Visual
  C++, then you will need already mentioned Netwide Assembler binary,
- nasmw.exe, to be available on your %PATH%.
+ nasmw.exe or nasm.exe, to be available on your %PATH%.
 
  Firstly you should run Configure:
 
