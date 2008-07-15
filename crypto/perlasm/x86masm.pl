@@ -71,10 +71,17 @@ sub ::DWC	{ "@_"; }
 sub ::file
 { my $tmp=<<___;
 TITLE	$_[0].asm
+IF \@Version LT 800
+ECHO MASM version 8.00 or later is strongly recommended.
+ENDIF
 .486
 .MODEL	FLAT
 OPTION	DOTNAME
-.TEXT\$	SEGMENT PAGE 'CODE'
+IF \@Version LT 800
+.text\$ SEGMENT PAGE 'CODE'
+ELSE
+.text\$	SEGMENT ALIGN(64) 'CODE'
+ENDIF
 ___
     push(@out,$tmp);
 }
@@ -114,13 +121,13 @@ ___
 	grep {s/\.[3-7]86/$xmmheader/} @out;
     }
 
-    push(@out,".TEXT\$	ENDS\n");
+    push(@out,".text\$	ENDS\n");
 
     if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out)
     {	my $comm=<<___;
-_DATA	SEGMENT
+.bss	SEGMENT
 COMM	${nmdecor}OPENSSL_ia32cap_P:DWORD
-_DATA	ENDS
+.bss	ENDS
 ___
 	# comment out OPENSSL_ia32cap_P declarations
 	grep {s/(^EXTERN\s+${nmdecor}OPENSSL_ia32cap_P)/\;$1/} @out;
