@@ -370,12 +370,13 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
 	d= (v[6]-'0')*10+(v[7]-'0');
 	h= (v[8]-'0')*10+(v[9]-'0');
 	m=  (v[10]-'0')*10+(v[11]-'0');
-	if (	(v[12] >= '0') && (v[12] <= '9') &&
-		(v[13] >= '0') && (v[13] <= '9'))
+	if (i >= 14 &&
+	    (v[12] >= '0') && (v[12] <= '9') &&
+	    (v[13] >= '0') && (v[13] <= '9'))
 		{
 		s=  (v[12]-'0')*10+(v[13]-'0');
 		/* Check for fractions of seconds. */
-		if (v[14] == '.')
+		if (i >= 15 && v[14] == '.')
 			{
 			int l = tm->length;
 			f = &v[14];	/* The decimal point. */
@@ -416,8 +417,9 @@ int ASN1_UTCTIME_print(BIO *bp, const ASN1_UTCTIME *tm)
 	d= (v[4]-'0')*10+(v[5]-'0');
 	h= (v[6]-'0')*10+(v[7]-'0');
 	m=  (v[8]-'0')*10+(v[9]-'0');
-	if (	(v[10] >= '0') && (v[10] <= '9') &&
-		(v[11] >= '0') && (v[11] <= '9'))
+	if (i >=12 &&
+	    (v[10] >= '0') && (v[10] <= '9') &&
+	    (v[11] >= '0') && (v[11] <= '9'))
 		s=  (v[10]-'0')*10+(v[11]-'0');
 
 	if (BIO_printf(bp,"%s %2d %02d:%02d:%02d %d%s",
@@ -489,4 +491,3 @@ err:
 	OPENSSL_free(b);
 	return(ret);
 	}
-
