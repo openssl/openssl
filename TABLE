@@ -947,7 +947,7 @@ $arflags      =
 
 *** darwin-i386-cc
 $cc           = cc
-$cflags       = -arch i386 -O3 -fomit-frame-pointer -fno-common
+$cflags       = -arch i386 -O3 -fomit-frame-pointer -DL_ENDIAN
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
