@@ -319,10 +319,10 @@ long CRYPTO_dbg_get_options(void)
 static int mem_cmp(const MEM *a, const MEM *b)
 	{
 #ifdef _WIN64
-	const char *a=(const char *)a->addr,
-		   *b=(const char *)b->addr;
-	if (a==b)	return 0;
-	else if (a>b)	return 1;
+	const char *ap=(const char *)a->addr,
+		   *bp=(const char *)b->addr;
+	if (ap==bp)	return 0;
+	else if (ap>bp)	return 1;
 	else		return -1;
 #else
 	return (const char *)a->addr - (const char *)b->addr;
