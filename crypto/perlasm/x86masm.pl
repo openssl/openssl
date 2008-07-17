@@ -78,7 +78,7 @@ ENDIF
 .MODEL	FLAT
 OPTION	DOTNAME
 IF \@Version LT 800
-.text\$ SEGMENT PAGE 'CODE'
+.text\$	SEGMENT PAGE 'CODE'
 ELSE
 .text\$	SEGMENT ALIGN(64) 'CODE'
 ENDIF
@@ -92,7 +92,7 @@ sub ::function_begin_B
   my $begin="${::lbdecor}_${func}_begin";
 
     &::LABEL($func,$global?"$begin":"$nmdecor$func");
-    $func=$nmdecor.$func."\tPROC";
+    $func="ALIGN\t16\n".$nmdecor.$func."\tPROC";
 
     if ($global)    { $func.=" PUBLIC\n${begin}::\n"; }
     else	    { $func.=" PRIVATE\n";            }
