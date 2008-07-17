@@ -97,7 +97,7 @@ sub BODY_00_15() {
 	&add	($A,"esi");	# h += K256[i]
 }
 
-&function_begin("sha256_block_data_order",16);
+&function_begin("sha256_block_data_order");
 	&mov	("esi",wparam(0));	# ctx
 	&mov	("edi",wparam(1));	# inp
 	&mov	("eax",wparam(2));	# num

@@ -261,7 +261,7 @@ sub BODY_00_15_x86 {
 }
 
 
-&function_begin("sha512_block_data_order",16);
+&function_begin("sha512_block_data_order");
 	&mov	("esi",wparam(0));	# ctx
 	&mov	("edi",wparam(1));	# inp
 	&mov	("eax",wparam(2));	# num

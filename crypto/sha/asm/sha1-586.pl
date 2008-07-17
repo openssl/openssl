@@ -149,7 +149,7 @@ sub BODY_40_59
 	&add($f,$e);			# f+=ROTATE(a,5)
 	}
 
-&function_begin("sha1_block_data_order",16);
+&function_begin("sha1_block_data_order");
 	&mov($tmp1,&wparam(0));	# SHA_CTX *c
 	&mov($T,&wparam(1));	# const void *input
 	&mov($A,&wparam(2));	# size_t num
