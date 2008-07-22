@@ -124,7 +124,7 @@ sub ::function_begin_B
 
     push(@out,".globl\t$func\n")	if ($global);
     if ($::coff)
-    {	push(@out,".def\t$func;\t.scl\t2;\t.type\t32;\t.endef\n"); }
+    {	push(@out,".def\t$func;\t.scl\t".(3-$global).";\t.type\t32;\t.endef\n"); }
     elsif (($::aout and !$::pic) or $::macosx)
     { }
     else
@@ -257,5 +257,8 @@ $ctor:
 ___
     }
 }
+
+sub ::dataseg
+{   push(@out,".data\n");   }
 
 1;

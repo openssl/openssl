@@ -8,6 +8,7 @@ $::lbdecor="\$L";	# local label decoration
 $nmdecor="_";		# external name decoration
 
 $initseg="";
+$segment="";
 
 sub ::generic
 { my ($opcode,@arg)=@_;
@@ -84,6 +85,7 @@ ELSE
 ENDIF
 ___
     push(@out,$tmp);
+    $segment = ".text\$";
 }
 
 sub ::function_begin_B
@@ -121,7 +123,7 @@ ___
 	grep {s/\.[3-7]86/$xmmheader/} @out;
     }
 
-    push(@out,".text\$	ENDS\n");
+    push(@out,"$segment	ENDS\n");
 
     if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out)
     {	my $comm=<<___;
@@ -174,5 +176,8 @@ DD	$f
 .CRT\$XCU	ENDS
 ___
 }
+
+sub ::dataseg
+{   push(@out,"$segment\tENDS\n_DATA\tSEGMENT\n"); $segment="_DATA";   }
 
 1;

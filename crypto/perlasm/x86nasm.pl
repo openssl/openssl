@@ -158,4 +158,9 @@ ___
     }
 }
 
+sub ::dataseg
+{   if ($mwerks)	{ push(@out,".section\t.data,4\n");   }
+    else		{ push(@out,"section\t.data align=4\n"); }
+}
+
 1;
