@@ -20,7 +20,6 @@
 # Currently recognized limitations:
 #
 # - can't use multiple ops per line;
-# - indirect calls and jumps are not supported;
 #
 # Dual-ABI styling rules.
 #
@@ -68,20 +67,23 @@ my $output = shift;
 my $win64=1 if ($output =~ /\.asm/);
 
 my $masmref=8 + 50727*2**-32;	# 8.00.50727 shipped with VS2005
-my $masm=$masmref;
+my $masm=0;
 my $PTR=" PTR";
 
+my $nasmref=2.03;
 my $nasm=0;
 
 if ($win64)
-{   if ($ENV{ASM} =~ m/nasm/)
-    {	$nasm = 1; $PTR="";   }
+{   if ($ENV{ASM} =~ m/nasm/ && `nasm -v` =~ m/version ([0-9]+)\.([0-9]+)/i)
+    {	$nasm = $1 + $2*0.01; $PTR="";  }
     elsif (`ml64 2>&1` =~ m/Version ([0-9]+)\.([0-9]+)(\.([0-9]+))?/)
     {	$masm = $1 + $2*2**-16 + $4*2**-32;   }
+    die "no assembler found on %PATH" if (!($nasm || $masm));
 }
 
 my $current_segment;
 my $current_function;
+my %globals;
 
 { package opcode;	# pick up opcodes
     sub re {
@@ -98,7 +100,7 @@ my $current_function;
 	    if ($self->{op} =~ /^(movz)b.*/) {	# movz is pain...
 		$self->{op} = $1;
 		$self->{sz} = "b";
-	    } elsif ($self->{op} =~ /call/) {
+	    } elsif ($self->{op} =~ /call|jmp/) {
 		$self->{sz} = ""
 	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])$/) {
 		$self->{op} = $1;
@@ -134,8 +136,6 @@ my $current_function;
 				  "mov	rsi,QWORD${PTR}[16+rsp]\n\t";
 	    	}
 		$self->{op} .= "DB\t0F3h,0C3h\t\t;repret";
-	    } elsif ($self->{op} =~ /^j/ && $nasm) {
-		$self->{op} .= " NEAR";
 	    }
 	    $self->{op};
 	}
@@ -176,9 +176,11 @@ my $current_function;
 	local	*line = shift;
 	undef	$ret;
 
-	if ($line =~ /^([^\(,]*)\(([%\w,]+)\)/) {
-	    $self->{label} = $1;
-	    ($self->{base},$self->{index},$self->{scale})=split(/,/,$2);
+	# optional * ---vvv--- appears in indirect jmp/call
+	if ($line =~ /^(\*?)([^\(,]*)\(([%\w,]+)\)/) {
+	    $self->{asterisk} = $1;
+	    $self->{label} = $2;
+	    ($self->{base},$self->{index},$self->{scale})=split(/,/,$3);
 	    $self->{scale} = 1 if (!defined($self->{scale}));
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
@@ -206,11 +208,11 @@ my $current_function;
 	    $self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 
 	    if (defined($self->{index})) {
-		sprintf "%s(%%%s,%%%s,%d)",
+		sprintf "%s%s(%%%s,%%%s,%d)",$self->{asterisk},
 					$self->{label},$self->{base},
 					$self->{index},$self->{scale};
 	    } else {
-		sprintf "%s(%%%s)",	$self->{label},$self->{base};
+		sprintf "%s%s(%%%s)",	$self->{asterisk},$self->{label},$self->{base};
 	    }
 	} else {
 	    %szmap = ( b=>"BYTE$PTR", w=>"WORD$PTR", l=>"DWORD$PTR", q=>"QWORD$PTR" );
@@ -218,6 +220,7 @@ my $current_function;
 	    $self->{label} =~ s/\./\$/g;
 	    $self->{label} =~ s/0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
+	    $sz="q" if ($self->{asterisk});
 
 	    if (defined($self->{index})) {
 		sprintf "%s[%s%s*%d+%s]",$szmap{$sz},
@@ -241,9 +244,11 @@ my $current_function;
 	local	*line = shift;
 	undef	$ret;
 
-	if ($line =~ /^%(\w+)/) {
+	# optional * ---vvv--- appears in indirect jmp/call
+	if ($line =~ /^(\*?)%(\w+)/) {
 	    bless $self,$class;
-	    $self->{value} = $1;
+	    $self->{asterisk} = $1;
+	    $self->{value} = $2;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 	}
@@ -266,7 +271,8 @@ my $current_function;
     }
     sub out {
     	my $self = shift;
-	sprintf $win64?"%s":"%%%s",$self->{value};
+	if (!$win64)	{ sprintf "%s%%%s",$self->{asterisk},$self->{value}; }
+	else		{ $self->{value}; }
     }
 }
 { package label;	# pick up labels, which end with :
@@ -290,11 +296,14 @@ my $current_function;
 	if (!$win64) {
 	    $self->{value};
 	} elsif ($self->{value} ne "$current_function->{name}:") {
+	    $self->{value} .= ":" if ($masm && $ret!~m/^\$/);
 	    $self->{value};
 	} elsif ($current_function->{abi} eq "svr4") {
-	    my $func =	"$current_function->{name}".($nasm?":":"\tPROC")."\n".
-			"	mov	QWORD${PTR}[8+rsp],rdi\t;WIN64 prologue\n".
-			"	mov	QWORD${PTR}[16+rsp],rsi\n";
+	    my $func =	"$current_function->{name}" .
+			($nasm ? ":" : "\tPROC $current_function->{scope}") .
+			"\n";
+	    $func .= "	mov	QWORD${PTR}[8+rsp],rdi\t;WIN64 prologue\n";
+	    $func .= "	mov	QWORD${PTR}[16+rsp],rsi\n";
 	    my $narg = $current_function->{narg};
 	    $narg=6 if (!defined($narg));
 	    $func .= "	mov	rdi,rcx\n" if ($narg>0);
@@ -305,7 +314,8 @@ my $current_function;
 	    $func .= "	mov	r9,QWORD${PTR}[48+rsp]\n" if ($narg>5);
 	    $func .= "\n";
 	} else {
-	   "$current_function->{name}".($nasm?":":"\tPROC");
+	   "$current_function->{name}".
+			($nasm ? ":" : "\tPROC $current_function->{scope}");
 	}
     }
 }
@@ -326,7 +336,11 @@ my $current_function;
     }
     sub out {
 	my $self = shift;
-	$self->{value};
+	if ($nasm && opcode->mnemonic()=~m/^j/) {
+	    "NEAR ".$self->{value};
+	} else {
+	    $self->{value};
+	}
     }
 }
 { package directive;	# pick up directives, which start with .
@@ -368,16 +382,12 @@ my $current_function;
 	    undef $self->{value};
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 	    SWITCH: for ($dir) {
-		/\.(text)/
-			    && do { my $v=undef;
+		/\.text/    && do { my $v=undef;
 				    if ($nasm) {
-					$v ="section	.$1 code align=64\n";
-					$v.="default	rel\n";
-					$v.="%define	PUBLIC global";
+					$v="section	.text code align=64\n";
 				    } else {
 					$v="$current_segment\tENDS\n" if ($current_segment);
-					$current_segment = "_$1\$";
-					$current_segment =~ tr/[a-z]/[A-Z]/;
+					$current_segment = ".text\$";
 					$v.="$current_segment\tSEGMENT ";
 					$v.=$masm>=$masmref ? "ALIGN(64)" : "PAGE";
 					$v.=" 'CODE'";
@@ -385,20 +395,55 @@ my $current_function;
 				    $self->{value} = $v;
 				    last;
 				  };
-		/\.extern/  && do { $self->{value}  = "EXTERN\t".$line;
-				    $self->{value} .= ":BYTE" if (!$nasm);
+		/\.data/    && do { my $v=undef;
+				    if ($nasm) {
+					$v="section	.data data align=8\n";
+				    } else {
+					$v="$current_segment\tENDS\n" if ($current_segment);
+					$current_segment = "_DATA";
+					$v.="$current_segment\tSEGMENT";
+				    }
+				    $self->{value} = $v;
 				    last;
 				  };
-		/\.globl/   && do { $self->{value} = "PUBLIC\t".$line; last; };
+		/\.section/ && do { my $v=undef;
+				    if ($nasm) {
+					$v="section	$line";
+					if ($line=~/\.([px])data/) {
+					    $v.=" rdata align=";
+					    $v.=$1 eq "p"? 4 : 8;
+					}
+				    } else {
+					$v="$current_segment\tENDS\n" if ($current_segment);
+					$v.="$line\tSEGMENT";
+					if ($line=~/\.([px])data/) {
+					    $v.=" READONLY";
+					    $v.=" ALIGN(".($1 eq "p" ? 4 : 8).")" if ($masm>=$masmref);
+					}
+				    }
+				    $current_segment = $line;
+				    $self->{value} = $v;
+				    last;
+				  };
+		/\.extern/  && do { $self->{value}  = "EXTERN\t".$line;
+				    $self->{value} .= ":NEAR" if ($masm);
+				    last;
+				  };
+		/\.globl/   && do { $self->{value} = "PUBLIC\t".$line;
+				    $globals{$line} = $line;
+				    last;
+				  };
 		/\.type/    && do { ($sym,$type,$narg) = split(',',$line);
 				    if ($type eq "\@function") {
 					undef $current_function;
 					$current_function->{name} = $sym;
 					$current_function->{abi}  = "svr4";
 					$current_function->{narg} = $narg;
+					$current_function->{scope} = defined($globals{$sym})?"PUBLIC":"PRIVATE";
 				    } elsif ($type eq "\@abi-omnipotent") {
 					undef $current_function;
 					$current_function->{name} = $sym;
+					$current_function->{scope} = defined($globals{$sym})?"PUBLIC":"PRIVATE";
 				    }
 				    last;
 				  };
@@ -414,8 +459,10 @@ my $current_function;
 				    my $sz  = substr($1,0,1);
 				    my $last = pop(@arr);
 				    my $conv = sub  {	my $var=shift;
-							if ($var=~s/0x([0-9a-f]+)/0$1h/i) { $var; }
-							else { sprintf"0%Xh",$var; }
+							$var=~s/0x([0-9a-f]+)/0$1h/ig;
+							if ($current_segment=~/.[px]data/)
+							{ $var=~s/\b([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
+							$var;
 						    };  
 
 				    $sz =~ tr/bvlq/BWDQ/;
@@ -452,6 +499,16 @@ my $current_function;
     }
 }
 
+if ($nasm) {
+    print <<___;
+default	rel
+%define	PUBLIC global
+___
+} elsif ($masm) {
+    print <<___;
+OPTION	DOTNAME
+___
+}
 while($line=<>) {
 
     chomp($line);
@@ -508,7 +565,7 @@ while($line=<>) {
     print $line,"\n";
 }
 
-print "\n$current_segment\tENDS\nEND\n" if ($current_segment);
+print "\n$current_segment\tENDS\nEND\n" if ($current_segment && $masm);
 
 close STDOUT;
 
