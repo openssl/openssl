@@ -251,7 +251,6 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"-keyform arg    key file format (PEM or ENGINE)\n");
 		BIO_printf(bio_err,"-signature file signature to verify\n");
 		BIO_printf(bio_err,"-sigopt nm:v    signature parameter\n");
-		BIO_printf(bio_err,"-binary         output in binary form\n");
 		BIO_printf(bio_err,"-hmac key       create hashed MAC with key\n");
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
