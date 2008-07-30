@@ -78,7 +78,7 @@ static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
-static int crl_akid_check(X509_STORE_CTX *ctx, AUTHORITY_KEYID *akid);
+static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer);
 static int idp_check_scope(X509 *x, X509_CRL *crl);
 static int internal_verify(X509_STORE_CTX *ctx);
 const char X509_version[]="X.509" OPENSSL_VERSION_PTEXT;
@@ -590,6 +590,7 @@ static int check_cert(X509_STORE_CTX *ctx)
 	cnum = ctx->error_depth;
 	x = sk_X509_value(ctx->chain, cnum);
 	ctx->current_cert = x;
+	ctx->current_issuer = NULL;
 	/* Try to retrieve relevant CRL */
 	ok = ctx->get_crl(ctx, &crl, x);
 	/* If error looking up CRL, nothing we can do except
@@ -699,9 +700,11 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 	{
 	int i, crl_score, best_score = -1;
 	X509_CRL *crl, *best_crl = NULL;
+	X509 *crl_issuer, *best_crl_issuer = NULL;
 	for (i = 0; i < sk_X509_CRL_num(crls); i++)
 		{
 		crl_score = 0;
+		crl_issuer = NULL;
 		crl = sk_X509_CRL_value(crls, i);
 		if (nm && X509_NAME_cmp(nm, X509_CRL_get_issuer(crl)))
 			continue;
@@ -718,15 +721,10 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 		else
 			crl_score |= CRL_SCORE_SCOPE;
 
-		if (crl->akid)
-			{
-			if (crl_akid_check(ctx, crl->akid))
-				crl_score |= CRL_SCORE_AKID;
-			}
-		else
+		if (crl_akid_check(ctx, crl, &crl_issuer))
 			crl_score |= CRL_SCORE_AKID;
-
-		if (crl_score == CRL_SCORE_ALL)
+		/* If CRL matches criteria and issuer is not different use it */
+		if (crl_score == CRL_SCORE_ALL && !crl_issuer)
 			{
 			*pcrl = crl;
 			CRYPTO_add(&crl->references, 1, CRYPTO_LOCK_X509_CRL);
@@ -736,25 +734,49 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 		if (crl_score > best_score)
 			{
 			best_crl = crl;
+			best_crl_issuer = crl_issuer;
 			best_score = crl_score;
 			}
 		}
 	if (best_crl)
 		{
 		*pcrl = best_crl;
+		ctx->current_issuer = best_crl_issuer;
 		CRYPTO_add(&best_crl->references, 1, CRYPTO_LOCK_X509);
 		}
-		
+
 	return 0;
 	}
 
-static int crl_akid_check(X509_STORE_CTX *ctx, AUTHORITY_KEYID *akid)
+static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer)
 	{
+	X509 *crl_issuer;
 	int cidx = ctx->error_depth;
+	if (!crl->akid)
+		return 1;
 	if (cidx != sk_X509_num(ctx->chain) - 1)
 		cidx++;
-	if (X509_check_akid(sk_X509_value(ctx->chain, cidx), akid) == X509_V_OK)
+	crl_issuer = sk_X509_value(ctx->chain, cidx);
+	if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK)
 		return 1;
+	/* If crl_issuer is self issued we may get a match further along the
+	 * chain.
+	 */
+	if (crl_issuer->ex_flags & EXFLAG_SI)
+		{
+		for (cidx++; cidx < sk_X509_num(ctx->chain); cidx++)
+			{
+			crl_issuer = sk_X509_value(ctx->chain, cidx);
+			if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK)
+				{
+				*pissuer = crl_issuer;
+				return 1;
+				}
+			if (!(crl_issuer->ex_flags & EXFLAG_SI))
+				break;
+			}
+		}
+		
 	return 0;
 	}
 
@@ -864,10 +886,13 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 	int ok = 0, chnum, cnum;
 	cnum = ctx->error_depth;
 	chnum = sk_X509_num(ctx->chain) - 1;
-	/* Find CRL issuer: if not last certificate then issuer
+	/* if we have an alternative CRL issuer cert use that */
+	if (ctx->current_issuer)
+		issuer = ctx->current_issuer;
+	/* Else find CRL issuer: if not last certificate then issuer
 	 * is next certificate in chain.
 	 */
-	if(cnum < chnum)
+	else if (cnum < chnum)
 		issuer = sk_X509_value(ctx->chain, cnum + 1);
 	else
 		{

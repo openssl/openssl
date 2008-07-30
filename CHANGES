@@ -4,6 +4,11 @@
 
  Changes between 0.9.8i and 0.9.9  [xx XXX xxxx]
 
+  *) Initial support for different CRL issuing certificates. This covers a
+     simple case where the self issued certificates in the chain exist and
+     the real CRL issuer is higher in the existing chain.
+     [Steve Henson]
+
   *) Removed effectively defunct crypto/store from the build.
      [Ben Laurie]
 

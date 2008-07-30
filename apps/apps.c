@@ -2233,6 +2233,8 @@ int args_verify(char ***pargs, int *pargc,
 		flags |= X509_V_FLAG_POLICY_CHECK;
 	else if (!strcmp(arg, "-explicit_policy"))
 		flags |= X509_V_FLAG_EXPLICIT_POLICY;
+	else if (!strcmp(arg, "-inhibit_any"))
+		flags |= X509_V_FLAG_INHIBIT_ANY;
 	else if (!strcmp(arg, "-x509_strict"))
 		flags |= X509_V_FLAG_X509_STRICT;
 	else if (!strcmp(arg, "-policy_print"))
