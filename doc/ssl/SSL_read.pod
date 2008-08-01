@@ -64,6 +64,11 @@ non-blocking socket, nothing is to be done, but select() can be used to check
 for the required condition. When using a buffering BIO, like a BIO pair, data
 must be written into or retrieved out of the BIO before being able to continue.
 
+L<SSL_pending(3)|SSL_pending(3)> can be used to find out whether there
+are buffered bytes available for immediate retrieval. In this case
+SSL_read() can be called without blocking or actually receiving new
+data from the underlying socket.
+
 =head1 WARNING
 
 When an SSL_read() operation has to be repeated because of
@@ -112,6 +117,7 @@ L<SSL_get_error(3)|SSL_get_error(3)>, L<SSL_write(3)|SSL_write(3)>,
 L<SSL_CTX_set_mode(3)|SSL_CTX_set_mode(3)>, L<SSL_CTX_new(3)|SSL_CTX_new(3)>,
 L<SSL_connect(3)|SSL_connect(3)>, L<SSL_accept(3)|SSL_accept(3)>
 L<SSL_set_connect_state(3)|SSL_set_connect_state(3)>,
+L<SSL_pending(3)|SSL_pending(3)>,
 L<SSL_shutdown(3)|SSL_shutdown(3)>, L<SSL_set_shutdown(3)|SSL_set_shutdown(3)>,
 L<ssl(3)|ssl(3)>, L<bio(3)|bio(3)>
 
