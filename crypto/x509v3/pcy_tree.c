@@ -130,11 +130,11 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 			ret = 2;
 		if (explicit_policy > 0)
 			{
-			explicit_policy--;
-			if (!(x->ex_flags & EXFLAG_SI)
-				&& (cache->explicit_skip != -1)
+			if (!(x->ex_flags & EXFLAG_SI))
+				explicit_policy--;
+			if ((cache->explicit_skip != -1)
 				&& (cache->explicit_skip < explicit_policy))
-				explicit_policy = cache->explicit_skip + 1;
+				explicit_policy = cache->explicit_skip;
 			}
 		}
 
