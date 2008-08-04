@@ -311,7 +311,36 @@ int X509_supported_extension(X509_EXTENSION *ex)
 		return 1;
 	return 0;
 	}
- 
+
+static void setup_dp(X509 *x, DIST_POINT *dp)
+	{
+	X509_NAME *iname = NULL;
+	int i;
+	if (!dp->distpoint || (dp->distpoint->type != 1))
+		return;
+	for (i = 0; i < sk_GENERAL_NAME_num(dp->CRLissuer); i++)
+		{
+		GENERAL_NAME *gen = sk_GENERAL_NAME_value(dp->CRLissuer, i);
+		if (gen->type == GEN_DIRNAME)
+			{
+			iname = gen->d.directoryName;
+			break;
+			}
+		}
+	if (!iname)
+		iname = X509_get_issuer_name(x);
+
+	DIST_POINT_set_dpname(dp->distpoint, iname);
+
+	}
+
+static void setup_crldp(X509 *x)
+	{
+	int i;
+	x->crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
+	for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++)
+		setup_dp(x, sk_DIST_POINT_value(x->crldp, i));
+	}
 
 static void x509v3_cache_extensions(X509 *x)
 {
@@ -419,7 +448,9 @@ static void x509v3_cache_extensions(X509 *x)
 	}
 	x->skid =X509_get_ext_d2i(x, NID_subject_key_identifier, NULL, NULL);
 	x->akid =X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
-	x->crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
+	setup_crldp(x);
+			
+			
 #ifndef OPENSSL_NO_RFC3779
  	x->rfc3779_addr =X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, NULL, NULL);
  	x->rfc3779_asid =X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum,

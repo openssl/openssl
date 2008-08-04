@@ -780,13 +780,82 @@ static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer)
 	return 0;
 	}
 
+/* Check for match between two dist point names: three separate cases.
+ * 1. Both are relative names and compare X509_NAME types.
+ * 2. One full, one relative. Compare X509_NAME to GENERAL_NAMES.
+ * 3. Both are full names and compare two GENERAL_NAMES.
+ */
+
+
+static int idp_check_dp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
+	{
+	X509_NAME *nm = NULL;
+	GENERAL_NAMES *gens = NULL;
+	GENERAL_NAME *gena, *genb;
+	int i, j;
+	if (a->type == 1)
+		{
+		if (!a->dpname)
+			return 0;
+		/* Case 1: two X509_NAME */
+		if (b->type == 1)
+			{
+			if (!b->dpname)
+				return 0;
+			if (!X509_NAME_cmp(a->dpname, b->dpname))
+				return 1;
+			else
+				return 0;
+			}
+		/* Case 2: set name and GENERAL_NAMES appropriately */
+		nm = a->dpname;
+		gens = b->name.fullname;
+		}
+	else if (b->type == 1)
+		{
+		if (!b->dpname)
+			return 0;
+		/* Case 2: set name and GENERAL_NAMES appropriately */
+		gens = a->name.fullname;
+		nm = b->dpname;
+		}
+
+	/* Handle case 2 with one GENERAL_NAMES and one X509_NAME */
+	if (nm)
+		{
+		for (i = 0; i < sk_GENERAL_NAME_num(gens); i++)
+			{
+			gena = sk_GENERAL_NAME_value(gens, i);	
+			if (gena->type != GEN_DIRNAME)
+				continue;
+			if (!X509_NAME_cmp(nm, gena->d.directoryName))
+				return 1;
+			}
+		return 0;
+		}
+
+	/* Else case 3: two GENERAL_NAMES */
+
+	for (i = 0; i < sk_GENERAL_NAME_num(a->name.fullname); i++)
+		{
+		gena = sk_GENERAL_NAME_value(a->name.fullname, i);
+		for (j = 0; j < sk_GENERAL_NAME_num(b->name.fullname); j++)
+			{
+			genb = sk_GENERAL_NAME_value(b->name.fullname, j);
+			if (!GENERAL_NAME_cmp(gena, genb))
+				return 1;
+			}
+		}
+
+	return 0;
+
+	}
 
 /* Check IDP name matches at least one CRLDP name */
 
 static int idp_check_scope(X509 *x, X509_CRL *crl)
 	{
-	int i, j, k;
-	GENERAL_NAMES *inames, *dnames;
+	int i;
 	if (crl->idp_flags & IDP_ONLYATTR)
 		return 0;
 	if (x->ex_flags & EXFLAG_CA)
@@ -801,31 +870,16 @@ static int idp_check_scope(X509 *x, X509_CRL *crl)
 		}
 	if (!crl->idp->distpoint)
 		return 1;
-	if (crl->idp->distpoint->type != 0)
-		return 1;
 	if (!x->crldp)
 		return 0;
-	inames = crl->idp->distpoint->name.fullname;
-	for (i = 0; i < sk_GENERAL_NAME_num(inames); i++)
+	for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++)
 		{
-		GENERAL_NAME *igen = sk_GENERAL_NAME_value(inames, i);
-		for (j = 0; j < sk_DIST_POINT_num(x->crldp); j++)
-			{
-			DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, j);
-			/* We don't handle these at present */
-			if (dp->reasons || dp->CRLissuer)
-				continue;
-			if (!dp->distpoint || (dp->distpoint->type != 0))
-				continue;
-			dnames = dp->distpoint->name.fullname;
-			for (k = 0; k < sk_GENERAL_NAME_num(dnames); k++)
-				{
-				GENERAL_NAME *cgen =
-					sk_GENERAL_NAME_value(dnames, k);
-				if (!GENERAL_NAME_cmp(igen, cgen))
-					return 1;
-				}
-			}
+		DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, i);
+		/* We don't handle these at present */
+		if (dp->reasons || dp->CRLissuer)
+			continue;
+		if (idp_check_dp(dp->distpoint, crl->idp->distpoint))
+			return 1;
 		}
 	return 0;
 	}

@@ -3,7 +3,7 @@
  * project 1999.
  */
 /* ====================================================================
- * Copyright (c) 1999, 2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -361,11 +361,31 @@ static void *v2i_crld(X509V3_EXT_METHOD *method,
 IMPLEMENT_STACK_OF(DIST_POINT)
 IMPLEMENT_ASN1_SET_OF(DIST_POINT)
 
+static int dpn_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+								void *exarg)
+	{
+	DIST_POINT_NAME *dpn = (DIST_POINT_NAME *)*pval;
 
-ASN1_CHOICE(DIST_POINT_NAME) = {
+	switch(operation)
+		{
+		case ASN1_OP_NEW_POST:
+		dpn->dpname = NULL;
+		break;
+
+		case ASN1_OP_FREE_POST:
+		if (dpn->dpname)
+			X509_NAME_free(dpn->dpname);
+		break;
+		}
+	return 1;
+	}
+
+
+ASN1_CHOICE_cb(DIST_POINT_NAME, dpn_cb) = {
 	ASN1_IMP_SEQUENCE_OF(DIST_POINT_NAME, name.fullname, GENERAL_NAME, 0),
 	ASN1_IMP_SET_OF(DIST_POINT_NAME, name.relativename, X509_NAME_ENTRY, 1)
-} ASN1_CHOICE_END(DIST_POINT_NAME)
+} ASN1_CHOICE_END_cb(DIST_POINT_NAME, DIST_POINT_NAME, type)
+
 
 IMPLEMENT_ASN1_FUNCTIONS(DIST_POINT_NAME)
 
@@ -547,6 +567,37 @@ static int i2r_crldp(X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
 			BIO_printf(out, "%*sCRL Issuer:\n", indent, "");
 			print_gens(out, point->CRLissuer, indent);
 			}
+		}
+	return 1;
+	}
+
+int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, X509_NAME *iname)
+	{
+	int i;
+	STACK_OF(X509_NAME_ENTRY) *frag;
+	X509_NAME_ENTRY *ne;
+	if (!dpn || (dpn->type != 1))
+		return 1;
+	frag = dpn->name.relativename;
+	dpn->dpname = X509_NAME_dup(iname);
+	if (!dpn->dpname)
+		return 0;
+	for (i = 0; i < sk_X509_NAME_ENTRY_num(frag); i++)
+		{
+		ne = sk_X509_NAME_ENTRY_value(frag, i);
+		if (!X509_NAME_add_entry(dpn->dpname, ne, -1, i ? 0 : 1))
+			{
+			X509_NAME_free(dpn->dpname);
+			dpn->dpname = NULL;
+			return 0;
+			}
+		}
+	/* generate cached encoding of name */
+	if (i2d_X509_NAME(dpn->dpname, NULL) < 0)
+		{
+		X509_NAME_free(dpn->dpname);
+		dpn->dpname = NULL;
+		return 0;
 		}
 	return 1;
 	}
