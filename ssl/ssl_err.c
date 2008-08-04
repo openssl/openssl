@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -167,8 +167,9 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL3_SEND_SERVER_CERTIFICATE),	"SSL3_SEND_SERVER_CERTIFICATE"},
 {ERR_FUNC(SSL_F_SSL3_SEND_SERVER_HELLO),	"SSL3_SEND_SERVER_HELLO"},
 {ERR_FUNC(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE),	"SSL3_SEND_SERVER_KEY_EXCHANGE"},
-{ERR_FUNC(SSL_F_SSL3_SETUP_BUFFERS),	"SSL3_SETUP_BUFFERS"},
 {ERR_FUNC(SSL_F_SSL3_SETUP_KEY_BLOCK),	"SSL3_SETUP_KEY_BLOCK"},
+{ERR_FUNC(SSL_F_SSL3_SETUP_READ_BUFFER),	"SSL3_SETUP_READ_BUFFER"},
+{ERR_FUNC(SSL_F_SSL3_SETUP_WRITE_BUFFER),	"SSL3_SETUP_WRITE_BUFFER"},
 {ERR_FUNC(SSL_F_SSL3_WRITE_BYTES),	"SSL3_WRITE_BYTES"},
 {ERR_FUNC(SSL_F_SSL3_WRITE_PENDING),	"SSL3_WRITE_PENDING"},
 {ERR_FUNC(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT),	"SSL_ADD_CLIENTHELLO_TLSEXT"},

@@ -561,7 +561,7 @@ typedef struct ssl3_comp_st
 	COMP_METHOD *method; /* The method :-) */
 	} SSL3_COMP;
 
-#if !defined(OPENSSL_NO_BUF_FREELISTS) && !defined(OPENSSL_NO_RELEASE_BUFFERS)
+#ifndef OPENSSL_NO_BUF_FREELISTS
 typedef struct ssl3_buf_freelist_st
 	{
 	size_t chunklen;

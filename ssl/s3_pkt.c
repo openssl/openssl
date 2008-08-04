@@ -238,11 +238,9 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		if (i <= 0)
 			{
 			rb->left = left;
-#ifndef OPENSSL_NO_RELEASE_BUFFERS
-			if (len+left == 0 &&
-			    (s->mode & SSL_MODE_RELEASE_BUFFERS))
-				ssl3_release_read_buffer(s);
-#endif
+			if (s->mode & SSL_MODE_RELEASE_BUFFERS)
+				if (len+left == 0)
+					ssl3_release_read_buffer(s);
 			return(i);
 			}
 		left+=i;
@@ -825,10 +823,8 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			{
 			wb->left=0;
 			wb->offset+=i;
-#ifndef OPENSSL_NO_RELEASE_BUFFERS
 			if (s->mode & SSL_MODE_RELEASE_BUFFERS)
 				ssl3_release_write_buffer(s);
-#endif
 			s->rwstate=SSL_NOTHING;
 			return(s->s3->wpend_ret);
 			}
@@ -983,10 +979,8 @@ start:
 				{
 				s->rstate=SSL_ST_READ_HEADER;
 				rr->off=0;
-#ifndef OPENSSL_NO_RELEASE_BUFFERS
-				if ((s->mode & SSL_MODE_RELEASE_BUFFERS))
+				if (s->mode & SSL_MODE_RELEASE_BUFFERS)
 					ssl3_release_read_buffer(s);
-#endif
 				}
 			}
 		return(n);

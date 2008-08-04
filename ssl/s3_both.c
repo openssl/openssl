@@ -591,7 +591,7 @@ int ssl_verify_alarm_type(long type)
 	return(al);
 	}
 
-#if !defined(OPENSSL_NO_BUF_FREELISTS) && !defined(OPENSSL_NO_RELEASE_BUFFERS)
+#ifndef OPENSSL_NO_BUF_FREELISTS
 /* On some platforms, malloc() performance is bad enough that you can't just
  * free() and malloc() buffers all the time, so we need to use freelists from
  * unused buffers.  Currently, each freelist holds memory chunks of only a
@@ -698,7 +698,7 @@ int ssl3_setup_read_buffer(SSL *s)
 	return 1;
 
 err:
-	SSLerr(SSL_F_SSL3_SETUP_BUFFERS,ERR_R_MALLOC_FAILURE);
+	SSLerr(SSL_F_SSL3_SETUP_READ_BUFFER,ERR_R_MALLOC_FAILURE);
 	return 0;
 	}
 
@@ -733,7 +733,7 @@ int ssl3_setup_write_buffer(SSL *s)
 	return 1;
 
 err:
-	SSLerr(SSL_F_SSL3_SETUP_BUFFERS,ERR_R_MALLOC_FAILURE);
+	SSLerr(SSL_F_SSL3_SETUP_WRITE_BUFFER,ERR_R_MALLOC_FAILURE);
 	return 0;
 	}
 

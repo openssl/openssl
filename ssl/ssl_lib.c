@@ -1581,7 +1581,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	ret->psk_client_callback=NULL;
 	ret->psk_server_callback=NULL;
 #endif
-#if !defined(OPENSSL_NO_BUF_FREELISTS) && !defined(OPENSSL_NO_RELEASE_BUFFERS)
+#ifndef OPENSSL_NO_BUF_FREELISTS
 	ret->freelist_max_len = SSL_MAX_BUF_FREELIST_LEN_DEFAULT;
 	ret->rbuf_freelist = OPENSSL_malloc(sizeof(SSL3_BUF_FREELIST));
 	if (!ret->rbuf_freelist)
@@ -1633,7 +1633,7 @@ static void SSL_COMP_free(SSL_COMP *comp)
     { OPENSSL_free(comp); }
 #endif
 
-#if !defined(OPENSSL_NO_BUF_FREELISTS) && !defined(OPENSSL_NO_RELEASE_BUFFERS)
+#ifndef OPENSSL_NO_BUF_FREELISTS
 static void
 ssl_buf_freelist_free(SSL3_BUF_FREELIST *list)
 	{
@@ -1714,7 +1714,7 @@ void SSL_CTX_free(SSL_CTX *a)
 		ENGINE_finish(a->client_cert_engine);
 #endif
 
-#if !defined(OPENSSL_NO_BUF_FREELISTS) && !defined(OPENSSL_NO_RELEASE_BUFFERS)
+#ifndef OPENSSL_NO_BUF_FREELISTS
 	if (a->wbuf_freelist)
 		ssl_buf_freelist_free(a->wbuf_freelist);
 	if (a->rbuf_freelist)

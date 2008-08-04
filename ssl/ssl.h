@@ -840,7 +840,7 @@ struct ssl_ctx_st
 		unsigned char *psk, unsigned int max_psk_len);
 #endif
 
-#if !defined(OPENSSL_NO_BUF_FREELISTS) || !defined(OPENSSL_NO_RELEASE_BUFFERS)
+#ifndef OPENSSL_NO_BUF_FREELISTS
 #define SSL_MAX_BUF_FREELIST_LEN_DEFAULT 32
 	unsigned int freelist_max_len;
 	struct ssl3_buf_freelist_st *wbuf_freelist;
@@ -1851,8 +1851,9 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL3_SEND_SERVER_CERTIFICATE		 154
 #define SSL_F_SSL3_SEND_SERVER_HELLO			 242
 #define SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE		 155
-#define SSL_F_SSL3_SETUP_BUFFERS			 156
 #define SSL_F_SSL3_SETUP_KEY_BLOCK			 157
+#define SSL_F_SSL3_SETUP_READ_BUFFER			 156
+#define SSL_F_SSL3_SETUP_WRITE_BUFFER			 291
 #define SSL_F_SSL3_WRITE_BYTES				 158
 #define SSL_F_SSL3_WRITE_PENDING			 159
 #define SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT		 277
