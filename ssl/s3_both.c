@@ -620,7 +620,7 @@ freelist_extract(SSL_CTX *ctx, int for_read, int sz)
 
 	CRYPTO_w_lock(CRYPTO_LOCK_SSL_CTX);
 	list = for_read ? ctx->rbuf_freelist : ctx->wbuf_freelist;
-	if (list != NULL && sz == list->chunklen)
+	if (list != NULL && sz == (int)list->chunklen)
 		ent = list->head;
 	if (ent != NULL)
 		{
