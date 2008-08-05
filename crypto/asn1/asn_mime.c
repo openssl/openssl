@@ -526,6 +526,8 @@ int SMIME_text(BIO *in, BIO *out)
 	sk_MIME_HEADER_pop_free(headers, mime_hdr_free);
 	while ((len = BIO_read(in, iobuf, sizeof(iobuf))) > 0)
 						BIO_write(out, iobuf, len);
+	if (len < 0)
+		return 0;
 	return 1;
 }
 
