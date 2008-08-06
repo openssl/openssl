@@ -717,8 +717,10 @@ file.
 
 Multi-threaded applications must provide two callback functions to
 OpenSSL by calling CRYPTO_set_locking_callback() and
-CRYPTO_set_id_callback().  This is described in the threads(3)
-manpage.
+CRYPTO_set_id_callback(), for all versions of OpenSSL up to and
+including 0.9.8[abc...]. As of version 0.9.9, CRYPTO_set_id_callback()
+and associated APIs are deprecated by CRYPTO_THREADID_set_callback()
+and friends. This is described in the threads(3) manpage.
 
 * I've compiled a program under Windows and it crashes: why?
 

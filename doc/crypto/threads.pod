@@ -194,7 +194,7 @@ Solaris, Irix and Win32.
 
 =head1 HISTORY
 
-CRYPTO_set_locking_callback() and CRYPTO_set_id_callback() are
+CRYPTO_set_locking_callback() is
 available in all versions of SSLeay and OpenSSL.
 CRYPTO_num_locks() was added in OpenSSL 0.9.4.
 All functions dealing with dynamic locks were added in OpenSSL 0.9.5b-dev.
