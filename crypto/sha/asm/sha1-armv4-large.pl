@@ -18,8 +18,8 @@
 # thumb		304		3212		4420
 # armv4-small	392/+29%	1958/+64%	2250/+96%
 # armv4-compact	740/+89%	1552/+26%	1840/+22%
-# armv4-large	1420/+92%	1307/+19%	1500/+23%
-# full unroll	~5100/+260%	~1260/+4%	~1500/+0%
+# armv4-large	1420/+92%	1307/+19%	1370/+34%[***]
+# full unroll	~5100/+260%	~1260/+4%	~1300/+5%
 # ====================================================================
 # thumb		= same as 'small' but in Thumb instructions[**] and
 #		  with recurring code in two private functions;
@@ -37,6 +37,7 @@
 #	modes are limited. As result it takes more instructions to do
 #	the same job in Thumb, therefore the code is never twice as
 #	small and always slower.
+# [***]	which is also ~35% better than compiler generated code.
 
 $output=shift;
 open STDOUT,">$output";
@@ -50,9 +51,10 @@ $c="r5";
 $d="r6";
 $e="r7";
 $K="r8";
-$t0="r10";
-$t1="r11";
-$t2="r12";
+$t0="r9";
+$t1="r10";
+$t2="r11";
+$t3="r12";
 $Xi="r14";
 @V=($a,$b,$c,$d,$e);
 
@@ -64,14 +66,14 @@ $code.=<<___;
 	ldrb	$t0,[$inp],#4
 	ldrb	$t1,[$inp,#-3]
 	ldrb	$t2,[$inp,#-2]
+	ldrb	$t3,[$inp,#-1]
 	add	$e,$K,$e,ror#2			@ E+=K_00_19
 	orr	$t0,$t1,$t0,lsl#8
-	ldrb	$t1,[$inp,#-1]
-	orr	$t0,$t2,$t0,lsl#8
 	add	$e,$e,$a,ror#27			@ E+=ROR(A,27)
-	orr	$t0,$t1,$t0,lsl#8
-	add	$e,$e,$t0			@ E+=X[i]
+	orr	$t0,$t2,$t0,lsl#8
 	eor	$t1,$c,$d			@ F_xx_xx
+	orr	$t0,$t3,$t0,lsl#8
+	add	$e,$e,$t0			@ E+=X[i]
 	str	$t0,[$Xi,#-4]!
 ___
 }
@@ -81,12 +83,12 @@ $code.=<<___;
 	ldr	$t0,[$Xi,#15*4]
 	ldr	$t1,[$Xi,#13*4]
 	ldr	$t2,[$Xi,#7*4]
+	ldr	$t3,[$Xi,#2*4]
 	add	$e,$K,$e,ror#2			@ E+=K_xx_xx
 	eor	$t0,$t0,$t1
-	ldr	$t1,[$Xi,#2*4]
-	add	$e,$e,$a,ror#27			@ E+=ROR(A,27)
 	eor	$t0,$t0,$t2
-	eor	$t0,$t0,$t1
+	eor	$t0,$t0,$t3
+	add	$e,$e,$a,ror#27			@ E+=ROR(A,27)
 ___
 $code.=<<___ if (!defined($flag));
 	eor	$t1,$c,$d			@ F_xx_xx, but not in 40_59
