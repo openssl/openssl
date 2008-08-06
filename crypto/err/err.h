@@ -147,8 +147,7 @@ extern "C" {
 #define ERR_NUM_ERRORS	16
 typedef struct err_state_st
 	{
-	unsigned long pid;
-	void *pidptr; /* new in OpenSSL 0.9.9 */
+	CRYPTO_THREADID tid;
 	int err_flags[ERR_NUM_ERRORS];
 	unsigned long err_buffer[ERR_NUM_ERRORS];
 	char *err_data[ERR_NUM_ERRORS];
@@ -351,7 +350,10 @@ void ERR_load_ERR_strings(void);
 void ERR_load_crypto_strings(void);
 void ERR_free_strings(void);
 
+void ERR_remove_thread_state(const CRYPTO_THREADID *tid);
+#ifndef OPENSSL_NO_DEPRECATED
 void ERR_remove_state(unsigned long pid); /* if zero we look it up */
+#endif
 ERR_STATE *ERR_get_state(void);
 
 #ifndef OPENSSL_NO_LHASH

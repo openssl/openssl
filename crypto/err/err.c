@@ -429,13 +429,13 @@ static ERR_STRING_DATA *int_err_del_item(ERR_STRING_DATA *d)
 
 static unsigned long err_state_hash(const ERR_STATE *a)
 	{
-	return (a->pid + (unsigned long)a->pidptr) * 13;
+	return CRYPTO_THREADID_hash(&a->tid) * 13;
 	}
 static IMPLEMENT_LHASH_HASH_FN(err_state, ERR_STATE)
 
 static int err_state_cmp(const ERR_STATE *a, const ERR_STATE *b)
 	{
-	return (a->pid != b->pid) || (a->pidptr != b->pidptr);
+	return CRYPTO_THREADID_cmp(&a->tid, &b->tid);
 	}
 static IMPLEMENT_LHASH_COMP_FN(err_state, ERR_STATE)
 
@@ -980,40 +980,37 @@ const char *ERR_reason_error_string(unsigned long e)
 	return((p == NULL)?NULL:p->string);
 	}
 
-void ERR_remove_state(unsigned long pid)
+void ERR_remove_thread_state(const CRYPTO_THREADID *id)
 	{
 	ERR_STATE tmp;
-	void *pidptr;
 
-	err_fns_check();
-	if (pid != 0)
-		pidptr = &errno;
+	if (id)
+		CRYPTO_THREADID_cpy(&tmp.tid, id);
 	else
-		{
-		pid = CRYPTO_thread_id();
-		pidptr = CRYPTO_thread_idptr();
-		}
-	
-	tmp.pid=pid;
-	tmp.pidptr=pidptr;
+		CRYPTO_THREADID_current(&tmp.tid);
+	err_fns_check();
 	/* thread_del_item automatically destroys the LHASH if the number of
 	 * items reaches zero. */
 	ERRFN(thread_del_item)(&tmp);
 	}
+
+#ifndef OPENSSL_NO_DEPRECATED
+void ERR_remove_state(unsigned long pid)
+	{
+	ERR_remove_thread_state(NULL);
+	}
+#endif
 
 ERR_STATE *ERR_get_state(void)
 	{
 	static ERR_STATE fallback;
 	ERR_STATE *ret,tmp,*tmpp=NULL;
 	int i;
-	unsigned long pid;
-	void *pidptr;
+	CRYPTO_THREADID tid;
 
 	err_fns_check();
-	pid = CRYPTO_thread_id();
-	pidptr = CRYPTO_thread_idptr();
-	tmp.pid = pid;
-	tmp.pidptr = pidptr;
+	CRYPTO_THREADID_current(&tid);
+	CRYPTO_THREADID_cpy(&tmp.tid, &tid);
 	ret=ERRFN(thread_get_item)(&tmp);
 
 	/* ret == the error state, if NULL, make a new one */
@@ -1021,8 +1018,7 @@ ERR_STATE *ERR_get_state(void)
 		{
 		ret=(ERR_STATE *)OPENSSL_malloc(sizeof(ERR_STATE));
 		if (ret == NULL) return(&fallback);
-		ret->pid=pid;
-		ret->pidptr=pidptr;
+		CRYPTO_THREADID_cpy(&ret->tid, &tid);
 		ret->top=0;
 		ret->bottom=0;
 		for (i=0; i<ERR_NUM_ERRORS; i++)

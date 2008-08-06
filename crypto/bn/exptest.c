@@ -187,7 +187,7 @@ int main(int argc, char *argv[])
 	BN_free(b);
 	BN_free(m);
 	BN_CTX_free(ctx);
-	ERR_remove_state(0);
+	ERR_remove_thread_state(NULL);
 	CRYPTO_mem_leaks(out);
 	BIO_free(out);
 	printf(" done\n");

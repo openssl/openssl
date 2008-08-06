@@ -421,12 +421,27 @@ void CRYPTO_set_add_lock_callback(int (*func)(int *num,int mount,int type,
 					      const char *file, int line));
 int (*CRYPTO_get_add_lock_callback(void))(int *num,int mount,int type,
 					  const char *file,int line);
+
+/* Don't use this structure directly. */
+typedef struct crypto_threadid_st
+	{
+	void *ptr;
+	unsigned long val;
+	} CRYPTO_THREADID;
+/* Only use CRYPTO_THREADID_set_[numeric|pointer]() within callbacks */
+void CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val);
+void CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr);
+int CRYPTO_THREADID_set_callback(void (*threadid_func)(CRYPTO_THREADID *));
+void (*CRYPTO_THREADID_get_callback(void))(CRYPTO_THREADID *);
+void CRYPTO_THREADID_current(CRYPTO_THREADID *id);
+int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b);
+void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src);
+unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id);
+#ifndef OPENSSL_NO_DEPRECATED
 void CRYPTO_set_id_callback(unsigned long (*func)(void));
 unsigned long (*CRYPTO_get_id_callback(void))(void);
 unsigned long CRYPTO_thread_id(void);
-void CRYPTO_set_idptr_callback(void *(*func)(void));
-void *(*CRYPTO_get_idptr_callback(void))(void);
-void *CRYPTO_thread_idptr(void);
+#endif
 
 const char *CRYPTO_get_lock_name(int type);
 int CRYPTO_add_lock(int *pointer,int amount,int type, const char *file,

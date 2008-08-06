@@ -184,8 +184,10 @@ static void (MS_FAR *locking_callback)(int mode,int type,
 	const char *file,int line)=0;
 static int (MS_FAR *add_lock_callback)(int *pointer,int amount,
 	int type,const char *file,int line)=0;
+#ifndef OPENSSL_NO_DEPRECATED
 static unsigned long (MS_FAR *id_callback)(void)=0;
-static void *(MS_FAR *idptr_callback)(void)=0;
+#endif
+static void (MS_FAR *threadid_callback)(CRYPTO_THREADID *)=0;
 static struct CRYPTO_dynlock_value *(MS_FAR *dynlock_create_callback)
 	(const char *file,int line)=0;
 static void (MS_FAR *dynlock_lock_callback)(int mode,
@@ -414,6 +416,108 @@ void CRYPTO_set_add_lock_callback(int (*func)(int *num,int mount,int type,
 	add_lock_callback=func;
 	}
 
+/* the memset() here and in set_pointer() seem overkill, but for the sake of
+ * CRYPTO_THREADID_cmp() this avoids any platform silliness that might cause two
+ * "equal" THREADID structs to not be memcmp()-identical. */
+void CRYPTO_THREADID_set_numeric(CRYPTO_THREADID *id, unsigned long val)
+	{
+	memset(id, 0, sizeof(*id));
+	id->val = val;
+	}
+
+static const unsigned char hash_coeffs[] = { 3, 5, 7, 11, 13, 17, 19, 23 };
+void CRYPTO_THREADID_set_pointer(CRYPTO_THREADID *id, void *ptr)
+	{
+	unsigned char *dest = (void *)&id->val;
+	unsigned int accum = 0;
+	unsigned char dnum = sizeof(id->val);
+
+	memset(id, 0, sizeof(*id));
+	id->ptr = ptr;
+	if (sizeof(id->val) >= sizeof(id->ptr))
+		{
+		/* 'ptr' can be embedded in 'val' without loss of uniqueness */
+		id->val = (unsigned long)id->ptr;
+		return;
+		}
+	/* hash ptr ==> val. Each byte of 'val' gets the mod-256 total of a
+	 * linear function over the bytes in 'ptr', the co-efficients of which
+	 * are a sequence of low-primes (hash_coeffs is an 8-element cycle) -
+	 * the starting prime for the sequence varies for each byte of 'val'
+	 * (unique polynomials unless pointers are >64-bit). For added spice,
+	 * the totals accumulate rather than restarting from zero, and the index
+	 * of the 'val' byte is added each time (position dependence). If I was
+	 * a black-belt, I'd scan big-endian pointers in reverse to give
+	 * low-order bits more play, but this isn't crypto and I'd prefer nobody
+	 * mistake it as such. Plus I'm lazy. */
+	while (dnum--)
+		{
+		const unsigned char *src = (void *)&id->ptr;
+		unsigned char snum = sizeof(id->ptr);
+		while (snum--)
+			accum += *(src++) * hash_coeffs[(snum + dnum) & 7];
+		accum += dnum;
+		*(dest++) = accum & 255;
+		}
+	}
+
+int CRYPTO_THREADID_set_callback(void (*func)(CRYPTO_THREADID *))
+	{
+	if (threadid_callback)
+		return 0;
+	threadid_callback = func;
+	return 1;
+	}
+
+void (*CRYPTO_THREADID_get_callback(void))(CRYPTO_THREADID *)
+	{
+	return threadid_callback;
+	}
+
+void CRYPTO_THREADID_current(CRYPTO_THREADID *id)
+	{
+	if (threadid_callback)
+		{
+		threadid_callback(id);
+		return;
+		}
+#ifndef OPENSSL_NO_DEPRECATED
+	/* If the deprecated callback was set, fall back to that */
+	if (id_callback)
+		{
+		CRYPTO_THREADID_set_numeric(id, id_callback());
+		return;
+		}
+#endif
+	/* Else pick a backup */
+#ifdef OPENSSL_SYS_WIN16
+	CRYPTO_THREADID_set_numeric(id, (unsigned long)GetCurrentTask());
+#elif defined(OPENSSL_SYS_WIN32)
+	CRYPTO_THREADID_set_numeric(id, (unsigned long)GetCurrentThreadId());
+#elif defined(OPENSSL_SYS_BEOS)
+	CRYPTO_THREADID_set_numeric(id, (unsigned long)find_thread(NULL));
+#else
+	/* For everything else, default to using the address of 'errno' */
+	CRYPTO_THREADID_set_pointer(id, &errno);
+#endif
+	}
+
+int CRYPTO_THREADID_cmp(const CRYPTO_THREADID *a, const CRYPTO_THREADID *b)
+	{
+	return memcmp(a, b, sizeof(*a));
+	}
+
+void CRYPTO_THREADID_cpy(CRYPTO_THREADID *dest, const CRYPTO_THREADID *src)
+	{
+	memcpy(dest, src, sizeof(*src));
+	}
+
+unsigned long CRYPTO_THREADID_hash(const CRYPTO_THREADID *id)
+	{
+	return id->val;
+	}
+
+#ifndef OPENSSL_NO_DEPRECATED
 unsigned long (*CRYPTO_get_id_callback(void))(void)
 	{
 	return(id_callback);
@@ -446,33 +550,13 @@ unsigned long CRYPTO_thread_id(void)
 		ret=id_callback();
 	return(ret);
 	}
-
-void *(*CRYPTO_get_idptr_callback(void))(void)
-	{
-	return(idptr_callback);
-	}
-
-void CRYPTO_set_idptr_callback(void *(*func)(void))
-	{
-	idptr_callback=func;
-	}
-
-void *CRYPTO_thread_idptr(void)
-	{
-	void *ret=NULL;
-
-	if (idptr_callback == NULL)
-		ret = &errno;
-	else
-		ret = idptr_callback();
-
-	return ret;
-	}
+#endif
 
 void CRYPTO_lock(int mode, int type, const char *file, int line)
 	{
 #ifdef LOCK_DEBUG
 		{
+		CRYPTO_THREADID id;
 		char *rw_text,*operation_text;
 
 		if (mode & CRYPTO_LOCK)
@@ -489,8 +573,9 @@ void CRYPTO_lock(int mode, int type, const char *file, int line)
 		else
 			rw_text="ERROR";
 
-		fprintf(stderr,"lock:%08lx/%08p:(%s)%s %-18s %s:%d\n",
-			CRYPTO_thread_id(), CRYPTO_thread_idptr(), rw_text, operation_text,
+		CRYPTO_THREADID_current(&id);
+		fprintf(stderr,"lock:%08lx:(%s)%s %-18s %s:%d\n",
+			CRYPTO_THREADID_hash(&id), rw_text, operation_text,
 			CRYPTO_get_lock_name(type), file, line);
 		}
 #endif
@@ -526,11 +611,14 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 
 		ret=add_lock_callback(pointer,amount,type,file,line);
 #ifdef LOCK_DEBUG
-		fprintf(stderr,"ladd:%08lx/%0xp:%2d+%2d->%2d %-18s %s:%d\n",
-			CRYPTO_thread_id(), CRYPTO_thread_idptr(),
-			before,amount,ret,
+		{
+		CRYPTO_THREADID id;
+		CRYPTO_THREADID_current(&id);
+		fprintf(stderr,"ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
+			CRYPTO_THREADID_hash(&id), before,amount,ret,
 			CRYPTO_get_lock_name(type),
 			file,line);
+		}
 #endif
 		}
 	else
@@ -539,11 +627,15 @@ int CRYPTO_add_lock(int *pointer, int amount, int type, const char *file,
 
 		ret= *pointer+amount;
 #ifdef LOCK_DEBUG
-		fprintf(stderr,"ladd:%08lx/%0xp:%2d+%2d->%2d %-18s %s:%d\n",
-			CRYPTO_thread_id(), CRYPTO_thread_idptr(),
+		{
+		CRYPTO_THREADID id;
+		CRYPTO_THREADID_current(&id);
+		fprintf(stderr,"ladd:%08lx:%2d+%2d->%2d %-18s %s:%d\n",
+			CRYPTO_THREADID_hash(&id),
 			*pointer,amount,ret,
 			CRYPTO_get_lock_name(type),
 			file,line);
+		}
 #endif
 		*pointer=ret;
 		CRYPTO_lock(CRYPTO_UNLOCK|CRYPTO_WRITE,type,file,line);

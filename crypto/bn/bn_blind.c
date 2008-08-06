@@ -121,10 +121,11 @@ struct bn_blinding_st
 	BIGNUM *Ai;
 	BIGNUM *e;
 	BIGNUM *mod; /* just a reference */
+#ifndef OPENSSL_NO_DEPRECATED
 	unsigned long thread_id; /* added in OpenSSL 0.9.6j and 0.9.7b;
 				  * used only by crypto/rsa/rsa_eay.c, rsa_lib.c */
-	void *thread_idptr; /* added in OpenSSL 0.9.9;
-			     * used only by crypto/rsa/rsa_eay.c, rsa_lib.c */
+#endif
+	CRYPTO_THREADID tid;
 	unsigned int  counter;
 	unsigned long flags;
 	BN_MONT_CTX *m_ctx;
@@ -160,6 +161,7 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 		BN_set_flags(ret->mod, BN_FLG_CONSTTIME);
 
 	ret->counter = BN_BLINDING_COUNTER;
+	CRYPTO_THREADID_current(&ret->tid);
 	return(ret);
 err:
 	if (ret != NULL) BN_BLINDING_free(ret);
@@ -265,6 +267,7 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b, BN_CTX *ct
 	return(ret);
 	}
 
+#ifndef OPENSSL_NO_DEPRECATED
 unsigned long BN_BLINDING_get_thread_id(const BN_BLINDING *b)
 	{
 	return b->thread_id;
@@ -274,15 +277,11 @@ void BN_BLINDING_set_thread_id(BN_BLINDING *b, unsigned long n)
 	{
 	b->thread_id = n;
 	}
+#endif
 
-void *BN_BLINDING_get_thread_idptr(const BN_BLINDING *b)
+CRYPTO_THREADID *BN_BLINDING_thread_id(BN_BLINDING *b)
 	{
-	return b->thread_idptr;
-	}
-
-void BN_BLINDING_set_thread_idptr(BN_BLINDING *b, void *p)
-	{
-	b->thread_idptr = p;
+	return &b->tid;
 	}
 
 unsigned long BN_BLINDING_get_flags(const BN_BLINDING *b)

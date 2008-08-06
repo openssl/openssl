@@ -4,6 +4,30 @@
 
  Changes between 0.9.8i and 0.9.9  [xx XXX xxxx]
 
+  *) To cater for systems that provide a pointer-based thread ID rather
+     than numeric, deprecate the current numeric thread ID mechanism and
+     replace it with a structure and associated callback type. This
+     mechanism allows a numeric "hash" to be extracted from a thread ID in
+     either case, and on platforms where pointers are larger than 'long',
+     mixing is done to help ensure the numeric 'hash' is usable even if it
+     can't be guaranteed unique. The default mechanism is to use "&errno"
+     as a pointer-based thread ID to distinguish between threads.
+
+     Applications that want to provide their own thread IDs should now use
+     CRYPTO_THREADID_set_callback() to register a callback that will call
+     either CRYPTO_THREADID_set_numeric() or CRYPTO_THREADID_set_pointer().
+
+     (This new approach replaces the functions CRYPTO_set_idptr_callback(),
+     CRYPTO_get_idptr_callback(), and CRYPTO_thread_idptr() that existed in
+     OpenSSL 0.9.9-dev between June 2006 and August 2008. Also, if an
+     application was previously providing a numeric thread callback that
+     was inappropriate for distinguishing threads, then uniqueness might
+     have been obtained with &errno that happened immediately in the
+     intermediate development versions of OpenSSL; this is no longer the
+     case, the numeric thread callback will now override the automatic use
+     of &errno.)
+     [Geoff Thorpe, with help from Bodo Moeller]
+
   *) Initial support for different CRL issuing certificates. This covers a
      simple case where the self issued certificates in the chain exist and
      the real CRL issuer is higher in the existing chain.
@@ -306,30 +330,6 @@
      digest and cipher tables. New options added to openssl utility:
      list-message-digest-algorithms and list-cipher-algorithms.
      [Steve Henson]
-
-  *) In addition to the numerical (unsigned long) thread ID, provide
-     for a pointer (void *) thread ID.  This helps accomodate systems
-     that do not provide an unsigned long thread ID.  OpenSSL assumes
-     it is in the same thread iff both the numerical and the pointer
-     thread ID agree; so applications are just required to define one
-     of them appropriately (e.g., by using a pointer to a per-thread
-     memory object malloc()ed by the application for the pointer-type
-     thread ID).  Exactly analoguous to the existing functions
-
-        void CRYPTO_set_id_callback(unsigned long (*func)(void));
-        unsigned long (*CRYPTO_get_id_callback(void))(void);
-        unsigned long CRYPTO_thread_id(void);
-
-     we now have additional functions
-
-        void CRYPTO_set_idptr_callback(void *(*func)(void));
-        void *(*CRYPTO_get_idptr_callback(void))(void);
-        void *CRYPTO_thread_idptr(void);
-
-     also in <openssl/crypto.h>.  The default value for
-     CRYPTO_thread_idptr() if the application has not provided its own
-     callback is &errno.
-     [Bodo Moeller]
 
   *) Change the array representation of binary polynomials: the list
      of degrees of non-zero coefficients is now terminated with -1.
