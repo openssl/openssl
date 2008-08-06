@@ -205,12 +205,12 @@ $code.=<<___;
 	b	.L_20_39_or_60_79	@ [+4], spare 300 bytes
 .L_done:
 	add	sp,sp,#80*4		@ "deallocate" stack frame
-	ldmia	$ctx,{$K,$t0,$t1,$t2,$Xi}
+	ldmia	$ctx,{$K,$t0,$t1,$t2,$t3}
 	add	$a,$K,$a
 	add	$b,$t0,$b
 	add	$c,$t1,$c,ror#2
 	add	$d,$t2,$d,ror#2
-	add	$e,$Xi,$e,ror#2
+	add	$e,$t3,$e,ror#2
 	stmia	$ctx,{$a,$b,$c,$d,$e}
 	teq	$inp,$len
 	bne	.Lloop			@ [+18], total 1307
