@@ -4,6 +4,18 @@
 
  Changes between 0.9.8i and 0.9.9  [xx XXX xxxx]
 
+  *) Fixes to pathlength constraint, self issued certificate handling,
+     policy processing to align with RFC3280 and PKITS tests.
+
+     This work was sponsored by Google.
+     [Steve Henson]
+
+  *) Support for name constraints certificate extension. DN, email, DNS
+     and URI types are currently supported.
+
+     This work was sponsored by Google.
+     [Steve Henson]
+
   *) To cater for systems that provide a pointer-based thread ID rather
      than numeric, deprecate the current numeric thread ID mechanism and
      replace it with a structure and associated callback type. This
@@ -31,6 +43,8 @@
   *) Initial support for different CRL issuing certificates. This covers a
      simple case where the self issued certificates in the chain exist and
      the real CRL issuer is higher in the existing chain.
+
+     This work was sponsored by Google.
      [Steve Henson]
 
   *) Removed effectively defunct crypto/store from the build.

@@ -74,6 +74,7 @@ static int null_callback(int ok,X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x);
 static int check_chain_extensions(X509_STORE_CTX *ctx);
+static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx);
 static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
@@ -289,6 +290,12 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	/* We have the chain complete: now we need to check its purpose */
 	ok = check_chain_extensions(ctx);
 
+	if (!ok) goto end;
+
+	/* Check name constraints */
+
+	ok = check_name_constraints(ctx);
+	
 	if (!ok) goto end;
 
 	/* The chain extensions are OK: check trust */
@@ -537,6 +544,42 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 	return ok;
 #endif
 }
+
+static int check_name_constraints(X509_STORE_CTX *ctx)
+	{
+	X509 *x;
+	int i, j, rv;
+	/* Check name constraints for all certificates */
+	for (i = sk_X509_num(ctx->chain) - 1; i >= 0; i--)
+		{
+		x = sk_X509_value(ctx->chain, i);
+		/* Ignore self issued certs unless last in chain */
+		if (i && (x->ex_flags & EXFLAG_SI))
+			continue;
+		/* Check against constraints for all certificates higher in
+		 * chain including trust anchor. Trust anchor not strictly
+		 * speaking needed but if it includes constraints it is to be
+		 * assumed it expects them to be obeyed.
+		 */
+		for (j = sk_X509_num(ctx->chain) - 1; j > i; j--)
+			{
+			NAME_CONSTRAINTS *nc = sk_X509_value(ctx->chain, j)->nc;
+			if (nc)
+				{
+				rv = NAME_CONSTRAINTS_check(x, nc);
+				if (rv != X509_V_OK)
+					{
+					ctx->error = rv;
+					ctx->error_depth = i;
+					ctx->current_cert = x;
+					if (!ctx->verify_cb(0,ctx))
+						return 0;
+					}
+				}
+			}
+		}
+	return 1;
+	}
 
 static int check_trust(X509_STORE_CTX *ctx)
 {

@@ -295,6 +295,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
 #endif
 		NID_policy_constraints,	/* 401 */
 		NID_proxyCertInfo,	/* 663 */
+		NID_name_constraints,	/* 666 */
 		NID_inhibit_any_policy	/* 748 */
 	};
 
@@ -448,6 +449,10 @@ static void x509v3_cache_extensions(X509 *x)
 	}
 	x->skid =X509_get_ext_d2i(x, NID_subject_key_identifier, NULL, NULL);
 	x->akid =X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
+	x->altname = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
+	x->nc = X509_get_ext_d2i(x, NID_name_constraints, &i, NULL);
+	if (!x->nc && (i != -1))
+		x->ex_flags |= EXFLAG_INVALID;
 	setup_crldp(x);
 			
 			

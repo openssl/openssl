@@ -177,6 +177,7 @@ typedef struct X509_POLICY_CACHE_st X509_POLICY_CACHE;
 typedef struct AUTHORITY_KEYID_st AUTHORITY_KEYID;
 typedef struct DIST_POINT_st DIST_POINT;
 typedef struct ISSUING_DIST_POINT_st ISSUING_DIST_POINT;
+typedef struct NAME_CONSTRAINTS_st NAME_CONSTRAINTS;
 
   /* If placed in pkcs12.h, we end up with a circular depency with pkcs7.h */
 #define DECLARE_PKCS12_STACK_OF(type) /* Nothing */

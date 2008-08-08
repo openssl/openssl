@@ -294,6 +294,8 @@ struct x509_st
 	AUTHORITY_KEYID *akid;
 	X509_POLICY_CACHE *policy_cache;
 	STACK_OF(DIST_POINT) *crldp;
+	STACK_OF(GENERAL_NAME) *altname;
+	NAME_CONSTRAINTS *nc;
 #ifndef OPENSSL_NO_RFC3779
 	STACK_OF(IPAddressFamily) *rfc3779_addr;
 	struct ASIdentifiers_st *rfc3779_asid;
