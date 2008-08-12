@@ -795,6 +795,9 @@ static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer)
 	{
 	X509 *crl_issuer;
 	int cidx = ctx->error_depth;
+#if 0
+	int i;
+#endif
 	if (!crl->akid)
 		return 1;
 	if (cidx != sk_X509_num(ctx->chain) - 1)
@@ -819,7 +822,31 @@ static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer)
 				break;
 			}
 		}
-		
+
+
+	/* Otherwise the CRL issuer is not on the path. Look for it in the
+	 * set of untrusted certificates.
+	 */
+
+#if 0
+	/* FIXME: not enabled yet because the CRL issuer certifcate is not
+	 * validated.
+	 */
+
+	for (i = 0; i < sk_X509_num(ctx->untrusted); i++)
+		{
+		crl_issuer = sk_X509_value(ctx->untrusted, i);
+		if (X509_NAME_cmp(X509_get_subject_name(crl_issuer),
+					X509_CRL_get_issuer(crl)))
+			continue;
+		if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK)
+			{
+			*pissuer = crl_issuer;
+			return 1;
+			}
+		}
+#endif
+
 	return 0;
 	}
 
