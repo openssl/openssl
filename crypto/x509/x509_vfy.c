@@ -1122,7 +1122,8 @@ static int check_policy(X509_STORE_CTX *ctx)
 				continue;
 			ctx->current_cert = x;
 			ctx->error = X509_V_ERR_INVALID_POLICY_EXTENSION;
-			ret = ctx->verify_cb(0, ctx);
+			if(!ctx->verify_cb(0, ctx))
+				return 0;
 			}
 		return 1;
 		}

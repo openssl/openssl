@@ -4,6 +4,11 @@
 
  Changes between 0.9.8i and 0.9.9  [xx XXX xxxx]
 
+  *) Add support for policy mappings extension.
+
+     This work was sponsored by Google.
+     [Steve Henson]
+
   *) Fixes to pathlength constraint, self issued certificate handling,
      policy processing to align with RFC3280 and PKITS tests.
 

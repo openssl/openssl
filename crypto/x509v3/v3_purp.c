@@ -296,6 +296,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
 		NID_policy_constraints,	/* 401 */
 		NID_proxyCertInfo,	/* 663 */
 		NID_name_constraints,	/* 666 */
+		NID_policy_mappings,	/* 747 */
 		NID_inhibit_any_policy	/* 748 */
 	};
 
