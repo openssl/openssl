@@ -1225,6 +1225,13 @@ int ssl3_do_change_cipher_spec(SSL *s)
 
 	if (s->s3->tmp.key_block == NULL)
 		{
+		if (s->session == NULL) 
+			{
+			/* might happen if dtls1_read_bytes() calls this */
+			SSLerr(SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC,SSL_R_CCS_RECEIVED_EARLY);
+			return (0);
+			}
+
 		s->session->cipher=s->s3->tmp.new_cipher;
 		if (!s->method->ssl3_enc->setup_key_block(s)) return(0);
 		}
