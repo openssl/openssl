@@ -11,7 +11,6 @@
 
      This work was sponsored by Google.
      [Steve Henson]
-     
 
   *) Add support for policy mappings extension.
 
@@ -42,6 +41,11 @@
      Applications that want to provide their own thread IDs should now use
      CRYPTO_THREADID_set_callback() to register a callback that will call
      either CRYPTO_THREADID_set_numeric() or CRYPTO_THREADID_set_pointer().
+
+     Note that ERR_remove_state() is now deprecated, because it is tied
+     to the assumption that thread IDs are numeric.  ERR_remove_state(0)
+     to free the current thread's error state should be replaced by
+     ERR_remove_thread_state(NULL).
 
      (This new approach replaces the functions CRYPTO_set_idptr_callback(),
      CRYPTO_get_idptr_callback(), and CRYPTO_thread_idptr() that existed in
