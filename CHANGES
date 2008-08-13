@@ -4,6 +4,15 @@
 
  Changes between 0.9.8i and 0.9.9  [xx XXX xxxx]
 
+  *) Add support for distinct certificate and CRL paths. The CRL issuer
+     certificate is validated separately in this case. Only enabled if
+     an extended CRL support flag is set: this flag will enable additional
+     CRL functionality in future.
+
+     This work was sponsored by Google.
+     [Steve Henson]
+     
+
   *) Add support for policy mappings extension.
 
      This work was sponsored by Google.

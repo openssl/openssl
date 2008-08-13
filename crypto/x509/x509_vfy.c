@@ -81,6 +81,10 @@ static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
 static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer);
 static int idp_check_scope(X509 *x, X509_CRL *crl);
+static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
+static int check_crl_chain(X509_STORE_CTX *ctx,
+			STACK_OF(X509) *cert_path,
+			STACK_OF(X509) *crl_path);
 static int internal_verify(X509_STORE_CTX *ctx);
 const char X509_version[]="X.509" OPENSSL_VERSION_PTEXT;
 
@@ -407,8 +411,8 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 	X509 *x;
 	int (*cb)(int xok,X509_STORE_CTX *xctx);
 	int proxy_path_length = 0;
-	int allow_proxy_certs =
-		!!(ctx->param->flags & X509_V_FLAG_ALLOW_PROXY_CERTS);
+	int purpose;
+	int allow_proxy_certs;
 	cb=ctx->verify_cb;
 
 	/* must_be_ca can have 1 of 3 values:
@@ -421,10 +425,22 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 	*/
 	must_be_ca = -1;
 
-	/* A hack to keep people who don't want to modify their software
-	   happy */
-	if (getenv("OPENSSL_ALLOW_PROXY_CERTS"))
-		allow_proxy_certs = 1;
+	/* CRL path validation */
+	if (ctx->parent)
+		{
+		allow_proxy_certs = 0;
+		purpose = X509_PURPOSE_CRL_SIGN;
+		}
+	else
+		{
+		allow_proxy_certs =
+			!!(ctx->param->flags & X509_V_FLAG_ALLOW_PROXY_CERTS);
+		/* A hack to keep people who don't want to modify their
+		   software happy */
+		if (getenv("OPENSSL_ALLOW_PROXY_CERTS"))
+			allow_proxy_certs = 1;
+		purpose = ctx->param->purpose;
+		}
 
 	/* Check all untrusted certificates */
 	for (i = 0; i < ctx->last_untrusted; i++)
@@ -491,8 +507,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
 			}
 		if (ctx->param->purpose > 0)
 			{
-			ret = X509_check_purpose(x, ctx->param->purpose,
-				must_be_ca > 0);
+			ret = X509_check_purpose(x, purpose, must_be_ca > 0);
 			if ((ret == 0)
 				|| ((ctx->param->flags & X509_V_FLAG_X509_STRICT)
 					&& (ret != 1)))
@@ -795,9 +810,7 @@ static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer)
 	{
 	X509 *crl_issuer;
 	int cidx = ctx->error_depth;
-#if 0
 	int i;
-#endif
 	if (!crl->akid)
 		return 1;
 	if (cidx != sk_X509_num(ctx->chain) - 1)
@@ -824,13 +837,13 @@ static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer)
 		}
 
 
+	/* Anything else needs extended CRL support */
+
+	if (!(ctx->param->flags & X509_V_FLAG_EXTENDED_CRL_SUPPORT))
+		return 0;
+
 	/* Otherwise the CRL issuer is not on the path. Look for it in the
 	 * set of untrusted certificates.
-	 */
-
-#if 0
-	/* FIXME: not enabled yet because the CRL issuer certifcate is not
-	 * validated.
 	 */
 
 	for (i = 0; i < sk_X509_num(ctx->untrusted); i++)
@@ -841,12 +854,73 @@ static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer)
 			continue;
 		if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK)
 			{
-			*pissuer = crl_issuer;
-			return 1;
+			if (check_crl_path(ctx, crl_issuer))
+				{
+				*pissuer = crl_issuer;
+				return 1;
+				}
 			}
 		}
-#endif
 
+	return 0;
+	}
+
+/* Check the path of a CRL issuer certificate. This creates a new
+ * X509_STORE_CTX and populates it with most of the parameters from the
+ * parent. This could be optimised somewhat since a lot of path checking
+ * will be duplicated by the parent, but this will rarely be used in 
+ * practice.
+ */
+
+static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
+	{
+	X509_STORE_CTX crl_ctx;
+	int ret;
+	if (ctx->parent)
+		return 0;
+	if (!X509_STORE_CTX_init(&crl_ctx, ctx->ctx, x, ctx->untrusted))
+		return -1;
+
+	crl_ctx.crls = ctx->crls;
+	/* Copy verify params across */
+	X509_STORE_CTX_set0_param(&crl_ctx, ctx->param);
+
+	crl_ctx.parent = ctx;
+	crl_ctx.verify_cb = ctx->verify_cb;
+
+	/* Verify CRL issuer */
+	ret = X509_verify_cert(&crl_ctx);
+
+	/* Maybe send path check result back to parent? */
+	if (!ret)
+		goto err;
+
+	/* Check chain is acceptable */
+
+	ret = check_crl_chain(ctx, ctx->chain, crl_ctx.chain);
+
+	err:
+	X509_STORE_CTX_cleanup(&crl_ctx);
+	return ret;
+	}
+
+/* RFC3280 says nothing about the relationship between CRL path
+ * and certificate path, which could lead to situations where a
+ * certificate could be revoked or validated by a CA not authorised
+ * to do so. RFC5280 is more strict and states that the two paths must
+ * end in the same trust anchor, though some discussions remain...
+ * until this is resolved we use the RFC5280 version
+ */
+
+static int check_crl_chain(X509_STORE_CTX *ctx,
+			STACK_OF(X509) *cert_path,
+			STACK_OF(X509) *crl_path)
+	{
+	X509 *cert_ta, *crl_ta;
+	cert_ta = sk_X509_value(cert_path, sk_X509_num(cert_path) - 1);
+	crl_ta = sk_X509_value(crl_path, sk_X509_num(crl_path) - 1);
+	if (!X509_cmp(cert_ta, crl_ta))
+		return 1;
 	return 0;
 	}
 
@@ -1127,6 +1201,8 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 static int check_policy(X509_STORE_CTX *ctx)
 	{
 	int ret;
+	if (ctx->parent)
+		return 1;
 	ret = X509_policy_check(&ctx->tree, &ctx->explicit_policy, ctx->chain,
 				ctx->param->policies, ctx->param->flags);
 	if (ret == 0)
@@ -1635,6 +1711,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	ctx->current_cert=NULL;
 	ctx->current_issuer=NULL;
 	ctx->tree = NULL;
+	ctx->parent = NULL;
 
 	ctx->param = X509_VERIFY_PARAM_new();
 
@@ -1754,7 +1831,8 @@ void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx)
 	if (ctx->cleanup) ctx->cleanup(ctx);
 	if (ctx->param != NULL)
 		{
-		X509_VERIFY_PARAM_free(ctx->param);
+		if (ctx->parent == NULL)
+			X509_VERIFY_PARAM_free(ctx->param);
 		ctx->param=NULL;
 		}
 	if (ctx->tree != NULL)

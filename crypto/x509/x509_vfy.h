@@ -269,6 +269,8 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	X509 *current_issuer;	/* cert currently being tested as valid issuer */
 	X509_CRL *current_crl;	/* current CRL */
 
+	X509_STORE_CTX *parent; /* For CRL path validation: parent context */
+
 	CRYPTO_EX_DATA ex_data;
 	} /* X509_STORE_CTX */;
 
@@ -377,6 +379,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define X509_V_FLAG_INHIBIT_MAP			0x400
 /* Notify callback that policy is OK */
 #define X509_V_FLAG_NOTIFY_POLICY		0x800
+/* Extended CRL features such as indirect CRLs, alternate CRL signing keys */
+#define X509_V_FLAG_EXTENDED_CRL_SUPPORT	0x1000
 
 #define X509_VP_FLAG_DEFAULT			0x1
 #define X509_VP_FLAG_OVERWRITE			0x2
