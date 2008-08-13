@@ -716,7 +716,7 @@ static EVP_PKEY *capi_get_pkey(ENGINE *eng, CAPI_KEY *key)
 	return ret;
 
 memerr:
-	CAPIerr(CAPI_F_CAPI_LOAD_PRIVKEY, ERR_R_MALLOC_FAILURE);
+	CAPIerr(CAPI_F_CAPI_GET_PKEY, ERR_R_MALLOC_FAILURE);
 	goto err;
 
 	}
@@ -1716,7 +1716,7 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 					CERT_STORE_CREATE_NEW_FLAG, NULL);
 	if (!dstore)
 		{
-		CAPIerr(CAPI_F_CLIENT_CERT_SELECT, CAPI_R_ERROR_CREATING_STORE);
+		CAPIerr(CAPI_F_CERT_SELECT_DIALOG, CAPI_R_ERROR_CREATING_STORE);
 		capi_addlasterror();
 		goto err;
 		}
@@ -1729,7 +1729,7 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 		if (!CertAddCertificateContextToStore(dstore, key->pcert,
 						CERT_STORE_ADD_NEW, NULL))
 			{
-			CAPIerr(CAPI_F_CLIENT_CERT_SELECT, CAPI_R_ERROR_ADDING_CERT);
+			CAPIerr(CAPI_F_CERT_SELECT_DIALOG, CAPI_R_ERROR_ADDING_CERT);
 			capi_addlasterror();
 			goto err;
 			}
