@@ -279,7 +279,12 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	{
 	int i,j,bl;
 
-	OPENSSL_assert(inl > 0);
+	if (inl <= 0)
+		{
+		*outl = 0;
+		return inl == 0;
+		}
+
 	if(ctx->buf_len == 0 && (inl&(ctx->block_mask)) == 0)
 		{
 		if(ctx->cipher->do_cipher(ctx,out,in,inl))
@@ -381,10 +386,10 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
 	int fix_len;
 	unsigned int b;
 
-	if (inl == 0)
+	if (inl <= 0)
 		{
-		*outl=0;
-		return 1;
+		*outl = 0;
+		return inl == 0;
 		}
 
 	if (ctx->flags & EVP_CIPH_NO_PADDING)
