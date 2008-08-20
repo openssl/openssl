@@ -80,7 +80,7 @@ static int check_revocation(X509_STORE_CTX *ctx);
 static int check_cert(X509_STORE_CTX *ctx);
 static int check_policy(X509_STORE_CTX *ctx);
 static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer);
-static int idp_check_scope(X509 *x, X509_CRL *crl);
+static int idp_check_scope(X509 *x, X509_CRL *crl, int *pimatch);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
 static int check_crl_chain(X509_STORE_CTX *ctx,
 			STACK_OF(X509) *cert_path,
@@ -751,7 +751,7 @@ static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 
 /* IDP flags which cause a CRL to be rejected */
 
-#define IDP_REJECT	(IDP_INVALID|IDP_INDIRECT|IDP_REASONS)
+#define IDP_REJECT	(IDP_INVALID|IDP_REASONS)
 
 static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 			X509_NAME *nm, STACK_OF(X509_CRL) *crls)
@@ -761,11 +761,19 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 	X509 *crl_issuer, *best_crl_issuer = NULL;
 	for (i = 0; i < sk_X509_CRL_num(crls); i++)
 		{
+		int imatch = 1;
 		crl_score = 0;
 		crl_issuer = NULL;
 		crl = sk_X509_CRL_value(crls, i);
 		if (nm && X509_NAME_cmp(nm, X509_CRL_get_issuer(crl)))
-			continue;
+			{
+			/* Issuer name does not match: could be indirect */
+			if (!(ctx->param->flags & X509_V_FLAG_EXTENDED_CRL_SUPPORT))
+				continue;
+			if (!(crl->idp_flags & IDP_INDIRECT))
+				continue;
+			imatch = 0;
+			}
 		if (check_crl_time(ctx, crl, 0))
 			crl_score |= CRL_SCORE_TIME;
 
@@ -773,11 +781,15 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 			{
 			if (crl->idp_flags & IDP_REJECT)
 				continue;
-			if (idp_check_scope(ctx->current_cert, crl))
+			if (idp_check_scope(ctx->current_cert, crl, &imatch))
 				crl_score |= CRL_SCORE_SCOPE;
 			}
 		else
 			crl_score |= CRL_SCORE_SCOPE;
+
+		/* If no issuer match at this point try next CRL */
+		if (!imatch)
+			continue;
 
 		if (crl_akid_check(ctx, crl, &crl_issuer))
 			crl_score |= CRL_SCORE_AKID;
@@ -809,6 +821,7 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl,
 static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer)
 	{
 	X509 *crl_issuer;
+	X509_NAME *cnm = X509_CRL_get_issuer(crl);
 	int cidx = ctx->error_depth;
 	int i;
 	if (!crl->akid)
@@ -818,24 +831,17 @@ static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer)
 	crl_issuer = sk_X509_value(ctx->chain, cidx);
 	if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK)
 		return 1;
-	/* If crl_issuer is self issued we may get a match further along the
-	 * chain.
-	 */
-	if (crl_issuer->ex_flags & EXFLAG_SI)
+	for (cidx++; cidx < sk_X509_num(ctx->chain); cidx++)
 		{
-		for (cidx++; cidx < sk_X509_num(ctx->chain); cidx++)
+		crl_issuer = sk_X509_value(ctx->chain, cidx);
+		if (X509_NAME_cmp(X509_get_subject_name(crl_issuer), cnm))
+			continue;
+		if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK)
 			{
-			crl_issuer = sk_X509_value(ctx->chain, cidx);
-			if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK)
-				{
-				*pissuer = crl_issuer;
-				return 1;
-				}
-			if (!(crl_issuer->ex_flags & EXFLAG_SI))
-				break;
+			*pissuer = crl_issuer;
+			return 1;
 			}
 		}
-
 
 	/* Anything else needs extended CRL support */
 
@@ -845,7 +851,6 @@ static int crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer)
 	/* Otherwise the CRL issuer is not on the path. Look for it in the
 	 * set of untrusted certificates.
 	 */
-
 	for (i = 0; i < sk_X509_num(ctx->untrusted); i++)
 		{
 		crl_issuer = sk_X509_value(ctx->untrusted, i);
@@ -928,6 +933,7 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
  * 1. Both are relative names and compare X509_NAME types.
  * 2. One full, one relative. Compare X509_NAME to GENERAL_NAMES.
  * 3. Both are full names and compare two GENERAL_NAMES.
+ * 4. One is NULL: automatic match.
  */
 
 
@@ -937,6 +943,8 @@ static int idp_check_dp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
 	GENERAL_NAMES *gens = NULL;
 	GENERAL_NAME *gena, *genb;
 	int i, j;
+	if (!a || !b)
+		return 1;
 	if (a->type == 1)
 		{
 		if (!a->dpname)
@@ -995,9 +1003,30 @@ static int idp_check_dp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
 
 	}
 
+static int idp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int *pimatch)
+	{
+	int i;
+	X509_NAME *nm = X509_CRL_get_issuer(crl);
+	/* If no CRLissuer return is successful iff don't need a match */
+	if (!dp->CRLissuer)
+		return *pimatch;
+	for (i = 0; i < sk_GENERAL_NAME_num(dp->CRLissuer); i++)
+		{
+		GENERAL_NAME *gen = sk_GENERAL_NAME_value(dp->CRLissuer, i);
+		if (gen->type != GEN_DIRNAME)
+			continue;
+		if (!X509_NAME_cmp(gen->d.directoryName, nm))
+			{
+			*pimatch = 1;
+			return 1;
+			}
+		}
+	return 0;
+	}
+
 /* Check IDP name matches at least one CRLDP name */
 
-static int idp_check_scope(X509 *x, X509_CRL *crl)
+static int idp_check_scope(X509 *x, X509_CRL *crl, int *pimatch)
 	{
 	int i;
 	if (crl->idp_flags & IDP_ONLYATTR)
@@ -1012,18 +1041,19 @@ static int idp_check_scope(X509 *x, X509_CRL *crl)
 		if (crl->idp_flags & IDP_ONLYCA)
 			return 0;
 		}
-	if (!crl->idp->distpoint)
+	if (!crl->idp->distpoint && *pimatch)
 		return 1;
-	if (!x->crldp)
-		return 0;
 	for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++)
 		{
 		DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, i);
 		/* We don't handle these at present */
-		if (dp->reasons || dp->CRLissuer)
+		if (dp->reasons)
 			continue;
 		if (idp_check_dp(dp->distpoint, crl->idp->distpoint))
-			return 1;
+			{
+			if (idp_check_crlissuer(dp, crl, pimatch))
+				return 1;
+			}
 		}
 	return 0;
 	}
@@ -1117,19 +1147,20 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 
 		if (crl->idp_flags & IDP_PRESENT)
 			{
+			int dmy = 1;
 			if (crl->idp_flags & IDP_INVALID)
 				{
 				ctx->error = X509_V_ERR_INVALID_EXTENSION;
 				ok = ctx->verify_cb(0, ctx);
 				if(!ok) goto err;
 				}
-			if (crl->idp_flags & (IDP_REASONS|IDP_INDIRECT))
+			if (crl->idp_flags & IDP_REASONS)
 				{
 				ctx->error = X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE;
 				ok = ctx->verify_cb(0, ctx);
 				if(!ok) goto err;
 				}
-			if (!idp_check_scope(ctx->current_cert, crl))
+			if (!idp_check_scope(ctx->current_cert, crl, &dmy))
 				{
 				ctx->error = X509_V_ERR_DIFFERENT_CRL_SCOPE;
 				ok = ctx->verify_cb(0, ctx);
@@ -1177,7 +1208,7 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 	 * If found assume revoked: want something cleverer than
 	 * this to handle entry extensions in V2 CRLs.
 	 */
-	if (X509_CRL_get0_by_serial(crl, NULL, X509_get_serialNumber(x)) > 0)
+	if (X509_CRL_get0_by_cert(crl, NULL, x) > 0)
 		{
 		ctx->error = X509_V_ERR_CERT_REVOKED;
 		ok = ctx->verify_cb(0, ctx);

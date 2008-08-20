@@ -4,6 +4,14 @@
 
  Changes between 0.9.8i and 0.9.9  [xx XXX xxxx]
 
+  *) Initial indirect CRL support. Currently only supported in the CRLs
+     passed directly and not via lookup. Process certificate issuer
+     CRL entry extension and lookup CRL entries by bother issuer name
+     and serial number. Check and proces CRL issuer entry in IDP extension.
+
+     This work was sponsored by Google.
+     [Steve Henson]
+
   *) Add support for distinct certificate and CRL paths. The CRL issuer
      certificate is validated separately in this case. Only enabled if
      an extended CRL support flag is set: this flag will enable additional

@@ -434,6 +434,8 @@ struct x509_revoked_st
 	ASN1_INTEGER *serialNumber;
 	ASN1_TIME *revocationDate;
 	STACK_OF(X509_EXTENSION) /* optional */ *extensions;
+	/* Set up if indirect CRL */
+	STACK_OF(GENERAL_NAME) *issuer;
 	int sequence; /* load sequence */
 	};
 
@@ -469,6 +471,7 @@ struct X509_crl_st
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif
+	STACK_OF(GENERAL_NAMES) *issuers;
 	const X509_CRL_METHOD *meth;
 	void *meth_data;
 	} /* X509_CRL */;
@@ -617,7 +620,8 @@ void X509_CRL_set_default_method(const X509_CRL_METHOD *meth);
 X509_CRL_METHOD *X509_CRL_METHOD_new(
 	int (*crl_init)(X509_CRL *crl),
 	int (*crl_free)(X509_CRL *crl),
-	int (*crl_lookup)(X509_CRL *crl, X509_REVOKED **ret, ASN1_INTEGER *ser),
+	int (*crl_lookup)(X509_CRL *crl, X509_REVOKED **ret,
+				ASN1_INTEGER *ser, X509_NAME *issuer),
 	int (*crl_verify)(X509_CRL *crl, EVP_PKEY *pk));
 void X509_CRL_METHOD_free(X509_CRL_METHOD *m);
 
@@ -847,6 +851,7 @@ DECLARE_ASN1_FUNCTIONS(X509_CRL)
 int X509_CRL_add0_revoked(X509_CRL *crl, X509_REVOKED *rev);
 int X509_CRL_get0_by_serial(X509_CRL *crl,
 		X509_REVOKED **ret, ASN1_INTEGER *serial);
+int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x);
 
 X509_PKEY *	X509_PKEY_new(void );
 void		X509_PKEY_free(X509_PKEY *a);
