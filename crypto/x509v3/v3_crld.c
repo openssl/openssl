@@ -79,6 +79,17 @@ const X509V3_EXT_METHOD v3_crld =
 	NULL
 	};
 
+const X509V3_EXT_METHOD v3_freshest_crl =
+	{
+	NID_freshest_crl, 0, ASN1_ITEM_ref(CRL_DIST_POINTS),
+	0,0,0,0,
+	0,0,
+	0,
+	v2i_crld,
+	i2r_crldp,0,
+	NULL
+	};
+
 static STACK_OF(GENERAL_NAME) *gnames_from_sectname(X509V3_CTX *ctx, char *sect)
 	{
 	STACK_OF(CONF_VALUE) *gnsect;

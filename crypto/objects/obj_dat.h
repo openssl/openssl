@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 857
-#define NUM_SN 850
-#define NUM_LN 850
-#define NUM_OBJ 804
+#define NUM_NID 858
+#define NUM_SN 851
+#define NUM_LN 851
+#define NUM_OBJ 805
 
-static const unsigned char lvalues[5711]={
+static const unsigned char lvalues[5714]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -872,6 +872,7 @@ static const unsigned char lvalues[5711]={
 0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x04,     /* [5685] OBJ_id_GostR3411_94_with_GostR3410_2001_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x08,0x01,     /* [5693] OBJ_id_GostR3410_2001_ParamSet_cc */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x11,0x02,/* [5701] OBJ_LocalKeySet */
+0x55,0x1D,0x2E,                              /* [5710] OBJ_freshest_crl */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2256,6 +2257,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"HMAC","hmac",NID_hmac,0,NULL,0},
 {"LocalKeySet","Microsoft Local Key set",NID_LocalKeySet,9,
 	&(lvalues[5701]),0},
+{"freshestCRL","X509v3 Freshest CRL",NID_freshest_crl,3,
+	&(lvalues[5710]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2534,6 +2537,7 @@ static const unsigned int sn_objs[NUM_SN]={
 126,	/* "extendedKeyUsage" */
 372,	/* "extendedStatus" */
 462,	/* "favouriteDrink" */
+857,	/* "freshestCRL" */
 453,	/* "friendlyCountry" */
 490,	/* "friendlyCountryName" */
 156,	/* "friendlyName" */
@@ -3230,6 +3234,7 @@ static const unsigned int ln_objs[NUM_LN]={
 89,	/* "X509v3 Certificate Policies" */
 140,	/* "X509v3 Delta CRL Indicator" */
 126,	/* "X509v3 Extended Key Usage" */
+857,	/* "X509v3 Freshest CRL" */
 748,	/* "X509v3 Inhibit Any Policy" */
 86,	/* "X509v3 Issuer Alternative Name" */
 770,	/* "X509v3 Issuing Distrubution Point" */
@@ -4029,6 +4034,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 90,	/* OBJ_authority_key_identifier     2 5 29 35 */
 401,	/* OBJ_policy_constraints           2 5 29 36 */
 126,	/* OBJ_ext_key_usage                2 5 29 37 */
+857,	/* OBJ_freshest_crl                 2 5 29 46 */
 748,	/* OBJ_inhibit_any_policy           2 5 29 54 */
 402,	/* OBJ_target_information           2 5 29 55 */
 403,	/* OBJ_no_rev_avail                 2 5 29 56 */

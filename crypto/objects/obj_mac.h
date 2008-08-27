@@ -2235,6 +2235,11 @@
 #define NID_ext_key_usage		126
 #define OBJ_ext_key_usage		OBJ_id_ce,37L
 
+#define SN_freshest_crl		"freshestCRL"
+#define LN_freshest_crl		"X509v3 Freshest CRL"
+#define NID_freshest_crl		857
+#define OBJ_freshest_crl		OBJ_id_ce,46L
+
 #define SN_inhibit_any_policy		"inhibitAnyPolicy"
 #define LN_inhibit_any_policy		"X509v3 Inhibit Any Policy"
 #define NID_inhibit_any_policy		748
