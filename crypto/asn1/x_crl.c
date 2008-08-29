@@ -203,6 +203,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		crl->akid = NULL;
 		crl->flags = 0;
 		crl->idp_flags = 0;
+		crl->idp_reasons = CRLDP_ALL_REASONS;
 		crl->meth = default_crl_method;
 		crl->meth_data = NULL;
 		crl->issuers = NULL;
@@ -308,6 +309,7 @@ static void setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp)
 		if (idp->onlysomereasons->length > 1)
 			crl->idp_reasons |=
 				(idp->onlysomereasons->data[1] << 8);
+		crl->idp_reasons &= CRLDP_ALL_REASONS;
 		}
 
 	DIST_POINT_set_dpname(idp->distpoint, X509_CRL_get_issuer(crl));

@@ -269,6 +269,9 @@ struct x509_store_ctx_st      /* X509_STORE_CTX */
 	X509 *current_issuer;	/* cert currently being tested as valid issuer */
 	X509_CRL *current_crl;	/* current CRL */
 
+	int current_crl_score;  /* score of current CRL */
+	unsigned int current_reasons;  /* Reason mask */
+
 	X509_STORE_CTX *parent; /* For CRL path validation: parent context */
 
 	CRYPTO_EX_DATA ex_data;
@@ -349,6 +352,7 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE		51
 #define		X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX	52
 #define		X509_V_ERR_UNSUPPORTED_NAME_SYNTAX		53
+#define		X509_V_ERR_CRL_PATH_VALIDATION_ERROR		54
 
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50

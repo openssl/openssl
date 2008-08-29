@@ -181,6 +181,8 @@ const char *X509_verify_cert_error_string(long n)
 		return("unsupported or invalid name constraint syntax");
 	case X509_V_ERR_UNSUPPORTED_NAME_SYNTAX:
 		return("unsupported or invalid name syntax");
+	case X509_V_ERR_CRL_PATH_VALIDATION_ERROR:
+		return("CRL path validation error");
 
 	default:
 		BIO_snprintf(buf,sizeof buf,"error number %ld",n);

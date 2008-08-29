@@ -223,11 +223,14 @@ union {
 /* If relativename then this contains the full distribution point name */
 X509_NAME *dpname;
 } DIST_POINT_NAME;
+/* All existing reasons */
+#define CRLDP_ALL_REASONS	0x807f
 
 struct DIST_POINT_st {
 DIST_POINT_NAME	*distpoint;
 ASN1_BIT_STRING *reasons;
 GENERAL_NAMES *CRLissuer;
+int dp_reasons;
 };
 
 typedef STACK_OF(DIST_POINT) CRL_DIST_POINTS;

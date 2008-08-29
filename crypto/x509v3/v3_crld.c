@@ -191,6 +191,7 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
 	}
 
 static const BIT_STRING_BITNAME reason_flags[] = {
+{0, "Unused", "unused"},
 {1, "Key Compromise", "keyCompromise"},
 {2, "CA Compromise", "CACompromise"},
 {3, "Affiliation Changed", "affiliationChanged"},
