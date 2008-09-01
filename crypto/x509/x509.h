@@ -436,6 +436,8 @@ struct x509_revoked_st
 	STACK_OF(X509_EXTENSION) /* optional */ *extensions;
 	/* Set up if indirect CRL */
 	STACK_OF(GENERAL_NAME) *issuer;
+	/* Revocation reason */
+	int reason;
 	int sequence; /* load sequence */
 	};
 
@@ -468,6 +470,9 @@ struct X509_crl_st
 	/* Convenient breakdown of IDP */
 	int idp_flags;
 	int idp_reasons;
+	/* CRL and base CRL numbers for delta processing */
+	ASN1_INTEGER *crl_number;
+	ASN1_INTEGER *base_crl_number;
 #ifndef OPENSSL_NO_SHA
 	unsigned char sha1_hash[SHA_DIGEST_LENGTH];
 #endif

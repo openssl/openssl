@@ -465,8 +465,7 @@ static void x509v3_cache_extensions(X509 *x)
 	if (!x->nc && (i != -1))
 		x->ex_flags |= EXFLAG_INVALID;
 	setup_crldp(x);
-			
-			
+
 #ifndef OPENSSL_NO_RFC3779
  	x->rfc3779_addr =X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, NULL, NULL);
  	x->rfc3779_asid =X509_get_ext_d2i(x, NID_sbgp_autonomousSysNum,
@@ -477,6 +476,9 @@ static void x509v3_cache_extensions(X509 *x)
 		ex = X509_get_ext(x, i);
 		if (!X509_EXTENSION_get_critical(ex))
 			continue;
+		if (OBJ_obj2nid(X509_EXTENSION_get_object(ex))
+					== NID_freshest_crl)
+			x->ex_flags |= EXFLAG_FRESHEST;
 		if (!X509_supported_extension(ex))
 			{
 			x->ex_flags |= EXFLAG_CRITICAL;

@@ -70,6 +70,44 @@
 #include <openssl/x509v3.h>
 #include <openssl/objects.h>
 
+/* CRL score values */
+
+/* No unhandled critical extensions */
+
+#define CRL_SCORE_NOCRITICAL	0x100
+
+/* certificate is within CRL scope */
+
+#define CRL_SCORE_SCOPE		0x080
+
+/* CRL times valid */
+
+#define CRL_SCORE_TIME		0x040
+
+/* Issuer name matches certificate */
+
+#define CRL_SCORE_ISSUER_NAME	0x020
+
+/* If this score or above CRL is probably valid */
+
+#define CRL_SCORE_VALID (CRL_SCORE_NOCRITICAL|CRL_SCORE_TIME|CRL_SCORE_SCOPE)
+
+/* CRL issuer is certificate issuer */
+
+#define CRL_SCORE_ISSUER_CERT	0x018
+
+/* CRL issuer is on certificate path */
+
+#define CRL_SCORE_SAME_PATH	0x008
+
+/* CRL issuer matches CRL AKID */
+
+#define CRL_SCORE_AKID		0x004
+
+/* Have a delta CRL with valid times */
+
+#define CRL_SCORE_TIME_DELTA	0x002
+
 static int null_callback(int ok,X509_STORE_CTX *e);
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer);
 static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x);
@@ -83,6 +121,10 @@ static int check_policy(X509_STORE_CTX *ctx);
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
 			unsigned int *preasons,
 			X509_CRL *crl, X509 *x);
+static int get_crl_delta(X509_STORE_CTX *ctx,
+				X509_CRL **pcrl, X509_CRL **pdcrl, X509 *x);
+static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl, int *pcrl_score,
+			X509_CRL *base, STACK_OF(X509_CRL) *crls);
 static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
 				X509 **pissuer, int *pcrl_score);
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
@@ -649,7 +691,7 @@ static int check_revocation(X509_STORE_CTX *ctx)
 
 static int check_cert(X509_STORE_CTX *ctx)
 	{
-	X509_CRL *crl = NULL;
+	X509_CRL *crl = NULL, *dcrl = NULL;
 	X509 *x;
 	int ok, cnum;
 	cnum = ctx->error_depth;
@@ -660,7 +702,10 @@ static int check_cert(X509_STORE_CTX *ctx)
 	while (ctx->current_reasons != CRLDP_ALL_REASONS)
 		{
 		/* Try to retrieve relevant CRL */
-		ok = ctx->get_crl(ctx, &crl, x);
+		if (ctx->get_crl)
+			ok = ctx->get_crl(ctx, &crl, x);
+		else
+			ok = get_crl_delta(ctx, &crl, &dcrl, x);
 		/* If error looking up CRL, nothing we can do except
 		 * notify callback
 		 */
@@ -674,14 +719,36 @@ static int check_cert(X509_STORE_CTX *ctx)
 		ok = ctx->check_crl(ctx, crl);
 		if (!ok)
 			goto err;
-		ok = ctx->cert_crl(ctx, crl, x);
-		if (!ok)
-			goto err;
+
+		if (dcrl)
+			{
+			ok = ctx->check_crl(ctx, dcrl);
+			if (!ok)
+				goto err;
+			ok = ctx->cert_crl(ctx, dcrl, x);
+			if (!ok)
+				goto err;
+			}
+		else
+			ok = 1;
+
+		/* Don't look in full CRL if delta reason is removefromCRL */
+		if (ok != 2)
+			{
+			ok = ctx->cert_crl(ctx, crl, x);
+			if (!ok)
+				goto err;
+			}
+
 		X509_CRL_free(crl);
+		X509_CRL_free(dcrl);
 		crl = NULL;
+		dcrl = NULL;
 		}
 	err:
 	X509_CRL_free(crl);
+	X509_CRL_free(dcrl);
+
 	ctx->current_crl = NULL;
 	return ok;
 
@@ -731,8 +798,8 @@ static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 			if (!ctx->verify_cb(0, ctx))
 				return 0;
 			}
-
-		if (i < 0)
+		/* Ignore expiry of base CRL is delta is valid */
+		if ((i < 0) && !(ctx->current_crl_score & CRL_SCORE_TIME_DELTA))
 			{
 			if (!notify)
 				return 0;
@@ -748,46 +815,8 @@ static int check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify)
 	return 1;
 	}
 
-/* CRL score values */
-
-/* No unhandled critical extensions */
-
-#define CRL_SCORE_NOCRITICAL	0x100
-
-/* certificate is within CRL scope */
-
-#define CRL_SCORE_SCOPE		0x080
-
-/* CRL times valid */
-
-#define CRL_SCORE_TIME		0x040
-
-/* Issuer name matches certificate */
-
-#define CRL_SCORE_ISSUER_NAME	0x020
-
-/* If this score or above CRL is probably valid */
-
-#define CRL_SCORE_VALID (CRL_SCORE_NOCRITICAL|CRL_SCORE_TIME|CRL_SCORE_SCOPE)
-
-/* CRL issuer is certificate issuer */
-
-#define CRL_SCORE_ISSUER_CERT	0x018
-
-/* CRL issuer is on certificate path */
-
-#define CRL_SCORE_SAME_PATH	0x008
-
-/* CRL issuer matches CRL AKID */
-
-#define CRL_SCORE_AKID		0x004
-
-/* CRL is complete, not delta */
-
-#define CRL_SCORE_COMPLETE	0x002
-
-static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 **pissuer,
-			int *pscore, unsigned int *preasons,
+static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
+			X509 **pissuer, int *pscore, unsigned int *preasons,
 			STACK_OF(X509_CRL) *crls)
 	{
 	int i, crl_score, best_score = *pscore;
@@ -818,14 +847,119 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 **pissuer,
 		*pissuer = best_crl_issuer;
 		*pscore = best_score;
 		*preasons = best_reasons;
-		CRYPTO_add(&best_crl->references, 1, CRYPTO_LOCK_X509);
+		CRYPTO_add(&best_crl->references, 1, CRYPTO_LOCK_X509_CRL);
+		if (*pdcrl)
+			{
+			X509_CRL_free(*pdcrl);
+			*pdcrl = NULL;
+			}
+		get_delta_sk(ctx, pdcrl, pscore, best_crl, crls);
 		}
-
 
 	if (best_score >= CRL_SCORE_VALID)
 		return 1;
 
 	return 0;
+	}
+
+/* Compare two CRL extensions for delta checking purposes. They should be
+ * both present or both absent. If both present all fields must be identical.
+ */
+
+static int crl_extension_match(X509_CRL *a, X509_CRL *b, int nid)
+	{
+	ASN1_OCTET_STRING *exta, *extb;
+	int i;
+	i = X509_CRL_get_ext_by_NID(a, nid, 0);
+	if (i >= 0)
+		{
+		/* Can't have multiple occurrences */
+		if (X509_CRL_get_ext_by_NID(a, nid, i) != -1)
+			return 0;
+		exta = X509_EXTENSION_get_data(X509_CRL_get_ext(a, i));
+		}
+	else
+		exta = NULL;
+
+	i = X509_CRL_get_ext_by_NID(b, nid, 0);
+
+	if (i >= 0)
+		{
+
+		if (X509_CRL_get_ext_by_NID(b, nid, i) != -1)
+			return 0;
+		extb = X509_EXTENSION_get_data(X509_CRL_get_ext(b, i));
+		}
+	else
+		extb = NULL;
+
+	if (!exta && !extb)
+		return 1;
+
+	if (!exta || !extb)
+		return 0;
+
+
+	if (ASN1_OCTET_STRING_cmp(exta, extb))
+		return 0;
+
+	return 1;
+	}
+
+/* See if a base and delta are compatible */
+
+static int check_delta_base(X509_CRL *delta, X509_CRL *base)
+	{
+	/* Delta CRL must be a delta */
+	if (!delta->base_crl_number)
+			return 0;
+	/* Base must have a CRL number */
+	if (!base->crl_number)
+			return 0;
+	/* Issuer names must match */
+	if (X509_NAME_cmp(X509_CRL_get_issuer(base),
+				X509_CRL_get_issuer(delta)))
+		return 0;
+	/* AKID and IDP must match */
+	if (!crl_extension_match(delta, base, NID_authority_key_identifier))
+			return 0;
+	if (!crl_extension_match(delta, base, NID_issuing_distribution_point))
+			return 0;
+	/* Delta CRL base number must not exceed Full CRL number. */
+	if (ASN1_INTEGER_cmp(delta->base_crl_number, base->crl_number) > 0)
+			return 0;
+	/* Delta CRL number must exceed full CRL number */
+	if (ASN1_INTEGER_cmp(delta->crl_number, base->crl_number) > 0)
+			return 1;
+	return 0;
+	}
+
+/* For a given base CRL find a delta... maybe extend to delta scoring
+ * or retrieve a chain of deltas...
+ */
+
+static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl, int *pscore,
+			X509_CRL *base, STACK_OF(X509_CRL) *crls)
+	{
+	X509_CRL *delta;
+	int i;
+	if (!(ctx->param->flags & X509_V_FLAG_USE_DELTAS))
+		return;
+	if (!((ctx->current_cert->ex_flags | base->flags) & EXFLAG_FRESHEST))
+		return;
+	for (i = 0; i < sk_X509_CRL_num(crls); i++)
+		{
+		delta = sk_X509_CRL_value(crls, i);
+		if (check_delta_base(delta, base))
+			{
+			if (check_crl_time(ctx, delta, 0))
+				*pscore |= CRL_SCORE_TIME_DELTA;
+			CRYPTO_add(&delta->references, 1, CRYPTO_LOCK_X509_CRL);
+			*dcrl = delta;
+			return;
+			}
+		}
+	*dcrl = NULL;
 	}
 
 /* For a given CRL return how suitable it is for the supplied certificate 'x'.
@@ -860,6 +994,9 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
 		if (!(crl->idp_reasons & ~tmp_reasons))
 			return 0;
 		}
+	/* Don't process deltas at this stage */
+	else if (crl->base_crl_number)
+		return 0;
 	/* If issuer name doesn't match certificate need indirect CRL */
 	if (X509_NAME_cmp(X509_get_issuer_name(x), X509_CRL_get_issuer(crl)))
 		{
@@ -1146,22 +1283,24 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
 	return 0;
 	}
 
-/* Retrieve CRL corresponding to current certificate. Currently only
- * one CRL is retrieved. Multiple CRLs may be needed if we handle
- * CRLs partitioned on reason code later.
+/* Retrieve CRL corresponding to current certificate.
+ * If deltas enabled try to find a delta CRL too
  */
 	
-static int get_crl(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 *x)
+static int get_crl_delta(X509_STORE_CTX *ctx,
+				X509_CRL **pcrl, X509_CRL **pdcrl, X509 *x)
 	{
 	int ok;
 	X509 *issuer = NULL;
 	int crl_score = 0;
 	unsigned int reasons;
-	X509_CRL *crl = NULL;
+	X509_CRL *crl = NULL, *dcrl = NULL;
 	STACK_OF(X509_CRL) *skcrl;
 	X509_NAME *nm = X509_get_issuer_name(x);
 	reasons = ctx->current_reasons;
-	ok = get_crl_sk(ctx, &crl, &issuer, &crl_score, &reasons, ctx->crls);
+	ok = get_crl_sk(ctx, &crl, &dcrl, 
+				&issuer, &crl_score, &reasons, ctx->crls);
+
 	if (ok)
 		goto done;
 
@@ -1173,7 +1312,7 @@ static int get_crl(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 *x)
 	if (!skcrl && crl)
 		goto done;
 
-	get_crl_sk(ctx, &crl, &issuer, &crl_score, &reasons, skcrl);
+	get_crl_sk(ctx, &crl, &dcrl, &issuer, &crl_score, &reasons, skcrl);
 
 	sk_X509_CRL_pop_free(skcrl, X509_CRL_free);
 
@@ -1186,6 +1325,7 @@ static int get_crl(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509 *x)
 		ctx->current_crl_score = crl_score;
 		ctx->current_reasons = reasons;
 		*pcrl = crl;
+		*pdcrl = dcrl;
 		return 1;
 		}
 
@@ -1203,6 +1343,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 	/* if we have an alternative CRL issuer cert use that */
 	if (ctx->current_issuer)
 		issuer = ctx->current_issuer;
+
 	/* Else find CRL issuer: if not last certificate then issuer
 	 * is next certificate in chain.
 	 */
@@ -1222,44 +1363,52 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 
 	if(issuer)
 		{
-		/* Check for cRLSign bit if keyUsage present */
-		if ((issuer->ex_flags & EXFLAG_KUSAGE) &&
-			!(issuer->ex_kusage & KU_CRL_SIGN))
+		/* Skip most tests for deltas because they have already
+		 * been done
+		 */
+		if (!crl->base_crl_number)
 			{
-			ctx->error = X509_V_ERR_KEYUSAGE_NO_CRL_SIGN;
-			ok = ctx->verify_cb(0, ctx);
-			if(!ok) goto err;
+			/* Check for cRLSign bit if keyUsage present */
+			if ((issuer->ex_flags & EXFLAG_KUSAGE) &&
+				!(issuer->ex_kusage & KU_CRL_SIGN))
+				{
+				ctx->error = X509_V_ERR_KEYUSAGE_NO_CRL_SIGN;
+				ok = ctx->verify_cb(0, ctx);
+				if(!ok) goto err;
+				}
+
+			if (!(ctx->current_crl_score & CRL_SCORE_SCOPE))
+				{
+				ctx->error = X509_V_ERR_DIFFERENT_CRL_SCOPE;
+				ok = ctx->verify_cb(0, ctx);
+				if(!ok) goto err;
+				}
+
+			if (!(ctx->current_crl_score & CRL_SCORE_SAME_PATH))
+				{
+				if (!check_crl_path(ctx, ctx->current_issuer))
+					{
+					ctx->error = X509_V_ERR_CRL_PATH_VALIDATION_ERROR;
+					ok = ctx->verify_cb(0, ctx);
+					if(!ok) goto err;
+					}
+				}
+
+			if (crl->idp_flags & IDP_INVALID)
+				{
+				ctx->error = X509_V_ERR_INVALID_EXTENSION;
+				ok = ctx->verify_cb(0, ctx);
+				if(!ok) goto err;
+				}
+
+
 			}
 
-	if (!(ctx->current_crl_score & CRL_SCORE_SCOPE))
-		{
-		ctx->error = X509_V_ERR_DIFFERENT_CRL_SCOPE;
-		ok = ctx->verify_cb(0, ctx);
-		if(!ok) goto err;
-		}
-
-	if (!(ctx->current_crl_score & CRL_SCORE_TIME))
-		{
-		ok = check_crl_time(ctx, crl, 1);
-		if (!ok)
-			goto err;
-		}
-
-	if (!(ctx->current_crl_score & CRL_SCORE_SAME_PATH))
-		{
-		if (!check_crl_path(ctx, ctx->current_issuer))
+		if (!(ctx->current_crl_score & CRL_SCORE_TIME))
 			{
-			ctx->error = X509_V_ERR_CRL_PATH_VALIDATION_ERROR;
-			ok = ctx->verify_cb(0, ctx);
-			if(!ok) goto err;
-			}
-		}
-
-		if (crl->idp_flags & IDP_INVALID)
-			{
-			ctx->error = X509_V_ERR_INVALID_EXTENSION;
-			ok = ctx->verify_cb(0, ctx);
-			if(!ok) goto err;
+			ok = check_crl_time(ctx, crl, 1);
+			if (!ok)
+				goto err;
 			}
 
 		/* Attempt to get issuer certificate public key */
@@ -1294,18 +1443,12 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 	{
 	int ok;
-	/* Look for serial number of certificate in CRL
-	 * If found assume revoked: want something cleverer than
-	 * this to handle entry extensions in V2 CRLs.
+	X509_REVOKED *rev;
+	/* The rules changed for this... previously if a CRL contained
+	 * unhandled critical extensions it could still be used to indicate
+	 * a certificate was revoked. This has since been changed since 
+	 * critical extension can change the meaning of CRL entries.
 	 */
-	if (X509_CRL_get0_by_cert(crl, NULL, x) > 0)
-		{
-		ctx->error = X509_V_ERR_CERT_REVOKED;
-		ok = ctx->verify_cb(0, ctx);
-		if (!ok)
-			return 0;
-		}
-
 	if (crl->flags & EXFLAG_CRITICAL)
 		{
 		if (ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL)
@@ -1313,6 +1456,18 @@ static int cert_crl(X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x)
 		ctx->error = X509_V_ERR_UNHANDLED_CRITICAL_CRL_EXTENSION;
 		ok = ctx->verify_cb(0, ctx);
 		if(!ok)
+			return 0;
+		}
+	/* Look for serial number of certificate in CRL
+	 * If found make sure reason is not removeFromCRL.
+	 */
+	if (X509_CRL_get0_by_cert(crl, &rev, x))
+		{
+		if (rev->reason == CRL_REASON_REMOVE_FROM_CRL)
+			return 2;
+		ctx->error = X509_V_ERR_CERT_REVOKED;
+		ok = ctx->verify_cb(0, ctx);
+		if (!ok)
 			return 0;
 		}
 
@@ -1898,7 +2053,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	if (store && store->get_crl)
 		ctx->get_crl = store->get_crl;
 	else
-		ctx->get_crl = get_crl;
+		ctx->get_crl = NULL;
 
 	if (store && store->check_crl)
 		ctx->check_crl = store->check_crl;

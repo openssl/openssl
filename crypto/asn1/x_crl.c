@@ -137,6 +137,7 @@ static int crl_set_issuers(X509_CRL *crl)
 		{
 		X509_REVOKED *rev = sk_X509_REVOKED_value(revoked, i);
 		STACK_OF(X509_EXTENSION) *exts;
+		ASN1_ENUMERATED *reason;
 		X509_EXTENSION *ext;
 		gtmp = X509_REVOKED_get_ext_d2i(rev, 
 						NID_certificate_issuer,
@@ -160,6 +161,22 @@ static int crl_set_issuers(X509_CRL *crl)
 				return 0;
 			}
 		rev->issuer = gens;
+
+		reason = X509_REVOKED_get_ext_d2i(rev, NID_crl_reason,
+								&j, NULL);
+		if (!reason && (j != -1))
+			{
+			crl->flags |= EXFLAG_INVALID;
+			return 1;
+			}
+
+		if (reason)
+			{
+			rev->reason = ASN1_ENUMERATED_get(reason);
+			ASN1_ENUMERATED_free(reason);
+			}
+		else
+			rev->reason = CRL_REASON_NONE;	
 
 		/* Check for critical CRL entry extensions */
 
@@ -207,6 +224,8 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		crl->meth = default_crl_method;
 		crl->meth_data = NULL;
 		crl->issuers = NULL;
+		crl->crl_number = NULL;
+		crl->base_crl_number = NULL;
 		break;
 
 		case ASN1_OP_D2I_POST:
@@ -221,6 +240,15 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 		crl->akid = X509_CRL_get_ext_d2i(crl,
 				NID_authority_key_identifier, NULL, NULL);	
 
+		crl->crl_number = X509_CRL_get_ext_d2i(crl,
+				NID_crl_number, NULL, NULL);	
+
+		crl->base_crl_number = X509_CRL_get_ext_d2i(crl,
+				NID_delta_crl, NULL, NULL);	
+		/* Delta CRLs must have CRL number */
+		if (crl->base_crl_number && !crl->crl_number)
+			crl->flags |= EXFLAG_INVALID;
+
 		/* See if we have any unhandled critical CRL extensions and 
 		 * indicate this in a flag. We only currently handle IDP so
 		 * anything else critical sets the flag.
@@ -233,13 +261,17 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 		for (idx = 0; idx < sk_X509_EXTENSION_num(exts); idx++)
 			{
+			int nid;
 			ext = sk_X509_EXTENSION_value(exts, idx);
+			nid = OBJ_obj2nid(ext->object);
+			if (nid == NID_freshest_crl)
+				crl->flags |= EXFLAG_FRESHEST;
 			if (ext->critical > 0)
 				{
-				/* We handle IDP now so permit it */
-				if (OBJ_obj2nid(ext->object) ==
-					NID_issuing_distribution_point)
-					continue;
+				/* We handle IDP and deltas */
+				if ((nid == NID_issuing_distribution_point)
+					|| (nid == NID_delta_crl))
+					break;;
 				crl->flags |= EXFLAG_CRITICAL;
 				break;
 				}
@@ -266,6 +298,8 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 			AUTHORITY_KEYID_free(crl->akid);
 		if (crl->idp)
 			ISSUING_DIST_POINT_free(crl->idp);
+		ASN1_INTEGER_free(crl->crl_number);
+		ASN1_INTEGER_free(crl->base_crl_number);
 		sk_GENERAL_NAMES_pop_free(crl->issuers, GENERAL_NAMES_free);
 		break;
 		}
@@ -435,6 +469,8 @@ static int def_crl_lookup(X509_CRL *crl,
 			{
 			if (ret)
 				*ret = rev;
+			if (rev->reason == CRL_REASON_REMOVE_FROM_CRL)
+				return 2;
 			return 1;
 			}
 		}

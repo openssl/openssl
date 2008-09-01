@@ -4,6 +4,12 @@
 
  Changes between 0.9.8i and 0.9.9  [xx XXX xxxx]
 
+  *) Delta CRL support. New use deltas option which will attempt to locate
+     and search any appropriate delta CRLs available.
+
+     This work was sponsored by Google.
+     [Steve Henson]
+
   *) Support for CRLs partitioned by reason code. Reorganise CRL processing
      code and add additional score elements. Validate alternate CRL paths
      as part of the CRL checking and indicate a new error "CRL path validation

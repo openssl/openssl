@@ -2241,6 +2241,8 @@ int args_verify(char ***pargs, int *pargc,
 		flags |= X509_V_FLAG_X509_STRICT;
 	else if (!strcmp(arg, "-extended_crl"))
 		flags |= X509_V_FLAG_EXTENDED_CRL_SUPPORT;
+	else if (!strcmp(arg, "-use_deltas"))
+		flags |= X509_V_FLAG_USE_DELTAS;
 	else if (!strcmp(arg, "-policy_print"))
 		flags |= X509_V_FLAG_NOTIFY_POLICY;
 	else
