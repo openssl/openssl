@@ -1067,7 +1067,6 @@ int ssl3_get_client_hello(SSL *s)
 			goto f_err;
 			}
 		s->s3->tmp.new_cipher=c;
-		ssl3_digest_cached_records(s);
 		}
 	else
 		{
@@ -1098,10 +1097,9 @@ int ssl3_get_client_hello(SSL *s)
 		else
 #endif
 		s->s3->tmp.new_cipher=s->session->cipher;
-		/* Clear cached handshake records */
-		BIO_free(s->s3->handshake_buffer);
-		s->s3->handshake_buffer = NULL;
 		}
+
+	ssl3_digest_cached_records(s);
 	
 	/* we now have the following setup. 
 	 * client_random
