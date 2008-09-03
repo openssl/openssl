@@ -1388,6 +1388,13 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 	/* Point after session ID in client hello */
 	const unsigned char *p = session_id + len;
 	unsigned short i;
+
+	/* If tickets disabled behave as if no ticket present
+ 	 * to permit stateful resumption.
+ 	 */
+	if (SSL_get_options(s) & SSL_OP_NO_TICKET)
+		return 1;
+
 	if ((s->version <= SSL3_VERSION) || !limit)
 		return 1;
 	if (p >= limit)
@@ -1419,8 +1426,8 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
  			 * trigger a full handshake
  			 */
 			if (SSL_get_options(s) & SSL_OP_NO_TICKET)
-				return 0;
-			/* If zero length not client will accept a ticket
+				return 1;
+			/* If zero length note client will accept a ticket
  			 * and indicate cache miss to trigger full handshake
  			 */
 			if (size == 0)
