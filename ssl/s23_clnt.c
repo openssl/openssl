@@ -276,7 +276,7 @@ static int ssl23_client_hello(SSL *s)
 		{
 		version = SSL2_VERSION;
 		}
-
+#ifndef OPENSSL_NO_TLSEXT
 	if (version != SSL2_VERSION)
 		{
 		/* have to disable SSL 2.0 compatibility if we need TLS extensions */
@@ -291,6 +291,7 @@ static int ssl23_client_hello(SSL *s)
 			ssl2_compat = 0;
 #endif
 		}
+#endif
 
 	buf=(unsigned char *)s->init_buf->data;
 	if (s->state == SSL23_ST_CW_CLNT_HELLO_A)
