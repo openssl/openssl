@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -138,6 +138,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL3_CONNECT),	"SSL3_CONNECT"},
 {ERR_FUNC(SSL_F_SSL3_CTRL),	"SSL3_CTRL"},
 {ERR_FUNC(SSL_F_SSL3_CTX_CTRL),	"SSL3_CTX_CTRL"},
+{ERR_FUNC(SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC),	"SSL3_DO_CHANGE_CIPHER_SPEC"},
 {ERR_FUNC(SSL_F_SSL3_ENC),	"SSL3_ENC"},
 {ERR_FUNC(SSL_F_SSL3_GENERATE_KEY_BLOCK),	"SSL3_GENERATE_KEY_BLOCK"},
 {ERR_FUNC(SSL_F_SSL3_GET_CERTIFICATE_REQUEST),	"SSL3_GET_CERTIFICATE_REQUEST"},
