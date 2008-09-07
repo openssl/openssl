@@ -820,10 +820,11 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
 			STACK_OF(X509_CRL) *crls)
 	{
 	int i, crl_score, best_score = *pscore;
-	unsigned int reasons, best_reasons;
+	unsigned int reasons, best_reasons = 0;
 	X509 *x = ctx->current_cert;
 	X509_CRL *crl, *best_crl = NULL;
 	X509 *crl_issuer, *best_crl_issuer = NULL;
+
 	for (i = 0; i < sk_X509_CRL_num(crls); i++)
 		{
 		crl = sk_X509_CRL_value(crls, i);
