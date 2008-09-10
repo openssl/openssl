@@ -229,6 +229,7 @@ extern "C" {
 #define SSL_TXT_LOW		"LOW"
 #define SSL_TXT_MEDIUM		"MEDIUM"
 #define SSL_TXT_HIGH		"HIGH"
+#define SSL_TXT_FIPS		"FIPS"
 
 #define SSL_TXT_kFZA		"kFZA" /* unused! */
 #define	SSL_TXT_aFZA		"aFZA" /* unused! */

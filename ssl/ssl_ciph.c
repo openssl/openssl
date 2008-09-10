@@ -308,6 +308,8 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_LOW,0,     0,0,0,0,0,SSL_LOW,   0,0,0},
 	{0,SSL_TXT_MEDIUM,0,  0,0,0,0,0,SSL_MEDIUM,0,0,0},
 	{0,SSL_TXT_HIGH,0,    0,0,0,0,0,SSL_HIGH,  0,0,0},
+	/* FIPS 140-2 approved ciphersuite */
+	{0,SSL_TXT_FIPS,0,    0,0,~SSL_eNULL,0,0,SSL_FIPS,  0,0,0},
 	};
 /* Search for public key algorithm with given name and 
  * return its pkey_id if it is available. Otherwise return 0

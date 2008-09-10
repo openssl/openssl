@@ -370,7 +370,7 @@
  * be possible.
  */
 #define SSL_EXP_MASK		0x00000003L
-#define SSL_STRONG_MASK		0x000000fcL
+#define SSL_STRONG_MASK		0x000001fcL
 
 #define SSL_NOT_EXP		0x00000001L
 #define SSL_EXPORT		0x00000002L
@@ -383,6 +383,7 @@
 #define SSL_LOW			0x00000020L
 #define SSL_MEDIUM		0x00000040L
 #define SSL_HIGH		0x00000080L
+#define SSL_FIPS		0x00000100L
 
 /* we have used 000000ff - 24 bits left to go */
 
