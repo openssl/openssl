@@ -273,9 +273,21 @@ int main(int Argc, char *Argv[])
 	i=NCONF_load(config,p,&errline);
 	if (i == 0)
 		{
-		NCONF_free(config);
-		config = NULL;
-		ERR_clear_error();
+		if (ERR_GET_REASON(ERR_peek_last_error())
+		    == CONF_R_NO_SUCH_FILE)
+			{
+			BIO_printf(bio_err,
+				   "WARNING: can't open config file: %s\n",p);
+			ERR_clear_error();
+			NCONF_free(config);
+			config = NULL;
+			}
+		else
+			{
+			ERR_print_errors(bio_err);
+			NCONF_free(config);
+			exit(1);
+			}
 		}
 
 	prog=prog_init();
