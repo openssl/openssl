@@ -1771,4 +1771,11 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 #endif
 
 #endif
+#else /* !WIN32 */
+#include <openssl/engine.h>
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+OPENSSL_EXPORT
+int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { return 0; }
+IMPLEMENT_DYNAMIC_CHECK_FN()
+#endif
 #endif

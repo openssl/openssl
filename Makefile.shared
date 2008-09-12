@@ -491,23 +491,23 @@ link_app.hpux:
 
 link_o.aix:
 	@ $(CALC_VERSIONS); \
-	OBJECT_MODE=`expr x$(SHARED_LDFLAGS) : 'x\-[a-z]*\(64\)'` || :; \
+	OBJECT_MODE=`expr "x$(SHARED_LDFLAGS)" : 'x\-[a-z]*\(64\)'` || :; \
 	OBJECT_MODE=$${OBJECT_MODE:-32}; export OBJECT_MODE; \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS=''; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-G,-bexpall,-bnolibpath,-bM:SRE'; \
+	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
 	$(LINK_SO_O);
 link_a.aix:
 	@ $(CALC_VERSIONS); \
-	OBJECT_MODE=`expr x$(SHARED_LDFLAGS) : 'x\-[a-z]*\(64\)'` || : ; \
+	OBJECT_MODE=`expr "x$(SHARED_LDFLAGS)" : 'x\-[a-z]*\(64\)'` || : ; \
 	OBJECT_MODE=$${OBJECT_MODE:-32}; export OBJECT_MODE; \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
 	ALLSYMSFLAGS='-bnogc'; \
 	NOALLSYMSFLAGS=''; \
-	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-G,-bexpall,-bnolibpath,-bM:SRE'; \
+	SHAREDFLAGS='$(CFLAGS) $(SHARED_LDFLAGS) -Wl,-bexpall,-bnolibpath,-bM:SRE'; \
 	$(LINK_SO_A_VIA_O)
 link_app.aix:
 	LDFLAGS="$(CFLAGS) -Wl,-brtl,-blibpath:$(LIBRPATH):$${LIBPATH:-/usr/lib:/lib}"; \
