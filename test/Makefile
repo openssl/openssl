@@ -185,7 +185,7 @@ test_rand:
 	../util/shlib_wrap.sh ./$(RANDTEST)
 
 test_enc:
-	@sh ./testenc
+	sh ./testenc
 
 test_x509:
 	echo test normal x509v1 certificate
