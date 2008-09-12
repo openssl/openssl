@@ -10,7 +10,7 @@ INCLUDES=
 CFLAG=-g
 AR=		ar r
 
-RC4_ENC=rc4_enc.o
+RC4_ENC=rc4_enc.o rc4_skey.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
@@ -21,8 +21,8 @@ TEST=rc4test.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=rc4_skey.c rc4_enc.c
-LIBOBJ=rc4_skey.o $(RC4_ENC)
+LIBSRC=rc4_skey.c rc4_enc.c rc4_fblk.c
+LIBOBJ=$(RC4_ENC) rc4_fblk.o
 
 SRC= $(LIBSRC)
 

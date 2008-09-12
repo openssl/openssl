@@ -359,6 +359,8 @@ ___
 
 $code =~ s/#([bwd])/$1/gm;
 
+$code =~ s/RC4_set_key/private_RC4_set_key/g if ($ENV{FIPSCANLIB} ne "");
+
 print $code;
 
 close STDOUT;

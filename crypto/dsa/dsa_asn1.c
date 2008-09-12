@@ -61,6 +61,7 @@
 #include <openssl/dsa.h>
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/bn.h>
 #ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
 #endif
