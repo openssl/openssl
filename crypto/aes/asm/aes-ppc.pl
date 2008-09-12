@@ -92,6 +92,7 @@ $mask80=$Tbl2;
 $mask1b=$Tbl3;
 
 $code.=<<___;
+.machine	"any"
 .text
 
 .align	7

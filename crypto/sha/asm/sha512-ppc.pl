@@ -173,6 +173,7 @@ ___
 }
 
 $code=<<___;
+.machine	"any"
 .text
 
 .globl	$func

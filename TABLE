@@ -745,7 +745,7 @@ $perlasm_scheme = aix32
 $dso_scheme   = dlfcn
 $shared_target= aix-shared
 $shared_cflag = 
-$shared_ldflag = -q32
+$shared_ldflag = -q32 -G
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = -X 32
@@ -754,7 +754,7 @@ $arflags      = -X 32
 $cc           = gcc
 $cflags       = -O -DB_ENDIAN
 $unistd       = 
-$thread_cflag = -D_THREAD_SAFE
+$thread_cflag = -pthread
 $sys_id       = AIX
 $lflags       = 
 $bn_ops       = BN_LLONG RC4_CHAR
@@ -775,10 +775,10 @@ $perlasm_scheme = aix32
 $dso_scheme   = dlfcn
 $shared_target= aix-shared
 $shared_cflag = 
-$shared_ldflag = 
+$shared_ldflag = -shared -Wl,-G
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
-$arflags      = -X 32
+$arflags      = -X32
 
 *** aix3-cc
 $cc           = cc
@@ -835,7 +835,7 @@ $perlasm_scheme = aix64
 $dso_scheme   = dlfcn
 $shared_target= aix-shared
 $shared_cflag = 
-$shared_ldflag = -q64
+$shared_ldflag = -q64 -G
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = -X 64
@@ -844,7 +844,7 @@ $arflags      = -X 64
 $cc           = gcc
 $cflags       = -maix64 -O -DB_ENDIAN
 $unistd       = 
-$thread_cflag = -D_THREAD_SAFE
+$thread_cflag = -pthread
 $sys_id       = AIX
 $lflags       = 
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR
@@ -865,7 +865,7 @@ $perlasm_scheme = aix64
 $dso_scheme   = dlfcn
 $shared_target= aix-shared
 $shared_cflag = 
-$shared_ldflag = -maix64
+$shared_ldflag = -maix64 -shared -Wl,-G
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = -X64
@@ -1500,14 +1500,44 @@ $shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
 $ranlib       = 
 $arflags      = 
 
-*** debug-geoff
+*** debug-geoff32
 $cc           = gcc
 $cflags       = -DBN_DEBUG -DBN_DEBUG_RAND -DBN_STRICT -DPURIFY -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_ASM -DOPENSSL_NO_INLINE_ASM -DL_ENDIAN -DTERMIO -DPEDANTIC -DMD32_REG_T=int -O1 -ggdb2 -Wall -Werror -Wundef -pedantic -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wsign-compare -Wmissing-prototypes -Wmissing-declarations -Wno-long-long
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
 $lflags       = -ldl
-$bn_ops       = SIXTY_FOUR_BIT_LONG
+$bn_ops       = BN_LLONG
+$cpuid_obj    = 
+$bn_obj       = 
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$perlasm_scheme = void
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = 
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+
+*** debug-geoff64
+$cc           = gcc
+$cflags       = -DBN_DEBUG -DBN_DEBUG_RAND -DBN_STRICT -DPURIFY -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_ASM -DOPENSSL_NO_INLINE_ASM -DL_ENDIAN -DTERMIO -DPEDANTIC -DMD32_REG_T=int -O1 -ggdb2 -Wall -Werror -Wundef -pedantic -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wsign-compare -Wmissing-prototypes -Wmissing-declarations -Wno-long-long
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR
 $cpuid_obj    = 
 $bn_obj       = 
 $des_obj      = 
@@ -1952,7 +1982,7 @@ $arflags      =
 
 *** debug-steve-opt
 $cc           = gcc
-$cflags       = -m64 -O3 -DL_ENDIAN -DTERMIO -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -pedantic -Wall -Werror -Wno-long-long -DMD32_REG_T=int
+$cflags       = -m64 -O3 -DL_ENDIAN -DTERMIO -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -DOPENSSSL_NO_DEPRECATED -g -pedantic -Wall -Werror -Wno-long-long -DMD32_REG_T=int
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1982,7 +2012,7 @@ $arflags      =
 
 *** debug-steve32
 $cc           = gcc
-$cflags       = -m32 -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe
+$cflags       = -m32 -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -DOPENSSSL_NO_DEPRECATED -g -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2012,7 +2042,7 @@ $arflags      =
 
 *** debug-steve64
 $cc           = gcc
-$cflags       = -m64 -DL_ENDIAN -DTERMIO -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -g -pedantic -Wall -Werror -Wno-long-long -DMD32_REG_T=int
+$cflags       = -m64 -DL_ENDIAN -DTERMIO -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -DOPENSSSL_NO_DEPRECATED -g -pedantic -Wall -Werror -Wno-long-long -DMD32_REG_T=int
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -3505,7 +3535,7 @@ $perlasm_scheme = coff
 $dso_scheme   = win32
 $shared_target= cygwin-shared
 $shared_cflag = -D_WINDLL -DOPENSSL_USE_APPLINK
-$shared_ldflag = -mno-cygwin -shared
+$shared_ldflag = -mno-cygwin
 $shared_extension = .dll.a
 $ranlib       = 
 $arflags      = 

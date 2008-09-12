@@ -20,6 +20,7 @@ if ($flavour=~/64/) {
 }
 
 $code=<<___;
+.machine	"any"
 .text
 
 .globl	.OPENSSL_cpuid_setup

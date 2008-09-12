@@ -254,7 +254,7 @@ $data=<<EOF;
 	
 # .text section
 	
-	.machine	$ISA
+	.machine	"any"
 
 #
 #	NOTE:	The following label name should be changed to
