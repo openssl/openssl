@@ -89,11 +89,13 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
 				if (!BIO_get_cipher_status(in))
 					goto err;
 				}
+			if (i < 0)
+				goto err;
 			break;
 			}
 				
-		if (tmpout)
-			BIO_write(tmpout, buf, i);
+		if (tmpout && (BIO_write(tmpout, buf, i) != i))
+			goto err;
 	}
 
 	if(flags & CMS_TEXT)

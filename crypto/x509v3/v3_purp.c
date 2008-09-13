@@ -291,7 +291,9 @@ int X509_supported_extension(X509_EXTENSION *ex)
 		NID_sbgp_ipAddrBlock,	/* 290 */
 		NID_sbgp_autonomousSysNum, /* 291 */
 #endif
-		NID_proxyCertInfo	/* 661 */
+		NID_policy_constraints,	/* 401 */
+		NID_proxyCertInfo,	/* 661 */
+		NID_inhibit_any_policy	/* 748 */
 	};
 
 	int ex_nid;
@@ -325,7 +327,7 @@ static void x509v3_cache_extensions(X509 *x)
 #endif
 	/* Does subject name match issuer ? */
 	if(!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)))
-			 x->ex_flags |= EXFLAG_SS;
+			 x->ex_flags |= EXFLAG_SI;
 	/* V1 should mean no extensions ... */
 	if(!X509_get_version(x)) x->ex_flags |= EXFLAG_V1;
 	/* Handle basic constraints */
