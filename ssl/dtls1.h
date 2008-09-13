@@ -70,6 +70,7 @@ extern "C" {
 #define DTLS1_VERSION			0xFEFF
 
 #if 0
+/* this alert description is not specified anywhere... */
 #define DTLS1_AD_MISSING_HANDSHAKE_MESSAGE    110
 #endif
 
@@ -85,7 +86,11 @@ extern "C" {
 
 #define DTLS1_CCS_HEADER_LENGTH                  1
 
+#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
 #define DTLS1_AL_HEADER_LENGTH                   7
+#else
+#define DTLS1_AL_HEADER_LENGTH                   2
+#endif
 
 
 typedef struct dtls1_bitmap_st
