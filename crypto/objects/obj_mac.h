@@ -315,6 +315,30 @@
 #define NID_ecdsa_with_SHA1		416
 #define OBJ_ecdsa_with_SHA1		OBJ_X9_62_id_ecSigType,1L
 
+#define SN_ecdsa_with_Recommended		"ecdsa-with-Recommended"
+#define NID_ecdsa_with_Recommended		791
+#define OBJ_ecdsa_with_Recommended		OBJ_X9_62_id_ecSigType,2L
+
+#define SN_ecdsa_with_Specified		"ecdsa-with-Specified"
+#define NID_ecdsa_with_Specified		792
+#define OBJ_ecdsa_with_Specified		OBJ_X9_62_id_ecSigType,3L
+
+#define SN_ecdsa_with_SHA224		"ecdsa-with-SHA224"
+#define NID_ecdsa_with_SHA224		793
+#define OBJ_ecdsa_with_SHA224		OBJ_ecdsa_with_Specified,1L
+
+#define SN_ecdsa_with_SHA256		"ecdsa-with-SHA256"
+#define NID_ecdsa_with_SHA256		794
+#define OBJ_ecdsa_with_SHA256		OBJ_ecdsa_with_Specified,2L
+
+#define SN_ecdsa_with_SHA384		"ecdsa-with-SHA384"
+#define NID_ecdsa_with_SHA384		795
+#define OBJ_ecdsa_with_SHA384		OBJ_ecdsa_with_Specified,3L
+
+#define SN_ecdsa_with_SHA512		"ecdsa-with-SHA512"
+#define NID_ecdsa_with_SHA512		796
+#define OBJ_ecdsa_with_SHA512		OBJ_ecdsa_with_Specified,4L
+
 #define OBJ_secg_ellipticCurve		OBJ_certicom_arc,0L
 
 #define SN_secp112r1		"secp112r1"
@@ -1006,6 +1030,11 @@
 #define NID_ms_csp_name		417
 #define OBJ_ms_csp_name		1L,3L,6L,1L,4L,1L,311L,17L,1L
 
+#define SN_LocalKeySet		"LocalKeySet"
+#define LN_LocalKeySet		"Microsoft Local Key set"
+#define NID_LocalKeySet		856
+#define OBJ_LocalKeySet		1L,3L,6L,1L,4L,1L,311L,17L,2L
+
 #define OBJ_certTypes		OBJ_pkcs9,22L
 
 #define LN_x509Certificate		"x509Certificate"
@@ -1103,9 +1132,29 @@
 #define LN_md5_sha1		"md5-sha1"
 #define NID_md5_sha1		114
 
+#define LN_hmacWithMD5		"hmacWithMD5"
+#define NID_hmacWithMD5		797
+#define OBJ_hmacWithMD5		OBJ_rsadsi,2L,6L
+
 #define LN_hmacWithSHA1		"hmacWithSHA1"
 #define NID_hmacWithSHA1		163
 #define OBJ_hmacWithSHA1		OBJ_rsadsi,2L,7L
+
+#define LN_hmacWithSHA224		"hmacWithSHA224"
+#define NID_hmacWithSHA224		798
+#define OBJ_hmacWithSHA224		OBJ_rsadsi,2L,8L
+
+#define LN_hmacWithSHA256		"hmacWithSHA256"
+#define NID_hmacWithSHA256		799
+#define OBJ_hmacWithSHA256		OBJ_rsadsi,2L,9L
+
+#define LN_hmacWithSHA384		"hmacWithSHA384"
+#define NID_hmacWithSHA384		800
+#define OBJ_hmacWithSHA384		OBJ_rsadsi,2L,10L
+
+#define LN_hmacWithSHA512		"hmacWithSHA512"
+#define NID_hmacWithSHA512		801
+#define OBJ_hmacWithSHA512		OBJ_rsadsi,2L,11L
 
 #define SN_rc2_cbc		"RC2-CBC"
 #define LN_rc2_cbc		"rc2-cbc"
@@ -2502,6 +2551,16 @@
 #define NID_sha224		675
 #define OBJ_sha224		OBJ_nist_hashalgs,4L
 
+#define OBJ_dsa_with_sha2		OBJ_nistAlgorithms,3L
+
+#define SN_dsa_with_SHA224		"dsa_with_SHA224"
+#define NID_dsa_with_SHA224		802
+#define OBJ_dsa_with_SHA224		OBJ_dsa_with_sha2,1L
+
+#define SN_dsa_with_SHA256		"dsa_with_SHA256"
+#define NID_dsa_with_SHA256		803
+#define OBJ_dsa_with_SHA256		OBJ_dsa_with_sha2,2L
+
 #define SN_hold_instruction_code		"holdInstructionCode"
 #define LN_hold_instruction_code		"Hold Instruction Code"
 #define NID_hold_instruction_code		430
@@ -3367,6 +3426,226 @@
 #define LN_ipsec4		"ipsec4"
 #define NID_ipsec4		750
 
+#define SN_whirlpool		"whirlpool"
+#define NID_whirlpool		804
+#define OBJ_whirlpool		OBJ_iso,0L,10118L,3L,0L,55L
+
+#define SN_cryptopro		"cryptopro"
+#define NID_cryptopro		805
+#define OBJ_cryptopro		OBJ_member_body,643L,2L,2L
+
+#define SN_cryptocom		"cryptocom"
+#define NID_cryptocom		806
+#define OBJ_cryptocom		OBJ_member_body,643L,2L,9L
+
+#define SN_id_GostR3411_94_with_GostR3410_2001		"id-GostR3411-94-with-GostR3410-2001"
+#define LN_id_GostR3411_94_with_GostR3410_2001		"GOST R 34.11-94 with GOST R 34.10-2001"
+#define NID_id_GostR3411_94_with_GostR3410_2001		807
+#define OBJ_id_GostR3411_94_with_GostR3410_2001		OBJ_cryptopro,3L
+
+#define SN_id_GostR3411_94_with_GostR3410_94		"id-GostR3411-94-with-GostR3410-94"
+#define LN_id_GostR3411_94_with_GostR3410_94		"GOST R 34.11-94 with GOST R 34.10-94"
+#define NID_id_GostR3411_94_with_GostR3410_94		808
+#define OBJ_id_GostR3411_94_with_GostR3410_94		OBJ_cryptopro,4L
+
+#define SN_id_GostR3411_94		"md_gost94"
+#define LN_id_GostR3411_94		"GOST R 34.11-94"
+#define NID_id_GostR3411_94		809
+#define OBJ_id_GostR3411_94		OBJ_cryptopro,9L
+
+#define SN_id_HMACGostR3411_94		"id-HMACGostR3411-94"
+#define LN_id_HMACGostR3411_94		"HMAC GOST 34.11-94"
+#define NID_id_HMACGostR3411_94		810
+#define OBJ_id_HMACGostR3411_94		OBJ_cryptopro,10L
+
+#define SN_id_GostR3410_2001		"gost2001"
+#define LN_id_GostR3410_2001		"GOST R 34.10-2001"
+#define NID_id_GostR3410_2001		811
+#define OBJ_id_GostR3410_2001		OBJ_cryptopro,19L
+
+#define SN_id_GostR3410_94		"gost94"
+#define LN_id_GostR3410_94		"GOST R 34.10-94"
+#define NID_id_GostR3410_94		812
+#define OBJ_id_GostR3410_94		OBJ_cryptopro,20L
+
+#define SN_id_Gost28147_89		"gost89"
+#define LN_id_Gost28147_89		"GOST 28147-89"
+#define NID_id_Gost28147_89		813
+#define OBJ_id_Gost28147_89		OBJ_cryptopro,21L
+
+#define SN_gost89_cnt		"gost89-cnt"
+#define NID_gost89_cnt		814
+
+#define SN_id_Gost28147_89_MAC		"gost-mac"
+#define LN_id_Gost28147_89_MAC		"GOST 28147-89 MAC"
+#define NID_id_Gost28147_89_MAC		815
+#define OBJ_id_Gost28147_89_MAC		OBJ_cryptopro,22L
+
+#define SN_id_GostR3411_94_prf		"prf-gostr3411-94"
+#define LN_id_GostR3411_94_prf		"GOST R 34.11-94 PRF"
+#define NID_id_GostR3411_94_prf		816
+#define OBJ_id_GostR3411_94_prf		OBJ_cryptopro,23L
+
+#define SN_id_GostR3410_2001DH		"id-GostR3410-2001DH"
+#define LN_id_GostR3410_2001DH		"GOST R 34.10-2001 DH"
+#define NID_id_GostR3410_2001DH		817
+#define OBJ_id_GostR3410_2001DH		OBJ_cryptopro,98L
+
+#define SN_id_GostR3410_94DH		"id-GostR3410-94DH"
+#define LN_id_GostR3410_94DH		"GOST R 34.10-94 DH"
+#define NID_id_GostR3410_94DH		818
+#define OBJ_id_GostR3410_94DH		OBJ_cryptopro,99L
+
+#define SN_id_Gost28147_89_CryptoPro_KeyMeshing		"id-Gost28147-89-CryptoPro-KeyMeshing"
+#define NID_id_Gost28147_89_CryptoPro_KeyMeshing		819
+#define OBJ_id_Gost28147_89_CryptoPro_KeyMeshing		OBJ_cryptopro,14L,1L
+
+#define SN_id_Gost28147_89_None_KeyMeshing		"id-Gost28147-89-None-KeyMeshing"
+#define NID_id_Gost28147_89_None_KeyMeshing		820
+#define OBJ_id_Gost28147_89_None_KeyMeshing		OBJ_cryptopro,14L,0L
+
+#define SN_id_GostR3411_94_TestParamSet		"id-GostR3411-94-TestParamSet"
+#define NID_id_GostR3411_94_TestParamSet		821
+#define OBJ_id_GostR3411_94_TestParamSet		OBJ_cryptopro,30L,0L
+
+#define SN_id_GostR3411_94_CryptoProParamSet		"id-GostR3411-94-CryptoProParamSet"
+#define NID_id_GostR3411_94_CryptoProParamSet		822
+#define OBJ_id_GostR3411_94_CryptoProParamSet		OBJ_cryptopro,30L,1L
+
+#define SN_id_Gost28147_89_TestParamSet		"id-Gost28147-89-TestParamSet"
+#define NID_id_Gost28147_89_TestParamSet		823
+#define OBJ_id_Gost28147_89_TestParamSet		OBJ_cryptopro,31L,0L
+
+#define SN_id_Gost28147_89_CryptoPro_A_ParamSet		"id-Gost28147-89-CryptoPro-A-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_A_ParamSet		824
+#define OBJ_id_Gost28147_89_CryptoPro_A_ParamSet		OBJ_cryptopro,31L,1L
+
+#define SN_id_Gost28147_89_CryptoPro_B_ParamSet		"id-Gost28147-89-CryptoPro-B-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_B_ParamSet		825
+#define OBJ_id_Gost28147_89_CryptoPro_B_ParamSet		OBJ_cryptopro,31L,2L
+
+#define SN_id_Gost28147_89_CryptoPro_C_ParamSet		"id-Gost28147-89-CryptoPro-C-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_C_ParamSet		826
+#define OBJ_id_Gost28147_89_CryptoPro_C_ParamSet		OBJ_cryptopro,31L,3L
+
+#define SN_id_Gost28147_89_CryptoPro_D_ParamSet		"id-Gost28147-89-CryptoPro-D-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_D_ParamSet		827
+#define OBJ_id_Gost28147_89_CryptoPro_D_ParamSet		OBJ_cryptopro,31L,4L
+
+#define SN_id_Gost28147_89_CryptoPro_Oscar_1_1_ParamSet		"id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_Oscar_1_1_ParamSet		828
+#define OBJ_id_Gost28147_89_CryptoPro_Oscar_1_1_ParamSet		OBJ_cryptopro,31L,5L
+
+#define SN_id_Gost28147_89_CryptoPro_Oscar_1_0_ParamSet		"id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_Oscar_1_0_ParamSet		829
+#define OBJ_id_Gost28147_89_CryptoPro_Oscar_1_0_ParamSet		OBJ_cryptopro,31L,6L
+
+#define SN_id_Gost28147_89_CryptoPro_RIC_1_ParamSet		"id-Gost28147-89-CryptoPro-RIC-1-ParamSet"
+#define NID_id_Gost28147_89_CryptoPro_RIC_1_ParamSet		830
+#define OBJ_id_Gost28147_89_CryptoPro_RIC_1_ParamSet		OBJ_cryptopro,31L,7L
+
+#define SN_id_GostR3410_94_TestParamSet		"id-GostR3410-94-TestParamSet"
+#define NID_id_GostR3410_94_TestParamSet		831
+#define OBJ_id_GostR3410_94_TestParamSet		OBJ_cryptopro,32L,0L
+
+#define SN_id_GostR3410_94_CryptoPro_A_ParamSet		"id-GostR3410-94-CryptoPro-A-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_A_ParamSet		832
+#define OBJ_id_GostR3410_94_CryptoPro_A_ParamSet		OBJ_cryptopro,32L,2L
+
+#define SN_id_GostR3410_94_CryptoPro_B_ParamSet		"id-GostR3410-94-CryptoPro-B-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_B_ParamSet		833
+#define OBJ_id_GostR3410_94_CryptoPro_B_ParamSet		OBJ_cryptopro,32L,3L
+
+#define SN_id_GostR3410_94_CryptoPro_C_ParamSet		"id-GostR3410-94-CryptoPro-C-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_C_ParamSet		834
+#define OBJ_id_GostR3410_94_CryptoPro_C_ParamSet		OBJ_cryptopro,32L,4L
+
+#define SN_id_GostR3410_94_CryptoPro_D_ParamSet		"id-GostR3410-94-CryptoPro-D-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_D_ParamSet		835
+#define OBJ_id_GostR3410_94_CryptoPro_D_ParamSet		OBJ_cryptopro,32L,5L
+
+#define SN_id_GostR3410_94_CryptoPro_XchA_ParamSet		"id-GostR3410-94-CryptoPro-XchA-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_XchA_ParamSet		836
+#define OBJ_id_GostR3410_94_CryptoPro_XchA_ParamSet		OBJ_cryptopro,33L,1L
+
+#define SN_id_GostR3410_94_CryptoPro_XchB_ParamSet		"id-GostR3410-94-CryptoPro-XchB-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_XchB_ParamSet		837
+#define OBJ_id_GostR3410_94_CryptoPro_XchB_ParamSet		OBJ_cryptopro,33L,2L
+
+#define SN_id_GostR3410_94_CryptoPro_XchC_ParamSet		"id-GostR3410-94-CryptoPro-XchC-ParamSet"
+#define NID_id_GostR3410_94_CryptoPro_XchC_ParamSet		838
+#define OBJ_id_GostR3410_94_CryptoPro_XchC_ParamSet		OBJ_cryptopro,33L,3L
+
+#define SN_id_GostR3410_2001_TestParamSet		"id-GostR3410-2001-TestParamSet"
+#define NID_id_GostR3410_2001_TestParamSet		839
+#define OBJ_id_GostR3410_2001_TestParamSet		OBJ_cryptopro,35L,0L
+
+#define SN_id_GostR3410_2001_CryptoPro_A_ParamSet		"id-GostR3410-2001-CryptoPro-A-ParamSet"
+#define NID_id_GostR3410_2001_CryptoPro_A_ParamSet		840
+#define OBJ_id_GostR3410_2001_CryptoPro_A_ParamSet		OBJ_cryptopro,35L,1L
+
+#define SN_id_GostR3410_2001_CryptoPro_B_ParamSet		"id-GostR3410-2001-CryptoPro-B-ParamSet"
+#define NID_id_GostR3410_2001_CryptoPro_B_ParamSet		841
+#define OBJ_id_GostR3410_2001_CryptoPro_B_ParamSet		OBJ_cryptopro,35L,2L
+
+#define SN_id_GostR3410_2001_CryptoPro_C_ParamSet		"id-GostR3410-2001-CryptoPro-C-ParamSet"
+#define NID_id_GostR3410_2001_CryptoPro_C_ParamSet		842
+#define OBJ_id_GostR3410_2001_CryptoPro_C_ParamSet		OBJ_cryptopro,35L,3L
+
+#define SN_id_GostR3410_2001_CryptoPro_XchA_ParamSet		"id-GostR3410-2001-CryptoPro-XchA-ParamSet"
+#define NID_id_GostR3410_2001_CryptoPro_XchA_ParamSet		843
+#define OBJ_id_GostR3410_2001_CryptoPro_XchA_ParamSet		OBJ_cryptopro,36L,0L
+
+#define SN_id_GostR3410_2001_CryptoPro_XchB_ParamSet		"id-GostR3410-2001-CryptoPro-XchB-ParamSet"
+#define NID_id_GostR3410_2001_CryptoPro_XchB_ParamSet		844
+#define OBJ_id_GostR3410_2001_CryptoPro_XchB_ParamSet		OBJ_cryptopro,36L,1L
+
+#define SN_id_GostR3410_94_a		"id-GostR3410-94-a"
+#define NID_id_GostR3410_94_a		845
+#define OBJ_id_GostR3410_94_a		OBJ_id_GostR3410_94,1L
+
+#define SN_id_GostR3410_94_aBis		"id-GostR3410-94-aBis"
+#define NID_id_GostR3410_94_aBis		846
+#define OBJ_id_GostR3410_94_aBis		OBJ_id_GostR3410_94,2L
+
+#define SN_id_GostR3410_94_b		"id-GostR3410-94-b"
+#define NID_id_GostR3410_94_b		847
+#define OBJ_id_GostR3410_94_b		OBJ_id_GostR3410_94,3L
+
+#define SN_id_GostR3410_94_bBis		"id-GostR3410-94-bBis"
+#define NID_id_GostR3410_94_bBis		848
+#define OBJ_id_GostR3410_94_bBis		OBJ_id_GostR3410_94,4L
+
+#define SN_id_Gost28147_89_cc		"id-Gost28147-89-cc"
+#define LN_id_Gost28147_89_cc		"GOST 28147-89 Cryptocom ParamSet"
+#define NID_id_Gost28147_89_cc		849
+#define OBJ_id_Gost28147_89_cc		OBJ_cryptocom,1L,6L,1L
+
+#define SN_id_GostR3410_94_cc		"gost94cc"
+#define LN_id_GostR3410_94_cc		"GOST 34.10-94 Cryptocom"
+#define NID_id_GostR3410_94_cc		850
+#define OBJ_id_GostR3410_94_cc		OBJ_cryptocom,1L,5L,3L
+
+#define SN_id_GostR3410_2001_cc		"gost2001cc"
+#define LN_id_GostR3410_2001_cc		"GOST 34.10-2001 Cryptocom"
+#define NID_id_GostR3410_2001_cc		851
+#define OBJ_id_GostR3410_2001_cc		OBJ_cryptocom,1L,5L,4L
+
+#define SN_id_GostR3411_94_with_GostR3410_94_cc		"id-GostR3411-94-with-GostR3410-94-cc"
+#define LN_id_GostR3411_94_with_GostR3410_94_cc		"GOST R 34.11-94 with GOST R 34.10-94 Cryptocom"
+#define NID_id_GostR3411_94_with_GostR3410_94_cc		852
+#define OBJ_id_GostR3411_94_with_GostR3410_94_cc		OBJ_cryptocom,1L,3L,3L
+
+#define SN_id_GostR3411_94_with_GostR3410_2001_cc		"id-GostR3411-94-with-GostR3410-2001-cc"
+#define LN_id_GostR3411_94_with_GostR3410_2001_cc		"GOST R 34.11-94 with GOST R 34.10-2001 Cryptocom"
+#define NID_id_GostR3411_94_with_GostR3410_2001_cc		853
+#define OBJ_id_GostR3411_94_with_GostR3410_2001_cc		OBJ_cryptocom,1L,3L,4L
+
+#define SN_id_GostR3410_2001_ParamSet_cc		"id-GostR3410-2001-ParamSet-cc"
+#define LN_id_GostR3410_2001_ParamSet_cc		"GOST R 3410-2001 Parameter Set Cryptocom"
+#define NID_id_GostR3410_2001_ParamSet_cc		854
+#define OBJ_id_GostR3410_2001_ParamSet_cc		OBJ_cryptocom,1L,8L,1L
+
 #define SN_camellia_128_cbc		"CAMELLIA-128-CBC"
 #define LN_camellia_128_cbc		"camellia-128-cbc"
 #define NID_camellia_128_cbc		751
@@ -3479,4 +3758,8 @@
 #define LN_seed_ofb128		"seed-ofb"
 #define NID_seed_ofb128		778
 #define OBJ_seed_ofb128		OBJ_kisa,1L,6L
+
+#define SN_hmac		"HMAC"
+#define LN_hmac		"hmac"
+#define NID_hmac		855
 

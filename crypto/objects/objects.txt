@@ -79,6 +79,12 @@ X9-62_primeCurve 7	 	: prime256v1
 !Alias id-ecSigType ansi-X9-62 4
 !global
 X9-62_id-ecSigType 1		: ecdsa-with-SHA1
+X9-62_id-ecSigType 2		: ecdsa-with-Recommended
+X9-62_id-ecSigType 3		: ecdsa-with-Specified
+ecdsa-with-Specified 1		: ecdsa-with-SHA224
+ecdsa-with-Specified 2		: ecdsa-with-SHA256
+ecdsa-with-Specified 3		: ecdsa-with-SHA384
+ecdsa-with-Specified 4		: ecdsa-with-SHA512
 
 # SECG curve OIDs from "SEC 2: Recommended Elliptic Curve Domain Parameters"
 # (http://www.secg.org/)
@@ -313,6 +319,7 @@ pkcs9 20		:			: friendlyName
 pkcs9 21		:			: localKeyID
 !Cname ms-csp-name
 1 3 6 1 4 1 311 17 1	: CSPName		: Microsoft CSP Name
+1 3 6 1 4 1 311 17 2	: LocalKeySet		: Microsoft Local Key set
 !Alias certTypes pkcs9 22
 certTypes 1		:			: x509Certificate
 certTypes 2		:			: sdsiCertificate
@@ -348,7 +355,15 @@ rsadsi 2 2		: MD2			: md2
 rsadsi 2 4		: MD4			: md4
 rsadsi 2 5		: MD5			: md5
 			: MD5-SHA1		: md5-sha1
+rsadsi 2 6		:			: hmacWithMD5
 rsadsi 2 7		:			: hmacWithSHA1
+
+# From RFC4231
+rsadsi 2 8		:			: hmacWithSHA224
+rsadsi 2 9		:			: hmacWithSHA256
+rsadsi 2 10		:			: hmacWithSHA384
+rsadsi 2 11		:			: hmacWithSHA512
+
 rsadsi 3 2		: RC2-CBC		: rc2-cbc
 			: RC2-ECB		: rc2-ecb
 !Cname rc2-cfb64
@@ -833,6 +848,11 @@ nist_hashalgs 2		: SHA384		: sha384
 nist_hashalgs 3		: SHA512		: sha512
 nist_hashalgs 4		: SHA224		: sha224
 
+# OIDs for dsa-with-sha224 and dsa-with-sha256
+!Alias dsa_with_sha2 nistAlgorithms 3
+dsa_with_sha2 1		: dsa_with_SHA224
+dsa_with_sha2 2		: dsa_with_SHA256
+
 # Hold instruction CRL entry extension
 !Cname hold-instruction-code
 id-ce 23		: holdInstructionCode	: Hold Instruction Code
@@ -1070,13 +1090,93 @@ rsadsi 1 1 6		: rsaOAEPEncryptionSET
 			: Oakley-EC2N-3		: ipsec3
 			: Oakley-EC2N-4		: ipsec4
 
+iso 0 10118 3 0 55	: whirlpool
+
+# GOST OIDs
+
+member-body 643 2 2	: cryptopro
+member-body 643 2 9	: cryptocom
+
+cryptopro 3		: id-GostR3411-94-with-GostR3410-2001 : GOST R 34.11-94 with GOST R 34.10-2001
+cryptopro 4		: id-GostR3411-94-with-GostR3410-94 : GOST R 34.11-94 with GOST R 34.10-94
+!Cname id-GostR3411-94
+cryptopro 9		: md_gost94		: GOST R 34.11-94
+cryptopro 10		: id-HMACGostR3411-94	: HMAC GOST 34.11-94
+!Cname id-GostR3410-2001
+cryptopro 19		: gost2001	: GOST R 34.10-2001
+!Cname id-GostR3410-94
+cryptopro 20		: gost94	: GOST R 34.10-94
+!Cname id-Gost28147-89
+cryptopro 21		: gost89 		: GOST 28147-89
+			: gost89-cnt
+!Cname id-Gost28147-89-MAC
+cryptopro 22		: gost-mac	: GOST 28147-89 MAC
+!Cname id-GostR3411-94-prf
+cryptopro 23		: prf-gostr3411-94	: GOST R 34.11-94 PRF
+cryptopro 98		: id-GostR3410-2001DH	: GOST R 34.10-2001 DH
+cryptopro 99		: id-GostR3410-94DH	: GOST R 34.10-94 DH
+
+cryptopro 14 1		: id-Gost28147-89-CryptoPro-KeyMeshing
+cryptopro 14 0		: id-Gost28147-89-None-KeyMeshing
+
+# GOST parameter set OIDs
+
+cryptopro 30 0		: id-GostR3411-94-TestParamSet
+cryptopro 30 1		: id-GostR3411-94-CryptoProParamSet
+
+cryptopro 31 0		: id-Gost28147-89-TestParamSet
+cryptopro 31 1		: id-Gost28147-89-CryptoPro-A-ParamSet
+cryptopro 31 2		: id-Gost28147-89-CryptoPro-B-ParamSet
+cryptopro 31 3		: id-Gost28147-89-CryptoPro-C-ParamSet
+cryptopro 31 4		: id-Gost28147-89-CryptoPro-D-ParamSet
+cryptopro 31 5		: id-Gost28147-89-CryptoPro-Oscar-1-1-ParamSet
+cryptopro 31 6		: id-Gost28147-89-CryptoPro-Oscar-1-0-ParamSet
+cryptopro 31 7		: id-Gost28147-89-CryptoPro-RIC-1-ParamSet
+
+cryptopro 32 0		: id-GostR3410-94-TestParamSet
+cryptopro 32 2		: id-GostR3410-94-CryptoPro-A-ParamSet
+cryptopro 32 3		: id-GostR3410-94-CryptoPro-B-ParamSet
+cryptopro 32 4		: id-GostR3410-94-CryptoPro-C-ParamSet
+cryptopro 32 5		: id-GostR3410-94-CryptoPro-D-ParamSet
+
+cryptopro 33 1		: id-GostR3410-94-CryptoPro-XchA-ParamSet
+cryptopro 33 2		: id-GostR3410-94-CryptoPro-XchB-ParamSet
+cryptopro 33 3		: id-GostR3410-94-CryptoPro-XchC-ParamSet
+
+cryptopro 35 0		: id-GostR3410-2001-TestParamSet
+cryptopro 35 1		: id-GostR3410-2001-CryptoPro-A-ParamSet
+cryptopro 35 2		: id-GostR3410-2001-CryptoPro-B-ParamSet
+cryptopro 35 3		: id-GostR3410-2001-CryptoPro-C-ParamSet
+
+cryptopro 36 0		: id-GostR3410-2001-CryptoPro-XchA-ParamSet
+cryptopro 36 1		: id-GostR3410-2001-CryptoPro-XchB-ParamSet
+
+id-GostR3410-94 1	: id-GostR3410-94-a
+id-GostR3410-94 2	: id-GostR3410-94-aBis
+id-GostR3410-94 3	: id-GostR3410-94-b
+id-GostR3410-94 4	: id-GostR3410-94-bBis
+
+# Cryptocom LTD GOST OIDs
+
+cryptocom 1 6 1		: id-Gost28147-89-cc	: GOST 28147-89 Cryptocom ParamSet
+!Cname id-GostR3410-94-cc
+cryptocom 1 5 3		: gost94cc	: GOST 34.10-94 Cryptocom
+!Cname id-GostR3410-2001-cc
+cryptocom 1 5 4		: gost2001cc	: GOST 34.10-2001 Cryptocom
+
+cryptocom 1 3 3		: id-GostR3411-94-with-GostR3410-94-cc : GOST R 34.11-94 with GOST R 34.10-94 Cryptocom
+cryptocom 1 3 4		: id-GostR3411-94-with-GostR3410-2001-cc : GOST R 34.11-94 with GOST R 34.10-2001 Cryptocom
+
+cryptocom 1 8 1		: id-GostR3410-2001-ParamSet-cc : GOST R 3410-2001 Parameter Set Cryptocom
 
 # Definitions for Camellia cipher - CBC MODE
+
 1 2 392 200011 61 1 1 1 2 : CAMELLIA-128-CBC		: camellia-128-cbc
 1 2 392 200011 61 1 1 1 3 : CAMELLIA-192-CBC		: camellia-192-cbc
 1 2 392 200011 61 1 1 1 4 : CAMELLIA-256-CBC		: camellia-256-cbc
 
 # Definitions for Camellia cipher - ECB, CFB, OFB MODE
+
 !Alias ntt-ds 0 3 4401 5
 !Alias camellia ntt-ds 3 1 9 
 
@@ -1107,7 +1207,6 @@ camellia 44		: CAMELLIA-256-CFB		: camellia-256-cfb
 			: CAMELLIA-192-CFB8		: camellia-192-cfb8
 			: CAMELLIA-256-CFB8		: camellia-256-cfb8
 
-
 # Definitions for SEED cipher - ECB, CBC, OFB mode
 
 member-body 410 200004  : KISA          : kisa
@@ -1117,3 +1216,7 @@ kisa 1 4                : SEED-CBC      : seed-cbc
 kisa 1 5                : SEED-CFB      : seed-cfb
 !Cname seed-ofb128
 kisa 1 6                : SEED-OFB      : seed-ofb
+
+# There is no OID that just denotes "HMAC" oddly enough...
+
+			: HMAC				: hmac
