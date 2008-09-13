@@ -811,6 +811,14 @@ start:
              *  may be fragmented--don't always expect dest_maxlen bytes */
 			if ( rr->length < dest_maxlen)
 				{
+#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
+				/*
+				 * for normal alerts rr->length is 2, while
+				 * dest_maxlen is 7 if we were to handle this
+				 * non-existing alert...
+				 */
+				FIX ME
+#endif
 				s->rstate=SSL_ST_READ_HEADER;
 				rr->length = 0;
 				goto start;
@@ -1576,7 +1584,7 @@ int dtls1_dispatch_alert(SSL *s)
 	{
 	int i,j;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
-	unsigned char buf[2 + 2 + 3]; /* alert level + alert desc + message seq +frag_off */
+	unsigned char buf[DTLS1_AL_HEADER_LENGTH];
 	unsigned char *ptr = &buf[0];
 
 	s->s3->alert_dispatch=0;
@@ -1585,6 +1593,7 @@ int dtls1_dispatch_alert(SSL *s)
 	*ptr++ = s->s3->send_alert[0];
 	*ptr++ = s->s3->send_alert[1];
 
+#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
 	if (s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE)
 		{	
 		s2n(s->d1->handshake_read_seq, ptr);
@@ -1600,6 +1609,7 @@ int dtls1_dispatch_alert(SSL *s)
 #endif
 		l2n3(s->d1->r_msg_hdr.frag_off, ptr);
 		}
+#endif
 
 	i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), 0);
 	if (i <= 0)
@@ -1609,8 +1619,11 @@ int dtls1_dispatch_alert(SSL *s)
 		}
 	else
 		{
-		if ( s->s3->send_alert[0] == SSL3_AL_FATAL ||
-			s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE)
+		if (s->s3->send_alert[0] == SSL3_AL_FATAL
+#ifdef DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
+		    || s->s3->send_alert[1] == DTLS1_AD_MISSING_HANDSHAKE_MESSAGE
+#endif
+		   )
 			(void)BIO_flush(s->wbio);
 
 		if (s->msg_callback)
