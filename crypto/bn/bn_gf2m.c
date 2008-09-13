@@ -384,7 +384,11 @@ int BN_GF2m_mod_arr(BIGNUM *r, const BIGNUM *a, const unsigned int p[])
 		if (zz == 0) break;
 		d1 = BN_BITS2 - d0;
 		
-		if (d0) z[dN] = (z[dN] << d1) >> d1; /* clear up the top d1 bits */
+		/* clear up the top d1 bits */
+		if (d0)
+			z[dN] = (z[dN] << d1) >> d1;
+		else
+			z[dN] = 0;
 		z[0] ^= zz; /* reduction t^0 component */
 
 		for (k = 1; p[k] != 0; k++)
