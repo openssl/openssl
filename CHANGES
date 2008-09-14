@@ -705,6 +705,10 @@
 
  Changes between 0.9.8h and 0.9.8i  [xx XXX xxxx]
 
+  *) Fix a state transitition in s3_srvr.c and d1_srvr.c
+     (was using SSL3_ST_CW_CLNT_HELLO_B, should be ..._ST_SW_SRVR_...).
+     [Nagendra Modadugu]
+
   *) The fix in 0.9.8c that supposedly got rid of unsafe
      double-checked locking was incomplete for RSA blinding,
      addressing just one layer of what turns out to have been
