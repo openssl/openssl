@@ -347,32 +347,88 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 #if defined(SO_RCVTIMEO)
 	case BIO_CTRL_DGRAM_SET_RECV_TIMEOUT:
+#ifdef OPENSSL_SYS_WINDOWS
+		{
+		struct timeval *tv = (struct timeval *)ptr;
+		int timeout = tv->tv_sec * 1000 + tv->tv_usec/1000;
+		if (setsockopt(b->num, SOL_SOCKET, SO_RCVTIME0,
+			(void*)&timeout, sizeof(timeout)) < 0)
+			{ perror("setsockopt"); ret = -1; }
+		}
+#else
 		if ( setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, ptr,
 			sizeof(struct timeval)) < 0)
 			{ perror("setsockopt");	ret = -1; }
+#endif
 		break;
 	case BIO_CTRL_DGRAM_GET_RECV_TIMEOUT:
+#ifdef OPENSSL_SYS_WINDOWS
+		{
+		int timeout, sz = sizeof(timeout);
+		struct timeval *tv = (struct timeval *)ptr;
+		if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIME0,
+			(void*)&timeout, &sz)) < 0)
+			{ perror("getsockopt"); ret = -1; }
+		else
+			{
+			tv->tv_sec = timeout / 1000;
+			tv->tv_usec = (timeout % 1000) * 1000;
+			ret = sizeof(*tv);
+			}
+		}
+#else
 		if ( getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO, 
 			ptr, (void *)&ret) < 0)
 			{ perror("getsockopt"); ret = -1; }
+#endif
 		break;
 #endif
 #if defined(SO_SNDTIMEO)
 	case BIO_CTRL_DGRAM_SET_SEND_TIMEOUT:
+#ifdef OPENSSL_SYS_WINDOWS
+		{
+		struct timeval *tv = (struct timeval *)ptr;
+		int timeout = tv->tv_sec * 1000 + tv->tv_usec/1000;
+		if (setsockopt(b->num, SOL_SOCKET, SO_SNDTIME0,
+			(void*)&timeout, sizeof(timeout)) < 0)
+			{ perror("setsockopt"); ret = -1; }
+		}
+#else
 		if ( setsockopt(b->num, SOL_SOCKET, SO_SNDTIMEO, ptr,
 			sizeof(struct timeval)) < 0)
 			{ perror("setsockopt");	ret = -1; }
+#endif
 		break;
 	case BIO_CTRL_DGRAM_GET_SEND_TIMEOUT:
+#ifdef OPENSSL_SYS_WINDOWS
+		{
+		int timeout, sz = sizeof(timeout);
+		struct timeval *tv = (struct timeval *)ptr;
+		if (getsockopt(b->num, SOL_SOCKET, SO_SNDTIME0,
+			(void*)&timeout, &sz)) < 0)
+			{ perror("getsockopt"); ret = -1; }
+		else
+			{
+			tv->tv_sec = timeout / 1000;
+			tv->tv_usec = (timeout % 1000) * 1000;
+			ret = sizeof(*tv);
+			}
+		}
+#else
 		if ( getsockopt(b->num, SOL_SOCKET, SO_SNDTIMEO, 
 			ptr, (void *)&ret) < 0)
 			{ perror("getsockopt"); ret = -1; }
+#endif
 		break;
 #endif
 	case BIO_CTRL_DGRAM_GET_SEND_TIMER_EXP:
 		/* fall-through */
 	case BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP:
+#ifdef OPENSSL_SYS_WINDOWS
+		if ( data->_errno == ETIMEDOUT)
+#else
 		if ( data->_errno == EAGAIN)
+#endif
 			{
 			ret = 1;
 			data->_errno = 0;
