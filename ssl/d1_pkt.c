@@ -1294,7 +1294,7 @@ int dtls1_write_bytes(SSL *s, int type, const void *buf_, int len)
 	else 
 		s->s3->wnum += i;
 
-	return tot + i;
+	return i;
 	}
 
 int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len, int create_empty_fragment)
