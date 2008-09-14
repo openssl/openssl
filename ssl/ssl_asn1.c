@@ -353,7 +353,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	memcpy(ret->session_id,os.data,os.length);
 
 	M_ASN1_D2I_get_x(ASN1_OCTET_STRING,osp,d2i_ASN1_OCTET_STRING);
-	if (ret->master_key_length > SSL_MAX_MASTER_KEY_LENGTH)
+	if (os.length > SSL_MAX_MASTER_KEY_LENGTH)
 		ret->master_key_length=SSL_MAX_MASTER_KEY_LENGTH;
 	else
 		ret->master_key_length=os.length;

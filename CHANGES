@@ -2,6 +2,196 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8h and 0.9.8i  [xx XXX xxxx]
+
+  *) Fix a state transitition in s3_srvr.c and d1_srvr.c
+     (was using SSL3_ST_CW_CLNT_HELLO_B, should be ..._ST_SW_SRVR_...).
+     [Nagendra Modadugu]
+
+  *) The fix in 0.9.8c that supposedly got rid of unsafe
+     double-checked locking was incomplete for RSA blinding,
+     addressing just one layer of what turns out to have been
+     doubly unsafe triple-checked locking.
+
+     So now fix this for real by retiring the MONT_HELPER macro
+     in crypto/rsa/rsa_eay.c.
+
+     [Bodo Moeller; problem pointed out by Marius Schilder]
+
+  *) Various precautionary measures:
+
+     - Avoid size_t integer overflow in HASH_UPDATE (md32_common.h).
+
+     - Avoid a buffer overflow in d2i_SSL_SESSION() (ssl_asn1.c).
+       (NB: This would require knowledge of the secret session ticket key
+       to exploit, in which case you'd be SOL either way.)
+
+     - Change bn_nist.c so that it will properly handle input BIGNUMs
+       outside the expected range.
+
+     - Enforce the 'num' check in BN_div() (bn_div.c) for non-BN_DEBUG
+       builds.
+
+     [Neel Mehta, Bodo Moeller]
+
+  *) Add support for Local Machine Keyset attribute in PKCS#12 files.
+     [Steve Henson]
+
+  *) Fix BN_GF2m_mod_arr() top-bit cleanup code.
+     [Huang Ying]
+
+  *) Expand ENGINE to support engine supplied SSL client certificate functions.
+
+     This work was sponsored by Logica.
+     [Steve Henson]
+
+  *) Add CryptoAPI ENGINE to support use of RSA and DSA keys held in Windows
+     keystores. Support for SSL/TLS client authentication too.
+     Not compiled unless enable-capieng specified to Configure.
+
+     This work was sponsored by Logica.
+     [Steve Henson]
+
+  *) Allow engines to be "soft loaded" - i.e. optionally don't die if
+     the load fails. Useful for distros.
+     [Ben Laurie and the FreeBSD team]
+
+ Changes between 0.9.8g and 0.9.8h  [28 May 2008]
+
+  *) Fix flaw if 'Server Key exchange message' is omitted from a TLS
+     handshake which could lead to a cilent crash as found using the
+     Codenomicon TLS test suite (CVE-2008-1672) 
+     [Steve Henson, Mark Cox]
+
+  *) Fix double free in TLS server name extensions which could lead to
+     a remote crash found by Codenomicon TLS test suite (CVE-2008-0891) 
+     [Joe Orton]
+
+  *) Clear error queue in SSL_CTX_use_certificate_chain_file()
+
+     Clear the error queue to ensure that error entries left from
+     older function calls do not interfere with the correct operation.
+     [Lutz Jaenicke, Erik de Castro Lopo]
+
+  *) Remove root CA certificates of commercial CAs:
+
+     The OpenSSL project does not recommend any specific CA and does not
+     have any policy with respect to including or excluding any CA.
+     Therefore it does not make any sense to ship an arbitrary selection
+     of root CA certificates with the OpenSSL software.
+     [Lutz Jaenicke]
+
+  *) RSA OAEP patches to fix two separate invalid memory reads.
+     The first one involves inputs when 'lzero' is greater than
+     'SHA_DIGEST_LENGTH' (it would read about SHA_DIGEST_LENGTH bytes
+     before the beginning of from). The second one involves inputs where
+     the 'db' section contains nothing but zeroes (there is a one-byte
+     invalid read after the end of 'db').
+     [Ivan Nestlerode <inestlerode@us.ibm.com>]
+
+  *) Partial backport from 0.9.9-dev:
+
+     Introduce bn_mul_mont (dedicated Montgomery multiplication
+     procedure) as a candidate for BIGNUM assembler implementation.
+     While 0.9.9-dev uses assembler for various architectures, only
+     x86_64 is available by default here in the 0.9.8 branch, and
+     32-bit x86 is available through a compile-time setting.
+
+     To try the 32-bit x86 assembler implementation, use Configure
+     option "enable-montasm" (which exists only for this backport).
+
+     As "enable-montasm" for 32-bit x86 disclaims code stability
+     anyway, in this constellation we activate additional code
+     backported from 0.9.9-dev for further performance improvements,
+     namely BN_from_montgomery_word.  (To enable this otherwise,
+     e.g. x86_64, try "-DMONT_FROM_WORD___NON_DEFAULT_0_9_8_BUILD".)
+
+     [Andy Polyakov (backport partially by Bodo Moeller)]
+
+  *) Add TLS session ticket callback. This allows an application to set
+     TLS ticket cipher and HMAC keys rather than relying on hardcoded fixed
+     values. This is useful for key rollover for example where several key
+     sets may exist with different names.
+     [Steve Henson]
+
+  *) Reverse ENGINE-internal logic for caching default ENGINE handles.
+     This was broken until now in 0.9.8 releases, such that the only way
+     a registered ENGINE could be used (assuming it initialises
+     successfully on the host) was to explicitly set it as the default
+     for the relevant algorithms. This is in contradiction with 0.9.7
+     behaviour and the documentation. With this fix, when an ENGINE is
+     registered into a given algorithm's table of implementations, the
+     'uptodate' flag is reset so that auto-discovery will be used next
+     time a new context for that algorithm attempts to select an
+     implementation.
+     [Ian Lister (tweaked by Geoff Thorpe)]
+
+  *) Backport of CMS code to OpenSSL 0.9.8. This differs from the 0.9.9
+     implemention in the following ways:
+
+     Lack of EVP_PKEY_ASN1_METHOD means algorithm parameters have to be
+     hard coded.
+
+     Lack of BER streaming support means one pass streaming processing is
+     only supported if data is detached: setting the streaming flag is
+     ignored for embedded content.
+
+     CMS support is disabled by default and must be explicitly enabled
+     with the enable-cms configuration option.
+     [Steve Henson]
+
+  *) Update the GMP engine glue to do direct copies between BIGNUM and
+     mpz_t when openssl and GMP use the same limb size. Otherwise the
+     existing "conversion via a text string export" trick is still used.
+     [Paul Sheer <paulsheer@gmail.com>]
+
+  *) Zlib compression BIO. This is a filter BIO which compressed and
+     uncompresses any data passed through it.
+     [Steve Henson]
+
+  *) Add AES_wrap_key() and AES_unwrap_key() functions to implement
+     RFC3394 compatible AES key wrapping.
+     [Steve Henson]
+
+  *) Add utility functions to handle ASN1 structures. ASN1_STRING_set0():
+     sets string data without copying. X509_ALGOR_set0() and
+     X509_ALGOR_get0(): set and retrieve X509_ALGOR (AlgorithmIdentifier)
+     data. Attribute function X509at_get0_data_by_OBJ(): retrieves data
+     from an X509_ATTRIBUTE structure optionally checking it occurs only
+     once. ASN1_TYPE_set1(): set and ASN1_TYPE structure copying supplied
+     data.
+     [Steve Henson]
+
+  *) Fix BN flag handling in RSA_eay_mod_exp() and BN_MONT_CTX_set()
+     to get the expected BN_FLG_CONSTTIME behavior.
+     [Bodo Moeller (Google)]
+  
+  *) Netware support:
+
+     - fixed wrong usage of ioctlsocket() when build for LIBC BSD sockets
+     - fixed do_tests.pl to run the test suite with CLIB builds too (CLIB_OPT)
+     - added some more tests to do_tests.pl
+     - fixed RunningProcess usage so that it works with newer LIBC NDKs too
+     - removed usage of BN_LLONG for CLIB builds to avoid runtime dependency
+     - added new Configure targets netware-clib-bsdsock, netware-clib-gcc,
+       netware-clib-bsdsock-gcc, netware-libc-bsdsock-gcc
+     - various changes to netware.pl to enable gcc-cross builds on Win32
+       platform
+     - changed crypto/bio/b_sock.c to work with macro functions (CLIB BSD)
+     - various changes to fix missing prototype warnings
+     - fixed x86nasm.pl to create correct asm files for NASM COFF output
+     - added AES, WHIRLPOOL and CPUID assembler code to build files
+     - added missing AES assembler make rules to mk1mf.pl
+     - fixed order of includes in apps/ocsp.c so that e_os.h settings apply
+     [Guenter Knauf <eflash@gmx.net>]
+
+  *) Implement certificate status request TLS extension defined in RFC3546.
+     A client can set the appropriate parameters and receive the encoded
+     OCSP response via a callback. A server can query the supplied parameters
+     and set the encoded OCSP response in the callback. Add simplified examples
+     to s_client and s_server.
+     [Steve Henson]
+
  Changes between 0.9.8g and 0.9.8h-fips  [xx XXX xxxx]
 
   *) Add flag EVP_CIPH_FLAG_LENGTH_BITS to indicate that input buffer length
@@ -133,14 +323,6 @@
      Update Windows build system.
      [Steve Henson]
 
- Changes between 0.9.8g and 0.9.8h  [xx XXX xxxx]
-
-  *) Implement certificate status request TLS extension defined in RFC3546.
-     A client can set the appropriate parameters and receive the encoded
-     OCSP response via a callback. A server can query the supplied parameters
-     and set the encoded OCSP response in the callback. Add simplified examples
-     to s_client and s_server.
-     [Steve Henson]
 
  Changes between 0.9.8f and 0.9.8g  [19 Oct 2007]
 
@@ -307,256 +489,9 @@
      authentication-only ciphersuites.
      [Bodo Moeller]
 
- Changes between 0.9.8e and 0.9.8f  [23 Feb 2007]
-
-  *) Mitigate branch prediction attacks, which can be practical if a
-     single processor is shared, allowing a spy process to extract
-     information.  For detailed background information, see
-     http://eprint.iacr.org/2007/039 (O. Aciicmez, S. Gueron,
-     J.-P. Seifert, "New Branch Prediction Vulnerabilities in OpenSSL
-     and Necessary Software Countermeasures").  The core of the change
-     are new versions BN_div_no_branch() and
-     BN_mod_inverse_no_branch() of BN_div() and BN_mod_inverse(),
-     respectively, which are slower, but avoid the security-relevant
-     conditional branches.  These are automatically called by BN_div()
-     and BN_mod_inverse() if the flag BN_FLG_CONSTTIME is set for the
-     modulus.  Also, BN_is_bit_set() has been changed to remove a
-     conditional branch.
-
-     BN_FLG_CONSTTIME is the new name for the previous
-     BN_FLG_EXP_CONSTTIME flag, since it now affects more than just
-     modular exponentiation.  (Since OpenSSL 0.9.7h, setting this flag
-     in the exponent causes BN_mod_exp_mont() to use the alternative
-     implementation in BN_mod_exp_mont_consttime().)  The old name
-     remains as a deprecated alias.
-
-     Similary, RSA_FLAG_NO_EXP_CONSTTIME is replaced by a more general
-     RSA_FLAG_NO_CONSTTIME flag since the RSA implementation now uses
-     constant-time implementations for more than just exponentiation.
-     Here too the old name is kept as a deprecated alias.
-
-     BN_BLINDING_new() will now use BN_dup() for the modulus so that
-     the BN_BLINDING structure gets an independent copy of the
-     modulus.  This means that the previous "BIGNUM *m" argument to
-     BN_BLINDING_new() and to BN_BLINDING_create_param() now
-     essentially becomes "const BIGNUM *m", although we can't actually
-     change this in the header file before 0.9.9.  It allows
-     RSA_setup_blinding() to use BN_with_flags() on the modulus to
-     enable BN_FLG_CONSTTIME.
-
-     [Matthew D Wood (Intel Corp)]
-
-  *) Mitigate branch prediction attacks, which can be practical if a
-     single processor is shared, allowing a spy process to extract
-     information.  For detailed background information, see
-     http://eprint.iacr.org/2007/039 (O. Aciicmez, S. Gueron,
-     J.-P. Seifert, "New Branch Prediction Vulnerabilities in OpenSSL
-     and Necessary Software Countermeasures").  The core of the change
-     are new versions BN_div_no_branch() and
-     BN_mod_inverse_no_branch() of BN_div() and BN_mod_inverse(),
-     respectively, which are slower, but avoid the security-relevant
-     conditional branches.  These are automatically called by BN_div()
-     and BN_mod_inverse() if the flag BN_FLG_CONSTTIME is set for one
-     of the input BIGNUMs.  Also, BN_is_bit_set() has been changed to
-     remove a conditional branch.
-
-     BN_FLG_CONSTTIME is the new name for the previous
-     BN_FLG_EXP_CONSTTIME flag, since it now affects more than just
-     modular exponentiation.  (Since OpenSSL 0.9.7h, setting this flag
-     in the exponent causes BN_mod_exp_mont() to use the alternative
-     implementation in BN_mod_exp_mont_consttime().)  The old name
-     remains as a deprecated alias.
-
-     Similary, RSA_FLAG_NO_EXP_CONSTTIME is replaced by a more general
-     RSA_FLAG_NO_CONSTTIME flag since the RSA implementation now uses
-     constant-time implementations for more than just exponentiation.
-     Here too the old name is kept as a deprecated alias.
-
-     BN_BLINDING_new() will now use BN_dup() for the modulus so that
-     the BN_BLINDING structure gets an independent copy of the
-     modulus.  This means that the previous "BIGNUM *m" argument to
-     BN_BLINDING_new() and to BN_BLINDING_create_param() now
-     essentially becomes "const BIGNUM *m", although we can't actually
-     change this in the header file before 0.9.9.  It allows
-     RSA_setup_blinding() to use BN_with_flags() on the modulus to
-     enable BN_FLG_CONSTTIME.
-
-     [Matthew D Wood (Intel Corp)]
-
-  *) Add the Korean symmetric 128-bit cipher SEED (see
-     http://www.kisa.or.kr/kisa/seed/jsp/seed_eng.jsp) and
-     add SEED ciphersuites from RFC 4162:
-
-        TLS_RSA_WITH_SEED_CBC_SHA      =  "SEED-SHA"
-        TLS_DHE_DSS_WITH_SEED_CBC_SHA  =  "DHE-DSS-SEED-SHA"
-        TLS_DHE_RSA_WITH_SEED_CBC_SHA  =  "DHE-RSA-SEED-SHA"
-        TLS_DH_anon_WITH_SEED_CBC_SHA  =  "ADH-SEED-SHA"
-
-     To minimize changes between patchlevels in the OpenSSL 0.9.8
-     series, SEED remains excluded from compilation unless OpenSSL
-     is configured with 'enable-seed'.
-     [KISA, Bodo Moeller]
-
-  *) Mitigate branch prediction attacks, which can be practical if a
-     single processor is shared, allowing a spy process to extract
-     information.  For detailed background information, see
-     http://eprint.iacr.org/2007/039 (O. Aciicmez, S. Gueron,
-     J.-P. Seifert, "New Branch Prediction Vulnerabilities in OpenSSL
-     and Necessary Software Countermeasures").  The core of the change
-     are new versions BN_div_no_branch() and
-     BN_mod_inverse_no_branch() of BN_div() and BN_mod_inverse(),
-     respectively, which are slower, but avoid the security-relevant
-     conditional branches.  These are automatically called by BN_div()
-     and BN_mod_inverse() if the flag BN_FLG_CONSTTIME is set for one
-     of the input BIGNUMs.  Also, BN_is_bit_set() has been changed to
-     remove a conditional branch.
-
-     BN_FLG_CONSTTIME is the new name for the previous
-     BN_FLG_EXP_CONSTTIME flag, since it now affects more than just
-     modular exponentiation.  (Since OpenSSL 0.9.7h, setting this flag
-     in the exponent causes BN_mod_exp_mont() to use the alternative
-     implementation in BN_mod_exp_mont_consttime().)  The old name
-     remains as a deprecated alias.
-
-     Similary, RSA_FLAG_NO_EXP_CONSTTIME is replaced by a more general
-     RSA_FLAG_NO_CONSTTIME flag since the RSA implementation now uses
-     constant-time implementations for more than just exponentiation.
-     Here too the old name is kept as a deprecated alias.
-
-     BN_BLINDING_new() will now use BN_dup() for the modulus so that
-     the BN_BLINDING structure gets an independent copy of the
-     modulus.  This means that the previous "BIGNUM *m" argument to
-     BN_BLINDING_new() and to BN_BLINDING_create_param() now
-     essentially becomes "const BIGNUM *m", although we can't actually
-     change this in the header file before 0.9.9.  It allows
-     RSA_setup_blinding() to use BN_with_flags() on the modulus to
-     enable BN_FLG_CONSTTIME.
-
-     [Matthew D Wood (Intel Corp)]
-
-  *) Add the Korean symmetric 128-bit cipher SEED (see
-     http://www.kisa.or.kr/kisa/seed/jsp/seed_eng.jsp) and
-     add SEED ciphersuites from RFC 4162:
-
-        TLS_RSA_WITH_SEED_CBC_SHA      =  "SEED-SHA"
-        TLS_DHE_DSS_WITH_SEED_CBC_SHA  =  "DHE-DSS-SEED-SHA"
-        TLS_DHE_RSA_WITH_SEED_CBC_SHA  =  "DHE-RSA-SEED-SHA"
-        TLS_DH_anon_WITH_SEED_CBC_SHA  =  "ADH-SEED-SHA"
-
-     To minimize changes between patchlevels in the OpenSSL 0.9.8
-     series, SEED remains excluded from compilation unless OpenSSL
-     is configured with 'enable-seed'.
-     [KISA, Bodo Moeller]
-
-  *) Mitigate branch prediction attacks, which can be practical if a
-     single processor is shared, allowing a spy process to extract
-     information.  For detailed background information, see
-     http://eprint.iacr.org/2007/039 (O. Aciicmez, S. Gueron,
-     J.-P. Seifert, "New Branch Prediction Vulnerabilities in OpenSSL
-     and Necessary Software Countermeasures").  The core of the change
-     are new versions BN_div_no_branch() and
-     BN_mod_inverse_no_branch() of BN_div() and BN_mod_inverse(),
-     respectively, which are slower, but avoid the security-relevant
-     conditional branches.  These are automatically called by BN_div()
-     and BN_mod_inverse() if the flag BN_FLG_CONSTTIME is set for one
-     of the input BIGNUMs.  Also, BN_is_bit_set() has been changed to
-     remove a conditional branch.
-
-     BN_FLG_CONSTTIME is the new name for the previous
-     BN_FLG_EXP_CONSTTIME flag, since it now affects more than just
-     modular exponentiation.  (Since OpenSSL 0.9.7h, setting this flag
-     in the exponent causes BN_mod_exp_mont() to use the alternative
-     implementation in BN_mod_exp_mont_consttime().)  The old name
-     remains as a deprecated alias.
-
-     Similary, RSA_FLAG_NO_EXP_CONSTTIME is replaced by a more general
-     RSA_FLAG_NO_CONSTTIME flag since the RSA implementation now uses
-     constant-time implementations for more than just exponentiation.
-     Here too the old name is kept as a deprecated alias.
-
-     BN_BLINDING_new() will now use BN_dup() for the modulus so that
-     the BN_BLINDING structure gets an independent copy of the
-     modulus.  This means that the previous "BIGNUM *m" argument to
-     BN_BLINDING_new() and to BN_BLINDING_create_param() now
-     essentially becomes "const BIGNUM *m", although we can't actually
-     change this in the header file before 0.9.9.  It allows
-     RSA_setup_blinding() to use BN_with_flags() on the modulus to
-     enable BN_FLG_CONSTTIME.
-
-     [Matthew D Wood (Intel Corp)]
-
-  *) Squeeze another 10% out of IGE mode when in != out.
-     [Ben Laurie]
-
-  *) AES IGE mode speedup.
-     [Dean Gaudet (Google)]
-
-  *) Add the Korean symmetric 128-bit cipher SEED (see
-     http://www.kisa.or.kr/kisa/seed/jsp/seed_eng.jsp) and
-     add SEED ciphersuites from RFC 4162:
-
-        TLS_RSA_WITH_SEED_CBC_SHA      =  "SEED-SHA"
-        TLS_DHE_DSS_WITH_SEED_CBC_SHA  =  "DHE-DSS-SEED-SHA"
-        TLS_DHE_RSA_WITH_SEED_CBC_SHA  =  "DHE-RSA-SEED-SHA"
-        TLS_DH_anon_WITH_SEED_CBC_SHA  =  "ADH-SEED-SHA"
-
-     To minimize changes between patchlevels in the OpenSSL 0.9.8
-     series, SEED remains excluded from compilation unless OpenSSL
-     is configured with 'enable-seed'.
-     [KISA, Bodo Moeller]
-
-  *) Mitigate branch prediction attacks, which can be practical if a
-     single processor is shared, allowing a spy process to extract
-     information.  For detailed background information, see
-     http://eprint.iacr.org/2007/039 (O. Aciicmez, S. Gueron,
-     J.-P. Seifert, "New Branch Prediction Vulnerabilities in OpenSSL
-     and Necessary Software Countermeasures").  The core of the change
-     are new versions BN_div_no_branch() and
-     BN_mod_inverse_no_branch() of BN_div() and BN_mod_inverse(),
-     respectively, which are slower, but avoid the security-relevant
-     conditional branches.  These are automatically called by BN_div()
-     and BN_mod_inverse() if the flag BN_FLG_CONSTTIME is set for one
-     of the input BIGNUMs.  Also, BN_is_bit_set() has been changed to
-     remove a conditional branch.
-
-     BN_FLG_CONSTTIME is the new name for the previous
-     BN_FLG_EXP_CONSTTIME flag, since it now affects more than just
-     modular exponentiation.  (Since OpenSSL 0.9.7h, setting this flag
-     in the exponent causes BN_mod_exp_mont() to use the alternative
-     implementation in BN_mod_exp_mont_consttime().)  The old name
-     remains as a deprecated alias.
-
-     Similary, RSA_FLAG_NO_EXP_CONSTTIME is replaced by a more general
-     RSA_FLAG_NO_CONSTTIME flag since the RSA implementation now uses
-     constant-time implementations for more than just exponentiation.
-     Here too the old name is kept as a deprecated alias.
-
-     BN_BLINDING_new() will now use BN_dup() for the modulus so that
-     the BN_BLINDING structure gets an independent copy of the
-     modulus.  This means that the previous "BIGNUM *m" argument to
-     BN_BLINDING_new() and to BN_BLINDING_create_param() now
-     essentially becomes "const BIGNUM *m", although we can't actually
-     change this in the header file before 0.9.9.  It allows
-     RSA_setup_blinding() to use BN_with_flags() on the modulus to
-     enable BN_FLG_CONSTTIME.
-
-     [Matthew D Wood (Intel Corp)]
-
-  *) In the SSL/TLS server implementation, be strict about session ID
-     context matching (which matters if an application uses a single
-     external cache for different purposes).  Previously,
-     out-of-context reuse was forbidden only if SSL_VERIFY_PEER was
-     set.  This did ensure strict client verification, but meant that,
-     with applications using a single external cache for quite
-     different requirements, clients could circumvent ciphersuite
-     restrictions for a given session ID context by starting a session
-     in a different context.
-     [Bodo Moeller]
-
-  *) Include "!eNULL" in SSL_DEFAULT_CIPHER_LIST to make sure that
-     a ciphersuite string such as "DEFAULT:RSA" cannot enable
-     authentication-only ciphersuites.
-     [Bodo Moeller]
+  *) Update the SSL_get_shared_ciphers() fix CVE-2006-3738 which was
+     not complete and could lead to a possible single byte overflow
+     (CVE-2007-5135) [Ben Laurie]
 
  Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
 

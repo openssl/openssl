@@ -187,6 +187,17 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	BN_ULONG d0,d1;
 	int num_n,div_n;
 
+	/* Invalid zero-padding would have particularly bad consequences
+	 * in the case of 'num', so don't just rely on bn_check_top() for this one
+	 * (bn_check_top() works only for BN_DEBUG builds) */
+	if (num->top > 0 && num->d[num->top - 1] == 0)
+		{
+		BNerr(BN_F_BN_DIV,BN_R_NOT_INITIALIZED);
+		return 0;
+		}
+
+	bn_check_top(num);
+
 	if ((BN_get_flags(num, BN_FLG_CONSTTIME) != 0) || (BN_get_flags(divisor, BN_FLG_CONSTTIME) != 0))
 		{
 		return BN_div_no_branch(dv, rm, num, divisor, ctx);
@@ -194,7 +205,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 
 	bn_check_top(dv);
 	bn_check_top(rm);
-	bn_check_top(num);
+	/* bn_check_top(num); */ /* 'num' has been checked already */
 	bn_check_top(divisor);
 
 	if (BN_is_zero(divisor))
@@ -419,7 +430,7 @@ static int BN_div_no_branch(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
 
 	bn_check_top(dv);
 	bn_check_top(rm);
-	bn_check_top(num);
+	/* bn_check_top(num); */ /* 'num' has been checked in BN_div() */
 	bn_check_top(divisor);
 
 	if (BN_is_zero(divisor))
