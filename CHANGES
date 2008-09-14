@@ -4,6 +4,22 @@
 
  Changes between 0.9.8h and 0.9.8i  [xx XXX xxxx]
 
+  *) Various precautionary measures:
+
+     - Avoid size_t integer overflow in HASH_UPDATE (md32_common.h).
+
+     - Avoid a buffer overflow in d2i_SSL_SESSION() (ssl_asn1.c).
+       (NB: This would require knowledge of the secret session ticket key
+       to exploit, in which case you'd be SOL either way.)
+
+     - Change bn_nist.c so that it will properly handle input BIGNUMs
+       outside the expected range.
+
+     - Enforce the 'num' check in BN_div() (bn_div.c) for non-BN_DEBUG
+       builds.
+
+     [Neel Mehta, Bodo Moeller]
+
   *) Add support for Local Machine Keyset attribute in PKCS#12 files.
      [Steve Henson]
 
@@ -27,6 +43,22 @@
      [Ben Laurie and the FreeBSD team]
 
  Changes between 0.9.8g and 0.9.8h  [28 May 2008]
+
+  *) Various precautionary measures:
+
+     - Avoid size_t integer overflow in HASH_UPDATE (md32_common.h).
+
+     - Avoid a buffer overflow in d2i_SSL_SESSION() (ssl_asn1.c).
+       (NB: This would require knowledge of the secret session ticket key
+       to exploit, in which case you'd be SOL either way.)
+
+     - Change bn_nist.c so that it will properly handle input BIGNUMs
+       outside the expected range.
+
+     - Enforce the 'num' check in BN_div() (bn_div.c) for non-BN_DEBUG
+       builds.
+
+     [Neel Mehta, Bodo Moeller]
 
   *) Fix flaw if 'Server Key exchange message' is omitted from a TLS
      handshake which could lead to a cilent crash as found using the

@@ -59,6 +59,7 @@
 #include "bn_lcl.h"
 #include "cryptlib.h"
 
+
 #define BN_NIST_192_TOP	(192+BN_BITS2-1)/BN_BITS2
 #define BN_NIST_224_TOP	(224+BN_BITS2-1)/BN_BITS2
 #define BN_NIST_256_TOP	(256+BN_BITS2-1)/BN_BITS2
@@ -101,60 +102,98 @@ static const BN_ULONG _nist_p_521[] = {0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
 	0xFFFFFFFF,0x000001FF};
 #endif
 
+
+static const BIGNUM _bignum_nist_p_192 =
+	{
+	(BN_ULONG *)_nist_p_192,
+	BN_NIST_192_TOP,
+	BN_NIST_192_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+	};
+
+static const BIGNUM _bignum_nist_p_224 =
+	{
+	(BN_ULONG *)_nist_p_224,
+	BN_NIST_224_TOP,
+	BN_NIST_224_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+	};
+
+static const BIGNUM _bignum_nist_p_256 =
+	{
+	(BN_ULONG *)_nist_p_256,
+	BN_NIST_256_TOP,
+	BN_NIST_256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+	};
+
+static const BIGNUM _bignum_nist_p_384 =
+	{
+	(BN_ULONG *)_nist_p_384,
+	BN_NIST_384_TOP,
+	BN_NIST_384_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+	};
+
+static const BIGNUM _bignum_nist_p_521 =
+	{
+	(BN_ULONG *)_nist_p_521,
+	BN_NIST_521_TOP,
+	BN_NIST_521_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+	};
+
+
 const BIGNUM *BN_get0_nist_prime_192(void)
 	{
-	static BIGNUM const_nist_192 = { (BN_ULONG *)_nist_p_192,
-		BN_NIST_192_TOP, BN_NIST_192_TOP, 0, BN_FLG_STATIC_DATA };
-	return &const_nist_192;
+	return &_bignum_nist_p_192;
 	}
 
 const BIGNUM *BN_get0_nist_prime_224(void)
 	{
-	static BIGNUM const_nist_224 = { (BN_ULONG *)_nist_p_224,
-		BN_NIST_224_TOP, BN_NIST_224_TOP, 0, BN_FLG_STATIC_DATA };
-	return &const_nist_224;
+	return &_bignum_nist_p_224;
 	}
 
 const BIGNUM *BN_get0_nist_prime_256(void)
 	{
-	static BIGNUM const_nist_256 = { (BN_ULONG *)_nist_p_256,
-		BN_NIST_256_TOP, BN_NIST_256_TOP, 0, BN_FLG_STATIC_DATA };
-	return &const_nist_256;
+	return &_bignum_nist_p_256;
 	}
 
 const BIGNUM *BN_get0_nist_prime_384(void)
 	{
-	static BIGNUM const_nist_384 = { (BN_ULONG *)_nist_p_384,
-		BN_NIST_384_TOP, BN_NIST_384_TOP, 0, BN_FLG_STATIC_DATA };
-	return &const_nist_384;
+	return &_bignum_nist_p_384;
 	}
 
 const BIGNUM *BN_get0_nist_prime_521(void)
 	{
-	static BIGNUM const_nist_521 = { (BN_ULONG *)_nist_p_521,
-		BN_NIST_521_TOP, BN_NIST_521_TOP, 0, BN_FLG_STATIC_DATA };
-	return &const_nist_521;
+	return &_bignum_nist_p_521;
 	}
 
-#define BN_NIST_ADD_ONE(a)	while (!(*(a)=(*(a)+1)&BN_MASK2)) ++(a);
 
 static void nist_cp_bn_0(BN_ULONG *buf, BN_ULONG *a, int top, int max)
-        {
+	{
 	int i;
-        BN_ULONG *_tmp1 = (buf), *_tmp2 = (a);
-        for (i = (top); i != 0; i--)
-                *_tmp1++ = *_tmp2++;
-        for (i = (max) - (top); i != 0; i--)
-                *_tmp1++ = (BN_ULONG) 0;
-        }
+	BN_ULONG *_tmp1 = (buf), *_tmp2 = (a);
+
+	OPENSSL_assert(top <= max);
+	for (i = (top); i != 0; i--)
+		*_tmp1++ = *_tmp2++;
+	for (i = (max) - (top); i != 0; i--)
+		*_tmp1++ = (BN_ULONG) 0;
+	}
 
 static void nist_cp_bn(BN_ULONG *buf, BN_ULONG *a, int top)
-        { 
+	{ 
 	int i;
-        BN_ULONG *_tmp1 = (buf), *_tmp2 = (a);
-        for (i = (top); i != 0; i--)
-                *_tmp1++ = *_tmp2++;
-        }
+	BN_ULONG *_tmp1 = (buf), *_tmp2 = (a);
+	for (i = (top); i != 0; i--)
+		*_tmp1++ = *_tmp2++;
+	}
 
 #if BN_BITS2 == 64
 #define bn_cp_64(to, n, from, m)	(to)[n] = (m>=0)?((from)[m]):0;
@@ -199,6 +238,11 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		*res;
 	size_t   mask;
 
+	field = &_bignum_nist_p_192; /* just to make sure */
+
+ 	if (BN_is_negative(a) || a->top > 2*BN_NIST_192_TOP)
+		return BN_nnmod(r, field, a, ctx);
+
 	i = BN_ucmp(field, a);
 	if (i == 0)
 		{
@@ -207,9 +251,6 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		}
 	else if (i > 0)
 		return (r == a) ? 1 : (BN_copy(r ,a) != NULL);
-
-	if (top == BN_NIST_192_TOP)
-		return BN_usub(r, a, field);
 
 	if (r != a)
 		{
@@ -245,6 +286,11 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	r->top = BN_NIST_192_TOP;
 	bn_correct_top(r);
 
+	if (BN_ucmp(field, r) <= 0)
+		{
+		if (!BN_usub(r, r, field)) return 0;
+		}
+
 	return 1;
 	}
 
@@ -272,6 +318,11 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		*res;
 	size_t   mask;
 
+	field = &_bignum_nist_p_224; /* just to make sure */
+
+ 	if (BN_is_negative(a) || a->top > 2*BN_NIST_224_TOP)
+		return BN_nnmod(r, field, a, ctx);
+
 	i = BN_ucmp(field, a);
 	if (i == 0)
 		{
@@ -280,9 +331,6 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		}
 	else if (i > 0)
 		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
-
-	if (top == BN_NIST_224_TOP)
-		return BN_usub(r, a, field);
 
 	if (r != a)
 		{
@@ -333,6 +381,11 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	r->top = BN_NIST_224_TOP;
 	bn_correct_top(r);
 
+	if (BN_ucmp(field, r) <= 0)
+		{
+		if (!BN_usub(r, r, field)) return 0;
+		}
+
 	return 1;
 #else	/* BN_BITS!=32 */
 	return 0;
@@ -364,6 +417,11 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		*res;
 	size_t   mask;
 
+	field = &_bignum_nist_p_256; /* just to make sure */
+
+ 	if (BN_is_negative(a) || a->top > 2*BN_NIST_256_TOP)
+		return BN_nnmod(r, field, a, ctx);
+
 	i = BN_ucmp(field, a);
 	if (i == 0)
 		{
@@ -372,9 +430,6 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		}
 	else if (i > 0)
 		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
-
-	if (top == BN_NIST_256_TOP)
-		return BN_usub(r, a, field);
 
 	if (r != a)
 		{
@@ -470,6 +525,11 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	r->top = BN_NIST_256_TOP;
 	bn_correct_top(r);
 
+	if (BN_ucmp(field, r) <= 0)
+		{
+		if (!BN_usub(r, r, field)) return 0;
+		}
+
 	return 1;
 #else	/* BN_BITS!=32 */
 	return 0;
@@ -505,6 +565,11 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		*res;
 	size_t	 mask;
 
+	field = &_bignum_nist_p_384; /* just to make sure */
+
+ 	if (BN_is_negative(a) || a->top > 2*BN_NIST_384_TOP)
+		return BN_nnmod(r, field, a, ctx);
+
 	i = BN_ucmp(field, a);
 	if (i == 0)
 		{
@@ -513,9 +578,6 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		}
 	else if (i > 0)
 		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
-
-	if (top == BN_NIST_384_TOP)
-		return BN_usub(r, a, field);
 
 	if (r != a)
 		{
@@ -631,6 +693,11 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	r->top = BN_NIST_384_TOP;
 	bn_correct_top(r);
 
+	if (BN_ucmp(field, r) <= 0)
+		{
+		if (!BN_usub(r, r, field)) return 0;
+		}
+
 	return 1;
 #else	/* BN_BITS!=32 */
 	return 0;
@@ -649,11 +716,33 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	BN_ULONG *r_d;
 	BIGNUM	*tmp;
 
+	field = &_bignum_nist_p_521; /* just to make sure */
+
+ 	if (BN_is_negative(a))
+		return BN_nnmod(r, field, a, ctx);
+
 	/* check whether a reduction is necessary */
 	top = a->top;
 	if (top < BN_NIST_521_TOP  || ( top == BN_NIST_521_TOP &&
-           (!(a->d[BN_NIST_521_TOP-1] & ~(BN_NIST_521_TOP_MASK)))))
-		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
+	    (!(a->d[BN_NIST_521_TOP-1] & ~(BN_NIST_521_TOP_MASK)))))
+		{
+		int i = BN_ucmp(field, a);
+		if (i == 0)
+			{
+			BN_zero(r);
+			return 1;
+			}
+		else
+			{
+#ifdef BN_DEBUG
+			OPENSSL_assert(i > 0); /* because 'field' is 1111...1111 */
+#endif
+			return (r == a)? 1 : (BN_copy(r ,a) != NULL);
+			}
+		}
+
+ 	if (BN_num_bits(a) > 2*521)
+		return BN_nnmod(r, field, a, ctx);
 
 	BN_CTX_start(ctx);
 	tmp = BN_CTX_get(ctx);
@@ -673,15 +762,11 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	if (!BN_uadd(r, tmp, r))
 		goto err;
-	top = r->top;
-	r_d = r->d;
-	if (top == BN_NIST_521_TOP  && 
-           (r_d[BN_NIST_521_TOP-1] & ~(BN_NIST_521_TOP_MASK)))
+
+	if (BN_ucmp(field, r) <= 0)
 		{
-		BN_NIST_ADD_ONE(r_d)
-		r->d[BN_NIST_521_TOP-1] &= BN_NIST_521_TOP_MASK; 
+		if (!BN_usub(r, r, field)) goto err;
 		}
-	bn_correct_top(r);
 
 	ret = 1;
 err:

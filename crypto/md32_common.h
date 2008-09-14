@@ -301,7 +301,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 		{
 		p=(unsigned char *)c->data;
 
-		if ((n+len) >= HASH_CBLOCK)
+		if (len >= HASH_CBLOCK || len+n >= HASH_CBLOCK)
 			{
 			memcpy (p+n,data,HASH_CBLOCK-n);
 			HASH_BLOCK_DATA_ORDER (c,p,1);
