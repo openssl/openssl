@@ -732,7 +732,7 @@ int dtls1_send_server_hello(SSL *s)
 
 		d = dtls1_set_message_header(s, d, SSL3_MT_SERVER_HELLO, l, 0, l);
 
-		s->state=SSL3_ST_CW_CLNT_HELLO_B;
+		s->state=SSL3_ST_SW_SRVR_HELLO_B;
 		/* number of bytes to write */
 		s->init_num=p-buf;
 		s->init_off=0;
@@ -741,7 +741,7 @@ int dtls1_send_server_hello(SSL *s)
 		dtls1_buffer_message(s, 0);
 		}
 
-	/* SSL3_ST_CW_CLNT_HELLO_B */
+	/* SSL3_ST_SW_SRVR_HELLO_B */
 	return(dtls1_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
@@ -765,7 +765,7 @@ int dtls1_send_server_done(SSL *s)
 		dtls1_buffer_message(s, 0);
 		}
 
-	/* SSL3_ST_CW_CLNT_HELLO_B */
+	/* SSL3_ST_SW_SRVR_DONE_B */
 	return(dtls1_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
