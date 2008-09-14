@@ -705,6 +705,16 @@
 
  Changes between 0.9.8h and 0.9.8i  [xx XXX xxxx]
 
+  *) The fix in 0.9.8c that supposedly got rid of unsafe
+     double-checked locking was incomplete for RSA blinding,
+     addressing just one layer of what turns out to have been
+     doubly unsafe triple-checked locking.
+
+     So now fix this for real by retiring the MONT_HELPER macro
+     in crypto/rsa/rsa_eay.c.
+
+     [Bodo Moeller; problem pointed out by Marius Schilder]
+
   *) Various precautionary measures:
 
      - Avoid size_t integer overflow in HASH_UPDATE (md32_common.h).
@@ -739,6 +749,10 @@
      This work was sponsored by Logica.
      [Steve Henson]
 
+  *) Allow engines to be "soft loaded" - i.e. optionally don't die if
+     the load fails. Useful for distros.
+     [Ben Laurie and the FreeBSD team]
+
  Changes between 0.9.8g and 0.9.8h  [28 May 2008]
 
   *) Fix flaw if 'Server Key exchange message' is omitted from a TLS
@@ -771,7 +785,26 @@
      the 'db' section contains nothing but zeroes (there is a one-byte
      invalid read after the end of 'db').
      [Ivan Nestlerode <inestlerode@us.ibm.com>]
-  
+
+  *) Partial backport from 0.9.9-dev:
+
+     Introduce bn_mul_mont (dedicated Montgomery multiplication
+     procedure) as a candidate for BIGNUM assembler implementation.
+     While 0.9.9-dev uses assembler for various architectures, only
+     x86_64 is available by default here in the 0.9.8 branch, and
+     32-bit x86 is available through a compile-time setting.
+
+     To try the 32-bit x86 assembler implementation, use Configure
+     option "enable-montasm" (which exists only for this backport).
+
+     As "enable-montasm" for 32-bit x86 disclaims code stability
+     anyway, in this constellation we activate additional code
+     backported from 0.9.9-dev for further performance improvements,
+     namely BN_from_montgomery_word.  (To enable this otherwise,
+     e.g. x86_64, try "-DMONT_FROM_WORD___NON_DEFAULT_0_9_8_BUILD".)
+
+     [Andy Polyakov (backport partially by Bodo Moeller)]
+
   *) Add TLS session ticket callback. This allows an application to set
      TLS ticket cipher and HMAC keys rather than relying on hardcoded fixed
      values. This is useful for key rollover for example where several key
@@ -790,10 +823,24 @@
      implementation.
      [Ian Lister (tweaked by Geoff Thorpe)]
 
+  *) Backport of CMS code to OpenSSL 0.9.8. This differs from the 0.9.9
+     implemention in the following ways:
+
+     Lack of EVP_PKEY_ASN1_METHOD means algorithm parameters have to be
+     hard coded.
+
+     Lack of BER streaming support means one pass streaming processing is
+     only supported if data is detached: setting the streaming flag is
+     ignored for embedded content.
+
+     CMS support is disabled by default and must be explicitly enabled
+     with the enable-cms configuration option.
+     [Steve Henson]
+
   *) Update the GMP engine glue to do direct copies between BIGNUM and
      mpz_t when openssl and GMP use the same limb size. Otherwise the
      existing "conversion via a text string export" trick is still used.
-     [Paul Sheer <paulsheer@gmail.com>, Geoff Thorpe]
+     [Paul Sheer <paulsheer@gmail.com>]
 
   *) Zlib compression BIO. This is a filter BIO which compressed and
      uncompresses any data passed through it.
@@ -1006,6 +1053,10 @@
      a ciphersuite string such as "DEFAULT:RSA" cannot enable
      authentication-only ciphersuites.
      [Bodo Moeller]
+
+  *) Update the SSL_get_shared_ciphers() fix CVE-2006-3738 which was
+     not complete and could lead to a possible single byte overflow
+     (CVE-2007-5135) [Ben Laurie]
 
  Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
 
@@ -2210,7 +2261,7 @@
 
      BN_mod_exp_mont_consttime() is the new exponentiation implementation,
      and this is automatically used by BN_mod_exp_mont() if the new flag
-     BN_FLG_EXP_CONSTTIME is set for the exponent.  RSA, DSA, and DH 
+     BN_FLG_EXP_CONSTTIME is set for the exponent.  RSA, DSA, and DH
      will use this BN flag for private exponents unless the flag
      RSA_FLAG_NO_EXP_CONSTTIME, DSA_FLAG_NO_EXP_CONSTTIME, or
      DH_FLAG_NO_EXP_CONSTTIME, respectively, is set.
