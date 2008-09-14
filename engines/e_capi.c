@@ -62,14 +62,30 @@
 #ifdef OPENSSL_SYS_WIN32
 #ifndef OPENSSL_NO_CAPIENG
 
+
 #include <windows.h>
+
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0400
+#endif
+
 #include <wincrypt.h>
 
 #undef X509_EXTENSIONS
 #undef X509_CERT_PAIR
 
+/* Definitions which may be missing from earlier version of headers */
+#ifndef CERT_STORE_OPEN_EXISTING_FLAG
+#define CERT_STORE_OPEN_EXISTING_FLAG                   0x00004000
+#endif
+
+#ifndef CERT_STORE_CREATE_NEW_FLAG
+#define CERT_STORE_CREATE_NEW_FLAG                      0x00002000
+#endif
+
 #include <openssl/engine.h>
 #include <openssl/pem.h>
+#include <openssl/x509v3.h>
 
 #include "e_capi_err.h"
 #include "e_capi_err.c"
@@ -141,6 +157,8 @@ struct CAPI_CTX_st {
 	/* Certificate store name to use */
 	LPTSTR storename;
 	LPTSTR ssl_client_store;
+	/* System store flags */
+	DWORD store_flags;
 
 /* Lookup string meanings in load_private_key */
 /* Substring of subject: uses "storename" */
@@ -190,6 +208,7 @@ static int capi_ctx_set_provname_idx(CAPI_CTX *ctx, int idx);
 #define CAPI_CMD_LIST_OPTIONS		(ENGINE_CMD_BASE + 10)
 #define CAPI_CMD_LOOKUP_METHOD		(ENGINE_CMD_BASE + 11)
 #define CAPI_CMD_STORE_NAME		(ENGINE_CMD_BASE + 12)
+#define CAPI_CMD_STORE_FLAGS		(ENGINE_CMD_BASE + 13)
 
 static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 	{CAPI_CMD_LIST_CERTS,
@@ -245,6 +264,10 @@ static const ENGINE_CMD_DEFN capi_cmd_defns[] = {
 		"store_name",
 		"certificate store name, default \"MY\"",
 		ENGINE_CMD_FLAG_STRING},
+	{CAPI_CMD_STORE_FLAGS,
+		"store_flags",
+		"Certificate store flags: 1 = system store",
+		ENGINE_CMD_FLAG_NUMERIC},
 
 	{0, NULL, NULL, 0}
 	};
@@ -289,6 +312,20 @@ static int capi_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 			OPENSSL_free(ctx->storename);
 		ctx->storename = BUF_strdup(p);
 		CAPI_trace(ctx, "Setting store name to %s\n", p);
+		break;
+
+		case CAPI_CMD_STORE_FLAGS:
+		if (i & 1)
+			{
+			ctx->store_flags |= CERT_SYSTEM_STORE_LOCAL_MACHINE;
+			ctx->store_flags &= ~CERT_SYSTEM_STORE_CURRENT_USER;
+			}
+		else
+			{
+			ctx->store_flags |= CERT_SYSTEM_STORE_CURRENT_USER;
+			ctx->store_flags &= ~CERT_SYSTEM_STORE_LOCAL_MACHINE;
+			}
+		CAPI_trace(ctx, "Setting flags to %d\n", i);
 		break;
 
 		case CAPI_CMD_DEBUG_LEVEL:
@@ -1254,7 +1291,8 @@ HCERTSTORE capi_open_store(CAPI_CTX *ctx, char *storename)
 		storename = "MY";
 	CAPI_trace(ctx, "Opening certificate store %s\n", storename);
 
-	hstore = CertOpenSystemStore(0, storename);
+	hstore = CertOpenStore(CERT_STORE_PROV_SYSTEM_A, 0, 0, 
+				ctx->store_flags, storename);
 	if (!hstore)
 		{
 		CAPIerr(CAPI_F_CAPI_OPEN_STORE, CAPI_R_ERROR_OPENING_STORE);
@@ -1371,7 +1409,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const char *contname, char *provnam
 
 static CAPI_KEY *capi_get_cert_key(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
 	{
-	CAPI_KEY *key;
+	CAPI_KEY *key = NULL;
 	CRYPT_KEY_PROV_INFO *pinfo = NULL;
 	char *provname = NULL, *contname = NULL;
 	pinfo = capi_get_prov_info(ctx, cert);
@@ -1380,8 +1418,7 @@ static CAPI_KEY *capi_get_cert_key(CAPI_CTX *ctx, PCCERT_CONTEXT cert)
 	provname = wide_to_asc(pinfo->pwszProvName);
 	contname = wide_to_asc(pinfo->pwszContainerName);
 	if (!provname || !contname)
-		return 0;
-
+		goto err;
 	key = capi_get_key(ctx, contname, provname,
 				pinfo->dwProvType, pinfo->dwKeySpec);
 
@@ -1454,6 +1491,9 @@ static CAPI_CTX *capi_ctx_new()
 	ctx->keytype = AT_KEYEXCHANGE;
 	ctx->storename = NULL;
 	ctx->ssl_client_store = NULL;
+	ctx->store_flags = CERT_STORE_OPEN_EXISTING_FLAG |
+				CERT_STORE_READONLY_FLAG |
+				CERT_SYSTEM_STORE_CURRENT_USER;
 	ctx->lookup_method = CAPI_LU_SUBSTR;
 	ctx->debug_level = 0;
 	ctx->debug_file = NULL;
@@ -1562,11 +1602,15 @@ static int capi_load_ssl_client_cert(ENGINE *e, SSL *ssl,
 			CAPI_trace(ctx, "Can't Parse Certificate %d\n", i);
 			continue;
 			}
-		if (cert_issuer_match(ca_dn, x))
+		if (cert_issuer_match(ca_dn, x)
+			&& X509_check_purpose(x, X509_PURPOSE_SSL_CLIENT, 0))
 			{
 			key = capi_get_cert_key(ctx, cert);
 			if (!key)
+				{
+				X509_free(x);
 				continue;
+				}
 			/* Match found: attach extra data to it so
 			 * we can retrieve the key later.
 			 */
@@ -1641,8 +1685,14 @@ static int cert_select_simple(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
  * CryptUIDlgSelectCertificateFromStore() to produce a dialog box.
  */
 
-#include <PrSht.h>
-#include <cryptuiapi.h>
+/* Definitions which are in cryptuiapi.h but this is not present in older
+ * versions of headers.
+ */
+
+#ifndef CRYPTUI_SELECT_LOCATION_COLUMN
+#define CRYPTUI_SELECT_LOCATION_COLUMN                   0x000000010
+#define CRYPTUI_SELECT_INTENDEDUSE_COLUMN                0x000000004
+#endif
 
 #define dlg_title L"OpenSSL Application SSL Client Certificate Selection"
 #define dlg_prompt L"Select a certificate to use for authentication"
@@ -1685,7 +1735,9 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 			}
 
 		}
-	hwnd = GetActiveWindow();
+	hwnd = GetForegroundWindow();
+	if (!hwnd)
+		hwnd = GetActiveWindow();
 	if (!hwnd && ctx->getconswindow)
 		hwnd = ctx->getconswindow();
 	/* Call dialog to select one */
@@ -1718,5 +1770,12 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 	}
 #endif
 
+#endif
+#else /* !WIN32 */
+#include <openssl/engine.h>
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+OPENSSL_EXPORT
+int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { return 0; }
+IMPLEMENT_DYNAMIC_CHECK_FN()
 #endif
 #endif
