@@ -60,6 +60,12 @@
      the load fails. Useful for distros.
      [Ben Laurie and the FreeBSD team]
 
+  *) Fix bug in X509_ATTRIBUTE creation: dont set attribute using
+     ASN1_TYPE_set1 if MBSTRING flag set. This bug would crash certain
+     attribute creation routines such as certifcate requests and PKCS#12
+     files.
+     [Steve Henson]
+
  Changes between 0.9.8g and 0.9.8h  [28 May 2008]
 
   *) Fix flaw if 'Server Key exchange message' is omitted from a TLS
