@@ -713,7 +713,6 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 #define BN_NIST_521_TOP_MASK	(BN_ULONG)0x1FF
 #endif
 	int	top, ret = 0;
-	BN_ULONG *r_d;
 	BIGNUM	*tmp;
 
 	field = &_bignum_nist_p_521; /* just to make sure */
