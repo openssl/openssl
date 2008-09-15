@@ -703,13 +703,7 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
-  *) Fix bug in X509_ATTRIBUTE creation: dont set attribute using
-     ASN1_TYPE_set1 if MBSTRING flag set. This bug would crash certain
-     attribute creation routines such as certifcate requests and PKCS#12
-     files.
-     [Steve Henson]
-
- Changes between 0.9.8h and 0.9.8i  [xx XXX xxxx]
+ Changes between 0.9.8h and 0.9.8i  [15 Sep 2008]
 
   *) Fix a state transitition in s3_srvr.c and d1_srvr.c
      (was using SSL3_ST_CW_CLNT_HELLO_B, should be ..._ST_SW_SRVR_...).
@@ -741,6 +735,10 @@
 
      [Neel Mehta, Bodo Moeller]
 
+  *) Allow engines to be "soft loaded" - i.e. optionally don't die if
+     the load fails. Useful for distros.
+     [Ben Laurie and the FreeBSD team]
+
   *) Add support for Local Machine Keyset attribute in PKCS#12 files.
      [Steve Henson]
 
@@ -759,11 +757,11 @@
      This work was sponsored by Logica.
      [Steve Henson]
 
->>> Note: this change doesn't apply to the 0.9.9-dev branch (yet).
-  *) Allow engines to be "soft loaded" - i.e. optionally don't die if
-     the load fails. Useful for distros.
-     [Ben Laurie and the FreeBSD team]
-<<<
+  *) Fix bug in X509_ATTRIBUTE creation: dont set attribute using
+     ASN1_TYPE_set1 if MBSTRING flag set. This bug would crash certain
+     attribute creation routines such as certifcate requests and PKCS#12
+     files.
+     [Steve Henson]
 
  Changes between 0.9.8g and 0.9.8h  [28 May 2008]
 
