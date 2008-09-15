@@ -17,8 +17,8 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= buffer.c buf_err.c
-LIBOBJ= buffer.o buf_err.o
+LIBSRC= buffer.c buf_str.c buf_err.c
+LIBOBJ= buffer.o buf_str.o buf_err.o
 
 SRC= $(LIBSRC)
 

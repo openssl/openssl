@@ -2,7 +2,9 @@
 
 # fixes bug in floating point emulation on sparc64 when
 # this script produces off-by-one output on sparc64
-use integer;
+eval 'use integer;';
+
+print STDERR "Warning: perl module integer not found.\n" if ($@);
 
 sub obj_cmp
 	{
