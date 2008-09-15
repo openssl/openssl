@@ -1470,6 +1470,36 @@ $shared_extension =
 $ranlib       = 
 $arflags      = 
 
+*** debug-darwin-i386-cc
+$cc           = cc
+$cflags       = -arch i386 -g3 -DL_ENDIAN
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = MACOSX
+$lflags       = -Wl,-search_paths_first%
+$bn_ops       = BN_LLONG RC4_INT RC4_CHUNK DES_UNROLL BF_PTR
+$cpuid_obj    = x86cpuid.o
+$bn_obj       = bn-586.o co-586.o x86-mont.o
+$des_obj      = des-586.o crypt586.o
+$aes_obj      = aes-586.o
+$bf_obj       = bf-586.o
+$md5_obj      = md5-586.o
+$sha1_obj     = sha1-586.o sha256-586.o sha512-586.o
+$cast_obj     = cast-586.o
+$rc4_obj      = rc4-586.o
+$rmd160_obj   = rmd-586.o
+$rc5_obj      = rc5-586.o
+$wp_obj       = wp_block.o wp-mmx.o
+$cmll_obj     = 
+$perlasm_scheme = macosx
+$dso_scheme   = dlfcn
+$shared_target= darwin-shared
+$shared_cflag = -fPIC -fno-common
+$shared_ldflag = -arch i386 -dynamiclib
+$shared_extension = .$(SHLIB_MAJOR).$(SHLIB_MINOR).dylib
+$ranlib       = 
+$arflags      = 
+
 *** debug-darwin-ppc-cc
 $cc           = cc
 $cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DB_ENDIAN -g -Wall -O
