@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8i and 0.9.8j  [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8h and 0.9.8i  [15 Sep 2008]
 
   *) Fix a state transitition in s3_srvr.c and d1_srvr.c
