@@ -147,6 +147,7 @@ char *default_config_file=NULL;
 #ifdef MONOLITH
 CONF *config=NULL;
 BIO *bio_err=NULL;
+int in_FIPS_mode=0;
 #endif
 
 
@@ -232,6 +233,19 @@ int main(int Argc, char *Argv[])
 	arg.data=NULL;
 	arg.count=0;
 
+	in_FIPS_mode = 0;
+
+#ifdef OPENSSL_FIPS
+	if(getenv("OPENSSL_FIPS")) {
+		if (!FIPS_mode_set(1)) {
+			ERR_load_crypto_strings();
+			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+			EXIT(1);
+		}
+		in_FIPS_mode = 1;
+		}
+#endif
+
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
 			BIO_set_fp(bio_err,stderr,BIO_NOCLOSE|BIO_FP_TEXT);
@@ -273,21 +287,9 @@ int main(int Argc, char *Argv[])
 	i=NCONF_load(config,p,&errline);
 	if (i == 0)
 		{
-		if (ERR_GET_REASON(ERR_peek_last_error())
-		    == CONF_R_NO_SUCH_FILE)
-			{
-			BIO_printf(bio_err,
-				   "WARNING: can't open config file: %s\n",p);
-			ERR_clear_error();
-			NCONF_free(config);
-			config = NULL;
-			}
-		else
-			{
-			ERR_print_errors(bio_err);
-			NCONF_free(config);
-			exit(1);
-			}
+		NCONF_free(config);
+		config = NULL;
+		ERR_clear_error();
 		}
 
 	prog=prog_init();

@@ -76,7 +76,7 @@
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
-	  const char *file,BIO *bmd,const char *hmac_key);
+	  const char *file,BIO *bmd,const char *hmac_key, int non_fips_allow);
 
 int MAIN(int, char **);
 
@@ -101,14 +101,16 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY *sigkey = NULL;
 	unsigned char *sigbuf = NULL;
 	int siglen = 0;
+	unsigned int sig_flags = 0;
 	char *passargin = NULL, *passin = NULL;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
 	char *hmac_key=NULL;
+	int non_fips_allow = 0;
 
 	apps_startup();
-
+ERR_load_crypto_strings();
 	if ((buf=(unsigned char *)OPENSSL_malloc(BUFSIZE)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
@@ -167,6 +169,27 @@ int MAIN(int argc, char **argv)
 			keyfile=*(++argv);
 			do_verify = 1;
 			}
+		else if (strcmp(*argv,"-x931") == 0)
+			sig_flags = EVP_MD_CTX_FLAG_PAD_X931;
+		else if (strcmp(*argv,"-pss_saltlen") == 0)
+			{
+			int saltlen;
+			if (--argc < 1) break;
+			saltlen=atoi(*(++argv));
+			if (saltlen == -1)
+				sig_flags = EVP_MD_CTX_FLAG_PSS_MREC;
+			else if (saltlen == -2)
+				sig_flags = EVP_MD_CTX_FLAG_PSS_MDLEN;
+			else if (saltlen < -2 || saltlen >= 0xFFFE)
+				{
+				BIO_printf(bio_err, "Invalid PSS salt length %d\n", saltlen);
+				goto end;
+				}
+			else
+				sig_flags = saltlen;
+			sig_flags <<= 16;
+			sig_flags |= EVP_MD_CTX_FLAG_PAD_PSS;
+			}
 		else if (strcmp(*argv,"-signature") == 0)
 			{
 			if (--argc < 1) break;
@@ -190,6 +213,8 @@ int MAIN(int argc, char **argv)
 			out_bin = 1;
 		else if (strcmp(*argv,"-d") == 0)
 			debug=1;
+		else if (strcmp(*argv,"-non-fips-allow") == 0)
+			non_fips_allow=1;
 		else if (!strcmp(*argv,"-fips-fingerprint"))
 			hmac_key = "etaonrishdlcupfm";
 		else if (!strcmp(*argv,"-hmac"))
@@ -356,8 +381,20 @@ int MAIN(int argc, char **argv)
 			goto end;
 		}
 	}
-		
 
+	if (non_fips_allow)
+		{
+		EVP_MD_CTX *md_ctx;
+		BIO_get_md_ctx(bmd,&md_ctx);
+		EVP_MD_CTX_set_flags(md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+		}
+
+	if (sig_flags)
+		{
+		EVP_MD_CTX *md_ctx;
+		BIO_get_md_ctx(bmd,&md_ctx);
+		EVP_MD_CTX_set_flags(md_ctx, sig_flags);
+		}
 
 	/* we use md as a filter, reading from 'in' */
 	if (!BIO_set_md(bmd,md))
@@ -373,7 +410,7 @@ int MAIN(int argc, char **argv)
 		{
 		BIO_set_fp(in,stdin,BIO_NOCLOSE);
 		err=do_fp(out, buf,inp,separator, out_bin, sigkey, sigbuf,
-			  siglen,"","(stdin)",bmd,hmac_key);
+			  siglen,"","(stdin)",bmd,hmac_key,non_fips_allow);
 		}
 	else
 		{
@@ -399,7 +436,7 @@ int MAIN(int argc, char **argv)
 			else
 				tmp="";
 			r=do_fp(out,buf,inp,separator,out_bin,sigkey,sigbuf,
-				siglen,tmp,argv[i],bmd,hmac_key);
+				siglen,tmp,argv[i],bmd,hmac_key,non_fips_allow);
 			if(r)
 			    err=r;
 			if(tofree)
@@ -426,7 +463,7 @@ end:
 
 int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  EVP_PKEY *key, unsigned char *sigin, int siglen, const char *title,
-	  const char *file,BIO *bmd,const char *hmac_key)
+	  const char *file,BIO *bmd,const char *hmac_key,int non_fips_allow)
 	{
 	unsigned int len;
 	int i;
