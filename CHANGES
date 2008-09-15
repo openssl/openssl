@@ -38,6 +38,10 @@
 
      [Neel Mehta, Bodo Moeller]
 
+  *) Allow engines to be "soft loaded" - i.e. optionally don't die if
+     the load fails. Useful for distros.
+     [Ben Laurie and the FreeBSD team]
+
   *) Add support for Local Machine Keyset attribute in PKCS#12 files.
      [Steve Henson]
 
@@ -55,10 +59,6 @@
 
      This work was sponsored by Logica.
      [Steve Henson]
-
-  *) Allow engines to be "soft loaded" - i.e. optionally don't die if
-     the load fails. Useful for distros.
-     [Ben Laurie and the FreeBSD team]
 
   *) Fix bug in X509_ATTRIBUTE creation: dont set attribute using
      ASN1_TYPE_set1 if MBSTRING flag set. This bug would crash certain
