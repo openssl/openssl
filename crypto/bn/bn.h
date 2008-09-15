@@ -531,6 +531,17 @@ int	BN_is_prime_ex(const BIGNUM *p,int nchecks, BN_CTX *ctx, BN_GENCB *cb);
 int	BN_is_prime_fasttest_ex(const BIGNUM *p,int nchecks, BN_CTX *ctx,
 		int do_trial_division, BN_GENCB *cb);
 
+int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx);
+
+int BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
+			const BIGNUM *Xp, const BIGNUM *Xp1, const BIGNUM *Xp2,
+			const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb);
+int BN_X931_generate_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
+			BIGNUM *Xp1, BIGNUM *Xp2,
+			const BIGNUM *Xp,
+			const BIGNUM *e, BN_CTX *ctx,
+			BN_GENCB *cb);
+
 BN_MONT_CTX *BN_MONT_CTX_new(void );
 void BN_MONT_CTX_init(BN_MONT_CTX *ctx);
 int BN_mod_mul_montgomery(BIGNUM *r,const BIGNUM *a,const BIGNUM *b,

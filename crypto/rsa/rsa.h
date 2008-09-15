@@ -74,6 +74,25 @@
 #error RSA is disabled.
 #endif
 
+/* If this flag is set the RSA method is FIPS compliant and can be used
+ * in FIPS mode. This is set in the validated module method. If an
+ * application sets this flag in its own methods it is its reposibility
+ * to ensure the result is compliant.
+ */
+
+#define RSA_FLAG_FIPS_METHOD			0x0400
+
+/* If this flag is set the operations normally disabled in FIPS mode are
+ * permitted it is then the applications responsibility to ensure that the
+ * usage is compliant.
+ */
+
+#define RSA_FLAG_NON_FIPS_ALLOW			0x0400
+
+#ifdef OPENSSL_FIPS
+#define FIPS_RSA_SIZE_T	int
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -163,6 +182,8 @@ struct rsa_st
 # define OPENSSL_RSA_MAX_MODULUS_BITS	16384
 #endif
 
+#define OPENSSL_RSA_FIPS_MIN_MODULUS_BITS 1024
+
 #ifndef OPENSSL_RSA_SMALL_MODULUS_BITS
 # define OPENSSL_RSA_SMALL_MODULUS_BITS	3072
 #endif
@@ -240,6 +261,11 @@ RSA *	RSA_generate_key(int bits, unsigned long e,void
 
 /* New version */
 int	RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1, BIGNUM *q2,
+			const BIGNUM *Xp1, const BIGNUM *Xp2, const BIGNUM *Xp,
+			const BIGNUM *Xq1, const BIGNUM *Xq2, const BIGNUM *Xq,
+			const BIGNUM *e, BN_GENCB *cb);
+int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e, BN_GENCB *cb);
 
 int	RSA_check_key(const RSA *);
 	/* next 4 return -1 on error */
@@ -256,6 +282,11 @@ void	RSA_free (RSA *r);
 int	RSA_up_ref(RSA *r);
 
 int	RSA_flags(const RSA *r);
+
+#ifdef OPENSSL_FIPS
+RSA *FIPS_rsa_new(void);
+void FIPS_rsa_free(RSA *r);
+#endif
 
 void RSA_set_default_method(const RSA_METHOD *meth);
 const RSA_METHOD *RSA_get_default_method(void);
