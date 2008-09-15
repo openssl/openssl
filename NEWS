@@ -5,8 +5,16 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8g and OpenSSL 0.9.8h:
+
+      o CryptoAPI ENGINE support.
+      o Various precautionary measures.
+      o Fix for bugs affecting certificate request creation.
+      o Support for local machine keyset attribute in PKCS#12 files.
+
   Major changes between OpenSSL 0.9.8f and OpenSSL 0.9.8g:
 
+      o Backport of CMS functionality to 0.9.8.
       o Fixes for bugs introduced with 0.9.8f.
 
   Major changes between OpenSSL 0.9.8e and OpenSSL 0.9.8f:
