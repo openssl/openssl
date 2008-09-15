@@ -703,6 +703,12 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
+  *) Fix bug in X509_ATTRIBUTE creation: dont set attribute using
+     ASN1_TYPE_set1 if MBSTRING flag set. This bug would crash certain
+     attribute creation routines such as certifcate requests and PKCS#12
+     files.
+     [Steve Henson]
+
  Changes between 0.9.8h and 0.9.8i  [xx XXX xxxx]
 
   *) Fix a state transitition in s3_srvr.c and d1_srvr.c
