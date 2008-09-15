@@ -332,7 +332,7 @@
 #define SSL_HIGH		0x00000080L
 #define SSL_FIPS		0x00000100L
 
-/* we have used 000000ff - 24 bits left to go */
+/* we have used 000001ff - 23 bits left to go */
 
 /*
  * Macros to check the export status and cipher strength for export ciphers.

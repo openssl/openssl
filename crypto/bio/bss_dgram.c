@@ -351,7 +351,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		{
 		struct timeval *tv = (struct timeval *)ptr;
 		int timeout = tv->tv_sec * 1000 + tv->tv_usec/1000;
-		if (setsockopt(b->num, SOL_SOCKET, SO_RCVTIME0,
+		if (setsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
 			(void*)&timeout, sizeof(timeout)) < 0)
 			{ perror("setsockopt"); ret = -1; }
 		}
@@ -366,8 +366,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		{
 		int timeout, sz = sizeof(timeout);
 		struct timeval *tv = (struct timeval *)ptr;
-		if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIME0,
-			(void*)&timeout, &sz)) < 0)
+		if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
+			(void*)&timeout, &sz) < 0)
 			{ perror("getsockopt"); ret = -1; }
 		else
 			{
@@ -389,7 +389,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		{
 		struct timeval *tv = (struct timeval *)ptr;
 		int timeout = tv->tv_sec * 1000 + tv->tv_usec/1000;
-		if (setsockopt(b->num, SOL_SOCKET, SO_SNDTIME0,
+		if (setsockopt(b->num, SOL_SOCKET, SO_SNDTIMEO,
 			(void*)&timeout, sizeof(timeout)) < 0)
 			{ perror("setsockopt"); ret = -1; }
 		}
@@ -404,8 +404,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		{
 		int timeout, sz = sizeof(timeout);
 		struct timeval *tv = (struct timeval *)ptr;
-		if (getsockopt(b->num, SOL_SOCKET, SO_SNDTIME0,
-			(void*)&timeout, &sz)) < 0)
+		if (getsockopt(b->num, SOL_SOCKET, SO_SNDTIMEO,
+			(void*)&timeout, &sz) < 0)
 			{ perror("getsockopt"); ret = -1; }
 		else
 			{
@@ -425,7 +425,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		/* fall-through */
 	case BIO_CTRL_DGRAM_GET_RECV_TIMER_EXP:
 #ifdef OPENSSL_SYS_WINDOWS
-		if ( data->_errno == ETIMEDOUT)
+		if ( data->_errno == WSAETIMEDOUT)
 #else
 		if ( data->_errno == EAGAIN)
 #endif
