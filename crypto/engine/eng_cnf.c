@@ -98,7 +98,7 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
 	CONF_VALUE *ecmd;
 	char *ctrlname, *ctrlvalue;
 	ENGINE *e = NULL;
-        int soft = 0;
+	int soft = 0;
 
 	name = skip_dot(name);
 #ifdef ENGINE_CONF_DEBUG
@@ -127,8 +127,8 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
 		/* Override engine name to use */
 		if (!strcmp(ctrlname, "engine_id"))
 			name = ctrlvalue;
-                else if (!strcmp(ctrlname, "soft_load"))
-                        soft = 1;
+		else if (!strcmp(ctrlname, "soft_load"))
+			soft = 1;
 		/* Load a dynamic ENGINE */
 		else if (!strcmp(ctrlname, "dynamic_path"))
 			{
@@ -151,11 +151,11 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
 			if (!e)
 				{
 				e = ENGINE_by_id(name);
-                                if (!e && soft)
-                                        {
-                                        ERR_clear_error();
-                                        return 1;
-                                        }
+				if (!e && soft)
+					{
+					ERR_clear_error();
+					return 1;
+					}
 				if (!e)
 					return 0;
 				}
