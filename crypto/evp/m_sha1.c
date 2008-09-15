@@ -68,6 +68,8 @@
 #include <openssl/rsa.h>
 #endif
 
+#ifndef OPENSSL_FIPS
+
 static int init(EVP_MD_CTX *ctx)
 	{ return SHA1_Init(ctx->md_data); }
 
@@ -97,7 +99,6 @@ const EVP_MD *EVP_sha1(void)
 	{
 	return(&sha1_md);
 	}
-#endif
 
 #ifndef OPENSSL_NO_SHA256
 static int init224(EVP_MD_CTX *ctx)
@@ -202,3 +203,7 @@ static const EVP_MD sha512_md=
 const EVP_MD *EVP_sha512(void)
 	{ return(&sha512_md); }
 #endif	/* ifndef OPENSSL_NO_SHA512 */
+
+#endif
+
+#endif

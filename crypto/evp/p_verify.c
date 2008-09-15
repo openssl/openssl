@@ -85,17 +85,29 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
 		EVPerr(EVP_F_EVP_VERIFYFINAL,EVP_R_WRONG_PUBLIC_KEY_TYPE);
 		return(-1);
 		}
-	EVP_MD_CTX_init(&tmp_ctx);
-	EVP_MD_CTX_copy_ex(&tmp_ctx,ctx);     
-	EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len);
-	EVP_MD_CTX_cleanup(&tmp_ctx);
-        if (ctx->digest->verify == NULL)
+	if (ctx->digest->verify == NULL)
                 {
 		EVPerr(EVP_F_EVP_VERIFYFINAL,EVP_R_NO_VERIFY_FUNCTION_CONFIGURED);
 		return(0);
 		}
 
-	return(ctx->digest->verify(ctx->digest->type,m,m_len,
-		sigbuf,siglen,pkey->pkey.ptr));
+	EVP_MD_CTX_init(&tmp_ctx);
+	EVP_MD_CTX_copy_ex(&tmp_ctx,ctx);     
+	if (ctx->digest->flags & EVP_MD_FLAG_SVCTX)
+		{
+		EVP_MD_SVCTX sctmp;
+		sctmp.mctx = &tmp_ctx;
+		sctmp.key = pkey->pkey.ptr;
+		i = ctx->digest->verify(ctx->digest->type,
+			NULL, -1, sigbuf, siglen, &sctmp);
+		}
+	else
+		{
+		EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len);
+		i = ctx->digest->verify(ctx->digest->type,m,m_len,
+					sigbuf,siglen,pkey->pkey.ptr);
+		}
+	EVP_MD_CTX_cleanup(&tmp_ctx);
+	return i;
 	}
 

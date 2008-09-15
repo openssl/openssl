@@ -81,7 +81,7 @@ static const EVP_MD dsa_md=
 	NID_dsaWithSHA,
 	NID_dsaWithSHA,
 	SHA_DIGEST_LENGTH,
-	0,
+	EVP_MD_FLAG_FIPS,
 	init,
 	update,
 	final,

@@ -67,6 +67,8 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 	if (c->cipher->set_asn1_parameters != NULL)
 		ret=c->cipher->set_asn1_parameters(c,type);
+	else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
+		ret=EVP_CIPHER_set_asn1_iv(c, type);
 	else
 		ret=-1;
 	return(ret);
@@ -78,6 +80,8 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 	if (c->cipher->get_asn1_parameters != NULL)
 		ret=c->cipher->get_asn1_parameters(c,type);
+	else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
+		ret=EVP_CIPHER_get_asn1_iv(c, type);
 	else
 		ret=-1;
 	return(ret);
@@ -178,11 +182,6 @@ int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx)
 	return ctx->cipher->block_size;
 	}
 
-int EVP_Cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl)
-	{
-	return ctx->cipher->do_cipher(ctx,out,in,inl);
-	}
-
 const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 	{
 	return ctx->cipher;
@@ -191,11 +190,6 @@ const EVP_CIPHER *EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx)
 unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher)
 	{
 	return cipher->flags;
-	}
-
-unsigned long EVP_CIPHER_CTX_flags(const EVP_CIPHER_CTX *ctx)
-	{
-	return ctx->cipher->flags;
 	}
 
 void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx)
@@ -213,11 +207,6 @@ int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher)
 	return cipher->iv_len;
 	}
 
-int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx)
-	{
-	return ctx->cipher->iv_len;
-	}
-
 int EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
 	{
 	return cipher->key_len;
@@ -226,11 +215,6 @@ int EVP_CIPHER_key_length(const EVP_CIPHER *cipher)
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx)
 	{
 	return ctx->key_len;
-	}
-
-int EVP_CIPHER_nid(const EVP_CIPHER *cipher)
-	{
-	return cipher->nid;
 	}
 
 int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx)
@@ -274,6 +258,21 @@ void EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags)
 	}
 
 int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
+	{
+	return (ctx->flags & flags);
+	}
+
+void EVP_CIPHER_CTX_set_flags(EVP_CIPHER_CTX *ctx, int flags)
+	{
+	ctx->flags |= flags;
+	}
+
+void EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags)
+	{
+	ctx->flags &= ~flags;
+	}
+
+int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
 	{
 	return (ctx->flags & flags);
 	}

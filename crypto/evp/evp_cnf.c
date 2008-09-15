@@ -1,5 +1,9 @@
+/* evp_cnf.c */
+/* Written by Stephen Henson (shenson@bigfoot.com) for the OpenSSL
+ * project 2007.
+ */
 /* ====================================================================
- * Copyright (c) 2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -16,12 +20,12 @@
  * 3. All advertising materials mentioning features or use of this
  *    software must display the following acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit. (http://www.openssl.org/)"
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
  *
  * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission. For written permission, please contact
- *    openssl-core@openssl.org.
+ *    licensing@OpenSSL.org.
  *
  * 5. Products derived from this software may not be called "OpenSSL"
  *    nor may "OpenSSL" appear in their names without prior written
@@ -30,7 +34,7 @@
  * 6. Redistributions of any form whatsoever must retain the following
  *    acknowledgment:
  *    "This product includes software developed by the OpenSSL Project
- *    for use in the OpenSSL Toolkit (http://www.openssl.org/)"
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
  *
  * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
  * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -46,72 +50,76 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
  *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
  */
 
-#include <openssl/opensslconf.h>
-#ifndef OPENSSL_NO_AES
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <string.h>
-#include <assert.h>
-#include <openssl/aes.h>
-#include "evp_locl.h"
+#include <stdio.h>
+#include <ctype.h>
+#include <openssl/crypto.h>
+#include "cryptlib.h"
+#include <openssl/conf.h>
+#include <openssl/dso.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
-static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-					const unsigned char *iv, int enc);
 
-typedef struct
+/* Algorithm configuration module. */
+
+static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
 	{
-	AES_KEY ks;
-	} EVP_AES_KEY;
-
-#define data(ctx)	EVP_C_DATA(EVP_AES_KEY,ctx)
-
-IMPLEMENT_BLOCK_CIPHER(aes_128, ks, AES, EVP_AES_KEY,
-		       NID_aes_128, 16, 16, 16, 128,
-		       EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1,
-		       aes_init_key,
-		       NULL, NULL, NULL, NULL)
-IMPLEMENT_BLOCK_CIPHER(aes_192, ks, AES, EVP_AES_KEY,
-		       NID_aes_192, 16, 24, 16, 128,
-		       EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1,
-		       aes_init_key,
-		       NULL, NULL, NULL, NULL)
-IMPLEMENT_BLOCK_CIPHER(aes_256, ks, AES, EVP_AES_KEY,
-		       NID_aes_256, 16, 32, 16, 128,
-		       EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1,
-		       aes_init_key,
-		       NULL, NULL, NULL, NULL)
-
-#define IMPLEMENT_AES_CFBR(ksize,cbits,flags)	IMPLEMENT_CFBR(aes,AES,EVP_AES_KEY,ks,ksize,cbits,16,flags)
-
-IMPLEMENT_AES_CFBR(128,1,EVP_CIPH_FLAG_FIPS)
-IMPLEMENT_AES_CFBR(192,1,EVP_CIPH_FLAG_FIPS)
-IMPLEMENT_AES_CFBR(256,1,EVP_CIPH_FLAG_FIPS)
-
-IMPLEMENT_AES_CFBR(128,8,EVP_CIPH_FLAG_FIPS)
-IMPLEMENT_AES_CFBR(192,8,EVP_CIPH_FLAG_FIPS)
-IMPLEMENT_AES_CFBR(256,8,EVP_CIPH_FLAG_FIPS)
-
-static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-		   const unsigned char *iv, int enc)
-	{
-	int ret;
-
-	if ((ctx->cipher->flags & EVP_CIPH_MODE) == EVP_CIPH_CFB_MODE
-	    || (ctx->cipher->flags & EVP_CIPH_MODE) == EVP_CIPH_OFB_MODE
-	    || enc) 
-		ret=AES_set_encrypt_key(key, ctx->key_len * 8, ctx->cipher_data);
-	else
-		ret=AES_set_decrypt_key(key, ctx->key_len * 8, ctx->cipher_data);
-
-	if(ret < 0)
+	int i;
+	const char *oid_section;
+	STACK_OF(CONF_VALUE) *sktmp;
+	CONF_VALUE *oval;
+	oid_section = CONF_imodule_get_value(md);
+	if(!(sktmp = NCONF_get_section(cnf, oid_section)))
 		{
-		EVPerr(EVP_F_AES_INIT_KEY,EVP_R_AES_KEY_SETUP_FAILED);
+		EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_ERROR_LOADING_SECTION);
 		return 0;
 		}
-
+	for(i = 0; i < sk_CONF_VALUE_num(sktmp); i++)
+		{
+		oval = sk_CONF_VALUE_value(sktmp, i);
+		if (!strcmp(oval->name, "fips_mode"))
+			{
+			int m;
+			if (!X509V3_get_value_bool(oval, &m))
+				{
+				EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_INVALID_FIPS_MODE);
+				return 0;
+				}
+			if (m > 0)
+				{
+#ifdef OPENSSL_FIPS
+				if (!FIPS_mode_set(1))
+					{
+					EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_ERROR_SETTING_FIPS_MODE);
+					return 0;
+					}
+#else
+				EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_FIPS_MODE_NOT_SUPPORTED);
+				return 0;
+#endif
+				}
+			}
+		else
+			{
+			EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_UNKNOWN_OPTION);
+			ERR_add_error_data(4, "name=", oval->name,
+						", value=", oval->value);
+			}
+				
+		}
 	return 1;
 	}
 
-#endif
+void EVP_add_alg_module(void)
+	{
+	CONF_module_add("alg_section", alg_module_init, 0);
+	}
