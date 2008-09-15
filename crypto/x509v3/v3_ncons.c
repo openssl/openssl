@@ -458,7 +458,7 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 	const char *baseptr = (char *)base->data;
 	const char *hostptr = (char *)uri->data;
 	const char *p = strchr(hostptr, ':');
-	size_t hostlen;
+	int hostlen;
 	/* Check for foo:// and skip past it */
 	if (!p || (p[1] != '/') || (p[2] != '/'))
 		return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
@@ -493,7 +493,7 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 		return X509_V_ERR_PERMITTED_VIOLATION;
 		}
 
-	if ((base->length != hostlen) || strncasecmp(hostptr, baseptr, hostlen))
+	if ((base->length != (int)hostlen) || strncasecmp(hostptr, baseptr, hostlen))
 		return X509_V_ERR_PERMITTED_VIOLATION;
 
 	return X509_V_OK;

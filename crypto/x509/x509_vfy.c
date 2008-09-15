@@ -823,7 +823,7 @@ static int get_crl_sk(X509_STORE_CTX *ctx, X509_CRL **pcrl, X509_CRL **pdcrl,
 	unsigned int reasons, best_reasons = 0;
 	X509 *x = ctx->current_cert;
 	X509_CRL *crl, *best_crl = NULL;
-	X509 *crl_issuer, *best_crl_issuer = NULL;
+	X509 *crl_issuer = NULL, *best_crl_issuer = NULL;
 
 	for (i = 0; i < sk_X509_CRL_num(crls); i++)
 		{
