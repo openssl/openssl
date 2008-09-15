@@ -128,11 +128,12 @@ void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
 		 * implementations suffer from significant performance
 		 * losses then, e.g. PIII exhibits >2x deterioration,
 		 * and so does Opteron. In order to assure optimal
-		 * all-round performance, let us [try to] detect P4 at
-		 * run-time by checking upon HTT bit in CPU capability
+		 * all-round performance, we detect P4 at run-time by
+		 * checking upon reserved bit 20 in CPU capability
 		 * vector and set up compressed key schedule, which is
 		 * recognized by correspondingly updated assembler
-		 * module...
+		 * module... Bit 20 is set up by OPENSSL_ia32_cpuid.
+		 *
 		 *				<appro@fy.chalmers.se>
 		 */
 #ifdef OPENSSL_FIPS
