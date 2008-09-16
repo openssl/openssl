@@ -12,12 +12,19 @@
 
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 #include <openssl/opensslv.h>
 
 const char SHA256_version[]="SHA-256" OPENSSL_VERSION_PTEXT;
 
 int SHA224_Init (SHA256_CTX *c)
 	{
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
 	c->h[0]=0xc1059ed8UL;	c->h[1]=0x367cd507UL;
 	c->h[2]=0x3070dd17UL;	c->h[3]=0xf70e5939UL;
 	c->h[4]=0xffc00b31UL;	c->h[5]=0x68581511UL;
@@ -29,6 +36,9 @@ int SHA224_Init (SHA256_CTX *c)
 
 int SHA256_Init (SHA256_CTX *c)
 	{
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
 	c->h[0]=0x6a09e667UL;	c->h[1]=0xbb67ae85UL;
 	c->h[2]=0x3c6ef372UL;	c->h[3]=0xa54ff53aUL;
 	c->h[4]=0x510e527fUL;	c->h[5]=0x9b05688cUL;

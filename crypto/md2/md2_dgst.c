@@ -62,6 +62,11 @@
 #include <openssl/md2.h>
 #include <openssl/opensslv.h>
 #include <openssl/crypto.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
+#include <openssl/err.h>
 
 const char MD2_version[]="MD2" OPENSSL_VERSION_PTEXT;
 
@@ -116,7 +121,7 @@ const char *MD2_options(void)
 		return("md2(int)");
 	}
 
-int MD2_Init(MD2_CTX *c)
+FIPS_NON_FIPS_MD_Init(MD2)
 	{
 	c->num=0;
 	memset(c->state,0,sizeof c->state);

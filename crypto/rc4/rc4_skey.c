@@ -59,6 +59,11 @@
 #include <openssl/rc4.h>
 #include "rc4_locl.h"
 #include <openssl/opensslv.h>
+#include <openssl/crypto.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 
 const char RC4_version[]="RC4" OPENSSL_VERSION_PTEXT;
 
@@ -85,7 +90,11 @@ const char *RC4_options(void)
  * Date: Wed, 14 Sep 1994 06:35:31 GMT
  */
 
+#ifdef OPENSSL_FIPS
+void private_RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
+#else
 void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
+#endif
 	{
         register RC4_INT tmp;
         register int id1,id2;
@@ -127,7 +136,12 @@ void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
 		 *
 		 *				<appro@fy.chalmers.se>
 		 */
-		if (OPENSSL_ia32cap_P & (1<<20)) {
+#ifdef OPENSSL_FIPS
+		unsigned long *ia32cap_ptr = OPENSSL_ia32cap_loc();
+		if (ia32cap_ptr && (*ia32cap_ptr & (1<<28))) {
+#else
+		if (OPENSSL_ia32cap_P & (1<<28)) {
+#endif
 			unsigned char *cp=(unsigned char *)d;
 
 			for (i=0;i<256;i++) cp[i]=i;

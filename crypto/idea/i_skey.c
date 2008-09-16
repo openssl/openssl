@@ -57,10 +57,27 @@
  */
 
 #include <openssl/idea.h>
+#include <openssl/crypto.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 #include "idea_lcl.h"
 
 static IDEA_INT inverse(unsigned int xin);
+
+#ifdef OPENSSL_FIPS
 void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
+	{
+	if (FIPS_mode())
+		FIPS_BAD_ABORT(IDEA)
+	private_idea_set_encrypt_key(key, ks);
+	}
+void private_idea_set_encrypt_key(const unsigned char *key,
+						IDEA_KEY_SCHEDULE *ks)
+#else
+void idea_set_encrypt_key(const unsigned char *key, IDEA_KEY_SCHEDULE *ks)
+#endif
 	{
 	int i;
 	register IDEA_INT *kt,*kf,r0,r1,r2;

@@ -5,6 +5,10 @@
  * ====================================================================
  */
 #include <openssl/opensslconf.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA512)
 /*
  * IMPLEMENTATION NOTES.
@@ -61,6 +65,9 @@ const char SHA512_version[]="SHA-512" OPENSSL_VERSION_PTEXT;
 
 int SHA384_Init (SHA512_CTX *c)
 	{
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
 	c->h[0]=U64(0xcbbb9d5dc1059ed8);
 	c->h[1]=U64(0x629a292a367cd507);
 	c->h[2]=U64(0x9159015a3070dd17);
@@ -76,6 +83,9 @@ int SHA384_Init (SHA512_CTX *c)
 
 int SHA512_Init (SHA512_CTX *c)
 	{
+#ifdef OPENSSL_FIPS
+	FIPS_selftest_check();
+#endif
 	c->h[0]=U64(0x6a09e667f3bcc908);
 	c->h[1]=U64(0xbb67ae8584caa73b);
 	c->h[2]=U64(0x3c6ef372fe94f82b);
@@ -327,7 +337,7 @@ static const SHA_LONG64 K512[80] = {
 				((SHA_LONG64)hi)<<32|lo;	})
 #   else
 #    define PULL64(x) ({ const unsigned int *p=(const unsigned int *)(&(x));\
-			 unsigned int hi=p[0],lo=p[1];		\
+			 unsigned int hi=p[0],lo=p[1];			\
 				asm ("bswapl %0; bswapl %1;"	\
 				: "=r"(lo),"=r"(hi)		\
 				: "0"(lo),"1"(hi));		\
