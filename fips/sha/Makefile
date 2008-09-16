@@ -23,7 +23,6 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
 TEST= fips_shatest.c
-TESTDATA= SHAmix.req SHAmix.fax
 APPS=
 EXE= fips_standalone_sha1$(EXE_EXT)
 
@@ -56,7 +55,6 @@ files:
 links:
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	cp $(TESTDATA) $(TOP)/test
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
 
 install:

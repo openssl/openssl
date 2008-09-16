@@ -6,7 +6,9 @@ eval 'exec perl -S $0 ${1+"$@"}'
 ##
 
 require 5.000;
-use strict;
+eval 'use strict;';
+
+print STDERR "Warning: perl module strict not found.\n" if ($@);
 
 # see INSTALL for instructions.
 
@@ -577,6 +579,11 @@ my $prefix="";
 my $openssldir="";
 my $exe_ext="";
 my $install_prefix="";
+my $fipslibdir="/usr/local/ssl/fips-1.0/lib/";
+my $nofipscanistercheck=0;
+my $fipsdso=0;
+my $fipscanisterinternal="n";
+my $baseaddr="0xFB00000";
 my $no_threads=0;
 my $threads=0;
 my $no_shared=0; # but "no-shared" is default
@@ -600,6 +607,7 @@ my $rc2	="crypto/rc2/rc2.h";
 my $bf	="crypto/bf/bf_locl.h";
 my $bn_asm	="bn_asm.o";
 my $des_enc="des_enc.o fcrypt_b.o";
+my $fips_des_enc="fips_des_enc.o";
 my $aes_enc="aes_core.o aes_cbc.o";
 my $bf_enc	="bf_enc.o";
 my $cast_enc="c_enc.o";
@@ -611,6 +619,7 @@ my $rmd160_obj="";
 my $processor="";
 my $default_ranlib;
 my $perl;
+my $fips=0;
 
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
@@ -739,11 +748,35 @@ PROCESS_ARGS:
 			}
 		elsif (/^386$/)
 			{ $processor=386; }
+		elsif (/^fips$/)
+			{
+			$fips=1;
+		        }
 		elsif (/^rsaref$/)
 			{
 			# No RSAref support any more since it's not needed.
 			# The check for the option is there so scripts aren't
 			# broken
+			}
+		elsif (/^nofipscanistercheck$/)
+			{
+			$fips = 1;
+			$nofipscanistercheck = 1;
+			}
+		elsif (/^fipscanisterbuild$/)
+			{
+			$fips = 1;
+			$nofipscanistercheck = 1;
+			$fipslibdir="";
+			$fipscanisterinternal="y";
+			}
+		elsif (/^fipsdso$/)
+			{
+			$fips = 1;
+			$nofipscanistercheck = 1;
+			$fipslibdir="";
+			$fipscanisterinternal="y";
+			$fipsdso = 1;
 			}
 		elsif (/^[-+]/)
 			{
@@ -778,6 +811,14 @@ PROCESS_ARGS:
 			elsif (/^--with-zlib-include=(.*)$/)
 				{
 				$withargs{"zlib-include"}="-I$1";
+				}
+			elsif (/^--with-fipslibdir=(.*)$/)
+				{
+				$fipslibdir="$1/";
+				}
+			elsif (/^--with-baseaddr=(.*)$/)
+				{
+				$baseaddr="$1";
 				}
 			else
 				{
@@ -886,6 +927,41 @@ print "Configuring for $target\n";
 
 &usage if (!defined($table{$target}));
 
+my @fields = split(/\s*:\s*/,$table{$target} . ":" x 30 , -1);
+my $cc = $fields[$idx_cc];
+my $cflags = $fields[$idx_cflags];
+my $unistd = $fields[$idx_unistd];
+my $thread_cflag = $fields[$idx_thread_cflag];
+my $sys_id = $fields[$idx_sys_id];
+my $lflags = $fields[$idx_lflags];
+my $bn_ops = $fields[$idx_bn_ops];
+my $cpuid_obj = $fields[$idx_cpuid_obj];
+my $bn_obj = $fields[$idx_bn_obj];
+my $des_obj = $fields[$idx_des_obj];
+my $aes_obj = $fields[$idx_aes_obj];
+my $bf_obj = $fields[$idx_bf_obj];
+my $md5_obj = $fields[$idx_md5_obj];
+my $sha1_obj = $fields[$idx_sha1_obj];
+my $cast_obj = $fields[$idx_cast_obj];
+my $rc4_obj = $fields[$idx_rc4_obj];
+my $rmd160_obj = $fields[$idx_rmd160_obj];
+my $rc5_obj = $fields[$idx_rc5_obj];
+my $dso_scheme = $fields[$idx_dso_scheme];
+my $shared_target = $fields[$idx_shared_target];
+my $shared_cflag = $fields[$idx_shared_cflag];
+my $shared_ldflag = $fields[$idx_shared_ldflag];
+my $shared_extension = $fields[$idx_shared_extension];
+my $ranlib = $fields[$idx_ranlib];
+my $arflags = $fields[$idx_arflags];
+
+if ($fips)
+	{
+	delete $disabled{"shared"} if ($disabled{"shared"} eq "default");
+	$disabled{"asm"}="forced"
+		if ($target !~ "VC\-.*" &&
+		    "$cpuid_obj:$bn_obj:$aes_obj:$des_obj:$sha1_obj" eq "::::");
+	}
+
 
 foreach (sort (keys %disabled))
 	{
@@ -949,10 +1025,22 @@ my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
 
 $IsMK1MF=1 if ($target eq "mingw" && $^O ne "cygwin" && !is_msys());
 
+$no_shared = 0 if ($fipsdso && !$IsMK1MF);
+
 $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target eq "mingw");
 $exe_ext=".nlm" if ($target =~ /netware/);
 $exe_ext=".pm"  if ($target =~ /vos/);
-$openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
+if ($openssldir eq "" and $prefix eq "")
+	{
+	if ($fips)
+		{
+		$openssldir="/usr/local/ssl/fips";
+		}
+	else
+		{
+		$openssldir="/usr/local/ssl";
+		}
+	}
 $prefix=$openssldir if $prefix eq "";
 
 $default_ranlib= &which("ranlib") or $default_ranlib="true";
@@ -967,33 +1055,6 @@ $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /(^\/|^[a-zA-Z]:[\\\/]
 
 
 print "IsMK1MF=$IsMK1MF\n";
-
-my @fields = split(/\s*:\s*/,$table{$target} . ":" x 30 , -1);
-my $cc = $fields[$idx_cc];
-my $cflags = $fields[$idx_cflags];
-my $unistd = $fields[$idx_unistd];
-my $thread_cflag = $fields[$idx_thread_cflag];
-my $sys_id = $fields[$idx_sys_id];
-my $lflags = $fields[$idx_lflags];
-my $bn_ops = $fields[$idx_bn_ops];
-my $cpuid_obj = $fields[$idx_cpuid_obj];
-my $bn_obj = $fields[$idx_bn_obj];
-my $des_obj = $fields[$idx_des_obj];
-my $aes_obj = $fields[$idx_aes_obj];
-my $bf_obj = $fields[$idx_bf_obj];
-my $md5_obj = $fields[$idx_md5_obj];
-my $sha1_obj = $fields[$idx_sha1_obj];
-my $cast_obj = $fields[$idx_cast_obj];
-my $rc4_obj = $fields[$idx_rc4_obj];
-my $rmd160_obj = $fields[$idx_rmd160_obj];
-my $rc5_obj = $fields[$idx_rc5_obj];
-my $dso_scheme = $fields[$idx_dso_scheme];
-my $shared_target = $fields[$idx_shared_target];
-my $shared_cflag = $fields[$idx_shared_cflag];
-my $shared_ldflag = $fields[$idx_shared_ldflag];
-my $shared_extension = $fields[$idx_shared_extension];
-my $ranlib = $fields[$idx_ranlib];
-my $arflags = $fields[$idx_arflags];
 
 # '%' in $lflags is used to split flags to "pre-" and post-flags
 my ($prelflags,$postlflags)=split('%',$lflags);
@@ -1128,6 +1189,8 @@ if ($no_asm)
 	{
 	$cpuid_obj=$bn_obj=$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj="";
 	$sha1_obj=$md5_obj=$rmd160_obj="";
+	$cflags=~s/\-D[BL]_ENDIAN//		if ($fips);
+	$thread_cflags=~s/\-D[BL]_ENDIAN//	if ($fips);
 	}
 if ($montasm)
 	{
@@ -1166,7 +1229,7 @@ if ($zlib)
 my $shared_mark = "";
 if ($shared_target eq "")
 	{
-	$no_shared_warn = 1 if !$no_shared;
+	$no_shared_warn = 1 if !$no_shared && !$fips;
 	$no_shared = 1;
 	}
 if (!$no_shared)
@@ -1255,7 +1318,13 @@ $bn_obj = $bn_asm unless $bn_obj ne "";
 # bn86* is the only one implementing bn_*_part_words
 $cflags.=" -DOPENSSL_BN_ASM_PART_WORDS" if ($bn_obj =~ /bn86/);
 $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /bn86/);
+
 $cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /\-mont|mo86\-/);
+
+if ($fips)
+	{
+	$openssl_other_defines.="#define OPENSSL_FIPS\n";
+	}
 
 $des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
@@ -1385,9 +1454,24 @@ while (<IN>)
 	s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
 	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
+	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
+	if ($fipsdso)
+		{
+		s/^FIPSCANLIB=.*/FIPSCANLIB=libfips/;
+		s/^SHARED_FIPS=.*/SHARED_FIPS=libfips\$(SHLIB_EXT)/;
+		s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl fips/;
+		}
+	else
+		{
+		s/^FIPSCANLIB=.*/FIPSCANLIB=libcrypto/ if $fips;
+		s/^SHARED_FIPS=.*/SHARED_FIPS=/;
+		s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl/;
+		}
+	s/^FIPSCANISTERINTERNAL=.*/FIPSCANISTERINTERNAL=$fipscanisterinternal/;
+	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
-	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);
+	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_FIPS) \$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);
 	if ($shared_extension ne "" && $shared_extension =~ /^\.s([ol])\.[^\.]*$/)
 		{
 		my $sotmp = $1;
@@ -1682,9 +1766,16 @@ BEGIN
     BEGIN
 	BLOCK "040904b0"
 	BEGIN
+#if defined(FIPS)
+	    VALUE "Comments", "WARNING: TEST VERSION ONLY ***NOT*** FIPS 140-2 VALIDATED.\\0"
+#endif
 	    // Required:	    
 	    VALUE "CompanyName", "The OpenSSL Project, http://www.openssl.org/\\0"
+#if defined(FIPS)
+	    VALUE "FileDescription", "TEST UNVALIDATED FIPS140-2 DLL\\0"
+#else
 	    VALUE "FileDescription", "OpenSSL Shared Library\\0"
+#endif
 	    VALUE "FileVersion", "$version\\0"
 #if defined(CRYPTO)
 	    VALUE "InternalName", "libeay32\\0"
@@ -1692,12 +1783,15 @@ BEGIN
 #elif defined(SSL)
 	    VALUE "InternalName", "ssleay32\\0"
 	    VALUE "OriginalFilename", "ssleay32.dll\\0"
+#elif defined(FIPS)
+	    VALUE "InternalName", "libosslfips\\0"
+	    VALUE "OriginalFilename", "libosslfips.dll\\0"
 #endif
 	    VALUE "ProductName", "The OpenSSL Toolkit\\0"
 	    VALUE "ProductVersion", "$version\\0"
 	    // Optional:
 	    //VALUE "Comments", "\\0"
-	    VALUE "LegalCopyright", "Copyright © 1998-2005 The OpenSSL Project. Copyright © 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
+	    VALUE "LegalCopyright", "Copyright © 1998-2007 The OpenSSL Project. Copyright © 1995-1998 Eric A. Young, Tim J. Hudson. All rights reserved.\\0"
 	    //VALUE "LegalTrademarks", "\\0"
 	    //VALUE "PrivateBuild", "\\0"
 	    //VALUE "SpecialBuild", "\\0"
@@ -1732,6 +1826,21 @@ for this platform yet, so it will pretend you gave the option 'no-shared'.  If
 you can inform the developpers (openssl-dev\@openssl.org) how to support shared
 libraries on this platform, they will at least look at it and try their best
 (but please first make sure you have tried with a current version of OpenSSL).
+EOF
+
+print <<\EOF if ($fipscanisterinternal eq "y");
+
+WARNING: OpenSSL has been configured using unsupported option(s) to internally
+generate a fipscanister.o object module for TESTING PURPOSES ONLY; that
+compiled module is NOT FIPS 140-2 validated and CANNOT be used to replace the
+OpenSSL FIPS Object Module as identified by the CMVP
+(http://csrc.nist.gov/cryptval/) in any application requiring the use of FIPS
+140-2 validated software. 
+
+This is an OpenSSL 0.9.8-fips test version.
+
+See the file README.FIPS for details of how to build a test library.
+
 EOF
 
 exit(0);
