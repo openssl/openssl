@@ -306,6 +306,12 @@ int ERR_get_next_error_library(void);
 int ERR_set_mark(void);
 int ERR_pop_to_mark(void);
 
+#ifdef OPENSSL_FIPS
+void int_ERR_set_state_func(ERR_STATE *(*get_func)(void),
+				void (*remove_func)(unsigned long pid));
+void int_ERR_lib_init(void);
+#endif
+
 /* Already defined in ossl_typ.h */
 /* typedef struct st_ERR_FNS ERR_FNS; */
 /* An application can use this function and provide the return value to loaded
