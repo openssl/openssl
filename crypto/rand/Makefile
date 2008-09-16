@@ -17,9 +17,9 @@ TEST= randtest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=md_rand.c randfile.c rand_lib.c rand_err.c rand_egd.c \
+LIBSRC=md_rand.c randfile.c rand_lib.c rand_eng.c rand_err.c rand_egd.c \
 	rand_win.c rand_unix.c rand_os2.c rand_nw.c
-LIBOBJ=md_rand.o randfile.o rand_lib.o rand_err.o rand_egd.o \
+LIBOBJ=md_rand.o randfile.o rand_lib.o rand_eng.o rand_err.o rand_egd.o \
 	rand_win.o rand_unix.o rand_os2.o rand_nw.o
 
 SRC= $(LIBSRC)

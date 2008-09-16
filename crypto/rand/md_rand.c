@@ -126,6 +126,10 @@
 
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 
 #ifdef BN_DEBUG
 # define PREDICT
@@ -331,6 +335,14 @@ static int ssleay_rand_bytes(unsigned char *buf, int num)
 	pid_t curr_pid = getpid();
 #endif
 	int do_stir_pool = 0;
+
+#ifdef OPENSSL_FIPS
+	if(FIPS_mode())
+	    {
+	    FIPSerr(FIPS_F_SSLEAY_RAND_BYTES,FIPS_R_NON_FIPS_METHOD);
+	    return 0;
+	    }
+#endif
 
 #ifdef PREDICT
 	if (rand_predictable)
