@@ -24,7 +24,7 @@ TEST=destest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
+LIBSRC=	des_lib.c cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 	ecb3_enc.c ecb_enc.c  enc_read.c enc_writ.c \
 	fcrypt.c ofb64enc.c ofb_enc.c  pcbc_enc.c \
 	qud_cksm.c rand_key.c rpc_enc.c  set_key.c  \
@@ -33,7 +33,7 @@ LIBSRC=	cbc_cksm.c cbc_enc.c  cfb64enc.c cfb_enc.c  \
 	str2key.c  cfb64ede.c ofb64ede.c ede_cbcm_enc.c des_old.c des_old2.c \
 	read2pwd.c
 
-LIBOBJ= set_key.o  ecb_enc.o  cbc_enc.o \
+LIBOBJ= des_lib.o set_key.o  ecb_enc.o  cbc_enc.o \
 	ecb3_enc.o cfb64enc.o cfb64ede.o cfb_enc.o  ofb64ede.o \
 	enc_read.o enc_writ.o ofb64enc.o \
 	ofb_enc.o  str2key.o  pcbc_enc.o qud_cksm.o rand_key.o \
