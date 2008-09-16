@@ -1,6 +1,6 @@
 /* crypto/dh/dh_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,6 +74,9 @@ static ERR_STRING_DATA DH_str_functs[]=
 {ERR_FUNC(DH_F_DHPARAMS_PRINT),	"DHparams_print"},
 {ERR_FUNC(DH_F_DHPARAMS_PRINT_FP),	"DHparams_print_fp"},
 {ERR_FUNC(DH_F_DH_BUILTIN_GENPARAMS),	"DH_BUILTIN_GENPARAMS"},
+{ERR_FUNC(DH_F_DH_COMPUTE_KEY),	"DH_compute_key"},
+{ERR_FUNC(DH_F_DH_GENERATE_KEY),	"DH_generate_key"},
+{ERR_FUNC(DH_F_DH_GENERATE_PARAMETERS),	"DH_generate_parameters"},
 {ERR_FUNC(DH_F_DH_NEW_METHOD),	"DH_new_method"},
 {ERR_FUNC(DH_F_GENERATE_KEY),	"GENERATE_KEY"},
 {ERR_FUNC(DH_F_GENERATE_PARAMETERS),	"GENERATE_PARAMETERS"},
@@ -84,6 +87,7 @@ static ERR_STRING_DATA DH_str_reasons[]=
 	{
 {ERR_REASON(DH_R_BAD_GENERATOR)          ,"bad generator"},
 {ERR_REASON(DH_R_INVALID_PUBKEY)         ,"invalid public key"},
+{ERR_REASON(DH_R_KEY_SIZE_TOO_SMALL)     ,"key size too small"},
 {ERR_REASON(DH_R_MODULUS_TOO_LARGE)      ,"modulus too large"},
 {ERR_REASON(DH_R_NO_PRIVATE_VALUE)       ,"no private value"},
 {0,NULL}

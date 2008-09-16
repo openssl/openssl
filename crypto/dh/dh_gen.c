@@ -66,6 +66,8 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
+#ifndef OPENSSL_FIPS
+
 static int dh_builtin_genparams(DH *ret, int prime_len, int generator, BN_GENCB *cb);
 
 int DH_generate_parameters_ex(DH *ret, int prime_len, int generator, BN_GENCB *cb)
@@ -173,3 +175,5 @@ err:
 		}
 	return ok;
 	}
+
+#endif

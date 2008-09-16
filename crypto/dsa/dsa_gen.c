@@ -82,6 +82,8 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
+#ifndef OPENSSL_FIPS
+
 static int dsa_builtin_paramgen(DSA *ret, int bits,
 		unsigned char *seed_in, int seed_len,
 		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
@@ -319,4 +321,5 @@ err:
 	if (mont != NULL) BN_MONT_CTX_free(mont);
 	return ok;
 	}
+#endif
 #endif

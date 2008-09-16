@@ -77,6 +77,8 @@
 # define OPENSSL_DH_MAX_MODULUS_BITS	10000
 #endif
 
+#define OPENSSL_DH_FIPS_MIN_MODULUS_BITS 1024
+
 #define DH_FLAG_CACHE_MONT_P     0x01
 #define DH_FLAG_NO_EXP_CONSTTIME 0x02 /* new with 0.9.7h; the built-in DH
                                        * implementation now uses constant time
@@ -167,6 +169,11 @@ struct dh_st
 
 const DH_METHOD *DH_OpenSSL(void);
 
+#ifdef OPENSSL_FIPS
+DH *	FIPS_dh_new(void);
+void	FIPS_dh_free(DH *dh);
+#endif
+
 void DH_set_default_method(const DH_METHOD *meth);
 const DH_METHOD *DH_get_default_method(void);
 int DH_set_method(DH *dh, const DH_METHOD *meth);
@@ -218,6 +225,9 @@ void ERR_load_DH_strings(void);
 #define DH_F_DHPARAMS_PRINT				 100
 #define DH_F_DHPARAMS_PRINT_FP				 101
 #define DH_F_DH_BUILTIN_GENPARAMS			 106
+#define DH_F_DH_COMPUTE_KEY				 107
+#define DH_F_DH_GENERATE_KEY				 108
+#define DH_F_DH_GENERATE_PARAMETERS			 109
 #define DH_F_DH_NEW_METHOD				 105
 #define DH_F_GENERATE_KEY				 103
 #define DH_F_GENERATE_PARAMETERS			 104
@@ -225,6 +235,7 @@ void ERR_load_DH_strings(void);
 /* Reason codes. */
 #define DH_R_BAD_GENERATOR				 101
 #define DH_R_INVALID_PUBKEY				 102
+#define DH_R_KEY_SIZE_TOO_SMALL				 104
 #define DH_R_MODULUS_TOO_LARGE				 103
 #define DH_R_NO_PRIVATE_VALUE				 100
 
