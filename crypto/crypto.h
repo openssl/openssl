@@ -219,7 +219,9 @@ typedef struct openssl_item_st
 #define CRYPTO_LOCK_EC_PRE_COMP		36
 #define CRYPTO_LOCK_STORE		37
 #define CRYPTO_LOCK_COMP		38
-#define CRYPTO_NUM_LOCKS		39
+#define CRYPTO_LOCK_FIPS		39
+#define CRYPTO_LOCK_FIPS2		40
+#define CRYPTO_NUM_LOCKS		41
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
@@ -341,14 +343,7 @@ DECLARE_STACK_OF(CRYPTO_EX_DATA_FUNCS)
 
 /* Set standard debugging functions (not done by default
  * unless CRYPTO_MDEBUG is defined) */
-#define CRYPTO_malloc_debug_init()	do {\
-	CRYPTO_set_mem_debug_functions(\
-		CRYPTO_dbg_malloc,\
-		CRYPTO_dbg_realloc,\
-		CRYPTO_dbg_free,\
-		CRYPTO_dbg_set_options,\
-		CRYPTO_dbg_get_options);\
-	} while(0)
+void CRYPTO_malloc_debug_init(void);
 
 int CRYPTO_mem_ctrl(int mode);
 int CRYPTO_is_mem_check_on(void);
@@ -427,6 +422,9 @@ const char *CRYPTO_get_lock_name(int type);
 int CRYPTO_add_lock(int *pointer,int amount,int type, const char *file,
 		    int line);
 
+void int_CRYPTO_set_do_dynlock_callback(
+	void (*do_dynlock_cb)(int mode, int type, const char *file, int line));
+
 int CRYPTO_get_new_dynlockid(void);
 void CRYPTO_destroy_dynlockid(int i);
 struct CRYPTO_dynlock_value *CRYPTO_get_dynlock_value(int i);
@@ -451,6 +449,10 @@ int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 				   void (*f)(void *,int),
 				   void (*so)(long),
 				   long (*go)(void));
+void CRYPTO_set_mem_info_functions(
+	int  (*push_info_fn)(const char *info, const char *file, int line),
+	int  (*pop_info_fn)(void),
+	int (*remove_all_info_fn)(void));
 void CRYPTO_get_mem_functions(void *(**m)(size_t),void *(**r)(void *, size_t), void (**f)(void *));
 void CRYPTO_get_locked_mem_functions(void *(**m)(size_t), void (**f)(void *));
 void CRYPTO_get_mem_ex_functions(void *(**m)(size_t,const char *,int),
@@ -506,6 +508,9 @@ void CRYPTO_dbg_free(void *addr,int before_p);
 void CRYPTO_dbg_set_options(long bits);
 long CRYPTO_dbg_get_options(void);
 
+int CRYPTO_dbg_push_info(const char *info, const char *file, int line);
+int CRYPTO_dbg_pop_info(void);
+int CRYPTO_dbg_remove_all_info(void);
 
 #ifndef OPENSSL_NO_FP_API
 void CRYPTO_mem_leaks_fp(FILE *);
@@ -582,6 +587,9 @@ int OPENSSL_isservice(void);
  * made after this point may be overwritten when the script is next run.
  */
 void ERR_load_CRYPTO_strings(void);
+
+#define OPENSSL_HAVE_INIT	1
+void OPENSSL_init(void);
 
 /* Error codes for the CRYPTO functions. */
 
