@@ -21,8 +21,8 @@ TEST=rc4test.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=rc4_skey.c rc4_enc.c
-LIBOBJ=$(RC4_ENC)
+LIBSRC=rc4_skey.c rc4_enc.c rc4_flbk.c
+LIBOBJ=$(RC4_ENC) rc4_fblk.o
 
 SRC= $(LIBSRC)
 
