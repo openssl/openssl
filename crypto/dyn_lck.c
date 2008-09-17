@@ -166,10 +166,16 @@ static const char* const lock_names[CRYPTO_NUM_LOCKS] =
 	"ec_pre_comp",
 	"store",
 	"comp",
+#ifndef OPENSSL_FIPS
+# if CRYPTO_NUM_LOCKS != 39
+#  error "Inconsistency between crypto.h and cryptlib.c"
+# endif
+#else
 	"fips",
 	"fips2",
-#if CRYPTO_NUM_LOCKS != 41
-# error "Inconsistency between crypto.h and cryptlib.c"
+# if CRYPTO_NUM_LOCKS != 41
+#  error "Inconsistency between crypto.h and cryptlib.c"
+# endif
 #endif
 	};
 

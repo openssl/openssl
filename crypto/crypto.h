@@ -219,9 +219,13 @@ typedef struct openssl_item_st
 #define CRYPTO_LOCK_EC_PRE_COMP		36
 #define CRYPTO_LOCK_STORE		37
 #define CRYPTO_LOCK_COMP		38
+#ifndef OPENSSL_FIPS
+#define CRYPTO_NUM_LOCKS		39
+#else
 #define CRYPTO_LOCK_FIPS		39
 #define CRYPTO_LOCK_FIPS2		40
 #define CRYPTO_NUM_LOCKS		41
+#endif
 
 #define CRYPTO_LOCK		1
 #define CRYPTO_UNLOCK		2
