@@ -187,7 +187,7 @@ int PKCS1_MGF1(unsigned char *mask, long len,
 	int mdlen;
 
 	EVP_MD_CTX_init(&c);
-	mdlen = EVP_MD_size(dgst);
+	mdlen = M_EVP_MD_size(dgst);
 	for (i = 0; outlen < len; i++)
 		{
 		cnt[0] = (unsigned char)((i >> 24) & 255);
