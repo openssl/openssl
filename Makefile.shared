@@ -101,15 +101,13 @@ LINK_SO=	\
     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
     SHAREDCMD="$${SHAREDCMD:-$(CC)}"; \
     SHAREDFLAGS="$${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
-    nm -Pg $$SHOBJECTS | grep ' [BDT] ' | cut -f1 -d' ' > lib$(LIBNAME).exp; \
     LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $${SHAREDCMD} $${SHAREDFLAGS} \
 	-o $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX \
 	$$ALLSYMSFLAGS $$SHOBJECTS $$NOALLSYMSFLAGS $$LIBDEPS \
-  ) && $(SYMLINK_SO); \
-  ( $(SET_X); rm -f lib$(LIBNAME).exp )
+  ) && $(SYMLINK_SO)
 
 SYMLINK_SO=	\
 	if [ -n "$$INHIBIT_SYMLINKS" ]; then :; else \
@@ -202,8 +200,10 @@ link_app.bsd:
 # to use native NSModule(3) API and refers to dlfcn as termporary hack.
 link_o.darwin:
 	@ $(CALC_VERSIONS); \
-	SHLIB=lib$(LIBNAME); \
-	SHLIB_SUFFIX=.so; \
+	SHLIB=`expr "$$THIS" : '.*/\([^/\.]*\)\.'`; \
+	SHLIB=$${SHLIB:-lib$(LIBNAME)}; \
+	SHLIB_SUFFIX=`expr "$$THIS" : '.*\(\.[^\.]*\)$$'`; \
+	SHLIB_SUFFIX=$${SHLIB_SUFFIX:-.so}; \
 	ALLSYMSFLAGS='-all_load'; \
 	NOALLSYMSFLAGS=''; \
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS)"; \

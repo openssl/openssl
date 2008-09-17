@@ -47,7 +47,7 @@ ALL=    $(GENERAL) $(SRC) $(HEADER)
 top:
 	@(cd ..; $(MAKE) DIRS=$(DIR) all)
 
-all: shared
+all: lib
 
 buildinf.h: ../Makefile
 	( echo "#ifndef MK1MF_BUILD"; \
@@ -95,7 +95,7 @@ links:
 	@target=links; $(RECURSIVE_MAKE)
 
 # lib: and $(LIB): are splitted to avoid end-less loop
-lib:	$(LIB)
+lib:	buildinf.h $(LIB) subdirs
 	@touch lib
 $(LIB):	$(LIBOBJ)
 	$(ARX) $(LIB) $(LIBOBJ)
