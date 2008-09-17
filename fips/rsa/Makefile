@@ -114,7 +114,7 @@ fips_rsa_gen.o: ../../include/openssl/opensslconf.h
 fips_rsa_gen.o: ../../include/openssl/opensslv.h
 fips_rsa_gen.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
 fips_rsa_gen.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_rsa_gen.o: ../../include/openssl/symhacks.h fips_rsa_gen.c
+fips_rsa_gen.o: ../../include/openssl/symhacks.h ../fips_locl.h fips_rsa_gen.c
 fips_rsa_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_rsa_lib.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 fips_rsa_lib.o: ../../include/openssl/err.h ../../include/openssl/evp.h

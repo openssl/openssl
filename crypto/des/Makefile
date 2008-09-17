@@ -157,6 +157,13 @@ des_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 des_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 des_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 des_enc.o: des_enc.c des_locl.h ncbc_enc.c
+des_lib.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+des_lib.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+des_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+des_lib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+des_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+des_lib.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+des_lib.o: ../../include/openssl/ui_compat.h des_lib.c des_locl.h des_ver.h
 des_old.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 des_old.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 des_old.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
@@ -175,14 +182,12 @@ ecb3_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 ecb3_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ecb3_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 ecb3_enc.o: des_locl.h ecb3_enc.c
-ecb_enc.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 ecb_enc.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 ecb_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-ecb_enc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ecb_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-ecb_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-ecb_enc.o: ../../include/openssl/ui_compat.h des_locl.h des_ver.h ecb_enc.c
-ecb_enc.o: spr.h
+ecb_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+ecb_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+ecb_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+ecb_enc.o: des_locl.h ecb_enc.c spr.h
 ede_cbcm_enc.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 ede_cbcm_enc.o: ../../include/openssl/e_os2.h
 ede_cbcm_enc.o: ../../include/openssl/opensslconf.h

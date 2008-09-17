@@ -103,7 +103,8 @@ aes_cfb.o: ../../e_os.h ../../include/openssl/aes.h
 aes_cfb.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 aes_cfb.o: aes_cfb.c aes_locl.h
 aes_core.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
-aes_core.o: ../../include/openssl/opensslconf.h aes_core.c aes_locl.h
+aes_core.o: ../../include/openssl/fips.h ../../include/openssl/opensslconf.h
+aes_core.o: aes_core.c aes_locl.h
 aes_ctr.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
 aes_ctr.o: ../../include/openssl/opensslconf.h aes_ctr.c aes_locl.h
 aes_ecb.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h

@@ -74,7 +74,9 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-md2_dgst.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+md2_dgst.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+md2_dgst.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+md2_dgst.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
 md2_dgst.o: ../../include/openssl/md2.h ../../include/openssl/opensslconf.h
 md2_dgst.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 md2_dgst.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
