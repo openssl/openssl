@@ -79,7 +79,7 @@ my $OS2=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5", "NeXT",
-			"EXPORT_VAR_AS_FUNCTION", "ZLIB" );
+			"EXPORT_VAR_AS_FUNCTION", "ZLIB", "OPENSSL_FIPS" );
 my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
@@ -123,6 +123,7 @@ my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw; my $no_camellia;
 my $no_seed;
 my $no_fp_api; my $no_static_engine; my $no_gmp; my $no_deprecated;
 my $no_rfc3779; my $no_tlsext; my $no_cms; my $no_capieng;
+my $fips;
 
 
 foreach (@ARGV, split(/ /, $options))
@@ -144,11 +145,13 @@ foreach (@ARGV, split(/ /, $options))
 	}
 	$VMS=1 if $_ eq "VMS";
 	$OS2=1 if $_ eq "OS2";
-	if ($_ eq "zlib" || $_ eq "zlib-dynamic"
-			 || $_ eq "enable-zlib-dynamic") {
-		$zlib = 1;
-	}
+	$fips=1 if /^fips/;
 
+	if ($_ eq "zlib" || $_ eq "zlib-dynamic"
+ 			 || $_ eq "enable-zlib-dynamic") {
+ 		$zlib = 1;
+	}
+ 
 
 	$do_ssl=1 if $_ eq "ssleay";
 	if ($_ eq "ssl") {
@@ -305,6 +308,7 @@ $crypto.=" crypto/tmdiff.h";
 $crypto.=" crypto/store/store.h";
 $crypto.=" crypto/pqueue/pqueue.h";
 $crypto.=" crypto/cms/cms.h";
+$crypto.=" fips/fips.h fips/rand/fips_rand.h";
 
 my $symhacks="crypto/symhacks.h";
 
@@ -1088,6 +1092,9 @@ sub is_valid
 			# will be represented as functions.  This currently
 			# only happens on VMS-VAX.
 			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32 || $W16)) {
+				return 1;
+			}
+			if ($keyword eq "OPENSSL_FIPS" && $fips) {
 				return 1;
 			}
 			if ($keyword eq "ZLIB" && $zlib) { return 1; }
