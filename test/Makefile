@@ -176,7 +176,7 @@ test_sha:
 	../util/shlib_wrap.sh ./$(SHA256TEST)
 	../util/shlib_wrap.sh ./$(SHA512TEST)
 	if [ -n "$(FIPSCANLIB)" ]; then \
-	  ../util/shlib_wrap.sh ./$(FIPS_SHATEST) < SHAmix.req | diff -w SHAmix.fax - ; \
+	  ../util/shlib_wrap.sh ./$(FIPS_SHATEST) < SHAmix.r | diff -w SHAmix.x - ; \
 	fi
 
 test_mdc2:
