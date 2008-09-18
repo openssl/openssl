@@ -7,6 +7,7 @@ echo Bignum
 cd crypto\bn\asm
 perl bn-586.pl win32 %ASMOPTS% > bn_win32.asm
 perl co-586.pl win32 %ASMOPTS% > co_win32.asm
+perl mo-586.pl win32 %ASMOPTS% > mt_win32.asm
 cd ..\..\..
 
 echo AES
