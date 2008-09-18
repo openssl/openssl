@@ -1837,7 +1837,7 @@ OpenSSL FIPS Object Module as identified by the CMVP
 (http://csrc.nist.gov/cryptval/) in any application requiring the use of FIPS
 140-2 validated software. 
 
-This is an OpenSSL 0.9.8-fips test version.
+This is an OpenSSL 0.9.8 test version.
 
 See the file README.FIPS for details of how to build a test library.
 
