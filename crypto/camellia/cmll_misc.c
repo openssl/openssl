@@ -52,11 +52,24 @@
 #include <openssl/opensslv.h>
 #include <openssl/camellia.h>
 #include "cmll_locl.h"
+#include <openssl/crypto.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 const char CAMELLIA_version[]="CAMELLIA" OPENSSL_VERSION_PTEXT;
 
 int Camellia_set_key(const unsigned char *userKey, const int bits,
 	CAMELLIA_KEY *key)
+#ifdef OPENSSL_FIPS
+	{
+	if (FIPS_mode())
+		FIPS_BAD_ABORT(CAMELLIA)
+	private_Camellia_set_key(userKey, bits, key);
+	}
+int private_Camellia_set_key(const unsigned char *userKey, const int bits,
+	CAMELLIA_KEY *key)
+#endif
 	{
 	if (!userKey || !key)
 		{
