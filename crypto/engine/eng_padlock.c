@@ -234,8 +234,8 @@ padlock_bind_fn(ENGINE *e, const char *id)
 	return 1;
 }
 
-IMPLEMENT_DYNAMIC_CHECK_FN ();
-IMPLEMENT_DYNAMIC_BIND_FN (padlock_bind_fn);
+IMPLEMENT_DYNAMIC_CHECK_FN ()
+IMPLEMENT_DYNAMIC_BIND_FN (padlock_bind_fn)
 #endif /* DYNAMIC_ENGINE */
 
 /* ===== Here comes the "real" engine ===== */

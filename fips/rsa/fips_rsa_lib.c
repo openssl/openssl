@@ -59,6 +59,7 @@
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
+#include <openssl/bn.h>
 #include <openssl/err.h>
 
 /* Minimal FIPS versions of FIPS_rsa_new() and FIPS_rsa_free: to

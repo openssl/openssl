@@ -20,6 +20,7 @@
 #include <openssl/des.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/dh.h>
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 

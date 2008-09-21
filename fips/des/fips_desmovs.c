@@ -66,6 +66,7 @@
 #include <ctype.h>
 #include <openssl/des.h>
 #include <openssl/evp.h>
+#include <openssl/bn.h>
 
 #include <openssl/err.h>
 #include "e_os.h"

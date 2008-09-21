@@ -58,6 +58,7 @@
 
 #include <string.h>
 #include <openssl/dsa.h>
+#include <openssl/bn.h>
 
 /* Minimal FIPS versions of FIPS_dsa_new() and FIPS_dsa_free: to
  * reduce external dependencies. 
