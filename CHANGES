@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8i and 0.9.9  [xx XXX xxxx]
+ Changes between 0.9.8j and 0.9.9  [xx XXX xxxx]
 
   *) Delta CRL support. New use deltas option which will attempt to locate
      and search any appropriate delta CRLs available.
@@ -702,6 +702,15 @@
 
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
+
+ Changes between 0.9.8i and 0.9.8j  [xx XXX xxxx]
+
+  *) Change the server-side SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG behavior
+     to ensure that even with this option, only ciphersuites in the
+     server's preference list will be accepted.  (Note that the option
+     applies only when resuming a session, so the earlier behavior was
+     just about the algorithm choice for symmetric cryptography.)
+     [Bodo Moeller]
 
  Changes between 0.9.8h and 0.9.8i  [15 Sep 2008]
 
