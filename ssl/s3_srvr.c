@@ -902,21 +902,27 @@ int ssl3_get_client_hello(SSL *s)
 				break;
 				}
 			}
+		if (j == 0 && (s->options & SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG) && (sk_SSL_CIPHER_num(ciphers) == 1))
+			{
+			/* Special case as client bug workaround: the previously used cipher may
+			 * not be in the current list, the client instead might be trying to
+			 * continue using a cipher that before wasn't chosen due to server
+			 * preferences.  We'll have to reject the connection if the cipher is not
+			 * enabled, though. */
+			c = sk_SSL_CIPHER_value(ciphers, 0);
+			if (sk_SSL_CIPHER_find(SSL_get_ciphers(s), c) >= 0)
+				{
+				s->session->cipher = c;
+				j = 1;
+				}
+			}
 		if (j == 0)
 			{
-			if ((s->options & SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG) && (sk_SSL_CIPHER_num(ciphers) == 1))
-				{
-				/* Very bad for multi-threading.... */
-				s->session->cipher=sk_SSL_CIPHER_value(ciphers, 0);
-				}
-			else
-				{
-				/* we need to have the cipher in the cipher
-				 * list if we are asked to reuse it */
-				al=SSL_AD_ILLEGAL_PARAMETER;
-				SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_REQUIRED_CIPHER_MISSING);
-				goto f_err;
-				}
+			/* we need to have the cipher in the cipher
+			 * list if we are asked to reuse it */
+			al=SSL_AD_ILLEGAL_PARAMETER;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_REQUIRED_CIPHER_MISSING);
+			goto f_err;
 			}
 		}
 
