@@ -296,7 +296,7 @@ int EC_KEY_check_key(const EC_KEY *eckey)
 	{
 	int	ok   = 0;
 	BN_CTX	*ctx = NULL;
-	BIGNUM	*order  = NULL;
+	const BIGNUM	*order  = NULL;
 	EC_POINT *point = NULL;
 
 	if (!eckey || !eckey->group || !eckey->pub_key)
@@ -306,8 +306,6 @@ int EC_KEY_check_key(const EC_KEY *eckey)
 		}
 	
 	if ((ctx = BN_CTX_new()) == NULL)
-		goto err;
-	if ((order = BN_new()) == NULL)
 		goto err;
 	if ((point = EC_POINT_new(eckey->group)) == NULL)
 		goto err;
@@ -319,17 +317,13 @@ int EC_KEY_check_key(const EC_KEY *eckey)
 		goto err;
 		}
 	/* testing whether pub_key * order is the point at infinity */
-	if (!EC_GROUP_get_order(eckey->group, order, ctx))
+	order = &eckey->group->order;
+	if (BN_is_zero(order))
 		{
 		ECerr(EC_F_EC_KEY_CHECK_KEY, EC_R_INVALID_GROUP_ORDER);
 		goto err;
 		}
-	if (!EC_POINT_copy(point, eckey->pub_key))
-		{
-		ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_EC_LIB);
-		goto err;
-		}
-	if (!EC_POINT_mul(eckey->group, point, order, NULL, NULL, ctx))
+	if (!EC_POINT_mul(eckey->group, point, NULL, eckey->pub_key, order, ctx))
 		{
 		ECerr(EC_F_EC_KEY_CHECK_KEY, ERR_R_EC_LIB);
 		goto err;
@@ -366,8 +360,6 @@ int EC_KEY_check_key(const EC_KEY *eckey)
 err:
 	if (ctx   != NULL)
 		BN_CTX_free(ctx);
-	if (order != NULL)
-		BN_free(order);
 	if (point != NULL)
 		EC_POINT_free(point);
 	return(ok);
