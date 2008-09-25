@@ -267,7 +267,12 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		goto err;
 		}
 
-	EVP_SignInit_ex(&ctx,type, NULL);
+	if (!EVP_SignInit_ex(&ctx,type, NULL))
+		{
+		outl=0;
+		ASN1err(ASN1_F_ASN1_ITEM_SIGN,ERR_R_EVP_LIB);
+		goto err;
+		}
 	EVP_SignUpdate(&ctx,(unsigned char *)buf_in,inl);
 	if (!EVP_SignFinal(&ctx,(unsigned char *)buf_out,
 			(unsigned int *)&outl,pkey))
