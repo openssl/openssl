@@ -50,7 +50,7 @@ sha512-586.s:	asm/sha512-586.pl ../perlasm/x86asm.pl
 	$(PERL) asm/sha512-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 sha1-ia64.s:   asm/sha1-ia64.pl
-	(cd asm; $(PERL) sha1-ia64.pl $(CFLAGS) ) > $@
+	(cd asm; $(PERL) sha1-ia64.pl ../$@ $(CFLAGS))
 sha256-ia64.s: asm/sha512-ia64.pl
 	(cd asm; $(PERL) sha512-ia64.pl ../$@ $(CFLAGS))
 sha512-ia64.s: asm/sha512-ia64.pl
