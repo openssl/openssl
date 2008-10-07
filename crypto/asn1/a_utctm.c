@@ -186,6 +186,12 @@ int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str)
 
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	{
+	return ASN1_UTCTIME_adj(s, t, 0, 0);
+	}
+
+ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
+				int offset_day, long offset_sec)
+	{
 	char *p;
 	struct tm *ts;
 	struct tm data;
@@ -199,6 +205,15 @@ ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s, time_t t)
 	ts=OPENSSL_gmtime(&t, &data);
 	if (ts == NULL)
 		return(NULL);
+
+	if (offset_day || offset_sec)
+		{ 
+		if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
+			return NULL;
+		}
+
+	if((ts->tm_year < 50) || (ts->tm_year >= 150))
+		return NULL;
 
 	p=(char *)s->data;
 	if ((p == NULL) || ((size_t)s->length < len))

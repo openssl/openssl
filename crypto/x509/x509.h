@@ -767,6 +767,8 @@ X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
 int		X509_cmp_time(const ASN1_TIME *s, time_t *t);
 int		X509_cmp_current_time(const ASN1_TIME *s);
 ASN1_TIME *	X509_time_adj(ASN1_TIME *s, long adj, time_t *t);
+ASN1_TIME *	X509_time_adj_ex(ASN1_TIME *s,
+				int offset_day, long offset_sec, time_t *t);
 ASN1_TIME *	X509_gmtime_adj(ASN1_TIME *s, long adj);
 
 const char *	X509_get_default_cert_area(void );

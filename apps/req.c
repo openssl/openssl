@@ -838,7 +838,7 @@ loop:
 
 			if (!X509_set_issuer_name(x509ss, X509_REQ_get_subject_name(req))) goto end;
 			if (!X509_gmtime_adj(X509_get_notBefore(x509ss),0)) goto end;
-			if (!X509_gmtime_adj(X509_get_notAfter(x509ss), (long)60*60*24*days)) goto end;
+			if (!X509_time_adj_ex(X509_get_notAfter(x509ss), days, 0, NULL)) goto end;
 			if (!X509_set_subject_name(x509ss, X509_REQ_get_subject_name(req))) goto end;
 			tmppkey = X509_REQ_get_pubkey(req);
 			if (!tmppkey || !X509_set_pubkey(x509ss,tmppkey)) goto end;

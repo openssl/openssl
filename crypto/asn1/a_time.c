@@ -100,6 +100,12 @@ int i2d_ASN1_TIME(ASN1_TIME *a, unsigned char **pp)
 
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 	{
+	return ASN1_TIME_adj(s, t, 0, 0);
+	}
+
+ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t,
+				int offset_day, long offset_sec)
+	{
 	struct tm *ts;
 	struct tm data;
 
@@ -109,9 +115,14 @@ ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s, time_t t)
 		ASN1err(ASN1_F_ASN1_TIME_SET, ASN1_R_ERROR_GETTING_TIME);
 		return NULL;
 		}
+	if (offset_day || offset_sec)
+		{ 
+		if (!OPENSSL_gmtime_adj(ts, offset_day, offset_sec))
+			return NULL;
+		}
 	if((ts->tm_year >= 50) && (ts->tm_year < 150))
-					return ASN1_UTCTIME_set(s, t);
-	return ASN1_GENERALIZEDTIME_set(s,t);
+			return ASN1_UTCTIME_adj(s, t, offset_day, offset_sec);
+	return ASN1_GENERALIZEDTIME_adj(s, t, offset_day, offset_sec);
 	}
 
 int ASN1_TIME_check(ASN1_TIME *t)

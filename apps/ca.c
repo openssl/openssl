@@ -1399,7 +1399,7 @@ bad:
 		if (!tmptm) goto err;
 		X509_gmtime_adj(tmptm,0);
 		X509_CRL_set_lastUpdate(crl, tmptm);	
-		X509_gmtime_adj(tmptm,(crldays*24+crlhours)*60*60 + crlsec);
+		X509_time_adj_ex(tmptm, crldays, crlhours*60*60 + crlsec, NULL);
 		X509_CRL_set_nextUpdate(crl, tmptm);	
 
 		ASN1_TIME_free(tmptm);
@@ -2006,7 +2006,7 @@ again2:
 	else ASN1_UTCTIME_set_string(X509_get_notBefore(ret),startdate);
 
 	if (enddate == NULL)
-		X509_gmtime_adj(X509_get_notAfter(ret),(long)60*60*24*days);
+		X509_time_adj_ex(X509_get_notAfter(ret),days, 0, NULL);
 	else ASN1_UTCTIME_set_string(X509_get_notAfter(ret),enddate);
 
 	if (!X509_set_subject_name(ret,subject)) goto err;
