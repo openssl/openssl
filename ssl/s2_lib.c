@@ -121,7 +121,7 @@ const char ssl2_version_str[]="SSLv2" OPENSSL_VERSION_PTEXT;
 #define SSL2_NUM_CIPHERS (sizeof(ssl2_ciphers)/sizeof(SSL_CIPHER))
 
 /* list of available SSLv2 ciphers (sorted by id) */
-OPENSSL_GLOBAL SSL_CIPHER ssl2_ciphers[]={
+OPENSSL_GLOBAL const SSL_CIPHER ssl2_ciphers[]={
 #if 0
 /* NULL_WITH_MD5 v3 */
 	{
@@ -303,7 +303,7 @@ int ssl2_num_ciphers(void)
 	return(SSL2_NUM_CIPHERS);
 	}
 
-SSL_CIPHER *ssl2_get_cipher(unsigned int u)
+const SSL_CIPHER *ssl2_get_cipher(unsigned int u)
 	{
 	if (u < SSL2_NUM_CIPHERS)
 		return(&(ssl2_ciphers[SSL2_NUM_CIPHERS-1-u]));
@@ -412,20 +412,22 @@ long ssl2_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	return(0);
 	}
 
+IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(const SSL_CIPHER, const SSL_CIPHER,
+				    ssl_cipher_id_cmp);
+
 /* This function needs to check if the ciphers required are actually
  * available */
-SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
+const SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
 	{
-	SSL_CIPHER c,*cp;
+	SSL_CIPHER c;
+	const SSL_CIPHER *cp;
 	unsigned long id;
 
 	id=0x02000000L|((unsigned long)p[0]<<16L)|
 		((unsigned long)p[1]<<8L)|(unsigned long)p[2];
 	c.id=id;
-	cp = (SSL_CIPHER *)OBJ_bsearch((char *)&c,
-		(char *)ssl2_ciphers,
-		SSL2_NUM_CIPHERS,sizeof(SSL_CIPHER),
-		FP_ICC ssl_cipher_id_cmp);
+	cp = OBJ_bsearch(const SSL_CIPHER, &c, const SSL_CIPHER, ssl2_ciphers,
+			 SSL2_NUM_CIPHERS, ssl_cipher_id_cmp);
 	if ((cp == NULL) || (cp->valid == 0))
 		return NULL;
 	else

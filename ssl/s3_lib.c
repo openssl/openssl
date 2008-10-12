@@ -2101,7 +2101,7 @@ int ssl3_num_ciphers(void)
 	return(SSL3_NUM_CIPHERS);
 	}
 
-SSL_CIPHER *ssl3_get_cipher(unsigned int u)
+const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
 	{
 	if (u < SSL3_NUM_CIPHERS)
 		return(&(ssl3_ciphers[SSL3_NUM_CIPHERS-1-u]));
@@ -2786,17 +2786,16 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 
 /* This function needs to check if the ciphers required are actually
  * available */
-SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
+const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 	{
-	SSL_CIPHER c,*cp;
+	SSL_CIPHER c;
+	const SSL_CIPHER *cp;
 	unsigned long id;
 
 	id=0x03000000L|((unsigned long)p[0]<<8L)|(unsigned long)p[1];
 	c.id=id;
-	cp = (SSL_CIPHER *)OBJ_bsearch((char *)&c,
-		(char *)ssl3_ciphers,
-		SSL3_NUM_CIPHERS,sizeof(SSL_CIPHER),
-		FP_ICC ssl_cipher_id_cmp);
+	cp = OBJ_bsearch(SSL_CIPHER, &c, SSL_CIPHER, ssl3_ciphers,
+			 SSL3_NUM_CIPHERS, ssl_cipher_id_cmp);
 	if (cp == NULL || cp->valid == 0)
 		return NULL;
 	else

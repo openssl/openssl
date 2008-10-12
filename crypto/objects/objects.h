@@ -1011,10 +1011,68 @@ int		OBJ_txt2nid(const char *s);
 int		OBJ_ln2nid(const char *s);
 int		OBJ_sn2nid(const char *s);
 int		OBJ_cmp(const ASN1_OBJECT *a,const ASN1_OBJECT *b);
-const char *	OBJ_bsearch(const char *key,const char *base,int num,int size,
-	int (*cmp)(const void *, const void *));
-const char *	OBJ_bsearch_ex(const char *key,const char *base,int num,
-	int size, int (*cmp)(const void *, const void *), int flags);
+const void *	OBJ_bsearch_(const void *key,const void *base,int num,int size,
+			     int (*cmp)(const void *, const void *));
+const void *	OBJ_bsearch_ex(const void *key,const void *base,int num,
+			       int size, int (*cmp)(const void *, const void *),
+			       int flags);
+
+#define _DECLARE_OBJ_BSEARCH_CMP_FN(scope, type1, type2, cmp)	\
+  scope type1 *cmp##_type_1; \
+  scope type2 *cmp##_type_2;					\
+  scope int cmp##_BSEARCH_CMP_FN(const void *, const void *);		\
+  scope int cmp(const type1 const *, const type2 const *);
+
+#define DECLARE_OBJ_BSEARCH_CMP_FN(type1, type2, cmp)	\
+  _DECLARE_OBJ_BSEARCH_CMP_FN(static, type1, type2, cmp)
+#define DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(type1, type2, cmp)	\
+  _DECLARE_OBJ_BSEARCH_CMP_FN(, type1, type2, cmp)
+
+/*
+ * Unsolved problem: if a type is actually a pointer type, like
+ * nid_triple is, then its impossible to get a const where you need
+ * it. Consider:
+ *
+ * typedef int nid_triple[3];
+ * const void *a_;
+ * const nid_triple const *a = a_;
+ *
+ * The assignement discards a const because what you really want is:
+ *
+ * const int const * const *a = a_;
+ *
+ * But if you do that, you lose the fact that a is an array of 3 ints,
+ * which breaks comparison functions.
+ *
+ * Thus we end up having to cast, sadly, or unpack the
+ * declarations. Or, as I finally did in this case, delcare nid_triple
+ * to be a struct, which it should have been in the first place.
+ *
+ * Ben, August 2008.
+ *
+ * Also, strictly speaking not all types need be const, but handling
+ * the non-constness means a lot of complication, and in practice
+ * comparison routines do always not touch their arguments.
+ */
+#define _IMPLEMENT_OBJ_BSEARCH_CMP_FN(scope, type1, type2, cmp)	\
+  scope int cmp##_BSEARCH_CMP_FN(const void *a_, const void *b_)	\
+      { \
+      const type1 const *a = a_; \
+      const type2 const *b = b_; \
+      return cmp(a,b); \
+      }
+
+#define IMPLEMENT_OBJ_BSEARCH_CMP_FN(type1, type2, cmp) \
+  _IMPLEMENT_OBJ_BSEARCH_CMP_FN(static, type1, type2, cmp)
+#define IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(type1, type2, cmp)	\
+  _IMPLEMENT_OBJ_BSEARCH_CMP_FN(, type1, type2, cmp)
+
+#define OBJ_bsearch(type1,key,type2,base,num,cmp)			       \
+  ((type2 *)OBJ_bsearch_(CHECKED_PTR_OF(type1,key),CHECKED_PTR_OF(type2,base), \
+			 num,sizeof(type2),				\
+			 (cmp##_type_1=CHECKED_PTR_OF(type1,cmp##_type_1), \
+			  cmp##_type_2=CHECKED_PTR_OF(type2,cmp##_type_2), \
+			  cmp##_BSEARCH_CMP_FN)))
 
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(const ASN1_OBJECT *obj);

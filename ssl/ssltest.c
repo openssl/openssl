@@ -317,7 +317,7 @@ static void sv_usage(void)
 
 static void print_details(SSL *c_ssl, const char *prefix)
 	{
-	SSL_CIPHER *ciph;
+	const SSL_CIPHER *ciph;
 	X509 *cert;
 		
 	ciph=SSL_get_current_cipher(c_ssl);
@@ -2408,7 +2408,7 @@ static int do_test_cipherlist(void)
 	{
 	int i = 0;
 	const SSL_METHOD *meth;
-	SSL_CIPHER *ci, *tci = NULL;
+	const SSL_CIPHER *ci, *tci = NULL;
 
 #ifndef OPENSSL_NO_SSL2
 	fprintf(stderr, "testing SSLv2 cipher list order: ");

@@ -577,7 +577,7 @@ typedef struct ssl3_buf_freelist_entry_st
 #endif
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
-OPENSSL_EXTERN SSL_CIPHER ssl2_ciphers[];
+OPENSSL_EXTERN const SSL_CIPHER ssl2_ciphers[];
 OPENSSL_EXTERN SSL_CIPHER ssl3_ciphers[];
 
 
@@ -784,6 +784,8 @@ int ssl_set_peer_cert_type(SESS_CERT *c, int type);
 int ssl_get_new_session(SSL *s, int session);
 int ssl_get_prev_session(SSL *s, unsigned char *session,int len, const unsigned char *limit);
 int ssl_cipher_id_cmp(const SSL_CIPHER *a,const SSL_CIPHER *b);
+DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(const SSL_CIPHER, const SSL_CIPHER,
+				  ssl_cipher_id_cmp);
 int ssl_cipher_ptr_id_cmp(const SSL_CIPHER * const *ap,
 			const SSL_CIPHER * const *bp);
 STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
@@ -803,9 +805,9 @@ int ssl_undefined_function(SSL *s);
 int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
-EVP_PKEY *ssl_get_sign_pkey(SSL *,SSL_CIPHER *);
+EVP_PKEY *ssl_get_sign_pkey(SSL *,const SSL_CIPHER *);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
-void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher);
+void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher);
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 int ssl_verify_alarm_type(long type);
 void ssl_load_ciphers(void);
@@ -814,7 +816,7 @@ int ssl2_enc_init(SSL *s, int client);
 int ssl2_generate_key_material(SSL *s);
 void ssl2_enc(SSL *s,int send_data);
 void ssl2_mac(SSL *s,unsigned char *mac,int send_data);
-SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p);
+const SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p);
 int ssl2_put_cipher_by_char(const SSL_CIPHER *c,unsigned char *p);
 int ssl2_part_read(SSL *s, unsigned long f, int i);
 int ssl2_do_write(SSL *s);
@@ -822,7 +824,7 @@ int ssl2_set_certificate(SSL *s, int type, int len, const unsigned char *data);
 void ssl2_return_error(SSL *s,int reason);
 void ssl2_write_error(SSL *s);
 int ssl2_num_ciphers(void);
-SSL_CIPHER *ssl2_get_cipher(unsigned int u);
+const SSL_CIPHER *ssl2_get_cipher(unsigned int u);
 int	ssl2_new(SSL *s);
 void	ssl2_free(SSL *s);
 int	ssl2_accept(SSL *s);
@@ -839,7 +841,7 @@ long	ssl2_ctx_callback_ctrl(SSL_CTX *s,int cmd, void (*fp)(void));
 int	ssl2_pending(const SSL *s);
 long	ssl2_default_timeout(void );
 
-SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
+const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c,unsigned char *p);
 void ssl3_init_finished_mac(SSL *s);
 int ssl3_send_server_certificate(SSL *s);
@@ -858,7 +860,7 @@ int ssl3_get_req_cert_type(SSL *s,unsigned char *p);
 long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 int ssl3_send_finished(SSL *s, int a, int b, const char *sender,int slen);
 int ssl3_num_ciphers(void);
-SSL_CIPHER *ssl3_get_cipher(unsigned int u);
+const SSL_CIPHER *ssl3_get_cipher(unsigned int u);
 int ssl3_renegotiate(SSL *ssl); 
 int ssl3_renegotiate_check(SSL *ssl); 
 int ssl3_dispatch_alert(SSL *s);
@@ -899,12 +901,12 @@ int ssl3_do_change_cipher_spec(SSL *ssl);
 long ssl3_default_timeout(void );
 
 int ssl23_num_ciphers(void );
-SSL_CIPHER *ssl23_get_cipher(unsigned int u);
+const SSL_CIPHER *ssl23_get_cipher(unsigned int u);
 int ssl23_read(SSL *s, void *buf, int len);
 int ssl23_peek(SSL *s, void *buf, int len);
 int ssl23_write(SSL *s, const void *buf, int len);
 int ssl23_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p);
-SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p);
+const SSL_CIPHER *ssl23_get_cipher_by_char(const unsigned char *p);
 long ssl23_default_timeout(void );
 
 long tls1_default_timeout(void);
@@ -934,7 +936,7 @@ void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
 void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
 long dtls1_default_timeout(void);
-SSL_CIPHER *dtls1_get_cipher(unsigned int u);
+const SSL_CIPHER *dtls1_get_cipher(unsigned int u);
 
 
 /* some client-only functions */
@@ -1020,7 +1022,7 @@ int ssl3_alert_code(int code);
 int ssl_ok(SSL *s);
 
 #ifndef OPENSSL_NO_ECDH
-int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs);
+int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs);
 #endif
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);

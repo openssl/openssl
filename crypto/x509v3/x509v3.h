@@ -76,12 +76,19 @@ typedef void * (*X509V3_EXT_NEW)(void);
 typedef void (*X509V3_EXT_FREE)(void *);
 typedef void * (*X509V3_EXT_D2I)(void *, const unsigned char ** , long);
 typedef int (*X509V3_EXT_I2D)(void *, unsigned char **);
-typedef STACK_OF(CONF_VALUE) * (*X509V3_EXT_I2V)(struct v3_ext_method *method, void *ext, STACK_OF(CONF_VALUE) *extlist);
-typedef void * (*X509V3_EXT_V2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, STACK_OF(CONF_VALUE) *values);
-typedef char * (*X509V3_EXT_I2S)(struct v3_ext_method *method, void *ext);
-typedef void * (*X509V3_EXT_S2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, const char *str);
-typedef int (*X509V3_EXT_I2R)(struct v3_ext_method *method, void *ext, BIO *out, int indent);
-typedef void * (*X509V3_EXT_R2I)(struct v3_ext_method *method, struct v3_ext_ctx *ctx, const char *str);
+typedef STACK_OF(CONF_VALUE) *
+  (*X509V3_EXT_I2V)(const struct v3_ext_method *method, void *ext,
+		    STACK_OF(CONF_VALUE) *extlist);
+typedef void * (*X509V3_EXT_V2I)(const struct v3_ext_method *method,
+				 struct v3_ext_ctx *ctx,
+				 STACK_OF(CONF_VALUE) *values);
+typedef char * (*X509V3_EXT_I2S)(const struct v3_ext_method *method, void *ext);
+typedef void * (*X509V3_EXT_S2I)(const struct v3_ext_method *method,
+				 struct v3_ext_ctx *ctx, const char *str);
+typedef int (*X509V3_EXT_I2R)(const struct v3_ext_method *method, void *ext,
+			      BIO *out, int indent);
+typedef void * (*X509V3_EXT_R2I)(const struct v3_ext_method *method,
+				 struct v3_ext_ctx *ctx, const char *str);
 
 /* V3 extension structure */
 
@@ -533,8 +540,8 @@ DECLARE_ASN1_FUNCTIONS(GENERAL_NAMES)
 
 STACK_OF(CONF_VALUE) *i2v_GENERAL_NAMES(X509V3_EXT_METHOD *method,
 		GENERAL_NAMES *gen, STACK_OF(CONF_VALUE) *extlist);
-GENERAL_NAMES *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+GENERAL_NAMES *v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method,
+				 X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 
 DECLARE_ASN1_FUNCTIONS(OTHERNAME)
 DECLARE_ASN1_FUNCTIONS(EDIPARTYNAME)
@@ -584,14 +591,15 @@ DECLARE_ASN1_ALLOC_FUNCTIONS(POLICY_CONSTRAINTS)
 DECLARE_ASN1_ITEM(POLICY_CONSTRAINTS)
 
 GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
-				X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-				int gen_type, char *value, int is_nc);
+			       const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+			       int gen_type, char *value, int is_nc);
 
 #ifdef HEADER_CONF_H
-GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-							CONF_VALUE *cnf);
-GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out, X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, CONF_VALUE *cnf, int is_nc);
+GENERAL_NAME *v2i_GENERAL_NAME(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+			       CONF_VALUE *cnf);
+GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
+				  const X509V3_EXT_METHOD *method,
+				  X509V3_CTX *ctx, CONF_VALUE *cnf, int is_nc);
 void X509V3_conf_free(CONF_VALUE *val);
 
 X509_EXTENSION *X509V3_EXT_nconf_nid(CONF *conf, X509V3_CTX *ctx, int ext_nid, char *value);
@@ -644,8 +652,8 @@ int X509V3_EXT_add_list(X509V3_EXT_METHOD *extlist);
 int X509V3_EXT_add_alias(int nid_to, int nid_from);
 void X509V3_EXT_cleanup(void);
 
-X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext);
-X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
+const X509V3_EXT_METHOD *X509V3_EXT_get(X509_EXTENSION *ext);
+const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid);
 int X509V3_add_standard_extensions(void);
 STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line);
 void *X509V3_EXT_d2i(X509_EXTENSION *ext);

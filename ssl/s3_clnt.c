@@ -719,7 +719,7 @@ err:
 int ssl3_get_server_hello(SSL *s)
 	{
 	STACK_OF(SSL_CIPHER) *sk;
-	SSL_CIPHER *c;
+	const SSL_CIPHER *c;
 	unsigned char *p,*d;
 	int i,al,ok;
 	unsigned int j;

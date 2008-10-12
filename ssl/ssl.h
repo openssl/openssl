@@ -401,11 +401,11 @@ typedef struct ssl_method_st
 	int (*ssl_dispatch_alert)(SSL *s);
 	long (*ssl_ctrl)(SSL *s,int cmd,long larg,void *parg);
 	long (*ssl_ctx_ctrl)(SSL_CTX *ctx,int cmd,long larg,void *parg);
-	SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
+	const SSL_CIPHER *(*get_cipher_by_char)(const unsigned char *ptr);
 	int (*put_cipher_by_char)(const SSL_CIPHER *cipher,unsigned char *ptr);
 	int (*ssl_pending)(const SSL *s);
 	int (*num_ciphers)(void);
-	SSL_CIPHER *(*get_cipher)(unsigned ncipher);
+	const SSL_CIPHER *(*get_cipher)(unsigned ncipher);
 	const struct ssl_method_st *(*get_ssl_method)(int version);
 	long (*get_timeout)(void);
 	struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
@@ -483,7 +483,7 @@ typedef struct ssl_session_st
 
 	int compress_meth;		/* Need to lookup the method */
 
-	SSL_CIPHER *cipher;
+	const SSL_CIPHER *cipher;
 	unsigned long cipher_id;	/* when ASN.1 loaded, this
 					 * needs to be used to load
 					 * the 'cipher' structure */
@@ -1431,7 +1431,7 @@ int	SSL_clear(SSL *s);
 
 void	SSL_CTX_flush_sessions(SSL_CTX *ctx,long tm);
 
-SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
+const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
 int	SSL_CIPHER_get_bits(const SSL_CIPHER *c,int *alg_bits);
 char *	SSL_CIPHER_get_version(const SSL_CIPHER *c);
 const char *	SSL_CIPHER_get_name(const SSL_CIPHER *c);

@@ -1348,7 +1348,7 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 					       STACK_OF(SSL_CIPHER) **skp)
 	{
-	SSL_CIPHER *c;
+	const SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *sk;
 	int i,n;
 
@@ -1751,7 +1751,7 @@ void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth)
 	X509_VERIFY_PARAM_set_depth(ctx->param, depth);
 	}
 
-void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
+void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	{
 	CERT_PKEY *cpk;
 	int rsa_enc,rsa_tmp,rsa_sign,dh_tmp,dh_rsa,dh_dsa,dsa_sign;
@@ -1963,7 +1963,7 @@ void ssl_set_cert_masks(CERT *c, SSL_CIPHER *cipher)
 #define ku_reject(x, usage) \
 	(((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
 
-int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL_CIPHER *cs)
+int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 	{
 	unsigned long alg_k, alg_a;
 	EVP_PKEY *pkey = NULL;
@@ -2109,7 +2109,7 @@ X509 *ssl_get_server_send_cert(SSL *s)
 	return(c->pkeys[i].x509);
 	}
 
-EVP_PKEY *ssl_get_sign_pkey(SSL *s,SSL_CIPHER *cipher)
+EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *cipher)
 	{
 	unsigned long alg_a;
 	CERT *c;
@@ -2547,7 +2547,7 @@ EVP_PKEY *SSL_get_privatekey(SSL *s)
 		return(NULL);
 	}
 
-SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
+const SSL_CIPHER *SSL_get_current_cipher(const SSL *s)
 	{
 	if ((s->session != NULL) && (s->session->cipher != NULL))
 		return(s->session->cipher);

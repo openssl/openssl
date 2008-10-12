@@ -4,6 +4,11 @@
 
  Changes between 0.9.8j and 0.9.9  [xx XXX xxxx]
 
+  *) Type-checked OBJ_bsearch. Also some constification necessitated
+     by type-checking.  Still to come: TXT_DB, bsearch(?),
+     OBJ_bsearch_ex, qsort, CRYPTO_EX_DATA, ASN1_VALUE, ASN1_STRING,
+     CONF_VALUE.  [Ben Laurie]
+
   *) New function OPENSSL_gmtime_adj() to add a specific number of days and
      seconds to a tm structure directly, instead of going through OS
      specific date routines. This avoids any issues with OS routines such

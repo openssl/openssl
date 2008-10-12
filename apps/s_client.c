@@ -1531,7 +1531,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	char buf[BUFSIZ];
 	STACK_OF(X509) *sk;
 	STACK_OF(X509_NAME) *sk2;
-	SSL_CIPHER *c;
+	const SSL_CIPHER *c;
 	X509_NAME *xn;
 	int j,i;
 #ifndef OPENSSL_NO_COMP

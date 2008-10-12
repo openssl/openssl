@@ -112,11 +112,17 @@ void main()
 	}
 #endif
 
+DECLARE_OBJ_BSEARCH_CMP_FN(EVP_PKEY_ASN1_METHOD *,
+			   const EVP_PKEY_ASN1_METHOD *, ameth_cmp);
+
 static int ameth_cmp(const EVP_PKEY_ASN1_METHOD * const *a,
-                const EVP_PKEY_ASN1_METHOD * const *b)
+		     const EVP_PKEY_ASN1_METHOD * const *b)
 	{
         return ((*a)->pkey_id - (*b)->pkey_id);
 	}
+
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(EVP_PKEY_ASN1_METHOD *,
+			     const EVP_PKEY_ASN1_METHOD *, ameth_cmp);
 
 int EVP_PKEY_asn1_get_count(void)
 	{
@@ -139,7 +145,8 @@ const EVP_PKEY_ASN1_METHOD *EVP_PKEY_asn1_get0(int idx)
 
 static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 	{
-	EVP_PKEY_ASN1_METHOD tmp, *t = &tmp, **ret;
+	EVP_PKEY_ASN1_METHOD tmp, *t = &tmp;
+	const EVP_PKEY_ASN1_METHOD **ret;
 	tmp.pkey_id = type;
 	if (app_methods)
 		{
@@ -148,11 +155,11 @@ static const EVP_PKEY_ASN1_METHOD *pkey_asn1_find(int type)
 		if (idx >= 0)
 			return sk_EVP_PKEY_ASN1_METHOD_value(app_methods, idx);
 		}
-	ret = (EVP_PKEY_ASN1_METHOD **) OBJ_bsearch((char *)&t,
-        		(char *)standard_methods,
-			sizeof(standard_methods)/sizeof(EVP_PKEY_ASN1_METHOD *),
-        		sizeof(EVP_PKEY_ASN1_METHOD *),
-			(int (*)(const void *, const void *))ameth_cmp);
+	ret = OBJ_bsearch(EVP_PKEY_ASN1_METHOD *, &t,
+			  const EVP_PKEY_ASN1_METHOD *, standard_methods,
+			  sizeof(standard_methods)
+			  /sizeof(EVP_PKEY_ASN1_METHOD *),
+			  ameth_cmp);
 	if (!ret || !*ret)
 		return NULL;
 	return *ret;

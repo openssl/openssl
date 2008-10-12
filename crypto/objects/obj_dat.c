@@ -81,9 +81,10 @@ static const unsigned int ln_objs[1];
 static const unsigned int obj_objs[1];
 #endif
 
-static int sn_cmp(const void *a, const void *b);
-static int ln_cmp(const void *a, const void *b);
-static int obj_cmp(const void *a, const void *b);
+DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, sn_cmp);
+DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, ln_cmp);
+DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, obj_cmp);
+
 #define ADDED_DATA	0
 #define ADDED_SNAME	1
 #define ADDED_LNAME	2
@@ -99,19 +100,15 @@ DECLARE_LHASH_OF(ADDED_OBJ);
 static int new_nid=NUM_NID;
 static LHASH_OF(ADDED_OBJ) *added=NULL;
 
-static int sn_cmp(const void *a, const void *b)
-	{
-	const ASN1_OBJECT * const *ap = a;
-	const unsigned int *bp = b;
-	return(strcmp((*ap)->sn,nid_objs[*bp].sn));
-	}
+static int sn_cmp(const ASN1_OBJECT * const *a, const unsigned int *b)
+	{ return(strcmp((*a)->sn,nid_objs[*b].sn)); }
 
-static int ln_cmp(const void *a, const void *b)
-	{ 
-	const ASN1_OBJECT * const *ap = a;
-	const unsigned int *bp = b;
-	return(strcmp((*ap)->ln,nid_objs[*bp].ln));
-	}
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, sn_cmp)
+
+static int ln_cmp(const ASN1_OBJECT * const *a, const unsigned int *b)
+	{ return(strcmp((*a)->ln,nid_objs[*b].ln)); }
+
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, ln_cmp)
 
 static unsigned long added_obj_hash(const ADDED_OBJ *ca)
 	{
@@ -385,6 +382,19 @@ const char *OBJ_nid2ln(int n)
 		}
 	}
 
+static int obj_cmp(const ASN1_OBJECT * const *ap, const unsigned int *bp)
+	{
+	int j;
+	const ASN1_OBJECT *a= *ap;
+	const ASN1_OBJECT *b= &nid_objs[*bp];
+
+	j=(a->length - b->length);
+        if (j) return(j);
+	return(memcmp(a->data,b->data,a->length));
+	}
+
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, obj_cmp)
+
 int OBJ_obj2nid(const ASN1_OBJECT *a)
 	{
 	const unsigned int *op;
@@ -402,8 +412,8 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
 		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=(const unsigned int *)OBJ_bsearch((const char *)&a,(const char *)obj_objs,
-		NUM_OBJ, sizeof(obj_objs[0]),obj_cmp);
+	op=OBJ_bsearch(const ASN1_OBJECT *, &a, const unsigned int, obj_objs,
+		       NUM_OBJ, obj_cmp);
 	if (op == NULL)
 		return(NID_undef);
 	return(nid_objs[*op].nid);
@@ -625,7 +635,8 @@ int OBJ_txt2nid(const char *s)
 
 int OBJ_ln2nid(const char *s)
 	{
-	ASN1_OBJECT o,*oo= &o;
+	ASN1_OBJECT o;
+	const ASN1_OBJECT *oo= &o;
 	ADDED_OBJ ad,*adp;
 	const unsigned int *op;
 
@@ -637,15 +648,16 @@ int OBJ_ln2nid(const char *s)
 		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=(const unsigned int*)OBJ_bsearch((char *)&oo,(char *)ln_objs, NUM_LN,
-		sizeof(ln_objs[0]),ln_cmp);
+	op=OBJ_bsearch(const ASN1_OBJECT *, &oo, const unsigned int, ln_objs,
+				   NUM_LN, ln_cmp);
 	if (op == NULL) return(NID_undef);
 	return(nid_objs[*op].nid);
 	}
 
 int OBJ_sn2nid(const char *s)
 	{
-	ASN1_OBJECT o,*oo= &o;
+	ASN1_OBJECT o;
+	const ASN1_OBJECT *oo= &o;
 	ADDED_OBJ ad,*adp;
 	const unsigned int *op;
 
@@ -657,32 +669,22 @@ int OBJ_sn2nid(const char *s)
 		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=(const unsigned int *)OBJ_bsearch((char *)&oo,(char *)sn_objs,NUM_SN,
-		sizeof(sn_objs[0]),sn_cmp);
+	op=OBJ_bsearch(const ASN1_OBJECT *, &oo, const unsigned int, sn_objs,
+				   NUM_SN, sn_cmp);
 	if (op == NULL) return(NID_undef);
 	return(nid_objs[*op].nid);
 	}
 
-static int obj_cmp(const void *ap, const void *bp)
-	{
-	int j;
-	const ASN1_OBJECT *a= *(ASN1_OBJECT * const *)ap;
-	const ASN1_OBJECT *b= &nid_objs[*((const unsigned int *)bp)];
-
-	j=(a->length - b->length);
-        if (j) return(j);
-	return(memcmp(a->data,b->data,a->length));
-        }
-
-const char *OBJ_bsearch(const char *key, const char *base, int num, int size,
-	int (*cmp)(const void *, const void *))
+const void *OBJ_bsearch_(const void *key, const void *base, int num, int size,
+			 int (*cmp)(const void *, const void *))
 	{
 	return OBJ_bsearch_ex(key, base, num, size, cmp, 0);
 	}
 
-const char *OBJ_bsearch_ex(const char *key, const char *base, int num,
+const void *OBJ_bsearch_ex(const void *key, const void *base_, int num,
 	int size, int (*cmp)(const void *, const void *), int flags)
 	{
+	const char *base=base_;
 	int l,h,i=0,c=0;
 	const char *p = NULL;
 

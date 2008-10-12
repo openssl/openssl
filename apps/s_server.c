@@ -2182,7 +2182,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	int ret=1;
 	int i,j,k,blank,dot;
 	SSL *con;
-	SSL_CIPHER *c;
+	const SSL_CIPHER *c;
 	BIO *io,*ssl_bio,*sbio;
 	long total_bytes;
 

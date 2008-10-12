@@ -219,8 +219,7 @@ e_capi.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
 e_capi.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 e_capi.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 e_capi.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_capi.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
-e_capi.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+e_capi.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
 e_capi.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 e_capi.o: ../include/openssl/sha.h ../include/openssl/stack.h
 e_capi.o: ../include/openssl/symhacks.h ../include/openssl/x509.h

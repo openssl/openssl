@@ -465,7 +465,7 @@ typedef struct ssl3_state_st
 		int message_type;
 
 		/* used to hold the new cipher we are going to use */
-		SSL_CIPHER *new_cipher;
+		const SSL_CIPHER *new_cipher;
 #ifndef OPENSSL_NO_DH
 		DH *dh;
 #endif

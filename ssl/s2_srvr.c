@@ -366,7 +366,7 @@ static int get_client_master_key(SSL *s)
 	int is_export,i,n,keya,ek;
 	unsigned long len;
 	unsigned char *p;
-	SSL_CIPHER *cp;
+	const SSL_CIPHER *cp;
 	const EVP_CIPHER *c;
 	const EVP_MD *md;
 

@@ -392,8 +392,8 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
 	
 }
 
-GENERAL_NAMES *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+GENERAL_NAMES *v2i_GENERAL_NAMES(const X509V3_EXT_METHOD *method,
+				 X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 {
 	GENERAL_NAME *gen;
 	GENERAL_NAMES *gens = NULL;
@@ -414,15 +414,15 @@ GENERAL_NAMES *v2i_GENERAL_NAMES(X509V3_EXT_METHOD *method,
 	return NULL;
 }
 
-GENERAL_NAME *v2i_GENERAL_NAME(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-							 CONF_VALUE *cnf)
+GENERAL_NAME *v2i_GENERAL_NAME(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+			       CONF_VALUE *cnf)
 	{
 	return v2i_GENERAL_NAME_ex(NULL, method, ctx, cnf, 0);
 	}
 
 GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
-				X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-				int gen_type, char *value, int is_nc)
+			       const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+			       int gen_type, char *value, int is_nc)
 	{
 	char is_string = 0;
 	GENERAL_NAME *gen = NULL;
@@ -518,8 +518,8 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
 	}
 
 GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
-				X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-						 CONF_VALUE *cnf, int is_nc)
+				  const X509V3_EXT_METHOD *method,
+				  X509V3_CTX *ctx, CONF_VALUE *cnf, int is_nc)
 	{
 	int type;
 

@@ -63,10 +63,10 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
-static void *v2i_crld(X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
-static int i2r_crldp(X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
-								int indent);
+static void *v2i_crld(const X509V3_EXT_METHOD *method,
+		      X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
+		     int indent);
 
 const X509V3_EXT_METHOD v3_crld =
 	{
@@ -308,8 +308,8 @@ static DIST_POINT *crldp_from_section(X509V3_CTX *ctx,
 	return NULL;
 	}
 
-static void *v2i_crld(X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+static void *v2i_crld(const X509V3_EXT_METHOD *method,
+		      X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 	{
 	STACK_OF(DIST_POINT) *crld = NULL;
 	GENERAL_NAMES *gens = NULL;
@@ -426,10 +426,10 @@ ASN1_SEQUENCE(ISSUING_DIST_POINT) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(ISSUING_DIST_POINT)
 
-static int i2r_idp(X509V3_EXT_METHOD *method,
-	     void *pidp, BIO *out, int indent);
-static void *v2i_idp(X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
+		   int indent);
+static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+		     STACK_OF(CONF_VALUE) *nval);
 
 const X509V3_EXT_METHOD v3_idp =
 	{
@@ -443,8 +443,8 @@ const X509V3_EXT_METHOD v3_idp =
 	NULL
 	};
 
-static void *v2i_idp(X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+		     STACK_OF(CONF_VALUE) *nval)
 	{
 	ISSUING_DIST_POINT *idp = NULL;
 	CONF_VALUE *cnf;
@@ -535,7 +535,8 @@ static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
 	return 1;
 	}
 
-static int i2r_idp(X509V3_EXT_METHOD *method, void *pidp, BIO *out, int indent)
+static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
+		   int indent)
 	{
 	ISSUING_DIST_POINT *idp = pidp;
 	if (idp->distpoint)
@@ -559,8 +560,8 @@ static int i2r_idp(X509V3_EXT_METHOD *method, void *pidp, BIO *out, int indent)
 	return 1;
 	}
 
-static int i2r_crldp(X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
-								int indent)
+static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
+		     int indent)
 	{
 	STACK_OF(DIST_POINT) *crld = pcrldp;
 	DIST_POINT *point;

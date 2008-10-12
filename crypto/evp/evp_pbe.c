@@ -189,16 +189,18 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	return 1;	
 }
 
-static int pbe_cmp2(const void *a, const void *b)
+DECLARE_OBJ_BSEARCH_CMP_FN(EVP_PBE_CTL, EVP_PBE_CTL, pbe_cmp2);
+
+static int pbe_cmp2(const EVP_PBE_CTL *pbe1, const EVP_PBE_CTL *pbe2)
 	{
-	const EVP_PBE_CTL *pbe1 = a;
-	const EVP_PBE_CTL *pbe2 = b;
 	int ret = pbe1->pbe_type - pbe2->pbe_type;
 	if (ret)
 		return ret;
 	else
 		return pbe1->pbe_nid - pbe2->pbe_nid;
 	}
+
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(EVP_PBE_CTL, EVP_PBE_CTL, pbe_cmp2);
 
 static int pbe_cmp(const EVP_PBE_CTL * const *a, const EVP_PBE_CTL * const *b)
 	{
@@ -269,11 +271,10 @@ int EVP_PBE_find(int type, int pbe_nid,
 		}
 	if (pbetmp == NULL)
 		{
-		pbetmp = (EVP_PBE_CTL *) OBJ_bsearch((char *)&pbelu,
-        		(char *)builtin_pbe,
-			sizeof(builtin_pbe)/sizeof(EVP_PBE_CTL),
-        		sizeof(EVP_PBE_CTL),
-			pbe_cmp2);
+		pbetmp = OBJ_bsearch(EVP_PBE_CTL, &pbelu,
+				     EVP_PBE_CTL, builtin_pbe,
+				     sizeof(builtin_pbe)/sizeof(EVP_PBE_CTL),
+				     pbe_cmp2);
 		}
 	if (pbetmp == NULL)
 		return 0;

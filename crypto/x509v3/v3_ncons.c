@@ -63,13 +63,13 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-static void *v2i_NAME_CONSTRAINTS(X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
-static int i2r_NAME_CONSTRAINTS(X509V3_EXT_METHOD *method, 
+static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
+				  X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
+static int i2r_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, 
 				void *a, BIO *bp, int ind);
-static int do_i2r_name_constraints(X509V3_EXT_METHOD *method,
-				STACK_OF(GENERAL_SUBTREE) *trees,
-					BIO *bp, int ind, char *name);
+static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
+				   STACK_OF(GENERAL_SUBTREE) *trees,
+				   BIO *bp, int ind, char *name);
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip);
 
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc);
@@ -106,8 +106,8 @@ ASN1_SEQUENCE(NAME_CONSTRAINTS) = {
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(GENERAL_SUBTREE)
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(NAME_CONSTRAINTS)
 
-static void *v2i_NAME_CONSTRAINTS(X509V3_EXT_METHOD *method,
-				X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
+				  X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
 	{
 	int i;
 	CONF_VALUE tval, *val;
@@ -162,8 +162,8 @@ static void *v2i_NAME_CONSTRAINTS(X509V3_EXT_METHOD *method,
 
 	
 
-static int i2r_NAME_CONSTRAINTS(X509V3_EXT_METHOD *method,
-				void *a, BIO *bp, int ind)
+static int i2r_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, void *a,
+				BIO *bp, int ind)
 	{
 	NAME_CONSTRAINTS *ncons = a;
 	do_i2r_name_constraints(method, ncons->permittedSubtrees,
@@ -173,9 +173,9 @@ static int i2r_NAME_CONSTRAINTS(X509V3_EXT_METHOD *method,
 	return 1;
 	}
 
-static int do_i2r_name_constraints(X509V3_EXT_METHOD *method,
-				STACK_OF(GENERAL_SUBTREE) *trees,
-					BIO *bp, int ind, char *name)
+static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
+				   STACK_OF(GENERAL_SUBTREE) *trees,
+				   BIO *bp, int ind, char *name)
 	{
 	GENERAL_SUBTREE *tree;
 	int i;

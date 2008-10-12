@@ -207,7 +207,7 @@ static int ssl_handshake_digest_flag[SSL_MD_NUM_IDX]={
 
 typedef struct cipher_order_st
 	{
-	SSL_CIPHER *cipher;
+	const SSL_CIPHER *cipher;
 	int active;
 	int dead;
 	struct cipher_order_st *next,*prev;
@@ -437,7 +437,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	     const EVP_MD **md, int *mac_pkey_type, int *mac_secret_size,SSL_COMP **comp)
 	{
 	int i;
-	SSL_CIPHER *c;
+	const SSL_CIPHER *c;
 
 	c=s->cipher;
 	if (c == NULL) return(0);
@@ -682,7 +682,7 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
                 CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 	{
 	int i, co_list_num;
-	SSL_CIPHER *c;
+	const SSL_CIPHER *c;
 
 	/*
 	 * We have num_of_ciphers descriptions compiled in, depending on the
@@ -745,7 +745,7 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 		}
 	}
 
-static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
+static void ssl_cipher_collect_aliases(const SSL_CIPHER **ca_list,
                         int num_of_group_aliases,
                         unsigned long disabled_mkey, unsigned long disabled_auth,
                         unsigned long disabled_enc, unsigned long disabled_mac,
@@ -753,7 +753,7 @@ static void ssl_cipher_collect_aliases(SSL_CIPHER **ca_list,
 			CIPHER_ORDER *head)
 	{
 	CIPHER_ORDER *ciph_curr;
-	SSL_CIPHER **ca_curr;
+	const SSL_CIPHER **ca_curr;
 	int i;
 	unsigned long mask_mkey = ~disabled_mkey;
 	unsigned long mask_auth = ~disabled_auth;
@@ -823,7 +823,7 @@ static void ssl_cipher_apply_rule(unsigned long cipher_id,
 		CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p)
 	{
 	CIPHER_ORDER *head, *tail, *curr, *curr2, *last;
-	SSL_CIPHER *cp;
+	const SSL_CIPHER *cp;
 	int reverse = 0;
 
 #ifdef CIPHER_DEBUG
@@ -999,7 +999,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 
 static int ssl_cipher_process_rulestr(const char *rule_str,
                 CIPHER_ORDER **head_p, CIPHER_ORDER **tail_p,
-                SSL_CIPHER **ca_list)
+                const SSL_CIPHER **ca_list)
 	{
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength;
 	const char *l, *start, *buf;
@@ -1258,7 +1258,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	STACK_OF(SSL_CIPHER) *cipherstack, *tmp_cipher_list;
 	const char *rule_p;
 	CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
-	SSL_CIPHER **ca_list = NULL;
+	const SSL_CIPHER **ca_list = NULL;
 
 	/*
 	 * Return with error if nothing to do.
@@ -1345,8 +1345,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	num_of_group_aliases = sizeof(cipher_aliases) / sizeof(SSL_CIPHER);
 	num_of_alias_max = num_of_ciphers + num_of_group_aliases + 1;
-	ca_list =
-		(SSL_CIPHER **)OPENSSL_malloc(sizeof(SSL_CIPHER *) * num_of_alias_max);
+	ca_list = OPENSSL_malloc(sizeof(SSL_CIPHER *) * num_of_alias_max);
 	if (ca_list == NULL)
 		{
 		OPENSSL_free(co_list);

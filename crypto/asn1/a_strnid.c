@@ -67,7 +67,6 @@ static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
 static void st_free(ASN1_STRING_TABLE *tbl);
 static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
 			const ASN1_STRING_TABLE * const *b);
-static int table_cmp(const void *a, const void *b);
 
 
 /* This is the global mask for the mbstring functions: this is use to
@@ -186,11 +185,14 @@ static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
 	return (*a)->nid - (*b)->nid;
 }
 
-static int table_cmp(const void *a, const void *b)
+DECLARE_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table_cmp);
+
+static int table_cmp(const ASN1_STRING_TABLE *a, const ASN1_STRING_TABLE *b)
 {
-	const ASN1_STRING_TABLE *sa = a, *sb = b;
-	return sa->nid - sb->nid;
+	return a->nid - b->nid;
 }
+
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table_cmp);
 
 ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
 {
@@ -198,10 +200,10 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
 	ASN1_STRING_TABLE *ttmp;
 	ASN1_STRING_TABLE fnd;
 	fnd.nid = nid;
-	ttmp = (ASN1_STRING_TABLE *) OBJ_bsearch((char *)&fnd,
-					(char *)tbl_standard, 
-			sizeof(tbl_standard)/sizeof(ASN1_STRING_TABLE),
-			sizeof(ASN1_STRING_TABLE), table_cmp);
+	ttmp = OBJ_bsearch(ASN1_STRING_TABLE, &fnd,
+			   ASN1_STRING_TABLE, tbl_standard, 
+			   sizeof(tbl_standard)/sizeof(ASN1_STRING_TABLE),
+			   table_cmp);
 	if(ttmp) return ttmp;
 	if(!stable) return NULL;
 	idx = sk_ASN1_STRING_TABLE_find(stable, &fnd);

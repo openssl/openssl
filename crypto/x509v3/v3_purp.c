@@ -267,10 +267,13 @@ int X509_PURPOSE_get_trust(X509_PURPOSE *xp)
 	return xp->trust;
 }
 
-static int nid_cmp(int *a, int *b)
+static int nid_cmp(const int *a, const int *b)
 	{
 	return *a - *b;
 	}
+
+DECLARE_OBJ_BSEARCH_CMP_FN(int, int, nid_cmp);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(int, int, nid_cmp);
 
 int X509_supported_extension(X509_EXTENSION *ex)
 	{
@@ -282,7 +285,7 @@ int X509_supported_extension(X509_EXTENSION *ex)
 	 * searched using bsearch.
 	 */
 
-	static int supported_nids[] = {
+	static const int supported_nids[] = {
 		NID_netscape_cert_type, /* 71 */
         	NID_key_usage,		/* 83 */
 		NID_subject_alt_name,	/* 85 */
@@ -300,16 +303,13 @@ int X509_supported_extension(X509_EXTENSION *ex)
 		NID_inhibit_any_policy	/* 748 */
 	};
 
-	int ex_nid;
-
-	ex_nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
+	const int ex_nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
 
 	if (ex_nid == NID_undef) 
 		return 0;
 
-	if (OBJ_bsearch((char *)&ex_nid, (char *)supported_nids,
-		sizeof(supported_nids)/sizeof(int), sizeof(int),
-		(int (*)(const void *, const void *))nid_cmp))
+	if (OBJ_bsearch(int, &ex_nid, int, supported_nids,
+			sizeof(supported_nids)/sizeof(int), nid_cmp))
 		return 1;
 	return 0;
 	}

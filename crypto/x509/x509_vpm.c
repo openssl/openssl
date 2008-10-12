@@ -356,11 +356,16 @@ static const X509_VERIFY_PARAM default_table[] = {
 
 static STACK_OF(X509_VERIFY_PARAM) *param_table = NULL;
 
-static int table_cmp(const void *pa, const void *pb)
+static int table_cmp(const X509_VERIFY_PARAM *a, const X509_VERIFY_PARAM *b)
+
 	{
-	const X509_VERIFY_PARAM *a = pa, *b = pb;
 	return strcmp(a->name, b->name);
 	}
+
+DECLARE_OBJ_BSEARCH_CMP_FN(const X509_VERIFY_PARAM, const X509_VERIFY_PARAM,
+			   table_cmp);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const X509_VERIFY_PARAM, const X509_VERIFY_PARAM,
+			     table_cmp);
 
 static int param_cmp(const X509_VERIFY_PARAM * const *a,
 			const X509_VERIFY_PARAM * const *b)
@@ -397,6 +402,7 @@ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
 	{
 	int idx;
 	X509_VERIFY_PARAM pm;
+
 	pm.name = (char *)name;
 	if (param_table)
 		{
@@ -404,11 +410,10 @@ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
 		if (idx != -1)
 			return sk_X509_VERIFY_PARAM_value(param_table, idx);
 		}
-	return (const X509_VERIFY_PARAM *) OBJ_bsearch((char *)&pm,
-				(char *)&default_table,
-				sizeof(default_table)/sizeof(X509_VERIFY_PARAM),
-				sizeof(X509_VERIFY_PARAM),
-				table_cmp);
+	return OBJ_bsearch(const X509_VERIFY_PARAM, &pm,
+			   const X509_VERIFY_PARAM, default_table,
+			   sizeof(default_table)/sizeof(X509_VERIFY_PARAM),
+			   table_cmp);
 	}
 
 void X509_VERIFY_PARAM_table_cleanup(void)
