@@ -829,8 +829,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			return(s->s3->wpend_ret);
 			}
 		else if (i <= 0) {
-			if (s->version == DTLS1_VERSION ||
-			    s->version == DTLS1_BAD_VER) {
+			if (s->version == DTLS1_VERSION) {
 				/* For DTLS, just drop it. That's kind of the wh
 ole
 				   point in using a datagram service */
