@@ -597,6 +597,7 @@ again:
 	/* check whether this is a repeat, or aged record */
 	if ( ! dtls1_record_replay_check(s, bitmap, &(rr->seq_num)))
 		{
+		rr->length = 0;
 		s->packet_length=0; /* dump this record */
 		goto again;     /* get another record */
 		}

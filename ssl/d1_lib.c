@@ -106,6 +106,7 @@ int dtls1_new(SSL *s)
 	pq_64bit_init(&(d1->bitmap.map));
 	pq_64bit_init(&(d1->bitmap.max_seq_num));
 	
+	d1->next_bitmap.length = d1->bitmap.length;
 	pq_64bit_init(&(d1->next_bitmap.map));
 	pq_64bit_init(&(d1->next_bitmap.max_seq_num));
 
