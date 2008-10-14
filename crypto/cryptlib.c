@@ -554,14 +554,6 @@ unsigned long CRYPTO_thread_id(void)
 	}
 #endif
 
-static void (*do_dynlock_cb)(int mode, int type, const char *file, int line);
-
-void int_CRYPTO_set_do_dynlock_callback(
-	void (*dyn_cb)(int mode, int type, const char *file, int line))
-	{
-	do_dynlock_cb = dyn_cb;
-	}
-
 void CRYPTO_lock(int mode, int type, const char *file, int line)
 	{
 #ifdef LOCK_DEBUG
@@ -591,8 +583,17 @@ void CRYPTO_lock(int mode, int type, const char *file, int line)
 #endif
 	if (type < 0)
 		{
-		if (do_dynlock_cb)
-			do_dynlock_cb(mode, type, file, line);
+		if (dynlock_lock_callback != NULL)
+			{
+			struct CRYPTO_dynlock_value *pointer
+				= CRYPTO_get_dynlock_value(type);
+
+			OPENSSL_assert(pointer != NULL);
+
+			dynlock_lock_callback(mode, pointer, file, line);
+
+			CRYPTO_destroy_dynlockid(type);
+			}
 		}
 	else
 		if (locking_callback != NULL)
@@ -694,62 +695,6 @@ void OPENSSL_cpuid_setup(void) {}
 #endif
 
 #if (defined(_WIN32) || defined(__CYGWIN__)) && defined(_WINDLL)
-
-#ifdef OPENSSL_FIPS
-
-#include <tlhelp32.h>
-#if defined(__GNUC__) && __GNUC__>=2
-static int DllInit(void) __attribute__((constructor));
-#elif defined(_MSC_VER)
-static int DllInit(void);
-# ifdef _WIN64
-# pragma section(".CRT$XCU",read)
-  __declspec(allocate(".CRT$XCU"))
-# else
-# pragma data_seg(".CRT$XCU")
-# endif
-  static int (*p)(void) = DllInit;
-# pragma data_seg()
-#endif
-
-static int DllInit(void)
-{
-#if defined(_WIN32_WINNT)
-	union	{ int(*f)(void); BYTE *p; } t = { DllInit };
-        HANDLE	hModuleSnap = INVALID_HANDLE_VALUE;
-	IMAGE_DOS_HEADER *dos_header;
-	IMAGE_NT_HEADERS *nt_headers;
-	MODULEENTRY32 me32 = {sizeof(me32)};
-
-	hModuleSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE,0);
-	if (hModuleSnap != INVALID_HANDLE_VALUE &&
-	    Module32First(hModuleSnap,&me32)) do
-		{
-		if (t.p >= me32.modBaseAddr &&
-		    t.p <  me32.modBaseAddr+me32.modBaseSize)
-			{
-			dos_header=(IMAGE_DOS_HEADER *)me32.modBaseAddr;
-			if (dos_header->e_magic==IMAGE_DOS_SIGNATURE)
-				{
-				nt_headers=(IMAGE_NT_HEADERS *)
-					((BYTE *)dos_header+dos_header->e_lfanew);
-				if (nt_headers->Signature==IMAGE_NT_SIGNATURE &&
-				    me32.modBaseAddr!=(BYTE*)nt_headers->OptionalHeader.ImageBase)
-					OPENSSL_NONPIC_relocated=1;
-				}
-			break;
-			}
-		} while (Module32Next(hModuleSnap,&me32));
-
-	if (hModuleSnap != INVALID_HANDLE_VALUE)
-		CloseHandle(hModuleSnap);
-#endif
-	OPENSSL_cpuid_setup();
-	return 0;
-}
-
-#else
-
 #ifdef __CYGWIN__
 /* pick DLL_[PROCESS|THREAD]_[ATTACH|DETACH] definitions */
 #include <windows.h>
@@ -791,8 +736,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 		}
 	return(TRUE);
 	}
-#endif
-
 #endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
