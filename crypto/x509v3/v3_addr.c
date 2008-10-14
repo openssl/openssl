@@ -878,6 +878,7 @@ int v3_addr_canonize(IPAddrBlocks *addr)
 				    v3_addr_get_afi(f)))
       return 0;
   }
+  sk_IPAddressFamily_set_cmp_func(addr, IPAddressFamily_cmp);
   sk_IPAddressFamily_sort(addr);
   assert(v3_addr_is_canonical(addr));
   return 1;
