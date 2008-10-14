@@ -722,6 +722,9 @@
 
  Changes between 0.9.8i and 0.9.8j  [xx XXX xxxx]
 
+  *) Add support for XMPP STARTTLS in s_client.
+     [Philip Paeps <philip@freebsd.org>]
+
   *) Change the server-side SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG behavior
      to ensure that even with this option, only ciphersuites in the
      server's preference list will be accepted.  (Note that the option
