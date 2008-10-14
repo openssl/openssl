@@ -1013,9 +1013,10 @@ int		OBJ_sn2nid(const char *s);
 int		OBJ_cmp(const ASN1_OBJECT *a,const ASN1_OBJECT *b);
 const void *	OBJ_bsearch_(const void *key,const void *base,int num,int size,
 			     int (*cmp)(const void *, const void *));
-const void *	OBJ_bsearch_ex(const void *key,const void *base,int num,
-			       int size, int (*cmp)(const void *, const void *),
-			       int flags);
+const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
+				int size,
+				int (*cmp)(const void *, const void *),
+				int flags);
 
 #define _DECLARE_OBJ_BSEARCH_CMP_FN(scope, type1, type2, cmp)	\
   scope type1 *cmp##_type_1; \
@@ -1073,6 +1074,13 @@ const void *	OBJ_bsearch_ex(const void *key,const void *base,int num,
 			 (cmp##_type_1=CHECKED_PTR_OF(type1,cmp##_type_1), \
 			  cmp##_type_2=CHECKED_PTR_OF(type2,cmp##_type_2), \
 			  cmp##_BSEARCH_CMP_FN)))
+
+#define OBJ_bsearch_ex(type1,key,type2,base,num,cmp,flags)			\
+  ((type2 *)OBJ_bsearch_(CHECKED_PTR_OF(type1,key),CHECKED_PTR_OF(type2,base), \
+			 num,sizeof(type2),				\
+			 (cmp##_type_1=CHECKED_PTR_OF(type1,cmp##_type_1), \
+			  cmp##_type_2=CHECKED_PTR_OF(type2,cmp##_type_2), \
+			  cmp##_BSEARCH_CMP_FN)),flags)
 
 int		OBJ_new_nid(int num);
 int		OBJ_add_object(const ASN1_OBJECT *obj);

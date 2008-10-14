@@ -77,11 +77,10 @@ const char STACK_version[]="Stack" OPENSSL_VERSION_PTEXT;
 
 #include <errno.h>
 
-int (*sk_set_cmp_func(_STACK *sk, int (*c)(const void * const *,
-					   const void * const *)))
-		(const void * const *, const void * const *)
+int (*sk_set_cmp_func(_STACK *sk, int (*c)(const void *, const void *)))
+		(const void *, const void *)
 	{
-	int (*old)(const void * const *,const void * const *)=sk->comp;
+	int (*old)(const void *,const void *)=sk->comp;
 
 	if (sk->comp != c)
 		sk->sorted=0;
@@ -115,10 +114,10 @@ err:
 
 _STACK *sk_new_null(void)
 	{
-	return sk_new((int (*)(const void * const *, const void * const *))0);
+	return sk_new((int (*)(const void *, const void *))0);
 	}
 
-_STACK *sk_new(int (*c)(const void * const *, const void * const *))
+_STACK *sk_new(int (*c)(const void *, const void *))
 	{
 	_STACK *ret;
 	int i;
@@ -213,9 +212,9 @@ void *sk_delete(_STACK *st, int loc)
 
 static int internal_find(_STACK *st, void *data, int ret_val_options)
 	{
-	char **r;
+	const void * const *r;
 	int i;
-	int (*comp_func)(const void *,const void *);
+
 	if(st == NULL) return -1;
 
 	if (st->comp == NULL)
@@ -227,17 +226,10 @@ static int internal_find(_STACK *st, void *data, int ret_val_options)
 		}
 	sk_sort(st);
 	if (data == NULL) return(-1);
-	/* This (and the "qsort" below) are the two places in OpenSSL
-	 * where we need to convert from our standard (type **,type **)
-	 * compare callback type to the (void *,void *) type required by
-	 * bsearch. However, the "data" it is being called(back) with are
-	 * not (type *) pointers, but the *pointers* to (type *) pointers,
-	 * so we get our extra level of pointer dereferencing that way. */
-	comp_func=(int (*)(const void *,const void *))(st->comp);
-	r=(char **)OBJ_bsearch_ex((char *)&data,(char *)st->data,
-		st->num,sizeof(char *),comp_func,ret_val_options);
+	r=OBJ_bsearch_ex_(&data,st->data,st->num,sizeof(void *),st->comp,
+			  ret_val_options);
 	if (r == NULL) return(-1);
-	return((int)(r-st->data));
+	return (int)((char **)r-st->data);
 	}
 
 int sk_find(_STACK *st, void *data)

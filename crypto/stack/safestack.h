@@ -69,7 +69,7 @@
     ((void (*)(void *)) ((1 ? p : (void (*)(type))0)))
 
 #define CHECKED_SK_CMP_FUNC(type, p) \
-    ((int (*)(const void * const *, const void * const *)) \
+    ((int (*)(const void *, const void *)) \
 	((1 ? p : (int (*)(const type * const *, const type * const *))0)))
 
 #define STACK_OF(type) struct stack_st_##type
