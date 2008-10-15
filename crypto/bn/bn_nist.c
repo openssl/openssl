@@ -345,11 +345,6 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	r->top = BN_NIST_192_TOP;
 	bn_correct_top(r);
 
-	if (BN_ucmp(field, r) <= 0)
-		{
-		if (!BN_usub(r, r, field)) return 0;
-		}
-
 	return 1;
 	}
 
@@ -381,7 +376,7 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	field = &_bignum_nist_p_224; /* just to make sure */
 
- 	if (BN_is_negative(a) || a->top > 2*BN_NIST_224_TOP)
+ 	if (BN_is_negative(a) || a->top > (2*224+BN_BITS2-1)/BN_BITS2)
 		return BN_nnmod(r, field, a, ctx);
 
 	i = BN_ucmp(field, a);
@@ -455,11 +450,6 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	nist_cp_bn(r_d, res, BN_NIST_224_TOP);
 	r->top = BN_NIST_224_TOP;
 	bn_correct_top(r);
-
-	if (BN_ucmp(field, r) <= 0)
-		{
-		if (!BN_usub(r, r, field)) return 0;
-		}
 
 	return 1;
 	}
@@ -573,11 +563,6 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	nist_cp_bn(r_d, res, BN_NIST_256_TOP);
 	r->top = BN_NIST_256_TOP;
 	bn_correct_top(r);
-
-	if (BN_ucmp(field, r) <= 0)
-		{
-		if (!BN_usub(r, r, field)) return 0;
-		}
 
 	return 1;
 	}
@@ -698,81 +683,65 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	r->top = BN_NIST_384_TOP;
 	bn_correct_top(r);
 
-	if (BN_ucmp(field, r) <= 0)
-		{
-		if (!BN_usub(r, r, field)) return 0;
-		}
-
 	return 1;
 	}
+
+#define BN_NIST_521_RSHIFT	(521%BN_BITS2)
+#define BN_NIST_521_LSHIFT	(BN_BITS2-BN_NIST_521_RSHIFT)
+#define BN_NIST_521_TOP_MASK	((BN_ULONG)BN_MASK2>>BN_NIST_521_LSHIFT)
 
 int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	BN_CTX *ctx)
 	{
-#if BN_BITS2 == 64
-#define BN_NIST_521_TOP_MASK	(BN_ULONG)0x1FF
-#elif BN_BITS2 == 32
-#define BN_NIST_521_TOP_MASK	(BN_ULONG)0x1FF
-#endif
-	int	top, ret = 0;
-	BIGNUM	*tmp;
+	int	top = a->top, i;
+	BN_ULONG *r_d, *a_d = a->d,
+		 t_d[BN_NIST_521_TOP],
+		 val,tmp,*res;
+	size_t	mask;
 
 	field = &_bignum_nist_p_521; /* just to make sure */
 
- 	if (BN_is_negative(a))
+ 	if (BN_is_negative(a) || BN_num_bits(a)>2*521)
 		return BN_nnmod(r, field, a, ctx);
 
-	/* check whether a reduction is necessary */
-	top = a->top;
-	if (top < BN_NIST_521_TOP  || ( top == BN_NIST_521_TOP &&
-	    (!(a->d[BN_NIST_521_TOP-1] & ~(BN_NIST_521_TOP_MASK)))))
+	i = BN_ucmp(field, a);
+	if (i == 0)
 		{
-		int i = BN_ucmp(field, a);
-		if (i == 0)
-			{
-			BN_zero(r);
-			return 1;
-			}
-		else
-			{
-#ifdef BN_DEBUG
-			OPENSSL_assert(i > 0); /* because 'field' is 1111...1111 */
-#endif
-			return (r == a)? 1 : (BN_copy(r ,a) != NULL);
-			}
+		BN_zero(r);
+		return 1;
 		}
+	else if (i > 0)
+		return (r == a)? 1 : (BN_copy(r ,a) != NULL);
 
- 	if (BN_num_bits(a) > 2*521)
-		return BN_nnmod(r, field, a, ctx);
-
-	BN_CTX_start(ctx);
-	tmp = BN_CTX_get(ctx);
-	if (!tmp)
-		goto err;
-
-	if (!bn_wexpand(tmp, BN_NIST_521_TOP))
-		goto err;
-	nist_cp_bn(tmp->d, a->d, BN_NIST_521_TOP);
-
-	tmp->top = BN_NIST_521_TOP;
-        tmp->d[BN_NIST_521_TOP-1]  &= BN_NIST_521_TOP_MASK;
-	bn_correct_top(tmp);
-
-	if (!BN_rshift(r, a, 521))
-		goto err;
-
-	if (!BN_uadd(r, tmp, r))
-		goto err;
-
-	if (BN_ucmp(field, r) <= 0)
+	if (r != a)
 		{
-		if (!BN_usub(r, r, field)) goto err;
+		if (!bn_wexpand(r,BN_NIST_521_TOP))
+			return 0;
+		r_d = r->d;
+		nist_cp_bn(r_d,a_d, BN_NIST_521_TOP);
 		}
+	else
+		r_d = a_d;
 
-	ret = 1;
-err:
-	BN_CTX_end(ctx);
+	/* upper 521 bits, copy ... */
+	nist_cp_bn_0(t_d,a_d + (BN_NIST_521_TOP-1), top - (BN_NIST_521_TOP-1),BN_NIST_521_TOP);
+	/* ... and right shift */
+	for (val=t_d[0],i=0; i<BN_NIST_521_TOP-1; i++)
+		{
+		tmp = val>>BN_NIST_521_RSHIFT;
+		val = t_d[i+1];
+		t_d[i] = (tmp | val<<BN_NIST_521_LSHIFT) & BN_MASK2;
+		}
+	t_d[i] = val>>BN_NIST_521_RSHIFT;
+	/* lower 521 bits */
+	r_d[i] &= BN_NIST_521_TOP_MASK;
 
-	bn_check_top(r);
-	return ret;
+	bn_add_words(r_d,r_d,t_d,BN_NIST_521_TOP);
+	mask = 0-(size_t)bn_sub_words(t_d,r_d,_nist_p_521,BN_NIST_521_TOP);
+	res  = (BN_ULONG *)(((size_t)t_d&~mask) | ((size_t)r_d&mask));
+	nist_cp_bn(r_d,res,BN_NIST_521_TOP);
+	r->top = BN_NIST_521_TOP;
+	bn_correct_top(r);
+
+	return 1;
 	}
