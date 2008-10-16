@@ -73,11 +73,21 @@ static const BN_ULONG _nist_p_192[][BN_NIST_192_TOP] = {
 	{0xFFFFFFFFFFFFFFFEULL,0xFFFFFFFFFFFFFFFDULL,0xFFFFFFFFFFFFFFFFULL},
 	{0xFFFFFFFFFFFFFFFDULL,0xFFFFFFFFFFFFFFFCULL,0xFFFFFFFFFFFFFFFFULL}
 	};
+static const BN_ULONG _nist_p_192_sqr[] = {
+	0x0000000000000001ULL,0x0000000000000002ULL,0x0000000000000001ULL,
+	0xFFFFFFFFFFFFFFFEULL,0xFFFFFFFFFFFFFFFDULL,0xFFFFFFFFFFFFFFFFULL
+	};
 static const BN_ULONG _nist_p_224[][BN_NIST_224_TOP] = {
 	{0x0000000000000001ULL,0xFFFFFFFF00000000ULL,
 	 0xFFFFFFFFFFFFFFFFULL,0x00000000FFFFFFFFULL},
 	{0x0000000000000002ULL,0xFFFFFFFE00000000ULL,
 	 0xFFFFFFFFFFFFFFFFULL,0x00000001FFFFFFFFULL} /* this one is "carry-full" */
+	};
+static const BN_ULONG _nist_p_224_sqr[] = {
+	0x0000000000000001ULL,0xFFFFFFFE00000000ULL,
+	0xFFFFFFFFFFFFFFFFULL,0x0000000200000000ULL,
+	0x0000000000000000ULL,0xFFFFFFFFFFFFFFFEULL,
+	0xFFFFFFFFFFFFFFFFULL
 	};
 static const BN_ULONG _nist_p_256[][BN_NIST_256_TOP] = {
 	{0xFFFFFFFFFFFFFFFFULL,0x00000000FFFFFFFFULL,
@@ -91,6 +101,12 @@ static const BN_ULONG _nist_p_256[][BN_NIST_256_TOP] = {
 	{0xFFFFFFFFFFFFFFFBULL,0x00000004FFFFFFFFULL,
 	 0x0000000000000000ULL,0xFFFFFFFB00000005ULL},
 	};
+static const BN_ULONG _nist_p_256_sqr[] = {
+	0x0000000000000001ULL,0xFFFFFFFE00000000ULL,
+	0xFFFFFFFFFFFFFFFFULL,0x00000001FFFFFFFEULL,
+	0x00000001FFFFFFFEULL,0x00000001FFFFFFFEULL,
+	0xFFFFFFFE00000001ULL,0xFFFFFFFE00000002ULL
+	};
 static const BN_ULONG _nist_p_384[][BN_NIST_384_TOP] = {
 	{0x00000000FFFFFFFFULL,0xFFFFFFFF00000000ULL,0xFFFFFFFFFFFFFFFEULL,
 	 0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL},
@@ -103,23 +119,47 @@ static const BN_ULONG _nist_p_384[][BN_NIST_384_TOP] = {
 	{0x00000004FFFFFFFBULL,0xFFFFFFFB00000000ULL,0xFFFFFFFFFFFFFFFAULL,
 	 0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL},
 	};
+static const BN_ULONG _nist_p_384_sqr[] = {
+	0xFFFFFFFE00000001ULL,0x0000000200000000ULL,0xFFFFFFFE00000000ULL,
+	0x0000000200000000ULL,0x0000000000000001ULL,0x0000000000000000ULL,
+	0x00000001FFFFFFFEULL,0xFFFFFFFE00000000ULL,0xFFFFFFFFFFFFFFFDULL,
+	0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL
+	};
 static const BN_ULONG _nist_p_521[] =
 	{0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,
 	0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,
 	0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,
 	0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,
 	0x00000000000001FFULL};
+static const BN_ULONG _nist_p_521_sqr[] = {
+	0x0000000000000001ULL,0x0000000000000000ULL,0x0000000000000000ULL,
+	0x0000000000000000ULL,0x0000000000000000ULL,0x0000000000000000ULL,
+	0x0000000000000000ULL,0x0000000000000000ULL,0xFFFFFFFFFFFFFC00ULL,
+	0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,
+	0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,0xFFFFFFFFFFFFFFFFULL,
+	0xFFFFFFFFFFFFFFFFULL,0x000000000003FFFFULL
+	};
 #elif BN_BITS2 == 32
 static const BN_ULONG _nist_p_192[][BN_NIST_192_TOP] = {
 	{0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFE,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF},
 	{0xFFFFFFFE,0xFFFFFFFF,0xFFFFFFFD,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF},
 	{0xFFFFFFFD,0xFFFFFFFF,0xFFFFFFFC,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF}
 	};
+static const BN_ULONG _nist_p_192_sqr[] = {
+	0x00000001,0x00000000,0x00000002,0x00000000,0x00000001,0x00000000,
+	0xFFFFFFFE,0xFFFFFFFF,0xFFFFFFFD,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF
+	};
 static const BN_ULONG _nist_p_224[][BN_NIST_224_TOP] = {
 	{0x00000001,0x00000000,0x00000000,0xFFFFFFFF,
 	 0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF},
 	{0x00000002,0x00000000,0x00000000,0xFFFFFFFE,
 	 0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF}
+	};
+static const BN_ULONG _nist_p_224_sqr[] = {
+	0x00000001,0x00000000,0x00000000,0xFFFFFFFE,
+	0xFFFFFFFF,0xFFFFFFFF,0x00000000,0x00000002,
+	0x00000000,0x00000000,0xFFFFFFFE,0xFFFFFFFF,
+	0xFFFFFFFF,0xFFFFFFFF
 	};
 static const BN_ULONG _nist_p_256[][BN_NIST_256_TOP] = {
 	{0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0x00000000,
@@ -133,6 +173,12 @@ static const BN_ULONG _nist_p_256[][BN_NIST_256_TOP] = {
 	{0xFFFFFFFB,0xFFFFFFFF,0xFFFFFFFF,0x00000004,
 	 0x00000000,0x00000000,0x00000005,0xFFFFFFFB},
 	};
+static const BN_ULONG _nist_p_256_sqr[] = {
+	0x00000001,0x00000000,0x00000000,0xFFFFFFFE,
+	0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFE,0x00000001,
+	0xFFFFFFFE,0x00000001,0xFFFFFFFE,0x00000001,
+	0x00000001,0xFFFFFFFE,0x00000002,0xFFFFFFFE
+	};
 static const BN_ULONG _nist_p_384[][BN_NIST_384_TOP] = {
 	{0xFFFFFFFF,0x00000000,0x00000000,0xFFFFFFFF,0xFFFFFFFE,0xFFFFFFFF,
 	 0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF},
@@ -145,10 +191,24 @@ static const BN_ULONG _nist_p_384[][BN_NIST_384_TOP] = {
 	{0xFFFFFFFB,0x00000004,0x00000000,0xFFFFFFFB,0xFFFFFFFA,0xFFFFFFFF,
 	 0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF},
 	};
+static const BN_ULONG _nist_p_384_sqr[] = {
+	0x00000001,0xFFFFFFFE,0x00000000,0x00000002,0x00000000,0xFFFFFFFE,
+	0x00000000,0x00000002,0x00000001,0x00000000,0x00000000,0x00000000,
+	0xFFFFFFFE,0x00000001,0x00000000,0xFFFFFFFE,0xFFFFFFFD,0xFFFFFFFF,
+	0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF
+	};
 static const BN_ULONG _nist_p_521[] = {0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
 	0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
 	0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
 	0xFFFFFFFF,0x000001FF};
+static const BN_ULONG _nist_p_521_sqr[] = {
+	0x00000001,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,0x00000000,
+	0x00000000,0x00000000,0x00000000,0x00000000,0xFFFFFC00,0xFFFFFFFF,
+	0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
+	0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,0xFFFFFFFF,
+	0xFFFFFFFF,0xFFFFFFFF,0x0003FFFF
+	};
 #else
 #error "unsupported BN_BITS2"
 #endif
@@ -231,7 +291,9 @@ static void nist_cp_bn_0(BN_ULONG *buf, BN_ULONG *a, int top, int max)
 	int i;
 	BN_ULONG *_tmp1 = (buf), *_tmp2 = (a);
 
+#ifdef BN_DEBUG
 	OPENSSL_assert(top <= max);
+#endif
 	for (i = (top); i != 0; i--)
 		*_tmp1++ = *_tmp2++;
 	for (i = (max) - (top); i != 0; i--)
@@ -293,11 +355,16 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		 c_d[BN_NIST_192_TOP],
 		*res;
 	size_t   mask;
+	static const BIGNUM _bignum_nist_p_192_sqr = {
+		(BN_ULONG *)_nist_p_192_sqr,
+		sizeof(_nist_p_192_sqr)/sizeof(_nist_p_192_sqr[0]),
+		sizeof(_nist_p_192_sqr)/sizeof(_nist_p_192_sqr[0]),
+		0,BN_FLG_STATIC_DATA };
 
 	field = &_bignum_nist_p_192; /* just to make sure */
 
- 	if (BN_is_negative(a) || a->top > 2*BN_NIST_192_TOP)
-		return BN_nnmod(r, field, a, ctx);
+ 	if (BN_is_negative(a) || BN_ucmp(a,&_bignum_nist_p_192_sqr)>=0)
+		return BN_nnmod(r, a, field, ctx);
 
 	i = BN_ucmp(field, a);
 	if (i == 0)
@@ -373,11 +440,17 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		*res;
 	size_t   mask;
 	union { bn_addsub_f f; size_t p; } u;
+	static const BIGNUM _bignum_nist_p_224_sqr = {
+		(BN_ULONG *)_nist_p_224_sqr,
+		sizeof(_nist_p_224_sqr)/sizeof(_nist_p_224_sqr[0]),
+		sizeof(_nist_p_224_sqr)/sizeof(_nist_p_224_sqr[0]),
+		0,BN_FLG_STATIC_DATA };
+
 
 	field = &_bignum_nist_p_224; /* just to make sure */
 
- 	if (BN_is_negative(a) || a->top > (2*224+BN_BITS2-1)/BN_BITS2)
-		return BN_nnmod(r, field, a, ctx);
+ 	if (BN_is_negative(a) || BN_ucmp(a,&_bignum_nist_p_224_sqr)>=0)
+		return BN_nnmod(r, a, field, ctx);
 
 	i = BN_ucmp(field, a);
 	if (i == 0)
@@ -478,11 +551,16 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		*res;
 	size_t   mask;
 	union { bn_addsub_f f; size_t p; } u;
+	static const BIGNUM _bignum_nist_p_256_sqr = {
+		(BN_ULONG *)_nist_p_256_sqr,
+		sizeof(_nist_p_256_sqr)/sizeof(_nist_p_256_sqr[0]),
+		sizeof(_nist_p_256_sqr)/sizeof(_nist_p_256_sqr[0]),
+		0,BN_FLG_STATIC_DATA };
 
 	field = &_bignum_nist_p_256; /* just to make sure */
 
- 	if (BN_is_negative(a) || a->top > 2*BN_NIST_256_TOP)
-		return BN_nnmod(r, field, a, ctx);
+ 	if (BN_is_negative(a) || BN_ucmp(a,&_bignum_nist_p_256_sqr)>=0)
+		return BN_nnmod(r, a, field, ctx);
 
 	i = BN_ucmp(field, a);
 	if (i == 0)
@@ -595,11 +673,17 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		*res;
 	size_t	 mask;
 	union { bn_addsub_f f; size_t p; } u;
+	static const BIGNUM _bignum_nist_p_384_sqr = {
+		(BN_ULONG *)_nist_p_384_sqr,
+		sizeof(_nist_p_384_sqr)/sizeof(_nist_p_384_sqr[0]),
+		sizeof(_nist_p_384_sqr)/sizeof(_nist_p_384_sqr[0]),
+		0,BN_FLG_STATIC_DATA };
+
 
 	field = &_bignum_nist_p_384; /* just to make sure */
 
- 	if (BN_is_negative(a) || a->top > 2*BN_NIST_384_TOP)
-		return BN_nnmod(r, field, a, ctx);
+ 	if (BN_is_negative(a) || BN_ucmp(a,&_bignum_nist_p_384_sqr)>=0)
+		return BN_nnmod(r, a, field, ctx);
 
 	i = BN_ucmp(field, a);
 	if (i == 0)
@@ -698,11 +782,16 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		 t_d[BN_NIST_521_TOP],
 		 val,tmp,*res;
 	size_t	mask;
+	static const BIGNUM _bignum_nist_p_521_sqr = {
+		(BN_ULONG *)_nist_p_521_sqr,
+		sizeof(_nist_p_521_sqr)/sizeof(_nist_p_521_sqr[0]),
+		sizeof(_nist_p_521_sqr)/sizeof(_nist_p_521_sqr[0]),
+		0,BN_FLG_STATIC_DATA };
 
 	field = &_bignum_nist_p_521; /* just to make sure */
 
- 	if (BN_is_negative(a) || BN_num_bits(a)>2*521)
-		return BN_nnmod(r, field, a, ctx);
+ 	if (BN_is_negative(a) || BN_ucmp(a,&_bignum_nist_p_521_sqr)>=0)
+		return BN_nnmod(r, a, field, ctx);
 
 	i = BN_ucmp(field, a);
 	if (i == 0)
