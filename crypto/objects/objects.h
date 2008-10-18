@@ -1071,15 +1071,15 @@ const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
 #define OBJ_bsearch(type1,key,type2,base,num,cmp)			       \
   ((type2 *)OBJ_bsearch_(CHECKED_PTR_OF(type1,key),CHECKED_PTR_OF(type2,base), \
 			 num,sizeof(type2),				\
-			 (cmp##_type_1=CHECKED_PTR_OF(type1,cmp##_type_1), \
-			  cmp##_type_2=CHECKED_PTR_OF(type2,cmp##_type_2), \
+			 ((void)CHECKED_PTR_OF(type1,cmp##_type_1),	\
+			  (void)CHECKED_PTR_OF(type2,cmp##_type_2),	\
 			  cmp##_BSEARCH_CMP_FN)))
 
 #define OBJ_bsearch_ex(type1,key,type2,base,num,cmp,flags)			\
   ((type2 *)OBJ_bsearch_(CHECKED_PTR_OF(type1,key),CHECKED_PTR_OF(type2,base), \
 			 num,sizeof(type2),				\
-			 (cmp##_type_1=CHECKED_PTR_OF(type1,cmp##_type_1), \
-			  cmp##_type_2=CHECKED_PTR_OF(type2,cmp##_type_2), \
+			 ((void)CHECKED_PTR_OF(type1,cmp##_type_1),	\
+			  (void)type_2=CHECKED_PTR_OF(type2,cmp##_type_2), \
 			  cmp##_BSEARCH_CMP_FN)),flags)
 
 int		OBJ_new_nid(int num);
