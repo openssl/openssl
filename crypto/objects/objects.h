@@ -1022,7 +1022,7 @@ const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
   scope type1 *cmp##_type_1; \
   scope type2 *cmp##_type_2;					\
   scope int cmp##_BSEARCH_CMP_FN(const void *, const void *);		\
-  scope int cmp(const type1 const *, const type2 const *);
+  scope int cmp(const type1 const *, const type2 const *)
 
 #define DECLARE_OBJ_BSEARCH_CMP_FN(type1, type2, cmp)	\
   _DECLARE_OBJ_BSEARCH_CMP_FN(static, type1, type2, cmp)
