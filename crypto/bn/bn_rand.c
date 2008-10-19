@@ -227,7 +227,7 @@ int     BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
 
 
 /* random number r:  0 <= r < range */
-static int bn_rand_range(int pseudo, BIGNUM *r, BIGNUM *range)
+static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
 	{
 	int (*bn_rand)(BIGNUM *, int, int, int) = pseudo ? BN_pseudo_rand : BN_rand;
 	int n;
@@ -294,12 +294,12 @@ static int bn_rand_range(int pseudo, BIGNUM *r, BIGNUM *range)
 	}
 
 
-int	BN_rand_range(BIGNUM *r, BIGNUM *range)
+int	BN_rand_range(BIGNUM *r, const BIGNUM *range)
 	{
 	return bn_rand_range(0, r, range);
 	}
 
-int	BN_pseudo_rand_range(BIGNUM *r, BIGNUM *range)
+int	BN_pseudo_rand_range(BIGNUM *r, const BIGNUM *range)
 	{
 	return bn_rand_range(1, r, range);
 	}
