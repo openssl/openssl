@@ -370,7 +370,7 @@ enum
 	PROTO_POP3,
 	PROTO_IMAP,
 	PROTO_FTP,
-	PROTO_XMPP,
+	PROTO_XMPP
 };
 
 int MAIN(int, char **);
