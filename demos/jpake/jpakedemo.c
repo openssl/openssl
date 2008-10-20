@@ -64,21 +64,26 @@ typedef struct
     JPakeZKP zkpxbs;  // ZKP(xb * s)
     } JPakeStep2;
 
+typedef struct
+    {
+    const char *name;  // Must be unique
+    int base;          // 1 for Alice, 3 for Bob. Only used for printing stuff.
+    JPakeStep1 s1c;    // Alice's g^x3, ZKP(x3) or Bob's g^x1, ZKP(x1)
+    JPakeStep1 s1d;    // Alice's g^x4, ZKP(x4) or Bob's g^x2, ZKP(x2)
+    JPakeStep2 s2;     // Alice's A, ZKP(x2 * s) or Bob's B, ZKP(x4 * s)
+    } JPakeUserPublic;
+
 /*
  * The user structure. In the definition, (xa, xb, xc, xd) are Alice's
  * (x1, x2, x3, x4) or Bob's (x3, x4, x1, x2). If you see what I mean.
  */
 typedef struct
     {
-    const char *name;  // Must be unique
-    int base;          // 1 for Alice, 3 for Bob. Only used for printing stuff.
+    JPakeUserPublic p;
     BIGNUM *secret;    // The shared secret
     BIGNUM *key;       // The calculated (shared) key
     BIGNUM *xa;        // Alice's x1 or Bob's x3
     BIGNUM *xb;        // Alice's x2 or Bob's x4
-    JPakeStep1 s1c;    // Alice's g^x3, ZKP(x3) or Bob's g^x1, ZKP(x1)
-    JPakeStep1 s1d;    // Alice's g^x4, ZKP(x4) or Bob's g^x2, ZKP(x2)
-    JPakeStep2 s2;     // Alice's A, ZKP(x2 * s) or Bob's B, ZKP(x4 * s)
     } JPakeUser;
 
 // Generate each party's random numbers. xa is in [0, q), xb is in [1, q).
@@ -105,9 +110,9 @@ static void genrand(JPakeUser *user, const JPakeParameters *params)
     BN_free(qm1);
 
     // Show
-    printf("x%d", user->base);
+    printf("x%d", user->p.base);
     showbn("", user->xa);
-    printf("x%d", user->base+1);
+    printf("x%d", user->p.base+1);
     showbn("", user->xb);
     }
 
@@ -141,7 +146,7 @@ static void hashbn(SHA_CTX *sha, const BIGNUM *bn)
 
 // h=hash(g, g^r, g^x, name)
 static void zkpHash(BIGNUM *h, const JPakeZKP *zkp, const BIGNUM *gx,
-		    const JPakeUser *from, const JPakeParameters *params)
+		    const JPakeUserPublic *from, const JPakeParameters *params)
     {
     unsigned char md[SHA_DIGEST_LENGTH];
     SHA_CTX sha;
@@ -179,7 +184,7 @@ static void CreateZKP(JPakeZKP *zkp, const BIGNUM *x, const JPakeUser *us,
     BN_mod_exp(gx, zkpg, x, params->p, params->ctx);
 
     // h=hash...
-    zkpHash(h, zkp, gx, us, params);
+    zkpHash(h, zkp, gx, &us->p, params);
     
     // b = r - x*h
     BN_mod_mul(t, x, h, params->q, params->ctx);
@@ -200,9 +205,9 @@ static void CreateZKP(JPakeZKP *zkp, const BIGNUM *x, const JPakeUser *us,
     BN_free(r);
     }
 
-static int VerifyZKP(const JPakeZKP *zkp, BIGNUM *x, const JPakeUser *them,
-		     const BIGNUM *zkpg, const JPakeParameters *params,
-		     int n, const char *suffix)
+static int VerifyZKP(const JPakeZKP *zkp, BIGNUM *x,
+		     const JPakeUserPublic *them, const BIGNUM *zkpg,
+		     const JPakeParameters *params, int n, const char *suffix)
     {
     BIGNUM *h = BN_new();
     BIGNUM *t1 = BN_new();
@@ -253,35 +258,35 @@ static void sendstep1_substep(JPakeStep1 *s1, const BIGNUM *x,
     CreateZKP(&s1->zkpx, x, us, params->g, params, n, "");
     }
 
-static void sendstep1(const JPakeUser *us, JPakeUser *them,
+static void sendstep1(const JPakeUser *us, JPakeUserPublic *them,
 		      const JPakeParameters *params)
     {
-    printf("\n%s sends %s:\n\n", us->name, them->name);
+    printf("\n%s sends %s:\n\n", us->p.name, them->name);
 
     // from's g^xa (which becomes to's g^xc) and ZKP(xa)
-    sendstep1_substep(&them->s1c, us->xa, us, params, us->base);
+    sendstep1_substep(&them->s1c, us->xa, us, params, us->p.base);
     // from's g^xb (which becomes to's g^xd) and ZKP(xb)
-    sendstep1_substep(&them->s1d, us->xb, us, params, us->base+1);
+    sendstep1_substep(&them->s1d, us->xb, us, params, us->p.base+1);
     }
 
-static int verifystep1(const JPakeUser *us, const JPakeUser *them,
+static int verifystep1(const JPakeUser *us, const JPakeUserPublic *them,
 		       const JPakeParameters *params)
     {
-    printf("\n%s verifies %s:\n\n", us->name, them->name);
+    printf("\n%s verifies %s:\n\n", us->p.name, them->name);
 
     // verify their ZKP(xc)
-    if(!VerifyZKP(&us->s1c.zkpx, us->s1c.gx, them, params->g, params,
+    if(!VerifyZKP(&us->p.s1c.zkpx, us->p.s1c.gx, them, params->g, params,
 		  them->base, ""))
 	return 0;
 
     // verify their ZKP(xd)
-    if(!VerifyZKP(&us->s1d.zkpx, us->s1d.gx, them, params->g, params,
+    if(!VerifyZKP(&us->p.s1d.zkpx, us->p.s1d.gx, them, params->g, params,
 		  them->base+1, ""))
 	return 0;
 
     // g^xd != 1
     printf("  g^{x%d} != 1: ", them->base+1);
-    if(BN_is_one(us->s1d.gx))
+    if(BN_is_one(us->p.s1d.gx))
 	{
 	puts("FAIL");
 	return 0;
@@ -291,21 +296,21 @@ static int verifystep1(const JPakeUser *us, const JPakeUser *them,
     return 1;
     }
 
-static void sendstep2(const JPakeUser *us, JPakeUser *them,
+static void sendstep2(const JPakeUser *us, JPakeUserPublic *them,
 		      const JPakeParameters *params)
     {
     BIGNUM *t1 = BN_new();
     BIGNUM *t2 = BN_new();
 
-    printf("\n%s sends %s:\n\n", us->name, them->name);
+    printf("\n%s sends %s:\n\n", us->p.name, them->name);
 
     // X = g^{(xa + xc + xd) * xb * s}
     // t1 = g^xa
     BN_mod_exp(t1, params->g, us->xa, params->p, params->ctx);
     // t2 = t1 * g^{xc} = g^{xa} * g^{xc} = g^{xa + xc}
-    BN_mod_mul(t2, t1, us->s1c.gx, params->p, params->ctx);
+    BN_mod_mul(t2, t1, us->p.s1c.gx, params->p, params->ctx);
     // t1 = t2 * g^{xd} = g^{xa + xc + xd}
-    BN_mod_mul(t1, t2, us->s1d.gx, params->p, params->ctx);
+    BN_mod_mul(t1, t2, us->p.s1d.gx, params->p, params->ctx);
     // t2 = xb * s
     BN_mod_mul(t2, us->xb, us->secret, params->q, params->ctx);
     // X = t1^{t2} = t1^{xb * s} = g^{(xa + xc + xd) * xb * s}
@@ -313,8 +318,8 @@ static void sendstep2(const JPakeUser *us, JPakeUser *them,
     BN_mod_exp(them->s2.X, t1, t2, params->p, params->ctx);
 
     // Show
-    printf("  g^{(x%d + x%d + x%d) * x%d * s)", us->base, them->base,
-	   them->base+1, us->base+1);
+    printf("  g^{(x%d + x%d + x%d) * x%d * s)", us->p.base, them->base,
+	   them->base+1, us->p.base+1);
     showbn("", them->s2.X);
 
     // ZKP(xb * s)
@@ -322,22 +327,22 @@ static void sendstep2(const JPakeUser *us, JPakeUser *them,
     //
     // g' = g^{xa + xc + xd}
     //
-    // as the generator, which means B is g'^{xb * s}
-    CreateZKP(&them->s2.zkpxbs, t2, us, t1, params, us->base+1, " * s");
+    // as the generator, which means X is g'^{xb * s}
+    CreateZKP(&them->s2.zkpxbs, t2, us, t1, params, us->p.base+1, " * s");
 
     // cleanup
     BN_free(t1);
     BN_free(t2);
     }
 
-static int verifystep2(const JPakeUser *us, const JPakeUser *them,
+static int verifystep2(const JPakeUser *us, const JPakeUserPublic *them,
 		       const JPakeParameters *params)
     {
     BIGNUM *t1 = BN_new();
     BIGNUM *t2 = BN_new();
     int ret = 0;
 
-    printf("\n%s verifies %s:\n\n", us->name, them->name);
+    printf("\n%s verifies %s:\n\n", us->p.name, them->name);
 
     // g' = g^{xc + xa + xb} [from our POV]
     // t1 = xa + xb
@@ -345,9 +350,9 @@ static int verifystep2(const JPakeUser *us, const JPakeUser *them,
     // t2 = g^{t1} = g^{xa+xb}
     BN_mod_exp(t2, params->g, t1, params->p, params->ctx);
     // t1 = g^{xc} * t2 = g^{xc + xa + xb}
-    BN_mod_mul(t1, us->s1c.gx, t2, params->p, params->ctx);
+    BN_mod_mul(t1, us->p.s1c.gx, t2, params->p, params->ctx);
 
-    if(VerifyZKP(&us->s2.zkpxbs, us->s2.X, them, t1, params, them->base+1,
+    if(VerifyZKP(&us->p.s2.zkpxbs, us->p.s2.X, them, t1, params, them->base+1,
 		  " * s"))
 	ret = 1;
 
@@ -364,7 +369,7 @@ static void computekey(JPakeUser *us, const JPakeParameters *params)
     BIGNUM *t2 = BN_new();
     BIGNUM *t3 = BN_new();
 
-    printf("\n%s calculates the shared key:\n\n", us->name);
+    printf("\n%s calculates the shared key:\n\n", us->p.name);
 
     // K = (X/g^{xb * xd * s})^{xb}
     //   = (g^{(xc + xa + xb) * xd * s - xb * xd *s})^{xb}
@@ -373,13 +378,13 @@ static void computekey(JPakeUser *us, const JPakeParameters *params)
     // [which is the same regardless of who calculates it]
 
     // t1 = (g^{xd})^{xb} = g^{xb * xd}
-    BN_mod_exp(t1, us->s1d.gx, us->xb, params->p, params->ctx);
+    BN_mod_exp(t1, us->p.s1d.gx, us->xb, params->p, params->ctx);
     // t2 = -s = q-s
     BN_sub(t2, params->q, us->secret);
     // t3 = t1^t2 = g^{-xb * xd * s}
     BN_mod_exp(t3, t1, t2, params->p, params->ctx);
     // t1 = X * t3 = X/g^{xb * xd * s}
-    BN_mod_mul(t1, us->s2.X, t3, params->p, params->ctx);
+    BN_mod_mul(t1, us->p.s2.X, t3, params->p, params->ctx);
     // K = t1^{xb}
     us->key = BN_new();
     BN_mod_exp(us->key, t1, us->xb, params->p, params->ctx);
@@ -398,10 +403,10 @@ int main(int argc, char **argv)
     JPakeParameters params;
     JPakeUser alice, bob;
 
-    alice.name = "Alice";
-    alice.base = 1;
-    bob.name = "Bob";
-    bob.base = 3;
+    alice.p.name = "Alice";
+    alice.p.base = 1;
+    bob.p.name = "Bob";
+    bob.p.base = 3;
 
     JPakeParametersInit(&params);
 
@@ -420,23 +425,23 @@ int main(int argc, char **argv)
     genrand(&bob, &params);
 
     // Now send stuff to each other...
-    sendstep1(&alice, &bob, &params);
-    sendstep1(&bob, &alice, &params);
+    sendstep1(&alice, &bob.p, &params);
+    sendstep1(&bob, &alice.p, &params);
 
     // And verify what each other sent
-    if(!verifystep1(&alice, &bob, &params))
+    if(!verifystep1(&alice, &bob.p, &params))
 	return 1;
-    if(!verifystep1(&bob, &alice, &params))
+    if(!verifystep1(&bob, &alice.p, &params))
 	return 2;
 
     // Second send
-    sendstep2(&alice, &bob, &params);
-    sendstep2(&bob, &alice, &params);
+    sendstep2(&alice, &bob.p, &params);
+    sendstep2(&bob, &alice.p, &params);
 
     // And second verify
-    if(!verifystep2(&alice, &bob, &params))
+    if(!verifystep2(&alice, &bob.p, &params))
 	return 3;
-    if(!verifystep2(&bob, &alice, &params))
+    if(!verifystep2(&bob, &alice.p, &params))
 	return 4;
 
     // Compute common key
