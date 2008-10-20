@@ -167,7 +167,7 @@ int MAIN(int argc, char **argv)
 			date=version=cflags=options=platform=dir=1;
 		else
 			{
-			BIO_printf(bio_err,"usage:version -[avbofp]\n");
+			BIO_printf(bio_err,"usage:version -[avbofpd]\n");
 			ret=1;
 			goto end;
 			}
