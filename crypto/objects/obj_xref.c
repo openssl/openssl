@@ -67,8 +67,8 @@ static int cmp_sig(const nid_triple *a, const nid_triple *b)
 	return a->sign_id - b->sign_id;
 	}
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const nid_triple, const nid_triple, cmp_sig);
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const nid_triple, const nid_triple, cmp_sig)
+DECLARE_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, cmp_sig);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, cmp_sig);
 
 static int cmp_sig_sk(const nid_triple * const *a, const nid_triple * const *b)
 	{
@@ -86,7 +86,7 @@ static int cmp_sigx(const nid_triple * const *a, const nid_triple * const *b)
 	return (*a)->pkey_id - (*b)->pkey_id;
 	}
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, cmp_sigx)
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, cmp_sigx);
 
 int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 	{
@@ -120,7 +120,7 @@ int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 	{
 	nid_triple tmp;
-	const nid_triple const *t=&tmp;
+	const nid_triple *t=&tmp;
 	const nid_triple **rv = NULL;
 
 	tmp.hash_id = dig_nid;

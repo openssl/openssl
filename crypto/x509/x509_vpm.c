@@ -362,9 +362,9 @@ static int table_cmp(const X509_VERIFY_PARAM *a, const X509_VERIFY_PARAM *b)
 	return strcmp(a->name, b->name);
 	}
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const X509_VERIFY_PARAM, const X509_VERIFY_PARAM,
+DECLARE_OBJ_BSEARCH_CMP_FN(X509_VERIFY_PARAM, X509_VERIFY_PARAM,
 			   table_cmp);
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const X509_VERIFY_PARAM, const X509_VERIFY_PARAM,
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(X509_VERIFY_PARAM, X509_VERIFY_PARAM,
 			     table_cmp);
 
 static int param_cmp(const X509_VERIFY_PARAM * const *a,

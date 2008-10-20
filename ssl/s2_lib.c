@@ -412,7 +412,7 @@ long ssl2_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	return(0);
 	}
 
-IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(const SSL_CIPHER, const SSL_CIPHER,
+IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER,
 				    ssl_cipher_id_cmp);
 
 /* This function needs to check if the ciphers required are actually

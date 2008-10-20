@@ -84,7 +84,7 @@ static const EVP_PKEY_METHOD *standard_methods[] =
 	&hmac_pkey_meth,
 	};
 
-DECLARE_OBJ_BSEARCH_CMP_FN(EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
+DECLARE_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
 			   pmeth_cmp);
 
 static int pmeth_cmp(const EVP_PKEY_METHOD * const *a,
@@ -93,13 +93,13 @@ static int pmeth_cmp(const EVP_PKEY_METHOD * const *a,
         return ((*a)->pkey_id - (*b)->pkey_id);
 	}
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const EVP_PKEY_METHOD *, const EVP_PKEY_METHOD *,
 			     pmeth_cmp);
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
 	{
-	EVP_PKEY_METHOD tmp, *t = &tmp;
-	const EVP_PKEY_METHOD **ret;
+	EVP_PKEY_METHOD tmp;
+	const EVP_PKEY_METHOD *t = &tmp, **ret;
 	tmp.pkey_id = type;
 	if (app_pkey_methods)
 		{
@@ -108,7 +108,7 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type)
 		if (idx >= 0)
 			return sk_EVP_PKEY_METHOD_value(app_pkey_methods, idx);
 		}
-	ret = OBJ_bsearch(EVP_PKEY_METHOD *, &t,
+	ret = OBJ_bsearch(const EVP_PKEY_METHOD *, &t,
 			  const EVP_PKEY_METHOD *, standard_methods,
 			  sizeof(standard_methods)/sizeof(EVP_PKEY_METHOD *),
 			  pmeth_cmp);

@@ -81,9 +81,9 @@ static const unsigned int ln_objs[1];
 static const unsigned int obj_objs[1];
 #endif
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, sn_cmp);
-DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, ln_cmp);
-DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, obj_cmp);
+DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn_cmp);
+DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln_cmp);
+DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj_cmp);
 
 #define ADDED_DATA	0
 #define ADDED_SNAME	1
@@ -103,12 +103,12 @@ static LHASH_OF(ADDED_OBJ) *added=NULL;
 static int sn_cmp(const ASN1_OBJECT * const *a, const unsigned int *b)
 	{ return(strcmp((*a)->sn,nid_objs[*b].sn)); }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, sn_cmp)
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn_cmp);
 
 static int ln_cmp(const ASN1_OBJECT * const *a, const unsigned int *b)
 	{ return(strcmp((*a)->ln,nid_objs[*b].ln)); }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, ln_cmp)
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln_cmp);
 
 static unsigned long added_obj_hash(const ADDED_OBJ *ca)
 	{
@@ -393,7 +393,7 @@ static int obj_cmp(const ASN1_OBJECT * const *ap, const unsigned int *bp)
 	return(memcmp(a->data,b->data,a->length));
 	}
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, const unsigned int, obj_cmp)
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj_cmp);
 
 int OBJ_obj2nid(const ASN1_OBJECT *a)
 	{

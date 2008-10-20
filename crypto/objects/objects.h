@@ -1022,7 +1022,7 @@ const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
   scope type1 *cmp##_type_1; \
   scope type2 *cmp##_type_2;					\
   scope int cmp##_BSEARCH_CMP_FN(const void *, const void *);		\
-  scope int cmp(const type1 const *, const type2 const *)
+  scope int cmp(type1 const *, type2 const *)
 
 #define DECLARE_OBJ_BSEARCH_CMP_FN(type1, type2, cmp)	\
   _DECLARE_OBJ_BSEARCH_CMP_FN(static, type1, type2, cmp)
@@ -1058,10 +1058,11 @@ const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
 #define _IMPLEMENT_OBJ_BSEARCH_CMP_FN(scope, type1, type2, cmp)	\
   scope int cmp##_BSEARCH_CMP_FN(const void *a_, const void *b_)	\
       { \
-      const type1 const *a = a_; \
-      const type2 const *b = b_; \
+      type1 const *a = a_; \
+      type2 const *b = b_; \
       return cmp(a,b); \
-      }
+      } \
+      extern void dummy_prototype(void)
 
 #define IMPLEMENT_OBJ_BSEARCH_CMP_FN(type1, type2, cmp) \
   _IMPLEMENT_OBJ_BSEARCH_CMP_FN(static, type1, type2, cmp)
@@ -1076,7 +1077,7 @@ const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
 			  cmp##_BSEARCH_CMP_FN)))
 
 #define OBJ_bsearch_ex(type1,key,type2,base,num,cmp,flags)			\
-  ((type2 *)OBJ_bsearch_(CHECKED_PTR_OF(type1,key),CHECKED_PTR_OF(type2,base), \
+  ((type2 *)OBJ_bsearch_ex_(CHECKED_PTR_OF(type1,key),CHECKED_PTR_OF(type2,base), \
 			 num,sizeof(type2),				\
 			 ((void)CHECKED_PTR_OF(type1,cmp##_type_1),	\
 			  (void)type_2=CHECKED_PTR_OF(type2,cmp##_type_2), \
