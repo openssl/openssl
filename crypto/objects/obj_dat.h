@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 858
-#define NUM_SN 851
-#define NUM_LN 851
-#define NUM_OBJ 805
+#define NUM_NID 859
+#define NUM_SN 852
+#define NUM_LN 852
+#define NUM_OBJ 806
 
-static const unsigned char lvalues[5714]={
+static const unsigned char lvalues[5722]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -873,6 +873,7 @@ static const unsigned char lvalues[5714]={
 0x2A,0x85,0x03,0x02,0x09,0x01,0x08,0x01,     /* [5693] OBJ_id_GostR3410_2001_ParamSet_cc */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x11,0x02,/* [5701] OBJ_LocalKeySet */
 0x55,0x1D,0x2E,                              /* [5710] OBJ_freshest_crl */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x03,     /* [5713] OBJ_id_on_permanentIdentifier */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2259,6 +2260,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5701]),0},
 {"freshestCRL","X509v3 Freshest CRL",NID_freshest_crl,3,
 	&(lvalues[5710]),0},
+{"id-on-permanentIdentifier","Permanent Identifier",
+	NID_id_on_permanentIdentifier,8,&(lvalues[5713]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2682,6 +2685,7 @@ static const unsigned int sn_objs[NUM_SN]={
 279,	/* "id-mod-qualified-cert-93" */
 281,	/* "id-mod-timestamp-protocol" */
 264,	/* "id-on" */
+858,	/* "id-on-permanentIdentifier" */
 347,	/* "id-on-personalData" */
 265,	/* "id-pda" */
 352,	/* "id-pda-countryOfCitizenship" */
@@ -3204,6 +3208,7 @@ static const unsigned int ln_objs[NUM_LN]={
 69,	/* "PBKDF2" */
 162,	/* "PBMAC1" */
 127,	/* "PKIX" */
+858,	/* "Permanent Identifier" */
 164,	/* "Policy Qualifier CPS" */
 165,	/* "Policy Qualifier User Notice" */
 385,	/* "Private" */
@@ -4482,6 +4487,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 345,	/* OBJ_id_cmc_popLinkWitness        1 3 6 1 5 5 7 7 23 */
 346,	/* OBJ_id_cmc_confirmCertAcceptance 1 3 6 1 5 5 7 7 24 */
 347,	/* OBJ_id_on_personalData           1 3 6 1 5 5 7 8 1 */
+858,	/* OBJ_id_on_permanentIdentifier    1 3 6 1 5 5 7 8 3 */
 348,	/* OBJ_id_pda_dateOfBirth           1 3 6 1 5 5 7 9 1 */
 349,	/* OBJ_id_pda_placeOfBirth          1 3 6 1 5 5 7 9 2 */
 351,	/* OBJ_id_pda_gender                1 3 6 1 5 5 7 9 3 */

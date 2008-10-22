@@ -1734,6 +1734,11 @@
 #define NID_id_on_personalData		347
 #define OBJ_id_on_personalData		OBJ_id_on,1L
 
+#define SN_id_on_permanentIdentifier		"id-on-permanentIdentifier"
+#define LN_id_on_permanentIdentifier		"Permanent Identifier"
+#define NID_id_on_permanentIdentifier		858
+#define OBJ_id_on_permanentIdentifier		OBJ_id_on,3L
+
 #define SN_id_pda_dateOfBirth		"id-pda-dateOfBirth"
 #define NID_id_pda_dateOfBirth		348
 #define OBJ_id_pda_dateOfBirth		OBJ_id_pda,1L
