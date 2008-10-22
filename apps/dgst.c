@@ -84,7 +84,7 @@ int MAIN(int argc, char **argv)
 	{
 	ENGINE *e = NULL;
 	unsigned char *buf=NULL;
-	int i,err=0;
+	int i,err=1;
 	const EVP_MD *md=NULL,*m;
 	BIO *in=NULL,*inp;
 	BIO *bmd=NULL;
@@ -415,6 +415,7 @@ ERR_load_crypto_strings();
 	else
 		{
 		name=OBJ_nid2sn(md->type);
+		err = 0;
 		for (i=0; i<argc; i++)
 			{
 			char *tmp,*tofree=NULL;
