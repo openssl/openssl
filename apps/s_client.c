@@ -221,6 +221,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -crlf         - convert LF from terminal into CRLF\n");
 	BIO_printf(bio_err," -quiet        - no s_client output\n");
 	BIO_printf(bio_err," -ign_eof      - ignore input eof (default when -quiet)\n");
+	BIO_printf(bio_err," -no_ign_eof   - don't ignore input eof\n");
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
@@ -437,6 +438,8 @@ int MAIN(int argc, char **argv)
 			}
 		else if	(strcmp(*argv,"-ign_eof") == 0)
 			c_ign_eof=1;
+		else if	(strcmp(*argv,"-no_ign_eof") == 0)
+			c_ign_eof=0;
 		else if	(strcmp(*argv,"-pause") == 0)
 			c_Pause=1;
 		else if	(strcmp(*argv,"-debug") == 0)
