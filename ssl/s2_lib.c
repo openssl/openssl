@@ -413,7 +413,7 @@ long ssl2_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	}
 
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER,
-				    ssl_cipher_id_cmp);
+				    ssl_cipher_id);
 
 /* This function needs to check if the ciphers required are actually
  * available */
@@ -426,8 +426,7 @@ const SSL_CIPHER *ssl2_get_cipher_by_char(const unsigned char *p)
 	id=0x02000000L|((unsigned long)p[0]<<16L)|
 		((unsigned long)p[1]<<8L)|(unsigned long)p[2];
 	c.id=id;
-	cp = OBJ_bsearch(const SSL_CIPHER, &c, const SSL_CIPHER, ssl2_ciphers,
-			 SSL2_NUM_CIPHERS, ssl_cipher_id_cmp);
+	cp = OBJ_bsearch_ssl_cipher_id(&c, ssl2_ciphers, SSL2_NUM_CIPHERS);
 	if ((cp == NULL) || (cp->valid == 0))
 		return NULL;
 	else

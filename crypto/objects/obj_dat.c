@@ -81,9 +81,9 @@ static const unsigned int ln_objs[1];
 static const unsigned int obj_objs[1];
 #endif
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn_cmp);
-DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln_cmp);
-DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj_cmp);
+DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn);
+DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln);
+DECLARE_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj);
 
 #define ADDED_DATA	0
 #define ADDED_SNAME	1
@@ -103,12 +103,12 @@ static LHASH_OF(ADDED_OBJ) *added=NULL;
 static int sn_cmp(const ASN1_OBJECT * const *a, const unsigned int *b)
 	{ return(strcmp((*a)->sn,nid_objs[*b].sn)); }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn_cmp);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, sn);
 
 static int ln_cmp(const ASN1_OBJECT * const *a, const unsigned int *b)
 	{ return(strcmp((*a)->ln,nid_objs[*b].ln)); }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln_cmp);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, ln);
 
 static unsigned long added_obj_hash(const ADDED_OBJ *ca)
 	{
@@ -393,7 +393,7 @@ static int obj_cmp(const ASN1_OBJECT * const *ap, const unsigned int *bp)
 	return(memcmp(a->data,b->data,a->length));
 	}
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj_cmp);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const ASN1_OBJECT *, unsigned int, obj);
 
 int OBJ_obj2nid(const ASN1_OBJECT *a)
 	{
@@ -412,8 +412,7 @@ int OBJ_obj2nid(const ASN1_OBJECT *a)
 		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=OBJ_bsearch(const ASN1_OBJECT *, &a, const unsigned int, obj_objs,
-		       NUM_OBJ, obj_cmp);
+	op=OBJ_bsearch_obj(&a, obj_objs, NUM_OBJ);
 	if (op == NULL)
 		return(NID_undef);
 	return(nid_objs[*op].nid);
@@ -648,8 +647,7 @@ int OBJ_ln2nid(const char *s)
 		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=OBJ_bsearch(const ASN1_OBJECT *, &oo, const unsigned int, ln_objs,
-				   NUM_LN, ln_cmp);
+	op=OBJ_bsearch_ln(&oo, ln_objs, NUM_LN);
 	if (op == NULL) return(NID_undef);
 	return(nid_objs[*op].nid);
 	}
@@ -669,8 +667,7 @@ int OBJ_sn2nid(const char *s)
 		adp=lh_ADDED_OBJ_retrieve(added,&ad);
 		if (adp != NULL) return (adp->obj->nid);
 		}
-	op=OBJ_bsearch(const ASN1_OBJECT *, &oo, const unsigned int, sn_objs,
-				   NUM_SN, sn_cmp);
+	op=OBJ_bsearch_sn(&oo, sn_objs, NUM_SN);
 	if (op == NULL) return(NID_undef);
 	return(nid_objs[*op].nid);
 	}

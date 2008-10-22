@@ -2794,8 +2794,7 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 
 	id=0x03000000L|((unsigned long)p[0]<<8L)|(unsigned long)p[1];
 	c.id=id;
-	cp = OBJ_bsearch(SSL_CIPHER, &c, SSL_CIPHER, ssl3_ciphers,
-			 SSL3_NUM_CIPHERS, ssl_cipher_id_cmp);
+	cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
 	if (cp == NULL || cp->valid == 0)
 		return NULL;
 	else

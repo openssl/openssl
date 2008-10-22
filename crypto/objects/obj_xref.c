@@ -62,22 +62,22 @@
 DECLARE_STACK_OF(nid_triple)
 STACK_OF(nid_triple) *sig_app, *sigx_app;
 
-static int cmp_sig(const nid_triple *a, const nid_triple *b)
+static int sig_cmp(const nid_triple *a, const nid_triple *b)
 	{
 	return a->sign_id - b->sign_id;
 	}
 
-DECLARE_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, cmp_sig);
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, cmp_sig);
+DECLARE_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(nid_triple, nid_triple, sig);
 
-static int cmp_sig_sk(const nid_triple * const *a, const nid_triple * const *b)
+static int sig_sk_cmp(const nid_triple * const *a, const nid_triple * const *b)
 	{
 	return (*a)->sign_id - (*b)->sign_id;
 	}
 
-DECLARE_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, cmp_sigx);
+DECLARE_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, sigx);
 
-static int cmp_sigx(const nid_triple * const *a, const nid_triple * const *b)
+static int sigx_cmp(const nid_triple * const *a, const nid_triple * const *b)
 	{
 	int ret;
 	ret = (*a)->hash_id - (*b)->hash_id;
@@ -86,7 +86,7 @@ static int cmp_sigx(const nid_triple * const *a, const nid_triple * const *b)
 	return (*a)->pkey_id - (*b)->pkey_id;
 	}
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, cmp_sigx);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(const nid_triple *, const nid_triple *, sigx);
 
 int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 	{
@@ -104,10 +104,8 @@ int OBJ_find_sigid_algs(int signid, int *pdig_nid, int *ppkey_nid)
 #ifndef OBJ_XREF_TEST2
 	if (rv == NULL)
 		{
-		rv = OBJ_bsearch(const nid_triple,&tmp,
-				 const nid_triple,sigoid_srt,
-				 sizeof(sigoid_srt) / sizeof(nid_triple),
-				 cmp_sig);
+		rv = OBJ_bsearch_sig(&tmp, sigoid_srt,
+				 sizeof(sigoid_srt) / sizeof(nid_triple));
 		}
 #endif
 	if (rv == NULL)
@@ -139,10 +137,9 @@ int OBJ_find_sigid_by_algs(int *psignid, int dig_nid, int pkey_nid)
 #ifndef OBJ_XREF_TEST2
 	if (rv == NULL)
 		{
-		rv = OBJ_bsearch(const nid_triple *,&t,
-				 const nid_triple *,sigoid_srt_xref,
-				 sizeof(sigoid_srt_xref) / sizeof(nid_triple *),
-				 cmp_sigx);
+		rv = OBJ_bsearch_sigx(&t, sigoid_srt_xref,
+				 sizeof(sigoid_srt_xref) / sizeof(nid_triple *)
+				 );
 		}
 #endif
 	if (rv == NULL)
@@ -155,11 +152,11 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
 	{
 	nid_triple *ntr;
 	if (!sig_app)
-		sig_app = sk_nid_triple_new(cmp_sig_sk);
+		sig_app = sk_nid_triple_new(sig_sk_cmp);
 	if (!sig_app)
 		return 0;
 	if (!sigx_app)
-		sigx_app = sk_nid_triple_new(cmp_sigx);
+		sigx_app = sk_nid_triple_new(sigx_cmp);
 	if (!sigx_app)
 		return 0;
 	ntr = OPENSSL_malloc(sizeof(int) * 3);

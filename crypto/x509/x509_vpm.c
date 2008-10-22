@@ -363,9 +363,9 @@ static int table_cmp(const X509_VERIFY_PARAM *a, const X509_VERIFY_PARAM *b)
 	}
 
 DECLARE_OBJ_BSEARCH_CMP_FN(X509_VERIFY_PARAM, X509_VERIFY_PARAM,
-			   table_cmp);
+			   table);
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(X509_VERIFY_PARAM, X509_VERIFY_PARAM,
-			     table_cmp);
+			     table);
 
 static int param_cmp(const X509_VERIFY_PARAM * const *a,
 			const X509_VERIFY_PARAM * const *b)
@@ -410,10 +410,8 @@ const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
 		if (idx != -1)
 			return sk_X509_VERIFY_PARAM_value(param_table, idx);
 		}
-	return OBJ_bsearch(const X509_VERIFY_PARAM, &pm,
-			   const X509_VERIFY_PARAM, default_table,
-			   sizeof(default_table)/sizeof(X509_VERIFY_PARAM),
-			   table_cmp);
+	return OBJ_bsearch_table(&pm, default_table,
+			   sizeof(default_table)/sizeof(X509_VERIFY_PARAM));
 	}
 
 void X509_VERIFY_PARAM_table_cleanup(void)

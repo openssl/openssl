@@ -1018,16 +1018,15 @@ const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
 				int (*cmp)(const void *, const void *),
 				int flags);
 
-#define _DECLARE_OBJ_BSEARCH_CMP_FN(scope, type1, type2, cmp)	\
-  scope type1 *cmp##_type_1; \
-  scope type2 *cmp##_type_2;					\
-  scope int cmp##_BSEARCH_CMP_FN(const void *, const void *);		\
-  scope int cmp(type1 const *, type2 const *)
+#define _DECLARE_OBJ_BSEARCH_CMP_FN(scope, type1, type2, nm)	\
+  static int nm##_cmp_BSEARCH_CMP_FN(const void *, const void *); \
+  static int nm##_cmp(type1 const *, type2 const *); \
+  scope type2 * OBJ_bsearch_##nm(type1 *key, type2 const *base, int num)
 
 #define DECLARE_OBJ_BSEARCH_CMP_FN(type1, type2, cmp)	\
   _DECLARE_OBJ_BSEARCH_CMP_FN(static, type1, type2, cmp)
-#define DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(type1, type2, cmp)	\
-  _DECLARE_OBJ_BSEARCH_CMP_FN(, type1, type2, cmp)
+#define DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(type1, type2, nm)	\
+  type2 * OBJ_bsearch_##nm(type1 *key, type2 const *base, int num)
 
 /*
  * Unsolved problem: if a type is actually a pointer type, like
@@ -1055,12 +1054,17 @@ const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
  * the non-constness means a lot of complication, and in practice
  * comparison routines do always not touch their arguments.
  */
-#define _IMPLEMENT_OBJ_BSEARCH_CMP_FN(scope, type1, type2, cmp)	\
-  scope int cmp##_BSEARCH_CMP_FN(const void *a_, const void *b_)	\
+#define _IMPLEMENT_OBJ_BSEARCH_CMP_FN(scope, type1, type2, nm)	\
+  static int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)	\
       { \
       type1 const *a = a_; \
       type2 const *b = b_; \
-      return cmp(a,b); \
+      return nm##_cmp(a,b); \
+      } \
+  scope type2 *OBJ_bsearch_##nm(type1 *key, type2 const *base, int num) \
+      { \
+      return (type2 *)OBJ_bsearch_(key, base, num, sizeof(type2), \
+					nm##_cmp_BSEARCH_CMP_FN); \
       } \
       extern void dummy_prototype(void)
 

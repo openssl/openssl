@@ -90,9 +90,9 @@ static int ext_cmp(const X509V3_EXT_METHOD * const *a,
 }
 
 DECLARE_OBJ_BSEARCH_CMP_FN(const X509V3_EXT_METHOD *, const X509V3_EXT_METHOD *,
-			   ext_cmp);
+			   ext);
 IMPLEMENT_OBJ_BSEARCH_CMP_FN(const X509V3_EXT_METHOD *,
-			     const X509V3_EXT_METHOD *, ext_cmp);
+			     const X509V3_EXT_METHOD *, ext);
 
 const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
 {
@@ -101,9 +101,7 @@ const X509V3_EXT_METHOD *X509V3_EXT_get_nid(int nid)
 	int idx;
 	if(nid < 0) return NULL;
 	tmp.ext_nid = nid;
-	ret = OBJ_bsearch(const X509V3_EXT_METHOD *, &t,
-			  const X509V3_EXT_METHOD *, standard_exts,
-			  STANDARD_EXTENSION_COUNT, ext_cmp);
+	ret = OBJ_bsearch_ext(&t, standard_exts, STANDARD_EXTENSION_COUNT);
 	if(ret) return *ret;
 	if(!ext_list) return NULL;
 	idx = sk_X509V3_EXT_METHOD_find(ext_list, &tmp);

@@ -272,8 +272,8 @@ static int nid_cmp(const int *a, const int *b)
 	return *a - *b;
 	}
 
-DECLARE_OBJ_BSEARCH_CMP_FN(int, int, nid_cmp);
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(int, int, nid_cmp);
+DECLARE_OBJ_BSEARCH_CMP_FN(int, int, nid);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(int, int, nid);
 
 int X509_supported_extension(X509_EXTENSION *ex)
 	{
@@ -303,13 +303,13 @@ int X509_supported_extension(X509_EXTENSION *ex)
 		NID_inhibit_any_policy	/* 748 */
 	};
 
-	const int ex_nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
+	int ex_nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
 
 	if (ex_nid == NID_undef) 
 		return 0;
 
-	if (OBJ_bsearch(int, &ex_nid, int, supported_nids,
-			sizeof(supported_nids)/sizeof(int), nid_cmp))
+	if (OBJ_bsearch_nid(&ex_nid, supported_nids,
+			sizeof(supported_nids)/sizeof(int)))
 		return 1;
 	return 0;
 	}

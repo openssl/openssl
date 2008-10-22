@@ -185,14 +185,14 @@ static int sk_table_cmp(const ASN1_STRING_TABLE * const *a,
 	return (*a)->nid - (*b)->nid;
 }
 
-DECLARE_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table_cmp);
+DECLARE_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table);
 
 static int table_cmp(const ASN1_STRING_TABLE *a, const ASN1_STRING_TABLE *b)
 {
 	return a->nid - b->nid;
 }
 
-IMPLEMENT_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table_cmp);
+IMPLEMENT_OBJ_BSEARCH_CMP_FN(ASN1_STRING_TABLE, ASN1_STRING_TABLE, table);
 
 ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
 {
@@ -200,10 +200,8 @@ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid)
 	ASN1_STRING_TABLE *ttmp;
 	ASN1_STRING_TABLE fnd;
 	fnd.nid = nid;
-	ttmp = OBJ_bsearch(ASN1_STRING_TABLE, &fnd,
-			   ASN1_STRING_TABLE, tbl_standard, 
-			   sizeof(tbl_standard)/sizeof(ASN1_STRING_TABLE),
-			   table_cmp);
+	ttmp = OBJ_bsearch_table(&fnd, tbl_standard, 
+			   sizeof(tbl_standard)/sizeof(ASN1_STRING_TABLE));
 	if(ttmp) return ttmp;
 	if(!stable) return NULL;
 	idx = sk_ASN1_STRING_TABLE_find(stable, &fnd);
