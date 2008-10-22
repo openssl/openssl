@@ -557,6 +557,7 @@ id-cmc 24		: id-cmc-confirmCertAcceptance
 
 # other names
 id-on 1			: id-on-personalData
+id-on 3			: id-on-permanentIdentifier : Permanent Identifier
 
 # personal data attributes
 id-pda 1		: id-pda-dateOfBirth
@@ -726,6 +727,8 @@ id-ce 35		: authorityKeyIdentifier : X509v3 Authority Key Identifier
 id-ce 36		: policyConstraints	: X509v3 Policy Constraints
 !Cname ext-key-usage
 id-ce 37		: extendedKeyUsage	: X509v3 Extended Key Usage
+!Cname freshest-crl
+id-ce 46		: freshestCRL		: X509v3 Freshest CRL
 !Cname inhibit-any-policy
 id-ce 54		: inhibitAnyPolicy	: X509v3 Inhibit Any Policy
 !Cname target-information

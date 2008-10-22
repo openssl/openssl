@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 857
-#define NUM_SN 850
-#define NUM_LN 850
-#define NUM_OBJ 804
+#define NUM_NID 858
+#define NUM_SN 851
+#define NUM_LN 851
+#define NUM_OBJ 805
 
-static unsigned char lvalues[5711]={
+static unsigned char lvalues[5719]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -872,6 +872,7 @@ static unsigned char lvalues[5711]={
 0x2A,0x85,0x03,0x02,0x09,0x01,0x03,0x04,     /* [5685] OBJ_id_GostR3411_94_with_GostR3410_2001_cc */
 0x2A,0x85,0x03,0x02,0x09,0x01,0x08,0x01,     /* [5693] OBJ_id_GostR3410_2001_ParamSet_cc */
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x11,0x02,/* [5701] OBJ_LocalKeySet */
+0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x03,     /* [5710] OBJ_id_on_permanentIdentifier */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2256,6 +2257,8 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"HMAC","hmac",NID_hmac,0,NULL,0},
 {"LocalKeySet","Microsoft Local Key set",NID_LocalKeySet,9,
 	&(lvalues[5701]),0},
+{"id-on-permanentIdentifier","Permanent Identifier",
+	NID_id_on_permanentIdentifier,8,&(lvalues[5710]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2678,6 +2681,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[279]),/* "id-mod-qualified-cert-93" */
 &(nid_objs[281]),/* "id-mod-timestamp-protocol" */
 &(nid_objs[264]),/* "id-on" */
+&(nid_objs[857]),/* "id-on-permanentIdentifier" */
 &(nid_objs[347]),/* "id-on-personalData" */
 &(nid_objs[265]),/* "id-pda" */
 &(nid_objs[352]),/* "id-pda-countryOfCitizenship" */
@@ -3200,6 +3204,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[69]),/* "PBKDF2" */
 &(nid_objs[162]),/* "PBMAC1" */
 &(nid_objs[127]),/* "PKIX" */
+&(nid_objs[857]),/* "Permanent Identifier" */
 &(nid_objs[164]),/* "Policy Qualifier CPS" */
 &(nid_objs[165]),/* "Policy Qualifier User Notice" */
 &(nid_objs[385]),/* "Private" */
@@ -4476,6 +4481,7 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[345]),/* OBJ_id_cmc_popLinkWitness        1 3 6 1 5 5 7 7 23 */
 &(nid_objs[346]),/* OBJ_id_cmc_confirmCertAcceptance 1 3 6 1 5 5 7 7 24 */
 &(nid_objs[347]),/* OBJ_id_on_personalData           1 3 6 1 5 5 7 8 1 */
+&(nid_objs[857]),/* OBJ_id_on_permanentIdentifier    1 3 6 1 5 5 7 8 3 */
 &(nid_objs[348]),/* OBJ_id_pda_dateOfBirth           1 3 6 1 5 5 7 9 1 */
 &(nid_objs[349]),/* OBJ_id_pda_placeOfBirth          1 3 6 1 5 5 7 9 2 */
 &(nid_objs[351]),/* OBJ_id_pda_gender                1 3 6 1 5 5 7 9 3 */

@@ -854,3 +854,5 @@ id_GostR3411_94_with_GostR3410_2001_cc		853
 id_GostR3410_2001_ParamSet_cc		854
 hmac		855
 LocalKeySet		856
+freshest_crl		857
+id_on_permanentIdentifier		858
