@@ -338,6 +338,7 @@ int MAIN(int argc, char **argv)
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0 ;
 	long mtu = 0;
+	char *jpake_secret = NULL;
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_client_method();
@@ -582,6 +583,11 @@ int MAIN(int argc, char **argv)
 			/* meth=TLSv1_client_method(); */
 			}
 #endif
+		else if (strcmp(*argv,"-jpake") == 0)
+			{
+			if (--argc < 1) goto bad;
+			jpake_secret = *++argv;
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -844,8 +850,6 @@ re_start:
 	else
 		sbio=BIO_new_socket(s,BIO_NOCLOSE);
 
-
-
 	if (nbio_test)
 		{
 		BIO *test;
@@ -889,6 +893,9 @@ SSL_set_tlsext_status_ids(con, ids);
 #endif
 		}
 #endif
+
+	if (jpake_secret)
+		jpake_client_auth(bio_c_out, sbio, jpake_secret);
 
 	SSL_set_bio(con,sbio,sbio);
 	SSL_set_connect_state(con);

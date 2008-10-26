@@ -277,11 +277,11 @@ rpc_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rpc_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 rpc_enc.o: des_locl.h des_ver.h rpc_des.h rpc_enc.c
 set_key.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-set_key.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-set_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-set_key.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-set_key.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
-set_key.o: des_locl.h set_key.c
+set_key.o: ../../include/openssl/e_os2.h ../../include/openssl/fips.h
+set_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/ossl_typ.h
+set_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+set_key.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+set_key.o: ../../include/openssl/ui_compat.h des_locl.h set_key.c
 str2key.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
 str2key.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
 str2key.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h

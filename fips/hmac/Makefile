@@ -106,13 +106,13 @@ fips_hmac_selftest.o: ../../include/openssl/safestack.h
 fips_hmac_selftest.o: ../../include/openssl/stack.h
 fips_hmac_selftest.o: ../../include/openssl/symhacks.h fips_hmac_selftest.c
 fips_hmactest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_hmactest.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
-fips_hmactest.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-fips_hmactest.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-fips_hmactest.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-fips_hmactest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_hmactest.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
-fips_hmactest.o: ../../include/openssl/obj_mac.h
+fips_hmactest.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
+fips_hmactest.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+fips_hmactest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+fips_hmactest.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+fips_hmactest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_hmactest.o: ../../include/openssl/fips.h ../../include/openssl/hmac.h
+fips_hmactest.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 fips_hmactest.o: ../../include/openssl/objects.h
 fips_hmactest.o: ../../include/openssl/opensslconf.h
 fips_hmactest.o: ../../include/openssl/opensslv.h

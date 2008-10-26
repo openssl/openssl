@@ -110,8 +110,9 @@ fips_dsa_key.o: ../../include/openssl/opensslv.h
 fips_dsa_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 fips_dsa_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 fips_dsa_key.o: ../../include/openssl/symhacks.h ../fips_locl.h fips_dsa_key.c
-fips_dsa_lib.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-fips_dsa_lib.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_dsa_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+fips_dsa_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
+fips_dsa_lib.o: ../../include/openssl/e_os2.h
 fips_dsa_lib.o: ../../include/openssl/opensslconf.h
 fips_dsa_lib.o: ../../include/openssl/opensslv.h
 fips_dsa_lib.o: ../../include/openssl/ossl_typ.h
@@ -122,9 +123,9 @@ fips_dsa_ossl.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 fips_dsa_ossl.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
 fips_dsa_ossl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
 fips_dsa_ossl.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-fips_dsa_ossl.o: ../../include/openssl/engine.h ../../include/openssl/evp.h
-fips_dsa_ossl.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-fips_dsa_ossl.o: ../../include/openssl/obj_mac.h
+fips_dsa_ossl.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+fips_dsa_ossl.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_dsa_ossl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 fips_dsa_ossl.o: ../../include/openssl/objects.h
 fips_dsa_ossl.o: ../../include/openssl/opensslconf.h
 fips_dsa_ossl.o: ../../include/openssl/opensslv.h
@@ -134,10 +135,10 @@ fips_dsa_ossl.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 fips_dsa_ossl.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 fips_dsa_ossl.o: ../../include/openssl/x509_vfy.h fips_dsa_ossl.c
 fips_dsa_selftest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_dsa_selftest.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
-fips_dsa_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_dsa_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_dsa_selftest.o: ../../include/openssl/lhash.h
+fips_dsa_selftest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_dsa_selftest.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_dsa_selftest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_dsa_selftest.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
 fips_dsa_selftest.o: ../../include/openssl/obj_mac.h
 fips_dsa_selftest.o: ../../include/openssl/objects.h
 fips_dsa_selftest.o: ../../include/openssl/opensslconf.h
@@ -147,10 +148,11 @@ fips_dsa_selftest.o: ../../include/openssl/safestack.h
 fips_dsa_selftest.o: ../../include/openssl/stack.h
 fips_dsa_selftest.o: ../../include/openssl/symhacks.h fips_dsa_selftest.c
 fips_dsa_sign.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_dsa_sign.o: ../../include/openssl/crypto.h ../../include/openssl/dsa.h
-fips_dsa_sign.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_dsa_sign.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_dsa_sign.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+fips_dsa_sign.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_dsa_sign.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_dsa_sign.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_dsa_sign.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_dsa_sign.o: ../../include/openssl/obj_mac.h
 fips_dsa_sign.o: ../../include/openssl/objects.h
 fips_dsa_sign.o: ../../include/openssl/opensslconf.h
 fips_dsa_sign.o: ../../include/openssl/opensslv.h
@@ -159,15 +161,16 @@ fips_dsa_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 fips_dsa_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_dsa_sign.o: fips_dsa_sign.c
 fips_dsatest.o: ../../e_os.h ../../include/openssl/asn1.h
-fips_dsatest.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
-fips_dsatest.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
-fips_dsatest.o: ../../include/openssl/des_old.h ../../include/openssl/dsa.h
-fips_dsatest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_dsatest.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-fips_dsatest.o: ../../include/openssl/engine.h ../../include/openssl/err.h
-fips_dsatest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_dsatest.o: ../../include/openssl/fips_rand.h ../../include/openssl/lhash.h
-fips_dsatest.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+fips_dsatest.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+fips_dsatest.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+fips_dsatest.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+fips_dsatest.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_dsatest.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+fips_dsatest.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+fips_dsatest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_dsatest.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
+fips_dsatest.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+fips_dsatest.o: ../../include/openssl/objects.h
 fips_dsatest.o: ../../include/openssl/opensslconf.h
 fips_dsatest.o: ../../include/openssl/opensslv.h
 fips_dsatest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h

@@ -33,6 +33,7 @@ L ECDH		crypto/ecdh/ecdh.h		crypto/ecdh/ech_err.c
 L STORE		crypto/store/store.h		crypto/store/str_err.c
 L FIPS		fips/fips.h			crypto/fips_err.h
 L CMS		crypto/cms/cms.h		crypto/cms/cms_err.c
+L JPAKE		crypto/jpake/jpake.h		crypto/jpake/jpake_err.c
 
 # additional header files to be scanned for function names
 L NONE		crypto/x509/x509_vfy.h		NONE

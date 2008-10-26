@@ -742,6 +742,8 @@ BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
 #endif
 int MAIN(int, char **);
 
+static char *jpake_secret = NULL;
+
 int MAIN(int argc, char *argv[])
 	{
 	X509_STORE *store = NULL;
@@ -774,7 +776,6 @@ int MAIN(int argc, char *argv[])
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
 #endif
-
 #ifndef OPENSSL_NO_TLSEXT
         tlsextctx tlsextcbp = {NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING};
 #endif
@@ -1071,7 +1072,13 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			s_key_file2= *(++argv);
 			}
+			
 #endif
+		else if (strcmp(*argv,"-jpake") == 0)
+			{
+			if (--argc < 1) goto bad;
+			jpake_secret = *(++argv);
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -1673,6 +1680,10 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		test=BIO_new(BIO_f_nbio_test());
 		sbio=BIO_push(test,sbio);
 		}
+
+	if(jpake_secret)
+		jpake_server_auth(bio_s_out, sbio, jpake_secret);
+
 	SSL_set_bio(con,sbio,sbio);
 	SSL_set_accept_state(con);
 	/* SSL_set_fd(con,s); */

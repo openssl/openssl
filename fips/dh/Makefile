@@ -105,8 +105,9 @@ fips_dh_key.o: ../../include/openssl/opensslv.h
 fips_dh_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
 fips_dh_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 fips_dh_key.o: ../../include/openssl/symhacks.h fips_dh_key.c
-fips_dh_lib.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
-fips_dh_lib.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_dh_lib.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+fips_dh_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h
+fips_dh_lib.o: ../../include/openssl/e_os2.h
 fips_dh_lib.o: ../../include/openssl/opensslconf.h
 fips_dh_lib.o: ../../include/openssl/opensslv.h
 fips_dh_lib.o: ../../include/openssl/ossl_typ.h
