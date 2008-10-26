@@ -70,7 +70,7 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(MDC2TEST)$(EXE_EXT) $(RMDTEST)$(EXE_EXT) \
 	$(RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
-	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT)
+	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) jpaketest$(EXE_EXT)
 
 # $(METHTEST)$(EXE_EXT)
 
@@ -82,7 +82,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(MDC2TEST).o $(RMDTEST).o \
 	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
-	$(EVPTEST).o $(IGETEST).o
+	$(EVPTEST).o $(IGETEST).o jpaketest.o
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c $(WPTEST).c \
@@ -90,7 +90,7 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c \
-	$(EVPTEST).c $(IGETEST).c
+	$(EVPTEST).c $(IGETEST).c jpaketest.c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -132,7 +132,8 @@ alltests: \
 	test_rand test_bn test_ec test_ecdsa test_ecdh \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
-	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige
+	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige \
+	test_jpake
 
 test_evp:
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -298,6 +299,10 @@ test_ige: $(IGETEST)$(EXE_EXT)
 	@echo "Test IGE mode"
 	../util/shlib_wrap.sh ./$(IGETEST)
 
+test_jpake: jpaketest$(EXE_EXT)
+	@echo "Test JPAKE"
+	../util/shlib_wrap.sh ./jpaketest
+
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
@@ -427,6 +432,9 @@ $(ECDHTEST)$(EXE_EXT): $(ECDHTEST).o $(DLIBCRYPTO)
 
 $(IGETEST)$(EXE_EXT): $(IGETEST).o $(DLIBCRYPTO)
 	@target=$(IGETEST); $(BUILD_CMD)
+
+jpaketest$(EXE_EXT): jpaketest.o $(DLIBCRYPTO)
+	@target=jpaketest; $(BUILD_CMD)
 
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
@@ -564,6 +572,14 @@ ideatest.o: ../include/openssl/opensslconf.h ideatest.c
 igetest.o: ../include/openssl/aes.h ../include/openssl/e_os2.h
 igetest.o: ../include/openssl/opensslconf.h ../include/openssl/ossl_typ.h
 igetest.o: ../include/openssl/rand.h igetest.c
+jpaketest.o: ../include/openssl/bio.h ../include/openssl/bn.h
+jpaketest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+jpaketest.o: ../include/openssl/err.h ../include/openssl/jpake.h
+jpaketest.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+jpaketest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+jpaketest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+jpaketest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+jpaketest.o: jpaketest.c
 md2test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 md2test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 md2test.o: ../include/openssl/evp.h ../include/openssl/md2.h

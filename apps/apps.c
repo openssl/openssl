@@ -122,6 +122,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <errno.h>
+#include <assert.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -136,6 +137,7 @@
 #include <openssl/rsa.h>
 #endif
 #include <openssl/bn.h>
+#include <openssl/jpake.h>
 
 #define NON_MAIN
 #include "apps.h"
@@ -2375,6 +2377,218 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx)
 	nodes_print(out, "User", X509_policy_tree_get0_user_policies(tree));
 	if (free_out)
 		BIO_free(out);
+	}
+
+static JPAKE_CTX *jpake_init(const char *us, const char *them,
+							 const char *secret)
+	{
+	BIGNUM *p = NULL;
+	BIGNUM *g = NULL;
+	BIGNUM *q = NULL;
+	BIGNUM *bnsecret = BN_new();
+	JPAKE_CTX *ctx;
+
+	// Use a safe prime for p (that we found earlier)
+	BN_hex2bn(&p, "F9E5B365665EA7A05A9C534502780FEE6F1AB5BD4F49947FD036DBD7E905269AF46EF28B0FC07487EE4F5D20FB3C0AF8E700F3A2FA3414970CBED44FEDFF80CE78D800F184BB82435D137AADA2C6C16523247930A63B85661D1FC817A51ACD96168E95898A1F83A79FFB529368AA7833ABD1B0C3AEDDB14D2E1A2F71D99F763F");
+	g = BN_new();
+	BN_set_word(g, 2);
+	q = BN_new();
+	BN_rshift1(q, p);
+
+	BN_bin2bn(secret, strlen(secret), bnsecret);
+
+	ctx = JPAKE_CTX_new(us, them, p, g, q, bnsecret);
+	BN_free(bnsecret);
+	BN_free(q);
+	BN_free(g);
+	BN_free(p);
+
+	return ctx;
+	}
+
+static void jpake_send_part(BIO *conn, const JPAKE_STEP_PART *p)
+	{
+	BN_print(conn, p->gx);
+	BIO_puts(conn, "\n");
+	BN_print(conn, p->zkpx.gr);
+	BIO_puts(conn, "\n");
+	BN_print(conn, p->zkpx.b);
+	BIO_puts(conn, "\n");
+	}
+
+static void jpake_send_step1(BIO *bconn, JPAKE_CTX *ctx)
+	{
+	JPAKE_STEP1 s1;
+
+	JPAKE_STEP1_init(&s1);
+	JPAKE_STEP1_generate(&s1, ctx);
+	jpake_send_part(bconn, &s1.p1);
+	jpake_send_part(bconn, &s1.p2);
+	BIO_flush(bconn);
+	JPAKE_STEP1_release(&s1);
+	}
+
+static void jpake_send_step2(BIO *bconn, JPAKE_CTX *ctx)
+	{
+	JPAKE_STEP2 s2;
+
+	JPAKE_STEP2_init(&s2);
+	JPAKE_STEP2_generate(&s2, ctx);
+	jpake_send_part(bconn, &s2);
+	BIO_flush(bconn);
+	JPAKE_STEP2_release(&s2);
+	}
+
+static void jpake_send_step3a(BIO *bconn, JPAKE_CTX *ctx)
+	{
+	JPAKE_STEP3A s3a;
+
+	JPAKE_STEP3A_init(&s3a);
+	JPAKE_STEP3A_generate(&s3a, ctx);
+	BIO_write(bconn, s3a.hhk, sizeof s3a.hhk);
+	BIO_flush(bconn);
+	JPAKE_STEP3A_release(&s3a);
+	}
+
+static void jpake_send_step3b(BIO *bconn, JPAKE_CTX *ctx)
+	{
+	JPAKE_STEP3B s3b;
+
+	JPAKE_STEP3B_init(&s3b);
+	JPAKE_STEP3B_generate(&s3b, ctx);
+	BIO_write(bconn, s3b.hk, sizeof s3b.hk);
+	BIO_flush(bconn);
+	JPAKE_STEP3B_release(&s3b);
+	}
+
+static void readbn(BIGNUM **bn, BIO *bconn)
+	{
+	char buf[10240];
+	int l;
+
+	l = BIO_gets(bconn, buf, sizeof buf);
+	assert(l >= 0);
+	assert(buf[l-1] == '\n');
+	buf[l-1] = '\0';
+	BN_hex2bn(bn, buf);
+	}
+
+static void jpake_receive_part(JPAKE_STEP_PART *p, BIO *bconn)
+	{
+	readbn(&p->gx, bconn);
+	readbn(&p->zkpx.gr, bconn);
+	readbn(&p->zkpx.b, bconn);
+	}
+
+static void jpake_receive_step1(JPAKE_CTX *ctx, BIO *bconn)
+	{
+	JPAKE_STEP1 s1;
+
+	JPAKE_STEP1_init(&s1);
+	jpake_receive_part(&s1.p1, bconn);
+	jpake_receive_part(&s1.p2, bconn);
+	if(!JPAKE_STEP1_process(ctx, &s1))
+		{
+		ERR_print_errors(bio_err);
+		exit(1);
+		}
+	JPAKE_STEP1_release(&s1);
+	}
+
+static void jpake_receive_step2(JPAKE_CTX *ctx, BIO *bconn)
+	{
+	JPAKE_STEP2 s2;
+
+	JPAKE_STEP2_init(&s2);
+	jpake_receive_part(&s2, bconn);
+	if(!JPAKE_STEP2_process(ctx, &s2))
+		{
+		ERR_print_errors(bio_err);
+		exit(1);
+		}
+	JPAKE_STEP2_release(&s2);
+	}
+
+static void jpake_receive_step3a(JPAKE_CTX *ctx, BIO *bconn)
+	{
+	JPAKE_STEP3A s3a;
+	int l;
+
+	JPAKE_STEP3A_init(&s3a);
+	l = BIO_read(bconn, s3a.hhk, sizeof s3a.hhk);
+	assert(l == sizeof s3a.hhk);
+	if(!JPAKE_STEP3A_process(ctx, &s3a))
+		{
+		ERR_print_errors(bio_err);
+		exit(1);
+		}
+	JPAKE_STEP3A_release(&s3a);
+	}
+
+static void jpake_receive_step3b(JPAKE_CTX *ctx, BIO *bconn)
+	{
+	JPAKE_STEP3B s3b;
+	int l;
+
+	JPAKE_STEP3B_init(&s3b);
+	l = BIO_read(bconn, s3b.hk, sizeof s3b.hk);
+	assert(l == sizeof s3b.hk);
+	if(!JPAKE_STEP3B_process(ctx, &s3b))
+		{
+		ERR_print_errors(bio_err);
+		exit(1);
+		}
+	JPAKE_STEP3B_release(&s3b);
+	}
+
+void jpake_client_auth(BIO *out, BIO *conn, const char *secret)
+	{
+	JPAKE_CTX *ctx;
+	BIO *bconn;
+
+	BIO_puts(out, "Authenticating with JPAKE\n");
+
+	ctx = jpake_init("client", "server", secret);
+
+	bconn = BIO_new(BIO_f_buffer());
+	BIO_push(bconn, conn);
+
+	jpake_send_step1(bconn, ctx);
+	jpake_receive_step1(ctx, bconn);
+	jpake_send_step2(bconn, ctx);
+	jpake_receive_step2(ctx, bconn);
+	jpake_send_step3a(bconn, ctx);
+	jpake_receive_step3b(ctx, bconn);
+
+	BIO_puts(out, "JPAKE authentication succeeded\n");
+
+	BIO_pop(bconn);
+	BIO_free(bconn);
+	}
+
+void jpake_server_auth(BIO *out, BIO *conn, const char *secret)
+	{
+	JPAKE_CTX *ctx;
+	BIO *bconn;
+
+	BIO_puts(out, "Authenticating with JPAKE\n");
+
+	ctx = jpake_init("server", "client", secret);
+
+	bconn = BIO_new(BIO_f_buffer());
+	BIO_push(bconn, conn);
+
+	jpake_receive_step1(ctx, bconn);
+	jpake_send_step1(bconn, ctx);
+	jpake_receive_step2(ctx, bconn);
+	jpake_send_step2(bconn, ctx);
+	jpake_receive_step3a(ctx, bconn);
+	jpake_send_step3b(bconn, ctx);
+
+	BIO_puts(out, "JPAKE authentication succeeded\n");
+
+	BIO_pop(bconn);
+	BIO_free(bconn);
 	}
 
 /*
