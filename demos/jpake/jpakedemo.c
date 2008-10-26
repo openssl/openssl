@@ -164,7 +164,8 @@ static void zkpHash(BIGNUM *h, const JPakeZKP *zkp, const BIGNUM *gx,
 
 // Prove knowledge of x
 // Note that we don't send g^x because, as it happens, we've always
-// sent it elsewhere. Also note that because of that, we could avoid calculating it here, but we don't, for clarity... 
+// sent it elsewhere. Also note that because of that, we could avoid
+// calculating it here, but we don't, for clarity...
 static void CreateZKP(JPakeZKP *zkp, const BIGNUM *x, const JPakeUser *us,
 		      const BIGNUM *zkpg, const JPakeParameters *params,
 		      int n, const char *suffix)
@@ -205,7 +206,7 @@ static void CreateZKP(JPakeZKP *zkp, const BIGNUM *x, const JPakeUser *us,
     BN_free(r);
     }
 
-static int VerifyZKP(const JPakeZKP *zkp, BIGNUM *x,
+static int VerifyZKP(const JPakeZKP *zkp, BIGNUM *gx,
 		     const JPakeUserPublic *them, const BIGNUM *zkpg,
 		     const JPakeParameters *params, int n, const char *suffix)
     {
@@ -215,12 +216,12 @@ static int VerifyZKP(const JPakeZKP *zkp, BIGNUM *x,
     BIGNUM *t3 = BN_new();
     int ret = 0;
 
-    zkpHash(h, zkp, x, them, params);
+    zkpHash(h, zkp, gx, them, params);
 
     // t1 = g^b
     BN_mod_exp(t1, zkpg, zkp->b, params->p, params->ctx);
     // t2 = (g^x)^h = g^{hx}
-    BN_mod_exp(t2, x, h, params->p, params->ctx);
+    BN_mod_exp(t2, gx, h, params->p, params->ctx);
     // t3 = t1 * t2 = g^{hx} * g^b = g^{hx+b} = g^r (allegedly)
     BN_mod_mul(t3, t1, t2, params->p, params->ctx);
 
