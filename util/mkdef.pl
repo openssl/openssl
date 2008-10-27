@@ -309,6 +309,7 @@ $crypto.=" crypto/krb5/krb5_asn.h";
 #$crypto.=" crypto/store/store.h";
 $crypto.=" crypto/pqueue/pqueue.h";
 $crypto.=" crypto/cms/cms.h";
+$crypto.=" crypto/jpake/jpake.h";
 
 my $symhacks="crypto/symhacks.h";
 

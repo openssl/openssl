@@ -1258,7 +1258,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	STACK_OF(SSL_CIPHER) *cipherstack, *tmp_cipher_list;
 	const char *rule_p;
 	CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
-	const SSL_CIPHER **ca_list = NULL;
+	SSL_CIPHER **ca_list = NULL;
 
 	/*
 	 * Return with error if nothing to do.
