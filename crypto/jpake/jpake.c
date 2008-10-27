@@ -13,23 +13,23 @@
 
 typedef struct
     {
-    char *name;   // Must be unique
+    char *name;  /* Must be unique */
     char *peer_name;
     BIGNUM *p;
     BIGNUM *g;
     BIGNUM *q;
-    BIGNUM *gxc;  // Alice's g^{x3} or Bob's g^{x1}
-    BIGNUM *gxd;  // Alice's g^{x4} or Bob's g^{x2}
+    BIGNUM *gxc; /* Alice's g^{x3} or Bob's g^{x1} */
+    BIGNUM *gxd; /* Alice's g^{x4} or Bob's g^{x2} */
     } JPAKE_CTX_PUBLIC;
 
 struct JPAKE_CTX
     {
     JPAKE_CTX_PUBLIC p;
-    BIGNUM *secret;    // The shared secret
+    BIGNUM *secret;   /* The shared secret */
     BN_CTX *ctx;
-    BIGNUM *xa;        // Alice's x1 or Bob's x3
-    BIGNUM *xb;        // Alice's x2 or Bob's x4
-    BIGNUM *key;       // The calculated (shared) key
+    BIGNUM *xa;       /* Alice's x1 or Bob's x3 */
+    BIGNUM *xb;       /* Alice's x2 or Bob's x4 */
+    BIGNUM *key;      /* The calculated (shared) key */
     };
 
 static void JPAKE_ZKP_init(JPAKE_ZKP *zkp)
@@ -44,7 +44,7 @@ static void JPAKE_ZKP_release(JPAKE_ZKP *zkp)
     BN_free(zkp->gr);
     }
 
-// Two birds with one stone - make the global name as expected
+/* Two birds with one stone - make the global name as expected */
 #define JPAKE_STEP_PART_init	JPAKE_STEP2_init
 #define JPAKE_STEP_PART_release	JPAKE_STEP2_release
 
@@ -158,15 +158,17 @@ static void hashbn(SHA_CTX *sha, const BIGNUM *bn)
     SHA1_Update(sha, bin, l);
     }
 
-// h=hash(g, g^r, g^x, name)
+/* h=hash(g, g^r, g^x, name) */
 static void zkp_hash(BIGNUM *h, const BIGNUM *zkpg, const JPAKE_STEP_PART *p,
 		     const char *proof_name)
     {
     unsigned char md[SHA_DIGEST_LENGTH];
     SHA_CTX sha;
 
-    // XXX: hash should not allow moving of the boundaries - Java code
-    // is flawed in this respect. Length encoding seems simplest.
+   /*
+    * XXX: hash should not allow moving of the boundaries - Java code
+    * is flawed in this respect. Length encoding seems simplest.
+    */
     SHA1_Init(&sha);
     hashbn(&sha, zkpg);
     assert(!BN_is_zero(p->zkpx.gr));
@@ -177,8 +179,10 @@ static void zkp_hash(BIGNUM *h, const BIGNUM *zkpg, const JPAKE_STEP_PART *p,
     BN_bin2bn(md, SHA_DIGEST_LENGTH, h);
     }
 
-// Prove knowledge of x
-// Note that p->gx has already been calculated
+/*
+ * Prove knowledge of x
+ * Note that p->gx has already been calculated
+ */
 static void generate_zkp(JPAKE_STEP_PART *p, const BIGNUM *x,
 			 const BIGNUM *zkpg, JPAKE_CTX *ctx)
     {
@@ -186,20 +190,22 @@ static void generate_zkp(JPAKE_STEP_PART *p, const BIGNUM *x,
     BIGNUM *h = BN_new();
     BIGNUM *t = BN_new();
 
-    // r in [0,q)
-    // XXX: Java chooses r in [0, 2^160) - i.e. distribution not uniform
+   /*
+    * r in [0,q)
+    * XXX: Java chooses r in [0, 2^160) - i.e. distribution not uniform
+    */
     BN_rand_range(r, ctx->p.q);
-    // g^r
+   /* g^r */
     BN_mod_exp(p->zkpx.gr, zkpg, r, ctx->p.p, ctx->ctx);
 
-    // h=hash...
+   /* h=hash... */
     zkp_hash(h, zkpg, p, ctx->p.name);
 
-    // b = r - x*h
+   /* b = r - x*h */
     BN_mod_mul(t, x, h, ctx->p.q, ctx->ctx);
     BN_mod_sub(p->zkpx.b, r, t, ctx->p.q, ctx->ctx);
 
-    // cleanup
+   /* cleanup */
     BN_free(t);
     BN_free(h);
     BN_free(r);
@@ -216,20 +222,20 @@ static int verify_zkp(const JPAKE_STEP_PART *p, const BIGNUM *zkpg,
 
     zkp_hash(h, zkpg, p, ctx->p.peer_name);
 
-    // t1 = g^b
+   /* t1 = g^b */
     BN_mod_exp(t1, zkpg, p->zkpx.b, ctx->p.p, ctx->ctx);
-    // t2 = (g^x)^h = g^{hx}
+   /* t2 = (g^x)^h = g^{hx} */
     BN_mod_exp(t2, p->gx, h, ctx->p.p, ctx->ctx);
-    // t3 = t1 * t2 = g^{hx} * g^b = g^{hx+b} = g^r (allegedly)
+   /* t3 = t1 * t2 = g^{hx} * g^b = g^{hx+b} = g^r (allegedly) */
     BN_mod_mul(t3, t1, t2, ctx->p.p, ctx->ctx);
 
-    // verify t3 == g^r
+   /* verify t3 == g^r */
     if(BN_cmp(t3, p->zkpx.gr) == 0)
 	ret = 1;
     else
 	JPAKEerr(JPAKE_F_VERIFY_ZKP, JPAKE_R_ZKP_VERIFY_FAILED);
 
-    // cleanup
+   /* cleanup */
     BN_free(t3);
     BN_free(t2);
     BN_free(t1);
@@ -245,25 +251,25 @@ static void generate_step_part(JPAKE_STEP_PART *p, const BIGNUM *x,
     generate_zkp(p, x, g, ctx);
     }
 
-// Generate each party's random numbers. xa is in [0, q), xb is in [1, q).
+/* Generate each party's random numbers. xa is in [0, q), xb is in [1, q). */
 static void genrand(JPAKE_CTX *ctx)
     {
     BIGNUM *qm1;
 
-    // xa in [0, q)
+   /* xa in [0, q) */
     BN_rand_range(ctx->xa, ctx->p.q);
 
-    // q-1
+   /* q-1 */
     qm1 = BN_new();
     BN_copy(qm1, ctx->p.q);
     BN_sub_word(qm1, 1);
 
-    // ... and xb in [0, q-1)
+   /* ... and xb in [0, q-1) */
     BN_rand_range(ctx->xb, qm1);
-    // [1, q)
+   /* [1, q) */
     BN_add_word(ctx->xb, 1);
 
-    // cleanup
+   /* cleanup */
     BN_free(qm1);
     }
 
@@ -278,28 +284,28 @@ int JPAKE_STEP1_generate(JPAKE_STEP1 *send, JPAKE_CTX *ctx)
 
 int JPAKE_STEP1_process(JPAKE_CTX *ctx, const JPAKE_STEP1 *received)
     {
-    // verify their ZKP(xc)
+   /* verify their ZKP(xc) */
     if(!verify_zkp(&received->p1, ctx->p.g, ctx))
 	{
 	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_VERIFY_X3_FAILED);
 	return 0;
 	}
 
-    // verify their ZKP(xd)
+   /* verify their ZKP(xd) */
     if(!verify_zkp(&received->p2, ctx->p.g, ctx))
 	{
 	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_VERIFY_X4_FAILED);
 	return 0;
 	}
 
-    // g^xd != 1
+   /* g^xd != 1 */
     if(BN_is_one(received->p2.gx))
 	{
 	JPAKEerr(JPAKE_F_JPAKE_STEP1_PROCESS, JPAKE_R_G_TO_THE_X4_IS_ONE);
 	return 0;
 	}
 
-    // Save the bits we need for later
+   /* Save the bits we need for later */
     BN_copy(ctx->p.gxc, received->p1.gx);
     BN_copy(ctx->p.gxd, received->p2.gx);
 
@@ -312,57 +318,63 @@ int JPAKE_STEP2_generate(JPAKE_STEP2 *send, JPAKE_CTX *ctx)
     BIGNUM *t1 = BN_new();
     BIGNUM *t2 = BN_new();
 
-    // X = g^{(xa + xc + xd) * xb * s}
-    // t1 = g^xa
+   /*
+    * X = g^{(xa + xc + xd) * xb * s}
+    * t1 = g^xa
+    */
     BN_mod_exp(t1, ctx->p.g, ctx->xa, ctx->p.p, ctx->ctx);
-    // t2 = t1 * g^{xc} = g^{xa} * g^{xc} = g^{xa + xc}
+   /* t2 = t1 * g^{xc} = g^{xa} * g^{xc} = g^{xa + xc} */
     BN_mod_mul(t2, t1, ctx->p.gxc, ctx->p.p, ctx->ctx);
-    // t1 = t2 * g^{xd} = g^{xa + xc + xd}
+   /* t1 = t2 * g^{xd} = g^{xa + xc + xd} */
     BN_mod_mul(t1, t2, ctx->p.gxd, ctx->p.p, ctx->ctx);
-    // t2 = xb * s
+   /* t2 = xb * s */
     BN_mod_mul(t2, ctx->xb, ctx->secret, ctx->p.q, ctx->ctx);
 
-    // ZKP(xb * s)
-    // XXX: this is kinda funky, because we're using
-    //
-    // g' = g^{xa + xc + xd}
-    //
-    // as the generator, which means X is g'^{xb * s}
-    // X = t1^{t2} = t1^{xb * s} = g^{(xa + xc + xd) * xb * s}
+   /*
+    * ZKP(xb * s)
+    * XXX: this is kinda funky, because we're using
+    *
+    * g' = g^{xa + xc + xd}
+    *
+    * as the generator, which means X is g'^{xb * s}
+    * X = t1^{t2} = t1^{xb * s} = g^{(xa + xc + xd) * xb * s}
+    */
     generate_step_part(send, t2, t1, ctx);
 
-    // cleanup
+   /* cleanup */
     BN_free(t1);
     BN_free(t2);
 
     return 1;
     }
 
-// gx = g^{xc + xa + xb} * xd * s
+/* gx = g^{xc + xa + xb} * xd * s */
 static int compute_key(JPAKE_CTX *ctx, const BIGNUM *gx)
     {
     BIGNUM *t1 = BN_new();
     BIGNUM *t2 = BN_new();
     BIGNUM *t3 = BN_new();
 
-    // K = (gx/g^{xb * xd * s})^{xb}
-    //   = (g^{(xc + xa + xb) * xd * s - xb * xd *s})^{xb}
-    //   = (g^{(xa + xc) * xd * s})^{xb}
-    //   = g^{(xa + xc) * xb * xd * s}
-    // [which is the same regardless of who calculates it]
+   /*
+    * K = (gx/g^{xb * xd * s})^{xb}
+    *   = (g^{(xc + xa + xb) * xd * s - xb * xd *s})^{xb}
+    *   = (g^{(xa + xc) * xd * s})^{xb}
+    *   = g^{(xa + xc) * xb * xd * s}
+    * [which is the same regardless of who calculates it]
+    */
 
-    // t1 = (g^{xd})^{xb} = g^{xb * xd}
+   /* t1 = (g^{xd})^{xb} = g^{xb * xd} */
     BN_mod_exp(t1, ctx->p.gxd, ctx->xb, ctx->p.p, ctx->ctx);
-    // t2 = -s = q-s
+   /* t2 = -s = q-s */
     BN_sub(t2, ctx->p.q, ctx->secret);
-    // t3 = t1^t2 = g^{-xb * xd * s}
+   /* t3 = t1^t2 = g^{-xb * xd * s} */
     BN_mod_exp(t3, t1, t2, ctx->p.p, ctx->ctx);
-    // t1 = gx * t3 = X/g^{xb * xd * s}
+   /* t1 = gx * t3 = X/g^{xb * xd * s} */
     BN_mod_mul(t1, gx, t3, ctx->p.p, ctx->ctx);
-    // K = t1^{xb}
+   /* K = t1^{xb} */
     BN_mod_exp(ctx->key, t1, ctx->xb, ctx->p.p, ctx->ctx);
 
-    // cleanup
+   /* cleanup */
     BN_free(t3);
     BN_free(t2);
     BN_free(t1);
@@ -376,12 +388,14 @@ int JPAKE_STEP2_process(JPAKE_CTX *ctx, const JPAKE_STEP2 *received)
     BIGNUM *t2 = BN_new();
     int ret = 0;
 
-    // g' = g^{xc + xa + xb} [from our POV]
-    // t1 = xa + xb
+   /*
+    * g' = g^{xc + xa + xb} [from our POV]
+    * t1 = xa + xb
+    */
     BN_mod_add(t1, ctx->xa, ctx->xb, ctx->p.q, ctx->ctx);
-    // t2 = g^{t1} = g^{xa+xb}
+   /* t2 = g^{t1} = g^{xa+xb} */
     BN_mod_exp(t2, ctx->p.g, t1, ctx->p.p, ctx->ctx);
-    // t1 = g^{xc} * t2 = g^{xc + xa + xb}
+   /* t1 = g^{xc} * t2 = g^{xc + xa + xb} */
     BN_mod_mul(t1, ctx->p.gxc, t2, ctx->p.p, ctx->ctx);
 
     if(verify_zkp(received, t1, ctx))
@@ -391,7 +405,7 @@ int JPAKE_STEP2_process(JPAKE_CTX *ctx, const JPAKE_STEP2 *received)
 
     compute_key(ctx, received->gx);
 
-    // cleanup
+   /* cleanup */
     BN_free(t2);
     BN_free(t1);
 
