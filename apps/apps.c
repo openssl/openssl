@@ -2345,14 +2345,14 @@ static JPAKE_CTX *jpake_init(const char *us, const char *them,
 	BIGNUM *bnsecret = BN_new();
 	JPAKE_CTX *ctx;
 
-	// Use a safe prime for p (that we found earlier)
+	/* Use a safe prime for p (that we found earlier) */
 	BN_hex2bn(&p, "F9E5B365665EA7A05A9C534502780FEE6F1AB5BD4F49947FD036DBD7E905269AF46EF28B0FC07487EE4F5D20FB3C0AF8E700F3A2FA3414970CBED44FEDFF80CE78D800F184BB82435D137AADA2C6C16523247930A63B85661D1FC817A51ACD96168E95898A1F83A79FFB529368AA7833ABD1B0C3AEDDB14D2E1A2F71D99F763F");
 	g = BN_new();
 	BN_set_word(g, 2);
 	q = BN_new();
 	BN_rshift1(q, p);
 
-	BN_bin2bn(secret, strlen(secret), bnsecret);
+	BN_bin2bn((const unsigned char *)secret, strlen(secret), bnsecret);
 
 	ctx = JPAKE_CTX_new(us, them, p, g, q, bnsecret);
 	BN_free(bnsecret);

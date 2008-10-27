@@ -28,6 +28,13 @@ depend:
 	@[ -n "$(MAKEDEPEND)" ] # should be set by upper Makefile...
 	$(MAKEDEPEND) -- $(CFLAG) $(INCLUDES) $(DEPFLAG) -- $(PROGS) $(LIBSRC)
 
+dclean:
+	$(PERL) -pe 'if (/^# DO NOT DELETE THIS LINE/) {print; exit(0);}' $(MAKEFILE) >Makefile.new
+	mv -f Makefile.new $(MAKEFILE)
+
+clean:
+	rm -f *.s *.o *.obj des lib tags core .pure .nfs* *.old *.bak fluff
+
 jpaketest: top jpaketest.c $(LIB)
 	$(CC) $(CFLAGS) -Wall -Werror -g -o jpaketest jpaketest.c $(LIB)
 # DO NOT DELETE THIS LINE -- make depend depends on it.
