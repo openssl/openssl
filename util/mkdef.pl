@@ -308,6 +308,7 @@ $crypto.=" crypto/tmdiff.h";
 $crypto.=" crypto/store/store.h";
 $crypto.=" crypto/pqueue/pqueue.h";
 $crypto.=" crypto/cms/cms.h";
+$crypto.=" crypto/jpake/jpake.h";
 $crypto.=" fips/fips.h fips/rand/fips_rand.h";
 
 my $symhacks="crypto/symhacks.h";

@@ -151,11 +151,12 @@ static void hashstring(SHA_CTX *sha, const char *string)
 static void hashbn(SHA_CTX *sha, const BIGNUM *bn)
     {
     size_t l = BN_num_bytes(bn);
-    unsigned char *bin = alloca(l);
+    unsigned char *bin = OPENSSL_malloc(l);
 
     hashlength(sha, l);
     BN_bn2bin(bn, bin);
     SHA1_Update(sha, bin, l);
+    OPENSSL_free(bin);
     }
 
 /* h=hash(g, g^r, g^x, name) */
