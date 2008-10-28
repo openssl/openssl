@@ -58,59 +58,22 @@ const char CAMELLIA_version[]="CAMELLIA" OPENSSL_VERSION_PTEXT;
 int Camellia_set_key(const unsigned char *userKey, const int bits,
 	CAMELLIA_KEY *key)
 	{
-	if (!userKey || !key)
-		{
+	if(!userKey || !key)
 		return -1;
-		}
-	
-	switch(bits)
-		{
-	case 128:
-		camellia_setup128(userKey, (unsigned int *)key->rd_key);
-		key->enc = camellia_encrypt128;
-		key->dec = camellia_decrypt128;
-		break;
-	case 192:
-		camellia_setup192(userKey, (unsigned int *)key->rd_key);
-		key->enc = camellia_encrypt256;
-		key->dec = camellia_decrypt256;
-		break;
-	case 256:
-		camellia_setup256(userKey, (unsigned int *)key->rd_key);
-		key->enc = camellia_encrypt256;
-		key->dec = camellia_decrypt256;
-		break;
-	default:
+	if(bits != 128 && bits != 192 && bits != 256)
 		return -2;
-		}
-	
-	key->bitLength = bits;
+	key->grand_rounds = Camellia_Ekeygen(bits , userKey, key->u.rd_key);
 	return 0;
 	}
 
 void Camellia_encrypt(const unsigned char *in, unsigned char *out,
 	const CAMELLIA_KEY *key)
 	{
-	u32 tmp[CAMELLIA_BLOCK_SIZE/sizeof(u32)];
-	const union { long one; char little; } camellia_endian = {1};
-
-	memcpy(tmp, in, CAMELLIA_BLOCK_SIZE);
-	if (camellia_endian.little) SWAP4WORD(tmp);
-	key->enc(key->rd_key, tmp);
-	if (camellia_endian.little) SWAP4WORD(tmp);
-	memcpy(out, tmp, CAMELLIA_BLOCK_SIZE);
+	Camellia_EncryptBlock(key->grand_rounds, in , key->u.rd_key , out);
 	}
 
 void Camellia_decrypt(const unsigned char *in, unsigned char *out,
 	const CAMELLIA_KEY *key)
 	{
-	u32 tmp[CAMELLIA_BLOCK_SIZE/sizeof(u32)];
-	const union { long one; char little; } camellia_endian = {1};
-
-	memcpy(tmp, in, CAMELLIA_BLOCK_SIZE);
-	if (camellia_endian.little) SWAP4WORD(tmp);
-	key->dec(key->rd_key, tmp);
-	if (camellia_endian.little) SWAP4WORD(tmp);
-	memcpy(out, tmp, CAMELLIA_BLOCK_SIZE);
+	Camellia_DecryptBlock(key->grand_rounds, in , key->u.rd_key , out);
 	}
-

@@ -74,17 +74,16 @@ extern "C" {
 #define CAMELLIA_TABLE_BYTE_LEN 272
 #define CAMELLIA_TABLE_WORD_LEN (CAMELLIA_TABLE_BYTE_LEN / 4)
 
- /* to match with WORD */
-typedef unsigned int KEY_TABLE_TYPE[CAMELLIA_TABLE_WORD_LEN];
+typedef unsigned int KEY_TABLE_TYPE[CAMELLIA_TABLE_WORD_LEN]; /* to match with WORD */
 
 struct camellia_key_st 
 	{
-	KEY_TABLE_TYPE rd_key;
-	int bitLength;
-	void (*enc)(const unsigned int *subkey, unsigned int *io);
-	void (*dec)(const unsigned int *subkey, unsigned int *io);
+	union	{
+		double d;	/* ensures 64-bit align */
+		KEY_TABLE_TYPE rd_key;
+		} u;
+	int grand_rounds;
 	};
-
 typedef struct camellia_key_st CAMELLIA_KEY;
 
 int Camellia_set_key(const unsigned char *userKey, const int bits,
@@ -126,4 +125,3 @@ void Camellia_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 #endif
 
 #endif /* !HEADER_Camellia_H */
-
