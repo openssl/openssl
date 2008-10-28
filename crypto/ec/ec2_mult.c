@@ -216,8 +216,8 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 	const EC_POINT *point, BN_CTX *ctx)
 	{
 	BIGNUM *x1, *x2, *z1, *z2;
-	int ret = 0, i, j;
-	BN_ULONG mask;
+	int ret = 0, i;
+	BN_ULONG mask,word;
 
 	if (r == point)
 		{
@@ -251,22 +251,24 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 	if (!BN_GF2m_add(x2, x2, &group->b)) goto err; /* x2 = x^4 + b */
 
 	/* find top most bit and go one past it */
-	i = scalar->top - 1; j = BN_BITS2 - 1;
+	i = scalar->top - 1;
 	mask = BN_TBIT;
-	while (!(scalar->d[i] & mask)) { mask >>= 1; j--; }
-	mask >>= 1; j--;
+	word = scalar->d[i];
+	while (!(word & mask)) mask >>= 1;
+	mask >>= 1;
 	/* if top most bit was at word break, go to next word */
 	if (!mask) 
 		{
-		i--; j = BN_BITS2 - 1;
+		i--;
 		mask = BN_TBIT;
 		}
 
 	for (; i >= 0; i--)
 		{
-		for (; j >= 0; j--)
+		word = scalar->d[i];
+		while (mask)
 			{
-			if (scalar->d[i] & mask)
+			if (word & mask)
 				{
 				if (!gf2m_Madd(group, &point->X, x1, z1, x2, z2, ctx)) goto err;
 				if (!gf2m_Mdouble(group, x2, z2, ctx)) goto err;
@@ -278,7 +280,6 @@ static int ec_GF2m_montgomery_point_multiply(const EC_GROUP *group, EC_POINT *r,
 				}
 			mask >>= 1;
 			}
-		j = BN_BITS2 - 1;
 		mask = BN_TBIT;
 		}
 
