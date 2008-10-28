@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-# Ascetic x86_64 AT&T to MASM assembler translator by <appro>.
+# Ascetic x86_64 AT&T to MASM/NASM assembler translator by <appro>.
 #
 # Why AT&T to MASM and not vice versa? Several reasons. Because AT&T
 # format is way easier to parse. Because it's simpler to "gear" from
@@ -23,8 +23,8 @@
 #
 # Dual-ABI styling rules.
 #
-# 1. Adhere to Unix register and stack layout [see the end for
-#    explanation].
+# 1. Adhere to Unix register and stack layout [see cross-reference
+#    ABI "card" at the end for explanation].
 # 2. Forget about "red zone," stick to more traditional blended
 #    stack frame allocation. If volatile storage is actually required
 #    that is. If not, just leave the stack as is.
@@ -54,7 +54,11 @@
 #	.Lpic_point:
 #		...
 #		lea		.Label-.Lpic_point(%rcx),%rbp
-
+#
+# 8. In order to provide for structured exception handling unified
+#    Win64 prologue copies %rsp value to %rax. For further details
+#    see SEH paragraph at the end.
+
 my $output = shift;
 
 { my ($stddev,$stdino,@junk)=stat(STDOUT);
@@ -137,6 +141,9 @@ my %globals;
 	    	}
 		$self->{op} .= "DB\t0F3h,0C3h\t\t;repret";
 	    }
+	    elsif ($self->{op} =~ /^(pop|push)f/) {
+		$self->{op} .= $self->{sz};
+	    }
 	    $self->{op};
 	}
     }
@@ -217,6 +224,7 @@ my %globals;
 	} else {
 	    %szmap = ( b=>"BYTE$PTR", w=>"WORD$PTR", l=>"DWORD$PTR", q=>"QWORD$PTR" );
 
+	    $self->{label} =~ s/\.L/\$L\$/g;
 	    $self->{label} =~ s/\./\$/g;
 	    $self->{label} =~ s/0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
@@ -286,7 +294,7 @@ my %globals;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
-	    $self->{value} =~ s/\.L/\$L/ if ($win64);
+	    $self->{value} =~ s/\.L/\$L\$/ if ($win64);
 	}
 	$ret;
     }
@@ -304,6 +312,10 @@ my %globals;
 			"\n";
 	    $func .= "	mov	QWORD${PTR}[8+rsp],rdi\t;WIN64 prologue\n";
 	    $func .= "	mov	QWORD${PTR}[16+rsp],rsi\n";
+	    $func .= "	mov	rax,rsp\n";
+	    $func .= "\$L\$SEH_begin_$current_function->{name}:";
+	    $func .= ":" if ($masm);
+	    $func .= "\n";
 	    my $narg = $current_function->{narg};
 	    $narg=6 if (!defined($narg));
 	    $func .= "	mov	rdi,rcx\n" if ($narg>0);
@@ -330,7 +342,7 @@ my %globals;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
-	    $self->{value} =~ s/\.L/\$L/g if ($win64);
+	    $self->{value} =~ s/\.L/\$L\$/g if ($win64);
 	}
 	$ret;
     }
@@ -429,7 +441,9 @@ my %globals;
 				    $self->{value} .= ":NEAR" if ($masm);
 				    last;
 				  };
-		/\.globl/   && do { $self->{value} = "PUBLIC\t".$line;
+		/\.globl|.global/
+			    && do { $self->{value}  = $masm?"PUBLIC":"global";
+				    $self->{value} .= "\t".$line;
 				    $globals{$line} = $line;
 				    last;
 				  };
@@ -448,20 +462,22 @@ my %globals;
 				    last;
 				  };
 		/\.size/    && do { if (defined($current_function)) {
-					$self->{value}="$current_function->{name}\tENDP" if(!$nasm);
+					$self->{value}="\$L\$SEH_end_$current_function->{name}:";
+					$self->{value}.=":\n$current_function->{name}\tENDP" if($masm);
 					undef $current_function;
 				    }
 				    last;
 				  };
 		/\.align/   && do { $self->{value} = "ALIGN\t".$line; last; };
 		/\.(byte|value|long|quad)/
-			    && do { my @arr = split(',',$line);
-				    my $sz  = substr($1,0,1);
+			    && do { my $sz  = substr($1,0,1);
+				    my @arr = split(',',$line);
 				    my $last = pop(@arr);
 				    my $conv = sub  {	my $var=shift;
 							$var=~s/0x([0-9a-f]+)/0$1h/ig;
+							$var=~s/\.L/\$L\$/g;
 							if ($current_segment=~/.[px]data/)
-							{ $var=~s/\b([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
+							{ $var=~s/([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
 							$var;
 						    };  
 
@@ -502,7 +518,6 @@ my %globals;
 if ($nasm) {
     print <<___;
 default	rel
-%define	PUBLIC global
 ___
 } elsif ($masm) {
     print <<___;
@@ -569,7 +584,7 @@ print "\n$current_segment\tENDS\nEND\n" if ($current_segment && $masm);
 
 close STDOUT;
 
-#################################################
+#################################################
 # Cross-reference x86_64 ABI "card"
 #
 # 		Unix		Win64
@@ -634,7 +649,9 @@ close STDOUT;
 # endif
 #	ret
 #
-#################################################
+#################################################
+# Win64 SEH, Structured Exception Handling.
+#
 # Unlike on Unix systems(*) lack of Win64 stack unwinding information
 # has undesired side-effect at run-time: if an exception is raised in
 # assembler subroutine such as those in question (basically we're
@@ -649,6 +666,7 @@ close STDOUT;
 # doable, though requires certain coding convention. Consider following
 # snippet:
 #
+# .type	function,@function
 # function:
 #	movq	%rsp,%rax	# copy rsp to volatile register
 #	pushq	%r15		# save non-volatile registers
@@ -668,6 +686,7 @@ close STDOUT;
 #	movq	-8(%rcx),%r15
 #	movq	%rcx,%rsp	# restore original rsp
 #	ret
+# .size function,.-function
 #
 # The key is that up to magic_point copy of original rsp value remains
 # in chosen volatile register and no non-volatile register, except for
@@ -677,10 +696,8 @@ close STDOUT;
 #
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
 #		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-# {	ULONG64 *rsp;
-#	if (context->Rip<magic_point)
-#	    rsp = (ULONG64 *)context->Rax;
-#	else
+# {	ULONG64 *rsp = (ULONG64 *)context->Rax;
+#	if (context->Rip >= magic_point)
 #	{   rsp = ((ULONG64 **)context->Rsp)[0];
 #	    context->Rbp = rsp[-3];
 #	    context->Rbx = rsp[-2];
@@ -731,19 +748,57 @@ close STDOUT;
 #	UNW_FLAG_NHANDLER			0
 #	ExceptionContinueSearch			1
 #
-# UNWIND_INFO structure for .xdata segment would be
-#	DB	9,0,0,0
-#	DD	imagerel handler
-# denoting exception handler for a function with zero-length prologue,
-# no stack frame or frame register.
+# In order to tie the handler to the function one has to compose
+# couple of structures: one for .xdata segment and one for .pdata.
 #
-# P.S.	Attentive reader can notice that effectively no exceptions are
-#	expected in "gear" prologue and epilogue [discussed in "ABI
-#	cross-reference" above]. No, there are not. This is because if
-#	memory area used by them was subject to segmentation violation,
-#	then exception would be raised upon call to our function and be
-#	accounted to caller and unwound from its frame, which is not a
-#	problem.
+# UNWIND_INFO structure for .xdata segment would be
+#
+# function_unwind_info:
+#	.byte	9,0,0,0
+#	.long	handler
+#
+# This structure designates exception handler for a function with
+# zero-length prologue, no stack frame or frame register.
+#
+# To facilitate composing of .pdata structures, auto-generated "gear"
+# prologue copies rsp value to rax and denotes next instruction with
+# $L$SEH_begin_{function_name} label. This essentially defines the SEH
+# styling rule mentioned in the beginning. Position of this label is
+# chosen in such manner that possible exceptions raised in the "gear"
+# prologue would be accounted to caller and unwound from latter's frame.
+# End of function is marked with respective $L$SEH_end_{function_name}
+# label. To summarize, .pdata segment would contain
+#
+#	.long	$L$SEH_begin_function
+#	.long	$L$SEH_end_function
+#	.long	function_unwind_info
+#
+# Reference to functon_unwind_info from .xdata segment is the anchor.
+# In case you wonder why references are 32-bit .longs and not 64-bit
+# .quads. References put into these two segments are required to be
+# *relative* to the base address of the current binary module, a.k.a.
+# image base. No Win64 module, be it .exe or .dll, can be larger than
+# 2GB and thus such relative references can be and are accommodated in
+# 32 bits.
+#
+# Having reviewed the example function code, one can argue that "movq
+# %rsp,%rax" above is redundant. It is not! Keep in mind that on Unix
+# rax would contain an undefined value. If this "offends" you, use
+# another register and refrain from modifying rax till magic_point is
+# reached, i.e. as if it was a non-volatile register. If more registers
+# are required prior [variable] frame setup is completed, note that
+# nobody says that you can have only one "magic point." You can
+# "liberate" non-volatile registers by denoting last stack off-load
+# instruction and reflecting it in finer grade unwind logic in handler.
+# After all, isn't it why it's called *language-specific* handler...
+#
+# Attentive reader can notice that exceptions would be mishandled in
+# auto-generated "gear" epilogue. Well, exception effectively can't
+# occur there, because if memory area used by it was subject to
+# segmentation violation, then it would be raised upon call to the
+# function (and as already mentioned be accounted to caller, which is
+# not a problem). If you're still not comfortable, then define tail
+# "magic point" just prior ret instruction and have handler treat it...
 #
 # (*)	Note that we're talking about run-time, not debug-time. Lack of
 #	unwind information makes debugging hard on both Windows and
