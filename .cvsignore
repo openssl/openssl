@@ -13,11 +13,10 @@ maketest.log
 cctest
 cctest.c
 cctest.a
-libcrypto.so.*
-libcrypto.pc
-libssl.so.*
-libssl.pc
 *.flc
 semantic.cache
 Makefile
 *.dll*
+*.so*
+*.sl*
+*.dylib*
