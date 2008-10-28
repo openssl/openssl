@@ -133,8 +133,8 @@ int BN_get_params(int which)
 
 const BIGNUM *BN_value_one(void)
 	{
-	static BN_ULONG data_one=1L;
-	static BIGNUM const_one={&data_one,1,1,0,BN_FLG_STATIC_DATA};
+	static const BN_ULONG data_one=1L;
+	static const BIGNUM const_one={(BN_ULONG *)&data_one,1,1,0,BN_FLG_STATIC_DATA};
 
 	return(&const_one);
 	}
@@ -160,7 +160,7 @@ char *BN_options(void)
 
 int BN_num_bits_word(BN_ULONG l)
 	{
-	static const char bits[256]={
+	static const unsigned char bits[256]={
 		0,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,
 		5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,
 		6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,6,
