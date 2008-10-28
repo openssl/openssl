@@ -85,6 +85,14 @@
 #define BUFSIZE	1024
 #define RAND_DATA 1024
 
+#ifdef OPENSSL_SYS_VMS
+/* This declaration is a nasty hack to get around vms' extension to fopen
+ * for passing in sharing options being disabled by our /STANDARD=ANSI89 */
+static FILE *(*const vms_fopen)(const char *, const char *, ...) =
+    (FILE *(*)(const char *, const char *, ...))fopen;
+#define VMS_OPEN_ATTRS "shr=get,put,upd,del","ctx=bin,stm","rfm=stm","rat=none","mrs=0"
+#endif
+
 /* #define RFILE ".rnd" - defined in ../../e_os.h */
 
 /* Note that these functions are intended for seed files only.
@@ -106,7 +114,11 @@ int RAND_load_file(const char *file, long bytes)
 	RAND_add(&sb,sizeof(sb),0.0);
 	if (bytes == 0) return(ret);
 
+#ifdef OPENSSL_SYS_VMS
+	in=vms_fopen(file,"rb",VMS_OPEN_ATTRS);
+#else
 	in=fopen(file,"rb");
+#endif
 	if (in == NULL) goto err;
 #if defined(S_IFBLK) && defined(S_IFCHR)
 	if (sb.st_mode & (S_IFBLK | S_IFCHR)) {
@@ -167,7 +179,7 @@ int RAND_write_file(const char *file)
 #endif
 	}
 
-#if defined(O_CREAT) && !defined(OPENSSL_SYS_WIN32)
+#if defined(O_CREAT) && !defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_SYS_VMS)
 	{
 	/* For some reason Win32 can't write to files created this way */
 	
@@ -178,8 +190,34 @@ int RAND_write_file(const char *file)
 		out = fdopen(fd, "wb");
 	}
 #endif
+
+#ifdef OPENSSL_SYS_VMS
+	/* VMS NOTE: Prior versions of this routine created a _new_
+	 * version of the rand file for each call into this routine, then
+	 * deleted all existing versions named ;-1, and finally renamed
+	 * the current version as ';1'. Under concurrent usage, this
+	 * resulted in an RMS race condition in rename() which could
+	 * orphan files (see vms message help for RMS$_REENT). With the
+	 * fopen() calls below, openssl/VMS now shares the top-level
+	 * version of the rand file. Note that there may still be
+	 * conditions where the top-level rand file is locked. If so, this
+	 * code will then create a new version of the rand file. Without
+	 * the delete and rename code, this can result in ascending file
+	 * versions that stop at version 32767, and this routine will then
+	 * return an error. The remedy for this is to recode the calling
+	 * application to avoid concurrent use of the rand file, or
+	 * synchronize usage at the application level. Also consider
+	 * whether or not you NEED a persistent rand file in a concurrent
+	 * use situation. 
+	 */
+
+	out = vms_fopen(file,"rb+",VMS_OPEN_ATTRS);
+	if (out == NULL)
+		out = vms_fopen(file,"wb",VMS_OPEN_ATTRS);
+#else
 	if (out == NULL)
 		out = fopen(file,"wb");
+#endif
 	if (out == NULL) goto err;
 
 #ifndef NO_CHMOD
@@ -201,25 +239,6 @@ int RAND_write_file(const char *file)
 		ret+=i;
 		if (n <= 0) break;
                 }
-#ifdef OPENSSL_SYS_VMS
-	/* Try to delete older versions of the file, until there aren't
-	   any */
-	{
-	char *tmpf;
-
-	tmpf = OPENSSL_malloc(strlen(file) + 4);  /* to add ";-1" and a nul */
-	if (tmpf)
-		{
-		strcpy(tmpf, file);
-		strcat(tmpf, ";-1");
-		while(delete(tmpf) == 0)
-			;
-		rename(file,";1"); /* Make sure it's version 1, or we
-				      will reach the limit (32767) at
-				      some point... */
-		}
-	}
-#endif /* OPENSSL_SYS_VMS */
 
 	fclose(out);
 	OPENSSL_cleanse(buf,BUFSIZE);
