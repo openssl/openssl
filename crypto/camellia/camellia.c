@@ -292,7 +292,7 @@ static const u32 Camellia_SBOX[][256] = {
 };
 
 /* Key generation constants */
-const u32 SIGMA[] = {
+static const u32 SIGMA[] = {
     0xa09e667f, 0x3bcc908b, 0xb67ae858, 0x4caa73b2, 0xc6ef372f, 0xe94f82be,
     0x54ff53a5, 0xf1d36f1c, 0x10e527fa, 0xde682d1d, 0xb05688c2, 0xb3e6c1fd
 };
@@ -462,7 +462,7 @@ int Camellia_Ekeygen(int keyBitLength, const u8 *rawKey, KEY_TABLE_TYPE k)
 	 */ 
 	}
 
-void Camellia_EncryptBlock(int grandRounds, const u8 plaintext[], 
+void Camellia_EncryptBlock_Rounds(int grandRounds, const u8 plaintext[], 
 		const KEY_TABLE_TYPE keyTable, u8 ciphertext[])
 	{
 	register u32 s0,s1,s2,s3; 
@@ -504,8 +504,14 @@ void Camellia_EncryptBlock(int grandRounds, const u8 plaintext[],
 	PUTU32(ciphertext+8, s0);
 	PUTU32(ciphertext+12,s1);
 	}
+void Camellia_EncryptBlock(int keyBitLength, const u8 plaintext[], 
+		const KEY_TABLE_TYPE keyTable, u8 ciphertext[])
+	{
+	Camellia_EncryptBlock_Rounds(keyBitLength==128?3:4,
+			plaintext,keyTable,ciphertext);
+	}
 
-void Camellia_DecryptBlock(int grandRounds, const u8 ciphertext[], 
+void Camellia_DecryptBlock_Rounds(int grandRounds, const u8 ciphertext[], 
 		const KEY_TABLE_TYPE keyTable, u8 plaintext[])
 	{
 	u32 s0,s1,s2,s3; 
@@ -546,4 +552,10 @@ void Camellia_DecryptBlock(int grandRounds, const u8 ciphertext[],
 	PUTU32(plaintext+4, s3);
 	PUTU32(plaintext+8, s0);
 	PUTU32(plaintext+12,s1);
+	}
+void Camellia_DecryptBlock(int keyBitLength, const u8 plaintext[], 
+		const KEY_TABLE_TYPE keyTable, u8 ciphertext[])
+	{
+	Camellia_DecryptBlock_Rounds(keyBitLength==128?3:4,
+			plaintext,keyTable,ciphertext);
 	}
