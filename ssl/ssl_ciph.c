@@ -1258,7 +1258,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	STACK_OF(SSL_CIPHER) *cipherstack, *tmp_cipher_list;
 	const char *rule_p;
 	CIPHER_ORDER *co_list = NULL, *head = NULL, *tail = NULL, *curr;
-	SSL_CIPHER **ca_list = NULL;
+	const SSL_CIPHER **ca_list = NULL;
 
 	/*
 	 * Return with error if nothing to do.
@@ -1353,8 +1353,8 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 		return(NULL);	/* Failure */
 		}
 	ssl_cipher_collect_aliases(ca_list, num_of_group_aliases,
-	                           disabled_mkey, disabled_auth, disabled_enc, disabled_mac, disabled_ssl,
-	                           head);
+	                           disabled_mkey, disabled_auth, disabled_enc,
+				   disabled_mac, disabled_ssl, head);
 
 	/*
 	 * If the rule_string begins with DEFAULT, apply the default rule
