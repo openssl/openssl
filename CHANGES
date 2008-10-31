@@ -4,10 +4,16 @@
 
  Changes between 0.9.8i and 0.9.8j  [xx XXX xxxx]
 
+<<<<<<< CHANGES
+  *) Use correct exit code if there is an error in dgst command.
+     [Steve Henson; problem pointed out by Roland Dirlewanger]
+
+=======
   *) Add JPAKE support, including demo authentication in s_client and
      s_server.
      [Ben Laurie]
 
+>>>>>>> 1.1238.2.123
   *) Set the comparison function in v3_addr_canonize().
      [Rob Austein <sra@hactrn.net>]
 
