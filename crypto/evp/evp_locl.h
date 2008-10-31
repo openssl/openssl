@@ -61,38 +61,66 @@
 /* Wrapper functions for each cipher mode */
 
 #define BLOCK_CIPHER_ecb_loop() \
-	unsigned int i, bl; \
+	size_t i, bl; \
 	bl = ctx->cipher->block_size;\
 	if(inl < bl) return 1;\
 	inl -= bl; \
 	for(i=0; i <= inl; i+=bl) 
 
 #define BLOCK_CIPHER_func_ecb(cname, cprefix, kstruct, ksched) \
-static int cname##_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
+static int cname##_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl) \
 {\
 	BLOCK_CIPHER_ecb_loop() \
 		cprefix##_ecb_encrypt(in + i, out + i, &((kstruct *)ctx->cipher_data)->ksched, ctx->encrypt);\
 	return 1;\
 }
 
+#define EVP_MAXCHUNK ((size_t)1<<(sizeof(long)*8-2))
+
 #define BLOCK_CIPHER_func_ofb(cname, cprefix, cbits, kstruct, ksched) \
-static int cname##_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
+static int cname##_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl) \
 {\
-	cprefix##_ofb##cbits##_encrypt(in, out, (long)inl, &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, &ctx->num);\
+	while(inl>=EVP_MAXCHUNK)\
+	    {\
+	    cprefix##_ofb##cbits##_encrypt(in, out, (long)EVP_MAXCHUNK, &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, &ctx->num);\
+	    inl-=EVP_MAXCHUNK;\
+	    in +=EVP_MAXCHUNK;\
+	    out+=EVP_MAXCHUNK;\
+	    }\
+	if (inl)\
+	    cprefix##_ofb##cbits##_encrypt(in, out, (long)inl, &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, &ctx->num);\
 	return 1;\
 }
 
 #define BLOCK_CIPHER_func_cbc(cname, cprefix, kstruct, ksched) \
-static int cname##_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
+static int cname##_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl) \
 {\
-	cprefix##_cbc_encrypt(in, out, (long)inl, &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, ctx->encrypt);\
+	while(inl>=EVP_MAXCHUNK) \
+	    {\
+	    cprefix##_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, ctx->encrypt);\
+	    inl-=EVP_MAXCHUNK;\
+	    in +=EVP_MAXCHUNK;\
+	    out+=EVP_MAXCHUNK;\
+	    }\
+	if (inl)\
+	    cprefix##_cbc_encrypt(in, out, (long)inl, &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, ctx->encrypt);\
 	return 1;\
 }
 
 #define BLOCK_CIPHER_func_cfb(cname, cprefix, cbits, kstruct, ksched) \
-static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, unsigned int inl) \
+static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in, size_t inl) \
 {\
-	cprefix##_cfb##cbits##_encrypt(in, out, (long)(cbits==1?inl*8:inl), &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, &ctx->num, ctx->encrypt);\
+	size_t chunk=EVP_MAXCHUNK;\
+	if (cbits==1)  chunk>>=3;\
+	if (inl<chunk) chunk=inl;\
+	while(inl && inl>=chunk)\
+	    {\
+	    cprefix##_cfb##cbits##_encrypt(in, out, (long)(cbits==1?chunk*8:chunk), &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, &ctx->num, ctx->encrypt);\
+	    inl-=chunk;\
+	    in +=chunk;\
+	    out+=chunk;\
+	    if(inl<chunk) chunk=inl;\
+	    }\
 	return 1;\
 }
 

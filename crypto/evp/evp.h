@@ -299,7 +299,7 @@ struct evp_cipher_st
 	int (*init)(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		    const unsigned char *iv, int enc);	/* init key */
 	int (*do_cipher)(EVP_CIPHER_CTX *ctx, unsigned char *out,
-			 const unsigned char *in, unsigned int inl);/* encrypt/decrypt data */
+			 const unsigned char *in, size_t inl);/* encrypt/decrypt data */
 	int (*cleanup)(EVP_CIPHER_CTX *); /* cleanup ctx */
 	int ctx_size;		/* how big ctx->cipher_data needs to be */
 	int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Populate a ASN1_TYPE with parameters */
