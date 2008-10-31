@@ -17,10 +17,10 @@ static int	gost_cipher_init_cpa(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	const unsigned char *iv, int enc);
 /* Handles block of data in CFB mode */			
 static int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	const unsigned char *in, unsigned int inl);
+	const unsigned char *in, size_t inl);
 /* Handles block of data in CNT mode */			
 static int	gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	const unsigned char *in, unsigned int inl);
+	const unsigned char *in, size_t inl);
 /* Cleanup function */			
 static int gost_cipher_cleanup(EVP_CIPHER_CTX *);
 /* set/get cipher parameters */
@@ -253,12 +253,12 @@ static void gost_cnt_next (void *ctx, unsigned char *iv, unsigned char *buf)
 
 /* GOST encryption in CFB mode */
 int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	const unsigned char *in, unsigned int inl)
+	const unsigned char *in, size_t inl)
 	{
 	const unsigned char *in_ptr=in;
 	unsigned char *out_ptr=out;
-	unsigned int i=0;
-	unsigned int j=0;
+	size_t i=0;
+	size_t j=0;
 /* process partial block if any */
 	if (ctx->num) 
 		{
@@ -315,12 +315,12 @@ int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	}
 
 static int gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
-	const unsigned char *in, unsigned int inl)
+	const unsigned char *in, size_t inl)
 	{
 	const unsigned char *in_ptr=in;
 	unsigned char *out_ptr=out;
-	unsigned int i=0;
-	unsigned int j;
+	size_t i=0;
+	size_t j;
 /* process partial block if any */
 	if (ctx->num) 
 		{
