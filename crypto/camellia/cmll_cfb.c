@@ -124,12 +124,11 @@
  */
 
 void Camellia_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const CAMELLIA_KEY *key,
+	size_t length, const CAMELLIA_KEY *key,
 	unsigned char *ivec, int *num, const int enc)
 	{
 
 	unsigned int n;
-	unsigned long l = length;
 	unsigned char c;
 
 	assert(in && out && key && ivec && num);
@@ -138,7 +137,7 @@ void Camellia_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 
 	if (enc) 
 		{
-		while (l--) 
+		while (length--) 
 			{
 			if (n == 0) 
 				{
@@ -150,7 +149,7 @@ void Camellia_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 		} 
 	else 
 		{
-		while (l--) 
+		while (length--) 
 			{
 			if (n == 0) 
 				{
@@ -202,10 +201,10 @@ void Camellia_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
 
 /* N.B. This expects the input to be packed, MS bit first */
 void Camellia_cfb1_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const CAMELLIA_KEY *key,
+	size_t length, const CAMELLIA_KEY *key,
 	unsigned char *ivec, int *num, const int enc)
 	{
-	unsigned int n;
+	size_t n;
 	unsigned char c[1],d[1];
 
 	assert(in && out && key && ivec && num);
@@ -221,10 +220,10 @@ void Camellia_cfb1_encrypt(const unsigned char *in, unsigned char *out,
 	}
 
 void Camellia_cfb8_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const CAMELLIA_KEY *key,
+	size_t length, const CAMELLIA_KEY *key,
 	unsigned char *ivec, int *num, const int enc)
 	{
-	unsigned int n;
+	size_t n;
 
 	assert(in && out && key && ivec && num);
 	assert(*num == 0);

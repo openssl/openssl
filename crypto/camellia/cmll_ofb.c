@@ -119,17 +119,16 @@
  * 128bit block we have used is contained in *num;
  */
 void Camellia_ofb128_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const CAMELLIA_KEY *key,
+	size_t length, const CAMELLIA_KEY *key,
 	unsigned char *ivec, int *num) {
 
 	unsigned int n;
-	unsigned long l=length;
 
 	assert(in && out && key && ivec && num);
 
 	n = *num;
 
-	while (l--) {
+	while (length--) {
 		if (n == 0) {
 			Camellia_encrypt(ivec, ivec, key);
 		}

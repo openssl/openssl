@@ -60,11 +60,10 @@
 #include "aes_locl.h"
 
 void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
-		     const unsigned long length, const AES_KEY *key,
+		     size_t len, const AES_KEY *key,
 		     unsigned char *ivec, const int enc) {
 
-	unsigned long n;
-	unsigned long len = length;
+	size_t n;
 	unsigned char tmp[AES_BLOCK_SIZE];
 	const unsigned char *iv = ivec;
 

@@ -64,6 +64,8 @@
 #error RC4 is disabled.
 #endif
 
+#include <stddef.h>
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
@@ -77,7 +79,7 @@ typedef struct rc4_key_st
  
 const char *RC4_options(void);
 void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data);
-void RC4(RC4_KEY *key, unsigned long len, const unsigned char *indata,
+void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
 		unsigned char *outdata);
 
 #ifdef  __cplusplus

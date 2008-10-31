@@ -113,21 +113,20 @@ static void Camellia_ctr128_inc(unsigned char *counter)
  * into the rest of the IV when incremented.
  */
 void Camellia_ctr128_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const CAMELLIA_KEY *key,
+	size_t length, const CAMELLIA_KEY *key,
 	unsigned char ivec[CAMELLIA_BLOCK_SIZE],
 	unsigned char ecount_buf[CAMELLIA_BLOCK_SIZE],
 	unsigned int *num) 
 	{
 
 	unsigned int n;
-	unsigned long l=length;
 
 	assert(in && out && key && counter && num);
 	assert(*num < CAMELLIA_BLOCK_SIZE);
 
 	n = *num;
 
-	while (l--) 
+	while (length--) 
 		{
 		if (n == 0) 
 			{

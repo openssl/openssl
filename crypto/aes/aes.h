@@ -58,6 +58,8 @@
 #error AES is disabled.
 #endif
 
+#include <stddef.h>
+
 #define AES_ENCRYPT	1
 #define AES_DECRYPT	0
 
@@ -96,35 +98,35 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 void AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
 	const AES_KEY *key, const int enc);
 void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const AES_KEY *key,
+	size_t length, const AES_KEY *key,
 	unsigned char *ivec, const int enc);
 void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-	unsigned long length, const AES_KEY *key,
+	size_t length, const AES_KEY *key,
 	unsigned char *ivec, int *num, const int enc);
 void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const AES_KEY *key,
+	size_t length, const AES_KEY *key,
 	unsigned char *ivec, int *num, const int enc);
 void AES_cfb8_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const AES_KEY *key,
+	size_t length, const AES_KEY *key,
 	unsigned char *ivec, int *num, const int enc);
 void AES_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
 			    const int nbits,const AES_KEY *key,
 			    unsigned char *ivec,const int enc);
 void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
-	unsigned long length, const AES_KEY *key,
+	size_t length, const AES_KEY *key,
 	unsigned char *ivec, int *num);
 void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const AES_KEY *key,
+	size_t length, const AES_KEY *key,
 	unsigned char ivec[AES_BLOCK_SIZE],
 	unsigned char ecount_buf[AES_BLOCK_SIZE],
 	unsigned int *num);
 /* NB: the IV is _two_ blocks long */
 void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
-		     const unsigned long length, const AES_KEY *key,
+		     size_t length, const AES_KEY *key,
 		     unsigned char *ivec, const int enc);
 /* NB: the IV is _four_ blocks long */
 void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
-			const unsigned long length, const AES_KEY *key,
+			size_t length, const AES_KEY *key,
 			const AES_KEY *key2, const unsigned char *ivec,
 			const int enc);
 

@@ -71,11 +71,11 @@
  * 128bit block we have used is contained in *num;
  */
 void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
-	unsigned long length, const AES_KEY *key,
+	size_t length, const AES_KEY *key,
 	unsigned char *ivec, int *num) {
 
 	unsigned int n;
-	unsigned long l=0;
+	size_t l=0;
 
 	assert(in && out && key && ivec && num);
 

@@ -73,11 +73,11 @@
  */
 
 void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
-	unsigned long length, const AES_KEY *key,
+	size_t length, const AES_KEY *key,
 	unsigned char *ivec, int *num, const int enc) {
 
     unsigned int n;
-    unsigned long l = 0;
+    size_t l = 0;
 
     assert(in && out && key && ivec && num);
 
@@ -219,10 +219,10 @@ void AES_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
 
 /* N.B. This expects the input to be packed, MS bit first */
 void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
-		      const unsigned long length, const AES_KEY *key,
+		      size_t length, const AES_KEY *key,
 		      unsigned char *ivec, int *num, const int enc)
     {
-    unsigned int n;
+    size_t n;
     unsigned char c[1],d[1];
 
     assert(in && out && key && ivec && num);
@@ -238,10 +238,10 @@ void AES_cfb1_encrypt(const unsigned char *in, unsigned char *out,
     }
 
 void AES_cfb8_encrypt(const unsigned char *in, unsigned char *out,
-		      const unsigned long length, const AES_KEY *key,
+		      size_t length, const AES_KEY *key,
 		      unsigned char *ivec, int *num, const int enc)
     {
-    unsigned int n;
+    size_t n;
 
     assert(in && out && key && ivec && num);
     assert(*num == 0);

@@ -60,12 +60,11 @@
 #include <openssl/camellia.h>
 #include "cmll_locl.h"
 void Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out,
-	const unsigned long length, const CAMELLIA_KEY *key,
+	size_t len, const CAMELLIA_KEY *key,
 	unsigned char *ivec, const int enc) 
 	{
 
-	unsigned long n;
-	unsigned long len = length;
+	size_t n;
 	unsigned char tmp[CAMELLIA_BLOCK_SIZE];
 	const unsigned char *iv = ivec;
 
