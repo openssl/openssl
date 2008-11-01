@@ -415,7 +415,8 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	return 1;
 	}
 
-typedef BN_ULONG (*bn_addsub_f)(BN_ULONG *,const BN_ULONG *,const BN_ULONG *,int);
+typedef BN_ULONG (*bn_addsub_f)(BN_ULONG *, const BN_ULONG *, const BN_ULONG *,
+				size_t);
 
 #define nist_set_224(to, from, a1, a2, a3, a4, a5, a6, a7) \
 	{ \
@@ -429,7 +430,7 @@ typedef BN_ULONG (*bn_addsub_f)(BN_ULONG *,const BN_ULONG *,const BN_ULONG *,int
 	}
 
 int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
-	BN_CTX *ctx)
+		    BN_CTX *ctx)
 	{
 	int	top = a->top, i;
 	int	carry;

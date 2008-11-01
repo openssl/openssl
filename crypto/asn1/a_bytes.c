@@ -64,12 +64,12 @@ static int asn1_collate_primitive(ASN1_STRING *a, ASN1_const_CTX *c);
 /* type is a 'bitmap' of acceptable string types.
  */
 ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a, const unsigned char **pp,
-	     long length, int type)
+				 size_t length, int type)
 	{
 	ASN1_STRING *ret=NULL;
 	const unsigned char *p;
 	unsigned char *s;
-	long len;
+	size_t len;
 	int inf,tag,xclass;
 	int i=0;
 
@@ -155,12 +155,12 @@ int i2d_ASN1_bytes(ASN1_STRING *a, unsigned char **pp, int tag, int xclass)
 	}
 
 ASN1_STRING *d2i_ASN1_bytes(ASN1_STRING **a, const unsigned char **pp,
-	     long length, int Ptag, int Pclass)
+			    size_t length, int Ptag, int Pclass)
 	{
 	ASN1_STRING *ret=NULL;
 	const unsigned char *p;
 	unsigned char *s;
-	long len;
+	size_t len;
 	int inf,tag,xclass;
 	int i=0;
 

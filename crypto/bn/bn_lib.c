@@ -315,7 +315,7 @@ BIGNUM *BN_new(void)
 
 /* This is used both by bn_expand2() and bn_dup_expand() */
 /* The caller MUST check that words > b->dmax before calling this */
-static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
+static BN_ULONG *bn_expand_internal(const BIGNUM *b, size_t words)
 	{
 	BN_ULONG *A,*a = NULL;
 	const BN_ULONG *B;
@@ -391,7 +391,7 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
  */
 
 #ifndef OPENSSL_NO_DEPRECATED
-BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
+BIGNUM *bn_dup_expand(const BIGNUM *b, size_t words)
 	{
 	BIGNUM *r = NULL;
 
@@ -442,7 +442,7 @@ BIGNUM *bn_dup_expand(const BIGNUM *b, int words)
  * It is mostly used by the various BIGNUM routines. If there is an error,
  * NULL is returned. If not, 'b' is returned. */
 
-BIGNUM *bn_expand2(BIGNUM *b, int words)
+BIGNUM *bn_expand2(BIGNUM *b, size_t words)
 	{
 	bn_check_top(b);
 
@@ -594,7 +594,7 @@ int BN_set_word(BIGNUM *a, BN_ULONG w)
 	return(1);
 	}
 
-BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
+BIGNUM *BN_bin2bn(const unsigned char *s, size_t len, BIGNUM *ret)
 	{
 	unsigned int i,m;
 	unsigned int n;
@@ -614,7 +614,7 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
 		}
 	i=((n-1)/BN_BYTES)+1;
 	m=((n-1)%(BN_BYTES));
-	if (bn_wexpand(ret, (int)i) == NULL)
+	if (bn_wexpand(ret, i) == NULL)
 		{
 		if (bn) BN_free(bn);
 		return NULL;
@@ -718,7 +718,7 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
 
 int BN_set_bit(BIGNUM *a, int n)
 	{
-	int i,j,k;
+	size_t i,j,k;
 
 	if (n < 0)
 		return 0;

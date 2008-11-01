@@ -83,11 +83,13 @@ int i2d_ASN1_OBJECT(ASN1_OBJECT *a, unsigned char **pp)
 	return(objsize);
 	}
 
-int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
+size_t a2d_ASN1_OBJECT(unsigned char *out, size_t olen, const char *buf,
+		       int num)
 	{
-	int i,first,len=0,c, use_bn;
+	int i,len=0,c, use_bn;
+	unsigned first;
 	char ftmp[24], *tmp = ftmp;
-	int tmpsize = sizeof ftmp;
+	size_t tmpsize = sizeof ftmp;
 	const char *p;
 	unsigned long l;
 	BIGNUM *bl = NULL;
@@ -150,11 +152,11 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 			if (use_bn)
 				{
 				if (!BN_mul_word(bl, 10L)
-					|| !BN_add_word(bl, c-'0'))
+				    || !BN_add_signed_word(bl, c-'0'))
 					goto err;
 				}
 			else
-				l=l*10L+(long)(c-'0');
+				l=l*10L+(c-'0');
 			}
 		if (len == 0)
 			{
@@ -227,7 +229,7 @@ err:
 	return(0);
 	}
 
-int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a)
+int i2t_ASN1_OBJECT(char *buf, size_t buf_len, ASN1_OBJECT *a)
 {
 	return OBJ_obj2txt(buf, buf_len, a, 0);
 }
@@ -235,7 +237,7 @@ int i2t_ASN1_OBJECT(char *buf, int buf_len, ASN1_OBJECT *a)
 int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 	{
 	char buf[80], *p = buf;
-	int i;
+	size_t i;
 
 	if ((a == NULL) || (a->data == NULL))
 		return(BIO_write(bp,"NULL",4));
@@ -256,13 +258,14 @@ int i2a_ASN1_OBJECT(BIO *bp, ASN1_OBJECT *a)
 	}
 
 ASN1_OBJECT *d2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
-	     long length)
+			     size_t length)
 {
 	const unsigned char *p;
-	long len;
+	size_t len;
 	int tag,xclass;
 	int inf,i;
 	ASN1_OBJECT *ret = NULL;
+
 	p= *pp;
 	inf=ASN1_get_object(&p,&len,&tag,&xclass,length);
 	if (inf & 0x80)
@@ -284,7 +287,7 @@ err:
 	return(NULL);
 }
 ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
-	     long len)
+			     size_t len)
 	{
 	ASN1_OBJECT *ret=NULL;
 	const unsigned char *p;
@@ -309,15 +312,15 @@ ASN1_OBJECT *c2i_ASN1_OBJECT(ASN1_OBJECT **a, const unsigned char **pp,
 		{
 		ret->length=0;
 		if (data != NULL) OPENSSL_free(data);
-		data=(unsigned char *)OPENSSL_malloc(len ? (int)len : 1);
+		data=OPENSSL_malloc(len ? len : 1);
 		if (data == NULL)
 			{ i=ERR_R_MALLOC_FAILURE; goto err; }
 		ret->flags|=ASN1_OBJECT_FLAG_DYNAMIC_DATA;
 		}
-	memcpy(data,p,(int)len);
+	memcpy(data,p,len);
 	/* reattach data to object, after which it remains const */
-	ret->data  =data;
-	ret->length=(int)len;
+	ret->data=data;
+	ret->length=len;
 	ret->sn=NULL;
 	ret->ln=NULL;
 	/* ret->flags=ASN1_OBJECT_FLAG_DYNAMIC; we know it is dynamic */
@@ -373,7 +376,7 @@ void ASN1_OBJECT_free(ASN1_OBJECT *a)
 		OPENSSL_free(a);
 	}
 
-ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, int len,
+ASN1_OBJECT *ASN1_OBJECT_create(int nid, unsigned char *data, size_t len,
 	     const char *sn, const char *ln)
 	{
 	ASN1_OBJECT o;

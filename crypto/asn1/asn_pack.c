@@ -66,7 +66,7 @@
 
 /* Turn an ASN1 encoded SEQUENCE OF into a STACK of structures */
 
-STACK_OF(BLOCK) *ASN1_seq_unpack(const unsigned char *buf, int len,
+STACK_OF(BLOCK) *ASN1_seq_unpack(const unsigned char *buf, size_t len,
 				 d2i_of_void *d2i, void (*free_func)(BLOCK))
 {
     STACK_OF(BLOCK) *sk;
@@ -83,7 +83,7 @@ STACK_OF(BLOCK) *ASN1_seq_unpack(const unsigned char *buf, int len,
  */
 
 unsigned char *ASN1_seq_pack(STACK_OF(BLOCK) *safes, i2d_of_void *i2d,
-			     unsigned char **buf, int *len)
+			     unsigned char **buf, size_t *len)
 {
 	int safelen;
 	unsigned char *safe, *p;

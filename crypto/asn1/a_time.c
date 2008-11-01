@@ -135,11 +135,12 @@ int ASN1_TIME_check(ASN1_TIME *t)
 	}
 
 /* Convert an ASN1_TIME structure to GeneralizedTime */
-ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out)
+ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t,
+						   ASN1_GENERALIZEDTIME **out)
 	{
 	ASN1_GENERALIZEDTIME *ret;
 	char *str;
-	int newlen;
+	size_t newlen;
 
 	if (!ASN1_TIME_check(t)) return NULL;
 

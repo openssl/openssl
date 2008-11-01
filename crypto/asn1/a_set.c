@@ -164,7 +164,7 @@ SetBlob
         }
 
 STACK_OF(BLOCK) *d2i_ASN1_SET(STACK_OF(BLOCK) **a, const unsigned char **pp,
-			      long length, d2i_of_void *d2i,
+			      size_t length, d2i_of_void *d2i,
 			      void (*free_func)(BLOCK), int ex_tag,
 			      int ex_class)
 	{

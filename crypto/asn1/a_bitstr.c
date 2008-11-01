@@ -60,12 +60,13 @@
 #include "cryptlib.h"
 #include <openssl/asn1.h>
 
-int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, int len)
-{ return M_ASN1_BIT_STRING_set(x, d, len); }
+int ASN1_BIT_STRING_set(ASN1_BIT_STRING *x, unsigned char *d, size_t len)
+	{ return M_ASN1_BIT_STRING_set(x, d, len); }
 
 int i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	{
-	int ret,j,bits,len;
+	int ret,j,bits;
+	size_t len;
 	unsigned char *p,*d;
 
 	if (a == NULL) return(0);
@@ -114,7 +115,7 @@ int i2c_ASN1_BIT_STRING(ASN1_BIT_STRING *a, unsigned char **pp)
 	}
 
 ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
-	const unsigned char **pp, long len)
+				     const unsigned char **pp, size_t len)
 	{
 	ASN1_BIT_STRING *ret=NULL;
 	const unsigned char *p;
@@ -144,13 +145,13 @@ ASN1_BIT_STRING *c2i_ASN1_BIT_STRING(ASN1_BIT_STRING **a,
 
 	if (len-- > 1) /* using one because of the bits left byte */
 		{
-		s=(unsigned char *)OPENSSL_malloc((int)len);
+		s=OPENSSL_malloc(len);
 		if (s == NULL)
 			{
 			i=ERR_R_MALLOC_FAILURE;
 			goto err;
 			}
-		memcpy(s,p,(int)len);
+		memcpy(s,p,len);
 		s[len-1]&=(0xff<<i);
 		p+=len;
 		}
@@ -173,9 +174,10 @@ err:
 
 /* These next 2 functions from Goetz Babin-Ebell <babinebell@trustcenter.de>
  */
-int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
+int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, size_t n, int value)
 	{
-	int w,v,iv;
+	int v,iv;
+	size_t w;
 	unsigned char *c;
 
 	w=n/8;
@@ -192,11 +194,9 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 		{
 		if (!value) return(1); /* Don't need to set */
 		if (a->data == NULL)
-			c=(unsigned char *)OPENSSL_malloc(w+1);
+			c=OPENSSL_malloc(w+1);
 		else
-			c=(unsigned char *)OPENSSL_realloc_clean(a->data,
-								 a->length,
-								 w+1);
+			c=OPENSSL_realloc_clean(a->data, a->length, w+1);
 		if (c == NULL)
 			{
 			ASN1err(ASN1_F_ASN1_BIT_STRING_SET_BIT,ERR_R_MALLOC_FAILURE);
@@ -212,7 +212,7 @@ int ASN1_BIT_STRING_set_bit(ASN1_BIT_STRING *a, int n, int value)
 	return(1);
 	}
 
-int ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n)
+int ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, size_t n)
 	{
 	int w,v;
 
@@ -230,7 +230,7 @@ int ASN1_BIT_STRING_get_bit(ASN1_BIT_STRING *a, int n)
  * 'len' is the length of 'flags'.
  */
 int ASN1_BIT_STRING_check(ASN1_BIT_STRING *a,
-			  unsigned char *flags, int flags_len)
+			  unsigned char *flags, size_t flags_len)
 	{
 	int i, ok;
 	/* Check if there is one bit set at all. */

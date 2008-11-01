@@ -63,11 +63,11 @@
 #include <openssl/asn1.h>
 
 static int asn1_print_info(BIO *bp, int tag, int xclass,int constructed,
-	int indent);
-static int asn1_parse2(BIO *bp, const unsigned char **pp, long length,
-	int offset, int depth, int indent, int dump);
+			   int indent);
+static int asn1_parse2(BIO *bp, const unsigned char **pp, size_t length,
+		       int offset, int depth, int indent, int dump);
 static int asn1_print_info(BIO *bp, int tag, int xclass, int constructed,
-	     int indent)
+			   int indent)
 	{
 	static const char fmt[]="%-18s";
 	char str[128];
@@ -99,21 +99,22 @@ err:
 	return(0);
 	}
 
-int ASN1_parse(BIO *bp, const unsigned char *pp, long len, int indent)
+int ASN1_parse(BIO *bp, const unsigned char *pp, size_t len, int indent)
 	{
 	return(asn1_parse2(bp,&pp,len,0,0,indent,0));
 	}
 
-int ASN1_parse_dump(BIO *bp, const unsigned char *pp, long len, int indent, int dump)
+int ASN1_parse_dump(BIO *bp, const unsigned char *pp, size_t len, int indent,
+		    int dump)
 	{
 	return(asn1_parse2(bp,&pp,len,0,0,indent,dump));
 	}
 
-static int asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offset,
-	     int depth, int indent, int dump)
+static int asn1_parse2(BIO *bp, const unsigned char **pp, size_t length,
+		       int offset, int depth, int indent, int dump)
 	{
 	const unsigned char *p,*ep,*tot,*op,*opp;
-	long len;
+	size_t len;
 	int tag,xclass,ret=0;
 	int nl,hl,j,r;
 	ASN1_OBJECT *o=NULL;
@@ -152,13 +153,13 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offse
 		if (j != (V_ASN1_CONSTRUCTED | 1))
 			{
 			if (BIO_printf(bp,"d=%-2d hl=%ld l=%4ld ",
-				depth,(long)hl,len) <= 0)
+				       depth,(long)hl,(long)len) <= 0)
 				goto end;
 			}
 		else
 			{
 			if (BIO_printf(bp,"d=%-2d hl=%ld l=inf  ",
-				depth,(long)hl) <= 0)
+				       depth,(long)hl) <= 0)
 				goto end;
 			}
 		if (!asn1_print_info(bp,tag,xclass,j,(indent)?depth:0))
@@ -170,7 +171,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offse
 			if (len > length)
 				{
 				BIO_printf(bp,
-					"length is greater than %ld\n",length);
+					   "length is greater than %ld\n",
+					   (long)length);
 				ret=0;
 				goto end;
 				}

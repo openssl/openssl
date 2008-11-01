@@ -61,7 +61,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1_mac.h>
 
-int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
+int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, size_t len)
 	{
 	ASN1_STRING *os;
 
@@ -73,7 +73,7 @@ int ASN1_TYPE_set_octetstring(ASN1_TYPE *a, unsigned char *data, int len)
 
 /* int max_len:  for returned value    */
 int ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data,
-	     int max_len)
+			      size_t max_len)
 	{
 	int ret,num;
 	unsigned char *p;
@@ -94,7 +94,7 @@ int ASN1_TYPE_get_octetstring(ASN1_TYPE *a, unsigned char *data,
 	}
 
 int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
-	     int len)
+				  size_t len)
 	{
 	int n,size;
 	ASN1_OCTET_STRING os,*osp;
@@ -136,7 +136,7 @@ int ASN1_TYPE_set_int_octetstring(ASN1_TYPE *a, long num, unsigned char *data,
  * case, set it to zero */
 /* int max_len:  for returned value    */
 int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
-	     int max_len)
+				  size_t max_len)
 	{
 	int ret= -1,n;
 	ASN1_INTEGER *ai=NULL;

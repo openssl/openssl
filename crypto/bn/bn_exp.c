@@ -521,7 +521,8 @@ err:
  * as cache lines are concerned.  The following functions are used to transfer a BIGNUM
  * from/to that table. */
 
-static int MOD_EXP_CTIME_COPY_TO_PREBUF(BIGNUM *b, int top, unsigned char *buf, int idx, int width)
+static int MOD_EXP_CTIME_COPY_TO_PREBUF(BIGNUM *b, size_t top,
+					unsigned char *buf, int idx, int width)
 	{
 	size_t i, j;
 
@@ -541,7 +542,9 @@ static int MOD_EXP_CTIME_COPY_TO_PREBUF(BIGNUM *b, int top, unsigned char *buf, 
 	return 1;
 	}
 
-static int MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top, unsigned char *buf, int idx, int width)
+static int MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, size_t top,
+					  unsigned char *buf, int idx,
+					  int width)
 	{
 	size_t i, j;
 
@@ -572,14 +575,14 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 		    const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *in_mont)
 	{
 	int i,bits,ret=0,idx,window,wvalue;
-	int top;
+	size_t top;
  	BIGNUM *r;
 	const BIGNUM *aa;
 	BN_MONT_CTX *mont=NULL;
 
 	int numPowers;
 	unsigned char *powerbufFree=NULL;
-	int powerbufLen = 0;
+	size_t powerbufLen = 0;
 	unsigned char *powerbuf=NULL;
 	BIGNUM *computeTemp=NULL, *am=NULL;
 
@@ -625,7 +628,7 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	 */
 	numPowers = 1 << window;
 	powerbufLen = sizeof(m->d[0])*top*numPowers;
-	if ((powerbufFree=(unsigned char*)OPENSSL_malloc(powerbufLen+MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH)) == NULL)
+	if ((powerbufFree=OPENSSL_malloc(powerbufLen+MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH)) == NULL)
 		goto err;
 		
 	powerbuf = MOD_EXP_CTIME_ALIGN(powerbufFree);

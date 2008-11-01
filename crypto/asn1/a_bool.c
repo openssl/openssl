@@ -75,11 +75,11 @@ int i2d_ASN1_BOOLEAN(int a, unsigned char **pp)
 	return(r);
 	}
 
-int d2i_ASN1_BOOLEAN(int *a, const unsigned char **pp, long length)
+int d2i_ASN1_BOOLEAN(int *a, const unsigned char **pp, size_t length)
 	{
 	int ret= -1;
 	const unsigned char *p;
-	long len;
+	size_t len;
 	int inf,tag,xclass;
 	int i=0;
 

@@ -176,7 +176,7 @@ int i2c_ASN1_INTEGER(ASN1_INTEGER *a, unsigned char **pp)
 /* Convert just ASN1 INTEGER content octets to ASN1_INTEGER structure */
 
 ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
-	     long len)
+			       size_t len)
 	{
 	ASN1_INTEGER *ret=NULL;
 	const unsigned char *p, *pend;
@@ -196,7 +196,7 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 
 	/* We must OPENSSL_malloc stuff, even for 0 bytes otherwise it
 	 * signifies a missing NULL parameter. */
-	s=(unsigned char *)OPENSSL_malloc((int)len+1);
+	s=OPENSSL_malloc(len+1);
 	if (s == NULL)
 		{
 		i=ERR_R_MALLOC_FAILURE;
@@ -246,7 +246,7 @@ ASN1_INTEGER *c2i_ASN1_INTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 			p++;
 			len--;
 			}
-		memcpy(s,p,(int)len);
+		memcpy(s,p,len);
 	}
 
 	if (ret->data != NULL) OPENSSL_free(ret->data);
@@ -269,12 +269,12 @@ err:
  */
 
 ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
-	     long length)
+				size_t length)
 	{
 	ASN1_INTEGER *ret=NULL;
 	const unsigned char *p;
 	unsigned char *to,*s;
-	long len;
+	size_t len;
 	int inf,tag,xclass;
 	int i;
 
@@ -302,7 +302,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 
 	/* We must OPENSSL_malloc stuff, even for 0 bytes otherwise it
 	 * signifies a missing NULL parameter. */
-	s=(unsigned char *)OPENSSL_malloc((int)len+1);
+	s=OPENSSL_malloc(len+1);
 	if (s == NULL)
 		{
 		i=ERR_R_MALLOC_FAILURE;
@@ -316,7 +316,7 @@ ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
 			p++;
 			len--;
 			}
-		memcpy(s,p,(int)len);
+		memcpy(s,p,len);
 		p+=len;
 	}
 
@@ -405,7 +405,7 @@ long ASN1_INTEGER_get(const ASN1_INTEGER *a)
 ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
 	{
 	ASN1_INTEGER *ret;
-	int len,j;
+	size_t len,j;
 
 	if (ai == NULL)
 		ret=M_ASN1_INTEGER_new();
@@ -423,7 +423,7 @@ ASN1_INTEGER *BN_to_ASN1_INTEGER(const BIGNUM *bn, ASN1_INTEGER *ai)
 	len=((j == 0)?0:((j/8)+1));
 	if (ret->length < len+4)
 		{
-		unsigned char *new_data=OPENSSL_realloc(ret->data, len+4);
+		unsigned char *new_data=OPENSSL_realloc(ret->data, len+4U);
 		if (!new_data)
 			{
 			ASN1err(ASN1_F_BN_TO_ASN1_INTEGER,ERR_R_MALLOC_FAILURE);

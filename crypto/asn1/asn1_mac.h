@@ -279,7 +279,7 @@ err:\
 		(V_ASN1_CONSTRUCTED|V_ASN1_CONTEXT_SPECIFIC|tag))) \
 		{ \
 		int Tinf,Ttag,Tclass; \
-		long Tlen; \
+		size_t Tlen; \
 		\
 		c.q=c.p; \
 		Tinf=ASN1_get_object(&c.p,&Tlen,&Ttag,&Tclass,c.slen); \

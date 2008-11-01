@@ -208,18 +208,18 @@ err:
 	return(ret);
 	}
 
-int     BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
+int     BN_rand(BIGNUM *rnd, size_t bits, int top, int bottom)
 	{
 	return bnrand(0, rnd, bits, top, bottom);
 	}
 
-int     BN_pseudo_rand(BIGNUM *rnd, int bits, int top, int bottom)
+int     BN_pseudo_rand(BIGNUM *rnd, size_t bits, int top, int bottom)
 	{
 	return bnrand(1, rnd, bits, top, bottom);
 	}
 
 #if 1
-int     BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
+int     BN_bntest_rand(BIGNUM *rnd, size_t bits, int top, int bottom)
 	{
 	return bnrand(2, rnd, bits, top, bottom);
 	}
@@ -229,7 +229,8 @@ int     BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom)
 /* random number r:  0 <= r < range */
 static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
 	{
-	int (*bn_rand)(BIGNUM *, int, int, int) = pseudo ? BN_pseudo_rand : BN_rand;
+	int (*bn_rand)(BIGNUM *, size_t, int, int)
+	    = pseudo ? BN_pseudo_rand : BN_rand;
 	int n;
 	int count = 100;
 

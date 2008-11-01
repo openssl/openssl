@@ -478,7 +478,7 @@ int CRYPTO_remove_all_info(void)
 
 
 static unsigned long break_order_num=0;
-void CRYPTO_dbg_malloc(void *addr, int num, const char *file, int line,
+void CRYPTO_dbg_malloc(void *addr, size_t num, const char *file, int line,
 	int before_p)
 	{
 	MEM *m,*mm;
@@ -602,8 +602,8 @@ void CRYPTO_dbg_free(void *addr, int before_p)
 		}
 	}
 
-void CRYPTO_dbg_realloc(void *addr1, void *addr2, int num,
-	const char *file, int line, int before_p)
+void CRYPTO_dbg_realloc(void *addr1, void *addr2, size_t num,
+			const char *file, int line, int before_p)
 	{
 	MEM m,*mp;
 
@@ -666,7 +666,7 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 	char buf[1024];
 	char *bufp = buf;
 	APP_INFO *amip;
-	int ami_cnt;
+	size_t ami_cnt;
 	struct tm *lcl = NULL;
 	CRYPTO_THREADID ti;
 
@@ -712,7 +712,7 @@ static void print_leak_doall_arg(const MEM *m, MEM_LEAK *l)
 
 	do
 		{
-		int buf_len;
+		size_t buf_len;
 		int info_len;
 
 		ami_cnt++;

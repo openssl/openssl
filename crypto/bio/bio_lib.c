@@ -156,12 +156,14 @@ void	BIO_set_flags(BIO *b, int flags)
 	b->flags |= flags;
 	}
 
-long (*BIO_get_callback(const BIO *b))(struct bio_st *,int,const char *,int, long,long)
+long (*BIO_get_callback(const BIO *b))(struct bio_st *, int, const char *,
+				       size_t, long, long)
 	{
 	return b->callback;
 	}
 
-void BIO_set_callback(BIO *b, long (*cb)(struct bio_st *,int,const char *,int, long,long))
+void BIO_set_callback(BIO *b, long (*cb)(struct bio_st *, int, const char *,
+					 size_t, long, long))
 	{
 	b->callback = cb;
 	}
@@ -190,7 +192,7 @@ int BIO_method_type(const BIO *b)
 int BIO_read(BIO *b, void *out, int outl)
 	{
 	int i;
-	long (*cb)(BIO *,int,const char *,int,long,long);
+	long (*cb)(BIO *, int, const char *, size_t, long, long);
 
 	if ((b == NULL) || (b->method == NULL) || (b->method->bread == NULL))
 		{
@@ -219,10 +221,10 @@ int BIO_read(BIO *b, void *out, int outl)
 	return(i);
 	}
 
-int BIO_write(BIO *b, const void *in, int inl)
+int BIO_write(BIO *b, const void *in, size_t inl)
 	{
 	int i;
-	long (*cb)(BIO *,int,const char *,int,long,long);
+	long (*cb)(BIO *,int,const char *,size_t,long,long);
 
 	if (b == NULL)
 		return(0);
@@ -235,7 +237,7 @@ int BIO_write(BIO *b, const void *in, int inl)
 		}
 
 	if ((cb != NULL) &&
-		((i=(int)cb(b,BIO_CB_WRITE,in,inl,0L,1L)) <= 0))
+		((i=cb(b,BIO_CB_WRITE,in,inl,0L,1L)) <= 0))
 			return(i);
 
 	if (!b->init)
@@ -257,7 +259,7 @@ int BIO_write(BIO *b, const void *in, int inl)
 int BIO_puts(BIO *b, const char *in)
 	{
 	int i;
-	long (*cb)(BIO *,int,const char *,int,long,long);
+	long (*cb)(BIO *, int, const char *, size_t, long, long);
 
 	if ((b == NULL) || (b->method == NULL) || (b->method->bputs == NULL))
 		{
@@ -290,7 +292,7 @@ int BIO_puts(BIO *b, const char *in)
 int BIO_gets(BIO *b, char *in, int inl)
 	{
 	int i;
-	long (*cb)(BIO *,int,const char *,int,long,long);
+	long (*cb)(BIO *, int, const char *, size_t, long, long);
 
 	if ((b == NULL) || (b->method == NULL) || (b->method->bgets == NULL))
 		{
@@ -351,7 +353,7 @@ char *BIO_ptr_ctrl(BIO *b, int cmd, long larg)
 long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
 	{
 	long ret;
-	long (*cb)(BIO *,int,const char *,int,long,long);
+	long (*cb)(BIO *, int, const char *, size_t, long, long);
 
 	if (b == NULL) return(0);
 
@@ -378,7 +380,7 @@ long BIO_ctrl(BIO *b, int cmd, long larg, void *parg)
 long BIO_callback_ctrl(BIO *b, int cmd, void (*fp)(struct bio_st *, int, const char *, int, long, long))
 	{
 	long ret;
-	long (*cb)(BIO *,int,const char *,int,long,long);
+	long (*cb)(BIO *, int, const char *, size_t, long, long);
 
 	if (b == NULL) return(0);
 

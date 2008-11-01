@@ -181,11 +181,12 @@ static int BN_div_no_branch(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
 int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	   BN_CTX *ctx)
 	{
-	int norm_shift,i,loop;
+	int norm_shift,i;
+	size_t loop;
 	BIGNUM *tmp,wnum,*snum,*sdiv,*res;
 	BN_ULONG *resp,*wnump;
 	BN_ULONG d0,d1;
-	int num_n,div_n;
+	size_t num_n,div_n;
 
 	/* Invalid zero-padding would have particularly bad consequences
 	 * in the case of 'num', so don't just rely on bn_check_top() for this one
@@ -265,7 +266,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
 	resp= &(res->d[loop-1]);
 
 	/* space for temp */
-	if (!bn_wexpand(tmp,(div_n+1))) goto err;
+	if (!bn_wexpand(tmp, div_n+1)) goto err;
 
 	if (BN_ucmp(&wnum,sdiv) >= 0)
 		{
@@ -429,7 +430,7 @@ static int BN_div_no_branch(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
 	BIGNUM *tmp,wnum,*snum,*sdiv,*res;
 	BN_ULONG *resp,*wnump;
 	BN_ULONG d0,d1;
-	int num_n,div_n;
+	size_t num_n,div_n;
 
 	bn_check_top(dv);
 	bn_check_top(rm);
@@ -498,12 +499,12 @@ static int BN_div_no_branch(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
 
 	/* Setup to 'res' */
 	res->neg= (num->neg^divisor->neg);
-	if (!bn_wexpand(res,(loop+1))) goto err;
+	if (!bn_wexpand(res,loop+1U)) goto err;
 	res->top=loop-1;
 	resp= &(res->d[loop-1]);
 
 	/* space for temp */
-	if (!bn_wexpand(tmp,(div_n+1))) goto err;
+	if (!bn_wexpand(tmp,div_n+1U)) goto err;
 
 	/* if res->top == 0 then clear the neg value otherwise decrease
 	 * the resp pointer */

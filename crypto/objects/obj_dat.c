@@ -431,7 +431,8 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	unsigned char *buf;
 	unsigned char *p;
 	const unsigned char *cp;
-	int i, j;
+	size_t i;
+	size_t j;
 
 	if(!no_name) {
 		if( ((nid = OBJ_sn2nid(s)) != NID_undef) ||
@@ -441,7 +442,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 
 	/* Work out size of content octets */
 	i=a2d_ASN1_OBJECT(NULL,0,s,-1);
-	if (i <= 0) {
+	if (i == 0) {
 		/* Don't clear the error */
 		/*ERR_clear_error();*/
 		return NULL;
@@ -449,7 +450,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	/* Work out total size */
 	j = ASN1_object_size(0,i,V_ASN1_OBJECT);
 
-	if((buf=(unsigned char *)OPENSSL_malloc(j)) == NULL) return NULL;
+	if((buf=OPENSSL_malloc(j)) == NULL) return NULL;
 
 	p = buf;
 	/* Write out tag+length */
@@ -463,7 +464,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
 	return op;
 	}
 
-int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
+int OBJ_obj2txt(char *buf, size_t buf_len, const ASN1_OBJECT *a, int no_name)
 {
 	int i,n=0,len,nid, first, use_bn;
 	BIGNUM *bl;
@@ -508,7 +509,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
 				goto err;
 			if (use_bn)
 				{
-				if (!BN_add_word(bl, c & 0x7f))
+				if (!BN_add_word(bl, c & 0x7fU))
 					goto err;
 				}
 			else
@@ -782,12 +783,13 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
 	int ok=0;
 	ASN1_OBJECT *op=NULL;
 	unsigned char *buf;
-	int i;
+	size_t i;
 
 	i=a2d_ASN1_OBJECT(NULL,0,oid,-1);
-	if (i <= 0) return(0);
+	if (i == 0)
+	    return 0;
 
-	if ((buf=(unsigned char *)OPENSSL_malloc(i)) == NULL)
+	if ((buf=OPENSSL_malloc(i)) == NULL)
 		{
 		OBJerr(OBJ_F_OBJ_CREATE,ERR_R_MALLOC_FAILURE);
 		return(0);
@@ -795,7 +797,7 @@ int OBJ_create(const char *oid, const char *sn, const char *ln)
 	i=a2d_ASN1_OBJECT(buf,i,oid,-1);
 	if (i == 0)
 		goto err;
-	op=(ASN1_OBJECT *)ASN1_OBJECT_create(OBJ_new_nid(1),buf,i,sn,ln);
+	op=ASN1_OBJECT_create(OBJ_new_nid(1),buf,i,sn,ln);
 	if (op == NULL) 
 		goto err;
 	ok=OBJ_add_object(op);

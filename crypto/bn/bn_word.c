@@ -168,6 +168,13 @@ int BN_add_word(BIGNUM *a, BN_ULONG w)
 	return(1);
 	}
 
+int BN_add_signed_word(BIGNUM *a, BN_LONG w)
+	{
+	if(w < 0)
+		return 0;
+	return BN_add_word(a, (BN_ULONG)w);
+	}
+
 int BN_sub_word(BIGNUM *a, BN_ULONG w)
 	{
 	int i;
