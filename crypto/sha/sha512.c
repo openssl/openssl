@@ -350,7 +350,7 @@ static const SHA_LONG64 K512[80] = {
 #ifndef PEDANTIC
 # if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 #  if defined(__x86_64) || defined(__x86_64__)
-#   define ROTR(a,n)	({ unsigned long ret;		\
+#   define ROTR(a,n)	({ SHA_LONG64 ret;		\
 				asm ("rorq %1,%0"	\
 				: "=r"(ret)		\
 				: "J"(n),"0"(a)		\
@@ -387,6 +387,7 @@ static const SHA_LONG64 K512[80] = {
 #  endif
 # elif defined(_MSC_VER)
 #  if defined(_WIN64)	/* applies to both IA-64 and AMD64 */
+#   pragma intrinsic(_rotr64)
 #   define ROTR(a,n)	_rotr64((a),n)
 #  endif
 #  if defined(_M_IX86) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
