@@ -65,7 +65,7 @@
 typedef struct
     {
     unsigned char *pbData;
-    int cbData;
+    size_t cbData;
     } MYBLOB;
 
 /* SetBlobCmp
@@ -85,11 +85,11 @@ static int SetBlobCmp(const void *elem1, const void *elem2 )
     }
 
 /* int is_set:  if TRUE, then sort the contents (i.e. it isn't a SEQUENCE)    */
-int i2d_ASN1_SET(STACK_OF(BLOCK) *a, unsigned char **pp,
-		 i2d_of_void *i2d, int ex_tag, int ex_class,
-		 int is_set)
+size_t i2d_ASN1_SET(STACK_OF(BLOCK) *a, unsigned char **pp,
+		    i2d_of_void *i2d, int ex_tag, int ex_class,
+		    int is_set)
 	{
-	int ret=0,r;
+	size_t ret=0,r;
 	int i;
 	unsigned char *p;
         unsigned char *pStart, *pTempMem;

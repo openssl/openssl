@@ -137,21 +137,21 @@ void RAND_cleanup(void)
 	RAND_set_rand_method(NULL);
 	}
 
-void RAND_seed(const void *buf, int num)
+void RAND_seed(const void *buf, size_t num)
 	{
 	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->seed)
 		meth->seed(buf,num);
 	}
 
-void RAND_add(const void *buf, int num, double entropy)
+void RAND_add(const void *buf, size_t num, double entropy)
 	{
 	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->add)
 		meth->add(buf,num,entropy);
 	}
 
-int RAND_bytes(unsigned char *buf, int num)
+int RAND_bytes(unsigned char *buf, size_t num)
 	{
 	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->bytes)
@@ -159,7 +159,7 @@ int RAND_bytes(unsigned char *buf, int num)
 	return(-1);
 	}
 
-int RAND_pseudo_bytes(unsigned char *buf, int num)
+int RAND_pseudo_bytes(unsigned char *buf, size_t num)
 	{
 	const RAND_METHOD *meth = RAND_get_rand_method();
 	if (meth && meth->pseudorand)

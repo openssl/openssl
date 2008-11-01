@@ -133,11 +133,11 @@ struct	sockaddr_un {
 #  define offsetof(TYPE, MEMBER) ((size_t) &((TYPE *)0)->MEMBER)
 #endif
 
-int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
+int RAND_query_egd_bytes(const char *path, unsigned char *buf, size_t bytes)
 	{
 	int ret = 0;
 	struct sockaddr_un addr;
-	int len, num, numbytes;
+	size_t len, num, numbytes;
 	int fd = -1;
 	int success;
 	unsigned char egdbuf[2], tempbuf[255], *retrievebuf;
@@ -281,7 +281,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 	}
 
 
-int RAND_egd_bytes(const char *path, int bytes)
+int RAND_egd_bytes(const char *path, size_t bytes)
 	{
 	int num, ret = 0;
 

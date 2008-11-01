@@ -142,7 +142,7 @@ int ASN1_TYPE_get_int_octetstring(ASN1_TYPE *a, long *num, unsigned char *data,
 	ASN1_INTEGER *ai=NULL;
 	ASN1_OCTET_STRING *os=NULL;
 	const unsigned char *p;
-	long length;
+	size_t length;
 	ASN1_const_CTX c;
 
 	if ((a->type != V_ASN1_SEQUENCE) || (a->value.sequence == NULL))

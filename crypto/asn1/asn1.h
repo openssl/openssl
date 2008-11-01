@@ -310,12 +310,12 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 	DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name)
 
 #define	DECLARE_ASN1_ENCODE_FUNCTIONS(type, itname, name) \
-	type *d2i_##name(type **a, const unsigned char **in, long len); \
+	type *d2i_##name(type **a, const unsigned char **in, size_t len); \
 	int i2d_##name(type *a, unsigned char **out); \
 	DECLARE_ASN1_ITEM(itname)
 
 #define	DECLARE_ASN1_ENCODE_FUNCTIONS_const(type, name) \
-	type *d2i_##name(type **a, const unsigned char **in, long len); \
+	type *d2i_##name(type **a, const unsigned char **in, size_t len); \
 	int i2d_##name(const type *a, unsigned char **out); \
 	DECLARE_ASN1_ITEM(name)
 
@@ -337,7 +337,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 	int fname##_print_ctx(BIO *out, stname *x, int indent, \
 					 const ASN1_PCTX *pctx);
 
-#define D2I_OF(type) type *(*)(type **,const unsigned char **,long)
+#define D2I_OF(type) type *(*)(type **,const unsigned char **,size_t)
 #define I2D_OF(type) int (*)(type *,unsigned char **)
 #define I2D_OF_const(type) int (*)(const type *,unsigned char **)
 
@@ -352,7 +352,7 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 #define CHECKED_PPTR_OF(type, p) \
     ((void**) (1 ? p : (type**)0))
 
-#define TYPEDEF_D2I_OF(type) typedef type *d2i_of_##type(type **,const unsigned char **,long)
+#define TYPEDEF_D2I_OF(type) typedef type *d2i_of_##type(type **,const unsigned char **,size_t)
 #define TYPEDEF_I2D_OF(type) typedef int i2d_of_##type(type *,unsigned char **)
 #define TYPEDEF_D2I2D_OF(type) TYPEDEF_D2I_OF(type); TYPEDEF_I2D_OF(type)
 
@@ -887,9 +887,9 @@ ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s,time_t t,
 int ASN1_TIME_check(ASN1_TIME *t);
 ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out);
 
-int i2d_ASN1_SET(STACK_OF(BLOCK) *a, unsigned char **pp,
-		 i2d_of_void *i2d, int ex_tag, int ex_class,
-		 int is_set);
+size_t i2d_ASN1_SET(STACK_OF(BLOCK) *a, unsigned char **pp,
+		    i2d_of_void *i2d, int ex_tag, int ex_class,
+		    int is_set);
 STACK_OF(BLOCK) *d2i_ASN1_SET(STACK_OF(BLOCK) **a, const unsigned char **pp,
 			      size_t length, d2i_of_void *d2i,
 			      void (*free_func)(BLOCK), int ex_tag,

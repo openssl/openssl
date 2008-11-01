@@ -793,21 +793,21 @@ int		X509_get_pubkey_parameters(EVP_PKEY *pkey,
 					   STACK_OF(X509) *chain);
 int		i2d_PUBKEY(EVP_PKEY *a,unsigned char **pp);
 EVP_PKEY *	d2i_PUBKEY(EVP_PKEY **a,const unsigned char **pp,
-			long length);
+			   size_t length);
 #ifndef OPENSSL_NO_RSA
 int		i2d_RSA_PUBKEY(RSA *a,unsigned char **pp);
 RSA *		d2i_RSA_PUBKEY(RSA **a,const unsigned char **pp,
-			long length);
+			       size_t length);
 #endif
 #ifndef OPENSSL_NO_DSA
 int		i2d_DSA_PUBKEY(DSA *a,unsigned char **pp);
 DSA *		d2i_DSA_PUBKEY(DSA **a,const unsigned char **pp,
-			long length);
+			       size_t length);
 #endif
 #ifndef OPENSSL_NO_EC
 int		i2d_EC_PUBKEY(EC_KEY *a, unsigned char **pp);
 EC_KEY 		*d2i_EC_PUBKEY(EC_KEY **a, const unsigned char **pp,
-			long length);
+			       size_t length);
 #endif
 
 DECLARE_ASN1_FUNCTIONS(X509_SIG)
@@ -862,8 +862,9 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x);
 
 X509_PKEY *	X509_PKEY_new(void );
 void		X509_PKEY_free(X509_PKEY *a);
-int		i2d_X509_PKEY(X509_PKEY *a,unsigned char **pp);
-X509_PKEY *	d2i_X509_PKEY(X509_PKEY **a,const unsigned char **pp,long length);
+int		i2d_X509_PKEY(X509_PKEY *a, unsigned char **pp);
+X509_PKEY *	d2i_X509_PKEY(X509_PKEY **a, const unsigned char **pp,
+			      size_t length);
 
 DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKI)
 DECLARE_ASN1_FUNCTIONS(NETSCAPE_SPKAC)

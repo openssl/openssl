@@ -1518,9 +1518,9 @@ int	SSL_CTX_remove_session(SSL_CTX *,SSL_SESSION *c);
 int	SSL_CTX_set_generate_session_id(SSL_CTX *, GEN_SESSION_CB);
 int	SSL_set_generate_session_id(SSL *, GEN_SESSION_CB);
 int	SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
-					unsigned int id_len);
+				    size_t id_len);
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a,const unsigned char **pp,
-			     long length);
+			     size_t length);
 
 #ifdef HEADER_X509_H
 X509 *	SSL_get_peer_certificate(const SSL *s);

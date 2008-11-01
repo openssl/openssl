@@ -315,7 +315,7 @@ int asn1_const_Finish(ASN1_const_CTX *c)
 	return _asn1_Finish(c);
 	}
 
-int asn1_GetSequence(ASN1_const_CTX *c, long *length)
+int asn1_GetSequence(ASN1_const_CTX *c, size_t *length)
 	{
 	const unsigned char *q;
 

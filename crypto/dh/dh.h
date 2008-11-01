@@ -194,7 +194,7 @@ int	DH_check(const DH *dh,int *codes);
 int	DH_check_pub_key(const DH *dh,const BIGNUM *pub_key, int *codes);
 int	DH_generate_key(DH *dh);
 int	DH_compute_key(unsigned char *key,const BIGNUM *pub_key,DH *dh);
-DH *	d2i_DHparams(DH **a,const unsigned char **pp, long length);
+DH *	d2i_DHparams(DH **a,const unsigned char **pp, size_t length);
 int	i2d_DHparams(const DH *a,unsigned char **pp);
 #ifndef OPENSSL_NO_FP_API
 int	DHparams_print_fp(FILE *fp, const DH *x);

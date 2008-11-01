@@ -296,7 +296,7 @@ static void update_buflen(const BIGNUM *b, size_t *pbuflen)
 	}
 
 static int dh_param_decode(EVP_PKEY *pkey,
-					const unsigned char **pder, int derlen)
+			   const unsigned char **pder, size_t derlen)
 	{
 	DH *dh;
 	if (!(dh = d2i_DHparams(NULL, pder, derlen)))

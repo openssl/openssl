@@ -107,7 +107,7 @@ static int rsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 	}
 
 static int old_rsa_priv_decode(EVP_PKEY *pkey,
-					const unsigned char **pder, int derlen)
+			       const unsigned char **pder, size_t derlen)
 	{
 	RSA *rsa;
 	if (!(rsa = d2i_RSAPrivateKey (NULL, pder, derlen)))

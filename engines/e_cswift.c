@@ -141,7 +141,7 @@ static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
 #endif
 
 /* RAND stuff */
-static int cswift_rand_bytes(unsigned char *buf, int num);
+static int cswift_rand_bytes(unsigned char *buf, size_t num);
 static int cswift_rand_status(void);
 
 /* The definitions for control commands specific to this engine */
@@ -1040,7 +1040,7 @@ static int cswift_mod_exp_dh(const DH *dh, BIGNUM *r,
 #endif
 
 /* Random bytes are good */
-static int cswift_rand_bytes(unsigned char *buf, int num)
+static int cswift_rand_bytes(unsigned char *buf, size_t num)
 {
 	SW_CONTEXT_HANDLE hac;
 	SW_STATUS swrc;

@@ -128,7 +128,7 @@ err:
 /* This works like d2i_PrivateKey() except it automatically works out the type */
 
 EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
-	     long length)
+			     size_t length)
 {
 	STACK_OF(ASN1_TYPE) *inkey;
 	const unsigned char *p;

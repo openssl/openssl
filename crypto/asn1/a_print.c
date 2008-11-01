@@ -65,11 +65,12 @@ int ASN1_PRINTABLE_type(const unsigned char *s, size_t len)
 	int c;
 	int ia5=0;
 	int t61=0;
+	int ignore_len = 0;
 
-	if (len <= 0) len= -1;
+	if (len == 0) ignore_len = 1;
 	if (s == NULL) return(V_ASN1_PRINTABLESTRING);
 
-	while ((*s) && (len-- != 0))
+	while (*s && !ignore_len && len-- != 0)
 		{
 		c= *(s++);
 #ifndef CHARSET_EBCDIC

@@ -62,7 +62,7 @@
 #include "bf_locl.h"
 #include "bf_pi.h"
 
-void BF_set_key(BF_KEY *key, int len, const unsigned char *data)
+void BF_set_key(BF_KEY *key, size_t len, const unsigned char *data)
 	{
 	int i;
 	BF_LONG *p,ri,in[2];

@@ -60,6 +60,7 @@
 #define HEADER_BLOWFISH_H
 
 #include <openssl/e_os2.h>
+#include <unistd.h>
 
 #ifdef  __cplusplus
 extern "C" {
@@ -105,7 +106,7 @@ typedef struct bf_key_st
 	} BF_KEY;
 
  
-void BF_set_key(BF_KEY *key, int len, const unsigned char *data);
+void BF_set_key(BF_KEY *key, size_t len, const unsigned char *data);
 
 void BF_encrypt(BF_LONG *data,const BF_KEY *key);
 void BF_decrypt(BF_LONG *data,const BF_KEY *key);

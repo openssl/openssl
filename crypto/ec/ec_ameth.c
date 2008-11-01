@@ -520,7 +520,7 @@ err:
 	}
 
 static int eckey_param_decode(EVP_PKEY *pkey,
-					const unsigned char **pder, int derlen)
+			      const unsigned char **pder, size_t derlen)
 	{
 	EC_KEY *eckey;
 	if (!(eckey = d2i_ECParameters(NULL, pder, derlen)))
@@ -557,7 +557,7 @@ static int eckey_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 	}
 
 static int old_ec_priv_decode(EVP_PKEY *pkey,
-					const unsigned char **pder, int derlen)
+			      const unsigned char **pder, size_t derlen)
 	{
 	EC_KEY *ec;
 	if (!(ec = d2i_ECPrivateKey (NULL, pder, derlen)))

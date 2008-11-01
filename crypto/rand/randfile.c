@@ -105,7 +105,8 @@ int RAND_load_file(const char *file, long bytes)
 #ifndef OPENSSL_NO_POSIX_IO
 	struct stat sb;
 #endif
-	int i,ret=0,n;
+	int i,ret=0;
+	size_t n;
 	FILE *in;
 
 	if (file == NULL) return(0);
@@ -162,7 +163,8 @@ err:
 int RAND_write_file(const char *file)
 	{
 	unsigned char buf[BUFSIZE];
-	int i,ret=0,rand_err=0;
+	int ret=0,rand_err=0;
+	size_t i;
 	FILE *out = NULL;
 	int n;
 #ifndef OPENSSL_NO_POSIX_IO
@@ -226,7 +228,7 @@ int RAND_write_file(const char *file)
 	if (out == NULL) goto err;
 
 #ifndef NO_CHMOD
-	chmod(file,0600);
+	chmod(file,(mode_t)0600);
 #endif
 	n=RAND_DATA;
 	for (;;)
@@ -236,7 +238,7 @@ int RAND_write_file(const char *file)
 		if (RAND_bytes(buf,i) <= 0)
 			rand_err=1;
 		i=fwrite(buf,1,i,out);
-		if (i <= 0)
+		if (i == 0)
 			{
 			ret=0;
 			break;

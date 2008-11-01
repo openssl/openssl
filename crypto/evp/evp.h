@@ -160,7 +160,7 @@ struct env_md_st
 	{
 	int type;
 	int pkey_type;
-	int md_size;
+	size_t md_size;
 	unsigned long flags;
 	int (*init)(EVP_MD_CTX *ctx);
 	int (*update)(EVP_MD_CTX *ctx,const void *data,size_t count);
@@ -175,8 +175,8 @@ struct env_md_st
 		      const unsigned char *sigbuf, unsigned int siglen,
 		      void *key);
 	int required_pkey_type[5]; /*EVP_PKEY_xxx */
-	int block_size;
-	int ctx_size; /* how big does the ctx->md_data need to be */
+	size_t block_size;
+	size_t ctx_size; /* how big does the ctx->md_data need to be */
 	/* control function */
 	int (*md_ctrl)(EVP_MD_CTX *ctx, int cmd, int p1, void *p2);
 	} /* EVP_MD */;
@@ -292,16 +292,16 @@ struct env_md_ctx_st
 struct evp_cipher_st
 	{
 	int nid;
-	int block_size;
-	int key_len;		/* Default value for variable length ciphers */
-	int iv_len;
+	size_t block_size;
+	size_t key_len;		/* Default value for variable length ciphers */
+	size_t iv_len;
 	unsigned long flags;	/* Various flags */
 	int (*init)(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		    const unsigned char *iv, int enc);	/* init key */
 	int (*do_cipher)(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			 const unsigned char *in, size_t inl);/* encrypt/decrypt data */
 	int (*cleanup)(EVP_CIPHER_CTX *); /* cleanup ctx */
-	int ctx_size;		/* how big ctx->cipher_data needs to be */
+	size_t ctx_size;	/* how big ctx->cipher_data needs to be */
 	int (*set_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Populate a ASN1_TYPE with parameters */
 	int (*get_asn1_parameters)(EVP_CIPHER_CTX *, ASN1_TYPE *); /* Get parameters from a ASN1_TYPE */
 	int (*ctrl)(EVP_CIPHER_CTX *, int type, int arg, void *ptr); /* Miscellaneous operations */
@@ -355,7 +355,7 @@ struct evp_cipher_ctx_st
 	const EVP_CIPHER *cipher;
 	ENGINE *engine;	/* functional reference if 'cipher' is ENGINE-provided */
 	int encrypt;		/* encrypt or decrypt */
-	int buf_len;		/* number we have left */
+	size_t buf_len;		/* number we have left */
 
 	unsigned char  oiv[EVP_MAX_IV_LENGTH];	/* original iv */
 	unsigned char  iv[EVP_MAX_IV_LENGTH];	/* working iv */
@@ -363,18 +363,18 @@ struct evp_cipher_ctx_st
 	int num;				/* used by cfb/ofb mode */
 
 	void *app_data;		/* application stuff */
-	int key_len;		/* May change for variable length cipher */
+	size_t key_len;		/* May change for variable length cipher */
 	unsigned long flags;	/* Various flags */
 	void *cipher_data; /* per EVP data */
-	int final_used;
+	size_t final_used;
 	int block_mask;
 	unsigned char final[EVP_MAX_BLOCK_LENGTH];/* possible final block */
 	} /* EVP_CIPHER_CTX */;
 
 typedef struct evp_Encode_Ctx_st
 	{
-	int num;	/* number saved in a partial encode/decode */
-	int length;	/* The length is either the output line length
+	size_t num;	/* number saved in a partial encode/decode */
+	size_t length;	/* The length is either the output line length
 			 * (in input bytes) or the shortest input line
 			 * length that is ok.  Once decoding begins,
 			 * the length is adjusted up each time a longer
@@ -419,8 +419,8 @@ int EVP_MD_type(const EVP_MD *md);
 #define EVP_MD_nid(e)			EVP_MD_type(e)
 #define EVP_MD_name(e)			OBJ_nid2sn(EVP_MD_nid(e))
 int EVP_MD_pkey_type(const EVP_MD *md);	
-int EVP_MD_size(const EVP_MD *md);
-int EVP_MD_block_size(const EVP_MD *md);
+size_t EVP_MD_size(const EVP_MD *md);
+size_t EVP_MD_block_size(const EVP_MD *md);
 
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 #define EVP_MD_CTX_size(e)		EVP_MD_size(EVP_MD_CTX_md(e))
@@ -429,17 +429,17 @@ const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx);
 
 int EVP_CIPHER_nid(const EVP_CIPHER *cipher);
 #define EVP_CIPHER_name(e)		OBJ_nid2sn(EVP_CIPHER_nid(e))
-int EVP_CIPHER_block_size(const EVP_CIPHER *cipher);
-int EVP_CIPHER_key_length(const EVP_CIPHER *cipher);
-int EVP_CIPHER_iv_length(const EVP_CIPHER *cipher);
+size_t EVP_CIPHER_block_size(const EVP_CIPHER *cipher);
+size_t EVP_CIPHER_key_length(const EVP_CIPHER *cipher);
+size_t EVP_CIPHER_iv_length(const EVP_CIPHER *cipher);
 unsigned long EVP_CIPHER_flags(const EVP_CIPHER *cipher);
 #define EVP_CIPHER_mode(e)		(EVP_CIPHER_flags(e) & EVP_CIPH_MODE)
 
 const EVP_CIPHER * EVP_CIPHER_CTX_cipher(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx);
-int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
-int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
-int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
+size_t EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
+size_t EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
+size_t EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
 void * EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
 void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);
 #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
@@ -471,10 +471,8 @@ void BIO_set_md(BIO *,const EVP_MD *md);
 #define BIO_get_cipher_status(b)	BIO_ctrl(b,BIO_C_GET_CIPHER_STATUS,0,NULL)
 #define BIO_get_cipher_ctx(b,c_pp)	BIO_ctrl(b,BIO_C_GET_CIPHER_CTX,0,(char *)c_pp)
 
-int EVP_Cipher(EVP_CIPHER_CTX *c,
-		unsigned char *out,
-		const unsigned char *in,
-		unsigned int inl);
+size_t EVP_Cipher(EVP_CIPHER_CTX *c, unsigned char *out,
+		  const unsigned char *in, size_t inl);
 
 #define EVP_add_cipher_alias(n,alias) \
 	OBJ_NAME_add((alias),OBJ_NAME_TYPE_CIPHER_METH|OBJ_NAME_ALIAS,(n))
@@ -510,25 +508,27 @@ char *	EVP_get_pw_prompt(void);
 
 int	EVP_BytesToKey(const EVP_CIPHER *type,const EVP_MD *md,
 		const unsigned char *salt, const unsigned char *data,
-		int datal, int count, unsigned char *key,unsigned char *iv);
+		size_t datal, int count, unsigned char *key,unsigned char *iv);
 
 int	EVP_EncryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher,
 		const unsigned char *key, const unsigned char *iv);
 int	EVP_EncryptInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher, ENGINE *impl,
 		const unsigned char *key, const unsigned char *iv);
 int	EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		int *outl, const unsigned char *in, int inl);
+			  int *outl, const unsigned char *in, size_t inl);
 int	EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 int	EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
 int	EVP_DecryptInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher,
-		const unsigned char *key, const unsigned char *iv);
-int	EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher, ENGINE *impl,
-		const unsigned char *key, const unsigned char *iv);
+			const unsigned char *key, const unsigned char *iv);
+int	EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher,
+			   ENGINE *impl, const unsigned char *key,
+			   const unsigned char *iv);
 int	EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		int *outl, const unsigned char *in, int inl);
+			  int *outl, const unsigned char *in, size_t inl);
 int	EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
-int	EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
+int	EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
+			    int *outl);
 
 int	EVP_CipherInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher,
 		       const unsigned char *key,const unsigned char *iv,
@@ -537,54 +537,53 @@ int	EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *cipher, ENGINE *impl
 		       const unsigned char *key,const unsigned char *iv,
 		       int enc);
 int	EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		int *outl, const unsigned char *in, int inl);
+			 int *outl, const unsigned char *in, size_t inl);
 int	EVP_CipherFinal(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 int	EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm, int *outl);
 
 int	EVP_SignFinal(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s,
-		EVP_PKEY *pkey);
+		      EVP_PKEY *pkey);
 
 int	EVP_VerifyFinal(EVP_MD_CTX *ctx,const unsigned char *sigbuf,
-		unsigned int siglen,EVP_PKEY *pkey);
+			size_t siglen,EVP_PKEY *pkey);
 
 int	EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 			const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
 int	EVP_DigestSignFinal(EVP_MD_CTX *ctx,
-			unsigned char *sigret, size_t *siglen);
+			    unsigned char *sigret, size_t *siglen);
 
 int	EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-			const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
+			     const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey);
 int	EVP_DigestVerifyFinal(EVP_MD_CTX *ctx,
-			unsigned char *sig, size_t siglen);
+			      unsigned char *sig, size_t siglen);
 
 int	EVP_OpenInit(EVP_CIPHER_CTX *ctx,const EVP_CIPHER *type,
-		const unsigned char *ek, int ekl, const unsigned char *iv,
-		EVP_PKEY *priv);
+		     const unsigned char *ek, size_t ekl,
+		     const unsigned char *iv, EVP_PKEY *priv);
 int	EVP_OpenFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
 int	EVP_SealInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-		 unsigned char **ek, int *ekl, unsigned char *iv,
-		EVP_PKEY **pubk, int npubk);
-int	EVP_SealFinal(EVP_CIPHER_CTX *ctx,unsigned char *out,int *outl);
+		     unsigned char **ek, int *ekl, unsigned char *iv,
+		     EVP_PKEY **pubk, int npubk);
+int	EVP_SealFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl);
 
 void	EVP_EncodeInit(EVP_ENCODE_CTX *ctx);
-void	EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx,unsigned char *out,int *outl,
-		const unsigned char *in,int inl);
-void	EVP_EncodeFinal(EVP_ENCODE_CTX *ctx,unsigned char *out,int *outl);
-int	EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int n);
+void	EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
+			 const unsigned char *in, size_t inl);
+void	EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl);
+int	EVP_EncodeBlock(unsigned char *t, const unsigned char *f, size_t n);
 
 void	EVP_DecodeInit(EVP_ENCODE_CTX *ctx);
 int	EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx,unsigned char *out,int *outl,
-		const unsigned char *in, int inl);
-int	EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned
-		char *out, int *outl);
-int	EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n);
+			 const unsigned char *in, size_t inl);
+int	EVP_DecodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl);
+int	EVP_DecodeBlock(unsigned char *t, const unsigned char *f, size_t n);
 
 void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *a);
 int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *a);
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void);
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *a);
-int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
+int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, size_t keylen);
 int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key);
@@ -850,13 +849,13 @@ EVP_PKEY *	EVP_PKEY_new(void);
 void		EVP_PKEY_free(EVP_PKEY *pkey);
 
 EVP_PKEY *	d2i_PublicKey(int type,EVP_PKEY **a, const unsigned char **pp,
-			long length);
+			      size_t length);
 int		i2d_PublicKey(EVP_PKEY *a, unsigned char **pp);
 
 EVP_PKEY *	d2i_PrivateKey(int type,EVP_PKEY **a, const unsigned char **pp,
 			long length);
 EVP_PKEY *	d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
-			long length);
+				   size_t length);
 int		i2d_PrivateKey(EVP_PKEY *a, unsigned char **pp);
 
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
@@ -962,13 +961,13 @@ void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
 							ASN1_PCTX *pctx));
 void EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
 		int (*param_decode)(EVP_PKEY *pkey,
-				const unsigned char **pder, int derlen),
+				    const unsigned char **pder, size_t derlen),
 		int (*param_encode)(const EVP_PKEY *pkey, unsigned char **pder),
 		int (*param_missing)(const EVP_PKEY *pk),
 		int (*param_copy)(EVP_PKEY *to, const EVP_PKEY *from),
 		int (*param_cmp)(const EVP_PKEY *a, const EVP_PKEY *b),
 		int (*param_print)(BIO *out, const EVP_PKEY *pkey, int indent,
-							ASN1_PCTX *pctx));
+				   ASN1_PCTX *pctx));
 
 void EVP_PKEY_asn1_set_free(EVP_PKEY_ASN1_METHOD *ameth,
 		void (*pkey_free)(EVP_PKEY *pkey));

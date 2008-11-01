@@ -105,7 +105,7 @@ int test_builtin(BIO *);
 /* functions to change the RAND_METHOD */
 int change_rand(void);
 int restore_rand(void);
-int fbytes(unsigned char *buf, int num);
+int fbytes(unsigned char *buf, size_t num);
 
 RAND_METHOD	fake_rand;
 const RAND_METHOD *old_rand;
@@ -152,7 +152,7 @@ static const char *numbers[8] = {
 	"1712787255652165239672857892369562652652652356758119494040"
 	"40041670216363"};
 
-int fbytes(unsigned char *buf, int num)
+int fbytes(unsigned char *buf, size_t num)
 	{
 	int	ret;
 	BIGNUM	*tmp = NULL;

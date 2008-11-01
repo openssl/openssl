@@ -69,7 +69,7 @@ int i2d_X509_PKEY(X509_PKEY *a, unsigned char **pp)
 	return(0);
 	}
 
-X509_PKEY *d2i_X509_PKEY(X509_PKEY **a, const unsigned char **pp, long length)
+X509_PKEY *d2i_X509_PKEY(X509_PKEY **a, const unsigned char **pp, size_t length)
 	{
 	int i;
 	M_ASN1_D2I_vars(a,X509_PKEY *,X509_PKEY_new);
