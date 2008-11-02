@@ -79,7 +79,7 @@ typedef unsigned char u8;
 # endif
 # define GETU32(p)   SWAP(*((u32 *)(p)))
 # define PUTU32(p,v) (*((u32 *)(p)) = SWAP((v)))
-#elif defined(__GNUC__) && __GNUC__>=2 && (defined(__i386) || defined(__x86_64))
+#elif defined(__GNUC__) && __GNUC__>=2 && (defined(__i386) || defined(__x86_64)) && !defined(PEDANTIC)
 # if defined(B_ENDIAN) /* stratus.com does it */
 #  define GETU32(p)   (*(u32 *)(p))
 #  define PUTU32(p,v) (*(u32 *)(p)=(v))

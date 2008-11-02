@@ -208,7 +208,8 @@ ASN1_TYPE *PKCS12_get_attr_gen(STACK_OF(X509_ATTRIBUTE) *attrs, int attr_nid);
 char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag);
 unsigned char *PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
 				int passlen, unsigned char *in, int inlen,
-				unsigned char **data, int *datalen, int en_de);
+				unsigned char **data, size_t *datalen,
+				int en_de);
 void * PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
 	     const char *pass, int passlen, ASN1_OCTET_STRING *oct, int zbuf);
 ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor, const ASN1_ITEM *it,
