@@ -1,7 +1,7 @@
 #ifdef __SUNPRO_C
 # include "../bn_asm.c"	/* kind of dirty hack for Sun Studio */
 #else
-#include <sys/types.h>
+#include <stddef.h>
 /*
  * x86_64 BIGNUM accelerator version 0.1, December 2002.
  *
