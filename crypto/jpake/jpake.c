@@ -4,7 +4,6 @@
 #include <openssl/sha.h>
 #include <openssl/err.h>
 #include <memory.h>
-#include <assert.h>
 
 /*
  * In the definition, (xa, xb, xc, xd) are Alice's (x1, x2, x3, x4) or
@@ -134,7 +133,7 @@ static void hashlength(SHA_CTX *sha, size_t l)
     {
     unsigned char b[2];
 
-    assert(l <= 0xffff);
+    OPENSSL_assert(l <= 0xffff);
     b[0] = l >> 8;
     b[1] = l&0xff;
     SHA1_Update(sha, b, 2);
@@ -172,7 +171,7 @@ static void zkp_hash(BIGNUM *h, const BIGNUM *zkpg, const JPAKE_STEP_PART *p,
     */
     SHA1_Init(&sha);
     hashbn(&sha, zkpg);
-    assert(!BN_is_zero(p->zkpx.gr));
+    OPENSSL_assert(!BN_is_zero(p->zkpx.gr));
     hashbn(&sha, p->zkpx.gr);
     hashbn(&sha, p->gx);
     hashstring(&sha, proof_name);

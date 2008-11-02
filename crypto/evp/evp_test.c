@@ -153,8 +153,8 @@ static void test1(const EVP_CIPHER *c,const unsigned char *key,int kn,
     
     if(kn != c->key_len)
 	{
-	fprintf(stderr,"Key length doesn't match, got %d expected %d\n",kn,
-		c->key_len);
+	fprintf(stderr,"Key length doesn't match, got %d expected %lu\n",kn,
+		(unsigned long)c->key_len);
 	test1_exit(5);
 	}
     EVP_CIPHER_CTX_init(&ctx);
