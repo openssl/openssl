@@ -4,6 +4,10 @@
 
  Changes between 0.9.8j and 0.9.9  [xx XXX xxxx]
 
+  *) Modify HMAC functions to return a value. Since these can be implemented
+     in an ENGINE errors can occur.
+     [Steve Henson]
+
   *) Type-checked OBJ_bsearch_ex.
      [Ben Laurie]
 
