@@ -432,7 +432,7 @@ int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
 	}
 
 int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
-				unsigned int id_len)
+				    size_t id_len)
 	{
 	/* A quick examination of SSL_SESSION_hash and SSL_SESSION_cmp shows how
 	 * we can "construct" a session to give us the desired check - ie. to

@@ -2424,7 +2424,7 @@ static void jpake_send_step1(BIO *bconn, JPAKE_CTX *ctx)
 	JPAKE_STEP1_generate(&s1, ctx);
 	jpake_send_part(bconn, &s1.p1);
 	jpake_send_part(bconn, &s1.p2);
-	BIO_flush(bconn);
+	(void)BIO_flush(bconn);
 	JPAKE_STEP1_release(&s1);
 	}
 
@@ -2435,7 +2435,7 @@ static void jpake_send_step2(BIO *bconn, JPAKE_CTX *ctx)
 	JPAKE_STEP2_init(&s2);
 	JPAKE_STEP2_generate(&s2, ctx);
 	jpake_send_part(bconn, &s2);
-	BIO_flush(bconn);
+	(void)BIO_flush(bconn);
 	JPAKE_STEP2_release(&s2);
 	}
 
@@ -2446,7 +2446,7 @@ static void jpake_send_step3a(BIO *bconn, JPAKE_CTX *ctx)
 	JPAKE_STEP3A_init(&s3a);
 	JPAKE_STEP3A_generate(&s3a, ctx);
 	BIO_write(bconn, s3a.hhk, sizeof s3a.hhk);
-	BIO_flush(bconn);
+	(void)BIO_flush(bconn);
 	JPAKE_STEP3A_release(&s3a);
 	}
 
@@ -2457,7 +2457,7 @@ static void jpake_send_step3b(BIO *bconn, JPAKE_CTX *ctx)
 	JPAKE_STEP3B_init(&s3b);
 	JPAKE_STEP3B_generate(&s3b, ctx);
 	BIO_write(bconn, s3b.hk, sizeof s3b.hk);
-	BIO_flush(bconn);
+	(void)BIO_flush(bconn);
 	JPAKE_STEP3B_release(&s3b);
 	}
 

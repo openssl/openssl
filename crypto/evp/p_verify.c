@@ -62,8 +62,8 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
-	     unsigned int siglen, EVP_PKEY *pkey)
+int	EVP_VerifyFinal(EVP_MD_CTX *ctx,const unsigned char *sigbuf,
+			size_t siglen,EVP_PKEY *pkey)
 	{
 	unsigned char m[EVP_MAX_MD_SIZE];
 	unsigned int m_len;

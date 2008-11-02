@@ -481,8 +481,9 @@ void bn_mul_high(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, BN_ULONG *l, int n2,
 		 BN_ULONG *t);
 BN_ULONG bn_add_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
 			   size_t cl, ssize_t dl);
-BN_ULONG bn_sub_part_words(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b,
-			   int cl, int dl);
+BN_ULONG bn_sub_part_words(BN_ULONG *r,
+			   const BN_ULONG *a, const BN_ULONG *b,
+			   size_t cl, ssize_t dl);
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
 		const BN_ULONG *np,const BN_ULONG *n0, int num);
 
