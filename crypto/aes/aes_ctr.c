@@ -54,9 +54,9 @@
 #  define NDEBUG
 # endif
 #endif
-#include <assert.h>
 
 #include <openssl/aes.h>
+#include <openssl/crypto.h>
 #include "aes_locl.h"
 
 /* NOTE: the IV/counter CTR mode is big-endian.  The rest of the AES code
@@ -113,15 +113,14 @@ static void AES_ctr128_inc(unsigned char *counter) {
  * into the rest of the IV when incremented.
  */
 void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
-	size_t length, const AES_KEY *key,
-	unsigned char ivec[AES_BLOCK_SIZE],
-	unsigned char ecount_buf[AES_BLOCK_SIZE],
-	unsigned int *num) {
-
+			size_t length, const AES_KEY *key,
+			unsigned char ivec[AES_BLOCK_SIZE],
+			unsigned char ecount_buf[AES_BLOCK_SIZE],
+			unsigned int *num) {
 	unsigned int n;
 
-	assert(in && out && key && counter && num);
-	assert(*num < AES_BLOCK_SIZE);
+	OPENSSL_assert(in && out && key && ecount_buf && num);
+	OPENSSL_assert(*num < AES_BLOCK_SIZE);
 
 	n = *num;
 

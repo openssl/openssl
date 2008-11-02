@@ -45,8 +45,6 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-$(LIBOBJ): $(LIBSRC)
-
 aes-ia64.s: asm/aes-ia64.S
 	$(CC) $(CFLAGS) -E asm/aes-ia64.S > $@
 

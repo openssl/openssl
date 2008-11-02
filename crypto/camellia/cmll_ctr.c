@@ -57,6 +57,7 @@
 #include <assert.h>
 
 #include <openssl/camellia.h>
+#include <openssl/crypto.h>
 #include "cmll_locl.h"
 
 /* NOTE: the IV/counter CTR mode is big-endian.  The rest of the Camellia code
@@ -121,8 +122,8 @@ void Camellia_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 
 	unsigned int n;
 
-	assert(in && out && key && counter && num);
-	assert(*num < CAMELLIA_BLOCK_SIZE);
+	OPENSSL_assert(in && out && key && ecount_buf && num);
+	OPENSSL_assert(*num < CAMELLIA_BLOCK_SIZE);
 
 	n = *num;
 
