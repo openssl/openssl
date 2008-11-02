@@ -632,4 +632,10 @@ static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num
 
 #endif /* SHA512_ASM */
 
-#endif /* OPENSSL_NO_SHA512 */
+#else /* !OPENSSL_NO_SHA512 */
+
+#if defined(PEDANTIC) || defined(__DECC) || defined(OPENSSL_SYS_MACOSX)
+static void *dummy=&dummy;
+#endif
+
+#endif /* !OPENSSL_NO_SHA512 */
