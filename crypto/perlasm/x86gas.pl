@@ -77,11 +77,11 @@ sub ::jmp_ptr	{ &::generic("jmp","*$_[0]");	}
 };
 *::shld = sub
 { my($dst,$src,$bits)=@_;
-    &::emit("shldl",$bit eq "cl"?"%cl":"\$$bits","%$src","%$dst");
+    &::emit("shldl",$bits eq "cl"?"%cl":"\$$bits","%$src","%$dst");
 };
 *::shrd = sub
 { my($dst,$src,$bits)=@_;
-    &::emit("shrdl",$bit eq "cl"?"%cl":"\$$bits","%$src","%$dst");
+    &::emit("shrdl",$bits eq "cl"?"%cl":"\$$bits","%$src","%$dst");
 };
 
 sub ::DWP

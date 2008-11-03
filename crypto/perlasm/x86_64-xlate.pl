@@ -68,7 +68,7 @@ my $output = shift;
 	if ($stddev!=$outdev || $stdino!=$outino);
 }
 
-my $win64=1 if ($output =~ /\.asm/);
+my $win64=1 if ($output =~ /\.asm$/);
 
 my $masmref=8 + 50727*2**-32;	# 8.00.50727 shipped with VS2005
 my $masm=0;
@@ -462,8 +462,12 @@ my %globals;
 				    last;
 				  };
 		/\.size/    && do { if (defined($current_function)) {
-					$self->{value}="\$L\$SEH_end_$current_function->{name}:";
-					$self->{value}.=":\n$current_function->{name}\tENDP" if($masm);
+					undef $self->{value};
+					if ($current_function->{abi} eq "svr4") {
+					    $self->{value}="\$L\$SEH_end_$current_function->{name}:";
+					    $self->{value}.=":\n" if($masm);
+					}
+					$self->{value}.="$current_function->{name}\tENDP" if($masm);
 					undef $current_function;
 				    }
 				    last;
