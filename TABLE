@@ -3570,6 +3570,36 @@ $shared_extension = .dll.a
 $ranlib       = 
 $arflags      = 
 
+*** mingw64
+$cc           = gcc
+$cflags       = -mno-cygwin -DL_ENDIAN -O3 -Wall -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE
+$unistd       = 
+$thread_cflag = 
+$sys_id       = MINGW64
+$lflags       = -lws2_32 -lgdi32
+$bn_ops       = SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN
+$cpuid_obj    = 
+$bn_obj       = 
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$perlasm_scheme = void
+$dso_scheme   = win32
+$shared_target= cygwin-shared
+$shared_cflag = -D_WINDLL
+$shared_ldflag = -mno-cygwin
+$shared_extension = .dll.a
+$ranlib       = 
+$arflags      = 
+
 *** ncr-scde
 $cc           = cc
 $cflags       = -O6 -Xa -Hoff=BEHAVED -686 -Hwide -Hiw

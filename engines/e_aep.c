@@ -57,7 +57,7 @@
 #include <string.h>
 
 #include <openssl/e_os2.h>
-#if !defined(OPENSSL_SYS_MSDOS) || defined(__DJGPP__)
+#if !defined(OPENSSL_SYS_MSDOS) || defined(__DJGPP__) || defined(__MINGW32__)
 #include <sys/types.h>
 #include <unistd.h>
 #else
