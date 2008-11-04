@@ -220,8 +220,7 @@ skip_to_init:
 	return ctx->digest->init(ctx);
 	}
 
-int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data,
-	     size_t count)
+int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 	{
 	return ctx->update(ctx,data,count);
 	}
