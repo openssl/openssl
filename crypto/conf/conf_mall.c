@@ -1,5 +1,5 @@
 /* conf_mall.c */
-/* Written by Stephen Henson (shenson@bigfoot.com) for the OpenSSL
+/* Written by Stephen Henson (steve@openssl.org) for the OpenSSL
  * project 2001.
  */
 /* ====================================================================

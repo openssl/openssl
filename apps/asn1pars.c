@@ -56,7 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
-/* A nice addition from Dr Stephen Henson <shenson@bigfoot.com> to 
+/* A nice addition from Dr Stephen Henson <steve@openssl.org> to 
  * add the -strparse option which parses nested binary structures
  */
 
