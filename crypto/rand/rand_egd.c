@@ -96,7 +96,7 @@
  */
 
 #if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_VOS) || defined(OPENSSL_SYS_BEOS)
-int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
+int RAND_query_egd_bytes(const char *path, unsigned char *buf, size_t bytes)
 	{
 	return(-1);
 	}
@@ -105,7 +105,7 @@ int RAND_egd(const char *path)
 	return(-1);
 	}
 
-int RAND_egd_bytes(const char *path,int bytes)
+int RAND_egd_bytes(const char *path,size_t bytes)
 	{
 	return(-1);
 	}
