@@ -115,6 +115,9 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
+#ifdef KSSL_DEBUG
+#include <openssl/des.h>
+#endif
 
 static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 			int sec_len, unsigned char *seed, int seed_len,
@@ -251,15 +254,15 @@ int tls1_change_cipher_state(SSL *s, int which)
 #ifdef KSSL_DEBUG
 	printf("tls1_change_cipher_state(which= %d) w/\n", which);
 	printf("\talg= %ld, comp= %p\n", s->s3->tmp.new_cipher->algorithms,
-                comp);
-	printf("\tevp_cipher == %p ==? &d_cbc_ede_cipher3\n", c);
+                (void *)comp);
+	printf("\tevp_cipher == %p ==? &d_cbc_ede_cipher3\n", (void *)c);
 	printf("\tevp_cipher: nid, blksz= %d, %d, keylen=%d, ivlen=%d\n",
                 c->nid,c->block_size,c->key_len,c->iv_len);
 	printf("\tkey_block: len= %d, data= ", s->s3->tmp.key_block_length);
 	{
-        int i;
-        for (i=0; i<s->s3->tmp.key_block_length; i++)
-		printf("%02x", key_block[i]);  printf("\n");
+        int ki;
+        for (ki=0; ki<s->s3->tmp.key_block_length; ki++)
+		printf("%02x", key_block[ki]);  printf("\n");
         }
 #endif	/* KSSL_DEBUG */
 
@@ -415,11 +418,13 @@ printf("which = %04X\nmac key=",which);
 	s->session->key_arg_length=0;
 #ifdef KSSL_DEBUG
 	{
-        int i;
+        int ki;
 	printf("EVP_CipherInit_ex(dd,c,key=,iv=,which)\n");
-	printf("\tkey= "); for (i=0; i<c->key_len; i++) printf("%02x", key[i]);
+	printf("\tkey= ");
+	for (ki=0; ki<c->key_len; ki++) printf("%02x", key[ki]);
 	printf("\n");
-	printf("\t iv= "); for (i=0; i<c->iv_len; i++) printf("%02x", iv[i]);
+	printf("\t iv= ");
+	for (ki=0; ki<c->iv_len; ki++) printf("%02x", iv[ki]);
 	printf("\n");
 	}
 #endif	/* KSSL_DEBUG */
@@ -592,10 +597,11 @@ int tls1_enc(SSL *s, int send)
 		{
                 unsigned long ui;
 		printf("EVP_Cipher(ds=%p,rec->data=%p,rec->input=%p,l=%ld) ==>\n",
-                        ds,rec->data,rec->input,l);
-		printf("\tEVP_CIPHER_CTX: %d buf_len, %d key_len [%d %d], %d iv_len\n",
+                        (void *)ds,rec->data,rec->input,l);
+		printf("\tEVP_CIPHER_CTX: %d buf_len, %d key_len [%ld %ld], %d iv_len\n",
                         ds->buf_len, ds->cipher->key_len,
-                        DES_KEY_SZ, DES_SCHEDULE_SZ,
+                        (unsigned long)DES_KEY_SZ,
+			(unsigned long)DES_SCHEDULE_SZ,
                         ds->cipher->iv_len);
 		printf("\t\tIV: ");
 		for (i=0; i<ds->cipher->iv_len; i++) printf("%02X", ds->iv[i]);
@@ -620,10 +626,10 @@ int tls1_enc(SSL *s, int send)
 
 #ifdef KSSL_DEBUG
 		{
-                unsigned long i;
+                unsigned long ki;
                 printf("\trec->data=");
-		for (i=0; i<l; i++)
-                        printf(" %02x", rec->data[i]);  printf("\n");
+		for (ki=0; ki<l; i++)
+                        printf(" %02x", rec->data[ki]);  printf("\n");
                 }
 #endif	/* KSSL_DEBUG */
 
@@ -807,7 +813,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	unsigned char buff[SSL_MAX_MASTER_KEY_LENGTH];
 
 #ifdef KSSL_DEBUG
-	printf ("tls1_generate_master_secret(%p,%p, %p, %d)\n", s,out, p,len);
+	printf ("tls1_generate_master_secret(%p,%p, %p, %d)\n", (void *)s,out, p,len);
 #endif	/* KSSL_DEBUG */
 
 	/* Setup the stuff to munge */
