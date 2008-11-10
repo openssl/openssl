@@ -45,8 +45,11 @@ EGD is available from http://www.lothar.com/tech/crypto/ (C<perl
 Makefile.PL; make; make install> to install). It is run as B<egd>
 I<path>, where I<path> is an absolute path designating a socket. When
 RAND_egd() is called with that path as an argument, it tries to read
-random bytes that EGD has collected. The read is performed in
-non-blocking mode.
+random bytes that EGD has collected. RAND_egd() retrieves entropy from the
+daemon using the daemon's "non-blocking read" command which shall
+be answered immediately by the daemon without waiting for additional
+entropy to be collected. The write and read socket operations in the
+communication are blocking.
 
 Alternatively, the EGD-interface compatible daemon PRNGD can be used. It is
 available from
