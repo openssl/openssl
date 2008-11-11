@@ -216,6 +216,9 @@ static int check_pem(const char *nm, const char *name)
 	if(!strcmp(nm, PEM_STRING_X509) &&
 		!strcmp(name, PEM_STRING_PKCS7)) return 1;
 
+	if(!strcmp(nm, PEM_STRING_PKCS7_SIGNED) &&
+		!strcmp(name, PEM_STRING_PKCS7)) return 1;
+
 	return 0;
 }
 
