@@ -754,12 +754,12 @@ int RAND_pseudo_bytes(unsigned char *buf,int num);
 #define bn_correct_top(a) \
         { \
         BN_ULONG *ftl; \
-	int _t371q = (a)->top; \
-	if (_t371q > 0) \
+	int tmp_top = (a)->top; \
+	if (tmp_top > 0) \
 		{ \
-		for (ftl= &((a)->d[_t371q-1]); _t371q > 0; _t371q--) \
+		for (ftl= &((a)->d[tmp_top-1]); tmp_top > 0; tmp_top--) \
 			if (*(ftl--)) break; \
-		(a)->top = _t371q; \
+		(a)->top = tmp_top; \
 		} \
 	bn_pollute(a); \
 	}
