@@ -981,7 +981,7 @@ $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
   or $perl="perl";
 
 chop $openssldir if $openssldir =~ /\/$/;
-chop $prefix if $prefix =~ /\/$/;
+chop $prefix if $prefix =~ /.\/$/;
 
 $openssldir=$prefix . "/ssl" if $openssldir eq "";
 $openssldir=$prefix . "/" . $openssldir if $openssldir !~ /(^\/|^[a-zA-Z]:[\\\/])/;
