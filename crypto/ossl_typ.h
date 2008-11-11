@@ -100,6 +100,8 @@ typedef int ASN1_NULL;
 #undef X509_EXTENSIONS
 #undef X509_CERT_PAIR
 #undef PKCS7_ISSUER_AND_SERIAL
+#undef OCSP_REQUEST
+#undef OCSP_RESPONSE
 #endif
 
 #ifdef BIGNUM
