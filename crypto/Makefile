@@ -71,7 +71,7 @@ uplink-cof.s:	$(TOP)/ms/uplink.pl
 	$(PERL) $(TOP)/ms/uplink.pl coff > $@
 
 x86_64cpuid.s: x86_64cpuid.pl
-	$(PERL) x86_64cpuid.pl $@
+	$(PERL) x86_64cpuid.pl $(PERLASM_SCHEME) > $@
 ia64cpuid.s: ia64cpuid.S
 	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
 ppccpuid.s:		ppccpuid.pl;	$(PERL) ppccpuid.pl $(PERLASM_SCHEME) $@

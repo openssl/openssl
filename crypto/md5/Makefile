@@ -45,7 +45,8 @@ lib:    $(LIBOBJ)
 md5-586.s:	asm/md5-586.pl ../perlasm/x86asm.pl
 	$(PERL) asm/md5-586.pl $(PERLASM_SCHEME) $(CFLAGS) > $@
 
-md5-x86_64.s:	asm/md5-x86_64.pl;	$(PERL) asm/md5-x86_64.pl $@
+md5-x86_64.s:	asm/md5-x86_64.pl
+	$(PERL) asm/md5-x86_64.pl $(PERLASM_SCHEME) > $@
 
 md5-ia64.s: asm/md5-ia64.S
 	$(CC) $(CFLAGS) -E asm/md5-ia64.S | \
