@@ -40,14 +40,16 @@
 # sha256_block:-( This is presumably because 64-bit shifts/rotates
 # apparently are not atomic instructions, but implemented in microcode.
 
-$output=shift;
+$flavour = shift;
+$output  = shift;
+if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-open STDOUT,"| $^X $xlate $output";
+open STDOUT,"| $^X $xlate $flavour $output";
 
 if ($output =~ /512/) {
 	$func="sha512_block_data_order";
@@ -196,8 +198,7 @@ $func:
 	mov	%rdx,$_end		# save end pointer, "3rd" arg
 	mov	%rbp,$_rsp		# save copy of %rsp
 
-	.picmeup $Tbl
-	lea	$TABLE-.($Tbl),$Tbl
+	lea	$TABLE(%rip),$Tbl
 
 	mov	$SZ*0($ctx),$A
 	mov	$SZ*1($ctx),$B

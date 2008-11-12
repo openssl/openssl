@@ -617,8 +617,7 @@ AES_encrypt:
 	push	$key
 
 	# pick Te4 copy which can't "overlap" with stack frame or key schedule
-	.picmeup	$sbox
-	lea	AES_Te+2048-.($sbox),$sbox
+	lea	.LAES_Te+2048(%rip),$sbox
 	lea	768(%rsp),%rbp
 	sub	$sbox,%rbp
 	and	\$0x300,%rbp
@@ -1210,8 +1209,7 @@ AES_decrypt:
 	push	$key
 
 	# pick Td4 copy which can't "overlap" with stack frame or key schedule
-	.picmeup	$sbox
-	lea	AES_Td+2048-.($sbox),$sbox
+	lea	.LAES_Td+2048(%rip),$sbox
 	lea	768(%rsp),%rbp
 	sub	$sbox,%rbp
 	and	\$0x300,%rbp
@@ -1292,8 +1290,7 @@ _x86_64_AES_set_encrypt_key:
 	test	\$-1,%rdi
 	jz	.Lbadpointer
 
-	.picmeup %rbp
-	lea	AES_Te-.(%rbp),%rbp
+	lea	.LAES_Te(%rip),%rbp
 	lea	2048+128(%rbp),%rbp
 
 	# prefetch Te4
@@ -1564,8 +1561,7 @@ AES_set_decrypt_key:
 		cmp	%rsi,%rdi
 	jne	.Linvert
 
-	.picmeup %rax
-	lea	AES_Te+2048+1024-.(%rax),%rax	# rcon
+	lea	.LAES_Te+2048+1024(%rip),%rax	# rcon
 
 	mov	40(%rax),$mask80
 	mov	48(%rax),$maskfe
@@ -1636,11 +1632,10 @@ AES_cbc_encrypt:
 	cld
 	mov	%r9d,%r9d	# clear upper half of enc
 
-	.picmeup $sbox
-	lea	AES_Te-.($sbox),$sbox
+	lea	.LAES_Te(%rip),$sbox
 	cmp	\$0,%r9
 	jne	.Lcbc_picked_te
-	lea	AES_Td-AES_Te($sbox),$sbox
+	lea	.LAES_Td(%rip),$sbox
 .Lcbc_picked_te:
 
 	mov	OPENSSL_ia32cap_P(%rip),%eax
@@ -2066,9 +2061,8 @@ ___
 }
 
 $code.=<<___;
-.globl	AES_Te
 .align	64
-AES_Te:
+.LAES_Te:
 ___
 	&_data_word(0xa56363c6, 0x847c7cf8, 0x997777ee, 0x8d7b7bf6);
 	&_data_word(0x0df2f2ff, 0xbd6b6bd6, 0xb16f6fde, 0x54c5c591);
@@ -2275,9 +2269,8 @@ $code.=<<___;
 	.long	0xfefefefe, 0xfefefefe, 0x1b1b1b1b, 0x1b1b1b1b
 ___
 $code.=<<___;
-.globl	AES_Td
 .align	64
-AES_Td:
+.LAES_Td:
 ___
 	&_data_word(0x50a7f451, 0x5365417e, 0xc3a4171a, 0x965e273a);
 	&_data_word(0xcb6bab3b, 0xf1459d1f, 0xab58faac, 0x9303e34b);

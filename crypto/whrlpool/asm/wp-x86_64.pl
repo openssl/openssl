@@ -71,8 +71,7 @@ $func:
 	mov	%rdx,16(%rbx)
 	mov	%rax,32(%rbx)		# saved stack pointer
 
-	.picmeup %rbp
-	lea	$table-.(%rbp),%rbp
+	lea	$table(%rip),%rbp
 
 	xor	%rcx,%rcx
 	xor	%rdx,%rdx

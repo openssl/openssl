@@ -336,8 +336,7 @@ RC4_set_key:
 .type	RC4_options,\@function,0
 .align	16
 RC4_options:
-	.picmeup %rax
-	lea	.Lopts-.(%rax),%rax
+	lea	.Lopts(%rip),%rax
 	mov	OPENSSL_ia32cap_P(%rip),%edx
 	bt	\$20,%edx
 	jnc	.Ldone

@@ -182,7 +182,7 @@ BN_ULONG bn_add_words (BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int n)
 
 	asm (
 	"	subq	%2,%2		\n"
-	".align 16			\n"
+	".p2align 4			\n"
 	"1:	movq	(%4,%2,8),%0	\n"
 	"	adcq	(%5,%2,8),%0	\n"
 	"	movq	%0,(%3,%2,8)	\n"
@@ -205,7 +205,7 @@ BN_ULONG bn_sub_words (BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int n)
 
 	asm (
 	"	subq	%2,%2		\n"
-	".align 16			\n"
+	".p2align 4			\n"
 	"1:	movq	(%4,%2,8),%0	\n"
 	"	sbbq	(%5,%2,8),%0	\n"
 	"	movq	%0,(%3,%2,8)	\n"
