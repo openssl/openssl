@@ -209,8 +209,7 @@ skip_to_init:
 
 			OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) <=
 					(int)sizeof(ctx->iv));
-			if(iv) memcpy(ctx->oiv, iv,
-				      EVP_CIPHER_CTX_iv_length(ctx));
+			if(iv) memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
 			memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
 			break;
 
@@ -230,7 +229,7 @@ skip_to_init:
 	}
 
 int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
-		     const unsigned char *in, size_t inl)
+	     const unsigned char *in, int inl)
 	{
 	if (ctx->encrypt)
 		return EVP_EncryptUpdate(ctx,out,outl,in,inl);
@@ -276,11 +275,9 @@ int EVP_DecryptInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *im
 	}
 
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
-		      const unsigned char *in, size_t inl)
+	     const unsigned char *in, int inl)
 	{
-	size_t i;
-	size_t bl;
-	size_t j;
+	int i,j,bl;
 
 	if (inl <= 0)
 		{
@@ -384,7 +381,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 	}
 
 int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
-		      const unsigned char *in, size_t inl)
+	     const unsigned char *in, int inl)
 	{
 	int fix_len;
 	unsigned int b;
@@ -518,10 +515,10 @@ int EVP_CIPHER_CTX_cleanup(EVP_CIPHER_CTX *c)
 	return 1;
 	}
 
-int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, size_t keylen)
+int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 	{
 	if(c->cipher->flags & EVP_CIPH_CUSTOM_KEY_LENGTH) 
-	    return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH, (int)keylen, NULL);
+		return EVP_CIPHER_CTX_ctrl(c, EVP_CTRL_SET_KEY_LENGTH, keylen, NULL);
 	if(c->key_len == keylen) return 1;
 	if((keylen > 0) && (c->cipher->flags & EVP_CIPH_VARIABLE_LENGTH))
 		{

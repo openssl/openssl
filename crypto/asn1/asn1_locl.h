@@ -84,24 +84,24 @@ struct evp_pkey_asn1_method_st
 	int (*pub_encode)(X509_PUBKEY *pub, const EVP_PKEY *pk);
 	int (*pub_cmp)(const EVP_PKEY *a, const EVP_PKEY *b);
 	int (*pub_print)(BIO *out, const EVP_PKEY *pkey, int indent,
-			 ASN1_PCTX *pctx);
+							ASN1_PCTX *pctx);
 
 	int (*priv_decode)(EVP_PKEY *pk, PKCS8_PRIV_KEY_INFO *p8inf);
 	int (*priv_encode)(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pk);
 	int (*priv_print)(BIO *out, const EVP_PKEY *pkey, int indent,
-			  ASN1_PCTX *pctx);
+							ASN1_PCTX *pctx);
 
 	int (*pkey_size)(const EVP_PKEY *pk);
 	int (*pkey_bits)(const EVP_PKEY *pk);
 
 	int (*param_decode)(EVP_PKEY *pkey,
-			    const unsigned char **pder, size_t derlen);
+				const unsigned char **pder, int derlen);
 	int (*param_encode)(const EVP_PKEY *pkey, unsigned char **pder);
 	int (*param_missing)(const EVP_PKEY *pk);
 	int (*param_copy)(EVP_PKEY *to, const EVP_PKEY *from);
 	int (*param_cmp)(const EVP_PKEY *a, const EVP_PKEY *b);
 	int (*param_print)(BIO *out, const EVP_PKEY *pkey, int indent,
-			   ASN1_PCTX *pctx);
+							ASN1_PCTX *pctx);
 
 	void (*pkey_free)(EVP_PKEY *pkey);
 	int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2);
@@ -109,7 +109,7 @@ struct evp_pkey_asn1_method_st
 	/* Legacy functions for old PEM */
 
 	int (*old_priv_decode)(EVP_PKEY *pkey,
-			       const unsigned char **pder, size_t derlen);
+				const unsigned char **pder, int derlen);
 	int (*old_priv_encode)(const EVP_PKEY *pkey, unsigned char **pder);
 
 	} /* EVP_PKEY_ASN1_METHOD */;

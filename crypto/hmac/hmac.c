@@ -61,7 +61,7 @@
 #include "cryptlib.h"
 #include <openssl/hmac.h>
 
-int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, size_t len,
+int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		  const EVP_MD *md, ENGINE *impl)
 	{
 	int i,j,reset=0;
@@ -124,7 +124,7 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, size_t len,
 	return 0;
 	}
 
-int HMAC_Init(HMAC_CTX *ctx, const void *key, size_t len, const EVP_MD *md)
+int HMAC_Init(HMAC_CTX *ctx, const void *key, int len, const EVP_MD *md)
 	{
 	if(key && md)
 	    HMAC_CTX_init(ctx);
@@ -188,7 +188,7 @@ void HMAC_CTX_cleanup(HMAC_CTX *ctx)
 	memset(ctx,0,sizeof *ctx);
 	}
 
-unsigned char *HMAC(const EVP_MD *evp_md, const void *key, size_t key_len,
+unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 		    const unsigned char *d, size_t n, unsigned char *md,
 		    unsigned int *md_len)
 	{

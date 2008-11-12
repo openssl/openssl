@@ -73,7 +73,7 @@
  * -4 = character encoded incorrectly (not minimal length).
  */
 
-int UTF8_getc(const unsigned char *str, size_t len, unsigned long *val)
+int UTF8_getc(const unsigned char *str, int len, unsigned long *val)
 {
 	const unsigned char *p;
 	unsigned long value;
@@ -152,7 +152,7 @@ int UTF8_getc(const unsigned char *str, size_t len, unsigned long *val)
  * It will need at most 6 characters.
  */
 
-int UTF8_putc(unsigned char *str, size_t len, unsigned long value)
+int UTF8_putc(unsigned char *str, int len, unsigned long value)
 {
 	if(!str) len = 6;	/* Maximum we will need */
 	else if(len <= 0) return -1;

@@ -69,9 +69,8 @@
  */
 
 unsigned char * PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
-				 int passlen, unsigned char *in, int inlen,
-				 unsigned char **data, size_t *datalen,
-				 int en_de)
+	     int passlen, unsigned char *in, int inlen, unsigned char **data,
+	     int *datalen, int en_de)
 {
 	unsigned char *out;
 	int outlen, i;
@@ -112,13 +111,12 @@ unsigned char * PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
  */
 
 void * PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
-			       const char *pass, int passlen,
-			       ASN1_OCTET_STRING *oct, int zbuf)
+	     const char *pass, int passlen, ASN1_OCTET_STRING *oct, int zbuf)
 {
 	unsigned char *out;
 	const unsigned char *p;
 	void *ret;
-	size_t outlen;
+	int outlen;
 
 	if (!PKCS12_pbe_crypt(algor, pass, passlen, oct->data, oct->length,
 			       &out, &outlen, 0)) {
@@ -149,10 +147,9 @@ void * PKCS12_item_decrypt_d2i(X509_ALGOR *algor, const ASN1_ITEM *it,
  * if zbuf set zero encoding.
  */
 
-ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
-					   const ASN1_ITEM *it,
-					   const char *pass, int passlen,
-					   void *obj, int zbuf)
+ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor, const ASN1_ITEM *it,
+				       const char *pass, int passlen,
+				       void *obj, int zbuf)
 {
 	ASN1_OCTET_STRING *oct;
 	unsigned char *in = NULL;
@@ -167,7 +164,7 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt(X509_ALGOR *algor,
 		return NULL;
 	}
 	if (!PKCS12_pbe_crypt(algor, pass, passlen, in, inlen, &oct->data,
-			      &oct->length, 1)) {
+				 &oct->length, 1)) {
 		PKCS12err(PKCS12_F_PKCS12_ITEM_I2D_ENCRYPT,PKCS12_R_ENCRYPT_ERROR);
 		OPENSSL_free(in);
 		return NULL;

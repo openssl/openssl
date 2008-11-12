@@ -157,7 +157,7 @@ int RAND_poll(void)
 	pid_t curr_pid = getpid();
 #if defined(DEVRANDOM) || defined(DEVRANDOM_EGD)
 	unsigned char tmpbuf[ENTROPY_NEEDED];
-	size_t n = 0;
+	int n = 0;
 #endif
 #ifdef DEVRANDOM
 	static const char *randomfiles[] = { DEVRANDOM };
@@ -261,7 +261,7 @@ int RAND_poll(void)
 				
 				if (try_read)
 					{
-					r = read(fd,tmpbuf+n,ENTROPY_NEEDED-n);
+					r = read(fd,(unsigned char *)tmpbuf+n, ENTROPY_NEEDED-n);
 					if (r > 0)
 						n += r;
 #if defined(OPENSSL_SYS_BEOS_R5)

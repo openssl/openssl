@@ -260,7 +260,7 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key)
 	}
 
 long MS_CALLBACK bio_dump_callback(BIO *bio, int cmd, const char *argp,
-				   size_t argi, long argl, long ret)
+	int argi, long argl, long ret)
 	{
 	BIO *out;
 

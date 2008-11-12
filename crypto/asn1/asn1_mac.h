@@ -279,7 +279,7 @@ err:\
 		(V_ASN1_CONSTRUCTED|V_ASN1_CONTEXT_SPECIFIC|tag))) \
 		{ \
 		int Tinf,Ttag,Tclass; \
-		size_t Tlen; \
+		long Tlen; \
 		\
 		c.q=c.p; \
 		Tinf=ASN1_get_object(&c.p,&Tlen,&Ttag,&Tclass,c.slen); \
@@ -569,8 +569,8 @@ err:\
 #define M_ASN1_I2D_finish()	*pp=p; \
 				return(r);
 
-int asn1_GetSequence(ASN1_const_CTX *c, size_t *length);
-void asn1_add_error(const unsigned char *address, int offset);
+int asn1_GetSequence(ASN1_const_CTX *c, long *length);
+void asn1_add_error(const unsigned char *address,int offset);
 #ifdef  __cplusplus
 }
 #endif

@@ -71,8 +71,7 @@
 #endif
 
 #ifndef OPENSSL_NO_FP_API
-STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
-					pem_password_cb *cb, void *u)
+STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u)
 	{
         BIO *b;
         STACK_OF(X509_INFO) *ret;
@@ -89,8 +88,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
 	}
 #endif
 
-STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
-					    pem_password_cb *cb, void *u)
+STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb, void *u)
 	{
 	X509_INFO *xi=NULL;
 	char *name=NULL,*header=NULL;

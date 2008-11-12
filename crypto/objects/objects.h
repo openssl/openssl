@@ -1006,8 +1006,7 @@ const char *	OBJ_nid2ln(int n);
 const char *	OBJ_nid2sn(int n);
 int		OBJ_obj2nid(const ASN1_OBJECT *o);
 ASN1_OBJECT *	OBJ_txt2obj(const char *s, int no_name);
-int             OBJ_obj2txt(char *buf, size_t buf_len, const ASN1_OBJECT *a,
-			    int no_name);
+int	OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name);
 int		OBJ_txt2nid(const char *s);
 int		OBJ_ln2nid(const char *s);
 int		OBJ_sn2nid(const char *s);

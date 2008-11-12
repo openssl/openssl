@@ -1050,7 +1050,7 @@ EC_GROUP *ec_asn1_pkparameters2group(const ECPKPARAMETERS *params)
 
 /* EC_GROUP <-> DER encoding of ECPKPARAMETERS */
 
-EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, size_t len)
+EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
 	{
 	EC_GROUP	*group  = NULL;
 	ECPKPARAMETERS	*params = NULL;
@@ -1099,7 +1099,7 @@ int i2d_ECPKParameters(const EC_GROUP *a, unsigned char **out)
 
 /* some EC_KEY functions */
 
-EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, size_t len)
+EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 	{
 	int             ok=0;
 	EC_KEY          *ret=NULL;

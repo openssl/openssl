@@ -73,7 +73,7 @@
 #endif
 
 EVP_PKEY *d2i_PublicKey(int type, EVP_PKEY **a, const unsigned char **pp,
-			size_t length)
+	     long length)
 	{
 	EVP_PKEY *ret;
 

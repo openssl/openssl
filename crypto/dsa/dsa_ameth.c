@@ -480,7 +480,7 @@ err:
 	}
 
 static int dsa_param_decode(EVP_PKEY *pkey,
-			    const unsigned char **pder, size_t derlen)
+					const unsigned char **pder, int derlen)
 	{
 	DSA *dsa;
 	if (!(dsa = d2i_DSAparams(NULL, pder, derlen)))
@@ -517,7 +517,7 @@ static int dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 	}
 
 static int old_dsa_priv_decode(EVP_PKEY *pkey,
-			       const unsigned char **pder, size_t derlen)
+					const unsigned char **pder, int derlen)
 	{
 	DSA *dsa;
 	if (!(dsa = d2i_DSAPrivateKey (NULL, pder, derlen)))

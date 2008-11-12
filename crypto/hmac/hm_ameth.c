@@ -104,7 +104,7 @@ static int hmac_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
  */
 
 static int old_hmac_decode(EVP_PKEY *pkey,
-			   const unsigned char **pder, size_t derlen)
+					const unsigned char **pder, int derlen)
 	{
 	ASN1_OCTET_STRING *os;
 	os = ASN1_OCTET_STRING_new();

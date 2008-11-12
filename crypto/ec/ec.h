@@ -661,7 +661,7 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
 
 typedef struct ecpk_parameters_st ECPKPARAMETERS;
 
-EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, size_t len);
+EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
 
 #define d2i_ECPKParameters_bio(bp,x) ASN1_d2i_bio_of(EC_GROUP,NULL,d2i_ECPKParameters,bp,x)
@@ -810,7 +810,7 @@ int EC_KEY_check_key(const EC_KEY *key);
  *  \param  len  length of the DER encoded private key
  *  \return the decoded private key or NULL if an error occurred.
  */
-EC_KEY *d2i_ECPrivateKey(EC_KEY **key, const unsigned char **in, size_t len);
+EC_KEY *d2i_ECPrivateKey(EC_KEY **key, const unsigned char **in, long len);
 
 /** Encodes a private key object and stores the result in a buffer.
  *  \param  key  the EC_KEY object to encode

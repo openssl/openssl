@@ -62,8 +62,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1_mac.h>
 
-static int asn1_get_length(const unsigned char **pp, int *inf, size_t *rl,
-			   size_t max);
+static int asn1_get_length(const unsigned char **pp,int *inf,long *rl,int max);
 static void asn1_put_length(unsigned char **pp, int length);
 const char ASN1_version[]="ASN.1" OPENSSL_VERSION_PTEXT;
 
@@ -81,29 +80,27 @@ static int _asn1_check_infinite_end(const unsigned char **p, long len)
 	return(0);
 	}
 
-int ASN1_check_infinite_end(unsigned char **p, size_t len)
+int ASN1_check_infinite_end(unsigned char **p, long len)
 	{
 	return _asn1_check_infinite_end((const unsigned char **)p, len);
 	}
 
-int ASN1_const_check_infinite_end(const unsigned char **p, size_t len)
+int ASN1_const_check_infinite_end(const unsigned char **p, long len)
 	{
 	return _asn1_check_infinite_end(p, len);
 	}
 
 
-int ASN1_get_object(const unsigned char **pp, size_t *plength, int *ptag,
-		    int *pclass, size_t omax)
+int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
+	int *pclass, long omax)
 	{
 	int i,ret;
 	long l;
 	const unsigned char *p= *pp;
 	int tag,xclass,inf;
-	size_t max=omax;
+	long max=omax;
 
-	if (!max)
-	    goto err;
-
+	if (!max) goto err;
 	ret=(*p&V_ASN1_CONSTRUCTED);
 	xclass=(*p&V_ASN1_PRIVATE);
 	i= *p&V_ASN1_PRIMITIVE_TAG;
@@ -154,8 +151,7 @@ err:
 	return(0x80);
 	}
 
-static int asn1_get_length(const unsigned char **pp, int *inf, size_t *rl,
-			   size_t max)
+static int asn1_get_length(const unsigned char **pp, int *inf, long *rl, int max)
 	{
 	const unsigned char *p= *pp;
 	unsigned long ret=0;
@@ -196,8 +192,8 @@ static int asn1_get_length(const unsigned char **pp, int *inf, size_t *rl,
 
 /* class 0 is constructed
  * constructed == 2 for indefinite length constructed */
-void ASN1_put_object(unsigned char **pp, int constructed, size_t length,
-		     int tag, int xclass)
+void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
+	     int xclass)
 	{
 	unsigned char *p= *pp;
 	int i, ttag;
@@ -258,7 +254,7 @@ static void asn1_put_length(unsigned char **pp, int length)
 	*pp=p;
 	}
 
-size_t ASN1_object_size(int constructed, size_t length, int tag)
+int ASN1_object_size(int constructed, int length, int tag)
 	{
 	int ret;
 
@@ -315,7 +311,7 @@ int asn1_const_Finish(ASN1_const_CTX *c)
 	return _asn1_Finish(c);
 	}
 
-int asn1_GetSequence(ASN1_const_CTX *c, size_t *length)
+int asn1_GetSequence(ASN1_const_CTX *c, long *length)
 	{
 	const unsigned char *q;
 
@@ -371,7 +367,7 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
 	return ret;
 	}
 
-int ASN1_STRING_set(ASN1_STRING *str, const void *_data, size_t len)
+int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len)
 	{
 	unsigned char *c;
 	const char *data=_data;
@@ -408,7 +404,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, size_t len)
 	return(1);
 	}
 
-void ASN1_STRING_set0(ASN1_STRING *str, void *data, size_t len)
+void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 	{
 	if (str->data)
 		OPENSSL_free(str->data);
@@ -473,14 +469,14 @@ void asn1_add_error(const unsigned char *address, int offset)
 	ERR_add_error_data(4,"address=",buf1," offset=",buf2);
 	}
 
-size_t ASN1_STRING_length(const ASN1_STRING *x)
-	{ return M_ASN1_STRING_length(x); }
+int ASN1_STRING_length(const ASN1_STRING *x)
+{ return M_ASN1_STRING_length(x); }
 
-void ASN1_STRING_length_set(ASN1_STRING *x, size_t len)
-	{ M_ASN1_STRING_length_set(x, len); return; }
+void ASN1_STRING_length_set(ASN1_STRING *x, int len)
+{ M_ASN1_STRING_length_set(x, len); return; }
 
 int ASN1_STRING_type(ASN1_STRING *x)
-	{ return M_ASN1_STRING_type(x); }
+{ return M_ASN1_STRING_type(x); }
 
 unsigned char * ASN1_STRING_data(ASN1_STRING *x)
-	{ return M_ASN1_STRING_data(x); }
+{ return M_ASN1_STRING_data(x); }

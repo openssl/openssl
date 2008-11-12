@@ -65,7 +65,7 @@
 ASN1_OBJECT *OBJ_dup(const ASN1_OBJECT *o)
 	{
 	ASN1_OBJECT *r;
-	size_t i;
+	int i;
 	char *ln=NULL,*sn=NULL;
 	unsigned char *data=NULL;
 

@@ -856,7 +856,7 @@ typedef struct ASN1_STREAM_ARG_st {
 	IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(stname, itname, fname)
 
 #define IMPLEMENT_ASN1_ENCODE_FUNCTIONS_fname(stname, itname, fname) \
-	stname *d2i_##fname(stname **a, const unsigned char **in, size_t len) \
+	stname *d2i_##fname(stname **a, const unsigned char **in, long len) \
 	{ \
 		return (stname *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, ASN1_ITEM_rptr(itname));\
 	} \
@@ -875,7 +875,7 @@ typedef struct ASN1_STREAM_ARG_st {
  * ASN1 constification is done.
  */
 #define IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(stname, itname, fname) \
-	stname *d2i_##fname(stname **a, const unsigned char **in, size_t len) \
+	stname *d2i_##fname(stname **a, const unsigned char **in, long len) \
 	{ \
 		return (stname *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, ASN1_ITEM_rptr(itname));\
 	} \

@@ -129,14 +129,14 @@ void EVP_EncodeInit(EVP_ENCODE_CTX *ctx)
 	}
 
 void EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
-		      const unsigned char *in, size_t inl)
+	     const unsigned char *in, int inl)
 	{
-	size_t i,j;
+	int i,j;
 	unsigned int total=0;
 
 	*outl=0;
 	if (inl == 0) return;
-	OPENSSL_assert(ctx->length <= sizeof(ctx->enc_data));
+	OPENSSL_assert(ctx->length <= (int)sizeof(ctx->enc_data));
 	if ((ctx->num+inl) < ctx->length)
 		{
 		memcpy(&(ctx->enc_data[ctx->num]),in,inl);
@@ -186,7 +186,7 @@ void EVP_EncodeFinal(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl)
 	*outl=ret;
 	}
 
-int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, size_t dlen)
+int EVP_EncodeBlock(unsigned char *t, const unsigned char *f, int dlen)
 	{
 	int i,ret=0;
 	unsigned long l;
@@ -233,10 +233,9 @@ void EVP_DecodeInit(EVP_ENCODE_CTX *ctx)
  *  1 for full line
  */
 int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
-		     const unsigned char *in, size_t inl)
+	     const unsigned char *in, int inl)
 	{
-	int seof= -1,eof=0,rv= -1,ret=0,i,v,tmp,ln,tmp2,exp_nl;
-	size_t n;
+	int seof= -1,eof=0,rv= -1,ret=0,i,v,tmp,n,ln,tmp2,exp_nl;
 	unsigned char *d;
 
 	n=ctx->num;
@@ -357,7 +356,7 @@ end:
 	return(rv);
 	}
 
-int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, size_t n)
+int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 	{
 	int i,ret=0,a,b,c,d;
 	unsigned long l;

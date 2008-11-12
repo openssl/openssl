@@ -416,13 +416,13 @@ void EVP_PKEY_asn1_set_private(EVP_PKEY_ASN1_METHOD *ameth,
 
 void EVP_PKEY_asn1_set_param(EVP_PKEY_ASN1_METHOD *ameth,
 		int (*param_decode)(EVP_PKEY *pkey,
-				    const unsigned char **pder, size_t derlen),
+				const unsigned char **pder, int derlen),
 		int (*param_encode)(const EVP_PKEY *pkey, unsigned char **pder),
 		int (*param_missing)(const EVP_PKEY *pk),
 		int (*param_copy)(EVP_PKEY *to, const EVP_PKEY *from),
 		int (*param_cmp)(const EVP_PKEY *a, const EVP_PKEY *b),
 		int (*param_print)(BIO *out, const EVP_PKEY *pkey, int indent,
-				   ASN1_PCTX *pctx))
+							ASN1_PCTX *pctx))
 	{
 	ameth->param_decode = param_decode;
 	ameth->param_encode = param_encode;

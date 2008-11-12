@@ -177,7 +177,7 @@ struct dsa_st
 DSA_SIG * DSA_SIG_new(void);
 void	DSA_SIG_free(DSA_SIG *a);
 int	i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);
-DSA_SIG * d2i_DSA_SIG(DSA_SIG **v, const unsigned char **pp, size_t length);
+DSA_SIG * d2i_DSA_SIG(DSA_SIG **v, const unsigned char **pp, long length);
 
 DSA_SIG * DSA_do_sign(const unsigned char *dgst,int dlen,DSA *dsa);
 int	DSA_do_verify(const unsigned char *dgst,int dgst_len,
@@ -206,9 +206,9 @@ int DSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 int DSA_set_ex_data(DSA *d, int idx, void *arg);
 void *DSA_get_ex_data(DSA *d, int idx);
 
-DSA *	d2i_DSAPublicKey(DSA **a, const unsigned char **pp, size_t length);
-DSA *	d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, size_t length);
-DSA * 	d2i_DSAparams(DSA **a, const unsigned char **pp, size_t length);
+DSA *	d2i_DSAPublicKey(DSA **a, const unsigned char **pp, long length);
+DSA *	d2i_DSAPrivateKey(DSA **a, const unsigned char **pp, long length);
+DSA * 	d2i_DSAparams(DSA **a, const unsigned char **pp, long length);
 
 /* Deprecated version */
 #ifndef OPENSSL_NO_DEPRECATED

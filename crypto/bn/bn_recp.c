@@ -214,7 +214,7 @@ err:
  * we can do faster division if the remainder is not required.
  */
 /* r := 2^len / m */
-int BN_reciprocal(BIGNUM *r, const BIGNUM *m, size_t len, BN_CTX *ctx)
+int BN_reciprocal(BIGNUM *r, const BIGNUM *m, int len, BN_CTX *ctx)
 	{
 	int ret= -1;
 	BIGNUM *t;

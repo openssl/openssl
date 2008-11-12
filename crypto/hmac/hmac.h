@@ -90,13 +90,13 @@ void HMAC_CTX_cleanup(HMAC_CTX *ctx);
 
 #define HMAC_cleanup(ctx) HMAC_CTX_cleanup(ctx) /* deprecated */
 
-int HMAC_Init(HMAC_CTX *ctx, const void *key, size_t len,
+int HMAC_Init(HMAC_CTX *ctx, const void *key, int len,
 	       const EVP_MD *md); /* deprecated */
-int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, size_t len,
+int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		  const EVP_MD *md, ENGINE *impl);
 int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, size_t len);
 int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len);
-unsigned char *HMAC(const EVP_MD *evp_md, const void *key, size_t key_len,
+unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 		    const unsigned char *d, size_t n, unsigned char *md,
 		    unsigned int *md_len);
 int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx);

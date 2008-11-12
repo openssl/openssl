@@ -338,7 +338,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	}
 
 SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
-			     size_t length)
+	     long length)
 	{
 	int version,ssl_version=0,i;
 	long id;

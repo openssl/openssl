@@ -1,7 +1,6 @@
 #ifdef __SUNPRO_C
 # include "../bn_asm.c"	/* kind of dirty hack for Sun Studio */
 #else
-#include <stddef.h>
 /*
  * x86_64 BIGNUM accelerator version 0.1, December 2002.
  *
@@ -176,7 +175,7 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 	return ret;
 }
 
-BN_ULONG bn_add_words (BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp, size_t n)
+BN_ULONG bn_add_words (BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int n)
 { BN_ULONG ret=0,i=0;
 
 	if (n <= 0) return 0;

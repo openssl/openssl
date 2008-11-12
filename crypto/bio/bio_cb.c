@@ -64,7 +64,7 @@
 #include <openssl/err.h>
 
 long MS_CALLBACK BIO_debug_callback(BIO *bio, int cmd, const char *argp,
-				    size_t argi, long argl, long ret)
+	     int argi, long argl, long ret)
 	{
 	BIO *b;
 	MS_STATIC char buf[256];

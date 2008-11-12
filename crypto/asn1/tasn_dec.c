@@ -126,8 +126,7 @@ unsigned long ASN1_tag2bit(int tag)
  */
 
 ASN1_VALUE *ASN1_item_d2i(ASN1_VALUE **pval,
-			  const unsigned char **in, size_t len,
-			  const ASN1_ITEM *it)
+		const unsigned char **in, long len, const ASN1_ITEM *it)
 	{
 	ASN1_TLC c;
 	ASN1_VALUE *ptmpval = NULL;
@@ -1244,7 +1243,7 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
 	{
 	int i;
 	int ptag, pclass;
-	size_t plen;
+	long plen;
 	const unsigned char *p, *q;
 	p = *in;
 	q = p;

@@ -80,11 +80,11 @@ extern "C" {
 
 struct rand_meth_st
 	{
-	void (*seed)(const void *buf, size_t num);
-	int (*bytes)(unsigned char *buf, size_t num);
+	void (*seed)(const void *buf, int num);
+	int (*bytes)(unsigned char *buf, int num);
 	void (*cleanup)(void);
-	void (*add)(const void *buf, size_t num, double entropy);
-	int (*pseudorand)(unsigned char *buf, size_t num);
+	void (*add)(const void *buf, int num, double entropy);
+	int (*pseudorand)(unsigned char *buf, int num);
 	int (*status)(void);
 	};
 
@@ -99,17 +99,17 @@ int RAND_set_rand_engine(ENGINE *engine);
 #endif
 RAND_METHOD *RAND_SSLeay(void);
 void RAND_cleanup(void );
-int  RAND_bytes(unsigned char *buf,size_t num);
-int  RAND_pseudo_bytes(unsigned char *buf,size_t num);
-void RAND_seed(const void *buf,size_t num);
-void RAND_add(const void *buf,size_t num,double entropy);
+int  RAND_bytes(unsigned char *buf,int num);
+int  RAND_pseudo_bytes(unsigned char *buf,int num);
+void RAND_seed(const void *buf,int num);
+void RAND_add(const void *buf,int num,double entropy);
 int  RAND_load_file(const char *file,long max_bytes);
 int  RAND_write_file(const char *file);
 const char *RAND_file_name(char *file,size_t num);
 int RAND_status(void);
-int RAND_query_egd_bytes(const char *path, unsigned char *buf, size_t bytes);
+int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes);
 int RAND_egd(const char *path);
-int RAND_egd_bytes(const char *path, size_t bytes);
+int RAND_egd_bytes(const char *path,int bytes);
 int RAND_poll(void);
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)

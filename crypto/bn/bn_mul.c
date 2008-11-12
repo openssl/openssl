@@ -78,8 +78,8 @@
    assembler counterparts for the systems that use assembler files.  */
 
 BN_ULONG bn_sub_part_words(BN_ULONG *r,
-			   const BN_ULONG *a, const BN_ULONG *b,
-			   size_t cl, ssize_t dl)
+	const BN_ULONG *a, const BN_ULONG *b,
+	int cl, int dl)
 	{
 	BN_ULONG c, t;
 
@@ -126,7 +126,7 @@ BN_ULONG bn_sub_part_words(BN_ULONG *r,
 		}
 	else
 		{
-		ssize_t save_dl = dl;
+		int save_dl = dl;
 #ifdef BN_COUNT
 		fprintf(stderr, "  bn_sub_part_words %d + %d (dl > 0, c = %d)\n", cl, dl, c);
 #endif
@@ -205,8 +205,8 @@ BN_ULONG bn_sub_part_words(BN_ULONG *r,
 #endif
 
 BN_ULONG bn_add_part_words(BN_ULONG *r,
-			   const BN_ULONG *a, const BN_ULONG *b,
-			   size_t cl, ssize_t dl)
+	const BN_ULONG *a, const BN_ULONG *b,
+	int cl, int dl)
 	{
 	BN_ULONG c, l, t;
 
@@ -222,7 +222,7 @@ BN_ULONG bn_add_part_words(BN_ULONG *r,
 
 	if (dl < 0)
 		{
-		ssize_t save_dl = dl;
+		int save_dl = dl;
 #ifdef BN_COUNT
 		fprintf(stderr, "  bn_add_part_words %d + %d (dl < 0, c = %d)\n", cl, dl, c);
 #endif
@@ -390,8 +390,8 @@ BN_ULONG bn_add_part_words(BN_ULONG *r,
  * a[1]*b[1]
  */
 /* dnX may not be positive, but n2/2+dnX has to be */
-void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, size_t n2,
-		      int dna, int dnb, BN_ULONG *t)
+void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, int n2,
+	int dna, int dnb, BN_ULONG *t)
 	{
 	int n=n2/2,c1,c2;
 	int tna=n+dna, tnb=n+dnb;
@@ -505,16 +505,16 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, size_t n2,
 	 * r[32] holds (b[1]*b[1])
 	 */
 
-	c1=bn_add_words(t,r,&(r[n2]),n2);
+	c1=(int)(bn_add_words(t,r,&(r[n2]),n2));
 
 	if (neg) /* if t[32] is negative */
 		{
-		c1-=bn_sub_words(&(t[n2]),t,&(t[n2]),n2);
+		c1-=(int)(bn_sub_words(&(t[n2]),t,&(t[n2]),n2));
 		}
 	else
 		{
 		/* Might have a carry */
-		c1+=bn_add_words(&(t[n2]),&(t[n2]),t,n2);
+		c1+=(int)(bn_add_words(&(t[n2]),&(t[n2]),t,n2));
 		}
 
 	/* t[32] holds (a[0]-a[1])*(b[1]-b[0])+(a[0]*b[0])+(a[1]*b[1])
@@ -522,7 +522,7 @@ void bn_mul_recursive(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b, size_t n2,
 	 * r[32] holds (b[1]*b[1])
 	 * c1 holds the carry bits
 	 */
-	c1+=bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2);
+	c1+=(int)(bn_add_words(&(r[n]),&(r[n]),&(t[n2]),n2));
 	if (c1)
 		{
 		p= &(r[n+n2]);

@@ -252,11 +252,9 @@ void BIO_clear_flags(BIO *b, int flags);
 #define BIO_cb_pre(a)	(!((a)&BIO_CB_RETURN))
 #define BIO_cb_post(a)	((a)&BIO_CB_RETURN)
 
-long (*BIO_get_callback(const BIO *b)) (struct bio_st *, int, const char *,
-					size_t, long, long);
-void BIO_set_callback(BIO *b, long (*callback)(struct bio_st *, int,
-					       const char *, size_t, long,
-					       long));
+long (*BIO_get_callback(const BIO *b)) (struct bio_st *,int,const char *,int, long,long);
+void BIO_set_callback(BIO *b, 
+	long (*callback)(struct bio_st *,int,const char *,int, long,long));
 char *BIO_get_callback_arg(const BIO *b);
 void BIO_set_callback_arg(BIO *b, char *arg);
 
@@ -283,7 +281,7 @@ struct bio_st
 	{
 	BIO_METHOD *method;
 	/* bio, mode, argp, argi, argl, ret */
-	long (*callback)(struct bio_st *,int,const char *,size_t, long,long);
+	long (*callback)(struct bio_st *,int,const char *,int, long,long);
 	char *cb_arg; /* first argument for the callback */
 
 	int init;
@@ -573,7 +571,7 @@ int	BIO_free(BIO *a);
 void	BIO_vfree(BIO *a);
 int	BIO_read(BIO *b, void *data, int len);
 int	BIO_gets(BIO *bp,char *buf, int size);
-int	BIO_write(BIO *b, const void *data, size_t len);
+int	BIO_write(BIO *b, const void *data, int len);
 int	BIO_puts(BIO *bp,const char *buf);
 int	BIO_indent(BIO *b,int indent,int max);
 long	BIO_ctrl(BIO *bp,int cmd,long larg,void *parg);
@@ -594,8 +592,8 @@ int BIO_nread(BIO *bio, char **buf, int num);
 int BIO_nwrite0(BIO *bio, char **buf);
 int BIO_nwrite(BIO *bio, char **buf, int num);
 
-long BIO_debug_callback(BIO *bio, int cmd, const char *argp, size_t argi,
-			long argl, long ret);
+long BIO_debug_callback(BIO *bio,int cmd,const char *argp,int argi,
+	long argl,long ret);
 
 BIO_METHOD *BIO_s_mem(void);
 BIO *BIO_new_mem_buf(void *buf, int len);

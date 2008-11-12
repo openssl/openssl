@@ -127,7 +127,7 @@ static int hwcrhk_mod_exp_dh(const DH *dh, BIGNUM *r,
 #endif
 
 /* RAND stuff */
-static int hwcrhk_rand_bytes(unsigned char *buf, size_t num);
+static int hwcrhk_rand_bytes(unsigned char *buf, int num);
 static int hwcrhk_rand_status(void);
 
 /* KM stuff */
@@ -1097,7 +1097,7 @@ static int hwcrhk_mod_exp_dh(const DH *dh, BIGNUM *r,
 #endif
 
 /* Random bytes are good */
-static int hwcrhk_rand_bytes(unsigned char *buf, size_t num)
+static int hwcrhk_rand_bytes(unsigned char *buf, int num)
 	{
 	char tempbuf[1024];
 	HWCryptoHook_ErrMsgBuf rmsg;

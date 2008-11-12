@@ -155,10 +155,10 @@ int rand_predictable=0;
 const char RAND_version[]="RAND" OPENSSL_VERSION_PTEXT;
 
 static void ssleay_rand_cleanup(void);
-static void ssleay_rand_seed(const void *buf, size_t num);
-static void ssleay_rand_add(const void *buf, size_t num, double add_entropy);
-static int ssleay_rand_bytes(unsigned char *buf, size_t num);
-static int ssleay_rand_pseudo_bytes(unsigned char *buf, size_t num);
+static void ssleay_rand_seed(const void *buf, int num);
+static void ssleay_rand_add(const void *buf, int num, double add_entropy);
+static int ssleay_rand_bytes(unsigned char *buf, int num);
+static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num);
 static int ssleay_rand_status(void);
 
 RAND_METHOD rand_ssleay_meth={
@@ -187,11 +187,9 @@ static void ssleay_rand_cleanup(void)
 	initialized=0;
 	}
 
-static void ssleay_rand_add(const void *buf, size_t num, double add)
+static void ssleay_rand_add(const void *buf, int num, double add)
 	{
-	int i,st_idx;
-	size_t j;
-	ssize_t k;
+	int i,j,k,st_idx;
 	long md_c[2];
 	unsigned char local_md[MD_DIGEST_LENGTH];
 	EVP_MD_CTX m;
@@ -304,7 +302,7 @@ static void ssleay_rand_add(const void *buf, size_t num, double add)
 	 * other thread's seeding remains without effect (except for
 	 * the incremented counter).  By XORing it we keep at least as
 	 * much entropy as fits into md. */
-	for (k = 0; k < sizeof(md); k++)
+	for (k = 0; k < (int)sizeof(md); k++)
 		{
 		md[k] ^= local_md[k];
 		}
@@ -317,17 +315,15 @@ static void ssleay_rand_add(const void *buf, size_t num, double add)
 #endif
 	}
 
-static void ssleay_rand_seed(const void *buf, size_t num)
+static void ssleay_rand_seed(const void *buf, int num)
 	{
 	ssleay_rand_add(buf, num, (double)num);
 	}
 
-static int ssleay_rand_bytes(unsigned char *buf, size_t num)
+static int ssleay_rand_bytes(unsigned char *buf, int num)
 	{
 	static volatile int stirred_pool = 0;
-	int i,st_num,st_idx;
-	size_t j;
-	ssize_t k;
+	int i,j,k,st_num,st_idx;
 	int num_ceil;
 	int ok;
 	long md_c[2];
@@ -494,7 +490,7 @@ static int ssleay_rand_bytes(unsigned char *buf, size_t num)
 		}
 
 	MD_Init(&m);
-	MD_Update(&m,&(md_c[0]),sizeof(md_c));
+	MD_Update(&m,(unsigned char *)&(md_c[0]),sizeof(md_c));
 	MD_Update(&m,local_md,MD_DIGEST_LENGTH);
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	MD_Update(&m,md,MD_DIGEST_LENGTH);
@@ -515,7 +511,7 @@ static int ssleay_rand_bytes(unsigned char *buf, size_t num)
 
 /* pseudo-random bytes that are guaranteed to be unique but not
    unpredictable */
-static int ssleay_rand_pseudo_bytes(unsigned char *buf, size_t num) 
+static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num) 
 	{
 	int ret;
 	unsigned long err;

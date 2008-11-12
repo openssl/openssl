@@ -67,8 +67,8 @@
 #include <openssl/rsa.h>
 
 int EVP_OpenInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *type,
-		 const unsigned char *ek, size_t ekl, const unsigned char *iv,
-		 EVP_PKEY *priv)
+	const unsigned char *ek, int ekl, const unsigned char *iv,
+	EVP_PKEY *priv)
 	{
 	unsigned char *key=NULL;
 	int i,size=0,ret=0;

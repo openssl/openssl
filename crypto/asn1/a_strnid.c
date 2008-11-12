@@ -121,7 +121,7 @@ int ASN1_STRING_set_default_mask_asc(char *p)
  */
 
 ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out, const unsigned char *in,
-				    size_t inlen, int inform, int nid)
+					int inlen, int inform, int nid)
 {
 	ASN1_STRING_TABLE *tbl;
 	ASN1_STRING *str = NULL;
