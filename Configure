@@ -1218,7 +1218,7 @@ if ($threads)
 
 if ($jpake)
 	{
-	$openssl_other_defines = "#define OPENSSL_EXPERIMENTAL_JPAKE\n";
+	$openssl_other_defines .= "#define OPENSSL_EXPERIMENTAL_JPAKE\n";
 	}
 
 if ($zlib)
