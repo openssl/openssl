@@ -41,25 +41,24 @@
 # 6. Don't use [or hand-code with .byte] "rep ret." "ret" mnemonic is
 #    required to identify the spots, where to inject Win64 epilogue!
 #    But on the pros, it's then prefixed with rep automatically:-)
-# 7. Due to MASM limitations [and certain general counter-intuitivity
-#    of ip-relative addressing] generation of position-independent
-#    code is assisted by synthetic directive, .picmeup, which puts
-#    address of the *next* instruction into target register.
+# 7. Stick to explicit ip-relative addressing. If you have to use
+#    GOTPCREL addressing, stick to mov symbol@GOTPCREL(%rip),%r??.
+#    Both are recognized and translated to proper Win64 addressing
+#    modes. To support legacy code a synthetic directive, .picmeup,
+#    is implemented. It puts address of the *next* instruction into
+#    target register, e.g.:
 #
-#    Example 1:
 #		.picmeup	%rax
 #		lea		.Label-.(%rax),%rax
-#    Example 2:
-#		.picmeup	%rcx
-#	.Lpic_point:
-#		...
-#		lea		.Label-.Lpic_point(%rcx),%rbp
 #
 # 8. In order to provide for structured exception handling unified
 #    Win64 prologue copies %rsp value to %rax. For further details
 #    see SEH paragraph at the end.
+# 9. .init segment is allowed to contain calls to functions only.
 
-my $output = shift;
+my $flavour = shift;
+my $output  = shift;
+if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
 
 { my ($stddev,$stdino,@junk)=stat(STDOUT);
   my ($outdev,$outino,@junk)=stat($output);
@@ -68,7 +67,10 @@ my $output = shift;
 	if ($stddev!=$outdev || $stdino!=$outino);
 }
 
-my $win64=1 if ($output =~ /\.asm$/);
+my $gas=1;	$gas=0 if ($output =~ /\.asm$/);
+my $elf=1;	$elf=0 if (!$gas);
+my $win64=0;
+my $prefix="";
 
 my $masmref=8 + 50727*2**-32;	# 8.00.50727 shipped with VS2005
 my $masm=0;
@@ -77,12 +79,18 @@ my $PTR=" PTR";
 my $nasmref=2.03;
 my $nasm=0;
 
-if ($win64)
+if    ($flavour eq "mingw64")	{ $gas=1; $elf=0; $win64=1; $prefix="_"; }
+elsif ($flavour eq "macosx")	{ $gas=1; $elf=0; $prefix="_"; }
+elsif ($flavour eq "masm")	{ $gas=0; $elf=0; $masm=$masmref; $win64=1; }
+elsif ($flavour eq "nasm")	{ $gas=0; $elf=0; $nasm=$nasmref; $win64=1; $PTR=""; }
+elsif (!$gas)
 {   if ($ENV{ASM} =~ m/nasm/ && `nasm -v` =~ m/version ([0-9]+)\.([0-9]+)/i)
     {	$nasm = $1 + $2*0.01; $PTR="";  }
     elsif (`ml64 2>&1` =~ m/Version ([0-9]+)\.([0-9]+)(\.([0-9]+))?/)
     {	$masm = $1 + $2*2**-16 + $4*2**-32;   }
     die "no assembler found on %PATH" if (!($nasm || $masm));
+    $win64=1;
+    $elf=0;
 }
 
 my $current_segment;
@@ -121,13 +129,20 @@ my %globals;
     }
     sub out {
 	my $self = shift;
-	if (!$win64) {
+	if ($gas) {
 	    if ($self->{op} eq "movz") {	# movz is pain...
 		sprintf "%s%s%s",$self->{op},$self->{sz},shift;
 	    } elsif ($self->{op} =~ /^set/) { 
 		"$self->{op}";
 	    } elsif ($self->{op} eq "ret") {
-	    	".byte	0xf3,0xc3";
+		my $epilogue = "";
+		if ($win64 && $current_function->{abi} eq "svr4") {
+		    $epilogue = "movq	8(%rsp),%rdi\n\t" .
+				"movq	16(%rsp),%rsi\n\t";
+		}
+	    	$epilogue . ".byte	0xf3,0xc3";
+	    } elsif ($self->{op} eq "call" && !$elf && $current_segment eq ".init") {
+		".p2align\t3\n\t.quad";
 	    } else {
 		"$self->{op}$self->{sz}";
 	    }
@@ -135,19 +150,25 @@ my %globals;
 	    $self->{op} =~ s/^movz/movzx/;
 	    if ($self->{op} eq "ret") {
 		$self->{op} = "";
-		if ($current_function->{abi} eq "svr4") {
+		if ($win64 && $current_function->{abi} eq "svr4") {
 		    $self->{op} = "mov	rdi,QWORD${PTR}[8+rsp]\t;WIN64 epilogue\n\t".
 				  "mov	rsi,QWORD${PTR}[16+rsp]\n\t";
 	    	}
 		$self->{op} .= "DB\t0F3h,0C3h\t\t;repret";
-	    }
-	    elsif ($self->{op} =~ /^(pop|push)f/) {
+	    } elsif ($self->{op} =~ /^(pop|push)f/) {
 		$self->{op} .= $self->{sz};
-	    }
+	    } elsif ($self->{op} eq "call" && $current_segment eq ".CRT\$XCU") {
+		$self->{op} = "ALIGN\t8\n\tDQ";
+	    } 
 	    $self->{op};
 	}
     }
-    sub mnemonic { shift->{op}; }
+    sub mnemonic {
+	my $self=shift;
+	my $op=shift;
+	$self->{op}=$op if (defined($op));
+	$self->{op};
+    }
 }
 { package const;	# pick up constants, which start with $
     sub re {
@@ -165,7 +186,7 @@ my %globals;
     sub out {
     	my $self = shift;
 
-	if (!$win64) {
+	if ($gas) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{value}
 	    $self->{value} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/egi;
@@ -192,6 +213,10 @@ my %globals;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
+	    if ($win64 && $self->{label} =~ s/\@GOTPCREL//) {
+		die if (opcode->mnemonic() ne "mov");
+		opcode->mnemonic("lea");
+	    }
 	    $self->{base}  =~ s/^%//;
 	    $self->{index} =~ s/^%// if (defined($self->{index}));
 	}
@@ -202,17 +227,20 @@ my %globals;
     	my $self = shift;
 	my $sz = shift;
 
+	$self->{label} =~ s/([_a-z][_a-z0-9]*)/$globals{$1} or $1/gei;
+
 	# Silently convert all EAs to 64-bit. This is required for
 	# elder GNU assembler and results in more compact code,
 	# *but* most importantly AES module depends on this feature!
 	$self->{index} =~ s/^[er](.?[0-9xpi])[d]?$/r\1/;
 	$self->{base}  =~ s/^[er](.?[0-9xpi])[d]?$/r\1/;
 
-	if (!$win64) {
+	if ($gas) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{label}
 	    $self->{label} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/egi;
 	    $self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
+	    $self->{label} =~ s/\.L/L\$/g	if (!$elf);
 
 	    if (defined($self->{index})) {
 		sprintf "%s%s(%%%s,%%%s,%d)",$self->{asterisk},
@@ -279,7 +307,7 @@ my %globals;
     }
     sub out {
     	my $self = shift;
-	if (!$win64)	{ sprintf "%s%%%s",$self->{asterisk},$self->{value}; }
+	if ($gas)	{ sprintf "%s%%%s",$self->{asterisk},$self->{value}; }
 	else		{ $self->{value}; }
     }
 }
@@ -289,24 +317,43 @@ my %globals;
 	local	*line = shift;
 	undef	$ret;
 
-	if ($line =~ /(^[\.\w]+\:)/) {
+	if ($line =~ /(^[\.\w]+)\:/) {
 	    $self->{value} = $1;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
-	    $self->{value} =~ s/\.L/\$L\$/ if ($win64);
+	    $self->{value} =~ s/\.L/\$L\$/ if (!$gas);
+	    $self->{value} =~ s/\.L/L\$/   if (!$elf);
 	}
 	$ret;
     }
     sub out {
 	my $self = shift;
 
-	if (!$win64) {
-	    $self->{value};
-	} elsif ($self->{value} ne "$current_function->{name}:") {
+	if ($gas) {
+	    my $func = ($globals{$self->{value}} or $self->{value}) . ":";
+	    if ($win64	&&
+			$current_function->{name} eq $self->{value} &&
+			$current_function->{abi} eq "svr4") {
+		$func .= "\n";
+		$func .= "	movq	%rdi,8(%rsp)\n";
+		$func .= "	movq	%rsi,16(%rsp)\n";
+		$func .= "	movq	%rsp,%rax\n";
+		$func .= ".LSEH_begin_$current_function->{name}:\n";
+		my $narg = $current_function->{narg};
+		$narg=6 if (!defined($narg));
+		$func .= "	movq	%rcx,%rdi\n" if ($narg>0);
+		$func .= "	movq	%rdx,%rsi\n" if ($narg>1);
+		$func .= "	movq	%r8,%rdx\n"  if ($narg>2);
+		$func .= "	movq	%r9,%rcx\n"  if ($narg>3);
+		$func .= "	movq	40(%rsp),%r8\n" if ($narg>4);
+		$func .= "	movq	48(%rsp),%r9\n" if ($narg>5);
+	    }
+	    $func;
+	} elsif ($self->{value} ne "$current_function->{name}") {
 	    $self->{value} .= ":" if ($masm && $ret!~m/^\$/);
-	    $self->{value};
-	} elsif ($current_function->{abi} eq "svr4") {
+	    $self->{value} . ":";
+	} elsif ($win64 && $current_function->{abi} eq "svr4") {
 	    my $func =	"$current_function->{name}" .
 			($nasm ? ":" : "\tPROC $current_function->{scope}") .
 			"\n";
@@ -342,7 +389,10 @@ my %globals;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
-	    $self->{value} =~ s/\.L/\$L\$/g if ($win64);
+	    $self->{value} =~ s/\@PLT// if (!$elf);
+	    $self->{value} =~ s/([_a-z][_a-z0-9]*)/$globals{$1} or $1/gei;
+	    $self->{value} =~ s/\.L/\$L\$/g if (!$gas);
+	    $self->{value} =~ s/\.L/L\$/g   if (!$elf);
 	}
 	$ret;
     }
@@ -372,27 +422,81 @@ my %globals;
 			"%r14"=>0x01358d4c,	"%r15"=>0x013d8d4c	);
 
 	if ($line =~ /^\s*(\.\w+)/) {
-	    if (!$win64) {
-		$self->{value} = $1;
-		$line =~ s/\@abi\-omnipotent/\@function/;
-		$line =~ s/\@function.*/\@function/;
-		if ($line =~ /\.picmeup\s+(%r[\w]+)/i) {
-		    $self->{value} = sprintf "\t.long\t0x%x,0x90000000",$opcode{$1};
-		} elsif ($line =~ /\.asciz\s+"(.*)"$/) {
-		    $self->{value} = ".byte\t".join(",",unpack("C*",$1),0);
-		} elsif ($line =~ /\.extern/) {
+	    $dir = $1;
+	    $ret = $self;
+	    undef $self->{value};
+	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
+
+	    SWITCH: for ($dir) {
+		/\.picmeup/ && do { if ($line =~ /(%r[\w]+)/i) {
+			    		$dir="\t.long";
+					$line=sprintf "0x%x,0x90000000",$opcode{$1};
+				    }
+				    last;
+				  };
+		/\.global|\.globl|\.extern/
+			    && do { $globals{$line} = $prefix . $line;
+				    $line = $globals{$line} if ($prefix);
+				    last;
+				  };
+		/\.type/    && do { ($sym,$type,$narg) = split(',',$line);
+				    if ($type eq "\@function") {
+					undef $current_function;
+					$current_function->{name} = $sym;
+					$current_function->{abi}  = "svr4";
+					$current_function->{narg} = $narg;
+					$current_function->{scope} = defined($globals{$sym})?"PUBLIC":"PRIVATE";
+				    } elsif ($type eq "\@abi-omnipotent") {
+					undef $current_function;
+					$current_function->{name} = $sym;
+					$current_function->{scope} = defined($globals{$sym})?"PUBLIC":"PRIVATE";
+				    }
+				    $line =~ s/\@abi\-omnipotent/\@function/;
+				    $line =~ s/\@function.*/\@function/;
+				    last;
+				  };
+		/\.asciz/   && do { if ($line =~ /^"(.*)"$/) {
+					$dir  = ".byte";
+					$line = join(",",unpack("C*",$1),0);
+				    }
+				    last;
+				  };
+	    }
+
+	    if ($gas) {
+		$self->{value} = $dir . "\t" . $line;
+
+		if ($dir =~ /\.extern/) {
 		    $self->{value} = ""; # swallow extern
-		} else {
-		    $self->{value} = $line;
+		} elsif (!$elf && $dir =~ /\.type/) {
+		    $self->{value} = "";
+		    $self->{value} = ".def\t" . ($globals{$1} or $1) . ";\t" .
+				(defined($globals{$1})?".scl 2;":".scl 3;") .
+				"\t.type 32;\t.endef"
+				if ($win64 && $line =~ /([^,]+),\@function/);
+		} elsif (!$elf && $dir =~ /\.size/) {
+		    $self->{value} = "";
+		    if (defined($current_function)) {
+			$self->{value} .= ".LSEH_end_$current_function->{name}:"
+				if ($win64 && $current_function->{abi} eq "svr4");
+			undef $current_function;
+		    }
+		} elsif (!$elf && $dir =~ /\.align/) {
+		    $self->{value} = ".p2align\t" . (log($line)/log(2));
+		} elsif ($dir eq ".section") {
+		    $current_segment=$line;
+		    if (!$elf && $current_segment eq ".init") {
+			if	($flavour eq "macosx")	{ $self->{value} = ".mod_init_func"; }
+			elsif	($flavour eq "mingw64")	{ $self->{value} = ".section\t.ctors"; }
+		    }
+		} elsif ($dir =~ /\.(text|data)/) {
+		    $current_segment=".$1";
 		}
 		$line = "";
 		return $self;
 	    }
 
-	    $dir = $1;
-	    $ret = $self;
-	    undef $self->{value};
-	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
+	    # non-gas case or nasm/masm
 	    SWITCH: for ($dir) {
 		/\.text/    && do { my $v=undef;
 				    if ($nasm) {
@@ -419,6 +523,8 @@ my %globals;
 				    last;
 				  };
 		/\.section/ && do { my $v=undef;
+				    $line =~ s/([^,]*).*/$1/;
+				    $line = ".CRT\$XCU" if ($line eq ".init");
 				    if ($nasm) {
 					$v="section	$line";
 					if ($line=~/\.([px])data/) {
@@ -444,21 +550,6 @@ my %globals;
 		/\.globl|.global/
 			    && do { $self->{value}  = $masm?"PUBLIC":"global";
 				    $self->{value} .= "\t".$line;
-				    $globals{$line} = $line;
-				    last;
-				  };
-		/\.type/    && do { ($sym,$type,$narg) = split(',',$line);
-				    if ($type eq "\@function") {
-					undef $current_function;
-					$current_function->{name} = $sym;
-					$current_function->{abi}  = "svr4";
-					$current_function->{narg} = $narg;
-					$current_function->{scope} = defined($globals{$sym})?"PUBLIC":"PRIVATE";
-				    } elsif ($type eq "\@abi-omnipotent") {
-					undef $current_function;
-					$current_function->{name} = $sym;
-					$current_function->{scope} = defined($globals{$sym})?"PUBLIC":"PRIVATE";
-				    }
 				    last;
 				  };
 		/\.size/    && do { if (defined($current_function)) {
@@ -473,38 +564,32 @@ my %globals;
 				    last;
 				  };
 		/\.align/   && do { $self->{value} = "ALIGN\t".$line; last; };
-		/\.(byte|value|long|quad)/
+		/\.(value|long|rva|quad)/
 			    && do { my $sz  = substr($1,0,1);
 				    my @arr = split(',',$line);
 				    my $last = pop(@arr);
 				    my $conv = sub  {	my $var=shift;
 							$var=~s/0x([0-9a-f]+)/0$1h/ig;
 							$var=~s/\.L/\$L\$/g;
-							if ($current_segment=~/.[px]data/)
+							if ($sz eq "D" && ($current_segment=~/.[px]data/ || $dir eq ".rva"))
 							{ $var=~s/([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
 							$var;
 						    };  
 
-				    $sz =~ tr/bvlq/BWDQ/;
+				    $sz =~ tr/bvlrq/BWDDQ/;
 				    $self->{value} = "\tD$sz\t";
 				    for (@arr) { $self->{value} .= &$conv($_).","; }
 				    $self->{value} .= &$conv($last);
 				    last;
 				  };
-		/\.picmeup/ && do { $self->{value} = sprintf"\tDD\t0%Xh,090000000h",$opcode{$line};
-				    last;
-				  };
-		/\.asciz/   && do { if ($line =~ /^"(.*)"$/) {
-					my @str=unpack("C*",$1);
-					push @str,0;
-					while ($#str>15) {
-					    $self->{value}.="DB\t"
-						.join(",",@str[0..15])."\n";
-					    foreach (0..15) { shift @str; }
-					}
+		/\.byte/    && do { my @str=split(",",$line);
+				    while ($#str>15) {
 					$self->{value}.="DB\t"
-						.join(",",@str) if (@str);
+						.join(",",@str[0..15])."\n";
+					foreach (0..15) { shift @str; }
 				    }
+				    $self->{value}.="DB\t"
+						.join(",",@str) if (@str);
 				    last;
 				  };
 	    }
@@ -566,7 +651,7 @@ while($line=<>) {
 	$sz=opcode->size();
 
 	if (defined($dst)) {
-	    if (!$win64) {
+	    if ($gas) {
 		printf "\t%s\t%s,%s",	$opcode->out($dst->size()),
 					$src->out($sz),$dst->out($sz);
 	    } else {
@@ -584,7 +669,8 @@ while($line=<>) {
     print $line,"\n";
 }
 
-print "\n$current_segment\tENDS\nEND\n" if ($current_segment && $masm);
+print "\n$current_segment\tENDS\n"	if ($current_segment && $masm);
+print "END\n"				if ($masm);
 
 close STDOUT;
 
@@ -759,26 +845,26 @@ close STDOUT;
 #
 # function_unwind_info:
 #	.byte	9,0,0,0
-#	.long	handler
+#	.rva	handler
 #
 # This structure designates exception handler for a function with
 # zero-length prologue, no stack frame or frame register.
 #
 # To facilitate composing of .pdata structures, auto-generated "gear"
 # prologue copies rsp value to rax and denotes next instruction with
-# $L$SEH_begin_{function_name} label. This essentially defines the SEH
+# .LSEH_begin_{function_name} label. This essentially defines the SEH
 # styling rule mentioned in the beginning. Position of this label is
 # chosen in such manner that possible exceptions raised in the "gear"
 # prologue would be accounted to caller and unwound from latter's frame.
-# End of function is marked with respective $L$SEH_end_{function_name}
+# End of function is marked with respective .LSEH_end_{function_name}
 # label. To summarize, .pdata segment would contain
 #
-#	.long	$L$SEH_begin_function
-#	.long	$L$SEH_end_function
-#	.long	function_unwind_info
+#	.rva	.LSEH_begin_function
+#	.rva	.LSEH_end_function
+#	.rva	function_unwind_info
 #
 # Reference to functon_unwind_info from .xdata segment is the anchor.
-# In case you wonder why references are 32-bit .longs and not 64-bit
+# In case you wonder why references are 32-bit .rvas and not 64-bit
 # .quads. References put into these two segments are required to be
 # *relative* to the base address of the current binary module, a.k.a.
 # image base. No Win64 module, be it .exe or .dll, can be larger than
