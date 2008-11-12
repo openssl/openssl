@@ -266,7 +266,7 @@ $cflags.=" -DOPENSSL_NO_ECDSA" if $no_ecdsa;
 $cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
-
+$cflags.=" -DOPENSSL_EXPERIMENTAL_JPAKE"    if $jpake;
 $cflags.= " -DZLIB" if $zlib_opt;
 $cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
 
@@ -706,6 +706,7 @@ sub var_add
 	return("") if $no_dh   && $dir =~ /\/dh/;
 	return("") if $no_ec   && $dir =~ /\/ec/;
 	return("") if $no_cms  && $dir =~ /\/cms/;
+	return("") if !$jpake  && $dir =~ /\/jpake/;
 	if ($no_des && $dir =~ /\/des/)
 		{
 		if ($val =~ /read_pwd/)
@@ -1062,6 +1063,8 @@ sub read_options
 		"no-shared" => 0,
 		"no-zlib" => 0,
 		"no-zlib-dynamic" => 0,
+		"no-experimental-jpake" => 0,
+		"enable-experimental-jpake" => \$jpake,
 		);
 
 	if (exists $valid_options{$_})
