@@ -1,6 +1,14 @@
 #include <openssl/jpake.h>
 #include <openssl/err.h>
 
+#ifndef OPENSSL_EXPERIMENTAL_JPAKE
+int main(int argc, char *argv[])
+{
+    printf("No RSA support\n");
+    return(0);
+}
+#else
+
 static void showbn(const char *name, const BIGNUM *bn)
     {
     fputs(name, stdout);
@@ -174,3 +182,5 @@ int main(int argc, char **argv)
 
     return 0;
     }
+
+#endif
