@@ -1169,7 +1169,7 @@ padlock_aes_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 /* Wrapper that provides an interface between the API and 
    the raw PadLock RNG */
 static int
-padlock_rand_bytes(unsigned char *output, size_t count)
+padlock_rand_bytes(unsigned char *output, int count)
 {
 	unsigned int eax, buf;
 
