@@ -8,6 +8,12 @@
 #ifndef HEADER_JPAKE_H
 #define HEADER_JPAKE_H
 
+#include <openssl/opensslconf.h>
+
+#ifndef OPENSSL_EXPERIMENTAL_JPAKE
+#error JPAKE is disabled.
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif

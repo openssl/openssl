@@ -725,6 +725,12 @@
      [NTT]
 
  Changes between 0.9.8i and 0.9.8j  [xx XXX xxxx]
+  
+  *) Update Configure code and WIN32 build scripts to support experimental
+     code. This is surrounded by OPENSSL_EXPERIMENTAL_FOO and not compiled
+     in by default. Using the configuration option "enable-experimental-foo"
+     enables it. Use this option for JPAKE.
+     [Steve Henson]
 
   *) Add JPAKE support, including demo authentication in s_client and
      s_server.
