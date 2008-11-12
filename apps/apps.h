@@ -338,8 +338,10 @@ X509_NAME *parse_name(char *str, long chtype, int multirdn);
 int args_verify(char ***pargs, int *pargc,
 			int *badarg, BIO *err, X509_VERIFY_PARAM **pm);
 void policies_print(BIO *out, X509_STORE_CTX *ctx);
+#ifdef OPENSSL_EXPERIMENTAL_JPAKE
 void jpake_client_auth(BIO *out, BIO *conn, const char *secret);
 void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
+#endif
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1

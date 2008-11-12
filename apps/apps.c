@@ -130,7 +130,9 @@
 #include <openssl/rsa.h>
 #endif
 #include <openssl/bn.h>
+#ifdef OPENSSL_EXPERIMENTAL_JPAKE
 #include <openssl/jpake.h>
+#endif
 
 #define NON_MAIN
 #include "apps.h"
@@ -2336,6 +2338,8 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx)
 		BIO_free(out);
 	}
 
+#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+
 static JPAKE_CTX *jpake_init(const char *us, const char *them,
 							 const char *secret)
 	{
@@ -2547,3 +2551,5 @@ void jpake_server_auth(BIO *out, BIO *conn, const char *secret)
 	BIO_pop(bconn);
 	BIO_free(bconn);
 	}
+
+#endif

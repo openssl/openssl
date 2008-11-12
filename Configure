@@ -588,6 +588,7 @@ my $no_threads=0;
 my $threads=0;
 my $no_shared=0; # but "no-shared" is default
 my $zlib=1;      # but "no-zlib" is default
+my $jpake=1;      # but "no-jpake" is default
 my $no_krb5=0;   # but "no-krb5" is implied unless "--with-krb5-..." is used
 my $no_rfc3779=1; # but "no-rfc3779" is default
 my $montasm=1;   # but "no-montasm" is default
@@ -628,6 +629,7 @@ my %disabled = ( # "what"         => "comment"
                  "camellia"       => "default",
                  "capieng"        => "default",
                  "cms"            => "default",
+                 "experimental-jpake"          => "default",
                  "gmp"            => "default",
                  "mdc2"           => "default",
                  "montasm"        => "default", # explicit option in 0.9.8 only (implicitly enabled in 0.9.9)
@@ -975,6 +977,8 @@ foreach (sort (keys %disabled))
 		{ $no_threads = 1; }
 	elsif (/^shared$/)
 		{ $no_shared = 1; }
+	elsif (/^experimental-jpake$/)
+		{ $jpake = 0; push @skip, "jpake"}
 	elsif (/^zlib$/)
 		{ $zlib = 0; }
 	elsif (/^montasm$/)
@@ -1212,6 +1216,11 @@ if ($threads)
 	$openssl_thread_defines .= $thread_defines;
 	}
 
+if ($jpake)
+	{
+	$openssl_other_defines = "#define OPENSSL_EXPERIMENTAL_JPAKE\n";
+	}
+
 if ($zlib)
 	{
 	$cflags = "-DZLIB $cflags";
@@ -1410,7 +1419,8 @@ while (<IN>)
 	if ($sdirs) {
 		my $dir;
 		foreach $dir (@skip) {
-			s/([ 	])$dir /\1/;
+			s/(\s)$dir\s/$1/;
+			s/\s$dir$//;
 			}
 		}
 	$sdirs = 0 unless /\\$/;
