@@ -11,6 +11,8 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_EXPERIMENTAL_JPAKE
+#error JPAKE is disabled
+#endif
 
 #ifdef  __cplusplus
 extern "C" {
@@ -123,6 +125,5 @@ void ERR_load_JPAKE_strings(void);
 
 #ifdef  __cplusplus
 }
-#endif
 #endif
 #endif

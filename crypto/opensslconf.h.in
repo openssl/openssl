@@ -1,5 +1,21 @@
 /* crypto/opensslconf.h.in */
 
+#ifdef OPENSSL_DOING_MAKEDEPEND
+
+/* Include any symbols here which have to be explicitly set to enable a
+ * feature. For example OPENSSL_EXPERIMENTAL_FOO
+ */
+
+#ifndef OPENSSL_FIPS
+#define OPENSSL_FIPS
+#endif
+
+#ifndef OPENSSL_EXPERIMENTAL_JPAKE
+#define OPENSSL_EXPERIMENTAL_JPAKE
+#endif
+
+#endif
+
 /* Generate 80386 code? */
 #undef I386_ONLY
 
