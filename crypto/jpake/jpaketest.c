@@ -4,7 +4,7 @@
 #ifndef OPENSSL_EXPERIMENTAL_JPAKE
 int main(int argc, char *argv[])
 {
-    printf("No RSA support\n");
+    printf("No J-PAKE support\n");
     return(0);
 }
 #else
