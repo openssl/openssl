@@ -108,7 +108,7 @@ static int getModulusAndExponent(const unsigned char *token, long *exponentLengt
 
 /* RAND number functions */
 /*-----------------------*/
-static int cca_get_random_bytes(unsigned char*, int );
+static int cca_get_random_bytes(unsigned char*, int);
 static int cca_random_status(void);
 
 #ifndef OPENSSL_NO_RSA
