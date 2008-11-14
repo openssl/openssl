@@ -1736,7 +1736,7 @@
 
 #define SN_id_on_permanentIdentifier		"id-on-permanentIdentifier"
 #define LN_id_on_permanentIdentifier		"Permanent Identifier"
-#define NID_id_on_permanentIdentifier		857
+#define NID_id_on_permanentIdentifier		858
 #define OBJ_id_on_permanentIdentifier		OBJ_id_on,3L
 
 #define SN_id_pda_dateOfBirth		"id-pda-dateOfBirth"
@@ -2239,6 +2239,11 @@
 #define LN_ext_key_usage		"X509v3 Extended Key Usage"
 #define NID_ext_key_usage		126
 #define OBJ_ext_key_usage		OBJ_id_ce,37L
+
+#define SN_freshest_crl		"freshestCRL"
+#define LN_freshest_crl		"X509v3 Freshest CRL"
+#define NID_freshest_crl		857
+#define OBJ_freshest_crl		OBJ_id_ce,46L
 
 #define SN_inhibit_any_policy		"inhibitAnyPolicy"
 #define LN_inhibit_any_policy		"X509v3 Inhibit Any Policy"
