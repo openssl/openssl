@@ -1,4 +1,4 @@
-#ifdef __SUNPRO_C
+#if !(defined(__GNUC__) && __GNUC__>=2)
 # include "../bn_asm.c"	/* kind of dirty hack for Sun Studio */
 #else
 /*
@@ -54,7 +54,11 @@
  *    machine.
  */
 
+#ifdef _WIN64
+#define BN_ULONG unsigned long long
+#else
 #define BN_ULONG unsigned long
+#endif
 
 /*
  * "m"(a), "+m"(r)	is the way to favor DirectPath µ-code;

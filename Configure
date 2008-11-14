@@ -492,7 +492,14 @@ my %table=(
 
 # MinGW
 "mingw", "gcc:-mno-cygwin -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall:::MINGW32:-lws2_32 -lgdi32:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts} EXPORT_VAR_AS_FN:${x86_asm}:coff:win32:cygwin-shared:-D_WINDLL -DOPENSSL_USE_APPLINK:-mno-cygwin:.dll.a",
-"mingw64", "gcc:-mno-cygwin -DL_ENDIAN -O3 -Wall -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE:::MINGW64:-lws2_32 -lgdi32:SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:${no_asm}:win32:cygwin-shared:-D_WINDLL:-mno-cygwin:.dll.a",
+# As for OPENSSL_USE_APPLINK. Applink makes it possible to use .dll
+# compiled with one compiler with application compiled with another
+# compiler. It's possible to engage Applink support in mingw64 build,
+# but it's not done, because till mingw64 supports structured exception
+# handling, one can't seriously consider its binaries for using with
+# non-mingw64 run-time environment. And as mingw64 is always consistent
+# with itself, Applink is never engaged and can as well be omitted.
+"mingw64", "gcc:-mno-cygwin -DL_ENDIAN -O3 -Wall -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE:::MINGW64:-lws2_32 -lgdi32:SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN:${x86_64_asm}:mingw64:win32:cygwin-shared:-D_WINDLL:-mno-cygwin:.dll.a",
 
 # UWIN 
 "UWIN", "cc:-DTERMIOS -DL_ENDIAN -O -Wall:::UWIN::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${no_asm}:win32",

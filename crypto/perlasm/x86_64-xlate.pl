@@ -71,6 +71,7 @@ my $gas=1;	$gas=0 if ($output =~ /\.asm$/);
 my $elf=1;	$elf=0 if (!$gas);
 my $win64=0;
 my $prefix="";
+my $decor=".L";
 
 my $masmref=8 + 50727*2**-32;	# 8.00.50727 shipped with VS2005
 my $masm=0;
@@ -80,9 +81,9 @@ my $nasmref=2.03;
 my $nasm=0;
 
 if    ($flavour eq "mingw64")	{ $gas=1; $elf=0; $win64=1; $prefix="_"; }
-elsif ($flavour eq "macosx")	{ $gas=1; $elf=0; $prefix="_"; }
-elsif ($flavour eq "masm")	{ $gas=0; $elf=0; $masm=$masmref; $win64=1; }
-elsif ($flavour eq "nasm")	{ $gas=0; $elf=0; $nasm=$nasmref; $win64=1; $PTR=""; }
+elsif ($flavour eq "macosx")	{ $gas=1; $elf=0; $prefix="_"; $decor="L\$"; }
+elsif ($flavour eq "masm")	{ $gas=0; $elf=0; $masm=$masmref; $win64=1; $decor="\$L\$"; }
+elsif ($flavour eq "nasm")	{ $gas=0; $elf=0; $nasm=$nasmref; $win64=1; $decor="\$L\$"; $PTR=""; }
 elsif (!$gas)
 {   if ($ENV{ASM} =~ m/nasm/ && `nasm -v` =~ m/version ([0-9]+)\.([0-9]+)/i)
     {	$nasm = $1 + $2*0.01; $PTR="";  }
@@ -91,6 +92,7 @@ elsif (!$gas)
     die "no assembler found on %PATH" if (!($nasm || $masm));
     $win64=1;
     $elf=0;
+    $decor="\$L\$";
 }
 
 my $current_segment;
@@ -228,6 +230,7 @@ my %globals;
 	my $sz = shift;
 
 	$self->{label} =~ s/([_a-z][_a-z0-9]*)/$globals{$1} or $1/gei;
+	$self->{label} =~ s/\.L/$decor/g;
 
 	# Silently convert all EAs to 64-bit. This is required for
 	# elder GNU assembler and results in more compact code,
@@ -240,7 +243,7 @@ my %globals;
 	    # in $self->{label}
 	    $self->{label} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/egi;
 	    $self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
-	    $self->{label} =~ s/\.L/L\$/g	if (!$elf);
+	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour eq "mingw64");
 
 	    if (defined($self->{index})) {
 		sprintf "%s%s(%%%s,%%%s,%d)",$self->{asterisk},
@@ -252,7 +255,6 @@ my %globals;
 	} else {
 	    %szmap = ( b=>"BYTE$PTR", w=>"WORD$PTR", l=>"DWORD$PTR", q=>"QWORD$PTR" );
 
-	    $self->{label} =~ s/\.L/\$L\$/g;
 	    $self->{label} =~ s/\./\$/g;
 	    $self->{label} =~ s/0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
@@ -322,8 +324,7 @@ my %globals;
 	    $ret = $self;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
-	    $self->{value} =~ s/\.L/\$L\$/ if (!$gas);
-	    $self->{value} =~ s/\.L/L\$/   if (!$elf);
+	    $self->{value} =~ s/^\.L/$decor/;
 	}
 	$ret;
     }
@@ -339,7 +340,7 @@ my %globals;
 		$func .= "	movq	%rdi,8(%rsp)\n";
 		$func .= "	movq	%rsi,16(%rsp)\n";
 		$func .= "	movq	%rsp,%rax\n";
-		$func .= ".LSEH_begin_$current_function->{name}:\n";
+		$func .= "${decor}SEH_begin_$current_function->{name}:\n";
 		my $narg = $current_function->{narg};
 		$narg=6 if (!defined($narg));
 		$func .= "	movq	%rcx,%rdi\n" if ($narg>0);
@@ -360,7 +361,7 @@ my %globals;
 	    $func .= "	mov	QWORD${PTR}[8+rsp],rdi\t;WIN64 prologue\n";
 	    $func .= "	mov	QWORD${PTR}[16+rsp],rsi\n";
 	    $func .= "	mov	rax,rsp\n";
-	    $func .= "\$L\$SEH_begin_$current_function->{name}:";
+	    $func .= "${decor}SEH_begin_$current_function->{name}:";
 	    $func .= ":" if ($masm);
 	    $func .= "\n";
 	    my $narg = $current_function->{narg};
@@ -391,8 +392,7 @@ my %globals;
 
 	    $self->{value} =~ s/\@PLT// if (!$elf);
 	    $self->{value} =~ s/([_a-z][_a-z0-9]*)/$globals{$1} or $1/gei;
-	    $self->{value} =~ s/\.L/\$L\$/g if (!$gas);
-	    $self->{value} =~ s/\.L/L\$/g   if (!$elf);
+	    $self->{value} =~ s/\.L/$decor/g;
 	}
 	$ret;
     }
@@ -461,6 +461,11 @@ my %globals;
 				    }
 				    last;
 				  };
+		/\.rva|\.long|\.quad/
+			    && do { $line =~ s/([_a-z][_a-z0-9]*)/$globals{$1} or $1/gei;
+				    $line =~ s/\.L/$decor/g;
+				    last;
+				  };
 	    }
 
 	    if ($gas) {
@@ -477,7 +482,7 @@ my %globals;
 		} elsif (!$elf && $dir =~ /\.size/) {
 		    $self->{value} = "";
 		    if (defined($current_function)) {
-			$self->{value} .= ".LSEH_end_$current_function->{name}:"
+			$self->{value} .= "${decor}SEH_end_$current_function->{name}:"
 				if ($win64 && $current_function->{abi} eq "svr4");
 			undef $current_function;
 		    }
@@ -555,7 +560,7 @@ my %globals;
 		/\.size/    && do { if (defined($current_function)) {
 					undef $self->{value};
 					if ($current_function->{abi} eq "svr4") {
-					    $self->{value}="\$L\$SEH_end_$current_function->{name}:";
+					    $self->{value}="${decor}SEH_end_$current_function->{name}:";
 					    $self->{value}.=":\n" if($masm);
 					}
 					$self->{value}.="$current_function->{name}\tENDP" if($masm);
@@ -570,7 +575,6 @@ my %globals;
 				    my $last = pop(@arr);
 				    my $conv = sub  {	my $var=shift;
 							$var=~s/0x([0-9a-f]+)/0$1h/ig;
-							$var=~s/\.L/\$L\$/g;
 							if ($sz eq "D" && ($current_segment=~/.[px]data/ || $dir eq ".rva"))
 							{ $var=~s/([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
 							$var;
