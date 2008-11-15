@@ -512,6 +512,13 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS_MD_MASTER_SECRET_CONST    "\x6d\x61\x73\x74\x65\x72\x20\x73\x65\x63\x72\x65\x74"  /*master secret*/
 #endif
 
+/* TLS Session Ticket extension struct */
+struct tls_session_ticket_ext_st
+	{
+	unsigned short length;
+	void *data;
+	};
+
 #ifdef  __cplusplus
 }
 #endif

@@ -788,6 +788,23 @@ int ssl3_get_server_hello(SSL *s)
 		goto f_err;
 		}
 
+#ifndef OPENSSL_NO_TLSEXT
+	/* check if we want to resume the session based on external pre-shared secret */
+	if (s->version >= TLS1_VERSION && s->tls_session_secret_cb)
+		{
+		SSL_CIPHER *pref_cipher=NULL;
+		s->session->master_key_length=sizeof(s->session->master_key);
+		if (s->tls_session_secret_cb(s, s->session->master_key,
+					     &s->session->master_key_length,
+					     NULL, &pref_cipher,
+					     s->tls_session_secret_cb_arg))
+			{
+			s->session->cipher = pref_cipher ?
+				pref_cipher : ssl_get_cipher_by_char(s, p+j);
+			}
+		}
+#endif /* OPENSSL_NO_TLSEXT */
+
 	if (j != 0 && j == s->session->session_id_length
 	    && memcmp(p,s->session->session_id,j) == 0)
 	    {
@@ -2927,11 +2944,8 @@ static int ssl3_check_finished(SSL *s)
 	{
 	int ok;
 	long n;
-	/* If we have no ticket or session ID is non-zero length (a match of
-	 * a non-zero session length would never reach here) it cannot be a
-	 * resumed session.
-	 */
-	if (!s->session->tlsext_tick || s->session->session_id_length)
+	/* If we have no ticket it cannot be a resumed session. */
+	if (!s->session->tlsext_tick)
 		return 1;
 	/* this function is called when we really expect a Certificate
 	 * message, so permit appropriate message length */

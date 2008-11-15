@@ -154,6 +154,12 @@ int tls1_new(SSL *s)
 
 void tls1_free(SSL *s)
 	{
+#ifndef OPENSSL_NO_TLSEXT
+	if (s->tlsext_session_ticket)
+		{
+		OPENSSL_free(s->tlsext_session_ticket);
+		}
+#endif /* OPENSSL_NO_TLSEXT */
 	ssl3_free(s);
 	}
 
@@ -357,8 +363,23 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		int ticklen;
 		if (s->session && s->session->tlsext_tick)
 			ticklen = s->session->tlsext_ticklen;
+		else if (s->session && s->tlsext_session_ticket &&
+			 s->tlsext_session_ticket->data)
+			{
+			ticklen = s->tlsext_session_ticket->length;
+			s->session->tlsext_tick = OPENSSL_malloc(ticklen);
+			if (!s->session->tlsext_tick)
+				return NULL;
+			memcpy(s->session->tlsext_tick,
+			       s->tlsext_session_ticket->data,
+			       ticklen);
+			s->session->tlsext_ticklen = ticklen;
+			}
 		else
 			ticklen = 0;
+		if (ticklen == 0 && s->tlsext_session_ticket &&
+		    s->tlsext_session_ticket->data == NULL)
+			goto skip_ext;
 		/* Check for enough room 2 for extension type, 2 for len
  		 * rest for ticket
   		 */
@@ -371,6 +392,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			ret += ticklen;
 			}
 		}
+		skip_ext:
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
 	if (s->s3->client_opaque_prf_input != NULL)
@@ -751,6 +773,15 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				}
 			}
 #endif
+		else if (type == TLSEXT_TYPE_session_ticket)
+			{
+			if (s->tls_session_ticket_ext_cb &&
+			    !s->tls_session_ticket_ext_cb(s, data, size, s->tls_session_ticket_ext_cb_arg))
+				{
+				*al = TLS1_AD_INTERNAL_ERROR;
+				return 0;
+				}
+			}
 		else if (type == TLSEXT_TYPE_status_request
 						&& s->ctx->tlsext_status_cb)
 			{
@@ -928,6 +959,12 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 		else if (type == TLSEXT_TYPE_session_ticket)
 			{
+			if (s->tls_session_ticket_ext_cb &&
+			    !s->tls_session_ticket_ext_cb(s, data, size, s->tls_session_ticket_ext_cb_arg))
+				{
+				*al = TLS1_AD_INTERNAL_ERROR;
+				return 0;
+				}
 			if ((SSL_get_options(s) & SSL_OP_NO_TICKET)
 				|| (size > 0))
 				{
@@ -1434,6 +1471,15 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 				{
 				s->tlsext_ticket_expected = 1;
 				return 0;	/* Cache miss */
+				}
+			if (s->tls_session_secret_cb)
+				{
+				/* Indicate cache miss here and instead of
+				 * generating the session from ticket now,
+				 * trigger abbreviated handshake based on
+				 * external mechanism to calculate the master
+				 * secret later. */
+				return 0;
 				}
 			return tls_decrypt_ticket(s, p, size, session_id, len,
 									ret);

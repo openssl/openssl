@@ -4,6 +4,9 @@
 
  Changes between 0.9.8j and 0.9.9  [xx XXX xxxx]
 
+  *) Add session ticket override functionality for use by EAP-FAST.
+     [Jouni Malinen <j@w1.fi>]
+
   *) Modify HMAC functions to return a value. Since these can be implemented
      in an ENGINE errors can occur.
      [Steve Henson]

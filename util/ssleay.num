@@ -254,3 +254,5 @@ PEM_read_bio_SSL_SESSION                302	EXIST::FUNCTION:
 SSL_CTX_set_psk_server_callback         303	EXIST::FUNCTION:PSK
 SSL_get_psk_identity                    304	EXIST::FUNCTION:PSK
 PEM_write_SSL_SESSION                   305	EXIST:!WIN16:FUNCTION:
+SSL_set_session_ticket_ext		306	EXIST::FUNCTION:TLSEXT
+SSL_set_session_secret_cb		307	EXIST::FUNCTION:TLSEXT

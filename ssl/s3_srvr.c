@@ -1010,6 +1010,59 @@ int ssl3_get_client_hello(SSL *s)
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
 			goto err;
 		}
+
+	/* Check if we want to use external pre-shared secret for this
+	 * handshake for not reused session only. We need to generate
+	 * server_random before calling tls_session_secret_cb in order to allow
+	 * SessionTicket processing to use it in key derivation. */
+	{
+		unsigned long Time;
+		unsigned char *pos;
+		Time=(unsigned long)time(NULL);			/* Time */
+		pos=s->s3->server_random;
+		l2n(Time,pos);
+		if (RAND_pseudo_bytes(pos,SSL3_RANDOM_SIZE-4) <= 0)
+			{
+			al=SSL_AD_INTERNAL_ERROR;
+			goto f_err;
+			}
+	}
+
+	if (!s->hit && s->version >= TLS1_VERSION && s->tls_session_secret_cb)
+		{
+		SSL_CIPHER *pref_cipher=NULL;
+
+		s->session->master_key_length=sizeof(s->session->master_key);
+		if(s->tls_session_secret_cb(s, s->session->master_key, &s->session->master_key_length,
+			ciphers, &pref_cipher, s->tls_session_secret_cb_arg))
+			{
+			s->hit=1;
+			s->session->ciphers=ciphers;
+			s->session->verify_result=X509_V_OK;
+
+			ciphers=NULL;
+
+			/* check if some cipher was preferred by call back */
+			pref_cipher=pref_cipher ? pref_cipher : ssl3_choose_cipher(s, s->session->ciphers, SSL_get_ciphers(s));
+			if (pref_cipher == NULL)
+				{
+				al=SSL_AD_HANDSHAKE_FAILURE;
+				SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_NO_SHARED_CIPHER);
+				goto f_err;
+				}
+
+			s->session->cipher=pref_cipher;
+
+			if (s->cipher_list)
+				sk_SSL_CIPHER_free(s->cipher_list);
+
+			if (s->cipher_list_by_id)
+				sk_SSL_CIPHER_free(s->cipher_list_by_id);
+
+			s->cipher_list = sk_SSL_CIPHER_dup(s->session->ciphers);
+			s->cipher_list_by_id = sk_SSL_CIPHER_dup(s->session->ciphers);
+			}
+		}
 #endif
 
 	/* Worst case, we will use the NULL compression, but if we have other
@@ -1134,16 +1187,22 @@ int ssl3_send_server_hello(SSL *s)
 	unsigned char *buf;
 	unsigned char *p,*d;
 	int i,sl;
-	unsigned long l,Time;
+	unsigned long l;
+#ifdef OPENSSL_NO_TLSEXT
+	unsigned long Time;
+#endif
 
 	if (s->state == SSL3_ST_SW_SRVR_HELLO_A)
 		{
 		buf=(unsigned char *)s->init_buf->data;
+#ifdef OPENSSL_NO_TLSEXT
 		p=s->s3->server_random;
+		/* Generate server_random if it was not needed previously */
 		Time=(unsigned long)time(NULL);			/* Time */
 		l2n(Time,p);
 		if (RAND_pseudo_bytes(p,SSL3_RANDOM_SIZE-4) <= 0)
 			return -1;
+#endif
 		/* Do the message type and length last */
 		d=p= &(buf[4]);
 
