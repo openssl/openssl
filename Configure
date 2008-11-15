@@ -648,7 +648,7 @@ my $perl;
 
 my %disabled = ( # "what"         => "comment"
 		 "gmp"		  => "default",
-                 "experimental-jpake"          => "default",
+                 #"experimental-jpake"          => "default",
                  "mdc2"           => "default",
                  "rc5"            => "default",
 		 "rfc3779"	  => "default",
