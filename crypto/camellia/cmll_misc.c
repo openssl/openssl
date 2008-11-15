@@ -65,7 +65,7 @@ int Camellia_set_key(const unsigned char *userKey, const int bits,
 	{
 	if (FIPS_mode())
 		FIPS_BAD_ABORT(CAMELLIA)
-	private_Camellia_set_key(userKey, bits, key);
+	return private_Camellia_set_key(userKey, bits, key);
 	}
 int private_Camellia_set_key(const unsigned char *userKey, const int bits,
 	CAMELLIA_KEY *key)
