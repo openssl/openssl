@@ -910,7 +910,7 @@ void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx, int (*app_verify_cookie_cb)(SSL 
 /* the maximum length of the buffer given to callbacks containing the
  * resulting identity/psk */
 #define PSK_MAX_IDENTITY_LEN 128
-#define PSK_MAX_PSK_LEN 64
+#define PSK_MAX_PSK_LEN 256
 void SSL_CTX_set_psk_client_callback(SSL_CTX *ctx, 
 	unsigned int (*psk_client_callback)(SSL *ssl, const char *hint, 
 		char *identity, unsigned int max_identity_len, unsigned char *psk,

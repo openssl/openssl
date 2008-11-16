@@ -302,7 +302,7 @@ static int cert_chain = 0;
 
 #ifndef OPENSSL_NO_PSK
 static char *psk_identity="Client_identity";
-static char *psk_key=NULL; /* by default PSK is not used */
+char *psk_key=NULL; /* by default PSK is not used */
 
 static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 	unsigned char *psk, unsigned int max_psk_len)
@@ -325,7 +325,9 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 	/* here we could lookup the given identity e.g. from a database */
   	if (strcmp(identity, psk_identity) != 0)
 		{
-                BIO_printf(bio_s_out, "PSK error: client identity not found\n");
+                BIO_printf(bio_s_out, "PSK error: client identity not found"
+			   " (got '%s' expected '%s')\n", identity,
+			   psk_identity);
 		goto out_err;
                 }
 	if (s_debug)
@@ -448,6 +450,9 @@ static void sv_usage(void)
 #ifndef OPENSSL_NO_PSK
 	BIO_printf(bio_err," -psk_hint arg - PSK identity hint to use\n");
 	BIO_printf(bio_err," -psk arg      - PSK in hex (without 0x)\n");
+# ifdef OPENSSL_EXPERIMENTAL_JPAKE
+	BIO_printf(bio_err," -jpake arg    - JPAKE secret to use\n");
+# endif
 #endif
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
@@ -1184,7 +1189,7 @@ int MAIN(int argc, char *argv[])
 			}
 			
 #endif
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#if defined(OPENSSL_EXPERIMENTAL_JPAKE) && !defined(OPENSSL_NO_PSK)
 		else if (strcmp(*argv,"-jpake") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1207,6 +1212,26 @@ bad:
 		goto end;
 		}
 
+#if defined(OPENSSL_EXPERIMENTAL_JPAKE) && !defined(OPENSSL_NO_PSK)
+	if (jpake_secret)
+		{
+		if (psk_key)
+			{
+			BIO_printf(bio_err,
+				   "Can't use JPAKE and PSK together\n");
+			goto end;
+			}
+		psk_identity = "JPAKE";
+		}
+
+	if (cipher)
+		{
+		BIO_printf(bio_err, "JPAKE sets cipher to PSK\n");
+		goto end;
+		}
+	cipher = "PSK";
+#endif
+		
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
 
@@ -1591,10 +1616,10 @@ bad:
 #endif
 
 #ifndef OPENSSL_NO_PSK
-	if (psk_key != NULL)
+	if (psk_key != NULL || jpake_secret)
 		{
 		if (s_debug)
-			BIO_printf(bio_s_out, "PSK key given, setting server callback\n");
+			BIO_printf(bio_s_out, "PSK key given or JPAKE in use, setting server callback\n");
 		SSL_CTX_set_psk_server_callback(ctx, psk_server_cb);
 		}
 

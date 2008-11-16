@@ -309,6 +309,7 @@ int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value);
 int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
 			const char *algname, ENGINE *e, int do_param);
 #ifdef OPENSSL_EXPERIMENTAL_JPAKE
+extern char *psk_key;
 void jpake_client_auth(BIO *out, BIO *conn, const char *secret);
 void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
 #endif

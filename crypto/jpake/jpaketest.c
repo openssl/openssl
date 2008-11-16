@@ -1,3 +1,15 @@
+#ifndef OPENSSL_EXPERIMENTAL_JPAKE
+
+#include <stdio.h>
+
+int main(int argc, char *argv[])
+{
+    printf("No J-PAKE support\n");
+    return(0);
+}
+
+#else
+
 #include <openssl/jpake.h>
 #include <openssl/err.h>
 
@@ -174,3 +186,5 @@ int main(int argc, char **argv)
 
     return 0;
     }
+
+#endif

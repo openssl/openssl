@@ -2381,7 +2381,7 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx)
 		BIO_free(out);
 	}
 
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#if defined(OPENSSL_EXPERIMENTAL_JPAKE) && !defined(OPENSSL_NO_PSK)
 
 static JPAKE_CTX *jpake_init(const char *us, const char *them,
 							 const char *secret)
@@ -2564,10 +2564,14 @@ void jpake_client_auth(BIO *out, BIO *conn, const char *secret)
 	jpake_send_step3a(bconn, ctx);
 	jpake_receive_step3b(ctx, bconn);
 
-	BIO_puts(out, "JPAKE authentication succeeded\n");
+	BIO_puts(out, "JPAKE authentication succeeded, setting PSK\n");
+
+	psk_key = BN_bn2hex(JPAKE_get_shared_key(ctx));
 
 	BIO_pop(bconn);
 	BIO_free(bconn);
+
+	JPAKE_CTX_free(ctx);
 	}
 
 void jpake_server_auth(BIO *out, BIO *conn, const char *secret)
@@ -2589,10 +2593,14 @@ void jpake_server_auth(BIO *out, BIO *conn, const char *secret)
 	jpake_receive_step3a(ctx, bconn);
 	jpake_send_step3b(bconn, ctx);
 
-	BIO_puts(out, "JPAKE authentication succeeded\n");
+	BIO_puts(out, "JPAKE authentication succeeded, setting PSK\n");
+
+	psk_key = BN_bn2hex(JPAKE_get_shared_key(ctx));
 
 	BIO_pop(bconn);
 	BIO_free(bconn);
+
+	JPAKE_CTX_free(ctx);
 	}
 
 #endif

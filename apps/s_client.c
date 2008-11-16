@@ -215,7 +215,7 @@ static int c_ign_eof=0;
 #ifndef OPENSSL_NO_PSK
 /* Default PSK identity and key */
 static char *psk_identity="Client_identity";
-static char *psk_key=NULL; /* by default PSK is not used */
+/*char *psk_key=NULL;  by default PSK is not used */
 
 static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
 	unsigned int max_identity_len, unsigned char *psk,
@@ -312,6 +312,9 @@ static void sc_usage(void)
 #ifndef OPENSSL_NO_PSK
 	BIO_printf(bio_err," -psk_identity arg - PSK identity\n");
 	BIO_printf(bio_err," -psk arg      - PSK in hex (without 0x)\n");
+# ifdef OPENSSL_EXPERIMENTAL_JPAKE
+	BIO_printf(bio_err," -jpake arg    - JPAKE secret to use\n");
+# endif
 #endif
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
@@ -724,6 +727,26 @@ bad:
 		goto end;
 		}
 
+#if defined(OPENSSL_EXPERIMENTAL_JPAKE) && !defined(OPENSSL_NO_PSK)
+	if (jpake_secret)
+		{
+		if (psk_key)
+			{
+			BIO_printf(bio_err,
+				   "Can't use JPAKE and PSK together\n");
+			goto end;
+			}
+		psk_identity = "JPAKE";
+		}
+
+	if (cipher)
+		{
+		BIO_printf(bio_err, "JPAKE sets cipher to PSK\n");
+		goto end;
+		}
+	cipher = "PSK";
+#endif
+
 	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
 
@@ -822,10 +845,10 @@ bad:
 #endif
 
 #ifndef OPENSSL_NO_PSK
-	if (psk_key != NULL)
+	if (psk_key != NULL || jpake_secret)
 		{
 		if (c_debug)
-			BIO_printf(bio_c_out, "PSK key given, setting client callback\n");
+			BIO_printf(bio_c_out, "PSK key given or JPAKE in use, setting client callback\n");
 		SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
 		}
 #endif
