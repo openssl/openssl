@@ -110,7 +110,7 @@ else	# Win32
     $base_cflags=' /W3 /WX /Gs0 /GF /Gy /nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DDSO_WIN32';
     $base_cflags.=' -D_CRT_SECURE_NO_DEPRECATE';	# shut up VC8
     $base_cflags.=' -D_CRT_NONSTDC_NO_DEPRECATE';	# shut up VC8
-    my $f = $shlib?' /MD':' /MT';
+    my $f = $shlib || $fips ?' /MD':' /MT';
     $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
     $opt_cflags=$f.' /Ox /O2 /Ob2';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
