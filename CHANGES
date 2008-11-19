@@ -4,6 +4,11 @@
 
  Changes between 0.9.8i and 0.9.8j  [xx XXX xxxx]
 
+  *) Allow the CHIL engine to be loaded, whether the application is
+     multithreaded or not. (This does not release the developer from the
+     obligation to set up the dynamic locking callbacks.)
+     [Sander Temme <sander@temme.net>]
+
   *) Update Configure code and WIN32 build scripts to support experimental
      code. This is surrounded by OPENSSL_EXPERIMENTAL_FOO and not compiled
      in by default. Using the configuration option "enable-experimental-foo"
