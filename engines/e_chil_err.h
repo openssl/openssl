@@ -88,7 +88,6 @@ static void ERR_HWCRHK_error(int function, int reason, char *file, int line);
 #define HWCRHK_R_CHIL_ERROR				 102
 #define HWCRHK_R_CTRL_COMMAND_NOT_IMPLEMENTED		 103
 #define HWCRHK_R_DSO_FAILURE				 104
-#define HWCRHK_R_LOCKING_MISSING			 114
 #define HWCRHK_R_MISSING_KEY_COMPONENTS			 105
 #define HWCRHK_R_NOT_INITIALISED			 106
 #define HWCRHK_R_NOT_LOADED				 107

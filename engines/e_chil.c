@@ -588,12 +588,6 @@ static int hwcrhk_init(ENGINE *e)
 			hwcrhk_globals.mutex_release = hwcrhk_mutex_unlock;
 			hwcrhk_globals.mutex_destroy = hwcrhk_mutex_destroy;
 			}
-		else if (CRYPTO_get_locking_callback() != NULL)
-			{
-			HWCRHKerr(HWCRHK_F_HWCRHK_INIT,HWCRHK_R_LOCKING_MISSING);
-			ERR_add_error_data(1,"You HAVE to add dynamic locking callbacks via CRYPTO_set_dynlock_{create,lock,destroy}_callback()");
-			goto err;
-			}
 		}
 
 	/* Try and get a context - if not, we may have a DSO but no

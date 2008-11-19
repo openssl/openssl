@@ -90,7 +90,6 @@ static ERR_STRING_DATA HWCRHK_str_reasons[]=
 {ERR_REASON(HWCRHK_R_CHIL_ERROR)         ,"chil error"},
 {ERR_REASON(HWCRHK_R_CTRL_COMMAND_NOT_IMPLEMENTED),"ctrl command not implemented"},
 {ERR_REASON(HWCRHK_R_DSO_FAILURE)        ,"dso failure"},
-{ERR_REASON(HWCRHK_R_LOCKING_MISSING)    ,"locking missing"},
 {ERR_REASON(HWCRHK_R_MISSING_KEY_COMPONENTS),"missing key components"},
 {ERR_REASON(HWCRHK_R_NOT_INITIALISED)    ,"not initialised"},
 {ERR_REASON(HWCRHK_R_NOT_LOADED)         ,"not loaded"},
