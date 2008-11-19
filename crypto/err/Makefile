@@ -89,7 +89,6 @@ err_all.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
 err_all.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
 err_all.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
 err_all.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-err_all.o: ../../include/openssl/fips.h ../../include/openssl/jpake.h
 err_all.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 err_all.o: ../../include/openssl/objects.h ../../include/openssl/ocsp.h
 err_all.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h

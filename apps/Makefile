@@ -193,7 +193,7 @@ apps.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
 apps.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 apps.o: ../include/openssl/engine.h ../include/openssl/err.h
 apps.o: ../include/openssl/evp.h ../include/openssl/fips.h
-apps.o: ../include/openssl/jpake.h ../include/openssl/lhash.h
+apps.o: ../include/openssl/lhash.h
 apps.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 apps.o: ../include/openssl/ocsp.h ../include/openssl/opensslconf.h
 apps.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
