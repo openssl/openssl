@@ -10,10 +10,6 @@
 #define OPENSSL_FIPS
 #endif
 
-#ifndef OPENSSL_EXPERIMENTAL_JPAKE
-#define OPENSSL_EXPERIMENTAL_JPAKE
-#endif
-
 #endif
 
 /* Generate 80386 code? */
