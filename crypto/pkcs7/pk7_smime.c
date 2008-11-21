@@ -282,6 +282,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 			PKCS7err(PKCS7_F_PKCS7_VERIFY,ERR_R_MALLOC_FAILURE);
 			goto err;
 		}
+		BIO_set_mem_eof_return(tmpout, 0);
 	} else tmpout = out;
 
 	/* We now have to 'read' from p7bio to calculate digests etc. */
