@@ -68,7 +68,10 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
 	if (out == NULL)
 		tmpout = BIO_new(BIO_s_null());
 	else if (flags & CMS_TEXT)
+		{
 		tmpout = BIO_new(BIO_s_mem());
+		BIO_set_mem_eof_return(tmpout, 0);
+		}
 	else
 		tmpout = out;
 
