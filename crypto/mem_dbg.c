@@ -807,3 +807,11 @@ void CRYPTO_malloc_debug_init(void)
 		CRYPTO_dbg_pop_info,
 		CRYPTO_dbg_remove_all_info);
 	}
+
+char *CRYPTO_strdup(const char *str, const char *file, int line)
+	{
+	char *ret = CRYPTO_malloc(strlen(str)+1, file, line);
+
+	strcpy(ret, str);
+	return ret;
+	}
