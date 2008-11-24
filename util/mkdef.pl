@@ -79,8 +79,7 @@ my $OS2=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5", "NeXT",
-			"EXPORT_VAR_AS_FUNCTION", "ZLIB", "OPENSSL_FIPS", 
-			"OPENSSL_EXPERIMENTAL_JPAKE" );
+			"EXPORT_VAR_AS_FUNCTION", "ZLIB", "OPENSSL_FIPS"); 
 my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
@@ -103,6 +102,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CMS",
 			 # CryptoAPI Engine
 			 "CAPIENG",
+			 # JPAKE
+			 "JPAKE",
 			 # Deprecated functions
 			 "DEPRECATED" );
 
@@ -123,7 +124,7 @@ my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw; my $no_camellia;
 my $no_seed;
 my $no_fp_api; my $no_static_engine; my $no_gmp; my $no_deprecated;
-my $no_rfc3779; my $no_tlsext; my $no_cms; my $no_capieng;
+my $no_rfc3779; my $no_tlsext; my $no_cms; my $no_capieng; my $no_jpake;
 my $fips;
 
 
@@ -151,10 +152,6 @@ foreach (@ARGV, split(/ /, $options))
 	if ($_ eq "zlib" || $_ eq "zlib-dynamic"
  			 || $_ eq "enable-zlib-dynamic") {
  		$zlib = 1;
-	}
-
-	if ($_ eq "enable-experimental-jpake") {
- 		$jpake = 1;
 	}
 
 	$do_ssl=1 if $_ eq "ssleay";
@@ -216,6 +213,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-tlsext$/)	{ $no_tlsext=1; }
 	elsif (/^no-cms$/)	{ $no_cms=1; }
 	elsif (/^no-capieng$/)	{ $no_capieng=1; }
+	elsif (/^no-jpake$/)	{ $no_jpake=1; }
 	}
 
 
@@ -556,10 +554,6 @@ sub do_defs
 						$tag{$tag[$tag_i]}=2;
 						print STDERR "DEBUG: $file: chaged tag $1 = 2\n" if $debug;
 					}
-					if ($tag[$tag_i] eq "OPENSSL_EXPERIMENTAL_".$1) {
-						$tag{$tag[$tag_i]}=-2;
-						print STDERR "DEBUG: $file: chaged tag $1 = -2\n" if $debug;
-					}
 					$tag_i--;
 				}
 			} elsif (/^\#\s*endif/) {
@@ -569,8 +563,6 @@ sub do_defs
 					print STDERR "DEBUG: \$t=\"$t\"\n" if $debug;
 					if ($tag{$t}==2) {
 						$tag{$t}=-1;
-					} elsif ($tag{$t}==-2) {
-						$tag{$t}=1;
 					} else {
 						$tag{$t}=0;
 					}
@@ -1109,9 +1101,6 @@ sub is_valid
 				return 1;
 			}
 			if ($keyword eq "ZLIB" && $zlib) { return 1; }
-			if ($keyword eq "OPENSSL_EXPERIMENTAL_JPAKE" && $jpake) {
-				return 1;
-			}
 			return 0;
 		} else {
 			# algorithms
@@ -1156,6 +1145,7 @@ sub is_valid
 			if ($keyword eq "TLSEXT" && $no_tlsext) { return 0; }
 			if ($keyword eq "CMS" && $no_cms) { return 0; }
 			if ($keyword eq "CAPIENG" && $no_capieng) { return 0; }
+			if ($keyword eq "JPAKE" && $no_jpake) { return 0; }
 			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }
 
 			# Nothing recognise as true

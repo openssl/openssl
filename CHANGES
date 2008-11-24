@@ -9,12 +9,6 @@
      obligation to set up the dynamic locking callbacks.)
      [Sander Temme <sander@temme.net>]
 
-  *) Update Configure code and WIN32 build scripts to support experimental
-     code. This is surrounded by OPENSSL_EXPERIMENTAL_FOO and not compiled
-     in by default. Using the configuration option "enable-experimental-foo"
-     enables it. Use this option for JPAKE.
-     [Steve Henson]
-
   *) Use correct exit code if there is an error in dgst command.
      [Steve Henson; problem pointed out by Roland Dirlewanger]
 

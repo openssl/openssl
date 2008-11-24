@@ -10,8 +10,8 @@
 
 #include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_EXPERIMENTAL_JPAKE
-#error JPAKE is disabled
+#ifdef OPENSSL_NO_JPAKE
+#error JPAKE is disabled.
 #endif
 
 #ifdef  __cplusplus

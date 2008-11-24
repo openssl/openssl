@@ -338,7 +338,7 @@ int MAIN(int argc, char **argv)
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0 ;
 	long mtu = 0;
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 	char *jpake_secret = NULL;
 #endif
 
@@ -585,7 +585,7 @@ int MAIN(int argc, char **argv)
 			/* meth=TLSv1_client_method(); */
 			}
 #endif
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 		else if (strcmp(*argv,"-jpake") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -897,7 +897,7 @@ SSL_set_tlsext_status_ids(con, ids);
 #endif
 		}
 #endif
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 	if (jpake_secret)
 		jpake_client_auth(bio_c_out, sbio, jpake_secret);
 #endif

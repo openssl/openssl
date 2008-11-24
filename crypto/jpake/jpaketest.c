@@ -1,6 +1,6 @@
 #include <openssl/err.h>
 
-#ifndef OPENSSL_EXPERIMENTAL_JPAKE
+#ifdef OPENSSL_NO_JPAKE
 int main(int argc, char *argv[])
 {
     printf("No J-PAKE support\n");

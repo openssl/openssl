@@ -742,7 +742,7 @@ BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
 #endif
 int MAIN(int, char **);
 
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 static char *jpake_secret = NULL;
 #endif
 
@@ -1076,7 +1076,7 @@ int MAIN(int argc, char *argv[])
 			}
 			
 #endif
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 		else if (strcmp(*argv,"-jpake") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1684,7 +1684,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		test=BIO_new(BIO_f_nbio_test());
 		sbio=BIO_push(test,sbio);
 		}
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 	if(jpake_secret)
 		jpake_server_auth(bio_s_out, sbio, jpake_secret);
 #endif

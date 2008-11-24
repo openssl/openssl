@@ -233,6 +233,7 @@ $cflags.=" -DOPENSSL_NO_SSL2" if $no_ssl2;
 $cflags.=" -DOPENSSL_NO_SSL3" if $no_ssl3;
 $cflags.=" -DOPENSSL_NO_TLSEXT" if $no_tlsext;
 $cflags.=" -DOPENSSL_NO_CMS" if $no_cms;
+$cflags.=" -DOPENSSL_NO_JPAKE" if $no_jpake;
 $cflags.=" -DOPENSSL_NO_CAPIENG" if $no_capieng;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
 $cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
@@ -242,7 +243,6 @@ $cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 $cflags.=" -DOPENSSL_FIPS"    if $fips;
-$cflags.=" -DOPENSSL_EXPERIMENTAL_JPAKE"    if $jpake;
 $cflags.= " -DZLIB" if $zlib_opt;
 $cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
 
@@ -1021,8 +1021,8 @@ sub var_add
 	return("") if $no_dh   && $dir =~ /\/dh/;
 	return("") if $no_ec   && $dir =~ /\/ec/;
 	return("") if $no_cms  && $dir =~ /\/cms/;
+	return("") if $no_jpake  && $dir =~ /\/jpake/;
 	return("") if !$fips   && $dir =~ /^fips/;
-	return("") if !$jpake  && $dir =~ /\/jpake/;
 	if ($no_des && $dir =~ /\/des/)
 		{
 		if ($val =~ /read_pwd/)
@@ -1290,6 +1290,7 @@ sub read_options
 		"no-ssl3" => \$no_ssl3,
 		"no-tlsext" => \$no_tlsext,
 		"no-cms" => \$no_cms,
+		"no-jpake" => \$no_jpake,
 		"no-capieng" => \$no_capieng,
 		"no-err" => \$no_err,
 		"no-sock" => \$no_sock,
@@ -1320,8 +1321,6 @@ sub read_options
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
 		"fipsdso" => [\$fips, \$fipscanisterbuild, \$fipsdso],
-		"no-experimental-jpake" => 0,
-		"enable-experimental-jpake" => \$jpake,
 		);
 
 	if (exists $valid_options{$_})
