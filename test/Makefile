@@ -835,9 +835,8 @@ ideatest.o: ../include/openssl/opensslconf.h ideatest.c
 igetest.o: ../include/openssl/aes.h ../include/openssl/e_os2.h
 igetest.o: ../include/openssl/opensslconf.h ../include/openssl/ossl_typ.h
 igetest.o: ../include/openssl/rand.h igetest.c
-jpaketest.o: ../include/openssl/bio.h ../include/openssl/crypto.h
-jpaketest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-jpaketest.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
+jpaketest.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+jpaketest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 jpaketest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 jpaketest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 jpaketest.o: ../include/openssl/symhacks.h jpaketest.c
