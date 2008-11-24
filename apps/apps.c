@@ -137,7 +137,7 @@
 #include <openssl/rsa.h>
 #endif
 #include <openssl/bn.h>
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 #include <openssl/jpake.h>
 #endif
 
@@ -2381,7 +2381,7 @@ void policies_print(BIO *out, X509_STORE_CTX *ctx)
 		BIO_free(out);
 	}
 
-#if defined(OPENSSL_EXPERIMENTAL_JPAKE) && !defined(OPENSSL_NO_PSK)
+#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 
 static JPAKE_CTX *jpake_init(const char *us, const char *them,
 							 const char *secret)

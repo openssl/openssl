@@ -1,4 +1,6 @@
-#ifndef OPENSSL_EXPERIMENTAL_JPAKE
+
+#include <openssl/opensslconf.h>
+#ifdef OPENSSL_NO_JPAKE
 
 #include <stdio.h>
 

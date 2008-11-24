@@ -611,7 +611,6 @@ my $no_threads=0;
 my $threads=0;
 my $no_shared=0; # but "no-shared" is default
 my $zlib=1;      # but "no-zlib" is default
-my $jpake=1;      # but "no-jpake" is default
 my $no_krb5=0;   # but "no-krb5" is implied unless "--with-krb5-..." is used
 my $no_rfc3779=1; # but "no-rfc3779" is default
 my $no_asm=0;
@@ -648,7 +647,6 @@ my $perl;
 
 my %disabled = ( # "what"         => "comment"
 		 "gmp"		  => "default",
-                 #"experimental-jpake"          => "default",
                  "mdc2"           => "default",
                  "rc5"            => "default",
 		 "rfc3779"	  => "default",
@@ -929,8 +927,6 @@ foreach (sort (keys %disabled))
 		{ $no_threads = 1; }
 	elsif (/^shared$/)
 		{ $no_shared = 1; }
-	elsif (/^experimental-jpake$/)
-		{ $jpake = 0; push @skip, "jpake"}
 	elsif (/^zlib$/)
 		{ $zlib = 0; }
 	elsif (/^static-engine$/)
@@ -1170,11 +1166,6 @@ if ($threads)
 	{
 	$cflags=$thread_cflags;
 	$openssl_thread_defines .= $thread_defines;
-	}
-
-if ($jpake)
-	{
-	$openssl_other_defines .= "#define OPENSSL_EXPERIMENTAL_JPAKE\n";
 	}
 
 if ($zlib)

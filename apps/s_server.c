@@ -450,7 +450,7 @@ static void sv_usage(void)
 #ifndef OPENSSL_NO_PSK
 	BIO_printf(bio_err," -psk_hint arg - PSK identity hint to use\n");
 	BIO_printf(bio_err," -psk arg      - PSK in hex (without 0x)\n");
-# ifdef OPENSSL_EXPERIMENTAL_JPAKE
+# ifndef OPENSSL_NO_JPAKE
 	BIO_printf(bio_err," -jpake arg    - JPAKE secret to use\n");
 # endif
 #endif
@@ -827,7 +827,7 @@ BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
 
 int MAIN(int, char **);
 
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 static char *jpake_secret = NULL;
 #endif
 
@@ -1189,7 +1189,7 @@ int MAIN(int argc, char *argv[])
 			}
 			
 #endif
-#if defined(OPENSSL_EXPERIMENTAL_JPAKE) && !defined(OPENSSL_NO_PSK)
+#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 		else if (strcmp(*argv,"-jpake") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1212,7 +1212,7 @@ bad:
 		goto end;
 		}
 
-#if defined(OPENSSL_EXPERIMENTAL_JPAKE) && !defined(OPENSSL_NO_PSK)
+#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 	if (jpake_secret)
 		{
 		if (psk_key)
@@ -1616,7 +1616,11 @@ bad:
 #endif
 
 #ifndef OPENSSL_NO_PSK
+#ifdef OPENSSL_NO_JPAKE
+	if (psk_key != NULL)
+#else
 	if (psk_key != NULL || jpake_secret)
+#endif
 		{
 		if (s_debug)
 			BIO_printf(bio_s_out, "PSK key given or JPAKE in use, setting server callback\n");
@@ -1843,7 +1847,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		test=BIO_new(BIO_f_nbio_test());
 		sbio=BIO_push(test,sbio);
 		}
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 	if(jpake_secret)
 		jpake_server_auth(bio_s_out, sbio, jpake_secret);
 #endif

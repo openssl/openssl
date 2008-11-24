@@ -312,7 +312,7 @@ static void sc_usage(void)
 #ifndef OPENSSL_NO_PSK
 	BIO_printf(bio_err," -psk_identity arg - PSK identity\n");
 	BIO_printf(bio_err," -psk arg      - PSK in hex (without 0x)\n");
-# ifdef OPENSSL_EXPERIMENTAL_JPAKE
+# ifndef OPENSSL_NO_JPAKE
 	BIO_printf(bio_err," -jpake arg    - JPAKE secret to use\n");
 # endif
 #endif
@@ -432,7 +432,7 @@ int MAIN(int argc, char **argv)
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0 ;
 	long socket_mtu = 0;
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 	char *jpake_secret = NULL;
 #endif
 
@@ -704,7 +704,7 @@ int MAIN(int argc, char **argv)
 			/* meth=TLSv1_client_method(); */
 			}
 #endif
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 		else if (strcmp(*argv,"-jpake") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -727,7 +727,7 @@ bad:
 		goto end;
 		}
 
-#if defined(OPENSSL_EXPERIMENTAL_JPAKE) && !defined(OPENSSL_NO_PSK)
+#if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 	if (jpake_secret)
 		{
 		if (psk_key)
@@ -845,7 +845,11 @@ bad:
 #endif
 
 #ifndef OPENSSL_NO_PSK
+#ifdef OPENSSL_NO_JPAKE
+	if (psk_key != NULL)
+#else
 	if (psk_key != NULL || jpake_secret)
+#endif
 		{
 		if (c_debug)
 			BIO_printf(bio_c_out, "PSK key given or JPAKE in use, setting client callback\n");
@@ -1049,7 +1053,7 @@ SSL_set_tlsext_status_ids(con, ids);
 #endif
 		}
 #endif
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_JPAKE
 	if (jpake_secret)
 		jpake_client_auth(bio_c_out, sbio, jpake_secret);
 #endif

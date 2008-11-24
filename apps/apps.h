@@ -308,8 +308,10 @@ int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value);
 int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
 			const char *algname, ENGINE *e, int do_param);
-#ifdef OPENSSL_EXPERIMENTAL_JPAKE
+#ifndef OPENSSL_NO_PSK
 extern char *psk_key;
+#endif
+#ifndef OPENSSL_NO_JPAKE
 void jpake_client_auth(BIO *out, BIO *conn, const char *secret);
 void jpake_server_auth(BIO *out, BIO *conn, const char *secret);
 #endif

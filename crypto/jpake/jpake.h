@@ -10,6 +10,10 @@
 
 #include <openssl/opensslconf.h>
 
+#ifdef OPENSSL_NO_JPAKE
+#error JPAKE is disabled.
+#endif
+
 #ifdef  __cplusplus
 extern "C" {
 #endif
