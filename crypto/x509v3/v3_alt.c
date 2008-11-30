@@ -513,7 +513,8 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
 	return gen;
 
 	err:
-	GENERAL_NAME_free(gen);
+	if (!out)
+		GENERAL_NAME_free(gen);
 	return NULL;
 	}
 
