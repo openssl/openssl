@@ -527,7 +527,8 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
 	return gen;
 
 	err:
-	GENERAL_NAME_free(gen);
+	if (!out)
+		GENERAL_NAME_free(gen);
 	return NULL;
 	}
 
