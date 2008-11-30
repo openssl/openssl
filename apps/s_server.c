@@ -1222,16 +1222,16 @@ bad:
 			goto end;
 			}
 		psk_identity = "JPAKE";
+		if (cipher)
+			{
+			BIO_printf(bio_err, "JPAKE sets cipher to PSK\n");
+			goto end;
+			}
+		cipher = "PSK";
 		}
 
-	if (cipher)
-		{
-		BIO_printf(bio_err, "JPAKE sets cipher to PSK\n");
-		goto end;
-		}
-	cipher = "PSK";
 #endif
-		
+
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
 
