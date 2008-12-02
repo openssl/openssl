@@ -81,21 +81,21 @@ void EVP_CIPHER_CTX_init(EVP_CIPHER_CTX *ctx)
  * algorithms in FIPS mode and ignore the errors.
  */
 
-int bad_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-	    const unsigned char *iv, int enc)
+static int bad_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+		    const unsigned char *iv, int enc)
 	{ FIPS_ERROR_IGNORED("Cipher init"); return 0;}
 
-int bad_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		 const unsigned char *in, unsigned int inl)
+static int bad_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+			 const unsigned char *in, unsigned int inl)
 	{ FIPS_ERROR_IGNORED("Cipher update"); return 0;}
 
 /* NB: no cleanup because it is allowed after failed init */
 
-int bad_set_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *typ)
+static int bad_set_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *typ)
 	{ FIPS_ERROR_IGNORED("Cipher set_asn1"); return 0;}
-int bad_get_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *typ)
+static int bad_get_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *typ)
 	{ FIPS_ERROR_IGNORED("Cipher get_asn1"); return 0;}
-int bad_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
+static int bad_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 	{ FIPS_ERROR_IGNORED("Cipher ctrl"); return 0;}
 
 static const EVP_CIPHER bad_cipher =
