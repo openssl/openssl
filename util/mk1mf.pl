@@ -1362,6 +1362,18 @@ sub read_options
 			{return 1;}
 		return 0;
 		}
+	# experimental-xxx is mostly like enable-xxx, but opensslconf.v
+	# will still set OPENSSL_NO_xxx unless we set OPENSSL_EXPERIMENTAL_xxx.
+	# (No need to fail if we don't know the algorithm -- this is for adventurous users only.)
+	elsif (/^experimental-/)
+		{
+		my $algo, $ALGO;
+		($algo = $_) =~ s/^experimental-//;
+		($ALGO = $algo) =~ tr/[a-z]/[A-Z]/;
+
+		$xcflags="-DOPENSSL_EXPERIMENTAL_$ALGO $xcflags";
+		
+		}
 	elsif (/^--with-krb5-flavor=(.*)$/)
 		{
 		my $krb5_flavor = $1;
