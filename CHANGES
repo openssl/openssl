@@ -730,15 +730,19 @@
  Changes between 0.9.8i and 0.9.8j  [xx XXX xxxx]
 
   *) Allow the CHIL engine to be loaded, whether the application is
-	 multithreaded or not. (This does not release the developer from the
-	 obligation to set up the dynamic locking callbacks.)
-	 [Sander Temme <sander@temme.net>]
+     multithreaded or not. (This does not release the developer from the
+     obligation to set up the dynamic locking callbacks.)
+     [Sander Temme <sander@temme.net>]
 
   *) Use correct exit code if there is an error in dgst command.
      [Steve Henson; problem pointed out by Roland Dirlewanger]
 
-  *) Add JPAKE support, including demo authentication in s_client and
-     s_server.
+  *) Tweak Configure so that you need to say "experimental-jpake" to enable
+     JPAKE, and need to use -DOPENSSL_EXPERIMENTAL_JPAKE in applications.
+     [Bodo Moeller]
+
+  *) Add experimental JPAKE support, including demo authentication in
+     s_client and s_server.
      [Ben Laurie]
 
   *) Set the comparison function in v3_addr_canonize().

@@ -307,6 +307,7 @@ e_xcbc_d.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 e_xcbc_d.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 e_xcbc_d.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 e_xcbc_d.o: ../../include/openssl/ui_compat.h ../cryptlib.h e_xcbc_d.c
+e_xcbc_d.o: evp_locl.h
 encode.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 encode.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 encode.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
