@@ -2521,7 +2521,14 @@ void jpake_client_auth(BIO *out, BIO *conn, const char *secret)
 	jpake_send_step3a(bconn, ctx);
 	jpake_receive_step3b(ctx, bconn);
 
-	BIO_puts(out, "JPAKE authentication succeeded\n");
+	/*
+	 * The problem is that you must use the derived key in the
+	 * session key or you are subject to man-in-the-middle
+	 * attacks.
+	 */
+	BIO_puts(out, "JPAKE authentication succeeded (N.B. This version can"
+		 " be MitMed. See the version in HEAD for how to do it"
+		 " properly)\n");
 
 	BIO_pop(bconn);
 	BIO_free(bconn);
@@ -2546,7 +2553,14 @@ void jpake_server_auth(BIO *out, BIO *conn, const char *secret)
 	jpake_receive_step3a(ctx, bconn);
 	jpake_send_step3b(bconn, ctx);
 
-	BIO_puts(out, "JPAKE authentication succeeded\n");
+	/*
+	 * The problem is that you must use the derived key in the
+	 * session key or you are subject to man-in-the-middle
+	 * attacks.
+	 */
+	BIO_puts(out, "JPAKE authentication succeeded (N.B. This version can"
+		 " be MitMed. See the version in HEAD for how to do it"
+		 " properly)\n");
 
 	BIO_pop(bconn);
 	BIO_free(bconn);
