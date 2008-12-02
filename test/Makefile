@@ -835,11 +835,7 @@ ideatest.o: ../include/openssl/opensslconf.h ideatest.c
 igetest.o: ../include/openssl/aes.h ../include/openssl/e_os2.h
 igetest.o: ../include/openssl/opensslconf.h ../include/openssl/ossl_typ.h
 igetest.o: ../include/openssl/rand.h igetest.c
-jpaketest.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-jpaketest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-jpaketest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-jpaketest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-jpaketest.o: ../include/openssl/symhacks.h jpaketest.c
+jpaketest.o: ../include/openssl/opensslconf.h jpaketest.c
 md2test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 md2test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 md2test.o: ../include/openssl/evp.h ../include/openssl/fips.h
@@ -877,11 +873,8 @@ rc2test.o: ../include/openssl/opensslconf.h ../include/openssl/rc2.h rc2test.c
 rc4test.o: ../e_os.h ../include/openssl/e_os2.h
 rc4test.o: ../include/openssl/opensslconf.h ../include/openssl/rc4.h
 rc4test.o: ../include/openssl/sha.h rc4test.c
-rc5test.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-rc5test.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-rc5test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-rc5test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-rc5test.o: ../include/openssl/symhacks.h rc5test.c
+rc5test.o: ../e_os.h ../include/openssl/e_os2.h
+rc5test.o: ../include/openssl/opensslconf.h rc5test.c
 rmdtest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 rmdtest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 rmdtest.o: ../include/openssl/evp.h ../include/openssl/fips.h

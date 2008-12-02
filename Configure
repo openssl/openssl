@@ -12,7 +12,7 @@ print STDERR "Warning: perl module strict not found.\n" if ($@);
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [enable-montasm] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [enable-montasm] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -624,12 +624,12 @@ my $fips=0;
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
-my %disabled = ( # "what"         => "comment"
+my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
                  "camellia"       => "default",
                  "capieng"        => "default",
                  "cms"            => "default",
-                 "jpake"          => "default",
                  "gmp"            => "default",
+                 "jpake"          => "experimental",
                  "mdc2"           => "default",
                  "montasm"        => "default", # explicit option in 0.9.8 only (implicitly enabled in 0.9.9)
                  "rc5"            => "default",
@@ -640,13 +640,21 @@ my %disabled = ( # "what"         => "comment"
                  "zlib"           => "default",
                  "zlib-dynamic"   => "default"
                );
+my @experimental = ();
 
-# Additional "no-..." options will be collected in %disabled.
-# To remove something from %disabled, use e.g. "enable-rc5".
-# For symmetry, "disable-..." is a synonym for "no-...".
+# This is what $depflags will look like with the above defaults
+# (we need this to see if we should advise the user to run "make depend"):
+my $default_depflags = " -DOPENSSL_NO_CAMELLIA -DOPENSSL_NO_CAPIENG -DOPENSSL_NO_CMS -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_SEED -DOPENSSL_NO_TLSEXT";
 
-# This is what $depflags will look like with the above default:
-my $default_depflags = " -DOPENSSL_NO_CAMELLIA -DOPENSSL_NO_CAPIENG -DOPENSSL_NO_CMS -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_SEED -DOPENSSL_NO_TLSEXT ";
+
+# Explicit "no-..." options will be collected in %disabled along with the defaults.
+# To remove something from %disabled, use "enable-foo" (unless it's experimental).
+# For symmetry, "disable-foo" is a synonym for "no-foo".
+
+# For features called "experimental" here, a more explicit "experimental-foo" is needed to enable.
+# We will collect such requests in @experimental.
+# To avoid accidental use of experimental features, applications will have to use -DOPENSSL_EXPERIMENTAL_FOO.
+
 
 my $no_sse2=0;
 
@@ -654,6 +662,7 @@ my $no_sse2=0;
 
 my $flags;
 my $depflags;
+my $openssl_experimental_defines;
 my $openssl_algorithm_defines;
 my $openssl_thread_defines;
 my $openssl_sys_defines="";
@@ -674,6 +683,7 @@ while($argv_unprocessed)
 	{
 	$flags="";
 	$depflags="";
+	$openssl_experimental_defines="";
 	$openssl_algorithm_defines="";
 	$openssl_thread_defines="";
 	$openssl_sys_defines="";
@@ -699,25 +709,35 @@ PROCESS_ARGS:
 
 		if (/^no-(.+)$/ || /^disable-(.+)$/)
 			{
-			if ($1 eq "ssl")
+			if (!($disabled{$1} eq "experimental"))
 				{
-				$disabled{"ssl2"} = "option(ssl)";
-				$disabled{"ssl3"} = "option(ssl)";
-				}
-			elsif ($1 eq "tls")
-				{
-				$disabled{"tls1"} = "option(tls)"
-				}
-			else
-				{
-				$disabled{$1} = "option";
+				if ($1 eq "ssl")
+					{
+					$disabled{"ssl2"} = "option(ssl)";
+					$disabled{"ssl3"} = "option(ssl)";
+					}
+				elsif ($1 eq "tls")
+					{
+					$disabled{"tls1"} = "option(tls)"
+					}
+				else
+					{
+					$disabled{$1} = "option";
+					}
 				}
 			}			
-		elsif (/^enable-(.+)$/)
+		elsif (/^enable-(.+)$/ || /^experimental-(.+)$/)
 			{
-			delete $disabled{$1};
+			my $algo = $1;
+			if ($disabled{$algo} eq "experimental")
+				{
+				die "You are requesting an experimental feature; please say 'experimental-$algo' if you are sure\n"
+					unless (/^experimental-/);
+				push @experimental, $algo;
+				}
+			delete $disabled{$algo};
 
-			$threads = 1 if ($1 eq "threads");
+			$threads = 1 if ($algo eq "threads");
 			}
 		elsif (/^--test-sanity$/)
 			{
@@ -962,6 +982,15 @@ if ($fips)
 		    "$cpuid_obj:$bn_obj:$aes_obj:$des_obj:$sha1_obj" eq "::::");
 	}
 
+foreach (sort @experimental)
+	{
+	my $ALGO;
+	($ALGO = $_) =~ tr/[a-z]/[A-Z]/;
+
+	# opensslconf.h will set OPENSSL_NO_... unless OPENSSL_EXPERIMENTAL_... is defined
+	$openssl_experimental_defines .= "#define OPENSSL_NO_$ALGO\n";
+	$cflags .= " -DOPENSSL_EXPERIMENTAL_$ALGO";
+	}
 
 foreach (sort (keys %disabled))
 	{
@@ -1012,7 +1041,7 @@ foreach (sort (keys %disabled))
 				push @skip, $algo;
 				print " (skip dir)";
 
-				$depflags .="-DOPENSSL_NO_$ALGO ";
+				$depflags .= " -DOPENSSL_NO_$ALGO";
 				}
 			}
 		}
@@ -1432,7 +1461,7 @@ while (<IN>)
 	s/^CC=.*$/CC= $cc/;
 	s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc";
 	s/^CFLAG=.*$/CFLAG= $cflags/;
-	s/^DEPFLAG=.*$/DEPFLAG= $depflags/;
+	s/^DEPFLAG=.*$/DEPFLAG=$depflags/;
 	s/^PEX_LIBS=.*$/PEX_LIBS= $prelflags/;
 	s/^EX_LIBS=.*$/EX_LIBS= $lflags/;
 	s/^EXE_EXT=.*$/EXE_EXT= $exe_ext/;
@@ -1576,6 +1605,7 @@ print OUT "/* WARNING: Generated automatically from opensslconf.h.in by Configur
 
 print OUT "/* OpenSSL was configured with the following options: */\n";
 my $openssl_algorithm_defines_trans = $openssl_algorithm_defines;
+$openssl_experimental_defines =~ s/^\s*#\s*define\s+OPENSSL_NO_(.*)/#ifndef OPENSSL_EXPERIMENTAL_$1\n# ifndef OPENSSL_NO_$1\n#  define OPENSSL_NO_$1\n# endif\n#endif/mg;
 $openssl_algorithm_defines_trans =~ s/^\s*#\s*define\s+OPENSSL_(.*)/# if defined(OPENSSL_$1) \&\& !defined($1)\n#  define $1\n# endif/mg;
 $openssl_algorithm_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
 $openssl_algorithm_defines = "   /* no ciphers excluded */\n" if $openssl_algorithm_defines eq "";
@@ -1584,8 +1614,10 @@ $openssl_sys_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/
 $openssl_other_defines =~ s/^\s*#\s*define\s+(.*)/#ifndef $1\n# define $1\n#endif/mg;
 print OUT $openssl_sys_defines;
 print OUT "#ifndef OPENSSL_DOING_MAKEDEPEND\n\n";
+print OUT $openssl_experimental_defines;
+print OUT "\n";
 print OUT $openssl_algorithm_defines;
-print OUT "\n#endif /* OPENSSL_DOING_MAKEDEPEND */\n";
+print OUT "\n#endif /* OPENSSL_DOING_MAKEDEPEND */\n\n";
 print OUT $openssl_thread_defines;
 print OUT $openssl_other_defines,"\n";
 

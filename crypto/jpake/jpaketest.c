@@ -1,13 +1,19 @@
-#include <openssl/err.h>
+#include <openssl/opensslconf.h>
 
 #ifdef OPENSSL_NO_JPAKE
+
+#include <stdio.h>
+
 int main(int argc, char *argv[])
 {
     printf("No J-PAKE support\n");
     return(0);
 }
+
 #else
+
 #include <openssl/jpake.h>
+#include <openssl/err.h>
 
 static void showbn(const char *name, const BIGNUM *bn)
     {
