@@ -44,6 +44,11 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
+cmll-x86.s:	asm/cmll-x86.pl ../perlasm/x86asm.pl
+	$(PERL) asm/cmll-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+cmll-x86_64.s:  asm/cmll-x86_64.pl
+	$(PERL) asm/cmll-x86_64.pl $(PERLASM_SCHEME) > $@
+
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
 
