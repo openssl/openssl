@@ -739,17 +739,20 @@ static int ipv6_from_asc(unsigned char *v6, const char *in)
 
 	/* Format result */
 
-	/* Copy initial part */
 	if (v6stat.zero_pos > 0)
+		{
+		/* Copy initial part */
 		memcpy(v6, v6stat.tmp, v6stat.zero_pos);
-	/* Zero middle */
-	if (v6stat.total != 16)
+		/* Zero middle */
 		memset(v6 + v6stat.zero_pos, 0, 16 - v6stat.total);
-	/* Copy final part */
-	if (v6stat.total != v6stat.zero_pos)
-		memcpy(v6 + v6stat.zero_pos + 16 - v6stat.total,
-			v6stat.tmp + v6stat.zero_pos,
-			v6stat.total - v6stat.zero_pos);
+		/* Copy final part */
+		if (v6stat.total != v6stat.zero_pos)
+			memcpy(v6 + v6stat.zero_pos + 16 - v6stat.total,
+				v6stat.tmp + v6stat.zero_pos,
+				v6stat.total - v6stat.zero_pos);
+		}
+	else
+		memcpy(v6, v6stat.tmp, 16);
 
 	return 1;
 	}
