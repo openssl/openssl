@@ -739,7 +739,7 @@ static int ipv6_from_asc(unsigned char *v6, const char *in)
 
 	/* Format result */
 
-	if (v6stat.zero_pos > 0)
+	if (v6stat.zero_pos >= 0)
 		{
 		/* Copy initial part */
 		memcpy(v6, v6stat.tmp, v6stat.zero_pos);
