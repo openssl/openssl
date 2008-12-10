@@ -2760,6 +2760,8 @@ static int do_multi(int multi)
 	for(n=0 ; n < multi ; ++n)
 		{
 		pipe(fd);
+		fflush(stdout);
+		fflush(stderr);
 		if(fork())
 			{
 			close(fd[1]);
