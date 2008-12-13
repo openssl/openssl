@@ -415,20 +415,21 @@ static int print_gost_01(BIO *out, const EVP_PKEY *pkey, int indent,
 			BN_print(out,key);
 		BIO_printf(out,"\n");
 		}
-	if (type >=1) 
+	if (type >= 1) 
 		{
 		BN_CTX *ctx = BN_CTX_new();
 		BIGNUM *X,*Y;
 		const EC_POINT *pubkey;
 		const EC_GROUP *group;
-		BN_CTX_start(ctx);
-		X= BN_CTX_get(ctx);
-		Y=BN_CTX_get(ctx);
+
 		if (!ctx) 
 			{
 			GOSTerr(GOST_F_PRINT_GOST_01,ERR_R_MALLOC_FAILURE);
 			return 0;
 			}
+		BN_CTX_start(ctx);
+		X = BN_CTX_get(ctx);
+		Y = BN_CTX_get(ctx);
 		pubkey = EC_KEY_get0_public_key((EC_KEY *)EVP_PKEY_get0((EVP_PKEY *)pkey));
 		group = EC_KEY_get0_group((EC_KEY *)EVP_PKEY_get0((EVP_PKEY *)pkey));
 		if (!EC_POINT_get_affine_coordinates_GFp(group,pubkey,X,Y,ctx)) 
