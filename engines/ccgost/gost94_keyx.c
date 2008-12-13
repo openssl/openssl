@@ -51,6 +51,8 @@ static int make_cp_exchange_key(BIGNUM *priv_key,EVP_PKEY *pubk, unsigned char *
 	gost_hash_ctx hash_ctx;
 	DH *dh = DH_new();
 	
+	if (!dh)
+		return 0;
 	memset(dh_key,0,128);
 	dh->g = BN_dup(pubk->pkey.dsa->g);
 	dh->p = BN_dup(pubk->pkey.dsa->p);
