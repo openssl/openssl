@@ -215,7 +215,7 @@ static int vms_load(DSO *dso)
 	p->imagename_dsc.dsc$b_class = DSC$K_CLASS_S;
 	p->imagename_dsc.dsc$a_pointer = p->imagename;
 
-	if(!sk_push(dso->meth_data, (char *)p))
+	if(!sk_void_push(dso->meth_data, (char *)p))
 		{
 		DSOerr(DSO_F_VMS_LOAD,DSO_R_STACK_ERROR);
 		goto err;
@@ -245,9 +245,9 @@ static int vms_unload(DSO *dso)
 		DSOerr(DSO_F_VMS_UNLOAD,ERR_R_PASSED_NULL_PARAMETER);
 		return(0);
 		}
-	if(sk_num(dso->meth_data) < 1)
+	if(sk_void_num(dso->meth_data) < 1)
 		return(1);
-	p = (DSO_VMS_INTERNAL *)sk_pop(dso->meth_data);
+	p = (DSO_VMS_INTERNAL *)sk_void_pop(dso->meth_data);
 	if(p == NULL)
 		{
 		DSOerr(DSO_F_VMS_UNLOAD,DSO_R_NULL_HANDLE);
@@ -302,13 +302,13 @@ void vms_bind_sym(DSO *dso, const char *symname, void **sym)
 		DSOerr(DSO_F_VMS_BIND_SYM,ERR_R_PASSED_NULL_PARAMETER);
 		return;
 		}
-	if(sk_num(dso->meth_data) < 1)
+	if(sk_void_num(dso->meth_data) < 1)
 		{
 		DSOerr(DSO_F_VMS_BIND_SYM,DSO_R_STACK_ERROR);
 		return;
 		}
-	ptr = (DSO_VMS_INTERNAL *)sk_value(dso->meth_data,
-		sk_num(dso->meth_data) - 1);
+	ptr = (DSO_VMS_INTERNAL *)sk_void_value(dso->meth_data,
+		sk_void_num(dso->meth_data) - 1);
 	if(ptr == NULL)
 		{
 		DSOerr(DSO_F_VMS_BIND_SYM,DSO_R_NULL_HANDLE);
