@@ -860,13 +860,35 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 
 	n0 = *n0p;
 
-	tp[num]   = bn_mul_words(tp,ap,num,bp[0]);
+	c0 = 0;
+	ml = bp[0];
+#ifdef mul64
+	mh = HBITS(ml);
+	ml = LBITS(ml);
+	for (j=0;j<num;++j)
+		mul(tp[j],ap[j],ml,mh,c0);
+#else
+	for (j=0;j<num;++j)
+		mul(tp[j],ap[j],ml,c0);
+#endif
+
+	tp[num]   = c0;
 	tp[num+1] = 0;
 	goto enter;
 
 	for(i=0;i<num;i++)
 		{
-		c0 = bn_mul_add_words(tp,ap,num,bp[i]);
+		c0 = 0;
+		ml = bp[i];
+#ifdef mul64
+		mh = HBITS(ml);
+		ml = LBITS(ml);
+		for (j=0;j<num;++j)
+			mul_add(tp[j],ap[j],ml,mh,c0);
+#else
+		for (j=0;j<num;++j)
+			mul_add(tp[j],ap[j],ml,c0);
+#endif
 		c1 = (tp[num] + c0)&BN_MASK2;
 		tp[num]   = c1;
 		tp[num+1] = (c1<c0?1:0);
