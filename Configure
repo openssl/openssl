@@ -1185,8 +1185,9 @@ $lflags="$libs$lflags" if ($libs ne "");
 
 if ($no_asm)
 	{
-	$cpuid_obj=$bn_obj=$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj=$wp_obj="";
-	$sha1_obj=$md5_obj=$rmd160_obj="";
+	$cpuid_obj=$bn_obj=
+	$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj=$cmll_obj=
+	$sha1_obj=$md5_obj=$rmd160_obj=$wp_obj="";
 	}
 
 if (!$no_shared)
