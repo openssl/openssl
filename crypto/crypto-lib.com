@@ -83,7 +83,7 @@ $ ENCRYPT_TYPES = "Basic,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
 		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
-		  "STORE,CMS,PQUEUE,TS"
+		  "STORE,CMS,PQUEUE,TS,JPAKE"
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -288,6 +288,7 @@ $ LIB_PQUEUE = "pqueue"
 $ LIB_TS = "ts_err,ts_req_utils,ts_req_print,ts_rsp_utils,ts_rsp_print,"+ -
 	"ts_rsp_sign,ts_rsp_verify,ts_verify_ctx,ts_lib,ts_conf,"+ -
 	"ts_asn1"
+$ LIB_JPAKE = "jpake,jpake_err"
 $!
 $! Setup exceptional compilations
 $!

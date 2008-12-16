@@ -34,7 +34,7 @@ $! Set the names of the engines we want to build
 $!
 $ ENGINES = "," + P6
 $ IF ENGINES .EQS. "," THEN -
-	ENGINES = ",4758cca,aep,atalla,cswift,chil,nuron,sureware,ubsec,padlock"
+	ENGINES = ",4758cca,aep,atalla,cswift,chil,nuron,sureware,ubsec,padlock,ccgost"
 $!
 $! Set the default TCP/IP library to link against if needed
 $!
@@ -87,6 +87,12 @@ $ ENGINE_chil = "e_chil"
 $ ENGINE_nuron = "e_nuron"
 $ ENGINE_sureware = "e_sureware"
 $ ENGINE_ubsec = "e_ubsec"
+$
+$ ENGINE_ccgost_SUBDIR = "ccgost"
+$ ENGINE_ccgost = "e_gost_err,gost2001_keyx,gost2001,gost89,gost94_keyx,"+ -
+		  "gost_ameth,gost_asn1,gost_crypt,gost_ctl,gost_eng,"+ -
+		  "gosthash,gost_keywrap,gost_md,gost_params,gost_pmeth,"+ -
+		  "gost_sign"
 $!
 $! Define which programs need to be linked with a TCP/IP library
 $!
@@ -149,7 +155,12 @@ $ IF FILE_NAME .EQS. "" THEN GOTO FILE_NEXT
 $!
 $! Set up the source and object reference
 $!
-$ SOURCE_FILE = F$PARSE(FILE_NAME,"SYS$DISK:[].C",,,"SYNTAX_ONLY")
+$ IF F$TYPE('LIB_ENGINE'_SUBDIR) .EQS. ""
+$ THEN
+$     SOURCE_FILE = F$PARSE(FILE_NAME,"SYS$DISK:[].C",,,"SYNTAX_ONLY")
+$ ELSE
+$     SOURCE_FILE = F$PARSE(FILE_NAME,"SYS$DISK:[."+'LIB_ENGINE'_SUBDIR+"].C",,,"SYNTAX_ONLY")
+$ ENDIF
 $ OBJECT_FILE = OBJ_DIR + F$PARSE(FILE_NAME,,,"NAME","SYNTAX_ONLY") + ".OBJ"
 $!
 $! If we get some problem, we just go on trying to build the next module.
