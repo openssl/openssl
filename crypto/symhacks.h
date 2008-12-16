@@ -187,6 +187,11 @@
 #define ENGINE_set_default_pkey_asn1_meths	ENGINE_set_def_pkey_asn1_meths
 #undef ENGINE_get_pkey_asn1_meth_engine
 #define ENGINE_get_pkey_asn1_meth_engine	ENGINE_get_pkey_asn1_meth_eng
+#undef ENGINE_set_load_ssl_client_cert_function
+#define ENGINE_set_load_ssl_client_cert_function \
+						ENGINE_set_ld_ssl_clnt_cert_fn
+#undef ENGINE_get_ssl_client_cert_function
+#define ENGINE_get_ssl_client_cert_function	ENGINE_get_ssl_client_cert_fn
 
 /* Hack some long OCSP names */
 #undef OCSP_REQUEST_get_ext_by_critical
