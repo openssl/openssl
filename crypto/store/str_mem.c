@@ -83,7 +83,7 @@ typedef struct mem_object_data_st
 	int references;
 	} MEM_OBJECT_DATA;
 
-DECLARE_STACK_OF(MEM_OBJECT_DATA);
+DECLARE_STACK_OF(MEM_OBJECT_DATA)
 struct mem_data_st
 	{
 	STACK_OF(MEM_OBJECT_DATA) *data; /* sorted with
@@ -93,7 +93,7 @@ struct mem_data_st
 						from parts of the data. */
 	};
 
-DECLARE_STACK_OF(STORE_ATTR_INFO);
+DECLARE_STACK_OF(STORE_ATTR_INFO)
 struct mem_ctx_st
 	{
 	int type;		/* The type we're searching for */
