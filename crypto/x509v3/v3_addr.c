@@ -234,7 +234,7 @@ static int i2r_IPAddressOrRanges(BIO *out,
 /*
  * i2r handler for an IPAddrBlocks extension.
  */
-static int i2r_IPAddrBlocks(X509V3_EXT_METHOD *method,
+static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
 			    void *ext,
 			    BIO *out,
 			    int indent)
@@ -886,7 +886,7 @@ int v3_addr_canonize(IPAddrBlocks *addr)
 /*
  * v2i handler for the IPAddrBlocks extension.
  */
-static void *v2i_IPAddrBlocks(struct v3_ext_method *method,
+static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
 			      struct v3_ext_ctx *ctx,
 			      STACK_OF(CONF_VALUE) *values)
 {

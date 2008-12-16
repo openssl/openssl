@@ -152,7 +152,7 @@ static int i2r_ASIdentifierChoice(BIO *out,
 /*
  * i2r method for an ASIdentifier extension.
  */
-static int i2r_ASIdentifiers(X509V3_EXT_METHOD *method,
+static int i2r_ASIdentifiers(const X509V3_EXT_METHOD *method,
 			     void *ext,
 			     BIO *out,
 			     int indent)
@@ -495,7 +495,7 @@ int v3_asid_canonize(ASIdentifiers *asid)
 /*
  * v2i method for an ASIdentifier extension.
  */
-static void *v2i_ASIdentifiers(struct v3_ext_method *method,
+static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
 			       struct v3_ext_ctx *ctx,
 			       STACK_OF(CONF_VALUE) *values)
 {
