@@ -1382,6 +1382,132 @@ AES_cbc_encrypt:
 	jmp	.Lcbc_cleanup
 
 .align	4
+<<<<<<< aes-x86_64.pl
+.Lcbc_slow_enc_loop:
+		xor	0($inp),$s0
+		xor	4($inp),$s1
+		xor	8($inp),$s2
+		xor	12($inp),$s3
+		mov	$keyp,$key	# restore key
+		mov	$inp,$_inp	# save inp
+		mov	$out,$_out	# save out
+		mov	%r10,$_len	# save len
+
+		call	_x86_64_AES_encrypt_compact
+
+		mov	$_inp,$inp	# restore inp
+		mov	$_out,$out	# restore out
+		mov	$_len,%r10	# restore len
+		mov	$s0,0($out)
+		mov	$s1,4($out)
+		mov	$s2,8($out)
+		mov	$s3,12($out)
+
+		lea	16($inp),$inp
+		lea	16($out),$out
+		sub	\$16,%r10
+		test	\$-16,%r10
+	jnz	.Lcbc_slow_enc_loop
+	test	\$15,%r10
+	jnz	.Lcbc_slow_enc_tail
+	mov	$_ivp,%rbp	# restore ivp
+	mov	$s0,0(%rbp)	# save ivec
+	mov	$s1,4(%rbp)
+	mov	$s2,8(%rbp)
+	mov	$s3,12(%rbp)
+
+	jmp	.Lcbc_exit
+.align	4
+.Lcbc_slow_enc_tail:
+	mov	%r10,%rcx
+	mov	$inp,%rsi
+	mov	$out,%rdi
+	.long	0x9066A4F3		# rep movsb
+	mov	\$16,%rcx		# zero tail
+	sub	%r10,%rcx
+	xor	%rax,%rax
+	.long	0x9066AAF3		# rep stosb
+	mov	$out,$inp		# this is not a mistake!
+	mov	\$16,%r10		# len=16
+	jmp	.Lcbc_slow_enc_loop	# one more spin...
+#--------------------------- SLOW DECRYPT ---------------------------#
+.align	16
+.LSLOW_DECRYPT:
+	shr	\$3,%rax
+	add	%rax,$sbox		# recall "magic" constants!
+
+	mov	0(%rbp),%r11		# copy iv to stack
+	mov	8(%rbp),%r12
+	mov	%r11,0+$ivec
+	mov	%r12,8+$ivec
+
+.align	4
+.Lcbc_slow_dec_loop:
+		mov	0($inp),$s0	# load input
+		mov	4($inp),$s1
+		mov	8($inp),$s2
+		mov	12($inp),$s3
+		mov	$keyp,$key	# restore key
+		mov	$inp,$_inp	# save inp
+		mov	$out,$_out	# save out
+		mov	%r10,$_len	# save len
+
+		call	_x86_64_AES_decrypt_compact
+
+		mov	$_inp,$inp	# restore inp
+		mov	$_out,$out	# restore out
+		mov	$_len,%r10
+		xor	0+$ivec,$s0
+		xor	4+$ivec,$s1
+		xor	8+$ivec,$s2
+		xor	12+$ivec,$s3
+
+		mov	0($inp),%r11	# load input
+		mov	8($inp),%r12
+		sub	\$16,%r10
+		jc	.Lcbc_slow_dec_partial
+		jz	.Lcbc_slow_dec_done
+
+		mov	%r11,0+$ivec	# copy input to iv
+		mov	%r12,8+$ivec
+
+		mov	$s0,0($out)	# save output [can zap input]
+		mov	$s1,4($out)
+		mov	$s2,8($out)
+		mov	$s3,12($out)
+
+		lea	16($inp),$inp
+		lea	16($out),$out
+	jmp	.Lcbc_slow_dec_loop
+.Lcbc_slow_dec_done:
+	mov	$_ivp,%rdi
+	mov	%r11,0(%rdi)		# copy iv back to user
+	mov	%r12,8(%rdi)
+
+	mov	$s0,0($out)		# save output [can zap input]
+	mov	$s1,4($out)
+	mov	$s2,8($out)
+	mov	$s3,12($out)
+
+	jmp	.Lcbc_exit
+
+.align	4
+.Lcbc_slow_dec_partial:
+	mov	$_ivp,%rdi
+	mov	%r11,0(%rdi)		# copy iv back to user
+	mov	%r12,8(%rdi)
+
+	mov	$s0,0+$ivec		# save output to stack
+	mov	$s1,4+$ivec
+	mov	$s2,8+$ivec
+	mov	$s3,12+$ivec
+
+	mov	$out,%rdi
+	lea	$ivec,%rsi
+	lea	16(%r10),%rcx
+	.long	0x9066A4F3	# rep movsb
+	jmp	.Lcbc_exit
+=======
 .Lcbc_dec_in_place_partial:
 	# one can argue if this is actually required
 	lea	($out,%rcx),%rdi
@@ -1389,6 +1515,7 @@ AES_cbc_encrypt:
 	neg	%rcx
 	.long	0xF689A4F3	# rep movsb	# restore tail
 	jmp	.Lcbc_cleanup
+>>>>>>> 1.10.2.6
 .size	AES_cbc_encrypt,.-AES_cbc_encrypt
 ___
 }
