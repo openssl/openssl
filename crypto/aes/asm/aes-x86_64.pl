@@ -1198,13 +1198,10 @@ AES_cbc_encrypt:
 	ret
 .align	4
 .Lcbc_enc_tail:
-	cmp	$inp,$out
-	je	.Lcbc_enc_in_place
 	mov	%r10,%rcx
 	mov	$inp,%rsi
 	mov	$out,%rdi
 	.long	0xF689A4F3		# rep movsb
-.Lcbc_enc_in_place:
 	mov	\$16,%rcx		# zero tail
 	sub	%r10,%rcx
 	xor	%rax,%rax
