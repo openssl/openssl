@@ -1965,19 +1965,16 @@ AES_cbc_encrypt:
 	jmp	.Lcbc_exit
 .align	4
 .Lcbc_slow_enc_tail:
-	cmp	$inp,$out
-	je	.Lcbc_slow_enc_in_place
 	mov	%r10,%rcx
 	mov	$inp,%rsi
 	mov	$out,%rdi
 	.long	0x9066A4F3		# rep movsb
-.Lcbc_slow_enc_in_place:
 	mov	\$16,%rcx		# zero tail
 	sub	%r10,%rcx
 	xor	%rax,%rax
 	.long	0x9066AAF3		# rep stosb
 	mov	$out,$inp		# this is not a mistake!
-	movq	\$16,$_len		# len=16
+	mov	\$16,%r10		# len=16
 	jmp	.Lcbc_slow_enc_loop	# one more spin...
 #--------------------------- SLOW DECRYPT ---------------------------#
 .align	16
