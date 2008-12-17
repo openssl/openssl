@@ -17,7 +17,7 @@ $i386=0;
 sub ::AUTOLOAD
 { my $opcode = $AUTOLOAD;
 
-    die "more than 2 arguments passed to $opcode" if ($#_>1);
+    die "more than 4 arguments passed to $opcode" if ($#_>3);
 
     $opcode =~ s/.*:://;
     if    ($opcode =~ /^push/) { $stack+=4; }
@@ -66,8 +66,8 @@ sub ::rotr	{ &ror(@_);	}
 sub ::exch	{ &xchg(@_);	}
 sub ::halt	{ &hlt;		}
 sub ::movz	{ &movzx(@_);	}
-sub ::pushf	{ &::pushfd;	}
-sub ::popf	{ &::popfd;	}
+sub ::pushf	{ &pushfd;	}
+sub ::popf	{ &popfd;	}
 
 # 3 argument instructions
 sub ::movq
@@ -79,9 +79,6 @@ sub ::movq
     else
     {	&::generic("movq",@_);			}
 }
-sub ::pshufw	{ &::emit("pshufw",@_); }
-sub ::shld	{ &::emit("shld",@_);   }
-sub ::shrd	{ &::emit("shrd",@_);   }
 
 # label management
 $lbdecor="L";		# local label decoration, set by package

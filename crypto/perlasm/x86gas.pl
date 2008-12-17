@@ -25,24 +25,20 @@ sub opsize()
 # expand opcode with size suffix;
 # prefix numeric constants with $;
 sub ::generic
-{ my($opcode,$dst,$src)=@_;
-  my($tmp,$suffix,@arg);
+{ my($opcode,@arg)=@_;
+  my($suffix,$dst,$src);
 
-    if (defined($src))
-    {	$src =~ s/^(e?[a-dsixphl]{2})$/%$1/o;
-	$src =~ s/^(x?mm[0-7])$/%$1/o;
-	$src =~ s/^(\-?[0-9]+)$/\$$1/o;
-	$src =~ s/^(\-?0x[0-9a-f]+)$/\$$1/o;
-	push(@arg,$src);
-    }
-    if (defined($dst))
-    {	$dst =~ s/^(\*?)(e?[a-dsixphl]{2})$/$1%$2/o;
-	$dst =~ s/^(x?mm[0-7])$/%$1/o;
-	$dst =~ s/^(\-?[0-9]+)$/\$$1/o		if(!defined($src));
-	$dst =~ s/^(\-?0x[0-9a-f]+)$/\$$1/o	if(!defined($src));
-	push(@arg,$dst);
+    @arg=reverse(@arg);
+
+    for (@arg)
+    {	s/^(\*?)(e?[a-dsixphl]{2})$/$1%$2/o;	# gp registers
+	s/^([xy]?mm[0-7])$/%$1/o;		# xmm/mmx registers
+	s/^(\-?[0-9]+)$/\$$1/o;			# constants
+	s/^(\-?0x[0-9a-f]+)$/\$$1/o;		# constants
     }
 
+    $dst = $arg[$#arg]		if ($#arg>=0);
+    $src = $arg[$#arg-1]	if ($#arg>=1);
     if    ($dst =~ m/^%/o)	{ $suffix=&opsize($dst); }
     elsif ($src =~ m/^%/o)	{ $suffix=&opsize($src); }
     else			{ $suffix="l";           }
@@ -70,19 +66,6 @@ sub ::call_ptr	{ &::generic("call","*$_[0]");	}
 sub ::jmp_ptr	{ &::generic("jmp","*$_[0]");	}
 
 *::bswap = sub	{ &::emit("bswap","%$_[0]");	} if (!$::i386);
-
-*::pshufw = sub
-{ my($dst,$src,$magic)=@_;
-    &::emit("pshufw","\$$magic","%$src","%$dst");
-};
-*::shld = sub
-{ my($dst,$src,$bits)=@_;
-    &::emit("shldl",$bits eq "cl"?"%cl":"\$$bits","%$src","%$dst");
-};
-*::shrd = sub
-{ my($dst,$src,$bits)=@_;
-    &::emit("shrdl",$bits eq "cl"?"%cl":"\$$bits","%$src","%$dst");
-};
 
 sub ::DWP
 { my($addr,$reg1,$reg2,$idx)=@_;

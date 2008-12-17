@@ -627,44 +627,42 @@ while($line=<>) {
 
     undef $label;
     undef $opcode;
-    undef $dst;
-    undef $src;
     undef $sz;
+    undef @args;
 
     if ($label=label->re(\$line))	{ print $label->out(); }
 
     if (directive->re(\$line)) {
 	printf "%s",directive->out();
-    } elsif ($opcode=opcode->re(\$line)) { ARGUMENT: {
+    } elsif ($opcode=opcode->re(\$line)) { ARGUMENT: while (1) {
+	my $arg;
 
-	if ($src=register->re(\$line))	{ opcode->size($src->size()); }
-	elsif ($src=const->re(\$line))	{ }
-	elsif ($src=ea->re(\$line))	{ }
-	elsif ($src=expr->re(\$line))	{ }
+	if ($arg=register->re(\$line))	{ opcode->size($arg->size()); }
+	elsif ($arg=const->re(\$line))	{ }
+	elsif ($arg=ea->re(\$line))	{ }
+	elsif ($arg=expr->re(\$line))	{ }
+	else				{ last ARGUMENT; }
+
+	push @args,$arg;
 
 	last ARGUMENT if ($line !~ /^,/);
 
-	$line = substr($line,1); $line =~ s/^\s+//;
-
-	if ($dst=register->re(\$line))	{ opcode->size($dst->size()); }
-	elsif ($dst=const->re(\$line))	{ }
-	elsif ($dst=ea->re(\$line))	{ }
-
+	$line =~ s/^,\s*//;
 	} # ARGUMENT:
 
 	$sz=opcode->size();
 
-	if (defined($dst)) {
+	if ($#args>=0) {
+	    my $insn;
 	    if ($gas) {
-		printf "\t%s\t%s,%s",	$opcode->out($dst->size()),
-					$src->out($sz),$dst->out($sz);
+		$insn = $opcode->out($#args>=1?$args[$#args]->size():$sz);
 	    } else {
+		$insn = $opcode->out();
+		@args = reverse(@args);
 		undef $sz if ($nasm && $opcode->mnemonic() eq "lea");
-		printf "\t%s\t%s,%s",	$opcode->out(),
-					$dst->out($sz),$src->out($sz);
 	    }
-	} elsif (defined($src)) {
-	    printf "\t%s\t%s",$opcode->out(),$src->out($sz);
+	    for (@args) { $_ = $_->out($sz); }
+	    printf "\t%s\t%s", $insn, join(",",@args);
 	} else {
 	    printf "\t%s",$opcode->out();
 	}
