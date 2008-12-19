@@ -25,17 +25,22 @@
 #
 # (*) with hyper-threading off
 
-$verticalspin=1;	# unlike 32-bit version $verticalspin performs
-			# ~15% better on both AMD and Intel cores
-$speed_limit=512;	# see aes-586.pl for details
-$output=shift;
+$flavour = shift;
+$output  = shift;
+if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
+
+$win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-open STDOUT,"| $^X $xlate $output";
+open STDOUT,"| $^X $xlate $flavour $output";
+
+$verticalspin=1;	# unlike 32-bit version $verticalspin performs
+			# ~15% better on both AMD and Intel cores
+$speed_limit=512;	# see aes-586.pl for details
 
 $code=".text\n";
 
@@ -592,18 +597,20 @@ AES_encrypt:
 	push	%r15
 
 	# allocate frame "above" key schedule
-	mov	%rsp,%rax
-	mov	%rdx,$key
-	lea	-63(%rdx),%rcx
+	mov	%rsp,%r10
+	lea	-63(%rdx),%rcx	# %rdx is key argument
 	and	\$-64,%rsp
 	sub	%rsp,%rcx
 	neg	%rcx
 	and	\$0x3c0,%rcx
 	sub	%rcx,%rsp
+	sub	\$32,%rsp
 
-	push	%rax		# save real stack pointer
-	push	%rsi		# save out
+	mov	%rsi,16(%rsp)	# save out
+	mov	%r10,24(%rsp)	# save real stack pointer
+.Lenc_prologue:
 
+	mov	%rdx,$key
 	mov	240($key),$rnds	# load rounds
 
 	mov	0(%rdi),$s0	# load input vector
@@ -613,8 +620,8 @@ AES_encrypt:
 
 	shl	\$4,$rnds
 	lea	($key,$rnds),%rbp
-	push	%rbp
-	push	$key
+	mov	$key,(%rsp)	# key schedule
+	mov	%rbp,8(%rsp)	# end of key schedule
 
 	# pick Te4 copy which can't "overlap" with stack frame or key schedule
 	lea	.LAES_Te+2048(%rip),$sbox
@@ -626,18 +633,20 @@ AES_encrypt:
 	call	_x86_64_AES_encrypt_compact
 
 	mov	16(%rsp),$out	# restore out
-	mov	24(%rsp),%rsp
+	mov	24(%rsp),%rsi	# restore saved stack pointer
 	mov	$s0,0($out)	# write output vector
 	mov	$s1,4($out)
 	mov	$s2,8($out)
 	mov	$s3,12($out)
 
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
+	mov	(%rsi),%r15
+	mov	8(%rsi),%r14
+	mov	16(%rsi),%r13
+	mov	24(%rsi),%r12
+	mov	32(%rsi),%rbp
+	mov	40(%rsi),%rbx
+	lea	48(%rsi),%rsp
+.Lenc_epilogue:
 	ret
 .size	AES_encrypt,.-AES_encrypt
 ___
@@ -1184,18 +1193,20 @@ AES_decrypt:
 	push	%r15
 
 	# allocate frame "above" key schedule
-	mov	%rsp,%rax
-	mov	%rdx,$key
-	lea	-63(%rdx),%rcx
+	mov	%rsp,%r10
+	lea	-63(%rdx),%rcx	# %rdx is key argument
 	and	\$-64,%rsp
 	sub	%rsp,%rcx
 	neg	%rcx
 	and	\$0x3c0,%rcx
 	sub	%rcx,%rsp
+	sub	\$32,%rsp
 
-	push	%rax		# save real stack pointer
-	push	%rsi		# save out
+	mov	%rsi,16(%rsp)	# save out
+	mov	%r10,24(%rsp)	# save real stack pointer
+.Ldec_prologue:
 
+	mov	%rdx,$key
 	mov	240($key),$rnds	# load rounds
 
 	mov	0(%rdi),$s0	# load input vector
@@ -1205,8 +1216,8 @@ AES_decrypt:
 
 	shl	\$4,$rnds
 	lea	($key,$rnds),%rbp
-	push	%rbp
-	push	$key
+	mov	$key,(%rsp)	# key schedule
+	mov	%rbp,8(%rsp)	# end of key schedule
 
 	# pick Td4 copy which can't "overlap" with stack frame or key schedule
 	lea	.LAES_Td+2048(%rip),$sbox
@@ -1220,18 +1231,20 @@ AES_decrypt:
 	call	_x86_64_AES_decrypt_compact
 
 	mov	16(%rsp),$out	# restore out
-	mov	24(%rsp),%rsp
+	mov	24(%rsp),%rsi	# restore saved stack pointer
 	mov	$s0,0($out)	# write output vector
 	mov	$s1,4($out)
 	mov	$s2,8($out)
 	mov	$s3,12($out)
 
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
+	mov	(%rsi),%r15
+	mov	8(%rsi),%r14
+	mov	16(%rsi),%r13
+	mov	24(%rsi),%r12
+	mov	32(%rsi),%rbp
+	mov	40(%rsi),%rbx
+	lea	48(%rsi),%rsp
+.Ldec_epilogue:
 	ret
 .size	AES_decrypt,.-AES_decrypt
 ___
@@ -1271,16 +1284,31 @@ $code.=<<___;
 .type	AES_set_encrypt_key,\@function,3
 .align	16
 AES_set_encrypt_key:
+	push	%rbx
+	push	%rbp
+	push	%r12			# redundant, but allows to share 
+	push	%r13			# exception handler...
+	push	%r14
+	push	%r15
+	sub	\$8,%rsp
+.Lenc_key_prologue:
+
 	call	_x86_64_AES_set_encrypt_key
+
+	mov	8(%rsp),%r15
+	mov	16(%rsp),%r14
+	mov	24(%rsp),%r13
+	mov	32(%rsp),%r12
+	mov	40(%rsp),%rbp
+	mov	48(%rsp),%rbx
+	add	\$56,%rsp
+.Lenc_key_epilogue:
 	ret
 .size	AES_set_encrypt_key,.-AES_set_encrypt_key
 
 .type	_x86_64_AES_set_encrypt_key,\@abi-omnipotent
 .align	16
 _x86_64_AES_set_encrypt_key:
-	push	%rbx
-	push	%rbp
-
 	mov	%esi,%ecx			# %ecx=bits
 	mov	%rdi,%rsi			# %rsi=userKey
 	mov	%rdx,%rdi			# %rdi=key
@@ -1461,8 +1489,6 @@ $code.=<<___;
 .Lbadpointer:
 	mov	\$-1,%rax
 .Lexit:
-	pop	%rbp
-	pop	%rbx
 	.byte	0xf3,0xc3			# rep ret
 .size	_x86_64_AES_set_encrypt_key,.-_x86_64_AES_set_encrypt_key
 ___
@@ -1528,18 +1554,19 @@ $code.=<<___;
 .type	AES_set_decrypt_key,\@function,3
 .align	16
 AES_set_decrypt_key:
-	push	%rdx			# save key schedule
-	call	_x86_64_AES_set_encrypt_key
-	cmp	\$0,%eax
-	pop	%r8			# restore key schedule
-	jne	.Labort
-
 	push	%rbx
 	push	%rbp
 	push	%r12
 	push	%r13
 	push	%r14
 	push	%r15
+	push	%rdx			# save key schedule
+.Ldec_key_prologue:
+
+	call	_x86_64_AES_set_encrypt_key
+	mov	(%rsp),%r8		# restore key schedule
+	cmp	\$0,%eax
+	jne	.Labort
 
 	mov	240(%r8),%r14d		# pull number of rounds
 	xor	%rdi,%rdi
@@ -1585,13 +1612,15 @@ $code.=<<___;
 	jnz	.Lpermute
 
 	xor	%rax,%rax
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
 .Labort:
+	mov	8(%rsp),%r15
+	mov	16(%rsp),%r14
+	mov	24(%rsp),%r13
+	mov	32(%rsp),%r12
+	mov	40(%rsp),%rbp
+	mov	48(%rsp),%rbx
+	add	\$56,%rsp
+.Ldec_key_epilogue:
 	ret
 .size	AES_set_decrypt_key,.-AES_set_decrypt_key
 ___
@@ -1621,14 +1650,16 @@ $code.=<<___;
 .extern	OPENSSL_ia32cap_P
 AES_cbc_encrypt:
 	cmp	\$0,%rdx	# check length
-	je	.Lcbc_just_ret
+	je	.Lcbc_epilogue
+	pushfq
 	push	%rbx
 	push	%rbp
 	push	%r12
 	push	%r13
 	push	%r14
 	push	%r15
-	pushfq
+.Lcbc_prologue:
+
 	cld
 	mov	%r9d,%r9d	# clear upper half of enc
 
@@ -1638,13 +1669,13 @@ AES_cbc_encrypt:
 	lea	.LAES_Td(%rip),$sbox
 .Lcbc_picked_te:
 
-	mov	OPENSSL_ia32cap_P(%rip),%eax
+	mov	OPENSSL_ia32cap_P(%rip),%r10d
 	cmp	\$$speed_limit,%rdx
-	jb	.Lcbc_slow_way
+	jb	.Lcbc_slow_prologue
 	test	\$15,%rdx
-	jnz	.Lcbc_slow_way
-	bt	\$28,%eax
-	jc	.Lcbc_slow_way
+	jnz	.Lcbc_slow_prologue
+	bt	\$28,%r10d
+	jc	.Lcbc_slow_prologue
 
 	# allocate aligned stack frame...
 	lea	-88-248(%rsp),$key
@@ -1672,8 +1703,9 @@ AES_cbc_encrypt:
 .Lcbc_te_ok:
 
 	xchg	%rsp,$key
-	add	\$8,%rsp	# reserve for return address!
+	#add	\$8,%rsp	# reserve for return address!
 	mov	$key,$_rsp	# save %rsp
+.Lcbc_fast_body:
 	mov	%rdi,$_inp	# save copy of inp
 	mov	%rsi,$_out	# save copy of out
 	mov	%rdx,$_len	# save copy of len
@@ -1757,25 +1789,7 @@ AES_cbc_encrypt:
 	mov	$s2,8(%rbp)
 	mov	$s3,12(%rbp)
 
-.align	4
-.Lcbc_cleanup:
-	cmpl	\$0,$mark	# was the key schedule copied?
-	lea	$aes_key,%rdi
-	je	.Lcbc_exit
-		mov	\$240/8,%ecx
-		xor	%rax,%rax
-		.long	0x90AB48F3	# rep stosq
-.Lcbc_exit:
-	mov	$_rsp,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-.Lcbc_just_ret:
-	ret
+	jmp	.Lcbc_fast_cleanup
 
 #----------------------------- DECRYPT -----------------------------#
 .align	16
@@ -1821,7 +1835,7 @@ AES_cbc_encrypt:
 	mov	8(%rbp),%r11
 	mov	%r10,0(%r12)		# copy back to user
 	mov	%r11,8(%r12)
-	jmp	.Lcbc_cleanup
+	jmp	.Lcbc_fast_cleanup
 
 .align	16
 .Lcbc_fast_dec_in_place:
@@ -1874,24 +1888,34 @@ AES_cbc_encrypt:
 	mov	$s2,8($out)
 	mov	$s3,12($out)
 
-	jmp	.Lcbc_cleanup
+.align	4
+.Lcbc_fast_cleanup:
+	cmpl	\$0,$mark	# was the key schedule copied?
+	lea	$aes_key,%rdi
+	je	.Lcbc_exit
+		mov	\$240/8,%ecx
+		xor	%rax,%rax
+		.long	0x90AB48F3	# rep stosq
+
+	jmp	.Lcbc_exit
 
 #--------------------------- SLOW ROUTINE ---------------------------#
 .align	16
-.Lcbc_slow_way:
+.Lcbc_slow_prologue:
 	# allocate aligned stack frame...
 	lea	-88(%rsp),%rbp
 	and	\$-64,%rbp
 	# ... just "above" key schedule
-	lea	-88-63(%rcx),%rax
-	sub	%rbp,%rax
-	neg	%rax
-	and	\$0x3c0,%rax
-	sub	%rax,%rbp
+	lea	-88-63(%rcx),%r10
+	sub	%rbp,%r10
+	neg	%r10
+	and	\$0x3c0,%r10
+	sub	%r10,%rbp
 
 	xchg	%rsp,%rbp
-	add	\$8,%rsp	# reserve for return address!
+	#add	\$8,%rsp	# reserve for return address!
 	mov	%rbp,$_rsp	# save %rsp
+.Lcbc_slow_body:
 	#mov	%rdi,$_inp	# save copy of inp
 	#mov	%rsi,$_out	# save copy of out
 	#mov	%rdx,$_len	# save copy of len
@@ -1963,6 +1987,7 @@ AES_cbc_encrypt:
 	mov	$s3,12(%rbp)
 
 	jmp	.Lcbc_exit
+
 .align	4
 .Lcbc_slow_enc_tail:
 	mov	%r10,%rcx
@@ -2053,6 +2078,21 @@ AES_cbc_encrypt:
 	lea	16(%r10),%rcx
 	.long	0x9066A4F3	# rep movsb
 	jmp	.Lcbc_exit
+
+.align	16
+.Lcbc_exit:
+	mov	$_rsp,%rsi
+	mov	(%rsi),%r15
+	mov	8(%rsi),%r14
+	mov	16(%rsi),%r13
+	mov	24(%rsi),%r12
+	mov	32(%rsi),%rbp
+	mov	40(%rsi),%rbx
+	lea	48(%rsi),%rsp
+.Lcbc_popfq:
+	popfq
+.Lcbc_epilogue:
+	ret
 .size	AES_cbc_encrypt,.-AES_cbc_encrypt
 ___
 }
@@ -2481,6 +2521,282 @@ $code.=<<___;
 .asciz  "AES for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
 ___
+
+# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
+#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
+if ($win64) {
+$rec="%rcx";
+$frame="%rdx";
+$context="%r8";
+$disp="%r9";
+
+$code.=<<___;
+.extern	__imp_RtlVirtualUnwind
+.type	block_se_handler,\@abi-omnipotent
+.align	16
+block_se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	mov	8($disp),%rsi		# disp->ImageBase
+	mov	56($disp),%r11		# disp->HandlerData
+
+	mov	0(%r11),%r10d		# HandlerData[0]
+	lea	(%rsi,%r10),%r10	# prologue label
+	cmp	%r10,%rbx		# context->Rip<prologue label
+	jb	.Lin_block_prologue
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	mov	4(%r11),%r10d		# HandlerData[1]
+	lea	(%rsi,%r10),%r10	# epilogue label
+	cmp	%r10,%rbx		# context->Rip>=epilogue label
+	jae	.Lin_block_prologue
+
+	mov	24(%rax),%rax		# pull saved real stack pointer
+	lea	48(%rax),%rax		# adjust...
+
+	mov	-8(%rax),%rbx
+	mov	-16(%rax),%rbp
+	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
+	mov	-48(%rax),%r15
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
+	mov	%r15,240($context)	# restore context->R15
+
+.Lin_block_prologue:
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rax,152($context)	# restore context->Rsp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+	jmp	.Lcommon_seh_exit
+.size	block_se_handler,.-block_se_handler
+
+.type	key_se_handler,\@abi-omnipotent
+.align	16
+key_se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	mov	8($disp),%rsi		# disp->ImageBase
+	mov	56($disp),%r11		# disp->HandlerData
+
+	mov	0(%r11),%r10d		# HandlerData[0]
+	lea	(%rsi,%r10),%r10	# prologue label
+	cmp	%r10,%rbx		# context->Rip<prologue label
+	jb	.Lin_key_prologue
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	mov	4(%r11),%r10d		# HandlerData[1]
+	lea	(%rsi,%r10),%r10	# epilogue label
+	cmp	%r10,%rbx		# context->Rip>=epilogue label
+	jae	.Lin_key_prologue
+
+	lea	56(%rax),%rax
+
+	mov	-8(%rax),%rbx
+	mov	-16(%rax),%rbp
+	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
+	mov	-48(%rax),%r15
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
+	mov	%r15,240($context)	# restore context->R15
+
+.Lin_key_prologue:
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rax,152($context)	# restore context->Rsp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+	jmp	.Lcommon_seh_exit
+.size	key_se_handler,.-key_se_handler
+
+.type	cbc_se_handler,\@abi-omnipotent
+.align	16
+cbc_se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	lea	.Lcbc_prologue(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lcbc_prologue
+	jb	.Lin_cbc_prologue
+
+	lea	.Lcbc_fast_body(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lcbc_fast_body
+	jb	.Lin_cbc_frame_setup
+
+	lea	.Lcbc_slow_prologue(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lcbc_slow_prologue
+	jb	.Lin_cbc_body
+
+	lea	.Lcbc_slow_body(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lcbc_slow_body
+	jb	.Lin_cbc_frame_setup
+
+.Lin_cbc_body:
+	mov	152($context),%rax	# pull context->Rsp
+
+	lea	.Lcbc_epilogue(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip>=.Lcbc_epilogue
+	jae	.Lin_cbc_prologue
+
+	lea	8(%rax),%rax
+
+	lea	.Lcbc_popfq(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip>=.Lcbc_popfq
+	jae	.Lin_cbc_prologue
+
+	mov	`16-8`(%rax),%rax	# biased $_rsp
+	lea	56(%rax),%rax
+
+.Lin_cbc_frame_setup:
+	mov	-16(%rax),%rbx
+	mov	-24(%rax),%rbp
+	mov	-32(%rax),%r12
+	mov	-40(%rax),%r13
+	mov	-48(%rax),%r14
+	mov	-56(%rax),%r15
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
+	mov	%r15,240($context)	# restore context->R15
+
+.Lin_cbc_prologue:
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rax,152($context)	# restore context->Rsp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+.Lcommon_seh_exit:
+
+	mov	40($disp),%rdi		# disp->ContextRecord
+	mov	$context,%rsi		# context
+	mov	\$`1232/8`,%ecx		# sizeof(CONTEXT)
+	.long	0xa548f3fc		# cld; rep movsq
+
+	mov	$disp,%rsi
+	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
+	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
+	mov	0(%rsi),%r8		# arg3, disp->ControlPc
+	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
+	mov	40(%rsi),%r10		# disp->ContextRecord
+	lea	56(%rsi),%r11		# &disp->HandlerData
+	lea	24(%rsi),%r12		# &disp->EstablisherFrame
+	mov	%r10,32(%rsp)		# arg5
+	mov	%r11,40(%rsp)		# arg6
+	mov	%r12,48(%rsp)		# arg7
+	mov	%rcx,56(%rsp)		# arg8, (NULL)
+	call	*__imp_RtlVirtualUnwind(%rip)
+
+	mov	\$1,%eax		# ExceptionContinueSearch
+	add	\$64,%rsp
+	popfq
+	pop	%r15
+	pop	%r14
+	pop	%r13
+	pop	%r12
+	pop	%rbp
+	pop	%rbx
+	pop	%rdi
+	pop	%rsi
+	ret
+.size	cbc_se_handler,.-cbc_se_handler
+
+.section	.pdata
+.align	4
+	.rva	.LSEH_begin_AES_encrypt
+	.rva	.LSEH_end_AES_encrypt
+	.rva	.LSEH_info_AES_encrypt
+
+	.rva	.LSEH_begin_AES_decrypt
+	.rva	.LSEH_end_AES_decrypt
+	.rva	.LSEH_info_AES_decrypt
+
+	.rva	.LSEH_begin_AES_set_encrypt_key
+	.rva	.LSEH_end_AES_set_encrypt_key
+	.rva	.LSEH_info_AES_set_encrypt_key
+
+	.rva	.LSEH_begin_AES_set_decrypt_key
+	.rva	.LSEH_end_AES_set_decrypt_key
+	.rva	.LSEH_info_AES_set_decrypt_key
+
+	.rva	.LSEH_begin_AES_cbc_encrypt
+	.rva	.LSEH_end_AES_cbc_encrypt
+	.rva	.LSEH_info_AES_cbc_encrypt
+
+.section	.xdata
+.align	8
+.LSEH_info_AES_encrypt:
+	.byte	9,0,0,0
+	.rva	block_se_handler
+	.rva	.Lenc_prologue,.Lenc_epilogue	# HandlerData[]
+.LSEH_info_AES_decrypt:
+	.byte	9,0,0,0
+	.rva	block_se_handler
+	.rva	.Ldec_prologue,.Ldec_epilogue	# HandlerData[]
+.LSEH_info_AES_set_encrypt_key:
+	.byte	9,0,0,0
+	.rva	key_se_handler
+	.rva	.Lenc_key_prologue,.Lenc_key_epilogue	# HandlerData[]
+.LSEH_info_AES_set_decrypt_key:
+	.byte	9,0,0,0
+	.rva	key_se_handler
+	.rva	.Ldec_key_prologue,.Ldec_key_epilogue	# HandlerData[]
+.LSEH_info_AES_cbc_encrypt:
+	.byte	9,0,0,0
+	.rva	cbc_se_handler
+___
+}
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 

@@ -30,14 +30,18 @@
 # 3 on Opteron] and which is *unacceptably* slow with 64-bit
 # operand.
 
-$output=shift;
+$flavour = shift;
+$output  = shift;
+if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
+
+$win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1; my $xlate;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-open STDOUT,"| $^X $xlate $output";
+open STDOUT,"| $^X $xlate $flavour $output";
 
 sub L() { $code.=".byte	".join(',',@_)."\n"; }
 sub LL(){ $code.=".byte	".join(',',@_).",".join(',',@_)."\n"; }
@@ -61,16 +65,18 @@ $func:
 	push	%r14
 	push	%r15
 
-	mov	%rsp,%rax
+	mov	%rsp,%r11
 	sub	\$128+40,%rsp
 	and	\$-64,%rsp
 
-	lea	128(%rsp),%rbx
-	mov	%rdi,0(%rbx)		# save parameter block
-	mov	%rsi,8(%rbx)
-	mov	%rdx,16(%rbx)
-	mov	%rax,32(%rbx)		# saved stack pointer
+	lea	128(%rsp),%r10
+	mov	%rdi,0(%r10)		# save parameter block
+	mov	%rsi,8(%r10)
+	mov	%rdx,16(%r10)
+	mov	%r11,32(%r10)		# saved stack pointer
+.Lprologue:
 
+	mov	%r10,%rbx
 	lea	$table(%rip),%rbp
 
 	xor	%rcx,%rcx
@@ -187,13 +193,15 @@ $code.=<<___;
 	mov	%rax,16(%rbx)
 	jmp	.Louterloop
 .Lalldone:
-	mov	32(%rbx),%rsp		# restore saved pointer
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
+	mov	32(%rbx),%rsi		# restore saved pointer
+	mov	(%rsi),%r15
+	mov	8(%rsi),%r14
+	mov	16(%rsi),%r13
+	mov	24(%rsi),%r12
+	mov	32(%rsi),%rbp
+	mov	40(%rsi),%rbx
+	lea	48(%rsi),%rsp
+.Lepilogue:
 	ret
 .size	$func,.-$func
 
@@ -468,6 +476,113 @@ ___
 	&L(0xe4,0x27,0x41,0x8b,0xa7,0x7d,0x95,0xd8);
 	&L(0xfb,0xee,0x7c,0x66,0xdd,0x17,0x47,0x9e);
 	&L(0xca,0x2d,0xbf,0x07,0xad,0x5a,0x83,0x33);
+
+# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
+#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
+if ($win64) {
+$rec="%rcx";
+$frame="%rdx";
+$context="%r8";
+$disp="%r9";
+
+$code.=<<___;
+.extern	__imp_RtlVirtualUnwind
+.type	se_handler,\@abi-omnipotent
+.align	16
+se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	lea	.Lprologue(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lprologue
+	jb	.Lin_prologue
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	lea	.Lepilogue(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip>=.Lepilogue
+	jae	.Lin_prologue
+
+	mov	128+32(%rax),%rax	# pull saved stack pointer
+	lea	48(%rax),%rax
+
+	mov	-8(%rax),%rbx
+	mov	-16(%rax),%rbp
+	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
+	mov	-48(%rax),%r15
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
+	mov	%r15,240($context)	# restore context->R15
+
+.Lin_prologue:
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rax,152($context)	# restore context->Rsp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+	mov	40($disp),%rdi		# disp->ContextRecord
+	mov	$context,%rsi		# context
+	mov	\$154,%ecx		# sizeof(CONTEXT)
+	.long	0xa548f3fc		# cld; rep movsq
+
+	mov	$disp,%rsi
+	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
+	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
+	mov	0(%rsi),%r8		# arg3, disp->ControlPc
+	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
+	mov	40(%rsi),%r10		# disp->ContextRecord
+	lea	56(%rsi),%r11		# &disp->HandlerData
+	lea	24(%rsi),%r12		# &disp->EstablisherFrame
+	mov	%r10,32(%rsp)		# arg5
+	mov	%r11,40(%rsp)		# arg6
+	mov	%r12,48(%rsp)		# arg7
+	mov	%rcx,56(%rsp)		# arg8, (NULL)
+	call	*__imp_RtlVirtualUnwind(%rip)
+
+	mov	\$1,%eax		# ExceptionContinueSearch
+	add	\$64,%rsp
+	popfq
+	pop	%r15
+	pop	%r14
+	pop	%r13
+	pop	%r12
+	pop	%rbp
+	pop	%rbx
+	pop	%rdi
+	pop	%rsi
+	ret
+.size	se_handler,.-se_handler
+
+.section	.pdata
+.align	4
+	.rva	.LSEH_begin_$func
+	.rva	.LSEH_end_$func
+	.rva	.LSEH_info_$func
+
+.section	.xdata
+.align	8
+.LSEH_info_$func:
+	.byte	9,0,0,0
+	.rva	se_handler
+___
+}
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;

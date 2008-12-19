@@ -108,14 +108,19 @@ sub round4_step
 EOF
 }
 
-my $output = shift;
+my $flavour = shift;
+my $output  = shift;
+if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
+
+my $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1; my $xlate;
 ( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-open STDOUT,"| $^X $xlate $output";
+no warnings qw(uninitialized);
+open STDOUT,"| $^X $xlate $flavour $output";
 
 $code .= <<EOF;
 .text
@@ -129,6 +134,7 @@ md5_block_asm_data_order:
 	push	%r12
 	push	%r14
 	push	%r15
+.Lprologue:
 
 	# rdi = arg #1 (ctx, MD5_CTX pointer)
 	# rsi = arg #2 (ptr, data pointer)
@@ -243,14 +249,120 @@ $code .= <<EOF;
 	mov	%ecx,		2*4(%rbp)	# ctx->C = C
 	mov	%edx,		3*4(%rbp)	# ctx->D = D
 
-	pop	%r15
-	pop	%r14
-	pop	%r12
-	pop	%rbx
-	pop	%rbp
+	mov	(%rsp),%r15
+	mov	8(%rsp),%r14
+	mov	16(%rsp),%r12
+	mov	24(%rsp),%rbx
+	mov	32(%rsp),%rbp
+	add	\$40,%rsp
+.Lepilogue:
 	ret
 .size md5_block_asm_data_order,.-md5_block_asm_data_order
 EOF
+
+# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
+#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
+if ($win64) {
+my $rec="%rcx";
+my $frame="%rdx";
+my $context="%r8";
+my $disp="%r9";
+
+$code.=<<___;
+.extern	__imp_RtlVirtualUnwind
+.type	se_handler,\@abi-omnipotent
+.align	16
+se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	lea	.Lprologue(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lprologue
+	jb	.Lin_prologue
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	lea	.Lepilogue(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip>=.Lepilogue
+	jae	.Lin_prologue
+
+	lea	40(%rax),%rax
+
+	mov	-8(%rax),%rbp
+	mov	-16(%rax),%rbx
+	mov	-24(%rax),%r12
+	mov	-32(%rax),%r14
+	mov	-40(%rax),%r15
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r14,232($context)	# restore context->R14
+	mov	%r15,240($context)	# restore context->R15
+
+.Lin_prologue:
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rax,152($context)	# restore context->Rsp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+	mov	40($disp),%rdi		# disp->ContextRecord
+	mov	$context,%rsi		# context
+	mov	\$154,%ecx		# sizeof(CONTEXT)
+	.long	0xa548f3fc		# cld; rep movsq
+
+	mov	$disp,%rsi
+	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
+	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
+	mov	0(%rsi),%r8		# arg3, disp->ControlPc
+	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
+	mov	40(%rsi),%r10		# disp->ContextRecord
+	lea	56(%rsi),%r11		# &disp->HandlerData
+	lea	24(%rsi),%r12		# &disp->EstablisherFrame
+	mov	%r10,32(%rsp)		# arg5
+	mov	%r11,40(%rsp)		# arg6
+	mov	%r12,48(%rsp)		# arg7
+	mov	%rcx,56(%rsp)		# arg8, (NULL)
+	call	*__imp_RtlVirtualUnwind(%rip)
+
+	mov	\$1,%eax		# ExceptionContinueSearch
+	add	\$64,%rsp
+	popfq
+	pop	%r15
+	pop	%r14
+	pop	%r13
+	pop	%r12
+	pop	%rbp
+	pop	%rbx
+	pop	%rdi
+	pop	%rsi
+	ret
+.size	se_handler,.-se_handler
+
+.section	.pdata
+.align	4
+	.rva	.LSEH_begin_md5_block_asm_data_order
+	.rva	.LSEH_end_md5_block_asm_data_order
+	.rva	.LSEH_info_md5_block_asm_data_order
+
+.section	.xdata
+.align	8
+.LSEH_info_md5_block_asm_data_order:
+	.byte	9,0,0,0
+	.rva	se_handler
+___
+}
 
 print $code;
 

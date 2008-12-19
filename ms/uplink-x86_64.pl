@@ -12,6 +12,7 @@ $prefix="_lazy";
 print <<___;
 .text
 .extern	OPENSSL_Uplink
+.globl	OPENSSL_UplinkTable
 ___
 for ($i=1;$i<=$N;$i++) {
 print <<___;
@@ -30,8 +31,8 @@ $prefix${i}:
 	mov	56(%rsp),%rdx
 	mov	64(%rsp),%r8
 	mov	72(%rsp),%r9
-	add	\$40,%rsp
 	lea	OPENSSL_UplinkTable(%rip),%rax
+	add	\$40,%rsp
 	jmp	*8*$i(%rax)
 $prefix${i}_end:
 .size	$prefix${i},.-$prefix${i}
@@ -39,24 +40,25 @@ ___
 }
 print <<___;
 .data
-.globl  OPENSSL_UplinkTable
 OPENSSL_UplinkTable:
         .quad   $N
 ___
 for ($i=1;$i<=$N;$i++) {   print "      .quad   $prefix$i\n";   }
 print <<___;
-.section	.pdata
+.section	.pdata,"r"
+.align		4
 ___
 for ($i=1;$i<=$N;$i++) {
 print <<___;
-	.long	$prefix${i}
-	.long	$prefix${i}_end
-	.long	${prefix}_unwind_info
+	.rva	$prefix${i},$prefix${i}_end,${prefix}_unwind_info
 ___
 }
 print <<___;
-.section	.xdata
+.section	.xdata,"r"
+.align		8
 ${prefix}_unwind_info:
 	.byte	0x01,0x04,0x01,0x00
 	.byte	0x04,0x42,0x00,0x00
 ___
+
+close STDOUT;
