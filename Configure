@@ -1432,12 +1432,13 @@ while (<IN>)
 		s/^AR=\s*/AR= \$\(CROSS_COMPILE_PREFIX\)/;
 		s/^NM=\s*/NM= \$\(CROSS_COMPILE_PREFIX\)/;
 		s/^RANLIB=\s*/RANLIB= \$\(CROSS_COMPILE_PREFIX\)/;
+		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= \$\(CROSS_COMPILE_PREFIX\)$cc/ if $cc eq "gcc";
 		}
 	else	{
 		s/^CC=.*$/CC= $cc/;
 		s/^RANLIB=.*/RANLIB= $ranlib/;
+		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc";
 		}
-	s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc";
 	s/^CFLAG=.*$/CFLAG= $cflags/;
 	s/^DEPFLAG=.*$/DEPFLAG=$depflags/;
 	s/^PEX_LIBS=.*$/PEX_LIBS= $prelflags/;
