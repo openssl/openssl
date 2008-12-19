@@ -574,7 +574,7 @@ my %globals;
 				    my @arr = split(',',$line);
 				    my $last = pop(@arr);
 				    my $conv = sub  {	my $var=shift;
-							$var=~s/0x([0-9a-f]+)/0$1h/ig;
+							$var=~s/0x([0-9a-f]+)/0$1h/ig if ($masm);
 							if ($sz eq "D" && ($current_segment=~/.[px]data/ || $dir eq ".rva"))
 							{ $var=~s/([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
 							$var;
@@ -587,6 +587,7 @@ my %globals;
 				    last;
 				  };
 		/\.byte/    && do { my @str=split(",",$line);
+				    map(s/0x([0-9a-f]+)/0$1h/ig,@str) if ($masm);	
 				    while ($#str>15) {
 					$self->{value}.="DB\t"
 						.join(",",@str[0..15])."\n";
@@ -661,8 +662,7 @@ while($line=<>) {
 		@args = reverse(@args);
 		undef $sz if ($nasm && $opcode->mnemonic() eq "lea");
 	    }
-	    for (@args) { $_ = $_->out($sz); }
-	    printf "\t%s\t%s", $insn, join(",",@args);
+	    printf "\t%s\t%s",$insn,join(",",map($_->out($sz),@args));
 	} else {
 	    printf "\t%s",$opcode->out();
 	}
