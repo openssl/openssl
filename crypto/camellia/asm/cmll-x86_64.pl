@@ -876,11 +876,12 @@ common_se_handler:
 	push	%rdi
 	push	%rbx
 	push	%rbp
+	push	%r12
 	push	%r13
 	push	%r14
 	push	%r15
 	pushfq
-	lea	-72(%rsp),%rsp
+	lea	-64(%rsp),%rsp
 
 	mov	120($context),%rax	# pull context->Rax
 	mov	248($context),%rbx	# pull context->Rip
@@ -919,36 +920,7 @@ common_se_handler:
 	mov	%rsi,168($context)	# restore context->Rsi
 	mov	%rdi,176($context)	# restore context->Rdi
 
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi
-	mov	\$`1232/8`,%ecx
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	lea	72(%rsp),%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
+	jmp	.Lcommon_seh_exit
 .size	common_se_handler,.-common_se_handler
 
 .type	cbc_se_handler,\@abi-omnipotent
@@ -1005,6 +977,9 @@ cbc_se_handler:
 	mov	%rax,152($context)	# restore context->Rsp
 	mov	%rsi,168($context)	# restore context->Rsi
 	mov	%rdi,176($context)	# restore context->Rdi
+
+.align	4
+.Lcommon_seh_exit:
 
 	mov	40($disp),%rdi		# disp->ContextRecord
 	mov	$context,%rsi		# context
