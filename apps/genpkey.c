@@ -376,8 +376,10 @@ int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
 
 	ameth = EVP_PKEY_asn1_find_str(&tmpeng, algname, -1);
 
+#ifndef OPENSSL_NO_ENGINE
 	if (!ameth && e)
 		ameth = ENGINE_get_pkey_asn1_meth_str(e, algname, -1);
+#endif
 
 	if (!ameth)
 		{

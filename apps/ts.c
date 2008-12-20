@@ -813,9 +813,10 @@ static TS_RESP *create_response(CONF *conf, const char *section, char *engine,
 
 	/* Setting serial number provider callback. */
 	if (!TS_CONF_set_serial(conf, section, serial_cb, resp_ctx)) goto end;
-
+#ifndef OPENSSL_NO_ENGINE
 	/* Setting default OpenSSL engine. */
 	if (!TS_CONF_set_crypto_device(conf, section, engine)) goto end;
+#endif
 
 	/* Setting TSA signer certificate. */
 	if (!TS_CONF_set_signer_cert(conf, section, signer, resp_ctx)) goto end;

@@ -96,9 +96,7 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e = NULL;
-#endif
 	int ret=1;
 	DSA *dsa=NULL;
 	int i,badops=0;

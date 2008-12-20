@@ -56,7 +56,6 @@
  *
  */
 
-#ifndef OPENSSL_NO_ENGINE
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -66,6 +65,7 @@
 #endif
 #include "apps.h"
 #include <openssl/err.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #include <openssl/ssl.h>
 

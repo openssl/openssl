@@ -143,7 +143,9 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/comp.h>
+#ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
+#endif
 #include "ssl_locl.h"
 
 #define SSL_ENC_DES_IDX		0
@@ -314,19 +316,37 @@ static const SSL_CIPHER cipher_aliases[]={
 /* Search for public key algorithm with given name and 
  * return its pkey_id if it is available. Otherwise return 0
  */
+#ifdef OPENSSL_NO_ENGINE
+
+static int get_optional_pkey_id(const char *pkey_name)
+	{
+	const EVP_PKEY_ASN1_METHOD *ameth;
+	int pkey_id=0;
+	ameth = EVP_PKEY_asn1_find_str(NULL,pkey_name,-1);
+	if (ameth) 
+		{
+		EVP_PKEY_asn1_get0_info(&pkey_id, NULL,NULL,NULL,NULL,ameth);
+		}		
+	return pkey_id;
+	}
+
+#else
+
 static int get_optional_pkey_id(const char *pkey_name)
 	{
 	const EVP_PKEY_ASN1_METHOD *ameth;
 	ENGINE *tmpeng = NULL;
 	int pkey_id=0;
 	ameth = EVP_PKEY_asn1_find_str(&tmpeng,pkey_name,-1);
-	if (ameth) 
+	if (ameth)
 		{
 		EVP_PKEY_asn1_get0_info(&pkey_id, NULL,NULL,NULL,NULL,ameth);
-		}		
-	if (tmpeng) ENGINE_finish(tmpeng);	
+		}
+	if (tmpeng) ENGINE_finish(tmpeng);
 	return pkey_id;
 	}
+
+#endif
 
 void ssl_load_ciphers(void)
 	{

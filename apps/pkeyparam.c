@@ -68,13 +68,13 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	ENGINE *e = NULL;
 	char **args, *infile = NULL, *outfile = NULL;
 	BIO *in = NULL, *out = NULL;
 	int text = 0, noout = 0;
 	EVP_PKEY *pkey=NULL;
 	int badarg = 0;
 #ifndef OPENSSL_NO_ENGINE
+	ENGINE *e = NULL;
 	char *engine=NULL;
 #endif
 	int ret = 1;
@@ -125,7 +125,9 @@ int MAIN(int argc, char **argv)
 
 	if (badarg)
 		{
+#ifndef OPENSSL_NO_ENGINE
 		bad:
+#endif
 		BIO_printf(bio_err, "Usage pkeyparam [options]\n");
 		BIO_printf(bio_err, "where options are\n");
 		BIO_printf(bio_err, "-in file        input file\n");
