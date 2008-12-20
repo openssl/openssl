@@ -321,8 +321,9 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_ENGINE
 	char *engine_id=NULL;
 	char *ssl_client_engine_id=NULL;
-	ENGINE *e=NULL, *ssl_client_engine=NULL;
+	ENGINE *ssl_client_engine=NULL;
 #endif
+	ENGINE *e=NULL;
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
 	struct timeval tv;
 #endif

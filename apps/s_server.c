@@ -764,9 +764,7 @@ int MAIN(int argc, char *argv[])
 	int state=0;
 	SSL_METHOD *meth=NULL;
         int socket_type=SOCK_STREAM;
-#ifndef OPENSSL_NO_ENGINE
 	ENGINE *e=NULL;
-#endif
 	char *inrand=NULL;
 	int s_cert_format = FORMAT_PEM, s_key_format = FORMAT_PEM;
 	char *passarg = NULL, *pass = NULL;
