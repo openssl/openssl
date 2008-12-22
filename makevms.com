@@ -429,11 +429,11 @@ $!
 $ SDIRS := ,-
    OBJECTS,-
    MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
-   DES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,-
-   BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,AES,-
+   DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,-
+   BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,-
    EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,-
-   STORE,CMS,PQUEUE
+   STORE,CMS,PQUEUE,JPAKE
 $ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,-
 		ossl_typ.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
@@ -445,6 +445,7 @@ $ EXHEADER_MDC2 := mdc2.h
 $ EXHEADER_HMAC := hmac.h
 $ EXHEADER_RIPEMD := ripemd.h
 $ EXHEADER_DES := des.h,des_old.h
+$ EXHEADER_AES := aes.h
 $ EXHEADER_RC2 := rc2.h
 $ EXHEADER_RC4 := rc4.h
 $ EXHEADER_RC5 := rc5.h
@@ -462,7 +463,6 @@ $ EXHEADER_DH := dh.h
 $ EXHEADER_ECDH := ecdh.h
 $ EXHEADER_DSO := dso.h
 $ EXHEADER_ENGINE := engine.h
-$ EXHEADER_AES := aes.h
 $ EXHEADER_BUFFER := buffer.h
 $ EXHEADER_BIO := bio.h
 $ EXHEADER_STACK := stack.h,safestack.h
@@ -486,6 +486,7 @@ $!EXHEADER_STORE := store.h,str_compat.h
 $ EXHEADER_STORE := store.h
 $ EXHEADER_CMS := cms.h
 $ EXHEADER_PQUEUE := pqueue.h,pq_compat.h
+$ EXHEADER_JPAKE := jpake.h
 $
 $ I = 0
 $ LOOP_SDIRS: 

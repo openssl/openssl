@@ -179,6 +179,11 @@
 #define ENGINE_set_load_privkey_function        ENGINE_set_load_privkey_fn
 #undef ENGINE_get_load_privkey_function
 #define ENGINE_get_load_privkey_function        ENGINE_get_load_privkey_fn
+#undef ENGINE_set_load_ssl_client_cert_function
+#define ENGINE_set_load_ssl_client_cert_function \
+						ENGINE_set_ld_ssl_clnt_cert_fn
+#undef ENGINE_get_ssl_client_cert_function
+#define ENGINE_get_ssl_client_cert_function	ENGINE_get_ssl_client_cert_fn
 
 /* Hack some long OCSP names */
 #undef OCSP_REQUEST_get_ext_by_critical

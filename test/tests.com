@@ -25,7 +25,7 @@ $	    tests := -
 	test_rand,test_bn,test_ec,test_ecdsa,test_ecdh,-
 	test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
-	test_ss,test_ca,test_engine,test_evp,test_ssl
+	test_ss,test_ca,test_engine,test_evp,test_ssl,test_ige,test_jpake
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
@@ -57,6 +57,8 @@ $	SSLTEST :=	ssltest
 $	RSATEST :=	rsa_test
 $	ENGINETEST :=	enginetest
 $	EVPTEST :=	evp_test
+$	IGETEST :=	igetest
+$	JPAKETEST :=	jpaketest
 $
 $	tests_i = 0
 $ loop_tests:
@@ -249,6 +251,14 @@ $	return
 $ test_rd: 
 $	write sys$output "test Rijndael"
 $	!mcr 'texe_dir''rdtest'
+$	return
+$ test_ige: 
+$	write sys$output "Test IGE mode"
+$	mcr 'texe_dir''igetest'
+$	return
+$ test_jpake: 
+$	write sys$output "Test JPAKE"
+$	mcr 'texe_dir''jpaketest'
 $	return
 $
 $
