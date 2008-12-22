@@ -632,7 +632,7 @@ $arflags      =
 
 *** VC-WIN32
 $cc           = cl
-$cflags       = -W3 -WX -Gs0 -GF -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
+$cflags       = -W3 -WX -Gs0 -GF -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN32
@@ -662,7 +662,7 @@ $arflags      =
 
 *** VC-WIN64A
 $cc           = cl
-$cflags       = -W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
+$cflags       = -W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN64A
@@ -692,7 +692,7 @@ $arflags      =
 
 *** VC-WIN64I
 $cc           = cl
-$cflags       = -W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE
+$cflags       = -W3 -Gs0 -Gy -nologo -DOPENSSL_SYSNAME_WIN32 -DWIN32_LEAN_AND_MEAN -DL_ENDIAN -DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE
 $unistd       = 
 $thread_cflag = 
 $sys_id       = WIN64I
@@ -3620,7 +3620,7 @@ $rc4_obj      = rc4-x86_64.o
 $rmd160_obj   = 
 $rc5_obj      = 
 $wp_obj       = wp-x86_64.o
-$cmll_obj     = 
+$cmll_obj     = cmll-x86_64.o cmll_misc.o
 $perlasm_scheme = mingw64
 $dso_scheme   = win32
 $shared_target= cygwin-shared
