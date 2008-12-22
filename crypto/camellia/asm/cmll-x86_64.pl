@@ -742,12 +742,14 @@ Camellia_cbc_encrypt:
 	mov	%rax,8+$ivec
 	mov	%rax,$_res
 
+.Lcbc_enc_pushf:
 	pushfq
 	cld
 	mov	$inp,%rsi
 	lea	$ivec,%rdi
 	.long	0x9066A4F3		# rep movsb
 	popfq
+.Lcbc_enc_popf:
 
 	lea	$ivec,$inp
 	lea	16+$ivec,%rax
@@ -830,12 +832,14 @@ Camellia_cbc_encrypt:
 	mov	@S[2],8+$ivec
 	mov	@S[3],12+$ivec
 
+.Lcbc_dec_pushf:
 	pushfq
 	cld
 	lea	$ivec,%rsi
 	lea	($out),%rdi
 	.long	0x9066A4F3		# rep movsb
 	popfq
+.Lcbc_dec_popf:
 
 	mov	%rax,(%rdx)		# write out IV residue
 	mov	%rbx,8(%rdx)
@@ -954,6 +958,25 @@ cbc_se_handler:
 	cmp	%r10,%rbx		# context->Rip>=.Lcbc_abort
 	jae	.Lin_cbc_prologue
 
+	# handle pushf/popf in Camellia_cbc_encrypt
+	lea	.Lcbc_enc_pushf(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<=.Lcbc_enc_pushf
+	jbe	.Lin_cbc_no_flag
+	lea	8(%rax),%rax
+	lea	.Lcbc_enc_popf(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lcbc_enc_popf
+	jb	.Lin_cbc_no_flag
+	lea	-8(%rax),%rax
+	lea	.Lcbc_dec_pushf(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<=.Lcbc_dec_pushf
+	jbe	.Lin_cbc_no_flag
+	lea	8(%rax),%rax
+	lea	.Lcbc_dec_popf(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<.Lcbc_dec_popf
+	jb	.Lin_cbc_no_flag
+	lea	-8(%rax),%rax
+
+.Lin_cbc_no_flag:
 	mov	48(%rax),%rax		# $_rsp
 	lea	48(%rax),%rax
 
