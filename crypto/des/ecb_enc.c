@@ -91,7 +91,7 @@ const char *DES_options(void)
 #ifdef DES_UNROLL
 		unroll="16";
 #else
-		unroll="4";
+		unroll="2";
 #endif
 		if (sizeof(DES_LONG) != sizeof(long))
 			size="int";
