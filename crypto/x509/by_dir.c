@@ -392,6 +392,9 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 					postfix,k);
 				}
 #ifndef OPENSSL_NO_POSIX_IO
+#ifdef _WIN32
+#define stat _stat
+#endif
 			{
 			struct stat st;
 			if (stat(b->data,&st) < 0)

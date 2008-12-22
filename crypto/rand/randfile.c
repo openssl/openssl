@@ -79,6 +79,13 @@
 # include <sys/stat.h>
 #endif
 
+#ifdef _WIN32
+#define stat	_stat
+#define chmod	_chmod
+#define open	_open
+#define fdopen	_fdopen
+#endif
+
 #undef BUFSIZE
 #define BUFSIZE	1024
 #define RAND_DATA 1024
