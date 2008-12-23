@@ -49,82 +49,12 @@
  *
  */
 
-#ifndef AES_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-#include <assert.h>
-
 #include <openssl/aes.h>
-#include "aes_locl.h"
+#include <openssl/modes.h>
 
-#define STRICT_ALIGNMENT
-#if defined(__i386) || defined(__i386__) || \
-    defined(__x86_64) || defined(__x86_64__) || \
-    defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64)
-#  undef STRICT_ALIGNMENT
-#endif
-
-/* The input and output encrypted as though 128bit ofb mode is being
- * used.  The extra state information to record how much of the
- * 128bit block we have used is contained in *num;
- */
 void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 	size_t length, const AES_KEY *key,
-	unsigned char *ivec, int *num) {
-
-	unsigned int n;
-	size_t l=0;
-
-	assert(in && out && key && ivec && num);
-
-	n = *num;
-
-#if !defined(OPENSSL_SMALL_FOOTPRINT)
-	if (AES_BLOCK_SIZE%sizeof(size_t) == 0) do { /* always true actually */
-		if (n) {
-			while (length) {
-				*(out++) = ivec[n] ^ *(in++);
-				length--;
-				if(!(n = (n + 1) % AES_BLOCK_SIZE))
-					break;
-			}
-		}
-#if defined(STRICT_ALIGNMENT)
-		if (((size_t)in|(size_t)out|(size_t)ivec)%sizeof(size_t) != 0)
-			break;
-#endif
-		while ((l + AES_BLOCK_SIZE) <= length) {
-			unsigned int i;
-			AES_encrypt(ivec, ivec, key);
-			for (i=0;i<AES_BLOCK_SIZE;i+=sizeof(size_t)) {
-				*(size_t*)(out+l+i) =
-				*(size_t*)(ivec+i) ^ *(size_t*)(in+l+i);
-			}
-			l += AES_BLOCK_SIZE;
-		}
-
-		if (l < length) {
-			AES_encrypt(ivec, ivec, key);
-			do {	out[l] = ivec[n] ^ in[l];
-				l++; n++;
-			} while (l < length);
-		}
-		*num = n;
-		return;
-	} while(0);
-#endif
-
-	/* this code would be commonly eliminated by x86* compiler */
-	while (l<length) {
-		if (n == 0) {
-			AES_encrypt(ivec, ivec, key);
-		}
-		out[l] = ivec[n] ^ in[l];
-		l++;
-		n = (n+1) % AES_BLOCK_SIZE;
-	}
-
-	*num=n;
+	unsigned char *ivec, int *num)
+{
+	CRYPTO_ofb128_encrypt(in,out,length,key,ivec,num,(block128_f)AES_encrypt);
 }

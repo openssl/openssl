@@ -105,14 +105,8 @@
  * [including the GNU Public Licence.]
  */
 
-#ifndef CAMELLIA_DEBUG
-# ifndef NDEBUG
-#  define NDEBUG
-# endif
-#endif
-#include <assert.h>
 #include <openssl/camellia.h>
-#include "cmll_locl.h"
+#include <openssl/modes.h>
 
 /* The input and output encrypted as though 128bit ofb mode is being
  * used.  The extra state information to record how much of the
@@ -121,20 +115,5 @@
 void Camellia_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 	size_t length, const CAMELLIA_KEY *key,
 	unsigned char *ivec, int *num) {
-
-	unsigned int n;
-
-	assert(in && out && key && ivec && num);
-
-	n = *num;
-
-	while (length--) {
-		if (n == 0) {
-			Camellia_encrypt(ivec, ivec, key);
-		}
-		*(out++) = *(in++) ^ ivec[n];
-		n = (n+1) % CAMELLIA_BLOCK_SIZE;
-	}
-
-	*num=n;
+	CRYPTO_ofb128_encrypt(in,out,length,key,ivec,num,(block128_f)Camellia_encrypt);
 }
