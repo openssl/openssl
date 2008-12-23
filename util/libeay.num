@@ -2815,7 +2815,7 @@ FIPS_allow_md5                          3256	NOEXIST::FUNCTION:
 DES_ede3_cfb_encrypt                    3257	EXIST::FUNCTION:DES
 EVP_des_ede3_cfb8                       3258	EXIST::FUNCTION:DES
 FIPS_rand_seeded                        3259	NOEXIST::FUNCTION:
-AES_cfbr_encrypt_block                  3260	EXIST::FUNCTION:AES
+AES_cfbr_encrypt_block                  3260	NOEXIST::FUNCTION:AES
 AES_cfb8_encrypt                        3261	EXIST::FUNCTION:AES
 FIPS_rand_seed                          3262	NOEXIST::FUNCTION:
 FIPS_corrupt_des                        3263	NOEXIST::FUNCTION:
@@ -3385,7 +3385,7 @@ Camellia_cfb128_encrypt                 3785	EXIST::FUNCTION:CAMELLIA
 Camellia_cfb1_encrypt                   3786	EXIST::FUNCTION:CAMELLIA
 Camellia_cfb8_encrypt                   3787	EXIST::FUNCTION:CAMELLIA
 Camellia_ctr128_encrypt                 3788	EXIST::FUNCTION:CAMELLIA
-Camellia_cfbr_encrypt_block             3789	EXIST::FUNCTION:CAMELLIA
+Camellia_cfbr_encrypt_block             3789	NOEXIST::FUNCTION:CAMELLIA
 Camellia_decrypt                        3790	EXIST::FUNCTION:CAMELLIA
 Camellia_ecb_encrypt                    3791	EXIST::FUNCTION:CAMELLIA
 Camellia_encrypt                        3792	EXIST::FUNCTION:CAMELLIA

@@ -110,9 +110,6 @@ void Camellia_cfb1_encrypt(const unsigned char *in, unsigned char *out,
 void Camellia_cfb8_encrypt(const unsigned char *in, unsigned char *out,
 	size_t length, const CAMELLIA_KEY *key,
 	unsigned char *ivec, int *num, const int enc);
-void Camellia_cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
-	const int nbits,const CAMELLIA_KEY *key,
-	unsigned char *ivec,const int enc);
 void Camellia_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 	size_t length, const CAMELLIA_KEY *key,
 	unsigned char *ivec, int *num);
