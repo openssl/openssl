@@ -58,7 +58,7 @@ void Camellia_cbc_encrypt(const unsigned char *in, unsigned char *out,
 	{
 
 	if (enc)
-		CRYPTO_cbc128_encrypt(in,out,len,key,ivec,(block_f)Camellia_encrypt);
+		CRYPTO_cbc128_encrypt(in,out,len,key,ivec,(block128_f)Camellia_encrypt);
 	else
-		CRYPTO_cbc128_decrypt(in,out,len,key,ivec,(block_f)Camellia_decrypt);
+		CRYPTO_cbc128_decrypt(in,out,len,key,ivec,(block128_f)Camellia_decrypt);
 	}
