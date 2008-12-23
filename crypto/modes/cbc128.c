@@ -48,7 +48,7 @@
  *
  */
 
-#include <stddef.h>
+#include "modes.h"
 #include <string.h>
 
 #ifndef MODES_DEBUG
@@ -57,8 +57,6 @@
 # endif
 #endif
 #include <assert.h>
-
-#include "modes.h"
 
 #define STRICT_ALIGNMENT 1
 #if defined(__i386) || defined(__i386__) || \
@@ -71,7 +69,7 @@
 
 void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,
-			unsigned char ivec[16], block_f block)
+			unsigned char ivec[16], block128_f block)
 {
 	size_t n;
 	const unsigned char *iv = ivec;
@@ -120,7 +118,7 @@ void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
 
 void CRYPTO_cbc128_decrypt(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,
-			unsigned char ivec[16], block_f block)
+			unsigned char ivec[16], block128_f block)
 {
 	size_t n;
 	union { size_t align; unsigned char c[16]; } tmp;

@@ -48,7 +48,7 @@
  *
  */
 
-#include <stddef.h>
+#include "modes.h"
 #include <string.h>
 
 #ifndef MODES_DEBUG
@@ -57,8 +57,6 @@
 # endif
 #endif
 #include <assert.h>
-
-#include "modes.h"
 
 typedef unsigned int u32;
 typedef unsigned char u8;
@@ -128,7 +126,7 @@ static void ctr128_inc_aligned(unsigned char *counter) {
 void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,
 			unsigned char ivec[16], unsigned char ecount_buf[16],
-			unsigned int *num, block_f block)
+			unsigned int *num, block128_f block)
 {
 	unsigned int n;
 	size_t l=0;

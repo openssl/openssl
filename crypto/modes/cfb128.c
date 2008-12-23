@@ -48,7 +48,7 @@
  *
  */
 
-#include <stddef.h>
+#include "modes.h"
 #include <string.h>
 
 #ifndef MODES_DEBUG
@@ -57,8 +57,6 @@
 # endif
 #endif
 #include <assert.h>
-
-#include "modes.h"
 
 #define STRICT_ALIGNMENT
 #if defined(__i386) || defined(__i386__) || \
@@ -75,7 +73,7 @@
 void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,
 			unsigned char ivec[16], int *num,
-			int enc, block_f block)
+			int enc, block128_f block)
 {
     unsigned int n;
     size_t l = 0;
@@ -184,7 +182,7 @@ void CRYPTO_cfb128_encrypt(const unsigned char *in, unsigned char *out,
 static void cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
 			    int nbits,const void *key,
 			    unsigned char ivec[16],int enc,
-			    block_f block)
+			    block128_f block)
 {
     int n,rem,num;
     unsigned char ovec[16*2 + 1];  /* +1 because we dererefence (but don't use) one byte off the end */
@@ -218,7 +216,7 @@ static void cfbr_encrypt_block(const unsigned char *in,unsigned char *out,
 void CRYPTO_cfb128_1_encrypt(const unsigned char *in, unsigned char *out,
 		 	size_t bits, const void *key,
 			unsigned char ivec[16], int *num,
-			int enc, block_f block)
+			int enc, block128_f block)
 {
     size_t n;
     unsigned char c[1],d[1];
@@ -238,7 +236,7 @@ void CRYPTO_cfb128_1_encrypt(const unsigned char *in, unsigned char *out,
 void CRYPTO_cfb128_8_encrypt(const unsigned char *in, unsigned char *out,
 			size_t length, const void *key,
 			unsigned char ivec[16], int *num,
-			int enc, block_f block)
+			int enc, block128_f block)
 {
     size_t n;
 
