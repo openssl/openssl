@@ -161,7 +161,7 @@ $!
 $ APPS_DES = "DES/DES,CBC3_ENC"
 $ APPS_PKCS7 = "ENC/ENC;DEC/DEC;SIGN/SIGN;VERIFY/VERIFY,EXAMPLE"
 $
-$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,tmdiff,cpt_err,ebcdic,uid,o_time,o_str,o_dir"
+$ LIB_ = "cryptlib,dyn_lck,mem,mem_clr,mem_dbg,cversion,ex_data,tmdiff,cpt_err,ebcdic,uid,o_time,o_str,o_dir,o_init,fips_err"
 $ LIB_MD2 = "md2_dgst,md2_one"
 $ LIB_MD4 = "md4_dgst,md4_one"
 $ LIB_MD5 = "md5_dgst,md5_one"
@@ -197,9 +197,9 @@ $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec2_smpl,ec2_mult"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
-	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr"
+	"rsa_pss,rsa_x931,rsa_x931g,rsa_asn1,rsa_depr,rsa_eng"
 $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
-	"dsa_err,dsa_ossl,dsa_depr"
+	"dsa_err,dsa_ossl,dsa_depr,dsa_utl"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
 $ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr"
 $ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err"
@@ -212,7 +212,7 @@ $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev,eng_padlock"
 $ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,"+ -
 	"aes_ctr,aes_ige"
-$ LIB_BUFFER = "buffer,buf_err"
+$ LIB_BUFFER = "buffer,buf_str,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
 	"bss_file,bss_sock,bss_conn,"+ -
@@ -224,18 +224,19 @@ $ LIB_STACK = "stack"
 $ LIB_LHASH = "lhash,lh_stats"
 $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
 	"rand_vms"
-$ LIB_ERR = "err,err_all,err_prn"
+$ LIB_ERR = "err,err_def,err_all,err_prn,err_str,err_bio"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err"
-$ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,"+ -
-	"e_des,e_bf,e_idea,e_des3,e_camellia,e_seed,"+ -
-	"e_rc4,e_aes,names,"+ -
-	"e_xcbc_d,e_rc2,e_cast,e_rc5"
+$ LIB_EVP = "encode,digest,dig_eng,evp_enc,evp_key,evp_acnf,evp_cnf,"+ -
+	"e_des,e_bf,e_idea,e_des3,e_camellia,"+ -
+	"e_rc4,e_aes,names,e_seed,"+ -
+	"e_xcbc_d,e_rc2,e_cast,e_rc5,enc_min"
 $ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1," + -
 	"m_dss,m_dss1,m_mdc2,m_ripemd,m_ecdsa,"+ -
 	"p_open,p_seal,p_sign,p_verify,p_lib,p_enc,p_dec,"+ -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
+$ LIB_EVP_3 = "e_old"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,"+ -
 	"a_enum,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -
