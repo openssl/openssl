@@ -108,7 +108,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 	const ASN1_AUX *aux = it->funcs;
 	ASN1_STREAM_ARG sarg;
 
-	if (!aux && !aux->asn1_cb)
+	if (!aux || !aux->asn1_cb)
 		{
 		ASN1err(ASN1_F_BIO_NEW_NDEF, ASN1_R_STREAMING_NOT_SUPPORTED);
 		return NULL;
