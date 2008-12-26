@@ -131,7 +131,7 @@ struct dsa_method
 	char *app_data;
 	/* If this is non-NULL, it is used to generate DSA parameters */
 	int (*dsa_paramgen)(DSA *dsa, int bits,
-			unsigned char *seed, int seed_len,
+			const unsigned char *seed, int seed_len,
 			int *counter_ret, unsigned long *h_ret,
 			BN_GENCB *cb);
 	/* If this is non-NULL, it is used to generate DSA keys */
@@ -220,7 +220,7 @@ DSA *	DSA_generate_parameters(int bits,
 
 /* New version */
 int	DSA_generate_parameters_ex(DSA *dsa, int bits,
-		unsigned char *seed,int seed_len,
+		const unsigned char *seed,int seed_len,
 		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
 
 int	DSA_generate_key(DSA *a);
