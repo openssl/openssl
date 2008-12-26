@@ -636,7 +636,6 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
                  "rfc3779"        => "default",
                  "seed"           => "default",
                  "shared"         => "default",
-                 "tlsext"         => "default",
                  "zlib"           => "default",
                  "zlib-dynamic"   => "default"
                );
