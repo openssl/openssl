@@ -1198,6 +1198,8 @@ AES_cbc_encrypt:
 	ret
 .align	4
 .Lcbc_enc_tail:
+	mov	%rax,%r11
+	mov	%rcx,%r12
 	mov	%r10,%rcx
 	mov	$inp,%rsi
 	mov	$out,%rdi
@@ -1208,6 +1210,8 @@ AES_cbc_encrypt:
 	.long	0xF689AAF3		# rep stosb
 	mov	$out,$inp		# this is not a mistake!
 	movq	\$16,$_len		# len=16
+	mov	%r11,%rax
+	mov	%r12,%rcx
 	jmp	.Lcbc_enc_loop		# one more spin...
 #----------------------------- DECRYPT -----------------------------#
 .align	16
