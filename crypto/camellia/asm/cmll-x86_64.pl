@@ -650,7 +650,7 @@ Camellia_cbc_encrypt:
 	neg	%r10
 	and	\$0x3C0,%r10
 	sub	%r10,%rsp
-	add	\$8,%rsp		# 8 is reserved for callee's ra
+	#add	\$8,%rsp		# 8 is reserved for callee's ra
 
 	mov	%rdi,$inp		# inp argument
 	mov	%rsi,$out		# out argument
@@ -746,7 +746,7 @@ Camellia_cbc_encrypt:
 	pushfq
 	cld
 	mov	$inp,%rsi
-	lea	$ivec,%rdi
+	lea	8+$ivec,%rdi
 	.long	0x9066A4F3		# rep movsb
 	popfq
 .Lcbc_enc_popf:
@@ -835,7 +835,7 @@ Camellia_cbc_encrypt:
 .Lcbc_dec_pushf:
 	pushfq
 	cld
-	lea	$ivec,%rsi
+	lea	8+$ivec,%rsi
 	lea	($out),%rdi
 	.long	0x9066A4F3		# rep movsb
 	popfq
