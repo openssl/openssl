@@ -399,13 +399,6 @@ char *DSO_merge(DSO *dso, const char *filespec1, const char *filespec2)
 		DSOerr(DSO_F_DSO_MERGE,ERR_R_PASSED_NULL_PARAMETER);
 		return(NULL);
 		}
-	if(filespec1 == NULL)
-		filespec1 = dso->filename;
-	if(filespec1 == NULL)
-		{
-		DSOerr(DSO_F_DSO_MERGE,DSO_R_NO_FILE_SPECIFICATION);
-		return(NULL);
-		}
 	if((dso->flags & DSO_FLAG_NO_NAME_TRANSLATION) == 0)
 		{
 		if(dso->merger != NULL)
