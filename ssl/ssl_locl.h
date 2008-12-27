@@ -880,7 +880,7 @@ int	ssl3_setup_read_buffer(SSL *s);
 int	ssl3_setup_write_buffer(SSL *s);
 int	ssl3_release_read_buffer(SSL *s);
 int	ssl3_release_write_buffer(SSL *s);
-void ssl3_digest_cached_records(SSL *s);
+int	ssl3_digest_cached_records(SSL *s);
 int	ssl3_new(SSL *s);
 void	ssl3_free(SSL *s);
 int	ssl3_accept(SSL *s);

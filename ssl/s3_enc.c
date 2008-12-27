@@ -580,37 +580,47 @@ void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 			}
 		}	
 	}
-void ssl3_digest_cached_records(SSL *s)
-	{
-		int i;
-		long mask;
-		const EVP_MD *md;
-		long hdatalen;
-		void *hdata;
-		/* Allocate handshake_dgst array */
-		ssl3_free_digest_list(s);
-		s->s3->handshake_dgst = OPENSSL_malloc(SSL_MAX_DIGEST * sizeof(EVP_MD_CTX *));
-		memset(s->s3->handshake_dgst,0,SSL_MAX_DIGEST *sizeof(EVP_MD_CTX *));
-		hdatalen = BIO_get_mem_data(s->s3->handshake_buffer,&hdata);
-		/* Loop through bitso of algorithm2 field and create MD_CTX-es */
-		for (i=0;ssl_get_handshake_digest(i,&mask,&md); i++) 
-			{
-				if ((mask & s->s3->tmp.new_cipher->algorithm2) && md) 
-				{
-					s->s3->handshake_dgst[i]=EVP_MD_CTX_create();
-					EVP_DigestInit_ex(s->s3->handshake_dgst[i],md,NULL);
-					EVP_DigestUpdate(s->s3->handshake_dgst[i],hdata,hdatalen);
-				} 
-				else 
-				{	
-					s->s3->handshake_dgst[i]=NULL;
-				}
-			}
-		/* Free handshake_buffer BIO */
-		BIO_free(s->s3->handshake_buffer);
-		s->s3->handshake_buffer = NULL;
 
+int ssl3_digest_cached_records(SSL *s)
+	{
+	int i;
+	long mask;
+	const EVP_MD *md;
+	long hdatalen;
+	void *hdata;
+
+	/* Allocate handshake_dgst array */
+	ssl3_free_digest_list(s);
+	s->s3->handshake_dgst = OPENSSL_malloc(SSL_MAX_DIGEST * sizeof(EVP_MD_CTX *));
+	memset(s->s3->handshake_dgst,0,SSL_MAX_DIGEST *sizeof(EVP_MD_CTX *));
+	hdatalen = BIO_get_mem_data(s->s3->handshake_buffer,&hdata);
+	if (hdatalen <= 0)
+		{
+		SSLerr(SSL_F_DIGEST_CACHED_RECORDS, SSL_R_BAD_HANDSHAKE_LENGTH);
+		return 0;
+		}
+
+	/* Loop through bitso of algorithm2 field and create MD_CTX-es */
+	for (i=0;ssl_get_handshake_digest(i,&mask,&md); i++) 
+		{
+		if ((mask & s->s3->tmp.new_cipher->algorithm2) && md) 
+			{
+			s->s3->handshake_dgst[i]=EVP_MD_CTX_create();
+			EVP_DigestInit_ex(s->s3->handshake_dgst[i],md,NULL);
+			EVP_DigestUpdate(s->s3->handshake_dgst[i],hdata,hdatalen);
+			} 
+		else 
+			{	
+			s->s3->handshake_dgst[i]=NULL;
+			}
+		}
+	/* Free handshake_buffer BIO */
+	BIO_free(s->s3->handshake_buffer);
+	s->s3->handshake_buffer = NULL;
+
+	return 1;
 	}
+
 int ssl3_cert_verify_mac(SSL *s, int md_nid, unsigned char *p)
 	{
 	return(ssl3_handshake_mac(s,md_nid,NULL,0,p));
@@ -632,8 +642,10 @@ static int ssl3_handshake_mac(SSL *s, int md_nid,
 	unsigned int i;
 	unsigned char md_buf[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX ctx,*d=NULL;
+
 	if (s->s3->handshake_buffer) 
-		ssl3_digest_cached_records(s);
+		if (!ssl3_digest_cached_records(s))
+			return 0;
 
 	/* Search for djgest of specified type  in the handshake_dgst
 	 * array*/

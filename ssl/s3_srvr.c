@@ -531,7 +531,8 @@ int ssl3_accept(SSL *s)
 				 * should be generalized. But it is next step
 				 */
 				if (s->s3->handshake_buffer)
-					ssl3_digest_cached_records(s);
+					if (!ssl3_digest_cached_records(s))
+						return -1;
 				for (dgst_num=0; dgst_num<SSL_MAX_DIGEST;dgst_num++)	
 					if (s->s3->handshake_dgst[dgst_num]) 
 						{
@@ -1158,7 +1159,8 @@ int ssl3_get_client_hello(SSL *s)
 		s->s3->tmp.new_cipher=s->session->cipher;
 		}
 
-	ssl3_digest_cached_records(s);
+	if (!ssl3_digest_cached_records(s))
+		goto f_err;
 	
 	/* we now have the following setup. 
 	 * client_random

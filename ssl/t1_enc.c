@@ -749,7 +749,9 @@ int tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *out)
 	int i;
 
 	if (s->s3->handshake_buffer) 
-		ssl3_digest_cached_records(s);
+		if (!ssl3_digest_cached_records(s))
+			return 0;
+
 	for (i=0;i<SSL_MAX_DIGEST;i++) 
 		{
 		  if (s->s3->handshake_dgst[i]&&EVP_MD_CTX_type(s->s3->handshake_dgst[i])==md_nid) 
@@ -784,10 +786,11 @@ int tls1_final_finish_mac(SSL *s,
 
 	q=buf;
 
-	EVP_MD_CTX_init(&ctx);
-
 	if (s->s3->handshake_buffer) 
-		ssl3_digest_cached_records(s);
+		if (!ssl3_digest_cached_records(s))
+			return 0;
+
+	EVP_MD_CTX_init(&ctx);
 
 	for (idx=0;ssl_get_handshake_digest(idx,&mask,&md);idx++)
 		{

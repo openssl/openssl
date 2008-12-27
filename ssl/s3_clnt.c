@@ -871,7 +871,8 @@ int ssl3_get_server_hello(SSL *s)
 			}
 		}
 	s->s3->tmp.new_cipher=c;
-	ssl3_digest_cached_records(s);
+	if (!ssl3_digest_cached_records(s))
+		goto f_err;
 
 	/* lets get the compression algorithm */
 	/* COMPRESSION */

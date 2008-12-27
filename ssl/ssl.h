@@ -1784,6 +1784,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_CLIENT_HELLO				 101
 #define SSL_F_CLIENT_MASTER_KEY				 102
 #define SSL_F_D2I_SSL_SESSION				 103
+#define SSL_F_DIGEST_CACHED_RECORDS			 293
 #define SSL_F_DO_DTLS1_WRITE				 245
 #define SSL_F_DO_SSL3_WRITE				 104
 #define SSL_F_DTLS1_ACCEPT				 246
@@ -1945,6 +1946,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_SET_RFD				 194
 #define SSL_F_SSL_SET_SESSION				 195
 #define SSL_F_SSL_SET_SESSION_ID_CONTEXT		 218
+#define SSL_F_SSL_SET_SESSION_TICKET_EXT		 294
 #define SSL_F_SSL_SET_TRUST				 228
 #define SSL_F_SSL_SET_WFD				 196
 #define SSL_F_SSL_SHUTDOWN				 224
@@ -1972,7 +1974,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_TLS1_PRF					 284
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
-#define SSL_F_SSL_SET_SESSION_TICKET_EXT		 213
 
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
@@ -1991,6 +1992,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_BAD_ECC_CERT				 304
 #define SSL_R_BAD_ECDSA_SIGNATURE			 305
 #define SSL_R_BAD_ECPOINT				 306
+#define SSL_R_BAD_HANDSHAKE_LENGTH			 332
 #define SSL_R_BAD_HELLO_REQUEST				 105
 #define SSL_R_BAD_LENGTH				 271
 #define SSL_R_BAD_MAC_DECODE				 113
