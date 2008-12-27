@@ -224,6 +224,12 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 		sign = -1;
 		}
 
+	if (scalar->d == NULL || scalar->top == 0)
+		{
+		ECerr(EC_F_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
+		goto err;
+		}
+
 	len = BN_num_bits(scalar);
 	r = OPENSSL_malloc(len + 1); /* modified wNAF may be one digit longer than binary representation
 	                              * (*ret_len will be set to the actual length, i.e. at most
@@ -231,12 +237,6 @@ static signed char *compute_wNAF(const BIGNUM *scalar, int w, size_t *ret_len)
 	if (r == NULL)
 		{
 		ECerr(EC_F_COMPUTE_WNAF, ERR_R_MALLOC_FAILURE);
-		goto err;
-		}
-
-	if (scalar->d == NULL || scalar->top == 0)
-		{
-		ECerr(EC_F_COMPUTE_WNAF, ERR_R_INTERNAL_ERROR);
 		goto err;
 		}
 	window_val = scalar->d[0] & mask;
