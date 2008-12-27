@@ -1996,6 +1996,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_BAD_HELLO_REQUEST				 105
 #define SSL_R_BAD_LENGTH				 271
 #define SSL_R_BAD_MAC_DECODE				 113
+#define SSL_R_BAD_MAC_LENGTH				 333
 #define SSL_R_BAD_MESSAGE_TYPE				 114
 #define SSL_R_BAD_PACKET_LENGTH				 115
 #define SSL_R_BAD_PROTOCOL_VERSION_NUMBER		 116
