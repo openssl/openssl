@@ -955,8 +955,9 @@ my $mark=&DWP(60+240,"esp");	#copy of aes_key->rounds
 
     &align	(4);
     &set_label("enc_tail");
-	&push	($key eq "edi" ? $key : "");	# push ivp
+	&mov	($s0,$key eq "edi" ? $key : "");
 	&mov	($key,$_out);			# load out
+	&push	($s0);				# push ivp
 	&mov	($s1,16);
 	&sub	($s1,$s2);
 	&cmp	($key,$acc);			# compare with inp
