@@ -17,8 +17,8 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= cbc128.c ctr128.c cfb128.c ofb128.c
-LIBOBJ= cbc128.o ctr128.o cfb128.o ofb128.o
+LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c
+LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o
 
 SRC= $(LIBSRC)
 
@@ -78,4 +78,5 @@ clean:
 cbc128.o: cbc128.c modes.h
 cfb128.o: cfb128.c modes.h
 ctr128.o: ctr128.c modes.h
+cts128.o: cts128.c modes.h
 ofb128.o: modes.h ofb128.c
