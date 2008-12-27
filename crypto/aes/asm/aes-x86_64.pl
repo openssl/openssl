@@ -1990,6 +1990,8 @@ AES_cbc_encrypt:
 
 .align	4
 .Lcbc_slow_enc_tail:
+	mov	%rax,%r11
+	mov	%rcx,%r12
 	mov	%r10,%rcx
 	mov	$inp,%rsi
 	mov	$out,%rdi
@@ -2000,6 +2002,8 @@ AES_cbc_encrypt:
 	.long	0x9066AAF3		# rep stosb
 	mov	$out,$inp		# this is not a mistake!
 	mov	\$16,%r10		# len=16
+	mov	%r11,%rax
+	mov	%r12,%rcx
 	jmp	.Lcbc_slow_enc_loop	# one more spin...
 #--------------------------- SLOW DECRYPT ---------------------------#
 .align	16

@@ -2360,6 +2360,7 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 
 #--------------------------- SLOW ENCRYPT ---------------------------#
 	&cmp	($s2,16);
+	&mov	($s3,$s1);
 	&jb	(&label("slow_enc_tail"));
 
 					if (!$x86only) {
@@ -2468,7 +2469,7 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 	&align	(4);
 	&data_word(0xAAF3F689);	# rep stosb	# zero tail
 
-	&lea	($key,&DWP(-16,$s3));		# restore ivp
+	&mov	($key,$_ivp);			# restore ivp
 	&mov	($acc,$s3);			# output as input
 	&mov	($s0,&DWP(0,$key));
 	&mov	($s1,&DWP(4,$key));
