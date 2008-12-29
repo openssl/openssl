@@ -81,6 +81,12 @@ int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
 	EVP_MD_CTX ctx;
 	unsigned char H_[EVP_MAX_MD_SIZE];
 
+	if (Hash == NULL)
+		{
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_BAD_ARGUMENT);
+		goto err;
+		}
+
 	hLen = EVP_MD_size(Hash);
 	/*
 	 * Negative sLen has special meanings:

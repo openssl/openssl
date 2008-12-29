@@ -412,6 +412,7 @@ printf("\n");
 
 	if (!clear)
 		{
+		/* !clear => s->read_hash != NULL => mac_size != -1 */
 		mac_size=EVP_MD_CTX_size(s->read_hash);
 
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+extra+mac_size)

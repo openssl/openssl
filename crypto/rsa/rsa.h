@@ -448,6 +448,7 @@ void ERR_load_RSA_strings(void);
 
 /* Reason codes. */
 #define RSA_R_ALGORITHM_MISMATCH			 100
+#define RSA_R_BAD_ARGUMENT				 149
 #define RSA_R_BAD_E_VALUE				 101
 #define RSA_R_BAD_FIXED_HEADER_DECRYPT			 102
 #define RSA_R_BAD_PAD_BYTE_COUNT			 103
