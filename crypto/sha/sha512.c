@@ -240,7 +240,7 @@ int SHA512_Update (SHA512_CTX *c, const void *_data, size_t len)
 
 		if (len < n)
 			{
-			memcpy (p+c->num,data,len), c->num += len;
+			memcpy (p+c->num,data,len), c->num += (unsigned int)len;
 			return 1;
 			}
 		else	{

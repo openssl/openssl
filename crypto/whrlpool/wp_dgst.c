@@ -130,7 +130,7 @@ void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c,const void *_inp,size_t bits)
 				else
 					{
 					memcpy(c->data+byteoff,inp,bits/8);
-					bitoff += bits;
+					bitoff += (unsigned int)bits;
 					bits = 0;
 					}
 				c->bitoff = bitoff;
@@ -197,7 +197,7 @@ void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c,const void *_inp,size_t bits)
 				b = (inp[0]<<inpgap)&0xff;
 				if (bitrem)	c->data[byteoff++] |= b>>bitrem;
 				else		c->data[byteoff++]  = b;
-				bitoff += bits;
+				bitoff += (unsigned int)bits;
 				if (bitoff==WHIRLPOOL_BBLOCK)
 					{
 					whirlpool_block(c,c->data,1);

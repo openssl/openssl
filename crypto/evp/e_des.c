@@ -147,7 +147,8 @@ static int des_cfb1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	    c[0]=(in[n/8]&(1 << (7-n%8))) ? 0x80 : 0;
 	    DES_cfb_encrypt(c,d,1,1,ctx->cipher_data,(DES_cblock *)ctx->iv,
 			ctx->encrypt);
-	    out[n/8]=(out[n/8]&~(0x80 >> (n%8)))|((d[0]&0x80) >> (n%8));
+	    out[n/8]=(out[n/8]&~(0x80 >> (unsigned int)(n%8))) |
+		     ((d[0]&0x80) >> (unsigned int)(n%8));
 	    }
 	inl-=chunk;
 	in +=chunk;

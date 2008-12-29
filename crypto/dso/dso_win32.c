@@ -358,7 +358,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 				return(NULL);
 				}
 			result->device = start;
-			result->devicelen = filename - start;
+			result->devicelen = (int)(filename - start);
 			position = IN_FILE;
 			start = ++filename;
 			result->dir = start;
@@ -367,7 +367,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 		case '/':
 			if(position == IN_NODE)
 				{
-				result->nodelen = filename - start;
+				result->nodelen = (int)(filename - start);
 				position = IN_FILE;
 				start = ++filename;
 				result->dir = start;
@@ -377,20 +377,20 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 				position = IN_FILE;
 				filename++;
 				result->dir = start;
-				result->dirlen = filename - start;
+				result->dirlen = (int)(filename - start);
 				start = filename;
 				}
 			else
 				{
 				filename++;
-				result->dirlen += filename - start;
+				result->dirlen += (int)(filename - start);
 				start = filename;
 				}
 			break;
 		case '\0':
 			if(position == IN_NODE)
 				{
-				result->nodelen = filename - start;
+				result->nodelen = (int)(filename - start);
 				}
 			else
 				{
@@ -404,13 +404,13 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 							result->dirlen = 0;
 							}
 						result->dirlen +=
-							filename - start;
+							(int)(filename - start);
 						}
 					else
 						{
 						result->file = start;
 						result->filelen =
-							filename - start;
+							(int)(filename - start);
 						}
 					}
 				}
@@ -504,7 +504,7 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
 				+ file_split->predirlen
 				- (start - file_split->predir);
 		strncpy(&result[offset], start,
-			end - start); offset += end - start;
+			end - start); offset += (int)(end - start);
 		result[offset] = '\\'; offset++;
 		start = end + 1;
 		}
@@ -525,7 +525,7 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
 				+ file_split->dirlen
 				- (start - file_split->dir);
 		strncpy(&result[offset], start,
-			end - start); offset += end - start;
+			end - start); offset += (int)(end - start);
 		result[offset] = '\\'; offset++;
 		start = end + 1;
 		}

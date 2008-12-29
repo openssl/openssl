@@ -293,7 +293,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 	 * Wei Dai <weidai@eskimo.com> for pointing it out. */
 	if (l < c->Nl) /* overflow */
 		c->Nh++;
-	c->Nh+=(len>>29);	/* might cause compiler warning on 16-bit */
+	c->Nh+=(HASH_LONG)(len>>29);	/* might cause compiler warning on 16-bit */
 	c->Nl=l;
 
 	n = c->num;
@@ -331,7 +331,7 @@ int HASH_UPDATE (HASH_CTX *c, const void *data_, size_t len)
 	if (len != 0)
 		{
 		p = (unsigned char *)c->data;
-		c->num = len;
+		c->num = (unsigned int)len;
 		memcpy (p,data,len);
 		}
 	return 1;
