@@ -709,6 +709,8 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		hash=ssl->read_hash;
 		}
 
+	/* If hash is NULL, then a crash will follow anyway */
+	OPENSSL_assert(hash);
 	md_size=EVP_MD_CTX_size(hash);
 	npad=(48/md_size)*md_size;
 
