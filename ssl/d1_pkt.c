@@ -423,17 +423,12 @@ printf("\n");
 	if (	(sess == NULL) ||
 		(s->enc_read_ctx == NULL) ||
 		(s->read_hash == NULL))
-	clear=1;
+		clear=1;
 
 	if (!clear)
 		{
+		/* !clear => s->read_hash != NULL => mac_size != -1 */
 		mac_size=EVP_MD_CTX_size(s->read_hash);
-		if (mac_size <= 0)
-			{
-			al=SSL_AD_INTERNAL_ERROR;
-			SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_BAD_MAC_LENGTH);
-			goto f_err;
-			}
 
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+mac_size)
 			{
