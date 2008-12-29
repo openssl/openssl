@@ -174,33 +174,33 @@ CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 		$${SHAREDCMD+SHAREDCMD} $${SHAREDFLAGS+SHAREDFLAGS}	\
 		$${SHARED_LIB+SHARED_LIB} $${LIBEXTRAS+LIBEXTRAS}
 
-BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
-		CC='${CC}' CFLAG='${CFLAG}' 			\
-		AS='${CC}' ASFLAG='${CFLAG} -c'			\
-		AR='${AR}' NM='${NM}' RANLIB='${RANLIB}'	\
-		CROSS_COMPILE_PREFIX='${CROSS_COMPILE_PREFIX}'	\
-		PERL='${PERL}'					\
-		SDIRS='${SDIRS}' LIBRPATH='${INSTALLTOP}/lib'	\
-		INSTALL_PREFIX='${INSTALL_PREFIX}'		\
-		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
-		MAKEDEPEND='$$$${TOP}/util/domd $$$${TOP} -MD ${MAKEDEPPROG}' \
-		DEPFLAG='-DOPENSSL_NO_DEPRECATED ${DEPFLAG}'	\
-		MAKEDEPPROG='${MAKEDEPPROG}'			\
-		SHARED_LDFLAGS='${SHARED_LDFLAGS}'		\
-		KRB5_INCLUDES='${KRB5_INCLUDES}' LIBKRB5='${LIBKRB5}'	\
-		EXE_EXT='${EXE_EXT}' SHARED_LIBS='${SHARED_LIBS}'	\
-		SHLIB_EXT='${SHLIB_EXT}' SHLIB_TARGET='${SHLIB_TARGET}'	\
-		PEX_LIBS='${PEX_LIBS}' EX_LIBS='${EX_LIBS}'	\
-		CPUID_OBJ='${CPUID_OBJ}'			\
-		BN_ASM='${BN_ASM}' DES_ENC='${DES_ENC}' 	\
-		AES_ENC='${AES_ENC}' CMLL_ENC='${CMLL_ENC}'	\
-		BF_ENC='${BF_ENC}' CAST_ENC='${CAST_ENC}'	\
-		RC4_ENC='${RC4_ENC}' RC5_ENC='${RC5_ENC}'	\
-		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
-		MD5_ASM_OBJ='${MD5_ASM_OBJ}'			\
-		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'		\
-		WP_ASM_OBJ='${WP_ASM_OBJ}'			\
-		PERLASM_SCHEME='${PERLASM_SCHEME}'		\
+BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
+		CC='$(CC)' CFLAG='$(CFLAG)' 			\
+		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
+		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
+		CROSS_COMPILE_PREFIX='$(CROSS_COMPILE_PREFIX)'	\
+		PERL='$(PERL)'					\
+		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/lib'	\
+		INSTALL_PREFIX='$(INSTALL_PREFIX)'		\
+		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\
+		MAKEDEPEND='$$$${TOP}/util/domd $$$${TOP} -MD $(MAKEDEPPROG)' \
+		DEPFLAG='-DOPENSSL_NO_DEPRECATED $(DEPFLAG)'	\
+		MAKEDEPPROG='$(MAKEDEPPROG)'			\
+		SHARED_LDFLAGS='$(SHARED_LDFLAGS)'		\
+		KRB5_INCLUDES='$(KRB5_INCLUDES)' LIBKRB5='$(LIBKRB5)'	\
+		EXE_EXT='$(EXE_EXT)' SHARED_LIBS='$(SHARED_LIBS)'	\
+		SHLIB_EXT='$(SHLIB_EXT)' SHLIB_TARGET='$(SHLIB_TARGET)'	\
+		PEX_LIBS='$(PEX_LIBS)' EX_LIBS='$(EX_LIBS)'	\
+		CPUID_OBJ='$(CPUID_OBJ)'			\
+		BN_ASM='$(BN_ASM)' DES_ENC='$(DES_ENC)' 	\
+		AES_ENC='$(AES_ENC)' CMLL_ENC='$(CMLL_ENC)'	\
+		BF_ENC='$(BF_ENC)' CAST_ENC='$(CAST_ENC)'	\
+		RC4_ENC='$(RC4_ENC)' RC5_ENC='$(RC5_ENC)'	\
+		SHA1_ASM_OBJ='$(SHA1_ASM_OBJ)'			\
+		MD5_ASM_OBJ='$(MD5_ASM_OBJ)'			\
+		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
+		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
+		PERLASM_SCHEME='$(PERLASM_SCHEME)'		\
 		THIS=$${THIS:-$@} MAKEFILE=Makefile MAKEOVERRIDES=
 # MAKEOVERRIDES= effectively "equalizes" GNU-ish and SysV-ish make flavors,
 # which in turn eliminates ambiguities in variable treatment with -e.
@@ -285,10 +285,10 @@ clean-shared:
 	done
 
 link-shared:
-	@ set -e; for i in ${SHLIBDIRS}; do \
+	@ set -e; for i in $(SHLIBDIRS); do \
 		$(MAKE) -f $(HERE)/Makefile.shared -e $(BUILDENV) \
-			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
+			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
+			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
 			symlink.$(SHLIB_TARGET); \
 		libs="$$libs -l$$i"; \
 	done
@@ -296,13 +296,13 @@ link-shared:
 build-shared: do_$(SHLIB_TARGET) link-shared
 
 do_$(SHLIB_TARGET):
-	@ set -e; libs='-L. ${SHLIBDEPS}'; for i in ${SHLIBDIRS}; do \
-		if [ "${SHLIBDIRS}" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+	@ set -e; libs='-L. $(SHLIBDEPS)'; for i in $(SHLIBDIRS); do \
+		if [ "$(SHLIBDIRS)" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 			libs="$(LIBKRB5) $$libs"; \
 		fi; \
 		$(CLEARENV) && $(MAKE) -f Makefile.shared -e $(BUILDENV) \
-			LIBNAME=$$i LIBVERSION=${SHLIB_MAJOR}.${SHLIB_MINOR} \
-			LIBCOMPATVERSIONS=";${SHLIB_VERSION_HISTORY}" \
+			LIBNAME=$$i LIBVERSION=$(SHLIB_MAJOR).$(SHLIB_MINOR) \
+			LIBCOMPATVERSIONS=";$(SHLIB_VERSION_HISTORY)" \
 			LIBDEPS="$$libs $(EX_LIBS)" \
 			link_a.$(SHLIB_TARGET); \
 		libs="-l$$i $$libs"; \
@@ -382,7 +382,7 @@ links:
 
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
-	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on generate );
+	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on generate );
 
 dclean:
 	rm -rf *.bak include/openssl certs/.0
@@ -403,7 +403,7 @@ test:   tests
 
 tests: rehash
 	@(cd test && echo "testing..." && \
-	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='${TESTS}' OPENSSL_DEBUG_MEMORY=on tests );
+	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on tests );
 	util/opensslwrap.sh version -a
 
 report:
@@ -482,8 +482,8 @@ tar-snap:
 dist:   
 	$(PERL) Configure dist
 	@$(MAKE) dist_pem_h
-	@$(MAKE) SDIRS='${SDIRS}' clean
-	@$(MAKE) TAR='${TAR}' TARFLAGS='${TARFLAGS}' tar
+	@$(MAKE) SDIRS='$(SDIRS)' clean
+	@$(MAKE) TAR='$(TAR)' TARFLAGS='$(TARFLAGS)' tar
 
 dist_pem_h:
 	(cd crypto/pem; $(MAKE) -e $(BUILDENV) pem.h; $(MAKE) clean)

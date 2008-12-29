@@ -144,7 +144,7 @@ LINK_SO_A_UNPACKED=	\
   SHOBJECTS=$$UNPACKDIR/*.o; \
   $(LINK_SO) && rm -rf $$UNPACKDIR
 
-DETECT_GNU_LD=(${CC} -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
+DETECT_GNU_LD=($(CC) -Wl,-V /dev/null 2>&1 | grep '^GNU ld' )>/dev/null
 
 DO_GNU_SO=$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
@@ -182,7 +182,7 @@ link_a.beos:
 	@ $(DO_BEOS_SO); $(LINK_SO_A)
 
 link_o.bsd:
-	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
+	@if $(DETECT_GNU_LD); then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
@@ -192,7 +192,7 @@ link_o.bsd:
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -nostdlib"; \
 	fi; $(LINK_SO_O)
 link_a.bsd:
-	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
+	@if $(DETECT_GNU_LD); then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).so; \
 	SHLIB_SUFFIX=; \
@@ -202,7 +202,7 @@ link_a.bsd:
 	SHAREDFLAGS="$(CFLAGS) $(SHARED_LDFLAGS) -shared -nostdlib"; \
 	fi; $(LINK_SO_A)
 link_app.bsd:
-	@if ${DETECT_GNU_LD}; then $(DO_GNU_APP); else \
+	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
 	LDFLAGS="$(CFLAGS) -Wl,-rpath,$(LIBPATH)"; \
 	fi; $(LINK_APP)
 
@@ -238,7 +238,7 @@ link_a.darwin:
 	if [ -n "$$SHLIB_SOVER_NODOT" ]; then \
 		SHAREDFLAGS="$$SHAREDFLAGS -compatibility_version $$SHLIB_SOVER_NODOT"; \
 	fi; \
-	SHAREDFLAGS="$$SHAREDFLAGS -install_name ${INSTALLTOP}/lib/$$SHLIB${SHLIB_EXT}"; \
+	SHAREDFLAGS="$$SHAREDFLAGS -install_name $(INSTALLTOP)/lib/$$SHLIB$(SHLIB_EXT)"; \
 	$(LINK_SO_A)
 link_app.darwin:	# is there run-path on darwin?
 	$(LINK_APP)
@@ -300,7 +300,7 @@ link_app.cygwin:
 	$(LINK_APP)
 
 link_o.alpha-osf1:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO); \
 	else \
 		SHLIB=lib$(LIBNAME).so; \
@@ -321,7 +321,7 @@ link_o.alpha-osf1:
 	fi; \
 	$(LINK_SO_O)
 link_a.alpha-osf1:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO); \
 	else \
 		SHLIB=lib$(LIBNAME).so; \
@@ -342,7 +342,7 @@ link_a.alpha-osf1:
 	fi; \
 	$(LINK_SO_A)
 link_app.alpha-osf1:
-	@if ${DETECT_GNU_LD}; then \
+	@if $(DETECT_GNU_LD); then \
 		$(DO_GNU_APP); \
 	else \
 		LDFLAGS="$(CFLAGS) -rpath $(LIBRPATH)"; \
@@ -350,7 +350,7 @@ link_app.alpha-osf1:
 	$(LINK_APP)
 
 link_o.solaris:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
@@ -364,12 +364,12 @@ link_o.solaris:
 	fi; \
 	$(LINK_SO_O)
 link_a.solaris:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
 		MINUSZ='-z '; \
-		(${CC} -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
+		($(CC) -v 2>&1 | grep gcc) > /dev/null && MINUSZ='-Wl,-z,'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=;\
 		ALLSYMSFLAGS="$${MINUSZ}allextract"; \
@@ -378,7 +378,7 @@ link_a.solaris:
 	fi; \
 	$(LINK_SO_A)
 link_app.solaris:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_APP); \
 	else \
 		LDFLAGS="$(CFLAGS) -R $(LIBRPATH)"; \
@@ -387,7 +387,7 @@ link_app.solaris:
 
 # OpenServer 5 native compilers used
 link_o.svr3:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
@@ -399,7 +399,7 @@ link_o.svr3:
 	fi; \
 	$(LINK_SO_O)
 link_a.svr3:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
@@ -411,12 +411,12 @@ link_a.svr3:
 	fi; \
 	$(LINK_SO_A_UNPACKED)
 link_app.svr3:
-	@${DETECT_GNU_LD} && $(DO_GNU_APP); \
+	@$(DETECT_GNU_LD) && $(DO_GNU_APP); \
 	$(LINK_APP)
 
 # UnixWare 7 and OpenUNIX 8 native compilers used
 link_o.svr5:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
@@ -430,12 +430,12 @@ link_o.svr5:
 	fi; \
 	$(LINK_SO_O)
 link_a.svr5:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
 		SHARE_FLAG='-G'; \
-		(${CC} -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAG='-shared'; \
+		($(CC) -v 2>&1 | grep gcc) > /dev/null && SHARE_FLAG='-shared'; \
 		SHLIB=lib$(LIBNAME).so; \
 		SHLIB_SUFFIX=; \
 		ALLSYMSFLAGS=''; \
@@ -444,11 +444,11 @@ link_a.svr5:
 	fi; \
 	$(LINK_SO_A_UNPACKED)
 link_app.svr5:
-	@${DETECT_GNU_LD} && $(DO_GNU_APP); \
+	@$(DETECT_GNU_LD) && $(DO_GNU_APP); \
 	$(LINK_APP)
 
 link_o.irix:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
@@ -462,7 +462,7 @@ link_o.irix:
 	fi; \
 	$(LINK_SO_O)
 link_a.irix:
-	@ if ${DETECT_GNU_LD}; then \
+	@ if $(DETECT_GNU_LD); then \
 		$(DO_GNU_SO); \
 	else \
 		$(CALC_VERSIONS); \
@@ -488,7 +488,7 @@ link_app.irix:
 # ELFs by the way].
 #
 link_o.hpux:
-	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
+	@if $(DETECT_GNU_LD); then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
 	expr "$(CFLAGS)" : '.*DSO_DLFCN' > /dev/null && SHLIB=lib$(LIBNAME).so; \
@@ -501,7 +501,7 @@ link_o.hpux:
 	rm -f $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX || :; \
 	$(LINK_SO_O) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
 link_a.hpux:
-	@if ${DETECT_GNU_LD}; then $(DO_GNU_SO); else \
+	@if $(DETECT_GNU_LD); then $(DO_GNU_SO); else \
 	$(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME).sl; \
 	expr $(PLATFORM) : '.*ia64' > /dev/null && SHLIB=lib$(LIBNAME).so; \
@@ -514,7 +514,7 @@ link_a.hpux:
 	rm -f $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX || :; \
 	$(LINK_SO_A) && chmod a=rx $$SHLIB$$SHLIB_SOVER$$SHLIB_SUFFIX
 link_app.hpux:
-	@if ${DETECT_GNU_LD}; then $(DO_GNU_APP); else \
+	@if $(DETECT_GNU_LD); then $(DO_GNU_APP); else \
 	LDFLAGS="$(CFLAGS) -Wl,+s,+cdp,../:,+cdp,./:,+b,$(LIBRPATH)"; \
 	fi; \
 	$(LINK_APP)

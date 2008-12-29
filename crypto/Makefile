@@ -17,7 +17,7 @@ AR=		ar r
 
 RECURSIVE_MAKE=	[ -n "$(SDIRS)" ] && for i in $(SDIRS) ; do \
 		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
-		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='${INCLUDES}' $$target ) || exit 1; \
+		    $(MAKE) -e TOP=../.. DIR=$$i INCLUDES='$(INCLUDES)' $$target ) || exit 1; \
 		done;
 
 PEX_LIBS=
@@ -77,7 +77,7 @@ ia64cpuid.s: ia64cpuid.S
 ppccpuid.s:		ppccpuid.pl;	$(PERL) ppccpuid.pl $(PERLASM_SCHEME) $@
 
 testapps:
-	[ -z "$(THIS)" ] || (	if echo ${SDIRS} | fgrep ' des '; \
+	[ -z "$(THIS)" ] || (	if echo $(SDIRS) | fgrep ' des '; \
 				then cd des && $(MAKE) -e des; fi )
 	[ -z "$(THIS)" ] || ( cd pkcs7 && $(MAKE) -e testapps );
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
