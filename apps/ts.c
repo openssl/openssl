@@ -598,6 +598,8 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
 	int md_value_len;
 
 	md_value_len = EVP_MD_size(md);
+	if (md_value_len < 0)
+	    goto err;
 	if (input)
 		{
 		/* Digest must be computed from an input file. */

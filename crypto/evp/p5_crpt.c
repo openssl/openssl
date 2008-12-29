@@ -81,6 +81,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	int saltlen, iter;
 	unsigned char *salt;
 	const unsigned char *pbuf;
+	int mdsize;
 
 	/* Extract useful info from parameter */
 	if (param == NULL || param->type != V_ASN1_SEQUENCE ||
@@ -109,9 +110,12 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	EVP_DigestUpdate(&ctx, salt, saltlen);
 	PBEPARAM_free(pbe);
 	EVP_DigestFinal_ex(&ctx, md_tmp, NULL);
+	mdsize = EVP_MD_size(md);
+	if (mdsize < 0)
+	    return 0;
 	for (i = 1; i < iter; i++) {
 		EVP_DigestInit_ex(&ctx, md, NULL);
-		EVP_DigestUpdate(&ctx, md_tmp, EVP_MD_size(md));
+		EVP_DigestUpdate(&ctx, md_tmp, mdsize);
 		EVP_DigestFinal_ex (&ctx, md_tmp, NULL);
 	}
 	EVP_MD_CTX_cleanup(&ctx);

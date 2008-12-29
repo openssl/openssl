@@ -428,7 +428,10 @@ printf("\n");
 	if (!clear)
 		{
 		/* !clear => s->read_hash != NULL => mac_size != -1 */
-		mac_size=EVP_MD_CTX_size(s->read_hash);
+		int t;
+		t=EVP_MD_CTX_size(s->read_hash);
+		OPENSSL_assert(t >= 0);
+		mac_size=t;
 
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+mac_size)
 			{
@@ -453,7 +456,7 @@ printf("\n");
 			}
 		rr->length-=mac_size;
 		i=s->method->ssl3_enc->mac(s,md,0);
-		if (memcmp(md,&(rr->data[rr->length]),mac_size) != 0)
+		if (i < 0 || memcmp(md,&(rr->data[rr->length]),mac_size) != 0)
 			{
 			goto decryption_failed_or_bad_record_mac;
 			}
@@ -1341,7 +1344,11 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 	if (clear)
 		mac_size=0;
 	else
+		{
 		mac_size=EVP_MD_CTX_size(s->write_hash);
+		if (mac_size < 0)
+			goto err;
+		}
 
 	/* DTLS implements explicit IV, so no need for empty fragments */
 #if 0
@@ -1428,7 +1435,8 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 
 	if (mac_size != 0)
 		{
-		s->method->ssl3_enc->mac(s,&(p[wr->length + bs]),1);
+		if(s->method->ssl3_enc->mac(s,&(p[wr->length + bs]),1) < 0)
+			goto err;
 		wr->length+=mac_size;
 		}
 

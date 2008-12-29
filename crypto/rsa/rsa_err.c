@@ -124,7 +124,6 @@ static ERR_STRING_DATA RSA_str_functs[]=
 static ERR_STRING_DATA RSA_str_reasons[]=
 	{
 {ERR_REASON(RSA_R_ALGORITHM_MISMATCH)    ,"algorithm mismatch"},
-{ERR_REASON(RSA_R_BAD_ARGUMENT)          ,"bad argument"},
 {ERR_REASON(RSA_R_BAD_E_VALUE)           ,"bad e value"},
 {ERR_REASON(RSA_R_BAD_FIXED_HEADER_DECRYPT),"bad fixed header decrypt"},
 {ERR_REASON(RSA_R_BAD_PAD_BYTE_COUNT)    ,"bad pad byte count"},

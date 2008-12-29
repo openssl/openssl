@@ -135,7 +135,11 @@ int dtls1_enc(SSL *s, int send)
 	if (send)
 		{
 		if (EVP_MD_CTX_md(s->write_hash))
+			{
 			n=EVP_MD_CTX_size(s->write_hash);
+			if (n < 0)
+				return -1;
+			}
 		ds=s->enc_write_ctx;
 		rec= &(s->s3->wrec);
 		if (s->enc_write_ctx == NULL)
@@ -157,7 +161,11 @@ int dtls1_enc(SSL *s, int send)
 	else
 		{
 		if (EVP_MD_CTX_md(s->read_hash))
+			{
 			n=EVP_MD_CTX_size(s->read_hash);
+			if (n < 0)
+				return -1;
+			}
 		ds=s->enc_read_ctx;
 		rec= &(s->s3->rrec);
 		if (s->enc_read_ctx == NULL)

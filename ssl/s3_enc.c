@@ -315,6 +315,8 @@ int ssl3_change_cipher_state(SSL *s, int which)
 
 	p=s->s3->tmp.key_block;
 	i=EVP_MD_size(m);
+	if (i < 0)
+		goto err2;
 	cl=EVP_CIPHER_key_length(c);
 	j=is_exp ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
 		 cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
@@ -409,7 +411,11 @@ int ssl3_setup_key_block(SSL *s)
 	s->s3->tmp.new_compression=comp;
 #endif
 
-	num=EVP_CIPHER_key_length(c)+EVP_MD_size(hash)+EVP_CIPHER_iv_length(c);
+	num=EVP_MD_size(hash);
+	if (num < 0)
+		return 0;
+
+	num=EVP_CIPHER_key_length(c)+num+EVP_CIPHER_iv_length(c);
 	num*=2;
 
 	ssl3_cleanup_key_block(s);
@@ -666,6 +672,9 @@ static int ssl3_handshake_mac(SSL *s, int md_nid,
 	EVP_MD_CTX_init(&ctx);
 	EVP_MD_CTX_copy_ex(&ctx,d);
 	n=EVP_MD_CTX_size(&ctx);
+	if (n < 0)
+		return 0;
+
 	npad=(48/n)*n;
 	if (sender != NULL)
 		EVP_DigestUpdate(&ctx,sender,len);
@@ -686,7 +695,7 @@ static int ssl3_handshake_mac(SSL *s, int md_nid,
 	return((int)ret);
 	}
 
-int ssl3_mac(SSL *ssl, unsigned char *md, int send)
+int n_ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	{
 	SSL3_RECORD *rec;
 	unsigned char *mac_sec,*seq;
@@ -695,6 +704,7 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 	unsigned char *p,rec_char;
 	unsigned int md_size;
 	int npad;
+	int t;
 
 	if (send)
 		{
@@ -711,9 +721,10 @@ int ssl3_mac(SSL *ssl, unsigned char *md, int send)
 		hash=ssl->read_hash;
 		}
 
-	/* If hash is NULL, then a crash will follow anyway */
-	OPENSSL_assert(hash);
-	md_size=EVP_MD_CTX_size(hash);
+	t=EVP_MD_CTX_size(hash);
+	if (t < 0)
+		return -1;
+	md_size=t;
 	npad=(48/md_size)*md_size;
 
 	/* Chop the digest off the end :-) */

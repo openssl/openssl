@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,6 +85,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_EVP_DIGESTINIT_EX),	"EVP_DigestInit_ex"},
 {ERR_FUNC(EVP_F_EVP_ENCRYPTFINAL_EX),	"EVP_EncryptFinal_ex"},
 {ERR_FUNC(EVP_F_EVP_MD_CTX_COPY_EX),	"EVP_MD_CTX_copy_ex"},
+{ERR_FUNC(EVP_F_EVP_MD_SIZE),	"EVP_MD_SIZE"},
 {ERR_FUNC(EVP_F_EVP_OPENINIT),	"EVP_OpenInit"},
 {ERR_FUNC(EVP_F_EVP_PBE_ALG_ADD),	"EVP_PBE_alg_add"},
 {ERR_FUNC(EVP_F_EVP_PBE_ALG_ADD_TYPE),	"EVP_PBE_alg_add_type"},
@@ -167,6 +168,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_INVALID_OPERATION)     ,"invalid operation"},
 {ERR_REASON(EVP_R_IV_TOO_LARGE)          ,"iv too large"},
 {ERR_REASON(EVP_R_KEYGEN_FAILURE)        ,"keygen failure"},
+{ERR_REASON(EVP_R_MESSAGE_DIGEST_IS_NULL),"message digest is null"},
 {ERR_REASON(EVP_R_METHOD_NOT_SUPPORTED)  ,"method not supported"},
 {ERR_REASON(EVP_R_MISSING_PARAMETERS)    ,"missing parameters"},
 {ERR_REASON(EVP_R_NO_CIPHER_SET)         ,"no cipher set"},

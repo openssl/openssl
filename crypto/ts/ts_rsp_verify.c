@@ -604,7 +604,10 @@ static int TS_compute_imprint(BIO *data, TS_TST_INFO *tst_info,
 		}
 
 	/* Compute message digest. */
-	*imprint_len = EVP_MD_size(md);
+	length = EVP_MD_size(md);
+	if (length < 0)
+	    goto err;
+	*imprint_len = length;
 	if (!(*imprint = OPENSSL_malloc(*imprint_len))) 
 		{
 		TSerr(TS_F_TS_COMPUTE_IMPRINT, ERR_R_MALLOC_FAILURE);

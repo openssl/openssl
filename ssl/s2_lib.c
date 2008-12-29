@@ -455,6 +455,7 @@ int ssl2_generate_key_material(SSL *s)
 	unsigned char *km;
 	unsigned char c='0';
 	const EVP_MD *md5;
+	int md_size;
 
 	md5 = EVP_md5();
 
@@ -471,10 +472,12 @@ int ssl2_generate_key_material(SSL *s)
  		SSLerr(SSL_F_SSL2_GENERATE_KEY_MATERIAL, ERR_R_INTERNAL_ERROR);
  		return 0;
  		}
-
-	for (i=0; i<s->s2->key_material_length; i += EVP_MD_size(md5))
+	md_size = EVP_MD_size(md5);
+	if (md_size < 0)
+	    return 0;
+	for (i=0; i<s->s2->key_material_length; i += md_size)
 		{
-		if (((km - s->s2->key_material) + EVP_MD_size(md5)) >
+		if (((km - s->s2->key_material) + md_size) >
 				(int)sizeof(s->s2->key_material))
 			{
 			/* EVP_DigestFinal_ex() below would write beyond buffer */
@@ -493,7 +496,7 @@ int ssl2_generate_key_material(SSL *s)
 		EVP_DigestUpdate(&ctx,s->s2->challenge,s->s2->challenge_length);
 		EVP_DigestUpdate(&ctx,s->s2->conn_id,s->s2->conn_id_length);
 		EVP_DigestFinal_ex(&ctx,km,NULL);
-		km += EVP_MD_size(md5);
+		km += md_size;
 		}
 
 	EVP_MD_CTX_cleanup(&ctx);

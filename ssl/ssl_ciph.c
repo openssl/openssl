@@ -381,16 +381,19 @@ void ssl_load_ciphers(void)
 		EVP_get_digestbyname(SN_md5);
 	ssl_mac_secret_size[SSL_MD_MD5_IDX]=
 		EVP_MD_size(ssl_digest_methods[SSL_MD_MD5_IDX]);
+	OPENSSL_assert(ssl_mac_secret_size[SSL_MD_MD5_IDX] >= 0);
 	ssl_digest_methods[SSL_MD_SHA1_IDX]=
 		EVP_get_digestbyname(SN_sha1);
 	ssl_mac_secret_size[SSL_MD_SHA1_IDX]=
 		EVP_MD_size(ssl_digest_methods[SSL_MD_SHA1_IDX]);
+	OPENSSL_assert(ssl_mac_secret_size[SSL_MD_SHA1_IDX] >= 0);
 	ssl_digest_methods[SSL_MD_GOST94_IDX]=
 		EVP_get_digestbyname(SN_id_GostR3411_94);
 	if (ssl_digest_methods[SSL_MD_GOST94_IDX])
 		{	
 		ssl_mac_secret_size[SSL_MD_GOST94_IDX]=
 			EVP_MD_size(ssl_digest_methods[SSL_MD_GOST94_IDX]);
+		OPENSSL_assert(ssl_mac_secret_size[SSL_MD_GOST94_IDX] >= 0);
 		}
 	ssl_digest_methods[SSL_MD_GOST89MAC_IDX]=
 		EVP_get_digestbyname(SN_id_Gost28147_89_MAC);

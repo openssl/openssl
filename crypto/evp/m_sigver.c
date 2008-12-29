@@ -128,7 +128,6 @@ int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 	return do_sigver_init(ctx, pctx, type, e, pkey, 1);
 	}
 
-
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 	{
 	int sctx, r = 0;
@@ -159,13 +158,15 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, size_t *siglen)
 		{
 		if (sctx)
 			{
-			if (ctx->pctx->pmeth->signctx(ctx->pctx, 
-						sigret, siglen, ctx) <= 0)
+			if (ctx->pctx->pmeth->signctx(ctx->pctx, sigret, siglen, ctx) <= 0)
 				return 0;
 			}
-		else if (EVP_PKEY_sign(ctx->pctx, sigret, siglen, NULL,
-						EVP_MD_size(ctx->digest)) <= 0)
-			return 0;
+		else
+			{
+			int s = EVP_MD_size(ctx->digest);
+			if (s < 0 || EVP_PKEY_sign(ctx->pctx, sigret, siglen, NULL, s) <= 0)
+				return 0;
+			}
 		}
 	return 1;
 	}
@@ -177,6 +178,8 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, unsigned char *sig, size_t siglen)
 	int r;
 	unsigned int mdlen;
 	int vctx;
+
+	/* FIXME: surely this should test verifyctx? (Ben 29/12/08) */
 	if (ctx->pctx->pmeth->signctx)
 		vctx = 1;
 	else

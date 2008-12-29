@@ -87,6 +87,8 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
 	HMAC_CTX hctx;
 
 	mdlen = EVP_MD_size(digest);
+	if (mdlen < 0)
+		return 0;
 
 	HMAC_CTX_init(&hctx);
 	p = out;
@@ -273,8 +275,9 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	salt = kdf->salt->value.octet_string->data;
 	saltlen = kdf->salt->value.octet_string->length;
 	iter = ASN1_INTEGER_get(kdf->iter);
-	PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter, prfmd,
-								keylen, key);
+	if(!PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter, prfmd,
+						   keylen, key))
+		goto err;
 	EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
 	OPENSSL_cleanse(key, keylen);
 	PBKDF2PARAM_free(kdf);

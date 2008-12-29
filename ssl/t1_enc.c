@@ -163,6 +163,7 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 	unsigned int A1_len;
 	
 	chunk=EVP_MD_size(md);
+	OPENSSL_assert(chunk >= 0);
 
 	HMAC_CTX_init(&ctx);
 	HMAC_CTX_init(&ctx_tmp);
@@ -605,7 +606,10 @@ int tls1_enc(SSL *s, int send)
 	if (send)
 		{
 		if (EVP_MD_CTX_md(s->write_hash))
+			{
 			n=EVP_MD_CTX_size(s->write_hash);
+			OPENSSL_assert(n >= 0);
+			}
 		ds=s->enc_write_ctx;
 		rec= &(s->s3->wrec);
 		if (s->enc_write_ctx == NULL)
@@ -616,7 +620,10 @@ int tls1_enc(SSL *s, int send)
 	else
 		{
 		if (EVP_MD_CTX_md(s->read_hash))
+			{
 			n=EVP_MD_CTX_size(s->read_hash);
+			OPENSSL_assert(n >= 0);
+			}
 		ds=s->enc_read_ctx;
 		rec= &(s->s3->rrec);
 		if (s->enc_read_ctx == NULL)
@@ -796,8 +803,8 @@ int tls1_final_finish_mac(SSL *s,
 		{
 		if (mask & s->s3->tmp.new_cipher->algorithm2)
 			{
-			unsigned int hashsize = EVP_MD_size(md);
-			if (hashsize > (sizeof buf - (size_t)(q-buf)))
+			int hashsize = EVP_MD_size(md);
+			if (hashsize < 0 || hashsize > (sizeof buf - (size_t)(q-buf)))
 				{
 				/* internal error: 'buf' is too small for this cipersuite! */
 				err = 1;
@@ -835,6 +842,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	EVP_MD_CTX hmac, *mac_ctx;
 	unsigned char buf[5]; 
 	int stream_mac = (send?(ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM):(ssl->mac_flags&SSL_MAC_FLAG_READ_MAC_STREAM));
+	int t;
 
 	if (send)
 		{
@@ -851,7 +859,9 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 		hash=ssl->read_hash;
 		}
 
-	md_size=EVP_MD_CTX_size(hash);
+	t=EVP_MD_CTX_size(hash);
+	OPENSSL_assert(t >= 0);
+	md_size=t;
 
 	buf[0]=rec->type;
 	buf[1]=(unsigned char)(ssl->version>>8);
@@ -884,7 +894,9 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 
 	EVP_DigestSignUpdate(mac_ctx,buf,5);
 	EVP_DigestSignUpdate(mac_ctx,rec->input,rec->length);
-	EVP_DigestSignFinal(mac_ctx,md,&md_size);
+	t=EVP_DigestSignFinal(mac_ctx,md,&md_size);
+	OPENSSL_assert(t > 0);
+		
 	if (!stream_mac) EVP_MD_CTX_cleanup(&hmac);
 #ifdef TLS_DEBUG
 printf("sec=");

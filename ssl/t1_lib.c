@@ -1532,6 +1532,11 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
  	 * integrity checks on ticket.
  	 */
 	mlen = HMAC_size(&hctx);
+	if (mlen < 0)
+		{
+		EVP_CIPHER_CTX_cleanup(&ctx);
+		return -1;
+		}
 	eticklen -= mlen;
 	/* Check HMAC of encrypted ticket */
 	HMAC_Update(&hctx, etick, eticklen);

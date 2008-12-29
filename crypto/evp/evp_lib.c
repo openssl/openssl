@@ -256,7 +256,10 @@ int EVP_MD_pkey_type(const EVP_MD *md)
 int EVP_MD_size(const EVP_MD *md)
 	{
 	if (!md)
+		{
+		EVPerr(EVP_F_EVP_MD_SIZE, EVP_R_MESSAGE_DIGEST_IS_NULL);
 		return -1;
+		}
 	return md->md_size;
 	}
 

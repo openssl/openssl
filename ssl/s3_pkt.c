@@ -414,6 +414,7 @@ printf("\n");
 		{
 		/* !clear => s->read_hash != NULL => mac_size != -1 */
 		mac_size=EVP_MD_CTX_size(s->read_hash);
+		OPENSSL_assert(mac_size >= 0);
 
 		if (rr->length > SSL3_RT_MAX_COMPRESSED_LENGTH+extra+mac_size)
 			{
@@ -444,7 +445,7 @@ printf("\n");
 #endif
 			}
 		i=s->method->ssl3_enc->mac(s,md,0);
-		if (mac == NULL || memcmp(md, mac, mac_size) != 0)
+		if (i < 0 || mac == NULL || memcmp(md, mac, mac_size) != 0)
 			{
 			decryption_failed_or_bad_record_mac = 1;
 			}
@@ -649,7 +650,11 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	if (clear)
 		mac_size=0;
 	else
+		{
 		mac_size=EVP_MD_CTX_size(s->write_hash);
+		if (mac_size < 0)
+			goto err;
+		}
 
 	/* 'create_empty_fragment' is true only when this function calls itself */
 	if (!clear && !create_empty_fragment && !s->s3->empty_fragment_done)
@@ -747,7 +752,8 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 	if (mac_size != 0)
 		{
-		s->method->ssl3_enc->mac(s,&(p[wr->length]),1);
+		if (s->method->ssl3_enc->mac(s,&(p[wr->length]),1) < 0)
+			goto err;
 		wr->length+=mac_size;
 		wr->input=p;
 		wr->data=p;

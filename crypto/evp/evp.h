@@ -1183,6 +1183,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_DIGESTINIT_EX				 128
 #define EVP_F_EVP_ENCRYPTFINAL_EX			 127
 #define EVP_F_EVP_MD_CTX_COPY_EX			 110
+#define EVP_F_EVP_MD_SIZE				 162
 #define EVP_F_EVP_OPENINIT				 102
 #define EVP_F_EVP_PBE_ALG_ADD				 115
 #define EVP_F_EVP_PBE_ALG_ADD_TYPE			 160
@@ -1262,6 +1263,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_INVALID_OPERATION				 148
 #define EVP_R_IV_TOO_LARGE				 102
 #define EVP_R_KEYGEN_FAILURE				 120
+#define EVP_R_MESSAGE_DIGEST_IS_NULL			 159
 #define EVP_R_METHOD_NOT_SUPPORTED			 144
 #define EVP_R_MISSING_PARAMETERS			 103
 #define EVP_R_NO_CIPHER_SET				 131

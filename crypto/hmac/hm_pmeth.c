@@ -157,7 +157,11 @@ static int hmac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 	{
 	unsigned int hlen;
 	HMAC_PKEY_CTX *hctx = ctx->data;
-	*siglen = EVP_MD_CTX_size(mctx);
+	int l = EVP_MD_CTX_size(mctx);
+
+	if (l < 0)
+		return 0;
+	*siglen = l;
 	if (!sig)
 		return 1;
 
