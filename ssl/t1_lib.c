@@ -1197,7 +1197,7 @@ int ssl_check_clienthello_tlsext(SSL *s)
  	 * Note: this must be called after servername callbacks in case 
  	 * the certificate has changed.
  	 */
-	if ((s->tlsext_status_type != -1) && s->ctx->tlsext_status_cb)
+	if ((s->tlsext_status_type != -1) && s->ctx && s->ctx->tlsext_status_cb)
 		{
 		int r;
 		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
