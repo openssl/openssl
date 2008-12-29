@@ -1777,7 +1777,7 @@ int ssl3_get_cert_status(SSL *s)
 		goto f_err;
 		}
 	n2l3(p, resplen);
-	if (resplen + 4 != n)
+	if (resplen + 4 != (unsigned long)n)
 		{
 		al = SSL_AD_DECODE_ERROR;
 		SSLerr(SSL_F_SSL3_GET_CERT_STATUS,SSL_R_LENGTH_MISMATCH);
