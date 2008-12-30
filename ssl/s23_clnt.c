@@ -368,6 +368,10 @@ static int ssl23_client_hello(SSL *s)
 				ch_len=SSL2_MAX_CHALLENGE_LENGTH;
 
 			/* write out sslv2 challenge */
+			/* Note that ch_len must be <= SSL3_RANDOM_SIZE (32),
+			   because it is one of SSL2_MAX_CHALLENGE_LENGTH (32)
+			   or SSL2_MAX_CHALLENGE_LENGTH (16), but leave the
+			   check in for futurproofing */
 			if (SSL3_RANDOM_SIZE < ch_len)
 				i=SSL3_RANDOM_SIZE;
 			else
@@ -544,6 +548,10 @@ static int ssl23_get_server_hello(SSL *s)
 			ch_len=SSL2_MAX_CHALLENGE_LENGTH;
 
 		/* write out sslv2 challenge */
+		/* Note that ch_len must be <= SSL3_RANDOM_SIZE (32), because
+		   it is one of SSL2_MAX_CHALLENGE_LENGTH (32) or
+		   SSL2_MAX_CHALLENGE_LENGTH (16), but leave the check in for
+		   futurproofing */
 		i=(SSL3_RANDOM_SIZE < ch_len)
 			?SSL3_RANDOM_SIZE:ch_len;
 		s->s2->challenge_length=i;
