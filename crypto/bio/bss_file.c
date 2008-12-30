@@ -279,7 +279,7 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 #endif
 		{
 #if defined(OPENSSL_SYS_WINDOWS)
-		int fd = fileno((FILE*)ptr);
+		int fd = _fileno((FILE*)ptr);
 		if (num & BIO_FP_TEXT)
 			_setmode(fd,_O_TEXT);
 		else

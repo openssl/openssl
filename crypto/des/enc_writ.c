@@ -153,7 +153,11 @@ int DES_enc_write(int fd, const void *_buf, int len,
 		{
 		/* eay 26/08/92 I was not doing writing from where we
 		 * got up to. */
+#ifndef _WIN32
 		i=write(fd,(void *)&(outbuf[j]),outnum-j);
+#else
+		i=_write(fd,(void *)&(outbuf[j]),outnum-j);
+#endif
 		if (i == -1)
 			{
 #ifdef EINTR

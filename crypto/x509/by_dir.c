@@ -74,6 +74,10 @@
 #include <openssl/lhash.h>
 #include <openssl/x509.h>
 
+#ifdef _WIN32
+#define stat	_stat
+#endif
+
 typedef struct lookup_dir_st
 	{
 	BUF_MEM *buffer;

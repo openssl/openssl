@@ -269,6 +269,7 @@ extern "C" {
 #      define _WIN32_WINNT 0x0400
 #    endif
 #    include <windows.h>
+#    include <stdio.h>
 #    include <stddef.h>
 #    include <errno.h>
 #    include <string.h>
@@ -284,12 +285,37 @@ static unsigned int _strlen31(const char *str)
 #    endif
 #    include <malloc.h>
 #    if defined(_MSC_VER) && _MSC_VER<=1200 && defined(_MT) && defined(isspace)
-       /* compensate for bug is VC6 ctype.h */
+       /* compensate for bug in VC6 ctype.h */
 #      undef isspace
 #      undef isdigit
 #      undef isalnum
 #      undef isupper
 #      undef isxdigit
+#    endif
+#    if defined(_MSC_VER) && !defined(_DLL) && defined(stdin)
+#      if _MSC_VER>=1300
+#        undef stdin
+#        undef stdout
+#        undef stderr
+         FILE *__iob_func();
+#        define stdin  (&__iob_func()[0])
+#        define stdout (&__iob_func()[1])
+#        define stderr (&__iob_func()[2])
+#      elif defined(I_CAN_LIVE_WITH_LNK4049)
+#        undef stdin
+#        undef stdout
+#        undef stderr
+         /* pre-1300 has __p__iob(), but it's available only in msvcrt.lib,
+          * or in other words with /MD. Declaring implicit import, i.e.
+          * with _imp_ prefix, works correctly with all compiler options,
+          * but without /MD results in LINK warning LNK4049:
+          * 'locally defined symbol "__iob" imported'.
+          */
+         extern FILE *_imp___iob;
+#        define stdin  (&_imp___iob[0])
+#        define stdout (&_imp___iob[1])
+#        define stderr (&_imp___iob[2])
+#      endif
 #    endif
 #  endif
 #  include <io.h>
