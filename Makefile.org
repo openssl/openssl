@@ -225,7 +225,7 @@ BUILD_CMD=  if [ -d "$$dir" ]; then \
 	    fi
 RECURSIVE_BUILD_CMD=for dir in $(DIRS); do $(BUILD_CMD); done
 BUILD_ONE_CMD=\
-	if echo " $(DIRS) " | grep " $$dir " >/dev/null 2>/dev/null; then \
+	if expr " $(DIRS) " : ".* $$dir " >/dev/null 2>&1; then \
 		$(BUILD_CMD); \
 	fi
 

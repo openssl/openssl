@@ -93,7 +93,7 @@ LINK_APP=	\
   ( $(SET_X);   \
     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
     LDCMD="$${LDCMD:-$(CC)}"; LDFLAGS="$${LDFLAGS:-$(CFLAGS)}"; \
-    LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
+    LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t;d' | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $${LDCMD} $${LDFLAGS} -o $${APPNAME:=$(APPNAME)} $(OBJECTS) $${LIBDEPS} )
@@ -103,7 +103,7 @@ LINK_SO=	\
     LIBDEPS="$${LIBDEPS:-$(LIBDEPS)}"; \
     SHAREDCMD="$${SHAREDCMD:-$(CC)}"; \
     SHAREDFLAGS="$${SHAREDFLAGS:-$(CFLAGS) $(SHARED_LDFLAGS)}"; \
-    LIBPATH=`for x in $$LIBDEPS; do if echo $$x | grep '^ *-L' > /dev/null 2>&1; then echo $$x | sed -e 's/^ *-L//'; fi; done | uniq`; \
+    LIBPATH=`for x in $$LIBDEPS; do echo $$x; done | sed -e 's/^ *-L//;t;d' | uniq`; \
     LIBPATH=`echo $$LIBPATH | sed -e 's/ /:/g'`; \
     LD_LIBRARY_PATH=$$LIBPATH:$$LD_LIBRARY_PATH \
     $${SHAREDCMD} $${SHAREDFLAGS} \
