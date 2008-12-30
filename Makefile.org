@@ -219,7 +219,8 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		SHA1_ASM_OBJ='${SHA1_ASM_OBJ}'			\
 		MD5_ASM_OBJ='${MD5_ASM_OBJ}'			\
 		RMD160_ASM_OBJ='${RMD160_ASM_OBJ}'		\
-		FIPSLIBDIR='${FIPSLIBDIR}' FIPSCANLIB='${FIPSCANLIB}' \
+		FIPSLIBDIR='${FIPSLIBDIR}'			\
+		FIPSCANLIB="$${FIPSCANLIB:-$(FIPSCANLIB)}"	\
 		FIPSCANISTERINTERNAL='${FIPSCANISTERINTERNAL}'	\
 		FIPS_EX_OBJ='${FIPS_EX_OBJ}'	\
 		THIS=$${THIS:-$@} MAKEFILE=Makefile MAKEOVERRIDES=
@@ -240,7 +241,8 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 # subdirectories defined in $(DIRS).  It requires that the target
 # is given through the shell variable `target'.
 BUILD_CMD=  if [ -d "$$dir" ]; then \
-	    (	cd $$dir && echo "making $$target in $$dir..." && \
+	    (	[ $$target != all -a -z "$(FIPSCANLIB)" ] && FIPSCANLIB=/dev/null; \
+		cd $$dir && echo "making $$target in $$dir..." && \
 		$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. DIR=$$dir $$target \
 	    ) || exit 1; \
 	    fi
