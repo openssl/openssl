@@ -218,7 +218,7 @@ STACK_OF(BLOCK) *d2i_ASN1_SET(STACK_OF(BLOCK) **a, const unsigned char **pp,
 		if ((s=d2i(NULL,&c.p,c.slen)) == NULL)
 			{
 			ASN1err(ASN1_F_D2I_ASN1_SET,ASN1_R_ERROR_PARSING_SET_ELEMENT);
-			asn1_add_error(*pp,(int)(c.q- *pp));
+			asn1_add_error(*pp,(int)(c.p- *pp));
 			goto err;
 			}
 		if (!sk_BLOCK_push(ret,s)) goto err;
