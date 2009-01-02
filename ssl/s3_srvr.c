@@ -2386,8 +2386,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 
 		EVP_PKEY_free(clnt_pub_pkey);
 		EC_POINT_free(clnt_ecpoint);
-		if (srvr_ecdh != NULL) 
-			EC_KEY_free(srvr_ecdh);
+		EC_KEY_free(srvr_ecdh);
 		BN_CTX_free(bn_ctx);
 
 		/* Compute the master secret */
