@@ -454,6 +454,7 @@ $ EXHEADER_BF := blowfish.h
 $ EXHEADER_CAST := cast.h
 $ EXHEADER_CAMELLIA := camellia.h
 $ EXHEADER_SEED := seed.h
+$ EXHEADER_MODES := modes.h
 $ EXHEADER_BN := bn.h
 $ EXHEADER_EC := ec.h
 $ EXHEADER_RSA := rsa.h
