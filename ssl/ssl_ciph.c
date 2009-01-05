@@ -142,7 +142,9 @@
 
 #include <stdio.h>
 #include <openssl/objects.h>
+#ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
+#endif
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
