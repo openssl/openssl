@@ -115,7 +115,10 @@
  */
 #include <stdio.h>
 #include <openssl/objects.h>
+#ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
+#endif
+
 #include "ssl_locl.h"
 
 #define SSL_ENC_DES_IDX		0

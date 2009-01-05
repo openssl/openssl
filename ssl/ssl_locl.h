@@ -124,7 +124,9 @@
 #include "e_os.h"
 
 #include <openssl/buffer.h>
+#ifndef OPENSSL_NO_COMP
 #include <openssl/comp.h>
+#endif
 #include <openssl/bio.h>
 #include <openssl/stack.h>
 #ifndef OPENSSL_NO_RSA
@@ -500,6 +502,7 @@ typedef struct ssl3_enc_method
 	int (*alert_value)(int);
 	} SSL3_ENC_METHOD;
 
+#ifndef OPENSSL_NO_COMP
 /* Used for holding the relevant compression methods loaded into SSL_CTX */
 typedef struct ssl3_comp_st
 	{
@@ -507,6 +510,7 @@ typedef struct ssl3_comp_st
 	char *name;	/* Text name used for the compression type */
 	COMP_METHOD *method; /* The method :-) */
 	} SSL3_COMP;
+#endif
 
 extern SSL3_ENC_METHOD ssl3_undef_enc_method;
 OPENSSL_EXTERN SSL_CIPHER ssl2_ciphers[];
