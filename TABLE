@@ -1838,7 +1838,7 @@ $arflags      =
 
 *** debug-steve64
 $cc           = gcc
-$cflags       = -m64 -DL_ENDIAN -DTERMIO -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -DOPENSSL_NO_DEPRECATED -g -pedantic -Wall -Werror -Wno-long-long -DMD32_REG_T=int
+$cflags       = -m64 -DL_ENDIAN -DTERMIO -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -DOPENSSL_NO_DEPRECATED -g -pedantic -Wall -Werror -Wno-long-long -Wsign-compare -DMD32_REG_T=int
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
