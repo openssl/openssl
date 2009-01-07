@@ -2844,7 +2844,7 @@ int ssl3_get_client_certificate(SSL *s)
 	else
 		{
 		i=ssl_verify_cert_chain(s,sk);
-		if (!i)
+		if (i <= 0)
 			{
 			al=ssl_verify_alarm_type(s->verify_result);
 			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_NO_CERTIFICATE_RETURNED);

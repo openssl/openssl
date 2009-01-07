@@ -727,7 +727,11 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
- Changes between 0.9.8i and 0.9.8j  [xx XXX xxxx]
+ Changes between 0.9.8i and 0.9.8j  [07 Jan 2009]
+
+  *) Properly check EVP_VerifyFinal() and similar return values
+     (CVE-2008-5077).
+     [Ben Laurie, Bodo Moeller, Google Security Team]
 
   *) Allow the CHIL engine to be loaded, whether the application is
      multithreaded or not. (This does not release the developer from the

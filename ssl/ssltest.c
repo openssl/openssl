@@ -2177,7 +2177,7 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 
 	if (cb_arg->proxy_auth)
 		{
-		if (ok)
+		if (ok > 0)
 			{
 			const char *cond_end = NULL;
 
