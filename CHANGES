@@ -12,10 +12,6 @@
      (CVE-2008-5077).
      [Ben Laurie, Bodo Moeller, Google Security Team]
 
-  *) Properly check EVP_VerifyFinal() and similar return values
-     (CVE-2008-5077).
-     [Ben Laurie, Bodo Moeller, Google Security Team]
-
   *) Enable TLS extensions by default.
      [Ben Laurie]
 
