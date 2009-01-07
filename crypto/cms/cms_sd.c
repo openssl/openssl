@@ -830,7 +830,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
 	cms_fixup_mctx(&mctx, si->pkey);
 	r = EVP_VerifyFinal(&mctx,
 			si->signature->data, si->signature->length, si->pkey);
-	if (!r)
+	if (r <= 0)
 		CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, CMS_R_VERIFICATION_FAILURE);
 	err:
 	EVP_MD_CTX_cleanup(&mctx);

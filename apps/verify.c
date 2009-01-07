@@ -266,7 +266,7 @@ static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X
 
 	ret=0;
 end:
-	if (i)
+	if (i > 0)
 		{
 		fprintf(stdout,"OK\n");
 		ret=1;
@@ -367,4 +367,3 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 		ERR_clear_error();
 	return(ok);
 	}
-

@@ -1044,7 +1044,7 @@ int ssl2_set_certificate(SSL *s, int type, int len, const unsigned char *data)
 
 	i=ssl_verify_cert_chain(s,sk);
 		
-	if ((s->verify_mode != SSL_VERIFY_NONE) && (!i))
+	if ((s->verify_mode != SSL_VERIFY_NONE) && (i <= 0))
 		{
 		SSLerr(SSL_F_SSL2_SET_CERTIFICATE,SSL_R_CERTIFICATE_VERIFY_FAILED);
 		goto err;
