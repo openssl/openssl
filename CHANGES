@@ -2,7 +2,11 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8i and 0.9.8j  [xx XXX xxxx]
+ Changes between 0.9.8i and 0.9.8j  [07 Jan 2009]
+
+  *) Properly check EVP_VerifyFinal() and similar return values
+     (CVE-2008-5077).
+     [Ben Laurie, Bodo Moeller, Google Security Team]
 
   *) Properly check EVP_VerifyFinal() and similar return values
      (CVE-2008-5077).

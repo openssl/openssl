@@ -1,5 +1,5 @@
 
- OpenSSL 0.9.8i
+ OpenSSL 0.9.8j
 
  Copyright (c) 1998-2008 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson

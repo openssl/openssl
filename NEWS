@@ -5,6 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8i and OpenSSL 0.9.8j:
+
+      o Fix security issue (CVE-2008-5077)
+      o Merge FIPS 140-2 branch code.
+
   Major changes between OpenSSL 0.9.8g and OpenSSL 0.9.8h:
 
       o CryptoAPI ENGINE support.
