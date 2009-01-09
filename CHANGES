@@ -733,6 +733,9 @@
      (CVE-2008-5077).
      [Ben Laurie, Bodo Moeller, Google Security Team]
 
+  *) Enable TLS extensions by default.
+     [Ben Laurie]
+
   *) Allow the CHIL engine to be loaded, whether the application is
      multithreaded or not. (This does not release the developer from the
      obligation to set up the dynamic locking callbacks.)
