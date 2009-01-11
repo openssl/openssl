@@ -772,6 +772,9 @@ void CRYPTO_mem_leaks(BIO *b)
 		{
 		BIO_printf(b,"%ld bytes leaked in %d chunks\n",
 			   ml.bytes,ml.chunks);
+#ifdef CRYPTO_MDEBUG_ABORT
+		abort();
+#endif
 		}
 	else
 		{
