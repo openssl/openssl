@@ -805,8 +805,8 @@ int tls1_final_finish_mac(SSL *s,
 		{
 		if (mask & s->s3->tmp.new_cipher->algorithm2)
 			{
-			unsigned int hashsize = EVP_MD_size(md);
-			if (hashsize < 0 || hashsize > (sizeof buf - (size_t)(q-buf)))
+			int hashsize = EVP_MD_size(md);
+			if (hashsize < 0 || hashsize > (int)(sizeof buf - (size_t)(q-buf)))
 				{
 				/* internal error: 'buf' is too small for this cipersuite! */
 				err = 1;
@@ -815,7 +815,7 @@ int tls1_final_finish_mac(SSL *s,
 				{
 				EVP_MD_CTX_copy_ex(&ctx,s->s3->handshake_dgst[idx]);
 				EVP_DigestFinal_ex(&ctx,q,&i);
-				if (i != hashsize) /* can't really happen */
+				if (i != (unsigned int)hashsize) /* can't really happen */
 					err = 1;
 				q+=i;
 				}

@@ -130,7 +130,7 @@ static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 	unsigned char mac[MAX_MAC_SIZE];
 	unsigned char *p;
 	int i;
-	unsigned int mac_size;
+	int mac_size;
 
  ssl2_read_again:
 	if (SSL_in_init(s) && !s->in_handshake)
@@ -263,7 +263,7 @@ static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 		/* added a check for length > max_size in case
 		 * encryption was not turned on yet due to an error */
 		if ((!s->s2->clear_text) &&
-			(s->s2->rlength >= mac_size))
+			(s->s2->rlength >= (unsigned int)mac_size))
 			{
 			ssl2_enc(s,0);
 			s->s2->ract_data_length-=mac_size;
