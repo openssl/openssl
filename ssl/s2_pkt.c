@@ -130,7 +130,7 @@ static int ssl2_read_internal(SSL *s, void *buf, int len, int peek)
 	unsigned char mac[MAX_MAC_SIZE];
 	unsigned char *p;
 	int i;
-	int mac_size;
+	unsigned int mac_size;
 
  ssl2_read_again:
 	if (SSL_in_init(s) && !s->in_handshake)
