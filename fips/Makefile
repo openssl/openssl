@@ -123,7 +123,7 @@ fips_premain_dso$(EXE_EXT): fips_premain.c
 		$(FIPSLIBDIR)fipscanister.o ../libcrypto.a $(EX_LIBS)
 # this is executed only when linking with external fipscanister.o
 fips_standalone_sha1$(EXE_EXT):	sha/fips_standalone_sha1.c
-	$(CC) $(CFLAGS) -DFIPSCANISTER_O -o $@ sha/fips_standalone_sha1.c $(FIPSLIBDIR)fipscanister.o
+	$(CC) $(CFLAGS) -DFIPSCANISTER_O -o $@ sha/fips_standalone_sha1.c $(FIPSLIBDIR)fipscanister.o $(EX_LIBS)
 
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)
