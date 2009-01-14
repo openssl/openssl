@@ -302,4 +302,5 @@ $code.=<<___;
 stringz	"SHA1 block transform for IA64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
+$output=shift and open STDOUT,">$output";
 print $code;
