@@ -142,7 +142,7 @@ int PEM_write_bio_PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
                                                pem_password_cb *cb, void *u)
 	{
 	char pem_str[80];
-	if (!x->ameth || !x->ameth->old_priv_encode)
+	if (!x->ameth || x->ameth->priv_encode)
 		return PEM_write_bio_PKCS8PrivateKey(bp, x, enc,
 							(char *)kstr, klen,
 							cb, u);

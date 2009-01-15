@@ -4,6 +4,11 @@
 
  Changes between 0.9.8j and 0.9.9  [xx XXX xxxx]
 
+  *) Make PKCS#8 the default write format for private keys, replacing the
+     traditional format. This form is standardised, more secure and doesn't
+     include an implicit MD5 dependency.
+     [Steve Henson]
+
   *) Add a $gcc_devteam_warn option to Configure. The idea is that any code
      committed to OpenSSL should pass this lot as a minimum.
      [Steve Henson]
