@@ -65,7 +65,7 @@ void OPENSSL_cleanse(void *p,size_t len) {}
 static void hmac_init(SHA_CTX *md_ctx,SHA_CTX *o_ctx,
 		      const char *key)
     {
-    int len=strlen(key);
+    size_t len=strlen(key);
     int i;
     unsigned char keymd[HMAC_MAX_MD_CBLOCK];
     unsigned char pad[HMAC_MAX_MD_CBLOCK];
@@ -139,7 +139,7 @@ int main(int argc,char **argv)
 	for( ; ; )
 	    {
 	    char buf[1024];
-	    int l=fread(buf,1,sizeof buf,f);
+	    size_t l=fread(buf,1,sizeof buf,f);
 
 	    if(l == 0)
 		{
