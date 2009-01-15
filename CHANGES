@@ -4,6 +4,13 @@
 
  Changes between 0.9.8j and 0.9.9  [xx XXX xxxx]
 
+  *) Enhance the hash format used for certificate directory links. The new
+     form uses the canonical encoding (meaning equivalent names will work
+     even if they aren't identical) and uses SHA1 instead of MD5. This form
+     is incompatible with the older format and as a result c_rehash should
+     be used to rebuild symbolic links.
+     [Steve Henson]
+
   *) Make PKCS#8 the default write format for private keys, replacing the
      traditional format. This form is standardised, more secure and doesn't
      include an implicit MD5 dependency.

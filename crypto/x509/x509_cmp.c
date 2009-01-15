@@ -198,11 +198,27 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 
 	}
 
+unsigned long X509_NAME_hash(X509_NAME *x)
+	{
+	unsigned long ret=0;
+	unsigned char md[16];
+
+	/* Make sure X509_NAME structure contains valid cached encoding */
+	i2d_X509_NAME(x,NULL);
+	EVP_Digest(x->canon_enc, x->canon_enclen, md, NULL, EVP_sha1(), NULL);
+
+	ret=(	((unsigned long)md[0]     )|((unsigned long)md[1]<<8L)|
+		((unsigned long)md[2]<<16L)|((unsigned long)md[3]<<24L)
+		)&0xffffffffL;
+	return(ret);
+	}
+
 
 #ifndef OPENSSL_NO_MD5
 /* I now DER encode the name and hash it.  Since I cache the DER encoding,
  * this is reasonably efficient. */
-unsigned long X509_NAME_hash(X509_NAME *x)
+
+unsigned long X509_NAME_hash_old(X509_NAME *x)
 	{
 	unsigned long ret=0;
 	unsigned char md[16];

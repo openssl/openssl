@@ -963,6 +963,7 @@ unsigned long	X509_subject_name_hash(X509 *x);
 int		X509_cmp(const X509 *a, const X509 *b);
 int		X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
 unsigned long	X509_NAME_hash(X509_NAME *x);
+unsigned long	X509_NAME_hash_old(X509_NAME *x);
 
 int		X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b);
 int		X509_CRL_match(const X509_CRL *a, const X509_CRL *b);
