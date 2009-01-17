@@ -62,6 +62,10 @@
    VAX. */
 #ifdef OPENSSL_SYS_VMS
 
+/* Hack a long name in crypto/cryptlib.c */
+#undef int_CRYPTO_set_do_dynlock_callback
+#define int_CRYPTO_set_do_dynlock_callback	int_CRYPTO_set_do_dynlock_cb
+
 /* Hack a long name in crypto/ex_data.c */
 #undef CRYPTO_get_ex_data_implementation
 #define CRYPTO_get_ex_data_implementation	CRYPTO_get_ex_data_impl
