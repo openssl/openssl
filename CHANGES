@@ -4,7 +4,10 @@
 
  Changes between 0.9.8j and 0.9.8k  [xx XXX xxxx]
 
-  *)
+  *) Allow CC in the environment to override the automatically chosen
+     compiler. Note that nothing is done to ensure flags work with the
+     chosen compiler.
+     [Ben Laurie]
 
  Changes between 0.9.8i and 0.9.8j  [07 Jan 2009]
 

@@ -399,11 +399,8 @@ exit 0
 # this is where the translation occurs into SSLeay terms
 # ---------------------------------------------------------------------------
 
-# figure out if gcc is available and if so we use it otherwise
-# we fallback to whatever cc does on the system
 GCCVER=`(gcc -dumpversion) 2>/dev/null`
 if [ "$GCCVER" != "" ]; then
-  CC=gcc
   # then strip off whatever prefix egcs prepends the number with...
   # Hopefully, this will work for any future prefixes as well.
   GCCVER=`echo $GCCVER | LC_ALL=C sed 's/^[a-zA-Z]*\-//'`
@@ -412,8 +409,17 @@ if [ "$GCCVER" != "" ]; then
   # major and minor version numbers.
   # peak single digit before and after first dot, e.g. 2.95.1 gives 29
   GCCVER=`echo $GCCVER | sed 's/\([0-9]\)\.\([0-9]\).*/\1\2/'`
-else
-  CC=cc
+fi
+
+# Only set CC if not supplied already
+if [ -z "$CC" ]; then
+# figure out if gcc is available and if so we use it otherwise
+# we fallback to whatever cc does on the system
+  if [ "$GCCVER" != "" ]; then
+    CC=gcc
+  else
+    CC=cc
+  fi
 fi
 GCCVER=${GCCVER:-0}
 if [ "$SYSTEM" = "HP-UX" ];then

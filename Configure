@@ -948,6 +948,10 @@ print "Configuring for $target\n";
 
 my @fields = split(/\s*:\s*/,$table{$target} . ":" x 30 , -1);
 my $cc = $fields[$idx_cc];
+# Allow environment CC to override compiler...
+if($ENV{CC}) {
+    $cc = $ENV{CC};
+}
 my $cflags = $fields[$idx_cflags];
 my $unistd = $fields[$idx_unistd];
 my $thread_cflag = $fields[$idx_thread_cflag];
