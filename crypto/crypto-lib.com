@@ -169,7 +169,7 @@ $ LIB_SHA = "sha_dgst,sha1dgst,sha_one,sha1_one,sha256,sha512"
 $ LIB_MDC2 = "mdc2dgst,mdc2_one"
 $ LIB_HMAC = "hmac"
 $ LIB_RIPEMD = "rmd_dgst,rmd_one"
-$ LIB_DES = "set_key,ecb_enc,cbc_enc,"+ -
+$ LIB_DES = "des_lib,set_key,ecb_enc,cbc_enc,"+ -
 	"ecb3_enc,cfb64enc,cfb64ede,cfb_enc,ofb64ede,"+ -
 	"enc_read,enc_writ,ofb64enc,"+ -
 	"ofb_enc,str2key,pcbc_enc,qud_cksm,rand_key,"+ -
