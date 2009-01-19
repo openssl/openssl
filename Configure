@@ -1052,8 +1052,6 @@ foreach (sort (keys %disabled))
 	print "\n";
 	}
 
-push @skip, "fips" unless $fips;
-
 my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
 
 $IsMK1MF=1 if ($target eq "mingw" && $^O ne "cygwin" && !is_msys());
