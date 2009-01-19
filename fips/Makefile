@@ -179,8 +179,8 @@ install:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 	@target=install; $(RECURSIVE_MAKE)
-	@cp -p -f fipscanister.o fipscanister.o.sha1 fips_premain.c \
-		fips_premain.c.sha1 \
+	@cp -p -f $(FIPSLIBDIR)fipscanister.o $(FIPSLIBDIR)fipscanister.o.sha1 \
+		$(FIPSLIBDIR)fips_premain.c $(FIPSLIBDIR)fips_premain.c.sha1 \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/; \
 	chmod 0444 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/fips*
 

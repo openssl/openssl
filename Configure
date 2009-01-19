@@ -1052,6 +1052,7 @@ foreach (sort (keys %disabled))
 	print "\n";
 	}
 
+push @skip, "fips" unless $fips;
 
 my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
 
@@ -1447,6 +1448,7 @@ while (<IN>)
 			}
 		}
 	$sdirs = 0 unless /\\$/;
+        s/fips // if (/^DIRS=/ && !$fips);
 	s/^VERSION=.*/VERSION=$version/;
 	s/^MAJOR=.*/MAJOR=$major/;
 	s/^MINOR=.*/MINOR=$minor/;
