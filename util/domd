@@ -22,7 +22,7 @@ if [ "$MAKEDEPEND" = "gcc" ]; then
     done
     sed -e '/^# DO NOT DELETE.*/,$d' < Makefile > Makefile.tmp
     echo '# DO NOT DELETE THIS LINE -- make depend depends on it.' >> Makefile.tmp
-    gcc -D OPENSSL_DOING_MAKEDEPEND -M $args >> Makefile.tmp
+    ${CC:-gcc} -D OPENSSL_DOING_MAKEDEPEND -M $args >> Makefile.tmp
     ${PERL} $TOP/util/clean-depend.pl < Makefile.tmp > Makefile.new
     rm -f Makefile.tmp
 else
