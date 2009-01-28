@@ -213,6 +213,8 @@ static int asn1_parse2(BIO *bp, const unsigned char **pp, long length, int offse
 				(tag == V_ASN1_T61STRING) ||
 				(tag == V_ASN1_IA5STRING) ||
 				(tag == V_ASN1_VISIBLESTRING) ||
+				(tag == V_ASN1_NUMERICSTRING) ||
+				(tag == V_ASN1_UTF8STRING) ||
 				(tag == V_ASN1_UTCTIME) ||
 				(tag == V_ASN1_GENERALIZEDTIME))
 				{
