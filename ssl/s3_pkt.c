@@ -272,7 +272,7 @@ static int ssl3_get_record(SSL *s)
 	unsigned char *p;
 	unsigned char md[EVP_MAX_MD_SIZE];
 	short version;
-	unsigned int mac_size;
+	int mac_size;
 	int clear=0;
 	size_t extra;
 	int decryption_failed_or_bad_record_mac = 0;
@@ -427,7 +427,7 @@ printf("\n");
 #endif			
 			}
 		/* check the MAC for rr->input (it's in mac_size bytes at the tail) */
-		if (rr->length >= mac_size)
+		if (rr->length >= (unsigned int)mac_size)
 			{
 			rr->length -= mac_size;
 			mac = &rr->data[rr->length];
@@ -445,7 +445,7 @@ printf("\n");
 #endif
 			}
 		i=s->method->ssl3_enc->mac(s,md,0);
-		if (i < 0 || mac == NULL || memcmp(md, mac, mac_size) != 0)
+		if (i < 0 || mac == NULL || memcmp(md, mac, (size_t)mac_size) != 0)
 			{
 			decryption_failed_or_bad_record_mac = 1;
 			}
