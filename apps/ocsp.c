@@ -57,6 +57,9 @@
  */
 #ifndef OPENSSL_NO_OCSP
 
+#define _XOPEN_SOURCE_EXTENDED	/* So fd_set and friends get properly defined
+				   on OpenVMS */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
