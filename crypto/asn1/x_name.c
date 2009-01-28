@@ -400,6 +400,7 @@ static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in)
 		out->type = in->type;
 		if (!ASN1_STRING_set(out, in->data, in->length))
 			return 0;
+		return 1;
 		}
 
 	out->type = V_ASN1_UTF8STRING;
