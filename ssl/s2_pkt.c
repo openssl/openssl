@@ -515,7 +515,7 @@ static int write_pending(SSL *s, const unsigned char *buf, unsigned int len)
 
 static int n_do_ssl_write(SSL *s, const unsigned char *buf, unsigned int len)
 	{
-	unsigned int j,k,olen,size,bs;
+	unsigned int j,k,olen,p,size,bs;
 	int mac_size;
 	register unsigned char *pp;
 
