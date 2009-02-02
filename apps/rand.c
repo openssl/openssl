@@ -68,7 +68,8 @@
 
 /* -out file         - write to file
  * -rand file:file   - PRNG seed files
- * -base64           - encode output
+ * -base64           - base64 encode output
+ * -hex              - hex encode output
  * num               - write 'num' bytes
  */
 
@@ -84,6 +85,7 @@ int MAIN(int argc, char **argv)
 	char *outfile = NULL;
 	char *inrand = NULL;
 	int base64 = 0;
+	int hex = 0;
 	BIO *out = NULL;
 	int num = -1;
 #ifndef OPENSSL_NO_ENGINE
@@ -133,6 +135,13 @@ int MAIN(int argc, char **argv)
 			else
 				badopt = 1;
 			}
+		else if (strcmp(argv[i], "-hex") == 0)
+			{
+			if (!hex)
+				hex = 1;
+			else
+				badopt = 1;
+			}
 		else if (isdigit((unsigned char)argv[i][0]))
 			{
 			if (num < 0)
@@ -148,6 +157,9 @@ int MAIN(int argc, char **argv)
 			badopt = 1;
 		}
 
+	if (hex && base64)
+		badopt = 1;
+
 	if (num < 0)
 		badopt = 1;
 	
@@ -160,7 +172,8 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err, "-engine e             - use engine e, possibly a hardware device.\n");
 #endif
 		BIO_printf(bio_err, "-rand file%cfile%c... - seed PRNG from files\n", LIST_SEPARATOR_CHAR, LIST_SEPARATOR_CHAR);
-		BIO_printf(bio_err, "-base64               - encode output\n");
+		BIO_printf(bio_err, "-base64               - base64 encode output\n");
+		BIO_printf(bio_err, "-hex                  - hex encode output\n");
 		goto err;
 		}
 
@@ -210,7 +223,14 @@ int MAIN(int argc, char **argv)
 		r = RAND_bytes(buf, chunk);
 		if (r <= 0)
 			goto err;
-		BIO_write(out, buf, chunk);
+		if (!hex) 
+			BIO_write(out, buf, chunk);
+		else
+			{
+			for (i = 0; i < chunk; i++)
+				BIO_printf(out, "%02x", buf[i]);
+			BIO_puts(out, "\n");
+			}
 		num -= chunk;
 		}
 	(void)BIO_flush(out);

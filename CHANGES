@@ -745,6 +745,9 @@
 
  Changes between 0.9.8j and 0.9.8k  [xx XXX xxxx]
 
+  *) New -hex option for openssl rand.
+     [Matthieu Herrb]
+
   *) Print out UTF8String and NumericString when parsing ASN1.
      [Steve Henson]
 
