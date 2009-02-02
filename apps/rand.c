@@ -229,7 +229,6 @@ int MAIN(int argc, char **argv)
 			{
 			for (i = 0; i < chunk; i++)
 				BIO_printf(out, "%02x", buf[i]);
-			BIO_puts(out, "\n");
 			}
 		num -= chunk;
 		}
