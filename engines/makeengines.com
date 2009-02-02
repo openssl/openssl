@@ -34,7 +34,7 @@ $! Set the names of the engines we want to build
 $!
 $ ENGINES = "," + P6
 $ IF ENGINES .EQS. "," THEN -
-	ENGINES = ",4758cca,aep,atalla,cswift,chil,nuron,sureware,ubsec"
+	ENGINES = ",4758cca,aep,atalla,cswift,chil,nuron,sureware,ubsec,capi"
 $!
 $! Set the default TCP/IP library to link against if needed
 $!
@@ -87,6 +87,7 @@ $ ENGINE_chil = "e_chil"
 $ ENGINE_nuron = "e_nuron"
 $ ENGINE_sureware = "e_sureware"
 $ ENGINE_ubsec = "e_ubsec"
+$ ENGINE_capi = "e_capi"
 $!
 $! Define which programs need to be linked with a TCP/IP library
 $!
