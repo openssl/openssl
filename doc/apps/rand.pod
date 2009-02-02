@@ -10,6 +10,7 @@ B<openssl rand>
 [B<-out> I<file>]
 [B<-rand> I<file(s)>]
 [B<-base64>]
+[B<-hex>]
 I<num>
 
 =head1 DESCRIPTION
@@ -40,6 +41,10 @@ all others.
 =item B<-base64>
 
 Perform base64 encoding on the output.
+
+=item B<-hex>
+
+Show the output as a hex string.
 
 =back
 
