@@ -233,6 +233,8 @@ int MAIN(int argc, char **argv)
 			}
 		num -= chunk;
 		}
+	if (hex)
+		BIO_puts(out, "\n");
 	(void)BIO_flush(out);
 
 	app_RAND_write_file(NULL, bio_err);
