@@ -3667,7 +3667,8 @@ CRYPTO_set_mem_info_functions           4053	EXIST::FUNCTION:
 RSA_X931_generate_key_ex                4054	EXIST::FUNCTION:RSA
 int_ERR_set_state_func                  4055	EXIST:OPENSSL_FIPS:FUNCTION:
 int_EVP_MD_set_engine_callbacks         4056	EXIST:OPENSSL_FIPS:FUNCTION:ENGINE
-int_CRYPTO_set_do_dynlock_callback      4057	EXIST::FUNCTION:
+int_CRYPTO_set_do_dynlock_callback      4057	EXIST:!VMS:FUNCTION:
+int_CRYPTO_set_do_dynlock_cb            4057	EXIST:VMS:FUNCTION:
 FIPS_rng_stick                          4058	EXIST:OPENSSL_FIPS:FUNCTION:
 EVP_CIPHER_CTX_set_flags                4059	EXIST::FUNCTION:
 BN_X931_generate_prime_ex               4060	EXIST::FUNCTION:
