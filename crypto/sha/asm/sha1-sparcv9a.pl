@@ -112,8 +112,9 @@ ___
 # virtually uniform performance of ~9.3 cycles per SHA1 round. Timings
 # mentioned above are theoretical lower limits. Real-life performance
 # was measured to be 6.6 cycles per SHA1 round on USIIi and 8.3 on
-# USIII. The latter means that processor manual must have an error in
-# instruction latency table or there is some unmentioned shortcut...
+# USIII. The latter is lower than half-round VIS timing, because there
+# are 16 Xupdate-free rounds, which "push down" average theoretical
+# timing to 8 cycles...
 }
 
 # The reference Xupdate procedure is then "strained" over *pairs* of
