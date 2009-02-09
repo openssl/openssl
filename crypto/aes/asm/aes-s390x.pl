@@ -31,12 +31,31 @@
 # Implement AES_set_[en|de]crypt_key. Key schedule setup is avoided
 # for 128-bit keys, if hardware support is detected.
 
+# Januray 2009.
+#
+# Add support for hardware AES192/256 and reschedule instructions to
+# minimize/avoid Address Generation Interlock hazard and to favour
+# dual-issue z10 pipeline. This gave ~25% improvement on z10. The gain
+# should be larger on earlier CPUs, because being dual-issue z10 makes
+# it improssible to eliminate the interlock condition, critial path is
+# not long enough. Yet z10 spends ~24 cycles per byte processed with
+# 128-bit key.
+#
+# Unlike previous version hardware support detection takes place only
+# at the moment of key schedule setup, which is denoted in key->rounds.
+# This is done, because deferred key setup can't be made MT-safe, not
+# for key lengthes longer than 128 bits.
+#
+# Add AES_cbc_encrypt, which gives incredible performance improvement,
+# it was measured to be ~6.6x. It's less than previously mentioned 8x,
+# because software implementation was optimized.
+
 $softonly=0;	# allow hardware support
 
-$t1="%r0";
-$t2="%r1";
-$t3="%r2";	$inp="%r2";
-$out="%r3";	$mask="%r3";	$bits="%r3";
+$t0="%r0";	$mask="%r0";
+$t1="%r1";
+$t2="%r2";	$inp="%r2";
+$t3="%r3";	$out="%r3";	$bits="%r3";
 $key="%r4";
 $i1="%r5";
 $i2="%r6";
@@ -59,7 +78,7 @@ $code=<<___;
 .text
 
 .type	AES_Te,\@object
-.align	64
+.align	256
 AES_Te:
 ___
 &_data_word(
@@ -165,6 +184,7 @@ $code.=<<___;
 .long	0x01000000, 0x02000000, 0x04000000, 0x08000000
 .long	0x10000000, 0x20000000, 0x40000000, 0x80000000
 .long	0x1B000000, 0x36000000, 0, 0, 0, 0, 0, 0
+.align	256
 .size	AES_Te,.-AES_Te
 
 # void AES_encrypt(const unsigned char *inp, unsigned char *out,
@@ -172,49 +192,32 @@ $code.=<<___;
 .globl	AES_encrypt
 .type	AES_encrypt,\@function
 AES_encrypt:
-	stg	$ra,112($sp)
 ___
 $code.=<<___ if (!$softonly);
-	lghi	%r0,10
-	c	%r0,240($key)
-	jne	.Lesoft
-	lghi	%r0,0		# query capability vector
-	la	%r1,16($sp)
-	.long	0xb92e0042	# km %r4,%r2
-	lg	%r0,16($sp)
-	tmhl	%r0,`0x8000>>2`
-	jz	.Lesoft128
-	lghi	%r0,`0x00|0x12`	# encrypt AES-128
+	l	%r0,240($key)
+	lhi	%r1,16
+	clr	%r0,%r1
+	jl	.Lesoft
+
 	la	%r1,0($key)
 	#la	%r2,0($inp)
 	la	%r4,0($out)
 	lghi	%r3,16		# single block length
 	.long	0xb92e0042	# km %r4,%r2
-	bcr	8,%r14		# return if done
-	la	$out,0(%r4)	# restore arguments
-	la	$key,0(%r1)
-.Lesoft128:
-	lghi	%r0,0
-	c	%r0,236($key)
-	je	.Lesoft
-	stmg	$inp,$key,16($sp)
-	la	$inp,0($key)
-	lghi	$bits,128
-	bras	$ra,.Lekey_internal	# postponed key schedule setup
-	lmg	$inp,$key,16($sp)
+	brc	1,.-4		# can this happen?
+	br	%r14
+.align	64
 .Lesoft:
 ___
 $code.=<<___;
-	stmg	%r3,%r13,24($sp)
-
-	larl	$tbl,AES_Te
+	stmg	%r3,$ra,24($sp)
 
 	llgf	$s0,0($inp)
 	llgf	$s1,4($inp)
 	llgf	$s2,8($inp)
 	llgf	$s3,12($inp)
 
-	llill	$mask,`0xff<<3`
+	larl	$tbl,AES_Te
 	bras	$ra,_s390x_AES_encrypt
 
 	lg	$out,24($sp)
@@ -230,26 +233,25 @@ $code.=<<___;
 .type   _s390x_AES_encrypt,\@function
 .align	16
 _s390x_AES_encrypt:
+	stg	$ra,152($sp)
 	x	$s0,0($key)
 	x	$s1,4($key)
 	x	$s2,8($key)
 	x	$s3,12($key)
 	l	$rounds,240($key)
+	llill	$mask,`0xff<<3`
 	aghi	$rounds,-1
-
+	j	.Lenc_loop
+.align	16
 .Lenc_loop:
-	sllg	$i1,$s0,`0+3`
-	srlg	$i2,$s0,`8-3`
-	srlg	$i3,$s0,`16-3`
+	sllg	$t1,$s0,`0+3`
+	srlg	$t2,$s0,`8-3`
+	srlg	$t3,$s0,`16-3`
 	srl	$s0,`24-3`
 	nr	$s0,$mask
-	ngr	$i1,$mask
-	nr	$i2,$mask
-	nr	$i3,$mask
-	l	$s0,0($s0,$tbl)	# Te0[s0>>24]
-	l	$t1,1($i1,$tbl)	# Te3[s0>>0]
-	l	$t2,2($i2,$tbl)	# Te2[s0>>8]
-	l	$t3,3($i3,$tbl)	# Te1[s0>>16]
+	ngr	$t1,$mask
+	nr	$t2,$mask
+	nr	$t3,$mask
 
 	srlg	$i1,$s1,`16-3`	# i0
 	sllg	$i2,$s1,`0+3`
@@ -259,72 +261,84 @@ _s390x_AES_encrypt:
 	nr	$s1,$mask
 	ngr	$i2,$mask
 	nr	$i3,$mask
+
+	l	$s0,0($s0,$tbl)	# Te0[s0>>24]
+	l	$t1,1($t1,$tbl)	# Te3[s0>>0]
+	l	$t2,2($t2,$tbl) # Te2[s0>>8]
+	l	$t3,3($t3,$tbl)	# Te1[s0>>16]
+
 	x	$s0,3($i1,$tbl)	# Te1[s1>>16]
 	l	$s1,0($s1,$tbl)	# Te0[s1>>24]
 	x	$t2,1($i2,$tbl)	# Te3[s1>>0]
 	x	$t3,2($i3,$tbl)	# Te2[s1>>8]
-	xr	$s1,$t1
 
 	srlg	$i1,$s2,`8-3`	# i0
 	srlg	$i2,$s2,`16-3`	# i1
-	sllg	$i3,$s2,`0+3`
-	srl	$s2,`24-3`
 	nr	$i1,$mask
 	nr	$i2,$mask
+	sllg	$i3,$s2,`0+3`
+	srl	$s2,`24-3`
 	nr	$s2,$mask
 	ngr	$i3,$mask
+
+	xr	$s1,$t1
+	srlg	$ra,$s3,`8-3`	# i1
+	sllg	$t1,$s3,`0+3`	# i0
+	nr	$ra,$mask
+	la	$key,16($key)
+	ngr	$t1,$mask
+
 	x	$s0,2($i1,$tbl)	# Te2[s2>>8]
 	x	$s1,3($i2,$tbl)	# Te1[s2>>16]
 	l	$s2,0($s2,$tbl)	# Te0[s2>>24]
 	x	$t3,1($i3,$tbl)	# Te3[s2>>0]
-	xr	$s2,$t2
 
-	sllg	$i1,$s3,`0+3`	# i0
-	srlg	$i2,$s3,`8-3`	# i1
 	srlg	$i3,$s3,`16-3`	# i2
+	xr	$s2,$t2
 	srl	$s3,`24-3`
-	ngr	$i1,$mask
-	nr	$i2,$mask
 	nr	$i3,$mask
 	nr	$s3,$mask
-	x	$s0,1($i1,$tbl)	# Te3[s3>>0]
-	x	$s1,2($i2,$tbl)	# Te2[s3>>8]
+
+	x	$s0,0($key)
+	x	$s1,4($key)
+	x	$s2,8($key)
+	x	$t3,12($key)
+
+	x	$s0,1($t1,$tbl)	# Te3[s3>>0]
+	x	$s1,2($ra,$tbl)	# Te2[s3>>8]
 	x	$s2,3($i3,$tbl)	# Te1[s3>>16]
 	l	$s3,0($s3,$tbl)	# Te0[s3>>24]
 	xr	$s3,$t3
 
-	la	$key,16($key)
-	x	$s0,0($key)
-	x	$s1,4($key)
-	x	$s2,8($key)
-	x	$s3,12($key)
-
 	brct	$rounds,.Lenc_loop
+	.align	16
 
-	sllg	$i1,$s0,`0+3`
-	srlg	$i2,$s0,`8-3`
-	srlg	$i3,$s0,`16-3`
+	sllg	$t1,$s0,`0+3`
+	srlg	$t2,$s0,`8-3`
+	ngr	$t1,$mask
+	srlg	$t3,$s0,`16-3`
 	srl	$s0,`24-3`
 	nr	$s0,$mask
-	ngr	$i1,$mask
-	nr	$i2,$mask
-	nr	$i3,$mask
-	llgc	$s0,2($s0,$tbl)	# Te4[s0>>24]
-	llgc	$t1,2($i1,$tbl)	# Te4[s0>>0]
-	llgc	$t2,2($i2,$tbl)	# Te4[s0>>8]
-	llgc	$t3,2($i3,$tbl)	# Te4[s0>>16]
-	sll	$s0,24
-	sll	$t2,8
-	sll	$t3,16
+	nr	$t2,$mask
+	nr	$t3,$mask
 
 	srlg	$i1,$s1,`16-3`	# i0
 	sllg	$i2,$s1,`0+3`
+	ngr	$i2,$mask
 	srlg	$i3,$s1,`8-3`
 	srl	$s1,`24-3`
 	nr	$i1,$mask
 	nr	$s1,$mask
-	ngr	$i2,$mask
 	nr	$i3,$mask
+
+	llgc	$s0,2($s0,$tbl)	# Te4[s0>>24]
+	llgc	$t1,2($t1,$tbl)	# Te4[s0>>0]
+	sll	$s0,24
+	llgc	$t2,2($t2,$tbl)	# Te4[s0>>8]
+	llgc	$t3,2($t3,$tbl)	# Te4[s0>>16]
+	sll	$t2,8
+	sll	$t3,16
+
 	llgc	$i1,2($i1,$tbl)	# Te4[s1>>16]
 	llgc	$s1,2($s1,$tbl)	# Te4[s1>>24]
 	llgc	$i2,2($i2,$tbl)	# Te4[s1>>0]
@@ -339,34 +353,40 @@ _s390x_AES_encrypt:
 	
 	srlg	$i1,$s2,`8-3`	# i0
 	srlg	$i2,$s2,`16-3`	# i1
-	sllg	$i3,$s2,`0+3`
-	srl	$s2,`24-3`
 	nr	$i1,$mask
 	nr	$i2,$mask
-	nr	$s2,$mask
+	sllg	$i3,$s2,`0+3`
+	srl	$s2,`24-3`
 	ngr	$i3,$mask
+	nr	$s2,$mask
+
+	sllg	$t1,$s3,`0+3`	# i0
+	srlg	$ra,$s3,`8-3`	# i1
+	ngr	$t1,$mask
+
 	llgc	$i1,2($i1,$tbl)	# Te4[s2>>8]
 	llgc	$i2,2($i2,$tbl)	# Te4[s2>>16]
+	sll	$i1,8
 	llgc	$s2,2($s2,$tbl)	# Te4[s2>>24]
 	llgc	$i3,2($i3,$tbl)	# Te4[s2>>0]
-	sll	$i1,8
 	sll	$i2,16
+	nr	$ra,$mask
 	sll	$s2,24
 	or	$s0,$i1
 	or	$s1,$i2
 	or	$s2,$t2
 	or	$t3,$i3
 
-	sllg	$i1,$s3,`0+3`	# i0
-	srlg	$i2,$s3,`8-3`	# i1
 	srlg	$i3,$s3,`16-3`	# i2
 	srl	$s3,`24-3`
-	ngr	$i1,$mask
-	nr	$i2,$mask
 	nr	$i3,$mask
 	nr	$s3,$mask
-	llgc	$i1,2($i1,$tbl)	# Te4[s3>>0]
-	llgc	$i2,2($i2,$tbl)	# Te4[s3>>8]
+
+	l	$t0,16($key)
+	l	$t2,20($key)
+
+	llgc	$i1,2($t1,$tbl)	# Te4[s3>>0]
+	llgc	$i2,2($ra,$tbl)	# Te4[s3>>8]
 	llgc	$i3,2($i3,$tbl)	# Te4[s3>>16]
 	llgc	$s3,2($s3,$tbl)	# Te4[s3>>24]
 	sll	$i2,8
@@ -377,8 +397,9 @@ _s390x_AES_encrypt:
 	or	$s2,$i3
 	or	$s3,$t3
 
-	x	$s0,16($key)
-	x	$s1,20($key)
+	lg	$ra,152($sp)
+	xr	$s0,$t0
+	xr	$s1,$t2
 	x	$s2,24($key)
 	x	$s3,28($key)
 
@@ -388,7 +409,7 @@ ___
 
 $code.=<<___;
 .type	AES_Td,\@object
-.align	64
+.align	256
 AES_Td:
 ___
 &_data_word(
@@ -497,50 +518,32 @@ $code.=<<___;
 .globl	AES_decrypt
 .type	AES_decrypt,\@function
 AES_decrypt:
-	stg	$ra,112($sp)
 ___
 $code.=<<___ if (!$softonly);
-	lghi	%r0,10
-	c	%r0,240($key)
-	jne	.Ldsoft
-	lghi	%r0,0		# query capability vector
-	la	%r1,16($sp)
-	.long	0xb92e0042	# km %r4,%r2
-	lg	%r0,16($sp)
-	tmhl	%r0,`0x8000>>2`
-	jz	.Ldsoft128
-	lghi	%r0,`0x80|0x12`	# decrypt AES-128
-	la	%r1,160($key)
+	l	%r0,240($key)
+	lhi	%r1,16
+	clr	%r0,%r1
+	jl	.Ldsoft
+
+	la	%r1,0($key)
 	#la	%r2,0($inp)
 	la	%r4,0($out)
 	lghi	%r3,16		# single block length
 	.long	0xb92e0042	# km %r4,%r2
-	bcr	8,%r14		# return if done
-	la	$out,0(%r4)	# restore arguments
-	lghi	$key,-160
-	la	$key,0($key,%r1)
-.Ldsoft128:
-	lghi	%r0,0
-	c	%r0,236($key)
-	je	.Ldsoft
-	stmg	$inp,$key,16($sp)
-	la	$inp,160($key)
-	lghi	$bits,128
-	bras	$ra,.Ldkey_internal	# postponed key schedule setup
-	lmg	$inp,$key,16($sp)
+	brc	1,.-4		# can this happen?
+	br	%r14
+.align	64
 .Ldsoft:
 ___
 $code.=<<___;
-	stmg	%r3,%r13,24($sp)
-
-	larl	$tbl,AES_Td
+	stmg	%r3,$ra,24($sp)
 
 	llgf	$s0,0($inp)
 	llgf	$s1,4($inp)
 	llgf	$s2,8($inp)
 	llgf	$s3,12($inp)
 
-	llill	$mask,`0xff<<3`
+	larl	$tbl,AES_Td
 	bras	$ra,_s390x_AES_decrypt
 
 	lg	$out,24($sp)
@@ -556,26 +559,25 @@ $code.=<<___;
 .type   _s390x_AES_decrypt,\@function
 .align	16
 _s390x_AES_decrypt:
+	stg	$ra,152($sp)
 	x	$s0,0($key)
 	x	$s1,4($key)
 	x	$s2,8($key)
 	x	$s3,12($key)
 	l	$rounds,240($key)
+	llill	$mask,`0xff<<3`
 	aghi	$rounds,-1
-
+	j	.Ldec_loop
+.align	16
 .Ldec_loop:
-	srlg	$i1,$s0,`16-3`
-	srlg	$i2,$s0,`8-3`
-	sllg	$i3,$s0,`0+3`
+	srlg	$t1,$s0,`16-3`
+	srlg	$t2,$s0,`8-3`
+	sllg	$t3,$s0,`0+3`
 	srl	$s0,`24-3`
 	nr	$s0,$mask
-	nr	$i1,$mask
-	nr	$i2,$mask
-	ngr	$i3,$mask
-	l	$s0,0($s0,$tbl)	# Td0[s0>>24]
-	l	$t1,3($i1,$tbl)	# Td1[s0>>16]
-	l	$t2,2($i2,$tbl)	# Td2[s0>>8]
-	l	$t3,1($i3,$tbl)	# Td3[s0>>0]
+	nr	$t1,$mask
+	nr	$t2,$mask
+	ngr	$t3,$mask
 
 	sllg	$i1,$s1,`0+3`	# i0
 	srlg	$i2,$s1,`16-3`
@@ -585,11 +587,16 @@ _s390x_AES_decrypt:
 	nr	$s1,$mask
 	nr	$i2,$mask
 	nr	$i3,$mask
+
+	l	$s0,0($s0,$tbl)	# Td0[s0>>24]
+	l	$t1,3($t1,$tbl)	# Td1[s0>>16]
+	l	$t2,2($t2,$tbl)	# Td2[s0>>8]
+	l	$t3,1($t3,$tbl)	# Td3[s0>>0]
+
 	x	$s0,1($i1,$tbl)	# Td3[s1>>0]
 	l	$s1,0($s1,$tbl)	# Td0[s1>>24]
 	x	$t2,3($i2,$tbl)	# Td1[s1>>16]
 	x	$t3,2($i3,$tbl)	# Td2[s1>>8]
-	xr	$s1,$t1
 
 	srlg	$i1,$s2,`8-3`	# i0
 	sllg	$i2,$s2,`0+3`	# i1
@@ -599,69 +606,72 @@ _s390x_AES_decrypt:
 	ngr	$i2,$mask
 	nr	$s2,$mask
 	nr	$i3,$mask
+
+	xr	$s1,$t1
+	srlg	$ra,$s3,`8-3`	# i1
+	srlg	$t1,$s3,`16-3`	# i0
+	nr	$ra,$mask
+	la	$key,16($key)
+	nr	$t1,$mask
+
 	x	$s0,2($i1,$tbl)	# Td2[s2>>8]
 	x	$s1,1($i2,$tbl)	# Td3[s2>>0]
 	l	$s2,0($s2,$tbl)	# Td0[s2>>24]
 	x	$t3,3($i3,$tbl)	# Td1[s2>>16]
-	xr	$s2,$t2
 
-	srlg	$i1,$s3,`16-3`	# i0
-	srlg	$i2,$s3,`8-3`	# i1
 	sllg	$i3,$s3,`0+3`	# i2
 	srl	$s3,`24-3`
-	nr	$i1,$mask
-	nr	$i2,$mask
 	ngr	$i3,$mask
 	nr	$s3,$mask
-	x	$s0,3($i1,$tbl)	# Td1[s3>>16]
-	x	$s1,2($i2,$tbl)	# Td2[s3>>8]
+
+	xr	$s2,$t2
+	x	$s0,0($key)
+	x	$s1,4($key)
+	x	$s2,8($key)
+	x	$t3,12($key)
+
+	x	$s0,3($t1,$tbl)	# Td1[s3>>16]
+	x	$s1,2($ra,$tbl)	# Td2[s3>>8]
 	x	$s2,1($i3,$tbl)	# Td3[s3>>0]
 	l	$s3,0($s3,$tbl)	# Td0[s3>>24]
 	xr	$s3,$t3
 
-	la	$key,16($key)
-	x	$s0,0($key)
-	x	$s1,4($key)
-	x	$s2,8($key)
-	x	$s3,12($key)
-
 	brct	$rounds,.Ldec_loop
+	.align	16
 
 	l	$t1,`2048+0`($tbl)	# prefetch Td4
-	l	$t2,`2048+32`($tbl)
-	l	$t3,`2048+64`($tbl)
-	l	$i1,`2048+96`($tbl)
-	l	$i2,`2048+128`($tbl)
-	l	$i3,`2048+160`($tbl)
-	l	$t1,`2048+192`($tbl)
-	l	$t2,`2048+224`($tbl)
+	l	$t2,`2048+64`($tbl)
+	l	$t3,`2048+128`($tbl)
+	l	$i1,`2048+192`($tbl)
 	llill	$mask,0xff
 
 	srlg	$i3,$s0,24	# i0
-	srlg	$i1,$s0,16
-	srlg	$i2,$s0,8
+	srlg	$t1,$s0,16
+	srlg	$t2,$s0,8
 	nr	$s0,$mask	# i3
-	nr	$i1,$mask
-	nr	$i2,$mask
-	llgc	$i3,2048($i3,$tbl)	# Td4[s0>>24]
-	llgc	$t1,2048($i1,$tbl)	# Td4[s0>>16]
-	llgc	$t2,2048($i2,$tbl)	# Td4[s0>>8]
-	llgc	$t3,2048($s0,$tbl)	# Td4[s0>>0]
-	sllg	$s0,$i3,24
-	sll	$t1,16
-	sll	$t2,8
+	nr	$t1,$mask
 
 	srlg	$i1,$s1,24
+	nr	$t2,$mask
 	srlg	$i2,$s1,16
-	srlg	$i3,$s1,8
+	srlg	$ra,$s1,8
 	nr	$s1,$mask	# i0
 	nr	$i2,$mask
-	nr	$i3,$mask
+	nr	$ra,$mask
+
+	llgc	$i3,2048($i3,$tbl)	# Td4[s0>>24]
+	llgc	$t1,2048($t1,$tbl)	# Td4[s0>>16]
+	llgc	$t2,2048($t2,$tbl)	# Td4[s0>>8]
+	sll	$t1,16
+	llgc	$t3,2048($s0,$tbl)	# Td4[s0>>0]
+	sllg	$s0,$i3,24
+	sll	$t2,8
+
 	llgc	$s1,2048($s1,$tbl)	# Td4[s1>>0]
 	llgc	$i1,2048($i1,$tbl)	# Td4[s1>>24]
 	llgc	$i2,2048($i2,$tbl)	# Td4[s1>>16]
-	llgc	$i3,2048($i3,$tbl)	# Td4[s1>>8]
 	sll	$i1,24
+	llgc	$i3,2048($ra,$tbl)	# Td4[s1>>8]
 	sll	$i2,16
 	sll	$i3,8
 	or	$s0,$s1
@@ -681,9 +691,8 @@ _s390x_AES_decrypt:
 	llgc	$i3,2048($i3,$tbl)	# Td4[s2>>16]
 	sll	$i1,8
 	sll	$i2,24
-	sll	$i3,16
 	or	$s0,$i1
-	or	$s1,$t1
+	sll	$i3,16
 	or	$t2,$i2
 	or	$t3,$i3
 
@@ -693,11 +702,17 @@ _s390x_AES_decrypt:
 	nr	$s3,$mask	# i2
 	nr	$i1,$mask
 	nr	$i2,$mask
+
+	lg	$ra,152($sp)
+	or	$s1,$t1
+	l	$t0,16($key)
+	l	$t1,20($key)
+
 	llgc	$i1,2048($i1,$tbl)	# Td4[s3>>16]
 	llgc	$i2,2048($i2,$tbl)	# Td4[s3>>8]
+	sll	$i1,16
 	llgc	$s2,2048($s3,$tbl)	# Td4[s3>>0]
 	llgc	$s3,2048($i3,$tbl)	# Td4[s3>>24]
-	sll	$i1,16
 	sll	$i2,8
 	sll	$s3,24
 	or	$s0,$i1
@@ -705,54 +720,72 @@ _s390x_AES_decrypt:
 	or	$s2,$t2
 	or	$s3,$t3
 
-	x	$s0,16($key)
-	x	$s1,20($key)
+	xr	$s0,$t0
+	xr	$s1,$t1
 	x	$s2,24($key)
 	x	$s3,28($key)
 
 	br	$ra	
 .size	_s390x_AES_decrypt,.-_s390x_AES_decrypt
+___
 
+$code.=<<___;
 # void AES_set_encrypt_key(const unsigned char *in, int bits,
 # 		 AES_KEY *key) {
 .globl	AES_set_encrypt_key
 .type	AES_set_encrypt_key,\@function
 .align	16
 AES_set_encrypt_key:
-	lghi	$t1,0
-	clgr	$inp,$t1
+	lghi	$t0,0
+	clgr	$inp,$t0
 	je	.Lminus1
-	clgr	$key,$t1
+	clgr	$key,$t0
 	je	.Lminus1
 
-	lghi	$t1,128
-	clr	$bits,$t1
-	je	.Lproceed128
-	lghi	$t1,192
-	clr	$bits,$t1
-	je	.Lekey_internal
-	lghi	$t1,256
-	clr	$bits,$t1
-	je	.Lekey_internal
+	lghi	$t0,128
+	clr	$bits,$t0
+	je	.Lproceed
+	lghi	$t0,192
+	clr	$bits,$t0
+	je	.Lproceed
+	lghi	$t0,256
+	clr	$bits,$t0
+	je	.Lproceed
 	lghi	%r2,-2
 	br	%r14
 
-.align	4
-.Lproceed128:
+.align	16
+.Lproceed:
 ___
 $code.=<<___ if (!$softonly);
+	# convert bits to km code, [128,192,256]->[18,19,20]
+	lhi	%r5,-128
+	lhi	%r0,18
+	ar	%r5,$bits
+	srl	%r5,6
+	ar	%r5,%r0
+
 	lghi	%r0,0		# query capability vector
 	la	%r1,16($sp)
-	.long	0xb92e0042	# km %r4,%r2
-	lg	%r0,16($sp)
-	tmhl	%r0,`0x8000>>2`
+	.long	0xb92f0042	# kmc %r4,%r2
+
+	llihh	%r1,0x8000
+	srlg	%r1,%r1,0(%r5)
+	ng	%r1,16($sp)
 	jz	.Lekey_internal
 
-	lmg	$t1,$t2,0($inp)	# just copy 128 bits...
-	stmg	$t1,$t2,0($key)
-	lghi	$t1,10
-	st	$t1,236($key)	# ... postpone key setup
-	st	$t1,240($key)
+	lmg	%r0,%r1,0($inp)	# just copy 128 bits...
+	stmg	%r0,%r1,0($key)
+	lhi	%r0,192
+	cr	$bits,%r0
+	jl	1f
+	lg	%r1,16($inp)
+	stg	%r1,16($key)
+	je	1f
+	lg	%r1,24($inp)
+	stg	%r1,24($key)
+1:	st	$bits,236($key)	# save bits
+	st	%r5,240($key)	# save km code
 	lghi	%r2,0
 	br	%r14
 ___
@@ -771,18 +804,15 @@ $code.=<<___;
 	st	$s1,4($key)
 	st	$s2,8($key)
 	st	$s3,12($key)
-	lghi	$t1,128
-	cr	$bits,$t1
+	lghi	$t0,128
+	cr	$bits,$t0
 	jne	.Lnot128
 
 	llill	$mask,0xff
 	lghi	$t3,0			# i=0
 	lghi	$rounds,10
-	st	$t3,236($key)		# mark as set up
 	st	$rounds,240($key)
 
-.align	8
-.L128_loop:
 	llgfr	$t2,$s3			# temp=rk[3]
 	srlg	$i1,$s3,8
 	srlg	$i2,$s3,16
@@ -790,6 +820,9 @@ $code.=<<___;
 	nr	$t2,$mask
 	nr	$i1,$mask
 	nr	$i2,$mask
+
+.align	16
+.L128_loop:
 	la	$t2,0($t2,$tbl)
 	la	$i1,0($i1,$tbl)
 	la	$i2,0($i2,$tbl)
@@ -803,6 +836,15 @@ $code.=<<___;
 	xr	$s1,$s0			# rk[5]=rk[1]^rk[4]
 	xr	$s2,$s1			# rk[6]=rk[2]^rk[5]
 	xr	$s3,$s2			# rk[7]=rk[3]^rk[6]
+
+	llgfr	$t2,$s3			# temp=rk[3]
+	srlg	$i1,$s3,8
+	srlg	$i2,$s3,16
+	nr	$t2,$mask
+	nr	$i1,$mask
+	srlg	$i3,$s3,24
+	nr	$i2,$mask
+
 	st	$s0,16($key)
 	st	$s1,20($key)
 	st	$s2,24($key)
@@ -814,14 +856,14 @@ $code.=<<___;
 	lmg	%r6,%r13,48($sp)
 	br	$ra
 
-.align	4
+.align	16
 .Lnot128:
-	llgf	$t1,16($inp)
-	llgf	$t2,20($inp)
-	st	$t1,16($key)
-	st	$t2,20($key)
-	lghi	$t1,192
-	cr	$bits,$t1
+	llgf	$t0,16($inp)
+	llgf	$t1,20($inp)
+	st	$t0,16($key)
+	st	$t1,20($key)
+	lghi	$t0,192
+	cr	$bits,$t0
 	jne	.Lnot192
 
 	llill	$mask,0xff
@@ -830,27 +872,29 @@ $code.=<<___;
 	st	$rounds,240($key)
 	lghi	$rounds,8
 
-.align	8
-.L192_loop:
-	srlg	$i1,$t2,8
-	srlg	$i2,$t2,16
-	srlg	$i3,$t2,24
-	nr	$t2,$mask
+	srlg	$i1,$t1,8
+	srlg	$i2,$t1,16
+	srlg	$i3,$t1,24
+	nr	$t1,$mask
 	nr	$i1,$mask
 	nr	$i2,$mask
-	la	$t2,0($t2,$tbl)
+
+.align	16
+.L192_loop:
+	la	$t1,0($t1,$tbl)
 	la	$i1,0($i1,$tbl)
 	la	$i2,0($i2,$tbl)
 	la	$i3,0($i3,$tbl)
-	icm	$t2,2,0($t2)		# Te4[rk[5]>>0]<<8
-	icm	$t2,4,0($i1)		# Te4[rk[5]>>8]<<16
-	icm	$t2,8,0($i2)		# Te4[rk[5]>>16]<<24
-	icm	$t2,1,0($i3)		# Te4[rk[5]>>24]
-	x	$t2,256($t3,$tbl)	# rcon[i]
-	xr	$s0,$t2			# rk[6]=rk[0]^...
+	icm	$t1,2,0($t1)		# Te4[rk[5]>>0]<<8
+	icm	$t1,4,0($i1)		# Te4[rk[5]>>8]<<16
+	icm	$t1,8,0($i2)		# Te4[rk[5]>>16]<<24
+	icm	$t1,1,0($i3)		# Te4[rk[5]>>24]
+	x	$t1,256($t3,$tbl)	# rcon[i]
+	xr	$s0,$t1			# rk[6]=rk[0]^...
 	xr	$s1,$s0			# rk[7]=rk[1]^rk[6]
 	xr	$s2,$s1			# rk[8]=rk[2]^rk[7]
 	xr	$s3,$s2			# rk[9]=rk[3]^rk[8]
+
 	st	$s0,24($key)
 	st	$s1,28($key)
 	st	$s2,32($key)
@@ -859,47 +903,57 @@ $code.=<<___;
 	lghi	%r2,0
 	lmg	%r6,%r13,48($sp)
 	br	$ra
-.align	4
+
+.align	16
 .L192_continue:
-	lgr	$t2,$s3
-	x	$t2,16($key)		# rk[10]=rk[4]^rk[9]
-	st	$t2,40($key)
-	x	$t2,20($key)		# rk[11]=rk[5]^rk[10]
-	st	$t2,44($key)
+	lgr	$t1,$s3
+	x	$t1,16($key)		# rk[10]=rk[4]^rk[9]
+	st	$t1,40($key)
+	x	$t1,20($key)		# rk[11]=rk[5]^rk[10]
+	st	$t1,44($key)
+
+	srlg	$i1,$t1,8
+	srlg	$i2,$t1,16
+	srlg	$i3,$t1,24
+	nr	$t1,$mask
+	nr	$i1,$mask
+	nr	$i2,$mask
+
 	la	$key,24($key)		# key+=6
 	la	$t3,4($t3)		# i++
 	j	.L192_loop
 
-.align	4
+.align	16
 .Lnot192:
-	llgf	$t1,24($inp)
-	llgf	$t2,28($inp)
-	st	$t1,24($key)
-	st	$t2,28($key)
+	llgf	$t0,24($inp)
+	llgf	$t1,28($inp)
+	st	$t0,24($key)
+	st	$t1,28($key)
 	llill	$mask,0xff
 	lghi	$t3,0			# i=0
 	lghi	$rounds,14
 	st	$rounds,240($key)
 	lghi	$rounds,7
 
-.align	8
-.L256_loop:
-	srlg	$i1,$t2,8
-	srlg	$i2,$t2,16
-	srlg	$i3,$t2,24
-	nr	$t2,$mask
+	srlg	$i1,$t1,8
+	srlg	$i2,$t1,16
+	srlg	$i3,$t1,24
+	nr	$t1,$mask
 	nr	$i1,$mask
 	nr	$i2,$mask
-	la	$t2,0($t2,$tbl)
+
+.align	16
+.L256_loop:
+	la	$t1,0($t1,$tbl)
 	la	$i1,0($i1,$tbl)
 	la	$i2,0($i2,$tbl)
 	la	$i3,0($i3,$tbl)
-	icm	$t2,2,0($t2)		# Te4[rk[7]>>0]<<8
-	icm	$t2,4,0($i1)		# Te4[rk[7]>>8]<<16
-	icm	$t2,8,0($i2)		# Te4[rk[7]>>16]<<24
-	icm	$t2,1,0($i3)		# Te4[rk[7]>>24]
-	x	$t2,256($t3,$tbl)	# rcon[i]
-	xr	$s0,$t2			# rk[8]=rk[0]^...
+	icm	$t1,2,0($t1)		# Te4[rk[7]>>0]<<8
+	icm	$t1,4,0($i1)		# Te4[rk[7]>>8]<<16
+	icm	$t1,8,0($i2)		# Te4[rk[7]>>16]<<24
+	icm	$t1,1,0($i3)		# Te4[rk[7]>>24]
+	x	$t1,256($t3,$tbl)	# rcon[i]
+	xr	$s0,$t1			# rk[8]=rk[0]^...
 	xr	$s1,$s0			# rk[9]=rk[1]^rk[8]
 	xr	$s2,$s1			# rk[10]=rk[2]^rk[9]
 	xr	$s3,$s2			# rk[11]=rk[3]^rk[10]
@@ -911,39 +965,47 @@ $code.=<<___;
 	lghi	%r2,0
 	lmg	%r6,%r13,48($sp)
 	br	$ra
-.align	4
+
+.align	16
 .L256_continue:
-	lgr	$t2,$s3			# temp=rk[11]
+	lgr	$t1,$s3			# temp=rk[11]
 	srlg	$i1,$s3,8
 	srlg	$i2,$s3,16
 	srlg	$i3,$s3,24
-	nr	$t2,$mask
+	nr	$t1,$mask
 	nr	$i1,$mask
 	nr	$i2,$mask
-	la	$t2,0($t2,$tbl)
+	la	$t1,0($t1,$tbl)
 	la	$i1,0($i1,$tbl)
 	la	$i2,0($i2,$tbl)
 	la	$i3,0($i3,$tbl)
-	llgc	$t2,0($t2)		# Te4[rk[11]>>0]
-	icm	$t2,2,0($i1)		# Te4[rk[11]>>8]<<8
-	icm	$t2,4,0($i2)		# Te4[rk[11]>>16]<<16
-	icm	$t2,8,0($i3)		# Te4[rk[11]>>24]<<24
-	x	$t2,16($key)		# rk[12]=rk[4]^...
-	st	$t2,48($key)
-	x	$t2,20($key)		# rk[13]=rk[5]^rk[12]
-	st	$t2,52($key)
-	x	$t2,24($key)		# rk[14]=rk[6]^rk[13]
-	st	$t2,56($key)
-	x	$t2,28($key)		# rk[15]=rk[7]^rk[14]
-	st	$t2,60($key)
+	llgc	$t1,0($t1)		# Te4[rk[11]>>0]
+	icm	$t1,2,0($i1)		# Te4[rk[11]>>8]<<8
+	icm	$t1,4,0($i2)		# Te4[rk[11]>>16]<<16
+	icm	$t1,8,0($i3)		# Te4[rk[11]>>24]<<24
+	x	$t1,16($key)		# rk[12]=rk[4]^...
+	st	$t1,48($key)
+	x	$t1,20($key)		# rk[13]=rk[5]^rk[12]
+	st	$t1,52($key)
+	x	$t1,24($key)		# rk[14]=rk[6]^rk[13]
+	st	$t1,56($key)
+	x	$t1,28($key)		# rk[15]=rk[7]^rk[14]
+	st	$t1,60($key)
+
+	srlg	$i1,$t1,8
+	srlg	$i2,$t1,16
+	srlg	$i3,$t1,24
+	nr	$t1,$mask
+	nr	$i1,$mask
+	nr	$i2,$mask
 
 	la	$key,32($key)		# key+=8
 	la	$t3,4($t3)		# i++
 	j	.L256_loop
-.align	4
+
 .Lminus1:
 	lghi	%r2,-1
-	br	%r14
+	br	$ra
 .size	AES_set_encrypt_key,.-AES_set_encrypt_key
 
 # void AES_set_decrypt_key(const unsigned char *in, int bits,
@@ -961,16 +1023,12 @@ AES_set_decrypt_key:
 	bnzr	$ra
 ___
 $code.=<<___ if (!$softonly);
-	lghi	$t1,10
-	c	$t1,240($key)
-	jne	.Lgo
-	lghi	$t1,0
-	c	$t1,236($key)
-	je	.Lgo
-
-	lmg	$t1,$t2,0($key)		# just copy 128 bits otherwise
-	stmg	$t1,$t2,160($key)
-	lghi	%r2,0
+	l	$t0,240($key)
+	lhi	$t1,16
+	cr	$t0,$t1
+	jl	.Lgo
+	oill	$t0,0x80	# set "decrypt" bit
+	st	$t0,240($key)
 	br	$ra
 
 .align	16
@@ -988,14 +1046,15 @@ $code.=<<___;
 	sllg	$i2,$rounds,4
 	la	$i2,0($i2,$key)
 	srl	$rounds,1
+	lghi	$t1,-16
 
-.align	8
+.align	16
 .Linv:	lmg	$s0,$s1,0($i1)
 	lmg	$s2,$s3,0($i2)
 	stmg	$s0,$s1,0($i2)
 	stmg	$s2,$s3,0($i1)
-	aghi	$i1,16
-	aghi	$i2,-16
+	la	$i1,16($i1)
+	la	$i2,0($t1,$i2)
 	brct	$rounds,.Linv
 ___
 $mask80=$i1;
@@ -1006,13 +1065,13 @@ $code.=<<___;
 	aghi	$rounds,-1
 	sll	$rounds,2	# (rounds-1)*4
 	llilh	$mask80,0x8080
-	oill	$mask80,0x8080
 	llilh	$mask1b,0x1b1b
-	oill	$mask1b,0x1b1b
 	llilh	$maskfe,0xfefe
+	oill	$mask80,0x8080
+	oill	$mask1b,0x1b1b
 	oill	$maskfe,0xfefe
 
-.align	8
+.align	16
 .Lmix:	l	$s0,16($key)	# tp1
 	lr	$s1,$s0
 	ngr	$s1,$mask80
@@ -1044,16 +1103,15 @@ $code.=<<___;
 	xr	$s1,$s0		# tp2^tp1
 	xr	$s2,$s0		# tp4^tp1
 	rll	$s0,$s0,24	# = ROTATE(tp1,8)
+	xr	$s2,$s3		# ^=tp8
 	xr	$s0,$s1		# ^=tp2^tp1
-	xr	$s0,$s2		# ^=tp4^tp1
-	xr	$s0,$s3		# ^= tp8[^(tp4^tp1)^(tp2^tp1)=tp4^tp2]
 	xr	$s1,$s3		# tp2^tp1^tp8
+	xr	$s0,$s2		# ^=tp4^tp1^tp8
 	rll	$s1,$s1,8
-	xr	$s0,$s1		# ^= ROTATE(tp8^tp2^tp1,24)
-	xr	$s2,$s3		# tp4^tp1^tp8
 	rll	$s2,$s2,16
-	xr	$s0,$s2    	# ^= ROTATE(tp8^tp4^tp1,16)
+	xr	$s0,$s1		# ^= ROTATE(tp8^tp2^tp1,24)
 	rll	$s3,$s3,24
+	xr	$s0,$s2    	# ^= ROTATE(tp8^tp4^tp1,16)
 	xr	$s0,$s3		# ^= ROTATE(tp8,8)
 
 	st	$s0,16($key)
@@ -1064,6 +1122,210 @@ $code.=<<___;
 	lghi	%r2,0
 	br	$ra
 .size	AES_set_decrypt_key,.-AES_set_decrypt_key
+___
+
+#void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+#                     size_t length, const AES_KEY *key,
+#                     unsigned char *ivec, const int enc)
+{
+my $inp="%r2";
+my $out="%r4";	# length and out are swapped
+my $len="%r3";
+my $key="%r5";
+my $ivp="%r6";
+
+$code.=<<___;
+.globl	AES_cbc_encrypt
+.type	AES_cbc_encrypt,\@function
+.align	16
+AES_cbc_encrypt:
+	xgr	%r3,%r4		# flip %r3 and %r4, out and len
+	xgr	%r4,%r3
+	xgr	%r3,%r4
+___
+$code.=<<___ if (!$softonly);
+	lhi	%r0,16
+	cl	%r0,240($key)
+	jh	.Lcbc_software
+
+	lg	%r0,0($ivp)	# copy ivec
+	lg	%r1,8($ivp)
+	stmg	%r0,%r1,16($sp)
+	lmg	%r0,%r1,0($key)	# copy key, cover 256 bit
+	stmg	%r0,%r1,32($sp)
+	lmg	%r0,%r1,16($key)
+	stmg	%r0,%r1,48($sp)
+	l	%r0,240($key)	# load kmc code
+	lghi	$key,15		# res=len%16, len-=res;
+	ngr	$key,$len
+	slgr	$len,$key
+	la	%r1,16($sp)	# parameter block - ivec || key
+	jz	.Lkmc_truncated
+	.long	0xb92f0042	# kmc %r4,%r2
+	brc	1,.-4		# pay attention to "partial completion"
+	ltr	$key,$key
+	jnz	.Lkmc_truncated
+.Lkmc_done:
+	lmg	%r0,%r1,16($sp)	# copy ivec to caller
+	stg	%r0,0($ivp)
+	stg	%r1,8($ivp)
+	br	$ra
+.align	16
+.Lkmc_truncated:
+	ahi	$key,-1		# it's the way it's encoded in mvc
+	tmll	%r0,0x80
+	jnz	.Lkmc_truncated_dec
+	lghi	%r1,0
+	stg	%r1,128($sp)
+	stg	%r1,136($sp)
+	bras	%r1,1f
+	mvc	128(1,$sp),0($inp)
+1:	ex	$key,0(%r1)
+	la	%r1,16($sp)	# restore parameter block
+	la	$inp,128($sp)
+	lghi	$len,16
+	.long	0xb92f0042	# kmc %r4,%r2
+	j	.Lkmc_done
+.align	16
+.Lkmc_truncated_dec:
+	stg	$out,64($sp)
+	la	$out,128($sp)
+	lghi	$len,16
+	.long	0xb92f0042	# kmc %r4,%r2
+	lg	$out,64($sp)
+	bras	%r1,2f
+	mvc	0(1,$out),128($sp)
+2:	ex	$key,0(%r1)
+	j	.Lkmc_done
+.align	16
+.Lcbc_software:
+___
+$code.=<<___;
+	stmg	$key,$ra,40($sp)
+	lhi	%r0,0
+	cl	%r0,164($sp)
+	je	.Lcbc_decrypt
+
+	larl	$tbl,AES_Te
+
+	llgf	$s0,0($ivp)
+	llgf	$s1,4($ivp)
+	llgf	$s2,8($ivp)
+	llgf	$s3,12($ivp)
+
+	lghi	$t0,16
+	slgr	$len,$t0
+	brc	4,.Lcbc_enc_tail	# if borrow
+.Lcbc_enc_loop:
+	stmg	$inp,$out,16($sp)
+	x	$s0,0($inp)
+	x	$s1,4($inp)
+	x	$s2,8($inp)
+	x	$s3,12($inp)
+	lgr	%r4,$key
+
+	bras	$ra,_s390x_AES_encrypt
+
+	lmg	$inp,$key,16($sp)
+	st	$s0,0($out)
+	st	$s1,4($out)
+	st	$s2,8($out)
+	st	$s3,12($out)
+
+	la	$inp,16($inp)
+	la	$out,16($out)
+	lghi	$t0,16
+	ltgr	$len,$len
+	jz	.Lcbc_enc_done
+	slgr	$len,$t0
+	brc	4,.Lcbc_enc_tail	# if borrow
+	j	.Lcbc_enc_loop
+.align	16
+.Lcbc_enc_done:
+	lg	$ivp,48($sp)
+	st	$s0,0($ivp)
+	st	$s1,4($ivp)	
+	st	$s2,8($ivp)
+	st	$s3,12($ivp)
+
+	lmg	%r7,$ra,56($sp)
+	br	$ra
+
+.align	16
+.Lcbc_enc_tail:
+	aghi	$len,15
+	lghi	$t0,0
+	stg	$t0,128($sp)
+	stg	$t0,136($sp)
+	bras	$t1,3f
+	mvc	128(1,$sp),0($inp)
+3:	ex	$len,0($t1)
+	lghi	$len,0
+	la	$inp,128($sp)
+	j	.Lcbc_enc_loop
+
+.align	16
+.Lcbc_decrypt:
+	larl	$tbl,AES_Td
+
+	lg	$t0,0($ivp)
+	lg	$t1,8($ivp)
+	stmg	$t0,$t1,128($sp)
+
+.Lcbc_dec_loop:
+	stmg	$inp,$out,16($sp)
+	llgf	$s0,0($inp)
+	llgf	$s1,4($inp)
+	llgf	$s2,8($inp)
+	llgf	$s3,12($inp)
+	lgr	%r4,$key
+
+	bras	$ra,_s390x_AES_decrypt
+
+	lmg	$inp,$key,16($sp)
+	sllg	$s0,$s0,32
+	sllg	$s2,$s2,32
+	lr	$s0,$s1
+	lr	$s2,$s3
+
+	lg	$t0,0($inp)
+	lg	$t1,8($inp)
+	xg	$s0,128($sp)
+	xg	$s2,136($sp)
+	lghi	$s1,16
+	slgr	$len,$s1
+	brc	4,.Lcbc_dec_tail	# if borrow
+	brc	2,.Lcbc_dec_done	# if zero
+	stg	$s0,0($out)
+	stg	$s2,8($out)
+	stmg	$t0,$t1,128($sp)
+
+	la	$inp,16($inp)
+	la	$out,16($out)
+	j	.Lcbc_dec_loop
+
+.Lcbc_dec_done:
+	stg	$s0,0($out)
+	stg	$s2,8($out)
+.Lcbc_dec_exit:
+	lmg	$ivp,$ra,48($sp)
+	stmg	$t0,$t1,0($ivp)
+
+	br	$ra
+
+.align	16
+.Lcbc_dec_tail:
+	aghi	$len,15
+	stg	$s0,128($sp)
+	stg	$s2,136($sp)
+	bras	$s1,4f
+	mvc	0(1,$out),128($sp)
+4:	ex	$len,0($s1)
+	j	.Lcbc_dec_exit
+.size	AES_cbc_encrypt,.-AES_cbc_encrypt
+___
+}
+$code.=<<___;
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 

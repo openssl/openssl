@@ -27,6 +27,11 @@
 # module performance by implementing dedicated squaring code-path and
 # possibly by unrolling loops...
 
+# January 2009.
+#
+# Reschedule to minimize/avoid Address Generation Interlock hazard,
+# make inner loops counter-based.
+
 $mn0="%r0";
 $num="%r1";
 
@@ -47,7 +52,7 @@ $nhi="%r10";
 $nlo="%r11";
 $AHI="%r12";
 $NHI="%r13";
-$fp="%r14";
+$count="%r14";
 $sp="%r15";
 
 $code.=<<___;
@@ -57,44 +62,46 @@ $code.=<<___;
 bn_mul_mont:
 	lgf	$num,164($sp)	# pull $num
 	sla	$num,3		# $num to enumerate bytes
-	la	$rp,0($num,$rp)	# pointers to point at the vectors' ends
-	la	$ap,0($num,$ap)
 	la	$bp,0($num,$bp)
-	la	$np,0($num,$np)
 
 	stmg	%r2,%r15,16($sp)
 
 	cghi	$num,16		#
 	lghi	%r2,0		#
 	blr	%r14		# if($num<16) return 0;
+	cghi	$num,128	#
+	bhr	%r14		# if($num>128) return 0;
 
-	lcgr	$num,$num	# -$num
+	lghi	$rp,-160-8	# leave room for carry bit
+	lcgr	$j,$num		# -$num
 	lgr	%r0,$sp
-	lgr	$fp,$sp
-	aghi	$fp,-160-8	# leave room for carry bit
-	la	$sp,0($num,$fp)	# alloca
-	stg	%r0,0($sp)
-	aghi	$fp,160-8	# $fp to point at tp[$num-1]
+	la	$rp,0($rp,$sp)
+	la	$sp,0($j,$rp)	# alloca
+	stg	%r0,0($sp)	# back chain
 
-	la	$bp,0($num,$bp)	# restore $bp
+	sra	$num,3		# restore $num
+	la	$bp,0($j,$bp)	# restore $bp
+	ahi	$num,-1		# adjust $num for inner loop
 	lg	$n0,0($n0)	# pull n0
 
 	lg	$bi,0($bp)
-	lg	$alo,0($num,$ap)
+	lg	$alo,0($ap)
 	mlgr	$ahi,$bi	# ap[0]*bp[0]
 	lgr	$AHI,$ahi
 
 	lgr	$mn0,$alo	# "tp[0]"*n0
 	msgr	$mn0,$n0
 
-	lg	$nlo,0($num,$np)#
+	lg	$nlo,0($np)	#
 	mlgr	$nhi,$mn0	# np[0]*m1
 	algr	$nlo,$alo	# +="tp[0]"
 	lghi	$NHI,0
 	alcgr	$NHI,$nhi
 
-	lgr	$j,$num
-	aghi	$j,8		# j=1
+	la	$j,8(%r0)	# j=1
+	lr	$count,$num
+
+.align	16
 .L1st:
 	lg	$alo,0($j,$ap)
 	mlgr	$ahi,$bi	# ap[j]*bp[0]
@@ -110,43 +117,45 @@ bn_mul_mont:
 	algr	$nlo,$alo
 	alcgr	$NHI,$nhi
 
-	stg	$nlo,0($j,$fp)	# tp[j-1]=
-	aghi	$j,8		# j++
-	jnz	.L1st
+	stg	$nlo,160-8($j,$sp)	# tp[j-1]=
+	la	$j,8($j)	# j++
+	brct	$count,.L1st
 
 	algr	$NHI,$AHI
 	lghi	$AHI,0
 	alcgr	$AHI,$AHI	# upmost overflow bit
-	stg	$NHI,0($fp)
-	stg	$AHI,8($fp)
+	stg	$NHI,160-8($j,$sp)
+	stg	$AHI,160($j,$sp)
 	la	$bp,8($bp)	# bp++
 
 .Louter:
 	lg	$bi,0($bp)	# bp[i]
-	lg	$alo,0($num,$ap)
+	lg	$alo,0($ap)
 	mlgr	$ahi,$bi	# ap[0]*bp[i]
-	alg	$alo,8($num,$fp)# +=tp[0]
+	alg	$alo,160($sp)	# +=tp[0]
 	lghi	$AHI,0
 	alcgr	$AHI,$ahi
 
 	lgr	$mn0,$alo
-	msgr	$mn0,$n0		# tp[0]*n0
+	msgr	$mn0,$n0	# tp[0]*n0
 
-	lg	$nlo,0($num,$np)# np[0]
+	lg	$nlo,0($np)	# np[0]
 	mlgr	$nhi,$mn0	# np[0]*m1
 	algr	$nlo,$alo	# +="tp[0]"
 	lghi	$NHI,0
 	alcgr	$NHI,$nhi
 
-	lgr	$j,$num
-	aghi	$j,8		# j=1
+	la	$j,8(%r0)	# j=1
+	lr	$count,$num
+
+.align	16
 .Linner:
 	lg	$alo,0($j,$ap)
 	mlgr	$ahi,$bi	# ap[j]*bp[i]
 	algr	$alo,$AHI
 	lghi	$AHI,0
 	alcgr	$ahi,$AHI
-	alg	$alo,8($j,$fp)	# +=tp[j]
+	alg	$alo,160($j,$sp)# +=tp[j]
 	alcgr	$AHI,$ahi
 
 	lg	$nlo,0($j,$np)
@@ -157,34 +166,29 @@ bn_mul_mont:
 	algr	$nlo,$alo	# +="tp[j]"
 	alcgr	$NHI,$nhi
 
-	stg	$nlo,0($j,$fp)	# tp[j-1]=
-	aghi	$j,8		# j++
-	jnz	.Linner
+	stg	$nlo,160-8($j,$sp)	# tp[j-1]=
+	la	$j,8($j)	# j++
+	brct	$count,.Linner
 
 	algr	$NHI,$AHI
 	lghi	$AHI,0
 	alcgr	$AHI,$AHI
-	alg	$NHI,8($fp)	# accumulate previous upmost overflow bit
+	alg	$NHI,160($j,$sp)# accumulate previous upmost overflow bit
 	lghi	$ahi,0
 	alcgr	$AHI,$ahi	# new upmost overflow bit
-	stg	$NHI,0($fp)
-	stg	$AHI,8($fp)
+	stg	$NHI,160-8($j,$sp)
+	stg	$AHI,160($j,$sp)
 
 	la	$bp,8($bp)	# bp++
-	clg	$bp,16+32($fp)	# compare to &bp[num]
+	clg	$bp,160+8+32($j,$sp)	# compare to &bp[num]
 	jne	.Louter
-___
 
-undef $bi;
-$count=$bp; undef $bp;
+	lg	$rp,160+8+16($j,$sp)	# reincarnate rp
+	la	$ap,160($sp)
+	ahi	$num,1		# restore $num, incidentally clears "borrow"
 
-$code.=<<___;
-	lg	$rp,16+16($fp)	# reincarnate rp
-	la	$ap,8($fp)
-	lgr	$j,$num
-
-	lcgr	$count,$num
-	sra	$count,3	# incidentally clears "borrow"
+	la	$j,0(%r0)
+	lr	$count,$num
 .Lsub:	lg	$alo,0($j,$ap)
 	slbg	$alo,0($j,$np)
 	stg	$alo,0($j,$rp)
@@ -198,15 +202,17 @@ $code.=<<___;
 	xgr	$np,$AHI
 	ngr	$np,$rp
 	ogr	$ap,$np		# ap=borrow?tp:rp
-	lgr	$j,$num
 
+	la	$j,0(%r0)
+	lgr	$count,$num
 .Lcopy:	lg	$alo,0($j,$ap)	# copy or in-place refresh
-	stg	$j,8($j,$fp)	# zap tp
+	stg	$j,160($j,$sp)	# zap tp
 	stg	$alo,0($j,$rp)
-	aghi	$j,8
-	jnz	.Lcopy
+	la	$j,8($j)
+	brct	$count,.Lcopy
 
-	lmg	%r6,%r15,16+48($fp)
+	la	%r1,160+8+48($j,$sp)
+	lmg	%r6,%r15,0(%r1)
 	lghi	%r2,1		# signal "processed"
 	br	%r14
 .size	bn_mul_mont,.-bn_mul_mont

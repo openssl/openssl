@@ -20,9 +20,15 @@
 #
 # sha512_block_data_order is ~70% faster than gcc 3.3 generated code.
 
+# January 2009.
+#
+# Add support for hardware SHA512 and reschedule instructions to
+# favour dual-issue z10 pipeline. Hardware SHA256/512 is ~4.7x faster
+# than software.
+
 $t0="%r0";
 $t1="%r1";
-$ctx="%r2";
+$ctx="%r2";	$t2="%r2";
 $inp="%r3";
 $len="%r4";	# used as index in inner loop
 
@@ -54,7 +60,7 @@ if ($output =~ /512/) {
 	@sigma0=(56,63, 7);
 	@sigma1=( 3,45, 6);
 	$rounds=80;
-	$kimdfunc=0;	# 0 means unknown/unsupported/unimplemented
+	$kimdfunc=3;	# 0 means unknown/unsupported/unimplemented/disabled
 } else {
 	$label="256";
 	$SZ=4;
@@ -83,32 +89,32 @@ ___
 $code.=<<___;
 	$ROT	$t0,$e,$Sigma1[0]
 	$ROT	$t1,$e,$Sigma1[1]
+	 lgr	$t2,$f
 	xgr	$t0,$t1
 	$ROT	$t1,$t1,`$Sigma1[2]-$Sigma1[1]`
-	xgr	$t0,$t1			# Sigma1(e)
+	 xgr	$t2,$g
 	$ST	$T1,`160+$SZ*($i%16)`($sp)
+	xgr	$t0,$t1			# Sigma1(e)
+	la	$T1,0($T1,$h)		# T1+=h
+	 ngr	$t2,$e
+	 lgr	$t1,$a
 	algr	$T1,$t0			# T1+=Sigma1(e)
-	algr	$T1,$h			# T1+=h
-	$ADD	$T1,`$i*$SZ`($len,$tbl)	# T1+=K[i]
-	lgr	$t0,$f
-	xgr	$t0,$g
-	ngr	$t0,$e
-	xgr	$t0,$g			# Ch(e,f,g)
-	algr	$T1,$t0			# T1+=Ch(e,f,g)
 	$ROT	$h,$a,$Sigma0[0]
+	 xgr	$t2,$g			# Ch(e,f,g)
+	$ADD	$T1,`$i*$SZ`($len,$tbl)	# T1+=K[i]
 	$ROT	$t0,$a,$Sigma0[1]
+	algr	$T1,$t2			# T1+=Ch(e,f,g)
+	 ogr	$t1,$b
 	xgr	$h,$t0
+	 lgr	$t2,$a
+	 ngr	$t1,$c
 	$ROT	$t0,$t0,`$Sigma0[2]-$Sigma0[1]`
 	xgr	$h,$t0			# h=Sigma0(a)
-	lgr	$t0,$a
-	ogr	$t0,$b
-	ngr	$t0,$c
-	lgr	$t1,$a
-	ngr	$t1,$b
-	ogr	$t0,$t1			# Maj(a,b,c)
-	algr	$h,$t0			# h+=Maj(a,b,c)
-	algr	$d,$T1			# d+=T1
+	 ngr	$t2,$b
 	algr	$h,$T1			# h+=T1
+	 ogr	$t2,$t1			# Maj(a,b,c)
+	la	$d,0($d,$T1)		# d+=T1
+	algr	$h,$t2			# h+=Maj(a,b,c)
 ___
 }
 
@@ -120,15 +126,15 @@ $code.=<<___;
 	$LD	$t1,`160+$SZ*(($i+14)%16)`($sp)
 	$ROT	$t0,$T1,$sigma0[0]
 	$SHR	$T1,$sigma0[2]
+	$ROT	$t2,$t0,`$sigma0[1]-$sigma0[0]`
 	xgr	$T1,$t0
-	$ROT	$t0,$t0,`$sigma0[1]-$sigma0[0]`
-	xgr	$T1,$t0				# sigma0(X[i+1])
 	$ROT	$t0,$t1,$sigma1[0]
-	$ADD	$T1,`160+$SZ*($i%16)`($sp)	# +=X[i]
+	xgr	$T1,$t2				# sigma0(X[i+1])
 	$SHR	$t1,$sigma1[2]
+	$ADD	$T1,`160+$SZ*($i%16)`($sp)	# +=X[i]
 	xgr	$t1,$t0
-	$ADD	$T1,`160+$SZ*(($i+9)%16)`($sp)	# +=X[i+9]
 	$ROT	$t0,$t0,`$sigma1[1]-$sigma1[0]`
+	$ADD	$T1,`160+$SZ*(($i+9)%16)`($sp)	# +=X[i+9]
 	xgr	$t1,$t0				# sigma1(X[i+14])
 	algr	$T1,$t1				# +=sigma1(X[i+14])
 ___
@@ -225,15 +231,14 @@ $code.=<<___ if ($kimdfunc);
 ___
 $code.=<<___;
 	sllg	$len,$len,`log(16*$SZ)/log(2)`
-	la	$len,0($inp,$len)
-	stmg	$len,%r15,32($sp)
+	lghi	%r1,-$frame
+	agr	$len,$inp
+	stmg	$ctx,%r15,16($sp)
 	lgr	%r0,$sp
-	aghi	$sp,-$frame
+	la	$sp,0(%r1,$sp)
 	stg	%r0,0($sp)
 
-	bras	$tbl,.Lpic
-.Lpic:	aghi	$tbl,$Table-.Lpic
-
+	larl	$tbl,$Table
 	$LD	$A,`0*$SZ`($ctx)
 	$LD	$B,`1*$SZ`($ctx)
 	$LD	$C,`2*$SZ`($ctx)
@@ -255,6 +260,8 @@ $code.=<<___;
 	clgr	$len,$t0
 	jne	.Lrounds_16_xx
 
+	lg	$ctx,`$frame+16`($sp)
+	la	$inp,`16*$SZ`($inp)
 	$ADD	$A,`0*$SZ`($ctx)
 	$ADD	$B,`1*$SZ`($ctx)
 	$ADD	$C,`2*$SZ`($ctx)
@@ -271,7 +278,6 @@ $code.=<<___;
 	$ST	$F,`5*$SZ`($ctx)
 	$ST	$G,`6*$SZ`($ctx)
 	$ST	$H,`7*$SZ`($ctx)
-	la	$inp,`16*$SZ`($inp)
 	clg	$inp,`$frame+32`($sp)
 	jne	.Lloop
 

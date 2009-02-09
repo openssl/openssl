@@ -15,14 +15,20 @@
 # twist is that SHA1 hardware support is detected and utilized. In
 # which case performance can reach further >4.5x for larger chunks.
 
+# January 2009.
+#
+# Optimize Xupdate for amount of memory references and reschedule
+# instructions to favour dual-issue z10 pipeline. On z10 hardware is
+# "only" ~2.3x faster than software.
+
 $kimdfunc=1;	# magic function code for kimd instruction
 
 $output=shift;
 open STDOUT,">$output";
 
-$t0="%r0";
-$t1="%r1";
-$ctx="%r2";
+$K_00_39="%r0"; $K=$K_00_39;
+$K_40_79="%r1";
+$ctx="%r2";	$prefetch="%r2";
 $inp="%r3";
 $len="%r4";
 
@@ -31,119 +37,107 @@ $B="%r6";
 $C="%r7";
 $D="%r8";
 $E="%r9";	@V=($A,$B,$C,$D,$E);
-$K_00_19="%r10";
-$K_20_39="%r11";
-$K_40_59="%r12";
-$K_60_79="%r13";
-$Xi="%r14";
+$t0="%r10";
+$t1="%r11";
+@X=("%r12","%r13","%r14");
 $sp="%r15";
 
 $frame=160+16*4;
 
-sub BODY_00_15 {
-my ($i,$a,$b,$c,$d,$e)=@_;
-my $xi=($i&1)?$Xi:$t1;
-
-$code.=<<___ if ($i<16 && !($i&1));
-	lg	$Xi,`$i*4`($inp)
-___
-$code.=<<___;
-	alr	$e,$K_00_19	### $i
-	rll	$t0,$a,5
-	alr	$e,$t0
-	lr	$t0,$d
-	xr	$t0,$c
-	nr	$t0,$b
-	xr	$t0,$d
-	alr	$e,$t0
-	rll	$b,$b,30
-___
-$code.=<<___ if ($i<16 && !($i&1));
-	srlg	$xi,$Xi,32
-	stg	$Xi,`160+$i*4`($sp)
-___
-$code.=<<___;
-	alr	$e,$xi
-___
-}
-
 sub Xupdate {
 my $i=shift;
 
+$code.=<<___ if ($i==15);
+	lg	$prefetch,160($sp)	### Xupdate(16) warm-up
+	lr	$X[0],$X[2]
+___
 return if ($i&1);	# Xupdate is vectorized and executed every 2nd cycle
-$code.=<<___;
-	lg	$Xi,`160+4*($i%16)`($sp)	### Xupdate($i)
-	xg	$Xi,`160+4*(($i+2)%16)`($sp)
-	xg	$Xi,`160+4*(($i+8)%16)`($sp)
+$code.=<<___ if ($i<16);
+	lg	$X[0],`$i*4`($inp)	### Xload($i)
+	rllg	$X[1],$X[0],32
 ___
-if ((($i+13)%16)==15) {
-$code.=<<___;
-	llgf	$t0,`160+4*15`($sp)
-	x	$Xi,`160+0`($sp)
-	sllg	$t0,$t0,32
-	xgr	$Xi,$t0
+$code.=<<___ if ($i>=16);
+	xgr	$X[0],$prefetch		### Xupdate($i)
+	lg	$prefetch,`160+4*(($i+2)%16)`($sp)
+	xg	$X[0],`160+4*(($i+8)%16)`($sp)
+	xgr	$X[0],$prefetch
+	rll	$X[0],$X[0],1
+	rllg	$X[1],$X[0],32
+	rll	$X[1],$X[1],1
+	rllg	$X[0],$X[1],32
+	lr	$X[2],$X[1]		# feedback
 ___
-} else {
-$code.=<<___;
-	xg	$Xi,`160+4*(($i+13)%16)`($sp)
+$code.=<<___ if ($i<=70);
+	stg	$X[0],`160+4*($i%16)`($sp)
 ___
-}
-$code.=<<___;
-	rll	$Xi,$Xi,1
-	rllg	$t1,$Xi,32
-	rll	$t1,$t1,1
-	rllg	$Xi,$t1,32
-	stg	$Xi,`160+4*($i%16)`($sp)
-___
+unshift(@X,pop(@X));
 }
 
-sub BODY_16_19 {
-	&Xupdate(@_[0]);
-	&BODY_00_15(@_);
+sub BODY_00_19 {
+my ($i,$a,$b,$c,$d,$e)=@_;
+my $xi=$X[1];
+
+	&Xupdate($i);
+$code.=<<___;
+	alr	$e,$K		### $i
+	rll	$t1,$a,5
+	lr	$t0,$d
+	xr	$t0,$c
+	alr	$e,$t1
+	nr	$t0,$b
+	alr	$e,$xi
+	xr	$t0,$d
+	rll	$b,$b,30
+	alr	$e,$t0
+___
 }
 
 sub BODY_20_39 {
 my ($i,$a,$b,$c,$d,$e)=@_;
-my $xi=($i&1)?$Xi:$t1;
-my $K_XX_XX=($i<40)?$K_20_39:$K_60_79;
+my $xi=$X[1];
 
 	&Xupdate($i);
 $code.=<<___;
-	alr	$e,$K_XX_XX	### $i
-	rll	$t0,$a,5
-	alr	$e,$t0
+	alr	$e,$K		### $i
+	rll	$t1,$a,5
 	lr	$t0,$b
+	alr	$e,$t1
 	xr	$t0,$c
-	xr	$t0,$d
-	alr	$e,$t0
-	rll	$b,$b,30
 	alr	$e,$xi
+	xr	$t0,$d
+	rll	$b,$b,30
+	alr	$e,$t0
 ___
 }
 
 sub BODY_40_59 {
 my ($i,$a,$b,$c,$d,$e)=@_;
-my $xi=($i&1)?$Xi:$t1;
+my $xi=$X[1];
 
 	&Xupdate($i);
 $code.=<<___;
-	alr	$e,$K_40_59	### $i
-	rll	$t0,$a,5
-	alr	$e,$t0
+	alr	$e,$K		### $i
+	rll	$t1,$a,5
 	lr	$t0,$b
+	alr	$e,$t1
 	or	$t0,$c
-	nr	$t0,$d
-	alr	$e,$xi
 	lr	$t1,$b
+	nr	$t0,$d
 	nr	$t1,$c
+	alr	$e,$xi
 	or	$t0,$t1
-	alr	$e,$t0
 	rll	$b,$b,30
+	alr	$e,$t0
 ___
 }
 
 $code.=<<___;
 .text
+.align	64
+.type	Ktable,\@object
+Ktable: .long	0x5a827999,0x6ed9eba1,0x8f1bbcdc,0xca62c1d6
+	.skip	48	#.long	0,0,0,0,0,0,0,0,0,0,0,0
+.size	Ktable,.-Ktable
 .globl	sha1_block_data_order
 .type	sha1_block_data_order,\@function
 sha1_block_data_order:
@@ -165,37 +159,43 @@ $code.=<<___ if ($kimdfunc);
 .Lsoftware:
 ___
 $code.=<<___;
+	lghi	%r1,-$frame
+	stg	$ctx,16($sp)
 	stmg	%r6,%r15,48($sp)
 	lgr	%r0,$sp
-	aghi	$sp,-$frame
+	la	$sp,0(%r1,$sp)
 	stg	%r0,0($sp)
 
-	sllg	$len,$len,6
-	la	$len,0($inp,$len)
-
+	larl	$t0,Ktable
 	llgf	$A,0($ctx)
 	llgf	$B,4($ctx)
 	llgf	$C,8($ctx)
 	llgf	$D,12($ctx)
 	llgf	$E,16($ctx)
 
-	llilh	$K_00_19,0x5a82
-	oill	$K_00_19,0x7999
-	llilh	$K_20_39,0x6ed9
-	oill	$K_20_39,0xeba1
-	llilh	$K_40_59,0x8f1b
-	oill	$K_40_59,0xbcdc
-	llilh	$K_60_79,0xca62
-	oill	$K_60_79,0xc1d6
+	lg	$K_00_39,0($t0)
+	lg	$K_40_79,8($t0)
+
 .Lloop:
+	rllg	$K_00_39,$K_00_39,32
 ___
-for ($i=0;$i<16;$i++)	{ &BODY_00_15($i,@V); unshift(@V,pop(@V)); }
-for (;$i<20;$i++)	{ &BODY_16_19($i,@V); unshift(@V,pop(@V)); }
+for ($i=0;$i<20;$i++)	{ &BODY_00_19($i,@V); unshift(@V,pop(@V)); }
+$code.=<<___;
+	rllg	$K_00_39,$K_00_39,32
+___
 for (;$i<40;$i++)	{ &BODY_20_39($i,@V); unshift(@V,pop(@V)); }
+$code.=<<___;	$K=$K_40_79;
+	rllg	$K_40_79,$K_40_79,32
+___
 for (;$i<60;$i++)	{ &BODY_40_59($i,@V); unshift(@V,pop(@V)); }
+$code.=<<___;
+	rllg	$K_40_79,$K_40_79,32
+___
 for (;$i<80;$i++)	{ &BODY_20_39($i,@V); unshift(@V,pop(@V)); }
 $code.=<<___;
 
+	lg	$ctx,`$frame+16`($sp)
+	la	$inp,64($inp)
 	al	$A,0($ctx)
 	al	$B,4($ctx)
 	al	$C,8($ctx)
@@ -206,9 +206,7 @@ $code.=<<___;
 	st	$C,8($ctx)
 	st	$D,12($ctx)
 	st	$E,16($ctx)
-	la	$inp,64($inp)
-	clgr	$inp,$len
-	jne	.Lloop
+	brct	$len,.Lloop
 
 	lmg	%r6,%r15,`$frame+48`($sp)
 	br	%r14
