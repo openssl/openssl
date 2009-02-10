@@ -1,6 +1,13 @@
 #!/usr/local/bin/perl
 
-open IN, "obj_mac.num";
+use strict;
+
+my %xref_tbl;
+my %oid_tbl;
+
+my ($mac_file, $xref_file) = @ARGV;
+
+open(IN, $mac_file) || die "Can't open $mac_file";
 
 # Read in OID nid values for a lookup table.
 
@@ -12,7 +19,7 @@ while (<IN>)
 	}
 close IN;
 
-open IN, "obj_xref.txt";
+open(IN, $xref_file) || die "Can't open $xref_file";
 
 my $ln = 1;
 
