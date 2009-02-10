@@ -1,5 +1,12 @@
 .text
 
+.globl	OPENSSL_cpuid_setup
+.type	OPENSSL_cpuid_setup,@function
+.align	16
+OPENSSL_cpuid_setup:
+	br	%r14		# reserved for future
+.size	OPENSSL_cpuid_setup,.-OPENSSL_cpuid_setup
+
 .globl	OPENSSL_s390x_facilities
 .type	OPENSSL_s390x_facilities,@function
 .align	16
