@@ -64,13 +64,15 @@ bn_mul_mont:
 	sla	$num,3		# $num to enumerate bytes
 	la	$bp,0($num,$bp)
 
-	stmg	%r2,%r15,16($sp)
+	stg	%r2,16($sp)
 
 	cghi	$num,16		#
 	lghi	%r2,0		#
 	blr	%r14		# if($num<16) return 0;
 	cghi	$num,128	#
 	bhr	%r14		# if($num>128) return 0;
+
+	stmg	%r3,%r15,24($sp)
 
 	lghi	$rp,-160-8	# leave room for carry bit
 	lcgr	$j,$num		# -$num
