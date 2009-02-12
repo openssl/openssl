@@ -9,9 +9,9 @@
 #
 # February 2009
 #
-# Performance is 2x of gcc 3.4.6 on z10. Coding "secret" is to avoid
-# arithmetic instructions, but adhere to load and load address in
-# order to minimize Address Generation Interlock.
+# Performance is 2x of gcc 3.4.6 on z10. Coding "secret" is to
+# "cluster" Address Generation Interlocks, so that one pipeline stall
+# resolves several dependencies.
 
 $rp="%r14";
 $sp="%r15";
@@ -43,10 +43,10 @@ RC4:
 	llgc	$XX[0],0($key)
 	llgc	$YY,1($key)
 	la	$XX[0],1($XX[0])
-	llgcr	$XX[0],$XX[0]
-	llgc	$TX[0],2($XX[0],$key)
+	nill	$XX[0],0xff
 	srlg	$cnt,$len,3
 	ltgr	$cnt,$cnt
+	llgc	$TX[0],2($XX[0],$key)
 	jz	.Lshort
 	j	.Loop8
 
@@ -56,16 +56,16 @@ ___
 for ($i=0;$i<8;$i++) {
 $code.=<<___;
 	la	$YY,0($YY,$TX[0])	# $i
-	llgcr	$YY,$YY
+	nill	$YY,255
 	la	$XX[1],1($XX[0])
-	llgcr	$XX[1],$XX[1]
+	nill	$XX[1],255
+___
+$code.=<<___ if ($i==1);
+	llgc	$acc,2($TY,$key)
 ___
 $code.=<<___ if ($i>1);
 	sllg	$acc,$acc,8
 	ic	$acc,2($TY,$key)
-___
-$code.=<<___ if ($i==1);
-	llgc	$acc,2($TY,$key)
 ___
 $code.=<<___;
 	llgc	$TY,2($YY,$key)
@@ -77,7 +77,7 @@ $code.=<<___;
 	la	$TX[1],0($TX[0])
 .Lcmov$i:
 	la	$TY,0($TY,$TX[0])
-	llgcr	$TY,$TY
+	nill	$TY,255
 ___
 push(@TX,shift(@TX)); push(@XX,shift(@XX));     # "rotate" registers
 }
@@ -101,18 +101,18 @@ $code.=<<___;
 .align	16
 .Loop1:
 	la	$YY,0($YY,$TX[0])
-	llgcr	$YY,$YY
+	nill	$YY,255
 	llgc	$TY,2($YY,$key)
 	stc	$TX[0],2($YY,$key)
 	stc	$TY,2($XX[0],$key)
-	la	$TY,0($TY,$TX[0])
-	llgcr	$TY,$TY
-	la	$XX[0],1($XX[0])
-	llgcr	$XX[0],$XX[0]
-	llgc	$TY,2($TY,$key)
-	llgc	$TX[0],2($XX[0],$key)
+	ar	$TY,$TX[0]
+	ahi	$XX[0],1
+	nill	$TY,255
+	nill	$XX[0],255
 	llgc	$acc,0($inp)
 	la	$inp,1($inp)
+	llgc	$TY,2($TY,$key)
+	llgc	$TX[0],2($XX[0],$key)
 	xr	$acc,$TY
 	stc	$acc,0($out)
 	la	$out,1($out)
@@ -168,8 +168,8 @@ RC4_set_key:
 	la	$idx,0($idx,$acc)
 	la	$ikey,1($ikey)
 	la	$idx,0($idx,$dat)
+	nill	$idx,255
 	la	$iinp,1($iinp)
-	llgcr	$idx,$idx
 	tml	$ikey,255
 	llgc	$dat,2($idx,$key)
 	stc	$dat,2+256-1($ikey,$key)
