@@ -432,5 +432,5 @@ int MAIN(int argc, char **argv)
 	if (passout)
 		OPENSSL_free(passout);
 
-	return (0);
+	return ret;
 	}
