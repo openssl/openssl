@@ -79,9 +79,9 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1, BIGNUM *q2,
 		goto err;
 
 	ctx = BN_CTX_new();
-	BN_CTX_start(ctx);
 	if (!ctx) 
 		goto err;
+	BN_CTX_start(ctx);
 
 	r0 = BN_CTX_get(ctx);
 	r1 = BN_CTX_get(ctx);
@@ -190,7 +190,7 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1, BIGNUM *q2,
 	if (ctx2)
 		BN_CTX_free(ctx2);
 	/* If this is set all calls successful */
-	if (rsa->iqmp != NULL)
+	if (rsa && rsa->iqmp != NULL)
 		return 1;
 
 	return 0;
