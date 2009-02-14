@@ -1447,6 +1447,7 @@ while (<IN>)
 		}
 	$sdirs = 0 unless /\\$/;
         s/fips // if (/^DIRS=/ && !$fips);
+        s/engines // if (/^DIRS=/ && $disabled{"engine"});
 	s/^VERSION=.*/VERSION=$version/;
 	s/^MAJOR=.*/MAJOR=$major/;
 	s/^MINOR=.*/MINOR=$minor/;
