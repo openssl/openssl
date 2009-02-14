@@ -332,7 +332,7 @@ int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
 int ASN1_STRING_print(BIO *bp, ASN1_STRING *v)
 	{
 	int i,n;
-	char buf[80],*p;;
+	char buf[80],*p;
 
 	if (v == NULL) return(0);
 	n=0;

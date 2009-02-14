@@ -68,7 +68,7 @@ eric (adding numbers to speculation)
 --- Appendix ---
 - The time measured is user time but these number a very rough.
 - Remember this is the cost of both client and server sides of the protocol.
-- The TCP/kernal overhead of connection establishment is normally the
+- The TCP/kernel overhead of connection establishment is normally the
   killer in SSL.  Often delays in the TCP protocol will make session-id
   reuse look slower that new sessions, but this would not be the case on
   a loaded server.

@@ -29,7 +29,7 @@ OSErr AppendErrorMessageToHandle(Handle inoutHandle);
 
 
 
-//	A bunch of evil macros that would be uneccessary if I were always using C++ !
+//	A bunch of evil macros that would be unnecessary if I were always using C++ !
 
 #define SetErrorMessageAndBailIfNil(theArg,theMessage)								\
 {																					\

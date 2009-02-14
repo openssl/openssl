@@ -926,7 +926,7 @@ int test_mod_exp(BIO *bp, BN_CTX *ctx)
 		BN_bntest_rand(b,2+i,0,0); /**/
 
 		if (!BN_mod_exp(d,a,b,c,ctx))
-			return(00);
+			return(0);
 
 		if (bp != NULL)
 			{
@@ -1028,7 +1028,7 @@ int test_exp(BIO *bp, BN_CTX *ctx)
 		BN_bntest_rand(b,2+i,0,0); /**/
 
 		if (!BN_exp(d,a,b,ctx))
-			return(00);
+			return(0);
 
 		if (bp != NULL)
 			{

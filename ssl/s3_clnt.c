@@ -173,7 +173,7 @@ int ssl3_connect(SSL *s)
 	long num1;
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
-	int new_state,state,skip=0;;
+	int new_state,state,skip=0;
 
 	RAND_add(&Time,sizeof(Time),0);
 	ERR_clear_error();

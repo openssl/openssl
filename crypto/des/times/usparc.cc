@@ -2,7 +2,7 @@ solaris 2.5.1 usparc 167mhz?? - SC4.0 cc -fast -Xa -xO5
 
 For the ultra sparc, SunC 4.0 cc -fast -Xa -xO5, running 'des_opts'
 gives a speed of 475,000 des/s while 'speed' gives 417,000 des/s.
-I belive the difference is tied up in optimisation that the compiler
+I believe the difference is tied up in optimisation that the compiler
 is able to perform when the code is 'inlined'.  For 'speed', the DES
 routines are being linked from a library.  I'll record the higher
 speed since if performance is everything, you can always inline
