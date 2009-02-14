@@ -28,7 +28,7 @@ SSL_CIPHER_get_version() returns the protocol version for B<cipher>, currently
 
 SSL_CIPHER_description() returns a textual description of the cipher used
 into the buffer B<buf> of length B<len> provided. B<len> must be at least
-128 bytes, otherwise a pointer to the the string "Buffer too small" is
+128 bytes, otherwise a pointer to the string "Buffer too small" is
 returned. If B<buf> is NULL, a buffer of 128 bytes is allocated using
 OPENSSL_malloc(). If the allocation fails, a pointer to the string
 "OPENSSL_malloc Error" is returned.

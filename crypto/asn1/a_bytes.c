@@ -79,7 +79,7 @@ ASN1_STRING *d2i_ASN1_type_bytes(ASN1_STRING **a, const unsigned char **pp,
 
 	if (tag >= 32)
 		{
-		i=ASN1_R_TAG_VALUE_TOO_HIGH;;
+		i=ASN1_R_TAG_VALUE_TOO_HIGH;
 		goto err;
 		}
 	if (!(ASN1_tag2bit(tag) & type))

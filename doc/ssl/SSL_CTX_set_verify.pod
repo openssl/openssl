@@ -28,7 +28,7 @@ specifies the B<verify_callback> function to be used. If no callback function
 shall be specified, the NULL pointer can be used for B<verify_callback>. In
 this case last B<verify_callback> set specifically for this B<ssl> remains. If
 no special B<callback> was set before, the default callback for the underlying
-B<ctx> is used, that was valid at the the time B<ssl> was created with
+B<ctx> is used, that was valid at the time B<ssl> was created with
 L<SSL_new(3)|SSL_new(3)>.
 
 SSL_CTX_set_verify_depth() sets the maximum B<depth> for the certificate chain

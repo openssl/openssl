@@ -14,7 +14,7 @@ SSL_free - free an allocated SSL structure
 
 SSL_free() decrements the reference count of B<ssl>, and removes the SSL
 structure pointed to by B<ssl> and frees up the allocated memory if the
-the reference count has reached 0.
+reference count has reached 0.
 
 =head1 NOTES
 

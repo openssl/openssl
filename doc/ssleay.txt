@@ -3800,9 +3800,9 @@ made public on sci.crypt in Sep 1994 (RC4) and Feb 1996 (RC2).  I have
 copies of the origional postings if people are interested.  RSA I believe 
 claim that they were 'trade-secrets' and that some-one broke an NDA in 
 revealing them.  Other claim they reverse engineered the algorithms from 
-compiled binaries.  If the algorithms were reverse engineered, I belive 
+compiled binaries.  If the algorithms were reverse engineered, I believe 
 RSA had no legal leg to stand on.  If an NDA was broken, I don't know.
-Regardless, RSA, I belive, is willing to go to court over the issue so 
+Regardless, RSA, I believe, is willing to go to court over the issue so 
 licencing is probably the best idea, or at least talk to them.
 If there are people who actually know more about this, pease let me know, I 
 don't want to vilify or spread miss-information if I can help it.
