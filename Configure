@@ -1423,6 +1423,7 @@ while (<IN>)
 			}
 		}
 	$sdirs = 0 unless /\\$/;
+        s/engines // if (/^DIRS=/ && $disabled{"engine"});
 	s/^VERSION=.*/VERSION=$version/;
 	s/^MAJOR=.*/MAJOR=$major/;
 	s/^MINOR=.*/MINOR=$minor/;
