@@ -237,7 +237,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
 		BIO_printf(bio_c_out, "Received PSK identity hint '%s'\n", hint);
 
 	/* lookup PSK identity and PSK key based on the given identity hint here */
-	ret = BIO_snprintf(identity, max_identity_len, psk_identity);
+	ret = BIO_snprintf(identity, max_identity_len, "%s", psk_identity);
 	if (ret < 0 || (unsigned int)ret > max_identity_len)
 		goto out_err;
 	if (c_debug)
