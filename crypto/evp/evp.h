@@ -1142,7 +1142,7 @@ void EVP_PKEY_meth_set_verifyctx(EVP_PKEY_METHOD *pmeth,
 
 void EVP_PKEY_meth_set_encrypt(EVP_PKEY_METHOD *pmeth,
 	int (*encrypt_init)(EVP_PKEY_CTX *ctx),
-	int (*encrypt)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
+	int (*encryptfn)(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 					const unsigned char *in, size_t inlen));
 
 void EVP_PKEY_meth_set_decrypt(EVP_PKEY_METHOD *pmeth,
