@@ -127,7 +127,7 @@ const struct gost_cipher_info *get_encryption_params(ASN1_OBJECT *obj)
 		{
 		const char * params = get_gost_engine_param(GOST_PARAM_CRYPT_PARAMS);
 		if (!params || !strlen(params)) 
-			return &gost_cipher_list[0];
+			return &gost_cipher_list[1];
 
 		nid = OBJ_txt2nid(params);
 		if (nid == NID_undef)
