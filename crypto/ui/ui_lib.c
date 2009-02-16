@@ -90,6 +90,7 @@ UI *UI_new_method(const UI_METHOD *method)
 
 	ret->strings=NULL;
 	ret->user_data=NULL;
+	ret->flags=0;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI, ret, &ret->ex_data);
 	return ret;
 	}
