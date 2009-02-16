@@ -201,7 +201,7 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 unsigned long X509_NAME_hash(X509_NAME *x)
 	{
 	unsigned long ret=0;
-	unsigned char md[16];
+	unsigned char md[SHA_DIGEST_LENGTH];
 
 	/* Make sure X509_NAME structure contains valid cached encoding */
 	i2d_X509_NAME(x,NULL);
