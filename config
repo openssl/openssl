@@ -29,7 +29,7 @@ EXE=""
 for i
 do
 case "$i" in 
--d*) PREFIX="debug-";;
+-d) PREFIX="debug-";;
 -t*) TEST="true";;
 -h*) TEST="true"; cat <<EOF
 Usage: config [options]
