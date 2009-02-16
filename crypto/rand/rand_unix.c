@@ -232,7 +232,7 @@ int RAND_poll(void)
 				t.tv_sec = 0;
 				t.tv_usec = usec;
 
-				if (FD_SETSIZE > 0 && fd >= FD_SETSIZE)
+				if (FD_SETSIZE > 0 && (unsigned)fd >= FD_SETSIZE)
 					{
 					/* can't use select, so just try to read once anyway */
 					try_read = 1;
