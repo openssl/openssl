@@ -320,7 +320,7 @@ static const X509_VERIFY_PARAM default_table[] = {
 	0,		/* flags */
 	0,		/* purpose */
 	0,		/* trust */
-	9,		/* depth */
+	100,		/* depth */
 	NULL		/* policies */
 	},
 	{
