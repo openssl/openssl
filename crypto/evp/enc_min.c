@@ -199,7 +199,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 			enc = 1;
 		ctx->encrypt = enc;
 		}
-#ifdef OPENSSL_NO_FIPS
+#ifdef OPENSSL_FIPS
 	if(FIPS_selftest_failed())
 		{
 		FIPSerr(FIPS_F_EVP_CIPHERINIT_EX,FIPS_R_FIPS_SELFTEST_FAILED);
