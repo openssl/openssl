@@ -22,7 +22,6 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
 TEST=fips_aesavs.c
-TESTDATA=fips_aes_data
 APPS=
 
 LIB=$(TOP)/libcrypto.a
@@ -50,7 +49,6 @@ files:
 links:
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/include/openssl $(EXHEADER)
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TEST)
-	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/test $(TESTDATA)
 	@$(PERL) $(TOP)/util/mklink.pl $(TOP)/apps $(APPS)
 
 install:
