@@ -59,6 +59,12 @@
 #ifndef HEADER_STORE_H
 #define HEADER_STORE_H
 
+#include <openssl/opensslconf.h>
+
+#ifdef OPENSSL_NO_STORE
+#error STORE is disabled.
+#endif
+
 #include <openssl/ossl_typ.h>
 #ifndef OPENSSL_NO_DEPRECATED
 #include <openssl/evp.h>
