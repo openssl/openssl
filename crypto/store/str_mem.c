@@ -314,9 +314,9 @@ static STORE_OBJECT *mem_list_next(STORE *s, void *handle)
 	for(srch = context->search_index;
 	    srch < sk_MEM_OBJECT_DATA_num(store->data)
 		    && STORE_ATTR_INFO_in_range(key.attr_info,
-			    sk_MEM_OBJECT_DATA_value(store->data, srch))
+			    sk_MEM_OBJECT_DATA_value(store->data, srch)->attr_info)
 		    && !(cres = STORE_ATTR_INFO_in_ex(key.attr_info,
-				 sk_MEM_OBJECT_DATA_value(store->data, srch)));
+				 sk_MEM_OBJECT_DATA_value(store->data, srch)->attr_info));
 	    srch++)
 		;
 
