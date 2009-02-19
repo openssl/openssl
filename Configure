@@ -658,6 +658,7 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
                  "rc5"            => "default",
 		 "rfc3779"	  => "default",
                  "shared"         => "default",
+		 "store"	  => "experimental",
                  "zlib"           => "default",
                  "zlib-dynamic"   => "default"
                );
@@ -665,7 +666,7 @@ my @experimental = ();
 
 # This is what $depflags will look like with the above defaults
 # (we need this to see if we should advise the user to run "make depend"):
-my $default_depflags = " -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779";
+my $default_depflags = " -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MDC2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_STORE";
 
 
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
