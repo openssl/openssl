@@ -547,6 +547,8 @@ void SSL_free(SSL *s)
 
 	if (s->ctx) SSL_CTX_free(s->ctx);
 #ifndef OPENSSL_NO_TLSEXT
+	if (s->tlsext_hostname)
+		OPENSSL_free(s->tlsext_hostname);
 	if (s->initial_ctx) SSL_CTX_free(s->initial_ctx);
 #ifndef OPENSSL_NO_EC
 	if (s->tlsext_ecpointformatlist) OPENSSL_free(s->tlsext_ecpointformatlist);
