@@ -510,6 +510,8 @@ void SSL_free(SSL *s)
 
 	if (s->ctx) SSL_CTX_free(s->ctx);
 #ifndef OPENSSL_NO_TLSEXT
+	if (s->tlsext_hostname)
+		OPENSSL_free(s->tlsext_hostname);
 	if (s->initial_ctx) SSL_CTX_free(s->initial_ctx);
 	if (s->tlsext_ocsp_exts)
 		sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
