@@ -504,6 +504,9 @@ links:
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
 	@set -e; target=links; $(RECURSIVE_BUILD_CMD)
+	if [ -z "$(FIPSCANLIB)" ]; then \
+		@set -e; target=links; dir=fips ; $(BUILD_CMD) ; \
+	fi
 
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
