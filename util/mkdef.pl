@@ -149,7 +149,7 @@ foreach (@ARGV, split(/ /, $options))
 	}
 	$VMS=1 if $_ eq "VMS";
 	$OS2=1 if $_ eq "OS2";
-	if ($_ eq "zlib" || $_ eq "zlib-dynamic"
+	if ($_ eq "zlib" || $_ eq "enable-zlib" || $_ eq "zlib-dynamic"
 			 || $_ eq "enable-zlib-dynamic") {
 		$zlib = 1;
 	}
