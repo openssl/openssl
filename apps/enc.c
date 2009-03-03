@@ -533,7 +533,8 @@ bad:
 			BIO_printf(bio_err,"invalid hex iv value\n");
 			goto end;
 			}
-		if ((hiv == NULL) && (str == NULL))
+		if ((hiv == NULL) && (str == NULL)
+		    && EVP_CIPHER_iv_length(cipher) != 0)
 			{
 			/* No IV was explicitly set and no IV was generated
 			 * during EVP_BytesToKey. Hence the IV is undefined,
