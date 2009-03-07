@@ -284,6 +284,7 @@ static int mem_gets(BIO *bp, char *buf, int size)
 
 	BIO_clear_retry_flags(bp);
 	j=bm->length;
+	if ((size-1) < j) j=size-1;
 	if (j <= 0)
 		{
 		*buf='\0';
@@ -292,17 +293,18 @@ static int mem_gets(BIO *bp, char *buf, int size)
 	p=bm->data;
 	for (i=0; i<j; i++)
 		{
-		if (p[i] == '\n') break;
+		if (p[i] == '\n')
+			{
+			i++;
+			break;
+			}
 		}
-	if (i == j)
-		{
-		BIO_set_retry_read(bp);
-		/* return(-1);  change the semantics 0.6.6a */ 
-		}
-	else
-		i++;
-	/* i is the max to copy */
-	if ((size-1) < i) i=size-1;
+
+	/*
+	 * i is now the max num of bytes to copy, either j or up to
+	 * and including the first newline
+	 */ 
+
 	i=mem_read(bp,buf,i);
 	if (i > 0) buf[i]='\0';
 	ret=i;

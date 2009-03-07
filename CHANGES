@@ -4,6 +4,10 @@
 
  Changes between 0.9.8j and 0.9.8k  [xx XXX xxxx]
 
+  *) Improve efficiency of mem_gets: don't search whole buffer each time
+     for a '\n'
+     [Jeremy Shapiro <jnshapir@us.ibm.com>]
+
   *) New -hex option for openssl rand.
      [Matthieu Herrb]
 
