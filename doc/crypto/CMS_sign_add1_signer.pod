@@ -2,7 +2,7 @@
 
 =head1 NAME
 
- CMS_sign_add_signer, CMS_SignerInfo_sign - add a signer to a CMS_ContentInfo signed data structure.
+ CMS_sign_add1_signer, CMS_SignerInfo_sign - add a signer to a CMS_ContentInfo signed data structure.
 
 =head1 SYNOPSIS
 
