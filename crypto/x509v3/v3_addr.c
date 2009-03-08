@@ -190,6 +190,8 @@ static int i2r_address(BIO *out,
       BIO_printf(out, "%x%s", (addr[i] << 8) | addr[i+1], (i < 14 ? ":" : ""));
     if (i < 16)
       BIO_puts(out, ":");
+    if (i == 0)
+      BIO_puts(out, ":");
     break;
   default:
     for (i = 0; i < bs->length; i++)
