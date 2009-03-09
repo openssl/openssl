@@ -170,6 +170,9 @@ PKCS12 *PKCS12_create(char *pass, char *name, EVP_PKEY *pkey, X509 *cert,
 
 	p12 = PKCS12_add_safes(safes, 0);
 
+	if (!p12)
+		goto err;
+
 	sk_PKCS7_pop_free(safes, PKCS7_free);
 
 	safes = NULL;
