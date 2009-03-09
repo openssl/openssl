@@ -1109,9 +1109,9 @@ bad:
 			if (startdate == NULL)
 				ERR_clear_error();
 			}
-		if (startdate && !ASN1_UTCTIME_set_string(NULL,startdate))
+		if (startdate && !ASN1_TIME_set_string(NULL, startdate))
 			{
-			BIO_printf(bio_err,"start date is invalid, it should be YYMMDDHHMMSSZ\n");
+			BIO_printf(bio_err,"start date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
 			goto err;
 			}
 		if (startdate == NULL) startdate="today";
@@ -1123,9 +1123,9 @@ bad:
 			if (enddate == NULL)
 				ERR_clear_error();
 			}
-		if (enddate && !ASN1_UTCTIME_set_string(NULL,enddate))
+		if (enddate && !ASN1_TIME_set_string(NULL, enddate))
 			{
-			BIO_printf(bio_err,"end date is invalid, it should be YYMMDDHHMMSSZ\n");
+			BIO_printf(bio_err,"end date is invalid, it should be YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ\n");
 			goto err;
 			}
 
@@ -2007,11 +2007,11 @@ again2:
 
 	if (strcmp(startdate,"today") == 0)
 		X509_gmtime_adj(X509_get_notBefore(ret),0);
-	else ASN1_UTCTIME_set_string(X509_get_notBefore(ret),startdate);
+	else ASN1_TIME_set_string(X509_get_notBefore(ret),startdate);
 
 	if (enddate == NULL)
 		X509_time_adj_ex(X509_get_notAfter(ret),days, 0, NULL);
-	else ASN1_UTCTIME_set_string(X509_get_notAfter(ret),enddate);
+	else ASN1_TIME_set_string(X509_get_notAfter(ret),enddate);
 
 	if (!X509_set_subject_name(ret,subject)) goto err;
 
@@ -2107,7 +2107,7 @@ again2:
 		}
 
 	BIO_printf(bio_err,"Certificate is to be certified until ");
-	ASN1_UTCTIME_print(bio_err,X509_get_notAfter(ret));
+	ASN1_TIME_print(bio_err,X509_get_notAfter(ret));
 	if (days) BIO_printf(bio_err," (%ld days)",days);
 	BIO_printf(bio_err, "\n");
 
@@ -2397,12 +2397,7 @@ static int fix_data(int nid, int *type)
 
 static int check_time_format(const char *str)
 	{
-	ASN1_UTCTIME tm;
-
-	tm.data=(unsigned char *)str;
-	tm.length=strlen(str);
-	tm.type=V_ASN1_UTCTIME;
-	return(ASN1_UTCTIME_check(&tm));
+	return ASN1_TIME_set_string(NULL, str);
 	}
 
 static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)

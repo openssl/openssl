@@ -173,3 +173,25 @@ ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZE
 
 	return ret;
 	}
+
+int ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
+	{
+	ASN1_TIME t;
+
+	t.length = strlen(str);
+	t.data = (unsigned char *)str;
+	
+	t.type = V_ASN1_UTCTIME;
+
+	if (!ASN1_TIME_check(&t))
+		{
+		t.type = V_ASN1_GENERALIZEDTIME;
+		if (!ASN1_TIME_check(&t))
+			return 0;
+		}
+	
+	if (s && !ASN1_STRING_copy((ASN1_STRING *)s, (ASN1_STRING *)&t))
+			return 0;
+
+	return 1;
+	}

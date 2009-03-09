@@ -4,6 +4,9 @@
 
  Changes between 0.9.8j and 0.9.9  [xx XXX xxxx]
 
+  *) Support GeneralizedTime in ca utility. 
+     [Oliver Martin <oliver@volatilevoid.net>, Steve Henson]
+
   *) Enhance the hash format used for certificate directory links. The new
      form uses the canonical encoding (meaning equivalent names will work
      even if they aren't identical) and uses SHA1 instead of MD5. This form
