@@ -164,7 +164,7 @@ if ($FLAVOR =~ /NT/)
 	$ex_libs="unicows.lib $ex_libs";
 	}
 # static library stuff
-$mklib='lib';
+$mklib='lib /nologo';
 $ranlib='';
 $plib="";
 $libp=".lib";
@@ -184,7 +184,7 @@ if ($nasm) {
 	$asm.=' /Zi' if $debug;
 	$afile='/Fo';
 } else {
-	$asm='ml /Cp /coff /c /Cx';
+	$asm='ml /nologo /Cp /coff /c /Cx';
 	$asm.=" /Zi" if $debug;
 	$afile='/Fo';
 }
