@@ -60,6 +60,9 @@
 #include <errno.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
+
+#ifndef OPENSSL_NO_SOCK
+
 #include <openssl/bio.h>
 
 #ifdef WATT32
@@ -300,3 +303,5 @@ int BIO_sock_non_fatal_error(int err)
 		}
 	return(0);
 	}
+
+#endif  /* #ifndef OPENSSL_NO_SOCK */

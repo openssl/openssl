@@ -162,7 +162,7 @@ else
 	}
 
 # static library stuff
-$mklib='lib';
+$mklib='lib /nologo';
 $ranlib='';
 $plib="";
 $libp=".lib";
@@ -193,7 +193,7 @@ if ($FLAVOR =~ /WIN64A/) {
 	$asmtype="win32n";
 	$afile='-o ';
 } else {
-	$asm='ml /Cp /coff /c /Cx';
+	$asm='ml /nologo /Cp /coff /c /Cx';
 	$asm.=" /Zi" if $debug;
 	$afile='/Fo';
 	$asmtype="win32";
