@@ -2428,7 +2428,7 @@ static void readbn(BIGNUM **bn, BIO *bconn)
 	int l;
 
 	l = BIO_gets(bconn, buf, sizeof buf);
-	assert(l >= 0);
+	assert(l > 0);
 	assert(buf[l-1] == '\n');
 	buf[l-1] = '\0';
 	BN_hex2bn(bn, buf);
