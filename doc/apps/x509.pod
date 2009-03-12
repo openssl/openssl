@@ -155,7 +155,7 @@ outputs the "hash" of the certificate issuer name.
 
 =item B<-hash>
 
-synonym for "-hash" for backward compatibility reasons.
+synonym for "-subject_hash" for backward compatibility reasons.
 
 =item B<-subject>
 
