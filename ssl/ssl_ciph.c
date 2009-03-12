@@ -1355,7 +1355,7 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
 	comp->method=cm;
 	load_builtin_compressions();
 	if (ssl_comp_methods
-		&& !sk_SSL_COMP_find(ssl_comp_methods,comp))
+		&& sk_SSL_COMP_find(ssl_comp_methods,comp) >= 0)
 		{
 		OPENSSL_free(comp);
 		MemCheck_on();
