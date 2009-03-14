@@ -69,7 +69,7 @@ static int asn1_check_eoc(const unsigned char **in, long len);
 static int asn1_find_end(const unsigned char **in, long len, char inf);
 
 static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
-				char inf, int tag, int aclass);
+			char inf, int tag, int aclass, int depth);
 
 static int collect_data(BUF_MEM *buf, const unsigned char **p, long plen);
 
@@ -878,7 +878,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
 		 * internally irrespective of the type. So instead just check
 		 * for UNIVERSAL class and ignore the tag.
 		 */
-		if (!asn1_collect(&buf, &p, plen, inf, -1, V_ASN1_UNIVERSAL))
+		if (!asn1_collect(&buf, &p, plen, inf, -1, V_ASN1_UNIVERSAL, 0))
 			{
 			free_cont = 1;
 			goto err;
@@ -1128,8 +1128,18 @@ static int asn1_find_end(const unsigned char **in, long len, char inf)
  * if it is indefinite length.
  */
 
+#ifndef ASN1_MAX_STRING_NEST
+/* This determines how many levels of recursion are permitted in ASN1
+ * string types. If it is not limited stack overflows can occur. If set
+ * to zero no recursion is allowed at all. Although zero should be adequate
+ * examples exist that require a value of 1. So 5 should be more than enough.
+ */
+#define ASN1_MAX_STRING_NEST 5
+#endif
+
+
 static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
-				char inf, int tag, int aclass)
+			char inf, int tag, int aclass, int depth)
 	{
 	const unsigned char *p, *q;
 	long plen;
@@ -1171,13 +1181,15 @@ static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
 		/* If indefinite length constructed update max length */
 		if (cst)
 			{
-#ifdef OPENSSL_ALLOW_NESTED_ASN1_STRINGS
-			if (!asn1_collect(buf, &p, plen, ininf, tag, aclass))
+			if (depth >= ASN1_MAX_STRING_NEST)
+				{
+				ASN1err(ASN1_F_ASN1_COLLECT,
+					ASN1_R_NESTED_ASN1_STRING);
 				return 0;
-#else
-			ASN1err(ASN1_F_ASN1_COLLECT, ASN1_R_NESTED_ASN1_STRING);
-			return 0;
-#endif
+				}
+			if (!asn1_collect(buf, &p, plen, ininf, tag, aclass,
+						depth + 1))
+				return 0;
 			}
 		else if (plen && !collect_data(buf, &p, plen))
 			return 0;
