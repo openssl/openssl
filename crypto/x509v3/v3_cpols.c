@@ -181,7 +181,11 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
 			pol = POLICYINFO_new();
 			pol->policyid = pobj;
 		}
-		sk_POLICYINFO_push(pols, pol);
+		if (!sk_POLICYINFO_push(pols, pol)){
+			POLICYINFO_free(pol);
+			X509V3err(X509V3_F_R2I_CERTPOL, ERR_R_MALLOC_FAILURE);
+			goto err;
+		}
 	}
 	sk_CONF_VALUE_pop_free(vals, X509V3_conf_free);
 	return pols;
@@ -446,4 +450,7 @@ void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent)
 	else
 		BIO_printf(out, "%*sNo Qualifiers\n", indent + 2, "");
 	}
+
+
+IMPLEMENT_STACK_OF(X509_POLICY_NODE)
 
