@@ -748,6 +748,10 @@
 
  Changes between 0.9.8j and 0.9.8k  [xx XXX xxxx]
 
+  *) Permit restricted recursion of ASN1 strings. This is needed in practice
+     to handle some structures.
+     [Steve Henson]
+
   *) Improve efficiency of mem_gets: don't search whole buffer each time
      for a '\n'
      [Jeremy Shapiro <jnshapir@us.ibm.com>]
