@@ -292,7 +292,7 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
 						CMS_R_STORE_INIT_ERROR);
 		goto err;
 		}
-	X509_STORE_CTX_set_purpose(&ctx, X509_PURPOSE_SMIME_SIGN);
+	X509_STORE_CTX_set_default(&cert_ctx, "smime_sign");
 	if (crls)
 		X509_STORE_CTX_set0_crls(&ctx, crls);
 

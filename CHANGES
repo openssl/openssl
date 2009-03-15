@@ -748,6 +748,11 @@
 
  Changes between 0.9.8j and 0.9.8k  [xx XXX xxxx]
 
+  *) Set S/MIME signing as the default purpose rather than setting it 
+     unconditionally. This allows applications to override it at the store
+     level.
+     [Steve Henson]
+
   *) Permit restricted recursion of ASN1 strings. This is needed in practice
      to handle some structures.
      [Steve Henson]
