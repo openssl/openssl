@@ -1242,7 +1242,7 @@ static int v3_addr_validate_path_internal(X509_STORE_CTX *ctx,
   /*
    * Trust anchor can't inherit.
    */
-  assert(x != NULL);
+  OPENSSL_assert(x != NULL);
   if (x->rfc3779_addr != NULL) {
     for (j = 0; j < sk_IPAddressFamily_num(x->rfc3779_addr); j++) {
       IPAddressFamily *fp = sk_IPAddressFamily_value(x->rfc3779_addr, j);
