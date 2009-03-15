@@ -229,8 +229,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 				sk_X509_free(signers);
 				return 0;
 				}
-			X509_STORE_CTX_set_purpose(&cert_ctx,
-						X509_PURPOSE_SMIME_SIGN);
+			X509_STORE_CTX_set_default(&cert_ctx, "smime_sign");
 		} else if(!X509_STORE_CTX_init (&cert_ctx, store, signer, NULL)) {
 			PKCS7err(PKCS7_F_PKCS7_VERIFY,ERR_R_X509_LIB);
 			sk_X509_free(signers);
