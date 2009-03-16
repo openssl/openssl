@@ -44,6 +44,7 @@
 !
 
 .ident "des_enc.m4 2.1"
+.file  "des_enc-sparc.S"
 
 #if defined(__SUNPRO_C) && defined(__sparcv9)
 # define ABI64  /* They've said -xarch=v9 at command line */
@@ -315,16 +316,16 @@ $4:
 	ld	[global1+local1], local1
 	xor	$2, out1, out1            ! 8642
 	xor	$2, out0, out0            ! 7531
-	fmovs	%f0, %f0                  ! fxor used for alignment
+	! fmovs	%f0, %f0                  ! fxor used for alignment
 
 	srl	out1, 4, local0           ! rotate 4 right
 	and	out0, local5, local3      ! 3
-	fmovs	%f0, %f0
+	! fmovs	%f0, %f0
 
 	ld	[$5+$3*8], local7         ! key 7531 next round
 	srl	local3, 8, local3         ! 3
 	and	local0, 252, local2       ! 2
-	fmovs	%f0, %f0
+	! fmovs	%f0, %f0
 
 	ld	[global3+local3],local3   ! 3
 	sll	out1, 28, out1            ! rotate
@@ -1179,8 +1180,11 @@ DES_encrypt1:
 
 	save	%sp, FRAME, %sp
 
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	ld	[in0], in5                ! left
 	cmp	in2, 0                    ! enc
@@ -1237,8 +1241,11 @@ DES_encrypt2:
 
 	save	%sp, FRAME, %sp
 
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	! Set sbox address 1 to 6 and rotate halfs 3 left
 	! Errors caught by destest? Yes. Still? *NO*
@@ -1352,8 +1359,11 @@ DES_encrypt3:
 
 	save	%sp, FRAME, %sp
 	
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	ld	[in0], in5                ! left
 	add	in2, 120, in4             ! ks2
@@ -1394,8 +1404,11 @@ DES_decrypt3:
 
 	save	%sp, FRAME, %sp
 	
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	ld	[in0], in5                ! left
 	add	in3, 120, in4             ! ks3
@@ -1424,105 +1437,6 @@ DES_decrypt3:
 .DES_decrypt3.end:
 	.size	 DES_decrypt3,.DES_decrypt3.end-DES_decrypt3
 
-	.align	256
-	.type	 .des_and,#object
-	.size	 .des_and,284
-
-.des_and:
-
-! This table is used for AND 0xFC when it is known that register
-! bits 8-31 are zero. Makes it possible to do three arithmetic
-! operations in one cycle.
-
-	.byte  0, 0, 0, 0, 4, 4, 4, 4
-	.byte  8, 8, 8, 8, 12, 12, 12, 12
-	.byte  16, 16, 16, 16, 20, 20, 20, 20
-	.byte  24, 24, 24, 24, 28, 28, 28, 28
-	.byte  32, 32, 32, 32, 36, 36, 36, 36
-	.byte  40, 40, 40, 40, 44, 44, 44, 44
-	.byte  48, 48, 48, 48, 52, 52, 52, 52
-	.byte  56, 56, 56, 56, 60, 60, 60, 60
-	.byte  64, 64, 64, 64, 68, 68, 68, 68
-	.byte  72, 72, 72, 72, 76, 76, 76, 76
-	.byte  80, 80, 80, 80, 84, 84, 84, 84
-	.byte  88, 88, 88, 88, 92, 92, 92, 92
-	.byte  96, 96, 96, 96, 100, 100, 100, 100
-	.byte  104, 104, 104, 104, 108, 108, 108, 108
-	.byte  112, 112, 112, 112, 116, 116, 116, 116
-	.byte  120, 120, 120, 120, 124, 124, 124, 124
-	.byte  128, 128, 128, 128, 132, 132, 132, 132
-	.byte  136, 136, 136, 136, 140, 140, 140, 140
-	.byte  144, 144, 144, 144, 148, 148, 148, 148
-	.byte  152, 152, 152, 152, 156, 156, 156, 156
-	.byte  160, 160, 160, 160, 164, 164, 164, 164
-	.byte  168, 168, 168, 168, 172, 172, 172, 172
-	.byte  176, 176, 176, 176, 180, 180, 180, 180
-	.byte  184, 184, 184, 184, 188, 188, 188, 188
-	.byte  192, 192, 192, 192, 196, 196, 196, 196
-	.byte  200, 200, 200, 200, 204, 204, 204, 204
-	.byte  208, 208, 208, 208, 212, 212, 212, 212
-	.byte  216, 216, 216, 216, 220, 220, 220, 220
-	.byte  224, 224, 224, 224, 228, 228, 228, 228
-	.byte  232, 232, 232, 232, 236, 236, 236, 236
-	.byte  240, 240, 240, 240, 244, 244, 244, 244
-	.byte  248, 248, 248, 248, 252, 252, 252, 252
-
-	! 5 numbers for initil/final permutation
-
-	.word   0x0f0f0f0f                ! offset 256
-	.word	0x0000ffff                ! 260
-	.word	0x33333333                ! 264
-	.word	0x00ff00ff                ! 268
-	.word	0x55555555                ! 272
-
-	.word	0                         ! 276
-	.word	LOOPS                     ! 280
-	.word	0x0000FC00                ! 284
-.PIC.DES_SPtrans:
-	.word	%r_disp32(DES_SPtrans)
-
-! input:	out0	offset between .PIC.me.up and caller
-! output:	out0	pointer to .PIC.me.up
-!		out2	pointer to .des_and
-!		global1	pointer to DES_SPtrans
-	.align	32
-.PIC.me.up:
-	add	out0,%o7,out0			! pointer to .PIC.me.up
-#if 1
-	ld	[out0+(.PIC.DES_SPtrans-.PIC.me.up)],global1
-	add	global1,(.PIC.DES_SPtrans-.PIC.me.up),global1
-	add	global1,out0,global1
-#else
-# ifdef OPENSSL_PIC
-	! In case anybody wonders why this code is same for both ABI.
-	! To start with it is not. Do note LDPTR below. But of course
-	! you must be wondering why the rest of it does not contain
-	! things like %hh, %hm and %lm. Well, those are needed only
-	! if OpenSSL library *itself* will become larger than 4GB,
-	! which is not going to happen any time soon. 
-	sethi	%hi(DES_SPtrans),global1
-	or	global1,%lo(DES_SPtrans),global1
-	sethi	%hi(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
-	add	global1,out0,global1
-	add	out2,%lo(_GLOBAL_OFFSET_TABLE_-(.PIC.me.up-.)),out2
-	LDPTR	[out2+global1],global1
-# elif 0
-	setn	DES_SPtrans,out2,global1	! synthetic instruction !
-# elif defined(ABI64)
-	sethi	%hh(DES_SPtrans),out2
-	or	out2,%hm(DES_SPtrans),out2
-	sethi	%lm(DES_SPtrans),global1
-	or	global1,%lo(DES_SPtrans),global1
-	sllx	out2,32,out2
-	or	out2,global1,global1
-# else
-	sethi	%hi(DES_SPtrans),global1
-	or	global1,%lo(DES_SPtrans),global1
-# endif
-#endif
-	retl
-	add	out0,.des_and-.PIC.me.up,out2
-
 ! void DES_ncbc_encrypt(input, output, length, schedule, ivec, enc)
 ! *****************************************************************
 
@@ -1539,8 +1453,11 @@ DES_ncbc_encrypt:
 	define({OUTPUT}, { [%sp+BIAS+ARG0+1*ARGSZ] })
 	define({IVEC},   { [%sp+BIAS+ARG0+4*ARGSZ] })
 
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	cmp	in5, 0                    ! enc   
 
@@ -1761,8 +1678,11 @@ DES_ede3_cbc_encrypt:
 	define({KS2}, { [%sp+BIAS+ARG0+4*ARGSZ] })
 	define({KS3}, { [%sp+BIAS+ARG0+5*ARGSZ] })
 
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	LDPTR	[%fp+BIAS+ARG0+7*ARGSZ], local3          ! enc
 	LDPTR	[%fp+BIAS+ARG0+6*ARGSZ], local4          ! ivec
@@ -1978,3 +1898,200 @@ DES_ede3_cbc_encrypt:
 
 .DES_ede3_cbc_encrypt.end:
 	.size	 DES_ede3_cbc_encrypt,.DES_ede3_cbc_encrypt.end-DES_ede3_cbc_encrypt
+
+	.align	256
+	.type	 .des_and,#object
+	.size	 .des_and,284
+
+.des_and:
+
+! This table is used for AND 0xFC when it is known that register
+! bits 8-31 are zero. Makes it possible to do three arithmetic
+! operations in one cycle.
+
+	.byte  0, 0, 0, 0, 4, 4, 4, 4
+	.byte  8, 8, 8, 8, 12, 12, 12, 12
+	.byte  16, 16, 16, 16, 20, 20, 20, 20
+	.byte  24, 24, 24, 24, 28, 28, 28, 28
+	.byte  32, 32, 32, 32, 36, 36, 36, 36
+	.byte  40, 40, 40, 40, 44, 44, 44, 44
+	.byte  48, 48, 48, 48, 52, 52, 52, 52
+	.byte  56, 56, 56, 56, 60, 60, 60, 60
+	.byte  64, 64, 64, 64, 68, 68, 68, 68
+	.byte  72, 72, 72, 72, 76, 76, 76, 76
+	.byte  80, 80, 80, 80, 84, 84, 84, 84
+	.byte  88, 88, 88, 88, 92, 92, 92, 92
+	.byte  96, 96, 96, 96, 100, 100, 100, 100
+	.byte  104, 104, 104, 104, 108, 108, 108, 108
+	.byte  112, 112, 112, 112, 116, 116, 116, 116
+	.byte  120, 120, 120, 120, 124, 124, 124, 124
+	.byte  128, 128, 128, 128, 132, 132, 132, 132
+	.byte  136, 136, 136, 136, 140, 140, 140, 140
+	.byte  144, 144, 144, 144, 148, 148, 148, 148
+	.byte  152, 152, 152, 152, 156, 156, 156, 156
+	.byte  160, 160, 160, 160, 164, 164, 164, 164
+	.byte  168, 168, 168, 168, 172, 172, 172, 172
+	.byte  176, 176, 176, 176, 180, 180, 180, 180
+	.byte  184, 184, 184, 184, 188, 188, 188, 188
+	.byte  192, 192, 192, 192, 196, 196, 196, 196
+	.byte  200, 200, 200, 200, 204, 204, 204, 204
+	.byte  208, 208, 208, 208, 212, 212, 212, 212
+	.byte  216, 216, 216, 216, 220, 220, 220, 220
+	.byte  224, 224, 224, 224, 228, 228, 228, 228
+	.byte  232, 232, 232, 232, 236, 236, 236, 236
+	.byte  240, 240, 240, 240, 244, 244, 244, 244
+	.byte  248, 248, 248, 248, 252, 252, 252, 252
+
+	! 5 numbers for initil/final permutation
+
+	.word   0x0f0f0f0f                ! offset 256
+	.word	0x0000ffff                ! 260
+	.word	0x33333333                ! 264
+	.word	0x00ff00ff                ! 268
+	.word	0x55555555                ! 272
+
+	.word	0                         ! 276
+	.word	LOOPS                     ! 280
+	.word	0x0000FC00                ! 284
+
+	.type	.PIC.DES_SPtrans,#object
+	.size	.PIC.DES_SPtrans,2048
+.align	64
+.PIC.DES_SPtrans:
+	! nibble 0
+	.word	0x02080800, 0x00080000, 0x02000002, 0x02080802
+	.word	0x02000000, 0x00080802, 0x00080002, 0x02000002
+	.word	0x00080802, 0x02080800, 0x02080000, 0x00000802
+	.word	0x02000802, 0x02000000, 0x00000000, 0x00080002
+	.word	0x00080000, 0x00000002, 0x02000800, 0x00080800
+	.word	0x02080802, 0x02080000, 0x00000802, 0x02000800
+	.word	0x00000002, 0x00000800, 0x00080800, 0x02080002
+	.word	0x00000800, 0x02000802, 0x02080002, 0x00000000
+	.word	0x00000000, 0x02080802, 0x02000800, 0x00080002
+	.word	0x02080800, 0x00080000, 0x00000802, 0x02000800
+	.word	0x02080002, 0x00000800, 0x00080800, 0x02000002
+	.word	0x00080802, 0x00000002, 0x02000002, 0x02080000
+	.word	0x02080802, 0x00080800, 0x02080000, 0x02000802
+	.word	0x02000000, 0x00000802, 0x00080002, 0x00000000
+	.word	0x00080000, 0x02000000, 0x02000802, 0x02080800
+	.word	0x00000002, 0x02080002, 0x00000800, 0x00080802
+	! nibble 1
+	.word	0x40108010, 0x00000000, 0x00108000, 0x40100000
+	.word	0x40000010, 0x00008010, 0x40008000, 0x00108000
+	.word	0x00008000, 0x40100010, 0x00000010, 0x40008000
+	.word	0x00100010, 0x40108000, 0x40100000, 0x00000010
+	.word	0x00100000, 0x40008010, 0x40100010, 0x00008000
+	.word	0x00108010, 0x40000000, 0x00000000, 0x00100010
+	.word	0x40008010, 0x00108010, 0x40108000, 0x40000010
+	.word	0x40000000, 0x00100000, 0x00008010, 0x40108010
+	.word	0x00100010, 0x40108000, 0x40008000, 0x00108010
+	.word	0x40108010, 0x00100010, 0x40000010, 0x00000000
+	.word	0x40000000, 0x00008010, 0x00100000, 0x40100010
+	.word	0x00008000, 0x40000000, 0x00108010, 0x40008010
+	.word	0x40108000, 0x00008000, 0x00000000, 0x40000010
+	.word	0x00000010, 0x40108010, 0x00108000, 0x40100000
+	.word	0x40100010, 0x00100000, 0x00008010, 0x40008000
+	.word	0x40008010, 0x00000010, 0x40100000, 0x00108000
+	! nibble 2
+	.word	0x04000001, 0x04040100, 0x00000100, 0x04000101
+	.word	0x00040001, 0x04000000, 0x04000101, 0x00040100
+	.word	0x04000100, 0x00040000, 0x04040000, 0x00000001
+	.word	0x04040101, 0x00000101, 0x00000001, 0x04040001
+	.word	0x00000000, 0x00040001, 0x04040100, 0x00000100
+	.word	0x00000101, 0x04040101, 0x00040000, 0x04000001
+	.word	0x04040001, 0x04000100, 0x00040101, 0x04040000
+	.word	0x00040100, 0x00000000, 0x04000000, 0x00040101
+	.word	0x04040100, 0x00000100, 0x00000001, 0x00040000
+	.word	0x00000101, 0x00040001, 0x04040000, 0x04000101
+	.word	0x00000000, 0x04040100, 0x00040100, 0x04040001
+	.word	0x00040001, 0x04000000, 0x04040101, 0x00000001
+	.word	0x00040101, 0x04000001, 0x04000000, 0x04040101
+	.word	0x00040000, 0x04000100, 0x04000101, 0x00040100
+	.word	0x04000100, 0x00000000, 0x04040001, 0x00000101
+	.word	0x04000001, 0x00040101, 0x00000100, 0x04040000
+	! nibble 3
+	.word	0x00401008, 0x10001000, 0x00000008, 0x10401008
+	.word	0x00000000, 0x10400000, 0x10001008, 0x00400008
+	.word	0x10401000, 0x10000008, 0x10000000, 0x00001008
+	.word	0x10000008, 0x00401008, 0x00400000, 0x10000000
+	.word	0x10400008, 0x00401000, 0x00001000, 0x00000008
+	.word	0x00401000, 0x10001008, 0x10400000, 0x00001000
+	.word	0x00001008, 0x00000000, 0x00400008, 0x10401000
+	.word	0x10001000, 0x10400008, 0x10401008, 0x00400000
+	.word	0x10400008, 0x00001008, 0x00400000, 0x10000008
+	.word	0x00401000, 0x10001000, 0x00000008, 0x10400000
+	.word	0x10001008, 0x00000000, 0x00001000, 0x00400008
+	.word	0x00000000, 0x10400008, 0x10401000, 0x00001000
+	.word	0x10000000, 0x10401008, 0x00401008, 0x00400000
+	.word	0x10401008, 0x00000008, 0x10001000, 0x00401008
+	.word	0x00400008, 0x00401000, 0x10400000, 0x10001008
+	.word	0x00001008, 0x10000000, 0x10000008, 0x10401000
+	! nibble 4
+	.word	0x08000000, 0x00010000, 0x00000400, 0x08010420
+	.word	0x08010020, 0x08000400, 0x00010420, 0x08010000
+	.word	0x00010000, 0x00000020, 0x08000020, 0x00010400
+	.word	0x08000420, 0x08010020, 0x08010400, 0x00000000
+	.word	0x00010400, 0x08000000, 0x00010020, 0x00000420
+	.word	0x08000400, 0x00010420, 0x00000000, 0x08000020
+	.word	0x00000020, 0x08000420, 0x08010420, 0x00010020
+	.word	0x08010000, 0x00000400, 0x00000420, 0x08010400
+	.word	0x08010400, 0x08000420, 0x00010020, 0x08010000
+	.word	0x00010000, 0x00000020, 0x08000020, 0x08000400
+	.word	0x08000000, 0x00010400, 0x08010420, 0x00000000
+	.word	0x00010420, 0x08000000, 0x00000400, 0x00010020
+	.word	0x08000420, 0x00000400, 0x00000000, 0x08010420
+	.word	0x08010020, 0x08010400, 0x00000420, 0x00010000
+	.word	0x00010400, 0x08010020, 0x08000400, 0x00000420
+	.word	0x00000020, 0x00010420, 0x08010000, 0x08000020
+	! nibble 5
+	.word	0x80000040, 0x00200040, 0x00000000, 0x80202000
+	.word	0x00200040, 0x00002000, 0x80002040, 0x00200000
+	.word	0x00002040, 0x80202040, 0x00202000, 0x80000000
+	.word	0x80002000, 0x80000040, 0x80200000, 0x00202040
+	.word	0x00200000, 0x80002040, 0x80200040, 0x00000000
+	.word	0x00002000, 0x00000040, 0x80202000, 0x80200040
+	.word	0x80202040, 0x80200000, 0x80000000, 0x00002040
+	.word	0x00000040, 0x00202000, 0x00202040, 0x80002000
+	.word	0x00002040, 0x80000000, 0x80002000, 0x00202040
+	.word	0x80202000, 0x00200040, 0x00000000, 0x80002000
+	.word	0x80000000, 0x00002000, 0x80200040, 0x00200000
+	.word	0x00200040, 0x80202040, 0x00202000, 0x00000040
+	.word	0x80202040, 0x00202000, 0x00200000, 0x80002040
+	.word	0x80000040, 0x80200000, 0x00202040, 0x00000000
+	.word	0x00002000, 0x80000040, 0x80002040, 0x80202000
+	.word	0x80200000, 0x00002040, 0x00000040, 0x80200040
+	! nibble 6
+	.word	0x00004000, 0x00000200, 0x01000200, 0x01000004
+	.word	0x01004204, 0x00004004, 0x00004200, 0x00000000
+	.word	0x01000000, 0x01000204, 0x00000204, 0x01004000
+	.word	0x00000004, 0x01004200, 0x01004000, 0x00000204
+	.word	0x01000204, 0x00004000, 0x00004004, 0x01004204
+	.word	0x00000000, 0x01000200, 0x01000004, 0x00004200
+	.word	0x01004004, 0x00004204, 0x01004200, 0x00000004
+	.word	0x00004204, 0x01004004, 0x00000200, 0x01000000
+	.word	0x00004204, 0x01004000, 0x01004004, 0x00000204
+	.word	0x00004000, 0x00000200, 0x01000000, 0x01004004
+	.word	0x01000204, 0x00004204, 0x00004200, 0x00000000
+	.word	0x00000200, 0x01000004, 0x00000004, 0x01000200
+	.word	0x00000000, 0x01000204, 0x01000200, 0x00004200
+	.word	0x00000204, 0x00004000, 0x01004204, 0x01000000
+	.word	0x01004200, 0x00000004, 0x00004004, 0x01004204
+	.word	0x01000004, 0x01004200, 0x01004000, 0x00004004
+	! nibble 7
+	.word	0x20800080, 0x20820000, 0x00020080, 0x00000000
+	.word	0x20020000, 0x00800080, 0x20800000, 0x20820080
+	.word	0x00000080, 0x20000000, 0x00820000, 0x00020080
+	.word	0x00820080, 0x20020080, 0x20000080, 0x20800000
+	.word	0x00020000, 0x00820080, 0x00800080, 0x20020000
+	.word	0x20820080, 0x20000080, 0x00000000, 0x00820000
+	.word	0x20000000, 0x00800000, 0x20020080, 0x20800080
+	.word	0x00800000, 0x00020000, 0x20820000, 0x00000080
+	.word	0x00800000, 0x00020000, 0x20000080, 0x20820080
+	.word	0x00020080, 0x20000000, 0x00000000, 0x00820000
+	.word	0x20800080, 0x20020080, 0x20020000, 0x00800080
+	.word	0x20820000, 0x00000080, 0x00800080, 0x20020000
+	.word	0x20820080, 0x00800000, 0x20800000, 0x20000080
+	.word	0x00820000, 0x00020080, 0x20020080, 0x20800000
+	.word	0x00000080, 0x20820000, 0x00820080, 0x00000000
+	.word	0x20000000, 0x20800080, 0x00020000, 0x00820080
+
