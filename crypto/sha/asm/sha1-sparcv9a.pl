@@ -22,6 +22,12 @@
 # 40% over pure IALU sha1-sparcv9.pl on UltraSPARC-IIi, but 12% on
 # UltraSPARC-III. See below for discussion...
 #
+# The module does not present direct interest for OpenSSL, because
+# it doesn't provide better performance on contemporary SPARCv9 CPUs,
+# UltraSPARC-Tx and SPARC64-V[II] to be specific. Those who feel they
+# absolutely must score on UltraSPARC-I-IV can simply replace
+# crypto/sha/asm/sha1-sparcv9.pl with this module.
+#
 # (*)	"Pipe-lined" means that even if it takes several cycles to
 #	complete, next instruction using same functional unit [but not
 #	depending on the result of the current instruction] can start
@@ -100,21 +106,26 @@ ___
 # The numbers delimited with slash are the earliest possible dispatch
 # cycles for given instruction assuming 1 cycle latency for simple VIS
 # instructions, such as on UltraSPARC-I&II, 3 cycles latency, such as
-# on UltraSPARC-III&IV, and 2 cycles latency, such as on SPARC64-V[?],
-# respectively. Being 2x-parallelized the procedure is "worth" 5, 8.5
-# or 6 ticks per SHA1 round. As FPU/VIS instructions are perfectly
-# pairable with IALU ones, the round timing is defined by the maximum
-# between VIS and IALU timings. The latter varies from round to round
-# and averages out at 6.25 ticks. This means that USI&II and SPARC64-V
-# should operate at IALU rate, while USIII&IV - at VIS rate. This
-# explains why performance improvement varies among processors. Well,
-# it should be noted that pure IALU sha1-sparcv9.pl module exhibits
-# virtually uniform performance of ~9.3 cycles per SHA1 round. Timings
-# mentioned above are theoretical lower limits. Real-life performance
-# was measured to be 6.6 cycles per SHA1 round on USIIi and 8.3 on
-# USIII. The latter is lower than half-round VIS timing, because there
-# are 16 Xupdate-free rounds, which "push down" average theoretical
-# timing to 8 cycles...
+# on UltraSPARC-III&IV, and 2 cycles latency(*), respectively. Being
+# 2x-parallelized the procedure is "worth" 5, 8.5 or 6 ticks per SHA1
+# round. As [long as] FPU/VIS instructions are perfectly pairable with
+# IALU ones, the round timing is defined by the maximum between VIS
+# and IALU timings. The latter varies from round to round and averages
+# out at 6.25 ticks. This means that USI&II should operate at IALU
+# rate, while USIII&IV - at VIS rate. This explains why performance
+# improvement varies among processors. Well, given that pure IALU
+# sha1-sparcv9.pl module exhibits virtually uniform performance of
+# ~9.3 cycles per SHA1 round. Timings mentioned above are theoretical
+# lower limits. Real-life performance was measured to be 6.6 cycles
+# per SHA1 round on USIIi and 8.3 on USIII. The latter is lower than
+# half-round VIS timing, because there are 16 Xupdate-free rounds,
+# which "push down" average theoretical timing to 8 cycles...
+
+# (*)	SPARC64-V[II] was originally believed to have 2 cycles VIS
+#	latency. Well, it might have, but it doesn't have dedicated
+#	VIS-unit. Instead, VIS instructions are executed by other
+#	functional units, ones used here - by IALU. This doesn't
+#	improve effective ILP...
 }
 
 # The reference Xupdate procedure is then "strained" over *pairs* of
@@ -124,7 +135,7 @@ ___
 # to fetch and align input for the next spin. The VIS instructions are
 # scheduled for latency of 2 cycles, because there are not enough IALU
 # instructions to schedule for latency of 3, while scheduling for 1
-# would give no gain on USI&II, but loss on SPARC64-V.
+# would give no gain on USI&II anyway.
 
 sub BODY_00_19 {
 my ($i,$a,$b,$c,$d,$e)=@_;
@@ -397,24 +408,20 @@ vis_const:
 .align	64
 .type	vis_const,#object
 .size	vis_const,(.-vis_const)
-load_vis_const:
-	ldd	[$tmp0+0],$VK_00_19
-	ldd	[$tmp0+8],$VK_20_39
-	ldd	[$tmp0+16],$VK_40_59
-	ldd	[$tmp0+24],$VK_60_79
-	retl
-	ldd	[$tmp0+32],$fmul
-.type	load_vis_const,#function
-.size	load_vis_const,(.-load_vis_const)
 
-.align	32
 .globl	sha1_block_data_order
 sha1_block_data_order:
 	save	%sp,-$frame,%sp
 	add	%fp,$bias-256,$base
 
-1:	call	load_vis_const
+1:	call	.+8
 	sub	%o7,1b-vis_const,$tmp0
+
+	ldd	[$tmp0+0],$VK_00_19
+	ldd	[$tmp0+8],$VK_20_39
+	ldd	[$tmp0+16],$VK_40_59
+	ldd	[$tmp0+24],$VK_60_79
+	ldd	[$tmp0+32],$fmul
 
 	ld	[$ctx+0],$Actx
 	and	$base,-256,$base
@@ -487,7 +494,8 @@ for (;$i<40;$i++)	{ &BODY_20_39($i,@V); unshift(@V,pop(@V)); }
 for (;$i<60;$i++)	{ &BODY_40_59($i,@V); unshift(@V,pop(@V)); }
 for (;$i<70;$i++)	{ &BODY_20_39($i,@V); unshift(@V,pop(@V)); }
 $code.=<<___;
-	brz,pn		$len,.Ltail
+	tst		$len
+	bz,pn		`$bits==32?"%icc":"%xcc"`,.Ltail
 	nop
 ___
 for (;$i<80;$i++)	{ &BODY_70_79($i,@V); unshift(@V,pop(@V)); }
