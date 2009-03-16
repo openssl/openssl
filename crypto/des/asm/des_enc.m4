@@ -1180,8 +1180,11 @@ DES_encrypt1:
 
 	save	%sp, FRAME, %sp
 
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	ld	[in0], in5                ! left
 	cmp	in2, 0                    ! enc
@@ -1238,8 +1241,11 @@ DES_encrypt2:
 
 	save	%sp, FRAME, %sp
 
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	! Set sbox address 1 to 6 and rotate halfs 3 left
 	! Errors caught by destest? Yes. Still? *NO*
@@ -1353,8 +1359,11 @@ DES_encrypt3:
 
 	save	%sp, FRAME, %sp
 	
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	ld	[in0], in5                ! left
 	add	in2, 120, in4             ! ks2
@@ -1395,8 +1404,11 @@ DES_decrypt3:
 
 	save	%sp, FRAME, %sp
 	
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	ld	[in0], in5                ! left
 	add	in3, 120, in4             ! ks3
@@ -1425,19 +1437,6 @@ DES_decrypt3:
 .DES_decrypt3.end:
 	.size	 DES_decrypt3,.DES_decrypt3.end-DES_decrypt3
 
-! input:	out0	offset between .PIC.me.up and caller
-! output:	out0	pointer to .PIC.me.up
-!		out2	pointer to .des_and
-!		global1	pointer to DES_SPtrans
-	.align	32
-.PIC.me.up:
-	add	out0,%o7,out0			! pointer to .PIC.me.up
-	sethi	%hi(.des_and-.PIC.me.up),out2
-	or	out2,%lo(.des_and-.PIC.me.up),out2
-	add	out0,out2,out2
-	retl
-	add	out2,.PIC.DES_SPtrans-.des_and,global1
-
 ! void DES_ncbc_encrypt(input, output, length, schedule, ivec, enc)
 ! *****************************************************************
 
@@ -1454,8 +1453,11 @@ DES_ncbc_encrypt:
 	define({OUTPUT}, { [%sp+BIAS+ARG0+1*ARGSZ] })
 	define({IVEC},   { [%sp+BIAS+ARG0+4*ARGSZ] })
 
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	cmp	in5, 0                    ! enc   
 
@@ -1676,8 +1678,11 @@ DES_ede3_cbc_encrypt:
 	define({KS2}, { [%sp+BIAS+ARG0+4*ARGSZ] })
 	define({KS3}, { [%sp+BIAS+ARG0+5*ARGSZ] })
 
-	call	.PIC.me.up
-	mov	.PIC.me.up-(.-4),out0
+	sethi	%hi(.PIC.DES_SPtrans-1f),global1
+	or	global1,%lo(.PIC.DES_SPtrans-1f),global1
+1:	call	.+8
+	add	%o7,global1,global1
+	sub	global1,.PIC.DES_SPtrans-.des_and,out2
 
 	LDPTR	[%fp+BIAS+ARG0+7*ARGSZ], local3          ! enc
 	LDPTR	[%fp+BIAS+ARG0+6*ARGSZ], local4          ! ivec
