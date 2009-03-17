@@ -4,6 +4,9 @@
 
  Changes between 0.9.8j and 0.9.9  [xx XXX xxxx]
 
+  *) Update Gost ENGINE to support parameter files.
+     [Victor B. Wagner <vitus@cryptocom.ru>]
+
   *) Support GeneralizedTime in ca utility. 
      [Oliver Martin <oliver@volatilevoid.net>, Steve Henson]
 

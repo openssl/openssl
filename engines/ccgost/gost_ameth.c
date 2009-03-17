@@ -806,6 +806,59 @@ static int mac_ctrl_gost(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 		}
 	return -2;
 }	
+
+int gost94_param_encode(const EVP_PKEY *pkey, unsigned char **pder) 
+{
+   int nid=gost94_nid_by_params(EVP_PKEY_get0((EVP_PKEY *)pkey));
+   return i2d_ASN1_OBJECT(OBJ_nid2obj(nid),pder);
+}
+int gost2001_param_encode(const EVP_PKEY *pkey, unsigned char **pder) 
+{
+   int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(EVP_PKEY_get0((EVP_PKEY *)pkey)));
+   return i2d_ASN1_OBJECT(OBJ_nid2obj(nid),pder);
+}
+
+int gost94_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
+{
+	ASN1_OBJECT *obj=NULL;
+	DSA *dsa = EVP_PKEY_get0(pkey);
+	int nid;
+	if (d2i_ASN1_OBJECT(&obj,pder,derlen)==NULL) {
+		return 0;
+	}
+	nid = OBJ_obj2nid(obj);
+	ASN1_OBJECT_free(obj);
+	if (!dsa) 
+		{
+		dsa=DSA_new();
+		if (!EVP_PKEY_assign(pkey,NID_id_GostR3410_94,dsa)) return 0;
+		}
+	if (!fill_GOST94_params(dsa,nid)) return 0;
+	return 1;
+}	
+
+int gost2001_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen) {
+	ASN1_OBJECT *obj=NULL;
+	int nid;
+	EC_KEY *ec = EVP_PKEY_get0(pkey);
+	if (d2i_ASN1_OBJECT(&obj,pder,derlen)==NULL) {
+		return 0;
+	}
+	nid = OBJ_obj2nid(obj);
+	ASN1_OBJECT_free(obj);
+	if (!ec) 
+		{
+		ec = EC_KEY_new();
+		if (!EVP_PKEY_assign(pkey,NID_id_GostR3410_2001,ec)) return 0;
+		}	
+	if (!fill_GOST2001_params(ec, nid)) return 0;
+	return 1;
+}	
+
+
+
+
+
 /* ----------------------------------------------------------------------*/
 int register_ameth_gost (int nid, EVP_PKEY_ASN1_METHOD **ameth, const char* pemstr, const char* info) 
 	{
@@ -820,7 +873,8 @@ int register_ameth_gost (int nid, EVP_PKEY_ASN1_METHOD **ameth, const char* pems
 				priv_decode_gost, priv_encode_gost, 
 				priv_print_gost94);
 
-			EVP_PKEY_asn1_set_param (*ameth, 0, 0,
+			EVP_PKEY_asn1_set_param (*ameth, 
+				gost94_param_decode, gost94_param_encode,
 				param_missing_gost94, param_copy_gost94, 
 				param_cmp_gost94,param_print_gost94 );
 			EVP_PKEY_asn1_set_public (*ameth,
@@ -836,7 +890,8 @@ int register_ameth_gost (int nid, EVP_PKEY_ASN1_METHOD **ameth, const char* pems
 				priv_decode_gost, priv_encode_gost, 
 				priv_print_gost01);
 
-			EVP_PKEY_asn1_set_param (*ameth, 0, 0,
+			EVP_PKEY_asn1_set_param (*ameth, 
+				gost2001_param_decode, gost2001_param_encode,
 				param_missing_gost01, param_copy_gost01, 
 				param_cmp_gost01, param_print_gost01);
 			EVP_PKEY_asn1_set_public (*ameth,

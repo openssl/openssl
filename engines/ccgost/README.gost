@@ -80,9 +80,7 @@ And section which describes configuration of the engine should contain
 Where engine_id parameter specifies name of engine (should be "gost").
 dynamic_path is a location of the loadable shared library implementing the
 engine. If the engine is compiled statically or is located in the OpenSSL
-engines directory, this line can be omitted. But as of October 2007 there is
-some bug in OpenSSL engine initialization code which prevents engine from
-correct initialization if it is loaded without explicit dynamic_path.
+engines directory, this line can be omitted. 
 default_algorithms parameter specifies that all algorithms, provided by
 engine, should be used.
 
@@ -119,7 +117,21 @@ USAGE WITH COMMAND LINE openssl UTILITY
 There are no algorithm-specific things with generation of certificate
 request once you have a private key.
 
-2. S/MIME operations
+2. Generation of certificate request along with private/public keypar
+
+   openssl req -newkey gost2001 -pkeyopt paramset:A
+
+   Syntax of -pkeyopt parameter is identical with genpkey command.
+
+   You can also use oldstyle syntax -newkey gost2001:paramfile, but in
+   this case you should create parameter file first. 
+
+   It can be created with
+
+   openssl genpkey -genparam -algorithm gost2001 -pkeyopt paramset:A\
+      -out paramfile.
+
+3. S/MIME operations
 
 If you want to send encrypted mail using GOST algorithms, don't forget
 to specify -gost89 as encryption algorithm for OpenSSL smime command.
@@ -127,7 +139,7 @@ While OpenSSL is clever enough to find out that GOST R 34.11-94 digest
 must be used for digital signing with GOST private key, it have no way
 to derive symmetric encryption algorithm from key exchange keys.
 
-3. TLS operations
+4. TLS operations
 
 OpenSSL supports all four ciphersuites defined in the IETF draft.
 Once you've loaded GOST key and certificate into your TLS server,
@@ -154,7 +166,7 @@ keys would be supported and clients can negotiate ones they wish.
 This allows creation of TLS servers which use GOST ciphersuites for
 Russian clients and RSA/DSA ciphersuites for foreign clients.
 
-4. Calculation of digests and symmetric encryption
+5. Calculation of digests and symmetric encryption
  OpenSSL provides specific commands (like sha1, aes etc) for calculation
  of digests and symmetric encryption. Since such commands cannot be
  added dynamically, no such commands are provided for GOST algorithms.
@@ -192,7 +204,7 @@ Russian clients and RSA/DSA ciphersuites for foreign clients.
  openssl enc -gost89-cnt -out encrypted-file -in plain-text-file -k <passphrase>
 
 
-5. Encrypting private keys and PKCS12
+6. Encrypting private keys and PKCS12
 
 To produce PKCS12 files compatible with MagPro CSP, you need to use
 GOST algorithm for encryption of PKCS12 file and also GOST R 34.11-94
@@ -201,7 +213,15 @@ hash to derive key from password.
 openssl pksc12 -export -inkey gost.pem -in gost_cert.pem -keypbe gost89\
    -certpbe gost89 -macalg md_gost94
  
- 
+7. Testing speed of symmetric ciphers.
+   
+To test performance of GOST symmetric ciphers you should use -evp switch
+of the openssl speed command. Engine-provided ciphers couldn't be
+accessed by cipher-specific functions, only via generic evp interface
+
+ openssl speed -evp gost89
+ openssl speed -evp gost89-cnt
+
 
 PROGRAMMING INTERFACES DETAILS
 

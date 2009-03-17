@@ -22,9 +22,23 @@
 static int pkey_gost_init(EVP_PKEY_CTX *ctx)
 	{
 	struct gost_pmeth_data *data;
+	EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(ctx);
 	data = OPENSSL_malloc(sizeof(struct gost_pmeth_data));
 	if (!data) return 0;
 	memset(data,0,sizeof(struct gost_pmeth_data));
+	if (pkey && EVP_PKEY_get0(pkey)) 
+		{
+		switch (EVP_PKEY_base_id(pkey)) {
+		case NID_id_GostR3410_94:
+		  data->sign_param_nid = gost94_nid_by_params(EVP_PKEY_get0(pkey));
+		  break;
+		case NID_id_GostR3410_2001:
+		   data->sign_param_nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(EVP_PKEY_get0((EVP_PKEY *)pkey)));
+		break;
+		default:
+			return 0;
+		}	  
+		}
 	EVP_PKEY_CTX_set_data(ctx,data);
 	return 1;
 	}
@@ -239,15 +253,16 @@ static int pkey_gost_ctrl01_str(EVP_PKEY_CTX *ctx,
 
 /* --------------------- key generation  --------------------------------*/
 
-
-/* Generates Gost_R3410_94_cp key */
-static int pkey_gost94cp_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+static int pkey_gost_paramgen_init(EVP_PKEY_CTX *ctx) {
+	return 1;
+}	
+static int pkey_gost94_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey) 
 	{
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
 	DSA *dsa=NULL;
 	if (data->sign_param_nid == NID_undef)
 		{
-			GOSTerr(GOST_F_PKEY_GOST94CP_KEYGEN,
+			GOSTerr(GOST_F_PKEY_GOST94_PARAMGEN,
 				GOST_R_NO_PARAMETERS_SET);
 			return 0;
 		}
@@ -257,31 +272,48 @@ static int pkey_gost94cp_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 		DSA_free(dsa);
 		return 0;
 		}
-	gost_sign_keygen(dsa);
 	EVP_PKEY_assign(pkey,NID_id_GostR3410_94,dsa);
+	return 1;
+	}
+static int pkey_gost01_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+	{
+	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
+	EC_KEY *ec=NULL;
+
+	if (data->sign_param_nid == NID_undef)
+		{
+			GOSTerr(GOST_F_PKEY_GOST01_PARAMGEN,
+				GOST_R_NO_PARAMETERS_SET);
+			return 0;
+		}
+	if (!ec) 	
+		ec = EC_KEY_new();
+	if (!fill_GOST2001_params(ec,data->sign_param_nid))
+		{
+		EC_KEY_free(ec);
+		return 0;
+		}
+	EVP_PKEY_assign(pkey,NID_id_GostR3410_2001,ec);
+	return 1;
+	}
+
+/* Generates Gost_R3410_94_cp key */
+static int pkey_gost94cp_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+	{
+	DSA *dsa;
+	if (!pkey_gost94_paramgen(ctx,pkey)) return 0;
+	dsa = EVP_PKEY_get0(pkey);
+	gost_sign_keygen(dsa);
 	return 1;
 	}
 
 /* Generates GOST_R3410 2001 key and assigns it using specified type */
 static int pkey_gost01cp_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{
-	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
-	EC_KEY *ec=NULL;
-	if (data->sign_param_nid == NID_undef)
-		{
-			GOSTerr(GOST_F_PKEY_GOST01CP_KEYGEN,
-				GOST_R_NO_PARAMETERS_SET);
-			return 0;
-		}
-	ec = EC_KEY_new();
-	if (!fill_GOST2001_params(ec,data->sign_param_nid))
-		{
-		EC_KEY_free(ec);
-		return 0;
-		}
+	EC_KEY *ec;
+    if (!pkey_gost01_paramgen(ctx,pkey)) return 0;
+	ec = EVP_PKEY_get0(pkey);
 	gost2001_keygen(ec);
-
-	EVP_PKEY_assign(pkey,NID_id_GostR3410_2001,ec);
 	return 1;
 	}
 
@@ -544,6 +576,7 @@ int register_pmeth_gost(int id, EVP_PKEY_METHOD **pmeth,int flags)
 			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST94cp_decrypt);
 			EVP_PKEY_meth_set_derive(*pmeth,
 				pkey_gost_derive_init, pkey_gost94_derive);
+			EVP_PKEY_meth_set_paramgen(*pmeth, pkey_gost_paramgen_init,pkey_gost94_paramgen);	
 			break;
 		case NID_id_GostR3410_2001:
 			EVP_PKEY_meth_set_ctrl(*pmeth,pkey_gost_ctrl, pkey_gost_ctrl01_str);
@@ -557,6 +590,7 @@ int register_pmeth_gost(int id, EVP_PKEY_METHOD **pmeth,int flags)
 			EVP_PKEY_meth_set_decrypt(*pmeth, NULL, pkey_GOST01cp_decrypt);
 			EVP_PKEY_meth_set_derive(*pmeth,
 				pkey_gost_derive_init, pkey_gost2001_derive);
+			EVP_PKEY_meth_set_paramgen(*pmeth, pkey_gost_paramgen_init,pkey_gost01_paramgen);	
 			break;
 		case NID_id_Gost28147_89_MAC:
 			EVP_PKEY_meth_set_ctrl(*pmeth,pkey_gost_mac_ctrl, pkey_gost_mac_ctrl_str);
