@@ -472,7 +472,7 @@ $code.=<<___ if ($SZ==8); # SHA512
 ___
 $code.=<<___;
 .Lpic:	call	.+8
-	sub	%o7,.Lpic-K${label},$Ktbl
+	add	%o7,K${label}-.Lpic,$Ktbl
 
 	$LD	[$ctx+`0*$SZ`],$A
 	$LD	[$ctx+`1*$SZ`],$B

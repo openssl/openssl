@@ -415,7 +415,7 @@ sha1_block_data_order:
 	add	%fp,$bias-256,$base
 
 1:	call	.+8
-	sub	%o7,1b-vis_const,$tmp0
+	add	%o7,vis_const-1b,$tmp0
 
 	ldd	[$tmp0+0],$VK_00_19
 	ldd	[$tmp0+8],$VK_20_39
@@ -433,7 +433,7 @@ sha1_block_data_order:
 	and	$inp,-8,$inp
 	ld	[$ctx+16],$Ectx
 
-	# X[16] is maintained in FP register bank
+	! X[16] is maintained in FP register bank
 	alignaddr	%g0,$align,%g0
 	ldd		[$inp+0],@X[0]
 	sub		$inp,-64,$Xfer
