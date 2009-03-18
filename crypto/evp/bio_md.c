@@ -130,8 +130,8 @@ static int md_read(BIO *b, char *out, int outl)
 		{
 		if (ret > 0)
 			{
-			EVP_DigestUpdate(ctx,(unsigned char *)out,
-				(unsigned int)ret);
+			if (EVP_DigestUpdate(ctx,(unsigned char *)out,
+				(unsigned int)ret)<=0) return (-1);
 			}
 		}
 	BIO_clear_retry_flags(b);
@@ -253,7 +253,9 @@ static int md_gets(BIO *bp, char *buf, int size)
 	ctx=bp->ptr;
 	if (size < ctx->digest->md_size)
 		return(0);
-	EVP_DigestFinal_ex(ctx,(unsigned char *)buf,&ret);
+	if (EVP_DigestFinal_ex(ctx,(unsigned char *)buf,&ret)<=0) 
+		return -1;
+		
 	return((int)ret);
 	}
 

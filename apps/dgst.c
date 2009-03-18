@@ -551,7 +551,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  const char *sig_name, const char *md_name,
 	  const char *file,BIO *bmd)
 	{
-	size_t len;
+	ssize_t len;
 	int i;
 
 	for (;;)
@@ -598,7 +598,14 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 			}
 		}
 	else
+		{
 		len=BIO_gets(bp,(char *)buf,BUFSIZE);
+		if (len <0) 
+			{
+			ERR_print_errors(bio_err);
+			return 1;
+			}
+		}
 
 	if(binout) BIO_write(out, buf, len);
 	else 
