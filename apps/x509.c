@@ -114,7 +114,7 @@ static const char *x509_usage[]={
 " -alias          - output certificate alias\n",
 " -noout          - no certificate output\n",
 " -ocspid         - print OCSP hash values for the subject name and public key\n",
-" -ocspurl        - print OCSP Responder URL(s)\n",
+" -ocsp_uri       - print OCSP Responder URL(s)\n",
 " -trustout       - output a \"trusted\" certificate\n",
 " -clrtrust       - clear all trusted purposes\n",
 " -clrreject      - clear all rejected purposes\n",
