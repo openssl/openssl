@@ -751,6 +751,11 @@
 
  Changes between 0.9.8j and 0.9.8k  [xx XXX xxxx]
 
+  *) Reject UniversalString and BMPString types with invalid lengths. This
+     prevents a crash in ASN1_STRING_print_ex() which assumes the strings have
+     a legal length. (CVE-2009-0590)
+     [Steve Henson]
+
   *) Set S/MIME signing as the default purpose rather than setting it 
      unconditionally. This allows applications to override it at the store
      level.
