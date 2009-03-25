@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8j and 0.9.8k  [xx XXX xxxx]
+ Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
   *) Add 2.5.4.* OIDs
      [Ilya O. <vrghost@gmail.com>]
