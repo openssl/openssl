@@ -613,7 +613,6 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val,
 
 	err:
 	ASN1_template_free(val, tt);
-	*val = NULL;
 	return 0;
 	}
 
@@ -762,7 +761,6 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
 
 	err:
 	ASN1_template_free(val, tt);
-	*val = NULL;
 	return 0;
 	}
 
