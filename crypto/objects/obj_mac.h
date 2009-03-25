@@ -2049,6 +2049,7 @@
 #define NID_stateOrProvinceName		16
 #define OBJ_stateOrProvinceName		OBJ_X509,8L
 
+#define SN_streetAddress		"street"
 #define LN_streetAddress		"streetAddress"
 #define NID_streetAddress		660
 #define OBJ_streetAddress		OBJ_X509,9L
@@ -2063,6 +2064,7 @@
 #define NID_organizationalUnitName		18
 #define OBJ_organizationalUnitName		OBJ_X509,11L
 
+#define SN_title		"title"
 #define LN_title		"title"
 #define NID_title		106
 #define OBJ_title		OBJ_X509,12L
@@ -2071,9 +2073,113 @@
 #define NID_description		107
 #define OBJ_description		OBJ_X509,13L
 
+#define LN_searchGuide		"searchGuide"
+#define NID_searchGuide		859
+#define OBJ_searchGuide		OBJ_X509,14L
+
+#define LN_businessCategory		"businessCategory"
+#define NID_businessCategory		860
+#define OBJ_businessCategory		OBJ_X509,15L
+
+#define LN_postalAddress		"postalAddress"
+#define NID_postalAddress		861
+#define OBJ_postalAddress		OBJ_X509,16L
+
 #define LN_postalCode		"postalCode"
 #define NID_postalCode		661
 #define OBJ_postalCode		OBJ_X509,17L
+
+#define LN_postOfficeBox		"postOfficeBox"
+#define NID_postOfficeBox		862
+#define OBJ_postOfficeBox		OBJ_X509,18L
+
+#define LN_physicalDeliveryOfficeName		"physicalDeliveryOfficeName"
+#define NID_physicalDeliveryOfficeName		863
+#define OBJ_physicalDeliveryOfficeName		OBJ_X509,19L
+
+#define LN_telephoneNumber		"telephoneNumber"
+#define NID_telephoneNumber		864
+#define OBJ_telephoneNumber		OBJ_X509,20L
+
+#define LN_telexNumber		"telexNumber"
+#define NID_telexNumber		865
+#define OBJ_telexNumber		OBJ_X509,21L
+
+#define LN_teletexTerminalIdentifier		"teletexTerminalIdentifier"
+#define NID_teletexTerminalIdentifier		866
+#define OBJ_teletexTerminalIdentifier		OBJ_X509,22L
+
+#define LN_facsimileTelephoneNumber		"facsimileTelephoneNumber"
+#define NID_facsimileTelephoneNumber		867
+#define OBJ_facsimileTelephoneNumber		OBJ_X509,23L
+
+#define LN_x121Address		"x121Address"
+#define NID_x121Address		868
+#define OBJ_x121Address		OBJ_X509,24L
+
+#define LN_internationaliSDNNumber		"internationaliSDNNumber"
+#define NID_internationaliSDNNumber		869
+#define OBJ_internationaliSDNNumber		OBJ_X509,25L
+
+#define LN_registeredAddress		"registeredAddress"
+#define NID_registeredAddress		870
+#define OBJ_registeredAddress		OBJ_X509,26L
+
+#define LN_destinationIndicator		"destinationIndicator"
+#define NID_destinationIndicator		871
+#define OBJ_destinationIndicator		OBJ_X509,27L
+
+#define LN_preferredDeliveryMethod		"preferredDeliveryMethod"
+#define NID_preferredDeliveryMethod		872
+#define OBJ_preferredDeliveryMethod		OBJ_X509,28L
+
+#define LN_presentationAddress		"presentationAddress"
+#define NID_presentationAddress		873
+#define OBJ_presentationAddress		OBJ_X509,29L
+
+#define LN_supportedApplicationContext		"supportedApplicationContext"
+#define NID_supportedApplicationContext		874
+#define OBJ_supportedApplicationContext		OBJ_X509,30L
+
+#define SN_member		"member"
+#define NID_member		875
+#define OBJ_member		OBJ_X509,31L
+
+#define SN_owner		"owner"
+#define NID_owner		876
+#define OBJ_owner		OBJ_X509,32L
+
+#define LN_roleOccupant		"roleOccupant"
+#define NID_roleOccupant		877
+#define OBJ_roleOccupant		OBJ_X509,33L
+
+#define SN_seeAlso		"seeAlso"
+#define NID_seeAlso		878
+#define OBJ_seeAlso		OBJ_X509,34L
+
+#define LN_userPassword		"userPassword"
+#define NID_userPassword		879
+#define OBJ_userPassword		OBJ_X509,35L
+
+#define LN_userCertificate		"userCertificate"
+#define NID_userCertificate		880
+#define OBJ_userCertificate		OBJ_X509,36L
+
+#define LN_cACertificate		"cACertificate"
+#define NID_cACertificate		881
+#define OBJ_cACertificate		OBJ_X509,37L
+
+#define LN_authorityRevocationList		"authorityRevocationList"
+#define NID_authorityRevocationList		882
+#define OBJ_authorityRevocationList		OBJ_X509,38L
+
+#define LN_certificateRevocationList		"certificateRevocationList"
+#define NID_certificateRevocationList		883
+#define OBJ_certificateRevocationList		OBJ_X509,39L
+
+#define LN_crossCertificatePair		"crossCertificatePair"
+#define NID_crossCertificatePair		884
+#define OBJ_crossCertificatePair		OBJ_X509,40L
 
 #define SN_name		"name"
 #define LN_name		"name"
@@ -2085,6 +2191,7 @@
 #define NID_givenName		99
 #define OBJ_givenName		OBJ_X509,42L
 
+#define SN_initials		"initials"
 #define LN_initials		"initials"
 #define NID_initials		101
 #define OBJ_initials		OBJ_X509,43L
@@ -2101,6 +2208,38 @@
 #define LN_dnQualifier		"dnQualifier"
 #define NID_dnQualifier		174
 #define OBJ_dnQualifier		OBJ_X509,46L
+
+#define LN_enhancedSearchGuide		"enhancedSearchGuide"
+#define NID_enhancedSearchGuide		885
+#define OBJ_enhancedSearchGuide		OBJ_X509,47L
+
+#define LN_protocolInformation		"protocolInformation"
+#define NID_protocolInformation		886
+#define OBJ_protocolInformation		OBJ_X509,48L
+
+#define LN_distinguishedName		"distinguishedName"
+#define NID_distinguishedName		887
+#define OBJ_distinguishedName		OBJ_X509,49L
+
+#define LN_uniqueMember		"uniqueMember"
+#define NID_uniqueMember		888
+#define OBJ_uniqueMember		OBJ_X509,50L
+
+#define LN_houseIdentifier		"houseIdentifier"
+#define NID_houseIdentifier		889
+#define OBJ_houseIdentifier		OBJ_X509,51L
+
+#define LN_supportedAlgorithms		"supportedAlgorithms"
+#define NID_supportedAlgorithms		890
+#define OBJ_supportedAlgorithms		OBJ_X509,52L
+
+#define LN_deltaRevocationList		"deltaRevocationList"
+#define NID_deltaRevocationList		891
+#define OBJ_deltaRevocationList		OBJ_X509,53L
+
+#define SN_dmdName		"dmdName"
+#define NID_dmdName		892
+#define OBJ_dmdName		OBJ_X509,54L
 
 #define LN_pseudonym		"pseudonym"
 #define NID_pseudonym		510

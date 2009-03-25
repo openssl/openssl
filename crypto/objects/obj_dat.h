@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 859
-#define NUM_SN 852
-#define NUM_LN 852
-#define NUM_OBJ 806
+#define NUM_NID 893
+#define NUM_SN 886
+#define NUM_LN 886
+#define NUM_OBJ 840
 
-static const unsigned char lvalues[5722]={
+static const unsigned char lvalues[5824]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -874,6 +874,40 @@ static const unsigned char lvalues[5722]={
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x11,0x02,/* [5701] OBJ_LocalKeySet */
 0x55,0x1D,0x2E,                              /* [5710] OBJ_freshest_crl */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x03,     /* [5713] OBJ_id_on_permanentIdentifier */
+0x55,0x04,0x0E,                              /* [5721] OBJ_searchGuide */
+0x55,0x04,0x0F,                              /* [5724] OBJ_businessCategory */
+0x55,0x04,0x10,                              /* [5727] OBJ_postalAddress */
+0x55,0x04,0x12,                              /* [5730] OBJ_postOfficeBox */
+0x55,0x04,0x13,                              /* [5733] OBJ_physicalDeliveryOfficeName */
+0x55,0x04,0x14,                              /* [5736] OBJ_telephoneNumber */
+0x55,0x04,0x15,                              /* [5739] OBJ_telexNumber */
+0x55,0x04,0x16,                              /* [5742] OBJ_teletexTerminalIdentifier */
+0x55,0x04,0x17,                              /* [5745] OBJ_facsimileTelephoneNumber */
+0x55,0x04,0x18,                              /* [5748] OBJ_x121Address */
+0x55,0x04,0x19,                              /* [5751] OBJ_internationaliSDNNumber */
+0x55,0x04,0x1A,                              /* [5754] OBJ_registeredAddress */
+0x55,0x04,0x1B,                              /* [5757] OBJ_destinationIndicator */
+0x55,0x04,0x1C,                              /* [5760] OBJ_preferredDeliveryMethod */
+0x55,0x04,0x1D,                              /* [5763] OBJ_presentationAddress */
+0x55,0x04,0x1E,                              /* [5766] OBJ_supportedApplicationContext */
+0x55,0x04,0x1F,                              /* [5769] OBJ_member */
+0x55,0x04,0x20,                              /* [5772] OBJ_owner */
+0x55,0x04,0x21,                              /* [5775] OBJ_roleOccupant */
+0x55,0x04,0x22,                              /* [5778] OBJ_seeAlso */
+0x55,0x04,0x23,                              /* [5781] OBJ_userPassword */
+0x55,0x04,0x24,                              /* [5784] OBJ_userCertificate */
+0x55,0x04,0x25,                              /* [5787] OBJ_cACertificate */
+0x55,0x04,0x26,                              /* [5790] OBJ_authorityRevocationList */
+0x55,0x04,0x27,                              /* [5793] OBJ_certificateRevocationList */
+0x55,0x04,0x28,                              /* [5796] OBJ_crossCertificatePair */
+0x55,0x04,0x2F,                              /* [5799] OBJ_enhancedSearchGuide */
+0x55,0x04,0x30,                              /* [5802] OBJ_protocolInformation */
+0x55,0x04,0x31,                              /* [5805] OBJ_distinguishedName */
+0x55,0x04,0x32,                              /* [5808] OBJ_uniqueMember */
+0x55,0x04,0x33,                              /* [5811] OBJ_houseIdentifier */
+0x55,0x04,0x34,                              /* [5814] OBJ_supportedAlgorithms */
+0x55,0x04,0x35,                              /* [5817] OBJ_deltaRevocationList */
+0x55,0x04,0x36,                              /* [5820] OBJ_dmdName */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1928,7 +1962,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"DES-CFB8","des-cfb8",NID_des_cfb8,0,NULL,0},
 {"DES-EDE3-CFB1","des-ede3-cfb1",NID_des_ede3_cfb1,0,NULL,0},
 {"DES-EDE3-CFB8","des-ede3-cfb8",NID_des_ede3_cfb8,0,NULL,0},
-{"streetAddress","streetAddress",NID_streetAddress,3,&(lvalues[4462]),0},
+{"street","streetAddress",NID_streetAddress,3,&(lvalues[4462]),0},
 {"postalCode","postalCode",NID_postalCode,3,&(lvalues[4465]),0},
 {"id-ppl","id-ppl",NID_id_ppl,7,&(lvalues[4468]),0},
 {"proxyCertInfo","Proxy Certificate Information",NID_proxyCertInfo,8,
@@ -2262,6 +2296,61 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5710]),0},
 {"id-on-permanentIdentifier","Permanent Identifier",
 	NID_id_on_permanentIdentifier,8,&(lvalues[5713]),0},
+{"searchGuide","searchGuide",NID_searchGuide,3,&(lvalues[5721]),0},
+{"businessCategory","businessCategory",NID_businessCategory,3,
+	&(lvalues[5724]),0},
+{"postalAddress","postalAddress",NID_postalAddress,3,&(lvalues[5727]),0},
+{"postOfficeBox","postOfficeBox",NID_postOfficeBox,3,&(lvalues[5730]),0},
+{"physicalDeliveryOfficeName","physicalDeliveryOfficeName",
+	NID_physicalDeliveryOfficeName,3,&(lvalues[5733]),0},
+{"telephoneNumber","telephoneNumber",NID_telephoneNumber,3,
+	&(lvalues[5736]),0},
+{"telexNumber","telexNumber",NID_telexNumber,3,&(lvalues[5739]),0},
+{"teletexTerminalIdentifier","teletexTerminalIdentifier",
+	NID_teletexTerminalIdentifier,3,&(lvalues[5742]),0},
+{"facsimileTelephoneNumber","facsimileTelephoneNumber",
+	NID_facsimileTelephoneNumber,3,&(lvalues[5745]),0},
+{"x121Address","x121Address",NID_x121Address,3,&(lvalues[5748]),0},
+{"internationaliSDNNumber","internationaliSDNNumber",
+	NID_internationaliSDNNumber,3,&(lvalues[5751]),0},
+{"registeredAddress","registeredAddress",NID_registeredAddress,3,
+	&(lvalues[5754]),0},
+{"destinationIndicator","destinationIndicator",
+	NID_destinationIndicator,3,&(lvalues[5757]),0},
+{"preferredDeliveryMethod","preferredDeliveryMethod",
+	NID_preferredDeliveryMethod,3,&(lvalues[5760]),0},
+{"presentationAddress","presentationAddress",NID_presentationAddress,
+	3,&(lvalues[5763]),0},
+{"supportedApplicationContext","supportedApplicationContext",
+	NID_supportedApplicationContext,3,&(lvalues[5766]),0},
+{"member","member",NID_member,3,&(lvalues[5769]),0},
+{"owner","owner",NID_owner,3,&(lvalues[5772]),0},
+{"roleOccupant","roleOccupant",NID_roleOccupant,3,&(lvalues[5775]),0},
+{"seeAlso","seeAlso",NID_seeAlso,3,&(lvalues[5778]),0},
+{"userPassword","userPassword",NID_userPassword,3,&(lvalues[5781]),0},
+{"userCertificate","userCertificate",NID_userCertificate,3,
+	&(lvalues[5784]),0},
+{"cACertificate","cACertificate",NID_cACertificate,3,&(lvalues[5787]),0},
+{"authorityRevocationList","authorityRevocationList",
+	NID_authorityRevocationList,3,&(lvalues[5790]),0},
+{"certificateRevocationList","certificateRevocationList",
+	NID_certificateRevocationList,3,&(lvalues[5793]),0},
+{"crossCertificatePair","crossCertificatePair",
+	NID_crossCertificatePair,3,&(lvalues[5796]),0},
+{"enhancedSearchGuide","enhancedSearchGuide",NID_enhancedSearchGuide,
+	3,&(lvalues[5799]),0},
+{"protocolInformation","protocolInformation",NID_protocolInformation,
+	3,&(lvalues[5802]),0},
+{"distinguishedName","distinguishedName",NID_distinguishedName,3,
+	&(lvalues[5805]),0},
+{"uniqueMember","uniqueMember",NID_uniqueMember,3,&(lvalues[5808]),0},
+{"houseIdentifier","houseIdentifier",NID_houseIdentifier,3,
+	&(lvalues[5811]),0},
+{"supportedAlgorithms","supportedAlgorithms",NID_supportedAlgorithms,
+	3,&(lvalues[5814]),0},
+{"deltaRevocationList","deltaRevocationList",NID_deltaRevocationList,
+	3,&(lvalues[5817]),0},
+{"dmdName","dmdName",NID_dmdName,3,&(lvalues[5820]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2458,10 +2547,12 @@ static const unsigned int sn_objs[NUM_SN]={
 501,	/* "audio" */
 177,	/* "authorityInfoAccess" */
 90,	/* "authorityKeyIdentifier" */
+882,	/* "authorityRevocationList" */
 87,	/* "basicConstraints" */
 365,	/* "basicOCSPResponse" */
 285,	/* "biometricInfo" */
 494,	/* "buildingName" */
+860,	/* "businessCategory" */
 691,	/* "c2onb191v4" */
 692,	/* "c2onb191v5" */
 697,	/* "c2onb239v4" */
@@ -2482,6 +2573,7 @@ static const unsigned int sn_objs[NUM_SN]={
 696,	/* "c2tnb239v3" */
 701,	/* "c2tnb359v1" */
 703,	/* "c2tnb431r1" */
+881,	/* "cACertificate" */
 483,	/* "cNAMERecord" */
 179,	/* "caIssuers" */
 785,	/* "caRepository" */
@@ -2490,6 +2582,7 @@ static const unsigned int sn_objs[NUM_SN]={
 677,	/* "certicom-arc" */
 771,	/* "certificateIssuer" */
 89,	/* "certificatePolicies" */
+883,	/* "certificateRevocationList" */
 54,	/* "challengePassword" */
 407,	/* "characteristic-two-field" */
 395,	/* "clearance" */
@@ -2500,6 +2593,7 @@ static const unsigned int sn_objs[NUM_SN]={
 153,	/* "crlBag" */
 103,	/* "crlDistributionPoints" */
 88,	/* "crlNumber" */
+884,	/* "crossCertificatePair" */
 806,	/* "cryptocom" */
 805,	/* "cryptopro" */
 500,	/* "dITRedirect" */
@@ -2508,9 +2602,13 @@ static const unsigned int sn_objs[NUM_SN]={
 434,	/* "data" */
 390,	/* "dcobject" */
 140,	/* "deltaCRL" */
+891,	/* "deltaRevocationList" */
 107,	/* "description" */
+871,	/* "destinationIndicator" */
 28,	/* "dhKeyAgreement" */
 382,	/* "directory" */
+887,	/* "distinguishedName" */
+892,	/* "dmdName" */
 174,	/* "dnQualifier" */
 447,	/* "document" */
 471,	/* "documentAuthor" */
@@ -2533,12 +2631,14 @@ static const unsigned int sn_objs[NUM_SN]={
 792,	/* "ecdsa-with-Specified" */
 48,	/* "emailAddress" */
 132,	/* "emailProtection" */
+885,	/* "enhancedSearchGuide" */
 389,	/* "enterprises" */
 384,	/* "experimental" */
 172,	/* "extReq" */
 56,	/* "extendedCertificateAttributes" */
 126,	/* "extendedKeyUsage" */
 372,	/* "extendedStatus" */
+867,	/* "facsimileTelephoneNumber" */
 462,	/* "favouriteDrink" */
 857,	/* "freshestCRL" */
 453,	/* "friendlyCountry" */
@@ -2565,6 +2665,7 @@ static const unsigned int sn_objs[NUM_SN]={
 486,	/* "homePostalAddress" */
 473,	/* "homeTelephoneNumber" */
 466,	/* "host" */
+889,	/* "houseIdentifier" */
 442,	/* "iA5StringSyntax" */
 783,	/* "id-DHBasedMac" */
 824,	/* "id-Gost28147-89-CryptoPro-A-ParamSet" */
@@ -2794,6 +2895,7 @@ static const unsigned int sn_objs[NUM_SN]={
 748,	/* "inhibitAnyPolicy" */
 101,	/* "initials" */
 647,	/* "international-organizations" */
+869,	/* "internationaliSDNNumber" */
 142,	/* "invalidityDate" */
 294,	/* "ipsecEndSystem" */
 295,	/* "ipsecTunnel" */
@@ -2811,6 +2913,7 @@ static const unsigned int sn_objs[NUM_SN]={
 493,	/* "mailPreferenceOption" */
 467,	/* "manager" */
 809,	/* "md_gost94" */
+875,	/* "member" */
 182,	/* "member-body" */
 51,	/* "messageDigest" */
 383,	/* "mgmt" */
@@ -2846,12 +2949,14 @@ static const unsigned int sn_objs[NUM_SN]={
 681,	/* "onBasis" */
 491,	/* "organizationalStatus" */
 475,	/* "otherMailbox" */
+876,	/* "owner" */
 489,	/* "pagerTelephoneNumber" */
 374,	/* "path" */
 112,	/* "pbeWithMD5AndCast5CBC" */
 499,	/* "personalSignature" */
 487,	/* "personalTitle" */
 464,	/* "photo" */
+863,	/* "physicalDeliveryOfficeName" */
 437,	/* "pilot" */
 439,	/* "pilotAttributeSyntax" */
 438,	/* "pilotAttributeType" */
@@ -2877,8 +2982,12 @@ static const unsigned int sn_objs[NUM_SN]={
 47,	/* "pkcs9" */
 401,	/* "policyConstraints" */
 747,	/* "policyMappings" */
+862,	/* "postOfficeBox" */
+861,	/* "postalAddress" */
 661,	/* "postalCode" */
 683,	/* "ppBasis" */
+872,	/* "preferredDeliveryMethod" */
+873,	/* "presentationAddress" */
 816,	/* "prf-gostr3411-94" */
 406,	/* "prime-field" */
 409,	/* "prime192v1" */
@@ -2890,13 +2999,16 @@ static const unsigned int sn_objs[NUM_SN]={
 415,	/* "prime256v1" */
 385,	/* "private" */
 84,	/* "privateKeyUsagePeriod" */
+886,	/* "protocolInformation" */
 663,	/* "proxyCertInfo" */
 510,	/* "pseudonym" */
 435,	/* "pss" */
 286,	/* "qcStatements" */
 457,	/* "qualityLabelledData" */
 450,	/* "rFC822localPart" */
+870,	/* "registeredAddress" */
 400,	/* "role" */
+877,	/* "roleOccupant" */
 448,	/* "room" */
 463,	/* "roomNumber" */
  6,	/* "rsaEncryption" */
@@ -2909,6 +3021,7 @@ static const unsigned int sn_objs[NUM_SN]={
 290,	/* "sbgp-ipAddrBlock" */
 292,	/* "sbgp-routerIdentifier" */
 159,	/* "sdsiCertificate" */
+859,	/* "searchGuide" */
 704,	/* "secp112r1" */
 705,	/* "secp112r2" */
 706,	/* "secp128r1" */
@@ -2943,6 +3056,7 @@ static const unsigned int sn_objs[NUM_SN]={
 733,	/* "sect571k1" */
 734,	/* "sect571r1" */
 386,	/* "security" */
+878,	/* "seeAlso" */
 394,	/* "selected-attribute-types" */
 105,	/* "serialNumber" */
 129,	/* "serverAuth" */
@@ -3081,14 +3195,19 @@ static const unsigned int sn_objs[NUM_SN]={
 454,	/* "simpleSecurityObject" */
 496,	/* "singleLevelQuality" */
 387,	/* "snmpv2" */
-660,	/* "streetAddress" */
+660,	/* "street" */
 85,	/* "subjectAltName" */
 769,	/* "subjectDirectoryAttributes" */
 398,	/* "subjectInfoAccess" */
 82,	/* "subjectKeyIdentifier" */
 498,	/* "subtreeMaximumQuality" */
 497,	/* "subtreeMinimumQuality" */
+890,	/* "supportedAlgorithms" */
+874,	/* "supportedApplicationContext" */
 402,	/* "targetInformation" */
+864,	/* "telephoneNumber" */
+866,	/* "teletexTerminalIdentifier" */
+865,	/* "telexNumber" */
 459,	/* "textEncodedORAddress" */
 293,	/* "textNotice" */
 133,	/* "timeStamping" */
@@ -3096,9 +3215,12 @@ static const unsigned int sn_objs[NUM_SN]={
 682,	/* "tpBasis" */
 375,	/* "trustRoot" */
 436,	/* "ucl" */
+888,	/* "uniqueMember" */
 55,	/* "unstructuredAddress" */
 49,	/* "unstructuredName" */
+880,	/* "userCertificate" */
 465,	/* "userClass" */
+879,	/* "userPassword" */
 373,	/* "valid" */
 678,	/* "wap" */
 679,	/* "wap-wsg" */
@@ -3114,6 +3236,7 @@ static const unsigned int sn_objs[NUM_SN]={
 741,	/* "wap-wsg-idm-ecid-wtls8" */
 742,	/* "wap-wsg-idm-ecid-wtls9" */
 804,	/* "whirlpool" */
+868,	/* "x121Address" */
 503,	/* "x500UniqueIdentifier" */
 158,	/* "x509Certificate" */
 160,	/* "x509Crl" */
@@ -3284,11 +3407,13 @@ static const unsigned int ln_objs[NUM_LN]={
 484,	/* "associatedDomain" */
 485,	/* "associatedName" */
 501,	/* "audio" */
+882,	/* "authorityRevocationList" */
 91,	/* "bf-cbc" */
 93,	/* "bf-cfb" */
 92,	/* "bf-ecb" */
 94,	/* "bf-ofb" */
 494,	/* "buildingName" */
+860,	/* "businessCategory" */
 691,	/* "c2onb191v4" */
 692,	/* "c2onb191v5" */
 697,	/* "c2onb239v4" */
@@ -3309,6 +3434,7 @@ static const unsigned int ln_objs[NUM_LN]={
 696,	/* "c2tnb239v3" */
 701,	/* "c2tnb359v1" */
 703,	/* "c2tnb431r1" */
+881,	/* "cACertificate" */
 483,	/* "cNAMERecord" */
 751,	/* "camellia-128-cbc" */
 757,	/* "camellia-128-cfb" */
@@ -3336,6 +3462,7 @@ static const unsigned int ln_objs[NUM_LN]={
 152,	/* "certBag" */
 677,	/* "certicom-arc" */
 517,	/* "certificate extensions" */
+883,	/* "certificateRevocationList" */
 54,	/* "challengePassword" */
 407,	/* "characteristic-two-field" */
 395,	/* "clearance" */
@@ -3346,6 +3473,7 @@ static const unsigned int ln_objs[NUM_LN]={
 53,	/* "countersignature" */
 14,	/* "countryName" */
 153,	/* "crlBag" */
+884,	/* "crossCertificatePair" */
 806,	/* "cryptocom" */
 805,	/* "cryptopro" */
 500,	/* "dITRedirect" */
@@ -3353,6 +3481,7 @@ static const unsigned int ln_objs[NUM_LN]={
 495,	/* "dSAQuality" */
 434,	/* "data" */
 390,	/* "dcObject" */
+891,	/* "deltaRevocationList" */
 31,	/* "des-cbc" */
 643,	/* "des-cdmf" */
 30,	/* "des-cfb" */
@@ -3371,10 +3500,13 @@ static const unsigned int ln_objs[NUM_LN]={
 63,	/* "des-ede3-ofb" */
 45,	/* "des-ofb" */
 107,	/* "description" */
+871,	/* "destinationIndicator" */
 80,	/* "desx-cbc" */
 28,	/* "dhKeyAgreement" */
 11,	/* "directory services (X.500)" */
 378,	/* "directory services - algorithms" */
+887,	/* "distinguishedName" */
+892,	/* "dmdName" */
 174,	/* "dnQualifier" */
 447,	/* "document" */
 471,	/* "documentAuthor" */
@@ -3404,7 +3536,9 @@ static const unsigned int ln_objs[NUM_LN]={
 792,	/* "ecdsa-with-Specified" */
 48,	/* "emailAddress" */
 632,	/* "encrypted track 2" */
+885,	/* "enhancedSearchGuide" */
 56,	/* "extendedCertificateAttributes" */
+867,	/* "facsimileTelephoneNumber" */
 462,	/* "favouriteDrink" */
 453,	/* "friendlyCountry" */
 490,	/* "friendlyCountryName" */
@@ -3426,6 +3560,7 @@ static const unsigned int ln_objs[NUM_LN]={
 486,	/* "homePostalAddress" */
 473,	/* "homeTelephoneNumber" */
 466,	/* "host" */
+889,	/* "houseIdentifier" */
 442,	/* "iA5StringSyntax" */
 381,	/* "iana" */
 824,	/* "id-Gost28147-89-CryptoPro-A-ParamSet" */
@@ -3640,6 +3775,7 @@ static const unsigned int ln_objs[NUM_LN]={
 676,	/* "identified-organization" */
 461,	/* "info" */
 101,	/* "initials" */
+869,	/* "internationaliSDNNumber" */
 749,	/* "ipsec3" */
 750,	/* "ipsec4" */
 181,	/* "iso" */
@@ -3666,6 +3802,7 @@ static const unsigned int ln_objs[NUM_LN]={
  8,	/* "md5WithRSAEncryption" */
 95,	/* "mdc2" */
 96,	/* "mdc2WithRSA" */
+875,	/* "member" */
 602,	/* "merchant initiated auth" */
 514,	/* "message extensions" */
 51,	/* "messageDigest" */
@@ -3680,6 +3817,7 @@ static const unsigned int ln_objs[NUM_LN]={
 491,	/* "organizationalStatus" */
 18,	/* "organizationalUnitName" */
 475,	/* "otherMailbox" */
+876,	/* "owner" */
 489,	/* "pagerTelephoneNumber" */
 782,	/* "password based MAC" */
 374,	/* "path" */
@@ -3700,6 +3838,7 @@ static const unsigned int ln_objs[NUM_LN]={
 499,	/* "personalSignature" */
 487,	/* "personalTitle" */
 464,	/* "photo" */
+863,	/* "physicalDeliveryOfficeName" */
 437,	/* "pilot" */
 439,	/* "pilotAttributeSyntax" */
 438,	/* "pilotAttributeType" */
@@ -3722,8 +3861,12 @@ static const unsigned int ln_objs[NUM_LN]={
 22,	/* "pkcs7-signedData" */
 151,	/* "pkcs8ShroudedKeyBag" */
 47,	/* "pkcs9" */
+862,	/* "postOfficeBox" */
+861,	/* "postalAddress" */
 661,	/* "postalCode" */
 683,	/* "ppBasis" */
+872,	/* "preferredDeliveryMethod" */
+873,	/* "presentationAddress" */
 406,	/* "prime-field" */
 409,	/* "prime192v1" */
 410,	/* "prime192v2" */
@@ -3732,6 +3875,7 @@ static const unsigned int ln_objs[NUM_LN]={
 413,	/* "prime239v2" */
 414,	/* "prime239v3" */
 415,	/* "prime256v1" */
+886,	/* "protocolInformation" */
 510,	/* "pseudonym" */
 435,	/* "pss" */
 286,	/* "qcStatements" */
@@ -3749,10 +3893,12 @@ static const unsigned int ln_objs[NUM_LN]={
 122,	/* "rc5-cfb" */
 121,	/* "rc5-ecb" */
 123,	/* "rc5-ofb" */
+870,	/* "registeredAddress" */
 460,	/* "rfc822Mailbox" */
 117,	/* "ripemd160" */
 119,	/* "ripemd160WithRSA" */
 400,	/* "role" */
+877,	/* "roleOccupant" */
 448,	/* "room" */
 463,	/* "roomNumber" */
 19,	/* "rsa" */
@@ -3766,6 +3912,7 @@ static const unsigned int ln_objs[NUM_LN]={
 290,	/* "sbgp-ipAddrBlock" */
 292,	/* "sbgp-routerIdentifier" */
 159,	/* "sdsiCertificate" */
+859,	/* "searchGuide" */
 704,	/* "secp112r1" */
 705,	/* "secp112r2" */
 706,	/* "secp128r1" */
@@ -3800,6 +3947,7 @@ static const unsigned int ln_objs[NUM_LN]={
 733,	/* "sect571k1" */
 734,	/* "sect571r1" */
 635,	/* "secure device signature" */
+878,	/* "seeAlso" */
 777,	/* "seed-cbc" */
 779,	/* "seed-cfb" */
 776,	/* "seed-ecb" */
@@ -3942,17 +4090,25 @@ static const unsigned int ln_objs[NUM_LN]={
 660,	/* "streetAddress" */
 498,	/* "subtreeMaximumQuality" */
 497,	/* "subtreeMinimumQuality" */
+890,	/* "supportedAlgorithms" */
+874,	/* "supportedApplicationContext" */
 100,	/* "surname" */
+864,	/* "telephoneNumber" */
+866,	/* "teletexTerminalIdentifier" */
+865,	/* "telexNumber" */
 459,	/* "textEncodedORAddress" */
 293,	/* "textNotice" */
 106,	/* "title" */
 682,	/* "tpBasis" */
 436,	/* "ucl" */
  0,	/* "undefined" */
+888,	/* "uniqueMember" */
 55,	/* "unstructuredAddress" */
 49,	/* "unstructuredName" */
+880,	/* "userCertificate" */
 465,	/* "userClass" */
 458,	/* "userId" */
+879,	/* "userPassword" */
 373,	/* "valid" */
 678,	/* "wap" */
 679,	/* "wap-wsg" */
@@ -3968,6 +4124,7 @@ static const unsigned int ln_objs[NUM_LN]={
 741,	/* "wap-wsg-idm-ecid-wtls8" */
 742,	/* "wap-wsg-idm-ecid-wtls9" */
 804,	/* "whirlpool" */
+868,	/* "x121Address" */
 503,	/* "x500UniqueIdentifier" */
 158,	/* "x509Certificate" */
 160,	/* "x509Crl" */
@@ -4009,13 +4166,47 @@ static const unsigned int obj_objs[NUM_OBJ]={
 18,	/* OBJ_organizationalUnitName       2 5 4 11 */
 106,	/* OBJ_title                        2 5 4 12 */
 107,	/* OBJ_description                  2 5 4 13 */
+859,	/* OBJ_searchGuide                  2 5 4 14 */
+860,	/* OBJ_businessCategory             2 5 4 15 */
+861,	/* OBJ_postalAddress                2 5 4 16 */
 661,	/* OBJ_postalCode                   2 5 4 17 */
+862,	/* OBJ_postOfficeBox                2 5 4 18 */
+863,	/* OBJ_physicalDeliveryOfficeName   2 5 4 19 */
+864,	/* OBJ_telephoneNumber              2 5 4 20 */
+865,	/* OBJ_telexNumber                  2 5 4 21 */
+866,	/* OBJ_teletexTerminalIdentifier    2 5 4 22 */
+867,	/* OBJ_facsimileTelephoneNumber     2 5 4 23 */
+868,	/* OBJ_x121Address                  2 5 4 24 */
+869,	/* OBJ_internationaliSDNNumber      2 5 4 25 */
+870,	/* OBJ_registeredAddress            2 5 4 26 */
+871,	/* OBJ_destinationIndicator         2 5 4 27 */
+872,	/* OBJ_preferredDeliveryMethod      2 5 4 28 */
+873,	/* OBJ_presentationAddress          2 5 4 29 */
+874,	/* OBJ_supportedApplicationContext  2 5 4 30 */
+875,	/* OBJ_member                       2 5 4 31 */
+876,	/* OBJ_owner                        2 5 4 32 */
+877,	/* OBJ_roleOccupant                 2 5 4 33 */
+878,	/* OBJ_seeAlso                      2 5 4 34 */
+879,	/* OBJ_userPassword                 2 5 4 35 */
+880,	/* OBJ_userCertificate              2 5 4 36 */
+881,	/* OBJ_cACertificate                2 5 4 37 */
+882,	/* OBJ_authorityRevocationList      2 5 4 38 */
+883,	/* OBJ_certificateRevocationList    2 5 4 39 */
+884,	/* OBJ_crossCertificatePair         2 5 4 40 */
 173,	/* OBJ_name                         2 5 4 41 */
 99,	/* OBJ_givenName                    2 5 4 42 */
 101,	/* OBJ_initials                     2 5 4 43 */
 509,	/* OBJ_generationQualifier          2 5 4 44 */
 503,	/* OBJ_x500UniqueIdentifier         2 5 4 45 */
 174,	/* OBJ_dnQualifier                  2 5 4 46 */
+885,	/* OBJ_enhancedSearchGuide          2 5 4 47 */
+886,	/* OBJ_protocolInformation          2 5 4 48 */
+887,	/* OBJ_distinguishedName            2 5 4 49 */
+888,	/* OBJ_uniqueMember                 2 5 4 50 */
+889,	/* OBJ_houseIdentifier              2 5 4 51 */
+890,	/* OBJ_supportedAlgorithms          2 5 4 52 */
+891,	/* OBJ_deltaRevocationList          2 5 4 53 */
+892,	/* OBJ_dmdName                      2 5 4 54 */
 510,	/* OBJ_pseudonym                    2 5 4 65 */
 400,	/* OBJ_role                         2 5 4 72 */
 769,	/* OBJ_subject_directory_attributes 2 5 29 9 */
