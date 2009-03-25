@@ -1163,7 +1163,7 @@ $arflags      =
 
 *** debug-ben-debug
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG  -DDEBUG_SAFESTACK -g3 -O2 -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -1784,34 +1784,34 @@ $arflags      =
 
 *** debug-steve-opt
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -m32 -O3 -g -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -m64 -O3 -DL_ENDIAN -DTERMIO -DCONF_DEBUG -DDEBUG_SAFESTACK -g -DMD32_REG_T=int
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
-$lflags       = -rdynamic -ldl
-$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
-$cpuid_obj    = x86cpuid-elf.o
-$bn_obj       = bn86-elf.o co86-elf.o MAYBE-MO86-elf.o
-$des_obj      = dx86-elf.o yx86-elf.o
-$aes_obj      = ax86-elf.o
-$bf_obj       = bx86-elf.o
-$md5_obj      = mx86-elf.o
-$sha1_obj     = sx86-elf.o s512sse2-elf.o
-$cast_obj     = cx86-elf.o
-$rc4_obj      = rx86-elf.o rc4_skey.o
-$rmd160_obj   = rm86-elf.o
-$rc5_obj      = r586-elf.o
-$dso_scheme   = dlfcn
-$shared_target= linux-shared
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK BF_PTR2 DES_INT DES_UNROLL
+$cpuid_obj    = x86_64cpuid.o
+$bn_obj       = x86_64-gcc.o x86_64-mont.o
+$des_obj      = 
+$aes_obj      = aes-x86_64.o
+$bf_obj       = 
+$md5_obj      = md5-x86_64.o
+$sha1_obj     = sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o
+$cast_obj     = 
+$rc4_obj      = rc4-x86_64.o
+$rmd160_obj   = 
+$rc5_obj      = 
+$dso_scheme   = elf
+$shared_target= dlfcn
+$shared_cflag = linux-shared
+$shared_ldflag = -fPIC
+$shared_extension = -m64
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $arflags      = 
 
 *** debug-steve32
 $cc           = gcc
-$cflags       = -m32 -DL_ENDIAN -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -DOPENSSL_NO_DEPRECATED -g -pedantic -Wno-long-long -Wall -Werror -Wshadow -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -m32 -DL_ENDIAN -DCONF_DEBUG -DDEBUG_SAFESTACK -g -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1838,7 +1838,7 @@ $arflags      =
 
 *** debug-steve64
 $cc           = gcc
-$cflags       = -m64 -DL_ENDIAN -DTERMIO -DREF_CHECK -DCONF_DEBUG -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG_ALL -DPEDANTIC -DOPENSSL_NO_DEPRECATED -g -pedantic -Wall -Werror -Wno-long-long -Wsign-compare -DMD32_REG_T=int
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -m64 -DL_ENDIAN -DTERMIO -DCONF_DEBUG -DDEBUG_SAFESTACK -g -DMD32_REG_T=int
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1855,12 +1855,12 @@ $cast_obj     =
 $rc4_obj      = rc4-x86_64.o
 $rmd160_obj   = 
 $rc5_obj      = 
-$dso_scheme   = dlfcn
-$shared_target= linux-shared
-$shared_cflag = -fPIC
-$shared_ldflag = -m64
-$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = 
+$dso_scheme   = elf
+$shared_target= dlfcn
+$shared_cflag = linux-shared
+$shared_ldflag = -fPIC
+$shared_extension = -m64
+$ranlib       = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $arflags      = 
 
 *** debug-ulf
