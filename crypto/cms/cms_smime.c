@@ -425,7 +425,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
 		for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++)
 			{
 			si = sk_CMS_SignerInfo_value(sinfos, i);
-			if (!CMS_SignerInfo_verify_content(si, cmsbio))
+			if (CMS_SignerInfo_verify_content(si, cmsbio) <= 0)
 				{
 				CMSerr(CMS_F_CMS_VERIFY,
 					CMS_R_CONTENT_VERIFY_ERROR);

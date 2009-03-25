@@ -4,6 +4,11 @@
 
  Changes between 0.9.8j and 0.9.8k  [xx XXX xxxx]
 
+  *) Fix bug where return value of CMS_SignerInfo_verify_content() was not
+     checked correctly. This would allow some invalid signed attributes to
+     appear to verify correctly. (CVE-2009-0591)
+     [Ivan Nestlerode <inestlerode@us.ibm.com>]
+
   *) Reject UniversalString and BMPString types with invalid lengths. This
      prevents a crash in ASN1_STRING_print_ex() which assumes the strings have
      a legal length. (CVE-2009-0590)
