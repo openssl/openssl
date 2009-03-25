@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 859
-#define NUM_SN 852
-#define NUM_LN 852
-#define NUM_OBJ 806
+#define NUM_NID 893
+#define NUM_SN 886
+#define NUM_LN 886
+#define NUM_OBJ 840
 
-static unsigned char lvalues[5722]={
+static unsigned char lvalues[5824]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -874,6 +874,40 @@ static unsigned char lvalues[5722]={
 0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x11,0x02,/* [5701] OBJ_LocalKeySet */
 0x55,0x1D,0x2E,                              /* [5710] OBJ_freshest_crl */
 0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x03,     /* [5713] OBJ_id_on_permanentIdentifier */
+0x55,0x04,0x0E,                              /* [5721] OBJ_searchGuide */
+0x55,0x04,0x0F,                              /* [5724] OBJ_businessCategory */
+0x55,0x04,0x10,                              /* [5727] OBJ_postalAddress */
+0x55,0x04,0x12,                              /* [5730] OBJ_postOfficeBox */
+0x55,0x04,0x13,                              /* [5733] OBJ_physicalDeliveryOfficeName */
+0x55,0x04,0x14,                              /* [5736] OBJ_telephoneNumber */
+0x55,0x04,0x15,                              /* [5739] OBJ_telexNumber */
+0x55,0x04,0x16,                              /* [5742] OBJ_teletexTerminalIdentifier */
+0x55,0x04,0x17,                              /* [5745] OBJ_facsimileTelephoneNumber */
+0x55,0x04,0x18,                              /* [5748] OBJ_x121Address */
+0x55,0x04,0x19,                              /* [5751] OBJ_internationaliSDNNumber */
+0x55,0x04,0x1A,                              /* [5754] OBJ_registeredAddress */
+0x55,0x04,0x1B,                              /* [5757] OBJ_destinationIndicator */
+0x55,0x04,0x1C,                              /* [5760] OBJ_preferredDeliveryMethod */
+0x55,0x04,0x1D,                              /* [5763] OBJ_presentationAddress */
+0x55,0x04,0x1E,                              /* [5766] OBJ_supportedApplicationContext */
+0x55,0x04,0x1F,                              /* [5769] OBJ_member */
+0x55,0x04,0x20,                              /* [5772] OBJ_owner */
+0x55,0x04,0x21,                              /* [5775] OBJ_roleOccupant */
+0x55,0x04,0x22,                              /* [5778] OBJ_seeAlso */
+0x55,0x04,0x23,                              /* [5781] OBJ_userPassword */
+0x55,0x04,0x24,                              /* [5784] OBJ_userCertificate */
+0x55,0x04,0x25,                              /* [5787] OBJ_cACertificate */
+0x55,0x04,0x26,                              /* [5790] OBJ_authorityRevocationList */
+0x55,0x04,0x27,                              /* [5793] OBJ_certificateRevocationList */
+0x55,0x04,0x28,                              /* [5796] OBJ_crossCertificatePair */
+0x55,0x04,0x2F,                              /* [5799] OBJ_enhancedSearchGuide */
+0x55,0x04,0x30,                              /* [5802] OBJ_protocolInformation */
+0x55,0x04,0x31,                              /* [5805] OBJ_distinguishedName */
+0x55,0x04,0x32,                              /* [5808] OBJ_uniqueMember */
+0x55,0x04,0x33,                              /* [5811] OBJ_houseIdentifier */
+0x55,0x04,0x34,                              /* [5814] OBJ_supportedAlgorithms */
+0x55,0x04,0x35,                              /* [5817] OBJ_deltaRevocationList */
+0x55,0x04,0x36,                              /* [5820] OBJ_dmdName */
 };
 
 static ASN1_OBJECT nid_objs[NUM_NID]={
@@ -1928,7 +1962,7 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 {"DES-CFB8","des-cfb8",NID_des_cfb8,0,NULL,0},
 {"DES-EDE3-CFB1","des-ede3-cfb1",NID_des_ede3_cfb1,0,NULL,0},
 {"DES-EDE3-CFB8","des-ede3-cfb8",NID_des_ede3_cfb8,0,NULL,0},
-{"streetAddress","streetAddress",NID_streetAddress,3,&(lvalues[4462]),0},
+{"street","streetAddress",NID_streetAddress,3,&(lvalues[4462]),0},
 {"postalCode","postalCode",NID_postalCode,3,&(lvalues[4465]),0},
 {"id-ppl","id-ppl",NID_id_ppl,7,&(lvalues[4468]),0},
 {"proxyCertInfo","Proxy Certificate Information",NID_proxyCertInfo,8,
@@ -2262,6 +2296,61 @@ static ASN1_OBJECT nid_objs[NUM_NID]={
 	&(lvalues[5710]),0},
 {"id-on-permanentIdentifier","Permanent Identifier",
 	NID_id_on_permanentIdentifier,8,&(lvalues[5713]),0},
+{"searchGuide","searchGuide",NID_searchGuide,3,&(lvalues[5721]),0},
+{"businessCategory","businessCategory",NID_businessCategory,3,
+	&(lvalues[5724]),0},
+{"postalAddress","postalAddress",NID_postalAddress,3,&(lvalues[5727]),0},
+{"postOfficeBox","postOfficeBox",NID_postOfficeBox,3,&(lvalues[5730]),0},
+{"physicalDeliveryOfficeName","physicalDeliveryOfficeName",
+	NID_physicalDeliveryOfficeName,3,&(lvalues[5733]),0},
+{"telephoneNumber","telephoneNumber",NID_telephoneNumber,3,
+	&(lvalues[5736]),0},
+{"telexNumber","telexNumber",NID_telexNumber,3,&(lvalues[5739]),0},
+{"teletexTerminalIdentifier","teletexTerminalIdentifier",
+	NID_teletexTerminalIdentifier,3,&(lvalues[5742]),0},
+{"facsimileTelephoneNumber","facsimileTelephoneNumber",
+	NID_facsimileTelephoneNumber,3,&(lvalues[5745]),0},
+{"x121Address","x121Address",NID_x121Address,3,&(lvalues[5748]),0},
+{"internationaliSDNNumber","internationaliSDNNumber",
+	NID_internationaliSDNNumber,3,&(lvalues[5751]),0},
+{"registeredAddress","registeredAddress",NID_registeredAddress,3,
+	&(lvalues[5754]),0},
+{"destinationIndicator","destinationIndicator",
+	NID_destinationIndicator,3,&(lvalues[5757]),0},
+{"preferredDeliveryMethod","preferredDeliveryMethod",
+	NID_preferredDeliveryMethod,3,&(lvalues[5760]),0},
+{"presentationAddress","presentationAddress",NID_presentationAddress,
+	3,&(lvalues[5763]),0},
+{"supportedApplicationContext","supportedApplicationContext",
+	NID_supportedApplicationContext,3,&(lvalues[5766]),0},
+{"member","member",NID_member,3,&(lvalues[5769]),0},
+{"owner","owner",NID_owner,3,&(lvalues[5772]),0},
+{"roleOccupant","roleOccupant",NID_roleOccupant,3,&(lvalues[5775]),0},
+{"seeAlso","seeAlso",NID_seeAlso,3,&(lvalues[5778]),0},
+{"userPassword","userPassword",NID_userPassword,3,&(lvalues[5781]),0},
+{"userCertificate","userCertificate",NID_userCertificate,3,
+	&(lvalues[5784]),0},
+{"cACertificate","cACertificate",NID_cACertificate,3,&(lvalues[5787]),0},
+{"authorityRevocationList","authorityRevocationList",
+	NID_authorityRevocationList,3,&(lvalues[5790]),0},
+{"certificateRevocationList","certificateRevocationList",
+	NID_certificateRevocationList,3,&(lvalues[5793]),0},
+{"crossCertificatePair","crossCertificatePair",
+	NID_crossCertificatePair,3,&(lvalues[5796]),0},
+{"enhancedSearchGuide","enhancedSearchGuide",NID_enhancedSearchGuide,
+	3,&(lvalues[5799]),0},
+{"protocolInformation","protocolInformation",NID_protocolInformation,
+	3,&(lvalues[5802]),0},
+{"distinguishedName","distinguishedName",NID_distinguishedName,3,
+	&(lvalues[5805]),0},
+{"uniqueMember","uniqueMember",NID_uniqueMember,3,&(lvalues[5808]),0},
+{"houseIdentifier","houseIdentifier",NID_houseIdentifier,3,
+	&(lvalues[5811]),0},
+{"supportedAlgorithms","supportedAlgorithms",NID_supportedAlgorithms,
+	3,&(lvalues[5814]),0},
+{"deltaRevocationList","deltaRevocationList",NID_deltaRevocationList,
+	3,&(lvalues[5817]),0},
+{"dmdName","dmdName",NID_dmdName,3,&(lvalues[5820]),0},
 };
 
 static ASN1_OBJECT *sn_objs[NUM_SN]={
@@ -2458,10 +2547,12 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[501]),/* "audio" */
 &(nid_objs[177]),/* "authorityInfoAccess" */
 &(nid_objs[90]),/* "authorityKeyIdentifier" */
+&(nid_objs[882]),/* "authorityRevocationList" */
 &(nid_objs[87]),/* "basicConstraints" */
 &(nid_objs[365]),/* "basicOCSPResponse" */
 &(nid_objs[285]),/* "biometricInfo" */
 &(nid_objs[494]),/* "buildingName" */
+&(nid_objs[860]),/* "businessCategory" */
 &(nid_objs[691]),/* "c2onb191v4" */
 &(nid_objs[692]),/* "c2onb191v5" */
 &(nid_objs[697]),/* "c2onb239v4" */
@@ -2482,6 +2573,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[696]),/* "c2tnb239v3" */
 &(nid_objs[701]),/* "c2tnb359v1" */
 &(nid_objs[703]),/* "c2tnb431r1" */
+&(nid_objs[881]),/* "cACertificate" */
 &(nid_objs[483]),/* "cNAMERecord" */
 &(nid_objs[179]),/* "caIssuers" */
 &(nid_objs[785]),/* "caRepository" */
@@ -2490,6 +2582,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[677]),/* "certicom-arc" */
 &(nid_objs[771]),/* "certificateIssuer" */
 &(nid_objs[89]),/* "certificatePolicies" */
+&(nid_objs[883]),/* "certificateRevocationList" */
 &(nid_objs[54]),/* "challengePassword" */
 &(nid_objs[407]),/* "characteristic-two-field" */
 &(nid_objs[395]),/* "clearance" */
@@ -2500,6 +2593,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[153]),/* "crlBag" */
 &(nid_objs[103]),/* "crlDistributionPoints" */
 &(nid_objs[88]),/* "crlNumber" */
+&(nid_objs[884]),/* "crossCertificatePair" */
 &(nid_objs[806]),/* "cryptocom" */
 &(nid_objs[805]),/* "cryptopro" */
 &(nid_objs[500]),/* "dITRedirect" */
@@ -2508,9 +2602,13 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[434]),/* "data" */
 &(nid_objs[390]),/* "dcobject" */
 &(nid_objs[140]),/* "deltaCRL" */
+&(nid_objs[891]),/* "deltaRevocationList" */
 &(nid_objs[107]),/* "description" */
+&(nid_objs[871]),/* "destinationIndicator" */
 &(nid_objs[28]),/* "dhKeyAgreement" */
 &(nid_objs[382]),/* "directory" */
+&(nid_objs[887]),/* "distinguishedName" */
+&(nid_objs[892]),/* "dmdName" */
 &(nid_objs[174]),/* "dnQualifier" */
 &(nid_objs[447]),/* "document" */
 &(nid_objs[471]),/* "documentAuthor" */
@@ -2533,12 +2631,14 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[792]),/* "ecdsa-with-Specified" */
 &(nid_objs[48]),/* "emailAddress" */
 &(nid_objs[132]),/* "emailProtection" */
+&(nid_objs[885]),/* "enhancedSearchGuide" */
 &(nid_objs[389]),/* "enterprises" */
 &(nid_objs[384]),/* "experimental" */
 &(nid_objs[172]),/* "extReq" */
 &(nid_objs[56]),/* "extendedCertificateAttributes" */
 &(nid_objs[126]),/* "extendedKeyUsage" */
 &(nid_objs[372]),/* "extendedStatus" */
+&(nid_objs[867]),/* "facsimileTelephoneNumber" */
 &(nid_objs[462]),/* "favouriteDrink" */
 &(nid_objs[857]),/* "freshestCRL" */
 &(nid_objs[453]),/* "friendlyCountry" */
@@ -2565,6 +2665,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[486]),/* "homePostalAddress" */
 &(nid_objs[473]),/* "homeTelephoneNumber" */
 &(nid_objs[466]),/* "host" */
+&(nid_objs[889]),/* "houseIdentifier" */
 &(nid_objs[442]),/* "iA5StringSyntax" */
 &(nid_objs[783]),/* "id-DHBasedMac" */
 &(nid_objs[824]),/* "id-Gost28147-89-CryptoPro-A-ParamSet" */
@@ -2794,6 +2895,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[748]),/* "inhibitAnyPolicy" */
 &(nid_objs[101]),/* "initials" */
 &(nid_objs[647]),/* "international-organizations" */
+&(nid_objs[869]),/* "internationaliSDNNumber" */
 &(nid_objs[142]),/* "invalidityDate" */
 &(nid_objs[294]),/* "ipsecEndSystem" */
 &(nid_objs[295]),/* "ipsecTunnel" */
@@ -2811,6 +2913,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[493]),/* "mailPreferenceOption" */
 &(nid_objs[467]),/* "manager" */
 &(nid_objs[809]),/* "md_gost94" */
+&(nid_objs[875]),/* "member" */
 &(nid_objs[182]),/* "member-body" */
 &(nid_objs[51]),/* "messageDigest" */
 &(nid_objs[383]),/* "mgmt" */
@@ -2846,12 +2949,14 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[681]),/* "onBasis" */
 &(nid_objs[491]),/* "organizationalStatus" */
 &(nid_objs[475]),/* "otherMailbox" */
+&(nid_objs[876]),/* "owner" */
 &(nid_objs[489]),/* "pagerTelephoneNumber" */
 &(nid_objs[374]),/* "path" */
 &(nid_objs[112]),/* "pbeWithMD5AndCast5CBC" */
 &(nid_objs[499]),/* "personalSignature" */
 &(nid_objs[487]),/* "personalTitle" */
 &(nid_objs[464]),/* "photo" */
+&(nid_objs[863]),/* "physicalDeliveryOfficeName" */
 &(nid_objs[437]),/* "pilot" */
 &(nid_objs[439]),/* "pilotAttributeSyntax" */
 &(nid_objs[438]),/* "pilotAttributeType" */
@@ -2877,8 +2982,12 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[47]),/* "pkcs9" */
 &(nid_objs[401]),/* "policyConstraints" */
 &(nid_objs[747]),/* "policyMappings" */
+&(nid_objs[862]),/* "postOfficeBox" */
+&(nid_objs[861]),/* "postalAddress" */
 &(nid_objs[661]),/* "postalCode" */
 &(nid_objs[683]),/* "ppBasis" */
+&(nid_objs[872]),/* "preferredDeliveryMethod" */
+&(nid_objs[873]),/* "presentationAddress" */
 &(nid_objs[816]),/* "prf-gostr3411-94" */
 &(nid_objs[406]),/* "prime-field" */
 &(nid_objs[409]),/* "prime192v1" */
@@ -2890,13 +2999,16 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[415]),/* "prime256v1" */
 &(nid_objs[385]),/* "private" */
 &(nid_objs[84]),/* "privateKeyUsagePeriod" */
+&(nid_objs[886]),/* "protocolInformation" */
 &(nid_objs[663]),/* "proxyCertInfo" */
 &(nid_objs[510]),/* "pseudonym" */
 &(nid_objs[435]),/* "pss" */
 &(nid_objs[286]),/* "qcStatements" */
 &(nid_objs[457]),/* "qualityLabelledData" */
 &(nid_objs[450]),/* "rFC822localPart" */
+&(nid_objs[870]),/* "registeredAddress" */
 &(nid_objs[400]),/* "role" */
+&(nid_objs[877]),/* "roleOccupant" */
 &(nid_objs[448]),/* "room" */
 &(nid_objs[463]),/* "roomNumber" */
 &(nid_objs[ 6]),/* "rsaEncryption" */
@@ -2909,6 +3021,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[290]),/* "sbgp-ipAddrBlock" */
 &(nid_objs[292]),/* "sbgp-routerIdentifier" */
 &(nid_objs[159]),/* "sdsiCertificate" */
+&(nid_objs[859]),/* "searchGuide" */
 &(nid_objs[704]),/* "secp112r1" */
 &(nid_objs[705]),/* "secp112r2" */
 &(nid_objs[706]),/* "secp128r1" */
@@ -2943,6 +3056,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[733]),/* "sect571k1" */
 &(nid_objs[734]),/* "sect571r1" */
 &(nid_objs[386]),/* "security" */
+&(nid_objs[878]),/* "seeAlso" */
 &(nid_objs[394]),/* "selected-attribute-types" */
 &(nid_objs[105]),/* "serialNumber" */
 &(nid_objs[129]),/* "serverAuth" */
@@ -3081,14 +3195,19 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[454]),/* "simpleSecurityObject" */
 &(nid_objs[496]),/* "singleLevelQuality" */
 &(nid_objs[387]),/* "snmpv2" */
-&(nid_objs[660]),/* "streetAddress" */
+&(nid_objs[660]),/* "street" */
 &(nid_objs[85]),/* "subjectAltName" */
 &(nid_objs[769]),/* "subjectDirectoryAttributes" */
 &(nid_objs[398]),/* "subjectInfoAccess" */
 &(nid_objs[82]),/* "subjectKeyIdentifier" */
 &(nid_objs[498]),/* "subtreeMaximumQuality" */
 &(nid_objs[497]),/* "subtreeMinimumQuality" */
+&(nid_objs[890]),/* "supportedAlgorithms" */
+&(nid_objs[874]),/* "supportedApplicationContext" */
 &(nid_objs[402]),/* "targetInformation" */
+&(nid_objs[864]),/* "telephoneNumber" */
+&(nid_objs[866]),/* "teletexTerminalIdentifier" */
+&(nid_objs[865]),/* "telexNumber" */
 &(nid_objs[459]),/* "textEncodedORAddress" */
 &(nid_objs[293]),/* "textNotice" */
 &(nid_objs[133]),/* "timeStamping" */
@@ -3096,9 +3215,12 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[682]),/* "tpBasis" */
 &(nid_objs[375]),/* "trustRoot" */
 &(nid_objs[436]),/* "ucl" */
+&(nid_objs[888]),/* "uniqueMember" */
 &(nid_objs[55]),/* "unstructuredAddress" */
 &(nid_objs[49]),/* "unstructuredName" */
+&(nid_objs[880]),/* "userCertificate" */
 &(nid_objs[465]),/* "userClass" */
+&(nid_objs[879]),/* "userPassword" */
 &(nid_objs[373]),/* "valid" */
 &(nid_objs[678]),/* "wap" */
 &(nid_objs[679]),/* "wap-wsg" */
@@ -3114,6 +3236,7 @@ static ASN1_OBJECT *sn_objs[NUM_SN]={
 &(nid_objs[741]),/* "wap-wsg-idm-ecid-wtls8" */
 &(nid_objs[742]),/* "wap-wsg-idm-ecid-wtls9" */
 &(nid_objs[804]),/* "whirlpool" */
+&(nid_objs[868]),/* "x121Address" */
 &(nid_objs[503]),/* "x500UniqueIdentifier" */
 &(nid_objs[158]),/* "x509Certificate" */
 &(nid_objs[160]),/* "x509Crl" */
@@ -3284,11 +3407,13 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[484]),/* "associatedDomain" */
 &(nid_objs[485]),/* "associatedName" */
 &(nid_objs[501]),/* "audio" */
+&(nid_objs[882]),/* "authorityRevocationList" */
 &(nid_objs[91]),/* "bf-cbc" */
 &(nid_objs[93]),/* "bf-cfb" */
 &(nid_objs[92]),/* "bf-ecb" */
 &(nid_objs[94]),/* "bf-ofb" */
 &(nid_objs[494]),/* "buildingName" */
+&(nid_objs[860]),/* "businessCategory" */
 &(nid_objs[691]),/* "c2onb191v4" */
 &(nid_objs[692]),/* "c2onb191v5" */
 &(nid_objs[697]),/* "c2onb239v4" */
@@ -3309,6 +3434,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[696]),/* "c2tnb239v3" */
 &(nid_objs[701]),/* "c2tnb359v1" */
 &(nid_objs[703]),/* "c2tnb431r1" */
+&(nid_objs[881]),/* "cACertificate" */
 &(nid_objs[483]),/* "cNAMERecord" */
 &(nid_objs[751]),/* "camellia-128-cbc" */
 &(nid_objs[757]),/* "camellia-128-cfb" */
@@ -3336,6 +3462,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[152]),/* "certBag" */
 &(nid_objs[677]),/* "certicom-arc" */
 &(nid_objs[517]),/* "certificate extensions" */
+&(nid_objs[883]),/* "certificateRevocationList" */
 &(nid_objs[54]),/* "challengePassword" */
 &(nid_objs[407]),/* "characteristic-two-field" */
 &(nid_objs[395]),/* "clearance" */
@@ -3346,6 +3473,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[53]),/* "countersignature" */
 &(nid_objs[14]),/* "countryName" */
 &(nid_objs[153]),/* "crlBag" */
+&(nid_objs[884]),/* "crossCertificatePair" */
 &(nid_objs[806]),/* "cryptocom" */
 &(nid_objs[805]),/* "cryptopro" */
 &(nid_objs[500]),/* "dITRedirect" */
@@ -3353,6 +3481,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[495]),/* "dSAQuality" */
 &(nid_objs[434]),/* "data" */
 &(nid_objs[390]),/* "dcObject" */
+&(nid_objs[891]),/* "deltaRevocationList" */
 &(nid_objs[31]),/* "des-cbc" */
 &(nid_objs[643]),/* "des-cdmf" */
 &(nid_objs[30]),/* "des-cfb" */
@@ -3371,10 +3500,13 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[63]),/* "des-ede3-ofb" */
 &(nid_objs[45]),/* "des-ofb" */
 &(nid_objs[107]),/* "description" */
+&(nid_objs[871]),/* "destinationIndicator" */
 &(nid_objs[80]),/* "desx-cbc" */
 &(nid_objs[28]),/* "dhKeyAgreement" */
 &(nid_objs[11]),/* "directory services (X.500)" */
 &(nid_objs[378]),/* "directory services - algorithms" */
+&(nid_objs[887]),/* "distinguishedName" */
+&(nid_objs[892]),/* "dmdName" */
 &(nid_objs[174]),/* "dnQualifier" */
 &(nid_objs[447]),/* "document" */
 &(nid_objs[471]),/* "documentAuthor" */
@@ -3404,7 +3536,9 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[792]),/* "ecdsa-with-Specified" */
 &(nid_objs[48]),/* "emailAddress" */
 &(nid_objs[632]),/* "encrypted track 2" */
+&(nid_objs[885]),/* "enhancedSearchGuide" */
 &(nid_objs[56]),/* "extendedCertificateAttributes" */
+&(nid_objs[867]),/* "facsimileTelephoneNumber" */
 &(nid_objs[462]),/* "favouriteDrink" */
 &(nid_objs[453]),/* "friendlyCountry" */
 &(nid_objs[490]),/* "friendlyCountryName" */
@@ -3426,6 +3560,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[486]),/* "homePostalAddress" */
 &(nid_objs[473]),/* "homeTelephoneNumber" */
 &(nid_objs[466]),/* "host" */
+&(nid_objs[889]),/* "houseIdentifier" */
 &(nid_objs[442]),/* "iA5StringSyntax" */
 &(nid_objs[381]),/* "iana" */
 &(nid_objs[824]),/* "id-Gost28147-89-CryptoPro-A-ParamSet" */
@@ -3640,6 +3775,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[676]),/* "identified-organization" */
 &(nid_objs[461]),/* "info" */
 &(nid_objs[101]),/* "initials" */
+&(nid_objs[869]),/* "internationaliSDNNumber" */
 &(nid_objs[749]),/* "ipsec3" */
 &(nid_objs[750]),/* "ipsec4" */
 &(nid_objs[181]),/* "iso" */
@@ -3666,6 +3802,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[ 8]),/* "md5WithRSAEncryption" */
 &(nid_objs[95]),/* "mdc2" */
 &(nid_objs[96]),/* "mdc2WithRSA" */
+&(nid_objs[875]),/* "member" */
 &(nid_objs[602]),/* "merchant initiated auth" */
 &(nid_objs[514]),/* "message extensions" */
 &(nid_objs[51]),/* "messageDigest" */
@@ -3680,6 +3817,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[491]),/* "organizationalStatus" */
 &(nid_objs[18]),/* "organizationalUnitName" */
 &(nid_objs[475]),/* "otherMailbox" */
+&(nid_objs[876]),/* "owner" */
 &(nid_objs[489]),/* "pagerTelephoneNumber" */
 &(nid_objs[782]),/* "password based MAC" */
 &(nid_objs[374]),/* "path" */
@@ -3700,6 +3838,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[499]),/* "personalSignature" */
 &(nid_objs[487]),/* "personalTitle" */
 &(nid_objs[464]),/* "photo" */
+&(nid_objs[863]),/* "physicalDeliveryOfficeName" */
 &(nid_objs[437]),/* "pilot" */
 &(nid_objs[439]),/* "pilotAttributeSyntax" */
 &(nid_objs[438]),/* "pilotAttributeType" */
@@ -3722,8 +3861,12 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[22]),/* "pkcs7-signedData" */
 &(nid_objs[151]),/* "pkcs8ShroudedKeyBag" */
 &(nid_objs[47]),/* "pkcs9" */
+&(nid_objs[862]),/* "postOfficeBox" */
+&(nid_objs[861]),/* "postalAddress" */
 &(nid_objs[661]),/* "postalCode" */
 &(nid_objs[683]),/* "ppBasis" */
+&(nid_objs[872]),/* "preferredDeliveryMethod" */
+&(nid_objs[873]),/* "presentationAddress" */
 &(nid_objs[406]),/* "prime-field" */
 &(nid_objs[409]),/* "prime192v1" */
 &(nid_objs[410]),/* "prime192v2" */
@@ -3732,6 +3875,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[413]),/* "prime239v2" */
 &(nid_objs[414]),/* "prime239v3" */
 &(nid_objs[415]),/* "prime256v1" */
+&(nid_objs[886]),/* "protocolInformation" */
 &(nid_objs[510]),/* "pseudonym" */
 &(nid_objs[435]),/* "pss" */
 &(nid_objs[286]),/* "qcStatements" */
@@ -3749,10 +3893,12 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[122]),/* "rc5-cfb" */
 &(nid_objs[121]),/* "rc5-ecb" */
 &(nid_objs[123]),/* "rc5-ofb" */
+&(nid_objs[870]),/* "registeredAddress" */
 &(nid_objs[460]),/* "rfc822Mailbox" */
 &(nid_objs[117]),/* "ripemd160" */
 &(nid_objs[119]),/* "ripemd160WithRSA" */
 &(nid_objs[400]),/* "role" */
+&(nid_objs[877]),/* "roleOccupant" */
 &(nid_objs[448]),/* "room" */
 &(nid_objs[463]),/* "roomNumber" */
 &(nid_objs[19]),/* "rsa" */
@@ -3766,6 +3912,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[290]),/* "sbgp-ipAddrBlock" */
 &(nid_objs[292]),/* "sbgp-routerIdentifier" */
 &(nid_objs[159]),/* "sdsiCertificate" */
+&(nid_objs[859]),/* "searchGuide" */
 &(nid_objs[704]),/* "secp112r1" */
 &(nid_objs[705]),/* "secp112r2" */
 &(nid_objs[706]),/* "secp128r1" */
@@ -3800,6 +3947,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[733]),/* "sect571k1" */
 &(nid_objs[734]),/* "sect571r1" */
 &(nid_objs[635]),/* "secure device signature" */
+&(nid_objs[878]),/* "seeAlso" */
 &(nid_objs[777]),/* "seed-cbc" */
 &(nid_objs[779]),/* "seed-cfb" */
 &(nid_objs[776]),/* "seed-ecb" */
@@ -3942,17 +4090,25 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[660]),/* "streetAddress" */
 &(nid_objs[498]),/* "subtreeMaximumQuality" */
 &(nid_objs[497]),/* "subtreeMinimumQuality" */
+&(nid_objs[890]),/* "supportedAlgorithms" */
+&(nid_objs[874]),/* "supportedApplicationContext" */
 &(nid_objs[100]),/* "surname" */
+&(nid_objs[864]),/* "telephoneNumber" */
+&(nid_objs[866]),/* "teletexTerminalIdentifier" */
+&(nid_objs[865]),/* "telexNumber" */
 &(nid_objs[459]),/* "textEncodedORAddress" */
 &(nid_objs[293]),/* "textNotice" */
 &(nid_objs[106]),/* "title" */
 &(nid_objs[682]),/* "tpBasis" */
 &(nid_objs[436]),/* "ucl" */
 &(nid_objs[ 0]),/* "undefined" */
+&(nid_objs[888]),/* "uniqueMember" */
 &(nid_objs[55]),/* "unstructuredAddress" */
 &(nid_objs[49]),/* "unstructuredName" */
+&(nid_objs[880]),/* "userCertificate" */
 &(nid_objs[465]),/* "userClass" */
 &(nid_objs[458]),/* "userId" */
+&(nid_objs[879]),/* "userPassword" */
 &(nid_objs[373]),/* "valid" */
 &(nid_objs[678]),/* "wap" */
 &(nid_objs[679]),/* "wap-wsg" */
@@ -3968,6 +4124,7 @@ static ASN1_OBJECT *ln_objs[NUM_LN]={
 &(nid_objs[741]),/* "wap-wsg-idm-ecid-wtls8" */
 &(nid_objs[742]),/* "wap-wsg-idm-ecid-wtls9" */
 &(nid_objs[804]),/* "whirlpool" */
+&(nid_objs[868]),/* "x121Address" */
 &(nid_objs[503]),/* "x500UniqueIdentifier" */
 &(nid_objs[158]),/* "x509Certificate" */
 &(nid_objs[160]),/* "x509Crl" */
@@ -4009,13 +4166,47 @@ static ASN1_OBJECT *obj_objs[NUM_OBJ]={
 &(nid_objs[18]),/* OBJ_organizationalUnitName       2 5 4 11 */
 &(nid_objs[106]),/* OBJ_title                        2 5 4 12 */
 &(nid_objs[107]),/* OBJ_description                  2 5 4 13 */
+&(nid_objs[859]),/* OBJ_searchGuide                  2 5 4 14 */
+&(nid_objs[860]),/* OBJ_businessCategory             2 5 4 15 */
+&(nid_objs[861]),/* OBJ_postalAddress                2 5 4 16 */
 &(nid_objs[661]),/* OBJ_postalCode                   2 5 4 17 */
+&(nid_objs[862]),/* OBJ_postOfficeBox                2 5 4 18 */
+&(nid_objs[863]),/* OBJ_physicalDeliveryOfficeName   2 5 4 19 */
+&(nid_objs[864]),/* OBJ_telephoneNumber              2 5 4 20 */
+&(nid_objs[865]),/* OBJ_telexNumber                  2 5 4 21 */
+&(nid_objs[866]),/* OBJ_teletexTerminalIdentifier    2 5 4 22 */
+&(nid_objs[867]),/* OBJ_facsimileTelephoneNumber     2 5 4 23 */
+&(nid_objs[868]),/* OBJ_x121Address                  2 5 4 24 */
+&(nid_objs[869]),/* OBJ_internationaliSDNNumber      2 5 4 25 */
+&(nid_objs[870]),/* OBJ_registeredAddress            2 5 4 26 */
+&(nid_objs[871]),/* OBJ_destinationIndicator         2 5 4 27 */
+&(nid_objs[872]),/* OBJ_preferredDeliveryMethod      2 5 4 28 */
+&(nid_objs[873]),/* OBJ_presentationAddress          2 5 4 29 */
+&(nid_objs[874]),/* OBJ_supportedApplicationContext  2 5 4 30 */
+&(nid_objs[875]),/* OBJ_member                       2 5 4 31 */
+&(nid_objs[876]),/* OBJ_owner                        2 5 4 32 */
+&(nid_objs[877]),/* OBJ_roleOccupant                 2 5 4 33 */
+&(nid_objs[878]),/* OBJ_seeAlso                      2 5 4 34 */
+&(nid_objs[879]),/* OBJ_userPassword                 2 5 4 35 */
+&(nid_objs[880]),/* OBJ_userCertificate              2 5 4 36 */
+&(nid_objs[881]),/* OBJ_cACertificate                2 5 4 37 */
+&(nid_objs[882]),/* OBJ_authorityRevocationList      2 5 4 38 */
+&(nid_objs[883]),/* OBJ_certificateRevocationList    2 5 4 39 */
+&(nid_objs[884]),/* OBJ_crossCertificatePair         2 5 4 40 */
 &(nid_objs[173]),/* OBJ_name                         2 5 4 41 */
 &(nid_objs[99]),/* OBJ_givenName                    2 5 4 42 */
 &(nid_objs[101]),/* OBJ_initials                     2 5 4 43 */
 &(nid_objs[509]),/* OBJ_generationQualifier          2 5 4 44 */
 &(nid_objs[503]),/* OBJ_x500UniqueIdentifier         2 5 4 45 */
 &(nid_objs[174]),/* OBJ_dnQualifier                  2 5 4 46 */
+&(nid_objs[885]),/* OBJ_enhancedSearchGuide          2 5 4 47 */
+&(nid_objs[886]),/* OBJ_protocolInformation          2 5 4 48 */
+&(nid_objs[887]),/* OBJ_distinguishedName            2 5 4 49 */
+&(nid_objs[888]),/* OBJ_uniqueMember                 2 5 4 50 */
+&(nid_objs[889]),/* OBJ_houseIdentifier              2 5 4 51 */
+&(nid_objs[890]),/* OBJ_supportedAlgorithms          2 5 4 52 */
+&(nid_objs[891]),/* OBJ_deltaRevocationList          2 5 4 53 */
+&(nid_objs[892]),/* OBJ_dmdName                      2 5 4 54 */
 &(nid_objs[510]),/* OBJ_pseudonym                    2 5 4 65 */
 &(nid_objs[400]),/* OBJ_role                         2 5 4 72 */
 &(nid_objs[769]),/* OBJ_subject_directory_attributes 2 5 29 9 */

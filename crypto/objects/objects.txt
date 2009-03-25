@@ -664,18 +664,52 @@ X509 5			: 			: serialNumber
 X509 6			: C			: countryName
 X509 7			: L			: localityName
 X509 8			: ST			: stateOrProvinceName
-X509 9			:			: streetAddress
+X509 9			: street		: streetAddress
 X509 10			: O			: organizationName
 X509 11			: OU			: organizationalUnitName
-X509 12			: 			: title
+X509 12			: title			: title
 X509 13			: 			: description
-X509 17			:			: postalCode
+X509 14			: 			: searchGuide
+X509 15			: 			: businessCategory
+X509 16			: 			: postalAddress
+X509 17			: 			: postalCode
+X509 18			: 			: postOfficeBox
+X509 19			: 			: physicalDeliveryOfficeName
+X509 20			: 			: telephoneNumber
+X509 21			: 			: telexNumber
+X509 22			: 			: teletexTerminalIdentifier
+X509 23			: 			: facsimileTelephoneNumber
+X509 24			: 			: x121Address
+X509 25			: 			: internationaliSDNNumber
+X509 26			: 			: registeredAddress
+X509 27			: 			: destinationIndicator
+X509 28			: 			: preferredDeliveryMethod
+X509 29			: 			: presentationAddress
+X509 30			: 			: supportedApplicationContext
+X509 31			: member		:
+X509 32			: owner			:
+X509 33			: 			: roleOccupant
+X509 34			: seeAlso		:
+X509 35			: 			: userPassword
+X509 36			: 			: userCertificate
+X509 37			: 			: cACertificate
+X509 38			: 			: authorityRevocationList
+X509 39			: 			: certificateRevocationList
+X509 40			: 			: crossCertificatePair
 X509 41			: name			: name
 X509 42			: GN			: givenName
-X509 43			: 			: initials
+X509 43			: initials		: initials
 X509 44			: 			: generationQualifier
 X509 45			: 			: x500UniqueIdentifier
 X509 46			: dnQualifier		: dnQualifier
+X509 47			: 			: enhancedSearchGuide
+X509 48			: 			: protocolInformation
+X509 49			: 			: distinguishedName
+X509 50			: 			: uniqueMember
+X509 51			: 			: houseIdentifier
+X509 52			: 			: supportedAlgorithms
+X509 53			: 			: deltaRevocationList
+X509 54			: dmdName		:
 X509 65			:			: pseudonym
 X509 72			: role			: role
 
