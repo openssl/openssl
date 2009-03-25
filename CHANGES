@@ -4,6 +4,11 @@
 
  Changes between 0.9.8j and 0.9.8k  [xx XXX xxxx]
 
+  *) Don't set val to NULL when freeing up structures, it is freed up by
+     underlying code. If sizeof(void *) > sizeof(long) this can result in
+     zeroing past the valid field. (CVE-2009-0789)
+     [Paolo Ganci <Paolo.Ganci@AdNovum.CH>]
+
   *) Fix bug where return value of CMS_SignerInfo_verify_content() was not
      checked correctly. This would allow some invalid signed attributes to
      appear to verify correctly. (CVE-2009-0591)
