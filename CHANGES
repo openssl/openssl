@@ -2,7 +2,21 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8k and 0.9.9  [xx XXX xxxx]
+ Changes between 0.9.8k and 1.0  [xx XXX xxxx]
+
+  *) Support use of registered digest and cipher names for dgst and cipher
+     commands instead of having to add each one as a special case. So now
+     you can do:
+
+        openssl sha256 foo
+
+     as well as:
+
+        openssl dgst -sha256 foo
+
+     and this works for ENGINE based algorithms too.
+
+     [Steve Henson]
 
   *) Update Gost ENGINE to support parameter files.
      [Victor B. Wagner <vitus@cryptocom.ru>]
