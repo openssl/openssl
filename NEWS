@@ -5,6 +5,29 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8k and OpenSSL 1.0:
+
+
+      o RFC3280 path validation: sufficient to process PKITS tests.
+      o Integrated support for PVK files and keyblobs.
+      o Change default private key format to PKCS#8.
+      o CMS support: able to process all examples in RFCXXXX
+      o Streaming ASN1 encode support for PKCS#7 and CMS.
+      o Multiple signer and signer add support for PKCS#7 and CMS.
+      o ASN1 printing support.
+      o Whirlpool hash algorithm added.
+      o RFC3161 time stamp support.
+      o New generalised public key API supporting ENGINE based algorithms.
+      o New generalised public key API utilities.
+      o New ENGINE supporting GOST algorithms.
+      o SSL/TLS GOST ciphersuite support.
+      o PKCS#7 and CMS GOST support.
+      o RFC4279 PSK ciphersuite support.
+      o Supported points format extension for ECC ciphersuites.
+      o ecdsa-with-SHA224/256/384/512 signature types.
+      o dsa-with-SHA224 and dsa-with-SHA256 signature types.
+      o Opaque PRF Input TLS extension support.
+
   Major changes between OpenSSL 0.9.8j and OpenSSL 0.9.8k:
 
       o Fix various build issues.
