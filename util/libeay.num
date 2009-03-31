@@ -2815,7 +2815,7 @@ FIPS_allow_md5                          3256	NOEXIST::FUNCTION:
 DES_ede3_cfb_encrypt                    3257	EXIST::FUNCTION:DES
 EVP_des_ede3_cfb8                       3258	EXIST::FUNCTION:DES
 FIPS_rand_seeded                        3259	NOEXIST::FUNCTION:
-AES_cfbr_encrypt_block                  3260	NOEXIST::FUNCTION:AES
+AES_cfbr_encrypt_block                  3260	NOEXIST::FUNCTION:
 AES_cfb8_encrypt                        3261	EXIST::FUNCTION:AES
 FIPS_rand_seed                          3262	NOEXIST::FUNCTION:
 FIPS_corrupt_des                        3263	NOEXIST::FUNCTION:
@@ -3385,7 +3385,7 @@ Camellia_cfb128_encrypt                 3785	EXIST::FUNCTION:CAMELLIA
 Camellia_cfb1_encrypt                   3786	EXIST::FUNCTION:CAMELLIA
 Camellia_cfb8_encrypt                   3787	EXIST::FUNCTION:CAMELLIA
 Camellia_ctr128_encrypt                 3788	EXIST::FUNCTION:CAMELLIA
-Camellia_cfbr_encrypt_block             3789	NOEXIST::FUNCTION:CAMELLIA
+Camellia_cfbr_encrypt_block             3789	NOEXIST::FUNCTION:
 Camellia_decrypt                        3790	EXIST::FUNCTION:CAMELLIA
 Camellia_ecb_encrypt                    3791	EXIST::FUNCTION:CAMELLIA
 Camellia_encrypt                        3792	EXIST::FUNCTION:CAMELLIA
@@ -3652,8 +3652,10 @@ CMS_set1_eContentType                   4040	EXIST::FUNCTION:CMS
 CMS_ReceiptRequest_create0              4041	EXIST::FUNCTION:CMS
 CMS_add1_signer                         4042	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_set0_pkey             4043	EXIST::FUNCTION:CMS
-ENGINE_set_load_ssl_client_cert_function 4044	EXIST::FUNCTION:ENGINE
-ENGINE_get_ssl_client_cert_function     4045	EXIST::FUNCTION:ENGINE
+ENGINE_set_load_ssl_client_cert_function 4044	EXIST:!VMS:FUNCTION:ENGINE
+ENGINE_set_ld_ssl_clnt_cert_fn          4044	EXIST:VMS:FUNCTION:ENGINE
+ENGINE_get_ssl_client_cert_function     4045	EXIST:!VMS:FUNCTION:ENGINE
+ENGINE_get_ssl_client_cert_fn           4045	EXIST:VMS:FUNCTION:ENGINE
 ENGINE_load_ssl_client_cert             4046	EXIST::FUNCTION:ENGINE
 ENGINE_load_capi                        4047	EXIST::FUNCTION:CAPIENG,ENGINE,STATIC_ENGINE
 OPENSSL_isservice                       4048	NOEXIST::FUNCTION:
@@ -4155,3 +4157,5 @@ TS_TST_INFO_get_ext_by_critical         4531	EXIST::FUNCTION:
 EVP_PKEY_CTX_new_id                     4532	EXIST::FUNCTION:
 TS_REQ_get_ext_by_OBJ                   4533	EXIST::FUNCTION:
 TS_CONF_set_signer_cert                 4534	EXIST::FUNCTION:
+X509_NAME_hash_old                      4535	EXIST::FUNCTION:
+ASN1_TIME_set_string                    4536	EXIST::FUNCTION:
