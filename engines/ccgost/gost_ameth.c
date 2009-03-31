@@ -807,18 +807,18 @@ static int mac_ctrl_gost(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	return -2;
 }	
 
-int gost94_param_encode(const EVP_PKEY *pkey, unsigned char **pder) 
+static int gost94_param_encode(const EVP_PKEY *pkey, unsigned char **pder) 
 {
    int nid=gost94_nid_by_params(EVP_PKEY_get0((EVP_PKEY *)pkey));
    return i2d_ASN1_OBJECT(OBJ_nid2obj(nid),pder);
 }
-int gost2001_param_encode(const EVP_PKEY *pkey, unsigned char **pder) 
+static int gost2001_param_encode(const EVP_PKEY *pkey, unsigned char **pder) 
 {
    int nid = EC_GROUP_get_curve_name(EC_KEY_get0_group(EVP_PKEY_get0((EVP_PKEY *)pkey)));
    return i2d_ASN1_OBJECT(OBJ_nid2obj(nid),pder);
 }
 
-int gost94_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
+static int gost94_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 {
 	ASN1_OBJECT *obj=NULL;
 	DSA *dsa = EVP_PKEY_get0(pkey);
@@ -837,7 +837,7 @@ int gost94_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen)
 	return 1;
 }	
 
-int gost2001_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen) {
+static int gost2001_param_decode(EVP_PKEY *pkey, const unsigned char **pder, int derlen) {
 	ASN1_OBJECT *obj=NULL;
 	int nid;
 	EC_KEY *ec = EVP_PKEY_get0(pkey);

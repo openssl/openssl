@@ -551,7 +551,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  const char *sig_name, const char *md_name,
 	  const char *file,BIO *bmd)
 	{
-	ssize_t len;
+	size_t len;
 	int i;
 
 	for (;;)
