@@ -150,7 +150,7 @@ int DES_enc_read(int fd, void *buf, int len, DES_key_schedule *sched,
 	/* first - get the length */
 	while (net_num < HDRSIZE) 
 		{
-#ifndef _WIN32
+#ifndef OPENSSL_SYS_WIN32
 		i=read(fd,(void *)&(net[net_num]),HDRSIZE-net_num);
 #else
 		i=_read(fd,(void *)&(net[net_num]),HDRSIZE-net_num);
