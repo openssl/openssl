@@ -1366,7 +1366,7 @@ $multilib     =
 
 *** debug-ben-debug
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -g3 -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -g3 -O2 -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
