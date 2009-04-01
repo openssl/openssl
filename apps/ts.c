@@ -165,6 +165,9 @@ int MAIN(int argc, char **argv)
 		BIO_set_fp(bio_err, stderr, BIO_NOCLOSE | BIO_FP_TEXT);
 		}
 
+	if (!load_config(bio_err, NULL))
+		goto cleanup;
+
 	for (argc--, argv++; argc > 0; argc--, argv++)
 		{
 		if (strcmp(*argv, "-config") == 0)
