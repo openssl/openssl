@@ -55,7 +55,7 @@ install:
 			esac; \
 			cp $${pfx}$(LIBNAME)$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new; \
 		else \
-			sfx="so"; \
+			sfx=".so"; \
 			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new; \
 		fi; \
 		chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new; \
