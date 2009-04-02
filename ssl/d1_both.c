@@ -136,7 +136,6 @@ static unsigned char *dtls1_write_message_header(SSL *s,
 static void dtls1_set_message_header_int(SSL *s, unsigned char mt,
 	unsigned long len, unsigned short seq_num, unsigned long frag_off, 
 	unsigned long frag_len);
-static int dtls1_retransmit_buffered_messages(SSL *s);
 static long dtls1_get_message_fragment(SSL *s, int st1, int stn, 
 	long max, int *ok);
 
@@ -943,8 +942,21 @@ int dtls1_read_failed(SSL *s, int code)
 	return dtls1_retransmit_buffered_messages(s) ;
 	}
 
+int
+dtls1_get_queue_priority(unsigned short seq, int is_ccs)
+	{
+	/* The index of the retransmission queue actually is the message sequence number,
+	 * since the queue only contains messages of a single handshake. However, the
+	 * ChangeCipherSpec has no message sequence number and so using only the sequence
+	 * will result in the CCS and Finished having the same index. To prevent this,
+	 * the sequence number is multiplied by 2. In case of a CCS 1 is subtracted.
+	 * This does not only differ CSS and Finished, it also maintains the order of the
+	 * index (important for priority queues) and fits in the unsigned short variable.
+	 */	
+	return seq * 2 - is_ccs;
+	}
 
-static int
+int
 dtls1_retransmit_buffered_messages(SSL *s)
 	{
 	pqueue sent = s->d1->sent_messages;
@@ -958,8 +970,9 @@ dtls1_retransmit_buffered_messages(SSL *s)
 	for ( item = pqueue_next(&iter); item != NULL; item = pqueue_next(&iter))
 		{
 		frag = (hm_fragment *)item->data;
-		if ( dtls1_retransmit_message(s, frag->msg_header.seq, 0, &found) <= 0 &&
-			found)
+			if ( dtls1_retransmit_message(s,
+				dtls1_get_queue_priority(frag->msg_header.seq, frag->msg_header.is_ccs),
+				0, &found) <= 0 && found)
 			{
 			fprintf(stderr, "dtls1_retransmit_message() failed\n");
 			return -1;
@@ -975,7 +988,6 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	pitem *item;
 	hm_fragment *frag;
 	PQ_64BIT seq64;
-	unsigned int epoch = s->d1->w_epoch;
 
 	/* this function is called immediately after a message has 
 	 * been serialized */
@@ -989,7 +1001,6 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 		{
 		OPENSSL_assert(s->d1->w_msg_hdr.msg_len + 
 			DTLS1_CCS_HEADER_LENGTH <= (unsigned int)s->init_num);
-		epoch++;
 		}
 	else
 		{
@@ -1004,9 +1015,19 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	frag->msg_header.frag_len = s->d1->w_msg_hdr.msg_len;
 	frag->msg_header.is_ccs = is_ccs;
 
-	pq_64bit_init(&seq64);
-	pq_64bit_assign_word(&seq64, epoch<<16 | frag->msg_header.seq);
+	/* save current state*/
+	frag->msg_header.saved_retransmit_state.enc_write_ctx = s->enc_write_ctx;
+	frag->msg_header.saved_retransmit_state.write_hash = s->write_hash;
+	frag->msg_header.saved_retransmit_state.compress = s->compress;
+	frag->msg_header.saved_retransmit_state.session = s->session;
+	frag->msg_header.saved_retransmit_state.epoch = s->d1->w_epoch;
 
+	pq_64bit_init(&seq64);
+
+	pq_64bit_assign_word(&seq64,
+						 dtls1_get_queue_priority(frag->msg_header.seq,
+												  frag->msg_header.is_ccs));
+		
 	item = pitem_new(seq64, frag);
 	pq_64bit_free(&seq64);
 	if ( item == NULL)
@@ -1035,6 +1056,8 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 	hm_fragment *frag ;
 	unsigned long header_length;
 	PQ_64BIT seq64;
+	struct dtls1_retransmit_state saved_state;
+	unsigned char save_write_sequence[8];
 
 	/*
 	  OPENSSL_assert(s->init_num == 0);
@@ -1070,9 +1093,45 @@ dtls1_retransmit_message(SSL *s, unsigned short seq, unsigned long frag_off,
 		frag->msg_header.msg_len, frag->msg_header.seq, 0, 
 		frag->msg_header.frag_len);
 
+	/* save current state */
+	saved_state.enc_write_ctx = s->enc_write_ctx;
+	saved_state.write_hash = s->write_hash;
+	saved_state.compress = s->compress;
+	saved_state.session = s->session;
+	saved_state.epoch = s->d1->w_epoch;
+	saved_state.epoch = s->d1->w_epoch;
+	
 	s->d1->retransmitting = 1;
+	
+	/* restore state in which the message was originally sent */
+	s->enc_write_ctx = frag->msg_header.saved_retransmit_state.enc_write_ctx;
+	s->write_hash = frag->msg_header.saved_retransmit_state.write_hash;
+	s->compress = frag->msg_header.saved_retransmit_state.compress;
+	s->session = frag->msg_header.saved_retransmit_state.session;
+	s->d1->w_epoch = frag->msg_header.saved_retransmit_state.epoch;
+	
+	if (frag->msg_header.saved_retransmit_state.epoch == saved_state.epoch - 1)
+	{
+		memcpy(save_write_sequence, s->s3->write_sequence, sizeof(s->s3->write_sequence));
+		memcpy(s->s3->write_sequence, s->d1->last_write_sequence, sizeof(s->s3->write_sequence));
+	}
+	
 	ret = dtls1_do_write(s, frag->msg_header.is_ccs ? 
-		SSL3_RT_CHANGE_CIPHER_SPEC : SSL3_RT_HANDSHAKE);
+						 SSL3_RT_CHANGE_CIPHER_SPEC : SSL3_RT_HANDSHAKE);
+	
+	/* restore current state */
+	s->enc_write_ctx = saved_state.enc_write_ctx;
+	s->write_hash = saved_state.write_hash;
+	s->compress = saved_state.compress;
+	s->session = saved_state.session;
+	s->d1->w_epoch = saved_state.epoch;
+	
+	if (frag->msg_header.saved_retransmit_state.epoch == saved_state.epoch - 1)
+	{
+		memcpy(s->d1->last_write_sequence, s->s3->write_sequence, sizeof(s->s3->write_sequence));
+		memcpy(s->s3->write_sequence, save_write_sequence, sizeof(s->s3->write_sequence));
+	}
+
 	s->d1->retransmitting = 0;
 
 	(void)BIO_flush(SSL_get_wbio(s));

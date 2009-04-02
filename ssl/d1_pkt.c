@@ -942,7 +942,9 @@ start:
 				n2s(p, seq);
 				n2l3(p, frag_off);
 
-				dtls1_retransmit_message(s, seq, frag_off, &found);
+				dtls1_retransmit_message(s,
+										 dtls1_get_queue_priority(frag->msg_header.seq, 0),
+										 frag_off, &found);
 				if ( ! found  && SSL_in_init(s))
 					{
 					/* fprintf( stderr,"in init = %d\n", SSL_in_init(s)); */
@@ -1031,6 +1033,16 @@ start:
 		dtls1_get_message_header(rr->data, &msg_hdr);
 		if( rr->epoch != s->d1->r_epoch)
 			{
+			rr->length = 0;
+			goto start;
+			}
+
+		/* If we are server, we may have a repeated FINISHED of the
+		 * client here, then retransmit our CCS and FINISHED.
+		 */
+		if (msg_hdr.type == SSL3_MT_FINISHED)
+			{
+			dtls1_retransmit_buffered_messages(s);
 			rr->length = 0;
 			goto start;
 			}
@@ -1758,6 +1770,7 @@ dtls1_reset_seq_numbers(SSL *s, int rw)
 	else
 		{
 		seq = s->s3->write_sequence;
+		memcpy(s->d1->last_write_sequence, seq, sizeof(s->s3->write_sequence));
 		s->d1->w_epoch++;
 		}
 
