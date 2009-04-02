@@ -114,6 +114,7 @@ int dtls1_new(SSL *s)
 	d1->processed_rcds.q=pqueue_new();
 	d1->buffered_messages = pqueue_new();
 	d1->sent_messages=pqueue_new();
+	d1->buffered_app_data.q=pqueue_new();
 
 	if ( s->server)
 		{
@@ -121,12 +122,13 @@ int dtls1_new(SSL *s)
 		}
 
 	if( ! d1->unprocessed_rcds.q || ! d1->processed_rcds.q 
-        || ! d1->buffered_messages || ! d1->sent_messages)
+        || ! d1->buffered_messages || ! d1->sent_messages || ! d1->buffered_app_data.q)
 		{
         if ( d1->unprocessed_rcds.q) pqueue_free(d1->unprocessed_rcds.q);
         if ( d1->processed_rcds.q) pqueue_free(d1->processed_rcds.q);
         if ( d1->buffered_messages) pqueue_free(d1->buffered_messages);
 		if ( d1->sent_messages) pqueue_free(d1->sent_messages);
+		if ( d1->buffered_app_data.q) pqueue_free(d1->buffered_app_data.q);
 		OPENSSL_free(d1);
 		return (0);
 		}
@@ -175,6 +177,15 @@ void dtls1_free(SSL *s)
         }
 	pqueue_free(s->d1->sent_messages);
 
+	while ( (item = pqueue_pop(s->d1->buffered_app_data.q)) != NULL)
+	{
+		frag = (hm_fragment *)item->data;
+		OPENSSL_free(frag->fragment);
+		OPENSSL_free(frag);
+		pitem_free(item);
+	}
+	pqueue_free(s->d1->buffered_app_data.q);
+	
 	pq_64bit_free(&(s->d1->bitmap.map));
 	pq_64bit_free(&(s->d1->bitmap.max_seq_num));
 
