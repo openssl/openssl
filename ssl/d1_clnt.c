@@ -425,8 +425,6 @@ int dtls1_connect(SSL *s)
 				s->s3->tmp.next_state=SSL3_ST_CR_FINISHED_A;
 				}
 			s->init_num=0;
-			/* mark client_random uninitialized */
-			memset (s->s3->client_random,0,sizeof(s->s3->client_random));
 			break;
 
 		case SSL3_ST_CR_FINISHED_A:
