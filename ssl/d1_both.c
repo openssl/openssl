@@ -575,30 +575,31 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 			}
 		}
 
-	frag = dtls1_hm_fragment_new(frag_len);
-	if ( frag == NULL)
-		goto err;
-
-	memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
-
 	if (frag_len)
-		{
-		/* read the body of the fragment (header has already been read */
+	{
+		frag = dtls1_hm_fragment_new(frag_len);
+		if ( frag == NULL)
+			goto err;
+
+		memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
+
+		/* read the body of the fragment (header has already been read) */
 		i = s->method->ssl_read_bytes(s,SSL3_RT_HANDSHAKE,
 			frag->fragment,frag_len,0);
 		if (i<=0 || (unsigned long)i!=frag_len)
 			goto err;
-		}
 
-	pq_64bit_init(&seq64);
-	pq_64bit_assign_word(&seq64, msg_hdr->seq);
+		pq_64bit_init(&seq64);
+		pq_64bit_assign_word(&seq64, msg_hdr->seq);
 
-	item = pitem_new(seq64, frag);
-	pq_64bit_free(&seq64);
-	if ( item == NULL)
-		goto err;
+		item = pitem_new(seq64, frag);
+		pq_64bit_free(&seq64);
+		if ( item == NULL)
+			goto err;
 
-	pqueue_insert(s->d1->buffered_messages, item);
+		pqueue_insert(s->d1->buffered_messages, item);
+	}
+
 	return DTLS1_HM_FRAGMENT_RETRY;
 
 err:
