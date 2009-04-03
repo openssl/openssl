@@ -116,6 +116,7 @@ extern "C" {
 /* Under Win32 these are defined in wincrypt.h */
 #undef X509_NAME
 #undef X509_CERT_PAIR
+#undef X509_EXTENSIONS
 #endif
 
 #define X509_FILETYPE_PEM	1

@@ -1,3 +1,4 @@
+#include "../bn_lcl.h"
 #ifdef __SUNPRO_C
 # include "../bn_asm.c"	/* kind of dirty hack for Sun Studio */
 #else
@@ -56,6 +57,9 @@
 
 #define BN_ULONG unsigned long
 
+#undef mul
+#undef mul_add
+
 /*
  * "m"(a), "+m"(r)	is the way to favor DirectPath µ-code;
  * "g"(0)		let the compiler to decide where does it
@@ -97,7 +101,7 @@
 		: "a"(a)		\
 		: "cc");
 
-BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	{
 	BN_ULONG c1=0;
 
@@ -121,7 +125,7 @@ BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	return(c1);
 	} 
 
-BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
+BN_ULONG bn_mul_words(BN_ULONG *rp, const BN_ULONG *ap, int num, BN_ULONG w)
 	{
 	BN_ULONG c1=0;
 
@@ -144,7 +148,7 @@ BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w)
 	return(c1);
 	} 
 
-void bn_sqr_words(BN_ULONG *r, BN_ULONG *a, int n)
+void bn_sqr_words(BN_ULONG *r, const BN_ULONG *a, int n)
         {
 	if (n <= 0) return;
 
@@ -175,7 +179,7 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
 	return ret;
 }
 
-BN_ULONG bn_add_words (BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int n)
+BN_ULONG bn_add_words (BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int n)
 { BN_ULONG ret=0,i=0;
 
 	if (n <= 0) return 0;
@@ -198,7 +202,7 @@ BN_ULONG bn_add_words (BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int n)
 }
 
 #ifndef SIMICS
-BN_ULONG bn_sub_words (BN_ULONG *rp, BN_ULONG *ap, BN_ULONG *bp,int n)
+BN_ULONG bn_sub_words (BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int n)
 { BN_ULONG ret=0,i=0;
 
 	if (n <= 0) return 0;
@@ -485,7 +489,7 @@ void bn_mul_comba4(BN_ULONG *r, BN_ULONG *a, BN_ULONG *b)
 	r[7]=c2;
 	}
 
-void bn_sqr_comba8(BN_ULONG *r, BN_ULONG *a)
+void bn_sqr_comba8(BN_ULONG *r, const BN_ULONG *a)
 	{
 	BN_ULONG t1,t2;
 	BN_ULONG c1,c2,c3;
@@ -561,7 +565,7 @@ void bn_sqr_comba8(BN_ULONG *r, BN_ULONG *a)
 	r[15]=c1;
 	}
 
-void bn_sqr_comba4(BN_ULONG *r, BN_ULONG *a)
+void bn_sqr_comba4(BN_ULONG *r, const BN_ULONG *a)
 	{
 	BN_ULONG t1,t2;
 	BN_ULONG c1,c2,c3;
