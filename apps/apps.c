@@ -259,13 +259,6 @@ int str2fmt(char *s)
 		return(FORMAT_ASN1);
 	else if ((*s == 'T') || (*s == 't'))
 		return(FORMAT_TEXT);
-	else if ((*s == 'P') || (*s == 'p'))
- 		{
- 		if (s[1] == 'V' || s[1] == 'v')
- 			return FORMAT_PVK;
- 		else
-  			return(FORMAT_PEM);
- 		}
   	else if ((*s == 'N') || (*s == 'n'))
   		return(FORMAT_NETSCAPE);
   	else if ((*s == 'S') || (*s == 's'))
@@ -278,6 +271,13 @@ int str2fmt(char *s)
 		return(FORMAT_PKCS12);
 	else if ((*s == 'E') || (*s == 'e'))
 		return(FORMAT_ENGINE);
+	else if ((*s == 'P') || (*s == 'p'))
+ 		{
+ 		if (s[1] == 'V' || s[1] == 'v')
+ 			return FORMAT_PVK;
+ 		else
+  			return(FORMAT_PEM);
+ 		}
 	else
 		return(FORMAT_UNDEF);
 	}
