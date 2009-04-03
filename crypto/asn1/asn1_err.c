@@ -1,6 +1,6 @@
 /* crypto/asn1/asn1_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -176,7 +176,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_FUNC(ASN1_F_PKCS5_PBE2_SET_IV),	"PKCS5_pbe2_set_iv"},
 {ERR_FUNC(ASN1_F_PKCS5_PBE_SET),	"PKCS5_pbe_set"},
 {ERR_FUNC(ASN1_F_PKCS5_PBE_SET0_ALGOR),	"PKCS5_pbe_set0_algor"},
-{ERR_FUNC(ASN1_F_SMIME_READ_ASN1),	"SMIME_read_asn1"},
+{ERR_FUNC(ASN1_F_SMIME_READ_ASN1),	"SMIME_read_ASN1"},
 {ERR_FUNC(ASN1_F_SMIME_TEXT),	"SMIME_text"},
 {ERR_FUNC(ASN1_F_X509_CINF_NEW),	"X509_CINF_NEW"},
 {ERR_FUNC(ASN1_F_X509_CRL_ADD0_REVOKED),	"X509_CRL_add0_revoked"},

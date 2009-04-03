@@ -27,6 +27,7 @@
       o ecdsa-with-SHA224/256/384/512 signature types.
       o dsa-with-SHA224 and dsa-with-SHA256 signature types.
       o Opaque PRF Input TLS extension support.
+      o Updated time routines to avoid OS limitations.
 
   Major changes between OpenSSL 0.9.8j and OpenSSL 0.9.8k:
 

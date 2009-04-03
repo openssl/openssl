@@ -23,6 +23,7 @@ B<openssl> B<x509>
 [B<-issuer>]
 [B<-nameopt option>]
 [B<-email>]
+[B<-ocsp_uri>]
 [B<-startdate>]
 [B<-enddate>]
 [B<-purpose>]
@@ -175,6 +176,10 @@ set multiple options. See the B<NAME OPTIONS> section for more information.
 =item B<-email>
 
 outputs the email address(es) if any.
+
+=item B<-ocsp_uri>
+
+outputs the OCSP responder address(es) if any.
 
 =item B<-startdate>
 
