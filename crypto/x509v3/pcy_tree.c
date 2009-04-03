@@ -160,7 +160,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
 	tree->auth_policies = NULL;
 	tree->user_policies = NULL;
 
-	if (!tree)
+	if (!tree->levels)
 		{
 		OPENSSL_free(tree);
 		return 0;
