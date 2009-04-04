@@ -810,7 +810,7 @@ int BIO_accept(int sock, char **addr)
 #ifdef EAI_FAMILY
 # if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_BEOS_BONE) || defined(OPENSSL_SYS_MSDOS)
 #  define SOCKLEN_T size_t
-# else
+# elif !defined(SOCKLEN_T)
 #  define SOCKLEN_T socklen_t
 #endif
 	do {
