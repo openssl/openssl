@@ -1054,24 +1054,34 @@ const void *	OBJ_bsearch_ex_(const void *key,const void *base,int num,
  * the non-constness means a lot of complication, and in practice
  * comparison routines do always not touch their arguments.
  */
-#define _IMPLEMENT_OBJ_BSEARCH_CMP_FN(scope, type1, type2, nm)	\
+
+#define IMPLEMENT_OBJ_BSEARCH_CMP_FN(type1, type2, nm)	\
   static int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)	\
       { \
       type1 const *a = a_; \
       type2 const *b = b_; \
       return nm##_cmp(a,b); \
       } \
-  scope type2 *OBJ_bsearch_##nm(type1 *key, type2 const *base, int num) \
+  static type2 *OBJ_bsearch_##nm(type1 *key, type2 const *base, int num) \
       { \
       return (type2 *)OBJ_bsearch_(key, base, num, sizeof(type2), \
 					nm##_cmp_BSEARCH_CMP_FN); \
       } \
       extern void dummy_prototype(void)
 
-#define IMPLEMENT_OBJ_BSEARCH_CMP_FN(type1, type2, cmp) \
-  _IMPLEMENT_OBJ_BSEARCH_CMP_FN(static, type1, type2, cmp)
-#define IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(type1, type2, cmp)	\
-  _IMPLEMENT_OBJ_BSEARCH_CMP_FN(, type1, type2, cmp)
+#define IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(type1, type2, nm)	\
+  static int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)	\
+      { \
+      type1 const *a = a_; \
+      type2 const *b = b_; \
+      return nm##_cmp(a,b); \
+      } \
+  type2 *OBJ_bsearch_##nm(type1 *key, type2 const *base, int num) \
+      { \
+      return (type2 *)OBJ_bsearch_(key, base, num, sizeof(type2), \
+					nm##_cmp_BSEARCH_CMP_FN); \
+      } \
+      extern void dummy_prototype(void)
 
 #define OBJ_bsearch(type1,key,type2,base,num,cmp)			       \
   ((type2 *)OBJ_bsearch_(CHECKED_PTR_OF(type1,key),CHECKED_PTR_OF(type2,base), \
