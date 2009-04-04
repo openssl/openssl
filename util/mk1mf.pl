@@ -736,8 +736,8 @@ sub var_add
 	@a=grep(!/^e_camellia$/,@a) if $no_camellia;
 	@a=grep(!/^e_seed$/,@a) if $no_seed;
 
-	@a=grep(!/(^s2_)|(^s23_)/,@a) if $no_ssl2;
-	@a=grep(!/(^s3_)|(^s23_)/,@a) if $no_ssl3;
+	#@a=grep(!/(^s2_)|(^s23_)/,@a) if $no_ssl2;
+	#@a=grep(!/(^s3_)|(^s23_)/,@a) if $no_ssl3;
 
 	@a=grep(!/(_sock$)|(_acpt$)|(_conn$)|(^pxy_)/,@a) if $no_sock;
 
