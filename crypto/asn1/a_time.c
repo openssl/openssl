@@ -112,7 +112,7 @@ ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s, time_t t,
 	ts=OPENSSL_gmtime(&t,&data);
 	if (ts == NULL)
 		{
-		ASN1err(ASN1_F_ASN1_TIME_SET, ASN1_R_ERROR_GETTING_TIME);
+		ASN1err(ASN1_F_ASN1_TIME_ADJ, ASN1_R_ERROR_GETTING_TIME);
 		return NULL;
 		}
 	if (offset_day || offset_sec)

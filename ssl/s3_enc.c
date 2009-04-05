@@ -604,7 +604,7 @@ int ssl3_digest_cached_records(SSL *s)
 	hdatalen = BIO_get_mem_data(s->s3->handshake_buffer,&hdata);
 	if (hdatalen <= 0)
 		{
-		SSLerr(SSL_F_DIGEST_CACHED_RECORDS, SSL_R_BAD_HANDSHAKE_LENGTH);
+		SSLerr(SSL_F_SSL3_DIGEST_CACHED_RECORDS, SSL_R_BAD_HANDSHAKE_LENGTH);
 		return 0;
 		}
 

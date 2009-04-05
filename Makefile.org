@@ -403,8 +403,8 @@ test:   tests
 
 tests: rehash
 	@(cd test && echo "testing..." && \
-	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on tests );
-	util/opensslwrap.sh version -a
+	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on OPENSSL_CONF=../apps/openssl.cnf tests );
+	OPENSSL_CONF=apps/openssl.cnf util/opensslwrap.sh version -a
 
 report:
 	@$(PERL) util/selftest.pl

@@ -1786,7 +1786,6 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_CLIENT_HELLO				 101
 #define SSL_F_CLIENT_MASTER_KEY				 102
 #define SSL_F_D2I_SSL_SESSION				 103
-#define SSL_F_DIGEST_CACHED_RECORDS			 293
 #define SSL_F_DO_DTLS1_WRITE				 245
 #define SSL_F_DO_SSL3_WRITE				 104
 #define SSL_F_DTLS1_ACCEPT				 246
@@ -1850,6 +1849,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL3_CONNECT				 132
 #define SSL_F_SSL3_CTRL					 213
 #define SSL_F_SSL3_CTX_CTRL				 133
+#define SSL_F_SSL3_DIGEST_CACHED_RECORDS		 293
 #define SSL_F_SSL3_DO_CHANGE_CIPHER_SPEC		 292
 #define SSL_F_SSL3_ENC					 134
 #define SSL_F_SSL3_GENERATE_KEY_BLOCK			 238
