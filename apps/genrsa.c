@@ -105,9 +105,9 @@ int MAIN(int argc, char **argv)
 	char *inrand=NULL;
 	BIO *out=NULL;
 	BIGNUM *bn = BN_new();
-	RSA *rsa = RSA_new();
+	RSA *rsa = NULL;
 
-	if(!bn || !rsa) goto err;
+	if(!bn) goto err;
 
 	apps_startup();
 	BN_GENCB_set(&cb, genrsa_cb, bio_err);
@@ -265,6 +265,10 @@ bad:
 
 	BIO_printf(bio_err,"Generating RSA private key, %d bit long modulus\n",
 		num);
+
+	rsa = RSA_new();
+	if (!rsa)
+		goto err;
 
 	if(!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, &cb))
 		goto err;
