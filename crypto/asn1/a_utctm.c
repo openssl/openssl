@@ -221,7 +221,7 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
 		p=OPENSSL_malloc(len);
 		if (p == NULL)
 			{
-			ASN1err(ASN1_F_ASN1_UTCTIME_SET,ERR_R_MALLOC_FAILURE);
+			ASN1err(ASN1_F_ASN1_UTCTIME_ADJ,ERR_R_MALLOC_FAILURE);
 			return(NULL);
 			}
 		if (s->data != NULL)
