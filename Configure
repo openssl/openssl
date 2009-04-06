@@ -1218,7 +1218,14 @@ if ($zlib)
 	$cflags = "-DZLIB $cflags";
 	if (defined($disabled{"zlib-dynamic"}))
 		{
-		$lflags = "$lflags -lz";
+		if (defined($withargs{"zlib-lib"}))
+			{
+			$lflags = "$lflags -L" . $withargs{"zlib-lib"} . " -lz";
+			}
+		else
+			{
+			$lflags = "$lflags -lz";
+			}
 		}
 	else
 		{

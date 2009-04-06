@@ -5,9 +5,9 @@
 DIR=		crypto
 TOP=		..
 CC=		cc
-INCLUDE=	-I. -I$(TOP) -I../include
+INCLUDE=	-I. -I$(TOP) -I../include $(ZLIB_INCLUDE)
 # INCLUDES targets sudbirs!
-INCLUDES=	-I.. -I../.. -I../asn1 -I../evp -I../../include
+INCLUDES=	-I.. -I../.. -I../asn1 -I../evp -I../../include $(ZLIB_INCLUDE)
 CFLAG=		-g
 MAKEDEPPROG=	makedepend
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
