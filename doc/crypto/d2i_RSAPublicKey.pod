@@ -11,21 +11,21 @@ d2i_Netscape_RSA - RSA public and private key encoding functions.
  #include <openssl/rsa.h>
  #include <openssl/x509.h>
 
- RSA * d2i_RSAPublicKey(RSA **a, unsigned char **pp, long length);
+ RSA * d2i_RSAPublicKey(RSA **a, const unsigned char **pp, long length);
 
  int i2d_RSAPublicKey(RSA *a, unsigned char **pp);
 
- RSA * d2i_RSA_PUBKEY(RSA **a, unsigned char **pp, long length);
+ RSA * d2i_RSA_PUBKEY(RSA **a, const unsigned char **pp, long length);
 
  int i2d_RSA_PUBKEY(RSA *a, unsigned char **pp);
 
- RSA * d2i_RSAPrivateKey(RSA **a, unsigned char **pp, long length);
+ RSA * d2i_RSAPrivateKey(RSA **a, const unsigned char **pp, long length);
 
  int i2d_RSAPrivateKey(RSA *a, unsigned char **pp);
 
  int i2d_Netscape_RSA(RSA *a, unsigned char **pp, int (*cb)());
 
- RSA * d2i_Netscape_RSA(RSA **a, unsigned char **pp, long length, int (*cb)());
+ RSA * d2i_Netscape_RSA(RSA **a, const unsigned char **pp, long length, int (*cb)());
 
 =head1 DESCRIPTION
 
