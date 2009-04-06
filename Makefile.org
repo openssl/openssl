@@ -579,7 +579,7 @@ install_html_docs:
 				grep -v $$filecase "^$$fn\$$" | \
 				(cd $(INSTALL_PREFIX)$(HTMLDIR)/$$subdir; \
 				 while read n; do \
-					$$here/util/point.sh $$fn.$(HTMLSUFFIX) "$$n".$(HTMLSUFFIX); \
+					PLATFORM=$(PLATFORM) $$here/util/point.sh $$fn.$(HTMLSUFFIX) "$$n".$(HTMLSUFFIX); \
 				 done); \
 		done; \
 	done
@@ -610,7 +610,7 @@ install_docs:
 			(grep -v "[	]"; true) | \
 			(cd $(INSTALL_PREFIX)$(MANDIR)/man$$sec/; \
 			 while read n; do \
-				$$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
+				PLATFORM=$(PLATFORM) $$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
 			 done); \
 	done; \
 	set -e; for i in doc/crypto/*.pod doc/ssl/*.pod; do \
@@ -627,7 +627,7 @@ install_docs:
 			(grep -v "[	]"; true) | \
 			(cd $(INSTALL_PREFIX)$(MANDIR)/man$$sec/; \
 			 while read n; do \
-				$$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
+				PLATFORM=$(PLATFORM) $$here/util/point.sh $$fn.$${sec}$(MANSUFFIX) "$$n".$${sec}$(MANSUFFIX); \
 			 done); \
 	done
 

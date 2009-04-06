@@ -1133,6 +1133,6 @@ my ($s0,$s1,$s2,$s3) = @T;
 &function_end("Camellia_cbc_encrypt");
 }
 
-&asciz("Camellia for x86 by <appro@openssl.org>");
+&asciz("Camellia for x86 by <appro\@openssl.org>");
 
 &asm_finish();
