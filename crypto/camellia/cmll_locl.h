@@ -71,30 +71,6 @@
 typedef unsigned int  u32;
 typedef unsigned char u8;
 
-#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64))
-# if _MSC_VER >= 1400
-#  define SWAP(x) _byteswap_ulong(x)
-# else
-#  define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)
-# endif
-# define GETU32(p)   SWAP(*((u32 *)(p)))
-# define PUTU32(p,v) (*((u32 *)(p)) = SWAP((v)))
-#elif defined(__GNUC__) && __GNUC__>=2 && (defined(__i386) || defined(__x86_64)) && !defined(PEDANTIC)
-# if defined(B_ENDIAN) /* stratus.com does it */
-#  define GETU32(p)   (*(u32 *)(p))
-#  define PUTU32(p,v) (*(u32 *)(p)=(v))
-# else
-#  define GETU32(p)   ({u32 r=*(const u32 *)(p); asm("bswapl %0":"=r"(r):"0"(r)); r; })
-#  define PUTU32(p,v) ({u32 r=(v); asm("bswapl %0":"=r"(r):"0"(r)); *(u32 *)(p)=r; })
-# endif
-#elif defined(__s390__) || defined(__s390x__)
-# define GETU32(p)   (*(u32 *)(p))
-# define PUTU32(p,v) (*(u32 *)(p)=(v))
-#else
-# define GETU32(p)   (((u32)(p)[0] << 24) ^ ((u32)(p)[1] << 16) ^ ((u32)(p)[2] <<  8) ^ ((u32)(p)[3]))
-# define PUTU32(p,v) ((p)[0] = (u8)((v) >> 24), (p)[1] = (u8)((v) >> 16), (p)[2] = (u8)((v) >>  8), (p)[3] = (u8)(v))
-#endif
-
 int Camellia_Ekeygen(int keyBitLength, const u8 *rawKey, KEY_TABLE_TYPE keyTable);
 void Camellia_EncryptBlock_Rounds(int grandRounds, const u8 plaintext[], 
 		const KEY_TABLE_TYPE keyTable, u8 ciphertext[]);
