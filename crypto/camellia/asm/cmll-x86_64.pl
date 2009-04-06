@@ -859,7 +859,7 @@ Camellia_cbc_encrypt:
 	ret
 .size	Camellia_cbc_encrypt,.-Camellia_cbc_encrypt
 
-.asciz	"Camellia for x86_64 by <appro@openssl.org>"
+.asciz	"Camellia for x86_64 by <appro\@openssl.org>"
 ___
 }
 
