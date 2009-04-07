@@ -1091,6 +1091,7 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	*cipher_list_by_id = tmp_cipher_list;
 	(void)sk_SSL_CIPHER_set_cmp_func(*cipher_list_by_id,ssl_cipher_ptr_id_cmp);
 
+	sk_SSL_CIPHER_sort(*cipher_list_by_id);
 	return(cipherstack);
 	}
 
