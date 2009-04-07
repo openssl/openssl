@@ -4,6 +4,12 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) If no SSLv2 ciphers are used don't use an SSLv2 compatible client hello:
+     this allows the use of compression and extensions. Change default cipher
+     string to remove SSLv2 ciphersuites. This effectively avoids ancient SSLv2
+     by default unless an application cipher string requests it.
+     [Steve Henson]
+
   *) Alter match criteria in PKCS12_parse(). It used to try to use local
      key ids to find matching certificates and keys but some PKCS#12 files
      don't follow the (somewhat unwritten) rules and this strategy fails.
