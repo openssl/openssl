@@ -133,7 +133,50 @@
 # define FD_SETSIZE (8*sizeof(fd_set))
 #endif
 
-#ifdef __OpenBSD__
+#ifdef __VOS__
+int RAND_poll(void)
+{
+	unsigned char buf[ENTROPY_NEEDED];
+	pid_t curr_pid;
+	uid_t curr_uid;
+	static int first=1;
+	int i;
+	long rnd = 0;
+	struct timespec ts;
+	unsigned seed;
+
+/* The VOS random() function starts from a static seed so its
+   initial value is predictable.  If random() returns the
+   initial value, reseed it with dynamic data.  The VOS
+   real-time clock has a granularity of 1 nsec so it should be
+   reasonably difficult to predict its exact value.  Do not
+   gratuitously reseed the PRNG because other code in this
+   process or thread may be using it.  */
+
+	if (first) {
+		first = 0;
+		rnd = random ();
+		if (rnd == 1804289383) {
+			clock_gettime (CLOCK_REALTIME, &ts);
+			curr_pid = getpid();
+			curr_uid = getuid();
+			seed = ts.tv_sec ^ ts.tv_nsec ^ curr_pid ^ curr_uid;
+			srandom (seed);
+		}
+	}
+
+	for (i = 0; i < sizeof(buf); i++) {
+		if (i % 4 == 0)
+			rnd = random();
+		buf[i] = rnd;
+		rnd >>= 8;
+	}
+	RAND_add(buf, sizeof(buf), ENTROPY_NEEDED);
+	memset(buf, 0, sizeof(buf));
+
+	return 1;
+}
+#elif defined __OpenBSD__
 int RAND_poll(void)
 {
 	u_int32_t rnd = 0, i;
