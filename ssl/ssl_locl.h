@@ -857,7 +857,7 @@ int ssl3_send_change_cipher_spec(SSL *s,int state_a,int state_b);
 int ssl3_change_cipher_state(SSL *s,int which);
 void ssl3_cleanup_key_block(SSL *s);
 int ssl3_do_write(SSL *s,int type);
-void ssl3_send_alert(SSL *s,int level, int desc);
+int ssl3_send_alert(SSL *s,int level, int desc);
 int ssl3_generate_master_secret(SSL *s, unsigned char *out,
 	unsigned char *p, int len);
 int ssl3_get_req_cert_type(SSL *s,unsigned char *p);

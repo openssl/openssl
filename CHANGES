@@ -772,6 +772,9 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) Handle non-blocking I/O properly in SSL_shutdown() call.
+     [Darryl Miles <darryl-mailinglists@netbauds.net>]
+
   *) Add 2.5.4.* OIDs
      [Ilya O. <vrghost@gmail.com>]
 
