@@ -250,6 +250,20 @@ end:
 	return(ret);
 	}
 
+static int ssl23_no_ssl2_ciphers(SSL *s)
+	{
+	SSL_CIPHER *cipher;
+	STACK_OF(SSL_CIPHER) *ciphers;
+	int i;
+	ciphers = SSL_get_ciphers(s);
+	for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++)
+		{
+		cipher = sk_SSL_CIPHER_value(ciphers, i);
+		if (cipher->algorithm_ssl == SSL_SSLV2)
+			return 0;
+		}
+	return 1;
+	}
 
 static int ssl23_client_hello(SSL *s)
 	{
@@ -263,6 +277,9 @@ static int ssl23_client_hello(SSL *s)
 	int ret;
 
 	ssl2_compat = (s->options & SSL_OP_NO_SSLv2) ? 0 : 1;
+
+	if (ssl2_compat && ssl23_no_ssl2_ciphers(s))
+		ssl2_compat = 0;
 
 	if (!(s->options & SSL_OP_NO_TLSv1))
 		{
