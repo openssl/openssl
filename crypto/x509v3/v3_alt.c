@@ -360,6 +360,7 @@ static int copy_email(X509V3_CTX *ctx, GENERAL_NAMES *gens, int move_p)
                 if (move_p)
                         {
                         X509_NAME_delete_entry(nm, i);
+			X509_NAME_ENTRY_free(ne);
                         i--;
                         }
 		if(!email || !(gen = GENERAL_NAME_new())) {
