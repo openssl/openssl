@@ -138,6 +138,37 @@ the EC curve to use.
 
 =back
 
+=head1 GOST2001 KEY GENERATION AND PARAMETER OPTIONS
+
+Gost 2001 support is not enabled by default. To enable this algorithm,
+one should load the ccgost engine in the OpenSSL configuration file.
+See README.gost file in the engines/ccgost directiry of the source
+distribution for more details.
+
+Use of a parameter file for the GOST R 34.10 algorithm is optional.
+Parameters can be specified during key generation directly as well as
+during generation of parameter file.
+
+=over 4
+
+=item B<paramset:name>
+
+Specifies GOST R 34.10-2001 parameter set according to RFC 4357.
+Parameter set can be specified using abbreviated name, object short name or
+numeric OID. Following parameter sets are supported:
+
+  paramset   OID               Usage
+  A          1.2.643.2.2.35.1  Signature
+  B          1.2.643.2.2.35.2  Signature
+  C          1.2.643.2.2.35.3  Signature
+  XA         1.2.643.2.2.36.0  Key exchange
+  XB         1.2.643.2.2.36.1  Key exchange
+  test       1.2.643.2.2.35.0  Test purposes
+
+=back
+
+
+
 =head1 NOTES
 
 The use of the genpkey program is encouraged over the algorithm specific

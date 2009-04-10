@@ -251,6 +251,33 @@ cipher suites using MD5.
 
 cipher suites using SHA1.
 
+=item B<aGOST> 
+
+cipher suites using GOST R 34.10 (either 2001 or 94) for authenticaction
+(needs an engine supporting GOST algorithms). 
+
+=item B<aGOST01>
+
+cipher suites using GOST R 34.10-2001 authentication.
+
+=item B<aGOST94>
+
+cipher suites using GOST R 34.10-94 authentication (note that R 34.10-94
+standard has been expired so use GOST R 34.10-2001)
+
+=item B<kGOST>
+
+cipher suites, using VKO 34.10 key exchange, specified in the RFC 4357.
+
+=item B<GOST94>
+
+cipher suites, using HMAC based on GOST R 34.11-94.
+
+=item B<GOST89MAC>
+
+cipher suites using GOST 28147-89 MAC B<instead of> HMAC.
+
+
 =back
 
 =head1 CIPHER SUITE NAMES
@@ -375,6 +402,16 @@ e.g. DES-CBC3-SHA. In these cases, RSA authentication is used.
  TLS_DHE_RSA_WITH_SEED_CBC_SHA          DHE-RSA-SEED-SHA
 
  TLS_DH_anon_WITH_SEED_CBC_SHA          ADH-SEED-SHA
+
+=head2 GOST ciphersuites from draft-chudov-cryptopro-cptls, extending TLS v1.0
+
+Note: these ciphers require an engine which including GOST cryptographic
+algorithms, such as the B<ccgost> engine, included in the OpenSSL distribution.
+
+ TLS_GOSTR341094_WITH_28147_CNT_IMIT GOST94-GOST89-GOST89
+ TLS_GOSTR341001_WITH_28147_CNT_IMIT GOST2001-GOST89-GOST89
+ TLS_GOSTR341094_WITH_NULL_GOSTR3411 GOST94-NULL-GOST94
+ TLS_GOSTR341001_WITH_NULL_GOSTR3411 GOST2001-NULL-GOST94
 
 =head2 Additional Export 1024 and other cipher suites
 

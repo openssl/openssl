@@ -22,13 +22,13 @@ B<openssl> B<req>
 [B<-new>]
 [B<-rand file(s)>]
 [B<-newkey rsa:bits>]
-[B<-newkey dsa:file>]
 [B<-newkey alg:file>]
 [B<-nodes>]
 [B<-key filename>]
 [B<-keyform PEM|DER>]
 [B<-keyout filename>]
-[B<-[md5|sha1|md2|mdc2]>]
+[B<-keygen_engine id>]
+[B<-[digest]>]
 [B<-config filename>]
 [B<-subj arg>]
 [B<-multivalue-rdn>]
@@ -36,11 +36,15 @@ B<openssl> B<req>
 [B<-days n>]
 [B<-set_serial n>]
 [B<-asn1-kludge>]
+[B<-no-asn1-kludge>]
 [B<-newhdr>]
 [B<-extensions section>]
 [B<-reqexts section>]
 [B<-utf8>]
 [B<-nameopt>]
+[B<-reqopt>]
+[B<-subject>]
+[B<-subj arg>]
 [B<-batch>]
 [B<-verbose>]
 [B<-engine id>]
@@ -92,6 +96,11 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 prints out the certificate request in text form.
 
+=item B<-subject>
+
+prints out the request subject (or certificate subject if B<-x509> is
+specified)
+
 =item B<-pubkey>
 
 outputs the public key.
@@ -119,6 +128,13 @@ in the configuration file and any requested extensions.
 If the B<-key> option is not used it will generate a new RSA private
 key using information specified in the configuration file.
 
+=item B<-subj arg>
+
+Replaces subject field of input request with specified data and outputs
+modified request. The arg must be formatted as
+I</type0=value0/type1=value1/type2=...>,
+characters may be escaped by \ (backslash), no spaces are skipped.
+
 =item B<-rand file(s)>
 
 a file or files containing random data used to seed the random number
@@ -132,12 +148,26 @@ all others.
 this option creates a new certificate request and a new private
 key. The argument takes one of several forms. B<rsa:nbits>, where
 B<nbits> is the number of bits, generates an RSA key B<nbits>
-in size. B<dsa:filename> generates a DSA key using the parameters
-in the file B<filename>. B<param:file> generates a key using the
-parameter file B<file>, the algorithm is determined by the
-parameters. B<algname:file> use algorithm B<algname> and parameter file
-B<file> the two algorithms must match or an error occurs. B<algname> just
-uses algorithm B<algname>.
+in size. If B<nbits> is omitted, i.e. B<-newkey rsa> specified,
+the default key size, specified in the configuration file is used.
+
+All other algorithms support the B<-newkey alg:file> form, where file may be
+an algorithm parameter file, created by the B<genpkey -genparam> command
+or and X.509 certificate for a key with approriate algorithm.
+
+B<param:file> generates a key using the parameter file or certificate B<file>,
+the algorithm is determined by the parameters. B<algname:file> use algorithm
+B<algname> and parameter file B<file>: the two algorithms must match or an
+error occurs. B<algname> just uses algorithm B<algname>, and parameters,
+if neccessary should be specified via B<-pkeyopt> parameter.
+
+B<dsa:filename> generates a DSA key using the parameters
+in the file B<filename>. B<ec:filename> generates EC key (usable both with
+ECDSA or ECDH algorithms), B<gost2001:filename> generates GOST R
+34.10-2001 key (requires B<ccgost> engine configured in the configuration
+file). If just B<gost2001> is specified a parameter set should be
+specified by B<-pkeyopt paramset:X>
+
 
 =item B<-pkeyopt opt:value>
 
@@ -167,11 +197,15 @@ configuration file is used.
 if this option is specified then if a private key is created it
 will not be encrypted.
 
-=item B<-[md5|sha1|md2|mdc2]>
+=item B<-[digest]>
 
-this specifies the message digest to sign the request with. This
-overrides the digest algorithm specified in the configuration file.
-This option is ignored for DSA requests: they always use SHA1.
+this specifies the message digest to sign the request with (such as
+B<-md5>, B<-sha1>). This overrides the digest algorithm specified in
+the configuration file.
+
+Some public key algorithms may override this choice. For instance, DSA
+signatures always use SHA1, GOST R 34.10 signatures always use
+GOST R 34.11-94 (B<-md_gost94>).
 
 =item B<-config filename>
 
@@ -239,6 +273,15 @@ B<option> argument can be a single option or multiple options separated by
 commas.  Alternatively the B<-nameopt> switch may be used more than once to
 set multiple options. See the L<x509(1)|x509(1)> manual page for details.
 
+=item B<-reqopt>
+
+customise the output format used with B<-text>. The B<option> argument can be
+a single option or multiple options separated by commas. 
+
+See discission of the  B<-certopt> parameter in the L<B<x509>|x509(1)>
+command.
+
+
 =item B<-asn1-kludge>
 
 by default the B<req> command outputs certificate requests containing
@@ -253,6 +296,10 @@ empty B<SET OF>. The invalid form does not include the empty
 B<SET OF> whereas the correct form does.
 
 It should be noted that very few CAs still require the use of this option.
+
+=item B<-no-asn1-kludge>
+
+Reverses effect of B<-asn1-kludge>
 
 =item B<-newhdr>
 
@@ -273,6 +320,11 @@ specifying an engine (by its unique B<id> string) will cause B<req>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.
+
+=item B<-keygen_engine id>
+
+specifies an engine (by its unique B<id> string) which would be used
+for key generation operations.
 
 =back
 

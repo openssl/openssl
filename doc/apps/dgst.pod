@@ -14,6 +14,7 @@ B<openssl> B<dgst>
 [B<-binary>]
 [B<-out filename>]
 [B<-sign filename>]
+[B<-keyform arg>]
 [B<-passin arg>]
 [B<-verify filename>]
 [B<-prverify filename>]
@@ -61,6 +62,23 @@ filename to output to, or standard output by default.
 
 digitally sign the digest using the private key in "filename".
 
+=item B<-keyform arg>
+
+Specifies the key format to sign digest with. Only PEM and ENGINE
+formats are supported by the B<dgst> command.
+
+=item B<-engine id>
+
+Use engine B<id> for operations (including private key storage).
+This engine is not used as source for digest algorithms, unless it is
+also specified in the configuration file.
+
+=item B<-sigopt nm:v>
+
+Pass options to the signature algorithm during sign or verify operations.
+Names and values of these options are algorithm-specific.
+
+
 =item B<-passin arg>
 
 the private key password source. For more information about the format of B<arg>
@@ -82,6 +100,35 @@ the actual signature to verify.
 =item B<-hmac key>
 
 create a hashed MAC using "key".
+
+=item B<-mac alg>
+
+create MAC (keyed Message Authentication Code). The most popular MAC
+algorithm is HMAC (hash-based MAC), but there are other MAC algorithms
+which are not based on hash, for instance B<gost-mac> algorithm,
+supported by B<ccgost> engine. MAC keys and other options should be set
+via B<-macopt> parameter.
+
+=item B<-macopt nm:v>
+
+Passes options to MAC algorithm, specified by B<-mac> key.
+Following options are supported by both by B<HMAC> and B<gost-mac>:
+
+=over 8
+
+=item B<key:string>
+	
+Specifies MAC key as alphnumeric string (use if key contain printable
+characters only). String length must conform to any restrictions of
+the MAC algorithm for example exactly 32 chars for gost-mac.
+
+=item B<hexkey:string>
+
+Specifies MAC key in hexadecimal form (two hex digits per byte).
+Key length must conform to any restrictions of the MAC algorithm
+for example exactly 32 chars for gost-mac.
+
+=back
 
 =item B<-rand file(s)>
 
