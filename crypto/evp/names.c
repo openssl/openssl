@@ -145,7 +145,7 @@ static void do_all_cipher_fn(const OBJ_NAME *nm, void *arg)
 	if (nm->alias)
 		dc->fn(NULL, nm->name, nm->data, dc->arg);
 	else
-		dc->fn((const EVP_CIPHER *)nm->data, NULL, NULL, dc->arg);
+		dc->fn((const EVP_CIPHER *)nm->data, nm->name, NULL, dc->arg);
 	}
 
 void EVP_CIPHER_do_all(void (*fn)(const EVP_CIPHER *ciph,
@@ -179,7 +179,7 @@ static void do_all_md_fn(const OBJ_NAME *nm, void *arg)
 	if (nm->alias)
 		dc->fn(NULL, nm->name, nm->data, dc->arg);
 	else
-		dc->fn((const EVP_MD *)nm->data, NULL, NULL, dc->arg);
+		dc->fn((const EVP_MD *)nm->data, nm->name, NULL, dc->arg);
 	}
 
 void EVP_MD_do_all(void (*fn)(const EVP_MD *md,

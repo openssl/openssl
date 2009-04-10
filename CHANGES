@@ -4,6 +4,14 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) Add "missing" function EVP_MD_flags() (without this the only way to
+     retrieve a digest flags is by accessing the structure directly. Update
+     EVP_MD_do_all*() and EVP_CIPHER_do_all*() to include the name a digest
+     or cipher is registered as in the "from" argument. Print out all
+     registered digests in the dgst usage message instead of manually 
+     attempting to work them out.
+     [Steve Henson]
+
   *) If no SSLv2 ciphers are used don't use an SSLv2 compatible client hello:
      this allows the use of compression and extensions. Change default cipher
      string to remove SSLv2 ciphersuites. This effectively avoids ancient SSLv2
