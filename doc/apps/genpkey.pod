@@ -148,15 +148,15 @@ can be used.
 
 Generate an RSA private key using default parameters:
 
- openssl genpkey -algoritm RSA -out key.pem 
+ openssl genpkey -algorithm RSA -out key.pem 
 
 Encrypt output private key using 128 bit AES and the passphrase "hello":
 
- openssl genpkey -algoritm RSA -out key.pem -aes-128-cbc -pass pass:hello
+ openssl genpkey -algorithm RSA -out key.pem -aes-128-cbc -pass pass:hello
 
 Generate a 2048 bit RSA key using 3 as the public exponent:
 
- openssl genpkey -algoritm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048 \
+ openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048 \
  						-pkeyopt rsa_keygen_pubexp:3
 
 Generate 1024 bit DSA parameters:
