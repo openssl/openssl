@@ -87,6 +87,7 @@ void ERR_GOST_error(int function, int reason, char *file, int line);
 #define GOST_F_GOST_DO_SIGN				 112
 #define GOST_F_GOST_DO_VERIFY				 113
 #define GOST_F_GOST_IMIT_CTRL				 114
+#define GOST_F_GOST_IMIT_FINAL				 140
 #define GOST_F_GOST_IMIT_UPDATE				 115
 #define GOST_F_PARAM_COPY_GOST01			 116
 #define GOST_F_PARAM_COPY_GOST94			 117
