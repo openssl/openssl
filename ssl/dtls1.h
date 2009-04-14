@@ -196,6 +196,13 @@ typedef struct dtls1_state_st
 	/* Buffered (sent) handshake records */
 	pqueue sent_messages;
 
+	/* Buffered application records.
+	 * Only for records between CCS and Finished
+	 * to prevent either protocol violation or
+	 * unnecessary message loss.
+	 */
+	record_pqueue buffered_app_data;
+
 	unsigned int mtu; /* max wire packet size */
 
 	struct hm_header_st w_msg_hdr;
