@@ -102,6 +102,19 @@ typedef struct dtls1_bitmap_st
 					   encoding */
 	} DTLS1_BITMAP;
 
+struct dtls1_retransmit_state
+	{
+	EVP_CIPHER_CTX *enc_write_ctx;	/* cryptographic state */
+	const EVP_MD *write_hash;		/* used for mac generation */
+#ifndef OPENSSL_NO_COMP
+	COMP_CTX *compress;				/* compression */
+#else
+	char *compress;	
+#endif
+	SSL_SESSION *session;
+	unsigned short epoch;
+	};
+
 struct hm_header_st
 	{
 	unsigned char type;
@@ -110,6 +123,7 @@ struct hm_header_st
 	unsigned long frag_off;
 	unsigned long frag_len;
 	unsigned int is_ccs;
+	struct dtls1_retransmit_state saved_retransmit_state;
 	};
 
 struct ccs_header_st
@@ -168,6 +182,9 @@ typedef struct dtls1_state_st
 	unsigned short next_handshake_write_seq;
 
 	unsigned short handshake_read_seq;
+
+	/* save last sequence number for retransmissions */
+	unsigned char last_write_sequence[8];
 
 	/* Received handshake records (processed and unprocessed) */
 	record_pqueue unprocessed_rcds;
