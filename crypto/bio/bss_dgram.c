@@ -66,6 +66,10 @@
 
 #include <openssl/bio.h>
 
+#ifdef OPENSSL_SYS_WIN32
+#include <sys/timeb.h>
+#endif
+
 #define IP_MTU      14 /* linux is lame */
 
 #ifdef WATT32
@@ -204,11 +208,12 @@ static int dgram_read(BIO *b, char *out, int outl)
 			{
 			if (data->hstimeout.tv_sec > 0 || data->hstimeout.tv_usec > 0)
 				{
+				struct timeval curtime;
 #ifdef OPENSSL_SYS_WIN32
-				struct timeb tb;
-				ftime(&tb);
-				curtime.tv_sec = tb.time;
-				curtime.tv_usec = tb.millitm * 1000;
+				struct _timeb tb;
+				_ftime(&tb);
+				curtime.tv_sec = (long)tb.time;
+				curtime.tv_usec = (long)tb.millitm * 1000;
 #else
 				gettimeofday(&curtime, NULL);
 #endif
@@ -374,10 +379,10 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		if (num > 0)
 			{
 #ifdef OPENSSL_SYS_WIN32
-			struct timeb tb;
-			ftime(&tb);
-			data->hstimeout.tv_sec = tb.time;
-			data->hstimeout.tv_usec = tb.millitm * 1000;
+			struct _timeb tb;
+			_ftime(&tb);
+			data->hstimeout.tv_sec = (long)tb.time;
+			data->hstimeout.tv_usec = (long)tb.millitm * 1000;
 #else
 			gettimeofday(&(data->hstimeout), NULL);
 #endif
