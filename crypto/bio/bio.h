@@ -159,6 +159,7 @@ extern "C" {
 
 #define BIO_CTRL_DGRAM_SET_PEER           44 /* Destination for the data */
 
+#define BIO_CTRL_DGRAM_SET_TIMEOUT        45
 
 /* modifiers */
 #define BIO_FP_READ		0x02
