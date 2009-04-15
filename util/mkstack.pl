@@ -90,7 +90,6 @@ while(<IN>) {
 #define sk_${type_thing}_set_cmp_func(st, cmp) SKM_sk_set_cmp_func($type_thing, (st), (cmp))
 #define sk_${type_thing}_dup(st) SKM_sk_dup($type_thing, st)
 #define sk_${type_thing}_pop_free(st, free_func) SKM_sk_pop_free($type_thing, (st), (free_func))
-#define sk_${type_thing}_free(st) SKM_sk_free($type_thing, (st))
 #define sk_${type_thing}_shift(st) SKM_sk_shift($type_thing, (st))
 #define sk_${type_thing}_pop(st) SKM_sk_pop($type_thing, (st))
 #define sk_${type_thing}_sort(st) SKM_sk_sort($type_thing, (st))
@@ -112,6 +111,21 @@ EOF
 #define sk_${t1}_pop_free(st, free_func) sk_pop_free(CHECKED_PTR_OF(STACK_OF($t1), st), CHECKED_SK_FREE_FUNC2($t1, free_func))
 #define sk_${t1}_insert(st, val, i) sk_insert(CHECKED_PTR_OF(STACK_OF($t1), st), CHECKED_PTR_OF($t2, val), i)
 #define sk_${t1}_free(st) SKM_sk_free(${t1}, st)
+#define sk_${t1}_set(st, i, val) sk_set((_STACK *)CHECKED_PTR_OF(STACK_OF($t1), st), i, CHECKED_PTR_OF($t2, val))
+#define sk_${t1}_zero(st) SKM_sk_zero($t1, (st))
+#define sk_${t1}_unshift(st, val) sk_unshift((_STACK *)CHECKED_PTR_OF(STACK_OF($t1), st), CHECKED_PTR_OF($t2, val))
+#define sk_${t1}_find_ex(st, val) sk_find_ex((_STACK *)CHECKED_CONST_PTR_OF(STACK_OF($t1), st), CHECKED_CONST_PTR_OF($t2, val))
+#define sk_${t1}_delete(st, i) SKM_sk_delete($t1, (st), (i))
+#define sk_${t1}_delete_ptr(st, ptr) ($t1 *)sk_delete_ptr((_STACK *)CHECKED_PTR_OF(STACK_OF($t1), st), CHECKED_PTR_OF($t2, ptr))
+#define sk_${t1}_set_cmp_func(st, cmp)  \\
+	((int (*)(const $t2 * const *,const $t2 * const *)) \\
+	sk_set_cmp_func((_STACK *)CHECKED_PTR_OF(STACK_OF($t1), st), CHECKED_SK_CMP_FUNC($t2, cmp)))
+#define sk_${t1}_dup(st) SKM_sk_dup($t1, st)
+#define sk_${t1}_shift(st) SKM_sk_shift($t1, (st))
+#define sk_${t1}_pop(st) ($t2 *)sk_pop((_STACK *)CHECKED_PTR_OF(STACK_OF($t1), st))
+#define sk_${t1}_sort(st) SKM_sk_sort($t1, (st))
+#define sk_${t1}_is_sorted(st) SKM_sk_is_sorted($t1, (st))
+
 EOF
 	}
 

@@ -263,6 +263,11 @@ int EVP_MD_size(const EVP_MD *md)
 	return md->md_size;
 	}
 
+unsigned long EVP_MD_flags(const EVP_MD *md)
+	{
+	return md->flags;
+	}
+
 const EVP_MD *EVP_MD_CTX_md(const EVP_MD_CTX *ctx)
 	{
 	if (!ctx)

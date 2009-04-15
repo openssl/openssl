@@ -365,11 +365,6 @@ int MAIN(int argc, char **argv)
 			serial = s2i_ASN1_INTEGER(NULL, *(++argv));
 			if (!serial) goto bad;
 			}
-		else if ((md_alg=EVP_get_digestbyname(&((*argv)[1]))) != NULL)
-			{
-			/* ok */
-			digest=md_alg;
-			}
 		else if (strcmp(*argv,"-extensions") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -379,6 +374,11 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			req_exts = *(++argv);
+			}
+		else if ((md_alg=EVP_get_digestbyname(&((*argv)[1]))) != NULL)
+			{
+			/* ok */
+			digest=md_alg;
 			}
 		else
 			{

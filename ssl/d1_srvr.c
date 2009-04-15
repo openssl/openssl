@@ -249,6 +249,7 @@ int dtls1_accept(SSL *s)
 		case SSL3_ST_SW_HELLO_REQ_B:
 
 			s->shutdown=0;
+			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
 			ret=dtls1_send_hello_request(s);
 			if (ret <= 0) goto end;
 			s->s3->tmp.next_state=SSL3_ST_SW_HELLO_REQ_C;
@@ -269,6 +270,7 @@ int dtls1_accept(SSL *s)
 			s->shutdown=0;
 			ret=ssl3_get_client_hello(s);
 			if (ret <= 0) goto end;
+			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 0, NULL);
 			s->new_session = 2;
 
 			if (s->d1->send_cookie)
@@ -282,6 +284,7 @@ int dtls1_accept(SSL *s)
 		case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A:
 		case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B:
 
+			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
 			ret = dtls1_send_hello_verify_request(s);
 			if ( ret <= 0) goto end;
 			s->d1->send_cookie = 0;
@@ -294,6 +297,7 @@ int dtls1_accept(SSL *s)
 			
 		case SSL3_ST_SW_SRVR_HELLO_A:
 		case SSL3_ST_SW_SRVR_HELLO_B:
+			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
 			ret=dtls1_send_server_hello(s);
 			if (ret <= 0) goto end;
 
@@ -309,6 +313,7 @@ int dtls1_accept(SSL *s)
 			/* Check if it is anon DH */
 			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
 				{
+				BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
 				ret=dtls1_send_server_certificate(s);
 				if (ret <= 0) goto end;
 				}
@@ -350,6 +355,7 @@ int dtls1_accept(SSL *s)
 				)
 			    )
 				{
+				BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
 				ret=dtls1_send_server_key_exchange(s);
 				if (ret <= 0) goto end;
 				}
@@ -386,6 +392,7 @@ int dtls1_accept(SSL *s)
 			else
 				{
 				s->s3->tmp.cert_request=1;
+				BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
 				ret=dtls1_send_certificate_request(s);
 				if (ret <= 0) goto end;
 #ifndef NETSCAPE_HANG_BUG
@@ -400,6 +407,7 @@ int dtls1_accept(SSL *s)
 
 		case SSL3_ST_SW_SRVR_DONE_A:
 		case SSL3_ST_SW_SRVR_DONE_B:
+			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
 			ret=dtls1_send_server_done(s);
 			if (ret <= 0) goto end;
 			s->s3->tmp.next_state=SSL3_ST_SR_CERT_A;
@@ -427,6 +435,7 @@ int dtls1_accept(SSL *s)
 			ret = ssl3_check_client_hello(s);
 			if (ret <= 0)
 				goto end;
+			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 0, NULL);
 			if (ret == 2)
 				s->state = SSL3_ST_SR_CLNT_HELLO_C;
 			else {
@@ -434,6 +443,7 @@ int dtls1_accept(SSL *s)
 				 * have not asked for it :-) */
 				ret=ssl3_get_client_certificate(s);
 				if (ret <= 0) goto end;
+				BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 0, NULL);
 				s->init_num=0;
 				s->state=SSL3_ST_SR_KEY_EXCH_A;
 			}
@@ -443,6 +453,7 @@ int dtls1_accept(SSL *s)
 		case SSL3_ST_SR_KEY_EXCH_B:
 			ret=ssl3_get_client_key_exchange(s);
 			if (ret <= 0) goto end;
+			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 0, NULL);
 			s->state=SSL3_ST_SR_CERT_VRFY_A;
 			s->init_num=0;
 
@@ -463,6 +474,7 @@ int dtls1_accept(SSL *s)
 			/* we should decide if we expected this one */
 			ret=ssl3_get_cert_verify(s);
 			if (ret <= 0) goto end;
+			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 0, NULL);
 
 			s->state=SSL3_ST_SR_FINISHED_A;
 			s->init_num=0;
@@ -473,6 +485,7 @@ int dtls1_accept(SSL *s)
 			ret=ssl3_get_finished(s,SSL3_ST_SR_FINISHED_A,
 				SSL3_ST_SR_FINISHED_B);
 			if (ret <= 0) goto end;
+			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 0, NULL);
 			if (s->hit)
 				s->state=SSL_ST_OK;
 			else
@@ -555,6 +568,7 @@ int dtls1_accept(SSL *s)
 			s->d1->handshake_read_seq = 0;
 			/* next message is server hello */
 			s->d1->handshake_write_seq = 0;
+			s->d1->next_handshake_write_seq = 0;
 			goto end;
 			/* break; */
 

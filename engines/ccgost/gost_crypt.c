@@ -550,7 +550,10 @@ int gost_imit_update(EVP_MD_CTX *ctx, const void *data, size_t count)
 int gost_imit_final(EVP_MD_CTX *ctx,unsigned char *md)
 	{
 	struct ossl_gost_imit_ctx *c = ctx->md_data;
-	if (!c->key_set) return 0;
+	if (!c->key_set) {
+		GOSTerr(GOST_F_GOST_IMIT_FINAL, GOST_R_MAC_KEY_NOT_SET);
+		return 0;
+	}
 	if (c->bytes_left)
 		{
 		int i;

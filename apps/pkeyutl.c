@@ -390,7 +390,7 @@ static void usage()
 	BIO_printf(bio_err, "Usage: pkeyutl [options]\n");
 	BIO_printf(bio_err, "-in file        input file\n");
 	BIO_printf(bio_err, "-out file       output file\n");
-	BIO_printf(bio_err, "-signature file signature file (verify operation only)\n");
+	BIO_printf(bio_err, "-sigfile file signature file (verify operation only)\n");
 	BIO_printf(bio_err, "-inkey file     input key\n");
 	BIO_printf(bio_err, "-keyform arg    private key format - default PEM\n");
 	BIO_printf(bio_err, "-pubin          input is a public key\n");

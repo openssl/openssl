@@ -1124,7 +1124,7 @@ static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
 	/* Verify CRL issuer */
 	ret = X509_verify_cert(&crl_ctx);
 
-	if (!ret)
+	if (ret <= 0)
 		goto err;
 
 	/* Check chain is acceptable */

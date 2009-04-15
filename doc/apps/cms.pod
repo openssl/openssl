@@ -36,17 +36,7 @@ B<openssl> B<cms>
 [B<-CAfile file>]
 [B<-CApath dir>]
 [B<-md digest>]
-[B<-des>]
-[B<-des3>]
-[B<-rc2-40>]
-[B<-rc2-64>]
-[B<-rc2-128>]
-[B<-aes128>]
-[B<-aes192>]
-[B<-aes256>]
-[B<-camellia128>]
-[B<-camellia192>]
-[B<-camellia256>]
+[B<-[cipher]>]
 [B<-nointern>]
 [B<-no_signer_cert_verify>]
 [B<-nocerts>]
@@ -253,13 +243,13 @@ to each certificate.
 digest algorithm to use when signing or resigning. If not present then the
 default digest algorithm for the signing key will be used (usually SHA1).
 
-=item B<-des -des3 -rc2-40 -rc2-64 -rc2-128 -aes128 -aes192 -aes256 -camellia128 -camellia192 -camellia256>
+=item B<-[cipher]>
 
-the encryption algorithm to use. DES (56 bits), triple DES (168 bits), 40, 64
-or 128 bit RC2, 128, 192 or 256 bit AES, or 128, 192 or 256 bit Camellia
-respectively. Any other cipher name (as recognized by the
+the encryption algorithm to use. For example triple DES (168 bits) - B<-des3>
+or 256 bit AES - B<-aes256>. Any standard algorithm name (as used by the
 EVP_get_cipherbyname() function) can also be used preceded by a dash, for 
-example B<-aes_128_cbc>.
+example B<-aes_128_cbc>. See L<B<enc>|enc(1)> for a list of ciphers
+supported by your version of OpenSSL.
 
 If not specified triple DES is used. Only used with B<-encrypt> and 
 B<-EncryptedData_create> commands.
@@ -410,6 +400,11 @@ the relevant mail headers. These are included outside the signed
 portion of a message so they may be included manually. If signing
 then many S/MIME mail clients check the signers certificate's email
 address matches that specified in the From: address.
+
+=item B<-purpose, -ignore_critical, -issuer_checks, -crl_check, -crl_check_all, -policy_check, -extended_crl, -x509_strict, -policy>
+
+Set various certificate chain valiadition option. See the
+L<B<verify>|verify(1)> manual page for details.
 
 =back
 

@@ -79,6 +79,26 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	  const char *sig_name, const char *md_name,
 	  const char *file,BIO *bmd);
 
+static void list_md_fn(const EVP_MD *m,
+			const char *from, const char *to, void *arg)
+	{
+	const char *mname;
+	/* Skip aliases */
+	if (!m)
+		return;
+	mname = OBJ_nid2ln(EVP_MD_type(m));
+	/* Skip shortnames */
+	if (strcmp(from, mname))
+		return;
+	/* Skip clones */
+	if (EVP_MD_flags(m) & EVP_MD_FLAG_PKEY_DIGEST)
+		return;
+	if (strchr(mname, ' '))
+		mname= EVP_MD_name(m);
+	BIO_printf(arg, "-%-14s to use the %s message digest algorithm\n",
+			mname, mname);
+	}
+
 int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
@@ -249,43 +269,17 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"-verify file    verify a signature using public key in file\n");
 		BIO_printf(bio_err,"-prverify file  verify a signature using private key in file\n");
 		BIO_printf(bio_err,"-keyform arg    key file format (PEM or ENGINE)\n");
+		BIO_printf(bio_err,"-out filename   output to filename rather than stdout\n");
 		BIO_printf(bio_err,"-signature file signature to verify\n");
 		BIO_printf(bio_err,"-sigopt nm:v    signature parameter\n");
 		BIO_printf(bio_err,"-hmac key       create hashed MAC with key\n");
+		BIO_printf(bio_err,"-mac algorithm  create MAC (not neccessarily HMAC)\n"); 
+		BIO_printf(bio_err,"-macopt nm:v    MAC algorithm parameters or key\n");
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err,"-engine e       use engine e, possibly a hardware device.\n");
 #endif
 
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm (default)\n",
-			LN_md5,LN_md5);
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
-			LN_md4,LN_md4);
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
-			LN_md2,LN_md2);
-#ifndef OPENSSL_NO_SHA
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
-			LN_sha1,LN_sha1);
-#ifndef OPENSSL_NO_SHA256
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
-			LN_sha224,LN_sha224);
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
-			LN_sha256,LN_sha256);
-#endif
-#ifndef OPENSSL_NO_SHA512
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
-			LN_sha384,LN_sha384);
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
-			LN_sha512,LN_sha512);
-#endif
-#endif
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
-			LN_mdc2,LN_mdc2);
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
-			LN_ripemd160,LN_ripemd160);
-#ifndef OPENSSL_NO_WHIRLPOOL
-		BIO_printf(bio_err,"-%-14s to use the %s message digest algorithm\n",
-			SN_whirlpool,SN_whirlpool);
-#endif
+		EVP_MD_do_all_sorted(list_md_fn, bio_err);
 		goto end;
 		}
 

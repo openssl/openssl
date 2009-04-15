@@ -10,6 +10,18 @@ B<openssl> B<verify>
 [B<-CApath directory>]
 [B<-CAfile file>]
 [B<-purpose purpose>]
+[B<-policy arg>]
+[B<-ignore_critical>]
+[B<-crl_check>]
+[B<-crl_check_all>]
+[B<-policy_check>]
+[B<-explicit_policy>]
+[B<-inhibit_any>]
+[B<-inhibit_map>]
+[B<-x509_strict>]
+[B<-extended_crl>]
+[B<-use_deltas>]
+[B<-policy_print>]
 [B<-untrusted file>]
 [B<-help>]
 [B<-issuer_checks>]
@@ -65,6 +77,63 @@ of the current certificate. This shows why each candidate issuer
 certificate was rejected. However the presence of rejection messages
 does not itself imply that anything is wrong: during the normal
 verify process several rejections may take place.
+
+=item B<-policy arg>
+
+Enable policy processing and add B<arg> to the user-initial-policy-set
+(see RFC3280 et al). The policy B<arg> can be an object name an OID in numeric
+form. This argument can appear more than once.
+
+=item B<-policy_check>
+
+Enables certificate policy processing.
+
+=item B<-explicit_policy>
+
+Set policy variable require-explicit-policy (see RFC3280 et al).
+
+=item B<-inhibit_any>
+
+Set policy variable inhibit-any-policy (see RFC3280 et al).
+
+=item B<-inhibit_map>
+
+Set policy variable inhibit-policy-mapping (see RFC3280 et al).
+
+=item B<-policy_print>
+
+Print out diagnostics, related to policy checking
+
+=item B<-crl_check>
+
+Checks end entity certificate validity by attempting to lookup a valid CRL.
+If a valid CRL cannot be found an error occurs. 
+
+=item B<-crl_check_all>
+
+Checks the validity of B<all> certificates in the chain by attempting
+to lookup valid CRLs.
+
+=item B<-ignore_critical>
+
+Normally if an unhandled critical extension is present which is not
+supported by OpenSSL the certificate is rejected (as required by
+RFC3280 et al). If this option is set critical extensions are
+ignored.
+
+=item B<-x509_strict>
+
+Disable workarounds for broken certificates which have to be disabled
+for strict X.509 compliance.
+
+=item B<-extended_crl>
+
+Enable extended CRL features such as indirect CRLs and alternate CRL
+signing keys.
+
+=item B<-use_deltas>
+
+Enable support for delta CRLs.
 
 =item B<->
 

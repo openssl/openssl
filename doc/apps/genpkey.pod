@@ -47,7 +47,7 @@ name accepted by EVP_get_cipherbyname() is acceptable such as B<des3>.
 
 =item B<-engine id>
 
-specifying an engine (by it's unique B<id> string) will cause B<req>
+specifying an engine (by its unique B<id> string) will cause B<genpkey>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms. If used this option should precede all other
@@ -138,6 +138,37 @@ the EC curve to use.
 
 =back
 
+=head1 GOST2001 KEY GENERATION AND PARAMETER OPTIONS
+
+Gost 2001 support is not enabled by default. To enable this algorithm,
+one should load the ccgost engine in the OpenSSL configuration file.
+See README.gost file in the engines/ccgost directiry of the source
+distribution for more details.
+
+Use of a parameter file for the GOST R 34.10 algorithm is optional.
+Parameters can be specified during key generation directly as well as
+during generation of parameter file.
+
+=over 4
+
+=item B<paramset:name>
+
+Specifies GOST R 34.10-2001 parameter set according to RFC 4357.
+Parameter set can be specified using abbreviated name, object short name or
+numeric OID. Following parameter sets are supported:
+
+  paramset   OID               Usage
+  A          1.2.643.2.2.35.1  Signature
+  B          1.2.643.2.2.35.2  Signature
+  C          1.2.643.2.2.35.3  Signature
+  XA         1.2.643.2.2.36.0  Key exchange
+  XB         1.2.643.2.2.36.1  Key exchange
+  test       1.2.643.2.2.35.0  Test purposes
+
+=back
+
+
+
 =head1 NOTES
 
 The use of the genpkey program is encouraged over the algorithm specific
@@ -148,15 +179,15 @@ can be used.
 
 Generate an RSA private key using default parameters:
 
- openssl genpkey -algoritm RSA -out key.pem 
+ openssl genpkey -algorithm RSA -out key.pem 
 
 Encrypt output private key using 128 bit AES and the passphrase "hello":
 
- openssl genpkey -algoritm RSA -out key.pem -aes-128-cbc -pass pass:hello
+ openssl genpkey -algorithm RSA -out key.pem -aes-128-cbc -pass pass:hello
 
 Generate a 2048 bit RSA key using 3 as the public exponent:
 
- openssl genpkey -algoritm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048 \
+ openssl genpkey -algorithm RSA -out key.pem -pkeyopt rsa_keygen_bits:2048 \
  						-pkeyopt rsa_keygen_pubexp:3
 
 Generate 1024 bit DSA parameters:

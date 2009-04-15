@@ -12,17 +12,24 @@ B<openssl enc -ciphername>
 [B<-pass arg>]
 [B<-e>]
 [B<-d>]
-[B<-a>]
+[B<-a/-base64>]
 [B<-A>]
 [B<-k password>]
 [B<-kfile filename>]
 [B<-K key>]
 [B<-iv IV>]
+[B<-S salt>]
+[B<-salt>]
+[B<-nosalt>]
+[B<-z>]
+[B<-md>]
 [B<-p>]
 [B<-P>]
 [B<-bufsize number>]
 [B<-nopad>]
 [B<-debug>]
+[B<-none>]
+[B<-engine id>]
 
 =head1 DESCRIPTION
 
@@ -74,6 +81,10 @@ base64 process the data. This means that if encryption is taking place
 the data is base64 encoded after encryption. If decryption is set then
 the input data is base64 decoded before being decrypted.
 
+=item B<-base64>
+
+same as B<-a>
+
 =item B<-A>
 
 if the B<-a> option is set then base64 process the data on one line.
@@ -89,10 +100,18 @@ read the password to derive the key from the first line of B<filename>.
 This is for compatibility with previous versions of OpenSSL. Superseded by
 the B<-pass> argument.
 
+=item B<-nosalt>
+
+do not use a salt 
+
+=item B<-salt>
+
+use salt (randomly generated or provide with B<-S> option) when
+encrypting (this is the default).
+
 =item B<-S salt>
 
-the actual salt to use: this must be represented as a string comprised only
-of hex digits.
+the actual salt to use: this must be represented as a string of hex digits.
 
 =item B<-K key>
 
@@ -131,12 +150,34 @@ disable standard block padding
 
 debug the BIOs used for I/O.
 
+=item B<-z>
+
+Compress or decompress clear text using zlib before encryption or after
+decryption. This option exists only if OpenSSL with compiled with zlib
+or zlib-dynamic option.
+
+=item B<-none>
+
+Use NULL cipher (no encryption or decryption of input).
+
 =back
 
 =head1 NOTES
 
 The program can be called either as B<openssl ciphername> or
-B<openssl enc -ciphername>.
+B<openssl enc -ciphername>. But the first form doesn't work with
+engine-provided ciphers, because this form is processed before the
+configuration file is read and any ENGINEs loaded.
+
+Engines which provide entirely new encryption algorithms (such as ccgost
+engine which provides gost89 algorithm) should be configured in the
+configuration file. Engines, specified in the command line using -engine
+options can only be used for hadrware-assisted implementations of
+ciphers, which are supported by OpenSSL core or other engine, specified
+in the configuration file.
+
+When enc command lists supported ciphers, ciphers provided by engines,
+specified in the configuration files are listed too.
 
 A password will be prompted for to derive the key and IV if necessary.
 
@@ -168,6 +209,14 @@ All RC2 ciphers have the same key and effective key length.
 Blowfish and RC5 algorithms use a 128 bit key.
 
 =head1 SUPPORTED CIPHERS
+
+Note that some of these ciphers can be disabled at compile time
+and some are available only if an appropriate engine is configured
+in the configuration file. The output of the B<enc> command run with
+unsupported options (for example B<openssl enc -help>) includes a
+list of ciphers, supported by your versesion of OpenSSL, including
+ones provided by configured engines.
+
 
  base64             Base 64
 
@@ -202,6 +251,9 @@ Blowfish and RC5 algorithms use a 128 bit key.
  des-ede3-ofb       Three key triple DES EDE in OFB mode
 
  desx               DESX algorithm.
+
+ gost89             GOST 28147-89 in CFB mode (provided by ccgost engine)
+ gost89-cnt        `GOST 28147-89 in CNT mode (provided by ccgost engine) 
 
  idea-cbc           IDEA algorithm in CBC mode
  idea               same as idea-cbc

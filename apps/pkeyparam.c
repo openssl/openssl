@@ -179,7 +179,7 @@ int MAIN(int argc, char **argv)
 	pkey = PEM_read_bio_Parameters(in, NULL);
 	if (!pkey)
 		{
-		BIO_printf(bio_err, "Error reading paramters\n");
+		BIO_printf(bio_err, "Error reading parameters\n");
 		ERR_print_errors(bio_err);
 		goto end;
 		}

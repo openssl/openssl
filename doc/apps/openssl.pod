@@ -81,6 +81,10 @@ Certificate Authority (CA) Management.
 
 Cipher Suite Description Determination.
 
+=item L<B<cms>|cms(1)>
+
+CMS (Cryptographic Message Syntax) utility
+
 =item L<B<crl>|crl(1)>
 
 Certificate Revocation List (CRL) Management.
@@ -98,6 +102,12 @@ Message Digest Calculation.
 Diffie-Hellman Parameter Management.
 Obsoleted by L<B<dhparam>|dhparam(1)>.
 
+=item L<B<dhparam>|dhparam(1)>
+
+Generation and Management of Diffie-Hellman Parameters. Superseded by 
+L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>
+
+
 =item L<B<dsa>|dsa(1)>
 
 DSA Data Management.
@@ -107,18 +117,25 @@ DSA Data Management.
 DSA Parameter Generation and Management. Superseded by 
 L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>
 
+=item L<B<ec>|ec(1)>
+
+EC (Elliptic curve) key processing
+
+=item L<B<ecparam>|ecparam(1)>
+
+EC parameter manipulation and generation
+
 =item L<B<enc>|enc(1)>
 
 Encoding with Ciphers.
 
+=item L<B<engine>|engine(1)>
+
+Engine (loadble module) information and manipulation.
+
 =item L<B<errstr>|errstr(1)>
 
 Error Number to Error String Conversion.
-
-=item L<B<dhparam>|dhparam(1)>
-
-Generation and Management of Diffie-Hellman Parameters. Superseded by 
-L<B<genpkey>|genpkey(1)> and L<B<pkeyparam>|pkeyparam(1)>
 
 =item B<gendh>
 
@@ -137,6 +154,10 @@ Generation of Private Key or Parameters.
 =item L<B<genrsa>|genrsa(1)>
 
 Generation of RSA Private Key. Superceded by L<B<genpkey>|genpkey(1)>.
+
+=item L<B<nseq>|nseq(1)
+
+Create or examine a netscape certificate sequence
 
 =item L<B<ocsp>|ocsp(1)>
 
@@ -158,13 +179,13 @@ PKCS#7 Data Management.
 
 Public and private key management.
 
-=item L<B<pkeyutl>|pkeyutl(1)>
-
-Public key algorithm cryptographic operation utility.
-
 =item L<B<pkeyparam>|pkeyparam(1)>
 
 Public key algorithm parameter management.
+
+=item L<B<pkeyutl>|pkeyutl(1)>
+
+Public key algorithm cryptographic operation utility.
 
 =item L<B<rand>|rand(1)>
 
@@ -177,6 +198,7 @@ PKCS#10 X.509 Certificate Signing Request (CSR) Management.
 =item L<B<rsa>|rsa(1)>
 
 RSA key management.
+
 
 =item L<B<rsautl>|rsautl(1)>
 
@@ -214,6 +236,10 @@ S/MIME mail processing.
 =item L<B<speed>|speed(1)>
 
 Algorithm Speed Measurement.
+
+=item L<B<spkac>|spkac(1)>
+
+SPKAC printing and generating utility
 
 =item L<B<ts>|ts(1)>
 

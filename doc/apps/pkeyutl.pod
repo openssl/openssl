@@ -12,6 +12,7 @@ B<openssl> B<pkeyutl>
 [B<-sigfile file>]
 [B<-inkey file>]
 [B<-keyform PEM|DER>]
+[B<-passin arg>]
 [B<-peerkey file>]
 [B<-peerform PEM|DER>]
 [B<-pubin>]
@@ -26,6 +27,7 @@ B<openssl> B<pkeyutl>
 [B<-pkeyopt opt:value>]
 [B<-hexdump>]
 [B<-asn1parse>]
+[B<-engine id>]
 
 =head1 DESCRIPTION
 
@@ -52,7 +54,13 @@ the input key file, by default it should be a private key.
 
 =item B<-keyform PEM|DER>
 
-the key format PEM or DER.
+the key format PEM, DER or ENGINE.
+
+=item B<-passin arg>
+
+the input key password source. For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
+
 
 =item B<-peerkey file>
 
@@ -60,7 +68,15 @@ the peer key file, used by key derivation (agreement) operations.
 
 =item B<-peerform PEM|DER>
 
-the peer key format PEM or DER.
+the peer key format PEM, DER or ENGINE.
+
+=item B<-engine id>
+
+specifying an engine (by its unique B<id> string) will cause B<pkeyutl>
+to attempt to obtain a functional reference to the specified engine,
+thus initialising it if needed. The engine will then be set as the default
+for all available algorithms.
+
 
 =item B<-pubin>
 

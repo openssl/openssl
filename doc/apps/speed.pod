@@ -44,7 +44,7 @@ This command is used to test the performance of cryptographic algorithms.
 
 =item B<-engine id>
 
-specifying an engine (by it's unique B<id> string) will cause B<speed>
+specifying an engine (by its unique B<id> string) will cause B<speed>
 to attempt to obtain a functional reference to the specified engine,
 thus initialising it if needed. The engine will then be set as the default
 for all available algorithms.

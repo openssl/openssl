@@ -66,6 +66,10 @@
 
 #include <openssl/bio.h>
 
+#ifdef OPENSSL_SYS_WIN32
+#include <sys/timeb.h>
+#endif
+
 #define IP_MTU      14 /* linux is lame */
 
 #ifdef WATT32
@@ -104,6 +108,8 @@ typedef struct bio_dgram_data_st
 	unsigned int connected;
 	unsigned int _errno;
 	unsigned int mtu;
+	struct timeval hstimeoutdiff;
+	struct timeval hstimeout;
 	} bio_dgram_data;
 
 BIO_METHOD *BIO_s_datagram(void)
@@ -195,6 +201,30 @@ static int dgram_read(BIO *b, char *out, int outl)
 				{
 				BIO_set_retry_read(b);
 				data->_errno = get_last_socket_error();
+				}
+			memset(&(data->hstimeout), 0, sizeof(struct timeval));
+			}
+		else
+			{
+			if (data->hstimeout.tv_sec > 0 || data->hstimeout.tv_usec > 0)
+				{
+				struct timeval curtime;
+#ifdef OPENSSL_SYS_WIN32
+				struct _timeb tb;
+				_ftime(&tb);
+				curtime.tv_sec = (long)tb.time;
+				curtime.tv_usec = (long)tb.millitm * 1000;
+#else
+				gettimeofday(&curtime, NULL);
+#endif
+
+				if (curtime.tv_sec >= data->hstimeout.tv_sec &&
+					curtime.tv_usec >= data->hstimeout.tv_usec)
+					{
+					data->_errno = EAGAIN;
+					ret = -1;
+					memset(&(data->hstimeout), 0, sizeof(struct timeval));
+					}
 				}
 			}
 		}
@@ -345,6 +375,30 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 
         memcpy(&(data->peer), to, sizeof(struct sockaddr));
         break;
+	case BIO_CTRL_DGRAM_SET_TIMEOUT:
+		if (num > 0)
+			{
+#ifdef OPENSSL_SYS_WIN32
+			struct _timeb tb;
+			_ftime(&tb);
+			data->hstimeout.tv_sec = (long)tb.time;
+			data->hstimeout.tv_usec = (long)tb.millitm * 1000;
+#else
+			gettimeofday(&(data->hstimeout), NULL);
+#endif
+			data->hstimeout.tv_sec += data->hstimeoutdiff.tv_sec;
+			data->hstimeout.tv_usec += data->hstimeoutdiff.tv_usec;
+			if (data->hstimeout.tv_usec >= 1000000)
+				{
+				data->hstimeout.tv_sec++;
+				data->hstimeout.tv_usec -= 1000000;
+				}
+			}
+		else
+			{
+			memset(&(data->hstimeout), 0, sizeof(struct timeval));
+			}
+		break;
 #if defined(SO_RCVTIMEO)
 	case BIO_CTRL_DGRAM_SET_RECV_TIMEOUT:
 #ifdef OPENSSL_SYS_WINDOWS
@@ -360,6 +414,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			sizeof(struct timeval)) < 0)
 			{ perror("setsockopt");	ret = -1; }
 #endif
+		memcpy(&(data->hstimeoutdiff), ptr, sizeof(struct timeval));
 		break;
 	case BIO_CTRL_DGRAM_GET_RECV_TIMEOUT:
 #ifdef OPENSSL_SYS_WINDOWS
