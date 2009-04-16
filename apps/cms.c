@@ -704,7 +704,7 @@ int MAIN(int argc, char **argv)
 
 		if (secret_key && !secret_keyid)
 			{
-			BIO_printf(bio_err, "No sectre key id\n");
+			BIO_printf(bio_err, "No secret key id\n");
 			goto end;
 			}
 

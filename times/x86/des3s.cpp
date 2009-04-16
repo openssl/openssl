@@ -60,7 +60,7 @@ void main(int argc,char *argv[])
 			des_encrypt3(&data[0],key1,key2,key3);
 			}
 
-		printf("des %d %d (%d)\n",
+		printf("des3 %d %d (%d)\n",
 			e1-s1,e2-s2,((e2-s2)-(e1-s1)));
 		}
 	}

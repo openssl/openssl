@@ -152,7 +152,7 @@ static int set_dist_point_name(DIST_POINT_NAME **pdp, X509V3_CTX *ctx,
 				sk_X509_NAME_ENTRY_num(rnm) - 1)->set)
 			{
 			X509V3err(X509V3_F_SET_DIST_POINT_NAME,
-						X509V3_R_INVAID_MULTIPLE_RDNS);
+						X509V3_R_INVALID_MULTIPLE_RDNS);
 			goto err;
 			}
 		}

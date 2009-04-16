@@ -837,8 +837,7 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			}
 		else if (i <= 0) {
 			if (s->version == DTLS1_VERSION) {
-				/* For DTLS, just drop it. That's kind of the wh
-ole
+				/* For DTLS, just drop it. That's kind of the whole
 				   point in using a datagram service */
 				wb->left = 0;
 			}

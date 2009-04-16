@@ -671,7 +671,7 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 			return p->extension_error;
 		if (ctx2)
 			{
-			BIO_printf(p->biodebug,"Swiching server context.\n");
+			BIO_printf(p->biodebug,"Switching server context.\n");
 			SSL_set_SSL_CTX(s,ctx2);
 			}     
 		}

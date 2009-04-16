@@ -1,7 +1,7 @@
 
 More number for the questions about SSL overheads....
 
-The following numbers were generated on a pentium pro 200, running linux.
+The following numbers were generated on a Pentium pro 200, running Linux.
 They give an indication of the SSL protocol and encryption overheads.
 
 The program that generated them is an unreleased version of ssl/ssltest.c
@@ -11,7 +11,7 @@ interface.
 
 How do I read this?  The protocol and cipher are reasonable obvious.
 The next number is the number of connections being made.  The next is the
-number of bytes exchanged bewteen the client and server side of the protocol.
+number of bytes exchanged between the client and server side of the protocol.
 This is the number of bytes that the client sends to the server, and then
 the server sends back.  Because this is all happening in one process,
 the data is being encrypted, decrypted, encrypted and then decrypted again.
@@ -55,10 +55,10 @@ SSLv3 DES-CBC3-SHA 1000 x 102400  336.61s 323.82s
 
 What does this all mean?  Well for a server, with no session-id reuse, with
 a transfer size of 10240 bytes, using RC4-MD5 and a 512bit server key,
-a pentium pro 200 running linux can handle the SSLv3 protocol overheads of
+a Pentium pro 200 running Linux can handle the SSLv3 protocol overheads of
 about 49 connections a second.  Reality will be quite different :-).
 
-Remeber the first number is 1000 full ssl handshakes, the second is
+Remember the first number is 1000 full ssl handshakes, the second is
 1 full and 999 with session-id reuse.  The RSA overheads for each exchange
 would be one public and one private operation, but the protocol/MAC/cipher
 cost would be quite similar in both the client and server.
@@ -72,21 +72,21 @@ eric (adding numbers to speculation)
   killer in SSL.  Often delays in the TCP protocol will make session-id
   reuse look slower that new sessions, but this would not be the case on
   a loaded server.
-- The TCP round trip latencies, while slowing indervidual connections,
+- The TCP round trip latencies, while slowing individual connections,
   would have minimal impact on throughput.
 - Instead of sending one 102400 byte buffer, one 8k buffer is sent until
 - the required number of bytes are processed.
-- The SSLv3 connections were actually SSLv2 compatable SSLv3 headers.
+- The SSLv3 connections were actually SSLv2 compatible SSLv3 headers.
 - A 512bit server key was being used except where noted.
 - No server key verification was being performed on the client side of the
   protocol.  This would slow things down very little.
 - The library being used is SSLeay 0.8.x.
-- The normal mesauring system was commands of the form
+- The normal measuring system was commands of the form
   time ./ssltest -num 1000 -bytes 102400 -cipher DES-CBC-SHA -reuse
   This modified version of ssltest should be in the next public release of
   SSLeay.
 
-The general cipher performace number for this platform are
+The general cipher performance number for this platform are
 
 SSLeay 0.8.2a 04-Sep-1997
 built on Fri Sep  5 17:37:05 EST 1997

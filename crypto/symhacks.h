@@ -382,7 +382,7 @@
 #endif /* defined OPENSSL_SYS_VMS */
 
 
-/* Case insensiteve linking causes problems.... */
+/* Case insensitive linking causes problems.... */
 #if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_OS2)
 #undef ERR_load_CRYPTO_strings
 #define ERR_load_CRYPTO_strings			ERR_load_CRYPTOlib_strings

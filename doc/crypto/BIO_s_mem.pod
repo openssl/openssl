@@ -74,7 +74,7 @@ Writes to memory BIOs will always succeed if memory is available: that is
 their size can grow indefinitely.
 
 Every read from a read write memory BIO will remove the data just read with
-an internal copy operation, if a BIO contains a lots of data and it is
+an internal copy operation, if a BIO contains a lot of data and it is
 read in small chunks the operation can be very slow. The use of a read only
 memory BIO avoids this problem. If the BIO must be read write then adding
 a buffering BIO to the chain will speed up the process.

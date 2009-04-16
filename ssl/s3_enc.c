@@ -655,7 +655,7 @@ static int ssl3_handshake_mac(SSL *s, int md_nid,
 		if (!ssl3_digest_cached_records(s))
 			return 0;
 
-	/* Search for djgest of specified type  in the handshake_dgst
+	/* Search for digest of specified type in the handshake_dgst
 	 * array*/
 	for (i=0;i<SSL_MAX_DIGEST;i++) 
 		{
