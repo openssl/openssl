@@ -304,6 +304,24 @@ my @fips_des3_test_list = (
 
 );
 
+my @fips_des3_cfb1_test_list = (
+
+    # DES3 CFB1 tests
+
+    [ "TCFB1invperm",  "fips_desmovs -f" ],
+    [ "TCFB1MMT1",     "fips_desmovs -f" ],
+    [ "TCFB1MMT2",     "fips_desmovs -f" ],
+    [ "TCFB1MMT3",     "fips_desmovs -f" ],
+    [ "TCFB1Monte1",   "fips_desmovs -f" ],
+    [ "TCFB1Monte2",   "fips_desmovs -f" ],
+    [ "TCFB1Monte3",   "fips_desmovs -f" ],
+    [ "TCFB1permop",   "fips_desmovs -f" ],
+    [ "TCFB1subtab",   "fips_desmovs -f" ],
+    [ "TCFB1varkey",   "fips_desmovs -f" ],
+    [ "TCFB1vartext",  "fips_desmovs -f" ],
+
+);
+
 # Verification special cases.
 # In most cases the output of a test is deterministic and
 # it can be compared to a known good result. A few involve
@@ -351,7 +369,8 @@ my %fips_enabled = (
     "rand-des2" => 0,
     aes         => 1,
     "aes-cfb1"  => 0,
-    des3        => 1
+    des3        => 1,
+    "des3-cfb1"  => 0
 );
 
 foreach (@ARGV) {
@@ -427,6 +446,7 @@ push @fips_test_list, @fips_rand_des2_test_list if $fips_enabled{"rand-des2"};
 push @fips_test_list, @fips_aes_test_list       if $fips_enabled{"aes"};
 push @fips_test_list, @fips_aes_cfb1_test_list  if $fips_enabled{"aes-cfb1"};
 push @fips_test_list, @fips_des3_test_list      if $fips_enabled{"des3"};
+push @fips_test_list, @fips_des3_cfb1_test_list if $fips_enabled{"des3-cfb1"};
 
 if ($list_tests) {
     my ( $test, $en );
@@ -806,11 +826,11 @@ sub cmp_file {
             return 1;
         }
         if ( !defined($rspline) ) {
-            print STDERR "ERROR: $tname EOF on $rspf\n";
+            print STDERR "ERROR: $tname EOF on $rsp\n";
             return 0;
         }
         if ( !defined($tstline) ) {
-            print STDERR "ERROR: $tname EOF on $tstf\n";
+            print STDERR "ERROR: $tname EOF on $tst\n";
             return 0;
         }
 
@@ -821,7 +841,7 @@ sub cmp_file {
 
         if ( $tstline ne $rspline ) {
             print STDERR "ERROR: $tname mismatch:\n";
-            print STDERR "\t $tstline != $rspline\n";
+            print STDERR "\t \"$tstline\" != \"$rspline\"\n";
             return 0;
         }
     }
@@ -842,6 +862,8 @@ sub next_line {
 
         # Translate multiple space into one
         s/\s+/ /g;
+	# Delete trailing whitespace
+	s/\s+$//;
         return $_;
     }
     return undef;
