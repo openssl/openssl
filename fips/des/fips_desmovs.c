@@ -110,15 +110,10 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 	cipher = EVP_des_ede3_cfb64();
     else if (strncasecmp(amode, "OFB", 3) == 0)
 	cipher = EVP_des_ede3_ofb();
-#if 0
-    else if(!strcasecmp(amode,"CFB1"))
-	{
-	ctx->cbits = 1;
-	ctx->cmode = EVP_CIPH_CFB_MODE;
-	}
-#endif
     else if(!strcasecmp(amode,"CFB8"))
 	cipher = EVP_des_ede3_cfb8();
+    else if(!strcasecmp(amode,"CFB1"))
+	cipher = EVP_des_ede3_cfb1();
     else
 	{
 	printf("Unknown mode: %s\n", amode);
@@ -127,6 +122,8 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 
     if (EVP_CipherInit_ex(ctx, cipher, NULL, aKey, iVec, dir) <= 0)
 	return 0;
+    if(!strcasecmp(amode,"CFB1"))
+	M_EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS);
     EVP_Cipher(ctx, out, in, len);
 
     return 1;
@@ -200,11 +197,11 @@ void do_mct(char *amode,
 	if(imode != ECB)
 	    OutputValue("IV",ivec,8,rfp,0);
 	OutputValue(t_tag[dir^1],text,len,rfp,imode == CFB1);
-
+#if 0
 	/* compensate for endianness */
 	if(imode == CFB1)
 	    text[0]<<=7;
-
+#endif
 	memcpy(text0,text,8);
 
 	for(j=0 ; j < 10000 ; ++j)
