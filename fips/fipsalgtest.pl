@@ -553,7 +553,7 @@ $cmd: generate run CMVP algorithm tests
 	--dir=<dirname>             Optional root for *.req file search
 	--filter=<regexp>
 	--onedir <dirname>          Assume all components in current directory
-	--rspdir=<dirname>          Name of subdirectories containing *.rsp files, default "resp"
+	--rspdir=<dirname>          Name of subdirectories containing *.rsp files, default "rsp"
 	--shwrap_prefix=<prefix>
 	--tprefix=<prefix>
 	--ignore-bogus              Ignore duplicate or bogus files
