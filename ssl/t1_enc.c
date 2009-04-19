@@ -882,7 +882,7 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 			mac_ctx = &hmac;
 		}
 
-	if (ssl->version == DTLS1_VERSION)
+	if (ssl->version == DTLS1_VERSION || ssl->version == DTLS1_BAD_VER)
 		{
 		unsigned char dtlsseq[8],*p=dtlsseq;
 
@@ -911,7 +911,7 @@ printf("rec=");
 {unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",buf[z]); printf("\n"); }
 #endif
 
-	if (ssl->version != DTLS1_VERSION)
+	if (ssl->version != DTLS1_VERSION && ssl->version != DTLS1_BAD_VER)
 		{
 		for (i=7; i>=0; i--)
 			{
