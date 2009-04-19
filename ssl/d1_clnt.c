@@ -130,7 +130,7 @@ static int dtls1_get_hello_verify(SSL *s);
 
 static SSL_METHOD *dtls1_get_client_method(int ver)
 	{
-	if (ver == DTLS1_VERSION)
+	if (ver == DTLS1_VERSION || ver == DTLS1_BAD_VER)
 		return(DTLSv1_client_method());
 	else
 		return(NULL);
@@ -181,7 +181,8 @@ int dtls1_connect(SSL *s)
 			s->server=0;
 			if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
 
-			if ((s->version & 0xff00 ) != (DTLS1_VERSION & 0xff00))
+			if ((s->version & 0xff00 ) != (DTLS1_VERSION & 0xff00) &&
+			    (s->version & 0xff00 ) != (DTLS1_BAD_VER & 0xff00))
 				{
 				SSLerr(SSL_F_DTLS1_CONNECT, ERR_R_INTERNAL_ERROR);
 				ret = -1;

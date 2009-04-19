@@ -765,10 +765,10 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	HMAC_CTX_init(&hmac);
 	HMAC_Init_ex(&hmac,mac_sec,EVP_MD_size(hash),hash,NULL);
 
-	if (ssl->version == DTLS1_VERSION && ssl->client_version != DTLS1_BAD_VER)
+	if (ssl->version == DTLS1_BAD_VER ||
+	    (ssl->version == DTLS1_VERSION && ssl->client_version != DTLS1_BAD_VER))
 		{
 		unsigned char dtlsseq[8],*p=dtlsseq;
-
 		s2n(send?ssl->d1->w_epoch:ssl->d1->r_epoch, p);
 		memcpy (p,&seq[2],6);
 
@@ -793,7 +793,7 @@ printf("rec=");
 {unsigned int z; for (z=0; z<rec->length; z++) printf("%02X ",buf[z]); printf("\n"); }
 #endif
 
-	if ( SSL_version(ssl) != DTLS1_VERSION)
+	if ( SSL_version(ssl) != DTLS1_VERSION && SSL_version(ssl) != DTLS1_BAD_VER)
 		{
 		for (i=7; i>=0; i--)
 			{

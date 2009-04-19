@@ -198,7 +198,10 @@ void dtls1_free(SSL *s)
 void dtls1_clear(SSL *s)
 	{
 	ssl3_clear(s);
-	s->version=DTLS1_VERSION;
+	if (s->options & SSL_OP_CISCO_ANYCONNECT)
+		s->version=DTLS1_BAD_VER;
+	else
+		s->version=DTLS1_VERSION;
 	}
 
 /*

@@ -1024,15 +1024,17 @@ start:
 	if (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC)
 		{
 		struct ccs_header_st ccs_hdr;
+		int ccs_hdr_len = DTLS1_CCS_HEADER_LENGTH;
 
 		dtls1_get_ccs_header(rr->data, &ccs_hdr);
 
 		/* 'Change Cipher Spec' is just a single byte, so we know
 		 * exactly what the record payload has to look like */
 		/* XDTLS: check that epoch is consistent */
-		if (	(s->client_version == DTLS1_BAD_VER && rr->length != 3) ||
-			(s->client_version != DTLS1_BAD_VER && rr->length != DTLS1_CCS_HEADER_LENGTH) || 
-			(rr->off != 0) || (rr->data[0] != SSL3_MT_CCS))
+		if (s->client_version == DTLS1_BAD_VER || s->version == DTLS1_BAD_VER)
+			ccs_hdr_len = 3;
+
+		if ((rr->length != ccs_hdr_len) || (rr->off != 0) || (rr->data[0] != SSL3_MT_CCS))
 			{
 			i=SSL_AD_ILLEGAL_PARAMETER;
 			SSLerr(SSL_F_DTLS1_READ_BYTES,SSL_R_BAD_CHANGE_CIPHER_SPEC);
@@ -1358,7 +1360,7 @@ int do_dtls1_write(SSL *s, int type, const unsigned char *buf, unsigned int len,
 #if 0
 	/* 'create_empty_fragment' is true only when this function calls itself */
 	if (!clear && !create_empty_fragment && !s->s3->empty_fragment_done
-		&& SSL_version(s) != DTLS1_VERSION)
+	    && SSL_version(s) != DTLS1_VERSION && SSL_version(s) != DTLS1_BAD_VER)
 		{
 		/* countermeasure against known-IV weakness in CBC ciphersuites
 		 * (see http://www.openssl.org/~bodo/tls-cbc.txt) 

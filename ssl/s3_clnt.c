@@ -708,7 +708,7 @@ int ssl3_get_server_hello(SSL *s)
 
 	if (!ok) return((int)n);
 
-	if ( SSL_version(s) == DTLS1_VERSION)
+	if ( SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
 		{
 		if ( s->s3->tmp.message_type == DTLS1_MT_HELLO_VERIFY_REQUEST)
 			{

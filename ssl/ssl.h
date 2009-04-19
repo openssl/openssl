@@ -510,6 +510,8 @@ typedef struct ssl_session_st
 #define SSL_OP_COOKIE_EXCHANGE              0x00002000L
 /* Don't use RFC4507 ticket extension */
 #define SSL_OP_NO_TICKET	            0x00004000L
+/* Use Cisco's "speshul" version of DTLS_BAD_VER (as client)  */
+#define SSL_OP_CISCO_ANYCONNECT		    0x00008000L
 
 /* As server, disallow session resumption on renegotiation */
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION	0x00010000L
