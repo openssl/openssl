@@ -19,6 +19,12 @@ my @fips_dsa_test_list = (
 
 );
 
+my @fips_dsa_pqgver_test_list = (
+
+    [ "PQGVer",  "fips_dssvs pqgver" ]
+
+);
+
 # RSA tests
 
 my @fips_rsa_test_list = (
@@ -360,6 +366,7 @@ my $list_tests     = 0;
 
 my %fips_enabled = (
     dsa         => 1,
+    "dsa-pqgver"  => 0,
     rsa         => 1,
     "rsa-pss0"  => 0,
     "rsa-pss62" => 1,
@@ -370,7 +377,7 @@ my %fips_enabled = (
     aes         => 1,
     "aes-cfb1"  => 0,
     des3        => 1,
-    "des3-cfb1"  => 0
+    "des3-cfb1" => 0
 );
 
 foreach (@ARGV) {
@@ -436,6 +443,7 @@ foreach (@ARGV) {
 my @fips_test_list;
 
 push @fips_test_list, @fips_dsa_test_list       if $fips_enabled{"dsa"};
+push @fips_test_list, @fips_dsa_pqgver_test_list if $fips_enabled{"dsa-pqgver"};
 push @fips_test_list, @fips_rsa_test_list       if $fips_enabled{"rsa"};
 push @fips_test_list, @fips_rsa_pss0_test_list  if $fips_enabled{"rsa-pss0"};
 push @fips_test_list, @fips_rsa_pss62_test_list if $fips_enabled{"rsa-pss62"};
