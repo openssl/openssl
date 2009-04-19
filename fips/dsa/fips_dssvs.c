@@ -131,6 +131,7 @@ void pqgver()
 		fputs(buf,stdout);
 		continue;
 		}
+	fputs(buf, stdout);
 	if(!strcmp(keyword,"[mod"))
 	    nmod=atoi(value);
 	else if(!strcmp(keyword,"P"))
@@ -158,12 +159,6 @@ void pqgver()
 		fprintf(stderr, "Parse Error\n");
 		exit (1);
 		}
-	    pbn("P",p);
-	    pbn("Q",q);
-	    pbn("G",g);
-	    pv("Seed",seed,20);
-	    printf("c = %d\n",counter);
-	    printf("H = %lx\n",h);
 	    dsa = FIPS_dsa_new();
 	    if (!DSA_generate_parameters_ex(dsa, nmod,seed,20 ,&counter2,&h2,NULL))
 			{
@@ -174,7 +169,7 @@ void pqgver()
 		|| (counter != counter2) || (h != h2))
 	    	printf("Result = F\n");
 	    else
-	    	printf("Result = T\n");
+	    	printf("Result = P\n");
 	    BN_free(p);
 	    BN_free(q);
 	    BN_free(g);
@@ -286,7 +281,7 @@ void keyver()
 		if (!BN_mod_exp(Y2, g, X, p, ctx) || BN_cmp(Y2, Y))
 	    		printf("Result = F\n");
 	        else
-	    		printf("Result = T\n");
+	    		printf("Result = P\n");
 		}
 	    BN_free(X);
 	    BN_free(Y);
