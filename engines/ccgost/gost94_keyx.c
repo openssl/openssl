@@ -25,7 +25,7 @@
 
 /* Computes Diffie-Hellman key and stores it into buffer in
  * little-endian byte order as expected by both versions of GOST 94
- * algorigthm
+ * algorithm
  */
 static int compute_pair_key_le(unsigned char *pair_key,BIGNUM *pub_key,DH *dh) 
 	{

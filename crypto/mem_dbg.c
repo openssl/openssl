@@ -787,7 +787,7 @@ void CRYPTO_mem_leaks(BIO *b)
 		 * XXX    This should be in CRYPTO_mem_leaks_cb,
 		 * and CRYPTO_mem_leaks should be implemented by
 		 * using CRYPTO_mem_leaks_cb.
-		 * (Also their should be a variant of lh_doall_arg
+		 * (Also there should be a variant of lh_doall_arg
 		 * that takes a function pointer instead of a void *;
 		 * this would obviate the ugly and illegal
 		 * void_fn_to_char kludge in CRYPTO_mem_leaks_cb.

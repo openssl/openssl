@@ -112,7 +112,7 @@ extern "C" {
 /********************************************************************
  The Microsoft section
  ********************************************************************/
-/* The following is used becaue of the small stack in some
+/* The following is used because of the small stack in some
  * Microsoft operating systems */
 #if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYSNAME_WIN32)
 #  define MS_STATIC	static
@@ -275,14 +275,14 @@ extern "C" {
 #    if !defined(OPENSSL_NO_SOCK) && defined(_WIN32_WINNT)
        /*
         * Just like defining _WIN32_WINNT including winsock2.h implies
-        * certain "discipline" for maintaing [broad] binary compatibility.
+        * certain "discipline" for maintaining [broad] binary compatibility.
         * As long as structures are invariant among Winsock versions,
         * it's sufficient to check for specific Winsock2 API availability
         * at run-time [DSO_global_lookup is recommended]...
         */
 #      include <winsock2.h>
 #      include <ws2tcpip.h>
-       /* yes, they have to be #included prior <windows.h> */
+       /* yes, they have to be #included prior to <windows.h> */
 #    endif
 #    include <windows.h>
 #    include <stdio.h>
@@ -372,7 +372,7 @@ static unsigned int _strlen31(const char *str)
 #    define DEFAULT_HOME  "C:"
 #  endif
 
-#else /* The non-microsoft world world */
+#else /* The non-microsoft world */
 
 #  ifdef OPENSSL_SYS_VMS
 #    define VMS 1

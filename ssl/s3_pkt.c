@@ -177,8 +177,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		}
 
 	/* extend reads should not span multiple packets for DTLS */
-	if ( SSL_version(s) == DTLS1_VERSION &&
-		extend)
+	if ( (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+	     &&	extend)
 		{
 		if ( left > 0 && n > left)
 			n = left;
@@ -836,9 +836,9 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			return(s->s3->wpend_ret);
 			}
 		else if (i <= 0) {
-			if (s->version == DTLS1_VERSION) {
-				/* For DTLS, just drop it. That's kind of the wh
-ole
+			if (s->version == DTLS1_VERSION ||
+			    s->version == DTLS1_BAD_VER) {
+				/* For DTLS, just drop it. That's kind of the whole
 				   point in using a datagram service */
 				wb->left = 0;
 			}

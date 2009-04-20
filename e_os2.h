@@ -262,7 +262,7 @@ extern "C" {
 #define OPENSSL_EXTERN OPENSSL_IMPORT
 
 /* Macros to allow global variables to be reached through function calls when
-   required (if a shared library version requvres it, for example.
+   required (if a shared library version requires it, for example.
    The way it's done allows definitions like this:
 
 	// in foobar.c

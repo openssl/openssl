@@ -292,7 +292,8 @@ int dtls1_accept(SSL *s)
 			s->s3->tmp.next_state=SSL3_ST_SR_CLNT_HELLO_A;
 
 			/* HelloVerifyRequest resets Finished MAC */
-			ssl3_init_finished_mac(s);
+			if (s->version != DTLS1_BAD_VER)
+				ssl3_init_finished_mac(s);
 			break;
 			
 		case SSL3_ST_SW_SRVR_HELLO_A:

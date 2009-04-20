@@ -3,7 +3,7 @@
  *             Copyright (c) 2005-2006 Cryptocom LTD                  *
  *         This file is distributed under the same license as OpenSSL *
  *                                                                    *
- *       Implementation of GOST R 34.10-94 signature algoritgthm      *
+ *       Implementation of GOST R 34.10-94 signature algorithm        *
  *       for OpenSSL                                                  *
  *          Requires OpenSSL 0.9.9 for compilation                    *
  **********************************************************************/

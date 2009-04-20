@@ -68,6 +68,7 @@ extern "C" {
 #endif
 
 #define DTLS1_VERSION			0xFEFF
+#define DTLS1_BAD_VER			0x0100
 
 #if 0
 /* this alert description is not specified anywhere... */

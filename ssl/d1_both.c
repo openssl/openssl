@@ -300,7 +300,7 @@ int dtls1_do_write(SSL *s, int type)
 				const struct hm_header_st *msg_hdr = &s->d1->w_msg_hdr;
 				int xlen;
 
-				if (frag_off == 0)
+				if (frag_off == 0 && s->version != DTLS1_BAD_VER)
 					{
 					/* reconstruct message header is if it
 					 * is being sent in single fragment */
@@ -407,8 +407,10 @@ long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 			s2n (msg_hdr->seq,p);
 			l2n3(0,p);
 			l2n3(msg_len,p);
-			p       -= DTLS1_HM_HEADER_LENGTH;
-			msg_len += DTLS1_HM_HEADER_LENGTH;
+			if (s->version != DTLS1_BAD_VER) {
+				p       -= DTLS1_HM_HEADER_LENGTH;
+				msg_len += DTLS1_HM_HEADER_LENGTH;
+			}
 
 			ssl3_finish_mac(s, p, msg_len);
 			if (s->msg_callback)
@@ -775,6 +777,13 @@ int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 		*p++=SSL3_MT_CCS;
 		s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
 		s->init_num=DTLS1_CCS_HEADER_LENGTH;
+
+		if (s->version == DTLS1_BAD_VER) {
+			s->d1->next_handshake_write_seq++;
+			s2n(s->d1->handshake_write_seq,p);
+			s->init_num+=2;
+		}
+
 		s->init_off=0;
 
 		dtls1_set_message_header_int(s, SSL3_MT_CCS, 0, 
@@ -989,7 +998,7 @@ dtls1_buffer_message(SSL *s, int is_ccs)
 	if ( is_ccs)
 		{
 		OPENSSL_assert(s->d1->w_msg_hdr.msg_len + 
-			DTLS1_CCS_HEADER_LENGTH == (unsigned int)s->init_num);
+			       ((s->version==DTLS1_VERSION)?DTLS1_CCS_HEADER_LENGTH:3) == (unsigned int)s->init_num);
 		}
 	else
 		{

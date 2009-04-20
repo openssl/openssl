@@ -20,7 +20,7 @@ don't do that.
 ==== readme ========================================================
 
 This is the old 0.6.6 docuementation.  Most of the cipher stuff is still
-relevent but I'm working (very slowly) on new docuemtation.
+relevent but I'm working (very slowly) on new documentation.
 The current version can be found online at
 
 http://www.cryptsoft.com/ssleay/doc
@@ -548,8 +548,8 @@ application, ssleay.  This one program is composed of many programs that
 can all be compiled independantly.
 
 ssleay has 3 modes of operation.
-1) If the ssleay binaray has the name of one of its component programs, it
-executes that program and then exits.  This can be achieve by using hard or
+1) If the ssleay binary has the name of one of its component programs, it
+executes that program and then exits.  This can be achieved by using hard or
 symbolic links, or failing that, just renaming the binary.
 2) If the first argument to ssleay is the name of one of the component
 programs, that program runs that program and then exits.
@@ -1185,7 +1185,7 @@ typedef struct bio_st
 	example is for BIO_s_sock().  A socket needs to be 
 	assigned to the BIO before it can be used.
 -	'shutdown', this flag indicates if the underlying 
-	comunication primative being used should be closed/freed 
+	communication primitive being used should be closed/freed 
 	when the BIO is closed.
 -	'flags' is used to hold extra state.  It is primarily used 
 	to hold information about why a non-blocking operation 
@@ -1799,7 +1799,7 @@ int BN_set_word(BIGNUM *a, unsigned long w);
 
 unsigned long BN_get_word(BIGNUM *a);
 	Returns 'a' in an unsigned long.  Not remarkably, often 'a' will
-	be biger than a word, in which case 0xffffffffL is returned.
+	be bigger than a word, in which case 0xffffffffL is returned.
 
 Word Operations
 These functions are much more efficient that the normal bignum arithmetic
@@ -2058,7 +2058,7 @@ Now you will notice that macros like
                 PEM_ASN1_write((int (*)())i2d_X509,PEM_STRING_X509,fp, \
 		                        (char *)x, NULL,NULL,0,NULL)
 Don't do encryption normally.  If you want to PEM encrypt your X509 structure,
-either just call PEM_ASN1_write directly or just define you own
+either just call PEM_ASN1_write directly or just define your own
 macro variant.  As you can see, this macro just sets all encryption related
 parameters to NULL.
 
@@ -5566,7 +5566,7 @@ These 2 functions create and destroy SSL_CTX structures
 
 The SSL_CTX has a session_cache_mode which is by default,
 in SSL_SESS_CACHE_SERVER mode.  What this means is that the library
-will automatically add new session-id's to the cache apon sucsessful
+will automatically add new session-id's to the cache upon successful
 SSL_accept() calls.
 If SSL_SESS_CACHE_CLIENT is set, then client certificates are also added
 to the cache.
@@ -5580,12 +5580,12 @@ SSL_SESS_NO_CACHE_BOTH	- Either SSL_accept() or SSL_connect().
 If SSL_SESS_CACHE_NO_AUTO_CLEAR is set, old timed out sessions are
 not automatically removed each 255, SSL_connect()s or SSL_accept()s.
 
-By default, apon every 255 successful SSL_connect() or SSL_accept()s,
+By default, upon every 255 successful SSL_connect() or SSL_accept()s,
 the cache is flush.  Please note that this could be expensive on
 a heavily loaded SSL server, in which case, turn this off and
 clear the cache of old entries 'manually' (with one of the functions
 listed below) every few hours.  Perhaps I should up this number, it is hard
-to say.  Remember, the '255' new calls is just a mechanims to get called
+to say.  Remember, the '255' new calls is just a mechanism to get called
 every now and then, in theory at most 255 new session-id's will have been
 added but if 100 are added every minute, you would still have
 500 in the cache before any would start being flushed (assuming a 3 minute
@@ -5628,10 +5628,10 @@ if copy is 1.  Otherwise, the reference count is not modified.
 void SSL_CTX_sess_set_get_cb(ctx,cb) sets the callback and
 int (*cb)()SSL_CTX_sess_get_get_cb(ctx) returns the callback.
 
-These callbacks are basically indended to be used by processes to
+These callbacks are basically intended to be used by processes to
 send their session-id's to other processes.  I currently have not implemented
-non-blocking semantics for these callbacks, it is upto the appication
-to make the callbacks effiecent if they require blocking (perhaps
+non-blocking semantics for these callbacks, it is upto the application
+to make the callbacks efficient if they require blocking (perhaps
 by 'saving' them and then 'posting them' when control returns from
 the SSL_accept().
 
@@ -6589,7 +6589,7 @@ This information can be used to recall the functions when the 'error'
 condition has dissapeared.
 
 After the connection has been made, information can be retrived about the
-SSL session and the session-id values that have been decided apon.
+SSL session and the session-id values that have been decided upon.
 The 'peer' certificate can be retrieved.
 
 The session-id values include
