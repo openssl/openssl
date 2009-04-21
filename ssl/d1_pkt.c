@@ -1067,7 +1067,7 @@ start:
 	if (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC)
 		{
 		struct ccs_header_st ccs_hdr;
-		int ccs_hdr_len = DTLS1_CCS_HEADER_LENGTH;
+		unsigned int ccs_hdr_len = DTLS1_CCS_HEADER_LENGTH;
 
 		dtls1_get_ccs_header(rr->data, &ccs_hdr);
 
