@@ -115,6 +115,9 @@
 
 #include <stdio.h>
 #include "ssl_locl.h"
+#ifndef OPENSSL_NO_KRB5
+#include "kssl_lcl.h"
+#endif
 #include <openssl/buffer.h>
 #include <openssl/rand.h>
 #include <openssl/objects.h>
@@ -892,7 +895,7 @@ int dtls1_send_client_key_exchange(SSL *s)
 				sizeof tmp_buf);
 			EVP_EncryptFinal_ex(&ciph_ctx,&(epms[outl]),&padl);
 			outl += padl;
-			if (outl > sizeof epms)
+			if (outl > (int)sizeof epms)
 				{
 				SSLerr(SSL_F_DTLS1_SEND_CLIENT_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
 				goto err;

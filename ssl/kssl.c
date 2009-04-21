@@ -76,6 +76,7 @@
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/krb5_asn.h>
+#include "kssl_lcl.h"
 
 #ifndef OPENSSL_NO_KRB5
 
@@ -131,7 +132,7 @@
 #define krb5_principal_compare   kssl_krb5_principal_compare
 #define krb5_decrypt_tkt_part    kssl_krb5_decrypt_tkt_part
 #define krb5_timeofday           kssl_krb5_timeofday
-#define krb5_rc_default           kssl_krb5_rc_default
+#define krb5_rc_default          kssl_krb5_rc_default
 
 #ifdef krb5_rc_initialize
 #undef krb5_rc_initialize
@@ -839,7 +840,7 @@ kssl_map_enc(krb5_enctype enctype)
 **	"62 xx 30 yy" (APPLICATION-2, SEQUENCE), where xx-yy =~ 2, and
 **	xx and yy are possibly multi-byte length fields.
 */
-int 	kssl_test_confound(unsigned char *p)
+static int 	kssl_test_confound(unsigned char *p)
 	{
 	int 	len = 2;
 	int 	xx = 0, yy = 0;
@@ -874,7 +875,7 @@ int 	kssl_test_confound(unsigned char *p)
 **      what the highest assigned CKSUMTYPE_ constant is.  As of 1.2.2
 **      it is 0x000c (CKSUMTYPE_HMAC_SHA1_DES3).  So we will use 0x0010.
 */
-size_t  *populate_cksumlens(void)
+static size_t  *populate_cksumlens(void)
 	{
 	int 		i, j, n;
 	static size_t 	*cklens = NULL;
@@ -1025,7 +1026,7 @@ print_krb5_keyblock(char *label, krb5_keyblock *keyblk)
 /*	Display contents of krb5_principal_data struct, for debugging
 **	(krb5_principal is typedef'd == krb5_principal_data *)
 */
-void
+static void
 print_krb5_princ(char *label, krb5_principal_data *princ)
         {
 	int i, ui, uj;
@@ -1224,7 +1225,7 @@ kssl_cget_tkt(	/* UPDATE */	KSSL_CTX *kssl_ctx,
 **				code here.  This tkt should alloc/free just
 **				like the real thing.
 */
-krb5_error_code
+static krb5_error_code
 kssl_TKT2tkt(	/* IN     */	krb5_context	krb5context,
 		/* IN     */	KRB5_TKTBODY	*asn1ticket,
 		/* OUT    */	krb5_ticket	**krb5ticket,
@@ -1899,7 +1900,7 @@ void kssl_krb5_free_data_contents(krb5_context context, krb5_data *data)
 **  Return pointer to the (partially) filled in struct tm on success,
 **  return NULL on failure.
 */
-struct tm	*k_gmtime(ASN1_GENERALIZEDTIME *gtime, struct tm *k_tm)
+static struct tm *k_gmtime(ASN1_GENERALIZEDTIME *gtime, struct tm *k_tm)
 	{
 	char 		c, *p;
 
@@ -1925,7 +1926,7 @@ struct tm	*k_gmtime(ASN1_GENERALIZEDTIME *gtime, struct tm *k_tm)
 **  So we try to sneek the clockskew out through the replay cache.
 **	If that fails just return a likely default (300 seconds).
 */
-krb5_deltat	get_rc_clockskew(krb5_context context)
+static krb5_deltat get_rc_clockskew(krb5_context context)
 	{
 	krb5_rcache 	rc;
 	krb5_deltat 	clockskew;
