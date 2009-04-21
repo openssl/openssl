@@ -794,7 +794,7 @@ int dtls1_send_client_key_exchange(SSL *s)
                         krb5_data	*enc_ticket;
                         krb5_data	authenticator, *authp = NULL;
 			EVP_CIPHER_CTX	ciph_ctx;
-			EVP_CIPHER	*enc = NULL;
+			const EVP_CIPHER *enc = NULL;
 			unsigned char	iv[EVP_MAX_IV_LENGTH];
 			unsigned char	tmp_buf[SSL_MAX_MASTER_KEY_LENGTH];
 			unsigned char	epms[SSL_MAX_MASTER_KEY_LENGTH 
