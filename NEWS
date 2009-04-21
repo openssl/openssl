@@ -11,7 +11,7 @@
       o RFC3280 path validation: sufficient to process PKITS tests.
       o Integrated support for PVK files and keyblobs.
       o Change default private key format to PKCS#8.
-      o CMS support: able to process all examples in RFCXXXX
+      o CMS support: able to process all examples in RFC4134
       o Streaming ASN1 encode support for PKCS#7 and CMS.
       o Multiple signer and signer add support for PKCS#7 and CMS.
       o ASN1 printing support.
