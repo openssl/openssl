@@ -2122,7 +2122,7 @@ krb5_error_code  kssl_check_authent(
  		tm_g = gmtime(&now);		tg = mktime(tm_g);
  		tz_offset = tg - tl;
 
-		*atimep = tr - tz_offset;
+		*atimep = (krb5_timestamp)(tr - tz_offset);
  		}
 
 #ifdef KSSL_DEBUG
