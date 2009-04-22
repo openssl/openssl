@@ -339,8 +339,10 @@ void ENGINE_load_ubsec(void);
 void ENGINE_load_cryptodev(void);
 void ENGINE_load_padlock(void);
 void ENGINE_load_builtin_engines(void);
+#ifdef OPENSSL_SYS_WIN32
 #ifndef OPENSSL_NO_CAPIENG
 void ENGINE_load_capi(void);
+#endif
 #endif
 
 /* Get and set global flags (ENGINE_TABLE_FLAG_***) for the implementation
