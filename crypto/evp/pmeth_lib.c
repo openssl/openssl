@@ -80,7 +80,9 @@ static const EVP_PKEY_METHOD *standard_methods[] =
 	&rsa_pkey_meth,
 	&dh_pkey_meth,
 	&dsa_pkey_meth,
+#ifndef OPENSSL_NO_EC
 	&ec_pkey_meth,
+#endif
 	&hmac_pkey_meth,
 	};
 

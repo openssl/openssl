@@ -918,6 +918,11 @@ if (defined($disabled{"tls1"}))
 	$disabled{"tlsext"} = "forced";
 	}
 
+if (defined($disabled{"ec"}))
+	{
+	$disabled{"gost"} = "forced";
+	}
+
 if ($target eq "TABLE") {
 	foreach $target (sort keys %table) {
 		print_table_entry($target);
