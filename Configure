@@ -918,7 +918,8 @@ if (defined($disabled{"tls1"}))
 	$disabled{"tlsext"} = "forced";
 	}
 
-if (defined($disabled{"ec"}))
+if (defined($disabled{"ec"}) || defined($disabled{"dsa"})
+    || defined($disabled{"dh"}))
 	{
 	$disabled{"gost"} = "forced";
 	}

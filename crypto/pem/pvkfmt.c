@@ -63,6 +63,7 @@
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/bn.h>
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
 
@@ -933,3 +934,4 @@ int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
 		}
 	return -1;
 	}
+#endif

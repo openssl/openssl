@@ -1715,7 +1715,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr, int *pkey_type,
 		ERR_print_errors(err);
 		return NULL;
 		}
-
+#ifndef OPENSSL_NO_RSA
 	if ((*pkey_type == EVP_PKEY_RSA) && (keylen != -1))
 		{
 		if (EVP_PKEY_CTX_set_rsa_keygen_bits(gctx, keylen) <= 0)
@@ -1726,6 +1726,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(BIO *err, const char *gstr, int *pkey_type,
 			return NULL;
 			}
 		}
+#endif
 
 	return gctx;
 	}

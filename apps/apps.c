@@ -921,11 +921,13 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 				&pkey, NULL, NULL))
 			goto end;
 		}
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
 	else if (format == FORMAT_MSBLOB)
 		pkey = b2i_PrivateKey_bio(key);
 	else if (format == FORMAT_PVK)
 		pkey = b2i_PVK_bio(key, (pem_password_cb *)password_callback,
 								&cb_data);
+#endif
 	else
 		{
 		BIO_printf(err,"bad input format specified for key file\n");
@@ -989,6 +991,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		{
 		pkey=d2i_PUBKEY_bio(key, NULL);
 		}
+#ifndef OPENSSL_NO_RSA
 	else if (format == FORMAT_ASN1RSA)
 		{
 		RSA *rsa;
@@ -1018,7 +1021,7 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 		else
 			pkey = NULL;
 		}
-
+#endif
 	else if (format == FORMAT_PEM)
 		{
 		pkey=PEM_read_bio_PUBKEY(key,NULL,
@@ -1028,8 +1031,10 @@ EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
 	else if (format == FORMAT_NETSCAPE || format == FORMAT_IISSGC)
 		pkey = load_netscape_key(err, key, file, key_descrip, format);
 #endif
+#if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
 	else if (format == FORMAT_MSBLOB)
 		pkey = b2i_PublicKey_bio(key);
+#endif
 	else
 		{
 		BIO_printf(err,"bad input format specified for key file\n");

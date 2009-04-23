@@ -409,6 +409,7 @@ bad:
 			}
 		else i=PEM_write_bio_RSAPrivateKey(out,rsa,
 						enc,NULL,0,NULL,passout);
+#ifndef OPENSSL_NO_DSA
 	} else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
 		EVP_PKEY *pk;
 		pk = EVP_PKEY_new();
@@ -420,6 +421,7 @@ bad:
 		else
 			i = i2b_PrivateKey_bio(out, pk);
 		EVP_PKEY_free(pk);
+#endif
 	} else	{
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
