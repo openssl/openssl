@@ -573,7 +573,7 @@ my %table=(
 
 my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A
 		    VC-NT VC-CE VC-WIN32
-		    BC-32 OS2-EMX
+		    BC-32 
 		    netware-clib netware-clib-bsdsock
 		    netware-libc netware-libc-bsdsock);
 
@@ -916,6 +916,11 @@ if (defined($disabled{"md5"}) || defined($disabled{"sha"})
 if (defined($disabled{"tls1"}))
 	{
 	$disabled{"tlsext"} = "forced";
+	}
+
+if (defined($disabled{"ec"}))
+	{
+	$disabled{"gost"} = "forced";
 	}
 
 if ($target eq "TABLE") {
@@ -1432,6 +1437,7 @@ while (<IN>)
 		}
 	$sdirs = 0 unless /\\$/;
         s/engines // if (/^DIRS=/ && $disabled{"engine"});
+	s/ccgost// if (/^ENGDIRS=/ && $disabled{"gost"});
 	s/^VERSION=.*/VERSION=$version/;
 	s/^MAJOR=.*/MAJOR=$major/;
 	s/^MINOR=.*/MINOR=$minor/;

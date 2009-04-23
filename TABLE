@@ -3691,7 +3691,7 @@ $multilib     = 64
 
 *** mingw
 $cc           = gcc
-$cflags       = -mno-cygwin -DL_ENDIAN -fomit-frame-pointer -O3 -march=i486 -Wall
+$cflags       = -mno-cygwin -DL_ENDIAN -DOPENSSL_NO_CAPIENG -fomit-frame-pointer -O3 -march=i486 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = MINGW32

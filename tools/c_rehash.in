@@ -31,6 +31,7 @@ if(! -x $openssl) {
 	foreach (split /$path_delim/, $ENV{PATH}) {
 		if(-x "$_/$openssl") {
 			$found = 1;
+			$openssl = "$_/$openssl";
 			last;
 		}	
 	}

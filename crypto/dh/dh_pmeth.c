@@ -59,7 +59,6 @@
 #include "cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>

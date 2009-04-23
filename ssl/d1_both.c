@@ -969,7 +969,7 @@ dtls1_retransmit_buffered_messages(SSL *s)
 		{
 		frag = (hm_fragment *)item->data;
 			if ( dtls1_retransmit_message(s,
-				dtls1_get_queue_priority(frag->msg_header.seq, frag->msg_header.is_ccs),
+				(unsigned short)dtls1_get_queue_priority(frag->msg_header.seq, frag->msg_header.is_ccs),
 				0, &found) <= 0 && found)
 			{
 			fprintf(stderr, "dtls1_retransmit_message() failed\n");

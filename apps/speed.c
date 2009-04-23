@@ -1129,6 +1129,14 @@ int MAIN(int argc, char **argv)
 			rsa_doit[i]=1;
 		for (i=0; i<DSA_NUM; i++)
 			dsa_doit[i]=1;
+#ifndef OPENSSL_NO_ECDSA
+		for (i=0; i<EC_NUM; i++)
+			ecdsa_doit[i]=1;
+#endif
+#ifndef OPENSSL_NO_ECDH
+		for (i=0; i<EC_NUM; i++)
+			ecdh_doit[i]=1;
+#endif
 		}
 	for (i=0; i<ALGOR_NUM; i++)
 		if (doit[i]) pr_header++;
