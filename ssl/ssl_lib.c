@@ -1966,6 +1966,8 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 #define ku_reject(x, usage) \
 	(((x)->ex_flags & EXFLAG_KUSAGE) && !((x)->ex_kusage & (usage)))
 
+#ifndef OPENSSL_NO_EC
+
 int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 	{
 	unsigned long alg_k, alg_a;
@@ -2036,6 +2038,8 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 
 	return 1;  /* all checks are ok */
 	}
+
+#endif
 
 /* THIS NEEDS CLEANING UP */
 X509 *ssl_get_server_send_cert(SSL *s)
