@@ -109,6 +109,7 @@ ZLIB_INCLUDE=
 LIBZLIB=
 
 DIRS=   crypto ssl engines apps test tools
+ENGDIRS= ccgost
 SHLIBDIRS= crypto ssl
 
 # dirs in crypto to build
@@ -179,7 +180,7 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
 		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
 		CROSS_COMPILE_PREFIX='$(CROSS_COMPILE_PREFIX)'	\
-		PERL='$(PERL)'					\
+		PERL='$(PERL)' ENGDIRS='$(ENGDIRS)'		\
 		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/lib'	\
 		INSTALL_PREFIX='$(INSTALL_PREFIX)'		\
 		INSTALLTOP='$(INSTALLTOP)' OPENSSLDIR='$(OPENSSLDIR)'	\

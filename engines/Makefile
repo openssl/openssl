@@ -9,9 +9,9 @@ INCLUDES= -I../include
 CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
-EDIRS= ccgost
+ENGDIRS= ccgost
 
-RECURSIVE_MAKE=	[ -n "$(EDIRS)" ] && for i in $(EDIRS) ; do \
+RECURSIVE_MAKE=	[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
 		    (cd $$i && echo "making $$target in $(DIR)/$$i..." && \
 		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
 		done;
