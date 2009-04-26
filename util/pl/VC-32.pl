@@ -173,7 +173,7 @@ $shlib_ex_obj="";
 $app_ex_obj="setargv.obj" if ($FLAVOR !~ /CE/);
 if ($FLAVOR =~ /WIN64A/) {
 	if (`nasm -v` =~ /NASM version ([0-9]+\.[0-9]+)/ && $1 >= 2.0) {
-		$asm='nasm -f win64';
+		$asm='nasm -f win64 -DNEAR -Ox';
 		$asm.=' -g' if $debug;
 		$afile='-o ';
 	} else {
