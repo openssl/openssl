@@ -27,7 +27,7 @@
 
 - Netwide Assembler, a.k.a. NASM, available from http://nasm.sourceforge.net/
   is required if you intend to utilize assembler modules. Note that NASM
-  is the only supported assembler.
+  is now the only supported assembler.
 
  If you are compiling from a tarball or a CVS snapshot then the Win32 files
  may well be not up to date. This may mean that some "tweaking" is required to
@@ -43,7 +43,7 @@
 
  Firstly you should run Configure:
 
- > perl Configure VC-WIN32 --prefix=c:/some/openssl/dir
+ > perl Configure VC-WIN32 --prefix=c:\some\openssl\dir
 
  Where the prefix argument specifies where OpenSSL will be installed to.
 
@@ -56,6 +56,7 @@
 
  - If you don't want to use the assembly language files at all then run:
 
+   > perl Configure VC-WIN32 no-asm --prefix=c:/some/openssl/dir
    > ms\do_ms
 
  If you get errors about things not having numbers assigned then check the
