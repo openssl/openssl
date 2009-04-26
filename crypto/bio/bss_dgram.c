@@ -61,6 +61,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <sys/time.h>
 #define USE_SOCKETS
 #include "cryptlib.h"
 
