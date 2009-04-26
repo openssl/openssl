@@ -662,6 +662,7 @@ while($line=<>) {
 		$insn = $opcode->out($#args>=1?$args[$#args]->size():$sz);
 	    } else {
 		$insn = $opcode->out();
+		$insn .= $sz if (map($_->out() =~ /xmm|mmx/,@args));
 		@args = reverse(@args);
 		undef $sz if ($nasm && $opcode->mnemonic() eq "lea");
 	    }

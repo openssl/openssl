@@ -16,9 +16,11 @@ sub ::generic
     # fix hexadecimal constants
     for (@arg) { s/0x([0-9a-f]+)/0$1h/oi; }
 
-    # fix xmm references
-    $arg[0] =~ s/\b[A-Z]+WORD\s+PTR/XMMWORD PTR/i if ($arg[1]=~/\bxmm[0-7]\b/i);
-    $arg[1] =~ s/\b[A-Z]+WORD\s+PTR/XMMWORD PTR/i if ($arg[0]=~/\bxmm[0-7]\b/i);
+    if ($opcode !~ /movq/)
+    {	# fix xmm references
+	$arg[0] =~ s/\b[A-Z]+WORD\s+PTR/XMMWORD PTR/i if ($arg[1]=~/\bxmm[0-7]\b/i);
+	$arg[1] =~ s/\b[A-Z]+WORD\s+PTR/XMMWORD PTR/i if ($arg[0]=~/\bxmm[0-7]\b/i);
+    }
 
     &::emit($opcode,@arg);
   1;
