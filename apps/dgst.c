@@ -594,7 +594,7 @@ int do_fp(BIO *out, unsigned char *buf, BIO *bp, int sep, int binout,
 	else
 		{
 		len=BIO_gets(bp,(char *)buf,BUFSIZE);
-		if (len <0) 
+		if ((int)len <0)
 			{
 			ERR_print_errors(bio_err);
 			return 1;
