@@ -659,30 +659,40 @@ const char *CRYPTO_get_lock_name(int type)
 
 #if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
 	defined(__INTEL__) || \
-	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64)
+	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 
-unsigned long  OPENSSL_ia32cap_P=0;
-unsigned long *OPENSSL_ia32cap_loc(void) { return &OPENSSL_ia32cap_P; }
+unsigned int  OPENSSL_ia32cap_P[2];
+unsigned int *OPENSSL_ia32cap_loc(void) { return OPENSSL_ia32cap_P; }
 
 #if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
 #define OPENSSL_CPUID_SETUP
+#if defined(_WIN32)
+typedef unsigned __int64 IA32CAP;
+#define strtoull _strtoui64
+#else
+typedef unsigned long long IA32CAP;
+#endif
 void OPENSSL_cpuid_setup(void)
 { static int trigger=0;
-  unsigned long OPENSSL_ia32_cpuid(void);
+  IA32CAP OPENSSL_ia32_cpuid(void);
+  IA32CAP vec;
   char *env;
 
     if (trigger)	return;
 
     trigger=1;
     if ((env=getenv("OPENSSL_ia32cap")))
-	OPENSSL_ia32cap_P = strtoul(env,NULL,0)|(1<<10);
+	vec = strtoull(env,NULL,0);
     else
-	OPENSSL_ia32cap_P = OPENSSL_ia32_cpuid()|(1<<10);
+	vec = OPENSSL_ia32_cpuid();
+
     /*
      * |(1<<10) sets a reserved bit to signal that variable
      * was initialized already... This is to avoid interference
      * with cpuid snippets in ELF .init segment.
      */
+    OPENSSL_ia32cap_P[0] = (unsigned int)vec|(1<<10);
+    OPENSSL_ia32cap_P[1] = (unsigned int)(vec>>32);
 }
 #endif
 

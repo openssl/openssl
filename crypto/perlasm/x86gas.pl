@@ -150,7 +150,7 @@ sub ::public_label
 
 sub ::file_end
 {   if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out) {
-	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,4";
+	my $tmp=".comm\t${nmdecor}OPENSSL_ia32cap_P,8";
 	if ($::elf)	{ push (@out,"$tmp,4\n"); }
 	else		{ push (@out,"$tmp\n"); }
     }
