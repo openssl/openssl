@@ -85,7 +85,9 @@
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/engine.h>
+#ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
+#endif
 #include <openssl/bn.h>
 
 #ifndef OPENSSL_NO_HW

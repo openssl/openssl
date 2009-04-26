@@ -334,6 +334,7 @@ bad:
 			i=PEM_write_bio_DSA_PUBKEY(out,dsa);
 		else i=PEM_write_bio_DSAPrivateKey(out,dsa,enc,
 							NULL,0,NULL, passout);
+#ifndef OPENSSL_NO_RSA
 	} else if (outformat == FORMAT_MSBLOB || outformat == FORMAT_PVK) {
 		EVP_PKEY *pk;
 		pk = EVP_PKEY_new();
@@ -345,6 +346,7 @@ bad:
 		else
 			i = i2b_PrivateKey_bio(out, pk);
 		EVP_PKEY_free(pk);
+#endif
 	} else {
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
@@ -365,4 +367,10 @@ end:
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
+#else /* !OPENSSL_NO_DSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

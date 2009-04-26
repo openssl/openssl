@@ -56,12 +56,12 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
-#include <openssl/rsa.h>
 #include <openssl/bn.h>
 
 #ifdef OPENSSL_SYS_WIN32
 #ifndef OPENSSL_NO_CAPIENG
 
+#include <openssl/rsa.h>
 
 #include <windows.h>
 
