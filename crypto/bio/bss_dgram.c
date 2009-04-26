@@ -61,7 +61,9 @@
 
 #include <stdio.h>
 #include <errno.h>
+#ifdef OPENSSL_SYS_VMS
 #include <sys/time.h>
+#endif
 #define USE_SOCKETS
 #include "cryptlib.h"
 
