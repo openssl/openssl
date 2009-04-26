@@ -83,6 +83,22 @@ typedef struct { /* FIXME incomplete */
 	GOST_KEY_TRANSPORT *gkt;
 } GOST_CLIENT_KEY_EXCHANGE_PARAMS;
 
+/* Hacks to shorten symbols to 31 characters or less, or OpenVMS.
+   This mimics what's done in symhacks.h, but since this is a very
+   local header file, I prefered to put this hack directly here.
+   -- Richard Levitte */
+#ifdef OPENSSL_SYS_VMS
+#undef GOST_CLIENT_KEY_EXCHANGE_PARAMS_it
+#defined GOST_CLIENT_KEY_EXCHANGE_PARAMS_it	GOST_CLIENT_KEY_EXC_PARAMS_it
+#undef GOST_CLIENT_KEY_EXCHANGE_PARAMS_new
+#defined GOST_CLIENT_KEY_EXCHANGE_PARAMS_new	GOST_CLIENT_KEY_EXC_PARAMS_new
+#undef GOST_CLIENT_KEY_EXCHANGE_PARAMS_free
+#defined GOST_CLIENT_KEY_EXCHANGE_PARAMS_free	GOST_CLIENT_KEY_EXC_PARAMS_free
+#undef d2i_GOST_CLIENT_KEY_EXCHANGE_PARAMS
+#defined d2i_GOST_CLIENT_KEY_EXCHANGE_PARAMS	d2i_GOST_CLIENT_KEY_EXC_PARAMS
+#undef i2d_GOST_CLIENT_KEY_EXCHANGE_PARAMS
+#defined i2d_GOST_CLIENT_KEY_EXCHANGE_PARAMS	i2d_GOST_CLIENT_KEY_EXC_PARAMS
+#endif /* End of hack */
 DECLARE_ASN1_FUNCTIONS(GOST_CLIENT_KEY_EXCHANGE_PARAMS)
 typedef struct {
 	ASN1_OBJECT *key_params;
