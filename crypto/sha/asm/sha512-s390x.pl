@@ -227,6 +227,7 @@ $code.=<<___ if ($kimdfunc);
 	.long	0xb93e0002	# kimd %r0,%r2
 	brc	1,.-4		# pay attention to "partial completion"
 	br	%r14
+.align	16
 .Lsoftware:
 ___
 $code.=<<___;
