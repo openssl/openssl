@@ -91,9 +91,9 @@ RC4:	or	$len,$len
 	jne	.Lentry
 	ret
 .Lentry:
+	push	%rbx
 	push	%r12
 	push	%r13
-	sub	\$8,%rsp
 .Lprologue:
 
 	add	\$8,$dat
@@ -167,7 +167,6 @@ $code.=<<___;
 	jz	.Lcloop1
 	cmpl	\$0,260($dat)
 	jnz	.Lcloop1
-	push	%rbx
 	jmp	.Lcloop8
 .align	16
 .Lcloop8:
@@ -222,7 +221,6 @@ $code.=<<___;
 
 	test	\$-8,$len
 	jnz	.Lcloop8
-	pop	%rbx
 	cmp	\$0,$len
 	jne	.Lcloop1
 	jmp	.Lexit
@@ -254,8 +252,9 @@ $code.=<<___;
 	movl	$XX[0]#d,-8($dat)
 	movl	$YY#d,-4($dat)
 
-	mov	8(%rsp),%r13
-	mov	16(%rsp),%r12
+	mov	(%rsp),%r13
+	mov	8(%rsp),%r12
+	mov	16(%rsp),%rbx
 	add	\$24,%rsp
 .Lepilogue:
 	ret
@@ -400,13 +399,15 @@ stream_se_handler:
 	mov	152($context),%rax	# pull context->Rsp
 
 	lea	.Lepilogue(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<prologue label
+	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lin_prologue
 
 	lea	24(%rax),%rax
 
-	mov	-8(%rax),%r12
-	mov	-16(%rax),%r13
+	mov	-8(%rax),%rbx
+	mov	-16(%rax),%r12
+	mov	-24(%rax),%r13
+	mov	%rbx,144($context)	# restore context->Rbx
 	mov	%r12,216($context)	# restore context->R12
 	mov	%r13,224($context)	# restore context->R13
 
