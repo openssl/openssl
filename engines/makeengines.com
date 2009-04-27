@@ -87,6 +87,7 @@ $ ENGINE_chil = "e_chil"
 $ ENGINE_nuron = "e_nuron"
 $ ENGINE_sureware = "e_sureware"
 $ ENGINE_ubsec = "e_ubsec"
+$ ENGINE_ubsec = "e_padlock"
 $
 $ ENGINE_ccgost_SUBDIR = "ccgost"
 $ ENGINE_ccgost = "e_gost_err,gost2001_keyx,gost2001,gost89,gost94_keyx,"+ -
@@ -139,6 +140,10 @@ $ ELSE
 $   WRITE SYS$OUTPUT "Compiling Support Files. (",BUILDALL,")"
 $ ENDIF
 $!
+$!  Create a .OPT file for the object files
+$!
+$ OPEN/WRITE OBJECTS 'EXE_DIR''ENGINE_NAME'.OPT
+$!
 $! Here's the start of per-engine module loop.
 $!
 $ FILE_COUNTER = 0
@@ -189,6 +194,14 @@ $   MACRO/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
 $ ELSE
 $   CC/OBJECT='OBJECT_FILE' 'SOURCE_FILE'
 $ ENDIF
+$ WRITE OBJECTS OBJECT_FILE
+$!
+$! Next file
+$!
+$ GOTO FILE_NEXT
+$!
+$ FILE_DONE:
+$ CLOSE OBJECTS
 $!
 $! Now, there are two ways to handle this.  We can either build 
 $! shareable images or stick the engine object file into libcrypto.
@@ -203,25 +216,15 @@ $ ENGINE_OPT := SYS$DISK:[]'ARCH'.OPT
 $ IF TCPIP_LIB .NES. ""
 $ THEN
 $   LINK/'DEBUGGER'/'TRACEBACK' /SHARE='EXE_DIR''ENGINE_NAME'.EXE -
-	'OBJECT_FILE''EXTRA_OBJ', -
+	'EXE_DIR''ENGINE_NAME'.OPT/OPTION'EXTRA_OBJ', -
 	'CRYPTO_LIB'/LIBRARY, -
 	'ENGINE_OPT'/OPTION,'TCPIP_LIB','OPT_FILE'/OPTION
 $ ELSE
 $   LINK/'DEBUGGER'/'TRACEBACK' /SHARE='EXE_DIR''ENGINE_NAME'.EXE -
-	'OBJECT_FILE''EXTRA_OBJ', -
+	'EXE_DIR''ENGINE_NAME'.OPT/OPTION'EXTRA_OBJ', -
         'CRYPTO_LIB'/LIBRARY, -
 	'ENGINE_OPT'/OPTION,'OPT_FILE'/OPTION
 $ ENDIF
-$!
-$! Clean up
-$!
-$ DELETE 'OBJECT_FILE';*
-$!
-$! Next file
-$!
-$ GOTO FILE_NEXT
-$!
-$ FILE_DONE:
 $!
 $! Next engine
 $!
