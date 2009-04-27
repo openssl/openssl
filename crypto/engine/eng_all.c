@@ -71,6 +71,9 @@ void ENGINE_load_builtin_engines(void)
 #if defined(__OpenBSD__) || defined(__FreeBSD__)
 	ENGINE_load_cryptodev();
 #endif
+#if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_AESNI)
+	ENGINE_load_aesni();
+#endif
 	ENGINE_load_dynamic();
 #ifndef OPENSSL_NO_STATIC_ENGINE
 #ifndef OPENSSL_NO_HW

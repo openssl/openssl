@@ -348,6 +348,7 @@ void ENGINE_load_gost(void);
 #endif
 #endif
 void ENGINE_load_cryptodev(void);
+void ENGINE_load_aesni(void);
 void ENGINE_load_builtin_engines(void);
 
 /* Get and set global flags (ENGINE_TABLE_FLAG_***) for the implementation
