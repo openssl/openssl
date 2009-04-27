@@ -348,7 +348,7 @@ if ($PREFIX eq "aesni") {
 	&lea	($inp,&DWP(0x30,$inp));
 	&pxor	($inout0,$ivec);
 	&pxor	($inout1,$in0);
-	&movups	($ivec,&QWP(0x20,$inp));
+	&movups	($ivec,&QWP(-0x10,$inp));
 	&pxor	($inout2,$in1);
 	&movups	(&QWP(0,$out),$inout0);
 	&mov	($rounds,$rounds_)	# restore $rounds
