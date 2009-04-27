@@ -212,9 +212,9 @@ if ($PREFIX eq "aesni") {
 	&call	("_aesni_encrypt3");
 	&movups	(&QWP(0,$out),$inout0);
 	&sub	($len,0x30);
-	&movups	(&QWP(0x10,$out),$inout0);
+	&movups	(&QWP(0x10,$out),$inout1);
 	&mov	($key,$key_);		# restore $key
-	&movups	(&QWP(0x20,$out),$inout0);
+	&movups	(&QWP(0x20,$out),$inout2);
 	&mov	($rounds,$rounds_);	# restore $rounds
 	&lea	($out,&DWP(0x30,$out));
 	&jnc	(&label("ecb_enc_loop3"));
@@ -250,9 +250,9 @@ if ($PREFIX eq "aesni") {
 	&movups	(&QWP(0,$out),$inout0);
 	&sub	($len,0x30);
 	&lea	($inp,&DWP(0x30,$inp));
-	&movups	(&QWP(0x10,$out),$inout0);
+	&movups	(&QWP(0x10,$out),$inout1);
 	&mov	($key,$key_);		# restore $key
-	&movups	(&QWP(0x20,$out),$inout0);
+	&movups	(&QWP(0x20,$out),$inout2);
 	&mov	($rounds,$rounds_);	# restore $rounds
 	&lea	($out,&DWP(0x30,$out));
 	&jnc	(&label("ecb_dec_loop3"));
