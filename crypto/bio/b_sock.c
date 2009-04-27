@@ -732,9 +732,9 @@ again:
 #endif
 				if (client.sa_family == AF_INET)
 					{
-					struct sockaddr_in *sin6 =
+					struct sockaddr_in *sin4 =
 						(struct sockaddr_in *)&client;
-					sin6->sin_addr.s_addr=htonl(0x7F000001);
+					sin4->sin_addr.s_addr=htonl(0x7F000001);
 					}
 				else	goto err;
 				}
@@ -808,18 +808,18 @@ int BIO_accept(int sock, char **addr)
 	if (addr == NULL) goto end;
 
 #ifdef EAI_FAMILY
-# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_BEOS_BONE) || defined(OPENSSL_SYS_MSDOS)
-#  define SOCKLEN_T size_t
-# elif !defined(SOCKLEN_T)
-#  define SOCKLEN_T socklen_t
-#endif
 	do {
 	char   h[NI_MAXHOST],s[NI_MAXSERV];
 	size_t nl;
 	static union {	void *p;
-			int (*f)(const struct sockaddr *,SOCKLEN_T,
+			int (*f)(const struct sockaddr *,size_t/*socklen_t*/,
 				 char *,size_t,char *,size_t,int);
 			} p_getnameinfo = {NULL};
+			/* 2nd argument to getnameinfo is specified to
+			 * be socklen_t. Unfortunately there is a number
+			 * of environments where socklen_t is not defined.
+			 * As it's passed by value, it's safe to pass it
+			 * as size_t... <appro> */
 
 	if (p_getnameinfo.p==NULL)
 		{
