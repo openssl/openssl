@@ -28,26 +28,26 @@ if $PROG engine padlock | grep -v no-ACE; then
     for alg in $ACE_ALGS; do
 	echo $alg
 	TEST=`(	cat $PROG | \
-		$PROG enc -e -k $HASH -$alg -bufsize 999 -engine padlock | \
-		$PROG enc -d -k $HASH -$alg | \
+		$PROG enc -e -k "$HASH" -$alg -bufsize 999 -engine padlock | \
+		$PROG enc -d -k "$HASH" -$alg | \
 		$PROG dgst -hex ) 2>/dev/null`
-	if [ $TEST != $HASH ]; then
+	if [ "$TEST" != "$HASH" ]; then
 		echo "-$alg encrypt test failed"
 		nerr=`expr $nerr + 1`
 	fi
 	TEST=`(	cat $PROG | \
-		$PROG enc -e -k $HASH -$alg | \
-		$PROG enc -d -k $HASH -$alg -bufsize 999 -engine padlock | \
+		$PROG enc -e -k "$HASH" -$alg | \
+		$PROG enc -d -k "$HASH" -$alg -bufsize 999 -engine padlock | \
 		$PROG dgst -hex ) 2>/dev/null`
-	if [ $TEST != $HASH ]; then
+	if [ "$TEST" != "$HASH" ]; then
 		echo "-$alg decrypt test failed"
 		nerr=`expr $nerr + 1`
 	fi
 	TEST=`(	cat $PROG | \
-		$PROG enc -e -k $HASH -$alg -engine padlock | \
-		$PROG enc -d -k $HASH -$alg -engine padlock | \
+		$PROG enc -e -k "$HASH" -$alg -engine padlock | \
+		$PROG enc -d -k "$HASH" -$alg -engine padlock | \
 		$PROG dgst -hex ) 2>/dev/null`
-	if [ $TEST != $HASH ]; then
+	if [ "$TEST" != "$HASH" ]; then
 		echo "-$alg en/decrypt test failed"
 		nerr=`expr $nerr + 1`
 	fi
