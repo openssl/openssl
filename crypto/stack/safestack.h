@@ -62,6 +62,14 @@
     ((void*) (1 ? p : (type*)0))
 #endif
 
+/* In C++ we get problems because an explicit cast is needed from (void *)
+ * we use CHECKED_STACK_OF to ensure the correct type is passed in the macros
+ * below. 
+ */
+
+#define CHECKED_STACK_OF(type, p) \
+    ((_STACK*) (1 ? p : (STACK_OF(type)*)0))
+
 #define CHECKED_SK_FREE_FUNC(type, p) \
     ((void (*)(void *)) ((1 ? p : (void (*)(type *))0)))
 
@@ -130,55 +138,55 @@ DECLARE_SPECIAL_STACK_OF(BLOCK, void)
 #define SKM_sk_new_null(type) \
 	((STACK_OF(type) *)sk_new_null())
 #define SKM_sk_free(type, st) \
-	sk_free(CHECKED_PTR_OF(STACK_OF(type), st))
+	sk_free(CHECKED_STACK_OF(type, st))
 #define SKM_sk_num(type, st) \
-	sk_num(CHECKED_PTR_OF(STACK_OF(type), st))
+	sk_num(CHECKED_STACK_OF(type, st))
 #define SKM_sk_value(type, st,i) \
-	((type *)sk_value(CHECKED_PTR_OF(STACK_OF(type), st), i))
+	((type *)sk_value(CHECKED_STACK_OF(type, st), i))
 #define SKM_sk_set(type, st,i,val) \
-	sk_set(CHECKED_PTR_OF(STACK_OF(type), st), i, CHECKED_PTR_OF(type, val))
+	sk_set(CHECKED_STACK_OF(type, st), i, CHECKED_PTR_OF(type, val))
 #define SKM_sk_zero(type, st) \
-	sk_zero(CHECKED_PTR_OF(STACK_OF(type), st))
+	sk_zero(CHECKED_STACK_OF(type, st))
 #define SKM_sk_push(type, st, val) \
-	sk_push(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_PTR_OF(type, val))
+	sk_push(CHECKED_STACK_OF(type, st), CHECKED_PTR_OF(type, val))
 #define SKM_sk_unshift(type, st, val) \
-	sk_unshift(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_PTR_OF(type, val))
+	sk_unshift(CHECKED_STACK_OF(type, st), CHECKED_PTR_OF(type, val))
 #define SKM_sk_find(type, st, val) \
-	sk_find(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_PTR_OF(type, val))
+	sk_find(CHECKED_STACK_OF(type, st), CHECKED_PTR_OF(type, val))
 #define SKM_sk_find_ex(type, st, val) \
-	sk_find_ex(CHECKED_PTR_OF(STACK_OF(type), st), \
+	sk_find_ex(CHECKED_STACK_OF(type, st), \
 		   CHECKED_PTR_OF(type, val))
 #define SKM_sk_delete(type, st, i) \
-	(type *)sk_delete(CHECKED_PTR_OF(STACK_OF(type), st), i)
+	(type *)sk_delete(CHECKED_STACK_OF(type, st), i)
 #define SKM_sk_delete_ptr(type, st, ptr) \
-	(type *)sk_delete_ptr(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_PTR_OF(type, ptr))
+	(type *)sk_delete_ptr(CHECKED_STACK_OF(type, st), CHECKED_PTR_OF(type, ptr))
 #define SKM_sk_insert(type, st,val, i) \
-	sk_insert(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_PTR_OF(type, val), i)
+	sk_insert(CHECKED_STACK_OF(type, st), CHECKED_PTR_OF(type, val), i)
 #define SKM_sk_set_cmp_func(type, st, cmp) \
 	((int (*)(const type * const *,const type * const *)) \
-	sk_set_cmp_func(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_SK_CMP_FUNC(type, cmp)))
+	sk_set_cmp_func(CHECKED_STACK_OF(type, st), CHECKED_SK_CMP_FUNC(type, cmp)))
 #define SKM_sk_dup(type, st) \
-	(STACK_OF(type) *)sk_dup(CHECKED_PTR_OF(STACK_OF(type), st))
+	(STACK_OF(type) *)sk_dup(CHECKED_STACK_OF(type, st))
 #define SKM_sk_pop_free(type, st, free_func) \
-	sk_pop_free(CHECKED_PTR_OF(STACK_OF(type), st), CHECKED_SK_FREE_FUNC(type, free_func))
+	sk_pop_free(CHECKED_STACK_OF(type, st), CHECKED_SK_FREE_FUNC(type, free_func))
 #define SKM_sk_shift(type, st) \
-	(type *)sk_shift(CHECKED_PTR_OF(STACK_OF(type), st))
+	(type *)sk_shift(CHECKED_STACK_OF(type, st))
 #define SKM_sk_pop(type, st) \
-	(type *)sk_pop(CHECKED_PTR_OF(STACK_OF(type), st))
+	(type *)sk_pop(CHECKED_STACK_OF(type, st))
 #define SKM_sk_sort(type, st) \
-	sk_sort(CHECKED_PTR_OF(STACK_OF(type), st))
+	sk_sort(CHECKED_STACK_OF(type, st))
 #define SKM_sk_is_sorted(type, st) \
-	sk_is_sorted(CHECKED_PTR_OF(STACK_OF(type), st))
+	sk_is_sorted(CHECKED_STACK_OF(type, st))
 
 #define	SKM_ASN1_SET_OF_d2i(type, st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
-	(STACK_OF(type) *)d2i_ASN1_SET(CHECKED_PTR_OF(STACK_OF(type), st), \
+	(STACK_OF(type) *)d2i_ASN1_SET(CHECKED_STACK_OF(type, st), \
 				pp, length, \
 				CHECKED_D2I_OF(type, d2i_func), \
 				CHECKED_SK_FREE_FUNC(type, free_func), \
 				ex_tag, ex_class)
 
 #define	SKM_ASN1_SET_OF_i2d(type, st, pp, i2d_func, ex_tag, ex_class, is_set) \
-	i2d_ASN1_SET(CHECKED_PTR_OF(STACK_OF(type), st), pp, \
+	i2d_ASN1_SET(CHECKED_STACK_OF(type, st), pp, \
 				CHECKED_I2D_OF(type, i2d_func), \
 				ex_tag, ex_class, is_set)
 

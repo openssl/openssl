@@ -4,6 +4,10 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) Add CHECKED_STACK_OF macro to safestack.h, otherwise safestack can't
+     be used on C++.
+     [Steve Henson]
+
   *) Add "missing" function EVP_MD_flags() (without this the only way to
      retrieve a digest flags is by accessing the structure directly. Update
      EVP_MD_do_all*() and EVP_CIPHER_do_all*() to include the name a digest
