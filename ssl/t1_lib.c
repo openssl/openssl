@@ -275,6 +275,10 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	int extdatalen=0;
 	unsigned char *ret = p;
 
+	/* don't add extensions for SSLv3 */
+	if (s->client_version == SSL3_VERSION)
+		return p;
+
 	ret+=2;
 
 	if (ret>=limit) return NULL; /* this really never occurs, but ... */
@@ -472,6 +476,10 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	int extdatalen=0;
 	unsigned char *ret = p;
 
+	/* don't add extensions for SSLv3 */
+	if (s->version == SSL3_VERSION)
+		return p;
+	
 	ret+=2;
 	if (ret>=limit) return NULL; /* this really never occurs, but ... */
 
