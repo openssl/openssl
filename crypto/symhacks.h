@@ -365,6 +365,10 @@
 #undef cms_SignerIdentifier_get0_signer_id
 #define cms_SignerIdentifier_get0_signer_id	cms_SignerId_get0_signer_id
 
+/* Hack some long DTLS1 names */
+#undef dtls1_retransmit_buffered_messages
+#define dtls1_retransmit_buffered_messages	dtls1_retransmit_buffered_msgs
+
 #endif /* defined OPENSSL_SYS_VMS */
 
 

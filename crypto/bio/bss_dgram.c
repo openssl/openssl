@@ -66,7 +66,7 @@
 
 #include <openssl/bio.h>
 
-#ifdef OPENSSL_SYS_WIN32
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS)
 #include <sys/timeb.h>
 #endif
 
@@ -212,6 +212,11 @@ static int dgram_read(BIO *b, char *out, int outl)
 #ifdef OPENSSL_SYS_WIN32
 				struct _timeb tb;
 				_ftime(&tb);
+				curtime.tv_sec = (long)tb.time;
+				curtime.tv_usec = (long)tb.millitm * 1000;
+#elif defined(OPENSSL_SYS_VMS)
+				struct timeb tb;
+				ftime(&tb);
 				curtime.tv_sec = (long)tb.time;
 				curtime.tv_usec = (long)tb.millitm * 1000;
 #else
