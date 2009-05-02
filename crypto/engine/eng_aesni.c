@@ -147,8 +147,9 @@ static int aesni_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 	((void *)(((unsigned long)(x)+AESNI_MIN_ALIGN-1)&~(AESNI_MIN_ALIGN-1)))
 
 /* Engine names */
-static const char *aesni_id = "aesni";
-static const char *aesni_name = "Intel AES-NI engine";
+static const char   aesni_id[] = "aesni",
+		    aesni_name[] = "Intel AES-NI engine",
+		    no_aesni_name[] = "Intel AES-NI engine (no-aesni)";
 
 /* ===== Engine "management" functions ===== */
 
@@ -156,15 +157,15 @@ static const char *aesni_name = "Intel AES-NI engine";
 static int
 aesni_bind_helper(ENGINE *e)
 {
-	if (!(OPENSSL_ia32cap_P[1] & (1UL << (57-32))))
-		return 0;
+	int engage = (OPENSSL_ia32cap_P[1] & (1 << (57-32))) != 0;
 
 	/* Register everything or return with an error */
 	if (!ENGINE_set_id(e, aesni_id) ||
-	    !ENGINE_set_name(e, aesni_name) ||
+	    !ENGINE_set_name(e, engage ? aesni_name : no_aesni_name) ||
 
 	    !ENGINE_set_init_function(e, aesni_init) ||
-	    !ENGINE_set_ciphers (e, aesni_ciphers))
+	    (engage && !ENGINE_set_ciphers (e, aesni_ciphers))
+	    )
 		return 0;
 
 	/* Everything looks good */
@@ -286,14 +287,14 @@ static int aesni_cipher_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
 	CRYPTO_cfb128_encrypt(in, out, inl, key, ctx->iv,
 				&ctx->num, ctx->encrypt,
-				aesni_encrypt);
+				(block128_f)aesni_encrypt);
 	return 1;
 }
 static int aesni_cipher_ofb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		 const unsigned char *in, size_t inl)
 {	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
 	CRYPTO_ofb128_encrypt(in, out, inl, key, ctx->iv,
-				&ctx->num, aesni_encrypt);
+				&ctx->num, (block128_f)aesni_encrypt);
 	return 1;
 }
 

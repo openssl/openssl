@@ -29,8 +29,8 @@ $rounds="ecx";
 $key="edx";
 $inp="esi";
 $out="edi";
-$rounds_="ebx";
-$key_="ebp";
+$rounds_="ebx";	# backup copy for $rounds
+$key_="ebp";	# backup copy for $key
 
 $inout0="xmm0";
 $inout1="xmm1";
@@ -39,26 +39,23 @@ $rndkey0="xmm3";
 $rndkey1="xmm4";
 $ivec="xmm5";
 $in0="xmm6";
-$in1="xmm7";
+$in1="xmm7";	$inout3="xmm7";
 
-sub _aesni_generate1	# folded loop
+# Inline version of internal aesni_[en|de]crypt1
+sub aesni_inline_generate1
 { my $p=shift;
 
-    &function_begin_B("_aesni_${p}rypt1");
-	&$movekey	($rndkey0,&QWP(0,$key));
-	&$movekey	($rndkey1,&QWP(16,$key));
-	&lea		($key,&DWP(16,$key));
-	&pxor		($inout0,$rndkey0);
-	&dec		($rounds);
-    &set_label("${p}1_loop",16);
+    &$movekey		($rndkey0,&QWP(0,$key));
+    &$movekey		($rndkey1,&QWP(16,$key));
+    &lea		($key,&DWP(32,$key));
+    &pxor		($inout0,$rndkey0);
+    &set_label("${p}1_loop");
 	eval"&aes${p}	($inout0,$rndkey1)";
 	&dec		($rounds);
-	&lea		($key,&DWP(16,$key));
 	&$movekey	($rndkey1,&QWP(0,$key));
-	&jnz		(&label("${p}1_loop"));
+	&lea		($key,&DWP(16,$key));
+    &jnz		(&label("${p}1_loop"));
     eval"&aes${p}last	($inout0,$rndkey1)";
-    &ret();
-    &function_end_B("_aesni_${p}rypt1");
 }
 
 sub aesni_generate1	# fully unrolled loop
@@ -67,7 +64,7 @@ sub aesni_generate1	# fully unrolled loop
     &function_begin_B("_aesni_${p}rypt1");
 	&$movekey	($rndkey0,&QWP(0,$key));
 	&$movekey	($rndkey1,&QWP(0x10,$key));
-	&cmp		($rounds,12);
+	&cmp		($rounds,11);
 	&pxor		($inout0,$rndkey0);
 	&$movekey	($rndkey0,&QWP(0x20,$key));
 	&lea		($key,&DWP(0x30,$key));
@@ -107,52 +104,52 @@ sub aesni_generate1	# fully unrolled loop
     &function_end_B("_aesni_${p}rypt1");
 }
 
-&aesni_generate1("enc");
 # void $PREFIX_encrypt (const void *inp,void *out,const AES_KEY *key);
+# &aesni_generate1("dec");
 &function_begin_B("${PREFIX}_encrypt");
 	&mov	("eax",&wparam(0));
 	&mov	($key,&wparam(2));
 	&movups	($inout0,&QWP(0,"eax"));
 	&mov	($rounds,&DWP(240,$key));
 	&mov	("eax",&wparam(1));
-	&call	("_aesni_encrypt1");
+	&aesni_inline_generate1("enc");	# &call	("_aesni_encrypt1");
 	&movups	(&QWP(0,"eax"),$inout0);
 	&ret	();
 &function_end_B("${PREFIX}_encrypt");
 
-&aesni_generate1("dec");
 # void $PREFIX_decrypt (const void *inp,void *out,const AES_KEY *key);
+# &aesni_generate1("dec");
 &function_begin_B("${PREFIX}_decrypt");
 	&mov	("eax",&wparam(0));
 	&mov	($key,&wparam(2));
 	&movups	($inout0,&QWP(0,"eax"));
 	&mov	($rounds,&DWP(240,$key));
 	&mov	("eax",&wparam(1));
-	&call	("_aesni_decrypt1");
+	&aesni_inline_generate1("dec");	# &call	("_aesni_decrypt1");
 	&movups	(&QWP(0,"eax"),$inout0);
 	&ret	();
 &function_end_B("${PREFIX}_decrypt");
-
-# _aesni_[en|de]crypt3 are private interfaces, 3 denotes interleave
-# factor. Why 3x? Even though aes[enc|dec] latency is 6, it turned
-# out that it can be scheduled only every *second* cycle. Thus 3x
-# interleave is the one providing optimal utilization, i.e. when
-# subroutine's throughput is virtually same as of non-interleaved
-# subroutine for number of input blocks up to 3. This is why it
-# handles even double-block inputs. Larger interleave factor would
-# perform suboptimally on shorter inputs... 
-
+
+# _aesni_[en|de]crypt[34] are private interfaces, N denotes interleave
+# factor. Why 3x subroutine is used in loops? Even though aes[enc|dec]
+# latency is 6, it turned out that it can be scheduled only every
+# *second* cycle. Thus 3x interleave is the one providing optimal
+# utilization, i.e. when subroutine's throughput is virtually same as
+# of non-interleaved subroutine [for number of input blocks up to 3].
+# This is why it makes no sense to implement 2x subroutine. As soon
+# as/if Intel improves throughput by making it possible to schedule
+# the instructions in question *every* cycles I would have to
+# implement 6x interleave and use it in loop...
 sub aesni_generate3
 { my $p=shift;
 
     &function_begin_B("_aesni_${p}rypt3");
 	&$movekey	($rndkey0,&QWP(0,$key));
-	&$movekey	($rndkey1,&QWP(16,$key));
 	&shr		($rounds,1);
+	&$movekey	($rndkey1,&QWP(16,$key));
 	&lea		($key,&DWP(32,$key));
 	&pxor		($inout0,$rndkey0);
 	&pxor		($inout1,$rndkey0);
-	&dec		($rounds);
 	&pxor		($inout2,$rndkey0);
 	&jmp		(&label("${p}3_loop"));
     &set_label("${p}3_loop",16);
@@ -177,14 +174,59 @@ sub aesni_generate3
     &ret();
     &function_end_B("_aesni_${p}rypt3");
 }
+
+# 4x interleave is implemented to improve small block performance,
+# most notably [and naturally] 4 block by ~30%. One can argue that one
+# should have implemented 5x as well, but improvement  would be <20%,
+# so it's not worth it...
+sub aesni_generate4
+{ my $p=shift;
+
+    &function_begin_B("_aesni_${p}rypt4");
+	&$movekey	($rndkey0,&QWP(0,$key));
+	&$movekey	($rndkey1,&QWP(16,$key));
+	&shr		($rounds,1);
+	&lea		($key,&DWP(32,$key));
+	&pxor		($inout0,$rndkey0);
+	&pxor		($inout1,$rndkey0);
+	&pxor		($inout2,$rndkey0);
+	&pxor		($inout3,$rndkey0);
+	&jmp		(&label("${p}3_loop"));
+    &set_label("${p}3_loop",16);
+	eval"&aes${p}	($inout0,$rndkey1)";
+	&$movekey	($rndkey0,&QWP(0,$key));
+	eval"&aes${p}	($inout1,$rndkey1)";
+	&dec		($rounds);
+	eval"&aes${p}	($inout2,$rndkey1)";
+	eval"&aes${p}	($inout3,$rndkey1)";
+	&$movekey	($rndkey1,&QWP(16,$key));
+	eval"&aes${p}	($inout0,$rndkey0)";
+	&lea		($key,&DWP(32,$key));
+	eval"&aes${p}	($inout1,$rndkey0)";
+	eval"&aes${p}	($inout2,$rndkey0)";
+	eval"&aes${p}	($inout3,$rndkey0)";
+	&jnz		(&label("${p}3_loop"));
+    eval"&aes${p}	($inout0,$rndkey1)";
+    &$movekey		($rndkey0,&QWP(0,$key));
+    eval"&aes${p}	($inout1,$rndkey1)";
+    eval"&aes${p}	($inout2,$rndkey1)";
+    eval"&aes${p}	($inout3,$rndkey1)";
+    eval"&aes${p}last	($inout0,$rndkey0)";
+    eval"&aes${p}last	($inout1,$rndkey0)";
+    eval"&aes${p}last	($inout2,$rndkey0)";
+    eval"&aes${p}last	($inout3,$rndkey0)";
+    &ret();
+    &function_end_B("_aesni_${p}rypt4");
+}
 &aesni_generate3("enc") if ($PREFIX eq "aesni");
 &aesni_generate3("dec");
+&aesni_generate4("enc") if ($PREFIX eq "aesni");
+&aesni_generate4("dec");
 
 if ($PREFIX eq "aesni") {
 # void aesni_ecb_encrypt (const void *in, void *out,
 #                         size_t length, const AES_KEY *key,
 #                         int enc);
-
 &function_begin("aesni_ecb_encrypt");
 	&mov	($inp,&wparam(0));
 	&mov	($out,&wparam(1));
@@ -200,79 +242,121 @@ if ($PREFIX eq "aesni") {
 	&mov	($rounds_,$rounds);	# backup $rounds
 	&jz	(&label("ecb_decrypt"));
 
-	&sub	($len,0x30);
-	&jc	(&label("ecb_enc_tail"));
-	jmp	(&label("ecb_enc_loop3"));
+	&sub	($len,0x40);
+	&jbe	(&label("ecb_enc_tail"));
+	&jmp	(&label("ecb_enc_loop3"));
 
 &set_label("ecb_enc_loop3",16);
 	&movups	($inout0,&QWP(0,$inp));
 	&movups	($inout1,&QWP(0x10,$inp));
 	&movups	($inout2,&QWP(0x20,$inp));
-	&lea	($inp,&DWP(0x30,$inp));
 	&call	("_aesni_encrypt3");
-	&movups	(&QWP(0,$out),$inout0);
 	&sub	($len,0x30);
-	&movups	(&QWP(0x10,$out),$inout1);
-	&mov	($key,$key_);		# restore $key
-	&movups	(&QWP(0x20,$out),$inout2);
-	&mov	($rounds,$rounds_);	# restore $rounds
+	&lea	($inp,&DWP(0x30,$inp));
 	&lea	($out,&DWP(0x30,$out));
-	&jnc	(&label("ecb_enc_loop3"));
+	&movups	(&QWP(-0x30,$out),$inout0);
+	&mov	($key,$key_);		# restore $key
+	&movups	(&QWP(-0x20,$out),$inout1);
+	&mov	($rounds,$rounds_);	# restore $rounds
+	&movups	(&QWP(-0x10,$out),$inout2);
+	&ja	(&label("ecb_enc_loop3"));
 
 &set_label("ecb_enc_tail");
-	&add	($len,0x30);
+	&add	($len,0x40);
 	&jz	(&label("ecb_ret"));
 
 	&cmp	($len,0x10);
 	&movups	($inout0,&QWP(0,$inp));
-	je	(&label("ecb_enc_one"));
+	&je	(&label("ecb_enc_one"));
+	&cmp	($len,0x20);
 	&movups	($inout1,&QWP(0x10,$inp));
-	&call	("_aesni_encrypt3");
+	&je	(&label("ecb_enc_two"));
+	&cmp	($len,0x30);
+	&movups	($inout2,&QWP(0x20,$inp));
+	&je	(&label("ecb_enc_three"));
+	&movups	($inout3,&QWP(0x30,$inp));
+	&call	("_aesni_encrypt4");
 	&movups	(&QWP(0,$out),$inout0);
 	&movups	(&QWP(0x10,$out),$inout1);
+	&movups	(&QWP(0x20,$out),$inout2);
+	&movups	(&QWP(0x30,$out),$inout3);
 	jmp	(&label("ecb_ret"));
 
 &set_label("ecb_enc_one",16);
-	&call	("_aesni_encrypt1");
+	&aesni_inline_generate1("enc");	# &call	("_aesni_encrypt1");
 	&movups	(&QWP(0,$out),$inout0);
 	&jmp	(&label("ecb_ret"));
 
+&set_label("ecb_enc_two",16);
+	&call	("_aesni_encrypt3");
+	&movups	(&QWP(0,$out),$inout0);
+	&movups	(&QWP(0x10,$out),$inout1);
+	&jmp	(&label("ecb_ret"));
+
+&set_label("ecb_enc_three",16);
+	&call	("_aesni_encrypt3");
+	&movups	(&QWP(0,$out),$inout0);
+	&movups	(&QWP(0x10,$out),$inout1);
+	&movups	(&QWP(0x20,$out),$inout2);
+	&jmp	(&label("ecb_ret"));
+
 &set_label("ecb_decrypt",16);
-	&sub	($len,0x30);
-	&jc	(&label("ecb_dec_tail"));
-	jmp	(&label("ecb_dec_loop3"));
+	&sub	($len,0x40);
+	&jbe	(&label("ecb_dec_tail"));
+	&jmp	(&label("ecb_dec_loop3"));
 
 &set_label("ecb_dec_loop3",16);
 	&movups	($inout0,&QWP(0,$inp));
 	&movups	($inout1,&QWP(0x10,$inp));
 	&movups	($inout2,&QWP(0x20,$inp));
 	&call	("_aesni_decrypt3");
-	&movups	(&QWP(0,$out),$inout0);
 	&sub	($len,0x30);
 	&lea	($inp,&DWP(0x30,$inp));
-	&movups	(&QWP(0x10,$out),$inout1);
-	&mov	($key,$key_);		# restore $key
-	&movups	(&QWP(0x20,$out),$inout2);
-	&mov	($rounds,$rounds_);	# restore $rounds
 	&lea	($out,&DWP(0x30,$out));
-	&jnc	(&label("ecb_dec_loop3"));
+	&movups	(&QWP(-0x30,$out),$inout0);
+	&mov	($key,$key_);		# restore $key
+	&movups	(&QWP(-0x20,$out),$inout1);
+	&mov	($rounds,$rounds_);	# restore $rounds
+	&movups	(&QWP(-0x10,$out),$inout2);
+	&ja	(&label("ecb_dec_loop3"));
 
 &set_label("ecb_dec_tail");
-	&add	($len,0x30);
+	&add	($len,0x40);
 	&jz	(&label("ecb_ret"));
 
 	&cmp	($len,0x10);
 	&movups	($inout0,&QWP(0,$inp));
-	je	(&label("ecb_dec_one"));
+	&je	(&label("ecb_dec_one"));
+	&cmp	($len,0x20);
 	&movups	($inout1,&QWP(0x10,$inp));
+	&je	(&label("ecb_dec_two"));
+	&cmp	($len,0x30);
+	&movups	($inout2,&QWP(0x20,$inp));
+	&je	(&label("ecb_dec_three"));
+	&movups	($inout3,&QWP(0x30,$inp));
+	&call	("_aesni_decrypt4");
+	&movups	(&QWP(0,$out),$inout0);
+	&movups	(&QWP(0x10,$out),$inout1);
+	&movups	(&QWP(0x20,$out),$inout2);
+	&movups	(&QWP(0x30,$out),$inout3);
+	&jmp	(&label("ecb_ret"));
+
+&set_label("ecb_dec_one",16);
+	&aesni_inline_generate1("dec");	# &call	("_aesni_decrypt3");
+	&movups	(&QWP(0,$out),$inout0);
+	&jmp	(&label("ecb_ret"));
+
+&set_label("ecb_dec_two",16);
 	&call	("_aesni_decrypt3");
 	&movups	(&QWP(0,$out),$inout0);
 	&movups	(&QWP(0x10,$out),$inout1);
-	jmp	(&label("ecb_ret"));
+	&jmp	(&label("ecb_ret"));
 
-&set_label("ecb_dec_one",16);
-	&call	("_aesni_decrypt1");
+&set_label("ecb_dec_three",16);
+	&call	("_aesni_decrypt3");
 	&movups	(&QWP(0,$out),$inout0);
+	&movups	(&QWP(0x10,$out),$inout1);
+	&movups	(&QWP(0x20,$out),$inout2);
 
 &set_label("ecb_ret");
 &function_end("aesni_ecb_encrypt");
@@ -288,7 +372,7 @@ if ($PREFIX eq "aesni") {
 	&mov	($key,&wparam(3));
 	&test	($len,$len);
 	&mov	($key_,&wparam(4));
-	&je	(&label("cbc_ret"));
+	&jz	(&label("cbc_ret"));
 
 	&cmp	(&wparam(5),0);
 	&movups	($ivec,&QWP(0,$key_));	# load IV
@@ -307,12 +391,12 @@ if ($PREFIX eq "aesni") {
 	&movups	($ivec,&QWP(0,$inp));
 	&lea	($inp,&DWP(16,$inp));
 	&pxor	($inout0,$ivec);
-	&call	("_aesni_encrypt1");
+	&aesni_inline_generate1("enc");	# &call	("_aesni_encrypt3");
 	&sub	($len,16);
+	&lea	($out,&DWP(16,$out));
 	&mov	($rounds,$rounds_);	# restore $rounds
 	&mov	($key,$key_);		# restore $key
-	&movups	(&QWP(0,$out),$inout0);
-	&lea	($out,&DWP(16,$out));
+	&movups	(&QWP(-16,$out),$inout0);
 	&jnc	(&label("cbc_enc_loop"));
 	&add	($len,16);
 	&jnz	(&label("cbc_enc_tail"));
@@ -333,8 +417,8 @@ if ($PREFIX eq "aesni") {
 	&jmp	(&label("cbc_enc_loop"));
 
 &set_label("cbc_decrypt",16);
-	&sub	($len,0x30);
-	&jc	(&label("cbc_dec_tail"));
+	&sub	($len,0x40);
+	&jbe	(&label("cbc_dec_tail"));
 	&jmp	(&label("cbc_dec_loop3"));
 
 &set_label("cbc_dec_loop3",16);
@@ -346,20 +430,20 @@ if ($PREFIX eq "aesni") {
 	&call	("_aesni_decrypt3");
 	&sub	($len,0x30);
 	&lea	($inp,&DWP(0x30,$inp));
+	&lea	($out,&DWP(0x30,$out));
 	&pxor	($inout0,$ivec);
 	&pxor	($inout1,$in0);
 	&movups	($ivec,&QWP(-0x10,$inp));
 	&pxor	($inout2,$in1);
-	&movups	(&QWP(0,$out),$inout0);
+	&movups	(&QWP(-0x30,$out),$inout0);
 	&mov	($rounds,$rounds_)	# restore $rounds
-	&movups	(&QWP(0x10,$out),$inout1);
+	&movups	(&QWP(-0x20,$out),$inout1);
 	&mov	($key,$key_);		# restore $key
-	&movups	(&QWP(0x20,$out),$inout2);
-	&lea	($out,&DWP(0x30,$out));
-	&jnc	(&label("cbc_dec_loop3"));
+	&movups	(&QWP(-0x10,$out),$inout2);
+	&ja	(&label("cbc_dec_loop3"));
 
 &set_label("cbc_dec_tail");
-	&add	($len,0x30);
+	&add	($len,0x40);
 	&jz	(&label("cbc_ret"));
 
 	&movups	($inout0,&QWP(0,$inp));
@@ -371,19 +455,26 @@ if ($PREFIX eq "aesni") {
 	&movaps	($in1,$inout1);
 	&jbe	(&label("cbc_dec_two"));
 	&movups	($inout2,&QWP(0x20,$inp));
-	&call	("_aesni_decrypt3");
+	&cmp	($len,0x30);
+	&jbe	(&label("cbc_dec_three"));
+	&movups	($inout3,&QWP(0x30,$inp));
+	&call	("_aesni_decrypt4");
+	&movups	($rndkey0,&QWP(0x10,$inp));
+	&movups	($rndkey1,&QWP(0x20,$inp));
 	&pxor	($inout0,$ivec);
-	&movups	($ivec,&QWP(0x20,$inp));
 	&pxor	($inout1,$in0);
-	&pxor	($inout2,$in1);
+	&movups	($ivec,&QWP(0x30,$inp));
 	&movups	(&QWP(0,$out),$inout0);
+	&pxor	($inout2,$rndkey0);
+	&pxor	($inout3,$rndkey1);
 	&movups	(&QWP(0x10,$out),$inout1);
-	&movaps	($inout0,$inout2);
-	&lea	($out,&DWP(0x20,$out));
+	&movups	(&QWP(0x20,$out),$inout2);
+	&movaps	($inout0,$inout3);
+	&lea	($out,&DWP(0x30,$out));
 	&jmp	(&label("cbc_dec_tail_collected"));
 
 &set_label("cbc_dec_one");
-	&call	("_aesni_decrypt1");
+	&aesni_inline_generate1("dec");	# &call	("_aesni_decrypt3");
 	&pxor	($inout0,$ivec);
 	&movaps	($ivec,$in0);
 	&jmp	(&label("cbc_dec_tail_collected"));
@@ -396,6 +487,18 @@ if ($PREFIX eq "aesni") {
 	&movaps	($inout0,$inout1);
 	&movaps	($ivec,$in1);
 	&lea	($out,&DWP(0x10,$out));
+	&jmp	(&label("cbc_dec_tail_collected"));
+
+&set_label("cbc_dec_three");
+	&call	("_aesni_decrypt3");
+	&pxor	($inout0,$ivec);
+	&pxor	($inout1,$in0);
+	&pxor	($inout2,$in1);
+	&movups	(&QWP(0,$out),$inout0);
+	&movups	(&QWP(0x10,$out),$inout1);
+	&movaps	($inout0,$inout2);
+	&movups	($ivec,&QWP(0x20,$inp));
+	&lea	($out,&DWP(0x20,$out));
 
 &set_label("cbc_dec_tail_collected");
 	&and	($len,15);
@@ -446,7 +549,7 @@ if ($PREFIX eq "aesni") {
 	&jne	(&label("bad_keybits"));
 
 &set_label("10rounds",16);
-	&mov		($rounds,10);
+	&mov		($rounds,9);
 	&$movekey	(&QWP(-16,$key),"xmm0");	# round 0
 	&aeskeygenassist("xmm1","xmm0",0x01);		# round 1
 	&call		(&label("key_128_cold"));
@@ -487,7 +590,7 @@ if ($PREFIX eq "aesni") {
 
 &set_label("12rounds",16);
 	&movq		("xmm2",&QWP(16,"eax"));	# remaining 1/3 of *userKey
-	&mov		($rounds,12);
+	&mov		($rounds,11);
 	&$movekey	(&QWP(-16,$key),"xmm0")		# round 0
 	&aeskeygenassist("xmm1","xmm2",0x01);		# round 1,2
 	&call		(&label("key_192a_cold"));
@@ -540,7 +643,7 @@ if ($PREFIX eq "aesni") {
 
 &set_label("14rounds",16);
 	&movups		("xmm2",&QWP(16,"eax"));	# remaining half of *userKey
-	&mov		($rounds,14);
+	&mov		($rounds,13);
 	&lea		($key,&DWP(16,$key));
 	&$movekey	(&QWP(-32,$key),"xmm0");	# round 0
 	&$movekey	(&QWP(-16,$key),"xmm2");	# round 1
@@ -625,10 +728,10 @@ if ($PREFIX eq "aesni") {
 	&mov	($key,&wparam(2));
 	&call	("_aesni_set_encrypt_key");
 	&mov	($key,&wparam(2));
-	&shl	($rounds,4)	# actually rounds after _aesni_set_encrypt_key
+	&shl	($rounds,4)	# rounds-1 after _aesni_set_encrypt_key
 	&test	("eax","eax");
 	&jnz	(&label("dec_key_ret"));
-	&lea	("eax",&DWP(0,$key,$rounds));	# end of key schedule
+	&lea	("eax",&DWP(16,$key,$rounds));	# end of key schedule
 
 	&$movekey	("xmm0",&QWP(0,$key));	# just swap
 	&$movekey	("xmm1",&QWP(0,"eax"));
@@ -636,9 +739,8 @@ if ($PREFIX eq "aesni") {
 	&$movekey	(&QWP(0,$key),"xmm1");
 	&lea		($key,&DWP(16,$key));
 	&lea		("eax",&DWP(-16,"eax"));
-	&jmp		(&label("dec_key_inverse"));
 
-&set_label("dec_key_inverse",16);
+&set_label("dec_key_inverse");
 	&$movekey	("xmm0",&QWP(0,$key));	# swap and inverse
 	&$movekey	("xmm1",&QWP(0,"eax"));
 	&aesimc		("xmm0","xmm0");
