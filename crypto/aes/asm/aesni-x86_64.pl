@@ -923,12 +923,12 @@ ecb_se_handler:
 	.rva	.LSEH_end_${PREFIX}_cbc_encrypt
 	.rva	.LSEH_info_cbc
 
-	.rva	${PREFIX}_set_encrypt_key
-	.rva	.LSEH_end_set_encrypt_key
-	.rva	.LSEH_info_key
-
 	.rva	${PREFIX}_set_decrypt_key
 	.rva	.LSEH_end_set_decrypt_key
+	.rva	.LSEH_info_key
+
+	.rva	${PREFIX}_set_encrypt_key
+	.rva	.LSEH_end_set_encrypt_key
 	.rva	.LSEH_info_key
 .section	.xdata
 .align	8
