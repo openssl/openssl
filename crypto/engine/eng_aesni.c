@@ -114,9 +114,9 @@ void ENGINE_load_aesni (void)
 }
 
 #ifdef COMPILE_HW_AESNI
-int aesni_set_encrypt_key(const unsigned char *userKey, const int bits,
+int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
 			      AES_KEY *key);
-int aesni_set_decrypt_key(const unsigned char *userKey, const int bits,
+int aesni_set_decrypt_key(const unsigned char *userKey, int bits,
 			      AES_KEY *key);
 
 void aesni_encrypt(const unsigned char *in, unsigned char *out,
@@ -126,14 +126,14 @@ void aesni_decrypt(const unsigned char *in, unsigned char *out,
 
 void aesni_ecb_encrypt(const unsigned char *in,
 			   unsigned char *out,
-			   const unsigned long length,
+			   size_t length,
 			   const AES_KEY *key,
-			   const int enc);
+			   int enc);
 void aesni_cbc_encrypt(const unsigned char *in,
 			   unsigned char *out,
-			   const unsigned long length,
+			   size_t length,
 			   const AES_KEY *key,
-			   unsigned char *ivec, const int enc);
+			   unsigned char *ivec, int enc);
 
 /* Function for ENGINE detection and control */
 static int aesni_init(ENGINE *e);
