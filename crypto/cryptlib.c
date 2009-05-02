@@ -668,7 +668,6 @@ unsigned int *OPENSSL_ia32cap_loc(void) { return OPENSSL_ia32cap_P; }
 #define OPENSSL_CPUID_SETUP
 #if defined(_WIN32)
 typedef unsigned __int64 IA32CAP;
-#define strtoull _strtoui64
 #else
 typedef unsigned long long IA32CAP;
 #endif
@@ -682,7 +681,11 @@ void OPENSSL_cpuid_setup(void)
 
     trigger=1;
     if ((env=getenv("OPENSSL_ia32cap")))
+#if defined(_WIN32)
+    {	if (!sscanf(env,"%I64i",&vec)) vec = strtoul(env,NULL,0);   }
+#else
 	vec = strtoull(env,NULL,0);
+#endif
     else
 	vec = OPENSSL_ia32_cpuid();
 
