@@ -78,15 +78,12 @@
 #if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_AES_NI) && !defined(OPENSSL_NO_AES)
 
 #include <stdio.h>
-#include <string.h>
-#include <assert.h>
-#include <openssl/crypto.h>
+#include "cryptlib.h"
 #include <openssl/dso.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
 #include <openssl/err.h>
-#include <cryptlib.h>
 #include <openssl/modes.h>
 
 /* AES-NI is available *ONLY* on some x86 CPUs.  Not only that it
