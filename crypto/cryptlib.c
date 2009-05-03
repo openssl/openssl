@@ -753,6 +753,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <tchar.h>
+#include <signal.h>
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
 int OPENSSL_isservice(void)
@@ -883,7 +884,13 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 	OPENSSL_showfatal(
 		"%s(%d): OpenSSL internal error, assertion failed: %s\n",
 		file,line,assertion);
+#if !defined(_WIN32)
 	abort();
+#else
+	/* Win32 customarily shows a dialog, but we just did that... */
+	raise(SIGABRT);
+	_exit(3);
+#endif
 	}
 
 void *OPENSSL_stderr(void)	{ return stderr; }
