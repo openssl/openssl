@@ -122,6 +122,7 @@ static ERR_STRING_DATA CAPI_str_reasons[]=
 {ERR_REASON(CAPI_R_UNSUPPORTED_ALGORITHM_NID),"unsupported algorithm nid"},
 {ERR_REASON(CAPI_R_UNSUPPORTED_PADDING)  ,"unsupported padding"},
 {ERR_REASON(CAPI_R_UNSUPPORTED_PUBLIC_KEY_ALGORITHM),"unsupported public key algorithm"},
+{ERR_REASON(CAPI_R_WIN32_ERROR)          ,"win32 error"},
 {0,NULL}
 	};
 
