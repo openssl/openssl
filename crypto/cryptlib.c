@@ -711,6 +711,8 @@ void OPENSSL_cpuid_setup(void) {}
 #ifdef __CYGWIN__
 /* pick DLL_[PROCESS|THREAD]_[ATTACH|DETACH] definitions */
 #include <windows.h>
+/* this has side-effect of _WIN32 getting defined, which otherwise
+ * is mutually exclusive with __CYGWIN__... */
 #endif
 
 /* All we really need to do is remove the 'error' state when a thread
@@ -884,10 +886,10 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 	OPENSSL_showfatal(
 		"%s(%d): OpenSSL internal error, assertion failed: %s\n",
 		file,line,assertion);
-#if !defined(_WIN32)
+#if !defined(_WIN32) || defined(__CYGWIN__)
 	abort();
 #else
-	/* Win32 customarily shows a dialog, but we just did that... */
+	/* Win32 abort() customarily shows a dialog, but we just did that... */
 	raise(SIGABRT);
 	_exit(3);
 #endif
