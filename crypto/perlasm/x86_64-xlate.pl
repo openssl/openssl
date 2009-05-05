@@ -575,8 +575,8 @@ my %globals;
 				    my @arr = split(',',$line);
 				    my $last = pop(@arr);
 				    my $conv = sub  {	my $var=shift;
-							$var=~s/(0b[0-1]+)/oct($1)/eig;
-							$var=~s/0x([0-9a-f]+)/0$1h/ig if ($masm);
+							$var=~s/^(0b[0-1]+)/oct($1)/eig;
+							$var=~s/^0x([0-9a-f]+)/0$1h/ig if ($masm);
 							if ($sz eq "D" && ($current_segment=~/.[px]data/ || $dir eq ".rva"))
 							{ $var=~s/([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
 							$var;
@@ -662,6 +662,7 @@ while($line=<>) {
 		$insn = $opcode->out($#args>=1?$args[$#args]->size():$sz);
 	    } else {
 		$insn = $opcode->out();
+		$insn .= $sz if (map($_->out() =~ /xmm|mmx/,@args));
 		@args = reverse(@args);
 		undef $sz if ($nasm && $opcode->mnemonic() eq "lea");
 	    }
@@ -831,6 +832,7 @@ close STDOUT;
 #	CONTEXT.R14				232
 #	CONTEXT.R15				240
 #	CONTEXT.Rip				248
+#	CONTEXT.Xmm6				512
 #	sizeof(CONTEXT)				1232
 #	DISPATCHER_CONTEXT.ControlPc		0
 #	DISPATCHER_CONTEXT.ImageBase		8
