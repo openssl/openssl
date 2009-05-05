@@ -88,6 +88,8 @@ static int dgram_clear(BIO *bio);
 
 static int BIO_dgram_should_retry(int s);
 
+static void get_current_time(struct timeval *t);
+
 static BIO_METHOD methods_dgramp=
 	{
 	BIO_TYPE_DGRAM,
@@ -209,19 +211,7 @@ static int dgram_read(BIO *b, char *out, int outl)
 			if (data->hstimeout.tv_sec > 0 || data->hstimeout.tv_usec > 0)
 				{
 				struct timeval curtime;
-#ifdef OPENSSL_SYS_WIN32
-				struct _timeb tb;
-				_ftime(&tb);
-				curtime.tv_sec = (long)tb.time;
-				curtime.tv_usec = (long)tb.millitm * 1000;
-#elif defined(OPENSSL_SYS_VMS)
-				struct timeb tb;
-				ftime(&tb);
-				curtime.tv_sec = (long)tb.time;
-				curtime.tv_usec = (long)tb.millitm * 1000;
-#else
-				gettimeofday(&curtime, NULL);
-#endif
+				get_current_time(&curtime);
 
 				if (curtime.tv_sec >= data->hstimeout.tv_sec &&
 					curtime.tv_usec >= data->hstimeout.tv_usec)
@@ -383,14 +373,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 	case BIO_CTRL_DGRAM_SET_TIMEOUT:
 		if (num > 0)
 			{
-#ifdef OPENSSL_SYS_WIN32
-			struct _timeb tb;
-			_ftime(&tb);
-			data->hstimeout.tv_sec = (long)tb.time;
-			data->hstimeout.tv_usec = (long)tb.millitm * 1000;
-#else
-			gettimeofday(&(data->hstimeout), NULL);
-#endif
+			get_current_time(&data->hstimeout);
 			data->hstimeout.tv_sec += data->hstimeoutdiff.tv_sec;
 			data->hstimeout.tv_usec += data->hstimeoutdiff.tv_usec;
 			if (data->hstimeout.tv_usec >= 1000000)
@@ -606,3 +589,20 @@ int BIO_dgram_non_fatal_error(int err)
 	return(0);
 	}
 #endif
+
+static void get_current_time(struct timeval *t)
+	{
+#ifdef OPENSSL_SYS_WIN32
+	struct _timeb tb;
+	_ftime(&tb);
+	t->tv_sec = (long)tb.time;
+	t->tv_usec = (long)tb.millitm * 1000;
+#elif defined(OPENSSL_SYS_VMS)
+	struct timeb tb;
+	ftime(&tb);
+	t->tv_sec = (long)tb.time;
+	t->tv_usec = (long)tb.millitm * 1000;
+#else
+	gettimeofday(t, NULL);
+#endif
+	}
