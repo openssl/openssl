@@ -56,12 +56,12 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
-#include <openssl/rsa.h>
 #include <openssl/bn.h>
 
 #ifdef OPENSSL_SYS_WIN32
 #ifndef OPENSSL_NO_CAPIENG
 
+#include <openssl/rsa.h>
 
 #include <windows.h>
 
@@ -152,11 +152,11 @@ struct CAPI_CTX_st {
 	char *debug_file;
 	/* Parameters to use for container lookup */
 	DWORD keytype;
-	LPTSTR cspname;
+	LPSTR cspname;
 	DWORD csptype;
 	/* Certificate store name to use */
-	LPTSTR storename;
-	LPTSTR ssl_client_store;
+	LPSTR storename;
+	LPSTR ssl_client_store;
 	/* System store flags */
 	DWORD store_flags;
 
@@ -442,7 +442,7 @@ static int capi_init(ENGINE *e)
 #ifdef OPENSSL_CAPIENG_DIALOG
 	{
 	HMODULE cryptui = LoadLibrary(TEXT("CRYPTUI.DLL"));
-	HMODULE kernel = LoadLibrary(TEXT("KERNEL32.DLL"));
+	HMODULE kernel = GetModuleHandle(TEXT("KERNEL32.DLL"));
 	if (cryptui)
 		ctx->certselectdlg = (CERTDLG)GetProcAddress(cryptui, "CryptUIDlgSelectCertificateFromStore");
 	if (kernel)
@@ -823,7 +823,7 @@ int capi_rsa_sign(int dtype, const unsigned char *m, unsigned int m_len,
 
 /* Finally sign it */
 	slen = RSA_size(rsa);
-	if(!CryptSignHash(hash, capi_key->keyspec, NULL, 0, sigret, &slen))
+	if(!CryptSignHashA(hash, capi_key->keyspec, NULL, 0, sigret, &slen))
 		{
 		CAPIerr(CAPI_F_CAPI_RSA_SIGN, CAPI_R_ERROR_SIGNING_HASH);
 		capi_addlasterror();
@@ -961,7 +961,7 @@ static DSA_SIG *capi_dsa_do_sign(const unsigned char *digest, int dlen,
 
 	/* Finally sign it */
 	slen = sizeof(csigbuf);
-	if(!CryptSignHash(hash, capi_key->keyspec, NULL, 0, csigbuf, &slen))
+	if(!CryptSignHashA(hash, capi_key->keyspec, NULL, 0, csigbuf, &slen))
 		{
 		CAPIerr(CAPI_F_CAPI_DSA_DO_SIGN, CAPI_R_ERROR_SIGNING_HASH);
 		capi_addlasterror();
@@ -1036,15 +1036,29 @@ static void capi_adderror(DWORD err)
 static char *wide_to_asc(LPWSTR wstr)
 	{
 	char *str;
+	int len_0,sz;
+
 	if (!wstr)
 		return NULL;
-	str = OPENSSL_malloc(wcslen(wstr) + 1);
+	len_0 = (int)wcslen(wstr)+1;	/* WideCharToMultiByte expects int */
+        sz = WideCharToMultiByte(CP_ACP,0,wstr,len_0,NULL,0,NULL,NULL);
+	if (!sz)
+		{
+		CAPIerr(CAPI_F_WIDE_TO_ASC, CAPI_R_WIN32_ERROR);
+		return NULL;
+		}
+	str = OPENSSL_malloc(sz);
 	if (!str)
 		{
 		CAPIerr(CAPI_F_WIDE_TO_ASC, ERR_R_MALLOC_FAILURE);
 		return NULL;
 		}
-	sprintf(str, "%S", wstr);
+	if (!WideCharToMultiByte(CP_ACP,0,wstr,len_0,str,sz,NULL,NULL))
+		{
+		OPENSSL_free(str);
+		CAPIerr(CAPI_F_WIDE_TO_ASC, CAPI_R_WIN32_ERROR);
+		return NULL;
+		}
 	return str;
 	}
 
@@ -1053,7 +1067,7 @@ static int capi_get_provname(CAPI_CTX *ctx, LPSTR *pname, DWORD *ptype, DWORD id
 	LPSTR name;
 	DWORD len, err;
 	CAPI_trace(ctx, "capi_get_provname, index=%d\n", idx);
-	if (!CryptEnumProviders(idx, NULL, 0, ptype, NULL, &len))
+	if (!CryptEnumProvidersA(idx, NULL, 0, ptype, NULL, &len))
 		{
 		err = GetLastError();
 		if (err == ERROR_NO_MORE_ITEMS)
@@ -1063,7 +1077,7 @@ static int capi_get_provname(CAPI_CTX *ctx, LPSTR *pname, DWORD *ptype, DWORD id
 		return 0;
 		}
 	name = OPENSSL_malloc(len);
-		if (!CryptEnumProviders(idx, NULL, 0, ptype, name, &len))
+	if (!CryptEnumProvidersA(idx, NULL, 0, ptype, name, &len))
 		{
 		err = GetLastError();
 		if (err == ERROR_NO_MORE_ITEMS)
@@ -1082,7 +1096,7 @@ static int capi_list_providers(CAPI_CTX *ctx, BIO *out)
 	{
 	DWORD idx, ptype;
 	int ret;
-	LPTSTR provname = NULL;
+	LPSTR provname = NULL;
 	CAPI_trace(ctx, "capi_list_providers\n");
 	BIO_printf(out, "Available CSPs:\n");
 	for(idx = 0; ; idx++)
@@ -1105,7 +1119,7 @@ static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
 	DWORD err, idx, flags, buflen = 0, clen;
 	LPSTR cname;
 	CAPI_trace(ctx, "Listing containers CSP=%s, type = %d\n", ctx->cspname, ctx->csptype);
-	if (!CryptAcquireContext(&hprov, NULL, ctx->cspname, ctx->csptype, CRYPT_VERIFYCONTEXT))
+	if (!CryptAcquireContextA(&hprov, NULL, ctx->cspname, ctx->csptype, CRYPT_VERIFYCONTEXT))
 		{
 		CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, CAPI_R_CRYPTACQUIRECONTEXT_ERROR);
 		capi_addlasterror();
@@ -1385,7 +1399,7 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const char *contname, char *provnam
 	key = OPENSSL_malloc(sizeof(CAPI_KEY));
 	CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n", 
 						contname, provname, ptype);
-	if (!CryptAcquireContext(&key->hprov, contname, provname, ptype, 0))
+	if (!CryptAcquireContextA(&key->hprov, contname, provname, ptype, 0))
 		{
 		CAPIerr(CAPI_F_CAPI_GET_KEY, CAPI_R_CRYPTACQUIRECONTEXT_ERROR);
 		capi_addlasterror();
@@ -1523,7 +1537,7 @@ static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type, int che
 	if (check)
 		{
 		HCRYPTPROV hprov;
-		if (!CryptAcquireContext(&hprov, NULL, pname, type,
+		if (!CryptAcquireContextA(&hprov, NULL, pname, type,
 						CRYPT_VERIFYCONTEXT))
 			{
 			CAPIerr(CAPI_F_CAPI_CTX_SET_PROVNAME, CAPI_R_CRYPTACQUIRECONTEXT_ERROR);
