@@ -659,7 +659,7 @@ const char *CRYPTO_get_lock_name(int type)
 
 #if	defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
 	defined(__INTEL__) || \
-	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64)
+	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 
 unsigned long  OPENSSL_ia32cap_P=0;
 unsigned long *OPENSSL_ia32cap_loc(void) { return &OPENSSL_ia32cap_P; }
@@ -698,6 +698,8 @@ void OPENSSL_cpuid_setup(void) {}
 #ifdef __CYGWIN__
 /* pick DLL_[PROCESS|THREAD]_[ATTACH|DETACH] definitions */
 #include <windows.h>
+/* this has side-effect of _WIN32 getting defined, which otherwise
+ * is mutually exclusive with __CYGWIN__... */
 #endif
 
 /* All we really need to do is remove the 'error' state when a thread
@@ -740,6 +742,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <tchar.h>
+#include <signal.h>
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
 int OPENSSL_isservice(void)
@@ -870,7 +873,13 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 	OPENSSL_showfatal(
 		"%s(%d): OpenSSL internal error, assertion failed: %s\n",
 		file,line,assertion);
+#if !defined(_WIN32) || defined(__CYGWIN__)
 	abort();
+#else
+	/* Win32 abort() customarily shows a dialog, but we just did that... */
+	raise(SIGABRT);
+	_exit(3);
+#endif
 	}
 
 void *OPENSSL_stderr(void)	{ return stderr; }
