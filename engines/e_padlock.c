@@ -1319,7 +1319,12 @@ static RAND_METHOD padlock_rand = {
 	padlock_rand_status,	/* rand status */
 };
 
-#endif /* COMPILE_HW_PADLOCK */
+#else  /* !COMPILE_HW_PADLOCK */
+#ifndef OPENSSL_NO_DYNAMIC_ENGINE
+OPENSSL_EXPORT
+int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { return 0; }
+IMPLEMENT_DYNAMIC_CHECK_FN()
+#endif
 
 #endif /* !OPENSSL_NO_HW_PADLOCK */
 #endif /* !OPENSSL_NO_HW */
