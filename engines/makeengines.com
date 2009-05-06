@@ -1,5 +1,5 @@
 $!
-$!  MAKEAPPS.COM
+$!  MAKEENGINES.COM
 $!  Written By:  Richard Levitte
 $!               richard@levitte.org
 $!
@@ -202,6 +202,10 @@ $ GOTO FILE_NEXT
 $!
 $ FILE_DONE:
 $ CLOSE OBJECTS
+$!
+$! Do not link the support files.
+$!
+$ IF ENGINE_NAME .EQS. "" THEN GOTO ENGINE_DONE
 $!
 $! Now, there are two ways to handle this.  We can either build 
 $! shareable images or stick the engine object file into libcrypto.
