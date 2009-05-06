@@ -41,7 +41,7 @@
  C++, then you will need already mentioned Netwide Assembler binary,
  nasmw.exe or nasm.exe, to be available on your %PATH%.
 
- Firstly you should run Configure with platorm VC-WIN32:
+ Firstly you should run Configure with platform VC-WIN32:
 
  > perl Configure VC-WIN32 --prefix=c:\some\openssl\dir
 
