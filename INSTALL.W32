@@ -41,7 +41,7 @@
  C++, then you will need already mentioned Netwide Assembler binary,
  nasmw.exe or nasm.exe, to be available on your %PATH%.
 
- Firstly you should run Configure:
+ Firstly you should run Configure with platorm VC-WIN32:
 
  > perl Configure VC-WIN32 --prefix=c:\some\openssl\dir
 
@@ -81,16 +81,13 @@
 
  There are various changes you can make to the Win32 compile
  environment. By default the library is not compiled with debugging
- symbols. If you add 'debug' to the mk1mf.pl lines in the do_* batch
- file then debugging symbols will be compiled in. Note that mk1mf.pl
- expects the platform to be the last argument on the command line, so
- 'debug' must appear before that, as all other options.
+ symbols. If you use the platform debug-VC-WIN32 instead of VC-WIN32
+ then debugging symbols will be compiled in.
 
-
- By default in 0.9.8 OpenSSL will compile builtin ENGINES into the
- libeay32.dll shared library. If you specify the "no-static-engine"
+ By default in 1.0.0 OpenSSL will compile builtin ENGINES into the
+ separate shared librariesy. If you specify the "enable-static-engine"
  option on the command line to Configure the shared library build
- (ms\ntdll.mak) will compile the engines as separate DLLs.
+ (ms\ntdll.mak) will compile the engines into libeay32.dll instead.
 
  The default Win32 environment is to leave out any Windows NT specific
  features.
@@ -101,7 +98,6 @@
 
  You can also build a static version of the library using the Makefile
  ms\nt.mak
-
 
 
  Borland C++ builder 5
