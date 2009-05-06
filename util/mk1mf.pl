@@ -54,6 +54,8 @@ while(<IN>) {
 }
 close(IN);
 
+$debug = 1 if $mf_platform =~ /^debug-/;
+
 die "Makefile is not the toplevel Makefile!\n" if $ssl_version eq "";
 
 $infile="MINFO";
