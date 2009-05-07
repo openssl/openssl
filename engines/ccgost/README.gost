@@ -75,7 +75,7 @@ And section which describes configuration of the engine should contain
 	engine_id = gost
 	dynamic_path = /usr/lib/ssl/engines/libgost.so
 	default_algorithms = ALL
-	crypt_params = id-Gost28147-89-CryptoPro-A-ParamSet
+	CRYPT_PARAMS = id-Gost28147-89-CryptoPro-A-ParamSet
 
 Where engine_id parameter specifies name of engine (should be "gost").
 dynamic_path is a location of the loadable shared library implementing the
@@ -84,7 +84,7 @@ engines directory, this line can be omitted.
 default_algorithms parameter specifies that all algorithms, provided by
 engine, should be used.
 
-The crypt_params parameter is engine-specific. It allows the user to choose
+The CRYPT_PARAMS parameter is engine-specific. It allows the user to choose
 between different parameter sets of symmetric cipher algorithm. RFC 4357
 specifies several parameters for the GOST 28147-89 algorithm, but OpenSSL
 doesn't provide user interface to choose one when encrypting. So use engine
