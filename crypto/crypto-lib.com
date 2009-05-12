@@ -213,7 +213,7 @@ $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
 	"tb_rsa,tb_dsa,tb_ecdsa,tb_dh,tb_ecdh,tb_rand,tb_store,"+ -
 	"tb_cipher,tb_digest,tb_pkmeth,tb_asnmth,"+ -
-	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev"+ -
+	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev,"+ -
 	"eng_aesni"
 $ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,aes_ctr,"+ -
 	"aes_ige,aes_wrap"
