@@ -32,7 +32,33 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&or	("ebp","eax");
 	&cmp	("ecx",0x6c65746e);	# "ntel"
 	&setne	(&LB("eax"));
-	&or	("ebp","eax");
+	&or	("ebp","eax");		# 0 indicates Intel CPU
+	&mov	("esi",1);		# "number of [AMD] cores"
+	&jz	(&label("intel"));
+
+	&cmp	("ebx",0x68747541);	# "Auth"
+	&setne	(&LB("eax"));
+	&mov	("esi","eax");
+	&cmp	("edx",0x69746E65);	# "enti"
+	&setne	(&LB("eax"));
+	&or	("esi","eax");
+	&cmp	("ecx",0x444D4163);	# "cAMD"
+	&setne	(&LB("eax"));
+	&or	("esi","eax");		# 0 indicates AMD CPU
+	&jnz	(&label("intel"));
+
+	&mov	("eax",0x80000000);
+	&cpuid	();
+	&cmp	("eax",0x80000008);
+	&mov	("esi",1);		# "number of [AMD] cores"
+	&jb	(&label("intel"));
+
+	&mov	("eax",0x80000008);
+	&cpuid	();
+	&movz	("esi",&LB("ecx"));	# number of cores - 1
+	&inc	("esi");		# number of cores
+
+&set_label("intel");
 	&mov	("eax",1);
 	&cpuid	();
 	&cmp	("ebp",0);
@@ -45,7 +71,8 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&bt	("edx",28);		# test hyper-threading bit
 	&jnc	(&label("done"));
 	&shr	("ebx",16);
-	&cmp	(&LB("ebx"),1);		# see if cache is shared(*)
+	&and	("ebx",0xff);
+	&cmp	("ebx","esi");		# see if cache is shared(*)
 	&ja	(&label("done"));
 	&and	("edx",0xefffffff);	# clear hyper-threading bit if not
 &set_label("done");
