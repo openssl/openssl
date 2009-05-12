@@ -126,16 +126,16 @@ void ENGINE_load_padlock (void)
 #ifdef COMPILE_HW_PADLOCK
 /* We do these includes here to avoid header problems on platforms that
    do not have the VIA padlock anyway... */
+#include <stdlib.h>
 #ifdef _WIN32
 # include <malloc.h>
 # ifndef alloca
 #  define alloca _alloca
 # endif
-#elif defined(NETWARE_CLIB) && defined(__GNUC__)
-  void *alloca(size_t);
-# define alloca(s) __builtin_alloca(s)
-#else
-# include <stdlib.h>
+#elif defined(__GNUC__)
+# ifndef alloca
+#  define alloca(s) __builtin_alloca((s))
+# endif
 #endif
 
 /* Function for ENGINE detection and control */
@@ -1325,6 +1325,7 @@ OPENSSL_EXPORT
 int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { return 0; }
 IMPLEMENT_DYNAMIC_CHECK_FN()
 #endif
+#endif /* COMPILE_HW_PADLOCK */
 
 #endif /* !OPENSSL_NO_HW_PADLOCK */
 #endif /* !OPENSSL_NO_HW */
