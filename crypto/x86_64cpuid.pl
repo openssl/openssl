@@ -59,8 +59,33 @@ OPENSSL_ia32_cpuid:
 	or	%eax,%r9d
 	cmp	\$0x6c65746e,%ecx	# "ntel"
 	setne	%al
-	or	%eax,%r9d
+	or	%eax,%r9d		# 0 indicates Intel CPU
+	mov	\$1,%r10d		# "number of [AMD] cores"
+	jz	.Lintel
 
+	cmp	\$0x68747541,%ebx	# "Auth"
+	setne	%al
+	mov	%eax,%r10d
+	cmp	\$0x69746E65,%edx	# "enti"
+	setne	%al
+	or	%eax,%r10d
+	cmp	\$0x444D4163,%ecx	# "cAMD"
+	setne	%al
+	or	%eax,%r10d		# 0 indicates AMD CPU
+	jnz	.Lintel
+
+	mov	\$0x80000000,%eax
+	cpuid
+	cmp	\$0x80000008,%eax
+	mov	\$1,%r10d		# "number of [AMD] cores"
+	jb	.Lintel
+
+	mov	\$0x80000008,%eax
+	cpuid
+	movzb	%cl,%r10		# number of cores - 1
+	inc	%r10			# number of cores
+
+.Lintel:
 	mov	\$1,%eax
 	cpuid
 	cmp	\$0,%r9d
@@ -74,7 +99,7 @@ OPENSSL_ia32_cpuid:
 	bt	\$28,%edx		# test hyper-threading bit
 	jnc	.Ldone
 	shr	\$16,%ebx
-	cmp	\$1,%bl			# see if cache is shared
+	cmp	%r10b,%bl		# see if cache is shared
 	ja	.Ldone
 	and	\$0xefffffff,%edx	# ~(1<<28)
 .Ldone:
