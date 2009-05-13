@@ -122,7 +122,9 @@
  * sigaction and fileno included. -pedantic would be more appropriate for
  * the intended purposes, but we can't prevent users from adding -ansi.
  */
-#define _POSIX_C_SOURCE 1
+#ifndef _POSIX_C_SOURCE
+#define _POSIX_C_SOURCE 2
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
