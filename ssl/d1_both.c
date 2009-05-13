@@ -518,6 +518,7 @@ dtls1_retrieve_buffered_fragment(SSL *s, long max, int *ok)
 
 	if ( s->d1->handshake_read_seq == frag->msg_header.seq)
 		{
+		unsigned long frag_len = frag->msg_header.frag_len;
 		pqueue_pop(s->d1->buffered_messages);
 
 		al=dtls1_preprocess_fragment(s,&frag->msg_header,max);
@@ -535,7 +536,7 @@ dtls1_retrieve_buffered_fragment(SSL *s, long max, int *ok)
 		if (al==0)
 			{
 			*ok = 1;
-			return frag->msg_header.frag_len;
+			return frag_len;
 			}
 
 		ssl3_send_alert(s,SSL3_AL_FATAL,al);
