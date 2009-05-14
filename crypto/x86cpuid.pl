@@ -23,6 +23,8 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&jnc	(&label("done"));
 	&xor	("eax","eax");
 	&cpuid	();
+	&mov	("edi","eax");		# max value for standard query level
+
 	&xor	("eax","eax");
 	&cmp	("ebx",0x756e6547);	# "Genu"
 	&setne	(&LB("eax"));
@@ -32,7 +34,55 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&or	("ebp","eax");
 	&cmp	("ecx",0x6c65746e);	# "ntel"
 	&setne	(&LB("eax"));
-	&or	("ebp","eax");
+	&or	("ebp","eax");		# 0 indicates Intel CPU
+	&jz	(&label("intel"));
+
+	&cmp	("ebx",0x68747541);	# "Auth"
+	&setne	(&LB("eax"));
+	&mov	("esi","eax");
+	&cmp	("edx",0x69746E65);	# "enti"
+	&setne	(&LB("eax"));
+	&or	("esi","eax");
+	&cmp	("ecx",0x444D4163);	# "cAMD"
+	&setne	(&LB("eax"));
+	&or	("esi","eax");		# 0 indicates AMD CPU
+	&jnz	(&label("intel"));
+
+	# AMD specific
+	&mov	("eax",0x80000000);
+	&cpuid	();
+	&cmp	("eax",0x80000008);
+	&jb	(&label("intel"));
+
+	&mov	("eax",0x80000008);
+	&cpuid	();
+	&movz	("esi",&LB("ecx"));	# number of cores - 1
+	&inc	("esi");		# number of cores
+
+	&mov	("eax",1);
+	&cpuid	();
+	&bt	("edx",28);
+	&jnc	(&label("done"));
+	&shr	("ebx",16);
+	&and	("ebx",0xff);
+	&cmp	("ebx","esi");
+	&ja	(&label("done"));
+	&and	("edx",0xefffffff);	# clear hyper-threading bit
+	&jmp	(&label("done"));
+	
+&set_label("intel");
+	&cmp	("edi",4);
+	&mov	("edi",-1);
+	&jb	(&label("nocacheinfo"));
+
+	&mov	("eax",4);
+	&mov	("ecx",0);		# query L1D
+	&cpuid	();
+	&mov	("edi","eax");
+	&shr	("edi",14);
+	&and	("edi",0xfff);		# number of cores -1 per L1D
+
+&set_label("nocacheinfo");
 	&mov	("eax",1);
 	&cpuid	();
 	&cmp	("ebp",0);
@@ -44,16 +94,19 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 &set_label("notP4");
 	&bt	("edx",28);		# test hyper-threading bit
 	&jnc	(&label("done"));
+	&and	("edx",0xefffffff);
+	&cmp	("edi",0);
+	&je	(&label("done"));
+
+	&or	("edx",0x10000000);
 	&shr	("ebx",16);
-	&cmp	(&LB("ebx"),1);		# see if cache is shared(*)
+	&cmp	(&LB("ebx"),1);
 	&ja	(&label("done"));
 	&and	("edx",0xefffffff);	# clear hyper-threading bit if not
 &set_label("done");
 	&mov	("eax","edx");
 	&mov	("edx","ecx");
 &function_end("OPENSSL_ia32_cpuid");
-# (*)	on Core2 this value is set to 2 denoting the fact that L2
-#	cache is shared between cores.
 
 &external_label("OPENSSL_ia32cap_P");
 
