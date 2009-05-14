@@ -50,6 +50,8 @@ OPENSSL_ia32_cpuid:
 
 	xor	%eax,%eax
 	cpuid
+	mov	%eax,%r11d		# max value for standard query level
+
 	xor	%eax,%eax
 	cmp	\$0x756e6547,%ebx	# "Genu"
 	setne	%al
@@ -60,7 +62,6 @@ OPENSSL_ia32_cpuid:
 	cmp	\$0x6c65746e,%ecx	# "ntel"
 	setne	%al
 	or	%eax,%r9d		# 0 indicates Intel CPU
-	mov	\$1,%r10d		# "number of [AMD] cores"
 	jz	.Lintel
 
 	cmp	\$0x68747541,%ebx	# "Auth"
@@ -74,10 +75,10 @@ OPENSSL_ia32_cpuid:
 	or	%eax,%r10d		# 0 indicates AMD CPU
 	jnz	.Lintel
 
+	# AMD specific
 	mov	\$0x80000000,%eax
 	cpuid
 	cmp	\$0x80000008,%eax
-	mov	\$1,%r10d		# "number of [AMD] cores"
 	jb	.Lintel
 
 	mov	\$0x80000008,%eax
@@ -85,7 +86,29 @@ OPENSSL_ia32_cpuid:
 	movzb	%cl,%r10		# number of cores - 1
 	inc	%r10			# number of cores
 
+	mov	\$1,%eax
+	cpuid
+	bt	\$28,%edx		# test hyper-threading bit
+	jnc	.Ldone
+	shr	\$16,%ebx		# number of logical processors
+	cmp	%r10b,%bl
+	ja	.Ldone
+	and	\$0xefffffff,%edx	# ~(1<<28)
+	jmp	.Ldone
+
 .Lintel:
+	cmp	\$4,%r11d
+	mov	\$-1,%r10d
+	jb	.Lnocacheinfo
+
+	mov	\$4,%eax
+	mov	\$0,%ecx		# query L1D
+	cpuid
+	mov	%eax,%r10d
+	shr	\$14,%r10d
+	and	\$0xfff,%r10d		# number of cores -1 per L1D
+
+.Lnocacheinfo:
 	mov	\$1,%eax
 	cpuid
 	cmp	\$0,%r9d
@@ -98,8 +121,13 @@ OPENSSL_ia32_cpuid:
 .Lnotintel:
 	bt	\$28,%edx		# test hyper-threading bit
 	jnc	.Ldone
+	and	\$0xefffffff,%edx	# ~(1<<28)
+	cmp	\$0,%r10d
+	je	.Ldone
+
+	or	\$0x10000000,%edx	# 1<<28
 	shr	\$16,%ebx
-	cmp	%r10b,%bl		# see if cache is shared
+	cmp	\$1,%bl			# see if cache is shared
 	ja	.Ldone
 	and	\$0xefffffff,%edx	# ~(1<<28)
 .Ldone:
