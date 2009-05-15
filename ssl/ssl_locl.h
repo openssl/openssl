@@ -942,6 +942,7 @@ void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
 void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
 long dtls1_default_timeout(void);
+struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft);
 const SSL_CIPHER *dtls1_get_cipher(unsigned int u);
 
 
