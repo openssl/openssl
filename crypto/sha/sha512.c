@@ -544,4 +544,13 @@ static void sha512_block_data_order (SHA512_CTX *ctx, const void *in, size_t num
 
 #endif /* SHA512_ASM */
 
+#else /* OPENSSL_NO_SHA512 */
+
+/* Sensitive compilers ("Compaq C V6.4-005 on OpenVMS VAX V7.3", for
+ * example) dislike a statement-free file, complaining:
+ * "%CC-W-EMPTYFILE, Source file does not contain any declarations."
+ */
+
+int sha512_dummy();
+
 #endif /* OPENSSL_NO_SHA512 */
