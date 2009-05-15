@@ -210,7 +210,13 @@ typedef struct dtls1_state_st
 	struct hm_header_st r_msg_hdr;
 
 	struct dtls1_timeout_st timeout;
-	
+
+	/* Indicates when the last handshake msg sent will timeout */
+	struct timeval next_timeout;
+
+	/* Timeout duration */
+	unsigned short timeout_duration;
+
 	/* storage for Alert/Handshake protocol data received but not
 	 * yet processed by ssl3_read_bytes: */
 	unsigned char alert_fragment[DTLS1_AL_HEADER_LENGTH];

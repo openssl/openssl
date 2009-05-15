@@ -883,7 +883,6 @@ unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
 int dtls1_read_failed(SSL *s, int code)
 	{
 	DTLS1_STATE *state;
-	BIO *bio;
 	int send_alert = 0;
 
 	if ( code > 0)
@@ -892,8 +891,7 @@ int dtls1_read_failed(SSL *s, int code)
 		return 1;
 		}
 
-	bio = SSL_get_rbio(s);
-	if ( ! BIO_dgram_recv_timedout(bio))
+	if (!dtls1_is_timer_expired(s))
 		{
 		/* not a timeout, none of our business, 
 		   let higher layers handle this.  in fact it's probably an error */
@@ -906,6 +904,7 @@ int dtls1_read_failed(SSL *s, int code)
 		return code;
 		}
 
+	dtls1_double_timeout(s);
 	state = s->d1;
 	state->timeout.num_alerts++;
 	if ( state->timeout.num_alerts > DTLS1_TMO_ALERT_COUNT)
