@@ -5,7 +5,7 @@ $!               richard@levitte.org
 $!
 $!  This command file compiles and creates the various engines in form
 $!  of shared images.  They are placed in [.xxx.EXE.ENGINES], where "xxx"
-$!  is either AXP or VAX depending on your hardware.
+$!  is ALPHA, IA64 or VAX, depending on your hardware.
 $!
 $!  P1	if this is ENGINES or ALL, the engines will build, otherwise not.
 $!
@@ -31,6 +31,11 @@ $!
 $!-----------------------------------------------------------------------------
 $!
 $! Set the names of the engines we want to build
+$! NOTE: Some might think this list ugly.  However, it's made this way to
+$! reflect the LIBNAMES variable in Makefile as closely as possible,
+$! thereby making it fairly easy to verify that the lists are the same.
+$! NOTE: gmp isn't built, as it's mostly a test engine and brings in another
+$! library that isn't necessarely ported to VMS.
 $!
 $ ENGINES = "," + P6
 $ IF ENGINES .EQS. "," THEN -
@@ -40,10 +45,27 @@ $! Set the default TCP/IP library to link against if needed
 $!
 $ TCPIP_LIB = ""
 $!
-$! Set the architecture name
+$! Check What Architecture We Are Using.
 $!
-$ ARCH := VAX
-$ IF F$GETSYI("CPU") .GE. 128 THEN ARCH := AXP
+$ IF (F$GETSYI("CPU").LT.128)
+$ THEN
+$!
+$!  The Architecture Is VAX.
+$!
+$   ARCH := VAX
+$!
+$! Else...
+$!
+$ ELSE
+$!
+$!  The Architecture Is Alpha, IA64 or whatever comes in the future.
+$!
+$   ARCH = F$EDIT( F$GETSYI( "ARCH_NAME"), "UPCASE")
+$   IF (ARCH .EQS. "") THEN ARCH = "UNK"
+$!
+$! End The Architecture Check.
+$!
+$ ENDIF
 $!
 $! Set the goal directories, and creat them if necessary
 $!
@@ -55,7 +77,6 @@ $!
 $! Set the goal files, and create them if necessary
 $!
 $ CRYPTO_LIB :=SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO.OLB
-$ CRYPTO_EXE :=SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO.EXE
 $ IF F$SEARCH(CRYPTO_LIB) .EQS. "" THEN LIBRARY/CREATE/OBJECT 'CRYPTO_LIB'
 $!
 $! OK, time to check options and initialise
@@ -71,13 +92,15 @@ $ GOSUB CHECK_OPTIONS
 $ GOSUB INITIALISE
 $ GOSUB CHECK_OPT_FILE
 $!
-$! Define what goes into each engine
+$! Define what goes into each engine.  VAX includes a transfer vector.
 $!
 $ ENGINE_ = ""
+$ TV_OBJ = ""
 $ IF ARCH .EQS. "VAX"
 $ THEN
 $   ENGINE_ = "engine_vector.mar"
-$   EXTRA_OBJ := ,'OBJ_DIR'ENGINE_VECTOR.OBJ
+$   TV_OBJ_NAME = OBJ_DIR + F$PARSE(ENGINE_,,,"NAME","SYNTAX_ONLY") + ".OBJ"
+$   TV_OBJ = ",''TV_OBJ_NAME'"
 $ ENDIF
 $ ENGINE_4758CCA = "e_4758cca"
 $ ENGINE_aep = "e_aep"
@@ -205,7 +228,11 @@ $ CLOSE OBJECTS
 $!
 $! Do not link the support files.
 $!
-$ IF ENGINE_NAME .EQS. "" THEN GOTO ENGINE_DONE
+$ IF ENGINE_NAME .EQS. "" THEN GOTO ENGINE_NEXT
+$!
+$! Do not link the support files.
+$!
+$ IF ENGINE_NAME .EQS. "" THEN GOTO ENGINE_NEXT
 $!
 $! Now, there are two ways to handle this.  We can either build 
 $! shareable images or stick the engine object file into libcrypto.
@@ -220,12 +247,12 @@ $ ENGINE_OPT := SYS$DISK:[]'ARCH'.OPT
 $ IF TCPIP_LIB .NES. ""
 $ THEN
 $   LINK/'DEBUGGER'/'TRACEBACK' /SHARE='EXE_DIR''ENGINE_NAME'.EXE -
-	'EXE_DIR''ENGINE_NAME'.OPT/OPTION'EXTRA_OBJ', -
+	'EXE_DIR''ENGINE_NAME'.OPT/OPTION'TV_OBJ', -
 	'CRYPTO_LIB'/LIBRARY, -
 	'ENGINE_OPT'/OPTION,'TCPIP_LIB','OPT_FILE'/OPTION
 $ ELSE
 $   LINK/'DEBUGGER'/'TRACEBACK' /SHARE='EXE_DIR''ENGINE_NAME'.EXE -
-	'EXE_DIR''ENGINE_NAME'.OPT/OPTION'EXTRA_OBJ', -
+	'EXE_DIR''ENGINE_NAME'.OPT/OPTION'TV_OBJ', -
         'CRYPTO_LIB'/LIBRARY, -
 	'ENGINE_OPT'/OPTION,'OPT_FILE'/OPTION
 $ ENDIF
@@ -316,7 +343,7 @@ $!
 $   IF (F$SEARCH(OPT_FILE).EQS."")
 $   THEN
 $!
-$!    Figure Out If We Need An AXP Or A VAX Linker Option File.
+$!    Figure Out If We Need A non-VAX Or A VAX Linker Option File.
 $!
 $     IF ARCH .EQS. "VAX"
 $     THEN
@@ -336,19 +363,19 @@ $!    Else...
 $!
 $     ELSE
 $!
-$!      Create The AXP Linker Option File.
+$!      Create The non-VAX Linker Option File.
 $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File For AXP To Link Agianst 
+! Default System Options File For non-VAX To Link Agianst 
 ! The Sharable C Runtime Library.
 !
 SYS$SHARE:CMA$OPEN_LIB_SHR/SHARE
 SYS$SHARE:CMA$OPEN_RTL/SHARE
 $EOD
 $!
-$!    End The VAX/AXP DEC C Option File Check.
+$!    End The DEC C Option File Check.
 $!
 $     ENDIF
 $!
@@ -413,8 +440,9 @@ $     IF ("," + ACCEPT_PHASE + ",") - ",ENGINES," -
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " where 'xxx' stands for:"
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "        AXP  :  Alpha architecture."
-$     WRITE SYS$OUTPUT "        VAX  :  VAX architecture."
+$     WRITE SYS$OUTPUT "    ALPHA    :  Alpha architecture."
+$     WRITE SYS$OUTPUT "    IA64     :  IA64 architecture."
+$     WRITE SYS$OUTPUT "    VAX      :  VAX architecture."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
@@ -539,7 +567,7 @@ $   ELSE
 $!
 $!    Check To See If We Have VAXC Or DECC.
 $!
-$     IF (ARCH.EQS."AXP").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
+$     IF (ARCH.NES."VAX").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
 $     THEN 
 $!
 $!      Looks Like DECC, Set To Use DECC.
@@ -650,7 +678,7 @@ $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_DECC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_DECC_OPTIONS.OPT"
 $!
 $!  End DECC Check.
 $!
@@ -672,7 +700,7 @@ $!
 $!    Compile Using VAXC.
 $!
 $     CC = "CC"
-$     IF ARCH.EQS."AXP"
+$     IF ARCH.NES."VAX"
 $     THEN
 $	WRITE SYS$OUTPUT "There is no VAX C on Alpha!"
 $	EXIT
@@ -689,7 +717,7 @@ $     DEFINE/NOLOG SYS SYS$COMMON:[SYSLIB]
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_VAXC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_VAXC_OPTIONS.OPT"
 $!
 $!  End VAXC Check
 $!
@@ -716,7 +744,7 @@ $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_GNUC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_GNUC_OPTIONS.OPT"
 $!
 $!  End The GNU C Check.
 $!
@@ -768,7 +796,7 @@ $!
 $! Build a MACRO command for the architecture at hand
 $!
 $ IF ARCH .EQS. "VAX" THEN MACRO = "MACRO/''DEBUGGER'"
-$ IF ARCH .EQS. "AXP" THEN MACRO = "MACRO/MIGRATION/''DEBUGGER'/''MACRO_OPTIMIZE'"
+$ IF ARCH .NES. "VAX" THEN MACRO = "MACRO/MIGRATION/''DEBUGGER'/''MACRO_OPTIMIZE'"
 $!
 $!  Show user the result
 $!

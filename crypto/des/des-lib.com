@@ -9,7 +9,7 @@ $!  Changes by Richard Levitte <richard@levitte.org>
 $!
 $!  This command files compiles and creates the 
 $!  "[.xxx.EXE.CRYPTO.DES]LIBDES.OLB" library.  The "xxx" denotes the machine 
-$!  architecture of AXP or VAX.
+$!  architecture of ALPHA, IA64 or VAX.
 $!
 $!  It was re-written to try to determine which "C" compiler to try to use
 $!  or the user can specify a compiler in P3.
@@ -45,24 +45,33 @@ $!
 $!
 $! Check Which Architecture We Are Using.
 $!
-$ IF (F$GETSYI("CPU").GE.128)
+$ IF (F$GETSYI("CPU").LT.128)
 $ THEN
 $!
-$!  The Architecture Is AXP.
+$!  The Architecture Is VAX
 $!
-$   ARCH := AXP
+$   ARCH := VAX
 $!
 $! Else...
 $!
 $ ELSE
 $!
-$!  The Architecture Is VAX.
+$!  The Architecture Is Alpha, IA64 or whatever comes in the future.
 $!
-$   ARCH := VAX
+$   ARCH = F$EDIT( F$GETSYI( "ARCH_NAME"), "UPCASE")
+$   IF (ARCH .EQS. "") THEN ARCH = "UNK"
 $!
 $! End The Architecture Check.
 $!
 $ ENDIF
+$!
+$! Define The OBJ Directory Name.
+$!
+$ OBJ_DIR := SYS$DISK:[--.'ARCH'.OBJ.CRYPTO.DES]
+$!
+$! Define The EXE Directory Name.
+$!
+$ EXE_DIR :== SYS$DISK:[--.'ARCH'.EXE.CRYPTO.DES]
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -71,10 +80,6 @@ $!
 $! Tell The User What Kind of Machine We Run On.
 $!
 $ WRITE SYS$OUTPUT "Compiling On A ",ARCH," Machine."
-$!
-$! Define The OBJ Directory Name.
-$!
-$ OBJ_DIR := SYS$DISK:[--.'ARCH'.OBJ.CRYPTO.DES]
 $!
 $! Check To See If The Architecture Specific OBJ Directory Exists.
 $!
@@ -88,10 +93,6 @@ $!
 $! End The Architecture Specific OBJ Directory Check.
 $!
 $ ENDIF
-$!
-$! Define The EXE Directory Name.
-$!
-$ EXE_DIR :== SYS$DISK:[--.'ARCH'.EXE.CRYPTO.DES]
 $!
 $! Check To See If The Architecture Specific Directory Exists.
 $!
@@ -564,7 +565,7 @@ $!
 $   IF (F$SEARCH(OPT_FILE).EQS."")
 $   THEN
 $!
-$!    Figure Out If We Need An AXP Or A VAX Linker Option File.
+$!    Figure Out If We Need An non-VAX Or A VAX Linker Option File.
 $!
 $     IF (F$GETSYI("CPU").LT.128)
 $     THEN
@@ -584,19 +585,19 @@ $!    Else...
 $!
 $     ELSE
 $!
-$!      Create The AXP Linker Option File.
+$!      Create The non-VAX Linker Option File.
 $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File For AXP To Link Agianst 
+! Default System Options File For non-VAX To Link Agianst 
 ! The Sharable C Runtime Library.
 !
 SYS$SHARE:CMA$OPEN_LIB_SHR/SHARE
 SYS$SHARE:CMA$OPEN_RTL/SHARE
 $EOD
 $!
-$!    End The VAX/AXP DEC C Option File Check.
+$!    End The DEC C Option File Check.
 $!
 $     ENDIF
 $!
@@ -687,8 +688,9 @@ $     WRITE SYS$OUTPUT "    DES_OPTS :  To Compile Just The [.xxx.EXE.CRYTPO.DES
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " Where 'xxx' Stands For: "
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "        AXP  :  Alpha Architecture."
-$     WRITE SYS$OUTPUT "        VAX  :  VAX Architecture."
+$     WRITE SYS$OUTPUT "    ALPHA    :  Alpha Architecture."
+$     WRITE SYS$OUTPUT "    IA64     :  IA64 Architecture."
+$     WRITE SYS$OUTPUT "    VAX      :  VAX Architecture."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
@@ -817,7 +819,7 @@ $   ELSE
 $!
 $!    Check To See If We Have VAXC Or DECC.
 $!
-$     IF (ARCH.EQS."AXP").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
+$     IF (ARCH.NES."VAX").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
 $     THEN 
 $!
 $!      Looks Like DECC, Set To Use DECC.
@@ -882,7 +884,7 @@ $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_DECC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_DECC_OPTIONS.OPT"
 $!
 $!  End DECC Check.
 $!
@@ -904,9 +906,9 @@ $!
 $!    Compile Using VAXC.
 $!
 $     CC = "CC"
-$     IF ARCH.EQS."AXP"
+$     IF ARCH.NES."VAX"
 $     THEN
-$	WRITE SYS$OUTPUT "There is no VAX C on Alpha!"
+$	WRITE SYS$OUTPUT "There is no VAX C on ''ARCH'!"
 $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
@@ -919,7 +921,7 @@ $     DEFINE/NOLOG SYS SYS$COMMON:[SYSLIB]
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_VAXC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_VAXC_OPTIONS.OPT"
 $!
 $!  End VAXC Check
 $!
@@ -944,7 +946,7 @@ $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_GNUC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_GNUC_OPTIONS.OPT"
 $!
 $!  End The GNU C Check.
 $!
