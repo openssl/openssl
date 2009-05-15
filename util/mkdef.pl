@@ -69,7 +69,7 @@ my $do_ctestall = 0;
 my $do_checkexist = 0;
 
 my $VMSVAX=0;
-my $VMSAlpha=0;
+my $VMSNonVAX=0;
 my $VMS=0;
 my $W32=0;
 my $W16=0;
@@ -145,9 +145,9 @@ foreach (@ARGV, split(/ /, $options))
 		$VMS=1;
 		$VMSVAX=1;
 	}
-	if ($_ eq "VMS-Alpha") {
+	if ($_ eq "VMS-NonVAX") {
 		$VMS=1;
-		$VMSAlpha=1;
+		$VMSNonVAX=1;
 	}
 	$VMS=1 if $_ eq "VMS";
 	$OS2=1 if $_ eq "OS2";
@@ -966,6 +966,19 @@ sub do_defs
 	$platform{"PEM_write_NS_CERT_SEQ"} = "VMS";
 	$platform{"PEM_read_P8_PRIV_KEY_INFO"} = "VMS";
 	$platform{"PEM_write_P8_PRIV_KEY_INFO"} = "VMS";
+	$platform{"EVP_sha384"} = "!VMSVAX";
+	$platform{"EVP_sha512"} = "!VMSVAX";
+	$platform{"SHA384_Init"} = "!VMSVAX";
+	$platform{"SHA384_Transform"} = "!VMSVAX";
+	$platform{"SHA384_Update"} = "!VMSVAX";
+	$platform{"SHA384_Final"} = "!VMSVAX";
+	$platform{"SHA384"} = "!VMSVAX";
+	$platform{"SHA512_Init"} = "!VMSVAX";
+	$platform{"SHA512_Transform"} = "!VMSVAX";
+	$platform{"SHA512_Update"} = "!VMSVAX";
+	$platform{"SHA512_Final"} = "!VMSVAX";
+	$platform{"SHA512"} = "!VMSVAX";
+
 
 	# Info we know about
 
@@ -1090,6 +1103,8 @@ sub is_valid
 
 		if ($platforms) {
 			# platforms
+			if ($keyword eq "VMSVAX" && $VMSVAX) { return 1; }
+			if ($keyword eq "VMSNonVAX" && $VMSNonVAX) { return 1; }
 			if ($keyword eq "VMS" && $VMS) { return 1; }
 			if ($keyword eq "WIN32" && $W32) { return 1; }
 			if ($keyword eq "WIN16" && $W16) { return 1; }
