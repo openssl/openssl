@@ -8,8 +8,8 @@ $!
 $!  Changes by Richard Levitte <richard@levitte.org>
 $!
 $!  This command files compiles and creates the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" 
-$!  library for OpenSSL.  The "xxx" denotes the machine architecture of AXP
-$!  or VAX.
+$!  library for OpenSSL.  The "xxx" denotes the machine architecture, ALPHA,
+$!  IA64 or VAX.
 $!
 $!  It was re-written so it would try to determine what "C" compiler to use 
 $!  or you can specify which "C" compiler to use.
@@ -17,28 +17,28 @@ $!
 $!  Specify the following as P1 to build just that part or ALL to just
 $!  build everything.
 $!
-$!    		LIBRARY    To just compile the [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
-$!    		APPS       To just compile the [.xxx.EXE.CRYPTO]*.EXE
-$!		ALL	   To do both LIBRARY and APPS
+$!    	LIBRARY    To just compile the [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
+$!    	APPS       To just compile the [.xxx.EXE.CRYPTO]*.EXE
+$!	ALL	   To do both LIBRARY and APPS
 $!
 $!  Specify DEBUG or NODEBUG as P2 to compile with or without debugger
 $!  information.
 $!
 $!  Specify which compiler at P3 to try to compile under.
 $!
-$!	   VAXC	 For VAX C.
-$!	   DECC	 For DEC C.
-$!	   GNUC	 For GNU C.
+$!	VAXC	   For VAX C.
+$!	DECC	   For DEC C.
+$!	GNUC	   For GNU C.
 $!
-$!  If you don't speficy a compiler, it will try to determine which
+$!  If you don't specify a compiler, it will try to determine which
 $!  "C" compiler to use.
 $!
 $!  P4, if defined, sets a TCP/IP library to use, through one of the following
 $!  keywords:
 $!
-$!	UCX		for UCX
-$!	TCPIP		for TCPIP (post UCX)
-$!	SOCKETSHR	for SOCKETSHR+NETLIB
+$!	UCX	   For UCX
+$!	TCPIP	   For TCPIP (post UCX)
+$!	SOCKETSHR  For SOCKETSHR+NETLIB
 $!
 $!  P5, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
@@ -54,26 +54,30 @@ $ TCPIP_LIB = ""
 $!
 $! Check Which Architecture We Are Using.
 $!
-$ IF (F$GETSYI("CPU").GE.128)
+$ IF (F$GETSYI("CPU").LT.128)
 $ THEN
 $!
-$!  The Architecture Is AXP
+$!  The Architecture Is VAX
 $!
-$   ARCH := AXP
+$   ARCH := VAX
 $!
 $! Else...
 $!
 $ ELSE
 $!
-$!  The Architecture Is VAX.
+$!  The Architecture Is Alpha, IA64 or whatever comes in the future.
 $!
-$   ARCH := VAX
+$   ARCH = F$EDIT( F$GETSYI( "ARCH_NAME"), "UPCASE")
+$   IF (ARCH .EQS. "") THEN ARCH = "UNK"
 $!
 $! End The Architecture Check.
 $!
 $ ENDIF
 $!
 $! Define The Different Encryption Types.
+$! NOTE: Some might think this list ugly.  However, it's made this way to
+$! reflect the SDIRS variable in [-]Makefile.org as closely as possible,
+$! thereby making it fairly easy to verify that the lists are the same.
 $!
 $ ENCRYPT_TYPES = "Basic,"+ -
 		  "OBJECTS,"+ -
@@ -84,6 +88,13 @@ $ ENCRYPT_TYPES = "Basic,"+ -
 		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
 		  "STORE,CMS,PQUEUE,TS,JPAKE"
+$! Define The OBJ Directory.
+$!
+$ OBJ_DIR := SYS$DISK:[-.'ARCH'.OBJ.CRYPTO]
+$!
+$! Define The EXE Directory.
+$!
+$ EXE_DIR := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -97,9 +108,6 @@ $! Tell The User What Kind of Machine We Run On.
 $!
 $ WRITE SYS$OUTPUT "Compiling On A ",ARCH," Machine."
 $!
-$! Define The OBJ Directory.
-$!
-$ OBJ_DIR := SYS$DISK:[-.'ARCH'.OBJ.CRYPTO]
 $!
 $! Check To See If The Architecture Specific OBJ Directory Exists.
 $!
@@ -113,10 +121,6 @@ $!
 $! End The Architecture Specific OBJ Directory Check.
 $!
 $ ENDIF
-$!
-$! Define The EXE Directory.
-$!
-$ EXE_DIR := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]
 $!
 $! Check To See If The Architecture Specific Directory Exists.
 $!
@@ -299,7 +303,7 @@ $ ! Disable the DOLLARID warning
 $ COMPILEWITH_CC4 = ",a_utctm,bss_log,o_time,o_dir"
 $ ! Disable disjoint optimization
 $ COMPILEWITH_CC5 = ",md2_dgst,md4_dgst,md5_dgst,mdc2dgst," + -
-                    "sha_dgst,sha1dgst,rmd_dgst,bf_enc,"
+                    "seed,sha_dgst,sha1dgst,rmd_dgst,bf_enc,"
 $ ! Disable the MIXLINKAGE warning
 $ COMPILEWITH_CC6 = ",enc_read,set_key,"
 $!
@@ -342,11 +346,11 @@ $! Create The Library and Apps Module Names.
 $!
 $ LIB_MODULE = "LIB_" + MODULE_NAME
 $ APPS_MODULE = "APPS_" + MODULE_NAME
-$ IF (MODULE_NAME.EQS."ASN1_2")
+$ IF (F$EXTRACT(0,5,MODULE_NAME).EQS."ASN1_")
 $ THEN
 $   MODULE_NAME = "ASN1"
 $ ENDIF
-$ IF (MODULE_NAME.EQS."EVP_2".OR.MODULE_NAME.EQS."EVP_3")
+$ IF (F$EXTRACT(0,5,MODULE_NAME).EQS."EVP_")
 $ THEN
 $   MODULE_NAME = "EVP"
 $ ENDIF
@@ -702,7 +706,7 @@ $!
 $   IF (F$SEARCH(OPT_FILE).EQS."")
 $   THEN
 $!
-$!    Figure Out If We Need An AXP Or A VAX Linker Option File.
+$!    Figure Out If We Need A non-VAX Or A VAX Linker Option File.
 $!
 $     IF ARCH .EQS. "VAX"
 $     THEN
@@ -722,19 +726,19 @@ $!    Else...
 $!
 $     ELSE
 $!
-$!      Create The AXP Linker Option File.
+$!      Create The non-VAX Linker Option File.
 $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File For AXP To Link Agianst 
+! Default System Options File For non-VAX To Link Agianst 
 ! The Sharable C Runtime Library.
 !
 SYS$SHARE:CMA$OPEN_LIB_SHR/SHARE
 SYS$SHARE:CMA$OPEN_RTL/SHARE
 $EOD
 $!
-$!    End The VAX/AXP DEC C Option File Check.
+$!    End The DEC C Option File Check.
 $!
 $     ENDIF
 $!
@@ -795,8 +799,9 @@ $     WRITE SYS$OUTPUT "    APPS     :  To Compile Just The [.xxx.EXE.CRYPTO]*.E
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " Where 'xxx' Stands For:"
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "        AXP  :  Alpha Architecture."
-$     WRITE SYS$OUTPUT "        VAX  :  VAX Architecture."
+$     WRITE SYS$OUTPUT "    ALPHA    :  Alpha Architecture."
+$     WRITE SYS$OUTPUT "    IA64     :  IA64 Architecture."
+$     WRITE SYS$OUTPUT "    VAX      :  VAX Architecture."
 $     WRITE SYS$OUTPUT ""
 $!
 $!    Time To EXIT.
@@ -921,7 +926,7 @@ $   ELSE
 $!
 $!    Check To See If We Have VAXC Or DECC.
 $!
-$     IF (ARCH.EQS."AXP").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
+$     IF (ARCH.NES."VAX").OR.(F$TRNLNM("DECC$CC_DEFAULT").NES."")
 $     THEN 
 $!
 $!      Looks Like DECC, Set To Use DECC.
@@ -1027,12 +1032,12 @@ $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
            "/NOLIST/PREFIX=ALL" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_DECC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_DECC_OPTIONS.OPT"
 $!
 $!  End DECC Check.
 $!
@@ -1054,14 +1059,14 @@ $!
 $!    Compile Using VAXC.
 $!
 $     CC = "CC"
-$     IF ARCH.EQS."AXP"
+$     IF ARCH.NES."VAX"
 $     THEN
-$	WRITE SYS$OUTPUT "There is no VAX C on Alpha!"
+$	WRITE SYS$OUTPUT "There is no VAX C on ''ARCH'!"
 $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $     CCDEFS = """VAXC""," + CCDEFS
 $!
@@ -1071,7 +1076,7 @@ $     DEFINE/NOLOG SYS SYS$COMMON:[SYSLIB]
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_VAXC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_VAXC_OPTIONS.OPT"
 $!
 $!  End VAXC Check
 $!
@@ -1093,12 +1098,12 @@ $!
 $!    Use GNU C...
 $!
 $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
-$     OPT_FILE = "SYS$DISK:[]VAX_GNUC_OPTIONS.OPT"
+$     OPT_FILE = "''EXE_DIR'VAX_GNUC_OPTIONS.OPT"
 $!
 $!  End The GNU C Check.
 $!
@@ -1168,7 +1173,7 @@ $!
 $! Build a MACRO command for the architecture at hand
 $!
 $ IF ARCH .EQS. "VAX" THEN MACRO = "MACRO/''DEBUGGER'"
-$ IF ARCH .EQS. "AXP" THEN MACRO = "MACRO/MIGRATION/''DEBUGGER'/''MACRO_OPTIMIZE'"
+$ IF ARCH .NES. "VAX" THEN MACRO = "MACRO/MIGRATION/''DEBUGGER'/''MACRO_OPTIMIZE'"
 $!
 $!  Show user the result
 $!

@@ -7,6 +7,14 @@ $	    write sys$error "RSAref 2.0 hasn't been properly extracted."
 $	    exit
 $	endif
 $
+$	if (f$getsyi("cpu").lt.128)
+$	then
+$	    arch := vax
+$	else
+$	    arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
+$	    if (arch .eqs. "") then arch = "UNK"
+$	endif
+$
 $	_save_default = f$environment("default")
 $	set default [.install]
 $	files := desc,digit,md2c,md5c,nn,prime,-
@@ -29,14 +37,8 @@ $	set default [-]
 $	define/user openssl [---.include.openssl]
 $	cc/define=ENGINE_DYNAMIC_SUPPORT rsaref.c
 $
-$	if f$getsyi("CPU") .ge. 128
+$	if arch .eqs. "VAX"
 $	then
-$	    link/share=librsaref.exe sys$input:/option
-[]rsaref.obj
-[.install]rsaref.olb/lib
-[---.axp.exe.crypto]libcrypto.olb/lib
-symbol_vector=(bind_engine=procedure,v_check=procedure)
-$	else
 $	    macro/object=rsaref_vec.obj sys$input:
 ;
 ; Transfer vector for VAX shareable image
@@ -80,6 +82,24 @@ PSECT_ATTR=$CHAR_STRING_CONSTANTS,NOWRT
 []rsaref.obj
 [.install]rsaref.olb/lib
 [---.vax.exe.crypto]libcrypto.olb/lib
+$	else
+$	    if arch_name .eqs. "ALPHA"
+$	    then
+$		link/share=librsaref.exe sys$input:/option
+[]rsaref.obj
+[.install]rsaref.olb/lib
+[---.alpha.exe.crypto]libcrypto.olb/lib
+symbol_vector=(bind_engine=procedure,v_check=procedure)
+$	    else
+$		if arch_name .eqs. "IA64"
+$		then
+$		    link /shareable=librsaref.exe sys$input: /options
+[]rsaref.obj
+[.install]rsaref.olb/lib
+[---.ia64.exe.crypto]libcrypto.olb/lib
+symbol_vector=(bind_engine=procedure,v_check=procedure)
+$		endif
+$	    endif
 $	endif
 $
 $	set default '_save_default'
