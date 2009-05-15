@@ -60,6 +60,11 @@
 /* Hacks to solve the problem with linkers incapable of handling very long
    symbol names.  In the case of VMS, the limit is 31 characters on VMS for
    VAX. */
+/* Note that this affects util/libeay.num and util/ssleay.num...  you may
+   change those manually, but that's not recommended, as those files are
+   controlled centrally and updated on Unix, and the central definition
+   may disagree with yours, which in turn may come with shareable library
+   incompatibilities. */
 #ifdef OPENSSL_SYS_VMS
 
 /* Hack a long name in crypto/cryptlib.c */
