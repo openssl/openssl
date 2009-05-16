@@ -203,6 +203,9 @@ const SSL_CIPHER *dtls1_get_cipher(unsigned int u)
 		{
 		if (ciph->algorithm_enc == SSL_RC4)
 			return NULL;
+		/* We currently don't support ECDH either */
+		if (ciph->algorithm_mkey & SSL_kEECDH)
+			return NULL;
 		}
 
 	return ciph;

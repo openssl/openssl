@@ -1343,9 +1343,6 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 		    s->psk_client_callback == NULL)
 			continue;
 #endif /* OPENSSL_NO_PSK */
-		/* DTLS doesn't currently support ECDHE */
-		if ((s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER) && (c->algorithm_mkey & SSL_kEECDH))
-			continue;
 		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
 		p+=j;
 		}
