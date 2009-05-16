@@ -237,3 +237,17 @@ pqueue_next(pitem **item)
 
 	return ret;
 	}
+
+int
+pqueue_size(pqueue_s *pq)
+{
+	pitem *item = pq->items;
+	int count = 0;
+	
+	while(item != NULL)
+	{
+		count++;
+		item = item->next;
+	}
+	return count;
+}

@@ -89,5 +89,6 @@ pitem *pqueue_iterator(pqueue pq);
 pitem *pqueue_next(piterator *iter);
 
 void   pqueue_print(pqueue pq);
+int    pqueue_size(pqueue pq);
 
 #endif /* ! HEADER_PQUEUE_H */
