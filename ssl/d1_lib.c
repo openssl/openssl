@@ -58,6 +58,7 @@
  */
 
 #include <stdio.h>
+#define USE_SOCKETS
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
