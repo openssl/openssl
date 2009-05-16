@@ -207,6 +207,10 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 	DTLS1_RECORD_DATA *rdata;
 	pitem *item;
 
+	/* Limit the size of the queue to prevent DOS attacks */
+	if (pqueue_size(queue->q) >= 100)
+		return 0;
+		
 	rdata = OPENSSL_malloc(sizeof(DTLS1_RECORD_DATA));
 	item = pitem_new(priority, rdata);
 	if (rdata == NULL || item == NULL)
