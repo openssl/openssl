@@ -869,7 +869,12 @@ void dtls1_get_message_header(unsigned char *data, struct hm_header_st *msg_hdr)
 void dtls1_get_ccs_header(unsigned char *data, struct ccs_header_st *ccs_hdr);
 void dtls1_reset_seq_numbers(SSL *s, int rw);
 long dtls1_default_timeout(void);
+struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft);
 SSL_CIPHER *dtls1_get_cipher(unsigned int u);
+void dtls1_start_timer(SSL *s);
+void dtls1_stop_timer(SSL *s);
+int dtls1_is_timer_expired(SSL *s);
+void dtls1_double_timeout(SSL *s);
 
 
 

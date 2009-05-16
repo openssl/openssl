@@ -719,7 +719,14 @@ start:
 			pitem_free(item);
 			}
 		}
-		
+
+	/* Check for timeout */
+	if (dtls1_is_timer_expired(s))
+		{
+		if (dtls1_read_failed(s, -1) > 0);
+			goto start;
+		}
+
 	/* get new packet if necessary */
 	if ((rr->length == 0) || (s->rstate == SSL_ST_READ_BODY))
 		{
@@ -1024,7 +1031,7 @@ start:
 	if (rr->type == SSL3_RT_CHANGE_CIPHER_SPEC)
 		{
 		struct ccs_header_st ccs_hdr;
-		int ccs_hdr_len = DTLS1_CCS_HEADER_LENGTH;
+		unsigned int ccs_hdr_len = DTLS1_CCS_HEADER_LENGTH;
 
 		dtls1_get_ccs_header(rr->data, &ccs_hdr);
 

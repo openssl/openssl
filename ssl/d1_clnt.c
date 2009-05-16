@@ -230,7 +230,7 @@ int dtls1_connect(SSL *s)
 			/* every DTLS ClientHello resets Finished MAC */
 			ssl3_init_finished_mac(s);
 
-			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
+			dtls1_start_timer(s);
 			ret=dtls1_client_hello(s);
 			if (ret <= 0) goto end;
 
@@ -256,7 +256,7 @@ int dtls1_connect(SSL *s)
 			if (ret <= 0) goto end;
 			else
 				{
-				BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 0, NULL);
+				dtls1_stop_timer(s);
 				if (s->hit)
 					s->state=SSL3_ST_CR_FINISHED_A;
 				else
@@ -271,7 +271,7 @@ int dtls1_connect(SSL *s)
 			ret = dtls1_get_hello_verify(s);
 			if ( ret <= 0)
 				goto end;
-			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 0, NULL);
+			dtls1_stop_timer(s);
 			if ( s->d1->send_cookie) /* start again, with a cookie */
 				s->state=SSL3_ST_CW_CLNT_HELLO_A;
 			else
@@ -333,7 +333,7 @@ int dtls1_connect(SSL *s)
 		case SSL3_ST_CW_CERT_B:
 		case SSL3_ST_CW_CERT_C:
 		case SSL3_ST_CW_CERT_D:
-			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
+			dtls1_start_timer(s);
 			ret=dtls1_send_client_certificate(s);
 			if (ret <= 0) goto end;
 			s->state=SSL3_ST_CW_KEY_EXCH_A;
@@ -342,7 +342,7 @@ int dtls1_connect(SSL *s)
 
 		case SSL3_ST_CW_KEY_EXCH_A:
 		case SSL3_ST_CW_KEY_EXCH_B:
-			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
+			dtls1_start_timer(s);
 			ret=dtls1_send_client_key_exchange(s);
 			if (ret <= 0) goto end;
 			l=s->s3->tmp.new_cipher->algorithms;
@@ -365,7 +365,7 @@ int dtls1_connect(SSL *s)
 
 		case SSL3_ST_CW_CERT_VRFY_A:
 		case SSL3_ST_CW_CERT_VRFY_B:
-			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
+			dtls1_start_timer(s);
 			ret=dtls1_send_client_verify(s);
 			if (ret <= 0) goto end;
 			s->state=SSL3_ST_CW_CHANGE_A;
@@ -375,7 +375,7 @@ int dtls1_connect(SSL *s)
 
 		case SSL3_ST_CW_CHANGE_A:
 		case SSL3_ST_CW_CHANGE_B:
-			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
+			dtls1_start_timer(s);
 			ret=dtls1_send_change_cipher_spec(s,
 				SSL3_ST_CW_CHANGE_A,SSL3_ST_CW_CHANGE_B);
 			if (ret <= 0) goto end;
@@ -410,7 +410,7 @@ int dtls1_connect(SSL *s)
 
 		case SSL3_ST_CW_FINISHED_A:
 		case SSL3_ST_CW_FINISHED_B:
-			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 1, NULL);
+			dtls1_start_timer(s);
 			ret=dtls1_send_finished(s,
 				SSL3_ST_CW_FINISHED_A,SSL3_ST_CW_FINISHED_B,
 				s->method->ssl3_enc->client_finished_label,
@@ -444,7 +444,7 @@ int dtls1_connect(SSL *s)
 			ret=ssl3_get_finished(s,SSL3_ST_CR_FINISHED_A,
 				SSL3_ST_CR_FINISHED_B);
 			if (ret <= 0) goto end;
-			BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_TIMEOUT, 0, NULL);
+			dtls1_stop_timer(s);
 
 			if (s->hit)
 				s->state=SSL3_ST_CW_CHANGE_A;

@@ -58,9 +58,15 @@
  */
 
 #include <stdio.h>
+#define USE_SOCKETS
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
+#ifdef OPENSSL_SYS_WIN32
+#include <sys/timeb.h>
+#endif
+
+static void get_current_time(struct timeval *t);
 const char dtls1_version_str[]="DTLSv1" OPENSSL_VERSION_PTEXT;
 
 SSL3_ENC_METHOD DTLSv1_enc_data={
@@ -223,3 +229,107 @@ SSL_CIPHER *dtls1_get_cipher(unsigned int u)
 
 	return ciph;
 	}
+
+void dtls1_start_timer(SSL *s)
+	{
+	/* If timer is not set, initialize duration with 1 second */
+	if (s->d1->next_timeout.tv_sec == 0 && s->d1->next_timeout.tv_usec == 0)
+		{
+		s->d1->timeout_duration = 1;
+		}
+	
+	/* Set timeout to current time */
+	get_current_time(&(s->d1->next_timeout));
+
+	/* Add duration to current time */
+	s->d1->next_timeout.tv_sec += s->d1->timeout_duration;
+	BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &(s->d1->next_timeout));
+	}
+
+struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft)
+	{
+	struct timeval timenow;
+
+	/* If no timeout is set, just return NULL */
+	if (s->d1->next_timeout.tv_sec == 0 && s->d1->next_timeout.tv_usec == 0)
+		{
+		return NULL;
+		}
+
+	/* Get current time */
+	get_current_time(&timenow);
+
+	/* If timer already expired, set remaining time to 0 */
+	if (s->d1->next_timeout.tv_sec < timenow.tv_sec ||
+		(s->d1->next_timeout.tv_sec == timenow.tv_sec &&
+		 s->d1->next_timeout.tv_usec <= timenow.tv_usec))
+		{
+		memset(timeleft, 0, sizeof(struct timeval));
+		return timeleft;
+		}
+
+	/* Calculate time left until timer expires */
+	memcpy(timeleft, &(s->d1->next_timeout), sizeof(struct timeval));
+	timeleft->tv_sec -= timenow.tv_sec;
+	timeleft->tv_usec -= timenow.tv_usec;
+	if (timeleft->tv_usec < 0)
+		{
+		timeleft->tv_sec--;
+		timeleft->tv_usec += 1000000;
+		}
+
+	return timeleft;
+	}
+
+int dtls1_is_timer_expired(SSL *s)
+	{
+	struct timeval timeleft;
+
+	/* Get time left until timeout, return false if no timer running */
+	if (dtls1_get_timeout(s, &timeleft) == NULL)
+		{
+		return 0;
+		}
+
+	/* Return false if timer is not expired yet */
+	if (timeleft.tv_sec > 0 || timeleft.tv_usec > 0)
+		{
+		return 0;
+		}
+
+	/* Timer expired, so return true */	
+	return 1;
+	}
+
+void dtls1_double_timeout(SSL *s)
+	{
+	s->d1->timeout_duration *= 2;
+	if (s->d1->timeout_duration > 60)
+		s->d1->timeout_duration = 60;
+	dtls1_start_timer(s);
+	}
+
+void dtls1_stop_timer(SSL *s)
+	{
+	/* Reset everything */
+	memset(&(s->d1->next_timeout), 0, sizeof(struct timeval));
+	s->d1->timeout_duration = 1;
+	BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &(s->d1->next_timeout));
+	}
+
+static void get_current_time(struct timeval *t)
+{
+#ifdef OPENSSL_SYS_WIN32
+	struct _timeb tb;
+	_ftime(&tb);
+	t->tv_sec = (long)tb.time;
+	t->tv_usec = (long)tb.millitm * 1000;
+#elif defined(OPENSSL_SYS_VMS)
+	struct timeb tb;
+	ftime(&tb);
+	t->tv_sec = (long)tb.time;
+	t->tv_usec = (long)tb.millitm * 1000;
+#else
+	gettimeofday(t, NULL);
+#endif
+}

@@ -158,7 +158,8 @@ extern "C" {
 
 #define BIO_CTRL_DGRAM_SET_PEER           44 /* Destination for the data */
 
-#define BIO_CTRL_DGRAM_SET_TIMEOUT        45
+#define BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT   45 /* Next DTLS handshake timeout to
+											  * adjust socket timeouts */
 
 /* modifiers */
 #define BIO_FP_READ		0x02
