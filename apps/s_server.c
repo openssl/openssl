@@ -1657,7 +1657,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 			}
 
 		
-		if ( socket_mtu > 28)
+		if (socket_mtu > 28)
 			{
 			SSL_set_options(con, SSL_OP_NO_QUERY_MTU);
 			SSL_set_mtu(con, socket_mtu - 28);
