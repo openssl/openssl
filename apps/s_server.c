@@ -283,10 +283,7 @@ static char *engine_id=NULL;
 static const char *session_id_prefix=NULL;
 
 static int enable_timeouts = 0;
-#ifdef mtu
-#undef mtu
-#endif
-static long mtu;
+static long socket_mtu;
 static int cert_chain = 0;
 
 
@@ -375,7 +372,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
 	BIO_printf(bio_err," -dtls1        - Just talk DTLSv1\n");
 	BIO_printf(bio_err," -timeout      - Enable timeouts\n");
-	BIO_printf(bio_err," -mtu          - Set MTU\n");
+	BIO_printf(bio_err," -mtu          - Set link layer MTU\n");
 	BIO_printf(bio_err," -chain        - Read a certificate chain\n");
 	BIO_printf(bio_err," -no_ssl2      - Just disable SSLv2\n");
 	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
@@ -1032,7 +1029,7 @@ int MAIN(int argc, char *argv[])
 		else if (strcmp(*argv,"-mtu") == 0)
 			{
 			if (--argc < 1) goto bad;
-			mtu = atol(*(++argv));
+			socket_mtu = atol(*(++argv));
 			}
 		else if (strcmp(*argv, "-chain") == 0)
 			cert_chain = 1;
@@ -1660,10 +1657,10 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 			}
 
 		
-		if ( mtu > 0)
+		if ( socket_mtu > 28)
 			{
 			SSL_set_options(con, SSL_OP_NO_QUERY_MTU);
-			SSL_set_mtu(con, mtu);
+			SSL_set_mtu(con, socket_mtu - 28);
 			}
 		else
 			/* want to do MTU discovery */

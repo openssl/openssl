@@ -226,7 +226,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
 	BIO_printf(bio_err," -dtls1        - just use DTLSv1\n");    
-	BIO_printf(bio_err," -mtu          - set the MTU\n");
+	BIO_printf(bio_err," -mtu          - set the link layer MTU\n");
 	BIO_printf(bio_err," -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
 	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences (only SSLv2)\n");
@@ -338,7 +338,7 @@ int MAIN(int argc, char **argv)
 	struct sockaddr peer;
 	int peerlen = sizeof(peer);
 	int enable_timeouts = 0 ;
-	long mtu = 0;
+	long socket_mtu = 0;
 #ifndef OPENSSL_NO_JPAKE
 	char *jpake_secret = NULL;
 #endif
@@ -489,7 +489,7 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-mtu") == 0)
 			{
 			if (--argc < 1) goto bad;
-			mtu = atol(*(++argv));
+			socket_mtu = atol(*(++argv));
 			}
 #endif
 		else if (strcmp(*argv,"-bugs") == 0)
@@ -843,10 +843,10 @@ re_start:
 			BIO_ctrl(sbio, BIO_CTRL_DGRAM_SET_SEND_TIMEOUT, 0, &timeout);
 			}
 
-		if ( mtu > 0)
+		if ( socket_mtu > 28)
 			{
 			SSL_set_options(con, SSL_OP_NO_QUERY_MTU);
-			SSL_set_mtu(con, mtu);
+			SSL_set_mtu(con, socket_mtu - 28);
 			}
 		else
 			/* want to do MTU discovery */
