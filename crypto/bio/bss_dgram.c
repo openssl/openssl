@@ -70,9 +70,7 @@
 #include <sys/timeb.h>
 #endif
 
-#ifdef OPENSSL_SYS_LINUX
 #define IP_MTU      14 /* linux is lame */
-#endif
 
 #ifdef WATT32
 #define sock_write SockWrite  /* Watt-32 uses same names */
@@ -405,26 +403,22 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 #endif
 	case BIO_CTRL_DGRAM_QUERY_MTU:
-#ifdef IP_MTU
-        sockopt_len = sizeof(sockopt_val);
+         sockopt_len = sizeof(sockopt_val);
 		if ((ret = getsockopt(b->num, IPPROTO_IP, IP_MTU, (void *)&sockopt_val,
 			&sockopt_len)) < 0 || sockopt_val < 0)
 			{ ret = 0; }
 		else
 			{
-			data->mtu = sockopt_val - 20 - 8; /* Subtract IP and UDP header */
+			data->mtu = sockopt_val;
 			ret = data->mtu;
 			}
-#else
-		ret = 0;
-#endif
 		break;
 	case BIO_CTRL_DGRAM_GET_MTU:
 		return data->mtu;
 		break;
 	case BIO_CTRL_DGRAM_SET_MTU:
-		data->mtu = num - 20 - 8; /* Subtract IP and UDP header */
-		ret = data->mtu;
+		data->mtu = num;
+		ret = num;
 		break;
 	case BIO_CTRL_DGRAM_SET_CONNECTED:
 		to = (struct sockaddr *)ptr;
