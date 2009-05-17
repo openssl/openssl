@@ -338,6 +338,10 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 	bio_dgram_data *data = NULL;
 	long sockopt_val = 0;
 	unsigned int sockopt_len = 0;
+#ifdef OPENSSL_SYS_LINUX
+	socklen_t addr_len;
+	struct sockaddr_storage addr;
+#endif
 
 	data = (bio_dgram_data *)b->ptr;
 
@@ -396,24 +400,83 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 #endif
 		break;
 		/* (Linux)kernel sets DF bit on outgoing IP packets */
-#ifdef IP_MTU_DISCOVER
 	case BIO_CTRL_DGRAM_MTU_DISCOVER:
-		sockopt_val = IP_PMTUDISC_DO;
-		if ((ret = setsockopt(b->num, IPPROTO_IP, IP_MTU_DISCOVER,
-			&sockopt_val, sizeof(sockopt_val))) < 0)
-			perror("setsockopt");
+#ifdef OPENSSL_SYS_LINUX
+		addr_len = (socklen_t)sizeof(struct sockaddr_storage);
+		memset((void *)&addr, 0, sizeof(struct sockaddr_storage));
+		if (getsockname(b->num, (void *)&addr, &addr_len) < 0)
+			{
+			ret = 0;
+			break;
+			}
+		sockopt_len = sizeof(sockopt_val);
+		switch (addr.ss_family)
+			{
+		case AF_INET:
+			sockopt_val = IP_PMTUDISC_DO;
+			if ((ret = setsockopt(b->num, IPPROTO_IP, IP_MTU_DISCOVER,
+				&sockopt_val, sizeof(sockopt_val))) < 0)
+				perror("setsockopt");
+			break;
+		case AF_INET6:
+			sockopt_val = IPV6_PMTUDISC_DO;
+			if ((ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
+				&sockopt_val, sizeof(sockopt_val))) < 0)
+				perror("setsockopt");
+			break;
+		default:
+			ret = -1;
+			break;
+			}
+		ret = -1;
+#else
 		break;
 #endif
 	case BIO_CTRL_DGRAM_QUERY_MTU:
-#ifdef IP_MTU
-        sockopt_len = sizeof(sockopt_val);
-		if ((ret = getsockopt(b->num, IPPROTO_IP, IP_MTU, (void *)&sockopt_val,
-			&sockopt_len)) < 0 || sockopt_val < 0)
-			{ ret = 0; }
-		else
+#ifdef OPENSSL_SYS_LINUX
+		addr_len = (socklen_t)sizeof(struct sockaddr_storage);
+		memset((void *)&addr, 0, sizeof(struct sockaddr_storage));
+		if (getsockname(b->num, (void *)&addr, &addr_len) < 0)
 			{
-			data->mtu = sockopt_val - 20 - 8; /* Subtract IP and UDP header */
-			ret = data->mtu;
+			ret = 0;
+			break;
+			}
+		sockopt_len = sizeof(sockopt_val);
+		switch (addr.ss_family)
+			{
+		case AF_INET:
+			if ((ret = getsockopt(b->num, IPPROTO_IP, IP_MTU, (void *)&sockopt_val,
+				&sockopt_len)) < 0 || sockopt_val < 0)
+				{
+				ret = 0;
+				}
+			else
+				{
+				/* we assume that the transport protocol is UDP and no
+				 * IP options are used.
+				 */
+				data->mtu = sockopt_val - 8 - 20;
+				ret = data->mtu;
+				}
+			break;
+		case AF_INET6:
+			if ((ret = getsockopt(b->num, IPPROTO_IPV6, IPV6_MTU, (void *)&sockopt_val,
+				&sockopt_len)) < 0 || sockopt_val < 0)
+				{
+				ret = 0;
+				}
+			else
+				{
+				/* we assume that the transport protocol is UDP and no
+				 * IPV6 options are used.
+				 */
+				data->mtu = sockopt_val - 8 - 40;
+				ret = data->mtu;
+				}
+			break;
+		default:
+			ret = 0;
+			break;
 			}
 #else
 		ret = 0;
@@ -423,8 +486,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		return data->mtu;
 		break;
 	case BIO_CTRL_DGRAM_SET_MTU:
-		data->mtu = num - 20 - 8; /* Subtract IP and UDP header */
-		ret = data->mtu;
+		data->mtu = num;
+		ret = num;
 		break;
 	case BIO_CTRL_DGRAM_SET_CONNECTED:
 		to = (struct sockaddr *)ptr;
