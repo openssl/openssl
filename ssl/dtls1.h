@@ -204,7 +204,7 @@ typedef struct dtls1_state_st
 	 */
 	record_pqueue buffered_app_data;
 
-	unsigned int mtu; /* max wire packet size */
+	unsigned int mtu; /* max DTLS packet size */
 
 	struct hm_header_st w_msg_hdr;
 	struct hm_header_st r_msg_hdr;
