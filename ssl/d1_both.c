@@ -561,16 +561,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	if ((msg_hdr->frag_off+frag_len) > msg_hdr->msg_len)
 		goto err;
 
-	/* Try to find item in queue, to prevent duplicate entries */
-	memset(seq64be,0,sizeof(seq64be));
-	seq64be[6] = (unsigned char) (msg_hdr->seq>>8);
-	seq64be[7] = (unsigned char) msg_hdr->seq;
-	item = pqueue_find(s->d1->buffered_messages, seq64be);
-	
-	/* Discard the message if sequence number was already there, is
-	 * too far in the future or the fragment is already in the queue */
-	if (msg_hdr->seq <= s->d1->handshake_read_seq ||
-		msg_hdr->seq > s->d1->handshake_read_seq + 10 || item != NULL)
+	if (msg_hdr->seq <= s->d1->handshake_read_seq)
 		{
 		unsigned char devnull [256];
 
