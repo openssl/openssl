@@ -4,6 +4,28 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) In dtls1_process_out_of_seq_message() the check if the current message
+     is already buffered was missing. For every new message was memory
+     allocated, allowing an attacker to perform an denial of service attack
+     with sending out of seq handshake messages until there is no memory
+     left. Additionally every future messege was buffered, even if the
+     sequence number made no sense and would be part of another handshake.
+     So only messages with sequence numbers less than 10 in advance will be
+     buffered.
+     [Robin Seggelmann, discovered by Daniel Mentz] 	
+
+  *) Records are buffered if they arrive with a future epoch to be
+     processed after finishing the corresponding handshake. There is
+     currently no limitation to this buffer allowing an attacker to perform
+     a DOS attack with sending records with future epochs until there is no
+     memory left. This patch adds the pqueue_size() function to detemine
+     the size of a buffer and limits the record buffer to 100 entries.
+     [Robin Seggelmann, discovered by Daniel Mentz] 	
+
+  *) Keep a copy of frag->msg_header.frag_len so it can be used after the
+     parent structure is freed.
+     [Daniel Mentz] 	
+
   *) Handle non-blocking I/O properly in SSL_shutdown() call.
      [Darryl Miles <darryl-mailinglists@netbauds.net>]
 
