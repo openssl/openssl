@@ -289,9 +289,6 @@ static int dgram_read(BIO *b, char *out, int outl)
 				BIO_set_retry_read(b);
 				data->_errno = get_last_socket_error();
 				}
-#if 0
-			memset(&(data->hstimeout), 0, sizeof(struct timeval));
-#endif
 			}
 		}
 	return(ret);
