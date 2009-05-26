@@ -11,7 +11,7 @@
      left. Additionally every future messege was buffered, even if the
      sequence number made no sense and would be part of another handshake.
      So only messages with sequence numbers less than 10 in advance will be
-     buffered.
+     buffered.  (CVE-2009-1378)
      [Robin Seggelmann, discovered by Daniel Mentz] 	
 
   *) Records are buffered if they arrive with a future epoch to be
@@ -20,10 +20,11 @@
      a DOS attack with sending records with future epochs until there is no
      memory left. This patch adds the pqueue_size() function to detemine
      the size of a buffer and limits the record buffer to 100 entries.
+     (CVE-2009-1377)
      [Robin Seggelmann, discovered by Daniel Mentz] 	
 
   *) Keep a copy of frag->msg_header.frag_len so it can be used after the
-     parent structure is freed.
+     parent structure is freed.  (CVE-2009-1379)
      [Daniel Mentz] 	
 
   *) Handle non-blocking I/O properly in SSL_shutdown() call.
