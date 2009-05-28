@@ -471,7 +471,11 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 #define TLS_CT_ECDSA_SIGN		64
 #define TLS_CT_RSA_FIXED_ECDH		65
 #define TLS_CT_ECDSA_FIXED_ECDH 	66
-#define TLS_CT_NUMBER			7
+#define TLS_CT_GOST94_SIGN		21
+#define TLS_CT_GOST01_SIGN		22
+/* when correcting this number, correct also SSL3_CT_NUMBER in ssl3.h (see
+ * comment there) */
+#define TLS_CT_NUMBER			9
 
 #define TLS1_FINISH_MAC_LENGTH		12
 
