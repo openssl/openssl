@@ -3725,3 +3725,4 @@ JPAKE_STEP2_release                     4110	EXIST::FUNCTION:JPAKE
 JPAKE_STEP3A_init                       4111	EXIST::FUNCTION:JPAKE
 ERR_load_JPAKE_strings                  4112	EXIST::FUNCTION:JPAKE
 JPAKE_STEP2_init                        4113	EXIST::FUNCTION:JPAKE
+pqueue_size                             4114	EXIST::FUNCTION:
