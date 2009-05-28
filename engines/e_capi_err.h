@@ -116,6 +116,7 @@ static void ERR_CAPI_error(int function, int reason, char *file, int line);
 #define CAPI_R_UNSUPPORTED_ALGORITHM_NID		 119
 #define CAPI_R_UNSUPPORTED_PADDING			 120
 #define CAPI_R_UNSUPPORTED_PUBLIC_KEY_ALGORITHM		 121
+#define CAPI_R_WIN32_ERROR				 127
 
 #ifdef  __cplusplus
 }

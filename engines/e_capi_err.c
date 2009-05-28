@@ -1,6 +1,6 @@
 /* e_capi_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -122,6 +122,7 @@ static ERR_STRING_DATA CAPI_str_reasons[]=
 {ERR_REASON(CAPI_R_UNSUPPORTED_ALGORITHM_NID),"unsupported algorithm nid"},
 {ERR_REASON(CAPI_R_UNSUPPORTED_PADDING)  ,"unsupported padding"},
 {ERR_REASON(CAPI_R_UNSUPPORTED_PUBLIC_KEY_ALGORITHM),"unsupported public key algorithm"},
+{ERR_REASON(CAPI_R_WIN32_ERROR)          ,"win32 error"},
 {0,NULL}
 	};
 
