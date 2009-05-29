@@ -65,6 +65,7 @@
 #ifdef OPENSSL_SYS_WIN32
 /* Needed for struct timeval */
 #include <winsock.h>
+#endif
 
 #ifdef  __cplusplus
 extern "C" {
