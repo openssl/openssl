@@ -279,15 +279,23 @@ struct env_md_ctx_st
 						* cleaned */
 #define EVP_MD_CTX_FLAG_REUSE		0x0004 /* Don't free up ctx->md_data
 						* in EVP_MD_CTX_cleanup */
-#define EVP_MD_CTX_FLAG_NO_INIT		0x0008 /* Don't initialized md_data */
+/* FIPS and pad options are ignored in 1.0.0, definitions are here
+ * so we don't accidentally reuse the values for other purposes.
+ */
 
-/* MD operational flags */
+#define EVP_MD_CTX_FLAG_NON_FIPS_ALLOW	0x0008	/* Allow use of non FIPS digest
+						 * in FIPS mode */
 
-#define EVP_MD_CTX_FLAG_OP_MASK		0x00f0
+/* The following PAD options are also currently ignored in 1.0.0, digest
+ * parameters are handled through EVP_DigestSign*() and EVP_DigestVerify*()
+ * instead.
+ */
+#define EVP_MD_CTX_FLAG_PAD_MASK	0xF0	/* RSA mode to use */
+#define EVP_MD_CTX_FLAG_PAD_PKCS1	0x00	/* PKCS#1 v1.5 mode */
+#define EVP_MD_CTX_FLAG_PAD_X931	0x10	/* X9.31 mode */
+#define EVP_MD_CTX_FLAG_PAD_PSS		0x20	/* PSS mode */
 
-#define EVP_MD_CTX_FLAG_OP_DIGEST	0x0000
-#define EVP_MD_CTX_FLAG_OP_SIGN		0x0010
-#define EVP_MD_CTX_FLAG_OP_VERIFY	0x0020
+#define EVP_MD_CTX_FLAG_NO_INIT		0x0100 /* Don't initialize md_data */
 
 struct evp_cipher_st
 	{
