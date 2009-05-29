@@ -162,11 +162,11 @@ struct CAPI_CTX_st {
 
 /* Lookup string meanings in load_private_key */
 /* Substring of subject: uses "storename" */
-#define CAPI_LU_SUBSTR		0
+#define CAPI_LU_SUBSTR		1
 /* Friendly name: uses storename */
-#define CAPI_LU_FNAME		1
+#define CAPI_LU_FNAME		2
 /* Container name: uses cspname, keytype */
-#define CAPI_LU_CONTNAME	2
+#define CAPI_LU_CONTNAME	3
 	int lookup_method;
 /* Info to dump with dumpcerts option */
 /* Issuer and serial name strings */
