@@ -62,6 +62,9 @@
 
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
+#ifdef OPENSSL_SYS_WIN32
+/* Needed for struct timeval */
+#include <winsock.h>
 
 #ifdef  __cplusplus
 extern "C" {
