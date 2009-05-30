@@ -376,6 +376,11 @@ static int nc_match_single(GENERAL_NAME *gen, GENERAL_NAME *base)
 
 static int nc_dn(X509_NAME *nm, X509_NAME *base)
 	{
+	/* Ensure canonical encodings are up to date.  */
+	if (nm->modified && i2d_X509_NAME(nm, NULL) < 0)
+		return X509_V_ERR_OUT_OF_MEM;
+	if (base->modified && i2d_X509_NAME(base, NULL) < 0)
+		return X509_V_ERR_OUT_OF_MEM;
 	if (base->canon_enclen > nm->canon_enclen)
 		return X509_V_ERR_PERMITTED_VIOLATION;
 	if (memcmp(base->canon_enc, nm->canon_enc, base->canon_enclen))
