@@ -173,16 +173,16 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 	{
 	int ret;
 
-	/* Ensure canonical encoding is present */
+	/* Ensure canonical encoding is present and up to date */
 
-	if (!a->canon_enc)
+	if (!a->canon_enc || a->modified)
 		{
 		ret = i2d_X509_NAME((X509_NAME *)a, NULL);
 		if (ret < 0)
 			return -2;
 		}
 
-	if (!b->canon_enc)
+	if (!b->canon_enc || b->modified)
 		{
 		ret = i2d_X509_NAME((X509_NAME *)b, NULL);
 		if (ret < 0)
