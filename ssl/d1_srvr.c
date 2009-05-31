@@ -311,8 +311,9 @@ int dtls1_accept(SSL *s)
 
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
-			/* Check if it is anon DH */
-			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
+			/* Check if it is anon DH or normal PSK */
+			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
+				&& !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK))
 				{
 				dtls1_start_timer(s);
 				ret=dtls1_send_server_certificate(s);
@@ -346,7 +347,13 @@ int dtls1_accept(SSL *s)
 			/* only send if a DH key exchange or
 			 * RSA but we have a sign only certificate */
 			if (s->s3->tmp.use_rsa_tmp
+			/* PSK: send ServerKeyExchange if PSK identity
+			 * hint if provided */
+#ifndef OPENSSL_NO_PSK
+			    || ((alg_k & SSL_kPSK) && s->ctx->psk_identity_hint)
+#endif
 			    || (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+			    || (alg_k & SSL_kEECDH)
 			    || ((alg_k & SSL_kRSA)
 				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
 				    || (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher)
@@ -383,7 +390,10 @@ int dtls1_accept(SSL *s)
 				  * (against the specs, but s3_clnt.c accepts this for SSL 3) */
 				 !(s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) ||
 				 /* never request cert in Kerberos ciphersuites */
-				(s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
+				(s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5)
+				/* With normal PSK Certificates and
+				 * Certificate Requests are omitted */
+				|| (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK))
 				{
 				/* no cert request */
 				skip=1;
@@ -458,15 +468,30 @@ int dtls1_accept(SSL *s)
 			s->state=SSL3_ST_SR_CERT_VRFY_A;
 			s->init_num=0;
 
-			/* We need to get hashes here so if there is
-			 * a client cert, it can be verified */ 
-			s->method->ssl3_enc->cert_verify_mac(s,
-				NID_md5,
-				&(s->s3->tmp.cert_verify_md[0]));
-			s->method->ssl3_enc->cert_verify_mac(s,
-				NID_sha1,
-				&(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]));
+			if (ret == 2)
+				{
+				/* For the ECDH ciphersuites when
+				 * the client sends its ECDH pub key in
+				 * a certificate, the CertificateVerify
+				 * message is not sent.
+				 */
+				s->state=SSL3_ST_SR_FINISHED_A;
+				s->init_num = 0;
+				}
+			else
+				{
+				s->state=SSL3_ST_SR_CERT_VRFY_A;
+				s->init_num=0;
 
+				/* We need to get hashes here so if there is
+				 * a client cert, it can be verified */ 
+				s->method->ssl3_enc->cert_verify_mac(s,
+					NID_md5,
+					&(s->s3->tmp.cert_verify_md[0]));
+				s->method->ssl3_enc->cert_verify_mac(s,
+					NID_sha1,
+					&(s->s3->tmp.cert_verify_md[MD5_DIGEST_LENGTH]));
+				}
 			break;
 
 		case SSL3_ST_SR_CERT_VRFY_A:
@@ -789,6 +814,13 @@ int dtls1_send_server_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_DH
 	DH *dh=NULL,*dhp;
 #endif
+#ifndef OPENSSL_NO_ECDH
+	EC_KEY *ecdh=NULL, *ecdhp;
+	unsigned char *encodedPoint = NULL;
+	int encodedlen = 0;
+	int curve_id = 0;
+	BN_CTX *bn_ctx = NULL; 
+#endif
 	EVP_PKEY *pkey;
 	unsigned char *p,*d;
 	int al,i;
@@ -897,6 +929,142 @@ int dtls1_send_server_key_exchange(SSL *s)
 			}
 		else 
 #endif
+#ifndef OPENSSL_NO_ECDH
+			if (type & SSL_kEECDH)
+			{
+			const EC_GROUP *group;
+
+			ecdhp=cert->ecdh_tmp;
+			if ((ecdhp == NULL) && (s->cert->ecdh_tmp_cb != NULL))
+				{
+				ecdhp=s->cert->ecdh_tmp_cb(s,
+				      SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
+				      SSL_C_EXPORT_PKEYLENGTH(s->s3->tmp.new_cipher));
+				}
+			if (ecdhp == NULL)
+				{
+				al=SSL_AD_HANDSHAKE_FAILURE;
+				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,SSL_R_MISSING_TMP_ECDH_KEY);
+				goto f_err;
+				}
+
+			if (s->s3->tmp.ecdh != NULL)
+				{
+				EC_KEY_free(s->s3->tmp.ecdh); 
+				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+
+			/* Duplicate the ECDH structure. */
+			if (ecdhp == NULL)
+				{
+				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
+				goto err;
+				}
+			if (!EC_KEY_up_ref(ecdhp))
+				{
+				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
+				goto err;
+				}
+			ecdh = ecdhp;
+
+			s->s3->tmp.ecdh=ecdh;
+			if ((EC_KEY_get0_public_key(ecdh) == NULL) ||
+			    (EC_KEY_get0_private_key(ecdh) == NULL) ||
+			    (s->options & SSL_OP_SINGLE_ECDH_USE))
+				{
+				if(!EC_KEY_generate_key(ecdh))
+				    {
+				    SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
+				    goto err;
+				    }
+				}
+
+			if (((group = EC_KEY_get0_group(ecdh)) == NULL) ||
+			    (EC_KEY_get0_public_key(ecdh)  == NULL) ||
+			    (EC_KEY_get0_private_key(ecdh) == NULL))
+				{
+				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
+				goto err;
+				}
+
+			if (SSL_C_IS_EXPORT(s->s3->tmp.new_cipher) &&
+			    (EC_GROUP_get_degree(group) > 163)) 
+				{
+				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,SSL_R_ECGROUP_TOO_LARGE_FOR_CIPHER);
+				goto err;
+				}
+
+			/* XXX: For now, we only support ephemeral ECDH
+			 * keys over named (not generic) curves. For 
+			 * supported named curves, curve_id is non-zero.
+			 */
+			if ((curve_id = 
+			    tls1_ec_nid2curve_id(EC_GROUP_get_curve_name(group)))
+			    == 0)
+				{
+				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,SSL_R_UNSUPPORTED_ELLIPTIC_CURVE);
+				goto err;
+				}
+
+			/* Encode the public key.
+			 * First check the size of encoding and
+			 * allocate memory accordingly.
+			 */
+			encodedlen = EC_POINT_point2oct(group, 
+			    EC_KEY_get0_public_key(ecdh),
+			    POINT_CONVERSION_UNCOMPRESSED, 
+			    NULL, 0, NULL);
+
+			encodedPoint = (unsigned char *) 
+			    OPENSSL_malloc(encodedlen*sizeof(unsigned char)); 
+			bn_ctx = BN_CTX_new();
+			if ((encodedPoint == NULL) || (bn_ctx == NULL))
+				{
+				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+
+
+			encodedlen = EC_POINT_point2oct(group, 
+			    EC_KEY_get0_public_key(ecdh), 
+			    POINT_CONVERSION_UNCOMPRESSED, 
+			    encodedPoint, encodedlen, bn_ctx);
+
+			if (encodedlen == 0) 
+				{
+				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
+				goto err;
+				}
+
+			BN_CTX_free(bn_ctx);  bn_ctx=NULL;
+
+			/* XXX: For now, we only support named (not 
+			 * generic) curves in ECDH ephemeral key exchanges.
+			 * In this situation, we need four additional bytes
+			 * to encode the entire ServerECDHParams
+			 * structure. 
+			 */
+			n = 4 + encodedlen;
+
+			/* We'll generate the serverKeyExchange message
+			 * explicitly so we can set these to NULLs
+			 */
+			r[0]=NULL;
+			r[1]=NULL;
+			r[2]=NULL;
+			r[3]=NULL;
+			}
+		else 
+#endif /* !OPENSSL_NO_ECDH */
+#ifndef OPENSSL_NO_PSK
+			if (type & SSL_kPSK)
+				{
+				/* reserve size for record length and PSK identity hint*/
+				n+=2+strlen(s->ctx->psk_identity_hint);
+				}
+			else
+#endif /* !OPENSSL_NO_PSK */
 			{
 			al=SSL_AD_HANDSHAKE_FAILURE;
 			SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
@@ -908,7 +1076,8 @@ int dtls1_send_server_key_exchange(SSL *s)
 			n+=2+nr[i];
 			}
 
-		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL))
+		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
+			&& !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK))
 			{
 			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher))
 				== NULL)
@@ -938,6 +1107,41 @@ int dtls1_send_server_key_exchange(SSL *s)
 			BN_bn2bin(r[i],p);
 			p+=nr[i];
 			}
+
+#ifndef OPENSSL_NO_ECDH
+		if (type & SSL_kEECDH) 
+			{
+			/* XXX: For now, we only support named (not generic) curves.
+			 * In this situation, the serverKeyExchange message has:
+			 * [1 byte CurveType], [2 byte CurveName]
+			 * [1 byte length of encoded point], followed by
+			 * the actual encoded point itself
+			 */
+			*p = NAMED_CURVE_TYPE;
+			p += 1;
+			*p = 0;
+			p += 1;
+			*p = curve_id;
+			p += 1;
+			*p = encodedlen;
+			p += 1;
+			memcpy((unsigned char*)p, 
+			    (unsigned char *)encodedPoint, 
+			    encodedlen);
+			OPENSSL_free(encodedPoint);
+			p += encodedlen;
+			}
+#endif
+
+#ifndef OPENSSL_NO_PSK
+		if (type & SSL_kPSK)
+			{
+			/* copy PSK identity hint */
+			s2n(strlen(s->ctx->psk_identity_hint), p); 
+			strncpy((char *)p, s->ctx->psk_identity_hint, strlen(s->ctx->psk_identity_hint));
+			p+=strlen(s->ctx->psk_identity_hint);
+			}
+#endif
 
 		/* not anonymous */
 		if (pkey != NULL)
@@ -992,6 +1196,25 @@ int dtls1_send_server_key_exchange(SSL *s)
 				}
 			else
 #endif
+#if !defined(OPENSSL_NO_ECDSA)
+				if (pkey->type == EVP_PKEY_EC)
+				{
+				/* let's do ECDSA */
+				EVP_SignInit_ex(&md_ctx,EVP_ecdsa(), NULL);
+				EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
+				EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
+				EVP_SignUpdate(&md_ctx,&(d[4]),n);
+				if (!EVP_SignFinal(&md_ctx,&(p[2]),
+					(unsigned int *)&i,pkey))
+					{
+					SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_ECDSA);
+					goto err;
+					}
+				s2n(i,p);
+				n+=i+2;
+				}
+			else
+#endif
 				{
 				/* Is this error check actually needed? */
 				al=SSL_AD_HANDSHAKE_FAILURE;
@@ -1018,6 +1241,10 @@ int dtls1_send_server_key_exchange(SSL *s)
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
 err:
+#ifndef OPENSSL_NO_ECDH
+	if (encodedPoint != NULL) OPENSSL_free(encodedPoint);
+	BN_CTX_free(bn_ctx);
+#endif
 	EVP_MD_CTX_cleanup(&md_ctx);
 	return(-1);
 	}
