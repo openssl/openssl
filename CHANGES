@@ -4,6 +4,9 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) Add ECDHE and PSK support to DTLS.
+     [Michael Tuexen <tuexen@fh-muenster.de>]
+
   *) Add CHECKED_STACK_OF macro to safestack.h, otherwise safestack can't
      be used on C++.
      [Steve Henson]
