@@ -858,8 +858,8 @@ bad:
 			perror(outdir);
 			goto err;
 			}
-#ifdef S_IFDIR
-		if (!(sb.st_mode & S_IFDIR))
+#ifdef S_ISDIR
+		if (!S_ISDIR(sb.st_mode))
 			{
 			BIO_printf(bio_err,"%s need to be a directory\n",outdir);
 			perror(outdir);
