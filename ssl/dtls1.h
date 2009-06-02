@@ -65,6 +65,8 @@
 #ifdef OPENSSL_SYS_WIN32
 /* Needed for struct timeval */
 #include <winsock.h>
+#elif defined(OPENSSL_SYS_NETWARE)
+#include <sys/timeval.h>
 #endif
 
 #ifdef  __cplusplus
