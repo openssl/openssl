@@ -333,8 +333,10 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 	int *ip;
 	struct sockaddr *to = NULL;
 	bio_dgram_data *data = NULL;
+#if defined(IP_MTU_DISCOVER) || defined(IP_MTU)
 	long sockopt_val = 0;
 	unsigned int sockopt_len = 0;
+#endif
 #ifdef OPENSSL_SYS_LINUX
 	socklen_t addr_len;
 	struct sockaddr_storage addr;
