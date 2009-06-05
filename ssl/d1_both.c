@@ -569,9 +569,13 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	item = pqueue_find(s->d1->buffered_messages, seq64be);
 	
 	/* Discard the message if sequence number was already there, is
-	 * too far in the future or the fragment is already in the queue */
+	 * too far in the future, already in the queue or if we received
+	 * a FINISHED before the SERVER_HELLO, which then must be a stale
+	 * retransmit.
+	 */
 	if (msg_hdr->seq <= s->d1->handshake_read_seq ||
-		msg_hdr->seq > s->d1->handshake_read_seq + 10 || item != NULL)
+		msg_hdr->seq > s->d1->handshake_read_seq + 10 || item != NULL ||
+		s->d1->handshake_read_seq == 0 && msg_hdr->type == SSL3_MT_FINISHED)
 		{
 		unsigned char devnull [256];
 

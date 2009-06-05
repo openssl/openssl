@@ -1102,6 +1102,16 @@ start:
 			s->msg_callback(0, s->version, SSL3_RT_CHANGE_CIPHER_SPEC, 
 				rr->data, 1, s, s->msg_callback_arg);
 
+		/* We can't process a CCS now, because previous handshake
+		 * messages are still missing, so just drop it.
+		 */
+		if (!s->d1->change_cipher_spec_ok)
+			{
+			goto start;
+			}
+
+		s->d1->change_cipher_spec_ok = 0;
+
 		s->s3->change_cipher_spec=1;
 		if (!ssl3_do_change_cipher_spec(s))
 			goto err;
