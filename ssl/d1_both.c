@@ -575,7 +575,7 @@ dtls1_process_out_of_seq_message(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	 */
 	if (msg_hdr->seq <= s->d1->handshake_read_seq ||
 		msg_hdr->seq > s->d1->handshake_read_seq + 10 || item != NULL ||
-		s->d1->handshake_read_seq == 0 && msg_hdr->type == SSL3_MT_FINISHED)
+		(s->d1->handshake_read_seq == 0 && msg_hdr->type == SSL3_MT_FINISHED))
 		{
 		unsigned char devnull [256];
 
