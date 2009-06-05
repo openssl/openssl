@@ -298,7 +298,9 @@ static const char *session_id_prefix=NULL;
 
 static int enable_timeouts = 0;
 static long socket_mtu;
+#ifndef OPENSSL_NO_DTLS1
 static int cert_chain = 0;
+#endif
 
 #ifndef OPENSSL_NO_PSK
 static char *psk_identity="Client_identity";

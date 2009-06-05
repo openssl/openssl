@@ -217,12 +217,19 @@ static void dgram_adjust_rcv_timeout(BIO *b)
 			timeleft.tv_usec += 1000000;
 			}
 
+		if (timeleft.tv_sec < 0)
+			{
+			timeleft.tv_sec = 0;
+			timeleft.tv_usec = 1;
+			}
+
 		/* Adjust socket timeout if next handhake message timer
 		 * will expire earlier.
 		 */
-		if (data->socket_timeout.tv_sec < timeleft.tv_sec ||
+		if ((data->socket_timeout.tv_sec == 0 && data->socket_timeout.tv_usec == 0) ||
+			(data->socket_timeout.tv_sec > timeleft.tv_sec) ||
 			(data->socket_timeout.tv_sec == timeleft.tv_sec &&
-			 data->socket_timeout.tv_usec <= timeleft.tv_usec))
+			 data->socket_timeout.tv_usec >= timeleft.tv_usec))
 			{
 #ifdef OPENSSL_SYS_WINDOWS
 			timeout = timeleft.tv_sec * 1000 + timeleft.tv_usec / 1000;
