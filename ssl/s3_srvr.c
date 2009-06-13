@@ -2388,6 +2388,8 @@ int ssl3_get_client_key_exchange(SSL *s)
 		EC_POINT_free(clnt_ecpoint);
 		EC_KEY_free(srvr_ecdh);
 		BN_CTX_free(bn_ctx);
+		EC_KEY_free(s->s3->tmp.ecdh);
+		s->s3->tmp.ecdh = NULL; 
 
 		/* Compute the master secret */
 		s->session->master_key_length = s->method->ssl3_enc-> \
