@@ -163,7 +163,7 @@ d1_clnt.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
 d1_clnt.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
 d1_clnt.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 d1_clnt.o: ../include/openssl/tls1.h ../include/openssl/x509.h
-d1_clnt.o: ../include/openssl/x509_vfy.h d1_clnt.c ssl_locl.h
+d1_clnt.o: ../include/openssl/x509_vfy.h d1_clnt.c kssl_lcl.h ssl_locl.h
 d1_enc.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 d1_enc.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 d1_enc.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
@@ -280,7 +280,7 @@ kssl.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
 kssl.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
 kssl.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 kssl.o: ../include/openssl/tls1.h ../include/openssl/x509.h
-kssl.o: ../include/openssl/x509_vfy.h kssl.c
+kssl.o: ../include/openssl/x509_vfy.h kssl.c kssl_lcl.h
 s23_clnt.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 s23_clnt.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 s23_clnt.o: ../include/openssl/crypto.h ../include/openssl/dsa.h

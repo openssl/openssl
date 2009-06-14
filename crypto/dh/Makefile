@@ -164,11 +164,11 @@ dh_pmeth.o: ../../include/openssl/err.h ../../include/openssl/evp.h
 dh_pmeth.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 dh_pmeth.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 dh_pmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-dh_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
-dh_pmeth.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-dh_pmeth.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-dh_pmeth.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-dh_pmeth.o: ../cryptlib.h ../evp/evp_locl.h dh_pmeth.c
+dh_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+dh_pmeth.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+dh_pmeth.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+dh_pmeth.o: ../../include/openssl/x509_vfy.h ../cryptlib.h ../evp/evp_locl.h
+dh_pmeth.o: dh_pmeth.c
 dh_prn.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dh_prn.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dh_prn.o: ../../include/openssl/dh.h ../../include/openssl/e_os2.h
