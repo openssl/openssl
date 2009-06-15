@@ -4,6 +4,11 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) Don't check self signed certificate signatures in X509_verify_cert():
+     it just wastes time without adding any security. As a useful side effect
+     self signed root CAs with non-FIPS digests are now usable in FIPS mode.
+     [Steve Henson]
+
   *) In dtls1_process_out_of_seq_message() the check if the current message
      is already buffered was missing. For every new message was memory
      allocated, allowing an attacker to perform an denial of service attack
