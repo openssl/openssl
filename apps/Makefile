@@ -153,12 +153,12 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
 	elif [ -n "$(FIPSCANLIB)" ]; then \
-	  FIPSLD_CC=$(CC); CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
+	  FIPSLD_CC="$(CC)"; CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
 	fi; \
 	LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
 	[ "x$(FIPSCANLIB)" = "xlibfips" ] && LIBRARIES="$$LIBRARIES -lfips"; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \
-		CC=$${CC} APPNAME=$(EXE) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
+		CC="$${CC}" APPNAME=$(EXE) OBJECTS="$(PROGRAM).o $(E_OBJ)" \
 		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
 		link_app.$${shlib_target}
 	-(cd ..; \
