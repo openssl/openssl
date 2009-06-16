@@ -92,7 +92,6 @@ int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 	const struct gost_cipher_info *param=get_encryption_params(NULL);
 	EVP_PKEY *pubk = EVP_PKEY_CTX_get0_pkey(ctx);
 	struct gost_pmeth_data *data = EVP_PKEY_CTX_get_data(ctx);
-	int size=-1;
 	gost_ctx cctx;
 	int key_is_ephemeral=1;
 	EVP_PKEY *mykey = EVP_PKEY_CTX_get0_peerkey(ctx);
@@ -178,10 +177,20 @@ int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 	ASN1_OBJECT_free(gkt->key_agreement_info->cipher);
 	gkt->key_agreement_info->cipher = OBJ_nid2obj(param->nid);
 	*outlen = i2d_GOST_KEY_TRANSPORT(gkt,out?&out:NULL);
-	if (!size)
+	if (*outlen <= 0)
 		{
 		GOSTerr(GOST_F_PKEY_GOST94CP_ENCRYPT,GOST_R_ERROR_PACKING_KEY_TRANSPORT_INFO);
-		size=-1;
+		goto err;
+		}
+	if (!key_is_ephemeral)
+		{
+		/* Set control "public key from client certificate used" */
+		if (EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 3, NULL) <= 0)
+			{
+			GOSTerr(GOST_F_PKEY_GOST94CP_ENCRYPT,
+				GOST_R_CTRL_CALL_FAILED);
+			goto err;
+			}
 		}
 	GOST_KEY_TRANSPORT_free(gkt);
 	return 1;	
@@ -207,7 +216,7 @@ int pkey_GOST94cp_decrypt(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *key_len
 	unsigned char sharedKey[32];
 	gost_ctx cctx;
 	const struct gost_cipher_info *param=NULL;
-	EVP_PKEY *eph_key=NULL;
+	EVP_PKEY *eph_key=NULL, *peerkey=NULL;
 	EVP_PKEY *priv= EVP_PKEY_CTX_get0_pkey(ctx); 
 	
 	if (!key)
@@ -224,19 +233,32 @@ int pkey_GOST94cp_decrypt(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *key_len
 		return 0;
 		}	
 	eph_key = X509_PUBKEY_get(gkt->key_agreement_info->ephem_key);
-	/* No ephemeral key in the structure. Check peer key in the context
-	 */
-	if (!eph_key) {
-		eph_key = EVP_PKEY_CTX_get0_peerkey(ctx);
-		if (! eph_key) {
+	if (eph_key)
+		{
+		if (EVP_PKEY_derive_set_peer(ctx, eph_key) <= 0)
+			{
 			GOSTerr(GOST_F_PKEY_GOST94CP_DECRYPT,
-				GOST_R_NO_PEER_KEY);
+				GOST_R_INCOMPATIBLE_PEER_KEY);
 			goto err;
+			}
 		}
-		/* Increment reference count of peer key */
-		CRYPTO_add(&(eph_key->references),1 ,CRYPTO_LOCK_EVP_PKEY);
-	}	
-
+	else
+		{
+		/* Set control "public key from client certificate used" */
+		if (EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 3, NULL) <= 0)
+			{
+			GOSTerr(GOST_F_PKEY_GOST94CP_DECRYPT,
+				GOST_R_CTRL_CALL_FAILED);
+			goto err;
+			}
+		}
+	peerkey = EVP_PKEY_CTX_get0_peerkey(ctx);
+	if (!peerkey)
+		{
+		GOSTerr(GOST_F_PKEY_GOST94CP_DECRYPT,
+			GOST_R_NO_PEER_KEY);
+		goto err;
+		}
 
 	param = get_encryption_params(gkt->key_agreement_info->cipher);
 	gost_init(&cctx,param->sblock);	
@@ -246,7 +268,7 @@ int pkey_GOST94cp_decrypt(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *key_len
 	memcpy(wrappedKey+8,gkt->key_info->encrypted_key->data,32);
 	OPENSSL_assert(gkt->key_info->imit->length==4);
 	memcpy(wrappedKey+40,gkt->key_info->imit->data,4);	
-	make_cp_exchange_key(gost_get0_priv_key(priv),eph_key,sharedKey);
+	make_cp_exchange_key(gost_get0_priv_key(priv),peerkey,sharedKey);
 	if (!keyUnwrapCryptoPro(&cctx,sharedKey,wrappedKey,key))
 		{
 		GOSTerr(GOST_F_PKEY_GOST94CP_DECRYPT,

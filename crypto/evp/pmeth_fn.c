@@ -285,13 +285,13 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 	{
 	int ret;
-	if (!ctx || !ctx->pmeth || !(ctx->pmeth->derive||ctx->pmeth->encrypt) || !ctx->pmeth->ctrl)
+	if (!ctx || !ctx->pmeth || !(ctx->pmeth->derive||ctx->pmeth->encrypt||ctx->pmeth->decrypt) || !ctx->pmeth->ctrl)
 		{
 		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
 			EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
 		return -2;
 		}
-	if (ctx->operation != EVP_PKEY_OP_DERIVE && ctx->operation != EVP_PKEY_OP_ENCRYPT)
+	if (ctx->operation != EVP_PKEY_OP_DERIVE && ctx->operation != EVP_PKEY_OP_ENCRYPT && ctx->operation != EVP_PKEY_OP_DECRYPT)
 		{
 		EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER,
 					EVP_R_OPERATON_NOT_INITIALIZED);
@@ -319,6 +319,11 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 		return -1;
 		}
 
+	/* ran@cryptocom.ru: For clarity.  The error is if parameters in peer are
+	 * present (!missing) but don't match.  EVP_PKEY_cmp_parameters may return
+	 * 1 (match), 0 (don't match) and -2 (comparison is not defined).  -1
+	 * (different key types) is impossible here because it is checked earlier.
+	 * -2 is OK for us here, as well as 1, so we can check for 0 only. */
 	if (!EVP_PKEY_missing_parameters(peer) &&
 		!EVP_PKEY_cmp_parameters(ctx->pkey, peer))
 		{
@@ -327,6 +332,8 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 		return -1;
 		}
 
+	if (ctx->peerkey)
+		EVP_PKEY_free(ctx->peerkey);
 	ctx->peerkey = peer;
 
 	ret = ctx->pmeth->ctrl(ctx, EVP_PKEY_CTRL_PEER_KEY, 1, peer);
