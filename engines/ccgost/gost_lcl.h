@@ -47,6 +47,7 @@
    	    int sign_param_nid; /* Should be set whenever parameters are filled */
 		EVP_MD *md;
 		unsigned char *shared_ukm;
+		int peer_key_used;
 	};
 
 	struct gost_mac_pmeth_data {

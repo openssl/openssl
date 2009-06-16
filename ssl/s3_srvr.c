@@ -514,6 +514,9 @@ int ssl3_accept(SSL *s)
 				 * the client sends its ECDH pub key in
 				 * a certificate, the CertificateVerify
 				 * message is not sent.
+				 * Also for GOST ciphersuites when
+				 * the client uses its key from the certificate
+				 * for key exchange.
 				 */
 				s->state=SSL3_ST_SR_FINISHED_A;
 				s->init_num = 0;
@@ -2496,33 +2499,70 @@ int ssl3_get_client_key_exchange(SSL *s)
 		else
 #endif
 		if (alg_k & SSL_kGOST) 
-		{
+			{
+			int ret = 0;
 			EVP_PKEY_CTX *pkey_ctx;
-			unsigned char premaster_secret[32];
-			size_t outlen;			
+			EVP_PKEY *client_pub_pkey = NULL;
+			unsigned char premaster_secret[32], *start;
+			size_t outlen, inlen;			
 
-			/* Get our certificate privatec key*/
+			/* Get our certificate private key*/
 			pkey_ctx = EVP_PKEY_CTX_new(s->cert->key->privatekey,NULL);	
 			EVP_PKEY_decrypt_init(pkey_ctx);
+			/* If client certificate is present and is of the same type, maybe
+			 * use it for key exchange.  Don't mind errors from
+			 * EVP_PKEY_derive_set_peer, because it is completely valid to use
+			 * a client certificate for authorization only. */
+			client_pub_pkey = X509_get_pubkey(s->session->peer);
+			if (client_pub_pkey)
+				{
+				if (EVP_PKEY_derive_set_peer(pkey_ctx, client_pub_pkey) <= 0)
+					ERR_clear_error();
+				}
 			/* Decrypt session key */
-			if ((*p!=( V_ASN1_SEQUENCE| V_ASN1_CONSTRUCTED)) || p[1]!=0x81 ) 
+			if ((*p!=( V_ASN1_SEQUENCE| V_ASN1_CONSTRUCTED))) 
 				{
 				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_DECRYPTION_FAILED);
-				goto err;
-				}	
-			if (EVP_PKEY_decrypt(pkey_ctx,premaster_secret,&outlen,p+3,p[2]) <0) 
+				goto gerr;
+				}
+			if (p[1] == 0x81)
+				{
+				start = p+3;
+				inlen = p[2];
+				}
+			else if (p[1] < 0x80)
+				{
+				start = p+2;
+				inlen = p[1];
+				}
+			else
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_DECRYPTION_FAILED);
+				goto gerr;
+				}
+			if (EVP_PKEY_decrypt(pkey_ctx,premaster_secret,&outlen,start,inlen) <=0) 
 
 				{
 				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_DECRYPTION_FAILED);
-				goto err;
+				goto gerr;
 				}
 			/* Generate master secret */
-			EVP_PKEY_CTX_free(pkey_ctx);
 			s->session->master_key_length=
 				s->method->ssl3_enc->generate_master_secret(s,
 					s->session->master_key,premaster_secret,32);
-
-		}
+			/* Check if pubkey from client certificate was used */
+			if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)
+				ret = 2;
+			else
+				ret = 1;
+		gerr:
+			EVP_PKEY_free(client_pub_pkey);
+			EVP_PKEY_CTX_free(pkey_ctx);
+			if (ret)
+				return ret;
+			else
+				goto err;
+			}
 		else
 		{
 		al=SSL_AD_HANDSHAKE_FAILURE;

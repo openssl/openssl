@@ -1,6 +1,6 @@
 /* e_gost_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -120,10 +120,12 @@ static ERR_STRING_DATA GOST_str_reasons[]=
 {ERR_REASON(GOST_R_BAD_KEY_PARAMETERS_FORMAT),"bad key parameters format"},
 {ERR_REASON(GOST_R_BAD_PKEY_PARAMETERS_FORMAT),"bad pkey parameters format"},
 {ERR_REASON(GOST_R_CANNOT_PACK_EPHEMERAL_KEY),"cannot pack ephemeral key"},
+{ERR_REASON(GOST_R_CTRL_CALL_FAILED)     ,"ctrl call failed"},
 {ERR_REASON(GOST_R_ERROR_COMPUTING_SHARED_KEY),"error computing shared key"},
 {ERR_REASON(GOST_R_ERROR_PACKING_KEY_TRANSPORT_INFO),"error packing key transport info"},
 {ERR_REASON(GOST_R_ERROR_PARSING_KEY_TRANSPORT_INFO),"error parsing key transport info"},
 {ERR_REASON(GOST_R_INCOMPATIBLE_ALGORITHMS),"incompatible algorithms"},
+{ERR_REASON(GOST_R_INCOMPATIBLE_PEER_KEY),"incompatible peer key"},
 {ERR_REASON(GOST_R_INVALID_CIPHER_PARAMS),"invalid cipher params"},
 {ERR_REASON(GOST_R_INVALID_CIPHER_PARAM_OID),"invalid cipher param oid"},
 {ERR_REASON(GOST_R_INVALID_DIGEST_TYPE)  ,"invalid digest type"},

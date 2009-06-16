@@ -37,7 +37,7 @@ EVP_PKEY_ctrl, EVP_PKEY_ctrl_str - algorithm specific control operations
 =head1 DESCRIPTION
 
 The function EVP_PKEY_CTX_ctrl() sends a control operation to the context
-B<ctx>. The key type used must match B<keytype> if it is not zero. The parameter
+B<ctx>. The key type used must match B<keytype> if it is not -1. The parameter
 B<optype> is a mask indicating which operations the control can be applied to.
 The control command is indicated in B<cmd> and any additional arguments in
 B<p1> and B<p2>.

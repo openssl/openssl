@@ -404,6 +404,11 @@ int ssl3_connect(SSL *s)
 				s->state=SSL3_ST_CW_CHANGE_A;
 				s->s3->change_cipher_spec=0;
 				}
+			if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY)
+				{
+				s->state=SSL3_ST_CW_CHANGE_A;
+				s->s3->change_cipher_spec=0;
+				}
 
 			s->init_num=0;
 			break;
@@ -2416,7 +2421,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 			size_t msglen;
 			unsigned int md_len;
 			int keytype;
-			unsigned char premaster_secret[32],shared_ukm[32];
+			unsigned char premaster_secret[32],shared_ukm[32], tmp[256];
 			EVP_MD_CTX *ukm_hash;
 			EVP_PKEY *pub_key;
 
@@ -2442,16 +2447,13 @@ int ssl3_send_client_key_exchange(SSL *s)
 			  /* Generate session key */	
 		    RAND_bytes(premaster_secret,32);
 			/* If we have client certificate, use its secret as peer key */
-			if (s->cert->key->privatekey) {
-				if (EVP_PKEY_derive_set_peer(pkey_ctx,s->cert->key->privatekey) <0) {
+			if (s->s3->tmp.cert_req && s->cert->key->privatekey) {
+				if (EVP_PKEY_derive_set_peer(pkey_ctx,s->cert->key->privatekey) <=0) {
 					/* If there was an error - just ignore it. Ephemeral key
 					* would be used
 					*/
 					ERR_clear_error();
-				} else {
-					/* Set flag "client cert key is used for key
-					 * exchange"*/
-				}	
+				}
 			}			
 			/* Compute shared IV and store it in algorithm-specific
 			 * context data */
@@ -2470,15 +2472,30 @@ int ssl3_send_client_key_exchange(SSL *s)
 			/* Make GOST keytransport blob message */
 			/*Encapsulate it into sequence */
 			*(p++)=V_ASN1_SEQUENCE | V_ASN1_CONSTRUCTED;
-			*(p++)=0x81;
-			msglen=256;
-			if (EVP_PKEY_encrypt(pkey_ctx,(unsigned char *)p+1,&msglen,premaster_secret,32)<0) {
+			msglen=255;
+			if (EVP_PKEY_encrypt(pkey_ctx,tmp,&msglen,premaster_secret,32)<0) {
 			SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
 					SSL_R_LIBRARY_BUG);
 				goto err;
-			}	
-			*(p++)= msglen & 0xff;
-			n=msglen+3;
+			}
+			if (msglen >= 0x80)
+				{
+				*(p++)=0x81;
+				*(p++)= msglen & 0xff;
+				n=msglen+3;
+				}
+			else
+				{
+				*(p++)= msglen & 0xff;
+				n=msglen+2;
+				}
+			memcpy(p, tmp, msglen);
+			/* Check if pubkey from client certificate was used */
+			if (EVP_PKEY_CTX_ctrl(pkey_ctx, -1, -1, EVP_PKEY_CTRL_PEER_KEY, 2, NULL) > 0)
+				{
+				/* Set flag "skip certificate verify" */
+				s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
+				}
 			EVP_PKEY_CTX_free(pkey_ctx);
 			s->session->master_key_length=
 				s->method->ssl3_enc->generate_master_secret(s,
