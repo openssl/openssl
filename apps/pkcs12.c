@@ -923,7 +923,7 @@ int print_attribs (BIO *out, STACK_OF(X509_ATTRIBUTE) *attrlst,const char *name)
 			av = sk_ASN1_TYPE_value(attr->value.set, 0);
 			switch(av->type) {
 				case V_ASN1_BMPSTRING:
-        			value = uni2asc(av->value.bmpstring->data,
+        			value = OPENSSL_uni2asc(av->value.bmpstring->data,
                                 	       av->value.bmpstring->length);
 				BIO_printf(out, "%s\n", value);
 				OPENSSL_free(value);

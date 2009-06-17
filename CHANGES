@@ -4,6 +4,11 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) Rename uni2asc and asc2uni functions to OPENSSL_uni2asc and
+     OPENSSL_asc2uni the original names were too generic and cause name
+     clashes on Netware.
+     [Guenter <lists@gknw.net>]
+
   *) Add ECDHE and PSK support to DTLS.
      [Michael Tuexen <tuexen@fh-muenster.de>]
 
