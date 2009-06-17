@@ -1987,23 +1987,23 @@ sub test_sanity
 		{
 		@fields = split(/\s*:\s*/,$table{$target} . ":" x 30 , -1);
 
-		if ($fields[$idx_dso_scheme-1] =~ /^(dl|dlfcn|win32|vms)$/)
+		if ($fields[$idx_dso_scheme-1] =~ /^(beos|dl|dlfcn|win32|vms)$/)
 			{
 			$errorcnt++;
 			print STDERR "SANITY ERROR: '$target' has the dso_scheme [$idx_dso_scheme] values\n";
 			print STDERR "              in the previous field\n";
 			}
-		elsif ($fields[$idx_dso_scheme+1] =~ /^(dl|dlfcn|win32|vms)$/)
+		elsif ($fields[$idx_dso_scheme+1] =~ /^(beos|dl|dlfcn|win32|vms)$/)
 			{
 			$errorcnt++;
 			print STDERR "SANITY ERROR: '$target' has the dso_scheme [$idx_dso_scheme] values\n";
 			print STDERR "              in the following field\n";
 			}
-		elsif ($fields[$idx_dso_scheme] !~ /^(dl|dlfcn|win32|vms|)$/)
+		elsif ($fields[$idx_dso_scheme] !~ /^(beos|dl|dlfcn|win32|vms|)$/)
 			{
 			$errorcnt++;
 			print STDERR "SANITY ERROR: '$target' has the dso_scheme [$idx_dso_scheme] field = ",$fields[$idx_dso_scheme],"\n";
-			print STDERR "              valid values are 'dl', 'dlfcn', 'win32' and 'vms'\n";
+			print STDERR "              valid values are 'beos', 'dl', 'dlfcn', 'win32' and 'vms'\n";
 			}
 		}
 	print STDERR "No sanity errors detected!\n" if $errorcnt == 0;
