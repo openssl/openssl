@@ -1255,8 +1255,8 @@ PKCS12_gen_mac                          1278	EXIST::FUNCTION:
 PKCS12_verify_mac                       1279	EXIST::FUNCTION:
 PKCS12_set_mac                          1280	EXIST::FUNCTION:
 PKCS12_setup_mac                        1281	EXIST::FUNCTION:
-asc2uni                                 1282	EXIST::FUNCTION:
-uni2asc                                 1283	EXIST::FUNCTION:
+OPENSSL_asc2uni                         1282	EXIST::FUNCTION:
+OPENSSL_uni2asc                         1283	EXIST::FUNCTION:
 i2d_PKCS12_BAGS                         1284	EXIST::FUNCTION:
 PKCS12_BAGS_new                         1285	EXIST::FUNCTION:
 d2i_PKCS12_BAGS                         1286	EXIST::FUNCTION:
