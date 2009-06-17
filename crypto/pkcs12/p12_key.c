@@ -69,6 +69,12 @@ extern BIO *bio_err;
 void h__dump (unsigned char *p, int len);
 #endif
 
+#ifdef OPENSSL_SYS_NETWARE
+/* Rename these functions to avoid name clashes on NetWare OS */
+#define uni2asc OPENSSL_uni2asc
+#define asc2uni OPENSSL_asc2uni
+#endif
+
 /* PKCS12 compatible key/IV generation */
 #ifndef min
 #define min(a,b) ((a) < (b) ? (a) : (b))

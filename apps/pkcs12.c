@@ -68,6 +68,12 @@
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 
+#ifdef OPENSSL_SYS_NETWARE
+/* Rename these functions to avoid name clashes on NetWare OS */
+#define uni2asc OPENSSL_uni2asc
+#define asc2uni OPENSSL_asc2uni
+#endif
+
 #define PROG pkcs12_main
 
 const EVP_CIPHER *enc;

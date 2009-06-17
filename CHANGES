@@ -4,6 +4,11 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) Rename uni2asc and asc2uni functions to OPENSSL_uni2asc and
+     OPENSSL_asc2uni conditionally on Netware platforms to avoid a name
+     clash.
+     [Steve Henson]
+
   *) Don't check self signed certificate signatures in X509_verify_cert():
      it just wastes time without adding any security. As a useful side effect
      self signed root CAs with non-FIPS digests are now usable in FIPS mode.
