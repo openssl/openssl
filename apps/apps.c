@@ -118,7 +118,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifndef OPENSSL_SYSNAME_WIN32
+#if !defined(OPENSSL_SYSNAME_WIN32) && !defined(NETWARE_CLIB)
 #include <strings.h>
 #endif
 #include <sys/types.h>
