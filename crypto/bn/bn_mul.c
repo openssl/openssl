@@ -1028,6 +1028,8 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 			assert(j <= al || j <= bl);
 			k = j+j;
 			t = BN_CTX_get(ctx);
+			if (t == NULL)
+				goto err;
 			if (al > j || bl > j)
 				{
 				bn_wexpand(t,k*4);
