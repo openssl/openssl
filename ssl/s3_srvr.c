@@ -2504,7 +2504,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 			EVP_PKEY_CTX *pkey_ctx;
 			EVP_PKEY *client_pub_pkey = NULL;
 			unsigned char premaster_secret[32], *start;
-			size_t outlen, inlen;			
+			size_t outlen=32, inlen;			
 
 			/* Get our certificate private key*/
 			pkey_ctx = EVP_PKEY_CTX_new(s->cert->key->privatekey,NULL);	
