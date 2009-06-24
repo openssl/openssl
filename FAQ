@@ -94,14 +94,17 @@ explains how to install this library.
 
 OpenSSL includes a command line utility that can be used to perform a
 variety of cryptographic functions.  It is described in the openssl(1)
-manpage.  Documentation for developers is currently being written.  A
-few manual pages already are available; overviews over libcrypto and
+manpage.  Documentation for developers is currently being written. Many
+manual pages are available; overviews over libcrypto and
 libssl are given in the crypto(3) and ssl(3) manpages.
 
 The OpenSSL manpages are installed in /usr/local/ssl/man/ (or a
 different directory if you specified one as described in INSTALL).
 In addition, you can read the most current versions at
-<URL: http://www.openssl.org/docs/>.
+<URL: http://www.openssl.org/docs/>. Note that the online documents refer
+to the very latest development versions of OpenSSL and may include features
+not present in released versions. If in doubt refer to the documentation
+that came with the version of OpenSSL you are using.
 
 For information on parts of libcrypto that are not yet documented, you
 might want to read Ariel Glenn's documentation on SSLeay 0.9, OpenSSL's
