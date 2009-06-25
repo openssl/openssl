@@ -308,6 +308,15 @@ a client and also echoes the request to standard output.
 
  BIO_free_all(sbio);
 
+=head1 BUGS
+
+In OpenSSL versions before 1.0.0 the BIO_pop() call was handled incorrectly,
+the I/O BIO reference count was incorrectly incremented (instead of
+decremented) and dissociated with the SSL BIO even if the SSL BIO was not
+explicitly being popped (e.g. a pop higher up the chain). Applications which
+included workarounds for this bug (e.g. freeing BIOs more than once) should
+be modified to handle this fix or they may free up an already freed BIO.
+
 =head1 SEE ALSO
 
 TBA

@@ -4,6 +4,16 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) In BIO_pop() and BIO_push() use the ctrl argument (which was NULL) to
+     indicate the initial BIO being pushed or popped. This makes it possible
+     to determine whether the BIO is the one explicitly called or as a result
+     of the ctrl being passed down the chain. Fix BIO_pop() and SSL BIOs so
+     it handles reference counts correctly and doesn't zero out the I/O bio
+     when it is not being explicitly popped. WARNING: applications which
+     included workarounds for the old buggy behaviour will need to be modified
+     or they could free up already freed BIOs.
+     [Steve Henson]
+
   *) Rename uni2asc and asc2uni functions to OPENSSL_uni2asc and
      OPENSSL_asc2uni the original names were too generic and cause name
      clashes on Netware.
