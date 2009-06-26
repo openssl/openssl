@@ -387,6 +387,9 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define X509_V_FLAG_EXTENDED_CRL_SUPPORT	0x1000
 /* Delta CRL support */
 #define X509_V_FLAG_USE_DELTAS			0x2000
+/* Check selfsigned CA signature */
+#define X509_V_FLAG_CHECK_SS_SIGNATURE		0x4000
+
 
 #define X509_VP_FLAG_DEFAULT			0x1
 #define X509_VP_FLAG_OVERWRITE			0x2
