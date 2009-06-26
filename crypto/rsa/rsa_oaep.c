@@ -52,6 +52,10 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 		return 0;
 		}
 
+	to[0] = 0;
+	seed = to + 1;
+	db = to + SHA_DIGEST_LENGTH + 1;
+
 	EVP_Digest((void *)param, plen, db, NULL, EVP_sha1(), NULL);
 	memset(db + SHA_DIGEST_LENGTH, 0,
 		emlen - flen - 2 * SHA_DIGEST_LENGTH - 1);
@@ -64,10 +68,6 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
 	   "\xaa\xfd\x12\xf6\x59\xca\xe6\x34\x89\xb4\x79\xe5\x07\x6d\xde\xc2\xf0\x6c\xb5\x8f",
 	   20);
 #endif
-
-	to[0] = 0;
-	seed = to + 1;
-	db = to + SHA_DIGEST_LENGTH + 1;
 
 	dbmask = OPENSSL_malloc(emlen - SHA_DIGEST_LENGTH);
 	if (dbmask == NULL)
