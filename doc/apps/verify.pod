@@ -135,6 +135,11 @@ signing keys.
 
 Enable support for delta CRLs.
 
+=item B<-check_ss_sig>
+
+Verify the signature on the self-signed root CA. This is disabled by default
+because it doesn't add any security.
+
 =item B<->
 
 marks the last option. All arguments following this are assumed to be

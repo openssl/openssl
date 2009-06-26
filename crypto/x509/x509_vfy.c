@@ -1610,10 +1610,11 @@ static int internal_verify(X509_STORE_CTX *ctx)
 		{
 		ctx->error_depth=n;
 
-		/* Skip signature check for self signed certificates. It
-		 * doesn't add any security and just wastes time.
+		/* Skip signature check for self signed certificates unless
+		 * explicitly asked for. It doesn't add any security and
+		 * just wastes time.
 		 */
-		if (!xs->valid && xs != xi)
+		if (!xs->valid && (xs != xi || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)))
 			{
 			if ((pkey=X509_get_pubkey(xi)) == NULL)
 				{
