@@ -66,6 +66,11 @@ certificate was rejected. However the presence of rejection messages
 does not itself imply that anything is wrong: during the normal
 verify process several rejections may take place.
 
+=item B<-check_ss_sig>
+
+Verify the signature on the self-signed root CA. This is disabled by default
+because it doesn't add any security.
+
 =item B<->
 
 marks the last option. All arguments following this are assumed to be

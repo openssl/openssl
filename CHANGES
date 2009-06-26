@@ -9,9 +9,10 @@
      clash.
      [Guenter <lists@gknw.net>]
 
-  *) Don't check self signed certificate signatures in X509_verify_cert():
-     it just wastes time without adding any security. As a useful side effect
-     self signed root CAs with non-FIPS digests are now usable in FIPS mode.
+  *) Don't check self signed certificate signatures in X509_verify_cert()
+     by default (a flag can override this): it just wastes time without
+     adding any security. As a useful side effect self signed root CAs
+     with non-FIPS digests are now usable in FIPS mode.
      [Steve Henson]
 
   *) In dtls1_process_out_of_seq_message() the check if the current message

@@ -363,6 +363,9 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 /* Notify callback that policy is OK */
 #define X509_V_FLAG_NOTIFY_POLICY		0x800
 
+/* Check selfsigned CA signature */
+#define X509_V_FLAG_CHECK_SS_SIGNATURE		0x4000
+
 #define X509_VP_FLAG_DEFAULT			0x1
 #define X509_VP_FLAG_OVERWRITE			0x2
 #define X509_VP_FLAG_RESET_FLAGS		0x4
