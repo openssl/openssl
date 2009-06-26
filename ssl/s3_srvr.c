@@ -472,7 +472,7 @@ int ssl3_accept(SSL *s)
 		
 		case SSL3_ST_SW_FLUSH:
 			/* number of bytes to be flushed */
-			num1=BIO_ctrl(s->wbio,BIO_CTRL_INFO,0,NULL);
+			num1=BIO_ctrl(s->wbio,BIO_CTRL_WPENDING,0,NULL);
 			if (num1 > 0)
 				{
 				s->rwstate=SSL_WRITING;
