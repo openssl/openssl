@@ -815,14 +815,30 @@ int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 	return(dtls1_do_write(s,SSL3_RT_CHANGE_CIPHER_SPEC));
 	}
 
+static int dtls1_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
+	{
+		int n;
+		unsigned char *p;
+
+		n=i2d_X509(x,NULL);
+		if (!BUF_MEM_grow_clean(buf,(int)(n+(*l)+3)))
+			{
+			SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
+			return 0;
+			}
+		p=(unsigned char *)&(buf->data[*l]);
+		l2n3(n,p);
+		i2d_X509(x,&p);
+		*l+=n+3;
+
+		return 1;
+	}
 unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
 	{
 	unsigned char *p;
-	int n,i;
+	int i;
 	unsigned long l= 3 + DTLS1_HM_HEADER_LENGTH;
 	BUF_MEM *buf;
-	X509_STORE_CTX xs_ctx;
-	X509_OBJECT obj;
 
 	/* TLSv1 sends a chain with nothing in it, instead of an alert */
 	buf=s->init_buf;
@@ -833,54 +849,33 @@ unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
 		}
 	if (x != NULL)
 		{
-		if(!X509_STORE_CTX_init(&xs_ctx,s->ctx->cert_store,NULL,NULL))
-			{
-			SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_X509_LIB);
-			return(0);
-			}
+		X509_STORE_CTX xs_ctx;
+  
+		if (!X509_STORE_CTX_init(&xs_ctx,s->ctx->cert_store,x,NULL))
+  			{
+  			SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_X509_LIB);
+  			return(0);
+  			}
+  
+		X509_verify_cert(&xs_ctx);
+		for (i=0; i < sk_X509_num(xs_ctx.chain); i++)
+  			{
+			x = sk_X509_value(xs_ctx.chain, i);
 
-		for (;;)
-			{
-			n=i2d_X509(x,NULL);
-			if (!BUF_MEM_grow_clean(buf,(int)(n+l+3)))
-				{
-				SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
-				return(0);
-				}
-			p=(unsigned char *)&(buf->data[l]);
-			l2n3(n,p);
-			i2d_X509(x,&p);
-			l+=n+3;
-			if (X509_NAME_cmp(X509_get_subject_name(x),
-				X509_get_issuer_name(x)) == 0) break;
-
-			i=X509_STORE_get_by_subject(&xs_ctx,X509_LU_X509,
-				X509_get_issuer_name(x),&obj);
-			if (i <= 0) break;
-			x=obj.data.x509;
-			/* Count is one too high since the X509_STORE_get uped the
-			 * ref count */
-			X509_free(x);
-			}
-
-		X509_STORE_CTX_cleanup(&xs_ctx);
-		}
-
+			if (!dtls1_add_cert_to_buf(buf, &l, x))
+  				{
+				X509_STORE_CTX_cleanup(&xs_ctx);
+				return 0;
+  				}
+  			}
+  		X509_STORE_CTX_cleanup(&xs_ctx);
+  		}
 	/* Thawte special :-) */
-	if (s->ctx->extra_certs != NULL)
 	for (i=0; i<sk_X509_num(s->ctx->extra_certs); i++)
 		{
 		x=sk_X509_value(s->ctx->extra_certs,i);
-		n=i2d_X509(x,NULL);
-		if (!BUF_MEM_grow_clean(buf,(int)(n+l+3)))
-			{
-			SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
-			return(0);
-			}
-		p=(unsigned char *)&(buf->data[l]);
-		l2n3(n,p);
-		i2d_X509(x,&p);
-		l+=n+3;
+		if (!dtls1_add_cert_to_buf(buf, &l, x))
+			return 0;
 		}
 
 	l-= (3 + DTLS1_HM_HEADER_LENGTH);
