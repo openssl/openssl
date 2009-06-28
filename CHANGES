@@ -808,6 +808,11 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) Fix the server certificate chain building code to use X509_verify_cert(),
+     it used to have an ad-hoc builder which was unable to cope with anything
+     other than a simple chain.
+     [David Woodhouse <dwmw2@infradead.org>, Steve Henson]
+
   *) Don't check self signed certificate signatures in X509_verify_cert()
      by default (a flag can override this): it just wastes time without
      adding any security. As a useful side effect self signed root CAs
