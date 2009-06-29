@@ -2192,7 +2192,7 @@ int args_verify(char ***pargs, int *pargc,
 	ASN1_OBJECT *otmp = NULL;
 	unsigned long flags = 0;
 	int i;
-	int purpose = 0;
+	int purpose = 0, depth = -1;
 	char **oldargs = *pargs;
 	char *arg = **pargs, *argn = (*pargs)[1];
 	if (!strcmp(arg, "-policy"))
@@ -2228,6 +2228,21 @@ int args_verify(char ***pargs, int *pargc,
 				{
 				xptmp = X509_PURPOSE_get0(i);
 				purpose = X509_PURPOSE_get_id(xptmp);
+				}
+			}
+		(*pargs)++;
+		}
+	else if (strcmp(arg,"-verify_depth") == 0)
+		{
+		if (!argn)
+			*badarg = 1;
+		else
+			{
+			depth = atoi(argn);
+			if(depth < 0)
+				{
+				BIO_printf(err, "invalid depth\n");
+				*badarg = 1;
 				}
 			}
 		(*pargs)++;
@@ -2282,6 +2297,9 @@ int args_verify(char ***pargs, int *pargc,
 
 	if (purpose)
 		X509_VERIFY_PARAM_set_purpose(*pm, purpose);
+
+	if (depth >= 0)
+		X509_VERIFY_PARAM_set_depth(*pm, depth);
 
 	end:
 
