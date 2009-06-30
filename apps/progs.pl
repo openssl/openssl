@@ -22,6 +22,7 @@ typedef struct {
 	const char *name;
 	int (*func)(int argc,char *argv[]);
 	} FUNCTION;
+DECLARE_LHASH_OF(FUNCTION);
 
 FUNCTION functions[] = {
 EOF
@@ -48,6 +49,8 @@ foreach (@ARGV)
 		{ print "#if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_SHA1)\n${str}#endif\n"; }
 	elsif ( ($_ =~ /^cms$/))
 		{ print "#ifndef OPENSSL_NO_CMS\n${str}#endif\n"; }
+	elsif ( ($_ =~ /^ocsp$/))
+		{ print "#ifndef OPENSSL_NO_OCSP\n${str}#endif\n"; }
 	else
 		{ print $str; }
 	}
