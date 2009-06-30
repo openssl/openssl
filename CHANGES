@@ -4,6 +4,10 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) Add compression id to {d2i,i2d}_SSL_SESSION so it is correctly saved
+     and restored.
+     [Steve Henson]
+
   *) Rename uni2asc and asc2uni functions to OPENSSL_uni2asc and
      OPENSSL_asc2uni conditionally on Netware platforms to avoid a name
      clash.
