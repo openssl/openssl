@@ -383,7 +383,6 @@ int MAIN(int argc, char **argv)
 	{
 	int off=0;
 	SSL *con=NULL;
-	X509_STORE *store = NULL;
 	int s,k,width,state=0;
 	char *cbuf=NULL,*sbuf=NULL,*mbuf=NULL;
 	int cbuf_len,cbuf_off;
@@ -404,7 +403,9 @@ int MAIN(int argc, char **argv)
 	SSL_CTX *ctx=NULL;
 	int ret=1,in_init=1,i,nbio_test=0;
 	int starttls_proto = PROTO_OFF;
-	int prexit = 0, vflags = 0;
+	int prexit = 0;
+	X509_VERIFY_PARAM *vpm = NULL;
+	int badarg = 0;
 	const SSL_METHOD *meth=NULL;
 	int socket_type=SOCK_STREAM;
 	BIO *sbio;
@@ -521,10 +522,12 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			cert_format = str2fmt(*(++argv));
 			}
-		else if	(strcmp(*argv,"-crl_check") == 0)
-			vflags |= X509_V_FLAG_CRL_CHECK;
-		else if	(strcmp(*argv,"-crl_check_all") == 0)
-			vflags |= X509_V_FLAG_CRL_CHECK|X509_V_FLAG_CRL_CHECK_ALL;
+		else if (args_verify(&argv, &argc, &badarg, bio_err, &vpm))
+			{
+			if (badarg)
+				goto bad;
+			continue;
+			}
 		else if (strcmp(*argv,"-verify_return_error") == 0)
 			verify_return_error = 1;
 		else if	(strcmp(*argv,"-prexit") == 0)
@@ -831,6 +834,9 @@ bad:
 		goto end;
 		}
 
+	if (vpm)
+		SSL_CTX_set1_param(ctx, vpm);
+
 #ifndef OPENSSL_NO_ENGINE
 	if (ssl_client_engine)
 		{
@@ -890,8 +896,6 @@ bad:
 		/* goto end; */
 		}
 
-	store = SSL_CTX_get_cert_store(ctx);
-	X509_STORE_set_flags(store, vflags);
 #ifndef OPENSSL_NO_TLSEXT
 	if (servername != NULL)
 		{
