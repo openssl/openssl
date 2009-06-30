@@ -264,7 +264,7 @@ get_cryptodev_ciphers(const int **cnids)
 		return (0);
 	}
 	memset(&sess, 0, sizeof(sess));
-	sess.key = (caddr_t)"123456781234567812345678";
+	sess.key = (caddr_t)"123456789abcdefghijklmno";
 
 	for (i = 0; ciphers[i].id && count < CRYPTO_ALGORITHM_MAX; i++) {
 		if (ciphers[i].nid == NID_undef)
@@ -681,7 +681,7 @@ zapparams(struct crypt_kop *kop)
 {
 	int i;
 
-	for (i = 0; i <= kop->crk_iparams + kop->crk_oparams; i++) {
+	for (i = 0; i < kop->crk_iparams + kop->crk_oparams; i++) {
 		if (kop->crk_param[i].crp_p)
 			free(kop->crk_param[i].crp_p);
 		kop->crk_param[i].crp_p = NULL;
