@@ -211,11 +211,11 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		ssl_cipher_get_evp(x,NULL,NULL,NULL,NULL,&comp);
 		if (comp == NULL)
 			{
-			if (BIO_printf(bp,"\n   Compression: %d",x->compress_meth) <= 0) goto err;
+			if (BIO_printf(bp,"\n    Compression: %d",x->compress_meth) <= 0) goto err;
 			}
 		else
 			{
-			if (BIO_printf(bp,"\n   Compression: %d (%s)", comp->id,comp->method->name) <= 0) goto err;
+			if (BIO_printf(bp,"\n    Compression: %d (%s)", comp->id,comp->method->name) <= 0) goto err;
 			}
 		}	
 #endif

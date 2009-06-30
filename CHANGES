@@ -808,6 +808,10 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) Add compression id to {d2i,i2d}_SSL_SESSION so it is correctly saved
+     and restored.
+     [Steve Henson]
+
   *) Fix the server certificate chain building code to use X509_verify_cert(),
      it used to have an ad-hoc builder which was unable to cope with anything
      other than a simple chain.

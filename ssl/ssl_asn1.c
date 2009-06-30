@@ -94,6 +94,7 @@ typedef struct ssl_session_asn1_st
 	ASN1_INTEGER version;
 	ASN1_INTEGER ssl_version;
 	ASN1_OCTET_STRING cipher;
+	ASN1_OCTET_STRING comp_id;
 	ASN1_OCTET_STRING master_key;
 	ASN1_OCTET_STRING session_id;
 	ASN1_OCTET_STRING session_id_context;
@@ -119,11 +120,14 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
 	int v1=0,v2=0,v3=0,v4=0,v5=0,v7=0,v8=0;
-	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
+	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2], cbuf;
 	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2],ibuf5[LSIZE2];
 #ifndef OPENSSL_NO_TLSEXT
 	int v6=0,v9=0,v10=0;
 	unsigned char ibuf6[LSIZE2];
+#endif
+#ifndef OPENSSL_NO_COMP
+	int v11=0;
 #endif
 	long l;
 	SSL_SESSION_ASN1 a;
@@ -167,6 +171,16 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 		buf[0]=((unsigned char)(l>>8L))&0xff;
 		buf[1]=((unsigned char)(l    ))&0xff;
 		}
+
+#ifndef OPENSSL_NO_COMP
+	if (in->compress_meth)
+		{
+		cbuf = (unsigned char)in->compress_meth;
+		a.comp_id.length = 1;
+		a.comp_id.type = V_ASN1_OCTET_STRING;
+		a.comp_id.data = &cbuf;
+		}
+#endif
 
 	a.master_key.length=in->master_key_length;
 	a.master_key.type=V_ASN1_OCTET_STRING;
@@ -287,6 +301,10 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
         	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING,10,v10);
 	if (in->tlsext_hostname)
         	M_ASN1_I2D_len_EXP_opt(&(a.tlsext_hostname), i2d_ASN1_OCTET_STRING,6,v6);
+#ifndef OPENSSL_NO_COMP
+	if (in->compress_meth)
+        	M_ASN1_I2D_len_EXP_opt(&(a.comp_id), i2d_ASN1_OCTET_STRING,11,v11);
+#endif
 #endif /* OPENSSL_NO_TLSEXT */
 #ifndef OPENSSL_NO_PSK
 	if (in->psk_identity_hint)
@@ -334,6 +352,10 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	if (in->tlsext_tick)
         	M_ASN1_I2D_put_EXP_opt(&(a.tlsext_tick), i2d_ASN1_OCTET_STRING,10,v10);
 #endif /* OPENSSL_NO_TLSEXT */
+#ifndef OPENSSL_NO_COMP
+	if (in->compress_meth)
+        	M_ASN1_I2D_put_EXP_opt(&(a.comp_id), i2d_ASN1_OCTET_STRING,11,v11);
+#endif
 	M_ASN1_I2D_finish();
 	}
 
@@ -573,6 +595,17 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	else
 		ret->tlsext_tick=NULL;
 #endif /* OPENSSL_NO_TLSEXT */
+#ifndef OPENSSL_NO_COMP
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,11);
+	if (os.data)
+		{
+		ret->compress_meth = os.data[0];
+		OPENSSL_free(os.data);
+		os.data = NULL;
+		}
+#endif
 
 	M_ASN1_D2I_Finish(a,SSL_SESSION_free,SSL_F_D2I_SSL_SESSION);
 	}
