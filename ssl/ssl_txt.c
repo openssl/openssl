@@ -178,7 +178,7 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 			}
 		else
 			{
-			if (BIO_printf(bp,"\n   Compression: %d (%s)", comp->id,comp->method->name) <= 0) goto err;
+			if (BIO_printf(bp,"\n    Compression: %d (%s)", comp->id,comp->method->name) <= 0) goto err;
 			}
 		}	
 #endif
