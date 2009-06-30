@@ -516,9 +516,7 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 	/* Anything non-default in "param" should overwrite anything in the
 	 * ctx.
 	 */
-	if (s->param)
-		X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx),
-						s->param);
+	X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx), s->param);
 
 	if (s->verify_callback)
 		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);
