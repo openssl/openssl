@@ -500,9 +500,6 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 		SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN,ERR_R_X509_LIB);
 		return(0);
 		}
-	if (s->param)
-		X509_VERIFY_PARAM_inherit(X509_STORE_CTX_get0_param(&ctx),
-						s->param);
 #if 0
 	if (SSL_get_verify_depth(s) >= 0)
 		X509_STORE_CTX_set_depth(&ctx, SSL_get_verify_depth(s));
@@ -516,6 +513,12 @@ int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk)
 
 	X509_STORE_CTX_set_default(&ctx,
 				s->server ? "ssl_client" : "ssl_server");
+	/* Anything non-default in "param" should overwrite anything in the
+	 * ctx.
+	 */
+	if (s->param)
+		X509_VERIFY_PARAM_set1(X509_STORE_CTX_get0_param(&ctx),
+						s->param);
 
 	if (s->verify_callback)
 		X509_STORE_CTX_set_verify_cb(&ctx, s->verify_callback);

@@ -198,8 +198,12 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
 int X509_VERIFY_PARAM_set1(X509_VERIFY_PARAM *to,
 						const X509_VERIFY_PARAM *from)
 	{
+	unsigned long save_flags = to->inh_flags;
+	int ret;
 	to->inh_flags |= X509_VP_FLAG_DEFAULT;
-	return X509_VERIFY_PARAM_inherit(to, from);
+	ret = X509_VERIFY_PARAM_inherit(to, from);
+	to->inh_flags = save_flags;
+	return ret;
 	}
 
 int X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name)
