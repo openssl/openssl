@@ -486,6 +486,16 @@ int SSL_set_trust(SSL *s, int trust)
 	return X509_VERIFY_PARAM_set_trust(s->param, trust);
 	}
 
+int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm)
+	{
+	return X509_VERIFY_PARAM_set1(ctx->param, vpm);
+	}
+
+int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm)
+	{
+	return X509_VERIFY_PARAM_set1(ssl->param, vpm);
+	}
+
 void SSL_free(SSL *s)
 	{
 	int i;
