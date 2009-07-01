@@ -625,7 +625,7 @@ static int
 bn2crparam(const BIGNUM *a, struct crparam *crp)
 {
 	int i, j, k;
-	ssize_t words, bytes, bits;
+	ssize_t bytes, bits;
 	u_char *b;
 
 	crp->crp_p = NULL;
@@ -637,6 +637,7 @@ bn2crparam(const BIGNUM *a, struct crparam *crp)
 	b = malloc(bytes);
 	if (b == NULL)
 		return (1);
+	memset(b, 0, bytes);
 
 	crp->crp_p = b;
 	crp->crp_nbits = bits;

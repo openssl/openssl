@@ -81,7 +81,7 @@ void OpenSSL_add_all_digests(void)
 	EVP_add_digest(EVP_dss());
 #endif
 #endif
-#ifndef OPENSSL_NO_SHA
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 	EVP_add_digest(EVP_sha1());
 	EVP_add_digest_alias(SN_sha1,"ssl3-sha1");
 	EVP_add_digest_alias(SN_sha1WithRSAEncryption,SN_sha1WithRSA);
