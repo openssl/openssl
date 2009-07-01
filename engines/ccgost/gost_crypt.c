@@ -390,6 +390,14 @@ int gost_cipher_ctl(EVP_CIPHER_CTX *ctx,int type,int arg,void *ptr)
 			}
 		break;
 		}
+		case EVP_CTRL_PBE_PRF_NID:
+			if (ptr) {
+				*((int *)ptr)=  NID_id_HMACGostR3411_94;
+				return 1;
+			} else {
+				return 0;
+			}	
+				
 		default:
 			GOSTerr(GOST_F_GOST_CIPHER_CTL,GOST_R_UNSUPPORTED_CIPHER_CTL_COMMAND);
 			return -1;
