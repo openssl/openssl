@@ -623,6 +623,7 @@ again:
 		/* this packet contained a partial record, dump it */
 		if ( n != i)
 			{
+			rr->length = 0;
 			s->packet_length = 0;
 			goto again;
 			}
@@ -636,6 +637,7 @@ again:
 	bitmap = dtls1_get_bitmap(s, rr, &is_next_epoch);
 	if ( bitmap == NULL)
 		{
+		rr->length = 0;
 		s->packet_length = 0;  /* dump this record */
 		goto again;   /* get another record */
 		}
@@ -660,6 +662,7 @@ again:
 		{
 		dtls1_record_bitmap_update(s, bitmap);
 		dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
+		rr->length = 0;
 		s->packet_length = 0;
 		goto again;
 		}
