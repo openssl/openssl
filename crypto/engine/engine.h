@@ -732,7 +732,7 @@ typedef int (*dynamic_bind_engine)(ENGINE *e, const char *id,
  * values. */
 void *ENGINE_get_static_state(void);
 
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
 void ENGINE_setup_bsd_cryptodev(void);
 #endif
 

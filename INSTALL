@@ -103,6 +103,12 @@
                 define preprocessor symbols, specify additional libraries,
                 library directories or other compiler options.
 
+  -DHAVE_CRYPTODEV Enable the BSD cryptodev engine even if we are not using
+		BSD. Useful if you are running ocf-linux or something
+		similar. Once enabled you can also enable the use of
+		cryptodev digests, which is usually slower unless you have
+		large amounts data. Use -DUSE_CRYPTODEV_DIGESTS to force
+		it.
 
  Installation in Detail
  ----------------------

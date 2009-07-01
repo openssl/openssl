@@ -68,7 +68,7 @@ void ENGINE_load_builtin_engines(void)
 	 * *no* builtin implementations). */
 	ENGINE_load_openssl();
 #endif
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
+#if !defined(OPENSSL_NO_HW) && (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
 	ENGINE_load_cryptodev();
 #endif
 	ENGINE_load_dynamic();
@@ -114,7 +114,7 @@ void ENGINE_load_builtin_engines(void)
 #endif
 	}
 
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
 void ENGINE_setup_bsd_cryptodev(void) {
 	static int bsd_cryptodev_default_loaded = 0;
 	if (!bsd_cryptodev_default_loaded) {
