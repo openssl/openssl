@@ -70,9 +70,9 @@ struct dev_crypto_state {
 	int d_fd;
 
 #ifdef USE_CRYPTODEV_DIGESTS
-	char dummy_mac_key[20];
+	char dummy_mac_key[HASH_MAX_LEN];
 
-	unsigned char digest_res[20];
+	unsigned char digest_res[HASH_MAX_LEN];
 	char *mac_data;
 	int mac_len;
 
@@ -90,7 +90,7 @@ static int get_cryptodev_digests(const int **cnids);
 static int cryptodev_usable_ciphers(const int **nids);
 static int cryptodev_usable_digests(const int **nids);
 static int cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, unsigned int inl);
+    const unsigned char *in, size_t inl);
 static int cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc);
 static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx);
@@ -343,7 +343,7 @@ cryptodev_usable_digests(const int **nids)
 
 static int
 cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-    const unsigned char *in, unsigned int inl)
+    const unsigned char *in, size_t inl)
 {
 	struct crypt_op cryp;
 	struct dev_crypto_state *state = ctx->cipher_data;
@@ -421,7 +421,7 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	if ((state->d_fd = get_dev_crypto()) < 0)
 		return (0);
 
-	sess->key = (unsigned char *)key;
+	sess->key = (caddr_t)key;
 	sess->keylen = ctx->key_len;
 	sess->cipher = cipher;
 
@@ -723,7 +723,7 @@ static int cryptodev_digest_update(EVP_MD_CTX *ctx, const void *data,
 	cryp.len = count;
 	cryp.src = (caddr_t) data;
 	cryp.dst = NULL;
-	cryp.mac = state->digest_res;
+	cryp.mac = (caddr_t) state->digest_res;
 	if (ioctl(state->d_fd, CIOCCRYPT, &cryp) < 0) {
 		printf("cryptodev_digest_update: digest failed\n");
 		return (0);
@@ -754,7 +754,7 @@ static int cryptodev_digest_final(EVP_MD_CTX *ctx, unsigned char *md)
 		cryp.len = state->mac_len;
 		cryp.src = state->mac_data;
 		cryp.dst = NULL;
-		cryp.mac = md;
+		cryp.mac = (caddr_t)md;
 
 		if (ioctl(state->d_fd, CIOCCRYPT, &cryp) < 0) {
 			printf("cryptodev_digest_final: digest failed\n");
@@ -899,7 +899,7 @@ bn2crparam(const BIGNUM *a, struct crparam *crp)
 		return (1);
 	memset(b, 0, bytes);
 
-	crp->crp_p = b;
+	crp->crp_p = (caddr_t) b;
 	crp->crp_nbits = bits;
 
 	for (i = 0, j = 0; i < a->top; i++) {
@@ -1253,7 +1253,7 @@ cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 		goto err;
 	kop.crk_iparams = 3;
 
-	kop.crk_param[3].crp_p = key;
+	kop.crk_param[3].crp_p = (caddr_t) key;
 	kop.crk_param[3].crp_nbits = keylen * 8;
 	kop.crk_oparams = 1;
 
