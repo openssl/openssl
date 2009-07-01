@@ -496,6 +496,12 @@ echo Operating system: $GUESSOS
 # script above so we end up with values in vars but that would take
 # more time that I want to waste at the moment
 case "$GUESSOS" in
+  uClinux*64*)
+    OUT=uClinux-dist64
+	;;
+  uClinux*)
+    OUT=uClinux-dist
+	;;
   mips2-sgi-irix)
 	CPU=`(hinv -t cpu) 2>/dev/null | head -1 | sed 's/^CPU:[^R]*R\([0-9]*\).*/\1/'`
 	CPU=${CPU:-0}
