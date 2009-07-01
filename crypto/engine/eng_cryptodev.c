@@ -75,9 +75,6 @@ static u_int32_t cryptodev_asymfeat = 0;
 static int get_asym_dev_crypto(void);
 static int open_dev_crypto(void);
 static int get_dev_crypto(void);
-static int cryptodev_max_iv(int cipher);
-static int cryptodev_key_length_valid(int cipher, int len);
-static int cipher_nid_to_cryptodev(int nid);
 static int get_cryptodev_ciphers(const int **cnids);
 static int get_cryptodev_digests(const int **cnids);
 static int cryptodev_usable_ciphers(const int **nids);
@@ -130,9 +127,12 @@ static struct {
 	int	ivmax;
 	int	keylen;
 } ciphers[] = {
+	{ CRYPTO_ARC4,			NID_rc4,		0,	16, },
 	{ CRYPTO_DES_CBC,		NID_des_cbc,		8,	 8, },
 	{ CRYPTO_3DES_CBC,		NID_des_ede3_cbc,	8,	24, },
 	{ CRYPTO_AES_CBC,		NID_aes_128_cbc,	16,	16, },
+	{ CRYPTO_AES_CBC,		NID_aes_192_cbc,	16,	24, },
+	{ CRYPTO_AES_CBC,		NID_aes_256_cbc,	16,	32, },
 	{ CRYPTO_BLF_CBC,		NID_bf_cbc,		8,	16, },
 	{ CRYPTO_CAST_CBC,		NID_cast5_cbc,		8,	16, },
 	{ CRYPTO_SKIPJACK_CBC,		NID_undef,		0,	 0, },
@@ -200,50 +200,6 @@ get_asym_dev_crypto(void)
 	if (fd == -1)
 		fd = get_dev_crypto();
 	return fd;
-}
-
-/*
- * XXXX this needs to be set for each alg - and determined from
- * a running card.
- */
-static int
-cryptodev_max_iv(int cipher)
-{
-	int i;
-
-	for (i = 0; ciphers[i].id; i++)
-		if (ciphers[i].id == cipher)
-			return (ciphers[i].ivmax);
-	return (0);
-}
-
-/*
- * XXXX this needs to be set for each alg - and determined from
- * a running card. For now, fake it out - but most of these
- * for real devices should return 1 for the supported key
- * sizes the device can handle.
- */
-static int
-cryptodev_key_length_valid(int cipher, int len)
-{
-	int i;
-
-	for (i = 0; ciphers[i].id; i++)
-		if (ciphers[i].id == cipher)
-			return (ciphers[i].keylen == len);
-	return (0);
-}
-
-/* convert libcrypto nids to cryptodev */
-static int
-cipher_nid_to_cryptodev(int nid)
-{
-	int i;
-
-	for (i = 0; ciphers[i].id; i++)
-		if (ciphers[i].nid == nid)
-			return (ciphers[i].id);
-	return (0);
 }
 
 /*
@@ -427,16 +383,20 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
 	struct dev_crypto_state *state = ctx->cipher_data;
 	struct session_op *sess = &state->d_sess;
-	int cipher;
+	int cipher, i;
 
-	if ((cipher = cipher_nid_to_cryptodev(ctx->cipher->nid)) == NID_undef)
-		return (0);
+	for (i = 0; ciphers[i].id; i++)
+		if (ctx->cipher->nid == ciphers[i].nid &&
+		    ctx->cipher->iv_len <= ciphers[i].ivmax &&
+		    ctx->key_len == ciphers[i].keylen) {
+			cipher = ciphers[i].id;
+			break;
+		}
 
-	if (ctx->cipher->iv_len > cryptodev_max_iv(cipher))
+	if (!ciphers[i].id) {
+		state->d_fd = -1;
 		return (0);
-
-	if (!cryptodev_key_length_valid(cipher, ctx->key_len))
-		return (0);
+	}
 
 	memset(sess, 0, sizeof(struct session_op));
 
@@ -495,6 +455,20 @@ cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
  * libcrypto EVP stuff - this is how we get wired to EVP so the engine
  * gets called when libcrypto requests a cipher NID.
  */
+
+/* RC4 */
+const EVP_CIPHER cryptodev_rc4 = {
+	NID_rc4,
+	1, 16, 0,
+	EVP_CIPH_VARIABLE_LENGTH,
+	cryptodev_init_key,
+	cryptodev_cipher,
+	cryptodev_cleanup,
+	sizeof(struct dev_crypto_state),
+	NULL,
+	NULL,
+	NULL
+};
 
 /* DES CBC EVP */
 const EVP_CIPHER cryptodev_des_cbc = {
@@ -563,6 +537,32 @@ const EVP_CIPHER cryptodev_aes_cbc = {
 	NULL
 };
 
+const EVP_CIPHER cryptodev_aes_192_cbc = {
+	NID_aes_192_cbc,
+	16, 24, 16,
+	EVP_CIPH_CBC_MODE,
+	cryptodev_init_key,
+	cryptodev_cipher,
+	cryptodev_cleanup,
+	sizeof(struct dev_crypto_state),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
+	NULL
+};
+
+const EVP_CIPHER cryptodev_aes_256_cbc = {
+	NID_aes_256_cbc,
+	16, 32, 16,
+	EVP_CIPH_CBC_MODE,
+	cryptodev_init_key,
+	cryptodev_cipher,
+	cryptodev_cleanup,
+	sizeof(struct dev_crypto_state),
+	EVP_CIPHER_set_asn1_iv,
+	EVP_CIPHER_get_asn1_iv,
+	NULL
+};
+
 /*
  * Registered by the ENGINE when used to find out how to deal with
  * a particular NID in the ENGINE. this says what we'll do at the
@@ -576,6 +576,9 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 		return (cryptodev_usable_ciphers(nids));
 
 	switch (nid) {
+	case NID_rc4:
+		*cipher = &cryptodev_rc4;
+		break;
 	case NID_des_ede3_cbc:
 		*cipher = &cryptodev_3des_cbc;
 		break;
@@ -590,6 +593,12 @@ cryptodev_engine_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 		break;
 	case NID_aes_128_cbc:
 		*cipher = &cryptodev_aes_cbc;
+		break;
+	case NID_aes_192_cbc:
+		*cipher = &cryptodev_aes_192_cbc;
+		break;
+	case NID_aes_256_cbc:
+		*cipher = &cryptodev_aes_256_cbc;
 		break;
 	default:
 		*cipher = NULL;
