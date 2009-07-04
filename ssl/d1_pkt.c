@@ -486,7 +486,7 @@ err:
 /* used only by dtls1_read_bytes */
 int dtls1_get_record(SSL *s)
 	{
-	int ssl_major,ssl_minor,al;
+	int ssl_major,ssl_minor;
 	int i,n;
 	SSL3_RECORD *rr;
 	SSL_SESSION *sess;
@@ -631,10 +631,6 @@ again:
 	dtls1_clear_timeouts(s);  /* done waiting */
 	return(1);
 
-f_err:
-	ssl3_send_alert(s,SSL3_AL_FATAL,al);
-err:
-	return(0);
 	}
 
 /* Return up to 'len' payload bytes received in 'type' records.
