@@ -542,27 +542,28 @@ again:
 			{
 			if (version != s->version && version != DTLS1_BAD_VER)
 				{
-				SSLerr(SSL_F_DTLS1_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
-				/* Send back error using their
-				 * version number :-) */
-				s->version=version;
-				al=SSL_AD_PROTOCOL_VERSION;
-				goto f_err;
+				/* unexpected version, silently discard */
+				rr->length = 0;
+				s->packet_length = 0;
+				goto again;
 				}
 			}
 
 		if ((version & 0xff00) != (DTLS1_VERSION & 0xff00) &&
 		    (version & 0xff00) != (DTLS1_BAD_VER & 0xff00))
 			{
-			SSLerr(SSL_F_DTLS1_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
-			goto err;
+			/* wrong version, silently discard record */
+			rr->length = 0;
+			s->packet_length = 0;
+			goto again;
 			}
 
 		if (rr->length > SSL3_RT_MAX_ENCRYPTED_LENGTH)
 			{
-			al=SSL_AD_RECORD_OVERFLOW;
-			SSLerr(SSL_F_DTLS1_GET_RECORD,SSL_R_PACKET_LENGTH_TOO_LONG);
-			goto f_err;
+			/* record too long, silently discard it */
+			rr->length = 0;
+			s->packet_length = 0;
+			goto again;
 			}
 
 		s->client_version = version;
