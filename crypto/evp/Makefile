@@ -437,19 +437,13 @@ m_ecdsa.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 m_ecdsa.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 m_ecdsa.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 m_ecdsa.o: ../cryptlib.h m_ecdsa.c
-m_md2.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
+m_md2.o: ../../e_os.h ../../include/openssl/bio.h
 m_md2.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-m_md2.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-m_md2.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-m_md2.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-m_md2.o: ../../include/openssl/lhash.h ../../include/openssl/md2.h
-m_md2.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-m_md2.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-m_md2.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-m_md2.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-m_md2.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-m_md2.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-m_md2.o: ../../include/openssl/x509_vfy.h ../cryptlib.h m_md2.c
+m_md2.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+m_md2.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
+m_md2.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+m_md2.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+m_md2.o: ../../include/openssl/symhacks.h ../cryptlib.h m_md2.c
 m_md4.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 m_md4.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 m_md4.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
