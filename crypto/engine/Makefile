@@ -84,6 +84,21 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+eng_aesni.o: ../../e_os.h ../../include/openssl/aes.h
+eng_aesni.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+eng_aesni.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+eng_aesni.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
+eng_aesni.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+eng_aesni.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
+eng_aesni.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+eng_aesni.o: ../../include/openssl/lhash.h ../../include/openssl/modes.h
+eng_aesni.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+eng_aesni.o: ../../include/openssl/opensslconf.h
+eng_aesni.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+eng_aesni.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+eng_aesni.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+eng_aesni.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+eng_aesni.o: ../../include/openssl/x509_vfy.h ../cryptlib.h eng_aesni.c
 eng_all.o: ../../e_os.h ../../include/openssl/asn1.h
 eng_all.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 eng_all.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

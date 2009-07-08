@@ -257,3 +257,5 @@ PEM_write_SSL_SESSION                   305	EXIST:!WIN16:FUNCTION:
 SSL_set_session_ticket_ext              306	EXIST::FUNCTION:
 SSL_set_session_secret_cb               307	EXIST::FUNCTION:
 SSL_set_session_ticket_ext_cb           308	EXIST::FUNCTION:
+SSL_set1_param                          309	EXIST::FUNCTION:
+SSL_CTX_set1_param                      310	EXIST::FUNCTION:

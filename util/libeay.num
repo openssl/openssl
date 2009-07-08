@@ -4161,3 +4161,4 @@ X509_NAME_hash_old                      4535	EXIST::FUNCTION:
 ASN1_TIME_set_string                    4536	EXIST::FUNCTION:
 EVP_MD_flags                            4537	EXIST::FUNCTION:
 TS_RESP_CTX_free                        4538	EXIST::FUNCTION:
+ENGINE_load_aesni                       4539	EXIST::FUNCTION:ENGINE
