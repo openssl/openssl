@@ -41,8 +41,6 @@ If B<md> is NULL, the digest is placed in a static array.  The size of
 the output is placed in B<md_len>, unless it is B<NULL>.
 
 B<evp_md> can be EVP_sha1(), EVP_ripemd160() etc.
-B<key> and B<evp_md> may be B<NULL> if a key and hash function have
-been set in a previous call to HMAC_Init() for that B<HMAC_CTX>.
 
 HMAC_CTX_init() initialises a B<HMAC_CTX> before first use. It must be
 called.
