@@ -180,6 +180,7 @@ int ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
 
 	t.length = strlen(str);
 	t.data = (unsigned char *)str;
+	t.flags = 0;
 	
 	t.type = V_ASN1_UTCTIME;
 
