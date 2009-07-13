@@ -141,9 +141,10 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		/* ... now we can act as if 'extend' was set */
 		}
 
-	/* extend reads should not span multiple packets for DTLS */
-	if ( SSL_version(s) == DTLS1_VERSION &&
-		extend)
+	/* For DTLS/UDP reads should not span multiple packets
+	 * because the read operation returns the whole packet
+	 * at once (as long as it fits into the buffer). */
+	if (SSL_version(s) == DTLS1_VERSION)
 		{
 		if ( s->s3->rbuf.left > 0 && n > s->s3->rbuf.left)
 			n = s->s3->rbuf.left;
@@ -209,6 +210,14 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 			return(i);
 			}
 		newb+=i;
+		/* reads should *never* span multiple packets for DTLS because
+		 * the underlying transport protocol is message oriented as opposed
+		 * to byte oriented as in the TLS case. */
+		if (SSL_version(s) == DTLS1_VERSION)
+			{
+			if (n > newb)
+				n = newb; /* makes the while condition false */
+			}
 		}
 
 	/* done reading, now the book-keeping */

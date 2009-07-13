@@ -517,7 +517,12 @@ again:
 		/* read timeout is handled by dtls1_read_bytes */
 		if (n <= 0) return(n); /* error or non-blocking */
 
-		OPENSSL_assert(s->packet_length == DTLS1_RT_HEADER_LENGTH);
+		/* this packet contained a partial record, dump it */
+		if (s->packet_length != DTLS1_RT_HEADER_LENGTH)
+			{
+			s->packet_length = 0;
+			goto again;
+			}
 
 		s->rstate=SSL_ST_READ_BODY;
 
