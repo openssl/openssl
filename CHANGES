@@ -4,6 +4,12 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) Delete MD2 from algorithm tables. This follows the recommendation in 
+     several standards that it is not used in new applications due to
+     several cryptographic weaknesses. For binary compatibility reasons
+     the MD2 API is still compiled in by default.
+     [Steve Henson]
+
   *) Add compression id to {d2i,i2d}_SSL_SESSION so it is correctly saved
      and restored.
      [Steve Henson]
