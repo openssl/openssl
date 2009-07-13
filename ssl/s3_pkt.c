@@ -160,7 +160,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 			if (pkt[0] == SSL3_RT_APPLICATION_DATA
 			    && (pkt[3]<<8|pkt[4]) >= 128)
 				{
-			 	/* Note that even if packet is corrupted
+				/* Note that even if packet is corrupted
 				 * and its length field is insane, we can
 				 * only be led to wrong decision about
 				 * whether memmove will occur or not.
@@ -176,11 +176,12 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		/* ... now we can act as if 'extend' was set */
 		}
 
-	/* extend reads should not span multiple packets for DTLS */
-	if ( (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
-	     &&	extend)
+	/* For DTLS/UDP reads should not span multiple packets
+	 * because the read operation returns the whole packet
+	 * at once (as long as it fits into the buffer). */
+	if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
 		{
-		if ( left > 0 && n > left)
+		if (left > 0 && n > left)
 			n = left;
 		}
 
@@ -207,15 +208,22 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		rb->offset = len + align;
 		}
 
-	max = rb->len - rb->offset;
-	if (n > max) /* does not happen */
+	if (n > rb->len - rb->offset) /* does not happen */
 		{
 		SSLerr(SSL_F_SSL3_READ_N,ERR_R_INTERNAL_ERROR);
 		return -1;
 		}
 
 	if (!s->read_ahead)
-		max=n;
+		/* ignore max parameter */
+		max = n;
+	else
+		{
+		if (max < n)
+			max = n;
+		if (max > rb->len - rb->offset)
+			max = rb->len - rb->offset;
+		}
 
 	while (left < n)
 		{
@@ -244,6 +252,14 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 			return(i);
 			}
 		left+=i;
+		/* reads should *never* span multiple packets for DTLS because
+		 * the underlying transport protocol is message oriented as opposed
+		 * to byte oriented as in the TLS case. */
+		if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+			{
+			if (n > left)
+				n = left; /* makes the while condition false */
+			}
 		}
 
 	/* done reading, now the book-keeping */
