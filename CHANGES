@@ -4,6 +4,12 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) Delete MD2 from algorithm tables. This follows the recommendation in 
+     several standards that it is not used in new applications due to
+     several cryptographic weaknesses. The algorithm is also disabled in
+     the default configuration.
+     [Steve Henson]
+
   *) In BIO_pop() and BIO_push() use the ctrl argument (which was NULL) to
      indicate the initial BIO being pushed or popped. This makes it possible
      to determine whether the BIO is the one explicitly called or as a result
