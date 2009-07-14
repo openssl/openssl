@@ -208,7 +208,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		rb->offset = len + align;
 		}
 
-	if (n > rb->len - rb->offset) /* does not happen */
+	if (n > (int)(rb->len - rb->offset)) /* does not happen */
 		{
 		SSLerr(SSL_F_SSL3_READ_N,ERR_R_INTERNAL_ERROR);
 		return -1;
@@ -221,7 +221,7 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		{
 		if (max < n)
 			max = n;
-		if (max > rb->len - rb->offset)
+		if (max > (int)(rb->len - rb->offset))
 			max = rb->len - rb->offset;
 		}
 
