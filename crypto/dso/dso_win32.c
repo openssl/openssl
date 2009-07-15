@@ -355,6 +355,7 @@ static struct file_st *win32_splitter(DSO *dso, const char *filename,
 				DSOerr(DSO_F_WIN32_SPLITTER,
 					DSO_R_INCORRECT_FILE_SYNTAX);
 				/*goto err;*/
+				OPENSSL_free(result);
 				return(NULL);
 				}
 			result->device = start;
@@ -621,6 +622,8 @@ static char *win32_merger(DSO *dso, const char *filespec1, const char *filespec2
 
 		merged = win32_joiner(dso, filespec1_split);
 		}
+	OPENSSL_free(filespec1_split);
+	OPENSSL_free(filespec2_split);
 	return(merged);
 	}
 
