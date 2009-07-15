@@ -815,21 +815,21 @@ int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 
 static int dtls1_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
 	{
-		int n;
-		unsigned char *p;
+	int n;
+	unsigned char *p;
 
-		n=i2d_X509(x,NULL);
-		if (!BUF_MEM_grow_clean(buf,(int)(n+(*l)+3)))
-			{
-			SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
-			return 0;
-			}
-		p=(unsigned char *)&(buf->data[*l]);
-		l2n3(n,p);
-		i2d_X509(x,&p);
-		*l+=n+3;
+	n=i2d_X509(x,NULL);
+	if (!BUF_MEM_grow_clean(buf,(int)(n+(*l)+3)))
+		{
+		SSLerr(SSL_F_DTLS1_ADD_CERT_TO_BUF,ERR_R_BUF_LIB);
+		return 0;
+		}
+	p=(unsigned char *)&(buf->data[*l]);
+	l2n3(n,p);
+	i2d_X509(x,&p);
+	*l+=n+3;
 
-		return 1;
+	return 1;
 	}
 unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
 	{

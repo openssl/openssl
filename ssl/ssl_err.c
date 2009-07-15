@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,6 +78,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_DO_DTLS1_WRITE),	"DO_DTLS1_WRITE"},
 {ERR_FUNC(SSL_F_DO_SSL3_WRITE),	"DO_SSL3_WRITE"},
 {ERR_FUNC(SSL_F_DTLS1_ACCEPT),	"DTLS1_ACCEPT"},
+{ERR_FUNC(SSL_F_DTLS1_ADD_CERT_TO_BUF),	"DTLS1_ADD_CERT_TO_BUF"},
 {ERR_FUNC(SSL_F_DTLS1_BUFFER_RECORD),	"DTLS1_BUFFER_RECORD"},
 {ERR_FUNC(SSL_F_DTLS1_CLIENT_HELLO),	"DTLS1_CLIENT_HELLO"},
 {ERR_FUNC(SSL_F_DTLS1_CONNECT),	"DTLS1_CONNECT"},
@@ -131,6 +132,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL2_SET_CERTIFICATE),	"SSL2_SET_CERTIFICATE"},
 {ERR_FUNC(SSL_F_SSL2_WRITE),	"SSL2_WRITE"},
 {ERR_FUNC(SSL_F_SSL3_ACCEPT),	"SSL3_ACCEPT"},
+{ERR_FUNC(SSL_F_SSL3_ADD_CERT_TO_BUF),	"SSL3_ADD_CERT_TO_BUF"},
 {ERR_FUNC(SSL_F_SSL3_CALLBACK_CTRL),	"SSL3_CALLBACK_CTRL"},
 {ERR_FUNC(SSL_F_SSL3_CHANGE_CIPHER_STATE),	"SSL3_CHANGE_CIPHER_STATE"},
 {ERR_FUNC(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM),	"SSL3_CHECK_CERT_AND_ALGORITHM"},
