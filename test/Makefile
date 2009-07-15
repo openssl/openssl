@@ -134,7 +134,7 @@ alltests: \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige \
-	test_jpake
+	test_jpake test_cms
 
 test_evp:
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -303,6 +303,10 @@ test_ige: $(IGETEST)$(EXE_EXT)
 test_jpake: $(JPAKETEST)$(EXE_EXT)
 	@echo "Test JPAKE"
 	../util/shlib_wrap.sh ./$(JPAKETEST)
+
+test_cms:
+	@echo "CMS consistency test"
+	$(PERL) cms-test.pl
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
