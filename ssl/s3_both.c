@@ -264,21 +264,21 @@ int ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 
 static int ssl3_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
 	{
-		int n;
-		unsigned char *p;
+	int n;
+	unsigned char *p;
 
-		n=i2d_X509(x,NULL);
-		if (!BUF_MEM_grow_clean(buf,(int)(n+(*l)+3)))
-			{
-				SSLerr(SSL_F_SSL3_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
-				return(-1);
-			}
-		p=(unsigned char *)&(buf->data[*l]);
-		l2n3(n,p);
-		i2d_X509(x,&p);
-		*l+=n+3;
+	n=i2d_X509(x,NULL);
+	if (!BUF_MEM_grow_clean(buf,(int)(n+(*l)+3)))
+		{
+		SSLerr(SSL_F_SSL3_ADD_CERT_TO_BUF,ERR_R_BUF_LIB);
+		return(-1);
+		}
+	p=(unsigned char *)&(buf->data[*l]);
+	l2n3(n,p);
+	i2d_X509(x,&p);
+	*l+=n+3;
 
-		return(0);
+	return(0);
 	}
 
 unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)

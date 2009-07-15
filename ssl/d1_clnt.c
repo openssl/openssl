@@ -1353,7 +1353,7 @@ int dtls1_send_client_verify(SSL *s)
 				SHA_DIGEST_LENGTH,&(p[2]),
 				(unsigned int *)&j,pkey->pkey.ec))
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
+				SSLerr(SSL_F_DTLS1_SEND_CLIENT_VERIFY,
 				    ERR_R_ECDSA_LIB);
 				goto err;
 				}
