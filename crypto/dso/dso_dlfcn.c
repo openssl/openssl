@@ -351,9 +351,9 @@ static char *dlfcn_merger(DSO *dso, const char *filespec1,
 	return(merged);
 	}
 
-#ifdef OPENSSL_SYS_MAC
-#define DSO_ext	".dynlib"
-#define DSO_extlen 7
+#ifdef OPENSSL_SYS_MACOSX
+#define DSO_ext	".dylib"
+#define DSO_extlen 6
 #else
 #define DSO_ext	".so"
 #define DSO_extlen 3
