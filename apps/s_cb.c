@@ -338,6 +338,12 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 		break;
 	default:
 		str_version = "???";
+	case DTLS1_VERSION:
+		str_version = "DTLS 1.0 ";
+		break;
+	case DTLS1_BAD_VER:
+		str_version = "DTLS 1.0 (bad) ";
+		break;
 		}
 
 	if (version == SSL2_VERSION)
@@ -401,7 +407,10 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 			}
 		}
 
-	if (version == SSL3_VERSION || version == TLS1_VERSION)
+	if (version == SSL3_VERSION ||
+	    version == TLS1_VERSION ||
+	    version == DTLS1_VERSION ||
+	    version == DTLS1_BAD_VER)
 		{
 		switch (content_type)
 			{
@@ -539,6 +548,9 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 					break;
 				case 15:
 					str_details1 = ", CertificateVerify";
+					break;
+				case 3:
+					str_details1 = ", HelloVerifyRequest";
 					break;
 				case 16:
 					str_details1 = ", ClientKeyExchange";
