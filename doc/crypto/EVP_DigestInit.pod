@@ -132,7 +132,9 @@ return B<EVP_MD> structures for the MD2, MD5, SHA, SHA1, MDC2 and RIPEMD160 dige
 algorithms respectively. The associated signature algorithm is RSA in each case.
 
 EVP_dss() and EVP_dss1() return B<EVP_MD> structures for SHA and SHA1 digest
-algorithms but using DSS (DSA) for the signature algorithm.
+algorithms but using DSS (DSA) for the signature algorithm. Note: there is 
+no need to use these pseudo-digests in OpenSSL 1.0.0 and later, they are
+however retained for compatibility.
 
 EVP_md_null() is a "null" message digest that does nothing: i.e. the hash it
 returns is of zero length.
@@ -228,12 +230,6 @@ digest name passed on the command line.
  printf("\n");
  }
 
-=head1 BUGS
-
-The link between digests and signing algorithms results in a situation where
-EVP_sha1() must be used with RSA and EVP_dss1() must be used with DSS
-even though they are identical digests.
-
 =head1 SEE ALSO
 
 L<evp(3)|evp(3)>, L<hmac(3)|hmac(3)>, L<md2(3)|md2(3)>,
@@ -252,5 +248,12 @@ and EVP_DigestFinal_ex() were added in OpenSSL 0.9.7.
 EVP_md_null(), EVP_md2(), EVP_md5(), EVP_sha(), EVP_sha1(),
 EVP_dss(), EVP_dss1(), EVP_mdc2() and EVP_ripemd160() were
 changed to return truely const EVP_MD * in OpenSSL 0.9.7.
+
+The link between digests and signing algorithms was fixed in OpenSSL 1.0 and
+later, so now EVP_sha1() can be used with RSA and DSA, there is no need to
+use EVP_dss1() any more.
+
+OpenSSL 1.0 and later does not include the MD2 digest algorithm in the
+default configuration due to its security weaknesses.
 
 =cut
