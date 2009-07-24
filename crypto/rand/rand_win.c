@@ -494,12 +494,28 @@ int RAND_poll(void)
                          * each entry.  Consider each field a source of 1 byte
                          * of entropy.
                          */
+			ZeroMemory(&hlist, sizeof(HEAPLIST32));
 			hlist.dwSize = sizeof(HEAPLIST32);		
 			if (good) stoptime = GetTickCount() + MAXDELAY;
 			if (heaplist_first(handle, &hlist))
+				{
+				/*
+				   following discussion on dev ML, exception on WinCE (or other Win
+				   platform) is theoretically of unknown origin; prevent infinite
+				   loop here when this theoretical case occurs; otherwise cope with
+				   the expected (MSDN documented) exception-throwing behaviour of
+				   Heap32Next() on WinCE.
+
+				   based on patch in original message by Tanguy Fautré (2009/03/02)
+			           Subject: RAND_poll() and CreateToolhelp32Snapshot() stability
+			     */
+				int ex_cnt_limit = 42; 
 				do
 					{
 					RAND_add(&hlist, hlist.dwSize, 3);
+					__try
+						{
+						ZeroMemory(&hentry, sizeof(HEAPENTRY32));
 					hentry.dwSize = sizeof(HEAPENTRY32);
 					if (heap_first(&hentry,
 						hlist.th32ProcessID,
@@ -512,8 +528,16 @@ int RAND_poll(void)
 						while (heap_next(&hentry)
 							&& --entrycnt > 0);
 						}
-					} while (heaplist_next(handle,
-						&hlist) && GetTickCount() < stoptime);
+						}
+					__except (EXCEPTION_EXECUTE_HANDLER)
+						{
+							/* ignore access violations when walking the heap list */
+							ex_cnt_limit--;
+						}
+					} while (heaplist_next(handle, &hlist) 
+						&& GetTickCount() < stoptime 
+						&& ex_cnt_limit > 0);
+				}
 
 			/* process walking */
                         /* PROCESSENTRY32 contains 9 fields that will change
