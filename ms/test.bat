@@ -35,10 +35,6 @@ echo md5test
 md5test
 if errorlevel 1 goto done
 
-echo md2test
-md2test
-if errorlevel 1 goto done
-
 echo rc2test
 rc2test
 if errorlevel 1 goto done
