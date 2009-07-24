@@ -223,6 +223,8 @@ int dtls1_connect(SSL *s)
 			s->init_num=0;
 			/* mark client_random uninitialized */
 			memset(s->s3->client_random,0,sizeof(s->s3->client_random));
+			s->d1->send_cookie = 0;
+			s->hit = 0;
 			break;
 
 		case SSL3_ST_CW_CLNT_HELLO_A:

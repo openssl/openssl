@@ -775,7 +775,7 @@ start:
 	/* Check for timeout */
 	if (dtls1_is_timer_expired(s))
 		{
-		if (dtls1_read_failed(s, -1) > 0);
+		if (dtls1_read_failed(s, -1) > 0)
 			goto start;
 		}
 
