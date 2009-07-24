@@ -538,7 +538,7 @@ jpaketest$(EXE_EXT): jpaketest.o $(DLIBCRYPTO)
 #	fi
 
 dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO)
-	@target=dummytest$; $(BUILD_CMD)
+	@target=dummytest; $(BUILD_CMD)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
