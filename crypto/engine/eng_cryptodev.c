@@ -55,6 +55,10 @@ ENGINE_load_cryptodev(void)
  
 #include <sys/types.h>
 #include <crypto/cryptodev.h>
+#include <crypto/dh/dh.h>
+#include <crypto/dsa/dsa.h>
+#include <crypto/err/err.h>
+#include <crypto/rsa/rsa.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <stdio.h>
@@ -86,7 +90,7 @@ static int get_asym_dev_crypto(void);
 static int open_dev_crypto(void);
 static int get_dev_crypto(void);
 static int get_cryptodev_ciphers(const int **cnids);
-static int get_cryptodev_digests(const int **cnids);
+/*static int get_cryptodev_digests(const int **cnids);*/
 static int cryptodev_usable_ciphers(const int **nids);
 static int cryptodev_usable_digests(const int **nids);
 static int cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -149,6 +153,7 @@ static struct {
 	{ 0,				NID_undef,		0,	 0, },
 };
 
+#if 0
 static struct {
 	int	id;
 	int	nid;
@@ -163,6 +168,7 @@ static struct {
 	{ CRYPTO_SHA1,			NID_sha1,		20},
 	{ 0,				NID_undef,		0},
 };
+#endif
 
 /*
  * Return a fd if /dev/crypto seems usable, 0 otherwise.
@@ -259,6 +265,7 @@ get_cryptodev_ciphers(const int **cnids)
  * returning them here is harmless, as long as we return NULL
  * when asked for a handler in the cryptodev_engine_digests routine
  */
+#if 0  /* not (yet?) used */
 static int
 get_cryptodev_digests(const int **cnids)
 {
@@ -290,6 +297,7 @@ get_cryptodev_digests(const int **cnids)
 		*cnids = NULL;
 	return (count);
 }
+#endif  /* 0 */
 
 /*
  * Find the useable ciphers|digests from dev/crypto - this is the first
@@ -348,7 +356,7 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	struct crypt_op cryp;
 	struct dev_crypto_state *state = ctx->cipher_data;
 	struct session_op *sess = &state->d_sess;
-	void *iiv;
+	const void *iiv;
 	unsigned char save_iv[EVP_MAX_IV_LENGTH];
 
 	if (state->d_fd < 0)
@@ -372,7 +380,7 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	if (ctx->cipher->iv_len) {
 		cryp.iv = (caddr_t) ctx->iv;
 		if (!ctx->encrypt) {
-			iiv = (void *) in + inl - ctx->cipher->iv_len;
+			iiv = in + inl - ctx->cipher->iv_len;
 			memcpy(save_iv, iiv, ctx->cipher->iv_len);
 		}
 	} else
@@ -387,7 +395,7 @@ cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 	if (ctx->cipher->iv_len) {
 		if (ctx->encrypt)
-			iiv = (void *) out + inl - ctx->cipher->iv_len;
+			iiv = out + inl - ctx->cipher->iv_len;
 		else
 			iiv = save_iv;
 		memcpy(ctx->iv, iiv, ctx->cipher->iv_len);
@@ -401,7 +409,7 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
 	struct dev_crypto_state *state = ctx->cipher_data;
 	struct session_op *sess = &state->d_sess;
-	int cipher, i;
+	int cipher = -1, i;
 
 	for (i = 0; ciphers[i].id; i++)
 		if (ctx->cipher->nid == ciphers[i].nid &&
