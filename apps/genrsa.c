@@ -269,6 +269,10 @@ bad:
 	BIO_printf(bio_err,"Generating RSA private key, %d bit long modulus\n",
 		num);
 
+	rsa = RSA_new();
+	if (!rsa)
+		goto err;
+
 	if (use_x931)
 		{
 		BIGNUM *pubexp;
