@@ -230,8 +230,8 @@ void lh_node_usage_stats_bio(const _LHASH *lh, BIO *out);
   lh_stats_bio(CHECKED_LHASH_OF(type, lh), out)
 #define LHM_lh_free(type, lh) lh_free(CHECKED_LHASH_OF(type, lh))
 
-DECLARE_LHASH_OF(STRING);
-DECLARE_LHASH_OF(CSTRING);
+DECLARE_LHASH_OF(OPENSSL_STRING);
+DECLARE_LHASH_OF(OPENSSL_CSTRING);
 
 #ifdef  __cplusplus
 }

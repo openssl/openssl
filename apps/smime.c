@@ -93,7 +93,7 @@ int MAIN(int argc, char **argv)
 	const char *inmode = "r", *outmode = "w";
 	char *infile = NULL, *outfile = NULL;
 	char *signerfile = NULL, *recipfile = NULL;
-	STACK_OF(STRING) *sksigners = NULL, *skkeys = NULL;
+	STACK_OF(OPENSSL_STRING) *sksigners = NULL, *skkeys = NULL;
 	char *certfile = NULL, *keyfile = NULL, *contfile=NULL;
 	const EVP_CIPHER *cipher = NULL;
 	PKCS7 *p7 = NULL;
@@ -260,13 +260,13 @@ int MAIN(int argc, char **argv)
 			if (signerfile)
 				{
 				if (!sksigners)
-					sksigners = sk_STRING_new_null();
-				sk_STRING_push(sksigners, signerfile);
+					sksigners = sk_OPENSSL_STRING_new_null();
+				sk_OPENSSL_STRING_push(sksigners, signerfile);
 				if (!keyfile)
 					keyfile = signerfile;
 				if (!skkeys)
-					skkeys = sk_STRING_new_null();
-				sk_STRING_push(skkeys, keyfile);
+					skkeys = sk_OPENSSL_STRING_new_null();
+				sk_OPENSSL_STRING_push(skkeys, keyfile);
 				keyfile = NULL;
 				}
 			signerfile = *++args;
@@ -302,12 +302,12 @@ int MAIN(int argc, char **argv)
 					goto argerr;
 					}
 				if (!sksigners)
-					sksigners = sk_STRING_new_null();
-				sk_STRING_push(sksigners, signerfile);
+					sksigners = sk_OPENSSL_STRING_new_null();
+				sk_OPENSSL_STRING_push(sksigners, signerfile);
 				signerfile = NULL;
 				if (!skkeys)
-					skkeys = sk_STRING_new_null();
-				sk_STRING_push(skkeys, keyfile);
+					skkeys = sk_OPENSSL_STRING_new_null();
+				sk_OPENSSL_STRING_push(skkeys, keyfile);
 				}
 			keyfile = *++args;
 			}
@@ -389,13 +389,13 @@ int MAIN(int argc, char **argv)
 		if (signerfile)
 			{
 			if (!sksigners)
-				sksigners = sk_STRING_new_null();
-			sk_STRING_push(sksigners, signerfile);
+				sksigners = sk_OPENSSL_STRING_new_null();
+			sk_OPENSSL_STRING_push(sksigners, signerfile);
 			if (!skkeys)
-				skkeys = sk_STRING_new_null();
+				skkeys = sk_OPENSSL_STRING_new_null();
 			if (!keyfile)
 				keyfile = signerfile;
-			sk_STRING_push(skkeys, keyfile);
+			sk_OPENSSL_STRING_push(skkeys, keyfile);
 			}
 		if (!sksigners)
 			{
@@ -707,10 +707,10 @@ int MAIN(int argc, char **argv)
 			}
 		else
 			flags |= PKCS7_REUSE_DIGEST;
-		for (i = 0; i < sk_STRING_num(sksigners); i++)
+		for (i = 0; i < sk_OPENSSL_STRING_num(sksigners); i++)
 			{
-			signerfile = sk_STRING_value(sksigners, i);
-			keyfile = sk_STRING_value(skkeys, i);
+			signerfile = sk_OPENSSL_STRING_value(sksigners, i);
+			keyfile = sk_OPENSSL_STRING_value(skkeys, i);
 			signer = load_cert(bio_err, signerfile,FORMAT_PEM, NULL,
 					e, "signer certificate");
 			if (!signer)
@@ -807,9 +807,9 @@ end:
 	if (vpm)
 		X509_VERIFY_PARAM_free(vpm);
 	if (sksigners)
-		sk_STRING_free(sksigners);
+		sk_OPENSSL_STRING_free(sksigners);
 	if (skkeys)
-		sk_STRING_free(skkeys);
+		sk_OPENSSL_STRING_free(skkeys);
 	X509_STORE_free(store);
 	X509_free(cert);
 	X509_free(recip);

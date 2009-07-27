@@ -117,7 +117,7 @@ int MAIN(int argc, char **argv)
     int ret = 1;
     int macver = 1;
     int noprompt = 0;
-    STACK_OF(STRING) *canames = NULL;
+    STACK_OF(OPENSSL_STRING) *canames = NULL;
     char *cpass = NULL, *mpass = NULL;
     char *passargin = NULL, *passargout = NULL, *passarg = NULL;
     char *passin = NULL, *passout = NULL;
@@ -222,8 +222,8 @@ int MAIN(int argc, char **argv)
 		} else if (!strcmp (*args, "-caname")) {
 		    if (args[1]) {
 			args++;	
-			if (!canames) canames = sk_STRING_new_null();
-			sk_STRING_push(canames, *args);
+			if (!canames) canames = sk_OPENSSL_STRING_new_null();
+			sk_OPENSSL_STRING_push(canames, *args);
 		    } else badarg = 1;
 		} else if (!strcmp (*args, "-in")) {
 		    if (args[1]) {
@@ -549,9 +549,9 @@ int MAIN(int argc, char **argv)
 
 	/* Add any CA names */
 
-	for (i = 0; i < sk_STRING_num(canames); i++)
+	for (i = 0; i < sk_OPENSSL_STRING_num(canames); i++)
 		{
-		catmp = (unsigned char *)sk_STRING_value(canames, i);
+		catmp = (unsigned char *)sk_OPENSSL_STRING_value(canames, i);
 		X509_alias_set1(sk_X509_value(certs, i), catmp, -1);
 		}
 
@@ -687,7 +687,7 @@ int MAIN(int argc, char **argv)
 #endif
     BIO_free(in);
     BIO_free_all(out);
-    if (canames) sk_STRING_free(canames);
+    if (canames) sk_OPENSSL_STRING_free(canames);
     if(passin) OPENSSL_free(passin);
     if(passout) OPENSSL_free(passout);
     apps_shutdown();

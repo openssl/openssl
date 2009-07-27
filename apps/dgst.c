@@ -127,7 +127,7 @@ int MAIN(int argc, char **argv)
 #endif
 	char *hmac_key=NULL;
 	char *mac_name=NULL;
-	STACK_OF(STRING) *sigopts = NULL, *macopts = NULL;
+	STACK_OF(OPENSSL_STRING) *sigopts = NULL, *macopts = NULL;
 
 	apps_startup();
 
@@ -230,8 +230,8 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1)
 				break;
 			if (!sigopts)
-				sigopts = sk_STRING_new_null();
-			if (!sigopts || !sk_STRING_push(sigopts, *(++argv)))
+				sigopts = sk_OPENSSL_STRING_new_null();
+			if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, *(++argv)))
 				break;
 			}
 		else if (strcmp(*argv,"-macopt") == 0)
@@ -239,8 +239,8 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1)
 				break;
 			if (!macopts)
-				macopts = sk_STRING_new_null();
-			if (!macopts || !sk_STRING_push(macopts, *(++argv)))
+				macopts = sk_OPENSSL_STRING_new_null();
+			if (!macopts || !sk_OPENSSL_STRING_push(macopts, *(++argv)))
 				break;
 			}
 		else if ((m=EVP_get_digestbyname(&((*argv)[1]))) != NULL)
@@ -365,9 +365,9 @@ int MAIN(int argc, char **argv)
 		if (macopts)
 			{
 			char *macopt;
-			for (i = 0; i < sk_STRING_num(macopts); i++)
+			for (i = 0; i < sk_OPENSSL_STRING_num(macopts); i++)
 				{
-				macopt = sk_STRING_value(macopts, i);
+				macopt = sk_OPENSSL_STRING_value(macopts, i);
 				if (pkey_ctrl_string(mac_ctx, macopt) <= 0)
 					{
 					BIO_printf(bio_err,
@@ -424,9 +424,9 @@ int MAIN(int argc, char **argv)
 		if (sigopts)
 			{
 			char *sigopt;
-			for (i = 0; i < sk_STRING_num(sigopts); i++)
+			for (i = 0; i < sk_OPENSSL_STRING_num(sigopts); i++)
 				{
-				sigopt = sk_STRING_value(sigopts, i);
+				sigopt = sk_OPENSSL_STRING_value(sigopts, i);
 				if (pkey_ctrl_string(pctx, sigopt) <= 0)
 					{
 					BIO_printf(bio_err,
@@ -531,9 +531,9 @@ end:
 	BIO_free_all(out);
 	EVP_PKEY_free(sigkey);
 	if (sigopts)
-		sk_STRING_free(sigopts);
+		sk_OPENSSL_STRING_free(sigopts);
 	if (macopts)
-		sk_STRING_free(macopts);
+		sk_OPENSSL_STRING_free(macopts);
 	if(sigbuf) OPENSSL_free(sigbuf);
 	if (bmd != NULL) BIO_free(bmd);
 	apps_shutdown();

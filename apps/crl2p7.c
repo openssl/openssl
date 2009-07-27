@@ -92,7 +92,7 @@ int MAIN(int argc, char **argv)
 	PKCS7 *p7 = NULL;
 	PKCS7_SIGNED *p7s = NULL;
 	X509_CRL *crl=NULL;
-	STACK_OF(STRING) *certflst=NULL;
+	STACK_OF(OPENSSL_STRING) *certflst=NULL;
 	STACK_OF(X509_CRL) *crl_stack=NULL;
 	STACK_OF(X509) *cert_stack=NULL;
 	int ret=1,nocrl=0;
@@ -140,8 +140,8 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-certfile") == 0)
 			{
 			if (--argc < 1) goto bad;
-			if(!certflst) certflst = sk_STRING_new_null();
-			sk_STRING_push(certflst,*(++argv));
+			if(!certflst) certflst = sk_OPENSSL_STRING_new_null();
+			sk_OPENSSL_STRING_push(certflst,*(++argv));
 			}
 		else
 			{
@@ -226,8 +226,8 @@ bad:
 	if ((cert_stack=sk_X509_new_null()) == NULL) goto end;
 	p7s->cert=cert_stack;
 
-	if(certflst) for(i = 0; i < sk_STRING_num(certflst); i++) {
-		certfile = sk_STRING_value(certflst, i);
+	if(certflst) for(i = 0; i < sk_OPENSSL_STRING_num(certflst); i++) {
+		certfile = sk_OPENSSL_STRING_value(certflst, i);
 		if (add_certs_from_file(cert_stack,certfile) < 0)
 			{
 			BIO_printf(bio_err, "error loading certificates\n");
@@ -236,7 +236,7 @@ bad:
 			}
 	}
 
-	sk_STRING_free(certflst);
+	sk_OPENSSL_STRING_free(certflst);
 
 	if (outfile == NULL)
 		{

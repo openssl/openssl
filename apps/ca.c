@@ -883,9 +883,9 @@ bad:
 	if (db == NULL) goto err;
 
 	/* Lets check some fields */
-	for (i=0; i<sk_PSTRING_num(db->db->data); i++)
+	for (i=0; i<sk_OPENSSL_PSTRING_num(db->db->data); i++)
 		{
-		pp=sk_PSTRING_value(db->db->data,i);
+		pp=sk_OPENSSL_PSTRING_value(db->db->data,i);
 		if ((pp[DB_type][0] != DB_TYPE_REV) &&
 			(pp[DB_rev_date][0] != '\0'))
 			{
@@ -938,7 +938,7 @@ bad:
 #endif
 		TXT_DB_write(out,db->db);
 		BIO_printf(bio_err,"%d entries loaded from the database\n",
-			   sk_PSTRING_num(db->db->data));
+			   sk_OPENSSL_PSTRING_num(db->db->data));
 		BIO_printf(bio_err,"generating index\n");
 		}
 	
@@ -1408,9 +1408,9 @@ bad:
 
 		ASN1_TIME_free(tmptm);
 
-		for (i=0; i<sk_PSTRING_num(db->db->data); i++)
+		for (i=0; i<sk_OPENSSL_PSTRING_num(db->db->data); i++)
 			{
-			pp=sk_PSTRING_value(db->db->data,i);
+			pp=sk_OPENSSL_PSTRING_value(db->db->data,i);
 			if (pp[DB_type][0] == DB_TYPE_REV)
 				{
 				if ((r=X509_REVOKED_new()) == NULL) goto err;
@@ -1685,9 +1685,9 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	int ok= -1,i,j,last,nid;
 	const char *p;
 	CONF_VALUE *cv;
-	STRING row[DB_NUMBER];
-	STRING *irow=NULL;
-	STRING *rrow=NULL;
+	OPENSSL_STRING row[DB_NUMBER];
+	OPENSSL_STRING *irow=NULL;
+	OPENSSL_STRING *rrow=NULL;
 	char buf[25];
 
 	tmptm=ASN1_UTCTIME_new();
@@ -1929,7 +1929,7 @@ again2:
 
 	if (db->attributes.unique_subject)
 		{
-		STRING *crow=row;
+		OPENSSL_STRING *crow=row;
 
 		rrow=TXT_DB_get_by_index(db->db,DB_name,crow);
 		if (rrow != NULL)
@@ -2632,9 +2632,9 @@ static int do_updatedb (CA_DB *db)
 	else
 		a_y2k = 0;
 
-	for (i = 0; i < sk_PSTRING_num(db->db->data); i++)
+	for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++)
 		{
-		rrow = sk_PSTRING_value(db->db->data, i);
+		rrow = sk_OPENSSL_PSTRING_value(db->db->data, i);
 
 		if (rrow[DB_type][0] == 'V')
 		 	{
