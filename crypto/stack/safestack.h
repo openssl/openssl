@@ -128,8 +128,8 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
  * nul-terminated. These should also be distinguished from "normal"
  * stacks. */
 
-typedef void *BLOCK;
-DECLARE_SPECIAL_STACK_OF(BLOCK, void)
+typedef void *OPENSSL_BLOCK;
+DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 
 /* SKM_sk_... stack macros are internal to safestack.h:
  * never use them directly, use sk_<type>_... instead */
@@ -2055,29 +2055,29 @@ DECLARE_SPECIAL_STACK_OF(BLOCK, void)
 #define sk_OPENSSL_STRING_is_sorted(st) SKM_sk_is_sorted(OPENSSL_STRING, (st))
 
 
-#define sk_BLOCK_new(cmp) ((STACK_OF(BLOCK) *)sk_new(CHECKED_SK_CMP_FUNC(void, cmp)))
-#define sk_BLOCK_new_null() ((STACK_OF(BLOCK) *)sk_new_null())
-#define sk_BLOCK_push(st, val) sk_push(CHECKED_PTR_OF(STACK_OF(BLOCK), st), CHECKED_PTR_OF(void, val))
-#define sk_BLOCK_find(st, val) sk_find(CHECKED_PTR_OF(STACK_OF(BLOCK), st), CHECKED_PTR_OF(void, val))
-#define sk_BLOCK_value(st, i) ((BLOCK)sk_value(CHECKED_PTR_OF(STACK_OF(BLOCK), st), i))
-#define sk_BLOCK_num(st) SKM_sk_num(BLOCK, st)
-#define sk_BLOCK_pop_free(st, free_func) sk_pop_free(CHECKED_PTR_OF(STACK_OF(BLOCK), st), CHECKED_SK_FREE_FUNC2(BLOCK, free_func))
-#define sk_BLOCK_insert(st, val, i) sk_insert(CHECKED_PTR_OF(STACK_OF(BLOCK), st), CHECKED_PTR_OF(void, val), i)
-#define sk_BLOCK_free(st) SKM_sk_free(BLOCK, st)
-#define sk_BLOCK_set(st, i, val) sk_set((_STACK *)CHECKED_PTR_OF(STACK_OF(BLOCK), st), i, CHECKED_PTR_OF(void, val))
-#define sk_BLOCK_zero(st) SKM_sk_zero(BLOCK, (st))
-#define sk_BLOCK_unshift(st, val) sk_unshift((_STACK *)CHECKED_PTR_OF(STACK_OF(BLOCK), st), CHECKED_PTR_OF(void, val))
-#define sk_BLOCK_find_ex(st, val) sk_find_ex((_STACK *)CHECKED_CONST_PTR_OF(STACK_OF(BLOCK), st), CHECKED_CONST_PTR_OF(void, val))
-#define sk_BLOCK_delete(st, i) SKM_sk_delete(BLOCK, (st), (i))
-#define sk_BLOCK_delete_ptr(st, ptr) (BLOCK *)sk_delete_ptr((_STACK *)CHECKED_PTR_OF(STACK_OF(BLOCK), st), CHECKED_PTR_OF(void, ptr))
-#define sk_BLOCK_set_cmp_func(st, cmp)  \
+#define sk_OPENSSL_BLOCK_new(cmp) ((STACK_OF(OPENSSL_BLOCK) *)sk_new(CHECKED_SK_CMP_FUNC(void, cmp)))
+#define sk_OPENSSL_BLOCK_new_null() ((STACK_OF(OPENSSL_BLOCK) *)sk_new_null())
+#define sk_OPENSSL_BLOCK_push(st, val) sk_push(CHECKED_PTR_OF(STACK_OF(OPENSSL_BLOCK), st), CHECKED_PTR_OF(void, val))
+#define sk_OPENSSL_BLOCK_find(st, val) sk_find(CHECKED_PTR_OF(STACK_OF(OPENSSL_BLOCK), st), CHECKED_PTR_OF(void, val))
+#define sk_OPENSSL_BLOCK_value(st, i) ((OPENSSL_BLOCK)sk_value(CHECKED_PTR_OF(STACK_OF(OPENSSL_BLOCK), st), i))
+#define sk_OPENSSL_BLOCK_num(st) SKM_sk_num(OPENSSL_BLOCK, st)
+#define sk_OPENSSL_BLOCK_pop_free(st, free_func) sk_pop_free(CHECKED_PTR_OF(STACK_OF(OPENSSL_BLOCK), st), CHECKED_SK_FREE_FUNC2(OPENSSL_BLOCK, free_func))
+#define sk_OPENSSL_BLOCK_insert(st, val, i) sk_insert(CHECKED_PTR_OF(STACK_OF(OPENSSL_BLOCK), st), CHECKED_PTR_OF(void, val), i)
+#define sk_OPENSSL_BLOCK_free(st) SKM_sk_free(OPENSSL_BLOCK, st)
+#define sk_OPENSSL_BLOCK_set(st, i, val) sk_set((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_BLOCK), st), i, CHECKED_PTR_OF(void, val))
+#define sk_OPENSSL_BLOCK_zero(st) SKM_sk_zero(OPENSSL_BLOCK, (st))
+#define sk_OPENSSL_BLOCK_unshift(st, val) sk_unshift((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_BLOCK), st), CHECKED_PTR_OF(void, val))
+#define sk_OPENSSL_BLOCK_find_ex(st, val) sk_find_ex((_STACK *)CHECKED_CONST_PTR_OF(STACK_OF(OPENSSL_BLOCK), st), CHECKED_CONST_PTR_OF(void, val))
+#define sk_OPENSSL_BLOCK_delete(st, i) SKM_sk_delete(OPENSSL_BLOCK, (st), (i))
+#define sk_OPENSSL_BLOCK_delete_ptr(st, ptr) (OPENSSL_BLOCK *)sk_delete_ptr((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_BLOCK), st), CHECKED_PTR_OF(void, ptr))
+#define sk_OPENSSL_BLOCK_set_cmp_func(st, cmp)  \
 	((int (*)(const void * const *,const void * const *)) \
-	sk_set_cmp_func((_STACK *)CHECKED_PTR_OF(STACK_OF(BLOCK), st), CHECKED_SK_CMP_FUNC(void, cmp)))
-#define sk_BLOCK_dup(st) SKM_sk_dup(BLOCK, st)
-#define sk_BLOCK_shift(st) SKM_sk_shift(BLOCK, (st))
-#define sk_BLOCK_pop(st) (void *)sk_pop((_STACK *)CHECKED_PTR_OF(STACK_OF(BLOCK), st))
-#define sk_BLOCK_sort(st) SKM_sk_sort(BLOCK, (st))
-#define sk_BLOCK_is_sorted(st) SKM_sk_is_sorted(BLOCK, (st))
+	sk_set_cmp_func((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_BLOCK), st), CHECKED_SK_CMP_FUNC(void, cmp)))
+#define sk_OPENSSL_BLOCK_dup(st) SKM_sk_dup(OPENSSL_BLOCK, st)
+#define sk_OPENSSL_BLOCK_shift(st) SKM_sk_shift(OPENSSL_BLOCK, (st))
+#define sk_OPENSSL_BLOCK_pop(st) (void *)sk_pop((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_BLOCK), st))
+#define sk_OPENSSL_BLOCK_sort(st) SKM_sk_sort(OPENSSL_BLOCK, (st))
+#define sk_OPENSSL_BLOCK_is_sorted(st) SKM_sk_is_sorted(OPENSSL_BLOCK, (st))
 
 
 #define sk_OPENSSL_PSTRING_new(cmp) ((STACK_OF(OPENSSL_PSTRING) *)sk_new(CHECKED_SK_CMP_FUNC(OPENSSL_STRING, cmp)))
