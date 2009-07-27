@@ -165,7 +165,7 @@ int MAIN(int argc, char **argv)
 	EVP_PKEY_CTX *genctx = NULL;
 	const char *keyalg = NULL;
 	char *keyalgstr = NULL;
-	STACK_OF(STRING) *pkeyopts = NULL;
+	STACK_OF(OPENSSL_STRING) *pkeyopts = NULL;
 	EVP_PKEY *pkey=NULL;
 	int i=0,badops=0,newreq=0,verbose=0,pkey_type=-1;
 	long newkey = -1;
@@ -306,8 +306,8 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1)
 				goto bad;
 			if (!pkeyopts)
-				pkeyopts = sk_STRING_new_null();
-			if (!pkeyopts || !sk_STRING_push(pkeyopts, *(++argv)))
+				pkeyopts = sk_OPENSSL_STRING_new_null();
+			if (!pkeyopts || !sk_OPENSSL_STRING_push(pkeyopts, *(++argv)))
 				goto bad;
 			}
 		else if (strcmp(*argv,"-batch") == 0)
@@ -667,9 +667,9 @@ bad:
 		if (pkeyopts)
 			{
 			char *genopt;
-			for (i = 0; i < sk_STRING_num(pkeyopts); i++)
+			for (i = 0; i < sk_OPENSSL_STRING_num(pkeyopts); i++)
 				{
-				genopt = sk_STRING_value(pkeyopts, i);
+				genopt = sk_OPENSSL_STRING_value(pkeyopts, i);
 				if (pkey_ctrl_string(genctx, genopt) <= 0)
 					{
 					BIO_printf(bio_err,
@@ -1083,7 +1083,7 @@ end:
 	if (genctx)
 		EVP_PKEY_CTX_free(genctx);
 	if (pkeyopts)
-		sk_STRING_free(pkeyopts);
+		sk_OPENSSL_STRING_free(pkeyopts);
 #ifndef OPENSSL_NO_ENGINE
 	if (gen_eng)
 		ENGINE_free(gen_eng);

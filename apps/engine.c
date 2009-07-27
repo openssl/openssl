@@ -200,7 +200,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
 	char *desc = NULL;
 	int flags;
 	int xpos = 0;
-	STACK_OF(STRING) *cmds = NULL;
+	STACK_OF(OPENSSL_STRING) *cmds = NULL;
 	if(!ENGINE_ctrl(e, ENGINE_CTRL_HAS_CTRL_FUNCTION, 0, NULL, NULL) ||
 			((num = ENGINE_ctrl(e, ENGINE_CTRL_GET_FIRST_CMD_TYPE,
 					0, NULL, NULL)) <= 0))
@@ -211,7 +211,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
 		return 1;
 		}
 
-	cmds = sk_STRING_new_null();
+	cmds = sk_OPENSSL_STRING_new_null();
 
 	if(!cmds)
 		goto err;
@@ -284,16 +284,16 @@ static int util_verbose(ENGINE *e, int verbose, BIO *bio_out, const char *indent
 		BIO_printf(bio_out, "\n");
 	ret = 1;
 err:
-	if(cmds) sk_STRING_pop_free(cmds, identity);
+	if(cmds) sk_OPENSSL_STRING_pop_free(cmds, identity);
 	if(name) OPENSSL_free(name);
 	if(desc) OPENSSL_free(desc);
 	return ret;
 	}
 
-static void util_do_cmds(ENGINE *e, STACK_OF(STRING) *cmds, BIO *bio_out,
-			 const char *indent)
+static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
+			BIO *bio_out, const char *indent)
 	{
-	int loop, res, num = sk_STRING_num(cmds);
+	int loop, res, num = sk_OPENSSL_STRING_num(cmds);
 
 	if(num < 0)
 		{
@@ -304,7 +304,7 @@ static void util_do_cmds(ENGINE *e, STACK_OF(STRING) *cmds, BIO *bio_out,
 		{
 		char buf[256];
 		const char *cmd, *arg;
-		cmd = sk_STRING_value(cmds, loop);
+		cmd = sk_OPENSSL_STRING_value(cmds, loop);
 		res = 1; /* assume success */
 		/* Check if this command has no ":arg" */
 		if((arg = strstr(cmd, ":")) == NULL)
@@ -344,9 +344,9 @@ int MAIN(int argc, char **argv)
 	const char **pp;
 	int verbose=0, list_cap=0, test_avail=0, test_avail_noise = 0;
 	ENGINE *e;
-	STACK_OF(STRING) *engines = sk_STRING_new_null();
-	STACK_OF(STRING) *pre_cmds = sk_STRING_new_null();
-	STACK_OF(STRING) *post_cmds = sk_STRING_new_null();
+	STACK_OF(OPENSSL_STRING) *engines = sk_OPENSSL_STRING_new_null();
+	STACK_OF(OPENSSL_STRING) *pre_cmds = sk_OPENSSL_STRING_new_null();
+	STACK_OF(OPENSSL_STRING) *post_cmds = sk_OPENSSL_STRING_new_null();
 	int badops=1;
 	BIO *bio_out=NULL;
 	const char *indent = "     ";
@@ -393,20 +393,20 @@ int MAIN(int argc, char **argv)
 			argc--; argv++;
 			if (argc == 0)
 				goto skip_arg_loop;
-			sk_STRING_push(pre_cmds,*argv);
+			sk_OPENSSL_STRING_push(pre_cmds,*argv);
 			}
 		else if (strcmp(*argv,"-post") == 0)
 			{
 			argc--; argv++;
 			if (argc == 0)
 				goto skip_arg_loop;
-			sk_STRING_push(post_cmds,*argv);
+			sk_OPENSSL_STRING_push(post_cmds,*argv);
 			}
 		else if ((strncmp(*argv,"-h",2) == 0) ||
 				(strcmp(*argv,"-?") == 0))
 			goto skip_arg_loop;
 		else
-			sk_STRING_push(engines,*argv);
+			sk_OPENSSL_STRING_push(engines,*argv);
 		argc--;
 		argv++;
 		}
@@ -421,17 +421,17 @@ skip_arg_loop:
 		goto end;
 		}
 
-	if (sk_STRING_num(engines) == 0)
+	if (sk_OPENSSL_STRING_num(engines) == 0)
 		{
 		for(e = ENGINE_get_first(); e != NULL; e = ENGINE_get_next(e))
 			{
-			sk_STRING_push(engines,(char *)ENGINE_get_id(e));
+			sk_OPENSSL_STRING_push(engines,(char *)ENGINE_get_id(e));
 			}
 		}
 
-	for (i=0; i<sk_STRING_num(engines); i++)
+	for (i=0; i<sk_OPENSSL_STRING_num(engines); i++)
 		{
-		const char *id = sk_STRING_value(engines,i);
+		const char *id = sk_OPENSSL_STRING_value(engines,i);
 		if ((e = ENGINE_by_id(id)) != NULL)
 			{
 			const char *name = ENGINE_get_name(e);
@@ -533,9 +533,9 @@ skip_pmeths:
 end:
 
 	ERR_print_errors(bio_err);
-	sk_STRING_pop_free(engines, identity);
-	sk_STRING_pop_free(pre_cmds, identity);
-	sk_STRING_pop_free(post_cmds, identity);
+	sk_OPENSSL_STRING_pop_free(engines, identity);
+	sk_OPENSSL_STRING_pop_free(pre_cmds, identity);
+	sk_OPENSSL_STRING_pop_free(post_cmds, identity);
 	if (bio_out != NULL) BIO_free_all(bio_out);
 	apps_shutdown();
 	OPENSSL_EXIT(ret);

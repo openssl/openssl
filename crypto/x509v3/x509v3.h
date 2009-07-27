@@ -693,10 +693,10 @@ int X509_PURPOSE_get_trust(X509_PURPOSE *xp);
 void X509_PURPOSE_cleanup(void);
 int X509_PURPOSE_get_id(X509_PURPOSE *);
 
-STACK_OF(STRING) *X509_get1_email(X509 *x);
-STACK_OF(STRING) *X509_REQ_get1_email(X509_REQ *x);
-void X509_email_free(STACK_OF(STRING) *sk);
-STACK_OF(STRING) *X509_get1_ocsp(X509 *x);
+STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x);
+STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x);
+void X509_email_free(STACK_OF(OPENSSL_STRING) *sk);
+STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x);
 
 ASN1_OCTET_STRING *a2i_IPADDRESS(const char *ipasc);
 ASN1_OCTET_STRING *a2i_IPADDRESS_NC(const char *ipasc);

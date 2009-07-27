@@ -110,9 +110,9 @@ o * In practice, however, it appears to be hard to have a const
  * string. For now, I'm settling for dealing with the fact it is a
  * string at all.
  */
-typedef char *STRING;
+typedef char *OPENSSL_STRING;
 
-typedef const char *CSTRING;
+typedef const char *OPENSSL_CSTRING;
 
 /* Confusingly, LHASH_OF(STRING) deals with char ** throughout, but
  * STACK_OF(STRING) is really more like STACK_OF(char), only, as
@@ -122,7 +122,7 @@ typedef const char *CSTRING;
  * macros below.
  */
 
-DECLARE_SPECIAL_STACK_OF(STRING, char)
+DECLARE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
 
 /* Similarly, we sometimes use a block of characters, NOT
  * nul-terminated. These should also be distinguished from "normal"
@@ -2030,29 +2030,29 @@ DECLARE_SPECIAL_STACK_OF(BLOCK, void)
 #define sk_void_sort(st) SKM_sk_sort(void, (st))
 #define sk_void_is_sorted(st) SKM_sk_is_sorted(void, (st))
 
-#define sk_STRING_new(cmp) ((STACK_OF(STRING) *)sk_new(CHECKED_SK_CMP_FUNC(char, cmp)))
-#define sk_STRING_new_null() ((STACK_OF(STRING) *)sk_new_null())
-#define sk_STRING_push(st, val) sk_push(CHECKED_PTR_OF(STACK_OF(STRING), st), CHECKED_PTR_OF(char, val))
-#define sk_STRING_find(st, val) sk_find(CHECKED_PTR_OF(STACK_OF(STRING), st), CHECKED_PTR_OF(char, val))
-#define sk_STRING_value(st, i) ((STRING)sk_value(CHECKED_PTR_OF(STACK_OF(STRING), st), i))
-#define sk_STRING_num(st) SKM_sk_num(STRING, st)
-#define sk_STRING_pop_free(st, free_func) sk_pop_free(CHECKED_PTR_OF(STACK_OF(STRING), st), CHECKED_SK_FREE_FUNC2(STRING, free_func))
-#define sk_STRING_insert(st, val, i) sk_insert(CHECKED_PTR_OF(STACK_OF(STRING), st), CHECKED_PTR_OF(char, val), i)
-#define sk_STRING_free(st) SKM_sk_free(STRING, st)
-#define sk_STRING_set(st, i, val) sk_set((_STACK *)CHECKED_PTR_OF(STACK_OF(STRING), st), i, CHECKED_PTR_OF(char, val))
-#define sk_STRING_zero(st) SKM_sk_zero(STRING, (st))
-#define sk_STRING_unshift(st, val) sk_unshift((_STACK *)CHECKED_PTR_OF(STACK_OF(STRING), st), CHECKED_PTR_OF(char, val))
-#define sk_STRING_find_ex(st, val) sk_find_ex((_STACK *)CHECKED_CONST_PTR_OF(STACK_OF(STRING), st), CHECKED_CONST_PTR_OF(char, val))
-#define sk_STRING_delete(st, i) SKM_sk_delete(STRING, (st), (i))
-#define sk_STRING_delete_ptr(st, ptr) (STRING *)sk_delete_ptr((_STACK *)CHECKED_PTR_OF(STACK_OF(STRING), st), CHECKED_PTR_OF(char, ptr))
-#define sk_STRING_set_cmp_func(st, cmp)  \
+#define sk_OPENSSL_STRING_new(cmp) ((STACK_OF(OPENSSL_STRING) *)sk_new(CHECKED_SK_CMP_FUNC(char, cmp)))
+#define sk_OPENSSL_STRING_new_null() ((STACK_OF(OPENSSL_STRING) *)sk_new_null())
+#define sk_OPENSSL_STRING_push(st, val) sk_push(CHECKED_PTR_OF(STACK_OF(OPENSSL_STRING), st), CHECKED_PTR_OF(char, val))
+#define sk_OPENSSL_STRING_find(st, val) sk_find(CHECKED_PTR_OF(STACK_OF(OPENSSL_STRING), st), CHECKED_PTR_OF(char, val))
+#define sk_OPENSSL_STRING_value(st, i) ((OPENSSL_STRING)sk_value(CHECKED_PTR_OF(STACK_OF(OPENSSL_STRING), st), i))
+#define sk_OPENSSL_STRING_num(st) SKM_sk_num(OPENSSL_STRING, st)
+#define sk_OPENSSL_STRING_pop_free(st, free_func) sk_pop_free(CHECKED_PTR_OF(STACK_OF(OPENSSL_STRING), st), CHECKED_SK_FREE_FUNC2(OPENSSL_STRING, free_func))
+#define sk_OPENSSL_STRING_insert(st, val, i) sk_insert(CHECKED_PTR_OF(STACK_OF(OPENSSL_STRING), st), CHECKED_PTR_OF(char, val), i)
+#define sk_OPENSSL_STRING_free(st) SKM_sk_free(OPENSSL_STRING, st)
+#define sk_OPENSSL_STRING_set(st, i, val) sk_set((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_STRING), st), i, CHECKED_PTR_OF(char, val))
+#define sk_OPENSSL_STRING_zero(st) SKM_sk_zero(OPENSSL_STRING, (st))
+#define sk_OPENSSL_STRING_unshift(st, val) sk_unshift((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_STRING), st), CHECKED_PTR_OF(char, val))
+#define sk_OPENSSL_STRING_find_ex(st, val) sk_find_ex((_STACK *)CHECKED_CONST_PTR_OF(STACK_OF(OPENSSL_STRING), st), CHECKED_CONST_PTR_OF(char, val))
+#define sk_OPENSSL_STRING_delete(st, i) SKM_sk_delete(OPENSSL_STRING, (st), (i))
+#define sk_OPENSSL_STRING_delete_ptr(st, ptr) (OPENSSL_STRING *)sk_delete_ptr((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_STRING), st), CHECKED_PTR_OF(char, ptr))
+#define sk_OPENSSL_STRING_set_cmp_func(st, cmp)  \
 	((int (*)(const char * const *,const char * const *)) \
-	sk_set_cmp_func((_STACK *)CHECKED_PTR_OF(STACK_OF(STRING), st), CHECKED_SK_CMP_FUNC(char, cmp)))
-#define sk_STRING_dup(st) SKM_sk_dup(STRING, st)
-#define sk_STRING_shift(st) SKM_sk_shift(STRING, (st))
-#define sk_STRING_pop(st) (char *)sk_pop((_STACK *)CHECKED_PTR_OF(STACK_OF(STRING), st))
-#define sk_STRING_sort(st) SKM_sk_sort(STRING, (st))
-#define sk_STRING_is_sorted(st) SKM_sk_is_sorted(STRING, (st))
+	sk_set_cmp_func((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_STRING), st), CHECKED_SK_CMP_FUNC(char, cmp)))
+#define sk_OPENSSL_STRING_dup(st) SKM_sk_dup(OPENSSL_STRING, st)
+#define sk_OPENSSL_STRING_shift(st) SKM_sk_shift(OPENSSL_STRING, (st))
+#define sk_OPENSSL_STRING_pop(st) (char *)sk_pop((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_STRING), st))
+#define sk_OPENSSL_STRING_sort(st) SKM_sk_sort(OPENSSL_STRING, (st))
+#define sk_OPENSSL_STRING_is_sorted(st) SKM_sk_is_sorted(OPENSSL_STRING, (st))
 
 
 #define sk_BLOCK_new(cmp) ((STACK_OF(BLOCK) *)sk_new(CHECKED_SK_CMP_FUNC(void, cmp)))
@@ -2080,29 +2080,29 @@ DECLARE_SPECIAL_STACK_OF(BLOCK, void)
 #define sk_BLOCK_is_sorted(st) SKM_sk_is_sorted(BLOCK, (st))
 
 
-#define sk_PSTRING_new(cmp) ((STACK_OF(PSTRING) *)sk_new(CHECKED_SK_CMP_FUNC(STRING, cmp)))
-#define sk_PSTRING_new_null() ((STACK_OF(PSTRING) *)sk_new_null())
-#define sk_PSTRING_push(st, val) sk_push(CHECKED_PTR_OF(STACK_OF(PSTRING), st), CHECKED_PTR_OF(STRING, val))
-#define sk_PSTRING_find(st, val) sk_find(CHECKED_PTR_OF(STACK_OF(PSTRING), st), CHECKED_PTR_OF(STRING, val))
-#define sk_PSTRING_value(st, i) ((PSTRING)sk_value(CHECKED_PTR_OF(STACK_OF(PSTRING), st), i))
-#define sk_PSTRING_num(st) SKM_sk_num(PSTRING, st)
-#define sk_PSTRING_pop_free(st, free_func) sk_pop_free(CHECKED_PTR_OF(STACK_OF(PSTRING), st), CHECKED_SK_FREE_FUNC2(PSTRING, free_func))
-#define sk_PSTRING_insert(st, val, i) sk_insert(CHECKED_PTR_OF(STACK_OF(PSTRING), st), CHECKED_PTR_OF(STRING, val), i)
-#define sk_PSTRING_free(st) SKM_sk_free(PSTRING, st)
-#define sk_PSTRING_set(st, i, val) sk_set((_STACK *)CHECKED_PTR_OF(STACK_OF(PSTRING), st), i, CHECKED_PTR_OF(STRING, val))
-#define sk_PSTRING_zero(st) SKM_sk_zero(PSTRING, (st))
-#define sk_PSTRING_unshift(st, val) sk_unshift((_STACK *)CHECKED_PTR_OF(STACK_OF(PSTRING), st), CHECKED_PTR_OF(STRING, val))
-#define sk_PSTRING_find_ex(st, val) sk_find_ex((_STACK *)CHECKED_CONST_PTR_OF(STACK_OF(PSTRING), st), CHECKED_CONST_PTR_OF(STRING, val))
-#define sk_PSTRING_delete(st, i) SKM_sk_delete(PSTRING, (st), (i))
-#define sk_PSTRING_delete_ptr(st, ptr) (PSTRING *)sk_delete_ptr((_STACK *)CHECKED_PTR_OF(STACK_OF(PSTRING), st), CHECKED_PTR_OF(STRING, ptr))
-#define sk_PSTRING_set_cmp_func(st, cmp)  \
-	((int (*)(const STRING * const *,const STRING * const *)) \
-	sk_set_cmp_func((_STACK *)CHECKED_PTR_OF(STACK_OF(PSTRING), st), CHECKED_SK_CMP_FUNC(STRING, cmp)))
-#define sk_PSTRING_dup(st) SKM_sk_dup(PSTRING, st)
-#define sk_PSTRING_shift(st) SKM_sk_shift(PSTRING, (st))
-#define sk_PSTRING_pop(st) (STRING *)sk_pop((_STACK *)CHECKED_PTR_OF(STACK_OF(PSTRING), st))
-#define sk_PSTRING_sort(st) SKM_sk_sort(PSTRING, (st))
-#define sk_PSTRING_is_sorted(st) SKM_sk_is_sorted(PSTRING, (st))
+#define sk_OPENSSL_PSTRING_new(cmp) ((STACK_OF(OPENSSL_PSTRING) *)sk_new(CHECKED_SK_CMP_FUNC(OPENSSL_STRING, cmp)))
+#define sk_OPENSSL_PSTRING_new_null() ((STACK_OF(OPENSSL_PSTRING) *)sk_new_null())
+#define sk_OPENSSL_PSTRING_push(st, val) sk_push(CHECKED_PTR_OF(STACK_OF(OPENSSL_PSTRING), st), CHECKED_PTR_OF(OPENSSL_STRING, val))
+#define sk_OPENSSL_PSTRING_find(st, val) sk_find(CHECKED_PTR_OF(STACK_OF(OPENSSL_PSTRING), st), CHECKED_PTR_OF(OPENSSL_STRING, val))
+#define sk_OPENSSL_PSTRING_value(st, i) ((OPENSSL_PSTRING)sk_value(CHECKED_PTR_OF(STACK_OF(OPENSSL_PSTRING), st), i))
+#define sk_OPENSSL_PSTRING_num(st) SKM_sk_num(OPENSSL_PSTRING, st)
+#define sk_OPENSSL_PSTRING_pop_free(st, free_func) sk_pop_free(CHECKED_PTR_OF(STACK_OF(OPENSSL_PSTRING), st), CHECKED_SK_FREE_FUNC2(OPENSSL_PSTRING, free_func))
+#define sk_OPENSSL_PSTRING_insert(st, val, i) sk_insert(CHECKED_PTR_OF(STACK_OF(OPENSSL_PSTRING), st), CHECKED_PTR_OF(OPENSSL_STRING, val), i)
+#define sk_OPENSSL_PSTRING_free(st) SKM_sk_free(OPENSSL_PSTRING, st)
+#define sk_OPENSSL_PSTRING_set(st, i, val) sk_set((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_PSTRING), st), i, CHECKED_PTR_OF(OPENSSL_STRING, val))
+#define sk_OPENSSL_PSTRING_zero(st) SKM_sk_zero(OPENSSL_PSTRING, (st))
+#define sk_OPENSSL_PSTRING_unshift(st, val) sk_unshift((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_PSTRING), st), CHECKED_PTR_OF(OPENSSL_STRING, val))
+#define sk_OPENSSL_PSTRING_find_ex(st, val) sk_find_ex((_STACK *)CHECKED_CONST_PTR_OF(STACK_OF(OPENSSL_PSTRING), st), CHECKED_CONST_PTR_OF(OPENSSL_STRING, val))
+#define sk_OPENSSL_PSTRING_delete(st, i) SKM_sk_delete(OPENSSL_PSTRING, (st), (i))
+#define sk_OPENSSL_PSTRING_delete_ptr(st, ptr) (OPENSSL_PSTRING *)sk_delete_ptr((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_PSTRING), st), CHECKED_PTR_OF(OPENSSL_STRING, ptr))
+#define sk_OPENSSL_PSTRING_set_cmp_func(st, cmp)  \
+	((int (*)(const OPENSSL_STRING * const *,const OPENSSL_STRING * const *)) \
+	sk_set_cmp_func((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_PSTRING), st), CHECKED_SK_CMP_FUNC(OPENSSL_STRING, cmp)))
+#define sk_OPENSSL_PSTRING_dup(st) SKM_sk_dup(OPENSSL_PSTRING, st)
+#define sk_OPENSSL_PSTRING_shift(st) SKM_sk_shift(OPENSSL_PSTRING, (st))
+#define sk_OPENSSL_PSTRING_pop(st) (OPENSSL_STRING *)sk_pop((_STACK *)CHECKED_PTR_OF(STACK_OF(OPENSSL_PSTRING), st))
+#define sk_OPENSSL_PSTRING_sort(st) SKM_sk_sort(OPENSSL_PSTRING, (st))
+#define sk_OPENSSL_PSTRING_is_sorted(st) SKM_sk_is_sorted(OPENSSL_PSTRING, (st))
 
 
 #define d2i_ASN1_SET_OF_ACCESS_DESCRIPTION(st, pp, length, d2i_func, free_func, ex_tag, ex_class) \
@@ -2390,24 +2390,6 @@ DECLARE_SPECIAL_STACK_OF(BLOCK, void)
   LHM_lh_stats_bio(CONF_VALUE,lh,out)
 #define lh_CONF_VALUE_free(lh) LHM_lh_free(CONF_VALUE,lh)
 
-#define lh_CSTRING_new() LHM_lh_new(CSTRING,cstring)
-#define lh_CSTRING_insert(lh,inst) LHM_lh_insert(CSTRING,lh,inst)
-#define lh_CSTRING_retrieve(lh,inst) LHM_lh_retrieve(CSTRING,lh,inst)
-#define lh_CSTRING_delete(lh,inst) LHM_lh_delete(CSTRING,lh,inst)
-#define lh_CSTRING_doall(lh,fn) LHM_lh_doall(CSTRING,lh,fn)
-#define lh_CSTRING_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(CSTRING,lh,fn,arg_type,arg)
-#define lh_CSTRING_error(lh) LHM_lh_error(CSTRING,lh)
-#define lh_CSTRING_num_items(lh) LHM_lh_num_items(CSTRING,lh)
-#define lh_CSTRING_down_load(lh) LHM_lh_down_load(CSTRING,lh)
-#define lh_CSTRING_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(CSTRING,lh,out)
-#define lh_CSTRING_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(CSTRING,lh,out)
-#define lh_CSTRING_stats_bio(lh,out) \
-  LHM_lh_stats_bio(CSTRING,lh,out)
-#define lh_CSTRING_free(lh) LHM_lh_free(CSTRING,lh)
-
 #define lh_ENGINE_PILE_new() LHM_lh_new(ENGINE_PILE,engine_pile)
 #define lh_ENGINE_PILE_insert(lh,inst) LHM_lh_insert(ENGINE_PILE,lh,inst)
 #define lh_ENGINE_PILE_retrieve(lh,inst) LHM_lh_retrieve(ENGINE_PILE,lh,inst)
@@ -2534,6 +2516,42 @@ DECLARE_SPECIAL_STACK_OF(BLOCK, void)
   LHM_lh_stats_bio(OBJ_NAME,lh,out)
 #define lh_OBJ_NAME_free(lh) LHM_lh_free(OBJ_NAME,lh)
 
+#define lh_OPENSSL_CSTRING_new() LHM_lh_new(OPENSSL_CSTRING,openssl_cstring)
+#define lh_OPENSSL_CSTRING_insert(lh,inst) LHM_lh_insert(OPENSSL_CSTRING,lh,inst)
+#define lh_OPENSSL_CSTRING_retrieve(lh,inst) LHM_lh_retrieve(OPENSSL_CSTRING,lh,inst)
+#define lh_OPENSSL_CSTRING_delete(lh,inst) LHM_lh_delete(OPENSSL_CSTRING,lh,inst)
+#define lh_OPENSSL_CSTRING_doall(lh,fn) LHM_lh_doall(OPENSSL_CSTRING,lh,fn)
+#define lh_OPENSSL_CSTRING_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(OPENSSL_CSTRING,lh,fn,arg_type,arg)
+#define lh_OPENSSL_CSTRING_error(lh) LHM_lh_error(OPENSSL_CSTRING,lh)
+#define lh_OPENSSL_CSTRING_num_items(lh) LHM_lh_num_items(OPENSSL_CSTRING,lh)
+#define lh_OPENSSL_CSTRING_down_load(lh) LHM_lh_down_load(OPENSSL_CSTRING,lh)
+#define lh_OPENSSL_CSTRING_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(OPENSSL_CSTRING,lh,out)
+#define lh_OPENSSL_CSTRING_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(OPENSSL_CSTRING,lh,out)
+#define lh_OPENSSL_CSTRING_stats_bio(lh,out) \
+  LHM_lh_stats_bio(OPENSSL_CSTRING,lh,out)
+#define lh_OPENSSL_CSTRING_free(lh) LHM_lh_free(OPENSSL_CSTRING,lh)
+
+#define lh_OPENSSL_STRING_new() LHM_lh_new(OPENSSL_STRING,openssl_string)
+#define lh_OPENSSL_STRING_insert(lh,inst) LHM_lh_insert(OPENSSL_STRING,lh,inst)
+#define lh_OPENSSL_STRING_retrieve(lh,inst) LHM_lh_retrieve(OPENSSL_STRING,lh,inst)
+#define lh_OPENSSL_STRING_delete(lh,inst) LHM_lh_delete(OPENSSL_STRING,lh,inst)
+#define lh_OPENSSL_STRING_doall(lh,fn) LHM_lh_doall(OPENSSL_STRING,lh,fn)
+#define lh_OPENSSL_STRING_doall_arg(lh,fn,arg_type,arg) \
+  LHM_lh_doall_arg(OPENSSL_STRING,lh,fn,arg_type,arg)
+#define lh_OPENSSL_STRING_error(lh) LHM_lh_error(OPENSSL_STRING,lh)
+#define lh_OPENSSL_STRING_num_items(lh) LHM_lh_num_items(OPENSSL_STRING,lh)
+#define lh_OPENSSL_STRING_down_load(lh) LHM_lh_down_load(OPENSSL_STRING,lh)
+#define lh_OPENSSL_STRING_node_stats_bio(lh,out) \
+  LHM_lh_node_stats_bio(OPENSSL_STRING,lh,out)
+#define lh_OPENSSL_STRING_node_usage_stats_bio(lh,out) \
+  LHM_lh_node_usage_stats_bio(OPENSSL_STRING,lh,out)
+#define lh_OPENSSL_STRING_stats_bio(lh,out) \
+  LHM_lh_stats_bio(OPENSSL_STRING,lh,out)
+#define lh_OPENSSL_STRING_free(lh) LHM_lh_free(OPENSSL_STRING,lh)
+
 #define lh_SSL_SESSION_new() LHM_lh_new(SSL_SESSION,ssl_session)
 #define lh_SSL_SESSION_insert(lh,inst) LHM_lh_insert(SSL_SESSION,lh,inst)
 #define lh_SSL_SESSION_retrieve(lh,inst) LHM_lh_retrieve(SSL_SESSION,lh,inst)
@@ -2551,24 +2569,6 @@ DECLARE_SPECIAL_STACK_OF(BLOCK, void)
 #define lh_SSL_SESSION_stats_bio(lh,out) \
   LHM_lh_stats_bio(SSL_SESSION,lh,out)
 #define lh_SSL_SESSION_free(lh) LHM_lh_free(SSL_SESSION,lh)
-
-#define lh_STRING_new() LHM_lh_new(STRING,string)
-#define lh_STRING_insert(lh,inst) LHM_lh_insert(STRING,lh,inst)
-#define lh_STRING_retrieve(lh,inst) LHM_lh_retrieve(STRING,lh,inst)
-#define lh_STRING_delete(lh,inst) LHM_lh_delete(STRING,lh,inst)
-#define lh_STRING_doall(lh,fn) LHM_lh_doall(STRING,lh,fn)
-#define lh_STRING_doall_arg(lh,fn,arg_type,arg) \
-  LHM_lh_doall_arg(STRING,lh,fn,arg_type,arg)
-#define lh_STRING_error(lh) LHM_lh_error(STRING,lh)
-#define lh_STRING_num_items(lh) LHM_lh_num_items(STRING,lh)
-#define lh_STRING_down_load(lh) LHM_lh_down_load(STRING,lh)
-#define lh_STRING_node_stats_bio(lh,out) \
-  LHM_lh_node_stats_bio(STRING,lh,out)
-#define lh_STRING_node_usage_stats_bio(lh,out) \
-  LHM_lh_node_usage_stats_bio(STRING,lh,out)
-#define lh_STRING_stats_bio(lh,out) \
-  LHM_lh_stats_bio(STRING,lh,out)
-#define lh_STRING_free(lh) LHM_lh_free(STRING,lh)
 /* End of util/mkstack.pl block, you may now edit :-) */
 
 #endif /* !defined HEADER_SAFESTACK_H */

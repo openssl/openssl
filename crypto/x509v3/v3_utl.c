@@ -67,9 +67,9 @@
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char * const *a, const char * const *b);
-static STACK_OF(STRING) *get_email(X509_NAME *name, GENERAL_NAMES *gens);
-static void str_free(STRING str);
-static int append_ia5(STACK_OF(STRING) **sk, ASN1_IA5STRING *email);
+static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name, GENERAL_NAMES *gens);
+static void str_free(OPENSSL_STRING str);
+static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, ASN1_IA5STRING *email);
 
 static int ipv4_from_asc(unsigned char *v4, const char *in);
 static int ipv6_from_asc(unsigned char *v6, const char *in);
@@ -463,10 +463,10 @@ static int sk_strcmp(const char * const *a, const char * const *b)
 	return strcmp(*a, *b);
 }
 
-STACK_OF(STRING) *X509_get1_email(X509 *x)
+STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x)
 {
 	GENERAL_NAMES *gens;
-	STACK_OF(STRING) *ret;
+	STACK_OF(OPENSSL_STRING) *ret;
 
 	gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
 	ret = get_email(X509_get_subject_name(x), gens);
@@ -474,10 +474,10 @@ STACK_OF(STRING) *X509_get1_email(X509 *x)
 	return ret;
 }
 
-STACK_OF(STRING) *X509_get1_ocsp(X509 *x)
+STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x)
 {
 	AUTHORITY_INFO_ACCESS *info;
-	STACK_OF(STRING) *ret = NULL;
+	STACK_OF(OPENSSL_STRING) *ret = NULL;
 	int i;
 
 	info = X509_get_ext_d2i(x, NID_info_access, NULL, NULL);
@@ -499,11 +499,11 @@ STACK_OF(STRING) *X509_get1_ocsp(X509 *x)
 	return ret;
 }
 
-STACK_OF(STRING) *X509_REQ_get1_email(X509_REQ *x)
+STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x)
 {
 	GENERAL_NAMES *gens;
 	STACK_OF(X509_EXTENSION) *exts;
-	STACK_OF(STRING) *ret;
+	STACK_OF(OPENSSL_STRING) *ret;
 
 	exts = X509_REQ_get_extensions(x);
 	gens = X509V3_get_d2i(exts, NID_subject_alt_name, NULL, NULL);
@@ -514,9 +514,9 @@ STACK_OF(STRING) *X509_REQ_get1_email(X509_REQ *x)
 }
 
 
-static STACK_OF(STRING) *get_email(X509_NAME *name, GENERAL_NAMES *gens)
+static STACK_OF(OPENSSL_STRING) *get_email(X509_NAME *name, GENERAL_NAMES *gens)
 {
-	STACK_OF(STRING) *ret = NULL;
+	STACK_OF(OPENSSL_STRING) *ret = NULL;
 	X509_NAME_ENTRY *ne;
 	ASN1_IA5STRING *email;
 	GENERAL_NAME *gen;
@@ -539,23 +539,23 @@ static STACK_OF(STRING) *get_email(X509_NAME *name, GENERAL_NAMES *gens)
 	return ret;
 }
 
-static void str_free(STRING str)
+static void str_free(OPENSSL_STRING str)
 {
 	OPENSSL_free(str);
 }
 
-static int append_ia5(STACK_OF(STRING) **sk, ASN1_IA5STRING *email)
+static int append_ia5(STACK_OF(OPENSSL_STRING) **sk, ASN1_IA5STRING *email)
 {
 	char *emtmp;
 	/* First some sanity checks */
 	if(email->type != V_ASN1_IA5STRING) return 1;
 	if(!email->data || !email->length) return 1;
-	if(!*sk) *sk = sk_STRING_new(sk_strcmp);
+	if(!*sk) *sk = sk_OPENSSL_STRING_new(sk_strcmp);
 	if(!*sk) return 0;
 	/* Don't add duplicates */
-	if(sk_STRING_find(*sk, (char *)email->data) != -1) return 1;
+	if(sk_OPENSSL_STRING_find(*sk, (char *)email->data) != -1) return 1;
 	emtmp = BUF_strdup((char *)email->data);
-	if(!emtmp || !sk_STRING_push(*sk, emtmp)) {
+	if(!emtmp || !sk_OPENSSL_STRING_push(*sk, emtmp)) {
 		X509_email_free(*sk);
 		*sk = NULL;
 		return 0;
@@ -563,9 +563,9 @@ static int append_ia5(STACK_OF(STRING) **sk, ASN1_IA5STRING *email)
 	return 1;
 }
 
-void X509_email_free(STACK_OF(STRING) *sk)
+void X509_email_free(STACK_OF(OPENSSL_STRING) *sk)
 {
-	sk_STRING_pop_free(sk, str_free);
+	sk_OPENSSL_STRING_pop_free(sk, str_free);
 }
 
 /* Convert IP addresses both IPv4 and IPv6 into an 

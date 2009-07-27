@@ -1488,7 +1488,7 @@ char *make_config_name()
 	return p;
 	}
 
-static unsigned long index_serial_hash(const CSTRING *a)
+static unsigned long index_serial_hash(const OPENSSL_CSTRING *a)
 	{
 	const char *n;
 
@@ -1497,7 +1497,7 @@ static unsigned long index_serial_hash(const CSTRING *a)
 	return(lh_strhash(n));
 	}
 
-static int index_serial_cmp(const CSTRING *a, const CSTRING *b)
+static int index_serial_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b)
 	{
 	const char *aa,*bb;
 
@@ -1509,16 +1509,16 @@ static int index_serial_cmp(const CSTRING *a, const CSTRING *b)
 static int index_name_qual(char **a)
 	{ return(a[0][0] == 'V'); }
 
-static unsigned long index_name_hash(const CSTRING *a)
+static unsigned long index_name_hash(const OPENSSL_CSTRING *a)
 	{ return(lh_strhash(a[DB_name])); }
 
-int index_name_cmp(const CSTRING *a, const CSTRING *b)
+int index_name_cmp(const OPENSSL_CSTRING *a, const OPENSSL_CSTRING *b)
 	{ return(strcmp(a[DB_name], b[DB_name])); }
 
-static IMPLEMENT_LHASH_HASH_FN(index_serial, CSTRING)
-static IMPLEMENT_LHASH_COMP_FN(index_serial, CSTRING)
-static IMPLEMENT_LHASH_HASH_FN(index_name, CSTRING)
-static IMPLEMENT_LHASH_COMP_FN(index_name, CSTRING)
+static IMPLEMENT_LHASH_HASH_FN(index_serial, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_COMP_FN(index_serial, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_HASH_FN(index_name, OPENSSL_CSTRING)
+static IMPLEMENT_LHASH_COMP_FN(index_name, OPENSSL_CSTRING)
 
 #undef BSIZE
 #define BSIZE 256

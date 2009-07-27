@@ -712,7 +712,7 @@ static int cert_status_cb(SSL *s, void *arg)
 	int use_ssl;
 	unsigned char *rspder = NULL;
 	int rspderlen;
-	STACK_OF(STRING) *aia = NULL;
+	STACK_OF(OPENSSL_STRING) *aia = NULL;
 	X509 *x = NULL;
 	X509_STORE_CTX inctx;
 	X509_OBJECT obj;
@@ -734,7 +734,7 @@ BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
 	aia = X509_get1_ocsp(x);
 	if (aia)
 		{
-		if (!OCSP_parse_url(sk_STRING_value(aia, 0),
+		if (!OCSP_parse_url(sk_OPENSSL_STRING_value(aia, 0),
 			&host, &port, &path, &use_ssl))
 			{
 			BIO_puts(err, "cert_status: can't parse AIA URL\n");
@@ -742,7 +742,7 @@ BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
 			}
 		if (srctx->verbose)
 			BIO_printf(err, "cert_status: AIA URL: %s\n",
-					sk_STRING_value(aia, 0));
+					sk_OPENSSL_STRING_value(aia, 0));
 		}
 	else
 		{
