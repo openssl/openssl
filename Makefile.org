@@ -299,7 +299,7 @@ build-shared: do_$(SHLIB_TARGET) link-shared
 
 do_$(SHLIB_TARGET):
 	@ set -e; libs='-L. $(SHLIBDEPS)'; for i in $(SHLIBDIRS); do \
-		if [ "$(SHLIBDIRS)" = "ssl" -a -n "$(LIBKRB5)" ]; then \
+		if [ "$$i" = "ssl" -a -n "$(LIBKRB5)" ]; then \
 			libs="$(LIBKRB5) $$libs"; \
 		fi; \
 		$(CLEARENV) && $(MAKE) -f Makefile.shared -e $(BUILDENV) \
