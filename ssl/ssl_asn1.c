@@ -90,7 +90,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 	{
 #define LSIZE2 (sizeof(long)*2)
 	int v1=0,v2=0,v3=0,v4=0,v5=0;
-	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2], cbuf;
+	unsigned char buf[4],ibuf1[LSIZE2],ibuf2[LSIZE2];
 	unsigned char ibuf3[LSIZE2],ibuf4[LSIZE2],ibuf5[LSIZE2];
 #ifndef OPENSSL_NO_TLSEXT
 	int v6=0,v9=0,v10=0;
@@ -98,6 +98,7 @@ int i2d_SSL_SESSION(SSL_SESSION *in, unsigned char **pp)
 #endif
 #ifndef OPENSSL_NO_COMP
 	int v11=0;
+	unsigned char cbuf;
 #endif
 	long l;
 	SSL_SESSION_ASN1 a;
