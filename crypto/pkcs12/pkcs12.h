@@ -230,8 +230,11 @@ int PKCS12_set_mac(PKCS12 *p12, const char *pass, int passlen,
 		   const EVP_MD *md_type);
 int PKCS12_setup_mac(PKCS12 *p12, int iter, unsigned char *salt,
 					 int saltlen, const EVP_MD *md_type);
+<<<<<<< pkcs12.h
+=======
 unsigned char *OPENSSL_asc2uni(const char *asc, int asclen, unsigned char **uni, int *unilen);
 char *OPENSSL_uni2asc(unsigned char *uni, int unilen);
+>>>>>>> 1.44
 
 DECLARE_ASN1_FUNCTIONS(PKCS12)
 DECLARE_ASN1_FUNCTIONS(PKCS12_MAC_DATA)
