@@ -168,6 +168,12 @@ extern BIO *bio_err;
 #define do_pipe_sig()
 #endif
 
+#ifdef OPENSSL_NO_COMP
+#define zlib_cleanup() 
+#else
+#define zlib_cleanup() COMP_zlib_cleanup()
+#endif
+
 #if defined(MONOLITH) && !defined(OPENSSL_C)
 #  define apps_startup() \
 		do_pipe_sig()
@@ -182,7 +188,7 @@ extern BIO *bio_err;
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			OBJ_cleanup(); EVP_cleanup(); ENGINE_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
-			ERR_free_strings(); COMP_zlib_cleanup();} while(0)
+			ERR_free_strings(); zlib_cleanup();} while(0)
 #  else
 #    define apps_startup() \
 			do { do_pipe_sig(); CRYPTO_malloc_init(); \
@@ -192,7 +198,7 @@ extern BIO *bio_err;
 			do { CONF_modules_unload(1); destroy_ui_method(); \
 			OBJ_cleanup(); EVP_cleanup(); \
 			CRYPTO_cleanup_all_ex_data(); ERR_remove_thread_state(NULL); \
-			ERR_free_strings(); } while(0)
+			ERR_free_strings(); zlib_cleanup(); } while(0)
 #  endif
 #endif
 
