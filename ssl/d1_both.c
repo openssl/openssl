@@ -823,7 +823,7 @@ static int dtls1_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
 		n=i2d_X509(x,NULL);
 		if (!BUF_MEM_grow_clean(buf,(int)(n+(*l)+3)))
 			{
-			SSLerr(SSL_F_DTLS1_OUTPUT_CERT_CHAIN,ERR_R_BUF_LIB);
+			SSLerr(SSL_F_DTLS1_ADD_CERT_TO_BUF,ERR_R_BUF_LIB);
 			return 0;
 			}
 		p=(unsigned char *)&(buf->data[*l]);
