@@ -240,6 +240,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_INVALID_MIME_TYPE)    ,"invalid mime type"},
 {ERR_REASON(ASN1_R_INVALID_MODIFIER)     ,"invalid modifier"},
 {ERR_REASON(ASN1_R_INVALID_NUMBER)       ,"invalid number"},
+{ERR_REASON(ASN1_R_INVALID_OBJECT_ENCODING),"invalid object encoding"},
 {ERR_REASON(ASN1_R_INVALID_SEPARATOR)    ,"invalid separator"},
 {ERR_REASON(ASN1_R_INVALID_TIME_FORMAT)  ,"invalid time format"},
 {ERR_REASON(ASN1_R_INVALID_UNIVERSALSTRING_LENGTH),"invalid universalstring length"},
