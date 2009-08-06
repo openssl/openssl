@@ -245,7 +245,7 @@ typedef struct
 } AESNI_KEY;
 
 static int
-aesni_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *user_key,
+aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *user_key,
 		    const unsigned char *iv, int enc)
 {
 	int ret;
@@ -259,7 +259,7 @@ aesni_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *user_key,
 		ret=aesni_set_decrypt_key(user_key, ctx->key_len * 8, key);
 
 	if(ret < 0) {
-		EVPerr(EVP_F_AES_INIT_KEY,EVP_R_AES_KEY_SETUP_FAILED);
+		EVPerr(EVP_F_AESNI_INIT_KEY,EVP_R_AES_KEY_SETUP_FAILED);
 		return 0;
 	}
 
