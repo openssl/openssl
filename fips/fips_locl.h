@@ -64,6 +64,7 @@ int fips_set_owning_thread(void);
 void fips_set_selftest_fail(void);
 int fips_clear_owning_thread(void);
 unsigned char *fips_signature_witness(void);
+int fips_check_rsa(RSA *rsa);
 
 #define FIPS_MAX_CIPHER_TEST_SIZE	16
 
