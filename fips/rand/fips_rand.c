@@ -114,7 +114,7 @@ void FIPS_rng_stick(void)
 	fips_prng_fail = 1;
 	}
 
-void fips_rand_prng_reset(FIPS_PRNG_CTX *ctx)
+static void fips_rand_prng_reset(FIPS_PRNG_CTX *ctx)
 	{
 	ctx->seeded = 0;
 	ctx->keyed = 0;
@@ -192,7 +192,7 @@ static int fips_set_prng_seed(FIPS_PRNG_CTX *ctx,
 	return 1;
 	}
 
-int fips_set_test_mode(FIPS_PRNG_CTX *ctx)
+static int fips_set_test_mode(FIPS_PRNG_CTX *ctx)
 	{
 	if (ctx->keyed)
 		{

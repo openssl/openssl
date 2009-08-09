@@ -88,7 +88,7 @@ void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 		
 		reset=1;
 		j=M_EVP_MD_block_size(md);
-		OPENSSL_assert(j <= sizeof ctx->key);
+		OPENSSL_assert(j <= (int)sizeof ctx->key);
 		if (j < len)
 			{
 			EVP_DigestInit_ex(&ctx->md_ctx,md, impl);
@@ -98,7 +98,7 @@ void HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 			}
 		else
 			{
-			OPENSSL_assert(len <= sizeof ctx->key);
+			OPENSSL_assert(len <= (int)sizeof ctx->key);
 			memcpy(ctx->key,key,len);
 			ctx->key_length=len;
 			}

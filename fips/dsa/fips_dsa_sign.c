@@ -70,6 +70,7 @@
  * case of a DSA signature.
  */
 
+#if 0
 int FIPS_dsa_size(DSA *r)
 	{
 	int ilen;
@@ -83,6 +84,7 @@ int FIPS_dsa_size(DSA *r)
 	 */
 	return ilen * 2 + 6;
 	}
+#endif
 
 /* Tiny ASN1 encoder for DSA_SIG structure. We can assume r, s smaller than
  * 0x80 octets as by the DSA standards they will be less than 2^160

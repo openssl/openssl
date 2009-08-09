@@ -78,7 +78,7 @@ void FIPS_corrupt_dsa_keygen(void)
 
 static int dsa_builtin_keygen(DSA *dsa);
 
-int fips_check_dsa(DSA *dsa)
+static int fips_check_dsa(DSA *dsa)
 	{
 	EVP_PKEY pk;
 	unsigned char tbs[] = "DSA Pairwise Check Data";

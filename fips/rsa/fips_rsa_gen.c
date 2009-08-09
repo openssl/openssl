@@ -82,7 +82,7 @@ void FIPS_corrupt_rsa_keygen(void)
 	fips_rsa_pairwise_fail = 1;
 	}
 
-int fips_check_rsa(RSA *rsa)
+static int fips_check_rsa(RSA *rsa)
 	{
 	const unsigned char tbs[] = "RSA Pairwise Check Data";
 	unsigned char *ctbuf = NULL, *ptbuf = NULL;
