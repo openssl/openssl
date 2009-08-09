@@ -4,6 +4,10 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) Don't allow the use of leading 0x80 in OIDs. This is a violation of
+     X690 8.9.12 and can produce some misleading textual output of OIDs.
+     [Steve Henson, reported by Dan Kaminsky]
+
   *) Delete MD2 from algorithm tables. This follows the recommendation in 
      several standards that it is not used in new applications due to
      several cryptographic weaknesses. For binary compatibility reasons
