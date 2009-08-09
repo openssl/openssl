@@ -78,7 +78,7 @@ void FIPS_corrupt_sha1()
 
 int FIPS_selftest_sha1()
     {
-    int n;
+    size_t n;
 
     for(n=0 ; n<sizeof(test)/sizeof(test[0]) ; ++n)
 	{
