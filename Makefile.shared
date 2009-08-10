@@ -238,7 +238,7 @@ link_a.darwin:
 	if [ -n "$$SHLIB_SOVER_NODOT" ]; then \
 		SHAREDFLAGS="$$SHAREDFLAGS -compatibility_version $$SHLIB_SOVER_NODOT"; \
 	fi; \
-	SHAREDFLAGS="$$SHAREDFLAGS -install_name $(INSTALLTOP)/lib/$$SHLIB$(SHLIB_EXT)"; \
+	SHAREDFLAGS="$$SHAREDFLAGS -install_name $(INSTALLTOP)/$(LIBDIR)/$$SHLIB$(SHLIB_EXT)"; \
 	$(LINK_SO_A)
 link_app.darwin:	# is there run-path on darwin?
 	$(LINK_APP)

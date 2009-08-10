@@ -814,6 +814,12 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) Add support for --libdir option and LIBDIR variable in makefiles. This
+     makes it possible to install openssl libraries in locations which 
+     have names other than "lib", for example "/usr/lib64" which some
+     systems need.
+     [Steve Henson, based on patch from Jeremy Utley]
+
   *) Don't allow the use of leading 0x80 in OIDs. This is a violation of
      X690 8.9.12 and can produce some misleading textual output of OIDs.
      [Steve Henson, reported by Dan Kaminsky]
