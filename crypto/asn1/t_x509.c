@@ -376,7 +376,7 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, const ASN1_GENERALIZEDTIME *tm)
 		{
 		s=  (v[12]-'0')*10+(v[13]-'0');
 		/* Check for fractions of seconds. */
-		if (i >= 15 && v[14] == '.')
+		if (tm->length >= 15 && v[14] == '.')
 			{
 			int l = tm->length;
 			f = &v[14];	/* The decimal point. */
