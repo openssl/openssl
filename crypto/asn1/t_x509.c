@@ -379,6 +379,8 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, ASN1_GENERALIZEDTIME *tm)
 	int gmt=0;
 	int i;
 	int y=0,M=0,d=0,h=0,m=0,s=0;
+	char *f = NULL;
+	int f_len = 0;
 
 	i=tm->length;
 	v=(char *)tm->data;
@@ -396,10 +398,21 @@ int ASN1_GENERALIZEDTIME_print(BIO *bp, ASN1_GENERALIZEDTIME *tm)
 	if (tm->length >= 14 &&
 	    (v[12] >= '0') && (v[12] <= '9') &&
 	    (v[13] >= '0') && (v[13] <= '9'))
+		{
 		s=  (v[12]-'0')*10+(v[13]-'0');
+		/* Check for fractions of seconds. */
+		if (tm->length >= 15 && v[14] == '.')
+			{
+			int l = tm->length;
+			f = &v[14];	/* The decimal point. */
+			f_len = 1;
+			while (14 + f_len < l && f[f_len] >= '0' && f[f_len] <= '9')
+				++f_len;
+			}
+		}
 
-	if (BIO_printf(bp,"%s %2d %02d:%02d:%02d %d%s",
-		mon[M-1],d,h,m,s,y,(gmt)?" GMT":"") <= 0)
+	if (BIO_printf(bp,"%s %2d %02d:%02d:%02d%.*s %d%s",
+		mon[M-1],d,h,m,s,f_len,f,y,(gmt)?" GMT":"") <= 0)
 		return(0);
 	else
 		return(1);
