@@ -190,7 +190,7 @@
 # undef NO_FORK
 #else
 # define NO_FORK 1
-#endef
+#endif
 
 #undef BUFSIZE
 #define BUFSIZE	((long)1024*8+1)
