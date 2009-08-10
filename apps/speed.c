@@ -184,9 +184,13 @@
 #include <openssl/ecdh.h>
 #endif
 
-#if !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MACINTOSH_CLASSIC) && !defined(OPENSSL_SYS_OS2) && !defined(OPENSSL_SYS_NETWARE)
-# define HAVE_FORK 1
-#endif
+#if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
+# define NO_FORK 1
+#elif HAVE_FORK
+# undef NO_FORK
+#else
+# define NO_FORK 1
+#endef
 
 #undef BUFSIZE
 #define BUFSIZE	((long)1024*8+1)
@@ -200,7 +204,7 @@ static void print_message(const char *s,long num,int length);
 static void pkey_print_message(const char *str, const char *str2,
 	long num, int bits, int sec);
 static void print_result(int alg,int run_no,int count,double time_used);
-#ifdef HAVE_FORK
+#ifndef NO_FORK
 static int do_multi(int multi);
 #endif
 
@@ -587,7 +591,7 @@ int MAIN(int argc, char **argv)
 	const EVP_CIPHER *evp_cipher=NULL;
 	const EVP_MD *evp_md=NULL;
 	int decrypt=0;
-#ifdef HAVE_FORK
+#ifndef NO_FORK
 	int multi=0;
 #endif
 
@@ -715,7 +719,7 @@ int MAIN(int argc, char **argv)
 			j--;
 			}
 #endif
-#ifdef HAVE_FORK
+#ifndef NO_FORK
 		else if	((argc > 0) && (strcmp(*argv,"-multi") == 0))
 			{
 			argc--;
@@ -1103,7 +1107,7 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err,"-evp e          use EVP e.\n");
 			BIO_printf(bio_err,"-decrypt        time decryption instead of encryption (only EVP).\n");
 			BIO_printf(bio_err,"-mr             produce machine readable output.\n");
-#ifdef HAVE_FORK
+#ifndef NO_FORK
 			BIO_printf(bio_err,"-multi n        run n benchmarks in parallel.\n");
 #endif
 			goto end;
@@ -1113,7 +1117,7 @@ int MAIN(int argc, char **argv)
 		j++;
 		}
 
-#ifdef HAVE_FORK
+#ifndef NO_FORK
 	if(multi && do_multi(multi))
 		goto show_res;
 #endif
@@ -2332,7 +2336,7 @@ int MAIN(int argc, char **argv)
 		}
 	if (rnd_fake) RAND_cleanup();
 #endif
-#ifdef HAVE_FORK
+#ifndef NO_FORK
 show_res:
 #endif
 	if(!mr)
@@ -2558,7 +2562,7 @@ static void print_result(int alg,int run_no,int count,double time_used)
 	results[alg][run_no]=((double)count)/time_used*lengths[run_no];
 	}
 
-#ifdef HAVE_FORK
+#ifndef NO_FORK
 static char *sstrsep(char **string, const char *delim)
     {
     char isdelim[256];
