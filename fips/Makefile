@@ -188,8 +188,8 @@ install:
 	done
 	cp -p -f $(FIPSLIBDIR)fipscanister.o $(FIPSLIBDIR)fipscanister.o.sha1 \
 		$(FIPSLIBDIR)fips_premain.c $(FIPSLIBDIR)fips_premain.c.sha1 \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/; \
-	chmod 0444 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/fips*
+		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/; \
+	chmod 0444 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/fips*
 
 lint:
 	@target=lint; $(RECURSIVE_MAKE)

@@ -100,13 +100,13 @@ install:
 				*DSO_DL*)	sfx="sl";;	\
 				*)		sfx="bad";;	\
 				esac; \
-				cp lib$$l.$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
+				cp lib$$l.$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/lib$$l.$$sfx.new; \
 			  else \
 			  	sfx="so"; \
-				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
+				cp cyg$$l.dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/lib$$l.$$sfx.new; \
 			  fi; \
-			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new; \
-			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/lib$$l.$$sfx ); \
+			  chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/lib$$l.$$sfx.new; \
+			  mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/lib$$l.$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/lib$$l.$$sfx ); \
 		done; \
 	fi
 

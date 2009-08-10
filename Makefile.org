@@ -71,6 +71,7 @@ PERL= perl
 TAR= tar
 TARFLAGS= --no-recursion
 MAKEDEPPROG=makedepend
+LIBDIR=lib
 
 # We let the C compiler driver to take care of .s files. This is done in
 # order to be excused from maintaining a separate set of architecture
@@ -112,7 +113,7 @@ LIBZLIB=
 # $(INSTALLTOP) for this build make be different so hard
 # code the path.
 
-FIPSLIBDIR=/usr/local/ssl/lib/
+FIPSLIBDIR=/usr/local/ssl/$(LIBDIR)/
 
 # This is set to "y" if fipscanister.o is compiled internally as
 # opposed to coming from an external validated location.
@@ -200,7 +201,7 @@ BUILDENV=	PLATFORM='${PLATFORM}' PROCESSOR='${PROCESSOR}' \
 		CC='${CC}' CFLAG='${CFLAG}' 			\
 		AS='${CC}' ASFLAG='${CFLAG} -c'			\
 		AR='${AR}' PERL='${PERL}' RANLIB='${RANLIB}'	\
-		SDIRS='${SDIRS}' LIBRPATH='${INSTALLTOP}/lib'	\
+		SDIRS='${SDIRS}' LIBRPATH='${INSTALLTOP}/$(LIBDIR)'	\
 		INSTALL_PREFIX='${INSTALL_PREFIX}'		\
 		INSTALLTOP='${INSTALLTOP}' OPENSSLDIR='${OPENSSLDIR}'	\
 		MAKEDEPEND='$$$${TOP}/util/domd $$$${TOP} -MD ${MAKEDEPPROG}' \
@@ -436,7 +437,7 @@ do_$(SHLIB_TARGET):
 libcrypto.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
-	    echo 'libdir=$${exec_prefix}/lib'; \
+	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL-libcrypto'; \
@@ -449,7 +450,7 @@ libcrypto.pc: Makefile
 libssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
-	    echo 'libdir=$${exec_prefix}/lib'; \
+	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL'; \
@@ -462,7 +463,7 @@ libssl.pc: Makefile
 openssl.pc: Makefile
 	@ ( echo 'prefix=$(INSTALLTOP)'; \
 	    echo 'exec_prefix=$${prefix}'; \
-	    echo 'libdir=$${exec_prefix}/lib'; \
+	    echo 'libdir=$${exec_prefix}/$(LIBDIR)'; \
 	    echo 'includedir=$${prefix}/include'; \
 	    echo ''; \
 	    echo 'Name: OpenSSL'; \
@@ -615,9 +616,9 @@ install: all install_docs install_sw
 
 install_sw:
 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR) \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/misc \
 		$(INSTALL_PREFIX)$(OPENSSLDIR)/certs \
@@ -632,10 +633,10 @@ install_sw:
 	do \
 		if [ -f "$$i" ]; then \
 		(       echo installing $$i; \
-			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-			mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i ); \
+			cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+			$(RANLIB) $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+			chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+			mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i ); \
 		fi; \
 	done;
 	@set -e; if [ -n "$(SHARED_LIBS)" ]; then \
@@ -645,22 +646,22 @@ install_sw:
 			if [ -f "$$i" -o -f "$$i.a" ]; then \
 			(       echo installing $$i; \
 				if [ "$(PLATFORM)" != "Cygwin" ]; then \
-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 				else \
 					c=`echo $$i | sed 's/^lib\(.*\)\.dll\.a/cyg\1-$(SHLIB_VERSION_NUMBER).dll/'`; \
 					cp $$c $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					chmod 755 $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new; \
 					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c.new $(INSTALL_PREFIX)$(INSTALLTOP)/bin/$$c; \
-					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new; \
-					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/$$i; \
+					cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new; \
+					mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/$$i; \
 				fi ); \
 			fi; \
 		done; \
 		(	here="`pwd`"; \
-			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
+			cd $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR); \
 			$(MAKE) -f $$here/Makefile HERE="$$here" link-shared ); \
 		if [ "$(INSTALLTOP)" != "/usr" ]; then \
 			echo 'OpenSSL shared libraries have been installed in:'; \
@@ -669,12 +670,12 @@ install_sw:
 			sed -e '1,/^$$/d' doc/openssl-shared.txt; \
 		fi; \
 	fi
-	cp libcrypto.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/libcrypto.pc
-	cp libssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/libssl.pc
-	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig
-	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/pkgconfig/openssl.pc
+	cp libcrypto.pc $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libcrypto.pc
+	cp libssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/libssl.pc
+	cp openssl.pc $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig
+	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/pkgconfig/openssl.pc
 
 install_docs:
 	@$(PERL) $(TOP)/util/mkdir-p.pl \

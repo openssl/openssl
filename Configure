@@ -585,6 +585,7 @@ my $idx_ranlib = $idx++;
 my $idx_arflags = $idx++;
 
 my $prefix="";
+my $libdir="";
 my $openssldir="";
 my $exe_ext="";
 my $install_prefix="";
@@ -819,6 +820,10 @@ PROCESS_ARGS:
 			elsif (/^--prefix=(.*)$/)
 				{
 				$prefix=$1;
+				}
+			elsif (/^--libdir=(.*)$/)
+				{
+				$libdir=$1;
 				}
 			elsif (/^--openssldir=(.*)$/)
 				{
@@ -1082,6 +1087,8 @@ if ($openssldir eq "" and $prefix eq "")
 		}
 	}
 $prefix=$openssldir if $prefix eq "";
+
+$libdir="lib" if $libdir eq "";
 
 $default_ranlib= &which("ranlib") or $default_ranlib="true";
 $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
@@ -1467,6 +1474,7 @@ while (<IN>)
 	s/^SHLIB_EXT=.*/SHLIB_EXT=$shared_extension/;
 	s/^INSTALLTOP=.*$/INSTALLTOP=$prefix/;
 	s/^OPENSSLDIR=.*$/OPENSSLDIR=$openssldir/;
+	s/^LIBDIR=.*$/LIBDIR=$libdir/;
 	s/^INSTALL_PREFIX=.*$/INSTALL_PREFIX=$install_prefix/;
 	s/^PLATFORM=.*$/PLATFORM=$target/;
 	s/^OPTIONS=.*$/OPTIONS=$options/;
