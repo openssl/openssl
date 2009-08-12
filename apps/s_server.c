@@ -1750,6 +1750,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
+	struct timeval timeout, *timeoutp;
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
 	struct timeval tv;
 #endif
@@ -1808,7 +1809,6 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 
 	if (SSL_version(con) == DTLS1_VERSION)
 		{
-		struct timeval timeout;
 
 		sbio=BIO_new_dgram(s,BIO_NOCLOSE);
 
@@ -1919,7 +1919,19 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				read_from_terminal = 1;
 			(void)fcntl(fileno(stdin), F_SETFL, 0);
 #else
-			i=select(width,(void *)&readfds,NULL,NULL,NULL);
+			if ((SSL_version(con) == DTLS1_VERSION) &&
+				DTLSv1_get_timeout(con, &timeout))
+				timeoutp = &timeout;
+			else
+				timeoutp = NULL;
+
+			i=select(width,(void *)&readfds,NULL,NULL,timeoutp);
+
+			if ((SSL_version(con) == DTLS1_VERSION) && DTLSv1_handle_timeout(con) > 0)
+				{
+				BIO_printf(bio_err,"TIMEOUT occured\n");
+				}
+
 			if (i <= 0) continue;
 			if (FD_ISSET(fileno(stdin),&readfds))
 				read_from_terminal = 1;
