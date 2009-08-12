@@ -1,7 +1,7 @@
 
  OpenSSL 1.1.0-dev XX xxx XXXX
 
- Copyright (c) 1998-2008 The OpenSSL Project
+ Copyright (c) 1998-2009 The OpenSSL Project
  Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
  All rights reserved.
 
@@ -112,8 +112,6 @@
  should be contacted if that algorithm is to be used; their web page is
  http://www.ascom.ch/.
 
- The MDC2 algorithm is patented by IBM.
-
  NTT and Mitsubishi have patents and pending patents on the Camellia
  algorithm, but allow use at no charge without requiring an explicit
  licensing agreement: http://info.isl.ntt.co.jp/crypt/eng/info/chiteki.html
@@ -138,6 +136,9 @@
 
  SUPPORT
  -------
+
+ See the OpenSSL website www.openssl.org for details of how to obtain
+ commercial technical support.
 
  If you have any problems with OpenSSL then please take the following steps
  first:
@@ -165,6 +166,10 @@
 
     openssl-bugs@openssl.org
 
+ Note that the request tracker should NOT be used for general assistance
+ or support queries. Just because something doesn't work the way you expect
+ does not mean it is necessarily a bug in OpenSSL.
+
  Note that mail to openssl-bugs@openssl.org is recorded in the publicly
  readable request tracker database and is forwarded to a public
  mailing list. Confidential mail may be sent to openssl-security@openssl.org
@@ -175,9 +180,21 @@
 
  Development is coordinated on the openssl-dev mailing list (see
  http://www.openssl.org for information on subscribing). If you
- would like to submit a patch, send it to openssl-dev@openssl.org with
+ would like to submit a patch, send it to openssl-bugs@openssl.org with
  the string "[PATCH]" in the subject. Please be sure to include a
  textual explanation of what your patch does.
+
+ If you are unsure as to whether a feature will be useful for the general
+ OpenSSL community please discuss it on the openssl-dev mailing list first.
+ Someone may be already working on the same thing or there may be a good
+ reason as to why that feature isn't implemented.
+
+ Patches should be as up to date as possible, preferably relative to the
+ current CVS or the last snapshot. They should follow the coding style of
+ OpenSSL and compile without warnings. Some of the core team developer targets
+ can be used for testing purposes, (debug-steve64, debug-geoff etc). OpenSSL
+ compiles on many varied platforms: try to ensure you only use portable
+ features.
 
  Note: For legal reasons, contributions from the US can be accepted only
  if a TSU notification and a copy of the patch are sent to crypt@bis.doc.gov
