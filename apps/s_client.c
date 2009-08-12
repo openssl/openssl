@@ -411,6 +411,7 @@ int MAIN(int argc, char **argv)
 	BIO *sbio;
 	char *inrand=NULL;
 	int mbuf_len=0;
+	struct timeval timeout, *timeoutp;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine_id=NULL;
 	char *ssl_client_engine_id=NULL;
@@ -979,7 +980,6 @@ re_start:
 
 	if ( SSL_version(con) == DTLS1_VERSION)
 		{
-		struct timeval timeout;
 
 		sbio=BIO_new_dgram(s,BIO_NOCLOSE);
 		if (getsockname(s, &peer, (void *)&peerlen) < 0)
@@ -1196,6 +1196,12 @@ SSL_set_tlsext_status_ids(con, ids);
 		FD_ZERO(&readfds);
 		FD_ZERO(&writefds);
 
+		if ((SSL_version(con) == DTLS1_VERSION) &&
+			DTLSv1_get_timeout(con, &timeout))
+			timeoutp = &timeout;
+		else
+			timeoutp = NULL;
+
 		if (SSL_in_init(con) && !SSL_total_renegotiations(con))
 			{
 			in_init=1;
@@ -1300,7 +1306,7 @@ SSL_set_tlsext_status_ids(con, ids);
 					if(!i && (!((_kbhit()) || (WAIT_OBJECT_0 == WaitForSingleObject(GetStdHandle(STD_INPUT_HANDLE), 0))) || !read_tty) ) continue;
 #endif
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
-					 NULL,NULL);
+					 NULL,timeoutp);
 			}
 #elif defined(OPENSSL_SYS_NETWARE)
 			if(!write_tty) {
@@ -1310,7 +1316,7 @@ SSL_set_tlsext_status_ids(con, ids);
 					i=select(width,(void *)&readfds,(void *)&writefds,
 						NULL,&tv);
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
-					NULL,NULL);
+					NULL,timeoutp);
 			}
 #elif defined(OPENSSL_SYS_BEOS_R5)
 			/* Under BeOS-R5 the situation is similar to DOS */
@@ -1328,12 +1334,12 @@ SSL_set_tlsext_status_ids(con, ids);
 					if (!i && (stdin_set != 1 || !read_tty))
 						continue;
 				} else 	i=select(width,(void *)&readfds,(void *)&writefds,
-					 NULL,NULL);
+					 NULL,timeoutp);
 			}
 			(void)fcntl(fileno(stdin), F_SETFL, 0);
 #else
 			i=select(width,(void *)&readfds,(void *)&writefds,
-				 NULL,NULL);
+				 NULL,timeoutp);
 #endif
 			if ( i < 0)
 				{
@@ -1342,6 +1348,11 @@ SSL_set_tlsext_status_ids(con, ids);
 				goto shut;
 				/* goto end; */
 				}
+			}
+
+		if ((SSL_version(con) == DTLS1_VERSION) && DTLSv1_handle_timeout(con) > 0)
+			{
+			BIO_printf(bio_err,"TIMEOUT occured\n");
 			}
 
 		if (!ssl_pending && FD_ISSET(SSL_get_fd(con),&writefds))
