@@ -598,11 +598,15 @@ md5test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 md5test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 md5test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 md5test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h md5test.c
-mdc2test.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-mdc2test.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-mdc2test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-mdc2test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-mdc2test.o: ../include/openssl/symhacks.h mdc2test.c
+mdc2test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+mdc2test.o: ../include/openssl/crypto.h ../include/openssl/des.h
+mdc2test.o: ../include/openssl/des_old.h ../include/openssl/e_os2.h
+mdc2test.o: ../include/openssl/evp.h ../include/openssl/mdc2.h
+mdc2test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+mdc2test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+mdc2test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+mdc2test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+mdc2test.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h mdc2test.c
 randtest.o: ../e_os.h ../include/openssl/e_os2.h
 randtest.o: ../include/openssl/opensslconf.h ../include/openssl/ossl_typ.h
 randtest.o: ../include/openssl/rand.h randtest.c
