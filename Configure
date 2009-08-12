@@ -665,7 +665,6 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "gmp"		  => "default",
                  "jpake"          => "experimental",
                  "md2"            => "default",
-		 "mdc2"           => "default",
                  "rc5"            => "default",
 		 "rfc3779"	  => "default",
                  "shared"         => "default",
