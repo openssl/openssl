@@ -730,11 +730,8 @@ start:
 		}
 
 	/* Check for timeout */
-	if (dtls1_is_timer_expired(s))
-		{
-		if (dtls1_read_failed(s, -1) > 0)
-			goto start;
-		}
+	if (dtls1_handle_timeout(s) > 0)
+		goto start;
 
 	/* get new packet if necessary */
 	if ((rr->length == 0) || (s->rstate == SSL_ST_READ_BODY))

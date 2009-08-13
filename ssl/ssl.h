@@ -1271,6 +1271,14 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 #define SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB	72
 #endif
 
+#define DTLS_CTRL_GET_TIMEOUT		73
+#define DTLS_CTRL_HANDLE_TIMEOUT	74
+
+#define DTLSv1_get_timeout(ssl, arg) \
+	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
+#define DTLSv1_handle_timeout(ssl) \
+	SSL_ctrl(ssl,DTLS_CTRL_HANDLE_TIMEOUT,0, NULL)
+
 #define SSL_session_reused(ssl) \
 	SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)
 #define SSL_num_renegotiations(ssl) \
@@ -1660,6 +1668,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_DTLS1_GET_MESSAGE				 252
 #define SSL_F_DTLS1_GET_MESSAGE_FRAGMENT		 253
 #define SSL_F_DTLS1_GET_RECORD				 254
+#define SSL_F_DTLS1_HANDLE_TIMEOUT			 282
 #define SSL_F_DTLS1_OUTPUT_CERT_CHAIN			 255
 #define SSL_F_DTLS1_PREPROCESS_FRAGMENT			 277
 #define SSL_F_DTLS1_PROCESS_OUT_OF_SEQ_MESSAGE		 256

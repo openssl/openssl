@@ -892,9 +892,6 @@ unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
 
 int dtls1_read_failed(SSL *s, int code)
 	{
-	DTLS1_STATE *state;
-	int send_alert = 0;
-
 	if ( code > 0)
 		{
 		fprintf( stderr, "invalid state reached %s:%d", __FILE__, __LINE__);
@@ -914,24 +911,6 @@ int dtls1_read_failed(SSL *s, int code)
 		return code;
 		}
 
-	dtls1_double_timeout(s);
-	state = s->d1;
-	state->timeout.num_alerts++;
-	if ( state->timeout.num_alerts > DTLS1_TMO_ALERT_COUNT)
-		{
-		/* fail the connection, enough alerts have been sent */
-		SSLerr(SSL_F_DTLS1_READ_FAILED,SSL_R_READ_TIMEOUT_EXPIRED);
-		return 0;
-		}
-
-	state->timeout.read_timeouts++;
-	if ( state->timeout.read_timeouts > DTLS1_TMO_READ_COUNT)
-		{
-		send_alert = 1;
-		state->timeout.read_timeouts = 1;
-		}
-
-
 #if 0 /* for now, each alert contains only one record number */
 	item = pqueue_peek(state->rcvd_records);
 	if ( item )
@@ -942,12 +921,12 @@ int dtls1_read_failed(SSL *s, int code)
 #endif
 
 #if 0  /* no more alert sending, just retransmit the last set of messages */
-		if ( send_alert)
-			ssl3_send_alert(s,SSL3_AL_WARNING,
-				DTLS1_AD_MISSING_HANDSHAKE_MESSAGE);
+	if ( state->timeout.read_timeouts >= DTLS1_TMO_READ_COUNT)
+		ssl3_send_alert(s,SSL3_AL_WARNING,
+			DTLS1_AD_MISSING_HANDSHAKE_MESSAGE);
 #endif
 
-	return dtls1_retransmit_buffered_messages(s) ;
+	return dtls1_handle_timeout(s);
 	}
 
 int

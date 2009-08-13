@@ -210,6 +210,29 @@ void dtls1_clear(SSL *s)
 		s->version=DTLS1_VERSION;
 	}
 
+long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
+	{
+	int ret=0;
+
+	switch (cmd)
+		{
+	case DTLS_CTRL_GET_TIMEOUT:
+		if (dtls1_get_timeout(s, (struct timeval*) parg) != NULL)
+			{
+			ret = 1;
+			}
+		break;
+	case DTLS_CTRL_HANDLE_TIMEOUT:
+		ret = dtls1_handle_timeout(s);
+		break;
+
+	default:
+		ret = ssl3_ctrl(s, cmd, larg, parg);
+		break;
+		}
+	return(ret);
+	}
+
 /*
  * As it's impossible to use stream ciphers in "datagram" mode, this
  * simple filter is designed to disengage them in DTLS. Unfortunately
@@ -315,6 +338,36 @@ void dtls1_stop_timer(SSL *s)
 	memset(&(s->d1->next_timeout), 0, sizeof(struct timeval));
 	s->d1->timeout_duration = 1;
 	BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT, 0, &(s->d1->next_timeout));
+	}
+
+int dtls1_handle_timeout(SSL *s)
+	{
+	DTLS1_STATE *state;
+
+	/* if no timer is expired, don't do anything */
+	if (!dtls1_is_timer_expired(s))
+		{
+		return 0;
+		}
+
+	dtls1_double_timeout(s);
+	state = s->d1;
+	state->timeout.num_alerts++;
+	if ( state->timeout.num_alerts > DTLS1_TMO_ALERT_COUNT)
+		{
+		/* fail the connection, enough alerts have been sent */
+		SSLerr(SSL_F_DTLS1_HANDLE_TIMEOUT,SSL_R_READ_TIMEOUT_EXPIRED);
+		return 0;
+		}
+
+	state->timeout.read_timeouts++;
+	if ( state->timeout.read_timeouts > DTLS1_TMO_READ_COUNT)
+		{
+		state->timeout.read_timeouts = 1;
+		}
+
+	dtls1_start_timer(s);
+	return dtls1_retransmit_buffered_messages(s);
 	}
 
 static void get_current_time(struct timeval *t)
