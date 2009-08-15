@@ -136,7 +136,7 @@ int mkcert(X509 **x509p, EVP_PKEY **pkeyp, int bits, int serial, int days)
 	}
 #endif
 	
-	if (!X509_sign(x,pk,EVP_md5()))
+	if (!X509_sign(x,pk,EVP_sha1()))
 		goto err;
 
 	*x509p=x;
