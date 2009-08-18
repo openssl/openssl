@@ -12,6 +12,8 @@
 # commentary below], and in 2006 the rest was rewritten in order to
 # gain freedom to liberate licensing terms.
 
+# January, September 2004.
+#
 # It was noted that Intel IA-32 C compiler generates code which
 # performs ~30% *faster* on P4 CPU than original *hand-coded*
 # SHA1 assembler implementation. To address this problem (and
@@ -30,6 +32,17 @@
 # re-tuned code to 0.9.7 and later.
 # ----------------------------------------------------------------
 #					<appro@fy.chalmers.se>
+
+# August 2009.
+#
+# George Spelvin has tipped that F_40_59(b,c,d) can be rewritten as
+# '(c&d) + (b&(c^d))', which allows to accumulate partial results
+# and lighten "pressure" on scratch registers. This resulted in
+# >12% performance improvement on contemporary AMD cores (with no
+# degradation on other CPUs:-). Also, the code was revised to maximize
+# "distance" between instructions producing input to 'lea' instruction
+# and the 'lea' instruction itself, which is essential for Intel Atom
+# core.
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
@@ -59,15 +72,16 @@ sub BODY_00_15
 	&rotl($tmp1,5);			# tmp1=ROTATE(a,5)
 	 &xor($f,$d);
 	&add($tmp1,$e);			# tmp1+=e;
-	 &and($f,$b);
-	&mov($e,&swtmp($n%16));		# e becomes volatile and is loaded
+	 &mov($e,&swtmp($n%16));	# e becomes volatile and is loaded
 	 				# with xi, also note that e becomes
 					# f in next round...
-	 &xor($f,$d);			# f holds F_00_19(b,c,d)
+	&and($f,$b);
 	&rotr($b,2);			# b=ROTATE(b,30)
-	 &lea($tmp1,&DWP(0x5a827999,$tmp1,$e));	# tmp1+=K_00_19+xi
+	 &xor($f,$d);			# f holds F_00_19(b,c,d)
+	&lea($tmp1,&DWP(0x5a827999,$tmp1,$e));	# tmp1+=K_00_19+xi
 
-	if ($n==15) { &add($f,$tmp1); }	# f+=tmp1
+	if ($n==15) { &mov($e,&swtmp(($n+1)%16));# pre-fetch f for next round
+		      &add($f,$tmp1); }	# f+=tmp1
 	else        { &add($tmp1,$f); }	# f becomes a in next round
 	}
 
@@ -77,22 +91,22 @@ sub BODY_16_19
 
 	&comment("16_19 $n");
 
-	&mov($f,&swtmp($n%16));		# f to hold Xupdate(xi,xa,xb,xc,xd)
-	 &mov($tmp1,$c);		# tmp1 to hold F_00_19(b,c,d)
-	&xor($f,&swtmp(($n+2)%16));
-	 &xor($tmp1,$d);
-	&xor($f,&swtmp(($n+8)%16));
-	 &and($tmp1,$b);		# tmp1 holds F_00_19(b,c,d)
-	&rotr($b,2);			# b=ROTATE(b,30)
+	&mov($tmp1,$c);			# tmp1 to hold F_00_19(b,c,d)
+	 &xor($f,&swtmp(($n+2)%16));	# f to hold Xupdate(xi,xa,xb,xc,xd)
+	&xor($tmp1,$d);
+	 &xor($f,&swtmp(($n+8)%16));
+	&and($tmp1,$b);
 	 &xor($f,&swtmp(($n+13)%16));	# f holds xa^xb^xc^xd
 	&rotl($f,1);			# f=ROTATE(f,1)
 	 &xor($tmp1,$d);		# tmp1=F_00_19(b,c,d)
-	&mov(&swtmp($n%16),$f);		# xi=f
-	&lea($f,&DWP(0x5a827999,$f,$e));# f+=K_00_19+e
-	 &mov($e,$a);			# e becomes volatile
-	&rotl($e,5);			# e=ROTATE(a,5)
-	 &add($f,$tmp1);		# f+=F_00_19(b,c,d)
-	&add($f,$e);			# f+=ROTATE(a,5)
+	&add($e,$tmp1);			# e+=F_00_19(b,c,d)
+	 &mov($tmp1,$a);
+	&rotr($b,2);			# b=ROTATE(b,30)
+	 &mov(&swtmp($n%16),$f);	# xi=f
+	&rotl($tmp1,5);			# ROTATE(a,5)
+	 &lea($f,&DWP(0x5a827999,$f,$e));# f+=F_00_19(b,c,d)+e
+	&mov($e,&swtmp(($n+1)%16));	# pre-fetch f for next round
+	 &add($f,$tmp1);		# f+=ROTATE(a,5)
 	}
 
 sub BODY_20_39
@@ -103,20 +117,20 @@ sub BODY_20_39
 	&comment("20_39 $n");
 
 	&mov($tmp1,$b);			# tmp1 to hold F_20_39(b,c,d)
-	 &mov($f,&swtmp($n%16));	# f to hold Xupdate(xi,xa,xb,xc,xd)
-	&rotr($b,2);			# b=ROTATE(b,30)
-	 &xor($f,&swtmp(($n+2)%16));
+	 &xor($f,&swtmp(($n+2)%16));	# f to hold Xupdate(xi,xa,xb,xc,xd)
 	&xor($tmp1,$c);
 	 &xor($f,&swtmp(($n+8)%16));
 	&xor($tmp1,$d);			# tmp1 holds F_20_39(b,c,d)
 	 &xor($f,&swtmp(($n+13)%16));	# f holds xa^xb^xc^xd
 	&rotl($f,1);			# f=ROTATE(f,1)
-	 &add($tmp1,$e);
-	&mov(&swtmp($n%16),$f);		# xi=f
-	 &mov($e,$a);			# e becomes volatile
-	&rotl($e,5);			# e=ROTATE(a,5)
-	 &lea($f,&DWP($K,$f,$tmp1));	# f+=K_20_39+e
-	&add($f,$e);			# f+=ROTATE(a,5)
+	 &add($e,$tmp1);		# e+=F_20_39(b,c,d)
+	&rotr($b,2);			# b=ROTATE(b,30)
+	 &mov($tmp1,$a);
+	&rotl($tmp1,5);			# ROTATE(a,5)
+	 &mov(&swtmp($n%16),$f) if($n<77);# xi=f
+	&lea($f,&DWP($K,$f,$e));	# f+=e+K_XX_YY
+	 &mov($e,&swtmp(($n+1)%16)) if($n<79);# pre-fetch f for next round
+	&add($f,$tmp1);			# f+=ROTATE(a,5)
 	}
 
 sub BODY_40_59
@@ -125,28 +139,24 @@ sub BODY_40_59
 
 	&comment("40_59 $n");
 
-	&mov($f,&swtmp($n%16));		# f to hold Xupdate(xi,xa,xb,xc,xd)
-	 &mov($tmp1,&swtmp(($n+2)%16));
-	&xor($f,$tmp1);
-	 &mov($tmp1,&swtmp(($n+8)%16));
-	&xor($f,$tmp1);
-	 &mov($tmp1,&swtmp(($n+13)%16));
-	&xor($f,$tmp1);			# f holds xa^xb^xc^xd
-	 &mov($tmp1,$b);		# tmp1 to hold F_40_59(b,c,d)
+	&mov($tmp1,$c);			# tmp1 to hold F_40_59(b,c,d)
+	 &xor($f,&swtmp(($n+2)%16));	# f to hold Xupdate(xi,xa,xb,xc,xd)
+	&xor($tmp1,$d);
+	 &xor($f,&swtmp(($n+8)%16));
+	&and($tmp1,$b);
+	 &xor($f,&swtmp(($n+13)%16));	# f holds xa^xb^xc^xd
 	&rotl($f,1);			# f=ROTATE(f,1)
-	 &or($tmp1,$c);
-	&mov(&swtmp($n%16),$f);		# xi=f
-	 &and($tmp1,$d);
-	&lea($f,&DWP(0x8f1bbcdc,$f,$e));# f+=K_40_59+e
-	 &mov($e,$b);			# e becomes volatile and is used
-					# to calculate F_40_59(b,c,d)
+	 &add($tmp1,$e);		# b&(c^d)+=e
 	&rotr($b,2);			# b=ROTATE(b,30)
-	 &and($e,$c);
-	&or($tmp1,$e);			# tmp1 holds F_40_59(b,c,d)		
-	 &mov($e,$a);
-	&rotl($e,5);			# e=ROTATE(a,5)
-	 &add($f,$tmp1);		# f+=tmp1;
+	 &mov($e,$a);			# e becomes volatile
+	&rotl($e,5);			# ROTATE(a,5)
+	 &mov(&swtmp($n%16),$f);	# xi=f
+	&lea($f,&DWP(0x8f1bbcdc,$f,$tmp1));# f+=K_40_59+e+(b&(c^d))
+	 &mov($tmp1,$c);
 	&add($f,$e);			# f+=ROTATE(a,5)
+	 &and($tmp1,$d);
+	&mov($e,&swtmp(($n+1)%16));	# pre-fetch f for next round
+	 &add($f,$tmp1);		# f+=c&d
 	}
 
 &function_begin("sha1_block_data_order");

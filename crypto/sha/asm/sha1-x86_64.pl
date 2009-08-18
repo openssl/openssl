@@ -16,7 +16,7 @@
 # There was suggestion to mechanically translate 32-bit code, but I
 # dismissed it, reasoning that x86_64 offers enough register bank
 # capacity to fully utilize SHA-1 parallelism. Therefore this fresh
-# implementation:-) However! While 64-bit code does performs better
+# implementation:-) However! While 64-bit code does perform better
 # on Opteron, I failed to beat 32-bit assembler on EM64T core. Well,
 # x86_64 does offer larger *addressable* bank, but out-of-order core
 # reaches for even more registers through dynamic aliasing, and EM64T
@@ -28,6 +28,13 @@
 # Opteron	+45%		+20%		6.8
 # Xeon P4	+65%		+0%		9.9
 # Core2		+60%		+10%		7.0
+
+# August 2009.
+#
+# The code was revised to minimize code size and to maximize
+# "distance" between instructions producing input to 'lea'
+# instruction and the 'lea' instruction itself, which is essential
+# for Intel Atom core.
 
 $flavour = shift;
 $output  = shift;
@@ -51,28 +58,136 @@ $ctx="%r8";
 $inp="%r9";
 $num="%r10";
 
-$xi="%eax";
-$t0="%ebx";
-$t1="%ecx";
-$A="%edx";
-$B="%esi";
-$C="%edi";
-$D="%ebp";
-$E="%r11d";
-$T="%r12d";
+$t0="%eax";
+$t1="%ebx";
+$t2="%ecx";
+@xi=("%edx","%ebp");
+$A="%esi";
+$B="%edi";
+$C="%r11d";
+$D="%r12d";
+$E="%r13d";
 
-@V=($A,$B,$C,$D,$E,$T);
+@V=($A,$B,$C,$D,$E);
 
-sub PROLOGUE {
-my $func=shift;
+sub BODY_00_19 {
+my ($i,$a,$b,$c,$d,$e)=@_;
+my $j=$i+1;
+$code.=<<___ if ($i==0);
+	mov	`4*$i`($inp),$xi[0]
+	bswap	$xi[0]
+	mov	$xi[0],`4*$i`(%rsp)
+___
+$code.=<<___ if ($i<15);
+	mov	$c,$t0
+	mov	`4*$j`($inp),$xi[1]
+	mov	$a,$t2
+	xor	$d,$t0
+	bswap	$xi[1]
+	rol	\$5,$t2
+	lea	0x5a827999($xi[0],$e),$e
+	and	$b,$t0
+	mov	$xi[1],`4*$j`(%rsp)
+	add	$t2,$e
+	xor	$d,$t0
+	rol	\$30,$b
+	add	$t0,$e
+___
+$code.=<<___ if ($i>=15);
+	mov	`4*($j%16)`(%rsp),$xi[1]
+	mov	$c,$t0
+	mov	$a,$t2
+	xor	`4*(($j+2)%16)`(%rsp),$xi[1]
+	xor	$d,$t0
+	rol	\$5,$t2
+	xor	`4*(($j+8)%16)`(%rsp),$xi[1]
+	and	$b,$t0
+	lea	0x5a827999($xi[0],$e),$e
+	xor	`4*(($j+13)%16)`(%rsp),$xi[1]
+	xor	$d,$t0
+	rol	\$1,$xi[1]
+	add	$t2,$e
+	rol	\$30,$b
+	mov	$xi[1],`4*($j%16)`(%rsp)
+	add	$t0,$e
+___
+unshift(@xi,pop(@xi));
+}
+
+sub BODY_20_39 {
+my ($i,$a,$b,$c,$d,$e)=@_;
+my $j=$i+1;
+my $K=($i<40)?0x6ed9eba1:0xca62c1d6;
+$code.=<<___ if ($i<79);
+	mov	`4*($j%16)`(%rsp),$xi[1]
+	mov	$c,$t0
+	mov	$a,$t2
+	xor	`4*(($j+2)%16)`(%rsp),$xi[1]
+	xor	$b,$t0
+	rol	\$5,$t2
+	lea	$K($xi[0],$e),$e
+	xor	`4*(($j+8)%16)`(%rsp),$xi[1]
+	xor	$d,$t0
+	add	$t2,$e
+	xor	`4*(($j+13)%16)`(%rsp),$xi[1]
+	rol	\$30,$b
+	add	$t0,$e
+	rol	\$1,$xi[1]
+___
+$code.=<<___ if ($i<76);
+	mov	$xi[1],`4*($j%16)`(%rsp)
+___
+$code.=<<___ if ($i==79);
+	mov	$c,$t0
+	mov	$a,$t2
+	xor	$b,$t0
+	lea	$K($xi[0],$e),$e
+	rol	\$5,$t2
+	xor	$d,$t0
+	add	$t2,$e
+	rol	\$30,$b
+	add	$t0,$e
+___
+unshift(@xi,pop(@xi));
+}
+
+sub BODY_40_59 {
+my ($i,$a,$b,$c,$d,$e)=@_;
+my $j=$i+1;
 $code.=<<___;
-.globl	$func
-.type	$func,\@function,3
+	mov	`4*($j%16)`(%rsp),$xi[1]
+	mov	$c,$t0
+	mov	$c,$t1
+	xor	`4*(($j+2)%16)`(%rsp),$xi[1]
+	and	$d,$t0
+	mov	$a,$t2
+	xor	`4*(($j+8)%16)`(%rsp),$xi[1]
+	xor	$d,$t1
+	lea	0x8f1bbcdc($xi[0],$e),$e
+	rol	\$5,$t2
+	xor	`4*(($j+13)%16)`(%rsp),$xi[1]
+	add	$t0,$e
+	and	$b,$t1
+	rol	\$1,$xi[1]
+	add	$t1,$e
+	rol	\$30,$b
+	mov	$xi[1],`4*($j%16)`(%rsp)
+	add	$t2,$e
+___
+unshift(@xi,pop(@xi));
+}
+
+$code.=<<___;
+.text
+
+.globl	sha1_block_data_order
+.type	sha1_block_data_order,\@function,3
 .align	16
-$func:
+sha1_block_data_order:
 	push	%rbx
 	push	%rbp
 	push	%r12
+	push	%r13
 	mov	%rsp,%r11
 	mov	%rdi,$ctx	# reassigned argument
 	sub	\$`8+16*4`,%rsp
@@ -87,158 +202,40 @@ $func:
 	mov	8($ctx),$C
 	mov	12($ctx),$D
 	mov	16($ctx),$E
-___
-}
 
-sub EPILOGUE {
-my $func=shift;
-$code.=<<___;
-	mov	`16*4`(%rsp),%rsi
-	mov	(%rsi),%r12
-	mov	8(%rsi),%rbp
-	mov	16(%rsi),%rbx
-	lea	24(%rsi),%rsp
-.Lepilogue:
-	ret
-.size	$func,.-$func
+.align	4
+.Lloop:
 ___
-}
-
-sub BODY_00_19 {
-my ($i,$a,$b,$c,$d,$e,$f,$host)=@_;
-my $j=$i+1;
-$code.=<<___ if ($i==0);
-	mov	`4*$i`($inp),$xi	
-	`"bswap	$xi"	if(!defined($host))`
-	mov	$xi,`4*$i`(%rsp)
-___
-$code.=<<___ if ($i<15);
-	lea	0x5a827999($xi,$e),$f
-	mov	$c,$t0
-	mov	`4*$j`($inp),$xi
-	mov	$a,$e
-	xor	$d,$t0
-	`"bswap	$xi"	if(!defined($host))`	
-	rol	\$5,$e
-	and	$b,$t0
-	mov	$xi,`4*$j`(%rsp)
-	add	$e,$f
-	xor	$d,$t0
-	rol	\$30,$b
-	add	$t0,$f
-___
-$code.=<<___ if ($i>=15);
-	lea	0x5a827999($xi,$e),$f
-	mov	`4*($j%16)`(%rsp),$xi
-	mov	$c,$t0
-	mov	$a,$e
-	xor	`4*(($j+2)%16)`(%rsp),$xi
-	xor	$d,$t0
-	rol	\$5,$e
-	xor	`4*(($j+8)%16)`(%rsp),$xi
-	and	$b,$t0
-	add	$e,$f
-	xor	`4*(($j+13)%16)`(%rsp),$xi
-	xor	$d,$t0
-	rol	\$30,$b
-	add	$t0,$f
-	rol	\$1,$xi
-	mov	$xi,`4*($j%16)`(%rsp)
-___
-}
-
-sub BODY_20_39 {
-my ($i,$a,$b,$c,$d,$e,$f)=@_;
-my $j=$i+1;
-my $K=($i<40)?0x6ed9eba1:0xca62c1d6;
-$code.=<<___ if ($i<79);
-	lea	$K($xi,$e),$f
-	mov	`4*($j%16)`(%rsp),$xi
-	mov	$c,$t0
-	mov	$a,$e
-	xor	`4*(($j+2)%16)`(%rsp),$xi
-	xor	$b,$t0
-	rol	\$5,$e
-	xor	`4*(($j+8)%16)`(%rsp),$xi
-	xor	$d,$t0
-	add	$e,$f
-	xor	`4*(($j+13)%16)`(%rsp),$xi
-	rol	\$30,$b
-	add	$t0,$f
-	rol	\$1,$xi
-___
-$code.=<<___ if ($i<76);
-	mov	$xi,`4*($j%16)`(%rsp)
-___
-$code.=<<___ if ($i==79);
-	lea	$K($xi,$e),$f
-	mov	$c,$t0
-	mov	$a,$e
-	xor	$b,$t0
-	rol	\$5,$e
-	xor	$d,$t0
-	add	$e,$f
-	rol	\$30,$b
-	add	$t0,$f
-___
-}
-
-sub BODY_40_59 {
-my ($i,$a,$b,$c,$d,$e,$f)=@_;
-my $j=$i+1;
-$code.=<<___;
-	lea	0x8f1bbcdc($xi,$e),$f
-	mov	`4*($j%16)`(%rsp),$xi
-	mov	$b,$t0
-	mov	$b,$t1
-	xor	`4*(($j+2)%16)`(%rsp),$xi
-	mov	$a,$e
-	and	$c,$t0
-	xor	`4*(($j+8)%16)`(%rsp),$xi
-	or	$c,$t1
-	rol	\$5,$e
-	xor	`4*(($j+13)%16)`(%rsp),$xi
-	and	$d,$t1
-	add	$e,$f
-	rol	\$1,$xi
-	or	$t1,$t0
-	rol	\$30,$b
-	mov	$xi,`4*($j%16)`(%rsp)
-	add	$t0,$f
-___
-}
-
-$code=".text\n";
-
-&PROLOGUE("sha1_block_data_order");
-$code.=".align	4\n.Lloop:\n";
 for($i=0;$i<20;$i++)	{ &BODY_00_19($i,@V); unshift(@V,pop(@V)); }
 for(;$i<40;$i++)	{ &BODY_20_39($i,@V); unshift(@V,pop(@V)); }
 for(;$i<60;$i++)	{ &BODY_40_59($i,@V); unshift(@V,pop(@V)); }
 for(;$i<80;$i++)	{ &BODY_20_39($i,@V); unshift(@V,pop(@V)); }
 $code.=<<___;
-	add	0($ctx),$E
-	add	4($ctx),$T
-	add	8($ctx),$A
-	add	12($ctx),$B
-	add	16($ctx),$C
-	mov	$E,0($ctx)
-	mov	$T,4($ctx)
-	mov	$A,8($ctx)
-	mov	$B,12($ctx)
-	mov	$C,16($ctx)
+	add	0($ctx),$A
+	add	4($ctx),$B
+	add	8($ctx),$C
+	add	12($ctx),$D
+	add	16($ctx),$E
+	mov	$A,0($ctx)
+	mov	$B,4($ctx)
+	mov	$C,8($ctx)
+	mov	$D,12($ctx)
+	mov	$E,16($ctx)
 
-	xchg	$E,$A	# mov	$E,$A
-	xchg	$T,$B	# mov	$T,$B
-	xchg	$E,$C	# mov	$A,$C
-	xchg	$T,$D	# mov	$B,$D
-			# mov	$C,$E
-	lea	`16*4`($inp),$inp
 	sub	\$1,$num
+	lea	`16*4`($inp),$inp
 	jnz	.Lloop
-___
-&EPILOGUE("sha1_block_data_order");
-$code.=<<___;
+
+	mov	`16*4`(%rsp),%rsi
+	mov	(%rsi),%r13
+	mov	8(%rsi),%r12
+	mov	16(%rsi),%rbp
+	mov	24(%rsi),%rbx
+	lea	32(%rsi),%rsp
+.Lepilogue:
+	ret
+.size	sha1_block_data_order,.-sha1_block_data_order
+
 .asciz	"SHA1 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 .align	16
 ___
@@ -281,14 +278,16 @@ se_handler:
 	jae	.Lin_prologue
 
 	mov	`16*4`(%rax),%rax	# pull saved stack pointer
-	lea	24(%rax),%rax
+	lea	32(%rax),%rax
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp
 	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
 	mov	%rbx,144($context)	# restore context->Rbx
 	mov	%rbp,160($context)	# restore context->Rbp
 	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
 
 .Lin_prologue:
 	mov	8(%rax),%rdi
