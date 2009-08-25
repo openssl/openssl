@@ -6,6 +6,7 @@ $!               A-Com Computing, Inc.
 $!               byer@mail.all-net.net
 $!
 $!  Changes by Richard Levitte <richard@levitte.org>
+$!             Zoltan Arpadffy <zoli@polarhome.com>   
 $!
 $!  This command files compiles and creates all the various different
 $!  "application" programs for the different types of encryption for OpenSSL.
@@ -150,7 +151,7 @@ $ IF COMPILER .EQS. "VAXC" THEN -
 $!
 $! Setup exceptional compilations
 $!
-$ COMPILEWITH_CC2 = ",S_SERVER,S_CLIENT,"
+$ COMPILEWITH_CC2 = ",S_SOCKET,S_SERVER,S_CLIENT,"
 $!
 $ PHASE := LIB
 $!
@@ -167,6 +168,10 @@ $!
 $!  Make The Application File Name
 $!
 $ CURRENT_APP = F$EDIT(F$ELEMENT(APP_COUNTER,",",PROGRAMS),"TRIM")
+$!
+$!  Create The Executable File Name.
+$!
+$   EXE_FILE = EXE_DIR + CURRENT_APP + ".EXE"
 $!
 $!  Check To See If We Are At The End Of The File List.
 $!
@@ -231,10 +236,6 @@ $!
 $!  Create The Object File Name.
 $!
 $   OBJECT_FILE = OBJ_DIR + FILE_NAME + ".OBJ"
-$!
-$!  Create The Executable File Name.
-$!
-$   EXE_FILE = EXE_DIR + FILE_NAME + ".EXE"
 $   ON WARNING THEN GOTO NEXT_LIB
 $!
 $!  Check To See If The File We Want To Compile Actually Exists.
