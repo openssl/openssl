@@ -7,6 +7,7 @@ $!                A-Com Computing, Inc.
 $!                byer@mail.all-net.net
 $!
 $! Changes by Richard Levitte <richard@levitte.org>
+$!	      Zoltan Arpadffy <zoli@polarhome.com>
 $!
 $! This procedure creates the SSL libraries of "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB"
 $! "[.xxx.EXE.SSL]LIBSSL.OLB"
@@ -264,7 +265,7 @@ $       GOTO TIDY
 $     ENDIF
 $   ENDIF
 $ ENDIF
-$ IF ARCH .EQS. "AXP"
+$ IF ARCH .NES. "VAX"
 $ THEN
 $!
 $!  Write the Alpha specific data
@@ -345,6 +346,10 @@ $!
 $!  End
 $!
 $ ENDIF
+$!
+$! There are many places where this is needed.
+$!
+$ WRITE H_FILE "#define _XOPEN_SOURCE_EXTENDED"
 $!
 $! Close the [.CRYPTO.<ARCH>]OPENSSLCONF.H file
 $!
@@ -733,7 +738,8 @@ $!
 $   IF (P1.EQS."CONFIG").OR.(P1.EQS."BUILDINF").OR.(P1.EQS."SOFTLINKS") -
        .OR.(P1.EQS."BUILDALL") -
        .OR.(P1.EQS."CRYPTO").OR.(P1.EQS."SSL") -
-       .OR.(P1.EQS."SSL_TASK").OR.(P1.EQS."TEST").OR.(P1.EQS."APPS")
+       .OR.(P1.EQS."SSL_TASK").OR.(P1.EQS."TEST").OR.(P1.EQS."APPS") -
+       .OR.(P1.EQS."ENGINES")
 $   THEN
 $!
 $!    A Valid Arguement.
@@ -747,7 +753,11 @@ $!
 $!    Tell The User We Don't Know What They Want.
 $!
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "The Option ",P1," Is Invalid.  The Valid Options Are:"
+$     WRITE SYS$OUTPUT "USAGE:   @MAKEVMS.COM [Target] [not-used option] [Debug option] <Compiler>"
+$     WRITE SYS$OUTPUT ""
+$     WRITE SYS$OUTPUT "Example: @MAKEVMS.COM ALL NORSAREF NODEBUG "
+$     WRITE SYS$OUTPUT ""
+$     WRITE SYS$OUTPUT "The Target ",P1," Is Invalid.  The Valid Target Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    ALL      :  Just Build Everything."
 $     WRITE SYS$OUTPUT "    CONFIG   :  Just build the [.CRYPTO.''ARCH']OPENSSLCONF.H file."
@@ -761,6 +771,7 @@ $     WRITE SYS$OUTPUT "    SSL      :  To Build Just The [.xxx.EXE.SSL]LIBSSL.O
 $     WRITE SYS$OUTPUT "    SSL_TASK :  To Build Just The [.xxx.EXE.SSL]SSL_TASK.EXE Program."
 $     WRITE SYS$OUTPUT "    TEST     :  To Build Just The OpenSSL Test Programs."
 $     WRITE SYS$OUTPUT "    APPS     :  To Build Just The OpenSSL Application Programs."
+$     WRITE SYS$OUTPUT "    ENGINES  :  To Build Just The ENGINES"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT " Where 'xxx' Stands For:"
 $     WRITE SYS$OUTPUT ""
