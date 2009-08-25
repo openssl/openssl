@@ -7,12 +7,13 @@ $	__here = f$parse(f$parse("A.;",__proc) - "A.;","[]A.;") - "A.;"
 $	__save_default = f$environment("default")
 $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then -
-	   __arch := f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
+	   __arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
 $	if __arch .eqs. "" then __arch := UNK
 $	texe_dir := sys$disk:[-.'__arch'.exe.test]
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
 $	set default '__here'
+$
 $	on control_y then goto exit
 $	on error then goto exit
 $

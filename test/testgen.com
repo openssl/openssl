@@ -2,8 +2,9 @@ $! TETSGEN.COM
 $
 $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then -
-	   __arch := f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
+	   __arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
 $	if __arch .eqs. "" then __arch := UNK
+$	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
 $	T := testcert
 $	KEY = 512
