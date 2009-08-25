@@ -6,6 +6,7 @@ $!               A-Com Computing, Inc.
 $!               byer@mail.all-net.net
 $!
 $!  Changes by Richard Levitte <richard@levitte.org>
+$!             Zoltan Arpadffy <zoli@polarhome.com>   
 $!
 $!  This command files compiles and creates all the various different
 $!  "application" programs for the different types of encryption for OpenSSL.
@@ -146,14 +147,15 @@ $ LIB_FILES = "VERIFY;ASN1PARS;REQ;DGST;DH;DHPARAM;ENC;PASSWD;GENDH;ERRSTR;"+-
 	      "RSA;RSAUTL;DSA;DSAPARAM;EC;ECPARAM;"+-
 	      "X509;GENRSA;GENDSA;S_SERVER;S_CLIENT;SPEED;"+-
 	      "S_TIME;APPS;S_CB;S_SOCKET;APP_RAND;VERSION;SESS_ID;"+-
-	      "CIPHERS;NSEQ;PKCS12;PKCS8;SPKAC;SMIME;RAND;ENGINE;OCSP;PRIME"
+	      "CIPHERS;NSEQ;PKCS12;PKCS8;SPKAC;SMIME;RAND;ENGINE;"+-
+	      "OCSP;PRIME;CMS"
 $ TCPIP_PROGRAMS = ",,"
 $ IF COMPILER .EQS. "VAXC" THEN -
      TCPIP_PROGRAMS = ",OPENSSL,"
 $!
 $! Setup exceptional compilations
 $!
-$ COMPILEWITH_CC2 = ",S_SERVER,S_CLIENT,"
+$ COMPILEWITH_CC2 = ",S_SOCKET,S_SERVER,S_CLIENT,"
 $!
 $ PHASE := LIB
 $!
