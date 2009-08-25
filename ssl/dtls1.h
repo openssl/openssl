@@ -62,6 +62,10 @@
 
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
+#ifdef OPENSSL_SYS_VMS
+#include <resource.h>
+#include <sys/timeb.h>
+#endif
 #ifdef OPENSSL_SYS_WIN32
 /* Needed for struct timeval */
 #include <winsock.h>
