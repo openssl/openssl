@@ -88,11 +88,6 @@ NETDB_DEFINE_CONTEXT
 static int wsa_init_done=0;
 #endif
 
-#if defined(OPENSSL_SYS_BEOS_BONE)		
-/* BONE's IP6 support is incomplete */
-#undef AF_INET6
-#endif
-
 #if 0
 static unsigned long BIO_ghbn_hits=0L;
 static unsigned long BIO_ghbn_miss=0L;
@@ -654,7 +649,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		if (strchr(h,':'))
 			{
 			if (h[1]=='\0') h=NULL;
-#ifdef AF_INET6
+#if OPENSSL_USE_IPV6
 			hint.ai_family = AF_INET6;
 #else
 			h=NULL;
@@ -720,7 +715,7 @@ again:
 			client = server;
 			if (h == NULL || strcmp(h,"*") == 0)
 				{
-#ifdef AF_INET6
+#if OPENSSL_USE_IPV6
 				if (client.sa_family == AF_INET6)
 					{
 					struct sockaddr_in6 *sin6 =
