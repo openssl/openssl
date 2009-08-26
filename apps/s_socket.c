@@ -63,9 +63,9 @@
 #include <signal.h>
 
 #ifdef FLAT_INC
-#include "e_os.h"
+#include "e_os2.h"
 #else
-#include "../e_os.h"
+#include "../e_os2.h"
 #endif
 
 /* With IPv6, it looks like Digital has mixed up the proper order of
@@ -84,6 +84,12 @@ typedef unsigned int u_int;
 #undef NON_MAIN
 #include "s_apps.h"
 #include <openssl/ssl.h>
+
+#ifdef FLAT_INC
+#include "e_os.h"
+#else
+#include "../e_os.h"
+#endif
 
 #ifndef OPENSSL_NO_SOCK
 
