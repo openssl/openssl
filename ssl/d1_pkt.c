@@ -1257,7 +1257,6 @@ err:
 int
 dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
 	{
-	unsigned int n,tot;
 	int i;
 
 	if (SSL_in_init(s) && !s->in_handshake)
@@ -1271,31 +1270,14 @@ dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
 			}
 		}
 
-	tot = s->s3->wnum;
-	n = len - tot;
-
-	while( n)
+	if (len > SSL3_RT_MAX_PLAIN_LENGTH)
 		{
-		/* dtls1_write_bytes sends one record at a time, sized according to 
-		 * the currently known MTU */
-		i = dtls1_write_bytes(s, type, buf_, len);
-		if (i <= 0) return i;
-		
-		if ((i == (int)n) ||
-			(type == SSL3_RT_APPLICATION_DATA &&
-				(s->mode & SSL_MODE_ENABLE_PARTIAL_WRITE)))
-			{
-			/* next chunk of data should get another prepended empty fragment
-			 * in ciphersuites with known-IV weakness: */
-			s->s3->empty_fragment_done = 0;
-			return tot+i;
-			}
-
-		tot += i;
-		n-=i;
+			SSLerr(SSL_F_DTLS1_WRITE_APP_DATA_BYTES,SSL_R_DTLS_MESSAGE_TOO_BIG);
+			return -1;
 		}
 
-	return tot;
+	i = dtls1_write_bytes(s, type, buf_, len);
+	return i;
 	}
 
 
@@ -1336,46 +1318,13 @@ have_handshake_fragment(SSL *s, int type, unsigned char *buf,
 /* Call this to write data in records of type 'type'
  * It will return <= 0 if not all data has been sent or non-blocking IO.
  */
-int dtls1_write_bytes(SSL *s, int type, const void *buf_, int len)
+int dtls1_write_bytes(SSL *s, int type, const void *buf, int len)
 	{
-	const unsigned char *buf=buf_;
-	unsigned int tot,n,nw;
 	int i;
-	unsigned int mtu;
 
+	OPENSSL_assert(len <= SSL3_RT_MAX_PLAIN_LENGTH);
 	s->rwstate=SSL_NOTHING;
-	tot=s->s3->wnum;
-
-	n=(len-tot);
-
-	/* handshake layer figures out MTU for itself, but data records
-	 * are also sent through this interface, so need to figure out MTU */
-#if 0
-	mtu = BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_GET_MTU, 0, NULL);
-	mtu += DTLS1_HM_HEADER_LENGTH;  /* HM already inserted */
-#endif
-	mtu = s->d1->mtu;
-
-	if (mtu > SSL3_RT_MAX_PLAIN_LENGTH)
-		mtu = SSL3_RT_MAX_PLAIN_LENGTH;
-
-	if (n > mtu)
-		nw=mtu;
-	else
-		nw=n;
-	
-	i=do_dtls1_write(s, type, &(buf[tot]), nw, 0);
-	if (i <= 0)
-		{
-		s->s3->wnum=tot;
-		return i;
-		}
-
-	if ( (int)s->s3->wnum + i == len)
-		s->s3->wnum = 0;
-	else 
-		s->s3->wnum += i;
-
+	i=do_dtls1_write(s, type, buf, len, 0);
 	return i;
 	}
 
