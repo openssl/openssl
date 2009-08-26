@@ -624,6 +624,18 @@ static unsigned int _strlen31(const char *str)
 #    define INVALID_SOCKET	(-1)
 #    endif /* INVALID_SOCKET */
 #  endif
+
+/* Some IPv6 implementations are broken, disable them in known bad
+ * versions.
+ */
+#  if !defined(OPENSSL_USE_IPV6)
+#    if defined(AF_INET6) && !defined(OPENSSL_SYS_BEOS_BONE) && !defined(NETWARE_CLIB)
+#      define OPENSSL_USE_IPV6 1
+#    else
+#      define OPENSSL_USE_IPV6 0
+#    endif
+#  endif
+
 #endif
 
 #if defined(__ultrix)

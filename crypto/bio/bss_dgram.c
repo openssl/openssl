@@ -429,12 +429,14 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 				&sockopt_val, sizeof(sockopt_val))) < 0)
 				perror("setsockopt");
 			break;
+#if OPENSSL_USE_IPV6
 		case AF_INET6:
 			sockopt_val = IPV6_PMTUDISC_DO;
 			if ((ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
 				&sockopt_val, sizeof(sockopt_val))) < 0)
 				perror("setsockopt");
 			break;
+#endif
 		default:
 			ret = -1;
 			break;
@@ -470,6 +472,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 				ret = data->mtu;
 				}
 			break;
+#if OPENSSL_USE_IPV6
 		case AF_INET6:
 			if ((ret = getsockopt(b->num, IPPROTO_IPV6, IPV6_MTU, (void *)&sockopt_val,
 				&sockopt_len)) < 0 || sockopt_val < 0)
@@ -485,6 +488,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 				ret = data->mtu;
 				}
 			break;
+#endif
 		default:
 			ret = 0;
 			break;
