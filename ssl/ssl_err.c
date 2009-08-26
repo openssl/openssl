@@ -490,6 +490,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_TLSV1_CERTIFICATE_UNOBTAINABLE),"tlsv1 certificate unobtainable"},
 {ERR_REASON(SSL_R_TLSV1_UNRECOGNIZED_NAME),"tlsv1 unrecognized name"},
 {ERR_REASON(SSL_R_TLSV1_UNSUPPORTED_EXTENSION),"tlsv1 unsupported extension"},
+{ERR_REASON(SSL_R_DTLS_MESSAGE_TOO_BIG),"dtls message too big"},
 {ERR_REASON(SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER),"tls client cert req with anon cipher"},
 {ERR_REASON(SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST),"tls invalid ecpointformat list"},
 {ERR_REASON(SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST),"tls peer did not respond with certificate list"},
