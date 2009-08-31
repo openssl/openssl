@@ -465,6 +465,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
 			}
 		gen->d.rid = obj;
 		}
+		break;
 
 		case GEN_IPADD:
 		if (is_nc)
