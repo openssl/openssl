@@ -4,6 +4,11 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) Update verify callback code in apps/s_cb.c and apps/verify.c, it
+     needlessly dereferenced structures, used obsolete functions and
+     didn't handle all updated verify codes correctly.
+     [Steve Henson]
+
   *) Delete MD2 from algorithm tables. This follows the recommendation in 
      several standards that it is not used in new applications due to
      several cryptographic weaknesses. The algorithm is also disabled in

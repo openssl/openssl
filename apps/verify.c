@@ -326,42 +326,49 @@ end:
 
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 	{
-	char buf[256];
+	int cert_error = X509_STORE_CTX_get_error(ctx);
+	X509 *current_cert = X509_STORE_CTX_get_current_cert(ctx);
 
 	if (!ok)
 		{
-		if (ctx->current_cert)
+		if (current_cert)
 			{
-			X509_NAME_oneline(
-				X509_get_subject_name(ctx->current_cert),buf,
-				sizeof buf);
-			printf("%s\n",buf);
+			X509_NAME_print_ex_fp(stdout,
+				X509_get_subject_name(current_cert),
+				0, XN_FLAG_ONELINE);
+			printf("\n");
 			}
-		printf("error %d at %d depth lookup:%s\n",ctx->error,
-			ctx->error_depth,
-			X509_verify_cert_error_string(ctx->error));
-		if (ctx->error == X509_V_ERR_CERT_HAS_EXPIRED) ok=1;
-		/* since we are just checking the certificates, it is
-		 * ok if they are self signed. But we should still warn
-		 * the user.
- 		 */
-		if (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ok=1;
-		/* Continue after extension errors too */
-		if (ctx->error == X509_V_ERR_INVALID_CA) ok=1;
-		if (ctx->error == X509_V_ERR_INVALID_NON_CA) ok=1;
-		if (ctx->error == X509_V_ERR_PATH_LENGTH_EXCEEDED) ok=1;
-		if (ctx->error == X509_V_ERR_INVALID_PURPOSE) ok=1;
-		if (ctx->error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ok=1;
-		if (ctx->error == X509_V_ERR_CRL_HAS_EXPIRED) ok=1;
-		if (ctx->error == X509_V_ERR_CRL_NOT_YET_VALID) ok=1;
-		if (ctx->error == X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION) ok=1;
+		printf("error %d at %d depth lookup:%s\n",cert_error,
+			X509_STORE_CTX_get_error_depth(ctx),
+			X509_verify_cert_error_string(cert_error));
+		switch(cert_error)
+			{
+			case X509_V_ERR_NO_EXPLICIT_POLICY:
+				policies_print(NULL, ctx);
+			case X509_V_ERR_CERT_HAS_EXPIRED:
 
-		if (ctx->error == X509_V_ERR_NO_EXPLICIT_POLICY)
-			policies_print(NULL, ctx);
+			/* since we are just checking the certificates, it is
+			 * ok if they are self signed. But we should still warn
+			 * the user.
+			 */
+
+			case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
+			/* Continue after extension errors too */
+			case X509_V_ERR_INVALID_CA:
+			case X509_V_ERR_INVALID_NON_CA:
+			case X509_V_ERR_PATH_LENGTH_EXCEEDED:
+			case X509_V_ERR_INVALID_PURPOSE:
+			case X509_V_ERR_CRL_HAS_EXPIRED:
+			case X509_V_ERR_CRL_NOT_YET_VALID:
+			case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
+			ok = 1;
+
+			}
+
 		return ok;
 
 		}
-	if ((ctx->error == X509_V_OK) && (ok == 2))
+	if (cert_error == X509_V_OK && ok == 2)
 		policies_print(NULL, ctx);
 	if (!v_verbose)
 		ERR_clear_error();
