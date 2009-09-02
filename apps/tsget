@@ -1,13 +1,13 @@
 #!/usr/bin/perl -w
 # Written by Zoltan Glozik <zglozik@stones.com>.
 # Copyright (c) 2002 The OpenTSA Project.  All rights reserved.
-$::version = '$Id: tsget,v 1.1 2006/02/12 23:11:21 ulf Exp $';
+$::version = '$Id: tsget,v 1.2 2009/09/02 15:57:24 steve Exp $';
 
 use strict;
 use IO::Handle;
 use Getopt::Std;
 use File::Basename;
-use WWW::Curl::easy;
+use WWW::Curl::Easy;
 
 use vars qw(%options);
 
@@ -37,7 +37,7 @@ sub create_curl {
     my $url = shift;
 
     # Create Curl object.
-    my $curl = WWW::Curl::easy::new();
+    my $curl = WWW::Curl::Easy::new();
 
     # Error-handling related options.
     $curl->setopt(CURLOPT_VERBOSE, 1) if $options{d};
@@ -192,4 +192,4 @@ REQUEST: foreach (@ARGV) {
     STDERR->printflush(", $output written.\n") if $options{v};
 }
 $curl->cleanup();
-WWW::Curl::easy::global_cleanup();
+WWW::Curl::Easy::global_cleanup();
