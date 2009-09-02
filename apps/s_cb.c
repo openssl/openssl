@@ -127,7 +127,6 @@ int verify_return_error=0;
 
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
-	char buf[256];
 	X509 *err_cert;
 	int err,depth;
 
@@ -135,8 +134,15 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	err=	X509_STORE_CTX_get_error(ctx);
 	depth=	X509_STORE_CTX_get_error_depth(ctx);
 
-	X509_NAME_oneline(X509_get_subject_name(err_cert),buf,sizeof buf);
-	BIO_printf(bio_err,"depth=%d %s\n",depth,buf);
+	BIO_printf(bio_err,"depth=%d ",depth);
+	if (err_cert)
+		{
+		X509_NAME_print_ex(bio_err, X509_get_subject_name(err_cert),
+					0, XN_FLAG_ONELINE);
+		BIO_puts(bio_err, "\n");
+		}
+	else
+		BIO_puts(bio_err, "<no cert>\n");
 	if (!ok)
 		{
 		BIO_printf(bio_err,"verify error:num=%d:%s\n",err,
@@ -153,25 +159,33 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 			verify_error=X509_V_ERR_CERT_CHAIN_TOO_LONG;
 			}
 		}
-	switch (ctx->error)
+	switch (err)
 		{
 	case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:
-		X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert),buf,sizeof buf);
-		BIO_printf(bio_err,"issuer= %s\n",buf);
+		BIO_puts(bio_err,"issuer= ");
+		X509_NAME_print_ex(bio_err, X509_get_issuer_name(err_cert),
+					0, XN_FLAG_ONELINE);
+		BIO_puts(bio_err, "\n");
 		break;
 	case X509_V_ERR_CERT_NOT_YET_VALID:
 	case X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
 		BIO_printf(bio_err,"notBefore=");
-		ASN1_TIME_print(bio_err,X509_get_notBefore(ctx->current_cert));
+		ASN1_TIME_print(bio_err,X509_get_notBefore(err_cert));
 		BIO_printf(bio_err,"\n");
 		break;
 	case X509_V_ERR_CERT_HAS_EXPIRED:
 	case X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
 		BIO_printf(bio_err,"notAfter=");
-		ASN1_TIME_print(bio_err,X509_get_notAfter(ctx->current_cert));
+		ASN1_TIME_print(bio_err,X509_get_notAfter(err_cert));
 		BIO_printf(bio_err,"\n");
 		break;
+	case X509_V_ERR_NO_EXPLICIT_POLICY:
+		policies_print(bio_err, ctx);
+		break;
 		}
+	if (err == X509_V_OK && ok == 2)
+		policies_print(bio_err, ctx);
+
 	BIO_printf(bio_err,"verify return:%d\n",ok);
 	return(ok);
 	}
