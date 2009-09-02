@@ -666,7 +666,12 @@ freelist_insert(SSL_CTX *ctx, int for_read, size_t sz, void *mem)
 int ssl3_setup_read_buffer(SSL *s)
 	{
 	unsigned char *p;
-	size_t len,align=0;
+	size_t len,align=0,headerlen;
+	
+	if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+		headerlen = DTLS1_RT_HEADER_LENGTH;
+	else
+		headerlen = SSL3_RT_HEADER_LENGTH;
 
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
 	align = (-SSL3_RT_HEADER_LENGTH)&(SSL3_ALIGN_PAYLOAD-1);
@@ -676,7 +681,7 @@ int ssl3_setup_read_buffer(SSL *s)
 		{
 		len = SSL3_RT_MAX_PLAIN_LENGTH
 			+ SSL3_RT_MAX_ENCRYPTED_OVERHEAD
-			+ SSL3_RT_HEADER_LENGTH + align;
+			+ headerlen + align;
 		if (s->options & SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER)
 			{
 			s->s3->init_extra = 1;
@@ -703,7 +708,12 @@ err:
 int ssl3_setup_write_buffer(SSL *s)
 	{
 	unsigned char *p;
-	size_t len,align=0;
+	size_t len,align=0,headerlen;
+
+	if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+		headerlen = DTLS1_RT_HEADER_LENGTH + 1;
+	else
+		headerlen = SSL3_RT_HEADER_LENGTH;
 
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
 	align = (-SSL3_RT_HEADER_LENGTH)&(SSL3_ALIGN_PAYLOAD-1);
@@ -713,13 +723,13 @@ int ssl3_setup_write_buffer(SSL *s)
 		{
 		len = s->max_send_fragment
 			+ SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD
-			+ SSL3_RT_HEADER_LENGTH + align;
+			+ headerlen + align;
 #ifndef OPENSSL_NO_COMP
 		if (!(s->options & SSL_OP_NO_COMPRESSION))
 			len += SSL3_RT_MAX_COMPRESSED_OVERHEAD;
 #endif
 		if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
-			len += SSL3_RT_HEADER_LENGTH + align
+			len += headerlen + align
 				+ SSL3_RT_SEND_MAX_ENCRYPTED_OVERHEAD;
 
 		if ((p=freelist_extract(s->ctx, 0, len)) == NULL)
