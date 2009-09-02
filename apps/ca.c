@@ -1403,7 +1403,12 @@ bad:
 		if (!tmptm) goto err;
 		X509_gmtime_adj(tmptm,0);
 		X509_CRL_set_lastUpdate(crl, tmptm);	
-		X509_time_adj_ex(tmptm, crldays, crlhours*60*60 + crlsec, NULL);
+		if (!X509_time_adj_ex(tmptm, crldays, crlhours*60*60 + crlsec,
+			NULL))
+			{
+			BIO_puts(bio_err, "error setting CRL nextUpdate\n");
+			goto err;
+			}
 		X509_CRL_set_nextUpdate(crl, tmptm);	
 
 		ASN1_TIME_free(tmptm);
