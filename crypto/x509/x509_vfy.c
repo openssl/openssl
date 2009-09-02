@@ -1765,10 +1765,14 @@ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
 	else time(&t);
 
 	if (s) type = s->type;
-	if (type == V_ASN1_UTCTIME)
-		return ASN1_UTCTIME_adj(s,t, offset_day, offset_sec);
-	if (type == V_ASN1_GENERALIZEDTIME)
-		return ASN1_GENERALIZEDTIME_adj(s, t, offset_day, offset_sec);
+	if (!(s->flags & ASN1_STRING_FLAG_MSTRING))
+		{
+		if (type == V_ASN1_UTCTIME)
+			return ASN1_UTCTIME_adj(s,t, offset_day, offset_sec);
+		if (type == V_ASN1_GENERALIZEDTIME)
+			return ASN1_GENERALIZEDTIME_adj(s, t, offset_day,
+								offset_sec);
+		}
 	return ASN1_TIME_adj(s, t, offset_day, offset_sec);
 	}
 

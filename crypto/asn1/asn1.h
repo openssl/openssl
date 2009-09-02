@@ -230,6 +230,10 @@ typedef struct asn1_object_st
  */
 
 #define ASN1_STRING_FLAG_CONT 0x020 
+/* This flag is used by ASN1 code to indicate an ASN1_STRING is an MSTRING
+ * type.
+ */
+#define ASN1_STRING_FLAG_MSTRING 0x040 
 /* This is the base type that holds just about everything :-) */
 typedef struct asn1_string_st
 	{
