@@ -413,8 +413,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		}
 	else
 		{
-		SSLerr(SSL_F_D2I_SSL_SESSION,SSL_R_UNKNOWN_SSL_VERSION);
-		return(NULL);
+		c.error=SSL_R_UNKNOWN_SSL_VERSION;
+		goto err;
 		}
 	
 	ret->cipher=NULL;
@@ -505,8 +505,8 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 	    {
 	    if (os.length > SSL_MAX_SID_CTX_LENGTH)
 		{
-		ret->sid_ctx_length=os.length;
-		SSLerr(SSL_F_D2I_SSL_SESSION,SSL_R_BAD_LENGTH);
+		c.error=SSL_R_BAD_LENGTH;
+		goto err;
 		}
 	    else
 		{
