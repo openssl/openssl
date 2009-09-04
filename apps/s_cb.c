@@ -117,12 +117,17 @@
 #undef NON_MAIN
 #undef USE_SOCKETS
 #include <openssl/err.h>
+#include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/ssl.h>
 #include "s_apps.h"
 
+#define	COOKIE_SECRET_LENGTH	16
+
 int verify_depth=0;
 int verify_error=X509_V_OK;
+unsigned char cookie_secret[COOKIE_SECRET_LENGTH];
+int cookie_initialized=0;
 
 int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 	{
@@ -645,4 +650,87 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 			extname, type, len);
 	BIO_dump(bio, (char *)data, len);
 	(void)BIO_flush(bio);
+	}
+
+int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+	{
+	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
+	unsigned int length, resultlength;
+	struct sockaddr_in peer;
+	
+	/* Initialize a random secret */
+	if (!cookie_initialized)
+		{
+		if (!RAND_bytes(cookie_secret, COOKIE_SECRET_LENGTH))
+			{
+			BIO_printf(bio_err,"error setting random cookie secret\n");
+			return 0;
+			}
+		cookie_initialized = 1;
+		}
+
+	/* Read peer information */
+	(void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
+
+	/* Create buffer with peer's address and port */
+	length = sizeof(peer.sin_addr);
+	length += sizeof(peer.sin_port);
+	buffer = OPENSSL_malloc(length);
+
+	if (buffer == NULL)
+		{
+		BIO_printf(bio_err,"out of memory\n");
+		return 0;
+		}
+	
+	memcpy(buffer, &peer.sin_addr, sizeof(peer.sin_addr));
+	memcpy(buffer + sizeof(peer.sin_addr), &peer.sin_port, sizeof(peer.sin_port));
+
+	/* Calculate HMAC of buffer using the secret */
+	HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
+	     buffer, length, result, &resultlength);
+	OPENSSL_free(buffer);
+
+	memcpy(cookie, result, resultlength);
+	*cookie_len = resultlength;
+
+	return 1;
+	}
+
+int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len)
+	{
+	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
+	unsigned int length, resultlength;
+	struct sockaddr_in peer;
+	
+	/* If secret isn't initialized yet, the cookie can't be valid */
+	if (!cookie_initialized)
+		return 0;
+
+	/* Read peer information */
+	(void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
+
+	/* Create buffer with peer's address and port */
+	length = sizeof(peer.sin_addr);
+	length += sizeof(peer.sin_port);
+	buffer = (unsigned char*) OPENSSL_malloc(length);
+	
+	if (buffer == NULL)
+		{
+		BIO_printf(bio_err,"out of memory\n");
+		return 0;
+		}
+	
+	memcpy(buffer, &peer.sin_addr, sizeof(peer.sin_addr));
+	memcpy(buffer + sizeof(peer.sin_addr), &peer.sin_port, sizeof(peer.sin_port));
+
+	/* Calculate HMAC of buffer using the secret */
+	HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
+	     buffer, length, result, &resultlength);
+	OPENSSL_free(buffer);
+	
+	if (cookie_len == resultlength && memcmp(result, cookie, resultlength) == 0)
+		return 1;
+
+	return 0;
 	}

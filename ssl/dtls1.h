@@ -88,7 +88,7 @@ extern "C" {
 #endif
 
 /* lengths of messages */
-#define DTLS1_COOKIE_LENGTH                     32
+#define DTLS1_COOKIE_LENGTH                     256
 
 #define DTLS1_RT_HEADER_LENGTH                  13
 
