@@ -1759,17 +1759,15 @@ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
 				int offset_day, long offset_sec, time_t *in_tm)
 	{
 	time_t t;
-	int type = -1;
 
 	if (in_tm) t = *in_tm;
 	else time(&t);
 
-	if (s) type = s->type;
-	if (!(s->flags & ASN1_STRING_FLAG_MSTRING))
+	if (s && !(s->flags & ASN1_STRING_FLAG_MSTRING))
 		{
-		if (type == V_ASN1_UTCTIME)
+		if (s->type == V_ASN1_UTCTIME)
 			return ASN1_UTCTIME_adj(s,t, offset_day, offset_sec);
-		if (type == V_ASN1_GENERALIZEDTIME)
+		if (s->type == V_ASN1_GENERALIZEDTIME)
 			return ASN1_GENERALIZEDTIME_adj(s, t, offset_day,
 								offset_sec);
 		}
