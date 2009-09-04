@@ -171,3 +171,6 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 					unsigned char *data, int len,
 					void *arg);
 #endif
+
+int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len);
+int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned int cookie_len);

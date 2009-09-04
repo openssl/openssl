@@ -290,11 +290,11 @@ static int dgram_read(BIO *b, char *out, int outl)
 		ret=recvfrom(b->num,out,outl,0,&peer,(void *)&peerlen);
 		dgram_reset_rcv_timeout(b);
 
-		if ( ! data->connected  && ret > 0)
-			BIO_ctrl(b, BIO_CTRL_DGRAM_CONNECT, 0, &peer);
+		if ( ! data->connected  && ret >= 0)
+			BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, &peer);
 
 		BIO_clear_retry_flags(b);
-		if (ret <= 0)
+		if (ret < 0)
 			{
 			if (BIO_dgram_should_retry(ret))
 				{
@@ -518,6 +518,12 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			memset(&(data->peer), 0x00, sizeof(struct sockaddr));
 			}
 		break;
+    case BIO_CTRL_DGRAM_GET_PEER:
+        to = (struct sockaddr *) ptr;
+
+        memcpy(to, &(data->peer), sizeof(struct sockaddr));
+		ret = sizeof(struct sockaddr);
+        break;
     case BIO_CTRL_DGRAM_SET_PEER:
         to = (struct sockaddr *) ptr;
 

@@ -816,6 +816,21 @@ int ssl3_get_client_hello(SSL *s)
 		goto f_err;
 		}
 
+	/* If we require cookies and this ClientHello doesn't
+	 * contain one, just return since we do not want to
+	 * allocate any memory yet. So check cookie length...
+	 */
+	if (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE)
+		{
+		unsigned int session_length, cookie_length;
+		
+		session_length = *(p + SSL3_RANDOM_SIZE);
+		cookie_length = *(p + SSL3_RANDOM_SIZE + session_length + 1);
+
+		if (cookie_len == 0)
+			return 1;
+		}
+
 	/* load the client random */
 	memcpy(s->s3->client_random,p,SSL3_RANDOM_SIZE);
 	p+=SSL3_RANDOM_SIZE;
@@ -855,22 +870,10 @@ int ssl3_get_client_hello(SSL *s)
 
 	p+=j;
 
-	if (s->version == DTLS1_VERSION)
+	if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER)
 		{
 		/* cookie stuff */
 		cookie_len = *(p++);
-
-		if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
-			s->d1->send_cookie == 0)
-			{
-			/* HelloVerifyMessage has already been sent */
-			if ( cookie_len != s->d1->cookie_len)
-				{
-				al = SSL_AD_HANDSHAKE_FAILURE;
-				SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO, SSL_R_COOKIE_MISMATCH);
-				goto f_err;
-				}
-			}
 
 		/* 
 		 * The ClientHello may contain a cookie even if the
@@ -886,7 +889,7 @@ int ssl3_get_client_hello(SSL *s)
 			}
 
 		/* verify the cookie if appropriate option is set. */
-		if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
+		if ((SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE) &&
 			cookie_len > 0)
 			{
 			memcpy(s->d1->rcvd_cookie, p, cookie_len);
@@ -911,6 +914,8 @@ int ssl3_get_client_hello(SSL *s)
 						SSL_R_COOKIE_MISMATCH);
 					goto f_err;
 				}
+
+			ret = 2;
 			}
 
 		p += cookie_len;
@@ -1185,7 +1190,7 @@ int ssl3_get_client_hello(SSL *s)
 	 * s->tmp.new_cipher	- the new cipher to use.
 	 */
 
-	ret=1;
+	if (ret < 0) ret=1;
 	if (0)
 		{
 f_err:

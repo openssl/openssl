@@ -1444,6 +1444,14 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 		return 1;
 	if (p >= limit)
 		return -1;
+	/* Skip past DTLS cookie */
+	if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER)
+		{
+		i = *(p++);
+		p+= i;
+		if (p >= limit)
+			return -1;
+		}
 	/* Skip past cipher list */
 	n2s(p, i);
 	p+= i;
