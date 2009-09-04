@@ -587,8 +587,13 @@ int ssl_verify_alarm_type(long type)
 int ssl3_setup_buffers(SSL *s)
 	{
 	unsigned char *p;
-	unsigned int extra;
+	unsigned int extra,headerlen;
 	size_t len;
+
+	if (SSL_version(s) == DTLS1_VERSION || SSL_version(s) == DTLS1_BAD_VER)
+		headerlen = DTLS1_RT_HEADER_LENGTH;
+	else
+		headerlen = SSL3_RT_HEADER_LENGTH;
 
 	if (s->s3->rbuf.buf == NULL)
 		{
@@ -606,7 +611,7 @@ int ssl3_setup_buffers(SSL *s)
 	if (s->s3->wbuf.buf == NULL)
 		{
 		len = SSL3_RT_MAX_PACKET_SIZE;
-		len += SSL3_RT_HEADER_LENGTH + 256; /* extra space for empty fragment */
+		len += headerlen + 256; /* extra space for empty fragment */
 		if ((p=OPENSSL_malloc(len)) == NULL)
 			goto err;
 		s->s3->wbuf.buf = p;
