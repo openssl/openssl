@@ -1654,6 +1654,10 @@ bad:
 	SSL_CTX_set_session_id_context(ctx,(void*)&s_server_session_id_context,
 		sizeof s_server_session_id_context);
 
+	/* Set DTLS cookie generation and verification callbacks */
+	SSL_CTX_set_cookie_generate_cb(ctx, generate_cookie_callback);
+	SSL_CTX_set_cookie_verify_cb(ctx, verify_cookie_callback);
+
 #ifndef OPENSSL_NO_TLSEXT
 	if (ctx2)
 		{

@@ -238,11 +238,6 @@ int dtls1_accept(SSL *s)
 				s->state=SSL3_ST_SW_HELLO_REQ_A;
 				}
 
-			if ( (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
-				s->d1->send_cookie = 1;
-			else
-				s->d1->send_cookie = 0;
-			
 			break;
 
 		case SSL3_ST_SW_HELLO_REQ_A:
@@ -273,7 +268,7 @@ int dtls1_accept(SSL *s)
 			dtls1_stop_timer(s);
 			s->new_session = 2;
 
-			if (s->d1->send_cookie)
+			if (ret == 1 && (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
 				s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A;
 			else
 				s->state = SSL3_ST_SW_SRVR_HELLO_A;
@@ -287,7 +282,6 @@ int dtls1_accept(SSL *s)
 			dtls1_start_timer(s);
 			ret = dtls1_send_hello_verify_request(s);
 			if ( ret <= 0) goto end;
-			s->d1->send_cookie = 0;
 			s->state=SSL3_ST_SW_FLUSH;
 			s->s3->tmp.next_state=SSL3_ST_SR_CLNT_HELLO_A;
 
@@ -670,15 +664,13 @@ int dtls1_send_hello_verify_request(SSL *s)
 		*(p++) = s->version >> 8;
 		*(p++) = s->version & 0xFF;
 
-		if (s->ctx->app_gen_cookie_cb != NULL &&
-		    s->ctx->app_gen_cookie_cb(s, s->d1->cookie, 
-			&(s->d1->cookie_len)) == 0)
+		if (s->ctx->app_gen_cookie_cb == NULL ||
+		     s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
+			 &(s->d1->cookie_len)) == 0)
 			{
 			SSLerr(SSL_F_DTLS1_SEND_HELLO_VERIFY_REQUEST,ERR_R_INTERNAL_ERROR);
 			return 0;
 			}
-		/* else the cookie is assumed to have 
-		 * been initialized by the application */
 
 		*(p++) = (unsigned char) s->d1->cookie_len;
 		memcpy(p, s->d1->cookie, s->d1->cookie_len);
