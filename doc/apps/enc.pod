@@ -57,15 +57,13 @@ see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)|openssl(1)>.
 
 =item B<-salt>
 
-use a salt in the key derivation routines. This option should B<ALWAYS>
-be used unless compatibility with previous versions of OpenSSL or SSLeay
-is required. This option is only present on OpenSSL versions 0.9.5 or
-above.
+use a salt in the key derivation routines. This is the default.
 
 =item B<-nosalt>
 
-don't use a salt in the key derivation routines. This is the default for
-compatibility with previous versions of OpenSSL and SSLeay.
+don't use a salt in the key derivation routines. This option B<SHOULD NOT> be
+used except for test purposes or compatibility with ancient versions of OpenSSL
+and SSLeay.
 
 =item B<-e>
 
