@@ -789,14 +789,14 @@ s_cb.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
 s_cb.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 s_cb.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
 s_cb.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-s_cb.o: ../include/openssl/pqueue.h ../include/openssl/safestack.h
-s_cb.o: ../include/openssl/sha.h ../include/openssl/ssl.h
-s_cb.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
-s_cb.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-s_cb.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
-s_cb.o: ../include/openssl/txt_db.h ../include/openssl/x509.h
-s_cb.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h apps.h
-s_cb.o: s_apps.h s_cb.c
+s_cb.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
+s_cb.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+s_cb.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+s_cb.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
+s_cb.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+s_cb.o: ../include/openssl/tls1.h ../include/openssl/txt_db.h
+s_cb.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+s_cb.o: ../include/openssl/x509v3.h apps.h s_apps.h s_cb.c
 s_client.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 s_client.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 s_client.o: ../include/openssl/comp.h ../include/openssl/conf.h
