@@ -827,7 +827,7 @@ int ssl3_get_client_hello(SSL *s)
 		session_length = *(p + SSL3_RANDOM_SIZE);
 		cookie_length = *(p + SSL3_RANDOM_SIZE + session_length + 1);
 
-		if (cookie_len == 0)
+		if (cookie_length == 0)
 			return 1;
 		}
 
