@@ -165,7 +165,6 @@ struct dsa_st
 	ENGINE *engine;
 	};
 
-#define DSAparams_dup(x) ASN1_dup_of_const(DSA,i2d_DSAparams,d2i_DSAparams,x)
 #define d2i_DSAparams_fp(fp,x) (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
 		(char *(*)())d2i_DSAparams,(fp),(unsigned char **)(x))
 #define i2d_DSAparams_fp(fp,x) ASN1_i2d_fp(i2d_DSAparams,(fp), \
@@ -174,6 +173,7 @@ struct dsa_st
 #define i2d_DSAparams_bio(bp,x) ASN1_i2d_bio_of_const(DSA,i2d_DSAparams,bp,x)
 
 
+DSA *DSAparams_dup(DSA *x);
 DSA_SIG * DSA_SIG_new(void);
 void	DSA_SIG_free(DSA_SIG *a);
 int	i2d_DSA_SIG(const DSA_SIG *a, unsigned char **pp);

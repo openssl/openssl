@@ -143,3 +143,8 @@ ASN1_CHOICE_cb(DSAPublicKey, dsa_cb) = {
 } ASN1_CHOICE_END_cb(DSA, DSAPublicKey, write_params)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA, DSAPublicKey, DSAPublicKey)
+
+DSA *DSAparams_dup(DSA *dsa)
+	{
+	return ASN1_item_dup(ASN1_ITEM_rptr(DSAparams), dsa);
+	}
