@@ -86,3 +86,8 @@ ASN1_SEQUENCE_cb(DHparams, dh_cb) = {
 } ASN1_SEQUENCE_END_cb(DH, DHparams)
 
 IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DH, DHparams, DHparams)
+
+DH *DHparams_dup(DH *dh)
+	{
+	return ASN1_item_dup(ASN1_ITEM_rptr(DHparams), dh);
+	}

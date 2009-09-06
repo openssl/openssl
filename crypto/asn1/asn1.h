@@ -952,7 +952,7 @@ int ASN1_put_eoc(unsigned char **pp);
 int ASN1_object_size(int constructed, int length, int tag);
 
 /* Used to implement other functions */
-void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, char *x);
+void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, void *x);
 
 #define ASN1_dup_of(type,i2d,d2i,x) \
     ((type*)ASN1_dup(CHECKED_I2D_OF(type, i2d), \
