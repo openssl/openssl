@@ -4,6 +4,10 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+  *) Add --strict-warnings option to Configure script to include devteam
+     warnings in other configurations.
+     [Steve Henson]
+
   *) Add support for --libdir option and LIBDIR variable in makefiles. This
      makes it possible to install openssl libraries in locations which 
      have names other than "lib", for example "/usr/lib64" which some
