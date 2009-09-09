@@ -60,6 +60,7 @@
 
 #include "cryptlib.h"
 #include <openssl/dsa.h>
+#include <openssl/rand.h>
 
 DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{
@@ -70,6 +71,7 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
 	     unsigned int *siglen, DSA *dsa)
 	{
 	DSA_SIG *s;
+	RAND_seed(dgst, dlen);
 	s=DSA_do_sign(dgst,dlen,dsa);
 	if (s == NULL)
 		{
