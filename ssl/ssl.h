@@ -1398,11 +1398,14 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 
 #define DTLS_CTRL_GET_TIMEOUT		73
 #define DTLS_CTRL_HANDLE_TIMEOUT	74
+#define DTLS_CTRL_LISTEN			75
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
 #define DTLSv1_handle_timeout(ssl) \
 	SSL_ctrl(ssl,DTLS_CTRL_HANDLE_TIMEOUT,0, NULL)
+#define DTLSv1_listen(ssl, peer) \
+	SSL_ctrl(ssl,DTLS_CTRL_LISTEN,0, (void *)peer)
 
 #define SSL_session_reused(ssl) \
 	SSL_ctrl((ssl),SSL_CTRL_GET_SESSION_REUSED,0,NULL)
