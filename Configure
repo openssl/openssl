@@ -104,6 +104,8 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 
 my $gcc_devteam_warn = "-Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED";
 
+my $strict_warnings = 0;
+
 my $x86_gcc_des="DES_PTR DES_RISC1 DES_UNROLL";
 
 # MD2_CHAR slags pentium pros
@@ -774,6 +776,10 @@ PROCESS_ARGS:
 			{
 			exit(&test_sanity());
 			}
+		elsif (/^--strict-warnings/)
+			{
+			$strict_warnings = 1;
+			}
 		elsif (/^reconfigure/ || /^reconf/)
 			{
 			if (open(IN,"<$Makefile"))
@@ -1433,6 +1439,16 @@ if ($shlib_version_number =~ /(^[0-9]*)\.([0-9\.]*)/)
 	{
 	$shlib_major=$1;
 	$shlib_minor=$2;
+	}
+
+if ($strict_warnings)
+	{
+	my $wopt;
+	die "ERROR --strict-warnings requires gcc" unless ($cc =~ /gcc$/);
+	foreach $wopt (split /\s+/, $gcc_devteam_warn)
+		{
+		$cflags .= " $wopt" unless ($cflags =~ /$wopt/)
+		}
 	}
 
 open(IN,'<Makefile.org') || die "unable to read Makefile.org:$!\n";
