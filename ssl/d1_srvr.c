@@ -274,6 +274,15 @@ int dtls1_accept(SSL *s)
 				s->state = SSL3_ST_SW_SRVR_HELLO_A;
 
 			s->init_num=0;
+
+			/* If we're just listening, stop here */
+			if (s->d1->listen && s->state == SSL3_ST_SW_SRVR_HELLO_A)
+				{
+				ret = 2;
+				s->d1->listen = 0;
+				goto end;
+				}
+			
 			break;
 			
 		case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A:
