@@ -62,6 +62,7 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
+#include <openssl/rand.h>
 #ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
 #endif
@@ -155,6 +156,7 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen, unsigned char *sig,
 		return 0;
 		}
 #endif
+	RAND_seed(dgst, dlen);
 	s=DSA_do_sign(dgst,dlen,dsa);
 	if (s == NULL)
 		{
