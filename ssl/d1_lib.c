@@ -68,6 +68,7 @@
 
 static void get_current_time(struct timeval *t);
 const char dtls1_version_str[]="DTLSv1" OPENSSL_VERSION_PTEXT;
+int dtls1_listen(SSL *s, struct sockaddr *client);
 
 SSL3_ENC_METHOD DTLSv1_enc_data={
     dtls1_enc,
@@ -224,6 +225,9 @@ long dtls1_ctrl(SSL *s, int cmd, long larg, void *parg)
 		break;
 	case DTLS_CTRL_HANDLE_TIMEOUT:
 		ret = dtls1_handle_timeout(s);
+		break;
+	case DTLS_CTRL_LISTEN:
+		ret = dtls1_listen(s, parg);
 		break;
 
 	default:
@@ -386,3 +390,17 @@ static void get_current_time(struct timeval *t)
 	gettimeofday(t, NULL);
 #endif
 }
+
+int dtls1_listen(SSL *s, struct sockaddr *client)
+	{
+	int ret;
+
+	SSL_set_options(s, SSL_OP_COOKIE_EXCHANGE);
+	s->d1->listen = 1;
+
+	ret = SSL_accept(s);
+	if (ret <= 0) return ret;
+	
+	(void) BIO_dgram_get_peer(SSL_get_rbio(s), client);
+	return 1;
+	}
