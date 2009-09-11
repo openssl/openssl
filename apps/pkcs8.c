@@ -275,7 +275,6 @@ int MAIN(int argc, char **argv)
 		}
 	if (topk8)
 		{
-		BIO_free(in); /* Not needed in this section */
 		pkey = load_key(bio_err, infile, informat, 1,
 			passin, e, "key");
 		if (!pkey)
