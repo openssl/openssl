@@ -15,8 +15,8 @@ i2d_X509_fp - X509 encode and decode functions
  X509 *d2i_X509_bio(BIO *bp, X509 **x);
  X509 *d2i_X509_fp(FILE *fp, X509 **x);
 
- int i2d_X509_bio(X509 *x, BIO *bp);
- int i2d_X509_fp(X509 *x, FILE *fp);
+ int i2d_X509_bio(BIO *bp, X509 *x);
+ int i2d_X509_fp(FILE *fp, X509 *x);
 
 =head1 DESCRIPTION
 
@@ -212,11 +212,11 @@ d2i_X509(), d2i_X509_bio() and d2i_X509_fp() return a valid B<X509> structure
 or B<NULL> if an error occurs. The error code that can be obtained by
 L<ERR_get_error(3)|ERR_get_error(3)>. 
 
-i2d_X509(), i2d_X509_bio() and i2d_X509_fp() return a the number of bytes
-successfully encoded or a negative value if an error occurs. The error code
-can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>. 
+i2d_X509() returns the number of bytes successfully encoded or a negative
+value if an error occurs. The error code can be obtained by
+L<ERR_get_error(3)|ERR_get_error(3)>. 
 
-i2d_X509_bio() and i2d_X509_fp() returns 1 for success and 0 if an error 
+i2d_X509_bio() and i2d_X509_fp() return 1 for success and 0 if an error 
 occurs The error code can be obtained by L<ERR_get_error(3)|ERR_get_error(3)>. 
 
 =head1 SEE ALSO
