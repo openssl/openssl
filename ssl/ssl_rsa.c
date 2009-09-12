@@ -723,7 +723,7 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
 		goto end;
 		}
 
-	x=PEM_read_bio_X509(in,NULL,ctx->default_passwd_callback,ctx->default_passwd_callback_userdata);
+	x=PEM_read_bio_X509_AUX(in,NULL,ctx->default_passwd_callback,ctx->default_passwd_callback_userdata);
 	if (x == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE,ERR_R_PEM_LIB);
