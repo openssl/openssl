@@ -11,7 +11,7 @@ SSL_CIPHER_get_name, SSL_CIPHER_get_bits, SSL_CIPHER_get_version, SSL_CIPHER_des
  const char *SSL_CIPHER_get_name(const SSL_CIPHER *cipher);
  int SSL_CIPHER_get_bits(const SSL_CIPHER *cipher, int *alg_bits);
  char *SSL_CIPHER_get_version(const SSL_CIPHER *cipher);
- char *SSL_CIPHER_description(SSL_CIPHER *cipher, char *buf, int size);
+ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int size);
 
 =head1 DESCRIPTION
 
