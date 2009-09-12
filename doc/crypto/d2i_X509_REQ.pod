@@ -15,8 +15,8 @@ i2d_X509_REQ_bio, i2d_X509_REQ_fp - PKCS#10 certificate request functions.
  X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **x);
  X509_REQ *d2i_X509_REQ_fp(FILE *fp, X509_REQ **x);
 
- int i2d_X509_REQ_bio(X509_REQ *x, BIO *bp);
- int i2d_X509_REQ_fp(X509_REQ *x, FILE *fp);
+ int i2d_X509_REQ_bio(BIO *bp, X509_REQ *x);
+ int i2d_X509_REQ_fp(FILE *fp, X509_REQ *x);
 
 =head1 DESCRIPTION
 
