@@ -1661,7 +1661,7 @@ long SSL_get_default_timeout(const SSL *s);
 
 int SSL_library_init(void );
 
-char *SSL_CIPHER_description(SSL_CIPHER *,char *buf,int size);
+char *SSL_CIPHER_description(const SSL_CIPHER *,char *buf,int size);
 STACK_OF(X509_NAME) *SSL_dup_CA_list(STACK_OF(X509_NAME) *sk);
 
 SSL *SSL_dup(SSL *ssl);
