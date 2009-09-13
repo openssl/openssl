@@ -2707,7 +2707,7 @@ int ssl3_send_client_verify(SSL *s)
 		s->method->ssl3_enc->cert_verify_mac(s,
 			NID_id_GostR3411_94,
 			data);
-		if (!EVP_PKEY_sign(pctx,signbuf,&sigsize,data,32)) {
+		if (EVP_PKEY_sign(pctx, signbuf, &sigsize, data, 32) <= 0) {
 			SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
 			ERR_R_INTERNAL_ERROR);
 			goto err;

@@ -344,7 +344,7 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
 
 	/* Get original receipt request details */
 
-	if (!CMS_get1_ReceiptRequest(osi, &rr))
+	if (CMS_get1_ReceiptRequest(osi, &rr) <= 0)
 		{
 		CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NO_RECEIPT_REQUEST);
 		goto err;
@@ -385,7 +385,7 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
 
 	/* Get original receipt request details */
 
-	if (!CMS_get1_ReceiptRequest(si, &rr))
+	if (CMS_get1_ReceiptRequest(si, &rr) <= 0)
 		{
 		CMSerr(CMS_F_CMS_ENCODE_RECEIPT, CMS_R_NO_RECEIPT_REQUEST);
 		goto err;

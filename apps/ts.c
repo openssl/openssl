@@ -649,7 +649,7 @@ static ASN1_INTEGER *create_nonce(int bits)
 
 	/* Generating random byte sequence. */
 	if (len > (int)sizeof(buf)) goto err;
-	if (!RAND_bytes(buf, len)) goto err;
+	if (RAND_bytes(buf, len) <= 0) goto err;
 
 	/* Find the first non-zero byte and creating ASN1_INTEGER object. */
 	for (i = 0; i < len && !buf[i]; ++i);

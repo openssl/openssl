@@ -860,7 +860,7 @@ void OPENSSL_showfatal (const char *fmta,...)
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
     /* this -------------v--- guards NT-specific calls */
-    if (GetVersion() < 0x80000000 && OPENSSL_isservice())
+    if (GetVersion() < 0x80000000 && OPENSSL_isservice() > 0)
     {	HANDLE h = RegisterEventSource(0,_T("OPENSSL"));
 	const TCHAR *pmsg=buf;
 	ReportEvent(h,EVENTLOG_ERROR_TYPE,0,0,0,1,0,&pmsg,0);
