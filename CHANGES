@@ -4,6 +4,13 @@
 
  Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
 
+
+  *) The functions ENGINE_ctrl(), OPENSSL_isservice(),
+     CMS_get1_RecipientRequest() and RAND_bytes() can return <=0 on error
+     fixes for a few places where the return code is not checked
+     correctly.
+     [Julia Lawall <julia@diku.dk>]
+
   *) Add --strict-warnings option to Configure script to include devteam
      warnings in other configurations.
      [Steve Henson]
