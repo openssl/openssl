@@ -217,7 +217,7 @@ int RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
 		   		ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
-		if (!RAND_bytes(salt, sLen))
+		if (RAND_bytes(salt, sLen) <= 0)
 			goto err;
 		}
 	maskedDBLen = emLen - hLen - 1;

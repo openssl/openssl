@@ -151,7 +151,7 @@ int dtls1_enc(SSL *s, int send)
 					__FILE__, __LINE__);
 			else if ( EVP_CIPHER_block_size(ds->cipher) > 1)
 				{
-				if (!RAND_bytes(rec->input, EVP_CIPHER_block_size(ds->cipher)))
+				if (RAND_bytes(rec->input, EVP_CIPHER_block_size(ds->cipher)) <= 0)
 					return -1;
 				}
 			}
