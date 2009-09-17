@@ -656,7 +656,7 @@ Camellia_cbc_encrypt:
 	mov	%rsi,$out		# out argument
 	mov	%r8,%rbx		# ivp argument
 	mov	%rcx,$key		# key argument
-	mov	272(%rcx),$keyend	# grandRounds
+	mov	272(%rcx),${keyend}d	# grandRounds
 
 	mov	%r8,$_ivp
 	mov	%rbp,$_rsp
