@@ -497,6 +497,7 @@ int RAND_poll(void)
 			ZeroMemory(&hlist, sizeof(HEAPLIST32));
 			hlist.dwSize = sizeof(HEAPLIST32);		
 			if (good) stoptime = GetTickCount() + MAXDELAY;
+#ifdef _MSC_VER
 			if (heaplist_first(handle, &hlist))
 				{
 				/*
@@ -538,6 +539,29 @@ int RAND_poll(void)
 						&& GetTickCount() < stoptime 
 						&& ex_cnt_limit > 0);
 				}
+
+#else
+			if (heaplist_first(handle, &hlist))
+				{
+				do
+					{
+					RAND_add(&hlist, hlist.dwSize, 3);
+					hentry.dwSize = sizeof(HEAPENTRY32);
+					if (heap_first(&hentry,
+						hlist.th32ProcessID,
+						hlist.th32HeapID))
+						{
+						int entrycnt = 80;
+						do
+							RAND_add(&hentry,
+								hentry.dwSize, 5);
+						while (heap_next(&hentry)
+							&& --entrycnt > 0);
+						}
+					} while (heaplist_next(handle, &hlist) 
+						&& GetTickCount() < stoptime);
+				}
+#endif
 
 			/* process walking */
                         /* PROCESSENTRY32 contains 9 fields that will change
