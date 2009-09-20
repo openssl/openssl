@@ -1594,9 +1594,11 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
-	struct timeval timeout, *timeoutp;
+	struct timeval timeout;
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE)
 	struct timeval tv;
+#else
+	struct timeval *timeoutp;
 #endif
 
 	if ((buf=OPENSSL_malloc(bufsize)) == NULL)
