@@ -588,7 +588,13 @@ static int get_ip(const char *str, unsigned char ip[4])
 int BIO_get_accept_socket(char *host, int bind_mode)
 	{
 	int ret=0;
+#if OPENSSL_USE_IPV6
+# define ossl_sock_family(s) s.ss_family
+	struct sockaddr_storage server,client;
+#else
+# define ossl_sock_family(s) s.sa_family
 	struct sockaddr server,client;
+#endif
 	struct sockaddr_in *sa_in;
 	int s=INVALID_SOCKET,cs;
 	unsigned char ip[4];
@@ -660,7 +666,11 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		}
 
 	if ((*p_getaddrinfo.f)(h,p,&hint,&res)) break;
+#if OPENSSL_USE_IPV6
+	memcpy(&server, res->ai_addr, res->ai_addrlen);
+#else
 	server = *res->ai_addr;
+#endif
 	(*p_freeaddrinfo.f)(res);
 	goto again;
 	} while (0);
@@ -687,7 +697,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		}
 
 again:
-	s=socket(server.sa_family,SOCK_STREAM,SOCKET_PROTOCOL);
+	s=socket(ossl_sock_family(server),SOCK_STREAM,SOCKET_PROTOCOL);
 	if (s == INVALID_SOCKET)
 		{
 		SYSerr(SYS_F_SOCKET,get_last_socket_error());
@@ -705,7 +715,7 @@ again:
 		bind_mode=BIO_BIND_NORMAL;
 		}
 #endif
-	if (bind(s,&server,sizeof(server)) == -1)
+	if (bind(s,(struct sockaddr *)&server,sizeof(server)) == -1)
 		{
 #ifdef SO_REUSEADDR
 		err_num=get_last_socket_error();
@@ -716,7 +726,7 @@ again:
 			if (h == NULL || strcmp(h,"*") == 0)
 				{
 #if OPENSSL_USE_IPV6
-				if (client.sa_family == AF_INET6)
+				if (ossl_sock_family(client) == AF_INET6)
 					{
 					struct sockaddr_in6 *sin6 =
 						(struct sockaddr_in6 *)&client;
@@ -725,7 +735,7 @@ again:
 					}
 				else
 #endif
-				if (client.sa_family == AF_INET)
+				if (ossl_sock_family(client) == AF_INET)
 					{
 					struct sockaddr_in *sin4 =
 						(struct sockaddr_in *)&client;
@@ -733,7 +743,7 @@ again:
 					}
 				else	goto err;
 				}
-			cs=socket(client.sa_family,SOCK_STREAM,SOCKET_PROTOCOL);
+			cs=socket(ossl_sock_family(client),SOCK_STREAM,SOCKET_PROTOCOL);
 			if (cs != INVALID_SOCKET)
 				{
 				int ii;
