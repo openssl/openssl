@@ -638,7 +638,7 @@ foreach (values %lib_nam)
 	}
 
 # hack to add version info on MSVC
-if (($platform eq "VC-WIN32") || ($platform eq "VC-WIN64A)
+if (($platform eq "VC-WIN32") || ($platform eq "VC-WIN64A")
 	|| ($platform eq "VC-WIN64I") || ($platform eq "VC-NT")) {
     $rules.= <<"EOF";
 \$(OBJ_D)\\\$(CRYPTO).res: ms\\version32.rc
@@ -831,7 +831,7 @@ sub do_defs
 		$ret.=$t;
 		}
 	# hack to add version info on MSVC
-	if ($shlib && (($platform eq "VC-WIN32") || ($platfrom eq "VC-WIN64I") || ($platform eq "VC-WIN64A) || ($platform eq "VC-NT")))
+	if ($shlib && (($platform eq "VC-WIN32") || ($platfrom eq "VC-WIN64I") || ($platform eq "VC-WIN64A") || ($platform eq "VC-NT")))
 		{
 		if ($var eq "CRYPTOOBJ")
 			{ $ret.="\$(OBJ_D)\\\$(CRYPTO).res "; }
