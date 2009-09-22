@@ -324,7 +324,7 @@ static int dgram_write(BIO *b, const char *in, int inl)
 	BIO_clear_retry_flags(b);
 	if (ret <= 0)
 		{
-		if (BIO_sock_should_retry(ret))
+		if (BIO_dgram_should_retry(ret))
 			{
 			BIO_set_retry_write(b);  
 			data->_errno = get_last_socket_error();
@@ -694,10 +694,6 @@ int BIO_dgram_non_fatal_error(int err)
 # endif
 #endif
 
-#if defined(ENOTCONN)
-	case ENOTCONN:
-#endif
-
 #ifdef EINTR
 	case EINTR:
 #endif
@@ -718,11 +714,6 @@ int BIO_dgram_non_fatal_error(int err)
 
 #ifdef EALREADY
 	case EALREADY:
-#endif
-
-/* DF bit set, and packet larger than MTU */
-#ifdef EMSGSIZE
-	case EMSGSIZE:
 #endif
 
 		return(1);
