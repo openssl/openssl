@@ -190,7 +190,7 @@ DSA *DSA_new_method(ENGINE *engine)
 	ret->method_mont_p=NULL;
 
 	ret->references=1;
-	ret->flags=ret->meth->flags;
+	ret->flags=ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data);
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
