@@ -97,8 +97,8 @@ static int surewarehk_rsa_sign(int flen,const unsigned char *from,unsigned char 
 
 /* RAND stuff */
 static int surewarehk_rand_bytes(unsigned char *buf, int num);
-static void surewarehk_rand_seed(const void *buf, int num);
-static void surewarehk_rand_add(const void *buf, int num, double entropy);
+static int surewarehk_rand_seed(const void *buf, int num);
+static int surewarehk_rand_add(const void *buf, int num, double entropy);
 
 /* KM stuff */
 static EVP_PKEY *surewarehk_load_privkey(ENGINE *e, const char *key_id,
@@ -629,24 +629,29 @@ static int surewarehk_rand_bytes(unsigned char *buf, int num)
 	return ret==1 ? 1 : 0;
 }
 
-static void surewarehk_rand_seed(const void *buf, int num)
+static int surewarehk_rand_seed(const void *buf, int num)
 {
 	int ret=0;
 	char msg[64]="ENGINE_rand_seed";
 	if(!p_surewarehk_Rand_Seed)
 	{
 		SUREWAREerr(SUREWARE_F_SUREWAREHK_RAND_SEED,ENGINE_R_NOT_INITIALISED);
+		return 0;
 	}
 	else
 	{
 		ret = p_surewarehk_Rand_Seed(msg,buf, num);
 		surewarehk_error_handling(msg,SUREWARE_F_SUREWAREHK_RAND_SEED,ret);
+		if (ret == 1)
+			return 1;
+		else
+			return 0;
 	}
 }
 
-static void surewarehk_rand_add(const void *buf, int num, double entropy)
+static int surewarehk_rand_add(const void *buf, int num, double entropy)
 {
-	surewarehk_rand_seed(buf,num);
+	return surewarehk_rand_seed(buf,num);
 }
 
 static EVP_PKEY* sureware_load_public(ENGINE *e,const char *key_id,char *hptr,unsigned long el,char keytype)
