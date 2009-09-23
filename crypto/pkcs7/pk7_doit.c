@@ -679,7 +679,11 @@ static int do_pkcs7_signed_attrib(PKCS7_SIGNER_INFO *si, EVP_MD_CTX *mctx)
 		}
 
 	/* Add digest */
-	EVP_DigestFinal_ex(mctx, md_data,&md_len);
+	if (!EVP_DigestFinal_ex(mctx, md_data,&md_len))
+		{
+		PKCS7err(PKCS7_F_DO_PKCS7_SIGNED_ATTRIB, ERR_R_EVP_LIB);
+		return 0;
+		}
 	if (!PKCS7_add1_attrib_digest(si, md_data, md_len))
 		{
 		PKCS7err(PKCS7_F_DO_PKCS7_SIGNED_ATTRIB, ERR_R_MALLOC_FAILURE);
@@ -787,7 +791,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 
 			/* We now have the EVP_MD_CTX, lets do the
 			 * signing. */
-			EVP_MD_CTX_copy_ex(&ctx_tmp,mdc);
+			if (!EVP_MD_CTX_copy_ex(&ctx_tmp,mdc))
+				goto err;
 
 			sk=si->auth_attr;
 
@@ -825,7 +830,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
 		if (!PKCS7_find_digest(&mdc, bio,
 				OBJ_obj2nid(p7->d.digest->md->algorithm)))
 			goto err;
-		EVP_DigestFinal_ex(mdc,md_data,&md_len);
+		if (!EVP_DigestFinal_ex(mdc,md_data,&md_len))
+			goto err;
 		M_ASN1_OCTET_STRING_set(p7->d.digest->digest, md_data, md_len);
 		}
 
@@ -1018,7 +1024,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 
 	/* mdc is the digest ctx that we want, unless there are attributes,
 	 * in which case the digest is the signed attributes */
-	EVP_MD_CTX_copy_ex(&mdc_tmp,mdc);
+	if (!EVP_MD_CTX_copy_ex(&mdc_tmp,mdc))
+		goto err;
 
 	sk=si->auth_attr;
 	if ((sk != NULL) && (sk_X509_ATTRIBUTE_num(sk) != 0))
@@ -1028,7 +1035,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 		int alen;
 		ASN1_OCTET_STRING *message_digest;
 
-		EVP_DigestFinal_ex(&mdc_tmp,md_dat,&md_len);
+		if (!EVP_DigestFinal_ex(&mdc_tmp,md_dat,&md_len))
+			goto err;
 		message_digest=PKCS7_digest_from_attributes(sk);
 		if (!message_digest)
 			{
@@ -1053,7 +1061,8 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 			goto err;
 			}
 
-		EVP_VerifyInit_ex(&mdc_tmp,EVP_get_digestbynid(md_type), NULL);
+		if (!EVP_VerifyInit_ex(&mdc_tmp,EVP_get_digestbynid(md_type), NULL))
+			goto err;
 
 		alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
 						ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY));
@@ -1063,7 +1072,8 @@ for (ii=0; ii<md_len; ii++) printf("%02X",md_dat[ii]); printf(" calc\n");
 			ret = -1;
 			goto err;
 			}
-		EVP_VerifyUpdate(&mdc_tmp, abuf, alen);
+		if (!EVP_VerifyUpdate(&mdc_tmp, abuf, alen))
+			goto err;
 
 		OPENSSL_free(abuf);
 		}

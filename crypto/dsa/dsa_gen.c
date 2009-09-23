@@ -201,8 +201,10 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 				}
 
 			/* step 2 */
-			EVP_Digest(seed, qsize, md,   NULL, evpmd, NULL);
-			EVP_Digest(buf,  qsize, buf2, NULL, evpmd, NULL);
+			if (!EVP_Digest(seed, qsize, md,   NULL, evpmd, NULL))
+				goto err;
+			if (!EVP_Digest(buf,  qsize, buf2, NULL, evpmd, NULL))
+				goto err;
 			for (i = 0; i < qsize; i++)
 				md[i]^=buf2[i];
 
@@ -252,7 +254,9 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 						break;
 					}
 
-				EVP_Digest(buf, qsize, md ,NULL, evpmd, NULL);
+				if (!EVP_Digest(buf, qsize, md ,NULL, evpmd,
+									NULL))
+					goto err;
 
 				/* step 8 */
 				if (!BN_bin2bn(md, qsize, r0))

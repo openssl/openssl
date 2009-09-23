@@ -110,10 +110,14 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
 		itmp[1] = (unsigned char)((i >> 16) & 0xff);
 		itmp[2] = (unsigned char)((i >> 8) & 0xff);
 		itmp[3] = (unsigned char)(i & 0xff);
-		HMAC_Init_ex(&hctx, pass, passlen, digest, NULL);
-		HMAC_Update(&hctx, salt, saltlen);
-		HMAC_Update(&hctx, itmp, 4);
-		HMAC_Final(&hctx, digtmp, NULL);
+		if (!HMAC_Init_ex(&hctx, pass, passlen, digest, NULL)
+			|| !HMAC_Update(&hctx, salt, saltlen)
+			|| !HMAC_Update(&hctx, itmp, 4)
+			|| !HMAC_Final(&hctx, digtmp, NULL))
+			{
+			HMAC_CTX_cleanup(&hctx);
+			return 0;
+			}
 		memcpy(p, digtmp, cplen);
 		for(j = 1; j < iter; j++)
 			{
@@ -211,7 +215,11 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	}
 
 	/* Fixup cipher based on AlgorithmIdentifier */
-	EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, en_de);
+	if (!EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, en_de))
+		{
+		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN, ERR_R_EVP_LIB);
+		goto err;
+		}
 	if(EVP_CIPHER_asn1_to_param(ctx, pbe2->encryption->parameter) < 0) {
 		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN,
 					EVP_R_CIPHER_PARAMETER_ERROR);
@@ -278,7 +286,11 @@ int PKCS5_v2_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	if(!PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, iter, prfmd,
 						   keylen, key))
 		goto err;
-	EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de);
+	if (!EVP_CipherInit_ex(ctx, NULL, NULL, key, NULL, en_de))
+		{
+		EVPerr(EVP_F_PKCS5_V2_PBE_KEYIVGEN, ERR_R_EVP_LIB);
+		goto err;
+		}
 	OPENSSL_cleanse(key, keylen);
 	PBKDF2PARAM_free(kdf);
 	return 1;

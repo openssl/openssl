@@ -4,6 +4,13 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) Extensive audit of libcrypto with DEBUG_UNUSED. Fix many cases where
+     return value is ignored. NB. The functions RAND_add(), RAND_seed(),
+     BIO_set_cipher() and some obscure PEM functions were changed so they
+     can now return an error. The RAND changes required a change to the
+     RAND_METHOD structure.
+     [Steve Henson]
+
   *) New macro __owur for "OpenSSL Warn Unused Result". This makes use of
      a gcc attribute to warn if the result of a function is ignored. This
      is enable if DEBUG_UNUSED is set. Add to several functions in evp.h

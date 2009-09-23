@@ -407,10 +407,7 @@ int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
 			}
 		BIO_get_md_ctx(chain, &mtmp);
 		if (EVP_MD_CTX_type(mtmp) == nid)
-			{
-			EVP_MD_CTX_copy_ex(mctx, mtmp);
-			return 1;
-			}
+			return EVP_MD_CTX_copy_ex(mctx, mtmp);
 		chain = BIO_next(chain);
 		}
 	}

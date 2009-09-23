@@ -85,8 +85,10 @@ int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *sigret, unsigned int *siglen,
 
 	*siglen=0;
 	EVP_MD_CTX_init(&tmp_ctx);
-	EVP_MD_CTX_copy_ex(&tmp_ctx,ctx);   
-	EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len);
+	if (!EVP_MD_CTX_copy_ex(&tmp_ctx,ctx))
+		goto err;  
+	if (!EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len))
+		goto err;
 	EVP_MD_CTX_cleanup(&tmp_ctx);
 
 	if (ctx->digest->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE)

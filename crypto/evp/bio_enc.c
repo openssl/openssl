@@ -198,9 +198,13 @@ static int enc_read(BIO *b, char *out, int outl)
 			}
 		else
 			{
-			EVP_CipherUpdate(&(ctx->cipher),
+			if (!EVP_CipherUpdate(&(ctx->cipher),
 				(unsigned char *)ctx->buf,&ctx->buf_len,
-				(unsigned char *)&(ctx->buf[BUF_OFFSET]),i);
+				(unsigned char *)&(ctx->buf[BUF_OFFSET]),i))
+				{
+				BIO_clear_retry_flags(b);
+				return 0;
+				}	
 			ctx->cont=1;
 			/* Note: it is possible for EVP_CipherUpdate to
 			 * decrypt zero bytes because this is or looks like
@@ -257,9 +261,13 @@ static int enc_write(BIO *b, const char *in, int inl)
 	while (inl > 0)
 		{
 		n=(inl > ENC_BLOCK_SIZE)?ENC_BLOCK_SIZE:inl;
-		EVP_CipherUpdate(&(ctx->cipher),
+		if (!EVP_CipherUpdate(&(ctx->cipher),
 			(unsigned char *)ctx->buf,&ctx->buf_len,
-			(unsigned char *)in,n);
+			(unsigned char *)in,n))
+			{
+			BIO_clear_retry_flags(b);
+			return 0;
+			}
 		inl-=n;
 		in+=n;
 
@@ -298,8 +306,9 @@ static long enc_ctrl(BIO *b, int cmd, long num, void *ptr)
 	case BIO_CTRL_RESET:
 		ctx->ok=1;
 		ctx->finished=0;
-		EVP_CipherInit_ex(&(ctx->cipher),NULL,NULL,NULL,NULL,
-			ctx->cipher.encrypt);
+		if (!EVP_CipherInit_ex(&(ctx->cipher),NULL,NULL,NULL,NULL,
+			ctx->cipher.encrypt))
+			return 0;
 		ret=BIO_ctrl(b->next_bio,cmd,num,ptr);
 		break;
 	case BIO_CTRL_EOF:	/* More to read */
@@ -405,22 +414,24 @@ EVP_CIPHER_ctx *c;
 	}
 */
 
-void BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
+int BIO_set_cipher(BIO *b, const EVP_CIPHER *c, const unsigned char *k,
 	     const unsigned char *i, int e)
 	{
 	BIO_ENC_CTX *ctx;
 
-	if (b == NULL) return;
+	if (b == NULL) return 0;
 
 	if ((b->callback != NULL) &&
 		(b->callback(b,BIO_CB_CTRL,(const char *)c,BIO_CTRL_SET,e,0L) <= 0))
-		return;
+		return 0;
 
 	b->init=1;
 	ctx=(BIO_ENC_CTX *)b->ptr;
-	EVP_CipherInit_ex(&(ctx->cipher),c,NULL, k,i,e);
+	if (!EVP_CipherInit_ex(&(ctx->cipher),c,NULL, k,i,e))
+		return 0;
 	
 	if (b->callback != NULL)
-		b->callback(b,BIO_CB_CTRL,(const char *)c,BIO_CTRL_SET,e,1L);
+		return b->callback(b,BIO_CB_CTRL,(const char *)c,BIO_CTRL_SET,e,1L);
+	return 1;
 	}
 

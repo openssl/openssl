@@ -71,8 +71,10 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
 	MS_STATIC EVP_MD_CTX tmp_ctx;
 
 	EVP_MD_CTX_init(&tmp_ctx);
-	EVP_MD_CTX_copy_ex(&tmp_ctx,ctx);     
-	EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len);
+	if (!EVP_MD_CTX_copy_ex(&tmp_ctx,ctx))
+		goto err;    
+	if (!EVP_DigestFinal_ex(&tmp_ctx,&(m[0]),&m_len))
+		goto err;
 	EVP_MD_CTX_cleanup(&tmp_ctx);
 
 	if (ctx->digest->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE)
