@@ -498,7 +498,7 @@ void	EVP_MD_CTX_init(EVP_MD_CTX *ctx);
 int	EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
 void	EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
-int     EVP_MD_CTX_copy_ex(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
+__owur int     EVP_MD_CTX_copy_ex(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
 void	EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
 void	EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
 int 	EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx,int flags);
@@ -517,7 +517,7 @@ int	EVP_read_pw_string(char *buf,int length,const char *prompt,int verify);
 void	EVP_set_pw_prompt(const char *prompt);
 char *	EVP_get_pw_prompt(void);
 
-int	EVP_BytesToKey(const EVP_CIPHER *type,const EVP_MD *md,
+__owur int	EVP_BytesToKey(const EVP_CIPHER *type,const EVP_MD *md,
 		const unsigned char *salt, const unsigned char *data,
 		int datal, int count, unsigned char *key,unsigned char *iv);
 
@@ -603,7 +603,7 @@ BIO_METHOD *BIO_f_md(void);
 BIO_METHOD *BIO_f_base64(void);
 BIO_METHOD *BIO_f_cipher(void);
 BIO_METHOD *BIO_f_reliable(void);
-void BIO_set_cipher(BIO *b,const EVP_CIPHER *c,const unsigned char *k,
+__owur int BIO_set_cipher(BIO *b,const EVP_CIPHER *c,const unsigned char *k,
 		const unsigned char *i, int enc);
 #endif
 
