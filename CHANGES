@@ -4,6 +4,12 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) New macro __owur for "OpenSSL Warn Unused Result". This makes use of
+     a gcc attribute to warn if the result of a function is ignored. This
+     is enable if DEBUG_UNUSED is set. Add to several functions in evp.h
+     whose return value is often ignored. 
+     [Steve Henson]
+
   *) The function EVP_PKEY_sign() returns <=0 on error: check return code
      correctly.
      [Julia Lawall <julia@diku.dk>]

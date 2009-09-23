@@ -283,6 +283,12 @@ extern "C" {
 # define OPENSSL_GLOBAL_REF(name) _shadow_##name
 #endif
 
+#ifdef DEBUG_UNUSED
+#define __owur __attribute__((__warn_unused_result__))
+#else
+#define __owur 
+#endif
+
 #ifdef  __cplusplus
 }
 #endif
