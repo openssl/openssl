@@ -96,8 +96,11 @@ cmll_ctr.o: ../../include/openssl/camellia.h ../../include/openssl/e_os2.h
 cmll_ctr.o: ../../include/openssl/opensslconf.h cmll_ctr.c cmll_locl.h
 cmll_ecb.o: ../../include/openssl/camellia.h ../../include/openssl/e_os2.h
 cmll_ecb.o: ../../include/openssl/opensslconf.h cmll_ecb.c cmll_locl.h
-cmll_misc.o: ../../include/openssl/camellia.h ../../include/openssl/e_os2.h
+cmll_misc.o: ../../include/openssl/camellia.h ../../include/openssl/crypto.h
+cmll_misc.o: ../../include/openssl/e_os2.h ../../include/openssl/fips.h
 cmll_misc.o: ../../include/openssl/opensslconf.h
-cmll_misc.o: ../../include/openssl/opensslv.h cmll_locl.h cmll_misc.c
+cmll_misc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+cmll_misc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+cmll_misc.o: ../../include/openssl/symhacks.h cmll_locl.h cmll_misc.c
 cmll_ofb.o: ../../include/openssl/camellia.h ../../include/openssl/e_os2.h
 cmll_ofb.o: ../../include/openssl/opensslconf.h cmll_locl.h cmll_ofb.c

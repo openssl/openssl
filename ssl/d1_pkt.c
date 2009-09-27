@@ -134,7 +134,7 @@ static int dtls1_record_needs_buffering(SSL *s, SSL3_RECORD *rr,
 	unsigned short *priority, unsigned long *offset);
 #endif
 static int dtls1_buffer_record(SSL *s, record_pqueue *q,
-	PQ_64BIT priority);
+	PQ_64BIT *priority);
 static int dtls1_process_record(SSL *s);
 #if PQ_64BIT_IS_INTEGER
 static PQ_64BIT bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num);
@@ -162,7 +162,7 @@ dtls1_copy_record(SSL *s, pitem *item)
 
 
 static int
-dtls1_buffer_record(SSL *s, record_pqueue *queue, PQ_64BIT priority)
+dtls1_buffer_record(SSL *s, record_pqueue *queue, PQ_64BIT *priority)
 {
     DTLS1_RECORD_DATA *rdata;
 	pitem *item;
@@ -172,7 +172,7 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, PQ_64BIT priority)
 		return 0;
 		
 	rdata = OPENSSL_malloc(sizeof(DTLS1_RECORD_DATA));
-	item = pitem_new(priority, rdata);
+	item = pitem_new(*priority, rdata);
 	if (rdata == NULL || item == NULL)
 		{
 		if (rdata != NULL) OPENSSL_free(rdata);
@@ -267,7 +267,7 @@ dtls1_process_buffered_records(SSL *s)
             if ( ! dtls1_process_record(s))
                 return(0);
             dtls1_buffer_record(s, &(s->d1->processed_rcds), 
-                s->s3->rrec.seq_num);
+                &s->s3->rrec.seq_num);
             }
         }
 
@@ -490,7 +490,7 @@ int dtls1_get_record(SSL *s)
 	int i,n;
 	SSL3_RECORD *rr;
 	SSL_SESSION *sess;
-	unsigned char *p;
+	unsigned char *p = NULL;
 	unsigned short version;
 	DTLS1_BITMAP *bitmap;
 	unsigned int is_next_epoch;
@@ -631,7 +631,7 @@ again:
     if (is_next_epoch)
         {
         dtls1_record_bitmap_update(s, bitmap);
-        dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
+        dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), &rr->seq_num);
 	rr->length = 0;
         s->packet_length = 0;
         goto again;
