@@ -787,7 +787,7 @@ BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
 		if (!OCSP_REQUEST_add_ext(req, ext, -1))
 			goto err;
 		}
-	resp = process_responder(err, req, host, path, port, use_ssl,
+	resp = process_responder(err, req, host, path, port, use_ssl, NULL,
 					srctx->timeout);
 	if (!resp)
 		{
