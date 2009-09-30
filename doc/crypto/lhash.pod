@@ -296,7 +296,7 @@ were changed for better type safety, and the function types LHASH_COMP_FN_TYPE,
 LHASH_HASH_FN_TYPE, LHASH_DOALL_FN_TYPE and LHASH_DOALL_ARG_FN_TYPE 
 became available.
 
-In OpenSSL 0.9.9, the lhash interface was revamped for even better
+In OpenSSL 1.0.0, the lhash interface was revamped for even better
 type checking.
 
 =cut

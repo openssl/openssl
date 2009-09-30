@@ -61,6 +61,6 @@ L<CMS_encrypt(3)|CMS_encrypt(3)>
 
 =head1 HISTORY
 
-BIO_new_CMS() was added to OpenSSL 0.9.9
+BIO_new_CMS() was added to OpenSSL 1.0.0
 
 =cut

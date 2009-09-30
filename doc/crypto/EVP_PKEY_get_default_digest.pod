@@ -36,6 +36,6 @@ L<EVP_PKEY_verifyrecover(3)|EVP_PKEY_verifyrecover(3)>,
 
 =head1 HISTORY
 
-This function was first added to OpenSSL 0.9.9.
+This function was first added to OpenSSL 1.0.0.
 
 =cut

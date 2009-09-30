@@ -58,9 +58,9 @@ If an application needs to call BIO_gets() or BIO_puts() through
 a chain containing digest BIOs then this can be done by prepending
 a buffering BIO.
 
-Before OpenSSL 0.9.9 the call to BIO_get_md_ctx() would only work if the BIO
+Before OpenSSL 1.0.0 the call to BIO_get_md_ctx() would only work if the BIO
 had been initialized for example by calling BIO_set_md() ). In OpenSSL
-0.9.9 and later the context is always returned and the BIO is state is set
+1.0.0 and later the context is always returned and the BIO is state is set
 to initialized. This allows applications to initialize the context externally
 if the standard calls such as BIO_set_md() are not sufficiently flexible.
 

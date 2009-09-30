@@ -110,7 +110,7 @@ The following is a list of all permitted cipher strings and their meanings.
 =item B<DEFAULT>
 
 the default cipher list. This is determined at compile time and, as of OpenSSL
-0.9.9, is normally B<ALL:!aNULL:!eNULL>. This must be the first cipher string
+1.0.0, is normally B<ALL:!aNULL:!eNULL>. This must be the first cipher string
 specified.
 
 =item B<COMPLEMENTOFDEFAULT>
@@ -473,6 +473,6 @@ L<s_client(1)|s_client(1)>, L<s_server(1)|s_server(1)>, L<ssl(3)|ssl(3)>
 
 The B<COMPLENTOFALL> and B<COMPLEMENTOFDEFAULT> selection options
 for cipherlist strings were added in OpenSSL 0.9.7.
-The B<-V> option for the B<ciphers> command was added in OpenSSL 0.9.9.
+The B<-V> option for the B<ciphers> command was added in OpenSSL 1.0.0.
 
 =cut
