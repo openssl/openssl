@@ -799,7 +799,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
 		}
 	r = EVP_DigestVerifyFinal(&mctx,
 			si->signature->data, si->signature->length);
-	if (!r)
+	if (r <= 0)
 		CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, CMS_R_VERIFICATION_FAILURE);
 	err:
 	EVP_MD_CTX_cleanup(&mctx);
