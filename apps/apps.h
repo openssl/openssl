@@ -259,6 +259,7 @@ ENGINE *setup_engine(BIO *err, const char *engine, int debug);
 #ifndef OPENSSL_NO_OCSP
 OCSP_RESPONSE *process_responder(BIO *err, OCSP_REQUEST *req,
 			char *host, char *path, char *port, int use_ssl,
+			STACK_OF(CONF_VALUE) *headers,
 			int req_timeout);
 #endif
 

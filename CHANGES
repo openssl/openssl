@@ -4,6 +4,10 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) Update OCSP request code to permit adding custom headers to the request:
+     some responders need this.
+     [Steve Henson]
+
   *) Extensive audit of libcrypto with DEBUG_UNUSED. Fix many cases where
      return value is ignored. NB. The functions RAND_add(), RAND_seed(),
      BIO_set_cipher() and some obscure PEM functions were changed so they
