@@ -47,6 +47,6 @@ L<EVP_PKEY_new(3)|EVP_PKEY_new(3)>
 
 =head1 HISTORY
 
-These functions were first added to OpenSSL 0.9.9.
+These functions were first added to OpenSSL 1.0.0.
 
 =cut

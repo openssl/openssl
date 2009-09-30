@@ -36,6 +36,6 @@ L<i2d_CMS_bio_stream(3)|i2d_CMS_bio_stream(3)>
 
 =head1 HISTORY
 
-PEM_write_bio_CMS_stream() was added to OpenSSL 0.9.9
+PEM_write_bio_CMS_stream() was added to OpenSSL 1.0.0
 
 =cut

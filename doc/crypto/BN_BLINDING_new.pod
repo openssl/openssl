@@ -101,7 +101,7 @@ L<bn(3)|bn(3)>
 
 =head1 HISTORY
 
-BN_BLINDING_thread_id was first introduced in OpenSSL 0.9.9, and it
+BN_BLINDING_thread_id was first introduced in OpenSSL 1.0.0, and it
 deprecates BN_BLINDING_set_thread_id and BN_BLINDING_get_thread_id.
 
 BN_BLINDING_convert_ex, BN_BLINDIND_invert_ex, BN_BLINDING_get_thread_id,

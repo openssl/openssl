@@ -439,7 +439,7 @@ structures may cause parsing errors.
 =head1 HISTORY
 
 The use of multiple B<-signer> options and the B<-resign> command were first
-added in OpenSSL 0.9.9
+added in OpenSSL 1.0.0
 
 
 =cut

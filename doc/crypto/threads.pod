@@ -198,7 +198,7 @@ CRYPTO_set_locking_callback() is
 available in all versions of SSLeay and OpenSSL.
 CRYPTO_num_locks() was added in OpenSSL 0.9.4.
 All functions dealing with dynamic locks were added in OpenSSL 0.9.5b-dev.
-B<CRYPTO_THREADID> and associated functions were introduced in OpenSSL 0.9.9
+B<CRYPTO_THREADID> and associated functions were introduced in OpenSSL 1.0.0
 to replace (actually, deprecate) the previous CRYPTO_set_id_callback(),
 CRYPTO_get_id_callback(), and CRYPTO_thread_id() functions which assumed
 thread IDs to always be represented by 'unsigned long'.

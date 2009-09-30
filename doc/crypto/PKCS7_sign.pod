@@ -80,16 +80,16 @@ BIO_new_PKCS7().
 If a signer is specified it will use the default digest for the signing
 algorithm. This is B<SHA1> for both RSA and DSA keys.
 
-In OpenSSL 0.9.9 the B<certs>, B<signcert> and B<pkey> parameters can all be
+In OpenSSL 1.0.0 the B<certs>, B<signcert> and B<pkey> parameters can all be
 B<NULL> if the B<PKCS7_PARTIAL> flag is set. One or more signers can be added
 using the function B<PKCS7_sign_add_signer()>. B<PKCS7_final()> must also be
 called to finalize the structure if streaming is not enabled. Alternative
 signing digests can also be specified using this method.
 
-In OpenSSL 0.9.9 if B<signcert> and B<pkey> are NULL then a certificates only
+In OpenSSL 1.0.0 if B<signcert> and B<pkey> are NULL then a certificates only
 PKCS#7 structure is output.
 
-In versions of OpenSSL before 0.9.9 the B<signcert> and B<pkey> parameters must
+In versions of OpenSSL before 1.0.0 the B<signcert> and B<pkey> parameters must
 B<NOT> be NULL.
 
 =head1 BUGS
@@ -109,8 +109,8 @@ L<ERR_get_error(3)|ERR_get_error(3)>, L<PKCS7_verify(3)|PKCS7_verify(3)>
 
 PKCS7_sign() was added to OpenSSL 0.9.5
 
-The B<PKCS7_PARTIAL> flag was added in OpenSSL 0.9.9
+The B<PKCS7_PARTIAL> flag was added in OpenSSL 1.0.0
 
-The B<PKCS7_STREAM> flag was added in OpenSSL 0.9.9
+The B<PKCS7_STREAM> flag was added in OpenSSL 1.0.0
 
 =cut

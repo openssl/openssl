@@ -82,6 +82,6 @@ L<PKCS7_final(3)|PKCS7_final(3)>,
 
 =head1 HISTORY
 
-PPKCS7_sign_add_signer() was added to OpenSSL 0.9.9
+PPKCS7_sign_add_signer() was added to OpenSSL 1.0.0
 
 =cut

@@ -77,6 +77,6 @@ L<sha(3)|sha(3)>, L<dgst(1)|dgst(1)>
 =head1 HISTORY
 
 EVP_DigestVerifyInit(), EVP_DigestVerifyUpdate() and EVP_DigestVerifyFinal() 
-were first added to OpenSSL 0.9.9.
+were first added to OpenSSL 1.0.0.
 
 =cut
