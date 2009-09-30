@@ -266,12 +266,12 @@ int OCSP_RESPONSE_print(BIO *bp, OCSP_RESPONSE* o, unsigned long flags)
 			if (!ASN1_GENERALIZEDTIME_print(bp,single->nextUpdate))
 				goto err;
 			}
-		if (!BIO_write(bp,"\n",1)) goto err;
+		if (BIO_write(bp,"\n",1) <= 0) goto err;
 		if (!X509V3_extensions_print(bp,
 					"Response Single Extensions",
 					single->singleExtensions, flags, 8))
 							goto err;
-		if (!BIO_write(bp,"\n",1)) goto err;
+		if (BIO_write(bp,"\n",1) <= 0) goto err;
 		}
 	if (!X509V3_extensions_print(bp, "Response Extensions",
 					rd->responseExtensions, flags, 4))
