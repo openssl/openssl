@@ -179,8 +179,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, unsigned char *sig, size_t siglen)
 	unsigned int mdlen;
 	int vctx;
 
-	/* FIXME: surely this should test verifyctx? (Ben 29/12/08) */
-	if (ctx->pctx->pmeth->signctx)
+	if (ctx->pctx->pmeth->verifyctx)
 		vctx = 1;
 	else
 		vctx = 0;
