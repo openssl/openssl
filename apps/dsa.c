@@ -351,7 +351,7 @@ bad:
 		BIO_printf(bio_err,"bad output format specified for outfile\n");
 		goto end;
 		}
-	if (!i)
+	if (i <= 0)
 		{
 		BIO_printf(bio_err,"unable to write private key\n");
 		ERR_print_errors(bio_err);
