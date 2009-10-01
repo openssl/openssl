@@ -267,7 +267,7 @@ int ssl2_accept(SSL *s)
  		case SSL2_ST_SEND_SERVER_VERIFY_C:
  			/* get the number of bytes to write */
  			num1=BIO_ctrl(s->wbio,BIO_CTRL_INFO,0,NULL);
- 			if (num1 != 0)
+ 			if (num1 > 0)
  				{
 				s->rwstate=SSL_WRITING;
  				num1=BIO_flush(s->wbio);
