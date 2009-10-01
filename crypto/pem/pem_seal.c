@@ -100,7 +100,7 @@ int PEM_SealInit(PEM_ENCODE_SEAL_CTX *ctx, EVP_CIPHER *type, EVP_MD *md_type,
 
 	EVP_CIPHER_CTX_init(&ctx->cipher);
 	ret=EVP_SealInit(&ctx->cipher,type,ek,ekl,iv,pubk,npubk);
-	if (!ret) goto err;
+	if (ret <= 0) goto err;
 
 	/* base64 encode the keys */
 	for (i=0; i<npubk; i++)
