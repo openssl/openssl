@@ -1027,7 +1027,7 @@ int test_exp(BIO *bp, BN_CTX *ctx)
 		BN_bntest_rand(a,20+i*5,0,0); /**/
 		BN_bntest_rand(b,2+i,0,0); /**/
 
-		if (!BN_exp(d,a,b,ctx))
+		if (BN_exp(d,a,b,ctx) <= 0)
 			return(0);
 
 		if (bp != NULL)
