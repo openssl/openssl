@@ -96,8 +96,7 @@ unsigned char * PKCS12_pbe_crypt(X509_ALGOR *algor, const char *pass,
 		PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,ERR_R_EVP_LIB);
 		goto err;
 		}
-	outlen += i;
-		
+
 	outlen = i;
 	if(!EVP_CipherFinal_ex(&ctx, out + i, &i)) {
 		OPENSSL_free(out);
