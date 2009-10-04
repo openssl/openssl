@@ -297,7 +297,7 @@ static int is_a_tty;
 
 /* Declare static functions */
 #if !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_SYS_WINCE)
-static void read_till_nl(FILE *);
+static int read_till_nl(FILE *);
 static void recsig(int);
 static void pushsig(void);
 static void popsig(void);
@@ -390,14 +390,16 @@ static int read_string(UI *ui, UI_STRING *uis)
 
 #if !defined(OPENSSL_SYS_WIN16) && !defined(OPENSSL_SYS_WINCE)
 /* Internal functions to read a string without echoing */
-static void read_till_nl(FILE *in)
+static int read_till_nl(FILE *in)
 	{
 #define SIZE 4
 	char buf[SIZE+1];
 
 	do	{
-		fgets(buf,SIZE,in);
+		if (!fgets(buf,SIZE,in))
+			return 0;
 		} while (strchr(buf,'\n') == NULL);
+	return 1;
 	}
 
 static volatile sig_atomic_t intr_signal;
@@ -445,7 +447,8 @@ static int read_string_inner(UI *ui, UI_STRING *uis, int echo, int strip_nl)
 			*p='\0';
 		}
 	else
-		read_till_nl(tty_in);
+		if (!read_till_nl(tty_in))
+			goto error;
 	if (UI_set_result(ui, uis, result) >= 0)
 		ok=1;
 

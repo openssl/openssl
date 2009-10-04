@@ -118,10 +118,13 @@ lib*|*.dll)	# must be linking a shared lib...
 
 	# generate signature...
 	SIG=`"${THERE}/fips/fips_premain_dso" "${TARGET}"`
+echo $TARGET: $SIG >>/tmp/fipsld.log
+incore $TARGET >>/tmp/fipsld.log 2>&1
 	/bin/rm -f "${TARGET}"
 	if [ -z "${SIG}" ]; then
 	   echo "unable to collect signature"; exit 1
 	fi
+
 
 	# recompile with signature...
 	${CC}	${CANISTER_O_CMD:+"${CANISTER_O_CMD}"} \
@@ -157,6 +160,8 @@ lib*|*.dll)	# must be linking a shared lib...
 
 	# generate signature...
 	SIG=`"${TARGET}"`
+echo $TARGET: $SIG >>/tmp/fipsld.log
+incore $TARGET >>/tmp/fipsld.log 2>&1
 	/bin/rm -f "${TARGET}"
 	if [ -z "${SIG}" ]; then
 	   echo "unable to collect signature"; exit 1
