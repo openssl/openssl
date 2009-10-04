@@ -1263,7 +1263,12 @@ bad:
 				BIO_printf(bio_err,"\n%d out of %d certificate requests certified, commit? [y/n]",total_done,total);
 				(void)BIO_flush(bio_err);
 				buf[0][0]='\0';
-				fgets(buf[0],10,stdin);
+				if (!fgets(buf[0],10,stdin))
+					{
+					BIO_printf(bio_err,"CERTIFICATION CANCELED: I/O error\n"); 
+					ret=0;
+					goto err;
+					}
 				if ((buf[0][0] != 'y') && (buf[0][0] != 'Y'))
 					{
 					BIO_printf(bio_err,"CERTIFICATION CANCELED\n"); 
@@ -2122,7 +2127,12 @@ again2:
 		BIO_printf(bio_err,"Sign the certificate? [y/n]:");
 		(void)BIO_flush(bio_err);
 		buf[0]='\0';
-		fgets(buf,sizeof(buf)-1,stdin);
+		if (!fgets(buf,sizeof(buf)-1,stdin))
+			{
+			BIO_printf(bio_err,"CERTIFICATE WILL NOT BE CERTIFIED: I/O error\n");
+			ok=0;
+			goto err;
+			}
 		if (!((buf[0] == 'y') || (buf[0] == 'Y')))
 			{
 			BIO_printf(bio_err,"CERTIFICATE WILL NOT BE CERTIFIED\n");

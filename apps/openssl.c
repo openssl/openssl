@@ -330,7 +330,8 @@ int main(int Argc, char *Argv[])
 			else	prompt="OpenSSL> ";
 			fputs(prompt,stdout);
 			fflush(stdout);
-			fgets(p,n,stdin);
+			if (!fgets(p,n,stdin))
+				goto end;
 			if (p[0] == '\0') goto end;
 			i=strlen(p);
 			if (i <= 1) break;

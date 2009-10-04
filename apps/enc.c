@@ -243,7 +243,12 @@ int MAIN(int argc, char **argv)
 				goto bad;
 				}
 			buf[0]='\0';
-			fgets(buf,sizeof buf,infile);
+			if (!fgets(buf,sizeof buf,infile))
+				{
+				BIO_printf(bio_err,"unable to read key from '%s'\n",
+					file);
+				goto bad;
+				}
 			fclose(infile);
 			i=strlen(buf);
 			if ((i > 0) &&
