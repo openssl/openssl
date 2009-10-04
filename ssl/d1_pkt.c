@@ -534,7 +534,7 @@ int dtls1_get_record(SSL *s)
 	int i,n;
 	SSL3_RECORD *rr;
 	SSL_SESSION *sess;
-	unsigned char *p;
+	unsigned char *p = NULL;
 	unsigned short version;
 	DTLS1_BITMAP *bitmap;
 	unsigned int is_next_epoch;
