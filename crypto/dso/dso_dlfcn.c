@@ -257,7 +257,10 @@ static void *dlfcn_bind_var(DSO *dso, const char *symname)
 static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
 	{
 	void *ptr;
-	DSO_FUNC_TYPE sym, *tsym = &sym;
+	union {
+		DSO_FUNC_TYPE sym;
+		void *dlret;
+	} u;
 
 	if((dso == NULL) || (symname == NULL))
 		{
@@ -275,14 +278,14 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
 		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_NULL_HANDLE);
 		return(NULL);
 		}
-	*(void **)(tsym) = dlsym(ptr, symname);
-	if(sym == NULL)
+	u.dlret = dlsym(ptr, symname);
+	if(u.dlret == NULL)
 		{
 		DSOerr(DSO_F_DLFCN_BIND_FUNC,DSO_R_SYM_FAILURE);
 		ERR_add_error_data(4, "symname(", symname, "): ", dlerror());
 		return(NULL);
 		}
-	return(sym);
+	return u.sym;
 	}
 
 static char *dlfcn_merger(DSO *dso, const char *filespec1,
