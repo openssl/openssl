@@ -1441,7 +1441,8 @@ start:
 		buf[0]='\0';
 		if (!batch)
 			{
-			fgets(buf,sizeof buf,stdin);
+			if (!fgets(buf,sizeof buf,stdin))
+				return 0;
 			}
 		else
 			{
@@ -1499,7 +1500,8 @@ start:
 		buf[0]='\0';
 		if (!batch)
 			{
-			fgets(buf,sizeof buf,stdin);
+			if (!fgets(buf,sizeof buf,stdin))
+				return 0;
 			}
 		else
 			{
