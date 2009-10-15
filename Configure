@@ -1101,7 +1101,7 @@ $default_ranlib= &which("ranlib") or $default_ranlib="true";
 $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
   or $perl="perl";
 
-$cross_compile_prefix=$ENV{'CROSS_COMPILE'};
+$cross_compile_prefix=$ENV{'CROSS_COMPILE'} if $cross_compile_prefix eq "";
 
 chop $openssldir if $openssldir =~ /\/$/;
 chop $prefix if $prefix =~ /.\/$/;
