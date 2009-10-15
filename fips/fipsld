@@ -117,7 +117,11 @@ lib*|*.dll)	# must be linking a shared lib...
 		${_WL_PREMAIN} "$@"
 
 	# generate signature...
-	SIG=`"${THERE}/fips/fips_premain_dso" "${TARGET}"`
+	if [ -z "${FIPS_SIG}" ]; then
+		SIG=`"${THERE}/fips/fips_premain_dso" "${TARGET}"`
+	else
+		SIG=`"${FIPS_SIG}" -dso "${TARGET}"`
+	fi
 	/bin/rm -f "${TARGET}"
 	if [ -z "${SIG}" ]; then
 	   echo "unable to collect signature"; exit 1
@@ -156,7 +160,11 @@ lib*|*.dll)	# must be linking a shared lib...
 		${_WL_PREMAIN} "$@"
 
 	# generate signature...
-	SIG=`"${TARGET}"`
+	if [ -z "${FIPS_SIG}" ]; then
+		SIG=`"${TARGET}"`
+	else
+		SIG=`"${FIPS_SIG}" -exe "${TARGET}"`
+	fi
 	/bin/rm -f "${TARGET}"
 	if [ -z "${SIG}" ]; then
 	   echo "unable to collect signature"; exit 1
