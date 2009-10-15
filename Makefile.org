@@ -360,7 +360,7 @@ libclean:
 	rm -f *.map *.so *.so.* *.dll engines/*.so engines/*.dll *.a engines/*.a */lib */*/lib
 
 clean:	libclean
-	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
+	rm -f shlib/*.o *.o core a.out fluff testlog make.log cctest cctest.c
 	@set -e; target=clean; $(RECURSIVE_BUILD_CMD)
 	rm -f $(LIBS)
 	rm -f openssl.pc libssl.pc libcrypto.pc
@@ -389,23 +389,12 @@ gentests:
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on generate );
 
 dclean:
-	rm -rf *.bak include/openssl certs/.0
+	rm -rf *.bak include/openssl
 	@set -e; target=dclean; $(RECURSIVE_BUILD_CMD)
-
-rehash: rehash.time
-rehash.time: certs apps
-	@if [ -z "$(CROSS_COMPILE_PREFIX)" ]; then \
-		(OPENSSL="`pwd`/util/opensslwrap.sh"; \
-		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe" || :; \
-		OPENSSL_DEBUG_MEMORY=on; \
-		export OPENSSL OPENSSL_DEBUG_MEMORY; \
-		$(PERL) tools/c_rehash certs) && \
-		touch rehash.time; \
-	else :; fi
 
 test:   tests
 
-tests: rehash
+tests:
 	@(cd test && echo "testing..." && \
 	$(CLEARENV) && $(MAKE) -e $(BUILDENV) TOP=.. TESTS='$(TESTS)' OPENSSL_DEBUG_MEMORY=on OPENSSL_CONF=../apps/openssl.cnf tests );
 	OPENSSL_CONF=apps/openssl.cnf util/opensslwrap.sh version -a
