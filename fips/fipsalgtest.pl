@@ -561,7 +561,16 @@ $cmd: generate run CMVP algorithm tests
 	--quiet                     Shhh....
 	--generate                  Generate algorithm test output
 	--win32                     Win32 environment
+	--enable-<alg>		    Enable algorithm set <alg>.
+	--disable-<alg>		    Disable algorithm set <alg>.
+	Where <alg> can be one of:
 EOF
+
+while (my ($key, $value) = each %fips_enabled)
+	{
+	printf "\t\t%-20s(%s by default)\n", $key ,
+			$value ? "enabled" : "disabled";
+	}
 }
 
 # Sanity check to see if all necessary executables exist
@@ -748,10 +757,10 @@ sub run_tests {
         }
         my $cmd = "$cmd_prefix$tprefix$tcmd ";
         if ( $tcmd =~ /-f$/ ) {
-            $cmd .= "$req $out";
+            $cmd .= "\"$req\" \"$out\"";
         }
         else {
-            $cmd .= "<$req >$out";
+            $cmd .= "<\"$req\" >\"$out\"";
         }
         print STDERR "DEBUG: running test $tname\n" if ( $debug && !$verify );
         system($cmd);
@@ -767,7 +776,7 @@ sub run_tests {
                 $vout =~ s/\.rsp$/.ver/;
                 $tcmd = $verify_special{$tname};
                 $cmd  = "$cmd_prefix$tprefix$tcmd ";
-                $cmd .= "<$out >$vout";
+                $cmd .= "<\"$out\" >\"$vout\"";
                 system($cmd);
                 if ( $? != 0 ) {
                     print STDERR
