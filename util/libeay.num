@@ -4163,3 +4163,5 @@ EVP_MD_flags                            4537	EXIST::FUNCTION:
 TS_RESP_CTX_free                        4538	EXIST::FUNCTION:
 DSAparams_dup                           4539	EXIST::FUNCTION:DSA
 DHparams_dup                            4540	EXIST::FUNCTION:DH
+OCSP_REQ_CTX_add1_header                4541	EXIST::FUNCTION:
+OCSP_REQ_CTX_set1_req                   4542	EXIST::FUNCTION:
