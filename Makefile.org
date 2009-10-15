@@ -180,7 +180,7 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		CC='$(CC)' CFLAG='$(CFLAG)' 			\
 		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
 		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
-		CROSS_COMPILE_PREFIX='$(CROSS_COMPILE_PREFIX)'	\
+		CROSS_COMPILE='$(CROSS_COMPILE)'	\
 		PERL='$(PERL)' ENGDIRS='$(ENGDIRS)'		\
 		SDIRS='$(SDIRS)' LIBRPATH='$(INSTALLTOP)/$(LIBDIR)'	\
 		INSTALL_PREFIX='$(INSTALL_PREFIX)'		\
@@ -394,7 +394,7 @@ dclean:
 
 rehash: rehash.time
 rehash.time: certs apps
-	@if [ -z "$(CROSS_COMPILE_PREFIX)" ]; then \
+	@if [ -z "$(CROSS_COMPILE)" ]; then \
 		(OPENSSL="`pwd`/util/opensslwrap.sh"; \
 		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe" || :; \
 		OPENSSL_DEBUG_MEMORY=on; \
