@@ -4164,3 +4164,5 @@ TS_RESP_CTX_free                        4538	EXIST::FUNCTION:
 ENGINE_load_aesni                       4539	EXIST::FUNCTION:ENGINE
 DSAparams_dup                           4540	EXIST::FUNCTION:DSA
 DHparams_dup                            4541	EXIST::FUNCTION:DH
+OCSP_REQ_CTX_add1_header                4542	EXIST::FUNCTION:
+OCSP_REQ_CTX_set1_req                   4543	EXIST::FUNCTION:
