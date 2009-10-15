@@ -591,6 +591,7 @@ my $libdir="";
 my $openssldir="";
 my $exe_ext="";
 my $install_prefix="";
+my $cross_compile_prefix="";
 my $fipslibdir="/usr/local/ssl/fips-1.0/lib/";
 my $nofipscanistercheck=0;
 my $fipsdso=0;
@@ -1100,6 +1101,8 @@ $default_ranlib= &which("ranlib") or $default_ranlib="true";
 $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
   or $perl="perl";
 
+$cross_compile_prefix=$ENV{'CROSS_COMPILE'};
+
 chop $openssldir if $openssldir =~ /\/$/;
 chop $prefix if $prefix =~ /.\/$/;
 
@@ -1495,7 +1498,16 @@ while (<IN>)
 	s/^PLATFORM=.*$/PLATFORM=$target/;
 	s/^OPTIONS=.*$/OPTIONS=$options/;
 	s/^CONFIGURE_ARGS=.*$/CONFIGURE_ARGS=$argvstring/;
-	s/^CC=.*$/CC= $cc/;
+	if ($cross_compile_prefix)
+		{
+		s/^CC=.*$/CROSS_COMPILE= $cross_compile_prefix\nCC= \$\(CROSS_COMPILE\)$cc/;
+		s/^AR=\s*/AR= \$\(CROSS_COMPILE\)/;
+		s/^RANLIB=\s*/RANLIB= \$\(CROSS_COMPILE\)/;
+		}
+	else	{
+		s/^CC=.*$/CC= $cc/;
+		s/^RANLIB=.*/RANLIB= $ranlib/;
+		}
 	s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc";
 	s/^CFLAG=.*$/CFLAG= $cflags/;
 	s/^DEPFLAG=.*$/DEPFLAG=$depflags/;
@@ -1514,7 +1526,6 @@ while (<IN>)
 	s/^SHA1_ASM_OBJ=.*$/SHA1_ASM_OBJ= $sha1_obj/;
 	s/^RMD160_ASM_OBJ=.*$/RMD160_ASM_OBJ= $rmd160_obj/;
 	s/^PROCESSOR=.*/PROCESSOR= $processor/;
-	s/^RANLIB=.*/RANLIB= $ranlib/;
 	s/^ARFLAGS=.*/ARFLAGS= $arflags/;
 	s/^PERL=.*/PERL= $perl/;
 	s/^KRB5_INCLUDES=.*/KRB5_INCLUDES=$withargs{"krb5-include"}/;
