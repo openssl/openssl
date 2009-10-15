@@ -692,8 +692,16 @@ int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsign
 	{
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
 	unsigned int length, resultlength;
+#if OPENSSL_USE_IPV6
+	union {
+		struct sockaddr_storage ss;
+		struct sockaddr_in6 s6;
+		struct sockaddr_in s4;
+	} peer;
+#else
 	struct sockaddr_in peer;
-	
+#endif
+
 	/* Initialize a random secret */
 	if (!cookie_initialized)
 		{
@@ -709,8 +717,25 @@ int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsign
 	(void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
 
 	/* Create buffer with peer's address and port */
+#if OPENSSL_USE_IPV6
+	length = 0;
+	switch (peer.ss.ss_family)
+		{
+	case AF_INET:
+		length += sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		length += sizeof(struct in6_addr);
+		break;
+	default:
+		OPENSSL_assert(0);
+		break;
+		}
+	length += sizeof(in_port_t);
+#else
 	length = sizeof(peer.sin_addr);
 	length += sizeof(peer.sin_port);
+#endif
 	buffer = OPENSSL_malloc(length);
 
 	if (buffer == NULL)
@@ -718,9 +743,34 @@ int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsign
 		BIO_printf(bio_err,"out of memory\n");
 		return 0;
 		}
-	
-	memcpy(buffer, &peer.sin_addr, sizeof(peer.sin_addr));
-	memcpy(buffer + sizeof(peer.sin_addr), &peer.sin_port, sizeof(peer.sin_port));
+
+#if OPENSSL_USE_IPV6
+	switch (peer.ss.ss_family)
+		{
+	case AF_INET:
+		memcpy(buffer,
+		       &peer.s4.sin_port,
+		       sizeof(in_port_t));
+		memcpy(buffer + sizeof(in_port_t),
+		       &peer.s4.sin_addr,
+		       sizeof(struct in_addr));
+		break;
+	case AF_INET6:
+		memcpy(buffer,
+		       &peer.s6.sin6_port,
+		       sizeof(in_port_t));
+		memcpy(buffer + sizeof(in_port_t),
+		       &peer.s6.sin6_addr,
+		       sizeof(struct in6_addr));
+		break;
+	default:
+		OPENSSL_assert(0);
+		break;
+		}
+#else
+	memcpy(buffer, &peer.sin_port, sizeof(peer.sin_port));
+	memcpy(buffer + sizeof(peer.sin_port), &peer.sin_addr, sizeof(peer.sin_addr));
+#endif
 
 	/* Calculate HMAC of buffer using the secret */
 	HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
@@ -737,8 +787,16 @@ int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned
 	{
 	unsigned char *buffer, result[EVP_MAX_MD_SIZE];
 	unsigned int length, resultlength;
+#if OPENSSL_USE_IPV6
+	union {
+		struct sockaddr_storage ss;
+		struct sockaddr_in6 s6;
+		struct sockaddr_in s4;
+	} peer;
+#else
 	struct sockaddr_in peer;
-	
+#endif
+
 	/* If secret isn't initialized yet, the cookie can't be valid */
 	if (!cookie_initialized)
 		return 0;
@@ -747,8 +805,25 @@ int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned
 	(void)BIO_dgram_get_peer(SSL_get_rbio(ssl), &peer);
 
 	/* Create buffer with peer's address and port */
+#if OPENSSL_USE_IPV6
+	length = 0;
+	switch (peer.ss.ss_family)
+		{
+	case AF_INET:
+		length += sizeof(struct in_addr);
+		break;
+	case AF_INET6:
+		length += sizeof(struct in6_addr);
+		break;
+	default:
+		OPENSSL_assert(0);
+		break;
+		}
+	length += sizeof(in_port_t);
+#else
 	length = sizeof(peer.sin_addr);
 	length += sizeof(peer.sin_port);
+#endif
 	buffer = OPENSSL_malloc(length);
 	
 	if (buffer == NULL)
@@ -756,15 +831,40 @@ int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned
 		BIO_printf(bio_err,"out of memory\n");
 		return 0;
 		}
-	
-	memcpy(buffer, &peer.sin_addr, sizeof(peer.sin_addr));
-	memcpy(buffer + sizeof(peer.sin_addr), &peer.sin_port, sizeof(peer.sin_port));
+
+#if OPENSSL_USE_IPV6
+	switch (peer.ss.ss_family)
+		{
+	case AF_INET:
+		memcpy(buffer,
+		       &peer.s4.sin_port,
+		       sizeof(in_port_t));
+		memcpy(buffer + sizeof(in_port_t),
+		       &peer.s4.sin_addr,
+		       sizeof(struct in_addr));
+		break;
+	case AF_INET6:
+		memcpy(buffer,
+		       &peer.s6.sin6_port,
+		       sizeof(in_port_t));
+		memcpy(buffer + sizeof(in_port_t),
+		       &peer.s6.sin6_addr,
+		       sizeof(struct in6_addr));
+		break;
+	default:
+		OPENSSL_assert(0);
+		break;
+		}
+#else
+	memcpy(buffer, &peer.sin_port, sizeof(peer.sin_port));
+	memcpy(buffer + sizeof(peer.sin_port), &peer.sin_addr, sizeof(peer.sin_addr));
+#endif
 
 	/* Calculate HMAC of buffer using the secret */
 	HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
 	     buffer, length, result, &resultlength);
 	OPENSSL_free(buffer);
-	
+
 	if (cookie_len == resultlength && memcmp(result, cookie, resultlength) == 0)
 		return 1;
 

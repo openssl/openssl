@@ -108,7 +108,11 @@ static BIO_METHOD methods_dgramp=
 
 typedef struct bio_dgram_data_st
 	{
-	struct sockaddr peer;
+#if OPENSSL_USE_IPV6
+	struct sockaddr_storage peer;
+#else
+	struct sockaddr_in peer;
+#endif
 	unsigned int connected;
 	unsigned int _errno;
 	unsigned int mtu;
@@ -274,7 +278,11 @@ static int dgram_read(BIO *b, char *out, int outl)
 	int ret=0;
 	bio_dgram_data *data = (bio_dgram_data *)b->ptr;
 
-	struct sockaddr peer;
+#if OPENSSL_USE_IPV6
+	struct sockaddr_storage peer;
+#else
+	struct sockaddr_in peer;
+#endif
 	int peerlen = sizeof(peer);
 
 	if (out != NULL)
@@ -287,7 +295,7 @@ static int dgram_read(BIO *b, char *out, int outl)
 		 * compiler warnings.
 		 */
 		dgram_adjust_rcv_timeout(b);
-		ret=recvfrom(b->num,out,outl,0,&peer,(void *)&peerlen);
+		ret=recvfrom(b->num,out,outl,0,(struct sockaddr *)&peer,(void *)&peerlen);
 		dgram_reset_rcv_timeout(b);
 
 		if ( ! data->connected  && ret >= 0)
@@ -312,13 +320,28 @@ static int dgram_write(BIO *b, const char *in, int inl)
 	bio_dgram_data *data = (bio_dgram_data *)b->ptr;
 	clear_socket_error();
 
-    if ( data->connected )
-        ret=writesocket(b->num,in,inl);
-    else
+	if ( data->connected )
+		ret=writesocket(b->num,in,inl);
+	else
+#if OPENSSL_USE_IPV6
+		if (data->peer.ss_family == AF_INET)
 #if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
-        ret=sendto(b->num, (char *)in, inl, 0, &data->peer, sizeof(data->peer));
+			ret=sendto(b->num, (char *)in, inl, 0, (const struct sockaddr *)&data->peer, sizeof(struct sockaddr_in));
 #else
-        ret=sendto(b->num, in, inl, 0, &data->peer, sizeof(data->peer));
+			ret=sendto(b->num, in, inl, 0, (const struct sockaddr *)&data->peer, sizeof(struct sockaddr_in));
+#endif
+		else
+#if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
+			ret=sendto(b->num, (char *)in, inl, 0, (const struct sockaddr *)&data->peer, sizeof(struct sockaddr_in6));
+#else
+			ret=sendto(b->num, in, inl, 0, (const struct sockaddr *)&data->peer, sizeof(struct sockaddr_in6));
+#endif
+#else
+#if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
+		ret=sendto(b->num, (char *)in, inl, 0, (const struct sockaddr *)&data->peer, sizeof(struct sockaddr_in));
+#else
+		ret=sendto(b->num, in, inl, 0, (const struct sockaddr *)&data->peer, sizeof(struct sockaddr_in));
+#endif
 #endif
 
 	BIO_clear_retry_flags(b);
@@ -405,7 +428,11 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		else
 			{
 #endif
-			memcpy(&(data->peer),to, sizeof(struct sockaddr));
+#if OPENSSL_USE_IPV6
+			memcpy(&(data->peer),to, sizeof(struct sockaddr_storage));
+#else
+			memcpy(&(data->peer),to, sizeof(struct sockaddr_in));
+#endif
 #if 0
 			}
 #endif
@@ -510,27 +537,44 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		if ( to != NULL)
 			{
 			data->connected = 1;
-			memcpy(&(data->peer),to, sizeof(struct sockaddr));
+#if OPENSSL_USE_IPV6
+			memcpy(&(data->peer),to, sizeof(struct sockaddr_storage));
+#else
+			memcpy(&(data->peer),to, sizeof(struct sockaddr_in));
+#endif
 			}
 		else
 			{
 			data->connected = 0;
-			memset(&(data->peer), 0x00, sizeof(struct sockaddr));
+#if OPENSSL_USE_IPV6
+			memset(&(data->peer), 0x00, sizeof(struct sockaddr_storage));
+#else
+			memset(&(data->peer), 0x00, sizeof(struct sockaddr_in));
+#endif
 			}
 		break;
-    case BIO_CTRL_DGRAM_GET_PEER:
-        to = (struct sockaddr *) ptr;
+	case BIO_CTRL_DGRAM_GET_PEER:
+		to = (struct sockaddr *) ptr;
 
-        memcpy(to, &(data->peer), sizeof(struct sockaddr));
-		ret = sizeof(struct sockaddr);
-        break;
-    case BIO_CTRL_DGRAM_SET_PEER:
-        to = (struct sockaddr *) ptr;
+#if OPENSSL_USE_IPV6
+		memcpy(to, &(data->peer), sizeof(struct sockaddr_storage));
+		ret = sizeof(struct sockaddr_storage);
+#else
+		memcpy(to, &(data->peer), sizeof(struct sockaddr_in));
+		ret = sizeof(struct sockaddr_in);
+#endif
+		break;
+	case BIO_CTRL_DGRAM_SET_PEER:
+		to = (struct sockaddr *) ptr;
 
-        memcpy(&(data->peer), to, sizeof(struct sockaddr));
-        break;
+#if OPENSSL_USE_IPV6
+		memcpy(&(data->peer), to, sizeof(struct sockaddr_storage));
+#else
+		memcpy(&(data->peer), to, sizeof(struct sockaddr_in));
+#endif
+		break;
 	case BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT:
-		memcpy(&(data->next_timeout), ptr, sizeof(struct timeval));		
+		memcpy(&(data->next_timeout), ptr, sizeof(struct timeval));
 		break;
 #if defined(SO_RCVTIMEO)
 	case BIO_CTRL_DGRAM_SET_RECV_TIMEOUT:
