@@ -235,16 +235,19 @@ int main(int Argc, char *Argv[])
 
 	in_FIPS_mode = 0;
 
-#ifdef OPENSSL_FIPS
 	if(getenv("OPENSSL_FIPS")) {
+#ifdef OPENSSL_FIPS
 		if (!FIPS_mode_set(1)) {
 			ERR_load_crypto_strings();
 			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
 			EXIT(1);
 		}
 		in_FIPS_mode = 1;
-		}
+#else
+		fprintf(stderr, "FIPS mode not supported.\n");
+		EXIT(1);
 #endif
+		}
 
 	if (bio_err == NULL)
 		if ((bio_err=BIO_new(BIO_s_file())) != NULL)
