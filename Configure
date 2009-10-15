@@ -1490,11 +1490,11 @@ while (<IN>)
 	s/^CONFIGURE_ARGS=.*$/CONFIGURE_ARGS=$argvstring/;
 	if ($cross_compile_prefix)
 		{
-		s/^CC=.*$/CROSS_COMPILE_PREFIX= $cross_compile_prefix\nCC= \$\(CROSS_COMPILE_PREFIX\)$cc/;
-		s/^AR=\s*/AR= \$\(CROSS_COMPILE_PREFIX\)/;
-		s/^NM=\s*/NM= \$\(CROSS_COMPILE_PREFIX\)/;
-		s/^RANLIB=\s*/RANLIB= \$\(CROSS_COMPILE_PREFIX\)/;
-		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= \$\(CROSS_COMPILE_PREFIX\)$cc/ if $cc eq "gcc";
+		s/^CC=.*$/CROSS_COMPILE= $cross_compile_prefix\nCC= \$\(CROSS_COMPILE\)$cc/;
+		s/^AR=\s*/AR= \$\(CROSS_COMPILE\)/;
+		s/^NM=\s*/NM= \$\(CROSS_COMPILE\)/;
+		s/^RANLIB=\s*/RANLIB= \$\(CROSS_COMPILE\)/;
+		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= \$\(CROSS_COMPILE\)$cc/ if $cc eq "gcc";
 		}
 	else	{
 		s/^CC=.*$/CC= $cc/;
