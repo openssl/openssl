@@ -723,15 +723,16 @@ int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsign
 		{
 	case AF_INET:
 		length += sizeof(struct in_addr);
+		length += sizeof(peer.s4.sin_port);
 		break;
 	case AF_INET6:
 		length += sizeof(struct in6_addr);
+		length += sizeof(peer.s6.sin6_port);
 		break;
 	default:
 		OPENSSL_assert(0);
 		break;
 		}
-	length += sizeof(in_port_t);
 #else
 	length = sizeof(peer.sin_addr);
 	length += sizeof(peer.sin_port);
@@ -750,16 +751,16 @@ int MS_CALLBACK generate_cookie_callback(SSL *ssl, unsigned char *cookie, unsign
 	case AF_INET:
 		memcpy(buffer,
 		       &peer.s4.sin_port,
-		       sizeof(in_port_t));
-		memcpy(buffer + sizeof(in_port_t),
+		       sizeof(peer.s4.sin_port));
+		memcpy(buffer + sizeof(peer.s4.sin_port),
 		       &peer.s4.sin_addr,
 		       sizeof(struct in_addr));
 		break;
 	case AF_INET6:
 		memcpy(buffer,
 		       &peer.s6.sin6_port,
-		       sizeof(in_port_t));
-		memcpy(buffer + sizeof(in_port_t),
+		       sizeof(peer.s6.sin6_port));
+		memcpy(buffer + sizeof(peer.s6.sin6_port),
 		       &peer.s6.sin6_addr,
 		       sizeof(struct in6_addr));
 		break;
@@ -811,15 +812,16 @@ int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned
 		{
 	case AF_INET:
 		length += sizeof(struct in_addr);
+		length += sizeof(peer.s4.sin_port);
 		break;
 	case AF_INET6:
 		length += sizeof(struct in6_addr);
+		length += sizeof(peer.s6.sin6_port);
 		break;
 	default:
 		OPENSSL_assert(0);
 		break;
 		}
-	length += sizeof(in_port_t);
 #else
 	length = sizeof(peer.sin_addr);
 	length += sizeof(peer.sin_port);
@@ -838,16 +840,16 @@ int MS_CALLBACK verify_cookie_callback(SSL *ssl, unsigned char *cookie, unsigned
 	case AF_INET:
 		memcpy(buffer,
 		       &peer.s4.sin_port,
-		       sizeof(in_port_t));
-		memcpy(buffer + sizeof(in_port_t),
+		       sizeof(peer.s4.sin_port));
+		memcpy(buffer + sizeof(peer.s4.sin_port),
 		       &peer.s4.sin_addr,
 		       sizeof(struct in_addr));
 		break;
 	case AF_INET6:
 		memcpy(buffer,
 		       &peer.s6.sin6_port,
-		       sizeof(in_port_t));
-		memcpy(buffer + sizeof(in_port_t),
+		       sizeof(peer.s6.sin6_port));
+		memcpy(buffer + sizeof(peer.s6.sin6_port),
 		       &peer.s6.sin6_addr,
 		       sizeof(struct in6_addr));
 		break;
