@@ -48,10 +48,10 @@ done
 
 # First get uname entries that we use below
 
-MACHINE=`(uname -m) 2>/dev/null` || MACHINE="unknown"
-RELEASE=`(uname -r) 2>/dev/null` || RELEASE="unknown"
-SYSTEM=`(uname -s) 2>/dev/null`  || SYSTEM="unknown"
-VERSION=`(uname -v) 2>/dev/null` || VERSION="unknown"
+[ "$MACHINE" ] || MACHINE=`(uname -m) 2>/dev/null` || MACHINE="unknown"
+[ "$RELEASE" ] || RELEASE=`(uname -r) 2>/dev/null` || RELEASE="unknown"
+[ "$SYSTEM" ] || SYSTEM=`(uname -s) 2>/dev/null`  || SYSTEM="unknown"
+[ "$BUILD" ] || VERSION=`(uname -v) 2>/dev/null` || VERSION="unknown"
 
 
 # Now test for ISC and SCO, since it is has a braindamaged uname.
