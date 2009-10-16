@@ -2211,6 +2211,7 @@ void ssl3_clear(SSL *s)
  	wlen = s->s3->wbuf.len;
 	if (s->s3->handshake_buffer) {
 		BIO_free(s->s3->handshake_buffer);
+		s->s3->handshake_buffer = NULL;
 	}
 	if (s->s3->handshake_dgst) {
 		ssl3_free_digest_list(s);
