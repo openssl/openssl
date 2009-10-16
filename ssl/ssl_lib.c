@@ -556,7 +556,6 @@ void SSL_free(SSL *s)
 	if (s->cert != NULL) ssl_cert_free(s->cert);
 	/* Free up if allocated */
 
-	if (s->ctx) SSL_CTX_free(s->ctx);
 #ifndef OPENSSL_NO_TLSEXT
 	if (s->tlsext_hostname)
 		OPENSSL_free(s->tlsext_hostname);
@@ -579,6 +578,8 @@ void SSL_free(SSL *s)
 		sk_X509_NAME_pop_free(s->client_CA,X509_NAME_free);
 
 	if (s->method != NULL) s->method->ssl_free(s);
+
+	if (s->ctx) SSL_CTX_free(s->ctx);
 
 #ifndef	OPENSSL_NO_KRB5
 	if (s->kssl_ctx != NULL)
