@@ -151,8 +151,8 @@ CRLs from the CRL distribution points extension.
 
 =head1 EXAMPLE
 
-Enable CRL checking when performing certificate verification of an B<SSL_CTX>
-structure:
+Enable CRL checking when performing certificate verification during SSL 
+connections associated with an B<SSL_CTX> structure B<ctx>:
 
   X509_VERIFY_PARAM *param;
   param = X509_VERIFY_PARAM_new();
