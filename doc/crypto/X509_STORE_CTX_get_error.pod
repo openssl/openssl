@@ -61,7 +61,7 @@ as "unused".
 
 =over 4
 
-=item B<0 X509_V_OK: ok>
+=item B<X509_V_OK: ok>
 
 the operation was successful.
 
