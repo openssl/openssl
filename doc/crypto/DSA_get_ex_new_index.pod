@@ -6,7 +6,7 @@ DSA_get_ex_new_index, DSA_set_ex_data, DSA_get_ex_data - add application specifi
 
 =head1 SYNOPSIS
 
- #include <openssl/DSA.h>
+ #include <openssl/dsa.h>
 
  int DSA_get_ex_new_index(long argl, void *argp,
 		CRYPTO_EX_new *new_func,
