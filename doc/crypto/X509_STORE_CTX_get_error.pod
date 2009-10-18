@@ -2,10 +2,11 @@
 
 =head1 NAME
 
-X509_STORE_CTX_get_error, X509_STORE_CTX_set_error, X509_STORE_CTX_get_error_depth, X509_STORE_CTX_get_current_cert, X509_STORE_CTX_get1_chain - get or set certificate verification status information
+X509_STORE_CTX_get_error, X509_STORE_CTX_set_error, X509_STORE_CTX_get_error_depth, X509_STORE_CTX_get_current_cert, X509_STORE_CTX_get1_chain, X509_verify_cert_error_string - get or set certificate verification status information
 
 =head1 SYNOPSIS
 
+ #include <openssl/x509.h>
  #include <openssl/x509_vfy.h>
 
  int	X509_STORE_CTX_get_error(X509_STORE_CTX *ctx);
@@ -14,6 +15,8 @@ X509_STORE_CTX_get_error, X509_STORE_CTX_set_error, X509_STORE_CTX_get_error_dep
  X509 *	X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx);
 
  STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx);
+
+ const char *X509_verify_cert_error_string(long n);
 
 =head1 DESCRIPTION
 
@@ -43,21 +46,26 @@ no longer needed it should be free up using:
 
   sk_X509_pop_free(chain, X509_free);
 
+X509_verify_cert_error_string() returns a human readable error string for
+verification error B<n>.
+
 =head1 RETURN VALUES
 
-X509_STORE_CTX_get_error() returns an B<X509_V_OK> or an error code.
+X509_STORE_CTX_get_error() returns B<X509_V_OK> or an error code.
 
 X509_STORE_CTX_get_error_depth() returns a non-negative error depth.
 
 X509_STORE_CTX_get_current_cert() returns the cerificate which caused the
 error or B<NULL> if no certificate is relevant to the error.
 
+X509_verify_cert_error_string() returns a human readable error string for
+verification error B<n>.
+
 =head1 ERROR CODES
 
-An exhaustive list of the error codes and messages is shown below, this also
-includes the name of the error code as defined in the header file x509_vfy.h
-Some of the error codes are defined but never returned: these are described
-as "unused".
+A list of error codes and messages is shown below.  Some of the
+error codes are defined but currently never returned: these are described as
+"unused".
 
 =over 4
 
@@ -211,6 +219,60 @@ extension does not permit certificate signing. This is only set if issuer check
 debugging is enabled it is used for status notification and is B<not> in itself
 an error.
 
+=item B<X509_V_ERR_INVALID_EXTENSION: invalid or inconsistent certificate extension>
+
+A certificate extension had an invalid value (for example an incorrect
+encoding) or some value inconsistent with other extensions.
+
+
+=item B<X509_V_ERR_INVALID_POLICY_EXTENSION: invalid or inconsistent certificate policy extension>
+
+A certificate policies extension had an invalid value (for example an incorrect
+encoding) or some value inconsistent with other extensions. This error only
+occurs if policy processing is enabled.
+
+=item B<X509_V_ERR_NO_EXPLICIT_POLICY: no explicit policy>
+
+The verification flags were set to require and explicit policy but none was
+present.
+
+=item B<X509_V_ERR_DIFFERENT_CRL_SCOPE: Different CRL scope>
+
+The only CRLs that could be found did not match the scope of the certificate.
+
+=item B<X509_V_ERR_UNSUPPORTED_EXTENSION_FEATURE: Unsupported extension feature>
+
+Some feature of a certificate extension is not supported. Unused.
+
+=item B<X509_V_ERR_PERMITTED_VIOLATION: permitted subtree violation>
+
+A name constraint violation occured in the permitted subtrees.
+
+=item B<X509_V_ERR_EXCLUDED_VIOLATION: excluded subtree violation>
+
+A name constraint violation occured in the excluded subtrees.
+
+=item B<X509_V_ERR_SUBTREE_MINMAX: name constraints minimum and maximum not supported>
+
+A certificate name constraints extension included a minimum or maximum field:
+this is not supported.
+
+=item B<X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE: unsupported name constraint type>
+
+An unsupported name constraint type was encountered. OpenSSL currently only
+supports directory name, DNS name, email and URI types.
+
+=item B<X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX: unsupported or invalid name constraint syntax>
+
+The format of the name constraint is not recognised: for example an email
+address format of a form not mentioned in RFC3280. This could be caused by
+a garbage extension or some new feature not currently supported.
+
+=item B<X509_V_ERR_CRL_PATH_VALIDATION_ERROR: CRL path validation error>
+
+An error occured when attempting to verify the CRL path. This error can only
+happen if extended CRL checking is enabled.
+
 =item B<X509_V_ERR_APPLICATION_VERIFICATION: application verification failure>
 
 an application specific error. This will never be returned unless explicitly
@@ -226,7 +288,9 @@ X509_STORE_CTX_get_current_cert() was never B<NULL>. Applications should
 check the return value before printing out any debugging information relating
 to the current certificate.
 
-=head1 BUGS
+If an unrecognised error code is passed to X509_verify_cert_error_string() the
+numerical value of the unknown code is returned in a static buffer. This is not
+thread safe but will never happen unless an invalid code is passed.
 
 =head1 SEE ALSO
 
