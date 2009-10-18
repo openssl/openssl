@@ -121,10 +121,11 @@ ecs_sign.o: ../../include/openssl/engine.h ../../include/openssl/evp.h
 ecs_sign.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 ecs_sign.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
 ecs_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-ecs_sign.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-ecs_sign.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-ecs_sign.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-ecs_sign.o: ../../include/openssl/x509_vfy.h ecs_locl.h ecs_sign.c
+ecs_sign.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+ecs_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+ecs_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+ecs_sign.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
+ecs_sign.o: ecs_locl.h ecs_sign.c
 ecs_vrf.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ecs_vrf.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 ecs_vrf.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

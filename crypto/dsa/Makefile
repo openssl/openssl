@@ -195,8 +195,9 @@ dsa_sign.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
 dsa_sign.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dsa_sign.o: ../../include/openssl/opensslconf.h
 dsa_sign.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-dsa_sign.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-dsa_sign.o: ../../include/openssl/symhacks.h ../cryptlib.h dsa_sign.c
+dsa_sign.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
+dsa_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+dsa_sign.o: ../cryptlib.h dsa_sign.c
 dsa_vrf.o: ../../e_os.h ../../include/openssl/bio.h
 dsa_vrf.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dsa_vrf.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
