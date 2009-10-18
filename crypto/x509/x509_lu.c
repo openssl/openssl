@@ -695,5 +695,11 @@ int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *param)
 	return X509_VERIFY_PARAM_set1(ctx->param, param);
 	}
 
+void X509_STORE_set_verify_cb(X509_STORE *ctx,
+				  int (*verify_cb)(int, X509_STORE_CTX *))
+	{
+	ctx->verify_cb = verify_cb;
+	}
+
 IMPLEMENT_STACK_OF(X509_LOOKUP)
 IMPLEMENT_STACK_OF(X509_OBJECT)

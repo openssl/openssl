@@ -419,6 +419,9 @@ int X509_STORE_set_purpose(X509_STORE *ctx, int purpose);
 int X509_STORE_set_trust(X509_STORE *ctx, int trust);
 int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *pm);
 
+void X509_STORE_set_verify_cb(X509_STORE *ctx,
+				  int (*verify_cb)(int, X509_STORE_CTX *));
+
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 
 int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
