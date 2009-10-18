@@ -93,7 +93,7 @@ int MAIN(int argc, char **argv)
 
 	cert_ctx=X509_STORE_new();
 	if (cert_ctx == NULL) goto end;
-	X509_STORE_set_verify_cb_func(cert_ctx,cb);
+	X509_STORE_set_verify_cb(cert_ctx,cb);
 
 	ERR_load_crypto_strings();
 

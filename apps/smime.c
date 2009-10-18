@@ -671,7 +671,7 @@ int MAIN(int argc, char **argv)
 		{
 		if (!(store = setup_verify(bio_err, CAfile, CApath)))
 			goto end;
-		X509_STORE_set_verify_cb_func(store, smime_cb);
+		X509_STORE_set_verify_cb(store, smime_cb);
 		if (vpm)
 			X509_STORE_set1_param(store, vpm);
 		}

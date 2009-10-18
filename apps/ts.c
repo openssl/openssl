@@ -1083,7 +1083,7 @@ static X509_STORE *create_cert_store(char *ca_path, char *ca_file)
 	cert_ctx = X509_STORE_new();
 
 	/* Setting the callback for certificate chain verification. */
-	X509_STORE_set_verify_cb_func(cert_ctx, verify_cb);
+	X509_STORE_set_verify_cb(cert_ctx, verify_cb);
 
 	/* Adding a trusted certificate directory source. */
 	if (ca_path)

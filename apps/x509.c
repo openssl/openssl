@@ -225,7 +225,7 @@ int MAIN(int argc, char **argv)
 
 	ctx=X509_STORE_new();
 	if (ctx == NULL) goto end;
-	X509_STORE_set_verify_cb_func(ctx,callb);
+	X509_STORE_set_verify_cb(ctx,callb);
 
 	argc--;
 	argv++;

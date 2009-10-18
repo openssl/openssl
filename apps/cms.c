@@ -880,7 +880,7 @@ int MAIN(int argc, char **argv)
 		{
 		if (!(store = setup_verify(bio_err, CAfile, CApath)))
 			goto end;
-		X509_STORE_set_verify_cb_func(store, cms_cb);
+		X509_STORE_set_verify_cb(store, cms_cb);
 		if (vpm)
 			X509_STORE_set1_param(store, vpm);
 		}
