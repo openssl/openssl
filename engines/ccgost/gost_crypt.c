@@ -371,7 +371,7 @@ static int gost_cipher_do_cnt(EVP_CIPHER_CTX *ctx, unsigned char *out,
 /* Cleaning up of EVP_CIPHER_CTX */
 int gost_cipher_cleanup(EVP_CIPHER_CTX *ctx) 
 	{
-	gost_destroy((gost_ctx *)ctx->cipher_data);
+	gost_destroy(&((struct ossl_gost_cipher_ctx *)ctx->cipher_data)->cctx);
 	ctx->app_data = NULL;
 	return 1;
 	}	
