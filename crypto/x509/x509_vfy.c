@@ -1387,7 +1387,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 
 			if (!(ctx->current_crl_score & CRL_SCORE_SAME_PATH))
 				{
-				if (!check_crl_path(ctx, ctx->current_issuer))
+				if (check_crl_path(ctx, ctx->current_issuer) <= 0)
 					{
 					ctx->error = X509_V_ERR_CRL_PATH_VALIDATION_ERROR;
 					ok = ctx->verify_cb(0, ctx);
