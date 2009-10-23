@@ -70,6 +70,7 @@ OpenSSL  -  Frequently Asked Questions
 * I think I've detected a memory leak, is this a bug?
 * Why does Valgrind complain about the use of uninitialized data?
 * Why doesn't a memory BIO work when a file does?
+* Where are the declarations and implementations of d2i_X509() etc?
 
 ===============================================================================
 
@@ -965,6 +966,17 @@ is needed. This must be done by calling:
    BIO_set_mem_eof_return(bio, 0);
 
 See the manual pages for more details.
+
+
+* Where are the declarations and implementations of d2i_X509() etc?
+
+These are defined by macros of the form:
+
+
+ DECLARE_ASN1_FUNCTIONS(X509) and IMPLEMENT_ASN1_FUNCTIONS(X509)
+
+The implementation passes an ASN1 "template" defining the structure into an
+ASN1 interpreter using generalised functions such as ASN1_item_d2i().
 
 
 ===============================================================================
