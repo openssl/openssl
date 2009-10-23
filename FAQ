@@ -970,7 +970,7 @@ See the manual pages for more details.
 
 * Where are the declarations and implementations of d2i_X509() etc?
 
-These are defined by macros of the form:
+These are defined and implemented by macros of the form:
 
 
  DECLARE_ASN1_FUNCTIONS(X509) and IMPLEMENT_ASN1_FUNCTIONS(X509)
