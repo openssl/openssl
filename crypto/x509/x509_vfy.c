@@ -679,7 +679,12 @@ static int check_revocation(X509_STORE_CTX *ctx)
 	if (ctx->param->flags & X509_V_FLAG_CRL_CHECK_ALL)
 		last = sk_X509_num(ctx->chain) - 1;
 	else
+		{
+		/* If checking CRL paths this isn't the EE certificate */
+		if (ctx->parent)
+			return 1;
 		last = 0;
+		}
 	for(i = 0; i <= last; i++)
 		{
 		ctx->error_depth = i;
