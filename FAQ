@@ -70,6 +70,7 @@ OpenSSL  -  Frequently Asked Questions
 * I think I've detected a memory leak, is this a bug?
 * Why does Valgrind complain about the use of uninitialized data?
 * Why doesn't a memory BIO work when a file does?
+* Where are the declarations and implementations of d2i_X509() etc?
 
 ===============================================================================
 
@@ -94,14 +95,17 @@ explains how to install this library.
 
 OpenSSL includes a command line utility that can be used to perform a
 variety of cryptographic functions.  It is described in the openssl(1)
-manpage.  Documentation for developers is currently being written.  A
-few manual pages already are available; overviews over libcrypto and
+manpage.  Documentation for developers is currently being written. Many
+manual pages are available; overviews over libcrypto and
 libssl are given in the crypto(3) and ssl(3) manpages.
 
 The OpenSSL manpages are installed in /usr/local/ssl/man/ (or a
 different directory if you specified one as described in INSTALL).
 In addition, you can read the most current versions at
-<URL: http://www.openssl.org/docs/>.
+<URL: http://www.openssl.org/docs/>. Note that the online documents refer
+to the very latest development versions of OpenSSL and may include features
+not present in released versions. If in doubt refer to the documentation
+that came with the version of OpenSSL you are using.
 
 For information on parts of libcrypto that are not yet documented, you
 might want to read Ariel Glenn's documentation on SSLeay 0.9, OpenSSL's
@@ -962,6 +966,17 @@ is needed. This must be done by calling:
    BIO_set_mem_eof_return(bio, 0);
 
 See the manual pages for more details.
+
+
+* Where are the declarations and implementations of d2i_X509() etc?
+
+These are defined by macros of the form:
+
+
+ DECLARE_ASN1_FUNCTIONS(X509) and IMPLEMENT_ASN1_FUNCTIONS(X509)
+
+The implementation passes an ASN1 "template" defining the structure into an
+ASN1 interpreter using generalised functions such as ASN1_item_d2i().
 
 
 ===============================================================================
