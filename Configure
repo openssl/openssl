@@ -1500,7 +1500,7 @@ while (<IN>)
 		}
 	else	{
 		s/^CC=.*$/CC= $cc/;
-		s/^AR=.*/AR= $ar/;
+		s/^AR=\s*ar/AR= $ar/;
 		s/^RANLIB=.*/RANLIB= $ranlib/;
 		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc";
 		}
