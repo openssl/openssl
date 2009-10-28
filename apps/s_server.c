@@ -859,6 +859,7 @@ int MAIN(int argc, char *argv[])
 	int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
 	X509 *s_cert = NULL, *s_dcert = NULL;
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
+	int no_cache = 0;
 #ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
@@ -1001,6 +1002,8 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			CApath= *(++argv);
 			}
+		else if (strcmp(*argv,"-no_cache") == 0)
+			no_cache = 1;
 		else if (args_verify(&argv, &argc, &badarg, bio_err, &vpm))
 			{
 			if (badarg)
@@ -1388,8 +1391,10 @@ bad:
 	if (socket_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
-
-	SSL_CTX_sess_set_cache_size(ctx,128);
+	if (no_cache)
+		SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
+	else
+		SSL_CTX_sess_set_cache_size(ctx,128);
 
 #if 0
 	if (cipher == NULL) cipher=getenv("SSL_CIPHER");
@@ -1455,7 +1460,10 @@ bad:
 
 		if (state) SSL_CTX_set_info_callback(ctx2,apps_ssl_info_callback);
 
-		SSL_CTX_sess_set_cache_size(ctx2,128);
+		if (no_cache)
+			SSL_CTX_set_session_cache_mode(ctx2,SSL_SESS_CACHE_OFF);
+		else
+			SSL_CTX_sess_set_cache_size(ctx2,128);
 
 		if ((!SSL_CTX_load_verify_locations(ctx2,CAfile,CApath)) ||
 			(!SSL_CTX_set_default_verify_paths(ctx2)))
