@@ -72,23 +72,33 @@ applications.
 
 =head2 The BIGNUM structure
 
- typedef struct bignum_st
+ typedef struct bignum_st BIGNUM;
+
+ struct bignum_st
         {
-        int top;      /* number of words used in d */
-        BN_ULONG *d;  /* pointer to an array containing the integer value */
-        int max;      /* size of the d array */
-        int neg;      /* sign */
-        } BIGNUM;
+        BN_ULONG *d;    /* Pointer to an array of 'BN_BITS2' bit chunks. */
+        int top;        /* Index of last used d +1. */
+        /* The next are internal book keeping for bn_expand. */
+        int dmax;       /* Size of the d array. */
+        int neg;        /* one if the number is negative */
+        int flags;
+        };
+
 
 The integer value is stored in B<d>, a malloc()ed array of words (B<BN_ULONG>),
 least significant word first. A B<BN_ULONG> can be either 16, 32 or 64 bits
 in size, depending on the 'number of bits' (B<BITS2>) specified in
 C<openssl/bn.h>.
 
-B<max> is the size of the B<d> array that has been allocated.  B<top>
+B<dmax> is the size of the B<d> array that has been allocated.  B<top>
 is the number of words being used, so for a value of 4, bn.d[0]=4 and
 bn.top=1.  B<neg> is 1 if the number is negative.  When a B<BIGNUM> is
 B<0>, the B<d> field can be B<NULL> and B<top> == B<0>.
+
+B<flags> is a bit field of flags which are defined in C<openssl/bn.h>. The 
+flags begin with B<BN_FLG_>. The macros BN_set_flags(b,n) and 
+BN_get_flags(b,n) exist to enable or fetch flag(s) B<n> from B<BIGNUM>
+structure B<b>.
 
 Various routines in this library require the use of temporary
 B<BIGNUM> variables during their execution.  Since dynamic memory
@@ -209,12 +219,12 @@ significant non-zero word plus one when B<a> has shrunk.
 =head2 Debugging
 
 bn_check_top() verifies that C<((a)-E<gt>top E<gt>= 0 && (a)-E<gt>top
-E<lt>= (a)-E<gt>max)>.  A violation will cause the program to abort.
+E<lt>= (a)-E<gt>dmax)>.  A violation will cause the program to abort.
 
 bn_print() prints B<a> to stderr. bn_dump() prints B<n> words at B<d>
 (in reverse order, i.e. most significant word first) to stderr.
 
-bn_set_max() makes B<a> a static number with a B<max> of its current size.
+bn_set_max() makes B<a> a static number with a B<dmax> of its current size.
 This is used by bn_set_low() and bn_set_high() to make B<r> a read-only
 B<BIGNUM> that contains the B<n> low or high words of B<a>.
 
