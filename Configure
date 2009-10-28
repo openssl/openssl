@@ -1090,7 +1090,8 @@ my $shared_target = $fields[$idx_shared_target];
 my $shared_cflag = $fields[$idx_shared_cflag];
 my $shared_ldflag = $fields[$idx_shared_ldflag];
 my $shared_extension = $fields[$idx_shared_extension];
-my $ranlib = $fields[$idx_ranlib];
+my $ranlib = $ENV{'RANLIB'} || $fields[$idx_ranlib];
+my $ar = $ENV{'AR'} || "ar";
 my $arflags = $fields[$idx_arflags];
 my $multilib = $fields[$idx_multilib];
 
@@ -1499,6 +1500,7 @@ while (<IN>)
 		}
 	else	{
 		s/^CC=.*$/CC= $cc/;
+		s/^AR=.*/AR= $ar/;
 		s/^RANLIB=.*/RANLIB= $ranlib/;
 		s/^MAKEDEPPROG=.*$/MAKEDEPPROG= $cc/ if $cc eq "gcc";
 		}
