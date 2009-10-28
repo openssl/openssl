@@ -1100,6 +1100,7 @@ $libdir="lib" if $libdir eq "";
 $default_ranlib= &which("ranlib") or $default_ranlib="true";
 $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
   or $perl="perl";
+my $make = $ENV{'MAKE'} || "make";
 
 $cross_compile_prefix=$ENV{'CROSS_COMPILE'} if $cross_compile_prefix eq "";
 
@@ -1800,7 +1801,7 @@ if($IsMK1MF) {
 EOF
 	close(OUT);
 } else {
-	my $make_command = "make PERL=\'$perl\'";
+	my $make_command = "$make PERL=\'$perl\'";
 	my $make_targets = "";
 	$make_targets .= " links" if $symlink;
 	$make_targets .= " depend" if $depflags ne $default_depflags && $make_depend;
