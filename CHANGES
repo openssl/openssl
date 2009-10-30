@@ -4,6 +4,15 @@
 
  Changes between 0.9.8k and 1.0  [xx XXX xxxx]
 
+  *) Fixes to stateless session resumption handling. Use initial_ctx when
+     issuing and attempting to decrypt tickets in case it has changed during
+     servername handling. Use a non-zero length session ID when attempting
+     stateless session resumption: this makes it possible to determine if
+     a resumption has occurred immediately after receiving server hello 
+     (several places in OpenSSL subtly assume this) instead of later in
+     the handshake.
+     [Steve Henson]
+
   *) Update OCSP request code to permit adding custom headers to the request:
      some responders need this.
      [Steve Henson]
