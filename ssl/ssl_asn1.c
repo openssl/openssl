@@ -579,19 +579,26 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		ret->tlsext_ticklen = os.length;
 		os.data = NULL;
 		os.length = 0;
-#if 0
 		/* There are two ways to detect a resumed ticket sesion.
 		 * One is to set a random session ID and then the server
 		 * must return a match in ServerHello. This allows the normal
-		 * client session ID matching to work.
+		 * client session ID matching to work and we know much 
+		 * earlier that the ticket has been accepted.
+		 * 
+		 * The other way is to set zero length session ID when the
+		 * ticket is presented and rely on the handshake to determine
+		 * session resumption.
 		 */ 
 		if (ret->session_id_length == 0)
 			{
-			ret->session_id_length=SSL3_MAX_SSL_SESSION_ID_LENGTH;
-			RAND_pseudo_bytes(ret->session_id,
-						ret->session_id_length);
-			}
+			EVP_Digest(ret->tlsext_tick, ret->tlsext_ticklen, 
+				   ret->session_id, &ret->session_id_length,
+#ifndef OPENSSL_NO_SHA256
+					EVP_sha256(), NULL);
+#else
+					EVP_sha1(), NULL);
 #endif
+			}
 		}
 	else
 		ret->tlsext_tick=NULL;

@@ -2973,6 +2973,7 @@ int ssl3_send_newsession_ticket(SSL *s)
 		unsigned int hlen;
 		EVP_CIPHER_CTX ctx;
 		HMAC_CTX hctx;
+		SSL_CTX *tctx = s->initial_ctx;
 		unsigned char iv[EVP_MAX_IV_LENGTH];
 		unsigned char key_name[16];
 
@@ -3011,9 +3012,9 @@ int ssl3_send_newsession_ticket(SSL *s)
 		 * it does all the work otherwise use generated values
 		 * from parent ctx.
 		 */
-		if (s->ctx->tlsext_ticket_key_cb)
+		if (tctx->tlsext_ticket_key_cb)
 			{
-			if (s->ctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
+			if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
 							 &hctx, 1) < 0)
 				{
 				OPENSSL_free(senc);
@@ -3024,10 +3025,10 @@ int ssl3_send_newsession_ticket(SSL *s)
 			{
 			RAND_pseudo_bytes(iv, 16);
 			EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-					s->ctx->tlsext_tick_aes_key, iv);
-			HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
+					tctx->tlsext_tick_aes_key, iv);
+			HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
 					tlsext_tick_md(), NULL);
-			memcpy(key_name, s->ctx->tlsext_tick_key_name, 16);
+			memcpy(key_name, tctx->tlsext_tick_key_name, 16);
 			}
 		l2n(s->session->tlsext_tick_lifetime_hint, p);
 		/* Skip ticket length for now */

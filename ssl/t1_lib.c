@@ -1516,16 +1516,17 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	unsigned char tick_hmac[EVP_MAX_MD_SIZE];
 	HMAC_CTX hctx;
 	EVP_CIPHER_CTX ctx;
+	SSL_CTX *tctx = s->initial_ctx;
 	/* Need at least keyname + iv + some encrypted data */
 	if (eticklen < 48)
 		goto tickerr;
 	/* Initialize session ticket encryption and HMAC contexts */
 	HMAC_CTX_init(&hctx);
 	EVP_CIPHER_CTX_init(&ctx);
-	if (s->ctx->tlsext_ticket_key_cb)
+	if (tctx->tlsext_ticket_key_cb)
 		{
 		unsigned char *nctick = (unsigned char *)etick;
-		int rv = s->ctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
+		int rv = tctx->tlsext_ticket_key_cb(s, nctick, nctick + 16,
 							&ctx, &hctx, 0);
 		if (rv < 0)
 			return -1;
@@ -1537,12 +1538,12 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	else
 		{
 		/* Check key name matches */
-		if (memcmp(etick, s->ctx->tlsext_tick_key_name, 16))
+		if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
 			goto tickerr;
-		HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key, 16,
+		HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
 					tlsext_tick_md(), NULL);
 		EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
-				s->ctx->tlsext_tick_aes_key, etick + 16);
+				tctx->tlsext_tick_aes_key, etick + 16);
 		}
 	/* Attempt to process session ticket, first conduct sanity and
  	 * integrity checks on ticket.
