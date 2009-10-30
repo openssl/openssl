@@ -1844,7 +1844,28 @@ int ssl3_get_new_session_ticket(SSL *s)
 		}
 	memcpy(s->session->tlsext_tick, p, ticklen);
 	s->session->tlsext_ticklen = ticklen;
-	
+	/* There are two ways to detect a resumed ticket sesion.
+	 * One is to set an appropriate session ID and then the server
+	 * must return a match in ServerHello. This allows the normal
+	 * client session ID matching to work and we know much 
+	 * earlier that the ticket has been accepted.
+	 * 
+	 * The other way is to set zero length session ID when the
+	 * ticket is presented and rely on the handshake to determine
+	 * session resumption.
+	 *
+	 * We choose the former approach because this fits in with
+	 * assumptions elsewhere in OpenSSL. The session ID is set
+	 * to the SHA256 (or SHA1 is SHA256 is disabled) hash of the
+	 * ticket.
+	 */ 
+	EVP_Digest(p, ticklen,
+			s->session->session_id, &s->session->session_id_length,
+#ifndef OPENSSL_NO_SHA256
+							EVP_sha256(), NULL);
+#else
+							EVP_sha1(), NULL);
+#endif
 	ret=1;
 	return(ret);
 f_err:
