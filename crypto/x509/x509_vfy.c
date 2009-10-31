@@ -1879,6 +1879,21 @@ STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
 	return chain;
 	}
 
+X509 *X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx)
+	{
+	return ctx->current_issuer;
+	}
+
+X509_CRL *X509_STORE_CTX_get0_current_crl(X509_STORE_CTX *ctx)
+	{
+	return ctx->current_crl;
+	}
+
+X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx)
+	{
+	return ctx->parent;
+	}
+
 void X509_STORE_CTX_set_cert(X509_STORE_CTX *ctx, X509 *x)
 	{
 	ctx->cert=x;
