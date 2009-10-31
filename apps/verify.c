@@ -310,7 +310,9 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 				0, XN_FLAG_ONELINE);
 			printf("\n");
 			}
-		printf("error %d at %d depth lookup:%s\n",cert_error,
+		printf("%serror %d at %d depth lookup:%s\n",
+			X509_STORE_CTX_get0_parent_ctx(ctx) ? "[CRL path]" : "",
+			cert_error,
 			X509_STORE_CTX_get_error_depth(ctx),
 			X509_verify_cert_error_string(cert_error));
 		switch(cert_error)
