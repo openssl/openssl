@@ -70,8 +70,9 @@
 #define PROG	verify_main
 
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
-static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose, ENGINE *e);
-static STACK_OF(X509) *load_untrusted(char *file);
+static int check(X509_STORE *ctx, char *file,
+		STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
+		STACK_OF(X509_CRL) *crls, ENGINE *e);
 static int v_verbose=0, vflags = 0;
 
 int MAIN(int, char **);
@@ -80,10 +81,10 @@ int MAIN(int argc, char **argv)
 	{
 	ENGINE *e = NULL;
 	int i,ret=1, badarg = 0;
-	int purpose = -1;
 	char *CApath=NULL,*CAfile=NULL;
-	char *untfile = NULL, *trustfile = NULL;
+	char *untfile = NULL, *trustfile = NULL, *crlfile = NULL;
 	STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
+	STACK_OF(X509_CRL) *crls = NULL;
 	X509_STORE *cert_ctx=NULL;
 	X509_LOOKUP *lookup=NULL;
 	X509_VERIFY_PARAM *vpm = NULL;
@@ -139,6 +140,11 @@ int MAIN(int argc, char **argv)
 				if (argc-- < 1) goto end;
 				trustfile= *(++argv);
 				}
+			else if (strcmp(*argv,"-CRLfile") == 0)
+				{
+				if (argc-- < 1) goto end;
+				crlfile= *(++argv);
+				}
 #ifndef OPENSSL_NO_ENGINE
 			else if (strcmp(*argv,"-engine") == 0)
 				{
@@ -192,26 +198,34 @@ int MAIN(int argc, char **argv)
 
 	ERR_clear_error();
 
-	if(untfile) {
-		if(!(untrusted = load_untrusted(untfile))) {
-			BIO_printf(bio_err, "Error loading untrusted file %s\n", untfile);
-			ERR_print_errors(bio_err);
+	if(untfile)
+		{
+		untrusted = load_certs(bio_err, untfile, FORMAT_PEM,
+					NULL, e, "untrusted certificates");
+		if(!untrusted)
 			goto end;
 		}
-	}
 
-	if(trustfile) {
-		if(!(trusted = load_untrusted(trustfile))) {
-			BIO_printf(bio_err, "Error loading untrusted file %s\n", trustfile);
-			ERR_print_errors(bio_err);
+	if(trustfile)
+		{
+		trusted = load_certs(bio_err, trustfile, FORMAT_PEM,
+					NULL, e, "trusted certificates");
+		if(!trusted)
 			goto end;
 		}
-	}
 
-	if (argc < 1) check(cert_ctx, NULL, untrusted, trusted, purpose, e);
+	if(crlfile)
+		{
+		crls = load_crls(bio_err, crlfile, FORMAT_PEM,
+					NULL, e, "other CRLs");
+		if(!crls)
+			goto end;
+		}
+
+	if (argc < 1) check(cert_ctx, NULL, untrusted, trusted, crls, e);
 	else
 		for (i=0; i<argc; i++)
-			check(cert_ctx,argv[i], untrusted, trusted, purpose, e);
+			check(cert_ctx,argv[i], untrusted, trusted, crls, e);
 	ret=0;
 end:
 	if (ret == 1) {
@@ -232,11 +246,14 @@ end:
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);
 	sk_X509_pop_free(untrusted, X509_free);
 	sk_X509_pop_free(trusted, X509_free);
+	sk_X509_CRL_pop_free(crls, X509_CRL_free);
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
 
-static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X509) *tchain, int purpose, ENGINE *e)
+static int check(X509_STORE *ctx, char *file,
+		STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
+		STACK_OF(X509_CRL) *crls, ENGINE *e)
 	{
 	X509 *x=NULL;
 	int i=0,ret=0;
@@ -260,7 +277,8 @@ static int check(X509_STORE *ctx, char *file, STACK_OF(X509) *uchain, STACK_OF(X
 		goto end;
 		}
 	if(tchain) X509_STORE_CTX_trusted_stack(csc, tchain);
-	if(purpose >= 0) X509_STORE_CTX_set_purpose(csc, purpose);
+	if (crls)
+		X509_STORE_CTX_set0_crls(csc, crls);
 	i=X509_verify_cert(csc);
 	X509_STORE_CTX_free(csc);
 
@@ -275,52 +293,6 @@ end:
 		ERR_print_errors(bio_err);
 	if (x != NULL) X509_free(x);
 
-	return(ret);
-	}
-
-static STACK_OF(X509) *load_untrusted(char *certfile)
-{
-	STACK_OF(X509_INFO) *sk=NULL;
-	STACK_OF(X509) *stack=NULL, *ret=NULL;
-	BIO *in=NULL;
-	X509_INFO *xi;
-
-	if(!(stack = sk_X509_new_null())) {
-		BIO_printf(bio_err,"memory allocation failure\n");
-		goto end;
-	}
-
-	if(!(in=BIO_new_file(certfile, "r"))) {
-		BIO_printf(bio_err,"error opening the file, %s\n",certfile);
-		goto end;
-	}
-
-	/* This loads from a file, a stack of x509/crl/pkey sets */
-	if(!(sk=PEM_X509_INFO_read_bio(in,NULL,NULL,NULL))) {
-		BIO_printf(bio_err,"error reading the file, %s\n",certfile);
-		goto end;
-	}
-
-	/* scan over it and pull out the certs */
-	while (sk_X509_INFO_num(sk))
-		{
-		xi=sk_X509_INFO_shift(sk);
-		if (xi->x509 != NULL)
-			{
-			sk_X509_push(stack,xi->x509);
-			xi->x509=NULL;
-			}
-		X509_INFO_free(xi);
-		}
-	if(!sk_X509_num(stack)) {
-		BIO_printf(bio_err,"no certificates in file, %s\n",certfile);
-		sk_X509_free(stack);
-		goto end;
-	}
-	ret=stack;
-end:
-	BIO_free(in);
-	sk_X509_INFO_free(sk);
 	return(ret);
 	}
 
