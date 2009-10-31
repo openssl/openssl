@@ -1095,76 +1095,120 @@ error:
 	}
 #endif /* ndef OPENSSL_NO_RC4 */
 
-STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
-	const char *pass, ENGINE *e, const char *cert_descrip)
+static int load_certs_crls(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *desc,
+	STACK_OF(X509) **pcerts, STACK_OF(X509_CRL) **pcrls)
 	{
-	BIO *certs;
 	int i;
-	STACK_OF(X509) *othercerts = NULL;
-	STACK_OF(X509_INFO) *allcerts = NULL;
+	BIO *bio;
+	STACK_OF(X509_INFO) *xis = NULL;
 	X509_INFO *xi;
 	PW_CB_DATA cb_data;
+	int rv = 0;
 
 	cb_data.password = pass;
 	cb_data.prompt_info = file;
 
-	if((certs = BIO_new(BIO_s_file())) == NULL)
+	if (format != FORMAT_PEM)
 		{
-		ERR_print_errors(err);
-		goto end;
+		BIO_printf(err,"bad input format specified for %s\n", desc);
+		return 0;
 		}
 
 	if (file == NULL)
-		BIO_set_fp(certs,stdin,BIO_NOCLOSE);
+		bio = BIO_new_fp(stdin,BIO_NOCLOSE);
 	else
+		bio = BIO_new_file(file, "r");
+
+	if (bio == NULL)
 		{
-		if (BIO_read_filename(certs,file) <= 0)
-			{
-			BIO_printf(err, "Error opening %s %s\n",
-				cert_descrip, file);
-			ERR_print_errors(err);
+		BIO_printf(err, "Error opening %s %s\n",
+				desc, file ? file : "stdin");
+		ERR_print_errors(err);
+		return 0;
+		}
+
+	xis = PEM_X509_INFO_read_bio(bio, NULL,
+				(pem_password_cb *)password_callback, &cb_data);
+
+	BIO_free(bio);
+
+	if (pcerts)
+		{
+		*pcerts = sk_X509_new_null();
+		if (!*pcerts)
 			goto end;
+		}
+
+	if (pcrls)
+		{
+		*pcrls = sk_X509_CRL_new_null();
+		if (!*pcrls)
+			goto end;
+		}
+
+	for(i = 0; i < sk_X509_INFO_num(xis); i++)
+		{
+		xi = sk_X509_INFO_value (xis, i);
+		if (xi->x509 && pcerts)
+			{
+			if (!sk_X509_push(*pcerts, xi->x509))
+				goto end;
+			xi->x509 = NULL;
+			}
+		if (xi->crl && pcrls)
+			{
+			if (!sk_X509_CRL_push(*pcrls, xi->crl))
+				goto end;
+			xi->crl = NULL;
 			}
 		}
 
-	if      (format == FORMAT_PEM)
+	if (pcerts && sk_X509_num(*pcerts) > 0)
+		rv = 1;
+
+	if (pcrls && sk_X509_CRL_num(*pcrls) > 0)
+		rv = 1;
+
+	end:
+
+	if (xis)
+		sk_X509_INFO_pop_free(xis, X509_INFO_free);
+
+	if (rv == 0)
 		{
-		othercerts = sk_X509_new_null();
-		if(!othercerts)
+		if (pcerts)
 			{
-			sk_X509_free(othercerts);
-			othercerts = NULL;
-			goto end;
+			sk_X509_pop_free(*pcerts, X509_free);
+			*pcerts = NULL;
 			}
-		allcerts = PEM_X509_INFO_read_bio(certs, NULL,
-				(pem_password_cb *)password_callback, &cb_data);
-		for(i = 0; i < sk_X509_INFO_num(allcerts); i++)
+		if (pcrls)
 			{
-			xi = sk_X509_INFO_value (allcerts, i);
-			if (xi->x509)
-				{
-				sk_X509_push(othercerts, xi->x509);
-				xi->x509 = NULL;
-				}
+			sk_X509_CRL_pop_free(*pcrls, X509_CRL_free);
+			*pcrls = NULL;
 			}
-		goto end;
-		}
-	else	{
-		BIO_printf(err,"bad input format specified for %s\n",
-			cert_descrip);
-		goto end;
-		}
-end:
-	if (othercerts == NULL)
-		{
-		BIO_printf(err,"unable to load certificates\n");
+		BIO_printf(err,"unable to load %s\n",
+				pcerts ? "certificates" : "CRLs");
 		ERR_print_errors(err);
 		}
-	if (allcerts) sk_X509_INFO_pop_free(allcerts, X509_INFO_free);
-	if (certs != NULL) BIO_free(certs);
-	return(othercerts);
+	return rv;
 	}
 
+STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *desc)
+	{
+	STACK_OF(X509) *certs;
+	load_certs_crls(err, file, format, pass, e, desc, &certs, NULL);
+	return certs;
+	}	
+
+STACK_OF(X509_CRL) *load_crls(BIO *err, const char *file, int format,
+	const char *pass, ENGINE *e, const char *desc)
+	{
+	STACK_OF(X509_CRL) *crls;
+	load_certs_crls(err, file, format, pass, e, desc, NULL, &crls);
+	return crls;
+	}	
 
 #define X509V3_EXT_UNKNOWN_MASK		(0xfL << 16)
 /* Return error for unknown extensions */
