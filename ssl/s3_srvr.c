@@ -1679,13 +1679,18 @@ int ssl3_send_server_key_exchange(SSL *s)
 				j=0;
 				for (num=2; num > 0; num--)
 					{
-					EVP_DigestInit_ex(&md_ctx,(num == 2)
-						?s->ctx->md5:s->ctx->sha1, NULL);
-					EVP_DigestUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
-					EVP_DigestUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
-					EVP_DigestUpdate(&md_ctx,&(d[4]),n);
-					EVP_DigestFinal_ex(&md_ctx,q,
-						(unsigned int *)&i);
+					if (!EVP_DigestInit_ex(&md_ctx,(num == 2)
+						?s->ctx->md5:s->ctx->sha1, NULL)
+						|| !EVP_DigestUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE)
+						|| !EVP_DigestUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE)
+						|| !EVP_DigestUpdate(&md_ctx,&(d[4]),n)
+						|| !EVP_DigestFinal_ex(&md_ctx,q,
+						(unsigned int *)&i))
+						{
+						SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_EVP_LIB);
+						goto err;
+						}
+						
 					q+=i;
 					j+=i;
 					}
@@ -1704,14 +1709,14 @@ int ssl3_send_server_key_exchange(SSL *s)
 				if (pkey->type == EVP_PKEY_DSA)
 				{
 				/* lets do DSS */
-				EVP_SignInit_ex(&md_ctx,EVP_dss1(), NULL);
-				EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx,&(d[4]),n);
-				if (!EVP_SignFinal(&md_ctx,&(p[2]),
+				if (!EVP_SignInit_ex(&md_ctx,EVP_dss1(), NULL)
+					|| !EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE)
+					|| !EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE)
+					|| !EVP_SignUpdate(&md_ctx,&(d[4]),n)
+					|| !EVP_SignFinal(&md_ctx,&(p[2]),
 					(unsigned int *)&i,pkey))
 					{
-					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_DSA);
+					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_EVP_LIB);
 					goto err;
 					}
 				s2n(i,p);
@@ -1723,14 +1728,14 @@ int ssl3_send_server_key_exchange(SSL *s)
 				if (pkey->type == EVP_PKEY_EC)
 				{
 				/* let's do ECDSA */
-				EVP_SignInit_ex(&md_ctx,EVP_ecdsa(), NULL);
-				EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx,&(d[4]),n);
-				if (!EVP_SignFinal(&md_ctx,&(p[2]),
-					(unsigned int *)&i,pkey))
+				if (!EVP_SignInit_ex(&md_ctx,EVP_ecdsa(), NULL)
+					|| !EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE)
+					|| !EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE)
+					|| !EVP_SignUpdate(&md_ctx,&(d[4]),n)
+					|| !EVP_SignFinal(&md_ctx,&(p[2]),
+						(unsigned int *)&i,pkey))
 					{
-					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_ECDSA);
+					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_EVP_LIB);
 					goto err;
 					}
 				s2n(i,p);
@@ -2969,7 +2974,7 @@ int ssl3_send_newsession_ticket(SSL *s)
 	if (s->state == SSL3_ST_SW_SESSION_TICKET_A)
 		{
 		unsigned char *p, *senc, *macstart;
-		int len, slen;
+		int len, slen, rv = 0;
 		unsigned int hlen;
 		EVP_CIPHER_CTX ctx;
 		HMAC_CTX hctx;
@@ -3024,11 +3029,21 @@ int ssl3_send_newsession_ticket(SSL *s)
 		else
 			{
 			RAND_pseudo_bytes(iv, 16);
+<<<<<<< s3_srvr.c
+			if (!EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+					s->ctx->tlsext_tick_aes_key, iv))
+				goto evp_err;
+			if (!HMAC_Init_ex(&hctx, s->ctx->tlsext_tick_hmac_key,
+					16, tlsext_tick_md(), NULL))
+				goto evp_err;
+			memcpy(key_name, s->ctx->tlsext_tick_key_name, 16);
+=======
 			EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
 					tctx->tlsext_tick_aes_key, iv);
 			HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
 					tlsext_tick_md(), NULL);
 			memcpy(key_name, tctx->tlsext_tick_key_name, 16);
+>>>>>>> 1.180
 			}
 		l2n(s->session->tlsext_tick_lifetime_hint, p);
 		/* Skip ticket length for now */
@@ -3041,15 +3056,26 @@ int ssl3_send_newsession_ticket(SSL *s)
 		memcpy(p, iv, EVP_CIPHER_CTX_iv_length(&ctx));
 		p += EVP_CIPHER_CTX_iv_length(&ctx);
 		/* Encrypt session data */
-		EVP_EncryptUpdate(&ctx, p, &len, senc, slen);
+		if (!EVP_EncryptUpdate(&ctx, p, &len, senc, slen))
+			goto evp_err;
 		p += len;
-		EVP_EncryptFinal(&ctx, p, &len);
+		if (!EVP_EncryptFinal(&ctx, p, &len))
+			goto evp_err;
 		p += len;
-		EVP_CIPHER_CTX_cleanup(&ctx);
 
-		HMAC_Update(&hctx, macstart, p - macstart);
-		HMAC_Final(&hctx, p, &hlen);
+		if (!HMAC_Update(&hctx, macstart, p - macstart))
+			goto evp_err;
+
+		if (!HMAC_Final(&hctx, p, &hlen))
+			goto evp_err;
+
+		rv = 1;
+
+		evp_err:
+		EVP_CIPHER_CTX_cleanup(&ctx);
 		HMAC_CTX_cleanup(&hctx);
+		if (!rv)
+			return -1;
 
 		p += hlen;
 		/* Now write out lengths: p points to end of data written */
