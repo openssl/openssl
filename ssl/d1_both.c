@@ -177,7 +177,7 @@ int dtls1_do_write(SSL *s, int type)
 	{
 	int ret;
 	int curr_mtu;
-	unsigned int len, frag_off;
+	unsigned int len, frag_off, mac_size, blocksize;
 
 	/* AHA!  Figure out the MTU, and stick to the right size */
 	if ( ! (SSL_get_options(s) & SSL_OP_NO_QUERY_MTU))
@@ -225,11 +225,22 @@ int dtls1_do_write(SSL *s, int type)
 		OPENSSL_assert(s->init_num == 
 			(int)s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH);
 
+	if (s->write_hash)
+		mac_size = EVP_MD_CTX_size(s->write_hash);
+	else
+		mac_size = 0;
+
+	if (s->enc_write_ctx && 
+		(EVP_CIPHER_mode( s->enc_write_ctx->cipher) & EVP_CIPH_CBC_MODE))
+		blocksize = 2 * EVP_CIPHER_block_size(s->enc_write_ctx->cipher);
+	else
+		blocksize = 0;
+
 	frag_off = 0;
 	while( s->init_num)
 		{
 		curr_mtu = s->d1->mtu - BIO_wpending(SSL_get_wbio(s)) - 
-			DTLS1_RT_HEADER_LENGTH;
+			DTLS1_RT_HEADER_LENGTH - mac_size - blocksize;
 
 		if ( curr_mtu <= DTLS1_HM_HEADER_LENGTH)
 			{
@@ -237,7 +248,8 @@ int dtls1_do_write(SSL *s, int type)
 			ret = BIO_flush(SSL_get_wbio(s));
 			if ( ret <= 0)
 				return ret;
-			curr_mtu = s->d1->mtu - DTLS1_RT_HEADER_LENGTH;
+			curr_mtu = s->d1->mtu - DTLS1_RT_HEADER_LENGTH -
+				mac_size - blocksize;
 			}
 
 		if ( s->init_num > curr_mtu)
