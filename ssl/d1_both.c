@@ -226,7 +226,7 @@ int dtls1_do_write(SSL *s, int type)
 			(int)s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH);
 
 	if (s->write_hash)
-		mac_size = EVP_MD_CTX_size(s->write_hash);
+		mac_size = EVP_MD_size(s->write_hash);
 	else
 		mac_size = 0;
 
