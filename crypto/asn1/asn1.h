@@ -1158,6 +1158,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_ASN1_VERIFY				 137
 #define ASN1_F_B64_READ_ASN1				 208
 #define ASN1_F_B64_WRITE_ASN1				 209
+#define ASN1_F_BIO_NEW_NDEF				 212
 #define ASN1_F_BITSTR_CB				 180
 #define ASN1_F_BN_TO_ASN1_ENUMERATED			 138
 #define ASN1_F_BN_TO_ASN1_INTEGER			 139
