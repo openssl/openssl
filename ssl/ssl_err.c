@@ -384,6 +384,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_NO_PRIVATE_KEY_ASSIGNED),"no private key assigned"},
 {ERR_REASON(SSL_R_NO_PROTOCOLS_AVAILABLE),"no protocols available"},
 {ERR_REASON(SSL_R_NO_PUBLICKEY)          ,"no publickey"},
+{ERR_REASON(SSL_R_NO_RENEGOTIATION)      ,"no renegotiation"},
 {ERR_REASON(SSL_R_NO_SHARED_CIPHER)      ,"no shared cipher"},
 {ERR_REASON(SSL_R_NO_VERIFY_CALLBACK)    ,"no verify callback"},
 {ERR_REASON(SSL_R_NULL_SSL_CTX)          ,"null ssl ctx"},

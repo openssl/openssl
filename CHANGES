@@ -2,6 +2,15 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8k and 0.9.8l  [5 Nov 2009]
+
+  *) Disable renegotiation completely - this fixes a severe security
+     problem at the cost of breaking all renegotiation. Renegotiation
+     can be re-enabled by setting
+     OPENSSL_ENABLE_UNSAFE_LEGACY_SESSION_RENEGOTATION at
+     compile-time. This is really not recommended.
+     [Ben Laurie]
+
  Changes between 0.9.8j and 0.9.8k  [25 Mar 2009]
 
   *) Don't set val to NULL when freeing up structures, it is freed up by
