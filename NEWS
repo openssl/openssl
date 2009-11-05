@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8k and OpenSSL 0.9.8l:
+
+      o Ban renegotiation.
+
   Major changes between OpenSSL 0.9.8j and OpenSSL 0.9.8k:
 
       o Fix various build issues.
