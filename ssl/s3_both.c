@@ -116,7 +116,6 @@
 
 #include <limits.h>
 #include <string.h>
-#include <assert.h>
 #include <stdio.h>
 #include "ssl_locl.h"
 #include <openssl/buffer.h>
@@ -173,14 +172,14 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
                    renegotiation checks */
                 if(s->type == SSL_ST_CONNECT)
                         {
-                         assert(i <= EVP_MAX_MD_SIZE);
+                         OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
                          memcpy(s->s3->previous_client_finished, 
                              s->s3->tmp.finish_md, i);
                          s->s3->previous_client_finished_len=i;
                         }
                 else
                         {
-                        assert(i <= EVP_MAX_MD_SIZE);
+                        OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
                         memcpy(s->s3->previous_server_finished, 
                             s->s3->tmp.finish_md, i);
                         s->s3->previous_server_finished_len=i;
@@ -254,14 +253,14 @@ int ssl3_get_finished(SSL *s, int a, int b)
            renegotiation checks */
         if(s->type == SSL_ST_ACCEPT)
                 {
-                assert(i <= EVP_MAX_MD_SIZE);
+                OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
                 memcpy(s->s3->previous_client_finished, 
                     s->s3->tmp.peer_finish_md, i);
                 s->s3->previous_client_finished_len=i;
                 }
         else
                 {
-                assert(i <= EVP_MAX_MD_SIZE);
+                OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
                 memcpy(s->s3->previous_server_finished, 
                     s->s3->tmp.peer_finish_md, i);
                 s->s3->previous_server_finished_len=i;
