@@ -177,7 +177,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	if (!(SSL_get_options(s) & SSL_OP_NO_TICKET))
 		{
 		int ticklen;
-		if (s->session && s->session->tlsext_tick)
+		if (!s->new_session && s->session && s->session->tlsext_tick)
 			ticklen = s->session->tlsext_ticklen;
 		else
 			ticklen = 0;
