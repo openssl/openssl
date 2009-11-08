@@ -115,6 +115,9 @@ extern "C" {
 #define TLSEXT_TYPE_ec_point_formats		11
 #define TLSEXT_TYPE_session_ticket		35
 
+/* Temporary extension type */
+#define TLSEXT_TYPE_renegotiate                 0xff01
+
 /* NameType value from RFC 3546 */
 #define TLSEXT_NAMETYPE_host_name 0
 /* status request value from RFC 3546 */

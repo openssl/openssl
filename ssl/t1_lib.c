@@ -173,7 +173,32 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		ret+=size_str;
 
 		}
+        
+        /* Add the renegotiation option: TODOEKR switch */
+        {
+          int el;
+          
+          if(!ssl_add_clienthello_renegotiate_ext(s, 0, &el, 0))
+              {
+              SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+              return NULL;
+              }
 
+          if((limit - p - 4 - el) < 0) return NULL;
+          
+          s2n(TLSEXT_TYPE_renegotiate,ret);
+          s2n(el,ret);
+
+          if(!ssl_add_clienthello_renegotiate_ext(s, ret, &el, el))
+              {
+              SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+              return NULL;
+              }
+
+          ret += el;
+        }
+
+           
 	if (!(SSL_get_options(s) & SSL_OP_NO_TICKET))
 		{
 		int ticklen;
@@ -269,6 +294,30 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		s2n(TLSEXT_TYPE_server_name,ret);
 		s2n(0,ret);
 		}
+
+        if(s->s3->send_connection_binding)
+        {
+          int el;
+          
+          if(!ssl_add_serverhello_renegotiate_ext(s, 0, &el, 0))
+              {
+              SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+              return NULL;
+              }
+
+          if((limit - p - 4 - el) < 0) return NULL;
+          
+          s2n(TLSEXT_TYPE_renegotiate,ret);
+          s2n(el,ret);
+
+          if(!ssl_add_serverhello_renegotiate_ext(s, ret, &el, el))
+              {
+              SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+              return NULL;
+              }
+
+          ret += el;
+        }
 	
 	if (s->tlsext_ticket_expected
 		&& !(SSL_get_options(s) & SSL_OP_NO_TICKET)) 
@@ -298,11 +347,23 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	unsigned short size;
 	unsigned short len;
 	unsigned char *data = *p;
+	int renegotiate_seen = 0;
+
 	s->servername_done = 0;
 	s->tlsext_status_type = -1;
+	s->s3->send_connection_binding = 0;
 
 	if (data >= (d+n-2))
+		{
+		if (s->new_session
+			&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+			{
+			/* We should always see one extension: the renegotiate extension */
+			*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
+			return 0;
+			}
 		return 1;
+		}
 	n2s(data,len);
 
 	if (data > (d+n-len)) 
@@ -415,6 +476,12 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				}
 
 			}
+		else if (type == TLSEXT_TYPE_renegotiate)
+			{
+			if(!ssl_parse_clienthello_renegotiate_ext(s, data, size, al))
+				return 0;
+			renegotiate_seen = 1;
+			}
 		else if (type == TLSEXT_TYPE_status_request
 						&& s->ctx->tlsext_status_cb)
 			{
@@ -515,9 +582,17 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				else
 					s->tlsext_status_type = -1;
 			}
+
 		/* session ticket processed earlier */
 
 		data+=size;		
+		}
+
+	if (s->new_session && !renegotiate_seen
+		&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+		{
+		*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
+		return 0;
 		}
 
 	*p = data;
@@ -530,11 +605,22 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	unsigned short size;
 	unsigned short len;  
 	unsigned char *data = *p;
-
 	int tlsext_servername = 0;
+	int renegotiate_seen = 0;
 
 	if (data >= (d+n-2))
+		{
+		/* Because the client does not see any renegotiation during an
+		   attack, we must enforce this on all server hellos, even the
+		   first */
+		if (!(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+			{
+			/* We should always see one extension: the renegotiate extension */
+			*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
+			return 0;
+			}
 		return 1;
+		}
 
 	n2s(data,len);
 
@@ -582,13 +668,25 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			/* Set flag to expect CertificateStatus message */
 			s->tlsext_status_expected = 1;
 			}
-
+		else if (type == TLSEXT_TYPE_renegotiate)
+			{
+			if(!ssl_parse_serverhello_renegotiate_ext(s, data, size, al))
+				return 0;
+			renegotiate_seen = 1;
+			}
 		data+=size;		
 		}
 
 	if (data != d+n)
 		{
 		*al = SSL_AD_DECODE_ERROR;
+		return 0;
+		}
+
+	if (!renegotiate_seen
+		&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+		{
+		*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
 		return 0;
 		}
 

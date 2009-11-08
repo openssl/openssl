@@ -2,14 +2,17 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
+ Changes between 0.9.8l and 0.9.8m  [xx XXX xxxx]
 
-  *) Disable renegotiation completely - this fixes a severe security
-     problem at the cost of breaking all renegotiation. Renegotiation
-     can be re-enabled by setting
-     OPENSSL_ENABLE_UNSAFE_LEGACY_SESSION_RENEGOTATION at
-     compile-time. This is really not recommended.
-     [Ben Laurie]
+  *) Implement
+     https://svn.resiprocate.org/rep/ietf-drafts/ekr/draft-rescorla-tls-renegotiate.txt. Re-enable
+     renegotiation but require the extension as needed. Unfortunately,
+     SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION turns out to be a
+     bad idea. It has been replaced by
+     SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION which can be set with
+     SSL_CTX_set_options(). This is really not recommended unless you
+     know what you are doing.
+     [Eric Rescorla <ekr@networkresonance.com> and Ben Laurie]
 
   *) Fixes to stateless session resumption handling. Use initial_ctx when
      issuing and attempting to decrypt tickets in case it has changed during
@@ -94,6 +97,16 @@
 
   *) Add 2.5.4.* OIDs
      [Ilya O. <vrghost@gmail.com>]
+
+ Changes between 0.9.8k and 0.9.8l  [5 Nov 2009]
+
+  *) Disable renegotiation completely - this fixes a severe security
+     problem (CVE-2009-3555) at the cost of breaking all
+     renegotiation. Renegotiation can be re-enabled by setting
+     SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION in s3->flags at
+     run-time. This is really not recommended unless you know what
+     you're doing.
+     [Ben Laurie]
 
  Changes between 0.9.8j and 0.9.8k  [25 Mar 2009]
 

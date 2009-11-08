@@ -638,6 +638,9 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 		extname = "server ticket";
 		break;
 
+		case TLSEXT_TYPE_renegotiate:
+		extname = "renegotiate";
+		break;
 
 		default:
 		extname = "unknown";
