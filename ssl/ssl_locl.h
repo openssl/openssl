@@ -1063,4 +1063,12 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 #endif
 EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) ;
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
+int ssl_add_serverhello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
+					int maxlen);
+int ssl_parse_serverhello_renegotiate_ext(SSL *s, unsigned char *d, int len,
+					  int *al);
+int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
+					int maxlen);
+int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
+					  int *al);
 #endif

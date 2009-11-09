@@ -844,6 +844,16 @@
 
  Changes between 0.9.8l and 0.9.8m  [xx XXX xxxx]
 
+  *) Implement
+     https://svn.resiprocate.org/rep/ietf-drafts/ekr/draft-rescorla-tls-renegotiate.txt. Re-enable
+     renegotiation but require the extension as needed. Unfortunately,
+     SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION turns out to be a
+     bad idea. It has been replaced by
+     SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION which can be set with
+     SSL_CTX_set_options(). This is really not recommended unless you
+     know what you are doing.
+     [Eric Rescorla <ekr@networkresonance.com> and Ben Laurie]
+
   *) Fixes to stateless session resumption handling. Use initial_ctx when
      issuing and attempting to decrypt tickets in case it has changed during
      servername handling. Use a non-zero length session ID when attempting

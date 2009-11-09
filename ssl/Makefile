@@ -30,7 +30,7 @@ LIBSRC=	\
 	ssl_lib.c ssl_err2.c ssl_cert.c ssl_sess.c \
 	ssl_ciph.c ssl_stat.c ssl_rsa.c \
 	ssl_asn1.c ssl_txt.c ssl_algs.c \
-	bio_ssl.c ssl_err.c kssl.c
+	bio_ssl.c ssl_err.c kssl.c t1_reneg.c
 LIBOBJ= \
 	s2_meth.o  s2_srvr.o  s2_clnt.o  s2_lib.o  s2_enc.o s2_pkt.o \
 	s3_meth.o  s3_srvr.o  s3_clnt.o  s3_lib.o  s3_enc.o s3_pkt.o s3_both.o \
@@ -41,7 +41,7 @@ LIBOBJ= \
 	ssl_lib.o ssl_err2.o ssl_cert.o ssl_sess.o \
 	ssl_ciph.o ssl_stat.o ssl_rsa.o \
 	ssl_asn1.o ssl_txt.o ssl_algs.o \
-	bio_ssl.o ssl_err.o kssl.o
+	bio_ssl.o ssl_err.o kssl.o t1_reneg.o
 
 SRC= $(LIBSRC)
 
