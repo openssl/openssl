@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8k and 1.0  [xx XXX xxxx]
+ Changes between 0.9.8l and 1.0  [xx XXX xxxx]
 
   *) Add load_crls() function to apps tidying load_certs() too. Add option
      to verify utility to allow additional CRLs to be included.
@@ -842,7 +842,7 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
- Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
+ Changes between 0.9.8l and 0.9.8m  [xx XXX xxxx]
 
   *) Fixes to stateless session resumption handling. Use initial_ctx when
      issuing and attempting to decrypt tickets in case it has changed during
