@@ -503,6 +503,12 @@ typedef struct ssl3_state_st
 		int cert_request;
 		} tmp;
 
+        /* Connection binding to prevent renegotiation attacks */
+        unsigned char previous_client_finished[EVP_MAX_MD_SIZE];
+        unsigned char previous_client_finished_len;
+        unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
+        unsigned char previous_server_finished_len;
+        int send_connection_binding; /* TODOEKR */
 	} SSL3_STATE;
 
 
