@@ -829,7 +829,7 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
- Changes between 0.9.8k and 0.9.8l  [xx XXX xxxx]
+ Changes between 0.9.8l and 0.9.8m  [xx XXX xxxx]
 
   *) Implement
      https://svn.resiprocate.org/rep/ietf-drafts/ekr/draft-rescorla-tls-renegotiate.txt. Re-enable
