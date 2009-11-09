@@ -4167,3 +4167,6 @@ DHparams_dup                            4541	EXIST::FUNCTION:DH
 OCSP_REQ_CTX_add1_header                4542	EXIST::FUNCTION:
 OCSP_REQ_CTX_set1_req                   4543	EXIST::FUNCTION:
 X509_STORE_set_verify_cb                4544	EXIST::FUNCTION:
+X509_STORE_CTX_get0_current_crl         4545	EXIST::FUNCTION:
+X509_STORE_CTX_get0_parent_ctx          4546	EXIST::FUNCTION:
+X509_STORE_CTX_get0_current_issuer      4547	EXIST::FUNCTION:
