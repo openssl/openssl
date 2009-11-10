@@ -227,6 +227,8 @@ ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf)
 	/* Allocate buffer for new encoding */
 
 	new_der = OPENSSL_malloc(len);
+	if (!new_der)
+		goto err;
 
 	/* Generate tagged encoding */
 
