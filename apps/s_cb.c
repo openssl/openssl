@@ -338,9 +338,6 @@ void MS_CALLBACK apps_ssl_info_callback(const SSL *s, int where, int ret)
 		}
 	}
 
-		case TLSEXT_TYPE_renegotiate:
-		extname = "renegotiate";
-		break;
 
 void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg)
 	{
@@ -670,6 +667,10 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 
 		case TLSEXT_TYPE_session_ticket:
 		extname = "server ticket";
+		break;
+
+		case TLSEXT_TYPE_renegotiate:
+		extname = "renegotiate";
 		break;
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
