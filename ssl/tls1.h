@@ -201,6 +201,9 @@ extern "C" {
 # define TLSEXT_TYPE_opaque_prf_input		?? */
 #endif
 
+/* Temporary extension type */
+#define TLSEXT_TYPE_renegotiate                 0xff01
+
 /* NameType value from RFC 3546 */
 #define TLSEXT_NAMETYPE_host_name 0
 /* status request value from RFC 3546 */
