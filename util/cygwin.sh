@@ -7,7 +7,7 @@
 # Uncomment when debugging
 #set -x
 
-CONFIG_OPTIONS="--prefix=/usr shared no-idea no-rc5 no-mdc2"
+CONFIG_OPTIONS="--prefix=/usr shared zlib no-idea no-rc5"
 INSTALL_PREFIX=/tmp/install
 
 VERSION=
@@ -66,7 +66,7 @@ function create_cygwin_readme()
 
 	  ./config ${CONFIG_OPTIONS}
 
-	The IDEA, RC5 and MDC2 algorithms are disabled due to patent and/or
+	The IDEA and RC5 algorithms are disabled due to patent and/or
 	licensing issues.
 	EOF
 }
