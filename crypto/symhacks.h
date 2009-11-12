@@ -138,6 +138,8 @@
 #define X509_policy_node_get0_qualifiers	X509_pcy_node_get0_qualifiers
 #undef X509_STORE_CTX_get_explicit_policy
 #define X509_STORE_CTX_get_explicit_policy	X509_STORE_CTX_get_expl_policy
+#undef X509_STORE_CTX_get0_current_issuer
+#define X509_STORE_CTX_get0_current_issuer	X509_STORE_CTX_get0_cur_issuer
 
 /* Hack some long CRYPTO names */
 #undef CRYPTO_set_dynlock_destroy_callback
