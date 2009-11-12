@@ -191,7 +191,8 @@ $ LIB_CAMELLIA = "camellia,cmll_misc,cmll_ecb,cmll_cbc,cmll_ofb,"+ -
 	"cmll_cfb,cmll_ctr"
 $ LIB_SEED = "seed,seed_cbc,seed_ecb,seed_cfb,seed_ofb"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
-$ IF F$TRNLNM("OPENSSL_NO_ASM") THEN LIB_BN_ASM = "bn_asm"
+$ IF F$TRNLNM("OPENSSL_NO_ASM") .OR. ARCH .NES. "VAX" THEN -
+     LIB_BN_ASM = "bn_asm"
 $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_kron,bn_sqrt,bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+","+ -
