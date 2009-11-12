@@ -220,7 +220,10 @@ static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str, int len)
 #ifndef OPENSSL_NO_ENGINE
 		/* If we have an ENGINE release it */
 		if (pkey->engine)
+			{
 			ENGINE_finish(pkey->engine);
+			pkey->engine = NULL;
+			}
 #endif
 		}
 	if (str)
