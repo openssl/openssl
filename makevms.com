@@ -349,7 +349,7 @@ $ ENDIF
 $!
 $! There are many places where this is needed.
 $!
-$ WRITE H_FILE "#define _XOPEN_SOURCE_EXTENDED"
+$!!! WRITE H_FILE "#define _XOPEN_SOURCE_EXTENDED"
 $!
 $! Close the [.CRYPTO.<ARCH>]OPENSSLCONF.H file
 $!
