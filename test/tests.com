@@ -284,6 +284,10 @@ $ test_jpake:
 $	write sys$output "Test JPAKE"
 $	mcr 'texe_dir''jpaketest'
 $	return
+$ test_cms:
+$	write sys$output "CMS consistency test"
+$	perl CMS-TEST.PL
+$	return
 $
 $
 $ exit:
