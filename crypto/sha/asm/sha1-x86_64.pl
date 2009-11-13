@@ -150,7 +150,7 @@ ___
 sub BODY_20_39 {
 my ($i,$a,$b,$c,$d,$e,$f)=@_;
 my $j=$i+1;
-my $K=($i<40)?0x6ed9eba1:0xca62c1d6;
+my $K=($i<40)?0x6ed9eba1:-0x359d3e2a;
 $code.=<<___ if ($i<79);
 	lea	$K($xi,$e),$f
 	mov	`4*($j%16)`(%rsp),$xi
@@ -187,7 +187,7 @@ sub BODY_40_59 {
 my ($i,$a,$b,$c,$d,$e,$f)=@_;
 my $j=$i+1;
 $code.=<<___;
-	lea	0x8f1bbcdc($xi,$e),$f
+       lea     -0x70e44324($xi,$e),$f
 	mov	`4*($j%16)`(%rsp),$xi
 	mov	$b,$t0
 	mov	$b,$t1
