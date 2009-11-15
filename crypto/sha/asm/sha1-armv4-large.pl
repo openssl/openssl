@@ -86,8 +86,8 @@ $code.=<<___;
 	ldr	$t3,[$Xi,#2*4]
 	add	$e,$K,$e,ror#2			@ E+=K_xx_xx
 	eor	$t0,$t0,$t1
+	eor	$t2,$t2,$t3
 	eor	$t0,$t0,$t2
-	eor	$t0,$t0,$t3
 	add	$e,$e,$a,ror#27			@ E+=ROR(A,27)
 ___
 $code.=<<___ if (!defined($flag));
@@ -131,6 +131,15 @@ ___
 
 sub BODY_40_59 {
 my ($a,$b,$c,$d,$e)=@_;
+if (1) {
+	&Xupdate(@_);
+$code.=<<___;
+	and	$t2,$c,$d
+	and	$t1,$b,$t1,ror#2
+	add	$e,$e,$t2,ror#2
+	add	$e,$e,$t1			@ E+=F_40_59(B,C,D)
+___
+} else {
 	&Xupdate(@_,1);
 $code.=<<___;
 	and	$t1,$b,$c,ror#2
@@ -139,6 +148,7 @@ $code.=<<___;
 	orr	$t1,$t1,$t2			@ F_40_59(B,C,D)
 	add	$e,$e,$t1			@ E+=F_40_59(B,C,D)
 ___
+}
 }
 
 $code=<<___;
