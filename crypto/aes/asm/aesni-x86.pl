@@ -15,6 +15,7 @@
 $PREFIX="aesni";	# if $PREFIX is set to "AES", the script
 			# generates drop-in replacement for
 			# crypto/aes/asm/aes-586.pl:-)
+$inline=1;		# inline _aesni_[en|de]crypt
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
@@ -105,27 +106,33 @@ sub aesni_generate1	# fully unrolled loop
 }
 
 # void $PREFIX_encrypt (const void *inp,void *out,const AES_KEY *key);
-# &aesni_generate1("dec");
+&aesni_generate1("enc") if (!$inline);
 &function_begin_B("${PREFIX}_encrypt");
 	&mov	("eax",&wparam(0));
 	&mov	($key,&wparam(2));
 	&movups	($inout0,&QWP(0,"eax"));
 	&mov	($rounds,&DWP(240,$key));
 	&mov	("eax",&wparam(1));
-	&aesni_inline_generate1("enc");	# &call	("_aesni_encrypt1");
+	if ($inline)
+	{   &aesni_inline_generate1("enc");	}
+	else
+	{   &call	("_aesni_encrypt1");	}
 	&movups	(&QWP(0,"eax"),$inout0);
 	&ret	();
 &function_end_B("${PREFIX}_encrypt");
 
 # void $PREFIX_decrypt (const void *inp,void *out,const AES_KEY *key);
-# &aesni_generate1("dec");
+&aesni_generate1("dec") if(!$inline);
 &function_begin_B("${PREFIX}_decrypt");
 	&mov	("eax",&wparam(0));
 	&mov	($key,&wparam(2));
 	&movups	($inout0,&QWP(0,"eax"));
 	&mov	($rounds,&DWP(240,$key));
 	&mov	("eax",&wparam(1));
-	&aesni_inline_generate1("dec");	# &call	("_aesni_decrypt1");
+	if ($inline)
+	{   &aesni_inline_generate1("dec");	}
+	else
+	{   &call	("_aesni_decrypt1");	}
 	&movups	(&QWP(0,"eax"),$inout0);
 	&ret	();
 &function_end_B("${PREFIX}_decrypt");
@@ -283,7 +290,10 @@ if ($PREFIX eq "aesni") {
 	jmp	(&label("ecb_ret"));
 
 &set_label("ecb_enc_one",16);
-	&aesni_inline_generate1("enc");	# &call	("_aesni_encrypt1");
+	if ($inline)
+	{   &aesni_inline_generate1("enc");	}
+	else
+	{   &call	("_aesni_encrypt1");	}
 	&movups	(&QWP(0,$out),$inout0);
 	&jmp	(&label("ecb_ret"));
 
@@ -342,7 +352,10 @@ if ($PREFIX eq "aesni") {
 	&jmp	(&label("ecb_ret"));
 
 &set_label("ecb_dec_one",16);
-	&aesni_inline_generate1("dec");	# &call	("_aesni_decrypt3");
+	if ($inline)
+	{   &aesni_inline_generate1("dec");	}
+	else
+	{   &call	("_aesni_decrypt1");	}
 	&movups	(&QWP(0,$out),$inout0);
 	&jmp	(&label("ecb_ret"));
 
@@ -391,7 +404,10 @@ if ($PREFIX eq "aesni") {
 	&movups	($ivec,&QWP(0,$inp));
 	&lea	($inp,&DWP(16,$inp));
 	&pxor	($inout0,$ivec);
-	&aesni_inline_generate1("enc");	# &call	("_aesni_encrypt3");
+	if ($inline)
+	{   &aesni_inline_generate1("enc");	}
+	else
+	{   &call	("_aesni_encrypt1");	}
 	&sub	($len,16);
 	&lea	($out,&DWP(16,$out));
 	&mov	($rounds,$rounds_);	# restore $rounds
@@ -474,7 +490,10 @@ if ($PREFIX eq "aesni") {
 	&jmp	(&label("cbc_dec_tail_collected"));
 
 &set_label("cbc_dec_one");
-	&aesni_inline_generate1("dec");	# &call	("_aesni_decrypt3");
+	if ($inline)
+	{   &aesni_inline_generate1("dec");	}
+	else
+	{   &call	("_aesni_decrypt1");	}
 	&pxor	($inout0,$ivec);
 	&movaps	($ivec,$in0);
 	&jmp	(&label("cbc_dec_tail_collected"));
