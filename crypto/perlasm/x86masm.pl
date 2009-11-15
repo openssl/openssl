@@ -128,7 +128,7 @@ ___
 
     if (grep {/\b${nmdecor}OPENSSL_ia32cap_P\b/i} @out)
     {	my $comm=<<___;
-.bss	SEGMENT
+.bss	SEGMENT 'BSS'
 COMM	${nmdecor}OPENSSL_ia32cap_P:QWORD
 .bss	ENDS
 ___
