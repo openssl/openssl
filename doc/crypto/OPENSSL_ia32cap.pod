@@ -21,14 +21,16 @@ manipulated afterwards to modify crypto library behaviour. For the
 moment of this writing seven bits are significant, namely:
 
 1. bit #4 denoting presence of Time-Stamp Counter.
-2. bit #20, reserved by Intel, is used to choose between RC4 code
+2. bit #20, reserved by Intel, is used to choose among RC4 code
    paths;
 3. bit #23 denoting MMX support;
 4. bit #25 denoting SSE support;
 5. bit #26 denoting SSE2 support;
 6. bit #28 denoting Hyperthreading, which is used to distiguish
    cores with shared cache;
-7. bit #57 denoting Intel AES instruction set extension;
+7. bit #30, reserved by Intel, is used to choose among RC4 code
+   paths;
+8. bit #57 denoting Intel AES instruction set extension;
 
 For example, clearing bit #26 at run-time disables high-performance
 SSE2 code present in the crypto library. You might have to do this if
