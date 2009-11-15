@@ -88,4 +88,6 @@ if [ -f "$LIBCRYPTOSO" -a -z "$preload_var" ]; then
 	export LD_PRELOAD _RLD_LIST DYLD_INSERT_LIBRARIES
 fi
 
-exec "$@"
+cmd="$1${EXE_EXT}"
+shift
+exec "$cmd" "$@"
