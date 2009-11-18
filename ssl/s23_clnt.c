@@ -235,6 +235,8 @@ static int ssl23_client_hello(SSL *s)
 			ssl2_compat = 0;
 		if (s->tlsext_status_type != -1)
 			ssl2_compat = 0;
+		if (!(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+			ssl2_compat = 0;
 		}
 #endif
 
