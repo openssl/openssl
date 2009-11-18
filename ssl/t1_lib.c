@@ -359,6 +359,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 			{
 			/* We should always see one extension: the renegotiate extension */
+	 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 			*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
 			return 0;
 			}
@@ -592,6 +593,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 		{
 		*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
+	 	SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
 		}
 
@@ -617,6 +619,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			{
 			/* We should always see one extension: the renegotiate extension */
 			*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
+			SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 			return 0;
 			}
 		return 1;
@@ -687,6 +690,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 		{
 		*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
+		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
 		}
 
