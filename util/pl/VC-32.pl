@@ -155,7 +155,7 @@ if ($FLAVOR =~ /CE/)
 else
 	{
 	$ex_libs.=' gdi32.lib advapi32.lib crypt32.lib user32.lib';
-	$ex_libs.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
+	$ex_libs.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/ and `cl 2>&1` =~ /14\.00\.4[0-9]{4}\./);
 	# WIN32 UNICODE build gets linked with unicows.lib for
 	# backward compatibility with Win9x.
 	$ex_libs="unicows.lib $ex_libs" if ($FLAVOR =~ /WIN32/ and $cflags =~ /\-DUNICODE/);
@@ -282,37 +282,14 @@ sub do_lib_rule
 	if (!$shlib)
 		{
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
-		$ex =' ';
-		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs $ex\n<<\n";
+		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs\n<<\n";
 		}
 	else
 		{
 		local($ex)=($target =~ /O_CRYPTO/)?'':' $(L_CRYPTO)';
-		if ($name eq "")
-			{
-			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
-			if ($target =~ /capi/)
-				{
-				$ex.=' crypt32.lib advapi32.lib';
-				}
-			}
-		elsif ($FLAVOR =~ /CE/)
-			{
-			$ex.=' winsock.lib';
-			$ex.=' $(WCECOMPAT)/lib/wcecompatex.lib' if (defined($ENV{'WCECOMPAT'}));
-			$ex.=' $(PORTSDK_LIBPATH)/portlib.lib'	 if (defined($ENV{'PORTSDK_LIBPATH'}));
-			}
-		else
-			{
-			$ex.=' unicows.lib' if ($FLAVOR =~ /NT/);
-			$ex.=' ws2_32.lib gdi32.lib advapi32.lib user32.lib';
-			$ex.=' crypt32.lib';
-			$ex.=' cryptui.lib' if $cflags =~ /-DOPENSSL_CAPIENG_DIALOG/;
-			$ex.=' bufferoverflowu.lib' if ($FLAVOR =~ /WIN64/);
-			}
 		$ex.=" $zlib_lib" if $zlib_opt == 1 && $target =~ /O_CRYPTO/;
-		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex\n<<\n";
-        $ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;2\n\n";
+		$ret.="\t\$(LINK) \$(MLFLAGS) $efile$target $name @<<\n  \$(SHLIB_EX_OBJ) $objs $ex \$(EX_LIBS)\n<<\n";
+		$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;2\n\n";
 		}
 	$ret.="\n";
 	return($ret);
@@ -328,7 +305,7 @@ sub do_link_rule
 	$ret.="$target: $files $dep_libs\n";
 	$ret.="\t\$(LINK) \$(LFLAGS) $efile$target @<<\n";
 	$ret.="  \$(APP_EX_OBJ) $files $libs\n<<\n";
-    $ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n";
+	$ret.="\tIF EXIST \$@.manifest mt -nologo -manifest \$@.manifest -outputresource:\$@;1\n\n";
 	return($ret);
 	}
 
