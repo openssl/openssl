@@ -822,7 +822,8 @@ int BIO_accept(int sock, char **addr)
 	if (sizeof(sa.len.i)!=sizeof(sa.len.s) && sa.len.i==0)
 		{
 		OPENSSL_assert(sa.len.s<=sizeof(sa.from));
-		sa.len.i = (unsigned int)sa.len.s;
+		sa.len.i = (int)sa.len.s;
+		/* use sa.len.i from this point */
 		}
 	if (ret == INVALID_SOCKET)
 		{
