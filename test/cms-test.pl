@@ -55,11 +55,8 @@
 
 my $ossl_path;
 
-if ( -f "../apps/openssl" ) {
+if ( -f "../apps/openssl$ENV{EXE_EXT}" ) {
     $ossl_path = "../util/shlib_wrap.sh ../apps/openssl";
-}
-elsif ( -f "../apps/openssl.exe" ) {
-    $ossl_path = "../util/shlib_wrap.sh ../apps/openssl.exe";
 }
 elsif ( -f "..\\out32dll\\openssl.exe" ) {
     $ossl_path = "..\\out32dll\\openssl.exe";
