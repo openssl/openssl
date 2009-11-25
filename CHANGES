@@ -2,14 +2,12 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8l and 1.0  [xx XXX xxxx]
+ Changes between 1.0 and 1.1  [xx XXX xxxx]
 
-  *) Add load_crls() function to apps tidying load_certs() too. Add option
-     to verify utility to allow additional CRLs to be included.
-     [Steve Henson]
-
-  *) Update OCSP request code to permit adding custom headers to the request:
-     some responders need this.
+  *) Split password based encryption into PBES2 and PBKDF2 functions. This
+     neatly separates the code into cipher and PBE sections and is required
+     for some algorithms that split PBES2 into separate pieces (such as
+     password based CMS).
      [Steve Henson]
 
   *) Extensive audit of libcrypto with DEBUG_UNUSED. Fix many cases where
@@ -23,6 +21,16 @@
      a gcc attribute to warn if the result of a function is ignored. This
      is enable if DEBUG_UNUSED is set. Add to several functions in evp.h
      whose return value is often ignored. 
+     [Steve Henson]
+
+ Changes between 0.9.8l and 1.0  [xx XXX xxxx]
+
+  *) Add load_crls() function to apps tidying load_certs() too. Add option
+     to verify utility to allow additional CRLs to be included.
+     [Steve Henson]
+
+  *) Update OCSP request code to permit adding custom headers to the request:
+     some responders need this.
      [Steve Henson]
 
   *) The function EVP_PKEY_sign() returns <=0 on error: check return code

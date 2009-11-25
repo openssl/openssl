@@ -1266,6 +1266,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_PKCS5_PBE2_SET_IV			 167
 #define ASN1_F_PKCS5_PBE_SET				 202
 #define ASN1_F_PKCS5_PBE_SET0_ALGOR			 215
+#define ASN1_F_PKCS5_PBKDF2_SET				 219
 #define ASN1_F_SMIME_READ_ASN1				 212
 #define ASN1_F_SMIME_TEXT				 213
 #define ASN1_F_X509_CINF_NEW				 168
