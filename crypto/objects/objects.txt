@@ -299,6 +299,7 @@ id-smime-alg 4		: id-smime-alg-RC2wrap
 id-smime-alg 5		: id-smime-alg-ESDH
 id-smime-alg 6		: id-smime-alg-CMS3DESwrap
 id-smime-alg 7		: id-smime-alg-CMSRC2wrap
+id-smime-alg 9		: id-alg-PWRI-KEK
 
 # S/MIME Certificate Distribution
 id-smime-cd 1		: id-smime-cd-ldap

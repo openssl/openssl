@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 893
-#define NUM_SN 886
-#define NUM_LN 886
-#define NUM_OBJ 840
+#define NUM_NID 894
+#define NUM_SN 887
+#define NUM_LN 887
+#define NUM_OBJ 841
 
-static const unsigned char lvalues[5824]={
+static const unsigned char lvalues[5835]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -908,6 +908,7 @@ static const unsigned char lvalues[5824]={
 0x55,0x04,0x34,                              /* [5814] OBJ_supportedAlgorithms */
 0x55,0x04,0x35,                              /* [5817] OBJ_deltaRevocationList */
 0x55,0x04,0x36,                              /* [5820] OBJ_dmdName */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x09,/* [5823] OBJ_id_alg_PWRI_KEK */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2351,6 +2352,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"deltaRevocationList","deltaRevocationList",NID_deltaRevocationList,
 	3,&(lvalues[5817]),0},
 {"dmdName","dmdName",NID_dmdName,3,&(lvalues[5820]),0},
+{"id-alg-PWRI-KEK","id-alg-PWRI-KEK",NID_id_alg_PWRI_KEK,11,
+	&(lvalues[5823]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2720,6 +2723,7 @@ static const unsigned int sn_objs[NUM_SN]={
 789,	/* "id-aes192-wrap" */
 790,	/* "id-aes256-wrap" */
 262,	/* "id-alg" */
+893,	/* "id-alg-PWRI-KEK" */
 323,	/* "id-alg-des40" */
 326,	/* "id-alg-dh-pop" */
 325,	/* "id-alg-dh-sig-hmac-sha1" */
@@ -3605,6 +3609,7 @@ static const unsigned int ln_objs[NUM_LN]={
 789,	/* "id-aes192-wrap" */
 790,	/* "id-aes256-wrap" */
 262,	/* "id-alg" */
+893,	/* "id-alg-PWRI-KEK" */
 323,	/* "id-alg-des40" */
 326,	/* "id-alg-dh-pop" */
 325,	/* "id-alg-dh-sig-hmac-sha1" */
@@ -4956,6 +4961,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 246,	/* OBJ_id_smime_alg_CMS3DESwrap     1 2 840 113549 1 9 16 3 6 */
 247,	/* OBJ_id_smime_alg_CMSRC2wrap      1 2 840 113549 1 9 16 3 7 */
 125,	/* OBJ_zlib_compression             1 2 840 113549 1 9 16 3 8 */
+893,	/* OBJ_id_alg_PWRI_KEK              1 2 840 113549 1 9 16 3 9 */
 248,	/* OBJ_id_smime_cd_ldap             1 2 840 113549 1 9 16 4 1 */
 249,	/* OBJ_id_smime_spq_ets_sqt_uri     1 2 840 113549 1 9 16 5 1 */
 250,	/* OBJ_id_smime_spq_ets_sqt_unotice 1 2 840 113549 1 9 16 5 2 */

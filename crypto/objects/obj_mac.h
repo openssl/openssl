@@ -981,6 +981,10 @@
 #define NID_id_smime_alg_CMSRC2wrap		247
 #define OBJ_id_smime_alg_CMSRC2wrap		OBJ_id_smime_alg,7L
 
+#define SN_id_alg_PWRI_KEK		"id-alg-PWRI-KEK"
+#define NID_id_alg_PWRI_KEK		893
+#define OBJ_id_alg_PWRI_KEK		OBJ_id_smime_alg,9L
+
 #define SN_id_smime_cd_ldap		"id-smime-cd-ldap"
 #define NID_id_smime_cd_ldap		248
 #define OBJ_id_smime_cd_ldap		OBJ_id_smime_cd,1L
