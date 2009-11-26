@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8l and 0.9.8m  [xx XXX xxxx]
+ Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
   *) Implement
      https://svn.resiprocate.org/rep/ietf-drafts/ekr/draft-rescorla-tls-renegotiate.txt. Re-enable
