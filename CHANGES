@@ -4,6 +4,10 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Experiemental password based recipient info support for CMS library:
+     implementing RFC3211.
+     [Steve Henson]
+
   *) Split password based encryption into PBES2 and PBKDF2 functions. This
      neatly separates the code into cipher and PBE sections and is required
      for some algorithms that split PBES2 into separate pieces (such as

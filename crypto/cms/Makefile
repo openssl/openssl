@@ -18,9 +18,11 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC= cms_lib.c cms_asn1.c cms_att.c cms_io.c cms_smime.c cms_err.c \
-	cms_sd.c cms_dd.c cms_cd.c cms_env.c cms_enc.c cms_ess.c
+	cms_sd.c cms_dd.c cms_cd.c cms_env.c cms_enc.c cms_ess.c \
+	cms_pwri.c
 LIBOBJ= cms_lib.o cms_asn1.o cms_att.o cms_io.o cms_smime.o cms_err.o \
-	cms_sd.o cms_dd.o cms_cd.o cms_env.o cms_enc.o cms_ess.o
+	cms_sd.o cms_dd.o cms_cd.o cms_env.o cms_enc.o cms_ess.o \
+	cms_pwri.o
 
 SRC= $(LIBSRC)
 
