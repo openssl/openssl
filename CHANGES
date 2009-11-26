@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8k and 1.0  [xx XXX xxxx]
+ Changes between 0.9.8m (?) and 1.0.0  [xx XXX xxxx]
 
   *) Add load_crls() function to apps tidying load_certs() too. Add option
      to verify utility to allow additional CRLs to be included.
@@ -21,10 +21,7 @@
      didn't handle all updated verify codes correctly.
      [Steve Henson]
 
-  *) Delete MD2 from algorithm tables. This follows the recommendation in 
-     several standards that it is not used in new applications due to
-     several cryptographic weaknesses. The algorithm is also disabled in
-     the default configuration.
+  *) Disable MD2 in the default configuration.
      [Steve Henson]
 
   *) In BIO_pop() and BIO_push() use the ctrl argument (which was NULL) to
@@ -37,9 +34,9 @@
      or they could free up already freed BIOs.
      [Steve Henson]
 
-  *) Rename uni2asc and asc2uni functions to OPENSSL_uni2asc and
-     OPENSSL_asc2uni the original names were too generic and cause name
-     clashes on Netware.
+  *) Extend the uni2asc/asc2uni => OPENSSL_uni2asc/OPENSSL_asc2uni
+     renaming to all platforms (within the 0.9.8 branch, this was
+     done conditionally on Netware platforms to avoid a name clash).
      [Guenter <lists@gknw.net>]
 
   *) Add ECDHE and PSK support to DTLS.
@@ -829,7 +826,7 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
- Changes between 0.9.8l and 0.9.8m  [xx XXX xxxx]
+ Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
   *) Implement
      https://svn.resiprocate.org/rep/ietf-drafts/ekr/draft-rescorla-tls-renegotiate.txt. Re-enable
@@ -845,7 +842,7 @@
      issuing and attempting to decrypt tickets in case it has changed during
      servername handling. Use a non-zero length session ID when attempting
      stateless session resumption: this makes it possible to determine if
-     a resumption has occurred immediately after receiving server hello 
+     a resumption has occurred immediately after receiving server hello
      (several places in OpenSSL subtly assume this) instead of later in
      the handshake.
      [Steve Henson]
@@ -861,7 +858,7 @@
      [Steve Henson]
 
   *) Add support for --libdir option and LIBDIR variable in makefiles. This
-     makes it possible to install openssl libraries in locations which 
+     makes it possible to install openssl libraries in locations which
      have names other than "lib", for example "/usr/lib64" which some
      systems need.
      [Steve Henson, based on patch from Jeremy Utley]
@@ -870,9 +867,20 @@
      X690 8.9.12 and can produce some misleading textual output of OIDs.
      [Steve Henson, reported by Dan Kaminsky]
 
+  *) Delete MD2 from algorithm tables. This follows the recommendation in
+     several standards that it is not used in new applications due to
+     several cryptographic weaknesses. For binary compatibility reasons
+     the MD2 API is still compiled in by default.
+     [Steve Henson]
+
   *) Add compression id to {d2i,i2d}_SSL_SESSION so it is correctly saved
      and restored.
      [Steve Henson]
+
+  *) Rename uni2asc and asc2uni functions to OPENSSL_uni2asc and
+     OPENSSL_asc2uni conditionally on Netware platforms to avoid a name
+     clash.
+     [Guenter <lists@gknw.net>]
 
   *) Fix the server certificate chain building code to use X509_verify_cert(),
      it used to have an ad-hoc builder which was unable to cope with anything
@@ -892,7 +900,7 @@
      left. Additionally every future messege was buffered, even if the
      sequence number made no sense and would be part of another handshake.
      So only messages with sequence numbers less than 10 in advance will be
-     buffered.
+     buffered.  (CVE-2009-1378)
      [Robin Seggelmann, discovered by Daniel Mentz] 	
 
   *) Records are buffered if they arrive with a future epoch to be
@@ -901,10 +909,11 @@
      a DOS attack with sending records with future epochs until there is no
      memory left. This patch adds the pqueue_size() function to detemine
      the size of a buffer and limits the record buffer to 100 entries.
+     (CVE-2009-1377)
      [Robin Seggelmann, discovered by Daniel Mentz] 	
 
   *) Keep a copy of frag->msg_header.frag_len so it can be used after the
-     parent structure is freed.
+     parent structure is freed.  (CVE-2009-1379)
      [Daniel Mentz] 	
 
   *) Handle non-blocking I/O properly in SSL_shutdown() call.
@@ -912,6 +921,16 @@
 
   *) Add 2.5.4.* OIDs
      [Ilya O. <vrghost@gmail.com>]
+
+ Changes between 0.9.8k and 0.9.8l  [5 Nov 2009]
+
+  *) Disable renegotiation completely - this fixes a severe security
+     problem (CVE-2009-3555) at the cost of breaking all
+     renegotiation. Renegotiation can be re-enabled by setting
+     SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION in s3->flags at
+     run-time. This is really not recommended unless you know what
+     you're doing.
+     [Ben Laurie]
 
  Changes between 0.9.8j and 0.9.8k  [25 Mar 2009]
 
@@ -951,12 +970,12 @@
 
   *) Support NumericString type for name components.
      [Steve Henson]
-  
+
   *) Allow CC in the environment to override the automatically chosen
      compiler. Note that nothing is done to ensure flags work with the
      chosen compiler.
      [Ben Laurie]
-  
+
  Changes between 0.9.8i and 0.9.8j  [07 Jan 2009]
 
   *) Properly check EVP_VerifyFinal() and similar return values
@@ -996,6 +1015,10 @@
      [Bodo Moeller]
 
  Changes between 0.9.8h and 0.9.8i  [15 Sep 2008]
+
+  *) Fix NULL pointer dereference if a DTLS server received
+     ChangeCipherSpec as first record (CVE-2009-1386).
+     [PR #1679]
 
   *) Fix a state transitition in s3_srvr.c and d1_srvr.c
      (was using SSL3_ST_CW_CLNT_HELLO_B, should be ..._ST_SW_SRVR_...).
@@ -2399,19 +2422,6 @@
      bn_sub_words() and bn_add_words() except they take arrays with
      differing sizes.
      [Richard Levitte]
-
- Changes between 0.9.7m and 0.9.7n  [xx XXX xxxx]
-
-  *) In the SSL/TLS server implementation, be strict about session ID
-     context matching (which matters if an application uses a single
-     external cache for different purposes).  Previously,
-     out-of-context reuse was forbidden only if SSL_VERIFY_PEER was
-     set.  This did ensure strict client verification, but meant that,
-     with applications using a single external cache for quite
-     different requirements, clients could circumvent ciphersuite
-     restrictions for a given session ID context by starting a session
-     in a different context.
-     [Bodo Moeller]
 
  Changes between 0.9.7l and 0.9.7m  [23 Feb 2007]
 
