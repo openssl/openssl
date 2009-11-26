@@ -192,9 +192,9 @@
 
  Changes between 0.9.8h and 0.9.8i  [15 Sep 2008]
 
-  *) Fix NULL pointer dereference if a DTLS server recieved
-     ChangeCipherSpec as first record (CVE-2009-1386)
-     [Bodo Moeller, discovered by Alex Lam]
+  *) Fix NULL pointer dereference if a DTLS server received
+     ChangeCipherSpec as first record (CVE-2009-1386).
+     [PR #1679]
 
   *) Fix a state transitition in s3_srvr.c and d1_srvr.c
      (was using SSL3_ST_CW_CLNT_HELLO_B, should be ..._ST_SW_SRVR_...).
