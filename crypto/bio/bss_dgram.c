@@ -565,21 +565,23 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			}
 		break;
 	case BIO_CTRL_DGRAM_GET_PEER:
-		to = (struct sockaddr *) ptr;
-		switch (to->sa_family)
+		switch (data->peer.sa.sa_family)
 			{
 			case AF_INET:
-				memcpy(to,&data->peer,(ret=sizeof(data->peer.sa_in)));
+				ret=sizeof(data->peer.sa_in);
 				break;
 #if OPENSSL_USE_IPV6
 			case AF_INET6:
-				memcpy(to,&data->peer,(ret=sizeof(data->peer.sa_in6)));
+				ret=sizeof(data->peer.sa_in6);
 				break;
 #endif
 			default:
-				memcpy(to,&data->peer,(ret=sizeof(data->peer.sa)));
+				ret=sizeof(data->peer.sa);
 				break;
 			}
+		if (num==0 || num>ret)
+			num=ret;
+		memcpy(ptr,&data->peer,(ret=num));
 		break;
 	case BIO_CTRL_DGRAM_SET_PEER:
 		to = (struct sockaddr *) ptr;
