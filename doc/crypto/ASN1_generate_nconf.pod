@@ -175,7 +175,7 @@ An IA5String explicitly tagged using APPLICATION tagging:
 
 A BITSTRING with bits 1 and 5 set and all others zero:
 
- FORMAT=BITLIST,BITSTRING:1,5
+ FORMAT:BITLIST,BITSTRING:1,5
 
 A more complex example using a config file to produce a
 SEQUENCE consiting of a BOOL an OID and a UTF8String:
