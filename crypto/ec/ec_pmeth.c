@@ -143,7 +143,7 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 
 	ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
 
-	if (ret < 0)
+	if (ret <= 0)
 		return ret;
 	*siglen = (size_t)sltmp;
 	return 1;
