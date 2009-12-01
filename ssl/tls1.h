@@ -287,6 +287,13 @@ SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 
 #endif
 
+/* Renegotiation indicator "magic" ciphersuite from
+ * "draft-ietf-tls-renegotiation" (FIXME: put RFC# in here when ready)
+ * FIXME: put correct ciphersuite number in here when available.
+ */
+
+#define OPENSSL_RI_MAGIC				0x03000FEC
+
 /* PSK ciphersuites from 4279 */
 #define TLS1_CK_PSK_WITH_RC4_128_SHA                    0x0300008A
 #define TLS1_CK_PSK_WITH_3DES_EDE_CBC_SHA               0x0300008B

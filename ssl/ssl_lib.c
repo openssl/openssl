@@ -1357,6 +1357,21 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
 		p+=j;
 		}
+
+#ifdef OPENSSL_RI_MAGIC
+	if (p == q)
+		return 0;
+	else
+		{
+		/* Bogus "cipher" to send out RI indicator */
+		static SSL_CIPHER ri =
+			{
+			0, NULL, OPENSSL_RI_MAGIC, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			};
+		j = put_cb ? put_cb(&ri,p) : ssl_put_cipher_by_char(s,&ri,p);
+		p+=j;
+		}
+#endif
 	return(p-q);
 	}
 
