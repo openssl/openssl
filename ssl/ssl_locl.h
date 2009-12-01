@@ -976,6 +976,12 @@ int ssl_prepare_clienthello_tlsext(SSL *s);
 int ssl_prepare_serverhello_tlsext(SSL *s);
 int ssl_check_clienthello_tlsext(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
+
+unsigned char *ssl_add_clienthello_dtlsext(SSL *s, unsigned char *p, unsigned char *limit);
+unsigned char *ssl_add_serverhello_dtlsext(SSL *s, unsigned char *p, unsigned char *limit);
+int ssl_parse_clienthello_dtlsext(SSL *s, unsigned char **data, unsigned char *d, int n, int *al);
+int ssl_parse_serverhello_dtlsext(SSL *s, unsigned char **data, unsigned char *d, int n, int *al);
+
 #ifdef OPENSSL_NO_SHA256
 #define tlsext_tick_md	EVP_sha1
 #else

@@ -730,6 +730,8 @@ int dtls1_send_server_hello(SSL *s)
 		p+=sl;
 
 		/* put the cipher */
+		if (s->s3->tmp.new_cipher == NULL)
+			return -1;
 		i=ssl3_put_cipher_by_char(s->s3->tmp.new_cipher,p);
 		p+=i;
 
@@ -741,6 +743,14 @@ int dtls1_send_server_hello(SSL *s)
 			*(p++)=0;
 		else
 			*(p++)=s->s3->tmp.new_compression->id;
+#endif
+
+#ifndef OPENSSL_NO_TLSEXT
+		if ((p = ssl_add_serverhello_dtlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+			{
+			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,ERR_R_INTERNAL_ERROR);
+			return -1;
+			}
 #endif
 
 		/* do the header */
