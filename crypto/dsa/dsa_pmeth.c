@@ -132,7 +132,7 @@ static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 
 	ret = DSA_sign(type, tbs, tbslen, sig, &sltmp, dsa);
 
-	if (ret < 0)
+	if (ret <= 0)
 		return ret;
 	*siglen = sltmp;
 	return 1;
