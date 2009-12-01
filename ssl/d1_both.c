@@ -764,6 +764,24 @@ int dtls1_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 		p+=i;
 		l=i;
 
+	/* Copy the finished so we can use it for
+	 * renegotiation checks
+	 */
+	if(s->type == SSL_ST_CONNECT)
+		{
+		OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
+		memcpy(s->s3->previous_client_finished, 
+		       s->s3->tmp.finish_md, i);
+		s->s3->previous_client_finished_len=i;
+		}
+	else
+		{
+		OPENSSL_assert(i <= EVP_MAX_MD_SIZE);
+		memcpy(s->s3->previous_server_finished, 
+		       s->s3->tmp.finish_md, i);
+		s->s3->previous_server_finished_len=i;
+		}
+
 #ifdef OPENSSL_SYS_WIN16
 		/* MSVC 1.5 does not clear the top bytes of the word unless
 		 * I do this.
