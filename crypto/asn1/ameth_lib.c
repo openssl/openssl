@@ -301,6 +301,8 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 		if (!ameth->info)
 			goto err;
 		}
+	else
+		ameth->info = NULL
 
 	if (pem_str)
 		{
@@ -308,6 +310,8 @@ EVP_PKEY_ASN1_METHOD* EVP_PKEY_asn1_new(int id, int flags,
 		if (!ameth->pem_str)
 			goto err;
 		}
+	else
+		ameth->pem_str = NULL
 
 	ameth->pub_decode = 0;
 	ameth->pub_encode = 0;
