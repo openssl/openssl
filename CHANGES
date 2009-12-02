@@ -828,6 +828,10 @@
 
  Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
+  *) Replace the highly broken and deprecated SPKAC certification method with
+     the updated NID creation version. This should correctly handle UTF8.
+     [Steve Henson]
+
   *) Implement
      https://svn.resiprocate.org/rep/ietf-drafts/ekr/draft-rescorla-tls-renegotiate.txt. Re-enable
      renegotiation but require the extension as needed. Unfortunately,
