@@ -215,7 +215,6 @@ static int certify_spkac(X509 **xret, char *infile,EVP_PKEY *pkey,X509 *x509,
 			 char *startdate, char *enddate, long days, char *ext_sect,
 			 CONF *conf, int verbose, unsigned long certopt, 
 			 unsigned long nameopt, int default_op, int ext_copy);
-static int fix_data(int nid, int *type);
 static void write_new_certificate(BIO *bp, X509 *x, int output_der, int notext);
 static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509, const EVP_MD *dgst,
 	STACK_OF(CONF_VALUE) *policy, CA_DB *db, BIGNUM *serial,char *subj,unsigned long chtype, int multirdn,
@@ -2334,25 +2333,9 @@ static int certify_spkac(X509 **xret, char *infile, EVP_PKEY *pkey, X509 *x509,
 			continue;
 			}
 
-		/*
-		if ((nid == NID_pkcs9_emailAddress) && (email_dn == 0))
-			continue;
-		*/
-		
-		j=ASN1_PRINTABLE_type((unsigned char *)buf,-1);
-		if (fix_data(nid, &j) == 0)
-			{
-			BIO_printf(bio_err,
-				"invalid characters in string %s\n",buf);
+		if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
+				(unsigned char *)buf, -1, -1, 0))
 			goto err;
-			}
-
-		if ((ne=X509_NAME_ENTRY_create_by_NID(&ne,nid,j,
-			(unsigned char *)buf,
-			strlen(buf))) == NULL)
-			goto err;
-
-		if (!X509_NAME_add_entry(n,ne,-1, 0)) goto err;
 		}
 	if (spki == NULL)
 		{
@@ -2393,21 +2376,6 @@ err:
 	if (ne != NULL) X509_NAME_ENTRY_free(ne);
 
 	return(ok);
-	}
-
-static int fix_data(int nid, int *type)
-	{
-	if (nid == NID_pkcs9_emailAddress)
-		*type=V_ASN1_IA5STRING;
-	if ((nid == NID_commonName) && (*type == V_ASN1_IA5STRING))
-		*type=V_ASN1_T61STRING;
-	if ((nid == NID_pkcs9_challengePassword) && (*type == V_ASN1_IA5STRING))
-		*type=V_ASN1_T61STRING;
-	if ((nid == NID_pkcs9_unstructuredName) && (*type == V_ASN1_T61STRING))
-		return(0);
-	if (nid == NID_pkcs9_unstructuredName)
-		*type=V_ASN1_IA5STRING;
-	return(1);
 	}
 
 static int check_time_format(const char *str)
