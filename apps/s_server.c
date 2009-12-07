@@ -458,6 +458,7 @@ static void sv_usage(void)
 #endif
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
+	BIO_printf(bio_err," -tls1_1       - Just talk TLSv1_1\n");
 	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
 	BIO_printf(bio_err," -dtls1        - Just talk DTLSv1\n");
 	BIO_printf(bio_err," -timeout      - Enable timeouts\n");
@@ -466,6 +467,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -no_ssl2      - Just disable SSLv2\n");
 	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
+	BIO_printf(bio_err," -no_tls1_1    - Just disable TLSv1.1\n");
 #ifndef OPENSSL_NO_DH
 	BIO_printf(bio_err," -no_dhe       - Disable ephemeral DH\n");
 #endif
@@ -1120,6 +1122,8 @@ int MAIN(int argc, char *argv[])
 			{ off|=SSL_OP_NO_SSLv2; }
 		else if	(strcmp(*argv,"-no_ssl3") == 0)
 			{ off|=SSL_OP_NO_SSLv3; }
+		else if	(strcmp(*argv,"-no_tls1_1") == 0)
+			{ off|=SSL_OP_NO_TLSv1_1; }
 		else if	(strcmp(*argv,"-no_tls1") == 0)
 			{ off|=SSL_OP_NO_TLSv1; }
 		else if	(strcmp(*argv,"-no_comp") == 0)
@@ -1137,6 +1141,8 @@ int MAIN(int argc, char *argv[])
 			{ meth=SSLv3_server_method(); }
 #endif
 #ifndef OPENSSL_NO_TLS1
+		else if	(strcmp(*argv,"-tls1_1") == 0)
+			{ meth=TLSv1_1_server_method(); }
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
 #endif

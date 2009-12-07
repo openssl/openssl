@@ -143,6 +143,7 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/md5.h>
+#include <openssl/rand.h>
 #ifdef KSSL_DEBUG
 #include <openssl/des.h>
 #endif
@@ -617,7 +618,27 @@ int tls1_enc(SSL *s, int send)
 		if (s->enc_write_ctx == NULL)
 			enc=NULL;
 		else
+			{
+			int ivlen;
 			enc=EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
+			/* For TLSv1.1 and later explicit IV */
+			if (s->version >= TLS1_1_VERSION)
+				ivlen = EVP_CIPHER_iv_length(enc);
+			else
+				ivlen = 0;
+			if (ivlen > 1)
+				{
+				if ( rec->data != rec->input)
+				/* we can't write into the input stream:
+				 * Can this ever happen?? (steve)
+				 */
+				fprintf(stderr,
+					"%s:%d: rec->data != rec->input\n",
+					__FILE__, __LINE__);
+				else if (RAND_bytes(rec->input, ivlen) <= 0)
+					return -1;
+				}
+			}
 		}
 	else
 		{
@@ -746,7 +767,13 @@ int tls1_enc(SSL *s, int send)
 					return -1;
 					}
 				}
-			rec->length-=i;
+			rec->length -=i;
+			if (s->version >= TLS1_1_VERSION)
+				{
+				rec->data += bs;    /* skip the explicit IV */
+				rec->input += bs;
+				rec->length -= bs;
+				}
 			}
 		}
 	return(1);

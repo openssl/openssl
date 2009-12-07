@@ -115,6 +115,7 @@
 #include "ssl_locl.h"
 #include <openssl/evp.h>
 #include <openssl/buffer.h>
+#include <openssl/rand.h>
 
 static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 			 unsigned int len, int create_empty_fragment);
@@ -629,6 +630,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	unsigned char *p,*plen;
 	int i,mac_size,clear=0;
 	int prefix_len=0;
+	int eivlen;
 	long align=0;
 	SSL3_RECORD *wr;
 	SSL3_BUFFER *wb=&(s->s3->wbuf);
@@ -738,9 +740,18 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	/* field where we are to write out packet length */
 	plen=p; 
 	p+=2;
+	/* Explicit IV length, block ciphers and TLS version 1.1 or later */
+	if (s->enc_write_ctx && s->version >= TLS1_1_VERSION)
+		{
+		eivlen = EVP_CIPHER_CTX_iv_length(s->enc_write_ctx);
+		if (eivlen <= 1)
+			eivlen = 0;
+		}
+	else 
+		eivlen = 0;
 
 	/* lets setup the record stuff. */
-	wr->data=p;
+	wr->data=p + eivlen;
 	wr->length=(int)len;
 	wr->input=(unsigned char *)buf;
 
@@ -768,11 +779,19 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 	if (mac_size != 0)
 		{
-		if (s->method->ssl3_enc->mac(s,&(p[wr->length]),1) < 0)
+		if (s->method->ssl3_enc->mac(s,&(p[wr->length + eivlen]),1) < 0)
 			goto err;
 		wr->length+=mac_size;
-		wr->input=p;
-		wr->data=p;
+		}
+
+	wr->input=p;
+	wr->data=p;
+
+	if (eivlen)
+		{
+		if (RAND_pseudo_bytes(p, eivlen) <= 0)
+			goto err;
+		wr->length += eivlen;
 		}
 
 	/* ssl3_enc can only have an error on read */
@@ -1262,7 +1281,7 @@ start:
 	default:
 #ifndef OPENSSL_NO_TLS
 		/* TLS just ignores unknown message types */
-		if (s->version == TLS1_VERSION)
+		if (s->version >= TLS1_VERSION && s->version <= TLS1_1_VERSION)
 			{
 			rr->length = 0;
 			goto start;

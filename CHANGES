@@ -4,6 +4,16 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Initial TLSv1.1 support. Since TLSv1.1 is very similar to TLS v1.0 only
+     a few changes are required:
+
+       Add SSL_OP_NO_TLSv1_1 flag.
+       Add TLSv1_1 methods.
+       Update version checking logic to handle version 1.1.
+       Add explicit IV handling (ported from DTLS code).
+       Add command line options to s_client/s_server.
+     [Steve Henson]
+
   *) Experiemental password based recipient info support for CMS library:
      implementing RFC3211.
      [Steve Henson]

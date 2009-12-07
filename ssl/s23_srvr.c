@@ -128,6 +128,8 @@ static const SSL_METHOD *ssl23_get_server_method(int ver)
 		return(SSLv3_server_method());
 	else if (ver == TLS1_VERSION)
 		return(TLSv1_server_method());
+	else if (ver == TLS1_1_VERSION)
+		return(TLSv1_1_server_method());
 	else
 		return(NULL);
 	}
@@ -283,7 +285,13 @@ int ssl23_get_client_hello(SSL *s)
 				/* SSLv3/TLSv1 */
 				if (p[4] >= TLS1_VERSION_MINOR)
 					{
-					if (!(s->options & SSL_OP_NO_TLSv1))
+					if (p[4] >= TLS1_1_VERSION_MINOR &&
+					   !(s->options & SSL_OP_NO_TLSv1_1))
+						{
+						s->version=TLS1_1_VERSION;
+						s->state=SSL23_ST_SR_CLNT_HELLO_B;
+						}
+					else if (!(s->options & SSL_OP_NO_TLSv1))
 						{
 						s->version=TLS1_VERSION;
 						/* type=2; */ /* done later to survive restarts */
@@ -343,7 +351,13 @@ int ssl23_get_client_hello(SSL *s)
 				v[1]=p[10]; /* minor version according to client_version */
 			if (v[1] >= TLS1_VERSION_MINOR)
 				{
-				if (!(s->options & SSL_OP_NO_TLSv1))
+				if (v[1] >= TLS1_1_VERSION_MINOR &&
+					!(s->options & SSL_OP_NO_TLSv1_1))
+					{
+					s->version=TLS1_1_VERSION;
+					type=3;
+					}
+				else if (!(s->options & SSL_OP_NO_TLSv1))
 					{
 					s->version=TLS1_VERSION;
 					type=3;
@@ -566,7 +580,9 @@ int ssl23_get_client_hello(SSL *s)
 			s->s3->rbuf.offset=0;
 			}
 
-		if (s->version == TLS1_VERSION)
+		if (s->version == TLS1_1_VERSION)
+			s->method = TLSv1_1_server_method();
+		else if (s->version == TLS1_VERSION)
 			s->method = TLSv1_server_method();
 		else
 			s->method = SSLv3_server_method();

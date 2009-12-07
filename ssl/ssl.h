@@ -298,6 +298,7 @@ extern "C" {
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
+#define SSL_TXT_TLSV1_1		"TLSv1.1"
 
 #define SSL_TXT_EXP		"EXP"
 #define SSL_TXT_EXPORT		"EXPORT"
@@ -569,6 +570,7 @@ typedef struct ssl_session_st
 #define SSL_OP_NO_SSLv2					0x01000000L
 #define SSL_OP_NO_SSLv3					0x02000000L
 #define SSL_OP_NO_TLSv1					0x04000000L
+#define SSL_OP_NO_TLSv1_1				0x00040000L
 
 /* The next flag deliberately changes the ciphertest, this is a check
  * for the PKCS#1 attack */
@@ -1629,6 +1631,10 @@ const SSL_METHOD *SSLv23_client_method(void);	/* SSLv3 but can rollback to v2 */
 const SSL_METHOD *TLSv1_method(void);		/* TLSv1.0 */
 const SSL_METHOD *TLSv1_server_method(void);	/* TLSv1.0 */
 const SSL_METHOD *TLSv1_client_method(void);	/* TLSv1.0 */
+
+const SSL_METHOD *TLSv1_1_method(void);		/* TLSv1.1 */
+const SSL_METHOD *TLSv1_1_server_method(void);	/* TLSv1.1 */
+const SSL_METHOD *TLSv1_1_client_method(void);	/* TLSv1.1 */
 
 const SSL_METHOD *DTLSv1_method(void);		/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_server_method(void);	/* DTLSv1.0 */
