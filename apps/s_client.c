@@ -1725,6 +1725,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 							 EVP_PKEY_bits(pktmp));
 		EVP_PKEY_free(pktmp);
 	}
+	BIO_printf(bio, "Secure Renegotiation IS%s supported\n",
+			SSL_get_secure_renegotiation_support(s) ? "" : " NOT");
 #ifndef OPENSSL_NO_COMP
 	comp=SSL_get_current_compression(s);
 	expansion=SSL_get_current_expansion(s);

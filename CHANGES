@@ -828,6 +828,11 @@
 
  Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
+  *) Add ctrl macro SSL_get_secure_renegotiation_support() which returns 1 if
+     peer supports secure renegotiation and 0 otherwise. Print out peer
+     renegotiation support in s_client/s_server.
+     [Steve Henson]
+
   *) Replace the highly broken and deprecated SPKAC certification method with
      the updated NID creation version. This should correctly handle UTF8.
      [Steve Henson]

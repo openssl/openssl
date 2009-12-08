@@ -623,6 +623,8 @@ typedef struct ssl_session_st
 #define SSL_set_mtu(ssl, mtu) \
         SSL_ctrl((ssl),SSL_CTRL_SET_MTU,(mtu),NULL)
 
+#define SSL_get_secure_renegotiation_support(ssl) \
+	SSL_ctrl((ssl), SSL_CTRL_GET_RI_SUPPORT, 0, NULL)
 
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
 void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
@@ -1371,6 +1373,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_MAX_CERT_LIST		51
 
 #define SSL_CTRL_SET_MAX_SEND_FRAGMENT		52
+
+#define SSL_CTRL_GET_RI_SUPPORT			53
 
 /* see tls1.h for macros based on these */
 #ifndef OPENSSL_NO_TLSEXT
