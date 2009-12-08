@@ -4,6 +4,17 @@
 
  Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
+  *) If client attempts to renegotiate and doesn't support RI respond with
+     a no_renegotiation alert as required by draft-ietf-tls-renegotiation.
+     Some renegotiating TLS clients will continue a connection gracefully
+     when they receive the alert. Unfortunately OpenSSL mishandled
+     this alert and would hang waiting for a server hello which it will never
+     receive. Now we treat a received no_renegotiation alert as a fatal 
+     error. This is because applications requesting a renegotiation might well
+     expect it to succeed and would have no code in place to handle the server
+     denying it so the only safe thing to do is to terminate the connection.
+     [Steve Henson]
+
   *) Add ctrl macro SSL_get_secure_renegotiation_support() which returns 1 if
      peer supports secure renegotiation and 0 otherwise. Print out peer
      renegotiation support in s_client/s_server.
