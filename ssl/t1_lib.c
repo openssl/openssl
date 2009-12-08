@@ -275,8 +275,9 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	int extdatalen=0;
 	unsigned char *ret = p;
 
-	/* don't add extensions for SSLv3 */
-	if (s->client_version == SSL3_VERSION)
+	/* don't add extensions for SSLv3 unless doing secure renegotiation */
+	if (s->client_version == SSL3_VERSION
+					&& !s->s3->send_connection_binding)
 		return p;
 
 	ret+=2;
@@ -504,8 +505,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	int extdatalen=0;
 	unsigned char *ret = p;
 
-	/* don't add extensions for SSLv3 */
-	if (s->version == SSL3_VERSION)
+	/* don't add extensions for SSLv3, unless doing secure renegotiation */
+	if (s->version == SSL3_VERSION && !s->s3->send_connection_binding)
 		return p;
 	
 	ret+=2;
@@ -633,7 +634,6 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 	s->servername_done = 0;
 	s->tlsext_status_type = -1;
-	s->s3->send_connection_binding = 0;
 
 	if (data >= (d+n-2))
 		{
