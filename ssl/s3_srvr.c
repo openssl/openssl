@@ -1015,7 +1015,7 @@ int ssl3_get_client_hello(SSL *s)
 
 #ifndef OPENSSL_NO_TLSEXT
 	/* TLS extensions*/
-	if (s->version > SSL3_VERSION && s->version != DTLS1_VERSION && s->version != DTLS1_BAD_VER)
+	if (s->version > SSL3_VERSION)
 		{
 		if (!ssl_parse_clienthello_tlsext(s,&p,d,n, &al))
 			{
@@ -1079,17 +1079,6 @@ int ssl3_get_client_hello(SSL *s)
 
 			s->cipher_list = sk_SSL_CIPHER_dup(s->session->ciphers);
 			s->cipher_list_by_id = sk_SSL_CIPHER_dup(s->session->ciphers);
-			}
-		}
-
-	/* DTLS extensions */
-	if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER)
-		{
-		if (!ssl_parse_clienthello_dtlsext(s,&p,d,n, &al))
-			{
-				/* 'al' set by ssl_parse_clienthello_dtlsext */
-				SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_PARSE_TLSEXT);
-				goto f_err;
 			}
 		}
 #endif

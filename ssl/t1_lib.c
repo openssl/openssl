@@ -340,7 +340,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
         }
 
 #ifndef OPENSSL_NO_EC
-	if (s->tlsext_ecpointformatlist != NULL)
+	if (s->tlsext_ecpointformatlist != NULL &&
+	    s->version != DTLS1_VERSION)
 		{
 		/* Add TLS extension ECPointFormats to the ClientHello message */
 		long lenmax; 
@@ -359,7 +360,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		memcpy(ret, s->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist_length);
 		ret+=s->tlsext_ecpointformatlist_length;
 		}
-	if (s->tlsext_ellipticcurvelist != NULL)
+	if (s->tlsext_ellipticcurvelist != NULL &&
+	    s->version != DTLS1_VERSION)
 		{
 		/* Add TLS extension EllipticCurves to the ClientHello message */
 		long lenmax; 
@@ -423,7 +425,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		skip_ext:
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
-	if (s->s3->client_opaque_prf_input != NULL)
+	if (s->s3->client_opaque_prf_input != NULL &&
+	    s->version != DTLS1_VERSION)
 		{
 		size_t col = s->s3->client_opaque_prf_input_len;
 		
@@ -440,7 +443,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 #endif
 
-	if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp)
+	if (s->tlsext_status_type == TLSEXT_STATUSTYPE_ocsp &&
+	    s->version != DTLS1_VERSION)
 		{
 		int i;
 		long extlen, idlen, itmp;
@@ -515,7 +519,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		s2n(0,ret);
 		}
 
-        if(s->s3->send_connection_binding)
+	if(s->s3->send_connection_binding)
         {
           int el;
           
@@ -540,7 +544,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
         }
 
 #ifndef OPENSSL_NO_EC
-	if (s->tlsext_ecpointformatlist != NULL)
+	if (s->tlsext_ecpointformatlist != NULL &&
+	    s->version != DTLS1_VERSION)
 		{
 		/* Add TLS extension ECPointFormats to the ServerHello message */
 		long lenmax; 
@@ -579,7 +584,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
-	if (s->s3->server_opaque_prf_input != NULL)
+	if (s->s3->server_opaque_prf_input != NULL &&
+	    s->version != DTLS1_VERSION)
 		{
 		size_t sol = s->s3->server_opaque_prf_input_len;
 		
@@ -757,7 +763,8 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			}
 
 #ifndef OPENSSL_NO_EC
-		else if (type == TLSEXT_TYPE_ec_point_formats)
+		else if (type == TLSEXT_TYPE_ec_point_formats &&
+	             s->version != DTLS1_VERSION)
 			{
 			unsigned char *sdata = data;
 			int ecpointformatlist_length = *(sdata++);
@@ -784,7 +791,8 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			fprintf(stderr,"\n");
 #endif
 			}
-		else if (type == TLSEXT_TYPE_elliptic_curves)
+		else if (type == TLSEXT_TYPE_elliptic_curves &&
+	             s->version != DTLS1_VERSION)
 			{
 			unsigned char *sdata = data;
 			int ellipticcurvelist_length = (*(sdata++) << 8);
@@ -814,7 +822,8 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			}
 #endif /* OPENSSL_NO_EC */
 #ifdef TLSEXT_TYPE_opaque_prf_input
-		else if (type == TLSEXT_TYPE_opaque_prf_input)
+		else if (type == TLSEXT_TYPE_opaque_prf_input &&
+	             s->version != DTLS1_VERSION)
 			{
 			unsigned char *sdata = data;
 
@@ -858,8 +867,8 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				return 0;
 			renegotiate_seen = 1;
 			}
-		else if (type == TLSEXT_TYPE_status_request
-						&& s->ctx->tlsext_status_cb)
+		else if (type == TLSEXT_TYPE_status_request &&
+		         s->version != DTLS1_VERSION && s->ctx->tlsext_status_cb)
 			{
 		
 			if (size < 5) 
@@ -1025,7 +1034,8 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			}
 
 #ifndef OPENSSL_NO_EC
-		else if (type == TLSEXT_TYPE_ec_point_formats)
+		else if (type == TLSEXT_TYPE_ec_point_formats &&
+	             s->version != DTLS1_VERSION)
 			{
 			unsigned char *sdata = data;
 			int ecpointformatlist_length = *(sdata++);
@@ -1071,7 +1081,8 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			s->tlsext_ticket_expected = 1;
 			}
 #ifdef TLSEXT_TYPE_opaque_prf_input
-		else if (type == TLSEXT_TYPE_opaque_prf_input)
+		else if (type == TLSEXT_TYPE_opaque_prf_input &&
+	             s->version != DTLS1_VERSION)
 			{
 			unsigned char *sdata = data;
 
@@ -1101,7 +1112,8 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				}
 			}
 #endif
-		else if (type == TLSEXT_TYPE_status_request)
+		else if (type == TLSEXT_TYPE_status_request &&
+		         s->version != DTLS1_VERSION)
 			{
 			/* MUST be empty and only sent if we've requested
 			 * a status request message.
