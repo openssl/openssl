@@ -876,7 +876,7 @@ void dtls1_start_timer(SSL *s);
 void dtls1_stop_timer(SSL *s);
 int dtls1_is_timer_expired(SSL *s);
 void dtls1_double_timeout(SSL *s);
-
+int dtls1_send_newsession_ticket(SSL *s);
 
 
 /* some client-only functions */
@@ -893,6 +893,9 @@ int ssl3_send_client_key_exchange(SSL *s);
 int ssl3_get_key_exchange(SSL *s);
 int ssl3_get_server_certificate(SSL *s);
 int ssl3_check_cert_and_algorithm(SSL *s);
+#ifndef OPENSSL_NO_TLSEXT
+int ssl3_check_finished(SSL *s);
+#endif
 
 int dtls1_client_hello(SSL *s);
 int dtls1_send_client_certificate(SSL *s);
@@ -976,11 +979,6 @@ int ssl_prepare_clienthello_tlsext(SSL *s);
 int ssl_prepare_serverhello_tlsext(SSL *s);
 int ssl_check_clienthello_tlsext(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
-
-unsigned char *ssl_add_clienthello_dtlsext(SSL *s, unsigned char *p, unsigned char *limit);
-unsigned char *ssl_add_serverhello_dtlsext(SSL *s, unsigned char *p, unsigned char *limit);
-int ssl_parse_clienthello_dtlsext(SSL *s, unsigned char **data, unsigned char *d, int n, int *al);
-int ssl_parse_serverhello_dtlsext(SSL *s, unsigned char **data, unsigned char *d, int n, int *al);
 
 #ifdef OPENSSL_NO_SHA256
 #define tlsext_tick_md	EVP_sha1
