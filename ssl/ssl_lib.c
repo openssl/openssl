@@ -1003,6 +1003,10 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 			return larg;
 			}
 		return 0;
+	case SSL_CTRL_GET_RI_SUPPORT:
+		if (s->s3)
+			return s->s3->send_connection_binding;
+		else return 0;
 	default:
 		return(s->method->ssl_ctrl(s,cmd,larg,parg));
 		}
@@ -1294,7 +1298,7 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 		{
 		static SSL_CIPHER msvc =
 			{
-			0, NULL, SSL3_CK_MCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
+			0, NULL, SSL3_CK_MCSV, 0, 0, 0, 0, 0, 0, 0,
 			};
 		j = put_cb ? put_cb(&msvc,p) : ssl_put_cipher_by_char(s,&msvc,p);
 		p+=j;
