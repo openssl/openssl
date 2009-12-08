@@ -1062,6 +1062,10 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 			return 0;
 		s->max_send_fragment = larg;
 		return 1;
+	case SSL_CTRL_GET_RI_SUPPORT:
+		if (s->s3)
+			return s->s3->send_connection_binding;
+		else return 0;
 	default:
 		return(s->method->ssl_ctrl(s,cmd,larg,parg));
 		}

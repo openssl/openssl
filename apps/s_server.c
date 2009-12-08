@@ -2215,6 +2215,8 @@ static int init_ssl_connection(SSL *con)
 			con->kssl_ctx->client_princ);
 		}
 #endif /* OPENSSL_NO_KRB5 */
+	BIO_printf(bio_s_out, "Secure Renegotiation IS%s supported\n",
+		      SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
 	return(1);
 	}
 
