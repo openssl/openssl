@@ -166,9 +166,6 @@
 
 static const SSL_METHOD *ssl3_get_client_method(int ver);
 static int ca_dn_cmp(const X509_NAME * const *a,const X509_NAME * const *b);
-#ifndef OPENSSL_NO_TLSEXT
-static int ssl3_check_finished(SSL *s);
-#endif
 
 static const SSL_METHOD *ssl3_get_client_method(int ver)
 	{
@@ -915,7 +912,7 @@ int ssl3_get_server_hello(SSL *s)
 
 #ifndef OPENSSL_NO_TLSEXT
 	/* TLS extensions*/
-	if (s->version > SSL3_VERSION && s->version != DTLS1_VERSION && s->version != DTLS1_BAD_VER)
+	if (s->version > SSL3_VERSION)
 		{
 		if (!ssl_parse_serverhello_tlsext(s,&p,d,n, &al))
 			{
@@ -929,17 +926,6 @@ int ssl3_get_server_hello(SSL *s)
 				goto err;
 			}
 		}
-
-	/* DTLS extensions */
-	if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER)
-	{
-		if (!ssl_parse_serverhello_dtlsext(s,&p,d,n, &al))
-		{
-			/* 'al' set by ssl_parse_serverhello_dtlsext */
-			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_PARSE_TLSEXT);
-			goto f_err;
-		}
-	}
 #endif
 
 	if (p != (d+n))
@@ -1832,6 +1818,7 @@ int ssl3_get_new_session_ticket(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_NEW_SESSION_TICKET,SSL_R_LENGTH_MISMATCH);
 		goto f_err;
 		}
+
 	p=d=(unsigned char *)s->init_msg;
 	n2l(p, s->session->tlsext_tick_lifetime_hint);
 	n2s(p, ticklen);
@@ -2996,7 +2983,7 @@ err:
  */
 
 #ifndef OPENSSL_NO_TLSEXT
-static int ssl3_check_finished(SSL *s)
+int ssl3_check_finished(SSL *s)
 	{
 	int ok;
 	long n;

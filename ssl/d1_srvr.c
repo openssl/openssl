@@ -305,8 +305,18 @@ int dtls1_accept(SSL *s)
 			ret=dtls1_send_server_hello(s);
 			if (ret <= 0) goto end;
 
+#ifndef OPENSSL_NO_TLSEXT
 			if (s->hit)
-				s->state=SSL3_ST_SW_CHANGE_A;
+				{
+				if (s->tlsext_ticket_expected)
+					s->state=SSL3_ST_SW_SESSION_TICKET_A;
+				else
+					s->state=SSL3_ST_SW_CHANGE_A;
+				}
+#else
+			if (s->hit)
+					s->state=SSL3_ST_SW_CHANGE_A;
+#endif
 			else
 				s->state=SSL3_ST_SW_CERT_A;
 			s->init_num=0;
@@ -321,10 +331,24 @@ int dtls1_accept(SSL *s)
 				dtls1_start_timer(s);
 				ret=dtls1_send_server_certificate(s);
 				if (ret <= 0) goto end;
+#ifndef OPENSSL_NO_TLSEXT
+				if (s->tlsext_status_expected)
+					s->state=SSL3_ST_SW_CERT_STATUS_A;
+				else
+					s->state=SSL3_ST_SW_KEY_EXCH_A;
+				}
+			else
+				{
+				skip = 1;
+				s->state=SSL3_ST_SW_KEY_EXCH_A;
+				}
+#else
 				}
 			else
 				skip=1;
+
 			s->state=SSL3_ST_SW_KEY_EXCH_A;
+#endif
 			s->init_num=0;
 			break;
 
@@ -519,10 +543,33 @@ int dtls1_accept(SSL *s)
 			dtls1_stop_timer(s);
 			if (s->hit)
 				s->state=SSL_ST_OK;
+#ifndef OPENSSL_NO_TLSEXT
+			else if (s->tlsext_ticket_expected)
+				s->state=SSL3_ST_SW_SESSION_TICKET_A;
+#endif
 			else
 				s->state=SSL3_ST_SW_CHANGE_A;
 			s->init_num=0;
 			break;
+
+#ifndef OPENSSL_NO_TLSEXT
+		case SSL3_ST_SW_SESSION_TICKET_A:
+		case SSL3_ST_SW_SESSION_TICKET_B:
+			ret=dtls1_send_newsession_ticket(s);
+			if (ret <= 0) goto end;
+			s->state=SSL3_ST_SW_CHANGE_A;
+			s->init_num=0;
+			break;
+
+		case SSL3_ST_SW_CERT_STATUS_A:
+		case SSL3_ST_SW_CERT_STATUS_B:
+			ret=ssl3_send_cert_status(s);
+			if (ret <= 0) goto end;
+			s->state=SSL3_ST_SW_KEY_EXCH_A;
+			s->init_num=0;
+			break;
+
+#endif
 
 		case SSL3_ST_SW_CHANGE_A:
 		case SSL3_ST_SW_CHANGE_B:
@@ -765,7 +812,7 @@ int dtls1_send_server_hello(SSL *s)
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
-		if ((p = ssl_add_serverhello_dtlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
+		if ((p = ssl_add_serverhello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
 			{
 			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,ERR_R_INTERNAL_ERROR);
 			return -1;
@@ -1394,3 +1441,114 @@ int dtls1_send_server_certificate(SSL *s)
 	/* SSL3_ST_SW_CERT_B */
 	return(dtls1_do_write(s,SSL3_RT_HANDSHAKE));
 	}
+
+#ifndef OPENSSL_NO_TLSEXT
+int dtls1_send_newsession_ticket(SSL *s)
+	{
+	if (s->state == SSL3_ST_SW_SESSION_TICKET_A)
+		{
+		unsigned char *p, *senc, *macstart;
+		int len, slen;
+		unsigned int hlen, msg_len;
+		EVP_CIPHER_CTX ctx;
+		HMAC_CTX hctx;
+		SSL_CTX *tctx = s->initial_ctx;
+		unsigned char iv[EVP_MAX_IV_LENGTH];
+		unsigned char key_name[16];
+
+		/* get session encoding length */
+		slen = i2d_SSL_SESSION(s->session, NULL);
+		/* Some length values are 16 bits, so forget it if session is
+ 		 * too long
+ 		 */
+		if (slen > 0xFF00)
+			return -1;
+		/* Grow buffer if need be: the length calculation is as
+ 		 * follows 12 (DTLS handshake message header) +
+ 		 * 4 (ticket lifetime hint) + 2 (ticket length) +
+ 		 * 16 (key name) + max_iv_len (iv length) +
+ 		 * session_length + max_enc_block_size (max encrypted session
+ 		 * length) + max_md_size (HMAC).
+ 		 */
+		if (!BUF_MEM_grow(s->init_buf,
+			DTLS1_HM_HEADER_LENGTH + 22 + EVP_MAX_IV_LENGTH +
+			EVP_MAX_BLOCK_LENGTH + EVP_MAX_MD_SIZE + slen))
+			return -1;
+		senc = OPENSSL_malloc(slen);
+		if (!senc)
+			return -1;
+		p = senc;
+		i2d_SSL_SESSION(s->session, &p);
+
+		p=(unsigned char *)&(s->init_buf->data[DTLS1_HM_HEADER_LENGTH]);
+		EVP_CIPHER_CTX_init(&ctx);
+		HMAC_CTX_init(&hctx);
+		/* Initialize HMAC and cipher contexts. If callback present
+		 * it does all the work otherwise use generated values
+		 * from parent ctx.
+		 */
+		if (tctx->tlsext_ticket_key_cb)
+			{
+			if (tctx->tlsext_ticket_key_cb(s, key_name, iv, &ctx,
+							 &hctx, 1) < 0)
+				{
+				OPENSSL_free(senc);
+				return -1;
+				}
+			}
+		else
+			{
+			RAND_pseudo_bytes(iv, 16);
+			EVP_EncryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
+					tctx->tlsext_tick_aes_key, iv);
+			HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
+					tlsext_tick_md(), NULL);
+			memcpy(key_name, tctx->tlsext_tick_key_name, 16);
+			}
+		l2n(s->session->tlsext_tick_lifetime_hint, p);
+		/* Skip ticket length for now */
+		p += 2;
+		/* Output key name */
+		macstart = p;
+		memcpy(p, key_name, 16);
+		p += 16;
+		/* output IV */
+		memcpy(p, iv, EVP_CIPHER_CTX_iv_length(&ctx));
+		p += EVP_CIPHER_CTX_iv_length(&ctx);
+		/* Encrypt session data */
+		EVP_EncryptUpdate(&ctx, p, &len, senc, slen);
+		p += len;
+		EVP_EncryptFinal(&ctx, p, &len);
+		p += len;
+		EVP_CIPHER_CTX_cleanup(&ctx);
+
+		HMAC_Update(&hctx, macstart, p - macstart);
+		HMAC_Final(&hctx, p, &hlen);
+		HMAC_CTX_cleanup(&hctx);
+
+		p += hlen;
+		/* Now write out lengths: p points to end of data written */
+		/* Total length */
+		len = p - (unsigned char *)&(s->init_buf->data[DTLS1_HM_HEADER_LENGTH]);
+		p=(unsigned char *)&(s->init_buf->data[DTLS1_HM_HEADER_LENGTH]) + 4;
+		s2n(len - 18, p);  /* Ticket length */
+
+		/* number of bytes to write */
+		s->init_num= len;
+		s->state=SSL3_ST_SW_SESSION_TICKET_B;
+		s->init_off=0;
+		OPENSSL_free(senc);
+
+		/* XDTLS:  set message header ? */
+		msg_len = s->init_num - DTLS1_HM_HEADER_LENGTH;
+		dtls1_set_message_header(s, (void *)s->init_buf->data,
+			SSL3_MT_NEWSESSION_TICKET, msg_len, 0, msg_len);
+
+		/* buffer the message to handle re-xmits */
+		dtls1_buffer_message(s, 0);
+		}
+
+	/* SSL3_ST_SW_SESSION_TICKET_B */
+	return(dtls1_do_write(s,SSL3_RT_HANDSHAKE));
+	}
+#endif
