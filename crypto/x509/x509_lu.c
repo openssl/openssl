@@ -200,7 +200,13 @@ X509_STORE *X509_STORE_new(void)
 	ret->lookup_crls = 0;
 	ret->cleanup = 0;
 
-	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data);
+	if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data))
+		{
+		sk_X509_OBJECT_free(ret->objs);
+		OPENSSL_free(ret);
+		return NULL;
+		}
+
 	ret->references=1;
 	return ret;
 	}

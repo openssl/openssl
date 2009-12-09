@@ -126,7 +126,8 @@ EVP_MD_CTX *EVP_MD_CTX_create(void)
 	{
 	EVP_MD_CTX *ctx=OPENSSL_malloc(sizeof *ctx);
 
-	EVP_MD_CTX_init(ctx);
+	if (ctx)
+		EVP_MD_CTX_init(ctx);
 
 	return ctx;
 	}
@@ -286,8 +287,17 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
 	if (in->md_data && out->digest->ctx_size)
 		{
-		if (tmp_buf) out->md_data = tmp_buf;
-		else out->md_data=OPENSSL_malloc(out->digest->ctx_size);
+		if (tmp_buf)
+			out->md_data = tmp_buf;
+		else
+			{
+			out->md_data=OPENSSL_malloc(out->digest->ctx_size);
+			if (!out->md_data)
+				{
+				EVPerr(EVP_F_EVP_MD_CTX_COPY_EX,ERR_R_MALLOC_FAILURE);
+				return 0;
+				}
+			}
 		memcpy(out->md_data,in->md_data,out->digest->ctx_size);
 		}
 
