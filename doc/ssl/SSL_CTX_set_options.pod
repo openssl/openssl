@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_set_options, SSL_set_options, SSL_CTX_get_options, SSL_get_options - manipulate SSL engine options
+SSL_CTX_set_options, SSL_set_options, SSL_CTX_get_options, SSL_get_options - manipulate SSL options
 
 =head1 SYNOPSIS
 
@@ -11,10 +11,17 @@ SSL_CTX_set_options, SSL_set_options, SSL_CTX_get_options, SSL_get_options - man
  long SSL_CTX_set_options(SSL_CTX *ctx, long options);
  long SSL_set_options(SSL *ssl, long options);
 
+ long SSL_CTX_clear_options(SSL_CTX *ctx, long options);
+ long SSL_clear_options(SSL *ssl, long options);
+
  long SSL_CTX_get_options(SSL_CTX *ctx);
  long SSL_get_options(SSL *ssl);
 
+ long SSL_get_secure_renegotiation_support(SSL *ssl);
+
 =head1 DESCRIPTION
+
+Note: all these functions are implemented using macros.
 
 SSL_CTX_set_options() adds the options set via bitmask in B<options> to B<ctx>.
 Options already set before are not cleared!
@@ -22,15 +29,23 @@ Options already set before are not cleared!
 SSL_set_options() adds the options set via bitmask in B<options> to B<ssl>.
 Options already set before are not cleared!
 
+SSL_CTX_clear_options() clears the options set via bitmask in B<options>
+to B<ctx>.
+
+SSL_clear_options() clears the options set via bitmask in B<options> to B<ssl>.
+
 SSL_CTX_get_options() returns the options set for B<ctx>.
 
 SSL_get_options() returns the options set for B<ssl>.
+
+SSL_get_secure_renegotiation_support() indicates whether the peer supports
+secure renegotiation.
 
 =head1 NOTES
 
 The behaviour of the SSL library can be changed by setting several options.
 The options are coded as bitmasks and can be combined by a logical B<or>
-operation (|). Options can only be added but can never be reset.
+operation (|).
 
 SSL_CTX_set_options() and SSL_set_options() affect the (external)
 protocol behaviour of the SSL library. The (internal) behaviour of
@@ -199,7 +214,7 @@ Do not use the TLSv1 protocol.
 
 When performing renegotiation as a server, always start a new session
 (i.e., session resumption requests are only accepted in the initial
-handshake).  This option is not needed for clients.
+handshake). This option is not needed for clients.
 
 =item SSL_OP_NO_TICKET
 
@@ -209,14 +224,61 @@ of RFC4507bis tickets for stateless session resumption.
 If this option is set this functionality is disabled and tickets will
 not be used by clients or servers.
 
+=item SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
+
+See the B<SECURE RENEGOTIATION> section for a discussion of the purpose of
+this option
+
 =back
+
+=head1 SECURE RENEGOTIATION
+
+OpenSSL by 0.9.8m and later always attempts to use secure renegotiation as
+described in draft-ietf-tls-renegotiation (FIXME: replace by RFC). This
+counters a prefix attack described in the draft and elsewhere (FIXME: need full
+reference).
+
+This attack has far reaching consequences which application writers should be
+aware of. In the description below an implementation supporting secure
+renegotiation is referred to as I<patched>. A server not supporting secure
+renegotiation is referred to as I<unpatched>.
+
+If an unpatched client attempts to connect to a patched OpenSSL server then
+the attempt will succeed but renegotiation is not permitted. As required
+by the standard a B<no_renegotiation> alert is sent back to the client if
+the TLS v1.0 protocol is used. If SSLv3.0 is used then renegotiation results
+in a fatal B<handshake_failed> alert.
+
+If a patched OpenSSL client attempts to connect to an unpatched server
+then the connection will fail because it is not possible to determine
+whether an attack is taking place.
+
+If the option B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then the
+renegotiation between unpatched clients and patched servers is permitted as
+well as initial connections and renegotiation between patched clients and
+unpatched servers. This option should be used with caution because it leaves
+both clients and servers vulnerable. However unpatched servers and clients are
+likely to be around for some time and simply refusing to connect to unpatched
+servers may well be considered unacceptable. So applications may be forced to
+use this option for the immediate future.
+
+The function SSL_get_secure_renegotiation_support() indicates whether the peer
+supports secure renegotiation. 
+
+The deprecated SSLv2 protocol does not support secure renegotiation at all.
 
 =head1 RETURN VALUES
 
 SSL_CTX_set_options() and SSL_set_options() return the new options bitmask
 after adding B<options>.
 
+SSL_CTX_clear_options() and SSL_clear_options() return the new options bitmask
+after clearing B<options>.
+
 SSL_CTX_get_options() and SSL_get_options() return the current bitmask.
+
+SSL_get_secure_renegotiation_support() returns 1 is the peer supports
+secure renegotiation and 0 if it does not.
 
 =head1 SEE ALSO
 
@@ -239,5 +301,11 @@ B<SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS> has been added in OpenSSL 0.9.6e.
 Versions up to OpenSSL 0.9.6c do not include the countermeasure that
 can be disabled with this option (in OpenSSL 0.9.6d, it was always
 enabled).
+
+SSL_CTX_clear_options() and SSL_clear_options() were first added in OpenSSL
+0.9.8m.
+
+B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> was first added in OpenSSL
+0.9.8m.
 
 =cut
