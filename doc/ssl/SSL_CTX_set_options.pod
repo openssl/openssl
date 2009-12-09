@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_set_options, SSL_set_options, SSL_CTX_get_options, SSL_get_options - manipulate SSL options
+SSL_CTX_set_options, SSL_set_options, SSL_CTX_clear_options, SSL_clear_options, SSL_CTX_get_options, SSL_get_options, SSL_get_secure_renegotiation_support - manipulate SSL options
 
 =head1 SYNOPSIS
 
@@ -233,7 +233,7 @@ this option
 
 =head1 SECURE RENEGOTIATION
 
-OpenSSL by 0.9.8m and later always attempts to use secure renegotiation as
+OpenSSL 0.9.8m and later always attempts to use secure renegotiation as
 described in draft-ietf-tls-renegotiation (FIXME: replace by RFC). This
 counters a prefix attack described in the draft and elsewhere (FIXME: need full
 reference).
@@ -254,13 +254,14 @@ then the connection will fail because it is not possible to determine
 whether an attack is taking place.
 
 If the option B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then the
-renegotiation between unpatched clients and patched servers is permitted as
-well as initial connections and renegotiation between patched clients and
-unpatched servers. This option should be used with caution because it leaves
-both clients and servers vulnerable. However unpatched servers and clients are
-likely to be around for some time and simply refusing to connect to unpatched
-servers may well be considered unacceptable. So applications may be forced to
-use this option for the immediate future.
+above restrictions are relaxed. Renegotiation is permissible and initial
+initial connections to unpatched servers will succeed.
+
+This option should be used with caution because it leaves both clients and
+servers vulnerable. However unpatched servers and clients are likely to be
+around for some time and refusing to connect to unpatched servers or denying
+renegotion altogether may be unacceptable. So applications may be forced to
+tolerate unsafe renegotiation for the immediate future.
 
 The function SSL_get_secure_renegotiation_support() indicates whether the peer
 supports secure renegotiation. 
