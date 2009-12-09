@@ -305,16 +305,40 @@ void lh_doall_arg(LHASH *lh, LHASH_DOALL_ARG_FN_TYPE func, void *arg)
 static void expand(LHASH *lh)
 	{
 	LHASH_NODE **n,**n1,**n2,*np;
-	unsigned int p,i,j;
+	unsigned int p,i,j,pmax;
 	unsigned long hash,nni;
+
+	p=(int)lh->p++;
+	nni=lh->num_alloc_nodes;
+	pmax=lh->pmax;
+
+	if ((lh->p) >= lh->pmax)
+		{
+		j=(int)lh->num_alloc_nodes*2;
+		n=(LHASH_NODE **)OPENSSL_realloc(lh->b,
+			(int)sizeof(LHASH_NODE *)*j);
+		if (n == NULL)
+			{
+/*			fputs("realloc error in lhash",stderr); */
+			lh->error++;
+			lh->p=0;
+			return;
+			}
+		/* else */
+		for (i=(int)lh->num_alloc_nodes; i<j; i++)/* 26/02/92 eay */
+			n[i]=NULL;			  /* 02/03/92 eay */
+		lh->pmax=lh->num_alloc_nodes;
+		lh->num_alloc_nodes=j;
+		lh->num_expand_reallocs++;
+		lh->p=0;
+		lh->b=n;
+		}
 
 	lh->num_nodes++;
 	lh->num_expands++;
-	p=(int)lh->p++;
 	n1= &(lh->b[p]);
-	n2= &(lh->b[p+(int)lh->pmax]);
+	n2= &(lh->b[p+pmax]);
 	*n2=NULL;        /* 27/07/92 - eay - undefined pointer bug */
-	nni=lh->num_alloc_nodes;
 	
 	for (np= *n1; np != NULL; )
 		{
@@ -335,35 +359,14 @@ static void expand(LHASH *lh)
 		np= *n1;
 		}
 
-	if ((lh->p) >= lh->pmax)
-		{
-		j=(int)lh->num_alloc_nodes*2;
-		n=(LHASH_NODE **)OPENSSL_realloc(lh->b,
-			(int)(sizeof(LHASH_NODE *)*j));
-		if (n == NULL)
-			{
-/*			fputs("realloc error in lhash",stderr); */
-			lh->error++;
-			lh->p=0;
-			return;
-			}
-		/* else */
-		for (i=(int)lh->num_alloc_nodes; i<j; i++)/* 26/02/92 eay */
-			n[i]=NULL;			  /* 02/03/92 eay */
-		lh->pmax=lh->num_alloc_nodes;
-		lh->num_alloc_nodes=j;
-		lh->num_expand_reallocs++;
-		lh->p=0;
-		lh->b=n;
-		}
 	}
 
 static void contract(LHASH *lh)
 	{
 	LHASH_NODE **n,*n1,*np;
+	int idx = lh->p+lh->pmax-1;
 
-	np=lh->b[lh->p+lh->pmax-1];
-	lh->b[lh->p+lh->pmax-1]=NULL; /* 24/07-92 - eay - weird but :-( */
+	np=lh->b[idx];
 	if (lh->p == 0)
 		{
 		n=(LHASH_NODE **)OPENSSL_realloc(lh->b,
@@ -383,6 +386,7 @@ static void contract(LHASH *lh)
 	else
 		lh->p--;
 
+	lh->b[idx] = NULL;
 	lh->num_nodes--;
 	lh->num_contracts++;
 
