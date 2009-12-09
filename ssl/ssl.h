@@ -605,17 +605,25 @@ typedef struct ssl_session_st
 
 #define SSL_CTX_set_options(ctx,op) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_OPTIONS,(op),NULL)
+#define SSL_CTX_clear_options(ctx,op) \
+	SSL_CTX_ctrl((ctx),SSL_CTRL_CLEAR_OPTIONS,(op),NULL)
 #define SSL_CTX_get_options(ctx) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_OPTIONS,0,NULL)
 #define SSL_set_options(ssl,op) \
 	SSL_ctrl((ssl),SSL_CTRL_OPTIONS,(op),NULL)
+#define SSL_clear_options(ssl,op) \
+	SSL_ctrl((ssl),SSL_CTRL_CLEAR_OPTIONS,(op),NULL)
 #define SSL_get_options(ssl) \
         SSL_ctrl((ssl),SSL_CTRL_OPTIONS,0,NULL)
 
 #define SSL_CTX_set_mode(ctx,op) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_MODE,(op),NULL)
+#define SSL_CTX_clear_mode(ctx,op) \
+	SSL_CTX_ctrl((ctx),SSL_CTRL_CLEAR_MODE,(op),NULL)
 #define SSL_CTX_get_mode(ctx) \
 	SSL_CTX_ctrl((ctx),SSL_CTRL_MODE,0,NULL)
+#define SSL_clear_mode(ssl,op) \
+	SSL_ctrl((ssl),SSL_CTRL_CLEAR_MODE,(op),NULL)
 #define SSL_set_mode(ssl,op) \
 	SSL_ctrl((ssl),SSL_CTRL_MODE,(op),NULL)
 #define SSL_get_mode(ssl) \
@@ -1374,8 +1382,6 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 
 #define SSL_CTRL_SET_MAX_SEND_FRAGMENT		52
 
-#define SSL_CTRL_GET_RI_SUPPORT			53
-
 /* see tls1.h for macros based on these */
 #ifndef OPENSSL_NO_TLSEXT
 #define SSL_CTRL_SET_TLSEXT_SERVERNAME_CB	53
@@ -1404,6 +1410,10 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define DTLS_CTRL_GET_TIMEOUT		73
 #define DTLS_CTRL_HANDLE_TIMEOUT	74
 #define DTLS_CTRL_LISTEN			75
+
+#define SSL_CTRL_GET_RI_SUPPORT			76
+#define SSL_CTRL_CLEAR_OPTIONS			77
+#define SSL_CTRL_CLEAR_MODE			78
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
