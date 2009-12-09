@@ -987,8 +987,12 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 
 	case SSL_CTRL_OPTIONS:
 		return(s->options|=larg);
+	case SSL_CTRL_CLEAR_OPTIONS:
+		return(s->options&=~larg);
 	case SSL_CTRL_MODE:
 		return(s->mode|=larg);
+	case SSL_CTRL_CLEAR_MODE:
+		return(s->mode &=~larg);
 	case SSL_CTRL_GET_MAX_CERT_LIST:
 		return(s->max_cert_list);
 	case SSL_CTRL_SET_MAX_CERT_LIST:
@@ -1093,8 +1097,12 @@ long SSL_CTX_ctrl(SSL_CTX *ctx,int cmd,long larg,void *parg)
 		return(ctx->stats.sess_cache_full);
 	case SSL_CTRL_OPTIONS:
 		return(ctx->options|=larg);
+	case SSL_CTRL_CLEAR_OPTIONS:
+		return(ctx->options&=~larg);
 	case SSL_CTRL_MODE:
 		return(ctx->mode|=larg);
+	case SSL_CTRL_CLEAR_MODE:
+		return(ctx->mode&=~larg);
 	default:
 		return(ctx->method->ssl_ctx_ctrl(ctx,cmd,larg,parg));
 		}
