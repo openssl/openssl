@@ -1394,8 +1394,8 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 	const SSL_CIPHER *c;
 	STACK_OF(SSL_CIPHER) *sk;
 	int i,n;
-
-	s->s3->send_connection_binding = 0;
+	if (s->s3)
+		s->s3->send_connection_binding = 0;
 
 	n=ssl_put_cipher_by_char(s,NULL,NULL);
 	if ((num%n) != 0)
@@ -1414,7 +1414,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 	for (i=0; i<num; i+=n)
 		{
 		/* Check for MCSV */
-		if ((n != 3 || !p[0]) &&
+		if (s->s3 && (n != 3 || !p[0]) &&
 			(p[n-2] == ((SSL3_CK_MCSV >> 8) & 0xff)) &&
 			(p[n-1] == (SSL3_CK_MCSV & 0xff)))
 			{
