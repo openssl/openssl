@@ -863,6 +863,9 @@
 
  Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
+  *) Add "missing" ssl ctrls to clear options and mode.
+     [Steve Henson]
+
   *) If client attempts to renegotiate and doesn't support RI respond with
      a no_renegotiation alert as required by draft-ietf-tls-renegotiation.
      Some renegotiating TLS clients will continue a connection gracefully
