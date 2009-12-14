@@ -350,21 +350,27 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	unsigned short len;
 	unsigned char *data = *p;
 	int renegotiate_seen = 0;
+	int need_ri;
 
 	s->servername_done = 0;
 	s->tlsext_status_type = -1;
+	/* Need RI if renegotiating unless legacy renegotiation allowed */
+	if (s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
+		|| !s->new_session)
+		need_ri = 0;
+	else
+		need_ri = 1;
 
 	if (data >= (d+n-2))
 		{
-		if (s->new_session
-			&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
-			{
-			/* We should always see one extension: the renegotiate extension */
-	 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-			*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
-			return 0;
-			}
-		return 1;
+		if (!need_ri)
+			return 1;
+		/* We need to see at least one extension: RI */
+		/* FIXME: Spec currently doesn't give alert to use */
+		*al = SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
+				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		return 0;
 		}
 	n2s(data,len);
 
@@ -590,11 +596,12 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		data+=size;		
 		}
 
-	if (s->new_session && !renegotiate_seen
-		&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+	if (need_ri && !renegotiate_seen)
 		{
-		*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
-	 	SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		/* FIXME: Spec currently doesn't give alert to use */
+		*al = SSL_AD_ILLEGAL_PARAMETER;
+	 	SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT,
+				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
 		}
 
@@ -610,20 +617,30 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	unsigned char *data = *p;
 	int tlsext_servername = 0;
 	int renegotiate_seen = 0;
+	int need_ri;
+	/* Determine if we need to see RI. Strictly speaking if we want to
+	 * avoid an attack we should *always* see RI even on initial server
+	 * hello because the client doesn't see any renegotiation during an
+	 * attack. However this would mean we could not connect to any server
+	 * which doesn't support RI so for the immediate future tolerate RI
+	 * absence on initial connect only.
+	 */
+	if (s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION ||
+		!s->new_session)
+		need_ri = 0;
+	else
+		need_ri = 1;
 
 	if (data >= (d+n-2))
 		{
-		/* Because the client does not see any renegotiation during an
-		   attack, we must enforce this on all server hellos, even the
-		   first */
-		if (!(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
-			{
-			/* We should always see one extension: the renegotiate extension */
-			*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
-			SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-			return 0;
-			}
-		return 1;
+		if (!need_ri)
+			return 1;
+		/* We need to see at least one extension: RI */
+		/* FIXME: Spec currently doesn't give alert to use */
+		*al = SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
+				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		return 0;
 		}
 
 	n2s(data,len);
@@ -688,11 +705,12 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		return 0;
 		}
 
-	if (!renegotiate_seen
-		&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+	if (!renegotiate_seen && need_ri)
 		{
-		*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
-		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		/* FIXME: Spec currently doesn't give alert to use */
+		*al = SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
+				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
 		}
 
