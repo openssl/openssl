@@ -636,21 +636,11 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	s->tlsext_status_type = -1;
 
 	if (data >= (d+n-2))
-		{
-		if (s->new_session
-			&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
-			{
-			/* We should always see one extension: the renegotiate extension */
-			*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
-			SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-			return 0;
-			}
-		return 1;
-		}
+		goto ri_check;
 	n2s(data,len);
 
 	if (data > (d+n-len)) 
-		return 1;
+		goto ri_check;
 
 	while (data <= (d+n-4))
 		{
@@ -658,7 +648,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		n2s(data,size);
 
 		if (data+size > (d+n))
-	   		return 1;
+	   		goto ri_check;
 #if 0
 		fprintf(stderr,"Received extension type %d size %d\n",type,size);
 #endif
@@ -971,17 +961,23 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		/* session ticket processed earlier */
 		data+=size;
 		}
-  
- 	if (s->new_session && !renegotiate_seen
- 		&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
- 		{
-		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
- 		*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
- 		return 0;
- 		}
- 
 				
 	*p = data;
+
+	ri_check:
+
+	/* Need RI if renegotiating */
+
+	if (!renegotiate_seen && s->new_session &&
+		!(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+		{
+		/* FIXME: Spec currently doesn't give alert to use */
+		*al = SSL_AD_ILLEGAL_PARAMETER;
+	 	SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT,
+				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		return 0;
+		}
+
 	return 1;
 	}
 
@@ -995,19 +991,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	int renegotiate_seen = 0;
 
 	if (data >= (d+n-2))
-		{
-		/* Because the client does not see any renegotiation during an
-		   attack, we must enforce this on all server hellos, even the
-		   first */
-		if (!(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
-			{
-			/* We should always see one extension: the renegotiate extension */
-			*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
-			SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-			return 0;
-			}
-		return 1;
-		}
+		goto ri_check;
 
 	n2s(data,len);
 
@@ -1017,7 +1001,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		n2s(data,size);
 
 		if (data+size > (d+n))
-	   		return 1;
+	   		goto ri_check;
 
 		if (s->tlsext_debug_cb)
 			s->tlsext_debug_cb(s, 1, type, data, size,
@@ -1141,14 +1125,6 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		return 0;
 		}
 
-	if (!renegotiate_seen
-		&& !(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
-		{
-		*al = SSL_AD_ILLEGAL_PARAMETER; /* is this the right alert? */
-		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT, SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-		return 0;
-		}
-
 	if (!s->hit && tlsext_servername == 1)
 		{
  		if (s->tlsext_hostname)
@@ -1171,6 +1147,26 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		}
 
 	*p = data;
+
+	ri_check:
+
+	/* Determine if we need to see RI. Strictly speaking if we want to
+	 * avoid an attack we should *always* see RI even on initial server
+	 * hello because the client doesn't see any renegotiation during an
+	 * attack. However this would mean we could not connect to any server
+	 * which doesn't support RI so for the immediate future tolerate RI
+	 * absence on initial connect only.
+	 */
+	if (!renegotiate_seen && s->new_session &&
+		!(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+		{
+		/* FIXME: Spec currently doesn't give alert to use */
+		*al = SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
+				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		return 0;
+		}
+
 	return 1;
 	}
 
