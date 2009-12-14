@@ -350,32 +350,17 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	unsigned short len;
 	unsigned char *data = *p;
 	int renegotiate_seen = 0;
-	int need_ri;
 
 	s->servername_done = 0;
 	s->tlsext_status_type = -1;
-	/* Need RI if renegotiating unless legacy renegotiation allowed */
-	if (s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
-		|| !s->new_session)
-		need_ri = 0;
-	else
-		need_ri = 1;
 
 	if (data >= (d+n-2))
-		{
-		if (!need_ri)
-			return 1;
-		/* We need to see at least one extension: RI */
-		/* FIXME: Spec currently doesn't give alert to use */
-		*al = SSL_AD_ILLEGAL_PARAMETER;
-		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
-				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-		return 0;
-		}
+		goto ri_check;
+
 	n2s(data,len);
 
 	if (data > (d+n-len)) 
-		return 1;
+		goto ri_check;
 
 	while (data <= (d+n-4))
 		{
@@ -595,8 +580,14 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 		data+=size;		
 		}
+	*p = data;
 
-	if (need_ri && !renegotiate_seen)
+	ri_check:
+
+	/* Need RI if renegotiating */
+
+	if (!renegotiate_seen && s->new_session &&
+		!(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 		{
 		/* FIXME: Spec currently doesn't give alert to use */
 		*al = SSL_AD_ILLEGAL_PARAMETER;
@@ -605,7 +596,6 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		return 0;
 		}
 
-	*p = data;
 	return 1;
 	}
 
@@ -617,31 +607,9 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	unsigned char *data = *p;
 	int tlsext_servername = 0;
 	int renegotiate_seen = 0;
-	int need_ri;
-	/* Determine if we need to see RI. Strictly speaking if we want to
-	 * avoid an attack we should *always* see RI even on initial server
-	 * hello because the client doesn't see any renegotiation during an
-	 * attack. However this would mean we could not connect to any server
-	 * which doesn't support RI so for the immediate future tolerate RI
-	 * absence on initial connect only.
-	 */
-	if (s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION ||
-		!s->new_session)
-		need_ri = 0;
-	else
-		need_ri = 1;
 
 	if (data >= (d+n-2))
-		{
-		if (!need_ri)
-			return 1;
-		/* We need to see at least one extension: RI */
-		/* FIXME: Spec currently doesn't give alert to use */
-		*al = SSL_AD_ILLEGAL_PARAMETER;
-		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
-				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-		return 0;
-		}
+		goto ri_check;
 
 	n2s(data,len);
 
@@ -651,7 +619,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		n2s(data,size);
 
 		if (data+size > (d+n))
-	   		return 1;
+	   		goto ri_check;
 
 		if (s->tlsext_debug_cb)
 			s->tlsext_debug_cb(s, 1, type, data, size,
@@ -705,15 +673,6 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		return 0;
 		}
 
-	if (!renegotiate_seen && need_ri)
-		{
-		/* FIXME: Spec currently doesn't give alert to use */
-		*al = SSL_AD_ILLEGAL_PARAMETER;
-		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
-				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-		return 0;
-		}
-
 	if (!s->hit && tlsext_servername == 1)
 		{
  		if (s->tlsext_hostname)
@@ -736,6 +695,26 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		}
 
 	*p = data;
+
+	ri_check:
+
+	/* Determine if we need to see RI. Strictly speaking if we want to
+	 * avoid an attack we should *always* see RI even on initial server
+	 * hello because the client doesn't see any renegotiation during an
+	 * attack. However this would mean we could not connect to any server
+	 * which doesn't support RI so for the immediate future tolerate RI
+	 * absence on initial connect only.
+	 */
+	if (!renegotiate_seen && s->new_session &&
+		!(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+		{
+		/* FIXME: Spec currently doesn't give alert to use */
+		*al = SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
+				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
+		return 0;
+		}
+
 	return 1;
 	}
 
