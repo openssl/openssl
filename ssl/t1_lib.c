@@ -368,7 +368,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		n2s(data,size);
 
 		if (data+size > (d+n))
-	   		return 1;
+	   		goto ri_check;
 
 		if (s->tlsext_debug_cb)
 			s->tlsext_debug_cb(s, 0, type, data, size,
