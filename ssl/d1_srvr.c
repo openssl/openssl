@@ -814,7 +814,7 @@ int dtls1_send_server_hello(SSL *s)
 #ifndef OPENSSL_NO_TLSEXT
 		if ((p = ssl_add_serverhello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
 			{
-			SSLerr(SSL_F_SSL3_SEND_SERVER_HELLO,ERR_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_DTLS1_SEND_SERVER_HELLO,ERR_R_INTERNAL_ERROR);
 			return -1;
 			}
 #endif

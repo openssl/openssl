@@ -698,7 +698,7 @@ int dtls1_client_hello(SSL *s)
 #ifndef OPENSSL_NO_TLSEXT
 		if ((p = ssl_add_clienthello_tlsext(s, p, buf+SSL3_RT_MAX_PLAIN_LENGTH)) == NULL)
 			{
-			SSLerr(SSL_F_SSL3_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_DTLS1_CLIENT_HELLO,ERR_R_INTERNAL_ERROR);
 			goto err;
 			}
 #endif		
