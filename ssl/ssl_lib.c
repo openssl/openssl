@@ -1591,6 +1591,10 @@ SSL_CTX *SSL_CTX_new(SSL_METHOD *meth)
 	}
 #endif
 #endif
+	/* Default is to connect to non-RI servers. When RI is more widely
+	 * deployed might change this.
+	 */
+	ret->options = SSL_OP_LEGACY_SERVER_CONNECT;
 
 	return(ret);
 err:
