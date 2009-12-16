@@ -174,26 +174,12 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
 	if (cipher_nid == -1)
 		cipher = NULL;
 	else
-		{
 		cipher = EVP_get_cipherbynid(cipher_nid);
-		if (!cipher)
-			{
-			EVPerr(EVP_F_EVP_PBE_CIPHERINIT,EVP_R_UNKNOWN_CIPHER);
-			return 0;
-			}
-		}
 
 	if (md_nid == -1)
 		md = NULL;
 	else
-		{
 		md = EVP_get_digestbynid(md_nid);
-		if (!md)
-			{
-			EVPerr(EVP_F_EVP_PBE_CIPHERINIT,EVP_R_UNKNOWN_DIGEST);
-			return 0;
-			}
-		}
 
 	if (!keygen(ctx, pass, passlen, param, cipher, md, en_de))
 		{
