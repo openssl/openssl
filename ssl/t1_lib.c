@@ -1157,8 +1157,9 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	 * which doesn't support RI so for the immediate future tolerate RI
 	 * absence on initial connect only.
 	 */
-	if (!renegotiate_seen && s->new_session &&
-		!(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
+	if (!renegotiate_seen && 
+		(s->new_session || !(s->options & SSL_OP_LEGACY_SERVER_CONNECT))
+		&& !(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 		{
 		/* FIXME: Spec currently doesn't give alert to use */
 		*al = SSL_AD_ILLEGAL_PARAMETER;

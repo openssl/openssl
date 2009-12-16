@@ -863,6 +863,11 @@
 
  Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
+  *) Add option SSL_OP_LEGACY_SERVER_CONNECT which will allow clients to
+     connect (but not renegotiate) with servers which do not support RI.
+     Until RI is more widely deployed this option is enabled by default.
+     [Steve Henson]
+
   *) Add "missing" ssl ctrls to clear options and mode.
      [Steve Henson]
 
