@@ -589,8 +589,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	if (!renegotiate_seen && s->new_session &&
 		!(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 		{
-		/* FIXME: Spec currently doesn't give alert to use */
-		*al = SSL_AD_ILLEGAL_PARAMETER;
+		*al = SSL_AD_HANDSHAKE_FAILURE;
 	 	SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT,
 				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
@@ -709,8 +708,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		(s->new_session || !(s->options & SSL_OP_LEGACY_SERVER_CONNECT))
 		&& !(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 		{
-		/* FIXME: Spec currently doesn't give alert to use */
-		*al = SSL_AD_ILLEGAL_PARAMETER;
+		*al = SSL_AD_HANDSHAKE_FAILURE;
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
 				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
