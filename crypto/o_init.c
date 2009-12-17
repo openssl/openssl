@@ -73,7 +73,7 @@ void OPENSSL_init(void)
 #ifdef CRYPTO_MDEBUG
 		CRYPTO_malloc_debug_init();
 #endif
-#ifdef OPENSSL_ENGINE
+#ifndef OPENSSL_NO_ENGINE
 		int_EVP_MD_init_engine_callbacks();
 		int_EVP_CIPHER_init_engine_callbacks();
 		int_RAND_init_engine_callbacks();
