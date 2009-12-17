@@ -187,6 +187,8 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_PRIVATE_KEY_DECODE_ERROR),"private key decode error"},
 {ERR_REASON(EVP_R_PRIVATE_KEY_ENCODE_ERROR),"private key encode error"},
 {ERR_REASON(EVP_R_PUBLIC_KEY_NOT_RSA)    ,"public key not rsa"},
+{ERR_REASON(EVP_R_UNKNOWN_CIPHER)        ,"unknown cipher"},
+{ERR_REASON(EVP_R_UNKNOWN_DIGEST)        ,"unknown digest"},
 {ERR_REASON(EVP_R_UNKNOWN_PBE_ALGORITHM) ,"unknown pbe algorithm"},
 {ERR_REASON(EVP_R_UNSUPORTED_NUMBER_OF_ROUNDS),"unsuported number of rounds"},
 {ERR_REASON(EVP_R_UNSUPPORTED_ALGORITHM) ,"unsupported algorithm"},
