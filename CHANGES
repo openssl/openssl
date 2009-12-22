@@ -39,6 +39,10 @@
 
  Changes between 0.9.8m (?) and 1.0.0  [xx XXX xxxx]
 
+  *) Constify crypto/cast (i.e., <openssl/cast.h>): a CAST_KEY doesn't
+     change when encrypting or decrypting.
+     [Bodo Moeller]
+
   *) Add load_crls() function to apps tidying load_certs() too. Add option
      to verify utility to allow additional CRLs to be included.
      [Steve Henson]
