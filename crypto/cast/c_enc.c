@@ -61,7 +61,8 @@
 
 void CAST_encrypt(CAST_LONG *data, const CAST_KEY *key)
 	{
-	register CAST_LONG l,r,*k,t;
+	register CAST_LONG l,r,t;
+	const register CAST_LONG *k;
 
 	k= &(key->data[0]);
 	l=data[0];
@@ -93,7 +94,8 @@ void CAST_encrypt(CAST_LONG *data, const CAST_KEY *key)
 
 void CAST_decrypt(CAST_LONG *data, const CAST_KEY *key)
 	{
-	register CAST_LONG l,r,*k,t;
+	register CAST_LONG l,r,t;
+	const register CAST_LONG *k;
 
 	k= &(key->data[0]);
 	l=data[0];
