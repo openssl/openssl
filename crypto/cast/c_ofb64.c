@@ -64,7 +64,7 @@
  * 64bit block we have used is contained in *num;
  */
 void CAST_ofb64_encrypt(const unsigned char *in, unsigned char *out,
-			long length, CAST_KEY *schedule, unsigned char *ivec,
+			long length, const CAST_KEY *schedule, unsigned char *ivec,
 			int *num)
 	{
 	register CAST_LONG v0,v1,t;
@@ -108,4 +108,3 @@ void CAST_ofb64_encrypt(const unsigned char *in, unsigned char *out,
 	t=v0=v1=ti[0]=ti[1]=0;
 	*num=n;
 	}
-
