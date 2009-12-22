@@ -86,7 +86,7 @@ static void xor_blocks (byte *result,const byte *a,const byte *b,size_t len)
  */
 static int hash_step(gost_ctx *c,byte *H,const byte *M) 
 	{
-	static byte U[32],W[32],V[32],S[32],Key[32];
+	byte U[32],W[32],V[32],S[32],Key[32];
 	int i;
 	/* Compute first key */
 	xor_blocks(W,H,M,32);
@@ -253,4 +253,3 @@ int finish_hash(gost_hash_ctx *ctx,byte *hashval)
 	memcpy(hashval,H,32);
 	return 1;
 	}
-
