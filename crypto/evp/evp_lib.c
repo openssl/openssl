@@ -163,6 +163,12 @@ int EVP_CIPHER_type(const EVP_CIPHER *ctx)
 
 		return NID_des_cfb64;
 
+		case NID_des_ede3_cfb64:
+		case NID_des_ede3_cfb8:
+		case NID_des_ede3_cfb1:
+
+		return NID_des_cfb64;
+
 		default:
 		/* Check it has an OID and it is valid */
 		otmp = OBJ_nid2obj(nid);
