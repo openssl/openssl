@@ -103,6 +103,7 @@ pa-risc2.o: asm/pa-risc2.s
 # ppc - AIX, Linux, MacOS X...
 bn-ppc.s:	asm/ppc.pl;	$(PERL) asm/ppc.pl $(PERLASM_SCHEME) $@
 ppc-mont.s:	asm/ppc-mont.pl;$(PERL) asm/ppc-mont.pl $(PERLASM_SCHEME) $@
+ppc64-mont.s:	asm/ppc64-mont.pl;$(PERL) asm/ppc64-mont.pl $(PERLASM_SCHEME) $@
 
 alpha-mont.s:	asm/alpha-mont.pl
 	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null

@@ -108,14 +108,19 @@ $code=<<___;
 .machine "any"
 .text
 
-.globl	.bn_mul_mont
+.globl	.bn_mul_mont_int
 .align	4
-.bn_mul_mont:
+.bn_mul_mont_int:
 	cmpwi	$num,4
 	mr	$rp,r3		; $rp is reassigned
 	li	r3,0
 	bltlr
-
+___
+$code.=<<___ if ($BNSZ==4);
+	cmpwi	$num,32		; longer key performance is not better
+	bgelr
+___
+$code.=<<___;
 	slwi	$num,$num,`log($BNSZ)/log(2)`
 	li	$tj,-4096
 	addi	$ovf,$num,`$FRAME+$RZONE`

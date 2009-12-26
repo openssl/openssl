@@ -23,9 +23,11 @@ $code=<<___;
 .machine	"any"
 .text
 
-.globl	.OPENSSL_cpuid_setup
+.globl	.OPENSSL_ppc64_probe
 .align	4
-.OPENSSL_cpuid_setup:
+.OPENSSL_ppc64_probe:
+	fcfid	f1,f1
+	extrdi	r0,r0,32,0
 	blr
 
 .globl	.OPENSSL_wipe_cpu
