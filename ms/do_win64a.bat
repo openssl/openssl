@@ -1,7 +1,17 @@
-
 perl util\mkfiles.pl >MINFO
-perl ms\uplink.pl win64a > ms\uptable.asm
+
+cmd /c "nasm -f win64 -v" >NUL: 2>&1
+if %errorlevel% neq 0 goto ml64
+
+perl ms\uplink-x86_64.pl nasm > ms\uptable.asm
+nasm -f win64 -o ms\uptable.obj ms\uptable.asm
+goto proceed
+
+:ml64
+perl ms\uplink-x86_64.pl masm > ms\uptable.asm
 ml64 -c -Foms\uptable.obj ms\uptable.asm
+
+:proceed
 perl util\mk1mf.pl no-asm VC-WIN64A >ms\nt.mak
 perl util\mk1mf.pl dll no-asm VC-WIN64A >ms\ntdll.mak
 

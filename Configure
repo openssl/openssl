@@ -1294,7 +1294,7 @@ if (!$IsMK1MF)
 		}
 	}
 
-$cpuid_obj.=" uplink.o uplink-cof.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
+$cpuid_obj.=" uplink.o uplink-x86.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
 
 #
 # Platform fix-ups

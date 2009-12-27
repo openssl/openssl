@@ -67,8 +67,8 @@ applink.o:	$(TOP)/ms/applink.c
 uplink.o:	$(TOP)/ms/uplink.c applink.o
 	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/uplink.c
 
-uplink-cof.s:	$(TOP)/ms/uplink.pl
-	$(PERL) $(TOP)/ms/uplink.pl coff > $@
+uplink-x86.s:	$(TOP)/ms/uplink-x86.pl
+	$(PERL) $(TOP)/ms/uplink-x86.pl $(PERLASM_SCHEME) > $@
 
 x86_64cpuid.s: x86_64cpuid.pl
 	$(PERL) x86_64cpuid.pl $(PERLASM_SCHEME) > $@
