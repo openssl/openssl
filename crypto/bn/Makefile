@@ -100,6 +100,9 @@ pa-risc2W.o: asm/pa-risc2W.s
 pa-risc2.o: asm/pa-risc2.s
 	/usr/ccs/bin/as -o pa-risc2.o asm/pa-risc2.s
 
+parisc-mont.s:	asm/parisc-mont.pl
+	$(PERL) asm/parisc-mont.pl $(PERLASM_SCHEME) $@
+
 # ppc - AIX, Linux, MacOS X...
 bn-ppc.s:	asm/ppc.pl;	$(PERL) asm/ppc.pl $(PERLASM_SCHEME) $@
 ppc-mont.s:	asm/ppc-mont.pl;$(PERL) asm/ppc-mont.pl $(PERLASM_SCHEME) $@

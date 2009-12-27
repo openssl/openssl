@@ -64,6 +64,9 @@ aes-sparcv9.s: asm/aes-sparcv9.pl
 aes-ppc.s:	asm/aes-ppc.pl
 	$(PERL) asm/aes-ppc.pl $(PERLASM_SCHEME) $@
 
+aes-parisc.s:	asm/aes-parisc.pl
+	$(PERL) asm/aes-parisc.pl $(PERLASM_SCHEME) $@
+
 # GNU make "catch all"
 aes-%.s:	asm/aes-%.pl;	$(PERL) $< $(CFLAGS) > $@
 

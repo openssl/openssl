@@ -53,6 +53,9 @@ rc4-ia64.S: asm/rc4-ia64.pl
 rc4-s390x.s:	asm/rc4-s390x.pl
 	$(PERL) asm/rc4-s390x.pl > $@
 
+rc4-parisc.s:	asm/rc4-parisc.pl
+	$(PERL) asm/rc4-parisc.pl $(PERLASM_SCHEME) $@
+
 rc4-ia64.s: rc4-ia64.S
 	@case `awk '/^#define RC4_INT/{print$$NF}' $(TOP)/include/openssl/opensslconf.h` in \
 	int)	set -x; $(CC) $(CFLAGS) -DSZ=4 -E rc4-ia64.S > $@ ;; \
