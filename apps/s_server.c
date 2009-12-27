@@ -209,6 +209,8 @@ static int init_ssl_connection(SSL *s);
 static void print_stats(BIO *bp,SSL_CTX *ctx);
 static int generate_session_id(const SSL *ssl, unsigned char *id,
 				unsigned int *id_len);
+static void init_session_cache_ctx(SSL_CTX *sctx);
+static void free_sessions(void);
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(const char *dhfile);
 static DH *get_dh512(void);
@@ -862,7 +864,7 @@ int MAIN(int argc, char *argv[])
 	int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
 	X509 *s_cert = NULL, *s_dcert = NULL;
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
-	int no_cache = 0;
+	int no_cache = 0, ext_cache = 0;
 #ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
@@ -1007,6 +1009,8 @@ int MAIN(int argc, char *argv[])
 			}
 		else if (strcmp(*argv,"-no_cache") == 0)
 			no_cache = 1;
+		else if (strcmp(*argv,"-ext_cache") == 0)
+			ext_cache = 1;
 		else if (args_verify(&argv, &argc, &badarg, bio_err, &vpm))
 			{
 			if (badarg)
@@ -1402,6 +1406,8 @@ bad:
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 	if (no_cache)
 		SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
+	else if (ext_cache)
+		init_session_cache_ctx(ctx);
 	else
 		SSL_CTX_sess_set_cache_size(ctx,128);
 
@@ -1471,6 +1477,8 @@ bad:
 
 		if (no_cache)
 			SSL_CTX_set_session_cache_mode(ctx2,SSL_SESS_CACHE_OFF);
+		else if (ext_cache)
+			init_session_cache_ctx(ctx2);
 		else
 			SSL_CTX_sess_set_cache_size(ctx2,128);
 
@@ -1721,6 +1729,7 @@ end:
 		OPENSSL_free(pass);
 	if (dpass)
 		OPENSSL_free(dpass);
+	free_sessions();
 #ifndef OPENSSL_NO_TLSEXT
 	if (ctx2 != NULL) SSL_CTX_free(ctx2);
 	if (s_cert2)
@@ -2695,3 +2704,115 @@ static int generate_session_id(const SSL *ssl, unsigned char *id,
 		return 0;
 	return 1;
 	}
+
+/* By default s_server uses an in-memory cache which caches SSL_SESSION
+ * structures without any serialisation. This hides some bugs which only
+ * become apparent in deployed servers. By implementing a basic external
+ * session cache some issues can be debugged using s_server.
+ */
+
+typedef struct simple_ssl_session_st
+	{
+	unsigned char *id;
+	int idlen;
+	unsigned char *der;
+	int derlen;
+	struct simple_ssl_session_st *next;
+	} simple_ssl_session;
+
+static simple_ssl_session *first = NULL;
+
+static int add_session(SSL *ssl, SSL_SESSION *session)
+	{
+	simple_ssl_session *sess;
+	unsigned char *p;
+
+	sess = OPENSSL_malloc(sizeof(simple_ssl_session));
+
+	sess->idlen = session->session_id_length;
+	sess->derlen = i2d_SSL_SESSION(session, NULL);
+
+	sess->id = BUF_memdup(session->session_id, sess->idlen);
+
+	sess->der = OPENSSL_malloc(sess->derlen);
+	p = sess->der;
+	i2d_SSL_SESSION(session, &p);
+
+	sess->next = first;
+	first = sess;
+	BIO_printf(bio_err, "New session added to external cache\n");
+	return 0;
+	}
+
+static SSL_SESSION *get_session(SSL *ssl, unsigned char *id, int idlen,
+					int *do_copy)
+	{
+	simple_ssl_session *sess;
+	*do_copy = 0;
+	for (sess = first; sess; sess = sess->next)
+		{
+		if (idlen == sess->idlen && !memcmp(sess->id, id, idlen))
+			{
+			const unsigned char *p = sess->der;
+			BIO_printf(bio_err, "Lookup session: cache hit\n");
+			return d2i_SSL_SESSION(NULL, &p, sess->derlen);
+			}
+		}
+	BIO_printf(bio_err, "Lookup session: cache miss\n");
+	return NULL;
+	}
+
+static void del_session(SSL_CTX *sctx, SSL_SESSION *session)
+	{
+	simple_ssl_session *sess, *prev = NULL;
+	unsigned char *id = session->session_id;
+	int idlen = session->session_id_length;
+	for (sess = first; sess; sess = sess->next)
+		{
+		if (idlen == sess->idlen && !memcmp(sess->id, id, idlen))
+			{
+			if(prev)
+				prev->next = sess->next;
+			else
+				first = sess->next;
+			OPENSSL_free(sess->id);
+			OPENSSL_free(sess->der);
+			OPENSSL_free(sess);
+			return;
+			}
+		prev = sess;
+		}
+	}
+
+static void init_session_cache_ctx(SSL_CTX *sctx)
+	{
+	SSL_CTX_set_session_cache_mode(sctx,
+			SSL_SESS_CACHE_NO_INTERNAL|SSL_SESS_CACHE_SERVER);
+	SSL_CTX_sess_set_new_cb(sctx, add_session);
+        SSL_CTX_sess_set_get_cb(sctx, get_session);
+        SSL_CTX_sess_set_remove_cb(sctx, del_session);
+	}
+
+static void free_sessions(void)
+	{
+	simple_ssl_session *sess, *tsess;
+	for (sess = first; sess;)
+		{
+		OPENSSL_free(sess->id);
+		OPENSSL_free(sess->der);
+		tsess = sess;
+		sess = sess->next;
+		OPENSSL_free(tsess);
+		}
+	first = NULL;
+	}
+	
+
+
+
+
+
+
+	
+
+
