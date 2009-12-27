@@ -1300,18 +1300,18 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 		p+=j;
 		}
 	/* If p == q, no ciphers and caller indicates an error, otherwise
-	 * add MCSV
+	 * add SCSV
 	 */
 	if (p != q)
 		{
-		static SSL_CIPHER msvc =
+		static SSL_CIPHER scsv =
 			{
-			0, NULL, SSL3_CK_MCSV, 0, 0, 0, 0, 0, 0, 0,
+			0, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0,
 			};
-		j = put_cb ? put_cb(&msvc,p) : ssl_put_cipher_by_char(s,&msvc,p);
+		j = put_cb ? put_cb(&scsv,p) : ssl_put_cipher_by_char(s,&scsv,p);
 		p+=j;
 #ifdef OPENSSL_RI_DEBUG
-		fprintf(stderr, "MCSV sent by client\n");
+		fprintf(stderr, "SCSV sent by client\n");
 #endif
 		}
 
@@ -1343,15 +1343,15 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 
 	for (i=0; i<num; i+=n)
 		{
-		/* Check for MCSV */
+		/* Check for SCSV */
 		if (s->s3 && (n != 3 || !p[0]) &&
-			(p[n-2] == ((SSL3_CK_MCSV >> 8) & 0xff)) &&
-			(p[n-1] == (SSL3_CK_MCSV & 0xff)))
+			(p[n-2] == ((SSL3_CK_SCSV >> 8) & 0xff)) &&
+			(p[n-1] == (SSL3_CK_SCSV & 0xff)))
 			{
 			s->s3->send_connection_binding = 1;
 			p += n;
 #ifdef OPENSSL_RI_DEBUG
-			fprintf(stderr, "MCSV received by server\n");
+			fprintf(stderr, "SCSV received by server\n");
 #endif
 			continue;
 			}

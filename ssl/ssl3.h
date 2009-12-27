@@ -130,8 +130,8 @@ extern "C" {
 #endif
 
 /* Magic Cipher Suite Value. NB: bogus value used for testing */
-#ifndef SSL3_CK_MCSV
-#define SSL3_CK_MCSV				0x03000FEC
+#ifndef SSL3_CK_SCSV
+#define SSL3_CK_SCSV				0x03000FEC
 #endif
 
 #define SSL3_CK_RSA_NULL_MD5			0x03000001
