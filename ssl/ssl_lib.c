@@ -1374,11 +1374,11 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 	 */
 	if (p != q && !s->new_session)
 		{
-		static SSL_CIPHER msvc =
+		static SSL_CIPHER scsv =
 			{
 			0, NULL, SSL3_CK_SCSV, 0, 0, 0, 0, 0, 0, 0, 0, 0
 			};
-		j = put_cb ? put_cb(&msvc,p) : ssl_put_cipher_by_char(s,&msvc,p);
+		j = put_cb ? put_cb(&scsv,p) : ssl_put_cipher_by_char(s,&scsv,p);
 		p+=j;
 #ifdef OPENSSL_RI_DEBUG
 		fprintf(stderr, "SCSV sent by client\n");
