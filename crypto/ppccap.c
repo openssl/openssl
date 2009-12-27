@@ -11,6 +11,7 @@ static int OPENSSL_ppccap_P = 0;
 
 static sigset_t all_masked;
 
+#ifdef OPENSSL_BN_ASM_MONT
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np, const BN_ULONG *n0, int num)
 	{
 	int bn_mul_mont_fpu64(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np, const BN_ULONG *n0, int num);
@@ -44,6 +45,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 
 	return bn_mul_mont_int(rp,ap,bp,np,n0,num);
 	}
+#endif
 
 static sigjmp_buf ill_jmp;
 static void ill_handler (int sig) { siglongjmp(ill_jmp,sig); }
@@ -55,6 +57,8 @@ void OPENSSL_cpuid_setup(void)
 	sigfillset(&all_masked);
 	sigdelset(&all_masked,SIGSEGV);
 	sigdelset(&all_masked,SIGILL);
+	sigdelset(&all_masked,SIGBUS);
+	sigdelset(&all_masked,SIGFPE);
 
 	if ((e=getenv("OPENSSL_ppccap")))
 		{
@@ -69,8 +73,7 @@ void OPENSSL_cpuid_setup(void)
 
 		memset(&ill_act,0,sizeof(ill_act));
 		ill_act.sa_handler = ill_handler;
-		sigfillset(&ill_act.sa_mask);
-		sigdelset(&ill_act.sa_mask,SIGILL);
+		ill_act.sa_mask    = all_masked;
 		sigprocmask(SIG_SETMASK,&ill_act.sa_mask,&oset);
 		sigaction (SIGILL,&ill_act,&ill_oact);
 		if (sigsetjmp(ill_jmp,0) == 0)
