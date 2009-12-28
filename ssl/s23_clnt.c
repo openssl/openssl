@@ -129,6 +129,8 @@ static const SSL_METHOD *ssl23_get_client_method(int ver)
 		return(SSLv3_client_method());
 	else if (ver == TLS1_VERSION)
 		return(TLSv1_client_method());
+	else if (ver == TLS1_1_VERSION)
+		return(TLSv1_1_client_method());
 	else
 		return(NULL);
 	}
