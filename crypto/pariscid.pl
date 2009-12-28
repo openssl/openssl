@@ -23,6 +23,17 @@ $code=<<___;
 	.SPACE	\$TEXT\$
 	.SUBSPA	\$CODE\$,QUAD=0,ALIGN=8,ACCESS=0x2C,CODE_ONLY
 
+	.EXPORT	OPENSSL_cpuid_setup,ENTRY
+	.ALIGN	8
+OPENSSL_cpuid_setup
+	.PROC
+	.CALLINFO	NO_CALLS
+	.ENTRY
+	bv	($rp)
+	.EXIT
+	nop
+	.PROCEND
+
 	.EXPORT	OPENSSL_rdtsc,ENTRY
 	.ALIGN	8
 OPENSSL_rdtsc

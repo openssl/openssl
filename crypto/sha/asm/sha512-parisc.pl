@@ -694,7 +694,7 @@ my $ldd = sub {
   my ($mod,$args) = @_;
   my $orig = "ldd$mod\t$args";
 
-    if ($args =~ /(\-[0-9]+)\(%r([0-9]+)\),%r([0-9]+)/)	# format 3 suffices
+    if ($args =~ /(\-?[0-9]+)\(%r([0-9]+)\),%r([0-9]+)/) # format 3 suffices
     {	my $opcode=(0x14<<26)|($2<<21)|($3<<16)|(($1&0x1FF8)<<1)|(($1>>13)&1);
 	$opcode|=(1<<3) if ($mod =~ /^,m/);
 	$opcode|=(1<<2) if ($mod =~ /^,mb/);
@@ -707,7 +707,7 @@ my $std = sub {
   my ($mod,$args) = @_;
   my $orig = "std$mod\t$args";
 
-    if ($args =~ /%r([0-9]+),(\-[0-9]+)\(%r([0-9]+)\)/)	# format 3 suffices
+    if ($args =~ /%r([0-9]+),(\-?[0-9]+)\(%r([0-9]+)\)/) # format 3 suffices
     {	my $opcode=(0x1c<<26)|($3<<21)|($1<<16)|(($2&0x1FF8)<<1)|(($2>>13)&1);
 	sprintf "\t.WORD\t0x%08x\t; %s",$opcode,$orig;
     }

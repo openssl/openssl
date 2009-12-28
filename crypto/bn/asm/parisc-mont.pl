@@ -894,7 +894,7 @@ my $ldd = sub {
     {	my $opcode=(0x03<<26)|($2<<21)|($1<<16)|(3<<6)|$3;
 	sprintf "\t.WORD\t0x%08x\t; %s",$opcode,$orig;
     }
-    elsif ($args =~ /([\-0-9]+)\(%r([0-9]+)\),%r([0-9]+)/)	# format 5
+    elsif ($args =~ /(\-?[0-9]+)\(%r([0-9]+)\),%r([0-9]+)/)	# format 5
     {	my $opcode=(0x03<<26)|($2<<21)|(1<<12)|(3<<6)|$3;
 	$opcode|=(($1&0xF)<<17)|(($1&0x10)<<12);		# encode offset
 	$opcode|=(1<<5)  if ($mod =~ /^,m/);
@@ -908,7 +908,7 @@ my $std = sub {
   my ($mod,$args) = @_;
   my $orig = "std$mod\t$args";
 
-    if ($args =~ /%r([0-9]+),([\-0-9]+)\(%r([0-9]+)\)/)		# format 6
+    if ($args =~ /%r([0-9]+),(\-?[0-9]+)\(%r([0-9]+)\)/)	# format 6
     {	my $opcode=(0x03<<26)|($3<<21)|($1<<16)|(1<<12)|(0xB<<6);
 	$opcode|=(($2&0xF)<<1)|(($2&0x10)>>4);			# encode offset
 	$opcode|=(1<<5)  if ($mod =~ /^,m/);
