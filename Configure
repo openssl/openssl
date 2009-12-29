@@ -1041,8 +1041,6 @@ $exe_ext=".pm"  if ($target =~ /vos/);
 $openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
 $prefix=$openssldir if $prefix eq "";
 
-$libdir="lib" if $libdir eq "";
-
 $default_ranlib= &which("ranlib") or $default_ranlib="true";
 $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
   or $perl="perl";
@@ -1094,6 +1092,8 @@ my $ranlib = $ENV{'RANLIB'} || $fields[$idx_ranlib];
 my $ar = $ENV{'AR'} || "ar";
 my $arflags = $fields[$idx_arflags];
 my $multilib = $fields[$idx_multilib];
+
+$libdir="lib$multilib" if $libdir eq "";
 
 $cflags = "$cflags$exp_cflags";
 
@@ -1673,10 +1673,7 @@ while (<IN>)
 		}
 	elsif	(/^#define\s+ENGINESDIR/)
 		{
-		# $foo is to become "$prefix/lib$multilib/engines";
-		# as Makefile.org and engines/Makefile are adapted for
-		# $multilib suffix.
-		my $foo = "$prefix/lib/engines";
+		my $foo = "$prefix/$libdir/engines";
 		$foo =~ s/\\/\\\\/g;
 		print OUT "#define ENGINESDIR \"$foo\"\n";
 		}
