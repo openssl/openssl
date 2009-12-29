@@ -25,7 +25,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 #else
 		/* boundary of 32 was experimentally determined on
 		   Linux 2.6.22, might have to be adjusted on AIX... */
-		if ((num>=32) && (OPENSSL_ppccap_P&PPC_FPU64))
+		if (num>=32 && (num&3)==0 && (OPENSSL_ppccap_P&PPC_FPU64))
 			{
 			sigset_t oset;
 			int ret;
@@ -49,6 +49,8 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 
 static sigjmp_buf ill_jmp;
 static void ill_handler (int sig) { siglongjmp(ill_jmp,sig); }
+
+void OPENSSL_ppc64_probe(void);
 
 void OPENSSL_cpuid_setup(void)
 	{

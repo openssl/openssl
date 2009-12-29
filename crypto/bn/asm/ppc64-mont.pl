@@ -56,10 +56,10 @@
 # that asynchronous signals have to be blocked upon entry to this
 # subroutine. Signal masking (and complementary unmasking) has quite
 # an impact on performance, naturally larger for shorter keys. It's
-# so severe that shorter key performance can be as low as 1/3 of
+# so severe that 512-bit key performance can be as low as 1/3 of
 # expected one. This is why this routine can be engaged for longer
 # key operations only, see crypto/ppccap.c for further details.
-# Alternative is to break dependance on upper halves on GPRs...
+# Alternative is to break dependence on upper halves on GPRs...
 # MacOS X is an exception from this and doesn't require signal
 # masking, and that's where above improvement coefficients were
 # collected.
