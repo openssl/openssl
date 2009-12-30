@@ -88,6 +88,17 @@ NETDB_DEFINE_CONTEXT
 static int wsa_init_done=0;
 #endif
 
+/*
+ * WSAAPI specifier is required to make indirect calls to run-time
+ * linked WinSock 2 functions used in this module, to be specific
+ * [get|free]addrinfo and getnameinfo. This is because WinSock uses
+ * uses non-C calling convention, __stdcall vs. __cdecl, on x86
+ * Windows. On non-WinSock platforms WSAAPI needs to be void.
+ */
+#ifndef WSAAPI
+#define WSAAPI
+#endif
+
 #if 0
 static unsigned long BIO_ghbn_hits=0L;
 static unsigned long BIO_ghbn_miss=0L;
@@ -627,12 +638,12 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 #ifdef EAI_FAMILY
 	do {
 	static union {	void *p;
-			int (*f)(const char *,const char *,
+			int (WSAAPI *f)(const char *,const char *,
 				 const struct addrinfo *,
 				 struct addrinfo **);
 			} p_getaddrinfo = {NULL};
 	static union {	void *p;
-			void (*f)(struct addrinfo *);
+			void (WSAAPI *f)(struct addrinfo *);
 			} p_freeaddrinfo = {NULL};
 	struct addrinfo *res,hint;
 
@@ -840,7 +851,7 @@ int BIO_accept(int sock, char **addr)
 	char   h[NI_MAXHOST],s[NI_MAXSERV];
 	size_t nl;
 	static union {	void *p;
-			int (*f)(const struct sockaddr *,size_t/*socklen_t*/,
+			int (WSAAPI *f)(const struct sockaddr *,size_t/*socklen_t*/,
 				 char *,size_t,char *,size_t,int);
 			} p_getnameinfo = {NULL};
 			/* 2nd argument to getnameinfo is specified to
