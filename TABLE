@@ -1428,7 +1428,7 @@ $multilib     =
 
 *** debug-ben
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DDEBUG_UNUSED -O2 -pedantic -Wall -Wshadow -Werror -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -1458,8 +1458,8 @@ $arflags      =
 $multilib     = 
 
 *** debug-ben-debug
-$cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -g3 -O2 -pipe
+$cc           = gcc44
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -g3 -O2 -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -3877,11 +3877,11 @@ $multilib     = 64
 
 *** mingw
 $cc           = gcc
-$cflags       = -mno-cygwin -DL_ENDIAN -DOPENSSL_NO_CAPIENG -fomit-frame-pointer -O3 -march=i486 -Wall
+$cflags       = -mno-cygwin -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -fomit-frame-pointer -O3 -march=i486 -Wall
 $unistd       = 
 $thread_cflag = 
 $sys_id       = MINGW32
-$lflags       = -lws2_32 -lgdi32
+$lflags       = -lws2_32 -lgdi32 -lcrypt32
 $bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT EXPORT_VAR_AS_FN
 $cpuid_obj    = x86cpuid.o
 $bn_obj       = bn-586.o co-586.o x86-mont.o
