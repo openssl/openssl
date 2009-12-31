@@ -1088,7 +1088,50 @@ int ssl3_get_client_hello(SSL *s)
 	 * algorithms from the client, starting at q. */
 	s->s3->tmp.new_compression=NULL;
 #ifndef OPENSSL_NO_COMP
-	if (!(s->options & SSL_OP_NO_COMPRESSION) && s->ctx->comp_methods)
+	/* This only happens if we have a cache hit */
+	if (s->session->compress_meth != 0)
+		{
+		int m, comp_id = s->session->compress_meth;
+		/* Perform sanity checks on resumed compression algorithm */
+		/* Can't disable compression */
+		if (s->options & SSL_OP_NO_COMPRESSION)
+			{
+			al=SSL_AD_INTERNAL_ERROR;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INCONSISTENT_COMPRESSION);
+			goto f_err;
+			}
+		/* Look for resumed compression method */
+		for (m = 0; m < sk_SSL_COMP_num(s->ctx->comp_methods); m++)
+			{
+			comp=sk_SSL_COMP_value(s->ctx->comp_methods,m);
+			if (comp_id == comp->id)
+				{
+				s->s3->tmp.new_compression=comp;
+				break;
+				}
+			}
+		if (s->s3->tmp.new_compression == NULL)
+			{
+			al=SSL_AD_INTERNAL_ERROR;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INVALID_COMPRESSION_ALGORITHM);
+			goto f_err;
+			}
+		/* Look for resumed method in compression list */
+		for (m = 0; m < i; m++)
+			{
+			if (q[m] == comp_id)
+				break;
+			}
+		if (m >= i)
+			{
+			al=SSL_AD_ILLEGAL_PARAMETER;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_REQUIRED_COMPRESSSION_ALGORITHM_MISSING);
+			goto f_err;
+			}
+		}
+	else if (s->hit)
+		comp = NULL;
+	else if (!(s->options & SSL_OP_NO_COMPRESSION) && s->ctx->comp_methods)
 		{ /* See if we have a match */
 		int m,nn,o,v,done=0;
 
@@ -1111,6 +1154,16 @@ int ssl3_get_client_hello(SSL *s)
 			s->s3->tmp.new_compression=comp;
 		else
 			comp=NULL;
+		}
+#else
+	/* If compression is disabled we'd better not try to resume a session
+	 * using compression.
+	 */
+	if (s->session->compress_id != 0)
+		{
+		al=SSL_AD_INTERNAL_ERROR;
+		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INCONSISTENT_COMPRESSION);
+		goto f_err;
 		}
 #endif
 

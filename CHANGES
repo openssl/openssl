@@ -44,6 +44,11 @@
 
  Changes between 0.9.8m (?) and 1.0.0  [xx XXX xxxx]
 
+  *) Fix compression algorithm handling: if resuming a session use the
+     compression algorithm of the resumed session instead of determining
+     it from client hello again. Don't allow server to change algorithm.
+     [Steve Henson]
+
   *) Constify crypto/cast (i.e., <openssl/cast.h>): a CAST_KEY doesn't
      change when encrypting or decrypting.
      [Bodo Moeller]
