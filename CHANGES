@@ -4,6 +4,11 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Add an "external" session cache for debugging purposes to s_server. This
+     should help trace issues which normally are only apparent in deployed
+     multi-process servers.
+     [Steve Henson]
+
   *) Initial TLSv1.1 support. Since TLSv1.1 is very similar to TLS v1.0 only
      a few changes are required:
 
