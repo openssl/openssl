@@ -891,10 +891,31 @@ int ssl3_get_server_hello(SSL *s)
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
 		goto f_err;
 		}
+	/* If compression is disabled we'd better not try to resume a session
+	 * using compression.
+	 */
+	if (s->session->compress_meth != 0)
+		{
+		al=SSL_AD_INTERNAL_ERROR;
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_INCONSISTENT_COMPRESSION);
+		goto f_err;
+		}
 #else
 	j= *(p++);
-	if ((j == 0) || (s->options & SSL_OP_NO_COMPRESSION))
+	if (s->hit && j != (int)s->session->compress_meth)
+		{
+		al=SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED);
+		goto f_err;
+		}
+	if (j == 0)
 		comp=NULL;
+	else if (s->options & SSL_OP_NO_COMPRESSION)
+		{
+		al=SSL_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_COMPRESSION_DISABLED);
+		goto f_err;
+		}
 	else
 		comp=ssl3_comp_find(s->ctx->comp_methods,j);
 	
