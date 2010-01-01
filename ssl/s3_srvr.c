@@ -1159,7 +1159,7 @@ int ssl3_get_client_hello(SSL *s)
 	/* If compression is disabled we'd better not try to resume a session
 	 * using compression.
 	 */
-	if (s->session->compress_id != 0)
+	if (s->session->compress_meth != 0)
 		{
 		al=SSL_AD_INTERNAL_ERROR;
 		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INCONSISTENT_COMPRESSION);
