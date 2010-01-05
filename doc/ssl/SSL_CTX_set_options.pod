@@ -255,7 +255,7 @@ whether an attack is taking place.
 
 If the option B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then the
 above restrictions are relaxed. Renegotiation is permissible and initial
-initial connections to unpatched servers will succeed.
+connections to unpatched servers will succeed.
 
 This option should be used with caution because it leaves both clients and
 servers vulnerable. However unpatched servers and clients are likely to be
