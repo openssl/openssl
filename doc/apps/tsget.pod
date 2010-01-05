@@ -144,25 +144,25 @@ absolute path.
 
 Get a time stamp response for file1.tsq over HTTP, output is written to 
 file1.tsr:
-	
+
   tsget -h http://tsa.opentsa.org:8080/tsa file1.tsq
 
 Get a time stamp response for file1.tsq and file2.tsq over HTTP showing
 progress, output is written to file1.reply and file2.reply respectively:
-	
+
   tsget -h http://tsa.opentsa.org:8080/tsa -v -e .reply \
 	file1.tsq file2.tsq
 
 Create a time stamp request, write it to file3.tsq, send it to the server and
 write the response to file3.tsr:
-	
+
   openssl ts -query -data file3.txt -cert | tee file3.tsq \
 	| tsget -h http://tsa.opentsa.org:8080/tsa \
 	-o file3.tsr
 
 Get a time stamp response for file1.tsq over HTTPS without client
 authentication:
-	
+
   tsget -h https://tsa.opentsa.org:8443/tsa \
 	-C cacerts.pem file1.tsq
 
