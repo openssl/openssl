@@ -383,8 +383,6 @@ int PKCS7_add1_attrib_digest(PKCS7_SIGNER_INFO *si,
 
 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags);
 PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont);
-int SMIME_crlf_copy(BIO *in, BIO *out, int flags);
-int SMIME_text(BIO *in, BIO *out);
 
 BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7);
 
