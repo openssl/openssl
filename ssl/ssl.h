@@ -485,7 +485,7 @@ typedef struct ssl_session_st
 	long timeout;
 	long time;
 
-	int compress_meth;		/* Need to lookup the method */
+	unsigned int compress_meth;	/* Need to lookup the method */
 
 	const SSL_CIPHER *cipher;
 	unsigned long cipher_id;	/* when ASN.1 loaded, this
