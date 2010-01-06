@@ -92,6 +92,8 @@ x86_64-mont.s:	asm/x86_64-mont.pl
 
 bn-ia64.s:	asm/ia64.S
 	$(CC) $(CFLAGS) -E asm/ia64.S > $@
+ia64-mont.s:	asm/ia64-mont.pl
+	$(PERL) asm/ia64-mont.pl $@ $(CFLAGS)
 
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
