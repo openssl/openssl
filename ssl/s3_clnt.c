@@ -902,7 +902,7 @@ int ssl3_get_server_hello(SSL *s)
 		}
 #else
 	j= *(p++);
-	if (s->hit && j != (int)s->session->compress_meth)
+	if (s->hit && j != s->session->compress_meth)
 		{
 		al=SSL_AD_ILLEGAL_PARAMETER;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_OLD_SESSION_COMPRESSION_ALGORITHM_NOT_RETURNED);
