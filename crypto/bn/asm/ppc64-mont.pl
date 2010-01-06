@@ -47,22 +47,23 @@
 
 # December 2009
 
-# Adapted for 32-bit build this module delivers 25-120%, more for
-# longer keys, performance improvement on 1.8GHz PPC970. However!
-# This implementation utilizes even 64-bit integer operations and
-# trouble is that most PPC operating systems don't preserve upper
-# halves of general purpose registers upong signal delivery. They do
-# preserve them upon context switch, but not signalling:-( This means
-# that asynchronous signals have to be blocked upon entry to this
-# subroutine. Signal masking (and complementary unmasking) has quite
-# an impact on performance, naturally larger for shorter keys. It's
-# so severe that 512-bit key performance can be as low as 1/3 of
-# expected one. This is why this routine can be engaged for longer
-# key operations only, see crypto/ppccap.c for further details.
-# Alternative is to break dependence on upper halves on GPRs...
-# MacOS X is an exception from this and doesn't require signal
-# masking, and that's where above improvement coefficients were
-# collected.
+# Adapted for 32-bit build this module delivers 25-120%, yes, more
+# than *twice* for longer keys, performance improvement over 32-bit
+# ppc-mont.pl on 1.8GHz PPC970. However! This implementation utilizes
+# even 64-bit integer operations and the trouble is that most PPC
+# operating systems don't preserve upper halves of general purpose
+# registers upon 32-bit signal delivery. They do preserve them upon
+# context switch, but not signalling:-( This means that asynchronous
+# signals have to be blocked upon entry to this subroutine. Signal
+# masking (and of course complementary unmasking) has quite an impact
+# on performance, naturally larger for shorter keys. It's so severe
+# that 512-bit key performance can be as low as 1/3 of expected one.
+# This is why this routine can be engaged for longer key operations
+# only on these OSes, see crypto/ppccap.c for further details. MacOS X
+# is an exception from this and doesn't require signal masking, and
+# that's where above improvement coefficients were collected. For
+# others alternative would be to break dependence on upper halves of
+# GPRs by sticking to 32-bit integer operations...
 
 $flavour = shift;
 
