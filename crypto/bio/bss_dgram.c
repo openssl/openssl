@@ -371,7 +371,13 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 #endif
 #ifdef OPENSSL_SYS_LINUX
 	socklen_t addr_len;
-	struct sockaddr_storage addr;
+	union	{
+		struct sockaddr	sa;
+		struct sockaddr_in s4;
+#if OPENSSL_USE_IPV6
+		struct sockaddr_in6 s6;
+#endif
+		} addr;
 #endif
 
 	data = (bio_dgram_data *)b->ptr;
@@ -446,15 +452,15 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		/* (Linux)kernel sets DF bit on outgoing IP packets */
 	case BIO_CTRL_DGRAM_MTU_DISCOVER:
 #ifdef OPENSSL_SYS_LINUX
-		addr_len = (socklen_t)sizeof(struct sockaddr_storage);
-		memset((void *)&addr, 0, sizeof(struct sockaddr_storage));
-		if (getsockname(b->num, (void *)&addr, &addr_len) < 0)
+		addr_len = (socklen_t)sizeof(addr);
+		memset((void *)&addr, 0, sizeof(addr));
+		if (getsockname(b->num, &addr.sa, &addr_len) < 0)
 			{
 			ret = 0;
 			break;
 			}
 		sockopt_len = sizeof(sockopt_val);
-		switch (addr.ss_family)
+		switch (addr.sa.sa_family)
 			{
 		case AF_INET:
 			sockopt_val = IP_PMTUDISC_DO;
@@ -462,7 +468,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 				&sockopt_val, sizeof(sockopt_val))) < 0)
 				perror("setsockopt");
 			break;
-#if OPENSSL_USE_IPV6
+#if OPENSSL_USE_IPV6 && defined(IPV6_MTU_DISCOVER)
 		case AF_INET6:
 			sockopt_val = IPV6_PMTUDISC_DO;
 			if ((ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
@@ -480,15 +486,15 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 #endif
 	case BIO_CTRL_DGRAM_QUERY_MTU:
 #ifdef OPENSSL_SYS_LINUX
-		addr_len = (socklen_t)sizeof(struct sockaddr_storage);
-		memset((void *)&addr, 0, sizeof(struct sockaddr_storage));
-		if (getsockname(b->num, (void *)&addr, &addr_len) < 0)
+		addr_len = (socklen_t)sizeof(addr);
+		memset((void *)&addr, 0, sizeof(addr));
+		if (getsockname(b->num, &addr.sa, &addr_len) < 0)
 			{
 			ret = 0;
 			break;
 			}
 		sockopt_len = sizeof(sockopt_val);
-		switch (addr.ss_family)
+		switch (addr.sa.sa_family)
 			{
 		case AF_INET:
 			if ((ret = getsockopt(b->num, IPPROTO_IP, IP_MTU, (void *)&sockopt_val,
@@ -505,7 +511,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 				ret = data->mtu;
 				}
 			break;
-#if OPENSSL_USE_IPV6
+#if OPENSSL_USE_IPV6 && defined(IPV6_MTU)
 		case AF_INET6:
 			if ((ret = getsockopt(b->num, IPPROTO_IPV6, IPV6_MTU, (void *)&sockopt_val,
 				&sockopt_len)) < 0 || sockopt_val < 0)
