@@ -129,10 +129,8 @@
 extern "C" {
 #endif
 
-/* Magic Cipher Suite Value. NB: bogus value used for testing */
-#ifndef SSL3_CK_SCSV
-#define SSL3_CK_SCSV				0x03000FEC
-#endif
+/* Signalling cipher suite value: from draft-ietf-tls-renegotiation-03.txt */
+#define SSL3_CK_SCSV				0x030000FF
 
 #define SSL3_CK_RSA_NULL_MD5			0x03000001
 #define SSL3_CK_RSA_NULL_SHA			0x03000002

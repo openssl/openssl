@@ -36,7 +36,7 @@
      the updated NID creation version. This should correctly handle UTF8.
      [Steve Henson]
 
-  *) Implement draft-ietf-tls-renegotiation. Re-enable
+  *) Implement draft-ietf-tls-renegotiation-03. Re-enable
      renegotiation but require the extension as needed. Unfortunately,
      SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION turns out to be a
      bad idea. It has been replaced by

@@ -429,6 +429,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_REUSE_CERT_LENGTH_NOT_ZERO),"reuse cert length not zero"},
 {ERR_REASON(SSL_R_REUSE_CERT_TYPE_NOT_ZERO),"reuse cert type not zero"},
 {ERR_REASON(SSL_R_REUSE_CIPHER_LIST_NOT_ZERO),"reuse cipher list not zero"},
+{ERR_REASON(SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING),"scsv received when renegotiating"},
 {ERR_REASON(SSL_R_SERVERHELLO_TLSEXT)    ,"serverhello tlsext"},
 {ERR_REASON(SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED),"session id context uninitialized"},
 {ERR_REASON(SSL_R_SHORT_READ)            ,"short read"},
