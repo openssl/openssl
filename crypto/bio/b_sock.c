@@ -606,7 +606,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 		struct sockaddr_in6 sa_in6;
 #endif
 	} server,client;
-	int s=INVALID_SOCKET,cs;
+	int s=INVALID_SOCKET,cs,addrlen;
 	unsigned char ip[4];
 	unsigned short port;
 	char *str=NULL,*e;
@@ -677,8 +677,10 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 
 	if ((*p_getaddrinfo.f)(h,p,&hint,&res)) break;
 
-	memcpy(&server, res->ai_addr,
-		res->ai_addrlen<=sizeof(server)?res->ai_addrlen:sizeof(server));
+	addrlen = res->ai_addrlen<=sizeof(server) ?
+			res->ai_addrlen :
+			sizeof(server);
+	memcpy(&server, res->ai_addr, addrlen);
 
 	(*p_freeaddrinfo.f)(res);
 	goto again;
@@ -690,6 +692,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	memset((char *)&server,0,sizeof(server));
 	server.sa_in.sin_family=AF_INET;
 	server.sa_in.sin_port=htons(port);
+	addrlen = sizeof(server.sa_in);
 
 	if (h == NULL || strcmp(h,"*") == 0)
 		server.sa_in.sin_addr.s_addr=INADDR_ANY;
@@ -723,7 +726,7 @@ again:
 		bind_mode=BIO_BIND_NORMAL;
 		}
 #endif
-	if (bind(s,&server.sa,sizeof(server)) == -1)
+	if (bind(s,&server.sa,addrlen) == -1)
 		{
 #ifdef SO_REUSEADDR
 		err_num=get_last_socket_error();
@@ -751,7 +754,7 @@ again:
 			if (cs != INVALID_SOCKET)
 				{
 				int ii;
-				ii=connect(cs,&client.sa,sizeof(client));
+				ii=connect(cs,&client.sa,addrlen);
 				closesocket(cs);
 				if (ii == INVALID_SOCKET)
 					{
