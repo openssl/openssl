@@ -1370,10 +1370,9 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 		p+=j;
 		}
 	/* If p == q, no ciphers and caller indicates an error. Otherwise
-	 * add SCSV if no extensions (i.e. SSL3 is client_version)
-	 * since spec RECOMMENDS not sending both RI and SCSV.
+	 * add SCSV if not renegotiating.
 	 */
-	if (p != q && !s->new_session && s->client_version == SSL3_VERSION)
+	if (p != q && !s->new_session)
 		{
 		static SSL_CIPHER scsv =
 			{
