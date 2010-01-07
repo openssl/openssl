@@ -134,7 +134,7 @@ bn_mul_mont:
 					};;
 { .mfi;	nop.m		0
 	xma.hu		ahi[1]=alo[3],bi,ahi[2]	// ap[1]*bp[0]
-	$ADDP		tp_1=8,sp	}
+	add		tp_1=8,sp	}
 { .mfi;	nop.m		0
 	xma.lu		alo[3]=alo[3],bi,ahi[2]
 	mov		pr.rot=0x20001f<<16
@@ -184,11 +184,10 @@ bn_mul_mont:
 (p41)	add		topbit=r0,r0,1
 	nop.i		0		}	
 { .mmi;	st8		[tp_1]=n[0]
-	$ADDP		tptr=16,sp
-	$ADDP		tp_1=8,sp	};;
-___
-
-$code.=<<___;
+	add		tptr=16,sp
+	add		tp_1=8,sp	};;
+
+
 .Louter:
 { .mmi;	ldf8		bi=[bptr],8		// (*bp++)
 	ldf8		ahi[3]=[tptr]		// tp[0]
@@ -282,8 +281,8 @@ $code.=<<___;
 	sub		aptr=aptr,len	};;	// rewind
 { .mmi;	sub		nptr=nptr,len
 (p41)	add		topbit=r0,r0,1
-	$ADDP		tptr=16,sp	}
-{ .mmb;	$ADDP		tp_1=8,sp
+	add		tptr=16,sp	}
+{ .mmb;	add		tp_1=8,sp
 	add		num=-1,num		// num--
 (p6)	br.cond.sptk.many	.Louter	};;
 
