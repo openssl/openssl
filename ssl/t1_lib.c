@@ -174,9 +174,10 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		ret+=size_str;
 
 		}
-        
-        /* Add the renegotiation option: TODOEKR switch */
-        {
+ 
+        /* Add RI if renegotiating */
+        if (s->new_session)
+          {
           int el;
           
           if(!ssl_add_clienthello_renegotiate_ext(s, 0, &el, 0))
