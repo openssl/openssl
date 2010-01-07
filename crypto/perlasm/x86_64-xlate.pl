@@ -189,7 +189,8 @@ my $current_function;
 	if (!$masm) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{label}
-	    $self->{label} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/egi;
+	    use integer;
+	    $self->{label} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)<<32>>32/egi;
 	    $self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 
 	    if (defined($self->{index})) {
