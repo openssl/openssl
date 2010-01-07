@@ -335,11 +335,21 @@ static int dgram_write(BIO *b, const char *in, int inl)
 	if ( data->connected )
 		ret=writesocket(b->num,in,inl);
 	else
-#if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
-		ret=sendto(b->num, (char *)in, inl, 0, &data->peer.sa, sizeof(data->peer));
-#else
-		ret=sendto(b->num, in, inl, 0, &data->peer.sa, sizeof(data->peer));
+		{
+		int peerlen = sizeof(data->peer);
+
+		if (data->peer.sa.sa_family == AF_INET)
+			peerlen = sizeof(data->peer.sa_in);
+#if OPENSSL_USE_IVP6
+		else if (data->peer.sa.sa_family == AF_INET6)
+			peerlen = sizeof(data->peer.sa_in6);
 #endif
+#if defined(NETWARE_CLIB) && defined(NETWARE_BSDSOCK)
+		ret=sendto(b->num, (char *)in, inl, 0, &data->peer.sa, peerlen);
+#else
+		ret=sendto(b->num, in, inl, 0, &data->peer.sa, peerlen);
+#endif
+		}
 
 	BIO_clear_retry_flags(b);
 	if (ret <= 0)
