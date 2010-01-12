@@ -99,7 +99,13 @@ static const char *x509_usage[]={
 " -passin arg     - private key password source\n",
 " -serial         - print serial number value\n",
 " -subject_hash   - print subject hash value\n",
+#ifndef OPENSSL_NO_MD5
+" -subject_hash_old   - print old-style (MD5) subject hash value\n",
+#endif
 " -issuer_hash    - print issuer hash value\n",
+#ifndef OPENSSL_NO_MD5
+" -issuer_hash_old    - print old-style (MD5) issuer hash value\n",
+#endif
 " -hash           - synonym for -subject_hash\n",
 " -subject        - print subject DN\n",
 " -issuer         - print issuer DN\n",
@@ -179,6 +185,9 @@ int MAIN(int argc, char **argv)
 	int text=0,serial=0,subject=0,issuer=0,startdate=0,enddate=0;
 	int next_serial=0;
 	int subject_hash=0,issuer_hash=0,ocspid=0;
+#ifndef OPENSSL_NO_MD5
+	int subject_hash_old=0,issuer_hash_old=0;
+#endif
 	int noout=0,sign_flag=0,CA_flag=0,CA_createserial=0,email=0;
 	int ocsp_uri=0;
 	int trustout=0,clrtrust=0,clrreject=0,aliasout=0,clrext=0;
@@ -397,8 +406,16 @@ int MAIN(int argc, char **argv)
 		else if (strcmp(*argv,"-hash") == 0
 			|| strcmp(*argv,"-subject_hash") == 0)
 			subject_hash= ++num;
+#ifndef OPENSSL_NO_MD5
+		else if (strcmp(*argv,"-subject_hash_old") == 0)
+			subject_hash_old= ++num;
+#endif
 		else if (strcmp(*argv,"-issuer_hash") == 0)
 			issuer_hash= ++num;
+#ifndef OPENSSL_NO_MD5
+		else if (strcmp(*argv,"-issuer_hash_old") == 0)
+			issuer_hash_old= ++num;
+#endif
 		else if (strcmp(*argv,"-subject") == 0)
 			subject= ++num;
 		else if (strcmp(*argv,"-issuer") == 0)
@@ -759,10 +776,22 @@ bad:
 				{
 				BIO_printf(STDout,"%08lx\n",X509_subject_name_hash(x));
 				}
+#ifndef OPENSSL_NO_MD5
+			else if (subject_hash_old == i)
+				{
+				BIO_printf(STDout,"%08lx\n",X509_subject_name_hash_old(x));
+				}
+#endif
 			else if (issuer_hash == i)
 				{
 				BIO_printf(STDout,"%08lx\n",X509_issuer_name_hash(x));
 				}
+#ifndef OPENSSL_NO_MD5
+			else if (issuer_hash_old == i)
+				{
+				BIO_printf(STDout,"%08lx\n",X509_issuer_name_hash_old(x));
+				}
+#endif
 			else if (pprint == i)
 				{
 				X509_PURPOSE *ptmp;

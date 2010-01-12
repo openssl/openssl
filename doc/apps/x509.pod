@@ -158,6 +158,16 @@ outputs the "hash" of the certificate issuer name.
 
 synonym for "-subject_hash" for backward compatibility reasons.
 
+=item B<-subject_hash_old>
+
+outputs the "hash" of the certificate subject name using the older algorithm
+as used by OpenSSL versions before 1.0.0.
+
+=item B<-issuer_hash_old>
+
+outputs the "hash" of the certificate issuer name using the older algorithm
+as used by OpenSSL versions before 1.0.0.
+
 =item B<-subject>
 
 outputs the subject name.
@@ -836,5 +846,11 @@ L<x509v3_config(5)|x509v3_config(5)>
 =head1 HISTORY
 
 Before OpenSSL 0.9.8, the default digest for RSA keys was MD5.
+
+The hash algorithm used in the B<-subject_hash> and B<-issuer_hash> options
+before OpenSSL 1.0.0 was based on the deprecated MD5 algorithm and the encoding
+of the distinguished name. In OpenSSL 1.0.0 and later it is based on a
+canonical version of the DN using SHA1. This means that any directories using
+the old form must have their links rebuilt using B<c_rehash> or similar. 
 
 =cut
