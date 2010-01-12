@@ -4170,3 +4170,5 @@ X509_STORE_CTX_get0_current_crl         4544	EXIST::FUNCTION:
 X509_STORE_CTX_get0_parent_ctx          4545	EXIST::FUNCTION:
 X509_STORE_CTX_get0_current_issuer      4546	EXIST:!VMS:FUNCTION:
 X509_STORE_CTX_get0_cur_issuer          4546	EXIST:VMS:FUNCTION:
+X509_issuer_name_hash_old               4547	EXIST::FUNCTION:MD5
+X509_subject_name_hash_old              4548	EXIST::FUNCTION:MD5
