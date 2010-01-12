@@ -138,6 +138,13 @@ unsigned long X509_issuer_name_hash(X509 *x)
 	return(X509_NAME_hash(x->cert_info->issuer));
 	}
 
+#ifndef OPENSSL_NO_MD5
+unsigned long X509_issuer_name_hash_old(X509 *x)
+	{
+	return(X509_NAME_hash_old(x->cert_info->issuer));
+	}
+#endif
+
 X509_NAME *X509_get_subject_name(X509 *a)
 	{
 	return(a->cert_info->subject);
@@ -152,6 +159,13 @@ unsigned long X509_subject_name_hash(X509 *x)
 	{
 	return(X509_NAME_hash(x->cert_info->subject));
 	}
+
+#ifndef OPENSSL_NO_MD5
+unsigned long X509_subject_name_hash_old(X509 *x)
+	{
+	return(X509_NAME_hash_old(x->cert_info->subject));
+	}
+#endif
 
 #ifndef OPENSSL_NO_SHA
 /* Compare two certificates: they must be identical for

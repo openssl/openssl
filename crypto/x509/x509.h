@@ -961,6 +961,11 @@ unsigned long	X509_issuer_name_hash(X509 *a);
 int		X509_subject_name_cmp(const X509 *a, const X509 *b);
 unsigned long	X509_subject_name_hash(X509 *x);
 
+#ifndef OPENSSL_NO_MD5
+unsigned long	X509_issuer_name_hash_old(X509 *a);
+unsigned long	X509_subject_name_hash_old(X509 *x);
+#endif
+
 int		X509_cmp(const X509 *a, const X509 *b);
 int		X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b);
 unsigned long	X509_NAME_hash(X509_NAME *x);
