@@ -4,6 +4,15 @@
 
  Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
+  *) Modify compression code so it frees up structures without using the
+     ex_data callbacks. This works around a problem where some applications
+     call CRYPTO_free_all_ex_data() before application exit (e.g. when
+     restarting) then use compression (e.g. SSL with compression) later.
+     This results in significant per-connection memory leaks and
+     has caused some security issues including CVE-2008-1678 and
+     CVE-2009-4355.
+     [Steve Henson]
+
   *) Constify crypto/cast (i.e., <openssl/cast.h>): a CAST_KEY doesn't
      change when encrypting or decrypting.
      [Bodo Moeller]
