@@ -881,6 +881,11 @@
 
  Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
+  *) Handle TLS versions 2.0 and later properly and correctly use the
+     highest version of TLS/SSL supported. Although TLS >= 2.0 is some way
+     off ancient servers have a habit of sticking around for a while...
+     [Steve Henson]
+
   *) Modify compression code so it frees up structures without using the
      ex_data callbacks. This works around a problem where some applications
      call CRYPTO_free_all_ex_data() before application exit (e.g. when
