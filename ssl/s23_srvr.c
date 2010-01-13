@@ -315,7 +315,7 @@ int ssl23_get_client_hello(SSL *s)
 			 (p[1] == SSL3_VERSION_MAJOR) &&
 			 (p[5] == SSL3_MT_CLIENT_HELLO) &&
 			 ((p[3] == 0 && p[4] < 5 /* silly record length? */)
-				|| (p[9] == p[1])))
+				|| (p[9] >= p[1])))
 			{
 			/*
 			 * SSLv3 or tls1 header
@@ -339,6 +339,13 @@ int ssl23_get_client_hello(SSL *s)
 				v[1] = TLS1_VERSION_MINOR;
 #endif
 				}
+			/* if major version number > 3 set minor to a value
+			 * which will use the highest version 3 we support.
+			 * If TLS 2.0 ever appears we will need to revise
+			 * this....
+			 */
+			else if (p[9] > SSL3_VERSION_MAJOR)
+				v[1]=0xff;
 			else
 				v[1]=p[10]; /* minor version according to client_version */
 			if (v[1] >= TLS1_VERSION_MINOR)
