@@ -2095,7 +2095,7 @@ again2:
 		}
 
 	BIO_printf(bio_err,"Certificate is to be certified until ");
-	ASN1_UTCTIME_print(bio_err,X509_get_notAfter(ret));
+	ASN1_TIME_print(bio_err,X509_get_notAfter(ret));
 	if (days) BIO_printf(bio_err," (%ld days)",days);
 	BIO_printf(bio_err, "\n");
 
@@ -2373,12 +2373,15 @@ err:
 
 static int check_time_format(const char *str)
 	{
-	ASN1_UTCTIME tm;
+	ASN1_TIME tm;
 
 	tm.data=(unsigned char *)str;
 	tm.length=strlen(str);
 	tm.type=V_ASN1_UTCTIME;
-	return(ASN1_UTCTIME_check(&tm));
+	if (ASN1_TIME_check(&tm))
+		return 1;
+	tm.type=V_ASN1_GENERALIZEDTIME;
+	return ASN1_TIME_check(&tm);
 	}
 
 static int do_revoke(X509 *x509, CA_DB *db, int type, char *value)
