@@ -259,3 +259,6 @@ SSL_set_session_secret_cb               307	EXIST::FUNCTION:
 SSL_set_session_ticket_ext_cb           308	EXIST::FUNCTION:
 SSL_set1_param                          309	EXIST::FUNCTION:
 SSL_CTX_set1_param                      310	EXIST::FUNCTION:
+TLSv1_1_method                          311	EXIST::FUNCTION:
+TLSv1_1_client_method                   312	EXIST::FUNCTION:
+TLSv1_1_server_method                   313	EXIST::FUNCTION:

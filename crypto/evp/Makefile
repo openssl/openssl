@@ -383,7 +383,7 @@ evp_pbe.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs12.h
 evp_pbe.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 evp_pbe.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 evp_pbe.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-evp_pbe.o: ../../include/openssl/x509_vfy.h ../cryptlib.h evp_pbe.c
+evp_pbe.o: ../../include/openssl/x509_vfy.h ../cryptlib.h evp_locl.h evp_pbe.c
 evp_pkey.o: ../../e_os.h ../../include/openssl/asn1.h
 evp_pkey.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 evp_pkey.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -601,7 +601,8 @@ p5_crpt2.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 p5_crpt2.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 p5_crpt2.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 p5_crpt2.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-p5_crpt2.o: ../../include/openssl/x509_vfy.h ../cryptlib.h p5_crpt2.c
+p5_crpt2.o: ../../include/openssl/x509_vfy.h ../cryptlib.h evp_locl.h
+p5_crpt2.o: p5_crpt2.c
 p_dec.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 p_dec.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 p_dec.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
