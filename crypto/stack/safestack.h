@@ -186,7 +186,7 @@ DECLARE_SPECIAL_STACK_OF(OPENSSL_BLOCK, void)
 				ex_tag, ex_class)
 
 #define	SKM_ASN1_SET_OF_i2d(type, st, pp, i2d_func, ex_tag, ex_class, is_set) \
-	i2d_ASN1_SET(CHECKED_STACK_OF(type, st), pp, \
+  i2d_ASN1_SET((STACK_OF(OPENSSL_BLOCK) *)CHECKED_STACK_OF(type, st), pp, \
 				CHECKED_I2D_OF(type, i2d_func), \
 				ex_tag, ex_class, is_set)
 
