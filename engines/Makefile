@@ -107,7 +107,7 @@ install:
 	@[ -n "$(INSTALLTOP)" ] # should be set by top Makefile...
 	@if [ -n "$(SHARED_LIBS)" ]; then \
 		set -e; \
-		$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines; \
+		$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines; \
 		for l in $(LIBNAMES); do \
 			( echo installing $$l; \
 			  pfx=lib; \
