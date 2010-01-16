@@ -292,6 +292,7 @@ int dtls1_accept(SSL *s)
 			ret = dtls1_send_hello_verify_request(s);
 			if ( ret <= 0) goto end;
 			s->state=SSL3_ST_SW_FLUSH;
+			s->new_session = 0;
 			s->s3->tmp.next_state=SSL3_ST_SR_CLNT_HELLO_A;
 
 			/* HelloVerifyRequest resets Finished MAC */
