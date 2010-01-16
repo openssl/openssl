@@ -198,6 +198,12 @@ case SSL23_ST_SR_CLNT_HELLO_A:	str="SSLv2/v3 read client hello A"; break;
 case SSL23_ST_SR_CLNT_HELLO_B:	str="SSLv2/v3 read client hello B"; break;
 #endif
 
+/* DTLS */
+case DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A: str="DTLS1 read hello verify request A"; break;
+case DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B: str="DTLS1 read hello verify request B"; break;
+case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A: str="DTLS1 write hello verify request A"; break;
+case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B: str="DTLS1 write hello verify request B"; break;
+
 default:	str="unknown state"; break;
 		}
 	return(str);
@@ -345,6 +351,11 @@ case SSL23_ST_CR_SRVR_HELLO_B:			str="23RSHA"; break;
 case SSL23_ST_SR_CLNT_HELLO_A:			str="23RCHA"; break;
 case SSL23_ST_SR_CLNT_HELLO_B:			str="23RCHB"; break;
 #endif
+/* DTLS */
+case DTLS1_ST_CR_HELLO_VERIFY_REQUEST_A: str="DRCHVA"; break;
+case DTLS1_ST_CR_HELLO_VERIFY_REQUEST_B: str="DRCHVB"; break;
+case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A: str="DWCHVA"; break;
+case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B: str="DWCHVB"; break;
 
 default:					str="UNKWN "; break;
 		}
