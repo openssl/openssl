@@ -53,13 +53,13 @@ install:
 			*DSO_WIN32*) sfx="eay32.dll"; pfx=;; \
 			*) sfx=".bad";; \
 			esac; \
-			cp $${pfx}$(LIBNAME)$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new; \
+			cp $${pfx}$(LIBNAME)$$sfx $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
 		else \
 			sfx=".so"; \
-			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new; \
+			cp cyg$(LIBNAME).dll $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
 		fi; \
-		chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new; \
-		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/lib/engines/$${pfx}$(LIBNAME)$$sfx; \
+		chmod 555 $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new; \
+		mv -f $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx.new $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR)/engines/$${pfx}$(LIBNAME)$$sfx; \
 	fi
 
 links:

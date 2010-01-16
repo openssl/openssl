@@ -551,7 +551,7 @@ install_sw:
 			fi; \
 		done; \
 		(	here="`pwd`"; \
-			cd $(INSTALL_PREFIX)$(INSTALLTOP)/lib; \
+			cd $(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR); \
 			$(MAKE) -f $$here/Makefile HERE="$$here" link-shared ); \
 		if [ "$(INSTALLTOP)" != "/usr" ]; then \
 			echo 'OpenSSL shared libraries have been installed in:'; \
