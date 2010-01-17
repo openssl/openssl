@@ -23,14 +23,26 @@
 #   reportedly based on Itanium 2 design;
 # - dedicated squaring procedure(?);
 #
+# January 2010
+#
+# Shorter vector support is implemented by zero-padding ap and np
+# vectors up to 8 elements, or 512 bits. This means that 256-bit
+# inputs will be processed only 2 times faster than 512-bit inputs,
+# not 4 [as one would expect, because algorithm complexity is n^2].
+# The reason for padding is that inputs shorter than 512 bits won't
+# be processed faster anyway, because minimal critical path of the
+# core loop happens to match 512-bit timing. Either way, it resulted
+# in >100% improvement of 512-bit RSA sign benchmark and 50% - of
+# 1024-bit one [in comparison to original version of *this* module].
+#
 # So far 'openssl speed rsa dsa' output on 900MHz Itanium 2 *with*
 # this module is:
 #                   sign    verify    sign/s verify/s
-# rsa  512 bits 0.000634s 0.000030s   1577.6  32877.3
-# rsa 1024 bits 0.001246s 0.000058s    802.8  17181.5
+# rsa  512 bits 0.000302s 0.000024s   3312.3  41332.2
+# rsa 1024 bits 0.000816s 0.000058s   1225.2  17172.0
 # rsa 2048 bits 0.005908s 0.000148s    169.3   6754.0
 # rsa 4096 bits 0.033456s 0.000469s     29.9   2133.6
-# dsa  512 bits 0.000322s 0.000286s   3106.0   3499.0
+# dsa  512 bits 0.000254s 0.000206s   3944.6   4865.1
 # dsa 1024 bits 0.000585s 0.000607s   1708.4   1647.4
 # dsa 2048 bits 0.001453s 0.001703s    688.1    587.4
 #
@@ -44,10 +56,9 @@
 # dsa 1024 bits 0.000823s 0.000867s   1215.6   1153.2
 # dsa 2048 bits 0.001894s 0.002179s    528.1    458.9
 #
-# 512-bit RSA sign performance does not improve, because this module
-# doesn't handle short enough vectors (yet). Otherwise RSA sign
-# improves by 60-30%, less for longer keys, while verify - by 35-13%.
-# DSA performance improves by 40-30%.
+# As it can be seen, RSA sign performance improves by 120-30%,
+# hereafter less for longer keys, while verify - by 72-13%.
+# DSA performance improves by 100-30%.
 
 if ($^O eq "hpux") {
     $ADDP="addp4";
@@ -57,34 +68,41 @@ if ($^O eq "hpux") {
 $code=<<___;
 .explicit
 .text
-
+
 // int bn_mul_mont (BN_ULONG *rp,const BN_ULONG *ap,
 //		    const BN_ULONG *bp,const BN_ULONG *np,
 //		    const BN_ULONG *n0p,int num);			
 .global	bn_mul_mont#
 .proc	bn_mul_mont#
-prevsp=r2;
-prevfs=r3;
-prevlc=r10;
-prevpr=r11;
-
-rptr=r14;
-aptr=r15;
-bptr=r16;
-nptr=r17;
-tptr=r18;	// &tp[0]
-tp_1=r19;	// &tp[-1]
-num=r20;
-len=r21;
-topbit=r22;
-lc=r23;
-
-bi=f6;
-n0=f7;
-m0=f8;
-
-.align	64
+.align	64;;
 bn_mul_mont:
+	.prologue
+	.body
+{ .mmi;	cmp4.le		p6,p7=2,r37;;
+(p6)	cmp4.lt.unc	p8,p9=8,r37
+	mov		ret0=r0		};;
+{ .bbb;
+(p9)	br.cond.dptk.many	bn_mul_mont_8
+(p8)	br.cond.dpnt.many	bn_mul_mont_general
+(p7)	br.ret.spnt.many	b0	};;
+.endp	bn_mul_mont#
+
+prevfs=r2;	prevpr=r3;	prevlc=r10;	prevsp=r11;
+
+rptr=r8;	aptr=r9;	bptr=r14;	nptr=r15;
+tptr=r16;	// &tp[0]
+tp_1=r17;	// &tp[-1]
+num=r18;	len=r19;	lc=r20;
+topbit=r21;	// carry bit from tmp[num]
+
+n0=f6;
+m0=f7;
+bi=f8;
+
+.local	bn_mul_mont_general#
+.proc	bn_mul_mont_general#
+.align	64;;
+bn_mul_mont_general:
 	.prologue
 { .mmi;	.save	ar.pfs,prevfs
 	alloc	prevfs=ar.pfs,6,2,0,8
@@ -94,14 +112,8 @@ bn_mul_mont:
 { .mmi;	.vframe	prevsp
 	mov	prevsp=sp
 	$ADDP	bptr=0,in2
-	cmp4.gt	p6,p0=5,in5		};;	// is num large enough?
-{ .mfi;	nop.m	0				// align loop bodies
-	nop.f	0
-	nop.i	0			}
-{ .mib;	mov	ret0=r0				// signal "unhandled"
 	.save	pr,prevpr
-	mov	prevpr=pr
-(p6)	br.ret.dpnt.many	b0	};;
+	mov	prevpr=pr		};;
 
 	.body
 	.rotf		alo[6],nlo[4],ahi[8],nhi[6]
@@ -186,7 +198,6 @@ bn_mul_mont:
 { .mmi;	st8		[tp_1]=n[0]
 	add		tptr=16,sp
 	add		tp_1=8,sp	};;
-
 
 .Louter:
 { .mmi;	ldf8		bi=[bptr],8		// (*bp++)
@@ -344,7 +355,405 @@ bn_mul_mont:
 	mov		sp=prevsp
 	mov		pr=prevpr,-2
 	br.ret.sptk.many	b0	};;
-.endp	bn_mul_mont
+.endp	bn_mul_mont_general#
+
+a1=r16;  a2=r17;  a3=r18;  a4=r19;  a5=r20;  a6=r21;  a7=r22;  a8=r23;
+n1=r24;  n2=r25;  n3=r26;  n4=r27;  n5=r28;  n6=r29;  n7=r30;  n8=r31;
+t0=r15;
+
+ai0=f8;  ai1=f9;  ai2=f10; ai3=f11; ai4=f12; ai5=f13; ai6=f14; ai7=f15;
+ni0=f16; ni1=f17; ni2=f18; ni3=f19; ni4=f20; ni5=f21; ni6=f22; ni7=f23;
+
+.local	bn_mul_mont_8#
+.proc	bn_mul_mont_8#
+.align	64
+.skip	48;;		// aligns loop body
+bn_mul_mont_8:
+	.prologue
+{ .mmi;	.save		ar.pfs,prevfs
+	alloc		prevfs=ar.pfs,6,2,0,8
+	.vframe		prevsp
+	mov		prevsp=sp
+	.save		ar.lc,prevlc
+	mov		prevlc=ar.lc	}
+{ .mmi;	add		r17=-6*16,sp
+	add		sp=-7*16,sp
+	.save		pr,prevpr
+	mov		prevpr=pr	};;
+
+{ .mmi;	.save.gf	0,0x10
+	stf.spill	[sp]=f16,-16
+	.save.gf	0,0x20
+	stf.spill	[r17]=f17,32
+	add		r16=-5*16,prevsp};;
+{ .mmi;	.save.gf	0,0x40
+	stf.spill	[r16]=f18,32
+	.save.gf	0,0x80
+	stf.spill	[r17]=f19,32
+	$ADDP		aptr=0,in1	};;
+{ .mmi;	.save.gf	0,0x100
+	stf.spill	[r16]=f20,32
+	.save.gf	0,0x200
+	stf.spill	[r17]=f21,32
+	$ADDP		r29=8,in1	};;
+{ .mmi;	.save.gf	0,0x400
+	stf.spill	[r16]=f22
+	.save.gf	0,0x800
+	stf.spill	[r17]=f23
+	$ADDP		rptr=0,in0	};;
+
+	.body
+	.rotf		bj[8],mj[2],tf[2],alo[10],ahi[10],nlo[10],nhi[10]
+	.rotr		t[8]
+
+// load input vectors padding them to 8 elements
+{ .mmi;	ldf8		ai0=[aptr],16		// ap[0]
+	ldf8		ai1=[r29],16		// ap[1]
+	$ADDP		bptr=0,in2	}
+{ .mmi;	$ADDP		r30=8,in2
+	$ADDP		nptr=0,in3
+	$ADDP		r31=8,in3	};;
+{ .mmi;	ldf8		bj[7]=[bptr],16		// bp[0]
+	ldf8		bj[6]=[r30],16		// bp[1]
+	cmp4.le		p4,p5=3,in5	}
+{ .mmi;	ldf8		ni0=[nptr],16		// np[0]
+	ldf8		ni1=[r31],16		// np[1]
+	cmp4.le		p6,p7=4,in5	};;
+
+{ .mfi;	(p4)ldf8	ai2=[aptr],16		// ap[2]
+	(p5)fcvt.fxu	ai2=f0
+	cmp4.le		p8,p9=5,in5	}
+{ .mfi;	(p6)ldf8	ai3=[r29],16		// ap[3]
+	(p7)fcvt.fxu	ai3=f0
+	cmp4.le		p10,p11=6,in5	}
+{ .mfi;	(p4)ldf8	bj[5]=[bptr],16		// bp[2]
+	(p5)fcvt.fxu	bj[5]=f0
+	cmp4.le		p12,p13=7,in5	}
+{ .mfi;	(p6)ldf8	bj[4]=[r30],16		// bp[3]
+	(p7)fcvt.fxu	bj[4]=f0
+	cmp4.le		p14,p15=8,in5	}
+{ .mfi;	(p4)ldf8	ni2=[nptr],16		// np[2]
+	(p5)fcvt.fxu	ni2=f0
+	addp4		r28=-1,in5	}
+{ .mfi;	(p6)ldf8	ni3=[r31],16		// np[3]
+	(p7)fcvt.fxu	ni3=f0
+	$ADDP		in4=0,in4	};;
+
+{ .mfi;	ldf8		n0=[in4]
+	fcvt.fxu	tf[1]=f0
+	nop.i		0		}
+
+{ .mfi;	(p8)ldf8	ai4=[aptr],16		// ap[4]
+	(p9)fcvt.fxu	ai4=f0
+	mov		t[0]=r0		}
+{ .mfi;	(p10)ldf8	ai5=[r29],16		// ap[5]
+	(p11)fcvt.fxu	ai5=f0
+	mov		t[1]=r0		}
+{ .mfi;	(p8)ldf8	bj[3]=[bptr],16		// bp[4]
+	(p9)fcvt.fxu	bj[3]=f0
+	mov		t[2]=r0		}
+{ .mfi;	(p10)ldf8	bj[2]=[r30],16		// bp[5]
+	(p11)fcvt.fxu	bj[2]=f0
+	mov		t[3]=r0		}
+{ .mfi;	(p8)ldf8	ni4=[nptr],16		// np[4]
+	(p9)fcvt.fxu	ni4=f0
+	mov		t[4]=r0		}
+{ .mfi;	(p10)ldf8	ni5=[r31],16		// np[5]
+	(p11)fcvt.fxu	ni5=f0
+	mov		t[5]=r0		};;
+
+{ .mfi;	(p12)ldf8	ai6=[aptr],16		// ap[6]
+	(p13)fcvt.fxu	ai6=f0
+	mov		t[6]=r0		}
+{ .mfi;	(p14)ldf8	ai7=[r29],16		// ap[7]
+	(p15)fcvt.fxu	ai7=f0
+	mov		t[7]=r0		}
+{ .mfi;	(p12)ldf8	bj[1]=[bptr],16		// bp[6]
+	(p13)fcvt.fxu	bj[1]=f0
+	mov		ar.lc=r28	}
+{ .mfi;	(p14)ldf8	bj[0]=[r30],16		// bp[7]
+	(p15)fcvt.fxu	bj[0]=f0
+	mov		ar.ec=2		}
+{ .mfi;	(p12)ldf8	ni6=[nptr],16		// np[6]
+	(p13)fcvt.fxu	ni6=f0
+	mov		pr.rot=1<<16	}
+{ .mfb;	(p14)ldf8	ni7=[r31],16		// np[7]
+	(p15)fcvt.fxu	ni7=f0
+	brp.loop.imp	.Louter_8_ctop,.Louter_8_cend-16
+					};;
+
+// The loop is scheduled for 32*(n+1) ticks on Itanium 2. Actual
+// measurement with help of Interval Time Counter indicate that the
+// factor is a tad higher: 33 or 34, if not 35. Exact measurement and
+// addressing the issue is problematic, because I don't have access
+// to platform-specific instruction-level profiler. On Itanium it
+// should run in 56*(n+1) ticks, because of higher xma latency...
+.Louter_8_ctop:
+	.pred.rel		"mutex",p40,p42
+	.pred.rel		"mutex",p48,p50
+{ .mfi;	(p16)	nop.m		0			// 0:
+	(p16)	xma.hu		ahi[0]=ai0,bj[7],tf[1]	//	ap[0]*b[i]+t[0]
+	(p40)	add		a3=a3,n3	}	//	(p17) a3+=n3
+{ .mfi;	(p42)	add		a3=a3,n3,1
+	(p16)	xma.lu		alo[0]=ai0,bj[7],tf[1]
+	(p16)	nop.i		0		};;
+{ .mii;	(p17)	getf.sig	a7=alo[8]		// 1:
+	(p48)	add		t[6]=t[6],a3		//	(p17) t[6]+=a3
+	(p50)	add		t[6]=t[6],a3,1	};;
+{ .mfi;	(p17)	getf.sig	a8=ahi[8]		// 2:
+	(p17)	xma.hu		nhi[7]=ni6,mj[1],nhi[6]	//	np[6]*m0
+	(p40)	cmp.ltu		p43,p41=a3,n3	}
+{ .mfi;	(p42)	cmp.leu		p43,p41=a3,n3
+	(p17)	xma.lu		nlo[7]=ni6,mj[1],nhi[6]
+	(p16)	nop.i		0		};;
+{ .mii;	(p17)	getf.sig	n5=nlo[6]		// 3:
+	(p48)	cmp.ltu		p51,p49=t[6],a3
+	(p50)	cmp.leu		p51,p49=t[6],a3	};;
+	.pred.rel		"mutex",p41,p43
+	.pred.rel		"mutex",p49,p51
+{ .mfi;	(p16)	nop.m		0			// 4:
+	(p16)	xma.hu		ahi[1]=ai1,bj[7],ahi[0]	//	ap[1]*b[i]
+	(p41)	add		a4=a4,n4	}	//	(p17) a4+=n4
+{ .mfi;	(p43)	add		a4=a4,n4,1
+	(p16)	xma.lu		alo[1]=ai1,bj[7],ahi[0]
+	(p16)	nop.i		0		};;
+{ .mfi;	(p49)	add		t[5]=t[5],a4		// 5:	(p17) t[5]+=a4
+	(p16)	xmpy.lu		mj[0]=alo[0],n0		//	(ap[0]*b[i]+t[0])*n0
+	(p51)	add		t[5]=t[5],a4,1	};;
+{ .mfi;	(p16)	nop.m		0			// 6:
+	(p17)	xma.hu		nhi[8]=ni7,mj[1],nhi[7]	//	np[7]*m0
+	(p41)	cmp.ltu		p42,p40=a4,n4	}
+{ .mfi;	(p43)	cmp.leu		p42,p40=a4,n4
+	(p17)	xma.lu		nlo[8]=ni7,mj[1],nhi[7]
+	(p16)	nop.i		0		};;
+{ .mii;	(p17)	getf.sig	n6=nlo[7]		// 7:
+	(p49)	cmp.ltu		p50,p48=t[5],a4
+	(p51)	cmp.leu		p50,p48=t[5],a4	};;
+	.pred.rel		"mutex",p40,p42
+	.pred.rel		"mutex",p48,p50
+{ .mfi;	(p16)	nop.m		0			// 8:
+	(p16)	xma.hu		ahi[2]=ai2,bj[7],ahi[1]	//	ap[2]*b[i]
+	(p40)	add		a5=a5,n5	}	//	(p17) a5+=n5
+{ .mfi;	(p42)	add		a5=a5,n5,1
+	(p16)	xma.lu		alo[2]=ai2,bj[7],ahi[1]
+	(p16)	nop.i		0		};;
+{ .mii;	(p16)	getf.sig	a1=alo[1]		// 9:
+	(p48)	add		t[4]=t[4],a5		//	p(17) t[4]+=a5
+	(p50)	add		t[4]=t[4],a5,1	};;
+{ .mfi;	(p16)	nop.m		0			// 10:
+	(p16)	xma.hu		nhi[0]=ni0,mj[0],alo[0]	//	np[0]*m0
+	(p40)	cmp.ltu		p43,p41=a5,n5	}
+{ .mfi;	(p42)	cmp.leu		p43,p41=a5,n5
+	(p16)	xma.lu		nlo[0]=ni0,mj[0],alo[0]
+	(p16)	nop.i		0		};;
+{ .mii;	(p17)	getf.sig	n7=nlo[8]		// 11:
+	(p48)	cmp.ltu		p51,p49=t[4],a5
+	(p50)	cmp.leu		p51,p49=t[4],a5	};;
+	.pred.rel		"mutex",p41,p43
+	.pred.rel		"mutex",p49,p51
+{ .mfi;	(p17)	getf.sig	n8=nhi[8]		// 12:
+	(p16)	xma.hu		ahi[3]=ai3,bj[7],ahi[2]	//	ap[3]*b[i]
+	(p41)	add		a6=a6,n6	}	//	(p17) a6+=n6
+{ .mfi;	(p43)	add		a6=a6,n6,1
+	(p16)	xma.lu		alo[3]=ai3,bj[7],ahi[2]
+	(p16)	nop.i		0		};;
+{ .mii;	(p16)	getf.sig	a2=alo[2]		// 13:
+	(p49)	add		t[3]=t[3],a6		//	(p17) t[3]+=a6
+	(p51)	add		t[3]=t[3],a6,1	};;
+{ .mfi;	(p16)	nop.m		0			// 14:
+	(p16)	xma.hu		nhi[1]=ni1,mj[0],nhi[0]	//	np[1]*m0
+	(p41)	cmp.ltu		p42,p40=a6,n6	}
+{ .mfi;	(p43)	cmp.leu		p42,p40=a6,n6
+	(p16)	xma.lu		nlo[1]=ni1,mj[0],nhi[0]
+	(p16)	nop.i		0		};;
+{ .mii;	(p16)	nop.m		0			// 15:
+	(p49)	cmp.ltu		p50,p48=t[3],a6
+	(p51)	cmp.leu		p50,p48=t[3],a6	};;
+	.pred.rel		"mutex",p40,p42
+	.pred.rel		"mutex",p48,p50
+{ .mfi;	(p16)	nop.m		0			// 16:
+	(p16)	xma.hu		ahi[4]=ai4,bj[7],ahi[3]	//	ap[4]*b[i]
+	(p40)	add		a7=a7,n7	}	//	(p17) a7+=n7
+{ .mfi;	(p42)	add		a7=a7,n7,1
+	(p16)	xma.lu		alo[4]=ai4,bj[7],ahi[3]
+	(p16)	nop.i		0		};;
+{ .mii;	(p16)	getf.sig	a3=alo[3]		// 17:
+	(p48)	add		t[2]=t[2],a7		//	(p17) t[2]+=a7
+	(p50)	add		t[2]=t[2],a7,1	};;
+{ .mfi;	(p16)	nop.m		0			// 18:
+	(p16)	xma.hu		nhi[2]=ni2,mj[0],nhi[1]	//	np[2]*m0
+	(p40)	cmp.ltu		p43,p41=a7,n7	}
+{ .mfi;	(p42)	cmp.leu		p43,p41=a7,n7
+	(p16)	xma.lu		nlo[2]=ni2,mj[0],nhi[1]
+	(p16)	nop.i		0		};;
+{ .mii;	(p16)	getf.sig	n1=nlo[1]		// 19:
+	(p48)	cmp.ltu		p51,p49=t[2],a7
+	(p50)	cmp.leu		p51,p49=t[2],a7	};;
+	.pred.rel		"mutex",p41,p43
+	.pred.rel		"mutex",p49,p51
+{ .mfi;	(p16)	nop.m		0			// 20:
+	(p16)	xma.hu		ahi[5]=ai5,bj[7],ahi[4]	//	ap[5]*b[i]
+	(p41)	add		a8=a8,n8	}	//	(p17) a8+=n8
+{ .mfi;	(p43)	add		a8=a8,n8,1
+	(p16)	xma.lu		alo[5]=ai5,bj[7],ahi[4]
+	(p16)	nop.i		0		};;
+{ .mii;	(p16)	getf.sig	a4=alo[4]		// 21:
+	(p49)	add		t[1]=t[1],a8		//	(p17) t[1]+=a8
+	(p51)	add		t[1]=t[1],a8,1	};;
+{ .mfi;	(p16)	nop.m		0			// 22:
+	(p16)	xma.hu		nhi[3]=ni3,mj[0],nhi[2]	//	np[3]*m0
+	(p41)	cmp.ltu		p42,p40=a8,n8	}
+{ .mfi;	(p43)	cmp.leu		p42,p40=a8,n8
+	(p16)	xma.lu		nlo[3]=ni3,mj[0],nhi[2]
+	(p16)	nop.i		0		};;
+{ .mii;	(p16)	getf.sig	n2=nlo[2]		// 23:
+	(p49)	cmp.ltu		p50,p48=t[1],a8
+	(p51)	cmp.leu		p50,p48=t[1],a8	};;
+{ .mfi;	(p16)	nop.m		0			// 24:
+	(p16)	xma.hu		ahi[6]=ai6,bj[7],ahi[5]	//	ap[6]*b[i]
+	(p16)	add		a1=a1,n1	}	//	(p16) a1+=n1
+{ .mfi;	(p16)	nop.m		0
+	(p16)	xma.lu		alo[6]=ai6,bj[7],ahi[5]
+	(p17)	mov		t[0]=r0		};;
+{ .mii;	(p16)	getf.sig	a5=alo[5]		// 25:
+	(p16)	add		t0=t[7],a1		//	(p16) t[7]+=a1
+	(p42)	add		t[0]=t[0],r0,1	};;
+{ .mfi;	(p16)	setf.sig	tf[0]=t0		// 26:
+	(p16)	xma.hu		nhi[4]=ni4,mj[0],nhi[3]	//	np[4]*m0
+	(p50)	add		t[0]=t[0],r0,1	}
+{ .mfi;	(p16)	cmp.ltu.unc	p42,p40=a1,n1
+	(p16)	xma.lu		nlo[4]=ni4,mj[0],nhi[3]
+	(p16)	nop.i		0		};;
+{ .mii;	(p16)	getf.sig	n3=nlo[3]		// 27:
+	(p16)	cmp.ltu.unc	p50,p48=t0,a1
+	(p16)	nop.i		0		};;
+	.pred.rel		"mutex",p40,p42
+	.pred.rel		"mutex",p48,p50
+{ .mfi;	(p16)	nop.m		0			// 28:
+	(p16)	xma.hu		ahi[7]=ai7,bj[7],ahi[6]	//	ap[7]*b[i]
+	(p40)	add		a2=a2,n2	}	//	(p16) a2+=n2
+{ .mfi;	(p42)	add		a2=a2,n2,1
+	(p16)	xma.lu		alo[7]=ai7,bj[7],ahi[6]
+	(p16)	nop.i		0		};;
+{ .mii;	(p16)	getf.sig	a6=alo[6]		// 29:
+	(p48)	add		t[6]=t[6],a2		//	(p16) t[6]+=a2
+	(p50)	add		t[6]=t[6],a2,1	};;
+{ .mfi;	(p16)	nop.m		0			// 30:
+	(p16)	xma.hu		nhi[5]=ni5,mj[0],nhi[4]	//	np[5]*m0
+	(p40)	cmp.ltu		p41,p39=a2,n2	}
+{ .mfi;	(p42)	cmp.leu		p41,p39=a2,n2
+	(p16)	xma.lu		nlo[5]=ni5,mj[0],nhi[4]
+	(p16)	nop.i		0		};;
+{ .mfi;	(p16)	getf.sig	n4=nlo[4]		// 31:
+	(p16)	nop.f		0
+	(p48)	cmp.ltu		p49,p47=t[6],a2	}
+{ .mfb;	(p50)	cmp.leu		p49,p47=t[6],a2
+	(p16)	nop.f		0
+	br.ctop.sptk.many	.Louter_8_ctop	};;
+.Louter_8_cend:
+
+// move np[8] to GPR bank and subtract it from carrybit|tmp[8]
+// carrybit|tmp[8] layout upon exit from above loop is:
+//	t[1]|t[2]|t[3]|t[4]|t[5]|t[6]|t[7]|t[0]|t0 (least significant)
+{ .mmi;	getf.sig	n1=ni0
+	getf.sig	n2=ni1
+	add		r16=-7*16,prevsp}
+{ .mmi;	getf.sig	n3=ni2
+	getf.sig	n4=ni3
+	add		r17=-6*16,prevsp};;
+{ .mmi;	getf.sig	n5=ni4
+	getf.sig	n6=ni5
+	add		r18=-5*16,prevsp}
+{ .mmi;	getf.sig	n7=ni6
+	getf.sig	n8=ni7
+	sub		n1=t0,n1	};;
+{ .mmi;	cmp.gtu		p34,p32=n1,t0;;
+	.pred.rel	"mutex",p32,p34
+	(p32)sub	n2=t[0],n2
+	(p34)sub	n2=t[0],n2,1	};;
+{ .mii;	(p32)cmp.gtu	p35,p33=n2,t[0]
+	(p34)cmp.geu	p35,p33=n2,t[0];;
+	.pred.rel	"mutex",p33,p35
+	(p33)sub	n3=t[7],n3	}
+{ .mmi;	(p35)sub	n3=t[7],n3,1;;
+	(p33)cmp.gtu	p34,p32=n3,t[7]
+	(p35)cmp.geu	p34,p32=n3,t[7]	};;
+	.pred.rel	"mutex",p32,p34
+{ .mii;	(p32)sub	n4=t[6],n4
+	(p34)sub	n4=t[6],n4,1;;
+	(p32)cmp.gtu	p35,p33=n4,t[6]	}
+{ .mmi;	(p34)cmp.geu	p35,p33=n4,t[6];;
+	.pred.rel	"mutex",p33,p35
+	(p33)sub	n5=t[5],n5
+	(p35)sub	n5=t[5],n5,1	};;
+{ .mii;	(p33)cmp.gtu	p34,p32=n5,t[5]
+	(p35)cmp.geu	p34,p32=n5,t[5];;
+	.pred.rel	"mutex",p32,p34
+	(p32)sub	n6=t[4],n6	}
+{ .mmi;	(p34)sub	n6=t[4],n6,1;;
+	(p32)cmp.gtu	p35,p33=n6,t[4]
+	(p34)cmp.geu	p35,p33=n6,t[4]	};;
+	.pred.rel	"mutex",p33,p35
+{ .mii;	(p33)sub	n7=t[3],n7
+	(p35)sub	n7=t[3],n7,1;;
+	(p33)cmp.gtu	p34,p32=n7,t[3]	}
+{ .mmi;	(p35)cmp.geu	p34,p32=n7,t[3];;
+	.pred.rel	"mutex",p32,p34
+	(p32)sub	n8=t[2],n8
+	(p34)sub	n8=t[2],n8,1	};;
+{ .mii;	(p32)cmp.gtu	p35,p33=n8,t[2]
+	(p34)cmp.geu	p35,p33=n8,t[2];;
+	.pred.rel	"mutex",p33,p35
+	(p33)sub	a8=t[1],r0	}
+{ .mmi;	(p35)sub	a8=t[1],r0,1;;
+	(p33)cmp.gtu	p34,p32=a8,t[1]
+	(p35)cmp.geu	p34,p32=a8,t[1]	};;
+
+// save the result, either tmp[num] or tmp[num]-np[num]
+	.pred.rel	"mutex",p32,p34
+{ .mmi;	(p32)st8	[rptr]=n1,8
+	(p34)st8	[rptr]=t0,8
+	add		r19=-4*16,prevsp};;
+{ .mmb;	(p32)st8	[rptr]=n2,8
+	(p34)st8	[rptr]=t[0],8
+	(p5)br.cond.dpnt.few	.Ldone	};;
+{ .mmb;	(p32)st8	[rptr]=n3,8
+	(p34)st8	[rptr]=t[7],8
+	(p7)br.cond.dpnt.few	.Ldone	};;
+{ .mmb;	(p32)st8	[rptr]=n4,8
+	(p34)st8	[rptr]=t[6],8
+	(p9)br.cond.dpnt.few	.Ldone	};;
+{ .mmb;	(p32)st8	[rptr]=n5,8
+	(p34)st8	[rptr]=t[5],8
+	(p11)br.cond.dpnt.few	.Ldone	};;
+{ .mmb;	(p32)st8	[rptr]=n6,8
+	(p34)st8	[rptr]=t[4],8
+	(p13)br.cond.dpnt.few	.Ldone	};;
+{ .mmb;	(p32)st8	[rptr]=n7,8
+	(p34)st8	[rptr]=t[3],8
+	(p15)br.cond.dpnt.few	.Ldone	};;
+{ .mmb;	(p32)st8	[rptr]=n8,8
+	(p34)st8	[rptr]=t[2],8
+	nop.b		0		};;
+.Ldone:						// epilogue
+{ .mmi;	ldf.fill	f16=[r16],64
+	ldf.fill	f17=[r17],64
+	nop.i		0		}
+{ .mmi;	ldf.fill	f18=[r18],64
+	ldf.fill	f19=[r19],64
+	mov		pr=prevpr,-2	};;
+{ .mmi;	ldf.fill	f20=[r16]
+	ldf.fill	f21=[r17]
+	mov		ar.lc=prevlc	}
+{ .mmi;	ldf.fill	f22=[r18]
+	ldf.fill	f23=[r19]
+	mov		ret0=1		}	// signal "handled"
+{ .mib;	rum		1<<5
+	.restore	sp
+	mov		sp=prevsp
+	br.ret.sptk.many	b0	};;
+.endp	bn_mul_mont_8#
+
 .type	copyright#,\@object
 copyright:
 stringz	"Montgomery multiplication for IA-64, CRYPTOGAMS by <appro\@openssl.org>"
