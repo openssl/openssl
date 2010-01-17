@@ -34,16 +34,30 @@ $code=<<___;
 .align	4
 .OPENSSL_wipe_cpu:
 	xor	r0,r0,r0
+	fmr	f0,f31
+	fmr	f1,f31
+	fmr	f2,f31
 	mr	r3,r1
+	fmr	f3,f31
 	xor	r4,r4,r4
+	fmr	f4,f31
 	xor	r5,r5,r5
+	fmr	f5,f31
 	xor	r6,r6,r6
+	fmr	f6,f31
 	xor	r7,r7,r7
+	fmr	f7,f31
 	xor	r8,r8,r8
+	fmr	f8,f31
 	xor	r9,r9,r9
+	fmr	f9,f31
 	xor	r10,r10,r10
+	fmr	f10,f31
 	xor	r11,r11,r11
+	fmr	f11,f31
 	xor	r12,r12,r12
+	fmr	f12,f31
+	fmr	f13,f31
 	blr
 
 .globl	.OPENSSL_atomic_add

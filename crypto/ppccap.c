@@ -57,10 +57,12 @@ void OPENSSL_cpuid_setup(void)
 	char *e;
 
 	sigfillset(&all_masked);
-	sigdelset(&all_masked,SIGSEGV);
 	sigdelset(&all_masked,SIGILL);
-	sigdelset(&all_masked,SIGBUS);
+	sigdelset(&all_masked,SIGTRAP);
+	sigdelset(&all_masked,SIGEMT);
 	sigdelset(&all_masked,SIGFPE);
+	sigdelset(&all_masked,SIGBUS);
+	sigdelset(&all_masked,SIGSEGV);
 
 	if ((e=getenv("OPENSSL_ppccap")))
 		{
