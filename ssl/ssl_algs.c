@@ -76,6 +76,10 @@ int SSL_library_init(void)
 #endif  
 #ifndef OPENSSL_NO_RC2
 	EVP_add_cipher(EVP_rc2_cbc());
+	/* Not actually used for SSL/TLS but this makes PKCS#12 work
+	 * if an application only calls SSL_library_init().
+	 */
+	EVP_add_cipher(EVP_rc2_40_cbc());
 #endif
 #ifndef OPENSSL_NO_AES
 	EVP_add_cipher(EVP_aes_128_cbc());
