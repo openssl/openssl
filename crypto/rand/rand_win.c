@@ -536,7 +536,7 @@ int RAND_poll(void)
 							ex_cnt_limit--;
 						}
 					} while (heaplist_next(handle, &hlist) 
-						&& (GetTickCount()-starttime)<MAXDELAY
+						&& (!good || (GetTickCount()-starttime)<MAXDELAY)
 						&& ex_cnt_limit > 0);
 				}
 
@@ -559,7 +559,7 @@ int RAND_poll(void)
 							&& --entrycnt > 0);
 						}
 					} while (heaplist_next(handle, &hlist) 
-						&& (GetTickCount()-starttime)<MAXDELAY);
+						&& (!good || (GetTickCount()-starttime)<MAXDELAY));
 				}
 #endif
 
@@ -574,7 +574,7 @@ int RAND_poll(void)
 			if (process_first(handle, &p))
 				do
 					RAND_add(&p, p.dwSize, 9);
-				while (process_next(handle, &p) && (GetTickCount()-starttime)<MAXDELAY);
+				while (process_next(handle, &p) && (!good || (GetTickCount()-starttime)<MAXDELAY));
 
 			/* thread walking */
                         /* THREADENTRY32 contains 6 fields that will change
@@ -586,7 +586,7 @@ int RAND_poll(void)
 			if (thread_first(handle, &t))
 				do
 					RAND_add(&t, t.dwSize, 6);
-				while (thread_next(handle, &t) && (GetTickCount()-starttime)<MAXDELAY);
+				while (thread_next(handle, &t) && (!good || (GetTickCount()-starttime)<MAXDELAY));
 
 			/* module walking */
                         /* MODULEENTRY32 contains 9 fields that will change
@@ -599,7 +599,7 @@ int RAND_poll(void)
 				do
 					RAND_add(&m, m.dwSize, 9);
 				while (module_next(handle, &m)
-					       	&& (GetTickCount()-starttime)<MAXDELAY);
+					       	&& (!good || (GetTickCount()-starttime)<MAXDELAY));
 			if (close_snap)
 				close_snap(handle);
 			else
