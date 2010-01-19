@@ -765,6 +765,11 @@ $code.=<<___ if (!$softonly);
 	srl	%r5,6
 	ar	%r5,%r0
 
+	larl	%r1,OPENSSL_s390xcap_P
+	lg	%r0,0(%r1)
+	tmhl	%r0,0x4000	# check for message-security assist
+	jz	.Lekey_internal
+
 	lghi	%r0,0		# query capability vector
 	la	%r1,16($sp)
 	.long	0xb92f0042	# kmc %r4,%r2
@@ -1323,6 +1328,7 @@ $code.=<<___;
 4:	ex	$len,0($s1)
 	j	.Lcbc_dec_exit
 .size	AES_cbc_encrypt,.-AES_cbc_encrypt
+.comm  OPENSSL_s390xcap_P,8,8
 ___
 }
 $code.=<<___;
