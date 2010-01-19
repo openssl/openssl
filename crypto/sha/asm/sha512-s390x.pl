@@ -214,6 +214,10 @@ $code.=<<___;
 $Func:
 ___
 $code.=<<___ if ($kimdfunc);
+	larl	%r1,OPENSSL_s390xcap_P
+	lg	%r0,0(%r1)
+	tmhl	%r0,0x4000	# check for message-security assist
+	jz	.Lsoftware
 	lghi	%r0,0
 	la	%r1,16($sp)
 	.long	0xb93e0002	# kimd %r0,%r2
@@ -286,6 +290,7 @@ $code.=<<___;
 	br	%r14
 .size	$Func,.-$Func
 .string	"SHA${label} block transform for s390x, CRYPTOGAMS by <appro\@openssl.org>"
+.comm	OPENSSL_s390xcap_P,8,8
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

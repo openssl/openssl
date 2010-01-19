@@ -1,12 +1,5 @@
 .text
 
-.globl	OPENSSL_cpuid_setup
-.type	OPENSSL_cpuid_setup,@function
-.align	16
-OPENSSL_cpuid_setup:
-	br	%r14		# reserved for future
-.size	OPENSSL_cpuid_setup,.-OPENSSL_cpuid_setup
-
 .globl	OPENSSL_s390x_facilities
 .type	OPENSSL_s390x_facilities,@function
 .align	16
@@ -14,6 +7,8 @@ OPENSSL_s390x_facilities:
 	lghi	%r0,0
 	.long	0xb2b0f010	# stfle	16(%r15)
 	lg	%r2,16(%r15)
+	larl	%r1,OPENSSL_s390xcap_P
+	stg	%r2,0(%r1)
 	br	%r14
 .size	OPENSSL_s390x_facilities,.-OPENSSL_s390x_facilities
 
@@ -88,3 +83,8 @@ OPENSSL_cleanse:
 	jnz	.Little
 	br	%r14
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
+
+.section	.init
+	brasl	%r14,OPENSSL_cpuid_setup
+
+.comm	OPENSSL_s390xcap_P,8,8
