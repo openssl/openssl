@@ -266,7 +266,6 @@ int dtls1_accept(SSL *s)
 			ret=ssl3_get_client_hello(s);
 			if (ret <= 0) goto end;
 			dtls1_stop_timer(s);
-			s->new_session = 2;
 
 			if (ret == 1 && (SSL_get_options(s) & SSL_OP_COOKIE_EXCHANGE))
 				s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A;
@@ -292,7 +291,6 @@ int dtls1_accept(SSL *s)
 			ret = dtls1_send_hello_verify_request(s);
 			if ( ret <= 0) goto end;
 			s->state=SSL3_ST_SW_FLUSH;
-			s->new_session = 0;
 			s->s3->tmp.next_state=SSL3_ST_SR_CLNT_HELLO_A;
 
 			/* HelloVerifyRequest resets Finished MAC */
@@ -302,6 +300,7 @@ int dtls1_accept(SSL *s)
 			
 		case SSL3_ST_SW_SRVR_HELLO_A:
 		case SSL3_ST_SW_SRVR_HELLO_B:
+			s->new_session = 2;
 			dtls1_start_timer(s);
 			ret=dtls1_send_server_hello(s);
 			if (ret <= 0) goto end;
