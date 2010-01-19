@@ -34,7 +34,7 @@ EVP_CIPHER cipher_gost =
 	NID_id_Gost28147_89,
 	1,/*block_size*/
 	32,/*key_size*/
-	8,/*iv_len - синхропосылка*/
+	8,/*iv_len */
 	EVP_CIPH_CFB_MODE| EVP_CIPH_NO_PADDING |
 	EVP_CIPH_CUSTOM_IV| EVP_CIPH_RAND_KEY | EVP_CIPH_ALWAYS_CALL_INIT,
 	gost_cipher_init,
@@ -52,7 +52,7 @@ EVP_CIPHER cipher_gost_cpacnt =
 	NID_gost89_cnt,
 	1,/*block_size*/
 	32,/*key_size*/
-	8,/*iv_len - синхропосылка*/
+	8,/*iv_len */
 	EVP_CIPH_OFB_MODE| EVP_CIPH_NO_PADDING |
 	EVP_CIPH_CUSTOM_IV| EVP_CIPH_RAND_KEY | EVP_CIPH_ALWAYS_CALL_INIT,
 	gost_cipher_init_cpa,
