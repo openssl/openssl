@@ -1137,7 +1137,6 @@ int set_cert_ex(unsigned long *flags, const char *arg)
 		{ "no_subject", X509_FLAG_NO_SUBJECT, 0},
 		{ "no_issuer", X509_FLAG_NO_ISSUER, 0},
 		{ "no_pubkey", X509_FLAG_NO_PUBKEY, 0},
-		{ "extensions", ~X509_FLAG_NO_EXTENSIONS, 0xffffffffl},
 		{ "no_extensions", X509_FLAG_NO_EXTENSIONS, 0},
 		{ "no_sigdump", X509_FLAG_NO_SIGDUMP, 0},
 		{ "no_aux", X509_FLAG_NO_AUX, 0},
