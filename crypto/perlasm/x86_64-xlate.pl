@@ -190,8 +190,9 @@ my $current_function;
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{label}
 	    use integer;
-	    $self->{label} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)<<32>>32/egi;
+	    $self->{label} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/egi;
 	    $self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
+	    $self->{label} =~ s/([0-9]+)/$1<<32>>32/eg;
 
 	    if (defined($self->{index})) {
 		sprintf "%s(%%%s,%%%s,%d)",
