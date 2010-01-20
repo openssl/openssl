@@ -128,21 +128,8 @@
 extern "C" {
 #endif
 
-<<<<<<< ssl3.h
-/* Magic Cipher Suite Value. NB: bogus value used for testing */
-<<<<<<< ssl3.h
-#ifndef SSL3_CK_MCSV
-#define SSL3_CK_MCSV				0x03000FEC
-#endif
-=======
-#ifndef SSL3_CK_SCSV
-#define SSL3_CK_SCSV				0x03000FEC
-#endif
->>>>>>> 1.50
-=======
 /* Signalling cipher suite value: from draft-ietf-tls-renegotiation-03.txt */
 #define SSL3_CK_SCSV				0x030000FF
->>>>>>> 1.51
 
 #define SSL3_CK_RSA_NULL_MD5			0x03000001
 #define SSL3_CK_RSA_NULL_SHA			0x03000002
