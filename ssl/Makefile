@@ -994,6 +994,27 @@ t1_meth.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 t1_meth.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 t1_meth.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ssl_locl.h
 t1_meth.o: t1_meth.c
+t1_reneg.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+t1_reneg.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+t1_reneg.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+t1_reneg.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+t1_reneg.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+t1_reneg.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+t1_reneg.o: ../include/openssl/err.h ../include/openssl/evp.h
+t1_reneg.o: ../include/openssl/fips.h ../include/openssl/hmac.h
+t1_reneg.o: ../include/openssl/kssl.h ../include/openssl/lhash.h
+t1_reneg.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+t1_reneg.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+t1_reneg.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
+t1_reneg.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
+t1_reneg.o: ../include/openssl/pq_compat.h ../include/openssl/pqueue.h
+t1_reneg.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+t1_reneg.o: ../include/openssl/sha.h ../include/openssl/ssl.h
+t1_reneg.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
+t1_reneg.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+t1_reneg.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+t1_reneg.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ssl_locl.h
+t1_reneg.o: t1_reneg.c
 t1_srvr.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 t1_srvr.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 t1_srvr.o: ../include/openssl/comp.h ../include/openssl/crypto.h
