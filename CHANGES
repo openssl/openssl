@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
+ Changes between 0.9.8l and 0.9.8m [xx XXX xxxx]
 
   *) Handle TLS versions 2.0 and later properly and correctly use the
      highest version of TLS/SSL supported. Although TLS >= 2.0 is some way

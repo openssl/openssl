@@ -5,6 +5,20 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8l and OpenSSL 0.9.8m-beta1:
+
+      o Remove MD2 from algorithm tables.
+      o SPKAC handling fixes.
+      o Implement draft-ietf-tls-renegotiation-03.
+      o Compression memory leak fixed.
+      o Compression session resumption fixed.
+      o Ticket and SNI coexistence fixes.
+      o Many fixes to DTLS handling. 
+
+  Major changes between OpenSSL 0.9.8k and OpenSSL 0.9.8l:
+
+      o Temporary work around for CVE-2009-3555: disable renegotiation.
+
   Major changes between OpenSSL 0.9.8j and OpenSSL 0.9.8k:
 
       o Fix various build issues.
