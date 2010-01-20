@@ -13,6 +13,10 @@ $rm='del /Q';
 
 $zlib_lib="zlib1.lib";
 
+# Santize -L options for ms link
+$l_flags =~ s/-L("\[^"]+")/\/libpath:$1/g;
+$l_flags =~ s/-L(\S+)/\/libpath:$1/g;
+
 # C compiler stuff
 $cc='cl';
 if ($FLAVOR =~ /WIN64/)
