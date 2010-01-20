@@ -461,6 +461,18 @@ dummytest$(EXE_EXT): dummytest.o $(DLIBCRYPTO)
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+asn1test.o: ../include/openssl/asn1.h ../include/openssl/asn1_mac.h
+asn1test.o: ../include/openssl/bio.h ../include/openssl/buffer.h
+asn1test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+asn1test.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+asn1test.o: ../include/openssl/ecdsa.h ../include/openssl/evp.h
+asn1test.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+asn1test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+asn1test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+asn1test.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
+asn1test.o: ../include/openssl/sha.h ../include/openssl/stack.h
+asn1test.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
+asn1test.o: ../include/openssl/x509_vfy.h asn1test.c
 bftest.o: ../e_os.h ../include/openssl/blowfish.h ../include/openssl/e_os2.h
 bftest.o: ../include/openssl/opensslconf.h bftest.c
 bntest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
