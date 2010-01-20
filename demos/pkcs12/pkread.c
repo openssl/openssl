@@ -20,8 +20,7 @@ int main(int argc, char **argv)
 		fprintf(stderr, "Usage: pkread p12file password opfile\n");
 		exit (1);
 	}
-	/*SSLeay_add_all_algorithms();*/
-	SSL_library_init();
+	OpenSSL_add_all_algorithms();
 	ERR_load_crypto_strings();
 	if (!(fp = fopen(argv[1], "rb"))) {
 		fprintf(stderr, "Error opening file %s\n", argv[1]);
