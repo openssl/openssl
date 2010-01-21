@@ -155,7 +155,7 @@ Generation of Private Key or Parameters.
 
 Generation of RSA Private Key. Superceded by L<B<genpkey>|genpkey(1)>.
 
-=item L<B<nseq>|nseq(1)
+=item L<B<nseq>|nseq(1)>
 
 Create or examine a netscape certificate sequence
 
