@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 
 	st = X509_STORE_new();
 
-	/* Read in signer certificate and private key */
+	/* Read in CA certificate */
 	tbio = BIO_new_file("cacert.pem", "r");
 
 	if (!tbio)
@@ -33,14 +33,14 @@ int main(int argc, char **argv)
 	if (!X509_STORE_add_cert(st, cacert))
 		goto err;
 
-	/* Open content being signed */
+	/* Open message being verified */
 
 	in = BIO_new_file("smout.txt", "r");
 
 	if (!in)
 		goto err;
 
-	/* Sign content */
+	/* parse message */
 	cms = SMIME_read_CMS(in, &cont);
 
 	if (!cms)
