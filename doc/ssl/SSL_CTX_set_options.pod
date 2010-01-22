@@ -247,7 +247,9 @@ If an unpatched client attempts to connect to a patched OpenSSL server then
 the attempt will succeed but renegotiation is not permitted. As required
 by the standard a B<no_renegotiation> alert is sent back to the client if
 the TLS v1.0 protocol is used. If SSLv3.0 is used then renegotiation results
-in a fatal B<handshake_failed> alert.
+in a fatal B<handshake_failed> alert. If the patched server attempts to
+renegotiate (existing applications which renegotiate may well do this) then
+a fatal B<handshake_failed> alert is sent.
 
 If a patched OpenSSL client attempts to connect to an unpatched server
 then the connection will fail because it is not possible to determine

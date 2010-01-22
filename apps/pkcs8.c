@@ -403,6 +403,10 @@ int MAIN(int argc, char **argv)
 			BIO_printf(bio_err, "DSA public key include in PrivateKey\n");
 			break;
 
+			case PKCS8_NEG_PRIVKEY:
+			BIO_printf(bio_err, "DSA private key value is negative\n");
+			break;
+
 			default:
 			BIO_printf(bio_err, "Unknown broken type\n");
 			break;

@@ -4,6 +4,9 @@
 
  Changes between 0.9.8m (?) and 1.0.0  [xx XXX xxxx]
 
+  *) Tolerate yet another broken PKCS#8 key format: private key value negative.
+     [Steve Henson]
+
   *) Add new -subject_hash_old and -issuer_hash_old options to x509 utility to
      output hashes compatible with older versions of OpenSSL.
      [Willy Weisz <weisz@vcpc.univie.ac.at>]
