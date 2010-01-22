@@ -585,6 +585,7 @@ struct pkcs8_priv_key_info_st
 #define PKCS8_NO_OCTET		1
 #define PKCS8_EMBEDDED_PARAM	2
 #define PKCS8_NS_DB		3
+#define PKCS8_NEG_PRIVKEY	4
         ASN1_INTEGER *version;
         X509_ALGOR *pkeyalg;
         ASN1_TYPE *pkey; /* Should be OCTET STRING but some are broken */
