@@ -145,12 +145,14 @@ OPENSSL_cleanse:
 	xor	%rax,%rax
 	cmp	\$15,$arg2
 	jae	.Lot
+	cmp	\$0,$arg2
+	je	.Lret
 .Little:
 	mov	%al,($arg1)
 	sub	\$1,$arg2
 	lea	1($arg1),$arg1
 	jnz	.Little
-	ret
+.Lret:	ret
 .align	16
 .Lot:
 	test	\$7,$arg1

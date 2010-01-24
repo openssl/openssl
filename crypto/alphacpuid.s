@@ -90,6 +90,7 @@ OPENSSL_rdtsc:
 OPENSSL_cleanse:
 	.frame	$30,0,$26
 	.prologue 0
+	beq	$17,.Ldone
 	and	$16,7,$0
 	bic	$17,7,$at
 	beq	$at,.Little

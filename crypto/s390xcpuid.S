@@ -62,6 +62,8 @@ OPENSSL_cleanse:
 	lghi	%r0,0
 	clgr	%r3,%r4
 	jh	.Lot
+	clgr	%r3,%r0
+	bcr	8,%r14
 .Little:
 	stc	%r0,0(%r2)
 	la	%r2,1(%r2)

@@ -242,6 +242,10 @@ OPENSSL_cleanse:
 #else
 	bgu	.Lot
 #endif
+	cmp	%o1,0
+	bne	.Little
+	nop
+	retl
 	nop
 
 .Little:
