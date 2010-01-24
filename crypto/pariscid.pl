@@ -97,7 +97,9 @@ OPENSSL_cleanse
 	.PROC
 	.CALLINFO	NO_CALLS
 	.ENTRY
-	cmpib,*>>	15,$len,Little
+	cmpib,*=	0,$len,Ldone
+	nop
+	cmpib,*>>=	15,$len,Little
 	ldi		$SIZE_T-1,%r1
 
 Lalign
@@ -112,14 +114,14 @@ Laligned
 	andcm		$len,%r1,%r28
 Loop
 	$ST		%r0,0($inp)
-	addib,*vnz	-$SIZE_T,%r28,Loop
+	addib,*<>	-$SIZE_T,%r28,Loop
 	ldo		$SIZE_T($inp),$inp
 
 	and,*<>		$len,%r1,$len
 	b,n		Ldone
 Little
 	stb		%r0,0($inp)
-	addib,*vnz	-1,$len,Little
+	addib,*<>	-1,$len,Little
 	ldo		1($inp),$inp
 Ldone
 	bv		($rp)
