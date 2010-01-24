@@ -484,7 +484,21 @@ int ssl3_accept(SSL *s)
 		
 		case SSL3_ST_SW_FLUSH:
 			/* number of bytes to be flushed */
-			num1=BIO_ctrl(s->wbio,BIO_CTRL_WPENDING,0,NULL);
+			/* This originally and incorrectly called BIO_CTRL_INFO
+			 * The reason why this is wrong is mentioned in PR#1949.
+			 * Unfortunately, as suggested in that bug some
+			 * versions of Apache unconditionally return 0
+			 * for BIO_CTRL_WPENDING meaning we don't correctly
+			 * flush data and some operations, like renegotiation,
+			 * don't work. Other software may also be affected so
+			 * call BIO_CTRL_INFO to retain compatibility with
+			 * previous behaviour and BIO_CTRL_WPENDING if we
+			 * get zero to address the PR#1949 case.
+			 */
+
+			num1=BIO_ctrl(s->wbio,BIO_CTRL_INFO,0,NULL);
+			if (num1 == 0)
+				num1=BIO_ctrl(s->wbio,BIO_CTRL_WPENDING,0,NULL);
 			if (num1 > 0)
 				{
 				s->rwstate=SSL_WRITING;
