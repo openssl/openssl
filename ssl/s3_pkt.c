@@ -979,7 +979,6 @@ start:
 		(s->session != NULL) && (s->session->cipher != NULL))
 		{
 		s->s3->handshake_fragment_len = 0;
-
 		if ((s->s3->handshake_fragment[1] != 0) ||
 			(s->s3->handshake_fragment[2] != 0) ||
 			(s->s3->handshake_fragment[3] != 0))

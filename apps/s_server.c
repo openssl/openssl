@@ -1836,6 +1836,20 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					continue;
 					/* strcpy(buf,"server side RE-NEGOTIATE\n"); */
 					}
+				if ((buf[0] == 'X') &&
+					((buf[1] == '\n') || (buf[1] == '\r')))
+					{
+					SSL_renegotiate(con);
+					i=SSL_do_handshake(con);
+					printf("SSL_do_handshake1 -> %d\n",i);
+					if (SSL_get_state(con) != SSL_ST_OK)
+						printf("Bad State\n");
+					con->state = SSL_ST_ACCEPT;
+					i=SSL_do_handshake(con);
+					printf("SSL_do_handshake2 -> %d\n",i);
+					i=0; /*13; */
+					continue;
+					}
 				if ((buf[0] == 'R') &&
 					((buf[1] == '\n') || (buf[1] == '\r')))
 					{
