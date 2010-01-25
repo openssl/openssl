@@ -177,6 +177,15 @@
 #undef SSL_COMP_get_compression_methods
 #define SSL_COMP_get_compression_methods	SSL_COMP_get_compress_methods
 
+#undef ssl_add_clienthello_renegotiate_ext
+#define ssl_add_clienthello_renegotiate_ext	ssl_add_clienthello_reneg_ext
+#undef ssl_add_serverhello_renegotiate_ext
+#define ssl_add_serverhello_renegotiate_ext	ssl_add_serverhello_reneg_ext
+#undef ssl_parse_clienthello_renegotiate_ext
+#define ssl_parse_clienthello_renegotiate_ext	ssl_parse_clienthello_reneg_ext
+#undef ssl_parse_serverhello_renegotiate_ext
+#define ssl_parse_serverhello_renegotiate_ext	ssl_parse_serverhello_reneg_ext
+
 /* Hack some long ENGINE names */
 #undef ENGINE_get_default_BN_mod_exp_crt
 #define ENGINE_get_default_BN_mod_exp_crt	ENGINE_get_def_BN_mod_exp_crt
