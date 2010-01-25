@@ -20,7 +20,7 @@ identified-organization 132	: certicom-arc
 joint-iso-itu-t 23	: international-organizations	: International Organizations
 
 international-organizations 43	: wap
-wap 13			: wap-wsg
+wap 1			: wap-wsg
 
 joint-iso-itu-t 5 1 5	: selected-attribute-types	: Selected Attribute Types
 
