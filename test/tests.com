@@ -12,6 +12,9 @@ $	if __arch .eqs. "" then __arch := UNK
 $	texe_dir := sys$disk:[-.'__arch'.exe.test]
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
+$	sslroot = f$parse("sys$disk:[-.apps];",,,,"syntax_only") - "].;"+ ".]"
+$	define /translation_attributes = concealed sslroot 'sslroot'
+$
 $	set default '__here'
 $	on control_y then goto exit
 $	on error then goto exit
@@ -287,4 +290,5 @@ $
 $
 $ exit:
 $	set default '__save_default'
+$	deassign sslroot
 $	exit
