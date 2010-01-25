@@ -122,7 +122,7 @@
 
 #define SN_wap_wsg		"wap-wsg"
 #define NID_wap_wsg		679
-#define OBJ_wap_wsg		OBJ_wap,13L
+#define OBJ_wap_wsg		OBJ_wap,1L
 
 #define SN_selected_attribute_types		"selected-attribute-types"
 #define LN_selected_attribute_types		"Selected Attribute Types"

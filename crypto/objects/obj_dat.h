@@ -707,7 +707,7 @@ static const unsigned char lvalues[5824]={
 0x2B,                                        /* [4582] OBJ_identified_organization */
 0x2B,0x81,0x04,                              /* [4583] OBJ_certicom_arc */
 0x67,0x2B,                                   /* [4586] OBJ_wap */
-0x67,0x2B,0x0D,                              /* [4588] OBJ_wap_wsg */
+0x67,0x2B,0x01,                              /* [4588] OBJ_wap_wsg */
 0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,     /* [4591] OBJ_X9_62_id_characteristic_two_basis */
 0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x01,/* [4599] OBJ_X9_62_onBasis */
 0x2A,0x86,0x48,0xCE,0x3D,0x01,0x02,0x03,0x02,/* [4608] OBJ_X9_62_tpBasis */
@@ -763,17 +763,17 @@ static const unsigned char lvalues[5824]={
 0x2B,0x81,0x04,0x00,0x25,                    /* [4926] OBJ_sect409r1 */
 0x2B,0x81,0x04,0x00,0x26,                    /* [4931] OBJ_sect571k1 */
 0x2B,0x81,0x04,0x00,0x27,                    /* [4936] OBJ_sect571r1 */
-0x67,0x2B,0x0D,0x04,0x01,                    /* [4941] OBJ_wap_wsg_idm_ecid_wtls1 */
-0x67,0x2B,0x0D,0x04,0x03,                    /* [4946] OBJ_wap_wsg_idm_ecid_wtls3 */
-0x67,0x2B,0x0D,0x04,0x04,                    /* [4951] OBJ_wap_wsg_idm_ecid_wtls4 */
-0x67,0x2B,0x0D,0x04,0x05,                    /* [4956] OBJ_wap_wsg_idm_ecid_wtls5 */
-0x67,0x2B,0x0D,0x04,0x06,                    /* [4961] OBJ_wap_wsg_idm_ecid_wtls6 */
-0x67,0x2B,0x0D,0x04,0x07,                    /* [4966] OBJ_wap_wsg_idm_ecid_wtls7 */
-0x67,0x2B,0x0D,0x04,0x08,                    /* [4971] OBJ_wap_wsg_idm_ecid_wtls8 */
-0x67,0x2B,0x0D,0x04,0x09,                    /* [4976] OBJ_wap_wsg_idm_ecid_wtls9 */
-0x67,0x2B,0x0D,0x04,0x0A,                    /* [4981] OBJ_wap_wsg_idm_ecid_wtls10 */
-0x67,0x2B,0x0D,0x04,0x0B,                    /* [4986] OBJ_wap_wsg_idm_ecid_wtls11 */
-0x67,0x2B,0x0D,0x04,0x0C,                    /* [4991] OBJ_wap_wsg_idm_ecid_wtls12 */
+0x67,0x2B,0x01,0x04,0x01,                    /* [4941] OBJ_wap_wsg_idm_ecid_wtls1 */
+0x67,0x2B,0x01,0x04,0x03,                    /* [4946] OBJ_wap_wsg_idm_ecid_wtls3 */
+0x67,0x2B,0x01,0x04,0x04,                    /* [4951] OBJ_wap_wsg_idm_ecid_wtls4 */
+0x67,0x2B,0x01,0x04,0x05,                    /* [4956] OBJ_wap_wsg_idm_ecid_wtls5 */
+0x67,0x2B,0x01,0x04,0x06,                    /* [4961] OBJ_wap_wsg_idm_ecid_wtls6 */
+0x67,0x2B,0x01,0x04,0x07,                    /* [4966] OBJ_wap_wsg_idm_ecid_wtls7 */
+0x67,0x2B,0x01,0x04,0x08,                    /* [4971] OBJ_wap_wsg_idm_ecid_wtls8 */
+0x67,0x2B,0x01,0x04,0x09,                    /* [4976] OBJ_wap_wsg_idm_ecid_wtls9 */
+0x67,0x2B,0x01,0x04,0x0A,                    /* [4981] OBJ_wap_wsg_idm_ecid_wtls10 */
+0x67,0x2B,0x01,0x04,0x0B,                    /* [4986] OBJ_wap_wsg_idm_ecid_wtls11 */
+0x67,0x2B,0x01,0x04,0x0C,                    /* [4991] OBJ_wap_wsg_idm_ecid_wtls12 */
 0x55,0x1D,0x20,0x00,                         /* [4996] OBJ_any_policy */
 0x55,0x1D,0x21,                              /* [5000] OBJ_policy_mappings */
 0x55,0x1D,0x36,                              /* [5003] OBJ_inhibit_any_policy */
@@ -4240,7 +4240,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 516,	/* OBJ_set_policy                   2 23 42 5 */
 517,	/* OBJ_set_certExt                  2 23 42 7 */
 518,	/* OBJ_set_brand                    2 23 42 8 */
-679,	/* OBJ_wap_wsg                      2 23 43 13 */
+679,	/* OBJ_wap_wsg                      2 23 43 1 */
 382,	/* OBJ_Directory                    1 3 6 1 1 */
 383,	/* OBJ_Management                   1 3 6 1 2 */
 384,	/* OBJ_Experimental                 1 3 6 1 3 */
@@ -4426,17 +4426,17 @@ static const unsigned int obj_objs[NUM_OBJ]={
 629,	/* OBJ_setAttr_IssCap_T2            2 23 42 3 3 4 */
 630,	/* OBJ_setAttr_IssCap_Sig           2 23 42 3 3 5 */
 642,	/* OBJ_set_brand_Novus              2 23 42 8 6011 */
-735,	/* OBJ_wap_wsg_idm_ecid_wtls1       2 23 43 13 4 1 */
-736,	/* OBJ_wap_wsg_idm_ecid_wtls3       2 23 43 13 4 3 */
-737,	/* OBJ_wap_wsg_idm_ecid_wtls4       2 23 43 13 4 4 */
-738,	/* OBJ_wap_wsg_idm_ecid_wtls5       2 23 43 13 4 5 */
-739,	/* OBJ_wap_wsg_idm_ecid_wtls6       2 23 43 13 4 6 */
-740,	/* OBJ_wap_wsg_idm_ecid_wtls7       2 23 43 13 4 7 */
-741,	/* OBJ_wap_wsg_idm_ecid_wtls8       2 23 43 13 4 8 */
-742,	/* OBJ_wap_wsg_idm_ecid_wtls9       2 23 43 13 4 9 */
-743,	/* OBJ_wap_wsg_idm_ecid_wtls10      2 23 43 13 4 10 */
-744,	/* OBJ_wap_wsg_idm_ecid_wtls11      2 23 43 13 4 11 */
-745,	/* OBJ_wap_wsg_idm_ecid_wtls12      2 23 43 13 4 12 */
+735,	/* OBJ_wap_wsg_idm_ecid_wtls1       2 23 43 1 4 1 */
+736,	/* OBJ_wap_wsg_idm_ecid_wtls3       2 23 43 1 4 3 */
+737,	/* OBJ_wap_wsg_idm_ecid_wtls4       2 23 43 1 4 4 */
+738,	/* OBJ_wap_wsg_idm_ecid_wtls5       2 23 43 1 4 5 */
+739,	/* OBJ_wap_wsg_idm_ecid_wtls6       2 23 43 1 4 6 */
+740,	/* OBJ_wap_wsg_idm_ecid_wtls7       2 23 43 1 4 7 */
+741,	/* OBJ_wap_wsg_idm_ecid_wtls8       2 23 43 1 4 8 */
+742,	/* OBJ_wap_wsg_idm_ecid_wtls9       2 23 43 1 4 9 */
+743,	/* OBJ_wap_wsg_idm_ecid_wtls10      2 23 43 1 4 10 */
+744,	/* OBJ_wap_wsg_idm_ecid_wtls11      2 23 43 1 4 11 */
+745,	/* OBJ_wap_wsg_idm_ecid_wtls12      2 23 43 1 4 12 */
 804,	/* OBJ_whirlpool                    1 0 10118 3 0 55 */
 124,	/* OBJ_rle_compression              1 1 1 1 666 1 */
 773,	/* OBJ_kisa                         1 2 410 200004 */
