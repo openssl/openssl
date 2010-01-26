@@ -117,6 +117,15 @@ int RAND_load_file(const char *file, long bytes)
 
 	if (file == NULL) return(0);
 
+#ifdef PURIFY
+	/* struct stat can have padding and unused fields that may not be
+	 * initialized in the call to stat(). We need to clear the entire
+	 * structure before calling RAND_add() to avoid complaints from
+	 * applications such as Valgrind.
+	 */
+	memset(&sb, 0, sizeof(sb));
+#endif
+
 	if (stat(file,&sb) < 0) return(0);
 	RAND_add(&sb,sizeof(sb),0.0);
 	if (bytes == 0) return(ret);
