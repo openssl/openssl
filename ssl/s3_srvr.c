@@ -189,7 +189,6 @@ int ssl3_accept(SSL *s)
 	BUF_MEM *buf;
 	unsigned long alg_k,Time=(unsigned long)time(NULL);
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
-	long num1;
 	int ret= -1;
 	int new_state,state,skip=0;
 
@@ -483,29 +482,24 @@ int ssl3_accept(SSL *s)
 			break;
 		
 		case SSL3_ST_SW_FLUSH:
-			/* number of bytes to be flushed */
-			/* This originally and incorrectly called BIO_CTRL_INFO
-			 * The reason why this is wrong is mentioned in PR#1949.
-			 * Unfortunately, as suggested in that bug some
-			 * versions of Apache unconditionally return 0
-			 * for BIO_CTRL_WPENDING meaning we don't correctly
-			 * flush data and some operations, like renegotiation,
-			 * don't work. Other software may also be affected so
-			 * call BIO_CTRL_INFO to retain compatibility with
-			 * previous behaviour and BIO_CTRL_WPENDING if we
-			 * get zero to address the PR#1949 case.
+
+			/* This code originally checked to see if
+			 * any data was pending using BIO_CTRL_INFO
+			 * and then flushed. This caused problems
+			 * as documented in PR#1939. The proposed
+			 * fix doesn't completely resolve this issue
+			 * as buggy implementations of BIO_CTRL_PENDING
+			 * still exist. So instead we just flush
+			 * unconditionally.
 			 */
 
-			num1=BIO_ctrl(s->wbio,BIO_CTRL_INFO,0,NULL);
-			if (num1 == 0)
-				num1=BIO_ctrl(s->wbio,BIO_CTRL_WPENDING,0,NULL);
-			if (num1 > 0)
+			s->rwstate=SSL_WRITING;
+			if (BIO_flush(s->wbio) <= 0)
 				{
-				s->rwstate=SSL_WRITING;
-				num1=BIO_flush(s->wbio);
-				if (num1 <= 0) { ret= -1; goto end; }
-				s->rwstate=SSL_NOTHING;
+				ret= -1;
+				goto end;
 				}
+			s->rwstate=SSL_NOTHING;
 
 			s->state=s->s3->tmp.next_state;
 			break;
