@@ -2843,7 +2843,7 @@ FIPS_selftest_failed                    3284	NOEXIST::FUNCTION:
 sk_is_sorted                            3285	EXIST::FUNCTION:
 X509_check_ca                           3286	EXIST::FUNCTION:
 private_idea_set_encrypt_key            3287	NOEXIST::FUNCTION:
-HMAC_CTX_set_flags                      3288	NOEXIST::FUNCTION:
+HMAC_CTX_set_flags                      3288	EXIST::FUNCTION:HMAC
 private_SHA_Init                        3289	NOEXIST::FUNCTION:
 private_CAST_set_key                    3290	NOEXIST::FUNCTION:
 private_RIPEMD160_Init                  3291	NOEXIST::FUNCTION:
@@ -3660,7 +3660,7 @@ ENGINE_load_ssl_client_cert             4046	EXIST::FUNCTION:ENGINE
 ENGINE_load_capi                        4047	EXIST::FUNCTION:ENGINE,STATIC_ENGINE
 OPENSSL_isservice                       4048	EXIST::FUNCTION:
 FIPS_dsa_sig_decode                     4049	NOEXIST::FUNCTION:
-EVP_CIPHER_CTX_clear_flags              4050	NOEXIST::FUNCTION:
+EVP_CIPHER_CTX_clear_flags              4050	EXIST::FUNCTION:
 FIPS_rand_status                        4051	NOEXIST::FUNCTION:
 FIPS_rand_set_key                       4052	NOEXIST::FUNCTION:
 CRYPTO_set_mem_info_functions           4053	NOEXIST::FUNCTION:
@@ -3669,7 +3669,7 @@ int_ERR_set_state_func                  4055	NOEXIST::FUNCTION:
 int_EVP_MD_set_engine_callbacks         4056	NOEXIST::FUNCTION:
 int_CRYPTO_set_do_dynlock_callback      4057	NOEXIST::FUNCTION:
 FIPS_rng_stick                          4058	NOEXIST::FUNCTION:
-EVP_CIPHER_CTX_set_flags                4059	NOEXIST::FUNCTION:
+EVP_CIPHER_CTX_set_flags                4059	EXIST::FUNCTION:
 BN_X931_generate_prime_ex               4060	NOEXIST::FUNCTION:
 FIPS_selftest_check                     4061	NOEXIST::FUNCTION:
 FIPS_rand_set_dt                        4062	NOEXIST::FUNCTION:
@@ -3679,7 +3679,7 @@ RSA_X931_derive_ex                      4065	NOEXIST::FUNCTION:
 FIPS_rsa_new                            4066	NOEXIST::FUNCTION:
 FIPS_rand_bytes                         4067	NOEXIST::FUNCTION:
 fips_cipher_test                        4068	NOEXIST::FUNCTION:
-EVP_CIPHER_CTX_test_flags               4069	NOEXIST::FUNCTION:
+EVP_CIPHER_CTX_test_flags               4069	EXIST::FUNCTION:
 CRYPTO_malloc_debug_init                4070	NOEXIST::FUNCTION:
 CRYPTO_dbg_push_info                    4071	NOEXIST::FUNCTION:
 FIPS_corrupt_rsa_keygen                 4072	NOEXIST::FUNCTION:

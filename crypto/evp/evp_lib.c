@@ -295,3 +295,18 @@ int EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx, int flags)
 	{
 	return (ctx->flags & flags);
 	}
+
+void EVP_CIPHER_CTX_set_flags(EVP_CIPHER_CTX *ctx, int flags)
+	{
+	ctx->flags |= flags;
+	}
+
+void EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags)
+	{
+	ctx->flags &= ~flags;
+	}
+
+int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags)
+	{
+	return (ctx->flags & flags);
+	}
