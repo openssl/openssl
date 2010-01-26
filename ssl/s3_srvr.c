@@ -499,6 +499,8 @@ int ssl3_accept(SSL *s)
 			num1=BIO_ctrl(s->wbio,BIO_CTRL_INFO,0,NULL);
 			if (num1 == 0)
 				num1=BIO_ctrl(s->wbio,BIO_CTRL_WPENDING,0,NULL);
+			if (num1 == 0)
+				num1=BIO_ctrl(s->wbio,BIO_CTRL_PENDING,0,NULL);
 			if (num1 > 0)
 				{
 				s->rwstate=SSL_WRITING;

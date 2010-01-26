@@ -103,7 +103,6 @@ extern unsigned long OPENSSL_ia32cap_P;
 void OPENSSL_showfatal(const char *,...);
 void *OPENSSL_stderr(void);
 extern int OPENSSL_NONPIC_relocated;
-int OPENSSL_isservice(void);
 
 #ifdef  __cplusplus
 }
