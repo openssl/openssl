@@ -330,7 +330,7 @@ again:
 #if 0
 fprintf(stderr, "Record type=%d, Length=%d\n", rr->type, rr->length);
 #endif
-
+fprintf(stderr, "RX version %x, Expecting %x\n", version, s->version);
 		/* Lets check version */
 		if (!s->first_packet)
 			{
@@ -736,7 +736,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 
 	*(p++)=(s->version>>8);
 	*(p++)=s->version&0xff;
-
+fprintf(stderr, "Wrote version %x\n", s->version);
 	/* field where we are to write out packet length */
 	plen=p; 
 	p+=2;
