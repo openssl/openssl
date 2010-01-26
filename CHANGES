@@ -4,6 +4,14 @@
 
  Changes between 0.9.8l and 0.9.8m [xx XXX xxxx]
 
+  *) The code that handled flusing of data in SSL/TLS originally used the
+     BIO_CTRL_INFO ctrl to see if any data was pending first. This caused
+     the problem outlined in PR#1949. The fix suggested there however can
+     trigger problems with buggy BIO_CTRL_WPENDING (e.g. some versions
+     of Apache). So instead simplify the code to flush unconditionally.
+     This should be fine since flushing with no data to flush is a no op.
+     [Steve Henson]
+
   *) Handle TLS versions 2.0 and later properly and correctly use the
      highest version of TLS/SSL supported. Although TLS >= 2.0 is some way
      off ancient servers have a habit of sticking around for a while...
