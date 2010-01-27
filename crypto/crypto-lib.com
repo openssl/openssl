@@ -6,6 +6,7 @@ $!               A-Com Computing, Inc.
 $!               byer@mail.all-net.net
 $!
 $!  Changes by Richard Levitte <richard@levitte.org>
+$!             Zoltan Arpadffy <arpadffy@polarhome.com>
 $!
 $!  This command files compiles and creates the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" 
 $!  library for OpenSSL.  The "xxx" denotes the machine architecture, ALPHA,
@@ -192,7 +193,8 @@ $ LIB_CAMELLIA = "camellia,cmll_misc,cmll_ecb,cmll_cbc,cmll_ofb,"+ -
 $ LIB_SEED = "seed,seed_ecb,seed_cbc,seed_cfb,seed_ofb"
 $ LIB_MODES = "cbc128,ctr128,cfb128,ofb128"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
-$ IF F$TRNLNM("OPENSSL_NO_ASM").OR.ARCH.NES."VAX" THEN LIB_BN_ASM = "bn_asm"
+$ IF F$TRNLNM("OPENSSL_NO_ASM") .OR. ARCH .NES. "VAX" THEN -
+     LIB_BN_ASM = "bn_asm"
 $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_kron,bn_sqrt,bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+","+ -
@@ -217,7 +219,7 @@ $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
 	"tb_rsa,tb_dsa,tb_ecdsa,tb_dh,tb_ecdh,tb_rand,tb_store,"+ -
 	"tb_cipher,tb_digest,tb_pkmeth,tb_asnmth,"+ -
-	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev,"+ -
+	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev"+ -
 	"eng_aesni"
 $ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,aes_ctr,"+ -
 	"aes_ige,aes_wrap"

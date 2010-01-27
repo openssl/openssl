@@ -3,6 +3,8 @@ $!
 $! Author: Richard Levitte <richard@levitte.org>
 $! Time of creation: 22-MAY-1998 10:13
 $!
+$! Changes by Zoltan Arpadffy <zoli@polarhome.com>
+$!
 $! P1	root of the directory tree
 $!
 $	IF P1 .EQS. ""
@@ -47,8 +49,8 @@ $	SDIRS := ,-
 		 EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,-
 		 UI,KRB5,-
 		 STORE,CMS,PQUEUE,TS,JPAKE
-$	EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,opensslconf.h,ebcdic.h,-
-		symhacks.h,ossl_typ.h
+$	EXHEADER_ := crypto.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,-
+		ossl_typ.h
 $	EXHEADER_OBJECTS := objects.h,obj_mac.h
 $	EXHEADER_MD2 := md2.h
 $	EXHEADER_MD4 := md4.h
@@ -105,8 +107,7 @@ $	EXHEADER_TS := ts.h
 $	EXHEADER_JPAKE := jpake.h
 $	LIBS := LIBCRYPTO
 $
-$	VEXE_DIR := [-.VAX.EXE.CRYPTO]
-$	AEXE_DIR := [-.AXP.EXE.CRYPTO]
+$	EXE_DIR := [-.'ARCH'.EXE.CRYPTO]
 $
 $	I = 0
 $ LOOP_SDIRS: 
@@ -130,15 +131,15 @@ $	E = F$EDIT(F$ELEMENT(I, ",", LIBS),"TRIM")
 $	I = I + 1
 $	IF E .EQS. "," THEN GOTO LOOP_LIB_END
 $	SET NOON
-$	IF F$SEARCH(VEXE_DIR+E+".OLB") .NES. ""
+$	IF F$SEARCH(EXE_DIR+E+".OLB") .NES. ""
 $	THEN
-$	  COPY 'VEXE_DIR''E'.OLB WRK_SSLLIB:'E'.OLB/log
+$	  COPY 'EXE_DIR''E'.OLB WRK_SSLLIB:'E'.OLB/log
 $	  SET FILE/PROT=W:RE WRK_SSLLIB:'E'.OLB
 $	ENDIF
 $	! Preparing for the time when we have shareable images
-$	IF F$SEARCH(VEXE_DIR+E+".EXE") .NES. ""
+$	IF F$SEARCH(EXE_DIR+E+".EXE") .NES. ""
 $	THEN
-$	  COPY 'VEXE_DIR''E'.EXE WRK_SSLLIB:'E'.EXE/log
+$	  COPY 'EXE_DIR''E'.EXE WRK_SSLLIB:'E'.EXE/log
 $	  SET FILE/PROT=W:RE WRK_SSLLIB:'E'.EXE
 $	ENDIF
 $	SET ON

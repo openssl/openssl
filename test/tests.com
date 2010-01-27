@@ -7,7 +7,7 @@ $	__here = f$parse(f$parse("A.;",__proc) - "A.;","[]A.;") - "A.;"
 $	__save_default = f$environment("default")
 $	__arch := VAX
 $	if f$getsyi("cpu") .ge. 128 then -
-	   __arch := f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
+	   __arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
 $	if __arch .eqs. "" then __arch := UNK
 $	texe_dir := sys$disk:[-.'__arch'.exe.test]
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
@@ -16,6 +16,7 @@ $	sslroot = f$parse("sys$disk:[-.apps];",,,,"syntax_only") - "].;"+ ".]"
 $	define /translation_attributes = concealed sslroot 'sslroot'
 $
 $	set default '__here'
+$
 $	on control_y then goto exit
 $	on error then goto exit
 $
@@ -34,7 +35,7 @@ $	    tests := -
 	test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
 	test_ss,test_ca,test_engine,test_evp,test_ssl,test_tsa,test_ige,-
-	test_jpake
+	test_jpake,test_cms
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
@@ -285,6 +286,10 @@ $	return
 $ test_jpake: 
 $	write sys$output "Test JPAKE"
 $	mcr 'texe_dir''jpaketest'
+$	return
+$ test_cms:
+$	write sys$output "CMS consistency test"
+$	perl CMS-TEST.PL
 $	return
 $
 $
