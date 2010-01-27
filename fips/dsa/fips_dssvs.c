@@ -40,7 +40,7 @@ static void pbn(const char *name, BIGNUM *bn)
 	return;
 	}
 
-void primes()
+static void primes()
     {
     char buf[10240];
     char lbuf[10240];
@@ -63,7 +63,7 @@ void primes()
 	}
     }
 
-void pqg()
+static void pqg()
     {
     char buf[1024];
     char lbuf[1024];
@@ -112,7 +112,7 @@ void pqg()
 	}
     }
 
-void pqgver()
+static void pqgver()
     {
     char buf[1024];
     char lbuf[1024];
@@ -212,7 +212,7 @@ static int dss_paramcheck(int nmod, BIGNUM *p, BIGNUM *q, BIGNUM *g,
     return 1;
     }
 
-void keyver()
+static void keyver()
     {
     char buf[1024];
     char lbuf[1024];
@@ -299,7 +299,7 @@ void keyver()
 	    BN_free(Y2);
     }
 
-void keypair()
+static void keypair()
     {
     char buf[1024];
     char lbuf[1024];
@@ -348,7 +348,7 @@ void keypair()
 	}
     }
 
-void siggen()
+static void siggen()
     {
     char buf[1024];
     char lbuf[1024];
@@ -421,7 +421,7 @@ void siggen()
 		FIPS_dsa_free(dsa);
     }
 
-void sigver()
+static void sigver()
     {
     DSA *dsa=NULL;
     char buf[1024];

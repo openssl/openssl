@@ -31,7 +31,7 @@ int main(int argc, char **argv)
 
 #include "fips_utl.h"
 
-void vst()
+static void vst()
     {
     unsigned char *key = NULL;
     unsigned char *v = NULL;
@@ -108,7 +108,7 @@ void vst()
 	}
     }
 
-void mct()
+static void mct()
     {
     unsigned char *key = NULL;
     unsigned char *v = NULL;

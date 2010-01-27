@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
 
 /*-----------------------------------------------*/
 
-int AESTest(EVP_CIPHER_CTX *ctx,
+static int AESTest(EVP_CIPHER_CTX *ctx,
 	    char *amode, int akeysz, unsigned char *aKey, 
 	    unsigned char *iVec, 
 	    int dir,  /* 0 = decrypt, 1 = encrypt */
@@ -238,7 +238,7 @@ enum XCrypt {XDECRYPT, XENCRYPT};
 #define gb(a,b) (((a)[(b)/8] >> (7-(b)%8))&1)
 #define sb(a,b,v) ((a)[(b)/8]=((a)[(b)/8]&~(1 << (7-(b)%8)))|(!!(v) << (7-(b)%8)))
 
-int do_mct(char *amode, 
+static int do_mct(char *amode, 
 	   int akeysz, unsigned char *aKey,unsigned char *iVec,
 	   int dir, unsigned char *text, int len,
 	   FILE *rfp)
@@ -546,7 +546,7 @@ int do_mct(char *amode,
   # Fri Aug 30 04:07:22 PM
   ----------------------------*/
 
-int proc_file(char *rqfile, char *rspfile)
+static int proc_file(char *rqfile, char *rspfile)
     {
     char afn[256], rfn[256];
     FILE *afp = NULL, *rfp = NULL;

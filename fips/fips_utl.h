@@ -47,6 +47,22 @@
  *
  */
 
+void do_print_errors(void);
+int hex2bin(const char *in, unsigned char *out);
+unsigned char *hex2bin_m(const char *in, long *plen);
+int do_hex2bn(BIGNUM **pr, const char *in);
+int do_bn_print(FILE *out, BIGNUM *bn);
+int do_bn_print_name(FILE *out, const char *name, BIGNUM *bn);
+int parse_line(char **pkw, char **pval, char *linebuf, char *olinebuf);
+BIGNUM *hex2bn(const char *in);
+int bin2hex(const unsigned char *in,int len,char *out);
+void pv(const char *tag,const unsigned char *val,int len);
+int tidy_line(char *linebuf, char *olinebuf);
+int bint2bin(const char *in, int len, unsigned char *out);
+int bin2bint(const unsigned char *in,int len,char *out);
+void PrintValue(char *tag, unsigned char *val, int len);
+void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode);
+
 void do_print_errors(void)
 	{
 	const char *file, *data;

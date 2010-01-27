@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 
 #define VERBOSE 0
 
-int DESTest(EVP_CIPHER_CTX *ctx,
+static int DESTest(EVP_CIPHER_CTX *ctx,
 	    char *amode, int akeysz, unsigned char *aKey, 
 	    unsigned char *iVec, 
 	    int dir,  /* 0 = decrypt, 1 = encrypt */
@@ -128,16 +128,16 @@ int DESTest(EVP_CIPHER_CTX *ctx,
 
     return 1;
     }
-
-void DebugValue(char *tag, unsigned char *val, int len)
+#if 0
+static void DebugValue(char *tag, unsigned char *val, int len)
     {
     char obuf[2048];
     int olen;
     olen = bin2hex(val, len, obuf);
     printf("%s = %.*s\n", tag, olen, obuf);
     }
-
-void shiftin(unsigned char *dst,unsigned char *src,int nbits)
+#endif
+static void shiftin(unsigned char *dst,unsigned char *src,int nbits)
     {
     int n;
 
@@ -157,7 +157,7 @@ char *t_mode[6] = {"CBC","ECB","OFB","CFB1","CFB8","CFB64"};
 enum Mode {CBC, ECB, OFB, CFB1, CFB8, CFB64};
 int Sizes[6]={64,64,64,1,8,64};
 
-void do_mct(char *amode, 
+static void do_mct(char *amode, 
 	    int akeysz, int numkeys, unsigned char *akey,unsigned char *ivec,
 	    int dir, unsigned char *text, int len,
 	    FILE *rfp)
@@ -264,7 +264,7 @@ void do_mct(char *amode,
 	}
     }
     
-int proc_file(char *rqfile, char *rspfile)
+static int proc_file(char *rqfile, char *rspfile)
     {
     char afn[256], rfn[256];
     FILE *afp = NULL, *rfp = NULL;
