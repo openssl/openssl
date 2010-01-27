@@ -177,7 +177,7 @@ int pkey_GOST94cp_encrypt(EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
 	ASN1_OBJECT_free(gkt->key_agreement_info->cipher);
 	gkt->key_agreement_info->cipher = OBJ_nid2obj(param->nid);
 	*outlen = i2d_GOST_KEY_TRANSPORT(gkt,out?&out:NULL);
-	if (*outlen <= 0)
+	if (*outlen == 0)
 		{
 		GOSTerr(GOST_F_PKEY_GOST94CP_ENCRYPT,GOST_R_ERROR_PACKING_KEY_TRANSPORT_INFO);
 		goto err;
