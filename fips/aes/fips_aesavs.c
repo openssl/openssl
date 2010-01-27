@@ -767,7 +767,7 @@ int proc_file(char *rqfile, char *rspfile)
 		    err =1;
 		    break;
 		    }
-		if (len >= sizeof(plaintext))
+		if (len >= (int)sizeof(plaintext))
 		    {
 		    printf("Buffer overflow\n");
 		    }
