@@ -38,7 +38,7 @@ $!
 $! Speficy DEBUG or NODEBUG as P3 to compile with or without debugging
 $! information.
 $!
-$! Specify which compiler at P4 to try to compile under.
+$! Specify which compiler as P4 to try to compile under.
 $!
 $!	  VAXC	 For VAX C.
 $!	  DECC	 For DEC C.
@@ -268,7 +268,7 @@ $ ENDIF
 $ IF ARCH .NES. "VAX"
 $ THEN
 $!
-$!  Write the Alpha specific data
+$!  Write the non-VAX specific data
 $!
 $   WRITE H_FILE "#if defined(HEADER_RC4_H)"
 $   WRITE H_FILE "#undef RC4_INT"
@@ -346,10 +346,6 @@ $!
 $!  End
 $!
 $ ENDIF
-$!
-$! There are many places where this is needed.
-$!
-$!!! WRITE H_FILE "#define _XOPEN_SOURCE_EXTENDED"
 $!
 $! Close the [.CRYPTO.<ARCH>]OPENSSLCONF.H file
 $!
@@ -757,7 +753,7 @@ $!
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "USAGE:   @MAKEVMS.COM [Target] [not-used option] [Debug option] <Compiler>"
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "Example: @MAKEVMS.COM ALL NORSAREF NODEBUG "
+$     WRITE SYS$OUTPUT "Example: @MAKEVMS.COM ALL """" NODEBUG "
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "The Target ",P1," Is Invalid.  The Valid Target Options Are:"
 $     WRITE SYS$OUTPUT ""
