@@ -238,24 +238,30 @@ OpenSSL 0.9.8m and later always attempts to use secure renegotiation as
 described in draft-ietf-tls-renegotiation (FIXME: replace by RFC). This
 counters the prefix attack described in CVE-2009-3555 and elsewhere.
 
+The deprecated and highly broken SSLv2 protocol does not support secure
+renegotiation at all: its use is B<strongly> discouraged.
+
 This attack has far reaching consequences which application writers should be
 aware of. In the description below an implementation supporting secure
 renegotiation is referred to as I<patched>. A server not supporting secure
 renegotiation is referred to as I<unpatched>.
 
+The following sections describe the operations permitted by OpenSSL's secure
+renegotiation implementation.
+
 =head2 Patched client and server
 
-Connections and renegotiation will always succeed.
+Connections and renegotiation are always permitted by OpenSSL implementations.
 
-=head2 Unpatched client and patched server
+=head2 Unpatched client and patched OpenSSL server
 
-The initial connection suceeds but client renegotiation is denied with a
-B<no_renegotiation> warning alert if TLS v1.0 is used or a fatal
+The initial connection suceeds but client renegotiation is denied by the
+server with a B<no_renegotiation> warning alert if TLS v1.0 is used or a fatal
 B<handshake_failure> alert in SSL v3.0.
 
-If the patched server attempts to renegotiate a fatal B<handshake_failure>
-alert is sent. This is because the server code may be unaware of the
-unpatched nature of the client.
+If the patched OpenSSL server attempts to renegotiate a fatal
+B<handshake_failure> alert is sent. This is because the server code may be
+unaware of the unpatched nature of the client.
 
 If the option B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then
 renegotiation B<always> succeeds.
@@ -264,32 +270,33 @@ B<NB:> a bug in OpenSSL clients earlier than 0.9.8m (all of which are
 unpatched) will result in the connection hanging if it receives a
 B<no_renegotiation> alert. OpenSSL versions 0.9.8m and later will regard
 a B<no_renegotiation> alert as fatal and respond with a fatal
-B<handshake_failure> alert.
+B<handshake_failure> alert. This is because the OpenSSL API currently has
+no provision to indicate to an application that a renegotiation attempt
+was refused.
 
-=head2 Patched client and unpatched server.
+=head2 Patched OpenSSL client and unpatched server.
 
 If the option B<SSL_OP_LEGACY_SERVER_CONNECT> is set then initial connections
-to unpatched servers succeed. This option is currently set by default even
-though it has security implications: otherwise it would be impossible to
-connect to unpatched servers i.e. all of them initially and this is clearly not
-acceptable.
+between patched OpenSSL clients and unpatched servers succeed. This option
+is currently set by default even though it has security implications: otherwise
+it would be impossible to connect to unpatched servers (i.e. all of them
+initially) and this is clearly not acceptable.
 
 As more servers become patched the option B<SSL_OP_LEGACY_SERVER_CONNECT> will
 B<not> be set by default in a future version of OpenSSL.
 
-Applications that want to ensure they can connect to unpatched servers should
-always B<set> B<SSL_OP_LEGACY_SERVER_CONNECT>
+OpenSSL client applications wishing to ensure they can connect to unpatched
+servers should always B<set> B<SSL_OP_LEGACY_SERVER_CONNECT>
 
-Applications that want to ensure they can B<not> connect to unpatched servers
-(and thus avoid any security issues) should always B<clear>
+OpenSSL client applications that want to ensure they can B<not> connect to
+unpatched servers (and thus avoid any security issues) should always B<clear>
 B<SSL_OP_LEGACY_SERVER_CONNECT> using SSL_CTX_clear_options() or
 SSL_clear_options().
 
-The function SSL_get_secure_renegotiation_support() indicates whether the peer
-supports secure renegotiation. 
-
-The deprecated and highly broken SSLv2 protocol does not support secure
-renegotiation at all: its use is B<strongly> discouraged.
+Renegotiation between a patched OpenSSL client and unpatched server follows
+the same scheme as between an unpatched client and a patched OpenSSL server:
+i.e. it is not permitted unless the option
+B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set.
 
 =head1 RETURN VALUES
 
