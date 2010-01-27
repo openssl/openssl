@@ -2397,7 +2397,6 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			goto end;
 			}
 
-		/* else we have data */
 		if (	((www == 1) && (strncmp("GET ",buf,4) == 0)) ||
 			((www == 2) && (strncmp("GET /stats ",buf,10) == 0)))
 			{
@@ -2405,6 +2404,25 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			X509 *peer;
 			STACK_OF(SSL_CIPHER) *sk;
 			static const char *space="                          ";
+
+			if(strncmp("GET /reneg ",buf,10) == 0)
+				{
+				for (;;)
+					{
+fprintf(stderr, "Line: %s\n", buf);
+					i=BIO_gets(io,buf,bufsize-1);
+					if (i <= 0)
+						goto end;
+					if (buf[0] == '\r' || buf[0] == '\n')
+						break;
+					}
+  sleep(1); 
+				SSL_renegotiate(con);
+				i=SSL_do_handshake(con);
+				SSL_renegotiate(con);
+				i=SSL_do_handshake(con);
+				printf("SSL_do_handshake -> %d\n",i);
+				}
 
 			BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
 			BIO_puts(io,"<HTML><BODY BGCOLOR=\"#ffffff\">\n");
@@ -2417,6 +2435,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				BIO_write(io," ",1);
 				}
 			BIO_puts(io,"\n");
+			BIO_printf(io, "Secure Renegotiation IS%s supported\n", SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
 
 			/* The following is evil and should not really
 			 * be done */
@@ -2640,7 +2659,7 @@ end:
 #endif
 
 err:
-
+ERR_print_errors(bio_err);
 	if (ret >= 0)
 		BIO_printf(bio_s_out,"ACCEPT\n");
 
