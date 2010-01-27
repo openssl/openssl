@@ -379,7 +379,8 @@ static int Zeroize()
     BIGNUM *bn;
     unsigned char userkey[16] = 
 	{ 0x48, 0x50, 0xf0, 0xa3, 0x3a, 0xed, 0xd3, 0xaf, 0x6e, 0x47, 0x7f, 0x83, 0x02, 0xb1, 0x09, 0x68 };
-    int i, n;
+    size_t i;
+    int n;
 
     key = FIPS_rsa_new();
     bn = BN_new();
@@ -410,12 +411,17 @@ static int Zeroize()
     }
 
 static int Error;
-const char * Fail(const char *msg)
+static const char * Fail(const char *msg)
     {
     do_print_errors();
     Error++;
     return msg; 
     }
+
+static void test_msg(const char *msg, int result)
+	{
+	printf("%s...%s\n", msg, result ? "successful" : Fail("Failed!"));
+	}
 
 int main(int argc,char **argv)
     {
@@ -487,20 +493,14 @@ int main(int argc,char **argv)
     /* Non-Approved cryptographic operation
     */
     printf("1. Non-Approved cryptographic operation test...\n");
-    printf("\ta. Included algorithm (D-H)...");
-    printf( dh_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("\ta. Included algorithm (D-H)...", dh_test());
 
     /* Power-up self test
     */
     ERR_clear_error();
-    printf("2. Automatic power-up self test...");
-    if (!FIPS_mode_set(1))
-	{
-	do_print_errors();
-        printf(Fail("FAILED!\n"));
+    test_msg("2. Automatic power-up self test", FIPS_mode_set(1));
+    if (!FIPS_mode())
 	exit(1);
-	}
-    printf("successful\n");
     if (do_corrupt_dsa_keygen)
             FIPS_corrupt_dsa_keygen();
     if (do_corrupt_rsa_keygen)
@@ -510,76 +510,66 @@ int main(int argc,char **argv)
 
     /* AES encryption/decryption
     */
-    printf("3. AES encryption/decryption...");
-    printf( FIPS_aes_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("3. AES encryption/decryption", FIPS_aes_test());
 
     /* RSA key generation and encryption/decryption
     */
-    printf("4. RSA key generation and encryption/decryption...");
-    printf( FIPS_rsa_test(bad_rsa) ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("4. RSA key generation and encryption/decryption",
+						FIPS_rsa_test(bad_rsa));
 
     /* DES-CBC encryption/decryption
     */
-    printf("5. DES-ECB encryption/decryption...");
-    printf( FIPS_des3_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("5. DES-ECB encryption/decryption", FIPS_des3_test());
 
     /* DSA key generation and signature validation
     */
-    printf("6. DSA key generation and signature validation...");
-    printf( FIPS_dsa_test(bad_dsa) ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("6. DSA key generation and signature validation",
+    						FIPS_dsa_test(bad_dsa));
 
     /* SHA-1 hash
     */
-    printf("7a. SHA-1 hash...");
-    printf( FIPS_sha1_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("7a. SHA-1 hash", FIPS_sha1_test());
 
     /* SHA-256 hash
     */
-    printf("7b. SHA-256 hash...");
-    printf( FIPS_sha256_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("7b. SHA-256 hash", FIPS_sha256_test());
 
     /* SHA-512 hash
     */
-    printf("7c. SHA-512 hash...");
-    printf( FIPS_sha512_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("7c. SHA-512 hash", FIPS_sha512_test());
 
     /* HMAC-SHA-1 hash
     */
-    printf("7d. HMAC-SHA-1 hash...");
-    printf( FIPS_hmac_sha1_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("7d. HMAC-SHA-1 hash", FIPS_hmac_sha1_test());
 
     /* HMAC-SHA-224 hash
     */
-    printf("7e. HMAC-SHA-224 hash...");
-    printf( FIPS_hmac_sha224_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("7e. HMAC-SHA-224 hash", FIPS_hmac_sha224_test());
 
     /* HMAC-SHA-256 hash
     */
-    printf("7f. HMAC-SHA-256 hash...");
-    printf( FIPS_hmac_sha256_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("7f. HMAC-SHA-256 hash", FIPS_hmac_sha256_test());
 
     /* HMAC-SHA-384 hash
     */
-    printf("7g. HMAC-SHA-384 hash...");
-    printf( FIPS_hmac_sha384_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("7g. HMAC-SHA-384 hash", FIPS_hmac_sha384_test());
 
     /* HMAC-SHA-512 hash
     */
-    printf("7h. HMAC-SHA-512 hash...");
-    printf( FIPS_hmac_sha512_test() ? "successful\n" :  Fail("FAILED!\n") );
+    test_msg("7h. HMAC-SHA-512 hash", FIPS_hmac_sha512_test());
 
     /* Non-Approved cryptographic operation
     */
     printf("8. Non-Approved cryptographic operation test...\n");
-    printf("\ta. Included algorithm (D-H)...");
-    printf( dh_test() ? "successful as expected\n"
-	    : Fail("failed INCORRECTLY!\n") );
+    printf("\ta. Included algorithm (D-H)...%s\n",
+    		dh_test() ? "successful as expected"
+	    					: Fail("failed INCORRECTLY!") );
 
     /* Zeroization
     */
-    printf("9. Zero-ization...\n");
-    printf( Zeroize() ? "\tsuccessful as expected\n"
-	    : Fail("\tfailed INCORRECTLY!\n") );
+    printf("9. Zero-ization...\n\t%s\n",
+    		Zeroize() ? "successful as expected"
+					: Fail("failed INCORRECTLY!") );
 
     printf("\nAll tests completed with %d errors\n", Error);
     return Error ? 1 : 0;
