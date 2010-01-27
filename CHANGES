@@ -840,7 +840,7 @@
 
  Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
-  *) The code that handled flusing of data in SSL/TLS originally used the
+  *) The code that handled flushing of data in SSL/TLS originally used the
      BIO_CTRL_INFO ctrl to see if any data was pending first. This caused
      the problem outlined in PR#1949. The fix suggested there however can
      trigger problems with buggy BIO_CTRL_WPENDING (e.g. some versions
