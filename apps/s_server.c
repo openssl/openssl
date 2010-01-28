@@ -2324,7 +2324,6 @@ static int www_body(char *hostname, int s, unsigned char *context)
 		}
 	SSL_set_bio(con,sbio,sbio);
 	SSL_set_accept_state(con);
-
 	/* SSL_set_fd(con,s); */
 	BIO_set_ssl(ssl_bio,con,BIO_CLOSE);
 	BIO_push(io,ssl_bio);
@@ -2406,6 +2405,32 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			STACK_OF(SSL_CIPHER) *sk;
 			static const char *space="                          ";
 
+		if (www == 1 && strncmp("GET /reneg", buf, 10) == 0)
+			{
+			if (strncmp("GET /renegcert", buf, 14) == 0)
+				SSL_set_verify(con,
+				SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,NULL);
+			i=SSL_renegotiate(con);
+			BIO_printf(bio_s_out, "SSL_renegotiate -> %d\n",i);
+			i=SSL_do_handshake(con);
+			if (i <= 0)
+				{
+				BIO_printf(bio_s_out, "SSL_do_handshake() Retval %d\n", SSL_get_error(con, i));
+				ERR_print_errors(bio_err);
+				goto err;
+				}
+			/* EVIL HACK! */
+			con->state = SSL_ST_ACCEPT;
+			i=SSL_do_handshake(con);
+			BIO_printf(bio_s_out, "SSL_do_handshake -> %d\n",i);
+			if (i <= 0)
+				{
+				BIO_printf(bio_s_out, "SSL_do_handshake() Retval %d\n", SSL_get_error(con, i));
+				ERR_print_errors(bio_err);
+				goto err;
+				}
+			}
+
 			BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
 			BIO_puts(io,"<HTML><BODY BGCOLOR=\"#ffffff\">\n");
 			BIO_puts(io,"<pre>\n");
@@ -2417,6 +2442,11 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				BIO_write(io," ",1);
 				}
 			BIO_puts(io,"\n");
+
+			BIO_printf(io,
+				"Secure Renegotiation IS%s supported\n",
+		      		SSL_get_secure_renegotiation_support(con) ?
+							"" : " NOT");
 
 			/* The following is evil and should not really
 			 * be done */

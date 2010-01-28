@@ -4,6 +4,11 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Experiemental regnegotiation in s_server -www mode. If the client 
+     browsers /reneg connection is renegotiated. If /renegcert it is
+     renegotiated requestion a certificate.
+     [Steve Henson]
+
   *) Add an "external" session cache for debugging purposes to s_server. This
      should help trace issues which normally are only apparent in deployed
      multi-process servers.
