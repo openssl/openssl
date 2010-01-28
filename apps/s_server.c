@@ -2391,6 +2391,17 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			STACK_OF(SSL_CIPHER) *sk;
 			static const char *space="                          ";
 
+		if (www == 1 && strncmp("GET /reneg", buf, 10) == 0)
+			{
+			if (strncmp("GET /renegcert", buf, 14) == 0)
+				SSL_set_verify(con,
+				SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE,NULL);
+			SSL_renegotiate(con);
+			i=SSL_do_handshake(con);
+			BIO_puts(bio_s_out, "RENEGOTIATING\n");
+			BIO_printf(bio_s_out, "SSL_do_handshake -> %d\n",i);
+			}
+
 			BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/html\r\n\r\n");
 			BIO_puts(io,"<HTML><BODY BGCOLOR=\"#ffffff\">\n");
 			BIO_puts(io,"<pre>\n");
