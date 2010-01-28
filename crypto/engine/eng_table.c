@@ -237,6 +237,7 @@ ENGINE *engine_table_select_tmp(ENGINE_TABLE **table, int nid, const char *f, in
 #endif
 		return NULL;
 		}
+	ERR_set_mark();
 	CRYPTO_w_lock(CRYPTO_LOCK_ENGINE);
 	/* Check again inside the lock otherwise we could race against cleanup
 	 * operations. But don't worry about a fprintf(stderr). */
@@ -310,6 +311,6 @@ end:
 	CRYPTO_w_unlock(CRYPTO_LOCK_ENGINE);
 	/* Whatever happened, any failed init()s are not failures in this
 	 * context, so clear our error state. */
-	ERR_clear_error();
+	ERR_pop_to_mark();
 	return ret;
 	}
