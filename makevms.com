@@ -18,8 +18,8 @@ $!
 $! Specify one of the following build options for P1.
 $!
 $!      ALL       Just build "everything".
-$!      CONFIG    Just build the "[.CRYPTO.<ARCH>]OPENSSLCONF.H" file.
-$!      BUILDINF  Just build the "[.CRYPTO.<ARCH>]BUILDINF.H" file.
+$!      CONFIG    Just build the "[.xxx.CRYPTO]OPENSSLCONF.H" file.
+$!      BUILDINF  Just build the "[.xxx.CRYPTO]BUILDINF.H" file.
 $!      SOFTLINKS Just fix the Unix soft links.
 $!      BUILDALL  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done.
 $!      CRYPTO    Just build the "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" library.
@@ -163,32 +163,32 @@ $! Time To EXIT.
 $!
 $ GOTO TIDY
 $!
-$! Rebuild The "[.CRYPTO.''ARCH']OPENSSLCONF.H" file.
+$! Rebuild The [.xxx.CRYPTO]OPENSSLCONF.H" file.
 $!
 $ CONFIG:
 $!
-$! Tell The User We Are Creating The [.CRYPTO.<ARCH>]OPENSSLCONF.H File.
+$! Tell The User We Are Creating The [.xxx.CRYPTO]OPENSSLCONF.H File.
 $!
-$ WRITE SYS$OUTPUT "Creating [.CRYPTO.''ARCH']OPENSSLCONF.H Include File."
+$ WRITE SYS$OUTPUT "Creating [.''ARCH'.CRYPTO]OPENSSLCONF.H Include File."
 $!
 $! First, make sure the directory exists.
 $!
-$ IF F$PARSE("SYS$DISK:[.CRYPTO.''ARCH']") .EQS. "" THEN -
-     CREATE/DIRECTORY SYS$DISK:[.CRYPTO.'ARCH']
+$ IF F$PARSE("SYS$DISK:[.''ARCH'.CRYPTO]") .EQS. "" THEN -
+     CREATE/DIRECTORY SYS$DISK:[.'ARCH'.CRYPTO]
 $!
-$! Create The [.CRYPTO.<ARCH>]OPENSSLCONF.H File.
+$! Create The [.xxx.CRYPTO]OPENSSLCONF.H File.
 $! Make sure it has the right format.
 $!
-$ OSCH_NAME = "SYS$DISK:[.CRYPTO.''ARCH']OPENSSLCONF.H"
+$ OSCH_NAME = "SYS$DISK:[.''ARCH'.CRYPTO]OPENSSLCONF.H"
 $ CREATE /FDL=SYS$INPUT: 'OSCH_NAME'
 RECORD
         FORMAT stream_lf
 $ OPEN /APPEND H_FILE 'OSCH_NAME'
 $!
-$! Write The [.CRYPTO.<ARCH>]OPENSSLCONF.H File.
+$! Write The [.xxx.CRYPTO]OPENSSLCONF.H File.
 $!
 $ WRITE H_FILE "/* This file was automatically built using makevms.com */"
-$ WRITE H_FILE "/* and [.CRYPTO.''ARCH']OPENSSLCONF.H_IN */"
+$ WRITE H_FILE "/* and [.''ARCH'.CRYPTO]OPENSSLCONF.H_IN */"
 $!
 $! Write a few macros that indicate how this system was built.
 $!
@@ -347,29 +347,29 @@ $!  End
 $!
 $ ENDIF
 $!
-$! Close the [.CRYPTO.<ARCH>]OPENSSLCONF.H file
+$! Close the [.xxx.CRYPTO]OPENSSLCONF.H file
 $!
 $ CLOSE H_FILE
 $!
-$! Purge The [.CRYPTO.<ARCH>]OPENSSLCONF.H file
+$! Purge The [.xxx.CRYPTO]OPENSSLCONF.H file
 $!
-$ PURGE SYS$DISK:[.CRYPTO.'ARCH']OPENSSLCONF.H
+$ PURGE SYS$DISK:[.'ARCH'.CRYPTO]OPENSSLCONF.H
 $!
 $! That's All, Time To RETURN.
 $!
 $ RETURN
 $!
-$! Rebuild The "[.CRYPTO.<ARCH>]BUILDINF.H" file.
+$! Rebuild The "[.xxx.CRYPTO]BUILDINF.H" file.
 $!
 $ BUILDINF:
 $!
-$! Tell The User We Are Creating The [.CRYPTO.<ARCH>]BUILDINF.H File.
+$! Tell The User We Are Creating The [.xxx.CRYPTO]BUILDINF.H File.
 $!
-$ WRITE SYS$OUTPUT "Creating [.CRYPTO.''ARCH']BUILDINF.H Include File."
+$ WRITE SYS$OUTPUT "Creating [.''ARCH'.CRYPTO]BUILDINF.H Include File."
 $!
-$! Create The [.CRYPTO.<ARCH>]BUILDINF.H File.
+$! Create The [.xxx.CRYPTO]BUILDINF.H File.
 $!
-$ BIH_NAME = "SYS$DISK:[.CRYPTO.''ARCH']BUILDINF.H"
+$ BIH_NAME = "SYS$DISK:[.''ARCH'.CRYPTO]BUILDINF.H"
 $ CREATE /FDL=SYS$INPUT: 'BIH_NAME'
 RECORD
         FORMAT stream_lf
@@ -380,19 +380,19 @@ $! Get The Current Date & Time.
 $!
 $ TIME = F$TIME()
 $!
-$! Write The [.CRYPTO.<ARCH>]BUILDINF.H File.
+$! Write The [.xxx.CRYPTO]BUILDINF.H File.
 $!
 $ WRITE H_FILE "#define CFLAGS """" /* Not filled in for now */"
 $ WRITE H_FILE "#define PLATFORM ""VMS ''ARCH' ''VMS_VER'"""
 $ WRITE H_FILE "#define DATE ""''TIME'"" "
 $!
-$! Close The [.CRYPTO.<ARCH>]BUILDINF.H File.
+$! Close The [.xxx.CRYPTO]BUILDINF.H File.
 $!
 $ CLOSE H_FILE
 $!
-$! Purge The [.CRYPTO.<ARCH>]BUILDINF.H File.
+$! Purge The [.xxx.CRYPTO]BUILDINF.H File.
 $!
-$ PURGE SYS$DISK:[.CRYPTO.'ARCH']BUILDINF.H
+$ PURGE SYS$DISK:[.'ARCH'.CRYPTO]BUILDINF.H
 $!
 $! That's All, Time To RETURN.
 $!
@@ -465,8 +465,7 @@ $ SDIRS := ,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,-
    EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,-
    STORE,CMS,PQUEUE,TS,JPAKE
-$ EXHEADER_ := crypto.h,opensslv.h,ebcdic.h,symhacks.h,ossl_typ.h
-$ EXHEADER_'ARCH' := opensslconf.h
+$ EXHEADER_ := crypto.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,ossl_typ.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
 $ EXHEADER_MD2 := md2.h
 $ EXHEADER_MD4 := md4.h
@@ -530,7 +529,15 @@ $ IF D .EQS. "," THEN GOTO LOOP_SDIRS_END
 $ tmp = EXHEADER_'D'
 $ IF D .EQS. ""
 $ THEN
-$   COPY [.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$   ! If we don't find a file in the source directory, it's most
+$   ! probably generated for each architecture
+$   ! (opensslconf.h, for example)
+$   IF F$SEARCH("[.CRYPTO]''tmp'") .EQS. ""
+$   THEN
+$     COPY [.'ARCH'.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$   ELSE
+$     COPY [.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$   ENDIF
 $ ELSE
 $   COPY [.CRYPTO.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
 $ ENDIF
@@ -758,8 +765,8 @@ $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "The Target ",P1," Is Invalid.  The Valid Target Options Are:"
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "    ALL      :  Just Build Everything."
-$     WRITE SYS$OUTPUT "    CONFIG   :  Just build the [.CRYPTO.''ARCH']OPENSSLCONF.H file."
-$     WRITE SYS$OUTPUT "    BUILDINF :  Just build the [.CRYPTO.''ARCH']BUILDINF.H file."
+$     WRITE SYS$OUTPUT "    CONFIG   :  Just build the [.xxx.CRYPTO]OPENSSLCONF.H file."
+$     WRITE SYS$OUTPUT "    BUILDINF :  Just build the [.xxx.CRYPTO]BUILDINF.H file."
 $     WRITE SYS$OUTPUT "    SOFTLINKS:  Just Fix The Unix soft links."
 $     WRITE SYS$OUTPUT "    BUILDALL :  Same as ALL, except CONFIG, BUILDINF and SOFTILNKS aren't done."
 $     WRITE SYS$OUTPUT "    CRYPTO   :  To Build Just The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library."
