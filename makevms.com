@@ -532,7 +532,8 @@ $ IF D .EQS. ""
 $ THEN
 $   COPY [.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
 $ ELSE
-$   IF D .EQS. "_''ARCH'" THEN
+$   IF D .EQS. "_''ARCH'"
+$   THEN
 $     COPY [.'ARCH'.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
 $   ELSE
 $     COPY [.CRYPTO.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
