@@ -117,6 +117,10 @@ $	IF D .EQS. "," THEN GOTO LOOP_SDIRS_END
 $	tmp = EXHEADER_'D'
 $	IF D .EQS. ""
 $	THEN
+$	  ! If we don't find a file in the source directory, it's most
+$	  ! probably generated for each architecture
+$	  ! (opensslconf.h, for example)
+$	  IF F$SEARCH("''tmp'") .EQS. "" THEN tmp = "[-.''ARCH'.CRYPTO]''tmp'"
 $	  COPY 'tmp' WRK_SSLINCLUDE: /LOG
 $	ELSE
 $	  COPY [.'D']'tmp' WRK_SSLINCLUDE: /LOG
