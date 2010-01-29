@@ -457,7 +457,7 @@ $!
 $! Copy All The ".H" Files From The [.CRYPTO] Directory Tree.
 $!
 $ SDIRS := ,-
-   'ARCH',-
+   _'ARCH',-
    OBJECTS,-
    MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,-
    DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,MODES,-
@@ -465,7 +465,8 @@ $ SDIRS := ,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,-
    EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,-
    STORE,CMS,PQUEUE,TS,JPAKE
-$ EXHEADER_ := crypto.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,ossl_typ.h
+$ EXHEADER_ := crypto.h,opensslv.h,ebcdic.h,symhacks.h,ossl_typ.h
+$ EXHEADER__'ARCH' := opensslconf.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
 $ EXHEADER_MD2 := md2.h
 $ EXHEADER_MD4 := md4.h
@@ -529,17 +530,13 @@ $ IF D .EQS. "," THEN GOTO LOOP_SDIRS_END
 $ tmp = EXHEADER_'D'
 $ IF D .EQS. ""
 $ THEN
-$   ! If we don't find a file in the source directory, it's most
-$   ! probably generated for each architecture
-$   ! (opensslconf.h, for example)
-$   IF F$SEARCH("[.CRYPTO]''tmp'") .EQS. ""
-$   THEN
+$   COPY [.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$ ELSE
+$   IF D .EQS. "_''ARCH'" THEN
 $     COPY [.'ARCH'.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
 $   ELSE
-$     COPY [.CRYPTO]'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
+$     COPY [.CRYPTO.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
 $   ENDIF
-$ ELSE
-$   COPY [.CRYPTO.'D']'tmp' SYS$DISK:[.INCLUDE.OPENSSL] !/LOG
 $ ENDIF
 $ GOTO LOOP_SDIRS
 $ LOOP_SDIRS_END:

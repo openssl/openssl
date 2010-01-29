@@ -41,6 +41,7 @@ $	IF F$PARSE("WRK_SSLINCLUDE:") .EQS. "" THEN -
 	   CREATE/DIR/LOG WRK_SSLINCLUDE:
 $
 $	SDIRS := ,-
+		 _'ARCH',-
 		 OBJECTS,-
 		 MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,-
 		 DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,-
@@ -49,8 +50,8 @@ $	SDIRS := ,-
 		 EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,-
 		 UI,KRB5,-
 		 STORE,CMS,PQUEUE,TS,JPAKE
-$	EXHEADER_ := crypto.h,opensslv.h,opensslconf.h,ebcdic.h,symhacks.h,-
-		ossl_typ.h
+$	EXHEADER_ := crypto.h,opensslv.h,ebcdic.h,symhacks.h,ossl_typ.h
+$	EXHEADER__'ARCH' := opensslconf.h
 $	EXHEADER_OBJECTS := objects.h,obj_mac.h
 $	EXHEADER_MD2 := md2.h
 $	EXHEADER_MD4 := md4.h
@@ -117,13 +118,14 @@ $	IF D .EQS. "," THEN GOTO LOOP_SDIRS_END
 $	tmp = EXHEADER_'D'
 $	IF D .EQS. ""
 $	THEN
-$	  ! If we don't find a file in the source directory, it's most
-$	  ! probably generated for each architecture
-$	  ! (opensslconf.h, for example)
-$	  IF F$SEARCH("''tmp'") .EQS. "" THEN tmp = "[-.''ARCH'.CRYPTO]''tmp'"
 $	  COPY 'tmp' WRK_SSLINCLUDE: /LOG
 $	ELSE
-$	  COPY [.'D']'tmp' WRK_SSLINCLUDE: /LOG
+$	  IF D .EQS. "_''ARCH'"
+$	  THEN
+$	    COPY [-.'ARCH'.CRYPTO]'tmp' WRK_SSLINCLUDE: /LOG
+$	  ELSE
+$	    COPY [.'D']'tmp' WRK_SSLINCLUDE: /LOG
+$	  ENDIF
 $	ENDIF
 $	SET FILE/PROT=WORLD:RE WRK_SSLINCLUDE:'tmp'
 $	GOTO LOOP_SDIRS
