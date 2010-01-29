@@ -6,7 +6,7 @@
 
   *) Experiemental regnegotiation in s_server -www mode. If the client 
      browsers /reneg connection is renegotiated. If /renegcert it is
-     renegotiated requestion a certificate.
+     renegotiated requesting a certificate.
      [Steve Henson]
 
   *) Add an "external" session cache for debugging purposes to s_server. This
