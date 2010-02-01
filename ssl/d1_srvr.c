@@ -452,7 +452,7 @@ int dtls1_accept(SSL *s)
 			s->init_num=0;
 			break;
 		
-		case SSL3_ST_CW_FLUSH:
+		case SSL3_ST_SW_FLUSH:
 			s->rwstate=SSL_WRITING;
 			if (BIO_flush(s->wbio) <= 0)
 				{
