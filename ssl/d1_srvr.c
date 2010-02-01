@@ -1303,9 +1303,10 @@ int dtls1_send_newsession_ticket(SSL *s)
 		p += hlen;
 		/* Now write out lengths: p points to end of data written */
 		/* Total length */
-		len = p - (unsigned char *)&(s->init_buf->data[DTLS1_HM_HEADER_LENGTH]);
+		len = p - (unsigned char *)(s->init_buf->data);
+		/* Ticket length */
 		p=(unsigned char *)&(s->init_buf->data[DTLS1_HM_HEADER_LENGTH]) + 4;
-		s2n(len - 18, p);  /* Ticket length */
+		s2n(len - DTLS1_HM_HEADER_LENGTH - 6, p);
 
 		/* number of bytes to write */
 		s->init_num= len;
