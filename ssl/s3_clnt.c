@@ -2668,9 +2668,7 @@ int ssl3_send_client_verify(SSL *s)
 	unsigned u=0;
 #endif
 	unsigned long n;
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_ECDSA)
 	int j;
-#endif
 
 	if (s->state == SSL3_ST_CW_CERT_VRFY_A)
 		{
