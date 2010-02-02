@@ -297,8 +297,12 @@ static const char *names[ALGOR_NUM]={
   "aes-128 ige","aes-192 ige","aes-256 ige"};
 static double results[ALGOR_NUM][SIZE_NUM];
 static int lengths[SIZE_NUM]={16,64,256,1024,8*1024};
+#ifndef OPENSSL_NO_RSA
 static double rsa_results[RSA_NUM][2];
+#endif
+#ifndef OPENSSL_NO_DSA
 static double dsa_results[DSA_NUM][2];
+#endif
 #ifndef OPENSSL_NO_ECDSA
 static double ecdsa_results[EC_NUM][2];
 #endif

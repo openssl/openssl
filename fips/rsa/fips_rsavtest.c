@@ -65,7 +65,6 @@
 #include <openssl/err.h>
 #include <openssl/x509v3.h>
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
 
 #ifndef OPENSSL_FIPS
 
@@ -76,6 +75,8 @@ int main(int argc, char *argv[])
 }
 
 #else
+
+#include <openssl/rsa.h>
 
 #include "fips_utl.h"
 

@@ -279,4 +279,10 @@ end:
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
+#else /* !OPENSSL_NO_DSA */
+
+# if PEDANTIC
+static void *dummy=&dummy;
+# endif
+
 #endif

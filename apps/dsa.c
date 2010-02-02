@@ -65,11 +65,11 @@
 #include "apps.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/dsa.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/bn.h>
+#include <openssl/dsa.h>
 
 #undef PROG
 #define PROG	dsa_main

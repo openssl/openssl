@@ -63,7 +63,6 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/err.h>
-#include <openssl/rsa.h>
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
 
@@ -77,6 +76,7 @@ int main(int argc, char *argv[])
 
 #else
 
+#include <openssl/rsa.h>
 #include "fips_utl.h"
 
 static int rsa_stest(FILE *out, FILE *in, int Saltlen);

@@ -69,7 +69,6 @@
 #include <openssl/rand.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include <openssl/dsa.h>
 #include <openssl/bn.h>
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
@@ -83,6 +82,7 @@ int main(int argc, char *argv[])
     return(0);
 }
 #else
+#include <openssl/dsa.h>
 #include <openssl/fips.h>
 #include <openssl/fips_rand.h>
 #include <openssl/dsa.h>

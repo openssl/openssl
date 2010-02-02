@@ -18,9 +18,6 @@
 #include <stdlib.h>
 #include <openssl/aes.h>
 #include <openssl/des.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/dh.h>
 #include <openssl/hmac.h>
 #include <openssl/err.h>
 
@@ -36,6 +33,10 @@ int main(int argc, char *argv[])
     return(0);
     }
 #else
+
+#include <openssl/rsa.h>
+#include <openssl/dsa.h>
+#include <openssl/dh.h>
 
 #include <openssl/fips.h>
 #include "fips_utl.h"
