@@ -5,7 +5,7 @@
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
   *) Experiemental regnegotiation in s_server -www mode. If the client 
-     browsers /reneg connection is renegotiated. If /renegcert it is
+     browses /reneg connection is renegotiated. If /renegcert it is
      renegotiated requesting a certificate.
      [Steve Henson]
 
@@ -48,6 +48,11 @@
      [Steve Henson]
 
  Changes between 0.9.8m (?) and 1.0.0  [xx XXX xxxx]
+
+  *) Add "missing" function EVP_CIPHER_CTX_copy(). This copies a cipher
+     context. The operation can be customised via the ctrl mechanism in
+     case ENGINEs want to include additional functionality.
+     [Steve Henson]
 
   *) Tolerate yet another broken PKCS#8 key format: private key value negative.
      [Steve Henson]
