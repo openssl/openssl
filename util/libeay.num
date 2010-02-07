@@ -4172,8 +4172,9 @@ X509_STORE_CTX_get0_current_issuer      4546	EXIST:!VMS:FUNCTION:
 X509_STORE_CTX_get0_cur_issuer          4546	EXIST:VMS:FUNCTION:
 X509_issuer_name_hash_old               4547	EXIST::FUNCTION:MD5
 X509_subject_name_hash_old              4548	EXIST::FUNCTION:MD5
-PKCS5_pbkdf2_set                        4549	EXIST::FUNCTION:
+EVP_CIPHER_CTX_copy                     4549	EXIST::FUNCTION:
 ENGINE_load_aesni                       4550	EXIST::FUNCTION:ENGINE
 CMS_add0_recipient_password             4551	EXIST::FUNCTION:CMS
 CMS_decrypt_set1_password               4552	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_set0_password         4553	EXIST::FUNCTION:CMS
+PKCS5_pbkdf2_set                        4554	EXIST::FUNCTION:
