@@ -4,6 +4,9 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Initial CMAC implementation. WARNING: EXPERIMENTAL, API MAY CHANGE.
+     [Steve Henson]
+
   *) Experiemental regnegotiation in s_server -www mode. If the client 
      browses /reneg connection is renegotiated. If /renegcert it is
      renegotiated requesting a certificate.
