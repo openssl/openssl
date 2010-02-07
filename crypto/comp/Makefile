@@ -86,13 +86,12 @@ c_rle.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 c_rle.o: ../../include/openssl/symhacks.h c_rle.c
 c_zlib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 c_zlib.o: ../../include/openssl/comp.h ../../include/openssl/crypto.h
-c_zlib.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-c_zlib.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
-c_zlib.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-c_zlib.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-c_zlib.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-c_zlib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-c_zlib.o: c_zlib.c
+c_zlib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+c_zlib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+c_zlib.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+c_zlib.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+c_zlib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+c_zlib.o: ../../include/openssl/symhacks.h c_zlib.c
 comp_err.o: ../../include/openssl/bio.h ../../include/openssl/comp.h
 comp_err.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 comp_err.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
