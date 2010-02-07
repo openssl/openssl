@@ -340,6 +340,8 @@ struct evp_cipher_st
 #define 	EVP_CIPH_NO_PADDING		0x100
 /* cipher handles random key generation */
 #define 	EVP_CIPH_RAND_KEY		0x200
+/* cipher has its own additional copying logic */
+#define 	EVP_CIPH_CUSTOM_COPY		0x200
 
 /* ctrl() values */
 
@@ -351,6 +353,7 @@ struct evp_cipher_st
 #define 	EVP_CTRL_SET_RC5_ROUNDS		0x5
 #define 	EVP_CTRL_RAND_KEY		0x6
 #define 	EVP_CTRL_PBE_PRF_NID		0x7
+#define 	EVP_CTRL_COPY			0x8
 
 typedef struct evp_cipher_info_st
 	{
@@ -449,6 +452,7 @@ int EVP_CIPHER_CTX_nid(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
+int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in);
 void * EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
 void EVP_CIPHER_CTX_set_app_data(EVP_CIPHER_CTX *ctx, void *data);
 #define EVP_CIPHER_CTX_type(c)         EVP_CIPHER_type(EVP_CIPHER_CTX_cipher(c))
@@ -1190,6 +1194,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_ECDSA_PKEY2PKCS8				 129
 #define EVP_F_ECKEY_PKEY2PKCS8				 132
 #define EVP_F_EVP_CIPHERINIT_EX				 123
+#define EVP_F_EVP_CIPHER_CTX_COPY			 163
 #define EVP_F_EVP_CIPHER_CTX_CTRL			 124
 #define EVP_F_EVP_CIPHER_CTX_SET_KEY_LENGTH		 122
 #define EVP_F_EVP_DECRYPTFINAL_EX			 101

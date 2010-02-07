@@ -4,6 +4,11 @@
 
  Changes between 0.9.8m (?) and 1.0.0  [xx XXX xxxx]
 
+  *) Add "missing" function EVP_CIPHER_CTX_copy(). This copies a cipher
+     context. The operation can be customised via the ctrl mechanism in
+     case ENGINEs want to include additional functionality.
+     [Steve Henson]
+
   *) Tolerate yet another broken PKCS#8 key format: private key value negative.
      [Steve Henson]
 
