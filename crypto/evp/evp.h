@@ -341,7 +341,7 @@ struct evp_cipher_st
 /* cipher handles random key generation */
 #define 	EVP_CIPH_RAND_KEY		0x200
 /* cipher has its own additional copying logic */
-#define 	EVP_CIPH_CUSTOM_COPY		0x200
+#define 	EVP_CIPH_CUSTOM_COPY		0x400
 
 /* ctrl() values */
 
