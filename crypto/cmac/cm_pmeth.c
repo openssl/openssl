@@ -138,7 +138,7 @@ static int pkey_cmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		break;
 
 		case EVP_PKEY_CTRL_CIPHER:
-		if (!CMAC_Init(cmctx, NULL, 0, p2, NULL))
+		if (!CMAC_Init(cmctx, NULL, 0, p2, ctx->engine))
 			return 0;
 		break;
 
