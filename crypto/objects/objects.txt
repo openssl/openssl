@@ -1258,3 +1258,5 @@ kisa 1 6                : SEED-OFB      : seed-ofb
 # There is no OID that just denotes "HMAC" oddly enough...
 
 			: HMAC				: hmac
+# Nor CMAC either
+			: CMAC				: cmac

@@ -116,6 +116,7 @@
 #define EVP_PKEY_DH	NID_dhKeyAgreement
 #define EVP_PKEY_EC	NID_X9_62_id_ecPublicKey
 #define EVP_PKEY_HMAC	NID_hmac
+#define EVP_PKEY_CMAC	NID_cmac
 
 #ifdef	__cplusplus
 extern "C" {
@@ -1042,10 +1043,16 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 #define EVP_PKEY_CTRL_CMS_DECRYPT	10
 #define EVP_PKEY_CTRL_CMS_SIGN		11
 
+#define EVP_PKEY_CTRL_CIPHER		12
+
 #define EVP_PKEY_ALG_CTRL		0x1000
 
 
 #define EVP_PKEY_FLAG_AUTOARGLEN	2
+/* Method handles all operations: don't assume any digest related
+ * defaults.
+ */
+#define EVP_PKEY_FLAG_SIGCTX_CUSTOM	4
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type);
 EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags);

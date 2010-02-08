@@ -1,6 +1,5 @@
-/* crypto/cmac/cmac.h */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
- * project.
+ * project 2010.
  */
 /* ====================================================================
  * Copyright (c) 2010 The OpenSSL Project.  All rights reserved.
@@ -49,34 +48,55 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
+ *
+ * This product includes cryptographic software written by Eric Young
+ * (eay@cryptsoft.com).  This product includes software written by Tim
+ * Hudson (tjh@cryptsoft.com).
+ *
  */
 
-
-#ifndef HEADER_CMAC_H
-#define HEADER_CMAC_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
+#include <stdio.h>
+#include "cryptlib.h"
 #include <openssl/evp.h>
+#include <openssl/cmac.h>
+#include "asn1_locl.h"
 
-/* Opaque */
-typedef struct CMAC_CTX_st CMAC_CTX;
+/* CMAC "ASN1" method. This is just here to indicate the
+ * maximum CMAC output length and to free up a CMAC
+ * key.
+ */
 
-CMAC_CTX *CMAC_CTX_new(void);
-void CMAC_CTX_cleanup(CMAC_CTX *ctx);
-void CMAC_CTX_free(CMAC_CTX *ctx);
-EVP_CIPHER_CTX *CMAC_CTX_get0_cipher_ctx(CMAC_CTX *ctx);
-int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in);
+static int cmac_size(const EVP_PKEY *pkey)
+	{
+	return EVP_MAX_BLOCK_LENGTH;
+	}
 
-int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen, 
-			const EVP_CIPHER *cipher, ENGINE *impl);
-int CMAC_Update(CMAC_CTX *ctx, const void *data, size_t dlen);
-int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen);
-int CMAC_resume(CMAC_CTX *ctx);
+static void cmac_key_free(EVP_PKEY *pkey)
+	{
+	CMAC_CTX *cmctx = (CMAC_CTX *)pkey->pkey.ptr;
+	if (cmctx)
+		CMAC_CTX_free(cmctx);
+	}
 
-#ifdef  __cplusplus
-}
-#endif
-#endif
+const EVP_PKEY_ASN1_METHOD cmac_asn1_meth = 
+	{
+	EVP_PKEY_CMAC,
+	EVP_PKEY_CMAC,
+	0,
+
+	"CMAC",
+	"OpenSSL CMAC method",
+
+	0,0,0,0,
+
+	0,0,0,
+
+	cmac_size,
+	0,
+	0,0,0,0,0,0,
+
+	cmac_key_free,
+	0,
+	0,0
+	};
+

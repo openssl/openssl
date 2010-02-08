@@ -3916,3 +3916,7 @@
 #define LN_hmac		"hmac"
 #define NID_hmac		855
 
+#define SN_cmac		"CMAC"
+#define LN_cmac		"cmac"
+#define NID_cmac		894
+

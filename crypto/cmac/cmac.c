@@ -122,6 +122,22 @@ void CMAC_CTX_free(CMAC_CTX *ctx)
 	OPENSSL_free(ctx);
 	}
 
+int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
+	{
+	int bl;
+	if (in->nlast_block == -1)
+		return 0;
+	if (!EVP_CIPHER_CTX_copy(&out->cctx, &in->cctx))
+		return 0;
+	bl = EVP_CIPHER_CTX_block_size(&in->cctx);
+	memcpy(out->k1, in->k1, bl);
+	memcpy(out->k2, in->k2, bl);
+	memcpy(out->tbl, in->tbl, bl);
+	memcpy(out->last_block, in->last_block, bl);
+	out->nlast_block = in->nlast_block;
+	return 1;
+	}
+
 int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen, 
 			const EVP_CIPHER *cipher, ENGINE *impl)
 	{
@@ -130,11 +146,11 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 	if (!key && !cipher && !impl && keylen == 0)
 		{
 		/* Not initialised */
-		if (ctx->last_block == -1)
+		if (ctx->nlast_block == -1)
 			return 0;
 		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
 			return 0;
-		return 0;
+		return 1;
 		}
 	/* Initialiase context */
 	if (cipher && !EVP_EncryptInit_ex(&ctx->cctx, cipher, impl, NULL, NULL))
@@ -158,6 +174,8 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 		/* Reset context again ready for first data block */
 		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
 			return 0;
+		/* Zero tbl so resume works */
+		memset(ctx->tbl, 0, bl);
 		ctx->nlast_block = 0;
 		}
 	return 1;
@@ -205,18 +223,21 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 
 	}
 
-size_t CMAC_Final(CMAC_CTX *ctx, unsigned char *out)
+int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
 	{
 	int i, bl, lb;
 	if (ctx->nlast_block == -1)
 		return 0;
 	bl = EVP_CIPHER_CTX_block_size(&ctx->cctx);
+	*poutlen = (size_t)bl;
+	if (!out)
+		return 1;
 	lb = ctx->nlast_block;
 	/* Is last block complete? */
 	if (lb == bl)
 		{
 		for (i = 0; i < bl; i++)
-			ctx->last_block[i] ^= ctx->k1[i];
+			out[i] = ctx->last_block[i] ^ ctx->k1[i];
 		}
 	else
 		{
@@ -224,9 +245,25 @@ size_t CMAC_Final(CMAC_CTX *ctx, unsigned char *out)
 		if (bl - lb > 1)
 			memset(ctx->last_block + lb + 1, 0, bl - lb - 1);
 		for (i = 0; i < bl; i++)
-			ctx->last_block[i] ^= ctx->k2[i];
+			out[i] = ctx->last_block[i] ^ ctx->k2[i];
 		}
-	if (!EVP_Cipher(&ctx->cctx, out, ctx->last_block, bl))
+	if (!EVP_Cipher(&ctx->cctx, out, out, bl))
+		{
+		OPENSSL_cleanse(out, bl);	
 		return 0;
-	return bl;
+		}
+	return 1;
+	}
+
+int CMAC_resume(CMAC_CTX *ctx)
+	{
+	if (ctx->nlast_block == -1)
+		return 0;
+	/* The buffer "tbl" containes the last fully encrypted block
+	 * which is the last IV (or all zeroes if no last encrypted block).
+	 * The last block has not been modified since CMAC_final().
+	 * So reinitliasing using the last decrypted block will allow
+	 * CMAC to continue after calling CMAC_Final(). 
+	 */
+	return EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, ctx->tbl);
 	}

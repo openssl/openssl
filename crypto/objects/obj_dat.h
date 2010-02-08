@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 894
-#define NUM_SN 887
-#define NUM_LN 887
+#define NUM_NID 895
+#define NUM_SN 888
+#define NUM_LN 888
 #define NUM_OBJ 841
 
 static const unsigned char lvalues[5835]={
@@ -2354,6 +2354,7 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 {"dmdName","dmdName",NID_dmdName,3,&(lvalues[5820]),0},
 {"id-alg-PWRI-KEK","id-alg-PWRI-KEK",NID_id_alg_PWRI_KEK,11,
 	&(lvalues[5823]),0},
+{"CMAC","cmac",NID_cmac,0,NULL,0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2403,6 +2404,7 @@ static const unsigned int sn_objs[NUM_SN]={
 110,	/* "CAST5-CFB" */
 109,	/* "CAST5-ECB" */
 111,	/* "CAST5-OFB" */
+894,	/* "CMAC" */
 13,	/* "CN" */
 141,	/* "CRLReason" */
 417,	/* "CSPName" */
@@ -3471,6 +3473,7 @@ static const unsigned int ln_objs[NUM_LN]={
 407,	/* "characteristic-two-field" */
 395,	/* "clearance" */
 633,	/* "cleartext track 2" */
+894,	/* "cmac" */
 13,	/* "commonName" */
 513,	/* "content types" */
 50,	/* "contentType" */

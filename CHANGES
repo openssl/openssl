@@ -5,6 +5,7 @@
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
   *) Initial CMAC implementation. WARNING: EXPERIMENTAL, API MAY CHANGE.
+     Add CMAC pkey methods.
      [Steve Henson]
 
   *) Experiemental regnegotiation in s_server -www mode. If the client 
