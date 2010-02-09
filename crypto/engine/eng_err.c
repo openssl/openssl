@@ -1,6 +1,6 @@
 /* crypto/engine/eng_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -124,6 +124,7 @@ static ERR_STRING_DATA ENGINE_str_reasons[]=
 {ERR_REASON(ENGINE_R_DSO_FAILURE)        ,"DSO failure"},
 {ERR_REASON(ENGINE_R_DSO_NOT_FOUND)      ,"dso not found"},
 {ERR_REASON(ENGINE_R_ENGINES_SECTION_ERROR),"engines section error"},
+{ERR_REASON(ENGINE_R_ENGINE_CONFIGURATION_ERROR),"engine configuration error"},
 {ERR_REASON(ENGINE_R_ENGINE_IS_NOT_IN_LIST),"engine is not in the list"},
 {ERR_REASON(ENGINE_R_ENGINE_SECTION_ERROR),"engine section error"},
 {ERR_REASON(ENGINE_R_FAILED_LOADING_PRIVATE_KEY),"failed loading private key"},
