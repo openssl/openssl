@@ -95,7 +95,7 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
 	int ret = 0;
 	long do_init = -1;
 	STACK_OF(CONF_VALUE) *ecmds;
-	CONF_VALUE *ecmd;
+	CONF_VALUE *ecmd = NULL;
 	char *ctrlname, *ctrlvalue;
 	ENGINE *e = NULL;
 	int soft = 0;
@@ -157,7 +157,7 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
 					return 1;
 					}
 				if (!e)
-					return 0;
+					goto err;
 				}
 			/* Allow "EMPTY" to mean no value: this allows a valid
 			 * "value" to be passed to ctrls of type NO_INPUT
@@ -186,16 +186,27 @@ static int int_engine_configure(char *name, char *value, const CONF *cnf)
 				}
 			else if (!ENGINE_ctrl_cmd_string(e,
 					ctrlname, ctrlvalue, 0))
-				return 0;
+				goto err;
 			}
 
 
 
 		}
 	if (e && (do_init == -1) && !int_engine_init(e))
+		{
+		ecmd = NULL;
 		goto err;
+		}
 	ret = 1;
 	err:
+	if (ret != 1)
+		{
+		ENGINEerr(ENGINE_F_INT_ENGINE_CONFIGURE, ENGINE_R_ENGINE_CONFIGURATION_ERROR);
+		if (ecmd)
+			ERR_add_error_data(6, "section=", ecmd->section, 
+						", name=", ecmd->name,
+						", value=", ecmd->value);
+		}
 	if (e)
 		ENGINE_free(e);
 	return ret;
