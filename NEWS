@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 0.9.8l and OpenSSL 1.0:
 
-      o Support for draft-ietf-tls-renegotiation-03.txt
+      o Support for RFC5746 TLS renegotiation extension.
       o RFC3280 path validation: sufficient to process PKITS tests.
       o Integrated support for PVK files and keyblobs.
       o Change default private key format to PKCS#8.
