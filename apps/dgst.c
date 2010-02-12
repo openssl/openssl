@@ -155,7 +155,7 @@ int MAIN(int argc, char **argv)
 		if ((*argv)[0] != '-') break;
 		if (strcmp(*argv,"-c") == 0)
 			separator=1;
-		if (strcmp(*argv,"-r") == 0)
+		else if (strcmp(*argv,"-r") == 0)
 			separator=2;
 		else if (strcmp(*argv,"-rand") == 0)
 			{
