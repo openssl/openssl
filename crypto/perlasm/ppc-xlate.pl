@@ -101,6 +101,13 @@ my $bnelr = sub {
 	"	.long	".sprintf "0x%x",19<<26|$bo<<21|2<<16|16<<1 :
 	"	bclr	$bo,2";
 };
+my $beqlr = sub {
+    my $f = shift;
+    my $bo = $f=~/-/ ? 12+2 : 12;	# optional "not to be taken" hint
+    ($flavour =~ /linux/) ?		# GNU as doesn't allow most recent hints
+	"	.long	".sprintf "0x%X",19<<26|$bo<<21|2<<16|16<<1 :
+	"	bclr	$bo,2";
+};
 # GNU assembler can't handle extrdi rA,rS,16,48, or when sum of last two
 # arguments is 64, with "operand out of range" error.
 my $extrdi = sub {

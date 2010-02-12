@@ -67,6 +67,8 @@ Loop:	lwarx	r5,0,r3
 	$CMPLI	r4,7
 	li	r0,0
 	bge	Lot
+	$CMPLI	r4,0
+	beqlr-
 Little:	mtctr	r4
 	stb	r0,0(r3)
 	addi	r3,r3,1

@@ -279,11 +279,14 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&xor	("eax","eax");
 	&cmp	("ecx",7);
 	&jae	(&label("lot"));
+	&cmp	("ecx",0);
+	&je	(&label("ret"));
 &set_label("little");
 	&mov	(&BP(0,"edx"),"al");
 	&sub	("ecx",1);
 	&lea	("edx",&DWP(1,"edx"));
 	&jnz	(&label("little"));
+&set_label("ret");
 	&ret	();
 
 &set_label("lot",16);
