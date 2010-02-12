@@ -9,7 +9,7 @@
 
       o Remove MD2 from algorithm tables.
       o SPKAC handling fixes.
-      o Implement draft-ietf-tls-renegotiation-03.
+      o Support for RFC5746 TLS renegotiation extension.
       o Compression memory leak fixed.
       o Compression session resumption fixed.
       o Ticket and SNI coexistence fixes.

@@ -235,8 +235,8 @@ these options.
 =head1 SECURE RENEGOTIATION
 
 OpenSSL 0.9.8m and later always attempts to use secure renegotiation as
-described in draft-ietf-tls-renegotiation (FIXME: replace by RFC). This
-counters the prefix attack described in CVE-2009-3555 and elsewhere.
+described in RFC5746. This counters the prefix attack described in
+CVE-2009-3555 and elsewhere.
 
 The deprecated and highly broken SSLv2 protocol does not support secure
 renegotiation at all: its use is B<strongly> discouraged.
