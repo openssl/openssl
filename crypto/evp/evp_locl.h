@@ -139,10 +139,10 @@ BLOCK_CIPHER_def1(cname, ofb##cbits, ofb, OFB, kstruct, nid, 1, \
 		  get_asn1, ctrl)
 
 #define BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, \
-			     iv_len, flags, init_key, cleanup, set_asn1, \
+			     flags, init_key, cleanup, set_asn1, \
 			     get_asn1, ctrl) \
 BLOCK_CIPHER_def1(cname, ecb, ecb, ECB, kstruct, nid, block_size, key_len, \
-		  iv_len, flags, init_key, cleanup, set_asn1, get_asn1, ctrl)
+		  0, flags, init_key, cleanup, set_asn1, get_asn1, ctrl)
 
 #define BLOCK_CIPHER_defs(cname, kstruct, \
 			  nid, block_size, key_len, iv_len, cbits, flags, \
@@ -153,7 +153,7 @@ BLOCK_CIPHER_def_cfb(cname, kstruct, nid, key_len, iv_len, cbits, \
 		     flags, init_key, cleanup, set_asn1, get_asn1, ctrl) \
 BLOCK_CIPHER_def_ofb(cname, kstruct, nid, key_len, iv_len, cbits, \
 		     flags, init_key, cleanup, set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, iv_len, flags, \
+BLOCK_CIPHER_def_ecb(cname, kstruct, nid, block_size, key_len, flags, \
 		     init_key, cleanup, set_asn1, get_asn1, ctrl)
 
 
