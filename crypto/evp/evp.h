@@ -343,6 +343,10 @@ struct evp_cipher_st
 #define 	EVP_CIPH_RAND_KEY		0x200
 /* cipher has its own additional copying logic */
 #define 	EVP_CIPH_CUSTOM_COPY		0x400
+/* Allow use default ASN1 get/set iv */
+#define		EVP_CIPH_FLAG_DEFAULT_ASN1	0x1000
+/* Buffer length in bits not bytes: CFB1 mode only */
+#define		EVP_CIPH_FLAG_LENGTH_BITS	0x2000
 
 /* ctrl() values */
 
