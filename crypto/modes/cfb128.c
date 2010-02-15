@@ -224,7 +224,6 @@ void CRYPTO_cfb128_1_encrypt(const unsigned char *in, unsigned char *out,
     assert(in && out && key && ivec && num);
     assert(*num == 0);
 
-    memset(out,0,(bits+7)/8);
     for(n=0 ; n<bits ; ++n)
 	{
 	c[0]=(in[n/8]&(1 << (7-n%8))) ? 0x80 : 0;
