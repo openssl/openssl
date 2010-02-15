@@ -115,7 +115,7 @@ static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, 
 	if (inl<chunk) chunk=inl;\
 	while(inl && inl>=chunk)\
 	    {\
-	    cprefix##_cfb##cbits##_encrypt(in, out, (long)(cbits==1?chunk*8:chunk), &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, &ctx->num, ctx->encrypt);\
+            cprefix##_cfb##cbits##_encrypt(in, out, (long)((cbits==1) && !(ctx->flags & EVP_CIPH_FLAG_LENGTH_BITS) ?inl*8:inl), &((kstruct *)ctx->cipher_data)->ksched, ctx->iv, &ctx->num, ctx->encrypt);\
 	    inl-=chunk;\
 	    in +=chunk;\
 	    out+=chunk;\
