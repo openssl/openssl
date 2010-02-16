@@ -136,12 +136,14 @@ DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey)
 				{
 				GOSTerr(GOST_F_GOST2001_DO_SIGN,GOST_R_RANDOM_NUMBER_GENERATOR_FAILED);
 				DSA_SIG_free(newsig);
+				newsig = NULL;
 				goto err;
 				}	
 			if (!EC_POINT_mul(group,C,k,NULL,NULL,ctx))
 				{
 				GOSTerr(GOST_F_GOST2001_DO_SIGN,ERR_R_EC_LIB);
 				DSA_SIG_free(newsig);
+				newsig = NULL;
 				goto err;
 				}	
 			if (!X) X=BN_CTX_get(ctx);
@@ -149,6 +151,7 @@ DSA_SIG *gost2001_do_sign(const unsigned char *dgst,int dlen, EC_KEY *eckey)
 				{
 				GOSTerr(GOST_F_GOST2001_DO_SIGN,ERR_R_EC_LIB);
 				DSA_SIG_free(newsig);
+				newsig = NULL;
 				goto err;
 				}	
 			if (!r) r=BN_CTX_get(ctx);
