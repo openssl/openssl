@@ -305,9 +305,6 @@ static int ssl23_client_hello(SSL *s)
 			ssl2_compat = 0;
 		if (s->tlsext_status_type != -1)
 			ssl2_compat = 0;
-		if (!(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
-			ssl2_compat = 0;
-		
 #ifdef TLSEXT_TYPE_opaque_prf_input
 		if (s->ctx->tlsext_opaque_prf_input_callback != 0 || s->tlsext_opaque_prf_input != NULL)
 			ssl2_compat = 0;

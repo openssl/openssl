@@ -495,11 +495,6 @@ int ssl23_get_client_hello(SSL *s)
 		SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_UNSUPPORTED_PROTOCOL);
 		goto err;
 #else
-		if (!(s->ctx->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
-			{
-			SSLerr(SSL_F_SSL23_GET_CLIENT_HELLO,SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
-			goto err;
-			}
 		/* we are talking sslv2 */
 		/* we need to clean up the SSLv3/TLSv1 setup and put in the
 		 * sslv2 stuff. */
