@@ -237,7 +237,7 @@ OpenSSL 0.9.8m and later always attempts to use secure renegotiation as
 described in RFC5746. This counters the prefix attack described in
 CVE-2009-3555 and elsewhere.
 
-The deprecated and highly broken SSLv2 protocol does not support secure
+The deprecated and highly broken SSLv2 protocol does not support
 renegotiation at all: its use is B<strongly> discouraged.
 
 This attack has far reaching consequences which application writers should be
@@ -276,10 +276,14 @@ was refused.
 =head2 Patched OpenSSL client and unpatched server.
 
 If the option B<SSL_OP_LEGACY_SERVER_CONNECT> is set then initial connections
-between patched OpenSSL clients and unpatched servers succeed. This option
-is currently set by default even though it has security implications: otherwise
-it would be impossible to connect to unpatched servers (i.e. all of them
-initially) and this is clearly not acceptable.
+and renegotiation between patched OpenSSL clients and unpatched servers
+succeeds.
+
+This option is currently set by default even though it has security
+implications: otherwise it would be impossible to connect to unpatched servers
+(i.e. all of them initially) and this is clearly not acceptable. Renegotiation
+is permitted because this does not add any additional security issues: during
+an attack clients do not see any renegotiations anyway.
 
 As more servers become patched the option B<SSL_OP_LEGACY_SERVER_CONNECT> will
 B<not> be set by default in a future version of OpenSSL.
@@ -292,10 +296,9 @@ unpatched servers (and thus avoid any security issues) should always B<clear>
 B<SSL_OP_LEGACY_SERVER_CONNECT> using SSL_CTX_clear_options() or
 SSL_clear_options().
 
-Renegotiation between a patched OpenSSL client and unpatched server follows
-the same scheme as between an unpatched client and a patched OpenSSL server:
-i.e. it is not permitted unless the option
-B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set.
+As in the previous case if the option
+B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then renegotiation
+B<always> succeeds.
 
 =head1 RETURN VALUES
 

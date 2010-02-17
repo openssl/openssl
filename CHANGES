@@ -926,7 +926,7 @@
      [Steve Henson]
 
   *) Add option SSL_OP_LEGACY_SERVER_CONNECT which will allow clients to
-     connect (but not renegotiate) with servers which do not support RI.
+     connect and renegotiate with servers which do not support RI.
      Until RI is more widely deployed this option is enabled by default.
      [Steve Henson]
 
