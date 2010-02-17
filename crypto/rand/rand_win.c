@@ -527,6 +527,7 @@ int RAND_poll(void)
 							RAND_add(&hentry,
 								hentry.dwSize, 5);
 						while (heap_next(&hentry)
+						&& (!good || (GetTickCount()-starttime)<MAXDELAY)
 							&& --entrycnt > 0);
 						}
 						}
