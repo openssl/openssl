@@ -898,6 +898,11 @@
 
  Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
 
+  *) On some versions of WIN32 Heap32Next is very slow. This can cause
+     excessive delays in the RAND_poll(): over a minute. As a workaround
+     include a time check in the inner Heap32Next loop too.
+     [Steve Henson]
+
   *) The code that handled flushing of data in SSL/TLS originally used the
      BIO_CTRL_INFO ctrl to see if any data was pending first. This caused
      the problem outlined in PR#1949. The fix suggested there however can
