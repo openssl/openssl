@@ -225,10 +225,16 @@ is explicitly set when OpenSSL is compiled.
 If this option is set this functionality is disabled and tickets will
 not be used by clients or servers.
 
-=item SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION, SSL_OP_LEGACY_SERVER_CONNECT
+=item SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
 
-See the B<SECURE RENEGOTIATION> section for a discussion of the purpose of
-these options.
+Allow legacy insecure renegotiation between OpenSSL and unpatched clients or
+servers. See the B<SECURE RENEGOTIATION> section for more details.
+
+=item SSL_OP_LEGACY_SERVER_CONNECT
+
+Allow legacy insecure renegotiation between OpenSSL and unpatched servers
+B<only>: this option is currently set by default. See the
+B<SECURE RENEGOTIATION> section for more details.
 
 =back
 
@@ -276,15 +282,18 @@ was refused.
 
 =head2 Patched OpenSSL client and unpatched server.
 
-If the option B<SSL_OP_LEGACY_SERVER_CONNECT> is set then initial connections
+If the option B<SSL_OP_LEGACY_SERVER_CONNECT> or
+B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then initial connections
 and renegotiation between patched OpenSSL clients and unpatched servers
-succeeds.
+succeeds. If neither option is set then initial connections to unpatched
+servers will fail.
 
-This option is currently set by default even though it has security
-implications: otherwise it would be impossible to connect to unpatched servers
-(i.e. all of them initially) and this is clearly not acceptable. Renegotiation
-is permitted because this does not add any additional security issues: during
-an attack clients do not see any renegotiations anyway.
+The option B<SSL_OP_LEGACY_SERVER_CONNECT> is currently set by default even
+though it has security implications: otherwise it would be impossible to
+connect to unpatched servers (i.e. all of them initially) and this is clearly
+not acceptable. Renegotiation is permitted because this does not add any
+additional security issues: during an attack clients do not see any
+renegotiations anyway.
 
 As more servers become patched the option B<SSL_OP_LEGACY_SERVER_CONNECT> will
 B<not> be set by default in a future version of OpenSSL.
@@ -297,9 +306,12 @@ unpatched servers (and thus avoid any security issues) should always B<clear>
 B<SSL_OP_LEGACY_SERVER_CONNECT> using SSL_CTX_clear_options() or
 SSL_clear_options().
 
-As in the previous case if the option
-B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> is set then renegotiation
-B<always> succeeds.
+The difference between the B<SSL_OP_LEGACY_SERVER_CONNECT> and
+B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> options is that
+B<SSL_OP_LEGACY_SERVER_CONNECT> enables initial connections and secure
+renegotiation between OpenSSL clients and unpatched servers B<only>, while
+B<SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION> allows initial connections
+and renegotiation between OpenSSL and unpatched clients or servers.
 
 =head1 RETURN VALUES
 
