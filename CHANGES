@@ -896,7 +896,11 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
- Changes between 0.9.8l (?) and 0.9.8m (?)  [xx XXX xxxx]
+ Changes between 0.9.8l and 0.9.8m  [xx XXX xxxx]
+
+  *) Fix X509_STORE locking: Every 'objs' access requires a lock (to
+     accommodate for stack sorting, always a write lock!).
+     [Bodo Moeller]
 
   *) On some versions of WIN32 Heap32Next is very slow. This can cause
      excessive delays in the RAND_poll(): over a minute. As a workaround
