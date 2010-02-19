@@ -420,11 +420,11 @@ static int get_cert_by_subject(X509_LOOKUP *xl, int type, X509_NAME *name,
 
 		/* we have added it to the cache so now pull
 		 * it out again */
-		CRYPTO_r_lock(CRYPTO_LOCK_X509_STORE);
+		CRYPTO_w_lock(CRYPTO_LOCK_X509_STORE);
 		j = sk_X509_OBJECT_find(xl->store_ctx->objs,&stmp);
 		if(j != -1) tmp=sk_X509_OBJECT_value(xl->store_ctx->objs,j);
 		else tmp = NULL;
-		CRYPTO_r_unlock(CRYPTO_LOCK_X509_STORE);
+		CRYPTO_w_unlock(CRYPTO_LOCK_X509_STORE);
 
 
 		/* If a CRL, update the last file suffix added for this */
@@ -480,4 +480,3 @@ finish:
 	if (b != NULL) BUF_MEM_free(b);
 	return(ok);
 	}
-
