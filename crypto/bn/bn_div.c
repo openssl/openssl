@@ -102,7 +102,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
 	/* The next 2 are needed so we can do a dv->d[0]|=1 later
 	 * since BN_lshift1 will only work once there is a value :-) */
 	BN_zero(dv);
-	bn_wexpand(dv,1);
+	if(bn_wexpand(dv,1) == NULL) goto end;
 	dv->top=1;
 
 	if (!BN_lshift(D,D,nm-nd)) goto end;

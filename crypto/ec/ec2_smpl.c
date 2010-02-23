@@ -174,8 +174,10 @@ int ec_GF2m_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 	dest->poly[2] = src->poly[2];
 	dest->poly[3] = src->poly[3];
 	dest->poly[4] = src->poly[4];
-	bn_wexpand(&dest->a, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2);
-	bn_wexpand(&dest->b, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2);
+	if(bn_wexpand(&dest->a, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL)
+		return 0;
+	if(bn_wexpand(&dest->b, (int)(dest->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL)
+		return 0;
 	for (i = dest->a.top; i < dest->a.dmax; i++) dest->a.d[i] = 0;
 	for (i = dest->b.top; i < dest->b.dmax; i++) dest->b.d[i] = 0;
 	return 1;
@@ -199,12 +201,12 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
 
 	/* group->a */
 	if (!BN_GF2m_mod_arr(&group->a, a, group->poly)) goto err;
-	bn_wexpand(&group->a, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2);
+	if(bn_wexpand(&group->a, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) goto err;
 	for (i = group->a.top; i < group->a.dmax; i++) group->a.d[i] = 0;
 	
 	/* group->b */
 	if (!BN_GF2m_mod_arr(&group->b, b, group->poly)) goto err;
-	bn_wexpand(&group->b, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2);
+	if(bn_wexpand(&group->b, (int)(group->poly[0] + BN_BITS2 - 1) / BN_BITS2) == NULL) goto err;
 	for (i = group->b.top; i < group->b.dmax; i++) group->b.d[i] = 0;
 		
 	ret = 1;

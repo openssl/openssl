@@ -4,6 +4,9 @@
 
  Changes between 0.9.8l and 0.9.8m [xx XXX xxxx]
 
+  *) Always check bn_wexpend() return values for failure.  (CVE-2009-3245)
+     [Martin Olsson, Neel Mehta]
+
   *) Fix X509_STORE locking: Every 'objs' access requires a lock (to
      accommodate for stack sorting, always a write lock!).
      [Bodo Moeller]

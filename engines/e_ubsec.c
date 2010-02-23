@@ -934,7 +934,7 @@ static int ubsec_dh_generate_key(DH *dh)
                 priv_key = BN_new();
                 if (priv_key == NULL) goto err;
                 priv_key_len = BN_num_bits(dh->p);
-                bn_wexpand(priv_key, dh->p->top);
+                if(bn_wexpand(priv_key, dh->p->top) == NULL) goto err;
                 do
                         if (!BN_rand_range(priv_key, dh->p)) goto err;
                 while (BN_is_zero(priv_key));
@@ -949,7 +949,7 @@ static int ubsec_dh_generate_key(DH *dh)
                 {
                 pub_key = BN_new();
                 pub_key_len = BN_num_bits(dh->p);
-                bn_wexpand(pub_key, dh->p->top);
+                if(bn_wexpand(pub_key, dh->p->top) == NULL) goto err;
                 if(pub_key == NULL) goto err;
                 }
         else

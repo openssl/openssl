@@ -294,7 +294,8 @@ int	BN_GF2m_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 	if (a->top < b->top) { at = b; bt = a; }
 	else { at = a; bt = b; }
 
-	bn_wexpand(r, at->top);
+	if(bn_wexpand(r, at->top) == NULL)
+		return 0;
 
 	for (i = 0; i < bt->top; i++)
 		{
