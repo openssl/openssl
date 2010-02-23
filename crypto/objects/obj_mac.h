@@ -2590,6 +2590,24 @@
 #define NID_aes_128_cfb128		421
 #define OBJ_aes_128_cfb128		OBJ_aes,4L
 
+#define SN_id_aes128_wrap		"id-aes128-wrap"
+#define NID_id_aes128_wrap		788
+#define OBJ_id_aes128_wrap		OBJ_aes,5L
+
+#define SN_aes_128_gcm		"id-aes128-GCM"
+#define LN_aes_128_gcm		"aes-128-gcm"
+#define NID_aes_128_gcm		895
+#define OBJ_aes_128_gcm		OBJ_aes,6L
+
+#define SN_aes_128_ccm		"id-aes128-CCM"
+#define LN_aes_128_ccm		"aes-128-ccm"
+#define NID_aes_128_ccm		896
+#define OBJ_aes_128_ccm		OBJ_aes,7L
+
+#define SN_id_aes128_wrap_pad		"id-aes128-wrap-pad"
+#define NID_id_aes128_wrap_pad		897
+#define OBJ_id_aes128_wrap_pad		OBJ_aes,8L
+
 #define SN_aes_192_ecb		"AES-192-ECB"
 #define LN_aes_192_ecb		"aes-192-ecb"
 #define NID_aes_192_ecb		422
@@ -2610,6 +2628,24 @@
 #define NID_aes_192_cfb128		425
 #define OBJ_aes_192_cfb128		OBJ_aes,24L
 
+#define SN_id_aes192_wrap		"id-aes192-wrap"
+#define NID_id_aes192_wrap		789
+#define OBJ_id_aes192_wrap		OBJ_aes,25L
+
+#define SN_aes_192_gcm		"id-aes192-GCM"
+#define LN_aes_192_gcm		"aes-192-gcm"
+#define NID_aes_192_gcm		898
+#define OBJ_aes_192_gcm		OBJ_aes,26L
+
+#define SN_aes_192_ccm		"id-aes192-CCM"
+#define LN_aes_192_ccm		"aes-192-ccm"
+#define NID_aes_192_ccm		899
+#define OBJ_aes_192_ccm		OBJ_aes,27L
+
+#define SN_id_aes192_wrap_pad		"id-aes192-wrap-pad"
+#define NID_id_aes192_wrap_pad		900
+#define OBJ_id_aes192_wrap_pad		OBJ_aes,28L
+
 #define SN_aes_256_ecb		"AES-256-ECB"
 #define LN_aes_256_ecb		"aes-256-ecb"
 #define NID_aes_256_ecb		426
@@ -2629,6 +2665,24 @@
 #define LN_aes_256_cfb128		"aes-256-cfb"
 #define NID_aes_256_cfb128		429
 #define OBJ_aes_256_cfb128		OBJ_aes,44L
+
+#define SN_id_aes256_wrap		"id-aes256-wrap"
+#define NID_id_aes256_wrap		790
+#define OBJ_id_aes256_wrap		OBJ_aes,45L
+
+#define SN_aes_256_gcm		"id-aes256-GCM"
+#define LN_aes_256_gcm		"aes-256-gcm"
+#define NID_aes_256_gcm		901
+#define OBJ_aes_256_gcm		OBJ_aes,46L
+
+#define SN_aes_256_ccm		"id-aes256-CCM"
+#define LN_aes_256_ccm		"aes-256-ccm"
+#define NID_aes_256_ccm		902
+#define OBJ_aes_256_ccm		OBJ_aes,47L
+
+#define SN_id_aes256_wrap_pad		"id-aes256-wrap-pad"
+#define NID_id_aes256_wrap_pad		903
+#define OBJ_id_aes256_wrap_pad		OBJ_aes,48L
 
 #define SN_aes_128_cfb1		"AES-128-CFB1"
 #define LN_aes_128_cfb1		"aes-128-cfb1"
@@ -2654,6 +2708,18 @@
 #define LN_aes_256_cfb8		"aes-256-cfb8"
 #define NID_aes_256_cfb8		655
 
+#define SN_aes_128_ctr		"AES-128-CTR"
+#define LN_aes_128_ctr		"aes-128-ctr"
+#define NID_aes_128_ctr		904
+
+#define SN_aes_192_ctr		"AES-192-CTR"
+#define LN_aes_192_ctr		"aes-192-ctr"
+#define NID_aes_192_ctr		905
+
+#define SN_aes_256_ctr		"AES-256-CTR"
+#define LN_aes_256_ctr		"aes-256-ctr"
+#define NID_aes_256_ctr		906
+
 #define SN_des_cfb1		"DES-CFB1"
 #define LN_des_cfb1		"des-cfb1"
 #define NID_des_cfb1		656
@@ -2669,18 +2735,6 @@
 #define SN_des_ede3_cfb8		"DES-EDE3-CFB8"
 #define LN_des_ede3_cfb8		"des-ede3-cfb8"
 #define NID_des_ede3_cfb8		659
-
-#define SN_id_aes128_wrap		"id-aes128-wrap"
-#define NID_id_aes128_wrap		788
-#define OBJ_id_aes128_wrap		OBJ_aes,5L
-
-#define SN_id_aes192_wrap		"id-aes192-wrap"
-#define NID_id_aes192_wrap		789
-#define OBJ_id_aes192_wrap		OBJ_aes,25L
-
-#define SN_id_aes256_wrap		"id-aes256-wrap"
-#define NID_id_aes256_wrap		790
-#define OBJ_id_aes256_wrap		OBJ_aes,45L
 
 #define OBJ_nist_hashalgs		OBJ_nistAlgorithms,2L
 
@@ -3813,6 +3867,18 @@
 #define LN_camellia_256_cbc		"camellia-256-cbc"
 #define NID_camellia_256_cbc		753
 #define OBJ_camellia_256_cbc		1L,2L,392L,200011L,61L,1L,1L,1L,4L
+
+#define SN_id_camellia128_wrap		"id-camellia128-wrap"
+#define NID_id_camellia128_wrap		907
+#define OBJ_id_camellia128_wrap		1L,2L,392L,200011L,61L,1L,1L,3L,2L
+
+#define SN_id_camellia192_wrap		"id-camellia192-wrap"
+#define NID_id_camellia192_wrap		908
+#define OBJ_id_camellia192_wrap		1L,2L,392L,200011L,61L,1L,1L,3L,3L
+
+#define SN_id_camellia256_wrap		"id-camellia256-wrap"
+#define NID_id_camellia256_wrap		909
+#define OBJ_id_camellia256_wrap		1L,2L,392L,200011L,61L,1L,1L,3L,4L
 
 #define OBJ_ntt_ds		0L,3L,4401L,5L
 
