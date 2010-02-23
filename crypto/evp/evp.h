@@ -741,9 +741,7 @@ const EVP_CIPHER *EVP_aes_128_cfb8(void);
 const EVP_CIPHER *EVP_aes_128_cfb128(void);
 # define EVP_aes_128_cfb EVP_aes_128_cfb128
 const EVP_CIPHER *EVP_aes_128_ofb(void);
-#if 0
 const EVP_CIPHER *EVP_aes_128_ctr(void);
-#endif
 const EVP_CIPHER *EVP_aes_192_ecb(void);
 const EVP_CIPHER *EVP_aes_192_cbc(void);
 const EVP_CIPHER *EVP_aes_192_cfb1(void);
@@ -751,9 +749,7 @@ const EVP_CIPHER *EVP_aes_192_cfb8(void);
 const EVP_CIPHER *EVP_aes_192_cfb128(void);
 # define EVP_aes_192_cfb EVP_aes_192_cfb128
 const EVP_CIPHER *EVP_aes_192_ofb(void);
-#if 0
 const EVP_CIPHER *EVP_aes_192_ctr(void);
-#endif
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
 const EVP_CIPHER *EVP_aes_256_cfb1(void);
@@ -761,9 +757,7 @@ const EVP_CIPHER *EVP_aes_256_cfb8(void);
 const EVP_CIPHER *EVP_aes_256_cfb128(void);
 # define EVP_aes_256_cfb EVP_aes_256_cfb128
 const EVP_CIPHER *EVP_aes_256_ofb(void);
-#if 0
 const EVP_CIPHER *EVP_aes_256_ctr(void);
-#endif
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);
@@ -1263,6 +1257,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_RC5_CTRL					 125
 
 /* Reason codes. */
+#define EVP_R_AES_IV_SETUP_FAILED			 162
 #define EVP_R_AES_KEY_SETUP_FAILED			 143
 #define EVP_R_ASN1_LIB					 140
 #define EVP_R_BAD_BLOCK_LENGTH				 136

@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -140,6 +140,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 
 static ERR_STRING_DATA EVP_str_reasons[]=
 	{
+{ERR_REASON(EVP_R_AES_IV_SETUP_FAILED)   ,"aes iv setup failed"},
 {ERR_REASON(EVP_R_AES_KEY_SETUP_FAILED)  ,"aes key setup failed"},
 {ERR_REASON(EVP_R_ASN1_LIB)              ,"asn1 lib"},
 {ERR_REASON(EVP_R_BAD_BLOCK_LENGTH)      ,"bad block length"},
