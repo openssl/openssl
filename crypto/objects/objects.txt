@@ -771,6 +771,10 @@ id-ce 55		: targetInformation	: X509v3 AC Targeting
 !Cname no-rev-avail
 id-ce 56		: noRevAvail		: X509v3 No Revocation Available
 
+# From RFC5280
+ext-key-usage 0		: anyExtendedKeyUsage	: Any Extended Key Usage
+
+
 !Cname netscape
 2 16 840 1 113730	: Netscape		: Netscape Communications Corp.
 !Cname netscape-cert-extension

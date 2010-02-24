@@ -2403,6 +2403,11 @@
 #define NID_no_rev_avail		403
 #define OBJ_no_rev_avail		OBJ_id_ce,56L
 
+#define SN_anyExtendedKeyUsage		"anyExtendedKeyUsage"
+#define LN_anyExtendedKeyUsage		"Any Extended Key Usage"
+#define NID_anyExtendedKeyUsage		910
+#define OBJ_anyExtendedKeyUsage		OBJ_ext_key_usage,0L
+
 #define SN_netscape		"Netscape"
 #define LN_netscape		"Netscape Communications Corp."
 #define NID_netscape		57

@@ -907,3 +907,4 @@ aes_256_ctr		906
 id_camellia128_wrap		907
 id_camellia192_wrap		908
 id_camellia256_wrap		909
+anyExtendedKeyUsage		910

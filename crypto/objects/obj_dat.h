@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 910
-#define NUM_SN 903
-#define NUM_LN 903
-#define NUM_OBJ 853
+#define NUM_NID 911
+#define NUM_SN 904
+#define NUM_LN 904
+#define NUM_OBJ 854
 
-static const unsigned char lvalues[5949]={
+static const unsigned char lvalues[5953]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -921,6 +921,7 @@ static const unsigned char lvalues[5949]={
 0x2A,0x83,0x08,0x8C,0x9A,0x4B,0x3D,0x01,0x01,0x03,0x02,/* [5915] OBJ_id_camellia128_wrap */
 0x2A,0x83,0x08,0x8C,0x9A,0x4B,0x3D,0x01,0x01,0x03,0x03,/* [5926] OBJ_id_camellia192_wrap */
 0x2A,0x83,0x08,0x8C,0x9A,0x4B,0x3D,0x01,0x01,0x03,0x04,/* [5937] OBJ_id_camellia256_wrap */
+0x55,0x1D,0x25,0x00,                         /* [5948] OBJ_anyExtendedKeyUsage */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2388,6 +2389,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	11,&(lvalues[5926]),0},
 {"id-camellia256-wrap","id-camellia256-wrap",NID_id_camellia256_wrap,
 	11,&(lvalues[5937]),0},
+{"anyExtendedKeyUsage","Any Extended Key Usage",
+	NID_anyExtendedKeyUsage,4,&(lvalues[5948]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2581,6 +2584,7 @@ static const unsigned int sn_objs[NUM_SN]={
 363,	/* "ad_timestamping" */
 376,	/* "algorithm" */
 405,	/* "ansi-X9-62" */
+910,	/* "anyExtendedKeyUsage" */
 746,	/* "anyPolicy" */
 370,	/* "archiveCutoff" */
 484,	/* "associatedDomain" */
@@ -3300,6 +3304,7 @@ static const unsigned int ln_objs[NUM_LN]={
 363,	/* "AD Time Stamping" */
 405,	/* "ANSI X9.62" */
 368,	/* "Acceptable OCSP Responses" */
+910,	/* "Any Extended Key Usage" */
 664,	/* "Any language" */
 177,	/* "Authority Information Access" */
 365,	/* "Basic OCSP Response" */
@@ -4325,6 +4330,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 96,	/* OBJ_mdc2WithRSA                  2 5 8 3 100 */
 95,	/* OBJ_mdc2                         2 5 8 3 101 */
 746,	/* OBJ_any_policy                   2 5 29 32 0 */
+910,	/* OBJ_anyExtendedKeyUsage          2 5 29 37 0 */
 519,	/* OBJ_setct_PANData                2 23 42 0 0 */
 520,	/* OBJ_setct_PANToken               2 23 42 0 1 */
 521,	/* OBJ_setct_PANOnly                2 23 42 0 2 */
