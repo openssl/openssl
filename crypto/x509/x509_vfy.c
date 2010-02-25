@@ -215,6 +215,21 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 		/* If we are self signed, we break */
 		if (cert_self_signed(x))
 			break;
+		/* If asked see if we can find issuer in trusted store first */
+		if (ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST)
+			{
+			ok = ctx->get_issuer(&xtmp, ctx, x);
+			if (ok < 0)
+				return ok;
+			/* If successful for now free up cert so it
+			 * will be picked up again later.
+			 */
+			if (ok > 0)
+				{
+				X509_free(xtmp);
+				break;
+				}
+			}
 
 		/* If we were passed a cert chain, use it first */
 		if (ctx->untrusted != NULL)

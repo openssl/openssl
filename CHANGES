@@ -4,6 +4,10 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Add -trusted_first option which attempts to find certificates in the
+     trusted store even if an untrusted chain is also supplied.
+     [Steve Henson]
+
   *) Initial experimental support for explicitly trusted non-root CAs. 
      OpenSSL still tries to build a complete chain to a root but if an
      intermediate CA has a trust setting included that is used. The first
