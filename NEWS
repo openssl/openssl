@@ -5,8 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 0.9.8l and OpenSSL 0.9.8m-beta1:
+  Major changes between OpenSSL 0.9.8l and OpenSSL 0.9.8m:
 
+      o Cipher definition fixes.
+      o Workaround for slow RAND_poll() on some WIN32 versions.
       o Remove MD2 from algorithm tables.
       o SPKAC handling fixes.
       o Support for RFC5746 TLS renegotiation extension.
