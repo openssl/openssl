@@ -312,8 +312,13 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 	/* we now have our chain, lets check it... */
 	xn=X509_get_issuer_name(x);
 
-	/* Is last certificate looked up self signed? */
-	if (!ctx->check_issued(ctx,x,x))
+	i = check_trust(ctx);
+
+	/* If explicitly rejected error */
+	if (i == X509_TRUST_REJECTED)
+		goto end;
+	/* If not explicitly trusted then indicate error */
+	if (i != X509_TRUST_TRUSTED)
 		{
 		if ((chain_ss == NULL) || !ctx->check_issued(ctx, x, chain_ss))
 			{
@@ -349,12 +354,6 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
 
 	ok = check_name_constraints(ctx);
 	
-	if (!ok) goto end;
-
-	/* The chain extensions are OK: check trust */
-
-	if (param->trust > 0) ok = check_trust(ctx);
-
 	if (!ok) goto end;
 
 	/* We may as well copy down any DSA parameters that are required */
@@ -647,28 +646,35 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
 
 static int check_trust(X509_STORE_CTX *ctx)
 {
-#ifdef OPENSSL_NO_CHAIN_VERIFY
-	return 1;
-#else
 	int i, ok;
-	X509 *x;
+	X509 *x = NULL;
 	int (*cb)(int xok,X509_STORE_CTX *xctx);
 	cb=ctx->verify_cb;
-/* For now just check the last certificate in the chain */
-	i = sk_X509_num(ctx->chain) - 1;
-	x = sk_X509_value(ctx->chain, i);
-	ok = X509_check_trust(x, ctx->param->trust, 0);
-	if (ok == X509_TRUST_TRUSTED)
-		return 1;
-	ctx->error_depth = i;
-	ctx->current_cert = x;
-	if (ok == X509_TRUST_REJECTED)
-		ctx->error = X509_V_ERR_CERT_REJECTED;
-	else
-		ctx->error = X509_V_ERR_CERT_UNTRUSTED;
-	ok = cb(0, ctx);
-	return ok;
-#endif
+	/* Check all trusted certificates in chain */
+	for (i = ctx->last_untrusted; i < sk_X509_num(ctx->chain); i++)
+		{
+		x = sk_X509_value(ctx->chain, i);
+		ok = X509_check_trust(x, ctx->param->trust, 0);
+		/* If explicitly trusted return trusted */
+		if (ok == X509_TRUST_TRUSTED)
+			return X509_TRUST_TRUSTED;
+		/* If explicitly rejected notify callback and reject if
+		 * not overridden.
+		 */
+		if (ok == X509_TRUST_REJECTED)
+			{
+			ctx->error_depth = i;
+			ctx->current_cert = x;
+			ctx->error = X509_V_ERR_CERT_REJECTED;
+			ok = cb(0, ctx);
+			if (!ok)
+				return X509_TRUST_REJECTED;
+			}
+		}
+	/* If no trusted certs in chain at all return untrusted and
+	 * allow standard (no issuer cert) etc errors to be indicated.
+	 */
+	return X509_TRUST_UNTRUSTED;
 }
 
 static int check_revocation(X509_STORE_CTX *ctx)

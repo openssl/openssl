@@ -4,6 +4,16 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Initial experimental support for explicitly trusted non-root CAs. 
+     OpenSSL still tries to build a complete chain to a root but if an
+     intermediate CA has a trust setting included that is used. The first
+     setting is used: whether to trust or reject.
+     [Steve Henson]
+
+  *) New -verify_name option in command line utilities to set verification
+     parameters by name.
+     [Steve Henson]
+
   *) Initial CMAC implementation. WARNING: EXPERIMENTAL, API MAY CHANGE.
      Add CMAC pkey methods.
      [Steve Henson]
