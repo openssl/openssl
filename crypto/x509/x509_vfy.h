@@ -527,8 +527,11 @@ int X509_VERIFY_PARAM_add0_policy(X509_VERIFY_PARAM *param,
 int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param, 
 					STACK_OF(ASN1_OBJECT) *policies);
 int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param);
+const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param);
 
 int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param);
+int X509_VERIFY_PARAM_get_count(void);
+const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id);
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name);
 void X509_VERIFY_PARAM_table_cleanup(void);
 

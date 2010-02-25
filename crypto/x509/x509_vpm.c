@@ -311,6 +311,11 @@ int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param)
 	return param->depth;
 	}
 
+const char *X509_VERIFY_PARAM_get0_name(const X509_VERIFY_PARAM *param)
+	{
+	return param->name;
+	}
+
 /* Default verify parameters: these are used for various
  * applications and can be overridden by the user specified table.
  * NB: the 'name' field *must* be in alphabetical order because it
@@ -411,6 +416,22 @@ int X509_VERIFY_PARAM_add0_table(X509_VERIFY_PARAM *param)
 	if (!sk_X509_VERIFY_PARAM_push(param_table, param))
 		return 0;
 	return 1;
+	}
+
+int X509_VERIFY_PARAM_get_count(void)
+	{
+	int num = sizeof(default_table)/sizeof(X509_VERIFY_PARAM);
+	if (param_table)
+		num += sk_X509_VERIFY_PARAM_num(param_table);
+	return num;
+	}
+
+const X509_VERIFY_PARAM *X509_VERIFY_PARAM_get0(int id)
+	{
+	int num = sizeof(default_table)/sizeof(X509_VERIFY_PARAM);
+	if (id < num)
+		return default_table + id;
+	return sk_X509_VERIFY_PARAM_value(param_table, id - num);
 	}
 
 const X509_VERIFY_PARAM *X509_VERIFY_PARAM_lookup(const char *name)
