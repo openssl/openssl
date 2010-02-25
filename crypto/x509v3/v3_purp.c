@@ -368,9 +368,6 @@ static void x509v3_cache_extensions(X509 *x)
 #ifndef OPENSSL_NO_SHA
 	X509_digest(x, EVP_sha1(), x->sha1_hash, NULL);
 #endif
-	/* Does subject name match issuer ? */
-	if(!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)))
-			 x->ex_flags |= EXFLAG_SI;
 	/* V1 should mean no extensions ... */
 	if(!X509_get_version(x)) x->ex_flags |= EXFLAG_V1;
 	/* Handle basic constraints */
@@ -464,6 +461,14 @@ static void x509v3_cache_extensions(X509 *x)
 	}
 	x->skid =X509_get_ext_d2i(x, NID_subject_key_identifier, NULL, NULL);
 	x->akid =X509_get_ext_d2i(x, NID_authority_key_identifier, NULL, NULL);
+	/* Does subject name match issuer ? */
+	if(!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)))
+			{
+			x->ex_flags |= EXFLAG_SI;
+			/* If SKID matches AKID also indicate self signed */
+			if (X509_check_akid(x, x->akid) == X509_V_OK)
+				x->ex_flags |= EXFLAG_SS;
+			}
 	x->altname = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
 	x->nc = X509_get_ext_d2i(x, NID_name_constraints, &i, NULL);
 	if (!x->nc && (i != -1))
