@@ -2239,6 +2239,7 @@ int args_verify(char ***pargs, int *pargc,
 	int purpose = 0, depth = -1;
 	char **oldargs = *pargs;
 	char *arg = **pargs, *argn = (*pargs)[1];
+	const X509_VERIFY_PARAM *vpm = NULL;
 	if (!strcmp(arg, "-policy"))
 		{
 		if (!argn)
@@ -2272,6 +2273,21 @@ int args_verify(char ***pargs, int *pargc,
 				{
 				xptmp = X509_PURPOSE_get0(i);
 				purpose = X509_PURPOSE_get_id(xptmp);
+				}
+			}
+		(*pargs)++;
+		}
+	else if (strcmp(arg,"-verify_name") == 0)
+		{
+		if (!argn)
+			*badarg = 1;
+		else
+			{
+			vpm = X509_VERIFY_PARAM_lookup(argn);
+			if(!vpm)
+				{
+				BIO_printf(err, "unrecognized verify name\n");
+				*badarg = 1;
 				}
 			}
 		(*pargs)++;
@@ -2333,6 +2349,9 @@ int args_verify(char ***pargs, int *pargc,
 		*badarg = 1;
 		goto end;
 		}
+
+	if (vpm)
+		X509_VERIFY_PARAM_set1(*pm, vpm);
 
 	if (otmp)
 		X509_VERIFY_PARAM_add0_policy(*pm, otmp);
