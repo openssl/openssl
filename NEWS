@@ -7,7 +7,6 @@
 
   Major changes between OpenSSL 0.9.8l and OpenSSL 1.0:
 
-      o Support for RFC5746 TLS renegotiation extension.
       o RFC3280 path validation: sufficient to process PKITS tests.
       o Integrated support for PVK files and keyblobs.
       o Change default private key format to PKCS#8.
@@ -28,6 +27,22 @@
       o dsa-with-SHA224 and dsa-with-SHA256 signature types.
       o Opaque PRF Input TLS extension support.
       o Updated time routines to avoid OS limitations.
+
+  Major changes between OpenSSL 0.9.8l and OpenSSL 0.9.8m:
+
+      o Cipher definition fixes.
+      o Workaround for slow RAND_poll() on some WIN32 versions.
+      o Remove MD2 from algorithm tables.
+      o SPKAC handling fixes.
+      o Support for RFC5746 TLS renegotiation extension.
+      o Compression memory leak fixed.
+      o Compression session resumption fixed.
+      o Ticket and SNI coexistence fixes.
+      o Many fixes to DTLS handling. 
+
+  Major changes between OpenSSL 0.9.8k and OpenSSL 0.9.8l:
+
+      o Temporary work around for CVE-2009-3555: disable renegotiation.
 
   Major changes between OpenSSL 0.9.8j and OpenSSL 0.9.8k:
 
