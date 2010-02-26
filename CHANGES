@@ -65,7 +65,7 @@
      whose return value is often ignored. 
      [Steve Henson]
 
- Changes between 0.9.8m (?) and 1.0.0  [xx XXX xxxx]
+ Changes between 0.9.8m and 1.0.0  [25 Feb 2010]
 
   *) Add "missing" function EVP_CIPHER_CTX_copy(). This copies a cipher
      context. The operation can be customised via the ctrl mechanism in
