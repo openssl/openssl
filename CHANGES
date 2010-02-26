@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8m and 0.9.8n [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8l and 0.9.8m [25 Feb 2010]
 
   *) Always check bn_wexpend() return values for failure.  (CVE-2009-3245)
