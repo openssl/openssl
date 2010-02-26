@@ -843,7 +843,7 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
 
- Changes between 0.9.8l and 0.9.8m  [xx XXX xxxx]
+ Changes between 0.9.8l and 0.9.8m  [25 Feb 2010]
 
   *) Fix X509_STORE locking: Every 'objs' access requires a lock (to
      accommodate for stack sorting, always a write lock!).
