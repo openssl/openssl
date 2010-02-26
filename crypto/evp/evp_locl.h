@@ -127,9 +127,9 @@ BLOCK_CIPHER_def1(cname, cbc, cbc, CBC, kstruct, nid, block_size, key_len, \
 #define BLOCK_CIPHER_def_cfb(cname, kstruct, nid, key_len, \
 			     iv_len, cbits, flags, init_key, cleanup, \
 			     set_asn1, get_asn1, ctrl) \
-BLOCK_CIPHER_def1(cname, cfb##cbits, cfb##cbits, CFB, kstruct, nid, \
-			(cbits + 7)/8, key_len, iv_len, \
-		flags, init_key, cleanup, set_asn1, get_asn1, ctrl)
+BLOCK_CIPHER_def1(cname, cfb##cbits, cfb##cbits, CFB, kstruct, nid, 1, \
+		  key_len, iv_len, flags, init_key, cleanup, set_asn1, \
+		  get_asn1, ctrl)
 
 #define BLOCK_CIPHER_def_ofb(cname, kstruct, nid, key_len, \
 			     iv_len, cbits, flags, init_key, cleanup, \
