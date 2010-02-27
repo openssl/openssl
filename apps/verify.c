@@ -350,6 +350,9 @@ static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx)
 			case X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION:
 			ok = 1;
 
+			case X509_V_ERR_KEYUSAGE_NO_CERTSIGN:
+			ok = 1;
+
 			}
 
 		return ok;
