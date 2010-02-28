@@ -337,7 +337,10 @@ X) -> 0x%08X\n",
 				t2 -= d1;
 				}
 #else /* !BN_LLONG */
-			BN_ULONG t2l,t2h,ql,qh;
+			BN_ULONG t2l,t2h;
+#if !defined(BN_UMULT_LOHI) && !defined(BN_UMULT_HIGH)
+			BN_ULONG ql,qh;
+#endif
 
 			q=bn_div_words(n0,n1,d0);
 #ifdef BN_DEBUG_LEVITTE
@@ -561,7 +564,10 @@ X) -> 0x%08X\n",
 				t2 -= d1;
 				}
 #else /* !BN_LLONG */
-			BN_ULONG t2l,t2h,ql,qh;
+			BN_ULONG t2l,t2h;
+#if !defined(BN_UMULT_LOHI) && !defined(BN_UMULT_HIGH)
+			BN_ULONG ql,qh;
+#endif
 
 			q=bn_div_words(n0,n1,d0);
 #ifdef BN_DEBUG_LEVITTE
