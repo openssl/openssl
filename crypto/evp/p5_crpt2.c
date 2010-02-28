@@ -235,7 +235,7 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 	const unsigned char *pbuf;
 	int saltlen, iter, plen;
 	int rv = 0;
-	unsigned int keylen;
+	unsigned int keylen = 0;
 	int prf_nid, hmac_md_nid;
 	PBKDF2PARAM *kdf = NULL;
 	const EVP_MD *prfmd;
