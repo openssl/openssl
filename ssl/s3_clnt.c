@@ -982,7 +982,7 @@ int ssl3_get_server_certificate(SSL *s)
 	if (!ok) return((int)n);
 
 	if ((s->s3->tmp.message_type == SSL3_MT_SERVER_KEY_EXCHANGE) ||
-		((s->s3->tmp.new_cipher->algorithms & SSL_aKRB5) && 
+		((s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5) && 
 		(s->s3->tmp.message_type == SSL3_MT_SERVER_DONE)))
 		{
 		s->s3->tmp.reuse_message=1;
