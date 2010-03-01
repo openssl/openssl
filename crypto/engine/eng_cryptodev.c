@@ -755,10 +755,18 @@ cryptodev_bn_mod_exp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 		goto err;
 	kop.crk_iparams = 3;
 
-	if (cryptodev_asym(&kop, BN_num_bytes(m), r, 0, NULL) == -1) {
+	if (cryptodev_asym(&kop, BN_num_bytes(m), r, 0, NULL)) {
+		printf("OCF asym process failed, Running in software\n");
+		const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+		ret = meth->bn_mod_exp(r, a, p, m, ctx, in_mont);
+
+	} else if (ECANCELED == kop.crk_status) {
+		printf("OCF hardware operation cancelled. Running in Software\n");
 		const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
 		ret = meth->bn_mod_exp(r, a, p, m, ctx, in_mont);
 	}
+	/* else cryptodev operation worked ok ==> ret = 1*/
+
 err:
 	zapparams(&kop);
 	return (ret);
@@ -801,10 +809,18 @@ cryptodev_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 		goto err;
 	kop.crk_iparams = 6;
 
-	if (cryptodev_asym(&kop, BN_num_bytes(rsa->n), r0, 0, NULL) == -1) {
+	if (cryptodev_asym(&kop, BN_num_bytes(rsa->n), r0, 0, NULL)) {
+		printf("OCF asym process failed, running in Software\n");
+		const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
+		ret = (*meth->rsa_mod_exp)(r0, I, rsa, ctx);
+
+	} else if (ECANCELED == kop.crk_status) {
+		printf("OCF hardware operation cancelled. Running in Software\n");
 		const RSA_METHOD *meth = RSA_PKCS1_SSLeay();
 		ret = (*meth->rsa_mod_exp)(r0, I, rsa, ctx);
 	}
+	/* else cryptodev operation worked ok ==> ret = 1*/
+
 err:
 	zapparams(&kop);
 	return (ret);
@@ -940,7 +956,8 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
 	kop.crk_iparams = 7;
 
 	if (cryptodev_asym(&kop, 0, NULL, 0, NULL) == 0) {
-		dsaret = kop.crk_status;
+/*OCF success value is 0, if not zero, change dsaret to fail*/
+		if(0 != kop.crk_status) dsaret  = 0;
 	} else {
 		const DSA_METHOD *meth = DSA_OpenSSL();
 
