@@ -574,7 +574,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 		return 0;
 		}
 #ifndef OPENSSL_NO_ENGINE
-	/* Make sure it's safe to copy a digest context using an ENGINE */
+	/* Make sure it's safe to copy a cipher context using an ENGINE */
 	if (in->engine && !ENGINE_init(in->engine))
 		{
 		EVPerr(EVP_F_EVP_CIPHER_CTX_COPY,ERR_R_ENGINE_LIB);
