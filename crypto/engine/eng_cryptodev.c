@@ -130,7 +130,7 @@ static int cryptodev_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
 static int cryptodev_dh_compute_key(unsigned char *key,
     const BIGNUM *pub_key, DH *dh);
 static int cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p,
-    void (*f)());
+    void (*f)(void));
 void ENGINE_load_cryptodev(void);
 
 static const ENGINE_CMD_DEFN cryptodev_defns[] = {
@@ -1294,7 +1294,7 @@ static DH_METHOD cryptodev_dh = {
  * but I expect we'll want some options soon.
  */
 static int
-cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
+cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
 {
 #ifdef HAVE_SYSLOG_R
 	struct syslog_data sd = SYSLOG_DATA_INIT;
