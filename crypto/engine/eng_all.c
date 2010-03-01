@@ -104,7 +104,7 @@ void ENGINE_load_builtin_engines(void)
 #endif
 #endif
 #ifndef OPENSSL_NO_HW
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
 	ENGINE_load_cryptodev();
 #endif
 #if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
