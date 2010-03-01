@@ -55,6 +55,10 @@ ENGINE_load_cryptodev(void)
  
 #include <sys/types.h>
 #include <crypto/cryptodev.h>
+#include <crypto/dh/dh.h>
+#include <crypto/dsa/dsa.h>
+#include <crypto/err/err.h>
+#include <crypto/rsa/rsa.h>
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <stdio.h>
@@ -124,7 +128,7 @@ static int cryptodev_mod_exp_dh(const DH *dh, BIGNUM *r, const BIGNUM *a,
 static int cryptodev_dh_compute_key(unsigned char *key,
     const BIGNUM *pub_key, DH *dh);
 static int cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p,
-    void (*f)(void));
+    void (*f)());
 void ENGINE_load_cryptodev(void);
 
 static const ENGINE_CMD_DEFN cryptodev_defns[] = {
@@ -149,7 +153,7 @@ static struct {
 	{ 0,				NID_undef,		0,	 0, },
 };
 
-#if 0  /* not (yet?) used */
+#if 0
 static struct {
 	int	id;
 	int	nid;
@@ -164,7 +168,7 @@ static struct {
 	{ CRYPTO_SHA1,			NID_sha1,		20},
 	{ 0,				NID_undef,		0},
 };
-#endif  /* 0 */
+#endif
 
 /*
  * Return a fd if /dev/crypto seems usable, 0 otherwise.
@@ -1288,7 +1292,7 @@ static DH_METHOD cryptodev_dh = {
  * but I expect we'll want some options soon.
  */
 static int
-cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void))
+cryptodev_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)())
 {
 #ifdef HAVE_SYSLOG_R
 	struct syslog_data sd = SYSLOG_DATA_INIT;
