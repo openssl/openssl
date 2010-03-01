@@ -90,7 +90,9 @@ static int get_asym_dev_crypto(void);
 static int open_dev_crypto(void);
 static int get_dev_crypto(void);
 static int get_cryptodev_ciphers(const int **cnids);
-/*static int get_cryptodev_digests(const int **cnids);*/
+#ifdef USE_CRYPTODEV_DIGESTS
+static int get_cryptodev_digests(const int **cnids);
+#endif
 static int cryptodev_usable_ciphers(const int **nids);
 static int cryptodev_usable_digests(const int **nids);
 static int cryptodev_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
@@ -153,7 +155,7 @@ static struct {
 	{ 0,				NID_undef,		0,	 0, },
 };
 
-#if 0
+#ifdef USE_CRYPTODEV_DIGESTS
 static struct {
 	int	id;
 	int	nid;
@@ -259,13 +261,13 @@ get_cryptodev_ciphers(const int **cnids)
 	return (count);
 }
 
+#ifdef USE_CRYPTODEV_DIGESTS
 /*
  * Find out what digests /dev/crypto will let us have a session for.
  * XXX note, that some of these openssl doesn't deal with yet!
  * returning them here is harmless, as long as we return NULL
  * when asked for a handler in the cryptodev_engine_digests routine
  */
-#if 0  /* not (yet?) used */
 static int
 get_cryptodev_digests(const int **cnids)
 {
