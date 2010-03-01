@@ -265,8 +265,11 @@ bad:
 
 	BIO_printf(bio_err,"Generating RSA private key, %d bit long modulus\n",
 		num);
-
+#ifdef OPENSSL_NO_ENGINE
 	rsa = RSA_new();
+#else
+	rsa = RSA_new_method(e);
+#endif
 	if (!rsa)
 		goto err;
 
