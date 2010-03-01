@@ -68,7 +68,7 @@ void ENGINE_load_builtin_engines(void)
 	 * *no* builtin implementations). */
 	ENGINE_load_openssl();
 #endif
-#if defined(__OpenBSD__) || defined(__FreeBSD__)
+#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
 	ENGINE_load_cryptodev();
 #endif
 #if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_AESNI)
