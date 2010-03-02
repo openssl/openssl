@@ -59,7 +59,9 @@ void OPENSSL_cpuid_setup(void)
 	sigfillset(&all_masked);
 	sigdelset(&all_masked,SIGILL);
 	sigdelset(&all_masked,SIGTRAP);
+#ifdef SIGEMT
 	sigdelset(&all_masked,SIGEMT);
+#endif
 	sigdelset(&all_masked,SIGFPE);
 	sigdelset(&all_masked,SIGBUS);
 	sigdelset(&all_masked,SIGSEGV);
