@@ -1802,6 +1802,9 @@ kssl_ctx_show(KSSL_CTX *kssl_ctx)
                                      kssl_ctx->service_name ? kssl_ctx->service_name: KRB5SVC,
                                      KRB5_NT_SRV_HST, &princ);
 
+    if (krb5rc)
+	goto exit;
+
     krb5rc = krb5_kt_get_entry(krb5context, krb5keytab, 
                                 princ,
                                 0 /* IGNORE_VNO */,

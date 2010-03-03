@@ -4,7 +4,9 @@
 
  Changes between 0.9.8m and 0.9.8n [xx XXX xxxx]
 
-  *)
+  *) Fix for CVE-2010-0433 where some kerberos enabled versions of OpenSSL 
+     could be crashed if the relevant tables were not present (e.g. chrooted).
+     [Tomas Hoger <thoger@redhat.com>]
 
  Changes between 0.9.8l and 0.9.8m [25 Feb 2010]
 
