@@ -128,6 +128,7 @@ void (*free_section)(void *db, STACK_OF(CONF_VALUE) *section);
 /* Context specific info */
 struct v3_ext_ctx {
 #define CTX_TEST 0x1
+#define X509V3_CTX_REPLACE 0x2
 int flags;
 X509 *issuer_cert;
 X509 *subject_cert;

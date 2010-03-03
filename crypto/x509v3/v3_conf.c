@@ -322,10 +322,10 @@ static void delete_ext(STACK_OF(X509_EXTENSION) *sk, X509_EXTENSION *dext)
 	int idx;
 	ASN1_OBJECT *obj;
 	obj = X509_EXTENSION_get_object(dext);
-	while ((idx = X509_EXTENSION_get_by_OBJ(sk, obj, -1)) >= 0)
+	while ((idx = X509v3_get_ext_by_OBJ(sk, obj, -1)) >= 0)
 		{
-		X509_EXTENSION *tmpext= X509_get_ext(sk, idx);
-		X509_del_ext(sk, idx);
+		X509_EXTENSION *tmpext = X509v3_get_ext(sk, idx);
+		X509v3_delete_ext(sk, idx);
 		X509_EXTENSION_free(tmpext);
 		}
 	}
@@ -348,7 +348,7 @@ int X509V3_EXT_add_nconf_sk(CONF *conf, X509V3_CTX *ctx, char *section,
 		val = sk_CONF_VALUE_value(nval, i);
 		if (!(ext = X509V3_EXT_nconf(conf, ctx, val->name, val->value)))
 								return 0;
-		if (ctx->flags == X509V3_CTX_FLAG_REPLACE)	
+		if (ctx->flags == X509V3_CTX_REPLACE)	
 			delete_ext(*sk, ext);
 		if (sk) X509v3_add_ext(sk, ext, -1);
 		X509_EXTENSION_free(ext);
