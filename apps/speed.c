@@ -184,12 +184,18 @@
 #include <openssl/ecdh.h>
 #endif
 
-#if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
-# define NO_FORK 1
-#elif HAVE_FORK
-# undef NO_FORK
+#ifndef HAVE_FORK
+# if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
+#  define HAVE_FORK 0
+# else
+#  define HAVE_FORK 1
+# endif
+#endif
+
+#if HAVE_FORK
+#undef NO_FORK
 #else
-# define NO_FORK 1
+#define NO_FORK
 #endif
 
 #undef BUFSIZE
