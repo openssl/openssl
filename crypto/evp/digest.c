@@ -235,6 +235,7 @@ static int do_evp_md_engine(EVP_MD_CTX *ctx, const EVP_MD **ptype, ENGINE *impl)
 				{
 				/* Same comment from evp_enc.c */
 				EVPerr(EVP_F_DO_EVP_MD_ENGINE,EVP_R_INITIALIZATION_ERROR);
+				ENGINE_finish(impl);
 				return 0;
 				}
 			/* We'll use the ENGINE's private digest definition */
