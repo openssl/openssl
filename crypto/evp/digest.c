@@ -175,6 +175,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 				{
 				/* Same comment from evp_enc.c */
 				EVPerr(EVP_F_EVP_DIGESTINIT_EX,EVP_R_INITIALIZATION_ERROR);
+				ENGINE_finish(impl);
 				return 0;
 				}
 			/* We'll use the ENGINE's private digest definition */
