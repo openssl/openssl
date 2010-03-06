@@ -300,6 +300,16 @@ const RSA_METHOD *RSA_null_method(void);
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPublicKey)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPrivateKey)
 
+typedef struct rsassaPssParams_st
+	{
+	X509_ALGOR *hashAlgorithm;
+	X509_ALGOR *maskGenAlgorithm;
+	ASN1_INTEGER *saltLength;
+	ASN1_INTEGER *trailerField;
+	} RSASSA_PSS_PARAMS;
+
+DECLARE_ASN1_FUNCTIONS(RSASSA_PSS_PARAMS)
+
 #ifndef OPENSSL_NO_FP_API
 int	RSA_print_fp(FILE *fp, const RSA *r,int offset);
 #endif

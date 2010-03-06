@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 911
-#define NUM_SN 904
-#define NUM_LN 904
-#define NUM_OBJ 854
+#define NUM_NID 913
+#define NUM_SN 906
+#define NUM_LN 906
+#define NUM_OBJ 856
 
-static const unsigned char lvalues[5953]={
+static const unsigned char lvalues[5971]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -922,6 +922,8 @@ static const unsigned char lvalues[5953]={
 0x2A,0x83,0x08,0x8C,0x9A,0x4B,0x3D,0x01,0x01,0x03,0x03,/* [5926] OBJ_id_camellia192_wrap */
 0x2A,0x83,0x08,0x8C,0x9A,0x4B,0x3D,0x01,0x01,0x03,0x04,/* [5937] OBJ_id_camellia256_wrap */
 0x55,0x1D,0x25,0x00,                         /* [5948] OBJ_anyExtendedKeyUsage */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x08,/* [5952] OBJ_mgf1 */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0A,/* [5961] OBJ_rsassaPss */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2391,6 +2393,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	11,&(lvalues[5937]),0},
 {"anyExtendedKeyUsage","Any Extended Key Usage",
 	NID_anyExtendedKeyUsage,4,&(lvalues[5948]),0},
+{"MGF1","mgf1",NID_mgf1,9,&(lvalues[5952]),0},
+{"RSASSA-PSS","rsassaPss",NID_rsassaPss,9,&(lvalues[5961]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2495,6 +2499,7 @@ static const unsigned int sn_objs[NUM_SN]={
  4,	/* "MD5" */
 114,	/* "MD5-SHA1" */
 95,	/* "MDC2" */
+911,	/* "MGF1" */
 388,	/* "Mail" */
 393,	/* "NULL" */
 404,	/* "NULL" */
@@ -2551,6 +2556,7 @@ static const unsigned int sn_objs[NUM_SN]={
 668,	/* "RSA-SHA256" */
 669,	/* "RSA-SHA384" */
 670,	/* "RSA-SHA512" */
+912,	/* "RSASSA-PSS" */
 777,	/* "SEED-CBC" */
 779,	/* "SEED-CFB" */
 776,	/* "SEED-ECB" */
@@ -3882,6 +3888,7 @@ static const unsigned int ln_objs[NUM_LN]={
 602,	/* "merchant initiated auth" */
 514,	/* "message extensions" */
 51,	/* "messageDigest" */
+911,	/* "mgf1" */
 506,	/* "mime-mhs-bodies" */
 505,	/* "mime-mhs-headings" */
 488,	/* "mobileTelephoneNumber" */
@@ -3981,6 +3988,7 @@ static const unsigned int ln_objs[NUM_LN]={
  6,	/* "rsaEncryption" */
 644,	/* "rsaOAEPEncryptionSET" */
 377,	/* "rsaSignature" */
+912,	/* "rsassaPss" */
 124,	/* "run length compression" */
 482,	/* "sOARecord" */
 155,	/* "safeContentsBag" */
@@ -4797,6 +4805,8 @@ static const unsigned int obj_objs[NUM_OBJ]={
  8,	/* OBJ_md5WithRSAEncryption         1 2 840 113549 1 1 4 */
 65,	/* OBJ_sha1WithRSAEncryption        1 2 840 113549 1 1 5 */
 644,	/* OBJ_rsaOAEPEncryptionSET         1 2 840 113549 1 1 6 */
+911,	/* OBJ_mgf1                         1 2 840 113549 1 1 8 */
+912,	/* OBJ_rsassaPss                    1 2 840 113549 1 1 10 */
 668,	/* OBJ_sha256WithRSAEncryption      1 2 840 113549 1 1 11 */
 669,	/* OBJ_sha384WithRSAEncryption      1 2 840 113549 1 1 12 */
 670,	/* OBJ_sha512WithRSAEncryption      1 2 840 113549 1 1 13 */

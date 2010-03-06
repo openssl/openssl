@@ -580,6 +580,16 @@
 #define NID_sha1WithRSAEncryption		65
 #define OBJ_sha1WithRSAEncryption		OBJ_pkcs1,5L
 
+#define SN_mgf1		"MGF1"
+#define LN_mgf1		"mgf1"
+#define NID_mgf1		911
+#define OBJ_mgf1		OBJ_pkcs1,8L
+
+#define SN_rsassaPss		"RSASSA-PSS"
+#define LN_rsassaPss		"rsassaPss"
+#define NID_rsassaPss		912
+#define OBJ_rsassaPss		OBJ_pkcs1,10L
+
 #define SN_sha256WithRSAEncryption		"RSA-SHA256"
 #define LN_sha256WithRSAEncryption		"sha256WithRSAEncryption"
 #define NID_sha256WithRSAEncryption		668

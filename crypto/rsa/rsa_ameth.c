@@ -265,6 +265,114 @@ static int rsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
 	return do_rsa_print(bp, pkey->pkey.rsa, indent, 1);
 	}
 
+static int rsa_pss_param_print(BIO *bp, RSASSA_PSS_PARAMS *pss, int indent)
+	{
+	int rv = 0;
+	X509_ALGOR *maskHash = NULL;
+	if (!pss)
+		{
+		if (BIO_puts(bp, " (INVALID PSS PARAMETERS)\n") <= 0)
+			return 0;
+		}
+	if (BIO_puts(bp, "\n") <= 0)
+		goto err;
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+	if (BIO_puts(bp, "Hash Algorithm: ") <= 0)
+		goto err;
+
+	if (pss->hashAlgorithm)
+		{
+		if (i2a_ASN1_OBJECT(bp, pss->hashAlgorithm->algorithm) <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "sha1 (default)") <= 0)
+		goto err;
+
+	if (BIO_puts(bp, "\n") <= 0)
+		goto err;
+
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+
+	if (BIO_puts(bp, "Mask Algorithm: ") <= 0)
+			goto err;
+	if (pss->maskGenAlgorithm)
+		{
+		ASN1_TYPE *param = pss->maskGenAlgorithm->parameter;
+		if (param->type == V_ASN1_SEQUENCE)
+			{
+			const unsigned char *p = param->value.sequence->data;
+			int plen = param->value.sequence->length;
+			maskHash = d2i_X509_ALGOR(NULL, &p, plen);
+			}
+		if (i2a_ASN1_OBJECT(bp, pss->maskGenAlgorithm->algorithm) <= 0)
+			goto err;
+		if (BIO_puts(bp, " with ") <= 0)
+			goto err;
+		if (i2a_ASN1_OBJECT(bp, maskHash->algorithm) <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "mgf1 with sha1 (default)") <= 0)
+		goto err;
+	BIO_puts(bp, "\n");
+
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+	if (BIO_puts(bp, "Salt Length: ") <= 0)
+			goto err;
+	if (pss->saltLength)
+		{
+		if (i2a_ASN1_INTEGER(bp, pss->saltLength) <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "20 (default)") <= 0)
+		goto err;
+	BIO_puts(bp, "\n");
+
+	if (!BIO_indent(bp, indent, 128))
+		goto err;
+	if (BIO_puts(bp, "Trailer Field: ") <= 0)
+			goto err;
+	if (pss->trailerField)
+		{
+		if (i2a_ASN1_INTEGER(bp, pss->trailerField) <= 0)
+			goto err;
+		}
+	else if (BIO_puts(bp, "0xbc (default)") <= 0)
+		goto err;
+	BIO_puts(bp, "\n");
+	
+	rv = 1;
+
+	err:
+	if (maskHash)
+		X509_ALGOR_free(maskHash);
+	RSASSA_PSS_PARAMS_free(pss);
+	return rv;
+
+	}
+
+static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
+					const ASN1_STRING *sig,
+					int indent, ASN1_PCTX *pctx)
+	{
+	if (OBJ_obj2nid(sigalg->algorithm) == NID_rsassaPss)
+		{
+		RSASSA_PSS_PARAMS *pss = NULL;
+		ASN1_TYPE *param = sigalg->parameter;
+		if (param && param->type == V_ASN1_SEQUENCE)
+			{
+			const unsigned char *p = param->value.sequence->data;
+			int plen = param->value.sequence->length;
+			pss = d2i_RSASSA_PSS_PARAMS(NULL, &p, plen);
+			}
+		if (!rsa_pss_param_print(bp, pss, indent))
+			return 0;
+		}
+
+	return X509_signature_dump(bp, sig, indent);
+	}
 
 static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	{
@@ -333,8 +441,9 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] =
 		int_rsa_size,
 		rsa_bits,
 
-		0,0,0,0,0,0,0,
+		0,0,0,0,0,0,
 
+		rsa_sig_print,
 		int_rsa_free,
 		rsa_pkey_ctrl,
 		old_rsa_priv_decode,
