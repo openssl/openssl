@@ -102,6 +102,9 @@ struct evp_pkey_asn1_method_st
 	int (*param_cmp)(const EVP_PKEY *a, const EVP_PKEY *b);
 	int (*param_print)(BIO *out, const EVP_PKEY *pkey, int indent,
 							ASN1_PCTX *pctx);
+	int (*sig_print)(BIO *out,
+			 const X509_ALGOR *sigalg, const ASN1_STRING *sig,
+					 int indent, ASN1_PCTX *pctx);
 
 	void (*pkey_free)(EVP_PKEY *pkey);
 	int (*pkey_ctrl)(EVP_PKEY *pkey, int op, long arg1, void *arg2);

@@ -235,7 +235,7 @@ typedef struct asn1_object_st
  */
 #define ASN1_STRING_FLAG_MSTRING 0x040 
 /* This is the base type that holds just about everything :-) */
-typedef struct asn1_string_st
+struct asn1_string_st
 	{
 	int length;
 	int type;
@@ -245,7 +245,7 @@ typedef struct asn1_string_st
 	 * input data has a non-zero 'unused bits' value, it will be
 	 * handled correctly */
 	long flags;
-	} ASN1_STRING;
+	};
 
 /* ASN1_ENCODING structure: this is used to save the received
  * encoding of an ASN1 type. This is useful to get round

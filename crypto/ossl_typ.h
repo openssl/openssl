@@ -91,6 +91,7 @@ typedef struct asn1_string_st ASN1_TIME;
 typedef struct asn1_string_st ASN1_GENERALIZEDTIME;
 typedef struct asn1_string_st ASN1_VISIBLESTRING;
 typedef struct asn1_string_st ASN1_UTF8STRING;
+typedef struct asn1_string_st ASN1_STRING;
 typedef int ASN1_BOOLEAN;
 typedef int ASN1_NULL;
 #endif

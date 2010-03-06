@@ -72,6 +72,7 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+#include "asn1_locl.h"
 
 #ifndef OPENSSL_NO_FP_API
 int X509_print_fp(FILE *fp, X509 *x)
@@ -286,24 +287,46 @@ err:
 	return(0);
 	}
 
-int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
+int X509_signature_dump(BIO *bp, const ASN1_STRING *sig, int indent)
 {
-	unsigned char *s;
+	const unsigned char *s;
 	int i, n;
-	if (BIO_puts(bp,"    Signature Algorithm: ") <= 0) return 0;
-	if (i2a_ASN1_OBJECT(bp, sigalg->algorithm) <= 0) return 0;
 
 	n=sig->length;
 	s=sig->data;
 	for (i=0; i<n; i++)
 		{
 		if ((i%18) == 0)
-			if (BIO_write(bp,"\n        ",9) <= 0) return 0;
+			if (BIO_write(bp,"\n",1) <= 0) return 0;
+			if (BIO_indent(bp, indent, indent) <= 0) return 0;
 			if (BIO_printf(bp,"%02x%s",s[i],
 				((i+1) == n)?"":":") <= 0) return 0;
 		}
 	if (BIO_write(bp,"\n",1) != 1) return 0;
+
 	return 1;
+}
+
+int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
+{
+	int sig_nid;
+	if (BIO_puts(bp,"    Signature Algorithm: ") <= 0) return 0;
+	if (i2a_ASN1_OBJECT(bp, sigalg->algorithm) <= 0) return 0;
+
+	sig_nid = OBJ_obj2nid(sigalg->algorithm);
+	if (sig_nid != NID_undef)
+		{
+		int pkey_nid, dig_nid;
+		const EVP_PKEY_ASN1_METHOD *ameth;
+		if (OBJ_find_sigid_algs(sig_nid, &dig_nid, &pkey_nid))
+			{
+			ameth = EVP_PKEY_asn1_find(NULL, pkey_nid);
+			if (ameth && ameth->sig_print)
+				return ameth->sig_print(bp, sigalg, sig, 9, 0);
+			}
+		}
+
+	return X509_signature_dump(bp, sig, 9);
 }
 
 int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)

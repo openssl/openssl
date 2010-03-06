@@ -656,6 +656,7 @@ int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey);
 
 int NETSCAPE_SPKI_print(BIO *out, NETSCAPE_SPKI *spki);
 
+int X509_signature_dump(BIO *bp,const ASN1_STRING *sig, int indent);
 int X509_signature_print(BIO *bp,X509_ALGOR *alg, ASN1_STRING *sig);
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);

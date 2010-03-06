@@ -333,7 +333,7 @@ const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[] =
 		int_rsa_size,
 		rsa_bits,
 
-		0,0,0,0,0,0,
+		0,0,0,0,0,0,0,
 
 		int_rsa_free,
 		rsa_pkey_ctrl,
