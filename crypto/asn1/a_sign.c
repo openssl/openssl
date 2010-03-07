@@ -219,7 +219,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	{
 	EVP_MD_CTX ctx;
 	unsigned char *buf_in=NULL,*buf_out=NULL;
-	int inl=0,outl=0,outll=0;
+	size_t inl=0,outl=0,outll=0;
 	int signid, paramtype;
 
 	if (type == NULL)
@@ -270,10 +270,9 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		goto err;
 		}
 
-	if (!EVP_SignInit_ex(&ctx,type, NULL)
-		|| !EVP_SignUpdate(&ctx,(unsigned char *)buf_in,inl)
-		|| !EVP_SignFinal(&ctx,(unsigned char *)buf_out,
-			(unsigned int *)&outl,pkey))
+	if (!EVP_DigestVerifyInit(&ctx, NULL, type, NULL, pkey)
+		|| !EVP_DigestSignUpdate(&ctx, buf_in, inl)
+		|| !EVP_DigestSignFinal(&ctx, buf_out, &outl))
 		{
 		outl=0;
 		ASN1err(ASN1_F_ASN1_ITEM_SIGN,ERR_R_EVP_LIB);

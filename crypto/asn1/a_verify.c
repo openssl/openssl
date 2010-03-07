@@ -163,7 +163,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 		goto err;
 		}
 
-	if (!EVP_VerifyInit_ex(&ctx,type, NULL))
+	if (!EVP_DigestVerifyInit(&ctx, NULL, type, NULL, pkey))
 		{
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_EVP_LIB);
 		ret=0;
@@ -178,7 +178,7 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 		goto err;
 		}
 
-	if (!EVP_VerifyUpdate(&ctx,(unsigned char *)buf_in,inl))
+	if (!EVP_DigestVerifyUpdate(&ctx,buf_in,inl))
 		{
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_EVP_LIB);
 		ret=0;
@@ -188,8 +188,8 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a, ASN1_BIT_STRING *signat
 	OPENSSL_cleanse(buf_in,(unsigned int)inl);
 	OPENSSL_free(buf_in);
 
-	if (EVP_VerifyFinal(&ctx,(unsigned char *)signature->data,
-			(unsigned int)signature->length,pkey) <= 0)
+	if (EVP_DigestVerifyFinal(&ctx,signature->data,
+			(size_t)signature->length) <= 0)
 		{
 		ASN1err(ASN1_F_ASN1_ITEM_VERIFY,ERR_R_EVP_LIB);
 		ret=0;
