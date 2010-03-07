@@ -904,6 +904,7 @@ bad:
 			else if (text == i)
 				{
 				X509_print_ex(out,x,nmflag, certflag);
+ERR_print_errors_fp(stderr);
 				}
 			else if (startdate == i)
 				{
