@@ -168,12 +168,16 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 
 	if(!(cflag & X509_FLAG_NO_SIGNAME))
 		{
+		if(X509_signature_print(bp, x->sig_alg, NULL) <= 0)
+			goto err;
+#if 0
 		if (BIO_printf(bp,"%8sSignature Algorithm: ","") <= 0) 
 			goto err;
 		if (i2a_ASN1_OBJECT(bp, ci->signature->algorithm) <= 0)
 			goto err;
 		if (BIO_puts(bp, "\n") <= 0)
 			goto err;
+#endif
 		}
 
 	if(!(cflag & X509_FLAG_NO_ISSUER))
@@ -327,8 +331,9 @@ int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
 				return ameth->sig_print(bp, sigalg, sig, 9, 0);
 			}
 		}
-
-	return X509_signature_dump(bp, sig, 9);
+	if (sig)
+		return X509_signature_dump(bp, sig, 9);
+	return 1;
 }
 
 int ASN1_STRING_print(BIO *bp, const ASN1_STRING *v)

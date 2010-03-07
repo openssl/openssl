@@ -400,8 +400,9 @@ static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 		if (!rv)
 			return 0;
 		}
-
-	return X509_signature_dump(bp, sig, indent);
+	if (sig)
+		return X509_signature_dump(bp, sig, indent);
+	return 1;
 	}
 
 static int rsa_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
