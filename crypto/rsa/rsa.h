@@ -241,6 +241,7 @@ struct rsa_st
 
 #define EVP_PKEY_CTRL_RSA_KEYGEN_BITS	(EVP_PKEY_ALG_CTRL + 3)
 #define EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP	(EVP_PKEY_ALG_CTRL + 4)
+#define EVP_PKEY_CTRL_MGF1_MD		(EVP_PKEY_ALG_CTRL + 5)
 
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2
@@ -300,15 +301,15 @@ const RSA_METHOD *RSA_null_method(void);
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPublicKey)
 DECLARE_ASN1_ENCODE_FUNCTIONS_const(RSA, RSAPrivateKey)
 
-typedef struct rsassaPssParams_st
+typedef struct rsa_pss_params_st
 	{
 	X509_ALGOR *hashAlgorithm;
 	X509_ALGOR *maskGenAlgorithm;
 	ASN1_INTEGER *saltLength;
 	ASN1_INTEGER *trailerField;
-	} RSASSA_PSS_PARAMS;
+	} RSA_PSS_PARAMS;
 
-DECLARE_ASN1_FUNCTIONS(RSASSA_PSS_PARAMS)
+DECLARE_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
 
 #ifndef OPENSSL_NO_FP_API
 int	RSA_print_fp(FILE *fp, const RSA *r,int offset);
