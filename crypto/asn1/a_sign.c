@@ -270,7 +270,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		goto err;
 		}
 
-	if (!EVP_DigestVerifyInit(&ctx, NULL, type, NULL, pkey)
+	if (!EVP_DigestSignInit(&ctx, NULL, type, NULL, pkey)
 		|| !EVP_DigestSignUpdate(&ctx, buf_in, inl)
 		|| !EVP_DigestSignFinal(&ctx, buf_out, &outl))
 		{
