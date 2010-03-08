@@ -559,7 +559,7 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 		m = OPENSSL_malloc(buf_len+10);
 		if (m == NULL)
 			{
-			DSAerr(DSA_F_DO_DSA_PRINT,ERR_R_MALLOC_FAILURE);
+			DSAerr(DSA_F_DSA_SIG_PRINT,ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
 

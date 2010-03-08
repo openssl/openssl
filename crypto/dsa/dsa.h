@@ -282,6 +282,7 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_DSA_SIGN					 106
 #define DSA_F_DSA_SIGN_SETUP				 107
 #define DSA_F_DSA_SIG_NEW				 109
+#define DSA_F_DSA_SIG_PRINT				 123
 #define DSA_F_DSA_VERIFY				 108
 #define DSA_F_I2D_DSA_SIG				 111
 #define DSA_F_OLD_DSA_PRIV_DECODE			 122
