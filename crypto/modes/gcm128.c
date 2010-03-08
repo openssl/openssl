@@ -120,6 +120,17 @@ typedef struct { u64 hi,lo; } u128;
 #define PACK(s) ((size_t)(s)<<(sizeof(size_t)*8-16))
 
 #if 0
+/*
+ * Under ideal conditions 8-bit version should be twice as fast as
+ * 4-bit one. But world is far from ideal. For gcc-generated x86 code,
+ * 8-bit was observed to run "only" ~50% faster. On x86_64 observed
+ * improvement was ~75%, much closer to optimal, but the fact of
+ * deviation means that references to pre-computed tables end up on
+ * critical path and as tables are pretty big, 4KB per key+1KB shared,
+ * execution time is sensitive to cache trashing. It's not actually
+ * proven, but 4-bit procedure is believed to provide adequate
+ * all-round performance...
+ */  
 static void gcm_init_8bit(u128 Htable[256], u64 H[2])
 {
 	int  i, j;
@@ -153,7 +164,7 @@ static void gcm_init_8bit(u128 Htable[256], u64 H[2])
 	}
 }
 
-static void gcm_mul_8bit(u64 Xi[2], u128 Htable[256])
+static void gcm_gmult_8bit(u64 Xi[2], u128 Htable[256])
 {
 	u128 Z = { 0, 0};
 	const u8 *xi = (const u8 *)Xi+15;
@@ -262,9 +273,12 @@ static void gcm_mul_8bit(u64 Xi[2], u128 Htable[256])
 }
 #endif
 
+#define _4BIT 1	/* change to 0 to switch to 1-bit multiplication */
+
+#if _4BIT
 static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 {
-	int  i, j;
+	int  i;
 	u128 V;
 
 	Htable[0].hi = 0;
@@ -286,34 +300,54 @@ static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 		Htable[i] = V;
 	}
 
+#if defined(OPENSSL_SMALL_FOOTPRINT)
 	for (i=2; i<16; i<<=1) {
-		u128 *Hi = Htable+i, H0 = *Hi;
-		for (j=1; j<i; ++j) {
-			Hi[j].hi = H0.hi^Htable[j].hi;
-			Hi[j].lo = H0.lo^Htable[j].lo;
+		u128 *Hi = Htable+i;
+		int   j;
+		for (V=*Hi, j=1; j<i; ++j) {
+			Hi[j].hi = V.hi^Htable[j].hi;
+			Hi[j].lo = V.lo^Htable[j].lo;
 		}
 	}
+#else
+	Htable[3].hi  = V.hi^Htable[2].hi, Htable[3].lo  = V.lo^Htable[2].lo;
+	V=Htable[4];
+	Htable[5].hi  = V.hi^Htable[1].hi, Htable[5].lo  = V.lo^Htable[1].lo;
+	Htable[6].hi  = V.hi^Htable[2].hi, Htable[6].lo  = V.lo^Htable[2].lo;
+	Htable[7].hi  = V.hi^Htable[3].hi, Htable[7].lo  = V.lo^Htable[3].lo;
+	V=Htable[8];
+	Htable[9].hi  = V.hi^Htable[1].hi, Htable[9].lo  = V.lo^Htable[1].lo;
+	Htable[10].hi = V.hi^Htable[2].hi, Htable[10].lo = V.lo^Htable[2].lo;
+	Htable[11].hi = V.hi^Htable[3].hi, Htable[11].lo = V.lo^Htable[3].lo;
+	Htable[12].hi = V.hi^Htable[4].hi, Htable[12].lo = V.lo^Htable[4].lo;
+	Htable[13].hi = V.hi^Htable[5].hi, Htable[13].lo = V.lo^Htable[5].lo;
+	Htable[14].hi = V.hi^Htable[6].hi, Htable[14].lo = V.lo^Htable[6].lo;
+	Htable[15].hi = V.hi^Htable[7].hi, Htable[15].lo = V.lo^Htable[7].lo;
+#endif
 }
 
-static void gcm_mul_4bit(u64 Xi[2], u128 Htable[16])
+#ifndef GMULT_ASM
+static const size_t rem_4bit[16] = {
+	PACK(0x0000), PACK(0x1C20), PACK(0x3840), PACK(0x2460),
+	PACK(0x7080), PACK(0x6CA0), PACK(0x48C0), PACK(0x54E0),
+	PACK(0xE100), PACK(0xFD20), PACK(0xD940), PACK(0xC560),
+	PACK(0x9180), PACK(0x8DA0), PACK(0xA9C0), PACK(0xB5E0) };
+
+static void gcm_gmult_4bit(u64 Xi[2], u128 Htable[16])
 {
-	u128 Z = { 0, 0};
-	const u8 *xi = (const u8 *)Xi+15;
-	size_t rem, nlo = *xi, nhi;
+	u128 Z;
+	int cnt = 15;
+	size_t rem, nlo, nhi;
 	const union { long one; char little; } is_endian = {1};
-	static const size_t rem_4bit[16] = {
-		PACK(0x0000), PACK(0x1C20), PACK(0x3840), PACK(0x2460),
-		PACK(0x7080), PACK(0x6CA0), PACK(0x48C0), PACK(0x54E0),
-		PACK(0xE100), PACK(0xFD20), PACK(0xD940), PACK(0xC560),
-		PACK(0x9180), PACK(0x8DA0), PACK(0xA9C0), PACK(0xB5E0) };
+
+	nlo  = ((const u8 *)Xi)[15];
+	nhi  = nlo>>4;
+	nlo &= 0xf;
+
+	Z.hi = Htable[nlo].hi;
+	Z.lo = Htable[nlo].lo;
 
 	while (1) {
-		nhi  = nlo>>4;
-		nlo &= 0xf;
-
-		Z.hi ^= Htable[nlo].hi;
-		Z.lo ^= Htable[nlo].lo;
-
 		rem  = (size_t)Z.lo&0xf;
 		Z.lo = (Z.hi<<60)|(Z.lo>>4);
 		Z.hi = (Z.hi>>4);
@@ -325,9 +359,11 @@ static void gcm_mul_4bit(u64 Xi[2], u128 Htable[16])
 		Z.hi ^= Htable[nhi].hi;
 		Z.lo ^= Htable[nhi].lo;
 
-		if ((u8 *)Xi==xi)	break;
+		if (--cnt<0)		break;
 
-		nlo = *(--xi);
+		nlo  = ((const u8 *)Xi)[cnt];
+		nhi  = nlo>>4;
+		nlo &= 0xf;
 
 		rem  = (size_t)Z.lo&0xf;
 		Z.lo = (Z.hi<<60)|(Z.lo>>4);
@@ -336,6 +372,9 @@ static void gcm_mul_4bit(u64 Xi[2], u128 Htable[16])
 			Z.hi ^= rem_4bit[rem];
 		else
 			Z.hi ^= (u64)rem_4bit[rem]<<32;
+
+		Z.hi ^= Htable[nlo].hi;
+		Z.lo ^= Htable[nlo].lo;
 	}
 
 	if (is_endian.little) {
@@ -357,7 +396,93 @@ static void gcm_mul_4bit(u64 Xi[2], u128 Htable[16])
 	}
 }
 
-static void gcm_mul_1bit(u64 Xi[2],const u64 H[2])
+#if !defined(OPENSSL_SMALL_FOOTPRINT)
+/*
+ * Streamed gcm_mult_4bit, see CRYPTO_gcm128_[en|de]crypt for
+ * details... It doesn't give any performance improvement, at least
+ * not on x86[_64]. It's here mostly as a placeholder for possible
+ * future non-trivial optimization[s]...
+ */
+static void gcm_ghash_4bit(const u8 *inp,size_t len,u64 Xi[2], u128 Htable[16])
+{
+    u128 Z;
+    int cnt;
+    size_t rem, nlo, nhi;
+    const union { long one; char little; } is_endian = {1};
+
+    do {
+	cnt  = 15;
+	nlo  = ((const u8 *)Xi)[15];
+	nlo ^= inp[15];
+	nhi  = nlo>>4;
+	nlo &= 0xf;
+
+	Z.hi = Htable[nlo].hi;
+	Z.lo = Htable[nlo].lo;
+
+	while (1) {
+		rem  = (size_t)Z.lo&0xf;
+		Z.lo = (Z.hi<<60)|(Z.lo>>4);
+		Z.hi = (Z.hi>>4);
+		if (sizeof(size_t)==8)
+			Z.hi ^= rem_4bit[rem];
+		else
+			Z.hi ^= (u64)rem_4bit[rem]<<32;
+
+		Z.hi ^= Htable[nhi].hi;
+		Z.lo ^= Htable[nhi].lo;
+
+		if (--cnt<0)		break;
+
+		nlo  = ((const u8 *)Xi)[cnt];
+		nlo ^= inp[cnt];
+		nhi  = nlo>>4;
+		nlo &= 0xf;
+
+		rem  = (size_t)Z.lo&0xf;
+		Z.lo = (Z.hi<<60)|(Z.lo>>4);
+		Z.hi = (Z.hi>>4);
+		if (sizeof(size_t)==8)
+			Z.hi ^= rem_4bit[rem];
+		else
+			Z.hi ^= (u64)rem_4bit[rem]<<32;
+
+		Z.hi ^= Htable[nlo].hi;
+		Z.lo ^= Htable[nlo].lo;
+	}
+
+	if (is_endian.little) {
+#ifdef BSWAP8
+		Xi[0] = BSWAP8(Z.hi);
+		Xi[1] = BSWAP8(Z.lo);
+#else
+		u8 *p = (u8 *)Xi;
+		u32 v;
+		v = (u32)(Z.hi>>32);	PUTU32(p,v);
+		v = (u32)(Z.hi);	PUTU32(p+4,v);
+		v = (u32)(Z.lo>>32);	PUTU32(p+8,v);
+		v = (u32)(Z.lo);	PUTU32(p+12,v);
+#endif
+	}
+	else {
+		Xi[0] = Z.hi;
+		Xi[1] = Z.lo;
+	}
+    } while (inp+=16, len-=16);
+}
+#endif
+#else
+void gcm_gmult_4bit(u64 Xi[2],u128 Htable[16]);
+void gcm_ghash_4bit(const u8 *inp,size_t len,u64 Xi[2],u128 Htable[16]);
+#endif
+
+#define GCM_MUL(ctx,Xi)   gcm_gmult_4bit(ctx->Xi.u,ctx->Htable)
+#define GHASH(in,len,ctx) gcm_ghash_4bit(in,len,ctx->Xi.u,ctx->Htable)
+#define GHASH_CHUNK       1024
+
+#else	/* !_4BIT */
+
+static void gcm_gmult_1bit(u64 Xi[2],const u64 H[2])
 {
 	u128 V,Z = { 0,0 };
 	long X;
@@ -365,7 +490,7 @@ static void gcm_mul_1bit(u64 Xi[2],const u64 H[2])
 	const long *xi = (const long *)Xi;
 	const union { long one; char little; } is_endian = {1};
 
-	V.hi = H[0];	/* h is in host byte order, no byte swaping */
+	V.hi = H[0];	/* H is in host byte order, no byte swapping */
 	V.lo = H[1];
 
 	for (j=0; j<16/sizeof(long); ++j) {
@@ -423,11 +548,7 @@ static void gcm_mul_1bit(u64 Xi[2],const u64 H[2])
 		Xi[1] = Z.lo;
 	}
 }
-
-#if 0
-#define GCM_MUL(ctx,Xi)	gcm_mul_1bit(ctx->Xi.u,ctx->H.u)
-#else
-#define GCM_MUL(ctx,Xi)	gcm_mul_4bit(ctx->Xi.u,ctx->Htable)
+#define GCM_MUL(ctx,Xi)	  gcm_gmult_1bit(ctx->Xi.u,ctx->H.u)
 #endif
 
 typedef struct {
@@ -435,7 +556,7 @@ typedef struct {
 	union { u64 u[2]; u32 d[4]; u8 c[16]; }	Yi,EKi,EK0,
 						Xi,H,
 						len;
-	/* Pre-computed table used by gcm_mul_4bit */
+	/* Pre-computed table used by gcm_gmult_4bit */
 	u128 Htable[16];
 	unsigned int res, ctr;
 	block128_f block;
@@ -528,6 +649,11 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx,const unsigned char *iv,size_t len)
 	}
 
 	(*ctx->block)(ctx->Yi.c,ctx->EK0.c,ctx->key);
+	++ctx->ctr;
+	if (is_endian.little)
+		PUTU32(ctx->Yi.c+12,ctx->ctr);
+	else
+		ctx->Yi.d[3] = ctx->ctr;
 }
 
 void CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx,const unsigned char *aad,size_t len)
@@ -536,12 +662,20 @@ void CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx,const unsigned char *aad,size_t len)
 
 	ctx->len.u[0] += len;
 
+#ifdef GHASH
+	if ((i = (len&(size_t)-16))) {
+		GHASH(aad,i,ctx);
+		aad += i;
+		len -= i;
+	}
+#else
 	while (len>=16) {
 		for (i=0; i<16; ++i) ctx->Xi.c[i] ^= aad[i];
 		GCM_MUL(ctx,Xi);
 		aad += 16;
 		len -= 16;
 	}
+#endif
 
 	if (len) {
 		for (i=0; i<len; ++i) ctx->Xi.c[i] ^= aad[i];
@@ -575,18 +709,58 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 				return;
 			}
 		}
-
 #if defined(STRICT_ALIGNMENT)
 		if (((size_t)in|(size_t)out)%sizeof(size_t) != 0)
 			break;
 #endif
-		while (len>=16) {
+#ifdef GHASH
+		while (len>=GHASH_CHUNK) {
+		    size_t j=GHASH_CHUNK;
+
+		    while (j) {
+			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
+			for (i=0; i<16; i+=sizeof(size_t))
+				*(size_t *)(out+i) =
+				*(size_t *)(in+i)^*(size_t *)(ctx->EKi.c+i);
+			out += 16;
+			in  += 16;
+			j   -= 16;
+		    }
+		    GHASH(out-GHASH_CHUNK,GHASH_CHUNK,ctx);
+		    len -= GHASH_CHUNK;
+		}
+		if ((i = (len&(size_t)-16))) {
+		    size_t j=i;
+
+		    while (len>=16) {
 			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
+			++ctr;
+			if (is_endian.little)
+				PUTU32(ctx->Yi.c+12,ctr);
+			else
+				ctx->Yi.d[3] = ctr;
+			for (i=0; i<16; i+=sizeof(size_t))
+				*(size_t *)(out+i) =
+				*(size_t *)(in+i)^*(size_t *)(ctx->EKi.c+i);
+			out += 16;
+			in  += 16;
+			len -= 16;
+		    }
+		    GHASH(out-j,j,ctx);
+		}
+#else
+		while (len>=16) {
+			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
+			++ctr;
+			if (is_endian.little)
+				PUTU32(ctx->Yi.c+12,ctr);
+			else
+				ctx->Yi.d[3] = ctr;
 			for (i=0; i<16; i+=sizeof(size_t))
 				*(size_t *)(ctx->Xi.c+i) ^=
 				*(size_t *)(out+i) =
@@ -596,14 +770,14 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 			in  += 16;
 			len -= 16;
 		}
-
+#endif
 		if (len) {
+			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
-			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 			while (len--) {
 				ctx->Xi.c[n] ^= out[n] = in[n]^ctx->EKi.c[n];
 				++n;
@@ -617,12 +791,12 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 #endif
 	for (i=0;i<len;++i) {
 		if (n==0) {
+			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
-			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 		}
 		ctx->Xi.c[n] ^= out[i] = in[i]^ctx->EKi.c[n];
 		n = (n+1)%16;
@@ -662,36 +836,74 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 				return;
 			}
 		}
-
 #if defined(STRICT_ALIGNMENT)
 		if (((size_t)in|(size_t)out)%sizeof(size_t) != 0)
 			break;
 #endif
-		while (len>=16) {
+#ifdef GHASH
+		while (len>=GHASH_CHUNK) {
+		    size_t j=GHASH_CHUNK;
+
+		    GHASH(in,GHASH_CHUNK,ctx);
+		    while (j) {
+			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
+			for (i=0; i<16; i+=sizeof(size_t))
+				*(size_t *)(out+i) =
+				*(size_t *)(in+i)^*(size_t *)(ctx->EKi.c+i);
+			out += 16;
+			in  += 16;
+			j   -= 16;
+		    }
+		    len -= GHASH_CHUNK;
+		}
+		if ((i = (len&(size_t)-16))) {
+		    GHASH(in,i,ctx);
+		    while (len>=16) {
 			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
+			++ctr;
+			if (is_endian.little)
+				PUTU32(ctx->Yi.c+12,ctr);
+			else
+				ctx->Yi.d[3] = ctr;
+			for (i=0; i<16; i+=sizeof(size_t))
+				*(size_t *)(out+i) =
+				*(size_t *)(in+i)^*(size_t *)(ctx->EKi.c+i);
+			out += 16;
+			in  += 16;
+			len -= 16;
+		    }
+		}
+#else
+		while (len>=16) {
+			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
+			++ctr;
+			if (is_endian.little)
+				PUTU32(ctx->Yi.c+12,ctr);
+			else
+				ctx->Yi.d[3] = ctr;
 			for (i=0; i<16; i+=sizeof(size_t)) {
 				size_t c = *(size_t *)(in+i);
 				*(size_t *)(out+i) = c^*(size_t *)(ctx->EKi.c+i);
 				*(size_t *)(ctx->Xi.c+i) ^= c;
 			}
-			GCM_MUL (ctx,Xi);
+			GCM_MUL(ctx,Xi);
 			out += 16;
 			in  += 16;
 			len -= 16;
 		}
-
+#endif
 		if (len) {
+			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
-			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 			while (len--) {
 				u8 c = in[n];
 				ctx->Xi.c[n] ^= c;
@@ -708,12 +920,12 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 	for (i=0;i<len;++i) {
 		u8 c;
 		if (n==0) {
+			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
-			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 		}
 		c = in[i];
 		out[i] ^= ctx->EKi.c[n];
@@ -983,13 +1195,13 @@ static const u8	IV18[]={0x93,0x13,0x22,0x5d,0xf8,0x84,0x06,0xe5,0x55,0x90,0x9c,0
 	if (P##n) CRYPTO_gcm128_encrypt(&ctx,P##n,out,sizeof(out));	\
 	CRYPTO_gcm128_finish(&ctx);				\
 	if (memcmp(ctx.Xi.c,T##n,16) || (C##n && memcmp(out,C##n,sizeof(out))))	\
-		ret++, printf ("encrypt test#%d failed.\n",##n);\
+		ret++, printf ("encrypt test#%d failed.\n",n);\
 	CRYPTO_gcm128_setiv(&ctx,IV##n,sizeof(IV##n));		\
 	if (A##n) CRYPTO_gcm128_aad(&ctx,A##n,sizeof(A##n));	\
 	if (C##n) CRYPTO_gcm128_decrypt(&ctx,C##n,out,sizeof(out));	\
 	CRYPTO_gcm128_finish(&ctx);				\
 	if (memcmp(ctx.Xi.c,T##n,16) || (P##n && memcmp(out,P##n,sizeof(out))))	\
-		ret++, printf ("decrypt test#%d failed.\n",##n);\
+		ret++, printf ("decrypt test#%d failed.\n",n);\
 	} while(0)
 
 int main()
@@ -1016,6 +1228,35 @@ int main()
 	TEST_CASE(16);
 	TEST_CASE(17);
 	TEST_CASE(18);
+
+	{
+	size_t start,stop,gcm_t,ctr_t,OPENSSL_rdtsc();
+	union { u64 u; u8 c[1024]; } buf;
+	int i;
+
+	AES_set_encrypt_key(K1,sizeof(K1)*8,&key);
+	CRYPTO_gcm128_init(&ctx,&key,(block128_f)AES_encrypt);
+	CRYPTO_gcm128_setiv(&ctx,IV1,sizeof(IV1));
+
+	CRYPTO_gcm128_encrypt(&ctx,buf.c,buf.c,sizeof(buf));
+	start = OPENSSL_rdtsc();
+	CRYPTO_gcm128_encrypt(&ctx,buf.c,buf.c,sizeof(buf));
+	gcm_t = OPENSSL_rdtsc() - start;
+
+	CRYPTO_ctr128_encrypt(buf.c,buf.c,sizeof(buf),
+			&key,ctx.Yi.c,ctx.EKi.c,&ctx.res,
+			(block128_f)AES_encrypt);
+	start = OPENSSL_rdtsc();
+	CRYPTO_ctr128_encrypt(buf.c,buf.c,sizeof(buf),
+		&key,ctx.Yi.c,ctx.EKi.c,&ctx.res,
+		(block128_f)AES_encrypt);
+	ctr_t = OPENSSL_rdtsc() - start;
+
+	printf("%.2f-%.2f=%.2f\n",
+			gcm_t/(double)sizeof(buf),
+			ctr_t/(double)sizeof(buf),
+			(gcm_t-ctr_t)/(double)sizeof(buf));
+	}
 
 	return ret;
 }
