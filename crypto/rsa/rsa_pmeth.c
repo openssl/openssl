@@ -444,7 +444,7 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		rctx->md = p2;
 		return 1;
 
-		case EVP_PKEY_CTRL_MGF1_MD:
+		case EVP_PKEY_CTRL_RSA_MGF1_MD:
 		rctx->mgf1md = p2;
 		return 1;
 

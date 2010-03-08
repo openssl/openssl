@@ -96,6 +96,7 @@ typedef int ASN1_BOOLEAN;
 typedef int ASN1_NULL;
 #endif
 
+typedef struct ASN1_ITEM_st ASN1_ITEM;
 typedef struct asn1_pctx_st ASN1_PCTX;
 
 #ifdef OPENSSL_SYS_WIN32

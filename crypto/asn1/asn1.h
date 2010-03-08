@@ -293,7 +293,6 @@ DECLARE_STACK_OF(ASN1_STRING_TABLE)
  * see asn1t.h
  */
 typedef struct ASN1_TEMPLATE_st ASN1_TEMPLATE;
-typedef struct ASN1_ITEM_st ASN1_ITEM;
 typedef struct ASN1_TLC_st ASN1_TLC;
 /* This is just an opaque pointer */
 typedef struct ASN1_VALUE_st ASN1_VALUE;

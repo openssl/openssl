@@ -4,7 +4,14 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
-   *) Add signature printing for PSS. Add PSS OIDs.
+  *) Add new algorithm specific ASN1 verification initialisation function
+     to EVP_PKEY_ASN1_METHOD: this is not in EVP_PKEY_METHOD since the ASN1
+     handling will be the same no matter what EVP_PKEY_METHOD is used.
+     Add a PSS handler to support verification of PSS signatures: checked
+     against a number of sample certificates.
+     [Steve Henson]
+
+  *) Add signature printing for PSS. Add PSS OIDs.
      [Steve Henson, Martin Kaiser <lists@kaiser.cx>]
 
   *) Add algorithm specific signature printing. An individual ASN1 method
