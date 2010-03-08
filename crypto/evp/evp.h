@@ -325,7 +325,7 @@ struct evp_cipher_st
 #define		EVP_CIPH_CBC_MODE		0x2
 #define		EVP_CIPH_CFB_MODE		0x3
 #define		EVP_CIPH_OFB_MODE		0x4
-#define 	EVP_CIPH_MODE			0x7
+#define 	EVP_CIPH_MODE			0xF0007
 /* Set if variable length cipher */
 #define 	EVP_CIPH_VARIABLE_LENGTH	0x8
 /* Set if the iv handling should be done by the cipher itself */
