@@ -741,6 +741,10 @@ case "$GUESSOS" in
 	OBJECT_MODE=${OBJECT_MODE:-32}
 	if [ "$CC" = "gcc" ]; then
 	    OUT="aix-gcc"
+          if [ $OBJECT_MODE -eq 64 ]; then
+            echo 'Your $OBJECT_MODE was found to be set to 64'
+            OUT="aix64-gcc"
+          fi
 	elif [ $OBJECT_MODE -eq 64 ]; then
 	    echo 'Your $OBJECT_MODE was found to be set to 64' 
 	    OUT="aix64-cc"
