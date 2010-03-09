@@ -4173,3 +4173,5 @@ X509_STORE_CTX_get0_cur_issuer          4546	EXIST:VMS:FUNCTION:
 X509_issuer_name_hash_old               4547	EXIST::FUNCTION:MD5
 X509_subject_name_hash_old              4548	EXIST::FUNCTION:MD5
 EVP_CIPHER_CTX_copy                     4549	EXIST::FUNCTION:
+UI_method_get_prompt_constructor        4550	EXIST::FUNCTION:
+UI_method_set_prompt_constructor        4551	EXIST::FUNCTION:
