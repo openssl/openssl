@@ -82,7 +82,7 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
 	dd->version = 0;
 	dd->encapContentInfo->eContentType = OBJ_nid2obj(NID_pkcs7_data);
 
-	cms_DigestAlgorithm_set(dd->digestAlgorithm, md);
+	X509_ALGOR_set_md(dd->digestAlgorithm, md);
 
 	return cms;
 

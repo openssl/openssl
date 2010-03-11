@@ -443,7 +443,6 @@ int cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert);
 CMS_ContentInfo *cms_CompressedData_create(int comp_nid);
 BIO *cms_CompressedData_init_bio(CMS_ContentInfo *cms);
 
-void cms_DigestAlgorithm_set(X509_ALGOR *alg, const EVP_MD *md);
 BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm);
 int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
 					X509_ALGOR *mdalg);

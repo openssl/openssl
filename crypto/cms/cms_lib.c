@@ -341,21 +341,6 @@ int CMS_set_detached(CMS_ContentInfo *cms, int detached)
 	return 0;
 	}
 
-/* Set up an X509_ALGOR DigestAlgorithmIdentifier from an EVP_MD */
-
-void cms_DigestAlgorithm_set(X509_ALGOR *alg, const EVP_MD *md)
-	{
-	int param_type;
-
-	if (md->flags & EVP_MD_FLAG_DIGALGID_ABSENT)
-		param_type = V_ASN1_UNDEF;
-	else
-		param_type = V_ASN1_NULL;
-
-	X509_ALGOR_set0(alg, OBJ_nid2obj(EVP_MD_type(md)), param_type, NULL);
-
-	}
-
 /* Create a digest BIO from an X509_ALGOR structure */
 
 BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm)

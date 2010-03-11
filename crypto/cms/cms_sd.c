@@ -360,7 +360,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 		goto err;
 		}
 
-	cms_DigestAlgorithm_set(si->digestAlgorithm, md);
+	X509_ALGOR_set_md(si->digestAlgorithm, md);
 
 	/* See if digest is present in digestAlgorithms */
 	for (i = 0; i < sk_X509_ALGOR_num(sd->digestAlgorithms); i++)
@@ -377,7 +377,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
 		alg = X509_ALGOR_new();
 		if (!alg)
 			goto merr;
-		cms_DigestAlgorithm_set(alg, md);
+		X509_ALGOR_set_md(alg, md);
 		if (!sk_X509_ALGOR_push(sd->digestAlgorithms, alg))
 			{
 			X509_ALGOR_free(alg);
