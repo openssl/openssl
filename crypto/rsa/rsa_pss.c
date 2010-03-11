@@ -63,6 +63,7 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#include "rsa_locl.h"
 
 static const unsigned char zeroes[] = {0,0,0,0,0,0,0,0};
 
@@ -73,6 +74,13 @@ static const unsigned char zeroes[] = {0,0,0,0,0,0,0,0};
 int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
 			const EVP_MD *Hash, const unsigned char *EM, int sLen)
 	{
+	return RSA_verify_PKCS1_PSS_mgf1(rsa, mHash, Hash, NULL, EM, sLen);
+	}
+
+int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
+			const EVP_MD *Hash, const EVP_MD *mgf1Hash,
+			const unsigned char *EM, int sLen)
+	{
 	int i;
 	int ret = 0;
 	int hLen, maskedDBLen, MSBits, emLen;
@@ -81,6 +89,9 @@ int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
 	EVP_MD_CTX ctx;
 	unsigned char H_[EVP_MAX_MD_SIZE];
 	EVP_MD_CTX_init(&ctx);
+
+	if (mgf1Hash == NULL)
+		mgf1Hash = Hash;
 
 	hLen = EVP_MD_size(Hash);
 	if (hLen < 0)
@@ -129,7 +140,7 @@ int RSA_verify_PKCS1_PSS(RSA *rsa, const unsigned char *mHash,
 		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
-	if (PKCS1_MGF1(DB, maskedDBLen, H, hLen, Hash) < 0)
+	if (PKCS1_MGF1(DB, maskedDBLen, H, hLen, mgf1Hash) < 0)
 		goto err;
 	for (i = 0; i < maskedDBLen; i++)
 		DB[i] ^= EM[i];
@@ -178,11 +189,21 @@ int RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
 			const unsigned char *mHash,
 			const EVP_MD *Hash, int sLen)
 	{
+	return RSA_padding_add_PKCS1_PSS_mgf1(rsa, EM, mHash, Hash, NULL, sLen);
+	}
+
+int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
+			const unsigned char *mHash,
+			const EVP_MD *Hash, const EVP_MD *mgf1Hash, int sLen)
+	{
 	int i;
 	int ret = 0;
 	int hLen, maskedDBLen, MSBits, emLen;
 	unsigned char *H, *salt = NULL, *p;
 	EVP_MD_CTX ctx;
+
+	if (mgf1Hash == NULL)
+		mgf1Hash = Hash;
 
 	hLen = EVP_MD_size(Hash);
 	if (hLen < 0)
@@ -244,7 +265,7 @@ int RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
 	EVP_MD_CTX_cleanup(&ctx);
 
 	/* Generate dbMask in place then perform XOR on it */
-	if (PKCS1_MGF1(EM, maskedDBLen, H, hLen, Hash))
+	if (PKCS1_MGF1(EM, maskedDBLen, H, hLen, mgf1Hash))
 		goto err;
 
 	p = EM;
