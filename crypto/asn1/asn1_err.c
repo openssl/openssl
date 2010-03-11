@@ -1,6 +1,6 @@
 /* crypto/asn1/asn1_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -107,6 +107,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_FUNC(ASN1_F_ASN1_ITEM_I2D_FP),	"ASN1_item_i2d_fp"},
 {ERR_FUNC(ASN1_F_ASN1_ITEM_PACK),	"ASN1_item_pack"},
 {ERR_FUNC(ASN1_F_ASN1_ITEM_SIGN),	"ASN1_item_sign"},
+{ERR_FUNC(ASN1_F_ASN1_ITEM_SIGN_CTX),	"ASN1_item_sign_ctx"},
 {ERR_FUNC(ASN1_F_ASN1_ITEM_UNPACK),	"ASN1_item_unpack"},
 {ERR_FUNC(ASN1_F_ASN1_ITEM_VERIFY),	"ASN1_item_verify"},
 {ERR_FUNC(ASN1_F_ASN1_MBSTRING_NCOPY),	"ASN1_mbstring_ncopy"},
@@ -208,6 +209,7 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_BOOLEAN_IS_WRONG_LENGTH),"boolean is wrong length"},
 {ERR_REASON(ASN1_R_BUFFER_TOO_SMALL)     ,"buffer too small"},
 {ERR_REASON(ASN1_R_CIPHER_HAS_NO_OBJECT_IDENTIFIER),"cipher has no object identifier"},
+{ERR_REASON(ASN1_R_CONTEXT_NOT_INITIALISED),"context not initialised"},
 {ERR_REASON(ASN1_R_DATA_IS_WRONG)        ,"data is wrong"},
 {ERR_REASON(ASN1_R_DECODE_ERROR)         ,"decode error"},
 {ERR_REASON(ASN1_R_DECODING_ERROR)       ,"decoding error"},

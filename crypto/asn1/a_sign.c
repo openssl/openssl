@@ -218,64 +218,100 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	     const EVP_MD *type)
 	{
 	EVP_MD_CTX ctx;
+	EVP_MD_CTX_init(&ctx);
+	if (!EVP_DigestSignInit(&ctx, NULL, type, NULL, pkey))
+		{
+		EVP_MD_CTX_cleanup(&ctx);
+		return 0;
+		}
+	return ASN1_item_sign_ctx(&ctx, it, algor1, algor2, signature, asn);
+	}
+		
+
+int ASN1_item_sign_ctx(EVP_MD_CTX *ctx,
+		const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
+	     	ASN1_BIT_STRING *signature, void *asn)
+	{
+	const EVP_MD *type;
+	EVP_PKEY *pkey;
 	unsigned char *buf_in=NULL,*buf_out=NULL;
 	size_t inl=0,outl=0,outll=0;
 	int signid, paramtype;
+	int rv;
 
-	if (type == NULL)
-		{
-		int def_nid;
-		if (EVP_PKEY_get_default_digest_nid(pkey, &def_nid) > 0)
-			type = EVP_get_digestbynid(def_nid);
-		}
+	type = EVP_MD_CTX_md(ctx);
+	pkey = EVP_PKEY_CTX_get0_pkey(ctx->pctx);
 
-	if (type == NULL)
+	if (!type || !pkey)
 		{
-		ASN1err(ASN1_F_ASN1_ITEM_SIGN, ASN1_R_NO_DEFAULT_DIGEST);
+		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ASN1_R_CONTEXT_NOT_INITIALISED);
 		return 0;
 		}
 
-	if (type->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE)
+	if (pkey->ameth->item_sign)
 		{
-		if (!pkey->ameth ||
-			!OBJ_find_sigid_by_algs(&signid, EVP_MD_nid(type),
-						pkey->ameth->pkey_id))
-			{
-			ASN1err(ASN1_F_ASN1_ITEM_SIGN,
-				ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
-			return 0;
-			}
+		rv = pkey->ameth->item_sign(ctx, it, asn, algor1, algor2,
+						signature);
+		if (rv == 1)
+			outl = signature->length;
+		/* Return value meanings:
+		 * <=0: error.
+		 *   1: method does everything.
+		 *   2: carry on as normal.
+		 *   3: ASN1 method sets algorithm identifiers: just sign.
+		 */
+		if (rv <= 0)
+			ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_EVP_LIB);
+		if (rv <= 1)
+			goto err;
 		}
 	else
-		signid = type->pkey_type;
+		rv = 2;
 
-	if (pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL)
-		paramtype = V_ASN1_NULL;
-	else
-		paramtype = V_ASN1_UNDEF;
+	if (rv == 2)
+		{
+		if (type->flags & EVP_MD_FLAG_PKEY_METHOD_SIGNATURE)
+			{
+			if (!pkey->ameth ||
+				!OBJ_find_sigid_by_algs(&signid,
+							EVP_MD_nid(type),
+							pkey->ameth->pkey_id))
+				{
+				ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,
+					ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+				return 0;
+				}
+			}
+		else
+			signid = type->pkey_type;
 
-	if (algor1)
-		X509_ALGOR_set0(algor1, OBJ_nid2obj(signid), paramtype, NULL);
-	if (algor2)
-		X509_ALGOR_set0(algor2, OBJ_nid2obj(signid), paramtype, NULL);
+		if (pkey->ameth->pkey_flags & ASN1_PKEY_SIGPARAM_NULL)
+			paramtype = V_ASN1_NULL;
+		else
+			paramtype = V_ASN1_UNDEF;
 
-	EVP_MD_CTX_init(&ctx);
+		if (algor1)
+			X509_ALGOR_set0(algor1, OBJ_nid2obj(signid), paramtype, NULL);
+		if (algor2)
+			X509_ALGOR_set0(algor2, OBJ_nid2obj(signid), paramtype, NULL);
+
+		}
+
 	inl=ASN1_item_i2d(asn,&buf_in, it);
 	outll=outl=EVP_PKEY_size(pkey);
-	buf_out=(unsigned char *)OPENSSL_malloc((unsigned int)outl);
+	buf_out=OPENSSL_malloc((unsigned int)outl);
 	if ((buf_in == NULL) || (buf_out == NULL))
 		{
 		outl=0;
-		ASN1err(ASN1_F_ASN1_ITEM_SIGN,ERR_R_MALLOC_FAILURE);
+		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
-	if (!EVP_DigestSignInit(&ctx, NULL, type, NULL, pkey)
-		|| !EVP_DigestSignUpdate(&ctx, buf_in, inl)
-		|| !EVP_DigestSignFinal(&ctx, buf_out, &outl))
+	if (!EVP_DigestSignUpdate(ctx, buf_in, inl)
+		|| !EVP_DigestSignFinal(ctx, buf_out, &outl))
 		{
 		outl=0;
-		ASN1err(ASN1_F_ASN1_ITEM_SIGN,ERR_R_EVP_LIB);
+		ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX,ERR_R_EVP_LIB);
 		goto err;
 		}
 	if (signature->data != NULL) OPENSSL_free(signature->data);
@@ -288,7 +324,7 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	signature->flags&= ~(ASN1_STRING_FLAG_BITS_LEFT|0x07);
 	signature->flags|=ASN1_STRING_FLAG_BITS_LEFT;
 err:
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_MD_CTX_cleanup(ctx);
 	if (buf_in != NULL)
 		{ OPENSSL_cleanse((char *)buf_in,(unsigned int)inl); OPENSSL_free(buf_in); }
 	if (buf_out != NULL)

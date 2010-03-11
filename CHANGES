@@ -4,6 +4,12 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Support for companion algorithm specific ASN1 signing routines.
+     New function ASN1_item_sign_ctx() signs a pre-initialised
+     EVP_MD_CTX structure and sets AlgorithmIdentifiers based on
+     the appropriate parameters.
+     [Steve Henson]
+
   *) Add new algorithm specific ASN1 verification initialisation function
      to EVP_PKEY_ASN1_METHOD: this is not in EVP_PKEY_METHOD since the ASN1
      handling will be the same no matter what EVP_PKEY_METHOD is used.

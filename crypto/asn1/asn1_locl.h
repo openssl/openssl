@@ -119,6 +119,9 @@ struct evp_pkey_asn1_method_st
 	int (*item_verify)(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 				X509_ALGOR *a, ASN1_BIT_STRING *sig,
 				EVP_PKEY *pkey);
+	int (*item_sign)(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+				X509_ALGOR *alg1, X509_ALGOR *alg2, 
+				ASN1_BIT_STRING *sig);
 
 	} /* EVP_PKEY_ASN1_METHOD */;
 
