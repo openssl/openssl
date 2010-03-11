@@ -617,13 +617,16 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 		/* Finally create string with pss parameter encoding. */
 		if (!ASN1_item_pack(pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS), &os1))
 			goto err;
-		os2 = ASN1_STRING_dup(os1);
-		if (!os2)
-			goto err;
+		if (alg2)
+			{
+			os2 = ASN1_STRING_dup(os1);
+			if (!os2)
+				goto err;
+			X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_rsassaPss),
+						V_ASN1_SEQUENCE, os2);
+			}
 		X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_rsassaPss),
 					V_ASN1_SEQUENCE, os1);
-		X509_ALGOR_set0(alg2, OBJ_nid2obj(NID_rsassaPss),
-					V_ASN1_SEQUENCE, os2);
 		os1 = os2 = NULL;
 		rv = 3;
 		err:
