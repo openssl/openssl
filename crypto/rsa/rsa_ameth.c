@@ -530,6 +530,15 @@ static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 	else
 		saltlen = 20;
 
+	/* low-level routines support only trailer field 0xbc (value 1)
+	 * and PKCS#1 says we should reject any other value anyway.
+	 */
+	if (pss->trailerField && ASN1_INTEGER_get(pss->trailerField) != 1)
+		{
+		RSAerr(RSA_F_RSA_ITEM_VERIFY, RSA_R_INVALID_TRAILER);
+		goto err;
+		}
+
 	/* We have all parameters now set up context */
 
 	if (!EVP_DigestVerifyInit(ctx, &pkctx, md, NULL, pkey))
