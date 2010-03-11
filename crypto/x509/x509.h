@@ -763,6 +763,7 @@ X509_ALGOR *X509_ALGOR_dup(X509_ALGOR *xn);
 int X509_ALGOR_set0(X509_ALGOR *alg, ASN1_OBJECT *aobj, int ptype, void *pval);
 void X509_ALGOR_get0(ASN1_OBJECT **paobj, int *pptype, void **ppval,
 						X509_ALGOR *algor);
+void X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md);
 
 X509_NAME *X509_NAME_dup(X509_NAME *xn);
 X509_NAME_ENTRY *X509_NAME_ENTRY_dup(X509_NAME_ENTRY *ne);
