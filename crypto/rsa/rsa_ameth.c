@@ -504,7 +504,7 @@ static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 
 	if (pss->hashAlgorithm)
 		{
-		md = EVP_get_digestbyobj(maskHash->algorithm);
+		md = EVP_get_digestbyobj(pss->hashAlgorithm->algorithm);
 		if (md == NULL)
 			{
 			RSAerr(RSA_F_RSA_ITEM_VERIFY, RSA_R_UNKNOWN_PSS_DIGEST);
