@@ -407,15 +407,25 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 				RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
 		return -2;
 
+		case EVP_PKEY_CTRL_GET_RSA_PADDING:
+		*(int *)p2 = rctx->pad_mode;
+		return 1;
+
 		case EVP_PKEY_CTRL_RSA_PSS_SALTLEN:
-		if (p1 < -2)
-			return -2;
+		case EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN:
 		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING)
 			{
 			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
 			return -2;
 			}
-		rctx->saltlen = p1;
+		if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN)
+			*(int *)p2 = rctx->saltlen;
+		else
+			{
+			if (p1 < -2)
+				return -2;
+			rctx->saltlen = p1;
+			}
 		return 1;
 
 		case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
@@ -440,7 +450,21 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		return 1;
 
 		case EVP_PKEY_CTRL_RSA_MGF1_MD:
-		rctx->mgf1md = p2;
+		case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
+		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING)
+			{
+			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_MGF1_MD);
+			return -2;
+			}
+		if (type == EVP_PKEY_CTRL_GET_RSA_MGF1_MD)
+			{
+			if (rctx->mgf1md)
+				*(const EVP_MD **)p2 = rctx->mgf1md;
+			else
+				*(const EVP_MD **)p2 = rctx->md;
+			}
+		else
+			rctx->mgf1md = p2;
 		return 1;
 
 		case EVP_PKEY_CTRL_DIGESTINIT:

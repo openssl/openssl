@@ -147,6 +147,7 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_INVALID_HEADER)        ,"invalid header"},
 {ERR_REASON(RSA_R_INVALID_KEYBITS)       ,"invalid keybits"},
 {ERR_REASON(RSA_R_INVALID_MESSAGE_LENGTH),"invalid message length"},
+{ERR_REASON(RSA_R_INVALID_MGF1_MD)       ,"invalid mgf1 md"},
 {ERR_REASON(RSA_R_INVALID_PADDING)       ,"invalid padding"},
 {ERR_REASON(RSA_R_INVALID_PADDING_MODE)  ,"invalid padding mode"},
 {ERR_REASON(RSA_R_INVALID_PSS_PARAMETERS),"invalid pss parameters"},
