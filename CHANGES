@@ -945,7 +945,10 @@
      could be crashed if the relevant tables were not present (e.g. chrooted).
      [Tomas Hoger <thoger@redhat.com>]
 
- Changes between 0.9.8l and 0.9.8m  [xx XXX xxxx]
+ Changes between 0.9.8l and 0.9.8m  [25 Feb 2010]
+
+  *) Always check bn_wexpend() return values for failure.  (CVE-2009-3245)
+     [Martin Olsson, Neel Mehta]
 
   *) Fix X509_STORE locking: Every 'objs' access requires a lock (to
      accommodate for stack sorting, always a write lock!).
