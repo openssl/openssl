@@ -317,6 +317,10 @@ int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, char *value);
 int init_gen_str(BIO *err, EVP_PKEY_CTX **pctx,
 			const char *algname, ENGINE *e, int do_param);
+int do_X509_sign(BIO *err, X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
+			STACK_OF(OPENSSL_STRING) *sigopts);
+int do_X509_REQ_sign(BIO *err, X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
+			STACK_OF(OPENSSL_STRING) *sigopts);
 #ifndef OPENSSL_NO_PSK
 extern char *psk_key;
 #endif
