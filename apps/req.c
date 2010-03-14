@@ -1819,3 +1819,18 @@ int do_X509_REQ_sign(BIO *err, X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
 	}
 		
 	
+
+int do_X509_CRL_sign(BIO *err, X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
+			STACK_OF(OPENSSL_STRING) *sigopts)
+	{
+	int rv;
+	EVP_MD_CTX mctx;
+	EVP_MD_CTX_init(&mctx);
+	rv = do_sign_init(err, &mctx, pkey, md, sigopts);
+	if (rv > 0)
+		rv = X509_CRL_sign_ctx(x, &mctx);
+	EVP_MD_CTX_cleanup(&mctx);
+	return rv > 0 ? 1 : 0;
+	}
+		
+	

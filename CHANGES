@@ -4,6 +4,11 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) New -sigopt option to the req and x509 utilities. Additional
+     signature parameters can be passed using this option and in
+     particular PSS. Todo: ca support.
+     [Steve Henson]
+
   *) Add RSA PSS signing function. This will generate and set the
      appropriate AlgorithmIdentifiers for PSS based on those in the
      corresponding EVP_MD_CTX structure. No application support yet.
