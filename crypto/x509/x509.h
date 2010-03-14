@@ -660,8 +660,11 @@ int X509_signature_dump(BIO *bp,const ASN1_STRING *sig, int indent);
 int X509_signature_print(BIO *bp,X509_ALGOR *alg, ASN1_STRING *sig);
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
+int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
+int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx);
 int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
+int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
 int NETSCAPE_SPKI_sign(NETSCAPE_SPKI *x, EVP_PKEY *pkey, const EVP_MD *md);
 
 int X509_pubkey_digest(const X509 *data,const EVP_MD *type,
@@ -897,9 +900,9 @@ int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *algor1,
 int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 	ASN1_BIT_STRING *signature,
 	void *data, EVP_PKEY *pkey, const EVP_MD *type);
-int ASN1_item_sign_ctx(EVP_MD_CTX *ctx,
-		const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
-	     	ASN1_BIT_STRING *signature, void *asn);
+int ASN1_item_sign_ctx(const ASN1_ITEM *it,
+		X509_ALGOR *algor1, X509_ALGOR *algor2,
+	     	ASN1_BIT_STRING *signature, void *asn, EVP_MD_CTX *ctx);
 #endif
 
 int 		X509_set_version(X509 *x,long version);

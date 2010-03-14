@@ -224,13 +224,13 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
 		EVP_MD_CTX_cleanup(&ctx);
 		return 0;
 		}
-	return ASN1_item_sign_ctx(&ctx, it, algor1, algor2, signature, asn);
+	return ASN1_item_sign_ctx(it, algor1, algor2, signature, asn, &ctx);
 	}
 		
 
-int ASN1_item_sign_ctx(EVP_MD_CTX *ctx,
-		const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
-	     	ASN1_BIT_STRING *signature, void *asn)
+int ASN1_item_sign_ctx(const ASN1_ITEM *it,
+		X509_ALGOR *algor1, X509_ALGOR *algor2,
+	     	ASN1_BIT_STRING *signature, void *asn, EVP_MD_CTX *ctx)
 	{
 	const EVP_MD *type;
 	EVP_PKEY *pkey;
