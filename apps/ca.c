@@ -1554,6 +1554,8 @@ err:
 	BN_free(serial);
 	BN_free(crlnumber);
 	free_index(db);
+	if (sigopts)
+		sk_OPENSSL_STRING_free(sigopts);
 	EVP_PKEY_free(pkey);
 	if (x509) X509_free(x509);
 	X509_CRL_free(crl);
