@@ -99,6 +99,10 @@
 #define CERT_STORE_CREATE_NEW_FLAG                      0x00002000
 #endif
 
+#ifndef CERT_SYSTEM_STORE_CURRENT_USER
+#define CERT_SYSTEM_STORE_CURRENT_USER			0x00010000
+#define 
+
 #include <openssl/engine.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
