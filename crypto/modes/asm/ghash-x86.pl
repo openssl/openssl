@@ -7,9 +7,11 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
+# March 2010
+#
 # The module implements "4-bit" Galois field multiplication and
 # streamed GHASH function. "4-bit" means that it uses 256 bytes
-# per-key table [+128/256 bytes fixed table]. It has two code paths:
+# per-key table [+64/128 bytes fixed table]. It has two code paths:
 # vanilla x86 and vanilla MMX. Former will be executed on 486 and
 # Pentium, latter on all others. Performance results are for streamed
 # GHASH subroutine and are expressed in cycles per processed byte,
@@ -18,13 +20,13 @@
 #		gcc 2.95.3(*)	MMX assembler	x86 assembler
 #
 # Pentium	100/112(**)	-		50
-# PIII		63 /77		17		24
-# P4		96 /122		33		84(***)
-# Opteron	50 /71		22		30
-# Core2		63 /102		21		28
+# PIII		63 /77		16		24
+# P4		96 /122		30		84(***)
+# Opteron	50 /71		21		30
+# Core2		63 /102		19		28
 #
 # (*)	gcc 3.4.x was observed to generate few percent slower code,
-#	which is one of reasons why 2.95.3 result were chosen;
+#	which is one of reasons why 2.95.3 results were chosen,
 #	another reason is lack of 3.4.x results for older CPUs;
 # (**)	second number is result for code compiled with -fPIC flag,
 #	which is actually more relevant, because assembler code is
@@ -32,8 +34,8 @@
 # (***)	see comment in non-MMX routine for further details;
 #
 # To summarize, it's 2-3 times faster than gcc-generated code. To
-# anchor it to something else SHA1 assembler processes single byte
-# in 11-13 cycles.
+# anchor it to something else SHA1 assembler processes one byte in
+# 11-13 cycles on contemporary x86 cores.
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
@@ -52,13 +54,13 @@ $Htbl = "esi";
 
 $unroll = 0;	# Affects x86 loop. Folded loop performs ~7% worse
 		# than unrolled, which has to be weighted against
-		# almost 2x code size reduction. Well, *overall*
-		# code size. x86-specific code shrinks by 7.5x...
+		# 1.7x code size reduction. Well, *overall* 1.7x,
+		# x86-specific code itself shrinks by 2.5x...
 
 sub mmx_loop() {
-# MMX version performs 2.5 times better on P4 (see comment in non-MMX
-# routine for further details), 35% better on Opteron and Core2, 40%
-# better on PIII... In other words effort is considered to be well
+# MMX version performs 2.8 times better on P4 (see comment in non-MMX
+# routine for further details), 40% better on Opteron, 50% better
+# on PIII and Core2... In other words effort is considered to be well
 # spent...
     my $inp = shift;
     my $rem_4bit = shift;
@@ -74,7 +76,7 @@ sub mmx_loop() {
 	&xor	($nlo,$nlo);	# avoid partial register stalls on PIII
 	&mov	($nhi,$Zll);
 	&mov	(&LB($nlo),&LB($nhi));
-	&mov	($cnt,15);
+	&mov	($cnt,14);
 	&shl	(&LB($nlo),4);
 	&and	($nhi,0xf0);
 	&movq	($Zlo,&QWP(8,$Htbl,$nlo));
@@ -85,34 +87,59 @@ sub mmx_loop() {
     &set_label("mmx_loop",16);
 	&psrlq	($Zlo,4);
 	&and	($rem,0xf);
+	&pxor	($Zlo,&QWP(8,$Htbl,$nhi));
 	&movq	($tmp,$Zhi);
 	&psrlq	($Zhi,4);
+	&mov	(&LB($nlo),&BP(0,$inp,$cnt));
 	&dec	($cnt);
-	&pxor	($Zlo,&QWP(8,$Htbl,$nhi));
 	&psllq	($tmp,60);
 	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
 	&movd	($rem,$Zlo);
 	&pxor	($Zhi,&QWP(0,$Htbl,$nhi));
+	&mov	($nhi,$nlo);
 	&pxor	($Zlo,$tmp);
 	&js	(&label("mmx_break"));
 
-	&movz	($nhi,&BP(0,$inp,$cnt));
-	&psrlq	($Zlo,4);
-	&mov	(&LB($nlo),&LB($nhi));
-	&movq	($tmp,$Zhi);
 	&shl	(&LB($nlo),4);
-	&psrlq	($Zhi,4);
 	&and	($rem,0xf);
+	&psrlq	($Zlo,4);
+	&and	($nhi,0xf0);
+	&movq	($tmp,$Zhi);
+	&psrlq	($Zhi,4);
 	&pxor	($Zlo,&QWP(8,$Htbl,$nlo));
 	&psllq	($tmp,60);
 	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
 	&movd	($rem,$Zlo);
 	&pxor	($Zhi,&QWP(0,$Htbl,$nlo));
 	&pxor	($Zlo,$tmp);
-	&and	($nhi,0xf0);
 	&jmp	(&label("mmx_loop"));
 
     &set_label("mmx_break",16);
+	&shl	(&LB($nlo),4);
+	&and	($rem,0xf);
+	&psrlq	($Zlo,4);
+	&and	($nhi,0xf0);
+	&movq	($tmp,$Zhi);
+	&psrlq	($Zhi,4);
+	&pxor	($Zlo,&QWP(8,$Htbl,$nlo));
+	&psllq	($tmp,60);
+	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
+	&movd	($rem,$Zlo);
+	&pxor	($Zhi,&QWP(0,$Htbl,$nlo));
+	&pxor	($Zlo,$tmp);
+
+	&psrlq	($Zlo,4);
+	&and	($rem,0xf);
+	&pxor	($Zlo,&QWP(8,$Htbl,$nhi));
+	&movq	($tmp,$Zhi);
+	&psrlq	($Zhi,4);
+	&psllq	($tmp,60);
+	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
+	&movd	($rem,$Zlo);
+	&pxor	($Zhi,&QWP(0,$Htbl,$nhi));
+	&mov	($nhi,$nlo);
+	&pxor	($Zlo,$tmp);
+
 	&psrlq	($Zlo,32);	# lower part of Zlo is already there
 	&movd	($Zhl,$Zhi);
 	&psrlq	($Zhi,32);

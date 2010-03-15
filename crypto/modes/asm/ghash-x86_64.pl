@@ -7,9 +7,11 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
+# March 2010
+#
 # The module implements "4-bit" Galois field multiplication and
 # streamed GHASH function. "4-bit" means that it uses 256 bytes
-# per-key table [+128 bytes fixed table]. Performance results are for
+# per-key table [+128 bytes shared table]. Performance results are for
 # streamed GHASH subroutine and are expressed in cycles per processed
 # byte, less is better:
 #
@@ -136,9 +138,8 @@ $code=<<___;
 .align	16
 gcm_gmult_4bit:
 	push	%rbx
-	push	%rbp
-	push	%r12
-	sub	\$16,%rsp
+	push	%rbp		# %rbp and %r12 are pushed exclusively in
+	push	%r12		# order to reuse Win64 exception handler...
 .Lgmult_prologue:
 
 	movzb	15($Xi),$Zlo
@@ -149,8 +150,8 @@ $code.=<<___;
 	mov	$Zlo,8($Xi)
 	mov	$Zhi,($Xi)
 
-	mov	32(%rsp),%rbx
-	lea	40(%rsp),%rsp
+	mov	16(%rsp),%rbx
+	lea	24(%rsp),%rsp
 .Lgmult_epilogue:
 	ret
 .size	gcm_gmult_4bit,.-gcm_gmult_4bit
@@ -174,7 +175,6 @@ gcm_ghash_4bit:
 	push	%rbx
 	push	%rbp
 	push	%r12
-	sub	\$16,%rsp
 .Lghash_prologue:
 
 	mov	8($Xi),$Zlo
@@ -186,11 +186,11 @@ gcm_ghash_4bit:
 	xor	8($inp),$Zlo
 	xor	($inp),$Zhi
 	lea	16($inp),$inp
-	mov	$Zlo,8(%rsp)
-	mov	$Zhi,(%rsp)
+	mov	$Zlo,8($Xi)
+	mov	$Zhi,($Xi)
 	shr	\$56,$Zlo
 ___
-	&loop	("%rsp");
+	&loop	($Xi);
 $code.=<<___;
 	cmp	$len,$inp
 	jb	.Louter_loop
@@ -198,10 +198,10 @@ $code.=<<___;
 	mov	$Zlo,8($Xi)
 	mov	$Zhi,($Xi)
 
-	mov	16(%rsp),%r12
-	mov	24(%rsp),%rbp
-	mov	32(%rsp),%rbx
-	lea	40(%rsp),%rsp
+	mov	0(%rsp),%r12
+	mov	8(%rsp),%rbp
+	mov	16(%rsp),%rbx
+	lea	24(%rsp),%rsp
 .Lghash_epilogue:
 	ret
 .size	gcm_ghash_4bit,.-gcm_ghash_4bit
@@ -259,7 +259,7 @@ se_handler:
 	cmp	%r10,%rbx		# context->Rip>=epilogue label
 	jae	.Lin_prologue
 
-	lea	40(%rax),%rax		# adjust "rsp"
+	lea	24(%rax),%rax		# adjust "rsp"
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp
