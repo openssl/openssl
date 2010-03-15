@@ -85,7 +85,7 @@
 
 #ifndef CERT_SYSTEM_STORE_CURRENT_USER
 #define CERT_SYSTEM_STORE_CURRENT_USER			0x00010000
-#define 
+#endif 
 
 #include <openssl/engine.h>
 #include <openssl/pem.h>
