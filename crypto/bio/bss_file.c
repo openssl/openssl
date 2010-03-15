@@ -272,9 +272,9 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 			BIO_clear_flags(b,BIO_FLAGS_UPLINK);
 #endif
 #endif
-#ifdef UP_fsetmode
+#ifdef UP_fsetmod
 		if (b->flags&BIO_FLAGS_UPLINK)
-			UP_fsetmode(b->ptr,num&BIO_FP_TEXT?'t':'b');
+			UP_fsetmod(b->ptr,num&BIO_FP_TEXT?'t':'b');
 		else
 #endif
 		{
