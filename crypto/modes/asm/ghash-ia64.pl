@@ -9,16 +9,16 @@
 #
 # March 2010
 #
-# The module implements "4-bit" Galois field multiplication and
-# streamed GHASH function. "4-bit" means that it uses 256 bytes
-# per-key table [+128 bytes shared table]. Streamed GHASH performance
-# was measured to be 6.35 cycles per processed byte on Itanium 2,
-# which is >90% better than Microsoft compiler generated code. Well,
-# the number should have been ~6.5. The deviation has everything to do
-# with the way performance is measured, as difference between GCM and
-# straightforward 128-bit counter mode. To anchor to something else
-# sha1-ia64.pl module processes one byte in 6.0 cycles. On Itanium
-# GHASH should run at ~8.5 cycles per byte.
+# The module implements "4-bit" GCM GHASH function and underlying
+# single multiplication operation in GF(2^128). "4-bit" means that it
+# uses 256 bytes per-key table [+128 bytes shared table]. Streamed
+# GHASH performance was measured to be 6.35 cycles per processed byte
+# on Itanium 2, which is >90% better than Microsoft compiler generated
+# code. Well, the number should have been ~6.5. The deviation has
+# everything to do with the way performance is measured: as difference
+# between GCM and straightforward 128-bit counter mode. To anchor to
+# something else sha1-ia64.pl module processes one byte in 6.0 cycles.
+# On Itanium GHASH should run at ~8.5 cycles per byte.
 
 $output=shift and (open STDOUT,">$output" or die "can't open $output: $!");
 

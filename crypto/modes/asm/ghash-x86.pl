@@ -9,13 +9,13 @@
 #
 # March 2010
 #
-# The module implements "4-bit" Galois field multiplication and
-# streamed GHASH function. "4-bit" means that it uses 256 bytes
-# per-key table [+64/128 bytes fixed table]. It has two code paths:
-# vanilla x86 and vanilla MMX. Former will be executed on 486 and
-# Pentium, latter on all others. Performance results are for streamed
-# GHASH subroutine and are expressed in cycles per processed byte,
-# less is better:
+# The module implements "4-bit" GCM GHASH function and underlying
+# single multiplication operation in GF(2^128). "4-bit" means that it
+# uses 256 bytes per-key table [+64/128 bytes fixed table]. It has two
+# code paths: vanilla x86 and vanilla MMX. Former will be executed on
+# 486 and Pentium, latter on all others. Performance results are for
+# streamed GHASH subroutine and are expressed in cycles per processed
+# byte, less is better:
 #
 #		gcc 2.95.3(*)	MMX assembler	x86 assembler
 #
