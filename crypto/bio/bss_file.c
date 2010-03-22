@@ -274,7 +274,7 @@ static long MS_CALLBACK file_ctrl(BIO *b, int cmd, long num, void *ptr)
 #endif
 #ifdef UP_fsetmod
 		if (b->flags&BIO_FLAGS_UPLINK)
-			UP_fsetmod(b->ptr,num&BIO_FP_TEXT?'t':'b');
+			UP_fsetmod(b->ptr,(char)((num&BIO_FP_TEXT)?'t':'b'));
 		else
 #endif
 		{
