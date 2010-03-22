@@ -2074,5 +2074,7 @@ EOF
 	$data =~ s/^(\s*)cmplw(\s+)([^,]+),(.*)/$1cmpl$2$3,0,$4/gm;
 	# assembler X doesn't accept li, load immediate value
 	#$data =~ s/^(\s*)li(\s+)([^,]+),(.*)/$1addi$2$3,0,$4/gm;
+	# assembler Y chokes on apostrophes in comments
+	$data =~ s/'//gm;
 	return($data);
 }
