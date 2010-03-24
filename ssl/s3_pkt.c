@@ -291,9 +291,9 @@ again:
 			if (version != s->version)
 				{
 				SSLerr(SSL_F_SSL3_GET_RECORD,SSL_R_WRONG_VERSION_NUMBER);
-				/* Send back error using their
-				 * version number :-) */
-				s->version=version;
+                                if ((s->version & 0xFF00) == (version & 0xFF00))
+                                	/* Send back error using their minor version number :-) */
+					s->version = (unsigned short)version;
 				al=SSL_AD_PROTOCOL_VERSION;
 				goto f_err;
 				}

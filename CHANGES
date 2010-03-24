@@ -2,7 +2,16 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8m and 0.9.8n [xx XXX xxxx]
+ Changes between 0.9.8m and 0.9.8n [24 Mar 2010]
+
+  *) When rejecting SSL/TLS records due to an incorrect version number, never
+     update s->server with a new major version number.  As of
+     - OpenSSL 0.9.8m if 'short' is a 16-bit type,
+     - OpenSSL 0.9.8f if 'short' is longer than 16 bits,
+     the previous behavior could result in a read attempt at NULL when
+     receiving specific incorrect SSL/TLS records once record payload
+     protection is active.  (CVE-2010-0740)
+     [Bodo Moeller, Adam Langley <agl@chromium.org>]
 
   *) Fix for CVE-2010-0433 where some kerberos enabled versions of OpenSSL 
      could be crashed if the relevant tables were not present (e.g. chrooted).
