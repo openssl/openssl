@@ -886,6 +886,8 @@ unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
   			}
   
 		X509_verify_cert(&xs_ctx);
+		/* Don't leave errors in the queue */
+		ERR_clear_error();
 		for (i=0; i < sk_X509_num(xs_ctx.chain); i++)
   			{
 			x = sk_X509_value(xs_ctx.chain, i);
