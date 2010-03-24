@@ -1316,6 +1316,8 @@ static int hwcrhk_insert_card(const char *prompt_info,
 		if (wrong_info && *wrong_info)
 			BIO_snprintf(buf, sizeof(buf)-1,
 				"Current card: \"%s\"\n", wrong_info);
+		else
+			buf[0] = 0;
 		ok = UI_dup_info_string(ui, buf);
 		if (ok >= 0 && prompt_info)
 			{
