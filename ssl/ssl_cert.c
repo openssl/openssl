@@ -753,6 +753,8 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
 			sk_X509_NAME_push(stack,xn);
 		}
 
+	ERR_clear_error();
+
 	if (0)
 		{
 err:
