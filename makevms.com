@@ -443,7 +443,7 @@ $ SDIRS := ,-
    STORE,CMS,PQUEUE,JPAKE
 $ EXHEADER_ := crypto.h,tmdiff.h,opensslv.h,ebcdic.h,symhacks.h,-
 		ossl_typ.h
-$ EXHEADER_'ARCH' := opensslconf.h
+$ EXHEADER__'ARCH' := opensslconf.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
 $ EXHEADER_MD2 := md2.h
 $ EXHEADER_MD4 := md4.h
