@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8n and 0.9.8o [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8m and 0.9.8n [24 Mar 2010]
 
   *) When rejecting SSL/TLS records due to an incorrect version number, never
