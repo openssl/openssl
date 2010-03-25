@@ -94,208 +94,170 @@ $!
 $ GOSUB CHECK_OPT_FILE
 $!
 $! Define The TEST Files.
+$! NOTE: Some might think this list ugly.  However, it's made this way to
+$! reflect the EXE variable in Makefile as closely as possible,
+$! thereby making it fairly easy to verify that the lists are the same.
 $!
-T_D_1  = "[-.crypto.bf]"
-T_F_1  = "bftest"
-T_D_2  = "[-.crypto.bn]
-T_F_2  = "bntest,exptest" ! "divtest"
-T_D_3  = "[-.crypto.cast]"
-T_F_3  = "casttest"
-T_D_4  = "[-.crypto.conf]"
-T_F_4  = "" ! "test"
-T_D_5  = "[-.crypto.des]"
-T_F_5  = "destest"
-T_D_6  = "[-.crypto.dh]"
-T_F_6  = "dhtest"
-T_D_7  = "[-.crypto.dsa]"
-T_F_7  = "dsatest"
-T_D_8  = "[-.crypto.ec]"
-T_F_8  = "ectest"
-T_D_9  = "[-.crypto.ecdh]"
-T_F_9  = "ecdhtest"
-T_D_10 = "[-.crypto.ecdsa]"
-T_F_10 = "ecdsatest"
-T_D_11 = "[-.crypto.engine]"
-T_F_11 = "enginetest"
-T_D_12 = "[-.crypto.evp]"
-T_F_12 = "evp_test"
-T_D_13 = "[-.crypto.hmac]"
-T_F_13 = "hmactest"
-T_D_14 = "[-.crypto.idea]"
-T_F_14 = "ideatest"
-T_D_15 = "[-.crypto.jpake]"
-T_F_15 = "jpaketest"
-T_D_16 = "[-.crypto.lhash]"
-T_F_16 = "" ! "lh_test"
-T_D_17 = "[-.crypto.md2]"
-T_F_17 = "md2test"
-T_D_18 = "[-.crypto.md4]"
-T_F_18 = "md4test"
-T_D_19 = "[-.crypto.md5]"
-T_F_19 = "md5test"
-T_D_20 = "[-.crypto.mdc2]"
-T_F_20 = "mdc2test"
-T_D_21 = "[-.crypto.pqueue]"
-T_F_21 = "" ! "pq_test"
-T_D_22 = "[-.crypto.rand]"
-T_F_22 = "randtest"
-T_D_23 = "[-.crypto.rc2]"
-T_F_23 = "rc2test"
-T_D_24 = "[-.crypto.rc4]"
-T_F_24 = "rc4test"
-T_D_25 = "[-.crypto.rc5]"
-T_F_25 = "rc5test"
-T_D_26 = "[-.crypto.ripemd]"
-T_F_26 = "rmdtest"
-T_D_27 = "[-.crypto.rsa]"
-T_F_27 = "rsa_test"
-T_D_28 = "[-.crypto.sha]
-T_F_28 = "sha1test,sha256t,sha512t,shatest"
-T_D_29 = "[-.crypto.threads]
-T_F_29 = "" !"mttest"
-T_D_30 = "[-.crypto.x509v3]
-T_F_30 = "" ! "tabtest"
-T_D_31 = "[-.ssl]"
-T_F_31 = "ssltest"
-T_D_32 = "[-.test]"
-T_F_32 = "igetest"
+$ TEST_FILES = "BNTEST,ECTEST,ECDSATEST,ECDHTEST,IDEATEST,"+ -
+	       "MD2TEST,MD4TEST,MD5TEST,HMACTEST,WP_TEST,"+ -
+	       "RC2TEST,RC4TEST,RC5TEST,"+ -
+	       "DESTEST,SHATEST,SHA1TEST,SHA256T,SHA512T,"+ -
+	       "MDC2TEST,RMDTEST,"+ -
+	       "RANDTEST,DHTEST,ENGINETEST,"+ -
+	       "BFTEST,CASTTEST,SSLTEST,EXPTEST,DSATEST,RSA_TEST,"+ -
+	       "EVP_TEST,JPAKETEST,IGETEST"
+$! Should we add MTTEST,PQ_TEST,LH_TEST,DIVTEST,TABTEST as well?
+$
+$! Additional directory information.
+$ T_D_BNTEST     := [-.crypto.bn]
+$ T_D_ECTEST     := [-.crypto.ec]
+$ T_D_ECDSATEST  := [-.crypto.ecdsa]
+$ T_D_ECDHTEST   := [-.crypto.ecdh]
+$ T_D_IDEATEST   := [-.crypto.idea]
+$ T_D_MD2TEST    := [-.crypto.md2]
+$ T_D_MD4TEST    := [-.crypto.md4]
+$ T_D_MD5TEST    := [-.crypto.md5]
+$ T_D_HMACTEST   := [-.crypto.hmac]
+$ T_D_WP_TEST    := [-.crypto.whrlpool]
+$ T_D_RC2TEST    := [-.crypto.rc2]
+$ T_D_RC4TEST    := [-.crypto.rc4]
+$ T_D_RC5TEST    := [-.crypto.rc5]
+$ T_D_DESTEST    := [-.crypto.des]
+$ T_D_SHATEST    := [-.crypto.sha]
+$ T_D_SHA1TEST   := [-.crypto.sha]
+$ T_D_SHA256T    := [-.crypto.sha]
+$ T_D_SHA512T    := [-.crypto.sha]
+$ T_D_MDC2TEST   := [-.crypto.mdc2]
+$ T_D_RMDTEST    := [-.crypto.ripemd]
+$ T_D_RANDTEST   := [-.crypto.rand]
+$ T_D_DHTEST     := [-.crypto.dh]
+$ T_D_ENGINETEST := [-.crypto.engine]
+$ T_D_BFTEST     := [-.crypto.bf]
+$ T_D_CASTTEST   := [-.crypto.cast]
+$ T_D_SSLTEST    := [-.ssl]
+$ T_D_EXPTEST    := [-.crypto.bn]
+$ T_D_DSATEST    := [-.crypto.dsa]
+$ T_D_RSA_TEST   := [-.crypto.rsa]
+$ T_D_EVP_TEST   := [-.crypto.evp]
+$ T_D_JPAKETEST  := [-.crypto.jpake]
+$ T_D_IGETEST    := [-.test]
 $!
 $ TCPIP_PROGRAMS = ",,"
 $ IF COMPILER .EQS. "VAXC" THEN -
      TCPIP_PROGRAMS = ",SSLTEST,"
 $!
-$! Define and initialize Test Directory Counter.
+$! Define A File Counter And Set It To "0".
 $!
-$ T_D_N = 0
+$ FILE_COUNTER = 0
 $!
-$! Increment directory counter.  Exit the directory loop, if done.
+$! Top Of The File Loop.
 $!
-$ NEXT_DIR:
+$ NEXT_FILE:
 $!
-$ T_D_N = T_D_N+ 1
-$ IF (F$TYPE( T_D_'T_D_N') .EQS. "") THEN GOTO DIR_DONE
+$! O.K, Extract The File Name From The File List.
 $!
-$!  Skip empty directory or file name list.
+$ FILE_NAME = F$ELEMENT(FILE_COUNTER,",",TEST_FILES)
 $!
-$   TEST_DIR = T_D_'T_D_N'
-$   TEST_FILES = T_F_'T_D_N'
-$   IF ((TEST_DIR .EQS. "") .OR. (TEST_FILES .EQS. "")) THEN GOTO NEXT_DIR
+$! Check To See If We Are At The End Of The File List.
 $!
-$!  Define A File Counter And Set It To "0".
+$ IF (FILE_NAME.EQS.",") THEN GOTO FILE_DONE
 $!
-$   FILE_COUNTER = 0
+$! Increment The Counter.
 $!
-$!  Top Of The File Loop.
+$ FILE_COUNTER = FILE_COUNTER + 1
 $!
-$   NEXT_FILE:
+$! Create The Source File Name.
 $!
-$!  O.K, Extract The File Name From The File List.
+$ SOURCE_FILE = "SYS$DISK:" + T_D_'FILE_NAME' + FILE_NAME + ".C"
 $!
-$   FILE_NAME = F$ELEMENT(FILE_COUNTER,",",TEST_FILES)
+$! Create The Object File Name.
 $!
-$!  Check To See If We Are At The End Of The File List.
+$ OBJECT_FILE = OBJ_DIR + FILE_NAME + ".OBJ"
 $!
-$   IF (FILE_NAME.EQS.",") THEN GOTO FILE_DONE
+$! Create The Executable File Name.
 $!
-$!  Increment The Counter.
+$ EXE_FILE = EXE_DIR + FILE_NAME + ".EXE"
+$ ON WARNING THEN GOTO NEXT_FILE
 $!
-$   FILE_COUNTER = FILE_COUNTER + 1
+$! Check To See If The File We Want To Compile Actually Exists.
 $!
-$!  Create The Source File Name.
+$ IF (F$SEARCH(SOURCE_FILE).EQS."")
+$ THEN
 $!
-$   SOURCE_FILE = "SYS$DISK:''TEST_DIR'" + FILE_NAME + ".C"
+$!  Tell The User That The File Dosen't Exist.
 $!
-$!  Create The Object File Name.
+$   WRITE SYS$OUTPUT ""
+$   WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Dosen't Exist."
+$   WRITE SYS$OUTPUT ""
 $!
-$   OBJECT_FILE = OBJ_DIR + FILE_NAME + ".OBJ"
+$!  Exit The Build.
 $!
-$!  Create The Executable File Name.
+$   GOTO EXIT
+$ ENDIF
 $!
-$   EXE_FILE = EXE_DIR + FILE_NAME + ".EXE"
-$   ON WARNING THEN GOTO NEXT_FILE
+$! Tell The User What We Are Building.
 $!
-$!  Check To See If The File We Want To Compile Actually Exists.
+$ WRITE SYS$OUTPUT "Building The ",FILE_NAME," Test Program."
 $!
-$   IF (F$SEARCH(SOURCE_FILE).EQS."")
-$   THEN
+$! Compile The File.
 $!
-$!    Tell The User That The File Dosen't Exist.
+$ ON ERROR THEN GOTO NEXT_FILE
+$ CC /OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$ ON WARNING THEN GOTO NEXT_FILE
 $!
-$     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Dosen't Exist."
-$     WRITE SYS$OUTPUT ""
+$! Check If What We Are About To Compile Works Without A TCP/IP Library.
 $!
-$!    Exit The Build.
+$ IF ((TCPIP_LIB.EQS."").AND.((TCPIP_PROGRAMS-FILE_NAME).NES.TCPIP_PROGRAMS))
+$ THEN
 $!
-$     GOTO EXIT
-$   ENDIF
+$!  Inform The User That A TCP/IP Library Is Needed To Compile This Program.
 $!
-$!  Tell The User What We Are Building.
-$!
-$   WRITE SYS$OUTPUT "Building The ",FILE_NAME," Test Program."
-$!
-$!  Compile The File.
-$!
-$   ON ERROR THEN GOTO NEXT_FILE
-$   CC /OBJECT='OBJECT_FILE' 'SOURCE_FILE'
-$   ON WARNING THEN GOTO NEXT_FILE
-$!
-$!  Check If What We Are About To Compile Works Without A TCP/IP Library.
-$!
-$   IF ((TCPIP_LIB.EQS."").AND.((TCPIP_PROGRAMS-FILE_NAME).NES.TCPIP_PROGRAMS))
-$   THEN
-$!
-$!    Inform The User That A TCP/IP Library Is Needed To Compile This Program.
-$!
-$     WRITE SYS$OUTPUT -
+$   WRITE SYS$OUTPUT -
        FILE_NAME," Needs A TCP/IP Library.  Can't Link.  Skipping..."
-$     GOTO NEXT_FILE
+$   GOTO NEXT_FILE
 $!
-$!  End The TCP/IP Library Check.
+$! End The TCP/IP Library Check.
 $!
-$   ENDIF
+$ ENDIF
 $!
-$!  Link The Program, Check To See If We Need To Link With RSAREF Or Not.
-$!  Check To See If We Are To Link With A Specific TCP/IP Library.
+$! Link The Program, Check To See If We Need To Link With RSAREF Or Not.
+$! Check To See If We Are To Link With A Specific TCP/IP Library.
 $!
-$   IF (TCPIP_LIB.NES."")
-$   THEN
+$ IF (TCPIP_LIB.NES."")
+$ THEN
 $!
-$!    Don't Link With The RSAREF Routines And TCP/IP Library.
+$!  Don't Link With The RSAREF Routines And TCP/IP Library.
 $!
-$     LINK /'DEBUGGER' /'TRACEBACK' /EXECUTABLE = 'EXE_FILE' -
+$   LINK /'DEBUGGER' /'TRACEBACK' /EXECUTABLE = 'EXE_FILE' -
        'OBJECT_FILE', -
        'SSL_LIB' /LIBRARY, -
        'CRYPTO_LIB' /LIBRARY, -
        'TCPIP_LIB', -
        'OPT_FILE' /OPTIONS
 $!
-$!    Else...
+$! Else...
 $!
-$   ELSE
+$ ELSE
 $!
-$!    Don't Link With The RSAREF Routines And Link With A TCP/IP Library.
+$!  Don't Link With The RSAREF Routines And Link With A TCP/IP Library.
 $!
-$     LINK /'DEBUGGER' /'TRACEBACK' /EXECUTABLE = 'EXE_FILE' -
+$   LINK /'DEBUGGER' /'TRACEBACK' /EXECUTABLE = 'EXE_FILE' -
        'OBJECT_FILE', -
        'SSL_LIB' /LIBRARY, -
        'CRYPTO_LIB' /LIBRARY, -
        'OPT_FILE' /OPTIONS
 $!
-$!  End The TCP/IP Library Check.
+$! End The TCP/IP Library Check.
 $!
-$   ENDIF
+$ ENDIF
 $!
-$!  Go Back And Do It Again.
+$! Go Back And Do It Again.
 $!
-$   GOTO NEXT_FILE
+$ GOTO NEXT_FILE
 $!
 $! All Done With This Library Part.
 $!
 $ FILE_DONE:
-$ GOTO NEXT_DIR
-$!
-$ DIR_DONE:
 $!
 $! All Done, Time To Exit.
 $!
