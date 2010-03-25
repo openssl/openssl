@@ -975,6 +975,8 @@ sub do_defs
 	$platform{"SHA512_Final"} = "!VMSVAX";
 	$platform{"SHA512"} = "!VMSVAX";
 
+	$platform{"pqueue_print"} = "!VMSVAX";
+
 	# Info we know about
 
 	push @ret, map { $_."\\".&info_string($_,"EXIST",

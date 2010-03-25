@@ -2996,7 +2996,7 @@ STORE_method_get_generate_function      3426	EXIST:!VMS:FUNCTION:
 STORE_meth_get_generate_fn              3426	EXIST:VMS:FUNCTION:
 STORE_method_set_list_end_function      3427	EXIST:!VMS:FUNCTION:
 STORE_meth_set_list_end_fn              3427	EXIST:VMS:FUNCTION:
-pqueue_print                            3428	EXIST::FUNCTION:
+pqueue_print                            3428	EXIST:!VMSVAX:FUNCTION:
 EC_GROUP_have_precompute_mult           3429	EXIST::FUNCTION:EC
 EC_KEY_print_fp                         3430	EXIST::FUNCTION:EC,FP_API
 BN_GF2m_mod_arr                         3431	EXIST::FUNCTION:
