@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8m (?) and 1.0.0  [xx XXX xxxx]
+ Changes between 0.9.8n and 1.0.0  [xx XXX xxxx]
 
   *) Add "missing" function EVP_CIPHER_CTX_copy(). This copies a cipher
      context. The operation can be customised via the ctrl mechanism in
@@ -15,7 +15,7 @@
   *) Add new -subject_hash_old and -issuer_hash_old options to x509 utility to
      output hashes compatible with older versions of OpenSSL.
      [Willy Weisz <weisz@vcpc.univie.ac.at>]
-  
+
   *) Fix compression algorithm handling: if resuming a session use the
      compression algorithm of the resumed session instead of determining
      it from client hello again. Don't allow server to change algorithm.
@@ -843,13 +843,25 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
   
-   Changes between 0.9.8m and 0.9.8n [xx XXX xxxx]
-  
+ Changes between 0.9.8m and 0.9.8n [24 Mar 2010]
+
+  *) When rejecting SSL/TLS records due to an incorrect version number, never
+     update s->server with a new major version number.  As of
+     - OpenSSL 0.9.8m if 'short' is a 16-bit type,
+     - OpenSSL 0.9.8f if 'short' is longer than 16 bits,
+     the previous behavior could result in a read attempt at NULL when
+     receiving specific incorrect SSL/TLS records once record payload
+     protection is active.  (CVE-2010-####)
+     [Bodo Moeller, Adam Langley]
+
   *) Fix for CVE-2010-0433 where some kerberos enabled versions of OpenSSL 
      could be crashed if the relevant tables were not present (e.g. chrooted).
      [Tomas Hoger <thoger@redhat.com>]
 
- Changes between 0.9.8l and 0.9.8m  [25 Feb 2010]
+ Changes between 0.9.8l and 0.9.8m [25 Feb 2010]
+
+  *) Always check bn_wexpend() return values for failure.  (CVE-2009-3245)
+     [Martin Olsson, Neel Mehta]
 
   *) Fix X509_STORE locking: Every 'objs' access requires a lock (to
      accommodate for stack sorting, always a write lock!).
