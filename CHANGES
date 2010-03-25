@@ -4,7 +4,11 @@
 
  Changes between 0.9.8n and 0.9.8o [xx XXX xxxx]
 
-  *)
+  *) VMS fixes: 
+     Reduce copying into .apps and .test in makevms.com
+     Don't try to use blank CA certificate in CA.com
+     Allow use of C files from original directories in maketests.com
+     [Steven M. Schweda" <sms@antinode.info>]
 
  Changes between 0.9.8m and 0.9.8n [24 Mar 2010]
 

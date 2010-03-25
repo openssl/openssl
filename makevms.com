@@ -408,41 +408,13 @@ $ SOFTLINKS:
 $!
 $! Tell The User We Are Partly Rebuilding The [.APPS] Directory.
 $!
-$ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD4.C', '[.APPS]MD5.C' And '[.APPS]RMD160.C' Files."
+$ WRITE SYS$OUTPUT "Rebuilding The '[.APPS]MD4.C' File."
 $!
-$ DELETE SYS$DISK:[.APPS]MD4.C;*,MD5.C;*,RMD160.C;*
+$ DELETE SYS$DISK:[.APPS]MD4.C;*
 $!
 $! Copy MD4.C from [.CRYPTO.MD4] into [.APPS]
 $!
 $ COPY SYS$DISK:[.CRYPTO.MD4]MD4.C SYS$DISK:[.APPS]
-$!
-$! Copy MD5.C from [.CRYPTO.MD5] into [.APPS]
-$!
-$ COPY SYS$DISK:[.CRYPTO.MD5]MD5.C SYS$DISK:[.APPS]
-$!
-$! Copy RMD160.C from [.CRYPTO.RIPEMD] into [.APPS]
-$!
-$ COPY SYS$DISK:[.CRYPTO.RIPEMD]RMD160.C SYS$DISK:[.APPS]
-$!
-$! Tell The User We Are Partly Rebuilding The [.TEST] Directory.
-$!
-$ WRITE SYS$OUTPUT "Rebuilding The '[.TEST]*.C' Files."
-$!
-$! First, We Have To "Rebuild" The "[.TEST]" Directory, So Delete
-$! All The "C" Files That Are Currently There Now.
-$!
-$ DELETE SYS$DISK:[.TEST]*.C;*
-$ DELETE SYS$DISK:[.TEST]EVPTESTS.TXT;*
-$!
-$! Copy all the *TEST.C files from [.CRYPTO...] into [.TEST]
-$!
-$ COPY SYS$DISK:[.CRYPTO.*]%*TEST.C SYS$DISK:[.TEST]
-$ COPY SYS$DISK:[.CRYPTO.SHA]SHA%%%T.C SYS$DISK:[.TEST]
-$ COPY SYS$DISK:[.CRYPTO.EVP]EVPTESTS.TXT SYS$DISK:[.TEST]
-$!
-$! Copy all the *TEST.C files from [.SSL...] into [.TEST]
-$!
-$ COPY SYS$DISK:[.SSL]%*TEST.C SYS$DISK:[.TEST]
 $!
 $! Tell The User We Are Rebuilding The [.INCLUDE.OPENSSL] Directory.
 $!

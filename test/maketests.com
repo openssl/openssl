@@ -42,34 +42,20 @@ $! (That is, If Wee Need To Link To One.)
 $!
 $ TCPIP_LIB = ""
 $!
-$! Check What Architecture We Are Using.
+$! Check Which Architecture We Are Using.
 $!
-$ IF (F$GETSYI("CPU").LT.128)
-$ THEN
+$ if (f$getsyi( "HW_MODEL") .lt. 1024)
+$ then
+$    arch = "VAX"
+$ else
+$    arch = ""
+$    arch = arch+ f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
+$    if (arch .eqs. "") then arch = "UNK"
+$ endif
 $!
-$!  The Architecture Is VAX.
-$!
-$   ARCH := VAX
-$!
-$! Else...
-$!
-$ ELSE
-$!
-$!  The Architecture Is Alpha, IA64 or whatever comes in the future.
-$!
-$   ARCH = F$EDIT( F$GETSYI( "ARCH_NAME"), "UPCASE")
-$   IF (ARCH .EQS. "") THEN ARCH = "UNK"
-$!
-$! End The Architecture Check.
-$!
-$ ENDIF
-$!
-$! Define The OBJ Directory.
+$! Define The OBJ and EXE Directories (EXE before CHECK_OPTIONS).
 $!
 $ OBJ_DIR := SYS$DISK:[-.'ARCH'.OBJ.TEST]
-$!
-$! Define The EXE Directory.
-$!
 $ EXE_DIR := SYS$DISK:[-.'ARCH'.EXE.TEST]
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
@@ -82,7 +68,7 @@ $ GOSUB INITIALISE
 $!
 $! Tell The User What Kind of Machine We Run On.
 $!
-$ WRITE SYS$OUTPUT "Compiling On A ",ARCH," Machine."
+$ WRITE SYS$OUTPUT "Compiling On ''ARCH'."
 $!
 $! Define The CRYPTO-LIB We Are To Use.
 $!
@@ -92,31 +78,12 @@ $! Define The SSL We Are To Use.
 $!
 $ SSL_LIB := SYS$DISK:[-.'ARCH'.EXE.SSL]LIBSSL.OLB
 $!
-$! Check To See If The Architecture Specific OBJ Directory Exists.
+$! Create the OBJ and EXE Directories, if needed.
 $!
-$ IF (F$PARSE(OBJ_DIR).EQS."")
-$ THEN
-$!
-$!  The EXE Directory Dosen't Exist, So Create It.
-$!
-$   CREATE/DIRECTORY 'OBJ_DIR'
-$!
-$! End The Architecture Specific OBJ Directory Check.
-$!
-$ ENDIF
-$!
-$! Check To See If The Architecture Specific EXE Directory Exists.
-$!
-$ IF (F$PARSE(EXE_DIR).EQS."")
-$ THEN
-$!
-$!  The EXE Directory Dosen't Exist, So Create It.
-$!
-$   CREATE/DIRECTORY 'EXE_DIR'
-$!
-$! End The Architecture Specific EXE Directory Check.
-$!
-$ ENDIF
+$ IF (F$PARSE(OBJ_DIR).EQS."") THEN -
+   CREATE /DIRECTORY 'OBJ_DIR'
+$ IF (F$PARSE(EXE_DIR).EQS."") THEN -
+   CREATE /DIRECTORY 'EXE_DIR'
 $!
 $! Check To See If We Have The Proper Libraries.
 $!
@@ -127,134 +94,208 @@ $!
 $ GOSUB CHECK_OPT_FILE
 $!
 $! Define The TEST Files.
-$! NOTE: Some might think this list ugly.  However, it's made this way to
-$! reflect the EXE variable in Makefile as closely as possible,
-$! thereby making it fairly easy to verify that the lists are the same.
 $!
-$ TEST_FILES = "BNTEST,ECTEST,ECDSATEST,ECDHTEST,IDEATEST,"+ -
-	       "MD2TEST,MD4TEST,MD5TEST,HMACTEST,"+ -
-	       "RC2TEST,RC4TEST,RC5TEST,"+ -
-	       "DESTEST,SHATEST,SHA1TEST,SHA256T,SHA512T,"+ -
-	       "MDC2TEST,RMDTEST,"+ -
-	       "RANDTEST,DHTEST,ENGINETEST,"+ -
-	       "BFTEST,CASTTEST,SSLTEST,EXPTEST,DSATEST,RSA_TEST,"+ -
-	       "EVP_TEST,JPAKETEST"
-$! Should we add MTTEST,PQ_TEST,LH_TEST,DIVTEST,TABTEST as well?
-$
+T_D_1  = "[-.crypto.bf]"
+T_F_1  = "bftest"
+T_D_2  = "[-.crypto.bn]
+T_F_2  = "bntest,exptest" ! "divtest"
+T_D_3  = "[-.crypto.cast]"
+T_F_3  = "casttest"
+T_D_4  = "[-.crypto.conf]"
+T_F_4  = "" ! "test"
+T_D_5  = "[-.crypto.des]"
+T_F_5  = "destest"
+T_D_6  = "[-.crypto.dh]"
+T_F_6  = "dhtest"
+T_D_7  = "[-.crypto.dsa]"
+T_F_7  = "dsatest"
+T_D_8  = "[-.crypto.ec]"
+T_F_8  = "ectest"
+T_D_9  = "[-.crypto.ecdh]"
+T_F_9  = "ecdhtest"
+T_D_10 = "[-.crypto.ecdsa]"
+T_F_10 = "ecdsatest"
+T_D_11 = "[-.crypto.engine]"
+T_F_11 = "enginetest"
+T_D_12 = "[-.crypto.evp]"
+T_F_12 = "evp_test"
+T_D_13 = "[-.crypto.hmac]"
+T_F_13 = "hmactest"
+T_D_14 = "[-.crypto.idea]"
+T_F_14 = "ideatest"
+T_D_15 = "[-.crypto.jpake]"
+T_F_15 = "jpaketest"
+T_D_16 = "[-.crypto.lhash]"
+T_F_16 = "" ! "lh_test"
+T_D_17 = "[-.crypto.md2]"
+T_F_17 = "md2test"
+T_D_18 = "[-.crypto.md4]"
+T_F_18 = "md4test"
+T_D_19 = "[-.crypto.md5]"
+T_F_19 = "md5test"
+T_D_20 = "[-.crypto.mdc2]"
+T_F_20 = "mdc2test"
+T_D_21 = "[-.crypto.pqueue]"
+T_F_21 = "" ! "pq_test"
+T_D_22 = "[-.crypto.rand]"
+T_F_22 = "randtest"
+T_D_23 = "[-.crypto.rc2]"
+T_F_23 = "rc2test"
+T_D_24 = "[-.crypto.rc4]"
+T_F_24 = "rc4test"
+T_D_25 = "[-.crypto.rc5]"
+T_F_25 = "rc5test"
+T_D_26 = "[-.crypto.ripemd]"
+T_F_26 = "rmdtest"
+T_D_27 = "[-.crypto.rsa]"
+T_F_27 = "rsa_test"
+T_D_28 = "[-.crypto.sha]
+T_F_28 = "sha1test,sha256t,sha512t,shatest"
+T_D_29 = "[-.crypto.threads]
+T_F_29 = "" !"mttest"
+T_D_30 = "[-.crypto.x509v3]
+T_F_30 = "" ! "tabtest"
+T_D_31 = "[-.ssl]"
+T_F_31 = "ssltest"
+T_D_32 = "[-.test]"
+T_F_32 = "igetest"
+$!
 $ TCPIP_PROGRAMS = ",,"
 $ IF COMPILER .EQS. "VAXC" THEN -
      TCPIP_PROGRAMS = ",SSLTEST,"
 $!
+$! Define and initialize Test Directory Counter.
+$!
+$ T_D_N = 0
+$!
+$! Increment directory counter.  Exit the directory loop, if done.
+$!
+$ NEXT_DIR:
+$!
+$ T_D_N = T_D_N+ 1
+$ IF (F$TYPE( T_D_'T_D_N') .EQS. "") THEN GOTO DIR_DONE
+$!
+$!  Skip empty directory or file name list.
+$!
+$   TEST_DIR = T_D_'T_D_N'
+$   TEST_FILES = T_F_'T_D_N'
+$   IF ((TEST_DIR .EQS. "") .OR. (TEST_FILES .EQS. "")) THEN GOTO NEXT_DIR
+$!
 $!  Define A File Counter And Set It To "0".
 $!
-$ FILE_COUNTER = 0
+$   FILE_COUNTER = 0
 $!
-$! Top Of The File Loop.
+$!  Top Of The File Loop.
 $!
-$ NEXT_FILE:
+$   NEXT_FILE:
 $!
-$! O.K, Extract The File Name From The File List.
+$!  O.K, Extract The File Name From The File List.
 $!
-$ FILE_NAME = F$ELEMENT(FILE_COUNTER,",",TEST_FILES)
+$   FILE_NAME = F$ELEMENT(FILE_COUNTER,",",TEST_FILES)
 $!
-$! Check To See If We Are At The End Of The File List.
+$!  Check To See If We Are At The End Of The File List.
 $!
-$ IF (FILE_NAME.EQS.",") THEN GOTO FILE_DONE
+$   IF (FILE_NAME.EQS.",") THEN GOTO FILE_DONE
 $!
-$! Increment The Counter.
+$!  Increment The Counter.
 $!
-$ FILE_COUNTER = FILE_COUNTER + 1
+$   FILE_COUNTER = FILE_COUNTER + 1
 $!
-$! Create The Source File Name.
+$!  Create The Source File Name.
 $!
-$ SOURCE_FILE = "SYS$DISK:[]" + FILE_NAME + ".C"
+$   SOURCE_FILE = "SYS$DISK:''TEST_DIR'" + FILE_NAME + ".C"
 $!
-$! Create The Object File Name.
+$!  Create The Object File Name.
 $!
-$ OBJECT_FILE = OBJ_DIR + FILE_NAME + ".OBJ"
+$   OBJECT_FILE = OBJ_DIR + FILE_NAME + ".OBJ"
 $!
-$! Create The Executable File Name.
+$!  Create The Executable File Name.
 $!
-$ EXE_FILE = EXE_DIR + FILE_NAME + ".EXE"
-$ ON WARNING THEN GOTO NEXT_FILE
+$   EXE_FILE = EXE_DIR + FILE_NAME + ".EXE"
+$   ON WARNING THEN GOTO NEXT_FILE
 $!
-$! Check To See If The File We Want To Compile Actually Exists.
+$!  Check To See If The File We Want To Compile Actually Exists.
 $!
-$ IF (F$SEARCH(SOURCE_FILE).EQS."")
-$ THEN
+$   IF (F$SEARCH(SOURCE_FILE).EQS."")
+$   THEN
 $!
-$!  Tell The User That The File Dosen't Exist.
+$!    Tell The User That The File Dosen't Exist.
 $!
-$   WRITE SYS$OUTPUT ""
-$   WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Dosen't Exist."
-$   WRITE SYS$OUTPUT ""
+$     WRITE SYS$OUTPUT ""
+$     WRITE SYS$OUTPUT "The File ",SOURCE_FILE," Dosen't Exist."
+$     WRITE SYS$OUTPUT ""
 $!
-$!  Exit The Build.
+$!    Exit The Build.
 $!
-$   GOTO EXIT
-$ ENDIF
+$     GOTO EXIT
+$   ENDIF
 $!
-$! Tell The User What We Are Building.
+$!  Tell The User What We Are Building.
 $!
-$ WRITE SYS$OUTPUT "Building The ",FILE_NAME," Test Program."
+$   WRITE SYS$OUTPUT "Building The ",FILE_NAME," Test Program."
 $!
-$! Compile The File.
+$!  Compile The File.
 $!
-$ ON ERROR THEN GOTO NEXT_FILE
-$ CC/OBJECT='OBJECT_FILE' /PREFIX=ALL -
-    /INCLUDE=(SYS$DISK:[-],SYS$DISK:[-.CRYPTO],SYS$DISK:[-.CRYPTO.X509V3],SYS$DISK:[-.INCLUDE.OPENSSL]) - 
-    'SOURCE_FILE'
-$ ON WARNING THEN GOTO NEXT_FILE
+$   ON ERROR THEN GOTO NEXT_FILE
+$   CC /OBJECT='OBJECT_FILE' 'SOURCE_FILE'
+$   ON WARNING THEN GOTO NEXT_FILE
 $!
-$! Check If What We Are About To Compile Works Without A TCP/IP Library.
+$!  Check If What We Are About To Compile Works Without A TCP/IP Library.
 $!
-$ IF ((TCPIP_LIB.EQS."").AND.((TCPIP_PROGRAMS-FILE_NAME).NES.TCPIP_PROGRAMS))
-$ THEN
+$   IF ((TCPIP_LIB.EQS."").AND.((TCPIP_PROGRAMS-FILE_NAME).NES.TCPIP_PROGRAMS))
+$   THEN
 $!
-$!  Inform The User That A TCP/IP Library Is Needed To Compile This Program.
+$!    Inform The User That A TCP/IP Library Is Needed To Compile This Program.
 $!
-$   WRITE SYS$OUTPUT FILE_NAME," Needs A TCP/IP Library.  Can't Link.  Skipping..."
+$     WRITE SYS$OUTPUT -
+       FILE_NAME," Needs A TCP/IP Library.  Can't Link.  Skipping..."
+$     GOTO NEXT_FILE
+$!
+$!  End The TCP/IP Library Check.
+$!
+$   ENDIF
+$!
+$!  Link The Program, Check To See If We Need To Link With RSAREF Or Not.
+$!  Check To See If We Are To Link With A Specific TCP/IP Library.
+$!
+$   IF (TCPIP_LIB.NES."")
+$   THEN
+$!
+$!    Don't Link With The RSAREF Routines And TCP/IP Library.
+$!
+$     LINK /'DEBUGGER' /'TRACEBACK' /EXECUTABLE = 'EXE_FILE' -
+       'OBJECT_FILE', -
+       'SSL_LIB' /LIBRARY, -
+       'CRYPTO_LIB' /LIBRARY, -
+       'TCPIP_LIB', -
+       'OPT_FILE' /OPTIONS
+$!
+$!    Else...
+$!
+$   ELSE
+$!
+$!    Don't Link With The RSAREF Routines And Link With A TCP/IP Library.
+$!
+$     LINK /'DEBUGGER' /'TRACEBACK' /EXECUTABLE = 'EXE_FILE' -
+       'OBJECT_FILE', -
+       'SSL_LIB' /LIBRARY, -
+       'CRYPTO_LIB' /LIBRARY, -
+       'OPT_FILE' /OPTIONS
+$!
+$!  End The TCP/IP Library Check.
+$!
+$   ENDIF
+$!
+$!  Go Back And Do It Again.
+$!
 $   GOTO NEXT_FILE
-$!
-$! End The TCP/IP Library Check.
-$!
-$ ENDIF
-$!
-$! Link The Program, Check To See If We Need To Link With RSAREF Or Not.
-$! Check To See If We Are To Link With A Specific TCP/IP Library.
-$!
-$ IF (TCPIP_LIB.NES."")
-$ THEN
-$!
-$!  Don't Link With The RSAREF Routines And TCP/IP Library.
-$!
-$   LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
-	'OBJECT_FILE', -
-        'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
-        'TCPIP_LIB','OPT_FILE'/OPTION
-$!
-$! Else...
-$!
-$ ELSE
-$!
-$!  Don't Link With The RSAREF Routines And Link With A TCP/IP Library.
-$!
-$   LINK/'DEBUGGER'/'TRACEBACK' /EXE='EXE_FILE' -
-	'OBJECT_FILE', -
-        'SSL_LIB'/LIBRARY,'CRYPTO_LIB'/LIBRARY, -
-        'OPT_FILE'/OPTION
-$!
-$! End The TCP/IP Library Check.
-$!
-$ ENDIF
-$!
-$! Go Back And Do It Again.
-$!
-$ GOTO NEXT_FILE
 $!
 $! All Done With This Library Part.
 $!
 $ FILE_DONE:
+$ GOTO NEXT_DIR
+$!
+$ DIR_DONE:
 $!
 $! All Done, Time To Exit.
 $!
@@ -281,10 +322,10 @@ $!
 $     CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File To Link Agianst 
-! The Sharable VAX C Runtime Library.
+! Default System Options File To Link Against
+! The Shareable VAX C Runtime Library.
 !
-SYS$SHARE:VAXCRTL.EXE/SHARE
+SYS$SHARE:VAXCRTL.EXE /SHAREABLE
 $EOD
 $!
 $!  End The Option File Check.
@@ -310,11 +351,11 @@ $!
 $     CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File To Link Agianst 
-! The Sharable C Runtime Library.
+! Default System Options File To Link Against
+! The Shareable C Runtime Library.
 !
-GNU_CC:[000000]GCCLIB/LIBRARY
-SYS$SHARE:VAXCRTL/SHARE
+GNU_CC:[000000]GCCLIB.OLB /LIBRARY
+SYS$SHARE:VAXCRTL.EXE /SHAREABLE
 $EOD
 $!
 $!  End The Option File Check.
@@ -345,10 +386,10 @@ $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File To Link Agianst 
-! The Sharable DEC C Runtime Library.
+! Default System Options File To Link Against
+! The Shareable DEC C Runtime Library.
 !
-SYS$SHARE:DECC$SHR.EXE/SHARE
+SYS$SHARE:DECC$SHR.EXE /SHAREABLE
 $EOD
 $!
 $!    Else...
@@ -360,11 +401,11 @@ $!
 $       CREATE 'OPT_FILE'
 $DECK
 !
-! Default System Options File For non-VAX To Link Agianst 
-! The Sharable C Runtime Library.
+! Default System Options File For non-VAX To Link Against
+! The Shareable C Runtime Library.
 !
-SYS$SHARE:CMA$OPEN_LIB_SHR/SHARE
-SYS$SHARE:CMA$OPEN_RTL/SHARE
+SYS$SHARE:CMA$OPEN_LIB_SHR.EXE /SHAREABLE
+SYS$SHARE:CMA$OPEN_RTL.EXE /SHAREABLE
 $EOD
 $!
 $!    End The DEC C Option File Check.
@@ -622,9 +663,9 @@ $!    Use DECC...
 $!
 $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
-	 THEN CC = "CC/DECC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
-           "/NOLIST/PREFIX=ALL" + -
+	 THEN CC = "CC /DECC"
+$     CC = CC + "/''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=ANSI89" + -
+           "/NOLIST /PREFIX=ALL" + -
 	   "/INCLUDE=(SYS$DISK:[-],SYS$DISK:[-.CRYPTO])" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
@@ -656,14 +697,14 @@ $     THEN
 $	WRITE SYS$OUTPUT "There is no VAX C on ''ARCH'!"
 $	EXIT
 $     ENDIF
-$     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
+$     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC /VAXC"
+$     CC = CC + "/''CC_OPTIMIZE' /''DEBUGGER' /NOLIST" + -
 	   "/INCLUDE=(SYS$DISK:[-],SYS$DISK:[-.CRYPTO])" + CCEXTRAFLAGS
 $     CCDEFS = CCDEFS + ",""VAXC"""
 $!
 $!    Define <sys> As SYS$COMMON:[SYSLIB]
 $!
-$     DEFINE/NOLOG SYS SYS$COMMON:[SYSLIB]
+$     DEFINE /NOLOG SYS SYS$COMMON:[SYSLIB]
 $!
 $!    Define The Linker Options File Name.
 $!
@@ -688,7 +729,7 @@ $     WRITE SYS$OUTPUT "Using GNU 'C' Compiler."
 $!
 $!    Use GNU C...
 $!
-$     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
+$     CC = "GCC /NOCASE_HACK /''GCC_OPTIMIZE' /''DEBUGGER' /NOLIST" + -
 	   "/INCLUDE=(SYS$DISK:[-],SYS$DISK:[-.CRYPTO])" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
@@ -723,7 +764,7 @@ $   CC = CC + "/DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
 $!
 $!  Show user the result
 $!
-$   WRITE/SYMBOL SYS$OUTPUT "Main Compiling Command: ",CC
+$   WRITE /SYMBOL SYS$OUTPUT "Main Compiling Command: ", CC
 $!
 $!  Else The User Entered An Invalid Arguement.
 $!
@@ -757,7 +798,7 @@ $   THEN
 $!
 $!    Set the library to use SOCKETSHR
 $!
-$     TCPIP_LIB = "SYS$DISK:[-.VMS]SOCKETSHR_SHR.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]SOCKETSHR_SHR.OPT /OPTIONS"
 $!
 $!    Done with SOCKETSHR
 $!
@@ -768,7 +809,7 @@ $!
 $   IF P3.EQS."MULTINET"
 $   THEN
 $!
-$!    Set the library to use UXC emulation.
+$!    Set the library to use UCX emulation.
 $!
 $     P3 = "UCX"
 $!
@@ -783,13 +824,13 @@ $   THEN
 $!
 $!    Set the library to use UCX.
 $!
-$     TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC.OPT /OPTIONS"
 $     IF F$TRNLNM("UCX$IPC_SHR") .NES. ""
 $     THEN
-$       TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC_LOG.OPT/OPT"
+$       TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_DECC_LOG.OPT /OPTIONS"
 $     ELSE
 $       IF COMPILER .NES. "DECC" .AND. ARCH .EQS. "VAX" THEN -
-	  TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_VAXC.OPT/OPT"
+	  TCPIP_LIB = "SYS$DISK:[-.VMS]UCX_SHR_VAXC.OPT /OPTIONS"
 $     ENDIF
 $!
 $!    Done with UCX
@@ -803,7 +844,7 @@ $   THEN
 $!
 $!    Set the library to use TCPIP (post UCX).
 $!
-$     TCPIP_LIB = "SYS$DISK:[-.VMS]TCPIP_SHR_DECC.OPT/OPT"
+$     TCPIP_LIB = "SYS$DISK:[-.VMS]TCPIP_SHR_DECC.OPT /OPTIONS"
 $!
 $!    Done with TCPIP
 $!
@@ -901,7 +942,7 @@ $ __INCLUDE = __TOP + "INCLUDE.OPENSSL]"
 $!
 $! Set up the logical name OPENSSL to point at the include directory
 $!
-$ DEFINE OPENSSL/NOLOG '__INCLUDE'
+$ DEFINE OPENSSL /NOLOG '__INCLUDE'
 $!
 $! Done
 $!
@@ -915,7 +956,7 @@ $ IF __SAVE_OPENSSL .EQS. ""
 $ THEN
 $   DEASSIGN OPENSSL
 $ ELSE
-$   DEFINE/NOLOG OPENSSL '__SAVE_OPENSSL'
+$   DEFINE /NOLOG OPENSSL '__SAVE_OPENSSL'
 $ ENDIF
 $!
 $! Done
