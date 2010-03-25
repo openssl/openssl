@@ -433,7 +433,7 @@ $!
 $! Copy All The ".H" Files From The [.CRYPTO] Directory Tree.
 $!
 $ SDIRS := ,-
-   'ARCH',-
+   _'ARCH',-
    OBJECTS,-
    MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,-
    DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,-
