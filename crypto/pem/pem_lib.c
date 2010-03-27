@@ -105,7 +105,7 @@ int PEM_def_callback(char *buf, int num, int w, void *key)
 
 	for (;;)
 		{
-		i=EVP_read_pw_string(buf,num,prompt,w);
+		i=EVP_read_pw_string_min(buf,MIN_LENGTH,num,prompt,w);
 		if (i != 0)
 			{
 			PEMerr(PEM_F_PEM_DEF_CALLBACK,PEM_R_PROBLEMS_GETTING_PASSWORD);
