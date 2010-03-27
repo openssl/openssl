@@ -172,15 +172,6 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 	switch (cmd)
 		{
-	case BIO_CTRL_RESET:
-		num=0;
-	case BIO_C_FILE_SEEK:
-		ret=0;
-		break;
-	case BIO_C_FILE_TELL:
-	case BIO_CTRL_INFO:
-		ret=0;
-		break;
 	case BIO_C_SET_FD:
 		sock_free(b);
 		b->num= *((int *)ptr);
@@ -202,10 +193,6 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 		break;
 	case BIO_CTRL_SET_CLOSE:
 		b->shutdown=(int)num;
-		break;
-	case BIO_CTRL_PENDING:
-	case BIO_CTRL_WPENDING:
-		ret=0;
 		break;
 	case BIO_CTRL_DUP:
 	case BIO_CTRL_FLUSH:
