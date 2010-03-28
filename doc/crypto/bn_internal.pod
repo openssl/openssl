@@ -13,6 +13,8 @@ library internal functions
 
 =head1 SYNOPSIS
 
+ #include <openssl/bn.h>
+
  BN_ULONG bn_mul_words(BN_ULONG *rp, BN_ULONG *ap, int num, BN_ULONG w);
  BN_ULONG bn_mul_add_words(BN_ULONG *rp, BN_ULONG *ap, int num,
    BN_ULONG w);

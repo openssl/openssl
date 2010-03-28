@@ -8,6 +8,8 @@ ASN1_STRING utility functions
 
 =head1 SYNOPSIS
 
+ #include <openssl/asn1.h>
+
  int ASN1_STRING_length(ASN1_STRING *x);
  unsigned char * ASN1_STRING_data(ASN1_STRING *x);
 

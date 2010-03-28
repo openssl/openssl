@@ -8,14 +8,16 @@ X509_NAME lookup and enumeration functions
 
 =head1 SYNOPSIS
 
-int X509_NAME_get_index_by_NID(X509_NAME *name,int nid,int lastpos);
-int X509_NAME_get_index_by_OBJ(X509_NAME *name,ASN1_OBJECT *obj, int lastpos);
+ #include <openssl/x509.h>
 
-int X509_NAME_entry_count(X509_NAME *name);
-X509_NAME_ENTRY *X509_NAME_get_entry(X509_NAME *name, int loc);
+ int X509_NAME_get_index_by_NID(X509_NAME *name,int nid,int lastpos);
+ int X509_NAME_get_index_by_OBJ(X509_NAME *name,ASN1_OBJECT *obj, int lastpos);
 
-int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf,int len);
-int X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, char *buf,int len);
+ int X509_NAME_entry_count(X509_NAME *name);
+ X509_NAME_ENTRY *X509_NAME_get_entry(X509_NAME *name, int loc);
+
+ int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf,int len);
+ int X509_NAME_get_text_by_OBJ(X509_NAME *name, ASN1_OBJECT *obj, char *buf,int len);
 
 =head1 DESCRIPTION
 

@@ -6,7 +6,9 @@ PKCS7_decrypt - decrypt content from a PKCS#7 envelopedData structure
 
 =head1 SYNOPSIS
 
-int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags);
+ #include <openssl/pkcs7.h>
+
+ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags);
 
 =head1 DESCRIPTION
 

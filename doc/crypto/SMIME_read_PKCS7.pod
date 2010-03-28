@@ -6,7 +6,9 @@ SMIME_read_PKCS7 - parse S/MIME message.
 
 =head1 SYNOPSIS
 
-PKCS7 *SMIME_read_PKCS7(BIO *in, BIO **bcont);
+ #include <openssl/pkcs7.h>
+
+ PKCS7 *SMIME_read_PKCS7(BIO *in, BIO **bcont);
 
 =head1 DESCRIPTION
 

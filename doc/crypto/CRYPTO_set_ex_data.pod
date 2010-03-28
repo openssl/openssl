@@ -6,6 +6,8 @@ CRYPTO_set_ex_data, CRYPTO_get_ex_data - internal application specific data func
 
 =head1 SYNOPSIS
 
+ #include <openssl/crypto.h>
+
  int CRYPTO_set_ex_data(CRYPTO_EX_DATA *r, int idx, void *arg);
 
  void *CRYPTO_get_ex_data(CRYPTO_EX_DATA *r, int idx);

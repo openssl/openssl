@@ -6,7 +6,9 @@ PKCS7_sign - create a PKCS#7 signedData structure
 
 =head1 SYNOPSIS
 
-PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs, BIO *data, int flags);
+ #include <openssl/pkcs7.h>
+
+ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs, BIO *data, int flags);
 
 =head1 DESCRIPTION
 
