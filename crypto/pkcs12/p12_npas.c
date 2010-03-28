@@ -120,8 +120,13 @@ static int newpass_p12(PKCS12 *p12, char *oldpass, char *newpass)
 			bags = PKCS12_unpack_p7data(p7);
 		} else if (bagnid == NID_pkcs7_encrypted) {
 			bags = PKCS12_unpack_p7encdata(p7, oldpass, -1);
-			alg_get(p7->d.encrypted->enc_data->algorithm,
-				&pbe_nid, &pbe_iter, &pbe_saltlen);
+			if (!alg_get(p7->d.encrypted->enc_data->algorithm,
+				&pbe_nid, &pbe_iter, &pbe_saltlen))
+				{
+				sk_PKCS12_SAFEBAG_pop_free(bags,
+						PKCS12_SAFEBAG_free);
+				bags = NULL;
+				}
 		} else continue;
 		if (!bags) {
 			sk_PKCS7_pop_free(asafes, PKCS7_free);
@@ -193,7 +198,9 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, char *oldpass, char *newpass)
 	if(M_PKCS12_bag_type(bag) != NID_pkcs8ShroudedKeyBag) return 1;
 
 	if (!(p8 = PKCS8_decrypt(bag->value.shkeybag, oldpass, -1))) return 0;
-	alg_get(bag->value.shkeybag->algor, &p8_nid, &p8_iter, &p8_saltlen);
+	if (!alg_get(bag->value.shkeybag->algor, &p8_nid, &p8_iter,
+							&p8_saltlen))
+		return 0;
 	if(!(p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
 						     p8_iter, p8))) return 0;
 	X509_SIG_free(bag->value.shkeybag);
@@ -208,9 +215,11 @@ static int alg_get(X509_ALGOR *alg, int *pnid, int *piter, int *psaltlen)
 
         p = alg->parameter->value.sequence->data;
         pbe = d2i_PBEPARAM(NULL, &p, alg->parameter->value.sequence->length);
+	if (!pbe)
+		return 0;
         *pnid = OBJ_obj2nid(alg->algorithm);
 	*piter = ASN1_INTEGER_get(pbe->iter);
 	*psaltlen = pbe->salt->length;
         PBEPARAM_free(pbe);
-        return 0;
+        return 1;
 }
