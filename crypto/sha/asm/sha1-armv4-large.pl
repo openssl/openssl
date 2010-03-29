@@ -226,6 +226,7 @@ $code.=<<___;
 .LK_60_79:	.word	0xca62c1d6
 .size	sha1_block_data_order,.-sha1_block_data_order
 .asciz	"SHA1 block transform for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
+.align	2
 ___
 
 $code =~ s/\bbx\s+lr\b/.word\t0xe12fff1e/gm;	# make it possible to compile with -march=armv4

@@ -193,6 +193,7 @@ bn_mul_mont:
 	bx	lr			@ interoperable with Thumb ISA:-)
 .size	bn_mul_mont,.-bn_mul_mont
 .asciz	"Montgomery multiplication for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
+.align	2
 ___
 
 $code =~ s/\bbx\s+lr\b/.word\t0xe12fff1e/gm;	# make it possible to compile with -march=armv4
