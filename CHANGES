@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8n and 1.0.0  [xx XXX xxxx]
+ Changes between 0.9.8n and 1.0.0  [29 Mar 2010]
 
   *) Add "missing" function EVP_CIPHER_CTX_copy(). This copies a cipher
      context. The operation can be customised via the ctrl mechanism in
