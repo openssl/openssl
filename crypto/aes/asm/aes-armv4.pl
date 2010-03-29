@@ -1024,6 +1024,7 @@ _armv4_AES_decrypt:
 	mov	pc,lr			@ return
 .size	_armv4_AES_decrypt,.-_armv4_AES_decrypt
 .asciz	"AES for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
+.align	2
 ___
 
 $code =~ s/\bbx\s+lr\b/.word\t0xe12fff1e/gm;	# make it possible to compile with -march=armv4

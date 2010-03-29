@@ -390,6 +390,7 @@ $code.=<<___;
 	bx	lr			@ interoperable with Thumb ISA:-)
 .size   sha512_block_data_order,.-sha512_block_data_order
 .asciz  "SHA512 block transform for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
+.align	2
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
