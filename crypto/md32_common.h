@@ -242,7 +242,7 @@
 # if defined(__GNUC__) && __GNUC__>=2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 #  if defined(__s390x__)
 #   define HOST_c2l(c,l)	({ asm ("lrv	%0,%1"			\
-				   :"=d"(l) :"m"(*(const unsigned int *)(c));\
+				   :"=d"(l) :"m"(*(const unsigned int *)(c)));\
 				   (c)+=4; (l);				})
 #   define HOST_l2c(l,c)	({ asm ("strv	%1,%0"			\
 				   :"=m"(*(unsigned int *)(c)) :"d"(l));\
