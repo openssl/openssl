@@ -78,6 +78,9 @@ DSO_METHOD *DSO_METHOD_dlfcn(void)
 #else
 
 #ifdef HAVE_DLFCN_H
+# ifdef __osf__
+#  define __EXTENSIONS__
+# endif
 # include <dlfcn.h>
 # define HAVE_DLINFO 1
 # if defined(_AIX) || defined(__CYGWIN__) || \
