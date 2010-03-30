@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0 and 1.0.0a  [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8n and 1.0.0  [29 Mar 2010]
 
   *) Add "missing" function EVP_CIPHER_CTX_copy(). This copies a cipher
