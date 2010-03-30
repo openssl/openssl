@@ -52,6 +52,9 @@ OpenSSL  -  Frequently Asked Questions
 * Why does the OpenSSL test suite fail in sha512t on x86 CPU?
 * Why does compiler fail to compile sha512.c?
 * Test suite still fails, what to do?
+* I think I've found a bug, what should I do?
+* I'm SURE I've found a bug, how do I report it?
+* I've found a security issue, how do I report it?
 
 [PROG] Questions about programming with OpenSSL
 
@@ -708,6 +711,64 @@ a compiler bug. Compiler bugs might appear in rather bizarre ways, they
 never make sense, and tend to emerge when you least expect them. In order
 to identify one, drop optimization level, e.g. by editing CFLAG line in
 top-level Makefile, recompile and re-run the test.
+
+* I think I've found a bug, what should I do?
+
+If you are a new user then it is quite likely you haven't found a bug and
+something is happening you aren't familiar with. Check this FAQ, the associated
+documentation and the mailing lists for similar queries. If you are still
+unsure whether it is a bug or not submit a query to the openssl-users mailing
+list.
+
+* I'm SURE I've found a bug, how do I report it?
+
+Bug reports with no security implications should be sent to the request
+tracker. This can be done my mailing the report to rt@openssl.org (or its alias
+openssl-bugs@openssl.org), please note that messages sent to the request
+tracker also appear in the public openssl-dev mailing list.
+
+The report should be in plain text. Any patches should be sent as
+plain text attachments because some mailers corrupt patches sent inline.
+If your issue affects multiple versions of OpenSSL check any patch apply
+cleanly and, if possible include patches to each affected version.
+
+The report should be given a meaningful subject line briefly summarising the
+issue. Just "bug in OpenSSL" or "bug in OpenSSL 0.9.8n" is not very helpful.
+
+By sending reports to the request tracker the bug can then be given a priority
+and assigned to the appropriate maintainer. The history of discussions can be
+accessed and if the issue has been addressed or a reason why not. If patches
+are sent to openssl-dev instead only they can be lost if a team member has to
+wade through months of old messages to review the discussion.
+
+See also http://www.openssl.org/support/rt.html
+
+* I've found a security issue, how do I report it?
+
+If you think your bug has security implications then please send it to
+openssl-security@openssl.org if you don't get a prompt reply at least 
+acknowledging receipt then resend or mail it directly to one of the
+more active team members (e.g. steve@openssl.org).
+
+[PROG] Questions about programming with OpenSSL
+
+* Is OpenSSL thread-safe?
+* I've compiled a program under Windows and it crashes: why?
+* How do I read or write a DER encoded buffer using the ASN1 functions?
+* OpenSSL uses DER but I need BER format: does OpenSSL support BER?
+* I've tried using <M_some_evil_pkcs12_macro> and I get errors why?
+* I've called <some function> and it fails, why?
+* I just get a load of numbers for the error output, what do they mean?
+* Why do I get errors about unknown algorithms?
+* Why can't the OpenSSH configure script detect OpenSSL?
+* Can I use OpenSSL's SSL library with non-blocking I/O?
+* Why doesn't my server application receive a client certificate?
+* Why does compilation fail due to an undefined symbol NID_uniqueIdentifier?
+* I think I've detected a memory leak, is this a bug?
+* Why does Valgrind complain about the use of uninitialized data?
+* Why doesn't a memory BIO work when a file does?
+* Where are the declarations and implementations of d2i_X509() etc?
+
 
 [PROG] ========================================================================
 
