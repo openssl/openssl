@@ -720,6 +720,7 @@ documentation and the mailing lists for similar queries. If you are still
 unsure whether it is a bug or not submit a query to the openssl-users mailing
 list.
 
+
 * I'm SURE I've found a bug, how do I report it?
 
 Bug reports with no security implications should be sent to the request
@@ -743,6 +744,7 @@ wade through months of old messages to review the discussion.
 
 See also <URL: http://www.openssl.org/support/rt.html>
 
+
 * I've found a security issue, how do I report it?
 
 If you think your bug has security implications then please send it to
@@ -751,7 +753,7 @@ acknowledging receipt then resend or mail it directly to one of the
 more active team members (e.g. Steve).
 
 
-[PROG] Questions about programming with OpenSSL
+[PROG] ========================================================================
 
 * Is OpenSSL thread-safe?
 * I've compiled a program under Windows and it crashes: why?
