@@ -15,7 +15,7 @@ SSL_library_init, OpenSSL_add_ssl_algorithms, SSLeay_add_ssl_algorithms
 
 =head1 DESCRIPTION
 
-SSL_library_init() registers the available ciphers and digests.
+SSL_library_init() registers the available SSL/TLS ciphers and digests.
 
 OpenSSL_add_ssl_algorithms() and SSLeay_add_ssl_algorithms() are synonyms
 for SSL_library_init().
@@ -26,9 +26,10 @@ SSL_library_init() must be called before any other action takes place.
 
 =head1 WARNING
 
-SSL_library_init() only registers ciphers. Another important initialization
-is the seeding of the PRNG (Pseudo Random Number Generator), which has to
-be performed separately.
+SSL_library_init() mainly adds ciphers and digests used directly by SSL/TLS.
+In some cases this is not sufficient and errors about unknown algorithms
+will occur: for example when an attempt is made to use a certificate using
+SHA256. This can be resolved by also calling OpenSSL_add_all_algorithms().
 
 =head1 EXAMPLES
 
