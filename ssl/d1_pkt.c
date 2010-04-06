@@ -624,15 +624,16 @@ again:
 	/* just read a 0 length packet */
 	if (rr->length == 0) goto again;
 
-    /* If this record is from the next epoch (either HM or ALERT), buffer it
-     * since it cannot be processed at this time.
-     * Records from the next epoch are marked as received even though they are 
-     * not processed, so as to prevent any potential resource DoS attack */
-    if (is_next_epoch)
-        {
-        dtls1_record_bitmap_update(s, bitmap);
-        dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), &rr->seq_num);
-	rr->length = 0;
+	/* If this record is from the next epoch (either HM or ALERT),
+	 * and a handshake is currently in progress, buffer it since it
+	 * cannot be processed at this time. */
+	if (is_next_epoch)
+		{
+		if (SSL_in_init(s) || s->in_handshake)
+			{
+			dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
+			}
+		rr->length = 0;
         s->packet_length = 0;
         goto again;
         }
