@@ -45,7 +45,7 @@ needs to read data.
 BIO_should_io_special() is true if some "special" condition, that is a
 reason other than reading or writing is the cause of the condition.
 
-BIO_get_retry_reason() returns a mask of the cause of a retry condition
+BIO_retry_type() returns a mask of the cause of a retry condition
 consisting of the values B<BIO_FLAGS_READ>, B<BIO_FLAGS_WRITE>,
 B<BIO_FLAGS_IO_SPECIAL> though current BIO types will only set one of
 these.
