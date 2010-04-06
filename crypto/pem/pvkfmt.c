@@ -654,6 +654,8 @@ int i2b_PublicKey_bio(BIO *out, EVP_PKEY *pk)
 	return do_i2b_bio(out, pk, 1);
 	}
 
+#ifndef OPENSSL_NO_RC4
+
 static int do_PVK_header(const unsigned char **in, unsigned int length,
 		int skip_magic,
 	       	unsigned int *psaltlen, unsigned int *pkeylen)
@@ -934,4 +936,7 @@ int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
 		}
 	return -1;
 	}
+
+#endif
+
 #endif

@@ -3861,10 +3861,10 @@ EVP_PKEY_meth_set_sign                  4243	EXIST::FUNCTION:
 CRYPTO_THREADID_current                 4244	EXIST::FUNCTION:
 EVP_PKEY_decrypt_init                   4245	EXIST::FUNCTION:
 NETSCAPE_X509_free                      4246	EXIST::FUNCTION:
-i2b_PVK_bio                             4247	EXIST::FUNCTION:
+i2b_PVK_bio                             4247	EXIST::FUNCTION:RC4
 EVP_PKEY_print_private                  4248	EXIST::FUNCTION:
 GENERAL_NAME_get0_value                 4249	EXIST::FUNCTION:
-b2i_PVK_bio                             4250	EXIST::FUNCTION:
+b2i_PVK_bio                             4250	EXIST::FUNCTION:RC4
 ASN1_UTCTIME_adj                        4251	EXIST::FUNCTION:
 TS_TST_INFO_new                         4252	EXIST::FUNCTION:
 EVP_MD_do_all_sorted                    4253	EXIST::FUNCTION:
