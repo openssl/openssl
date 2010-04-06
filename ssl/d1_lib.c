@@ -305,6 +305,16 @@ struct timeval* dtls1_get_timeout(SSL *s, struct timeval* timeleft)
 		timeleft->tv_usec += 1000000;
 		}
 
+	/* If remaining time is less than 15 ms, set it to 0
+	 * to prevent issues because of small devergences with
+	 * socket timeouts.
+	 */
+	if (timeleft->tv_sec == 0 && timeleft->tv_usec < 15000)
+		{
+		memset(timeleft, 0, sizeof(struct timeval));
+		}
+	
+
 	return timeleft;
 	}
 
