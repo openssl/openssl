@@ -766,7 +766,7 @@ start:
 		 * buffer the application data for later processing rather
 		 * than dropping the connection.
 		 */
-		dtls1_buffer_record(s, &(s->d1->buffered_app_data), 0);
+		dtls1_buffer_record(s, &(s->d1->buffered_app_data), rr->seq_num);
 		rr->length = 0;
 		goto start;
 		}
