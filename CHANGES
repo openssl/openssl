@@ -847,6 +847,13 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
   
+ Changes between 0.9.8n and 0.9.8o [xx XXX xxxx]
+
+  *) Add SHA2 algorithms to SSL_library_init(). SHA2 is becoming far more
+     common in certificates and some applications which only call
+     SSL_library_init and not OpenSSL_add_all_algorithms() will fail.
+     [Steve Henson]
+
  Changes between 0.9.8m and 0.9.8n [24 Mar 2010]
 
   *) When rejecting SSL/TLS records due to an incorrect version number, never
