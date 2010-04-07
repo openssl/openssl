@@ -4,6 +4,11 @@
 
  Changes between 0.9.8n and 0.9.8o [xx XXX xxxx]
 
+  *) Add SHA2 algorithms to SSL_library_init(). SHA2 is becoming far more
+     common in certificates and some applications which only call
+     SSL_library_init and not OpenSSL_add_all_algorithms() will fail.
+     [Steve Henson]
+
   *) VMS fixes: 
      Reduce copying into .apps and .test in makevms.com
      Don't try to use blank CA certificate in CA.com

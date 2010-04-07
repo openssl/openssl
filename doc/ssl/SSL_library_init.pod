@@ -26,24 +26,27 @@ SSL_library_init() must be called before any other action takes place.
 
 =head1 WARNING
 
-SSL_library_init() mainly adds ciphers and digests used directly by SSL/TLS.
-In some cases this is not sufficient and errors about unknown algorithms
-will occur: for example when an attempt is made to use a certificate using
-SHA256. This can be resolved by also calling OpenSSL_add_all_algorithms().
+SSL_library_init() adds ciphers and digests used directly and indirectly by
+SSL/TLS.
 
 =head1 EXAMPLES
 
 A typical TLS/SSL application will start with the library initialization,
-will provide readable error messages and will seed the PRNG.
+and provide readable error messages.
 
  SSL_load_error_strings();                /* readable error messages */
  SSL_library_init();                      /* initialize library */
- actions_to_seed_PRNG(); 
 
 =head1 RETURN VALUES
 
 SSL_library_init() always returns "1", so it is safe to discard the return
 value.
+
+=head1 NOTES
+
+OpenSSL 0.9.8o and 1.0.0a and later added SHA2 algorithms to SSL_library_init().
+Applications which need to use SHA2 in earlier versions of OpenSSL should call
+OpenSSL_add_all_algorithms() as well.
 
 =head1 SEE ALSO
 
