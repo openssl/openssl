@@ -801,7 +801,7 @@ static int mac_ctrl_gost(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 	switch (op)
 		{
 		case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
-			*(int *)arg2 = NID_undef;
+			*(int *)arg2 = NID_id_Gost28147_89_MAC;
 			return 2;
 		}
 	return -2;
