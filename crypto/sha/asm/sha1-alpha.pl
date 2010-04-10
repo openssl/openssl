@@ -310,5 +310,6 @@ $code.=<<___;
 	ret	(ra)
 .end	sha1_block_data_order
 ___
+$output=shift and open STDOUT,">$output";
 print $code;
 close STDOUT;
