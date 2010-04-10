@@ -61,14 +61,11 @@
 typedef unsigned int u32;
 typedef unsigned char u8;
 
-# define GETU32(pt) (((u32)(pt)[0] << 24) ^ ((u32)(pt)[1] << 16) ^ ((u32)(pt)[2] <<  8) ^ ((u32)(pt)[3]))
-# define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); (ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
-
 #define STRICT_ALIGNMENT
-#if defined(__i386) || defined(__i386__) || \
-    defined(__x86_64) || defined(__x86_64__) || \
-    defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64) || \
-    defined(__s390__) || defined(__s390x__)
+#if defined(__i386)	|| defined(__i386__)	|| \
+    defined(__x86_64)	|| defined(__x86_64__)	|| \
+    defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64) || \
+    defined(__s390__)	|| defined(__s390x__)
 #  undef STRICT_ALIGNMENT
 #endif
 
@@ -77,18 +74,19 @@ typedef unsigned char u8;
 
 /* increment counter (128-bit int) by 1 */
 static void ctr128_inc(unsigned char *counter) {
-	u32 c,n=16;
+	u32 n=16;
+	u8  c;
 
 	do {
-		n -= 4;
-		c = GETU32(counter+n);
-		++c;	c &= 0xFFFFFFFF;
-		PUTU32(counter + n, c);
+		--n;
+		c = counter[n];
+		++c;
+		counter[n] = c;
 		if (c) return;
 	} while (n);
 }
 
-#if !defined(OPENSSL_SMALL_FOORPRINT)
+#if !defined(OPENSSL_SMALL_FOOTPRINT)
 static void ctr128_inc_aligned(unsigned char *counter) {
 	size_t *data,c,n;
 	const union { long one; char little; } is_endian = {1};
@@ -151,14 +149,14 @@ void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 		while (len>=16) {
 			(*block)(ivec, ecount_buf, key);
 			ctr128_inc_aligned(ivec);
-			for (n=0; n<16; n+=sizeof(size_t))
+			for (; n<16; n+=sizeof(size_t))
 				*(size_t *)(out+n) =
 				*(size_t *)(in+n) ^ *(size_t *)(ecount_buf+n);
 			len -= 16;
 			out += 16;
 			in  += 16;
+			n = 0;
 		}
-		n = 0;
 		if (len) {
 			(*block)(ivec, ecount_buf, key);
  			ctr128_inc_aligned(ivec);
