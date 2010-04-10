@@ -53,15 +53,15 @@ $code=<<___;
 .align	5
 .ent	bn_mul_mont
 bn_mul_mont:
-	lda	sp,-40(sp)
+	lda	sp,-48(sp)
 	stq	ra,0(sp)
 	stq	s3,8(sp)
 	stq	s4,16(sp)
 	stq	s5,24(sp)
 	stq	fp,32(sp)
 	mov	sp,fp
-	.mask	0x0400f000,-40
-	.frame	fp,40,ra
+	.mask	0x0400f000,-48
+	.frame	fp,48,ra
 	.prologue 0
 
 	.align	4
@@ -306,7 +306,7 @@ bn_mul_mont:
 	ldq	s4,16(sp)
 	ldq	s5,24(sp)
 	ldq	fp,32(sp)
-	lda	sp,40(sp)
+	lda	sp,48(sp)
 	ret	(ra)
 .end	bn_mul_mont
 .rdata
