@@ -179,7 +179,7 @@ OPENSSL_atomic_add:
 	ba	.enter
 	nop
 #ifdef __sun
-! Note that you don't have to link with libthread to call thr_yield,
+! Note that you do not have to link with libthread to call thr_yield,
 ! as libc provides a stub, which is overloaded the moment you link
 ! with *either* libpthread or libthread...
 #define	YIELD_CPU	thr_yield
