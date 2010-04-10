@@ -115,7 +115,9 @@ my %globals;
 		$self->{op} = $1;
 		$self->{sz} = "b";
 	    } elsif ($self->{op} =~ /call|jmp/) {
-		$self->{sz} = ""
+		$self->{sz} = "";
+	    } elsif ($self->{op} =~ /^p/ && $' !~ /^(ush|op)/) { # SSEn
+		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])$/) {
 		$self->{op} = $1;
 		$self->{sz} = $2;
@@ -574,11 +576,11 @@ my %globals;
 		/\.align/   && do { $self->{value} = "ALIGN\t".$line; last; };
 		/\.(value|long|rva|quad)/
 			    && do { my $sz  = substr($1,0,1);
-				    my @arr = split(',',$line);
+				    my @arr = split(/,\s*/,$line);
 				    my $last = pop(@arr);
 				    my $conv = sub  {	my $var=shift;
 							$var=~s/^(0b[0-1]+)/oct($1)/eig;
-							$var=~s/0x([0-9a-f]+)/0$1h/ig if ($masm);
+							$var=~s/^0x([0-9a-f]+)/0$1h/ig if ($masm);
 							if ($sz eq "D" && ($current_segment=~/.[px]data/ || $dir eq ".rva"))
 							{ $var=~s/([_a-z\$\@][_a-z0-9\$\@]*)/$nasm?"$1 wrt ..imagebase":"imagerel $1"/egi; }
 							$var;
@@ -590,7 +592,7 @@ my %globals;
 				    $self->{value} .= &$conv($last);
 				    last;
 				  };
-		/\.byte/    && do { my @str=split(",",$line);
+		/\.byte/    && do { my @str=split(/,\s*/,$line);
 				    map(s/(0b[0-1]+)/oct($1)/eig,@str);
 				    map(s/0x([0-9a-f]+)/0$1h/ig,@str) if ($masm);	
 				    while ($#str>15) {
@@ -613,6 +615,71 @@ my %globals;
 	$self->{value};
     }
 }
+
+sub rex {
+ local *opcode=shift;
+ my ($dst,$src)=@_;
+
+   if ($dst>=8 || $src>=8) {
+	$rex=0x40;
+	$rex|=0x04 if($dst>=8);
+	$rex|=0x01 if($src>=8);
+	push @opcode,$rex;
+   }
+}
+
+# older gas doesn't handle SSE>2 instructions
+my %regrm = (	"%eax"=>0, "%ecx"=>1, "%edx"=>2, "%ebx"=>3,
+		"%esp"=>4, "%ebp"=>5, "%esi"=>6, "%edi"=>7	);
+
+my $pextrd = sub {
+  my ($imm,$src,$dst) = @_;
+    if ("$imm:$src" =~ /\$([0-9]+):%xmm([0-9]+)/) {
+      my @opcode=(0x66);
+	$imm=$1;
+	$src=$2;
+	if ($dst =~ /%r([0-9]+)d/)	{ $dst = $1; }
+	elsif ($dst =~ /%e/)		{ $dst = $regrm{$dst}; }
+	rex(\@opcode,$src,$dst);
+	push @opcode,0x0f,0x3a,0x16;
+	push @opcode,0xc0|(($src&7)<<3)|($dst&7);	# ModR/M
+	push @opcode,$imm;
+	printf "\t.byte\t%s\n",join(',',@opcode);
+    } else {
+	printf "\tpextrd\t%s\n",join(',',@_);
+    }
+} if ($gas);
+
+my $pinsrd = sub {
+  my ($imm,$src,$dst) = @_;
+    if ("$imm:$dst" =~ /\$([0-9]+):%xmm([0-9]+)/) {
+      my @opcode=(0x66);
+	$imm=$1;
+	$dst=$2;
+	if ($src =~ /%r([0-9]+)d/)	{ $src = $1; }
+	elsif ($src =~ /%e/)		{ $src = $regrm{$src}; }
+	rex(\@opcode,$dst,$src);
+	push @opcode,0x0f,0x3a,0x22;
+	push @opcode,0xc0|(($dst&7)<<3)|($src&7);	# ModR/M
+	push @opcode,$imm;
+	printf "\t.byte\t%s\n",join(',',@opcode);
+    } else {
+	printf "\tpinsrd\t%s\n",join(',',@_);
+    }
+} if ($gas);
+
+my $pshufb = sub {
+  my ($src,$dst) = @_;
+    if ("$dst:$src" =~ /%xmm([0-9]+):%xmm([0-9]+)/) {
+      my @opcode=(0x66);
+	rex(\@opcode,$1,$2);
+	push @opcode,0x0f,0x38,0x00;
+	push @opcode,0xc0|($2&7)|(($1&7)<<3);	# ModR/M
+	printf "\t.byte\t%s\n",join(',',@opcode);
+    } else {
+	printf "\tpshufb\t%s\n",join(',',@_);
+    }
+} if ($gas);
 
 if ($nasm) {
     print <<___;
@@ -662,13 +729,17 @@ while($line=<>) {
 	    my $insn;
 	    if ($gas) {
 		$insn = $opcode->out($#args>=1?$args[$#args]->size():$sz);
+		@args = map($_->out($sz),@args);
+		my $asm = eval("\$$insn");
+		if (ref($asm) eq 'CODE') { &$asm(@args); }
+		else { printf "\t%s\t%s",$insn,join(",",@args); }
 	    } else {
 		$insn = $opcode->out();
 		$insn .= $sz if (map($_->out() =~ /xmm|mmx/,@args));
 		@args = reverse(@args);
 		undef $sz if ($nasm && $opcode->mnemonic() eq "lea");
+		printf "\t%s\t%s",$insn,join(",",map($_->out($sz),@args));
 	    }
-	    printf "\t%s\t%s",$insn,join(",",map($_->out($sz),@args));
 	} else {
 	    printf "\t%s",$opcode->out();
 	}
