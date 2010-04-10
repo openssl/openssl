@@ -1211,7 +1211,7 @@ $multilib     =
 
 *** darwin-ppc-cc
 $cc           = cc
-$cflags       = -arch ppc -O3 -DB_ENDIAN
+$cflags       = -arch ppc -O3 -DB_ENDIAN -Wa,-force_cpusubtype_ALL
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = MACOSX
