@@ -749,6 +749,18 @@ int OPENSSL_isservice(void)
 { HWINSTA h;
   DWORD len;
   WCHAR *name;
+  static union { void *p; int (*f)(void); } _OPENSSL_isservice = { NULL };
+
+    if (_OPENSSL_isservice.p == NULL) {
+	HANDLE h = GetModuleHandle(NULL);
+	if (h != NULL)
+	    _OPENSSL_isservice.p = GetProcAddress(h,"_OPENSSL_isservice");
+	if (_OPENSSL_isservice.p == NULL)
+	    _OPENSSL_isservice.p = (void *)-1;
+    }
+
+    if (_OPENSSL_isservice.p != (void *)-1)
+	return (*_OPENSSL_isservice.f)();
 
     (void)GetDesktopWindow(); /* return value is ignored */
 
