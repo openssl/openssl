@@ -18,10 +18,9 @@ if $PROG engine aesni | grep -v no-aesni; then
 
     HASH=`cat $PROG | $PROG dgst -hex`
 
-    AES_ALGS="	aes-128-ecb aes-192-ecb aes-256-ecb \
-		aes-128-cbc aes-192-cbc aes-256-cbc \
-		aes-128-cfb aes-192-cfb aes-256-cfb \
-		aes-128-ofb aes-192-ofb aes-256-ofb"
+    AES_ALGS="	aes-128-ctr aes-128-ecb aes-128-cbc aes-128-cfb aes-128-ofb \
+		aes-192-ctr aes-192-ecb aes-192-cbc aes-192-cfb aes-192-ofb \
+		aes-256-ctr aes-256-ecb aes-256-cbc aes-256-cfb aes-256-ofb"
     BUFSIZE="16 32 48 64 80 96 128 144 999"
 
     nerr=0
