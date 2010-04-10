@@ -41,7 +41,7 @@ $inp="%rdi";
 $out="%rsi";
 $len="%rdx";
 $key="%rcx";	# input to and changed by aesni_[en|de]cryptN !!!
-$ivp="%r8";	# cbc
+$ivp="%r8";	# cbc, ctr
 
 $rnds_="%r10d";	# backup copy for $rounds
 $key_="%r11";	# backup copy for $key
@@ -51,7 +51,7 @@ $inout0="%xmm0";	$inout1="%xmm1";
 $inout2="%xmm2";	$inout3="%xmm3";
 $rndkey0="%xmm4";	$rndkey1="%xmm5";
 
-$iv="%xmm6";		$in0="%xmm7";	# used in CBC decrypt
+$iv="%xmm6";		$in0="%xmm7";	# used in CBC decrypt, CTR
 $in1="%xmm8";		$in2="%xmm9";
 
 # Inline version of internal aesni_[en|de]crypt1.
@@ -214,6 +214,7 @@ ___
 &aesni_generate4("dec");
 
 if ($PREFIX eq "aesni") {
+########################################################################
 # void aesni_ecb_encrypt (const void *in, void *out,
 #			  size_t length, const AES_KEY *key,
 #			  int enc);
@@ -232,8 +233,9 @@ aesni_ecb_encrypt:
 	mov	$rounds,$rnds_		# backup $rounds
 	jz	.Lecb_decrypt
 #--------------------------- ECB ENCRYPT ------------------------------#
-	sub	\$0x40,$len
+	cmp	\$0x40,$len
 	jbe	.Lecb_enc_tail
+	sub	\$0x40,$len
 	jmp	.Lecb_enc_loop3
 .align 16
 .Lecb_enc_loop3:
@@ -251,14 +253,13 @@ aesni_ecb_encrypt:
 	movups	$inout2,-0x10($out)
 	ja	.Lecb_enc_loop3
 
-.Lecb_enc_tail:
 	add	\$0x40,$len
 	jz	.Lecb_ret
 
-	cmp	\$0x10,$len
-	movups	($inp),$inout0
-	je	.Lecb_enc_one
+.Lecb_enc_tail:
 	cmp	\$0x20,$len
+	movups	($inp),$inout0
+	jb	.Lecb_enc_one
 	movups	0x10($inp),$inout1
 	je	.Lecb_enc_two
 	cmp	\$0x30,$len
@@ -294,8 +295,9 @@ $code.=<<___;
 #--------------------------- ECB DECRYPT ------------------------------#
 .align	16
 .Lecb_decrypt:
-	sub	\$0x40,$len
+	cmp	\$0x40,$len
 	jbe	.Lecb_dec_tail
+	sub	\$0x40,$len
 	jmp	.Lecb_dec_loop3
 .align 16
 .Lecb_dec_loop3:
@@ -313,14 +315,13 @@ $code.=<<___;
 	movups	$inout2,-0x10($out)
 	ja	.Lecb_dec_loop3
 
-.Lecb_dec_tail:
 	add	\$0x40,$len
 	jz	.Lecb_ret
 
-	cmp	\$0x10,$len
-	movups	($inp),$inout0
-	je	.Lecb_dec_one
+.Lecb_dec_tail:
 	cmp	\$0x20,$len
+	movups	($inp),$inout0
+	jb	.Lecb_dec_one
 	movups	0x10($inp),$inout1
 	je	.Lecb_dec_two
 	cmp	\$0x30,$len
@@ -357,8 +358,175 @@ $code.=<<___;
 	ret
 .size	aesni_ecb_encrypt,.-aesni_ecb_encrypt
 ___
+######################################################################
+# handles only complete blocks, operates on 32-bit counter and
+# does not update *ivec! (see engine/eng_aesni.c for details)
+#
+# void aesni_ctr32_encrypt_blocks (const void *in, void *out,
+#                         size_t blocks, const AES_KEY *key,
+#                         const char *ivec);
+$increment="%xmm10";
+$bswap_mask="%xmm11";
+
+$code.=<<___;
+.globl	aesni_ctr32_encrypt_blocks
+.type	aesni_ctr32_encrypt_blocks,\@function,5
+.align	16
+aesni_ctr32_encrypt_blocks:
+___
+$code.=<<___ if ($win64);
+	lea	-0x68(%rsp),%rsp
+	movaps	%xmm6,(%rsp)
+	movaps	%xmm7,0x10(%rsp)
+	movaps	%xmm8,0x20(%rsp)
+	movaps	%xmm9,0x30(%rsp)
+	movaps	%xmm10,0x40(%rsp)
+	movaps	%xmm11,0x50(%rsp)
+
+.Lctr32_body:
+___
+$code.=<<___;
+	movups	($ivp),$inout3
+	movaps	.Lincrement(%rip),$increment
+	movaps	.Lbswap_mask(%rip),$bswap_mask
+	xor	$rounds,$rounds
+	pextrd	\$3,$inout3,$rnds_		# pull 32-bit counter
+	pinsrd	\$3,$rounds,$inout3		# wipe 32-bit counter
+
+	mov	240($key),$rounds		# key->rounds
+	pxor	$iv,$iv				# vector of 3 32-bit counters
+	bswap	$rnds_
+	pinsrd	\$0,$rnds_,$iv
+	inc	$rnds_
+	pinsrd	\$1,$rnds_,$iv
+	inc	$rnds_
+	pinsrd	\$2,$rnds_,$iv
+
+	cmp	\$4,$len
+	pshufb	$bswap_mask,$iv
+	jbe	.Lctr32_tail
+	mov	$rounds,$rnds_
+	mov	$key,$key_
+	sub	\$4,$len
+	jmp	.Lctr32_loop3
+
+.align	16
+.Lctr32_loop3:
+	pshufd	\$`3<<6`,$iv,$inout0		# place counter to upper dword
+	pshufd	\$`2<<6`,$iv,$inout1
+	pshufd	\$`1<<6`,$iv,$inout2
+	movups	($inp),$in0
+	movups	0x10($inp),$in1
+	movups	0x20($inp),$in2
+	por	$inout3,$inout0			# merge counter-less ivec
+	por	$inout3,$inout1
+	por	$inout3,$inout2
+	pshufb	$bswap_mask,$iv
+
+	call	_aesni_encrypt3
+
+	paddd	$increment,$iv
+	pxor	$inout0,$in0
+	pxor	$inout1,$in1
+	pxor	$inout2,$in2
+	pshufb	$bswap_mask,$iv
+	movups	$in0,($out)
+	movups	$in1,0x10($out)
+	movups	$in2,0x20($out)
+
+	sub	\$3,$len
+	lea	0x30($inp),$inp
+	lea	0x30($out),$out
+	mov	$key_,$key
+	mov	$rnds_,$rounds
+	ja	.Lctr32_loop3
+
+	add	\$4,$len
+	pextrd	\$1,$iv,$rnds_			# migh need last counter value
+	jz	.Lctr32_done
+	bswap	$rnds_
+
+.Lctr32_tail:
+	cmp	\$2,$len
+	pshufd	\$`3<<6`,$iv,$inout0
+	pshufd	\$`2<<6`,$iv,$inout1
+	pshufd	\$`1<<6`,$iv,$inout2
+	por	$inout3,$inout0
+	movups	($inp),$in0
+	jb	.Lctr32_one
+	por	$inout3,$inout1
+	movups	0x10($inp),$in1
+	je	.Lctr32_two
+	cmp	\$3,$len
+	por	$inout3,$inout2
+	movups	0x20($inp),$in2
+	je	.Lctr32_three
+
+	inc	$rnds_				# compose last counter value
+	bswap	$rnds_
+	pinsrd	\$3,$rnds_,$inout3
+	movups	0x30($inp),$iv
+
+	call	_aesni_encrypt4
+
+	pxor	$inout0,$in0
+	pxor	$inout1,$in1
+	pxor	$inout2,$in2
+	pxor	$inout3,$iv
+	movups	$in0,($out)
+	movups	$in1,0x10($out)
+	movups	$in2,0x20($out)
+	movups	$iv,0x30($out)
+	jmp	.Lctr32_done
+
+.align	16
+.Lctr32_one:
+___
+	&aesni_generate1("enc",$key,$rounds);
+$code.=<<___;
+	pxor	$inout0,$in0
+	movups	$in0,($out)
+	jmp	.Lctr32_done
+
+.align	16
+.Lctr32_two:
+	call	_aesni_encrypt3
+	pxor	$inout0,$in0
+	pxor	$inout1,$in1
+	movups	$in0,($out)
+	movups	$in1,0x10($out)
+	jmp	.Lctr32_done
+
+.align	16
+.Lctr32_three:
+	call	_aesni_encrypt3
+	pxor	$inout0,$in0
+	pxor	$inout1,$in1
+	pxor	$inout2,$in2
+	movups	$in0,($out)
+	movups	$in1,0x10($out)
+	movups	$in2,0x20($out)
+
+.Lctr32_done:
+___
+
+$code.=<<___ if ($win64);
+	movaps	(%rsp),%xmm6
+	movaps	0x10(%rsp),%xmm7
+	movaps	0x20(%rsp),%xmm8
+	movaps	0x30(%rsp),%xmm9
+	movaps	0x40(%rsp),%xmm10
+	movaps	0x50(%rsp),%xmm11
+	lea	0x68(%rsp),%rsp
+___
+$code.=<<___;
+.Lctr32_ret:
+	ret
+.size	aesni_ctr32_encrypt_blocks,.-aesni_ctr32_encrypt_blocks
+___
 }
 
+########################################################################
 # void $PREFIX_cbc_encrypt (const void *inp, void *out,
 #			    size_t length, const AES_KEY *key,
 #			    unsigned char *ivp,const int enc);
@@ -429,9 +597,10 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	movups	($ivp),$iv
-	sub	\$0x40,$len
+	cmp	\$0x40,$len
 	mov	$rnds_,$rounds
 	jbe	.Lcbc_dec_tail
+	sub	\$0x40,$len
 	jmp	.Lcbc_dec_loop3
 .align 16
 .Lcbc_dec_loop3:
@@ -456,11 +625,11 @@ $code.=<<___;
 	movups	$inout2,-0x10($out)
 	ja	.Lcbc_dec_loop3
 
-.Lcbc_dec_tail:
 	add	\$0x40,$len
 	movups	$iv,($ivp)
 	jz	.Lcbc_dec_ret
 
+.Lcbc_dec_tail:
 	movups	($inp),$inout0
 	cmp	\$0x10,$len
 	movaps	$inout0,$in0
@@ -796,6 +965,11 @@ ___
 }
 
 $code.=<<___;
+.align	64
+.Lbswap_mask:
+	.byte	15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
+.Lincrement:
+	.long	3,3,3,0
 .asciz  "AES for Intel AES-NI, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
 ___
@@ -810,6 +984,75 @@ $disp="%r9";
 
 $code.=<<___;
 .extern	__imp_RtlVirtualUnwind
+___
+$code.=<<___ if ($PREFIX eq "aesni");
+.type	ecb_se_handler,\@abi-omnipotent
+.align	16
+ecb_se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	152($context),%rax	# pull context->Rsp
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+	jmp	.Lcommon_seh_exit
+.size	ecb_se_handler,.-ecb_se_handler
+
+.type	ctr32_se_handler,\@abi-omnipotent
+.align	16
+ctr32_se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	lea	.Lctr32_body(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<"prologue" label
+	jb	.Lin_ctr32_prologue
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	lea	.Lctr32_ret(%rip),%r10
+	cmp	%r10,%rbx
+	jae	.Lin_ctr32_prologue
+
+	lea	0(%rax),%rsi		# top of stack
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$12,%ecx		# 6*sizeof(%xmm0)/sizeof(%rax)
+	.long	0xa548f3fc		# cld; rep movsq
+	lea	0x68(%rax),%rax		# adjust stack pointer
+
+.Lin_ctr32_prologue:
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rax,152($context)	# restore context->Rsp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+	jmp	.Lcommon_seh_exit
+.size	ctr32_se_handler,.-ctr32_se_handler
+___
+$code.=<<___;
 .type	cbc_se_handler,\@abi-omnipotent
 .align	16
 cbc_se_handler:
@@ -829,52 +1072,29 @@ cbc_se_handler:
 
 	lea	.Lcbc_decrypt(%rip),%r10
 	cmp	%r10,%rbx		# context->Rip<"prologue" label
-	jb	.Lin_prologue
+	jb	.Lin_cbc_prologue
 
 	lea	.Lcbc_decrypt_body(%rip),%r10
 	cmp	%r10,%rbx		# context->Rip<cbc_decrypt_body
-	jb	.Lrestore_rax
+	jb	.Lrestore_cbc_rax
 
 	lea	.Lcbc_ret(%rip),%r10
 	cmp	%r10,%rbx		# context->Rip>="epilogue" label
-	jae	.Lin_prologue
+	jae	.Lin_cbc_prologue
 
 	lea	0(%rax),%rsi		# top of stack
 	lea	512($context),%rdi	# &context.Xmm6
 	mov	\$8,%ecx		# 4*sizeof(%xmm0)/sizeof(%rax)
 	.long	0xa548f3fc		# cld; rep movsq
 	lea	0x58(%rax),%rax		# adjust stack pointer
-	jmp	.Lin_prologue
+	jmp	.Lin_cbc_prologue
 
-.Lrestore_rax:
+.Lrestore_cbc_rax:
 	mov	120($context),%rax
-.Lin_prologue:
+.Lin_cbc_prologue:
 	mov	8(%rax),%rdi
 	mov	16(%rax),%rsi
 	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	jmp	.Lcommon_seh_exit
-.size	cbc_se_handler,.-cbc_se_handler
-
-.type	ecb_se_handler,\@abi-omnipotent
-.align	16
-ecb_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	152($context),%rax	# pull context->Rsp
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
 	mov	%rsi,168($context)	# restore context->Rsi
 	mov	%rdi,176($context)	# restore context->Rdi
 
@@ -915,10 +1135,17 @@ ecb_se_handler:
 
 .section	.pdata
 .align	4
-	.rva	.LSEH_begin_${PREFIX}_ecb_encrypt
-	.rva	.LSEH_end_${PREFIX}_ecb_encrypt
+___
+$code.=<<___ if ($PREFIX eq "aesni");
+	.rva	.LSEH_begin_aesni_ecb_encrypt
+	.rva	.LSEH_end_aesni_ecb_encrypt
 	.rva	.LSEH_info_ecb
 
+	.rva	.LSEH_begin_aesni_ctr32_encrypt_blocks
+	.rva	.LSEH_end_aesni_ctr32_encrypt_blocks
+	.rva	.LSEH_info_ctr32
+___
+$code.=<<___;
 	.rva	.LSEH_begin_${PREFIX}_cbc_encrypt
 	.rva	.LSEH_end_${PREFIX}_cbc_encrypt
 	.rva	.LSEH_info_cbc
@@ -932,9 +1159,16 @@ ecb_se_handler:
 	.rva	.LSEH_info_key
 .section	.xdata
 .align	8
+___
+$code.=<<___ if ($PREFIX eq "aesni");
 .LSEH_info_ecb:
 	.byte	9,0,0,0
 	.rva	ecb_se_handler
+.LSEH_info_ctr32:
+	.byte	9,0,0,0
+	.rva	ctr32_se_handler
+___
+$code.=<<___;
 .LSEH_info_cbc:
 	.byte	9,0,0,0
 	.rva	cbc_se_handler

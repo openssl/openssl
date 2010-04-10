@@ -111,6 +111,35 @@ void ENGINE_load_aesni (void)
 }
 
 #ifdef COMPILE_HW_AESNI
+
+typedef unsigned int u32;
+typedef unsigned char u8;
+
+#if defined(__GNUC__) && __GNUC__>=2
+#  define BSWAP4(x) ({	u32 ret=(x);			\
+			asm volatile ("bswapl %0"	\
+			: "+r"(ret));	ret;		})
+#elif defined(_MSC_VER)
+# if _MSC_VER>=1300
+#  pragma intrinsic(_byteswap_ulong)
+#  define BSWAP4(x)	_byteswap_ulong((u32)(x))
+# elif defined(_M_IX86)
+   __inline u32 _bswap4(u32 val) {
+	_asm mov eax,val
+	_asm bswap eax
+   }
+#  define BSWAP4(x)	_bswap4(x)
+# endif
+#endif
+
+#ifdef BSWAP4
+#define GETU32(p)	BSWAP4(*(const u32 *)(p))
+#define PUTU32(p,v)	*(u32 *)(p) = BSWAP4(v)
+#else
+#define GETU32(p)	((u32)(p)[0]<<24|(u32)(p)[1]<<16|(u32)(p)[2]<<8|(u32)(p)[3])
+#define PUTU32(p,v)	((p)[0]=(u8)((v)>>24),(p)[1]=(u8)((v)>>16),(p)[2]=(u8)((v)>>8),(p)[3]=(u8)(v))
+#endif
+
 int aesni_set_encrypt_key(const unsigned char *userKey, int bits,
 			      AES_KEY *key);
 int aesni_set_decrypt_key(const unsigned char *userKey, int bits,
@@ -131,6 +160,12 @@ void aesni_cbc_encrypt(const unsigned char *in,
 			   size_t length,
 			   const AES_KEY *key,
 			   unsigned char *ivec, int enc);
+
+void aesni_ctr32_encrypt_blocks(const unsigned char *in,
+			   unsigned char *out,
+			   size_t blocks,
+			   const AES_KEY *key,
+			   const unsigned char *ivec);
 
 /* Function for ENGINE detection and control */
 static int aesni_init(ENGINE *e);
@@ -224,16 +259,19 @@ static int aesni_cipher_nids[] = {
 	NID_aes_128_cbc,
 	NID_aes_128_cfb,
 	NID_aes_128_ofb,
+	NID_aes_128_ctr,
 
 	NID_aes_192_ecb,
 	NID_aes_192_cbc,
 	NID_aes_192_cfb,
 	NID_aes_192_ofb,
+	NID_aes_192_ctr,
 
 	NID_aes_256_ecb,
 	NID_aes_256_cbc,
 	NID_aes_256_cfb,
 	NID_aes_256_ofb,
+	NID_aes_256_ctr,
 };
 static int aesni_cipher_nids_num =
 	(sizeof(aesni_cipher_nids)/sizeof(aesni_cipher_nids[0]));
@@ -251,17 +289,27 @@ aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *user_key,
 	int ret;
 	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
 
-	if ((ctx->cipher->flags & EVP_CIPH_MODE) == EVP_CIPH_CFB_MODE
-	    || (ctx->cipher->flags & EVP_CIPH_MODE) == EVP_CIPH_OFB_MODE
-	    || enc)
-		ret=aesni_set_encrypt_key(user_key, ctx->key_len * 8, key);
-	else
+	if (((ctx->cipher->flags & EVP_CIPH_MODE) == EVP_CIPH_ECB_MODE
+	    || (ctx->cipher->flags & EVP_CIPH_MODE) == EVP_CIPH_CBC_MODE)
+	    && !enc)
 		ret=aesni_set_decrypt_key(user_key, ctx->key_len * 8, key);
+	else
+		ret=aesni_set_encrypt_key(user_key, ctx->key_len * 8, key);
 
 	if(ret < 0) {
 		EVPerr(EVP_F_AESNI_INIT_KEY,EVP_R_AES_KEY_SETUP_FAILED);
 		return 0;
 	}
+
+	if (ctx->cipher->flags&EVP_CIPH_CUSTOM_IV)
+		{
+		if (iv!=NULL)
+			memcpy (ctx->iv,iv,ctx->cipher->iv_len);
+		else	{
+			EVPerr(EVP_F_AESNI_INIT_KEY,EVP_R_AES_IV_SETUP_FAILED);
+			return 0;
+			}
+		}
 
 	return 1;
 }
@@ -336,6 +384,117 @@ DECLARE_AES_EVP(256,cbc,CBC);
 DECLARE_AES_EVP(256,cfb,CFB);
 DECLARE_AES_EVP(256,ofb,OFB);
 
+static void ctr96_inc(unsigned char *counter) {
+	u32 n=12;
+	u8  c;
+
+	do {
+		--n;
+		c = counter[n];
+		++c;
+		counter[n] = c;
+		if (c) return;
+	} while (n);
+}
+
+static int aesni_counter(EVP_CIPHER_CTX *ctx, unsigned char *out,
+		const unsigned char *in, size_t len)
+{
+	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
+	u32 n, ctr32;
+	n = ctx->num;
+
+	while (n && len) {
+		*(out++) = *(in++) ^ ctx->buf[n];
+		--len;
+		n = (n+1) % 16;
+	}
+
+	ctr32 = GETU32(ctx->iv+12);
+	while (len>=16) {
+		size_t blocks = len/16;
+		/*
+		 * 1<<24 is just a not-so-small yet not-so-large number...
+		 */
+		if (blocks > (1U<<24)) blocks = (1U<<24);
+		/*
+		 * As aesni_ctr32 operates on 32-bit counter, caller
+		 * has to handle overflow. 'if' below detects the
+		 * overflow, which is then handled by limiting the
+		 * amount of blocks to the exact overflow point...
+		 */
+		ctr32 += (u32)blocks;
+		if (ctr32 < blocks) {
+			blocks -= ctr32;
+			ctr32   = 0;
+		}
+		aesni_ctr32_encrypt_blocks(in,out,blocks,key,ctx->iv);
+		/* aesni_ctr32 does not update ctx->iv, caller does: */
+		PUTU32(ctx->iv+12,ctr32);
+		/* ... overflow was detected, propogate carry. */
+		if (ctr32 == 0)	ctr96_inc(ctx->iv);
+		blocks *= 16;
+		len -= blocks;
+		out += blocks;
+		in  += blocks;
+	}
+	if (len) {
+		aesni_encrypt(ctx->iv,ctx->buf,key);
+		++ctr32;
+		PUTU32(ctx->iv+12,ctr32);
+		if (ctr32 == 0)	ctr96_inc(ctx->iv);
+		while (len--) {
+			out[n] = in[n] ^ ctx->buf[n];
+			++n;
+		}
+	}
+	ctx->num = n;
+
+	return 1;
+}
+
+static const EVP_CIPHER aesni_128_ctr=
+	{
+	NID_aes_128_ctr,1,16,16,
+	EVP_CIPH_CUSTOM_IV,
+	aesni_init_key,
+	aesni_counter,
+	NULL,
+	sizeof(AESNI_KEY),
+	NULL,
+	NULL,
+	NULL,
+	NULL
+	};
+
+static const EVP_CIPHER aesni_192_ctr=
+	{
+	NID_aes_192_ctr,1,24,16,
+	EVP_CIPH_CUSTOM_IV,
+	aesni_init_key,
+	aesni_counter,
+	NULL,
+	sizeof(AESNI_KEY),
+	NULL,
+	NULL,
+	NULL,
+	NULL
+	};
+
+static const EVP_CIPHER aesni_256_ctr=
+	{
+	NID_aes_256_ctr,1,32,16,
+	EVP_CIPH_CUSTOM_IV,
+	aesni_init_key,
+	aesni_counter,
+	NULL,
+	sizeof(AESNI_KEY),
+	NULL,
+	NULL,
+	NULL,
+	NULL
+	};
+
 static int
 aesni_ciphers (ENGINE *e, const EVP_CIPHER **cipher,
 		      const int **nids, int nid)
@@ -360,6 +519,9 @@ aesni_ciphers (ENGINE *e, const EVP_CIPHER **cipher,
 	case NID_aes_128_ofb:
 		*cipher = &aesni_128_ofb;
 		break;
+	case NID_aes_128_ctr:
+		*cipher = &aesni_128_ctr;
+		break;
 
 	case NID_aes_192_ecb:
 		*cipher = &aesni_192_ecb;
@@ -373,6 +535,9 @@ aesni_ciphers (ENGINE *e, const EVP_CIPHER **cipher,
 	case NID_aes_192_ofb:
 		*cipher = &aesni_192_ofb;
 		break;
+	case NID_aes_192_ctr:
+		*cipher = &aesni_192_ctr;
+		break;
 
 	case NID_aes_256_ecb:
 		*cipher = &aesni_256_ecb;
@@ -385,6 +550,9 @@ aesni_ciphers (ENGINE *e, const EVP_CIPHER **cipher,
 		break;
 	case NID_aes_256_ofb:
 		*cipher = &aesni_256_ofb;
+		break;
+	case NID_aes_256_ctr:
+		*cipher = &aesni_256_ctr;
 		break;
 
 	default:

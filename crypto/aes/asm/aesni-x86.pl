@@ -23,7 +23,8 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],$0);
 
-$movekey = eval($RREFIX eq "aseni" ? "*movaps" : "*movups");
+if ($PREFIX eq "aesni")	{ $movekey=*movaps; }
+else			{ $movekey=*movups; }
 
 $len="eax";
 $rounds="ecx";
@@ -41,7 +42,7 @@ $rndkey1="xmm4";
 $ivec="xmm5";
 $in0="xmm6";
 $in1="xmm7";	$inout3="xmm7";
-
+
 # Inline version of internal aesni_[en|de]crypt1
 sub aesni_inline_generate1
 { my $p=shift;
@@ -104,7 +105,7 @@ sub aesni_generate1	# fully unrolled loop
     &ret();
     &function_end_B("_aesni_${p}rypt1");
 }
-
+
 # void $PREFIX_encrypt (const void *inp,void *out,const AES_KEY *key);
 &aesni_generate1("enc") if (!$inline);
 &function_begin_B("${PREFIX}_encrypt");
@@ -136,7 +137,7 @@ sub aesni_generate1	# fully unrolled loop
 	&movups	(&QWP(0,"eax"),$inout0);
 	&ret	();
 &function_end_B("${PREFIX}_decrypt");
-
+
 # _aesni_[en|de]crypt[34] are private interfaces, N denotes interleave
 # factor. Why 3x subroutine is used in loops? Even though aes[enc|dec]
 # latency is 6, it turned out that it can be scheduled only every
@@ -229,8 +230,9 @@ sub aesni_generate4
 &aesni_generate3("dec");
 &aesni_generate4("enc") if ($PREFIX eq "aesni");
 &aesni_generate4("dec");
-
+
 if ($PREFIX eq "aesni") {
+######################################################################
 # void aesni_ecb_encrypt (const void *in, void *out,
 #                         size_t length, const AES_KEY *key,
 #                         int enc);
@@ -249,8 +251,9 @@ if ($PREFIX eq "aesni") {
 	&mov	($rounds_,$rounds);	# backup $rounds
 	&jz	(&label("ecb_decrypt"));
 
-	&sub	($len,0x40);
+	&cmp	($len,0x40);
 	&jbe	(&label("ecb_enc_tail"));
+	&sub	($len,0x40);
 	&jmp	(&label("ecb_enc_loop3"));
 
 &set_label("ecb_enc_loop3",16);
@@ -268,14 +271,13 @@ if ($PREFIX eq "aesni") {
 	&movups	(&QWP(-0x10,$out),$inout2);
 	&ja	(&label("ecb_enc_loop3"));
 
-&set_label("ecb_enc_tail");
 	&add	($len,0x40);
 	&jz	(&label("ecb_ret"));
 
-	&cmp	($len,0x10);
-	&movups	($inout0,&QWP(0,$inp));
-	&je	(&label("ecb_enc_one"));
+&set_label("ecb_enc_tail");
 	&cmp	($len,0x20);
+	&movups	($inout0,&QWP(0,$inp));
+	&jb	(&label("ecb_enc_one"));
 	&movups	($inout1,&QWP(0x10,$inp));
 	&je	(&label("ecb_enc_two"));
 	&cmp	($len,0x30);
@@ -309,10 +311,11 @@ if ($PREFIX eq "aesni") {
 	&movups	(&QWP(0x10,$out),$inout1);
 	&movups	(&QWP(0x20,$out),$inout2);
 	&jmp	(&label("ecb_ret"));
-
+######################################################################
 &set_label("ecb_decrypt",16);
-	&sub	($len,0x40);
+	&cmp	($len,0x40);
 	&jbe	(&label("ecb_dec_tail"));
+	&sub	($len,0x40);
 	&jmp	(&label("ecb_dec_loop3"));
 
 &set_label("ecb_dec_loop3",16);
@@ -330,14 +333,13 @@ if ($PREFIX eq "aesni") {
 	&movups	(&QWP(-0x10,$out),$inout2);
 	&ja	(&label("ecb_dec_loop3"));
 
-&set_label("ecb_dec_tail");
 	&add	($len,0x40);
 	&jz	(&label("ecb_ret"));
 
-	&cmp	($len,0x10);
-	&movups	($inout0,&QWP(0,$inp));
-	&je	(&label("ecb_dec_one"));
+&set_label("ecb_dec_tail");
 	&cmp	($len,0x20);
+	&movups	($inout0,&QWP(0,$inp));
+	&jb	(&label("ecb_dec_one"));
 	&movups	($inout1,&QWP(0x10,$inp));
 	&je	(&label("ecb_dec_two"));
 	&cmp	($len,0x30);
@@ -373,8 +375,173 @@ if ($PREFIX eq "aesni") {
 
 &set_label("ecb_ret");
 &function_end("aesni_ecb_encrypt");
-}
+
+######################################################################
+# handles only complete blocks, operates on 32-bit counter and
+# does not update *ivec! (see engine/eng_aesni.c for details)
+#
+# void aesni_ctr32_encrypt_blocks (const void *in, void *out,
+#                         size_t blocks, const AES_KEY *key,
+#                         const char *ivec);
+&function_begin("aesni_ctr32_encrypt_blocks");
+	&mov	($inp,&wparam(0));
+	&mov	($out,&wparam(1));
+	&mov	($len,&wparam(2));
+	&mov	($key,&wparam(3));
+	&mov	($rounds_,&wparam(4));
+	&mov	($key_,"esp");
+	&sub	("esp",60);
+	&and	("esp",-16);			# align stack
+	&mov	(&DWP(48,"esp"),$key_);
 
+	&movups	($inout3,&QWP(0,$rounds_));	# load ivec
+
+	# compose byte-swap control mask for pshufb on stack
+	&mov	(&DWP(0,"esp"),0x0c0d0e0f);
+	&mov	(&DWP(4,"esp"),0x08090a0b);
+	&mov	(&DWP(8,"esp"),0x04050607);
+	&mov	(&DWP(12,"esp"),0x00010203);
+
+	# compose counter increment vector on stack
+	&mov	($rounds,3);
+	&xor	($key_,$key_);
+	&mov	(&DWP(16,"esp"),$rounds);
+	&mov	(&DWP(20,"esp"),$rounds);
+	&mov	(&DWP(24,"esp"),$rounds);
+	&mov	(&DWP(28,"esp"),$key_);
+
+	&pextrd	($rounds_,$inout3,3);		# pull 32-bit counter
+	&pinsrd	($inout3,$key_,3);		# wipe 32-bit counter
+
+	&mov	($rounds,&DWP(240,$key));	# key->rounds
+	&movaps	($rndkey0,&QWP(0,"esp"));	# load byte-swap mask
+
+	# $ivec is vector of 3 32-bit counters
+	&pxor	($ivec,$ivec);
+	&bswap	($rounds_);
+	&pinsrd	($ivec,$rounds_,0);
+	&inc	($rounds_);
+	&pinsrd	($ivec,$rounds_,1);
+	&inc	($rounds_);
+	&pinsrd	($ivec,$rounds_,2);
+
+	&cmp	($len,4);
+	&pshufb	($ivec,$rndkey0);		# byte swap
+	&jbe	(&label("ctr32_tail"));
+	&movaps	(&QWP(32,"esp"),$inout3);	# save counter-less ivec
+	&mov	($rounds_,$rounds);
+	&mov	($key_,$key);
+	&sub	($len,4);
+	&jmp	(&label("ctr32_loop3"));
+
+&set_label("ctr32_loop3",16);
+	&pshufd	($inout0,$ivec,3<<6);		# place counter to upper dword
+	&pshufd	($inout1,$ivec,2<<6);
+	&pshufd	($inout2,$ivec,1<<6);
+	&por	($inout0,$inout3);		# merge counter-less ivec
+	&por	($inout1,$inout3);
+	&por	($inout2,$inout3);
+
+	&call	("_aesni_encrypt3");
+
+	 &movaps($rndkey0,&QWP(0,"esp"));	# load byte-swap mask
+	&movups	($in0,&QWP(0,$inp));
+	&movups	($in1,&QWP(0x10,$inp));
+	&movups	($rndkey1,&QWP(0x20,$inp));
+	 &pshufb($ivec,$rndkey0);		# byte swap
+	 &paddd	($ivec,&QWP(16,"esp"));		# counter increment
+	&pxor	($in0,$inout0);
+	&pxor	($in1,$inout1);
+	&pxor	($rndkey1,$inout2);
+	&movups	(&QWP(0,$out),$in0);
+	&movups	(&QWP(0x10,$out),$in1);
+	&movups	(&QWP(0x20,$out),$rndkey1);
+	&movaps	($inout3,&QWP(32,"esp"));	# load counter-less ivec
+	 &pshufb($ivec,$rndkey0);		# byte swap
+
+	&sub	($len,3);
+	&lea	($inp,&DWP(0x30,$inp));
+	&lea	($out,&DWP(0x30,$out));
+	&mov	($key,$key_);
+	&mov	($rounds,$rounds_);
+	&ja	(&label("ctr32_loop3"));
+
+	&add	($len,4);
+	&pextrd	($rounds_,$ivec,1);		# might need last counter value
+	&jz	(&label("ctr32_ret"));
+	&bswap	($rounds_);
+
+&set_label("ctr32_tail");
+	&cmp	($len,2);
+	&pshufd	($inout0,$ivec,3<<6);
+	&pshufd	($inout1,$ivec,2<<6);
+	&pshufd	($inout2,$ivec,1<<6);
+	&por	($inout0,$inout3);
+	&jb	(&label("ctr32_one"));
+	&por	($inout1,$inout3);
+	&je	(&label("ctr32_two"));
+	&cmp	($len,3);
+	&por	($inout2,$inout3);
+	&je	(&label("ctr32_three"));
+
+	&inc	($rounds_);			# compose last counter value
+	&bswap	($rounds_);
+	&pinsrd	($inout3,$rounds_,3);
+
+	&call	("_aesni_encrypt4");
+
+	&movups	($in0,&QWP(0,$inp));
+	&movups	($rndkey1,&QWP(0x10,$inp));
+	&movups	($rndkey0,&QWP(0x20,$inp));
+	&movups	($ivec,&QWP(0x30,$inp));
+	&pxor	($in0,$inout0);
+	&pxor	($rndkey1,$inout1);
+	&pxor	($rndkey0,$inout2);
+	&pxor	($ivec,$inout3);
+	&movups	(&QWP(0,$out),$in0);
+	&movups	(&QWP(0x10,$out),$rndkey1);
+	&movups	(&QWP(0x20,$out),$rndkey0);
+	&movups	(&QWP(0x30,$out),$ivec);
+	&jmp	(&label("ctr32_ret"));
+
+&set_label("ctr32_one",16);
+	if ($inline)
+	{   &aesni_inline_generate1("enc");	}
+	else
+	{   &call	("_aesni_encrypt1");	}
+	&movups	($in0,&QWP(0,$inp));
+	&pxor	($in0,$inout0);
+	&movups	(&QWP(0,$out),$in0);
+	&jmp	(&label("ctr32_ret"));
+
+&set_label("ctr32_two",16);
+	&call	("_aesni_encrypt3");
+	&movups	($in0,&QWP(0,$inp));
+	&movups	($in1,&QWP(0x10,$inp));
+	&pxor	($in0,$inout0);
+	&pxor	($in1,$inout1);
+	&movups	(&QWP(0,$out),$in0);
+	&movups	(&QWP(0x10,$out),$in1);
+	&jmp	(&label("ctr32_ret"));
+
+&set_label("ctr32_three",16);
+	&call	("_aesni_encrypt3");
+	&movups	($in0,&QWP(0,$inp));
+	&movups	($in1,&QWP(0x10,$inp));
+	&movups	($rndkey1,&QWP(0x20,$inp));
+	&pxor	($in0,$inout0);
+	&pxor	($in1,$inout1);
+	&pxor	($rndkey1,$inout2);
+	&movups	(&QWP(0,$out),$in0);
+	&movups	(&QWP(0x10,$out),$in1);
+	&movups	(&QWP(0x20,$out),$rndkey1);
+
+&set_label("ctr32_ret");
+	&mov	("esp",&DWP(48,"esp"));
+&function_end("aesni_ctr32_encrypt_blocks");
+}
+
+######################################################################
 # void $PREFIX_cbc_encrypt (const void *inp, void *out,
 #                           size_t length, const AES_KEY *key,
 #                           unsigned char *ivp,const int enc);
@@ -431,10 +598,11 @@ if ($PREFIX eq "aesni") {
 	&mov	($inp,$out);		# $inp and $out are the same
 	&mov	($key,$key_);		# restore $key
 	&jmp	(&label("cbc_enc_loop"));
-
+######################################################################
 &set_label("cbc_decrypt",16);
-	&sub	($len,0x40);
+	&cmp	($len,0x40);
 	&jbe	(&label("cbc_dec_tail"));
+	&sub	($len,0x40);
 	&jmp	(&label("cbc_dec_loop3"));
 
 &set_label("cbc_dec_loop3",16);
@@ -458,10 +626,10 @@ if ($PREFIX eq "aesni") {
 	&movups	(&QWP(-0x10,$out),$inout2);
 	&ja	(&label("cbc_dec_loop3"));
 
-&set_label("cbc_dec_tail");
 	&add	($len,0x40);
 	&jz	(&label("cbc_ret"));
 
+&set_label("cbc_dec_tail");
 	&movups	($inout0,&QWP(0,$inp));
 	&cmp	($len,0x10);
 	&movaps	($in0,$inout0);
@@ -539,7 +707,8 @@ if ($PREFIX eq "aesni") {
 	&mov	($key_,&wparam(4));
 	&movups	(&QWP(0,$key_),$ivec);	# output IV
 &function_end("${PREFIX}_cbc_encrypt");
-
+
+######################################################################
 # Mechanical port from aesni-x86_64.pl.
 #
 # _aesni_set_encrypt_key is private interface,
