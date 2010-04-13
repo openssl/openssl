@@ -30,7 +30,7 @@ $!	   VAXC	 For VAX C.
 $!	   DECC	 For DEC C.
 $!	   GNUC	 For GNU C.
 $!
-$!  If you don't speficy a compiler, it will try to determine which
+$!  If you don't specify a compiler, it will try to determine which
 $!  "C" compiler to use.
 $!
 $!  P4, if defined, sets a TCP/IP library to use, through one of the following
@@ -55,7 +55,7 @@ $ THEN
 $!
 $!  The Architecture Is VAX.
 $!
-$   ARCH := VAX
+$   ARCH = "VAX"
 $!
 $! Else...
 $!
@@ -524,12 +524,12 @@ $! Else...
 $!
 $ ELSE
 $!
-$!  Else, Check To See If P1 Has A Valid Arguement.
+$!  Else, Check To See If P1 Has A Valid Argument.
 $!
 $   IF (P1.EQS."LIBRARY").OR.(P1.EQS."SSL_TASK")
 $   THEN
 $!
-$!    A Valid Arguement.
+$!    A Valid Argument.
 $!
 $     BUILDALL = P1
 $!
@@ -557,7 +557,7 @@ $!    Time To EXIT.
 $!
 $     EXIT
 $!
-$!  End The Valid Arguement Check.
+$!  End The Valid Argument Check.
 $!
 $   ENDIF
 $!
@@ -611,7 +611,7 @@ $!    Time To EXIT.
 $!
 $     EXIT
 $!
-$!  End The Valid Arguement Check.
+$!  End The Valid Argument Check.
 $!
 $   ENDIF
 $!
@@ -893,7 +893,7 @@ $!  Show user the result
 $!
 $   WRITE/SYMBOL SYS$OUTPUT "Main Compiling Command: ",CC
 $!
-$!  Else The User Entered An Invalid Arguement.
+$!  Else The User Entered An Invalid Argument.
 $!
 $ ELSE
 $!
@@ -994,7 +994,7 @@ $!  Print info
 $!
 $   WRITE SYS$OUTPUT "TCP/IP library spec: ", TCPIP_LIB
 $!
-$!  Else The User Entered An Invalid Arguement.
+$!  Else The User Entered An Invalid Argument.
 $!
 $ ELSE
 $!

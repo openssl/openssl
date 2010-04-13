@@ -60,7 +60,7 @@ $ THEN
 $!
 $!  The Architecture Is VAX
 $!
-$   ARCH := VAX
+$   ARCH = "VAX"
 $!
 $! Else...
 $!
@@ -80,9 +80,11 @@ $! NOTE: Some might think this list ugly.  However, it's made this way to
 $! reflect the SDIRS variable in [-]Makefile.org as closely as possible,
 $! thereby making it fairly easy to verify that the lists are the same.
 $!
+$ ET_WHIRLPOOL = "WHRLPOOL"
+$ IF ARCH .EQS. "VAX" THEN ET_WHIRLPOOL = ""
 $ ENCRYPT_TYPES = "Basic,"+ -
 		  "OBJECTS,"+ -
-		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,WHRLPOOL,"+ -
+		  "MD2,MD4,MD5,SHA,MDC2,HMAC,RIPEMD,"+ET_WHIRLPOOL+","+ -
 		  "DES,AES,RC2,RC4,RC5,IDEA,BF,CAST,CAMELLIA,SEED,MODES,"+ -
 		  "BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
@@ -367,7 +369,7 @@ $!
 $ IF F$TYPE('LIB_MODULE') .EQS. ""
 $ THEN
 $   WRITE SYS$ERROR ""
-$   WRITE SYS$ERROR "The module ",MODULE_NAME," does not exist.  Continuing..."
+$   WRITE SYS$ERROR "The module ",MODULE_NAME1," does not exist.  Continuing..."
 $   WRITE SYS$ERROR ""
 $   GOTO MODULE_NEXT
 $ ENDIF
@@ -777,12 +779,12 @@ $! Else...
 $!
 $ ELSE
 $!
-$!  Else, Check To See If P1 Has A Valid Arguement.
+$!  Else, Check To See If P1 Has A Valid Argument.
 $!
 $   IF (P1.EQS."LIBRARY").OR.(P1.EQS."APPS")
 $   THEN
 $!
-$!    A Valid Arguement.
+$!    A Valid Argument.
 $!
 $     BUILDALL = P1
 $!
@@ -810,7 +812,7 @@ $!    Time To EXIT.
 $!
 $     EXIT
 $!
-$!  End The Valid Arguement Check.
+$!  End The Valid Argument Check.
 $!
 $   ENDIF
 $!
@@ -863,7 +865,7 @@ $!    Time To EXIT.
 $!
 $     EXIT
 $!
-$!  End The Valid Arguement Check.
+$!  End The Valid Argument Check.
 $!
 $   ENDIF
 $!
@@ -1034,7 +1036,7 @@ $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
            "/NOLIST/PREFIX=ALL" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[._''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
@@ -1068,7 +1070,7 @@ $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[._''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $     CCDEFS = """VAXC""," + CCDEFS
 $!
@@ -1100,7 +1102,7 @@ $!
 $!    Use GNU C...
 $!
 $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[._''ARCH'],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
@@ -1150,7 +1152,7 @@ $!  Show user the result
 $!
 $   WRITE/SYMBOL SYS$OUTPUT "Main C Compiling Command: ",CC
 $!
-$!  Else The User Entered An Invalid Arguement.
+$!  Else The User Entered An Invalid Argument.
 $!
 $ ELSE
 $!
@@ -1168,7 +1170,7 @@ $!  Time To EXIT.
 $!
 $   EXIT
 $!
-$! End The Valid Arguement Check.
+$! End The Valid Argument Check.
 $!
 $ ENDIF
 $!
@@ -1263,7 +1265,7 @@ $!  Print info
 $!
 $   WRITE SYS$OUTPUT "TCP/IP library spec: ", TCPIP_LIB
 $!
-$!  Else The User Entered An Invalid Arguement.
+$!  Else The User Entered An Invalid Argument.
 $!
 $ ELSE
 $!

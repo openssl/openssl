@@ -25,7 +25,7 @@ $!	   VAXC	 For VAX C.
 $!	   DECC	 For DEC C.
 $!	   GNUC	 For GNU C.
 $!
-$!  If you don't speficy a compiler, it will try to determine which
+$!  If you don't specify a compiler, it will try to determine which
 $!  "C" compiler to use.
 $!
 $!  P3, if defined, sets a TCP/IP library to use, through one of the following
@@ -52,7 +52,7 @@ $ THEN
 $!
 $!  The Architecture Is VAX.
 $!
-$   ARCH := VAX
+$   ARCH = "VAX"
 $!
 $! Else...
 $!
@@ -555,7 +555,7 @@ $!    Time To EXIT.
 $!
 $     EXIT
 $!
-$!  End The Valid Arguement Check.
+$!  End The Valid Argument Check.
 $!
 $   ENDIF
 $!
@@ -770,7 +770,7 @@ $!  Set up default defines
 $!
 $   CCDEFS = """FLAT_INC=1""," + CCDEFS
 $!
-$!  Else The User Entered An Invalid Arguement.
+$!  Else The User Entered An Invalid Argument.
 $!
 $ ELSE
 $!
@@ -875,7 +875,7 @@ $!  Print info
 $!
 $   WRITE SYS$OUTPUT "TCP/IP library spec: ", TCPIP_LIB
 $!
-$!  Else The User Entered An Invalid Arguement.
+$!  Else The User Entered An Invalid Argument.
 $!
 $ ELSE
 $!
