@@ -631,7 +631,7 @@ again:
 		{
 		if (SSL_in_init(s) || s->in_handshake)
 			{
-			dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
+			dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), &rr->seq_num);
 			}
 		rr->length = 0;
         s->packet_length = 0;
@@ -767,7 +767,7 @@ start:
 		 * buffer the application data for later processing rather
 		 * than dropping the connection.
 		 */
-		dtls1_buffer_record(s, &(s->d1->buffered_app_data), rr->seq_num);
+		dtls1_buffer_record(s, &(s->d1->buffered_app_data), &rr->seq_num);
 		rr->length = 0;
 		goto start;
 		}
