@@ -978,6 +978,12 @@ sub do_defs
 	$platform{"SHA512_Update"} = "!VMSVAX";
 	$platform{"SHA512_Final"} = "!VMSVAX";
 	$platform{"SHA512"} = "!VMSVAX";
+	$platform{"WHIRLPOOL_Init"} = "!VMSVAX";
+	$platform{"WHIRLPOOL"} = "!VMSVAX";
+	$platform{"WHIRLPOOL_BitUpdate"} = "!VMSVAX";
+	$platform{"EVP_whirlpool"} = "!VMSVAX";
+	$platform{"WHIRLPOOL_Final"} = "!VMSVAX";
+	$platform{"WHIRLPOOL_Update"} = "!VMSVAX";
 
 
 	# Info we know about
