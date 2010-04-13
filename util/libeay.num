@@ -3752,7 +3752,7 @@ TS_REQ_set_policy_id                    4138	EXIST::FUNCTION:
 d2i_TS_RESP_fp                          4139	EXIST::FUNCTION:
 ENGINE_get_pkey_asn1_meth_engine        4140	EXIST:!VMS:FUNCTION:ENGINE
 ENGINE_get_pkey_asn1_meth_eng           4140	EXIST:VMS:FUNCTION:ENGINE
-WHIRLPOOL_Init                          4141	EXIST::FUNCTION:WHIRLPOOL
+WHIRLPOOL_Init                          4141	EXIST:!VMSVAX:FUNCTION:WHIRLPOOL
 TS_RESP_set_status_info                 4142	EXIST::FUNCTION:
 EVP_PKEY_keygen                         4143	EXIST::FUNCTION:
 EVP_DigestSignInit                      4144	EXIST::FUNCTION:
@@ -3761,7 +3761,7 @@ TS_REQ_dup                              4146	EXIST::FUNCTION:
 GENERAL_NAME_dup                        4147	EXIST::FUNCTION:
 ASN1_SEQUENCE_ANY_it                    4148	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:
 ASN1_SEQUENCE_ANY_it                    4148	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:
-WHIRLPOOL                               4149	EXIST::FUNCTION:WHIRLPOOL
+WHIRLPOOL                               4149	EXIST:!VMSVAX:FUNCTION:WHIRLPOOL
 X509_STORE_get1_crls                    4150	EXIST::FUNCTION:
 ENGINE_get_pkey_asn1_meth               4151	EXIST::FUNCTION:ENGINE
 EVP_PKEY_asn1_new                       4152	EXIST::FUNCTION:
@@ -3812,7 +3812,7 @@ DSO_global_lookup                       4195	EXIST::FUNCTION:
 TS_CONF_set_tsa_name                    4196	EXIST::FUNCTION:
 i2d_ASN1_SET_ANY                        4197	EXIST::FUNCTION:
 ENGINE_load_gost                        4198	EXIST::FUNCTION:ENGINE,GOST,STATIC_ENGINE
-WHIRLPOOL_BitUpdate                     4199	EXIST::FUNCTION:WHIRLPOOL
+WHIRLPOOL_BitUpdate                     4199	EXIST:!VMSVAX:FUNCTION:WHIRLPOOL
 ASN1_PCTX_get_flags                     4200	EXIST::FUNCTION:
 TS_TST_INFO_get_ext_by_NID              4201	EXIST::FUNCTION:
 TS_RESP_new                             4202	EXIST::FUNCTION:
@@ -3975,7 +3975,7 @@ X509_PUBKEY_get0_param                  4356	EXIST::FUNCTION:
 TS_MSG_IMPRINT_dup                      4357	EXIST::FUNCTION:
 PKCS7_print_ctx                         4358	EXIST::FUNCTION:
 i2d_TS_REQ_bio                          4359	EXIST::FUNCTION:
-EVP_whirlpool                           4360	EXIST::FUNCTION:WHIRLPOOL
+EVP_whirlpool                           4360	EXIST:!VMSVAX:FUNCTION:WHIRLPOOL
 EVP_PKEY_asn1_set_param                 4361	EXIST::FUNCTION:
 EVP_PKEY_meth_set_encrypt               4362	EXIST::FUNCTION:
 ASN1_PCTX_set_flags                     4363	EXIST::FUNCTION:
@@ -3986,7 +3986,7 @@ ENGINE_register_all_pkey_meths          4367	EXIST::FUNCTION:ENGINE
 TS_RESP_CTX_set_status_info_cond        4368	EXIST:!VMS:FUNCTION:
 TS_RESP_CTX_set_stat_info_cond          4368	EXIST:VMS:FUNCTION:
 EVP_PKEY_verify                         4369	EXIST::FUNCTION:
-WHIRLPOOL_Final                         4370	EXIST::FUNCTION:WHIRLPOOL
+WHIRLPOOL_Final                         4370	EXIST:!VMSVAX:FUNCTION:WHIRLPOOL
 X509_CRL_METHOD_new                     4371	EXIST::FUNCTION:
 EVP_DigestSignFinal                     4372	EXIST::FUNCTION:
 TS_RESP_CTX_set_def_policy              4373	EXIST::FUNCTION:
@@ -4068,7 +4068,7 @@ ERR_remove_thread_state                 4445	EXIST::FUNCTION:
 EVP_PKEY_meth_add0                      4446	EXIST::FUNCTION:
 TS_TST_INFO_set_tsa                     4447	EXIST::FUNCTION:
 EVP_PKEY_meth_new                       4448	EXIST::FUNCTION:
-WHIRLPOOL_Update                        4449	EXIST::FUNCTION:WHIRLPOOL
+WHIRLPOOL_Update                        4449	EXIST:!VMSVAX:FUNCTION:WHIRLPOOL
 TS_CONF_set_accuracy                    4450	EXIST::FUNCTION:
 ASN1_PCTX_set_oid_flags                 4451	EXIST::FUNCTION:
 ESS_SIGNING_CERT_dup                    4452	EXIST::FUNCTION:
@@ -4173,6 +4173,8 @@ X509_STORE_CTX_get0_cur_issuer          4546	EXIST:VMS:FUNCTION:
 X509_issuer_name_hash_old               4547	EXIST::FUNCTION:MD5
 X509_subject_name_hash_old              4548	EXIST::FUNCTION:MD5
 EVP_CIPHER_CTX_copy                     4549	EXIST::FUNCTION:
-UI_method_get_prompt_constructor        4550	EXIST::FUNCTION:
-UI_method_set_prompt_constructor        4551	EXIST::FUNCTION:
+UI_method_get_prompt_constructor        4550	EXIST:!VMS:FUNCTION:
+UI_method_get_prompt_constructr         4550	EXIST:VMS:FUNCTION:
+UI_method_set_prompt_constructor        4551	EXIST:!VMS:FUNCTION:
+UI_method_set_prompt_constructr         4551	EXIST:VMS:FUNCTION:
 EVP_read_pw_string_min                  4552	EXIST::FUNCTION:
