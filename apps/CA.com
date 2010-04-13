@@ -114,8 +114,8 @@ $!
 $   IF F$SEARCH(CATOP+".private"+CAKEY) .EQS. ""
 $   THEN
 $     READ '__INPUT' FILE -
-	   /PROMT="CA certificate filename (or enter to create)"
-$     IF F$SEARCH(FILE) .NES. ""
+	   /PROMPT="CA certificate filename (or enter to create)"
+$     IF (FILE .NES. "") .AND. (F$SEARCH(FILE) .NES. "")
 $     THEN
 $       COPY 'FILE' 'CATOP'.private'CAKEY'
 $	RET=$STATUS
