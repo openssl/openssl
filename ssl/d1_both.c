@@ -599,7 +599,7 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	hm_fragment *frag = NULL;
 	pitem *item = NULL;
 	int i = -1, is_complete;
-	unsigned char seq64be[8];
+	PQ_64BIT seq64;
 	unsigned long frag_len = msg_hdr->frag_len, max_len;
 
 	if ((msg_hdr->frag_off+frag_len) > msg_hdr->msg_len)
@@ -617,10 +617,10 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 		goto err;
 
 	/* Try to find item in queue */
-	memset(seq64be,0,sizeof(seq64be));
-	seq64be[6] = (unsigned char) (msg_hdr->seq>>8);
-	seq64be[7] = (unsigned char) msg_hdr->seq;
-	item = pqueue_find(s->d1->buffered_messages, seq64be);
+	pq_64bit_init(&seq64);
+	pq_64bit_assign_word(&seq64, msg_hdr->seq);
+	item = pqueue_find(s->d1->buffered_messages, seq64);
+	pq_64bit_free(&seq64);
 
 	if (item == NULL)
 		{
@@ -672,11 +672,11 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 
 	if (item == NULL)
 		{
-		memset(seq64be,0,sizeof(seq64be));
-		seq64be[6] = (unsigned char)(msg_hdr->seq>>8);
-		seq64be[7] = (unsigned char)(msg_hdr->seq);
+		pq_64bit_init(&seq64);
+		pq_64bit_assign_word(&seq64, msg_hdr->seq);
+		item = pitem_new(seq64, frag);
+		pq_64bit_free(&seq64);
 
-		item = pitem_new(seq64be, frag);
 		if (item == NULL)
 			{
 			goto err;
