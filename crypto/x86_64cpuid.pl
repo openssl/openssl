@@ -152,7 +152,8 @@ OPENSSL_cleanse:
 	sub	\$1,$arg2
 	lea	1($arg1),$arg1
 	jnz	.Little
-.Lret:	ret
+.Lret:
+	ret
 .align	16
 .Lot:
 	test	\$7,$arg1
