@@ -31,10 +31,10 @@ $Thi1="t5";
 $Tlo1="t6";
 $rem="t7";	# $8
 #################
-$Xi="a0";	# $16
+$Xi="a0";	# $16, input argument block
 $Htbl="a1";
-
-
+$inp="a2";
+$len="a3";
 $nlo="a4";	# $20
 $nhi="a5";
 $Zhi="t8";
@@ -313,12 +313,6 @@ $code.=<<___;
 	ret	(ra)
 .end	gcm_gmult_4bit
 ___
-
-# argument block for gcm_ghash_4bit
-$inp="a0";	# $16
-$len="a1";
-$Xi ="a2";
-$Htbl="a3";
 
 $inhi="s0";
 $inlo="s1";

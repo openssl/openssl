@@ -18,7 +18,7 @@
 #		gcc 3.4.x	assembler
 #
 # Opteron	18.5		10.2		+80%
-# Core2		26.0		16.4		+58%
+# Core2		17.5		11.0		+59%
 
 $flavour = shift;
 $output  = shift;
@@ -41,10 +41,10 @@ $Zhi="%r9";
 $tmp="%r10";
 $rem_4bit = "%r11";
 
-# per-function register layout
 $Xi="%rdi";
 $Htbl="%rsi";
 
+# per-function register layout
 $cnt="%rcx";
 $rem="%rdx";
 
@@ -159,10 +159,8 @@ ___
 
 
 # per-function register layout
-$inp="%rdi";
-$len="%rsi";
-$Xi="%rdx";
-$Htbl="%rcx";
+$inp="%rdx";
+$len="%rcx";
 
 $cnt="%rbp";
 $rem="%r12";

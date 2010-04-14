@@ -142,13 +142,13 @@ gcm_ghash_4bit:
 	.prologue
 { .mmi;	.save	ar.pfs,prevfs
 	alloc	prevfs=ar.pfs,4,4,0,8
-	$ADDP	inp=15,in0			// &inp[15]
+	$ADDP	inp=15,in2			// &inp[15]
 	mov	rem_4bitp=ip		}
-{ .mmi;	$ADDP	end=in1,in0			// &inp[len]
-	$ADDP	Xi=15,in2			// &Xi[15]
+{ .mmi;	$ADDP	end=in3,in2			// &inp[len]
+	$ADDP	Xi=15,in0			// &Xi[15]
 	.save	ar.lc,prevlc
 	mov	prevlc=ar.lc		};;
-{ .mmi;	$ADDP	Htbl=8,in3			// &Htbl[0].lo
+{ .mmi;	$ADDP	Htbl=8,in1			// &Htbl[0].lo
 	mov	mask0xf0=0xf0
 	.save	pr,prevpr
 	mov	prevpr=pr		}

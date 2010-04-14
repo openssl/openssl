@@ -54,10 +54,10 @@ $remi="%l5";
 $Htblo="%l6";
 $cnt="%l7";
 
-$inp="%i0";	# input arguments for gcm_ghash_4bit
-$len="%i1";
-$Xi="%i2";
-$Htbl="%i3";
+$Xi="%i0";	# input argument block
+$Htbl="%i1";
+$inp="%i2";
+$len="%i3";
 
 $code.=<<___;
 .section	".text",#alloc,#execinstr
@@ -208,8 +208,6 @@ gcm_ghash_4bit:
 .size	gcm_ghash_4bit,(.-gcm_ghash_4bit)
 ___
 
-$Xi="%i0";	# input arguments for gcm_gmult_4bit
-$Htbl="%i1";
 undef $inp;
 undef $len;
 

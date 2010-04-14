@@ -23,7 +23,7 @@
 # PIII		63 /77		16		24
 # P4		96 /122		30		84(***)
 # Opteron	50 /71		21		30
-# Core2		63 /102		19		28
+# Core2		54 /68		13		18
 #
 # (*)	gcc 3.4.x was observed to generate few percent slower code,
 #	which is one of reasons why 2.95.3 results were chosen,
@@ -317,12 +317,12 @@ if ($unroll) {
 
 	&lea	("eax",&DWP(&label("rem_4bit")."-".&label("pic_point"),"eax"));
 
-	&mov	($inp,&wparam(0));	# load in
-	&mov	($Zlh,&wparam(1));	# load len
-	&mov	($Zhh,&wparam(2));	# load Xi
-	&mov	($Htbl,&wparam(3));	# load Htable
+	&mov	($Zhh,&wparam(0));	# load Xi
+	&mov	($Htbl,&wparam(1));	# load Htable
+	&mov	($inp,&wparam(2));	# load in
+	&mov	($Zlh,&wparam(3));	# load len
 	&add	($Zlh,$inp);
-	&mov	(&wparam(1),$Zlh);	# len to point at the end of input
+	&mov	(&wparam(3),$Zlh);	# len to point at the end of input
 	&stack_push(4+1);		# +1 for stack alignment
 	&mov	($Zll,&DWP(12,$Zhh));	# load Xi[16]
 	&mov	($Zhl,&DWP(4,$Zhh));
@@ -344,10 +344,10 @@ if ($unroll) {
 	&mmx_loop("esp","eax");
 
 	&lea	($inp,&DWP(16,$inp));
-	&cmp	($inp,&wparam(1));
+	&cmp	($inp,&wparam(3));
 	&jb	(&label("mmx_outer_loop"));
 
-	&mov	($inp,&wparam(2));	# load Xi
+	&mov	($inp,&wparam(0));	# load Xi
 	&emms	();
 	&mov	(&DWP(12,$inp),$Zll);
 	&mov	(&DWP(4,$inp),$Zhl);
@@ -359,12 +359,12 @@ if ($unroll) {
     &set_label("x86",16);
     }
 	&stack_push(16+4+1);			# +1 for 64-bit alignment
-	&mov	($inp,&wparam(0));		# load in
-	&mov	("ecx",&wparam(1));		# load len
-	&mov	($Zll,&wparam(2));		# load Xi
-	&mov	($Htbl,&wparam(3));		# load Htable
+	&mov	($Zll,&wparam(0));		# load Xi
+	&mov	($Htbl,&wparam(1));		# load Htable
+	&mov	($inp,&wparam(2));		# load in
+	&mov	("ecx",&wparam(3));		# load len
 	&add	("ecx",$inp);
-	&mov	(&wparam(1),"ecx");
+	&mov	(&wparam(3),"ecx");
 
 	&mov	($Zhh,&DWP(0,$Zll));		# load Xi[16]
 	&mov	($Zhl,&DWP(4,$Zll));
@@ -390,14 +390,14 @@ if ($unroll) {
 		&call	("_x86_gmult_4bit_inner");
 	} else {
 		&x86_loop(0);
-		&mov	($inp,&wparam(0));
+		&mov	($inp,&wparam(2));
 	}
 	&lea	($inp,&DWP(16,$inp));
-	&cmp	($inp,&wparam(1));
-	&mov	(&wparam(0),$inp)	if (!$unroll);
+	&cmp	($inp,&wparam(3));
+	&mov	(&wparam(2),$inp)	if (!$unroll);
 	&jb	(&label("x86_outer_loop"));
 
-	&mov	($inp,&wparam(2));	# load Xi
+	&mov	($inp,&wparam(0));	# load Xi
 	&mov	(&DWP(12,$inp),$Zll);
 	&mov	(&DWP(8,$inp),$Zlh);
 	&mov	(&DWP(4,$inp),$Zhl);
