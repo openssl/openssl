@@ -95,14 +95,14 @@ void CRYPTO_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 #endif
 		while (len>=16) {
 			(*block)(ivec, ivec, key);
-			for (n=0; n<16; n+=sizeof(size_t))
+			for (; n<16; n+=sizeof(size_t))
 				*(size_t*)(out+n) =
 				*(size_t*)(in+n) ^ *(size_t*)(ivec+n);
 			len -= 16;
 			out += 16;
 			in  += 16;
+			n = 0;
 		}
-		n = 0;
 		if (len) {
 			(*block)(ivec, ivec, key);
 			while (len--) {
