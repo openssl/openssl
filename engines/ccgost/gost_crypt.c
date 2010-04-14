@@ -299,7 +299,7 @@ int	gost_cipher_do_cfb(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	if (i<inl)
 		{
 		gost_crypt_mesh(ctx->cipher_data,ctx->iv,ctx->buf);
-		if (!ctx->encrypt) memcpy(ctx->buf+8,in_ptr,j);
+		if (!ctx->encrypt) memcpy(ctx->buf+8,in_ptr,inl-i);
 		for (j=0;i<inl;j++,i++)
 			{
 			out_ptr[j]=ctx->buf[j]^in_ptr[j];
