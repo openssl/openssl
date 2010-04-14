@@ -165,6 +165,7 @@ typedef struct hm_fragment_st
 	{
 	struct hm_header_st msg_header;
 	unsigned char *fragment;
+	unsigned char *reassembly;
 	} hm_fragment;
 
 typedef struct dtls1_state_st
