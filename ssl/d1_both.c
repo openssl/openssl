@@ -127,17 +127,17 @@
 
 #define RSMBLY_BITMASK_MARK(bitmask, start, end) { \
 			if ((end) - (start) <= 8) { \
-				int ii; \
+				unsigned long ii; \
 				for (ii = (start); ii < (end); ii++) bitmask[((ii) >> 3)] |= (1 << ((ii) & 7)); \
 			} else { \
-				int ii; \
+				unsigned long ii; \
 				bitmask[((start) >> 3)] |= bitmask_start_values[((start) & 7)]; \
 				for (ii = (((start) >> 3) + 1); ii < ((end) >> 3); ii++) bitmask[ii] = 0xff; \
 				bitmask[((end) >> 3)] |= bitmask_end_values[((end) & 7)]; \
 			} }
 
 #define RSMBLY_BITMASK_IS_COMPLETE(bitmask, msg_len, is_complete) { \
-			int ii; \
+			unsigned long ii; \
 			is_complete = 1; \
 			if (bitmask[((msg_len) >> 3)] != bitmask_end_values[((msg_len) & 7)]) is_complete = 0; \
 			if (is_complete) for (ii = 0; ii < ((msg_len) >> 3); ii++) \
