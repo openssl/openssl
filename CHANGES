@@ -4,6 +4,11 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) New function OPENSSL_gmtime_diff to find the difference in days
+     and seconds between two tm structures. This will be used to provide
+     additional functionality for ASN1_TIME.
+     [Steve Henson]
+
   *) New -sigopt option to the ca, req and x509 utilities. Additional
      signature parameters can be passed using this option and in
      particular PSS. 
