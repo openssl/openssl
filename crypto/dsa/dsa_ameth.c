@@ -209,7 +209,7 @@ static int dsa_priv_decode(EVP_PKEY *pkey, PKCS8_PRIV_KEY_INFO *p8)
 	if (*p == (V_ASN1_SEQUENCE|V_ASN1_CONSTRUCTED))
 		{
 		ASN1_TYPE *t1, *t2;
-	    	if(!(ndsa = d2i_ASN1_SEQUENCE_ANY(NULL, &p, pklen)));
+	    	if(!(ndsa = d2i_ASN1_SEQUENCE_ANY(NULL, &p, pklen)))
 			goto decerr;
 		if (sk_ASN1_TYPE_num(ndsa) != 2)
 			goto decerr;
