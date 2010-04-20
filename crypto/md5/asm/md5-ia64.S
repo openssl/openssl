@@ -914,7 +914,7 @@ md5_digest_block##offset:						\
 	nop 0x0 ;							\
 	br.cond.sptk.many md5_digest_GHI ;				\
 } ;;									\
-	.endp md5digestBlock ## offset
+	.endp md5_digest_block##offset
 
 MD5FBLOCK(1)
 MD5FBLOCK(2)
