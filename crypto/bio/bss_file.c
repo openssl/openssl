@@ -121,7 +121,27 @@ BIO *BIO_new_file(const char *filename, const char *mode)
 	BIO *ret;
 	FILE *file;
 
-	if ((file=fopen(filename,mode)) == NULL)
+	file=fopen(filename,mode);	
+#if defined(_WIN32) && defined(CP_UTF8)
+	if (file==NULL && errno==ENOENT) /* see if filename is UTF-8 encoded */
+		{
+		int sz,len_0 = (int)strlen(filename)+1;
+		if ((sz=MultiByteToWideChar(CP_UTF8,0,filename,len_0,
+					    NULL,0))>0)
+			{
+			WCHAR wmode[8];
+			WCHAR *wfilename = _alloca(sz*sizeof(WCHAR));
+
+			if (MultiByteToWideChar(CP_UTF8,0,filename,len_0,
+						wfilename,sz) &&
+			    MultiByteToWideChar(CP_UTF8,0,mode,strlen(mode)+1,
+			    			wmode,sizeof(wmode)/sizeof(wmode[0]))
+			   )
+				file = _wfopen(wfilename,wmode);
+			}
+		}
+#endif
+	if (file == NULL)
 		{
 		SYSerr(SYS_F_FOPEN,get_last_sys_error());
 		ERR_add_error_data(5,"fopen('",filename,"','",mode,"')");
