@@ -10,15 +10,20 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
+MODES_ASM_OBJ=
+
 CFLAGS= $(INCLUDES) $(CFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG)
+AFLAGS= $(ASFLAGS)
 
 GENERAL=Makefile
 TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c
-LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o
+LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c
+LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o \
+	$(MODES_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
@@ -37,6 +42,19 @@ lib:	$(LIBOBJ)
 	$(AR) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
+
+aes-ia64.s:	asm/ghash-ia64.pl
+	$(PERL) asm/ghash-ia64.pl $@ $(CFLAGS)
+ghash-x86.s:	asm/ghash-x86.pl
+	$(PERL) asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+ghash-x86_64.s:	asm/ghash-x86_64.pl
+	$(PERL) asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
+ghash-sparcv9.s:	asm/ghash-sparcv9.pl
+	$(PERL) asm/ghash-sparcv8.pl $(CFLAGS) > $@
+ghash-alpha.s:	asm/ghash-alpha.pl
+	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
+# GNU make "catch all"
+ghash-%.s:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $(CFLAGS) > $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
