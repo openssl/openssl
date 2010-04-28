@@ -118,10 +118,47 @@ static BIO_METHOD methods_filep=
 
 BIO *BIO_new_file(const char *filename, const char *mode)
 	{
-	BIO *ret;
-	FILE *file;
+	BIO  *ret;
+	FILE *file=NULL;
 
-	if ((file=fopen(filename,mode)) == NULL)
+#if defined(_WIN32) && defined(CP_UTF8)
+	int sz, len_0 = (int)strlen(filename)+1;
+
+	/*
+	 * Basically there are three cases to cover: a) filename is
+	 * pure ASCII string; b) actual UTF-8 encoded string and
+	 * c) locale-ized string, i.e. one containing 8-bit
+	 * characters that are meaningful in current system locale.
+	 * If filename is pure ASCII or real UTF-8 encoded string,
+	 * MultiByteToWideChar succeeds and _wfopen works. If
+	 * filename is locale-ized string, chances are that
+	 * MultiByteToWideChar fails reporting
+	 * ERROR_NO_UNICODE_TRANSLATION, in which case we fall
+	 * back to fopen...
+	 */
+	if ((sz=MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,
+					filename,len_0,NULL,0))>0)
+		{
+		WCHAR  wmode[8];
+		WCHAR *wfilename = _alloca(sz*sizeof(WCHAR));
+
+		if (MultiByteToWideChar(CP_UTF8,MB_ERR_INVALID_CHARS,
+					filename,len_0,wfilename,sz) &&
+		    MultiByteToWideChar(CP_UTF8,0,mode,strlen(mode)+1,
+			    		wmode,sizeof(wmode)/sizeof(wmode[0])) &&
+		    (file=_wfopen(wfilename,wmode))==NULL && errno==ENOENT
+		   )	/* UTF-8 decode succeeded, but no file, filename
+			 * could still have been locale-ized... */
+			file = fopen(filename,mode);
+		}
+	else if (GetLastError()==ERROR_NO_UNICODE_TRANSLATION)
+		{
+		file = fopen(filename,mode);
+		}
+#else
+	file=fopen(filename,mode);	
+#endif
+	if (file == NULL)
 		{
 		SYSerr(SYS_F_FOPEN,get_last_sys_error());
 		ERR_add_error_data(5,"fopen('",filename,"','",mode,"')");
