@@ -135,8 +135,8 @@ my $alpha_asm="alphacpuid.o:bn_asm.o alpha-mont.o:::::sha1-alpha.o:::::::ghash-a
 my $mips3_asm=":bn-mips3.o:::::::::::::void";
 my $s390x_asm="s390xcap.o s390xcpuid.o:bn-s390x.o s390x-mont.o::aes_ctr.o aes-s390x.o:::sha1-s390x.o sha256-s390x.o sha512-s390x.o::rc4-s390x.o::::::void";
 my $armv4_asm=":bn_asm.o armv4-mont.o::aes_cbc.o aes_ctr.o aes-armv4.o:::sha1-armv4-large.o sha256-armv4.o sha512-armv4.o::::::::void";
-my $parisc11_asm="pariscid.o:bn_asm.o parisc-mont.o::aes_core.o aes_cbc.o aes_ctr.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o::::::32";
-my $parisc20_asm="pariscid.o:pa-risc2W.o parisc-mont.o::aes_core.o aes_cbc.o aes_ctr.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o::::::64";
+my $parisc11_asm="pariscid.o:bn_asm.o parisc-mont.o::aes_core.o aes_cbc.o aes_ctr.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o:32";
+my $parisc20_asm="pariscid.o:pa-risc2W.o parisc-mont.o::aes_core.o aes_cbc.o aes_ctr.o aes-parisc.o:::sha1-parisc.o sha256-parisc.o sha512-parisc.o::rc4-parisc.o:::::ghash-parisc.o:64";
 my $ppc32_asm="ppccpuid.o ppccap.o:bn-ppc.o ppc-mont.o ppc64-mont.o::aes_core.o aes_cbc.o aes_ctr.o aes-ppc.o:::sha1-ppc.o sha256-ppc.o:::::::";
 my $ppc64_asm="ppccpuid.o ppccap.o:bn-ppc.o ppc-mont.o ppc64-mont.o::aes_core.o aes_cbc.o aes_ctr.o aes-ppc.o:::sha1-ppc.o sha256-ppc.o sha512-ppc.o:::::::";
 my $no_asm="::::::::::::::void";
@@ -292,6 +292,7 @@ my %table=(
 # Since there is mention of this in shlib/hpux10-cc.sh
 "hpux-parisc-cc-o4","cc:-Ae +O4 +ESlit -z -DB_ENDIAN -DBN_DIV2W -DMD32_XARRAY::-D_REENTRANT::-ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1:${no_asm}:dl:hpux-shared:+Z:-b:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "hpux-parisc-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1:${no_asm}:dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
+"hpux-parisc1_1-gcc","gcc:-O3 -DB_ENDIAN -DBN_DIV2W::-D_REENTRANT::-Wl,+s -ldld:BN_LLONG DES_PTR DES_UNROLL DES_RISC1:${parisc11_asm}:dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "hpux-parisc2-gcc","gcc:-march=2.0 -O3 -DB_ENDIAN -D_REENTRANT::::-Wl,+s -ldld:SIXTY_FOUR_BIT RC4_CHAR RC4_CHUNK DES_PTR DES_UNROLL DES_RISC1::pa-risc2.o:::::::::::::void:dl:hpux-shared:-fPIC:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "hpux64-parisc2-gcc","gcc:-O3 -DB_ENDIAN -D_REENTRANT::::-ldl:SIXTY_FOUR_BIT_LONG MD2_CHAR RC4_INDEX RC4_CHAR DES_UNROLL DES_RISC1 DES_INT::pa-risc2W.o:::::::::::::void:dlfcn:hpux-shared:-fpic:-shared:.sl.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/pa20_64",
 

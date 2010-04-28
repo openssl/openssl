@@ -50,9 +50,11 @@ ghash-x86.s:	asm/ghash-x86.pl
 ghash-x86_64.s:	asm/ghash-x86_64.pl
 	$(PERL) asm/ghash-x86_64.pl $(PERLASM_SCHEME) > $@
 ghash-sparcv9.s:	asm/ghash-sparcv9.pl
-	$(PERL) asm/ghash-sparcv8.pl $(CFLAGS) > $@
+	$(PERL) asm/ghash-sparcv9.pl $(CFLAGS) > $@
 ghash-alpha.s:	asm/ghash-alpha.pl
 	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
+ghash-parisc.s:	asm/ghash-parisc.pl
+	$($PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
 # GNU make "catch all"
 ghash-%.s:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $(CFLAGS) > $@
 
