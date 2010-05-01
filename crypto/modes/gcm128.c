@@ -83,7 +83,7 @@ typedef struct { u64 hi,lo; } u128;
 # undef STRICT_ALIGNMENT
 #endif
 
-#if defined(__GNUC__) && __GNUC__>=2
+#if defined(__GNUC__) && __GNUC__>=2 && !defined(PEDANTIC)
 # if defined(__x86_64) || defined(__x86_64__)
 #  define BSWAP8(x) ({	u64 ret=(x);			\
 			asm volatile ("bswapq %0"	\
@@ -91,7 +91,7 @@ typedef struct { u64 hi,lo; } u128;
 #  define BSWAP4(x) ({	u32 ret=(x);			\
 			asm volatile ("bswapl %0"	\
 			: "+r"(ret));	ret;		})
-# elif defined(__i386) || defined(__i386__)
+# elif (defined(__i386) || defined(__i386__)) && !defined(PEDANTIC)
 #  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);	\
 			asm volatile ("bswapl %0; bswapl %1"	\
 			: "+r"(hi),"+r"(lo));		\
@@ -565,7 +565,7 @@ static void gcm_gmult_1bit(u64 Xi[2],const u64 H[2])
 
 #endif
 
-typedef struct {
+struct gcm128_context {
 	/* Following 6 names follow names in GCM specification */
 	union { u64 u[2]; u32 d[4]; u8 c[16]; }	Yi,EKi,EK0,
 						Xi,H,
@@ -579,7 +579,7 @@ typedef struct {
 	unsigned int res, ctr;
 	block128_f block;
 	void *key;
-} GCM128_CONTEXT;
+};
 
 void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 {

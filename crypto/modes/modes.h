@@ -70,3 +70,18 @@ size_t CRYPTO_nistcts128_decrypt_block(const unsigned char *in, unsigned char *o
 size_t CRYPTO_nistcts128_decrypt(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,
 			unsigned char ivec[16], cbc128_f cbc);
+
+typedef struct gcm128_context GCM128_CONTEXT;
+
+void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block);
+void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv,
+			 size_t len);
+void CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad,
+		       size_t len);
+void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
+			   const unsigned char *in, unsigned char *out,
+			   size_t len);
+void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
+			   const unsigned char *in, unsigned char *out,
+			   size_t len);
+void CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx);
