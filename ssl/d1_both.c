@@ -127,25 +127,26 @@
 
 #define RSMBLY_BITMASK_MARK(bitmask, start, end) { \
 			if ((end) - (start) <= 8) { \
-				unsigned long ii; \
+				long ii; \
 				for (ii = (start); ii < (end); ii++) bitmask[((ii) >> 3)] |= (1 << ((ii) & 7)); \
 			} else { \
-				unsigned long ii; \
+				long ii; \
 				bitmask[((start) >> 3)] |= bitmask_start_values[((start) & 7)]; \
-				for (ii = (((start) >> 3) + 1); ii < ((end) >> 3); ii++) bitmask[ii] = 0xff; \
-				bitmask[((end) >> 3)] |= bitmask_end_values[((end) & 7)]; \
+				for (ii = (((start) >> 3) + 1); ii < ((((end) - 1)) >> 3); ii++) bitmask[ii] = 0xff; \
+				bitmask[(((end) - 1) >> 3)] |= bitmask_end_values[((end) & 7)]; \
 			} }
 
 #define RSMBLY_BITMASK_IS_COMPLETE(bitmask, msg_len, is_complete) { \
-			unsigned long ii; \
+			long ii; \
+			OPENSSL_assert((msg_len) > 0); \
 			is_complete = 1; \
-			if (bitmask[((msg_len) >> 3)] != bitmask_end_values[((msg_len) & 7)]) is_complete = 0; \
-			if (is_complete) for (ii = 0; ii < ((msg_len) >> 3); ii++) \
-			if (bitmask[ii] != 0xff) { is_complete = 0; break; } }
+			if (bitmask[(((msg_len) - 1) >> 3)] != bitmask_end_values[((msg_len) & 7)]) is_complete = 0; \
+			if (is_complete) for (ii = (((msg_len) - 1) >> 3) - 1; ii >= 0 ; ii--) \
+				if (bitmask[ii] != 0xff) { is_complete = 0; break; } }
 
 #if 0
 #define RSMBLY_BITMASK_PRINT(bitmask, msg_len) { \
-			int ii; \
+			long ii; \
 			printf("bitmask: "); for (ii = 0; ii < (msg_len); ii++) \
 			printf("%d ", (bitmask[ii >> 3] & (1 << (ii & 7))) >> (ii & 7)); \
 			printf("\n"); }
@@ -658,11 +659,11 @@ dtls1_reassemble_fragment(SSL *s, struct hm_header_st* msg_hdr, int *ok)
 	if (i<=0 || (unsigned long)i!=frag_len)
 		goto err;
 
-	RSMBLY_BITMASK_MARK(frag->reassembly, msg_hdr->frag_off,
-	                    msg_hdr->frag_off + frag_len);
+	RSMBLY_BITMASK_MARK(frag->reassembly, (long)msg_hdr->frag_off,
+	                    (long)(msg_hdr->frag_off + frag_len));
 
-	RSMBLY_BITMASK_IS_COMPLETE(frag->reassembly, msg_hdr->msg_len,
-	                           is_complete)
+	RSMBLY_BITMASK_IS_COMPLETE(frag->reassembly, (long)msg_hdr->msg_len,
+	                           is_complete);
 
 	if (is_complete)
 		{
