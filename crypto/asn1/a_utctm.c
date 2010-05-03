@@ -112,7 +112,7 @@ err:
 
 #endif
 
-int ASN1_UTCTIME_check(ASN1_UTCTIME *d)
+int ASN1_UTCTIME_check(const ASN1_UTCTIME *d)
 	{
 	static const int min[8]={ 0, 1, 1, 0, 0, 0, 0, 0};
 	static const int max[8]={99,12,31,23,59,59,12,59};

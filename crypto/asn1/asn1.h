@@ -839,7 +839,7 @@ int ASN1_INTEGER_cmp(const ASN1_INTEGER *x, const ASN1_INTEGER *y);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_ENUMERATED)
 
-int ASN1_UTCTIME_check(ASN1_UTCTIME *a);
+int ASN1_UTCTIME_check(const ASN1_UTCTIME *a);
 ASN1_UTCTIME *ASN1_UTCTIME_set(ASN1_UTCTIME *s,time_t t);
 ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
 				int offset_day, long offset_sec);
@@ -849,7 +849,7 @@ int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t);
 time_t ASN1_UTCTIME_get(const ASN1_UTCTIME *s);
 #endif
 
-int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *a);
+int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *a);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_set(ASN1_GENERALIZEDTIME *s,time_t t);
 ASN1_GENERALIZEDTIME *ASN1_GENERALIZEDTIME_adj(ASN1_GENERALIZEDTIME *s,
 	     time_t t, int offset_day, long offset_sec);
@@ -886,7 +886,7 @@ DECLARE_ASN1_ITEM(ASN1_OCTET_STRING_NDEF)
 ASN1_TIME *ASN1_TIME_set(ASN1_TIME *s,time_t t);
 ASN1_TIME *ASN1_TIME_adj(ASN1_TIME *s,time_t t,
 				int offset_day, long offset_sec);
-int ASN1_TIME_check(ASN1_TIME *t);
+int ASN1_TIME_check(const ASN1_TIME *t);
 ASN1_GENERALIZEDTIME *ASN1_TIME_to_generalizedtime(ASN1_TIME *t, ASN1_GENERALIZEDTIME **out);
 int ASN1_TIME_set_string(ASN1_TIME *s, const char *str);
 
