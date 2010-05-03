@@ -86,10 +86,9 @@ unsigned long X509_issuer_and_serial_hash(X509 *a)
 
 	EVP_MD_CTX_init(&ctx);
 	f=X509_NAME_oneline(a->cert_info->issuer,NULL,0);
-	ret=strlen(f);
 	if (!EVP_DigestInit_ex(&ctx, EVP_md5(), NULL))
 		goto err;
-	if (!EVP_DigestUpdate(&ctx,(unsigned char *)f,ret))
+	if (!EVP_DigestUpdate(&ctx,(unsigned char *)f,strlen(f)))
 		goto err;
 	OPENSSL_free(f);
 	if(!EVP_DigestUpdate(&ctx,(unsigned char *)a->cert_info->serialNumber->data,
