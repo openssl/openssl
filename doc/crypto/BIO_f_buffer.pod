@@ -31,7 +31,7 @@ BIO_get_buffer_num_lines() returns the number of lines currently buffered.
 
 BIO_set_read_buffer_size(), BIO_set_write_buffer_size() and BIO_set_buffer_size()
 set the read, write or both read and write buffer sizes to B<size>. The initial
-buffer size is DEFAULT_BUFFER_SIZE, currently 1024. Any attempt to reduce the
+buffer size is DEFAULT_BUFFER_SIZE, currently 4096. Any attempt to reduce the
 buffer size below DEFAULT_BUFFER_SIZE is ignored. Any buffered data is cleared
 when the buffer is resized.
 
@@ -66,4 +66,9 @@ there was an error.
 
 =head1 SEE ALSO
 
-TBA
+L<BIO(3)|BIO(3)>,
+L<BIO_reset(3)|BIO_reset(3)>,
+L<BIO_flush(3)|BIO_flush(3)>,
+L<BIO_pop(3)|BIO_pop(3)>,
+L<BIO_ctrl(3)|BIO_ctrl(3)>,
+L<BIO_int_ctrl(3)|BIO_ctrl(3)>
