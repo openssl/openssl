@@ -15,6 +15,10 @@ typedef void (*cbc128_f)(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,
 			unsigned char ivec[16], int enc);
 
+typedef void (*ctr128_f)(const unsigned char *in, unsigned char *out,
+			size_t blocks, const void *key,
+			const unsigned char ivec[16]);
+
 void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,
 			unsigned char ivec[16], block128_f block);
@@ -26,6 +30,11 @@ void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,
 			unsigned char ivec[16], unsigned char ecount_buf[16],
 			unsigned int *num, block128_f block);
+
+void CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
+			size_t len, const void *key,
+			unsigned char ivec[16], unsigned char ecount_buf[16],
+			unsigned int *num, ctr128_f ctr);
 
 void CRYPTO_ofb128_encrypt(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,

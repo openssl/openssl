@@ -47,7 +47,7 @@
  * ====================================================================
  */
 
-#include "modes.h"
+#include "modes_lcl.h"
 #include <string.h>
 
 #ifndef MODES_DEBUG
@@ -57,64 +57,14 @@
 #endif
 #include <assert.h>
 
-#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
-typedef __int64 i64;
-typedef unsigned __int64 u64;
-#define U64(C) C##UI64
-#elif defined(__arch64__)
-typedef long i64;
-typedef unsigned long u64;
-#define U64(C) C##UL
-#else
-typedef long long i64;
-typedef unsigned long long u64;
-#define U64(C) C##ULL
-#endif
-
-typedef unsigned int u32;
-typedef unsigned char u8;
 typedef struct { u64 hi,lo; } u128;
 
-#define STRICT_ALIGNMENT
-#if defined(__i386)	|| defined(__i386__)	|| \
-    defined(__x86_64)	|| defined(__x86_64__)	|| \
-    defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64) || \
-    defined(__s390__)	|| defined(__s390x__)
-# undef STRICT_ALIGNMENT
-#endif
-
-#if defined(__GNUC__) && __GNUC__>=2 && !defined(PEDANTIC)
-# if defined(__x86_64) || defined(__x86_64__)
-#  define BSWAP8(x) ({	u64 ret=(x);			\
-			asm volatile ("bswapq %0"	\
-			: "+r"(ret));	ret;		})
-#  define BSWAP4(x) ({	u32 ret=(x);			\
-			asm volatile ("bswapl %0"	\
-			: "+r"(ret));	ret;		})
-# elif (defined(__i386) || defined(__i386__)) && !defined(PEDANTIC)
-#  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);	\
-			asm volatile ("bswapl %0; bswapl %1"	\
-			: "+r"(hi),"+r"(lo));		\
-			(u64)hi<<32|lo;			})
-#  define BSWAP4(x) ({	u32 ret=(x);			\
-			asm volatile ("bswapl %0"	\
-			: "+r"(ret));	ret;		})
-# endif
-#elif defined(_MSC_VER)
-# if _MSC_VER>=1300
-#  pragma intrinsic(_byteswap_uint64,_byteswap_ulong)
-#  define BSWAP8(x)	_byteswap_uint64((u64)(x))
-#  define BSWAP4(x)	_byteswap_ulong((u32)(x))
-# elif defined(_M_IX86)
-# endif
-#endif
-
-#ifdef BSWAP4
-#define GETU32(p)	BSWAP4(*(const u32 *)(p))
-#define PUTU32(p,v)	*(u32 *)(p) = BSWAP4(v)
-#else
-#define GETU32(p)	((u32)(p)[0]<<24|(u32)(p)[1]<<16|(u32)(p)[2]<<8|(u32)(p)[3])
-#define PUTU32(p,v)	((p)[0]=(u8)((v)>>24),(p)[1]=(u8)((v)>>16),(p)[2]=(u8)((v)>>8),(p)[3]=(u8)(v))
+#if defined(BSWAP4) && defined(STRICT_ALIGNMENT)
+/* redefine, because alignment is ensured */
+#undef	GETU32
+#define	GETU32(p)	BSWAP4(*(const u32 *)(p))
+#undef	PUTU32
+#define	PUTU32(p,v)	*(u32 *)(p) = BSWAP4(v)
 #endif
 
 #define	PACK(s)	((size_t)(s)<<(sizeof(size_t)*8-16))
@@ -284,29 +234,34 @@ static void gcm_gmult_8bit(u64 Xi[2], u128 Htable[256])
 
 static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 {
-	int  i;
 	u128 V;
+#if defined(OPENSSL_SMALL_FOOTPRINT)
+	int  i;
+#endif
+#define REDUCE(V) do { \
+	if (sizeof(size_t)==8) { \
+		u64 T = U64(0xe100000000000000) & (0-(V.lo&1)); \
+		V.lo  = (V.hi<<63)|(V.lo>>1); \
+		V.hi  = (V.hi>>1 )^T; \
+	} \
+	else { \
+		u32 T = 0xe1000000U & (0-(u32)(V.lo&1)); \
+		V.lo  = (V.hi<<63)|(V.lo>>1); \
+		V.hi  = (V.hi>>1 )^((u64)T<<32); \
+	} \
+} while(0)
 
 	Htable[0].hi = 0;
 	Htable[0].lo = 0;
 	V.hi = H[0];
 	V.lo = H[1];
 
+#if defined(OPENSSL_SMALL_FOOTPRINT)
 	for (Htable[8]=V, i=4; i>0; i>>=1) {
-		if (sizeof(size_t)==8) {
-			u64 T = U64(0xe100000000000000) & (0-(V.lo&1));
-			V.lo  = (V.hi<<63)|(V.lo>>1);
-			V.hi  = (V.hi>>1 )^T;
-		}
-		else {
-			u32 T = 0xe1000000U & (0-(u32)(V.lo&1));
-			V.lo  = (V.hi<<63)|(V.lo>>1);
-			V.hi  = (V.hi>>1 )^((u64)T<<32);
-		}
+		REDUCE(V);
 		Htable[i] = V;
 	}
 
-#if defined(OPENSSL_SMALL_FOOTPRINT)
 	for (i=2; i<16; i<<=1) {
 		u128 *Hi = Htable+i;
 		int   j;
@@ -316,6 +271,13 @@ static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 		}
 	}
 #else
+	Htable[8] = V;
+	REDUCE(V);
+	Htable[4] = V;
+	REDUCE(V);
+	Htable[2] = V;
+	REDUCE(V);
+	Htable[1] = V;
 	Htable[3].hi  = V.hi^Htable[2].hi, Htable[3].lo  = V.lo^Htable[2].lo;
 	V=Htable[4];
 	Htable[5].hi  = V.hi^Htable[1].hi, Htable[5].lo  = V.lo^Htable[1].lo;
@@ -330,6 +292,29 @@ static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 	Htable[14].hi = V.hi^Htable[6].hi, Htable[14].lo = V.lo^Htable[6].lo;
 	Htable[15].hi = V.hi^Htable[7].hi, Htable[15].lo = V.lo^Htable[7].lo;
 #endif
+#if defined(GHASH_ASM) && (defined(__arm__) || defined(__arm))
+	/*
+	 * ARM assembler expects specific dword order in Htable.
+	 */
+	{
+	int j;
+	const union { long one; char little; } is_endian = {1};
+
+	if (is_endian.little)
+		for (j=0;j<16;++j) {
+			V = Htable[j];
+			Htable[j].hi = V.lo;
+			Htable[j].lo = V.hi;
+		}
+	else
+		for (j=0;j<16;++j) {
+			V = Htable[j];
+			Htable[j].hi = V.lo<<32|V.lo>>32;
+			Htable[j].lo = V.hi<<32|V.hi>>32;
+		}
+	}
+#endif
+#undef	REDUCE
 }
 
 #ifndef GHASH_ASM
@@ -568,15 +553,14 @@ static void gcm_gmult_1bit(u64 Xi[2],const u64 H[2])
 struct gcm128_context {
 	/* Following 6 names follow names in GCM specification */
 	union { u64 u[2]; u32 d[4]; u8 c[16]; }	Yi,EKi,EK0,
-						Xi,H,
-						len;
+						Xi,H,len;
 	/* Pre-computed table used by gcm_gmult_* */
 #if TABLE_BITS==8
 	u128 Htable[256];
 #else
 	u128 Htable[16];
 #endif
-	unsigned int res, ctr;
+	unsigned int res, pad;
 	block128_f block;
 	void *key;
 };
@@ -616,6 +600,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx,const unsigned char *iv,size_t len)
 {
 	const union { long one; char little; } is_endian = {1};
+	unsigned int ctr;
 
 	ctx->Yi.u[0]  = 0;
 	ctx->Yi.u[1]  = 0;
@@ -628,7 +613,7 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx,const unsigned char *iv,size_t len)
 	if (len==12) {
 		memcpy(ctx->Yi.c,iv,12);
 		ctx->Yi.c[15]=1;
-		ctx->ctr=1;
+		ctr=1;
 	}
 	else {
 		size_t i;
@@ -665,17 +650,17 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx,const unsigned char *iv,size_t len)
 		GCM_MUL(ctx,Yi);
 
 		if (is_endian.little)
-			ctx->ctr = GETU32(ctx->Yi.c+12);
+			ctr = GETU32(ctx->Yi.c+12);
 		else
-			ctx->ctr = ctx->Yi.d[3];
+			ctr = ctx->Yi.d[3];
 	}
 
 	(*ctx->block)(ctx->Yi.c,ctx->EK0.c,ctx->key);
-	++ctx->ctr;
+	++ctr;
 	if (is_endian.little)
-		PUTU32(ctx->Yi.c+12,ctx->ctr);
+		PUTU32(ctx->Yi.c+12,ctr);
 	else
-		ctx->Yi.d[3] = ctx->ctr;
+		ctx->Yi.d[3] = ctr;
 }
 
 void CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx,const unsigned char *aad,size_t len)
@@ -714,7 +699,10 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 
 	ctx->len.u[1] += len;
 	n   = ctx->res;
-	ctr = ctx->ctr;
+	if (is_endian.little)
+		ctr = GETU32(ctx->Yi.c+12);
+	else
+		ctr = ctx->Yi.d[3];
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
 	if (16%sizeof(size_t) == 0) do {	/* always true actually */
@@ -806,7 +794,6 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 		}
 
 		ctx->res = n;
-		ctx->ctr = ctr;
 		return;
 	} while(0);
 #endif
@@ -826,7 +813,6 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 	}
 
 	ctx->res = n;
-	ctx->ctr = ctr;
 }
 
 void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
@@ -839,7 +825,10 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 
 	ctx->len.u[1] += len;
 	n   = ctx->res;
-	ctr = ctx->ctr;
+	if (is_endian.little)
+		ctr = GETU32(ctx->Yi.c+12);
+	else
+		ctr = ctx->Yi.d[3];
 
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
 	if (16%sizeof(size_t) == 0) do {	/* always true actually */
@@ -934,7 +923,6 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 		}
 
 		ctx->res = n;
-		ctx->ctr = ctr;
 		return;
 	} while(0);
 #endif
@@ -957,7 +945,6 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 	}
 
 	ctx->res = n;
-	ctx->ctr = ctr;
 }
 
 void CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx)

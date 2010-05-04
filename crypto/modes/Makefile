@@ -95,8 +95,9 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-cbc128.o: cbc128.c modes.h
-cfb128.o: cfb128.c modes.h
-ctr128.o: ctr128.c modes.h
-cts128.o: cts128.c modes.h
-ofb128.o: modes.h ofb128.c
+cbc128.o: ../../include/openssl/modes.h cbc128.c modes_lcl.h
+cfb128.o: ../../include/openssl/modes.h cfb128.c modes_lcl.h
+ctr128.o: ../../include/openssl/modes.h ctr128.c modes_lcl.h
+cts128.o: ../../include/openssl/modes.h cts128.c modes_lcl.h
+gcm128.o: ../../include/openssl/modes.h gcm128.c modes_lcl.h
+ofb128.o: ../../include/openssl/modes.h modes_lcl.h ofb128.c

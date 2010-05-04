@@ -5,7 +5,7 @@
  * forms are granted according to the OpenSSL license.
  */
 
-#include "modes.h"
+#include "modes_lcl.h"
 #include <string.h>
 
 #ifndef MODES_DEBUG
