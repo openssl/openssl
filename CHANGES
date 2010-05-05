@@ -4,6 +4,9 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Make generated asm have non-executable stack.
+     [Contributed by Google <agl@google.com>]
+
   *) New function OPENSSL_gmtime_diff to find the difference in days
      and seconds between two tm structures. This will be used to provide
      additional functionality for ASN1_TIME.

@@ -123,6 +123,7 @@ no warnings qw(uninitialized);
 open STDOUT,"| $^X $xlate $flavour $output";
 
 $code .= <<EOF;
+.section .note.GNU-stack,"",\@progbits
 .text
 .align 16
 

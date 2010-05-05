@@ -42,7 +42,8 @@ $verticalspin=1;	# unlike 32-bit version $verticalspin performs
 			# ~15% better on both AMD and Intel cores
 $speed_limit=512;	# see aes-586.pl for details
 
-$code=".text\n";
+$code=".section .note.GNU-stack,\"\",\@progbits\n";
+$code.=".text\n";
 
 $s0="%eax";
 $s1="%ebx";

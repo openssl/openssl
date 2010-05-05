@@ -16,6 +16,13 @@ print<<___;
 .section	.init
 	call	OPENSSL_cpuid_setup
 
+___
+
+if ($flavour =~ /elf/) {
+  print ".section .note.GNU-stack,\"\",\@progbits\n"
+}
+
+print<<___;
 .text
 
 .globl	OPENSSL_atomic_add
