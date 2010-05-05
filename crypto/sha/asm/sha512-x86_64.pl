@@ -178,8 +178,6 @@ ___
 }
 
 $code=<<___;
-.section .note.GNU-stack,"",\@progbits
-
 .text
 
 .globl	$func

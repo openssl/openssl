@@ -82,7 +82,6 @@ $YY="%r12";
 $TY="%r13";
 
 $code=<<___;
-.section .note.GNU-stack,"",\@progbits
 .text
 
 .globl	RC4

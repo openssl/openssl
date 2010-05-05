@@ -45,7 +45,6 @@ $m0="%rbx";
 $m1="%rbp";
 
 $code=<<___;
-.section .note.GNU-stack,"",\@progbits
 .text
 
 .globl	bn_mul_mont

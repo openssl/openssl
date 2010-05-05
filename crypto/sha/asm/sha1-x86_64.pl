@@ -178,7 +178,6 @@ unshift(@xi,pop(@xi));
 }
 
 $code.=<<___;
-.section .note.GNU-stack,"",\@progbits
 .text
 
 .globl	sha1_block_data_order
