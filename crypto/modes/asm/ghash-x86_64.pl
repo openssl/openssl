@@ -20,6 +20,12 @@
 # Opteron	18.5		10.2		+80%
 # Core2		17.5		11.0		+59%
 
+# May 2010
+#
+# Add PCLMULQDQ version performing at 2.07 cycles per processed byte.
+# See ghash-x86.pl for background information and details about coding
+# techniques.
+
 $flavour = shift;
 $output  = shift;
 if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
@@ -51,7 +57,7 @@ $rem="%rdx";
 sub lo() { my $r=shift; $r =~ s/%[er]([a-d])x/%\1l/;
 			$r =~ s/%[er]([sd]i)/%\1l/;
 			$r =~ s/%(r[0-9]+)[d]?/%\1b/;   $r; }
-
+
 { my $N;
   sub loop() {
   my $inp = shift;
@@ -156,8 +162,7 @@ $code.=<<___;
 	ret
 .size	gcm_gmult_4bit,.-gcm_gmult_4bit
 ___
-
-
+
 # per-function register layout
 $inp="%rdx";
 $len="%rcx";
@@ -203,9 +208,295 @@ $code.=<<___;
 .Lghash_epilogue:
 	ret
 .size	gcm_ghash_4bit,.-gcm_ghash_4bit
+___
+
+######################################################################
+# PCLMULQDQ version.
 
+@_4args=$win64?	("%rcx","%rdx","%r8", "%r9") :	# Win64 order
+		("%rdi","%rsi","%rdx","%rcx");	# Unix order
+
+($Xi,$Xhi)=("%xmm0","%xmm1");	$Hkey="%xmm2";
+($T1,$T2,$T3)=("%xmm3","%xmm4","%xmm5");
+
+sub clmul64x64_T2 {	# minimal register pressure
+my ($Xhi,$Xi,$Hkey,$modulo)=@_;
+
+$code.=<<___ if (!defined($modulo));
+	movdqa		$Xi,$Xhi		#
+	pshufd		\$0b01001110,$Xi,$T1
+	pshufd		\$0b01001110,$Hkey,$T2
+	pxor		$Xi,$T1			#
+	pxor		$Hkey,$T2
+___
+$code.=<<___;
+	pclmulqdq	\$0x00,$Hkey,$Xi	#######
+	pclmulqdq	\$0x11,$Hkey,$Xhi	#######
+	pclmulqdq	\$0x00,$T2,$T1		#######
+	pxor		$Xi,$T1			#
+	pxor		$Xhi,$T1		#
+
+	movdqa		$T1,$T2			#
+	psrldq		\$8,$T1
+	pslldq		\$8,$T2			#
+	pxor		$T1,$Xhi
+	pxor		$T2,$Xi			#
+___
+}
+
+sub reduction_alg9 {	# 17/13 times faster than Intel version
+my ($Xhi,$Xi) = @_;
+
+$code.=<<___;
+	# 1st phase
+	movdqa		$Xi,$T1			#
+	psllq		\$1,$Xi
+	pxor		$T1,$Xi			#
+	psllq		\$5,$Xi			#
+	pxor		$T1,$Xi			#
+	psllq		\$57,$Xi		#
+	movdqa		$Xi,$T2			#
+	pslldq		\$8,$Xi
+	psrldq		\$8,$T2			#	
+	pxor		$T1,$Xi
+	pxor		$T2,$Xhi		#
+
+	# 2nd phase
+	movdqa		$Xi,$T2
+	psrlq		\$5,$Xi
+	pxor		$T2,$Xi			#
+	psrlq		\$1,$Xi			#
+	pxor		$T2,$Xi			#
+	pxor		$Xhi,$T2
+	psrlq		\$1,$Xi			#
+	pxor		$T2,$Xi			#
+___
+}
+
+{ my ($Htbl,$Xip)=@_4args;
+
+$code.=<<___;
+.globl	gcm_init_clmul
+.type	gcm_init_clmul,\@abi-omnipotent
+.align	16
+gcm_init_clmul:
+	movdqu		($Xip),$Hkey
+	pshufd		\$0b01001110,$Hkey,$Hkey	# dword swap
+
+	# <<1 twist
+	pshufd		\$0b11111111,$Hkey,$T2	# broadcast uppermost dword
+	movdqa		$Hkey,$T1
+	psllq		\$1,$Hkey
+	pxor		$T3,$T3			#
+	psrlq		\$63,$T1
+	pcmpgtd		$T2,$T3			# broadcast carry bit
+	pslldq		\$8,$T1
+	por		$T1,$Hkey		# H<<=1
+
+	# magic reduction
+	pand		.L0x1c2_polynomial(%rip),$T3
+	pxor		$T3,$Hkey		# if(carry) H^=0x1c2_polynomial
+
+	# calculate H^2
+	movdqa		$Hkey,$Xi
+___
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey);
+	&reduction_alg9	($Xhi,$Xi);
+$code.=<<___;
+	movdqu		$Hkey,($Htbl)		# save H
+	movdqu		$Xi,16($Htbl)		# save H^2
+	ret
+.size	gcm_init_clmul,.-gcm_init_clmul
+___
+}
+
+{ my ($Xip,$Htbl)=@_4args;
+
+$code.=<<___;
+.globl	gcm_gmult_clmul
+.type	gcm_gmult_clmul,\@abi-omnipotent
+.align	16
+gcm_gmult_clmul:
+	movdqu		($Xip),$Xi
+	movdqa		.Lbswap_mask(%rip),$T3
+	movdqu		($Htbl),$Hkey
+	pshufb		$T3,$Xi
+___
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey);
+	&reduction_alg9	($Xhi,$Xi);
+$code.=<<___;
+	pshufb		$T3,$Xi
+	movdqu		$Xi,($Xip)
+	ret
+.size	gcm_gmult_clmul,.-gcm_gmult_clmul
+___
+}
+
+{ my ($Xip,$Htbl,$inp,$len)=@_4args;
+  my $Xn="%xmm6";
+  my $Xhn="%xmm7";
+  my $Hkey2="%xmm8";
+  my $T1n="%xmm9";
+  my $T2n="%xmm10";
+
+$code.=<<___;
+.globl	gcm_ghash_clmul
+.type	gcm_ghash_clmul,\@abi-omnipotent
+.align	16
+gcm_ghash_clmul:
+___
+$code.=<<___ if ($win64);
+.LSEH_begin_gcm_ghash_clmul:
+	# I can't trust assembler to use specific encoding:-(
+	.byte	0x48,0x83,0xec,0x58		#sub	\$0x58,%rsp
+	.byte	0x0f,0x29,0x34,0x24		#movaps	%xmm6,(%rsp)
+	.byte	0x0f,0x29,0x7c,0x24,0x10	#movdqa	%xmm7,0x10(%rsp)
+	.byte	0x44,0x0f,0x29,0x44,0x24,0x20	#movaps	%xmm8,0x20(%rsp)
+	.byte	0x44,0x0f,0x29,0x4c,0x24,0x30	#movaps	%xmm9,0x30(%rsp)
+	.byte	0x44,0x0f,0x29,0x54,0x24,0x40	#movaps	%xmm10,0x40(%rsp)
+___
+$code.=<<___;
+	movdqa		.Lbswap_mask(%rip),$T3
+
+	movdqu		($Xip),$Xi
+	movdqu		($Htbl),$Hkey
+	pshufb		$T3,$Xi
+
+	sub		\$0x10,$len
+	jz		.Lodd_tail
+
+	movdqu		16($Htbl),$Hkey2
+	#######
+	# Xi+2 =[H*(Ii+1 + Xi+1)] mod P =
+	#	[(H*Ii+1) + (H*Xi+1)] mod P =
+	#	[(H*Ii+1) + H^2*(Ii+Xi)] mod P
+	#
+	movdqu		($inp),$T1		# Ii
+	movdqu		16($inp),$Xn		# Ii+1
+	pshufb		$T3,$T1
+	pshufb		$T3,$Xn
+	pxor		$T1,$Xi			# Ii+Xi
+___
+	&clmul64x64_T2	($Xhn,$Xn,$Hkey);	# H*Ii+1
+$code.=<<___;
+	movdqa		$Xi,$Xhi		#
+	pshufd		\$0b01001110,$Xi,$T1
+	pshufd		\$0b01001110,$Hkey2,$T2
+	pxor		$Xi,$T1			#
+	pxor		$Hkey2,$T2
+
+	lea		32($inp),$inp		# i+=2
+	sub		\$0x20,$len
+	jbe		.Leven_tail
+
+.Lmod_loop:
+___
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey2,1);	# H^2*(Ii+Xi)
+$code.=<<___;
+	movdqu		($inp),$T1		# Ii
+	pxor		$Xn,$Xi			# (H*Ii+1) + H^2*(Ii+Xi)
+	pxor		$Xhn,$Xhi
+
+	movdqu		16($inp),$Xn		# Ii+1
+	pshufb		$T3,$T1
+	pshufb		$T3,$Xn
+
+	movdqa		$Xn,$Xhn		#
+	pshufd		\$0b01001110,$Xn,$T1n
+	pshufd		\$0b01001110,$Hkey,$T2n
+	pxor		$Xn,$T1n		#
+	pxor		$Hkey,$T2n
+	 pxor		$T1,$Xhi		# "Ii+Xi", consume early
+
+	  movdqa	$Xi,$T1			# 1st phase
+	  psllq		\$1,$Xi
+	  pxor		$T1,$Xi			#
+	  psllq		\$5,$Xi			#
+	  pxor		$T1,$Xi			#
+	pclmulqdq	\$0x00,$Hkey,$Xn	#######
+	  psllq		\$57,$Xi		#
+	  movdqa	$Xi,$T2			#
+	  pslldq	\$8,$Xi
+	  psrldq	\$8,$T2			#	
+	  pxor		$T1,$Xi
+	  pxor		$T2,$Xhi		#
+
+	pclmulqdq	\$0x11,$Hkey,$Xhn	#######
+	  movdqa	$Xi,$T2			# 2nd phase
+	  psrlq		\$5,$Xi
+	  pxor		$T2,$Xi			#
+	  psrlq		\$1,$Xi			#
+	  pxor		$T2,$Xi			#
+	  pxor		$Xhi,$T2
+	  psrlq		\$1,$Xi			#
+	  pxor		$T2,$Xi			#
+
+	pclmulqdq	\$0x00,$T2n,$T1n	#######
+	 movdqa		$Xi,$Xhi		#
+	 pshufd		\$0b01001110,$Xi,$T1
+	 pshufd		\$0b01001110,$Hkey2,$T2
+	 pxor		$Xi,$T1			#
+	 pxor		$Hkey2,$T2
+
+	pxor		$Xn,$T1n		#
+	pxor		$Xhn,$T1n		#
+	movdqa		$T1n,$T2n		#
+	psrldq		\$8,$T1n
+	pslldq		\$8,$T2n		#
+	pxor		$T1n,$Xhn
+	pxor		$T2n,$Xn		#
+
+	lea		32($inp),$inp
+	sub		\$0x20,$len
+	ja		.Lmod_loop
+
+.Leven_tail:
+___
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey2,1);	# H^2*(Ii+Xi)
+$code.=<<___;
+	pxor		$Xn,$Xi			# (H*Ii+1) + H^2*(Ii+Xi)
+	pxor		$Xhn,$Xhi
+___
+	&reduction_alg9	($Xhi,$Xi);
+$code.=<<___;
+	test		$len,$len
+	jnz		.Ldone
+
+.Lodd_tail:
+	movdqu		($inp),$T1		# Ii
+	pshufb		$T3,$T1
+	pxor		$T1,$Xi			# Ii+Xi
+___
+	&clmul64x64_T2	($Xhi,$Xi,$Hkey);	# H*(Ii+Xi)
+	&reduction_alg9	($Xhi,$Xi);
+$code.=<<___;
+.Ldone:
+	pshufb		$T3,$Xi
+	movdqu		$Xi,($Xip)
+___
+$code.=<<___ if ($win64);
+	movaps	(%rsp),%xmm6
+	movaps	0x10(%rsp),%xmm7
+	movaps	0x20(%rsp),%xmm8
+	movaps	0x30(%rsp),%xmm9
+	movaps	0x40(%rsp),%xmm10
+	add	\$0x58,%rsp
+___
+$code.=<<___;
+	ret
+.LSEH_end_gcm_ghash_clmul:
+.size	gcm_ghash_clmul,.-gcm_ghash_clmul
+___
+}
+
+$code.=<<___;
 .align	64
-.type	rem_4bit,\@object
+.Lbswap_mask:
+	.byte	15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0
+.L0x1c2_polynomial:
+	.byte	1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0xc2
+.align	64
+.type	.Lrem_4bit,\@object
 .Lrem_4bit:
 	.long	0,`0x0000<<16`,0,`0x1C20<<16`,0,`0x3840<<16`,0,`0x2460<<16`
 	.long	0,`0x7080<<16`,0,`0x6CA0<<16`,0,`0x48C0<<16`,0,`0x54E0<<16`
@@ -214,7 +505,7 @@ $code.=<<___;
 .asciz	"GHASH for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
 ___
-
+
 # EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
 #		CONTEXT *context,DISPATCHER_CONTEXT *disp)
 if ($win64) {
@@ -316,6 +607,10 @@ se_handler:
 	.rva	.LSEH_end_gcm_ghash_4bit
 	.rva	.LSEH_info_gcm_ghash_4bit
 
+	.rva	.LSEH_begin_gcm_ghash_clmul
+	.rva	.LSEH_end_gcm_ghash_clmul
+	.rva	.LSEH_info_gcm_ghash_clmul
+
 .section	.xdata
 .align	8
 .LSEH_info_gcm_gmult_4bit:
@@ -326,9 +621,46 @@ se_handler:
 	.byte	9,0,0,0
 	.rva	se_handler
 	.rva	.Lghash_prologue,.Lghash_epilogue	# HandlerData
+.LSEH_info_gcm_ghash_clmul:
+	.byte	0x01,0x1f,0x0b,0x00
+	.byte	0x1f,0xa8,0x04,0x00	#movaps 0x40(rsp),xmm10
+	.byte	0x19,0x98,0x03,0x00	#movaps 0x30(rsp),xmm9
+	.byte	0x13,0x88,0x02,0x00	#movaps 0x20(rsp),xmm8
+	.byte	0x0d,0x78,0x01,0x00	#movaps 0x10(rsp),xmm7
+	.byte	0x08,0x68,0x00,0x00	#movaps (rsp),xmm6
+	.byte	0x04,0xa2,0x00,0x00	#sub	rsp,0x58
 ___
 }
+
+sub rex {
+ local *opcode=shift;
+ my ($dst,$src)=@_;
+
+   if ($dst>=8 || $src>=8) {
+	$rex=0x40;
+	$rex|=0x04 if($dst>=8);
+	$rex|=0x01 if($src>=8);
+	push @opcode,$rex;
+   }
+}
+
+sub pclmulqdq {
+  my $arg=shift;
+  my @opcode=(0x66);
+
+    if ($arg=~/\$([x0-9a-f]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+	rex(\@opcode,$3,$2);
+	push @opcode,0x0f,0x3a,0x44;
+	push @opcode,0xc0|($2&7)|(($3&7)<<3);	# ModR/M
+	my $c=$1;
+	push @opcode,$c=~/^0/?oct($c):$c;
+	return ".byte\t".join(',',@opcode);
+    }
+    return "pclmulqdq\t".$arg;
+}
+
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
+$code =~ s/\bpclmulqdq\s+(\$.*%xmm[0-9]+).*$/pclmulqdq($1)/gem;
 
 print $code;
 

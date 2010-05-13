@@ -67,7 +67,20 @@ typedef struct { u64 hi,lo; } u128;
 #define	PUTU32(p,v)	*(u32 *)(p) = BSWAP4(v)
 #endif
 
-#define	PACK(s)	((size_t)(s)<<(sizeof(size_t)*8-16))
+#define	PACK(s)		((size_t)(s)<<(sizeof(size_t)*8-16))
+#define REDUCE1BIT(V)	do { \
+	if (sizeof(size_t)==8) { \
+		u64 T = U64(0xe100000000000000) & (0-(V.lo&1)); \
+		V.lo  = (V.hi<<63)|(V.lo>>1); \
+		V.hi  = (V.hi>>1 )^T; \
+	} \
+	else { \
+		u32 T = 0xe1000000U & (0-(u32)(V.lo&1)); \
+		V.lo  = (V.hi<<63)|(V.lo>>1); \
+		V.hi  = (V.hi>>1 )^((u64)T<<32); \
+	} \
+} while(0)
+
 #ifdef	TABLE_BITS
 #undef	TABLE_BITS
 #endif
@@ -75,15 +88,14 @@ typedef struct { u64 hi,lo; } u128;
  * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
  * never be set to 8. 8 is effectively reserved for testing purposes.
  * Under ideal conditions "8-bit" version should be twice as fast as
- * "4-bit" one. But world is far from ideal. For gcc-generated x86 code,
- * "8-bit" was observed to run only ~50% faster. On x86_64 observed
- * improvement was ~75%, much closer to optimal, but the fact of
- * deviation means that references to pre-computed tables end up on
- * critical path and as tables are pretty big, 4KB per key+1KB shared,
- * execution time is sensitive to cache timing. It's not actually
- * proven, but 4-bit procedure is believed to provide adequate
- * all-round performance...
- */  
+ * "4-bit" one. For gcc-generated x86[_64] code, "8-bit" was observed to
+ * run ~75% faster, closer to 100% for commercial compilers... But the
+ * catch is that "8-bit" procedure consumes 16 times more memory, 4KB
+ * per indivudual key + 1KB shared, and as access to these tables end up
+ * on critical path, real-life execution time would be sensitive to
+ * cache timing. It's not actually proven, but "4-bit" procedure is
+ * believed to provide adequate all-round performance...
+ */
 #define	TABLE_BITS 4
 
 #if	TABLE_BITS==8
@@ -99,16 +111,7 @@ static void gcm_init_8bit(u128 Htable[256], u64 H[2])
 	V.lo = H[1];
 
 	for (Htable[128]=V, i=64; i>0; i>>=1) {
-		if (sizeof(size_t)==8) {
-			u64 T = U64(0xe100000000000000) & (0-(V.lo&1));
-			V.lo  = (V.hi<<63)|(V.lo>>1);
-			V.hi  = (V.hi>>1 )^T;
-		}
-		else {
-			u32 T = 0xe1000000U & (0-(u32)(V.lo&1));
-			V.lo  = (V.hi<<63)|(V.lo>>1);
-			V.hi  = (V.hi>>1 )^((u64)T<<32);
-		}
+		REDUCE1BIT(V);
 		Htable[i] = V;
 	}
 
@@ -238,18 +241,6 @@ static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 #if defined(OPENSSL_SMALL_FOOTPRINT)
 	int  i;
 #endif
-#define REDUCE(V) do { \
-	if (sizeof(size_t)==8) { \
-		u64 T = U64(0xe100000000000000) & (0-(V.lo&1)); \
-		V.lo  = (V.hi<<63)|(V.lo>>1); \
-		V.hi  = (V.hi>>1 )^T; \
-	} \
-	else { \
-		u32 T = 0xe1000000U & (0-(u32)(V.lo&1)); \
-		V.lo  = (V.hi<<63)|(V.lo>>1); \
-		V.hi  = (V.hi>>1 )^((u64)T<<32); \
-	} \
-} while(0)
 
 	Htable[0].hi = 0;
 	Htable[0].lo = 0;
@@ -258,7 +249,7 @@ static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 
 #if defined(OPENSSL_SMALL_FOOTPRINT)
 	for (Htable[8]=V, i=4; i>0; i>>=1) {
-		REDUCE(V);
+		REDUCE1BIT(V);
 		Htable[i] = V;
 	}
 
@@ -272,11 +263,11 @@ static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 	}
 #else
 	Htable[8] = V;
-	REDUCE(V);
+	REDUCE1BIT(V);
 	Htable[4] = V;
-	REDUCE(V);
+	REDUCE1BIT(V);
 	Htable[2] = V;
-	REDUCE(V);
+	REDUCE1BIT(V);
 	Htable[1] = V;
 	Htable[3].hi  = V.hi^Htable[2].hi, Htable[3].lo  = V.lo^Htable[2].lo;
 	V=Htable[4];
@@ -314,7 +305,6 @@ static void gcm_init_4bit(u128 Htable[16], u64 H[2])
 		}
 	}
 #endif
-#undef	REDUCE
 }
 
 #ifndef GHASH_ASM
@@ -471,7 +461,7 @@ void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 
 #define GCM_MUL(ctx,Xi)   gcm_gmult_4bit(ctx->Xi.u,ctx->Htable)
 #if defined(GHASH_ASM) || !defined(OPENSSL_SMALL_FOOTPRINT)
-#define GHASH(in,len,ctx) gcm_ghash_4bit((ctx)->Xi.u,(ctx)->Htable,in,len)
+#define GHASH(ctx,in,len) gcm_ghash_4bit((ctx)->Xi.u,(ctx)->Htable,in,len)
 /* GHASH_CHUNK is "stride parameter" missioned to mitigate cache
  * trashing effect. In other words idea is to hash data while it's
  * still in L1 cache after encryption pass... */
@@ -514,17 +504,7 @@ static void gcm_gmult_1bit(u64 Xi[2],const u64 H[2])
 			Z.hi ^= V.hi&M;
 			Z.lo ^= V.lo&M;
 
-			if (sizeof(size_t)==8) {
-				u64 T = U64(0xe100000000000000) & (0-(V.lo&1));
-				V.lo  = (V.hi<<63)|(V.lo>>1);
-				V.hi  = (V.hi>>1 )^T;
-			}
-			else {
-				u32 T = 0xe1000000U & (0-(u32)(V.lo&1));
-				V.lo  = (V.hi<<63)|(V.lo>>1);
-				V.hi  = (V.hi>>1 )^((u64)T<<32);
-			}
-				
+			REDUCE1BIT(V);
 		}
 	}
 
@@ -559,11 +539,39 @@ struct gcm128_context {
 	u128 Htable[256];
 #else
 	u128 Htable[16];
+	void (*gmult)(u64 Xi[2],const u128 Htable[16]);
+	void (*ghash)(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 #endif
 	unsigned int res, pad;
 	block128_f block;
 	void *key;
 };
+
+#if	TABLE_BITS==4 && defined(GHASH_ASM) && !defined(I386_ONLY) && \
+	(defined(__i386)	|| defined(__i386__)	|| \
+	 defined(__x86_64)	|| defined(__x86_64__)	|| \
+	 defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64))
+# define GHASH_ASM_IAX
+extern unsigned int OPENSSL_ia32cap_P[2];
+
+void gcm_init_clmul(u128 Htable[16],const u64 Xi[2]);
+void gcm_gmult_clmul(u64 Xi[2],const u128 Htable[16]);
+void gcm_ghash_clmul(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
+
+# if	defined(__i386) || defined(__i386__) || defined(_M_IX86)
+#  define GHASH_ASM_X86
+void gcm_gmult_4bit_mmx(u64 Xi[2],const u128 Htable[16]);
+void gcm_ghash_4bit_mmx(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
+
+void gcm_gmult_4bit_x86(u64 Xi[2],const u128 Htable[16]);
+void gcm_ghash_4bit_x86(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
+# endif
+
+# undef  GCM_MUL
+# define GCM_MUL(ctx,Xi)   (*((ctx)->gmult))(ctx->Xi.u,ctx->Htable)
+# undef  GHASH
+# define GHASH(ctx,in,len) (*((ctx)->ghash))((ctx)->Xi.u,(ctx)->Htable,in,len)
+#endif
 
 void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 {
@@ -593,7 +601,29 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #if	TABLE_BITS==8
 	gcm_init_8bit(ctx->Htable,ctx->H.u);
 #elif	TABLE_BITS==4
+# if	defined(GHASH_ASM_IAX)
+	if (OPENSSL_ia32cap_P[1]&(1<<1)) {
+		gcm_init_clmul(ctx->Htable,ctx->H.u);
+		ctx->gmult = gcm_gmult_clmul;
+		ctx->ghash = gcm_ghash_clmul;
+		return;
+	}
 	gcm_init_4bit(ctx->Htable,ctx->H.u);
+#  if	defined(GHASH_ASM_X86)
+	if (OPENSSL_ia32cap_P[0]&(1<<23)) {
+		ctx->gmult = gcm_gmult_4bit_mmx;
+		ctx->ghash = gcm_ghash_4bit_mmx;
+	} else {
+		ctx->gmult = gcm_gmult_4bit_x86;
+		ctx->ghash = gcm_ghash_4bit_x86;
+	}
+#  else
+	ctx->gmult = gcm_gmult_4bit;
+	ctx->ghash = gcm_ghash_4bit;
+#  endif
+# else
+	gcm_init_4bit(ctx->Htable,ctx->H.u);
+# endif
 #endif
 }
 
@@ -671,7 +701,7 @@ void CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx,const unsigned char *aad,size_t len)
 
 #ifdef GHASH
 	if ((i = (len&(size_t)-16))) {
-		GHASH(aad,i,ctx);
+		GHASH(ctx,aad,i);
 		aad += i;
 		len -= i;
 	}
@@ -740,7 +770,7 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 			in  += 16;
 			j   -= 16;
 		    }
-		    GHASH(out-GHASH_CHUNK,GHASH_CHUNK,ctx);
+		    GHASH(ctx,out-GHASH_CHUNK,GHASH_CHUNK);
 		    len -= GHASH_CHUNK;
 		}
 		if ((i = (len&(size_t)-16))) {
@@ -760,7 +790,7 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 			in  += 16;
 			len -= 16;
 		    }
-		    GHASH(out-j,j,ctx);
+		    GHASH(ctx,out-j,j);
 		}
 #else
 		while (len>=16) {
@@ -854,7 +884,7 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 		while (len>=GHASH_CHUNK) {
 		    size_t j=GHASH_CHUNK;
 
-		    GHASH(in,GHASH_CHUNK,ctx);
+		    GHASH(ctx,in,GHASH_CHUNK);
 		    while (j) {
 			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 			++ctr;
@@ -872,7 +902,7 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 		    len -= GHASH_CHUNK;
 		}
 		if ((i = (len&(size_t)-16))) {
-		    GHASH(in,i,ctx);
+		    GHASH(ctx,in,i);
 		    while (len>=16) {
 			(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
 			++ctr;
@@ -1243,6 +1273,7 @@ int main()
 	{
 	size_t start,stop,gcm_t,ctr_t,OPENSSL_rdtsc();
 	union { u64 u; u8 c[1024]; } buf;
+	int i;
 
 	AES_set_encrypt_key(K1,sizeof(K1)*8,&key);
 	CRYPTO_gcm128_init(&ctx,&key,(block128_f)AES_encrypt);
@@ -1267,11 +1298,11 @@ int main()
 			ctr_t/(double)sizeof(buf),
 			(gcm_t-ctr_t)/(double)sizeof(buf));
 #ifdef GHASH
-	GHASH(buf.c,sizeof(buf),&ctx);
+	GHASH(&ctx,buf.c,sizeof(buf));
 	start = OPENSSL_rdtsc();
-	GHASH(buf.c,sizeof(buf),&ctx);
+	for (i=0;i<100;++i) GHASH(&ctx,buf.c,sizeof(buf));
 	gcm_t = OPENSSL_rdtsc() - start;
-	printf("%.2f\n",gcm_t/(double)sizeof(buf));
+	printf("%.2f\n",gcm_t/(double)sizeof(buf)/(double)i);
 #endif
 	}
 #endif
