@@ -58,6 +58,10 @@
 # fit for Core2 and therefore the code was modified to skip cloop8 on
 # this CPU.
 
+# Intel Westmere was observed to perform suboptimally. Adding yet
+# another movzb to cloop1 improved performance by almost 50%! Core2
+# performance is improved too, but nominally...
+
 $flavour = shift;
 $output  = shift;
 if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
@@ -229,6 +233,7 @@ $code.=<<___;
 .align	16
 .Lcloop1:
 	add	$TX[0]#b,$YY#b
+	movzb	$YY#b,$YY#d
 	movzb	($dat,$YY),$TY#d
 	movb	$TX[0]#b,($dat,$YY)
 	movb	$TY#b,($dat,$XX[0])
