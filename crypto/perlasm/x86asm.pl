@@ -86,31 +86,37 @@ my %regrm = (	"eax"=>0, "ecx"=>1, "edx"=>2, "ebx"=>3,
 sub ::pextrd
 { my($dst,$src,$imm)=@_;
     if ("$dst:$src" =~ /(e[a-dsd][ixp]):xmm([0-7])/)
-    {	&data_byte(0x66,0x0f,0x3a,0x16,0xc0|($2<<3)|$regrm{$1},$imm);	}
+    {	&::data_byte(0x66,0x0f,0x3a,0x16,0xc0|($2<<3)|$regrm{$1},$imm);	}
+    else
+    {	&::generic("pextrd",@_);		}
 }
 
 sub ::pinsrd
 { my($dst,$src,$imm)=@_;
     if ("$dst:$src" =~ /xmm([0-7]):(e[a-dsd][ixp])/)
-    {	&data_byte(0x66,0x0f,0x3a,0x22,0xc0|($1<<3)|$regrm{$2},$imm);	}
+    {	&::data_byte(0x66,0x0f,0x3a,0x22,0xc0|($1<<3)|$regrm{$2},$imm);	}
+    else
+    {	&::generic("pinsrd",@_);		}
 }
 
 sub ::pshufb
 { my($dst,$src)=@_;
     if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
     {	&data_byte(0x66,0x0f,0x38,0x00,0xc0|($1<<3)|$2);	}
+    else
+    {	&::generic("pshufb",@_);		}
 }
 
 # AESNI extenstion
 sub ::aeskeygenassist
 { my($dst,$src,$imm)=@_;
     if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
-    {	&data_byte(0x66,0x0f,0x3a,0xdf,0xc0|($1<<3)|$2,$imm);	}
+    {	&::data_byte(0x66,0x0f,0x3a,0xdf,0xc0|($1<<3)|$2,$imm);	}
 }
 sub ::aescommon
 { my($opcodelet,$dst,$src)=@_;
     if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
-    {	&data_byte(0x66,0x0f,0x38,$opcodelet,0xc0|($1<<3)|$2);	}
+    {	&::data_byte(0x66,0x0f,0x38,$opcodelet,0xc0|($1<<3)|$2);}
 }
 sub ::aesimc		{ ::aescommon(0xdb,@_); }
 sub ::aesenc		{ ::aescommon(0xdc,@_); }
@@ -121,7 +127,9 @@ sub ::aesdeclast	{ ::aescommon(0xdf,@_); }
 sub ::pclmulqdq
 { my($dst,$src,$imm)=@_;
     if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
-    {	&data_byte(0x66,0x0f,0x3a,0x44,0xc0|($1<<3)|$2,$imm);	}
+    {	&::data_byte(0x66,0x0f,0x3a,0x44,0xc0|($1<<3)|$2,$imm);	}
+    else
+    {	&::generic("pclmulqdq",@_);		}
 }
 
 # label management
