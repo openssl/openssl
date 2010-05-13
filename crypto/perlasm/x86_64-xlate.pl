@@ -193,7 +193,7 @@ my %globals;
 	if ($gas) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{value}
-	    $self->{value} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/egi;
+	    $self->{value} =~ s/(?<=[\b\+\-\/\*\%])(0[x0-9a-f]+)/oct($1)/egi;
 	    $self->{value} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 	    sprintf "\$%s",$self->{value};
 	} else {
@@ -245,7 +245,7 @@ my %globals;
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{label}, new gas requires sign extension...
 	    use integer;
-	    $self->{label} =~ s/(?<![0-9a-f])(0[x0-9a-f]+)/oct($1)/egi;
+	    $self->{label} =~ s/(?<=[\b\+\-\/\*\%])(0[xb]*[0-9a-f]+)/oct($1)/egi;
 	    $self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 	    $self->{label} =~ s/([0-9]+)/$1<<32>>32/eg;
 	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour eq "mingw64");
@@ -258,10 +258,11 @@ my %globals;
 		sprintf "%s%s(%%%s)",	$self->{asterisk},$self->{label},$self->{base};
 	    }
 	} else {
-	    %szmap = ( b=>"BYTE$PTR", w=>"WORD$PTR", l=>"DWORD$PTR", q=>"QWORD$PTR" );
+	    %szmap = (	b=>"BYTE$PTR", w=>"WORD$PTR", l=>"DWORD$PTR",
+	    		q=>"QWORD$PTR",o=>"OWORD$PTR" );
 
 	    $self->{label} =~ s/\./\$/g;
-	    $self->{label} =~ s/0x([0-9a-f]+)/0$1h/ig;
+	    $self->{label} =~ s/(?<=[\b\+\-\/\*\%])0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
 	    $sz="q" if ($self->{asterisk});
 
@@ -735,7 +736,11 @@ while($line=<>) {
 		else { printf "\t%s\t%s",$insn,join(",",@args); }
 	    } else {
 		$insn = $opcode->out();
-		$insn .= $sz if (map($_->out() =~ /xmm|mmx/,@args));
+		foreach (@args) {
+		    my $arg = $_->out();
+		    if ($arg =~ /xmm/) { $insn.=$sz; $sz="o"; last; }
+		    if ($arg =~ /mm/)  { $insn.=$sz; $sz="q"; last; }
+		}
 		@args = reverse(@args);
 		undef $sz if ($nasm && $opcode->mnemonic() eq "lea");
 		printf "\t%s\t%s",$insn,join(",",map($_->out($sz),@args));
