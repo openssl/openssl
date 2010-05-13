@@ -25,6 +25,10 @@
 # Add PCLMULQDQ version performing at 2.07 cycles per processed byte.
 # See ghash-x86.pl for background information and details about coding
 # techniques.
+#
+# Special thanks to David Woodhouse <dwmw2@infradead.org> for
+# providing access to a Westmere-based system on behalf of Intel
+# Open Source Technology Centre.
 
 $flavour = shift;
 $output  = shift;
