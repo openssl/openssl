@@ -302,8 +302,8 @@ static t_UBSEC_diffie_hellman_generate_ioctl
 	*p_UBSEC_diffie_hellman_generate_ioctl = NULL;
 static t_UBSEC_diffie_hellman_agree_ioctl *p_UBSEC_diffie_hellman_agree_ioctl = NULL;
 #endif
-static t_UBSEC_rsa_mod_exp_ioctl *p_UBSEC_rsa_mod_exp_ioctl = NULL;
 #ifndef OPENSSL_NO_RSA
+static t_UBSEC_rsa_mod_exp_ioctl *p_UBSEC_rsa_mod_exp_ioctl = NULL;
 static t_UBSEC_rsa_mod_exp_crt_ioctl *p_UBSEC_rsa_mod_exp_crt_ioctl = NULL;
 #endif
 #ifndef OPENSSL_NO_DSA
