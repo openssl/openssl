@@ -813,16 +813,6 @@ int dump_certs_pkeys_bag (BIO *out, PKCS12_SAFEBAG *bag, char *pass,
 	default:
 		BIO_printf (bio_err, "Warning unsupported bag type: ");
 		i2a_ASN1_OBJECT (bio_err, bag->type);
-{
-unsigned char *foo = NULL;
-int foolen;
-FILE *op;
-foolen = i2d_PKCS12_SAFEBAG(bag, &foo);
-op = fopen("/tmp/unknown.der", "w");
-fwrite(foo, 1, foolen, op);
-fclose(op);
-}
-
 		BIO_printf (bio_err, "\n");
 		return 1;
 	break;
