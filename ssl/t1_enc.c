@@ -148,7 +148,7 @@
 #endif
 
 /* seed1 through seed5 are virtually concatenated */
-static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
+static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 			int sec_len,
 			const void *seed1, int seed1_len,
 			const void *seed2, int seed2_len,
@@ -163,55 +163,79 @@ static void tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 	HMAC_CTX ctx_tmp;
 	unsigned char A1[EVP_MAX_MD_SIZE];
 	unsigned int A1_len;
+	int ret = 0;
 	
 	chunk=EVP_MD_size(md);
 	OPENSSL_assert(chunk >= 0);
 
 	HMAC_CTX_init(&ctx);
 	HMAC_CTX_init(&ctx_tmp);
-	HMAC_Init_ex(&ctx,sec,sec_len,md, NULL);
-	HMAC_Init_ex(&ctx_tmp,sec,sec_len,md, NULL);
-	if (seed1 != NULL) HMAC_Update(&ctx,seed1,seed1_len);
-	if (seed2 != NULL) HMAC_Update(&ctx,seed2,seed2_len);
-	if (seed3 != NULL) HMAC_Update(&ctx,seed3,seed3_len);
-	if (seed4 != NULL) HMAC_Update(&ctx,seed4,seed4_len);
-	if (seed5 != NULL) HMAC_Update(&ctx,seed5,seed5_len);
-	HMAC_Final(&ctx,A1,&A1_len);
+	if (!HMAC_Init_ex(&ctx,sec,sec_len,md, NULL))
+		goto err;
+	if (!HMAC_Init_ex(&ctx_tmp,sec,sec_len,md, NULL))
+		goto err;
+	if (seed1 != NULL && !HMAC_Update(&ctx,seed1,seed1_len))
+		goto err;
+	if (seed2 != NULL && !HMAC_Update(&ctx,seed2,seed2_len))
+		goto err;
+	if (seed3 != NULL && !HMAC_Update(&ctx,seed3,seed3_len))
+		goto err;
+	if (seed4 != NULL && !HMAC_Update(&ctx,seed4,seed4_len))
+		goto err;
+	if (seed5 != NULL && !HMAC_Update(&ctx,seed5,seed5_len))
+		goto err;
+	if (!HMAC_Final(&ctx,A1,&A1_len))
+		goto err;
 
 	n=0;
 	for (;;)
 		{
-		HMAC_Init_ex(&ctx,NULL,0,NULL,NULL); /* re-init */
-		HMAC_Init_ex(&ctx_tmp,NULL,0,NULL,NULL); /* re-init */
-		HMAC_Update(&ctx,A1,A1_len);
-		HMAC_Update(&ctx_tmp,A1,A1_len);
-		if (seed1 != NULL) HMAC_Update(&ctx,seed1,seed1_len);
-		if (seed2 != NULL) HMAC_Update(&ctx,seed2,seed2_len);
-		if (seed3 != NULL) HMAC_Update(&ctx,seed3,seed3_len);
-		if (seed4 != NULL) HMAC_Update(&ctx,seed4,seed4_len);
-		if (seed5 != NULL) HMAC_Update(&ctx,seed5,seed5_len);
+		if (!HMAC_Init_ex(&ctx,NULL,0,NULL,NULL)) /* re-init */
+			goto err;
+		if (!HMAC_Init_ex(&ctx_tmp,NULL,0,NULL,NULL)) /* re-init */
+			goto err;
+		if (!HMAC_Update(&ctx,A1,A1_len))
+			goto err;
+		if (!HMAC_Update(&ctx_tmp,A1,A1_len))
+			goto err;
+		if (seed1 != NULL && !HMAC_Update(&ctx,seed1,seed1_len))
+			goto err;
+		if (seed2 != NULL && !HMAC_Update(&ctx,seed2,seed2_len))
+			goto err;
+		if (seed3 != NULL && !HMAC_Update(&ctx,seed3,seed3_len))
+			goto err;
+		if (seed4 != NULL && !HMAC_Update(&ctx,seed4,seed4_len))
+			goto err;
+		if (seed5 != NULL && !HMAC_Update(&ctx,seed5,seed5_len))
+			goto err;
 
 		if (olen > chunk)
 			{
-			HMAC_Final(&ctx,out,&j);
+			if (!HMAC_Final(&ctx,out,&j))
+				goto err;
 			out+=j;
 			olen-=j;
-			HMAC_Final(&ctx_tmp,A1,&A1_len); /* calc the next A1 value */
+			if (!HMAC_Final(&ctx_tmp,A1,&A1_len)) /* calc the next A1 value */
+				goto err;
 			}
 		else	/* last one */
 			{
-			HMAC_Final(&ctx,A1,&A1_len);
+			if (!HMAC_Final(&ctx,A1,&A1_len))
+				goto err;
 			memcpy(out,A1,olen);
 			break;
 			}
 		}
+	ret = 1;
+err:
 	HMAC_CTX_cleanup(&ctx);
 	HMAC_CTX_cleanup(&ctx_tmp);
 	OPENSSL_cleanse(A1,sizeof(A1));
+	return ret;
 	}
 
 /* seed1 through seed5 are virtually concatenated */
-static void tls1_PRF(long digest_mask,
+static int tls1_PRF(long digest_mask,
 		     const void *seed1, int seed1_len,
 		     const void *seed2, int seed2_len,
 		     const void *seed3, int seed3_len,
@@ -225,6 +249,7 @@ static void tls1_PRF(long digest_mask,
 	const unsigned char *S1;
 	long m;
 	const EVP_MD *md;
+	int ret = 0;
 
 	/* Count number of digests and partition sec evenly */
 	count=0;
@@ -239,11 +264,12 @@ static void tls1_PRF(long digest_mask,
 			if (!md) {
 				SSLerr(SSL_F_TLS1_PRF,
 				SSL_R_UNSUPPORTED_DIGEST_TYPE);
-				return;				
+				goto err;				
 			}
-			tls1_P_hash(md ,S1,len+(slen&1),
-			            seed1,seed1_len,seed2,seed2_len,seed3,seed3_len,seed4,seed4_len,seed5,seed5_len,
-			            out2,olen);
+			if (!tls1_P_hash(md ,S1,len+(slen&1),
+					seed1,seed1_len,seed2,seed2_len,seed3,seed3_len,seed4,seed4_len,seed5,seed5_len,
+					out2,olen))
+				goto err;
 			S1+=len;
 			for (i=0; i<olen; i++)
 			{
@@ -251,12 +277,15 @@ static void tls1_PRF(long digest_mask,
 			}
 		}
 	}
-
+	ret = 1;
+err:
+	return ret;
 }
-static void tls1_generate_key_block(SSL *s, unsigned char *km,
+static int tls1_generate_key_block(SSL *s, unsigned char *km,
 	     unsigned char *tmp, int num)
 	{
-	tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+	int ret;
+	ret = tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
 		 TLS_MD_KEY_EXPANSION_CONST,TLS_MD_KEY_EXPANSION_CONST_SIZE,
 		 s->s3->server_random,SSL3_RANDOM_SIZE,
 		 s->s3->client_random,SSL3_RANDOM_SIZE,
@@ -274,6 +303,7 @@ static void tls1_generate_key_block(SSL *s, unsigned char *km,
                 }
         printf("\n");  }
 #endif    /* KSSL_DEBUG */
+	return ret;
 	}
 
 int tls1_change_cipher_state(SSL *s, int which)
@@ -461,22 +491,24 @@ printf("which = %04X\nmac key=",which);
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).
 		 */
-		tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
-			 exp_label,exp_label_len,
-			 s->s3->client_random,SSL3_RANDOM_SIZE,
-			 s->s3->server_random,SSL3_RANDOM_SIZE,
-			 NULL,0,NULL,0,
-			 key,j,tmp1,tmp2,EVP_CIPHER_key_length(c));
+		if (!tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+				exp_label,exp_label_len,
+				s->s3->client_random,SSL3_RANDOM_SIZE,
+				s->s3->server_random,SSL3_RANDOM_SIZE,
+				NULL,0,NULL,0,
+				key,j,tmp1,tmp2,EVP_CIPHER_key_length(c)))
+			goto err2;
 		key=tmp1;
 
 		if (k > 0)
 			{
-			tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
-				 TLS_MD_IV_BLOCK_CONST,TLS_MD_IV_BLOCK_CONST_SIZE,
-				 s->s3->client_random,SSL3_RANDOM_SIZE,
-				 s->s3->server_random,SSL3_RANDOM_SIZE,
-				 NULL,0,NULL,0,
-				 empty,0,iv1,iv2,k*2);
+			if (!tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+					TLS_MD_IV_BLOCK_CONST,TLS_MD_IV_BLOCK_CONST_SIZE,
+					s->s3->client_random,SSL3_RANDOM_SIZE,
+					s->s3->server_random,SSL3_RANDOM_SIZE,
+					NULL,0,NULL,0,
+					empty,0,iv1,iv2,k*2))
+				goto err2;
 			if (client_write)
 				iv=iv1;
 			else
@@ -518,12 +550,13 @@ err2:
 
 int tls1_setup_key_block(SSL *s)
 	{
-	unsigned char *p1,*p2;
+	unsigned char *p1,*p2=NULL;
 	const EVP_CIPHER *c;
 	const EVP_MD *hash;
 	int num;
 	SSL_COMP *comp;
 	int mac_type= NID_undef,mac_secret_size=0;
+	int ret=0;
 
 #ifdef KSSL_DEBUG
 	printf ("tls1_setup_key_block()\n");
@@ -548,13 +581,19 @@ int tls1_setup_key_block(SSL *s)
 	ssl3_cleanup_key_block(s);
 
 	if ((p1=(unsigned char *)OPENSSL_malloc(num)) == NULL)
+		{
+		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,ERR_R_MALLOC_FAILURE);
 		goto err;
-	if ((p2=(unsigned char *)OPENSSL_malloc(num)) == NULL)
-		goto err;
+		}
 
 	s->s3->tmp.key_block_length=num;
 	s->s3->tmp.key_block=p1;
 
+	if ((p2=(unsigned char *)OPENSSL_malloc(num)) == NULL)
+		{
+		SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,ERR_R_MALLOC_FAILURE);
+		goto err;
+		}
 
 #ifdef TLS_DEBUG
 printf("client random\n");
@@ -564,9 +603,8 @@ printf("server random\n");
 printf("pre-master\n");
 { int z; for (z=0; z<s->session->master_key_length; z++) printf("%02X%c",s->session->master_key[z],((z+1)%16)?' ':'\n'); }
 #endif
-	tls1_generate_key_block(s,p1,p2,num);
-	OPENSSL_cleanse(p2,num);
-	OPENSSL_free(p2);
+	if (!tls1_generate_key_block(s,p1,p2,num))
+		goto err;
 #ifdef TLS_DEBUG
 printf("\nkey block\n");
 { int z; for (z=0; z<num; z++) printf("%02X%c",p1[z],((z+1)%16)?' ':'\n'); }
@@ -591,10 +629,14 @@ printf("\nkey block\n");
 			}
 		}
 		
-	return(1);
+	ret = 1;
 err:
-	SSLerr(SSL_F_TLS1_SETUP_KEY_BLOCK,ERR_R_MALLOC_FAILURE);
-	return(0);
+	if (p2)
+		{
+		OPENSSL_cleanse(p2,num);
+		OPENSSL_free(p2);
+		}
+	return(ret);
 	}
 
 int tls1_enc(SSL *s, int send)
@@ -822,10 +864,11 @@ int tls1_final_finish_mac(SSL *s,
 			}
 		}
 		
-	tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
-		 str,slen, buf,(int)(q-buf), NULL,0, NULL,0, NULL,0,
-		 s->session->master_key,s->session->master_key_length,
-		 out,buf2,sizeof buf2);
+	if (!tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+			str,slen, buf,(int)(q-buf), NULL,0, NULL,0, NULL,0,
+			s->session->master_key,s->session->master_key_length,
+			out,buf2,sizeof buf2))
+		err = 1;
 	EVP_MD_CTX_cleanup(&ctx);
 
 	if (err)
