@@ -7,6 +7,7 @@
 my $openssl;
 
 my $dir;
+my $prefix;
 
 if(defined $ENV{OPENSSL}) {
 	$openssl = $ENV{OPENSSL};

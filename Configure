@@ -1812,11 +1812,11 @@ EOF
 	(system $make_command.$make_targets) == 0 or exit $?
 		if $make_targets ne "";
 	if ( $perl =~ m@^/@) {
-	    &dofile("tools/c_rehash",$perl,'^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
+	    &dofile("tools/c_rehash",$perl,'^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";', '^my \$prefix;$', 'my $prefix = "' . $prefix . '";');
 	    &dofile("apps/CA.pl",$perl,'^#!/', '#!%s');
 	} else {
 	    # No path for Perl known ...
-	    &dofile("tools/c_rehash",'/usr/local/bin/perl','^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";');
+	    &dofile("tools/c_rehash",'/usr/local/bin/perl','^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";',  '^my \$prefix;$', 'my $prefix = "' . $prefix . '";');
 	    &dofile("apps/CA.pl",'/usr/local/bin/perl','^#!/', '#!%s');
 	}
 	if ($depflags ne $default_depflags && !$make_depend) {
