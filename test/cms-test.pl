@@ -54,8 +54,11 @@
 # OpenSSL PKCS#7 and CMS implementations.
 
 my $ossl_path;
-
-if ( -f "../apps/openssl$ENV{EXE_EXT}" ) {
+my $redir = " 2>cms.err 1>cms.out";
+# Make MSYS work
+if ( $^O eq "MSWin32" && -f "../apps/openssl.exe" ) {
+    $ossl_path = "cmd /c ..\\apps\\openssl";
+elsif ( -f "../apps/openssl$ENV{EXE_EXT}" ) {
     $ossl_path = "../util/shlib_wrap.sh ../apps/openssl";
 }
 elsif ( -f "..\\out32dll\\openssl.exe" ) {
@@ -382,14 +385,14 @@ sub run_smime_tests {
 		$rscmd =~ s/-stream//;	
 		$rvcmd =~ s/-stream//;
 		}
-        system("$scmd$rscmd 2>cms.err 1>cms.out");
+        system("$scmd$rscmd$redir");
         if ($?) {
             print "$tnam: generation error\n";
             $$rv++;
             exit 1 if $halt_err;
             next;
         }
-        system("$vcmd$rvcmd 2>cms.err 1>cms.out");
+        system("$vcmd$rvcmd$redir");
         if ($?) {
             print "$tnam: verify error\n";
             $$rv++;
