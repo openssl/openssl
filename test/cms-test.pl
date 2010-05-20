@@ -58,6 +58,7 @@ my $redir = " 2>cms.err 1>cms.out";
 # Make MSYS work
 if ( $^O eq "MSWin32" && -f "../apps/openssl.exe" ) {
     $ossl_path = "cmd /c ..\\apps\\openssl";
+}
 elsif ( -f "../apps/openssl$ENV{EXE_EXT}" ) {
     $ossl_path = "../util/shlib_wrap.sh ../apps/openssl";
 }
