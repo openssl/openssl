@@ -115,7 +115,7 @@ void ENGINE_load_aesni (void)
 typedef unsigned int u32;
 typedef unsigned char u8;
 
-#if defined(__GNUC__) && __GNUC__>=2
+#if defined(__GNUC__) && __GNUC__>=2 && !defined(PEDANTIC)
 #  define BSWAP4(x) ({	u32 ret=(x);			\
 			asm volatile ("bswapl %0"	\
 			: "+r"(ret));	ret;		})
