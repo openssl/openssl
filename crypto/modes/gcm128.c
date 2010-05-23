@@ -87,14 +87,34 @@ typedef struct { u64 hi,lo; } u128;
 /*
  * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
  * never be set to 8. 8 is effectively reserved for testing purposes.
- * Under ideal conditions "8-bit" version should be twice as fast as
- * "4-bit" one. For gcc-generated x86[_64] code, "8-bit" was observed to
- * run ~75% faster, closer to 100% for commercial compilers... But the
- * catch is that "8-bit" procedure consumes 16 times more memory, 4KB
- * per indivudual key + 1KB shared, and as access to these tables end up
- * on critical path, real-life execution time would be sensitive to
- * cache timing. It's not actually proven, but "4-bit" procedure is
- * believed to provide adequate all-round performance...
+ * TABLE_BITS>1 are lookup-table-driven implementations referred to as
+ * "Shoup's" in GCM specification. In other words OpenSSL does not cover
+ * whole spectrum of possible table driven implementations. Why? In
+ * non-"Shoup's" case memory access pattern is segmented in such manner,
+ * that it's trivial to see that cache timing information can reveal
+ * fair portion of intermediate hash value. Given that ciphertext is
+ * always available to attacker, it's possible for him to attempt to
+ * deduce secret parameter H and if successful, tamper with messages
+ * [which is nothing but trivial in CTR mode]. In "Shoup's" case it's
+ * not as trivial, but there is no reason to believe that it's resistant
+ * to cache-timing attack. And the thing about "8-bit" implementation is
+ * that it consumes 16 (sixteen) times more memory, 4KB per individual
+ * key + 1KB shared. Well, on pros side it should be twice as fast as
+ * "4-bit" version. And for gcc-generated x86[_64] code, "8-bit" version
+ * was observed to run ~75% faster, closer to 100% for commercial
+ * compilers... Yet "4-bit" procedure is preferred, because it's
+ * believed to provide better security-performance balance and adequate
+ * all-round performance. "All-round" refers to things like:
+ *
+ * - shorter setup time effectively improves overall timing for
+ *   handling short messages;
+ * - larger table allocation can become unbearable because of VM
+ *   subsystem penalties (for example on Windows large enough free
+ *   results in VM working set trimming, meaning that consequent
+ *   malloc would immediately incur working set expansion);
+ * - larger table has larger cache footprint, which can affect
+ *   performance of other code paths (not necessarily even from same
+ *   thread in Hyper-Threading world);
  */
 #define	TABLE_BITS 4
 
@@ -1041,7 +1061,7 @@ static const u8	K3[]=  {0xfe,0xff,0xe9,0x92,0x86,0x65,0x73,0x1c,0x6d,0x6a,0x8f,0
 			0xe3,0xaa,0x21,0x2f,0x2c,0x02,0xa4,0xe0,0x35,0xc1,0x7e,0x23,0x29,0xac,0xa1,0x2e,
 			0x21,0xd5,0x14,0xb2,0x54,0x66,0x93,0x1c,0x7d,0x8f,0x6a,0x5a,0xac,0x84,0xaa,0x05,
 			0x1b,0xa3,0x0b,0x39,0x6a,0x0a,0xac,0x97,0x3d,0x58,0xe0,0x91,0x47,0x3f,0x59,0x85},
-		T3[]=  {0x4d,0x5c,0x2a,0xf3,0x27,0xcd,0x64,0xa6,0x2c,0xf3,0x5a,0xbd,0x2b,0xa6,0xfa,0xb4,};
+		T3[]=  {0x4d,0x5c,0x2a,0xf3,0x27,0xcd,0x64,0xa6,0x2c,0xf3,0x5a,0xbd,0x2b,0xa6,0xfa,0xb4};
 
 /* Test Case 4 */
 #define K4 K3
