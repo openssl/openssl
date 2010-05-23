@@ -7,7 +7,7 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
-# March 2010
+# March, May 2010
 #
 # The module implements "4-bit" GCM GHASH function and underlying
 # single multiplication operation in GF(2^128). "4-bit" means that it
@@ -20,10 +20,10 @@
 #		gcc 2.95.3(*)	MMX assembler	x86 assembler
 #
 # Pentium	100/112(**)	-		50
-# PIII		63 /77		16		24
-# P4		96 /122		30		84(***)
-# Opteron	50 /71		21		30
-# Core2		54 /68		12.5		18
+# PIII		63 /77		14.5		24
+# P4		96 /122		24.5		84(***)
+# Opteron	50 /71		14.5		30
+# Core2		54 /68		10.5		18
 #
 # (*)	gcc 3.4.x was observed to generate few percent slower code,
 #	which is one of reasons why 2.95.3 results were chosen,
@@ -33,9 +33,10 @@
 #	position-independent;
 # (***)	see comment in non-MMX routine for further details;
 #
-# To summarize, it's >2-3 times faster than gcc-generated code. To
+# To summarize, it's >2-4 times faster than gcc-generated code. To
 # anchor it to something else SHA1 assembler processes one byte in
-# 11-13 cycles on contemporary x86 cores.
+# 11-13 cycles on contemporary x86 cores. As for choice of MMX in
+# particular, see comment at the end of the file...
 
 # May 2010
 #
@@ -317,17 +318,24 @@ if (!$x86only) {{{
 
 &static_label("rem_4bit");
 
-sub mmx_loop() {
-# MMX version performs 2.8 times better on P4 (see comment in non-MMX
-# routine for further details), 40% better on Opteron and Core2, 50%
-# better on PIII... In other words effort is considered to be well
-# spent...
-    my $inp = shift;
-    my $rem_4bit = shift;
-    my $cnt = $Zhh;
+&function_begin_B("_mmx_gmult_4bit_inner");
+# MMX version performs 3.5 times better on P4 (see comment in non-MMX
+# routine for further details), 100% better on Opteron, ~70% better
+# on Core2 and PIII... In other words effort is considered to be well
+# spent... Since initial release the loop was unrolled in order to
+# "liberate" register previously used as loop counter. Instead it's
+# used to optimize critical path in 'Z.hi ^= rem_4bit[Z.lo&0xf]'.
+# The path involves move of Z.lo from MMX to integer register,
+# effective address calculation and finally merge of value to Z.hi.
+# Reference to rem_4bit is scheduled so late that I had to >>4
+# rem_4bit elements. This resulted in 20-45% procent improvement
+# on contemporary µ-archs.
+{
+    my $cnt;
+    my $rem_4bit = "eax";
+    my @rem = ($Zhh,$Zll);
     my $nhi = $Zhl;
     my $nlo = $Zlh;
-    my $rem = $Zll;
 
     my ($Zlo,$Zhi) = ("mm0","mm1");
     my $tmp = "mm2";
@@ -335,80 +343,52 @@ sub mmx_loop() {
 	&xor	($nlo,$nlo);	# avoid partial register stalls on PIII
 	&mov	($nhi,$Zll);
 	&mov	(&LB($nlo),&LB($nhi));
-	&mov	($cnt,14);
 	&shl	(&LB($nlo),4);
 	&and	($nhi,0xf0);
 	&movq	($Zlo,&QWP(8,$Htbl,$nlo));
 	&movq	($Zhi,&QWP(0,$Htbl,$nlo));
-	&movd	($rem,$Zlo);
-	&jmp	(&label("mmx_loop"));
+	&movd	($rem[0],$Zlo);
 
-    &set_label("mmx_loop",16);
-	&psrlq	($Zlo,4);
-	&and	($rem,0xf);
-	&movq	($tmp,$Zhi);
-	&psrlq	($Zhi,4);
-	&pxor	($Zlo,&QWP(8,$Htbl,$nhi));
-	&mov	(&LB($nlo),&BP(0,$inp,$cnt));
-	&psllq	($tmp,60);
-	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
-	&dec	($cnt);
-	&movd	($rem,$Zlo);
-	&pxor	($Zhi,&QWP(0,$Htbl,$nhi));
-	&mov	($nhi,$nlo);
-	&pxor	($Zlo,$tmp);
-	&js	(&label("mmx_break"));
+	for ($cnt=28;$cnt>=-2;$cnt--) {
+	    my $odd = $cnt&1;
+	    my $nix = $odd ? $nlo : $nhi;
 
-	&shl	(&LB($nlo),4);
-	&and	($rem,0xf);
-	&psrlq	($Zlo,4);
-	&and	($nhi,0xf0);
-	&movq	($tmp,$Zhi);
-	&psrlq	($Zhi,4);
-	&pxor	($Zlo,&QWP(8,$Htbl,$nlo));
-	&psllq	($tmp,60);
-	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
-	&movd	($rem,$Zlo);
-	&pxor	($Zhi,&QWP(0,$Htbl,$nlo));
-	&pxor	($Zlo,$tmp);
-	&jmp	(&label("mmx_loop"));
+		&shl	(&LB($nlo),4)			if ($odd);
+		&psrlq	($Zlo,4);
+		&movq	($tmp,$Zhi);
+		&psrlq	($Zhi,4);
+		&pxor	($Zlo,&QWP(8,$Htbl,$nix));
+		&mov	(&LB($nlo),&BP($cnt/2,$inp))	if (!$odd && $cnt>=0);
+		&psllq	($tmp,60);
+		&and	($nhi,0xf0)			if ($odd);
+		&pxor	($Zhi,&QWP(0,$rem_4bit,$rem[1],8)) if ($cnt<28);
+		&and	($rem[0],0xf);
+		&pxor	($Zhi,&QWP(0,$Htbl,$nix));
+		&mov	($nhi,$nlo)			if (!$odd && $cnt>=0);
+		&movd	($rem[1],$Zlo);
+		&pxor	($Zlo,$tmp);
 
-    &set_label("mmx_break",16);
-	&shl	(&LB($nlo),4);
-	&and	($rem,0xf);
-	&psrlq	($Zlo,4);
-	&and	($nhi,0xf0);
-	&movq	($tmp,$Zhi);
-	&psrlq	($Zhi,4);
-	&pxor	($Zlo,&QWP(8,$Htbl,$nlo));
-	&psllq	($tmp,60);
-	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
-	&movd	($rem,$Zlo);
-	&pxor	($Zhi,&QWP(0,$Htbl,$nlo));
-	&pxor	($Zlo,$tmp);
+		push	(@rem,shift(@rem));		# "rotate" registers
+	}
 
-	&psrlq	($Zlo,4);
-	&and	($rem,0xf);
-	&movq	($tmp,$Zhi);
-	&psrlq	($Zhi,4);
-	&pxor	($Zlo,&QWP(8,$Htbl,$nhi));
-	&psllq	($tmp,60);
-	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
-	&movd	($rem,$Zlo);
-	&pxor	($Zhi,&QWP(0,$Htbl,$nhi));
-	&pxor	($Zlo,$tmp);
+	&mov	($inp,&DWP(4,$rem_4bit,$rem[1],8));	# last rem_4bit[rem]
 
 	&psrlq	($Zlo,32);	# lower part of Zlo is already there
 	&movd	($Zhl,$Zhi);
 	&psrlq	($Zhi,32);
 	&movd	($Zlh,$Zlo);
 	&movd	($Zhh,$Zhi);
+	&shl	($inp,4);	# compensate for rem_4bit[i] being >>4
 
 	&bswap	($Zll);
 	&bswap	($Zhl);
 	&bswap	($Zlh);
+	&xor	($Zhh,$inp);
 	&bswap	($Zhh);
+
+	&ret	();
 }
+&function_end_B("_mmx_gmult_4bit_inner");
 
 &function_begin("gcm_gmult_4bit_mmx");
 	&mov	($inp,&wparam(0));	# load Xi
@@ -421,8 +401,9 @@ sub mmx_loop() {
 
 	&movz	($Zll,&BP(15,$inp));
 
-	&mmx_loop($inp,"eax");
+	&call	("_mmx_gmult_4bit_inner");
 
+	&mov	($inp,&wparam(0));	# load Xi
 	&emms	();
 	&mov	(&DWP(12,$inp),$Zll);
 	&mov	(&DWP(4,$inp),$Zhl);
@@ -458,15 +439,18 @@ sub mmx_loop() {
 	&xor	($Zhl,&DWP(4,$inp));
 	&xor	($Zlh,&DWP(8,$inp));
 	&xor	($Zhh,&DWP(0,$inp));
+	&mov	(&wparam(2),$inp);
 	&mov	(&DWP(12,"esp"),$Zll);
 	&mov	(&DWP(4,"esp"),$Zhl);
 	&mov	(&DWP(8,"esp"),$Zlh);
 	&mov	(&DWP(0,"esp"),$Zhh);
 
+	&mov	($inp,"esp");
 	&shr	($Zll,24);
 
-	&mmx_loop("esp","eax");
+	&call	("_mmx_gmult_4bit_inner");
 
+	&mov	($inp,&wparam(2));
 	&lea	($inp,&DWP(16,$inp));
 	&cmp	($inp,&wparam(3));
 	&jb	(&label("mmx_outer_loop"));
@@ -552,8 +536,8 @@ if (1) {		# Algorithm 9 with <<1 twist.
 			# candidate for interleaving with 64x64
 			# multiplication. Pre-modulo-scheduled loop
 			# was found to be ~20% faster than Algorithm 5
-			# below. Algorithm 9 was then chosen and
-			# optimized further...
+			# below. Algorithm 9 was therefore chosen for
+			# further optimization...
 
 sub reduction_alg9 {	# 17/13 times faster than Intel version
 my ($Xhi,$Xi) = @_;
@@ -567,7 +551,7 @@ my ($Xhi,$Xi) = @_;
 	&psllq		($Xi,57);		#
 	&movdqa		($T2,$Xi);		#
 	&pslldq		($Xi,8);
-	&psrldq		($T2,8);		#	
+	&psrldq		($T2,8);		#
 	&pxor		($Xi,$T1);
 	&pxor		($Xhi,$T2);		#
 
@@ -952,11 +936,34 @@ my ($Xhi,$Xi)=@_;
 }}	# $sse2
 
 &set_label("rem_4bit",64);
-	&data_word(0,0x0000<<16,0,0x1C20<<16,0,0x3840<<16,0,0x2460<<16);
-	&data_word(0,0x7080<<16,0,0x6CA0<<16,0,0x48C0<<16,0,0x54E0<<16);
-	&data_word(0,0xE100<<16,0,0xFD20<<16,0,0xD940<<16,0,0xC560<<16);
-	&data_word(0,0x9180<<16,0,0x8DA0<<16,0,0xA9C0<<16,0,0xB5E0<<16);
+	&data_word(0,0x0000<<12,0,0x1C20<<12,0,0x3840<<12,0,0x2460<<12);
+	&data_word(0,0x7080<<12,0,0x6CA0<<12,0,0x48C0<<12,0,0x54E0<<12);
+	&data_word(0,0xE100<<12,0,0xFD20<<12,0,0xD940<<12,0,0xC560<<12);
+	&data_word(0,0x9180<<12,0,0x8DA0<<12,0,0xA9C0<<12,0,0xB5E0<<12);
 }}}	# !$x86only
 
 &asciz("GHASH for x86, CRYPTOGAMS by <appro\@openssl.org>");
 &asm_finish();
+
+# A question was risen about choice of vanilla MMX. Or rather why wasn't
+# SSE2 chosen instead? In addition to the fact that MMX runs on legacy
+# CPUs such as PIII, "4-bit" MMX version was observed to provide better
+# performance than *corresponding* SSE2 one even on contemporary CPUs.
+# SSE2 results were provided by Peter-Michael Hager. He maintains SSE2
+# implementation featuring full range of lookup-table sizes, but with
+# per-invocation lookup table setup. Latter means that table size is
+# chosen depending on how much data is to be hashed in every given call,
+# more data - larger table. Best reported result for Core2 is ~4 cycles
+# per processed byte out of 64KB block. Recall that this number accounts
+# even for 64KB table setup overhead. As discussed in gcm128.c we choose
+# to be more conservative in respect to lookup table sizes, but how
+# do the results compare? As per table in the beginning, minimalistic
+# MMX version delivers ~11 cycles on same platform. As also discussed in
+# gcm128.c, next in line "8-bit Shoup's" method should deliver twice the
+# performance of "4-bit" one. It should be also be noted that in SSE2
+# case improvement can be "super-linear," i.e. more than twice, mostly
+# because >>8 maps to single instruction on SSE2 register. This is
+# unlike "4-bit" case when >>4 maps to same amount of instructions in
+# both MMX and SSE2 cases. Bottom line is that switch to SSE2 is
+# considered to be justifiable only in case we choose to implement
+# "8-bit" method...
