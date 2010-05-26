@@ -122,10 +122,10 @@ struct desparams {
 /*
  * Encrypt an arbitrary sized buffer
  */
-#define	DESIOCBLOCK	_IOWR(d, 6, struct desparams)
+#define	DESIOCBLOCK	_IOWR('d', 6, struct desparams)
 
 /* 
  * Encrypt of small amount of data, quickly
  */
-#define DESIOCQUICK	_IOWR(d, 7, struct desparams) 
+#define DESIOCQUICK	_IOWR('d', 7, struct desparams) 
 
