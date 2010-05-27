@@ -5,7 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
-  Major changes between OpenSSL 0.9.8l and OpenSSL 1.0:
+  Major changes between OpenSSL 1.0.0 and OpenSSL 1.0.0a:
+
+      o GOST MAC and CFB fixes.
+
+  Major changes between OpenSSL 0.9.8n and OpenSSL 1.0:
 
       o RFC3280 path validation: sufficient to process PKITS tests.
       o Integrated support for PVK files and keyblobs.
@@ -27,6 +31,18 @@
       o dsa-with-SHA224 and dsa-with-SHA256 signature types.
       o Opaque PRF Input TLS extension support.
       o Updated time routines to avoid OS limitations.
+
+  Major changes between OpenSSL 0.9.8n and OpenSSL 0.9.8o:
+
+      o Various DTLS fixes.
+      o Recognise SHA2 certificates if only SSL algorithms added.
+      o Fix for no-rc4 compilation.
+      o Chil ENGINE unload workaround.
+
+  Major changes between OpenSSL 0.9.8m and OpenSSL 0.9.8n:
+
+      o CFB cipher definition fixes.
+      o Fix security issues CVE-2010-0740 and CVE-2010-0433.
 
   Major changes between OpenSSL 0.9.8l and OpenSSL 0.9.8m:
 
