@@ -5,6 +5,13 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8n and OpenSSL 0.9.8o:
+
+      o Various DTLS fixes.
+      o Recognise SHA2 certificates if only SSL algorithms added.
+      o Fix for no-rc4 compilation.
+      o Chil ENGINE unload workaround.
+
   Major changes between OpenSSL 0.9.8m and OpenSSL 0.9.8n:
 
       o CFB cipher definition fixes.
