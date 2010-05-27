@@ -866,10 +866,17 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	if (format == FORMAT_ENGINE)
 		{
 		if (!e)
-			BIO_printf(bio_err,"no engine specified\n");
+			BIO_printf(err,"no engine specified\n");
 		else
+			{
 			pkey = ENGINE_load_private_key(e, file,
 				ui_method, &cb_data);
+			if (!pkey) 
+				{
+				BIO_printf(err,"cannot load %s from engine\n",key_descrip);
+				ERR_print_errors(err);
+				}	
+			}
 		goto end;
 		}
 #endif
@@ -919,8 +926,11 @@ EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 		}
  end:
 	if (key != NULL) BIO_free(key);
-	if (pkey == NULL)
+	if (pkey == NULL) 
+		{
 		BIO_printf(err,"unable to load %s\n", key_descrip);
+		ERR_print_errors(err);
+		}	
 	return(pkey);
 	}
 
