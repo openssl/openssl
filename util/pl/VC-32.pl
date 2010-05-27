@@ -128,7 +128,7 @@ $inc_def="inc32";
 
 if ($debug)
 	{
-	$cflags=$dbg_cflags.$base_cflags;
+	$cflags=$dbg_cflags.$base_cflags.' /Zi';
 	$lflags.=" /debug";
 	$mlflags.=' /debug';
 	}
