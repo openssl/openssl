@@ -751,7 +751,19 @@ $code.=<<___;
 AES_set_encrypt_key:
 	push	%rbx
 	push	%rbp
+	sub	\$8,%rsp
 
+	call	_x86_64_AES_set_encrypt_key
+
+	mov	8(%rsp),%rbp
+	mov	16(%rsp),%rbx
+	add	\$24,%rsp
+	ret
+.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+
+.type	_x86_64_AES_set_encrypt_key,\@abi-omnipotent
+.align	16
+_x86_64_AES_set_encrypt_key:
 	mov	%esi,%ecx			# %ecx=bits
 	mov	%rdi,%rsi			# %rsi=userKey
 	mov	%rdx,%rdi			# %rdi=key
@@ -938,10 +950,8 @@ $code.=<<___;
 .Lbadpointer:
 	mov	\$-1,%rax
 .Lexit:
-	pop	%rbp
-	pop	%rbx
-	ret
-.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+	.byte	0xf3,0xc3		# rep ret
+.size	_x86_64_AES_set_encrypt_key,.-_x86_64_AES_set_encrypt_key
 ___
 
 sub deckey()
@@ -973,15 +983,14 @@ $code.=<<___;
 .type	AES_set_decrypt_key,\@function,3
 .align	16
 AES_set_decrypt_key:
-	push	%rdx
-	call	AES_set_encrypt_key
-	cmp	\$0,%eax
-	je	.Lproceed
-	lea	24(%rsp),%rsp
-	ret
-.Lproceed:
+	push	%rbx
+	push	%rbp
+	push	%rdx			# save key schedule
+
+	call	_x86_64_AES_set_encrypt_key
 	mov	(%rsp),%r8		# restore key schedule
-	mov	%rbx,(%rsp)
+	cmp	\$0,%eax
+	jne	.Labort
 
 	mov	240(%r8),%ecx		# pull number of rounds
 	xor	%rdi,%rdi
@@ -1023,7 +1032,10 @@ $code.=<<___;
 	jnz	.Lpermute
 
 	xor	%rax,%rax
-	pop	%rbx
+.Labort:
+	mov	8(%rsp),%rbp
+	mov	16(%rsp),%rbx
+	add	\$24,%rsp
 	ret
 .size	AES_set_decrypt_key,.-AES_set_decrypt_key
 ___
