@@ -659,7 +659,14 @@ again:
 #ifdef SO_REUSEADDR
 		err_num=get_last_socket_error();
 		if ((bind_mode == BIO_BIND_REUSEADDR_IF_UNUSED) &&
+#ifdef OPENSSL_SYS_WINDOWS
+			/* Some versions of Windows define EADDRINUSE to
+			 * a dummy value.
+			 */
+			(err_num == WSAEADDRINUSE))
+#else
 			(err_num == EADDRINUSE))
+#endif
 			{
 			memcpy((char *)&client,(char *)&server,sizeof(server));
 			if (strcmp(h,"*") == 0)

@@ -153,10 +153,6 @@ extern "C" {
 #define clear_socket_error()	WSASetLastError(0)
 #define readsocket(s,b,n)	recv((s),(b),(n),0)
 #define writesocket(s,b,n)	send((s),(b),(n),0)
-#ifdef EADDRINUSE
-#undef EADDRINUSE
-#endif
-#define EADDRINUSE		WSAEADDRINUSE
 #elif defined(__DJGPP__)
 #define WATT32
 #define get_last_socket_error()	errno
