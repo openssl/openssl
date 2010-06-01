@@ -3879,7 +3879,7 @@ $multilib     = 64
 $cc           = gcc
 $cflags       = -mno-cygwin -DL_ENDIAN -DWIN32_LEAN_AND_MEAN -fomit-frame-pointer -O3 -march=i486 -Wall
 $unistd       = 
-$thread_cflag = 
+$thread_cflag = -D_MT
 $sys_id       = MINGW32
 $lflags       = -lws2_32 -lgdi32 -lcrypt32
 $bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT EXPORT_VAR_AS_FN
@@ -3910,7 +3910,7 @@ $multilib     =
 $cc           = gcc
 $cflags       = -mno-cygwin -DL_ENDIAN -O3 -Wall -DWIN32_LEAN_AND_MEAN -DUNICODE -D_UNICODE
 $unistd       = 
-$thread_cflag = 
+$thread_cflag = -D_MT
 $sys_id       = MINGW64
 $lflags       = -lws2_32 -lgdi32 -lcrypt32
 $bn_ops       = SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT EXPORT_VAR_AS_FN
