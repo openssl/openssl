@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8n and 0.9.8o [xx XXX xxxx]
+ Changes between 0.9.8n and 0.9.8o [01 Jun 2010]
 
   *) Correct a typo in the CMS ASN1 module which can result in invalid memory
      access or freeing data twice (CVE-2010-0742)

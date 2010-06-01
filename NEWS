@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 0.9.8n and OpenSSL 0.9.8o:
 
+      o Fix for security issue CVE-2010-0742.
       o Various DTLS fixes.
       o Recognise SHA2 certificates if only SSL algorithms added.
       o Fix for no-rc4 compilation.
