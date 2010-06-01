@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.0.0 and OpenSSL 1.0.0a:
 
+      o Fix for security issue CVE-2010-1633.
       o GOST MAC and CFB fixes.
 
   Major changes between OpenSSL 0.9.8n and OpenSSL 1.0:
@@ -34,6 +35,7 @@
 
   Major changes between OpenSSL 0.9.8n and OpenSSL 0.9.8o:
 
+      o Fix for security issue CVE-2010-0742.
       o Various DTLS fixes.
       o Recognise SHA2 certificates if only SSL algorithms added.
       o Fix for no-rc4 compilation.

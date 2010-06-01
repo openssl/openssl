@@ -4,7 +4,9 @@
 
  Changes between 1.0.0 and 1.0.0a  [xx XXX xxxx]
 
-  *)
+  *) Check return value of int_rsa_verify in pkey_rsa_verifyrecover 
+     (CVE-2010-1633)
+     [Steve Henson, Peter-Michael Hager <hager@dortmund.net>]
 
  Changes between 0.9.8n and 1.0.0  [29 Mar 2010]
 
@@ -848,6 +850,10 @@
      [NTT]
   
  Changes between 0.9.8n and 0.9.8o [xx XXX xxxx]
+
+  *) Correct a typo in the CMS ASN1 module which can result in invalid memory
+     access or freeing data twice (CVE-2010-0742)
+     [Steve Henson, Ronald Moesbergen <intercommit@gmail.com>]
 
   *) Add SHA2 algorithms to SSL_library_init(). SHA2 is becoming far more
      common in certificates and some applications which only call
