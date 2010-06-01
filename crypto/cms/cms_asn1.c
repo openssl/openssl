@@ -130,8 +130,8 @@ ASN1_NDEF_SEQUENCE(CMS_SignedData) = {
 } ASN1_NDEF_SEQUENCE_END(CMS_SignedData)
 
 ASN1_SEQUENCE(CMS_OriginatorInfo) = {
-	ASN1_IMP_SET_OF_OPT(CMS_SignedData, certificates, CMS_CertificateChoices, 0),
-	ASN1_IMP_SET_OF_OPT(CMS_SignedData, crls, CMS_RevocationInfoChoice, 1)
+	ASN1_IMP_SET_OF_OPT(CMS_OriginatorInfo, certificates, CMS_CertificateChoices, 0),
+	ASN1_IMP_SET_OF_OPT(CMS_OriginatorInfo, crls, CMS_RevocationInfoChoice, 1)
 } ASN1_SEQUENCE_END(CMS_OriginatorInfo)
 
 ASN1_NDEF_SEQUENCE(CMS_EncryptedContentInfo) = {

@@ -4,6 +4,10 @@
 
  Changes between 0.9.8n and 0.9.8o [xx XXX xxxx]
 
+  *) Correct a typo in the CMS ASN1 module which can result in invalid memory
+     access or freeing data twice (CVE-2010-0742)
+     [Steve Henson, Ronald Moesbergen <intercommit@gmail.com>]
+
   *) Add SHA2 algorithms to SSL_library_init(). SHA2 is becoming far more
      common in certificates and some applications which only call
      SSL_library_init and not OpenSSL_add_all_algorithms() will fail.
