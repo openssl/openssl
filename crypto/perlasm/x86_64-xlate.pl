@@ -55,6 +55,8 @@
 #    Win64 prologue copies %rsp value to %rax. For further details
 #    see SEH paragraph at the end.
 # 9. .init segment is allowed to contain calls to functions only.
+# a. If function accepts more than 4 arguments *and* >4th argument
+#    is declared as non 64-bit value, do clear its upper part.
 
 my $flavour = shift;
 my $output  = shift;
@@ -80,7 +82,10 @@ my $PTR=" PTR";
 my $nasmref=2.03;
 my $nasm=0;
 
-if    ($flavour eq "mingw64")	{ $gas=1; $elf=0; $win64=1; $prefix="_"; }
+if    ($flavour eq "mingw64")	{ $gas=1; $elf=0; $win64=1;
+				  $prefix=`echo __USER_LABEL_PREFIX__ | $ENV{CC} -E -P -`;
+				  chomp($prefix);
+				}
 elsif ($flavour eq "macosx")	{ $gas=1; $elf=0; $prefix="_"; $decor="L\$"; }
 elsif ($flavour eq "masm")	{ $gas=0; $elf=0; $masm=$masmref; $win64=1; $decor="\$L\$"; }
 elsif ($flavour eq "nasm")	{ $gas=0; $elf=0; $nasm=$nasmref; $win64=1; $decor="\$L\$"; $PTR=""; }
@@ -193,7 +198,7 @@ my %globals;
 	if ($gas) {
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{value}
-	    $self->{value} =~ s/(?<=[\b\+\-\/\*\%])(0[x0-9a-f]+)/oct($1)/egi;
+	    $self->{value} =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/oct($1)/egi;
 	    $self->{value} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 	    sprintf "\$%s",$self->{value};
 	} else {
@@ -245,7 +250,7 @@ my %globals;
 	    # Solaris /usr/ccs/bin/as can't handle multiplications
 	    # in $self->{label}, new gas requires sign extension...
 	    use integer;
-	    $self->{label} =~ s/(?<=[\b\+\-\/\*\%])(0[xb]*[0-9a-f]+)/oct($1)/egi;
+	    $self->{label} =~ s/(?<![\w\$\.])(0x?[0-9a-f]+)/oct($1)/egi;
 	    $self->{label} =~ s/([0-9]+\s*[\*\/\%]\s*[0-9]+)/eval($1)/eg;
 	    $self->{label} =~ s/([0-9]+)/$1<<32>>32/eg;
 	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour eq "mingw64");
@@ -262,7 +267,7 @@ my %globals;
 	    		q=>"QWORD$PTR",o=>"OWORD$PTR" );
 
 	    $self->{label} =~ s/\./\$/g;
-	    $self->{label} =~ s/(?<=[\b\+\-\/\*\%])0x([0-9a-f]+)/0$1h/ig;
+	    $self->{label} =~ s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
 	    $sz="q" if ($self->{asterisk});
 
