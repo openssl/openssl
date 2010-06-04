@@ -67,6 +67,7 @@ sub get_mem
 }
 sub ::BP	{ &get_mem("BYTE",@_);  }
 sub ::DWP	{ &get_mem("DWORD",@_); }
+sub ::WP	{ &get_mem("WORD",@_);	}
 sub ::QWP	{ &get_mem("",@_);      }
 sub ::BC	{ (($::mwerks)?"":"BYTE ")."@_";  }
 sub ::DWC	{ (($::mwerks)?"":"DWORD ")."@_"; }
@@ -135,7 +136,8 @@ sub ::public_label
 
 sub ::data_byte
 {   push(@out,(($::mwerks)?".byte\t":"db\t").join(',',@_)."\n");	}
-
+sub ::data_short
+{   push(@out,(($::mwerks)?".word\t":"dw\t").join(',',@_)."\n");	}
 sub ::data_word
 {   push(@out,(($::mwerks)?".long\t":"dd\t").join(',',@_)."\n");	}
 

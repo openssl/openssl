@@ -14,7 +14,7 @@ sub ::generic
 { my ($opcode,@arg)=@_;
 
     # fix hexadecimal constants
-    for (@arg) { s/0x([0-9a-f]+)/0$1h/oi; }
+    for (@arg) { s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/oi; }
 
     if ($opcode !~ /movq/)
     {	# fix xmm references
@@ -65,6 +65,7 @@ sub get_mem
   $ret;
 }
 sub ::BP	{ &get_mem("BYTE",@_);  }
+sub ::WP	{ &get_mem("WORD",@_);	}
 sub ::DWP	{ &get_mem("DWORD",@_); }
 sub ::QWP	{ &get_mem("QWORD",@_); }
 sub ::BC	{ "@_";  }
@@ -155,6 +156,9 @@ sub ::public_label
 
 sub ::data_byte
 {   push(@out,("DB\t").join(',',@_)."\n");	}
+
+sub ::data_short
+{   push(@out,("DW\t").join(',',@_)."\n");	}
 
 sub ::data_word
 {   push(@out,("DD\t").join(',',@_)."\n");	}

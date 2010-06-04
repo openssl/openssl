@@ -91,6 +91,7 @@ sub ::DWP
 }
 sub ::QWP	{ &::DWP(@_);	}
 sub ::BP	{ &::DWP(@_);	}
+sub ::WP	{ &::DWP(@_);	}
 sub ::BC	{ @_;		}
 sub ::DWC	{ @_;		}
 
@@ -165,6 +166,7 @@ sub ::file_end
 }
 
 sub ::data_byte	{   push(@out,".byte\t".join(',',@_)."\n");   }
+sub ::data_short{   push(@out,".word\t".join(',',@_)."\n");  }
 sub ::data_word {   push(@out,".long\t".join(',',@_)."\n");   }
 
 sub ::align
