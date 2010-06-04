@@ -7,23 +7,25 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
-# March, May 2010
+# March, May, June 2010
 #
 # The module implements "4-bit" GCM GHASH function and underlying
 # single multiplication operation in GF(2^128). "4-bit" means that it
 # uses 256 bytes per-key table [+64/128 bytes fixed table]. It has two
 # code paths: vanilla x86 and vanilla MMX. Former will be executed on
-# 486 and Pentium, latter on all others. Performance results are for
-# streamed GHASH subroutine and are expressed in cycles per processed
-# byte, less is better:
+# 486 and Pentium, latter on all others. MMX GHASH features so called
+# "528B" variant of "4-bit" method utilizing additional 256+16 bytes
+# of per-key storage [+512 bytes shared table]. Performance results
+# are for streamed GHASH subroutine and are expressed in cycles per
+# processed byte, less is better:
 #
 #		gcc 2.95.3(*)	MMX assembler	x86 assembler
 #
 # Pentium	100/112(**)	-		50
-# PIII		63 /77		14.5		24
-# P4		96 /122		24.5		84(***)
-# Opteron	50 /71		14.5		30
-# Core2		54 /68		10.5		18
+# PIII		63 /77		12.2		24
+# P4		96 /122		18.0		84(***)
+# Opteron	50 /71		10.1		30
+# Core2		54 /68		8.6		18
 #
 # (*)	gcc 3.4.x was observed to generate few percent slower code,
 #	which is one of reasons why 2.95.3 results were chosen,
@@ -33,7 +35,7 @@
 #	position-independent;
 # (***)	see comment in non-MMX routine for further details;
 #
-# To summarize, it's >2-4 times faster than gcc-generated code. To
+# To summarize, it's >2-5 times faster than gcc-generated code. To
 # anchor it to something else SHA1 assembler processes one byte in
 # 11-13 cycles on contemporary x86 cores. As for choice of MMX in
 # particular, see comment at the end of the file...
@@ -318,6 +320,10 @@ if (!$x86only) {{{
 
 &static_label("rem_4bit");
 
+if (0) {{	# "May" MMX version is kept for reference...
+
+$S=12;		# shift factor for rem_4bit
+
 &function_begin_B("_mmx_gmult_4bit_inner");
 # MMX version performs 3.5 times better on P4 (see comment in non-MMX
 # routine for further details), 100% better on Opteron, ~70% better
@@ -464,6 +470,329 @@ if (!$x86only) {{{
 
 	&stack_pop(4+1);
 &function_end("gcm_ghash_4bit_mmx");
+
+}} else {{	# "June" MMX version...
+		# ... has "April" gcm_gmult_4bit_mmx with folded loop.
+		# This is done to conserve code size...
+$S=16;		# shift factor for rem_4bit
+
+sub mmx_loop() {
+# MMX version performs 2.8 times better on P4 (see comment in non-MMX
+# routine for further details), 40% better on Opteron and Core2, 50%
+# better on PIII... In other words effort is considered to be well
+# spent...
+    my $inp = shift;
+    my $rem_4bit = shift;
+    my $cnt = $Zhh;
+    my $nhi = $Zhl;
+    my $nlo = $Zlh;
+    my $rem = $Zll;
+
+    my ($Zlo,$Zhi) = ("mm0","mm1");
+    my $tmp = "mm2";
+
+	&xor	($nlo,$nlo);	# avoid partial register stalls on PIII
+	&mov	($nhi,$Zll);
+	&mov	(&LB($nlo),&LB($nhi));
+	&mov	($cnt,14);
+	&shl	(&LB($nlo),4);
+	&and	($nhi,0xf0);
+	&movq	($Zlo,&QWP(8,$Htbl,$nlo));
+	&movq	($Zhi,&QWP(0,$Htbl,$nlo));
+	&movd	($rem,$Zlo);
+	&jmp	(&label("mmx_loop"));
+
+    &set_label("mmx_loop",16);
+	&psrlq	($Zlo,4);
+	&and	($rem,0xf);
+	&movq	($tmp,$Zhi);
+	&psrlq	($Zhi,4);
+	&pxor	($Zlo,&QWP(8,$Htbl,$nhi));
+	&mov	(&LB($nlo),&BP(0,$inp,$cnt));
+	&psllq	($tmp,60);
+	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
+	&dec	($cnt);
+	&movd	($rem,$Zlo);
+	&pxor	($Zhi,&QWP(0,$Htbl,$nhi));
+	&mov	($nhi,$nlo);
+	&pxor	($Zlo,$tmp);
+	&js	(&label("mmx_break"));
+
+	&shl	(&LB($nlo),4);
+	&and	($rem,0xf);
+	&psrlq	($Zlo,4);
+	&and	($nhi,0xf0);
+	&movq	($tmp,$Zhi);
+	&psrlq	($Zhi,4);
+	&pxor	($Zlo,&QWP(8,$Htbl,$nlo));
+	&psllq	($tmp,60);
+	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
+	&movd	($rem,$Zlo);
+	&pxor	($Zhi,&QWP(0,$Htbl,$nlo));
+	&pxor	($Zlo,$tmp);
+	&jmp	(&label("mmx_loop"));
+
+    &set_label("mmx_break",16);
+	&shl	(&LB($nlo),4);
+	&and	($rem,0xf);
+	&psrlq	($Zlo,4);
+	&and	($nhi,0xf0);
+	&movq	($tmp,$Zhi);
+	&psrlq	($Zhi,4);
+	&pxor	($Zlo,&QWP(8,$Htbl,$nlo));
+	&psllq	($tmp,60);
+	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
+	&movd	($rem,$Zlo);
+	&pxor	($Zhi,&QWP(0,$Htbl,$nlo));
+	&pxor	($Zlo,$tmp);
+
+	&psrlq	($Zlo,4);
+	&and	($rem,0xf);
+	&movq	($tmp,$Zhi);
+	&psrlq	($Zhi,4);
+	&pxor	($Zlo,&QWP(8,$Htbl,$nhi));
+	&psllq	($tmp,60);
+	&pxor	($Zhi,&QWP(0,$rem_4bit,$rem,8));
+	&movd	($rem,$Zlo);
+	&pxor	($Zhi,&QWP(0,$Htbl,$nhi));
+	&pxor	($Zlo,$tmp);
+
+	&psrlq	($Zlo,32);	# lower part of Zlo is already there
+	&movd	($Zhl,$Zhi);
+	&psrlq	($Zhi,32);
+	&movd	($Zlh,$Zlo);
+	&movd	($Zhh,$Zhi);
+
+	&bswap	($Zll);
+	&bswap	($Zhl);
+	&bswap	($Zlh);
+	&bswap	($Zhh);
+}
+
+&function_begin("gcm_gmult_4bit_mmx");
+	&mov	($inp,&wparam(0));	# load Xi
+	&mov	($Htbl,&wparam(1));	# load Htable
+
+	&call	(&label("pic_point"));
+	&set_label("pic_point");
+	&blindpop("eax");
+	&lea	("eax",&DWP(&label("rem_4bit")."-".&label("pic_point"),"eax"));
+
+	&movz	($Zll,&BP(15,$inp));
+
+	&mmx_loop($inp,"eax");
+
+	&emms	();
+	&mov	(&DWP(12,$inp),$Zll);
+	&mov	(&DWP(4,$inp),$Zhl);
+	&mov	(&DWP(8,$inp),$Zlh);
+	&mov	(&DWP(0,$inp),$Zhh);
+&function_end("gcm_gmult_4bit_mmx");
+
+######################################################################
+# Below subroutine is "528B" variant of "4-bit" GCM GHASH function
+# (see gcm128.c for details). It provides further 20-40% performance
+# improvement over *previous* version of this module.
+
+&static_label("rem_8bit");
+
+&function_begin("gcm_ghash_4bit_mmx");
+{ my ($Zlo,$Zhi) = ("mm7","mm6");
+  my $rem_8bit = "esi";
+  my $Htbl = "ebx";
+
+    # parameter block
+    &mov	("eax",&wparam(0));		# Xi
+    &mov	("ebx",&wparam(1));		# Htable
+    &mov	("ecx",&wparam(2));		# inp
+    &mov	("edx",&wparam(3));		# len
+    &mov	("ebp","esp");			# original %esp
+    &call	(&label("pic_point"));
+    &set_label	("pic_point");
+    &blindpop	($rem_8bit);
+    &lea	($rem_8bit,&DWP(&label("rem_8bit")."-".&label("pic_point"),$rem_8bit));
+
+    &sub	("esp",512+16+16);		# allocate stack frame...
+    &and	("esp",-64);			# ...and align it
+    &sub	("esp",16);			# place for (u8)(H[]<<4)
+
+    &add	("edx","ecx");			# pointer to the end of input
+    &mov	(&DWP(528+16+0,"esp"),"eax");	# save Xi
+    &mov	(&DWP(528+16+8,"esp"),"edx");	# save inp+len
+    &mov	(&DWP(528+16+12,"esp"),"ebp");	# save original %esp
+
+    { my @lo  = ("mm0","mm1","mm2");
+      my @hi  = ("mm3","mm4","mm5");
+      my @tmp = ("mm6","mm7");
+      my $off1=0,$off2=0,$i;
+
+      &add	($Htbl,128);			# optimize for size
+      &lea	("edi",&DWP(16+128,"esp"));
+      &lea	("ebp",&DWP(16+256+128,"esp"));
+
+      # decompose Htable (low and high parts are kept separately),
+      # generate Htable>>4, save to stack...
+      for ($i=0;$i<18;$i++) {
+
+	&mov	("edx",&DWP(16*$i+8-128,$Htbl))		if ($i<16);
+	&movq	($lo[0],&QWP(16*$i+8-128,$Htbl))	if ($i<16);
+	&psllq	($tmp[1],60)				if ($i>1);
+	&movq	($hi[0],&QWP(16*$i+0-128,$Htbl))	if ($i<16);
+	&por	($lo[2],$tmp[1])			if ($i>1);
+	&movq	(&QWP($off1-128,"edi"),$lo[1])		if ($i>0 && $i<17);
+	&psrlq	($lo[1],4)				if ($i>0 && $i<17);
+	&movq	(&QWP($off1,"edi"),$hi[1])		if ($i>0 && $i<17);
+	&movq	($tmp[0],$hi[1])			if ($i>0 && $i<17);
+	&movq	(&QWP($off2-128,"ebp"),$lo[2])		if ($i>1);
+	&psrlq	($hi[1],4)				if ($i>0 && $i<17);
+	&movq	(&QWP($off2,"ebp"),$hi[2])		if ($i>1);
+	&shl	("edx",4)				if ($i<16);
+	&mov	(&BP($i,"esp"),&LB("edx"))		if ($i<16);
+
+	unshift	(@lo,pop(@lo));			# "rotate" registers
+	unshift	(@hi,pop(@hi));
+	unshift	(@tmp,pop(@tmp));
+	$off1 += 8	if ($i>0);
+	$off2 += 8	if ($i>1);
+      }
+    }
+
+    &movq	($Zhi,&QWP(0,"eax"));
+    &mov	("ebx",&DWP(8,"eax"));
+    &mov	("edx",&DWP(12,"eax"));		# load Xi
+
+&set_label("outer",16);
+  { my $nlo = "eax";
+    my $dat = "edx";
+    my @nhi = ("edi","ebp");
+    my @rem = ("ebx","ecx");
+    my @red = ("mm0","mm1","mm2");
+    my $tmp = "mm3";
+
+    &xor	($dat,&DWP(12,"ecx"));		# merge input
+    &xor	("ebx",&DWP(8,"ecx"));
+    &pxor	($Zhi,&QWP(0,"ecx"));
+    &lea	("ecx",&DWP(16,"ecx"));		# inp+=16
+    #&mov	(&DWP(528+12,"esp"),$dat);	# save inp^Xi
+    &mov	(&DWP(528+8,"esp"),"ebx");
+    &movq	(&QWP(528+0,"esp"),$Zhi);
+    &mov	(&DWP(528+16+4,"esp"),"ecx");	# save inp
+
+    &xor	($nlo,$nlo);
+    &rol	($dat,8);
+    &mov	(&LB($nlo),&LB($dat));
+    &mov	($nhi[1],$nlo);
+    &and	(&LB($nlo),0x0f);
+    &shr	($nhi[1],4);
+    &pxor	($red[0],$red[0]);
+    &rol	($dat,8);				# next byte
+    &pxor	($red[1],$red[1]);
+    &pxor	($red[2],$red[2]);
+
+    # Just like in "May" verson modulo-schedule for critical path in
+    # 'Z.hi ^= rem_8bit[Z.lo&0xff^((u8)H[nhi]<<4)]<<48'. Final xor
+    # is scheduled so late that rem_8bit is shifted *right* by 16,
+    # which is why last argument to pinsrw is 2, which corresponds to
+    # <<32...
+    for ($j=11,$i=0;$i<15;$i++) {
+
+      if ($i>0) {
+	&pxor	($Zlo,&QWP(16,"esp",$nlo,8));		# Z^=H[nlo]
+	&rol	($dat,8);				# next byte
+	&pxor	($Zhi,&QWP(16+128,"esp",$nlo,8));
+
+	&pxor	($Zlo,$tmp);
+	&pxor	($Zhi,&QWP(16+256+128,"esp",$nhi[0],8));
+	&xor	(&LB($rem[1]),&BP(0,"esp",$nhi[0]));	# rem^H[nhi]<<4
+      } else {
+	&movq	($Zlo,&QWP(16,"esp",$nlo,8));
+	&movq	($Zhi,&QWP(16+128,"esp",$nlo,8));
+      }
+
+	&mov	(&LB($nlo),&LB($dat));
+	&mov	($dat,&DWP(528+$j,"esp"))	if (--$j%4==0);
+
+	&movd	($rem[0],$Zlo);
+	&movz	($rem[1],&LB($rem[1]))		if ($i>0);
+	&psrlq	($Zlo,8);
+
+	&movq	($tmp,$Zhi);
+	&mov	($nhi[0],$nlo);
+	&psrlq	($Zhi,8);
+
+	&pxor	($Zlo,&QWP(16+256+0,"esp",$nhi[1],8));	# Z^=H[nhi]>>4
+	&and	(&LB($nlo),0x0f);
+	&psllq	($tmp,56);
+
+	&pxor	($Zhi,$red[1])				if ($i>1);
+	&shr	($nhi[0],4);
+	&pinsrw	($red[0],&WP(0,$rem_8bit,$rem[1],2),2)	if ($i>0);
+
+	unshift	(@red,pop(@red));			# "rotate" registers
+	unshift	(@rem,pop(@rem));
+	unshift	(@nhi,pop(@nhi));
+    }
+
+    &pxor	($Zlo,&QWP(16,"esp",$nlo,8));		# Z^=H[nlo]
+    &pxor	($Zhi,&QWP(16+128,"esp",$nlo,8));
+    &xor	(&LB($rem[1]),&BP(0,"esp",$nhi[0]));	#$rem[0]);			# rem^H[nhi]<<4
+
+    &pxor	($Zlo,$tmp);
+    &pxor	($Zhi,&QWP(16+256+128,"esp",$nhi[0],8));
+    &movz	($rem[1],&LB($rem[1]));
+
+    &pxor	($red[2],$red[2]);			# clear 2nd word
+    &psllq	($red[1],4);
+
+    &movd	($rem[0],$Zlo);
+    &psrlq	($Zlo,4);
+
+    &movq	($tmp,$Zhi);
+    &psrlq	($Zhi,4);
+    &shl	($rem[0],4);
+
+    &pxor	($Zlo,&QWP(16,"esp",$nhi[1],8));	# Z^=H[nhi]
+    &psllq	($tmp,60);
+    &movz	($rem[0],&LB($rem[0]));
+
+    &pxor	($Zlo,$tmp);
+    &pxor	($Zhi,&QWP(16+128,"esp",$nhi[1],8));
+
+    &pinsrw	($red[0],&WP(0,$rem_8bit,$rem[1],2),2);
+    &pxor	($Zhi,$red[1]);
+
+    &movd	($dat,$Zlo);
+    &pinsrw	($red[2],&WP(0,$rem_8bit,$rem[0],2),3);
+
+    &psllq	($red[0],12);
+    &pxor	($Zhi,$red[0]);
+    &psrlq	($Zlo,32);
+    &pxor	($Zhi,$red[2]);
+
+    &mov	("ecx",&DWP(528+16+4,"esp"));	# restore inp
+    &movd	("ebx",$Zlo);
+    &movq	($tmp,$Zhi);			# 01234567
+    &psllw	($Zhi,8);			# 1.3.5.7.
+    &psrlw	($tmp,8);			# .0.2.4.6
+    &por	($Zhi,$tmp);			# 10325476
+    &bswap	($dat);
+    &pshufw	($Zhi,$Zhi,0b00011011);		# 76543210
+    &bswap	("ebx");
+    
+    &cmp	("ecx",&DWP(528+16+8,"esp"));	# are we done?
+    &jne	(&label("outer"));
+  }
+
+    &mov	("eax",&DWP(528+16+0,"esp"));	# restore Xi
+    &mov	(&DWP(12,"eax"),"edx");
+    &mov	(&DWP(8,"eax"),"ebx");
+    &movq	(&QWP(0,"eax"),$Zhi);
+
+    &mov	("esp",&DWP(528+16+12,"esp"));	# restore original %esp
+    &emms	();
+}
+&function_end("gcm_ghash_4bit_mmx");
+}}
 
 if ($sse2) {{
 ######################################################################
@@ -936,10 +1265,43 @@ my ($Xhi,$Xi)=@_;
 }}	# $sse2
 
 &set_label("rem_4bit",64);
-	&data_word(0,0x0000<<12,0,0x1C20<<12,0,0x3840<<12,0,0x2460<<12);
-	&data_word(0,0x7080<<12,0,0x6CA0<<12,0,0x48C0<<12,0,0x54E0<<12);
-	&data_word(0,0xE100<<12,0,0xFD20<<12,0,0xD940<<12,0,0xC560<<12);
-	&data_word(0,0x9180<<12,0,0x8DA0<<12,0,0xA9C0<<12,0,0xB5E0<<12);
+	&data_word(0,0x0000<<$S,0,0x1C20<<$S,0,0x3840<<$S,0,0x2460<<$S);
+	&data_word(0,0x7080<<$S,0,0x6CA0<<$S,0,0x48C0<<$S,0,0x54E0<<$S);
+	&data_word(0,0xE100<<$S,0,0xFD20<<$S,0,0xD940<<$S,0,0xC560<<$S);
+	&data_word(0,0x9180<<$S,0,0x8DA0<<$S,0,0xA9C0<<$S,0,0xB5E0<<$S);
+&set_label("rem_8bit",64);
+	&data_short(0x0000,0x01C2,0x0384,0x0246,0x0708,0x06CA,0x048C,0x054E);
+	&data_short(0x0E10,0x0FD2,0x0D94,0x0C56,0x0918,0x08DA,0x0A9C,0x0B5E);
+	&data_short(0x1C20,0x1DE2,0x1FA4,0x1E66,0x1B28,0x1AEA,0x18AC,0x196E);
+	&data_short(0x1230,0x13F2,0x11B4,0x1076,0x1538,0x14FA,0x16BC,0x177E);
+	&data_short(0x3840,0x3982,0x3BC4,0x3A06,0x3F48,0x3E8A,0x3CCC,0x3D0E);
+	&data_short(0x3650,0x3792,0x35D4,0x3416,0x3158,0x309A,0x32DC,0x331E);
+	&data_short(0x2460,0x25A2,0x27E4,0x2626,0x2368,0x22AA,0x20EC,0x212E);
+	&data_short(0x2A70,0x2BB2,0x29F4,0x2836,0x2D78,0x2CBA,0x2EFC,0x2F3E);
+	&data_short(0x7080,0x7142,0x7304,0x72C6,0x7788,0x764A,0x740C,0x75CE);
+	&data_short(0x7E90,0x7F52,0x7D14,0x7CD6,0x7998,0x785A,0x7A1C,0x7BDE);
+	&data_short(0x6CA0,0x6D62,0x6F24,0x6EE6,0x6BA8,0x6A6A,0x682C,0x69EE);
+	&data_short(0x62B0,0x6372,0x6134,0x60F6,0x65B8,0x647A,0x663C,0x67FE);
+	&data_short(0x48C0,0x4902,0x4B44,0x4A86,0x4FC8,0x4E0A,0x4C4C,0x4D8E);
+	&data_short(0x46D0,0x4712,0x4554,0x4496,0x41D8,0x401A,0x425C,0x439E);
+	&data_short(0x54E0,0x5522,0x5764,0x56A6,0x53E8,0x522A,0x506C,0x51AE);
+	&data_short(0x5AF0,0x5B32,0x5974,0x58B6,0x5DF8,0x5C3A,0x5E7C,0x5FBE);
+	&data_short(0xE100,0xE0C2,0xE284,0xE346,0xE608,0xE7CA,0xE58C,0xE44E);
+	&data_short(0xEF10,0xEED2,0xEC94,0xED56,0xE818,0xE9DA,0xEB9C,0xEA5E);
+	&data_short(0xFD20,0xFCE2,0xFEA4,0xFF66,0xFA28,0xFBEA,0xF9AC,0xF86E);
+	&data_short(0xF330,0xF2F2,0xF0B4,0xF176,0xF438,0xF5FA,0xF7BC,0xF67E);
+	&data_short(0xD940,0xD882,0xDAC4,0xDB06,0xDE48,0xDF8A,0xDDCC,0xDC0E);
+	&data_short(0xD750,0xD692,0xD4D4,0xD516,0xD058,0xD19A,0xD3DC,0xD21E);
+	&data_short(0xC560,0xC4A2,0xC6E4,0xC726,0xC268,0xC3AA,0xC1EC,0xC02E);
+	&data_short(0xCB70,0xCAB2,0xC8F4,0xC936,0xCC78,0xCDBA,0xCFFC,0xCE3E);
+	&data_short(0x9180,0x9042,0x9204,0x93C6,0x9688,0x974A,0x950C,0x94CE);
+	&data_short(0x9F90,0x9E52,0x9C14,0x9DD6,0x9898,0x995A,0x9B1C,0x9ADE);
+	&data_short(0x8DA0,0x8C62,0x8E24,0x8FE6,0x8AA8,0x8B6A,0x892C,0x88EE);
+	&data_short(0x83B0,0x8272,0x8034,0x81F6,0x84B8,0x857A,0x873C,0x86FE);
+	&data_short(0xA9C0,0xA802,0xAA44,0xAB86,0xAEC8,0xAF0A,0xAD4C,0xAC8E);
+	&data_short(0xA7D0,0xA612,0xA454,0xA596,0xA0D8,0xA11A,0xA35C,0xA29E);
+	&data_short(0xB5E0,0xB422,0xB664,0xB7A6,0xB2E8,0xB32A,0xB16C,0xB0AE);
+	&data_short(0xBBF0,0xBA32,0xB874,0xB9B6,0xBCF8,0xBD3A,0xBF7C,0xBEBE);
 }}}	# !$x86only
 
 &asciz("GHASH for x86, CRYPTOGAMS by <appro\@openssl.org>");
@@ -957,13 +1319,12 @@ my ($Xhi,$Xi)=@_;
 # per processed byte out of 64KB block. Recall that this number accounts
 # even for 64KB table setup overhead. As discussed in gcm128.c we choose
 # to be more conservative in respect to lookup table sizes, but how
-# do the results compare? As per table in the beginning, minimalistic
-# MMX version delivers ~11 cycles on same platform. As also discussed in
-# gcm128.c, next in line "8-bit Shoup's" method should deliver twice the
-# performance of "4-bit" one. It should be also be noted that in SSE2
-# case improvement can be "super-linear," i.e. more than twice, mostly
-# because >>8 maps to single instruction on SSE2 register. This is
-# unlike "4-bit" case when >>4 maps to same amount of instructions in
-# both MMX and SSE2 cases. Bottom line is that switch to SSE2 is
-# considered to be justifiable only in case we choose to implement
-# "8-bit" method...
+# do the results compare? Minimalistic "256B" MMX version delivers ~11
+# cycles on same platform. As also discussed in gcm128.c, next in line
+# "8-bit Shoup's" method should deliver twice the performance of "4-bit"
+# one. It should be also be noted that in SSE2 case improvement can be
+# "super-linear," i.e. more than twice, mostly because >>8 maps to
+# single instruction on SSE2 register. This is unlike "4-bit" case when
+# >>4 maps to same amount of instructions in both MMX and SSE2 cases.
+# Bottom line is that switch to SSE2 is considered to be justifiable
+# only in case we choose to implement "8-bit" method...
