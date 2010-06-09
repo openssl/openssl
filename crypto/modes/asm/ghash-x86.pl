@@ -30,6 +30,8 @@
 # (*)	gcc 3.4.x was observed to generate few percent slower code,
 #	which is one of reasons why 2.95.3 results were chosen,
 #	another reason is lack of 3.4.x results for older CPUs;
+#	comparison is not completely fair, because C results are
+#	for vanilla "256B" implementations, not "528B";-)
 # (**)	second number is result for code compiled with -fPIC flag,
 #	which is actually more relevant, because assembler code is
 #	position-independent;
@@ -472,8 +474,8 @@ $S=12;		# shift factor for rem_4bit
 &function_end("gcm_ghash_4bit_mmx");
 
 }} else {{	# "June" MMX version...
-		# ... has "April" gcm_gmult_4bit_mmx with folded loop.
-		# This is done to conserve code size...
+		# ... has slower "April" gcm_gmult_4bit_mmx with folded
+		# loop. This is done to conserve code size...
 $S=16;		# shift factor for rem_4bit
 
 sub mmx_loop() {
@@ -592,7 +594,7 @@ sub mmx_loop() {
 ######################################################################
 # Below subroutine is "528B" variant of "4-bit" GCM GHASH function
 # (see gcm128.c for details). It provides further 20-40% performance
-# improvement over *previous* version of this module.
+# improvement over above mentioned "May" version.
 
 &static_label("rem_8bit");
 
@@ -631,7 +633,7 @@ sub mmx_loop() {
       &lea	("ebp",&DWP(16+256+128,"esp"));
 
       # decompose Htable (low and high parts are kept separately),
-      # generate Htable>>4, save to stack...
+      # generate Htable[]>>4, (u8)(Htable[]<<4), save to stack...
       for ($i=0;$i<18;$i++) {
 
 	&mov	("edx",&DWP(16*$i+8-128,$Htbl))		if ($i<16);
@@ -669,7 +671,7 @@ sub mmx_loop() {
     my @red = ("mm0","mm1","mm2");
     my $tmp = "mm3";
 
-    &xor	($dat,&DWP(12,"ecx"));		# merge input
+    &xor	($dat,&DWP(12,"ecx"));		# merge input data
     &xor	("ebx",&DWP(8,"ecx"));
     &pxor	($Zhi,&QWP(0,"ecx"));
     &lea	("ecx",&DWP(16,"ecx"));		# inp+=16
@@ -685,15 +687,15 @@ sub mmx_loop() {
     &and	(&LB($nlo),0x0f);
     &shr	($nhi[1],4);
     &pxor	($red[0],$red[0]);
-    &rol	($dat,8);				# next byte
+    &rol	($dat,8);			# next byte
     &pxor	($red[1],$red[1]);
     &pxor	($red[2],$red[2]);
 
     # Just like in "May" verson modulo-schedule for critical path in
-    # 'Z.hi ^= rem_8bit[Z.lo&0xff^((u8)H[nhi]<<4)]<<48'. Final xor
-    # is scheduled so late that rem_8bit is shifted *right* by 16,
-    # which is why last argument to pinsrw is 2, which corresponds to
-    # <<32...
+    # 'Z.hi ^= rem_8bit[Z.lo&0xff^((u8)H[nhi]<<4)]<<48'. Final 'pxor'
+    # is scheduled so late that rem_8bit[] has to be shifted *right*
+    # by 16, which is why last argument to pinsrw is 2, which
+    # corresponds to <<32=<<48>>16...
     for ($j=11,$i=0;$i<15;$i++) {
 
       if ($i>0) {
@@ -703,18 +705,18 @@ sub mmx_loop() {
 
 	&pxor	($Zlo,$tmp);
 	&pxor	($Zhi,&QWP(16+256+128,"esp",$nhi[0],8));
-	&xor	(&LB($rem[1]),&BP(0,"esp",$nhi[0]));	# rem^H[nhi]<<4
+	&xor	(&LB($rem[1]),&BP(0,"esp",$nhi[0]));	# rem^(H[nhi]<<4)
       } else {
 	&movq	($Zlo,&QWP(16,"esp",$nlo,8));
 	&movq	($Zhi,&QWP(16+128,"esp",$nlo,8));
       }
 
 	&mov	(&LB($nlo),&LB($dat));
-	&mov	($dat,&DWP(528+$j,"esp"))	if (--$j%4==0);
+	&mov	($dat,&DWP(528+$j,"esp"))		if (--$j%4==0);
 
 	&movd	($rem[0],$Zlo);
-	&movz	($rem[1],&LB($rem[1]))		if ($i>0);
-	&psrlq	($Zlo,8);
+	&movz	($rem[1],&LB($rem[1]))			if ($i>0);
+	&psrlq	($Zlo,8);				# Z>>=8
 
 	&movq	($tmp,$Zhi);
 	&mov	($nhi[0],$nlo);
@@ -735,7 +737,7 @@ sub mmx_loop() {
 
     &pxor	($Zlo,&QWP(16,"esp",$nlo,8));		# Z^=H[nlo]
     &pxor	($Zhi,&QWP(16+128,"esp",$nlo,8));
-    &xor	(&LB($rem[1]),&BP(0,"esp",$nhi[0]));	#$rem[0]);			# rem^H[nhi]<<4
+    &xor	(&LB($rem[1]),&BP(0,"esp",$nhi[0]));	# rem^(H[nhi]<<4)
 
     &pxor	($Zlo,$tmp);
     &pxor	($Zhi,&QWP(16+256+128,"esp",$nhi[0],8));
@@ -745,11 +747,11 @@ sub mmx_loop() {
     &psllq	($red[1],4);
 
     &movd	($rem[0],$Zlo);
-    &psrlq	($Zlo,4);
+    &psrlq	($Zlo,4);				# Z>>=4
 
     &movq	($tmp,$Zhi);
     &psrlq	($Zhi,4);
-    &shl	($rem[0],4);
+    &shl	($rem[0],4);				# rem<<4
 
     &pxor	($Zlo,&QWP(16,"esp",$nhi[1],8));	# Z^=H[nhi]
     &psllq	($tmp,60);
@@ -762,9 +764,9 @@ sub mmx_loop() {
     &pxor	($Zhi,$red[1]);
 
     &movd	($dat,$Zlo);
-    &pinsrw	($red[2],&WP(0,$rem_8bit,$rem[0],2),3);
+    &pinsrw	($red[2],&WP(0,$rem_8bit,$rem[0],2),3);	# last is <<48
 
-    &psllq	($red[0],12);
+    &psllq	($red[0],12);				# correct by <<16>>4
     &pxor	($Zhi,$red[0]);
     &psrlq	($Zlo,32);
     &pxor	($Zhi,$red[2]);
@@ -1316,15 +1318,16 @@ my ($Xhi,$Xi)=@_;
 # per-invocation lookup table setup. Latter means that table size is
 # chosen depending on how much data is to be hashed in every given call,
 # more data - larger table. Best reported result for Core2 is ~4 cycles
-# per processed byte out of 64KB block. Recall that this number accounts
-# even for 64KB table setup overhead. As discussed in gcm128.c we choose
-# to be more conservative in respect to lookup table sizes, but how
-# do the results compare? Minimalistic "256B" MMX version delivers ~11
-# cycles on same platform. As also discussed in gcm128.c, next in line
-# "8-bit Shoup's" method should deliver twice the performance of "4-bit"
-# one. It should be also be noted that in SSE2 case improvement can be
-# "super-linear," i.e. more than twice, mostly because >>8 maps to
-# single instruction on SSE2 register. This is unlike "4-bit" case when
-# >>4 maps to same amount of instructions in both MMX and SSE2 cases.
+# per processed byte out of 64KB block. This number accounts even for
+# 64KB table setup overhead. As discussed in gcm128.c we choose to be
+# more conservative in respect to lookup table sizes, but how do the
+# results compare? Minimalistic "256B" MMX version delivers ~11 cycles
+# on same platform. As also discussed in gcm128.c, next in line "8-bit
+# Shoup's" or "4KB" method should deliver twice the performance of
+# "256B" one, in other words not worse than ~6 cycles per byte. It
+# should be also be noted that in SSE2 case improvement can be "super-
+# linear," i.e. more than twice, mostly because >>8 maps to single
+# instruction on SSE2 register. This is unlike "4-bit" case when >>4
+# maps to same amount of instructions in both MMX and SSE2 cases.
 # Bottom line is that switch to SSE2 is considered to be justifiable
 # only in case we choose to implement "8-bit" method...
