@@ -7,18 +7,26 @@
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 #
-# March 2010
+# March, June 2010
 #
 # The module implements "4-bit" GCM GHASH function and underlying
-# single multiplication operation in GF(2^128). "4-bit" means that it
-# uses 256 bytes per-key table [+128 bytes shared table]. Performance
-# results are for streamed GHASH subroutine and are expressed in
-# cycles per processed byte, less is better:
+# single multiplication operation in GF(2^128). "4-bit" means that
+# it uses 256 bytes per-key table [+128 bytes shared table]. GHASH
+# function features so called "528B" variant utilizing additional
+# 256+16 bytes of per-key storage [+512 bytes shared table].
+# Performance results are for this streamed GHASH subroutine and are
+# expressed in cycles per processed byte, less is better:
 #
-#		gcc 3.4.x	assembler
+#		gcc 3.4.x(*)	assembler
 #
-# Opteron	18.5		10.2		+80%
-# Core2		17.5		11.0		+59%
+# P4		28.6		14.0		+100%
+# Opteron	18.5		7.7		+140%
+# Core2		17.5		8.1(**)		+115%
+#
+# (*)	comparison is not completely fair, because C results are
+#	for vanilla "256B" implementation, not "528B";-)
+# (**)	it's mystery [to me] why Core2 result is not same as for
+#	Opteron;
 
 # May 2010
 #
@@ -58,9 +66,17 @@ $Htbl="%rsi";
 $cnt="%rcx";
 $rem="%rdx";
 
-sub lo() { my $r=shift; $r =~ s/%[er]([a-d])x/%\1l/;
-			$r =~ s/%[er]([sd]i)/%\1l/;
+sub LB() { my $r=shift; $r =~ s/%[er]([a-d])x/%\1l/	or
+			$r =~ s/%[er]([sd]i)/%\1l/	or
+			$r =~ s/%[er](bp)/%\1l/		or
 			$r =~ s/%(r[0-9]+)[d]?/%\1b/;   $r; }
+
+sub AUTOLOAD()		# thunk [simplified] 32-bit style perlasm
+{ my $opcode = $AUTOLOAD; $opcode =~ s/.*:://;
+  my $arg = pop;
+    $arg = "\$$arg" if ($arg*1 eq $arg);
+    $code .= "\t$opcode\t".join(',',$arg,reverse @_)."\n";
+}
 
 { my $N;
   sub loop() {
@@ -70,13 +86,13 @@ sub lo() { my $r=shift; $r =~ s/%[er]([a-d])x/%\1l/;
 $code.=<<___;
 	xor	$nlo,$nlo
 	xor	$nhi,$nhi
-	mov	`&lo("$Zlo")`,`&lo("$nlo")`
-	mov	`&lo("$Zlo")`,`&lo("$nhi")`
-	shl	\$4,`&lo("$nlo")`
+	mov	`&LB("$Zlo")`,`&LB("$nlo")`
+	mov	`&LB("$Zlo")`,`&LB("$nhi")`
+	shl	\$4,`&LB("$nlo")`
 	mov	\$14,$cnt
 	mov	8($Htbl,$nlo),$Zlo
 	mov	($Htbl,$nlo),$Zhi
-	and	\$0xf0,`&lo("$nhi")`
+	and	\$0xf0,`&LB("$nhi")`
 	mov	$Zlo,$rem
 	jmp	.Loop$N
 
@@ -85,15 +101,15 @@ $code.=<<___;
 	shr	\$4,$Zlo
 	and	\$0xf,$rem
 	mov	$Zhi,$tmp
-	mov	($inp,$cnt),`&lo("$nlo")`
+	mov	($inp,$cnt),`&LB("$nlo")`
 	shr	\$4,$Zhi
 	xor	8($Htbl,$nhi),$Zlo
 	shl	\$60,$tmp
 	xor	($Htbl,$nhi),$Zhi
-	mov	`&lo("$nlo")`,`&lo("$nhi")`
+	mov	`&LB("$nlo")`,`&LB("$nhi")`
 	xor	($rem_4bit,$rem,8),$Zhi
 	mov	$Zlo,$rem
-	shl	\$4,`&lo("$nlo")`
+	shl	\$4,`&LB("$nlo")`
 	xor	$tmp,$Zlo
 	dec	$cnt
 	js	.Lbreak$N
@@ -105,7 +121,7 @@ $code.=<<___;
 	xor	8($Htbl,$nlo),$Zlo
 	shl	\$60,$tmp
 	xor	($Htbl,$nlo),$Zhi
-	and	\$0xf0,`&lo("$nhi")`
+	and	\$0xf0,`&LB("$nhi")`
 	xor	($rem_4bit,$rem,8),$Zhi
 	mov	$Zlo,$rem
 	xor	$tmp,$Zlo
@@ -120,7 +136,7 @@ $code.=<<___;
 	xor	8($Htbl,$nlo),$Zlo
 	shl	\$60,$tmp
 	xor	($Htbl,$nlo),$Zhi
-	and	\$0xf0,`&lo("$nhi")`
+	and	\$0xf0,`&LB("$nhi")`
 	xor	($rem_4bit,$rem,8),$Zhi
 	mov	$Zlo,$rem
 	xor	$tmp,$Zlo
@@ -170,9 +186,7 @@ ___
 # per-function register layout
 $inp="%rdx";
 $len="%rcx";
-
-$cnt="%rbp";
-$rem="%r12";
+$rem_8bit=$rem_4bit;
 
 $code.=<<___;
 .globl	gcm_ghash_4bit
@@ -182,33 +196,145 @@ gcm_ghash_4bit:
 	push	%rbx
 	push	%rbp
 	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	sub	\$280,%rsp
 .Lghash_prologue:
-
-	mov	8($Xi),$Zlo
-	mov	($Xi),$Zhi
-	add	$inp,$len
-	lea	.Lrem_4bit(%rip),$rem_4bit
-.align	4
-.Louter_loop:
-	xor	8($inp),$Zlo
-	xor	($inp),$Zhi
-	lea	16($inp),$inp
-	mov	$Zlo,8($Xi)
-	mov	$Zhi,($Xi)
-	shr	\$56,$Zlo
+	mov	$inp,%r14		# reassign couple of args
+	mov	$len,%r15
 ___
-	&loop	($Xi);
-$code.=<<___;
-	cmp	$len,$inp
-	jb	.Louter_loop
+{ my $inp="%r14";
+  my $dat="%edx";
+  my $len="%r15";
+  my @nhi=("%ebx","%ecx");
+  my @rem=("%r12","%r13");
+  my $Hshr4="%rbp";
 
+	&sub	($Htbl,-128);		# size optimization
+	&lea	($Hshr4,"16+128(%rsp)");
+	{ my @lo =($nlo,$nhi);
+          my @hi =($Zlo,$Zhi);
+
+	  &xor	($dat,$dat);
+	  for ($i=0,$j=-2;$i<18;$i++,$j++) {
+	    &mov	("$j(%rsp)",&LB($dat))		if ($i>1);
+	    &or		($lo[0],$tmp)			if ($i>1);
+	    &mov	(&LB($dat),&LB($lo[1]))		if ($i>0 && $i<17);
+	    &shr	($lo[1],4)			if ($i>0 && $i<17);
+	    &mov	($tmp,$hi[1])			if ($i>0 && $i<17);
+	    &shr	($hi[1],4)			if ($i>0 && $i<17);
+	    &mov	("8*$j($Hshr4)",$hi[0])		if ($i>1);
+	    &mov	($hi[0],"16*$i+0-128($Htbl)")	if ($i<16);
+	    &shl	(&LB($dat),4)			if ($i>0 && $i<17);
+	    &mov	("8*$j-128($Hshr4)",$lo[0])	if ($i>1);
+	    &mov	($lo[0],"16*$i+8-128($Htbl)")	if ($i<16);
+	    &shl	($tmp,60)			if ($i>0 && $i<17);
+
+	    push	(@lo,shift(@lo));
+	    push	(@hi,shift(@hi));
+	  }
+	}
+	&add	($Htbl,-128);
+	&mov	($Zlo,"8($Xi)");
+	&mov	($Zhi,"0($Xi)");
+	&add	($len,$inp);		# pointer to the end of data
+	&lea	($rem_8bit,".Lrem_8bit(%rip)");
+	&jmp	(".Louter_loop");
+
+$code.=".align	16\n.Louter_loop:\n";
+	&xor	($Zhi,"($inp)");
+	&mov	("%rdx","8($inp)");
+	&lea	($inp,"16($inp)");
+	&xor	("%rdx",$Zlo);
+	&mov	("($Xi)",$Zhi);
+	&mov	("8($Xi)","%rdx");
+	&shr	("%rdx",32);
+
+	&xor	($nlo,$nlo);
+	&rol	($dat,8);
+	&mov	(&LB($nlo),&LB($dat));
+	&movz	($nhi[0],&LB($dat));
+	&shl	(&LB($nlo),4);
+	&shr	($nhi[0],4);
+
+	for ($j=11,$i=0;$i<15;$i++) {
+	    &rol	($dat,8);
+	    &xor	($Zlo,"8($Htbl,$nlo)")			if ($i>0);
+	    &xor	($Zhi,"($Htbl,$nlo)")			if ($i>0);
+	    &mov	($Zlo,"8($Htbl,$nlo)")			if ($i==0);
+	    &mov	($Zhi,"($Htbl,$nlo)")			if ($i==0);
+
+	    &mov	(&LB($nlo),&LB($dat));
+	    &xor	($Zlo,$tmp)				if ($i>0);
+	    &movzw	($rem[1],"($rem_8bit,$rem[1],2)")	if ($i>0);
+
+	    &movz	($nhi[1],&LB($dat));
+	    &shl	(&LB($nlo),4);
+	    &movzb	($rem[0],"(%rsp,$nhi[0])");
+
+	    &shr	($nhi[1],4)				if ($i<14);
+	    &and	($nhi[1],0xf0)				if ($i==14);
+	    &shl	($rem[1],48)				if ($i>0);
+	    &xor	($rem[0],$Zlo);
+
+	    &mov	($tmp,$Zhi);
+	    &xor	($Zhi,$rem[1])				if ($i>0);
+	    &shr	($Zlo,8);
+
+	    &movz	($rem[0],&LB($rem[0]));
+	    &mov	($dat,"$j($Xi)")			if (--$j%4==0);
+	    &shr	($Zhi,8);
+
+	    &xor	($Zlo,"-128($Hshr4,$nhi[0],8)");
+	    &shl	($tmp,56);
+	    &xor	($Zhi,"($Hshr4,$nhi[0],8)");
+
+	    unshift	(@nhi,pop(@nhi));		# "rotate" registers
+	    unshift	(@rem,pop(@rem));
+	}
+	&movzw	($rem[1],"($rem_8bit,$rem[1],2)");
+	&xor	($Zlo,"8($Htbl,$nlo)");
+	&xor	($Zhi,"($Htbl,$nlo)");
+
+	&shl	($rem[1],48);
+	&xor	($Zlo,$tmp);
+
+	&xor	($Zhi,$rem[1]);
+	&movz	($rem[0],&LB($Zlo));
+	&shr	($Zlo,4);
+
+	&mov	($tmp,$Zhi);
+	&shl	(&LB($rem[0]),4);
+	&shr	($Zhi,4);
+
+	&xor	($Zlo,"8($Htbl,$nhi[0])");
+	&movzw	($rem[0],"($rem_8bit,$rem[0],2)");
+	&shl	($tmp,60);
+
+	&xor	($Zhi,"($Htbl,$nhi[0])");
+	&xor	($Zlo,$tmp);
+	&shl	($rem[0],48);
+
+	&bswap	($Zlo);
+	&xor	($Zhi,$rem[0]);
+
+	&bswap	($Zhi);
+	&cmp	($inp,$len);
+	&jb	(".Louter_loop");
+}
+$code.=<<___;
 	mov	$Zlo,8($Xi)
 	mov	$Zhi,($Xi)
 
-	mov	0(%rsp),%r12
-	mov	8(%rsp),%rbp
-	mov	16(%rsp),%rbx
-	lea	24(%rsp),%rsp
+	lea	280(%rsp),%rsi
+	mov	0(%rsi),%r15
+	mov	8(%rsi),%r14
+	mov	16(%rsi),%r13
+	mov	24(%rsi),%r12
+	mov	32(%rsi),%rbp
+	mov	40(%rsi),%rbx
+	lea	48(%rsi),%rsp
 .Lghash_epilogue:
 	ret
 .size	gcm_ghash_4bit,.-gcm_ghash_4bit
@@ -506,6 +632,41 @@ $code.=<<___;
 	.long	0,`0x7080<<16`,0,`0x6CA0<<16`,0,`0x48C0<<16`,0,`0x54E0<<16`
 	.long	0,`0xE100<<16`,0,`0xFD20<<16`,0,`0xD940<<16`,0,`0xC560<<16`
 	.long	0,`0x9180<<16`,0,`0x8DA0<<16`,0,`0xA9C0<<16`,0,`0xB5E0<<16`
+.type	.Lrem_8bit,\@object
+.Lrem_8bit:
+	.value	0x0000,0x01C2,0x0384,0x0246,0x0708,0x06CA,0x048C,0x054E
+	.value	0x0E10,0x0FD2,0x0D94,0x0C56,0x0918,0x08DA,0x0A9C,0x0B5E
+	.value	0x1C20,0x1DE2,0x1FA4,0x1E66,0x1B28,0x1AEA,0x18AC,0x196E
+	.value	0x1230,0x13F2,0x11B4,0x1076,0x1538,0x14FA,0x16BC,0x177E
+	.value	0x3840,0x3982,0x3BC4,0x3A06,0x3F48,0x3E8A,0x3CCC,0x3D0E
+	.value	0x3650,0x3792,0x35D4,0x3416,0x3158,0x309A,0x32DC,0x331E
+	.value	0x2460,0x25A2,0x27E4,0x2626,0x2368,0x22AA,0x20EC,0x212E
+	.value	0x2A70,0x2BB2,0x29F4,0x2836,0x2D78,0x2CBA,0x2EFC,0x2F3E
+	.value	0x7080,0x7142,0x7304,0x72C6,0x7788,0x764A,0x740C,0x75CE
+	.value	0x7E90,0x7F52,0x7D14,0x7CD6,0x7998,0x785A,0x7A1C,0x7BDE
+	.value	0x6CA0,0x6D62,0x6F24,0x6EE6,0x6BA8,0x6A6A,0x682C,0x69EE
+	.value	0x62B0,0x6372,0x6134,0x60F6,0x65B8,0x647A,0x663C,0x67FE
+	.value	0x48C0,0x4902,0x4B44,0x4A86,0x4FC8,0x4E0A,0x4C4C,0x4D8E
+	.value	0x46D0,0x4712,0x4554,0x4496,0x41D8,0x401A,0x425C,0x439E
+	.value	0x54E0,0x5522,0x5764,0x56A6,0x53E8,0x522A,0x506C,0x51AE
+	.value	0x5AF0,0x5B32,0x5974,0x58B6,0x5DF8,0x5C3A,0x5E7C,0x5FBE
+	.value	0xE100,0xE0C2,0xE284,0xE346,0xE608,0xE7CA,0xE58C,0xE44E
+	.value	0xEF10,0xEED2,0xEC94,0xED56,0xE818,0xE9DA,0xEB9C,0xEA5E
+	.value	0xFD20,0xFCE2,0xFEA4,0xFF66,0xFA28,0xFBEA,0xF9AC,0xF86E
+	.value	0xF330,0xF2F2,0xF0B4,0xF176,0xF438,0xF5FA,0xF7BC,0xF67E
+	.value	0xD940,0xD882,0xDAC4,0xDB06,0xDE48,0xDF8A,0xDDCC,0xDC0E
+	.value	0xD750,0xD692,0xD4D4,0xD516,0xD058,0xD19A,0xD3DC,0xD21E
+	.value	0xC560,0xC4A2,0xC6E4,0xC726,0xC268,0xC3AA,0xC1EC,0xC02E
+	.value	0xCB70,0xCAB2,0xC8F4,0xC936,0xCC78,0xCDBA,0xCFFC,0xCE3E
+	.value	0x9180,0x9042,0x9204,0x93C6,0x9688,0x974A,0x950C,0x94CE
+	.value	0x9F90,0x9E52,0x9C14,0x9DD6,0x9898,0x995A,0x9B1C,0x9ADE
+	.value	0x8DA0,0x8C62,0x8E24,0x8FE6,0x8AA8,0x8B6A,0x892C,0x88EE
+	.value	0x83B0,0x8272,0x8034,0x81F6,0x84B8,0x857A,0x873C,0x86FE
+	.value	0xA9C0,0xA802,0xAA44,0xAB86,0xAEC8,0xAF0A,0xAD4C,0xAC8E
+	.value	0xA7D0,0xA612,0xA454,0xA596,0xA0D8,0xA11A,0xA35C,0xA29E
+	.value	0xB5E0,0xB422,0xB664,0xB7A6,0xB2E8,0xB32A,0xB16C,0xB0AE
+	.value	0xBBF0,0xBA32,0xB874,0xB9B6,0xBCF8,0xBD3A,0xBF7C,0xBEBE
+
 .asciz	"GHASH for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
 ___
