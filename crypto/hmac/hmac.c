@@ -138,11 +138,8 @@ int HMAC_Update(HMAC_CTX *ctx, const unsigned char *data, size_t len)
 
 int HMAC_Final(HMAC_CTX *ctx, unsigned char *md, unsigned int *len)
 	{
-	int j;
 	unsigned int i;
 	unsigned char buf[EVP_MAX_MD_SIZE];
-
-	j=EVP_MD_block_size(ctx->md);
 
 	if (!EVP_DigestFinal_ex(&ctx->md_ctx,buf,&i))
 		goto err;

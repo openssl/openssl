@@ -1027,7 +1027,7 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                 const SSL_CIPHER **ca_list)
 	{
 	unsigned long alg_mkey, alg_auth, alg_enc, alg_mac, alg_ssl, algo_strength;
-	const char *l, *start, *buf;
+	const char *l, *buf;
 	int j, multi, found, rule, retval, ok, buflen;
 	unsigned long cipher_id = 0;
 	char ch;
@@ -1064,7 +1064,6 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
 		alg_ssl = 0;
 		algo_strength = 0;
 
-		start=l;
 		for (;;)
 			{
 			ch = *l;
@@ -1456,7 +1455,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	int is_export,pkl,kl;
 	const char *ver,*exp_str;
 	const char *kx,*au,*enc,*mac;
-	unsigned long alg_mkey,alg_auth,alg_enc,alg_mac,alg_ssl,alg2,alg_s;
+	unsigned long alg_mkey,alg_auth,alg_enc,alg_mac,alg_ssl,alg2;
 #ifdef KSSL_DEBUG
 	static const char *format="%-23s %s Kx=%-8s Au=%-4s Enc=%-9s Mac=%-4s%s AL=%lx/%lx/%lx/%lx/%lx\n";
 #else
@@ -1469,7 +1468,6 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	alg_mac = cipher->algorithm_mac;
 	alg_ssl = cipher->algorithm_ssl;
 
-	alg_s=cipher->algo_strength;
 	alg2=cipher->algorithm2;
 
 	is_export=SSL_C_IS_EXPORT(cipher);
