@@ -601,9 +601,9 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n, int *al)
 	{
+	unsigned short length;
 	unsigned short type;
 	unsigned short size;
-	unsigned short len;  
 	unsigned char *data = *p;
 	int tlsext_servername = 0;
 	int renegotiate_seen = 0;
@@ -611,7 +611,12 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	if (data >= (d+n-2))
 		goto ri_check;
 
-	n2s(data,len);
+	n2s(data,length);
+	if (data+length != d+n)
+		{
+		*al = SSL_AD_DECODE_ERROR;
+		return 0;
+		}
 
 	while(data <= (d+n-4))
 		{

@@ -2075,12 +2075,14 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	{
 	char *buf=NULL;
 	int ret=1;
-	int i,j,k,blank,dot;
+	int i,j,k,dot;
 	struct stat st_buf;
 	SSL *con;
 	SSL_CIPHER *c;
 	BIO *io,*ssl_bio,*sbio;
+#ifdef RENEG
 	long total_bytes;
+#endif
 
 	buf=OPENSSL_malloc(bufsize);
 	if (buf == NULL) return(0);
@@ -2151,7 +2153,6 @@ static int www_body(char *hostname, int s, unsigned char *context)
 		SSL_set_msg_callback_arg(con, bio_s_out);
 		}
 
-	blank=0;
 	for (;;)
 		{
 		if (hack)
@@ -2388,7 +2389,9 @@ static int www_body(char *hostname, int s, unsigned char *context)
                                         BIO_puts(io,"HTTP/1.0 200 ok\r\nContent-type: text/plain\r\n\r\n");
                                 }
 			/* send the file */
+#ifdef RENEG
 			total_bytes=0;
+#endif
 			for (;;)
 				{
 				i=BIO_read(file,buf,bufsize);
