@@ -327,7 +327,7 @@ static int init_server_long(int *sock, int port, char *ip, int type)
 	{
 	int ret=0;
 	struct sockaddr_in server;
-	int s= -1,i;
+	int s= -1;
 
 	if (!ssl_sock_init()) return(0);
 
@@ -366,7 +366,6 @@ static int init_server_long(int *sock, int port, char *ip, int type)
 		}
 	/* Make it 128 for linux */
 	if (type==SOCK_STREAM && listen(s,128) == -1) goto err;
-	i=0;
 	*sock=s;
 	ret=1;
 err:
@@ -384,7 +383,7 @@ static int init_server(int *sock, int port, int type)
 
 static int do_accept(int acc_sock, int *sock, char **host)
 	{
-	int ret,i;
+	int ret;
 	struct hostent *h1,*h2;
 	static struct sockaddr_in from;
 	int len;
@@ -461,7 +460,6 @@ redoit:
 			BIO_printf(bio_err,"gethostbyname failure\n");
 			return(0);
 			}
-		i=0;
 		if (h2->h_addrtype != AF_INET)
 			{
 			BIO_printf(bio_err,"gethostbyname addr is not AF_INET\n");

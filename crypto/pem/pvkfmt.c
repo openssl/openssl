@@ -662,7 +662,7 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
 		
 	{
 	const unsigned char *p = *in;
-	unsigned int pvk_magic, keytype, is_encrypted;
+	unsigned int pvk_magic, is_encrypted;
 	if (skip_magic)
 		{
 		if (length < 20)
@@ -689,7 +689,7 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
 		}
 	/* Skip reserved */
 	p += 4;
-	keytype = read_ledword(&p);
+	/*keytype = */read_ledword(&p);
 	is_encrypted = read_ledword(&p);
 	*psaltlen = read_ledword(&p);
 	*pkeylen = read_ledword(&p);
@@ -839,7 +839,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
 static int i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel,
 		pem_password_cb *cb, void *u)
 	{
-	int outlen = 24, noinc, pklen;
+	int outlen = 24, pklen;
 	unsigned char *p, *salt = NULL;
 	if (enclevel)
 		outlen += PVK_SALTLEN;
@@ -850,10 +850,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel,
 	if (!out)
 		return outlen;
 	if (*out)
-		{
 		p = *out;
-		noinc = 0;
-		}
 	else
 		{
 		p = OPENSSL_malloc(outlen);
@@ -863,7 +860,6 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY*pk, int enclevel,
 			return -1;
 			}
 		*out = p;
-		noinc = 1;
 		}
 
 	write_ledword(&p, MS_PVKMAGIC);

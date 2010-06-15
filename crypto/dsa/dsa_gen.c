@@ -120,7 +120,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 	BIGNUM *r0,*W,*X,*c,*test;
 	BIGNUM *g=NULL,*q=NULL,*p=NULL;
 	BN_MONT_CTX *mont=NULL;
-	int i, k,n=0,b,m=0, qsize = qbits >> 3;
+	int i, k, n=0, m=0, qsize = qbits >> 3;
 	int counter=0;
 	int r=0;
 	BN_CTX *ctx=NULL;
@@ -232,7 +232,6 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 		/* "offset = 2" */
 
 		n=(bits-1)/160;
-		b=(bits-1)-n*160;
 
 		for (;;)
 			{

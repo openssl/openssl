@@ -157,7 +157,7 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 			const void *seed5, int seed5_len,
 			unsigned char *out, int olen)
 	{
-	int chunk,n;
+	int chunk;
 	unsigned int j;
 	HMAC_CTX ctx;
 	HMAC_CTX ctx_tmp;
@@ -187,7 +187,6 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 	if (!HMAC_Final(&ctx,A1,&A1_len))
 		goto err;
 
-	n=0;
 	for (;;)
 		{
 		if (!HMAC_Init_ex(&ctx,NULL,0,NULL,NULL)) /* re-init */
@@ -309,13 +308,13 @@ static int tls1_generate_key_block(SSL *s, unsigned char *km,
 int tls1_change_cipher_state(SSL *s, int which)
 	{
 	static const unsigned char empty[]="";
-	unsigned char *p,*key_block,*mac_secret;
+	unsigned char *p,*mac_secret;
 	unsigned char *exp_label;
 	unsigned char tmp1[EVP_MAX_KEY_LENGTH];
 	unsigned char tmp2[EVP_MAX_KEY_LENGTH];
 	unsigned char iv1[EVP_MAX_IV_LENGTH*2];
 	unsigned char iv2[EVP_MAX_IV_LENGTH*2];
-	unsigned char *ms,*key,*iv,*er1,*er2;
+	unsigned char *ms,*key,*iv;
 	int client_write;
 	EVP_CIPHER_CTX *dd;
 	const EVP_CIPHER *c;
@@ -337,7 +336,6 @@ int tls1_change_cipher_state(SSL *s, int which)
 #ifndef OPENSSL_NO_COMP
 	comp=s->s3->tmp.new_compression;
 #endif
-	key_block=s->s3->tmp.key_block;
 
 #ifdef KSSL_DEBUG
 	printf("tls1_change_cipher_state(which= %d) w/\n", which);
@@ -448,8 +446,6 @@ int tls1_change_cipher_state(SSL *s, int which)
 	               cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
 	/* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
 	k=EVP_CIPHER_iv_length(c);
-	er1= &(s->s3->client_random[0]);
-	er2= &(s->s3->server_random[0]);
 	if (	(which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
 		(which == SSL3_CHANGE_CIPHER_SERVER_READ))
 		{
@@ -880,7 +876,7 @@ int tls1_final_finish_mac(SSL *s,
 int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	{
 	SSL3_RECORD *rec;
-	unsigned char *mac_sec,*seq;
+	unsigned char *seq;
 	EVP_MD_CTX *hash;
 	size_t md_size;
 	int i;
@@ -892,14 +888,12 @@ int tls1_mac(SSL *ssl, unsigned char *md, int send)
 	if (send)
 		{
 		rec= &(ssl->s3->wrec);
-		mac_sec= &(ssl->s3->write_mac_secret[0]);
 		seq= &(ssl->s3->write_sequence[0]);
 		hash=ssl->write_hash;
 		}
 	else
 		{
 		rec= &(ssl->s3->rrec);
-		mac_sec= &(ssl->s3->read_mac_secret[0]);
 		seq= &(ssl->s3->read_sequence[0]);
 		hash=ssl->read_hash;
 		}

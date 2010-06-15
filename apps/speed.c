@@ -334,9 +334,6 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-#ifndef OPENSSL_NO_ENGINE
-	ENGINE *e = NULL;
-#endif
 	unsigned char *buf=NULL,*buf2=NULL;
 	int mret=1;
 	long count=0,save_count=0;
@@ -430,7 +427,6 @@ int MAIN(int argc, char **argv)
 	unsigned char DES_iv[8];
 	unsigned char iv[2*MAX_BLOCK_SIZE/8];
 #ifndef OPENSSL_NO_DES
-	DES_cblock *buf_as_des_cblock = NULL;
 	static DES_cblock key ={0x12,0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0};
 	static DES_cblock key2={0x34,0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12};
 	static DES_cblock key3={0x56,0x78,0x9a,0xbc,0xde,0xf0,0x12,0x34};
@@ -644,9 +640,6 @@ int MAIN(int argc, char **argv)
 		BIO_printf(bio_err,"out of memory\n");
 		goto end;
 		}
-#ifndef OPENSSL_NO_DES
-	buf_as_des_cblock = (DES_cblock *)buf;
-#endif
 	if ((buf2=(unsigned char *)OPENSSL_malloc((int)BUFSIZE)) == NULL)
 		{
 		BIO_printf(bio_err,"out of memory\n");
@@ -721,7 +714,7 @@ int MAIN(int argc, char **argv)
 				BIO_printf(bio_err,"no engine given\n");
 				goto end;
 				}
-                        e = setup_engine(bio_err, *argv, 0);
+                        setup_engine(bio_err, *argv, 0);
 			/* j will be increased again further down.  We just
 			   don't want speed to confuse an engine with an
 			   algorithm, especially when none is given (which

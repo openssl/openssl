@@ -285,7 +285,7 @@ CONF_VALUE *_CONF_new_section(CONF *conf, const char *section)
 	v->value=(char *)sk;
 	
 	vv=lh_CONF_VALUE_insert(conf->data,v);
-	assert(vv == NULL);
+	OPENSSL_assert(vv == NULL);
 	ok=1;
 err:
 	if (!ok)

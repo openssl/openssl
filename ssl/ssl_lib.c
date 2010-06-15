@@ -2110,23 +2110,12 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 /* THIS NEEDS CLEANING UP */
 X509 *ssl_get_server_send_cert(SSL *s)
 	{
-	unsigned long alg_k,alg_a,mask_k,mask_a;
+	unsigned long alg_k,alg_a;
 	CERT *c;
-	int i,is_export;
+	int i;
 
 	c=s->cert;
 	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
-	is_export=SSL_C_IS_EXPORT(s->s3->tmp.new_cipher);
-	if (is_export)
-		{
-		mask_k = c->export_mask_k;
-		mask_a = c->export_mask_a;
-		}
-	else
-		{
-		mask_k = c->mask_k;
-		mask_a = c->mask_a;
-		}
 	
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
 	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
