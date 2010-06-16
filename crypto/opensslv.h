@@ -29,7 +29,7 @@
 #ifdef OPENSSL_FIPS
 #define OPENSSL_VERSION_TEXT	"OpenSSL 1.0.0b-fips-dev xx XXX xxxx"
 #else
-#define OPENSSL_VERSION_TEXT	"OpenSSL 1.0.0b-dev x XXX xxxx"
+#define OPENSSL_VERSION_TEXT	"OpenSSL 1.0.0b-dev xx XXX xxxx"
 #endif
 #define OPENSSL_VERSION_PTEXT	" part of " OPENSSL_VERSION_TEXT
 
