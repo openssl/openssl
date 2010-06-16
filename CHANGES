@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0a and 1.0.0b  [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.0 and 1.0.0a  [01 Jun 2010]
 
   *) Check return value of int_rsa_verify in pkey_rsa_verifyrecover 
