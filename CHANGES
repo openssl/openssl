@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8o and 0.9.8p [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8n and 0.9.8o [01 Jun 2010]
 
   *) Correct a typo in the CMS ASN1 module which can result in invalid memory
