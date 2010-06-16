@@ -1,0 +1,7 @@
+lib
+Makefile.save
+*.flc
+semantic.cache
+sha1-*.s
+sha256-*.s
+sha512-*.s

@@ -1,0 +1,6 @@
+lib
+Makefile.save
+*.flc
+semantic.cache
+cx86-*.s
+cast-586.s
