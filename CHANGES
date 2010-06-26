@@ -4,7 +4,11 @@
 
  Changes between 0.9.8o and 0.9.8p [xx XXX xxxx]
 
-  *)
+  *) Don't repeatedly append PBE algorithms to table if they already exist.
+     Sort table on each new add. This effectively makes the table read only
+     after all algorithms are added and subsequent calls to PKCS12_pbe_add
+     etc are non-op.
+     [Steve Henson]
 
  Changes between 0.9.8n and 0.9.8o [01 Jun 2010]
 
