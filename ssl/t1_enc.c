@@ -607,7 +607,8 @@ printf("\nkey block\n");
 { int z; for (z=0; z<num; z++) printf("%02X%c",p1[z],((z+1)%16)?' ':'\n'); }
 #endif
 
-	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS))
+	if (!(s->options & SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS)
+		&& s->method->version <= TLS1_VERSION)
 		{
 		/* enable vulnerability countermeasure for CBC ciphers with
 		 * known-IV problem (http://www.openssl.org/~bodo/tls-cbc.txt)
