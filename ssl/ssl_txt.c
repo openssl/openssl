@@ -115,6 +115,8 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 		s="SSLv2";
 	else if (x->ssl_version == SSL3_VERSION)
 		s="SSLv3";
+	else if (x->ssl_version == TLS1_1_VERSION)
+		s="TLSv1.1";
 	else if (x->ssl_version == TLS1_VERSION)
 		s="TLSv1";
 	else if (x->ssl_version == DTLS1_VERSION)

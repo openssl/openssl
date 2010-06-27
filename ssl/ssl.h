@@ -298,6 +298,7 @@ extern "C" {
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
+#define SSL_TXT_TLSV1_1		"TLSv1.1"
 
 #define SSL_TXT_EXP		"EXP"
 #define SSL_TXT_EXPORT		"EXPORT"
@@ -526,6 +527,7 @@ typedef struct ssl_session_st
 #define SSL_OP_SSLEAY_080_CLIENT_DH_BUG			0x00000080L
 #define SSL_OP_TLS_D5_BUG				0x00000100L
 #define SSL_OP_TLS_BLOCK_PADDING_BUG			0x00000200L
+#define SSL_OP_NO_TLSv1_1				0x00000400L
 
 /* Disable SSL 3.0/TLS 1.0 CBC vulnerability workaround that was added
  * in OpenSSL 0.9.6d.  Usually (depending on the application protocol)
@@ -536,7 +538,7 @@ typedef struct ssl_session_st
 
 /* SSL_OP_ALL: various bug workarounds that should be rather harmless.
  *             This used to be 0x000FFFFFL before 0.9.7. */
-#define SSL_OP_ALL					0x80000FFFL
+#define SSL_OP_ALL					0x80000BFFL
 
 /* DTLS options */
 #define SSL_OP_NO_QUERY_MTU                 0x00001000L
@@ -1646,6 +1648,10 @@ const SSL_METHOD *SSLv23_client_method(void);	/* SSLv3 but can rollback to v2 */
 const SSL_METHOD *TLSv1_method(void);		/* TLSv1.0 */
 const SSL_METHOD *TLSv1_server_method(void);	/* TLSv1.0 */
 const SSL_METHOD *TLSv1_client_method(void);	/* TLSv1.0 */
+
+const SSL_METHOD *TLSv1_1_method(void);		/* TLSv1.1 */
+const SSL_METHOD *TLSv1_1_server_method(void);	/* TLSv1.1 */
+const SSL_METHOD *TLSv1_1_client_method(void);	/* TLSv1.1 */
 
 const SSL_METHOD *DTLSv1_method(void);		/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_server_method(void);	/* DTLSv1.0 */

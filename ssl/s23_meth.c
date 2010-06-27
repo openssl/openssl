@@ -76,6 +76,8 @@ static const SSL_METHOD *ssl23_get_method(int ver)
 #ifndef OPENSSL_NO_TLS1
 	if (ver == TLS1_VERSION)
 		return(TLSv1_method());
+	else if (ver == TLS1_1_VERSION)
+		return(TLSv1_1_method());
 	else
 #endif
 		return(NULL);

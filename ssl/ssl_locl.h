@@ -591,11 +591,12 @@ extern SSL3_ENC_METHOD TLSv1_enc_data;
 extern SSL3_ENC_METHOD SSLv3_enc_data;
 extern SSL3_ENC_METHOD DTLSv1_enc_data;
 
-#define IMPLEMENT_tls1_meth_func(func_name, s_accept, s_connect, s_get_meth) \
+#define IMPLEMENT_tls_meth_func(version, func_name, s_accept, s_connect, \
+				s_get_meth) \
 const SSL_METHOD *func_name(void)  \
 	{ \
 	static const SSL_METHOD func_name##_data= { \
-		TLS1_VERSION, \
+		version, \
 		tls1_new, \
 		tls1_clear, \
 		tls1_free, \
@@ -669,7 +670,7 @@ const SSL_METHOD *func_name(void)  \
 const SSL_METHOD *func_name(void)  \
 	{ \
 	static const SSL_METHOD func_name##_data= { \
-	TLS1_VERSION, \
+	TLS1_1_VERSION, \
 	tls1_new, \
 	tls1_clear, \
 	tls1_free, \

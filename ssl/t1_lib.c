@@ -166,7 +166,7 @@ void tls1_free(SSL *s)
 void tls1_clear(SSL *s)
 	{
 	ssl3_clear(s);
-	s->version=TLS1_VERSION;
+	s->version = s->method->version;
 	}
 
 #ifndef OPENSSL_NO_EC
