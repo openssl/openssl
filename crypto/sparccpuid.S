@@ -225,12 +225,32 @@ _sparcv9_rdtick:
 	xor	%o0,%o0,%o0
 	.word	0x91410000	!rd	%tick,%o0
 	retl
-	.word	0x93323020	!srlx	%o2,32,%o1
+	.word	0x93323020	!srlx	%o0,32,%o1
 .notick:
 	retl
 	xor	%o1,%o1,%o1
 .type	_sparcv9_rdtick,#function
 .size	_sparcv9_rdtick,.-_sparcv9_rdtick
+
+.global	_sparcv9_rdwrasi
+.align	8
+_sparcv9_rdwrasi:
+	.word	0x9340c000	!rd	%asi,%o1
+	.word	0x87820000	!wr	%o0,%g0,%asi
+	retl
+	mov	%o1,%o0
+.type	_sparcv9_rdwrasi,#function
+.size	_sparcv9_rdwrasi,.-_sparcv9_rdwrasi
+
+.global	_sparcv9_vis1_probe
+.align	8
+_sparcv9_vis1_probe:
+	.word	0x81b00c20	!fzeros	%f0
+	.word	0xc19ba002+BIAS	!ldda	[%sp+BIAS+2]%asi,%f0
+	retl
+	nop
+.type	_sparcv9_vis1_probe,#function
+.size	_sparcv9_vis1_probe,.-_sparcv9_vis1_probe
 
 .global	OPENSSL_cleanse
 .align	32

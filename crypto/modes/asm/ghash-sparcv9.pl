@@ -315,6 +315,7 @@ gcm_gmult_4bit:
 .type	gcm_gmult_4bit,#function
 .size	gcm_gmult_4bit,(.-gcm_gmult_4bit)
 .asciz	"GHASH for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
+.align	4
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
