@@ -20,6 +20,13 @@
 # 32-bit build	81.0		48.6		11.8	(+586%/+311%)
 # 64-bit build	27.5		20.3		11.8	(+133%/+72%)
 #
+# Here is data collected on UltraSPARC T1 system running Linux:
+#
+#		gcc 4.4.1			this assembler
+#
+# 32-bit build	566				50	(+1000%)
+# 64-bit build	56				50	(+12%)
+#
 # I don't quite understand why difference between 32-bit and 64-bit
 # compiler-generated code is so big. Compilers *were* instructed to
 # generate code for UltraSPARC and should have used 64-bit registers
@@ -28,7 +35,7 @@
 # module;-) Loops are aggressively modulo-scheduled in respect to
 # references to input data and Z.hi updates to achieve 12 cycles
 # timing. To anchor to something else, sha1-sparcv9.pl spends 11.6
-# cycles to process one byte [on UltraSPARC pre-Tx CPU].
+# cycles to process one byte on UltraSPARC pre-Tx CPU and ~24 on T1.
 
 $bits=32;
 for (@ARGV)     { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
