@@ -19,6 +19,16 @@
 # loop, this assembler loop body was found to be ~3x smaller than
 # compiler-generated one...
 #
+# Note about "528B" variant. In ARM case it makes lesser sense to
+# implement it for following reasons:
+#
+# - performance improvement won't be anywhere near 50%, because 128-
+#   bit shift operation is neatly fused with 128-bit xor here, and
+#   "538B" variant would eliminate only 4-5 instructions out of 32
+#   in the inner loop (meaning that estimated improvement is ~15%);
+# - ARM-based systems are often embedded ones and extra memory
+#   consumption might be unappreciated (for so little improvement);
+#
 # Byte order [in]dependence. =========================================
 #
 # Caller is expected to maintain specific *dword* order in Htable,
