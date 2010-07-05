@@ -406,6 +406,7 @@ redoit:
 	if (ret == INVALID_SOCKET)
 		{
 #if defined(OPENSSL_SYS_WINDOWS) || (defined(OPENSSL_SYS_NETWARE) && !defined(NETWARE_BSDSOCK))
+		int i;
 		i=WSAGetLastError();
 		BIO_printf(bio_err,"accept error %d\n",i);
 #else
