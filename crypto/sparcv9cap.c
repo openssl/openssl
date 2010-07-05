@@ -27,7 +27,6 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	}
 
 unsigned long	_sparcv9_rdtick(void);
-unsigned long	_sparcv9_rdwrasi(unsigned long);
 void		_sparcv9_vis1_probe(void);
 
 unsigned long OPENSSL_rdtsc(void)
@@ -150,7 +149,6 @@ void OPENSSL_cpuid_setup(void)
 	char *e;
 	struct sigaction	common_act,ill_oact,bus_oact;
 	sigset_t		all_masked,oset;
-	unsigned long		oasi;
 	int			sig;
  
 	if ((e=getenv("OPENSSL_sparcv9cap")))
@@ -179,7 +177,6 @@ void OPENSSL_cpuid_setup(void)
 
 	sigaction(SIGILL,&common_act,&ill_oact);
 	sigaction(SIGBUS,&common_act,&bus_oact);/* T1 fails 16-bit ldda */
-	oasi = _sparcv9_rdwrasi(0xD2);		/* ASI_FL16_P */
 	if ((sig=sigsetjmp(common_jmp,0)) == 0)
 		{
 		_sparcv9_vis1_probe();
@@ -193,7 +190,6 @@ void OPENSSL_cpuid_setup(void)
 		{
 		OPENSSL_sparcv9cap_P &= ~SPARCV9_VIS1;
 		}
-	_sparcv9_rdwrasi(oasi);
 	sigaction(SIGBUS,&bus_oact,NULL);
 	sigaction(SIGILL,&ill_oact,NULL);
 
