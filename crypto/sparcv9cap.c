@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <setjmp.h>
+#include <signal.h>
 #include <sys/time.h>
 #include <openssl/bn.h>
 
@@ -9,6 +11,7 @@
 #define SPARCV9_VIS1		(1<<2)
 #define SPARCV9_VIS2		(1<<3)	/* reserved */
 #define SPARCV9_FMADD		(1<<4)	/* reserved for SPARC64 V */
+
 static int OPENSSL_sparcv9cap_P=SPARCV9_TICK_PRIVILEGED;
 
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num)
@@ -23,10 +26,12 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 		return bn_mul_mont_int(rp,ap,bp,np,n0,num);
 	}
 
+unsigned long	_sparcv9_rdtick(void);
+unsigned long	_sparcv9_rdwrasi(unsigned long);
+void		_sparcv9_vis1_probe(void);
+
 unsigned long OPENSSL_rdtsc(void)
 	{
-	unsigned long _sparcv9_rdtick(void);
-
 	if (OPENSSL_sparcv9cap_P&SPARCV9_TICK_PRIVILEGED)
 #if defined(__sun) && defined(__SVR4)
 		return gethrtime();
@@ -137,9 +142,16 @@ void OPENSSL_cpuid_setup(void)
 
 #else
 
+static sigjmp_buf common_jmp;
+static void common_handler(int sig) { siglongjmp(common_jmp,sig); }
+
 void OPENSSL_cpuid_setup(void)
 	{
 	char *e;
+	struct sigaction	common_act,ill_oact,bus_oact;
+	sigset_t		all_masked,oset;
+	unsigned long		oasi;
+	int			sig;
  
 	if ((e=getenv("OPENSSL_sparcv9cap")))
 		{
@@ -149,6 +161,55 @@ void OPENSSL_cpuid_setup(void)
 
 	/* For now we assume that the rest supports UltraSPARC-I* only */
 	OPENSSL_sparcv9cap_P |= SPARCV9_PREFER_FPU|SPARCV9_VIS1;
+
+	sigfillset(&all_masked);
+	sigdelset(&all_masked,SIGILL);
+	sigdelset(&all_masked,SIGTRAP);
+#ifdef SIGEMT
+	sigdelset(&all_masked,SIGEMT);
+#endif
+	sigdelset(&all_masked,SIGFPE);
+	sigdelset(&all_masked,SIGBUS);
+	sigdelset(&all_masked,SIGSEGV);
+	sigprocmask(SIG_SETMASK,&all_masked,&oset);
+
+	memset(&common_act,0,sizeof(common_act));
+	common_act.sa_handler = common_handler;
+	common_act.sa_mask    = all_masked;
+
+	sigaction(SIGILL,&common_act,&ill_oact);
+	sigaction(SIGBUS,&common_act,&bus_oact);/* T1 fails 16-bit ldda */
+	oasi = _sparcv9_rdwrasi(0xD2);		/* ASI_FL16_P */
+	if ((sig=sigsetjmp(common_jmp,0)) == 0)
+		{
+		_sparcv9_vis1_probe();
+		OPENSSL_sparcv9cap_P |= SPARCV9_VIS1;
+		}
+	else if (sig == SIGBUS)			/* T1 fails 16-bit ldda */
+		{
+		OPENSSL_sparcv9cap_P &= ~SPARCV9_PREFER_FPU;
+		}
+	else
+		{
+		OPENSSL_sparcv9cap_P &= ~SPARCV9_VIS1;
+		}
+	_sparcv9_rdwrasi(oasi);
+	sigaction(SIGBUS,&bus_oact,NULL);
+	sigaction(SIGILL,&ill_oact,NULL);
+
+	sigaction(SIGILL,&common_act,&ill_oact);
+	if (sigsetjmp(common_jmp,0) == 0)
+		{
+		_sparcv9_rdtick();
+		OPENSSL_sparcv9cap_P &= ~SPARCV9_TICK_PRIVILEGED;
+		}
+	else
+		{
+		OPENSSL_sparcv9cap_P |= SPARCV9_TICK_PRIVILEGED;
+		}
+	sigaction(SIGILL,&ill_oact,NULL);
+
+	sigprocmask(SIG_SETMASK,&oset,NULL);
 	}
 
 #endif
