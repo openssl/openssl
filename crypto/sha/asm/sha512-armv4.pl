@@ -22,7 +22,7 @@ $hi=0;
 $lo=4;
 # ====================================================================
 
-$output=shift;
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 $ctx="r0";

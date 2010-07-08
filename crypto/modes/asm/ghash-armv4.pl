@@ -39,6 +39,9 @@
 # *native* byte order on current platform. See gcm128.c for working
 # example...
 
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+open STDOUT,">$output";
+
 $Xi="r0";	# argument block
 $Htbl="r1";
 $inp="r2";
@@ -58,9 +61,6 @@ $nhi="r14";
 
 $rem_4bit=$inp;	# used in gcm_gmult_4bit
 $cnt=$len;
-
-$output=shift;
-open STDOUT,">$output";
 
 sub Zsmash() {
   my $i=12;

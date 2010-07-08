@@ -68,7 +68,7 @@ aes-parisc.s:	asm/aes-parisc.pl
 	$(PERL) asm/aes-parisc.pl $(PERLASM_SCHEME) $@
 
 # GNU make "catch all"
-aes-%.s:	asm/aes-%.pl;	$(PERL) $< $(CFLAGS) > $@
+aes-%.s:	asm/aes-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

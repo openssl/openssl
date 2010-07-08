@@ -114,7 +114,7 @@ alpha-mont.s:	asm/alpha-mont.pl
 	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
 
 # GNU make "catch all"
-%-mont.s:	asm/%-mont.pl;	$(PERL) $< $(CFLAGS) > $@
+%-mont.s:	asm/%-mont.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

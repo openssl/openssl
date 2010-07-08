@@ -39,7 +39,7 @@
 #	small and always slower.
 # [***]	which is also ~35% better than compiler generated code.
 
-$output=shift;
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 $ctx="r0";

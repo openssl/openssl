@@ -13,7 +13,7 @@
 # lute" terms is ~2250 cycles per 64-byte block or ~35 cycles per
 # byte.
 
-$output=shift;
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 $ctx="r0";	$t0="r0";

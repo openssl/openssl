@@ -22,6 +22,9 @@
 #
 # AES_set_[en|de]crypt_key is added.
 
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+open STDOUT,">$output";
+
 $s0="r0";
 $s1="r1";
 $s2="r2";
@@ -1029,3 +1032,4 @@ ___
 
 $code =~ s/\bbx\s+lr\b/.word\t0xe12fff1e/gm;	# make it possible to compile with -march=armv4
 print $code;
+close STDOUT;	# enforce flush
