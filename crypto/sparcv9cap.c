@@ -27,7 +27,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	}
 
 unsigned long	_sparcv9_rdtick(void);
-void		_sparcv9_vis1_probe(void);
+unsigned long	_sparcv9_vis1_probe(void);
 
 unsigned long OPENSSL_rdtsc(void)
 	{
@@ -176,24 +176,6 @@ void OPENSSL_cpuid_setup(void)
 	common_act.sa_mask    = all_masked;
 
 	sigaction(SIGILL,&common_act,&ill_oact);
-	sigaction(SIGBUS,&common_act,&bus_oact);/* T1 fails 16-bit ldda */
-	if ((sig=sigsetjmp(common_jmp,0)) == 0)
-		{
-		_sparcv9_vis1_probe();
-		OPENSSL_sparcv9cap_P |= SPARCV9_VIS1;
-		}
-	else if (sig == SIGBUS)			/* T1 fails 16-bit ldda */
-		{
-		OPENSSL_sparcv9cap_P &= ~SPARCV9_PREFER_FPU;
-		}
-	else
-		{
-		OPENSSL_sparcv9cap_P &= ~SPARCV9_VIS1;
-		}
-	sigaction(SIGBUS,&bus_oact,NULL);
-	sigaction(SIGILL,&ill_oact,NULL);
-
-	sigaction(SIGILL,&common_act,&ill_oact);
 	if (sigsetjmp(common_jmp,0) == 0)
 		{
 		_sparcv9_rdtick();
@@ -201,8 +183,28 @@ void OPENSSL_cpuid_setup(void)
 		}
 	else
 		{
+		/* This happens on US-I&II, which have working VIS1
+		 * and fast FPU... In other words we are done... */
 		OPENSSL_sparcv9cap_P |= SPARCV9_TICK_PRIVILEGED;
+		sigaction(SIGILL,&ill_oact,NULL);
+		sigprocmask(SIG_SETMASK,&oset,NULL);
+		return;
 		}
+	sigaction(SIGILL,&ill_oact,NULL);
+
+	sigaction(SIGILL,&common_act,&ill_oact);
+	sigaction(SIGBUS,&common_act,&bus_oact);/* T1 fails 16-bit ldda */
+	if ((sig=sigsetjmp(common_jmp,0)) == 0)
+		{
+		/* see sparccpud.S for details... */
+		if (_sparcv9_vis1_probe() >= 12)
+			OPENSSL_sparcv9cap_P &= ~SPARCV9_VIS1;
+		}
+	else
+		{
+		OPENSSL_sparcv9cap_P &= ~SPARCV9_VIS1;
+		}
+	sigaction(SIGBUS,&bus_oact,NULL);
 	sigaction(SIGILL,&ill_oact,NULL);
 
 	sigprocmask(SIG_SETMASK,&oset,NULL);
