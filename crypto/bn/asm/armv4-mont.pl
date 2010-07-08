@@ -23,6 +23,9 @@
 # than 1/2KB. Windows CE port would be trivial, as it's exclusively
 # about decorations, ABI and instruction syntax are identical.
 
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+open STDOUT,">$output";
+
 $num="r0";	# starts as num argument, but holds &tp[num-1]
 $ap="r1";
 $bp="r2"; $bi="r2"; $rp="r2";
