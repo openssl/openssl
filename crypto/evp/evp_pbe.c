@@ -116,7 +116,7 @@ static int pbe_cmp(const char * const *a, const char * const *b)
 int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
 	     EVP_PBE_KEYGEN *keygen)
 {
-	EVP_PBE_CTL *pbe_tmp, pbelu;
+	EVP_PBE_CTL *pbe_tmp = NULL, pbelu;
 	int i;
 	if (!pbe_algs)
 		{
@@ -141,8 +141,6 @@ int EVP_PBE_alg_add(int nid, const EVP_CIPHER *cipher, const EVP_MD *md,
 				&& pbe_tmp->keygen == keygen)
 				return 1;
 			}
-		else
-			pbe_tmp = NULL;
 		}
 
 	if (!pbe_tmp)
