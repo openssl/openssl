@@ -50,6 +50,9 @@
 # it was measured to be ~6.6x. It's less than previously mentioned 8x,
 # because software implementation was optimized.
 
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+open STDOUT,">$output";
+
 $softonly=0;	# allow hardware support
 
 $t0="%r0";	$mask="%r0";
@@ -1337,3 +1340,4 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
+close STDOUT;	# force flush

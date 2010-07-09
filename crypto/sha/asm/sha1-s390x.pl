@@ -23,7 +23,7 @@
 
 $kimdfunc=1;	# magic function code for kimd instruction
 
-$output=shift;
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 $K_00_39="%r0"; $K=$K_00_39;

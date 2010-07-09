@@ -32,6 +32,9 @@
 # Reschedule to minimize/avoid Address Generation Interlock hazard,
 # make inner loops counter-based.
 
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+open STDOUT,">$output";
+
 $mn0="%r0";
 $num="%r1";
 
