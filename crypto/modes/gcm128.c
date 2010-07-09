@@ -47,6 +47,7 @@
  * ====================================================================
  */
 
+#include "crypto.h"
 #include "modes_lcl.h"
 #include <string.h>
 
@@ -458,8 +459,8 @@ static void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],
     /*
      * Extra 256+16 bytes per-key plus 512 bytes shared tables
      * [should] give ~50% improvement... One could have PACK()-ed
-     * the rem_8bit even here, but priority is to minimize memory
-     * usage...
+     * the rem_8bit even here, but the priority is to minimize
+     * cache footprint...
      */ 
     u128 Hshr4[16];	/* Htable shifted right by 4 bits */
     u8   Hshl4[16];	/* Htable shifted left  by 4 bits */
@@ -496,7 +497,6 @@ static void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],
 	0xA7D0, 0xA612, 0xA454, 0xA596, 0xA0D8, 0xA11A, 0xA35C, 0xA29E,
 	0xB5E0, 0xB422, 0xB664, 0xB7A6, 0xB2E8, 0xB32A, 0xB16C, 0xB0AE,
 	0xBBF0, 0xBA32, 0xB874, 0xB9B6, 0xBCF8, 0xBD3A, 0xBF7C, 0xBEBE };
-
     /*
      * This pre-processing phase slows down procedure by approximately
      * same time as it makes each loop spin faster. In other words
@@ -512,24 +512,7 @@ static void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],
     }
 
     do {
-	nlo  = ((const u8 *)Xi)[15];
-	nlo ^= inp[15];
-	nhi  = nlo>>4;
-	nlo &= 0xf;
-
-	Z.hi = Htable[nlo].hi;
-	Z.lo = Htable[nlo].lo;
-
-	rem = (size_t)Z.lo&0xff;
-
-	Z.lo = (Z.hi<<56)|(Z.lo>>8);
-	Z.hi = (Z.hi>>8);
-
-	Z.hi ^= Hshr4[nhi].hi;
-	Z.lo ^= Hshr4[nhi].lo;
-	Z.hi ^= (u64)rem_8bit[rem^Hshl4[nhi]]<<48;
-
-	for (cnt=14; cnt>0; --cnt) {
+	for (Z.lo=0, Z.hi=0, cnt=15; cnt; --cnt) {
 		nlo  = ((const u8 *)Xi)[cnt];
 		nlo ^= inp[cnt];
 		nhi  = nlo>>4;
@@ -733,7 +716,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #if	TABLE_BITS==8
 	gcm_init_8bit(ctx->Htable,ctx->H.u);
 #elif	TABLE_BITS==4
-# if	defined(GHASH_ASM_IAX)
+# if	defined(GHASH_ASM_IAX)			/* both x86 and x86_64 */
 	if (OPENSSL_ia32cap_P[1]&(1<<1)) {
 		gcm_init_clmul(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_clmul;
@@ -741,7 +724,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 		return;
 	}
 	gcm_init_4bit(ctx->Htable,ctx->H.u);
-#  if	defined(GHASH_ASM_X86)
+#  if	defined(GHASH_ASM_X86)			/* x86 only */
 	if (OPENSSL_ia32cap_P[0]&(1<<23)) {
 		ctx->gmult = gcm_gmult_4bit_mmx;
 		ctx->ghash = gcm_ghash_4bit_mmx;
@@ -1109,7 +1092,8 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 	ctx->res = n;
 }
 
-void CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx)
+int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
+			size_t len)
 {
 	const union { long one; char little; } is_endian = {1};
 	u64 alen = ctx->len.u[0]<<3;
@@ -1139,6 +1123,29 @@ void CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx)
 
 	ctx->Xi.u[0] ^= ctx->EK0.u[0];
 	ctx->Xi.u[1] ^= ctx->EK0.u[1];
+
+	if (tag && len<=sizeof(ctx->Xi))
+		return memcmp(ctx->Xi.c,tag,len);
+	else
+		return -1;
+}
+
+GCM128_CONTEXT *CRYPTO_gcm128_new(void *key, block128_f block)
+{
+	GCM128_CONTEXT *ret;
+
+	if ((ret = (GCM128_CONTEXT *)OPENSSL_malloc(sizeof(GCM128_CONTEXT))))
+		CRYPTO_gcm128_init(ret,key,block);
+
+	return ret;
+}
+
+void CRYPTO_gcm128_release(GCM128_CONTEXT *ctx)
+{
+	if (ctx) {
+		OPENSSL_cleanse(ctx,sizeof(*ctx));
+		OPENSSL_free(ctx);
+	}
 }
 
 #if defined(SELFTEST)
@@ -1365,15 +1372,15 @@ static const u8	IV18[]={0x93,0x13,0x22,0x5d,0xf8,0x84,0x06,0xe5,0x55,0x90,0x9c,0
 	CRYPTO_gcm128_setiv(&ctx,IV##n,sizeof(IV##n));		\
 	if (A##n) CRYPTO_gcm128_aad(&ctx,A##n,sizeof(A##n));	\
 	if (P##n) CRYPTO_gcm128_encrypt(&ctx,P##n,out,sizeof(out));	\
-	CRYPTO_gcm128_finish(&ctx);				\
-	if (memcmp(ctx.Xi.c,T##n,16) || (C##n && memcmp(out,C##n,sizeof(out))))	\
+	if (CRYPTO_gcm128_finish(&ctx,T##n,16) ||		\
+	    (C##n && memcmp(out,C##n,sizeof(out))))		\
 		ret++, printf ("encrypt test#%d failed.\n",n);\
 	CRYPTO_gcm128_setiv(&ctx,IV##n,sizeof(IV##n));		\
 	if (A##n) CRYPTO_gcm128_aad(&ctx,A##n,sizeof(A##n));	\
 	if (C##n) CRYPTO_gcm128_decrypt(&ctx,C##n,out,sizeof(out));	\
-	CRYPTO_gcm128_finish(&ctx);				\
-	if (memcmp(ctx.Xi.c,T##n,16) || (P##n && memcmp(out,P##n,sizeof(out))))	\
-		ret++, printf ("decrypt test#%d failed.\n",n);\
+	if (CRYPTO_gcm128_finish(&ctx,T##n,16) ||		\
+	    (P##n && memcmp(out,P##n,sizeof(out))))		\
+		ret++, printf ("decrypt test#%d failed.\n",n);	\
 	} while(0)
 
 int main()
