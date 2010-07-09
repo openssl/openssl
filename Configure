@@ -1402,7 +1402,7 @@ if ($aes_obj =~ /\.o$/)
 	$cflags.=" -DAES_ASM";
 	# aes_ctr.o is not a real file, only indication that assembler
 	# module implements AES_ctr32_encrypt...
-	$cflags.=" -DAES_CTR_ASM" if ($aes_obj =~ s/\s*aes_ctr.o//);
+	$cflags.=" -DAES_CTR_ASM" if ($aes_obj =~ s/\s*aes_ctr\.o//);
 	$aes_obj =~ s/\s*aesni\-x86\.o// if ($no_sse2);
 	}
 else	{
