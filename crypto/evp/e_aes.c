@@ -55,6 +55,7 @@
 #include <string.h>
 #include <assert.h>
 #include <openssl/aes.h>
+#include <openssl/modes.h>
 #include "evp_locl.h"
 
 static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -101,9 +102,19 @@ static int aes_counter (EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
 	unsigned int num;
 	num = ctx->num;
-	AES_ctr128_encrypt (in,out,len,
+#ifdef AES_CTR_ASM
+	void AES_ctr32_encrypt(const unsigned char *in, unsigned char *out,
+			size_t blocks, const AES_KEY *key,
+			const unsigned char ivec[AES_BLOCK_SIZE]);
+
+	CRYPTO_ctr128_encrypt_ctr32(in,out,len,
 		&((EVP_AES_KEY *)ctx->cipher_data)->ks,
-		ctx->iv,ctx->buf,&num);
+		ctx->iv,ctx->buf,&num,(ctr128_f)AES_ctr32_encrypt);
+#else
+	CRYPTO_ctr128_encrypt(in,out,len,
+		&((EVP_AES_KEY *)ctx->cipher_data)->ks,
+		ctx->iv,ctx->buf,&num,(block128_f)AES_encrypt);
+#endif
 	ctx->num = (size_t)num;
 	return 1;
 }

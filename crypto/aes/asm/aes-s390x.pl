@@ -50,6 +50,10 @@
 # it was measured to be ~6.6x. It's less than previously mentioned 8x,
 # because software implementation was optimized.
 
+# May 2010.
+#
+# Add AES_ctr32_encrypt.
+
 while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
@@ -1331,10 +1335,148 @@ $code.=<<___;
 4:	ex	$len,0($s1)
 	j	.Lcbc_dec_exit
 .size	AES_cbc_encrypt,.-AES_cbc_encrypt
-.comm  OPENSSL_s390xcap_P,8,8
+___
+}
+#void AES_ctr32_encrypt(const unsigned char *in, unsigned char *out,
+#                     size_t blocks, const AES_KEY *key,
+#                     const unsigned char *ivec)
+{
+my $inp="%r2";
+my $out="%r3";
+my $len="%r4";
+my $key="%r5";	my $iv0="%r5";
+my $ivp="%r6";
+my $fp ="%r7";
+
+$code.=<<___;
+.globl	AES_ctr32_encrypt
+.type	AES_ctr32_encrypt,\@function
+.align	16
+AES_ctr32_encrypt:
+___
+$code.=<<___ if (!$softonly);
+	l	%r0,240($key)
+	lhi	%r1,16
+	clr	%r0,%r1
+	jl	.Lctr32_software
+
+	stmg	%r6,$s3,48($sp)
+
+	slgr	$out,$inp
+	la	%r1,0($key)	# %r1 is permanent copy of $key
+	lg	$iv0,0($ivp)	# load ivec
+	lg	$ivp,8($ivp)
+
+	# prepare and allocate stack frame
+	lghi	$s0,-272	# guarantee at least 256-bytes buffer
+	lghi	$s1,-4096
+	lgr	$fp,$sp
+	algr	$s0,$sp
+	ngr	$s0,$s1		# align at page boundary
+	la	$sp,0($s0)	# alloca
+	stg	$fp,0($s0)	# back-chain
+
+	# calculate resultant buffer size
+	la	$s0,16($s0)	# buffer starts at offset of 16
+	slgr	$fp,$s0
+	srlg	$fp,$fp,4	# $fp is buffer length in blocks, minimum 16
+	stg	$fp,8($sp)
+
+	slgr	$len,$fp
+	brc	1,.Lctr32_hw_loop	# not zero, no borrow
+	algr	$fp,$len
+	lghi	$len,0
+	stg	$fp,8($sp)
+
+.Lctr32_hw_loop:
+	la	$s2,16($sp)
+	lgr	$s3,$fp
+.Lctr32_hw_prepare:
+	stg	$iv0,0($s2)
+	stg	$ivp,8($s2)
+	la	$s2,16($s2)
+	ahi	$ivp,1		# 32-bit increment, preserves upper half
+	brct	$s3,.Lctr32_hw_prepare
+
+	la	$s0,16($sp)	# inp
+	sllg	$s1,$fp,4	# len
+	la	$s2,16($sp)	# out
+	.long	0xb92e00a8	# km %r10,%r8
+	brc	1,.-4		# pay attention to "partial completion"
+
+	la	$s2,16($sp)
+	lgr	$s3,$fp
+	slgr	$s2,$inp
+.Lctr32_hw_xor:
+	lg	$s0,0($inp)
+	lg	$s1,8($inp)
+	xg	$s0,0($s2,$inp)
+	xg	$s1,8($s2,$inp)
+	stg	$s0,0($out,$inp)
+	stg	$s1,8($out,$inp)
+	la	$inp,16($inp)
+	brct	$s3,.Lctr32_hw_xor
+
+	slgr	$len,$fp
+	brc	1,.Lctr32_hw_loop	# not zero, no borrow
+	algr	$fp,$len
+	lghi	$len,0
+	brc	4+1,.Lctr32_hw_loop	# not zero
+
+	lg	$s0,0($sp)
+	lg	$s1,8($sp)
+	la	$s2,16($sp)
+.Lctr32_hw_zap:
+	stg	$s0,0($s2)
+	stg	$s0,8($s2)
+	la	$s2,16($s2)
+	brct	$s1,.Lctr32_hw_zap
+
+	la	$sp,0($s0)
+	lmg	%r6,$s3,48($sp)
+	br	$ra
+.align	16
+.Lctr32_software:
+___
+$code.=<<___;
+	stmg	$key,$ra,40($sp)
+	slgr	$out,$inp
+	larl	$tbl,AES_Te
+	llgf	$t1,12($ivp)
+
+.Lctr32_loop:
+	stmg	$inp,$len,16($sp)
+	llgf	$s0,0($ivp)
+	llgf	$s1,4($ivp)
+	llgf	$s2,8($ivp)
+	lgr	$s3,$t1
+	st	$t1,128($sp)
+	lgr	%r4,$key
+
+	bras	$ra,_s390x_AES_encrypt
+
+	lmg	$inp,$ivp,16($sp)
+	llgf	$t1,128($sp)
+	x	$s0,0($inp)
+	x	$s1,4($inp)
+	x	$s2,8($inp)
+	x	$s3,12($inp)
+	st	$s0,0($out,$inp)
+	st	$s1,4($out,$inp)
+	st	$s2,8($out,$inp)
+	st	$s3,12($out,$inp)
+
+	la	$inp,16($inp)
+	ahi	$t1,1		# 32-bit increment
+	brct	$len,.Lctr32_loop
+
+	lmg	%r6,$ra,48($sp)
+	br	$ra
+.size	AES_ctr32_encrypt,.-AES_ctr32_encrypt
 ___
 }
 $code.=<<___;
+.comm  OPENSSL_s390xcap_P,8,8
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 

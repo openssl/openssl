@@ -11,7 +11,7 @@ CFLAG=-g
 MAKEFILE=	Makefile
 AR=		ar r
 
-AES_ENC=aes_core.o aes_cbc.o aes_ctr.o
+AES_ENC=aes_core.o aes_cbc.o
 
 CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
@@ -24,7 +24,7 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=aes_core.c aes_misc.c aes_ecb.c aes_cbc.c aes_cfb.c aes_ofb.c \
-       aes_ctr.c aes_ige.c aes_wrap.c
+       aes_ige.c aes_wrap.c
 LIBOBJ=aes_misc.o aes_ecb.o aes_cfb.o aes_ofb.o aes_ige.o aes_wrap.o \
        $(AES_ENC)
 
@@ -113,8 +113,6 @@ aes_cfb.o: ../../include/openssl/aes.h ../../include/openssl/modes.h
 aes_cfb.o: ../../include/openssl/opensslconf.h aes_cfb.c
 aes_core.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
 aes_core.o: ../../include/openssl/opensslconf.h aes_core.c aes_locl.h
-aes_ctr.o: ../../include/openssl/aes.h ../../include/openssl/modes.h
-aes_ctr.o: ../../include/openssl/opensslconf.h aes_ctr.c
 aes_ecb.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
 aes_ecb.o: ../../include/openssl/opensslconf.h aes_ecb.c aes_locl.h
 aes_ige.o: ../../e_os.h ../../include/openssl/aes.h ../../include/openssl/bio.h
