@@ -37,7 +37,9 @@
 #	modes are limited. As result it takes more instructions to do
 #	the same job in Thumb, therefore the code is never twice as
 #	small and always slower.
-# [***]	which is also ~35% better than compiler generated code.
+# [***]	which is also ~35% better than compiler generated code. Dual-
+#	issue Cortex A8 core was measured to process input block in
+#	~990 cycles.
 
 while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
