@@ -10,7 +10,13 @@
 # SHA512 block procedure for ARMv4. September 2007.
 
 # This code is ~4.5 (four and a half) times faster than code generated
-# by gcc 3.4 and it spends ~72 clock cycles per byte. 
+# by gcc 3.4 and it spends ~72 clock cycles per byte [on single-issue
+# Xscale PXA250 core].
+#
+# July 2010.
+#
+# Rescheduling for dual-issue pipeline resulted in 6% improvement on
+# Cortex A8 core and ~40 cycles per processed byte.
 
 # Byte order [in]dependence. =========================================
 #
@@ -22,7 +28,7 @@ $hi=0;
 $lo=4;
 # ====================================================================
 
-$output=shift;
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 $ctx="r0";
@@ -73,33 +79,31 @@ $code.=<<___;
 	eor	$t0,$t0,$Elo,lsl#23
 	eor	$t1,$t1,$Ehi,lsl#23	@ Sigma1(e)
 	adds	$Tlo,$Tlo,$t0
-	adc	$Thi,$Thi,$t1		@ T += Sigma1(e)
-	adds	$Tlo,$Tlo,$t2
-	adc	$Thi,$Thi,$t3		@ T += h
-
 	ldr	$t0,[sp,#$Foff+0]	@ f.lo
+	adc	$Thi,$Thi,$t1		@ T += Sigma1(e)
 	ldr	$t1,[sp,#$Foff+4]	@ f.hi
+	adds	$Tlo,$Tlo,$t2
 	ldr	$t2,[sp,#$Goff+0]	@ g.lo
+	adc	$Thi,$Thi,$t3		@ T += h
 	ldr	$t3,[sp,#$Goff+4]	@ g.hi
+
+	eor	$t0,$t0,$t2
 	str	$Elo,[sp,#$Eoff+0]
-	str	$Ehi,[sp,#$Eoff+4]
-	str	$Alo,[sp,#$Aoff+0]
-	str	$Ahi,[sp,#$Aoff+4]
-
-	eor	$t0,$t0,$t2
 	eor	$t1,$t1,$t3
+	str	$Ehi,[sp,#$Eoff+4]
 	and	$t0,$t0,$Elo
+	str	$Alo,[sp,#$Aoff+0]
 	and	$t1,$t1,$Ehi
+	str	$Ahi,[sp,#$Aoff+4]
 	eor	$t0,$t0,$t2
-	eor	$t1,$t1,$t3		@ Ch(e,f,g)
-
 	ldr	$t2,[$Ktbl,#4]		@ K[i].lo
+	eor	$t1,$t1,$t3		@ Ch(e,f,g)
 	ldr	$t3,[$Ktbl,#0]		@ K[i].hi
-	ldr	$Elo,[sp,#$Doff+0]	@ d.lo
-	ldr	$Ehi,[sp,#$Doff+4]	@ d.hi
 
 	adds	$Tlo,$Tlo,$t0
+	ldr	$Elo,[sp,#$Doff+0]	@ d.lo
 	adc	$Thi,$Thi,$t1		@ T += Ch(e,f,g)
+	ldr	$Ehi,[sp,#$Doff+4]	@ d.hi
 	adds	$Tlo,$Tlo,$t2
 	adc	$Thi,$Thi,$t3		@ T += K[i]
 	adds	$Elo,$Elo,$Tlo

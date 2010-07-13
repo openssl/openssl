@@ -11,9 +11,14 @@
 
 # Performance is ~2x better than gcc 3.4 generated code and in "abso-
 # lute" terms is ~2250 cycles per 64-byte block or ~35 cycles per
-# byte.
+# byte [on single-issue Xscale PXA250 core].
 
-$output=shift;
+# July 2010.
+#
+# Rescheduling for dual-issue pipeline resulted in 22% improvement on
+# Cortex A8 core and ~20 cycles per processed byte.
+
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
 
 $ctx="r0";	$t0="r0";
@@ -52,27 +57,27 @@ $code.=<<___ if ($i<16);
 ___
 $code.=<<___;
 	ldr	$t2,[$Ktbl],#4			@ *K256++
-	str	$T1,[sp,#`$i%16`*4]
 	mov	$t0,$e,ror#$Sigma1[0]
+	str	$T1,[sp,#`$i%16`*4]
 	eor	$t0,$t0,$e,ror#$Sigma1[1]
-	eor	$t0,$t0,$e,ror#$Sigma1[2]	@ Sigma1(e)
-	add	$T1,$T1,$t0
 	eor	$t1,$f,$g
+	eor	$t0,$t0,$e,ror#$Sigma1[2]	@ Sigma1(e)
 	and	$t1,$t1,$e
+	add	$T1,$T1,$t0
 	eor	$t1,$t1,$g			@ Ch(e,f,g)
-	add	$T1,$T1,$t1
 	add	$T1,$T1,$h
-	add	$T1,$T1,$t2
 	mov	$h,$a,ror#$Sigma0[0]
+	add	$T1,$T1,$t1
 	eor	$h,$h,$a,ror#$Sigma0[1]
+	add	$T1,$T1,$t2
 	eor	$h,$h,$a,ror#$Sigma0[2]		@ Sigma0(a)
 	orr	$t0,$a,$b
-	and	$t0,$t0,$c
 	and	$t1,$a,$b
-	orr	$t0,$t0,$t1			@ Maj(a,b,c)
-	add	$h,$h,$t0
-	add	$d,$d,$T1
+	and	$t0,$t0,$c
 	add	$h,$h,$T1
+	orr	$t0,$t0,$t1			@ Maj(a,b,c)
+	add	$d,$d,$T1
+	add	$h,$h,$t0
 ___
 }
 
@@ -80,19 +85,19 @@ sub BODY_16_XX {
 my ($i,$a,$b,$c,$d,$e,$f,$g,$h) = @_;
 
 $code.=<<___;
-	ldr	$t1,[sp,#`($i+1)%16`*4]	@ $i
+	ldr	$t1,[sp,#`($i+1)%16`*4]		@ $i
 	ldr	$t2,[sp,#`($i+14)%16`*4]
 	ldr	$T1,[sp,#`($i+0)%16`*4]
-	ldr	$inp,[sp,#`($i+9)%16`*4]
 	mov	$t0,$t1,ror#$sigma0[0]
+	ldr	$inp,[sp,#`($i+9)%16`*4]
 	eor	$t0,$t0,$t1,ror#$sigma0[1]
 	eor	$t0,$t0,$t1,lsr#$sigma0[2]	@ sigma0(X[i+1])
 	mov	$t1,$t2,ror#$sigma1[0]
-	eor	$t1,$t1,$t2,ror#$sigma1[1]
-	eor	$t1,$t1,$t2,lsr#$sigma1[2]	@ sigma1(X[i+14])
 	add	$T1,$T1,$t0
-	add	$T1,$T1,$t1
+	eor	$t1,$t1,$t2,ror#$sigma1[1]
 	add	$T1,$T1,$inp
+	eor	$t1,$t1,$t2,lsr#$sigma1[2]	@ sigma1(X[i+14])
+	add	$T1,$T1,$t1
 ___
 	&BODY_00_15(@_);
 }
