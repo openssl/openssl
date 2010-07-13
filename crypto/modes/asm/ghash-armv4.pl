@@ -19,6 +19,12 @@
 # loop, this assembler loop body was found to be ~3x smaller than
 # compiler-generated one...
 #
+# July 2010
+#
+# Rescheduling for dual-issue pipeline resulted in 8.5% improvement on
+# Cortex A8 core and ~25 cycles per processed byte (which was observed
+# to be ~3 times faster than gcc-generated code:-)
+#
 # Note about "528B" variant. In ARM case it makes lesser sense to
 # implement it for following reasons:
 #
@@ -123,12 +129,12 @@ gcm_ghash_4bit:
 
 	add	$Zhh,$Htbl,$nlo,lsl#4
 	ldmia	$Zhh,{$Zll-$Zhh}	@ load Htbl[nlo]
+	add	$Thh,$Htbl,$nhi
 	ldrb	$nlo,[$inp,#14]
 
-	add	$Thh,$Htbl,$nhi
 	and	$nhi,$Zll,#0xf		@ rem
 	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
-	mov	$nhi,$nhi,lsl#1
+	add	$nhi,$nhi,$nhi
 	eor	$Zll,$Tll,$Zll,lsr#4
 	ldrh	$Tll,[sp,$nhi]		@ rem_4bit[rem]
 	eor	$Zll,$Zll,$Zlh,lsl#28
@@ -139,15 +145,15 @@ gcm_ghash_4bit:
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
 	eor	$Zhh,$Thh,$Zhh,lsr#4
 	eor	$nlo,$nlo,$nhi
-	eor	$Zhh,$Zhh,$Tll,lsl#16
 	and	$nhi,$nlo,#0xf0
 	and	$nlo,$nlo,#0x0f
+	eor	$Zhh,$Zhh,$Tll,lsl#16
 
 .Loop:
 	add	$Thh,$Htbl,$nlo,lsl#4
 	subs	$cnt,$cnt,#1
-	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nlo]
 	and	$nlo,$Zll,#0xf		@ rem
+	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nlo]
 	add	$nlo,$nlo,$nlo
 	eor	$Zll,$Tll,$Zll,lsr#4
 	ldrh	$Tll,[sp,$nlo]		@ rem_4bit[rem]
@@ -161,22 +167,22 @@ gcm_ghash_4bit:
 
 	add	$Thh,$Htbl,$nhi
 	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
-	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
 	and	$nhi,$Zll,#0xf		@ rem
+	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
 	add	$nhi,$nhi,$nhi
 	eor	$Zll,$Tll,$Zll,lsr#4
 	ldrh	$Tll,[sp,$nhi]		@ rem_4bit[rem]
 	eor	$Zll,$Zll,$Zlh,lsl#28
-	ldrplb	$nhi,[$Xi,$cnt]
 	eor	$Zlh,$Tlh,$Zlh,lsr#4
+	ldrplb	$nhi,[$Xi,$cnt]
 	eor	$Zlh,$Zlh,$Zhl,lsl#28
 	eor	$Zhl,$Thl,$Zhl,lsr#4
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
-	eor	$Zhh,$Thh,$Zhh,lsr#4
 	eorpl	$nlo,$nlo,$nhi
-	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
+	eor	$Zhh,$Thh,$Zhh,lsr#4
 	andpl	$nhi,$nlo,#0xf0
 	andpl	$nlo,$nlo,#0x0f
+	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
 	bpl	.Loop
 
 	ldr	$len,[sp,#32]		@ re-load $len/end
@@ -212,7 +218,7 @@ gcm_gmult_4bit:
 	add	$Thh,$Htbl,$nhi
 	and	$nhi,$Zll,#0xf		@ rem
 	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
-	mov	$nhi,$nhi,lsl#1
+	add	$nhi,$nhi,$nhi
 	eor	$Zll,$Tll,$Zll,lsr#4
 	ldrh	$Tll,[$rem_4bit,$nhi]	@ rem_4bit[rem]
 	eor	$Zll,$Zll,$Zlh,lsl#28
@@ -228,8 +234,8 @@ gcm_gmult_4bit:
 .Loop2:
 	add	$Thh,$Htbl,$nlo,lsl#4
 	subs	$cnt,$cnt,#1
-	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nlo]
 	and	$nlo,$Zll,#0xf		@ rem
+	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nlo]
 	add	$nlo,$nlo,$nlo
 	eor	$Zll,$Tll,$Zll,lsr#4
 	ldrh	$Tll,[$rem_4bit,$nlo]	@ rem_4bit[rem]
@@ -243,8 +249,8 @@ gcm_gmult_4bit:
 
 	add	$Thh,$Htbl,$nhi
 	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
-	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
 	and	$nhi,$Zll,#0xf		@ rem
+	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
 	add	$nhi,$nhi,$nhi
 	eor	$Zll,$Tll,$Zll,lsr#4
 	ldrh	$Tll,[$rem_4bit,$nhi]	@ rem_4bit[rem]
@@ -255,8 +261,8 @@ gcm_gmult_4bit:
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
 	eor	$Zhh,$Thh,$Zhh,lsr#4
 	andpl	$nhi,$nlo,#0xf0
-	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
 	andpl	$nlo,$nlo,#0x0f
+	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
 	bpl	.Loop2
 ___
 	&Zsmash();
