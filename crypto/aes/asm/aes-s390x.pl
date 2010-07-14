@@ -44,7 +44,7 @@
 # Unlike previous version hardware support detection takes place only
 # at the moment of key schedule setup, which is denoted in key->rounds.
 # This is done, because deferred key setup can't be made MT-safe, not
-# for key lengthes longer than 128 bits.
+# for keys longer than 128 bits.
 #
 # Add AES_cbc_encrypt, which gives incredible performance improvement,
 # it was measured to be ~6.6x. It's less than previously mentioned 8x,
@@ -52,7 +52,13 @@
 
 # May 2010.
 #
-# Add AES_ctr32_encrypt.
+# Add AES_ctr32_encrypt. If hardware-assisted, it provides up to 4.3x
+# performance improvement over "generic" counter mode routine relying
+# on single-block, also hardware-assisted, AES_encrypt. "Up to" refers
+# to the fact that exact throughput value depends on current stack
+# frame alignment within 4KB page. In worst case you get ~75% of the
+# maximum, but *on average* it would be as much as ~98%. Meaning that
+# worst case is unlike, it's like hitting ravine on plateau.
 
 while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
@@ -1367,24 +1373,27 @@ $code.=<<___ if (!$softonly);
 	lg	$iv0,0($ivp)	# load ivec
 	lg	$ivp,8($ivp)
 
-	# prepare and allocate stack frame
-	lghi	$s0,-272	# guarantee at least 256-bytes buffer
+	# prepare and allocate stack frame at the top of 4K page
+	# with 1K reserved for eventual signal handling
+	lghi	$s0,-1024-256-16# guarantee at least 256-bytes buffer
 	lghi	$s1,-4096
-	lgr	$fp,$sp
 	algr	$s0,$sp
+	lgr	$fp,$sp
 	ngr	$s0,$s1		# align at page boundary
-	la	$sp,0($s0)	# alloca
-	stg	$fp,0($s0)	# back-chain
+	slgr	$fp,$s0		# total buffer size
+	lgr	$s2,$sp
+	lghi	$s1,1024+16	# sl[g]fi is extended-immediate facility
+	slgr	$fp,$s1		# deduct reservation to get usable buffer size
+	# buffer size is at lest 256 and at most 3072+256-16
 
-	# calculate resultant buffer size
-	la	$s0,16($s0)	# buffer starts at offset of 16
-	slgr	$fp,$s0
-	srlg	$fp,$fp,4	# $fp is buffer length in blocks, minimum 16
+	la	$sp,1024($s0)	# alloca
+	srlg	$fp,$fp,4	# convert bytes to blocks, minimum 16
+	stg	$s2,0($sp)	# back-chain
 	stg	$fp,8($sp)
 
 	slgr	$len,$fp
 	brc	1,.Lctr32_hw_loop	# not zero, no borrow
-	algr	$fp,$len
+	algr	$fp,$len	# input is shorter than allocated buffer
 	lghi	$len,0
 	stg	$fp,8($sp)
 
