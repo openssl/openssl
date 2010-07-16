@@ -221,6 +221,8 @@ link_app.bsd:
 # order to provide compatibility with pre-10.4 dlopen, modules are
 # linked with -bundle flag, which makes .dylib extension misleading.
 # It works, because dlopen is [and always was] extension-agnostic.
+# Alternative to this heuristic approach is to develop specific
+# MacOS X dso module relying on whichever "native" dyld interface.
 link_o.darwin:
 	@ $(CALC_VERSIONS); \
 	SHLIB=lib$(LIBNAME); \
