@@ -1093,6 +1093,12 @@ my $ar = $ENV{'AR'} || "ar";
 my $arflags = $fields[$idx_arflags];
 my $multilib = $fields[$idx_multilib];
 
+# if $prefix/lib$multilib is not an existing directory, then
+# assume that it's not searched by linker automatically, in
+# which case adding $multilib suffix causes more grief than
+# we're ready to tolerate, so don't...
+$multilib="" if !-d "$prefix/lib$multilib";
+
 $libdir="lib$multilib" if $libdir eq "";
 
 $cflags = "$cflags$exp_cflags";
