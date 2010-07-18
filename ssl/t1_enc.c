@@ -1071,3 +1071,26 @@ int tls1_alert_code(int code)
 		}
 	}
 
+int SSL_tls1_key_exporter(SSL *s, unsigned char *label, int label_len,
+                           unsigned char *context, int context_len,
+                           unsigned char *out, int olen)
+	{
+	unsigned char *tmp;
+	int rv;
+
+	tmp = OPENSSL_malloc(olen);
+
+	if (!tmp)
+		return 0;
+	
+	rv = tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+			 label, label_len,
+			 s->s3->client_random,SSL3_RANDOM_SIZE,
+			 s->s3->server_random,SSL3_RANDOM_SIZE,
+			 context, context_len, NULL, 0,
+			 s->session->master_key, s->session->master_key_length,
+			 out, tmp, olen);
+
+	OPENSSL_free(tmp);
+	return rv;
+	}
