@@ -4,6 +4,9 @@
 
  Changes between 1.0.0a and 1.0.1  [xx XXX xxxx]
 
+  *) Add support for TLS key exporter as described in RFC5705.
+     [Robin Seggelmann <seggelmann@fh-muenster.de>, Steve Henson]
+
   *) Initial TLSv1.1 support. Since TLSv1.1 is very similar to TLS v1.0 only
      a few changes are required:
 
