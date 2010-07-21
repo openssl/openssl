@@ -4,6 +4,11 @@
 
  Changes between 1.0.0a and 1.0.1  [xx XXX xxxx]
 
+  *) Add call to ENGINE_register_all_complete() to
+     ENGINE_load_builtin_engines(), so some implementations get used
+     automatically instead of needing explicit application support.
+     [Steve Henson]
+
   *) Add support for TLS key exporter as described in RFC5705.
      [Robin Seggelmann <seggelmann@fh-muenster.de>, Steve Henson]
 
