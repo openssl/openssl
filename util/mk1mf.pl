@@ -13,6 +13,7 @@ $banner="\t\@echo Building OpenSSL";
 
 my $no_static_engine = 1;
 my $engines = "";
+my $otherlibs = "";
 local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
 local $zlib_lib = "";
 local $perl_asm = 0;	# 1 to autobuild asm files from perl scripts
@@ -356,6 +357,12 @@ for (;;)
 		$lib=$val;
 		$lib =~ s/^.*\/([^\/]+)$/$1/;
 		}
+	if ($key eq "LIBNAME" && $no_static_engine)
+		{
+		$lib=$val;
+		$lib =~ s/^.*\/([^\/]+)$/$1/;
+		$otherlibs .= " $lib";
+		}
 
 	if ($key eq "EXHEADER")
 		{ $exheader.=&var_add($dir,$val, 1); }
@@ -658,7 +665,7 @@ foreach (split(/\s+/,$test))
 	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
 	}
 
-$defs.=&do_defs("E_SHLIB",$engines,"\$(ENG_D)",$shlibp);
+$defs.=&do_defs("E_SHLIB",$engines . $otherlibs,"\$(ENG_D)",$shlibp);
 
 foreach (split(/\s+/,$engines))
 	{
@@ -670,6 +677,14 @@ foreach (split(/\s+/,$engines))
 
 $rules.= &do_lib_rule("\$(SSLOBJ)","\$(O_SSL)",$ssl,$shlib,"\$(SO_SSL)");
 $rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)");
+
+foreach (split(/\s+/,$otherlibs))
+	{
+	my $uc = $_;
+	$uc =~ tr /a-z/A-Z/;	
+	$rules.= &do_lib_rule("\$(${uc}OBJ)","\$(ENG_D)$o$_$shlibp", "", $shlib, "");
+
+	}
 
 $rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
 
