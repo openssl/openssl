@@ -114,6 +114,13 @@
        Add command line options to s_client/s_server.
      [Steve Henson]
 
+ Changes between 1.0.0a and 1.0.0b  [xx XXX xxxx]
+
+
+  *) Fix WIN32 build system to correctly link an ENGINE directory into
+     a DLL. 
+     [Steve Henson]
+
  Changes between 1.0.0 and 1.0.0a  [xx XXX xxxx]
   
   *) Check return value of int_rsa_verify in pkey_rsa_verifyrecover 
