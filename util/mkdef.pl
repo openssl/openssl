@@ -316,6 +316,7 @@ $crypto.=" crypto/krb5/krb5_asn.h";
 $crypto.=" crypto/pqueue/pqueue.h";
 $crypto.=" crypto/cms/cms.h";
 $crypto.=" crypto/jpake/jpake.h";
+$crypto.=" crypto/modes/modes.h";
 
 my $symhacks="crypto/symhacks.h";
 
