@@ -4178,3 +4178,14 @@ UI_method_get_prompt_constructr         4550	EXIST:VMS:FUNCTION:
 UI_method_set_prompt_constructor        4551	EXIST:!VMS:FUNCTION:
 UI_method_set_prompt_constructr         4551	EXIST:VMS:FUNCTION:
 EVP_read_pw_string_min                  4552	EXIST::FUNCTION:
+CRYPTO_cts128_encrypt                   4553	EXIST::FUNCTION:
+CRYPTO_cts128_decrypt_block             4554	EXIST::FUNCTION:
+CRYPTO_cfb128_1_encrypt                 4555	EXIST::FUNCTION:
+CRYPTO_cbc128_encrypt                   4556	EXIST::FUNCTION:
+CRYPTO_ctr128_encrypt                   4557	EXIST::FUNCTION:
+CRYPTO_ofb128_encrypt                   4558	EXIST::FUNCTION:
+CRYPTO_cts128_decrypt                   4559	EXIST::FUNCTION:
+CRYPTO_cts128_encrypt_block             4560	EXIST::FUNCTION:
+CRYPTO_cbc128_decrypt                   4561	EXIST::FUNCTION:
+CRYPTO_cfb128_encrypt                   4562	EXIST::FUNCTION:
+CRYPTO_cfb128_8_encrypt                 4563	EXIST::FUNCTION:
