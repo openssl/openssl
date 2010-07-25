@@ -399,6 +399,12 @@
 #undef dtls1_retransmit_buffered_messages
 #define dtls1_retransmit_buffered_messages	dtls1_retransmit_buffered_msgs
 
+/* Hack some long UI names */
+#undef UI_method_get_prompt_constructor
+#define UI_method_get_prompt_constructor	UI_method_get_prompt_constructr
+#undef UI_method_set_prompt_constructor
+#define UI_method_set_prompt_constructor	UI_method_set_prompt_constructr
+
 #endif /* defined OPENSSL_SYS_VMS */
 
 
