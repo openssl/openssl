@@ -13,6 +13,9 @@
 # "cluster" Address Generation Interlocks, so that one pipeline stall
 # resolves several dependencies.
 
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+open STDOUT,">$output";
+
 $rp="%r14";
 $sp="%r15";
 $code=<<___;
@@ -203,3 +206,4 @@ RC4_options:
 ___
 
 print $code;
+close STDOUT;	# force flush
