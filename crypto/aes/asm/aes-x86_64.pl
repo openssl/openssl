@@ -1295,10 +1295,6 @@ AES_set_encrypt_key:
 
 	call	_x86_64_AES_set_encrypt_key
 
-	mov	8(%rsp),%r15
-	mov	16(%rsp),%r14
-	mov	24(%rsp),%r13
-	mov	32(%rsp),%r12
 	mov	40(%rsp),%rbp
 	mov	48(%rsp),%rbx
 	add	\$56,%rsp
@@ -1556,8 +1552,8 @@ $code.=<<___;
 AES_set_decrypt_key:
 	push	%rbx
 	push	%rbp
-	push	%r12
-	push	%r13
+	push	%r12			# redundant, but allows to share
+	push	%r13			# exception handler...
 	push	%r14
 	push	%r15
 	push	%rdx			# save key schedule
@@ -1613,10 +1609,6 @@ $code.=<<___;
 
 	xor	%rax,%rax
 .Labort:
-	mov	8(%rsp),%r15
-	mov	16(%rsp),%r14
-	mov	24(%rsp),%r13
-	mov	32(%rsp),%r12
 	mov	40(%rsp),%rbp
 	mov	48(%rsp),%rbx
 	add	\$56,%rsp
