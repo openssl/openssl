@@ -18,7 +18,7 @@
 # non-parallelizable modes such as CBC encrypt is 3.75 cycles per byte
 # processed with 128-bit key. And given their throughput asymptotic
 # performance for parallelizable modes is 1.25 cycles per byte. Being
-# asymptotic limit it's not something you commonly achieve in reality,
+# asymptotic limit is not something you commonly achieve in reality,
 # but how close does one get? Below are results collected for
 # different modes and block sized. Pairs of numbers are for en-/
 # decryption.
@@ -77,7 +77,7 @@
 # overhead affects small-block performance, as well as OFB and CFB
 # results. Differences are not large, most common coefficients are
 # 10/11.7 and 10/13.4 (as opposite to 10/12.0 and 10/14.0), but one
-# observe even 10/11.2 and 10/12.4 (CTR, OFB, CFB, CTR)...
+# observe even 10/11.2 and 10/12.4 (CTR, OFB, CFB)...
 
 $PREFIX="aesni";	# if $PREFIX is set to "AES", the script
 			# generates drop-in replacement for
@@ -130,7 +130,7 @@ sub aesni_generate1 {
 my ($p,$key,$rounds,$inout)=@_;	$inout=$inout0 if (!defined($inout));
 ++$sn;
 $code.=<<___;
-	$movkey	($key),$rndkey0
+	movdqu	($key),$rndkey0
 	$movkey	16($key),$rndkey1
 	lea	32($key),$key
 	pxor	$rndkey0,$inout
@@ -152,7 +152,7 @@ $code.=<<___;
 .type	${PREFIX}_encrypt,\@abi-omnipotent
 .align	16
 ${PREFIX}_encrypt:
-	movups	($inp),$inout0		# load input
+	movdqu	($inp),$inout0		# load input
 	mov	240($key),$rounds	# pull $rounds
 ___
 	&aesni_generate1("enc",$key,$rounds);
@@ -165,7 +165,7 @@ $code.=<<___;
 .type	${PREFIX}_decrypt,\@abi-omnipotent
 .align	16
 ${PREFIX}_decrypt:
-	movups	($inp),$inout0		# load input
+	movdqu	($inp),$inout0		# load input
 	mov	240($key),$rounds	# pull $rounds
 ___
 	&aesni_generate1("dec",$key,$rounds);
@@ -1279,7 +1279,7 @@ ccm64_se_handler:
 	mov	248($context),%rbx	# pull context->Rip
 
 	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),$r11		# disp->HandlerData
+	mov	56($disp),%r11		# disp->HandlerData
 
 	mov	0(%r11),%r10d		# HandlerData[0]
 	lea	(%rsi,%r10),%r10	# prologue label
@@ -1443,13 +1443,11 @@ $code.=<<___ if ($PREFIX eq "aesni");
 
 	.rva	.LSEH_begin_aesni_ccm64_encrypt_blocks
 	.rva	.LSEH_end_aesni_ccm64_encrypt_blocks
-	.rva	.LSEH_info_ccm64
-	.rva	.Lccm64_enc_body,.Lccm64_enc_ret	# HandlerData[]
+	.rva	.LSEH_info_ccm64_enc
 
 	.rva	.LSEH_begin_aesni_ccm64_decrypt_blocks
 	.rva	.LSEH_end_aesni_ccm64_decrypt_blocks
-	.rva	.LSEH_info_ccm64
-	.rva	.Lccm64_dec_body,.Lccm64_dec_ret	# HandlerData[]
+	.rva	.LSEH_info_ccm64_dec
 
 	.rva	.LSEH_begin_aesni_ctr32_encrypt_blocks
 	.rva	.LSEH_end_aesni_ctr32_encrypt_blocks
@@ -1474,9 +1472,14 @@ $code.=<<___ if ($PREFIX eq "aesni");
 .LSEH_info_ecb:
 	.byte	9,0,0,0
 	.rva	ecb_se_handler
-.LSEH_info_ccm64:
+.LSEH_info_ccm64_enc:
 	.byte	9,0,0,0
 	.rva	ccm64_se_handler
+	.rva	.Lccm64_enc_body,.Lccm64_enc_ret	# HandlerData[]
+.LSEH_info_ccm64_dec:
+	.byte	9,0,0,0
+	.rva	ccm64_se_handler
+	.rva	.Lccm64_dec_body,.Lccm64_dec_ret	# HandlerData[]
 .LSEH_info_ctr32:
 	.byte	9,0,0,0
 	.rva	ctr32_se_handler
