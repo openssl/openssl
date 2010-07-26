@@ -20,6 +20,15 @@
 # something else sha1-ia64.pl module processes one byte in 6.0 cycles.
 # On Itanium GHASH should run at ~8.5 cycles per byte.
 
+# Note about "528B" variant. In Itanium 2 case it makes lesser sense
+# to implement it for following reason. Because number of functional
+# units is naturally limited, it's impossible to implement "528B" loop
+# in 4 cycles, only in 5. This means that theoretically performance
+# improvement can't be more than 20%, ~15% is more realistic. This
+# is considered below justification level for implementing new code.
+# Not to mention that on original Itanium it would actually run
+# slower, spending >9 cycles per byte.
+
 $output=shift and (open STDOUT,">$output" or die "can't open $output: $!");
 
 if ($^O eq "hpux") {
