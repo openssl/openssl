@@ -121,7 +121,7 @@ my %globals;
 		$self->{sz} = "b";
 	    } elsif ($self->{op} =~ /call|jmp/) {
 		$self->{sz} = "";
-	    } elsif ($self->{op} =~ /^p/ && $' !~ /^(ush|op)/) { # SSEn
+	    } elsif ($self->{op} =~ /^p/ && $' !~ /^(ush|op|insrw)/) { # SSEn
 		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])$/) {
 		$self->{op} = $1;
@@ -264,7 +264,7 @@ my %globals;
 	    }
 	} else {
 	    %szmap = (	b=>"BYTE$PTR", w=>"WORD$PTR", l=>"DWORD$PTR",
-	    		q=>"QWORD$PTR",o=>"OWORD$PTR" );
+	    		q=>"QWORD$PTR",o=>"OWORD$PTR",x=>"XMMWORD$PTR" );
 
 	    $self->{label} =~ s/\./\$/g;
 	    $self->{label} =~ s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/ig;
@@ -634,62 +634,62 @@ sub rex {
    }
 }
 
-# older gas doesn't handle SSE>2 instructions
+# older gas and ml64 don't handle SSE>2 instructions
 my %regrm = (	"%eax"=>0, "%ecx"=>1, "%edx"=>2, "%ebx"=>3,
 		"%esp"=>4, "%ebp"=>5, "%esi"=>6, "%edi"=>7	);
 
 my $pextrd = sub {
-  my ($imm,$src,$dst) = @_;
-    if ("$imm:$src" =~ /\$([0-9]+):%xmm([0-9]+)/) {
+    if (shift =~ /\$([0-9]+),%xmm([0-9]+),(%\w+)/) {
       my @opcode=(0x66);
 	$imm=$1;
 	$src=$2;
+	$dst=$3;
 	if ($dst =~ /%r([0-9]+)d/)	{ $dst = $1; }
 	elsif ($dst =~ /%e/)		{ $dst = $regrm{$dst}; }
 	rex(\@opcode,$src,$dst);
 	push @opcode,0x0f,0x3a,0x16;
 	push @opcode,0xc0|(($src&7)<<3)|($dst&7);	# ModR/M
 	push @opcode,$imm;
-	printf "\t.byte\t%s\n",join(',',@opcode);
+	@opcode;
     } else {
-	printf "\tpextrd\t%s\n",join(',',@_);
+	();
     }
-} if ($gas);
+};
 
 my $pinsrd = sub {
-  my ($imm,$src,$dst) = @_;
-    if ("$imm:$dst" =~ /\$([0-9]+):%xmm([0-9]+)/) {
+    if (shift =~ /\$([0-9]+),(%\w+),%xmm([0-9]+)/) {
       my @opcode=(0x66);
 	$imm=$1;
-	$dst=$2;
+	$src=$2;
+	$dst=$3;
 	if ($src =~ /%r([0-9]+)d/)	{ $src = $1; }
 	elsif ($src =~ /%e/)		{ $src = $regrm{$src}; }
 	rex(\@opcode,$dst,$src);
 	push @opcode,0x0f,0x3a,0x22;
 	push @opcode,0xc0|(($dst&7)<<3)|($src&7);	# ModR/M
 	push @opcode,$imm;
-	printf "\t.byte\t%s\n",join(',',@opcode);
+	@opcode;
     } else {
-	printf "\tpinsrd\t%s\n",join(',',@_);
+	();
     }
-} if ($gas);
+};
 
 my $pshufb = sub {
-  my ($src,$dst) = @_;
-    if ("$dst:$src" =~ /%xmm([0-9]+):%xmm([0-9]+)/) {
+    if (shift =~ /%xmm([0-9]+),%xmm([0-9]+)/) {
       my @opcode=(0x66);
-	rex(\@opcode,$1,$2);
+	rex(\@opcode,$2,$1);
 	push @opcode,0x0f,0x38,0x00;
-	push @opcode,0xc0|($2&7)|(($1&7)<<3);	# ModR/M
-	printf "\t.byte\t%s\n",join(',',@opcode);
+	push @opcode,0xc0|($1&7)|(($2&7)<<3);		# ModR/M
+	@opcode;
     } else {
-	printf "\tpshufb\t%s\n",join(',',@_);
+	();
     }
-} if ($gas);
+};
 
 if ($nasm) {
     print <<___;
 default	rel
+%define XMMWORD
 ___
 } elsif ($masm) {
     print <<___;
@@ -706,14 +706,22 @@ while($line=<>) {
 
     undef $label;
     undef $opcode;
-    undef $sz;
     undef @args;
 
     if ($label=label->re(\$line))	{ print $label->out(); }
 
     if (directive->re(\$line)) {
 	printf "%s",directive->out();
-    } elsif ($opcode=opcode->re(\$line)) { ARGUMENT: while (1) {
+    } elsif ($opcode=opcode->re(\$line)) {
+	my $asm = eval("\$".$opcode->mnemonic());
+	undef @bytes;
+	
+	if ((ref($asm) eq 'CODE') && scalar(@bytes=&$asm($line))) {
+	    print $gas?".byte\t":"DB\t",join(',',@bytes),"\n";
+	    next;
+	}
+
+	ARGUMENT: while (1) {
 	my $arg;
 
 	if ($arg=register->re(\$line))	{ opcode->size($arg->size()); }
@@ -729,22 +737,21 @@ while($line=<>) {
 	$line =~ s/^,\s*//;
 	} # ARGUMENT:
 
-	$sz=opcode->size();
-
 	if ($#args>=0) {
 	    my $insn;
+	    my $sz=opcode->size();
+
 	    if ($gas) {
 		$insn = $opcode->out($#args>=1?$args[$#args]->size():$sz);
 		@args = map($_->out($sz),@args);
-		my $asm = eval("\$$insn");
-		if (ref($asm) eq 'CODE') { &$asm(@args); }
-		else { printf "\t%s\t%s",$insn,join(",",@args); }
+		printf "\t%s\t%s",$insn,join(",",@args);
 	    } else {
 		$insn = $opcode->out();
 		foreach (@args) {
 		    my $arg = $_->out();
-		    if ($arg =~ /xmm/) { $insn.=$sz; $sz="o"; last; }
-		    if ($arg =~ /mm/)  { $insn.=$sz; $sz="q"; last; }
+		    # $insn.=$sz compensates for movq, pinsrw, ...
+		    if ($arg =~ /^xmm[0-9]+$/) { $insn.=$sz; $sz="x" if(!$sz); last; }
+		    if ($arg =~ /^mm[0-9]+$/)  { $insn.=$sz; $sz="q" if(!$sz); last; }
 		}
 		@args = reverse(@args);
 		undef $sz if ($nasm && $opcode->mnemonic() eq "lea");
