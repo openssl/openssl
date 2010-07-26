@@ -401,55 +401,10 @@ static int aesni_counter(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		const unsigned char *in, size_t len)
 {
 	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
-	u32 n, ctr32;
-	n = ctx->num;
 
-	while (n && len) {
-		*(out++) = *(in++) ^ ctx->buf[n];
-		--len;
-		n = (n+1) % 16;
-	}
-
-	ctr32 = GETU32(ctx->iv+12);
-	while (len>=16) {
-		size_t blocks = len/16;
-		/*
-		 * 1<<24 is just a not-so-small yet not-so-large number...
-		 */
-		if (blocks > (1U<<24)) blocks = (1U<<24);
-		/*
-		 * As aesni_ctr32 operates on 32-bit counter, caller
-		 * has to handle overflow. 'if' below detects the
-		 * overflow, which is then handled by limiting the
-		 * amount of blocks to the exact overflow point...
-		 */
-		ctr32 += (u32)blocks;
-		if (ctr32 < blocks) {
-			blocks -= ctr32;
-			ctr32   = 0;
-		}
-		aesni_ctr32_encrypt_blocks(in,out,blocks,key,ctx->iv);
-		/* aesni_ctr32 does not update ctx->iv, caller does: */
-		PUTU32(ctx->iv+12,ctr32);
-		/* ... overflow was detected, propogate carry. */
-		if (ctr32 == 0)	ctr96_inc(ctx->iv);
-		blocks *= 16;
-		len -= blocks;
-		out += blocks;
-		in  += blocks;
-	}
-	if (len) {
-		aesni_encrypt(ctx->iv,ctx->buf,key);
-		++ctr32;
-		PUTU32(ctx->iv+12,ctr32);
-		if (ctr32 == 0)	ctr96_inc(ctx->iv);
-		while (len--) {
-			out[n] = in[n] ^ ctx->buf[n];
-			++n;
-		}
-	}
-	ctx->num = n;
-
+	CRYPTO_ctr128_encrypt_ctr32(in,out,len,key,
+				ctx->iv,ctx->buf,&ctx->num,
+				aesni_ctr32_encrypt_blocks);
 	return 1;
 }
 
