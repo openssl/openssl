@@ -1,3 +1,5 @@
+#!/usr/bin/env perl
+print <<___;
 .text
 
 .set	noat
@@ -123,3 +125,4 @@ OPENSSL_cleanse:
 	br	.Little
 .Ldone: ret	($26)
 .end	OPENSSL_cleanse
+___
