@@ -812,6 +812,12 @@ $len="ebx";
 
 &static_label("bswap");
 
+sub pclmulqdq
+{ my($dst,$src,$imm)=@_;
+    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
+    {	&data_byte(0x66,0x0f,0x3a,0x44,0xc0|($1<<3)|$2,$imm);	}
+}
+
 sub clmul64x64_T2 {	# minimal "register" pressure
 my ($Xhi,$Xi,$Hkey)=@_;
 

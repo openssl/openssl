@@ -59,6 +59,23 @@ $rndkey1="xmm4";
 $ivec="xmm5";
 $in0="xmm6";
 $in1="xmm7";	$inout3="xmm7";
+
+# AESNI extenstion
+sub aeskeygenassist
+{ my($dst,$src,$imm)=@_;
+    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
+    {	&data_byte(0x66,0x0f,0x3a,0xdf,0xc0|($1<<3)|$2,$imm);	}
+}
+sub aescommon
+{ my($opcodelet,$dst,$src)=@_;
+    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
+    {	&data_byte(0x66,0x0f,0x38,$opcodelet,0xc0|($1<<3)|$2);}
+}
+sub aesimc	{ aescommon(0xdb,@_); }
+sub aesenc	{ aescommon(0xdc,@_); }
+sub aesenclast	{ aescommon(0xdd,@_); }
+sub aesdec	{ aescommon(0xde,@_); }
+sub aesdeclast	{ aescommon(0xdf,@_); }
 
 # Inline version of internal aesni_[en|de]crypt1
 { my $sn;
@@ -66,7 +83,7 @@ sub aesni_inline_generate1
 { my ($p,$inout)=@_; $inout=$inout0 if (!defined($inout));
   $sn++;
 
-    &$movekey		($rndkey0,&QWP(0,$key));
+    &movdqu		($rndkey0,&QWP(0,$key));
     &$movekey		($rndkey1,&QWP(16,$key));
     &lea		($key,&DWP(32,$key));
     &pxor		($inout,$rndkey0);
@@ -83,7 +100,7 @@ sub aesni_generate1	# fully unrolled loop
 { my ($p,$inout)=@_; $inout=$inout0 if (!defined($inout));
 
     &function_begin_B("_aesni_${p}rypt1");
-	&$movekey	($rndkey0,&QWP(0,$key));
+	&movdqu		($rndkey0,&QWP(0,$key));
 	&$movekey	($rndkey1,&QWP(0x10,$key));
 	&pxor		($inout,$rndkey0);
 	&$movekey	($rndkey0,&QWP(0x20,$key));
@@ -130,7 +147,7 @@ sub aesni_generate1	# fully unrolled loop
 &function_begin_B("${PREFIX}_encrypt");
 	&mov	("eax",&wparam(0));
 	&mov	($key,&wparam(2));
-	&movups	($inout0,&QWP(0,"eax"));
+	&movdqu	($inout0,&QWP(0,"eax"));
 	&mov	($rounds,&DWP(240,$key));
 	&mov	("eax",&wparam(1));
 	if ($inline)
@@ -146,7 +163,7 @@ sub aesni_generate1	# fully unrolled loop
 &function_begin_B("${PREFIX}_decrypt");
 	&mov	("eax",&wparam(0));
 	&mov	($key,&wparam(2));
-	&movups	($inout0,&QWP(0,"eax"));
+	&movdqu	($inout0,&QWP(0,"eax"));
 	&mov	($rounds,&DWP(240,$key));
 	&mov	("eax",&wparam(1));
 	if ($inline)

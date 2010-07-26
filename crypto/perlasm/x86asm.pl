@@ -107,31 +107,6 @@ sub ::pshufb
     {	&::generic("pshufb",@_);		}
 }
 
-# AESNI extenstion
-sub ::aeskeygenassist
-{ my($dst,$src,$imm)=@_;
-    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
-    {	&::data_byte(0x66,0x0f,0x3a,0xdf,0xc0|($1<<3)|$2,$imm);	}
-}
-sub ::aescommon
-{ my($opcodelet,$dst,$src)=@_;
-    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
-    {	&::data_byte(0x66,0x0f,0x38,$opcodelet,0xc0|($1<<3)|$2);}
-}
-sub ::aesimc		{ ::aescommon(0xdb,@_); }
-sub ::aesenc		{ ::aescommon(0xdc,@_); }
-sub ::aesenclast	{ ::aescommon(0xdd,@_); }
-sub ::aesdec		{ ::aescommon(0xde,@_); }
-sub ::aesdeclast	{ ::aescommon(0xdf,@_); }
-
-sub ::pclmulqdq
-{ my($dst,$src,$imm)=@_;
-    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
-    {	&::data_byte(0x66,0x0f,0x3a,0x44,0xc0|($1<<3)|$2,$imm);	}
-    else
-    {	&::generic("pclmulqdq",@_);		}
-}
-
 # label management
 $lbdecor="L";		# local label decoration, set by package
 $label="000";
