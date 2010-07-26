@@ -682,7 +682,7 @@ int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
 	}
 
 int CMS_decrypt_set1_password(CMS_ContentInfo *cms, 
-				unsigned char *pass, ssize_t passlen)
+				unsigned char *pass, ossl_ssize_t passlen)
 	{
 	STACK_OF(CMS_RecipientInfo) *ris;
 	CMS_RecipientInfo *ri;

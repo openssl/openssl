@@ -4,6 +4,11 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Use type ossl_ssize_t instad of ssize_t which isn't available on
+     all platforms. Move ssize_t definition from e_os.h to the public
+     header file e_os2.h as it now appears in public header file cms.h
+     [Steve Henson]
+
   *) New function OPENSSL_gmtime_diff to find the difference in days
      and seconds between two tm structures. This will be used to provide
      additional functionality for ASN1_TIME.
