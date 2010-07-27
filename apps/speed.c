@@ -1777,7 +1777,7 @@ int MAIN(int argc, char **argv)
 	if (doit[D_GHASH])
 		{
 		GCM128_CONTEXT *ctx = CRYPTO_gcm128_new(&aes_ks1,(block128_f)AES_encrypt);
-		CRYPTO_gcm128_setiv (ctx,"0123456789ab",12);
+		CRYPTO_gcm128_setiv (ctx,(unsigned char *)"0123456789ab",12);
 
 		for (j=0; j<SIZE_NUM; j++)
 			{
