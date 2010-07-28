@@ -343,6 +343,9 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -tlsextdebug      - hex dump of all TLS extensions received\n");
 	BIO_printf(bio_err," -status           - request certificate status from server\n");
 	BIO_printf(bio_err," -no_ticket        - disable use of RFC4507bis session tickets\n");
+# ifndef OPENSSL_NO_NPN
+	BIO_printf(bio_err," -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
+# endif
 #endif
 	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
 	}
@@ -367,6 +370,40 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	
 	return SSL_TLSEXT_ERR_OK;
 	}
+
+# ifndef OPENSSL_NO_NPN
+/* This the context that we pass to next_proto_cb */
+typedef struct tlsextnextprotoctx_st {
+	unsigned char *data;
+	unsigned short len;
+	int status;
+} tlsextnextprotoctx;
+
+static tlsextnextprotoctx next_proto;
+
+static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, const unsigned char *in, unsigned int inlen, void *arg)
+	{
+	tlsextnextprotoctx *ctx = arg;
+
+	if (!c_quiet)
+		{
+		/* We can assume that |in| is syntactically valid. */
+		unsigned i;
+		BIO_printf(bio_c_out, "Protocols advertised by server: ");
+		for (i = 0; i < inlen; )
+			{
+			if (i)
+				BIO_write(bio_c_out, ", ", 2);
+			BIO_write(bio_c_out, &in[i + 1], in[i]);
+			i += in[i] + 1;
+			}
+		BIO_write(bio_c_out, "\n", 1);
+		}
+
+	ctx->status = SSL_select_next_proto(out, outlen, in, inlen, ctx->data, ctx->len);
+	return SSL_TLSEXT_ERR_OK;
+	}
+# endif  /* ndef OPENSSL_NO_NPN */
 #endif
 
 enum
@@ -430,6 +467,9 @@ int MAIN(int argc, char **argv)
 	char *servername = NULL; 
         tlsextctx tlsextcbp = 
         {NULL,0};
+# ifndef OPENSSL_NO_NPN
+	const char *next_proto_neg_in = NULL;
+# endif
 #endif
 	char *sess_in = NULL;
 	char *sess_out = NULL;
@@ -661,6 +701,13 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_TLSEXT
 		else if	(strcmp(*argv,"-no_ticket") == 0)
 			{ off|=SSL_OP_NO_TICKET; }
+# ifndef OPENSSL_NO_NPN
+		else if (strcmp(*argv,"-nextprotoneg") == 0)
+			{
+			if (--argc < 1) goto bad;
+			next_proto_neg_in = *(++argv);
+			}
+# endif
 #endif
 		else if (strcmp(*argv,"-serverpref") == 0)
 			off|=SSL_OP_CIPHER_SERVER_PREFERENCE;
@@ -766,6 +813,21 @@ bad:
 
 	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
+
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+	next_proto.status = -1;
+	if (next_proto_neg_in)
+		{
+		next_proto.data = next_protos_parse(&next_proto.len, next_proto_neg_in);
+		if (next_proto.data == NULL)
+			{
+			BIO_printf(bio_err, "Error parsing -nextprotoneg argument\n");
+			goto end;
+			}
+		}
+	else
+		next_proto.data = NULL;
+#endif
 
 #ifndef OPENSSL_NO_ENGINE
         e = setup_engine(bio_err, engine_id, 1);
@@ -887,6 +949,11 @@ bad:
 	 * Setting read ahead solves this problem.
 	 */
 	if (socket_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
+
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+	if (next_proto.data)
+		SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
+#endif
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
 	if (cipher != NULL)
@@ -1747,6 +1814,18 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	BIO_printf(bio,"Expansion: %s\n",
 		expansion ? SSL_COMP_get_name(expansion) : "NONE");
 #endif
+
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+	if (next_proto.status != -1) {
+		const unsigned char *proto;
+		unsigned int proto_len;
+		SSL_get0_next_proto_negotiated(s, &proto, &proto_len);
+		BIO_printf(bio, "Next protocol: (%d) ", next_proto.status);
+		BIO_write(bio, proto, proto_len);
+		BIO_write(bio, "\n", 1);
+	}
+#endif
+
 	SSL_SESSION_print(bio,SSL_get_session(s));
 	BIO_printf(bio,"---\n");
 	if (peer != NULL)

@@ -2230,6 +2230,15 @@ void ssl3_clear(SSL *s)
 	s->s3->num_renegotiations=0;
 	s->s3->in_read_app_data=0;
 	s->version=SSL3_VERSION;
+
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+	if (s->next_proto_negotiated)
+		{
+		OPENSSL_free(s->next_proto_negotiated);
+		s->next_proto_negotiated = NULL;
+		s->next_proto_negotiated_len = 0;
+		}
+#endif
 	}
 
 long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)

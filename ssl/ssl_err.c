@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -155,6 +155,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL3_GET_KEY_EXCHANGE),	"SSL3_GET_KEY_EXCHANGE"},
 {ERR_FUNC(SSL_F_SSL3_GET_MESSAGE),	"SSL3_GET_MESSAGE"},
 {ERR_FUNC(SSL_F_SSL3_GET_NEW_SESSION_TICKET),	"SSL3_GET_NEW_SESSION_TICKET"},
+{ERR_FUNC(SSL_F_SSL3_GET_NEXT_PROTO),	"SSL3_GET_NEXT_PROTO"},
 {ERR_FUNC(SSL_F_SSL3_GET_RECORD),	"SSL3_GET_RECORD"},
 {ERR_FUNC(SSL_F_SSL3_GET_SERVER_CERTIFICATE),	"SSL3_GET_SERVER_CERTIFICATE"},
 {ERR_FUNC(SSL_F_SSL3_GET_SERVER_DONE),	"SSL3_GET_SERVER_DONE"},
@@ -355,6 +356,8 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_EXCESSIVE_MESSAGE_SIZE),"excessive message size"},
 {ERR_REASON(SSL_R_EXTRA_DATA_IN_MESSAGE) ,"extra data in message"},
 {ERR_REASON(SSL_R_GOT_A_FIN_BEFORE_A_CCS),"got a fin before a ccs"},
+{ERR_REASON(SSL_R_GOT_NEXT_PROTO_BEFORE_A_CCS),"got next proto before a ccs"},
+{ERR_REASON(SSL_R_GOT_NEXT_PROTO_WITHOUT_EXTENSION),"got next proto without seeing extension"},
 {ERR_REASON(SSL_R_HTTPS_PROXY_REQUEST)   ,"https proxy request"},
 {ERR_REASON(SSL_R_HTTP_REQUEST)          ,"http request"},
 {ERR_REASON(SSL_R_ILLEGAL_PADDING)       ,"illegal padding"},

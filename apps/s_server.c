@@ -493,9 +493,12 @@ static void sv_usage(void)
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT2);
 	BIO_printf(bio_err," -key2 arg     - Private Key file to use for servername, in cert file if\n");
 	BIO_printf(bio_err,"                 not specified (default is %s)\n",TEST_CERT2);
+# ifndef OPENSSL_NO_NPN
 	BIO_printf(bio_err," -tlsextdebug  - hex dump of all TLS extensions received\n");
+# endif
 	BIO_printf(bio_err," -no_ticket    - disable use of RFC4507bis session tickets\n");
 	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
+	BIO_printf(bio_err," -nextprotoneg arg - set the advertised protocols for the NPN extension (comma-separated list)\n");
 #endif
 	}
 
@@ -830,6 +833,24 @@ BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
 	ret = SSL_TLSEXT_ERR_ALERT_FATAL;
 	goto done;
 	}
+
+# ifndef OPENSSL_NO_NPN
+/* This is the context that we pass to next_proto_cb */
+typedef struct tlsextnextprotoctx_st {
+	unsigned char *data;
+	unsigned int len;
+} tlsextnextprotoctx;
+
+static int next_proto_cb(SSL *s, const unsigned char **data, unsigned int *len, void *arg)
+	{
+	tlsextnextprotoctx *next_proto = arg;
+
+	*data = next_proto->data;
+	*len = next_proto->len;
+
+	return SSL_TLSEXT_ERR_OK;
+	}
+# endif  /* ndef OPENSSL_NO_NPN */
 #endif
 
 int MAIN(int, char **);
@@ -871,6 +892,10 @@ int MAIN(int argc, char *argv[])
 #endif
 #ifndef OPENSSL_NO_TLSEXT
         tlsextctx tlsextcbp = {NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING};
+# ifndef OPENSSL_NO_NPN
+	const char *next_proto_neg_in = NULL;
+	tlsextnextprotoctx next_proto;
+# endif
 #endif
 #ifndef OPENSSL_NO_PSK
 	/* by default do not send a PSK identity hint */
@@ -1201,7 +1226,13 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			s_key_file2= *(++argv);
 			}
-			
+# ifndef OPENSSL_NO_NPN
+		else if	(strcmp(*argv,"-nextprotoneg") == 0)
+			{
+			if (--argc < 1) goto bad;
+			next_proto_neg_in = *(++argv);
+			}
+# endif
 #endif
 #if !defined(OPENSSL_NO_JPAKE) && !defined(OPENSSL_NO_PSK)
 		else if (strcmp(*argv,"-jpake") == 0)
@@ -1306,6 +1337,21 @@ bad:
 				goto end;
 				}
 			}
+# ifndef OPENSSL_NO_NPN
+		if (next_proto_neg_in)
+			{
+			unsigned short len;
+			next_proto.data = next_protos_parse(&len,
+				next_proto_neg_in);
+			if (next_proto.data == NULL)
+				goto end;
+			next_proto.len = len;
+			}
+		else
+			{
+			next_proto.data = NULL;
+			}
+# endif
 #endif
 		}
 
@@ -1490,6 +1536,11 @@ bad:
 		if (vpm)
 			SSL_CTX_set1_param(ctx2, vpm);
 		}
+
+# ifndef OPENSSL_NO_NPN
+	if (next_proto.data)
+		SSL_CTX_set_next_protos_advertised_cb(ctx, next_proto_cb, &next_proto);
+# endif
 #endif 
 
 #ifndef OPENSSL_NO_DH
@@ -2174,6 +2225,10 @@ static int init_ssl_connection(SSL *con)
 	X509 *peer;
 	long verify_error;
 	MS_STATIC char buf[BUFSIZ];
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+	const unsigned char *next_proto_neg;
+	unsigned next_proto_neg_len;
+#endif
 
 	if ((i=SSL_accept(con)) <= 0)
 		{
@@ -2213,6 +2268,15 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+	SSL_get0_next_proto_negotiated(con, &next_proto_neg, &next_proto_neg_len);
+	if (next_proto_neg)
+		{
+		BIO_printf(bio_s_out,"NEXTPROTO is ");
+		BIO_write(bio_s_out, next_proto_neg, next_proto_neg_len);
+		BIO_printf(bio_s_out, "\n");
+		}
+#endif
 	if (con->hit) BIO_printf(bio_s_out,"Reused session-id\n");
 	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
 		TLS1_FLAGS_TLS_PADDING_BUG)

@@ -4,6 +4,12 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Add Next Protocol Negotiation,
+     http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-00. Can be
+     disabled with a no-npn flag to config or Configure. Code donated
+     by Google.
+     [Adam Langley <agl@google.com> and Ben Laurie]
+
   *) Use type ossl_ssize_t instad of ssize_t which isn't available on
      all platforms. Move ssize_t definition from e_os.h to the public
      header file e_os2.h as it now appears in public header file cms.h

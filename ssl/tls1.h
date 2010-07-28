@@ -208,6 +208,11 @@ extern "C" {
 /* Temporary extension type */
 #define TLSEXT_TYPE_renegotiate                 0xff01
 
+#ifndef OPENSSL_NO_NPN
+/* This is not an IANA defined extension number */
+#define TLSEXT_TYPE_next_proto_neg		13172
+#endif
+
 /* NameType value from RFC 3546 */
 #define TLSEXT_NAMETYPE_host_name 0
 /* status request value from RFC 3546 */
