@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-print <<___;
+print <<'___';
 .text
 
 .set	noat
