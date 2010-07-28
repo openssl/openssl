@@ -122,7 +122,7 @@ static int aes_counter (EVP_CIPHER_CTX *ctx, unsigned char *out,
 static const EVP_CIPHER aes_128_ctr_cipher=
 	{
 	NID_aes_128_ctr,1,16,16,
-	EVP_CIPH_CUSTOM_IV,
+	EVP_CIPH_CTR_MODE,
 	aes_init_key,
 	aes_counter,
 	NULL,
@@ -139,7 +139,7 @@ const EVP_CIPHER *EVP_aes_128_ctr (void)
 static const EVP_CIPHER aes_192_ctr_cipher=
 	{
 	NID_aes_192_ctr,1,24,16,
-	EVP_CIPH_CUSTOM_IV,
+	EVP_CIPH_CTR_MODE,
 	aes_init_key,
 	aes_counter,
 	NULL,
@@ -156,7 +156,7 @@ const EVP_CIPHER *EVP_aes_192_ctr (void)
 static const EVP_CIPHER aes_256_ctr_cipher=
 	{
 	NID_aes_256_ctr,1,32,16,
-	EVP_CIPH_CUSTOM_IV,
+	EVP_CIPH_CTR_MODE,
 	aes_init_key,
 	aes_counter,
 	NULL,
@@ -186,16 +186,6 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		{
 		EVPerr(EVP_F_AES_INIT_KEY,EVP_R_AES_KEY_SETUP_FAILED);
 		return 0;
-		}
-
-	if (ctx->cipher->flags&EVP_CIPH_CUSTOM_IV)
-		{
-		if (iv!=NULL)
-			memcpy (ctx->iv,iv,ctx->cipher->iv_len);
-		else	{
-			EVPerr(EVP_F_AES_INIT_KEY,EVP_R_AES_IV_SETUP_FAILED);
-			return 0;
-			}
 		}
 
 	return 1;
