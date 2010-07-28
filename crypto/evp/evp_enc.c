@@ -206,14 +206,17 @@ skip_to_init:
 			ctx->num = 0;
 
 			case EVP_CIPH_CBC_MODE:
-			case EVP_CIPH_CTR_MODE:
 
 			OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) <=
 					(int)sizeof(ctx->iv));
 			if(iv) memcpy(ctx->oiv, iv, EVP_CIPHER_CTX_iv_length(ctx));
+			memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
+			break;
+
+			case EVP_CIPH_CTR_MODE:
 			/* Don't reuse IV for CTR mode */
-			if (EVP_CIPHER_CTX_mode(ctx) != EVP_CIPH_CTR_MODE)
-				memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
+			if(iv)
+				memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
 			break;
 
 			default:
