@@ -1092,6 +1092,171 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 	ctx->res = n;
 }
 
+void CRYPTO_gcm128_encrypt_crt32(GCM128_CONTEXT *ctx,
+		const unsigned char *in, unsigned char *out,
+		size_t len, ctr128_f stream)
+{
+	const union { long one; char little; } is_endian = {1};
+	unsigned int n, ctr;
+	size_t i;
+
+	ctx->len.u[1] += len;
+	n   = ctx->res;
+	if (is_endian.little)
+		ctr = GETU32(ctx->Yi.c+12);
+	else
+		ctr = ctx->Yi.d[3];
+
+	if (n) {
+		while (n && len) {
+			ctx->Xi.c[n] ^= *(out++) = *(in++)^ctx->EKi.c[n];
+			--len;
+			n = (n+1)%16;
+		}
+		if (n==0) GCM_MUL(ctx,Xi);
+		else {
+			ctx->res = n;
+			return;
+		}
+	}
+#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+	while (len>=GHASH_CHUNK) {
+		(*stream)(in,out,GHASH_CHUNK/16,ctx->key,ctx->Yi.c);
+		ctr += GHASH_CHUNK/16;
+		if (is_endian.little)
+			PUTU32(ctx->Yi.c+12,ctr);
+		else
+			ctx->Yi.d[3] = ctr;
+		GHASH(ctx,out,GHASH_CHUNK);
+		out += GHASH_CHUNK;
+		in  += GHASH_CHUNK;
+		len -= GHASH_CHUNK;
+	}
+#endif
+	if ((i = (len&(size_t)-16))) {
+		size_t j=i/16;
+
+		(*stream)(in,out,j,ctx->key,ctx->Yi.c);
+		ctr += j;
+		if (is_endian.little)
+			PUTU32(ctx->Yi.c+12,ctr);
+		else
+			ctx->Yi.d[3] = ctr;
+		in  += i;
+		len -= i;
+#if defined(GHASH)
+		GHASH(ctx,out,i);
+		out += i;
+#else
+		while (j--) {
+			for (i=0;i<16;++i) ctx->Xi.c[i] ^= out[i];
+			GCM_MUL(ctx,Xi);
+			out += 16;
+		}
+#endif
+	}
+	if (len) {
+		(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
+		++ctr;
+		if (is_endian.little)
+			PUTU32(ctx->Yi.c+12,ctr);
+		else
+			ctx->Yi.d[3] = ctr;
+		while (len--) {
+			ctx->Xi.c[n] ^= out[n] = in[n]^ctx->EKi.c[n];
+			++n;
+		}
+	}
+
+	ctx->res = n;
+}
+
+void CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
+		const unsigned char *in, unsigned char *out,
+		size_t len,ctr128_f stream)
+{
+	const union { long one; char little; } is_endian = {1};
+	unsigned int n, ctr;
+	size_t i;
+
+	ctx->len.u[1] += len;
+	n   = ctx->res;
+	if (is_endian.little)
+		ctr = GETU32(ctx->Yi.c+12);
+	else
+		ctr = ctx->Yi.d[3];
+
+	if (n) {
+		while (n && len) {
+			u8 c = *(in++);
+			*(out++) = c^ctx->EKi.c[n];
+			ctx->Xi.c[n] ^= c;
+			--len;
+			n = (n+1)%16;
+		}
+		if (n==0) GCM_MUL (ctx,Xi);
+		else {
+			ctx->res = n;
+			return;
+		}
+	}
+#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
+	while (len>=GHASH_CHUNK) {
+		GHASH(ctx,in,GHASH_CHUNK);
+		(*stream)(in,out,GHASH_CHUNK/16,ctx->key,ctx->Yi.c);
+		ctr += GHASH_CHUNK/16;
+		if (is_endian.little)
+			PUTU32(ctx->Yi.c+12,ctr);
+		else
+			ctx->Yi.d[3] = ctr;
+		out += GHASH_CHUNK;
+		in  += GHASH_CHUNK;
+		len -= GHASH_CHUNK;
+	}
+#endif
+	if ((i = (len&(size_t)-16))) {
+		size_t j=i/16;
+
+#if defined(GHASH)
+		GHASH(ctx,in,i);
+#else
+		while (j--) {
+			size_t k;
+			for (k=0;k<16;++k) ctx->Xi.c[k] ^= in[k];
+			GCM_MUL(ctx,Xi);
+			in += 16;
+		}
+		j   = i/16;
+		in -= i;
+#endif
+		(*stream)(in,out,j,ctx->key,ctx->Yi.c);
+		ctr += j;
+		if (is_endian.little)
+			PUTU32(ctx->Yi.c+12,ctr);
+		else
+			ctx->Yi.d[3] = ctr;
+		out += i;
+		in  += i;
+		len -= i;
+	}
+	if (len) {
+		(*ctx->block)(ctx->Yi.c,ctx->EKi.c,ctx->key);
+		++ctr;
+		if (is_endian.little)
+			PUTU32(ctx->Yi.c+12,ctr);
+		else
+			ctx->Yi.d[3] = ctr;
+		while (len--) {
+			u8 c = in[n];
+			ctx->Xi.c[n] ^= c;
+			out[n] = c^ctx->EKi.c[n];
+			++n;
+		}
+	}
+
+	ctx->res = n;
+}
+
 int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
 			size_t len)
 {
