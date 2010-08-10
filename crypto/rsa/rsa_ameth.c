@@ -588,7 +588,11 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
 		if (saltlen == -1)
 			saltlen = EVP_MD_size(sigmd);
 		else if (saltlen == -2)
+			{
 			saltlen = EVP_PKEY_size(pk) - EVP_MD_size(sigmd) - 2;
+			if (((EVP_PKEY_bits(pk) - 1) & 0x7) == 0)
+				saltlen--;
+			}
 		pss = RSA_PSS_PARAMS_new();
 		if (!pss)
 			goto err;
