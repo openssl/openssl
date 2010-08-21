@@ -54,7 +54,7 @@ ghash-sparcv9.s:	asm/ghash-sparcv9.pl
 ghash-alpha.s:	asm/ghash-alpha.pl
 	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
 ghash-parisc.s:	asm/ghash-parisc.pl
-	$($PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
+	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
 
 # GNU make "catch all"
 ghash-%.s:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
