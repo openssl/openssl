@@ -1092,7 +1092,7 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 	ctx->res = n;
 }
 
-void CRYPTO_gcm128_encrypt_crt32(GCM128_CONTEXT *ctx,
+void CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 		const unsigned char *in, unsigned char *out,
 		size_t len, ctr128_f stream)
 {
