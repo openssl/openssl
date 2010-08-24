@@ -8,7 +8,7 @@
 #set -x
 
 CONFIG_OPTIONS="--prefix=/usr shared zlib no-idea no-rc5"
-INSTALL_PREFIX=/tmp/install
+INSTALL_PREFIX=/tmp/install/INSTALL
 
 VERSION=
 SUBVERSION=$1
@@ -124,8 +124,12 @@ strip usr/bin/*.exe usr/bin/*.dll usr/lib/engines/*.so
 chmod u-w usr/lib/engines/*.so
 
 # Runtime package
-find etc usr/bin usr/lib/engines usr/share/doc usr/ssl/certs \
-     usr/ssl/man/man[157] usr/ssl/misc usr/ssl/openssl.cnf usr/ssl/private \
+tar cjf libopenssl${VERSION//[!0-9]/}-${VERSION}-${SUBVERSION}.tar.bz2 \
+     usr/bin/cyg*dll
+# Base package
+find etc usr/bin/openssl.exe usr/bin/c_rehash usr/lib/engines usr/share/doc \
+     usr/ssl/certs usr/ssl/man/man[157] usr/ssl/misc usr/ssl/openssl.cnf \
+     usr/ssl/private \
      -empty -o \! -type d |
 tar cjfT openssl-${VERSION}-${SUBVERSION}.tar.bz2 -
 # Development package
@@ -135,6 +139,7 @@ tar cjfT openssl-devel-${VERSION}-${SUBVERSION}.tar.bz2 -
 
 ls -l openssl-${VERSION}-${SUBVERSION}.tar.bz2
 ls -l openssl-devel-${VERSION}-${SUBVERSION}.tar.bz2
+ls -l libopenssl${VERSION//[!0-9]/}-${VERSION}-${SUBVERSION}.tar.bz2
 
 cleanup
 
