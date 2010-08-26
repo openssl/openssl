@@ -158,6 +158,7 @@ const EC_METHOD *EC_GFp_nist_method(void);
 const EC_METHOD *EC_GFp_nistp224_method(void);
 #endif
 
+
 /********************************************************************/ 
 /*           EC_METHOD for curves over GF(2^m)                      */
 /********************************************************************/
