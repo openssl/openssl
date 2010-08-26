@@ -218,7 +218,7 @@ int ssl3_accept(SSL *s)
 		switch (s->state)
 			{
 		case SSL_ST_RENEGOTIATE:
-			s->new_session=1;
+			s->renegotiate=1;
 			/* s->state=SSL_ST_ACCEPT; */
 
 		case SSL_ST_BEFORE:
@@ -316,7 +316,7 @@ int ssl3_accept(SSL *s)
 			ret=ssl3_get_client_hello(s);
 			if (ret <= 0) goto end;
 			
-			s->new_session = 2;
+			s->renegotiate = 2;
 			s->state=SSL3_ST_SW_SRVR_HELLO_A;
 			s->init_num=0;
 			break;
@@ -706,11 +706,12 @@ int ssl3_accept(SSL *s)
 
 			s->init_num=0;
 
-			if (s->new_session == 2) /* skipped if we just sent a HelloRequest */
+			if (s->renegotiate == 2) /* skipped if we just sent a HelloRequest */
 				{
 				/* actually not necessarily a 'new' session unless
 				 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
 				
+				s->renegotiate=0;
 				s->new_session=0;
 				
 				ssl_update_cache(s,SSL_SESS_CACHE_SERVER);

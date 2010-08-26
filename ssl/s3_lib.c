@@ -2226,6 +2226,7 @@ void ssl3_clear(SSL *s)
 
 	s->packet_length=0;
 	s->s3->renegotiate=0;
+	s->s3->new_session=0;
 	s->s3->total_renegotiations=0;
 	s->s3->num_renegotiations=0;
 	s->s3->in_read_app_data=0;

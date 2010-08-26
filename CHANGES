@@ -107,6 +107,10 @@
   
  Changes between 1.0.0a and 1.0.1  [xx XXX xxxx]
 
+  *) Permit abbreviated handshakes when renegotiating using the function
+     SSL_renegotiate_abbreviated().
+     [Robin Seggelmann <seggelmann@fh-muenster.de>]
+
   *) Add call to ENGINE_register_all_complete() to
      ENGINE_load_builtin_engines(), so some implementations get used
      automatically instead of needing explicit application support.

@@ -202,9 +202,9 @@ int SSL_clear(SSL *s)
        * needed because SSL_clear is not called when doing renegotiation) */
 	/* This is set if we are doing dynamic renegotiation so keep
 	 * the old cipher.  It is sort of a SSL_clear_lite :-) */
-	if (s->new_session) return(1);
+	if (s->renegotiate) return(1);
 #else
-	if (s->new_session)
+	if (s->renegotiate)
 		{
 		SSLerr(SSL_F_SSL_CLEAR,ERR_R_INTERNAL_ERROR);
 		return 0;
@@ -1016,18 +1016,29 @@ int SSL_shutdown(SSL *s)
 
 int SSL_renegotiate(SSL *s)
 	{
-	if (s->new_session == 0)
-		{
-		s->new_session=1;
-		}
+	if (s->renegotiate == 0)
+		s->renegotiate=1;
+
+	s->new_session=1;
+
 	return(s->method->ssl_renegotiate(s));
 	}
+
+int SSL_renegotiate_abbreviated(SSL *s)
+{
+	if (s->renegotiate == 0)
+		s->renegotiate=1;
+	
+	s->new_session=0;
+	
+	return(s->method->ssl_renegotiate(s));
+}
 
 int SSL_renegotiate_pending(SSL *s)
 	{
 	/* becomes true when negotiation is requested;
 	 * false again once a handshake has finished */
-	return (s->new_session != 0);
+	return (s->renegotiate != 0);
 	}
 
 long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
@@ -2649,6 +2660,7 @@ SSL *SSL_dup(SSL *s)
 	ret->in_handshake = s->in_handshake;
 	ret->handshake_func = s->handshake_func;
 	ret->server = s->server;
+	ret->renegotiate = s->renegotiate;
 	ret->new_session = s->new_session;
 	ret->quiet_shutdown = s->quiet_shutdown;
 	ret->shutdown=s->shutdown;
