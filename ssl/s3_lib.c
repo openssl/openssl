@@ -2226,7 +2226,6 @@ void ssl3_clear(SSL *s)
 
 	s->packet_length=0;
 	s->s3->renegotiate=0;
-	s->s3->new_session=0;
 	s->s3->total_renegotiations=0;
 	s->s3->num_renegotiations=0;
 	s->s3->in_read_app_data=0;
@@ -2545,6 +2544,11 @@ long ssl3_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
 					unsigned char *, int, void *))fp;
 		break;
 #endif
+	case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:
+		{
+		s->not_resumable_session_cb = (int (*)(SSL *, int))fp;
+		}
+		break;
 	default:
 		break;
 		}
@@ -2789,6 +2793,11 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		break;
 
 #endif
+	case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:
+		{
+		ctx->not_resumable_session_cb = (int (*)(SSL *, int))fp;
+		}
+		break;
 	default:
 		return(0);
 		}
@@ -3336,4 +3345,3 @@ need to go to SSL_ST_ACCEPT.
 		}
 	return(ret);
 	}
-
