@@ -107,10 +107,6 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 	EXIT(1); \
 } while (0)
 
-void prime_field_tests(void);
-void char2_field_tests(void);
-void internal_curve_test(void);
-
 #define TIMING_BASE_PT 0
 #define TIMING_RAND_PT 1
 #define TIMING_SIMUL 2
@@ -194,6 +190,48 @@ static void timings(EC_GROUP *group, int type, BN_CTX *ctx)
 		}
 	}
 #endif
+
+/* test multiplication with group order, long and negative scalars */
+static void group_order_tests(EC_GROUP *group)
+	{
+	BIGNUM *n1, *n2, *order;
+	EC_POINT *P = EC_POINT_new(group);
+	EC_POINT *Q = EC_POINT_new(group);
+	n1 = BN_new(); n2 = BN_new(); order = BN_new();
+	BN_CTX *ctx = BN_CTX_new();
+	fprintf(stdout, "verify group order ...");
+	fflush(stdout);
+	if (!EC_GROUP_get_order(group, order, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, order, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
+	fprintf(stdout, ".");
+	fflush(stdout);
+	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
+	if (!EC_POINT_mul(group, Q, order, NULL, NULL, ctx)) ABORT;
+	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
+	fprintf(stdout, " ok\n");
+	fprintf(stdout, "long/negative scalar tests ... ");
+	if (!BN_one(n1)) ABORT;
+	/* n1 = 1 - order */
+	if (!BN_sub(n1, n1, order)) ABORT;
+	if(!EC_POINT_mul(group, Q, NULL, P, n1, ctx)) ABORT;
+	if (0 != EC_POINT_cmp(group, Q, P, ctx)) ABORT;
+	/* n2 = 1 + order */
+	if (!BN_add(n2, order, BN_value_one())) ABORT;
+	if(!EC_POINT_mul(group, Q, NULL, P, n2, ctx)) ABORT;
+	if (0 != EC_POINT_cmp(group, Q, P, ctx)) ABORT;
+	/* n2 = (1 - order) * (1 + order) */
+	if (!BN_mul(n2, n1, n2, ctx)) ABORT;
+	if(!EC_POINT_mul(group, Q, NULL, P, n2, ctx)) ABORT;
+	if (0 != EC_POINT_cmp(group, Q, P, ctx)) ABORT;
+	fprintf(stdout, "ok\n");
+	EC_POINT_free(P);
+	EC_POINT_free(Q);
+	BN_free(n1);
+	BN_free(n2);
+	BN_free(order);
+	BN_CTX_free(ctx);
+	}
 
 void prime_field_tests()
 	{	
@@ -321,21 +359,21 @@ void prime_field_tests()
 	if (len == 0) ABORT;
 	if (!EC_POINT_oct2point(group, P, buf, len, ctx)) ABORT;
 	if (0 != EC_POINT_cmp(group, P, Q, ctx)) ABORT;
-	fprintf(stdout, "Generator as octect string, compressed form:\n     ");
+	fprintf(stdout, "Generator as octet string, compressed form:\n     ");
 	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
 	
 	len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_UNCOMPRESSED, buf, sizeof buf, ctx);
 	if (len == 0) ABORT;
 	if (!EC_POINT_oct2point(group, P, buf, len, ctx)) ABORT;
 	if (0 != EC_POINT_cmp(group, P, Q, ctx)) ABORT;
-	fprintf(stdout, "\nGenerator as octect string, uncompressed form:\n     ");
+	fprintf(stdout, "\nGenerator as octet string, uncompressed form:\n     ");
 	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
 	
 	len = EC_POINT_point2oct(group, Q, POINT_CONVERSION_HYBRID, buf, sizeof buf, ctx);
 	if (len == 0) ABORT;
 	if (!EC_POINT_oct2point(group, P, buf, len, ctx)) ABORT;
 	if (0 != EC_POINT_cmp(group, P, Q, ctx)) ABORT;
-	fprintf(stdout, "\nGenerator as octect string, hybrid form:\n     ");
+	fprintf(stdout, "\nGenerator as octet string, hybrid form:\n     ");
 	for (i = 0; i < len; i++) fprintf(stdout, "%02X", buf[i]);
 	
 	if (!EC_POINT_get_Jprojective_coordinates_GFp(group, R, x, y, z, ctx)) ABORT;
@@ -381,17 +419,7 @@ void prime_field_tests()
 	if (EC_GROUP_get_degree(group) != 160) ABORT;
 	fprintf(stdout, " ok\n");
 	
-	fprintf(stdout, "verify group order ...");
-	fflush(stdout);
-	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, ".");
-	fflush(stdout);
-	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, " ok\n");
+	group_order_tests(group);
 
 	if (!(P_160 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_160, group)) ABORT;
@@ -425,17 +453,7 @@ void prime_field_tests()
 	if (EC_GROUP_get_degree(group) != 192) ABORT;
 	fprintf(stdout, " ok\n");
 	
-	fprintf(stdout, "verify group order ...");
-	fflush(stdout);
-	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, ".");
-	fflush(stdout);
-	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, " ok\n");
+	group_order_tests(group);
 
 	if (!(P_192 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_192, group)) ABORT;
@@ -469,17 +487,7 @@ void prime_field_tests()
 	if (EC_GROUP_get_degree(group) != 224) ABORT;
 	fprintf(stdout, " ok\n");
 	
-	fprintf(stdout, "verify group order ...");
-	fflush(stdout);
-	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, ".");
-	fflush(stdout);
-	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, " ok\n");
+	group_order_tests(group);
 
 	if (!(P_224 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_224, group)) ABORT;
@@ -514,17 +522,7 @@ void prime_field_tests()
 	if (EC_GROUP_get_degree(group) != 256) ABORT;
 	fprintf(stdout, " ok\n");
 	
-	fprintf(stdout, "verify group order ...");
-	fflush(stdout);
-	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, ".");
-	fflush(stdout);
-	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, " ok\n");
+	group_order_tests(group);
 
 	if (!(P_256 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_256, group)) ABORT;
@@ -563,18 +561,8 @@ void prime_field_tests()
 	fprintf(stdout, "verify degree ...");
 	if (EC_GROUP_get_degree(group) != 384) ABORT;
 	fprintf(stdout, " ok\n");
-	
-	fprintf(stdout, "verify group order ...");
-	fflush(stdout);
-	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, ".");
-	fflush(stdout);
-	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, " ok\n");
+
+	group_order_tests(group);
 
 	if (!(P_384 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_384, group)) ABORT;
@@ -619,18 +607,8 @@ void prime_field_tests()
 	fprintf(stdout, "verify degree ...");
 	if (EC_GROUP_get_degree(group) != 521) ABORT;
 	fprintf(stdout, " ok\n");
-	
-	fprintf(stdout, "verify group order ...");
-	fflush(stdout);
-	if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, ".");
-	fflush(stdout);
-	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT;
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT;
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT;
-	fprintf(stdout, " ok\n");
+
+ 	group_order_tests(group);
 
 	if (!(P_521 = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT;
 	if (!EC_GROUP_copy(P_521, group)) ABORT;
@@ -659,6 +637,7 @@ void prime_field_tests()
 		points[2] = Q;
 		points[3] = Q;
 
+		if (!EC_GROUP_get_order(group, z, ctx)) ABORT;
 		if (!BN_add(y, z, BN_value_one())) ABORT;
 		if (BN_is_odd(y)) ABORT;
 		if (!BN_rshift1(y, y)) ABORT;
@@ -792,19 +771,10 @@ void prime_field_tests()
 	fprintf(stdout, "verify degree ..."); \
 	if (EC_GROUP_get_degree(group) != _degree) ABORT; \
 	fprintf(stdout, " ok\n"); \
-	fprintf(stdout, "verify group order ..."); \
-	fflush(stdout); \
-	if (!EC_GROUP_get_order(group, z, ctx)) ABORT; \
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT; \
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT; \
-	fprintf(stdout, "."); \
-	fflush(stdout); \
-	if (!EC_GROUP_precompute_mult(group, ctx)) ABORT; \
-	if (!EC_POINT_mul(group, Q, z, NULL, NULL, ctx)) ABORT; \
-	if (!EC_POINT_is_at_infinity(group, Q)) ABORT; \
-	fprintf(stdout, " ok\n"); \
+	group_order_tests(group); \
 	if (!(_variable = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT; \
-	if (!EC_GROUP_copy(_variable, group)) ABORT;
+	if (!EC_GROUP_copy(_variable, group)) ABORT; \
+
 
 void char2_field_tests()
 	{	
@@ -1287,12 +1257,113 @@ void internal_curve_test(void)
 		EC_GROUP_free(group);
 		}
 	if (ok)
-		fprintf(stdout, " ok\n");
+		fprintf(stdout, " ok\n\n");
 	else
-		fprintf(stdout, " failed\n");
+		fprintf(stdout, " failed\n\n");
 	OPENSSL_free(curves);
 	return;
 	}
+
+#ifdef EC_NISTP224_64_GCC_128
+void nistp224_test()
+	{
+	fprintf(stdout, "\nNIST curve P-224 (optimised implementation):\n");
+	BIGNUM *p, *a, *b, *x, *y, *n, *m, *order;
+	p = BN_new();
+	a = BN_new();
+	b = BN_new();
+	x = BN_new(); y = BN_new();
+	m = BN_new(); n = BN_new(); order = BN_new();
+	BN_CTX *ctx = BN_CTX_new();
+	EC_GROUP *NISTP224 = NULL;
+	NISTP224 = EC_GROUP_new(EC_GFp_nistp224_method());
+	if(!NISTP224) ABORT;
+	if (!BN_hex2bn(&p, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000000000000000000001")) ABORT;
+	if (1 != BN_is_prime_ex(p, BN_prime_checks, ctx, NULL)) ABORT;
+	if (!BN_hex2bn(&a, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFE")) ABORT;
+	if (!BN_hex2bn(&b, "B4050A850C04B3ABF54132565044B0B7D7BFD8BA270B39432355FFB4")) ABORT;
+	if (!EC_GROUP_set_curve_GFp(NISTP224, p, a, b, ctx)) ABORT;
+	EC_POINT *G = EC_POINT_new(NISTP224);
+	EC_POINT *P = EC_POINT_new(NISTP224);
+	EC_POINT *Q = EC_POINT_new(NISTP224);
+	EC_POINT *Q_CHECK = EC_POINT_new(NISTP224);
+	if(!BN_hex2bn(&x, "E84FB0B8E7000CB657D7973CF6B42ED78B301674276DF744AF130B3E")) ABORT;
+	if(!BN_hex2bn(&y, "4376675C6FC5612C21A0FF2D2A89D2987DF7A2BC52183B5982298555")) ABORT;
+	if(!EC_POINT_set_affine_coordinates_GFp(NISTP224, Q_CHECK, x, y, ctx)) ABORT;
+	if (!BN_hex2bn(&x, "B70E0CBD6BB4BF7F321390B94A03C1D356C21122343280D6115C1D21")) ABORT;
+	if (!BN_hex2bn(&y, "BD376388B5F723FB4C22DFE6CD4375A05A07476444D5819985007E34")) ABORT;
+	if (!EC_POINT_set_affine_coordinates_GFp(NISTP224, G, x, y, ctx)) ABORT;
+	if (!BN_hex2bn(&order, "FFFFFFFFFFFFFFFFFFFFFFFFFFFF16A2E0B8F03E13DD29455C5C2A3D")) ABORT;
+	if (!EC_GROUP_set_generator(NISTP224, G, order, BN_value_one())) ABORT;
+
+	fprintf(stdout, "verify degree ... ");
+	if (EC_GROUP_get_degree(NISTP224) != 224) ABORT;
+	fprintf(stdout, "ok\n");
+
+	fprintf(stdout, "NIST test vectors ... ");
+	if (!BN_hex2bn(&n, "3F0C488E987C80BE0FEE521F8D90BE6034EC69AE11CA72AA777481E8")) ABORT;
+	/* fixed point multiplication */
+	EC_POINT_mul(NISTP224, Q, n, NULL, NULL, ctx);
+	if (0 != EC_POINT_cmp(NISTP224, Q, Q_CHECK, ctx)) ABORT;
+	/* random point multiplication */
+	EC_POINT_mul(NISTP224, Q, NULL, G, n, ctx);
+	if (0 != EC_POINT_cmp(NISTP224, Q, Q_CHECK, ctx)) ABORT;
+
+	/* set generator to P = 2*G, where G is the standard generator */
+	if (!EC_POINT_dbl(NISTP224, P, G, ctx)) ABORT;
+	if (!EC_GROUP_set_generator(NISTP224, P, order, BN_value_one())) ABORT;
+	/* set the scalar to m=n/2, where n is the NIST test scalar */
+	if (!BN_rshift(m, n, 1)) ABORT;
+
+	/* test the non-standard generator */
+	/* fixed point multiplication */
+	EC_POINT_mul(NISTP224, Q, m, NULL, NULL, ctx);
+	if (0 != EC_POINT_cmp(NISTP224, Q, Q_CHECK, ctx)) ABORT;
+	/* random point multiplication */
+	EC_POINT_mul(NISTP224, Q, NULL, P, m, ctx);
+	if (0 != EC_POINT_cmp(NISTP224, Q, Q_CHECK, ctx)) ABORT;
+
+	/* now repeat all tests with precomputation */
+	if (!EC_GROUP_precompute_mult(NISTP224, ctx)) ABORT;
+
+	/* fixed point multiplication */
+	EC_POINT_mul(NISTP224, Q, m, NULL, NULL, ctx);
+	if (0 != EC_POINT_cmp(NISTP224, Q, Q_CHECK, ctx)) ABORT;
+	/* random point multiplication */
+	EC_POINT_mul(NISTP224, Q, NULL, P, m, ctx);
+	if (0 != EC_POINT_cmp(NISTP224, Q, Q_CHECK, ctx)) ABORT;
+
+	/* reset generator */
+	if (!EC_GROUP_set_generator(NISTP224, G, order, BN_value_one())) ABORT;
+	/* fixed point multiplication */
+	EC_POINT_mul(NISTP224, Q, n, NULL, NULL, ctx);
+	if (0 != EC_POINT_cmp(NISTP224, Q, Q_CHECK, ctx)) ABORT;
+	/* random point multiplication */
+	EC_POINT_mul(NISTP224, Q, NULL, G, n, ctx);
+	if (0 != EC_POINT_cmp(NISTP224, Q, Q_CHECK, ctx)) ABORT;
+
+	fprintf(stdout, "ok\n");
+	group_order_tests(NISTP224);
+#if 0
+	timings(NISTP224, TIMING_BASE_PT, ctx);
+	timings(NISTP224, TIMING_RAND_PT, ctx);
+#endif
+	EC_GROUP_free(NISTP224);
+	EC_POINT_free(G);
+	EC_POINT_free(P);
+	EC_POINT_free(Q);
+	EC_POINT_free(Q_CHECK);
+	BN_free(n);
+	BN_free(m);
+	BN_free(p);
+	BN_free(a);
+	BN_free(b);
+	BN_free(x);
+	BN_free(y);
+	BN_free(order);
+	BN_CTX_free(ctx);
+	}
+#endif
 
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
@@ -1318,6 +1389,9 @@ int main(int argc, char *argv[])
 	prime_field_tests();
 	puts("");
 	char2_field_tests();
+#ifdef EC_NISTP224_64_GCC_128
+	nistp224_test();
+#endif
 	/* test the internal curves */
 	internal_curve_test();
 

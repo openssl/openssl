@@ -107,6 +107,18 @@
   
  Changes between 1.0.0a and 1.0.1  [xx XXX xxxx]
 
+  *) Add EC_GFp_nistp224_method(), a 64-bit optimized implementation for
+     elliptic curve NIST-P224 with constant-time single point multiplication on
+     typical inputs.  EC_GROUP_new_by_curve_name() will automatically use this
+     (while EC_GROUP_new_curve_GFp() currently won't and prefers the more
+     flexible implementations).
+
+     The implementation requires support for the nonstandard type __uint128_t,
+     and so is disabled by default.  To include this in your build of OpenSSL,
+     use -DEC_NISTP224_64_GCC_128 on the Configure (or config) command line,
+     and run "make depend" (or "make update").
+     [Emilia Käsper <emilia.kasper@esat.kuleuven.be> (Google)]
+
   *) Permit abbreviated handshakes when renegotiating using the function
      SSL_renegotiate_abbreviated().
      [Robin Seggelmann <seggelmann@fh-muenster.de>]
