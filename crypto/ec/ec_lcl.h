@@ -3,7 +3,7 @@
  * Originally written by Bodo Moeller for the OpenSSL project.
  */
 /* ====================================================================
- * Copyright (c) 1998-2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1998-2010 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -391,3 +391,16 @@ int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
 int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
 int ec_GF2m_have_precompute_mult(const EC_GROUP *group);
+
+#ifdef EC_NISTP224_64_GCC_128
+/* method functions in ecp_nistp224.c */
+int ec_GFp_nistp224_group_init(EC_GROUP *group);
+int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
+	const BIGNUM *a, const BIGNUM *n, BN_CTX *);
+int ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP *group,
+	const EC_POINT *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
+int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
+int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+int ec_GFp_nistp224_have_precompute_mult(const EC_GROUP *group);
+#endif
