@@ -875,7 +875,10 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
   
- Changes between 0.9.8n and 0.9.8o [xx XXX xxxx]
+ Changes between 0.9.8n and 0.9.8o [01 Jun 2010]
+
+  [NB: OpenSSL 0.9.8o and later 0.9.8 patch levels were released after
+  OpenSSL 1.0.0.]
 
   *) Correct a typo in the CMS ASN1 module which can result in invalid memory
      access or freeing data twice (CVE-2010-0742)
@@ -886,6 +889,12 @@
      SSL_library_init and not OpenSSL_add_all_algorithms() will fail.
      [Steve Henson]
 
+  *) VMS fixes: 
+     Reduce copying into .apps and .test in makevms.com
+     Don't try to use blank CA certificate in CA.com
+     Allow use of C files from original directories in maketests.com
+     [Steven M. Schweda" <sms@antinode.info>]
+
  Changes between 0.9.8m and 0.9.8n [24 Mar 2010]
 
   *) When rejecting SSL/TLS records due to an incorrect version number, never
@@ -894,8 +903,8 @@
      - OpenSSL 0.9.8f if 'short' is longer than 16 bits,
      the previous behavior could result in a read attempt at NULL when
      receiving specific incorrect SSL/TLS records once record payload
-     protection is active.  (CVE-2010-####)
-     [Bodo Moeller, Adam Langley]
+     protection is active.  (CVE-2010-0740)
+     [Bodo Moeller, Adam Langley <agl@chromium.org>]
 
   *) Fix for CVE-2010-0433 where some kerberos enabled versions of OpenSSL 
      could be crashed if the relevant tables were not present (e.g. chrooted).
