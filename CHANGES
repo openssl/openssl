@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
+ Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
   *) Improve forward-security support: add functions
 
@@ -123,7 +123,7 @@
      whose return value is often ignored. 
      [Steve Henson]
   
- Changes between 1.0.0a and 1.0.1  [xx XXX xxxx]
+ Changes between 1.0.0b and 1.0.1  [xx XXX xxxx]
 
   *) Add EC_GFp_nistp224_method(), a 64-bit optimized implementation for
      elliptic curve NIST-P224 with constant-time single point multiplication on
