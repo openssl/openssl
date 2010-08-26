@@ -259,6 +259,12 @@ SSL_set_session_secret_cb               307	EXIST::FUNCTION:
 SSL_set_session_ticket_ext_cb           308	EXIST::FUNCTION:
 SSL_set1_param                          309	EXIST::FUNCTION:
 SSL_CTX_set1_param                      310	EXIST::FUNCTION:
-TLSv1_1_method                          311	EXIST::FUNCTION:
-TLSv1_1_client_method                   312	EXIST::FUNCTION:
-TLSv1_1_server_method                   313	EXIST::FUNCTION:
+SSL_tls1_key_exporter                   311	EXIST::FUNCTION:
+SSL_renegotiate_abbreviated             312	EXIST::FUNCTION:
+TLSv1_1_method                          313	EXIST::FUNCTION:
+TLSv1_1_client_method                   314	EXIST::FUNCTION:
+TLSv1_1_server_method                   315	EXIST::FUNCTION:
+SSL_CTX_set_next_protos_advertised_cb   316	EXIST::FUNCTION:
+SSL_get0_next_proto_negotiated          317	EXIST::FUNCTION:
+SSL_select_next_proto                   318	EXIST::FUNCTION:
+SSL_CTX_set_next_proto_select_cb        319	EXIST::FUNCTION:
