@@ -875,6 +875,18 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
   
+ Changes between 0.9.8o and 0.9.8p [xx XXX xxxx]
+
+  *) ec2_GF2m_simple_mul bugfix: compute correct result if the output EC_POINT
+     is also one of the inputs.
+     [Emilia Käsper <emilia.kasper@esat.kuleuven.be> (Google)]
+
+  *) Don't repeatedly append PBE algorithms to table if they already exist.
+     Sort table on each new add. This effectively makes the table read only
+     after all algorithms are added and subsequent calls to PKCS12_pbe_add
+     etc are non-op.
+     [Steve Henson]
+
  Changes between 0.9.8n and 0.9.8o [01 Jun 2010]
 
   [NB: OpenSSL 0.9.8o and later 0.9.8 patch levels were released after
