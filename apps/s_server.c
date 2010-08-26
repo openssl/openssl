@@ -201,6 +201,7 @@ typedef unsigned int u_int;
 #ifndef OPENSSL_NO_RSA
 static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 #endif
+static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(char *hostname, int s, unsigned char *context);
 static int www_body(char *hostname, int s, unsigned char *context);
 static void close_accept_socket(void );
@@ -289,6 +290,7 @@ static int s_tlsextdebug=0;
 static int s_tlsextstatus=0;
 static int cert_status_cb(SSL *s, void *arg);
 #endif
+static int no_resume_ephemeral = 0;
 static int s_msg=0;
 static int s_quiet=0;
 
@@ -476,6 +478,7 @@ static void sv_usage(void)
 #ifndef OPENSSL_NO_ECDH
 	BIO_printf(bio_err," -no_ecdhe     - Disable ephemeral ECDH\n");
 #endif
+	BIO_printf(bio_err, "-no_resume_ephemeral - Disable caching and tickets if ephemeral (EC)DH is used\n");
 	BIO_printf(bio_err," -bugs         - Turn on SSL bug compatibility\n");
 	BIO_printf(bio_err," -www          - Respond to a 'GET /' with a status page\n");
 	BIO_printf(bio_err," -WWW          - Respond to a 'GET /<path> HTTP/1.0' with file ./<path>\n");
@@ -853,6 +856,12 @@ static int next_proto_cb(SSL *s, const unsigned char **data, unsigned int *len, 
 # endif  /* ndef OPENSSL_NO_NPN */
 #endif
 
+static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
+	{
+	/* disable resumption for sessions with forward secure ciphers */
+	return is_forward_secure;
+	}
+
 int MAIN(int, char **);
 
 #ifndef OPENSSL_NO_JPAKE
@@ -1120,6 +1129,8 @@ int MAIN(int argc, char *argv[])
 			{ no_dhe=1; }
 		else if	(strcmp(*argv,"-no_ecdhe") == 0)
 			{ no_ecdhe=1; }
+		else if (strcmp(*argv,"-no_resume_ephemeral") == 0)
+			{ no_resume_ephemeral = 1; }
 #ifndef OPENSSL_NO_PSK
                 else if (strcmp(*argv,"-psk_hint") == 0)
 			{
@@ -1688,6 +1699,15 @@ bad:
 		}
 #endif
 #endif
+
+	if (no_resume_ephemeral)
+		{
+		SSL_CTX_set_not_resumable_session_callback(ctx, not_resumable_sess_cb);
+#ifndef OPENSSL_NO_TLSEXT
+		if (ctx2)
+			SSL_CTX_set_not_resumable_session_callback(ctx2, not_resumable_sess_cb);
+#endif
+		}
 
 #ifndef OPENSSL_NO_PSK
 #ifdef OPENSSL_NO_JPAKE

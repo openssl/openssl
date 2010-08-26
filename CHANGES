@@ -4,6 +4,24 @@
 
  Changes between 1.0.0 and 1.1.0  [xx XXX xxxx]
 
+  *) Improve forward-security support: add functions
+
+       void SSL_CTX_set_not_resumable_session_callback(SSL_CTX *ctx, int (*cb)(SSL *ssl, int is_forward_secure))
+       void SSL_set_not_resumable_session_callback(SSL *ssl, int (*cb)(SSL *ssl, int is_forward_secure))
+
+     for use by SSL/TLS servers; the callback function will be called whenever a
+     new session is created, and gets to decide whether the session may be
+     cached to make it resumable (return 0) or not (return 1).  (As by the
+     SSL/TLS protocol specifications, the session_id sent by the server will be
+     empty to indicate that the session is not resumable; also, the server will
+     not generate RFC 4507 (RFC 5077) session tickets.)
+
+     A simple reasonable callback implementation is to return is_forward_secure.
+     This parameter will be set to 1 or 0 depending on the ciphersuite selected
+     by the SSL/TLS server library, indicating whether it can provide forward
+     security.
+     [Emilia Käsper <emilia.kasper@esat.kuleuven.be> (Google)]
+
   *) Add Next Protocol Negotiation,
      http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-00. Can be
      disabled with a no-npn flag to config or Configure. Code donated

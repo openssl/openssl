@@ -1251,6 +1251,13 @@ int ssl3_get_client_hello(SSL *s)
 			goto f_err;
 			}
 		s->s3->tmp.new_cipher=c;
+		/* check whether we should disable session resumption */
+		if (s->not_resumable_session_cb != NULL)
+			s->session->not_resumable=s->not_resumable_session_cb(s,
+				((c->algorithm_mkey & (SSL_kEDH | SSL_kEECDH)) != 0));
+		if (s->session->not_resumable)
+			/* do not send a session ticket */
+			s->tlsext_ticket_expected = 0;
 		}
 	else
 		{
@@ -1354,8 +1361,9 @@ int ssl3_send_server_hello(SSL *s)
 		 * if session caching is disabled so existing functionality
 		 * is unaffected.
 		 */
-		if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
-			&& !s->hit)
+		if (s->session->not_resumable ||
+			(!(s->ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
+				&& !s->hit))
 			s->session->session_id_length=0;
 
 		sl=s->session->session_id_length;

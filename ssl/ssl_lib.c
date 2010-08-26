@@ -319,6 +319,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->msg_callback=ctx->msg_callback;
 	s->msg_callback_arg=ctx->msg_callback_arg;
 	s->verify_mode=ctx->verify_mode;
+	s->not_resumable_session_cb=ctx->not_resumable_session_cb;
 #if 0
 	s->verify_depth=ctx->verify_depth;
 #endif
@@ -3162,6 +3163,19 @@ void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version,
 void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg))
 	{
 	SSL_callback_ctrl(ssl, SSL_CTRL_SET_MSG_CALLBACK, (void (*)(void))cb);
+	}
+
+void SSL_CTX_set_not_resumable_session_callback(SSL_CTX *ctx,
+	int (*cb)(SSL *ssl, int is_forward_secure))
+	{
+	SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB,
+		(void (*)(void))cb);
+	}
+void SSL_set_not_resumable_session_callback(SSL *ssl,
+	int (*cb)(SSL *ssl, int is_forward_secure))
+	{
+	SSL_callback_ctrl(ssl, SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB,
+		(void (*)(void))cb);
 	}
 
 /* Allocates new EVP_MD_CTX and sets pointer to it into given pointer
