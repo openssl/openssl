@@ -317,7 +317,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 
         /* Add RI if renegotiating */
-        if (s->new_session)
+        if (s->renegotiate)
           {
           int el;
           
@@ -1028,7 +1028,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 	/* Need RI if renegotiating */
 
-	if (!renegotiate_seen && s->new_session &&
+	if (!renegotiate_seen && s->renegotiate &&
 		!(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 		{
 		*al = SSL_AD_HANDSHAKE_FAILURE;

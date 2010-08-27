@@ -1392,7 +1392,7 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 	/* If p == q, no ciphers and caller indicates an error. Otherwise
 	 * add SCSV if not renegotiating.
 	 */
-	if (p != q && !s->new_session)
+	if (p != q && !s->renegotiate)
 		{
 		static SSL_CIPHER scsv =
 			{
@@ -1439,7 +1439,7 @@ STACK_OF(SSL_CIPHER) *ssl_bytes_to_cipher_list(SSL *s,unsigned char *p,int num,
 			(p[n-1] == (SSL3_CK_SCSV & 0xff)))
 			{
 			/* SCSV fatal if renegotiating */
-			if (s->new_session)
+			if (s->renegotiate)
 				{
 				SSLerr(SSL_F_SSL_BYTES_TO_CIPHER_LIST,SSL_R_SCSV_RECEIVED_WHEN_RENEGOTIATING);
 				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE); 
