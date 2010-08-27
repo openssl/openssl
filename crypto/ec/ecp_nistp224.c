@@ -68,27 +68,15 @@
 #include <openssl/err.h>
 #include "ec_lcl.h"
 
-typedef __uint128_t uint128_t; /* nonstandard; implemented by gcc on 64-bit platforms */
+#if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3 && __GNUC_MINOR__ >= 1))
+  /* even with gcc, the typedef won't work for 32-bit platforms */
+  typedef __uint128_t uint128_t; /* nonstandard; implemented by gcc on 64-bit platforms */
+#else
+  #error "Need GCC 3.1 or later to define type uint128_t"
+#endif
 
 typedef uint8_t u8;
 
-static const u8 nistp224_curve_params[5*28] = {
-	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,    /* p */
-	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,
-	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,
-	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,    /* a */
-	0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,0xFF,0xFF,0xFF,0xFF,
-	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,
-	0xB4,0x05,0x0A,0x85,0x0C,0x04,0xB3,0xAB,0xF5,0x41,    /* b */
-	0x32,0x56,0x50,0x44,0xB0,0xB7,0xD7,0xBF,0xD8,0xBA,
-	0x27,0x0B,0x39,0x43,0x23,0x55,0xFF,0xB4,
-	0xB7,0x0E,0x0C,0xBD,0x6B,0xB4,0xBF,0x7F,0x32,0x13,    /* x */
-	0x90,0xB9,0x4A,0x03,0xC1,0xD3,0x56,0xC2,0x11,0x22,
-	0x34,0x32,0x80,0xD6,0x11,0x5C,0x1D,0x21,
-	0xbd,0x37,0x63,0x88,0xb5,0xf7,0x23,0xfb,0x4c,0x22,    /* y */
-	0xdf,0xe6,0xcd,0x43,0x75,0xa0,0x5a,0x07,0x47,0x64,
-	0x44,0xd5,0x81,0x99,0x85,0x00,0x7e,0x34
-};
 
 /******************************************************************************/
 /*		    INTERNAL REPRESENTATION OF FIELD ELEMENTS
@@ -108,8 +96,27 @@ static const u8 nistp224_curve_params[5*28] = {
 
 typedef uint64_t fslice;
 
-/* Field element size (and group order size), in bytes: 28*8 = 224 */
-static const unsigned fElemSize = 28;
+/* Field element represented as a byte arrary.
+ * 28*8 = 224 bits is also the group order size for the elliptic curve.  */
+typedef u8 felem_bytearray[28];
+
+static const felem_bytearray nistp224_curve_params[5] = {
+	{0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,    /* p */
+	 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,
+	 0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01},
+	{0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,    /* a */
+	 0xFF,0xFF,0xFF,0xFF,0xFF,0xFE,0xFF,0xFF,0xFF,0xFF,
+	 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFE},
+	{0xB4,0x05,0x0A,0x85,0x0C,0x04,0xB3,0xAB,0xF5,0x41,    /* b */
+	 0x32,0x56,0x50,0x44,0xB0,0xB7,0xD7,0xBF,0xD8,0xBA,
+	 0x27,0x0B,0x39,0x43,0x23,0x55,0xFF,0xB4},
+	{0xB7,0x0E,0x0C,0xBD,0x6B,0xB4,0xBF,0x7F,0x32,0x13,    /* x */
+	 0x90,0xB9,0x4A,0x03,0xC1,0xD3,0x56,0xC2,0x11,0x22,
+	 0x34,0x32,0x80,0xD6,0x11,0x5C,0x1D,0x21},
+	{0xbd,0x37,0x63,0x88,0xb5,0xf7,0x23,0xfb,0x4c,0x22,    /* y */
+	 0xdf,0xe6,0xcd,0x43,0x75,0xa0,0x5a,0x07,0x47,0x64,
+	 0x44,0xd5,0x81,0x99,0x85,0x00,0x7e,0x34}
+};
 
 /* Precomputed multiples of the standard generator
  * b_0*G + b_1*2^56*G + b_2*2^112*G + b_3*2^168*G for
@@ -252,14 +259,14 @@ static void flip_endian(u8 *out, const u8 *in, unsigned len)
 /* From OpenSSL BIGNUM to internal representation */
 static int BN_to_felem(fslice out[4], const BIGNUM *bn)
 	{
-	u8 b_in[fElemSize];
-	u8 b_out[fElemSize];
+        felem_bytearray b_in;
+	felem_bytearray b_out;
 	unsigned num_bytes;
 
 	/* BN_bn2bin eats leading zeroes */
-	memset(b_out, 0, fElemSize);
+	memset(b_out, 0, sizeof b_out);
 	num_bytes = BN_num_bytes(bn);
-	if (num_bytes > fElemSize)
+	if (num_bytes > sizeof b_out)
 		{
 		ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
 		return 0;
@@ -278,10 +285,10 @@ static int BN_to_felem(fslice out[4], const BIGNUM *bn)
 /* From internal representation to OpenSSL BIGNUM */
 static BIGNUM *felem_to_BN(BIGNUM *out, const fslice in[4])
 	{
-	u8 b_in[fElemSize], b_out[fElemSize];
+	felem_bytearray b_in, b_out;
 	felem_to_bin28(b_in, in);
-	flip_endian(b_out, b_in, fElemSize);
-	return BN_bin2bn(b_out, fElemSize, out);
+	flip_endian(b_out, b_in, sizeof b_out);
+	return BN_bin2bn(b_out, sizeof b_out, out);
 	}
 
 /******************************************************************************/
@@ -959,7 +966,7 @@ static void select_point(const fslice bits[4], const fslice pre_comp[16][3][4],
  * of the generator, using certain (large) precomputed multiples in g_pre_comp.
  * Output point (X, Y, Z) is stored in x_out, y_out, z_out */
 static void batch_mul(fslice x_out[4], fslice y_out[4], fslice z_out[4],
-	const u8 scalars[][fElemSize], const unsigned num_points, const u8 *g_scalar,
+	const felem_bytearray scalars[], const unsigned num_points, const u8 *g_scalar,
 	const fslice pre_comp[][16][3][4], const fslice g_pre_comp[16][3][4])
 	{
 	unsigned i, j, num;
@@ -1104,9 +1111,9 @@ int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 	if (((curve_p = BN_CTX_get(ctx)) == NULL) ||
 		((curve_a = BN_CTX_get(ctx)) == NULL) ||
 		((curve_b = BN_CTX_get(ctx)) == NULL)) goto err;
-	BN_bin2bn(nistp224_curve_params, fElemSize, curve_p);
-	BN_bin2bn(nistp224_curve_params + 28, fElemSize, curve_a);
-	BN_bin2bn(nistp224_curve_params + 56, fElemSize, curve_b);
+	BN_bin2bn(nistp224_curve_params[0], sizeof(felem_bytearray), curve_p);
+	BN_bin2bn(nistp224_curve_params[1], sizeof(felem_bytearray), curve_a);
+	BN_bin2bn(nistp224_curve_params[2], sizeof(felem_bytearray), curve_b);
 	if ((BN_cmp(curve_p, p)) || (BN_cmp(curve_a, a)) ||
 		(BN_cmp(curve_b, b)))
 		{
@@ -1175,10 +1182,10 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
 	int i, j;
 	BN_CTX *new_ctx = NULL;
 	BIGNUM *x, *y, *z, *tmp_scalar;
-	u8 g_secret[fElemSize];
-	u8 (*secrets)[fElemSize] = NULL;
+	felem_bytearray g_secret;
+	felem_bytearray *secrets = NULL;
 	fslice (*pre_comp)[16][3][4] = NULL;
-	u8 tmp[fElemSize];
+	felem_bytearray tmp;
 	unsigned num_bytes;
 	int have_pre_comp = 0;
 	size_t num_points = num;
@@ -1231,7 +1238,7 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
 			 * treat the generator as a random point */
 			num_points = num_points + 1;
 		}
-	secrets = OPENSSL_malloc(num_points * fElemSize);
+	secrets = OPENSSL_malloc(num_points * sizeof(felem_bytearray));
 	pre_comp = OPENSSL_malloc(num_points * 16 * 3 * 4 * sizeof(fslice));
 
 	if ((num_points) && ((secrets == NULL) || (pre_comp == NULL)))
@@ -1242,7 +1249,7 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
 
 	/* we treat NULL scalars as 0, and NULL points as points at infinity,
 	 * i.e., they contribute nothing to the linear combination */
-	memset(secrets, 0, num_points * fElemSize);
+	memset(secrets, 0, num_points * sizeof(felem_bytearray));
 	memset(pre_comp, 0, num_points * 16 * 3 * 4 * sizeof(fslice));
 	for (i = 0; i < num_points; ++i)
 		{
@@ -1262,7 +1269,7 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
 			{
 			num_bytes = BN_num_bytes(p_scalar);
 			/* reduce scalar to 0 <= scalar < 2^224 */
-			if ((num_bytes > fElemSize) || (BN_is_negative(p_scalar)))
+			if ((num_bytes > sizeof(felem_bytearray)) || (BN_is_negative(p_scalar)))
 				{
 				/* this is an unusual input, and we don't guarantee
 				 * constant-timeness */
@@ -1307,10 +1314,10 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
 	/* the scalar for the generator */
 	if ((scalar != NULL) && (have_pre_comp))
 		{
-		memset(g_secret, 0, fElemSize);
+		memset(g_secret, 0, sizeof g_secret);
 		num_bytes = BN_num_bytes(scalar);
 		/* reduce scalar to 0 <= scalar < 2^224 */
-		if ((num_bytes > fElemSize) || (BN_is_negative(scalar)))
+		if ((num_bytes > sizeof(felem_bytearray)) || (BN_is_negative(scalar)))
 			{
 			/* this is an unusual input, and we don't guarantee
 			 * constant-timeness */
@@ -1326,14 +1333,14 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
 		flip_endian(g_secret, tmp, num_bytes);
 		/* do the multiplication with generator precomputation*/
 		batch_mul(x_out, y_out, z_out,
-			(const u8 (*)[fElemSize]) secrets, num_points,
+			(const felem_bytearray (*)) secrets, num_points,
 			g_secret, (const fslice (*)[16][3][4]) pre_comp,
 			(const fslice (*)[3][4]) g_pre_comp);
 		}
 	else
 		/* do the multiplication without generator precomputation */
 		batch_mul(x_out, y_out, z_out,
-			(const u8 (*)[fElemSize]) secrets, num_points,
+			(const felem_bytearray (*)) secrets, num_points,
 			NULL, (const fslice (*)[16][3][4]) pre_comp, NULL);
 	/* reduce the output to its unique minimal representation */
 	felem_contract(x_in, x_out);
@@ -1383,8 +1390,8 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	generator = EC_POINT_new(group);
 	if (generator == NULL)
 		goto err;
-	BN_bin2bn(nistp224_curve_params + 84, fElemSize, x);
-	BN_bin2bn(nistp224_curve_params + 112, fElemSize, y);
+	BN_bin2bn(nistp224_curve_params[3], sizeof (felem_bytearray), x);
+	BN_bin2bn(nistp224_curve_params[4], sizeof (felem_bytearray), y);
 	if (!EC_POINT_set_affine_coordinates_GFp(group, generator, x, y, ctx))
 		goto err;
 	if ((pre = nistp224_pre_comp_new()) == NULL)
@@ -1478,4 +1485,7 @@ int ec_GFp_nistp224_have_precompute_mult(const EC_GROUP *group)
 	else
 		return 0;
 	}
+
+#else
+static void *dummy=&dummy;
 #endif
