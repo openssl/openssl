@@ -197,8 +197,9 @@ static void group_order_tests(EC_GROUP *group)
 	BIGNUM *n1, *n2, *order;
 	EC_POINT *P = EC_POINT_new(group);
 	EC_POINT *Q = EC_POINT_new(group);
-	n1 = BN_new(); n2 = BN_new(); order = BN_new();
 	BN_CTX *ctx = BN_CTX_new();
+
+	n1 = BN_new(); n2 = BN_new(); order = BN_new();
 	fprintf(stdout, "verify group order ...");
 	fflush(stdout);
 	if (!EC_GROUP_get_order(group, order, ctx)) ABORT;
@@ -1275,7 +1276,9 @@ void nistp224_test()
 	x = BN_new(); y = BN_new();
 	m = BN_new(); n = BN_new(); order = BN_new();
 	BN_CTX *ctx = BN_CTX_new();
-	EC_GROUP *NISTP224 = NULL;
+	EC_GROUP *NISTP224;
+	EC_POINT *G, *P, *Q, *Q_CHECK;
+
 	NISTP224 = EC_GROUP_new(EC_GFp_nistp224_method());
 	if(!NISTP224) ABORT;
 	if (!BN_hex2bn(&p, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000000000000000000001")) ABORT;
@@ -1283,10 +1286,10 @@ void nistp224_test()
 	if (!BN_hex2bn(&a, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFE")) ABORT;
 	if (!BN_hex2bn(&b, "B4050A850C04B3ABF54132565044B0B7D7BFD8BA270B39432355FFB4")) ABORT;
 	if (!EC_GROUP_set_curve_GFp(NISTP224, p, a, b, ctx)) ABORT;
-	EC_POINT *G = EC_POINT_new(NISTP224);
-	EC_POINT *P = EC_POINT_new(NISTP224);
-	EC_POINT *Q = EC_POINT_new(NISTP224);
-	EC_POINT *Q_CHECK = EC_POINT_new(NISTP224);
+	G = EC_POINT_new(NISTP224);
+	P = EC_POINT_new(NISTP224);
+	Q = EC_POINT_new(NISTP224);
+	Q_CHECK = EC_POINT_new(NISTP224);
 	if(!BN_hex2bn(&x, "E84FB0B8E7000CB657D7973CF6B42ED78B301674276DF744AF130B3E")) ABORT;
 	if(!BN_hex2bn(&y, "4376675C6FC5612C21A0FF2D2A89D2987DF7A2BC52183B5982298555")) ABORT;
 	if(!EC_POINT_set_affine_coordinates_GFp(NISTP224, Q_CHECK, x, y, ctx)) ABORT;
