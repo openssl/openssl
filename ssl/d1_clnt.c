@@ -171,7 +171,7 @@ int dtls1_connect(SSL *s)
 		switch(s->state)
 			{
 		case SSL_ST_RENEGOTIATE:
-			s->renegotiate=1;
+			s->new_session=1;
 			s->state=SSL_ST_CONNECT;
 			s->ctx->stats.sess_connect_renegotiate++;
 			/* break */
@@ -539,7 +539,6 @@ int dtls1_connect(SSL *s)
 			/* else do it later in ssl3_write */
 
 			s->init_num=0;
-			s->renegotiate=0;
 			s->new_session=0;
 
 			ssl_update_cache(s,SSL_SESS_CACHE_CLIENT);

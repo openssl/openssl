@@ -1280,7 +1280,6 @@ start:
 #else
 			s->state = s->server ? SSL_ST_ACCEPT : SSL_ST_CONNECT;
 #endif
-			s->renegotiate=1;
 			s->new_session=1;
 			}
 		i=s->handshake_func(s);
