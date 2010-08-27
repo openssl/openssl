@@ -254,9 +254,11 @@ static int BN_to_felem(fslice out[4], const BIGNUM *bn)
 	{
 	u8 b_in[fElemSize];
 	u8 b_out[fElemSize];
+	unsigned num_bytes;
+
 	/* BN_bn2bin eats leading zeroes */
 	memset(b_out, 0, fElemSize);
-	unsigned num_bytes = BN_num_bytes(bn);
+	num_bytes = BN_num_bytes(bn);
 	if (num_bytes > fElemSize)
 		{
 		ECerr(EC_F_BN_TO_FELEM, EC_R_BIGNUM_OUT_OF_RANGE);
@@ -305,9 +307,10 @@ static void felem_sum64(fslice out[4], const fslice in[4])
 /* Assumes in[i] < 2^57 */
 static void felem_diff64(fslice out[4], const fslice in[4])
 	{
-	static const uint64_t two58p2 = (1l << 58) + (1l << 2);
-	static const uint64_t two58m2 = (1l << 58) - (1l << 2);
-	static const uint64_t two58m42m2 = (1l << 58) - (1l << 42) - (1l << 2);
+	static const uint64_t two58p2 = (((uint64_t) 1) << 58) + (((uint64_t) 1) << 2);
+	static const uint64_t two58m2 = (((uint64_t) 1) << 58) - (((uint64_t) 1) << 2);
+	static const uint64_t two58m42m2 = (((uint64_t) 1) << 58) -
+	    (((uint64_t) 1) << 42) - (((uint64_t) 1) << 2);
 
 	/* Add 0 mod 2^224-2^96+1 to ensure out > in */
 	out[0] += two58p2;
@@ -487,7 +490,7 @@ static void felem_reduce(fslice out[4], const uint128_t in[7])
 /* Reduce to unique minimal representation */
 static void felem_contract(fslice out[4], const fslice in[4])
 	{
-	static const int64_t two56 = (1l << 56);
+	static const int64_t two56 = ((uint64_t) 1) << 56;
 	/* 0 <= in < 2^225 */
 	/* if in > 2^224 , reduce in = in - 2^224 + 2^96 - 1 */
 	int64_t tmp[4], a;
@@ -585,15 +588,17 @@ static void felem_contract(fslice out[4], const fslice in[4])
  * and 2^225 - 2^97 + 2 */
 static fslice felem_is_zero(const fslice in[4])
 	{
-	fslice zero = (in[0] | in[1] | in[2] | in[3]);
+	fslice zero, two224m96p1, two225m97p2;
+
+	zero = in[0] | in[1] | in[2] | in[3];
 	zero = (((int64_t)(zero) - 1) >> 63) & 1;
-	fslice two224m96p1 = (in[0] ^ 1) | (in[1] ^ 0x00ffff0000000000)
+	two224m96p1 = (in[0] ^ 1) | (in[1] ^ 0x00ffff0000000000)
 		| (in[2] ^ 0x00ffffffffffffff) | (in[3] ^ 0x00ffffffffffffff);
 	two224m96p1 = (((int64_t)(two224m96p1) - 1) >> 63) & 1;
-	fslice two225m97p2 = (in[0] ^ 2) | (in[1] ^ 0x00fffe0000000000)
+	two225m97p2 = (in[0] ^ 2) | (in[1] ^ 0x00fffe0000000000)
 		| (in[2] ^ 0x00ffffffffffffff) | (in[3] ^ 0x01ffffffffffffff);
 	two225m97p2 = (((int64_t)(two225m97p2) - 1) >> 63) & 1;
-	return  (zero | two224m96p1 | two225m97p2);
+	return (zero | two224m96p1 | two225m97p2);
 	}
 
 /* Invert a field element */
@@ -603,6 +608,7 @@ static void felem_inv(fslice out[4], const fslice in[4])
 	fslice ftmp[4], ftmp2[4], ftmp3[4], ftmp4[4];
 	uint128_t tmp[7];
 	unsigned i;
+
 	felem_square(tmp, in); felem_reduce(ftmp, tmp);		/* 2 */
 	felem_mul(tmp, in, ftmp); felem_reduce(ftmp, tmp);	/* 2^2 - 1 */
 	felem_square(tmp, ftmp); felem_reduce(ftmp, tmp);	/* 2^3 - 2 */
@@ -959,10 +965,11 @@ static void batch_mul(fslice x_out[4], fslice y_out[4], fslice z_out[4],
 	unsigned i, j, num;
 	unsigned gen_mul = (g_scalar != NULL);
 	fslice nq[12], nqt[12], tmp[12];
-	/* set nq to the point at infinity */
-	memset(nq, 0, 12 * sizeof(fslice));
 	fslice bits[4];
 	u8 byte;
+
+	/* set nq to the point at infinity */
+	memset(nq, 0, 12 * sizeof(fslice));
 
 	/* Loop over all scalars msb-to-lsb, 4 bits at a time: for each nibble,
 	 * double 4 times, then add the precomputed point multiples.
@@ -1087,10 +1094,10 @@ int ec_GFp_nistp224_group_init(EC_GROUP *group)
 int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 	const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	{
-
 	int ret = 0;
 	BN_CTX *new_ctx = NULL;
 	BIGNUM *curve_p, *curve_a, *curve_b;
+
 	if (ctx == NULL)
 		if ((ctx = new_ctx = BN_CTX_new()) == NULL) return 0;
 	BN_CTX_start(ctx);
@@ -1123,6 +1130,7 @@ int ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP *group,
 	{
 	fslice z1[4], z2[4], x_in[4], y_in[4], x_out[4], y_out[4];
 	uint128_t tmp[7];
+
 	if (EC_POINT_is_at_infinity(group, point))
 		{
 		ECerr(EC_F_EC_GFP_NISTP224_POINT_GET_AFFINE_COORDINATES,
@@ -1180,6 +1188,7 @@ int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r,
 	EC_POINT *generator = NULL;
 	const EC_POINT *p = NULL;
 	const BIGNUM *p_scalar = NULL;
+
 	if (ctx == NULL)
 		if ((ctx = new_ctx = BN_CTX_new()) == NULL) return 0;
 	BN_CTX_start(ctx);
@@ -1359,6 +1368,7 @@ int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 	BN_CTX *new_ctx = NULL;
 	BIGNUM *x, *y;
 	EC_POINT *generator = NULL;
+
 	/* throw away old precomputation */
 	EC_EX_DATA_free_data(&group->extra_data, nistp224_pre_comp_dup,
 		nistp224_pre_comp_free, nistp224_pre_comp_clear_free);
