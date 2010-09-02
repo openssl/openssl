@@ -267,6 +267,7 @@ $cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
 $cflags.=" -DOPENSSL_NO_EC"   if $no_ec;
 $cflags.=" -DOPENSSL_NO_ECDSA" if $no_ecdsa;
 $cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
+$cflags.=" -DOPENSSL_NO_GOST" if $no_gost;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 $cflags.=" -DOPENSSL_NO_JPAKE"    if $no_jpake;
@@ -723,6 +724,7 @@ sub var_add
 	return("") if $no_dsa  && $dir =~ /\/dsa/;
 	return("") if $no_dh   && $dir =~ /\/dh/;
 	return("") if $no_ec   && $dir =~ /\/ec/;
+	return("") if $no_gost   && $dir =~ /\/ccgost/;
 	return("") if $no_cms  && $dir =~ /\/cms/;
 	return("") if $no_jpake  && $dir =~ /\/jpake/;
 	if ($no_des && $dir =~ /\/des/)
@@ -1062,6 +1064,7 @@ sub read_options
 		"no-ec" => \$no_ec,
 		"no-ecdsa" => \$no_ecdsa,
 		"no-ecdh" => \$no_ecdh,
+		"no-gost" => \$no_gost,
 		"no-engine" => \$no_engine,
 		"no-hw" => \$no_hw,
 		"just-ssl" =>
