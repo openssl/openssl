@@ -3226,7 +3226,7 @@ int ssl3_send_cert_status(SSL *s)
 int ssl3_get_next_proto(SSL *s)
 	{
 	int ok;
-	unsigned proto_len, padding_len;
+	int proto_len, padding_len;
 	long n;
 	const unsigned char *p;
 
