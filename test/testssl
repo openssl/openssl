@@ -148,4 +148,15 @@ $ssltest -tls1 -cipher PSK -psk abc123 $extra || exit 1
 echo test tls1 with PSK via BIO pair
 $ssltest -bio_pair -tls1 -cipher PSK -psk abc123 $extra || exit 1
 
+#############################################################################
+# Next Protocol Negotiation Tests
+
+$ssltest -bio_pair -tls1 -npn_client || exit 1
+$ssltest -bio_pair -tls1 -npn_server || exit 1
+$ssltest -bio_pair -tls1 -npn_server_reject || exit 1
+$ssltest -bio_pair -tls1 -npn_client -npn_server_reject || exit 1
+$ssltest -bio_pair -tls1 -npn_client -npn_server || exit 1
+$ssltest -bio_pair -tls1 -npn_client -npn_server -num 2 || exit 1
+$ssltest -bio_pair -tls1 -npn_client -npn_server -num 2 -reuse || exit 1
+
 exit 0
