@@ -21,17 +21,18 @@
 #
 #		gcc 2.95.3(*)	MMX assembler	x86 assembler
 #
-# Pentium	100/112(**)	-		50
-# PIII		63 /77		12.2		24
-# P4		96 /122		18.0		84(***)
-# Opteron	50 /71		10.1		30
-# Core2		54 /68		8.6		18
+# Pentium	105/111(**)	-		50
+# PIII		68 /75		12.2		24
+# P4		125/125		17.8		84(***)
+# Opteron	66 /70		10.1		30
+# Core2		54 /67		8.4		18
 #
 # (*)	gcc 3.4.x was observed to generate few percent slower code,
 #	which is one of reasons why 2.95.3 results were chosen,
 #	another reason is lack of 3.4.x results for older CPUs;
-#	comparison is not completely fair, because C results are
-#	for vanilla "256B" implementations, not "528B";-)
+#	comparison with MMX results is not completely fair, because C
+#	results are for vanilla "256B" implementation, while
+#	assembler results are for "528B";-)
 # (**)	second number is result for code compiled with -fPIC flag,
 #	which is actually more relevant, because assembler code is
 #	position-independent;
@@ -44,7 +45,7 @@
 
 # May 2010
 #
-# Add PCLMULQDQ version performing at 2.13 cycles per processed byte.
+# Add PCLMULQDQ version performing at 2.10 cycles per processed byte.
 # The question is how close is it to theoretical limit? The pclmulqdq
 # instruction latency appears to be 14 cycles and there can't be more
 # than 2 of them executing at any given time. This means that single
@@ -60,38 +61,36 @@
 # Before we proceed to this implementation let's have closer look at
 # the best-performing code suggested by Intel in their white paper.
 # By tracing inter-register dependencies Tmod is estimated as ~19
-# cycles and Naggr is 4, resulting in 2.05 cycles per processed byte.
-# As implied, this is quite optimistic estimate, because it does not
-# account for Karatsuba pre- and post-processing, which for a single
-# multiplication is ~5 cycles. Unfortunately Intel does not provide
-# performance data for GHASH alone, only for fused GCM mode. But
-# we can estimate it by subtracting CTR performance result provided
-# in "AES Instruction Set" white paper: 3.54-1.38=2.16 cycles per
-# processed byte or 5% off the estimate. It should be noted though
-# that 3.54 is GCM result for 16KB block size, while 1.38 is CTR for
-# 1KB block size, meaning that real number is likely to be a bit
-# further from estimate.
+# cycles and Naggr chosen by Intel is 4, resulting in 2.05 cycles per
+# processed byte. As implied, this is quite optimistic estimate,
+# because it does not account for Karatsuba pre- and post-processing,
+# which for a single multiplication is ~5 cycles. Unfortunately Intel
+# does not provide performance data for GHASH alone. But benchmarking
+# AES_GCM_encrypt ripped out of Fig. 15 of the white paper with aadt
+# alone resulted in 2.46 cycles per byte of out 16KB buffer. Note that
+# the result accounts even for pre-computing of degrees of the hash
+# key H, but its portion is negligible at 16KB buffer size.
 #
 # Moving on to the implementation in question. Tmod is estimated as
 # ~13 cycles and Naggr is 2, giving asymptotic performance of ...
 # 2.16. How is it possible that measured performance is better than
 # optimistic theoretical estimate? There is one thing Intel failed
-# to recognize. By fusing GHASH with CTR former's performance is
-# really limited to above (Tmul + Tmod/Naggr) equation. But if GHASH
-# procedure is detached, the modulo-reduction can be interleaved with
-# Naggr-1 multiplications and under ideal conditions even disappear
-# from the equation. So that optimistic theoretical estimate for this
-# implementation is ... 28/16=1.75, and not 2.16. Well, it's probably
-# way too optimistic, at least for such small Naggr. I'd argue that
-# (28+Tproc/Naggr), where Tproc is time required for Karatsuba pre-
-# and post-processing, is more realistic estimate. In this case it
-# gives ... 1.91 cycles per processed byte. Or in other words,
-# depending on how well we can interleave reduction and one of the
-# two multiplications the performance should be betwen 1.91 and 2.16.
-# As already mentioned, this implementation processes one byte [out
-# of 1KB buffer] in 2.13 cycles, while x86_64 counterpart - in 2.07.
-# x86_64 performance is better, because larger register bank allows
-# to interleave reduction and multiplication better.
+# to recognize. By serializing GHASH with CTR in same subroutine
+# former's performance is really limited to above (Tmul + Tmod/Naggr)
+# equation. But if GHASH procedure is detached, the modulo-reduction
+# can be interleaved with Naggr-1 multiplications at instruction level
+# and under ideal conditions even disappear from the equation. So that
+# optimistic theoretical estimate for this implementation is ...
+# 28/16=1.75, and not 2.16. Well, it's probably way too optimistic,
+# at least for such small Naggr. I'd argue that (28+Tproc/Naggr),
+# where Tproc is time required for Karatsuba pre- and post-processing,
+# is more realistic estimate. In this case it gives ... 1.91 cycles.
+# Or in other words, depending on how well we can interleave reduction
+# and one of the two multiplications the performance should be betwen
+# 1.91 and 2.16. As already mentioned, this implementation processes
+# one byte out of 8KB buffer in 2.10 cycles, while x86_64 counterpart
+# - in 2.02. x86_64 performance is better, because larger register
+# bank allows to interleave reduction and multiplication better.
 #
 # Does it make sense to increase Naggr? To start with it's virtually
 # impossible in 32-bit mode, because of limited register bank

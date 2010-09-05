@@ -17,8 +17,8 @@
 #
 #		gcc 3.3.x	cc 5.2		this assembler
 #
-# 32-bit build	81.0		48.6		11.8	(+586%/+311%)
-# 64-bit build	27.5		20.3		11.8	(+133%/+72%)
+# 32-bit build	81.4		43.3		12.6	(+546%/+244%)
+# 64-bit build	20.2		21.2		12.6	(+60%/+68%)
 #
 # Here is data collected on UltraSPARC T1 system running Linux:
 #

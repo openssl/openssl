@@ -20,17 +20,18 @@
 #		gcc 3.4.x(*)	assembler
 #
 # P4		28.6		14.0		+100%
-# Opteron	18.5		7.7		+140%
-# Core2		17.5		8.1(**)		+115%
+# Opteron	19.3		7.7		+150%
+# Core2		17.8		8.1(**)		+120%
 #
 # (*)	comparison is not completely fair, because C results are
-#	for vanilla "256B" implementation, not "528B";-)
+#	for vanilla "256B" implementation, while assembler results
+#	are for "528B";-)
 # (**)	it's mystery [to me] why Core2 result is not same as for
 #	Opteron;
 
 # May 2010
 #
-# Add PCLMULQDQ version performing at 2.07 cycles per processed byte.
+# Add PCLMULQDQ version performing at 2.02 cycles per processed byte.
 # See ghash-x86.pl for background information and details about coding
 # techniques.
 #
