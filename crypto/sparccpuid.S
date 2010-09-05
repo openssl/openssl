@@ -232,13 +232,23 @@ _sparcv9_rdtick:
 .type	_sparcv9_rdtick,#function
 .size	_sparcv9_rdtick,.-_sparcv9_rdtick
 
+.global	_sparcv9_vis1_probe
+.align	8
+_sparcv9_vis1_probe:
+	.word	0x81b00d80	!fxor	%f0,%f0,%f0
+	add	%sp,BIAS+2,%o1
+	retl
+	.word	0xc19a5a40	!ldda	[%o1]ASI_FP16_P,%f0
+.type	_sparcv9_vis1_probe,#function
+.size	_sparcv9_vis1_probe,.-_sparcv9_vis1_probe
+
 ! Probe and instrument VIS1 instruction. Output is number of cycles it
 ! takes to execute rdtick and pair of VIS1 instructions. US-Tx VIS unit
 ! is slow (documented to be 6 cycles on T2) and the core is in-order
 ! single-issue, it should be possible to distinguish Tx reliably...
 ! Observed return values are:
 !
-!	UltraSPARC IIi		7
+!	UltraSPARC IIe		7
 !	UltraSPARC III		7
 !	UltraSPARC T1		24
 !
@@ -247,9 +257,9 @@ _sparcv9_rdtick:
 ! It would be possible to detect specifically US-T1 by instrumenting
 ! fmul8ulx16, which is emulated on T1 and as such accounts for quite
 ! a lot of %tick-s, couple of thousand on Linux...
-.global	_sparcv9_vis1_probe
+.global	_sparcv9_vis1_instrument
 .align	8
-_sparcv9_vis1_probe:
+_sparcv9_vis1_instrument:
 	.word	0x91410000	!rd	%tick,%o0
 	.word	0x81b00d80	!fxor	%f0,%f0,%f0
 	.word	0x85b08d82	!fxor	%f2,%f2,%f2
@@ -281,12 +291,28 @@ _sparcv9_vis1_probe:
 	.word	0x38680002	!bgu,a	%xcc,.+8
 	mov	%o3,%o0
 
-	! check for ASI_FP16_P is redundant...
-	add	%sp,BIAS+2,%o1
 	retl
-	.word	0xc19a5a40	!ldda	[%o1]ASI_FP16_P,%f0
-.type	_sparcv9_vis1_probe,#function
-.size	_sparcv9_vis1_probe,.-_sparcv9_vis1_probe
+	nop
+.type	_sparcv9_vis1_instrument,#function
+.size	_sparcv9_vis1_instrument,.-_sparcv9_vis1_instrument
+
+.global	_sparcv9_vis2_probe
+.align	8
+_sparcv9_vis2_probe:
+	retl
+	.word	0x81b00980	!bshuffle	%f0,%f0,%f0
+.type	_sparcv9_vis2_probe,#function
+.size	_sparcv9_vis2_probe,.-_sparcv9_vis2_probe
+
+.global	_sparcv9_fmadd_probe
+.align	8
+_sparcv9_fmadd_probe:
+	.word	0x81b00d80	!fxor	%f0,%f0,%f0
+	.word	0x85b08d82	!fxor	%f2,%f2,%f2
+	retl
+	.word	0x81b80440	!fmaddd	%f0,%f0,%f2,%f0
+.type	_sparcv9_fmadd_probe,#function
+.size	_sparcv9_fmadd_probe,.-_sparcv9_fmadd_probe
 
 .global	OPENSSL_cleanse
 .align	32

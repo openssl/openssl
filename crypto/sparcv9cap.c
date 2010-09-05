@@ -27,7 +27,10 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 	}
 
 unsigned long	_sparcv9_rdtick(void);
-unsigned long	_sparcv9_vis1_probe(void);
+void		_sparcv9_vis1_probe(void);
+unsigned long	_sparcv9_vis1_instrument(void);
+void		_sparcv9_vis2_probe(void);
+void		_sparcv9_fmadd_probe(void);
 
 unsigned long OPENSSL_rdtsc(void)
 	{
@@ -41,8 +44,11 @@ unsigned long OPENSSL_rdtsc(void)
 		return _sparcv9_rdtick();
 	}
 
-#if defined(__sun) && defined(__SVR4)
-
+#if 0 && defined(__sun) && defined(__SVR4)
+/* This code path is disabled, because of incompatibility of
+ * libdevinfo.so.1 and libmalloc.so.1 (see below for details)
+ */
+#include <malloc.h>
 #include <dlfcn.h>
 #include <libdevinfo.h>
 #include <sys/systeminfo.h>
@@ -114,7 +120,21 @@ void OPENSSL_cpuid_setup(void)
 			return;
 			}
 		}
-
+#ifdef M_KEEP
+	/*
+	 * Solaris libdevinfo.so.1 is effectively incomatible with
+	 * libmalloc.so.1. Specifically, if application is linked with
+	 * -lmalloc, it crashes upon startup with SIGSEGV in
+	 * free(3LIBMALLOC) called by di_fini. Prior call to
+	 * mallopt(M_KEEP,0) somehow helps... But not always...
+	 */
+	if ((h = dlopen(NULL,RTLD_LAZY)))
+		{
+		union { void *p; int (*f)(int,int); } sym;
+		if ((sym.p = dlsym(h,"mallopt"))) (*sym.f)(M_KEEP,0);
+		dlclose(h);
+		}
+#endif
 	if ((h = dlopen("libdevinfo.so.1",RTLD_LAZY))) do
 		{
 		di_init_t	di_init;
@@ -150,6 +170,10 @@ void OPENSSL_cpuid_setup(void)
 	struct sigaction	common_act,ill_oact,bus_oact;
 	sigset_t		all_masked,oset;
 	int			sig;
+	static int trigger=0;
+
+	if (trigger) return;
+	trigger=1;
  
 	if ((e=getenv("OPENSSL_sparcv9cap")))
 		{
@@ -157,8 +181,8 @@ void OPENSSL_cpuid_setup(void)
 		return;
 		}
 
-	/* For now we assume that the rest supports UltraSPARC-I* only */
-	OPENSSL_sparcv9cap_P |= SPARCV9_PREFER_FPU|SPARCV9_VIS1;
+	/* Initial value, fits UltraSPARC-I&II... */
+	OPENSSL_sparcv9cap_P = SPARCV9_PREFER_FPU|SPARCV9_TICK_PRIVILEGED;
 
 	sigfillset(&all_masked);
 	sigdelset(&all_masked,SIGILL);
@@ -176,34 +200,34 @@ void OPENSSL_cpuid_setup(void)
 	common_act.sa_mask    = all_masked;
 
 	sigaction(SIGILL,&common_act,&ill_oact);
-	if (sigsetjmp(common_jmp,0) == 0)
+	sigaction(SIGBUS,&common_act,&bus_oact);/* T1 fails 16-bit ldda [on Linux] */
+
+	if (sigsetjmp(common_jmp,1) == 0)
 		{
 		_sparcv9_rdtick();
 		OPENSSL_sparcv9cap_P &= ~SPARCV9_TICK_PRIVILEGED;
 		}
-	else
-		{
-		/* This happens on US-I&II, which have working VIS1
-		 * and fast FPU... In other words we are done... */
-		OPENSSL_sparcv9cap_P |= SPARCV9_TICK_PRIVILEGED;
-		sigaction(SIGILL,&ill_oact,NULL);
-		sigprocmask(SIG_SETMASK,&oset,NULL);
-		return;
-		}
-	sigaction(SIGILL,&ill_oact,NULL);
 
-	sigaction(SIGILL,&common_act,&ill_oact);
-	sigaction(SIGBUS,&common_act,&bus_oact);/* T1 fails 16-bit ldda */
-	if ((sig=sigsetjmp(common_jmp,0)) == 0)
+	if (sigsetjmp(common_jmp,1) == 0)
 		{
-		/* see sparccpud.S for details... */
-		if (_sparcv9_vis1_probe() >= 12)
-			OPENSSL_sparcv9cap_P &= ~SPARCV9_VIS1;
+		_sparcv9_vis1_probe();
+		OPENSSL_sparcv9cap_P |= SPARCV9_VIS1;
+		/* detect UltraSPARC-Tx, see sparccpud.S for details... */
+		if (_sparcv9_vis1_instrument() >= 12)
+			OPENSSL_sparcv9cap_P &= ~(SPARCV9_VIS1|SPARCV9_PREFER_FPU);
+		else
+			{
+			_sparcv9_vis2_probe();
+			OPENSSL_sparcv9cap_P |= SPARCV9_VIS2;
+			}
 		}
-	else
+
+	if (sigsetjmp(common_jmp,1) == 0)
 		{
-		OPENSSL_sparcv9cap_P &= ~SPARCV9_VIS1;
+		_sparcv9_fmadd_probe();
+		OPENSSL_sparcv9cap_P |= SPARCV9_FMADD;
 		}
+
 	sigaction(SIGBUS,&bus_oact,NULL);
 	sigaction(SIGILL,&ill_oact,NULL);
 
