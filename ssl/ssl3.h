@@ -455,7 +455,7 @@ typedef struct ssl3_state_st
 	void *server_opaque_prf_input;
 	size_t server_opaque_prf_input_len;
 
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 	/* Set if we saw the Next Protocol Negotiation extension from
 	   our peer. */
 	int next_proto_neg_seen;
@@ -552,7 +552,7 @@ typedef struct ssl3_state_st
 #define SSL3_ST_CW_CERT_VRFY_B		(0x191|SSL_ST_CONNECT)
 #define SSL3_ST_CW_CHANGE_A		(0x1A0|SSL_ST_CONNECT)
 #define SSL3_ST_CW_CHANGE_B		(0x1A1|SSL_ST_CONNECT)
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 #define SSL3_ST_CW_NEXT_PROTO_A		(0x200|SSL_ST_CONNECT)
 #define SSL3_ST_CW_NEXT_PROTO_B		(0x201|SSL_ST_CONNECT)
 #endif
@@ -601,7 +601,7 @@ typedef struct ssl3_state_st
 #define SSL3_ST_SR_CERT_VRFY_B		(0x1A1|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CHANGE_A		(0x1B0|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CHANGE_B		(0x1B1|SSL_ST_ACCEPT)
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 #define SSL3_ST_SR_NEXT_PROTO_A		(0x210|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_NEXT_PROTO_B		(0x211|SSL_ST_ACCEPT)
 #endif
@@ -629,7 +629,7 @@ typedef struct ssl3_state_st
 #define SSL3_MT_CLIENT_KEY_EXCHANGE		16
 #define SSL3_MT_FINISHED			20
 #define SSL3_MT_CERTIFICATE_STATUS		22
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 #define SSL3_MT_NEXT_PROTO			67
 #endif
 #define DTLS1_MT_HELLO_VERIFY_REQUEST    3

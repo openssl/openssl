@@ -343,7 +343,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -tlsextdebug      - hex dump of all TLS extensions received\n");
 	BIO_printf(bio_err," -status           - request certificate status from server\n");
 	BIO_printf(bio_err," -no_ticket        - disable use of RFC4507bis session tickets\n");
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
 # endif
 #endif
@@ -371,7 +371,7 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	return SSL_TLSEXT_ERR_OK;
 	}
 
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 /* This the context that we pass to next_proto_cb */
 typedef struct tlsextnextprotoctx_st {
 	unsigned char *data;
@@ -403,7 +403,7 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen, con
 	ctx->status = SSL_select_next_proto(out, outlen, in, inlen, ctx->data, ctx->len);
 	return SSL_TLSEXT_ERR_OK;
 	}
-# endif  /* ndef OPENSSL_NO_NPN */
+# endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
 #endif
 
 enum
@@ -467,7 +467,7 @@ int MAIN(int argc, char **argv)
 	char *servername = NULL; 
         tlsextctx tlsextcbp = 
         {NULL,0};
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
 # endif
 #endif
@@ -701,7 +701,7 @@ int MAIN(int argc, char **argv)
 #ifndef OPENSSL_NO_TLSEXT
 		else if	(strcmp(*argv,"-no_ticket") == 0)
 			{ off|=SSL_OP_NO_TICKET; }
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 		else if (strcmp(*argv,"-nextprotoneg") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -814,7 +814,7 @@ bad:
 	OpenSSL_add_ssl_algorithms();
 	SSL_load_error_strings();
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	next_proto.status = -1;
 	if (next_proto_neg_in)
 		{
@@ -950,7 +950,7 @@ bad:
 	 */
 	if (socket_type == SOCK_DGRAM) SSL_CTX_set_read_ahead(ctx, 1);
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (next_proto.data)
 		SSL_CTX_set_next_proto_select_cb(ctx, next_proto_cb, &next_proto);
 #endif
@@ -1815,7 +1815,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		expansion ? SSL_COMP_get_name(expansion) : "NONE");
 #endif
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (next_proto.status != -1) {
 		const unsigned char *proto;
 		unsigned int proto_len;

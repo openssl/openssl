@@ -538,7 +538,7 @@ int ssl3_accept(SSL *s)
 				 * the client uses its key from the certificate
 				 * for key exchange.
 				 */
-#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NPN)
+#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
 				s->state=SSL3_ST_SR_FINISHED_A;
 #else
 				if (s->s3->next_proto_neg_seen)
@@ -588,7 +588,7 @@ int ssl3_accept(SSL *s)
 			ret=ssl3_get_cert_verify(s);
 			if (ret <= 0) goto end;
 
-#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NPN)
+#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
 			s->state=SSL3_ST_SR_FINISHED_A;
 #else
 			if (s->s3->next_proto_neg_seen)
@@ -599,7 +599,7 @@ int ssl3_accept(SSL *s)
 			s->init_num=0;
 			break;
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 		case SSL3_ST_SR_NEXT_PROTO_A:
 		case SSL3_ST_SR_NEXT_PROTO_B:
 			ret=ssl3_get_next_proto(s);
@@ -680,7 +680,7 @@ int ssl3_accept(SSL *s)
 			s->state=SSL3_ST_SW_FLUSH;
 			if (s->hit)
 				{
-#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NPN)
+#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
 				s->s3->tmp.next_state=SSL3_ST_SR_FINISHED_A;
 #else
 				if (s->s3->next_proto_neg_seen)
@@ -3242,7 +3242,7 @@ int ssl3_get_next_proto(SSL *s)
 		SSL3_ST_SR_NEXT_PROTO_A,
 		SSL3_ST_SR_NEXT_PROTO_B,
 		SSL3_MT_NEXT_PROTO,
-		129,
+		514,  /* See the payload format below */
 		&ok);
 
 	if (!ok)

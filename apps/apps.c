@@ -3032,7 +3032,7 @@ int raw_write_stdout(const void *buf,int siz)
 	{	return write(fileno(stdout),buf,siz);	}
 #endif
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 /* next_protos_parse parses a comma separated list of strings into a string
  * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
  *   outlen: (output) set to the length of the resulting buffer on success.
@@ -3047,7 +3047,7 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
 	size_t i, start = 0;
 
 	len = strlen(in);
-	if (len > 65535)
+	if (len >= 65535)
 		return NULL;
 
 	out = OPENSSL_malloc(strlen(in) + 1);
@@ -3073,4 +3073,4 @@ unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
 	*outlen = len + 1;
 	return out;
 	}
-#endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NPN */
+#endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */

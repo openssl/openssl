@@ -354,7 +354,7 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->tlsext_ocsp_resplen = -1;
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->initial_ctx=ctx;
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 	s->next_proto_negotiated = NULL;
 # endif
 #endif
@@ -590,7 +590,7 @@ void SSL_free(SSL *s)
 		kssl_ctx_free(s->kssl_ctx);
 #endif	/* OPENSSL_NO_KRB5 */
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (s->next_proto_negotiated)
 		OPENSSL_free(s->next_proto_negotiated);
 #endif
@@ -1497,7 +1497,7 @@ int SSL_get_servername_type(const SSL *s)
 	return -1;
 	}
 
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 /* SSL_select_next_proto implements the standard protocol selection. It is
  * expected that this function is called from the callback set by
  * SSL_CTX_set_next_proto_select_cb.
@@ -1778,7 +1778,7 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	ret->tlsext_status_cb = 0;
 	ret->tlsext_status_arg = NULL;
 
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 	ret->next_protos_advertised_cb = 0;
 	ret->next_proto_select_cb = 0;
 # endif

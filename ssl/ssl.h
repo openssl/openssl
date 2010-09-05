@@ -860,7 +860,7 @@ struct ssl_ctx_st
 	int (*tlsext_opaque_prf_input_callback)(SSL *, void *peerinput, size_t len, void *arg);
 	void *tlsext_opaque_prf_input_callback_arg;
 
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 	/* Next protocol negotiation information */
 	/* (for experimental NPN extension). */
 
@@ -949,7 +949,7 @@ int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e);
 #endif
 void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx, int (*app_gen_cookie_cb)(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len));
 void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx, int (*app_verify_cookie_cb)(SSL *ssl, unsigned char *cookie, unsigned int cookie_len));
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s,
 					   int (*cb) (SSL *ssl,
 						      const unsigned char **out,
@@ -1236,7 +1236,7 @@ struct ssl_st
 
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
 
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 	/* Next protocol negotiation. For the client, this is the protocol that
 	 * we sent in NextProtocol and is set when handling ServerHello
 	 * extensions.

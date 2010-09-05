@@ -494,7 +494,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			i2d_X509_EXTENSIONS(s->tlsext_ocsp_exts, &ret);
 		}
 
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 	if (s->ctx->next_proto_select_cb && !s->s3->tmp.finish_md_len)
 		{
 		/* The client advertises an emtpy extension to indicate its
@@ -517,8 +517,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 	{
 	int extdatalen=0;
 	unsigned char *ret = p;
-#ifndef OPENSSL_NO_NPN
-	char next_proto_neg_seen;
+#ifndef OPENSSL_NO_NEXTPROTONEG
+	int next_proto_neg_seen;
 #endif
 
 	/* don't add extensions for SSLv3, unless doing secure renegotiation */
@@ -633,7 +633,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 		}
 
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 	next_proto_neg_seen = s->s3->next_proto_neg_seen;
 	s->s3->next_proto_neg_seen = 0;
 	if (next_proto_neg_seen && s->ctx->next_protos_advertised_cb)
@@ -995,7 +995,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				else
 					s->tlsext_status_type = -1;
 			}
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 		else if (type == TLSEXT_TYPE_next_proto_neg &&
                          s->s3->tmp.finish_md_len == 0)
 			{
@@ -1040,11 +1040,11 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	return 1;
 	}
 
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 /* ssl_next_proto_validate validates a Next Protocol Negotiation block. No
  * elements of zero length are allowed and the set of elements must exactly fill
  * the length of the block. */
-static char ssl_next_proto_validate(unsigned char *d, unsigned len)
+static int ssl_next_proto_validate(unsigned char *d, unsigned len)
 	{
 	unsigned int off = 0;
 
@@ -1194,7 +1194,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			/* Set flag to expect CertificateStatus message */
 			s->tlsext_status_expected = 1;
 			}
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 		else if (type == TLSEXT_TYPE_next_proto_neg)
 			{
 			unsigned char *selected;

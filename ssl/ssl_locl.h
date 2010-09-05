@@ -968,7 +968,7 @@ int ssl3_get_server_certificate(SSL *s);
 int ssl3_check_cert_and_algorithm(SSL *s);
 #ifndef OPENSSL_NO_TLSEXT
 int ssl3_check_finished(SSL *s);
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 int ssl3_send_next_proto(SSL *s);
 # endif
 #endif
@@ -989,7 +989,7 @@ int ssl3_check_client_hello(SSL *s);
 int ssl3_get_client_certificate(SSL *s);
 int ssl3_get_client_key_exchange(SSL *s);
 int ssl3_get_cert_verify(SSL *s);
-#ifndef OPENSSL_NO_NPN
+#ifndef OPENSSL_NO_NEXTPROTONEG
 int ssl3_get_next_proto(SSL *s);
 #endif
 

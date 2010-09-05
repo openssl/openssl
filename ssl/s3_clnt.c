@@ -424,7 +424,7 @@ int ssl3_connect(SSL *s)
 				SSL3_ST_CW_CHANGE_A,SSL3_ST_CW_CHANGE_B);
 			if (ret <= 0) goto end;
 
-#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NPN)
+#if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
 			s->state=SSL3_ST_CW_FINISHED_A;
 #else
 			if (s->next_proto_negotiated)
@@ -459,7 +459,7 @@ int ssl3_connect(SSL *s)
 
 			break;
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 		case SSL3_ST_CW_NEXT_PROTO_A:
 		case SSL3_ST_CW_NEXT_PROTO_B:
 			ret=ssl3_send_next_proto(s);
@@ -3018,7 +3018,7 @@ err:
  */
 
 #ifndef OPENSSL_NO_TLSEXT
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 int ssl3_send_next_proto(SSL *s)
 	{
 	unsigned int len, padding_len;

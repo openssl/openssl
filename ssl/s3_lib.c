@@ -2231,7 +2231,7 @@ void ssl3_clear(SSL *s)
 	s->s3->in_read_app_data=0;
 	s->version=SSL3_VERSION;
 
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	if (s->next_proto_negotiated)
 		{
 		OPENSSL_free(s->next_proto_negotiated);

@@ -496,12 +496,12 @@ static void sv_usage(void)
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT2);
 	BIO_printf(bio_err," -key2 arg     - Private Key file to use for servername, in cert file if\n");
 	BIO_printf(bio_err,"                 not specified (default is %s)\n",TEST_CERT2);
-# ifndef OPENSSL_NO_NPN
 	BIO_printf(bio_err," -tlsextdebug  - hex dump of all TLS extensions received\n");
-# endif
 	BIO_printf(bio_err," -no_ticket    - disable use of RFC4507bis session tickets\n");
 	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
+# ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - set the advertised protocols for the NPN extension (comma-separated list)\n");
+# endif
 #endif
 	}
 
@@ -837,7 +837,7 @@ BIO_printf(err, "cert_status: received %d ids\n", sk_OCSP_RESPID_num(ids));
 	goto done;
 	}
 
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 /* This is the context that we pass to next_proto_cb */
 typedef struct tlsextnextprotoctx_st {
 	unsigned char *data;
@@ -901,7 +901,7 @@ int MAIN(int argc, char *argv[])
 #endif
 #ifndef OPENSSL_NO_TLSEXT
         tlsextctx tlsextcbp = {NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING};
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
 	tlsextnextprotoctx next_proto;
 # endif
@@ -1237,7 +1237,7 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			s_key_file2= *(++argv);
 			}
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 		else if	(strcmp(*argv,"-nextprotoneg") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1348,7 +1348,7 @@ bad:
 				goto end;
 				}
 			}
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 		if (next_proto_neg_in)
 			{
 			unsigned short len;
@@ -1548,7 +1548,7 @@ bad:
 			SSL_CTX_set1_param(ctx2, vpm);
 		}
 
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 	if (next_proto.data)
 		SSL_CTX_set_next_protos_advertised_cb(ctx, next_proto_cb, &next_proto);
 # endif
@@ -2245,7 +2245,7 @@ static int init_ssl_connection(SSL *con)
 	X509 *peer;
 	long verify_error;
 	MS_STATIC char buf[BUFSIZ];
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	const unsigned char *next_proto_neg;
 	unsigned next_proto_neg_len;
 #endif
@@ -2288,7 +2288,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NPN)
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	SSL_get0_next_proto_negotiated(con, &next_proto_neg, &next_proto_neg_len);
 	if (next_proto_neg)
 		{
