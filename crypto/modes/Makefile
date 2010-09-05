@@ -43,7 +43,7 @@ lib:	$(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 	@touch lib
 
-aes-ia64.s:	asm/ghash-ia64.pl
+ghash-ia64.s:	asm/ghash-ia64.pl
 	$(PERL) asm/ghash-ia64.pl $@ $(CFLAGS)
 ghash-x86.s:	asm/ghash-x86.pl
 	$(PERL) asm/ghash-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
