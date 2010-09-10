@@ -91,16 +91,16 @@ ___
 sub BODY_00_15 {
 my ($a,$b,$c,$d,$e)=@_;
 $code.=<<___;
-	ldrb	$t0,[$inp],#4
-	ldrb	$t1,[$inp,#-1]
-	ldrb	$t2,[$inp,#-2]
+	ldrb	$t1,[$inp,#2]
+	ldrb	$t0,[$inp,#3]
+	ldrb	$t2,[$inp,#1]
 	add	$e,$K,$e,ror#2			@ E+=K_00_19
-	ldrb	$t3,[$inp,#-3]
+	ldrb	$t3,[$inp],#4
 	add	$e,$e,$a,ror#27			@ E+=ROR(A,27)
-	orr	$t0,$t1,$t0,lsl#24
+	orr	$t0,$t0,$t1,lsl#8
 	eor	$t1,$c,$d			@ F_xx_xx
-	orr	$t0,$t0,$t2,lsl#8
-	orr	$t0,$t0,$t3,lsl#16
+	orr	$t0,$t0,$t2,lsl#16
+	orr	$t0,$t0,$t3,lsl#24
 	and	$t1,$b,$t1,ror#2
 	add	$e,$e,$t0			@ E+=X[i]
 	eor	$t1,$t1,$d,ror#2		@ F_00_19(B,C,D)
