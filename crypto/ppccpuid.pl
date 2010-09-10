@@ -30,6 +30,12 @@ $code=<<___;
 	extrdi	r0,r0,32,0
 	blr
 
+.globl	.OPENSSL_altivec_probe
+.align	4
+.OPENSSL_altivec_probe:
+	.long	0x10000484	# vor	v0,v0,v0
+	blr
+
 .globl	.OPENSSL_wipe_cpu
 .align	4
 .OPENSSL_wipe_cpu:

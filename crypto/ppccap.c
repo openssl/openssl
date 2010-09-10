@@ -6,6 +6,7 @@
 #include <openssl/bn.h>
 
 #define PPC_FPU64	(1<<0)
+#define PPC_ALTIVEC	(1<<1)
 
 static int OPENSSL_ppccap_P = 0;
 
@@ -39,7 +40,7 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 #endif
 		}
 	else if ((OPENSSL_ppccap_P&PPC_FPU64))
-		/* this is a "must" on Power 6, but run-time detection
+		/* this is a "must" on POWER6, but run-time detection
 		 * is not implemented yet... */
 		return bn_mul_mont_fpu64(rp,ap,bp,np,n0,num);
 
@@ -55,7 +56,13 @@ void OPENSSL_ppc64_probe(void);
 void OPENSSL_cpuid_setup(void)
 	{
 	char *e;
+	struct sigaction	ill_oact,ill_act;
+	sigset_t		oset;
+	static int trigger=0;
 
+	if (trigger) return;
+	trigger=1;
+ 
 	sigfillset(&all_masked);
 	sigdelset(&all_masked,SIGILL);
 	sigdelset(&all_masked,SIGTRAP);
@@ -72,26 +79,36 @@ void OPENSSL_cpuid_setup(void)
 		return;
 		}
 
+	OPENSSL_ppccap_P = 0;
+
+	memset(&ill_act,0,sizeof(ill_act));
+	ill_act.sa_handler = ill_handler;
+	ill_act.sa_mask    = all_masked;
+
+	sigprocmask(SIG_SETMASK,&ill_act.sa_mask,&oset);
+	sigaction(SIGILL,&ill_act,&ill_oact);
+
 	if (sizeof(size_t)==4)
 		{
-		struct sigaction	ill_oact,ill_act;
-		sigset_t		oset;
-
-		memset(&ill_act,0,sizeof(ill_act));
-		ill_act.sa_handler = ill_handler;
-		ill_act.sa_mask    = all_masked;
-		sigprocmask(SIG_SETMASK,&ill_act.sa_mask,&oset);
-		sigaction (SIGILL,&ill_act,&ill_oact);
-		if (sigsetjmp(ill_jmp,0) == 0)
+		if (sigsetjmp(ill_jmp,1) == 0)
 			{
 			OPENSSL_ppc64_probe();
 			OPENSSL_ppccap_P |= PPC_FPU64;
 			}
-		else
-			{
-			OPENSSL_ppccap_P &= ~PPC_FPU64;
-			}
-		sigaction (SIGILL,&ill_oact,NULL);
-		sigprocmask(SIG_SETMASK,&oset,NULL);
 		}
+	else
+		{
+		/*
+		 * Wanted code detecting POWER6 CPU and setting PPC_FPU64
+		 */
+		}
+
+	if (sigsetjmp(ill_jmp,1) == 0)
+		{
+		OPENSSL_altivec_probe();
+		OPENSSL_ppccap_P |= PPC_ALTIVEC;
+		}
+
+	sigaction (SIGILL,&ill_oact,NULL);
+	sigprocmask(SIG_SETMASK,&oset,NULL);
 	}
