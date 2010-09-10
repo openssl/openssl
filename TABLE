@@ -1506,7 +1506,7 @@ $multilib     =
 
 *** debug-ben-debug
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DCONF_DEBUG -DBN_CTX_DEBUG -DDEBUG_SAFESTACK -g3 -O2 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -g3 -O2 -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -3893,7 +3893,7 @@ $rmd160_obj   =
 $rc5_obj      = 
 $wp_obj       = 
 $cmll_obj     = 
-$modes_obj    = 
+$modes_obj    = ghash-s390x.o
 $perlasm_scheme = void
 $dso_scheme   = dlfcn
 $shared_target= linux-shared
