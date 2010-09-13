@@ -195,7 +195,7 @@ if ($FLAVOR =~ /WIN64A/) {
 	my $ver=`nasm -v 2>NUL`;
 	my $vew=`nasmw -v 2>NUL`;
 	# pick newest version
-	$asm=($ver gt $vew?"nasm":"nasmw")." -f win32";
+	$asm=($ver ge $vew?"nasm":"nasmw")." -f win32";
 	$asmtype="win32n";
 	$afile='-o ';
 } else {
