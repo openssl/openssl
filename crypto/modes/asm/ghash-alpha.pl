@@ -245,8 +245,12 @@ ___
 }}
 
 $code=<<___;
+#ifdef __linux__
+#include <asm/regdef.h>
+#else
 #include <asm.h>
 #include <regdef.h>
+#endif
 
 .text
 
@@ -437,7 +441,7 @@ rem_4bit:
 	.quad	0x7080<<48, 0x6CA0<<48, 0x48C0<<48, 0x54E0<<48
 	.quad	0xE100<<48, 0xFD20<<48, 0xD940<<48, 0xC560<<48
 	.quad	0x9180<<48, 0x8DA0<<48, 0xA9C0<<48, 0xB5E0<<48
-.asciiz "GHASH for Alpha, CRYPTOGAMS by <appro\@openssl.org>"
+.ascii	"GHASH for Alpha, CRYPTOGAMS by <appro\@openssl.org>"
 .align	4
 
 ___

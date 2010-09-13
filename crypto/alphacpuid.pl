@@ -70,9 +70,9 @@ OPENSSL_wipe_cpu:
 OPENSSL_atomic_add:
 	.frame	$30,0,$26
 	.prologue 0
-1:	ldl_l	$0,($16)
+1:	ldl_l	$0,0($16)
 	addl	$0,$17,$1
-	stl_c	$1,($16)
+	stl_c	$1,0($16)
 	beq	$1,1b
 	addl	$0,$17,$0
 	ret	($26)
