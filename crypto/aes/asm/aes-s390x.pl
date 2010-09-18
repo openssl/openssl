@@ -1485,7 +1485,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.comm  OPENSSL_s390xcap_P,8,8
+.comm  OPENSSL_s390xcap_P,16,8
 .string	"AES for s390x, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
