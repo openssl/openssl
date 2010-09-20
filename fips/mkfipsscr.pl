@@ -306,6 +306,7 @@ my $rspdir = "rsp";
 my $rspignore = 0;
 my @bogus = ();			# list of unmatched *.rsp files
 my $bufout = '';
+my $bufdir = '';
 my %_programs = ();		# list of external programs to check
 
 foreach (@ARGV)
@@ -423,7 +424,6 @@ else
 RM="$rmcmd"
 MKDIR="$mkcmd"
 TPREFIX=$tprefix
-
 END
 
 	}
@@ -567,7 +567,7 @@ sub test_dir
 		{
 		$rsp =~ tr|/|\\|;
 		$req =~ tr|/|\\|;
-		$bufout .= <<END;
+		$bufdir = <<END;
 
 echo Running tests in $req
 if exist "$rsp" rd /s /q "$rsp"
@@ -576,7 +576,7 @@ END
 		}
 	else
 		{
-		$bufout .= <<END;
+		$bufdir = <<END;
 
 echo Running tests in "$req"
 \$RM "$rsp"
@@ -592,6 +592,10 @@ sub test_line
 	my ($win32, $req, $tprefix, $tnam) = @_;
 	my $rsp = $req;
 	my $tcmd = $fips_tests{$tnam};
+
+	$bufout .= $bufdir;
+	$bufdir = "";
+		
 	$rsp =~ s/req\/([^\/]*).req$/$rspdir\/$1.rsp/;
 	if ($tcmd =~ /-f$/)
 		{
