@@ -8,9 +8,20 @@
 # ====================================================================
 
 # September 2010.
+#
+# The module implements "4-bit" GCM GHASH function and underlying
+# single multiplication operation in GF(2^128). "4-bit" means that it
+# uses 256 bytes per-key table [+128 bytes shared table]. Performance
+# was measured to be ~18 cycles per processed byte on z10, which is
+# almost 40% better than gcc-generated code. It should be noted that
+# 18 cycles is worse result than expected: loop is scheduled for 12
+# and the result should be close to 12. In the lack of instruction-
+# level profiling data it's impossible to tell why...
 
 while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
 open STDOUT,">$output";
+
+$softonly=1;	# disable hardware support for now
 
 $Zhi="%r0";
 $Zlo="%r1";
@@ -38,6 +49,31 @@ $code.=<<___;
 .globl	gcm_gmult_4bit
 .align	32
 gcm_gmult_4bit:
+___
+$code.=<<___ if(!$softonly);
+	larl	%r1,OPENSSL_s390xcap_P
+	lg	%r0,0(%r1)
+	tmhl	%r0,0x4000	# check for message-security-assist
+	jz	.Lsoft_gmult
+	lghi	%r0,0
+	la	%r1,16($sp)
+	.long	0xb93e0004	# kimd %r0,%r4
+	lg	%r1,24($sp)
+	tmhh	%r1,0x4000	# check for function 65
+	jz	.Lsoft_gmult
+	stg	%r0,16($sp)	# arrange 16 bytes of zero input
+	stg	%r0,24($sp)
+	lghi	%r0,65		# function 65
+	la	%r1,0($Xi)	# H lies right after Xi in gcm128_context
+	la	$inp,16($sp)
+	lghi	$len,16
+	.long	0xb93e0004	# kimd %r0,$inp
+	brc	1,.-4		# pay attention to "partial completion"
+	br	%r14
+.align	32
+.Lsoft_gmult:
+___
+$code.=<<___;
 	stmg	%r6,%r14,48($sp)
 
 	aghi	$Xi,-1
@@ -53,6 +89,27 @@ gcm_gmult_4bit:
 .globl	gcm_ghash_4bit
 .align	32
 gcm_ghash_4bit:
+___
+$code.=<<___ if(!$softonly);
+	larl	%r1,OPENSSL_s390xcap_P
+	lg	%r0,0(%r1)
+	tmhl	%r0,0x4000	# check for message-security-assist
+	jz	.Lsoft_ghash
+	lghi	%r0,0
+	la	%r1,16($sp)
+	.long	0xb93e0004	# kimd %r0,%r4
+	lg	%r1,24($sp)
+	tmhh	%r1,0x4000	# check for function 65
+	jz	.Lsoft_ghash
+	lghi	%r0,65		# function 65
+	la	%r1,0($Xi)	# H lies right after Xi in gcm128_context
+	.long	0xb93e0004	# kimd %r0,$inp
+	brc	1,.-4		# pay attention to "partial completion"
+	br	%r14
+.align	32
+.Lsoft_ghash:
+___
+$code.=<<___;
 	stmg	%r6,%r14,48($sp)
 
 	aghi	$Xi,-1
@@ -62,92 +119,94 @@ gcm_ghash_4bit:
 
 	lg	$Zlo,8+1($Xi)		# Xi
 	lg	$Zhi,0+1($Xi)
+	lghi	$tmp,0
 .Louter:
-	xg	$Zlo,8($inp)		# Xi ^= inp 
-	xg	$Zhi,0($inp)
+	xg	$Zhi,0($inp)		# Xi ^= inp 
+	xg	$Zlo,8($inp)
+	xgr	$Zhi,$tmp
 	stg	$Zlo,8+1($Xi)
 	stg	$Zhi,0+1($Xi)
 
 .Lgmult_shortcut:
-	lghi	$tmp,0xff
-	srlg	$xi,$Zlo,8		# extract first two bytes
+	lghi	$tmp,0xf0
+	sllg	$nlo,$Zlo,4
+	srlg	$xi,$Zlo,8		# extract second byte
+	ngr	$nlo,$tmp
 	lgr	$nhi,$Zlo
-	ngr	$xi,$tmp
-	ngr	$nhi,$tmp
-
-	sllg	$nlo,$nhi,4
-	nill	$nhi,0xf0
-	nill	$nlo,0xf0
 	lghi	$cnt,14
+	ngr	$nhi,$tmp
 
 	lg	$Zlo,8($nlo,$Htbl)
 	lg	$Zhi,0($nlo,$Htbl)
 
 	sllg	$nlo,$xi,4
-	nill	$xi,0xf0
 	sllg	$rem0,$Zlo,3
-	nill	$nlo,0xf0
-
-	srlg	$Zlo,$Zlo,4
+	ngr	$nlo,$tmp
 	ngr	$rem0,$x78
+	ngr	$xi,$tmp
+
 	sllg	$tmp,$Zhi,60
-	xg	$Zlo,8($nhi,$Htbl)
+	srlg	$Zlo,$Zlo,4
 	srlg	$Zhi,$Zhi,4
-	xgr	$Zlo,$tmp
+	xg	$Zlo,8($nhi,$Htbl)
 	xg	$Zhi,0($nhi,$Htbl)
 	lgr	$nhi,$xi
 	sllg	$rem1,$Zlo,3
-
+	xgr	$Zlo,$tmp
+	ngr	$rem1,$x78
+	j	.Lghash_inner
+.align	16
 .Lghash_inner:
 	srlg	$Zlo,$Zlo,4
-	ngr	$rem1,$x78
-	xg	$Zlo,8($nlo,$Htbl)
 	sllg	$tmp,$Zhi,60
-	xg	$Zhi,0($rem0,$rem_4bit)
-	xgr	$Zlo,$tmp
+	xg	$Zlo,8($nlo,$Htbl)
 	srlg	$Zhi,$Zhi,4
 	llgc	$xi,0($cnt,$Xi)
-	sllg	$rem0,$Zlo,3
 	xg	$Zhi,0($nlo,$Htbl)
 	sllg	$nlo,$xi,4
-	nill	$xi,0xf0
+	xg	$Zhi,0($rem0,$rem_4bit)
 	nill	$nlo,0xf0
-
-	srlg	$Zlo,$Zlo,4
-	ngr	$rem0,$x78
-	xg	$Zlo,8($nhi,$Htbl)
-	sllg	$tmp,$Zhi,60
-	xg	$Zhi,0($rem1,$rem_4bit)
+	sllg	$rem0,$Zlo,3
 	xgr	$Zlo,$tmp
+	ngr	$rem0,$x78
+	nill	$xi,0xf0
+
+	sllg	$tmp,$Zhi,60
+	srlg	$Zlo,$Zlo,4
 	srlg	$Zhi,$Zhi,4
-	sllg	$rem1,$Zlo,3
+	xg	$Zlo,8($nhi,$Htbl)
 	xg	$Zhi,0($nhi,$Htbl)
 	lgr	$nhi,$xi
+	xg	$Zhi,0($rem1,$rem_4bit)
+	sllg	$rem1,$Zlo,3
+	xgr	$Zlo,$tmp
+	ngr	$rem1,$x78
 	brct	$cnt,.Lghash_inner
 
+	sllg	$tmp,$Zhi,60
 	srlg	$Zlo,$Zlo,4
-	ngr	$rem1,$x78
+	srlg	$Zhi,$Zhi,4
 	xg	$Zlo,8($nlo,$Htbl)
-	sllg	$tmp,$Zhi,60
-	xg	$Zhi,0($rem0,$rem_4bit)
-	xgr	$Zlo,$tmp
-	srlg	$Zhi,$Zhi,4
-	sllg	$rem0,$Zlo,3
 	xg	$Zhi,0($nlo,$Htbl)
-
-	srlg	$Zlo,$Zlo,4
-	ngr	$rem0,$x78
-	xg	$Zhi,0($rem1,$rem_4bit)
-	sllg	$tmp,$Zhi,60
-	xg	$Zlo,8($nhi,$Htbl)
-	srlg	$Zhi,$Zhi,4
-	xgr	$Zlo,$tmp
-	xg	$Zhi,0($nhi,$Htbl)
-
-	la	$inp,16($inp)
+	sllg	$xi,$Zlo,3
 	xg	$Zhi,0($rem0,$rem_4bit)
+	xgr	$Zlo,$tmp
+	ngr	$xi,$x78
+
+	sllg	$tmp,$Zhi,60
+	srlg	$Zlo,$Zlo,4
+	srlg	$Zhi,$Zhi,4
+	xg	$Zlo,8($nhi,$Htbl)
+	xg	$Zhi,0($nhi,$Htbl)
+	xgr	$Zlo,$tmp
+	xg	$Zhi,0($rem1,$rem_4bit)
+
+	lg	$tmp,0($xi,$rem_4bit)
+	la	$inp,16($inp)
+	sllg	$tmp,$tmp,4		# correct last rem_4bit[rem]
 	brctg	$len,.Louter
 
+	xgr	$Zhi,$tmp
 	stg	$Zlo,8+1($Xi)
 	stg	$Zhi,0+1($Xi)
 	lmg	%r6,%r14,48($sp)
@@ -157,10 +216,10 @@ gcm_ghash_4bit:
 
 .align	64
 rem_4bit:
-	.long	`0x0000<<16`,0,`0x1C20<<16`,0,`0x3840<<16`,0,`0x2460<<16`,0
-	.long	`0x7080<<16`,0,`0x6CA0<<16`,0,`0x48C0<<16`,0,`0x54E0<<16`,0
-	.long	`0xE100<<16`,0,`0xFD20<<16`,0,`0xD940<<16`,0,`0xC560<<16`,0
-	.long	`0x9180<<16`,0,`0x8DA0<<16`,0,`0xA9C0<<16`,0,`0xB5E0<<16`,0
+	.long	`0x0000<<12`,0,`0x1C20<<12`,0,`0x3840<<12`,0,`0x2460<<12`,0
+	.long	`0x7080<<12`,0,`0x6CA0<<12`,0,`0x48C0<<12`,0,`0x54E0<<12`,0
+	.long	`0xE100<<12`,0,`0xFD20<<12`,0,`0xD940<<12`,0,`0xC560<<12`,0
+	.long	`0x9180<<12`,0,`0x8DA0<<12`,0,`0xA9C0<<12`,0,`0xB5E0<<12`,0
 .type	rem_4bit,\@object
 .size	rem_4bit,(.-rem_4bit)
 .string	"GHASH for s390x, CRYPTOGAMS by <appro\@openssl.org>"
