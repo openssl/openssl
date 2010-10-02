@@ -49,6 +49,8 @@
 # key length, more for longer keys.
 
 $flavour = shift;
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+open STDOUT,">$output";
 
 if ($flavour =~ /64|n32/i) {
 	$LD="ld";

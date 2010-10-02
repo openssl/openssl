@@ -82,6 +82,11 @@ bn-mips3.o:	asm/mips3.s
 		as -$$ABI -O -o $@ asm/mips3.s; \
 	else	$(CC) -c $(CFLAGS) -o $@ asm/mips3.s; fi
 
+bn-mips.s:	asm/mips.pl
+	$(PERL) asm/mips.pl $(PERLASM_SCHEME) $@
+mips-mont.s:	asm/mips-mont.pl
+	$(PERL)	asm/mips-mont.pl $(PERLASM_SCHEME) $@
+
 bn-s390x.o:	asm/s390x.S
 	$(CC) $(CFLAGS) -c -o $@ asm/s390x.S
 

@@ -1,19 +1,23 @@
 #!/usr/bin/env perl
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
 # ====================================================================
 
 # This module doesn't present direct interest for OpenSSL, because it
-# doesn't provide better performance for longer keys. While 512-bit
-# RSA private key operations are 40% faster, 1024-bit ones are hardly
-# faster at all, while longer key operations are slower by up to 20%.
-# It might be of interest to embedded system developers though, as
-# it's smaller than 1KB, yet offers ~3x improvement over compiler
-# generated code.
+# doesn't provide better performance for longer keys, at least not on
+# in-order-execution cores. While 512-bit RSA sign operations can be
+# 65% faster in 64-bit mode, 1024-bit ones are only 15% faster, and
+# 4096-bit ones are up to 15% slower. In 32-bit mode it varies from
+# 16% improvement for 512-bit RSA sign to -33% for 4096-bit RSA
+# verify:-( All comparisons are against bn_mul_mont-free assembler.
+# The module might be of interest to embedded system developers, as
+# the code is smaller than 1KB, yet offers >3x improvement on MIPS64
+# and 75-30% [less for longer keys] on MIPS32 over compiler-generated
+# code.
 
 ######################################################################
 # There is a number of MIPS ABI in use, O32 and N32/64 are most
@@ -126,9 +130,12 @@ $code.=<<___ if ($flavour =~ /o32/i);
 ___
 $code.=<<___;
 	slt	$at,$num,4
-	beqzl	$at,bn_mul_mont_internal
+	bnez	$at,1f
 	li	$t0,0
-	jr	$ra
+	slt	$at,$num,17	# on in-order CPU
+	bnezl	$at,bn_mul_mont_internal
+	nop
+1:	jr	$ra
 	li	$a0,0
 .end	bn_mul_mont
 
