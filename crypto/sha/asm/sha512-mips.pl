@@ -67,7 +67,12 @@ if ($flavour =~ /64|n32/i) {
 ######################################################################
 
 $output=shift;
+for (@ARGV) {	$big_endian=1 if (/\-DB_ENDIAN/);
+		$big_endian=0 if (/\-DL_ENDIAN/);
+		$output=$_ if (/^\w[\w\-]*\.\w+$/);	}
 open STDOUT,">$output";
+
+if (!defined($big_endian)) { $big_endian=(unpack('L',pack('N',1))==1); }
 
 if ($output =~ /512/) {
 	$label="512";
@@ -114,7 +119,7 @@ $code.=<<___ if ($i<15);
 	${LD}l	@X[1],`($i+1)*$SZ+$MSB`($inp)
 	${LD}r	@X[1],`($i+1)*$SZ+$LSB`($inp)
 ___
-$code.=<<___	if ($little_endian && $i<16);	# XXX no 64-bit byte swap yet
+$code.=<<___	if (!$big_endian && $i<16);	# XXX no 64-bit byte swap yet
 	srl	$tmp0,@X[0],24	# byte swap($i)
 	srl	$tmp1,@X[0],8
 	andi	$tmp2,@X[0],0xFF00
