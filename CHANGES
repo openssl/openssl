@@ -4,6 +4,11 @@
 
  Changes between 0.9.8o and 0.9.8p [xx XXX xxxx]
 
+  *) Don't reencode certificate when calculating signature: cache and use
+     the original encoding instead. This makes signature verification of
+     some broken encodings work correctly.
+     [Steve Henson]
+
   *) ec2_GF2m_simple_mul bugfix: compute correct result if the output EC_POINT
      is also one of the inputs.
      [Emilia Käsper <emilia.kasper@esat.kuleuven.be> (Google)]
