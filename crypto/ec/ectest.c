@@ -234,7 +234,7 @@ static void group_order_tests(EC_GROUP *group)
 	BN_CTX_free(ctx);
 	}
 
-void prime_field_tests()
+static void prime_field_tests()
 	{	
 	BN_CTX *ctx = NULL;
 	BIGNUM *p, *a, *b;
@@ -777,7 +777,7 @@ void prime_field_tests()
 	if (!EC_GROUP_copy(_variable, group)) ABORT; \
 
 
-void char2_field_tests()
+static void char2_field_tests()
 	{	
 	BN_CTX *ctx = NULL;
 	BIGNUM *p, *a, *b;
@@ -1211,7 +1211,7 @@ void char2_field_tests()
 
 	}
 
-void internal_curve_test(void)
+static void internal_curve_test(void)
 	{
 	EC_builtin_curve *curves = NULL;
 	size_t crv_len = 0, n = 0;
