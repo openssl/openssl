@@ -343,7 +343,7 @@ Create a cleartext signed message:
  openssl smime -sign -in message.txt -text -out mail.msg \
 	-signer mycert.pem
 
-Create an opaque signed message
+Create an opaque signed message:
 
  openssl smime -sign -in message.txt -text -out mail.msg -nodetach \
 	-signer mycert.pem
@@ -397,11 +397,11 @@ it with:
  -----BEGIN PKCS7-----
  -----END PKCS7-----
 
-and using the command, 
+and using the command: 
 
  openssl smime -verify -inform PEM -in signature.pem -content content.txt
 
-alternatively you can base64 decode the signature and use
+Alternatively you can base64 decode the signature and use:
 
  openssl smime -verify -inform DER -in signature.der -content content.txt
 
