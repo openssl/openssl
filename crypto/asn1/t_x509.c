@@ -333,6 +333,8 @@ int X509_signature_print(BIO *bp, X509_ALGOR *sigalg, ASN1_STRING *sig)
 		}
 	if (sig)
 		return X509_signature_dump(bp, sig, 9);
+	else if (BIO_puts(bp, "\n") <= 0)
+		return 0;
 	return 1;
 }
 

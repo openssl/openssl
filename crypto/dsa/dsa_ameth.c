@@ -547,7 +547,15 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
 					int indent, ASN1_PCTX *pctx)
 	{
 	DSA_SIG *dsa_sig;
-	const unsigned char *p = sig->data;
+	const unsigned char *p;
+	if (!sig)
+		{
+		if (BIO_puts(bp, "\n") <= 0)
+			return 0;
+		else
+			return 1;
+		}
+	p = sig->data;
 	dsa_sig = d2i_DSA_SIG(NULL, &p, sig->length);
 	if (dsa_sig)
 		{
