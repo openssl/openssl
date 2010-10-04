@@ -164,7 +164,7 @@ void aesni_cbc_encrypt(const unsigned char *in,
 void aesni_ctr32_encrypt_blocks(const unsigned char *in,
 			   unsigned char *out,
 			   size_t blocks,
-			   const AES_KEY *key,
+			   const void *key,
 			   const unsigned char *ivec);
 
 /* Function for ENGINE detection and control */
@@ -384,6 +384,7 @@ DECLARE_AES_EVP(256,cbc,CBC);
 DECLARE_AES_EVP(256,cfb,CFB);
 DECLARE_AES_EVP(256,ofb,OFB);
 
+#if notused
 static void ctr96_inc(unsigned char *counter) {
 	u32 n=12;
 	u8  c;
@@ -396,6 +397,7 @@ static void ctr96_inc(unsigned char *counter) {
 		if (c) return;
 	} while (n);
 }
+#endif
 
 static int aesni_counter(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		const unsigned char *in, size_t len)
@@ -403,7 +405,7 @@ static int aesni_counter(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	AES_KEY *key = AESNI_ALIGN(ctx->cipher_data);
 
 	CRYPTO_ctr128_encrypt_ctr32(in,out,len,key,
-				ctx->iv,ctx->buf,&ctx->num,
+				ctx->iv,ctx->buf,(unsigned int *)&ctx->num,
 				aesni_ctr32_encrypt_blocks);
 	return 1;
 }
