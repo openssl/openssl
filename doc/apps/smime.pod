@@ -427,7 +427,7 @@ Ideally a database should be maintained of a certificates for each email
 address.
 
 The code doesn't currently take note of the permitted symmetric encryption
-algorithms as supplied in the SMIMECapabilities signed attribute. this means the
+algorithms as supplied in the SMIMECapabilities signed attribute. This means the
 user has to manually include the correct encryption algorithm. It should store
 the list of permitted ciphers in a database and only use those.
 
