@@ -167,7 +167,7 @@ my %globals;
 	    } elsif ($self->{op} =~ /^(pop|push)f/) {
 		$self->{op} .= $self->{sz};
 	    } elsif ($self->{op} eq "call" && $current_segment eq ".CRT\$XCU") {
-		$self->{op} = "ALIGN\t8\n\tDQ";
+		$self->{op} = "\tDQ";
 	    } 
 	    $self->{op};
 	}
@@ -546,6 +546,8 @@ my %globals;
 					if ($line=~/\.([px])data/) {
 					    $v.=" rdata align=";
 					    $v.=$1 eq "p"? 4 : 8;
+					} elsif ($line=~/\.CRT\$/i) {
+					    $v.=" rdata align=8";
 					}
 				    } else {
 					$v="$current_segment\tENDS\n" if ($current_segment);
@@ -553,6 +555,8 @@ my %globals;
 					if ($line=~/\.([px])data/) {
 					    $v.=" READONLY";
 					    $v.=" ALIGN(".($1 eq "p" ? 4 : 8).")" if ($masm>=$masmref);
+					} elsif ($line=~/\.CRT\$/i) {
+					    $v.=" READONLY DWORD";
 					}
 				    }
 				    $current_segment = $line;
