@@ -173,6 +173,9 @@
 
  Changes between 0.9.8n and 1.0.0  [29 Mar 2010]
 
+  *) Fix for double free bug in ssl/s3_clnt.c CVE-2010-2939
+     [Steve Henson]
+
   *) Add "missing" function EVP_CIPHER_CTX_copy(). This copies a cipher
      context. The operation can be customised via the ctrl mechanism in
      case ENGINEs want to include additional functionality.
