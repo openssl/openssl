@@ -31,7 +31,8 @@
 # The return value is placed in $a0. Following coding rules facilitate
 # interoperability:
 #
-# - never ever touch $tp, "thread pointer", former $gp;
+# - never ever touch $tp, "thread pointer", former $gp [o32 can be
+#   excluded from the rule, because it's specified volatile];
 # - copy return value to $t0, former $v0 [or to $a0 if you're adapting
 #   old code];
 # - on O32 populate $a4-$a7 with 'lw $aN,4*N($sp)' if necessary;
@@ -61,12 +62,12 @@ if ($flavour =~ /64|n32/i) {
 	$PTR_SLL="sll";
 	$SZREG=4;
 }
+$pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 #
 # <appro@openssl.org>
 #
 ######################################################################
 
-$output=shift;
 for (@ARGV) {	$big_endian=1 if (/\-DB_ENDIAN/);
 		$big_endian=0 if (/\-DL_ENDIAN/);
 		$output=$_ if (/^\w[\w\-]*\.\w+$/);	}
@@ -104,6 +105,9 @@ if ($output =~ /512/) {
 	$rounds=64;
 }
 
+$MSB = $big_endian ? 0 : ($SZ-1);
+$LSB = ($SZ-1)&~$MSB;
+
 @V=($A,$B,$C,$D,$E,$F,$G,$H)=map("\$$_",(1,2,3,7,24,25,30,31));
 @X=map("\$$_",(8..23));
 
@@ -127,7 +131,7 @@ $code.=<<___	if (!$big_endian && $i<16);	# XXX no 64-bit byte swap yet
 	andi	$tmp1,0xFF00
 	sll	$tmp2,$tmp2,8
 	or	@X[0],$tmp0
-	or	$tmp1,$t2
+	or	$tmp1,$tmp2
 	or	@X[0],$tmp1
 ___
 $code.=<<___;
@@ -160,7 +164,7 @@ $code.=<<___;
 	xor	$h,$tmp1
 	$SLL	$tmp1,$a,`$SZ*8-@Sigma0[0]`
 	xor	$h,$tmp0
-	$ST	@X[0],`($i%16)*$SZ`($sp)
+	$ST	@X[0],`($i%16)*$SZ`($sp)	# offload to ring buffer
 	xor	$h,$tmp1			# Sigma0(a)
 
 	or	$tmp0,$a,$b
@@ -174,7 +178,7 @@ $code.=<<___;
 	$ADDU	$h,$T1
 ___
 $code.=<<___ if ($i>=13);
-	$LD	@X[3],`(($i+3)%16)*$SZ`($sp)	# prefetch
+	$LD	@X[3],`(($i+3)%16)*$SZ`($sp)	# prefetch from ring buffer
 ___
 }
 
@@ -206,16 +210,12 @@ $code.=<<___;
 
 	xor	$tmp3,$tmp0			# sigma1(X[i+14])
 	$ADDU	@X[0],$tmp3
-
 ___
 	&BODY_00_15(@_);
 }
 
 $FRAMESIZE=16*$SZ+16*$SZREG;
 $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0xc0fff008 : 0xc0ff0000;
-$pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
-$MSB = 0;
-$LSB = ($SZ-1)&~$MSB;
 
 $code.=<<___;
 .text
