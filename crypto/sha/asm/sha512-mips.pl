@@ -123,8 +123,8 @@ $code.=<<___ if ($i<15);
 	${LD}l	@X[1],`($i+1)*$SZ+$MSB`($inp)
 	${LD}r	@X[1],`($i+1)*$SZ+$LSB`($inp)
 ___
-$code.=<<___	if (!$big_endian && $i<16);	# XXX no 64-bit byte swap yet
-	srl	$tmp0,@X[0],24	# byte swap($i)
+$code.=<<___	if (!$big_endian && $i<16 && $SZ==4);
+	srl	$tmp0,@X[0],24		# byte swap($i)
 	srl	$tmp1,@X[0],8
 	andi	$tmp2,@X[0],0xFF00
 	sll	@X[0],@X[0],24
@@ -132,6 +132,26 @@ $code.=<<___	if (!$big_endian && $i<16);	# XXX no 64-bit byte swap yet
 	sll	$tmp2,$tmp2,8
 	or	@X[0],$tmp0
 	or	$tmp1,$tmp2
+	or	@X[0],$tmp1
+___
+$code.=<<___	if (!$big_endian && $i<16 && $SZ==8);
+	ori	$tmp0,$zero,0xFF
+	dsll	$tmp2,$tmp0,32
+	or	$tmp0,$tmp2		# 0x000000FF000000FF
+	and	$tmp1,@X[0],$tmp0	# byte swap($i)
+	dsrl	$tmp2,@X[0],24
+	dsll	$tmp1,24
+	and	$tmp2,$tmp0
+	dsll	$tmp0,8			# 0x0000FF000000FF00
+	or	$tmp1,$tmp2
+	and	$tmp2,@X[0],$tmp0
+	dsrl	@X[0],8
+	dsll	$tmp2,8
+	and	@X[0],$tmp0
+	or	$tmp1,$tmp2
+	or	@X[0],$tmp1
+	dsrl	$tmp1,@X[0],32
+	dsll	@X[0],32
 	or	@X[0],$tmp1
 ___
 $code.=<<___;
