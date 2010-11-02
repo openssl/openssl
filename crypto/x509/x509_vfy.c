@@ -2034,7 +2034,7 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store, X509 *x509,
 	if (store)
 		ret = X509_VERIFY_PARAM_inherit(ctx->param, store->param);
 	else
-		ctx->param->flags |= X509_VP_FLAG_DEFAULT|X509_VP_FLAG_ONCE;
+		ctx->param->inh_flags |= X509_VP_FLAG_DEFAULT|X509_VP_FLAG_ONCE;
 
 	if (store)
 		{
