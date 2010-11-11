@@ -119,17 +119,17 @@ int MAIN(int argc, char **argv)
 		if (!strcmp(*argv,"-in"))
 			{
 			if (--argc < 1) badarg = 1;
-                        infile= *(++argv);
+                        else infile= *(++argv);
 			}
 		else if (!strcmp(*argv,"-out"))
 			{
 			if (--argc < 1) badarg = 1;
-			outfile= *(++argv);
+			else outfile= *(++argv);
 			}
 		else if (!strcmp(*argv,"-sigfile"))
 			{
 			if (--argc < 1) badarg = 1;
-			sigfile= *(++argv);
+			else sigfile= *(++argv);
 			}
 		else if(!strcmp(*argv, "-inkey"))
 			{
@@ -159,17 +159,17 @@ int MAIN(int argc, char **argv)
 		else if (!strcmp(*argv,"-passin"))
 			{
 			if (--argc < 1) badarg = 1;
-			passargin= *(++argv);
+			else passargin= *(++argv);
 			}
 		else if (strcmp(*argv,"-peerform") == 0)
 			{
 			if (--argc < 1) badarg = 1;
-			peerform=str2fmt(*(++argv));
+			else peerform=str2fmt(*(++argv));
 			}
 		else if (strcmp(*argv,"-keyform") == 0)
 			{
 			if (--argc < 1) badarg = 1;
-			keyform=str2fmt(*(++argv));
+			else keyform=str2fmt(*(++argv));
 			}
 #ifndef OPENSSL_NO_ENGINE
 		else if(!strcmp(*argv, "-engine"))
