@@ -257,6 +257,8 @@ int args_from_file(char *file, int *argc, char **argv[])
 
 int str2fmt(char *s)
 	{
+	if (s == NULL)
+		return FORMAT_UNDEF;
 	if 	((*s == 'D') || (*s == 'd'))
 		return(FORMAT_ASN1);
 	else if ((*s == 'T') || (*s == 't'))
