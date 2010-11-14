@@ -2579,12 +2579,19 @@ int ssl3_get_client_key_exchange(SSL *s)
 			{
 			int ret = 0;
 			EVP_PKEY_CTX *pkey_ctx;
-			EVP_PKEY *client_pub_pkey = NULL;
+			EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
 			unsigned char premaster_secret[32], *start;
-			size_t outlen=32, inlen;			
+			size_t outlen=32, inlen;
+			unsigned long alg_a;
 
 			/* Get our certificate private key*/
-			pkey_ctx = EVP_PKEY_CTX_new(s->cert->key->privatekey,NULL);	
+			alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+			if (alg_a & SSL_aGOST94)
+				pk = s->cert->pkeys[SSL_PKEY_GOST94].privatekey;
+			else if (alg_a & SSL_aGOST01)
+				pk = s->cert->pkeys[SSL_PKEY_GOST01].privatekey;
+
+			pkey_ctx = EVP_PKEY_CTX_new(pk,NULL);
 			EVP_PKEY_decrypt_init(pkey_ctx);
 			/* If client certificate is present and is of the same type, maybe
 			 * use it for key exchange.  Don't mind errors from
