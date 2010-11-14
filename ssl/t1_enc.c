@@ -661,7 +661,8 @@ int tls1_enc(SSL *s, int send)
 			int ivlen;
 			enc=EVP_CIPHER_CTX_cipher(s->enc_write_ctx);
 			/* For TLSv1.1 and later explicit IV */
-			if (s->version >= TLS1_1_VERSION)
+			if (s->version >= TLS1_1_VERSION
+				&& EVP_CIPHER_mode(enc) == EVP_CIPH_CBC_MODE)
 				ivlen = EVP_CIPHER_iv_length(enc);
 			else
 				ivlen = 0;
@@ -807,7 +808,8 @@ int tls1_enc(SSL *s, int send)
 					}
 				}
 			rec->length -=i;
-			if (s->version >= TLS1_1_VERSION)
+			if (s->version >= TLS1_1_VERSION
+				&& EVP_CIPHER_CTX_mode(ds) == EVP_CIPH_CBC_MODE)
 				{
 				rec->data += bs;    /* skip the explicit IV */
 				rec->input += bs;
