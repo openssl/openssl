@@ -594,9 +594,16 @@ ideatest.o: ../include/openssl/opensslconf.h ideatest.c
 igetest.o: ../include/openssl/aes.h ../include/openssl/e_os2.h
 igetest.o: ../include/openssl/opensslconf.h ../include/openssl/ossl_typ.h
 igetest.o: ../include/openssl/rand.h igetest.c
-jpaketest.o: ../include/openssl/opensslconf.h jpaketest.c
-md2test.o: ../e_os.h ../include/openssl/e_os2.h
-md2test.o: ../include/openssl/opensslconf.h md2test.c
+jpaketest.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+jpaketest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
+jpaketest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+jpaketest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+jpaketest.o: ../include/openssl/symhacks.h jpaketest.c
+md2test.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
+md2test.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
+md2test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+md2test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+md2test.o: ../include/openssl/symhacks.h md2test.c
 md4test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 md4test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 md4test.o: ../include/openssl/evp.h ../include/openssl/md4.h
