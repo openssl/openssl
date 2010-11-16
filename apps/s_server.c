@@ -1166,6 +1166,8 @@ int MAIN(int argc, char *argv[])
 			{ off|=SSL_OP_NO_TLSv1_1; }
 		else if	(strcmp(*argv,"-no_tls1") == 0)
 			{ off|=SSL_OP_NO_TLSv1; }
+		else if	(strcmp(*argv,"-no_tls1_1") == 0)
+			{ off|=SSL_OP_NO_TLSv1_1; }
 		else if	(strcmp(*argv,"-no_comp") == 0)
 			{ off|=SSL_OP_NO_COMPRESSION; }
 #ifndef OPENSSL_NO_TLSEXT
@@ -1185,6 +1187,8 @@ int MAIN(int argc, char *argv[])
 			{ meth=TLSv1_1_server_method(); }
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
+		else if	(strcmp(*argv,"-tls1_1") == 0)
+			{ meth=TLSv1_1_server_method(); }
 #endif
 #ifndef OPENSSL_NO_DTLS1
 		else if	(strcmp(*argv,"-dtls1") == 0)
