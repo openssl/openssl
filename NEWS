@@ -5,6 +5,12 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.0a and OpenSSL 1.0.0b:
+
+      o Fix for security issue CVE-2010-3864.
+      o Fix for CVE-2010-2939
+      o Fix WIN32 build system for GOST ENGINE.
+
   Major changes between OpenSSL 1.0.0 and OpenSSL 1.0.0a:
 
       o Fix for security issue CVE-2010-1633.
