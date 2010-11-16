@@ -432,12 +432,21 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				switch (servname_type)
 					{
 				case TLSEXT_NAMETYPE_host_name:
-					if (s->session->tlsext_hostname == NULL)
+					if (!s->hit)
 						{
-						if (len > TLSEXT_MAXLEN_host_name || 
-							((s->session->tlsext_hostname = OPENSSL_malloc(len+1)) == NULL))
+						if(s->session->tlsext_hostname)
+							{
+							*al = SSL_AD_DECODE_ERROR;
+							return 0;
+							}
+						if (len > TLSEXT_MAXLEN_host_name)
 							{
 							*al = TLS1_AD_UNRECOGNIZED_NAME;
+							return 0;
+							}
+						if ((s->session->tlsext_hostname = OPENSSL_malloc(len+1)) == NULL)
+							{
+							*al = TLS1_AD_INTERNAL_ERROR;
 							return 0;
 							}
 						memcpy(s->session->tlsext_hostname, sdata, len);
@@ -452,7 +461,8 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 						}
 					else 
-						s->servername_done = strlen(s->session->tlsext_hostname) == len 
+						s->servername_done = s->session->tlsext_hostname
+							&& strlen(s->session->tlsext_hostname) == len 
 							&& strncmp(s->session->tlsext_hostname, (char *)sdata, len) == 0;
 					
 					break;
