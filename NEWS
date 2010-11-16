@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.0.0a and OpenSSL 1.0.0b:
 
+      o Fix for security issue CVE-2010-3864.
       o Fix for CVE-2010-2939
       o Fix WIN32 build system for GOST ENGINE.
 
