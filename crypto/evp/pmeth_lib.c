@@ -134,6 +134,8 @@ static EVP_PKEY_CTX *int_ctx_new(EVP_PKEY *pkey, ENGINE *e, int id)
 		id = pkey->ameth->pkey_id;
 		}
 #ifndef OPENSSL_NO_ENGINE
+	if (pkey && pkey->engine)
+		e = pkey->engine;
 	/* Try to find an ENGINE which implements this method */
 	if (e)
 		{
