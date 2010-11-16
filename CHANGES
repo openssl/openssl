@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0b and 1.0.0c  [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.0a and 1.0.0b  [16 Nov 2010]
 
   *) Fix extension code to avoid race conditions which can result in a buffer
