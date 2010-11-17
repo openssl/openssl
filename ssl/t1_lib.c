@@ -714,12 +714,21 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				switch (servname_type)
 					{
 				case TLSEXT_NAMETYPE_host_name:
-					if (s->session->tlsext_hostname == NULL)
+					if (!s->hit)
 						{
-						if (len > TLSEXT_MAXLEN_host_name || 
-							((s->session->tlsext_hostname = OPENSSL_malloc(len+1)) == NULL))
+						if(s->session->tlsext_hostname)
+							{
+							*al = SSL_AD_DECODE_ERROR;
+							return 0;
+							}
+						if (len > TLSEXT_MAXLEN_host_name)
 							{
 							*al = TLS1_AD_UNRECOGNIZED_NAME;
+							return 0;
+							}
+						if ((s->session->tlsext_hostname = OPENSSL_malloc(len+1)) == NULL)
+							{
+							*al = TLS1_AD_INTERNAL_ERROR;
 							return 0;
 							}
 						memcpy(s->session->tlsext_hostname, sdata, len);
@@ -734,7 +743,8 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 						}
 					else 
-						s->servername_done = strlen(s->session->tlsext_hostname) == len 
+						s->servername_done = s->session->tlsext_hostname
+							&& strlen(s->session->tlsext_hostname) == len 
 							&& strncmp(s->session->tlsext_hostname, (char *)sdata, len) == 0;
 					
 					break;
@@ -765,15 +775,22 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				*al = TLS1_AD_DECODE_ERROR;
 				return 0;
 				}
-			s->session->tlsext_ecpointformatlist_length = 0;
-			if (s->session->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->session->tlsext_ecpointformatlist);
-			if ((s->session->tlsext_ecpointformatlist = OPENSSL_malloc(ecpointformatlist_length)) == NULL)
+			if (!s->hit)
 				{
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return 0;
+				if(s->session->tlsext_ecpointformatlist)
+					{
+					OPENSSL_free(s->session->tlsext_ecpointformatlist);
+					s->session->tlsext_ecpointformatlist = NULL;
+					}
+				s->session->tlsext_ecpointformatlist_length = 0;
+				if ((s->session->tlsext_ecpointformatlist = OPENSSL_malloc(ecpointformatlist_length)) == NULL)
+					{
+					*al = TLS1_AD_INTERNAL_ERROR;
+					return 0;
+					}
+				s->session->tlsext_ecpointformatlist_length = ecpointformatlist_length;
+				memcpy(s->session->tlsext_ecpointformatlist, sdata, ecpointformatlist_length);
 				}
-			s->session->tlsext_ecpointformatlist_length = ecpointformatlist_length;
-			memcpy(s->session->tlsext_ecpointformatlist, sdata, ecpointformatlist_length);
 #if 0
 			fprintf(stderr,"ssl_parse_clienthello_tlsext s->session->tlsext_ecpointformatlist (length=%i) ", s->session->tlsext_ecpointformatlist_length);
 			sdata = s->session->tlsext_ecpointformatlist;
@@ -794,15 +811,22 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				*al = TLS1_AD_DECODE_ERROR;
 				return 0;
 				}
-			s->session->tlsext_ellipticcurvelist_length = 0;
-			if (s->session->tlsext_ellipticcurvelist != NULL) OPENSSL_free(s->session->tlsext_ellipticcurvelist);
-			if ((s->session->tlsext_ellipticcurvelist = OPENSSL_malloc(ellipticcurvelist_length)) == NULL)
+			if (!s->hit)
 				{
-				*al = TLS1_AD_INTERNAL_ERROR;
-				return 0;
+				if(s->session->tlsext_ellipticcurvelist)
+					{
+					*al = TLS1_AD_DECODE_ERROR;
+					return 0;
+					}
+				s->session->tlsext_ellipticcurvelist_length = 0;
+				if ((s->session->tlsext_ellipticcurvelist = OPENSSL_malloc(ellipticcurvelist_length)) == NULL)
+					{
+					*al = TLS1_AD_INTERNAL_ERROR;
+					return 0;
+					}
+				s->session->tlsext_ellipticcurvelist_length = ellipticcurvelist_length;
+				memcpy(s->session->tlsext_ellipticcurvelist, sdata, ellipticcurvelist_length);
 				}
-			s->session->tlsext_ellipticcurvelist_length = ellipticcurvelist_length;
-			memcpy(s->session->tlsext_ellipticcurvelist, sdata, ellipticcurvelist_length);
 #if 0
 			fprintf(stderr,"ssl_parse_clienthello_tlsext s->session->tlsext_ellipticcurvelist (length=%i) ", s->session->tlsext_ellipticcurvelist_length);
 			sdata = s->session->tlsext_ellipticcurvelist;

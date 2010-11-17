@@ -40,6 +40,10 @@
 
  Changes between 1.0.0a and 1.0.0b  [xx XXX xxxx]
 
+  *) Fix extension code to avoid race conditions which can result in a buffer
+     overrun vulnerability: resumed sessions must not be modified as they can
+     be shared by multiple threads. CVE-2010-3864
+
   *) Fix WIN32 build system to correctly link an ENGINE directory into
      a DLL. 
      [Steve Henson]
@@ -892,6 +896,10 @@
      [NTT]
   
  Changes between 0.9.8o and 0.9.8p [xx XXX xxxx]
+
+  *) Fix extension code to avoid race conditions which can result in a buffer
+     overrun vulnerability: resumed sessions must not be modified as they can
+     be shared by multiple threads. CVE-2010-3864
 
   *) Fix for double free bug in ssl/s3_clnt.c CVE-2010-2939
      [Steve Henson]
