@@ -214,6 +214,12 @@ skip_to_init:
 			memcpy(ctx->iv, ctx->oiv, EVP_CIPHER_CTX_iv_length(ctx));
 			break;
 
+			case EVP_CIPH_CTR_MODE:
+			/* Don't reuse IV for CTR mode */
+			if(iv)
+				memcpy(ctx->iv, iv, EVP_CIPHER_CTX_iv_length(ctx));
+			break;
+
 			default:
 			return 0;
 			break;
