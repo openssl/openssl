@@ -816,8 +816,8 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				{
 				if(s->session->tlsext_ecpointformatlist)
 					{
-					*al = TLS1_AD_DECODE_ERROR;
-					return 0;
+					OPENSSL_free(s->session->tlsext_ecpointformatlist);
+					s->session->tlsext_ecpointformatlist = NULL;
 					}
 				s->session->tlsext_ecpointformatlist_length = 0;
 				if ((s->session->tlsext_ecpointformatlist = OPENSSL_malloc(ecpointformatlist_length)) == NULL)
