@@ -310,7 +310,7 @@ const char *RAND_file_name(char *buf, size_t size)
 	 * to something hopefully decent if that isn't available. 
 	 */
 
-	if (!ok)
+	if (!buf[0])
 		if (BUF_strlcpy(buf,"/dev/arandom",size) >= size) {
 			return(NULL);
 		}	
