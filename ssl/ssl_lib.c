@@ -2440,8 +2440,6 @@ const char *SSL_get_version(const SSL *s)
 		return("TLSv1");
 	else if (s->version == SSL3_VERSION)
 		return("SSLv3");
-	else if (s->version == SSL3_VERSION)
-		return("SSLv3");
 	else if (s->version == SSL2_VERSION)
 		return("SSLv2");
 	else
