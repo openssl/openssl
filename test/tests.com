@@ -77,6 +77,7 @@ $ loop_tests:
 $	tests_e = f$element(tests_i,",",tests)
 $	tests_i = tests_i + 1
 $	if tests_e .eqs. "," then goto exit
+$	write sys$output "---> ''tests_e'"
 $	gosub 'tests_e'
 $	goto loop_tests
 $
