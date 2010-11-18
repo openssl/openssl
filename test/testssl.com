@@ -21,10 +21,10 @@ $	    cert=p2
 $	endif
 $	ssltest := mcr 'texe_dir'ssltest -key 'key' -cert 'cert' -c_key 'key' -c_cert 'cert'
 $
+$	set noon
 $	define/user sys$output testssl-x509-output.
 $	define/user sys$error nla0:
 $	mcr 'exe_dir'openssl x509 -in 'cert' -text -noout
-$	set noon
 $	define/user sys$error nla0:
 $	search/output=nla0: testssl-x509-output. "DSA Public Key"/exact
 $	if $severity .eq. 1
@@ -33,7 +33,6 @@ $	    dsa_cert := YES
 $	else
 $	    dsa_cert := NO
 $	endif
-$	set on
 $	delete testssl-x509-output.;*
 $
 $	if p3 .eqs. ""
@@ -161,14 +160,12 @@ $	if $severity .ne. 1 then goto exit3
 $
 $!###########################################################################
 $
-$	set noon
 $	define/user sys$output nla0:
 $	mcr 'exe_dir'openssl no-rsa
 $	no_rsa=$SEVERITY
 $	define/user sys$output nla0:
 $	mcr 'exe_dir'openssl no-dh
 $	no_dh=$SEVERITY
-$	set on
 $
 $	if no_dh
 $	then
@@ -203,4 +200,5 @@ $ exit3:
 $	RET = 3
 $ exit:
 $	if p3 .eqs. "" then delete certs.tmp;*
+$	set on
 $	exit 'RET'

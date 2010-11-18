@@ -167,6 +167,8 @@ $	endsubroutine
 $
 $	! Main body ----------------------------------------------------------
 $
+$	set noon
+$
 $	write sys$output "Setting up TSA test directory..."
 $	call setup_dir
 $
@@ -244,5 +246,7 @@ $	call verify_time_stamp_response_fail req3.tsq resp1.tsr
 $
 $	write sys$output "Cleaning up..."
 $	call clean_up_dir
+$
+$	set on
 $
 $	exit
