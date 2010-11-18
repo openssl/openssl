@@ -70,6 +70,7 @@ $	ENGINETEST :=	enginetest
 $	EVPTEST :=	evp_test
 $	IGETEST :=	igetest
 $	JPAKETEST :=	jpaketest
+$	ASN1TEST :=	asn1test
 $
 $	tests_i = 0
 $ loop_tests:
