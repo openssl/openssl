@@ -139,8 +139,9 @@ $ T_D_EXPTEST    := [-.crypto.bn]
 $ T_D_DSATEST    := [-.crypto.dsa]
 $ T_D_RSA_TEST   := [-.crypto.rsa]
 $ T_D_EVP_TEST   := [-.crypto.evp]
-$ T_D_JPAKETEST  := [-.crypto.jpake]
 $ T_D_IGETEST    := [-.test]
+$ T_D_JPAKETEST  := [-.crypto.jpake]
+$ T_D_ASN1TEST   := [-.test]
 $!
 $ TCPIP_PROGRAMS = ",,"
 $ IF COMPILER .EQS. "VAXC" THEN -
