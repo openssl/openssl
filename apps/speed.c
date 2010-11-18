@@ -1230,7 +1230,8 @@ int MAIN(int argc, char **argv)
 		count*=2;
 		Time_F(START);
 		for (it=count; it; it--)
-			DES_ecb_encrypt(buf_as_des_cblock,buf_as_des_cblock,
+			DES_ecb_encrypt((DES_cblock *)buf,
+				(DES_cblock *)buf,
 				&sch,DES_ENCRYPT);
 		d=Time_F(STOP);
 		} while (d <3);
