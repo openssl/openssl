@@ -743,6 +743,16 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <tchar.h>
 #include <signal.h>
+#ifdef __WATCOMC__
+#if defined(_UNICODE) || defined(__UNICODE__)
+#define _vsntprintf _vsnwprintf
+#else
+#define _vsntprintf _vsnprintf
+#endif
+#endif
+#ifdef _MSC_VER
+#define alloca _alloca
+#endif
 
 #if defined(_WIN32_WINNT) && _WIN32_WINNT>=0x0333
 int OPENSSL_isservice(void)
@@ -773,11 +783,7 @@ int OPENSSL_isservice(void)
 
     if (len>512) return -1;		/* paranoia */
     len++,len&=~1;			/* paranoia */
-#ifdef _MSC_VER
-    name=(WCHAR *)_alloca(len+sizeof(WCHAR));
-#else
     name=(WCHAR *)alloca(len+sizeof(WCHAR));
-#endif
     if (!GetUserObjectInformationW (h,UOI_NAME,name,len,&len))
 	return -1;
 
@@ -822,11 +828,7 @@ void OPENSSL_showfatal (const char *fmta,...)
       size_t len_0=strlen(fmta)+1,i;
       WCHAR *fmtw;
 
-#ifdef _MSC_VER
-	fmtw = (WCHAR *)_alloca (len_0*sizeof(WCHAR));
-#else
-	fmtw = (WCHAR *)alloca (len_0*sizeof(WCHAR));
-#endif
+	fmtw = (WCHAR *)alloca(len_0*sizeof(WCHAR));
 	if (fmtw == NULL) { fmt=(const TCHAR *)L"no stack?"; break; }
 
 #ifndef OPENSSL_NO_MULTIBYTE
