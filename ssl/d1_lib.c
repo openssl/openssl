@@ -62,7 +62,7 @@
 #include <openssl/objects.h>
 #include "ssl_locl.h"
 
-#ifdef OPENSSL_SYS_WIN32
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS)
 #include <sys/timeb.h>
 #endif
 
