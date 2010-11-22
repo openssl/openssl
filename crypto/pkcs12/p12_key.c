@@ -176,8 +176,10 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 		out += u;
 		for (j = 0; j < v; j++) B[j] = Ai[j % u];
 		/* Work out B + 1 first then can use B as tmp space */
-		BN_bin2bn (B, v, Bpl1);
-		BN_add_word (Bpl1, 1);
+		if (!BN_bin2bn (B, v, Bpl1))
+			goto err;
+		if (!BN_add_word (Bpl1, 1))
+			goto err;
 		for (j = 0; j < Ilen ; j+=v) {
 			if (!BN_bin2bn(I + j, v, Ij))
 				goto err;
