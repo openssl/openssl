@@ -131,7 +131,7 @@ bn_mul_words:
 	brct	%r4,.Loop4_mul
 
 	la	%r10,1(%r10)		// see if len%4 is zero ...
-	brct	%r10,.Loop1_madd	// without touching condition code:-)
+	brct	%r10,.Loop1_mul		// without touching condition code:-)
 
 .Lend_mul:
 	alcgr	%r8,zero	// collect carry bit
