@@ -88,7 +88,7 @@ $ ENCRYPT_TYPES = "Basic,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
 		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
-		  "STORE,CMS,PQUEUE,TS,JPAKE"
+		  "CMS,PQUEUE,TS,JPAKE,STORE,CMAC"
 $! Define The OBJ Directory.
 $!
 $ OBJ_DIR := SYS$DISK:[-.'ARCH'.OBJ.CRYPTO]
@@ -191,7 +191,7 @@ $ LIB_CAST = "c_skey,c_ecb,c_enc,c_cfb64,c_ofb64"
 $ LIB_CAMELLIA = "camellia,cmll_misc,cmll_ecb,cmll_cbc,cmll_ofb,"+ -
 	"cmll_cfb,cmll_ctr"
 $ LIB_SEED = "seed,seed_ecb,seed_cbc,seed_cfb,seed_ofb"
-$ LIB_MODES = "cbc128,ctr128,cfb128,ofb128,cts128"
+$ LIB_MODES = "cbc128,ctr128,cts128,cfb128,ofb128,gcm128"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
 $ IF F$TRNLNM("OPENSSL_NO_ASM") .OR. ARCH .NES. "VAX" THEN -
      LIB_BN_ASM = "bn_asm"
@@ -219,9 +219,9 @@ $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_table,eng_pkey,eng_fat,eng_all,"+ -
 	"tb_rsa,tb_dsa,tb_ecdsa,tb_dh,tb_ecdh,tb_rand,tb_store,"+ -
 	"tb_cipher,tb_digest,tb_pkmeth,tb_asnmth,"+ -
-	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev"+ -
+	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev,"+ -
 	"eng_aesni"
-$ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,aes_ctr,"+ -
+$ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,"+ -
 	"aes_ige,aes_wrap"
 $ LIB_BUFFER = "buffer,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
@@ -289,14 +289,16 @@ $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 $ LIB_UI_COMPAT = ",ui_compat"
 $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
 $ LIB_KRB5 = "krb5_asn"
-$ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
 $ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
-	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess"
+	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess,"+ -
+	"cms_pwri"
 $ LIB_PQUEUE = "pqueue"
 $ LIB_TS = "ts_err,ts_req_utils,ts_req_print,ts_rsp_utils,ts_rsp_print,"+ -
 	"ts_rsp_sign,ts_rsp_verify,ts_verify_ctx,ts_lib,ts_conf,"+ -
 	"ts_asn1"
 $ LIB_JPAKE = "jpake,jpake_err"
+$ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
+$ LIB_CMAC = "cmac,cm_ameth,cm_pmeth"
 $!
 $! Setup exceptional compilations
 $!

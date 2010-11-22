@@ -464,7 +464,7 @@ $ SDIRS := ,-
    BN,EC,RSA,DSA,ECDSA,DH,ECDH,DSO,ENGINE,-
    BUFFER,BIO,STACK,LHASH,RAND,ERR,-
    EVP,ASN1,PEM,X509,X509V3,CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,-
-   STORE,CMS,PQUEUE,TS,JPAKE
+   CMS,PQUEUE,TS,JPAKE,STORE,CMAC
 $ EXHEADER_ := crypto.h,opensslv.h,ebcdic.h,symhacks.h,ossl_typ.h
 $ EXHEADER__'ARCH' := opensslconf.h
 $ EXHEADER_OBJECTS := objects.h,obj_mac.h
@@ -515,12 +515,13 @@ $ EXHEADER_COMP := comp.h
 $ EXHEADER_OCSP := ocsp.h
 $ EXHEADER_UI := ui.h,ui_compat.h
 $ EXHEADER_KRB5 := krb5_asn.h
-$!EXHEADER_STORE := store.h,str_compat.h
-$ EXHEADER_STORE := store.h
 $ EXHEADER_CMS := cms.h
 $ EXHEADER_PQUEUE := pqueue.h
 $ EXHEADER_TS := ts.h
 $ EXHEADER_JPAKE := jpake.h
+$!EXHEADER_STORE := store.h,str_compat.h
+$ EXHEADER_STORE := store.h
+$ EXHEADER_CMAC := cmac.h
 $
 $ I = 0
 $ LOOP_SDIRS: 
