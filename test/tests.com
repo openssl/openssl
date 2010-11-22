@@ -14,6 +14,7 @@ $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
 $	sslroot = f$parse("sys$disk:[-.apps];",,,,"syntax_only") - "].;"+ ".]"
 $	define /translation_attributes = concealed sslroot 'sslroot'
+$	openssl_conf := sslroot:[000000]openssl-vms.cnf
 $
 $	set default '__here'
 $
@@ -290,6 +291,8 @@ $	mcr 'texe_dir''jpaketest'
 $	return
 $ test_cms:
 $	write sys$output "CMS consistency test"
+$	! The following makes perl include the DCL symbol table in the env.
+$	define/user perl_env_tables clisym_local,lnm$file_dev,ctrl_env
 $	perl CMS-TEST.PL
 $	return
 $
