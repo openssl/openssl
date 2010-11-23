@@ -298,6 +298,7 @@ $	return
 $
 $
 $ exit:
+$	mcr 'exe_dir'openssl version -a
 $	set default '__save_default'
 $	deassign sslroot
 $	exit
