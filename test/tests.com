@@ -12,11 +12,11 @@ $	if __arch .eqs. "" then __arch := UNK
 $	texe_dir := sys$disk:[-.'__arch'.exe.test]
 $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
+$	set default '__here'
+$
 $	sslroot = f$parse("sys$disk:[-.apps];",,,,"syntax_only") - "].;"+ ".]"
 $	define /translation_attributes = concealed sslroot 'sslroot'
 $	openssl_conf := sslroot:[000000]openssl-vms.cnf
-$
-$	set default '__here'
 $
 $	on control_y then goto exit
 $	on error then goto exit
@@ -175,27 +175,57 @@ $	@tpkcs7d.com
 $	deassign sys$error
 $	return
 $ test_bn:
-$	write sys$output "starting big number library test, could take a while..."
-$	create bntest-vms.fdl
+$	write sys$output -
+	      "starting big number library test, could take a while..."
+$	set noon
+$	define sys$error nl:
+$	define sys$output nl:
+$	@ bctest.com
+$	status = $status
+$	deassign sys$error
+$	deassign sys$output
+$	on control_y then goto exit
+$	on error then goto exit
+$	if (status)
+$	then
+$	    create /fdl = sys$input bntest-vms.tmp
 FILE
 	ORGANIZATION	sequential
 RECORD
 	FORMAT		stream_lf
-$	create/fdl=bntest-vms.fdl bntest-vms.sh
-$	open/append foo bntest-vms.sh
-$	type/output=foo: sys$input:
+$	    define /user_mode sys$output bntest-vms.tmp
+$	    mcr 'texe_dir''bntest'
+$	    define /user_mode sys$input bntest-vms.tmp
+$	    define /user_mode sys$output bntest-vms.out
+$	    bc
+$	    @ bntest.com bntest-vms.out
+$	    status = $status
+$	    if (status)
+$	    then
+$		delete bntest-vms.out;*
+$		delete bntest-vms.tmp;*
+$	    endif
+$	else
+$	    create /fdl = sys$input bntest-vms.sh
+FILE
+	ORGANIZATION	sequential
+RECORD
+	FORMAT		stream_lf
+$	    open /append bntest_file bntest-vms.sh
+$	    type /output = bntest_file sys$input:
 << __FOO__ sh -c "`sh ./bctest`" | perl -e '$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $1";} elsif (!/^0$/) {die "\nFailed! bc: $_";} else {print STDERR "."; $i++;}} print STDERR "\n$i tests passed\n"'
-$	define/user sys$output bntest-vms.tmp
-$	mcr 'texe_dir''bntest'
-$	copy bntest-vms.tmp foo:
-$	delete bntest-vms.tmp;*
-$	type/output=foo: sys$input:
+$	    define/user sys$output bntest-vms.tmp
+$	    mcr 'texe_dir''bntest'
+$	    copy bntest-vms.tmp bntest_file
+$	    delete bntest-vms.tmp;*
+$	    type /output = bntest_file sys$input:
 __FOO__
-$	close foo
-$	write sys$output "-- copy the [.test]bntest-vms.sh and [.test]bctest files to a Unix system and"
-$	write sys$output "-- run bntest-vms.sh through sh or bash to verify that the bignum operations"
-$	write sys$output "-- went well."
-$	write sys$output ""
+$	    close bntest_file
+$	    write sys$output "-- copy the [.test]bntest-vms.sh and [.test]bctest files to a Unix system and"
+$	    write sys$output "-- run bntest-vms.sh through sh or bash to verify that the bignum operations"
+$	    write sys$output "-- went well."
+$	    write sys$output ""
+$	endif
 $	write sys$output "test a^b%c implementations"
 $	mcr 'texe_dir''exptest'
 $	return
