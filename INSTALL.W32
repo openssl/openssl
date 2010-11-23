@@ -185,6 +185,15 @@
    required. Run the installers and do whatever magic they say it takes
    to start MSYS bash shell with GNU tools on its PATH.
 
+   N.B. Since source tar-ball can contain symbolic links, it's essential
+   that you use accompanying MSYS tar to unpack the source. It will
+   either handle them in one way or another or fail to extract them,
+   which does the trick too. Latter means that you may safely ignore all
+   "cannot create symlink" messages, as they will be "re-created" at
+   configure stage by copying corresponding files. Alternative programs
+   were observed to create empty files instead, which results in build
+   failure.
+
  * Compile OpenSSL:
 
    $ ./config
