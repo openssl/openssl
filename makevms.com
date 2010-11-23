@@ -382,7 +382,7 @@ $ TIME = F$TIME()
 $!
 $! Write The [.xxx.CRYPTO]BUILDINF.H File.
 $!
-$ WRITE H_FILE "#define CFLAGS """" /* Not filled in for now */"
+$! WRITE H_FILE "#define CFLAGS """" /* Not filled in for now */"
 $ WRITE H_FILE "#define PLATFORM ""VMS ''ARCH' ''VMS_VER'"""
 $ WRITE H_FILE "#define DATE ""''TIME'"" "
 $!
@@ -393,6 +393,11 @@ $!
 $! Purge The [.xxx.CRYPTO]BUILDINF.H File.
 $!
 $ PURGE SYS$DISK:[.'ARCH'.CRYPTO]BUILDINF.H
+$!
+$! Delete [.CRYPTO]BUILDINF.H File, as there might be some residue from Unix.
+$!
+$ IF F$SEARCH("[.CRYPTO]BUILDINF.H") .NES. "" THEN -
+     DELETE SYS$DISK:[.CRYPTO]BUILDINF.H;*
 $!
 $! That's All, Time To RETURN.
 $!
