@@ -4,7 +4,10 @@
 
  Changes between 1.0.0b and 1.0.0c  [xx XXX xxxx]
 
-  *)
+  *) Fixed J-PAKE implementation error, originally discovered by
+     Sebastien Martini, further info and confirmation from Stefan
+     Arentz and Feng Hao. Note that this fix is a security fix.
+     [Ben Laurie]
 
  Changes between 1.0.0a and 1.0.0b  [16 Nov 2010]
 
