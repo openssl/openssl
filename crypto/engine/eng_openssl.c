@@ -89,6 +89,7 @@
 #define TEST_ENG_OPENSSL_RC4
 #define TEST_ENG_OPENSSL_PKEY
 /* #define TEST_ENG_OPENSSL_HMAC */
+/* #define TEST_ENG_OPENSSL_HMAC_INIT */
 /* #define TEST_ENG_OPENSSL_RC4_OTHERS */
 #define TEST_ENG_OPENSSL_RC4_P_INIT
 /* #define TEST_ENG_OPENSSL_RC4_P_CIPHER */
@@ -426,7 +427,9 @@ static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
 	HMAC_CTX_init(&hctx->ctx);
 	EVP_PKEY_CTX_set_data(ctx, hctx);
 	EVP_PKEY_CTX_set0_keygen_info(ctx, NULL, 0);
-
+#ifdef TEST_ENG_OPENSSL_HMAC_INIT
+	fprintf(stderr, "(TEST_ENG_OPENSSL_HMAC) ossl_hmac_init() called\n");
+#endif
 	return 1;
 	}
 
@@ -606,7 +609,7 @@ static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
 		EVP_PKEY_HMAC,
 		0
 		};
-	if (!*pmeth)
+	if (!pmeth)
 		{
 		*nids = ossl_pkey_nids;
 		return 1;
