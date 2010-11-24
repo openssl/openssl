@@ -235,6 +235,56 @@ EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags)
 	return pmeth;
 	}
 
+void EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags,
+				const EVP_PKEY_METHOD *meth)
+	{
+	if (ppkey_id)
+		*ppkey_id = meth->pkey_id;
+	if (pflags)
+		*pflags = meth->flags;
+	}
+
+void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src)
+	{
+
+	dst->init = src->init;
+	dst->copy = src->copy;
+	dst->cleanup = src->cleanup;
+
+	dst->paramgen_init = src->paramgen_init;
+	dst->paramgen = src->paramgen;
+
+	dst->keygen_init = src->keygen_init;
+	dst->keygen = src->keygen;
+
+	dst->sign_init = src->sign_init;
+	dst->sign = src->sign;
+
+	dst->verify_init = src->verify_init;
+	dst->verify = src->verify;
+
+	dst->verify_recover_init = src->verify_recover_init;
+	dst->verify_recover = src->verify_recover;
+
+	dst->signctx_init = src->signctx_init;
+	dst->signctx = src->signctx;
+
+	dst->verifyctx_init = src->verifyctx_init;
+	dst->verifyctx = src->verifyctx;
+
+	dst->encrypt_init = src->encrypt_init;
+	dst->encrypt = src->encrypt;
+
+	dst->decrypt_init = src->decrypt_init;
+	dst->decrypt = src->decrypt;
+
+	dst->derive_init = src->derive_init;
+	dst->derive = src->derive;
+
+	dst->ctrl = src->ctrl;
+	dst->ctrl_str = src->ctrl_str;
+	}
+
 void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
 	{
 	if (pmeth && (pmeth->flags & EVP_PKEY_FLAG_DYNAMIC))

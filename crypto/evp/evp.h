@@ -1049,6 +1049,9 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type);
 EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags);
+void EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags,
+				const EVP_PKEY_METHOD *meth);
+void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src);
 void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth);
 int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth);
 

@@ -4,6 +4,9 @@
 
  Changes between 1.0.0b and 1.0.1  [xx XXX xxxx]
 
+  *) Add functions to copy EVP_PKEY_METHOD and retrieve flags and id.
+     [Steve Henson]
+
   *) Add EC_GFp_nistp224_method(), a 64-bit optimized implementation for
      elliptic curve NIST-P224 with constant-time single point multiplication on
      typical inputs.  EC_GROUP_new_by_curve_name() will automatically use this
