@@ -159,68 +159,73 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 			unsigned char *out, int olen)
 	{
 	int chunk;
-	unsigned int j;
-	HMAC_CTX ctx;
-	HMAC_CTX ctx_tmp;
+	size_t j;
+	EVP_MD_CTX ctx, ctx_tmp;
+	EVP_PKEY *mac_key;
 	unsigned char A1[EVP_MAX_MD_SIZE];
-	unsigned int A1_len;
+	size_t A1_len;
 	int ret = 0;
 	
 	chunk=EVP_MD_size(md);
 	OPENSSL_assert(chunk >= 0);
 
-	HMAC_CTX_init(&ctx);
-	HMAC_CTX_init(&ctx_tmp);
-	if (!HMAC_Init_ex(&ctx,sec,sec_len,md, NULL))
+	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_init(&ctx_tmp);
+	mac_key = EVP_PKEY_new_mac_key(EVP_PKEY_HMAC, NULL, sec, sec_len);
+	if (!mac_key)
 		goto err;
-	if (!HMAC_Init_ex(&ctx_tmp,sec,sec_len,md, NULL))
+	if (!EVP_DigestSignInit(&ctx,NULL,md, NULL, mac_key))
 		goto err;
-	if (seed1 != NULL && !HMAC_Update(&ctx,seed1,seed1_len))
+	if (!EVP_DigestSignInit(&ctx_tmp,NULL,md, NULL, mac_key))
 		goto err;
-	if (seed2 != NULL && !HMAC_Update(&ctx,seed2,seed2_len))
+	if (seed1 && !EVP_DigestSignUpdate(&ctx,seed1,seed1_len))
 		goto err;
-	if (seed3 != NULL && !HMAC_Update(&ctx,seed3,seed3_len))
+	if (seed2 && !EVP_DigestSignUpdate(&ctx,seed2,seed2_len))
 		goto err;
-	if (seed4 != NULL && !HMAC_Update(&ctx,seed4,seed4_len))
+	if (seed3 && !EVP_DigestSignUpdate(&ctx,seed3,seed3_len))
 		goto err;
-	if (seed5 != NULL && !HMAC_Update(&ctx,seed5,seed5_len))
+	if (seed4 && !EVP_DigestSignUpdate(&ctx,seed4,seed4_len))
 		goto err;
-	if (!HMAC_Final(&ctx,A1,&A1_len))
+	if (seed5 && !EVP_DigestSignUpdate(&ctx,seed5,seed5_len))
+		goto err;
+	if (!EVP_DigestSignFinal(&ctx,A1,&A1_len))
 		goto err;
 
 	for (;;)
 		{
-		if (!HMAC_Init_ex(&ctx,NULL,0,NULL,NULL)) /* re-init */
+		/* Reinit mac contexts */
+		if (!EVP_DigestSignInit(&ctx,NULL,md, NULL, mac_key))
 			goto err;
-		if (!HMAC_Init_ex(&ctx_tmp,NULL,0,NULL,NULL)) /* re-init */
+		if (!EVP_DigestSignInit(&ctx_tmp,NULL,md, NULL, mac_key))
 			goto err;
-		if (!HMAC_Update(&ctx,A1,A1_len))
+		if (!EVP_DigestSignUpdate(&ctx,A1,A1_len))
 			goto err;
-		if (!HMAC_Update(&ctx_tmp,A1,A1_len))
+		if (!EVP_DigestSignUpdate(&ctx_tmp,A1,A1_len))
 			goto err;
-		if (seed1 != NULL && !HMAC_Update(&ctx,seed1,seed1_len))
+		if (seed1 && !EVP_DigestSignUpdate(&ctx,seed1,seed1_len))
 			goto err;
-		if (seed2 != NULL && !HMAC_Update(&ctx,seed2,seed2_len))
+		if (seed2 && !EVP_DigestSignUpdate(&ctx,seed2,seed2_len))
 			goto err;
-		if (seed3 != NULL && !HMAC_Update(&ctx,seed3,seed3_len))
+		if (seed3 && !EVP_DigestSignUpdate(&ctx,seed3,seed3_len))
 			goto err;
-		if (seed4 != NULL && !HMAC_Update(&ctx,seed4,seed4_len))
+		if (seed4 && !EVP_DigestSignUpdate(&ctx,seed4,seed4_len))
 			goto err;
-		if (seed5 != NULL && !HMAC_Update(&ctx,seed5,seed5_len))
+		if (seed5 && !EVP_DigestSignUpdate(&ctx,seed5,seed5_len))
 			goto err;
 
 		if (olen > chunk)
 			{
-			if (!HMAC_Final(&ctx,out,&j))
+			if (!EVP_DigestSignFinal(&ctx,out,&j))
 				goto err;
 			out+=j;
 			olen-=j;
-			if (!HMAC_Final(&ctx_tmp,A1,&A1_len)) /* calc the next A1 value */
+			/* calc the next A1 value */
+			if (!EVP_DigestSignFinal(&ctx_tmp,A1,&A1_len))
 				goto err;
 			}
 		else	/* last one */
 			{
-			if (!HMAC_Final(&ctx,A1,&A1_len))
+			if (!EVP_DigestSignFinal(&ctx,A1,&A1_len))
 				goto err;
 			memcpy(out,A1,olen);
 			break;
@@ -228,8 +233,9 @@ static int tls1_P_hash(const EVP_MD *md, const unsigned char *sec,
 		}
 	ret = 1;
 err:
-	HMAC_CTX_cleanup(&ctx);
-	HMAC_CTX_cleanup(&ctx_tmp);
+	EVP_PKEY_free(mac_key);
+	EVP_MD_CTX_cleanup(&ctx);
+	EVP_MD_CTX_cleanup(&ctx_tmp);
 	OPENSSL_cleanse(A1,sizeof(A1));
 	return ret;
 	}
