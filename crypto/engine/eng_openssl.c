@@ -80,11 +80,15 @@
 #include <openssl/dh.h>
 #endif
 
+#include <openssl/hmac.h>
+#include <openssl/x509v3.h>
+
 /* This testing gunk is implemented (and explained) lower down. It also assumes
  * the application explicitly calls "ENGINE_load_openssl()" because this is no
  * longer automatic in ENGINE_load_builtin_engines(). */
 #define TEST_ENG_OPENSSL_RC4
 #define TEST_ENG_OPENSSL_PKEY
+/* #define TEST_ENG_OPENSSL_HMAC */
 /* #define TEST_ENG_OPENSSL_RC4_OTHERS */
 #define TEST_ENG_OPENSSL_RC4_P_INIT
 /* #define TEST_ENG_OPENSSL_RC4_P_CIPHER */
@@ -123,6 +127,12 @@ static EVP_PKEY *openssl_load_privkey(ENGINE *eng, const char *key_id,
 	UI_METHOD *ui_method, void *callback_data);
 #endif
 
+#ifdef TEST_ENG_OPENSSL_HMAC
+static int ossl_register_hmac_meth(void);
+static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
+        const int **nids, int nid);
+#endif
+
 /* The constants used when creating the ENGINE */
 static const char *engine_openssl_id = "openssl";
 static const char *engine_openssl_name = "Software engine support";
@@ -159,6 +169,10 @@ static int bind_helper(ENGINE *e)
 #endif
 #ifdef TEST_ENG_OPENSSL_PKEY
 			|| !ENGINE_set_load_privkey_function(e, openssl_load_privkey)
+#endif
+#ifdef TEST_ENG_OPENSSL_HMAC
+			|| !ossl_register_hmac_meth()
+			|| !ENGINE_set_pkey_meths(e, ossl_pkey_meths)
 #endif
 			)
 		return 0;
@@ -381,4 +395,232 @@ static EVP_PKEY *openssl_load_privkey(ENGINE *eng, const char *key_id,
 	BIO_free(in);
 	return key;
 	}
+#endif
+
+#ifdef TEST_ENG_OPENSSL_HMAC
+
+/* Experimental HMAC redirection implementation: mainly copied from
+ * hm_pmeth.c
+ */
+
+/* HMAC pkey context structure */
+
+typedef struct
+	{
+	const EVP_MD *md;	/* MD for HMAC use */
+	ASN1_OCTET_STRING ktmp; /* Temp storage for key */
+	HMAC_CTX ctx;
+	} OSSL_HMAC_PKEY_CTX;
+
+static int ossl_hmac_init(EVP_PKEY_CTX *ctx)
+	{
+	OSSL_HMAC_PKEY_CTX *hctx;
+	hctx = OPENSSL_malloc(sizeof(OSSL_HMAC_PKEY_CTX));
+	if (!hctx)
+		return 0;
+	hctx->md = NULL;
+	hctx->ktmp.data = NULL;
+	hctx->ktmp.length = 0;
+	hctx->ktmp.flags = 0;
+	hctx->ktmp.type = V_ASN1_OCTET_STRING;
+	HMAC_CTX_init(&hctx->ctx);
+	EVP_PKEY_CTX_set_data(ctx, hctx);
+	EVP_PKEY_CTX_set0_keygen_info(ctx, NULL, 0);
+
+	return 1;
+	}
+
+static int ossl_hmac_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
+	{
+	OSSL_HMAC_PKEY_CTX *sctx, *dctx;
+	if (!ossl_hmac_init(dst))
+		return 0;
+       	sctx = EVP_PKEY_CTX_get_data(src);
+       	dctx = EVP_PKEY_CTX_get_data(dst);
+	dctx->md = sctx->md;
+	HMAC_CTX_init(&dctx->ctx);
+	if (!HMAC_CTX_copy(&dctx->ctx, &sctx->ctx))
+		return 0;
+	if (sctx->ktmp.data)
+		{
+		if (!ASN1_OCTET_STRING_set(&dctx->ktmp,
+					sctx->ktmp.data, sctx->ktmp.length))
+			return 0;
+		}
+	return 1;
+	}
+
+static void ossl_hmac_cleanup(EVP_PKEY_CTX *ctx)
+	{
+	OSSL_HMAC_PKEY_CTX *hctx;
+	hctx = EVP_PKEY_CTX_get_data(ctx);
+	HMAC_CTX_cleanup(&hctx->ctx);
+	if (hctx->ktmp.data)
+		{
+		if (hctx->ktmp.length)
+			OPENSSL_cleanse(hctx->ktmp.data, hctx->ktmp.length);
+		OPENSSL_free(hctx->ktmp.data);
+		hctx->ktmp.data = NULL;
+		}
+	OPENSSL_free(hctx);
+	}
+
+static int ossl_hmac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+	{
+	ASN1_OCTET_STRING *hkey = NULL;
+	OSSL_HMAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx);
+	if (!hctx->ktmp.data)
+		return 0;
+	hkey = ASN1_OCTET_STRING_dup(&hctx->ktmp);
+	if (!hkey)
+		return 0;
+	EVP_PKEY_assign(pkey, EVP_PKEY_HMAC, hkey);
+	
+	return 1;
+	}
+
+static int ossl_int_update(EVP_MD_CTX *ctx,const void *data,size_t count)
+	{
+	OSSL_HMAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx->pctx);
+	if (!HMAC_Update(&hctx->ctx, data, count))
+		return 0;
+	return 1;
+	}
+
+static int ossl_hmac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
+	{
+	EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_NO_INIT);
+	mctx->update = ossl_int_update;
+	return 1;
+	}
+
+static int ossl_hmac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+					EVP_MD_CTX *mctx)
+	{
+	unsigned int hlen;
+	OSSL_HMAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx);
+	int l = EVP_MD_CTX_size(mctx);
+
+	if (l < 0)
+		return 0;
+	*siglen = l;
+	if (!sig)
+		return 1;
+
+	if (!HMAC_Final(&hctx->ctx, sig, &hlen))
+		return 0;
+	*siglen = (size_t)hlen;
+	return 1;
+	}
+
+static int ossl_hmac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+	{
+	OSSL_HMAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx);
+	EVP_PKEY *pk;
+	ASN1_OCTET_STRING *key;
+	switch (type)
+		{
+
+		case EVP_PKEY_CTRL_SET_MAC_KEY:
+		if ((!p2 && p1 > 0) || (p1 < -1))
+			return 0;
+		if (!ASN1_OCTET_STRING_set(&hctx->ktmp, p2, p1))
+			return 0;
+		break;
+
+		case EVP_PKEY_CTRL_MD:
+		hctx->md = p2;
+		break;
+
+		case EVP_PKEY_CTRL_DIGESTINIT:
+		pk = EVP_PKEY_CTX_get0_pkey(ctx);
+		key = EVP_PKEY_get0(pk);
+		if (!HMAC_Init_ex(&hctx->ctx, key->data, key->length, hctx->md,
+				NULL))
+			return 0;
+		break;
+
+		default:
+		return -2;
+
+		}
+	return 1;
+	}
+
+static int ossl_hmac_ctrl_str(EVP_PKEY_CTX *ctx,
+			const char *type, const char *value)
+	{
+	if (!value)
+		{
+		return 0;
+		}
+	if (!strcmp(type, "key"))
+		{
+		void *p = (void *)value;
+		return ossl_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY,
+				-1, p);
+		}
+	if (!strcmp(type, "hexkey"))
+		{
+		unsigned char *key;
+		int r;
+		long keylen;
+		key = string_to_hex(value, &keylen);
+		if (!key)
+			return 0;
+		r = ossl_hmac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY, keylen, key);
+		OPENSSL_free(key);
+		return r;
+		}
+	return -2;
+	}
+
+static EVP_PKEY_METHOD *ossl_hmac_meth;
+
+static int ossl_register_hmac_meth(void)
+	{
+	EVP_PKEY_METHOD *meth;
+	meth = EVP_PKEY_meth_new(EVP_PKEY_HMAC, 0);
+	if (!meth)
+		return 0;
+	EVP_PKEY_meth_set_init(meth, ossl_hmac_init);
+	EVP_PKEY_meth_set_copy(meth, ossl_hmac_copy);
+	EVP_PKEY_meth_set_cleanup(meth, ossl_hmac_cleanup);
+
+	EVP_PKEY_meth_set_keygen(meth, 0, ossl_hmac_keygen);
+
+	EVP_PKEY_meth_set_signctx(meth, ossl_hmac_signctx_init,
+						ossl_hmac_signctx);
+
+	EVP_PKEY_meth_set_ctrl(meth, ossl_hmac_ctrl, ossl_hmac_ctrl_str);
+	ossl_hmac_meth = meth;
+	return 1;
+	}
+
+static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
+        const int **nids, int nid)
+
+	{
+	static int ossl_pkey_nids[] = 
+		{
+		EVP_PKEY_HMAC,
+		0
+		};
+	if (!*pmeth)
+		{
+		*nids = ossl_pkey_nids;
+		return 1;
+		}
+
+	if (nid == EVP_PKEY_HMAC)
+		{
+		*pmeth = ossl_hmac_meth;
+		return 1;
+		}
+
+	*pmeth = NULL;
+	return 0;
+	}
+
+
 #endif
