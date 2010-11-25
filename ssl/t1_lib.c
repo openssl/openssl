@@ -1336,7 +1336,7 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 			break;
 			}
 		}
-	using_ecc = using_ecc && (s->version == TLS1_VERSION);
+	using_ecc = using_ecc && (s->version >= TLS1_VERSION);
 	if (using_ecc)
 		{
 		if (s->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->tlsext_ecpointformatlist);
