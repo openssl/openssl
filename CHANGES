@@ -4,7 +4,10 @@
 
  Changes between 0.9.8p and 0.9.8q [xx XXX xxxx]
 
-  *)
+  *) Fixed J-PAKE implementation error, originally discovered by
+     Sebastien Martini, further info and confirmation from Stefan
+     Arentz and Feng Hao. Note that this fix is a security fix.
+     [Ben Laurie]
 
  Changes between 0.9.8o and 0.9.8p [16 Nov 2010]
 
