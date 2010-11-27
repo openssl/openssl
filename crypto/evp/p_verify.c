@@ -68,7 +68,7 @@ int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
 	unsigned char m[EVP_MAX_MD_SIZE];
 	unsigned int m_len;
 	int i = 0,ok = 0,v;
-	MS_STATIC EVP_MD_CTX tmp_ctx;
+	EVP_MD_CTX tmp_ctx;
 	EVP_PKEY_CTX *pkctx = NULL;
 
 	EVP_MD_CTX_init(&tmp_ctx);
