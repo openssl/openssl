@@ -123,7 +123,7 @@
      whose return value is often ignored. 
      [Steve Henson]
   
- Changes between 1.0.0b and 1.0.1  [xx XXX xxxx]
+ Changes between 1.0.0c and 1.0.1  [xx XXX xxxx]
 
   *) Add functions to copy EVP_PKEY_METHOD and retrieve flags and id.
      [Steve Henson]
@@ -162,7 +162,14 @@
        Add command line options to s_client/s_server.
      [Steve Henson]
 
- Changes between 1.0.0a and 1.0.0b  [xx XXX xxxx]
+ Changes between 1.0.0b and 1.0.0c  [xx XXX xxxx]
+
+  *) Fixed J-PAKE implementation error, originally discovered by
+     Sebastien Martini, further info and confirmation from Stefan
+     Arentz and Feng Hao. Note that this fix is a security fix. CVE-2010-4252
+     [Ben Laurie]
+
+ Changes between 1.0.0a and 1.0.0b  [16 Nov 2010]
 
   *) Fix extension code to avoid race conditions which can result in a buffer
      overrun vulnerability: resumed sessions must not be modified as they can
