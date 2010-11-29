@@ -6,7 +6,7 @@
 
   *) Fixed J-PAKE implementation error, originally discovered by
      Sebastien Martini, further info and confirmation from Stefan
-     Arentz and Feng Hao. Note that this fix is a security fix.
+     Arentz and Feng Hao. Note that this fix is a security fix. CVE-2010-4252
      [Ben Laurie]
 
  Changes between 1.0.0a and 1.0.0b  [16 Nov 2010]
