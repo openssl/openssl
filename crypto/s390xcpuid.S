@@ -62,6 +62,9 @@ OPENSSL_wipe_cpu:
 .type	OPENSSL_cleanse,@function
 .align	16
 OPENSSL_cleanse:
+#if !defined(__s390x__) && !defined(__s390x)
+	llgfr	%r3,%r3
+#endif
 	lghi	%r4,15
 	lghi	%r0,0
 	clgr	%r3,%r4

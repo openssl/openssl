@@ -629,7 +629,18 @@ case "$GUESSOS" in
   sh*-*-linux2)  OUT="linux-generic32"; options="$options -DL_ENDIAN" ;;
   m68k*-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
   s390-*-linux2) OUT="linux-generic32"; options="$options -DB_ENDIAN" ;;
-  s390x-*-linux2) OUT="linux-s390x" ;;
+  s390x-*-linux2)
+	# To be uncommented when glibc bug is fixed, see Configure...
+	#if egrep -e '^features.* highgprs' /proc/cpuinfo >/dev/null ; then
+	#  echo "WARNING! If you wish to build \"highgprs\" 32-bit library, then you"
+	#  echo "         have to invoke './Configure linux32-s390x' *manually*."
+	#  if [ "$TEST" = "false" -a -t -1 ]; then
+	#    echo "         You have about 5 seconds to press Ctrl-C to abort."
+	#    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	#  fi
+	#fi
+	OUT="linux64-s390x"
+	;;
   x86_64-*-linux?) OUT="linux-x86_64" ;;
   *86-*-linux2) OUT="linux-elf"
 	if [ "$GCCVER" -gt 28 ]; then
