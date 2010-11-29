@@ -14,8 +14,12 @@ $	exe_dir := sys$disk:[-.'__arch'.exe.apps]
 $
 $	set default '__here'
 $
-$	sslroot = f$parse("sys$disk:[-.apps];",,,,"syntax_only") - "].;"+ ".]"
-$	define /translation_attributes = concealed sslroot 'sslroot'
+$       ROOT = F$PARSE("sys$disk:[-]A.;0",,,,"SYNTAX_ONLY,NO_CONCEAL") - "A.;0"
+$       ROOT_DEV = F$PARSE(ROOT,,,"DEVICE","SYNTAX_ONLY")
+$       ROOT_DIR = F$PARSE(ROOT,,,"DIRECTORY","SYNTAX_ONLY") -
+                   - ".][000000" - "[000000." - "][" - "[" - "]"
+$       ROOT = ROOT_DEV + "[" + ROOT_DIR
+$       DEFINE/NOLOG SSLROOT 'ROOT'.APPS.] /TRANS=CONC
 $	openssl_conf := sslroot:[000000]openssl-vms.cnf
 $
 $	on control_y then goto exit
@@ -82,7 +86,7 @@ $	gosub 'tests_e'
 $	goto loop_tests
 $
 $ test_evp:
-$	mcr 'texe_dir''evptest' evptests.txt
+$	mcr 'texe_dir''evptest' 'ROOT'.CRYPTO.EVP]evptests.txt
 $	return
 $ test_des:
 $	mcr 'texe_dir''destest'
