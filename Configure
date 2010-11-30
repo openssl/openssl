@@ -1111,6 +1111,12 @@ my ($prelflags,$postlflags)=split('%',$lflags);
 if (defined($postlflags))	{ $lflags=$postlflags;	}
 else				{ $lflags=$prelflags; undef $prelflags;	}
 
+if ($target =~ /^mingw/ && `$cc --target-help 2>&1` !~ m/\-mno\-cygwin/m)
+	{
+	$cflags =~ s/\-mno\-cygwin\s*//;
+	$shared_ldflag =~ s/\-mno\-cygwin\s*//;
+	}
+
 my $no_shared_warn=0;
 my $no_user_cflags=0;
 
