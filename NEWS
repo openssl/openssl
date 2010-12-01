@@ -8,7 +8,6 @@
   Major changes between OpenSSL 0.9.8p and OpenSSL 0.9.8q:
 
       o Fix for CVE-2010-4252
-      o Corrected fix for security issue CVE-2010-3864.
 
   Major changes between OpenSSL 0.9.8o and OpenSSL 0.9.8p:
 
