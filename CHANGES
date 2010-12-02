@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8q and 0.9.8r [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8p and 0.9.8q [2 Dec 2010]
 
   *) Disable code workaround for ancient and obsolete Netscape browsers
