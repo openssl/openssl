@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0c and 1.0.0d [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.0b and 1.0.0c  [2 Dec 2010]
 
   *) Disable code workaround for ancient and obsolete Netscape browsers
