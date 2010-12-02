@@ -69,7 +69,7 @@ Verify signature using PKCS#1 and SHA256 digest:
 	/* Error */
 
  /* Perform operation */
- ret = EVP_PKEY_verify(ctx, md, mdlen, sig, siglen);
+ ret = EVP_PKEY_verify(ctx, sig, siglen, md, mdlen);
 
  /* ret == 1 indicates success, 0 verify failure and < 0 for some
   * other error.
