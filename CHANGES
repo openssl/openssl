@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8p and 0.9.8q [xx XXX xxxx]
+ Changes between 0.9.8p and 0.9.8q [2 Dec 2010]
 
   *) Disable code workaround for ancient and obsolete Netscape browsers
      and servers: an attacker can use it in a ciphersuite downgrade attack.
