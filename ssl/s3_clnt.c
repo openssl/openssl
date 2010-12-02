@@ -814,8 +814,11 @@ int ssl3_get_server_hello(SSL *s)
 		s->session->cipher_id = s->session->cipher->id;
 	if (s->hit && (s->session->cipher_id != c->id))
 		{
+/* Workaround is now obsolete */
+#if 0
 		if (!(s->options &
 			SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG))
+#endif
 			{
 			al=SSL_AD_ILLEGAL_PARAMETER;
 			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_OLD_SESSION_CIPHER_NOT_RETURNED);

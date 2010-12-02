@@ -78,18 +78,7 @@ this breaks this server so 16 bytes is the way to go.
 
 =item SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG
 
-ssl3.netscape.com:443, first a connection is established with RC4-MD5.
-If it is then resumed, we end up using DES-CBC3-SHA.  It should be
-RC4-MD5 according to 7.6.1.3, 'cipher_suite'.
-
-Netscape-Enterprise/2.01 (https://merchant.netscape.com) has this bug.
-It only really shows up when connecting via SSLv2/v3 then reconnecting
-via SSLv3. The cipher list changes....
-
-NEW INFORMATION.  Try connecting with a cipher list of just
-DES-CBC-SHA:RC4-MD5.  For some weird reason, each new connection uses
-RC4-MD5, but a re-connect tries to use DES-CBC-SHA.  So netscape, when
-doing a re-connect, always takes the first cipher in the cipher list.
+As of OpenSSL 0.9.8q and 1.0.0c, this option has no effect.
 
 =item SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG
 

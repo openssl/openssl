@@ -4,6 +4,11 @@
 
  Changes between 0.9.8p and 0.9.8q [xx XXX xxxx]
 
+  *) Disable code workaround for ancient and obsolete Netscape browsers
+     and servers: an attacker can use it in a ciphersuite downgrade attack.
+     Thanks to Martin Rex for discovering this bug. CVE-2010-4180
+     [Steve Henson]
+
   *) Fixed J-PAKE implementation error, originally discovered by
      Sebastien Martini, further info and confirmation from Stefan
      Arentz and Feng Hao. Note that this fix is a security fix. CVE-2010-4252
