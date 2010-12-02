@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.0.0b and OpenSSL 1.0.0c:
 
+      o Fix for security issue CVE-2010-4180
       o Fix for CVE-2010-4252
       o Fix mishandling of absent EC point format extension.
       o Fix various platform compilation issues.
