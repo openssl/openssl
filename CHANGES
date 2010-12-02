@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0b and 1.0.0c  [xx XXX xxxx]
+ Changes between 1.0.0b and 1.0.0c  [2 Dec 2010]
 
   *) Disable code workaround for ancient and obsolete Netscape browsers
      and servers: an attacker can use it in a ciphersuite downgrade attack.
