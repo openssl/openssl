@@ -74,7 +74,7 @@ Recover digest originally signed using PKCS#1 and SHA256 digest:
 	/* Error */
 
  /* Determine buffer length */
- if (EVP_PKEY_verifyrecover(ctx, rout, &routlen, sig, siglen) <= 0)
+ if (EVP_PKEY_verifyrecover(ctx, NULL, &routlen, sig, siglen) <= 0)
 	/* Error */
 
  rout = OPENSSL_malloc(routlen);
