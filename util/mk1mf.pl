@@ -679,7 +679,7 @@ foreach (split(/\s+/,$engines))
 $rules.= &do_lib_rule("\$(SSLOBJ)","\$(O_SSL)",$ssl,$shlib,"\$(SO_SSL)");
 $rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)");
 
-foreach (split(/\s+/,$otherlibs))
+foreach (split(" ",$otherlibs))
 	{
 	my $uc = $_;
 	$uc =~ tr /a-z/A-Z/;	
