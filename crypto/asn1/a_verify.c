@@ -60,7 +60,6 @@
 #include <time.h>
 
 #include "cryptlib.h"
-#include "asn1_locl.h"
 
 #ifndef NO_SYS_TYPES_H
 # include <sys/types.h>
@@ -71,6 +70,7 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+#include "asn1_locl.h"
 
 #ifndef NO_ASN1_OLD
 
