@@ -32,8 +32,13 @@ $!      APPS      Just build the "[.xxx.EXE.APPS]" application programs for Open
 $!      ENGINES   Just build the "[.xxx.EXE.ENGINES]" application programs for OpenSSL.
 $!
 $!
-$! P2 is ignored (it was used to denote if RSAref should be used or not,
-$! and is simply kept so surrounding scripts don't get confused)
+$! For 64 bit architectures (Alpha and IA64), specify the pointer size as P2.
+$! For 32 bit architectures (VAX), P2 is ignored.
+$! Currently supported values are:
+$!
+$!	32	To ge a library compiled with /POINTER_SIZE=32
+$!	64	To ge a library compiled with /POINTER_SIZE=64
+$!
 $!
 $! Specify DEBUG or NODEBUG as P3 to compile with or without debugging
 $! information.
@@ -581,7 +586,7 @@ $ TIME = F$TIME()
 $!
 $! Write The [.CRYPTO._xxx]BUILDINF.H File.
 $!
-$! WRITE H_FILE "#define CFLAGS """" /* Not filled in for now */"
+$ WRITE H_FILE "#define CFLAGS ""/POINTER_SIZE=''POINTER_SIZE'"""
 $ WRITE H_FILE "#define PLATFORM ""VMS ''ARCH' ''VMS_VERSION'"""
 $ WRITE H_FILE "#define DATE ""''TIME'"" "
 $!
@@ -726,14 +731,14 @@ $! That's All, Time To RETURN.
 $!
 $ RETURN
 $!
-$! Build The "[.xxx.EXE.CRYPTO]LIBCRYPTO.OLB" Library.
+$! Build The "[.xxx.EXE.CRYPTO]LIBCRYPTO''LIB32'.OLB" Library.
 $!
 $ CRYPTO:
 $!
 $! Tell The User What We Are Doing.
 $!
 $ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT "Building The [.",ARCH,".EXE.CRYPTO]LIBCRYPTO.OLB Library."
+$ WRITE SYS$OUTPUT "Building The [.",ARCH,".EXE.CRYPTO]LIBCRYPTO''LIB32'.OLB Library."
 $!
 $! Go To The [.CRYPTO] Directory.
 $!
@@ -741,11 +746,11 @@ $ SET DEFAULT SYS$DISK:[.CRYPTO]
 $!
 $! Build The [.xxx.EXE.CRYPTO]LIBCRYPTO.OLB Library.
 $!  
-$ @CRYPTO-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'"
+$ @CRYPTO-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'" "''POINTER_SIZE'"
 $!
 $! Build The [.xxx.EXE.CRYPTO]*.EXE Test Applications.
 $!  
-$ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN' "''BUILDPART'"
+$ @CRYPTO-LIB APPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'" "''POINTER_SIZE'"
 $!
 $! Go Back To The Main Directory.
 $!
@@ -755,14 +760,14 @@ $! Time To RETURN.
 $!
 $ RETURN
 $!
-$! Build The "[.xxx.EXE.SSL]LIBSSL.OLB" Library.
+$! Build The "[.xxx.EXE.SSL]LIBSSL''LIB32'.OLB" Library.
 $!
 $ SSL:
 $!
 $! Tell The User What We Are Doing.
 $!
 $ WRITE SYS$OUTPUT ""
-$ WRITE SYS$OUTPUT "Building The [.",ARCH,".EXE.SSL]LIBSSL.OLB Library."
+$ WRITE SYS$OUTPUT "Building The [.",ARCH,".EXE.SSL]LIBSSL''LIB32'.OLB Library."
 $!
 $! Go To The [.SSL] Directory.
 $!
@@ -770,7 +775,7 @@ $ SET DEFAULT SYS$DISK:[.SSL]
 $!
 $! Build The [.xxx.EXE.SSL]LIBSSL.OLB Library.
 $!
-$ @SSL-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @SSL-LIB LIBRARY 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''POINTER_SIZE'"
 $!
 $! Go Back To The Main Directory.
 $!
@@ -795,7 +800,7 @@ $ SET DEFAULT SYS$DISK:[.SSL]
 $!
 $! Build The [.xxx.EXE.SSL]SSL_TASK.EXE
 $!
-$ @SSL-LIB SSL_TASK 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @SSL-LIB SSL_TASK 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''POINTER_SIZE'"
 $!
 $! Go Back To The Main Directory.
 $!
@@ -820,7 +825,7 @@ $ SET DEFAULT SYS$DISK:[.TEST]
 $!
 $! Build The Test Programs.
 $!
-$ @MAKETESTS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @MAKETESTS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''POINTER_SIZE'"
 $!
 $! Go Back To The Main Directory.
 $!
@@ -845,7 +850,7 @@ $ SET DEFAULT SYS$DISK:[.APPS]
 $!
 $! Build The Application Programs.
 $!
-$ @MAKEAPPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN'
+$ @MAKEAPPS 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "" "''POINTER_SIZE'"
 $!
 $! Go Back To The Main Directory.
 $!
@@ -870,7 +875,7 @@ $ SET DEFAULT SYS$DISK:[.ENGINES]
 $!
 $! Build The Application Programs.
 $!
-$ @MAKEENGINES ENGINES 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" 'ISSEVEN' "''BUILDPART'"
+$ @MAKEENGINES ENGINES 'DEBUGGER' "''COMPILER'" "''TCPIP_TYPE'" "''ISSEVEN'" "''BUILDPART'" "''POINTER_SIZE'"
 $!
 $! Go Back To The Main Directory.
 $!
@@ -927,9 +932,9 @@ $!
 $!    Tell The User We Don't Know What They Want.
 $!
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "USAGE:   @MAKEVMS.COM [Target] [not-used option] [Debug option] <Compiler>"
+$     WRITE SYS$OUTPUT "USAGE:   @MAKEVMS.COM [Target] [Pointer size] [Debug option] <Compiler>"
 $     WRITE SYS$OUTPUT ""
-$     WRITE SYS$OUTPUT "Example: @MAKEVMS.COM ALL NORSAREF NODEBUG "
+$     WRITE SYS$OUTPUT "Example: @MAKEVMS.COM ALL """" NODEBUG "
 $     WRITE SYS$OUTPUT ""
 $     WRITE SYS$OUTPUT "The Target ",P1," Is Invalid.  The Valid Target Options Are:"
 $     WRITE SYS$OUTPUT ""
@@ -963,6 +968,58 @@ $!
 $   ENDIF
 $!
 $! End The P1 Check.
+$!
+$ ENDIF
+$!
+$! Check To See If P2 Is Blank.
+$!
+$ IF (P2.EQS."")
+$ THEN
+$   POINTER_SIZE = ""
+$ ELSE
+$!
+$!  Check is P2 Is Valid
+$!
+$   IF (P2.EQS."32")
+$   THEN
+$     POINTER_SIZE = "32"
+$     IF ARCH .EQS. "VAX"
+$     THEN
+$       LIB32 = ""
+$     ELSE
+$       LIB32 = "32"
+$     ENDIF
+$   ELSE
+$     IF (P2.EQS."64")
+$     THEN
+$       LIB32 = ""
+$       IF ARCH .EQS. "VAX"
+$       THEN
+$         POINTER_SIZE = "32"
+$       ELSE
+$         POINTER_SIZE = "64"
+$       ENDIF
+$     ELSE
+$!
+$!      Tell The User Entered An Invalid Option..
+$!
+$       WRITE SYS$OUTPUT ""
+$       WRITE SYS$OUTPUT "The Option ",P2," Is Invalid.  The Valid Options Are:"
+$       WRITE SYS$OUTPUT ""
+$       WRITE SYS$OUTPUT "    32  :  Compile with 32 bit pointer size"
+$       WRITE SYS$OUTPUT "    64  :  Compile with 64 bit pointer size"
+$       WRITE SYS$OUTPUT ""
+$!
+$!      Time To EXIT.
+$!
+$       GOTO TIDY
+$!
+$!      End The Valid Arguement Check.
+$!
+$     ENDIF
+$   ENDIF
+$!
+$! End The P2 Check.
 $!
 $ ENDIF
 $!

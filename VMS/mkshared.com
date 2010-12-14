@@ -38,7 +38,7 @@ $   libopt = "''libdir'LIBCRYPTO.OPT"
 $   libmap = "''libdir'LIBCRYPTO.MAP"
 $   libgoal= "''libdir'LIBCRYPTO.EXE"
 $   libref = ""
-$   gosub create_nonvax_shr
+$   if f$search(libdir+libolb) .nes. "" then gosub create_nonvax_shr
 $   libid  = "SSL"
 $   libnum = "[.UTIL]SSLEAY.NUM"
 $   libdir = "[.''ARCH'.EXE.SSL]"
@@ -47,7 +47,26 @@ $   libopt = "''libdir'LIBSSL.OPT"
 $   libmap = "''libdir'LIBSSL.MAP"
 $   libgoal= "''libdir'LIBSSL.EXE"
 $   libref = "[.''ARCH'.EXE.CRYPTO]LIBCRYPTO.EXE"
-$   gosub create_nonvax_shr
+$   if f$search(libdir+libolb) .nes. "" then gosub create_nonvax_shr
+$   arch_vax = 0
+$   libid  = "Crypto"
+$   libnum = "[.UTIL]LIBEAY.NUM"
+$   libdir = "[.''ARCH'.EXE.CRYPTO]"
+$   libolb = "''libdir'LIBCRYPTO32.OLB"
+$   libopt = "''libdir'LIBCRYPTO32.OPT"
+$   libmap = "''libdir'LIBCRYPTO32.MAP"
+$   libgoal= "''libdir'LIBCRYPTO32.EXE"
+$   libref = ""
+$   if f$search(libdir+libolb) .nes. "" then gosub create_nonvax_shr
+$   libid  = "SSL"
+$   libnum = "[.UTIL]SSLEAY.NUM"
+$   libdir = "[.''ARCH'.EXE.SSL]"
+$   libolb = "''libdir'LIBSSL32.OLB"
+$   libopt = "''libdir'LIBSSL32.OPT"
+$   libmap = "''libdir'LIBSSL32.MAP"
+$   libgoal= "''libdir'LIBSSL32.EXE"
+$   libref = "[.''ARCH'.EXE.CRYPTO]LIBCRYPTO32.EXE"
+$   if f$search(libdir+libolb) .nes. "" then gosub create_nonvax_shr
 $ else
 $   arch_vax = 1
 $   libtit = "CRYPTO_TRANSFER_VECTOR"
@@ -62,7 +81,7 @@ $   libmap = "''libdir'LIBCRYPTO.MAP"
 $   libgoal= "''libdir'LIBCRYPTO.EXE"
 $   libref = ""
 $   libvec = "LIBCRYPTO"
-$   gosub create_vax_shr
+$   if f$search(libdir+libolb) .nes. "" then gosub create_vax_shr
 $   libtit = "SSL_TRANSFER_VECTOR"
 $   libid  = "SSL"
 $   libnum = "[.UTIL]SSLEAY.NUM"
@@ -75,11 +94,11 @@ $   libmap = "''libdir'LIBSSL.MAP"
 $   libgoal= "''libdir'LIBSSL.EXE"
 $   libref = "[.''ARCH'.EXE.CRYPTO]LIBCRYPTO.EXE"
 $   libvec = "LIBSSL"
-$   gosub create_vax_shr
+$   if f$search(libdir+libolb) .nes. "" then gosub create_vax_shr
 $ endif
 $ exit
 $
-$! ----- Soubroutines to build the shareable libraries
+$! ----- Subroutines to build the shareable libraries
 $! For each supported architecture, there's a main shareable library
 $! creator, which is called from the main code above.
 $! The creator will define a number of variables to tell the next levels of

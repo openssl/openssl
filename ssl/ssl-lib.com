@@ -42,6 +42,13 @@ $!	SOCKETSHR	for SOCKETSHR+NETLIB
 $!
 $!  P5, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
+$!  For 64 bit architectures (Alpha and IA64), specify the pointer size as P6.
+$!  For 32 bit architectures (VAX), P6 is ignored.
+$!  Currently supported values are:
+$!
+$!	32	To ge a library compiled with /POINTER_SIZE=32
+$!	64	To ge a library compiled with /POINTER_SIZE=64
+$!
 $!
 $! Define A TCP/IP Library That We Will Need To Link To.
 $! (That Is, If We Need To Link To One.)
@@ -118,11 +125,11 @@ $ ENDIF
 $!
 $! Define The Library Name.
 $!
-$ SSL_LIB := 'EXE_DIR'LIBSSL.OLB
+$ SSL_LIB := 'EXE_DIR'LIBSSL'LIB32'.OLB
 $!
 $! Define The CRYPTO-LIB We Are To Use.
 $!
-$ CRYPTO_LIB := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO.OLB
+$ CRYPTO_LIB := SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO'LIB32'.OLB
 $!
 $! Check To See What We Are To Do.
 $!
@@ -156,7 +163,7 @@ $! Compile The Library.
 $!
 $ LIBRARY:
 $!
-$! Check To See If We Already Have A "[.xxx.EXE.SSL]LIBSSL.OLB" Library...
+$! Check To See If We Already Have A "[.xxx.EXE.SSL]LIBSSL''LIB32'.OLB" Library...
 $!
 $ IF (F$SEARCH(SSL_LIB).EQS."")
 $ THEN
@@ -653,6 +660,58 @@ $! End The P5 Check.
 $!
 $ ENDIF
 $!
+$! Check To See If P6 Is Blank.
+$!
+$ IF (P6.EQS."")
+$ THEN
+$   POINTER_SIZE = ""
+$ ELSE
+$!
+$!  Check is P6 Is Valid
+$!
+$   IF (P6.EQS."32")
+$   THEN
+$     POINTER_SIZE = "/POINTER_SIZE=32"
+$     IF ARCH .EQS. "VAX"
+$     THEN
+$       LIB32 = ""
+$     ELSE
+$       LIB32 = "32"
+$     ENDIF
+$   ELSE
+$     IF (P6.EQS."64")
+$     THEN
+$       LIB32 = ""
+$       IF ARCH .EQS. "VAX"
+$       THEN
+$         POINTER_SIZE = "/POINTER_SIZE=32"
+$       ELSE
+$         POINTER_SIZE = "/POINTER_SIZE=64"
+$       ENDIF
+$     ELSE
+$!
+$!      Tell The User Entered An Invalid Option..
+$!
+$       WRITE SYS$OUTPUT ""
+$       WRITE SYS$OUTPUT "The Option ",P6," Is Invalid.  The Valid Options Are:"
+$       WRITE SYS$OUTPUT ""
+$       WRITE SYS$OUTPUT "    32  :  Compile with 32 bit pointer size"
+$       WRITE SYS$OUTPUT "    64  :  Compile with 64 bit pointer size"
+$       WRITE SYS$OUTPUT ""
+$!
+$!      Time To EXIT.
+$!
+$       GOTO TIDY
+$!
+$!      End The Valid Arguement Check.
+$!
+$     ENDIF
+$   ENDIF
+$!
+$! End The P6 Check.
+$!
+$ ENDIF
+$!
 $! Check To See If P3 Is Blank.
 $!
 $ IF (P3.EQS."")
@@ -780,7 +839,7 @@ $!
 $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
+$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89''POINTER_SIZE'" + -
            "/NOLIST/PREFIX=ALL" + -
 	   "/INCLUDE=(SYS$DISK:[-.CRYPTO],SYS$DISK:[-])" + CCEXTRAFLAGS
 $!
