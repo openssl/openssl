@@ -43,7 +43,7 @@ $	IF F$PARSE("WRK_SSLXEXE:") .EQS. "" THEN -
 $
 $	EXHEADER := ssl.h,ssl2.h,ssl3.h,ssl23.h,tls1.h,dtls1.h,kssl.h
 $	E_EXE := ssl_task
-$	LIBS := LIBSSL
+$	LIBS := LIBSSL,LIBSSL32
 $
 $	XEXE_DIR := [-.'ARCH'.EXE.SSL]
 $

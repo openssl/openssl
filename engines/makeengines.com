@@ -28,6 +28,13 @@ $!
 $!  P6	if defined, denotes which engines to build.  If not defined,
 $!	all available engines are built.
 $!
+$!  For 64 bit architectures (Alpha and IA64), specify the pointer size as P7.
+$!  For 32 bit architectures (VAX), P7 is ignored.
+$!  Currently supported values are:
+$!
+$!	32	To ge a library compiled with /POINTER_SIZE=32
+$!	64	To ge a library compiled with /POINTER_SIZE=64
+$!
 $!-----------------------------------------------------------------------------
 $!
 $! Set the names of the engines we want to build
@@ -76,7 +83,7 @@ $ IF F$PARSE(EXE_DIR) .EQS. "" THEN CREATE/DIRECTORY 'EXE_DIR'
 $!
 $! Set the goal files, and create them if necessary
 $!
-$ CRYPTO_LIB :=SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO.OLB
+$ CRYPTO_LIB :=SYS$DISK:[-.'ARCH'.EXE.CRYPTO]LIBCRYPTO'LIB32'.OLB
 $ IF F$SEARCH(CRYPTO_LIB) .EQS. "" THEN LIBRARY/CREATE/OBJECT 'CRYPTO_LIB'
 $!
 $! OK, time to check options and initialise
@@ -87,6 +94,7 @@ $ OPT_DEBUG = P2
 $ OPT_COMPILER = P3
 $ OPT_TCPIP_LIB = P4
 $ OPT_SPECIAL_THREADS = P5
+$ OPT_POINTER_SIZE = P7
 $
 $ GOSUB CHECK_OPTIONS
 $ GOSUB INITIALISE
@@ -544,6 +552,58 @@ $! End The OPT_SPECIAL_THREADS Check.
 $!
 $ ENDIF
 $!
+$! Check To See If OPT_POINTER_SIZE Is Blank.
+$!
+$ IF (OPT_POINTER_SIZE.EQS."")
+$ THEN
+$   POINTER_SIZE = ""
+$ ELSE
+$!
+$!  Check is OPT_POINTER_SIZE Is Valid
+$!
+$   IF (OPT_POINTER_SIZE.EQS."32")
+$   THEN
+$     POINTER_SIZE = "/POINTER_SIZE=32"
+$     IF ARCH .EQS. "VAX"
+$     THEN
+$       LIB32 = ""
+$     ELSE
+$       LIB32 = "32"
+$     ENDIF
+$   ELSE
+$     IF (OPT_POINTER_SIZE.EQS."64")
+$     THEN
+$       LIB32 = ""
+$       IF ARCH .EQS. "VAX"
+$       THEN
+$         POINTER_SIZE = "/POINTER_SIZE=32"
+$       ELSE
+$         POINTER_SIZE = "/POINTER_SIZE=64"
+$       ENDIF
+$     ELSE
+$!
+$!      Tell The User Entered An Invalid Option..
+$!
+$       WRITE SYS$OUTPUT ""
+$       WRITE SYS$OUTPUT "The Option ",OPT_POINTER_SIZE," Is Invalid.  The Valid Options Are:"
+$       WRITE SYS$OUTPUT ""
+$       WRITE SYS$OUTPUT "    32  :  Compile with 32 bit pointer size"
+$       WRITE SYS$OUTPUT "    64  :  Compile with 64 bit pointer size"
+$       WRITE SYS$OUTPUT ""
+$!
+$!      Time To EXIT.
+$!
+$       GOTO TIDY
+$!
+$!      End The Valid Arguement Check.
+$!
+$     ENDIF
+$   ENDIF
+$!
+$! End The OPT_POINTER_SIZE Check.
+$!
+$ ENDIF
+$!
 $! Check To See If OPT_COMPILER Is Blank.
 $!
 $ IF (OPT_COMPILER.EQS."")
@@ -671,7 +731,7 @@ $!
 $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89" + -
+$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=ANSI89''POINTER_SIZE'" + -
            "/NOLIST/PREFIX=ALL" + -
 	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[.VENDOR_DEFNS])" + -
 	   CCEXTRAFLAGS
