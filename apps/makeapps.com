@@ -570,6 +570,13 @@ $! End The P1 Check.
 $!
 $ ENDIF
 $!
+$! Check To See If P6 Is Blank.
+$!
+$ IF (P6.EQS."")
+$ THEN
+$   POINTER_SIZE = ""
+$ ELSE
+$!
 $!  Check is P6 Is Valid
 $!
 $   IF (P6.EQS."32")
