@@ -55,27 +55,26 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <malloc.h>
-#ifndef alloca
-# define alloca _alloca
-#endif
 
 #include <openssl/crypto.h>
-#include <openssl/buffer.h>
-#include <openssl/bn.h>
 
 #ifdef OPENSSL_SYS_WIN32
 #ifndef OPENSSL_NO_CAPIENG
 
+#include <openssl/buffer.h>
+#include <openssl/bn.h>
 #include <openssl/rsa.h>
-
-#include <windows.h>
 
 #ifndef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
 #endif
 
+#include <windows.h>
 #include <wincrypt.h>
+#include <malloc.h>
+#ifndef alloca
+# define alloca _alloca
+#endif
 
 /*
  * This module uses several "new" interfaces, among which is
