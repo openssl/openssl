@@ -353,6 +353,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX	52
 #define		X509_V_ERR_UNSUPPORTED_NAME_SYNTAX		53
 #define		X509_V_ERR_CRL_PATH_VALIDATION_ERROR		54
+/* Another issuer check debug option */
+#define		X509_V_ERR_PATH_LOOP				55
 
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50

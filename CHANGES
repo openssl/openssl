@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) If a candidate issuer certificate is already part of the constructed
+     path ignore it: new debug notification X509_V_ERR_PATH_LOOP for this case.
+     [Steve Henson]
+
   *) Improve forward-security support: add functions
 
        void SSL_CTX_set_not_resumable_session_callback(SSL_CTX *ctx, int (*cb)(SSL *ssl, int is_forward_secure))

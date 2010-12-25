@@ -183,6 +183,8 @@ const char *X509_verify_cert_error_string(long n)
 		return("unsupported or invalid name syntax");
 	case X509_V_ERR_CRL_PATH_VALIDATION_ERROR:
 		return("CRL path validation error");
+	case X509_V_ERR_PATH_LOOP:
+		return("Path Loop");
 
 	default:
 		BIO_snprintf(buf,sizeof buf,"error number %ld",n);
