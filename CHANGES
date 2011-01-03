@@ -4,7 +4,10 @@
 
  Changes between 0.9.8q and 0.9.8r [xx XXX xxxx]
 
-  *)
+  *) Fix bug in string printing code: if *any* escaping is enabled we must
+     escape the escape character (backslash) or the resulting string is
+     ambiguous.
+     [Steve Henson]
 
  Changes between 0.9.8p and 0.9.8q [2 Dec 2010]
 
