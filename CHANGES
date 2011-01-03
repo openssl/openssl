@@ -4,7 +4,10 @@
 
  Changes between 1.0.0c and 1.0.0d [xx XXX xxxx]
 
-  *)
+  *) Fix bug in string printing code: if *any* escaping is enabled we must
+     escape the escape character (backslash) or the resulting string is
+     ambiguous.
+     [Steve Henson]
 
  Changes between 1.0.0b and 1.0.0c  [2 Dec 2010]
 
