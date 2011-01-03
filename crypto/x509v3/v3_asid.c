@@ -799,7 +799,7 @@ static int v3_asid_validate_path_internal(X509_STORE_CTX *ctx,
   /*
    * Trust anchor can't inherit.
    */
-  assert(x != NULL);
+  OPENSSL_assert(x != NULL);
   if (x->rfc3779_asid != NULL) {
     if (x->rfc3779_asid->asnum != NULL &&
 	x->rfc3779_asid->asnum->type == ASIdentifierChoice_inherit)
