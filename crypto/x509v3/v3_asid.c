@@ -372,7 +372,7 @@ static int ASIdentifierChoice_is_canonical(ASIdentifierChoice *choice)
 int v3_asid_is_canonical(ASIdentifiers *asid)
 {
   return (asid == NULL ||
-	  (ASIdentifierChoice_is_canonical(asid->asnum) ||
+	  (ASIdentifierChoice_is_canonical(asid->asnum) &&
 	   ASIdentifierChoice_is_canonical(asid->rdi)));
 }
 
