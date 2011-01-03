@@ -340,7 +340,7 @@ static int dgram_write(BIO *b, const char *in, int inl)
 
 		if (data->peer.sa.sa_family == AF_INET)
 			peerlen = sizeof(data->peer.sa_in);
-#if OPENSSL_USE_IVP6
+#if OPENSSL_USE_IPV6
 		else if (data->peer.sa.sa_family == AF_INET6)
 			peerlen = sizeof(data->peer.sa_in6);
 #endif
