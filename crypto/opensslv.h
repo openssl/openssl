@@ -25,7 +25,7 @@
  * (Prior to 0.9.5a beta1, a different scheme was used: MMNNFFRBB for
  *  major minor fix final patch/beta)
  */
-#define OPENSSL_VERSION_NUMBER	0x10000040
+#define OPENSSL_VERSION_NUMBER	0x10000040L
 #ifdef OPENSSL_FIPS
 #define OPENSSL_VERSION_TEXT	"OpenSSL 1.0.0d-dev-fips xx XXX xxxx"
 #else
