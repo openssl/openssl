@@ -757,6 +757,8 @@ int tls1_enc(SSL *s, int send)
 			{
 			if (l == 0 || l%bs != 0)
 				{
+				if (s->version >= TLS1_1_VERSION)
+					return -1;
 				SSLerr(SSL_F_TLS1_ENC,SSL_R_BLOCK_CIPHER_PAD_IS_WRONG);
 				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECRYPTION_FAILED);
 				return 0;
