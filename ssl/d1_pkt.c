@@ -414,7 +414,8 @@ dtls1_process_record(SSL *s)
 			goto err;
 
 		/* otherwise enc_err == -1 */
-		goto err;
+		al=SSL_AD_BAD_RECORD_MAC;
+		goto f_err;
 		}
 
 #ifdef TLS_DEBUG
