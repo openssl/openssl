@@ -767,7 +767,7 @@ $	EXIT
 $     ENDIF
 $     IF F$TRNLNM("DECC$CC_DEFAULT").EQS."/DECC" THEN CC = "CC/VAXC"
 $     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.VENDOR_DEFNS])" + -
 	   CCEXTRAFLAGS
 $     CCDEFS = """VAXC""," + CCDEFS
 $!
@@ -799,7 +799,7 @@ $!
 $!    Use GNU C...
 $!
 $     CC = "GCC/NOCASE_HACK/''GCC_OPTIMIZE'/''DEBUGGER'/NOLIST" + -
-	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.ENGINE.VENDOR_DEFNS])" + -
+	   "/INCLUDE=(SYS$DISK:[],SYS$DISK:[-],SYS$DISK:[.VENDOR_DEFNS])" + -
 	   CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
