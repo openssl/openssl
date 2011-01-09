@@ -96,7 +96,8 @@ static struct hostent *GetHostByName(char *name);
 static void ssl_sock_cleanup(void);
 #endif
 static int ssl_sock_init(void);
-static int init_client_ip(int *sock,unsigned char ip[4], int port, int type);
+static int init_client_ip(int *sock, const unsigned char ip[4], int port,
+			  int type);
 static int init_server(int *sock, int port, int type);
 static int init_server_long(int *sock, int port,char *ip, int type);
 static int do_accept(int acc_sock, int *sock, char **host);
@@ -239,7 +240,8 @@ int init_client(int *sock, char *host, int port, int type)
 	return(init_client_ip(sock,ip,port,type));
 	}
 
-static int init_client_ip(int *sock, unsigned char ip[4], int port, int type)
+static int init_client_ip(int *sock, const unsigned char ip[4], int port,
+			  int type)
 	{
 	unsigned long addr;
 	struct sockaddr_in them;
