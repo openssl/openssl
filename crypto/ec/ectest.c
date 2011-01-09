@@ -234,7 +234,7 @@ static void group_order_tests(EC_GROUP *group)
 	BN_CTX_free(ctx);
 	}
 
-static void prime_field_tests()
+static void prime_field_tests(void)
 	{	
 	BN_CTX *ctx = NULL;
 	BIGNUM *p, *a, *b;
@@ -777,7 +777,7 @@ static void prime_field_tests()
 	if (!EC_GROUP_copy(_variable, group)) ABORT; \
 
 
-static void char2_field_tests()
+static void char2_field_tests(void)
 	{	
 	BN_CTX *ctx = NULL;
 	BIGNUM *p, *a, *b;
