@@ -208,7 +208,7 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_print,bn_rand,bn_shift,bn_word,bn_blind,"+ -
 	"bn_kron,bn_sqrt,bn_gcd,bn_prime,bn_err,bn_sqr,"+LIB_BN_ASM+","+ -
 	"bn_recp,bn_mont,bn_mpi,bn_exp2,bn_gf2m,bn_nist,"+ -
-	"bn_depr,bn_const"
+	"bn_depr,bn_const,bn_x931"
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err,ec_curve,ec_check,ec_print,ec_asn1,ec_key,"+ -
 	"ec2_smpl,ec2_mult,ec_ameth,ec_pmeth,eck_prn"
@@ -231,7 +231,7 @@ $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev"
 $ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,aes_ctr,"+ -
 	"aes_ige,aes_wrap"
-$ LIB_BUFFER = "buffer,buf_err"
+$ LIB_BUFFER = "buffer,buf_str,buf_err"
 $ LIB_BIO = "bio_lib,bio_cb,bio_err,"+ -
 	"bss_mem,bss_null,bss_fd,"+ -
 	"bss_file,bss_sock,bss_conn,"+ -
