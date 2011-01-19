@@ -105,12 +105,13 @@ int DSA_generate_parameters_ex(DSA *ret, int bits,
 			}
 
 		return dsa_builtin_paramgen(ret, bits, qbits, evpmd,
-				seed_in, seed_len, counter_ret, h_ret, cb);
+			seed_in, seed_len, NULL, counter_ret, h_ret, cb);
 		}
 	}
 
 int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
+	unsigned char *seed_out,
 	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
 	{
 	int ok=0;
@@ -332,6 +333,8 @@ err:
 			}
 		if (counter_ret != NULL) *counter_ret=counter;
 		if (h_ret != NULL) *h_ret=h;
+		if (seed_out)
+			memcpy(seed_out, seed, qsize);
 		}
 	if(ctx)
 		{
