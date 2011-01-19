@@ -441,11 +441,8 @@ int ec_GFp_simple_set_Jprojective_coordinates_GFp(const EC_GROUP *group, EC_POIN
 			}
 		point->Z_is_one = Z_is_one;
 		}
-
-	if (BN_cmp(&point->X, x) || BN_cmp(&point->Y, y))
-		ret = 2;
-	else
-		ret = 1;
+	
+	ret = 1;
 	
  err:
 	if (new_ctx != NULL)
@@ -1409,9 +1406,6 @@ int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *
 		{
 		return EC_POINT_is_at_infinity(group, b) ? 0 : 1;
 		}
-
-	if (EC_POINT_is_at_infinity(group, b))
-		return 1;
 	
 	if (a->Z_is_one && b->Z_is_one)
 		{
@@ -1499,6 +1493,7 @@ int ec_GFp_simple_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *
 		BN_CTX_free(new_ctx);
 	return ret;
 	}
+
 
 int ec_GFp_simple_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 	{

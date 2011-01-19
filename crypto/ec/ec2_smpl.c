@@ -363,12 +363,7 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group, EC_POINT 
 	if (!BN_copy(&point->Z, BN_value_one())) goto err;
 	BN_set_negative(&point->Z, 0);
 	point->Z_is_one = 1;
-	if (BN_num_bits(x) > BN_num_bits(&group->field))
-		ret = 2;
-	else if (BN_num_bits(y) > BN_num_bits(&group->field))
-		ret = 2;
-	else
-		ret = 1;
+	ret = 1;
 
   err:
 	return ret;
@@ -942,9 +937,6 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT 
 		{
 		return EC_POINT_is_at_infinity(group, b) ? 0 : 1;
 		}
-
-	if (EC_POINT_is_at_infinity(group, b))
-		return 1;
 	
 	if (a->Z_is_one && b->Z_is_one)
 		{
@@ -973,15 +965,6 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT 
 	if (ctx) BN_CTX_end(ctx);
 	if (new_ctx) BN_CTX_free(new_ctx);
 	return ret;
-	}
-
-int ec_GF2m_simple_range(const EC_GROUP *group, const EC_POINT *a)
-	{
-	if (BN_num_bits(&a->X) > BN_num_bits(&group->field))
-		return 0;
-	if (BN_num_bits(&a->Y) > BN_num_bits(&group->field))
-		return 0;
-	return 1;
 	}
 
 
