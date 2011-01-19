@@ -252,7 +252,7 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	if (!dsa)
 		return 0;
 	ret = dsa_builtin_paramgen(dsa, dctx->nbits, dctx->qbits, dctx->pmd,
-	                           NULL, 0, NULL, NULL, pcb);
+	                           NULL, 0, NULL, NULL, NULL, pcb);
 	if (ret)
 		EVP_PKEY_assign_DSA(pkey, dsa);
 	else
