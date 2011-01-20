@@ -43,7 +43,12 @@ die "First stage Link failure" if $? != 0;
 
 
 print "$fips_premain_dso $fips_target\n";
-$fips_hash=`$fips_premain_dso $fips_target`;
+system("$fips_premain_dso $fips_target >$fips_target.sha1");
+die "Get hash failure" if $? != 0;
+open my $sha1_res, '<', $fips_target.".sha1" or die "Get hash failure";
+$fips_hash=<$sha1_res>;
+close $sha1_res;
+unlink $fips_target.".sha1";
 chomp $fips_hash;
 die "Get hash failure" if $? != 0;
 
