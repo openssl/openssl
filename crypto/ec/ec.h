@@ -806,6 +806,15 @@ int EC_KEY_generate_key(EC_KEY *key);
  */
 int EC_KEY_check_key(const EC_KEY *key);
 
+/** Sets a public key from affine coordindates performing
+ *  neccessary NIST PKV tests.
+ *  \param  key  the EC_KEY object
+ *  \param  x    public key x coordinate
+ *  \param  y    public key y coordinate
+ *  \return 1 on success and 0 otherwise.
+ */
+int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y);
+
 
 /********************************************************************/
 /*        de- and encoding functions for SEC1 ECPrivateKey          */
@@ -1021,6 +1030,7 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_KEY_NEW					 182
 #define EC_F_EC_KEY_PRINT				 180
 #define EC_F_EC_KEY_PRINT_FP				 181
+#define EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES	 229
 #define EC_F_EC_POINTS_MAKE_AFFINE			 136
 #define EC_F_EC_POINT_ADD				 112
 #define EC_F_EC_POINT_CMP				 113
@@ -1066,6 +1076,7 @@ void ERR_load_EC_strings(void);
 #define EC_R_ASN1_UNKNOWN_FIELD				 116
 #define EC_R_BIGNUM_OUT_OF_RANGE			 144
 #define EC_R_BUFFER_TOO_SMALL				 100
+#define EC_R_COORDINATES_OUT_OF_RANGE			 146
 #define EC_R_D2I_ECPKPARAMETERS_FAILURE			 117
 #define EC_R_DECODE_ERROR				 142
 #define EC_R_DISCRIMINANT_IS_ZERO			 118

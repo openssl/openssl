@@ -371,6 +371,81 @@ err:
 	return(ok);
 	}
 
+int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
+	{
+	BN_CTX *ctx = NULL;
+	BIGNUM *tx, *ty;
+	EC_POINT *point = NULL;
+	int ok = 0, tmp_nid, is_char_two = 0;
+
+	if (!key || !key->group || !x || !y)
+		{
+		ECerr(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
+						ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	ctx = BN_CTX_new();
+	if (!ctx)
+		goto err;
+
+	point = EC_POINT_new(key->group);
+
+	if (!point)
+		goto err;
+
+	tmp_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(key->group));
+
+        if (tmp_nid == NID_X9_62_characteristic_two_field)
+		is_char_two = 1;
+
+	tx = BN_CTX_get(ctx);
+	ty = BN_CTX_get(ctx);
+
+	if (is_char_two)
+		{
+		if (!EC_POINT_set_affine_coordinates_GF2m(key->group, point,
+								x, y, ctx))
+			goto err;
+		if (!EC_POINT_get_affine_coordinates_GF2m(key->group, point,
+								tx, ty, ctx))
+			goto err;
+		}
+	else
+		{
+		if (!EC_POINT_set_affine_coordinates_GFp(key->group, point,
+								x, y, ctx))
+			goto err;
+		if (!EC_POINT_get_affine_coordinates_GFp(key->group, point,
+								tx, ty, ctx))
+			goto err;
+		}
+	/* Check if retrieved coordinates match originals: if not values
+	 * are out of range.
+	 */
+	if (BN_cmp(x, tx) || BN_cmp(y, ty))
+		{
+		ECerr(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
+			EC_R_COORDINATES_OUT_OF_RANGE);
+		goto err;
+		}
+
+	if (!EC_KEY_set_public_key(key, point))
+		goto err;
+
+	if (EC_KEY_check_key(key) == 0)
+		goto err;
+
+	ok = 1;
+
+	err:
+	if (ctx)
+		BN_CTX_free(ctx);
+	if (point)
+		EC_POINT_free(point);
+	return ok;
+
+	}
+
 const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key)
 	{
 	return key->group;
