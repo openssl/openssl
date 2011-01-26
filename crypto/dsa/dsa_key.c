@@ -64,6 +64,37 @@
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 
+#ifdef OPENSSL_FIPS
+
+#include <openssl/fips.h>
+#include <openssl/evp.h>
+
+static int fips_dsa_pairwise_fail = 0;
+
+void FIPS_corrupt_dsa_keygen(void)
+	{
+	fips_dsa_pairwise_fail = 1;
+	}
+
+static int fips_check_dsa(DSA *dsa)
+	{
+	EVP_PKEY pk;
+	unsigned char tbs[] = "DSA Pairwise Check Data";
+    	pk.type = EVP_PKEY_DSA;
+    	pk.pkey.dsa = dsa;
+
+	if (!fips_pkey_signature_test(&pk, tbs, -1,
+					NULL, 0, EVP_sha1(), 0, NULL))
+		{
+		FIPSerr(FIPS_F_FIPS_CHECK_DSA,FIPS_R_PAIRWISE_TEST_FAILED);
+		fips_set_selftest_fail();
+		return 0;
+		}
+	return 1;
+	}
+
+#endif
+
 static int dsa_builtin_keygen(DSA *dsa);
 
 int DSA_generate_key(DSA *dsa)
@@ -78,6 +109,14 @@ static int dsa_builtin_keygen(DSA *dsa)
 	int ok=0;
 	BN_CTX *ctx=NULL;
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
+
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
+		{
+		DSAerr(DSA_F_DSA_BUILTIN_KEYGEN, DSA_R_KEY_SIZE_TOO_SMALL);
+		goto err;
+		}
+#endif
 
 	if ((ctx=BN_CTX_new()) == NULL) goto err;
 
@@ -117,6 +156,12 @@ static int dsa_builtin_keygen(DSA *dsa)
 
 	dsa->priv_key=priv_key;
 	dsa->pub_key=pub_key;
+#ifdef OPENSSL_FIPS
+	if (fips_dsa_pairwise_fail)
+		BN_add_word(dsa->pub_key, 1);
+	if(!fips_check_dsa(dsa))
+#endif
+	    goto err;
 	ok=1;
 
 err:

@@ -88,6 +88,8 @@
 # define OPENSSL_DSA_MAX_MODULUS_BITS	10000
 #endif
 
+#define OPENSSL_DSA_FIPS_MIN_MODULUS_BITS 1024
+
 #define DSA_FLAG_CACHE_MONT_P	0x01
 #define DSA_FLAG_NO_EXP_CONSTTIME       0x02 /* new with 0.9.7h; the built-in DSA
                                               * implementation now uses constant time
@@ -96,6 +98,21 @@
                                               * faster variable sliding window method to
                                               * be used for all exponents.
                                               */
+
+/* If this flag is set the DSA method is FIPS compliant and can be used
+ * in FIPS mode. This is set in the validated module method. If an
+ * application sets this flag in its own methods it is its reposibility
+ * to ensure the result is compliant.
+ */
+
+#define DSA_FLAG_FIPS_METHOD			0x0400
+
+/* If this flag is set the operations normally disabled in FIPS mode are
+ * permitted it is then the applications responsibility to ensure that the
+ * usage is compliant.
+ */
+
+#define DSA_FLAG_NON_FIPS_ALLOW			0x0400
 
 #ifdef  __cplusplus
 extern "C" {
@@ -189,6 +206,13 @@ void	DSA_set_default_method(const DSA_METHOD *);
 const DSA_METHOD *DSA_get_default_method(void);
 int	DSA_set_method(DSA *dsa, const DSA_METHOD *);
 
+#ifdef OPENSSL_FIPS
+DSA *	FIPS_dsa_new(void);
+void	FIPS_dsa_free (DSA *r);
+DSA_SIG * FIPS_dsa_sign_ctx(DSA *dsa, EVP_MD_CTX *ctx);
+int FIPS_dsa_verify_ctx(DSA *dsa, EVP_MD_CTX *ctx, DSA_SIG *s);
+#endif
+
 DSA *	DSA_new(void);
 DSA *	DSA_new_method(ENGINE *engine);
 void	DSA_free (DSA *r);
@@ -270,6 +294,8 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_DO_DSA_PRINT				 104
 #define DSA_F_DSAPARAMS_PRINT				 100
 #define DSA_F_DSAPARAMS_PRINT_FP			 101
+#define DSA_F_DSA_BUILTIN_KEYGEN			 124
+#define DSA_F_DSA_BUILTIN_PARAMGEN			 125
 #define DSA_F_DSA_DO_SIGN				 112
 #define DSA_F_DSA_DO_VERIFY				 113
 #define DSA_F_DSA_NEW_METHOD				 103
@@ -297,6 +323,7 @@ void ERR_load_DSA_strings(void);
 #define DSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE		 100
 #define DSA_R_DECODE_ERROR				 104
 #define DSA_R_INVALID_DIGEST_TYPE			 106
+#define DSA_R_KEY_SIZE_TOO_SMALL			 111
 #define DSA_R_MISSING_PARAMETERS			 101
 #define DSA_R_MODULUS_TOO_LARGE				 103
 #define DSA_R_NEED_NEW_SETUP_VALUES			 110

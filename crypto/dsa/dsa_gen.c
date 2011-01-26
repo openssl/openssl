@@ -73,12 +73,18 @@
 
 #ifndef OPENSSL_NO_SHA
 
+#define OPENSSL_FIPSEVP
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 #include "dsa_locl.h"
 
 int DSA_generate_parameters_ex(DSA *ret, int bits,
@@ -126,6 +132,21 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 	int r=0;
 	BN_CTX *ctx=NULL;
 	unsigned int h=2;
+
+#ifdef OPENSSL_FIPS
+	if(FIPS_selftest_failed())
+	    {
+	    FIPSerr(FIPS_F_DSA_BUILTIN_PARAMGEN,
+		    FIPS_R_FIPS_SELFTEST_FAILED);
+	    goto err;
+	    }
+
+	if (FIPS_mode() && (bits < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
+		{
+		DSAerr(DSA_F_DSA_BUILTIN_PARAMGEN, DSA_R_KEY_SIZE_TOO_SMALL);
+		goto err;
+		}
+#endif
 
 	if (qsize != SHA_DIGEST_LENGTH && qsize != SHA224_DIGEST_LENGTH &&
 	    qsize != SHA256_DIGEST_LENGTH)
