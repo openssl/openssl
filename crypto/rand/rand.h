@@ -128,11 +128,21 @@ void ERR_load_RAND_strings(void);
 /* Error codes for the RAND functions. */
 
 /* Function codes. */
+#define RAND_F_FIPS_RAND				 102
+#define RAND_F_FIPS_RAND_SET_DT				 103
+#define RAND_F_FIPS_SET_PRNG_SEED			 104
+#define RAND_F_FIPS_SET_TEST_MODE			 105
 #define RAND_F_RAND_GET_RAND_METHOD			 101
 #define RAND_F_SSLEAY_RAND_BYTES			 100
 
 /* Reason codes. */
+#define RAND_R_NOT_IN_TEST_MODE				 101
+#define RAND_R_NO_KEY_SET				 102
+#define RAND_R_PRNG_ERROR				 103
+#define RAND_R_PRNG_KEYED				 104
 #define RAND_R_PRNG_NOT_SEEDED				 100
+#define RAND_R_PRNG_SEED_MUST_NOT_MATCH_KEY		 105
+#define RAND_R_PRNG_STUCK				 106
 
 #ifdef  __cplusplus
 }
