@@ -5,7 +5,7 @@
 DIR=		test
 TOP=		..
 CC=		cc
-INCLUDES=	-I$(TOP) -I../include $(KRB5_INCLUDES)
+INCLUDES=	-I$(TOP) -I../include $(KRB5_INCLUDES) -I$(TOP)/fips
 CFLAG=		-g
 MAKEDEPEND=	$(TOP)/util/domd $(TOP) -MD $(MAKEDEPPROG)
 PERL=		perl
@@ -27,6 +27,7 @@ DLIBCRYPTO= ../libcrypto.a
 DLIBSSL= ../libssl.a
 LIBCRYPTO= -L.. -lcrypto
 LIBSSL= -L.. -lssl
+LIBFIPS= -L.. -lfips
 
 BNTEST=		bntest
 ECTEST=		ectest
@@ -61,6 +62,18 @@ ENGINETEST=	enginetest
 EVPTEST=	evp_test
 IGETEST=	igetest
 JPAKETEST=	jpaketest
+FIPS_SHATEST=	fips_shatest
+FIPS_DESTEST=	fips_desmovs
+FIPS_RANDTEST=	fips_randtest
+FIPS_AESTEST=	fips_aesavs
+FIPS_HMACTEST=	fips_hmactest
+FIPS_RSAVTEST=	fips_rsavtest
+FIPS_RSASTEST=	fips_rsastest
+FIPS_RSAGTEST=	fips_rsagtest
+FIPS_DSATEST=	fips_dsatest
+FIPS_DSSVS=	fips_dssvs
+FIPS_RNGVS=	fips_rngvs
+FIPS_TEST_SUITE=fips_test_suite
 
 TESTS=		alltests
 
@@ -71,7 +84,13 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(MDC2TEST)$(EXE_EXT) $(RMDTEST)$(EXE_EXT) \
 	$(RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
-	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT)
+	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) \
+	$(FIPS_SHATEST)$(EXE_EXT) $(FIPS_DESTEST)$(EXE_EXT) \
+	$(FIPS_RANDTEST)$(EXE_EXT) $(FIPS_AESTEST)$(EXE_EXT) \
+	$(FIPS_HMACTEST)$(EXE_EXT) $(FIPS_RSAVTEST)$(EXE_EXT) \
+	$(FIPS_RSASTEST)$(EXE_EXT) $(FIPS_RSAGTEST)$(EXE_EXT) \
+	$(FIPS_DSSVS)$(EXE_EXT) $(FIPS_DSATEST)$(EXE_EXT) \
+	$(FIPS_RNGVS)$(EXE_EXT) $(FIPS_TEST_SUITE)$(EXE_EXT) 
 
 # $(METHTEST)$(EXE_EXT)
 
@@ -83,6 +102,10 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(MDC2TEST).o $(RMDTEST).o \
 	$(RANDTEST).o $(DHTEST).o $(ENGINETEST).o $(CASTTEST).o \
 	$(BFTEST).o  $(SSLTEST).o  $(DSATEST).o  $(EXPTEST).o $(RSATEST).o \
+	$(FIPS_SHATEST).o $(FIPS_DESTEST).o $(FIPS_RANDTEST).o \
+	$(FIPS_AESTEST).o $(FIPS_HMACTEST).o $(FIPS_RSAVTEST).o \
+	$(FIPS_RSASTEST).o $(FIPS_RSAGTEST).o \
+	$(FIPS_DSSVS).o $(FIPS_DSATEST).o $(FIPS_RNGVS).o $(FIPS_TEST_SUITE).o \
 	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
@@ -91,6 +114,10 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c \
+	$(FIPS_SHATEST).c $(FIPS_DESTEST).c $(FIPS_RANDTEST).c \
+	$(FIPS_AESTEST).c $(FIPS_HMACTEST).c $(FIPS_RSAVTEST).c \
+	$(FIPS_RSASTEST).c $(FIPS_RSAGTEST).c \
+	$(FIPS_DSSVS).c $(FIPS_DSATEST).c $(FIPS_RNGVS).c $(FIPS_TEST_SUITE).c \
 	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c
 
 EXHEADER= 
@@ -371,6 +398,71 @@ $(SHA256TEST)$(EXE_EXT): $(SHA256TEST).o $(DLIBCRYPTO)
 
 $(SHA512TEST)$(EXE_EXT): $(SHA512TEST).o $(DLIBCRYPTO)
 	@target=$(SHA512TEST); $(BUILD_CMD)
+
+FIPS_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
+		shlib_target="$(SHLIB_TARGET)"; \
+	fi; \
+	if [ "$(FIPSCANLIB)" = "libfips" ]; then \
+		LIBRARIES="-L$(TOP) -lfips"; \
+	elif [ -n "$(FIPSCANLIB)" ]; then \
+		FIPSLD_CC="$(CC)"; CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
+		LIBRARIES="$${FIPSLIBDIR:-$(TOP)/fips/}fipscanister.o"; \
+	else \
+		LIBRARIES="$(LIBCRYPTO)"; \
+	fi; \
+	$(MAKE) -f $(TOP)/Makefile.shared -e \
+		CC="$${CC}" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		link_app.$${shlib_target}
+
+FIPS_CRYPTO_BUILD_CMD=shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
+		shlib_target="$(SHLIB_TARGET)"; \
+	fi; \
+	LIBRARIES="$(LIBSSL) $(LIBCRYPTO) $(LIBKRB5)"; \
+	if [ -z "$(SHARED_LIBS)" -a -n "$(FIPSCANLIB)" ] ; then \
+		FIPSLD_CC="$(CC)"; CC=$(TOP)/fips/fipsld; export CC FIPSLD_CC; \
+	fi; \
+	[ "$(FIPSCANLIB)" = "libfips" ] && LIBRARIES="$$LIBRARIES -lfips"; \
+	$(MAKE) -f $(TOP)/Makefile.shared -e \
+		CC="$${CC}" APPNAME=$$target$(EXE_EXT) OBJECTS="$$target.o" \
+		LIBDEPS="$(PEX_LIBS) $$LIBRARIES $(EX_LIBS)" \
+		link_app.$${shlib_target}
+
+$(FIPS_SHATEST)$(EXE_EXT): $(FIPS_SHATEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_SHATEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_AESTEST)$(EXE_EXT): $(FIPS_AESTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_AESTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_DESTEST)$(EXE_EXT): $(FIPS_DESTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_DESTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_HMACTEST)$(EXE_EXT): $(FIPS_HMACTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_HMACTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_RANDTEST)$(EXE_EXT): $(FIPS_RANDTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_RANDTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_RSAVTEST)$(EXE_EXT): $(FIPS_RSAVTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_RSAVTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_RSASTEST)$(EXE_EXT): $(FIPS_RSASTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_RSASTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_RSAGTEST)$(EXE_EXT): $(FIPS_RSAGTEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_RSAGTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_DSATEST)$(EXE_EXT): $(FIPS_DSATEST).o $(DLIBCRYPTO)
+	@target=$(FIPS_DSATEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_DSSVS)$(EXE_EXT): $(FIPS_DSSVS).o $(DLIBCRYPTO)
+	@target=$(FIPS_DSSVS); $(FIPS_BUILD_CMD)
+
+$(FIPS_RNGVS)$(EXE_EXT): $(FIPS_RNGVS).o $(DLIBCRYPTO)
+	@target=$(FIPS_RNGVS); $(FIPS_BUILD_CMD)
+
+$(FIPS_TEST_SUITE)$(EXE_EXT): $(FIPS_TEST_SUITE).o $(DLIBCRYPTO)
+	@target=$(FIPS_TEST_SUITE); $(FIPS_BUILD_CMD)
 
 $(RMDTEST)$(EXE_EXT): $(RMDTEST).o $(DLIBCRYPTO)
 	@target=$(RMDTEST); $(BUILD_CMD)
