@@ -331,12 +331,12 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
 		ret->m_ctx = m_ctx;
 
 	do {
+		int rv;
 		if (!BN_rand_range(ret->A, ret->mod)) goto err;
-		if (BN_mod_inverse(ret->Ai, ret->A, ret->mod, ctx) == NULL)
+		if (!int_bn_mod_inverse(ret->Ai, ret->A, ret->mod, ctx, &rv))
 			{
 			/* this should almost never happen for good RSA keys */
-			unsigned long error = ERR_peek_last_error();
-			if (ERR_GET_REASON(error) == BN_R_NO_INVERSE)
+			if (rv)
 				{
 				if (retry_counter-- == 0)
 				{
@@ -344,7 +344,6 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
 						BN_R_TOO_MANY_ITERATIONS);
 					goto err;
 				}
-				ERR_clear_error();
 				}
 			else
 				goto err;

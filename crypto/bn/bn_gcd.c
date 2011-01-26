@@ -205,12 +205,27 @@ err:
 /* solves ax == 1 (mod n) */
 static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
         const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx);
+
 BIGNUM *BN_mod_inverse(BIGNUM *in,
 	const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
+	{
+	BIGNUM *rv;
+	int noinv;
+	rv = int_bn_mod_inverse(in, a, n, ctx, &noinv);
+	if (noinv)
+		BNerr(BN_F_BN_MOD_INVERSE,BN_R_NO_INVERSE);
+	return rv;
+	}
+
+BIGNUM *int_bn_mod_inverse(BIGNUM *in,
+	const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx, int *pnoinv)
 	{
 	BIGNUM *A,*B,*X,*Y,*M,*D,*T,*R=NULL;
 	BIGNUM *ret=NULL;
 	int sign;
+
+	if (pnoinv)
+		*pnoinv = 0;
 
 	if ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0) || (BN_get_flags(n, BN_FLG_CONSTTIME) != 0))
 		{
@@ -488,7 +503,8 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 		}
 	else
 		{
-		BNerr(BN_F_BN_MOD_INVERSE,BN_R_NO_INVERSE);
+		if (pnoinv)
+			*pnoinv = 1;
 		goto err;
 		}
 	ret=R;
