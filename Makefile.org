@@ -110,7 +110,33 @@ LIBKRB5=
 ZLIB_INCLUDE=
 LIBZLIB=
 
-DIRS=   crypto ssl engines apps test tools
+# This is the location of fipscanister.o and friends.
+# The FIPS module build will place it $(INSTALLTOP)/lib
+# but since $(INSTALLTOP) can only take the default value
+# when the module is built it will be in /usr/local/ssl/lib
+# $(INSTALLTOP) for this build make be different so hard
+# code the path.
+
+FIPSLIBDIR=/usr/local/ssl/$(LIBDIR)/
+
+# This is set to "y" if fipscanister.o is compiled internally as
+# opposed to coming from an external validated location.
+
+FIPSCANISTERINTERNAL=n
+
+# The location of the library which contains fipscanister.o
+# normally it will be libcrypto unless fipsdso is set in which
+# case it will be libfips. If not compiling in FIPS mode at all
+# this is empty making it a useful test for a FIPS compile.
+
+FIPSCANLIB=
+
+# Shared library base address. Currently only used on Windows.
+#
+
+BASEADDR=
+
+DIRS=   crypto fips ssl engines apps test tools
 ENGDIRS= ccgost
 SHLIBDIRS= crypto ssl
 
@@ -207,6 +233,10 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
 		MODES_ASM_OBJ='$(MODES_ASM_OBJ)'		\
 		PERLASM_SCHEME='$(PERLASM_SCHEME)'		\
+		FIPSLIBDIR='${FIPSLIBDIR}'			\
+		FIPSCANLIB="$${FIPSCANLIB:-$(FIPSCANLIB)}"	\
+		FIPSCANISTERINTERNAL='${FIPSCANISTERINTERNAL}'	\
+		FIPS_EX_OBJ='${FIPS_EX_OBJ}'	\
 		THIS=$${THIS:-$@} MAKEFILE=Makefile MAKEOVERRIDES=
 # MAKEOVERRIDES= effectively "equalizes" GNU-ish and SysV-ish make flavors,
 # which in turn eliminates ambiguities in variable treatment with -e.
@@ -238,13 +268,92 @@ BUILD_ONE_CMD=\
 reflect:
 	@[ -n "$(THIS)" ] && $(CLEARENV) && $(MAKE) $(THIS) -e $(BUILDENV)
 
+
+# FIXME
+
+FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
+	../crypto/aes/aes_ecb.o \
+	../crypto/aes/aes_ofb.o \
+	../crypto/bn/bn_add.o \
+	../crypto/bn/bn_blind.o \
+	../crypto/bn/bn_ctx.o \
+	../crypto/bn/bn_div.o \
+	../crypto/bn/bn_exp2.o \
+	../crypto/bn/bn_exp.o \
+	../crypto/bn/bn_gcd.o \
+	../crypto/bn/bn_lib.o \
+	../crypto/bn/bn_mod.o \
+	../crypto/bn/bn_mont.o \
+	../crypto/bn/bn_mul.o \
+	../crypto/bn/bn_prime.o \
+	../crypto/bn/bn_rand.o \
+	../crypto/bn/bn_recp.o \
+	../crypto/bn/bn_shift.o \
+	../crypto/bn/bn_sqr.o \
+	../crypto/bn/bn_word.o \
+	../crypto/bn/bn_x931p.o \
+	../crypto/buffer/buf_str.o \
+	../crypto/cryptlib.o \
+	../crypto/des/cfb64ede.o \
+	../crypto/des/cfb64enc.o \
+	../crypto/des/cfb_enc.o \
+	../crypto/des/ecb3_enc.o \
+	../crypto/des/ofb64ede.o \
+	../crypto/des/fcrypt.o \
+	../crypto/des/set_key.o \
+	../crypto/dh/dh_check.o \
+	../crypto/dh/dh_gen.o \
+	../crypto/dh/dh_key.o \
+	../crypto/dsa/dsa_gen.o \
+	../crypto/dsa/dsa_key.o \
+	../crypto/dsa/dsa_ossl.o \
+	../crypto/dsa/dsa_sign.o \
+	../crypto/dsa/dsa_vrf.o \
+	../crypto/evp/e_aes.o \
+	../crypto/evp/e_des3.o \
+	../crypto/evp/m_sha1.o \
+	../crypto/hmac/hmac.o \
+	../crypto/mem.o \
+	../crypto/modes/cfb128.o \
+	../crypto/modes/ctr128.o \
+	../crypto/modes/ofb128.o \
+	../crypto/rand/md_rand.o \
+	../crypto/rand/rand_egd.o \
+	../crypto/rand/randfile.o \
+	../crypto/rand/rand_lib.o \
+	../crypto/rand/rand_os2.o \
+	../crypto/rand/rand_unix.o \
+	../crypto/rand/rand_win.o \
+	../crypto/rsa/rsa_eay.o \
+	../crypto/rsa/rsa_gen.o \
+	../crypto/rsa/rsa_crpt.o \
+	../crypto/rsa/rsa_none.o \
+	../crypto/rsa/rsa_oaep.o \
+	../crypto/rsa/rsa_pk1.o \
+	../crypto/rsa/rsa_pss.o \
+	../crypto/rsa/rsa_ssl.o \
+	../crypto/rsa/rsa_x931.o \
+	../crypto/sha/sha1dgst.o \
+	../crypto/sha/sha256.o \
+	../crypto/sha/sha512.o \
+	../crypto/uid.o
+
 sub_all: build_all
 build_all: build_libs build_apps build_tests build_tools
 
-build_libs: build_crypto build_ssl build_engines
+build_libs: build_crypto build_fips build_ssl build_engines
+
+build_fips:
+	@dir=fips; target=all; [ -z "$(FIPSCANLIB)" ] || $(BUILD_ONE_CMD)
 
 build_crypto:
-	@dir=crypto; target=all; $(BUILD_ONE_CMD)
+	if [ -n "$(FIPSCANLIB)" ]; then \
+		EXCL_OBJ='$(AES_ENC) $(BN_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA1_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
+		ARX='$(PERL) $${TOP}/util/arx.pl $(AR)' ; \
+	else \
+		ARX='${AR}' ; \
+	fi ; export ARX ; \
+		dir=crypto; target=all; $(BUILD_ONE_CMD)
 build_ssl:
 	@dir=ssl; target=all; $(BUILD_ONE_CMD)
 build_engines:
