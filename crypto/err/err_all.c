@@ -56,6 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
+#define OPENSSL_NO_FIPS_ERR
+
 #include <stdio.h>
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
@@ -106,6 +108,9 @@
 
 void ERR_load_crypto_strings(void)
 	{
+#ifdef OPENSSL_FIPS
+	FIPS_set_error_callbacks(ERR_put_error, ERR_add_error_vdata);
+#endif
 #ifndef OPENSSL_NO_ERR
 	ERR_load_ERR_strings(); /* include error strings for SYSerr */
 	ERR_load_BN_strings();
