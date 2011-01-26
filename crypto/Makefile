@@ -100,7 +100,7 @@ links:
 lib:	$(LIB)
 	@touch lib
 $(LIB):	$(LIBOBJ)
-	$(AR) $(LIB) $(LIBOBJ)
+	$(ARX) $(LIB) $(LIBOBJ)
 	$(RANLIB) $(LIB) || echo Never mind.
 
 shared: buildinf.h lib subdirs
