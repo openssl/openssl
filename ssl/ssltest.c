@@ -2292,15 +2292,7 @@ static int MS_CALLBACK app_verify_callback(X509_STORE_CTX *ctx, void *arg)
 		}
 
 #ifndef OPENSSL_NO_X509_VERIFY
-# ifdef OPENSSL_FIPS
-	if(s->version == TLS1_VERSION)
-		FIPS_allow_md5(1);
-# endif
 	ok = X509_verify_cert(ctx);
-# ifdef OPENSSL_FIPS
-	if(s->version == TLS1_VERSION)
-		FIPS_allow_md5(0);
-# endif
 #endif
 
 	if (cb_arg->proxy_auth)
