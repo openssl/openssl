@@ -56,6 +56,8 @@
  *
  */
 
+#define OPENSSL_FIPSEVP
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
@@ -93,7 +95,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 	if (mgf1Hash == NULL)
 		mgf1Hash = Hash;
 
-	hLen = EVP_MD_size(Hash);
+	hLen = M_EVP_MD_size(Hash);
 	if (hLen < 0)
 		goto err;
 	/*
@@ -166,7 +168,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 		if (!EVP_DigestUpdate(&ctx, DB + i, maskedDBLen - i))
 			goto err;
 		}
-	if (!EVP_DigestFinal(&ctx, H_, NULL))
+	if (!EVP_DigestFinal_ex(&ctx, H_, NULL))
 		goto err;
 	if (memcmp(H_, H, hLen))
 		{
@@ -205,7 +207,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 	if (mgf1Hash == NULL)
 		mgf1Hash = Hash;
 
-	hLen = EVP_MD_size(Hash);
+	hLen = M_EVP_MD_size(Hash);
 	if (hLen < 0)
 		goto err;
 	/*
@@ -260,7 +262,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 		goto err;
 	if (sLen && !EVP_DigestUpdate(&ctx, salt, sLen))
 		goto err;
-	if (!EVP_DigestFinal(&ctx, H, NULL))
+	if (!EVP_DigestFinal_ex(&ctx, H, NULL))
 		goto err;
 	EVP_MD_CTX_cleanup(&ctx);
 

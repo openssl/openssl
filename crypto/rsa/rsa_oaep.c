@@ -18,6 +18,8 @@
  * an equivalent notion.
  */
 
+#define OPENSSL_FIPSEVP
+
 
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
 #include <stdio.h>
@@ -194,7 +196,7 @@ int PKCS1_MGF1(unsigned char *mask, long len,
 	int rv = -1;
 
 	EVP_MD_CTX_init(&c);
-	mdlen = EVP_MD_size(dgst);
+	mdlen = M_EVP_MD_size(dgst);
 	if (mdlen < 0)
 		goto err;
 	for (i = 0; outlen < len; i++)
