@@ -55,6 +55,9 @@
  * copied and put under another distribution licence
  * [including the GNU Public Licence.]
  */
+
+#define OPENSSL_FIPSEVP
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,7 +81,7 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 	if (key != NULL)
 		{
 		reset=1;
-		j=EVP_MD_block_size(md);
+		j=M_EVP_MD_block_size(md);
 		OPENSSL_assert(j <= (int)sizeof(ctx->key));
 		if (j < len)
 			{
@@ -107,14 +110,14 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 			pad[i]=0x36^ctx->key[i];
 		if (!EVP_DigestInit_ex(&ctx->i_ctx,md, impl))
 			goto err;
-		if (!EVP_DigestUpdate(&ctx->i_ctx,pad,EVP_MD_block_size(md)))
+		if (!EVP_DigestUpdate(&ctx->i_ctx,pad,M_EVP_MD_block_size(md)))
 			goto err;
 
 		for (i=0; i<HMAC_MAX_MD_CBLOCK; i++)
 			pad[i]=0x5c^ctx->key[i];
 		if (!EVP_DigestInit_ex(&ctx->o_ctx,md, impl))
 			goto err;
-		if (!EVP_DigestUpdate(&ctx->o_ctx,pad,EVP_MD_block_size(md)))
+		if (!EVP_DigestUpdate(&ctx->o_ctx,pad,M_EVP_MD_block_size(md)))
 			goto err;
 		}
 	if (!EVP_MD_CTX_copy_ex(&ctx->md_ctx,&ctx->i_ctx))
@@ -163,11 +166,12 @@ void HMAC_CTX_init(HMAC_CTX *ctx)
 
 int HMAC_CTX_copy(HMAC_CTX *dctx, HMAC_CTX *sctx)
 	{
-	if (!EVP_MD_CTX_copy(&dctx->i_ctx, &sctx->i_ctx))
+	HMAC_CTX_init(dctx);
+	if (!EVP_MD_CTX_copy_ex(&dctx->i_ctx, &sctx->i_ctx))
 		goto err;
-	if (!EVP_MD_CTX_copy(&dctx->o_ctx, &sctx->o_ctx))
+	if (!EVP_MD_CTX_copy_ex(&dctx->o_ctx, &sctx->o_ctx))
 		goto err;
-	if (!EVP_MD_CTX_copy(&dctx->md_ctx, &sctx->md_ctx))
+	if (!EVP_MD_CTX_copy_ex(&dctx->md_ctx, &sctx->md_ctx))
 		goto err;
 	memcpy(dctx->key, sctx->key, HMAC_MAX_MD_CBLOCK);
 	dctx->key_length = sctx->key_length;
@@ -208,7 +212,7 @@ unsigned char *HMAC(const EVP_MD *evp_md, const void *key, int key_len,
 
 void HMAC_CTX_set_flags(HMAC_CTX *ctx, unsigned long flags)
 	{
-	EVP_MD_CTX_set_flags(&ctx->i_ctx, flags);
-	EVP_MD_CTX_set_flags(&ctx->o_ctx, flags);
-	EVP_MD_CTX_set_flags(&ctx->md_ctx, flags);
+	M_EVP_MD_CTX_set_flags(&ctx->i_ctx, flags);
+	M_EVP_MD_CTX_set_flags(&ctx->o_ctx, flags);
+	M_EVP_MD_CTX_set_flags(&ctx->md_ctx, flags);
 	}
