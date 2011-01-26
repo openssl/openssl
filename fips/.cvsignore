@@ -1,0 +1,8 @@
+lib
+Makefile.save
+fips_test_suite
+fips_premain_dso
+fips_standalone_sha1
+fipscanister.o.sha1
+*.flc
+semantic.cache

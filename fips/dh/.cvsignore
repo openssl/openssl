@@ -1,0 +1,4 @@
+lib
+*.flc
+semantic.cache
+Makefile.save
