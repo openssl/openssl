@@ -68,6 +68,11 @@
 #include <openssl/rsa.h>
 #endif
 
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
+
 static int init(EVP_MD_CTX *ctx)
 	{ return SHA1_Init(ctx->md_data); }
 
@@ -88,7 +93,7 @@ static const EVP_MD sha1_md=
 	final,
 	NULL,
 	NULL,
-	EVP_PKEY_RSA_method,
+	EVP_PKEY_NULL_method,
 	SHA_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA_CTX),
 	};
@@ -125,7 +130,7 @@ static const EVP_MD sha224_md=
 	final256,
 	NULL,
 	NULL,
-	EVP_PKEY_RSA_method,
+	EVP_PKEY_NULL_method,
 	SHA256_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA256_CTX),
 	};
@@ -144,7 +149,7 @@ static const EVP_MD sha256_md=
 	final256,
 	NULL,
 	NULL,
-	EVP_PKEY_RSA_method,
+	EVP_PKEY_NULL_method,
 	SHA256_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA256_CTX),
 	};
@@ -175,7 +180,7 @@ static const EVP_MD sha384_md=
 	final512,
 	NULL,
 	NULL,
-	EVP_PKEY_RSA_method,
+	EVP_PKEY_NULL_method,
 	SHA512_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA512_CTX),
 	};
@@ -194,7 +199,7 @@ static const EVP_MD sha512_md=
 	final512,
 	NULL,
 	NULL,
-	EVP_PKEY_RSA_method,
+	EVP_PKEY_NULL_method,
 	SHA512_CBLOCK,
 	sizeof(EVP_MD *)+sizeof(SHA512_CTX),
 	};
@@ -202,3 +207,4 @@ static const EVP_MD sha512_md=
 const EVP_MD *EVP_sha512(void)
 	{ return(&sha512_md); }
 #endif	/* ifndef OPENSSL_NO_SHA512 */
+

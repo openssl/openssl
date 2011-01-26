@@ -217,6 +217,8 @@ typedef int evp_verify_method(int type,const unsigned char *m,
 
 #define EVP_MD_FLAG_DIGALGID_CUSTOM		0x0018
 
+#define EVP_MD_FLAG_FIPS	0x0400 /* Note if suitable for use in FIPS mode */
+
 /* Digest ctrls */
 
 #define	EVP_MD_CTRL_DIGALGID			0x1
@@ -348,6 +350,10 @@ struct evp_cipher_st
 #define		EVP_CIPH_FLAG_DEFAULT_ASN1	0x1000
 /* Buffer length in bits not bytes: CFB1 mode only */
 #define		EVP_CIPH_FLAG_LENGTH_BITS	0x2000
+/* Note if suitable for use in FIPS mode */
+#define		EVP_CIPH_FLAG_FIPS		0x4000
+/* Allow non FIPS cipher in FIPS mode */
+#define		EVP_CIPH_FLAG_NON_FIPS_ALLOW	0x8000
 
 /* ctrl() values */
 
@@ -432,6 +438,22 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define EVP_get_cipherbynid(a) EVP_get_cipherbyname(OBJ_nid2sn(a))
 #define EVP_get_cipherbyobj(a) EVP_get_cipherbynid(OBJ_obj2nid(a))
 
+/* Macros to reduce FIPS dependencies: do NOT use in applications */
+#define M_EVP_MD_size(e)		((e)->md_size)
+#define M_EVP_MD_block_size(e)		((e)->block_size)
+#define M_EVP_MD_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
+#define M_EVP_MD_CTX_clear_flags(ctx,flgs) ((ctx)->flags&=~(flgs))
+#define M_EVP_MD_CTX_test_flags(ctx,flgs) ((ctx)->flags&(flgs))
+#define M_EVP_MD_type(e)			((e)->type)
+#define M_EVP_MD_CTX_type(e)		M_EVP_MD_type(M_EVP_MD_CTX_md(e))
+#define M_EVP_MD_CTX_md(e)			((e)->digest)
+
+#define M_EVP_CIPHER_CTX_iv_length(e)	(e->cipher->iv_len)
+#define M_EVP_CIPHER_CTX_flags(e)	(e->cipher->flags)
+#define M_EVP_CIPHER_CTX_mode(e)	(M_EVP_CIPHER_CTX_flags(e) & EVP_CIPH_MODE)
+
+#define M_EVP_CIPHER_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
+
 int EVP_MD_type(const EVP_MD *md);
 #define EVP_MD_nid(e)			EVP_MD_type(e)
 #define EVP_MD_name(e)			OBJ_nid2sn(EVP_MD_nid(e))
@@ -504,20 +526,70 @@ __owur int EVP_Cipher(EVP_CIPHER_CTX *c,
 #define EVP_delete_digest_alias(alias) \
 	OBJ_NAME_remove(alias,OBJ_NAME_TYPE_MD_METH|OBJ_NAME_ALIAS);
 
+#ifdef OPENSSL_FIPS
+void FIPS_md_ctx_init(EVP_MD_CTX *ctx);
+EVP_MD_CTX *FIPS_md_ctx_create(void);
+void FIPS_md_ctx_destroy(EVP_MD_CTX *ctx);
+int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type);
+int FIPS_digestupdate(EVP_MD_CTX *ctx, const void *data, size_t count);
+int FIPS_digestfinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size);
+int FIPS_digest(const void *data, size_t count,
+		unsigned char *md, unsigned int *size, const EVP_MD *type);
+int FIPS_md_ctx_cleanup(EVP_MD_CTX *ctx);
+int     FIPS_md_ctx_copy(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
+
+
+void FIPS_cipher_ctx_init(EVP_CIPHER_CTX *ctx);
+int FIPS_cipher_ctx_cleanup(EVP_CIPHER_CTX *c);
+EVP_CIPHER_CTX *FIPS_cipher_ctx_new(void);
+void FIPS_cipher_ctx_free(EVP_CIPHER_CTX *ctx);
+int FIPS_cipherinit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+	     const unsigned char *key, const unsigned char *iv, int enc);
+int FIPS_cipher_ctx_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
+int FIPS_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+			const unsigned char *in, unsigned int inl);
+
+#endif
+
+#if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSEVP)
+
+#define EVP_MD_CTX_init FIPS_md_ctx_init
+#define EVP_MD_CTX_cleanup FIPS_md_ctx_cleanup
+#define EVP_MD_CTX_create FIPS_md_ctx_create
+#define EVP_MD_CTX_destroy FIPS_md_ctx_destroy
+#define EVP_DigestInit_ex(ctx, type, impl) FIPS_digestinit(ctx, type)
+#define EVP_DigestUpdate FIPS_digestupdate
+#define EVP_Digest(data, count, md, size, type, impl) \
+			FIPS_digest(data, count, md, size, type)
+#define EVP_DigestFinal_ex FIPS_digestfinal
+#define EVP_MD_CTX_copy_ex FIPS_md_ctx_copy
+
+#define EVP_CipherInit_ex(ctx, cipher, impl, key, iv, enc) \
+				FIPS_cipherinit(ctx, cipher, key, iv, enc)
+
+#define EVP_CIPHER_CTX_init FIPS_cipher_ctx_init
+#define EVP_CIPHER_CTX_cleanup FIPS_cipher_ctx_cleanup
+#define EVP_Cipher FIPS_cipher
+#define EVP_CIPHER_CTX_ctrl FIPS_cipher_ctx_ctrl
+
+#else
+
 void	EVP_MD_CTX_init(EVP_MD_CTX *ctx);
 int	EVP_MD_CTX_cleanup(EVP_MD_CTX *ctx);
 EVP_MD_CTX *EVP_MD_CTX_create(void);
 void	EVP_MD_CTX_destroy(EVP_MD_CTX *ctx);
-__owur int     EVP_MD_CTX_copy_ex(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
-void	EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
-void	EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
-int 	EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx,int flags);
 __owur int	EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
 __owur int	EVP_DigestUpdate(EVP_MD_CTX *ctx,const void *d,
 			 size_t cnt);
 __owur int	EVP_DigestFinal_ex(EVP_MD_CTX *ctx,unsigned char *md,unsigned int *s);
 __owur int	EVP_Digest(const void *data, size_t count,
 		unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl);
+#endif
+
+__owur int     EVP_MD_CTX_copy_ex(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
+void	EVP_MD_CTX_set_flags(EVP_MD_CTX *ctx, int flags);
+void	EVP_MD_CTX_clear_flags(EVP_MD_CTX *ctx, int flags);
+int 	EVP_MD_CTX_test_flags(const EVP_MD_CTX *ctx,int flags);
 
 __owur int     EVP_MD_CTX_copy(EVP_MD_CTX *out,const EVP_MD_CTX *in);  
 __owur int	EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type);

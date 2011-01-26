@@ -254,14 +254,12 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
 
 #define EVP_C_DATA(kstruct, ctx)	((kstruct *)(ctx)->cipher_data)
 
-#define IMPLEMENT_CFBR(cipher,cprefix,kstruct,ksched,keysize,cbits,iv_len) \
+#define IMPLEMENT_CFBR(cipher,cprefix,kstruct,ksched,keysize,cbits,iv_len,fl) \
 	BLOCK_CIPHER_func_cfb(cipher##_##keysize,cprefix,cbits,kstruct,ksched) \
 	BLOCK_CIPHER_def_cfb(cipher##_##keysize,kstruct, \
 			     NID_##cipher##_##keysize, keysize/8, iv_len, cbits, \
-			     0, cipher##_init_key, NULL, \
-			     EVP_CIPHER_set_asn1_iv, \
-			     EVP_CIPHER_get_asn1_iv, \
-			     NULL)
+			     (fl)|EVP_CIPH_FLAG_DEFAULT_ASN1, \
+			     cipher##_init_key, NULL, NULL, NULL, NULL)
 
 struct evp_pkey_ctx_st
 	{
