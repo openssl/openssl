@@ -60,6 +60,12 @@
 #include <time.h>
 #include "cryptlib.h"
 #include <openssl/rand.h>
+
+#ifdef OPENSSL_FIPSCANISTER
+#define OPENSSL_NO_ENGINE
+#include <openssl/fips.h>
+#endif
+
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
