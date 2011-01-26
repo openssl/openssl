@@ -1,0 +1,5 @@
+fips_standalone_sha1
+lib
+Makefile.save
+*.flc
+semantic.cache
