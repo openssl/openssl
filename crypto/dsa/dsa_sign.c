@@ -63,6 +63,11 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 
+#define OPENSSL_FIPSAPI
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{
 	return dsa->meth->dsa_do_sign(dgst, dlen, dsa);

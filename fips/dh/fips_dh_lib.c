@@ -56,9 +56,12 @@
  *
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <string.h>
 #include <openssl/bn.h>
 #include <openssl/dh.h>
+#include <openssl/fips.h>
 
 /* Minimal FIPS versions of FIPS_dh_new() and FIPS_dh_free(): to
  * reduce external dependencies. 

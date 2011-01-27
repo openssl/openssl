@@ -60,11 +60,17 @@
 #endif
 #endif
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include <assert.h>
 
 #include "cryptlib.h"
 #include "bn_lcl.h"
+
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 /* TODO list
  *

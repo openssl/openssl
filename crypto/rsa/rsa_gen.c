@@ -70,6 +70,8 @@
 
 #ifdef OPENSSL_FIPS
 
+#define OPENSSL_FIPSAPI
+
 #include <openssl/fips.h>
 #include <openssl/evp.h>
 

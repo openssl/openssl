@@ -113,6 +113,11 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
+#define OPENSSL_FIPSAPI
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 /* maximum precomputation table size for *variable* sliding windows */
 #define TABLE_SIZE	32
 

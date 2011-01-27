@@ -111,11 +111,14 @@
 
 /* Minimal standalone FIPS versions of Digest operations */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include <string.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/fips.h>
 
 void FIPS_md_ctx_init(EVP_MD_CTX *ctx)
 	{

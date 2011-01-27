@@ -123,6 +123,8 @@ int main(int argc, char *argv[])
 
 #else
 
+#define OPENSSL_FIPSAPI
+
 #include <openssl/fips.h>
 #include "fips_utl.h"
 

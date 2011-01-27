@@ -56,11 +56,13 @@
  * [including the GNU Public Licence.]
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
+#include <openssl/fips.h>
 
 void FIPS_cipher_ctx_init(EVP_CIPHER_CTX *ctx)
 	{

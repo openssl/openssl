@@ -113,8 +113,13 @@ void FIPS_lock(int mode, int type,const char *file,int line);
 void FIPS_set_locking_callback (void (*func)(int mode, int type,
 				const char *file,int line));
 
+void *FIPS_malloc(int num, const char *file, int line);
+void FIPS_free(void *);
+
 #if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSAPI)
 #define CRYPTO_lock FIPS_lock
+#define CRYPTO_malloc FIPS_malloc
+#define CRYPTO_free FIPS_free
 #endif
 
 /* BEGIN ERROR CODES */

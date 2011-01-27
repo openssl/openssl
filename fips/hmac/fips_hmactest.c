@@ -77,7 +77,6 @@ int main(int argc, char *argv[])
 
 #else
 
-#include <openssl/fips.h>
 #include "fips_utl.h"
 
 static int hmac_test(const EVP_MD *md, FILE *out, FILE *in);

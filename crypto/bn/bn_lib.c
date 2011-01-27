@@ -67,6 +67,11 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
+#define OPENSSL_FIPSAPI
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 const char BN_version[]="Big Number" OPENSSL_VERSION_PTEXT;
 
 /* This stuff appears to be completely unused, so is deprecated */
