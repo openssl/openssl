@@ -249,6 +249,10 @@ typedef struct openssl_item_st
 #define CRYPTO_add(a,b,c)	((*(a))+=(b))
 #endif
 
+#if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSEVP)
+#define CRYPTO_lock FIPS_lock
+#endif
+
 /* Some applications as well as some parts of OpenSSL need to allocate
    and deallocate locks in a dynamic fashion.  The following typedef
    makes this possible in a type-safe manner.  */
