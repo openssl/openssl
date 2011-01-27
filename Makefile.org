@@ -336,6 +336,7 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/sha/sha1dgst.o \
 	../crypto/sha/sha256.o \
 	../crypto/sha/sha512.o \
+	../crypto/thr_id.o \
 	../crypto/uid.o
 
 sub_all: build_all
