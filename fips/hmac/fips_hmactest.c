@@ -56,6 +56,8 @@
  *
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
@@ -77,6 +79,7 @@ int main(int argc, char *argv[])
 
 #else
 
+#include <openssl/fips.h>
 #include "fips_utl.h"
 
 static int hmac_test(const EVP_MD *md, FILE *out, FILE *in);

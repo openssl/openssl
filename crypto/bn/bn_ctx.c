@@ -68,10 +68,6 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
-
 /* TODO list
  *
  * 1. Check a bunch of "(words+1)" type hacks in various bignum functions and

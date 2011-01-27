@@ -7,6 +7,9 @@
  * Validation System (RNGVS)", May 25, 2004.
  *
  */
+
+#define OPENSSL_FIPSAPI
+
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_FIPS

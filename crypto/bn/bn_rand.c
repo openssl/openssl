@@ -109,16 +109,13 @@
  *
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
 #include <openssl/rand.h>
-
-#define OPENSSL_FIPSAPI
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
 
 static int bnrand(int pseudorand, BIGNUM *rnd, int bits, int top, int bottom)
 	{

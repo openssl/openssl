@@ -48,7 +48,6 @@
  */
 
 #define OPENSSL_FIPSAPI
-#include <openssl/fips.h>
 
 int hex2bin(const char *in, unsigned char *out);
 unsigned char *hex2bin_m(const char *in, long *plen);

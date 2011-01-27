@@ -1,3 +1,5 @@
+
+#define OPENSSL_FIPSAPI
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_FIPS
@@ -9,8 +11,6 @@ int main(int argc, char **argv)
     return(0);
 }
 #else
-
-#define OPENSSL_FIPSAPI
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>

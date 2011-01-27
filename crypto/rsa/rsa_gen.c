@@ -62,6 +62,8 @@
  * - Geoff
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"
@@ -70,7 +72,6 @@
 
 #ifdef OPENSSL_FIPS
 
-#define OPENSSL_FIPSAPI
 
 #include <openssl/fips.h>
 #include <openssl/evp.h>

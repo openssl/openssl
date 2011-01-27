@@ -125,6 +125,11 @@
 #include <stdio.h>
 #endif
 
+/* Get FIPS renames if needed */
+#if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSAPI)
+#include <openssl/fips.h>
+#endif
+
 #include <openssl/stack.h>
 #include <openssl/safestack.h>
 #include <openssl/opensslv.h>

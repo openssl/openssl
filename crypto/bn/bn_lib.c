@@ -61,16 +61,13 @@
 # define NDEBUG
 #endif
 
+#define OPENSSL_FIPSAPI
+
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
-
-#define OPENSSL_FIPSAPI
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
 
 const char BN_version[]="Big Number" OPENSSL_VERSION_PTEXT;
 

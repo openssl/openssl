@@ -56,14 +56,11 @@
  * [including the GNU Public Licence.]
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/buffer.h>
-
-#define OPENSSL_FIPSAPI
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
 
 char *BUF_strdup(const char *str)
 	{

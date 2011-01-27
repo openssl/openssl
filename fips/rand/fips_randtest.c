@@ -103,6 +103,8 @@
  *
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -125,8 +127,8 @@ int main(int argc, char *argv[])
 
 #define OPENSSL_FIPSAPI
 
-#include <openssl/fips.h>
 #include "fips_utl.h"
+#include <openssl/fips.h>
 
 typedef struct
 	{

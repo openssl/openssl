@@ -60,6 +60,7 @@ extern "C" {
 #endif
 
 struct dsa_st;
+struct rsa_st;
 struct evp_pkey_st;
 struct env_md_st;
 struct evp_cipher_st;
@@ -108,18 +109,41 @@ int fips_cipher_test(struct evp_cipher_ctx_st *ctx,
 void fips_set_selftest_fail(void);
 int fips_check_rsa(struct rsa_st *rsa);
 
-void FIPS_lock(int mode, int type,const char *file,int line);
-
-void FIPS_set_locking_callback (void (*func)(int mode, int type,
+void FIPS_set_locking_callback(void (*func)(int mode, int type,
 				const char *file,int line));
 
-void *FIPS_malloc(int num, const char *file, int line);
-void FIPS_free(void *);
+/* Where necessary redirect standard OpenSSL APIs to FIPS versions */
 
 #if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSAPI)
+
 #define CRYPTO_lock FIPS_lock
 #define CRYPTO_malloc FIPS_malloc
 #define CRYPTO_free FIPS_free
+
+#define EVP_MD_CTX_init FIPS_md_ctx_init
+#define EVP_MD_CTX_cleanup FIPS_md_ctx_cleanup
+#define EVP_MD_CTX_create FIPS_md_ctx_create
+#define EVP_MD_CTX_destroy FIPS_md_ctx_destroy
+#define EVP_DigestInit_ex(ctx, type, impl) FIPS_digestinit(ctx, type)
+#define EVP_DigestInit FIPS_digestinit
+#define EVP_DigestUpdate FIPS_digestupdate
+#define EVP_Digest(data, count, md, size, type, impl) \
+			FIPS_digest(data, count, md, size, type)
+#define EVP_DigestFinal_ex FIPS_digestfinal
+#define EVP_MD_CTX_copy_ex FIPS_md_ctx_copy
+
+#define EVP_CipherInit_ex(ctx, cipher, impl, key, iv, enc) \
+				FIPS_cipherinit(ctx, cipher, key, iv, enc)
+
+#define EVP_CipherInit FIPS_cipherinit
+
+#define EVP_CIPHER_CTX_init FIPS_cipher_ctx_init
+#define EVP_CIPHER_CTX_cleanup FIPS_cipher_ctx_cleanup
+#define EVP_Cipher FIPS_cipher
+#define EVP_CIPHER_CTX_ctrl FIPS_cipher_ctx_ctrl
+#define EVP_CIPHER_CTX_new FIPS_cipher_ctx_new
+#define EVP_CIPHER_CTX_free FIPS_cipher_ctx_free
+
 #endif
 
 /* BEGIN ERROR CODES */

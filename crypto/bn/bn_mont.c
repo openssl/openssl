@@ -122,10 +122,6 @@
 #include "cryptlib.h"
 #include "bn_lcl.h"
 
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
-
 #define MONT_WORD /* use the faster word-based algorithm */
 
 #ifdef MONT_WORD

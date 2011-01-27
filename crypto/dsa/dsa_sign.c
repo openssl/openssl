@@ -58,15 +58,12 @@
 
 /* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
+#define OPENSSL_FIPSAPI
+
 #include "cryptlib.h"
 #include <openssl/dsa.h>
 #include <openssl/rand.h>
 #include <openssl/bn.h>
-
-#define OPENSSL_FIPSAPI
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
 
 DSA_SIG * DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	{

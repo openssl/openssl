@@ -83,8 +83,8 @@ int main(int argc, char *argv[])
 
 #else
 
-#include <openssl/fips.h>
 #include "fips_utl.h"
+#include <openssl/fips.h>
 
 #define DES_BLOCK_SIZE 8
 

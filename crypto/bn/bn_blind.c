@@ -109,15 +109,11 @@
  * [including the GNU Public Licence.]
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include "bn_lcl.h"
-
-#define OPENSSL_FIPSAPI
-
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
 
 #define BN_BLINDING_COUNTER	32
 

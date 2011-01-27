@@ -30,10 +30,6 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-#endif
-
 static int MGF1(unsigned char *mask, long len,
 	const unsigned char *seed, long seedlen);
 
