@@ -108,16 +108,7 @@ int fips_cipher_test(struct evp_cipher_ctx_st *ctx,
 void fips_set_selftest_fail(void);
 int fips_check_rsa(struct rsa_st *rsa);
 
-void FIPS_evp_md_ctx_init(EVP_MD_CTX *ctx);
-EVP_MD_CTX *FIPS_evp_md_ctx_create(void);
-int FIPS_evp_digestinit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl);
-int FIPS_evp_digestupdate(EVP_MD_CTX *ctx, const void *data, size_t count);
-int FIPS_evp_digestfinal(EVP_MD_CTX *ctx,
-					unsigned char *md, unsigned int *size);
-int FIPS_evp_digest(const void *data, size_t count,
-		unsigned char *md, unsigned int *size, const EVP_MD *type, ENGINE *impl);
-void FIPS_evp_md_ctx_destroy(EVP_MD_CTX *ctx);
-int FIPS_evp_md_ctx_cleanup(EVP_MD_CTX *ctx);
+void FIPS_lock(int mode, int type,const char *file,int line);
 
 void FIPS_set_locking_callback (void (*func)(int mode, int type,
 				const char *file,int line));
