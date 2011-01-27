@@ -47,6 +47,8 @@
  *
  */
 
+#define OPENSSL_FIPSEVP
+
 /*
  * This is a FIPS approved AES PRNG based on ANSI X9.31 A.2.4.
  */

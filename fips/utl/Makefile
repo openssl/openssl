@@ -2,7 +2,7 @@
 # OpenSSL/fips/utl/Makefile
 #
 
-DIR=	callback
+DIR=	utl
 TOP=	../..
 CC=	cc
 INCLUDES=
@@ -22,8 +22,8 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= fips_err.c fips_md.c fips_enc.c
-LIBOBJ= fips_err.o fips_md.o fips_enc.o
+LIBSRC= fips_err.c fips_md.c fips_enc.c fips_lck.c
+LIBOBJ= fips_err.o fips_md.o fips_enc.o fips_lck.o
 
 SRC= $(LIBSRC)
 
