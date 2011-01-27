@@ -109,6 +109,8 @@
  *
  */
 
+#define OPENSSL_FIPSEVP
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
