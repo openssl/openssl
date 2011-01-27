@@ -10,7 +10,7 @@ int main(int argc, char **argv)
 }
 #else
 
-#define OPENSSL_FIPSEVP
+#define OPENSSL_FIPSAPI
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>

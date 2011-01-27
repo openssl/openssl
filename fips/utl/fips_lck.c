@@ -51,7 +51,7 @@
  * ====================================================================
  */
 
-#define OPENSSL_FIPSEVP
+#define OPENSSL_FIPSAPI
 
 #include <openssl/evp.h>
 #include <openssl/fips.h>

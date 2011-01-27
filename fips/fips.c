@@ -47,7 +47,7 @@
  *
  */
 
-#define OPENSSL_FIPSEVP
+#define OPENSSL_FIPSAPI
 
 #include <openssl/rand.h>
 #include <openssl/fips_rand.h>

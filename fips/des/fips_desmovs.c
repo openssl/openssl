@@ -58,7 +58,7 @@
   U.S.A.
   ----------------------------------------------*/
 
-#define OPENSSL_FIPSEVP
+#define OPENSSL_FIPSAPI
 
 #include <stdio.h>
 #include <stdlib.h>

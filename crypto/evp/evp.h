@@ -551,7 +551,7 @@ int FIPS_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 #endif
 
-#if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSEVP)
+#if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSAPI)
 
 #define EVP_MD_CTX_init FIPS_md_ctx_init
 #define EVP_MD_CTX_cleanup FIPS_md_ctx_cleanup
