@@ -1086,7 +1086,17 @@ my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
 $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target =~ /^mingw/);
 $exe_ext=".nlm" if ($target =~ /netware/);
 $exe_ext=".pm"  if ($target =~ /vos/);
-$openssldir="/usr/local/ssl" if ($openssldir eq "" and $prefix eq "");
+if ($openssldir eq "" and $prefix eq "")
+	{
+	if ($fips)
+		{
+		$openssldir="/usr/local/ssl/fips-2.0";
+		}
+	else
+		{
+		$openssldir="/usr/local/ssl";
+		}
+	}
 $prefix=$openssldir if $prefix eq "";
 
 $default_ranlib= &which("ranlib") or $default_ranlib="true";
