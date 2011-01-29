@@ -114,7 +114,7 @@ LIBZLIB=
 # The FIPS module build will place it $(INSTALLTOP)/lib
 # but since $(INSTALLTOP) can only take the default value
 # when the module is built it will be in /usr/local/ssl/lib
-# $(INSTALLTOP) for this build make be different so hard
+# $(INSTALLTOP) for this build may be different so hard
 # code the path.
 
 FIPSLIBDIR=/usr/local/ssl/$(LIBDIR)/
