@@ -1,0 +1,26 @@
+Preliminary status and build information for FIPS module v2.0
+
+To build the module do:
+
+./config fipscanisterbuild
+make
+
+Build should complete without errors.
+
+Run test suite:
+
+test/fips_test_suite
+
+again should complete without errors.
+
+Run test vectors: TBA.
+
+Known issues:
+
+No Windows support. 
+Algorithm tests are pre-2011.
+No SP800-90 PRNG.
+No ECDSA2 support.
+No DSA2 support.
+No GCM.
+No CMAC.
