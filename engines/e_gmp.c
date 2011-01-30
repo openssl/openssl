@@ -471,6 +471,8 @@ static int bind_fn(ENGINE *e, const char *id)
 IMPLEMENT_DYNAMIC_BIND_FN(bind_fn)
 #else
 OPENSSL_EXPORT
+int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
+OPENSSL_EXPORT
 int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns) { return 0; }
 #endif
 #endif /* !OPENSSL_NO_DYNAMIC_ENGINE */
