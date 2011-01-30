@@ -833,6 +833,10 @@ PROCESS_ARGS:
 			}
 		elsif (/^386$/)
 			{ $processor=386; }
+		elsif (/^fips$/)
+			{
+			$fips=1;
+		        }
 		elsif (/^rsaref$/)
 			{
 			# No RSAref support any more since it's not needed.
@@ -1022,6 +1026,10 @@ print "Configuring for $target\n";
 
 &usage if (!defined($table{$target}));
 
+if ($fips)
+	{
+	delete $disabled{"shared"} if ($disabled{"shared"} eq "default");
+	}
 
 foreach (sort (keys %disabled))
 	{
@@ -1310,8 +1318,11 @@ if ($no_asm)
 	$cpuid_obj=$bn_obj=
 	$des_obj=$aes_obj=$bf_obj=$cast_obj=$rc4_obj=$rc5_obj=$cmll_obj=
 	$modes_obj=$sha1_obj=$md5_obj=$rmd160_obj=$wp_obj="";
+	$cflags=~s/\-D[BL]_ENDIAN//		if ($fips);
+	$thread_cflags=~s/\-D[BL]_ENDIAN//	if ($fips);
 	}
 
+print STDERR "No shared if $no_shared\n";
 if (!$no_shared)
 	{
 	$cast_obj="";	# CAST assembler is not PIC
@@ -1347,7 +1358,7 @@ if ($zlib)
 my $shared_mark = "";
 if ($shared_target eq "")
 	{
-	$no_shared_warn = 1 if !$no_shared;
+	$no_shared_warn = 1 if !$no_shared && !$fips;
 	$no_shared = 1;
 	}
 if (!$no_shared)
