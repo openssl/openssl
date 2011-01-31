@@ -22,6 +22,64 @@ int main(int argc, char **argv)
 
 #include "fips_utl.h"
 
+static int parse_mod(char *line, int *pdsa2, int *pL, int *pN,
+				const EVP_MD **pmd)
+	{
+	char lbuf[10240];
+	char *keyword, *value;
+
+	char *p;
+	p = strchr(line, ',');
+	if (!p)
+		{
+		*pL = atoi(line);
+		*pdsa2 = 0;
+		*pN = 160;
+		*pmd = EVP_sha1();
+		return 1;
+		}
+	*pdsa2 = 1;
+	*p = 0;
+	if (!parse_line(&keyword, &value, lbuf, line))
+		return 0;
+	if (strcmp(keyword, "L"))
+		return 0;
+	*pL = atoi(value);
+	strcpy(line, p + 1);
+	p = strchr(line, ',');
+	if (!p)
+		return 0;
+	*p = 0;
+	if (!parse_line(&keyword, &value, lbuf, line))
+		return 0;
+	if (strcmp(keyword, "N"))
+		return 0;
+	*pN = atoi(value);
+	strcpy(line, p + 1);
+	p = strchr(line, ']');
+	if (!p)
+		return 0;
+	*p = 0;
+	p = line;
+	while(isspace(*p))
+		p++;
+	if (!strcmp(p, "SHA-1"))
+		*pmd = EVP_sha1();
+	else if (!strcmp(p, "SHA-224"))
+		*pmd = EVP_sha224();
+	else if (!strcmp(p, "SHA-256"))
+		*pmd = EVP_sha256();
+	else if (!strcmp(p, "SHA-384"))
+		*pmd = EVP_sha384();
+	else if (!strcmp(p, "SHA-512"))
+		*pmd = EVP_sha512();
+	else
+		return 0;
+	return 1;
+	}
+
+
+
 static void pbn(const char *name, BIGNUM *bn)
 	{
 	int len, i;
@@ -69,6 +127,10 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
 	unsigned char *seed_out,
 	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+int dsa_builtin_paramgen2(DSA *ret, size_t bits, size_t qbits,
+	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
+	unsigned char *seed_out,
+	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
 
 static void pqg()
     {
@@ -85,7 +147,9 @@ static void pqg()
 		continue;
 		}
 	if(!strcmp(keyword,"[mod"))
+	    {
 	    nmod=atoi(value);
+	    }
 	else if(!strcmp(keyword,"N"))
 	    {
 	    int n=atoi(value);
@@ -126,7 +190,9 @@ static void pqgver()
     int counter, counter2;
     unsigned long h, h2;
     DSA *dsa=NULL;
-    int nmod=0;
+    int dsa2, L, N;
+    const EVP_MD *md = NULL;
+    int seedlen;
     unsigned char seed[1024];
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
@@ -138,7 +204,13 @@ static void pqgver()
 		}
 	fputs(buf, stdout);
 	if(!strcmp(keyword,"[mod"))
-	    nmod=atoi(value);
+	    {
+	    if (!parse_mod(value, &dsa2, &L, &N, &md))
+		{
+		fprintf(stderr, "Mod Parse Error\n");
+		exit (1);
+		}
+	    }
 	else if(!strcmp(keyword,"P"))
 	    p=hex2bn(value);
 	else if(!strcmp(keyword,"Q"))
@@ -147,8 +219,8 @@ static void pqgver()
 	    g=hex2bn(value);
 	else if(!strcmp(keyword,"Seed"))
 	    {
-	    int slen = hex2bin(value, seed);
-	    if (slen != 20)
+	    seedlen = hex2bin(value, seed);
+	    if (!dsa2 && seedlen != 20)
 		{
 		fprintf(stderr, "Seed parse length error\n");
 		exit (1);
@@ -165,8 +237,20 @@ static void pqgver()
 		exit (1);
 		}
 	    dsa = FIPS_dsa_new();
-	    if (!DSA_generate_parameters_ex(dsa, nmod,seed,20 ,&counter2,&h2,NULL))
+	    if (!dsa2 && !dsa_builtin_paramgen(dsa, L, N, md,
+					seed, seedlen, NULL,
+					&counter2, &h2, NULL))
+			{
+			fprintf(stderr, "Parameter Generation error\n");
 			exit(1);
+			}
+	    if (dsa2 && dsa_builtin_paramgen2(dsa, L, N, md,
+					seed, seedlen, NULL,
+					&counter2, &h2, NULL) < 0)
+			{
+			fprintf(stderr, "Parameter Generation error\n");
+			exit(1);
+			}
             if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) || BN_cmp(dsa->g, g)
 		|| (counter != counter2) || (h != h2))
 	    	printf("Result = F\n");

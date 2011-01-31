@@ -157,6 +157,7 @@ void ERR_load_FIPS_strings(void);
 /* Function codes. */
 #define FIPS_F_DH_BUILTIN_GENPARAMS			 100
 #define FIPS_F_DSA_BUILTIN_PARAMGEN			 101
+#define FIPS_F_DSA_BUILTIN_PARAMGEN2			 126
 #define FIPS_F_DSA_DO_SIGN				 102
 #define FIPS_F_DSA_DO_VERIFY				 103
 #define FIPS_F_EVP_CIPHERINIT_EX			 124
