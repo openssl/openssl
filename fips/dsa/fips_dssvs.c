@@ -35,7 +35,8 @@ static int parse_mod(char *line, int *pdsa2, int *pL, int *pN,
 		*pL = atoi(line);
 		*pdsa2 = 0;
 		*pN = 160;
-		*pmd = EVP_sha1();
+		if (pmd)
+			*pmd = EVP_sha1();
 		return 1;
 		}
 	*pdsa2 = 1;
