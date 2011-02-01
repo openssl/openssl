@@ -494,7 +494,9 @@ static void sigver()
     char lbuf[1024];
     unsigned char msg[1024];
     char *keyword, *value;
-    int nmod=0, n=0;
+    int n=0;
+    int dsa2, L, N;
+    const EVP_MD *md = NULL;
     DSA_SIG sg, *sig = &sg;
 
     sig->r = NULL;
@@ -507,27 +509,24 @@ static void sigver()
 		fputs(buf,stdout);
 		continue;
 		}
+	fputs(buf,stdout);
 	if(!strcmp(keyword,"[mod"))
 	    {
-	    nmod=atoi(value);
-	    if(dsa)
+	    if (!parse_mod(value, &dsa2, &L, &N, &md))
+		{
+		fprintf(stderr, "Mod Parse Error\n");
+		exit (1);
+		}
+	    if (dsa)
 		FIPS_dsa_free(dsa);
-	    dsa=FIPS_dsa_new();
+	    dsa = FIPS_dsa_new();
 	    }
 	else if(!strcmp(keyword,"P"))
 	    dsa->p=hex2bn(value);
 	else if(!strcmp(keyword,"Q"))
 	    dsa->q=hex2bn(value);
 	else if(!strcmp(keyword,"G"))
-	    {
 	    dsa->g=hex2bn(value);
-
-	    printf("[mod = %d]\n\n",nmod);
-	    pbn("P",dsa->p);
-	    pbn("Q",dsa->q);
-	    pbn("G",dsa->g);
-	    putc('\n',stdout);
-	    }
 	else if(!strcmp(keyword,"Msg"))
 	    {
 	    n=hex2bin(value,msg);
@@ -544,10 +543,7 @@ static void sigver()
 	    EVP_MD_CTX_init(&mctx);
 	    sig->s=hex2bn(value);
 	
-	    pbn("Y",dsa->pub_key);
-	    pbn("R",sig->r);
-	    pbn("S",sig->s);
-	    EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL);
+	    EVP_DigestInit_ex(&mctx, md, NULL);
 	    EVP_DigestUpdate(&mctx, msg, n);
 	    no_err = 1;
 	    r = FIPS_dsa_verify_ctx(dsa, &mctx, sig);
