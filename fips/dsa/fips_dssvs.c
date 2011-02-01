@@ -137,7 +137,8 @@ static void pqg()
     char buf[1024];
     char lbuf[1024];
     char *keyword, *value;
-    int nmod=0;
+    int dsa2, L, N;
+    const EVP_MD *md = NULL;
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
@@ -148,13 +149,16 @@ static void pqg()
 		}
 	if(!strcmp(keyword,"[mod"))
 	    {
-	    nmod=atoi(value);
+	    fputs(buf,stdout);
+	    if (!parse_mod(value, &dsa2, &L, &N, &md))
+		{
+		fprintf(stderr, "Mod Parse Error\n");
+		exit (1);
+		}
 	    }
 	else if(!strcmp(keyword,"N"))
 	    {
 	    int n=atoi(value);
-
-	    printf("[mod = %d]\n\n",nmod);
 
 	    while(n--)
 		{
@@ -164,13 +168,25 @@ static void pqg()
 		unsigned long h;
 		dsa = FIPS_dsa_new();
 
-		if (!dsa_builtin_paramgen(dsa, nmod, 160, NULL, NULL, 0,
-					seed,&counter,&h,NULL))
+		if (!dsa2 && !dsa_builtin_paramgen(dsa, L, N, md,
+						NULL, 0, seed,
+						&counter, &h, NULL))
+			{
+			fprintf(stderr, "Parameter Generation error\n");
 			exit(1);
+			}
+		if (dsa2 && dsa_builtin_paramgen2(dsa, L, N, md,
+						NULL, 0, seed,
+						&counter, &h, NULL) <= 0)
+			{
+			fprintf(stderr, "Parameter Generation error\n");
+			exit(1);
+			}
+ 
 		pbn("P",dsa->p);
 		pbn("Q",dsa->q);
 		pbn("G",dsa->g);
-		pv("Seed",seed,20);
+		pv("Seed",seed, M_EVP_MD_size(md));
 		printf("c = %d\n",counter);
 		printf("H = %lx\n",h);
 		putc('\n',stdout);
@@ -433,7 +449,8 @@ static void siggen()
     char buf[1024];
     char lbuf[1024];
     char *keyword, *value;
-    int nmod=0;
+    int dsa2, L, N;
+    const EVP_MD *md = NULL;
     DSA *dsa=NULL;
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
@@ -443,15 +460,29 @@ static void siggen()
 		fputs(buf,stdout);
 		continue;
 		}
+	fputs(buf,stdout);
 	if(!strcmp(keyword,"[mod"))
 	    {
-	    nmod=atoi(value);
-	    printf("[mod = %d]\n\n",nmod);
+	    if (!parse_mod(value, &dsa2, &L, &N, &md))
+		{
+		fprintf(stderr, "Mod Parse Error\n");
+		exit (1);
+		}
 	    if (dsa)
 		FIPS_dsa_free(dsa);
 	    dsa = FIPS_dsa_new();
-	    if (!DSA_generate_parameters_ex(dsa, nmod,NULL,0,NULL,NULL,NULL))
-		exit(1);
+	    if (!dsa2 && !dsa_builtin_paramgen(dsa, L, N, md, NULL, 0,
+						NULL, NULL, NULL, NULL))
+			{
+			fprintf(stderr, "Parameter Generation error\n");
+			exit(1);
+			}
+	    if (dsa2 && dsa_builtin_paramgen2(dsa, L, N, md, NULL, 0,
+						NULL, NULL, NULL, NULL) <= 0)
+			{
+			fprintf(stderr, "Parameter Generation error\n");
+			exit(1);
+			}
 	    pbn("P",dsa->p);
 	    pbn("Q",dsa->q);
 	    pbn("G",dsa->g);
@@ -466,13 +497,12 @@ static void siggen()
 	    EVP_MD_CTX_init(&mctx);
 
 	    n=hex2bin(value,msg);
-	    pv("Msg",msg,n);
 
 	    if (!DSA_generate_key(dsa))
 		exit(1);
 	    pbn("Y",dsa->pub_key);
 
-	    EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL);
+	    EVP_DigestInit_ex(&mctx, md, NULL);
 	    EVP_DigestUpdate(&mctx, msg, n);
 	    sig = FIPS_dsa_sign_ctx(dsa, &mctx);
 
@@ -528,10 +558,7 @@ static void sigver()
 	else if(!strcmp(keyword,"G"))
 	    dsa->g=hex2bn(value);
 	else if(!strcmp(keyword,"Msg"))
-	    {
 	    n=hex2bin(value,msg);
-	    pv("Msg",msg,n);
-	    }
 	else if(!strcmp(keyword,"Y"))
 	    dsa->pub_key=hex2bn(value);
 	else if(!strcmp(keyword,"R"))
@@ -542,7 +569,7 @@ static void sigver()
 	    int r;
 	    EVP_MD_CTX_init(&mctx);
 	    sig->s=hex2bn(value);
-	
+
 	    EVP_DigestInit_ex(&mctx, md, NULL);
 	    EVP_DigestUpdate(&mctx, msg, n);
 	    no_err = 1;
