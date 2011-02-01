@@ -46,7 +46,10 @@ static int parse_mod(char *line, int *pdsa2, int *pL, int *pN,
 		return 0;
 	*pL = atoi(value);
 	strcpy(line, p + 1);
-	p = strchr(line, ',');
+	if (pmd)
+		p = strchr(line, ',');
+	else
+		p = strchr(line, ']');
 	if (!p)
 		return 0;
 	*p = 0;
@@ -55,6 +58,8 @@ static int parse_mod(char *line, int *pdsa2, int *pL, int *pN,
 	if (strcmp(keyword, "N"))
 		return 0;
 	*pN = atoi(value);
+	if (!pmd)
+		return 1;
 	strcpy(line, p + 1);
 	p = strchr(line, ']');
 	if (!p)
@@ -289,13 +294,13 @@ static void pqgver()
  * output of the KeyPair test.
  */
 
-static int dss_paramcheck(int nmod, BIGNUM *p, BIGNUM *q, BIGNUM *g,
+static int dss_paramcheck(int L, int N, BIGNUM *p, BIGNUM *q, BIGNUM *g,
 							BN_CTX *ctx)
     {
     BIGNUM *rem = NULL;
-    if (BN_num_bits(p) != nmod)
+    if (BN_num_bits(p) != L)
 	return 0;
-    if (BN_num_bits(q) != 160)
+    if (BN_num_bits(q) != N)
 	return 0;
     if (BN_is_prime_ex(p, BN_prime_checks, ctx, NULL) != 1)
 	return 0;
@@ -322,7 +327,8 @@ static void keyver()
     BIGNUM *p = NULL, *q = NULL, *g = NULL, *X = NULL, *Y = NULL;
     BIGNUM *Y2;
     BN_CTX *ctx = NULL;
-    int nmod=0, paramcheck = 0;
+    int dsa2, L, N;
+    int paramcheck = 0;
 
     ctx = BN_CTX_new();
     Y2 = BN_new();
@@ -346,7 +352,11 @@ static void keyver()
 		BN_free(g);
 	    g = NULL;
 	    paramcheck = 0;
-	    nmod=atoi(value);
+	    if (!parse_mod(value, &dsa2, &L, &N, NULL))
+		{
+		fprintf(stderr, "Mod Parse Error\n");
+		exit (1);
+		}
 	    }
 	else if(!strcmp(keyword,"P"))
 	    p=hex2bn(value);
@@ -371,7 +381,7 @@ static void keyver()
 	    pbn("Y",Y);
 	    if (!paramcheck)
 		{
-		if (dss_paramcheck(nmod, p, q, g, ctx))
+		if (dss_paramcheck(L, N, p, q, g, ctx))
 			paramcheck = 1;
 		else
 			paramcheck = -1;
@@ -406,26 +416,41 @@ static void keypair()
     char buf[1024];
     char lbuf[1024];
     char *keyword, *value;
-    int nmod=0;
+    int dsa2, L, N;
 
     while(fgets(buf,sizeof buf,stdin) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
-		fputs(buf,stdout);
 		continue;
 		}
 	if(!strcmp(keyword,"[mod"))
-	    nmod=atoi(value);
+	    {
+	    if (!parse_mod(value, &dsa2, &L, &N, NULL))
+		{
+		fprintf(stderr, "Mod Parse Error\n");
+		exit (1);
+		}
+	    fputs(buf,stdout);
+	    }
 	else if(!strcmp(keyword,"N"))
 	    {
 	    DSA *dsa;
 	    int n=atoi(value);
 
-	    printf("[mod = %d]\n\n",nmod);
 	    dsa = FIPS_dsa_new();
-	    if (!DSA_generate_parameters_ex(dsa, nmod,NULL,0,NULL,NULL,NULL))
-		exit(1);
+	    if (!dsa2 && !dsa_builtin_paramgen(dsa, L, N, NULL, NULL, 0,
+						NULL, NULL, NULL, NULL))
+			{
+			fprintf(stderr, "Parameter Generation error\n");
+			exit(1);
+			}
+	    if (dsa2 && dsa_builtin_paramgen2(dsa, L, N, NULL, NULL, 0,
+						NULL, NULL, NULL, NULL) <= 0)
+			{
+			fprintf(stderr, "Parameter Generation error\n");
+			exit(1);
+			}
 	    pbn("P",dsa->p);
 	    pbn("Q",dsa->q);
 	    pbn("G",dsa->g);
@@ -587,7 +612,7 @@ int main(int argc,char **argv)
     {
     if(argc != 2)
 	{
-	fprintf(stderr,"%s [prime|pqg|pqgver|keypair|siggen|sigver]\n",argv[0]);
+	fprintf(stderr,"%s [prime|pqg|pqgver|keypair|keyver|siggen|sigver]\n",argv[0]);
 	exit(1);
 	}
     fips_set_error_print();
