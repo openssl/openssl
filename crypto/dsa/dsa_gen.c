@@ -472,7 +472,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 				goto err;
 
 			if (!seed_in)
-				RAND_pseudo_bytes(seed, qsize);
+				RAND_pseudo_bytes(seed, seed_len);
 			/* step 2 */
 			if (!EVP_Digest(seed, seed_len, md, NULL, evpmd, NULL))
 				goto err;
@@ -509,6 +509,9 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 			/* do a callback call */
 			/* step 5 */
 			}
+		/* Copy seed to seed_out before we mess with it */
+		if (seed_out)
+			memcpy(seed_out, seed, seed_len);
 
 		if(!BN_GENCB_call(cb, 2, 0)) goto err;
 		if(!BN_GENCB_call(cb, 3, 0)) goto err;
@@ -605,7 +608,7 @@ end:
 
 	ok=1;
 err:
-	if (ok)
+	if (ok == 1)
 		{
 		if(ret->p) BN_free(ret->p);
 		if(ret->q) BN_free(ret->q);
@@ -620,8 +623,6 @@ err:
 			}
 		if (counter_ret != NULL) *counter_ret=counter;
 		if (h_ret != NULL) *h_ret=h;
-		if (seed_out)
-			memcpy(seed_out, seed, seed_len);
 		}
 	if (seed)
 		OPENSSL_free(seed);
