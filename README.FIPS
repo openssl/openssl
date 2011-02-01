@@ -13,7 +13,21 @@ test/fips_test_suite
 
 again should complete without errors.
 
-Run test vectors: TBA.
+Run test vectors: 
+
+1. Download an appropriate set of testvectors from www.openssl.org/docs/fips
+   those for 2007 are OK.
+
+2. Extract the files to a suitable directory.
+
+3. Run the test vector perl script, for example:
+
+   cd fips
+   perl fipsalgtest.pl --dir=/wherever/stuff/was/extracted
+
+4. It should say "passed all tests" at the end. Report full details of any
+   failures.
+
 
 Known issues:
 
@@ -21,6 +35,6 @@ No Windows support.
 Algorithm tests are pre-2011.
 No SP800-90 PRNG.
 No ECDSA2 support.
-No DSA2 support.
+No DSA2 support: work in progress.
 No GCM.
 No CMAC.
