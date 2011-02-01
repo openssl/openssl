@@ -881,7 +881,10 @@ sub next_line {
         s/\s+/ /g;
 	# Delete trailing whitespace
 	s/\s+$//;
-        return $_;
+	# Remove leading zeroes
+	s/= 00/= /;
+	# Translate to upper case
+        return uc $_;
     }
     return undef;
 }
