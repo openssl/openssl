@@ -68,12 +68,8 @@
 
 #ifdef OPENSSL_FIPS
 
-/* seed, out_p, out_q, out_g are taken the NIST test vectors */
+/* out_p, out_q, out_g are taken from NIST test vectors */
 
-static unsigned char seed[20] = {
-	0x77, 0x8f, 0x40, 0x74, 0x6f, 0x66, 0xbe, 0x33, 0xce, 0xbe, 0x99, 0x34,
-	0x4c, 0xfc, 0xf3, 0x28, 0xaa, 0x70, 0x2d, 0x3a
-  	};
 
 static unsigned char out_p[] = {
 	0xf7, 0x7c, 0x1b, 0x83, 0xd8, 0xe8, 0x5c, 0x7f, 0x85, 0x30, 0x17, 0x57,
@@ -112,15 +108,13 @@ static const unsigned char str1[]="12345678901234567890";
 
 void FIPS_corrupt_dsa()
     {
-    ++seed[0];
+    ++out_q[0];
     }
 
 int FIPS_selftest_dsa()
     {
     DSA *dsa=NULL;
-    int counter,i,j, ret = 0;
-    unsigned char buf[256];
-    unsigned long h;
+    int ret = 0;
     EVP_MD_CTX mctx;
     DSA_SIG *dsig = NULL;
 
@@ -130,26 +124,14 @@ int FIPS_selftest_dsa()
 
     if(dsa == NULL)
 	goto err;
-    if(!DSA_generate_parameters_ex(dsa, 1024,seed,20,&counter,&h,NULL))
+
+    if (!(dsa->p = BN_bin2bn(out_p, sizeof(out_p), dsa->p)))
 	goto err;
-    if (counter != 378) 
+    if (!(dsa->q = BN_bin2bn(out_q, sizeof(out_q), dsa->q)))
 	goto err;
-    if (h != 2)
-	goto err;
-    i=BN_bn2bin(dsa->q,buf);
-    j=sizeof(out_q);
-    if (i != j || memcmp(buf,out_q,i) != 0)
+    if (!(dsa->g = BN_bin2bn(out_g, sizeof(out_g), dsa->g)))
 	goto err;
 
-    i=BN_bn2bin(dsa->p,buf);
-    j=sizeof(out_p);
-    if (i != j || memcmp(buf,out_p,i) != 0)
-	goto err;
-
-    i=BN_bn2bin(dsa->g,buf);
-    j=sizeof(out_g);
-    if (i != j || memcmp(buf,out_g,i) != 0)
-	goto err;
     DSA_generate_key(dsa);
 
     if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL))
