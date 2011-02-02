@@ -82,6 +82,11 @@ DSA_SIG * FIPS_dsa_sign_ctx(DSA *dsa, EVP_MD_CTX *ctx)
 	return s;
 	}
 
+DSA_SIG * FIPS_dsa_sign_digest(DSA *dsa, const unsigned char *dig, int dlen)
+	{
+	return dsa->meth->dsa_do_sign(dig, dlen, dsa);
+	}
+
 int FIPS_dsa_verify_ctx(DSA *dsa, EVP_MD_CTX *ctx, DSA_SIG *s)
 	{
 	int ret=-1;
@@ -91,6 +96,12 @@ int FIPS_dsa_verify_ctx(DSA *dsa, EVP_MD_CTX *ctx, DSA_SIG *s)
 	ret=dsa->meth->dsa_do_verify(dig,dlen,s,dsa);
 	OPENSSL_cleanse(dig, dlen);
 	return ret;
+	}
+
+int FIPS_dsa_verify_digest(DSA *dsa,
+				const unsigned char *dig, int dlen, DSA_SIG *s)
+	{
+	return dsa->meth->dsa_do_verify(dig,dlen,s,dsa);
 	}
 
 #endif
