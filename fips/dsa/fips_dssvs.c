@@ -212,7 +212,7 @@ static void pqgver()
     int counter, counter2;
     unsigned long h, h2;
     DSA *dsa=NULL;
-    int dsa2, L, N;
+    int dsa2, L, N, part_test = 0;
     const EVP_MD *md = NULL;
     int seedlen;
     unsigned char seed[1024];
@@ -221,6 +221,11 @@ static void pqgver()
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
+		if (p && q)
+			{
+			part_test = 1;
+			goto partial;
+			}
 		fputs(buf,stdout);
 		continue;
 		}
@@ -250,10 +255,12 @@ static void pqgver()
 	    }
 	else if(!strcmp(keyword,"c"))
 	    counter =atoi(buf+4);
-	else if(!strcmp(keyword,"H"))
+	partial:
+	if(!strcmp(keyword,"H") || part_test)
 	    {
-	    h = atoi(value);
-	    if (!p || !q || !g)
+	    if (!part_test)
+	    	h = atoi(value);
+	    if (!p || !q || (!g && !part_test))
 		{
 		fprintf(stderr, "Parse Error\n");
 		exit (1);
@@ -273,8 +280,9 @@ static void pqgver()
 			fprintf(stderr, "Parameter Generation error\n");
 			exit(1);
 			}
-            if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) || BN_cmp(dsa->g, g)
-		|| (counter != counter2) || (h != h2))
+            if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) || 
+		(!part_test &&
+		((BN_cmp(dsa->g, g) || (counter != counter2) || (h != h2)))))
 	    	printf("Result = F\n");
 	    else
 	    	printf("Result = P\n");
@@ -286,6 +294,11 @@ static void pqgver()
 	    g = NULL;
 	    FIPS_dsa_free(dsa);
 	    dsa = NULL;
+	    if (part_test)
+		{
+		fputs(buf,stdout);
+		part_test = 0;
+		}
 	    }
 	}
     }
