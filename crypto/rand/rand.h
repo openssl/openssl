@@ -94,7 +94,7 @@ extern int rand_predictable;
 
 int RAND_set_rand_method(const RAND_METHOD *meth);
 const RAND_METHOD *RAND_get_rand_method(void);
-#ifndef OPENSSL_NO_ENGINE
+#if !defined(OPENSSL_NO_ENGINE) && !defined(OPENSSL_FIPS)
 int RAND_set_rand_engine(ENGINE *engine);
 #endif
 RAND_METHOD *RAND_SSLeay(void);
