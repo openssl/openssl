@@ -482,8 +482,9 @@ void ERR_load_RSA_strings(void);
 /* Function codes. */
 #define RSA_F_CHECK_PADDING_MD				 140
 #define RSA_F_DO_RSA_PRINT				 146
-#define RSA_F_FIPS_RSA_SIGN				 149
+#define RSA_F_FIPS_RSA_SIGN_DIGEST			 149
 #define RSA_F_FIPS_RSA_VERIFY				 150
+#define RSA_F_FIPS_RSA_VERIFY_DIGEST			 151
 #define RSA_F_INT_RSA_VERIFY				 145
 #define RSA_F_MEMORY_LOCK				 100
 #define RSA_F_OLD_RSA_PRIV_DECODE			 147
@@ -510,6 +511,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_PADDING_ADD_NONE			 107
 #define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP		 121
 #define RSA_F_RSA_PADDING_ADD_PKCS1_PSS			 125
+#define RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1		 152
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1		 108
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2		 109
 #define RSA_F_RSA_PADDING_ADD_SSLV23			 110
@@ -530,7 +532,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_SIGN_ASN1_OCTET_STRING		 118
 #define RSA_F_RSA_VERIFY				 119
 #define RSA_F_RSA_VERIFY_ASN1_OCTET_STRING		 120
-#define RSA_F_RSA_VERIFY_PKCS1_PSS			 126
+#define RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1			 126
 
 /* Reason codes. */
 #define RSA_R_ALGORITHM_MISMATCH			 100

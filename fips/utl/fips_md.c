@@ -149,7 +149,7 @@ int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type)
 			ctx->md_data=OPENSSL_malloc(type->ctx_size);
 			if (ctx->md_data == NULL)
 				{
-				EVPerr(EVP_F_EVP_DIGESTINIT_EX,
+				EVPerr(EVP_F_FIPS_DIGESTINIT,
 							ERR_R_MALLOC_FAILURE);
 				return 0;
 				}
@@ -230,7 +230,7 @@ int FIPS_md_ctx_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	unsigned char *tmp_buf;
 	if ((in == NULL) || (in->digest == NULL))
 		{
-		EVPerr(EVP_F_EVP_MD_CTX_COPY_EX,EVP_R_INPUT_NOT_INITIALIZED);
+		EVPerr(EVP_F_FIPS_MD_CTX_COPY,EVP_R_INPUT_NOT_INITIALIZED);
 		return 0;
 		}
 
@@ -252,7 +252,7 @@ int FIPS_md_ctx_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 			out->md_data=OPENSSL_malloc(out->digest->ctx_size);
 			if (!out->md_data)
 				{
-				EVPerr(EVP_F_EVP_MD_CTX_COPY_EX,ERR_R_MALLOC_FAILURE);
+				EVPerr(EVP_F_FIPS_MD_CTX_COPY,ERR_R_MALLOC_FAILURE);
 				return 0;
 				}
 			}

@@ -377,13 +377,13 @@ static int RSA_eay_private_encrypt(int flen, const unsigned char *from,
 #ifdef OPENSSL_FIPS
 	if(FIPS_selftest_failed())
 		{
-		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
+		FIPSerr(FIPS_F_RSA_EAY_PRIVATE_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
 		goto err;
 		}
 
 	if (FIPS_mode() && (BN_num_bits(rsa->n) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
 		{
-		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
+		RSAerr(RSA_F_RSA_EAY_PRIVATE_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
 		return -1;
 		}
 #endif
@@ -524,13 +524,13 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 #ifdef OPENSSL_FIPS
 	if(FIPS_selftest_failed())
 		{
-		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
+		FIPSerr(FIPS_F_RSA_EAY_PRIVATE_DECRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
 		goto err;
 		}
 
 	if (FIPS_mode() && (BN_num_bits(rsa->n) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
 		{
-		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
+		RSAerr(RSA_F_RSA_EAY_PRIVATE_DECRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
 		return -1;
 		}
 #endif
@@ -623,9 +623,9 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		r=RSA_padding_check_PKCS1_type_2(to,num,buf,j,num);
 		break;
 #ifndef OPENSSL_NO_SHA
-        case RSA_PKCS1_OAEP_PADDING:
+	case RSA_PKCS1_OAEP_PADDING:
 	        r=RSA_padding_check_PKCS1_OAEP(to,num,buf,j,num,NULL,0);
-                break;
+		break;
 #endif
  	case RSA_SSLV23_PADDING:
 		r=RSA_padding_check_SSLv23(to,num,buf,j,num);
@@ -667,13 +667,13 @@ static int RSA_eay_public_decrypt(int flen, const unsigned char *from,
 #ifdef OPENSSL_FIPS
 	if(FIPS_selftest_failed())
 		{
-		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_ENCRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
+		FIPSerr(FIPS_F_RSA_EAY_PUBLIC_DECRYPT,FIPS_R_FIPS_SELFTEST_FAILED);
 		goto err;
 		}
 
 	if (FIPS_mode() && (BN_num_bits(rsa->n) < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
 		{
-		RSAerr(RSA_F_RSA_EAY_PUBLIC_ENCRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
+		RSAerr(RSA_F_RSA_EAY_PUBLIC_DECRYPT, RSA_R_KEY_SIZE_TOO_SMALL);
 		return -1;
 		}
 #endif
@@ -886,12 +886,12 @@ static int RSA_eay_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 	if (!BN_mod(r0,pr1,rsa->p,ctx)) goto err;
 
 	/* If p < q it is occasionally possible for the correction of
-         * adding 'p' if r0 is negative above to leave the result still
+	 * adding 'p' if r0 is negative above to leave the result still
 	 * negative. This can break the private key operations: the following
 	 * second correction should *always* correct this rare occurrence.
 	 * This will *never* happen with OpenSSL generated keys because
-         * they ensure p > q [steve]
-         */
+	 * they ensure p > q [steve]
+	 */
 	if (BN_is_negative(r0))
 		if (!BN_add(r0,r0,rsa->p)) goto err;
 	if (!BN_mul(r1,r0,rsa->q,ctx)) goto err;

@@ -112,7 +112,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 	else if (sLen == -2)	sLen = -2;
 	else if (sLen < -2)
 		{
-		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_SLEN_CHECK_FAILED);
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
 		goto err;
 		}
 
@@ -120,7 +120,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 	emLen = RSA_size(rsa);
 	if (EM[0] & (0xFF << MSBits))
 		{
-		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_FIRST_OCTET_INVALID);
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_FIRST_OCTET_INVALID);
 		goto err;
 		}
 	if (MSBits == 0)
@@ -130,12 +130,12 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 		}
 	if (emLen < (hLen + sLen + 2)) /* sLen can be small negative */
 		{
-		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_DATA_TOO_LARGE);
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_DATA_TOO_LARGE);
 		goto err;
 		}
 	if (EM[emLen - 1] != 0xbc)
 		{
-		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_LAST_OCTET_INVALID);
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_LAST_OCTET_INVALID);
 		goto err;
 		}
 	maskedDBLen = emLen - hLen - 1;
@@ -143,7 +143,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 	DB = OPENSSL_malloc(maskedDBLen);
 	if (!DB)
 		{
-		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, ERR_R_MALLOC_FAILURE);
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 	if (PKCS1_MGF1(DB, maskedDBLen, H, hLen, mgf1Hash) < 0)
@@ -155,12 +155,12 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 	for (i = 0; DB[i] == 0 && i < (maskedDBLen-1); i++) ;
 	if (DB[i++] != 0x1)
 		{
-		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_SLEN_RECOVERY_FAILED);
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_SLEN_RECOVERY_FAILED);
 		goto err;
 		}
 	if (sLen >= 0 && (maskedDBLen - i) != sLen)
 		{
-		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_SLEN_CHECK_FAILED);
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
 		goto err;
 		}
 	if (!EVP_DigestInit_ex(&ctx, Hash, NULL)
@@ -176,7 +176,7 @@ int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
 		goto err;
 	if (memcmp(H_, H, hLen))
 		{
-		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS, RSA_R_BAD_SIGNATURE);
+		RSAerr(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1, RSA_R_BAD_SIGNATURE);
 		ret = 0;
 		}
 	else 
@@ -224,7 +224,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 	else if (sLen == -2)	sLen = -2;
 	else if (sLen < -2)
 		{
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS, RSA_R_SLEN_CHECK_FAILED);
+		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1, RSA_R_SLEN_CHECK_FAILED);
 		goto err;
 		}
 
@@ -241,8 +241,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 		}
 	else if (emLen < (hLen + sLen + 2))
 		{
-		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS,
-		   RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+		RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
 		goto err;
 		}
 	if (sLen > 0)
@@ -250,8 +249,7 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 		salt = OPENSSL_malloc(sLen);
 		if (!salt)
 			{
-			RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS,
-		   		ERR_R_MALLOC_FAILURE);
+			RSAerr(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1,ERR_R_MALLOC_FAILURE);
 			goto err;
 			}
 		if (RAND_bytes(salt, sLen) <= 0)

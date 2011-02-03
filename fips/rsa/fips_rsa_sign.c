@@ -228,7 +228,7 @@ int FIPS_rsa_sign_digest(RSA *rsa, const unsigned char *md, int md_len,
 		hash_id = RSA_X931_hash_id(md_type);
 		if (hash_id == -1)
 			{
-			RSAerr(RSA_F_FIPS_RSA_SIGN,RSA_R_UNKNOWN_ALGORITHM_TYPE);
+			RSAerr(RSA_F_FIPS_RSA_SIGN_DIGEST,RSA_R_UNKNOWN_ALGORITHM_TYPE);
 			return 0;
 			}
 		tmpdinfo[md_len] = (unsigned char)hash_id;
@@ -241,7 +241,7 @@ int FIPS_rsa_sign_digest(RSA *rsa, const unsigned char *md, int md_len,
 		
 		if (!der)
 			{
-			RSAerr(RSA_F_FIPS_RSA_SIGN,RSA_R_UNKNOWN_ALGORITHM_TYPE);
+			RSAerr(RSA_F_FIPS_RSA_SIGN_DIGEST,RSA_R_UNKNOWN_ALGORITHM_TYPE);
 			return 0;
 			}
 		memcpy(tmpdinfo, der, dlen);
@@ -257,7 +257,7 @@ int FIPS_rsa_sign_digest(RSA *rsa, const unsigned char *md, int md_len,
 		sbuf = OPENSSL_malloc(RSA_size(rsa));
 		if (!sbuf)
 			{
-			RSAerr(RSA_F_FIPS_RSA_SIGN,ERR_R_MALLOC_FAILURE);
+			RSAerr(RSA_F_FIPS_RSA_SIGN_DIGEST,ERR_R_MALLOC_FAILURE);
 			goto psserr;
 			}
 		if (!RSA_padding_add_PKCS1_PSS_mgf1(rsa, sbuf, md, mhash, 
@@ -278,7 +278,7 @@ int FIPS_rsa_sign_digest(RSA *rsa, const unsigned char *md, int md_len,
 	j=RSA_size(rsa);
 	if (i > (j-RSA_PKCS1_PADDING_SIZE))
 		{
-		RSAerr(RSA_F_FIPS_RSA_SIGN,RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
+		RSAerr(RSA_F_FIPS_RSA_SIGN_DIGEST,RSA_R_DIGEST_TOO_BIG_FOR_RSA_KEY);
 		goto done;
 		}
 	/* NB: call underlying method directly to avoid FIPS blocking */
@@ -322,7 +322,7 @@ int FIPS_rsa_verify_digest(RSA *rsa, const unsigned char *dig, int diglen,
 
 	if (siglen != (unsigned int)RSA_size(rsa))
 		{
-		RSAerr(RSA_F_FIPS_RSA_VERIFY,RSA_R_WRONG_SIGNATURE_LENGTH);
+		RSAerr(RSA_F_FIPS_RSA_VERIFY_DIGEST,RSA_R_WRONG_SIGNATURE_LENGTH);
 		return(0);
 		}
 
@@ -331,7 +331,7 @@ int FIPS_rsa_verify_digest(RSA *rsa, const unsigned char *dig, int diglen,
 	s= OPENSSL_malloc((unsigned int)siglen);
 	if (s == NULL)
 		{
-		RSAerr(RSA_F_FIPS_RSA_VERIFY,ERR_R_MALLOC_FAILURE);
+		RSAerr(RSA_F_FIPS_RSA_VERIFY_DIGEST,ERR_R_MALLOC_FAILURE);
 		goto err;
 		}
 
@@ -350,23 +350,23 @@ int FIPS_rsa_verify_digest(RSA *rsa, const unsigned char *dig, int diglen,
 		int hash_id;
 		if (i != (int)(diglen + 1))
 			{
-			RSAerr(RSA_F_FIPS_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			RSAerr(RSA_F_FIPS_RSA_VERIFY_DIGEST,RSA_R_BAD_SIGNATURE);
 			goto err;
 			}
 		hash_id = RSA_X931_hash_id(md_type);
 		if (hash_id == -1)
 			{
-			RSAerr(RSA_F_FIPS_RSA_VERIFY,RSA_R_UNKNOWN_ALGORITHM_TYPE);
+			RSAerr(RSA_F_FIPS_RSA_VERIFY_DIGEST,RSA_R_UNKNOWN_ALGORITHM_TYPE);
 			goto err;
 			}
 		if (s[diglen] != (unsigned char)hash_id)
 			{
-			RSAerr(RSA_F_FIPS_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			RSAerr(RSA_F_FIPS_RSA_VERIFY_DIGEST,RSA_R_BAD_SIGNATURE);
 			goto err;
 			}
 		if (memcmp(s, dig, diglen))
 			{
-			RSAerr(RSA_F_FIPS_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			RSAerr(RSA_F_FIPS_RSA_VERIFY_DIGEST,RSA_R_BAD_SIGNATURE);
 			goto err;
 			}
 		ret = 1;
@@ -378,7 +378,7 @@ int FIPS_rsa_verify_digest(RSA *rsa, const unsigned char *dig, int diglen,
 		
 		if (!der)
 			{
-			RSAerr(RSA_F_FIPS_RSA_VERIFY,RSA_R_UNKNOWN_ALGORITHM_TYPE);
+			RSAerr(RSA_F_FIPS_RSA_VERIFY_DIGEST,RSA_R_UNKNOWN_ALGORITHM_TYPE);
 			return(0);
 			}
 
@@ -393,7 +393,7 @@ int FIPS_rsa_verify_digest(RSA *rsa, const unsigned char *dig, int diglen,
 		if ((i != (int)(dlen + diglen)) || memcmp(der, s, dlen)
 			|| memcmp(s + dlen, dig, diglen))
 			{
-			RSAerr(RSA_F_FIPS_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+			RSAerr(RSA_F_FIPS_RSA_VERIFY_DIGEST,RSA_R_BAD_SIGNATURE);
 			goto err;
 			}
 		ret = 1;

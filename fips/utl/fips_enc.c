@@ -105,7 +105,7 @@ int FIPS_cipherinit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 			ctx->cipher_data=OPENSSL_malloc(ctx->cipher->ctx_size);
 			if (!ctx->cipher_data)
 				{
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX, ERR_R_MALLOC_FAILURE);
+				EVPerr(EVP_F_FIPS_CIPHERINIT, ERR_R_MALLOC_FAILURE);
 				return 0;
 				}
 			}
@@ -119,14 +119,14 @@ int FIPS_cipherinit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 			{
 			if(!FIPS_cipher_ctx_ctrl(ctx, EVP_CTRL_INIT, 0, NULL))
 				{
-				EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+				EVPerr(EVP_F_FIPS_CIPHERINIT, EVP_R_INITIALIZATION_ERROR);
 				return 0;
 				}
 			}
 		}
 	else if(!ctx->cipher)
 		{
-		EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_NO_CIPHER_SET);
+		EVPerr(EVP_F_FIPS_CIPHERINIT, EVP_R_NO_CIPHER_SET);
 		return 0;
 		}
 	/* we assume block size is a power of 2 in *cryptUpdate */
@@ -205,18 +205,18 @@ int FIPS_cipher_ctx_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
 	int ret;
 	if(!ctx->cipher) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
+		EVPerr(EVP_F_FIPS_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
 		return 0;
 	}
 
 	if(!ctx->cipher->ctrl) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_CTRL_NOT_IMPLEMENTED);
+		EVPerr(EVP_F_FIPS_CIPHER_CTX_CTRL, EVP_R_CTRL_NOT_IMPLEMENTED);
 		return 0;
 	}
 
 	ret = ctx->cipher->ctrl(ctx, type, arg, ptr);
 	if(ret == -1) {
-		EVPerr(EVP_F_EVP_CIPHER_CTX_CTRL, EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
+		EVPerr(EVP_F_FIPS_CIPHER_CTX_CTRL, EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
 		return 0;
 	}
 	return ret;

@@ -77,7 +77,7 @@ ASN1_SCTX *ASN1_SCTX_new(int (*scan_cb)(ASN1_SCTX *ctx))
 	ret = OPENSSL_malloc(sizeof(ASN1_SCTX));
 	if (ret == NULL)
 		{
-		ASN1err(ASN1_F_ASN1_PCTX_NEW, ERR_R_MALLOC_FAILURE);
+		ASN1err(ASN1_F_ASN1_SCTX_NEW, ERR_R_MALLOC_FAILURE);
 		return NULL;
 		}
 	ret->scan_cb = scan_cb;
@@ -113,5 +113,3 @@ void *ASN1_SCTX_get_app_data(ASN1_SCTX *p)
 	{
 	return p->app_data;
 	}
-
-
