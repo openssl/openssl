@@ -62,12 +62,12 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
-#include <openssl/fips.h>
 
 #ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
 
 extern int fips_check_rsa(RSA *rsa);
-
+#endif
 
 /* X9.31 RSA key derivation and generation */
 
@@ -206,7 +206,8 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e, BN_GENCB *cb)
 	int ok = 0;
 	BIGNUM *Xp = NULL, *Xq = NULL;
 	BN_CTX *ctx = NULL;
-	
+
+#ifdef OPENSSL_FIPS
 	if (bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS)
 	    {
 	    FIPSerr(FIPS_F_RSA_X931_GENERATE_KEY_EX,FIPS_R_KEY_TOO_SHORT);
@@ -224,6 +225,7 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e, BN_GENCB *cb)
 	    FIPSerr(FIPS_F_RSA_X931_GENERATE_KEY_EX,FIPS_R_FIPS_SELFTEST_FAILED);
 	    return 0;
 	    }
+#endif
 
 	ctx = BN_CTX_new();
 	if (!ctx)
@@ -258,8 +260,10 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e, BN_GENCB *cb)
 				NULL, NULL, NULL, NULL, NULL, NULL, e, cb))
 		goto error;
 
+#ifdef OPENSSL_FIPS
 	if(!fips_check_rsa(rsa))
 	    goto error;
+#endif
 
 	ok = 1;
 
@@ -277,4 +281,3 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e, BN_GENCB *cb)
 
 	}
 
-#endif

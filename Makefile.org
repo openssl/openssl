@@ -333,6 +333,7 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/rsa/rsa_pss.o \
 	../crypto/rsa/rsa_ssl.o \
 	../crypto/rsa/rsa_x931.o \
+	../crypto/rsa/rsa_x931g.o \
 	../crypto/sha/sha1dgst.o \
 	../crypto/sha/sha256.o \
 	../crypto/sha/sha512.o \
