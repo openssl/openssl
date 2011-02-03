@@ -51,6 +51,8 @@
  * ====================================================================
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <openssl/err.h>
 #include <openssl/fips.h>
 

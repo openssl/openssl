@@ -120,6 +120,9 @@ void FIPS_set_locking_callback(void (*func)(int mode, int type,
 #define CRYPTO_malloc FIPS_malloc
 #define CRYPTO_free FIPS_free
 
+#define ERR_put_error FIPS_put_error
+#define ERR_add_error_data FIPS_add_error_data
+
 #define EVP_MD_CTX_init FIPS_md_ctx_init
 #define EVP_MD_CTX_cleanup FIPS_md_ctx_cleanup
 #define EVP_MD_CTX_create FIPS_md_ctx_create

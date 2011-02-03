@@ -56,6 +56,8 @@
  * [including the GNU Public Licence.]
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include <time.h>
 #include "cryptlib.h"

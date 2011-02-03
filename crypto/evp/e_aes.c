@@ -48,6 +48,8 @@
  *
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_AES
 #include <openssl/evp.h>

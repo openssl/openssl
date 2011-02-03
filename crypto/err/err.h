@@ -137,11 +137,6 @@ extern "C" {
 #define ERR_PUT_error(a,b,c,d,e)	ERR_put_error(a,b,c,NULL,0)
 #endif
 
-#if defined(OPENSSL_FIPSCANISTER) && !defined(OPENSSL_NO_FIPS_ERR)
-#define ERR_put_error FIPS_put_error
-#define ERR_add_error_data FIPS_add_error_data
-#endif
-
 #ifdef OPENSSL_FIPS
 void FIPS_set_error_callbacks(
 	void (*put_cb)(int lib, int func,int reason,const char *file,int line),

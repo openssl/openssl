@@ -58,6 +58,8 @@
 
 /* Original version from Steven Schoch <schoch@sheba.arc.nasa.gov> */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include "cryptlib.h"
 #include <openssl/bn.h>
