@@ -264,7 +264,13 @@ SSL_renegotiate_abbreviated             312	EXIST::FUNCTION:
 TLSv1_1_method                          313	EXIST::FUNCTION:
 TLSv1_1_client_method                   314	EXIST::FUNCTION:
 TLSv1_1_server_method                   315	EXIST::FUNCTION:
-SSL_CTX_set_next_protos_advertised_cb   316	EXIST::FUNCTION:
+SSL_CTX_set_next_protos_advertised_cb   316	EXIST:!VMS:FUNCTION:
+SSL_CTX_set_next_protos_adv_cb          316	EXIST:VMS:FUNCTION:
 SSL_get0_next_proto_negotiated          317	EXIST::FUNCTION:
 SSL_select_next_proto                   318	EXIST::FUNCTION:
-SSL_CTX_set_next_proto_select_cb        319	EXIST::FUNCTION:
+SSL_CTX_set_next_proto_select_cb        319	EXIST:!VMS:FUNCTION:
+SSL_CTX_set_next_proto_sel_cb           319	EXIST:VMS:FUNCTION:
+SSL_CTX_set_not_resumable_session_callback 320	EXIST:!VMS:FUNCTION:
+SSL_CTX_set_not_resumbl_sess_cb         320	EXIST:VMS:FUNCTION:
+SSL_set_not_resumable_session_callback  321	EXIST:!VMS:FUNCTION:
+SSL_set_not_resumbl_sess_cb             321	EXIST:VMS:FUNCTION:

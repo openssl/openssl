@@ -170,6 +170,13 @@ ex_data.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 ex_data.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 ex_data.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
 ex_data.o: ex_data.c
+lock.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
+lock.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+lock.o: ../include/openssl/err.h ../include/openssl/lhash.h
+lock.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+lock.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+lock.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
+lock.o: lock.c
 mem.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
 mem.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 mem.o: ../include/openssl/err.h ../include/openssl/lhash.h
@@ -194,6 +201,13 @@ o_str.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 o_str.o: o_str.c o_str.h
 o_time.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h o_time.c
 o_time.o: o_time.h
+thr_id.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/buffer.h
+thr_id.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+thr_id.o: ../include/openssl/err.h ../include/openssl/lhash.h
+thr_id.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+thr_id.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+thr_id.o: ../include/openssl/stack.h ../include/openssl/symhacks.h cryptlib.h
+thr_id.o: thr_id.c
 uid.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 uid.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 uid.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h

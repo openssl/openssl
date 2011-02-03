@@ -639,7 +639,7 @@ t_x509.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 t_x509.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 t_x509.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 t_x509.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
-t_x509.o: ../cryptlib.h t_x509.c
+t_x509.o: ../cryptlib.h asn1_locl.h t_x509.c
 t_x509a.o: ../../e_os.h ../../include/openssl/asn1.h
 t_x509a.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 t_x509a.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
@@ -701,6 +701,21 @@ tasn_prn.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 tasn_prn.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 tasn_prn.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
 tasn_prn.o: ../cryptlib.h asn1_locl.h tasn_prn.c
+tasn_scn.o: ../../e_os.h ../../include/openssl/asn1.h
+tasn_scn.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
+tasn_scn.o: ../../include/openssl/buffer.h ../../include/openssl/conf.h
+tasn_scn.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+tasn_scn.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
+tasn_scn.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
+tasn_scn.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+tasn_scn.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+tasn_scn.o: ../../include/openssl/opensslconf.h
+tasn_scn.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+tasn_scn.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+tasn_scn.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+tasn_scn.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+tasn_scn.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+tasn_scn.o: ../cryptlib.h asn1_locl.h tasn_scn.c
 tasn_typ.o: ../../include/openssl/asn1.h ../../include/openssl/asn1t.h
 tasn_typ.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 tasn_typ.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h

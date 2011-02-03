@@ -356,3 +356,8 @@ bn_word.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 bn_word.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 bn_word.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 bn_word.o: ../../include/openssl/symhacks.h ../cryptlib.h bn_lcl.h bn_word.c
+bn_x931p.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+bn_x931p.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+bn_x931p.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+bn_x931p.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+bn_x931p.o: ../../include/openssl/symhacks.h bn_x931p.c
