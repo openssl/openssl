@@ -97,6 +97,9 @@
 #include <openssl/ui.h>
 #include <openssl/ocsp.h>
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 #include <openssl/ts.h>
 #ifndef OPENSSL_NO_CMS
 #include <openssl/cms.h>
