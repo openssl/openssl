@@ -5,6 +5,14 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.0b and OpenSSL 1.0.0c:
+
+      o Fix for security issue CVE-2010-4180
+      o Fix for CVE-2010-4252
+      o Fix mishandling of absent EC point format extension.
+      o Fix various platform compilation issues.
+      o Corrected fix for security issue CVE-2010-3864.
+
   Major changes between OpenSSL 1.0.0a and OpenSSL 1.0.0b:
 
       o Fix for security issue CVE-2010-3864.
