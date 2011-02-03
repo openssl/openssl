@@ -24,7 +24,7 @@
       o Fix for security issue CVE-2010-1633.
       o GOST MAC and CFB fixes.
 
-  Major changes between OpenSSL 0.9.8n and OpenSSL 1.0:
+  Major changes between OpenSSL 0.9.8n and OpenSSL 1.0.0:
 
       o RFC3280 path validation: sufficient to process PKITS tests.
       o Integrated support for PVK files and keyblobs.
