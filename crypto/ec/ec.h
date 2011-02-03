@@ -155,7 +155,9 @@ const EC_METHOD *EC_GFp_nist_method(void);
 /** Returns 64-bit optimized methods for nistp224
  *  \return  EC_METHOD object
  */
+#ifndef OPENSSL_SYS_WIN32
 const EC_METHOD *EC_GFp_nistp224_method(void);
+#endif
 #endif
 
 
