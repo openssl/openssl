@@ -72,7 +72,7 @@ static void fips_free_def(void *x)
 
 static void *(*fips_malloc_cb)(int num, const char *file, int line) =
 		fips_malloc_def;
-void (*fips_free_cb)(void *) =
+static void (*fips_free_cb)(void *) =
 		fips_free_def;
 
 void *FIPS_malloc(int num, const char *file, int line)

@@ -58,7 +58,7 @@
 
 /* FIPS locking callbacks */
 
-void (*fips_lck_cb)(int mode, int type,const char *file,int line) = 0;
+static void (*fips_lck_cb)(int mode, int type,const char *file,int line) = 0;
 
 void FIPS_lock(int mode, int type,const char *file,int line)
 	{

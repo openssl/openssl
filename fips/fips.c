@@ -70,13 +70,24 @@
 
 static int fips_selftest_fail;
 static int fips_mode;
+static int fips_started = 0;
 static const void *fips_rand_check;
+
+static int fips_is_owning_thread(void);
+static int fips_set_owning_thread(void);
+static int fips_clear_owning_thread(void);
+static unsigned char *fips_signature_witness(void);
+
+static void fips_w_lock(void)	{ CRYPTO_w_lock(CRYPTO_LOCK_FIPS); }
+static void fips_w_unlock(void)	{ CRYPTO_w_unlock(CRYPTO_LOCK_FIPS); }
+static void fips_r_lock(void)	{ CRYPTO_r_lock(CRYPTO_LOCK_FIPS); }
+static void fips_r_unlock(void)	{ CRYPTO_r_unlock(CRYPTO_LOCK_FIPS); }
 
 static void fips_set_mode(int onoff)
 	{
 	int owning_thread = fips_is_owning_thread();
 
-	if (fips_is_started())
+	if (fips_started)
 		{
 		if (!owning_thread) fips_w_lock();
 		fips_mode = onoff;
@@ -88,7 +99,7 @@ static void fips_set_rand_check(const void *rand_check)
 	{
 	int owning_thread = fips_is_owning_thread();
 
-	if (fips_is_started())
+	if (fips_started)
 		{
 		if (!owning_thread) fips_w_lock();
 		fips_rand_check = rand_check;
@@ -101,7 +112,7 @@ int FIPS_mode(void)
 	int ret = 0;
 	int owning_thread = fips_is_owning_thread();
 
-	if (fips_is_started())
+	if (fips_started)
 		{
 		if (!owning_thread) fips_r_lock();
 		ret = fips_mode;
@@ -115,7 +126,7 @@ const void *FIPS_rand_check(void)
 	const void *ret = 0;
 	int owning_thread = fips_is_owning_thread();
 
-	if (fips_is_started())
+	if (fips_started)
 		{
 		if (!owning_thread) fips_r_lock();
 		ret = fips_rand_check;
@@ -127,7 +138,7 @@ const void *FIPS_rand_check(void)
 int FIPS_selftest_failed(void)
     {
     int ret = 0;
-    if (fips_is_started())
+    if (fips_started)
 	{
 	int owning_thread = fips_is_owning_thread();
 
@@ -256,7 +267,7 @@ int FIPS_mode_set(int onoff)
     int ret = 0;
 
     fips_w_lock();
-    fips_set_started();
+    fips_started = 1;
     fips_set_owning_thread();
 
     if(onoff)
@@ -344,30 +355,14 @@ end:
     return ret;
     }
 
-void fips_w_lock(void)		{ CRYPTO_w_lock(CRYPTO_LOCK_FIPS); }
-void fips_w_unlock(void)	{ CRYPTO_w_unlock(CRYPTO_LOCK_FIPS); }
-void fips_r_lock(void)		{ CRYPTO_r_lock(CRYPTO_LOCK_FIPS); }
-void fips_r_unlock(void)	{ CRYPTO_r_unlock(CRYPTO_LOCK_FIPS); }
-
-static int fips_started = 0;
 static CRYPTO_THREADID fips_thread;
 static int fips_thread_set = 0;
 
-void fips_set_started(void)
-	{
-	fips_started = 1;
-	}
-
-int fips_is_started(void)
-	{
-	return fips_started;
-	}
-
-int fips_is_owning_thread(void)
+static int fips_is_owning_thread(void)
 	{
 	int ret = 0;
 
-	if (fips_is_started())
+	if (fips_started)
 		{
 		CRYPTO_r_lock(CRYPTO_LOCK_FIPS2);
 		if (fips_thread_set)
@@ -386,7 +381,7 @@ int fips_set_owning_thread(void)
 	{
 	int ret = 0;
 
-	if (fips_is_started())
+	if (fips_started)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_FIPS2);
 		if (!fips_thread_set)
@@ -403,7 +398,7 @@ int fips_clear_owning_thread(void)
 	{
 	int ret = 0;
 
-	if (fips_is_started())
+	if (fips_started)
 		{
 		CRYPTO_w_lock(CRYPTO_LOCK_FIPS2);
 		if (fips_thread_set)
