@@ -580,7 +580,7 @@ void gcm_ghash_4bit(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 /* GHASH_CHUNK is "stride parameter" missioned to mitigate cache
  * trashing effect. In other words idea is to hash data while it's
  * still in L1 cache after encryption pass... */
-#define GHASH_CHUNK       1024
+#define GHASH_CHUNK       (3*1024)
 #endif
 
 #else	/* TABLE_BITS */
@@ -1082,7 +1082,7 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 				ctx->Yi.d[3] = ctr;
 		}
 		c = in[i];
-		out[i] ^= ctx->EKi.c[n];
+		out[i] = c^ctx->EKi.c[n];
 		ctx->Xi.c[n] ^= c;
 		n = (n+1)%16;
 		if (n==0)
@@ -1137,7 +1137,7 @@ void CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 		size_t j=i/16;
 
 		(*stream)(in,out,j,ctx->key,ctx->Yi.c);
-		ctr += j;
+		ctr += (unsigned int)j;
 		if (is_endian.little)
 			PUTU32(ctx->Yi.c+12,ctr);
 		else
@@ -1230,7 +1230,7 @@ void CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 		in -= i;
 #endif
 		(*stream)(in,out,j,ctx->key,ctx->Yi.c);
-		ctr += j;
+		ctr += (unsigned int)j;
 		if (is_endian.little)
 			PUTU32(ctx->Yi.c+12,ctr);
 		else
@@ -1535,12 +1535,14 @@ static const u8	IV18[]={0x93,0x13,0x22,0x5d,0xf8,0x84,0x06,0xe5,0x55,0x90,0x9c,0
 	AES_set_encrypt_key(K##n,sizeof(K##n)*8,&key);		\
 	CRYPTO_gcm128_init(&ctx,&key,(block128_f)AES_encrypt);	\
 	CRYPTO_gcm128_setiv(&ctx,IV##n,sizeof(IV##n));		\
+	memset(out,0,sizeof(out));				\
 	if (A##n) CRYPTO_gcm128_aad(&ctx,A##n,sizeof(A##n));	\
 	if (P##n) CRYPTO_gcm128_encrypt(&ctx,P##n,out,sizeof(out));	\
 	if (CRYPTO_gcm128_finish(&ctx,T##n,16) ||		\
 	    (C##n && memcmp(out,C##n,sizeof(out))))		\
-		ret++, printf ("encrypt test#%d failed.\n",n);\
+		ret++, printf ("encrypt test#%d failed.\n",n);	\
 	CRYPTO_gcm128_setiv(&ctx,IV##n,sizeof(IV##n));		\
+	memset(out,0,sizeof(out));				\
 	if (A##n) CRYPTO_gcm128_aad(&ctx,A##n,sizeof(A##n));	\
 	if (C##n) CRYPTO_gcm128_decrypt(&ctx,C##n,out,sizeof(out));	\
 	if (CRYPTO_gcm128_finish(&ctx,T##n,16) ||		\
