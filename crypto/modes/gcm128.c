@@ -657,7 +657,7 @@ struct gcm128_context {
 	void (*gmult)(u64 Xi[2],const u128 Htable[16]);
 	void (*ghash)(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 #endif
-	unsigned int res, pad;
+	unsigned int mres, ares;
 	block128_f block;
 	void *key;
 };
@@ -751,9 +751,10 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx,const unsigned char *iv,size_t len)
 	ctx->Yi.u[1]  = 0;
 	ctx->Xi.u[0]  = 0;
 	ctx->Xi.u[1]  = 0;
-	ctx->len.u[0] = 0;
-	ctx->len.u[1] = 0;
-	ctx->res = 0;
+	ctx->len.u[0] = 0;	/* AAD length */
+	ctx->len.u[1] = 0;	/* message length */
+	ctx->ares = 0;
+	ctx->mres = 0;
 
 	if (len==12) {
 		memcpy(ctx->Yi.c,iv,12);
@@ -811,8 +812,23 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx,const unsigned char *iv,size_t len)
 void CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx,const unsigned char *aad,size_t len)
 {
 	size_t i;
+	int n;
 
 	ctx->len.u[0] += len;
+	n = ctx->ares;
+
+	if (n) {
+		while (n && len) {
+			ctx->Xi.c[n] ^= *(aad++);
+			--len;
+			n = (n+1)%16;
+		}
+		if (n==0) GCM_MUL(ctx,Xi);
+		else {
+			ctx->ares = n;
+			return;
+		}
+	}
 
 #ifdef GHASH
 	if ((i = (len&(size_t)-16))) {
@@ -829,9 +845,11 @@ void CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx,const unsigned char *aad,size_t len)
 	}
 #endif
 	if (len) {
+		n = (int)len;
 		for (i=0; i<len; ++i) ctx->Xi.c[i] ^= aad[i];
-		GCM_MUL(ctx,Xi);
 	}
+
+	ctx->ares = n;
 }
 
 void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
@@ -842,8 +860,14 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 	unsigned int n, ctr;
 	size_t i;
 
+	if (ctx->ares) {
+		/* First call to encrypt finalizes GHASH(AAD) */
+		GCM_MUL(ctx,Xi);
+		ctx->ares = 0;
+	}
+
 	ctx->len.u[1] += len;
-	n   = ctx->res;
+	n   = ctx->mres;
 	if (is_endian.little)
 		ctr = GETU32(ctx->Yi.c+12);
 	else
@@ -859,7 +883,7 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 			}
 			if (n==0) GCM_MUL(ctx,Xi);
 			else {
-				ctx->res = n;
+				ctx->mres = n;
 				return;
 			}
 		}
@@ -938,7 +962,7 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 			}
 		}
 
-		ctx->res = n;
+		ctx->mres = n;
 		return;
 	} while(0);
 #endif
@@ -957,7 +981,7 @@ void CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 			GCM_MUL(ctx,Xi);
 	}
 
-	ctx->res = n;
+	ctx->mres = n;
 }
 
 void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
@@ -968,8 +992,14 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 	unsigned int n, ctr;
 	size_t i;
 
+	if (ctx->ares) {
+		/* First call to decrypt finalizes GHASH(AAD) */
+		GCM_MUL(ctx,Xi);
+		ctx->ares = 0;
+	}
+
 	ctx->len.u[1] += len;
-	n   = ctx->res;
+	n   = ctx->mres;
 	if (is_endian.little)
 		ctr = GETU32(ctx->Yi.c+12);
 	else
@@ -987,7 +1017,7 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 			}
 			if (n==0) GCM_MUL (ctx,Xi);
 			else {
-				ctx->res = n;
+				ctx->mres = n;
 				return;
 			}
 		}
@@ -1067,7 +1097,7 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 			}
 		}
 
-		ctx->res = n;
+		ctx->mres = n;
 		return;
 	} while(0);
 #endif
@@ -1089,7 +1119,7 @@ void CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 			GCM_MUL(ctx,Xi);
 	}
 
-	ctx->res = n;
+	ctx->mres = n;
 }
 
 void CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
@@ -1100,8 +1130,14 @@ void CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 	unsigned int n, ctr;
 	size_t i;
 
+	if (ctx->ares) {
+		/* First call to encrypt finalizes GHASH(AAD) */
+		GCM_MUL(ctx,Xi);
+		ctx->ares = 0;
+	}
+
 	ctx->len.u[1] += len;
-	n   = ctx->res;
+	n   = ctx->mres;
 	if (is_endian.little)
 		ctr = GETU32(ctx->Yi.c+12);
 	else
@@ -1115,7 +1151,7 @@ void CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 		}
 		if (n==0) GCM_MUL(ctx,Xi);
 		else {
-			ctx->res = n;
+			ctx->mres = n;
 			return;
 		}
 	}
@@ -1168,7 +1204,7 @@ void CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 		}
 	}
 
-	ctx->res = n;
+	ctx->mres = n;
 }
 
 void CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
@@ -1179,8 +1215,14 @@ void CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 	unsigned int n, ctr;
 	size_t i;
 
+	if (ctx->ares) {
+		/* First call to decrypt finalizes GHASH(AAD) */
+		GCM_MUL(ctx,Xi);
+		ctx->ares = 0;
+	}
+
 	ctx->len.u[1] += len;
-	n   = ctx->res;
+	n   = ctx->mres;
 	if (is_endian.little)
 		ctr = GETU32(ctx->Yi.c+12);
 	else
@@ -1196,7 +1238,7 @@ void CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 		}
 		if (n==0) GCM_MUL (ctx,Xi);
 		else {
-			ctx->res = n;
+			ctx->mres = n;
 			return;
 		}
 	}
@@ -1254,7 +1296,7 @@ void CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 		}
 	}
 
-	ctx->res = n;
+	ctx->mres = n;
 }
 
 int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
@@ -1264,7 +1306,7 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
 	u64 alen = ctx->len.u[0]<<3;
 	u64 clen = ctx->len.u[1]<<3;
 
-	if (ctx->res)
+	if (ctx->mres)
 		GCM_MUL(ctx,Xi);
 
 	if (is_endian.little) {
@@ -1591,11 +1633,11 @@ int main()
 	gcm_t = OPENSSL_rdtsc() - start;
 
 	CRYPTO_ctr128_encrypt(buf.c,buf.c,sizeof(buf),
-			&key,ctx.Yi.c,ctx.EKi.c,&ctx.res,
+			&key,ctx.Yi.c,ctx.EKi.c,&ctx.mres,
 			(block128_f)AES_encrypt);
 	start = OPENSSL_rdtsc();
 	CRYPTO_ctr128_encrypt(buf.c,buf.c,sizeof(buf),
-			&key,ctx.Yi.c,ctx.EKi.c,&ctx.res,
+			&key,ctx.Yi.c,ctx.EKi.c,&ctx.mres,
 			(block128_f)AES_encrypt);
 	ctr_t = OPENSSL_rdtsc() - start;
 
