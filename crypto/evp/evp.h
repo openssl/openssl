@@ -354,6 +354,10 @@ struct evp_cipher_st
 #define		EVP_CIPH_FLAG_FIPS		0x4000
 /* Allow non FIPS cipher in FIPS mode */
 #define		EVP_CIPH_FLAG_NON_FIPS_ALLOW	0x8000
+/* Cipher handles any and all padding logic as well
+ * as finalisation.
+ */
+#define 	EVP_CIPH_FLAG_CUSTOM_CIPHER	0x10000
 
 /* ctrl() values */
 

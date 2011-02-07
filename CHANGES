@@ -4,6 +4,16 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) New flag in ciphers: EVP_CIPH_FLAG_CUSTOM_CIPHER. This means the
+     underlying do_cipher function handles all cipher semantics itself
+     including padding and finalisation. This is useful if (for example)
+     an ENGINE cipher handles block padding itself. The behaviour of
+     do_cipher is subtly changed if this flag is set: the return value
+     is the number of characters written to the output buffer (zero is
+     no longer an error code) or a negative error code. Also if the
+     input buffer is NULL and length -1 finalisation should be performed.
+     [Steve Henson]
+
   *) If a candidate issuer certificate is already part of the constructed
      path ignore it: new debug notification X509_V_ERR_PATH_LOOP for this case.
      [Steve Henson]
