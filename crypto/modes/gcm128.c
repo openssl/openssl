@@ -1337,6 +1337,12 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
 		return -1;
 }
 
+void CRYPTO_gcm128_tag(GCM128_CONTEXT *ctx, unsigned char *tag, size_t len)
+{
+	CRYPTO_gcm128_finish(ctx, NULL, 0);
+	memcpy(tag, ctx->Xi.c, len);
+}
+
 GCM128_CONTEXT *CRYPTO_gcm128_new(void *key, block128_f block)
 {
 	GCM128_CONTEXT *ret;

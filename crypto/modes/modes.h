@@ -102,4 +102,5 @@ void CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 			size_t len, ctr128_f stream);
 int  CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
 			size_t len);
+void  CRYPTO_gcm128_tag(GCM128_CONTEXT *ctx, unsigned char *tag, size_t len);
 void CRYPTO_gcm128_release(GCM128_CONTEXT *ctx);
