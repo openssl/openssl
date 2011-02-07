@@ -80,6 +80,8 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
 	if (c->cipher->get_asn1_parameters != NULL)
 		ret=c->cipher->get_asn1_parameters(c,type);
+	else if (c->cipher->flags & EVP_CIPH_FLAG_DEFAULT_ASN1)
+		ret=EVP_CIPHER_get_asn1_iv(c, type);
 	else
 		ret=-1;
 	return(ret);
