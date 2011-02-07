@@ -47,7 +47,7 @@
  *
  */
 
-#define OPENSSL_FIPS_EVP
+#define OPENSSL_FIPSAPI
 
 #include <string.h>
 #include <openssl/err.h>
