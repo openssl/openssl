@@ -11,7 +11,7 @@
      do_cipher is subtly changed if this flag is set: the return value
      is the number of characters written to the output buffer (zero is
      no longer an error code) or a negative error code. Also if the
-     input buffer is NULL and length -1 finalisation should be performed.
+     input buffer is NULL and length 0 finalisation should be performed.
      [Steve Henson]
 
   *) If a candidate issuer certificate is already part of the constructed

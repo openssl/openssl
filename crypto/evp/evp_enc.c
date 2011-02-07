@@ -368,10 +368,10 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER)
 		{
-		i = ctx->cipher->do_cipher(ctx, out, NULL, -1);
+		i = ctx->cipher->do_cipher(ctx, out, NULL, 0);
 		if (i < 0)
 			return 0;
-		else
+		else 
 			*outl = i;
 		return 1;
 		}
@@ -483,7 +483,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
 	if (ctx->cipher->flags & EVP_CIPH_FLAG_CUSTOM_CIPHER)
 		{
-		i = ctx->cipher->do_cipher(ctx, out, NULL, -1);
+		i = ctx->cipher->do_cipher(ctx, out, NULL, 0);
 		if (i < 0)
 			return 0;
 		else
