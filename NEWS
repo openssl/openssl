@@ -47,6 +47,15 @@
       o Opaque PRF Input TLS extension support.
       o Updated time routines to avoid OS limitations.
 
+  Major changes between OpenSSL 0.9.8p and OpenSSL 0.9.8q:
+
+      o Fix for security issue CVE-2010-4180
+      o Fix for CVE-2010-4252
+
+  Major changes between OpenSSL 0.9.8o and OpenSSL 0.9.8p:
+
+      o Fix for security issue CVE-2010-3864.
+
   Major changes between OpenSSL 0.9.8n and OpenSSL 0.9.8o:
 
       o Fix for security issue CVE-2010-0742.
