@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.0c and OpenSSL 1.0.0d:
+
+      o Fix for security issue CVE-2011-0014
+
   Major changes between OpenSSL 1.0.0b and OpenSSL 1.0.0c:
 
       o Fix for security issue CVE-2010-4180
@@ -46,6 +50,10 @@
       o dsa-with-SHA224 and dsa-with-SHA256 signature types.
       o Opaque PRF Input TLS extension support.
       o Updated time routines to avoid OS limitations.
+
+  Major changes between OpenSSL 0.9.8q and OpenSSL 0.9.8r:
+
+      o Fix for security issue CVE-2011-0014
 
   Major changes between OpenSSL 0.9.8p and OpenSSL 0.9.8q:
 
