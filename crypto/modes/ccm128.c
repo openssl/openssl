@@ -68,11 +68,12 @@ typedef struct {
 
 /* First you setup M and L parameters and pass the key schedule */
 void CRYPTO_ccm128_init(CCM128_CONTEXT *ctx,
-	unsigned int M,unsigned int L,void *key)
+	unsigned int M,unsigned int L,void *key,block128_f block)
 {
 	memset(ctx->nonce.c,0,sizeof(ctx->nonce.c));
 	ctx->nonce.c[0] = ((u8)(L-1)&7) | (u8)(((M-2)/2)&7)<<3;
 	ctx->blocks = 0;
+	ctx->block = block;
 	ctx->key = key;
 }
 
