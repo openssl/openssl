@@ -2,9 +2,13 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8q and 0.9.8r [8 Feb 2011]
 
-  *) Fix parsing of OCSP stapling ClientHello extension.  CVE-2011-0014
+  *) Fix parsing of OCSP stapling ClientHello extension. CVE-2011-0014
      [Neel Mehta, Adam Langley, Bodo Moeller (Google)]
 
   *) Fix bug in string printing code: if *any* escaping is enabled we must
