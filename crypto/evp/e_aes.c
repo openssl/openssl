@@ -312,11 +312,20 @@ static int aes_gcm(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	if (in)
 		{
 		if (out == NULL)
-			CRYPTO_gcm128_aad(gctx->gcm, in, len);
+			{
+			if (CRYPTO_gcm128_aad(gctx->gcm, in, len))
+				return -1;
+			}
 		else if (ctx->encrypt)
-			CRYPTO_gcm128_encrypt(gctx->gcm, in, out, len);
+			{
+			if (CRYPTO_gcm128_encrypt(gctx->gcm, in, out, len))
+				return -1;
+			}
 		else
-			CRYPTO_gcm128_decrypt(gctx->gcm, in, out, len);
+			{
+			if (CRYPTO_gcm128_decrypt(gctx->gcm, in, out, len))
+				return -1;
+			}
 		return len;
 		}
 	else

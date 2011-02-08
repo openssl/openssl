@@ -316,6 +316,7 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/modes/cbc128.o \
 	../crypto/modes/cfb128.o \
 	../crypto/modes/ctr128.o \
+	../crypto/modes/gcm128.o \
 	../crypto/modes/ofb128.o \
 	../crypto/rand/md_rand.o \
 	../crypto/rand/rand_egd.o \
@@ -350,7 +351,7 @@ build_fips:
 
 build_crypto:
 	if [ -n "$(FIPSCANLIB)" ]; then \
-		EXCL_OBJ='$(AES_ENC) $(BN_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA1_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
+		EXCL_OBJ='$(AES_ENC) $(BN_ASM) $(DES_ENC) $(CPUID_OBJ) $(SHA1_ASM_OBJ) $(MODES_ASM_OBJ) $(FIPS_EX_OBJ)' ; export EXCL_OBJ ; \
 		ARX='$(PERL) $${TOP}/util/arx.pl $(AR)' ; \
 	else \
 		ARX='${AR}' ; \
