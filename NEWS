@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8q and OpenSSL 0.9.8r:
+
+      o Fix for security issue CVE-2011-0014
+
   Major changes between OpenSSL 0.9.8p and OpenSSL 0.9.8q:
 
       o Fix for security issue CVE-2010-4180
