@@ -136,6 +136,15 @@ static void gcmtest(int encrypt)
 				exit(1);
 				}
 			}
+		else if(!strcmp(keyword,"PT"))
+			{
+			pt = hex2bin_m(value, &l);
+			if (l != ptlen)
+				{
+				fprintf(stderr, "Inconsistent PT length\n");
+				exit(1);
+				}
+			}
 		else if(!strcmp(keyword,"CT"))
 			{
 			ct = hex2bin_m(value, &l);
@@ -162,11 +171,43 @@ static void gcmtest(int encrypt)
 				fprintf(stderr, "Inconsistent Tag length\n");
 				exit(1);
 				}
-			if (encrypt)
+			}
+		/* FIXME: need intenal IV generation */
+		if (encrypt && iv && pt && aad)
+			{
+			tag = OPENSSL_malloc(taglen);
+			EVP_CipherInit_ex(&ctx, gcm, NULL, NULL, NULL, 1);
+			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN, ivlen, 0);
+			EVP_CipherInit_ex(&ctx, NULL, NULL, key, iv, 1);
+
+			if (aadlen)
+				EVP_Cipher(&ctx, NULL, aad, aadlen);
+			if (ptlen)
 				{
-				fprintf(stderr, "Parse Error for Encrypt\n");
-				exit(1);
+				ct = OPENSSL_malloc(ptlen);
+				rv = EVP_Cipher(&ctx, ct, pt, ptlen);
 				}
+			EVP_Cipher(&ctx, NULL, NULL, 0);
+			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_GET_TAG,
+								taglen, tag);	
+			OutputValue("CT", ct, ptlen, stdout, 0);
+			OutputValue("Tag", tag, taglen, stdout, 0);
+			if (iv)
+				OPENSSL_free(iv);
+			if (aad)
+				OPENSSL_free(aad);
+			if (ct)
+				OPENSSL_free(ct);
+			if (pt)
+				OPENSSL_free(pt);
+			if (key)
+				OPENSSL_free(key);
+			if (tag)
+				OPENSSL_free(tag);
+			iv = aad = ct = pt = key = tag = NULL;
+			}	
+		if (!encrypt && tag)
+			{
 			EVP_CipherInit_ex(&ctx, gcm, NULL, NULL, NULL, 0);
 			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN, ivlen, 0);
 			EVP_CipherInit_ex(&ctx, NULL, NULL, key, iv, 0);
