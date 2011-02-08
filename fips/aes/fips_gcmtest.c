@@ -195,6 +195,7 @@ static void gcmtest(int encrypt)
 				OPENSSL_free(key);
 			if (tag)
 				OPENSSL_free(tag);
+			iv = aad = ct = pt = key = tag = NULL;
 			}
 		}
 	}
