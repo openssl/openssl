@@ -21,7 +21,7 @@ AFLAGS= $(ASFLAGS)
 CFLAGS= $(INCLUDES) $(CFLAG)
 
 GENERAL=Makefile
-TEST=fips_aesavs.c
+TEST=fips_aesavs.c fips_gcmtest.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a

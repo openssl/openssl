@@ -134,6 +134,11 @@ int hex2bin(const char *in, unsigned char *out)
 unsigned char *hex2bin_m(const char *in, long *plen)
 	{
 	unsigned char *p;
+	if (strlen(in) == 0)
+		{
+		*plen = 0;
+		return OPENSSL_malloc(1);
+		}
 	p = OPENSSL_malloc((strlen(in) + 1)/2);
 	*plen = hex2bin(in, p);
 	return p;
