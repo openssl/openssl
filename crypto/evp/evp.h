@@ -374,6 +374,8 @@ struct evp_cipher_st
 #define 	EVP_CTRL_GCM_SET_IVLEN		0x9
 #define 	EVP_CTRL_GCM_GET_TAG		0x10
 #define 	EVP_CTRL_GCM_SET_TAG		0x11
+#define		EVP_CTRL_GCM_SET_IV_FIXED	0x12
+#define		EVP_CTRL_GCM_IV_GEN		0x13
 
 typedef struct evp_cipher_info_st
 	{

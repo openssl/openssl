@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add some FIPS mode restrictions to GCM. Add internal IV generator.
+     Update fips_gcmtest to use IV generator.
+     [Steve Henson]
+
   *) Initial, experimental EVP support for AES-GCM. AAD can be input by
      setting output buffer to NULL. The *Final function must be
      called although it will not retrieve any additional data. The tag

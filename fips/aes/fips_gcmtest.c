@@ -172,13 +172,31 @@ static void gcmtest(int encrypt)
 				exit(1);
 				}
 			}
-		/* FIXME: need intenal IV generation */
-		if (encrypt && iv && pt && aad)
+		if (encrypt && pt && aad && (iv || encrypt==1))
 			{
 			tag = OPENSSL_malloc(taglen);
 			EVP_CipherInit_ex(&ctx, gcm, NULL, NULL, NULL, 1);
 			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN, ivlen, 0);
-			EVP_CipherInit_ex(&ctx, NULL, NULL, key, iv, 1);
+			if (encrypt == 1)
+				{
+				static unsigned char iv_fixed[4] = {1,2,3,4};
+				if (!iv)
+					iv = OPENSSL_malloc(ivlen);
+				EVP_CipherInit_ex(&ctx, NULL, NULL, key, NULL, 1);
+				EVP_CIPHER_CTX_ctrl(&ctx,
+						EVP_CTRL_GCM_SET_IV_FIXED,
+						4, iv_fixed);
+				if (!EVP_CIPHER_CTX_ctrl(&ctx,
+					EVP_CTRL_GCM_IV_GEN, 0, iv))
+					{
+					fprintf(stderr, "IV gen error\n");
+					exit(1);
+					}
+				OutputValue("IV", iv, ivlen, stdout, 0);
+				}
+			else
+				EVP_CipherInit_ex(&ctx, NULL, NULL, key, iv, 1);
+
 
 			if (aadlen)
 				EVP_Cipher(&ctx, NULL, aad, aadlen);
@@ -254,6 +272,8 @@ int main(int argc,char **argv)
 		exit(1);
 	if(!strcmp(argv[1],"-encrypt"))
 		encrypt = 1;
+	else if(!strcmp(argv[1],"-encryptIVext"))
+		encrypt = 2;
 	else if(!strcmp(argv[1],"-decrypt"))
 		encrypt = 0;
 	else
