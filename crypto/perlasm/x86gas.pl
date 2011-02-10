@@ -166,7 +166,7 @@ sub ::file_end
 }
 
 sub ::data_byte	{   push(@out,".byte\t".join(',',@_)."\n");   }
-sub ::data_short{   push(@out,".word\t".join(',',@_)."\n");  }
+sub ::data_short{   push(@out,".value\t".join(',',@_)."\n");  }
 sub ::data_word {   push(@out,".long\t".join(',',@_)."\n");   }
 
 sub ::align
