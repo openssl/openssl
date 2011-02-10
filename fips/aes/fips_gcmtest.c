@@ -176,6 +176,8 @@ static void gcmtest(int encrypt)
 			{
 			tag = OPENSSL_malloc(taglen);
 			EVP_CipherInit_ex(&ctx, gcm, NULL, NULL, NULL, 1);
+			/* Relax FIPS constraints for testing */
+			M_EVP_CIPHER_CTX_set_flags(&ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
 			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN, ivlen, 0);
 			if (encrypt == 1)
 				{
@@ -227,6 +229,8 @@ static void gcmtest(int encrypt)
 		if (!encrypt && tag)
 			{
 			EVP_CipherInit_ex(&ctx, gcm, NULL, NULL, NULL, 0);
+			/* Relax FIPS constraints for testing */
+			M_EVP_CIPHER_CTX_set_flags(&ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
 			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN, ivlen, 0);
 			EVP_CipherInit_ex(&ctx, NULL, NULL, key, iv, 0);
 			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, taglen, tag);
