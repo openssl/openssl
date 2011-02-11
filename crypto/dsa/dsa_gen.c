@@ -369,18 +369,21 @@ err:
 	return ok;
 	}
 
-/* Permissible parameter values for (L,N): see FIPS186-3 4.2 */
+/* Security strength of parameter values for (L,N): see FIPS186-3 4.2
+ * and SP800-131A
+ */
 
-static int dsa2_check_params(size_t L, size_t N)
+
+static int dsa2_security_strength(size_t L, size_t N)
 	{
 	if (L == 1024 && N == 160)
-		return 1;
+		return 80;
 	if (L == 2048 && N == 224)
-		return 1;
+		return 112;
 	if (L == 2048 && N == 256)
-		return 1;
+		return 112;
 	if (L == 3072 && N == 256)
-		return 1;
+		return 112;
 	return 0;
 	}
 
@@ -414,7 +417,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 	    goto err;
 	    }
 #endif
-	if (!dsa2_check_params(L, N))
+	if (!dsa2_security_strength(L, N))
 		{
 		DSAerr(DSA_F_DSA_BUILTIN_PARAMGEN2, DSA_R_INVALID_PARAMETERS);
 		ok = 0;
