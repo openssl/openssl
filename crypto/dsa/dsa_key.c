@@ -162,8 +162,12 @@ static int dsa_builtin_keygen(DSA *dsa)
 	if (fips_dsa_pairwise_fail)
 		BN_add_word(dsa->pub_key, 1);
 	if(!fips_check_dsa(dsa))
+		{
+		dsa->pub_key = NULL;
+		dsa->priv_key = NULL;
+	    	goto err;
+		}
 #endif
-	    goto err;
 	ok=1;
 
 err:
