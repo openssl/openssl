@@ -62,7 +62,9 @@ testapps:
 	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
 
 all:
-	@if [ -z "$(FIPSLIBDIR)" ]; then \
+	@if [ -n "$(FIPSCANISTERONLY)" ]; then \
+		$(MAKE) -e subdirs lib ; \
+	elif [ -z "$(FIPSLIBDIR)" ]; then \
 		$(MAKE) -e subdirs lib fips_premain_dso$(EXE_EXT); \
 	else  \
 		$(MAKE) -e lib fips_premain_dso$(EXE_EXT) fips_standalone_sha1$(EXE_EXT); \

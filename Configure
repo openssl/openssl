@@ -654,6 +654,7 @@ my $fipslibdir="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
 my $fipsdso=0;
 my $fipscanisterinternal="n";
+my $fipscanisteronly = 0;
 my $baseaddr="0xFB00000";
 my $no_threads=0;
 my $threads=0;
@@ -850,6 +851,14 @@ PROCESS_ARGS:
 			{
 			$fips = 1;
 			$nofipscanistercheck = 1;
+			}
+		elsif (/^fipscanisteronly$/)
+			{
+			$fips = 1;
+			$nofipscanistercheck = 1;
+			$fipslibdir="";
+			$fipscanisterinternal="y";
+			$fipscanisteronly = 1;
 			}
 		elsif (/^fipscanisterbuild$/)
 			{
@@ -1565,7 +1574,9 @@ if ($strict_warnings)
 		}
 	}
 
-open(IN,'<Makefile.org') || die "unable to read Makefile.org:$!\n";
+my $mforg = $fipscanisteronly ? "Makefile.fips" : "Makefile.org";
+
+open(IN,"<$mforg") || die "unable to read $mforg:$!\n";
 unlink("$Makefile.new") || die "unable to remove old $Makefile.new:$!\n" if -e "$Makefile.new";
 open(OUT,">$Makefile.new") || die "unable to create $Makefile.new:$!\n";
 print OUT "### Generated automatically from Makefile.org by Configure.\n\n";
