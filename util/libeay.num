@@ -4256,3 +4256,7 @@ fips_set_selftest_fail                  4626	EXIST:OPENSSL_FIPS:FUNCTION:
 fips_check_rsa                          4627	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_check_incore_fingerprint           4628	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_incore_fingerprint                 4629	EXIST:OPENSSL_FIPS:FUNCTION:
+EVP_aes_128_gcm                         4630	EXIST::FUNCTION:AES
+CRYPTO_gcm128_tag                       4631	EXIST::FUNCTION:
+EVP_aes_192_gcm                         4632	EXIST::FUNCTION:AES
+EVP_aes_256_gcm                         4633	EXIST::FUNCTION:AES

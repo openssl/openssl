@@ -52,7 +52,8 @@ my %mf_import = (
 	SHA1_ASM_OBJ   => \$mf_sha_asm,
 	RMD160_ASM_OBJ => \$mf_rmd_asm,
 	WP_ASM_OBJ     => \$mf_wp_asm,
-	CMLL_ENC       => \$mf_cm_asm
+	CMLL_ENC       => \$mf_cm_asm,
+	MODES_ASM_OBJ  => \$mf_modes_asm
 );
 
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
@@ -426,7 +427,8 @@ if ($fips)
 		$fips_exclude_obj{$1} = 1 if (/\/([^\/]*)$/);
 		}
 	foreach (split " ",
-		"$mf_cpuid_asm $mf_aes_asm $mf_sha_asm $mf_bn_asm $mf_des_asm")
+		"$mf_cpuid_asm $mf_aes_asm $mf_sha_asm $mf_bn_asm " .
+		"$mf_des_asm $mf_modes_asm")
 		{
 		s/\.o//;
 		$fips_exclude_obj{$_} = 1;

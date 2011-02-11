@@ -239,6 +239,7 @@ if (!$no_asm)
 	win32_import_asm($mf_sha_asm, "sha", \$sha1_asm_obj, \$sha1_asm_src);
 	win32_import_asm($mf_rmd_asm, "ripemd", \$rmd160_asm_obj, \$rmd160_asm_src);
 	win32_import_asm($mf_wp_asm, "whrlpool", \$whirlpool_asm_obj, \$whirlpool_asm_src);
+	win32_import_asm($mf_modes_asm, "modes", \$modes_asm_obj, \$modes_asm_src);
 	win32_import_asm($mf_cpuid_asm, "", \$cpuid_asm_obj, \$cpuid_asm_src);
 	$perl_asm = 1;
 	}
