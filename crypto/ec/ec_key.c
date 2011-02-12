@@ -400,7 +400,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 
 	tx = BN_CTX_get(ctx);
 	ty = BN_CTX_get(ctx);
-
+#ifndef OPENSSL_NO_EC2M
 	if (is_char_two)
 		{
 		if (!EC_POINT_set_affine_coordinates_GF2m(key->group, point,
@@ -411,6 +411,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 			goto err;
 		}
 	else
+#endif
 		{
 		if (!EC_POINT_set_affine_coordinates_GFp(key->group, point,
 								x, y, ctx))

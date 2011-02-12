@@ -425,7 +425,7 @@ int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *
 	return group->meth->group_get_curve(group, p, a, b, ctx);
 	}
 
-
+#ifndef OPENSSL_NO_EC2M
 int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 	{
 	if (group->meth->group_set_curve == 0)
@@ -446,7 +446,7 @@ int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM 
 		}
 	return group->meth->group_get_curve(group, p, a, b, ctx);
 	}
-
+#endif
 
 int EC_GROUP_get_degree(const EC_GROUP *group)
 	{
@@ -856,7 +856,7 @@ int EC_POINT_set_affine_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
 	return group->meth->point_set_affine_coordinates(group, point, x, y, ctx);
 	}
 
-
+#ifndef OPENSSL_NO_EC2M
 int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group, EC_POINT *point,
 	const BIGNUM *x, const BIGNUM *y, BN_CTX *ctx)
 	{
@@ -872,7 +872,7 @@ int EC_POINT_set_affine_coordinates_GF2m(const EC_GROUP *group, EC_POINT *point,
 		}
 	return group->meth->point_set_affine_coordinates(group, point, x, y, ctx);
 	}
-
+#endif
 
 int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group, const EC_POINT *point,
 	BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
@@ -890,7 +890,7 @@ int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group, const EC_POINT *p
 	return group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
 	}
 
-
+#ifndef OPENSSL_NO_EC2M
 int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group, const EC_POINT *point,
 	BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
 	{
@@ -906,7 +906,7 @@ int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group, const EC_POINT *
 		}
 	return group->meth->point_get_affine_coordinates(group, point, x, y, ctx);
 	}
-
+#endif
 
 int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *point,
 	const BIGNUM *x, int y_bit, BN_CTX *ctx)
@@ -924,7 +924,7 @@ int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *poi
 	return group->meth->point_set_compressed_coordinates(group, point, x, y_bit, ctx);
 	}
 
-
+#ifndef OPENSSL_NO_EC2M
 int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group, EC_POINT *point,
 	const BIGNUM *x, int y_bit, BN_CTX *ctx)
 	{
@@ -940,7 +940,7 @@ int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group, EC_POINT *po
 		}
 	return group->meth->point_set_compressed_coordinates(group, point, x, y_bit, ctx);
 	}
-
+#endif
 
 size_t EC_POINT_point2oct(const EC_GROUP *group, const EC_POINT *point, point_conversion_form_t form,
         unsigned char *buf, size_t len, BN_CTX *ctx)

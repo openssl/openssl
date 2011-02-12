@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) New build option no-ec2m to disable characteristic 2 code.
+     [Steve Henson]
+
   *) New build option "fipscanisteronly". This only builds fipscanister.o
      and (currently) associated fips utilities. Uses the file Makefile.fips
      instead of Makefile.org as the prototype.
