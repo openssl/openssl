@@ -332,7 +332,7 @@ static int rsa_printver(FILE *out,
 	if (!rsa_pubkey->n || !rsa_pubkey->e)
 		goto error;
 
-	EVP_MD_CTX_init(&ctx);
+	FIPS_md_ctx_init(&ctx);
 
 	if (Saltlen >= 0)
 		pad_mode = RSA_PKCS1_PSS_PADDING;
@@ -341,9 +341,9 @@ static int rsa_printver(FILE *out,
 	else
 		pad_mode = RSA_PKCS1_PADDING;
 
-	if (!EVP_DigestInit_ex(&ctx, dgst, NULL))
+	if (!FIPS_digestinit(&ctx, dgst))
 		goto error;
-	if (!EVP_DigestUpdate(&ctx, Msg, Msglen))
+	if (!FIPS_digestupdate(&ctx, Msg, Msglen))
 		goto error;
 
 	no_err = 1;
@@ -352,7 +352,7 @@ static int rsa_printver(FILE *out,
 	no_err = 0;
 
 
-	EVP_MD_CTX_cleanup(&ctx);
+	FIPS_md_ctx_cleanup(&ctx);
 
 	if (r < 0)
 		goto error;

@@ -86,7 +86,7 @@ int FIPS_selftest_sha1()
 	{
 	unsigned char md[SHA_DIGEST_LENGTH];
 
-	EVP_Digest(test[n],strlen(test[n]),md, NULL, EVP_sha1(), NULL);
+	FIPS_digest(test[n],strlen(test[n]),md, NULL, EVP_sha1());
 	if(memcmp(md,ret[n],sizeof md))
 	    {
 	    FIPSerr(FIPS_F_FIPS_SELFTEST_SHA1,FIPS_R_SELFTEST_FAILED);

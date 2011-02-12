@@ -118,7 +118,7 @@ int FIPS_selftest_dsa()
     EVP_MD_CTX mctx;
     DSA_SIG *dsig = NULL;
 
-    EVP_MD_CTX_init(&mctx);
+    FIPS_md_ctx_init(&mctx);
 
     dsa = FIPS_dsa_new();
 
@@ -134,17 +134,17 @@ int FIPS_selftest_dsa()
 
     DSA_generate_key(dsa);
 
-    if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL))
+    if (!FIPS_digestinit(&mctx, EVP_sha1()))
 	goto err;
-    if (!EVP_DigestUpdate(&mctx, str1, 20))
+    if (!FIPS_digestupdate(&mctx, str1, 20))
 	goto err;
     dsig = FIPS_dsa_sign_ctx(dsa, &mctx);
     if (!dsig)
 	goto err;
 
-    if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL))
+    if (!FIPS_digestinit(&mctx, EVP_sha1()))
 	goto err;
-    if (!EVP_DigestUpdate(&mctx, str1, 20))
+    if (!FIPS_digestupdate(&mctx, str1, 20))
 	goto err;
     if (FIPS_dsa_verify_ctx(dsa, &mctx, dsig) != 1)
 	goto err;
@@ -152,7 +152,7 @@ int FIPS_selftest_dsa()
     ret = 1;
 
     err:
-    EVP_MD_CTX_cleanup(&mctx);
+    FIPS_md_ctx_cleanup(&mctx);
     if (dsa)
 	FIPS_dsa_free(dsa);
     if (dsig)

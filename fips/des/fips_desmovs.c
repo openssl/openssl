@@ -122,11 +122,11 @@ static int DESTest(EVP_CIPHER_CTX *ctx,
 	EXIT(1);
 	}
 
-    if (EVP_CipherInit_ex(ctx, cipher, NULL, aKey, iVec, dir) <= 0)
+    if (FIPS_cipherinit(ctx, cipher, aKey, iVec, dir) <= 0)
 	return 0;
     if(!strcasecmp(amode,"CFB1"))
 	M_EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS);
-    EVP_Cipher(ctx, out, in, len);
+    FIPS_cipher(ctx, out, in, len);
 
     return 1;
     }
@@ -184,7 +184,7 @@ static void do_mct(char *amode,
 	int kp=akeysz/64;
 	unsigned char old_iv[8];
 	EVP_CIPHER_CTX ctx;
-	EVP_CIPHER_CTX_init(&ctx);
+	FIPS_cipher_ctx_init(&ctx);
 
 	fprintf(rfp,"\nCOUNT = %d\n",i);
 	if(kp == 1)
@@ -219,7 +219,7 @@ static void do_mct(char *amode,
 	    else
 		{
 		memcpy(old_iv,ctx.iv,8);
-		EVP_Cipher(&ctx,text,text,len);
+		FIPS_cipher(&ctx,text,text,len);
 		}
 	    if(j == 9999)
 		{
@@ -282,7 +282,7 @@ static int proc_file(char *rqfile, char *rspfile)
     char *rp;
     EVP_CIPHER_CTX ctx;
     int numkeys=1;
-    EVP_CIPHER_CTX_init(&ctx);
+    FIPS_cipher_ctx_init(&ctx);
 
     if (!rqfile || !(*rqfile))
 	{

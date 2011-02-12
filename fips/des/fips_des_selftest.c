@@ -110,7 +110,7 @@ int FIPS_selftest_des()
     {
     int n, ret = 0;
     EVP_CIPHER_CTX ctx;
-    EVP_CIPHER_CTX_init(&ctx);
+    FIPS_cipher_ctx_init(&ctx);
     /* Encrypt/decrypt with 2-key 3DES and compare to known answers */
     for(n=0 ; n < 2 ; ++n)
 	{
@@ -130,7 +130,7 @@ int FIPS_selftest_des()
 	}
     ret = 1;
     err:
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    FIPS_cipher_ctx_cleanup(&ctx);
     if (ret == 0)
 	    FIPSerr(FIPS_F_FIPS_SELFTEST_DES,FIPS_R_SELFTEST_FAILED);
 

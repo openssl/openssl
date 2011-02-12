@@ -208,7 +208,7 @@ void FIPS_md_ctx_destroy(EVP_MD_CTX *ctx)
 /* This call frees resources associated with the context */
 int FIPS_md_ctx_cleanup(EVP_MD_CTX *ctx)
 	{
-	/* Don't assume ctx->md_data was cleaned in EVP_Digest_Final,
+	/* Don't assume ctx->md_data was cleaned in FIPS_digest_Final,
 	 * because sometimes only copies of the context are ever finalised.
 	 */
 	if (ctx->digest && ctx->digest->cleanup

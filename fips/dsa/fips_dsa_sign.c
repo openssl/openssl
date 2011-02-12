@@ -76,7 +76,7 @@ DSA_SIG * FIPS_dsa_sign_ctx(DSA *dsa, EVP_MD_CTX *ctx)
 	DSA_SIG *s;
 	unsigned char dig[EVP_MAX_MD_SIZE];
 	unsigned int dlen;
-        EVP_DigestFinal_ex(ctx, dig, &dlen);
+        FIPS_digestfinal(ctx, dig, &dlen);
 	s = dsa->meth->dsa_do_sign(dig,dlen,dsa);
 	OPENSSL_cleanse(dig, dlen);
 	return s;
@@ -92,7 +92,7 @@ int FIPS_dsa_verify_ctx(DSA *dsa, EVP_MD_CTX *ctx, DSA_SIG *s)
 	int ret=-1;
 	unsigned char dig[EVP_MAX_MD_SIZE];
 	unsigned int dlen;
-        EVP_DigestFinal_ex(ctx, dig, &dlen);
+        FIPS_digestfinal(ctx, dig, &dlen);
 	ret=dsa->meth->dsa_do_verify(dig,dlen,s,dsa);
 	OPENSSL_cleanse(dig, dlen);
 	return ret;

@@ -87,7 +87,7 @@ static void gcmtest(int encrypt)
 	unsigned char *ct = NULL, *pt = NULL;
 	EVP_CIPHER_CTX ctx;
 	const EVP_CIPHER *gcm;
-	EVP_CIPHER_CTX_init(&ctx);
+	FIPS_cipher_ctx_init(&ctx);
 
 	while(fgets(buf,sizeof buf,stdin) != NULL)
 		{
@@ -175,20 +175,20 @@ static void gcmtest(int encrypt)
 		if (encrypt && pt && aad && (iv || encrypt==1))
 			{
 			tag = OPENSSL_malloc(taglen);
-			EVP_CipherInit_ex(&ctx, gcm, NULL, NULL, NULL, 1);
+			FIPS_cipherinit(&ctx, gcm, NULL, NULL, 1);
 			/* Relax FIPS constraints for testing */
 			M_EVP_CIPHER_CTX_set_flags(&ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
-			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN, ivlen, 0);
+			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN, ivlen, 0);
 			if (encrypt == 1)
 				{
 				static unsigned char iv_fixed[4] = {1,2,3,4};
 				if (!iv)
 					iv = OPENSSL_malloc(ivlen);
-				EVP_CipherInit_ex(&ctx, NULL, NULL, key, NULL, 1);
-				EVP_CIPHER_CTX_ctrl(&ctx,
+				FIPS_cipherinit(&ctx, NULL, key, NULL, 1);
+				FIPS_cipher_ctx_ctrl(&ctx,
 						EVP_CTRL_GCM_SET_IV_FIXED,
 						4, iv_fixed);
-				if (!EVP_CIPHER_CTX_ctrl(&ctx,
+				if (!FIPS_cipher_ctx_ctrl(&ctx,
 					EVP_CTRL_GCM_IV_GEN, 0, iv))
 					{
 					fprintf(stderr, "IV gen error\n");
@@ -197,18 +197,18 @@ static void gcmtest(int encrypt)
 				OutputValue("IV", iv, ivlen, stdout, 0);
 				}
 			else
-				EVP_CipherInit_ex(&ctx, NULL, NULL, key, iv, 1);
+				FIPS_cipherinit(&ctx, NULL, key, iv, 1);
 
 
 			if (aadlen)
-				EVP_Cipher(&ctx, NULL, aad, aadlen);
+				FIPS_cipher(&ctx, NULL, aad, aadlen);
 			if (ptlen)
 				{
 				ct = OPENSSL_malloc(ptlen);
-				rv = EVP_Cipher(&ctx, ct, pt, ptlen);
+				rv = FIPS_cipher(&ctx, ct, pt, ptlen);
 				}
-			EVP_Cipher(&ctx, NULL, NULL, 0);
-			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_GET_TAG,
+			FIPS_cipher(&ctx, NULL, NULL, 0);
+			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_GET_TAG,
 								taglen, tag);	
 			OutputValue("CT", ct, ptlen, stdout, 0);
 			OutputValue("Tag", tag, taglen, stdout, 0);
@@ -228,20 +228,20 @@ static void gcmtest(int encrypt)
 			}	
 		if (!encrypt && tag)
 			{
-			EVP_CipherInit_ex(&ctx, gcm, NULL, NULL, NULL, 0);
+			FIPS_cipherinit(&ctx, gcm, NULL, NULL, 0);
 			/* Relax FIPS constraints for testing */
 			M_EVP_CIPHER_CTX_set_flags(&ctx, EVP_CIPH_FLAG_NON_FIPS_ALLOW);
-			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN, ivlen, 0);
-			EVP_CipherInit_ex(&ctx, NULL, NULL, key, iv, 0);
-			EVP_CIPHER_CTX_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, taglen, tag);
+			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN, ivlen, 0);
+			FIPS_cipherinit(&ctx, NULL, key, iv, 0);
+			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, taglen, tag);
 			if (aadlen)
-				EVP_Cipher(&ctx, NULL, aad, aadlen);
+				FIPS_cipher(&ctx, NULL, aad, aadlen);
 			if (ptlen)
 				{
 				pt = OPENSSL_malloc(ptlen);
-				rv = EVP_Cipher(&ctx, pt, ct, ptlen);
+				rv = FIPS_cipher(&ctx, pt, ct, ptlen);
 				}
-			rv = EVP_Cipher(&ctx, NULL, NULL, 0);
+			rv = FIPS_cipher(&ctx, NULL, NULL, 0);
 			if (rv < 0)
 				printf("FAIL\n");
 			else

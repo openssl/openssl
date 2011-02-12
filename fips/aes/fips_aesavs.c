@@ -213,14 +213,14 @@ static int AESTest(EVP_CIPHER_CTX *ctx,
 	printf("Invalid key size: %d\n", akeysz);
 	return 0; 
 	}
-    if (EVP_CipherInit_ex(ctx, cipher, NULL, aKey, iVec, dir) <= 0)
+    if (FIPS_cipherinit(ctx, cipher, aKey, iVec, dir) <= 0)
 	return 0;
     if(!strcasecmp(amode,"CFB1"))
 	M_EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS);
     if (dir)
-		EVP_Cipher(ctx, ciphertext, plaintext, len);
+		FIPS_cipher(ctx, ciphertext, plaintext, len);
 	else
-		EVP_Cipher(ctx, plaintext, ciphertext, len);
+		FIPS_cipher(ctx, plaintext, ciphertext, len);
     return 1;
     }
 
@@ -254,7 +254,7 @@ static int do_mct(char *amode,
     int i, j, n, n1, n2;
     int imode = 0, nkeysz = akeysz/8;
     EVP_CIPHER_CTX ctx;
-    EVP_CIPHER_CTX_init(&ctx);
+    FIPS_cipher_ctx_init(&ctx);
 
     if (len > 32)
 	{
@@ -310,12 +310,12 @@ static int do_mct(char *amode,
 		    {
 		    if (dir == XENCRYPT)
 			{
-			EVP_Cipher(&ctx, ctext[j], ptext[j], len);
+			FIPS_cipher(&ctx, ctext[j], ptext[j], len);
 			memcpy(ptext[j+1], ctext[j], len);
 			}
 		    else
 			{
-			EVP_Cipher(&ctx, ptext[j], ctext[j], len);
+			FIPS_cipher(&ctx, ptext[j], ctext[j], len);
 			memcpy(ctext[j+1], ptext[j], len);
 			}
 		    }
@@ -338,12 +338,12 @@ static int do_mct(char *amode,
 		    {
 		    if (dir == XENCRYPT)
 			{
-			EVP_Cipher(&ctx, ctext[j], ptext[j], len);
+			FIPS_cipher(&ctx, ctext[j], ptext[j], len);
 			memcpy(ptext[j+1], ctext[j-1], len);
 			}
 		    else
 			{
-			EVP_Cipher(&ctx, ptext[j], ctext[j], len);
+			FIPS_cipher(&ctx, ptext[j], ctext[j], len);
 			memcpy(ctext[j+1], ptext[j-1], len);
 			}
 		    }
@@ -359,9 +359,9 @@ static int do_mct(char *amode,
 		else
 		    {
 		    if (dir == XENCRYPT)
-			EVP_Cipher(&ctx, ctext[j], ptext[j], len);
+			FIPS_cipher(&ctx, ctext[j], ptext[j], len);
 		    else
-			EVP_Cipher(&ctx, ptext[j], ctext[j], len);
+			FIPS_cipher(&ctx, ptext[j], ctext[j], len);
 		    }
 		if (dir == XENCRYPT)
 		    {
@@ -393,9 +393,9 @@ static int do_mct(char *amode,
 		else
 		    {
 		    if (dir == XENCRYPT)
-			EVP_Cipher(&ctx, ctext[j], ptext[j], len);
+			FIPS_cipher(&ctx, ctext[j], ptext[j], len);
 		    else
-			EVP_Cipher(&ctx, ptext[j], ctext[j], len);
+			FIPS_cipher(&ctx, ptext[j], ctext[j], len);
 
 		    }
 		if(dir == XENCRYPT)
@@ -565,7 +565,7 @@ static int proc_file(char *rqfile, char *rspfile)
     unsigned char ciphertext[2048];
     char *rp;
     EVP_CIPHER_CTX ctx;
-    EVP_CIPHER_CTX_init(&ctx);
+    FIPS_cipher_ctx_init(&ctx);
 
     if (!rqfile || !(*rqfile))
 	{

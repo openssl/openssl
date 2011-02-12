@@ -54,18 +54,18 @@ static int FIPS_aes_test(void)
 	unsigned char key[16] = { 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
 	unsigned char plaintext[16] = "etaonrishdlcu";
 	EVP_CIPHER_CTX ctx;
-	EVP_CIPHER_CTX_init(&ctx);
-	if (EVP_CipherInit_ex(&ctx, EVP_aes_128_ecb(),NULL, key, NULL, 1) <= 0)
+	FIPS_cipher_ctx_init(&ctx);
+	if (FIPS_cipherinit(&ctx, EVP_aes_128_ecb(), key, NULL, 1) <= 0)
 		goto err;
-	EVP_Cipher(&ctx, citmp, plaintext, 16);
-	if (EVP_CipherInit_ex(&ctx, EVP_aes_128_ecb(),NULL, key, NULL, 0) <= 0)
+	FIPS_cipher(&ctx, citmp, plaintext, 16);
+	if (FIPS_cipherinit(&ctx, EVP_aes_128_ecb(), key, NULL, 0) <= 0)
 		goto err;
-	EVP_Cipher(&ctx, pltmp, citmp, 16);
+	FIPS_cipher(&ctx, pltmp, citmp, 16);
 	if (memcmp(pltmp, plaintext, 16))
 		goto err;
 	ret = 1;
 	err:
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	FIPS_cipher_ctx_cleanup(&ctx);
 	return ret;
 	}
 
@@ -78,18 +78,18 @@ static int FIPS_des3_test(void)
 		              19,20,21,22,23,24};
     	unsigned char plaintext[] = { 'e', 't', 'a', 'o', 'n', 'r', 'i', 's' };
 	EVP_CIPHER_CTX ctx;
-	EVP_CIPHER_CTX_init(&ctx);
-	if (EVP_CipherInit_ex(&ctx, EVP_des_ede3_ecb(),NULL, key, NULL, 1) <= 0)
+	FIPS_cipher_ctx_init(&ctx);
+	if (FIPS_cipherinit(&ctx, EVP_des_ede3_ecb(), key, NULL, 1) <= 0)
 		goto err;
-	EVP_Cipher(&ctx, citmp, plaintext, 8);
-	if (EVP_CipherInit_ex(&ctx, EVP_des_ede3_ecb(),NULL, key, NULL, 0) <= 0)
+	FIPS_cipher(&ctx, citmp, plaintext, 8);
+	if (FIPS_cipherinit(&ctx, EVP_des_ede3_ecb(), key, NULL, 0) <= 0)
 		goto err;
-	EVP_Cipher(&ctx, pltmp, citmp, 8);
+	FIPS_cipher(&ctx, pltmp, citmp, 8);
 	if (memcmp(pltmp, plaintext, 8))
 		goto err;
 	ret = 1;
 	err:
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	FIPS_cipher_ctx_cleanup(&ctx);
 	return ret;
 	}
 
@@ -105,7 +105,7 @@ static int FIPS_dsa_test(int bad)
     DSA_SIG *sig = NULL;
 
     ERR_clear_error();
-    EVP_MD_CTX_init(&mctx);
+    FIPS_md_ctx_init(&mctx);
     dsa = FIPS_dsa_new();
     if (!dsa)
 	goto end;
@@ -116,23 +116,23 @@ static int FIPS_dsa_test(int bad)
     if (bad)
 	    BN_add_word(dsa->pub_key, 1);
 
-    if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL))
+    if (!FIPS_digestinit(&mctx, EVP_sha1()))
 	goto end;
-    if (!EVP_DigestUpdate(&mctx, dgst, sizeof(dgst) - 1))
+    if (!FIPS_digestupdate(&mctx, dgst, sizeof(dgst) - 1))
 	goto end;
     sig = FIPS_dsa_sign_ctx(dsa, &mctx);
     if (!sig)
 	goto end;
 
-    if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL))
+    if (!FIPS_digestinit(&mctx, EVP_sha1()))
 	goto end;
-    if (!EVP_DigestUpdate(&mctx, dgst, sizeof(dgst) - 1))
+    if (!FIPS_digestupdate(&mctx, dgst, sizeof(dgst) - 1))
 	goto end;
     r = FIPS_dsa_verify_ctx(dsa, &mctx, sig);
     end:
     if (sig)
 	DSA_SIG_free(sig);
-    EVP_MD_CTX_cleanup(&mctx);
+    FIPS_md_ctx_cleanup(&mctx);
     if (dsa)
   	  FIPS_dsa_free(dsa);
     if (r != 1)
@@ -154,7 +154,7 @@ static int FIPS_rsa_test(int bad)
     int r = 0;
 
     ERR_clear_error();
-    EVP_MD_CTX_init(&mctx);
+    FIPS_md_ctx_init(&mctx);
     key = FIPS_rsa_new();
     bn = BN_new();
     if (!key || !bn)
@@ -166,20 +166,20 @@ static int FIPS_rsa_test(int bad)
     if (bad)
 	    BN_add_word(key->n, 1);
 
-    if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL))
+    if (!FIPS_digestinit(&mctx, EVP_sha1()))
 	goto end;
-    if (!EVP_DigestUpdate(&mctx, input_ptext, sizeof(input_ptext) - 1))
+    if (!FIPS_digestupdate(&mctx, input_ptext, sizeof(input_ptext) - 1))
 	goto end;
     if (!FIPS_rsa_sign_ctx(key, &mctx, RSA_PKCS1_PADDING, 0, NULL, buf, &slen))
 	goto end;
 
-    if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL))
+    if (!FIPS_digestinit(&mctx, EVP_sha1()))
 	goto end;
-    if (!EVP_DigestUpdate(&mctx, input_ptext, sizeof(input_ptext) - 1))
+    if (!FIPS_digestupdate(&mctx, input_ptext, sizeof(input_ptext) - 1))
 	goto end;
     r = FIPS_rsa_verify_ctx(key, &mctx, RSA_PKCS1_PADDING, 0, NULL, buf, slen);
     end:
-    EVP_MD_CTX_cleanup(&mctx);
+    FIPS_md_ctx_cleanup(&mctx);
     if (key)
   	  FIPS_rsa_free(key);
     if (r != 1)
@@ -199,7 +199,7 @@ static int FIPS_sha1_test()
     unsigned char md[SHA_DIGEST_LENGTH];
 
     ERR_clear_error();
-    if (!EVP_Digest(str,sizeof(str) - 1,md, NULL, EVP_sha1(), NULL)) return 0;
+    if (!FIPS_digest(str,sizeof(str) - 1,md, NULL, EVP_sha1())) return 0;
     if (memcmp(md,digest,sizeof(md)))
         return 0;
     return 1;
@@ -218,7 +218,7 @@ static int FIPS_sha256_test()
     unsigned char md[SHA256_DIGEST_LENGTH];
 
     ERR_clear_error();
-    if (!EVP_Digest(str,sizeof(str) - 1,md, NULL, EVP_sha256(), NULL)) return 0;
+    if (!FIPS_digest(str,sizeof(str) - 1,md, NULL, EVP_sha256())) return 0;
     if (memcmp(md,digest,sizeof(md)))
         return 0;
     return 1;
@@ -239,7 +239,7 @@ static int FIPS_sha512_test()
     unsigned char md[SHA512_DIGEST_LENGTH];
 
     ERR_clear_error();
-    if (!EVP_Digest(str,sizeof(str) - 1,md, NULL, EVP_sha512(), NULL)) return 0;
+    if (!FIPS_digest(str,sizeof(str) - 1,md, NULL, EVP_sha512())) return 0;
     if (memcmp(md,digest,sizeof(md)))
         return 0;
     return 1;

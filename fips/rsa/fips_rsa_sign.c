@@ -197,7 +197,7 @@ int FIPS_rsa_sign_ctx(RSA *rsa, EVP_MD_CTX *ctx,
 	{
 	unsigned int md_len, rv;
 	unsigned char md[EVP_MAX_MD_SIZE];
-        EVP_DigestFinal_ex(ctx, md, &md_len);
+        FIPS_digestfinal(ctx, md, &md_len);
 	rv = FIPS_rsa_sign_digest(rsa, md, md_len,
 					M_EVP_MD_CTX_md(ctx),
 					rsa_pad_mode, saltlen,
@@ -300,7 +300,7 @@ int FIPS_rsa_verify_ctx(RSA *rsa, EVP_MD_CTX *ctx,
 	{
 	unsigned int md_len, rv;
 	unsigned char md[EVP_MAX_MD_SIZE];
-        EVP_DigestFinal_ex(ctx, md, &md_len);
+        FIPS_digestfinal(ctx, md, &md_len);
 	rv = FIPS_rsa_verify_digest(rsa, md, md_len, M_EVP_MD_CTX_md(ctx),
 					rsa_pad_mode, saltlen, mgf1Hash,
 					sigbuf, siglen);

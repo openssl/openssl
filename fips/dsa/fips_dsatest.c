@@ -156,7 +156,7 @@ int main(int argc, char **argv)
 	BN_GENCB cb;
 	EVP_MD_CTX mctx;
 	BN_GENCB_set(&cb, dsa_cb, stderr);
-	EVP_MD_CTX_init(&mctx);
+	FIPS_md_ctx_init(&mctx);
 
     	fips_set_error_print();
 	if(!FIPS_mode_set(1))
@@ -212,17 +212,17 @@ int main(int argc, char **argv)
 		}
 	DSA_generate_key(dsa);
 
-	if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL))
+	if (!FIPS_digestinit(&mctx, EVP_sha1()))
 		goto end;
-	if (!EVP_DigestUpdate(&mctx, str1, 20))
+	if (!FIPS_digestupdate(&mctx, str1, 20))
 		goto end;
 	sig = FIPS_dsa_sign_ctx(dsa, &mctx);
 	if (!sig)
 		goto end;
 
-	if (!EVP_DigestInit_ex(&mctx, EVP_sha1(), NULL))
+	if (!FIPS_digestinit(&mctx, EVP_sha1()))
 		goto end;
-	if (!EVP_DigestUpdate(&mctx, str1, 20))
+	if (!FIPS_digestupdate(&mctx, str1, 20))
 		goto end;
 	if (FIPS_dsa_verify_ctx(dsa, &mctx, sig) != 1)
 		goto end;
@@ -233,7 +233,7 @@ end:
 	if (sig)
 		DSA_SIG_free(sig);
 	if (dsa != NULL) FIPS_dsa_free(dsa);
-	EVP_MD_CTX_cleanup(&mctx);
+	FIPS_md_ctx_cleanup(&mctx);
 #if 0
 	CRYPTO_mem_leaks(bio_err);
 #endif

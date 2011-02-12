@@ -300,7 +300,7 @@ static int print_dgst(const EVP_MD *emd, FILE *out,
 	{
 	int i, mdlen;
 	unsigned char md[EVP_MAX_MD_SIZE];
-	if (!EVP_Digest(Msg, Msglen, md, (unsigned int *)&mdlen, emd, NULL))
+	if (!FIPS_digest(Msg, Msglen, md, (unsigned int *)&mdlen, emd))
 		{
 		fputs("Error calculating HASH\n", stderr);
 		return 0;
@@ -321,7 +321,7 @@ static int print_monte(const EVP_MD *md, FILE *out,
 	unsigned char *m1, *m2, *m3, *p;
 	unsigned int mlen, m1len, m2len, m3len;
 
-	EVP_MD_CTX_init(&ctx);
+	FIPS_md_ctx_init(&ctx);
 
 	if (SeedLen > EVP_MAX_MD_SIZE)
 		mlen = SeedLen;
@@ -346,17 +346,17 @@ static int print_monte(const EVP_MD *md, FILE *out,
 		{
 		for (i = 0; i < 1000; i++)
 			{
-			EVP_DigestInit_ex(&ctx, md, NULL);
-			EVP_DigestUpdate(&ctx, m1, m1len);
-			EVP_DigestUpdate(&ctx, m2, m2len);
-			EVP_DigestUpdate(&ctx, m3, m3len);
+			FIPS_digestinit(&ctx, md);
+			FIPS_digestupdate(&ctx, m1, m1len);
+			FIPS_digestupdate(&ctx, m2, m2len);
+			FIPS_digestupdate(&ctx, m3, m3len);
 			p = m1;
 			m1 = m2;
 			m1len = m2len;
 			m2 = m3;
 			m2len = m3len;
 			m3 = p;
-			EVP_DigestFinal_ex(&ctx, m3, &m3len);
+			FIPS_digestfinal(&ctx, m3, &m3len);
 			}
 		fprintf(out, "COUNT = %d\n", j);
 		fputs("MD = ", out);
@@ -378,7 +378,7 @@ static int print_monte(const EVP_MD *md, FILE *out,
 	if (m3)
 		OPENSSL_free(m3);
 
-	EVP_MD_CTX_cleanup(&ctx);
+	FIPS_md_ctx_cleanup(&ctx);
 
 	return ret;
 	}

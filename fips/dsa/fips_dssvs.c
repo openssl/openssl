@@ -533,7 +533,7 @@ static void siggen()
 	    int n;
 	    EVP_MD_CTX mctx;
 	    DSA_SIG *sig;
-	    EVP_MD_CTX_init(&mctx);
+	    FIPS_md_ctx_init(&mctx);
 
 	    n=hex2bin(value,msg);
 
@@ -541,15 +541,15 @@ static void siggen()
 		exit(1);
 	    pbn("Y",dsa->pub_key);
 
-	    EVP_DigestInit_ex(&mctx, md, NULL);
-	    EVP_DigestUpdate(&mctx, msg, n);
+	    FIPS_digestinit(&mctx, md);
+	    FIPS_digestupdate(&mctx, msg, n);
 	    sig = FIPS_dsa_sign_ctx(dsa, &mctx);
 
 	    pbn("R",sig->r);
 	    pbn("S",sig->s);
 	    putc('\n',stdout);
 	    DSA_SIG_free(sig);
-	    EVP_MD_CTX_cleanup(&mctx);
+	    FIPS_md_ctx_cleanup(&mctx);
 	    }
 	}
 	if (dsa)
@@ -606,15 +606,15 @@ static void sigver()
 	    {
 	    EVP_MD_CTX mctx;
 	    int r;
-	    EVP_MD_CTX_init(&mctx);
+	    FIPS_md_ctx_init(&mctx);
 	    sig->s=hex2bn(value);
 
-	    EVP_DigestInit_ex(&mctx, md, NULL);
-	    EVP_DigestUpdate(&mctx, msg, n);
+	    FIPS_digestinit(&mctx, md);
+	    FIPS_digestupdate(&mctx, msg, n);
 	    no_err = 1;
 	    r = FIPS_dsa_verify_ctx(dsa, &mctx, sig);
 	    no_err = 0;
-	    EVP_MD_CTX_cleanup(&mctx);
+	    FIPS_md_ctx_cleanup(&mctx);
 	
 	    printf("Result = %c\n", r == 1 ? 'P' : 'F');
 	    putc('\n',stdout);

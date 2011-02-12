@@ -438,7 +438,7 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 	unsigned int siglen;
 	DSA_SIG *dsig = NULL;
 	EVP_MD_CTX mctx;
-	EVP_MD_CTX_init(&mctx);
+	FIPS_md_ctx_init(&mctx);
 
 	if ((pkey->type == EVP_PKEY_RSA)
 		&& ((size_t)RSA_size(pkey->pkey.rsa) > sizeof(sigtmp)))
@@ -454,9 +454,9 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 	if (tbslen == -1)
 		tbslen = strlen((char *)tbs);
 
-	if (!EVP_DigestInit_ex(&mctx, digest, NULL))
+	if (!FIPS_digestinit(&mctx, digest))
 		goto error;
-	if (!EVP_DigestUpdate(&mctx, tbs, tbslen))
+	if (!FIPS_digestupdate(&mctx, tbs, tbslen))
 		goto error;
 	if (pkey->type == EVP_PKEY_RSA)
 		{
@@ -478,9 +478,9 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 	if (kat && ((siglen != katlen) || memcmp(kat, sig, katlen)))
 		goto error;
 
-	if (!EVP_DigestInit_ex(&mctx, digest, NULL))
+	if (!FIPS_digestinit(&mctx, digest))
 		goto error;
-	if (!EVP_DigestUpdate(&mctx, tbs, tbslen))
+	if (!FIPS_digestupdate(&mctx, tbs, tbslen))
 		goto error;
 	if (pkey->type == EVP_PKEY_RSA)
 		{
@@ -501,12 +501,12 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 		DSA_SIG_free(dsig);
 	if (sig != sigtmp)
 		OPENSSL_free(sig);
-	EVP_MD_CTX_cleanup(&mctx);
+	FIPS_md_ctx_cleanup(&mctx);
 	if (ret != 1)
 		{
 		FIPSerr(FIPS_F_FIPS_PKEY_SIGNATURE_TEST,FIPS_R_TEST_FAILURE);
 		if (fail_str)
-			ERR_add_error_data(2, "Type=", fail_str);
+			FIPS_add_error_data(2, "Type=", fail_str);
 		return 0;
 		}
 	return 1;
@@ -526,14 +526,14 @@ int fips_cipher_test(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	unsigned char pltmp[FIPS_MAX_CIPHER_TEST_SIZE];
 	unsigned char citmp[FIPS_MAX_CIPHER_TEST_SIZE];
 	OPENSSL_assert(len <= FIPS_MAX_CIPHER_TEST_SIZE);
-	if (EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 1) <= 0)
+	if (FIPS_cipherinit(ctx, cipher, key, iv, 1) <= 0)
 		return 0;
-	EVP_Cipher(ctx, citmp, plaintext, len);
+	FIPS_cipher(ctx, citmp, plaintext, len);
 	if (memcmp(citmp, ciphertext, len))
 		return 0;
-	if (EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, 0) <= 0)
+	if (FIPS_cipherinit(ctx, cipher, key, iv, 0) <= 0)
 		return 0;
-	EVP_Cipher(ctx, pltmp, citmp, len);
+	FIPS_cipher(ctx, pltmp, citmp, len);
 	if (memcmp(pltmp, plaintext, len))
 		return 0;
 	return 1;

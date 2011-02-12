@@ -82,7 +82,7 @@ int FIPS_selftest_aes()
     int n;
     int ret = 0;
     EVP_CIPHER_CTX ctx;
-    EVP_CIPHER_CTX_init(&ctx);
+    FIPS_cipher_ctx_init(&ctx);
 
     for(n=0 ; n < 1 ; ++n)
 	{
@@ -95,7 +95,7 @@ int FIPS_selftest_aes()
 	}
     ret = 1;
     err:
-    EVP_CIPHER_CTX_cleanup(&ctx);
+    FIPS_cipher_ctx_cleanup(&ctx);
     if (ret == 0)
 	    FIPSerr(FIPS_F_FIPS_SELFTEST_AES,FIPS_R_SELFTEST_FAILED);
     return ret;
