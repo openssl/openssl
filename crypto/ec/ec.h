@@ -665,9 +665,11 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 /* EC_GROUP_get_basis_type() returns the NID of the basis type
  * used to represent the field elements */
 int EC_GROUP_get_basis_type(const EC_GROUP *);
+#ifndef OPENSSL_NO_EC2M
 int EC_GROUP_get_trinomial_basis(const EC_GROUP *, unsigned int *k);
 int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1, 
 	unsigned int *k2, unsigned int *k3);
+#endif
 
 #define OPENSSL_EC_NAMED_CURVE	0x001
 
