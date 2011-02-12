@@ -719,12 +719,14 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 	gcm_init_8bit(ctx->Htable,ctx->H.u);
 #elif	TABLE_BITS==4
 # if	defined(GHASH_ASM_IAX)			/* both x86 and x86_64 */
+#  if	!defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
 	if (OPENSSL_ia32cap_P[1]&(1<<1)) {
 		gcm_init_clmul(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_clmul;
 		ctx->ghash = gcm_ghash_clmul;
 		return;
 	}
+#  endif
 	gcm_init_4bit(ctx->Htable,ctx->H.u);
 #  if	defined(GHASH_ASM_X86)			/* x86 only */
 	if (OPENSSL_ia32cap_P[0]&(1<<23)) {
