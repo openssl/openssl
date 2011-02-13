@@ -231,7 +231,7 @@ int main(int argc, char **argv)
 
 end:
 	if (sig)
-		DSA_SIG_free(sig);
+		FIPS_dsa_sig_free(sig);
 	if (dsa != NULL) FIPS_dsa_free(dsa);
 	FIPS_md_ctx_cleanup(&mctx);
 #if 0

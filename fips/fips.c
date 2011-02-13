@@ -498,7 +498,7 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 
 	error:
 	if (dsig != NULL)
-		DSA_SIG_free(dsig);
+		FIPS_dsa_sig_free(dsig);
 	if (sig != sigtmp)
 		OPENSSL_free(sig);
 	FIPS_md_ctx_cleanup(&mctx);

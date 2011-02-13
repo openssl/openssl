@@ -307,8 +307,6 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/dsa/dsa_gen.o \
 	../crypto/dsa/dsa_key.o \
 	../crypto/dsa/dsa_ossl.o \
-	../crypto/dsa/dsa_sign.o \
-	../crypto/dsa/dsa_vrf.o \
 	../crypto/evp/e_aes.o \
 	../crypto/evp/e_des3.o \
 	../crypto/evp/m_sha1.o \

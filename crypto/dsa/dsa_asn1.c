@@ -88,7 +88,7 @@ ASN1_SEQUENCE_cb(DSA_SIG, sig_cb) = {
 	ASN1_SIMPLE(DSA_SIG, s, CBIGNUM)
 } ASN1_SEQUENCE_END_cb(DSA_SIG, DSA_SIG)
 
-IMPLEMENT_ASN1_ENCODE_FUNCTIONS_const_fname(DSA_SIG, DSA_SIG, DSA_SIG)
+IMPLEMENT_ASN1_FUNCTIONS_const(DSA_SIG)
 
 /* Override the default free and new methods */
 static int dsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,

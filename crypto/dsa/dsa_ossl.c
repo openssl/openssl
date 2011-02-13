@@ -173,7 +173,7 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 redo:
 	if ((dsa->kinv == NULL) || (dsa->r == NULL))
 		{
-		if (!DSA_sign_setup(dsa,ctx,&kinv,&r)) goto err;
+		if (!dsa->meth->dsa_sign_setup(dsa,ctx,&kinv,&r)) goto err;
 		}
 	else
 		{
@@ -199,7 +199,6 @@ redo:
 	if (BN_cmp(s,dsa->q) > 0)
 		if (!BN_sub(s,s,dsa->q)) goto err;
 	if (!BN_mod_mul(s,s,kinv,dsa->q,ctx)) goto err;
-
 	ret=DSA_SIG_new();
 	if (ret == NULL) goto err;
 	/* Redo if r or s is zero as required by FIPS 186-3: this is

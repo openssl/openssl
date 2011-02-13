@@ -548,7 +548,7 @@ static void siggen()
 	    pbn("R",sig->r);
 	    pbn("S",sig->s);
 	    putc('\n',stdout);
-	    DSA_SIG_free(sig);
+	    FIPS_dsa_sig_free(sig);
 	    FIPS_md_ctx_cleanup(&mctx);
 	    }
 	}

@@ -147,6 +147,9 @@ void FIPS_set_locking_callback(void (*func)(int mode, int type,
 #define EVP_CIPHER_CTX_new FIPS_cipher_ctx_new
 #define EVP_CIPHER_CTX_free FIPS_cipher_ctx_free
 
+#define DSA_SIG_new FIPS_dsa_sig_new
+#define DSA_SIG_free FIPS_dsa_sig_free
+
 #endif
 
 /* BEGIN ERROR CODES */

@@ -156,7 +156,7 @@ int FIPS_selftest_dsa()
     if (dsa)
 	FIPS_dsa_free(dsa);
     if (dsig)
-	DSA_SIG_free(dsig);
+	FIPS_dsa_sig_free(dsig);
     if (ret == 0)
 	    FIPSerr(FIPS_F_FIPS_SELFTEST_DSA,FIPS_R_SELFTEST_FAILED);
     return ret;

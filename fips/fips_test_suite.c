@@ -131,7 +131,7 @@ static int FIPS_dsa_test(int bad)
     r = FIPS_dsa_verify_ctx(dsa, &mctx, sig);
     end:
     if (sig)
-	DSA_SIG_free(sig);
+	FIPS_dsa_sig_free(sig);
     FIPS_md_ctx_cleanup(&mctx);
     if (dsa)
   	  FIPS_dsa_free(dsa);

@@ -96,3 +96,26 @@ void FIPS_dsa_free(DSA *r)
 	OPENSSL_free(r);
 	}
 
+DSA_SIG *FIPS_dsa_sig_new(void)
+	{
+	DSA_SIG *sig;
+	sig = OPENSSL_malloc(sizeof(DSA_SIG));
+	if (!sig)
+		return NULL;
+	sig->r = NULL;
+	sig->s = NULL;
+	return sig;
+	}
+
+void FIPS_dsa_sig_free(DSA_SIG *sig)
+	{
+	if (sig)
+		{
+		if (sig->r)
+			BN_free(sig->r);
+		if (sig->s)
+			BN_free(sig->s);
+		OPENSSL_free(sig);
+		}
+	}
+
