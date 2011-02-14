@@ -269,7 +269,6 @@ BUILD_ONE_CMD=\
 reflect:
 	@[ -n "$(THIS)" ] && $(CLEARENV) && $(MAKE) $(THIS) -e $(BUILDENV)
 
-
 # FIXME
 
 FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
@@ -282,10 +281,12 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/bn/bn_exp2.o \
 	../crypto/bn/bn_exp.o \
 	../crypto/bn/bn_gcd.o \
+	../crypto/bn/bn_gf2m.o \
 	../crypto/bn/bn_lib.o \
 	../crypto/bn/bn_mod.o \
 	../crypto/bn/bn_mont.o \
 	../crypto/bn/bn_mul.o \
+	../crypto/bn/bn_nist.o \
 	../crypto/bn/bn_prime.o \
 	../crypto/bn/bn_rand.o \
 	../crypto/bn/bn_recp.o \
@@ -308,6 +309,17 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/dsa/dsa_gen.o \
 	../crypto/dsa/dsa_key.o \
 	../crypto/dsa/dsa_ossl.o \
+	../crypto/ec/ec_curve.o \
+	../crypto/ec/ec_cvt.o \
+	../crypto/ec/ec_key.o \
+	../crypto/ec/ec_lib.o \
+	../crypto/ec/ecp_mont.o \
+	../crypto/ec/ec_mult.o \
+	../crypto/ec/ecp_nist.o \
+	../crypto/ec/ecp_smpl.o \
+	../crypto/ec/ec2_mult.o \
+	../crypto/ec/ec2_smpl.o \
+	../crypto/ecdsa/ecs_ossl.o \
 	../crypto/evp/e_aes.o \
 	../crypto/evp/e_des3.o \
 	../crypto/evp/m_sha1.o \

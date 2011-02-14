@@ -153,6 +153,11 @@ void FIPS_set_locking_callbacks(void (*func)(int mode, int type,
 #define DSA_SIG_new FIPS_dsa_sig_new
 #define DSA_SIG_free FIPS_dsa_sig_free
 
+#define ECDSA_SIG_new FIPS_ecdsa_sig_new
+#define ECDSA_SIG_free FIPS_ecdsa_sig_free
+
+#define ecdsa_check fips_ecdsa_check
+
 #endif
 
 /* BEGIN ERROR CODES */

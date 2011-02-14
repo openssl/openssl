@@ -35,7 +35,7 @@ AFLAGS=$(ASFLAGS)
 
 LIBS=
 
-FDIRS=sha rand des aes dsa rsa dh hmac utl
+FDIRS=sha rand des aes dsa ecdsa rsa dh hmac utl
 
 GENERAL=Makefile README fips-lib.com install.com
 
@@ -45,11 +45,11 @@ LIBSRC=fips.c
 LIBOBJ=fips.o
 
 FIPS_OBJ_LISTS=sha/lib hmac/lib rand/lib des/lib aes/lib dsa/lib rsa/lib \
-		dh/lib utl/lib
+		dh/lib utl/lib ecdsa/lib
 
 SRC= $(LIBSRC)
 
-EXHEADER=fips.h
+EXHEADER=fips.h fipshacks.h
 HEADER=$(EXHEADER) fips_utl.h fips_locl.h
 EXE=fipsld
 

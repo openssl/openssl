@@ -88,6 +88,8 @@
  *
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>

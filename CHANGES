@@ -4,6 +4,12 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add ECDSA code to fips module. Add tiny fips_ecdsa_check to just
+     return internal method without any ENGINE dependencies. Add new
+     tiny fips sign and verify functions. Initial incomplete algorithm
+     test program.
+     [Steve Henson]
+
   *) New build option no-ec2m to disable characteristic 2 code.
      [Steve Henson]
 
