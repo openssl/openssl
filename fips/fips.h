@@ -109,14 +109,17 @@ int fips_cipher_test(struct evp_cipher_ctx_st *ctx,
 void fips_set_selftest_fail(void);
 int fips_check_rsa(struct rsa_st *rsa);
 
-void FIPS_set_locking_callback(void (*func)(int mode, int type,
-				const char *file,int line));
+void FIPS_set_locking_callbacks(void (*func)(int mode, int type,
+				const char *file,int line),
+				int (*add_cb)(int *pointer, int amount,
+					int type, const char *file, int line));
 
 /* Where necessary redirect standard OpenSSL APIs to FIPS versions */
 
 #if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSAPI)
 
 #define CRYPTO_lock FIPS_lock
+#define CRYPTO_add_lock FIPS_add_lock
 #define CRYPTO_malloc FIPS_malloc
 #define CRYPTO_free FIPS_free
 

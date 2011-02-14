@@ -384,7 +384,7 @@ void CRYPTO_set_dynlock_lock_callback(void (*func)(int mode,
 	struct CRYPTO_dynlock_value *l, const char *file, int line))
 	{
 #ifdef OPENSSL_FIPS
-	FIPS_set_locking_callback(CRYPTO_lock);
+	FIPS_set_locking_callbacks(CRYPTO_lock, CRYPTO_add_lock);
 #endif
 	dynlock_lock_callback=func;
 	}
@@ -412,7 +412,7 @@ void CRYPTO_set_locking_callback(void (*func)(int mode,int type,
 					      const char *file,int line))
 	{
 #ifdef OPENSSL_FIPS
-	FIPS_set_locking_callback(CRYPTO_lock);
+	FIPS_set_locking_callbacks(CRYPTO_lock, CRYPTO_add_lock);
 #endif
 	locking_callback=func;
 	}

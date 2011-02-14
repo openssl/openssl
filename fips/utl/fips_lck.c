@@ -59,6 +59,8 @@
 /* FIPS locking callbacks */
 
 static void (*fips_lck_cb)(int mode, int type,const char *file,int line) = 0;
+static int (*fips_add_cb)(int *pointer, int amount, int type, const char *file,
+	     int line);
 
 void FIPS_lock(int mode, int type,const char *file,int line)
 	{
@@ -66,8 +68,20 @@ void FIPS_lock(int mode, int type,const char *file,int line)
 		fips_lck_cb(mode, type, file, line);
 	}
 
-void FIPS_set_locking_callback (void (*func)(int mode, int type,
-				const char *file,int line))
+void FIPS_set_locking_callbacks(void (*func)(int mode, int type,
+				const char *file,int line),
+				int (*add_cb)(int *pointer, int amount,
+					int type, const char *file, int line))
 	{
 	fips_lck_cb = func;
+	fips_add_cb = add_cb;
+	}
+
+int FIPS_add_lock(int *pointer, int amount, int type, const char *file,
+	     int line)
+	{
+	if (fips_add_cb)
+		return fips_add_cb(pointer, amount, type, file, line);
+	*pointer += amount;
+	return *pointer;
 	}

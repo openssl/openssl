@@ -4251,7 +4251,7 @@ ASN1_SCTX_new                           4621	EXIST::FUNCTION:
 EC_GFp_nistp224_method                  4622	EXIST:!WIN32:FUNCTION:EC
 FIPS_rsa_verify_ctx                     4623	EXIST:OPENSSL_FIPS:FUNCTION:RSA
 FIPS_selftest                           4624	EXIST:OPENSSL_FIPS:FUNCTION:
-FIPS_set_locking_callback               4625	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_set_locking_callbacks              4625	EXIST:OPENSSL_FIPS:FUNCTION:
 fips_set_selftest_fail                  4626	EXIST:OPENSSL_FIPS:FUNCTION:
 fips_check_rsa                          4627	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_check_incore_fingerprint           4628	EXIST:OPENSSL_FIPS:FUNCTION:
