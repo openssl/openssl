@@ -6,7 +6,7 @@
 
 int main(int argc, char **argv)
 {
-    printf("No FIPS DSA support\n");
+    printf("No FIPS ECDSA support\n");
     return(0);
 }
 #else
@@ -22,11 +22,47 @@ int main(int argc, char **argv)
 #include <openssl/objects.h>
 
 
-static int lookup_curve(const char *curve_name)
+static int lookup_curve(char *curve_name, const EVP_MD **pmd)
 	{
-	char cname[6];
-	strncpy(cname, curve_name, 5);
-	cname[5] = 0;
+	char *cname, *p;
+	cname = curve_name + 1;
+	p = strchr(cname, ']');
+	if (!p)
+		{
+		fprintf(stderr, "Parse error: missing ]\n");
+		return NID_undef;
+		}
+	*p = 0;
+	p = strchr(cname, ',');
+	if (p)
+		{
+		if (!pmd)
+			{
+			fprintf(stderr, "Parse error: unexpected digest\n");
+			return NID_undef;
+			}
+		*p = 0;
+		p++;
+
+		if (!strcmp(p, "SHA-1"))
+			*pmd = EVP_sha1();
+		else if (!strcmp(p, "SHA-224"))
+			*pmd = EVP_sha224();
+		else if (!strcmp(p, "SHA-256"))
+			*pmd = EVP_sha256();
+		else if (!strcmp(p, "SHA-384"))
+			*pmd = EVP_sha384();
+		else if (!strcmp(p, "SHA-512"))
+			*pmd = EVP_sha512();
+		else
+			{
+			fprintf(stderr, "Unknown digest %s\n", p);
+			return NID_undef;
+			}
+		}
+	else if(pmd)
+		*pmd = EVP_sha1();
+
 	if (!strcmp(cname, "B-163"))
 		return NID_sect163r2;
 	if (!strcmp(cname, "B-233"))
@@ -65,7 +101,7 @@ static int lookup_curve(const char *curve_name)
 static int PKV(void)
 	{
 
-	char buf[1024], lbuf[1024];
+	char buf[2048], lbuf[2048];
 	char *keyword, *value;
 	int curve_nid = NID_undef;
 	BIGNUM *Qx = NULL, *Qy = NULL;
@@ -75,7 +111,7 @@ static int PKV(void)
 		fputs(buf, stdout);
 		if (*buf == '[')
 			{
-			curve_nid = lookup_curve(buf + 1);
+			curve_nid = lookup_curve(buf, NULL);
 			if (curve_nid == NID_undef)
 				return 0;
 				
@@ -109,7 +145,7 @@ static int PKV(void)
 
 static int SigVer(void)
 	{
-	char buf[1024], lbuf[1024];
+	char buf[2048], lbuf[2048];
 	char *keyword, *value;
 	unsigned char *msg;
 	int curve_nid = NID_undef;
@@ -117,7 +153,7 @@ static int SigVer(void)
 	BIGNUM *Qx = NULL, *Qy = NULL;
 	EC_KEY *key = NULL;
 	ECDSA_SIG sg, *sig = &sg;
-	const EVP_MD *digest = EVP_sha1();
+	const EVP_MD *digest = NULL;
 	EVP_MD_CTX mctx;
 	EVP_MD_CTX_init(&mctx);
 	sig->r = NULL;
@@ -127,7 +163,7 @@ static int SigVer(void)
 		fputs(buf, stdout);
 		if (*buf == '[')
 			{
-			curve_nid = lookup_curve(buf + 1);
+			curve_nid = lookup_curve(buf, &digest);
 			if (curve_nid == NID_undef)
 				return 0;
 			}

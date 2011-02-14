@@ -116,6 +116,15 @@ int hex2bin(const char *in, unsigned char *out)
 	    out[n2++]=ch;
 	    break;
 	    }
+	/* If input is odd length first digit is least significant: assumes
+	 * all digits valid hex and null terminated which is true for the
+	 * strings we pass.
+	 */
+	if (n1 == 1 && strlen(in) & 1)
+		{
+		out[n2++] = ch;
+		continue;
+		}
 	out[n2] = ch << 4;
 	/* second byte */
 	if ((in[n1] >= '0') && (in[n1] <= '9'))
