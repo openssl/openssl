@@ -69,6 +69,8 @@
  *
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <openssl/err.h>
 #include "ec_lcl.h"
 
@@ -78,7 +80,10 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 	const EC_METHOD *meth;
 	EC_GROUP *ret;
 
-	meth = EC_GFp_nist_method();
+	if (BN_nist_mod_func(p))
+		meth = EC_GFp_nist_method();
+	else
+		meth = EC_GFp_mont_method();
 	
 	ret = EC_GROUP_new(meth);
 	if (ret == NULL)
@@ -86,37 +91,8 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 
 	if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx))
 		{
-		unsigned long err;
-		  
-		err = ERR_peek_last_error();
-
-		if (!(ERR_GET_LIB(err) == ERR_LIB_EC &&
-			((ERR_GET_REASON(err) == EC_R_NOT_A_NIST_PRIME) ||
-			 (ERR_GET_REASON(err) == EC_R_NOT_A_SUPPORTED_NIST_PRIME))))
-			{
-			/* real error */
-			
-			EC_GROUP_clear_free(ret);
-			return NULL;
-			}
-			
-		
-		/* not an actual error, we just cannot use EC_GFp_nist_method */
-
-		ERR_clear_error();
-
 		EC_GROUP_clear_free(ret);
-		meth = EC_GFp_mont_method();
-
-		ret = EC_GROUP_new(meth);
-		if (ret == NULL)
-			return NULL;
-
-		if (!EC_GROUP_set_curve_GFp(ret, p, a, b, ctx))
-			{
-			EC_GROUP_clear_free(ret);
-			return NULL;
-			}
+		return NULL;
 		}
 
 	return ret;
