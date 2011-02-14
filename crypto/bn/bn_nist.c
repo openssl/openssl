@@ -834,3 +834,18 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	return 1;
 	}
+
+int (*BN_nist_mod_func(const BIGNUM *p))(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
+	{
+	if (BN_ucmp(&_bignum_nist_p_192, p) == 0)
+		return BN_nist_mod_192;
+	if (BN_ucmp(&_bignum_nist_p_224, p) == 0)
+		return BN_nist_mod_224;
+	if (BN_ucmp(&_bignum_nist_p_256, p) == 0)
+		return BN_nist_mod_256;
+	if (BN_ucmp(&_bignum_nist_p_384, p) == 0)
+		return BN_nist_mod_384;
+	if (BN_ucmp(&_bignum_nist_p_521, p) == 0)
+		return BN_nist_mod_521;
+	return 0;
+	}
