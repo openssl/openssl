@@ -69,6 +69,8 @@
  *
  */
 
+#define OPENSSL_FIPSAPI
+
 #include "ec_lcl.h"
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>

@@ -82,10 +82,15 @@
 # endif
 #endif
 
+/* Use default functions for poin2oct, oct2point and compressed coordinates */
+#define EC_FLAGS_DEFAULT_OCT	0x1
+
 /* Structure details are not part of the exported interface,
  * so all this may change in future versions. */
 
 struct ec_method_st {
+	/* Various method flags */
+	int flags;
 	/* used by EC_METHOD_get_field_type: */
 	int field_type; /* a NID */
 
