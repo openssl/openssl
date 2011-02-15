@@ -52,8 +52,8 @@
 int hex2bin(const char *in, unsigned char *out);
 unsigned char *hex2bin_m(const char *in, long *plen);
 int do_hex2bn(BIGNUM **pr, const char *in);
-int do_bn_print(FILE *out, BIGNUM *bn);
-int do_bn_print_name(FILE *out, const char *name, BIGNUM *bn);
+int do_bn_print(FILE *out, const BIGNUM *bn);
+int do_bn_print_name(FILE *out, const char *name, const BIGNUM *bn);
 int parse_line(char **pkw, char **pval, char *linebuf, char *olinebuf);
 BIGNUM *hex2bn(const char *in);
 int bin2hex(const unsigned char *in,int len,char *out);
@@ -171,7 +171,7 @@ int do_hex2bn(BIGNUM **pr, const char *in)
 	return r;
 	}
 
-int do_bn_print(FILE *out, BIGNUM *bn)
+int do_bn_print(FILE *out, const BIGNUM *bn)
 	{
 	int len, i;
 	unsigned char *tmp;
@@ -195,7 +195,7 @@ int do_bn_print(FILE *out, BIGNUM *bn)
 	return 1;
 	}
 
-int do_bn_print_name(FILE *out, const char *name, BIGNUM *bn)
+int do_bn_print_name(FILE *out, const char *name, const BIGNUM *bn)
 	{
 	int r;
 	fprintf(out, "%s = ", name);

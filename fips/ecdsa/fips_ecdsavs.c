@@ -22,9 +22,11 @@ int main(int argc, char **argv)
 #include <openssl/objects.h>
 
 
-static int lookup_curve(char *curve_name, const EVP_MD **pmd)
+static int lookup_curve(char *in, char *curve_name, const EVP_MD **pmd)
 	{
 	char *cname, *p;
+	/* Copy buffer as we will change it */
+	strcpy(curve_name, in);
 	cname = curve_name + 1;
 	p = strchr(cname, ']');
 	if (!p)
@@ -98,6 +100,93 @@ static int lookup_curve(char *curve_name, const EVP_MD **pmd)
 	return NID_undef;
 	}
 
+static int ec_get_pubkey(EC_KEY *key, BIGNUM *x, BIGNUM *y)
+	{
+	const EC_POINT *pt;
+	const EC_GROUP *grp;
+	const EC_METHOD *meth;
+	int rv;
+	BN_CTX *ctx;
+	ctx = BN_CTX_new();
+	if (!ctx)
+		return 0;
+	grp = EC_KEY_get0_group(key);
+	pt = EC_KEY_get0_public_key(key);
+	meth = EC_GROUP_method_of(grp);
+	if (EC_METHOD_get_field_type(meth) == NID_X9_62_prime_field)
+		rv = EC_POINT_get_affine_coordinates_GFp(grp, pt, x, y, ctx);
+	else
+		rv = EC_POINT_get_affine_coordinates_GF2m(grp, pt, x, y, ctx);
+
+	BN_CTX_free(ctx);
+
+	return rv;
+
+	}
+
+static int KeyPair(void)
+	{
+	char buf[2048], lbuf[2048];
+	char *keyword, *value;
+	int curve_nid = NID_undef;
+	int i, count;
+	BIGNUM *Qx = NULL, *Qy = NULL;
+	const BIGNUM *d = NULL;
+	EC_KEY *key = NULL;
+	Qx = BN_new();
+	Qy = BN_new();
+	while(fgets(buf, sizeof buf, stdin) != NULL)
+		{
+		if (*buf == '[' && buf[2] == '-')
+			{
+			if (buf[2] == '-')
+			curve_nid = lookup_curve(buf, lbuf, NULL);
+			fputs(buf, stdout);
+			continue;
+			}
+		if (!parse_line(&keyword, &value, lbuf, buf))
+			{
+			fputs(buf, stdout);
+			continue;
+			}
+		if (!strcmp(keyword, "N"))
+			{
+			count = atoi(value);
+
+			for (i = 0; i < count; i++)
+				{
+
+				key = EC_KEY_new_by_curve_name(curve_nid);
+				if (!EC_KEY_generate_key(key))
+					{
+					fprintf(stderr, "Error generating key\n");
+					return 0;
+					}
+
+				if (!ec_get_pubkey(key, Qx, Qy))
+					{
+					fprintf(stderr, "Error getting public key\n");
+					return 0;
+					}
+
+				d = EC_KEY_get0_private_key(key);
+
+				do_bn_print_name(stdout, "d", d);
+				do_bn_print_name(stdout, "Qx", Qx);
+				do_bn_print_name(stdout, "Qy", Qy);
+				fputs("\n", stdout);
+				EC_KEY_free(key);
+
+				}
+
+			}
+
+		}
+	BN_free(Qx);
+	BN_free(Qy);
+	return 1;
+	}
+
 static int PKV(void)
 	{
 
@@ -109,9 +198,9 @@ static int PKV(void)
 	while(fgets(buf, sizeof buf, stdin) != NULL)
 		{
 		fputs(buf, stdout);
-		if (*buf == '[')
+		if (*buf == '[' && buf[2] == '-')
 			{
-			curve_nid = lookup_curve(buf, NULL);
+			curve_nid = lookup_curve(buf, lbuf, NULL);
 			if (curve_nid == NID_undef)
 				return 0;
 				
@@ -143,6 +232,82 @@ static int PKV(void)
 	return 1;
 	}
 
+static int SigGen(void)
+	{
+	char buf[2048], lbuf[2048];
+	char *keyword, *value;
+	unsigned char *msg;
+	int curve_nid = NID_undef;
+	long mlen;
+	BIGNUM *Qx = NULL, *Qy = NULL;
+	EC_KEY *key = NULL;
+	ECDSA_SIG *sig = NULL;
+	const EVP_MD *digest = NULL;
+	EVP_MD_CTX mctx;
+	EVP_MD_CTX_init(&mctx);
+	Qx = BN_new();
+	Qy = BN_new();
+	while(fgets(buf, sizeof buf, stdin) != NULL)
+		{
+		fputs(buf, stdout);
+		if (*buf == '[')
+			{
+			curve_nid = lookup_curve(buf, lbuf, &digest);
+			if (curve_nid == NID_undef)
+				return 0;
+			}
+		if (!parse_line(&keyword, &value, lbuf, buf))
+			continue;
+		if (!strcmp(keyword, "Msg"))
+			{
+			msg = hex2bin_m(value, &mlen);
+			if (!msg)
+				{
+				fprintf(stderr, "Invalid Message\n");
+				return 0;
+				}
+
+			key = EC_KEY_new_by_curve_name(curve_nid);
+			if (!EC_KEY_generate_key(key))
+				{
+				fprintf(stderr, "Error generating key\n");
+				return 0;
+				}
+
+			if (!ec_get_pubkey(key, Qx, Qy))
+				{
+				fprintf(stderr, "Error getting public key\n");
+				return 0;
+				}
+
+			FIPS_digestinit(&mctx, digest);
+			FIPS_digestupdate(&mctx, msg, mlen);
+	    		sig = FIPS_ecdsa_sign_ctx(key, &mctx);
+
+			if (!sig)
+				{
+				fprintf(stderr, "Error signing message\n");
+				return 0;
+				}
+
+			do_bn_print_name(stdout, "Qx", Qx);
+			do_bn_print_name(stdout, "Qy", Qy);
+			do_bn_print_name(stdout, "R", sig->r);
+			do_bn_print_name(stdout, "S", sig->s);
+
+			EC_KEY_free(key);
+
+			FIPS_ecdsa_sig_free(sig);
+
+			}
+
+		}
+	BN_free(Qx);
+	BN_free(Qy);
+	FIPS_md_ctx_cleanup(&mctx);
+	return 1;
+	}
+
 static int SigVer(void)
 	{
 	char buf[2048], lbuf[2048];
@@ -163,7 +328,7 @@ static int SigVer(void)
 		fputs(buf, stdout);
 		if (*buf == '[')
 			{
-			curve_nid = lookup_curve(buf, &digest);
+			curve_nid = lookup_curve(buf, lbuf, &digest);
 			if (curve_nid == NID_undef)
 				return 0;
 			}
@@ -236,26 +401,32 @@ static int SigVer(void)
 int main(int argc, char **argv)
 	{
 	const char *cmd = argv[1];
+	int rv = 0;
 	fips_set_error_print();
 	if (!cmd)
 		{
-		fprintf(stderr, "fips_ecdsavs [PKV|SigVer]\n");
+		fprintf(stderr, "fips_ecdsavs [KeyPair|PKV|SigGen|SigVer]\n");
 		return 1;
 		}
-	if (!strcmp(cmd, "PKV"))
+	if (!strcmp(cmd, "KeyPair"))
+		rv = KeyPair();
+	else if (!strcmp(cmd, "PKV"))
+		rv = PKV();
+	else if (!strcmp(cmd, "SigVer"))
+		rv = SigVer();
+	else if (!strcmp(cmd, "SigGen"))
+		rv = SigGen();
+	else
 		{
-		if (PKV() <= 0)
-			goto err;
+		fprintf(stderr, "Unknown command %s\n", cmd);
+		return 1;
 		}
-	if (!strcmp(cmd, "SigVer"))
+	if (rv <= 0)
 		{
-		if (SigVer() <= 0)
-			goto err;
+		fprintf(stderr, "Error running %s\n", cmd);
+		return 1;
 		}
 	return 0;
-	err:
-	fprintf(stderr, "Error running %s\n", cmd);
-	return 1;
 	}
 
 #endif
