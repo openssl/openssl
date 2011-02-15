@@ -232,6 +232,35 @@ int EC_KEY_up_ref(EC_KEY *r)
 	return ((i > 1) ? 1 : 0);
 	}
 
+#ifdef OPENSSL_FIPS
+
+#include <openssl/evp.h>
+
+static int fips_ec_pairwise_fail = 0;
+
+void FIPS_corrupt_ec_keygen(void)
+	{
+	fips_ec_pairwise_fail = 1;
+	}
+
+static int fips_check_ec(EC_KEY *key)
+	{
+	EVP_PKEY pk;
+	unsigned char tbs[] = "ECDSA Pairwise Check Data";
+    	pk.type = EVP_PKEY_EC;
+    	pk.pkey.ec = key;
+
+	if (!fips_pkey_signature_test(&pk, tbs, -1, NULL, 0, NULL, 0, NULL))
+		{
+		FIPSerr(FIPS_F_FIPS_CHECK_EC,FIPS_R_PAIRWISE_TEST_FAILED);
+		fips_set_selftest_fail();
+		return 0;
+		}
+	return 1;
+	}
+
+#endif
+
 int EC_KEY_generate_key(EC_KEY *eckey)
 	{	
 	int	ok = 0;
@@ -279,6 +308,17 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 
 	eckey->priv_key = priv_key;
 	eckey->pub_key  = pub_key;
+
+#ifdef OPENSSL_FIPS
+	if (fips_ec_pairwise_fail)
+		BN_add_word(eckey->priv_key, 1);
+	if(!fips_check_ec(eckey))
+		{
+		eckey->priv_key = NULL;
+		eckey->pub_key  = NULL;
+	    	goto err;
+		}
+#endif
 
 	ok=1;
 

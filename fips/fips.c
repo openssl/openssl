@@ -56,6 +56,7 @@
 #include <openssl/hmac.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
+#include <openssl/ecdsa.h>
 #include <string.h>
 #include <limits.h>
 #include "fips_locl.h"
@@ -437,6 +438,7 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 	unsigned char sigtmp[256], *sig = sigtmp;
 	unsigned int siglen;
 	DSA_SIG *dsig = NULL;
+	ECDSA_SIG *esig = NULL;
 	EVP_MD_CTX mctx;
 	FIPS_md_ctx_init(&mctx);
 
@@ -473,6 +475,12 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 		if (!dsig)
 			goto error;
 		}
+	else if (pkey->type == EVP_PKEY_EC)
+		{
+		esig = FIPS_ecdsa_sign_ctx(pkey->pkey.ec, &mctx);
+		if (!esig)
+			goto error;
+		}
 #if 0
 	else if (!EVP_SignFinal(&mctx, sig, &siglen, pkey))
 		goto error;
@@ -494,6 +502,10 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 		{
 		ret = FIPS_dsa_verify_ctx(pkey->pkey.dsa, &mctx, dsig);
 		}
+	else if (pkey->type == EVP_PKEY_EC)
+		{
+		ret = FIPS_ecdsa_verify_ctx(pkey->pkey.ec, &mctx, esig);
+		}
 #if 0
 	else
 		ret = EVP_VerifyFinal(&mctx, sig, siglen, pkey);
@@ -502,6 +514,8 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 	error:
 	if (dsig != NULL)
 		FIPS_dsa_sig_free(dsig);
+	if (esig != NULL)
+		FIPS_ecdsa_sig_free(esig);
 	if (sig != sigtmp)
 		OPENSSL_free(sig);
 	FIPS_md_ctx_cleanup(&mctx);

@@ -84,6 +84,7 @@ int FIPS_selftest_rsa(void);
 void FIPS_corrupt_dsa(void);
 void FIPS_corrupt_dsa_keygen(void);
 int FIPS_selftest_dsa(void);
+void FIPS_corrupt_ec_keygen(void);
 void FIPS_corrupt_rng(void);
 void FIPS_rng_stick(void);
 int FIPS_selftest_rng(void);
@@ -180,6 +181,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_EVP_CIPHERINIT_EX			 124
 #define FIPS_F_EVP_DIGESTINIT_EX			 125
 #define FIPS_F_FIPS_CHECK_DSA				 104
+#define FIPS_F_FIPS_CHECK_EC				 129
 #define FIPS_F_FIPS_CHECK_INCORE_FINGERPRINT		 105
 #define FIPS_F_FIPS_CHECK_RSA				 106
 #define FIPS_F_FIPS_CIPHERINIT				 128
