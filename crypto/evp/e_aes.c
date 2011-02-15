@@ -119,7 +119,7 @@ static int aes_counter (EVP_CIPHER_CTX *ctx, unsigned char *out,
 static const EVP_CIPHER aes_128_ctr_cipher=
 	{
 	NID_aes_128_ctr,1,16,16,
-	EVP_CIPH_CTR_MODE,
+	EVP_CIPH_CTR_MODE|EVP_CIPH_FLAG_FIPS,
 	aes_init_key,
 	aes_counter,
 	NULL,
@@ -136,7 +136,7 @@ const EVP_CIPHER *EVP_aes_128_ctr (void)
 static const EVP_CIPHER aes_192_ctr_cipher=
 	{
 	NID_aes_192_ctr,1,24,16,
-	EVP_CIPH_CTR_MODE,
+	EVP_CIPH_CTR_MODE|EVP_CIPH_FLAG_FIPS,
 	aes_init_key,
 	aes_counter,
 	NULL,
@@ -153,7 +153,7 @@ const EVP_CIPHER *EVP_aes_192_ctr (void)
 static const EVP_CIPHER aes_256_ctr_cipher=
 	{
 	NID_aes_256_ctr,1,32,16,
-	EVP_CIPH_CTR_MODE,
+	EVP_CIPH_CTR_MODE|EVP_CIPH_FLAG_FIPS,
 	aes_init_key,
 	aes_counter,
 	NULL,
@@ -415,7 +415,8 @@ static const EVP_CIPHER aes_128_gcm_cipher=
 	NID_aes_128_gcm,1,16,12,
 	EVP_CIPH_GCM_MODE|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1
 		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER
-		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT,
+		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT
+		| EVP_CIPH_FLAG_FIPS,
 	aes_gcm_init_key,
 	aes_gcm,
 	aes_gcm_cleanup,
@@ -434,7 +435,8 @@ static const EVP_CIPHER aes_192_gcm_cipher=
 	NID_aes_128_gcm,1,24,12,
 	EVP_CIPH_GCM_MODE|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1
 		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER
-		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT,
+		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT
+		| EVP_CIPH_FLAG_FIPS,
 	aes_gcm_init_key,
 	aes_gcm,
 	aes_gcm_cleanup,
@@ -453,7 +455,8 @@ static const EVP_CIPHER aes_256_gcm_cipher=
 	NID_aes_128_gcm,1,32,12,
 	EVP_CIPH_GCM_MODE|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1
 		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER
-		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT,
+		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT
+		| EVP_CIPH_FLAG_FIPS,
 	aes_gcm_init_key,
 	aes_gcm,
 	aes_gcm_cleanup,
