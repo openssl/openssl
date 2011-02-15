@@ -98,8 +98,15 @@ static void fips_set_error_print(void)
 
 int hex2bin(const char *in, unsigned char *out)
     {
-    int n1, n2;
+    int n1, n2, isodd = 0;
     unsigned char ch;
+
+    n1 = strlen(in);
+    if (in[n1 - 1] == '\n')
+	n1--;
+
+    if (n1 & 1)
+	isodd = 1;
 
     for (n1=0,n2=0 ; in[n1] && in[n1] != '\n' ; )
 	{ /* first byte */
@@ -120,7 +127,7 @@ int hex2bin(const char *in, unsigned char *out)
 	 * all digits valid hex and null terminated which is true for the
 	 * strings we pass.
 	 */
-	if (n1 == 1 && strlen(in) & 1)
+	if (n1 == 1 && isodd)
 		{
 		out[n2++] = ch;
 		continue;
