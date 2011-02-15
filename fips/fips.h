@@ -114,6 +114,9 @@ void FIPS_set_locking_callbacks(void (*func)(int mode, int type,
 				int (*add_cb)(int *pointer, int amount,
 					int type, const char *file, int line));
 
+#define FIPS_ERROR_IGNORED(alg) OpenSSLDie(__FILE__, __LINE__, \
+		alg " previous FIPS forbidden algorithm error ignored");
+
 /* Where necessary redirect standard OpenSSL APIs to FIPS versions */
 
 #if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSAPI)
@@ -179,6 +182,8 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_CHECK_DSA				 104
 #define FIPS_F_FIPS_CHECK_INCORE_FINGERPRINT		 105
 #define FIPS_F_FIPS_CHECK_RSA				 106
+#define FIPS_F_FIPS_CIPHERINIT				 128
+#define FIPS_F_FIPS_DIGESTINIT				 127
 #define FIPS_F_FIPS_DSA_CHECK				 107
 #define FIPS_F_FIPS_MODE_SET				 108
 #define FIPS_F_FIPS_PKEY_SIGNATURE_TEST			 109

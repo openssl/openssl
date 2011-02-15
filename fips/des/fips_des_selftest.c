@@ -111,14 +111,6 @@ int FIPS_selftest_des()
     int n, ret = 0;
     EVP_CIPHER_CTX ctx;
     FIPS_cipher_ctx_init(&ctx);
-    /* Encrypt/decrypt with 2-key 3DES and compare to known answers */
-    for(n=0 ; n < 2 ; ++n)
-	{
-	if (!fips_cipher_test(&ctx, EVP_des_ede_ecb(),
-				tests2[n].key, NULL,
-				tests2[n].plaintext, tests2[n].ciphertext, 8))
-		goto err;
-	}
 
     /* Encrypt/decrypt with 3DES and compare to known answers */
     for(n=0 ; n < 2 ; ++n)

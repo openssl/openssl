@@ -162,6 +162,7 @@ static ERR_STRING_DATA EVP_str_reasons[]=
 {ERR_REASON(EVP_R_DECODE_ERROR)          ,"decode error"},
 {ERR_REASON(EVP_R_DIFFERENT_KEY_TYPES)   ,"different key types"},
 {ERR_REASON(EVP_R_DIFFERENT_PARAMETERS)  ,"different parameters"},
+{ERR_REASON(EVP_R_DISABLED_FOR_FIPS)     ,"disabled for fips"},
 {ERR_REASON(EVP_R_ENCODE_ERROR)          ,"encode error"},
 {ERR_REASON(EVP_R_EVP_PBE_CIPHERINIT_ERROR),"evp pbe cipherinit error"},
 {ERR_REASON(EVP_R_EXPECTING_AN_RSA_KEY)  ,"expecting an rsa key"},

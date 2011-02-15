@@ -219,6 +219,8 @@ int FIPS_rsa_sign_digest(RSA *rsa, const unsigned char *md, int md_len,
 	/* Largest DigestInfo: 19 (max encoding) + max MD */
 	unsigned char tmpdinfo[19 + EVP_MAX_MD_SIZE];
 
+	FIPS_selftest_check();
+
 	md_type = M_EVP_MD_type(mhash);
 
 	if (rsa_pad_mode == RSA_X931_PADDING)
@@ -325,6 +327,8 @@ int FIPS_rsa_verify_digest(RSA *rsa, const unsigned char *dig, int diglen,
 		RSAerr(RSA_F_FIPS_RSA_VERIFY_DIGEST,RSA_R_WRONG_SIGNATURE_LENGTH);
 		return(0);
 		}
+
+	FIPS_selftest_check();
 
 	md_type = M_EVP_MD_type(mhash);
 

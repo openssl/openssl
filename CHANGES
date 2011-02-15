@@ -4,10 +4,13 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add selftest checks and algorithm block of non-fips algorithms in
+     FIPS mode. Remove DES2 from selftests.
+     [Steve Henson]
+
   *) Add ECDSA code to fips module. Add tiny fips_ecdsa_check to just
      return internal method without any ENGINE dependencies. Add new
-     tiny fips sign and verify functions. Initial incomplete algorithm
-     test program.
+     tiny fips sign and verify functions.
      [Steve Henson]
 
   *) New build option no-ec2m to disable characteristic 2 code.

@@ -78,9 +78,53 @@ EVP_CIPHER_CTX *FIPS_cipher_ctx_new(void)
 	return ctx;
 	}
 
+/* The purpose of these is to trap programs that attempt to use non FIPS
+ * algorithms in FIPS mode and ignore the errors.
+ */
+
+static int bad_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+		    const unsigned char *iv, int enc)
+	{ FIPS_ERROR_IGNORED("Cipher init"); return 0;}
+
+static int bad_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+			 const unsigned char *in, size_t inl)
+	{ FIPS_ERROR_IGNORED("Cipher update"); return 0;}
+
+/* NB: no cleanup because it is allowed after failed init */
+
+static int bad_set_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *typ)
+	{ FIPS_ERROR_IGNORED("Cipher set_asn1"); return 0;}
+static int bad_get_asn1(EVP_CIPHER_CTX *ctx, ASN1_TYPE *typ)
+	{ FIPS_ERROR_IGNORED("Cipher get_asn1"); return 0;}
+static int bad_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
+	{ FIPS_ERROR_IGNORED("Cipher ctrl"); return 0;}
+
+static const EVP_CIPHER bad_cipher =
+	{
+	0,
+	0,
+	0,
+	0,
+	0,
+	bad_init,
+	bad_do_cipher,
+	NULL,
+	0,
+	bad_set_asn1,
+	bad_get_asn1,
+	bad_ctrl,
+	NULL
+	};
+
 int FIPS_cipherinit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     const unsigned char *key, const unsigned char *iv, int enc)
 	{
+	if(FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_CIPHERINIT,FIPS_R_FIPS_SELFTEST_FAILED);
+		ctx->cipher = &bad_cipher;
+		return 0;
+		}
 	if (enc == -1)
 		enc = ctx->encrypt;
 	else
@@ -91,6 +135,14 @@ int FIPS_cipherinit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 		}
 	if (cipher)
 		{
+		/* Only FIPS ciphers allowed */
+		if (FIPS_mode() && !(cipher->flags & EVP_CIPH_FLAG_FIPS) &&
+			!(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW))
+			{
+			EVPerr(EVP_F_FIPS_CIPHERINIT, EVP_R_DISABLED_FOR_FIPS);
+			ctx->cipher = &bad_cipher;
+			return 0;
+			}
 		/* Ensure a context left lying around from last time is cleared
 		 * (the previous check attempted to avoid this if the same
 		 * ENGINE and EVP_CIPHER could be used). */
@@ -208,6 +260,7 @@ int FIPS_cipher_ctx_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 		EVPerr(EVP_F_FIPS_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
 		return 0;
 	}
+	FIPS_selftest_check();
 
 	if(!ctx->cipher->ctrl) {
 		EVPerr(EVP_F_FIPS_CIPHER_CTX_CTRL, EVP_R_CTRL_NOT_IMPLEMENTED);
@@ -226,5 +279,6 @@ int FIPS_cipher_ctx_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 int FIPS_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			const unsigned char *in, unsigned int inl)
 	{
+	FIPS_selftest_check();
 	return ctx->cipher->do_cipher(ctx,out,in,inl);
 	}

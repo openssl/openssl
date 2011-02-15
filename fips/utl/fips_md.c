@@ -135,9 +135,51 @@ EVP_MD_CTX *FIPS_md_ctx_create(void)
 	return ctx;
 	}
 
+/* The purpose of these is to trap programs that attempt to use non FIPS
+ * algorithms in FIPS mode and ignore the errors.
+ */
+
+static int bad_init(EVP_MD_CTX *ctx)
+	{ FIPS_ERROR_IGNORED("Digest init"); return 0;}
+
+static int bad_update(EVP_MD_CTX *ctx,const void *data,size_t count)
+	{ FIPS_ERROR_IGNORED("Digest update"); return 0;}
+
+static int bad_final(EVP_MD_CTX *ctx,unsigned char *md)
+	{ FIPS_ERROR_IGNORED("Digest Final"); return 0;}
+
+static const EVP_MD bad_md =
+	{
+	0,
+	0,
+	0,
+	0,
+	bad_init,
+	bad_update,
+	bad_final,
+	NULL,
+	NULL,
+	NULL,
+	0,
+	{0,0,0,0},
+	};
+
 int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type)
 	{
 	M_EVP_MD_CTX_clear_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
+	if(FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_DIGESTINIT,FIPS_R_FIPS_SELFTEST_FAILED);
+		ctx->digest = &bad_md;
+		return 0;
+		}
+	if(FIPS_mode() && !(type->flags & EVP_MD_FLAG_FIPS) &&
+		!(ctx->flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW))
+		{
+		EVPerr(EVP_F_FIPS_DIGESTINIT, EVP_R_DISABLED_FOR_FIPS);
+		ctx->digest = &bad_md;
+		return 0;
+		}
 	if (ctx->digest != type)
 		{
 		if (ctx->digest && ctx->digest->ctx_size)
@@ -162,6 +204,7 @@ int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type)
 
 int FIPS_digestupdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 	{
+	FIPS_selftest_check();
 	return ctx->update(ctx,data,count);
 	}
 
@@ -169,6 +212,8 @@ int FIPS_digestupdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 int FIPS_digestfinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	{
 	int ret;
+
+	FIPS_selftest_check();
 
 	OPENSSL_assert(ctx->digest->md_size <= EVP_MAX_MD_SIZE);
 	ret=ctx->digest->final(ctx,md);
