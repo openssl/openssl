@@ -116,7 +116,7 @@ static int FIPS_dsa_test(int bad)
     if (bad)
 	    BN_add_word(dsa->pub_key, 1);
 
-    if (!FIPS_digestinit(&mctx, EVP_sha1()))
+    if (!FIPS_digestinit(&mctx, EVP_sha256()))
 	goto end;
     if (!FIPS_digestupdate(&mctx, dgst, sizeof(dgst) - 1))
 	goto end;
@@ -124,7 +124,7 @@ static int FIPS_dsa_test(int bad)
     if (!sig)
 	goto end;
 
-    if (!FIPS_digestinit(&mctx, EVP_sha1()))
+    if (!FIPS_digestinit(&mctx, EVP_sha256()))
 	goto end;
     if (!FIPS_digestupdate(&mctx, dgst, sizeof(dgst) - 1))
 	goto end;
@@ -160,20 +160,20 @@ static int FIPS_rsa_test(int bad)
     if (!key || !bn)
 	return 0;
     BN_set_word(bn, 65537);
-    if (!RSA_generate_key_ex(key, 1024,bn,NULL))
+    if (!RSA_generate_key_ex(key, 2048,bn,NULL))
 	return 0;
     BN_free(bn);
     if (bad)
 	    BN_add_word(key->n, 1);
 
-    if (!FIPS_digestinit(&mctx, EVP_sha1()))
+    if (!FIPS_digestinit(&mctx, EVP_sha256()))
 	goto end;
     if (!FIPS_digestupdate(&mctx, input_ptext, sizeof(input_ptext) - 1))
 	goto end;
     if (!FIPS_rsa_sign_ctx(key, &mctx, RSA_PKCS1_PADDING, 0, NULL, buf, &slen))
 	goto end;
 
-    if (!FIPS_digestinit(&mctx, EVP_sha1()))
+    if (!FIPS_digestinit(&mctx, EVP_sha256()))
 	goto end;
     if (!FIPS_digestupdate(&mctx, input_ptext, sizeof(input_ptext) - 1))
 	goto end;
