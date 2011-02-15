@@ -85,8 +85,7 @@ static int fips_check_dsa(DSA *dsa)
     	pk.type = EVP_PKEY_DSA;
     	pk.pkey.dsa = dsa;
 
-	if (!fips_pkey_signature_test(&pk, tbs, -1,
-					NULL, 0, EVP_sha1(), 0, NULL))
+	if (!fips_pkey_signature_test(&pk, tbs, -1, NULL, 0, NULL, 0, NULL))
 		{
 		FIPSerr(FIPS_F_FIPS_CHECK_DSA,FIPS_R_PAIRWISE_TEST_FAILED);
 		fips_set_selftest_fail();

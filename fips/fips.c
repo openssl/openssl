@@ -454,6 +454,9 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 	if (tbslen == -1)
 		tbslen = strlen((char *)tbs);
 
+	if (digest == NULL)
+		digest = EVP_sha256();
+
 	if (!FIPS_digestinit(&mctx, digest))
 		goto error;
 	if (!FIPS_digestupdate(&mctx, tbs, tbslen))
