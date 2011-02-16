@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <openssl/crypto.h>
 #include <openssl/e_os2.h>
 #include <openssl/buffer.h>
-#include <openssl/crypto.h>
 
 int main(int argc, char *argv[])
 	{

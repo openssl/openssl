@@ -49,6 +49,7 @@
  *
  */
 
+#include <openssl/crypto.h>
 #include <openssl/aes.h>
 #include <openssl/rand.h>
 #include <stdio.h>

@@ -5,6 +5,7 @@
  * forms are granted according to the OpenSSL license.
  */
 
+#include <openssl/crypto.h>
 #include "modes_lcl.h"
 #include <string.h>
 

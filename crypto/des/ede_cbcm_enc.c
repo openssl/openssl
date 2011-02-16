@@ -68,6 +68,7 @@ http://www.cs.technion.ac.il/users/wwwb/cgi-bin/tr-get.cgi/1998/CS/CS0928.ps.gz
 
 */
 
+#include <openssl/crypto.h>
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_DESCBCM is defined */
 
 #ifndef OPENSSL_NO_DESCBCM

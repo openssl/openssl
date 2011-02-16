@@ -61,6 +61,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/crypto.h>
 #include "des_locl.h"
 
 #ifdef CBC_ENC_C__DONT_UPDATE_IV

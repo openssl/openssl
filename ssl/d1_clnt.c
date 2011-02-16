@@ -114,6 +114,7 @@
  */
 
 #include <stdio.h>
+#include <openssl/crypto.h>
 #include "ssl_locl.h"
 #ifndef OPENSSL_NO_KRB5
 #include "kssl_lcl.h"

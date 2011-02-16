@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/crypto.h>
 #include "des_locl.h"
 
 DES_LONG DES_cbc_cksum(const unsigned char *in, DES_cblock *output,

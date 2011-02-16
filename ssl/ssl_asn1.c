@@ -84,6 +84,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <openssl/crypto.h>
 #include "ssl_locl.h"
 #include <openssl/asn1_mac.h>
 #include <openssl/objects.h>
