@@ -49,7 +49,7 @@ FIPS_OBJ_LISTS=sha/lib hmac/lib rand/lib des/lib aes/lib dsa/lib rsa/lib \
 
 SRC= $(LIBSRC)
 
-EXHEADER=fips.h fipshacks.h
+EXHEADER=fips.h fipssyms.h
 HEADER=$(EXHEADER) fips_utl.h fips_locl.h
 EXE=fipsld
 

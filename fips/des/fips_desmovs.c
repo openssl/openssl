@@ -66,6 +66,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <ctype.h>
+#include <openssl/crypto.h>
 #include <openssl/des.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>

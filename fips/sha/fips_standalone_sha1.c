@@ -50,7 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/opensslconf.h>
+#include <openssl/crypto.h>
 #include <openssl/sha.h>
 #include <openssl/hmac.h>
 #include <openssl/fips.h>

@@ -4,6 +4,12 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add experimental option FIPSSYMS to give all symbols in
+     fipscanister.o and FIPS or fips prefix. This will avoid
+     conflicts with future versions of OpenSSL. Only works for
+     no-asm at present.
+     [Steve Henson]
+
   *) Add selftest checks and algorithm block of non-fips algorithms in
      FIPS mode. Remove DES2 from selftests.
      [Steve Henson]

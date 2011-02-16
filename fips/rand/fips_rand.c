@@ -52,7 +52,7 @@
 /*
  * This is a FIPS approved AES PRNG based on ANSI X9.31 A.2.4.
  */
-
+#include <openssl/crypto.h>
 #include "e_os.h"
 
 /* If we don't define _XOPEN_SOURCE_EXTENDED, struct timeval won't

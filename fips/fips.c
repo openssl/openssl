@@ -49,6 +49,7 @@
 
 #define OPENSSL_FIPSAPI
 
+#include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/fips_rand.h>
 #include <openssl/err.h>
