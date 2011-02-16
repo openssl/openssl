@@ -148,7 +148,7 @@ SHLIBDIRS= crypto
 SDIRS=  \
 	sha hmac des aes modes \
 	bn ec rsa dsa ecdsa dh ecdh \
-	buffer rand err evp cmac
+	buffer rand evp cmac
 # keep in mind that the above list is adjusted by ./Configure
 # according to no-xxx arguments...
 
