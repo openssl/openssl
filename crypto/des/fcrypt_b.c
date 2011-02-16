@@ -57,6 +57,7 @@
  */
 
 #include <stdio.h>
+#include <openssl/crypto.h>
 
 /* This version of crypt has been developed from my MIT compatible
  * DES library.

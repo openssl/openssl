@@ -123,10 +123,10 @@
 
 #include "e_os.h"
 
+#include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include "rand_lcl.h"
 
-#include <openssl/crypto.h>
 #include <openssl/err.h>
 
 #ifdef OPENSSL_FIPS
@@ -168,7 +168,7 @@ static int ssleay_rand_nopseudo_bytes(unsigned char *buf, int num);
 static int ssleay_rand_pseudo_bytes(unsigned char *buf, int num);
 static int ssleay_rand_status(void);
 
-RAND_METHOD rand_ssleay_meth={
+static RAND_METHOD rand_ssleay_meth={
 	ssleay_rand_seed,
 	ssleay_rand_nopseudo_bytes,
 	ssleay_rand_cleanup,

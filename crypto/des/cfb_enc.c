@@ -57,6 +57,7 @@
  */
 
 #include "e_os.h"
+#include <openssl/crypto.h>
 #include "des_locl.h"
 #include <assert.h>
 

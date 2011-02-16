@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/crypto.h>
 #include "des_locl.h"
 
 void DES_ecb3_encrypt(const_DES_cblock *input, DES_cblock *output,

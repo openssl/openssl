@@ -43,6 +43,7 @@
 #include <assert.h>
 
 #include <stdlib.h>
+#include <crypto/aes.h>
 #include <openssl/aes.h>
 #include "aes_locl.h"
 

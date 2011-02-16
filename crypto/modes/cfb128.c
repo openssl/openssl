@@ -48,6 +48,7 @@
  *
  */
 
+#include <openssl/crypto.h>
 #include "modes_lcl.h"
 #include <string.h>
 
