@@ -409,10 +409,6 @@
 #define SHA512_Update FIPS_sha512_update
 #define SHA512_version FIPS_sha512_version
 #define _shadow_DES_check_key fips__shadow_des_check_key
-#define aesni_cbc_encrypt fips_aesni_cbc_encrypt
-#define aesni_decrypt fips_aesni_decrypt
-#define aesni_set_decrypt_key fips_aesni_set_decrypt_key
-#define aesni_set_encrypt_key fips_aesni_set_encrypt_key
 #define bn_add_part_words fips_bn_add_part_words
 #define bn_cmp_part_words fips_bn_cmp_part_words
 #define bn_cmp_words fips_bn_cmp_words
@@ -502,9 +498,9 @@
 #define ec_wNAF_precompute_mult fips_ec_wnaf_precompute_mult
 #define int_bn_mod_inverse fips_int_bn_mod_inverse
 #define cleanse_ctr fips_cleanse_ctr
+/* assembler symbols */
 #define gcm_gmult_4bit_x86 fips_gcm_gmult_4bit_x86
 #define gcm_ghash_4bit_x86 fips_gcm_ghash_4bit_x86
-/* assembler symbols */
 #define AES_cbc_encrypt FIPS_aes_cbc_encrypt
 #define AES_decrypt FIPS_aes_decrypt
 #define AES_encrypt FIPS_aes_encrypt
@@ -559,3 +555,7 @@
 #define OPENSSL_far_spin fips_openssl_far_spin
 #define OPENSSL_indirect_call fips_openssl_indirect_call
 #define OPENSSL_instrument_halt fips_openssl_instrument_halt
+#define aesni_cbc_encrypt fips_aesni_cbc_encrypt
+#define aesni_decrypt fips_aesni_decrypt
+#define aesni_set_decrypt_key fips_aesni_set_decrypt_key
+#define aesni_set_encrypt_key fips_aesni_set_encrypt_key
