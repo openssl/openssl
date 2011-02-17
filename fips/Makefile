@@ -109,7 +109,6 @@ fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
 		set -x; ${FIPS_SITE_LD} -r -o $@ $$objs; \
 	elif $(CC) -dumpversion >/dev/null 2>&1; then \
 		set -x; $(CC) $$cflags -r -nostdlib -o $@ $$objs ; \
-		echo OBJS $$objs >/tmp/objs.txt ; \
 	else case "$$os" in \
 		HP-UX|OSF1|SunOS) set -x; /usr/ccs/bin/ld -r -o $@ $$objs ;; \
 		*) set -x; $(CC) $$cflags -r -o $@ $$objs ;; \
