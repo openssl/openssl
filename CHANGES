@@ -6,8 +6,9 @@
 
   *) Add experimental option FIPSSYMS to give all symbols in
      fipscanister.o and FIPS or fips prefix. This will avoid
-     conflicts with future versions of OpenSSL. Only works for
-     no-asm at present.
+     conflicts with future versions of OpenSSL. Add perl script
+     util/fipsas.pl to preprocess assembly language source files
+     and rename any affected symbols.
      [Steve Henson]
 
   *) Add selftest checks and algorithm block of non-fips algorithms in

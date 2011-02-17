@@ -78,7 +78,7 @@ LIBDIR=lib
 # dependent assembler flags. E.g. if you throw -mcpu=ultrasparc at SPARC
 # gcc, then the driver will automatically translate it to -xarch=v8plus
 # and pass it down to assembler.
-AS=$(CC) -c
+#AS=$(CC) -c
 ASFLAG=$(CFLAG)
 
 # For x86 assembler: Set PROCESSOR to 386 if you want to support
@@ -205,7 +205,7 @@ CLEARENV=	TOP= && unset TOP $${LIB+LIB} $${LIBS+LIBS}	\
 
 BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		CC='$(CC)' CFLAG='$(CFLAG)' 			\
-		AS='$(CC)' ASFLAG='$(CFLAG) -c'			\
+		ASFLAG='$(CFLAG) -c'			\
 		AR='$(AR)' NM='$(NM)' RANLIB='$(RANLIB)'	\
 		CROSS_COMPILE='$(CROSS_COMPILE)'	\
 		PERL='$(PERL)' ENGDIRS='$(ENGDIRS)'		\
@@ -367,6 +367,11 @@ build_crypto:
 	else \
 		ARX='${AR}' ; \
 	fi ; export ARX ; \
+	if [ $(FIPSCANISTERINTERNAL) = "y" ]; then \
+		AS='$(PERL) $${TOP}/util/fipsas.pl $${TOP} $${<} $(CC)' ; \
+	else \
+		AS='$(CC) -c' ; \
+	fi ; export AS ; \
 		dir=crypto; target=all; $(BUILD_ONE_CMD)
 build_ssl:
 	@dir=ssl; target=all; $(BUILD_ONE_CMD)

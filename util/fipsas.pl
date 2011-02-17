@@ -9,6 +9,19 @@ my @ARGS = @ARGV;
 my $top = shift @ARGS;
 my $target = shift @ARGS;
 
+# HACK to disable operation if no OPENSSL_FIPSSYMS option.
+# will go away when tested more fully.
+
+my $enabled = 0;
+
+foreach (@ARGS) { $enabled = 1 if /-DOPENSSL_FIPSSYMS/ ; }
+
+if ($enabled == 0)
+	{
+	system @ARGS;
+	exit $?
+	}
+
 # Open symbol rename file.
 open(IN, "$top/fips/fipssyms.h") || die "Can't open fipssyms.h";
 
