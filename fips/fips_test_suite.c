@@ -490,6 +490,9 @@ int main(int argc,char **argv)
         } else if (!strcmp(argv[1], "dsa")) {
             FIPS_corrupt_dsa();
             printf("DSA key generation and signature validation with corrupted KAT...\n");
+        } else if (!strcmp(argv[1], "ecdsa")) {
+            FIPS_corrupt_ecdsa();
+            printf("ECDSA key generation and signature validation with corrupted KAT...\n");
         } else if (!strcmp(argv[1], "rsa")) {
             FIPS_corrupt_rsa();
             printf("RSA key generation and signature validation with corrupted KAT...\n");

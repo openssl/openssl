@@ -22,8 +22,8 @@ TEST= fips_ecdsavs.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= fips_ecdsa_lib.c fips_ecdsa_sign.c
-LIBOBJ= fips_ecdsa_lib.o fips_ecdsa_sign.o
+LIBSRC= fips_ecdsa_lib.c fips_ecdsa_sign.c fips_ecdsa_selftest.c
+LIBOBJ= fips_ecdsa_lib.o fips_ecdsa_sign.o fips_ecdsa_selftest.o
 
 SRC= $(LIBSRC)
 

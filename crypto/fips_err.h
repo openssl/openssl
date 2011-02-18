@@ -90,6 +90,7 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_AES_GCM),	"FIPS_selftest_aes_gcm"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_DES),	"FIPS_selftest_des"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_DSA),	"FIPS_selftest_dsa"},
+{ERR_FUNC(FIPS_F_FIPS_SELFTEST_ECDSA),	"FIPS_selftest_ecdsa"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_HMAC),	"FIPS_selftest_hmac"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_RNG),	"FIPS_selftest_rng"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_SHA1),	"FIPS_selftest_sha1"},

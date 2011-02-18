@@ -86,6 +86,8 @@ int FIPS_selftest_rsa(void);
 void FIPS_corrupt_dsa(void);
 void FIPS_corrupt_dsa_keygen(void);
 int FIPS_selftest_dsa(void);
+int FIPS_selftest_ecdsa(void);
+void FIPS_corrupt_ecdsa(void);
 void FIPS_corrupt_ec_keygen(void);
 void FIPS_corrupt_rng(void);
 void FIPS_rng_stick(void);
@@ -195,6 +197,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_SELFTEST_AES_GCM			 130
 #define FIPS_F_FIPS_SELFTEST_DES			 111
 #define FIPS_F_FIPS_SELFTEST_DSA			 112
+#define FIPS_F_FIPS_SELFTEST_ECDSA			 131
 #define FIPS_F_FIPS_SELFTEST_HMAC			 113
 #define FIPS_F_FIPS_SELFTEST_RNG			 114
 #define FIPS_F_FIPS_SELFTEST_SHA1			 115

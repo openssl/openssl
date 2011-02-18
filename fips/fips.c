@@ -178,6 +178,7 @@ int FIPS_selftest(void)
 	&& FIPS_selftest_aes_gcm()
 	&& FIPS_selftest_des()
 	&& FIPS_selftest_rsa()
+	&& FIPS_selftest_ecdsa()
 	&& FIPS_selftest_dsa();
     }
 
