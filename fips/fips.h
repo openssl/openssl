@@ -75,6 +75,8 @@ void FIPS_selftest_check(void);
 void FIPS_corrupt_sha1(void);
 int FIPS_selftest_sha1(void);
 void FIPS_corrupt_aes(void);
+int FIPS_selftest_aes_gcm(void);
+void FIPS_corrupt_aes_gcm(void);
 int FIPS_selftest_aes(void);
 void FIPS_corrupt_des(void);
 int FIPS_selftest_des(void);
@@ -190,6 +192,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_MODE_SET				 108
 #define FIPS_F_FIPS_PKEY_SIGNATURE_TEST			 109
 #define FIPS_F_FIPS_SELFTEST_AES			 110
+#define FIPS_F_FIPS_SELFTEST_AES_GCM			 130
 #define FIPS_F_FIPS_SELFTEST_DES			 111
 #define FIPS_F_FIPS_SELFTEST_DSA			 112
 #define FIPS_F_FIPS_SELFTEST_HMAC			 113

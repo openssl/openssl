@@ -69,6 +69,47 @@ static int FIPS_aes_test(void)
 	return ret;
 	}
 
+static int FIPS_aes_gcm_test(void)
+	{
+	int ret = 0;
+	unsigned char pltmp[16];
+	unsigned char citmp[16];
+	unsigned char tagtmp[16];
+	unsigned char key[16] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16};
+	unsigned char iv[16] = {21,22,23,24,25,26,27,28,29,30,31,32};
+	unsigned char aad[] = "Some text AAD";
+	unsigned char plaintext[16] = "etaonrishdlcu";
+	EVP_CIPHER_CTX ctx;
+	FIPS_cipher_ctx_init(&ctx);
+	if (FIPS_cipherinit(&ctx, EVP_aes_128_gcm(), key, iv, 1) <= 0)
+		goto err;
+	FIPS_cipher(&ctx, NULL, aad, sizeof(aad));
+	FIPS_cipher(&ctx, citmp, plaintext, 16);
+	FIPS_cipher(&ctx, NULL, NULL, 0);
+	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_GET_TAG, 16, tagtmp))
+		goto err;
+
+	if (FIPS_cipherinit(&ctx, EVP_aes_128_gcm(), key, iv, 0) <= 0)
+		goto err;
+	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, 16, tagtmp))
+		goto err;
+
+	FIPS_cipher(&ctx, NULL, aad, sizeof(aad));
+
+	FIPS_cipher(&ctx, pltmp, citmp, 16);
+
+	if (FIPS_cipher(&ctx, NULL, NULL, 0) < 0)
+		goto err;
+
+	if (memcmp(pltmp, plaintext, 16))
+		goto err;
+
+	ret = 1;
+	err:
+	FIPS_cipher_ctx_cleanup(&ctx);
+	return ret;
+	}
+
 static int FIPS_des3_test(void)
 	{
 	int ret = 0;
@@ -440,6 +481,9 @@ int main(int argc,char **argv)
         if (!strcmp(argv[1], "aes")) {
             FIPS_corrupt_aes();
             printf("AES encryption/decryption with corrupted KAT...\n");
+        } else if (!strcmp(argv[1], "aes-gcm")) {
+            FIPS_corrupt_aes_gcm();
+            printf("AES-GCM encryption/decryption with corrupted KAT...\n");
         } else if (!strcmp(argv[1], "des")) {
             FIPS_corrupt_des();
             printf("DES3-ECB encryption/decryption with corrupted KAT...\n");
@@ -508,7 +552,10 @@ int main(int argc,char **argv)
 
     /* AES encryption/decryption
     */
-    test_msg("3. AES encryption/decryption", FIPS_aes_test());
+    test_msg("3a. AES encryption/decryption", FIPS_aes_test());
+    /* AES GCM encryption/decryption
+    */
+    test_msg("3b. AES-GCM encryption/decryption", FIPS_aes_gcm_test());
 
     /* RSA key generation and encryption/decryption
     */

@@ -87,6 +87,7 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_FIPS_MODE_SET),	"FIPS_mode_set"},
 {ERR_FUNC(FIPS_F_FIPS_PKEY_SIGNATURE_TEST),	"fips_pkey_signature_test"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_AES),	"FIPS_selftest_aes"},
+{ERR_FUNC(FIPS_F_FIPS_SELFTEST_AES_GCM),	"FIPS_selftest_aes_gcm"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_DES),	"FIPS_selftest_des"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_DSA),	"FIPS_selftest_dsa"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_HMAC),	"FIPS_selftest_hmac"},
