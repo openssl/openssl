@@ -58,7 +58,7 @@
 #include <assert.h>
 #include <openssl/aes.h>
 #include "evp_locl.h"
-#include <openssl/modes.h>
+#include "modes_lcl.h"
 #include <openssl/rand.h>
 
 static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -196,8 +196,7 @@ typedef struct
 	int key_set;
 	/* Set if an iv is set */
 	int iv_set;
-	/* Pointer to GCM128_CTX: FIXME actual structure later */
-	GCM128_CONTEXT *gcm;
+	GCM128_CONTEXT gcm;
 	/* Temporary IV store */
 	unsigned char *iv;
 	/* IV length */
@@ -212,8 +211,7 @@ typedef struct
 static int aes_gcm_cleanup(EVP_CIPHER_CTX *c)
 	{
 	EVP_AES_GCM_CTX *gctx = c->cipher_data;
-	if (gctx->gcm)
-		CRYPTO_gcm128_release(gctx->gcm);
+	OPENSSL_cleanse(&gctx->gcm, sizeof(gctx->gcm));
 	if (gctx->iv != c->iv)
 		OPENSSL_free(gctx->iv);
 	return 1;
@@ -239,7 +237,6 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	switch (type)
 		{
 	case EVP_CTRL_INIT:
-		gctx->gcm = NULL;
 		gctx->key_set = 0;
 		gctx->iv_set = 0;
 		gctx->ivlen = c->cipher->iv_len;
@@ -304,7 +301,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	case EVP_CTRL_GCM_IV_GEN:
 		if (gctx->iv_gen == 0 || gctx->key_set == 0)
 			return 0;
-		CRYPTO_gcm128_setiv(gctx->gcm, gctx->iv, gctx->ivlen);
+		CRYPTO_gcm128_setiv(&gctx->gcm, gctx->iv, gctx->ivlen);
 		memcpy(ptr, gctx->iv, gctx->ivlen);
 		/* Invocation field will be at least 8 bytes in size and
 		 * so no need to check wrap around or increment more than
@@ -329,15 +326,7 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	if (key)
 		{
 		AES_set_encrypt_key(key, ctx->key_len * 8, &gctx->ks);
-		if (!gctx->gcm)
-			{
-			gctx->gcm =
-				CRYPTO_gcm128_new(&gctx->ks, (block128_f)AES_encrypt);
-			if (!gctx->gcm)
-				return 0;
-			}
-		else
-			CRYPTO_gcm128_init(gctx->gcm, &gctx->ks, (block128_f)AES_encrypt);
+		CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks, (block128_f)AES_encrypt);
 		/* If we have an iv can set it directly, otherwise use
 		 * saved IV.
 		 */
@@ -345,7 +334,7 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			iv = gctx->iv;
 		if (iv)
 			{
-			CRYPTO_gcm128_setiv(gctx->gcm, iv, gctx->ivlen);
+			CRYPTO_gcm128_setiv(&gctx->gcm, iv, gctx->ivlen);
 			gctx->iv_set = 1;
 			}
 		gctx->key_set = 1;
@@ -354,7 +343,7 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		{
 		/* If key set use IV, otherwise copy */
 		if (gctx->key_set)
-			CRYPTO_gcm128_setiv(gctx->gcm, iv, gctx->ivlen);
+			CRYPTO_gcm128_setiv(&gctx->gcm, iv, gctx->ivlen);
 		else
 			memcpy(gctx->iv, iv, gctx->ivlen);
 		gctx->iv_set = 1;
@@ -376,17 +365,17 @@ static int aes_gcm(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		{
 		if (out == NULL)
 			{
-			if (CRYPTO_gcm128_aad(gctx->gcm, in, len))
+			if (CRYPTO_gcm128_aad(&gctx->gcm, in, len))
 				return -1;
 			}
 		else if (ctx->encrypt)
 			{
-			if (CRYPTO_gcm128_encrypt(gctx->gcm, in, out, len))
+			if (CRYPTO_gcm128_encrypt(&gctx->gcm, in, out, len))
 				return -1;
 			}
 		else
 			{
-			if (CRYPTO_gcm128_decrypt(gctx->gcm, in, out, len))
+			if (CRYPTO_gcm128_decrypt(&gctx->gcm, in, out, len))
 				return -1;
 			}
 		return len;
@@ -395,13 +384,13 @@ static int aes_gcm(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		{
 		if (!ctx->encrypt)
 			{
-			if (CRYPTO_gcm128_finish(gctx->gcm,
+			if (CRYPTO_gcm128_finish(&gctx->gcm,
 					gctx->tag, gctx->taglen) != 0)
 				return -1;
 			gctx->iv_set = 0;
 			return 0;
 			}
-		CRYPTO_gcm128_tag(gctx->gcm, gctx->tag, 16);
+		CRYPTO_gcm128_tag(&gctx->gcm, gctx->tag, 16);
 		gctx->taglen = 16;
 		/* Don't reuse the IV */
 		gctx->iv_set = 0;

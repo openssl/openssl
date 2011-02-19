@@ -73,3 +73,61 @@ typedef unsigned char u8;
 #define GETU32(p)	((u32)(p)[0]<<24|(u32)(p)[1]<<16|(u32)(p)[2]<<8|(u32)(p)[3])
 #define PUTU32(p,v)	((p)[0]=(u8)((v)>>24),(p)[1]=(u8)((v)>>16),(p)[2]=(u8)((v)>>8),(p)[3]=(u8)(v))
 #endif
+
+/* GCM definitions */
+
+typedef struct { u64 hi,lo; } u128;
+
+#ifdef	TABLE_BITS
+#undef	TABLE_BITS
+#endif
+/*
+ * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
+ * never be set to 8. 8 is effectively reserved for testing purposes.
+ * TABLE_BITS>1 are lookup-table-driven implementations referred to as
+ * "Shoup's" in GCM specification. In other words OpenSSL does not cover
+ * whole spectrum of possible table driven implementations. Why? In
+ * non-"Shoup's" case memory access pattern is segmented in such manner,
+ * that it's trivial to see that cache timing information can reveal
+ * fair portion of intermediate hash value. Given that ciphertext is
+ * always available to attacker, it's possible for him to attempt to
+ * deduce secret parameter H and if successful, tamper with messages
+ * [which is nothing but trivial in CTR mode]. In "Shoup's" case it's
+ * not as trivial, but there is no reason to believe that it's resistant
+ * to cache-timing attack. And the thing about "8-bit" implementation is
+ * that it consumes 16 (sixteen) times more memory, 4KB per individual
+ * key + 1KB shared. Well, on pros side it should be twice as fast as
+ * "4-bit" version. And for gcc-generated x86[_64] code, "8-bit" version
+ * was observed to run ~75% faster, closer to 100% for commercial
+ * compilers... Yet "4-bit" procedure is preferred, because it's
+ * believed to provide better security-performance balance and adequate
+ * all-round performance. "All-round" refers to things like:
+ *
+ * - shorter setup time effectively improves overall timing for
+ *   handling short messages;
+ * - larger table allocation can become unbearable because of VM
+ *   subsystem penalties (for example on Windows large enough free
+ *   results in VM working set trimming, meaning that consequent
+ *   malloc would immediately incur working set expansion);
+ * - larger table has larger cache footprint, which can affect
+ *   performance of other code paths (not necessarily even from same
+ *   thread in Hyper-Threading world);
+ */
+#define	TABLE_BITS 4
+
+struct gcm128_context {
+	/* Following 6 names follow names in GCM specification */
+	union { u64 u[2]; u32 d[4]; u8 c[16]; }	Yi,EKi,EK0,
+						Xi,H,len;
+	/* Pre-computed table used by gcm_gmult_* */
+#if TABLE_BITS==8
+	u128 Htable[256];
+#else
+	u128 Htable[16];
+	void (*gmult)(u64 Xi[2],const u128 Htable[16]);
+	void (*ghash)(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
+#endif
+	unsigned int mres, ares;
+	block128_f block;
+	void *key;
+};
