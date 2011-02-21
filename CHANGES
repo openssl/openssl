@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Modify fipscanisteronly build option to only build the necessary object
+     files by filtering FIPS_EX_OBJ through a perl script in crypto/Makefile.
+     [Steve Henson]
+
   *) Add experimental option FIPSSYMS to give all symbols in
      fipscanister.o and FIPS or fips prefix. This will avoid
      conflicts with future versions of OpenSSL. Add perl script

@@ -147,8 +147,8 @@ SHLIBDIRS= crypto
 # dirs in crypto to build
 SDIRS=  \
 	sha hmac des aes modes \
-	bn ec rsa dsa ecdsa dh ecdh \
-	buffer rand evp cmac
+	bn ec rsa dsa ecdsa dh \
+	buffer rand evp # ecdh cmac
 # keep in mind that the above list is adjusted by ./Configure
 # according to no-xxx arguments...
 
@@ -372,7 +372,7 @@ build_crypto:
 	else \
 		AS='$(CC) -c' ; \
 	fi ; export AS ; \
-		dir=crypto; target=all; $(BUILD_ONE_CMD)
+		dir=crypto; target=fips; $(BUILD_ONE_CMD)
 build_ssl:
 	@dir=ssl; target=all; $(BUILD_ONE_CMD)
 build_engines:
