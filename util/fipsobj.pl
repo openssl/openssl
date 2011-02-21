@@ -6,7 +6,7 @@ my $dir = $ARGV[0];
 
 my $asmobjs = "";
 
-# Add any needed assembly languagr files.
+# Add any needed assembly language files.
 
 $asmobjs = $ENV{AES_ENC} if $dir eq "aes";
 $asmobjs = $ENV{BN_ASM} if $dir eq "bn";
