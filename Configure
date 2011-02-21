@@ -1334,7 +1334,6 @@ if ($no_asm)
 	$thread_cflags=~s/\-D[BL]_ENDIAN//	if ($fips);
 	}
 
-print STDERR "No shared if $no_shared\n";
 if (!$no_shared)
 	{
 	$cast_obj="";	# CAST assembler is not PIC
