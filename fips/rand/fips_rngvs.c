@@ -28,7 +28,6 @@ int main(int argc, char **argv)
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/fips_rand.h>
-#include <openssl/x509v3.h>
 #include <string.h>
 #include <ctype.h>
 

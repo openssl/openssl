@@ -65,7 +65,6 @@
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
 #include <openssl/err.h>
-#include <openssl/x509v3.h>
 #include <openssl/bn.h>
 
 #ifndef OPENSSL_FIPS

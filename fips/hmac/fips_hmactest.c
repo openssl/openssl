@@ -67,8 +67,6 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 
-#include <openssl/x509v3.h>
-
 #ifndef OPENSSL_FIPS
 
 int main(int argc, char *argv[])
