@@ -154,10 +154,9 @@ SDIRS=  \
 
 LINKDIRS=  \
 	objects sha hmac des aes modes \
-	bn ec rsa dsa ecdsa dh ecdh dso engine \
+	bn ec rsa dsa ecdsa dh ecdh engine \
 	buffer bio stack lhash rand err \
-	evp asn1 pem x509 x509v3 pkcs7 ocsp ui krb5 \
-	cmac
+	evp asn1 pem ocsp ui cmac
 
 # tests to perform.  "alltests" is a special word indicating that all tests
 # should be performed.
