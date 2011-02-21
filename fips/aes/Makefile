@@ -109,3 +109,14 @@ fips_aesavs.o: ../../include/openssl/opensslv.h
 fips_aesavs.o: ../../include/openssl/ossl_typ.h
 fips_aesavs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 fips_aesavs.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_aesavs.c
+fips_gcmtest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+fips_gcmtest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_gcmtest.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_gcmtest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_gcmtest.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_gcmtest.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+fips_gcmtest.o: ../../include/openssl/opensslconf.h
+fips_gcmtest.o: ../../include/openssl/opensslv.h
+fips_gcmtest.o: ../../include/openssl/ossl_typ.h
+fips_gcmtest.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+fips_gcmtest.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_gcmtest.c

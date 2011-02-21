@@ -92,27 +92,6 @@ clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-fips_rsa_eay.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_rsa_eay.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_rsa_eay.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_rsa_eay.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-fips_rsa_eay.o: ../../include/openssl/opensslconf.h
-fips_rsa_eay.o: ../../include/openssl/opensslv.h
-fips_rsa_eay.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
-fips_rsa_eay.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-fips_rsa_eay.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_rsa_eay.o: fips_rsa_eay.c
-fips_rsa_gen.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_rsa_gen.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_rsa_gen.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_rsa_gen.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_rsa_gen.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-fips_rsa_gen.o: ../../include/openssl/objects.h
-fips_rsa_gen.o: ../../include/openssl/opensslconf.h
-fips_rsa_gen.o: ../../include/openssl/opensslv.h
-fips_rsa_gen.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
-fips_rsa_gen.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-fips_rsa_gen.o: ../../include/openssl/symhacks.h ../fips_locl.h fips_rsa_gen.c
 fips_rsa_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_rsa_lib.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 fips_rsa_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -150,64 +129,42 @@ fips_rsa_sign.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
 fips_rsa_sign.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 fips_rsa_sign.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_rsa_sign.o: fips_rsa_sign.c
-fips_rsa_x931g.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_rsa_x931g.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_rsa_x931g.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_rsa_x931g.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-fips_rsa_x931g.o: ../../include/openssl/opensslconf.h
-fips_rsa_x931g.o: ../../include/openssl/opensslv.h
-fips_rsa_x931g.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
-fips_rsa_x931g.o: ../../include/openssl/safestack.h
-fips_rsa_x931g.o: ../../include/openssl/stack.h
-fips_rsa_x931g.o: ../../include/openssl/symhacks.h fips_rsa_x931g.c
 fips_rsagtest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_rsagtest.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-fips_rsagtest.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-fips_rsagtest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_rsagtest.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-fips_rsagtest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_rsagtest.o: ../../include/openssl/fips.h ../../include/openssl/hmac.h
-fips_rsagtest.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+fips_rsagtest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_rsagtest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_rsagtest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_rsagtest.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
+fips_rsagtest.o: ../../include/openssl/obj_mac.h
 fips_rsagtest.o: ../../include/openssl/objects.h
 fips_rsagtest.o: ../../include/openssl/opensslconf.h
 fips_rsagtest.o: ../../include/openssl/opensslv.h
-fips_rsagtest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-fips_rsagtest.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-fips_rsagtest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-fips_rsagtest.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-fips_rsagtest.o: ../../include/openssl/x509_vfy.h
-fips_rsagtest.o: ../../include/openssl/x509v3.h ../fips_utl.h fips_rsagtest.c
+fips_rsagtest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
+fips_rsagtest.o: ../../include/openssl/safestack.h
+fips_rsagtest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_rsagtest.o: ../fips_utl.h fips_rsagtest.c
 fips_rsastest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_rsastest.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-fips_rsastest.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-fips_rsastest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_rsastest.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-fips_rsastest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_rsastest.o: ../../include/openssl/fips.h ../../include/openssl/hmac.h
-fips_rsastest.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+fips_rsastest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_rsastest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_rsastest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_rsastest.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
+fips_rsastest.o: ../../include/openssl/obj_mac.h
 fips_rsastest.o: ../../include/openssl/objects.h
 fips_rsastest.o: ../../include/openssl/opensslconf.h
 fips_rsastest.o: ../../include/openssl/opensslv.h
-fips_rsastest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-fips_rsastest.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-fips_rsastest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-fips_rsastest.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-fips_rsastest.o: ../../include/openssl/x509_vfy.h
-fips_rsastest.o: ../../include/openssl/x509v3.h ../fips_utl.h fips_rsastest.c
+fips_rsastest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
+fips_rsastest.o: ../../include/openssl/safestack.h
+fips_rsastest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_rsastest.o: ../fips_utl.h fips_rsastest.c
 fips_rsavtest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_rsavtest.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-fips_rsavtest.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-fips_rsavtest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_rsavtest.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-fips_rsavtest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_rsavtest.o: ../../include/openssl/fips.h ../../include/openssl/hmac.h
-fips_rsavtest.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+fips_rsavtest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_rsavtest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_rsavtest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_rsavtest.o: ../../include/openssl/hmac.h ../../include/openssl/lhash.h
+fips_rsavtest.o: ../../include/openssl/obj_mac.h
 fips_rsavtest.o: ../../include/openssl/objects.h
 fips_rsavtest.o: ../../include/openssl/opensslconf.h
 fips_rsavtest.o: ../../include/openssl/opensslv.h
-fips_rsavtest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-fips_rsavtest.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
-fips_rsavtest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-fips_rsavtest.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-fips_rsavtest.o: ../../include/openssl/x509_vfy.h
-fips_rsavtest.o: ../../include/openssl/x509v3.h ../fips_utl.h fips_rsavtest.c
+fips_rsavtest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rsa.h
+fips_rsavtest.o: ../../include/openssl/safestack.h
+fips_rsavtest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_rsavtest.o: ../fips_utl.h fips_rsavtest.c

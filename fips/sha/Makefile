@@ -130,20 +130,16 @@ fips_sha1_selftest.o: ../../include/openssl/safestack.h
 fips_sha1_selftest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 fips_sha1_selftest.o: ../../include/openssl/symhacks.h fips_sha1_selftest.c
 fips_shatest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_shatest.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-fips_shatest.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-fips_shatest.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_shatest.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-fips_shatest.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-fips_shatest.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-fips_shatest.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+fips_shatest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_shatest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_shatest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_shatest.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+fips_shatest.o: ../../include/openssl/objects.h
 fips_shatest.o: ../../include/openssl/opensslconf.h
 fips_shatest.o: ../../include/openssl/opensslv.h
-fips_shatest.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-fips_shatest.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
-fips_shatest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-fips_shatest.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-fips_shatest.o: ../../include/openssl/x509v3.h ../fips_utl.h fips_shatest.c
+fips_shatest.o: ../../include/openssl/ossl_typ.h
+fips_shatest.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+fips_shatest.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_shatest.c
 fips_standalone_sha1.o: ../../include/openssl/asn1.h
 fips_standalone_sha1.o: ../../include/openssl/bio.h
 fips_standalone_sha1.o: ../../include/openssl/crypto.h

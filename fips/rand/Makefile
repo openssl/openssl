@@ -120,7 +120,7 @@ fips_randtest.o: ../../e_os.h ../../include/openssl/bio.h
 fips_randtest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 fips_randtest.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 fips_randtest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
-fips_randtest.o: ../../include/openssl/fips_rand.h
+fips_randtest.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
 fips_randtest.o: ../../include/openssl/lhash.h
 fips_randtest.o: ../../include/openssl/opensslconf.h
 fips_randtest.o: ../../include/openssl/opensslv.h
@@ -129,21 +129,14 @@ fips_randtest.o: ../../include/openssl/safestack.h
 fips_randtest.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_randtest.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
 fips_randtest.o: ../fips_utl.h fips_randtest.c
-fips_rngvs.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_rngvs.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-fips_rngvs.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
-fips_rngvs.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-fips_rngvs.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
-fips_rngvs.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-fips_rngvs.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-fips_rngvs.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_rngvs.o: ../../include/openssl/fips_rand.h ../../include/openssl/lhash.h
-fips_rngvs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-fips_rngvs.o: ../../include/openssl/opensslconf.h
+fips_rngvs.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+fips_rngvs.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+fips_rngvs.o: ../../include/openssl/des_old.h ../../include/openssl/dsa.h
+fips_rngvs.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_rngvs.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
+fips_rngvs.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 fips_rngvs.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-fips_rngvs.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
-fips_rngvs.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+fips_rngvs.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
 fips_rngvs.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 fips_rngvs.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
-fips_rngvs.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
-fips_rngvs.o: ../../include/openssl/x509v3.h ../fips_utl.h fips_rngvs.c
+fips_rngvs.o: ../fips_utl.h fips_rngvs.c
