@@ -33,7 +33,7 @@ while (<STDIN>)
 		# Skip unused directories under crypto/
 		next if -d "crypto/$1" && !exists $cdirs{$1};
 		# Keep assembly language dir, Makefile or certain extensions
-		if (!/\/asm\// && !/\/Makefile$/ && && !/\.(in|pl|h)$/)
+		if (!/\/asm\// && !/\/Makefile$/ && !/\.(in|pl|h)$/)
 			{
 			# If C source file must be on list.
 			next if !/(\w+\.c)$/ || !exists $tarobjs{$1};
