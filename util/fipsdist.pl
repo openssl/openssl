@@ -25,7 +25,7 @@ while (<STDIN>)
 	{
 	chomp;
 	# Skip directories but leave top level files.
-	next unless (/^(fips\/|crypto|util|test|include)/ || (!/\// && -f $_));
+	next unless (/^(fips\/|crypto|util|test|include|ms)/ || (!/\// && -f $_));
 	if (/^crypto\/([^\/]+)/)
 		{
 		# Skip unused directories under crypto/
