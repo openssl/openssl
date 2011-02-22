@@ -522,8 +522,8 @@ files:
 links:
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
-	$(MAKE) -C fips links
-	SDIRS='$(LINKDIRS)' $(MAKE) -C crypto links
+	$(BUILDENV) $(MAKE) -C fips links
+	$(BUILDENV) SDIRS='$(LINKDIRS)' $(MAKE) -C crypto links
 
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \
