@@ -84,7 +84,10 @@ my @dirs = (
 
 %top;
 
+my $fipscanisteronly = 0;
+
 foreach (@dirs) {
+	next if ($fipscanisteronly && !(-d $_));
 	&files_dir ($_, "Makefile");
 }
 
@@ -150,4 +153,8 @@ if ($dir eq "." && defined($sym{"BUILDENV"}))
 print "RELATIVE_DIRECTORY=\n";
 
 close (IN);
+if ($dir eq "." && $sym{CONFIGURE_ARGS} =~ /fipscanisteronly/)
+	{
+	$fipscanisteronly = 1;
+	}
 }
