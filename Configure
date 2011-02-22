@@ -1926,7 +1926,9 @@ EOF
 	$make_targets .= " gentests" if $symlink;
 	(system $make_command.$make_targets) == 0 or exit $?
 		if $make_targets ne "";
-	if ( $perl =~ m@^/@) {
+	if ( $fipscanisteronly )
+		{}
+	elsif ( $perl =~ m@^/@) {
 	    &dofile("tools/c_rehash",$perl,'^#!/', '#!%s','^my \$dir;$', 'my $dir = "' . $openssldir . '";', '^my \$prefix;$', 'my $prefix = "' . $prefix . '";');
 	    &dofile("apps/CA.pl",$perl,'^#!/', '#!%s');
 	} else {
