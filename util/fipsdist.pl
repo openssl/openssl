@@ -21,8 +21,6 @@ foreach (split / /, $ENV{LINKDIRS} ) { $cdirs{$_} = 1 };
 
 $cdirs{perlasm} = 1;
 
-foreach (keys %cdirs) { print STDERR "CDIR: $_\n";}
-
 while (<STDIN>)
 	{
 	chomp;
