@@ -29,7 +29,7 @@ SRC= $(LIBSRC)
 
 #EXHEADER= store.h str_compat.h
 EXHEADER= modes.h
-HEADER=	$(EXHEADER)
+HEADER=	modes_lcl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
