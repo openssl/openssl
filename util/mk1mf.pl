@@ -853,12 +853,6 @@ foreach (split(/\s+/,$test))
 	$tt="\$(OBJ_D)${o}$t${obj}";
 	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","$t_libs \$(EX_LIBS)", $ltype);
 	}
-foreach (split(/\s+/,$test))
-	{
-	$t=&bname($_);
-	$tt="\$(OBJ_D)${o}$t${obj}";
-	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
-	}
 
 $defs.=&do_defs("E_SHLIB",$engines . $otherlibs,"\$(ENG_D)",$shlibp);
 
