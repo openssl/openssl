@@ -25,10 +25,15 @@ my $fips_sha1_exe_path = "";
 
 local $fipscanisterbuild = 0;
 
+my $fipscanisteronly = 0;
+
 my $fipslibdir = "";
 my $baseaddr = "";
 
 my $ex_l_libs = "";
+
+my $build_targets = "lib exe";
+my $libs_dep = "\$(O_CRYPTO) \$(O_SSL)";
 
 # Options to import from top level Makefile
 
@@ -371,7 +376,7 @@ for (;;)
 	if ($key eq "LIBKRB5")
 		{ $ex_libs .= " $val" if $val ne "";}
 
-	if ($key eq "TEST")
+	if ($key eq "TEST" && (!$fipscanisteronly || $dir =~ /^fips/ ))
 		{ $test.=&var_add($dir,$val, 0); }
 
 	if (($key eq "PROGS") || ($key eq "E_OBJ"))
@@ -448,7 +453,7 @@ if ($fips)
 				$lib_obj{"FIPS"} .= "$_ ";
 				}
 			}
-		else
+		elsif (!$fipscanisteronly)
 			{
 			$lib_obj{"CRYPTO"} .= "$_ ";
 			}
@@ -498,7 +503,7 @@ if ($fips)
 	{
 	if (!$shlib)
 		{
-		$ex_build_targets .= " \$(LIB_D)$o$crypto_compat \$(PREMAIN_DSO_EXE)";
+		$build_targets .= " \$(LIB_D)$o$crypto_compat \$(PREMAIN_DSO_EXE)";
 		$ex_l_libs .= " \$(O_FIPSCANISTER)";
 		$ex_libs_dep .= " \$(O_FIPSCANISTER)" if $fipscanisterbuild;
 		}
@@ -520,6 +525,13 @@ if ($fips)
 				"fips_premain.c", "fips_premain.c.sha1");
 		}
 	}
+
+if ($fipscanisteronly)
+	{
+	$build_targets = "\$(O_FIPSCANISTER) \$(T_EXE)";
+	$libs_dep = "";
+	}
+	
 
 if ($shlib)
 	{
@@ -659,13 +671,13 @@ INC=-I\$(INC_D) -I\$(INCL_D)
 APP_CFLAGS=\$(INC) \$(CFLAG) \$(APP_CFLAG)
 LIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG)
 SHLIB_CFLAGS=\$(INC) \$(CFLAG) \$(LIB_CFLAG) \$(SHLIB_CFLAG)
-LIBS_DEP=\$(O_CRYPTO) \$(O_SSL) $ex_libs_dep
+LIBS_DEP=$libs_dep
 
 #############################################
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers \$(FIPS_SHA1_EXE) lib exe $ex_build_targets
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers \$(FIPS_SHA1_EXE) $build_targets
 
 banner:
 $banner
@@ -1325,6 +1337,7 @@ sub read_options
 		"no-zlib-dynamic" => 0,
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
+		"fipscanisteronly" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],
 		);
 
 	if (exists $valid_options{$_})
