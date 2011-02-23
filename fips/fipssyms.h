@@ -14,7 +14,10 @@
 #define BN_BLINDING_set_flags FIPS_bn_blinding_set_flags
 #define BN_BLINDING_thread_id FIPS_bn_blinding_thread_id
 #define BN_BLINDING_update FIPS_bn_blinding_update
+#define BN_BLINDING_get_thread_id FIPS_bn_blinding_get_thread_id
+#define BN_BLINDING_set_thread_id FIPS_bn_blinding_set_thread_id
 #define BN_CTX_end FIPS_bn_ctx_end
+#define BN_CTX_init FIPS_bn_ctx_init
 #define BN_CTX_free FIPS_bn_ctx_free
 #define BN_CTX_get FIPS_bn_ctx_get
 #define BN_CTX_new FIPS_bn_ctx_new
@@ -133,6 +136,8 @@
 #define BN_ucmp FIPS_bn_ucmp
 #define BN_usub FIPS_bn_usub
 #define BN_value_one FIPS_bn_value_one
+#define BN_set_params FIPS_bn_set_params
+#define BN_get_params FIPS_bn_get_params
 #define BN_version FIPS_bn_version
 #define BUF_memdup FIPS_buf_memdup
 #define BUF_strdup FIPS_buf_strdup
@@ -147,6 +152,9 @@
 #define CRYPTO_THREADID_set_callback FIPS_crypto_threadid_set_callback
 #define CRYPTO_THREADID_set_numeric FIPS_crypto_threadid_set_numeric
 #define CRYPTO_THREADID_set_pointer FIPS_crypto_threadid_set_pointer
+#define CRYPTO_get_id_callback FIPS_crypto_get_id_callback
+#define CRYPTO_set_id_callback FIPS_crypto_set_id_callback
+#define CRYPTO_thread_id FIPS_crypto_thread_id
 #define CRYPTO_cbc128_decrypt FIPS_crypto_cbc128_decrypt
 #define CRYPTO_cbc128_encrypt FIPS_crypto_cbc128_encrypt
 #define CRYPTO_cfb128_1_encrypt FIPS_crypto_cfb128_1_encrypt
@@ -344,12 +352,14 @@
 #define RAND_cleanup FIPS_rand_cleanup
 #define RAND_egd FIPS_rand_egd
 #define RAND_egd_bytes FIPS_rand_egd_bytes
+#define RAND_event FIPS_rand_event
 #define RAND_file_name FIPS_rand_file_name
 #define RAND_get_rand_method FIPS_rand_get_rand_method
 #define RAND_load_file FIPS_rand_load_file
 #define RAND_poll FIPS_rand_poll
 #define RAND_pseudo_bytes FIPS_rand_pseudo_bytes
 #define RAND_query_egd_bytes FIPS_rand_query_egd_bytes
+#define RAND_screen FIPS_rand_screen
 #define RAND_seed FIPS_ossl_rand_seed
 #define RAND_set_rand_method FIPS_rand_set_rand_method
 #define RAND_status FIPS_ossl_rand_status
@@ -412,6 +422,7 @@
 #define bn_add_part_words fips_bn_add_part_words
 #define bn_cmp_part_words fips_bn_cmp_part_words
 #define bn_cmp_words fips_bn_cmp_words
+#define bn_dup_expand fips_bn_dup_expand
 #define bn_expand2 fips_bn_expand2
 #define bn_mul_high fips_bn_mul_high
 #define bn_mul_low_normal fips_bn_mul_low_normal
