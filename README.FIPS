@@ -28,13 +28,26 @@ Run test vectors:
 4. It should say "passed all tests" at the end. Report full details of any
    failures.
 
+Run symbol hiding test:
+
+./config fipscanisteronly -DOPENSSL_FIPSSYMS
+make
+
+This time only the fips utilities should be built.
+
+Examine the external symbols in fips/fipscanister.o they should all begin
+with FIPS or fips. One way to check with GNU nm is:
+
+nm -g --defined-only fips/fipscanister.o | grep -v -i fips
 
 Known issues:
 
-No Windows support. 
 Algorithm tests are pre-2011.
+The fipslagtest.pl script wont auto run new algorithm tests such as DSA2.
+No ECDH.
+No primitives tests for ECDH/DH
+Selftests need updating with larger key sizes in some cases and redundant
+tests pruned.
 No SP800-90 PRNG.
-No ECDSA2 support.
-No DSA2 support: work in progress.
-No GCM.
 No CMAC.
+No CCM.
