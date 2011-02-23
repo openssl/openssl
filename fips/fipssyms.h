@@ -144,6 +144,7 @@
 #define BUF_strlcat FIPS_buf_strlcat
 #define BUF_strlcpy FIPS_buf_strlcpy
 #define BUF_strndup FIPS_buf_strndup
+#define DllMain	fips_dllmain
 #define CRYPTO_THREADID_cmp FIPS_crypto_threadid_cmp
 #define CRYPTO_THREADID_cpy FIPS_crypto_threadid_cpy
 #define CRYPTO_THREADID_current FIPS_crypto_threadid_current
