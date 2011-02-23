@@ -209,12 +209,12 @@ static void pqgver()
     char lbuf[1024];
     char *keyword, *value;
     BIGNUM *p = NULL, *q = NULL, *g = NULL;
-    int counter, counter2;
-    unsigned long h, h2;
+    int counter=-1, counter2;
+    unsigned long h=-1, h2;
     DSA *dsa=NULL;
     int dsa2, L, N, part_test = 0;
     const EVP_MD *md = NULL;
-    int seedlen;
+    int seedlen=-1;
     unsigned char seed[1024];
 
     while(fgets(buf,sizeof buf,stdin) != NULL)

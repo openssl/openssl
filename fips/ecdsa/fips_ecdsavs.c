@@ -312,7 +312,7 @@ static int SigVer(void)
 	{
 	char buf[2048], lbuf[2048];
 	char *keyword, *value;
-	unsigned char *msg;
+	unsigned char *msg = NULL;
 	int curve_nid = NID_undef;
 	long mlen;
 	BIGNUM *Qx = NULL, *Qy = NULL;

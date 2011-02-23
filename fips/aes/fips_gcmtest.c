@@ -86,7 +86,7 @@ static void gcmtest(int encrypt)
 	unsigned char *key = NULL, *iv = NULL, *aad = NULL, *tag = NULL;
 	unsigned char *ct = NULL, *pt = NULL;
 	EVP_CIPHER_CTX ctx;
-	const EVP_CIPHER *gcm;
+	const EVP_CIPHER *gcm = NULL;
 	FIPS_cipher_ctx_init(&ctx);
 
 	while(fgets(buf,sizeof buf,stdin) != NULL)

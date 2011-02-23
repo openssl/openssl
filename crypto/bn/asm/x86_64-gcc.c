@@ -98,7 +98,7 @@
 		: "cc");		\
 	(r)=carry, carry=high;		\
 	} while (0)
-
+#undef sqr
 #define sqr(r0,r1,a)			\
 	asm ("mulq %2"			\
 		: "=a"(r0),"=d"(r1)	\
