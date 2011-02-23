@@ -1163,10 +1163,14 @@ sub perlasm_compile_target
 	{
 	my($target,$source,$bname)=@_;
 	my($ret);
-
 	$bname =~ s/(.*)\.[^\.]$/$1/;
 	$ret ="\$(TMP_D)$o$bname.asm: $source\n";
-	$ret.="\t\$(PERL) $source $asmtype \$(CFLAG) >\$\@\n\n";
+	$ret.="\t\$(PERL) $source $asmtype \$(CFLAG) >\$\@\n";
+	if ($cflags =~ /-DOPENSSL_FIPSSYMS/)
+		{
+		$ret .= "\t\$(PERL) util\\fipsas.pl . \$@ norunasm \$(CFLAG)\n";
+		}
+	$ret .= "\n";
 	$ret.="$target: \$(TMP_D)$o$bname.asm\n";
 	$ret.="\t\$(ASM) $afile\$\@ \$(TMP_D)$o$bname.asm\n\n";
 	return($ret);

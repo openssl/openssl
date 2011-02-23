@@ -9,6 +9,14 @@ my @ARGS = @ARGV;
 my $top = shift @ARGS;
 my $target = shift @ARGS;
 
+my $runasm = 1;
+
+if ($ARGS[0] eq "norunasm")
+	{
+	$runasm = 0;
+	shift @ARGS;
+	}
+
 # HACK to disable operation if no OPENSSL_FIPSSYMS option.
 # will go away when tested more fully.
 
@@ -16,11 +24,12 @@ my $enabled = 0;
 
 foreach (@ARGS) { $enabled = 1 if /-DOPENSSL_FIPSSYMS/ ; }
 
-if ($enabled == 0)
+if ($enabled == 0 && $runasm)
 	{
 	system @ARGS;
 	exit $?
 	}
+
 
 # Open symbol rename file.
 open(IN, "$top/fips/fipssyms.h") || die "Can't open fipssyms.h";
@@ -53,18 +62,32 @@ while (<IN>)
 {
 	while (($from, $to) = each %edits)
 		{
-		s/(\b)$from(\b)/$1$to$2/g;
+		s/(\b_*)$from(\b)/$1$to$2/g;
 		}
 	print OUT $_;
 }
-# run assembler
-system @ARGS;
 
-my $rv = $?;
+close OUT;
 
-# restore target
-unlink $target;
-rename "tmptarg.s", $target;
+if ($runasm)
+	{
+	# run assembler
+	system @ARGS;
 
-die "Error executing assembler!" if $rv != 0;
+	my $rv = $?;
+
+	# restore target
+	unlink $target;
+	rename "tmptarg.s", $target;
+
+	die "Error executing assembler!" if $rv != 0;
+	}
+else
+	{
+	# Don't care about target
+	unlink "tmptarg.s";
+	}
+
+
+
 
