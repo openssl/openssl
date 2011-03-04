@@ -103,6 +103,16 @@
 # providing access to a Westmere-based system on behalf of Intel
 # Open Source Technology Centre.
 
+# January 2010
+#
+# Tweaked to optimize transitions between integer and FP operations
+# on same XMM register, PCLMULQDQ subroutine was measured to process
+# one byte in 2.07 cycles on Sandy Bridge, and in 2.12 - on Westmere.
+# The minor regression on Westmere is outweighed by ~15% improvement
+# on Sandy Bridge. Strangely enough attempt to modify 64-bit code in
+# similar manner resulted in almost 20% degradation on Sandy Bridge,
+# where original 64-bit code processes one byte in 1.95 cycles.
+
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
@@ -829,8 +839,8 @@ my ($Xhi,$Xi,$Hkey)=@_;
 	&pclmulqdq	($Xi,$Hkey,0x00);	#######
 	&pclmulqdq	($Xhi,$Hkey,0x11);	#######
 	&pclmulqdq	($T1,$T2,0x00);		#######
-	&pxor		($T1,$Xi);		#
-	&pxor		($T1,$Xhi);		#
+	&xorps		($T1,$Xi);		#
+	&xorps		($T1,$Xhi);		#
 
 	&movdqa		($T2,$T1);		#
 	&psrldq		($T1,8);
@@ -950,7 +960,7 @@ my ($Xhi,$Xi) = @_;
 
 	&movdqu		($Xi,&QWP(0,$Xip));
 	&movdqa		($T3,&QWP(0,$const));
-	&movdqu		($Hkey,&QWP(0,$Htbl));
+	&movups		($Hkey,&QWP(0,$Htbl));
 	&pshufb		($Xi,$T3);
 
 	&clmul64x64_T2	($Xhi,$Xi,$Hkey);
@@ -993,7 +1003,7 @@ my ($Xhi,$Xi) = @_;
 	&pxor		($Xi,$T1);		# Ii+Xi
 
 	&clmul64x64_T2	($Xhn,$Xn,$Hkey);	# H*Ii+1
-	&movdqu		($Hkey,&QWP(16,$Htbl));	# load H^2
+	&movups		($Hkey,&QWP(16,$Htbl));	# load H^2
 
 	&lea		($inp,&DWP(32,$inp));	# i+=2
 	&sub		($len,0x20);
@@ -1002,7 +1012,7 @@ my ($Xhi,$Xi) = @_;
 &set_label("mod_loop");
 	&clmul64x64_T2	($Xhi,$Xi,$Hkey);	# H^2*(Ii+Xi)
 	&movdqu		($T1,&QWP(0,$inp));	# Ii
-	&movdqu		($Hkey,&QWP(0,$Htbl));	# load H
+	&movups		($Hkey,&QWP(0,$Htbl));	# load H
 
 	&pxor		($Xi,$Xn);		# (H*Ii+1) + H^2*(Ii+Xi)
 	&pxor		($Xhi,$Xhn);
@@ -1043,9 +1053,9 @@ my ($Xhi,$Xi) = @_;
 	  &pxor		($Xi,$T2);		#
 
 	&pclmulqdq	($T1,$T3,0x00);		#######
-	&movdqu		($Hkey,&QWP(16,$Htbl));	# load H^2
-	&pxor		($T1,$Xn);		#
-	&pxor		($T1,$Xhn);		#
+	&movups		($Hkey,&QWP(16,$Htbl));	# load H^2
+	&xorps		($T1,$Xn);		#
+	&xorps		($T1,$Xhn);		#
 
 	&movdqa		($T3,$T1);		#
 	&psrldq		($T1,8);
@@ -1069,7 +1079,7 @@ my ($Xhi,$Xi) = @_;
 	&test		($len,$len);
 	&jnz		(&label("done"));
 
-	&movdqu		($Hkey,&QWP(0,$Htbl));	# load H
+	&movups		($Hkey,&QWP(0,$Htbl));	# load H
 &set_label("odd_tail");
 	&movdqu		($T1,&QWP(0,$inp));	# Ii
 	&pshufb		($T1,$T3);
