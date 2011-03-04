@@ -69,8 +69,8 @@ bn_mul_mont:
 	cghi	$num,16		#
 	lghi	%r2,0		#
 	blr	%r14		# if($num<16) return 0;
-	cghi	$num,128	#
-	bhr	%r14		# if($num>128) return 0;
+	cghi	$num,96		#
+	bhr	%r14		# if($num>96) return 0;
 
 	stmg	%r3,%r15,24($sp)
 
