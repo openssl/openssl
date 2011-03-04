@@ -38,15 +38,15 @@
 # So far 'openssl speed rsa dsa' output on 900MHz Itanium 2 *with*
 # this module is:
 #                   sign    verify    sign/s verify/s
-# rsa  512 bits 0.000302s 0.000024s   3312.3  41332.2
-# rsa 1024 bits 0.000816s 0.000058s   1225.2  17172.0
+# rsa  512 bits 0.000290s 0.000024s   3452.8  42031.4
+# rsa 1024 bits 0.000793s 0.000058s   1261.7  17172.0
 # rsa 2048 bits 0.005908s 0.000148s    169.3   6754.0
 # rsa 4096 bits 0.033456s 0.000469s     29.9   2133.6
-# dsa  512 bits 0.000254s 0.000206s   3944.6   4865.1
+# dsa  512 bits 0.000253s 0.000198s   3949.9   5057.0
 # dsa 1024 bits 0.000585s 0.000607s   1708.4   1647.4
 # dsa 2048 bits 0.001453s 0.001703s    688.1    587.4
 #
-# ... and *without*:
+# ... and *without* (but still with ia64.S):
 #
 # rsa  512 bits 0.000670s 0.000041s   1491.8  24145.5
 # rsa 1024 bits 0.001988s 0.000080s    502.9  12499.3
@@ -56,9 +56,9 @@
 # dsa 1024 bits 0.000823s 0.000867s   1215.6   1153.2
 # dsa 2048 bits 0.001894s 0.002179s    528.1    458.9
 #
-# As it can be seen, RSA sign performance improves by 120-30%,
-# hereafter less for longer keys, while verify - by 72-13%.
-# DSA performance improves by 100-30%.
+# As it can be seen, RSA sign performance improves by 130-30%,
+# hereafter less for longer keys, while verify - by 74-13%.
+# DSA performance improves by 115-30%.
 
 if ($^O eq "hpux") {
     $ADDP="addp4";
@@ -473,7 +473,7 @@ bn_mul_mont_8:
 	mov		ar.lc=r28	}
 { .mfi;	(p14)ldf8	bj[0]=[r30],16		// bp[7]
 	(p15)fcvt.fxu	bj[0]=f0
-	mov		ar.ec=2		}
+	mov		ar.ec=1		}
 { .mfi;	(p12)ldf8	ni6=[nptr],16		// np[6]
 	(p13)fcvt.fxu	ni6=f0
 	mov		pr.rot=1<<16	}
@@ -482,12 +482,12 @@ bn_mul_mont_8:
 	brp.loop.imp	.Louter_8_ctop,.Louter_8_cend-16
 					};;
 
-// The loop is scheduled for 32*(n+1) ticks on Itanium 2. Actual
-// measurement with help of Interval Time Counter indicate that the
+// The loop is scheduled for 32*n ticks on Itanium 2. Actual attempt
+// to measure with help of Interval Time Counter indicated that the
 // factor is a tad higher: 33 or 34, if not 35. Exact measurement and
 // addressing the issue is problematic, because I don't have access
 // to platform-specific instruction-level profiler. On Itanium it
-// should run in 56*(n+1) ticks, because of higher xma latency...
+// should run in 56*n ticks, because of higher xma latency...
 .Louter_8_ctop:
 	.pred.rel		"mutex",p40,p42
 	.pred.rel		"mutex",p48,p50
@@ -652,62 +652,149 @@ bn_mul_mont_8:
 	br.ctop.sptk.many	.Louter_8_ctop	};;
 .Louter_8_cend:
 
-// move np[8] to GPR bank and subtract it from carrybit|tmp[8]
+// above loop has to execute one more time, without (p16), which is
+// replaced with merged move of np[8] to GPR bank
+	.pred.rel		"mutex",p40,p42
+	.pred.rel		"mutex",p48,p50
+{ .mmi;	(p0)	getf.sig	n1=ni0			// 0:
+	(p40)	add		a3=a3,n3		//	(p17) a3+=n3
+	(p42)	add		a3=a3,n3,1	};;
+{ .mii;	(p17)	getf.sig	a7=alo[8]		// 1:
+	(p48)	add		t[6]=t[6],a3		//	(p17) t[6]+=a3
+	(p50)	add		t[6]=t[6],a3,1	};;
+{ .mfi;	(p17)	getf.sig	a8=ahi[8]		// 2:
+	(p17)	xma.hu		nhi[7]=ni6,mj[1],nhi[6]	//	np[6]*m0
+	(p40)	cmp.ltu		p43,p41=a3,n3	}
+{ .mfi;	(p42)	cmp.leu		p43,p41=a3,n3
+	(p17)	xma.lu		nlo[7]=ni6,mj[1],nhi[6]
+	(p0)	nop.i		0		};;
+{ .mii;	(p17)	getf.sig	n5=nlo[6]		// 3:
+	(p48)	cmp.ltu		p51,p49=t[6],a3
+	(p50)	cmp.leu		p51,p49=t[6],a3	};;
+	.pred.rel		"mutex",p41,p43
+	.pred.rel		"mutex",p49,p51
+{ .mmi;	(p0)	getf.sig	n2=ni1			// 4:
+	(p41)	add		a4=a4,n4		//	(p17) a4+=n4
+	(p43)	add		a4=a4,n4,1	};;
+{ .mfi;	(p49)	add		t[5]=t[5],a4		// 5:	(p17) t[5]+=a4
+	(p0)	nop.f		0
+	(p51)	add		t[5]=t[5],a4,1	};;
+{ .mfi;	(p0)	getf.sig	n3=ni2			// 6:
+	(p17)	xma.hu		nhi[8]=ni7,mj[1],nhi[7]	//	np[7]*m0
+	(p41)	cmp.ltu		p42,p40=a4,n4	}
+{ .mfi;	(p43)	cmp.leu		p42,p40=a4,n4
+	(p17)	xma.lu		nlo[8]=ni7,mj[1],nhi[7]
+	(p0)	nop.i		0		};;
+{ .mii;	(p17)	getf.sig	n6=nlo[7]		// 7:
+	(p49)	cmp.ltu		p50,p48=t[5],a4
+	(p51)	cmp.leu		p50,p48=t[5],a4	};;
+	.pred.rel		"mutex",p40,p42
+	.pred.rel		"mutex",p48,p50
+{ .mii;	(p0)	getf.sig	n4=ni3			// 8:
+	(p40)	add		a5=a5,n5		//	(p17) a5+=n5
+	(p42)	add		a5=a5,n5,1	};;
+{ .mii;	(p0)	nop.m		0			// 9:
+	(p48)	add		t[4]=t[4],a5		//	p(17) t[4]+=a5
+	(p50)	add		t[4]=t[4],a5,1	};;
+{ .mii;	(p0)	nop.m		0			// 10:
+	(p40)	cmp.ltu		p43,p41=a5,n5
+	(p42)	cmp.leu		p43,p41=a5,n5	};;
+{ .mii;	(p17)	getf.sig	n7=nlo[8]		// 11:
+	(p48)	cmp.ltu		p51,p49=t[4],a5
+	(p50)	cmp.leu		p51,p49=t[4],a5	};;
+	.pred.rel		"mutex",p41,p43
+	.pred.rel		"mutex",p49,p51
+{ .mii;	(p17)	getf.sig	n8=nhi[8]		// 12:
+	(p41)	add		a6=a6,n6		//	(p17) a6+=n6
+	(p43)	add		a6=a6,n6,1	};;
+{ .mii;	(p0)	getf.sig	n5=ni4			// 13:
+	(p49)	add		t[3]=t[3],a6		//	(p17) t[3]+=a6
+	(p51)	add		t[3]=t[3],a6,1	};;
+{ .mii;	(p0)	nop.m		0			// 14:
+	(p41)	cmp.ltu		p42,p40=a6,n6
+	(p43)	cmp.leu		p42,p40=a6,n6	};;
+{ .mii;	(p0)	getf.sig	n6=ni5			// 15:
+	(p49)	cmp.ltu		p50,p48=t[3],a6
+	(p51)	cmp.leu		p50,p48=t[3],a6	};;
+	.pred.rel		"mutex",p40,p42
+	.pred.rel		"mutex",p48,p50
+{ .mii;	(p0)	nop.m		0			// 16:
+	(p40)	add		a7=a7,n7		//	(p17) a7+=n7
+	(p42)	add		a7=a7,n7,1	};;
+{ .mii;	(p0)	nop.m		0			// 17:
+	(p48)	add		t[2]=t[2],a7		//	(p17) t[2]+=a7
+	(p50)	add		t[2]=t[2],a7,1	};;
+{ .mii;	(p0)	nop.m		0			// 18:
+	(p40)	cmp.ltu		p43,p41=a7,n7
+	(p42)	cmp.leu		p43,p41=a7,n7	};;
+{ .mii;	(p0)	getf.sig	n7=ni6			// 19:
+	(p48)	cmp.ltu		p51,p49=t[2],a7
+	(p50)	cmp.leu		p51,p49=t[2],a7	};;
+	.pred.rel		"mutex",p41,p43
+	.pred.rel		"mutex",p49,p51
+{ .mii;	(p0)	nop.m		0			// 20:
+	(p41)	add		a8=a8,n8		//	(p17) a8+=n8
+	(p43)	add		a8=a8,n8,1	};;
+{ .mmi;	(p0)	nop.m		0			// 21:
+	(p49)	add		t[1]=t[1],a8		//	(p17) t[1]+=a8
+	(p51)	add		t[1]=t[1],a8,1	}
+{ .mmi;	(p17)	mov		t[0]=r0
+	(p41)	cmp.ltu		p42,p40=a8,n8
+	(p43)	cmp.leu		p42,p40=a8,n8	};;
+{ .mmi;	(p0)	getf.sig	n8=ni7			// 22:
+	(p49)	cmp.ltu		p50,p48=t[1],a8
+	(p51)	cmp.leu		p50,p48=t[1],a8	}
+{ .mmi;	(p42)	add		t[0]=t[0],r0,1
+	(p0)	add		r16=-7*16,prevsp
+	(p0)	add		r17=-6*16,prevsp	};;
+
+// subtract np[8] from carrybit|tmp[8]
 // carrybit|tmp[8] layout upon exit from above loop is:
-//	t[1]|t[2]|t[3]|t[4]|t[5]|t[6]|t[7]|t[0]|t0 (least significant)
-{ .mmi;	getf.sig	n1=ni0
-	getf.sig	n2=ni1
-	add		r16=-7*16,prevsp}
-{ .mmi;	getf.sig	n3=ni2
-	getf.sig	n4=ni3
-	add		r17=-6*16,prevsp};;
-{ .mmi;	getf.sig	n5=ni4
-	getf.sig	n6=ni5
-	add		r18=-5*16,prevsp}
-{ .mmi;	getf.sig	n7=ni6
-	getf.sig	n8=ni7
+//	t[0]|t[1]|t[2]|t[3]|t[4]|t[5]|t[6]|t[7]|t0 (least significant)
+{ .mmi;	(p50)add	t[0]=t[0],r0,1
+	add		r18=-5*16,prevsp
 	sub		n1=t0,n1	};;
 { .mmi;	cmp.gtu		p34,p32=n1,t0;;
 	.pred.rel	"mutex",p32,p34
-	(p32)sub	n2=t[0],n2
-	(p34)sub	n2=t[0],n2,1	};;
-{ .mii;	(p32)cmp.gtu	p35,p33=n2,t[0]
-	(p34)cmp.geu	p35,p33=n2,t[0];;
+	(p32)sub	n2=t[7],n2
+	(p34)sub	n2=t[7],n2,1	};;
+{ .mii;	(p32)cmp.gtu	p35,p33=n2,t[7]
+	(p34)cmp.geu	p35,p33=n2,t[7];;
 	.pred.rel	"mutex",p33,p35
-	(p33)sub	n3=t[7],n3	}
-{ .mmi;	(p35)sub	n3=t[7],n3,1;;
-	(p33)cmp.gtu	p34,p32=n3,t[7]
-	(p35)cmp.geu	p34,p32=n3,t[7]	};;
+	(p33)sub	n3=t[6],n3	}
+{ .mmi;	(p35)sub	n3=t[6],n3,1;;
+	(p33)cmp.gtu	p34,p32=n3,t[6]
+	(p35)cmp.geu	p34,p32=n3,t[6]	};;
 	.pred.rel	"mutex",p32,p34
-{ .mii;	(p32)sub	n4=t[6],n4
-	(p34)sub	n4=t[6],n4,1;;
-	(p32)cmp.gtu	p35,p33=n4,t[6]	}
-{ .mmi;	(p34)cmp.geu	p35,p33=n4,t[6];;
+{ .mii;	(p32)sub	n4=t[5],n4
+	(p34)sub	n4=t[5],n4,1;;
+	(p32)cmp.gtu	p35,p33=n4,t[5]	}
+{ .mmi;	(p34)cmp.geu	p35,p33=n4,t[5];;
 	.pred.rel	"mutex",p33,p35
-	(p33)sub	n5=t[5],n5
-	(p35)sub	n5=t[5],n5,1	};;
-{ .mii;	(p33)cmp.gtu	p34,p32=n5,t[5]
-	(p35)cmp.geu	p34,p32=n5,t[5];;
+	(p33)sub	n5=t[4],n5
+	(p35)sub	n5=t[4],n5,1	};;
+{ .mii;	(p33)cmp.gtu	p34,p32=n5,t[4]
+	(p35)cmp.geu	p34,p32=n5,t[4];;
 	.pred.rel	"mutex",p32,p34
-	(p32)sub	n6=t[4],n6	}
-{ .mmi;	(p34)sub	n6=t[4],n6,1;;
-	(p32)cmp.gtu	p35,p33=n6,t[4]
-	(p34)cmp.geu	p35,p33=n6,t[4]	};;
+	(p32)sub	n6=t[3],n6	}
+{ .mmi;	(p34)sub	n6=t[3],n6,1;;
+	(p32)cmp.gtu	p35,p33=n6,t[3]
+	(p34)cmp.geu	p35,p33=n6,t[3]	};;
 	.pred.rel	"mutex",p33,p35
-{ .mii;	(p33)sub	n7=t[3],n7
-	(p35)sub	n7=t[3],n7,1;;
-	(p33)cmp.gtu	p34,p32=n7,t[3]	}
-{ .mmi;	(p35)cmp.geu	p34,p32=n7,t[3];;
+{ .mii;	(p33)sub	n7=t[2],n7
+	(p35)sub	n7=t[2],n7,1;;
+	(p33)cmp.gtu	p34,p32=n7,t[2]	}
+{ .mmi;	(p35)cmp.geu	p34,p32=n7,t[2];;
 	.pred.rel	"mutex",p32,p34
-	(p32)sub	n8=t[2],n8
-	(p34)sub	n8=t[2],n8,1	};;
-{ .mii;	(p32)cmp.gtu	p35,p33=n8,t[2]
-	(p34)cmp.geu	p35,p33=n8,t[2];;
+	(p32)sub	n8=t[1],n8
+	(p34)sub	n8=t[1],n8,1	};;
+{ .mii;	(p32)cmp.gtu	p35,p33=n8,t[1]
+	(p34)cmp.geu	p35,p33=n8,t[1];;
 	.pred.rel	"mutex",p33,p35
-	(p33)sub	a8=t[1],r0	}
-{ .mmi;	(p35)sub	a8=t[1],r0,1;;
-	(p33)cmp.gtu	p34,p32=a8,t[1]
-	(p35)cmp.geu	p34,p32=a8,t[1]	};;
+	(p33)sub	a8=t[0],r0	}
+{ .mmi;	(p35)sub	a8=t[0],r0,1;;
+	(p33)cmp.gtu	p34,p32=a8,t[0]
+	(p35)cmp.geu	p34,p32=a8,t[0]	};;
 
 // save the result, either tmp[num] or tmp[num]-np[num]
 	.pred.rel	"mutex",p32,p34
@@ -715,25 +802,25 @@ bn_mul_mont_8:
 	(p34)st8	[rptr]=t0,8
 	add		r19=-4*16,prevsp};;
 { .mmb;	(p32)st8	[rptr]=n2,8
-	(p34)st8	[rptr]=t[0],8
+	(p34)st8	[rptr]=t[7],8
 	(p5)br.cond.dpnt.few	.Ldone	};;
 { .mmb;	(p32)st8	[rptr]=n3,8
-	(p34)st8	[rptr]=t[7],8
+	(p34)st8	[rptr]=t[6],8
 	(p7)br.cond.dpnt.few	.Ldone	};;
 { .mmb;	(p32)st8	[rptr]=n4,8
-	(p34)st8	[rptr]=t[6],8
+	(p34)st8	[rptr]=t[5],8
 	(p9)br.cond.dpnt.few	.Ldone	};;
 { .mmb;	(p32)st8	[rptr]=n5,8
-	(p34)st8	[rptr]=t[5],8
+	(p34)st8	[rptr]=t[4],8
 	(p11)br.cond.dpnt.few	.Ldone	};;
 { .mmb;	(p32)st8	[rptr]=n6,8
-	(p34)st8	[rptr]=t[4],8
+	(p34)st8	[rptr]=t[3],8
 	(p13)br.cond.dpnt.few	.Ldone	};;
 { .mmb;	(p32)st8	[rptr]=n7,8
-	(p34)st8	[rptr]=t[3],8
+	(p34)st8	[rptr]=t[2],8
 	(p15)br.cond.dpnt.few	.Ldone	};;
 { .mmb;	(p32)st8	[rptr]=n8,8
-	(p34)st8	[rptr]=t[2],8
+	(p34)st8	[rptr]=t[1],8
 	nop.b		0		};;
 .Ldone:						// epilogue
 { .mmi;	ldf.fill	f16=[r16],64
