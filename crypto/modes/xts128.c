@@ -69,6 +69,7 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, u64 secno,
 {
 	const union { long one; char little; } is_endian = {1};
 	union { u64 u[2]; u32 d[4]; u8 c[16]; } tweak, scratch;
+	unsigned int i;
 
 	if (len<16) return -1;
 
@@ -84,7 +85,7 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, u64 secno,
 
 	(*ctx->block2)(tweak.c,tweak.c,ctx->key2);
 
-	if (!enc && len%16) len-=16;
+	if (!enc && (len%16)) len-=16;
 
 	while (len>=16) {
 #if defined(STRICT_ALIGNMENT)
@@ -103,6 +104,8 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, u64 secno,
 		out += 16;
 		len -= 16;
 
+		if (len==0)	return 0;
+
 		if (is_endian.little) {
 			unsigned int carry,res;
 			
@@ -112,7 +115,7 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, u64 secno,
 			tweak.u[1] = (tweak.u[1]<<1)|carry;
 		}
 		else {
-			unsigned int carry,c,i;
+			unsigned int carry,c;
 
 			for (carry=0,i=0;i<16;++i) {
 				c = tweak.c[i];
@@ -122,67 +125,63 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, u64 secno,
 			tweak.c[0] ^= 0x87&(0-carry);
 		}
 	}
-	if (len) {
-		unsigned int i;
+	if (enc) {
+		for (i=0;i<len;++i) {
+			u8 c = inp[i];
+			out[i] = scratch.c[i];
+			scratch.c[i] = c;
+		}
+		scratch.u[0] ^= tweak.u[0];
+		scratch.u[1] ^= tweak.u[1];
+		(*ctx->block1)(scratch.c,scratch.c,ctx->key1);
+		scratch.u[0] ^= tweak.u[0];
+		scratch.u[1] ^= tweak.u[1];
+		memcpy(out-16,scratch.c,16);
+	}
+	else {
+		union { u64 u[2]; u8 c[16]; } tweak1;
 
-		if (enc) {
-			for (i=0;i<len;++i) {
-				u8 c = inp[i];
-				out[i] = scratch.c[i];
-				scratch.c[i] = c;
-			}
-			scratch.u[0] ^= tweak.u[0];
-			scratch.u[1] ^= tweak.u[1];
-			(*ctx->block1)(scratch.c,scratch.c,ctx->key1);
-			scratch.u[0] ^= tweak.u[0];
-			scratch.u[1] ^= tweak.u[1];
-			memcpy(out-16,scratch.c,16);
+		if (is_endian.little) {
+			unsigned int carry,res;
+
+			res = 0x87&(((int)tweak.d[3])>>31);
+			carry = tweak.u[0]>>63;
+			tweak1.u[0] = (tweak.u[0]<<1)^res;
+			tweak1.u[1] = (tweak.u[1]<<1)|carry;
 		}
 		else {
-			union { u64 u[2]; u8 c[16]; } tweak1;
+			unsigned int carry,c;
 
-			if (is_endian.little) {
-				unsigned int carry,res;
-	
-				res = 0x87&(((int)tweak.d[3])>>31);
-				carry = tweak.u[0]>>63;
-				tweak1.u[0] = (tweak.u[0]<<1)^res;
-				tweak1.u[1] = (tweak.u[1]<<1)|carry;
+			for (carry=0,i=0;i<16;++i) {
+				c = tweak.c[i];
+				tweak1.c[i] = (c<<1)|carry;
+				carry = c>>7;
 			}
-			else {
-				unsigned int carry,c;
-
-				for (carry=0,i=0;i<16;++i) {
-					c = tweak.c[i];
-					tweak1.c[i] = (c<<1)|carry;
-					carry = c>>7;
-				}
-				tweak1.c[0] ^= 0x87&(0-carry);
-			}
-#if defined(STRICT_ALIGNMENT)
-			memcpy(scratch.c,inp,16);
-			scratch.u[0] ^= tweak1.u[0];
-			scratch.u[1] ^= tweak1.u[1];
-#else
-			scratch.u[0] = ((u64*)inp)[0]^tweak1.u[0];
-			scratch.u[1] = ((u64*)inp)[1]^tweak1.u[1];
-#endif
-			(*ctx->block1)(scratch.c,scratch.c,ctx->key1);
-			scratch.u[0] ^= tweak1.u[0];
-			scratch.u[1] ^= tweak1.u[1];
-
-			for (i=0;i<len;++i) {
-				u8 c = inp[16+i];
-				out[16+i] = scratch.c[i];
-				scratch.c[i] = c;
-			}
-			scratch.u[0] ^= tweak.u[0];
-			scratch.u[1] ^= tweak.u[1];
-			(*ctx->block1)(scratch.c,scratch.c,ctx->key1);
-			scratch.u[0] ^= tweak.u[0];
-			scratch.u[1] ^= tweak.u[1];
-			memcpy (out,scratch.c,16);
+			tweak1.c[0] ^= 0x87&(0-carry);
 		}
+#if defined(STRICT_ALIGNMENT)
+		memcpy(scratch.c,inp,16);
+		scratch.u[0] ^= tweak1.u[0];
+		scratch.u[1] ^= tweak1.u[1];
+#else
+		scratch.u[0] = ((u64*)inp)[0]^tweak1.u[0];
+		scratch.u[1] = ((u64*)inp)[1]^tweak1.u[1];
+#endif
+		(*ctx->block1)(scratch.c,scratch.c,ctx->key1);
+		scratch.u[0] ^= tweak1.u[0];
+		scratch.u[1] ^= tweak1.u[1];
+
+		for (i=0;i<len;++i) {
+			u8 c = inp[16+i];
+			out[16+i] = scratch.c[i];
+			scratch.c[i] = c;
+		}
+		scratch.u[0] ^= tweak.u[0];
+		scratch.u[1] ^= tweak.u[1];
+		(*ctx->block1)(scratch.c,scratch.c,ctx->key1);
+		scratch.u[0] ^= tweak.u[0];
+		scratch.u[1] ^= tweak.u[1];
+		memcpy (out,scratch.c,16);
 	}
 
 	return 0;
