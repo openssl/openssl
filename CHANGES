@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Initial implementation of SP800-90 DRBGs for Hash and CTR. Not used by
+     anything, incomplete, subject to change and largely untested at present.
+     [Steve Henson]
+
   *) Modify fipscanisteronly build option to only build the necessary object
      files by filtering FIPS_EX_OBJ through a perl script in crypto/Makefile.
      [Steve Henson]

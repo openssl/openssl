@@ -22,13 +22,15 @@ TEST= fips_randtest.c fips_rngvs.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC=fips_rand.c fips_rand_selftest.c
-LIBOBJ=fips_rand.o fips_rand_selftest.o
+LIBSRC=	fips_rand.c fips_rand_selftest.c \
+	fips_drbg_lib.c fips_drbg_hash.c fips_drbg_ctr.c
+LIBOBJ=	fips_rand.o fips_rand_selftest.o \
+	fips_drbg_lib.o fips_drbg_hash.o fips_drbg_ctr.o
 
 SRC= $(LIBSRC)
 
 EXHEADER= fips_rand.h
-HEADER=	$(EXHEADER)
+HEADER=	$(EXHEADER) fips_rand_lcl.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

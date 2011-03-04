@@ -70,6 +70,16 @@ int FIPS_rand_status(void);
 
 const RAND_METHOD *FIPS_rand_method(void);
 
+typedef struct drbg_ctx_st DRBG_CTX;
+
+DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags);
+int FIPS_drbg_instantiate(DRBG_CTX *dctx, int strength,
+				const unsigned char *pers, size_t perslen);
+int FIPS_drbg_reseed(DRBG_CTX *dctx, const unsigned char *adin, size_t adinlen);
+int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
+			int prediction_resistance,
+			const unsigned char *adin, size_t adinlen);
+
 #ifdef  __cplusplus
 }
 #endif
