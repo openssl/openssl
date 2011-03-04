@@ -41,8 +41,8 @@
 # processor, as long as it's "z-CPU". Latter implies that the code
 # remains z/Architecture specific. Compatibility with 32-bit BN_ULONG
 # is achieved by swapping words after 64-bit loads, follow _dswap-s.
-# On z990 it was measured to perform 2.6-2.2 times better, less for
-# longer keys...
+# On z990 it was measured to perform 2.6-2.2 times better than
+# compiler-generated code, less for longer keys...
 
 $flavour = shift;
 
@@ -102,8 +102,8 @@ $code.=<<___ if ($flavour =~ /3[12]/);
 	bnzr	%r14		# if ($num&1) return 0;
 ___
 $code.=<<___ if ($flavour !~ /3[12]/);
-	cghi	$num,128	#
-	bhr	%r14		# if($num>128) return 0;
+	cghi	$num,96		#
+	bhr	%r14		# if($num>96) return 0;
 ___
 $code.=<<___;
 	stm${g}	%r3,%r15,3*$SIZE_T($sp)
