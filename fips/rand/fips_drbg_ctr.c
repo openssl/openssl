@@ -360,12 +360,15 @@ int fips_drbg_ctr_init(DRBG_CTX *dctx)
 		{
 		case NID_aes_128_ctr:
 		keylen = 16;
+		break;
 
 		case NID_aes_192_ctr:
 		keylen = 24;
+		break;
 
 		case NID_aes_256_ctr:
 		keylen = 32;
+		break;
 
 		default:
 		return -2;
@@ -394,6 +397,15 @@ int fips_drbg_ctr_init(DRBG_CTX *dctx)
 		/* Set key schedule for df_key */
 		AES_set_encrypt_key(df_key, dctx->strength, &cctx->df_ks);
 
+		dctx->min_entropy = cctx->keylen;
+		dctx->max_entropy = DRBG_MAX_ENTROPY;
+		dctx->min_nonce = dctx->min_entropy / 2;
+		dctx->max_nonce = DRBG_MAX_NONCE;
+		dctx->max_pers = DRBG_MAX_LENGTH;
+		dctx->max_adin = DRBG_MAX_LENGTH;
+		}
+	else
+		{
 		dctx->min_entropy = dctx->seedlen;
 		dctx->max_entropy = dctx->seedlen;
 		/* Nonce not used */
@@ -401,15 +413,6 @@ int fips_drbg_ctr_init(DRBG_CTX *dctx)
 		dctx->max_nonce = 0;
 		dctx->max_pers = dctx->seedlen;
 		dctx->max_adin = dctx->seedlen;
-		}
-	else
-		{
-		dctx->min_entropy = cctx->keylen;
-		dctx->max_entropy = DRBG_MAX_ENTROPY;
-		dctx->min_nonce = dctx->min_entropy / 2;
-		dctx->max_nonce = DRBG_MAX_NONCE;
-		dctx->max_pers = DRBG_MAX_LENGTH;
-		dctx->max_adin = DRBG_MAX_LENGTH;
 		}
 
 	dctx->max_request = 1<<19;
