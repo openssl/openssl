@@ -72,6 +72,9 @@ const RAND_METHOD *FIPS_rand_method(void);
 
 typedef struct drbg_ctx_st DRBG_CTX;
 
+/* Flag for CTR mode only: use derivation function ctr_df */
+#define	DRBG_FLAG_CTR_USE_DF		0x1
+
 DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags);
 int FIPS_drbg_instantiate(DRBG_CTX *dctx, int strength,
 				const unsigned char *pers, size_t perslen);
@@ -79,6 +82,16 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx, const unsigned char *adin, size_t adinlen);
 int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 			int prediction_resistance,
 			const unsigned char *adin, size_t adinlen);
+
+int FIPS_drbg_set_test_mode(DRBG_CTX *dctx,
+	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char *out,
+				int entropy, size_t min_len, size_t max_len),
+	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char *out,
+				int entropy, size_t min_len, size_t max_len));
+
+void *FIPS_drbg_get_app_data(DRBG_CTX *ctx);
+void FIPS_drbg_set_app_data(DRBG_CTX *ctx, void *app_data);
+size_t FIPS_drbg_get_blocklength(DRBG_CTX *dctx);
 
 #ifdef  __cplusplus
 }

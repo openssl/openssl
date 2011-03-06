@@ -134,6 +134,8 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 
 	dctx->status = DRBG_STATUS_READY;
 	dctx->reseed_counter = 1;
+	/* Initial test value for reseed interval */
+	dctx->reseed_interval = 1<<24;
 
 	end:
 
@@ -160,7 +162,7 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 
 	if (!adin)
 		adinlen = 0;
-	else if (adinlen > dctx->max_adin);
+	else if (adinlen > dctx->max_adin)
 		{
 		/* error */
 		return 0;
@@ -223,4 +225,31 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 	}
 
 
+int FIPS_drbg_set_test_mode(DRBG_CTX *dctx,
+	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char *out,
+				int entropy, size_t min_len, size_t max_len),
+	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char *out,
+				int entropy, size_t min_len, size_t max_len))
+	{
+	if (dctx->status != DRBG_STATUS_UNINITIALISED)
+		return 0;
+	dctx->flags |= DRBG_FLAG_TEST;
+	dctx->get_entropy = get_entropy;
+	dctx->get_nonce = get_nonce;
+	return 1;
+	}
 
+void *FIPS_drbg_get_app_data(DRBG_CTX *dctx)
+	{
+	return dctx->app_data;
+	}
+
+void FIPS_drbg_set_app_data(DRBG_CTX *dctx, void *app_data)
+	{
+	dctx->app_data = app_data;
+	}
+
+size_t FIPS_drbg_get_blocklength(DRBG_CTX *dctx)
+	{
+	return dctx->blocklength;
+	}

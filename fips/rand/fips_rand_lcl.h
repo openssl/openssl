@@ -84,12 +84,8 @@ struct drbg_ctr_ctx_st
 
 /* DRBG flags */
 
-/* Enable prediction resistance */
-#define	DRBG_FLAG_PREDICTION_RESISTANCE	0x1
-/* CTR only: use derivation function */
-#define	DRBG_FLAG_CTR_USE_DF		0x2
 /* PRNG is in test state */
-#define	DRBG_FLAG_TEST			0x4
+#define	DRBG_FLAG_TEST			0x2
 
 /* DRBG status values */
 /* not initialised */
