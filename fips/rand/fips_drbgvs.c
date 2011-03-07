@@ -294,6 +294,8 @@ int main(int argc,char **argv)
 		if (gen == 2)
 			{
 			OutputValue("ReturnedBits", out, outlen, stdout, 0);
+			FIPS_drbg_free(dctx);
+			dctx = NULL;
 			gen = 0;
 			}
 

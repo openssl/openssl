@@ -306,6 +306,13 @@ static int drbg_hash_generate(DRBG_CTX *dctx,
 	return 1;
 	}
 
+static int drbg_hash_uninstantiate(DRBG_CTX *dctx)
+	{
+	EVP_MD_CTX_cleanup(&dctx->d.hash.mctx);
+	OPENSSL_cleanse(&dctx->d.hash, sizeof(DRBG_HASH_CTX));
+	return 1;
+	}
+
 int fips_drbg_hash_init(DRBG_CTX *dctx)
 	{
 	const EVP_MD *md;
@@ -346,6 +353,7 @@ int fips_drbg_hash_init(DRBG_CTX *dctx)
 	dctx->instantiate = drbg_hash_instantiate;
 	dctx->reseed = drbg_hash_reseed;
 	dctx->generate = drbg_hash_generate;
+	dctx->uninstantiate = drbg_hash_uninstantiate;
 
 	dctx->d.hash.md = md;
 	EVP_MD_CTX_init(&hctx->mctx);

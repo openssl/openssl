@@ -350,6 +350,12 @@ static int drbg_ctr_generate(DRBG_CTX *dctx,
 
 	}
 
+static int drbg_ctr_uninstantiate(DRBG_CTX *dctx)
+	{
+	OPENSSL_cleanse(&dctx->d.ctr, sizeof(DRBG_CTR_CTX));
+	return 1;
+	}
+
 int fips_drbg_ctr_init(DRBG_CTX *dctx)
 	{
 	DRBG_CTR_CTX *cctx = &dctx->d.ctr;
@@ -377,6 +383,7 @@ int fips_drbg_ctr_init(DRBG_CTX *dctx)
 	dctx->instantiate = drbg_ctr_instantiate;
 	dctx->reseed = drbg_ctr_reseed;
 	dctx->generate = drbg_ctr_generate;
+	dctx->uninstantiate = drbg_ctr_uninstantiate;
 
 
 	cctx->keylen = keylen;

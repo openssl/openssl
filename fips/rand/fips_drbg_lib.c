@@ -62,30 +62,41 @@
 
 /* Support framework for SP800-90 DRBGs */
 
-DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
+static int fips_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 	{
 	int rv;
-	DRBG_CTX *dctx;
-	dctx = OPENSSL_malloc(sizeof(DRBG_CTX));
 	memset(dctx, 0, sizeof(DRBG_CTX));
 	dctx->status = DRBG_STATUS_UNINITIALISED;
 	dctx->flags = flags;
 	dctx->type = type;
+
 	rv = fips_drbg_hash_init(dctx);
+
 	if (rv == -2)
 		rv = fips_drbg_ctr_init(dctx);
-	if (rv <= 0)
+
+	return rv;
+	}
+
+DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
+	{
+	DRBG_CTX *dctx;
+	dctx = OPENSSL_malloc(sizeof(DRBG_CTX));
+	if (!dctx)
+		return NULL;
+	if (fips_drbg_init(dctx, type, flags) <= 0)
 		{
-		/* Fatal: cannot initialiase DRBG */
-		goto err;
-		}
-
-	return dctx;
-
-	err:
-	if (dctx)
 		OPENSSL_free(dctx);
-	return NULL;
+		return NULL;
+		}
+	return dctx;
+	}
+
+void FIPS_drbg_free(DRBG_CTX *dctx)
+	{
+	dctx->uninstantiate(dctx);
+	OPENSSL_cleanse(dctx, sizeof(DRBG_CTX));
+	OPENSSL_free(dctx);
 	}
 
 int FIPS_drbg_instantiate(DRBG_CTX *dctx,
@@ -224,6 +235,18 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 	return 1;
 	}
 
+int FIPS_drbg_uninstantiate(DRBG_CTX *dctx)
+	{
+	int save_type, save_flags, rv;
+	save_type = dctx->type;
+	save_flags = dctx->flags;
+	rv = dctx->uninstantiate(dctx);
+	OPENSSL_cleanse(dctx, sizeof(DRBG_CTX));
+	/* If method has problems uninstantiating, return error */
+	if (rv <= 0)
+		return rv;
+	return fips_drbg_init(dctx, save_type, save_flags);
+	}
 
 int FIPS_drbg_set_test_mode(DRBG_CTX *dctx,
 	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char *out,

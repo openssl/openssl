@@ -83,6 +83,9 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 			int prediction_resistance,
 			const unsigned char *adin, size_t adinlen);
 
+int FIPS_drbg_uninstantiate(DRBG_CTX *dctx);
+void FIPS_drbg_free(DRBG_CTX *dctx);
+
 int FIPS_drbg_set_test_mode(DRBG_CTX *dctx,
 	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char *out,
 				int entropy, size_t min_len, size_t max_len),
