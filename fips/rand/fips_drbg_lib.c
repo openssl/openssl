@@ -57,6 +57,7 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
+#include <openssl/err.h>
 #include <openssl/fips_rand.h>
 #include "fips_rand_lcl.h"
 
@@ -80,12 +81,23 @@ static int fips_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 
 DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
 	{
+	int rv;
 	DRBG_CTX *dctx;
 	dctx = OPENSSL_malloc(sizeof(DRBG_CTX));
 	if (!dctx)
-		return NULL;
-	if (fips_drbg_init(dctx, type, flags) <= 0)
 		{
+		FIPSerr(FIPS_F_FIPS_DRBG_NEW, ERR_R_MALLOC_FAILURE);
+		return NULL;
+		}
+	rv = fips_drbg_init(dctx, type, flags);
+
+	if (rv <= 0)
+		{
+		if (rv == -2)
+			FIPSerr(FIPS_F_FIPS_DRBG_NEW, FIPS_R_UNSUPPORTED_DRBG_TYPE);
+		else
+			FIPSerr(FIPS_F_FIPS_DRBG_NEW, FIPS_R_ERROR_INITIALISING_DRBG);
+
 		OPENSSL_free(dctx);
 		return NULL;
 		}
@@ -105,13 +117,32 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 	{
 	size_t entlen, noncelen;
 
+#if 0
+	/* Put here so error script picks them up */
+	FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE,
+				FIPS_R_PERSONALISATION_STRING_TOO_LONG);
+	FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_IN_ERROR_STATE);
+	FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_ALREADY_INSTANTIATED);
+	FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_ERROR_RETRIEVING_ENTROPY);
+	FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_ERROR_RETRIEVING_NONCE);
+	FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_INSTANTIATE_ERROR);
+#endif
+
+	int r = 0;
+
 	if (perslen > dctx->max_pers)
-		return 0;
+		{
+		r = FIPS_R_PERSONALISATION_STRING_TOO_LONG;
+		goto end;
+		}
 
 	if (dctx->status != DRBG_STATUS_UNINITIALISED)
 		{
-		/* error */
-		return 0;
+		if (dctx->status == DRBG_STATUS_ERROR)
+			r = FIPS_R_IN_ERROR_STATE;
+		else
+			r = FIPS_R_ALREADY_INSTANTIATED;
+		goto end;
 		}
 
 	dctx->status = DRBG_STATUS_ERROR;
@@ -120,7 +151,10 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 				dctx->min_entropy, dctx->max_entropy);
 
 	if (entlen < dctx->min_entropy || entlen > dctx->max_entropy)
+		{
+		r = FIPS_R_ERROR_RETRIEVING_ENTROPY;
 		goto end;
+		}
 
 	if (dctx->max_nonce > 0)
 		{
@@ -130,7 +164,10 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 					dctx->min_nonce, dctx->max_nonce);
 
 		if (noncelen < dctx->min_nonce || noncelen > dctx->max_nonce)
+			{
+			r = FIPS_R_ERROR_RETRIEVING_NONCE;
 			goto end;
+			}
 
 		}
 	else
@@ -140,7 +177,10 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 				dctx->entropy, entlen,
 				dctx->nonce, noncelen,
 				pers, perslen))
+		{
+		r = FIPS_R_ERROR_INSTANTIATING_DRBG;
 		goto end;
+		}
 
 
 	dctx->status = DRBG_STATUS_READY;
@@ -156,6 +196,9 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 	if (dctx->status == DRBG_STATUS_READY)
 		return 1;
 
+	if (r && !(dctx->flags & DRBG_FLAG_TEST))
+		FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, r);
+
 	return 0;
 
 	}
@@ -164,19 +207,28 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 			const unsigned char *adin, size_t adinlen)
 	{
 	size_t entlen;
+	int r = 0;
+
+#if 0
+	FIPSerr(FIPS_F_FIPS_DRBG_RESEED, FIPS_R_NOT_INSTANTIATED);
+	FIPSerr(FIPS_F_FIPS_DRBG_RESEED, FIPS_R_ADDITIONAL_INPUT_TOO_LONG);
+#endif
 	if (dctx->status != DRBG_STATUS_READY
 		&& dctx->status != DRBG_STATUS_RESEED)
 		{
-		/* error */
-		return 0;
+		if (dctx->status == DRBG_STATUS_ERROR)
+			r = FIPS_R_IN_ERROR_STATE;
+		else if(dctx->status == DRBG_STATUS_UNINITIALISED)
+			r = FIPS_R_NOT_INSTANTIATED;
+		goto end;
 		}
 
 	if (!adin)
 		adinlen = 0;
 	else if (adinlen > dctx->max_adin)
 		{
-		/* error */
-		return 0;
+		r = FIPS_R_ADDITIONAL_INPUT_TOO_LONG;
+		goto end;
 		}
 
 	dctx->status = DRBG_STATUS_ERROR;
@@ -185,7 +237,10 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 				dctx->min_entropy, dctx->max_entropy);
 
 	if (entlen < dctx->min_entropy || entlen > dctx->max_entropy)
+		{
+		r = FIPS_R_ERROR_RETRIEVING_ENTROPY;
 		goto end;
+		}
 
 	if (!dctx->reseed(dctx, dctx->entropy, entlen, adin, adinlen))
 		goto end;
@@ -194,43 +249,63 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 	dctx->reseed_counter = 1;
 	end:
 	OPENSSL_cleanse(dctx->entropy, sizeof(dctx->entropy));
+
 	if (dctx->status == DRBG_STATUS_READY)
 		return 1;
+
+	if (r && !(dctx->flags & DRBG_FLAG_TEST))
+		FIPSerr(FIPS_F_FIPS_DRBG_RESEED, r);
+
 	return 0;
 	}
-	
+
 
 int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 			int prediction_resistance,
 			const unsigned char *adin, size_t adinlen)
 	{
+	int r = 0;
 	if (outlen > dctx->max_request)
 		{
-		/* Too large */
+		r = FIPS_R_REQUEST_TOO_LARGE_FOR_DRBG;
 		return 0;
 		}
 	if (dctx->status == DRBG_STATUS_RESEED || prediction_resistance)
 		{
 		if (!FIPS_drbg_reseed(dctx, adin, adinlen))
-			return 0;
+			{
+			r = FIPS_R_RESEED_ERROR;
+			goto end;
+			}
 		adin = NULL;
 		adinlen = 0;
 		}
 	if (dctx->status != DRBG_STATUS_READY)
 		{
-		/* Bad error */
-		return 0;
+		if (dctx->status == DRBG_STATUS_ERROR)
+			r = FIPS_R_IN_ERROR_STATE;
+		else if(dctx->status == DRBG_STATUS_UNINITIALISED)
+			r = FIPS_R_NOT_INSTANTIATED;
+		goto end;
 		}
 	if (!dctx->generate(dctx, out, outlen, adin, adinlen))
 		{
-		/* Bad error */
+		r = FIPS_R_GENERATE_ERROR;
 		dctx->status = DRBG_STATUS_ERROR;
-		return 0;
+		goto end;
 		}
 	if (dctx->reseed_counter > dctx->reseed_interval)
 		dctx->status = DRBG_STATUS_RESEED;
 	else
 		dctx->reseed_counter++;
+
+	end:
+	if (r)
+		{
+		if (!(dctx->flags & DRBG_FLAG_TEST))
+			FIPSerr(FIPS_F_FIPS_DRBG_GENERATE, r);
+		return 0;
+		}
 
 	return 1;
 	}
