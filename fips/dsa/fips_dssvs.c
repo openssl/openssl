@@ -84,37 +84,15 @@ static int parse_mod(char *line, int *pdsa2, int *pL, int *pN,
 	return 1;
 	}
 
-
-
-static void pbn(const char *name, BIGNUM *bn)
-	{
-	int len, i;
-	unsigned char *tmp;
-	len = BN_num_bytes(bn);
-	tmp = OPENSSL_malloc(len);
-	if (!tmp)
-		{
-		fprintf(stderr, "Memory allocation error\n");
-		return;
-		}
-	BN_bn2bin(bn, tmp);
-	printf("%s = ", name);
-	for (i = 0; i < len; i++)
-		printf("%02X", tmp[i]);
-	fputs("\n", stdout);
-	OPENSSL_free(tmp);
-	return;
-	}
-
-static void primes()
+static void primes(FILE *in, FILE *out)
     {
     char buf[10240];
     char lbuf[10240];
     char *keyword, *value;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
-	fputs(buf,stdout);
+	fputs(buf,out);
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		continue;
 	if(!strcmp(keyword,"Prime"))
@@ -123,7 +101,7 @@ static void primes()
 
 	    pp=BN_new();
 	    do_hex2bn(&pp,value);
-	    printf("result= %c\n",
+	    fprintf(out, "result= %c\n",
 		   BN_is_prime_ex(pp,20,NULL,NULL) ? 'P' : 'F');
 	    }	    
 	}
@@ -138,7 +116,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t bits, size_t qbits,
 	unsigned char *seed_out,
 	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
 
-static void pqg()
+static void pqg(FILE *in, FILE *out)
     {
     char buf[1024];
     char lbuf[1024];
@@ -146,16 +124,16 @@ static void pqg()
     int dsa2, L, N;
     const EVP_MD *md = NULL;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		continue;
 		}
 	if(!strcmp(keyword,"[mod"))
 	    {
-	    fputs(buf,stdout);
+	    fputs(buf,out);
 	    if (!parse_mod(value, &dsa2, &L, &N, &md))
 		{
 		fprintf(stderr, "Mod Parse Error\n");
@@ -189,21 +167,20 @@ static void pqg()
 			exit(1);
 			}
  
-		pbn("P",dsa->p);
-		pbn("Q",dsa->q);
-		pbn("G",dsa->g);
-		pv("Seed",seed, M_EVP_MD_size(md));
-		printf("c = %d\n",counter);
-		printf("H = %lx\n",h);
-		putc('\n',stdout);
+		do_bn_print_name(out, "P",dsa->p);
+		do_bn_print_name(out, "Q",dsa->q);
+		do_bn_print_name(out, "G",dsa->g);
+		OutputValue("Seed",seed, M_EVP_MD_size(md), out, 0);
+		fprintf(out, "c = %d\n",counter);
+		fprintf(out, "H = %lx\n\n",h);
 		}
 	    }
 	else
-	    fputs(buf,stdout);
+	    fputs(buf,out);
 	}
     }
 
-static void pqgver()
+static void pqgver(FILE *in, FILE *out)
     {
     char buf[1024];
     char lbuf[1024];
@@ -217,7 +194,7 @@ static void pqgver()
     int seedlen=-1;
     unsigned char seed[1024];
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
@@ -226,10 +203,10 @@ static void pqgver()
 			part_test = 1;
 			goto partial;
 			}
-		fputs(buf,stdout);
+		fputs(buf,out);
 		continue;
 		}
-	fputs(buf, stdout);
+	fputs(buf, out);
 	if(!strcmp(keyword,"[mod"))
 	    {
 	    if (!parse_mod(value, &dsa2, &L, &N, &md))
@@ -283,9 +260,9 @@ static void pqgver()
             if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) || 
 		(!part_test &&
 		((BN_cmp(dsa->g, g) || (counter != counter2) || (h != h2)))))
-	    	printf("Result = F\n");
+	    	fprintf(out, "Result = F\n");
 	    else
-	    	printf("Result = P\n");
+	    	fprintf(out, "Result = P\n");
 	    BN_free(p);
 	    BN_free(q);
 	    BN_free(g);
@@ -296,7 +273,7 @@ static void pqgver()
 	    dsa = NULL;
 	    if (part_test)
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		part_test = 0;
 		}
 	    }
@@ -333,7 +310,7 @@ static int dss_paramcheck(int L, int N, BIGNUM *p, BIGNUM *q, BIGNUM *g,
     return 1;
     }
 
-static void keyver()
+static void keyver(FILE *in, FILE *out)
     {
     char buf[1024];
     char lbuf[1024];
@@ -347,11 +324,11 @@ static void keyver()
     ctx = BN_CTX_new();
     Y2 = BN_new();
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		continue;
 		}
 	if(!strcmp(keyword,"[mod"))
@@ -388,11 +365,11 @@ static void keyver()
 		fprintf(stderr, "Parse Error\n");
 		exit (1);
 		}
-	    pbn("P",p);
-	    pbn("Q",q);
-	    pbn("G",g);
-	    pbn("X",X);
-	    pbn("Y",Y);
+	    do_bn_print_name(out, "P",p);
+	    do_bn_print_name(out, "Q",q);
+	    do_bn_print_name(out, "G",g);
+	    do_bn_print_name(out, "X",X);
+	    do_bn_print_name(out, "Y",Y);
 	    if (!paramcheck)
 		{
 		if (dss_paramcheck(L, N, p, q, g, ctx))
@@ -401,13 +378,13 @@ static void keyver()
 			paramcheck = -1;
 		}
 	    if (paramcheck != 1)
-	   	printf("Result = F\n");
+	   	fprintf(out, "Result = F\n");
 	    else
 		{
 		if (!BN_mod_exp(Y2, g, X, p, ctx) || BN_cmp(Y2, Y))
-	    		printf("Result = F\n");
+	    		fprintf(out, "Result = F\n");
 	        else
-	    		printf("Result = P\n");
+	    		fprintf(out, "Result = P\n");
 		}
 	    BN_free(X);
 	    BN_free(Y);
@@ -425,14 +402,14 @@ static void keyver()
 	    BN_free(Y2);
     }
 
-static void keypair()
+static void keypair(FILE *in, FILE *out)
     {
     char buf[1024];
     char lbuf[1024];
     char *keyword, *value;
     int dsa2, L, N;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
@@ -445,7 +422,7 @@ static void keypair()
 		fprintf(stderr, "Mod Parse Error\n");
 		exit (1);
 		}
-	    fputs(buf,stdout);
+	    fputs(buf,out);
 	    }
 	else if(!strcmp(keyword,"N"))
 	    {
@@ -465,25 +442,25 @@ static void keypair()
 			fprintf(stderr, "Parameter Generation error\n");
 			exit(1);
 			}
-	    pbn("P",dsa->p);
-	    pbn("Q",dsa->q);
-	    pbn("G",dsa->g);
-	    putc('\n',stdout);
+	    do_bn_print_name(out, "P",dsa->p);
+	    do_bn_print_name(out, "Q",dsa->q);
+	    do_bn_print_name(out, "G",dsa->g);
+	    fputs("\n", out);
 
 	    while(n--)
 		{
 		if (!DSA_generate_key(dsa))
 			exit(1);
 
-		pbn("X",dsa->priv_key);
-		pbn("Y",dsa->pub_key);
-		putc('\n',stdout);
+		do_bn_print_name(out, "X",dsa->priv_key);
+		do_bn_print_name(out, "Y",dsa->pub_key);
+	    	fputs("\n", out);
 		}
 	    }
 	}
     }
 
-static void siggen()
+static void siggen(FILE *in, FILE *out)
     {
     char buf[1024];
     char lbuf[1024];
@@ -492,14 +469,14 @@ static void siggen()
     const EVP_MD *md = NULL;
     DSA *dsa=NULL;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		continue;
 		}
-	fputs(buf,stdout);
+	fputs(buf,out);
 	if(!strcmp(keyword,"[mod"))
 	    {
 	    if (!parse_mod(value, &dsa2, &L, &N, &md))
@@ -522,10 +499,10 @@ static void siggen()
 			fprintf(stderr, "Parameter Generation error\n");
 			exit(1);
 			}
-	    pbn("P",dsa->p);
-	    pbn("Q",dsa->q);
-	    pbn("G",dsa->g);
-	    putc('\n',stdout);
+	    do_bn_print_name(out, "P",dsa->p);
+	    do_bn_print_name(out, "Q",dsa->q);
+	    do_bn_print_name(out, "G",dsa->g);
+	    fputs("\n", out);
 	    }
 	else if(!strcmp(keyword,"Msg"))
 	    {
@@ -539,15 +516,15 @@ static void siggen()
 
 	    if (!DSA_generate_key(dsa))
 		exit(1);
-	    pbn("Y",dsa->pub_key);
+	    do_bn_print_name(out, "Y",dsa->pub_key);
 
 	    FIPS_digestinit(&mctx, md);
 	    FIPS_digestupdate(&mctx, msg, n);
 	    sig = FIPS_dsa_sign_ctx(dsa, &mctx);
 
-	    pbn("R",sig->r);
-	    pbn("S",sig->s);
-	    putc('\n',stdout);
+	    do_bn_print_name(out, "R",sig->r);
+	    do_bn_print_name(out, "S",sig->s);
+	    fputs("\n", out);
 	    FIPS_dsa_sig_free(sig);
 	    FIPS_md_ctx_cleanup(&mctx);
 	    }
@@ -556,7 +533,7 @@ static void siggen()
 		FIPS_dsa_free(dsa);
     }
 
-static void sigver()
+static void sigver(FILE *in, FILE *out)
     {
     DSA *dsa=NULL;
     char buf[1024];
@@ -571,14 +548,14 @@ static void sigver()
     sig->r = NULL;
     sig->s = NULL;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		continue;
 		}
-	fputs(buf,stdout);
+	fputs(buf,out);
 	if(!strcmp(keyword,"[mod"))
 	    {
 	    if (!parse_mod(value, &dsa2, &L, &N, &md))
@@ -616,15 +593,35 @@ static void sigver()
 	    no_err = 0;
 	    FIPS_md_ctx_cleanup(&mctx);
 	
-	    printf("Result = %c\n", r == 1 ? 'P' : 'F');
-	    putc('\n',stdout);
+	    fprintf(out, "Result = %c\n\n", r == 1 ? 'P' : 'F');
 	    }
 	}
     }
 
 int main(int argc,char **argv)
     {
-    if(argc != 2)
+    FILE *in, *out;
+    if (argc == 4)
+	{
+	in = fopen(argv[2], "r");
+	if (!in)
+		{
+		fprintf(stderr, "Error opening input file\n");
+		exit(1);
+		}
+	out = fopen(argv[3], "w");
+	if (!out)
+		{
+		fprintf(stderr, "Error opening output file\n");
+		exit(1);
+		}
+	}
+    else if (argc == 2)
+	{
+	in = stdin;
+	out = stdout;
+	}
+    else
 	{
 	fprintf(stderr,"%s [prime|pqg|pqgver|keypair|keyver|siggen|sigver]\n",argv[0]);
 	exit(1);
@@ -633,23 +630,29 @@ int main(int argc,char **argv)
     if(!FIPS_mode_set(1))
 	exit(1);
     if(!strcmp(argv[1],"prime"))
-	primes();
+	primes(in, out);
     else if(!strcmp(argv[1],"pqg"))
-	pqg();
+	pqg(in, out);
     else if(!strcmp(argv[1],"pqgver"))
-	pqgver();
+	pqgver(in, out);
     else if(!strcmp(argv[1],"keypair"))
-	keypair();
+	keypair(in, out);
     else if(!strcmp(argv[1],"keyver"))
-	keyver();
+	keyver(in, out);
     else if(!strcmp(argv[1],"siggen"))
-	siggen();
+	siggen(in, out);
     else if(!strcmp(argv[1],"sigver"))
-	sigver();
+	sigver(in, out);
     else
 	{
 	fprintf(stderr,"Don't know how to %s.\n",argv[1]);
 	exit(1);
+	}
+
+    if (argc == 4)
+	{
+	fclose(in);
+	fclose(out);
 	}
 
     return 0;
