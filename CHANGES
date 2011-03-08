@@ -4,6 +4,13 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) New algorithm test program fips_dhvs to handle DH primitives only testing.
+     [Steve Henson]
+
+  *) New function DH_compute_key_padded() to compute a DH key and pad with
+     leading zeroes if needed: this complies with SP800-56A et al.
+     [Steve Henson]
+
   *) Initial implementation of SP800-90 DRBGs for Hash and CTR. Not used by
      anything, incomplete, subject to change and largely untested at present.
      [Steve Henson]
