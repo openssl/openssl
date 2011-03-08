@@ -60,7 +60,7 @@
 
 int main(int argc, char **argv)
 {
-    printf("No FIPS DRBG support\n");
+    printf("No FIPS DH support\n");
     return(0);
 }
 #else
