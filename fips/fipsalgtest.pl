@@ -760,7 +760,7 @@ sub run_tests {
             $cmd .= "\"$req\" \"$out\"";
         }
         else {
-            $cmd .= "<\"$req\" >\"$out\"";
+            $cmd .= "\"$req\" \"$out\"";
         }
         print STDERR "DEBUG: running test $tname\n" if ( $debug && !$verify );
         system($cmd);
@@ -776,7 +776,7 @@ sub run_tests {
                 $vout =~ s/\.rsp$/.ver/;
                 $tcmd = $verify_special{$tname};
                 $cmd  = "$cmd_prefix$tprefix$tcmd ";
-                $cmd .= "<\"$out\" >\"$vout\"";
+                $cmd .= "\"$out\" \"$vout\"";
                 system($cmd);
                 if ( $? != 0 ) {
                     print STDERR
