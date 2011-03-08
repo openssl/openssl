@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 
 #include "fips_utl.h"
 
-static void gcmtest(int encrypt)
+static void gcmtest(FILE *in, FILE *out, int encrypt)
 	{
 	char buf[2048];
 	char lbuf[2048];
@@ -89,9 +89,9 @@ static void gcmtest(int encrypt)
 	const EVP_CIPHER *gcm = NULL;
 	FIPS_cipher_ctx_init(&ctx);
 
-	while(fgets(buf,sizeof buf,stdin) != NULL)
+	while(fgets(buf,sizeof buf,in) != NULL)
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		if (!parse_line(&keyword, &value, lbuf, buf))
 			continue;
 		if(!strcmp(keyword,"[Keylen"))
@@ -194,7 +194,7 @@ static void gcmtest(int encrypt)
 					fprintf(stderr, "IV gen error\n");
 					exit(1);
 					}
-				OutputValue("IV", iv, ivlen, stdout, 0);
+				OutputValue("IV", iv, ivlen, out, 0);
 				}
 			else
 				FIPS_cipherinit(&ctx, NULL, key, iv, 1);
@@ -210,8 +210,8 @@ static void gcmtest(int encrypt)
 			FIPS_cipher(&ctx, NULL, NULL, 0);
 			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_GET_TAG,
 								taglen, tag);	
-			OutputValue("CT", ct, ptlen, stdout, 0);
-			OutputValue("Tag", tag, taglen, stdout, 0);
+			OutputValue("CT", ct, ptlen, out, 0);
+			OutputValue("Tag", tag, taglen, out, 0);
 			if (iv)
 				OPENSSL_free(iv);
 			if (aad)
@@ -243,9 +243,9 @@ static void gcmtest(int encrypt)
 				}
 			rv = FIPS_cipher(&ctx, NULL, NULL, 0);
 			if (rv < 0)
-				printf("FAIL\n");
+				fprintf(out, "FAIL\n");
 			else
-				OutputValue("PT", pt, ptlen, stdout, 0);
+				OutputValue("PT", pt, ptlen, out, 0);
 			if (iv)
 				OPENSSL_free(iv);
 			if (aad)
@@ -266,7 +266,28 @@ static void gcmtest(int encrypt)
 int main(int argc,char **argv)
 	{
 	int encrypt;
-	if(argc != 2)
+	FILE *in, *out;
+	if (argc == 4)
+		{
+		in = fopen(argv[2], "r");
+		if (!in)
+			{
+			fprintf(stderr, "Error opening input file\n");
+			exit(1);
+			}
+		out = fopen(argv[3], "w");
+		if (!out)
+			{
+			fprintf(stderr, "Error opening output file\n");
+			exit(1);
+			}
+		}
+	else if (argc == 2)
+		{
+		in = stdin;
+		out = stdout;
+		}
+	else
 		{
 		fprintf(stderr,"%s [-encrypt|-decrypt]\n",argv[0]);
 		exit(1);
@@ -286,7 +307,13 @@ int main(int argc,char **argv)
 		exit(1);
 		}
 
-	gcmtest(encrypt);
+	gcmtest(in, out, encrypt);
+
+	if (argc == 4)
+		{
+		fclose(in);
+		fclose(out);
+		}
 
 	return 0;
 }
