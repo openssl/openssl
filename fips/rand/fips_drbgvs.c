@@ -60,7 +60,7 @@
 
 int main(int argc, char **argv)
 {
-    printf("No FIPS GCM support\n");
+    printf("No FIPS DRBG support\n");
     return(0);
 }
 #else
@@ -155,27 +155,54 @@ static size_t test_nonce(DRBG_CTX *dctx, unsigned char *out,
 
 int main(int argc,char **argv)
 	{
+	FILE *in, *out;
 	DRBG_CTX *dctx;
 	TEST_ENT t;
 	int r, nid;
 	int pr = 0;
 	char buf[2048], lbuf[2048];
-	unsigned char out[2048];
+	unsigned char randout[2048];
 	char *keyword = NULL, *value = NULL;
 
 	unsigned char *ent = NULL, *nonce = NULL, *pers = NULL, *adin = NULL;
 	long entlen, noncelen, perslen, adinlen;
 	int df;
 
-	int outlen = 0;
+	int randoutlen = 0;
 
 	int gen = 0;
 
 	fips_set_error_print();
-	
-	while (fgets(buf, sizeof(buf), stdin) != NULL)
+
+	if (argc == 3)
 		{
-		fputs(buf, stdout);
+		in = fopen(argv[1], "r");
+		if (!in)
+			{
+			fprintf(stderr, "Error opening input file\n");
+			exit(1);
+			}
+		out = fopen(argv[2], "w");
+		if (!out)
+			{
+			fprintf(stderr, "Error opening output file\n");
+			exit(1);
+			}
+		}
+	else if (argc == 1)
+		{
+		in = stdin;
+		out = stdout;
+		}
+	else
+		{
+		fprintf(stderr,"%s (infile outfile)\n",argv[0]);
+		exit(1);
+		}
+
+	while (fgets(buf, sizeof(buf), in) != NULL)
+		{
+		fputs(buf, out);
 		if (strlen(buf) > 4 && !strncmp(buf, "[SHA-", 5))
 			{
 			nid = parse_md(buf);
@@ -223,7 +250,7 @@ int main(int argc,char **argv)
 				exit (1);
 			FIPS_drbg_set_test_mode(dctx, test_entropy, test_nonce);
 			FIPS_drbg_set_app_data(dctx, &t);
-			outlen = (int)FIPS_drbg_get_blocklength(dctx);
+			randoutlen = (int)FIPS_drbg_get_blocklength(dctx);
 			r = FIPS_drbg_instantiate(dctx, 0, pers, perslen);
 			if (!r)
 				{
@@ -242,7 +269,7 @@ int main(int argc,char **argv)
 			adin = hex2bin_m(value, &adinlen);
 			if (pr)
 				continue;
-			r = FIPS_drbg_generate(dctx, out, outlen, 0,
+			r = FIPS_drbg_generate(dctx, randout, randoutlen, 0,
 								adin, adinlen);
 			if (!r)
 				{
@@ -263,7 +290,8 @@ int main(int argc,char **argv)
 				ent = hex2bin_m(value, &entlen);
 				t.ent = ent;
 				t.entlen = entlen;
-				r = FIPS_drbg_generate(dctx, out, outlen, 1,
+				r = FIPS_drbg_generate(dctx,
+							randout, randoutlen, 1,
 							adin, adinlen);
 				if (!r)
 					{
@@ -293,7 +321,8 @@ int main(int argc,char **argv)
 			}
 		if (gen == 2)
 			{
-			OutputValue("ReturnedBits", out, outlen, stdout, 0);
+			OutputValue("ReturnedBits", randout, randoutlen,
+									out, 0);
 			FIPS_drbg_free(dctx);
 			dctx = NULL;
 			gen = 0;
