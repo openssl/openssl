@@ -67,6 +67,7 @@
  *
  */
 
+#define OPENSSL_FIPSAPI
 
 #include <string.h>
 #include <limits.h>
@@ -213,3 +214,15 @@ err:
 	if (buf) OPENSSL_free(buf);
 	return(ret);
 	}
+
+#ifdef OPENSSL_FIPSCANISTER
+/* FIPS stanadlone version of ecdh_check: just return FIPS method */
+ECDH_DATA *fips_ecdh_check(EC_KEY *key)
+	{
+	static ECDH_DATA rv = {
+		0,0,0,
+		&openssl_ecdh_meth
+		};
+	return &rv;
+	}
+#endif

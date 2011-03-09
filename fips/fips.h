@@ -165,6 +165,7 @@ void FIPS_set_locking_callbacks(void (*func)(int mode, int type,
 #define ECDSA_SIG_free FIPS_ecdsa_sig_free
 
 #define ecdsa_check fips_ecdsa_check
+#define ecdh_check fips_ecdh_check
 
 #endif
 
