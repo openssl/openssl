@@ -1,8 +1,61 @@
+/* fips/ecdsa/fips_ecdsavs.c */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project.
+ */
+/* ====================================================================
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    licensing@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ */
+
 #define OPENSSL_FIPSAPI
 #include <openssl/opensslconf.h>
+#include <stdio.h>
 
 #ifndef OPENSSL_FIPS
-#include <stdio.h>
 
 int main(int argc, char **argv)
 {
@@ -124,7 +177,7 @@ static int ec_get_pubkey(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 
 	}
 
-static int KeyPair(void)
+static int KeyPair(FILE *in, FILE *out)
 	{
 	char buf[2048], lbuf[2048];
 	char *keyword, *value;
@@ -135,18 +188,18 @@ static int KeyPair(void)
 	EC_KEY *key = NULL;
 	Qx = BN_new();
 	Qy = BN_new();
-	while(fgets(buf, sizeof buf, stdin) != NULL)
+	while(fgets(buf, sizeof buf, in) != NULL)
 		{
 		if (*buf == '[' && buf[2] == '-')
 			{
 			if (buf[2] == '-')
 			curve_nid = lookup_curve(buf, lbuf, NULL);
-			fputs(buf, stdout);
+			fputs(buf, out);
 			continue;
 			}
 		if (!parse_line(&keyword, &value, lbuf, buf))
 			{
-			fputs(buf, stdout);
+			fputs(buf, out);
 			continue;
 			}
 		if (!strcmp(keyword, "N"))
@@ -171,10 +224,10 @@ static int KeyPair(void)
 
 				d = EC_KEY_get0_private_key(key);
 
-				do_bn_print_name(stdout, "d", d);
-				do_bn_print_name(stdout, "Qx", Qx);
-				do_bn_print_name(stdout, "Qy", Qy);
-				fputs("\n", stdout);
+				do_bn_print_name(out, "d", d);
+				do_bn_print_name(out, "Qx", Qx);
+				do_bn_print_name(out, "Qy", Qy);
+				fputs("\n", out);
 				EC_KEY_free(key);
 
 				}
@@ -187,7 +240,7 @@ static int KeyPair(void)
 	return 1;
 	}
 
-static int PKV(void)
+static int PKV(FILE *in, FILE *out)
 	{
 
 	char buf[2048], lbuf[2048];
@@ -195,9 +248,9 @@ static int PKV(void)
 	int curve_nid = NID_undef;
 	BIGNUM *Qx = NULL, *Qy = NULL;
 	EC_KEY *key = NULL;
-	while(fgets(buf, sizeof buf, stdin) != NULL)
+	while(fgets(buf, sizeof buf, in) != NULL)
 		{
-		fputs(buf, stdout);
+		fputs(buf, out);
 		if (*buf == '[' && buf[2] == '-')
 			{
 			curve_nid = lookup_curve(buf, lbuf, NULL);
@@ -225,14 +278,14 @@ static int PKV(void)
 				}
 			key = EC_KEY_new_by_curve_name(curve_nid);
 			rv = EC_KEY_set_public_key_affine_coordinates(key, Qx, Qy);
-			printf("Result = %s\n", rv ? "P":"F");
+			fprintf(out, "Result = %s\n", rv ? "P":"F");
 			}
 
 		}
 	return 1;
 	}
 
-static int SigGen(void)
+static int SigGen(FILE *in, FILE *out)
 	{
 	char buf[2048], lbuf[2048];
 	char *keyword, *value;
@@ -247,9 +300,9 @@ static int SigGen(void)
 	EVP_MD_CTX_init(&mctx);
 	Qx = BN_new();
 	Qy = BN_new();
-	while(fgets(buf, sizeof buf, stdin) != NULL)
+	while(fgets(buf, sizeof buf, in) != NULL)
 		{
-		fputs(buf, stdout);
+		fputs(buf, out);
 		if (*buf == '[')
 			{
 			curve_nid = lookup_curve(buf, lbuf, &digest);
@@ -290,10 +343,10 @@ static int SigGen(void)
 				return 0;
 				}
 
-			do_bn_print_name(stdout, "Qx", Qx);
-			do_bn_print_name(stdout, "Qy", Qy);
-			do_bn_print_name(stdout, "R", sig->r);
-			do_bn_print_name(stdout, "S", sig->s);
+			do_bn_print_name(out, "Qx", Qx);
+			do_bn_print_name(out, "Qy", Qy);
+			do_bn_print_name(out, "R", sig->r);
+			do_bn_print_name(out, "S", sig->s);
 
 			EC_KEY_free(key);
 
@@ -308,7 +361,7 @@ static int SigGen(void)
 	return 1;
 	}
 
-static int SigVer(void)
+static int SigVer(FILE *in, FILE *out)
 	{
 	char buf[2048], lbuf[2048];
 	char *keyword, *value;
@@ -323,9 +376,9 @@ static int SigVer(void)
 	EVP_MD_CTX_init(&mctx);
 	sig->r = NULL;
 	sig->s = NULL;
-	while(fgets(buf, sizeof buf, stdin) != NULL)
+	while(fgets(buf, sizeof buf, in) != NULL)
 		{
-		fputs(buf, stdout);
+		fputs(buf, out);
 		if (*buf == '[')
 			{
 			curve_nid = lookup_curve(buf, lbuf, &digest);
@@ -391,7 +444,7 @@ static int SigVer(void)
 	    		rv = FIPS_ecdsa_verify_ctx(key, &mctx, sig);
 			no_err = 0;
 
-			printf("Result = %s\n", rv ? "P":"F");
+			fprintf(out, "Result = %s\n", rv ? "P":"F");
 			}
 
 		}
@@ -400,32 +453,65 @@ static int SigVer(void)
 
 int main(int argc, char **argv)
 	{
+	FILE *in, *out;
 	const char *cmd = argv[1];
 	int rv = 0;
 	fips_set_error_print();
+	if (!FIPS_mode_set(1))
+		exit(1);
+
+	if (argc == 4)
+		{
+		in = fopen(argv[2], "r");
+		if (!in)
+			{
+			fprintf(stderr, "Error opening input file\n");
+			exit(1);
+			}
+		out = fopen(argv[3], "w");
+		if (!out)
+			{
+			fprintf(stderr, "Error opening output file\n");
+			exit(1);
+			}
+		}
+	else if (argc == 2)
+		{
+		in = stdin;
+		out = stdout;
+		}
+
 	if (!cmd)
 		{
 		fprintf(stderr, "fips_ecdsavs [KeyPair|PKV|SigGen|SigVer]\n");
 		return 1;
 		}
 	if (!strcmp(cmd, "KeyPair"))
-		rv = KeyPair();
+		rv = KeyPair(in, out);
 	else if (!strcmp(cmd, "PKV"))
-		rv = PKV();
+		rv = PKV(in, out);
 	else if (!strcmp(cmd, "SigVer"))
-		rv = SigVer();
+		rv = SigVer(in, out);
 	else if (!strcmp(cmd, "SigGen"))
-		rv = SigGen();
+		rv = SigGen(in, out);
 	else
 		{
 		fprintf(stderr, "Unknown command %s\n", cmd);
 		return 1;
 		}
+
+	if (argc == 4)
+		{
+		fclose(in);
+		fclose(out);
+		}
+
 	if (rv <= 0)
 		{
 		fprintf(stderr, "Error running %s\n", cmd);
 		return 1;
 		}
+
 	return 0;
 	}
 

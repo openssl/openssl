@@ -161,6 +161,8 @@ int main(int argc,char **argv)
 	int do_verify = -1, exout = 0;
 
 	fips_set_error_print();
+	if(!FIPS_mode_set(1))
+		exit(1);
 
 	if (argn && !strcmp(*args, "dhver"))
 		{
