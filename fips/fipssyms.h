@@ -510,6 +510,9 @@
 #define ec_wNAF_precompute_mult fips_ec_wnaf_precompute_mult
 #define int_bn_mod_inverse fips_int_bn_mod_inverse
 #define cleanse_ctr fips_cleanse_ctr
+#define DH_compute_key_padded FIPS_dh_compute_key_padded
+#define ECDH_OpenSSL FIPS_ecdh_openssl
+#define ECDH_compute_key FIPS_ecdh_compute_key
 /* assembler symbols */
 #define gcm_gmult_4bit_x86 fips_gcm_gmult_4bit_x86
 #define gcm_ghash_4bit_x86 fips_gcm_ghash_4bit_x86
