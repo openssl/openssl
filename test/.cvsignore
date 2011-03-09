@@ -37,3 +37,6 @@ fips_desmovs
 fips_dssvs
 fips_rngvs
 fips_test_suite
+fips_dhvs
+fips_drbgvs
+fips_ecdsavs
