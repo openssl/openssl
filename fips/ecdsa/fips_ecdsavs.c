@@ -169,7 +169,14 @@ static int ec_get_pubkey(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 	if (EC_METHOD_get_field_type(meth) == NID_X9_62_prime_field)
 		rv = EC_POINT_get_affine_coordinates_GFp(grp, pt, x, y, ctx);
 	else
+#ifdef OPENSSL_NO_EC2M
+		{
+		fprintf(stderr, "ERROR: GF2m not supported\n");
+		exit(1);
+		}
+#else
 		rv = EC_POINT_get_affine_coordinates_GF2m(grp, pt, x, y, ctx);
+#endif
 
 	BN_CTX_free(ctx);
 

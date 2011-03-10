@@ -171,10 +171,17 @@ static EC_POINT *make_peer(EC_GROUP *group, BIGNUM *x, BIGNUM *y)
 		return NULL;
 	c = BN_CTX_new();
 	if (EC_METHOD_get_field_type(EC_GROUP_method_of(group))
-		== NID_X9_62_characteristic_two_field)
-		rv = EC_POINT_set_affine_coordinates_GF2m(group, peer, x, y, c);
-	else
+		== NID_X9_62_prime_field)
 		rv = EC_POINT_set_affine_coordinates_GFp(group, peer, x, y, c);
+	else
+#ifdef OPENSSL_NO_EC2M
+		{
+		fprintf(stderr, "ERROR: GF2m not supported\n");
+		exit(1);
+		}
+#else
+		rv = EC_POINT_set_affine_coordinates_GF2m(group, peer, x, y, c);
+#endif
 
 	BN_CTX_free(c);
 	if (rv)
@@ -204,7 +211,14 @@ static int ec_print_pubkey(FILE *out, EC_KEY *key)
 	if (EC_METHOD_get_field_type(meth) == NID_X9_62_prime_field)
 		rv = EC_POINT_get_affine_coordinates_GFp(grp, pt, tx, ty, ctx);
 	else
+#ifdef OPENSSL_NO_EC2M
+		{
+		fprintf(stderr, "ERROR: GF2m not supported\n");
+		exit(1);
+		}
+#else
 		rv = EC_POINT_get_affine_coordinates_GF2m(grp, pt, tx, ty, ctx);
+#endif
 
 	do_bn_print_name(out, "QeIUTx", tx);
 	do_bn_print_name(out, "QeIUTy", ty);
