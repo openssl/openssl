@@ -128,6 +128,7 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {ERR_REASON(FIPS_R_FIPS_SELFTEST_FAILED) ,"fips selftest failed"},
 {ERR_REASON(FIPS_R_GENERATE_ERROR)       ,"generate error"},
 {ERR_REASON(FIPS_R_INSTANTIATE_ERROR)    ,"instantiate error"},
+{ERR_REASON(FIPS_R_INSUFFICIENT_SECURITY_STRENGTH),"insufficient security strength"},
 {ERR_REASON(FIPS_R_INVALID_KEY_LENGTH)   ,"invalid key length"},
 {ERR_REASON(FIPS_R_IN_ERROR_STATE)       ,"in error state"},
 {ERR_REASON(FIPS_R_KEY_TOO_SHORT)        ,"key too short"},

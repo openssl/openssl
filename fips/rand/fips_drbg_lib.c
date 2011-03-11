@@ -145,6 +145,12 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 		goto end;
 		}
 
+	if (strength > dctx->strength)
+		{
+		r = FIPS_R_INSUFFICIENT_SECURITY_STRENGTH;
+		goto end;
+		}
+
 	dctx->status = DRBG_STATUS_ERROR;
 
 	entlen = dctx->get_entropy(dctx, dctx->entropy, dctx->strength,
@@ -261,7 +267,7 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 
 
 int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
-			int prediction_resistance,
+			int strength, int prediction_resistance,
 			const unsigned char *adin, size_t adinlen)
 	{
 	int r = 0;
@@ -270,6 +276,13 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 		r = FIPS_R_REQUEST_TOO_LARGE_FOR_DRBG;
 		return 0;
 		}
+
+	if (strength > dctx->strength)
+		{
+		r = FIPS_R_INSUFFICIENT_SECURITY_STRENGTH;
+		goto end;
+		}
+
 	if (dctx->status == DRBG_STATUS_RESEED || prediction_resistance)
 		{
 		if (!FIPS_drbg_reseed(dctx, adin, adinlen))
@@ -350,4 +363,9 @@ void FIPS_drbg_set_app_data(DRBG_CTX *dctx, void *app_data)
 size_t FIPS_drbg_get_blocklength(DRBG_CTX *dctx)
 	{
 	return dctx->blocklength;
+	}
+
+int FIPS_drbg_get_strength(DRBG_CTX *dctx)
+	{
+	return dctx->strength;
 	}
