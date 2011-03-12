@@ -140,12 +140,12 @@ static int get_index(CA_DB *db, char* id, char type)
 	return -1 ; 
 	}
 
-static void print_entry(CA_DB *db, BIO * bio, int index, int verbose, char * s)
+static void print_entry(CA_DB *db, BIO * bio, int indx, int verbose, char * s)
 	{
-	if (index >= 0 && verbose)
+	if (indx >= 0 && verbose)
 		{
 		int j;
-		char **pp=sk_OPENSSL_PSTRING_value(db->db->data,index);
+		char **pp=sk_OPENSSL_PSTRING_value(db->db->data,indx);
 		BIO_printf(bio,"%s \"%s\"\n",s,pp[DB_srpid]);
 		for (j = 0; j < DB_NUMBER; j++)
 			{
@@ -696,10 +696,10 @@ bad:
 				}
 			else
 				{
-				char ** pp = sk_OPENSSL_PSTRING_value(db->db->data,userindex);
+				char ** xpp = sk_OPENSSL_PSTRING_value(db->db->data,userindex);
 				BIO_printf(bio_err,"user \"%s\" revoked. t\n",user);
 
-				pp[DB_srptype][0] = 'R' ;
+				xpp[DB_srptype][0] = 'R' ;
 				
 				doupdatedb = 1;
 				}

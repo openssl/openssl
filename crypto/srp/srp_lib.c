@@ -326,7 +326,7 @@ int SRP_Verify_A_mod_N(BIGNUM *A, BIGNUM *N)
 */
 char *  SRP_check_known_gN_param(BIGNUM* g, BIGNUM* N)
 	{
-	int i;
+	size_t i;
 	if ((g == NULL) || (N == NULL))
 		return 0;
 
@@ -343,7 +343,7 @@ char *  SRP_check_known_gN_param(BIGNUM* g, BIGNUM* N)
 
 SRP_gN *SRP_get_default_gN(const char * id)
 	{
-	int i; 
+	size_t i; 
 
 	if (id == NULL) 
 		return knowngN;

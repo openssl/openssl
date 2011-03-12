@@ -403,11 +403,11 @@ static int SRP_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)
 	BIGNUM *r = BN_new();
 	int ret =
 		g != NULL && N != NULL && bn_ctx != NULL && BN_is_odd(N) &&
-		BN_is_prime(N,SRP_NUMBER_ITERATIONS_FOR_PRIME,NULL,bn_ctx,NULL) &&
+		BN_is_prime_ex(N,SRP_NUMBER_ITERATIONS_FOR_PRIME,bn_ctx,NULL) &&
 		p != NULL && BN_rshift1(p, N) &&
 
 		/* p = (N-1)/2 */
-		BN_is_prime(p,SRP_NUMBER_ITERATIONS_FOR_PRIME,NULL,bn_ctx,NULL) &&
+		BN_is_prime_ex(p,SRP_NUMBER_ITERATIONS_FOR_PRIME,bn_ctx,NULL) &&
 		r != NULL &&
 
 		/* verify g^((N-1)/2) == -1 (mod N) */

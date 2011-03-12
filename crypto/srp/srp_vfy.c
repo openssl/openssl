@@ -414,14 +414,14 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 		else if (pp[DB_srptype][0] == DB_SRP_VALID)
 			{
 			/* it is a user .... */
-			SRP_gN *gN;
-			if ((gN = SRP_get_gN_by_id(pp[DB_srpgN],SRP_gN_tab))!=NULL)
+			SRP_gN *lgN;
+			if ((lgN = SRP_get_gN_by_id(pp[DB_srpgN],SRP_gN_tab))!=NULL)
 				{
 				error_code = SRP_ERR_MEMORY;
 				if ((user_pwd = SRP_user_pwd_new()) == NULL) 
 					goto err;
 				
-				SRP_user_pwd_set_gN(user_pwd,gN->g,gN->N);
+				SRP_user_pwd_set_gN(user_pwd,lgN->g,lgN->N);
 				if (!SRP_user_pwd_set_ids(user_pwd, pp[DB_srpid],
 										  pp[DB_srpinfo]))
 					goto err;

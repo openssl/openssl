@@ -414,7 +414,7 @@ err:
 
 int SRP_Calc_A_param(SSL *s)
 	{
-	unsigned char rand[SSL_MAX_MASTER_KEY_LENGTH];
+	unsigned char rnd[SSL_MAX_MASTER_KEY_LENGTH];
 
 	if (BN_num_bits(s->srp_ctx.N) < s->srp_ctx.strength)
 		return 0;
@@ -423,10 +423,10 @@ int SRP_Calc_A_param(SSL *s)
 		!SRP_check_known_gN_param(s->srp_ctx.g,s->srp_ctx.N))
 		return 0;
 
-	if (RAND_bytes(rand, sizeof(rand)) <= 0)
+	if (RAND_bytes(rnd, sizeof(rnd)) <= 0)
 		return 0;
-	s->srp_ctx.a = BN_bin2bn(rand,sizeof(rand), s->srp_ctx.a);
-	OPENSSL_cleanse(rand,sizeof(rand));
+	s->srp_ctx.a = BN_bin2bn(rnd,sizeof(rnd), s->srp_ctx.a);
+	OPENSSL_cleanse(rnd,sizeof(rnd));
 
 	if (!(s->srp_ctx.A = SRP_Calc_A(s->srp_ctx.a,s->srp_ctx.N,s->srp_ctx.g)))
 		return 0;
