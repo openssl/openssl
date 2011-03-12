@@ -289,6 +289,7 @@
 #define SSL_kEECDH		0x00000080L /* ephemeral ECDH */
 #define SSL_kPSK		0x00000100L /* PSK */
 #define SSL_kGOST       0x00000200L /* GOST key exchange */
+#define SSL_kSRP        0x00000400L /* SRP */
 
 /* Bits for algorithm_auth (server authentication) */
 #define SSL_aRSA		0x00000001L /* RSA auth */

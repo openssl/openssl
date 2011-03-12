@@ -341,6 +341,30 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
           ret += el;
         }
 
+#ifndef OPENSSL_NO_SRP
+#define MIN(x,y) (((x)<(y))?(x):(y))
+	/* we add SRP username the first time only if we have one! */
+	if (s->srp_ctx.login != NULL)
+		{/* Add TLS extension SRP username to the Client Hello message */
+		int login_len = MIN(strlen(s->srp_ctx.login) + 1, 255);
+		long lenmax; 
+
+		if ((lenmax = limit - ret - 5) < 0) return NULL; 
+		if (login_len > lenmax) return NULL;
+		if (login_len > 255)
+			{
+			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+			return NULL;
+			}
+		s2n(TLSEXT_TYPE_srp,ret);
+		s2n(login_len+1,ret);
+
+		(*ret++) = (unsigned char) MIN(strlen(s->srp_ctx.login), 254);
+		memcpy(ret, s->srp_ctx.login, MIN(strlen(s->srp_ctx.login), 254));
+		ret+=login_len;
+		}
+#endif
+
 #ifndef OPENSSL_NO_EC
 	if (s->tlsext_ecpointformatlist != NULL &&
 	    s->version != DTLS1_VERSION)
@@ -799,6 +823,19 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				}
 
 			}
+#ifndef OPENSSL_NO_SRP
+		else if (type == TLSEXT_TYPE_srp)
+			{
+			if (size > 0)
+				{
+				len = data[0];
+				if ((s->srp_ctx.login = OPENSSL_malloc(len+1)) == NULL)
+					return -1;
+				memcpy(s->srp_ctx.login, &data[1], len);
+				s->srp_ctx.login[len]='\0';  
+				}
+			}
+#endif
 
 #ifndef OPENSSL_NO_EC
 		else if (type == TLSEXT_TYPE_ec_point_formats &&

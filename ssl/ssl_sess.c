@@ -218,6 +218,9 @@ SSL_SESSION *SSL_SESSION_new(void)
 	ss->psk_identity_hint=NULL;
 	ss->psk_identity=NULL;
 #endif
+#ifndef OPENSSL_NO_SRP
+	ss->srp_username=NULL;
+#endif
 	return(ss);
 	}
 
@@ -733,6 +736,10 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 		OPENSSL_free(ss->psk_identity_hint);
 	if (ss->psk_identity != NULL)
 		OPENSSL_free(ss->psk_identity);
+#endif
+#ifndef OPENSSL_NO_SRP
+	if (ss->srp_username != NULL)
+		OPENSSL_free(ss->srp_username);
 #endif
 	OPENSSL_cleanse(ss,sizeof(*ss));
 	OPENSSL_free(ss);

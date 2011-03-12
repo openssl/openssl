@@ -121,6 +121,7 @@ and [options] can be one of
 	just-ssl				- remove all non-ssl keys/digest
 	no-asm 					- No x86 asm
 	no-krb5					- No KRB5
+	no-srp					- No SRP
 	no-ec					- No EC
 	no-ecdsa				- No ECDSA
 	no-ecdh					- No ECDH
@@ -278,6 +279,7 @@ $cflags.=" -DOPENSSL_NO_SOCK" if $no_sock;
 $cflags.=" -DOPENSSL_NO_SSL2" if $no_ssl2;
 $cflags.=" -DOPENSSL_NO_SSL3" if $no_ssl3;
 $cflags.=" -DOPENSSL_NO_TLSEXT" if $no_tlsext;
+$cflags.=" -DOPENSSL_NO_SRP" if $no_srp;
 $cflags.=" -DOPENSSL_NO_CMS" if $no_cms;
 $cflags.=" -DOPENSSL_NO_ERR"  if $no_err;
 $cflags.=" -DOPENSSL_NO_KRB5" if $no_krb5;
@@ -1029,6 +1031,8 @@ sub var_add
 	@a=grep(!/(^sha1)|(_sha1$)|(m_dss1$)/,@a) if $no_sha1;
 	@a=grep(!/_mdc2$/,@a) if $no_mdc2;
 
+	@a=grep(!/(srp)/,@a) if $no_srp;
+
 	@a=grep(!/^engine$/,@a) if $no_engine;
 	@a=grep(!/^hw$/,@a) if $no_hw;
 	@a=grep(!/(^rsa$)|(^genrsa$)/,@a) if $no_rsa;
@@ -1308,6 +1312,7 @@ sub read_options
 		"no-ssl2" => \$no_ssl2,
 		"no-ssl3" => \$no_ssl3,
 		"no-tlsext" => \$no_tlsext,
+		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
 		"no-jpake" => \$no_jpake,
 		"no-ec2m" => \$no_ec2m,
@@ -1324,7 +1329,7 @@ sub read_options
 			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
 			  \$no_md2, \$no_sha, \$no_mdc2, \$no_dsa, \$no_dh,
 			  \$no_ssl2, \$no_err, \$no_ripemd, \$no_rc5,
-			  \$no_aes, \$no_camellia, \$no_seed],
+			  \$no_aes, \$no_camellia, \$no_seed, \$no_srp],
 		"rsaref" => 0,
 		"gcc" => \$gcc,
 		"debug" => \$debug,

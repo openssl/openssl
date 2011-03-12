@@ -278,6 +278,20 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CR_SRVR_HELLO_A:
 		case SSL3_ST_CR_SRVR_HELLO_B:
 			ret=ssl3_get_server_hello(s);
+#ifndef OPENSSL_NO_SRP
+			if ((ret == 0) && (s->s3->warn_alert == SSL_AD_MISSING_SRP_USERNAME))
+				{
+				if (!SRP_have_to_put_srp_username(s))
+					{
+					SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_MISSING_SRP_USERNAME);
+					ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_USER_CANCELLED);
+					goto end;
+					}
+				s->state=SSL3_ST_CW_CLNT_HELLO_A;
+				if (!ssl_init_wbio_buffer(s,0)) { ret= -1; goto end; }
+				break;
+				}
+#endif
 			if (ret <= 0) goto end;
 
 			if (s->hit)
@@ -359,6 +373,17 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CR_SRVR_DONE_B:
 			ret=ssl3_get_server_done(s);
 			if (ret <= 0) goto end;
+#ifndef OPENSSL_NO_SRP
+			if (s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP)
+				{
+				if ((ret = SRP_Calc_A_param(s))<=0)
+					{
+					SSLerr(SSL_F_SSL3_GET_SERVER_DONE,SSL_R_SRP_A_CALC);
+					ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_INTERNAL_ERROR);
+					goto end;
+					}
+				}
+#endif
 			if (s->s3->tmp.cert_req)
 				s->state=SSL3_ST_CW_CERT_A;
 			else
@@ -1301,6 +1326,86 @@ int ssl3_get_key_exchange(SSL *s)
 		}
 	else
 #endif /* !OPENSSL_NO_PSK */
+#ifndef OPENSSL_NO_SRP
+	if (alg_k & SSL_kSRP)
+		{
+		n2s(p,i);
+		param_len=i+2;
+		if (param_len > n)
+			{
+			al=SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_SRP_N_LENGTH);
+			goto f_err;
+			}
+		if (!(s->srp_ctx.N=BN_bin2bn(p,i,NULL)))
+			{
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_BN_LIB);
+			goto err;
+			}
+		p+=i;
+
+		n2s(p,i);
+		param_len+=i+2;
+		if (param_len > n)
+			{
+			al=SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_SRP_G_LENGTH);
+			goto f_err;
+			}
+		if (!(s->srp_ctx.g=BN_bin2bn(p,i,NULL)))
+			{
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_BN_LIB);
+			goto err;
+			}
+		p+=i;
+
+		i = (unsigned int)(p[0]);
+		p++;
+		param_len+=i+1;
+		if (param_len > n)
+			{
+			al=SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_SRP_S_LENGTH);
+			goto f_err;
+			}
+		if (!(s->srp_ctx.s=BN_bin2bn(p,i,NULL)))
+			{
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_BN_LIB);
+			goto err;
+			}
+		p+=i;
+
+		n2s(p,i);
+		param_len+=i+2;
+		if (param_len > n)
+			{
+			al=SSL_AD_DECODE_ERROR;
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_SRP_B_LENGTH);
+			goto f_err;
+			}
+		if (!(s->srp_ctx.B=BN_bin2bn(p,i,NULL)))
+			{
+			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_BN_LIB);
+			goto err;
+			}
+		p+=i;
+		n-=param_len;
+
+/* We must check if there is a certificate */
+#ifndef OPENSSL_NO_RSA
+		if (alg_a & SSL_aRSA)
+			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_RSA_ENC].x509);
+#else
+		if (0)
+			;
+#endif
+#ifndef OPENSSL_NO_DSA
+		else if (alg_a & SSL_aDSS)
+			pkey=X509_get_pubkey(s->session->sess_cert->peer_pkeys[SSL_PKEY_DSA_SIGN].x509);
+#endif
+		}
+	else
+#endif /* !OPENSSL_NO_SRP */
 #ifndef OPENSSL_NO_RSA
 	if (alg_k & SSL_kRSA)
 		{
@@ -2570,6 +2675,39 @@ int ssl3_send_client_key_exchange(SSL *s)
 			EVP_PKEY_free(pub_key);
 
 			}
+#ifndef OPENSSL_NO_SRP
+		else if (alg_k & SSL_kSRP)
+			{
+			if (s->srp_ctx.A != NULL)
+				{
+				/* send off the data */
+				n=BN_num_bytes(s->srp_ctx.A);
+				s2n(n,p);
+				BN_bn2bin(s->srp_ctx.A,p);
+				n+=2;
+				}
+			else
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+			if (s->session->srp_username != NULL)
+				OPENSSL_free(s->session->srp_username);
+			s->session->srp_username = BUF_strdup(s->srp_ctx.login);
+			if (s->session->srp_username == NULL)
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+					ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+
+			if ((s->session->master_key_length = SRP_generate_client_master_secret(s,s->session->master_key))<0)
+				{
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+			}
+#endif
 #ifndef OPENSSL_NO_PSK
 		else if (alg_k & SSL_kPSK)
 			{

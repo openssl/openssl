@@ -127,20 +127,19 @@ dh_err.o: dh_err.c
 dh_gen.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 dh_gen.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dh_gen.o: ../../include/openssl/dh.h ../../include/openssl/e_os2.h
-dh_gen.o: ../../include/openssl/err.h ../../include/openssl/fips.h
-dh_gen.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-dh_gen.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-dh_gen.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-dh_gen.o: ../../include/openssl/symhacks.h ../cryptlib.h dh_gen.c
+dh_gen.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dh_gen.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+dh_gen.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+dh_gen.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+dh_gen.o: ../cryptlib.h dh_gen.c
 dh_key.o: ../../e_os.h ../../include/openssl/bio.h ../../include/openssl/bn.h
 dh_key.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dh_key.o: ../../include/openssl/dh.h ../../include/openssl/e_os2.h
-dh_key.o: ../../include/openssl/err.h ../../include/openssl/fips.h
-dh_key.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
-dh_key.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-dh_key.o: ../../include/openssl/rand.h ../../include/openssl/safestack.h
-dh_key.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-dh_key.o: ../cryptlib.h dh_key.c
+dh_key.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
+dh_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+dh_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h
+dh_key.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+dh_key.o: ../../include/openssl/symhacks.h ../cryptlib.h dh_key.c
 dh_lib.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 dh_lib.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
 dh_lib.o: ../../include/openssl/crypto.h ../../include/openssl/dh.h

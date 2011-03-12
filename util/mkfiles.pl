@@ -63,6 +63,7 @@ my @dirs = (
 "crypto/pqueue",
 "crypto/whrlpool",
 "crypto/ts",
+"crypto/srp",
 "fips",
 "fips/aes",
 "fips/des",

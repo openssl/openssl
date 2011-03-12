@@ -62,6 +62,7 @@ ENGINETEST=	enginetest
 EVPTEST=	evp_test
 IGETEST=	igetest
 JPAKETEST=	jpaketest
+SRPTEST=	srptest
 FIPS_SHATEST=	fips_shatest
 FIPS_DESTEST=	fips_desmovs
 FIPS_RANDTEST=	fips_randtest
@@ -90,7 +91,7 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) \
 	$(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
-	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT)
+	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT)
 
 FIPSEXE=$(FIPS_SHATEST)$(EXE_EXT) $(FIPS_DESTEST)$(EXE_EXT) \
 	$(FIPS_RANDTEST)$(EXE_EXT) $(FIPS_AESTEST)$(EXE_EXT) \
@@ -175,7 +176,7 @@ alltests: \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige \
-	test_jpake test_cms
+	test_jpake test_srp test_cms
 
 test_evp:
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -348,6 +349,10 @@ test_jpake: $(JPAKETEST)$(EXE_EXT)
 test_cms:
 	@echo "CMS consistency test"
 	$(PERL) cms-test.pl
+
+test_srp: $(SRPTEST)$(EXE_EXT)
+	@echo "Test SRP"
+	../util/shlib_wrap.sh ./srptest
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
@@ -562,6 +567,9 @@ $(IGETEST)$(EXE_EXT): $(IGETEST).o $(DLIBCRYPTO)
 $(JPAKETEST)$(EXE_EXT): $(JPAKETEST).o $(DLIBCRYPTO)
 	@target=$(JPAKETEST); $(BUILD_CMD)
 
+$(SRPTEST)$(EXE_EXT): $(SRPTEST).o $(DLIBCRYPTO)
+	@target=$(SRPTEST); $(BUILD_CMD)
+
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c
 
@@ -628,7 +636,8 @@ ecdhtest.o: ../include/openssl/sha.h ../include/openssl/stack.h
 ecdhtest.o: ../include/openssl/symhacks.h ecdhtest.c
 ecdsatest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 ecdsatest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-ecdsatest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+ecdsatest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+ecdsatest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
 ecdsatest.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
 ecdsatest.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
 ecdsatest.o: ../include/openssl/err.h ../include/openssl/evp.h
@@ -636,13 +645,15 @@ ecdsatest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 ecdsatest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 ecdsatest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 ecdsatest.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-ecdsatest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-ecdsatest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+ecdsatest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+ecdsatest.o: ../include/openssl/sha.h ../include/openssl/stack.h
+ecdsatest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 ecdsatest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ecdsatest.o: ecdsatest.c
 ectest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 ectest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
-ectest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+ectest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+ectest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
 ectest.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
 ectest.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
 ectest.o: ../include/openssl/err.h ../include/openssl/evp.h
@@ -650,34 +661,41 @@ ectest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 ectest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 ectest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 ectest.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
-ectest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-ectest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+ectest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+ectest.o: ../include/openssl/sha.h ../include/openssl/stack.h
+ectest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 ectest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ectest.c
 enginetest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-enginetest.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-enginetest.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-enginetest.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
-enginetest.o: ../include/openssl/engine.h ../include/openssl/err.h
-enginetest.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-enginetest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-enginetest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-enginetest.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-enginetest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-enginetest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+enginetest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+enginetest.o: ../include/openssl/crypto.h ../include/openssl/dh.h
+enginetest.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+enginetest.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
+enginetest.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
+enginetest.o: ../include/openssl/err.h ../include/openssl/evp.h
+enginetest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+enginetest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+enginetest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+enginetest.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+enginetest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+enginetest.o: ../include/openssl/sha.h ../include/openssl/stack.h
+enginetest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
 enginetest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 enginetest.o: enginetest.c
 evp_test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-evp_test.o: ../include/openssl/buffer.h ../include/openssl/conf.h
-evp_test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-evp_test.o: ../include/openssl/ec.h ../include/openssl/ecdh.h
-evp_test.o: ../include/openssl/ecdsa.h ../include/openssl/engine.h
-evp_test.o: ../include/openssl/err.h ../include/openssl/evp.h
-evp_test.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-evp_test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-evp_test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-evp_test.o: ../include/openssl/pkcs7.h ../include/openssl/safestack.h
-evp_test.o: ../include/openssl/sha.h ../include/openssl/stack.h
-evp_test.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
+evp_test.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+evp_test.o: ../include/openssl/conf.h ../include/openssl/crypto.h
+evp_test.o: ../include/openssl/dh.h ../include/openssl/dsa.h
+evp_test.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+evp_test.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+evp_test.o: ../include/openssl/engine.h ../include/openssl/err.h
+evp_test.o: ../include/openssl/evp.h ../include/openssl/lhash.h
+evp_test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+evp_test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+evp_test.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
+evp_test.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+evp_test.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+evp_test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+evp_test.o: ../include/openssl/ui.h ../include/openssl/x509.h
 evp_test.o: ../include/openssl/x509_vfy.h evp_test.c
 exptest.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/bn.h
 exptest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
@@ -686,169 +704,116 @@ exptest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 exptest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 exptest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 exptest.o: ../include/openssl/symhacks.h exptest.c
-fips_aesavs.o: ../e_os.h ../fips/fips_utl.h ../include/openssl/aes.h
-fips_aesavs.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-fips_aesavs.o: ../include/openssl/bn.h ../include/openssl/crypto.h
-fips_aesavs.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-fips_aesavs.o: ../include/openssl/evp.h ../include/openssl/fips.h
+fips_aesavs.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_aesavs.o: ../include/openssl/bio.h ../include/openssl/bn.h
+fips_aesavs.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+fips_aesavs.o: ../include/openssl/err.h ../include/openssl/evp.h
 fips_aesavs.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 fips_aesavs.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 fips_aesavs.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 fips_aesavs.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 fips_aesavs.o: ../include/openssl/symhacks.h fips_aesavs.c
-fips_desmovs.o: ../e_os.h ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_desmovs.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_desmovs.o: ../include/openssl/crypto.h ../include/openssl/des.h
-fips_desmovs.o: ../include/openssl/des_old.h ../include/openssl/e_os2.h
-fips_desmovs.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_desmovs.o: ../include/openssl/fips.h ../include/openssl/lhash.h
+fips_desmovs.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+fips_desmovs.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+fips_desmovs.o: ../include/openssl/des.h ../include/openssl/des_old.h
+fips_desmovs.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+fips_desmovs.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 fips_desmovs.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 fips_desmovs.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 fips_desmovs.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 fips_desmovs.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 fips_desmovs.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 fips_desmovs.o: fips_desmovs.c
-fips_dsatest.o: ../e_os.h ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_dsatest.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_dsatest.o: ../include/openssl/crypto.h ../include/openssl/des.h
-fips_dsatest.o: ../include/openssl/des_old.h ../include/openssl/dsa.h
+fips_dhvs.o: ../include/openssl/opensslconf.h fips_dhvs.c
+fips_drbgvs.o: ../include/openssl/opensslconf.h fips_drbgvs.c
+fips_dsatest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+fips_dsatest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
 fips_dsatest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-fips_dsatest.o: ../include/openssl/evp.h ../include/openssl/fips.h
-fips_dsatest.o: ../include/openssl/fips_rand.h ../include/openssl/lhash.h
+fips_dsatest.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 fips_dsatest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 fips_dsatest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 fips_dsatest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
 fips_dsatest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-fips_dsatest.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-fips_dsatest.o: ../include/openssl/ui_compat.h fips_dsatest.c
-fips_dssvs.o: ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_dssvs.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_dssvs.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
-fips_dssvs.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-fips_dssvs.o: ../include/openssl/evp.h ../include/openssl/fips.h
-fips_dssvs.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-fips_dssvs.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-fips_dssvs.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-fips_dssvs.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-fips_dssvs.o: ../include/openssl/symhacks.h fips_dssvs.c
-fips_ecdsavs.o: ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_ecdsavs.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_ecdsavs.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-fips_ecdsavs.o: ../include/openssl/ec.h ../include/openssl/ecdsa.h
-fips_ecdsavs.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_ecdsavs.o: ../include/openssl/fips.h ../include/openssl/lhash.h
-fips_ecdsavs.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-fips_ecdsavs.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-fips_ecdsavs.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-fips_ecdsavs.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-fips_ecdsavs.o: fips_ecdsavs.c
-fips_gcmtest.o: ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_gcmtest.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_gcmtest.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
-fips_gcmtest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-fips_gcmtest.o: ../include/openssl/evp.h ../include/openssl/fips.h
-fips_gcmtest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-fips_gcmtest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-fips_gcmtest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-fips_gcmtest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-fips_gcmtest.o: ../include/openssl/symhacks.h fips_gcmtest.c
-fips_hmactest.o: ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_hmactest.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_hmactest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-fips_hmactest.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_hmactest.o: ../include/openssl/fips.h ../include/openssl/hmac.h
+fips_dsatest.o: ../include/openssl/symhacks.h fips_dsatest.c
+fips_dssvs.o: ../include/openssl/opensslconf.h fips_dssvs.c
+fips_ecdhvs.o: ../include/openssl/opensslconf.h fips_ecdhvs.c
+fips_ecdsavs.o: ../include/openssl/opensslconf.h fips_ecdsavs.c
+fips_gcmtest.o: ../include/openssl/opensslconf.h fips_gcmtest.c
+fips_hmactest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+fips_hmactest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+fips_hmactest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+fips_hmactest.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 fips_hmactest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 fips_hmactest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 fips_hmactest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 fips_hmactest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 fips_hmactest.o: ../include/openssl/symhacks.h fips_hmactest.c
-fips_randtest.o: ../e_os.h ../fips/fips_utl.h ../include/openssl/bio.h
-fips_randtest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
-fips_randtest.o: ../include/openssl/des.h ../include/openssl/des_old.h
-fips_randtest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
-fips_randtest.o: ../include/openssl/fips.h ../include/openssl/fips_rand.h
+fips_randtest.o: ../e_os.h ../include/openssl/bio.h ../include/openssl/bn.h
+fips_randtest.o: ../include/openssl/crypto.h ../include/openssl/des.h
+fips_randtest.o: ../include/openssl/des_old.h ../include/openssl/e_os2.h
+fips_randtest.o: ../include/openssl/err.h ../include/openssl/fips_rand.h
 fips_randtest.o: ../include/openssl/lhash.h ../include/openssl/opensslconf.h
 fips_randtest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 fips_randtest.o: ../include/openssl/rand.h ../include/openssl/safestack.h
 fips_randtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 fips_randtest.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h
 fips_randtest.o: fips_randtest.c
-fips_rngvs.o: ../fips/fips_utl.h ../include/openssl/bio.h
-fips_rngvs.o: ../include/openssl/bn.h ../include/openssl/crypto.h
-fips_rngvs.o: ../include/openssl/des.h ../include/openssl/des_old.h
-fips_rngvs.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-fips_rngvs.o: ../include/openssl/err.h ../include/openssl/fips.h
-fips_rngvs.o: ../include/openssl/fips_rand.h ../include/openssl/lhash.h
-fips_rngvs.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-fips_rngvs.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
-fips_rngvs.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-fips_rngvs.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-fips_rngvs.o: ../include/openssl/ui_compat.h fips_rngvs.c
-fips_rsagtest.o: ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_rsagtest.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_rsagtest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-fips_rsagtest.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_rsagtest.o: ../include/openssl/fips.h ../include/openssl/hmac.h
+fips_rngvs.o: ../include/openssl/opensslconf.h fips_rngvs.c
+fips_rsagtest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+fips_rsagtest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+fips_rsagtest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+fips_rsagtest.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 fips_rsagtest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 fips_rsagtest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 fips_rsagtest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-fips_rsagtest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-fips_rsagtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-fips_rsagtest.o: fips_rsagtest.c
-fips_rsastest.o: ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_rsastest.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_rsastest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-fips_rsastest.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_rsastest.o: ../include/openssl/fips.h ../include/openssl/hmac.h
+fips_rsagtest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+fips_rsagtest.o: ../include/openssl/symhacks.h fips_rsagtest.c
+fips_rsastest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+fips_rsastest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+fips_rsastest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+fips_rsastest.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 fips_rsastest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 fips_rsastest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 fips_rsastest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-fips_rsastest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-fips_rsastest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-fips_rsastest.o: fips_rsastest.c
-fips_rsavtest.o: ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_rsavtest.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_rsavtest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-fips_rsavtest.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_rsavtest.o: ../include/openssl/fips.h ../include/openssl/hmac.h
+fips_rsastest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+fips_rsastest.o: ../include/openssl/symhacks.h fips_rsastest.c
+fips_rsavtest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+fips_rsavtest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+fips_rsavtest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+fips_rsavtest.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 fips_rsavtest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 fips_rsavtest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 fips_rsavtest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-fips_rsavtest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-fips_rsavtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-fips_rsavtest.o: fips_rsavtest.c
-fips_shatest.o: ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_shatest.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_shatest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-fips_shatest.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_shatest.o: ../include/openssl/fips.h ../include/openssl/lhash.h
+fips_rsavtest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+fips_rsavtest.o: ../include/openssl/symhacks.h fips_rsavtest.c
+fips_shatest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+fips_shatest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+fips_shatest.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+fips_shatest.o: ../include/openssl/evp.h ../include/openssl/lhash.h
 fips_shatest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 fips_shatest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 fips_shatest.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
 fips_shatest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
 fips_shatest.o: fips_shatest.c
-fips_test_suite.o: ../fips/fips_utl.h ../include/openssl/asn1.h
-fips_test_suite.o: ../include/openssl/bio.h ../include/openssl/bn.h
-fips_test_suite.o: ../include/openssl/crypto.h ../include/openssl/dh.h
-fips_test_suite.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
-fips_test_suite.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_test_suite.o: ../include/openssl/fips.h ../include/openssl/hmac.h
+fips_test_suite.o: ../include/openssl/asn1.h ../include/openssl/bio.h
+fips_test_suite.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+fips_test_suite.o: ../include/openssl/e_os2.h ../include/openssl/err.h
+fips_test_suite.o: ../include/openssl/evp.h ../include/openssl/hmac.h
 fips_test_suite.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
 fips_test_suite.o: ../include/openssl/objects.h
 fips_test_suite.o: ../include/openssl/opensslconf.h
 fips_test_suite.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-fips_test_suite.o: ../include/openssl/rand.h ../include/openssl/rsa.h
-fips_test_suite.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-fips_test_suite.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-fips_test_suite.o: fips_test_suite.c
+fips_test_suite.o: ../include/openssl/rand.h ../include/openssl/safestack.h
+fips_test_suite.o: ../include/openssl/sha.h ../include/openssl/stack.h
+fips_test_suite.o: ../include/openssl/symhacks.h fips_test_suite.c
 hmactest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-hmactest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-hmactest.o: ../include/openssl/evp.h ../include/openssl/hmac.h
-hmactest.o: ../include/openssl/md5.h ../include/openssl/obj_mac.h
-hmactest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-hmactest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-hmactest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-hmactest.o: ../include/openssl/symhacks.h hmactest.c
+hmactest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+hmactest.o: ../include/openssl/e_os2.h ../include/openssl/evp.h
+hmactest.o: ../include/openssl/hmac.h ../include/openssl/md5.h
+hmactest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+hmactest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+hmactest.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+hmactest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h hmactest.c
 ideatest.o: ../e_os.h ../include/openssl/e_os2.h ../include/openssl/idea.h
 ideatest.o: ../include/openssl/opensslconf.h ideatest.c
 igetest.o: ../include/openssl/aes.h ../include/openssl/crypto.h
@@ -856,39 +821,35 @@ igetest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
 igetest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 igetest.o: ../include/openssl/rand.h ../include/openssl/safestack.h
 igetest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h igetest.c
-jpaketest.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-jpaketest.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-jpaketest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-jpaketest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-jpaketest.o: ../include/openssl/symhacks.h jpaketest.c
-md2test.o: ../include/openssl/buffer.h ../include/openssl/crypto.h
-md2test.o: ../include/openssl/e_os2.h ../include/openssl/opensslconf.h
-md2test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-md2test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-md2test.o: ../include/openssl/symhacks.h md2test.c
+jpaketest.o: ../include/openssl/opensslconf.h jpaketest.c
+md2test.o: ../e_os.h ../include/openssl/e_os2.h
+md2test.o: ../include/openssl/opensslconf.h md2test.c
 md4test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-md4test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-md4test.o: ../include/openssl/evp.h ../include/openssl/md4.h
-md4test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-md4test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-md4test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-md4test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h md4test.c
+md4test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+md4test.o: ../include/openssl/e_os2.h ../include/openssl/evp.h
+md4test.o: ../include/openssl/md4.h ../include/openssl/obj_mac.h
+md4test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+md4test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+md4test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+md4test.o: ../include/openssl/symhacks.h md4test.c
 md5test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-md5test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-md5test.o: ../include/openssl/evp.h ../include/openssl/md5.h
-md5test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-md5test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-md5test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-md5test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h md5test.c
+md5test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+md5test.o: ../include/openssl/e_os2.h ../include/openssl/evp.h
+md5test.o: ../include/openssl/md5.h ../include/openssl/obj_mac.h
+md5test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+md5test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+md5test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+md5test.o: ../include/openssl/symhacks.h md5test.c
 mdc2test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-mdc2test.o: ../include/openssl/crypto.h ../include/openssl/des.h
-mdc2test.o: ../include/openssl/des_old.h ../include/openssl/e_os2.h
-mdc2test.o: ../include/openssl/evp.h ../include/openssl/mdc2.h
-mdc2test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-mdc2test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-mdc2test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
-mdc2test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-mdc2test.o: ../include/openssl/ui.h ../include/openssl/ui_compat.h mdc2test.c
+mdc2test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+mdc2test.o: ../include/openssl/des.h ../include/openssl/des_old.h
+mdc2test.o: ../include/openssl/e_os2.h ../include/openssl/evp.h
+mdc2test.o: ../include/openssl/mdc2.h ../include/openssl/obj_mac.h
+mdc2test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+mdc2test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+mdc2test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+mdc2test.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
+mdc2test.o: ../include/openssl/ui_compat.h mdc2test.c
 randtest.o: ../e_os.h ../include/openssl/crypto.h ../include/openssl/e_os2.h
 randtest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 randtest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
@@ -907,12 +868,13 @@ rc5test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 rc5test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 rc5test.o: ../include/openssl/symhacks.h rc5test.c
 rmdtest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-rmdtest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-rmdtest.o: ../include/openssl/evp.h ../include/openssl/obj_mac.h
-rmdtest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-rmdtest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-rmdtest.o: ../include/openssl/ripemd.h ../include/openssl/safestack.h
-rmdtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h rmdtest.c
+rmdtest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+rmdtest.o: ../include/openssl/e_os2.h ../include/openssl/evp.h
+rmdtest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+rmdtest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+rmdtest.o: ../include/openssl/ossl_typ.h ../include/openssl/ripemd.h
+rmdtest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+rmdtest.o: ../include/openssl/symhacks.h rmdtest.c
 rsa_test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 rsa_test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
 rsa_test.o: ../include/openssl/e_os2.h ../include/openssl/err.h
@@ -922,19 +884,21 @@ rsa_test.o: ../include/openssl/rand.h ../include/openssl/rsa.h
 rsa_test.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 rsa_test.o: ../include/openssl/symhacks.h rsa_test.c
 sha1test.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-sha1test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-sha1test.o: ../include/openssl/evp.h ../include/openssl/obj_mac.h
-sha1test.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-sha1test.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-sha1test.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-sha1test.o: ../include/openssl/stack.h ../include/openssl/symhacks.h sha1test.c
+sha1test.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+sha1test.o: ../include/openssl/e_os2.h ../include/openssl/evp.h
+sha1test.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+sha1test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+sha1test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+sha1test.o: ../include/openssl/sha.h ../include/openssl/stack.h
+sha1test.o: ../include/openssl/symhacks.h sha1test.c
 shatest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
-shatest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-shatest.o: ../include/openssl/evp.h ../include/openssl/obj_mac.h
-shatest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-shatest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-shatest.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-shatest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h shatest.c
+shatest.o: ../include/openssl/bn.h ../include/openssl/crypto.h
+shatest.o: ../include/openssl/e_os2.h ../include/openssl/evp.h
+shatest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+shatest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+shatest.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+shatest.o: ../include/openssl/sha.h ../include/openssl/stack.h
+shatest.o: ../include/openssl/symhacks.h shatest.c
 ssltest.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 ssltest.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 ssltest.o: ../include/openssl/comp.h ../include/openssl/conf.h
@@ -951,10 +915,11 @@ ssltest.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
 ssltest.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 ssltest.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
 ssltest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-ssltest.o: ../include/openssl/sha.h ../include/openssl/ssl.h
-ssltest.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
-ssltest.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-ssltest.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+ssltest.o: ../include/openssl/sha.h ../include/openssl/srp.h
+ssltest.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+ssltest.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
+ssltest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+ssltest.o: ../include/openssl/tls1.h ../include/openssl/ui.h
 ssltest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
 ssltest.o: ../include/openssl/x509v3.h ssltest.c
 wp_test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h

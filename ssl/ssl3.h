@@ -576,6 +576,8 @@ typedef struct ssl3_state_st
 #define SSL3_ST_SR_CLNT_HELLO_A		(0x110|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_B		(0x111|SSL_ST_ACCEPT)
 #define SSL3_ST_SR_CLNT_HELLO_C		(0x112|SSL_ST_ACCEPT)
+/* a new state to remember that we have already receive a ClientHello without srp username extension */
+#define SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME (0x1E2|SSL_ST_ACCEPT)
 /* write to client */
 #define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A (0x113|SSL_ST_ACCEPT)
 #define DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B (0x114|SSL_ST_ACCEPT)

@@ -159,4 +159,14 @@ $ssltest -bio_pair -tls1 -npn_client -npn_server || exit 1
 $ssltest -bio_pair -tls1 -npn_client -npn_server -num 2 || exit 1
 $ssltest -bio_pair -tls1 -npn_client -npn_server -num 2 -reuse || exit 1
 
+if ../util/shlib_wrap.sh ../apps/openssl no-srp; then
+  echo skipping SRP tests
+else
+  echo test tls1 with SRP
+  $ssltest -tls1 -cipher SRP -srpuser test -srppass abc123
+
+  echo test tls1 with SRP via BIO pair
+  $ssltest -bio_pair -tls1 -cipher SRP -srpuser test -srppass abc123
+fi
+
 exit 0

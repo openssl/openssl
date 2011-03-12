@@ -247,6 +247,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_ECDH,0,    SSL_kECDHr|SSL_kECDHe|SSL_kEECDH,0,0,0,0,0,0,0,0},
 
         {0,SSL_TXT_kPSK,0,    SSL_kPSK,  0,0,0,0,0,0,0,0},
+	{0,SSL_TXT_kSRP,0,    SSL_kSRP,  0,0,0,0,0,0,0,0},
 	{0,SSL_TXT_kGOST,0, SSL_kGOST,0,0,0,0,0,0,0,0},
 
 	/* server authentication aliases */
@@ -273,6 +274,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_ADH,0,     SSL_kEDH,SSL_aNULL,0,0,0,0,0,0,0},
 	{0,SSL_TXT_AECDH,0,   SSL_kEECDH,SSL_aNULL,0,0,0,0,0,0,0},
         {0,SSL_TXT_PSK,0,     SSL_kPSK,SSL_aPSK,0,0,0,0,0,0,0},
+	{0,SSL_TXT_SRP,0,     SSL_kSRP,0,0,0,0,0,0,0,0},
 
 
 	/* symmetric encryption aliases */
@@ -660,6 +662,9 @@ static void ssl_cipher_get_disabled(unsigned long *mkey, unsigned long *auth, un
 #ifdef OPENSSL_NO_PSK
 	*mkey |= SSL_kPSK;
 	*auth |= SSL_aPSK;
+#endif
+#ifdef OPENSSL_NO_SRP
+	*mkey |= SSL_kSRP;
 #endif
 	/* Check for presence of GOST 34.10 algorithms, and if they
 	 * do not present, disable  appropriate auth and key exchange */
@@ -1510,6 +1515,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_kPSK:
 		kx="PSK";
+		break;
+	case SSL_kSRP:
+		kx="SRP";
 		break;
 	default:
 		kx="unknown";

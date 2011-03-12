@@ -1015,6 +1015,12 @@ if (defined($disabled{"ec"}) || defined($disabled{"dsa"})
 	$disabled{"gost"} = "forced";
 	}
 
+# SRP requires TLSEXT
+if (defined($disabled{"tlsext"}))
+	{
+	$disabled{"srp"} = "forced";
+	}
+
 if ($target eq "TABLE") {
 	foreach $target (sort keys %table) {
 		print_table_entry($target);
