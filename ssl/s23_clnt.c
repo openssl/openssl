@@ -619,12 +619,7 @@ static int ssl23_get_server_hello(SSL *s)
 #endif
 		}
 	else if (p[1] == SSL3_VERSION_MAJOR &&
-#if SSL3_VERSION_MINOR == 0
-		 /* p[2] is inevitably >= 0 */
 	         p[2] <= TLS1_1_VERSION_MINOR &&
-#else
-	         p[2] >= SSL3_VERSION_MINOR && p[2] <= TLS1_1_VERSION_MINOR &&
-#endif
 	         ((p[0] == SSL3_RT_HANDSHAKE && p[5] == SSL3_MT_SERVER_HELLO) ||
 	          (p[0] == SSL3_RT_ALERT && p[3] == 0 && p[4] == 2)))
 		{
