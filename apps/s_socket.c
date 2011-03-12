@@ -233,6 +233,7 @@ int init_client(int *sock, char *host, int port, int type)
 	{
 	unsigned char ip[4];
 
+	ip[0] = ip[1] = ip[2] = ip[3] = 0;
 	if (!host_ip(host,&(ip[0])))
 		{
 		return(0);
