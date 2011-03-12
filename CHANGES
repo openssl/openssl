@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add SRP support.
+     [Tom Wu <thomwu@cisco.com> and Ben Laurie]
+
   *) Add ECDH code to fips module and fips_ecdhvs for primitives only testing.
      [Steve Henson]
 
