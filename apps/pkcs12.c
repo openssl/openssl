@@ -647,7 +647,7 @@ int MAIN(int argc, char **argv)
 
     if (!twopass) BUF_strlcpy(macpass, pass, sizeof macpass);
 
-    if (options & INFO) BIO_printf (bio_err, "MAC Iteration %ld\n", p12->mac->iter ? ASN1_INTEGER_get (p12->mac->iter) : 1);
+    if ((options & INFO) && p12->mac) BIO_printf (bio_err, "MAC Iteration %ld\n", p12->mac->iter ? ASN1_INTEGER_get (p12->mac->iter) : 1);
     if(macver) {
 #ifdef CRYPTO_MDEBUG
     CRYPTO_push_info("verify MAC");
