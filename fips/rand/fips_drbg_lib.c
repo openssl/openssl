@@ -63,7 +63,7 @@
 
 /* Support framework for SP800-90 DRBGs */
 
-static int fips_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
+int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 	{
 	int rv;
 	memset(dctx, 0, sizeof(DRBG_CTX));
@@ -75,6 +75,14 @@ static int fips_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 
 	if (rv == -2)
 		rv = fips_drbg_ctr_init(dctx);
+
+	if (rv <= 0)
+		{
+		if (rv == -2)
+			FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_UNSUPPORTED_DRBG_TYPE);
+		else
+			FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_ERROR_INITIALISING_DRBG);
+		}
 
 	return rv;
 	}
@@ -89,18 +97,16 @@ DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
 		FIPSerr(FIPS_F_FIPS_DRBG_NEW, ERR_R_MALLOC_FAILURE);
 		return NULL;
 		}
-	rv = fips_drbg_init(dctx, type, flags);
+	if (type == 0)
+		return dctx;
+	rv = FIPS_drbg_init(dctx, type, flags);
 
-	if (rv <= 0)
+	if (FIPS_drbg_init(dctx, type, flags) <= 0)
 		{
-		if (rv == -2)
-			FIPSerr(FIPS_F_FIPS_DRBG_NEW, FIPS_R_UNSUPPORTED_DRBG_TYPE);
-		else
-			FIPSerr(FIPS_F_FIPS_DRBG_NEW, FIPS_R_ERROR_INITIALISING_DRBG);
-
 		OPENSSL_free(dctx);
 		return NULL;
 		}
+		
 	return dctx;
 	}
 
@@ -331,9 +337,7 @@ int FIPS_drbg_uninstantiate(DRBG_CTX *dctx)
 	rv = dctx->uninstantiate(dctx);
 	OPENSSL_cleanse(dctx, sizeof(DRBG_CTX));
 	/* If method has problems uninstantiating, return error */
-	if (rv <= 0)
-		return rv;
-	return fips_drbg_init(dctx, save_type, save_flags);
+	return rv;
 	}
 
 int FIPS_drbg_set_test_mode(DRBG_CTX *dctx,

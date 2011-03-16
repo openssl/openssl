@@ -515,6 +515,8 @@ int main(int argc,char **argv)
         } else if (!strcmp(argv[1], "sha1")) {
             FIPS_corrupt_sha1();
             printf("SHA-1 hash with corrupted KAT...\n");
+	} else if (!strcmp(argv[1], "drbg")) {
+	    FIPS_corrupt_drbg();
 	} else if (!strcmp(argv[1], "rng")) {
 	    FIPS_corrupt_rng();
 	} else if (!strcmp(argv[1], "rngstick")) {

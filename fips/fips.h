@@ -90,9 +90,11 @@ int FIPS_selftest_ecdsa(void);
 void FIPS_corrupt_ecdsa(void);
 void FIPS_corrupt_ec_keygen(void);
 void FIPS_corrupt_rng(void);
+void FIPS_corrupt_drbg(void);
 void FIPS_rng_stick(void);
 int FIPS_selftest_rng(void);
 int FIPS_selftest_hmac(void);
+int FIPS_selftest_drbg(void);
 
 unsigned int FIPS_incore_fingerprint(unsigned char *sig,unsigned int len);
 int FIPS_check_incore_fingerprint(void);
@@ -192,6 +194,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_CIPHERINIT				 128
 #define FIPS_F_FIPS_DIGESTINIT				 127
 #define FIPS_F_FIPS_DRBG_GENERATE			 132
+#define FIPS_F_FIPS_DRBG_INIT				 136
 #define FIPS_F_FIPS_DRBG_INSTANTIATE			 133
 #define FIPS_F_FIPS_DRBG_NEW				 134
 #define FIPS_F_FIPS_DRBG_RESEED				 135
