@@ -282,7 +282,7 @@ int ssl3_connect(SSL *s)
 				{
 				if (!SRP_have_to_put_srp_username(s))
 					{
-					SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_MISSING_SRP_USERNAME);
+					SSLerr(SSL_F_SSL3_CONNECT,SSL_R_MISSING_SRP_USERNAME);
 					ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_USER_CANCELLED);
 					goto end;
 					}
@@ -377,7 +377,7 @@ int ssl3_connect(SSL *s)
 				{
 				if ((ret = SRP_Calc_A_param(s))<=0)
 					{
-					SSLerr(SSL_F_SSL3_GET_SERVER_DONE,SSL_R_SRP_A_CALC);
+					SSLerr(SSL_F_SSL3_CONNECT,SSL_R_SRP_A_CALC);
 					ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_INTERNAL_ERROR);
 					goto end;
 					}
@@ -2685,7 +2685,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 
 			if ((s->session->master_key_length = SRP_generate_client_master_secret(s,s->session->master_key))<0)
 				{
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 				goto err;
 				}
 			}

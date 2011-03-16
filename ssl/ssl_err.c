@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -250,7 +250,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL_SET_TRUST),	"SSL_set_trust"},
 {ERR_FUNC(SSL_F_SSL_SET_WFD),	"SSL_set_wfd"},
 {ERR_FUNC(SSL_F_SSL_SHUTDOWN),	"SSL_shutdown"},
-{ERR_FUNC(SSL_F_SSL_SRP_CTX_INIT),	"SSL_SRP_CTX_INIT"},
+{ERR_FUNC(SSL_F_SSL_SRP_CTX_INIT),	"SSL_SRP_CTX_init"},
 {ERR_FUNC(SSL_F_SSL_UNDEFINED_CONST_FUNCTION),	"SSL_UNDEFINED_CONST_FUNCTION"},
 {ERR_FUNC(SSL_F_SSL_UNDEFINED_FUNCTION),	"SSL_UNDEFINED_FUNCTION"},
 {ERR_FUNC(SSL_F_SSL_UNDEFINED_VOID_FUNCTION),	"SSL_UNDEFINED_VOID_FUNCTION"},
@@ -333,7 +333,6 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_CIPHER_CODE_WRONG_LENGTH),"cipher code wrong length"},
 {ERR_REASON(SSL_R_CIPHER_OR_HASH_UNAVAILABLE),"cipher or hash unavailable"},
 {ERR_REASON(SSL_R_CIPHER_TABLE_SRC_ERROR),"cipher table src error"},
-{ERR_REASON(SSL_R_CLIENTHELLO_SRP_TLS_EXT),"error with the SRP username"},
 {ERR_REASON(SSL_R_CLIENTHELLO_TLSEXT)    ,"clienthello tlsext"},
 {ERR_REASON(SSL_R_COMPRESSED_LENGTH_TOO_LONG),"compressed length too long"},
 {ERR_REASON(SSL_R_COMPRESSION_DISABLED)  ,"compression disabled"},

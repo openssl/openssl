@@ -364,7 +364,7 @@ int ssl3_accept(SSL *s)
 					break;
 					}
 				ret = -1;
-				SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
+				SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLSEXT);
 				goto end;
 				}
 #endif
@@ -2683,12 +2683,12 @@ int ssl3_get_client_key_exchange(SSL *s)
 			if (param_len > n)
 				{
 				al=SSL_AD_DECODE_ERROR;
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_SRP_A_LENGTH);
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_BAD_SRP_A_LENGTH);
 				goto f_err;
 				}
 			if (!(s->srp_ctx.A=BN_bin2bn(p,i,NULL)))
 				{
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_BN_LIB);
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,ERR_R_BN_LIB);
 				goto err;
 				}
 			if (s->session->srp_username != NULL)
@@ -2703,7 +2703,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 
 			if ((s->session->master_key_length = SRP_generate_server_master_secret(s,s->session->master_key))<0)
 				{
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
 				goto err;
 				}
 
