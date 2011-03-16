@@ -4,6 +4,9 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Add SRP support.
+     [Tom Wu <tjw@cs.stanford.edu> and Ben Laurie]
+
   *) Add functions to copy EVP_PKEY_METHOD and retrieve flags and id.
      [Steve Henson]
 

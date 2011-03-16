@@ -61,6 +61,7 @@ ENGINETEST=	enginetest
 EVPTEST=	evp_test
 IGETEST=	igetest
 JPAKETEST=	jpaketest
+SRPTEST=	srptest
 ASN1TEST=	asn1test
 
 TESTS=		alltests
@@ -72,7 +73,7 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(MDC2TEST)$(EXE_EXT) $(RMDTEST)$(EXE_EXT) \
 	$(RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) $(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
-	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) \
+	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT) \
 	$(ASN1TEST)$(EXE_EXT)
 
 # $(METHTEST)$(EXE_EXT)
@@ -93,7 +94,7 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(DESTEST).c $(SHATEST).c $(SHA1TEST).c $(MDC2TEST).c $(RMDTEST).c \
 	$(RANDTEST).c $(DHTEST).c $(ENGINETEST).c $(CASTTEST).c \
 	$(BFTEST).c  $(SSLTEST).c $(DSATEST).c   $(EXPTEST).c $(RSATEST).c \
-	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(ASN1TEST).c
+	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(SRPTEST).c $(ASN1TEST).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -136,7 +137,7 @@ alltests: \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige \
-	test_jpake test_cms
+	test_jpake test_srp test_cms
 
 test_evp:
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -310,6 +311,10 @@ test_cms:
 	@echo "CMS consistency test"
 	$(PERL) cms-test.pl
 
+test_srp: $(SRPTEST)$(EXE_EXT)
+	@echo "Test SRP"
+	../util/shlib_wrap.sh ./srptest
+
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
 
@@ -445,6 +450,9 @@ $(JPAKETEST)$(EXE_EXT): $(JPAKETEST).o $(DLIBCRYPTO)
 
 $(ASN1TEST)$(EXE_EXT): $(ASN1TEST).o $(DLIBCRYPTO)
 	@target=$(ASN1TEST); $(BUILD_CMD)
+
+$(SRPTEST)$(EXE_EXT): $(SRPTEST).o $(DLIBCRYPTO)
+	@target=$(SRPTEST); $(BUILD_CMD)
 
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c

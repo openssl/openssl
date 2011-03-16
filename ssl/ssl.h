@@ -252,6 +252,7 @@ extern "C" {
 #define SSL_TXT_kEECDH		"kEECDH"
 #define SSL_TXT_kPSK            "kPSK"
 #define SSL_TXT_kGOST		"kGOST"
+#define SSL_TXT_kSRP		"kSRP"
 
 #define	SSL_TXT_aRSA		"aRSA"
 #define	SSL_TXT_aDSS		"aDSS"
@@ -275,6 +276,7 @@ extern "C" {
 #define SSL_TXT_ECDSA		"ECDSA"
 #define SSL_TXT_KRB5      	"KRB5"
 #define SSL_TXT_PSK             "PSK"
+#define SSL_TXT_SRP		"SRP"
 
 #define SSL_TXT_DES		"DES"
 #define SSL_TXT_3DES		"3DES"
@@ -437,6 +439,7 @@ typedef struct ssl_method_st
  *	ECPointFormatList [ 7 ] OCTET STRING,     -- optional EC point format list from TLS extension
  *	PSK_identity_hint [ 8 ] EXPLICIT OCTET STRING, -- optional PSK identity hint
  *	PSK_identity [ 9 ] EXPLICIT OCTET STRING -- optional PSK identity
+ *	SRP_username [ 11 ] EXPLICIT OCTET STRING -- optional SRP username
  *	}
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
@@ -512,6 +515,9 @@ typedef struct ssl_session_st
 	unsigned char *tlsext_tick;	/* Session ticket */
 	size_t	tlsext_ticklen;		/* Session ticket length */	
 	long tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */
+#endif
+#ifndef OPENSSL_NO_SRP
+	char *srp_username;
 #endif
 	} SSL_SESSION;
 
@@ -644,7 +650,42 @@ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int con
 #define SSL_CTX_set_msg_callback_arg(ctx, arg) SSL_CTX_ctrl((ctx), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 #define SSL_set_msg_callback_arg(ssl, arg) SSL_ctrl((ssl), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
 
+#ifndef OPENSSL_NO_SRP
 
+typedef struct srp_ctx_st
+	{
+	/* param for all the callbacks */
+	void *SRP_cb_arg;
+	/* set client Hello login callback */
+	int (*TLS_ext_srp_username_callback)(SSL *, int *, void *);
+	/* set SRP N/g param callback for verification */
+	int (*SRP_verify_param_callback)(SSL *, void *);
+	/* set SRP client passwd callback */
+	char *(*SRP_give_srp_client_pwd_callback)(SSL *, void *);
+	/* set SRP client username callback */
+	char *(*SRP_TLS_ext_missing_srp_client_username_callback)(SSL *, void *);
+
+	char *login;
+	BIGNUM *N,*g,*s,*B,*A;
+	BIGNUM *a,*b,*v;
+	char *info;
+	int strength;
+
+	unsigned long srp_Mask;
+	} SRP_CTX;
+
+/* see tls_srp.c */
+int SSL_SRP_CTX_init(SSL *s);
+int SSL_CTX_SRP_CTX_init(SSL_CTX *ctx);
+int SSL_SRP_CTX_free(SSL *ctx);
+int SSL_CTX_SRP_CTX_free(SSL_CTX *ctx);
+int SSL_srp_server_param_with_username(SSL *s, int *ad);
+int SRP_generate_server_master_secret(SSL *s,unsigned char *master_key);
+int SRP_Calc_A_param(SSL *s);
+int SRP_generate_client_master_secret(SSL *s,unsigned char *master_key);
+int SRP_have_to_put_srp_username(SSL *s);
+
+#endif
 
 #if defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_WIN32)
 #define SSL_MAX_CERT_LIST_DEFAULT 1024*30 /* 30k max cert list :-) */
@@ -868,6 +909,9 @@ struct ssl_ctx_st
 	unsigned int freelist_max_len;
 	struct ssl3_buf_freelist_st *wbuf_freelist;
 	struct ssl3_buf_freelist_st *rbuf_freelist;
+#endif
+#ifndef OPENSSL_NO_SRP
+	SRP_CTX srp_ctx; /* ctx for SRP authentication */
 #endif
 	};
 
@@ -1112,6 +1156,10 @@ struct ssl_st
 		unsigned char *psk, unsigned int max_psk_len);
 #endif
 
+#ifndef OPENSSL_NO_SRP
+	SRP_CTX srp_ctx; /* ctx for SRP authentication */
+#endif
+
 	SSL_CTX *ctx;
 	/* set this flag to 1 and a sleep(1) is put into all SSL_read()
 	 * and SSL_write() calls, good for nbio debuging :-) */
@@ -1329,6 +1377,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_AD_BAD_CERTIFICATE_STATUS_RESPONSE TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE
 #define SSL_AD_BAD_CERTIFICATE_HASH_VALUE TLS1_AD_BAD_CERTIFICATE_HASH_VALUE
 #define SSL_AD_UNKNOWN_PSK_IDENTITY     TLS1_AD_UNKNOWN_PSK_IDENTITY /* fatal */
+#define SSL_AD_UNKNOWN_SRP_USERNAME	TLS1_AD_UNKNOWN_SRP_USERNAME
+#define SSL_AD_MISSING_SRP_USERNAME	TLS1_AD_MISSING_SRP_USERNAME
 
 #define SSL_ERROR_NONE			0
 #define SSL_ERROR_SSL			1
@@ -1412,6 +1462,15 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP	71
 
 #define SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB	72
+
+#define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME_CB	75
+#define SSL_CTRL_SET_SRP_VERIFY_PARAM_CB		76
+#define SSL_CTRL_SET_SRP_GIVE_CLIENT_PWD_CB		77
+#define SSL_CTRL_SET_TLS_EXT_SRP_MISSING_CLIENT_USERNAME_CB		78
+#define SSL_CTRL_SET_SRP_ARG		79
+#define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME		80
+#define SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH		81
+#define SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD		82
 #endif
 
 #define DTLS_CTRL_GET_TIMEOUT		73
@@ -1615,6 +1674,32 @@ int SSL_set_trust(SSL *s, int trust);
 
 int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm);
 int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
+
+#ifndef OPENSSL_NO_SRP
+int SSL_CTX_set_srp_username(SSL_CTX *ctx,char *name);
+int SSL_CTX_set_srp_password(SSL_CTX *ctx,char *password);
+int SSL_CTX_set_srp_strength(SSL_CTX *ctx, int strength);
+int SSL_CTX_set_srp_client_pwd_callback(SSL_CTX *ctx,
+					char *(*cb)(SSL *,void *));
+int SSL_CTX_set_srp_verify_param_callback(SSL_CTX *ctx,
+					  int (*cb)(SSL *,void *));
+int SSL_CTX_set_srp_username_callback(SSL_CTX *ctx,
+				      int (*cb)(SSL *,int *,void *));
+int SSL_CTX_set_srp_missing_srp_username_callback(SSL_CTX *ctx,
+						  char *(*cb)(SSL *,void *));
+int SSL_CTX_set_srp_cb_arg(SSL_CTX *ctx, void *arg);
+
+int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
+			     BIGNUM *sa, BIGNUM *v, char *info);
+int SSL_set_srp_server_param_pw(SSL *s, const char *user, const char *pass,
+				const char *grp);
+
+BIGNUM *SSL_get_srp_g(SSL *s);
+BIGNUM *SSL_get_srp_N(SSL *s);
+
+char *SSL_get_srp_username(SSL *s);
+char *SSL_get_srp_userinfo(SSL *s);
+#endif
 
 void	SSL_free(SSL *ssl);
 int 	SSL_accept(SSL *ssl);
@@ -2008,6 +2093,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_SET_TRUST				 228
 #define SSL_F_SSL_SET_WFD				 196
 #define SSL_F_SSL_SHUTDOWN				 224
+#define SSL_F_SSL_SRP_CTX_INIT				 293
 #define SSL_F_SSL_UNDEFINED_CONST_FUNCTION		 243
 #define SSL_F_SSL_UNDEFINED_FUNCTION			 197
 #define SSL_F_SSL_UNDEFINED_VOID_FUNCTION		 244
@@ -2066,6 +2152,11 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_BAD_RSA_MODULUS_LENGTH			 121
 #define SSL_R_BAD_RSA_SIGNATURE				 122
 #define SSL_R_BAD_SIGNATURE				 123
+#define SSL_R_BAD_SRP_A_LENGTH				 2096
+#define SSL_R_BAD_SRP_B_LENGTH				 2097
+#define SSL_R_BAD_SRP_G_LENGTH				 2098
+#define SSL_R_BAD_SRP_N_LENGTH				 2099
+#define SSL_R_BAD_SRP_S_LENGTH				 2100
 #define SSL_R_BAD_SSL_FILETYPE				 124
 #define SSL_R_BAD_SSL_SESSION_ID_LENGTH			 125
 #define SSL_R_BAD_STATE					 126
@@ -2082,6 +2173,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_CIPHER_CODE_WRONG_LENGTH			 137
 #define SSL_R_CIPHER_OR_HASH_UNAVAILABLE		 138
 #define SSL_R_CIPHER_TABLE_SRC_ERROR			 139
+#define SSL_R_CLIENTHELLO_SRP_TLS_EXT			 2101
 #define SSL_R_CLIENTHELLO_TLSEXT			 226
 #define SSL_R_COMPRESSED_LENGTH_TOO_LONG		 140
 #define SSL_R_COMPRESSION_DISABLED			 343
@@ -2118,6 +2210,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_INVALID_COMMAND				 280
 #define SSL_R_INVALID_COMPRESSION_ALGORITHM		 341
 #define SSL_R_INVALID_PURPOSE				 278
+#define SSL_R_INVALID_SRP_USERNAME			 2107
 #define SSL_R_INVALID_STATUS_RESPONSE			 328
 #define SSL_R_INVALID_TICKET_KEYS_LENGTH		 325
 #define SSL_R_INVALID_TRUST				 279
@@ -2147,6 +2240,8 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_MISSING_RSA_CERTIFICATE			 168
 #define SSL_R_MISSING_RSA_ENCRYPTING_CERT		 169
 #define SSL_R_MISSING_RSA_SIGNING_CERT			 170
+#define SSL_R_MISSING_SRP_PARAM				 2103
+#define SSL_R_MISSING_SRP_USERNAME			 2104
 #define SSL_R_MISSING_TMP_DH_KEY			 171
 #define SSL_R_MISSING_TMP_ECDH_KEY			 311
 #define SSL_R_MISSING_TMP_RSA_KEY			 172
@@ -2219,6 +2314,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED		 277
 #define SSL_R_SHORT_READ				 219
 #define SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE	 220
+#define SSL_R_SRP_A_CALC				 2105
 #define SSL_R_SSL23_DOING_SESSION_ID_REUSE		 221
 #define SSL_R_SSL2_CONNECTION_ID_TOO_LONG		 299
 #define SSL_R_SSL3_EXT_INVALID_ECPOINTFORMAT		 321

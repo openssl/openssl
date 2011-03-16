@@ -1203,6 +1203,10 @@ start:
 				SSLerr(SSL_F_SSL3_READ_BYTES,SSL_R_NO_RENEGOTIATION);
 				goto f_err;
 				}
+#ifdef SSL_AD_MISSING_SRP_USERNAME
+			if (alert_descr == SSL_AD_MISSING_SRP_USERNAME)
+				return(0);
+#endif
 			}
 		else if (alert_level == 2) /* fatal */
 			{

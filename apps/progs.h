@@ -44,6 +44,7 @@ extern int smime_main(int argc,char *argv[]);
 extern int rand_main(int argc,char *argv[]);
 extern int engine_main(int argc,char *argv[]);
 extern int ocsp_main(int argc,char *argv[]);
+extern int srp_main(int argc,char *argv[]);
 extern int prime_main(int argc,char *argv[]);
 extern int ts_main(int argc,char *argv[]);
 
@@ -144,6 +145,9 @@ FUNCTION functions[] = {
 #endif
 #ifndef OPENSSL_NO_OCSP
 	{FUNC_TYPE_GENERAL,"ocsp",ocsp_main},
+#endif
+#ifndef OPENSSL_NO_SRP
+	{FUNC_TYPE_GENERAL,"srp",srp_main},
 #endif
 	{FUNC_TYPE_GENERAL,"prime",prime_main},
 	{FUNC_TYPE_GENERAL,"ts",ts_main},

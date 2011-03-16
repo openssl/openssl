@@ -186,6 +186,9 @@ typedef unsigned int u_int;
 #ifndef OPENSSL_NO_RSA
 #include <openssl/rsa.h>
 #endif
+#ifndef OPENSSL_NO_SRP
+#include <openssl/srp.h>
+#endif
 #include "s_apps.h"
 #include "timeouts.h"
 
@@ -369,6 +372,40 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
         }
 #endif
 
+#ifndef OPENSSL_NO_SRP
+/* This is a context that we pass to callbacks */
+typedef struct srpsrvparm_st
+	{
+	int verbose;
+	char *login;
+	SRP_VBASE *vb;
+	} srpsrvparm;
+
+static int MS_CALLBACK ssl_srp_server_param_cb(SSL *s, int *ad, void *arg)
+	{
+	srpsrvparm *p = (srpsrvparm *) arg;
+	SRP_user_pwd *user;
+
+	p->login = BUF_strdup(SSL_get_srp_username(s));
+	BIO_printf(bio_err, "SRP username = \"%s\"\n", p->login);
+
+	user = SRP_VBASE_get_by_user(p->vb, p->login);
+	if (user == NULL)
+		{
+		BIO_printf(bio_err, "User %s doesn't exist\n", p->login);
+		return SSL3_AL_FATAL;
+		}
+	if (SSL_set_srp_server_param(s, user->N, user->g, user->s, user->v,
+				     user->info) < 0)
+		{
+		*ad = SSL_AD_INTERNAL_ERROR;
+		return SSL3_AL_FATAL;
+		}
+	return SSL_ERROR_NONE;
+	}
+
+#endif
+
 #ifdef MONOLITH
 static void s_server_init(void)
 	{
@@ -455,6 +492,10 @@ static void sv_usage(void)
 # ifndef OPENSSL_NO_JPAKE
 	BIO_printf(bio_err," -jpake arg    - JPAKE secret to use\n");
 # endif
+#endif
+#ifndef OPENSSL_NO_SRP
+	BIO_printf(bio_err," -srpvfile file      - The verifier file for SRP\n");
+	BIO_printf(bio_err," -srpuserseed string - A seed string for a default user salt.\n");
 #endif
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
@@ -874,12 +915,21 @@ int MAIN(int argc, char *argv[])
 	/* by default do not send a PSK identity hint */
 	static char *psk_identity_hint=NULL;
 #endif
+#ifndef OPENSSL_NO_SRP
+	char *srpuserseed = NULL;
+	char *srp_verifier_file = NULL;
+	srpsrvparm p;
+#endif
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_server_method();
 #elif !defined(OPENSSL_NO_SSL3)
 	meth=SSLv3_server_method();
 #elif !defined(OPENSSL_NO_SSL2)
 	meth=SSLv2_server_method();
+#elif !defined(OPENSSL_NO_TLS1)
+	meth=TLSv1_server_method();
+#else
+  /*  #error no SSL version enabled */
 #endif
 
 	local_argc=argc;
@@ -1110,6 +1160,20 @@ int MAIN(int argc, char *argv[])
 				BIO_printf(bio_err,"Not a hex number '%s'\n",*argv);
 				goto bad;
 				}
+			}
+#endif
+#ifndef OPENSSL_NO_SRP
+		else if (strcmp(*argv, "-srpvfile") == 0)
+			{
+			if (--argc < 1) goto bad;
+			srp_verifier_file = *(++argv);
+			meth=TLSv1_server_method();
+			}
+		else if (strcmp(*argv, "-srpuserseed") == 0)
+			{
+			if (--argc < 1) goto bad;
+			srpuserseed = *(++argv);
+			meth=TLSv1_server_method();
 			}
 #endif
 		else if	(strcmp(*argv,"-www") == 0)
@@ -1690,6 +1754,23 @@ bad:
 		}
 #endif
 
+#ifndef OPENSSL_NO_SRP
+	if (srp_verifier_file != NULL)
+		{
+		p.vb = SRP_VBASE_new(srpuserseed);
+		if ((ret = SRP_VBASE_init(p.vb, srp_verifier_file)) != SRP_NO_ERROR)
+			{
+			BIO_printf(bio_err,
+				   "Cannot initialize SRP verifier file \"%s\":ret=%d\n",
+				   srp_verifier_file, ret);
+				goto end;
+			}
+		SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE,verify_callback);
+		SSL_CTX_set_srp_cb_arg(ctx, &p);  			
+		SSL_CTX_set_srp_username_callback(ctx, ssl_srp_server_param_cb);
+		}
+	else
+#endif
 	if (CAfile != NULL)
 		{
 		SSL_CTX_set_client_CA_list(ctx,SSL_load_client_CA_file(CAfile));

@@ -98,7 +98,7 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # RFC3779
 			 "RFC3779",
 			 # TLS
-			 "TLSEXT", "PSK",
+			 "TLSEXT", "PSK", "SRP",
 			 # CMS
 			 "CMS",
 			 # CryptoAPI Engine
@@ -127,7 +127,7 @@ my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
 my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw;
 my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
 my $no_rfc3779; my $no_psk; my $no_tlsext; my $no_cms; my $no_capieng;
-my $no_jpake; my $no_ssl2;
+my $no_jpake; my $no_srp; my $no_ssl2;
 
 my $zlib;
 
@@ -218,6 +218,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
 	elsif (/^no-capieng$/)	{ $no_capieng=1; }
 	elsif (/^no-jpake$/)	{ $no_jpake=1; }
+	elsif (/^no-srp$/)	{ $no_srp=1; }
 	}
 
 
@@ -317,6 +318,7 @@ $crypto.=" crypto/pqueue/pqueue.h";
 $crypto.=" crypto/cms/cms.h";
 $crypto.=" crypto/jpake/jpake.h";
 $crypto.=" crypto/modes/modes.h";
+$crypto.=" crypto/srp/srp.h";
 
 my $symhacks="crypto/symhacks.h";
 
@@ -1173,6 +1175,7 @@ sub is_valid
 			if ($keyword eq "SSL2" && $no_ssl2) { return 0; }
 			if ($keyword eq "CAPIENG" && $no_capieng) { return 0; }
 			if ($keyword eq "JPAKE" && $no_jpake) { return 0; }
+			if ($keyword eq "SRP" && $no_srp) { return 0; }
 			if ($keyword eq "DEPRECATED" && $no_deprecated) { return 0; }
 
 			# Nothing recognise as true

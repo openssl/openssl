@@ -189,6 +189,10 @@ int SSL_SESSION_print(BIO *bp, const SSL_SESSION *x)
 	if (BIO_puts(bp,"\n    PSK identity hint: ") <= 0) goto err;
 	if (BIO_printf(bp, "%s", x->psk_identity_hint ? x->psk_identity_hint : "None") <= 0) goto err;
 #endif
+#ifndef OPENSSL_NO_SRP
+	if (BIO_puts(bp,"\n    SRP username: ") <= 0) goto err;
+	if (BIO_printf(bp, "%s", x->srp_username ? x->srp_username : "None") <= 0) goto err;
+#endif
 #ifndef OPENSSL_NO_TLSEXT
 	if (x->tlsext_tick_lifetime_hint)
 		{

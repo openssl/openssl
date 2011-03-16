@@ -163,6 +163,9 @@ typedef unsigned int u_int;
 #include <openssl/rand.h>
 #include <openssl/ocsp.h>
 #include <openssl/bn.h>
+#ifndef OPENSSL_NO_SRP
+#include <openssl/srp.h>
+#endif
 #include "s_apps.h"
 #include "timeouts.h"
 
@@ -316,6 +319,13 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -jpake arg    - JPAKE secret to use\n");
 # endif
 #endif
+#ifndef OPENSSL_NO_SRP
+	BIO_printf(bio_err," -srpuser user     - SRP authentification for 'user'\n");
+	BIO_printf(bio_err," -srppass arg      - password for 'user'\n");
+	BIO_printf(bio_err," -srp_lateuser     - SRP username into second ClientHello message\n");
+	BIO_printf(bio_err," -srp_moregroups   - Tolerate other than the known g N values.\n");
+	BIO_printf(bio_err," -srp_strength int - minimal mength in bits for N (default %d).\n",SRP_MINIMAL_N);
+#endif
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
 	BIO_printf(bio_err," -tls1_1       - just use TLSv1.1\n");
@@ -367,6 +377,112 @@ static int MS_CALLBACK ssl_servername_cb(SSL *s, int *ad, void *arg)
 	
 	return SSL_TLSEXT_ERR_OK;
 	}
+
+#ifndef OPENSSL_NO_SRP
+
+/* This is a context that we pass to all callbacks */
+typedef struct srp_arg_st
+	{
+	char *srppassin;
+	char *srplogin;
+	int msg;   /* copy from c_msg */
+	int debug; /* copy from c_debug */
+	int amp;   /* allow more groups */
+	int strength /* minimal size for N */ ;
+	} SRP_ARG;
+
+#define SRP_NUMBER_ITERATIONS_FOR_PRIME 64
+
+static int SRP_Verify_N_and_g(BIGNUM *N, BIGNUM *g)
+	{
+	BN_CTX *bn_ctx = BN_CTX_new();
+	BIGNUM *p = BN_new();
+	BIGNUM *r = BN_new();
+	int ret =
+		g != NULL && N != NULL && bn_ctx != NULL && BN_is_odd(N) &&
+		BN_is_prime_ex(N, SRP_NUMBER_ITERATIONS_FOR_PRIME, bn_ctx, NULL) &&
+		p != NULL && BN_rshift1(p, N) &&
+
+		/* p = (N-1)/2 */
+		BN_is_prime_ex(p, SRP_NUMBER_ITERATIONS_FOR_PRIME, bn_ctx, NULL) &&
+		r != NULL &&
+
+		/* verify g^((N-1)/2) == -1 (mod N) */
+		BN_mod_exp(r, g, p, N, bn_ctx) &&
+		BN_add_word(r, 1) &&
+		BN_cmp(r, N) == 0;
+
+	if(r)
+		BN_free(r);
+	if(p)
+		BN_free(p);
+	if(bn_ctx)
+		BN_CTX_free(bn_ctx);
+	return ret;
+	}
+
+static int MS_CALLBACK ssl_srp_verify_param_cb(SSL *s, void *arg)
+	{
+	SRP_ARG *srp_arg = (SRP_ARG *)arg;
+	BIGNUM *N = NULL, *g = NULL;
+	if (!(N = SSL_get_srp_N(s)) || !(g = SSL_get_srp_g(s)))
+		return 0;
+	if (srp_arg->debug || srp_arg->msg || srp_arg->amp == 1)
+		{
+    		BIO_printf(bio_err, "SRP parameters:\n"); 
+		BIO_printf(bio_err,"\tN="); BN_print(bio_err,N);
+		BIO_printf(bio_err,"\n\tg="); BN_print(bio_err,g);
+		BIO_printf(bio_err,"\n");
+		}
+
+	if (SRP_check_known_gN_param(g,N))
+		return 1;
+
+	if (srp_arg->amp == 1)
+		{
+		if (srp_arg->debug)
+			BIO_printf(bio_err, "SRP param N and g are not known params, going to check deeper.\n");
+
+/* The srp_moregroups must be used with caution, testing primes costs time. 
+   Implementors should rather add the value to the known ones.
+   The minimal size has already been tested.
+*/
+		if (BN_num_bits(g) <= BN_BITS && SRP_Verify_N_and_g(N,g))
+			return 1;
+		}	
+	BIO_printf(bio_err, "SRP param N and g rejected.\n");
+	return 0;
+	}
+
+#define PWD_STRLEN 1024
+
+static char * MS_CALLBACK ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
+	{
+	SRP_ARG *srp_arg = (SRP_ARG *)arg;
+	char *pass = (char *)OPENSSL_malloc(PWD_STRLEN+1);
+	PW_CB_DATA cb_tmp;
+	int l;
+
+	cb_tmp.password = (char *)srp_arg->srppassin;
+	cb_tmp.prompt_info = "SRP user";
+	if ((l = password_callback(pass, PWD_STRLEN, 0, &cb_tmp))<0)
+		{
+		BIO_printf (bio_err, "Can't read Password\n");
+		OPENSSL_free(pass);
+		return NULL;
+		}
+	*(pass+l)= '\0';
+
+	return pass;
+	}
+
+static char * MS_CALLBACK missing_srp_username_callback(SSL *s, void *arg)
+	{
+	SRP_ARG *srp_arg = (SRP_ARG *)arg;
+	return BUF_strdup(srp_arg->srplogin);
+	}
+
+#endif
 #endif
 
 enum
@@ -439,6 +555,11 @@ int MAIN(int argc, char **argv)
 	long socket_mtu = 0;
 #ifndef OPENSSL_NO_JPAKE
 	char *jpake_secret = NULL;
+#endif
+#ifndef OPENSSL_NO_SRP
+	char * srppass = NULL;
+	int srp_lateuser = 0;
+	SRP_ARG srp_arg = {NULL,NULL,0,0,0,1024};
 #endif
 
 #if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
@@ -587,6 +708,37 @@ int MAIN(int argc, char **argv)
                                 BIO_printf(bio_err,"Not a hex number '%s'\n",*argv);
                                 goto bad;
                                 }
+			}
+#endif
+#ifndef OPENSSL_NO_SRP
+		else if (strcmp(*argv,"-srpuser") == 0)
+			{
+			if (--argc < 1) goto bad;
+			srp_arg.srplogin= *(++argv);
+			meth=TLSv1_client_method();
+			}
+		else if (strcmp(*argv,"-srppass") == 0)
+			{
+			if (--argc < 1) goto bad;
+			srppass= *(++argv);
+			meth=TLSv1_client_method();
+			}
+		else if (strcmp(*argv,"-srp_strength") == 0)
+			{
+			if (--argc < 1) goto bad;
+			srp_arg.strength=atoi(*(++argv));
+			BIO_printf(bio_err,"SRP minimal length for N is %d\n",srp_arg.strength);
+			meth=TLSv1_client_method();
+			}
+		else if (strcmp(*argv,"-srp_lateuser") == 0)
+			{
+			srp_lateuser= 1;
+			meth=TLSv1_client_method();
+			}
+		else if	(strcmp(*argv,"-srp_moregroups") == 0)
+			{
+			srp_arg.amp=1;
+			meth=TLSv1_client_method();
 			}
 #endif
 #ifndef OPENSSL_NO_SSL2
@@ -840,6 +992,14 @@ bad:
 			}
 		}
 
+#ifndef OPENSSL_NO_SRP
+	if(!app_passwd(bio_err, srppass, NULL, &srp_arg.srppassin, NULL))
+		{
+		BIO_printf(bio_err, "Error getting password\n");
+		goto end;
+		}
+#endif
+
 	ctx=SSL_CTX_new(meth);
 	if (ctx == NULL)
 		{
@@ -919,6 +1079,26 @@ bad:
 		SSL_CTX_set_tlsext_servername_callback(ctx, ssl_servername_cb);
 		SSL_CTX_set_tlsext_servername_arg(ctx, &tlsextcbp);
 		}
+#ifndef OPENSSL_NO_SRP
+        if (srp_arg.srplogin)
+		{
+		if (srp_lateuser) 
+			SSL_CTX_set_srp_missing_srp_username_callback(ctx,missing_srp_username_callback);
+		else if (!SSL_CTX_set_srp_username(ctx, srp_arg.srplogin))
+			{
+			BIO_printf(bio_err,"Unable to set SRP username\n");
+			goto end;
+			}
+		srp_arg.msg = c_msg;
+		srp_arg.debug = c_debug ;
+		SSL_CTX_set_srp_cb_arg(ctx,&srp_arg);
+		SSL_CTX_set_srp_client_pwd_callback(ctx, ssl_give_srp_client_pwd_cb);
+		SSL_CTX_set_srp_strength(ctx, srp_arg.strength);
+		if (c_msg || c_debug || srp_arg.amp == 0)
+			SSL_CTX_set_srp_verify_param_callback(ctx, ssl_srp_verify_param_cb);
+		}
+
+#endif
 #endif
 
 	con=SSL_new(ctx);

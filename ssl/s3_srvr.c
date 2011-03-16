@@ -179,6 +179,31 @@ static const SSL_METHOD *ssl3_get_server_method(int ver)
 		return(NULL);
 	}
 
+#ifndef OPENSSL_NO_SRP
+static int SSL_check_srp_ext_ClientHello(SSL *s, int *ad)
+	{
+	int ret = SSL_ERROR_NONE;
+
+	*ad = SSL_AD_UNRECOGNIZED_NAME;
+
+	if ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) &&
+	    (s->srp_ctx.TLS_ext_srp_username_callback != NULL))
+		{
+		if(s->srp_ctx.login == NULL)
+			{
+			/* There isn't any srp login extension !!! */
+			ret = SSL3_AL_WARNING;
+			*ad = SSL_AD_MISSING_SRP_USERNAME;
+			}
+		else
+			{
+			ret = SSL_srp_server_param_with_username(s,ad);
+			}
+		}
+	return ret;
+	}
+#endif
+
 IMPLEMENT_ssl3_meth_func(SSLv3_server_method,
 			ssl3_accept,
 			ssl_undefined_function,
@@ -191,6 +216,10 @@ int ssl3_accept(SSL *s)
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state,skip=0;
+#ifndef OPENSSL_NO_SRP
+	int srp_no_username=0;
+	int extension_error,al;
+#endif
 
 	RAND_add(&Time,sizeof(Time),0);
 	ERR_clear_error();
@@ -311,10 +340,34 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SR_CLNT_HELLO_A:
 		case SSL3_ST_SR_CLNT_HELLO_B:
 		case SSL3_ST_SR_CLNT_HELLO_C:
+#ifndef OPENSSL_NO_SRP
+		case SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME:
+#endif
 
 			s->shutdown=0;
 			ret=ssl3_get_client_hello(s);
 			if (ret <= 0) goto end;
+#ifndef OPENSSL_NO_SRP
+			extension_error = 0;
+			if ((al = SSL_check_srp_ext_ClientHello(s,&extension_error)) != SSL_ERROR_NONE)
+				{
+				ssl3_send_alert(s,al,extension_error);
+				if (extension_error == SSL_AD_MISSING_SRP_USERNAME)
+					{
+					if (srp_no_username) goto end;
+					ERR_clear_error();
+					srp_no_username = 1;
+					s->state=SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME;
+					if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
+					if ((ret=BIO_flush(s->wbio)) <= 0) goto end;
+					s->init_num=0;
+					break;
+					}
+				ret = -1;
+				SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
+				goto end;
+				}
+#endif
 			
 			s->renegotiate = 2;
 			s->state=SSL3_ST_SW_SRVR_HELLO_A;
@@ -345,7 +398,7 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SW_CERT_A:
 		case SSL3_ST_SW_CERT_B:
 			/* Check if it is anon DH or anon ECDH, */
-			/* normal PSK or KRB5 */
+			/* normal PSK or KRB5 or SRP */
 			if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
 				&& !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK)
 				&& !(s->s3->tmp.new_cipher->algorithm_auth & SSL_aKRB5))
@@ -409,6 +462,10 @@ int ssl3_accept(SSL *s)
 			 * hint if provided */
 #ifndef OPENSSL_NO_PSK
 			    || ((alg_k & SSL_kPSK) && s->ctx->psk_identity_hint)
+#endif
+#ifndef OPENSSL_NO_SRP
+			    /* SRP: send ServerKeyExchange */
+			    || (alg_k & SSL_kSRP)
 #endif
 			    || (alg_k & (SSL_kDHr|SSL_kDHd|SSL_kEDH))
 			    || (alg_k & SSL_kEECDH)
@@ -803,7 +860,11 @@ int ssl3_get_client_hello(SSL *s)
 	 * If we are SSLv3, we will respond with SSLv3, even if prompted with
 	 * TLSv1.
 	 */
-	if (s->state == SSL3_ST_SR_CLNT_HELLO_A)
+	if (s->state == SSL3_ST_SR_CLNT_HELLO_A
+#ifndef OPENSSL_NO_SRP
+		|| (s->state == SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME)
+#endif
+		)
 		{
 		s->state=SSL3_ST_SR_CLNT_HELLO_B;
 		}
@@ -1668,14 +1729,37 @@ int ssl3_send_server_key_exchange(SSL *s)
 				}
 			else
 #endif /* !OPENSSL_NO_PSK */
+#ifndef OPENSSL_NO_SRP
+		if (type & SSL_kSRP)
+			{
+			if ((s->srp_ctx.N == NULL) ||
+				(s->srp_ctx.g == NULL) ||
+				(s->srp_ctx.s == NULL) ||
+				(s->srp_ctx.B == NULL))
+				{
+				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_MISSING_SRP_PARAM);
+				goto err;
+				}
+			r[0]=s->srp_ctx.N;
+			r[1]=s->srp_ctx.g;
+			r[2]=s->srp_ctx.s;
+			r[3]=s->srp_ctx.B;
+			}
+		else 
+#endif
 			{
 			al=SSL_AD_HANDSHAKE_FAILURE;
 			SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE);
 			goto f_err;
 			}
-		for (i=0; r[i] != NULL; i++)
+		for (i=0; r[i] != NULL && i<4; i++)
 			{
 			nr[i]=BN_num_bytes(r[i]);
+#ifndef OPENSSL_NO_SRP
+			if ((i == 2) && (type & SSL_kSRP))
+				n+=1+nr[i];
+			else
+#endif
 			n+=2+nr[i];
 			}
 
@@ -1704,8 +1788,16 @@ int ssl3_send_server_key_exchange(SSL *s)
 		d=(unsigned char *)s->init_buf->data;
 		p= &(d[4]);
 
-		for (i=0; r[i] != NULL; i++)
+		for (i=0; r[i] != NULL && i<4; i++)
 			{
+#ifndef OPENSSL_NO_SRP
+			if ((i == 2) && (type & SSL_kSRP))
+				{
+				*p = nr[i];
+				p++;
+				}
+			else
+#endif
 			s2n(nr[i],p);
 			BN_bn2bin(r[i],p);
 			p+=nr[i];
@@ -2581,6 +2673,44 @@ int ssl3_get_client_key_exchange(SSL *s)
 			}
 		else
 #endif
+#ifndef OPENSSL_NO_SRP
+		if (alg_k & SSL_kSRP)
+			{
+			int param_len;
+
+			n2s(p,i);
+			param_len=i+2;
+			if (param_len > n)
+				{
+				al=SSL_AD_DECODE_ERROR;
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_SRP_A_LENGTH);
+				goto f_err;
+				}
+			if (!(s->srp_ctx.A=BN_bin2bn(p,i,NULL)))
+				{
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_BN_LIB);
+				goto err;
+				}
+			if (s->session->srp_username != NULL)
+				OPENSSL_free(s->session->srp_username);
+			s->session->srp_username = BUF_strdup(s->srp_ctx.login);
+			if (s->session->srp_username == NULL)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+					ERR_R_MALLOC_FAILURE);
+				goto err;
+				}
+
+			if ((s->session->master_key_length = SRP_generate_server_master_secret(s,s->session->master_key))<0)
+				{
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+
+			p+=i;
+			}
+		else
+#endif	/* OPENSSL_NO_SRP */
 		if (alg_k & SSL_kGOST) 
 			{
 			int ret = 0;
@@ -2664,7 +2794,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 	return(1);
 f_err:
 	ssl3_send_alert(s,SSL3_AL_FATAL,al);
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_ECDH)
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_ECDH) || defined(OPENSSL_NO_SRP)
 err:
 #endif
 #ifndef OPENSSL_NO_ECDH
