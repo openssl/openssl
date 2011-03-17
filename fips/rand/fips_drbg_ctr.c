@@ -352,7 +352,7 @@ static int drbg_ctr_generate(DRBG_CTX *dctx,
 
 static int drbg_ctr_uninstantiate(DRBG_CTX *dctx)
 	{
-	OPENSSL_cleanse(&dctx->d.ctr, sizeof(DRBG_CTR_CTX));
+	memset(&dctx->d.ctr, 0, sizeof(DRBG_CTR_CTX));
 	return 1;
 	}
 
@@ -384,7 +384,6 @@ int fips_drbg_ctr_init(DRBG_CTX *dctx)
 	dctx->reseed = drbg_ctr_reseed;
 	dctx->generate = drbg_ctr_generate;
 	dctx->uninstantiate = drbg_ctr_uninstantiate;
-
 
 	cctx->keylen = keylen;
 	dctx->strength = keylen * 8;
@@ -423,7 +422,7 @@ int fips_drbg_ctr_init(DRBG_CTX *dctx)
 		}
 
 	dctx->max_request = 1<<19;
-	dctx->reseed_counter = DRBG_MAX_LENGTH;
+	dctx->reseed_interval = 1<<24;
 
 	return 1;
 	}

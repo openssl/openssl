@@ -118,7 +118,6 @@ void FIPS_drbg_free(DRBG_CTX *dctx)
 	}
 
 int FIPS_drbg_instantiate(DRBG_CTX *dctx,
-				int strength,
 				const unsigned char *pers, size_t perslen)
 	{
 	size_t entlen, noncelen;
@@ -148,12 +147,6 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 			r = FIPS_R_IN_ERROR_STATE;
 		else
 			r = FIPS_R_ALREADY_INSTANTIATED;
-		goto end;
-		}
-
-	if (strength > dctx->strength)
-		{
-		r = FIPS_R_INSUFFICIENT_SECURITY_STRENGTH;
 		goto end;
 		}
 
@@ -197,8 +190,6 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 
 	dctx->status = DRBG_STATUS_READY;
 	dctx->reseed_counter = 1;
-	/* Initial test value for reseed interval */
-	dctx->reseed_interval = 1<<24;
 
 	end:
 
@@ -208,7 +199,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 	if (dctx->status == DRBG_STATUS_READY)
 		return 1;
 
-	if (r && !(dctx->flags & DRBG_FLAG_TEST))
+	if (r && !(dctx->flags & DRBG_FLAG_NOERR))
 		FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, r);
 
 	return 0;
@@ -265,7 +256,7 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 	if (dctx->status == DRBG_STATUS_READY)
 		return 1;
 
-	if (r && !(dctx->flags & DRBG_FLAG_TEST))
+	if (r && !(dctx->flags & DRBG_FLAG_NOERR))
 		FIPSerr(FIPS_F_FIPS_DRBG_RESEED, r);
 
 	return 0;
@@ -313,7 +304,7 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 		dctx->status = DRBG_STATUS_ERROR;
 		goto end;
 		}
-	if (dctx->reseed_counter > dctx->reseed_interval)
+	if (dctx->reseed_counter >= dctx->reseed_interval)
 		dctx->status = DRBG_STATUS_RESEED;
 	else
 		dctx->reseed_counter++;
@@ -321,7 +312,7 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 	end:
 	if (r)
 		{
-		if (!(dctx->flags & DRBG_FLAG_TEST))
+		if (!(dctx->flags & DRBG_FLAG_NOERR))
 			FIPSerr(FIPS_F_FIPS_DRBG_GENERATE, r);
 		return 0;
 		}
@@ -331,11 +322,14 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 
 int FIPS_drbg_uninstantiate(DRBG_CTX *dctx)
 	{
-	int save_type, save_flags, rv;
-	save_type = dctx->type;
-	save_flags = dctx->flags;
+	int rv;
+	if (!dctx->uninstantiate)
+		return 1;
 	rv = dctx->uninstantiate(dctx);
-	OPENSSL_cleanse(dctx, sizeof(DRBG_CTX));
+	/* Although we'd like to cleanse here we can't because we have to
+	 * test the uninstantiate really zeroes the data.
+	 */
+	memset(dctx, 0, sizeof(DRBG_CTX));
 	/* If method has problems uninstantiating, return error */
 	return rv;
 	}

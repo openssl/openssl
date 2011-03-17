@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Extensive self tests and health checking required by SP800-90 DRBG.
+     Remove strength parameter from FIPS_drbg_instantiate and always
+     instantiate at maximum supported strength.
+     [Steve Henson]
+
   *) Add SRP support.
      [Tom Wu <tjw@cs.stanford.edu> and Ben Laurie]
 

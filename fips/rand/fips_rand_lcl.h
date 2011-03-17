@@ -86,6 +86,8 @@ struct drbg_ctr_ctx_st
 
 /* PRNG is in test state */
 #define	DRBG_FLAG_TEST			0x2
+/* Functions shouldn't call err library */
+#define	DRBG_FLAG_NOERR			0x4
 
 /* DRBG status values */
 /* not initialised */
@@ -103,7 +105,7 @@ struct drbg_ctr_ctx_st
 
 /* A default maximum length: larger than any reasonable value used in pratice */
 
-#define DRBG_MAX_LENGTH			0x7fffffff
+#define DRBG_MAX_LENGTH			0x7ffffff0
 
 /* DRBG context structure */
 

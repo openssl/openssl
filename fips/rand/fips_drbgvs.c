@@ -156,9 +156,9 @@ static size_t test_nonce(DRBG_CTX *dctx, unsigned char *out,
 int main(int argc,char **argv)
 	{
 	FILE *in, *out;
-	DRBG_CTX *dctx;
+	DRBG_CTX *dctx = NULL;
 	TEST_ENT t;
-	int r, nid;
+	int r, nid = 0;
 	int pr = 0;
 	char buf[2048], lbuf[2048];
 	unsigned char randout[2048];
@@ -166,7 +166,7 @@ int main(int argc,char **argv)
 
 	unsigned char *ent = NULL, *nonce = NULL, *pers = NULL, *adin = NULL;
 	long entlen, noncelen, perslen, adinlen;
-	int df;
+	int df = 0;
 
 	int randoutlen = 0;
 
@@ -251,7 +251,7 @@ int main(int argc,char **argv)
 			FIPS_drbg_set_test_mode(dctx, test_entropy, test_nonce);
 			FIPS_drbg_set_app_data(dctx, &t);
 			randoutlen = (int)FIPS_drbg_get_blocklength(dctx);
-			r = FIPS_drbg_instantiate(dctx, 0, pers, perslen);
+			r = FIPS_drbg_instantiate(dctx, pers, perslen);
 			if (!r)
 				{
 				fprintf(stderr, "Error instantiating DRBG\n");

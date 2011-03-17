@@ -726,8 +726,10 @@ typedef struct
 	{
 	const unsigned char *ent;
 	size_t entlen;
+	int entcnt;
 	const unsigned char *nonce;
 	size_t noncelen;
+	int noncecnt;
 	} TEST_ENT;
 
 static size_t test_entropy(DRBG_CTX *dctx, unsigned char *out,
@@ -735,6 +737,7 @@ static size_t test_entropy(DRBG_CTX *dctx, unsigned char *out,
 	{
 	TEST_ENT *t = FIPS_drbg_get_app_data(dctx);
 	memcpy(out, t->ent, t->entlen);
+	t->entcnt++;
 	return t->entlen;
 	}
 
@@ -743,6 +746,7 @@ static size_t test_nonce(DRBG_CTX *dctx, unsigned char *out,
 	{
 	TEST_ENT *t = FIPS_drbg_get_app_data(dctx);
 	memcpy(out, t->nonce, t->noncelen);
+	t->noncecnt++;
 	return t->noncelen;
 	}
 
@@ -767,8 +771,10 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	t.entlen = td->entlen;
 	t.nonce = td->nonce;
 	t.noncelen = td->noncelen;
+	t.entcnt = 0;
+	t.noncecnt = 0;
 
-	if (!FIPS_drbg_instantiate(dctx, 0, td->pers, td->perslen))
+	if (!FIPS_drbg_instantiate(dctx, td->pers, td->perslen))
 		goto err;
 
 	t.ent = td->entpr;
@@ -796,13 +802,197 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	return rv;
 	}
 
+/* This is the "health check" function required by SP800-90. Induce several
+ * failure modes and check an error condition is set.
+ */
+
+static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
+	{
+	unsigned char randout[1024];
+	TEST_ENT t;
+	size_t i;
+	unsigned char *p = (unsigned char *)dctx;
+
+	/* Initialise DRBG */
+
+	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
+		goto err;
+
+	if (!FIPS_drbg_set_test_mode(dctx, test_entropy, test_nonce))
+		goto err;
+
+	FIPS_drbg_set_app_data(dctx, &t);
+
+	t.ent = td->ent;
+	t.entlen = td->entlen;
+	t.nonce = td->nonce;
+	t.noncelen = td->noncelen;
+	t.entcnt = 0;
+	t.noncecnt = 0;
+
+	/* Don't report induced errors */
+	dctx->flags |= DRBG_FLAG_NOERR;
+
+	/* Try too large a personalisation length */
+	if (FIPS_drbg_instantiate(dctx, td->pers, dctx->max_pers + 1) > 0)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_PERSONALISATION_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	/* Test entropy source failure detection */
+
+	t.entlen = 0;
+	if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	/* Try to generate output from uninstantiated DRBG */
+	if (FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
+				td->adin, td->adinlen))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_GENERATE_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	/* Instantiate with valid data. NB: errors now reported again */
+	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
+		goto err;
+	if (!FIPS_drbg_set_test_mode(dctx, test_entropy, test_nonce))
+		goto err;
+	FIPS_drbg_set_app_data(dctx, &t);
+
+	t.entlen = td->entlen;
+	if (!FIPS_drbg_instantiate(dctx, td->pers, td->perslen))
+		goto err;
+
+	/* Check generation is now OK */
+	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
+				td->adin, td->adinlen))
+		goto err;
+
+	/* Try to generate with too high a strength.
+	 */
+
+	dctx->flags |= DRBG_FLAG_NOERR;
+	if (dctx->strength != 256)
+		{
+		if (FIPS_drbg_generate(dctx, randout, td->katlen, 256, 0,
+					td->adin, td->adinlen))
+			{
+			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_STRENGTH_ERROR_UNDETECTED);
+
+			goto err;
+			}
+		}
+
+	/* Request too much data for one request */
+	if (FIPS_drbg_generate(dctx, randout, dctx->max_request + 1, 0, 0,
+				td->adin, td->adinlen))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_REQUEST_LENGTH_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	/* Check prediction resistance request fails if entropy source
+	 * failure.
+	 */
+
+	t.entlen = 0;
+
+	if (FIPS_drbg_generate(dctx, randout, td->katlen, 0, 1,
+				td->adin, td->adinlen))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		goto err;
+		}
+		
+
+	/* Instantiate again with valid data */
+
+	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
+		goto err;
+	if (!FIPS_drbg_set_test_mode(dctx, test_entropy, test_nonce))
+		goto err;
+	FIPS_drbg_set_app_data(dctx, &t);
+
+	t.entlen = td->entlen;
+	/* Test reseeding works */
+	dctx->reseed_interval = 2;
+	if (!FIPS_drbg_instantiate(dctx, td->pers, td->perslen))
+		goto err;
+
+	/* Check generation is now OK */
+	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
+				td->adin, td->adinlen))
+		goto err;
+	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
+				td->adin, td->adinlen))
+		goto err;
+
+	/* DRBG should now require a reseed */
+	if (dctx->status != DRBG_STATUS_RESEED)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_RESEED_COUNTER_ERROR);
+		goto err;
+		}
+
+
+	/* Generate again and check entropy has been requested for reseed */
+	t.entcnt = 0;
+	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
+				td->adin, td->adinlen))
+		goto err;
+	if (t.entcnt != 1)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_NOT_REQUESTED_FOR_RESEED);
+		goto err;
+		}
+
+	FIPS_drbg_uninstantiate(dctx);
+	p = (unsigned char *)dctx;
+	/* Standard says we have to check uninstantiate really zeroes
+	 * the data...
+	 */
+	for (i = 0; i < sizeof(DRBG_CTX); i++)
+		{
+		if (*p != 0)
+			{
+			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ZEROISE_ERROR);
+			goto err;
+			}
+		p++;
+		}
+
+	return 1;
+
+	err:
+	/* A real error as opposed to an induced one: underlying function will
+	 * indicate the error.
+	 */
+	if (!(dctx->flags & DRBG_FLAG_NOERR))
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_FUNCTION_ERROR);
+	FIPS_drbg_uninstantiate(dctx);
+	return 0;
+
+	}
+		
+
 int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags)
 	{
+	int rv;
 	DRBG_SELFTEST_DATA *td;
 	for (td = drbg_test; td->nid != 0; td++)
 		{
 		if (td->nid == nid && td->flags == flags)
-			return fips_drbg_single_kat(dctx, td);
+			{
+			rv = fips_drbg_single_kat(dctx, td);
+			if (rv <= 0)
+				return rv;
+			return fips_drbg_health_check(dctx, td);
+			}
 		}
 	return 0;
 	}
@@ -815,8 +1005,12 @@ int FIPS_selftest_drbg(void)
 	if (!dctx)
 		return 0;
 	for (td = drbg_test; td->nid != 0; td++)
+		{
 		if (!fips_drbg_single_kat(dctx, td))
 			break;
+		if (!fips_drbg_health_check(dctx, td))
+			break;
+		}
 	if (td->nid == 0)
 		return 1;
 	return 0;

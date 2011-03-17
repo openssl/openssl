@@ -460,7 +460,7 @@ static int SigVer(FILE *in, FILE *out)
 
 int main(int argc, char **argv)
 	{
-	FILE *in, *out;
+	FILE *in = NULL, *out = NULL;
 	const char *cmd = argv[1];
 	int rv = 0;
 	fips_set_error_print();

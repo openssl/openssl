@@ -279,7 +279,7 @@ int main(int argc,char **argv)
 	int argn = argc - 1;
 	FILE *in, *out;
 	char buf[2048], lbuf[2048];
-	unsigned char *rhash;
+	unsigned char *rhash = NULL;
 	long rhashlen;
 	BIGNUM *cx = NULL, *cy = NULL;
 	BIGNUM *id = NULL, *ix = NULL, *iy = NULL;
