@@ -263,7 +263,8 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 	}
 
 
-int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
+static int fips_drbg_generate_internal(DRBG_CTX *dctx,
+			unsigned char *out, size_t outlen,
 			int strength, int prediction_resistance,
 			const unsigned char *adin, size_t adinlen)
 	{
@@ -313,11 +314,74 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 	if (r)
 		{
 		if (!(dctx->flags & DRBG_FLAG_NOERR))
-			FIPSerr(FIPS_F_FIPS_DRBG_GENERATE, r);
+			FIPSerr(FIPS_F_FIPS_DRBG_GENERATE_INTERNAL, r);
 		return 0;
 		}
 
 	return 1;
+	}
+
+/* external generate function: incorporates continuous RNG test if not
+ * in test mode.
+ */
+
+int FIPS_drbg_generate(DRBG_CTX *dctx,
+			unsigned char *out, size_t outlen,
+			int strength, int prediction_resistance,
+			const unsigned char *adin, size_t adinlen)
+	{
+	unsigned char tmp[16], *pout;
+	size_t poutlen;
+	/* If test mode don't run continuous RNG test */
+	if (dctx->flags & DRBG_FLAG_TEST)
+		{
+		return fips_drbg_generate_internal(dctx, out, outlen,
+							strength,
+							prediction_resistance,
+							adin, adinlen);
+		}
+	/* If this is the first call generate block and save buffer */
+	if (!dctx->lb_valid)
+		{
+		if (!fips_drbg_generate_internal(dctx, dctx->lb, 16,
+						strength, prediction_resistance,
+						adin, adinlen))
+			return 0;
+		dctx->lb_valid = 1;
+		}
+
+	/* If request less that 16 bytes request 16 in temp buffer */
+
+	if (outlen < 16)
+		{
+		pout = tmp;
+		poutlen = 16;
+		}
+	else
+		{
+		pout = out;
+		poutlen = outlen;
+		}
+
+	/* Generate data */
+	if (!fips_drbg_generate_internal(dctx, pout, poutlen,
+						strength, prediction_resistance,
+						adin, adinlen))
+			return 0;
+	/* Compare to last block for continuous PRNG test */
+	if (!memcmp(pout, dctx->lb, 16))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_GENERATE, FIPS_R_DRBG_STUCK);
+		return 0;
+		}
+	/* Update last block */
+	memcpy(dctx->lb, pout, 16);
+	/* Copy to output buffer if needed */
+	if (outlen < 16)
+		memcpy(out, pout, outlen);
+
+	return 1;
+
 	}
 
 int FIPS_drbg_uninstantiate(DRBG_CTX *dctx)

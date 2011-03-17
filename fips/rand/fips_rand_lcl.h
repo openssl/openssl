@@ -167,6 +167,12 @@ struct drbg_ctx_st
 	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char *out,
 				int entropy, size_t min_len, size_t max_len);
 
+	/* Continuous random number test temporary area */
+	/* Last block */	
+	unsigned char lb[16];
+	/* set if lb is valid */
+	int lb_valid;
+
 	};
 
 
