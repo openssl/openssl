@@ -710,7 +710,7 @@ static const unsigned char sha512_returnedbits[] =
 static DRBG_SELFTEST_DATA drbg_test[] = {
 	make_drbg_test_data_df(NID_aes_128_ctr, aes_128_use_df),
 	make_drbg_test_data_df(NID_aes_192_ctr, aes_192_use_df),
-	make_drbg_test_data_df(NID_aes_192_ctr, aes_192_use_df),
+	make_drbg_test_data_df(NID_aes_256_ctr, aes_256_use_df),
 	make_drbg_test_data(NID_aes_128_ctr, 0, aes_128_no_df),
 	make_drbg_test_data(NID_aes_192_ctr, 0, aes_192_no_df),
 	make_drbg_test_data(NID_aes_256_ctr, 0, aes_256_no_df),
