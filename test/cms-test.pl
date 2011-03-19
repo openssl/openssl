@@ -56,8 +56,8 @@
 my $ossl_path;
 my $redir = " 2> cms.err > cms.out";
 # Make VMS work
-if ( $^O eq "VMS" && -f "$ENV{EXE_DIR}openssl.exe" ) {
-    $ossl_path = "pipe mcr $ENV{EXE_DIR}openssl.exe";
+if ( $^O eq "VMS" && -f "OSSLX:openssl.exe" ) {
+    $ossl_path = "pipe mcr OSSLX:openssl";
 }
 # Make MSYS work
 elsif ( $^O eq "MSWin32" && -f "../apps/openssl.exe" ) {

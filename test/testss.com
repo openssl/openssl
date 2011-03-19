@@ -1,16 +1,19 @@
 $! TESTSS.COM
 $
-$	__arch := VAX
+$	__arch = "VAX"
 $	if f$getsyi("cpu") .ge. 128 then -
 	   __arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
-$	if __arch .eqs. "" then __arch := UNK
-$	exe_dir := sys$disk:[-.'__arch'.exe.apps]
+$	if __arch .eqs. "" then __arch = "UNK"
+$!
+$	if (p1 .eqs. "64") then __arch = __arch+ "_64"
+$!
+$	exe_dir = "sys$disk:[-.''__arch'.exe.apps]"
 $
 $	digest="-md5"
-$	reqcmd := mcr 'exe_dir'openssl req
-$	x509cmd := mcr 'exe_dir'openssl x509 'digest'
-$	verifycmd := mcr 'exe_dir'openssl verify
-$	dummycnf := sys$disk:[-.apps]openssl-vms.cnf
+$	reqcmd = "mcr ''exe_dir'openssl req"
+$	x509cmd = "mcr ''exe_dir'openssl x509 ''digest'"
+$	verifycmd = "mcr ''exe_dir'openssl verify"
+$	dummycnf = "sys$disk:[-.apps]openssl-vms.cnf"
 $
 $	CAkey="""keyCA.ss"""
 $	CAcert="""certCA.ss"""

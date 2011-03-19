@@ -277,7 +277,7 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 	m1|=m2;			/* (al!=ri) */
 	m1|=(0-(size_t)v);	/* (al!=ri || v) */
 	m1&=~m2;		/* (al!=ri || v) && !al>ri */
-	nrp=(BN_ULONG *)(((size_t)rp&~m1)|((size_t)ap&m1));
+	nrp=(BN_ULONG *)(((PTR_SIZE_INT)rp&~m1)|((PTR_SIZE_INT)ap&m1));
 	}
 
 	/* 'i<ri' is chosen to eliminate dependency on input data, even

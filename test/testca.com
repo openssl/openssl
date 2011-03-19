@@ -1,11 +1,13 @@
 $! TESTCA.COM
 $
-$	__arch := VAX
+$	__arch = "VAX"
 $	if f$getsyi("cpu") .ge. 128 then -
 	   __arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
-$	if __arch .eqs. "" then __arch := UNK
+$	if __arch .eqs. "" then __arch = "UNK"
+$!
+$       if (p1 .eqs. "64") then __arch = __arch+ "_64"
 $
-$	openssl := mcr 'exe_dir'openssl
+$	openssl = "mcr ''exe_dir'openssl"
 $
 $	SSLEAY_CONFIG="-config ""CAss.cnf"""
 $

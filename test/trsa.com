@@ -1,10 +1,13 @@
 $! TRSA.COM  --  Tests rsa keys
 $
-$	__arch := VAX
+$	__arch = "VAX"
 $	if f$getsyi("cpu") .ge. 128 then -
 	   __arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
-$	if __arch .eqs. "" then __arch := UNK
-$	exe_dir := sys$disk:[-.'__arch'.exe.apps]
+$	if __arch .eqs. "" then __arch = "UNK"
+$!
+$	if (p2 .eqs. "64") then __arch = __arch+ "_64"
+$!
+$	exe_dir = "sys$disk:[-.''__arch'.exe.apps]"
 $
 $	set noon
 $	define/user sys$output nla0:
@@ -17,9 +20,9 @@ $	    write sys$output "skipping RSA conversion test"
 $	    exit
 $	endif
 $
-$	cmd := mcr 'exe_dir'openssl rsa
+$	cmd = "mcr ''exe_dir'openssl rsa"
 $
-$	t := testrsa.pem
+$	t = "testrsa.pem"
 $	if p1 .nes. "" then t = p1
 $
 $	write sys$output "testing RSA conversions"

@@ -1,11 +1,14 @@
 $! TESTSSL.COM
 $
-$	__arch := VAX
+$	__arch = "VAX"
 $	if f$getsyi("cpu") .ge. 128 then -
 	   __arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
-$	if __arch .eqs. "" then __arch := UNK
-$	texe_dir := sys$disk:[-.'__arch'.exe.test]
-$	exe_dir := sys$disk:[-.'__arch'.exe.apps]
+$	if __arch .eqs. "" then __arch = "UNK"
+$!
+$	if (p4 .eqs. "64") then __arch = __arch+ "_64"
+$!
+$	texe_dir = "sys$disk:[-.''__arch'.exe.test]"
+$	exe_dir = "sys$disk:[-.''__arch'.exe.apps]"
 $
 $	if p1 .eqs. ""
 $	then
@@ -19,8 +22,9 @@ $	    cert="[-.apps]server.pem"
 $	else
 $	    cert=p2
 $	endif
-$	ssltest := mcr 'texe_dir'ssltest -key 'key' -cert 'cert' -c_key 'key' -c_cert 'cert'
-$
+$	ssltest = "mcr ''texe_dir'ssltest -key ''key'"+ -
+	 " -cert ''cert' -c_key ''key' -c_cert ''cert'"
+$!
 $	set noon
 $	define/user sys$output testssl-x509-output.
 $	define/user sys$error nla0:
@@ -29,9 +33,9 @@ $	define/user sys$error nla0:
 $	search/output=nla0: testssl-x509-output. "DSA Public Key"/exact
 $	if $severity .eq. 1
 $	then
-$	    dsa_cert := YES
+$	    dsa_cert = "YES"
 $	else
-$	    dsa_cert := NO
+$	    dsa_cert = "NO"
 $	endif
 $	delete testssl-x509-output.;*
 $

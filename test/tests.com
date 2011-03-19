@@ -1,16 +1,32 @@
 $! TESTS.COM  --  Performs the necessary tests
 $!
 $! P1	tests to be performed.  Empty means all.
-$
+$! P2	Pointer size: "", "32", or "64".
+$!
+$! Announce/identify.
+$!
+$	proc = f$environment( "procedure")
+$	write sys$output "@@@ "+ -
+	 f$parse( proc, , , "name")+ f$parse( proc, , , "type")
+$!
 $	__proc = f$element(0,";",f$environment("procedure"))
 $	__here = f$parse(f$parse("A.;",__proc) - "A.;","[]A.;") - "A.;"
 $	__save_default = f$environment("default")
-$	__arch := VAX
+$	__arch = "VAX"
 $	if f$getsyi("cpu") .ge. 128 then -
 	   __arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
-$	if __arch .eqs. "" then __arch := UNK
-$	texe_dir := sys$disk:[-.'__arch'.exe.test]
-$	exe_dir := sys$disk:[-.'__arch'.exe.apps]
+$	if __arch .eqs. "" then __arch = "UNK"
+$!
+$	__archd = __arch
+$       pointer_size = ""
+$	if (p2 .eq. "64")
+$	then
+$	  pointer_size = "64"
+$	  __archd = __arch+ "_64"
+$	endif
+$!
+$	texe_dir := sys$disk:[-.'__archd'.exe.test]
+$	exe_dir := sys$disk:[-.'__archd'.exe.apps]
 $
 $	set default '__here'
 $
@@ -76,7 +92,7 @@ $	EVPTEST :=	evp_test
 $	IGETEST :=	igetest
 $	JPAKETEST :=	jpaketest
 $	ASN1TEST :=	asn1test
-$
+$!
 $	tests_i = 0
 $ loop_tests:
 $	tests_e = f$element(tests_i,",",tests)
@@ -139,58 +155,69 @@ $ test_rand:
 $	mcr 'texe_dir''randtest'
 $	return
 $ test_enc:
-$	@testenc.com
+$	@testenc.com 'pointer_size'
 $	return
 $ test_x509:
-$	define sys$error nla0:
+$	set noon
+$	define sys$error test_x509.err
 $	write sys$output "test normal x509v1 certificate"
-$	@tx509.com
+$	@tx509.com "" 'pointer_size'
 $	write sys$output "test first x509v3 certificate"
-$	@tx509.com v3-cert1.pem
+$	@tx509.com v3-cert1.pem 'pointer_size'
 $	write sys$output "test second x509v3 certificate"
-$	@tx509.com v3-cert2.pem
+$	@tx509.com v3-cert2.pem 'pointer_size'
 $	deassign sys$error
+$	set on
 $	return
 $ test_rsa:
-$	define sys$error nla0:
-$	@trsa.com
+$	set noon
+$	define sys$error test_rsa.err
+$	@trsa.com "" 'pointer_size'
 $	deassign sys$error
 $	mcr 'texe_dir''rsatest'
+$	set on
 $	return
 $ test_crl:
-$	define sys$error nla0:
-$	@tcrl.com
+$	set noon
+$	define sys$error test_crl.err
+$	@tcrl.com "" 'pointer_size'
 $	deassign sys$error
+$	set on
 $	return
 $ test_sid:
-$	define sys$error nla0:
-$	@tsid.com
+$	set noon
+$	define sys$error test_sid.err
+$	@tsid.com "" 'pointer_size'
 $	deassign sys$error
+$	set on
 $	return
 $ test_req:
-$	define sys$error nla0:
-$	@treq.com
-$	@treq.com testreq2.pem
+$	set noon
+$	define sys$error test_req.err
+$	@treq.com "" 'pointer_size'
+$	@treq.com testreq2.pem 'pointer_size'
 $	deassign sys$error
+$	set on
 $	return
 $ test_pkcs7:
-$	define sys$error nla0:
-$	@tpkcs7.com
-$	@tpkcs7d.com
+$	set noon
+$	define sys$error test_pkcs7.err
+$	@tpkcs7.com "" 'pointer_size'
+$	@tpkcs7d.com "" 'pointer_size'
 $	deassign sys$error
+$	set on
 $	return
 $ test_bn:
 $	write sys$output -
 	      "starting big number library test, could take a while..."
 $	set noon
-$	define sys$error nl:
-$	define sys$output nl:
+$	define sys$error test_bn.err
+$	define sys$output test_bn.out
 $	@ bctest.com
 $	status = $status
 $	deassign sys$error
 $	deassign sys$output
-$	on control_y then goto exit
-$	on error then goto exit
+$	set on
 $	if (status)
 $	then
 $	    create /fdl = sys$input bntest-vms.tmp
@@ -219,7 +246,7 @@ RECORD
 $	    open /append bntest_file bntest-vms.sh
 $	    type /output = bntest_file sys$input:
 << __FOO__ sh -c "`sh ./bctest`" | perl -e '$i=0; while (<STDIN>) {if (/^test (.*)/) {print STDERR "\nverify $1";} elsif (!/^0$/) {die "\nFailed! bc: $_";} else {print STDERR "."; $i++;}} print STDERR "\n$i tests passed\n"'
-$	    define/user sys$output bntest-vms.tmp
+$	    define /user_mode sys$output bntest-vms.tmp
 $	    mcr 'texe_dir''bntest'
 $	    copy bntest-vms.tmp bntest_file
 $	    delete bntest-vms.tmp;*
@@ -249,7 +276,7 @@ $	return
 $ test_verify:
 $	write sys$output "The following command should have some OK's and some failures"
 $	write sys$output "There are definitly a few expired certificates"
-$	@tverify.com
+$	@tverify.com 'pointer_size'
 $	return
 $ test_dh:
 $	write sys$output "Generate a set of DH parameters"
@@ -261,7 +288,7 @@ $	mcr 'texe_dir''dsatest'
 $	return
 $ test_gen:
 $	write sys$output "Generate and verify a certificate request"
-$	@testgen.com
+$	@testgen.com 'pointer_size'
 $	return
 $ maybe_test_ss:
 $	testss_RDT = f$cvtime(f$file_attributes("testss.com","RDT"))
@@ -274,7 +301,7 @@ $	if f$cvtime(f$file_attributes("certCA.ss","RDT")) .les. testss_RDT then -
 $	return
 $ test_ss:
 $	write sys$output "Generate and certify a test certificate"
-$	@testss.com
+$	@testss.com 'pointer_size'
 $	return
 $ test_engine: 
 $	write sys$output "Manipulate the ENGINE structures"
@@ -283,11 +310,11 @@ $	return
 $ test_ssl:
 $	write sys$output "test SSL protocol"
 $	gosub maybe_test_ss
-$	@testssl.com keyU.ss certU.ss certCA.ss
+$	@testssl.com keyU.ss certU.ss certCA.ss 'pointer_size'
 $	return
 $ test_ca:
 $	set noon
-$	define/user sys$output nla0:
+$	define /user_mode sys$output test_ca.out
 $	mcr 'exe_dir'openssl no-rsa
 $	save_severity=$SEVERITY
 $	set on
@@ -296,7 +323,7 @@ $	then
 $	    write sys$output "skipping CA.com test -- requires RSA"
 $	else
 $	    write sys$output "Generate and certify a test certificate via the 'ca' program"
-$	    @testca.com
+$	    @testca.com 'pointer_size'
 $	endif
 $	return
 $ test_aes: 
@@ -305,7 +332,7 @@ $!	!mcr 'texe_dir''aestest'
 $	return
 $ test_tsa:
 $	set noon
-$	define/user sys$output nla0:
+$	define /user_mode sys$output nla0:
 $	mcr 'exe_dir'openssl no-rsa
 $	save_severity=$SEVERITY
 $	set on
@@ -313,7 +340,7 @@ $	if save_severity
 $	then
 $	    write sys$output "skipping testtsa.com test -- requires RSA"
 $	else
-$	    @testtsa.com
+$	    @testtsa.com "" "" "" 'pointer_size'
 $	endif
 $	return
 $ test_ige: 
@@ -326,8 +353,8 @@ $	mcr 'texe_dir''jpaketest'
 $	return
 $ test_cms:
 $	write sys$output "CMS consistency test"
-$	! The following makes perl include the DCL symbol table in the env.
-$	define/user perl_env_tables clisym_local,lnm$file_dev,ctrl_env
+$	! Define the logical name used to find openssl.exe in the perl script.
+$	define /user_mode osslx 'exe_dir'
 $	perl CMS-TEST.PL
 $	return
 $
