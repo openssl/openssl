@@ -176,7 +176,6 @@
 #define SSL_CTX_set_default_passwd_cb_userdata  SSL_CTX_set_def_passwd_cb_ud
 #undef SSL_COMP_get_compression_methods
 #define SSL_COMP_get_compression_methods	SSL_COMP_get_compress_methods
-
 #undef ssl_add_clienthello_renegotiate_ext
 #define ssl_add_clienthello_renegotiate_ext	ssl_add_clienthello_reneg_ext
 #undef ssl_add_serverhello_renegotiate_ext
@@ -185,6 +184,17 @@
 #define ssl_parse_clienthello_renegotiate_ext	ssl_parse_clienthello_reneg_ext
 #undef ssl_parse_serverhello_renegotiate_ext
 #define ssl_parse_serverhello_renegotiate_ext	ssl_parse_serverhello_reneg_ext
+#undef SSL_srp_server_param_with_username
+#define SSL_srp_server_param_with_username	SSL_srp_server_param_with_un
+#undef SSL_CTX_set_srp_client_pwd_callback
+#define SSL_CTX_set_srp_client_pwd_callback	SSL_CTX_set_srp_client_pwd_cb
+#undef SSL_CTX_set_srp_verify_param_callback
+#define SSL_CTX_set_srp_verify_param_callback	SSL_CTX_set_srp_vfy_param_cb
+#undef SSL_CTX_set_srp_username_callback
+#define SSL_CTX_set_srp_username_callback	SSL_CTX_set_srp_un_cb
+#undef SSL_CTX_set_srp_missing_srp_username_callback
+#define SSL_CTX_set_srp_missing_srp_username_callback \
+						SSL_CTX_set_srp_miss_srp_un_cb
 
 /* Hack some long ENGINE names */
 #undef ENGINE_get_default_BN_mod_exp_crt
@@ -405,8 +415,6 @@
 /* Hack some long SRP names */
 #undef SRP_generate_server_master_secret
 #define SRP_generate_server_master_secret	SRP_gen_server_master_secret
-#undef SSL_srp_server_param_with_username
-#define SSL_srp_server_param_with_username	SSL_srp_server_param_with_uname
 #undef SRP_generate_client_master_secret
 #define SRP_generate_client_master_secret	SRP_gen_client_master_secret
 
