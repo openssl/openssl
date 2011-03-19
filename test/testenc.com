@@ -1,13 +1,16 @@
 $! TESTENC.COM  --  Test encoding and decoding
 $
-$	__arch := VAX
+$	__arch = "VAX"
 $	if f$getsyi("cpu") .ge. 128 then -
 	   __arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
-$	if __arch .eqs. "" then __arch := UNK
+$	if __arch .eqs. "" then __arch = "UNK"
+$!
+$	if (p1 .eqs. 64) then __arch = __arch+ "_64"
 $
-$	testsrc := makefile.
-$	test := p.txt
-$	cmd := mcr 'exe_dir'openssl
+$	exe_dir = "sys$disk:[-.''__arch'.exe.apps]"
+$	testsrc = "makefile."
+$	test = "p.txt"
+$	cmd = "mcr ''exe_dir'openssl"
 $
 $	if f$search(test) .nes. "" then delete 'test';*
 $	convert/fdl=sys$input: 'testsrc' 'test'

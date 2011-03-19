@@ -1,14 +1,15 @@
-$! TETSGEN.COM
+$! TESTGEN.COM
 $
-$	__arch := VAX
+$	__arch = "VAX"
 $	if f$getsyi("cpu") .ge. 128 then -
 	   __arch = f$edit( f$getsyi( "ARCH_NAME"), "UPCASE")
-$	if __arch .eqs. "" then __arch := UNK
-$	exe_dir := sys$disk:[-.'__arch'.exe.apps]
+$	if __arch .eqs. "" then __arch = "UNK"
+$	if (p1 .eqs. 64) then __arch = __arch+ "_64"
+$	exe_dir = "sys$disk:[-.''__arch'.exe.apps]"
 $
-$	T := testcert
+$	T = "testcert"
 $	KEY = 512
-$	CA := [-.certs]testca.pem
+$	CA = "[-.certs]testca.pem"
 $
 $	set noon
 $	if f$search(T+".1;*") .nes. "" then delete 'T'.1;*
@@ -20,7 +21,8 @@ $	write sys$output "generating certificate request"
 $
 $	append/new nl: .rnd
 $	open/append random_file .rnd
-$	write random_file "string to make the random number generator think it has entropy"
+$	write random_file -
+	 "string to make the random number generator think it has entropy"
 $	close random_file
 $
 $	set noon
@@ -33,8 +35,10 @@ $	then
 $	    req_new="-newkey dsa:[-.apps]dsa512.pem"
 $	else
 $	    req_new="-new"
-$	    write sys$output "There should be a 2 sequences of .'s and some +'s."
-$	    write sys$output "There should not be more that at most 80 per line"
+$	    write sys$output -
+	     "There should be a 2 sequences of .'s and some +'s."
+$	    write sys$output -
+	     "There should not be more that at most 80 per line"
 $	endif
 $
 $	write sys$output "This could take some time."

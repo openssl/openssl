@@ -4,6 +4,8 @@ $!
 $! Exit status = 1 (success) if all tests passed,
 $!               0 (warning) if any test failed.
 $!
+$! 2011-02-20 SMS.  Added code to skip "#" comments in the input file.
+$!
 $! 2010-04-05 SMS.  New.  Based (loosely) on perl code in bntest-vms.sh.
 $!
 $!                  Expect data like:
@@ -35,6 +37,11 @@ $!
 $ read_loop:
 $     read /end = read_loop_end /error = tidy result_file line
 $     t1 = f$element( 0, " ", line)
+$!
+$!    Skip "#" comment lines.
+$     if (f$extract( 0, 1, f$edit( line, "TRIM")) .eqs. "#") then -
+       goto read_loop
+$!
 $     if (t1 .eqs. "test")
 $     then
 $         passed = passed+ 1
