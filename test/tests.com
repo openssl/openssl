@@ -56,7 +56,7 @@ $	    tests := -
 	test_enc,test_x509,test_rsa,test_crl,test_sid,-
 	test_gen,test_req,test_pkcs7,test_verify,test_dh,test_dsa,-
 	test_ss,test_ca,test_engine,test_evp,test_ssl,test_tsa,test_ige,-
-	test_jpake,test_cms
+	test_jpake,test_srp,test_cms
 $	endif
 $	tests = f$edit(tests,"COLLAPSE")
 $
@@ -91,6 +91,7 @@ $	ENGINETEST :=	enginetest
 $	EVPTEST :=	evp_test
 $	IGETEST :=	igetest
 $	JPAKETEST :=	jpaketest
+$	SRPTEST :=	srptest
 $	ASN1TEST :=	asn1test
 $!
 $	tests_i = 0
@@ -356,6 +357,10 @@ $	write sys$output "CMS consistency test"
 $	! Define the logical name used to find openssl.exe in the perl script.
 $	define /user_mode osslx 'exe_dir'
 $	perl CMS-TEST.PL
+$	return
+$ test_srp: 
+$	write sys$output "Test SRP"
+$	mcr 'texe_dir''srptest'
 $	return
 $
 $
