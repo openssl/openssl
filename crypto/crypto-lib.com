@@ -113,7 +113,7 @@ $ ENCRYPT_TYPES = "Basic,"+ -
 		  "BUFFER,BIO,STACK,LHASH,RAND,ERR,"+ -
 		  "EVP,EVP_2,EVP_3,ASN1,ASN1_2,PEM,X509,X509V3,"+ -
 		  "CONF,TXT_DB,PKCS7,PKCS12,COMP,OCSP,UI,KRB5,"+ -
-		  "STORE,CMS,PQUEUE,TS,JPAKE"
+		  "CMS,PQUEUE,TS,JPAKE,SRP,STORE"
 $!
 $! Check To Make Sure We Have Valid Command Line Parameters.
 $!
@@ -325,7 +325,6 @@ $ LIB_OCSP = "ocsp_asn,ocsp_ext,ocsp_ht,ocsp_lib,ocsp_cl,"+ -
 $ LIB_UI_COMPAT = ",ui_compat"
 $ LIB_UI = "ui_err,ui_lib,ui_openssl,ui_util"+LIB_UI_COMPAT
 $ LIB_KRB5 = "krb5_asn"
-$ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
 $ LIB_CMS = "cms_lib,cms_asn1,cms_att,cms_io,cms_smime,cms_err,"+ -
 	"cms_sd,cms_dd,cms_cd,cms_env,cms_enc,cms_ess"
 $ LIB_PQUEUE = "pqueue"
@@ -333,6 +332,8 @@ $ LIB_TS = "ts_err,ts_req_utils,ts_req_print,ts_rsp_utils,ts_rsp_print,"+ -
 	"ts_rsp_sign,ts_rsp_verify,ts_verify_ctx,ts_lib,ts_conf,"+ -
 	"ts_asn1"
 $ LIB_JPAKE = "jpake,jpake_err"
+$ LIB_SRP = "srp_lib,srp_vfy"
+$ LIB_STORE = "str_err,str_lib,str_meth,str_mem"
 $!
 $! Setup exceptional compilations
 $!
