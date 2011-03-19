@@ -238,6 +238,9 @@
 #define EC_GROUP_get_point_conversion_form	EC_GROUP_get_point_conv_form
 #undef EC_GROUP_clear_free_all_extra_data
 #define EC_GROUP_clear_free_all_extra_data	EC_GROUP_clr_free_all_xtra_data
+#undef EC_KEY_set_public_key_affine_coordinates
+#define EC_KEY_set_public_key_affine_coordinates \
+						EC_KEY_set_pub_key_aff_coords
 #undef EC_POINT_set_Jprojective_coordinates_GFp
 #define EC_POINT_set_Jprojective_coordinates_GFp \
                                                 EC_POINT_set_Jproj_coords_GFp
@@ -398,6 +401,14 @@
 /* Hack some long DTLS1 names */
 #undef dtls1_retransmit_buffered_messages
 #define dtls1_retransmit_buffered_messages	dtls1_retransmit_buffered_msgs
+
+/* Hack some long SRP names */
+#undef SRP_generate_server_master_secret
+#define SRP_generate_server_master_secret	SRP_gen_server_master_secret
+#undef SSL_srp_server_param_with_username
+#define SSL_srp_server_param_with_username	SSL_srp_server_param_with_uname
+#undef SRP_generate_client_master_secret
+#define SRP_generate_client_master_secret	SRP_gen_client_master_secret
 
 /* Hack some long UI names */
 #undef UI_method_get_prompt_constructor
