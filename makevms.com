@@ -740,7 +740,7 @@ $ EXHEADER_LHASH := lhash.h
 $ EXHEADER_RAND := rand.h
 $ EXHEADER_ERR := err.h
 $ EXHEADER_EVP := evp.h
-$ EXHEADER_ASN1 := asn1.h, asn1t.h, asn1_mac.h
+$ EXHEADER_ASN1 := asn1.h, asn1_mac.h, asn1t.h
 $ EXHEADER_PEM := pem.h, pem2.h
 $ EXHEADER_X509 := x509.h, x509_vfy.h
 $ EXHEADER_X509V3 := x509v3.h
@@ -772,7 +772,8 @@ $ loop_sdirs_end:
 $!
 $! Copy All The ".H" Files From The [.SSL] Directory.
 $!
-$ EXHEADER := dtls1.h, kssl.h, ssl.h, ssl2.h, ssl23.h, ssl3.h, tls1.h
+$! (keep these in the same order as ssl/Makefile)
+$ EXHEADER := ssl.h, ssl2.h, ssl3.h, ssl23.h, tls1.h, dtls1.h, kssl.h
 $ copy sys$disk:[.ssl]'exheader' sys$disk:[.include.openssl]
 $!
 $! Purge the [.include.openssl] header files.
