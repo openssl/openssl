@@ -4205,3 +4205,4 @@ SRP_Calc_A                              4576	EXIST::FUNCTION:SRP
 SRP_Verify_A_mod_N                      4577	EXIST::FUNCTION:SRP
 SRP_VBASE_init                          4578	EXIST::FUNCTION:SRP
 SRP_Verify_B_mod_N                      4579	EXIST::FUNCTION:SRP
+OPENSSL_strcasecmp                      4594	EXIST::FUNCTION:

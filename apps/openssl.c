@@ -410,7 +410,33 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
 		}
 	if (fp != NULL)
 		{
+#if defined( OPENSSL_SYS_VMS) && !defined( VMS_TRUST_ARGV)
+		/* 2011-03-08 SMS.
+		 * "HP C V7.3-009 on OpenVMS Alpha V8.3" with 64-bit
+		 * pointers (at least) may not NULL-terminate argv[]
+		 * as expected.  If necessary, use a (properly)
+		 * NULL-terminated duplicate of argv[].
+		 */
+		char **argv2 = NULL;
+
+		if (argv[ argc] != NULL)
+			{
+			argv2 = OPENSSL_malloc( (argc+ 1)* sizeof( char *));
+			if (argv2 == NULL)
+				{ ret = -1; goto end; }
+			memcpy( argv2, argv, (argc* sizeof( char *)));
+			argv2[ argc] = NULL;
+			argv = argv2;
+			}
+#endif
 		ret=fp->func(argc,argv);
+#if defined( OPENSSL_SYS_VMS) && !defined( VMS_TRUST_ARGV)
+		/* Free any duplicate argv[] storage. */
+		if (argv2 != NULL)
+			{
+			OPENSSL_free( argv2);
+			}
+#endif
 		}
 	else if ((strncmp(argv[0],"no-",3)) == 0)
 		{

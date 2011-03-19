@@ -393,8 +393,10 @@ bad:
 
 	if (inf == NULL)
 	        {
+#ifndef OPENSSL_NO_SETVBUF_IONBF
 		if (bufsize != NULL)
 			setvbuf(stdin, (char *)NULL, _IONBF, 0);
+#endif /* ndef OPENSSL_NO_SETVBUF_IONBF */
 		BIO_set_fp(in,stdin,BIO_NOCLOSE);
 	        }
 	else
@@ -447,8 +449,10 @@ bad:
 	if (outf == NULL)
 		{
 		BIO_set_fp(out,stdout,BIO_NOCLOSE);
+#ifndef OPENSSL_NO_SETVBUF_IONBF
 		if (bufsize != NULL)
 			setvbuf(stdout, (char *)NULL, _IONBF, 0);
+#endif /* ndef OPENSSL_NO_SETVBUF_IONBF */
 #ifdef OPENSSL_SYS_VMS
 		{
 		BIO *tmpbio = BIO_new(BIO_f_linebuffer());
