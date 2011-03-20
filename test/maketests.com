@@ -536,7 +536,28 @@ $     POINTER_SIZE = "/POINTER_SIZE=32"
 $   ELSE
 $     IF (P5 .EQS. "64")
 $     THEN
-$       POINTER_SIZE = "/POINTER_SIZE=64=ARGV"
+$       POINTER_SIZE = "/POINTER_SIZE=64"
+$	SET NOON
+$	DEFINE /USER SYS$OUTPUT NL:
+$	DEFINE /USER SYS$ERROR NL:
+$	CC /POINTER_SIZE=64=ARGV NL:
+$	IF ($STATUS .AND. %X0FFF0000) .EQ. %X00030000
+$	THEN
+$	  ! If we got here, it means DCL complained like this:
+$	  ! %DCL-W-NOVALU, value not allowed - remove value specification
+$	  !  \64=\
+$	  !
+$	  ! If the compiler was run, logicals defined in /USER would
+$	  ! have been deassigned automatically.  However, when DCL
+$	  ! complains, they aren't, so we do it here (it might be
+$	  ! unnecessary, but just in case there will be another error
+$	  ! message further on that we don't want to miss)
+$	  DEASSIGN/USER SYS$ERROR
+$	  DEASSIGN/USER SYS$OUTPUT
+$	ELSE
+$	  POINTER_SIZE = POINTER_SIZE + "=ARGV"
+$	ENDIF
+$	SET ON
 $       ARCHD = ARCH+ "_64"
 $       LIB32 = ""
 $     ELSE
