@@ -213,7 +213,7 @@ static void lock_dbg_cb(int mode, int type, const char *file, int line)
 	}
 
 
-int main(int Argc, char *Argv[])
+int main(int Argc, char *_Argv[])
 	{
 	ARGS arg;
 #define PROG_NAME_SIZE	39
@@ -227,7 +227,54 @@ int main(int Argc, char *Argv[])
 	char **argv,*p;
 	LHASH_OF(FUNCTION) *prog=NULL;
 	long errline;
- 
+
+#if defined( OPENSSL_SYS_VMS) && !defined( VMS_TRUST_ARGV)
+	/* 2011-03-08 SMS.
+	 * "HP C V7.3-009 on OpenVMS Alpha V8.3" with 64-bit
+	 * pointers (at least) may not NULL-terminate argv[]
+	 * as expected.  If necessary, use a (properly)
+	 * NULL-terminated duplicate of argv[].
+	 */
+	/* 2011-03-20 RL.
+	 * Additionally, when the argument vector is full of
+	 * 32-bit pointers and we have a 64-bit pointer size
+	 * everywhere else, we need to make a copy of it using
+	 * 64-bit pointers.  Hence the odd conditinal.
+	 */
+	char **Argv = NULL;
+	int free_Argv = 0;
+
+	if (_Argv[ Argc] != NULL
+# if defined(__INITIAL_POINTER_SIZE)
+		|| sizeof(_Argv) < (__INITIAL_POINTER_SIZE / 8)
+# endif
+		)
+		{
+		int i;
+		Argv = OPENSSL_malloc( (Argc+ 1)* sizeof( char *));
+		if (Argv == NULL)
+			{ ret = -1; goto end; }
+		for(i = 0; i < Argc; i++)
+			Argv[i] = _Argv[i];
+		Argv[ Argc] = NULL;
+		free_Argv = 1;
+		}
+	else
+		{
+		/* 2011-03-20 RL.
+		 * If we didn't copy the argument vector, then simply
+		 * assign our variable.  This will never happen when
+		 * the argument vector pointer size was smaller than
+		 * the initial pointer size, so even if the case might
+		 * look unsafe, it isn't, it's just there to shut the
+		 * compiler up.
+		 */
+		Argv = (char **)_Argv;
+		}
+#else
+	char **Argv = _Argv;
+#endif
+
 	arg.data=NULL;
 	arg.count=0;
 
@@ -373,6 +420,13 @@ end:
 		BIO_free(bio_err);
 		bio_err=NULL;
 		}
+#if defined( OPENSSL_SYS_VMS) && !defined( VMS_TRUST_ARGV)
+	/* Free any duplicate Argv[] storage. */
+	if (free_Argv)
+		{
+		OPENSSL_free(Argv);
+		}
+#endif
 	OPENSSL_EXIT(ret);
 	}
 
@@ -410,33 +464,7 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
 		}
 	if (fp != NULL)
 		{
-#if defined( OPENSSL_SYS_VMS) && !defined( VMS_TRUST_ARGV)
-		/* 2011-03-08 SMS.
-		 * "HP C V7.3-009 on OpenVMS Alpha V8.3" with 64-bit
-		 * pointers (at least) may not NULL-terminate argv[]
-		 * as expected.  If necessary, use a (properly)
-		 * NULL-terminated duplicate of argv[].
-		 */
-		char **argv2 = NULL;
-
-		if (argv[ argc] != NULL)
-			{
-			argv2 = OPENSSL_malloc( (argc+ 1)* sizeof( char *));
-			if (argv2 == NULL)
-				{ ret = -1; goto end; }
-			memcpy( argv2, argv, (argc* sizeof( char *)));
-			argv2[ argc] = NULL;
-			argv = argv2;
-			}
-#endif
 		ret=fp->func(argc,argv);
-#if defined( OPENSSL_SYS_VMS) && !defined( VMS_TRUST_ARGV)
-		/* Free any duplicate argv[] storage. */
-		if (argv2 != NULL)
-			{
-			OPENSSL_free( argv2);
-			}
-#endif
 		}
 	else if ((strncmp(argv[0],"no-",3)) == 0)
 		{
