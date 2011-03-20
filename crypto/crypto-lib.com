@@ -203,7 +203,7 @@ $!
 $ APPS_DES = "DES/DES,CBC3_ENC"
 $ APPS_PKCS7 = "ENC/ENC;DEC/DEC;SIGN/SIGN;VERIFY/VERIFY,EXAMPLE"
 $
-$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,cpt_err,ebcdic,uid,o_time,o_str,o_dir"
+$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,cpt_err,ebcdic,uid,o_time,o_str,o_dir,thr_id,lock,fips_ers"
 $ LIB_MD2 = "md2_dgst,md2_one"
 $ LIB_MD4 = "md4_dgst,md4_one"
 $ LIB_MD5 = "md5_dgst,md5_one"
@@ -239,7 +239,8 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 	"bn_depr,bn_const,bn_x931p"
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err,ec_curve,ec_check,ec_print,ec_asn1,ec_key,"+ -
-	"ec2_smpl,ec2_mult,ec_ameth,ec_pmeth,eck_prn"
+	"ec2_smpl,ec2_mult,ec_ameth,ec_pmeth,eck_prn,"+ -
+	"ecp_nistp224,ecp_oct,ec2_oct,ec_oct"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
 	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr,rsa_ameth,rsa_prn,"+ -
@@ -1011,7 +1012,8 @@ $!
 $! Set basic C compiler /INCLUDE directories.
 $!
 $ CC_INCLUDES = "SYS$DISK:[.''ARCHD'],SYS$DISK:[],SYS$DISK:[-],"+ -
-   "SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1]"
+   "SYS$DISK:[.ENGINE.VENDOR_DEFNS],SYS$DISK:[.EVP],SYS$DISK:[.ASN1],"+ -
+   "SYS$DISK:[.MODES]"
 $!
 $! Check To See If P3 Is Blank.
 $!
