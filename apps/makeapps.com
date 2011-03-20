@@ -620,6 +620,7 @@ $	  DEASSIGN/USER SYS$OUTPUT
 $	ELSE
 $	  POINTER_SIZE = POINTER_SIZE + "=ARGV"
 $	ENDIF
+$	SET ON
 $       ARCHD = ARCH+ "_64"
 $       LIB32 = ""
 $     ELSE
