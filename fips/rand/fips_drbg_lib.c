@@ -112,7 +112,8 @@ DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
 
 void FIPS_drbg_free(DRBG_CTX *dctx)
 	{
-	dctx->uninstantiate(dctx);
+	if (dctx->uninstantiate)
+		dctx->uninstantiate(dctx);
 	OPENSSL_cleanse(dctx, sizeof(DRBG_CTX));
 	OPENSSL_free(dctx);
 	}
@@ -388,8 +389,9 @@ int FIPS_drbg_uninstantiate(DRBG_CTX *dctx)
 	{
 	int rv;
 	if (!dctx->uninstantiate)
-		return 1;
-	rv = dctx->uninstantiate(dctx);
+		rv = 1;
+	else
+		rv = dctx->uninstantiate(dctx);
 	/* Although we'd like to cleanse here we can't because we have to
 	 * test the uninstantiate really zeroes the data.
 	 */

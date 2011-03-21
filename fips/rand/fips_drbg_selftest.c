@@ -1011,6 +1011,7 @@ int FIPS_selftest_drbg(void)
 		if (!fips_drbg_health_check(dctx, td))
 			break;
 		}
+	FIPS_drbg_free(dctx);
 	if (td->nid == 0)
 		return 1;
 	return 0;
