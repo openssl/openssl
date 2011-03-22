@@ -4189,4 +4189,8 @@ CRYPTO_cts128_encrypt_block             4560	EXIST::FUNCTION:
 CRYPTO_cbc128_decrypt                   4561	EXIST::FUNCTION:
 CRYPTO_cfb128_encrypt                   4562	EXIST::FUNCTION:
 CRYPTO_cfb128_8_encrypt                 4563	EXIST::FUNCTION:
-OPENSSL_strcasecmp                      4594	EXIST::FUNCTION:
+OPENSSL_strcasecmp                      4564	EXIST::FUNCTION:
+OPENSSL_memcmp                          4565	EXIST::FUNCTION:
+OPENSSL_strncasecmp                     4566	EXIST::FUNCTION:
+OPENSSL_gmtime                          4567	EXIST::FUNCTION:
+OPENSSL_gmtime_adj                      4568	EXIST::FUNCTION:
