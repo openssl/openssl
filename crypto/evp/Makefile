@@ -189,11 +189,11 @@ e_aes.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
 e_aes.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 e_aes.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
 e_aes.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-e_aes.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-e_aes.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-e_aes.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-e_aes.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h e_aes.c
-e_aes.o: evp_locl.h
+e_aes.o: ../../include/openssl/modes.h ../../include/openssl/obj_mac.h
+e_aes.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
+e_aes.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+e_aes.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+e_aes.o: ../../include/openssl/symhacks.h e_aes.c evp_locl.h
 e_bf.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_bf.o: ../../include/openssl/blowfish.h ../../include/openssl/buffer.h
 e_bf.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

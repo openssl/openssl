@@ -114,6 +114,21 @@ rsa_chk.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_chk.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
 rsa_chk.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rsa_chk.o: rsa_chk.c
+rsa_crpt.o: ../../e_os.h ../../include/openssl/asn1.h
+rsa_crpt.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+rsa_crpt.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
+rsa_crpt.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+rsa_crpt.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+rsa_crpt.o: ../../include/openssl/engine.h ../../include/openssl/err.h
+rsa_crpt.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
+rsa_crpt.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+rsa_crpt.o: ../../include/openssl/opensslconf.h
+rsa_crpt.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+rsa_crpt.o: ../../include/openssl/pkcs7.h ../../include/openssl/rand.h
+rsa_crpt.o: ../../include/openssl/rsa.h ../../include/openssl/safestack.h
+rsa_crpt.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+rsa_crpt.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+rsa_crpt.o: ../../include/openssl/x509_vfy.h ../cryptlib.h rsa_crpt.c
 rsa_depr.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_depr.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 rsa_depr.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h

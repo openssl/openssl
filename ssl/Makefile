@@ -609,13 +609,14 @@ s3_pkt.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
 s3_pkt.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 s3_pkt.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
 s3_pkt.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-s3_pkt.o: ../include/openssl/pqueue.h ../include/openssl/rsa.h
-s3_pkt.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-s3_pkt.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
-s3_pkt.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
-s3_pkt.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-s3_pkt.o: ../include/openssl/tls1.h ../include/openssl/x509.h
-s3_pkt.o: ../include/openssl/x509_vfy.h s3_pkt.c ssl_locl.h
+s3_pkt.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
+s3_pkt.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+s3_pkt.o: ../include/openssl/sha.h ../include/openssl/ssl.h
+s3_pkt.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
+s3_pkt.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+s3_pkt.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+s3_pkt.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h s3_pkt.c
+s3_pkt.o: ssl_locl.h
 s3_srvr.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 s3_srvr.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 s3_srvr.o: ../include/openssl/comp.h ../include/openssl/crypto.h
@@ -887,13 +888,13 @@ t1_enc.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 t1_enc.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 t1_enc.o: ../include/openssl/pem.h ../include/openssl/pem2.h
 t1_enc.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
-t1_enc.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
-t1_enc.o: ../include/openssl/sha.h ../include/openssl/ssl.h
-t1_enc.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
-t1_enc.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-t1_enc.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
-t1_enc.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ssl_locl.h
-t1_enc.o: t1_enc.c
+t1_enc.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+t1_enc.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+t1_enc.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+t1_enc.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
+t1_enc.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+t1_enc.o: ../include/openssl/tls1.h ../include/openssl/x509.h
+t1_enc.o: ../include/openssl/x509_vfy.h ssl_locl.h t1_enc.c
 t1_lib.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 t1_lib.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 t1_lib.o: ../include/openssl/conf.h ../include/openssl/crypto.h
@@ -973,3 +974,24 @@ t1_srvr.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
 t1_srvr.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
 t1_srvr.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ssl_locl.h
 t1_srvr.o: t1_srvr.c
+tls_srp.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
+tls_srp.o: ../include/openssl/bn.h ../include/openssl/buffer.h
+tls_srp.o: ../include/openssl/comp.h ../include/openssl/crypto.h
+tls_srp.o: ../include/openssl/dsa.h ../include/openssl/dtls1.h
+tls_srp.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
+tls_srp.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
+tls_srp.o: ../include/openssl/err.h ../include/openssl/evp.h
+tls_srp.o: ../include/openssl/hmac.h ../include/openssl/kssl.h
+tls_srp.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
+tls_srp.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+tls_srp.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+tls_srp.o: ../include/openssl/pem.h ../include/openssl/pem2.h
+tls_srp.o: ../include/openssl/pkcs7.h ../include/openssl/pqueue.h
+tls_srp.o: ../include/openssl/rand.h ../include/openssl/rsa.h
+tls_srp.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+tls_srp.o: ../include/openssl/srp.h ../include/openssl/ssl.h
+tls_srp.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
+tls_srp.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+tls_srp.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+tls_srp.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h ssl_locl.h
+tls_srp.o: tls_srp.c
