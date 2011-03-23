@@ -239,6 +239,7 @@ ecp_nist.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ecp_nist.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecp_nist.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecp_nist.o: ../../include/openssl/symhacks.h ec_lcl.h ecp_nist.c
+ecp_nistp224.o: ecp_nistp224.c
 ecp_oct.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ecp_oct.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ecp_oct.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h

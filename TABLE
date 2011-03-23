@@ -1570,14 +1570,14 @@ $multilib     =
 
 *** debug-ben
 $cc           = gcc
-$cflags       = -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -O2 -pedantic -Wall -Wshadow -Werror -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DDEBUG_SAFESTACK -O2 -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
 $lflags       = 
 $bn_ops       = 
 $cpuid_obj    = 
-$bn_obj       = bn86-elf.o co86-elf.o
+$bn_obj       = 
 $des_obj      = 
 $aes_obj      = 
 $bf_obj       = 
