@@ -51,6 +51,8 @@
  * ====================================================================
  */
 
+#define OPENSSL_FIPSAPI
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -129,7 +131,7 @@ int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 		return 0;
 	if (!EVP_CIPHER_CTX_copy(&out->cctx, &in->cctx))
 		return 0;
-	bl = EVP_CIPHER_CTX_block_size(&in->cctx);
+	bl = M_EVP_CIPHER_CTX_block_size(&in->cctx);
 	memcpy(out->k1, in->k1, bl);
 	memcpy(out->k2, in->k2, bl);
 	memcpy(out->tbl, in->tbl, bl);
@@ -148,31 +150,31 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 		/* Not initialised */
 		if (ctx->nlast_block == -1)
 			return 0;
-		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
+		if (!M_EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
 			return 0;
 		return 1;
 		}
 	/* Initialiase context */
-	if (cipher && !EVP_EncryptInit_ex(&ctx->cctx, cipher, impl, NULL, NULL))
+	if (cipher && !M_EVP_EncryptInit_ex(&ctx->cctx, cipher, impl, NULL, NULL))
 		return 0;
 	/* Non-NULL key means initialisation complete */
 	if (key)
 		{
 		int bl;
-		if (!EVP_CIPHER_CTX_cipher(&ctx->cctx))
+		if (!M_EVP_CIPHER_CTX_cipher(&ctx->cctx))
 			return 0;
 		if (!EVP_CIPHER_CTX_set_key_length(&ctx->cctx, keylen))
 			return 0;
-		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, key, zero_iv))
+		if (!M_EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, key, zero_iv))
 			return 0;
-		bl = EVP_CIPHER_CTX_block_size(&ctx->cctx);
+		bl = M_EVP_CIPHER_CTX_block_size(&ctx->cctx);
 		if (!EVP_Cipher(&ctx->cctx, ctx->tbl, zero_iv, bl))
 			return 0;
 		make_kn(ctx->k1, ctx->tbl, bl);
 		make_kn(ctx->k2, ctx->k1, bl);
 		OPENSSL_cleanse(ctx->tbl, bl);
 		/* Reset context again ready for first data block */
-		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
+		if (!M_EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
 			return 0;
 		/* Zero tbl so resume works */
 		memset(ctx->tbl, 0, bl);
@@ -189,7 +191,7 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 		return 0;
 	if (dlen == 0)
 		return 1;
-	bl = EVP_CIPHER_CTX_block_size(&ctx->cctx);
+	bl = M_EVP_CIPHER_CTX_block_size(&ctx->cctx);
 	/* Copy into partial block if we need to */
 	if (ctx->nlast_block > 0)
 		{
@@ -228,7 +230,7 @@ int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
 	int i, bl, lb;
 	if (ctx->nlast_block == -1)
 		return 0;
-	bl = EVP_CIPHER_CTX_block_size(&ctx->cctx);
+	bl = M_EVP_CIPHER_CTX_block_size(&ctx->cctx);
 	*poutlen = (size_t)bl;
 	if (!out)
 		return 1;
@@ -265,5 +267,5 @@ int CMAC_resume(CMAC_CTX *ctx)
 	 * So reinitliasing using the last decrypted block will allow
 	 * CMAC to continue after calling CMAC_Final(). 
 	 */
-	return EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, ctx->tbl);
+	return M_EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, ctx->tbl);
 	}

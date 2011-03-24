@@ -458,11 +458,22 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define M_EVP_MD_CTX_type(e)		M_EVP_MD_type(M_EVP_MD_CTX_md(e))
 #define M_EVP_MD_CTX_md(e)			((e)->digest)
 
-#define M_EVP_CIPHER_CTX_iv_length(e)	(e->cipher->iv_len)
-#define M_EVP_CIPHER_CTX_flags(e)	(e->cipher->flags)
+#define M_EVP_CIPHER_CTX_iv_length(e)	((e)->cipher->iv_len)
+#define M_EVP_CIPHER_CTX_flags(e)	((e)->cipher->flags)
+#define M_EVP_CIPHER_CTX_block_size(e)	((e)->cipher->block_size)
+#define M_EVP_CIPHER_CTX_cipher(e)	((e)->cipher)
 #define M_EVP_CIPHER_CTX_mode(e)	(M_EVP_CIPHER_CTX_flags(e) & EVP_CIPH_MODE)
 
 #define M_EVP_CIPHER_CTX_set_flags(ctx,flgs) ((ctx)->flags|=(flgs))
+
+#define M_EVP_EncryptInit(ctx,ciph,key,iv) \
+	(EVP_CipherInit(ctx,ciph,key,iv,1))
+#define M_EVP_EncryptInit_ex(ctx,ciph,impl,key,iv) \
+	(EVP_CipherInit_ex(ctx,ciph,impl,key,iv,1))
+#define M_EVP_DecryptInit(ctx,ciph,key,iv) \
+	(EVP_CipherInit(ctx,ciph,key,iv,0))
+#define M_EVP_DecryptInit_ex(ctx,ciph,impl,key,iv) \
+	(EVP_CipherInit_ex(ctx,ciph,impl,key,iv,0))
 
 int EVP_MD_type(const EVP_MD *md);
 #define EVP_MD_nid(e)			EVP_MD_type(e)
@@ -1288,7 +1299,9 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
 #define EVP_F_FIPS_CIPHERINIT				 166
+#define EVP_F_FIPS_CIPHER_CTX_COPY			 170
 #define EVP_F_FIPS_CIPHER_CTX_CTRL			 167
+#define EVP_F_FIPS_CIPHER_CTX_SET_KEY_LENGTH		 171
 #define EVP_F_FIPS_DIGESTINIT				 168
 #define EVP_F_FIPS_MD_CTX_COPY				 169
 #define EVP_F_INT_CTX_NEW				 157

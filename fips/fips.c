@@ -174,6 +174,7 @@ int FIPS_selftest(void)
 
     return FIPS_selftest_sha1()
 	&& FIPS_selftest_hmac()
+	&& FIPS_selftest_cmac()
 	&& FIPS_selftest_aes()
 	&& FIPS_selftest_aes_gcm()
 	&& FIPS_selftest_des()

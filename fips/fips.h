@@ -95,6 +95,7 @@ void FIPS_rng_stick(void);
 int FIPS_selftest_rng(void);
 int FIPS_selftest_hmac(void);
 int FIPS_selftest_drbg(void);
+int FIPS_selftest_cmac(void);
 
 unsigned int FIPS_incore_fingerprint(unsigned char *sig,unsigned int len);
 int FIPS_check_incore_fingerprint(void);
@@ -159,6 +160,8 @@ void FIPS_set_locking_callbacks(void (*func)(int mode, int type,
 #define EVP_CIPHER_CTX_ctrl FIPS_cipher_ctx_ctrl
 #define EVP_CIPHER_CTX_new FIPS_cipher_ctx_new
 #define EVP_CIPHER_CTX_free FIPS_cipher_ctx_free
+#define EVP_CIPHER_CTX_copy FIPS_cipher_ctx_copy
+#define EVP_CIPHER_CTX_set_key_length FIPS_cipher_ctx_set_key_length
 
 #define DSA_SIG_new FIPS_dsa_sig_new
 #define DSA_SIG_free FIPS_dsa_sig_free
@@ -205,6 +208,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_PKEY_SIGNATURE_TEST			 109
 #define FIPS_F_FIPS_SELFTEST_AES			 110
 #define FIPS_F_FIPS_SELFTEST_AES_GCM			 130
+#define FIPS_F_FIPS_SELFTEST_CMAC			 139
 #define FIPS_F_FIPS_SELFTEST_DES			 111
 #define FIPS_F_FIPS_SELFTEST_DSA			 112
 #define FIPS_F_FIPS_SELFTEST_ECDSA			 131

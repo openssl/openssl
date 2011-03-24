@@ -295,6 +295,7 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/bn/bn_word.o \
 	../crypto/bn/bn_x931p.o \
 	../crypto/buffer/buf_str.o \
+	../crypto/cmac/cmac.o \
 	../crypto/cryptlib.o \
 	../crypto/des/cfb64ede.o \
 	../crypto/des/cfb64enc.o \

@@ -35,7 +35,7 @@ AFLAGS=$(ASFLAGS)
 
 LIBS=
 
-FDIRS=sha rand des aes dsa ecdh ecdsa rsa dh hmac utl
+FDIRS=sha rand des aes dsa ecdh ecdsa rsa dh cmac hmac utl
 
 GENERAL=Makefile README fips-lib.com install.com
 
@@ -45,7 +45,7 @@ LIBSRC=fips.c
 LIBOBJ=fips.o
 
 FIPS_OBJ_LISTS=sha/lib hmac/lib rand/lib des/lib aes/lib dsa/lib rsa/lib \
-		dh/lib utl/lib ecdsa/lib
+		dh/lib utl/lib ecdsa/lib cmac/lib
 
 SRC= $(LIBSRC)
 
