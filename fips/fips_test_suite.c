@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/cmac.h>
 #include <openssl/sha.h>
 #include <openssl/err.h>
 
@@ -394,6 +395,259 @@ static int FIPS_hmac_sha512_test()
     return 1;
     }
 
+/* CMAC-AES128: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_cmac_aes128_test()
+    {
+    unsigned char key[16] = { 0x2b,0x7e,0x15,0x16, 0x28,0xae,0xd2,0xa6,
+			      0xab,0xf7,0x15,0x88, 0x09,0xcf,0x4f,0x3c, };
+    unsigned char data[] = "Sample text";
+    unsigned char kaval[EVP_MAX_MD_SIZE] =
+	    { 0x16,0x83,0xfe,0xac, 0x52,0x9b,0xae,0x23,
+	      0xd7,0xd5,0x66,0xf5, 0xd2,0x8d,0xbd,0x2a, };
+
+    unsigned char *out = NULL;
+    unsigned int outlen;
+    CMAC_CTX *ctx = CMAC_CTX_new();
+    int r = 0;
+
+    ERR_clear_error();
+
+    if (!ctx)
+	    goto end;
+    if (!CMAC_Init(ctx,key,sizeof(key),EVP_aes_128_cbc(),NULL))
+	    goto end;
+    if (!CMAC_Update(ctx,data,sizeof(data)-1))
+	    goto end;
+    /* This should return 1.  If not, there's a programming error... */
+    if (!CMAC_Final(ctx, out, &outlen))
+	    goto end;
+    out = OPENSSL_malloc(outlen);
+    if (!CMAC_Final(ctx, out, &outlen))
+	    goto end;
+#if 0
+    {
+    char *hexout = OPENSSL_malloc(outlen * 2 + 1);
+    bin2hex(out, outlen, hexout);
+    printf("CMAC-AES128: res = %s\n", hexout);
+    OPENSSL_free(hexout);
+    }
+    r = 1;
+#else
+    if (!memcmp(out,kaval,outlen))
+	    r = 1;
+#endif
+    end:
+    CMAC_CTX_free(ctx);
+    if (out)
+  	  OPENSSL_free(out);
+    return r;
+    }
+
+/* CMAC-AES192: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_cmac_aes192_test()
+    {
+    unsigned char key[] = { 0x8e,0x73,0xb0,0xf7, 0xda,0x0e,0x64,0x52,
+			    0xc8,0x10,0xf3,0x2b, 0x80,0x90,0x79,0xe5,
+			    0x62,0xf8,0xea,0xd2, 0x52,0x2c,0x6b,0x7b, };
+    unsigned char data[] = "Sample text";
+    unsigned char kaval[] =
+	    { 0xd6,0x99,0x19,0x25, 0xe5,0x1d,0x95,0x48,
+	      0xb1,0x4a,0x0b,0xf2, 0xc6,0x3c,0x47,0x1f, };
+
+    unsigned char *out = NULL;
+    unsigned int outlen;
+    CMAC_CTX *ctx = CMAC_CTX_new();
+    int r = 0;
+
+    ERR_clear_error();
+
+    if (!ctx)
+	    goto end;
+    if (!CMAC_Init(ctx,key,sizeof(key),EVP_aes_192_cbc(),NULL))
+	    goto end;
+    if (!CMAC_Update(ctx,data,sizeof(data)-1))
+	    goto end;
+    /* This should return 1.  If not, there's a programming error... */
+    if (!CMAC_Final(ctx, out, &outlen))
+	    goto end;
+    out = OPENSSL_malloc(outlen);
+    if (!CMAC_Final(ctx, out, &outlen))
+	    goto end;
+#if 0
+    {
+    char *hexout = OPENSSL_malloc(outlen * 2 + 1);
+    bin2hex(out, outlen, hexout);
+    printf("CMAC-AES192: res = %s\n", hexout);
+    OPENSSL_free(hexout);
+    }
+    r = 1;
+#else
+    if (!memcmp(out,kaval,outlen))
+	    r = 1;
+#endif
+    end:
+    CMAC_CTX_free(ctx);
+    if (out)
+  	  OPENSSL_free(out);
+    return r;
+    }
+
+/* CMAC-AES256: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_cmac_aes256_test()
+    {
+    unsigned char key[] = { 0x60,0x3d,0xeb,0x10, 0x15,0xca,0x71,0xbe,
+			    0x2b,0x73,0xae,0xf0, 0x85,0x7d,0x77,0x81,
+			    0x1f,0x35,0x2c,0x07, 0x3b,0x61,0x08,0xd7,
+			    0x2d,0x98,0x10,0xa3, 0x09,0x14,0xdf,0xf4, };
+    unsigned char data[] = "Sample text";
+    unsigned char kaval[] =
+	    { 0xec,0xc2,0xcf,0x63, 0xc7,0xce,0xfc,0xa4,
+	      0xb0,0x86,0x37,0x5f, 0x15,0x60,0xba,0x1f, };
+
+    unsigned char *out = NULL;
+    unsigned int outlen;
+    CMAC_CTX *ctx = CMAC_CTX_new();
+    int r = 0;
+
+    ERR_clear_error();
+
+    if (!ctx)
+	    goto end;
+    if (!CMAC_Init(ctx,key,sizeof(key),EVP_aes_256_cbc(),NULL))
+	    goto end;
+    if (!CMAC_Update(ctx,data,sizeof(data)-1))
+	    goto end;
+    /* This should return 1.  If not, there's a programming error... */
+    if (!CMAC_Final(ctx, out, &outlen))
+	    goto end;
+    out = OPENSSL_malloc(outlen);
+    if (!CMAC_Final(ctx, out, &outlen))
+	    goto end;
+#if 0
+    {
+    char *hexout = OPENSSL_malloc(outlen * 2 + 1);
+    bin2hex(out, outlen, hexout);
+    printf("CMAC-AES256: res = %s\n", hexout);
+    OPENSSL_free(hexout);
+    }
+    r = 1;
+#else
+    if (!memcmp(out,kaval,outlen))
+	    r = 1;
+#endif
+    end:
+    CMAC_CTX_free(ctx);
+    if (out)
+  	  OPENSSL_free(out);
+    return r;
+    }
+
+/* CMAC-TDEA2: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_cmac_tdea2_test()
+    {
+    unsigned char key[] = { 0x4c,0xf1,0x51,0x34, 0xa2,0x85,0x0d,0xd5,
+			    0x8a,0x3d,0x10,0xba, 0x80,0x57,0x0d,0x38, };
+    unsigned char data[] = "Sample text";
+    unsigned char kaval[] =
+	{0x73, 0xf7, 0xa0, 0x48, 0xf8, 0x94, 0xed, 0xdd, 0x0a, 0xea, 0xea, 0x56, 0x1b, 0x61, 0x2e, 0x70,
+	 0xb2, 0xfb, 0xec, 0xc6};
+
+    unsigned char *out = NULL;
+    unsigned int outlen;
+    CMAC_CTX *ctx = CMAC_CTX_new();
+    int r = 0;
+
+    ERR_clear_error();
+
+    if (!ctx)
+	    goto end;
+    if (!CMAC_Init(ctx,key,sizeof(key),EVP_des_ede_cbc(),NULL))
+	    goto end;
+    if (!CMAC_Update(ctx,data,sizeof(data)-1))
+	    goto end;
+    /* This should return 1.  If not, there's a programming error... */
+    if (!CMAC_Final(ctx, out, &outlen))
+	    goto end;
+    out = OPENSSL_malloc(outlen);
+    if (!CMAC_Final(ctx, out, &outlen))
+	    goto end;
+#if 1
+    {
+    char *hexout = OPENSSL_malloc(outlen * 2 + 1);
+    bin2hex(out, outlen, hexout);
+    printf("CMAC-TDEA2: res = %s\n", hexout);
+    OPENSSL_free(hexout);
+    }
+    r = 1;
+#else
+    if (!memcmp(out,kaval,outlen))
+	    r = 1;
+#endif
+    end:
+    CMAC_CTX_free(ctx);
+    if (out)
+  	  OPENSSL_free(out);
+    return r;
+    }
+
+/* CMAC-TDEA3: generate hash of known digest value and compare to known
+   precomputed correct hash
+*/
+static int FIPS_cmac_tdea3_test()
+    {
+    unsigned char key[] = { 0x8a,0xa8,0x3b,0xf8, 0xcb,0xda,0x10,0x62,
+			    0x0b,0xc1,0xbf,0x19, 0xfb,0xb6,0xcd,0x58,
+			    0xbc,0x31,0x3d,0x4a, 0x37,0x1c,0xa8,0xb5, };
+    unsigned char data[] = "Sample text";
+    unsigned char kaval[EVP_MAX_MD_SIZE] =
+	    { 0xb4,0x06,0x4e,0xbf, 0x59,0x89,0xba,0x68, };
+
+    unsigned char *out = NULL;
+    unsigned int outlen;
+    CMAC_CTX *ctx = CMAC_CTX_new();
+    int r = 0;
+
+    ERR_clear_error();
+
+    if (!ctx)
+	    goto end;
+    if (!CMAC_Init(ctx,key,sizeof(key),EVP_des_ede3_cbc(),NULL))
+	    goto end;
+    if (!CMAC_Update(ctx,data,sizeof(data)-1))
+	    goto end;
+    /* This should return 1.  If not, there's a programming error... */
+    if (!CMAC_Final(ctx, out, &outlen))
+	    goto end;
+    out = OPENSSL_malloc(outlen);
+    if (!CMAC_Final(ctx, out, &outlen))
+	    goto end;
+#if 0
+    {
+    char *hexout = OPENSSL_malloc(outlen * 2 + 1);
+    bin2hex(out, outlen, hexout);
+    printf("CMAC-TDEA3: res = %s\n", hexout);
+    OPENSSL_free(hexout);
+    }
+    r = 1;
+#else
+    if (!memcmp(out,kaval,outlen))
+	    r = 1;
+#endif
+    end:
+    CMAC_CTX_free(ctx);
+    if (out)
+  	  OPENSSL_free(out);
+    return r;
+    }
+
 
 /* DH: generate shared parameters
 */
@@ -608,16 +862,38 @@ int main(int argc,char **argv)
     */
     test_msg("7h. HMAC-SHA-512 hash", FIPS_hmac_sha512_test());
 
+    /* CMAC-AES-128 hash
+    */
+    test_msg("8a. CMAC-AES-128 hash", FIPS_cmac_aes128_test());
+
+    /* CMAC-AES-192 hash
+    */
+    test_msg("8b. CMAC-AES-192 hash", FIPS_cmac_aes192_test());
+
+    /* CMAC-AES-256 hash
+    */
+    test_msg("8c. CMAC-AES-256 hash", FIPS_cmac_aes256_test());
+
+# if 0				/* Not a FIPS algorithm */
+    /* CMAC-TDEA-2 hash
+    */
+    test_msg("8d. CMAC-TDEA-2 hash", FIPS_cmac_tdea2_test());
+#endif
+
+    /* CMAC-TDEA-3 hash
+    */
+    test_msg("8e. CMAC-TDEA-3 hash", FIPS_cmac_tdea3_test());
+
     /* Non-Approved cryptographic operation
     */
-    printf("8. Non-Approved cryptographic operation test...\n");
+    printf("9. Non-Approved cryptographic operation test...\n");
     printf("\ta. Included algorithm (D-H)...%s\n",
     		dh_test() ? "successful as expected"
 	    					: Fail("failed INCORRECTLY!") );
 
     /* Zeroization
     */
-    printf("9. Zero-ization...\n\t%s\n",
+    printf("10. Zero-ization...\n\t%s\n",
     		Zeroize() ? "successful as expected"
 					: Fail("failed INCORRECTLY!") );
 

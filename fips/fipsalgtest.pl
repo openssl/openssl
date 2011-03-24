@@ -95,6 +95,17 @@ my @fips_hmac_test_list = (
 
 );
 
+# CMAC
+
+my @fips_cmac_test_list = (
+
+    "CMAC",
+
+    [ "CMACGenAES256", "fips_cmactest -g" ],
+    [ "CMACVerAES256", "fips_cmactest -v" ]
+
+);
+
 # RAND tests, AES version
 
 my @fips_rand_aes_test_list = (
@@ -372,6 +383,7 @@ my %fips_enabled = (
     "rsa-pss62" => 1,
     sha         => 1,
     hmac        => 1,
+    cmac        => 1,
     "rand-aes"  => 1,
     "rand-des2" => 0,
     aes         => 1,
@@ -449,6 +461,7 @@ push @fips_test_list, @fips_rsa_pss0_test_list  if $fips_enabled{"rsa-pss0"};
 push @fips_test_list, @fips_rsa_pss62_test_list if $fips_enabled{"rsa-pss62"};
 push @fips_test_list, @fips_sha_test_list       if $fips_enabled{"sha"};
 push @fips_test_list, @fips_hmac_test_list      if $fips_enabled{"hmac"};
+push @fips_test_list, @fips_cmac_test_list      if $fips_enabled{"cmac"};
 push @fips_test_list, @fips_rand_aes_test_list  if $fips_enabled{"rand-aes"};
 push @fips_test_list, @fips_rand_des2_test_list if $fips_enabled{"rand-des2"};
 push @fips_test_list, @fips_aes_test_list       if $fips_enabled{"aes"};
