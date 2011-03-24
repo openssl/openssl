@@ -76,3 +76,15 @@ clean:
 	rm -f *.o *.obj lib tags core .pure .nfs* *.old *.bak fluff
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+fips_ecdhvs.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+fips_ecdhvs.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_ecdhvs.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+fips_ecdhvs.o: ../../include/openssl/ecdh.h ../../include/openssl/err.h
+fips_ecdhvs.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_ecdhvs.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+fips_ecdhvs.o: ../../include/openssl/objects.h
+fips_ecdhvs.o: ../../include/openssl/opensslconf.h
+fips_ecdhvs.o: ../../include/openssl/opensslv.h
+fips_ecdhvs.o: ../../include/openssl/ossl_typ.h
+fips_ecdhvs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+fips_ecdhvs.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_ecdhvs.c

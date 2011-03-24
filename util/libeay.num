@@ -4308,3 +4308,4 @@ EVP_aes_256_gcm                         4677	EXIST::FUNCTION:AES
 BN_nist_mod_func                        4678	EXIST::FUNCTION:
 FIPS_drbg_get_app_data                  4679	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_rsa_verify_ctx                     4680	EXIST:OPENSSL_FIPS:FUNCTION:RSA
+FIPS_selftest_cmac                      4681	EXIST:OPENSSL_FIPS:FUNCTION:

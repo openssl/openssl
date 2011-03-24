@@ -108,8 +108,8 @@ ecs_ossl.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ecs_ossl.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 ecs_ossl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
 ecs_ossl.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-ecs_ossl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-ecs_ossl.o: ../../include/openssl/opensslconf.h
+ecs_ossl.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+ecs_ossl.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
 ecs_ossl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ecs_ossl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 ecs_ossl.o: ../../include/openssl/symhacks.h ecs_locl.h ecs_ossl.c

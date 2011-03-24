@@ -85,3 +85,13 @@ fips_dh_lib.o: ../../include/openssl/opensslv.h
 fips_dh_lib.o: ../../include/openssl/ossl_typ.h
 fips_dh_lib.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 fips_dh_lib.o: ../../include/openssl/symhacks.h fips_dh_lib.c
+fips_dhvs.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+fips_dhvs.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_dhvs.o: ../../include/openssl/dh.h ../../include/openssl/e_os2.h
+fips_dhvs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_dhvs.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+fips_dhvs.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+fips_dhvs.o: ../../include/openssl/opensslconf.h
+fips_dhvs.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+fips_dhvs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+fips_dhvs.o: ../../include/openssl/symhacks.h ../fips_utl.h fips_dhvs.c

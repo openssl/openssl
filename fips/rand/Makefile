@@ -90,6 +90,85 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
+fips_drbg_ctr.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+fips_drbg_ctr.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+fips_drbg_ctr.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+fips_drbg_ctr.o: ../../include/openssl/e_os2.h ../../include/openssl/evp.h
+fips_drbg_ctr.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
+fips_drbg_ctr.o: ../../include/openssl/obj_mac.h
+fips_drbg_ctr.o: ../../include/openssl/objects.h
+fips_drbg_ctr.o: ../../include/openssl/opensslconf.h
+fips_drbg_ctr.o: ../../include/openssl/opensslv.h
+fips_drbg_ctr.o: ../../include/openssl/ossl_typ.h
+fips_drbg_ctr.o: ../../include/openssl/safestack.h
+fips_drbg_ctr.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_drbg_ctr.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+fips_drbg_ctr.o: fips_drbg_ctr.c fips_rand_lcl.h
+fips_drbg_hash.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+fips_drbg_hash.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+fips_drbg_hash.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+fips_drbg_hash.o: ../../include/openssl/e_os2.h ../../include/openssl/evp.h
+fips_drbg_hash.o: ../../include/openssl/fips.h
+fips_drbg_hash.o: ../../include/openssl/fips_rand.h
+fips_drbg_hash.o: ../../include/openssl/obj_mac.h
+fips_drbg_hash.o: ../../include/openssl/objects.h
+fips_drbg_hash.o: ../../include/openssl/opensslconf.h
+fips_drbg_hash.o: ../../include/openssl/opensslv.h
+fips_drbg_hash.o: ../../include/openssl/ossl_typ.h
+fips_drbg_hash.o: ../../include/openssl/safestack.h
+fips_drbg_hash.o: ../../include/openssl/stack.h
+fips_drbg_hash.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+fips_drbg_hash.o: ../../include/openssl/ui_compat.h fips_drbg_hash.c
+fips_drbg_hash.o: fips_rand_lcl.h
+fips_drbg_lib.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+fips_drbg_lib.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
+fips_drbg_lib.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+fips_drbg_lib.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_drbg_lib.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_drbg_lib.o: ../../include/openssl/fips_rand.h
+fips_drbg_lib.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+fips_drbg_lib.o: ../../include/openssl/objects.h
+fips_drbg_lib.o: ../../include/openssl/opensslconf.h
+fips_drbg_lib.o: ../../include/openssl/opensslv.h
+fips_drbg_lib.o: ../../include/openssl/ossl_typ.h
+fips_drbg_lib.o: ../../include/openssl/safestack.h
+fips_drbg_lib.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+fips_drbg_lib.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+fips_drbg_lib.o: fips_drbg_lib.c fips_rand_lcl.h
+fips_drbg_selftest.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+fips_drbg_selftest.o: ../../include/openssl/bio.h
+fips_drbg_selftest.o: ../../include/openssl/crypto.h
+fips_drbg_selftest.o: ../../include/openssl/des.h
+fips_drbg_selftest.o: ../../include/openssl/des_old.h
+fips_drbg_selftest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_drbg_selftest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_drbg_selftest.o: ../../include/openssl/fips_rand.h
+fips_drbg_selftest.o: ../../include/openssl/lhash.h
+fips_drbg_selftest.o: ../../include/openssl/obj_mac.h
+fips_drbg_selftest.o: ../../include/openssl/objects.h
+fips_drbg_selftest.o: ../../include/openssl/opensslconf.h
+fips_drbg_selftest.o: ../../include/openssl/opensslv.h
+fips_drbg_selftest.o: ../../include/openssl/ossl_typ.h
+fips_drbg_selftest.o: ../../include/openssl/safestack.h
+fips_drbg_selftest.o: ../../include/openssl/stack.h
+fips_drbg_selftest.o: ../../include/openssl/symhacks.h
+fips_drbg_selftest.o: ../../include/openssl/ui.h
+fips_drbg_selftest.o: ../../include/openssl/ui_compat.h fips_drbg_selftest.c
+fips_drbg_selftest.o: fips_rand_lcl.h
+fips_drbgvs.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
+fips_drbgvs.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
+fips_drbgvs.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
+fips_drbgvs.o: ../../include/openssl/dsa.h ../../include/openssl/e_os2.h
+fips_drbgvs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_drbgvs.o: ../../include/openssl/fips.h ../../include/openssl/fips_rand.h
+fips_drbgvs.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+fips_drbgvs.o: ../../include/openssl/objects.h
+fips_drbgvs.o: ../../include/openssl/opensslconf.h
+fips_drbgvs.o: ../../include/openssl/opensslv.h
+fips_drbgvs.o: ../../include/openssl/ossl_typ.h
+fips_drbgvs.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+fips_drbgvs.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
+fips_drbgvs.o: ../../include/openssl/ui_compat.h ../fips_utl.h fips_drbgvs.c
 fips_rand.o: ../../e_os.h ../../include/openssl/aes.h
 fips_rand.o: ../../include/openssl/bio.h ../../include/openssl/crypto.h
 fips_rand.o: ../../include/openssl/des.h ../../include/openssl/des_old.h

@@ -70,8 +70,9 @@ static void put_err_cb(int lib, int func,int reason,const char *file,int line)
 	{
 		if (no_err)
 			return;
-		fprintf(stderr, "ERROR:lib=%d,func=%d,reason=%d"
+		fprintf(stderr, "ERROR:%08lX:lib=%d,func=%d,reason=%d"
 				":file=%s:line=%d\n",
+			ERR_PACK(lib, func, reason),
 			lib, func, reason, file, line);
 	}
 

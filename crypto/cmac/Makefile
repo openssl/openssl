@@ -104,8 +104,9 @@ cmac.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 cmac.o: ../../include/openssl/buffer.h ../../include/openssl/cmac.h
 cmac.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 cmac.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-cmac.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
-cmac.o: ../../include/openssl/objects.h ../../include/openssl/opensslconf.h
-cmac.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-cmac.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-cmac.o: ../../include/openssl/symhacks.h ../cryptlib.h cmac.c
+cmac.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
+cmac.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+cmac.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+cmac.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+cmac.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+cmac.o: ../cryptlib.h cmac.c
