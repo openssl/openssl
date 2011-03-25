@@ -43,9 +43,9 @@ $!  P6, if defined, specifies the C pointer size.  Ignored on VAX.
 $!      ("64=ARGV" gives more efficient code with HP C V7.3 or newer.)
 $!      Supported values are:
 $!
-$!      ""      Compile with default (/NOPOINTER_SIZE)
-$!      32      Compile with /POINTER_SIZE=32 (SHORT)
-$!      64      Compile with /POINTER_SIZE=64[=ARGV] (LONG[=ARGV])
+$!      ""       Compile with default (/NOPOINTER_SIZE)
+$!      32       Compile with /POINTER_SIZE=32 (SHORT)
+$!      64       Compile with /POINTER_SIZE=64[=ARGV] (LONG[=ARGV])
 $!               (Automatically select ARGV if compiler supports it.)
 $!      64=      Compile with /POINTER_SIZE=64 (LONG).
 $!      64=ARGV  Compile with /POINTER_SIZE=64=ARGV (LONG=ARGV).
@@ -599,7 +599,7 @@ $ THEN
 $!
 $   IF (P6 .EQS. "32")
 $   THEN
-$     POINTER_SIZE = "/POINTER_SIZE=32"
+$     POINTER_SIZE = " /POINTER_SIZE=32"
 $   ELSE
 $     POINTER_SIZE = F$EDIT( P6, "COLLAPSE, UPCASE")
 $     IF ((POINTER_SIZE .EQS. "64") .OR. -
@@ -610,32 +610,32 @@ $       ARCHD = ARCH+ "_64"
 $       LIB32 = ""
 $       IF (F$EXTRACT( 2, 1, POINTER_SIZE) .EQS. "=")
 $       THEN
-$!         Explicit user choice: "64" or "64=ARGV".
-$          IF (POINTER_SIZE .EQS. "64=") THEN POINTER_SIZE = "64"
+$!        Explicit user choice: "64" or "64=ARGV".
+$         IF (POINTER_SIZE .EQS. "64=") THEN POINTER_SIZE = "64"
 $       ELSE
-$	SET NOON
+$         SET NOON
 $         DEFINE /USER_MODE SYS$OUTPUT NL:
 $         DEFINE /USER_MODE SYS$ERROR NL:
 $         CC /NOLIST /NOOBJECT /POINTER_SIZE=64=ARGV NL:
-$	IF ($STATUS .AND. %X0FFF0000) .EQ. %X00030000
-$	THEN
-$	  ! If we got here, it means DCL complained like this:
-$	  ! %DCL-W-NOVALU, value not allowed - remove value specification
-$	  !  \64=\
-$	  !
-$	  ! If the compiler was run, logicals defined in /USER would
-$	  ! have been deassigned automatically.  However, when DCL
-$	  ! complains, they aren't, so we do it here (it might be
-$	  ! unnecessary, but just in case there will be another error
-$	  ! message further on that we don't want to miss)
+$         IF ($STATUS .AND. %X0FFF0000) .EQ. %X00030000
+$         THEN
+$           ! If we got here, it means DCL complained like this:
+$           ! %DCL-W-NOVALU, value not allowed - remove value specification
+$           !  \64=\
+$           !
+$           ! If the compiler was run, logicals defined in /USER would
+$           ! have been deassigned automatically.  However, when DCL
+$           ! complains, they aren't, so we do it here (it might be
+$           ! unnecessary, but just in case there will be another error
+$           ! message further on that we don't want to miss)
 $           DEASSIGN /USER_MODE SYS$ERROR
 $           DEASSIGN /USER_MODE SYS$OUTPUT
-$	ELSE
-$	  POINTER_SIZE = POINTER_SIZE + "=ARGV"
-$	ENDIF
-$	SET ON
+$         ELSE
+$           POINTER_SIZE = POINTER_SIZE + "=ARGV"
+$         ENDIF
+$         SET ON
 $       ENDIF
-$       POINTER_SIZE = "/POINTER_SIZE=''POINTER_SIZE'"
+$       POINTER_SIZE = " /POINTER_SIZE=''POINTER_SIZE'"
 $!
 $     ELSE
 $!
@@ -773,7 +773,7 @@ $ CCDEFS = "MONOLITH"
 $ IF F$TYPE(USER_CCDEFS) .NES. "" THEN CCDEFS = CCDEFS + "," + USER_CCDEFS
 $ CCEXTRAFLAGS = ""
 $ IF F$TYPE(USER_CCFLAGS) .NES. "" THEN CCEXTRAFLAGS = USER_CCFLAGS
-$ CCDISABLEWARNINGS = "LONGLONGTYPE,LONGLONGSUFX,FOUNDCR"
+$ CCDISABLEWARNINGS = "" !!! "LONGLONGTYPE,LONGLONGSUFX,FOUNDCR"
 $ IF F$TYPE(USER_CCDISABLEWARNINGS) .NES. "" THEN -
 	CCDISABLEWARNINGS = CCDISABLEWARNINGS + "," + USER_CCDISABLEWARNINGS
 $!
@@ -853,9 +853,9 @@ $!
 $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
-$     CC = CC + "/''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
+$     CC = CC + " /''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
        "''POINTER_SIZE' /NOLIST /PREFIX=ALL" + -
-       "/INCLUDE=(''CC_INCLUDES')" + CCEXTRAFLAGS
+       " /INCLUDE=(''CC_INCLUDES') " + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
@@ -1066,13 +1066,13 @@ $ IF COMPILER .EQS. "DECC"
 $ THEN
 $   IF CCDISABLEWARNINGS .NES. ""
 $   THEN
-$     CCDISABLEWARNINGS = "/WARNING=(DISABLE=(" + CCDISABLEWARNINGS + "))"
+$     CCDISABLEWARNINGS = " /WARNING=(DISABLE=(" + CCDISABLEWARNINGS + "))"
 $   ENDIF
 $ ELSE
 $   CCDISABLEWARNINGS = ""
 $ ENDIF
-$ CC2 = CC + "/DEFINE=(" + CCDEFS + ",_POSIX_C_SOURCE)" + CCDISABLEWARNINGS
-$ CC = CC + "/DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
+$ CC2 = CC + " /DEFINE=(" + CCDEFS + ",_POSIX_C_SOURCE)" + CCDISABLEWARNINGS
+$ CC = CC + " /DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
 $!
 $! Show user the result
 $!

@@ -33,7 +33,7 @@ $!      ENGINES   Just build the "[.xxx.EXE.ENGINES]" application programs for O
 $!
 $! P2, if defined, specifies the C pointer size.  Ignored on VAX.
 $!      ("64=ARGV" gives more efficient code with HP C V7.3 or newer.)
-$!     Supported values are:
+$!      Supported values are:
 $!
 $!      ""       Compile with default (/NOPOINTER_SIZE).
 $!      32       Compile with /POINTER_SIZE=32 (SHORT).

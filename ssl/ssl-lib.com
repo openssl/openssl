@@ -43,11 +43,12 @@ $!
 $!  P5, if defined, sets a compiler thread NOT needed on OpenVMS 7.1 (and up)
 $!
 $!  P6, if defined, specifies the C pointer size.  Ignored on VAX.
+$!      ("64=ARGV" gives more efficient code with HP C V7.3 or newer.)
 $!      Supported values are:
 $!
-$!      ""      Compile with default (/NOPOINTER_SIZE)
-$!      32      Compile with /POINTER_SIZE=32 (SHORT)
-$!      64      Compile with /POINTER_SIZE=64[=ARGV] (LONG[=ARGV])
+$!      ""       Compile with default (/NOPOINTER_SIZE)
+$!      32       Compile with /POINTER_SIZE=32 (SHORT)
+$!      64       Compile with /POINTER_SIZE=64[=ARGV] (LONG[=ARGV])
 $!               (Automatically select ARGV if compiler supports it.)
 $!      64=      Compile with /POINTER_SIZE=64 (LONG).
 $!      64=ARGV  Compile with /POINTER_SIZE=64=ARGV (LONG=ARGV).
@@ -342,6 +343,8 @@ $ COMPILEWITH_CC5 = "" !!! ",ssl_task,"
 $!
 $! Tell The User We Are Creating The SSL_TASK.
 $!
+$! Tell The User We Are Creating The SSL_TASK.
+$!
 $ WRITE SYS$OUTPUT "Creating SSL_TASK OSU HTTP SSL Engine."	
 $!
 $!  Tell The User What File We Are Compiling.
@@ -359,9 +362,9 @@ $ THEN
 $   if (.not. CC5_SHOWN)
 $   then
 $     CC5_SHOWN = 1
-$ write sys$output "        \Using special rule (5)"
-$ x = "    "+ CC5
-$ write /symbol sys$output x
+$     write sys$output "        \Using special rule (5)"
+$     x = "    "+ CC5
+$     write /symbol sys$output x
 $   endif
 $   CC5 /OBJECT='OBJ_DIR''FILE_NAME'.OBJ SYS$DISK:[]'FILE_NAME'.C
 $ ELSE
@@ -708,7 +711,7 @@ $ THEN
 $!
 $   IF (P6 .EQS. "32")
 $   THEN
-$     POINTER_SIZE = "/POINTER_SIZE=32"
+$     POINTER_SIZE = " /POINTER_SIZE=32"
 $   ELSE
 $     POINTER_SIZE = F$EDIT( P6, "COLLAPSE, UPCASE")
 $     IF ((POINTER_SIZE .EQS. "64") .OR. -
@@ -717,7 +720,7 @@ $     IF ((POINTER_SIZE .EQS. "64") .OR. -
 $     THEN
 $       ARCHD = ARCH+ "_64"
 $       LIB32 = ""
-$       POINTER_SIZE = "/POINTER_SIZE=64"
+$       POINTER_SIZE = " /POINTER_SIZE=64"
 $     ELSE
 $!
 $!      Tell The User Entered An Invalid Option.
@@ -934,9 +937,9 @@ $!
 $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
-$     CC = CC + "/''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
+$     CC = CC + " /''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
        "''POINTER_SIZE' /NOLIST /PREFIX=ALL" + -
-       "/INCLUDE=(''CC_INCLUDES')" + CCEXTRAFLAGS
+       " /INCLUDE=(''CC_INCLUDES') " + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
 $!
@@ -1024,16 +1027,16 @@ $     THEN
 $       CC4DISABLEWARNINGS = "DOLLARID"
 $     ELSE
 $       CC4DISABLEWARNINGS = CCDISABLEWARNINGS + ",DOLLARID"
-$       CCDISABLEWARNINGS = "/WARNING=(DISABLE=(" + CCDISABLEWARNINGS + "))"
+$       CCDISABLEWARNINGS = " /WARNING=(DISABLE=(" + CCDISABLEWARNINGS + "))"
 $     ENDIF
-$     CC4DISABLEWARNINGS = "/WARNING=(DISABLE=(" + CC4DISABLEWARNINGS + "))"
+$     CC4DISABLEWARNINGS = " /WARNING=(DISABLE=(" + CC4DISABLEWARNINGS + "))"
 $   ELSE
 $     CCDISABLEWARNINGS = ""
 $     CC4DISABLEWARNINGS = ""
 $   ENDIF
-$   CC2 = CC + "/DEFINE=(" + CCDEFS + ",_POSIX_C_SOURCE)" + CCDISABLEWARNINGS
-$   CC3 = CC + "/DEFINE=(" + CCDEFS + ISSEVEN + ")" + CCDISABLEWARNINGS
-$   CC = CC + "/DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
+$   CC2 = CC + " /DEFINE=(" + CCDEFS + ",_POSIX_C_SOURCE)" + CCDISABLEWARNINGS
+$   CC3 = CC + " /DEFINE=(" + CCDEFS + ISSEVEN + ")" + CCDISABLEWARNINGS
+$   CC = CC + " /DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
 $   IF COMPILER .EQS. "DECC"
 $   THEN
 $     CC4 = CC - CCDISABLEWARNINGS + CC4DISABLEWARNINGS
