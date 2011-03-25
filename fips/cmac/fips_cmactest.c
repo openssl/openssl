@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 				cipher = EVP_aes_192_cbc();
 			else if (!strcmp(p, "aes256"))
 				cipher = EVP_aes_256_cbc();
-			else if (!strcmp(p, "tdea3"))
+			else if (!strcmp(p, "tdea3") || !strcmp(p, "tdes3"))
 				{
 				cipher = EVP_des_ede3_cbc();
 				Klen_counts_keys = 1;
