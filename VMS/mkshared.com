@@ -328,6 +328,8 @@ $   entrycount=0
 $   loop:
 $     read /end=loop_end /err=loop_end libnum line
 $     lin = f$edit( line, "COMPRESS,TRIM")
+$!    Skip a "#" comment line.
+$     if (f$extract( 0, 1, lin) .eqs. "#") then goto loop
 $     entrynum = f$int(f$element( 1, " ", lin))
 $     entryinfo = f$element( 2, " ", lin)
 $     curentry = f$element( 0, " ", lin)

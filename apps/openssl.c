@@ -212,8 +212,13 @@ static void lock_dbg_cb(int mode, int type, const char *file, int line)
 		}
 	}
 
+#if defined( OPENSSL_SYS_VMS) && (__INITIAL_POINTER_SIZE == 64)
+# define ARGV _Argv
+#else
+# define ARGV Argv
+#endif
 
-int main(int Argc, char *_Argv[])
+int main(int Argc, char *ARGV[])
 	{
 	ARGS arg;
 #define PROG_NAME_SIZE	39
@@ -228,25 +233,33 @@ int main(int Argc, char *_Argv[])
 	LHASH_OF(FUNCTION) *prog=NULL;
 	long errline;
 
-#if defined( OPENSSL_SYS_VMS) && !defined( VMS_TRUST_ARGV)
-	/* 2011-03-08 SMS.
-	 * "HP C V7.3-009 on OpenVMS Alpha V8.3" with 64-bit
-	 * pointers (at least) may not NULL-terminate argv[]
-	 * as expected.  If necessary, use a (properly)
-	 * NULL-terminated duplicate of argv[].
-	 */
-	/* 2011-03-20 RL.
-	 * Additionally, when the argument vector is full of
-	 * 32-bit pointers and we have a 64-bit pointer size
-	 * everywhere else, we need to make a copy of it using
-	 * 64-bit pointers.  Hence the odd conditinal.
+#if defined( OPENSSL_SYS_VMS) && (__INITIAL_POINTER_SIZE == 64)
+	/* 2011-03-22 SMS.
+	 * If we have 32-bit pointers everywhere, then we're safe, and
+	 * we bypass this mess, as on non-VMS systems.  (See ARGV,
+	 * above.)
+	 * Problem 1: Compaq/HP C before V7.3 always used 32-bit
+	 * pointers for argv[].
+	 * Fix 1: For a 32-bit argv[], when we're using 64-bit pointers
+	 * everywhere else, we always allocate and use a 64-bit
+	 * duplicate of argv[].
+	 * Problem 2: Compaq/HP C V7.3 (Alpha, IA64) before ECO1 failed
+	 * to NULL-terminate a 64-bit argv[].  (As this was written, the
+	 * compiler ECO was available only on IA64.)
+	 * Fix 2: Unless advised not to (VMS_TRUST_ARGV), we test a
+	 * 64-bit argv[argc] for NULL, and, if necessary, use a
+	 * (properly) NULL-terminated (64-bit) duplicate of argv[].
+	 * The same code is used in either case to duplicate argv[].
+	 * Some of these decisions could be handled in preprocessing,
+	 * but the code tends to get even uglier, and the penalty for
+	 * deciding at compile- or run-time is tiny.
 	 */
 	char **Argv = NULL;
 	int free_Argv = 0;
 
-	if (_Argv[ Argc] != NULL
-# if defined(__INITIAL_POINTER_SIZE)
-		|| sizeof(_Argv) < (__INITIAL_POINTER_SIZE / 8)
+	if ((sizeof( _Argv) < 8)        /* 32-bit argv[]. */
+# if !defined( VMS_TRUST_ARGV)
+	 || (_Argv[ Argc] != NULL)      /* Untrusted argv[argc] not NULL. */
 # endif
 		)
 		{
@@ -256,24 +269,17 @@ int main(int Argc, char *_Argv[])
 			{ ret = -1; goto end; }
 		for(i = 0; i < Argc; i++)
 			Argv[i] = _Argv[i];
-		Argv[ Argc] = NULL;
+		Argv[ Argc] = NULL;     /* Certain NULL termination. */
 		free_Argv = 1;
 		}
 	else
 		{
-		/* 2011-03-20 RL.
-		 * If we didn't copy the argument vector, then simply
-		 * assign our variable.  This will never happen when
-		 * the argument vector pointer size was smaller than
-		 * the initial pointer size, so even if the case might
-		 * look unsafe, it isn't, it's just there to shut the
-		 * compiler up.
-		 */
+		/* Use the known-good 32-bit argv[] (which needs the
+		 * type cast to satisfy the compiler), or the trusted or
+		 * tested-good 64-bit argv[] as-is. */
 		Argv = (char **)_Argv;
 		}
-#else
-	char **Argv = _Argv;
-#endif
+#endif /* defined( OPENSSL_SYS_VMS) && (__INITIAL_POINTER_SIZE == 64) */
 
 	arg.data=NULL;
 	arg.count=0;
@@ -420,7 +426,7 @@ end:
 		BIO_free(bio_err);
 		bio_err=NULL;
 		}
-#if defined( OPENSSL_SYS_VMS) && !defined( VMS_TRUST_ARGV)
+#if defined( OPENSSL_SYS_VMS) && (__INITIAL_POINTER_SIZE == 64)
 	/* Free any duplicate Argv[] storage. */
 	if (free_Argv)
 		{

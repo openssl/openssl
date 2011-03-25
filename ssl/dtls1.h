@@ -60,12 +60,6 @@
 #ifndef HEADER_DTLS1_H
 #define HEADER_DTLS1_H
 
-/* Unless _XOPEN_SOURCE_EXTENDED is defined, struct timeval will not be
-   properly defined with DEC C, at least on VMS */
-#if defined(__DECC) || defined(__DECCXX)
-#define _XOPEN_SOURCE_EXTENDED
-#endif
-
 #include <openssl/buffer.h>
 #include <openssl/pqueue.h>
 #ifdef OPENSSL_SYS_VMS
