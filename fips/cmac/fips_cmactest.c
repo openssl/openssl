@@ -456,7 +456,7 @@ static int print_cmac_gen(const EVP_CIPHER *cipher, FILE *out,
 		fputs("Error calculating CMAC\n", stderr);
 		rc = 0;
 		}
-	else if (Tlen > reslen)
+	else if (Tlen > (int)reslen)
 		{
 		fputs("Parameter error, Tlen > CMAC length\n", stderr);
 		rc = 0;
@@ -491,7 +491,7 @@ static int print_cmac_ver(const EVP_CIPHER *cipher, FILE *out,
 		fputs("Error calculating CMAC\n", stderr);
 		rc = 0;
 		}
-	else if (Tlen > reslen)
+	else if (Tlen > (int)reslen)
 		{
 		fputs("Parameter error, Tlen > CMAC length\n", stderr);
 		rc = 0;

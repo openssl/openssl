@@ -57,9 +57,9 @@
 #ifdef OPENSSL_FIPS
 typedef struct {
 	const EVP_CIPHER *(*alg)(void);
-	const unsigned char key[EVP_MAX_KEY_LENGTH]; int keysize;
-	const unsigned char msg[64]; int msgsize;
-	const unsigned char mac[32]; int macsize;
+	const unsigned char key[EVP_MAX_KEY_LENGTH]; size_t keysize;
+	const unsigned char msg[64]; size_t msgsize;
+	const unsigned char mac[32]; size_t macsize;
 } CMAC_KAT;
 
 /* from http://csrc.nist.gov/publications/nistpubs/800-38B/SP_800-38B.pdf */
