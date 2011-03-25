@@ -29,6 +29,7 @@ $!  P6	if defined, denotes which engines to build.  If not defined,
 $!	all available engines are built.
 $!
 $!  P7, if defined, specifies the C pointer size.  Ignored on VAX.
+$!      ("64=ARGV" gives more efficient code with HP C V7.3 or newer.)
 $!      Supported values are:
 $!
 $!	""	Compile with default (/NOPOINTER_SIZE)
@@ -609,7 +610,7 @@ $ THEN
 $!
 $   IF (OPT_POINTER_SIZE .EQS. "32")
 $   THEN
-$     POINTER_SIZE = "/POINTER_SIZE=32"
+$     POINTER_SIZE = " /POINTER_SIZE=32"
 $   ELSE
 $     POINTER_SIZE = F$EDIT( OPT_POINTER_SIZE, "COLLAPSE, UPCASE")
 $     IF ((POINTER_SIZE .EQS. "64") .OR. -
@@ -618,7 +619,7 @@ $     IF ((POINTER_SIZE .EQS. "64") .OR. -
 $     THEN
 $       ARCHD = ARCH+ "_64"
 $       LIB32 = ""
-$       POINTER_SIZE = "/POINTER_SIZE=64"
+$       POINTER_SIZE = " /POINTER_SIZE=64"
 $     ELSE
 $!
 $!      Tell The User Entered An Invalid Option.
@@ -834,9 +835,9 @@ $!
 $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
-$     CC = CC + "/''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
+$     CC = CC + " /''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
        "''POINTER_SIZE' /NOLIST /PREFIX=ALL" + -
-       "/INCLUDE=(''CC_INCLUDES')" + -
+       " /INCLUDE=(''CC_INCLUDES') " + -
        CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
@@ -923,12 +924,12 @@ $   IF COMPILER .EQS. "DECC"
 $   THEN
 $     IF CCDISABLEWARNINGS .NES. ""
 $     THEN
-$       CCDISABLEWARNINGS = "/WARNING=(DISABLE=(" + CCDISABLEWARNINGS + "))"
+$       CCDISABLEWARNINGS = " /WARNING=(DISABLE=(" + CCDISABLEWARNINGS + "))"
 $     ENDIF
 $   ELSE
 $     CCDISABLEWARNINGS = ""
 $   ENDIF
-$   CC = CC + "/DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
+$   CC = CC + " /DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
 $!
 $!  Show user the result
 $!
