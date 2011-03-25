@@ -696,6 +696,7 @@ my $fips=0;
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
+		 "ec-nistp224-64-gcc-218" => "default",
 		 "gmp"		  => "default",
                  "jpake"          => "experimental",
                  "md2"            => "default",
@@ -1074,7 +1075,7 @@ foreach (sort (keys %disabled))
 	else
 		{
 		my ($ALGO, $algo);
-		($ALGO = $algo = $_) =~ tr/[a-z]/[A-Z]/;
+		($ALGO = $algo = $_) =~ tr/[\-a-z]/[_A-Z]/;
 
 		if (/^asm$/ || /^err$/ || /^hw$/ || /^hw-/)
 			{

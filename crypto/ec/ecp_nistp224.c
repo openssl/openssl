@@ -62,7 +62,8 @@
  * Inspired by Daniel J. Bernstein's public domain nistp224 implementation
  * and Adam Langley's public domain 64-bit C implementation of curve25519
  */
-#ifdef EC_NISTP224_64_GCC_128
+#include <openssl/opensslconf.h>
+#ifndef OPENSSL_NO_EC_NISTP224_64_GCC_128
 #include <stdint.h>
 #include <string.h>
 #include <openssl/err.h>
