@@ -101,8 +101,14 @@ my @fips_cmac_test_list = (
 
     "CMAC",
 
-    [ "CMACGenAES256", "fips_cmactest -g" ],
-    [ "CMACVerAES256", "fips_cmactest -v" ]
+    [ "CMACGenAES128", "fips_cmactest -a aes128 -g" ],
+    [ "CMACVerAES128", "fips_cmactest -a aes128 -v" ],
+    [ "CMACGenAES192", "fips_cmactest -a aes192 -g" ],
+    [ "CMACVerAES192", "fips_cmactest -a aes192 -v" ],
+    [ "CMACGenAES256", "fips_cmactest -a aes256 -g" ],
+    [ "CMACVerAES256", "fips_cmactest -a aes256 -v" ],
+    [ "CMACGenTDES3", "fips_cmactest -a tdes3 -g" ],
+    [ "CMACVerTDES3", "fips_cmactest -a tdes3 -v" ],
 
 );
 
