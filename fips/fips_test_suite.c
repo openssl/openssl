@@ -548,56 +548,6 @@ static int FIPS_cmac_aes256_test()
     return r;
     }
 
-/* CMAC-TDEA2: generate hash of known digest value and compare to known
-   precomputed correct hash
-*/
-static int FIPS_cmac_tdea2_test()
-    {
-    unsigned char key[] = { 0x4c,0xf1,0x51,0x34, 0xa2,0x85,0x0d,0xd5,
-			    0x8a,0x3d,0x10,0xba, 0x80,0x57,0x0d,0x38, };
-    unsigned char data[] = "Sample text";
-    unsigned char kaval[] =
-	{0x73, 0xf7, 0xa0, 0x48, 0xf8, 0x94, 0xed, 0xdd, 0x0a, 0xea, 0xea, 0x56, 0x1b, 0x61, 0x2e, 0x70,
-	 0xb2, 0xfb, 0xec, 0xc6};
-
-    unsigned char *out = NULL;
-    unsigned int outlen;
-    CMAC_CTX *ctx = CMAC_CTX_new();
-    int r = 0;
-
-    ERR_clear_error();
-
-    if (!ctx)
-	    goto end;
-    if (!CMAC_Init(ctx,key,sizeof(key),EVP_des_ede_cbc(),NULL))
-	    goto end;
-    if (!CMAC_Update(ctx,data,sizeof(data)-1))
-	    goto end;
-    /* This should return 1.  If not, there's a programming error... */
-    if (!CMAC_Final(ctx, out, &outlen))
-	    goto end;
-    out = OPENSSL_malloc(outlen);
-    if (!CMAC_Final(ctx, out, &outlen))
-	    goto end;
-#if 1
-    {
-    char *hexout = OPENSSL_malloc(outlen * 2 + 1);
-    bin2hex(out, outlen, hexout);
-    printf("CMAC-TDEA2: res = %s\n", hexout);
-    OPENSSL_free(hexout);
-    }
-    r = 1;
-#else
-    if (!memcmp(out,kaval,outlen))
-	    r = 1;
-#endif
-    end:
-    CMAC_CTX_free(ctx);
-    if (out)
-  	  OPENSSL_free(out);
-    return r;
-    }
-
 /* CMAC-TDEA3: generate hash of known digest value and compare to known
    precomputed correct hash
 */
