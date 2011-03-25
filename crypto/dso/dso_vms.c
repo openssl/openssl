@@ -68,8 +68,8 @@
 #include <stsdef.h>
 #include <descrip.h>
 #include <starlet.h>
-#endif
 #include "vms_rms.h"
+#endif
 
 /* Some compiler options may mask the declaration of "_malloc32". */
 #if __INITIAL_POINTER_SIZE && defined _ANSI_C_SOURCE
