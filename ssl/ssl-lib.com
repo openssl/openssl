@@ -48,6 +48,9 @@ $!
 $!      ""      Compile with default (/NOPOINTER_SIZE)
 $!      32      Compile with /POINTER_SIZE=32 (SHORT)
 $!      64      Compile with /POINTER_SIZE=64[=ARGV] (LONG[=ARGV])
+$!               (Automatically select ARGV if compiler supports it.)
+$!      64=      Compile with /POINTER_SIZE=64 (LONG).
+$!      64=ARGV  Compile with /POINTER_SIZE=64=ARGV (LONG=ARGV).
 $!
 $!  P7, if defined, specifies a directory where ZLIB files (zlib.h,
 $!  libz.olb) may be found.  Optionally, a non-default object library
@@ -158,6 +161,10 @@ $! Define The CRYPTO-LIB We Are To Use.
 $!
 $ CRYPTO_LIB := SYS$DISK:[-.'ARCHD'.EXE.CRYPTO]SSL_LIBCRYPTO'LIB32'.OLB
 $!
+$! Set up exceptional compilations.
+$!
+$ CC5_SHOWN = 0
+$!
 $! Check To See What We Are To Do.
 $!
 $ IF (BUILDALL.EQS."TRUE")
@@ -215,6 +222,8 @@ $ LIB_SSL = "s2_meth,s2_srvr,s2_clnt,s2_lib,s2_enc,s2_pkt,"+ -
 	    "ssl_ciph,ssl_stat,ssl_rsa,"+ -
 	    "ssl_asn1,ssl_txt,ssl_algs,"+ -
 	    "bio_ssl,ssl_err,kssl,tls_srp,t1_reneg"
+$!
+$ COMPILEWITH_CC5 = ""
 $!
 $! Tell The User That We Are Compiling The Library.
 $!
@@ -329,6 +338,8 @@ $! End The SSL_TASK.C File Check.
 $!
 $ ENDIF
 $!
+$ COMPILEWITH_CC5 = "" !!! ",ssl_task,"
+$!
 $! Tell The User We Are Creating The SSL_TASK.
 $!
 $ WRITE SYS$OUTPUT "Creating SSL_TASK OSU HTTP SSL Engine."	
@@ -342,11 +353,20 @@ $! Compile The File.
 $!
 $ ON ERROR THEN GOTO SSL_TASK_END
 $!
+$ FILE_NAME0 = ","+ F$ELEMENT(0,".",FILE_NAME)+ ","
+$ IF COMPILEWITH_CC5 - FILE_NAME0 .NES. COMPILEWITH_CC5
+$ THEN
+$   if (.not. CC5_SHOWN)
+$   then
+$     CC5_SHOWN = 1
 $ write sys$output "        \Using special rule (5)"
 $ x = "    "+ CC5
 $ write /symbol sys$output x
-$!
-$ CC5/OBJECT='OBJ_DIR''FILE_NAME'.OBJ SYS$DISK:[]'FILE_NAME'.C
+$   endif
+$   CC5 /OBJECT='OBJ_DIR''FILE_NAME'.OBJ SYS$DISK:[]'FILE_NAME'.C
+$ ELSE
+$   CC /OBJECT='OBJ_DIR''FILE_NAME'.OBJ SYS$DISK:[]'FILE_NAME'.C
+$ ENDIF
 $!
 $! Link The Program.
 $!
@@ -690,11 +710,14 @@ $   IF (P6 .EQS. "32")
 $   THEN
 $     POINTER_SIZE = "/POINTER_SIZE=32"
 $   ELSE
-$     IF (P6 .EQS. "64")
+$     POINTER_SIZE = F$EDIT( P6, "COLLAPSE, UPCASE")
+$     IF ((POINTER_SIZE .EQS. "64") .OR. -
+       (POINTER_SIZE .EQS. "64=") .OR. -
+       (POINTER_SIZE .EQS. "64=ARGV"))
 $     THEN
-$       POINTER_SIZE = "/POINTER_SIZE=64"
 $       ARCHD = ARCH+ "_64"
 $       LIB32 = ""
+$       POINTER_SIZE = "/POINTER_SIZE=64"
 $     ELSE
 $!
 $!      Tell The User Entered An Invalid Option.
@@ -703,9 +726,16 @@ $       WRITE SYS$OUTPUT ""
 $       WRITE SYS$OUTPUT "The Option ", P6, -
          " Is Invalid.  The Valid Options Are:"
 $       WRITE SYS$OUTPUT ""
-$       WRITE SYS$OUTPUT "    """"  :  Compile with default (short) pointers."
-$       WRITE SYS$OUTPUT "    32  :  Compile with 32-bit (short) pointers."
-$       WRITE SYS$OUTPUT "    64  :  Compile with 64-bit (long) pointers."
+$       WRITE SYS$OUTPUT -
+         "    """"       :  Compile with default (short) pointers."
+$       WRITE SYS$OUTPUT -
+         "    32       :  Compile with 32-bit (short) pointers."
+$       WRITE SYS$OUTPUT -
+         "    64       :  Compile with 64-bit (long) pointers (auto ARGV)."
+$       WRITE SYS$OUTPUT -
+         "    64=      :  Compile with 64-bit (long) pointers (no ARGV)."
+$       WRITE SYS$OUTPUT -
+         "    64=ARGV  :  Compile with 64-bit (long) pointers (ARGV)."
 $       WRITE SYS$OUTPUT ""
 $! 
 $!      Time To EXIT.
@@ -824,7 +854,7 @@ $ CCDEFS = "TCPIP_TYPE_''P4'"
 $ IF F$TYPE(USER_CCDEFS) .NES. "" THEN CCDEFS = CCDEFS + "," + USER_CCDEFS
 $ CCEXTRAFLAGS = ""
 $ IF F$TYPE(USER_CCFLAGS) .NES. "" THEN CCEXTRAFLAGS = USER_CCFLAGS
-$ CCDISABLEWARNINGS = "LONGLONGTYPE,LONGLONGSUFX,FOUNDCR"
+$ CCDISABLEWARNINGS = "" !!! "LONGLONGTYPE,LONGLONGSUFX,FOUNDCR"
 $ IF F$TYPE(USER_CCDISABLEWARNINGS) .NES. "" THEN -
 	CCDISABLEWARNINGS = CCDISABLEWARNINGS + "," + USER_CCDISABLEWARNINGS
 $!
@@ -904,8 +934,8 @@ $!
 $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=RELAXED"+ -
-       "''POINTER_SIZE'/NOLIST/PREFIX=ALL" + -
+$     CC = CC + "/''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
+       "''POINTER_SIZE' /NOLIST /PREFIX=ALL" + -
        "/INCLUDE=(''CC_INCLUDES')" + CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.

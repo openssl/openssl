@@ -32,11 +32,15 @@ $!      APPS      Just build the "[.xxx.EXE.APPS]" application programs for Open
 $!      ENGINES   Just build the "[.xxx.EXE.ENGINES]" application programs for OpenSSL.
 $!
 $! P2, if defined, specifies the C pointer size.  Ignored on VAX.
+$!      ("64=ARGV" gives more efficient code with HP C V7.3 or newer.)
 $!     Supported values are:
 $!
-$!      ""      Compile with default (/NOPOINTER_SIZE)
-$!      32      Compile with /POINTER_SIZE=32 (SHORT)
-$!      64      Compile with /POINTER_SIZE=64[=ARGV] (LONG[=ARGV])
+$!      ""       Compile with default (/NOPOINTER_SIZE).
+$!      32       Compile with /POINTER_SIZE=32 (SHORT).
+$!      64       Compile with /POINTER_SIZE=64[=ARGV] (LONG[=ARGV]).
+$!               (Automatically select ARGV if compiler supports it.)
+$!      64=      Compile with /POINTER_SIZE=64 (LONG).
+$!      64=ARGV  Compile with /POINTER_SIZE=64=ARGV (LONG=ARGV).
 $!
 $! P3 specifies DEBUG or NODEBUG, to compile with or without debugging
 $!    information.
@@ -1045,9 +1049,11 @@ $   IF (P2 .EQS. "32")
 $   THEN
 $     POINTER_SIZE = "32"
 $   ELSE
-$     IF (P2 .EQS. "64")
+$     POINTER_SIZE = F$EDIT( P2, "COLLAPSE, UPCASE")
+$     IF ((POINTER_SIZE .EQS. "64") .OR. -
+       (POINTER_SIZE .EQS. "64=") .OR. -
+       (POINTER_SIZE .EQS. "64=ARGV"))
 $     THEN
-$       POINTER_SIZE = "64"
 $       ARCHD = ARCH+ "_64"
 $       LIB32 = ""
 $     ELSE
@@ -1058,9 +1064,16 @@ $       WRITE SYS$OUTPUT ""
 $       WRITE SYS$OUTPUT "The Option ", P2, -
          " Is Invalid.  The Valid Options Are:"
 $       WRITE SYS$OUTPUT ""
-$       WRITE SYS$OUTPUT "    """"  :  Compile with default (short) pointers."
-$       WRITE SYS$OUTPUT "    32  :  Compile with 32-bit (short) pointers."
-$       WRITE SYS$OUTPUT "    64  :  Compile with 64-bit (long) pointers."
+$       WRITE SYS$OUTPUT -
+         "    """"       :  Compile with default (short) pointers."
+$       WRITE SYS$OUTPUT -
+         "    32       :  Compile with 32-bit (short) pointers."
+$       WRITE SYS$OUTPUT -
+         "    64       :  Compile with 64-bit (long) pointers (auto ARGV)."
+$       WRITE SYS$OUTPUT -
+         "    64=      :  Compile with 64-bit (long) pointers (no ARGV)."
+$       WRITE SYS$OUTPUT -
+         "    64=ARGV  :  Compile with 64-bit (long) pointers (ARGV)."
 $       WRITE SYS$OUTPUT ""
 $! 
 $!      Time To EXIT.

@@ -25,7 +25,7 @@ $!	   VAXC	 For VAX C.
 $!	   DECC	 For DEC C.
 $!	   GNUC	 For GNU C.
 $!
-$!  If you don't speficy a compiler, it will try to determine which
+$!  If you don't specify a compiler, it will try to determine which
 $!  "C" compiler to use.
 $!
 $!  P3, if defined, sets a TCP/IP library to use, through one of the following
@@ -43,6 +43,9 @@ $!
 $!      ""      Compile with default (/NOPOINTER_SIZE)
 $!      32      Compile with /POINTER_SIZE=32 (SHORT)
 $!      64      Compile with /POINTER_SIZE=64[=ARGV] (LONG[=ARGV])
+$!               (Automatically select ARGV if compiler supports it.)
+$!      64=      Compile with /POINTER_SIZE=64 (LONG).
+$!      64=ARGV  Compile with /POINTER_SIZE=64=ARGV (LONG=ARGV).
 $!
 $!  P6, if defined, specifies a directory where ZLIB files (zlib.h,
 $!  libz.olb) may be found.  Optionally, a non-default object library
@@ -536,13 +539,22 @@ $   IF (P5 .EQS. "32")
 $   THEN
 $     POINTER_SIZE = "/POINTER_SIZE=32"
 $   ELSE
-$     IF (P5 .EQS. "64")
+$     POINTER_SIZE = F$EDIT( P5, "COLLAPSE, UPCASE")
+$     IF ((POINTER_SIZE .EQS. "64") .OR. -
+       (POINTER_SIZE .EQS. "64=") .OR. -
+       (POINTER_SIZE .EQS. "64=ARGV"))
 $     THEN
-$       POINTER_SIZE = "/POINTER_SIZE=64"
+$       ARCHD = ARCH+ "_64"
+$       LIB32 = ""
+$       IF (F$EXTRACT( 2, 1, POINTER_SIZE) .EQS. "=")
+$       THEN
+$!         Explicit user choice: "64" or "64=ARGV".
+$          IF (POINTER_SIZE .EQS. "64=") THEN POINTER_SIZE = "64"
+$       ELSE
 $	SET NOON
-$	DEFINE /USER SYS$OUTPUT NL:
-$	DEFINE /USER SYS$ERROR NL:
-$	CC /POINTER_SIZE=64=ARGV NL:
+$         DEFINE /USER_MODE SYS$OUTPUT NL:
+$         DEFINE /USER_MODE SYS$ERROR NL:
+$         CC /NOLIST /NOOBJECT /POINTER_SIZE=64=ARGV NL:
 $	IF ($STATUS .AND. %X0FFF0000) .EQ. %X00030000
 $	THEN
 $	  ! If we got here, it means DCL complained like this:
@@ -554,14 +566,14 @@ $	  ! have been deassigned automatically.  However, when DCL
 $	  ! complains, they aren't, so we do it here (it might be
 $	  ! unnecessary, but just in case there will be another error
 $	  ! message further on that we don't want to miss)
-$	  DEASSIGN/USER SYS$ERROR
-$	  DEASSIGN/USER SYS$OUTPUT
+$           DEASSIGN /USER_MODE SYS$ERROR
+$           DEASSIGN /USER_MODE SYS$OUTPUT
 $	ELSE
 $	  POINTER_SIZE = POINTER_SIZE + "=ARGV"
 $	ENDIF
 $	SET ON
-$       ARCHD = ARCH+ "_64"
-$       LIB32 = ""
+$       ENDIF
+$       POINTER_SIZE = "/POINTER_SIZE=''POINTER_SIZE'"
 $     ELSE
 $!
 $!      Tell The User Entered An Invalid Option.
@@ -570,9 +582,16 @@ $       WRITE SYS$OUTPUT ""
 $       WRITE SYS$OUTPUT "The Option ", P5, -
          " Is Invalid.  The Valid Options Are:"
 $       WRITE SYS$OUTPUT ""
-$       WRITE SYS$OUTPUT "    """"  :  Compile with default (short) pointers."
-$       WRITE SYS$OUTPUT "    32  :  Compile with 32-bit (short) pointers."
-$       WRITE SYS$OUTPUT "    64  :  Compile with 64-bit (long) pointers."
+$       WRITE SYS$OUTPUT -
+         "    """"  :  Compile with default (short) pointers."
+$       WRITE SYS$OUTPUT -
+         "    32  :  Compile with 32-bit (short) pointers."
+$       WRITE SYS$OUTPUT -
+         "    64       :  Compile with 64-bit (long) pointers (auto ARGV)."
+$       WRITE SYS$OUTPUT -
+         "    64=      :  Compile with 64-bit (long) pointers (no ARGV)."
+$       WRITE SYS$OUTPUT -
+         "    64=ARGV  :  Compile with 64-bit (long) pointers (ARGV)."
 $       WRITE SYS$OUTPUT ""
 $! 
 $!      Time To EXIT.
