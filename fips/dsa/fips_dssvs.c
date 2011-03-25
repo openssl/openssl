@@ -626,9 +626,7 @@ int main(int argc,char **argv)
 	fprintf(stderr,"%s [prime|pqg|pqgver|keypair|keyver|siggen|sigver]\n",argv[0]);
 	exit(1);
 	}
-    fips_set_error_print();
-    if(!FIPS_mode_set(1))
-	exit(1);
+    fips_algtest_init();
     if(!strcmp(argv[1],"prime"))
 	primes(in, out);
     else if(!strcmp(argv[1],"pqg"))

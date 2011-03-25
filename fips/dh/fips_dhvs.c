@@ -160,9 +160,7 @@ int main(int argc,char **argv)
 	char *keyword = NULL, *value = NULL;
 	int do_verify = -1, exout = 0;
 
-	fips_set_error_print();
-	if(!FIPS_mode_set(1))
-		exit(1);
+	fips_algtest_init();
 
 	if (argn && !strcmp(*args, "dhver"))
 		{

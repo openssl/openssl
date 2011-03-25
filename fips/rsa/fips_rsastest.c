@@ -91,9 +91,7 @@ int main(int argc, char **argv)
 
 	int ret = 1, Saltlen = -1;
 
-	fips_set_error_print();
-	if(!FIPS_mode_set(1))
-		goto end;
+	fips_algtest_init();
 
 	if ((argc > 2) && !strcmp("-saltlen", argv[1]))
 		{

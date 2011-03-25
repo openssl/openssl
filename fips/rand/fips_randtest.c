@@ -241,7 +241,7 @@ static void run_test(unsigned char *key, int keylen, AES_PRNG_MCT *tv)
 
 int main()
 	{
-	fips_set_error_print();
+	fips_algtest_init();
 	run_test(aes_128_mct_key, 16, &aes_128_mct_tv);
 	printf("FIPS PRNG test 1 done\n");
 	run_test(aes_192_mct_key, 24, &aes_192_mct_tv);

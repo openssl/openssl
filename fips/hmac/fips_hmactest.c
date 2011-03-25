@@ -90,9 +90,7 @@ int main(int argc, char **argv)
 	FILE *in = NULL, *out = NULL;
 
 	int ret = 1;
-	fips_set_error_print();
-	if(!FIPS_mode_set(1))
-		goto end;
+	fips_algtest_init();
 
 	if (argc == 1)
 		in = stdin;

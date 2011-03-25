@@ -291,9 +291,7 @@ int main(int argc,char **argv)
 	int curve_nids[5] = {0,0,0,0,0};
 	int param_set = -1;
 
-	fips_set_error_print();
-	if(!FIPS_mode_set(1))
-		exit(1);
+	fips_algtest_init();
 
 	if (argn && !strcmp(*args, "ecdhver"))
 		{

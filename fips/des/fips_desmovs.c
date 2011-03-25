@@ -633,11 +633,7 @@ int main(int argc, char **argv)
     char fn[250] = "", rfn[256] = "";
     int f_opt = 0, d_opt = 1;
 
-#ifdef OPENSSL_FIPS
-    fips_set_error_print();
-    if(!FIPS_mode_set(1))
-	EXIT(1);
-#endif
+    fips_algtest_init();
     if (argc > 1)
 	{
 	if (strcasecmp(argv[1], "-d") == 0)

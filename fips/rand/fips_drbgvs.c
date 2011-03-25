@@ -172,7 +172,7 @@ int main(int argc,char **argv)
 
 	int gen = 0;
 
-	fips_set_error_print();
+	fips_algtest_init();
 
 	if (argc == 3)
 		{

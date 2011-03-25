@@ -156,9 +156,7 @@ int main(int argc, char **argv)
 	BN_GENCB_set(&cb, dsa_cb, stderr);
 	FIPS_md_ctx_init(&mctx);
 
-    	fips_set_error_print();
-	if(!FIPS_mode_set(1))
-	    EXIT(1);
+    	fips_algtest_init();
 
 	fprintf(stderr,"test generation of DSA parameters\n");
 

@@ -102,9 +102,7 @@ int main(int argc, char **argv)
 	int known_keylen = 0;	/* Only set when Klen_counts_keys = 1 */
 	const EVP_CIPHER *cipher = 0;
 	int ret = 1;
-	fips_set_error_print();
-	if(!FIPS_mode_set(1))
-		goto end;
+	fips_algtest_init();
 
 	while (argc > 1 && argv[1][0] == '-')
 		{

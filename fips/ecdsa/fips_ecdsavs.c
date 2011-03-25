@@ -463,9 +463,7 @@ int main(int argc, char **argv)
 	FILE *in = NULL, *out = NULL;
 	const char *cmd = argv[1];
 	int rv = 0;
-	fips_set_error_print();
-	if (!FIPS_mode_set(1))
-		exit(1);
+	fips_algtest_init();
 
 	if (argc == 4)
 		{

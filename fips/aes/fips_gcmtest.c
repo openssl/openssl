@@ -292,9 +292,7 @@ int main(int argc,char **argv)
 		fprintf(stderr,"%s [-encrypt|-decrypt]\n",argv[0]);
 		exit(1);
 		}
-	fips_set_error_print();
-	if(!FIPS_mode_set(1))
-		exit(1);
+	fips_algtest_init();
 	if(!strcmp(argv[1],"-encrypt"))
 		encrypt = 1;
 	else if(!strcmp(argv[1],"-encryptIVext"))

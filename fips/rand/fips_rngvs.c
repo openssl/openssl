@@ -226,9 +226,7 @@ int main(int argc,char **argv)
 	fprintf(stderr,"%s [mct|vst]\n",argv[0]);
 	exit(1);
 	}
-    fips_set_error_print();
-    if(!FIPS_mode_set(1))
-	exit(1);
+    fips_algtest_init();
     FIPS_rand_reset();
     if (!FIPS_rand_test_mode())
 	{

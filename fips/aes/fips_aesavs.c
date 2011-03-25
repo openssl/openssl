@@ -867,12 +867,8 @@ int main(int argc, char **argv)
     FILE *fp = NULL;
     char fn[250] = "", rfn[256] = "";
     int f_opt = 0, d_opt = 1;
-    fips_set_error_print();
+    fips_algtest_init();
 
-#ifdef OPENSSL_FIPS
-    if(!FIPS_mode_set(1))
-	EXIT(1);
-#endif
     if (argc > 1)
 	{
 	if (strcasecmp(argv[1], "-d") == 0)

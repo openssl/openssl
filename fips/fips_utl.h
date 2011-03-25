@@ -63,6 +63,7 @@ int bint2bin(const char *in, int len, unsigned char *out);
 int bin2bint(const unsigned char *in,int len,char *out);
 void PrintValue(char *tag, unsigned char *val, int len);
 void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode);
+void fips_algtest_init(void);
 
 static int no_err;
 
@@ -95,6 +96,16 @@ static void add_err_cb(int num, va_list args)
 static void fips_set_error_print(void)
 	{
 	FIPS_set_error_callbacks(put_err_cb, add_err_cb);
+	}
+
+void fips_algtest_init(void)
+	{
+	fips_set_error_print();
+	if (!FIPS_mode_set(1))
+		{
+		fprintf(stderr, "Error entering FIPS mode\n");
+		exit(1);
+		}
 	}
 
 int hex2bin(const char *in, unsigned char *out)
