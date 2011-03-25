@@ -34,6 +34,9 @@ $!
 $!	""	Compile with default (/NOPOINTER_SIZE)
 $!	32	Compile with /POINTER_SIZE=32 (SHORT)
 $!	64	Compile with /POINTER_SIZE=64[=ARGV] (LONG[=ARGV])
+$!               (Automatically select ARGV if compiler supports it.)
+$!      64=      Compile with /POINTER_SIZE=64 (LONG).
+$!      64=ARGV  Compile with /POINTER_SIZE=64=ARGV (LONG=ARGV).
 $!
 $!  P8, if defined, specifies a directory where ZLIB files (zlib.h,
 $!  libz.olb) may be found.  Optionally, a non-default object library
@@ -608,11 +611,14 @@ $   IF (OPT_POINTER_SIZE .EQS. "32")
 $   THEN
 $     POINTER_SIZE = "/POINTER_SIZE=32"
 $   ELSE
-$     IF (OPT_POINTER_SIZE .EQS. "64")
+$     POINTER_SIZE = F$EDIT( OPT_POINTER_SIZE, "COLLAPSE, UPCASE")
+$     IF ((POINTER_SIZE .EQS. "64") .OR. -
+       (POINTER_SIZE .EQS. "64=") .OR. -
+       (POINTER_SIZE .EQS. "64=ARGV"))
 $     THEN
-$       POINTER_SIZE = "/POINTER_SIZE=64"
 $       ARCHD = ARCH+ "_64"
 $       LIB32 = ""
+$       POINTER_SIZE = "/POINTER_SIZE=64"
 $     ELSE
 $!
 $!      Tell The User Entered An Invalid Option.
@@ -621,9 +627,16 @@ $       WRITE SYS$OUTPUT ""
 $       WRITE SYS$OUTPUT "The Option ", OPT_POINTER_SIZE, -
          " Is Invalid.  The Valid Options Are:"
 $       WRITE SYS$OUTPUT ""
-$       WRITE SYS$OUTPUT "    """"  :  Compile with default (short) pointers."
-$       WRITE SYS$OUTPUT "    32  :  Compile with 32-bit (short) pointers."
-$       WRITE SYS$OUTPUT "    64  :  Compile with 64-bit (long) pointers."
+$       WRITE SYS$OUTPUT -
+         "    """"       :  Compile with default (short) pointers."
+$       WRITE SYS$OUTPUT -
+         "    32       :  Compile with 32-bit (short) pointers."
+$       WRITE SYS$OUTPUT -
+         "    64       :  Compile with 64-bit (long) pointers (auto ARGV)."
+$       WRITE SYS$OUTPUT -
+         "    64=      :  Compile with 64-bit (long) pointers (no ARGV)."
+$       WRITE SYS$OUTPUT -
+         "    64=ARGV  :  Compile with 64-bit (long) pointers (ARGV)."
 $       WRITE SYS$OUTPUT ""
 $! 
 $!      Time To EXIT.
@@ -742,7 +755,7 @@ $ CCDEFS = "TCPIP_TYPE_''OPT_TCPIP_LIB',DSO_VMS"
 $ IF F$TYPE(USER_CCDEFS) .NES. "" THEN CCDEFS = CCDEFS + "," + USER_CCDEFS
 $ CCEXTRAFLAGS = ""
 $ IF F$TYPE(USER_CCFLAGS) .NES. "" THEN CCEXTRAFLAGS = USER_CCFLAGS
-$ CCDISABLEWARNINGS = "LONGLONGTYPE,LONGLONGSUFX"
+$ CCDISABLEWARNINGS = "" !!! "LONGLONGTYPE,LONGLONGSUFX"
 $ IF F$TYPE(USER_CCDISABLEWARNINGS) .NES. "" THEN -
 	CCDISABLEWARNINGS = CCDISABLEWARNINGS + "," + USER_CCDISABLEWARNINGS
 $!
@@ -821,8 +834,8 @@ $!
 $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
-$     CC = CC + "/''CC_OPTIMIZE'/''DEBUGGER'/STANDARD=RELAXED"+ -
-       "''POINTER_SIZE'/NOLIST/PREFIX=ALL" + -
+$     CC = CC + "/''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
+       "''POINTER_SIZE' /NOLIST /PREFIX=ALL" + -
        "/INCLUDE=(''CC_INCLUDES')" + -
        CCEXTRAFLAGS
 $!
