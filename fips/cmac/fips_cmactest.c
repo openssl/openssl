@@ -80,7 +80,8 @@ int main(int argc, char *argv[])
 #include <openssl/fips.h>
 #include "fips_utl.h"
 
-static int cmac_test(const EVP_CIPHER *cipher, FILE *out, FILE *in, int mode);
+static int cmac_test(const EVP_CIPHER *cipher, FILE *out, FILE *in,
+	int mode, int Klen_counts_keys, int known_keylen);
 static int print_cmac_gen(const EVP_CIPHER *cipher, FILE *out,
 		unsigned char *Key, int Klen,
 		unsigned char *Msg, int Msglen,
@@ -95,20 +96,60 @@ int main(int argc, char **argv)
 	{
 	FILE *in = NULL, *out = NULL;
 	int mode = 0;		/* 0 => Generate, 1 => Verify */
-
+	int Klen_counts_keys = 0; /* 0 => Klen is size of one key
+				     1 => Klen is amount of keys
+				  */
+	int known_keylen = 0;	/* Only set when Klen_counts_keys = 1 */
+	const EVP_CIPHER *cipher = 0;
 	int ret = 1;
 	fips_set_error_print();
 	if(!FIPS_mode_set(1))
 		goto end;
 
-	if (argc > 1 && argv[1][0] == '-')
+	while (argc > 1 && argv[1][0] == '-')
 		{
-		if (strcmp(argv[1], "-g") == 0)
-			mode = 0;
-		else if (strcmp(argv[1], "-v") == 0)
-			mode = 1;
-		else
+		switch (argv[1][1])
 			{
+		case 'a':
+			{
+			char *p = &argv[1][2];
+			if (*p == '\0')
+				{
+				if (argc <= 2)
+					{
+					fprintf(stderr, "Option %s needs a value\n", argv[1]);
+					goto end;
+					}
+				argv++;
+				argc--;
+				p = &argv[1][0];
+				}
+			if (!strcmp(p, "aes128"))
+				cipher = EVP_aes_128_cbc();
+			else if (!strcmp(p, "aes192"))
+				cipher = EVP_aes_192_cbc();
+			else if (!strcmp(p, "aes256"))
+				cipher = EVP_aes_256_cbc();
+			else if (!strcmp(p, "tdea3"))
+				{
+				cipher = EVP_des_ede3_cbc();
+				Klen_counts_keys = 1;
+				known_keylen = 8;
+				}
+			else
+				{
+				fprintf(stderr, "Unknown algorithm %s\n", p);
+				goto end;
+				}
+			}
+			break;
+		case 'g':
+			mode = 0;
+			break;
+		case 'v':
+			mode = 1;
+			break;
+		default:
 			fprintf(stderr, "Unknown option %s\n", argv[1]);
 			goto end;
 			}
@@ -137,7 +178,8 @@ int main(int argc, char **argv)
 		goto end;
 		}
 
-	if (!cmac_test(EVP_aes_256_cbc(), out, in, mode))
+	if (!cmac_test(cipher, out, in, mode,
+			Klen_counts_keys, known_keylen))
 		{
 		fprintf(stderr, "FATAL cmac file processing error\n");
 		goto end;
@@ -156,13 +198,15 @@ int main(int argc, char **argv)
 
 	}
 
-#define CMAC_TEST_MAXLINELEN	1024
+#define CMAC_TEST_MAXLINELEN	150000
 
-int cmac_test(const EVP_CIPHER *cipher, FILE *out, FILE *in, int mode)
+int cmac_test(const EVP_CIPHER *cipher, FILE *out, FILE *in,
+	int mode, int Klen_counts_keys, int known_keylen)
 	{
 	char *linebuf, *olinebuf, *p, *q;
 	char *keyword, *value;
-	unsigned char *Key = NULL, *Msg = NULL, *Mac = NULL;
+	unsigned char **Keys = NULL, *Msg = NULL, *Mac = NULL;
+	unsigned char *Key = NULL;
 	int Count, Klen, Mlen, Tlen;
 	long Keylen, Msglen, Maclen;
 	int ret = 0;
@@ -241,6 +285,16 @@ int cmac_test(const EVP_CIPHER *cipher, FILE *out, FILE *in, int mode)
 			Klen = atoi(value);
 			if (Klen < 0)
 				goto parse_error;
+			if (Klen_counts_keys)
+				{
+				Keys = OPENSSL_malloc(sizeof(*Keys) * Klen);
+				memset(Keys, '\0', sizeof(*Keys) * Klen);
+				}
+			else
+				{
+				Keys = OPENSSL_malloc(sizeof(*Keys));
+				memset(Keys, '\0', sizeof(*Keys));
+				}
 			}
 		else if (!strcmp(keyword, "Mlen"))
 			{
@@ -258,12 +312,21 @@ int cmac_test(const EVP_CIPHER *cipher, FILE *out, FILE *in, int mode)
 			if (Tlen < 0)
 				goto parse_error;
 			}
-		else if (!strcmp(keyword, "Key"))
+		else if (!strcmp(keyword, "Key") && !Klen_counts_keys)
 			{
-			if (Key)
+			if (Keys[0])
 				goto parse_error;
-			Key = hex2bin_m(value, &Keylen);
-			if (!Key)
+			Keys[0] = hex2bin_m(value, &Keylen);
+			if (!Keys[0])
+				goto parse_error;
+			}
+		else if (!strncmp(keyword, "Key", 3) && Klen_counts_keys)
+			{
+			int keynum = atoi(keyword + 3);
+			if (!keynum || keynum > Klen || Keys[keynum-1])
+				goto parse_error;
+			Keys[keynum-1] = hex2bin_m(value, &Keylen);
+			if (!Keys[keynum-1])
 				goto parse_error;
 			}
 		else if (!strcmp(keyword, "Msg"))
@@ -295,49 +358,58 @@ int cmac_test(const EVP_CIPHER *cipher, FILE *out, FILE *in, int mode)
 
 		fputs(olinebuf, out);
 
-		switch(mode)
+		if (Keys && Msg && (!mode || Mac) && (Tlen > 0) && (Klen > 0))
 			{
-		case 0:
-			if (Key && Msg && (Tlen > 0) && (Klen > 0))
+			if (Klen_counts_keys)
 				{
+				int x;
+				Key = OPENSSL_malloc(Klen * known_keylen);
+				for (x = 0; x < Klen; x++)
+					{
+					memcpy(Key + x * known_keylen,
+						Keys[x], known_keylen);
+					OPENSSL_free(Keys[x]);
+					}
+				Klen *= known_keylen;
+				}
+			else
+				{
+				Key = OPENSSL_malloc(Klen);
+				memcpy(Key, Keys[0], Klen);
+				OPENSSL_free(Keys[0]);
+				}
+			OPENSSL_free(Keys);
+
+			switch(mode)
+				{
+			case 0:
 				if (!print_cmac_gen(cipher, out,
 						Key, Klen,
 						Msg, Mlen,
 						Tlen))
 					goto error;
-				OPENSSL_free(Key);
-				Key = NULL;
-				OPENSSL_free(Msg);
-				Msg = NULL;
-				Klen = -1;
-				Mlen = -1;
-				Tlen = -1;
-				Count = -1;
-				}
-			break;
-		case 1:
-			if (Key && Msg && Mac && (Tlen > 0) && (Klen > 0))
-				{
+				break;
+			case 1:
 				if (!print_cmac_ver(cipher, out,
 						Key, Klen,
 						Msg, Mlen,
 						Mac, Maclen,
 						Tlen))
 					goto error;
-				OPENSSL_free(Key);
-				Key = NULL;
-				OPENSSL_free(Msg);
-				Msg = NULL;
-				OPENSSL_free(Mac);
-				Mac = NULL;
-				Klen = -1;
-				Mlen = -1;
-				Tlen = -1;
-				Count = -1;
+				break;
 				}
-			break;
-			}
 
+			OPENSSL_free(Key);
+			Key = NULL;
+			OPENSSL_free(Msg);
+			Msg = NULL;
+			OPENSSL_free(Mac);
+			Mac = NULL;
+			Klen = -1;
+			Mlen = -1;
+			Tlen = -1;
+			Count = -1;
+			}
 		}
 
 
@@ -354,6 +426,8 @@ int cmac_test(const EVP_CIPHER *cipher, FILE *out, FILE *in, int mode)
 		OPENSSL_free(Key);
 	if (Msg)
 		OPENSSL_free(Msg);
+	if (Mac)
+		OPENSSL_free(Mac);
 
 	return ret;
 
@@ -372,7 +446,7 @@ static int print_cmac_gen(const EVP_CIPHER *cipher, FILE *out,
 	{
 	int rc, i;
 	size_t reslen;
-	unsigned char res[1024];
+	unsigned char res[128];
 	CMAC_CTX *cmac_ctx = CMAC_CTX_new();
 
 	CMAC_Init(cmac_ctx, Key, Klen, cipher, 0);
@@ -407,7 +481,7 @@ static int print_cmac_ver(const EVP_CIPHER *cipher, FILE *out,
 	{
 	int rc;
 	size_t reslen;
-	unsigned char res[1024];
+	unsigned char res[128];
 	CMAC_CTX *cmac_ctx = CMAC_CTX_new();
 
 	CMAC_Init(cmac_ctx, Key, Klen, cipher, 0);
