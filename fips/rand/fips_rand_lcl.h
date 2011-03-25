@@ -84,8 +84,6 @@ struct drbg_ctr_ctx_st
 
 /* DRBG flags */
 
-/* PRNG is in test state */
-#define	DRBG_FLAG_TEST			0x2
 /* Functions shouldn't call err library */
 #define	DRBG_FLAG_NOERR			0x4
 

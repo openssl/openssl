@@ -245,10 +245,10 @@ int main(int argc,char **argv)
 		if (!strcmp(keyword, "PersonalizationString"))
 			{
 			pers = hex2bin_m(value, &perslen);
-			dctx = FIPS_drbg_new(nid, df);
+			dctx = FIPS_drbg_new(nid, df | DRBG_FLAG_TEST);
 			if (!dctx)
 				exit (1);
-			FIPS_drbg_set_test_mode(dctx, test_entropy, test_nonce);
+			FIPS_drbg_set_callbacks(dctx, test_entropy, test_nonce);
 			FIPS_drbg_set_app_data(dctx, &t);
 			randoutlen = (int)FIPS_drbg_get_blocklength(dctx);
 			r = FIPS_drbg_instantiate(dctx, pers, perslen);

@@ -74,6 +74,8 @@ typedef struct drbg_ctx_st DRBG_CTX;
 
 /* Flag for CTR mode only: use derivation function ctr_df */
 #define	DRBG_FLAG_CTR_USE_DF		0x1
+/* PRNG is in test state */
+#define	DRBG_FLAG_TEST			0x2
 
 DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags);
 int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags);
@@ -87,7 +89,7 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 int FIPS_drbg_uninstantiate(DRBG_CTX *dctx);
 void FIPS_drbg_free(DRBG_CTX *dctx);
 
-int FIPS_drbg_set_test_mode(DRBG_CTX *dctx,
+int FIPS_drbg_set_callbacks(DRBG_CTX *dctx,
 	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char *out,
 				int entropy, size_t min_len, size_t max_len),
 	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char *out,

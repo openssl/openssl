@@ -4300,7 +4300,7 @@ FIPS_drbg_set_app_data                  4669	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_ecdsa_sign_ctx                     4670	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
 FIPS_ecdsa_sign_digest                  4671	EXIST:OPENSSL_FIPS:FUNCTION:ECDSA
 X509_ALGOR_set_md                       4672	EXIST::FUNCTION:
-FIPS_drbg_set_test_mode                 4673	EXIST:OPENSSL_FIPS:FUNCTION:
+FIPS_drbg_set_callbacks                 4673	EXIST:OPENSSL_FIPS:FUNCTION:
 ASN1_SCTX_new                           4674	EXIST::FUNCTION:
 FIPS_set_locking_callbacks              4675	EXIST:OPENSSL_FIPS:FUNCTION:
 CRYPTO_ctr128_encrypt_ctr32             4676	EXIST::FUNCTION:

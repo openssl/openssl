@@ -400,7 +400,7 @@ int FIPS_drbg_uninstantiate(DRBG_CTX *dctx)
 	return rv;
 	}
 
-int FIPS_drbg_set_test_mode(DRBG_CTX *dctx,
+int FIPS_drbg_set_callbacks(DRBG_CTX *dctx,
 	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char *out,
 				int entropy, size_t min_len, size_t max_len),
 	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char *out,
@@ -408,7 +408,6 @@ int FIPS_drbg_set_test_mode(DRBG_CTX *dctx,
 	{
 	if (dctx->status != DRBG_STATUS_UNINITIALISED)
 		return 0;
-	dctx->flags |= DRBG_FLAG_TEST;
 	dctx->get_entropy = get_entropy;
 	dctx->get_nonce = get_nonce;
 	return 1;
