@@ -40,3 +40,4 @@ fips_test_suite
 fips_dhvs
 fips_drbgvs
 fips_ecdsavs
+fips_ecdhvs
