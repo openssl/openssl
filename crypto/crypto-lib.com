@@ -48,10 +48,11 @@ $!  WARNING: this should only be done to recompile some part of an already
 $!  fully compiled library.
 $!
 $!  P7, if defined, specifies the C pointer size.  Ignored on VAX.
+$!      ("64=ARGV" gives more efficient code with HP C V7.3 or newer.)
 $!      Supported values are:
 $!
-$!      ""      Compile with default (/NOPOINTER_SIZE)
-$!      32      Compile with /POINTER_SIZE=32 (SHORT)
+$!      ""       Compile with default (/NOPOINTER_SIZE)
+$!      32       Compile with /POINTER_SIZE=32 (SHORT)
 $!      64       Compile with /POINTER_SIZE=64[=ARGV] (LONG[=ARGV]).
 $!               (Automatically select ARGV if compiler supports it.)
 $!      64=      Compile with /POINTER_SIZE=64 (LONG).
@@ -976,7 +977,7 @@ $ THEN
 $!
 $   IF (P7 .EQS. "32")
 $   THEN
-$     POINTER_SIZE = "/POINTER_SIZE=32"
+$     POINTER_SIZE = " /POINTER_SIZE=32"
 $   ELSE
 $     POINTER_SIZE = F$EDIT( P7, "COLLAPSE, UPCASE")
 $     IF ((POINTER_SIZE .EQS. "64") .OR. -
@@ -985,7 +986,7 @@ $     IF ((POINTER_SIZE .EQS. "64") .OR. -
 $     THEN
 $       ARCHD = ARCH+ "_64"
 $       LIB32 = ""
-$       POINTER_SIZE = "/POINTER_SIZE=64"
+$       POINTER_SIZE = " /POINTER_SIZE=64"
 $     ELSE
 $!
 $!      Tell The User Entered An Invalid Option.
@@ -1203,9 +1204,9 @@ $!
 $     CC = "CC"
 $     IF ARCH.EQS."VAX" .AND. F$TRNLNM("DECC$CC_DEFAULT").NES."/DECC" -
 	 THEN CC = "CC/DECC"
-$     CC = CC + "/''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
+$     CC = CC + " /''CC_OPTIMIZE' /''DEBUGGER' /STANDARD=RELAXED"+ -
        "''POINTER_SIZE' /NOLIST /PREFIX=ALL" + -
-       "/INCLUDE=(''CC_INCLUDES')"+ -
+       " /INCLUDE=(''CC_INCLUDES')"+ -
        CCEXTRAFLAGS
 $!
 $!    Define The Linker Options File Name.
@@ -1297,20 +1298,20 @@ $       CC6DISABLEWARNINGS = "MIXLINKAGE"
 $     ELSE
 $       CC4DISABLEWARNINGS = CCDISABLEWARNINGS + ",DOLLARID"
 $       CC6DISABLEWARNINGS = CCDISABLEWARNINGS + ",MIXLINKAGE"
-$       CCDISABLEWARNINGS = "/WARNING=(DISABLE=(" + CCDISABLEWARNINGS + "))"
+$       CCDISABLEWARNINGS = " /WARNING=(DISABLE=(" + CCDISABLEWARNINGS + "))"
 $     ENDIF
-$     CC4DISABLEWARNINGS = "/WARNING=(DISABLE=(" + CC4DISABLEWARNINGS + "))"
-$     CC6DISABLEWARNINGS = "/WARNING=(DISABLE=(" + CC6DISABLEWARNINGS + "))"
+$     CC4DISABLEWARNINGS = " /WARNING=(DISABLE=(" + CC4DISABLEWARNINGS + "))"
+$     CC6DISABLEWARNINGS = " /WARNING=(DISABLE=(" + CC6DISABLEWARNINGS + "))"
 $   ELSE
 $     CCDISABLEWARNINGS = ""
 $     CC4DISABLEWARNINGS = ""
 $     CC6DISABLEWARNINGS = ""
 $   ENDIF
-$   CC3 = CC + "/DEFINE=(" + CCDEFS + ISSEVEN + ")" + CCDISABLEWARNINGS
-$   CC = CC + "/DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
+$   CC3 = CC + " /DEFINE=(" + CCDEFS + ISSEVEN + ")" + CCDISABLEWARNINGS
+$   CC = CC + " /DEFINE=(" + CCDEFS + ")" + CCDISABLEWARNINGS
 $   IF ARCH .EQS. "VAX" .AND. COMPILER .EQS. "DECC" .AND. P2 .NES. "DEBUG"
 $   THEN
-$     CC5 = CC + "/OPTIMIZE=NODISJOINT"
+$     CC5 = CC + " /OPTIMIZE=NODISJOINT"
 $     CC5_DIFFERENT = 1
 $   ELSE
 $     CC5 = CC
