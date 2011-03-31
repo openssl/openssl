@@ -23,9 +23,11 @@ APPS=
 
 LIB=$(TOP)/libcrypto.a
 LIBSRC=	fips_rand.c fips_rand_selftest.c \
-	fips_drbg_lib.c fips_drbg_hash.c fips_drbg_ctr.c fips_drbg_selftest.c
+	fips_drbg_lib.c fips_drbg_hash.c fips_drbg_ctr.c fips_drbg_selftest.c \
+	fips_drbg_rand.c
 LIBOBJ=	fips_rand.o fips_rand_selftest.o \
-	fips_drbg_lib.o fips_drbg_hash.o fips_drbg_ctr.o fips_drbg_selftest.o
+	fips_drbg_lib.o fips_drbg_hash.o fips_drbg_ctr.o fips_drbg_selftest.o \
+	fips_drbg_rand.o
 
 SRC= $(LIBSRC)
 
