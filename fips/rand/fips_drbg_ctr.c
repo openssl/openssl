@@ -404,9 +404,9 @@ int fips_drbg_ctr_init(DRBG_CTX *dctx)
 		AES_set_encrypt_key(df_key, dctx->strength, &cctx->df_ks);
 
 		dctx->min_entropy = cctx->keylen;
-		dctx->max_entropy = DRBG_MAX_ENTROPY;
+		dctx->max_entropy = DRBG_MAX_LENGTH;
 		dctx->min_nonce = dctx->min_entropy / 2;
-		dctx->max_nonce = DRBG_MAX_NONCE;
+		dctx->max_nonce = DRBG_MAX_LENGTH;
 		dctx->max_pers = DRBG_MAX_LENGTH;
 		dctx->max_adin = DRBG_MAX_LENGTH;
 		}

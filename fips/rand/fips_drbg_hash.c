@@ -368,10 +368,10 @@ int fips_drbg_hash_init(DRBG_CTX *dctx)
 
 
 	dctx->min_entropy = dctx->strength / 8;
-	dctx->max_entropy = DRBG_MAX_ENTROPY;
+	dctx->max_entropy = DRBG_MAX_LENGTH;
 
 	dctx->min_nonce = dctx->min_entropy / 2;
-	dctx->max_nonce = DRBG_MAX_NONCE;
+	dctx->max_nonce = DRBG_MAX_LENGTH;
 
 	dctx->max_pers = DRBG_MAX_LENGTH;
 	dctx->max_adin = DRBG_MAX_LENGTH;

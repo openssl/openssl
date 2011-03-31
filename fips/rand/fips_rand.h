@@ -90,10 +90,12 @@ int FIPS_drbg_uninstantiate(DRBG_CTX *dctx);
 void FIPS_drbg_free(DRBG_CTX *dctx);
 
 int FIPS_drbg_set_callbacks(DRBG_CTX *dctx,
-	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char *out,
+	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
 				int entropy, size_t min_len, size_t max_len),
-	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char *out,
-				int entropy, size_t min_len, size_t max_len));
+	void (*cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
+	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
+				int entropy, size_t min_len, size_t max_len),
+	void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen));
 
 void *FIPS_drbg_get_app_data(DRBG_CTX *ctx);
 void FIPS_drbg_set_app_data(DRBG_CTX *ctx, void *app_data);

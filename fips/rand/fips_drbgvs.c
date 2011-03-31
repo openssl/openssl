@@ -135,19 +135,19 @@ typedef struct
 	size_t noncelen;
 	} TEST_ENT;
 
-static size_t test_entropy(DRBG_CTX *dctx, unsigned char *out,
+static size_t test_entropy(DRBG_CTX *dctx, unsigned char **pout,
                                 int entropy, size_t min_len, size_t max_len)
 	{
 	TEST_ENT *t = FIPS_drbg_get_app_data(dctx);
-	memcpy(out, t->ent, t->entlen);
+	*pout = (unsigned char *)t->ent;
 	return t->entlen;
 	}
 
-static size_t test_nonce(DRBG_CTX *dctx, unsigned char *out,
+static size_t test_nonce(DRBG_CTX *dctx, unsigned char **pout,
                                 int entropy, size_t min_len, size_t max_len)
 	{
 	TEST_ENT *t = FIPS_drbg_get_app_data(dctx);
-	memcpy(out, t->nonce, t->noncelen);
+	*pout = (unsigned char *)t->nonce;
 	return t->noncelen;
 	}
 
@@ -248,7 +248,8 @@ int main(int argc,char **argv)
 			dctx = FIPS_drbg_new(nid, df | DRBG_FLAG_TEST);
 			if (!dctx)
 				exit (1);
-			FIPS_drbg_set_callbacks(dctx, test_entropy, test_nonce);
+			FIPS_drbg_set_callbacks(dctx, test_entropy, 0,
+							test_nonce, 0);
 			FIPS_drbg_set_app_data(dctx, &t);
 			randoutlen = (int)FIPS_drbg_get_blocklength(dctx);
 			r = FIPS_drbg_instantiate(dctx, pers, perslen);

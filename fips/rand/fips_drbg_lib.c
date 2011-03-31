@@ -121,7 +121,8 @@ void FIPS_drbg_free(DRBG_CTX *dctx)
 int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 				const unsigned char *pers, size_t perslen)
 	{
-	size_t entlen, noncelen;
+	size_t entlen = 0, noncelen = 0;
+	unsigned char *nonce = NULL, *entropy = NULL;
 
 #if 0
 	/* Put here so error script picks them up */
@@ -153,7 +154,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 
 	dctx->status = DRBG_STATUS_ERROR;
 
-	entlen = dctx->get_entropy(dctx, dctx->entropy, dctx->strength,
+	entlen = dctx->get_entropy(dctx, &entropy, dctx->strength,
 				dctx->min_entropy, dctx->max_entropy);
 
 	if (entlen < dctx->min_entropy || entlen > dctx->max_entropy)
@@ -164,8 +165,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 
 	if (dctx->max_nonce > 0)
 		{
-
-		noncelen = dctx->get_nonce(dctx, dctx->nonce,
+		noncelen = dctx->get_nonce(dctx, &nonce,
 					dctx->strength / 2,
 					dctx->min_nonce, dctx->max_nonce);
 
@@ -176,12 +176,10 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 			}
 
 		}
-	else
-		noncelen = 0;
 
 	if (!dctx->instantiate(dctx, 
-				dctx->entropy, entlen,
-				dctx->nonce, noncelen,
+				entropy, entlen,
+				nonce, noncelen,
 				pers, perslen))
 		{
 		r = FIPS_R_ERROR_INSTANTIATING_DRBG;
@@ -194,8 +192,11 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 
 	end:
 
-	OPENSSL_cleanse(dctx->entropy, sizeof(dctx->entropy));
-	OPENSSL_cleanse(dctx->nonce, sizeof(dctx->nonce));
+	if (entropy && dctx->cleanup_entropy)
+		dctx->cleanup_entropy(dctx, entropy, entlen);
+
+	if (nonce && dctx->cleanup_nonce)
+		dctx->cleanup_nonce(dctx, nonce, noncelen);
 
 	if (dctx->status == DRBG_STATUS_READY)
 		return 1;
@@ -210,6 +211,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 int FIPS_drbg_reseed(DRBG_CTX *dctx,
 			const unsigned char *adin, size_t adinlen)
 	{
+	unsigned char *entropy = NULL;
 	size_t entlen;
 	int r = 0;
 
@@ -237,7 +239,7 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 
 	dctx->status = DRBG_STATUS_ERROR;
 
-	entlen = dctx->get_entropy(dctx, dctx->entropy, dctx->strength,
+	entlen = dctx->get_entropy(dctx, &entropy, dctx->strength,
 				dctx->min_entropy, dctx->max_entropy);
 
 	if (entlen < dctx->min_entropy || entlen > dctx->max_entropy)
@@ -246,13 +248,15 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 		goto end;
 		}
 
-	if (!dctx->reseed(dctx, dctx->entropy, entlen, adin, adinlen))
+	if (!dctx->reseed(dctx, entropy, entlen, adin, adinlen))
 		goto end;
 
 	dctx->status = DRBG_STATUS_READY;
 	dctx->reseed_counter = 1;
 	end:
-	OPENSSL_cleanse(dctx->entropy, sizeof(dctx->entropy));
+
+	if (entropy && dctx->cleanup_entropy)
+		dctx->cleanup_entropy(dctx, entropy, entlen);
 
 	if (dctx->status == DRBG_STATUS_READY)
 		return 1;
@@ -401,15 +405,19 @@ int FIPS_drbg_uninstantiate(DRBG_CTX *dctx)
 	}
 
 int FIPS_drbg_set_callbacks(DRBG_CTX *dctx,
-	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char *out,
+	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
 				int entropy, size_t min_len, size_t max_len),
-	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char *out,
-				int entropy, size_t min_len, size_t max_len))
+	void (*cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
+	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
+				int entropy, size_t min_len, size_t max_len),
+	void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen))
 	{
 	if (dctx->status != DRBG_STATUS_UNINITIALISED)
 		return 0;
 	dctx->get_entropy = get_entropy;
+	dctx->cleanup_entropy = cleanup_entropy;
 	dctx->get_nonce = get_nonce;
+	dctx->cleanup_nonce = cleanup_nonce;
 	return 1;
 	}
 

@@ -153,17 +153,19 @@ struct drbg_ctx_st
 	/* uninstantiate */
 	int (*uninstantiate)(DRBG_CTX *ctx);
 
-	unsigned char entropy[DRBG_MAX_ENTROPY];
-
 	/* entropy gathering function */
-	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char *out,
+	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
 				int entropy, size_t min_len, size_t max_len);
+	/* Indicates we have finished with entropy buffer */
+	void (*cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen);
 
 	unsigned char nonce[DRBG_MAX_NONCE];
 
 	/* nonce gathering function */
-	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char *out,
+	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
 				int entropy, size_t min_len, size_t max_len);
+	/* Indicates we have finished with nonce buffer */
+	void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen);
 
 	/* Continuous random number test temporary area */
 	/* Last block */	
