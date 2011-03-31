@@ -97,10 +97,6 @@ struct drbg_ctr_ctx_st
 /* fatal error condition */
 #define DRBG_STATUS_ERROR		3
 
-/* Maximum values for temp entropy and nonce */
-#define DRBG_MAX_ENTROPY		1024
-#define DRBG_MAX_NONCE			1024
-
 /* A default maximum length: larger than any reasonable value used in pratice */
 
 #define DRBG_MAX_LENGTH			0x7ffffff0
@@ -158,8 +154,6 @@ struct drbg_ctx_st
 				int entropy, size_t min_len, size_t max_len);
 	/* Indicates we have finished with entropy buffer */
 	void (*cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen);
-
-	unsigned char nonce[DRBG_MAX_NONCE];
 
 	/* nonce gathering function */
 	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char **pout,

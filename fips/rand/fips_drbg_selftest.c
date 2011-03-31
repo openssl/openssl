@@ -797,6 +797,8 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	rv = 1;
 
 	err:
+	if (rv == 0)
+		FIPSerr(FIPS_F_FIPS_DRBG_SINGLE_KAT, FIPS_R_SELFTEST_FAILED);
 	FIPS_drbg_uninstantiate(dctx);
 	
 	return rv;
