@@ -408,7 +408,7 @@ static int FIPS_cmac_aes128_test()
 	      0xd7,0xd5,0x66,0xf5, 0xd2,0x8d,0xbd,0x2a, };
 
     unsigned char *out = NULL;
-    unsigned int outlen;
+    size_t outlen;
     CMAC_CTX *ctx = CMAC_CTX_new();
     int r = 0;
 
@@ -459,7 +459,7 @@ static int FIPS_cmac_aes192_test()
 	      0xb1,0x4a,0x0b,0xf2, 0xc6,0x3c,0x47,0x1f, };
 
     unsigned char *out = NULL;
-    unsigned int outlen;
+    size_t outlen;
     CMAC_CTX *ctx = CMAC_CTX_new();
     int r = 0;
 
@@ -511,7 +511,7 @@ static int FIPS_cmac_aes256_test()
 	      0xb0,0x86,0x37,0x5f, 0x15,0x60,0xba,0x1f, };
 
     unsigned char *out = NULL;
-    unsigned int outlen;
+    size_t outlen;
     CMAC_CTX *ctx = CMAC_CTX_new();
     int r = 0;
 
@@ -561,7 +561,7 @@ static int FIPS_cmac_tdea3_test()
 	    { 0xb4,0x06,0x4e,0xbf, 0x59,0x89,0xba,0x68, };
 
     unsigned char *out = NULL;
-    unsigned int outlen;
+    size_t outlen;
     CMAC_CTX *ctx = CMAC_CTX_new();
     int r = 0;
 

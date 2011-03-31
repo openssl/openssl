@@ -108,8 +108,7 @@ static const CMAC_KAT vector[] = {
 
 int FIPS_selftest_cmac()
     {
-    size_t n;
-    unsigned int     outlen;
+    size_t n, outlen;
     unsigned char    out[32];
     const EVP_CIPHER *cipher;
     CMAC_CTX *ctx = CMAC_CTX_new();
