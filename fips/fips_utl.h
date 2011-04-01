@@ -49,6 +49,9 @@
 
 #define OPENSSL_FIPSAPI
 
+#include <openssl/fips_rand.h>
+#include <openssl/objects.h>
+
 int hex2bin(const char *in, unsigned char *out);
 unsigned char *hex2bin_m(const char *in, long *plen);
 int do_hex2bn(BIGNUM **pr, const char *in);
@@ -93,14 +96,33 @@ static void add_err_cb(int num, va_list args)
 	fputs("\n", stderr);
 	}
 
-static void fips_set_error_print(void)
+/* Dummy Entropy to keep DRBG happy. WARNING: THIS IS TOTALLY BOGUS
+ * HAS ZERO SECURITY AND MUST NOT BE USED IN REAL APPLICATIONS.
+ */
+
+static unsigned char dummy_entropy[1024];
+
+static size_t dummy_cb(DRBG_CTX *ctx, unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len)
 	{
+	*pout = dummy_entropy;
+	return min_len;
+	}
+
+static void fips_algtest_init_nofips(void)
+	{
+	DRBG_CTX *ctx;
 	FIPS_set_error_callbacks(put_err_cb, add_err_cb);
+	OPENSSL_cleanse(dummy_entropy, 1024);
+	ctx = FIPS_get_default_drbg();
+	FIPS_drbg_init(ctx, NID_aes_256_ctr, DRBG_FLAG_CTR_USE_DF);
+	FIPS_drbg_set_callbacks(ctx, dummy_cb, 0, dummy_cb, 0);
+	FIPS_drbg_instantiate(ctx, dummy_entropy, 10);
 	}
 
 void fips_algtest_init(void)
 	{
-	fips_set_error_print();
+	fips_algtest_init_nofips();
 	if (!FIPS_mode_set(1))
 		{
 		fprintf(stderr, "Error entering FIPS mode\n");

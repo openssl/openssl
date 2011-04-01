@@ -274,6 +274,17 @@ static int fips_drbg_generate_internal(DRBG_CTX *dctx,
 			const unsigned char *adin, size_t adinlen)
 	{
 	int r = 0;
+
+	if (dctx->status != DRBG_STATUS_READY
+		&& dctx->status != DRBG_STATUS_RESEED)
+		{
+		if (dctx->status == DRBG_STATUS_ERROR)
+			r = FIPS_R_IN_ERROR_STATE;
+		else if(dctx->status == DRBG_STATUS_UNINITIALISED)
+			r = FIPS_R_NOT_INSTANTIATED;
+		goto end;
+		}
+
 	if (outlen > dctx->max_request)
 		{
 		r = FIPS_R_REQUEST_TOO_LARGE_FOR_DRBG;
@@ -296,14 +307,7 @@ static int fips_drbg_generate_internal(DRBG_CTX *dctx,
 		adin = NULL;
 		adinlen = 0;
 		}
-	if (dctx->status != DRBG_STATUS_READY)
-		{
-		if (dctx->status == DRBG_STATUS_ERROR)
-			r = FIPS_R_IN_ERROR_STATE;
-		else if(dctx->status == DRBG_STATUS_UNINITIALISED)
-			r = FIPS_R_NOT_INSTANTIATED;
-		goto end;
-		}
+
 	if (!dctx->generate(dctx, out, outlen, adin, adinlen))
 		{
 		r = FIPS_R_GENERATE_ERROR;

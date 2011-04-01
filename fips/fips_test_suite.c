@@ -673,7 +673,7 @@ int main(int argc,char **argv)
     int do_rng_stick = 0;
     int no_exit = 0;
 
-    fips_set_error_print();
+    fips_algtest_init_nofips();
 
     printf("\tFIPS-mode test application\n\n");
 
