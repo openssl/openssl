@@ -114,7 +114,7 @@ void FIPS_drbg_free(DRBG_CTX *dctx)
 	{
 	if (dctx->uninstantiate)
 		dctx->uninstantiate(dctx);
-	OPENSSL_cleanse(dctx, sizeof(DRBG_CTX));
+	OPENSSL_cleanse(&dctx->d, sizeof(dctx->d));
 	OPENSSL_free(dctx);
 	}
 
@@ -403,7 +403,8 @@ int FIPS_drbg_uninstantiate(DRBG_CTX *dctx)
 	/* Although we'd like to cleanse here we can't because we have to
 	 * test the uninstantiate really zeroes the data.
 	 */
-	memset(dctx, 0, sizeof(DRBG_CTX));
+	memset(&dctx->d, 0, sizeof(dctx->d));
+	dctx->status = DRBG_STATUS_UNINITIALISED;
 	/* If method has problems uninstantiating, return error */
 	return rv;
 	}
@@ -422,6 +423,22 @@ int FIPS_drbg_set_callbacks(DRBG_CTX *dctx,
 	dctx->cleanup_entropy = cleanup_entropy;
 	dctx->get_nonce = get_nonce;
 	dctx->cleanup_nonce = cleanup_nonce;
+	return 1;
+	}
+
+int FIPS_drbg_set_rand_callbacks(DRBG_CTX *dctx,
+	size_t (*get_adin)(DRBG_CTX *ctx, unsigned char **pout),
+	void (*cleanup_adin)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
+	int (*rand_seed_cb)(DRBG_CTX *ctx, const void *buf, int num),
+	int (*rand_add_cb)(DRBG_CTX *ctx,
+				const void *buf, int num, double entropy))
+	{
+	if (dctx->status != DRBG_STATUS_UNINITIALISED)
+		return 0;
+	dctx->get_adin = get_adin;
+	dctx->cleanup_adin = cleanup_adin;
+	dctx->rand_seed_cb = rand_seed_cb;
+	dctx->rand_add_cb = rand_add_cb;
 	return 1;
 	}
 

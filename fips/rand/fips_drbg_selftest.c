@@ -954,11 +954,11 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		}
 
 	FIPS_drbg_uninstantiate(dctx);
-	p = (unsigned char *)dctx;
+	p = (unsigned char *)&dctx->d;
 	/* Standard says we have to check uninstantiate really zeroes
 	 * the data...
 	 */
-	for (i = 0; i < sizeof(DRBG_CTX); i++)
+	for (i = 0; i < sizeof(dctx->d); i++)
 		{
 		if (*p != 0)
 			{
@@ -980,7 +980,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	return 0;
 
 	}
-		
+
 
 int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags)
 	{

@@ -97,6 +97,13 @@ int FIPS_drbg_set_callbacks(DRBG_CTX *dctx,
 				int entropy, size_t min_len, size_t max_len),
 	void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen));
 
+int FIPS_drbg_set_rand_callbacks(DRBG_CTX *dctx,
+	size_t (*get_adin)(DRBG_CTX *ctx, unsigned char **pout),
+	void (*cleanup_adin)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
+	int (*rand_seed_cb)(DRBG_CTX *ctx, const void *buf, int num),
+	int (*rand_add_cb)(DRBG_CTX *ctx,
+				const void *buf, int num, double entropy));
+
 void *FIPS_drbg_get_app_data(DRBG_CTX *ctx);
 void FIPS_drbg_set_app_data(DRBG_CTX *ctx, void *app_data);
 size_t FIPS_drbg_get_blocklength(DRBG_CTX *dctx);
