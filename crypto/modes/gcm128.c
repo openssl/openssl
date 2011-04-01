@@ -82,6 +82,40 @@
 	} \
 } while(0)
 
+/*
+ * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
+ * never be set to 8. 8 is effectively reserved for testing purposes.
+ * TABLE_BITS>1 are lookup-table-driven implementations referred to as
+ * "Shoup's" in GCM specification. In other words OpenSSL does not cover
+ * whole spectrum of possible table driven implementations. Why? In
+ * non-"Shoup's" case memory access pattern is segmented in such manner,
+ * that it's trivial to see that cache timing information can reveal
+ * fair portion of intermediate hash value. Given that ciphertext is
+ * always available to attacker, it's possible for him to attempt to
+ * deduce secret parameter H and if successful, tamper with messages
+ * [which is nothing but trivial in CTR mode]. In "Shoup's" case it's
+ * not as trivial, but there is no reason to believe that it's resistant
+ * to cache-timing attack. And the thing about "8-bit" implementation is
+ * that it consumes 16 (sixteen) times more memory, 4KB per individual
+ * key + 1KB shared. Well, on pros side it should be twice as fast as
+ * "4-bit" version. And for gcc-generated x86[_64] code, "8-bit" version
+ * was observed to run ~75% faster, closer to 100% for commercial
+ * compilers... Yet "4-bit" procedure is preferred, because it's
+ * believed to provide better security-performance balance and adequate
+ * all-round performance. "All-round" refers to things like:
+ *
+ * - shorter setup time effectively improves overall timing for
+ *   handling short messages;
+ * - larger table allocation can become unbearable because of VM
+ *   subsystem penalties (for example on Windows large enough free
+ *   results in VM working set trimming, meaning that consequent
+ *   malloc would immediately incur working set expansion);
+ * - larger table has larger cache footprint, which can affect
+ *   performance of other code paths (not necessarily even from same
+ *   thread in Hyper-Threading world);
+ *
+ * Value of 1 is not appropriate for performance reasons.
+ */
 #if	TABLE_BITS==8
 
 static void gcm_init_8bit(u128 Htable[256], u64 H[2])
@@ -108,7 +142,7 @@ static void gcm_init_8bit(u128 Htable[256], u64 H[2])
 	}
 }
 
-static void gcm_gmult_8bit(u64 Xi[2], u128 Htable[256])
+static void gcm_gmult_8bit(u64 Xi[2], const u128 Htable[256])
 {
 	u128 Z = { 0, 0};
 	const u8 *xi = (const u8 *)Xi+15;
@@ -612,7 +646,7 @@ static void gcm_gmult_1bit(u64 Xi[2],const u64 H[2])
 	(defined(__i386)	|| defined(__i386__)	|| \
 	 defined(__x86_64)	|| defined(__x86_64__)	|| \
 	 defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64))
-# define GHASH_ASM_IAX
+# define GHASH_ASM_X86_OR_64
 extern unsigned int OPENSSL_ia32cap_P[2];
 
 void gcm_init_clmul(u128 Htable[16],const u64 Xi[2]);
@@ -628,10 +662,7 @@ void gcm_gmult_4bit_x86(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_4bit_x86(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 # endif
 
-# undef  GCM_MUL
-# define GCM_MUL(ctx,Xi)   (*((ctx)->gmult))(ctx->Xi.u,ctx->Htable)
-# undef  GHASH
-# define GHASH(ctx,in,len) (*((ctx)->ghash))((ctx)->Xi.u,(ctx)->Htable,in,len)
+# define GCM_FUNCREF_4BIT
 #endif
 
 void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
@@ -662,7 +693,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #if	TABLE_BITS==8
 	gcm_init_8bit(ctx->Htable,ctx->H.u);
 #elif	TABLE_BITS==4
-# if	defined(GHASH_ASM_IAX)			/* both x86 and x86_64 */
+# if	defined(GHASH_ASM_X86_OR_64)
 #  if	!defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
 	if (OPENSSL_ia32cap_P[1]&(1<<1)) {
 		gcm_init_clmul(ctx->Htable,ctx->H.u);
@@ -694,6 +725,9 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx,const unsigned char *iv,size_t len)
 {
 	const union { long one; char little; } is_endian = {1};
 	unsigned int ctr;
+#ifdef GCM_FUNCREF_4BIT
+	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+#endif
 
 	ctx->Yi.u[0]  = 0;
 	ctx->Yi.u[1]  = 0;
@@ -762,6 +796,13 @@ int CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx,const unsigned char *aad,size_t len)
 	size_t i;
 	unsigned int n;
 	u64 alen = ctx->len.u[0];
+#ifdef GCM_FUNCREF_4BIT
+	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+# ifdef GHASH
+	void (*gcm_ghash_4bit)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len) = ctx->ghash;
+# endif
+#endif
 
 	if (ctx->len.u[1]) return -2;
 
@@ -815,6 +856,13 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 	unsigned int n, ctr;
 	size_t i;
 	u64 mlen = ctx->len.u[1];
+#ifdef GCM_FUNCREF_4BIT
+	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+# ifdef GHASH
+	void (*gcm_ghash_4bit)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len) = ctx->ghash;
+# endif
+#endif
 
 #if 0
 	n = (unsigned int)mlen%16; /* alternative to ctx->mres */
@@ -956,6 +1004,13 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 	unsigned int n, ctr;
 	size_t i;
 	u64 mlen = ctx->len.u[1];
+#ifdef GCM_FUNCREF_4BIT
+	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+# ifdef GHASH
+	void (*gcm_ghash_4bit)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len) = ctx->ghash;
+# endif
+#endif
 
 	mlen += len;
 	if (mlen>((U64(1)<<36)-32) || (sizeof(len)==8 && mlen<len))
@@ -1100,6 +1155,13 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 	unsigned int n, ctr;
 	size_t i;
 	u64 mlen = ctx->len.u[1];
+#ifdef GCM_FUNCREF_4BIT
+	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+# ifdef GHASH
+	void (*gcm_ghash_4bit)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len) = ctx->ghash;
+# endif
+#endif
 
 	mlen += len;
 	if (mlen>((U64(1)<<36)-32) || (sizeof(len)==8 && mlen<len))
@@ -1191,6 +1253,13 @@ int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 	unsigned int n, ctr;
 	size_t i;
 	u64 mlen = ctx->len.u[1];
+#ifdef GCM_FUNCREF_4BIT
+	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+# ifdef GHASH
+	void (*gcm_ghash_4bit)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len) = ctx->ghash;
+# endif
+#endif
 
 	mlen += len;
 	if (mlen>((U64(1)<<36)-32) || (sizeof(len)==8 && mlen<len))
@@ -1287,6 +1356,9 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
 	const union { long one; char little; } is_endian = {1};
 	u64 alen = ctx->len.u[0]<<3;
 	u64 clen = ctx->len.u[1]<<3;
+#ifdef GCM_FUNCREF_4BIT
+	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+#endif
 
 	if (ctx->mres)
 		GCM_MUL(ctx,Xi);
@@ -1395,9 +1467,8 @@ static const u8	P4[]=  {0xd9,0x31,0x32,0x25,0xf8,0x84,0x06,0xe5,0xa5,0x59,0x09,0
 /* Test Case 5 */
 #define K5 K4
 #define P5 P4
-static const u8	A5[]=  {0xfe,0xed,0xfa,0xce,0xde,0xad,0xbe,0xef,0xfe,0xed,0xfa,0xce,0xde,0xad,0xbe,0xef,
-			0xab,0xad,0xda,0xd2},
-		IV5[]= {0xca,0xfe,0xba,0xbe,0xfa,0xce,0xdb,0xad},
+#define A5 A4
+static const u8	IV5[]= {0xca,0xfe,0xba,0xbe,0xfa,0xce,0xdb,0xad},
 		C5[]=  {0x61,0x35,0x3b,0x4c,0x28,0x06,0x93,0x4a,0x77,0x7f,0xf5,0x1f,0xa2,0x2a,0x47,0x55,
 			0x69,0x9b,0x2a,0x71,0x4f,0xcd,0xc6,0xf8,0x37,0x66,0xe5,0xf9,0x7b,0x6c,0x74,0x23,
 			0x73,0x80,0x69,0x00,0xe4,0x9f,0x24,0xb2,0x2b,0x09,0x75,0x44,0xd4,0x89,0x6b,0x42,

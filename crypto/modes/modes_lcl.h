@@ -29,7 +29,10 @@ typedef unsigned char u8;
 #if defined(__i386)	|| defined(__i386__)	|| \
     defined(__x86_64)	|| defined(__x86_64__)	|| \
     defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64) || \
-    defined(__s390__)	|| defined(__s390x__)
+    defined(__s390__)	|| defined(__s390x__)	|| \
+    ( (defined(__arm__)	|| defined(__arm)) && \
+      (defined(__ARM_ARCH_7__)	|| defined(__ARM_ARCH_7A__) || \
+       defined(__ARM_ARCH_7R__)	|| defined(__ARM_ARCH_7M__)) )
 # undef STRICT_ALIGNMENT
 #endif
 
@@ -37,19 +40,28 @@ typedef unsigned char u8;
 #if defined(__GNUC__) && __GNUC__>=2
 # if defined(__x86_64) || defined(__x86_64__)
 #  define BSWAP8(x) ({	u64 ret=(x);			\
-			asm volatile ("bswapq %0"	\
+			asm ("bswapq %0"		\
 			: "+r"(ret));	ret;		})
 #  define BSWAP4(x) ({	u32 ret=(x);			\
-			asm volatile ("bswapl %0"	\
+			asm ("bswapl %0"		\
 			: "+r"(ret));	ret;		})
 # elif (defined(__i386) || defined(__i386__))
 #  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);	\
-			asm volatile ("bswapl %0; bswapl %1"	\
+			asm ("bswapl %0; bswapl %1"	\
 			: "+r"(hi),"+r"(lo));		\
 			(u64)hi<<32|lo;			})
 #  define BSWAP4(x) ({	u32 ret=(x);			\
-			asm volatile ("bswapl %0"	\
+			asm ("bswapl %0"		\
 			: "+r"(ret));	ret;		})
+# elif (defined(__arm__) || defined(__arm)) && !defined(STRICT_ALIGNMENT)
+#  define BSWAP8(x) ({	u32 lo=(u64)(x)>>32,hi=(x);	\
+			asm ("rev %0,%0; rev %1,%1"	\
+			: "+r"(hi),"+r"(lo));		\
+			(u64)hi<<32|lo;			})
+#  define BSWAP4(x) ({	u32 ret;			\
+			asm ("rev %0,%1"		\
+			: "=r"(ret) : "r"((u32)(x)));	\
+			ret;				})
 # endif
 #elif defined(_MSC_VER)
 # if _MSC_VER>=1300
@@ -83,43 +95,16 @@ typedef struct { u64 hi,lo; } u128;
 #endif
 /*
  * Even though permitted values for TABLE_BITS are 8, 4 and 1, it should
- * never be set to 8. 8 is effectively reserved for testing purposes.
- * TABLE_BITS>1 are lookup-table-driven implementations referred to as
- * "Shoup's" in GCM specification. In other words OpenSSL does not cover
- * whole spectrum of possible table driven implementations. Why? In
- * non-"Shoup's" case memory access pattern is segmented in such manner,
- * that it's trivial to see that cache timing information can reveal
- * fair portion of intermediate hash value. Given that ciphertext is
- * always available to attacker, it's possible for him to attempt to
- * deduce secret parameter H and if successful, tamper with messages
- * [which is nothing but trivial in CTR mode]. In "Shoup's" case it's
- * not as trivial, but there is no reason to believe that it's resistant
- * to cache-timing attack. And the thing about "8-bit" implementation is
- * that it consumes 16 (sixteen) times more memory, 4KB per individual
- * key + 1KB shared. Well, on pros side it should be twice as fast as
- * "4-bit" version. And for gcc-generated x86[_64] code, "8-bit" version
- * was observed to run ~75% faster, closer to 100% for commercial
- * compilers... Yet "4-bit" procedure is preferred, because it's
- * believed to provide better security-performance balance and adequate
- * all-round performance. "All-round" refers to things like:
- *
- * - shorter setup time effectively improves overall timing for
- *   handling short messages;
- * - larger table allocation can become unbearable because of VM
- *   subsystem penalties (for example on Windows large enough free
- *   results in VM working set trimming, meaning that consequent
- *   malloc would immediately incur working set expansion);
- * - larger table has larger cache footprint, which can affect
- *   performance of other code paths (not necessarily even from same
- *   thread in Hyper-Threading world);
+ * never be set to 8 [or 1]. For further information see gcm128.c.
  */
 #define	TABLE_BITS 4
 
 struct gcm128_context {
 	/* Following 6 names follow names in GCM specification */
-	union { u64 u[2]; u32 d[4]; u8 c[16]; }	Yi,EKi,EK0,
-						Xi,H,len;
-	/* Pre-computed table used by gcm_gmult_* */
+	union { u64 u[2]; u32 d[4]; u8 c[16]; }	Yi,EKi,EK0,len,
+						Xi,H;
+	/* Relative position of Xi, H and pre-computed Htable is used
+	 * in some assembler modules, i.e. don't change the order! */
 #if TABLE_BITS==8
 	u128 Htable[256];
 #else
