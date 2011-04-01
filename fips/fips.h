@@ -122,6 +122,10 @@ void FIPS_set_locking_callbacks(void (*func)(int mode, int type,
 				int (*add_cb)(int *pointer, int amount,
 					int type, const char *file, int line));
 
+void FIPS_set_malloc_callbacks(
+		void *(*malloc_cb)(int num, const char *file, int line),
+		void (*free_cb)(void *));
+
 #define FIPS_ERROR_IGNORED(alg) OpenSSLDie(__FILE__, __LINE__, \
 		alg " previous FIPS forbidden algorithm error ignored");
 

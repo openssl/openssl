@@ -84,3 +84,11 @@ void FIPS_free(void *x)
 	{
 	fips_free_cb(x);
 	}
+
+void FIPS_set_malloc_callbacks(
+		void *(*malloc_cb)(int num, const char *file, int line),
+		void (*free_cb)(void *))
+	{
+	fips_malloc_cb = malloc_cb;
+	fips_free_cb = free_cb;
+	}
