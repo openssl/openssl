@@ -112,7 +112,12 @@
 
 void OPENSSL_init(void)
 	{
+	static int done = 0;
+	if (done)
+		return;
+	done = 1;
+#if 1
 	fprintf(stderr, "Called OPENSSL_init\n");
+#endif
 	}
-
 
