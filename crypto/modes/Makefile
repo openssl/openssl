@@ -57,7 +57,9 @@ ghash-parisc.s:	asm/ghash-parisc.pl
 	$(PERL) asm/ghash-parisc.pl $(PERLASM_SCHEME) $@
 
 # GNU make "catch all"
-ghash-%.s:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+ghash-%.S:	asm/ghash-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+
+ghash-armv4.o:	ghash-armv4.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

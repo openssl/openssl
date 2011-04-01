@@ -25,6 +25,18 @@
 # Cortex A8 core and ~25 cycles per processed byte (which was observed
 # to be ~3 times faster than gcc-generated code:-)
 #
+# February 2011
+#
+# Profiler-assisted and platform-specific optimization resulted in 7%
+# improvement on Cortex A8 core and ~23.5 cycles per byte.
+#
+# March 2011
+#
+# Add NEON implementation featuring polynomial multiplication, i.e. no
+# lookup tables involved. On Cortex A8 it was measured to process one
+# byte in 15 cycles or 55% faster than integer-only code.
+
+# ====================================================================
 # Note about "528B" variant. In ARM case it makes lesser sense to
 # implement it for following reasons:
 #
@@ -52,6 +64,7 @@ $Xi="r0";	# argument block
 $Htbl="r1";
 $inp="r2";
 $len="r3";
+
 $Zll="r4";	# variables
 $Zlh="r5";
 $Zhl="r6";
@@ -72,8 +85,13 @@ sub Zsmash() {
   my $i=12;
   my @args=@_;
   for ($Zll,$Zlh,$Zhl,$Zhh) {
-    # can be reduced to single "str $_,[$Xi,$i]" on big-endian platforms
     $code.=<<___;
+#if __ARM_ARCH__>=7 && defined(__ARMEL__)
+	rev	$_,$_
+	str	$_,[$Xi,#$i]
+#elif defined(__ARMEB__)
+	str	$_,[$Xi,#$i]
+#else
 	mov	$Tlh,$_,lsr#8
 	strb	$_,[$Xi,#$i+3]
 	mov	$Thl,$_,lsr#16
@@ -81,6 +99,7 @@ sub Zsmash() {
 	mov	$Thh,$_,lsr#24
 	strb	$Thl,[$Xi,#$i+1]
 	strb	$Thh,[$Xi,#$i]
+#endif
 ___
     $code.="\t".shift(@args)."\n";
     $i-=4;
@@ -88,6 +107,8 @@ ___
 }
 
 $code=<<___;
+#include "arm_arch.h"
+
 .text
 .code	32
 
@@ -149,41 +170,41 @@ gcm_ghash_4bit:
 	and	$nlo,$nlo,#0x0f
 	eor	$Zhh,$Zhh,$Tll,lsl#16
 
-.Loop:
+.Linner:
 	add	$Thh,$Htbl,$nlo,lsl#4
-	subs	$cnt,$cnt,#1
 	and	$nlo,$Zll,#0xf		@ rem
-	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nlo]
+	subs	$cnt,$cnt,#1
 	add	$nlo,$nlo,$nlo
+	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nlo]
 	eor	$Zll,$Tll,$Zll,lsr#4
-	ldrh	$Tll,[sp,$nlo]		@ rem_4bit[rem]
 	eor	$Zll,$Zll,$Zlh,lsl#28
 	eor	$Zlh,$Tlh,$Zlh,lsr#4
 	eor	$Zlh,$Zlh,$Zhl,lsl#28
+	ldrh	$Tll,[sp,$nlo]		@ rem_4bit[rem]
 	eor	$Zhl,$Thl,$Zhl,lsr#4
+	ldrplb	$nlo,[$inp,$cnt]
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
 	eor	$Zhh,$Thh,$Zhh,lsr#4
-	ldrplb	$nlo,[$inp,$cnt]
 
 	add	$Thh,$Htbl,$nhi
-	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
 	and	$nhi,$Zll,#0xf		@ rem
-	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
+	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
 	add	$nhi,$nhi,$nhi
+	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
 	eor	$Zll,$Tll,$Zll,lsr#4
-	ldrh	$Tll,[sp,$nhi]		@ rem_4bit[rem]
+	ldrplb	$Tll,[$Xi,$cnt]
 	eor	$Zll,$Zll,$Zlh,lsl#28
 	eor	$Zlh,$Tlh,$Zlh,lsr#4
-	ldrplb	$nhi,[$Xi,$cnt]
+	ldrh	$Tlh,[sp,$nhi]
 	eor	$Zlh,$Zlh,$Zhl,lsl#28
 	eor	$Zhl,$Thl,$Zhl,lsr#4
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
-	eorpl	$nlo,$nlo,$nhi
+	eorpl	$nlo,$nlo,$Tll
 	eor	$Zhh,$Thh,$Zhh,lsr#4
 	andpl	$nhi,$nlo,#0xf0
 	andpl	$nlo,$nlo,#0x0f
-	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
-	bpl	.Loop
+	eor	$Zhh,$Zhh,$Tlh,lsl#16	@ ^= rem_4bit[rem]
+	bpl	.Linner
 
 	ldr	$len,[sp,#32]		@ re-load $len/end
 	add	$inp,$inp,#16
@@ -194,10 +215,14 @@ $code.=<<___;
 	bne	.Louter
 
 	add	sp,sp,#36
+#if __ARM_ARCH__>=5
+	ldmia	sp!,{r4-r11,pc}
+#else
 	ldmia	sp!,{r4-r11,lr}
 	tst	lr,#1
 	moveq	pc,lr			@ be binary compatible with V4, yet
 	bx	lr			@ interoperable with Thumb ISA:-)
+#endif
 .size	gcm_ghash_4bit,.-gcm_ghash_4bit
 
 .global	gcm_gmult_4bit
@@ -231,31 +256,31 @@ gcm_gmult_4bit:
 	eor	$Zhh,$Zhh,$Tll,lsl#16
 	and	$nlo,$nlo,#0x0f
 
-.Loop2:
+.Loop:
 	add	$Thh,$Htbl,$nlo,lsl#4
-	subs	$cnt,$cnt,#1
 	and	$nlo,$Zll,#0xf		@ rem
-	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nlo]
+	subs	$cnt,$cnt,#1
 	add	$nlo,$nlo,$nlo
+	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nlo]
 	eor	$Zll,$Tll,$Zll,lsr#4
-	ldrh	$Tll,[$rem_4bit,$nlo]	@ rem_4bit[rem]
 	eor	$Zll,$Zll,$Zlh,lsl#28
 	eor	$Zlh,$Tlh,$Zlh,lsr#4
 	eor	$Zlh,$Zlh,$Zhl,lsl#28
+	ldrh	$Tll,[$rem_4bit,$nlo]	@ rem_4bit[rem]
 	eor	$Zhl,$Thl,$Zhl,lsr#4
+	ldrplb	$nlo,[$Xi,$cnt]
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
 	eor	$Zhh,$Thh,$Zhh,lsr#4
-	ldrplb	$nlo,[$Xi,$cnt]
 
 	add	$Thh,$Htbl,$nhi
-	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
 	and	$nhi,$Zll,#0xf		@ rem
-	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
+	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
 	add	$nhi,$nhi,$nhi
+	ldmia	$Thh,{$Tll-$Thh}	@ load Htbl[nhi]
 	eor	$Zll,$Tll,$Zll,lsr#4
-	ldrh	$Tll,[$rem_4bit,$nhi]	@ rem_4bit[rem]
 	eor	$Zll,$Zll,$Zlh,lsl#28
 	eor	$Zlh,$Tlh,$Zlh,lsr#4
+	ldrh	$Tll,[$rem_4bit,$nhi]	@ rem_4bit[rem]
 	eor	$Zlh,$Zlh,$Zhl,lsl#28
 	eor	$Zhl,$Thl,$Zhl,lsr#4
 	eor	$Zhl,$Zhl,$Zhh,lsl#28
@@ -263,16 +288,138 @@ gcm_gmult_4bit:
 	andpl	$nhi,$nlo,#0xf0
 	andpl	$nlo,$nlo,#0x0f
 	eor	$Zhh,$Zhh,$Tll,lsl#16	@ ^= rem_4bit[rem]
-	bpl	.Loop2
+	bpl	.Loop
 ___
 	&Zsmash();
 $code.=<<___;
+#if __ARM_ARCH__>=5
+	ldmia	sp!,{r4-r11,pc}
+#else
 	ldmia	sp!,{r4-r11,lr}
 	tst	lr,#1
 	moveq	pc,lr			@ be binary compatible with V4, yet
 	bx	lr			@ interoperable with Thumb ISA:-)
+#endif
 .size	gcm_gmult_4bit,.-gcm_gmult_4bit
-.asciz  "GHASH for ARMv4, CRYPTOGAMS by <appro\@openssl.org>"
+___
+{
+my $cnt=$Htbl;	# $Htbl is used once in the very beginning
+
+my ($Hhi, $Hlo, $Zo, $T, $xi, $mod) = map("d$_",(0..7));
+my ($Qhi, $Qlo, $Z,  $R, $zero, $Qpost, $IN) = map("q$_",(8..15));
+
+# Z:Zo keeps 128-bit result shifted by 1 to the right, with bottom bit
+# in Zo. Or should I say "top bit", because GHASH is specified in
+# reverse bit order? Otherwise straightforward 128-bt H by one input
+# byte multiplication and modulo-reduction, times 16.
+
+sub Dlo()   { shift=~m|q([1]?[0-9])|?"d".($1*2):"";     }
+sub Dhi()   { shift=~m|q([1]?[0-9])|?"d".($1*2+1):"";   }
+sub Q()     { shift=~m|d([1-3]?[02468])|?"q".($1/2):""; }
+
+$code.=<<___;
+#if __ARM_ARCH__>=7
+.fpu	neon
+
+.global	gcm_gmult_neon
+.type	gcm_gmult_neon,%function
+.align	4
+gcm_gmult_neon:
+	sub		$Htbl,#16		@ point at H in GCM128_CTX
+	vld1.64		`&Dhi("$IN")`,[$Xi,:64]!@ load Xi
+	vmov.i32	$mod,#0xe1		@ our irreducible polynomial
+	vld1.64		`&Dlo("$IN")`,[$Xi,:64]!
+	vshr.u64	$mod,#32
+	vldmia		$Htbl,{$Hhi-$Hlo}	@ load H
+	veor		$zero,$zero
+#ifdef __ARMEL__
+	vrev64.8	$IN,$IN
+#endif
+	veor		$Qpost,$Qpost
+	veor		$R,$R
+	mov		$cnt,#16
+	veor		$Z,$Z
+	mov		$len,#16
+	veor		$Zo,$Zo
+	vdup.8		$xi,`&Dlo("$IN")`[0]	@ broadcast lowest byte
+	b		.Linner_neon
+.size	gcm_gmult_neon,.-gcm_gmult_neon
+
+.global	gcm_ghash_neon
+.type	gcm_ghash_neon,%function
+.align	4
+gcm_ghash_neon:
+	vld1.64		`&Dhi("$Z")`,[$Xi,:64]!	@ load Xi
+	vmov.i32	$mod,#0xe1		@ our irreducible polynomial
+	vld1.64		`&Dlo("$Z")`,[$Xi,:64]!
+	vshr.u64	$mod,#32
+	vldmia		$Xi,{$Hhi-$Hlo}		@ load H
+	veor		$zero,$zero
+	nop
+#ifdef __ARMEL__
+	vrev64.8	$Z,$Z
+#endif
+.Louter_neon:
+	vld1.64		`&Dhi($IN)`,[$inp]!	@ load inp
+	veor		$Qpost,$Qpost
+	vld1.64		`&Dlo($IN)`,[$inp]!
+	veor		$R,$R
+	mov		$cnt,#16
+#ifdef __ARMEL__
+	vrev64.8	$IN,$IN
+#endif
+	veor		$Zo,$Zo
+	veor		$IN,$Z			@ inp^=Xi
+	veor		$Z,$Z
+	vdup.8		$xi,`&Dlo("$IN")`[0]	@ broadcast lowest byte
+.Linner_neon:
+	subs		$cnt,$cnt,#1
+	vmull.p8	$Qlo,$Hlo,$xi		@ H.lo·Xi[i]
+	vmull.p8	$Qhi,$Hhi,$xi		@ H.hi·Xi[i]
+	vext.8		$IN,$zero,#1		@ IN>>=8
+
+	veor		$Z,$Qpost		@ modulo-scheduled part
+	vshl.i64	`&Dlo("$R")`,#48
+	vdup.8		$xi,`&Dlo("$IN")`[0]	@ broadcast lowest byte
+	veor		$T,`&Dlo("$Qlo")`,`&Dlo("$Z")`
+
+	veor		`&Dhi("$Z")`,`&Dlo("$R")`
+	vuzp.8		$Qlo,$Qhi
+	vsli.8		$Zo,$T,#1		@ compose the "carry" byte
+	vext.8		$Z,$zero,#1		@ Z>>=8
+
+	vmull.p8	$R,$Zo,$mod		@ "carry"·0xe1
+	vshr.u8		$Zo,$T,#7		@ save Z's bottom bit
+	vext.8		$Qpost,$Qlo,$zero,#1	@ Qlo>>=8
+	veor		$Z,$Qhi
+	bne		.Linner_neon
+
+	veor		$Z,$Qpost		@ modulo-scheduled artefact
+	vshl.i64	`&Dlo("$R")`,#48
+	veor		`&Dhi("$Z")`,`&Dlo("$R")`
+
+	@ finalization, normalize Z:Zo
+	vand		$Zo,$mod		@ suffices to mask the bit
+	vshr.u64	`&Dhi(&Q("$Zo"))`,`&Dlo("$Z")`,#63
+	vshl.i64	$Z,#1
+	subs		$len,#16
+	vorr		$Z,`&Q("$Zo")`		@ Z=Z:Zo<<1
+	bne		.Louter_neon
+
+#ifdef __ARMEL__
+	vrev64.8	$Z,$Z
+#endif
+	sub		$Xi,#16	
+	vst1.64		`&Dhi("$Z")`,[$Xi,:64]!	@ write out Xi
+	vst1.64		`&Dlo("$Z")`,[$Xi,:64]
+
+	bx	lr
+.size	gcm_ghash_neon,.-gcm_ghash_neon
+#endif
+___
+}
+$code.=<<___;
+.asciz  "GHASH for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align  2
 ___
 

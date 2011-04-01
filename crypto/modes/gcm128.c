@@ -642,27 +642,38 @@ static void gcm_gmult_1bit(u64 Xi[2],const u64 H[2])
 
 #endif
 
-#if	TABLE_BITS==4 && defined(GHASH_ASM) && !defined(I386_ONLY) && \
+#if	TABLE_BITS==4 && defined(GHASH_ASM)
+# if	!defined(I386_ONLY) && \
 	(defined(__i386)	|| defined(__i386__)	|| \
 	 defined(__x86_64)	|| defined(__x86_64__)	|| \
 	 defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64))
-# define GHASH_ASM_X86_OR_64
+#  define GHASH_ASM_X86_OR_64
+#  define GCM_FUNCREF_4BIT
 extern unsigned int OPENSSL_ia32cap_P[2];
 
 void gcm_init_clmul(u128 Htable[16],const u64 Xi[2]);
 void gcm_gmult_clmul(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_clmul(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 
-# if	defined(__i386) || defined(__i386__) || defined(_M_IX86)
-#  define GHASH_ASM_X86
+#  if	defined(__i386) || defined(__i386__) || defined(_M_IX86)
+#   define GHASH_ASM_X86
 void gcm_gmult_4bit_mmx(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_4bit_mmx(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 
 void gcm_gmult_4bit_x86(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_4bit_x86(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
-# endif
+#  endif
+# elif defined(__arm__) || defined(__arm)
+#  include "arm_arch.h"
+#  if __ARM_ARCH__>=7
+#   define GHASH_ASM_ARM
+#   define GCM_FUNCREF_4BIT
+extern unsigned int OPENSSL_armcap;
 
-# define GCM_FUNCREF_4BIT
+void gcm_gmult_neon(u64 Xi[2],const u128 Htable[16]);
+void gcm_ghash_neon(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
+#  endif
+# endif
 #endif
 
 void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
@@ -715,6 +726,15 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 	ctx->gmult = gcm_gmult_4bit;
 	ctx->ghash = gcm_ghash_4bit;
 #  endif
+# elif	defined(GHASH_ASM_ARM)
+	if (OPENSSL_armcap & 1) {
+		ctx->gmult = gcm_gmult_neon;
+		ctx->ghash = gcm_ghash_neon;
+	} else {
+		gcm_init_4bit(ctx->Htable,ctx->H.u);
+		ctx->gmult = gcm_gmult_4bit;
+		ctx->ghash = gcm_ghash_4bit;
+	}
 # else
 	gcm_init_4bit(ctx->Htable,ctx->H.u);
 # endif
