@@ -306,6 +306,7 @@ sub do_lib_rule
 	if (!$shlib)
 		{
 #		$ret.="\t\$(RM) \$(O_$Name)\n";
+		$ret.="$target: $objs\n";
 		$ret.="\t\$(MKLIB) $lfile$target @<<\n  $objs\n<<\n";
 		}
 	else
