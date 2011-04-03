@@ -468,20 +468,6 @@ again:
 	if (!s->d1->listen)
 		s->d1->handshake_read_seq++;
 
-	/* we just read a handshake message from the other side:
-	 * this means that we don't need to retransmit of the
-	 * buffered messages.  
-	 * XDTLS: may be able clear out this
-	 * buffer a little sooner (i.e if an out-of-order
-	 * handshake message/record is received at the record
-	 * layer.  
-	 * XDTLS: exception is that the server needs to
-	 * know that change cipher spec and finished messages
-	 * have been received by the client before clearing this
-	 * buffer.  this can simply be done by waiting for the
-	 * first data  segment, but is there a better way?  */
-	dtls1_clear_record_buffer(s);
-
 	s->init_msg = s->init_buf->data + DTLS1_HM_HEADER_LENGTH;
 	return s->init_num;
 
