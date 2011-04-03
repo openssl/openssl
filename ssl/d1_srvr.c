@@ -278,6 +278,12 @@ int dtls1_accept(SSL *s)
 				{
 				ret = 2;
 				s->d1->listen = 0;
+				/* Set expected sequence numbers
+				 * to continue the handshake.
+				 */
+				s->d1->handshake_read_seq = 2;
+				s->d1->handshake_write_seq = 1;
+				s->d1->next_handshake_write_seq = 1;
 				goto end;
 				}
 			
@@ -736,9 +742,6 @@ int dtls1_send_hello_verify_request(SSL *s)
 		/* number of bytes to write */
 		s->init_num=p-buf;
 		s->init_off=0;
-
-		/* buffer the message to handle re-xmits */
-		dtls1_buffer_message(s, 0);
 		}
 
 	/* s->state = DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B */
