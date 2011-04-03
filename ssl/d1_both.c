@@ -464,7 +464,10 @@ again:
 
 	memset(msg_hdr, 0x00, sizeof(struct hm_header_st));
 
-	s->d1->handshake_read_seq++;
+	/* Don't change sequence numbers while listening */
+	if (!s->d1->listen)
+		s->d1->handshake_read_seq++;
+
 	/* we just read a handshake message from the other side:
 	 * this means that we don't need to retransmit of the
 	 * buffered messages.  
@@ -813,9 +816,11 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 
 	/* 
 	 * if this is a future (or stale) message it gets buffered
-	 * (or dropped)--no further processing at this time 
+	 * (or dropped)--no further processing at this time
+	 * While listening, we accept seq 1 (ClientHello with cookie)
+	 * although we're still expecting seq 0 (ClientHello)
 	 */
-	if ( msg_hdr.seq != s->d1->handshake_read_seq)
+	if (msg_hdr.seq != s->d1->handshake_read_seq && !(s->d1->listen && msg_hdr.seq == 1))
 		return dtls1_process_out_of_seq_message(s, &msg_hdr, ok);
 
 	len = msg_hdr.msg_len;
@@ -1322,7 +1327,8 @@ unsigned char *
 dtls1_set_message_header(SSL *s, unsigned char *p, unsigned char mt,
 			unsigned long len, unsigned long frag_off, unsigned long frag_len)
 	{
-	if ( frag_off == 0)
+	/* Don't change sequence numbers while listening */
+	if (frag_off == 0 && !s->d1->listen)
 		{
 		s->d1->handshake_write_seq = s->d1->next_handshake_write_seq;
 		s->d1->next_handshake_write_seq++;
