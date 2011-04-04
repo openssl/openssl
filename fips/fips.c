@@ -80,10 +80,10 @@ static int fips_set_owning_thread(void);
 static int fips_clear_owning_thread(void);
 static unsigned char *fips_signature_witness(void);
 
-static void fips_w_lock(void)	{ CRYPTO_w_lock(CRYPTO_LOCK_FIPS); }
-static void fips_w_unlock(void)	{ CRYPTO_w_unlock(CRYPTO_LOCK_FIPS); }
-static void fips_r_lock(void)	{ CRYPTO_r_lock(CRYPTO_LOCK_FIPS); }
-static void fips_r_unlock(void)	{ CRYPTO_r_unlock(CRYPTO_LOCK_FIPS); }
+#define fips_w_lock()	CRYPTO_w_lock(CRYPTO_LOCK_FIPS)
+#define fips_w_unlock()	CRYPTO_w_unlock(CRYPTO_LOCK_FIPS)
+#define fips_r_lock()	CRYPTO_r_lock(CRYPTO_LOCK_FIPS)
+#define fips_r_unlock()	CRYPTO_r_unlock(CRYPTO_LOCK_FIPS)
 
 static void fips_set_mode(int onoff)
 	{
@@ -404,6 +404,7 @@ int fips_set_owning_thread(void)
 			{
 			CRYPTO_THREADID_current(&fips_thread);
 			ret = 1;
+			fips_thread_set = 1;
 			}
 		CRYPTO_w_unlock(CRYPTO_LOCK_FIPS2);
 		}
