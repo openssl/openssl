@@ -129,6 +129,9 @@
 #include "progs.h"
 #include "s_apps.h"
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 /* The LHASH callbacks ("hash" & "cmp") have been replaced by functions with the
  * base prototypes (we cast each variable inside the function to the required
@@ -308,6 +311,19 @@ int main(int Argc, char *ARGV[])
 #endif
 		{
 		CRYPTO_set_locking_callback(lock_dbg_cb);
+		}
+
+	if(getenv("OPENSSL_FIPS")) {
+#ifdef OPENSSL_FIPS
+		if (!FIPS_mode_set(1)) {
+			ERR_load_crypto_strings();
+			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
+			EXIT(1);
+		}
+#else
+		fprintf(stderr, "FIPS mode not supported.\n");
+		EXIT(1);
+#endif
 		}
 
 	apps_startup();
