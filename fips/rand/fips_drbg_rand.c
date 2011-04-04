@@ -65,7 +65,7 @@
 /* Mapping of SP800-90 DRBGs to OpenSSL RAND_METHOD */
 
 /* Since we only have one global PRNG used at any time in OpenSSL use a global
- * variable to store contexts.
+ * variable to store context.
  */
 
 static DRBG_CTX ossl_dctx;
@@ -94,7 +94,7 @@ static int fips_drbg_bytes(unsigned char *out, int count)
 			adinlen = dctx->get_adin(dctx, &adin);
 			if (adinlen && !adin)
 				{
-				/* ERROR */
+				FIPSerr(FIPS_F_FIPS_DRBG_BYTES, FIPS_R_ERROR_RETRIEVING_ADDITIONAL_INPUT);
 				goto err;
 				}
 			}
