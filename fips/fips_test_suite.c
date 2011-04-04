@@ -671,6 +671,7 @@ int main(int argc,char **argv)
     int do_corrupt_rsa_keygen = 0, do_corrupt_dsa_keygen = 0;
     int bad_rsa = 0, bad_dsa = 0;
     int do_rng_stick = 0;
+    int do_drbg_stick = 0;
     int no_exit = 0;
 
     fips_algtest_init_nofips();
@@ -727,6 +728,10 @@ int main(int argc,char **argv)
 	    do_rng_stick = 1;
 	    no_exit = 1;
 	    printf("RNG test with stuck continuous test...\n");
+	} else if (!strcmp(argv[1], "drbgstick")) {
+	    do_drbg_stick = 1;
+	    no_exit = 1;
+	    printf("DRBG test with stuck continuous test...\n");
         } else {
             printf("Bad argument \"%s\"\n", argv[1]);
             exit(1);
@@ -756,6 +761,8 @@ int main(int argc,char **argv)
             FIPS_corrupt_dsa_keygen();
     if (do_corrupt_rsa_keygen)
             FIPS_corrupt_rsa_keygen();
+    if (do_drbg_stick)
+            FIPS_drbg_stick();
     if (do_rng_stick)
             FIPS_rng_stick();
 

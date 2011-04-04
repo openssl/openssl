@@ -330,14 +330,24 @@ static int drbg_ctr_generate(DRBG_CTX *dctx,
 	for (;;)
 		{
 		inc_128(cctx);
+		if (!(dctx->flags & DRBG_FLAG_TEST) && !dctx->lb_valid)
+			{
+			AES_encrypt(cctx->V, dctx->lb, &cctx->ks);
+			dctx->lb_valid = 1;
+			continue;
+			}
 		if (outlen < 16)
 			{
 			/* Use K as temp space as it will be updated */
 			AES_encrypt(cctx->V, cctx->K, &cctx->ks);
+			if (!drbg_cprng_test(dctx, cctx->K))
+				return 0;
 			memcpy(out, cctx->K, outlen);
 			break;
 			}
 		AES_encrypt(cctx->V, out, &cctx->ks);
+		if (!drbg_cprng_test(dctx, out))
+			return 0;
 		out += 16;
 		outlen -= 16;
 		if (outlen == 0)

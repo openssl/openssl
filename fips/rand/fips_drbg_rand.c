@@ -117,6 +117,13 @@ static int fips_drbg_bytes(unsigned char *out, int count)
 	return rv;
 	}
 
+static int fips_drbg_pseudo(unsigned char *out, int count)
+	{
+	if (fips_drbg_bytes(out, count) <= 0)
+		return -1;
+	return 1;
+	}
+
 static int fips_drbg_status(void)
 	{
 	DRBG_CTX *dctx = &ossl_dctx;
@@ -168,7 +175,7 @@ static const RAND_METHOD rand_drbg_meth =
 	fips_drbg_bytes,
 	fips_drbg_cleanup,
 	fips_drbg_add,
-	fips_drbg_bytes,
+	fips_drbg_pseudo,
 	fips_drbg_status
 	};
 

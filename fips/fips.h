@@ -92,6 +92,7 @@ void FIPS_corrupt_ec_keygen(void);
 void FIPS_corrupt_rng(void);
 void FIPS_corrupt_drbg(void);
 void FIPS_rng_stick(void);
+void FIPS_drbg_stick(void);
 int FIPS_selftest_rng(void);
 int FIPS_selftest_hmac(void);
 int FIPS_selftest_drbg(void);
@@ -188,6 +189,7 @@ void ERR_load_FIPS_strings(void);
 
 /* Function codes. */
 #define FIPS_F_DH_BUILTIN_GENPARAMS			 100
+#define FIPS_F_DRBG_CPRNG_TEST				 141
 #define FIPS_F_DSA_BUILTIN_PARAMGEN			 101
 #define FIPS_F_DSA_BUILTIN_PARAMGEN2			 126
 #define FIPS_F_DSA_DO_SIGN				 102
@@ -253,6 +255,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_R_GENERATE_ERROR_UNDETECTED		 136
 #define FIPS_R_INSTANTIATE_ERROR			 125
 #define FIPS_R_INSUFFICIENT_SECURITY_STRENGTH		 132
+#define FIPS_R_INTERNAL_ERROR				 143
 #define FIPS_R_INVALID_KEY_LENGTH			 109
 #define FIPS_R_IN_ERROR_STATE				 126
 #define FIPS_R_KEY_TOO_SHORT				 108

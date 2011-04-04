@@ -100,6 +100,10 @@ struct drbg_ctr_ctx_st
 /* A default maximum length: larger than any reasonable value used in pratice */
 
 #define DRBG_MAX_LENGTH			0x7ffffff0
+/* Maximum DRBG block length: all md sizes are bigger than cipher blocks sizes
+ * so use max digest length.
+ */
+#define DRBG_MAX_BLOCK			EVP_MAX_MD_SIZE
 
 /* DRBG context structure */
 
@@ -163,7 +167,7 @@ struct drbg_ctx_st
 
 	/* Continuous random number test temporary area */
 	/* Last block */	
-	unsigned char lb[16];
+	unsigned char lb[EVP_MAX_MD_SIZE];
 	/* set if lb is valid */
 	int lb_valid;
 
@@ -181,3 +185,4 @@ struct drbg_ctx_st
 int fips_drbg_ctr_init(DRBG_CTX *dctx);
 int fips_drbg_hash_init(DRBG_CTX *dctx);
 int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags);
+int drbg_cprng_test(DRBG_CTX *dctx, const unsigned char *out);
