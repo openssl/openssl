@@ -203,7 +203,8 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 
 			if (!seed_len)
 				{
-				RAND_pseudo_bytes(seed, qsize);
+				if (RAND_pseudo_bytes(seed, qsize) < 0)
+					goto err;
 				seed_is_random = 1;
 				}
 			else
@@ -475,7 +476,10 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 				goto err;
 
 			if (!seed_in)
-				RAND_pseudo_bytes(seed, seed_len);
+				{
+				if (RAND_pseudo_bytes(seed, seed_len) < 0)
+					goto err;
+				}
 			/* step 2 */
 			if (!EVP_Digest(seed, seed_len, md, NULL, evpmd, NULL))
 				goto err;
