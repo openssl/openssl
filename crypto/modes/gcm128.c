@@ -676,6 +676,15 @@ void gcm_ghash_neon(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 # endif
 #endif
 
+#ifdef GCM_FUNCREF_4BIT
+# undef  GCM_MUL
+# define GCM_MUL(ctx,Xi)	(*gcm_gmult_p)(ctx->Xi.u,ctx->Htable)
+# ifdef GHASH
+#  undef  GHASH
+#  define GHASH(ctx,in,len)	(*gcm_ghash_p)(ctx->Xi.u,ctx->Htable,in,len)
+# endif
+#endif
+
 void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 {
 	const union { long one; char little; } is_endian = {1};
@@ -706,7 +715,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #elif	TABLE_BITS==4
 # if	defined(GHASH_ASM_X86_OR_64)
 #  if	!defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
-	if (OPENSSL_ia32cap_P[1]&(1<<1)) {
+	if (OPENSSL_ia32cap_P[1]&(1<<1)) {	/* check PCLMULQDQ bit */
 		gcm_init_clmul(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_clmul;
 		ctx->ghash = gcm_ghash_clmul;
@@ -715,7 +724,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #  endif
 	gcm_init_4bit(ctx->Htable,ctx->H.u);
 #  if	defined(GHASH_ASM_X86)			/* x86 only */
-	if (OPENSSL_ia32cap_P[0]&(1<<23)) {
+	if (OPENSSL_ia32cap_P[0]&(1<<23)) {	/* check MMX bit */
 		ctx->gmult = gcm_gmult_4bit_mmx;
 		ctx->ghash = gcm_ghash_4bit_mmx;
 	} else {
@@ -746,7 +755,7 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx,const unsigned char *iv,size_t len)
 	const union { long one; char little; } is_endian = {1};
 	unsigned int ctr;
 #ifdef GCM_FUNCREF_4BIT
-	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+	void (*gcm_gmult_p)(u64 Xi[2],const u128 Htable[16])	= ctx->gmult;
 #endif
 
 	ctx->Yi.u[0]  = 0;
@@ -817,10 +826,10 @@ int CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx,const unsigned char *aad,size_t len)
 	unsigned int n;
 	u64 alen = ctx->len.u[0];
 #ifdef GCM_FUNCREF_4BIT
-	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+	void (*gcm_gmult_p)(u64 Xi[2],const u128 Htable[16])	= ctx->gmult;
 # ifdef GHASH
-	void (*gcm_ghash_4bit)(u64 Xi[2],const u128 Htable[16],
-				const u8 *inp,size_t len) = ctx->ghash;
+	void (*gcm_ghash_p)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len)	= ctx->ghash;
 # endif
 #endif
 
@@ -877,10 +886,10 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 	size_t i;
 	u64 mlen = ctx->len.u[1];
 #ifdef GCM_FUNCREF_4BIT
-	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+	void (*gcm_gmult_p)(u64 Xi[2],const u128 Htable[16])	= ctx->gmult;
 # ifdef GHASH
-	void (*gcm_ghash_4bit)(u64 Xi[2],const u128 Htable[16],
-				const u8 *inp,size_t len) = ctx->ghash;
+	void (*gcm_ghash_p)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len)	= ctx->ghash;
 # endif
 #endif
 
@@ -1025,10 +1034,10 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 	size_t i;
 	u64 mlen = ctx->len.u[1];
 #ifdef GCM_FUNCREF_4BIT
-	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+	void (*gcm_gmult_p)(u64 Xi[2],const u128 Htable[16])	= ctx->gmult;
 # ifdef GHASH
-	void (*gcm_ghash_4bit)(u64 Xi[2],const u128 Htable[16],
-				const u8 *inp,size_t len) = ctx->ghash;
+	void (*gcm_ghash_p)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len)	= ctx->ghash;
 # endif
 #endif
 
@@ -1176,10 +1185,10 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 	size_t i;
 	u64 mlen = ctx->len.u[1];
 #ifdef GCM_FUNCREF_4BIT
-	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+	void (*gcm_gmult_p)(u64 Xi[2],const u128 Htable[16])	= ctx->gmult;
 # ifdef GHASH
-	void (*gcm_ghash_4bit)(u64 Xi[2],const u128 Htable[16],
-				const u8 *inp,size_t len) = ctx->ghash;
+	void (*gcm_ghash_p)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len)	= ctx->ghash;
 # endif
 #endif
 
@@ -1274,10 +1283,10 @@ int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 	size_t i;
 	u64 mlen = ctx->len.u[1];
 #ifdef GCM_FUNCREF_4BIT
-	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+	void (*gcm_gmult_p)(u64 Xi[2],const u128 Htable[16])	= ctx->gmult;
 # ifdef GHASH
-	void (*gcm_ghash_4bit)(u64 Xi[2],const u128 Htable[16],
-				const u8 *inp,size_t len) = ctx->ghash;
+	void (*gcm_ghash_p)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len)	= ctx->ghash;
 # endif
 #endif
 
@@ -1377,7 +1386,7 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
 	u64 alen = ctx->len.u[0]<<3;
 	u64 clen = ctx->len.u[1]<<3;
 #ifdef GCM_FUNCREF_4BIT
-	void (*gcm_gmult_4bit)(u64 Xi[2],const u128 Htable[16]) = ctx->gmult;
+	void (*gcm_gmult_p)(u64 Xi[2],const u128 Htable[16])	= ctx->gmult;
 #endif
 
 	if (ctx->mres)
