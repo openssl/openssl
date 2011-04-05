@@ -204,13 +204,13 @@ static int hash_gen(DRBG_CTX *dctx, unsigned char *out, size_t outlen)
 		if (outlen < dctx->blocklength)
 			{
 			FIPS_digestfinal(&hctx->mctx, hctx->vtmp, NULL);
-			if (!drbg_cprng_test(dctx, hctx->vtmp))
+			if (!fips_drbg_cprng_test(dctx, hctx->vtmp))
 				return 0;
 			memcpy(out, hctx->vtmp, outlen);
 			return 1;
 			}
 		FIPS_digestfinal(&hctx->mctx, out, NULL);
-		if (!drbg_cprng_test(dctx, out))
+		if (!fips_drbg_cprng_test(dctx, out))
 			return 0;
 		outlen -= dctx->blocklength;
 		if (outlen == 0)

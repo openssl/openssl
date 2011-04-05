@@ -347,25 +347,6 @@
 #define OPENSSL_stderr FIPS_openssl_stderr
 #define OpenSSLDie FIPS_openssldie
 #define PKCS1_MGF1 FIPS_pkcs1_mgf1
-#define RAND_SSLeay FIPS_rand_ssleay
-#define RAND_add FIPS_rand_add
-#define RAND_bytes FIPS_ossl_rand_bytes
-#define RAND_cleanup FIPS_rand_cleanup
-#define RAND_egd FIPS_rand_egd
-#define RAND_egd_bytes FIPS_rand_egd_bytes
-#define RAND_event FIPS_rand_event
-#define RAND_file_name FIPS_rand_file_name
-#define RAND_get_rand_method FIPS_rand_get_rand_method
-#define RAND_load_file FIPS_rand_load_file
-#define RAND_poll FIPS_rand_poll
-#define RAND_pseudo_bytes FIPS_rand_pseudo_bytes
-#define RAND_query_egd_bytes FIPS_rand_query_egd_bytes
-#define RAND_screen FIPS_rand_screen
-#define RAND_seed FIPS_ossl_rand_seed
-#define RAND_set_rand_method FIPS_rand_set_rand_method
-#define RAND_status FIPS_ossl_rand_status
-#define RAND_version FIPS_rand_version
-#define RAND_write_file FIPS_rand_write_file
 #define RSA_PKCS1_SSLeay FIPS_rsa_pkcs1_ssleay
 #define RSA_X931_derive_ex FIPS_rsa_x931_derive_ex
 #define RSA_X931_generate_key_ex FIPS_rsa_x931_generate_key_ex
@@ -513,6 +494,17 @@
 #define DH_compute_key_padded FIPS_dh_compute_key_padded
 #define ECDH_OpenSSL FIPS_ecdh_openssl
 #define ECDH_compute_key FIPS_ecdh_compute_key
+
+#define CMAC_CTX_cleanup FIPS_cmac_ctx_cleanup
+#define CMAC_CTX_copy FIPS_cmac_ctx_copy
+#define CMAC_CTX_free FIPS_cmac_ctx_free
+#define CMAC_CTX_get0_cipher_ctx FIPS_cmac_ctx_get0_cipher_ctx
+#define CMAC_CTX_new FIPS_cmac_ctx_new
+#define CMAC_Init FIPS_cmac_init
+#define CMAC_Update FIPS_cmac_update
+#define CMAC_Final FIPS_cmac_final
+#define CMAC_resume FIPS_cmac_resume
+
 /* assembler symbols */
 #define gcm_gmult_4bit_x86 fips_gcm_gmult_4bit_x86
 #define gcm_ghash_4bit_x86 fips_gcm_ghash_4bit_x86

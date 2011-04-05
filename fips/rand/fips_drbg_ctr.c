@@ -340,13 +340,13 @@ static int drbg_ctr_generate(DRBG_CTX *dctx,
 			{
 			/* Use K as temp space as it will be updated */
 			AES_encrypt(cctx->V, cctx->K, &cctx->ks);
-			if (!drbg_cprng_test(dctx, cctx->K))
+			if (!fips_drbg_cprng_test(dctx, cctx->K))
 				return 0;
 			memcpy(out, cctx->K, outlen);
 			break;
 			}
 		AES_encrypt(cctx->V, out, &cctx->ks);
-		if (!drbg_cprng_test(dctx, out))
+		if (!fips_drbg_cprng_test(dctx, out))
 			return 0;
 		out += 16;
 		outlen -= 16;

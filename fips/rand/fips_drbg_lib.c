@@ -406,7 +406,7 @@ void FIPS_drbg_stick(void)
 	}
 
 /* Continuous DRBG utility function */
-int drbg_cprng_test(DRBG_CTX *dctx, const unsigned char *out)
+int fips_drbg_cprng_test(DRBG_CTX *dctx, const unsigned char *out)
 	{
 	/* No CPRNG in test mode */
 	if (dctx->flags & DRBG_FLAG_TEST)

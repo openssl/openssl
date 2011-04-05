@@ -148,7 +148,7 @@ SHLIBDIRS= crypto
 SDIRS=  \
 	sha hmac des aes modes \
 	bn ec rsa dsa ecdsa dh \
-	buffer rand evp ecdh cmac
+	buffer evp ecdh cmac
 # keep in mind that the above list is adjusted by ./Configure
 # according to no-xxx arguments...
 
@@ -338,13 +338,6 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/modes/ctr128.o \
 	../crypto/modes/gcm128.o \
 	../crypto/modes/ofb128.o \
-	../crypto/rand/md_rand.o \
-	../crypto/rand/rand_egd.o \
-	../crypto/rand/randfile.o \
-	../crypto/rand/rand_lib.o \
-	../crypto/rand/rand_os2.o \
-	../crypto/rand/rand_unix.o \
-	../crypto/rand/rand_win.o \
 	../crypto/rsa/rsa_eay.o \
 	../crypto/rsa/rsa_gen.o \
 	../crypto/rsa/rsa_crpt.o \
