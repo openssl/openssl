@@ -111,7 +111,7 @@ static FIPS_PRNG_CTX sctx;
 
 static int fips_prng_fail = 0;
 
-void FIPS_rng_stick(void)
+void FIPS_x931_stick(void)
 	{
 	fips_prng_fail = 1;
 	}
@@ -205,12 +205,12 @@ static int fips_set_test_mode(FIPS_PRNG_CTX *ctx)
 	return 1;
 	}
 
-int FIPS_rand_test_mode(void)
+int FIPS_x931_test_mode(void)
 	{
 	return fips_set_test_mode(&sctx);
 	}
 
-int FIPS_rand_set_dt(unsigned char *dt)
+int FIPS_x931_set_dt(unsigned char *dt)
 	{
 	if (!sctx.test_mode)
 		{
@@ -339,7 +339,7 @@ static int fips_rand(FIPS_PRNG_CTX *ctx,
 	}
 
 
-int FIPS_rand_set_key(const unsigned char *key, int keylen)
+int FIPS_x931_set_key(const unsigned char *key, int keylen)
 	{
 	int ret;
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
@@ -348,7 +348,7 @@ int FIPS_rand_set_key(const unsigned char *key, int keylen)
 	return ret;
 	}
 
-int FIPS_rand_seed(const void *seed, int seedlen)
+int FIPS_x931_seed(const void *seed, int seedlen)
 	{
 	int ret;
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
@@ -358,7 +358,7 @@ int FIPS_rand_seed(const void *seed, int seedlen)
 	}
 
 
-int FIPS_rand_bytes(unsigned char *out, int count)
+int FIPS_x931_bytes(unsigned char *out, int count)
 	{
 	int ret;
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
@@ -367,7 +367,7 @@ int FIPS_rand_bytes(unsigned char *out, int count)
 	return ret;
 	}
 
-int FIPS_rand_status(void)
+int FIPS_x931_status(void)
 	{
 	int ret;
 	CRYPTO_r_lock(CRYPTO_LOCK_RAND);
@@ -376,7 +376,7 @@ int FIPS_rand_status(void)
 	return ret;
 	}
 
-void FIPS_rand_reset(void)
+void FIPS_x931_reset(void)
 	{
 	CRYPTO_w_lock(CRYPTO_LOCK_RAND);
 	fips_rand_prng_reset(&sctx);
@@ -385,30 +385,30 @@ void FIPS_rand_reset(void)
 
 static int fips_do_rand_seed(const void *seed, int seedlen)
 	{
-	FIPS_rand_seed(seed, seedlen);
+	FIPS_x931_seed(seed, seedlen);
 	return 1;
 	}
 
 static int fips_do_rand_add(const void *seed, int seedlen,
 					double add_entropy)
 	{
-	FIPS_rand_seed(seed, seedlen);
+	FIPS_x931_seed(seed, seedlen);
 	return 1;
 	}
 
-static const RAND_METHOD rand_fips_meth=
+static const RAND_METHOD rand_x931_meth=
     {
     fips_do_rand_seed,
-    FIPS_rand_bytes,
-    FIPS_rand_reset,
+    FIPS_x931_bytes,
+    FIPS_x931_reset,
     fips_do_rand_add,
-    FIPS_rand_bytes,
-    FIPS_rand_status
+    FIPS_x931_bytes,
+    FIPS_x931_status
     };
 
-const RAND_METHOD *FIPS_rand_method(void)
+const RAND_METHOD *FIPS_x931_method(void)
 {
-  return &rand_fips_meth;
+  return &rand_x931_meth;
 }
 
 #endif

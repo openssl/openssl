@@ -723,7 +723,7 @@ int main(int argc,char **argv)
 	} else if (!strcmp(argv[1], "drbg")) {
 	    FIPS_corrupt_drbg();
 	} else if (!strcmp(argv[1], "rng")) {
-	    FIPS_corrupt_rng();
+	    FIPS_corrupt_x931();
 	} else if (!strcmp(argv[1], "rngstick")) {
 	    do_rng_stick = 1;
 	    no_exit = 1;
@@ -764,7 +764,7 @@ int main(int argc,char **argv)
     if (do_drbg_stick)
             FIPS_drbg_stick();
     if (do_rng_stick)
-            FIPS_rng_stick();
+            FIPS_x931_stick();
 
     /* AES encryption/decryption
     */

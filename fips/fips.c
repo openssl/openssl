@@ -323,7 +323,7 @@ int FIPS_mode_set(int onoff)
 	    }
 
 	/* Perform RNG KAT before seeding */
-	if (!FIPS_selftest_rng())
+	if (!FIPS_selftest_x931())
 	    {
 	    fips_selftest_fail = 1;
 	    ret = 0;

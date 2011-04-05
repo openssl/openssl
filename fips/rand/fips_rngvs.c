@@ -90,10 +90,10 @@ static void vst(FILE *in, FILE *out)
 		return;
 		}
 
-	    FIPS_rand_set_key(key, keylen);
-	    FIPS_rand_seed(v,16);
-	    FIPS_rand_set_dt(dt);
-	    if (FIPS_rand_bytes(ret,16) <= 0)
+	    FIPS_x931_set_key(key, keylen);
+	    FIPS_x931_seed(v,16);
+	    FIPS_x931_set_dt(dt);
+	    if (FIPS_x931_bytes(ret,16) <= 0)
 		{
 		fprintf(stderr, "Error getting PRNG value\n");
 	        return;
@@ -168,12 +168,12 @@ static void mct(FILE *in, FILE *out)
 		return;
 		}
 
-	    FIPS_rand_set_key(key, keylen);
-	    FIPS_rand_seed(v,16);
+	    FIPS_x931_set_key(key, keylen);
+	    FIPS_x931_seed(v,16);
 	    for (i = 0; i < 10000; i++)
 		{
-		    FIPS_rand_set_dt(dt);
-		    if (FIPS_rand_bytes(ret,16) <= 0)
+		    FIPS_x931_set_dt(dt);
+		    if (FIPS_x931_bytes(ret,16) <= 0)
 			{
 			fprintf(stderr, "Error getting PRNG value\n");
 		        return;
@@ -227,8 +227,8 @@ int main(int argc,char **argv)
 	exit(1);
 	}
     fips_algtest_init();
-    FIPS_rand_reset();
-    if (!FIPS_rand_test_mode())
+    FIPS_x931_reset();
+    if (!FIPS_x931_test_mode())
 	{
 	fprintf(stderr, "Error setting PRNG test mode\n");
 	exit(1);

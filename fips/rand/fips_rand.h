@@ -58,17 +58,17 @@
 extern "C" {
 #endif
 
-int FIPS_rand_set_key(const unsigned char *key, int keylen);
-int FIPS_rand_seed(const void *buf, int num);
-int FIPS_rand_bytes(unsigned char *out, int outlen);
+int FIPS_x931_set_key(const unsigned char *key, int keylen);
+int FIPS_x931_seed(const void *buf, int num);
+int FIPS_x931_bytes(unsigned char *out, int outlen);
 
-int FIPS_rand_test_mode(void);
-void FIPS_rand_reset(void);
-int FIPS_rand_set_dt(unsigned char *dt);
+int FIPS_x931_test_mode(void);
+void FIPS_x931_reset(void);
+int FIPS_x931_set_dt(unsigned char *dt);
 
-int FIPS_rand_status(void);
+int FIPS_x931_status(void);
 
-const RAND_METHOD *FIPS_rand_method(void);
+const RAND_METHOD *FIPS_x931_method(void);
 
 typedef struct drbg_ctx_st DRBG_CTX;
 

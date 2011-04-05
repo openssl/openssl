@@ -324,26 +324,26 @@ static AES_PRNG_TV aes_256_tv[] = {
 };
 
 
-void FIPS_corrupt_rng()
+void FIPS_corrupt_x931()
     {
     aes_192_tv[0].V[0]++;
     }
 
-#define fips_rand_test(key, tv) \
-	do_rand_test(key, sizeof key, tv, sizeof(tv)/sizeof(AES_PRNG_TV))
+#define fips_x931_test(key, tv) \
+	do_x931_test(key, sizeof key, tv, sizeof(tv)/sizeof(AES_PRNG_TV))
 
-static int do_rand_test(unsigned char *key, int keylen,
+static int do_x931_test(unsigned char *key, int keylen,
 			AES_PRNG_TV *tv, int ntv)
 	{
 	unsigned char R[16];
 	int i;
-	if (!FIPS_rand_set_key(key, keylen))
+	if (!FIPS_x931_set_key(key, keylen))
 		return 0;
 	for (i = 0; i < ntv; i++)
 		{
-		FIPS_rand_seed(tv[i].V, 16);
-		FIPS_rand_set_dt(tv[i].DT);
-		FIPS_rand_bytes(R, 16);
+		FIPS_x931_seed(tv[i].V, 16);
+		FIPS_x931_set_dt(tv[i].DT);
+		FIPS_x931_bytes(R, 16);
 		if (memcmp(R, tv[i].R, 16))
 			return 0;
 		}
@@ -351,22 +351,22 @@ static int do_rand_test(unsigned char *key, int keylen,
 	}
 	
 
-int FIPS_selftest_rng()
+int FIPS_selftest_x931()
 	{
-	FIPS_rand_reset();
-	if (!FIPS_rand_test_mode())
+	FIPS_x931_reset();
+	if (!FIPS_x931_test_mode())
 		{
 		FIPSerr(FIPS_F_FIPS_SELFTEST_RNG,FIPS_R_SELFTEST_FAILED);
 		return 0;
 		}
-	if (!fips_rand_test(aes_128_key,aes_128_tv)
-		|| !fips_rand_test(aes_192_key, aes_192_tv)
-		|| !fips_rand_test(aes_256_key, aes_256_tv))
+	if (!fips_x931_test(aes_128_key,aes_128_tv)
+		|| !fips_x931_test(aes_192_key, aes_192_tv)
+		|| !fips_x931_test(aes_256_key, aes_256_tv))
 		{
 		FIPSerr(FIPS_F_FIPS_SELFTEST_RNG,FIPS_R_SELFTEST_FAILED);
 		return 0;
 		}
-	FIPS_rand_reset();
+	FIPS_x931_reset();
 	return 1;
 	}
 

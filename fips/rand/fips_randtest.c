@@ -218,15 +218,15 @@ static void run_test(unsigned char *key, int keylen, AES_PRNG_MCT *tv)
     {
     unsigned char buf[16], dt[16];
     int i, j;
-    FIPS_rand_reset();
-    FIPS_rand_test_mode();
-    FIPS_rand_set_key(key, keylen);
-    FIPS_rand_seed(tv->V, 16);
+    FIPS_x931_reset();
+    FIPS_x931_test_mode();
+    FIPS_x931_set_key(key, keylen);
+    FIPS_x931_seed(tv->V, 16);
     memcpy(dt, tv->DT, 16);
     for (i = 0; i < 10000; i++)
 	{
-    	FIPS_rand_set_dt(dt);
-	FIPS_rand_bytes(buf, 16);
+    	FIPS_x931_set_dt(dt);
+	FIPS_x931_bytes(buf, 16);
 	/* Increment DT */
 	for (j = 15; j >= 0; j--)
 		{
