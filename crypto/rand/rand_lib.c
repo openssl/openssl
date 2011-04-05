@@ -61,11 +61,6 @@
 #include "cryptlib.h"
 #include <openssl/rand.h>
 
-#ifdef OPENSSL_FIPSCANISTER
-#define OPENSSL_NO_ENGINE
-#include <openssl/fips.h>
-#endif
-
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
@@ -180,3 +175,70 @@ int RAND_status(void)
 		return meth->status();
 	return 0;
 	}
+
+#ifdef OPENSSL_FIPS
+
+#include <openssl/fips.h>
+#include <openssl/fips_rand.h>
+
+/* FIPS DRBG initialisation code. This sets up the DRBG for use by the
+ * rest of OpenSSL. 
+ */
+
+/* Entropy gatherer: use standard OpenSSL PRNG to seed (this will gather
+ * entropy internally through RAND_poll().
+ */
+
+static size_t drbg_get_entropy(DRBG_CTX *ctx, unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len)
+        {
+	*pout = OPENSSL_malloc(min_len);
+	if (!*pout)
+		return 0;
+	if (RAND_SSLeay()->bytes(*pout, min_len) <= 0)
+		{
+		OPENSSL_free(*pout);
+		*pout = NULL;
+		return 0;
+		}
+        return min_len;
+        }
+
+static void drbg_free_entropy(DRBG_CTX *ctx, unsigned char *out, size_t olen)
+	{
+	OPENSSL_cleanse(out, olen);
+	OPENSSL_free(out);
+	}
+
+/* RAND_add() and RAND_seed() pass through to OpenSSL PRNG so it is 
+ * correctly seeded by RAND_poll().
+ */
+
+static int drbg_rand_add(DRBG_CTX *ctx, const void *in, int inlen,
+				double entropy)
+	{
+	return RAND_SSLeay()->add(in, inlen, entropy);
+	}
+
+static int drbg_rand_seed(DRBG_CTX *ctx, const void *in, int inlen)
+	{
+	return RAND_SSLeay()->seed(in, inlen);
+	}
+
+int RAND_init_fips(void)
+	{
+	DRBG_CTX *dctx;
+	unsigned char pers[16] = {0,0,0};
+	dctx = FIPS_get_default_drbg();
+        FIPS_drbg_init(dctx, NID_aes_256_ctr, DRBG_FLAG_CTR_USE_DF);
+        FIPS_drbg_set_callbacks(dctx,
+				drbg_get_entropy, drbg_free_entropy,
+				drbg_get_entropy, drbg_free_entropy);
+	FIPS_drbg_set_rand_callbacks(dctx, 0, 0,
+					drbg_rand_seed, drbg_rand_add);
+        FIPS_drbg_instantiate(dctx, pers, sizeof(pers));
+        FIPS_rand_set_method(FIPS_drbg_method());
+	return 1;
+	}
+
+#endif

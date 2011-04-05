@@ -145,28 +145,18 @@ static void fips_drbg_cleanup(void)
 static int fips_drbg_seed(const void *seed, int seedlen)
 	{
 	DRBG_CTX *dctx = &ossl_dctx;
-	int rv = 1;
 	if (dctx->rand_seed_cb)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
-		rv = dctx->rand_seed_cb(dctx, seed, seedlen);
-		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
-		}
-	return rv;
+		return dctx->rand_seed_cb(dctx, seed, seedlen);
+	return 1;
 	}
 
 static int fips_drbg_add(const void *seed, int seedlen,
 					double add_entropy)
 	{
 	DRBG_CTX *dctx = &ossl_dctx;
-	int rv = 1;
 	if (dctx->rand_add_cb)
-		{
-		CRYPTO_w_lock(CRYPTO_LOCK_RAND);
-		rv = dctx->rand_add_cb(dctx, seed, seedlen, add_entropy);
-		CRYPTO_w_unlock(CRYPTO_LOCK_RAND);
-		}
-	return rv;
+		return dctx->rand_add_cb(dctx, seed, seedlen, add_entropy);
+	return 1;
 	}
 
 static const RAND_METHOD rand_drbg_meth =

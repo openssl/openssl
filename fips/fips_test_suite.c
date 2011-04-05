@@ -678,9 +678,6 @@ int main(int argc,char **argv)
 
     printf("\tFIPS-mode test application\n\n");
 
-    /* Load entropy from external file, if any */
-    RAND_load_file(".rnd", 1024);
-
     if (argv[1]) {
         /* Corrupted KAT tests */
         if (!strcmp(argv[1], "aes")) {

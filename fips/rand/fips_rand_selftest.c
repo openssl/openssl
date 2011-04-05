@@ -356,14 +356,14 @@ int FIPS_selftest_x931()
 	FIPS_x931_reset();
 	if (!FIPS_x931_test_mode())
 		{
-		FIPSerr(FIPS_F_FIPS_SELFTEST_RNG,FIPS_R_SELFTEST_FAILED);
+		FIPSerr(FIPS_F_FIPS_SELFTEST_X931,FIPS_R_SELFTEST_FAILED);
 		return 0;
 		}
 	if (!fips_x931_test(aes_128_key,aes_128_tv)
 		|| !fips_x931_test(aes_192_key, aes_192_tv)
 		|| !fips_x931_test(aes_256_key, aes_256_tv))
 		{
-		FIPSerr(FIPS_F_FIPS_SELFTEST_RNG,FIPS_R_SELFTEST_FAILED);
+		FIPSerr(FIPS_F_FIPS_SELFTEST_X931,FIPS_R_SELFTEST_FAILED);
 		return 0;
 		}
 	FIPS_x931_reset();

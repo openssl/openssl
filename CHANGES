@@ -4,6 +4,14 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Extensive reorganisation of FIPS PRNG behaviour. Remove all dependencies
+     to OpenSSL RAND code and replace with a tiny FIPS RAND API which also
+     performs algorithm blocking for unapproved PRNG types. Also do not
+     set PRNG type in FIPS_mode_set(): leave this to the application.
+     Add default OpenSSL DRBG handling: sets up FIPS PRNG and seeds with
+     the standard OpenSSL PRNG.
+     [Steve Henson]
+
   *) Rename old X9.31 PRNG functions of the form FIPS_rand* to FIPS_x931*.
      This shouldn't present any incompatibility problems because applications
      shouldn't be using these directly and any that are will need to rethink

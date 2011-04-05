@@ -112,6 +112,7 @@ int FIPS_drbg_get_strength(DRBG_CTX *dctx);
 DRBG_CTX *FIPS_get_default_drbg(void);
 const RAND_METHOD *FIPS_drbg_method(void);
 
+int FIPS_rand_set_method(const RAND_METHOD *meth);
 
 #ifdef  __cplusplus
 }

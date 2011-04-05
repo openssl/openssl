@@ -56,6 +56,7 @@
 #include <openssl/err.h>
 #ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#include <openssl/rand.h>
 #endif
 
 #if defined(__GNUC__) && __GNUC__>=2
@@ -123,6 +124,7 @@ void OPENSSL_init(void)
 	FIPS_set_locking_callbacks(CRYPTO_lock, CRYPTO_add_lock);
 	FIPS_set_error_callbacks(ERR_put_error, ERR_add_error_vdata);
 	FIPS_set_malloc_callbacks(CRYPTO_malloc, CRYPTO_free);
+	RAND_init_fips();
 #endif
 #if 0
 	fprintf(stderr, "Called OPENSSL_init\n");

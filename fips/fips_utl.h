@@ -118,6 +118,7 @@ static void fips_algtest_init_nofips(void)
 	FIPS_drbg_init(ctx, NID_aes_256_ctr, DRBG_FLAG_CTR_USE_DF);
 	FIPS_drbg_set_callbacks(ctx, dummy_cb, 0, dummy_cb, 0);
 	FIPS_drbg_instantiate(ctx, dummy_entropy, 10);
+	FIPS_rand_set_method(FIPS_drbg_method());
 	}
 
 void fips_algtest_init(void)

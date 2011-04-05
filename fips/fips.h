@@ -177,6 +177,12 @@ void FIPS_set_malloc_callbacks(
 #define ecdsa_check fips_ecdsa_check
 #define ecdh_check fips_ecdh_check
 
+#define RAND_bytes FIPS_rand_bytes
+#define RAND_pseudo_bytes FIPS_rand_pseudo_bytes
+#define RAND_add FIPS_rand_add
+#define RAND_seed FIPS_rand_seed
+#define RAND_status FIPS_rand_status
+
 #endif
 
 /* BEGIN ERROR CODES */
@@ -214,6 +220,12 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_DSA_CHECK				 107
 #define FIPS_F_FIPS_MODE_SET				 108
 #define FIPS_F_FIPS_PKEY_SIGNATURE_TEST			 109
+#define FIPS_F_FIPS_RAND_ADD				 143
+#define FIPS_F_FIPS_RAND_BYTES				 144
+#define FIPS_F_FIPS_RAND_PSEUDO_BYTES			 145
+#define FIPS_F_FIPS_RAND_SEED				 148
+#define FIPS_F_FIPS_RAND_SET_METHOD			 146
+#define FIPS_F_FIPS_RAND_STATUS				 147
 #define FIPS_F_FIPS_SELFTEST_AES			 110
 #define FIPS_F_FIPS_SELFTEST_AES_GCM			 130
 #define FIPS_F_FIPS_SELFTEST_CMAC			 139
@@ -223,6 +235,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_SELFTEST_HMAC			 113
 #define FIPS_F_FIPS_SELFTEST_RNG			 114
 #define FIPS_F_FIPS_SELFTEST_SHA1			 115
+#define FIPS_F_FIPS_SELFTEST_X931			 149
 #define FIPS_F_HASH_FINAL				 123
 #define FIPS_F_RSA_BUILTIN_KEYGEN			 116
 #define FIPS_F_RSA_EAY_PRIVATE_DECRYPT			 117

@@ -73,7 +73,6 @@
 static int fips_selftest_fail;
 static int fips_mode;
 static int fips_started = 0;
-static const void *fips_rand_check;
 
 static int fips_is_owning_thread(void);
 static int fips_set_owning_thread(void);
@@ -97,18 +96,6 @@ static void fips_set_mode(int onoff)
 		}
 	}
 
-static void fips_set_rand_check(const void *rand_check)
-	{
-	int owning_thread = fips_is_owning_thread();
-
-	if (fips_started)
-		{
-		if (!owning_thread) fips_w_lock();
-		fips_rand_check = rand_check;
-		if (!owning_thread) fips_w_unlock();
-		}
-	}
-
 int FIPS_mode(void)
 	{
 	int ret = 0;
@@ -118,20 +105,6 @@ int FIPS_mode(void)
 		{
 		if (!owning_thread) fips_r_lock();
 		ret = fips_mode;
-		if (!owning_thread) fips_r_unlock();
-		}
-	return ret;
-	}
-
-const void *FIPS_rand_check(void)
-	{
-	const void *ret = 0;
-	int owning_thread = fips_is_owning_thread();
-
-	if (fips_started)
-		{
-		if (!owning_thread) fips_r_lock();
-		ret = fips_rand_check;
 		if (!owning_thread) fips_r_unlock();
 		}
 	return ret;
@@ -329,28 +302,7 @@ int FIPS_mode_set(int onoff)
 	    ret = 0;
 	    goto end;
 	    }
-#if 0
-	/* automagically seed PRNG if not already seeded */
-	if(!FIPS_rand_status())
-	    {
-	    unsigned char buf[48];
-	    if(RAND_bytes(buf,sizeof buf) <= 0)
-		{
-		fips_selftest_fail = 1;
-		ret = 0;
-		goto end;
-		}
-	    FIPS_rand_set_key(buf,32);
-	    FIPS_rand_seed(buf+32,16);
-	    }
 
-	/* now switch into FIPS mode */
-	fips_set_rand_check(FIPS_rand_method());
-	RAND_set_rand_method(FIPS_rand_method());
-#else
-	fips_set_rand_check(FIPS_drbg_method());
-	RAND_set_rand_method(FIPS_drbg_method());
-#endif
 	if(FIPS_selftest())
 	    fips_set_mode(1);
 	else

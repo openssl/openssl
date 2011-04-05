@@ -214,7 +214,7 @@ int FIPS_x931_set_dt(unsigned char *dt)
 	{
 	if (!sctx.test_mode)
 		{
-		RANDerr(RAND_F_FIPS_RAND_SET_DT,RAND_R_NOT_IN_TEST_MODE);
+		RANDerr(RAND_F_FIPS_X931_SET_DT,RAND_R_NOT_IN_TEST_MODE);
 		return 0;
 		}
 	memcpy(sctx.DT, dt, AES_BLOCK_LENGTH);
