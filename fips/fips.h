@@ -127,6 +127,8 @@ void FIPS_set_malloc_callbacks(
 		void *(*malloc_cb)(int num, const char *file, int line),
 		void (*free_cb)(void *));
 
+void FIPS_get_timevec(unsigned char *buf, unsigned long *pctr);
+
 #define FIPS_ERROR_IGNORED(alg) OpenSSLDie(__FILE__, __LINE__, \
 		alg " previous FIPS forbidden algorithm error ignored");
 

@@ -221,14 +221,13 @@ int FIPS_x931_set_dt(unsigned char *dt)
 	return 1;
 	}
 
-static void fips_get_dt(FIPS_PRNG_CTX *ctx)
-    {
+void FIPS_get_timevec(unsigned char *buf, unsigned long *pctr)
+	{
 #ifdef OPENSSL_SYS_WIN32
 	FILETIME ft;
 #else
 	struct timeval tv;
 #endif
-	unsigned char *buf = ctx->DT;
 
 #ifndef GETPID_IS_MEANINGLESS
 	unsigned long pid;
@@ -255,12 +254,12 @@ static void fips_get_dt(FIPS_PRNG_CTX *ctx)
 	buf[6] = (unsigned char) ((tv.tv_usec >> 16) & 0xff);
 	buf[7] = (unsigned char) ((tv.tv_usec >> 24) & 0xff);
 #endif
-	buf[8] = (unsigned char) (ctx->counter & 0xff);
-	buf[9] = (unsigned char) ((ctx->counter >> 8) & 0xff);
-	buf[10] = (unsigned char) ((ctx->counter >> 16) & 0xff);
-	buf[11] = (unsigned char) ((ctx->counter >> 24) & 0xff);
+	buf[8] = (unsigned char) (*pctr & 0xff);
+	buf[9] = (unsigned char) ((*pctr >> 8) & 0xff);
+	buf[10] = (unsigned char) ((*pctr >> 16) & 0xff);
+	buf[11] = (unsigned char) ((*pctr >> 24) & 0xff);
 
-	ctx->counter++;
+	(*pctr)++;
 
 
 #ifndef GETPID_IS_MEANINGLESS
@@ -296,7 +295,7 @@ static int fips_rand(FIPS_PRNG_CTX *ctx,
 	for (;;)
 		{
 		if (!ctx->test_mode)
-			fips_get_dt(ctx);
+			FIPS_get_timevec(ctx->DT, &ctx->counter);
 		AES_encrypt(ctx->DT, I, &ctx->ks);
 		for (i = 0; i < AES_BLOCK_LENGTH; i++)
 			tmp[i] = I[i] ^ ctx->V[i];
