@@ -145,6 +145,8 @@ static ERR_STRING_DATA ERR_str_libraries[]=
 {ERR_PACK(ERR_LIB_CONF,0,0)		,"configuration file routines"},
 {ERR_PACK(ERR_LIB_CRYPTO,0,0)		,"common libcrypto routines"},
 {ERR_PACK(ERR_LIB_EC,0,0)		,"elliptic curve routines"},
+{ERR_PACK(ERR_LIB_ECDSA,0,0)		,"ECDSA routines"},
+{ERR_PACK(ERR_LIB_ECDH,0,0)		,"ECDH routines"},
 {ERR_PACK(ERR_LIB_SSL,0,0)		,"SSL routines"},
 {ERR_PACK(ERR_LIB_BIO,0,0)		,"BIO routines"},
 {ERR_PACK(ERR_LIB_PKCS7,0,0)		,"PKCS7 routines"},
@@ -205,6 +207,7 @@ static ERR_STRING_DATA ERR_str_reasons[]=
 {ERR_R_ENGINE_LIB			,"ENGINE lib"},
 {ERR_R_OCSP_LIB				,"OCSP lib"},
 {ERR_R_TS_LIB				,"TS lib"},
+{ERR_R_ECDSA_LIB			,"ECDSA lib"},
 
 {ERR_R_NESTED_ASN1_ERROR		,"nested asn1 error"},
 {ERR_R_BAD_ASN1_OBJECT_HEADER		,"bad asn1 object header"},
