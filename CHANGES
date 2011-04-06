@@ -9,7 +9,7 @@
      performs algorithm blocking for unapproved PRNG types. Also do not
      set PRNG type in FIPS_mode_set(): leave this to the application.
      Add default OpenSSL DRBG handling: sets up FIPS PRNG and seeds with
-     the standard OpenSSL PRNG.
+     the standard OpenSSL PRNG: set additional data to a date time vector.
      [Steve Henson]
 
   *) Rename old X9.31 PRNG functions of the form FIPS_rand* to FIPS_x931*.
