@@ -168,10 +168,9 @@ int fbytes(unsigned char *buf, int num)
 		return 0;
 		}
 	fbytes_counter ++;
-	ret = BN_bn2bin(tmp, buf);	
-	if (ret == 0 || ret != num)
+	if (num != BN_num_bytes(tmp) || !BN_bn2bin(tmp, buf))
 		ret = 0;
-	else
+	else 
 		ret = 1;
 	if (tmp)
 		BN_free(tmp);
