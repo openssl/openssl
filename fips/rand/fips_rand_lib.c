@@ -138,3 +138,25 @@ int FIPS_rand_status(void)
 		return fips_rand_meth->status();
 	return 0;
 	}
+
+/* Return instantiated strength of PRNG. For DRBG this is an internal
+ * parameter. For X9.31 PRNG it is 80 bits (from SP800-131). Any other
+ * type of PRNG is not approved and returns 0 in FIPS mode and maximum
+ * 256 outside FIPS mode.
+ */
+
+int FIPS_rand_strength(void)
+	{
+	if (fips_approved_rand_meth == 1)
+		return FIPS_drbg_get_strength(FIPS_get_default_drbg());
+	else if (fips_approved_rand_meth == 2)
+		return 80;
+	else if (fips_approved_rand_meth == 0)
+		{
+		if (FIPS_mode())
+			return 0;
+		else
+			return 256;
+		}
+	return 0;
+	}
