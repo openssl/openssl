@@ -84,6 +84,18 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 			FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_ERROR_INITIALISING_DRBG);
 		}
 
+	/* If not in test mode run selftests on DRBG of the same type */
+
+	if (!(dctx->flags & DRBG_FLAG_TEST))
+		{
+		DRBG_CTX tctx;
+		if (!fips_drbg_kat(&tctx, type, flags | DRBG_FLAG_TEST))
+			{
+			/*FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_SELFTEST_FAILURE);*/
+			return 0;
+			}
+		}
+
 	return rv;
 	}
 
