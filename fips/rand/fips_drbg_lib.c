@@ -91,7 +91,7 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 		DRBG_CTX tctx;
 		if (!fips_drbg_kat(&tctx, type, flags | DRBG_FLAG_TEST))
 			{
-			/*FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_SELFTEST_FAILURE);*/
+			FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_SELFTEST_FAILURE);
 			return 0;
 			}
 		}
@@ -426,7 +426,7 @@ int fips_drbg_cprng_test(DRBG_CTX *dctx, const unsigned char *out)
 	/* Check block is valid: should never happen */
 	if (dctx->lb_valid == 0)
 		{
-		FIPSerr(FIPS_F_DRBG_CPRNG_TEST, FIPS_R_INTERNAL_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_CPRNG_TEST, FIPS_R_INTERNAL_ERROR);
 		fips_set_selftest_fail();
 		return 0;
 		}
@@ -435,7 +435,7 @@ int fips_drbg_cprng_test(DRBG_CTX *dctx, const unsigned char *out)
 	/* Check against last block: fail if match */
 	if (!memcmp(dctx->lb, out, dctx->blocklength))
 		{
-		FIPSerr(FIPS_F_DRBG_CPRNG_TEST, FIPS_R_DRBG_STUCK);
+		FIPSerr(FIPS_F_FIPS_DRBG_CPRNG_TEST, FIPS_R_DRBG_STUCK);
 		fips_set_selftest_fail();
 		return 0;
 		}
