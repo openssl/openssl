@@ -21,6 +21,13 @@ foreach (split / /, $ENV{LINKDIRS} ) { $cdirs{$_} = 1 };
 
 $cdirs{perlasm} = 1;
 
+if (exists $ENV{NOEC2M})
+	{
+	delete $tarobjs{"bn_gf2m.c"};
+	delete $tarobjs{"ec2_mult.c"};
+	delete $tarobjs{"ec2_smpl.c"};
+	}
+
 my %keep = 
 	(
 	"Makefile.fips" => 1,

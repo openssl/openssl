@@ -1717,6 +1717,10 @@ while (<IN>)
 		s/^SHARED_LIBS_LINK_EXTS=.*/SHARED_LIBS_LINK_EXTS=.\$(SHLIB_MAJOR).dylib .dylib/;
 		}
 	s/^SHARED_LDFLAGS=.*/SHARED_LDFLAGS=$shared_ldflag/;
+	if ($fipscanisteronly == 2 && exists $disabled{"ec2m"})
+		{
+		next if (/ec2_/ || /bn_gf2m/);
+		}
 	print OUT $_."\n";
 	}
 close(IN);
