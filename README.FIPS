@@ -28,6 +28,12 @@ Run test vectors:
 4. It should say "passed all tests" at the end. Report full details of any
    failures.
 
+Run:
+
+make clean
+
+to remove any object modules from previous compile.
+
 Run symbol hiding test:
 
 ./config fipscanisteronly -DOPENSSL_FIPSSYMS
