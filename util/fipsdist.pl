@@ -21,11 +21,29 @@ foreach (split / /, $ENV{LINKDIRS} ) { $cdirs{$_} = 1 };
 
 $cdirs{perlasm} = 1;
 
+my %keep = 
+	(
+	"Makefile.fips" => 1,
+	"Makefile.shared" => 1,
+	"README.FIPS" => 1,
+	"e_os.h" => 1,
+	"e_os2.h" => 1,
+	"Configure" => 1,
+	"config" => 1,
+	);
+
 while (<STDIN>)
 	{
 	chomp;
-	# Skip directories but leave top level files.
-	next unless (/^(fips\/|crypto|util|test|include|ms)/ || (!/\// && -f $_));
+	# Keep top level files in list
+	if (!/\// && -f $_)
+		{
+		next unless exists $keep{$_};
+		}
+	else
+		{
+		next unless (/^(fips\/|crypto|util|test|include|ms)/);
+		}
 	if (/^crypto\/([^\/]+)/)
 		{
 		# Skip unused directories under crypto/
@@ -36,6 +54,10 @@ while (<STDIN>)
 			# If C source file must be on list.
 			next if !/(\w+\.c)$/ || !exists $tarobjs{$1};
 			}
+		}
+	if (/^test\//)
+		{
+		next unless /Makefile/ || /dummytest.c/;
 		}
 	print "$_\n";
 	}

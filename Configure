@@ -693,6 +693,16 @@ my $default_ranlib;
 my $perl;
 my $fips=0;
 
+# If ssl directory missing assume truncated FIPS tarball
+if (! -d ssl)
+	{
+	print STDERR "Auto Configuring fipsonly\n";
+	$fips = 1;
+	$nofipscanistercheck = 1;
+	$fipslibdir="";
+	$fipscanisterinternal="y";
+	$fipscanisteronly = 1;
+	}
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
