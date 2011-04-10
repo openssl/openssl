@@ -101,7 +101,6 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 
 DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
 	{
-	int rv;
 	DRBG_CTX *dctx;
 	dctx = OPENSSL_malloc(sizeof(DRBG_CTX));
 	if (!dctx)
@@ -111,7 +110,6 @@ DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
 		}
 	if (type == 0)
 		return dctx;
-	rv = FIPS_drbg_init(dctx, type, flags);
 
 	if (FIPS_drbg_init(dctx, type, flags) <= 0)
 		{
