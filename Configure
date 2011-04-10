@@ -693,17 +693,6 @@ my $default_ranlib;
 my $perl;
 my $fips=0;
 
-# If ssl directory missing assume truncated FIPS tarball
-if (! -d ssl)
-	{
-	print STDERR "Auto Configuring fipsonly\n";
-	$fips = 1;
-	$nofipscanistercheck = 1;
-	$fipslibdir="";
-	$fipscanisterinternal="y";
-	$fipscanisteronly = 1;
-	}
-
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
@@ -719,6 +708,21 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
                  "zlib-dynamic"   => "default"
                );
 my @experimental = ();
+
+# If ssl directory missing assume truncated FIPS tarball
+if (! -d ssl)
+	{
+	print STDERR "Auto Configuring fipsonly\n";
+	$fips = 1;
+	$nofipscanistercheck = 1;
+	$fipslibdir="";
+	$fipscanisterinternal="y";
+	$fipscanisteronly = 2;
+	if (! -f "crypto/bn/bn_gf2m.c" )
+		{
+		$disabled{ec2m} = "forced";
+		}
+	}
 
 # This is what $depflags will look like with the above defaults
 # (we need this to see if we should advise the user to run "make depend"):
@@ -1117,6 +1121,12 @@ foreach (sort (keys %disabled))
 	}
 
 my $exp_cflags = "";
+
+if ($fipscanisteronly == 2)
+	{
+	$exp_cflags .= " -DOPENSSL_FIPSSYMS";
+	}
+
 foreach (sort @experimental)
 	{
 	my $ALGO;
