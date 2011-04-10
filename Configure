@@ -710,7 +710,7 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 my @experimental = ();
 
 # If ssl directory missing assume truncated FIPS tarball
-if (! -d ssl)
+if (!-d "ssl")
 	{
 	print STDERR "Auto Configuring fipsonly\n";
 	$fips = 1;
@@ -1124,6 +1124,7 @@ my $exp_cflags = "";
 
 if ($fipscanisteronly == 2)
 	{
+print STDERR "ADDING FIPSSYM\n";
 	$exp_cflags .= " -DOPENSSL_FIPSSYMS";
 	}
 
