@@ -84,17 +84,11 @@ ech_err.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 ech_err.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 ech_err.o: ech_err.c
 ech_key.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-ech_key.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-ech_key.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-ech_key.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
-ech_key.o: ../../include/openssl/engine.h ../../include/openssl/evp.h
-ech_key.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-ech_key.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+ech_key.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+ech_key.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
 ech_key.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-ech_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/pkcs7.h
-ech_key.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
+ech_key.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 ech_key.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-ech_key.o: ../../include/openssl/x509.h ../../include/openssl/x509_vfy.h
 ech_key.o: ech_key.c ech_locl.h
 ech_lib.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 ech_lib.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
@@ -114,8 +108,8 @@ ech_ossl.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
 ech_ossl.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 ech_ossl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
 ech_ossl.o: ../../include/openssl/ecdh.h ../../include/openssl/err.h
-ech_ossl.o: ../../include/openssl/fips.h ../../include/openssl/lhash.h
-ech_ossl.o: ../../include/openssl/obj_mac.h ../../include/openssl/opensslconf.h
+ech_ossl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+ech_ossl.o: ../../include/openssl/opensslconf.h
 ech_ossl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 ech_ossl.o: ../../include/openssl/safestack.h ../../include/openssl/sha.h
 ech_ossl.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
