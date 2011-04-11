@@ -540,7 +540,7 @@ report:
 	@$(PERL) util/selftest.pl
 
 depend:
-	@set -e; target=depend; $(RECURSIVE_BUILD_CMD)
+	@echo make depend not supported ; false
 
 lint:
 	@set -e; target=lint; $(RECURSIVE_BUILD_CMD)

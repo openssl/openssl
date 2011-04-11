@@ -46,6 +46,28 @@ with FIPS or fips. One way to check with GNU nm is:
 
 nm -g --defined-only fips/fipscanister.o | grep -v -i fips
 
+Restricted tarball tests.
+
+The validated module will have its own tarball containing sufficient code to
+build fipscanister.o and the associated algorithm tests. You can create a
+similar tarball yourself for testing purposes using the commands below.
+
+Standard restricted tarball:
+
+make -f Makefile.fips dist
+
+Prime field field only ECC tarball:
+
+make NOEC2M=1 -f Makefile.fips dist
+
+Once you've created the tarball extract into a fresh directory and do:
+
+./config
+make
+
+You can then run the algorithm tests as above. This build automatically uses
+fipscanisteronly and -DOPENSSL_FIPSYMS and no-ec2m as appropriate.
+
 Known issues:
 
 Algorithm tests are pre-2011.
