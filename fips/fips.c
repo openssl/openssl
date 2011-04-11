@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -70,8 +70,8 @@
 #define PATH_MAX 1024
 #endif
 
-static int fips_selftest_fail;
-static int fips_mode;
+static int fips_selftest_fail = 0;
+static int fips_mode = 0;
 static int fips_started = 0;
 
 static int fips_is_owning_thread(void);
@@ -511,9 +511,12 @@ int fips_cipher_test(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	unsigned char pltmp[FIPS_MAX_CIPHER_TEST_SIZE];
 	unsigned char citmp[FIPS_MAX_CIPHER_TEST_SIZE];
 	OPENSSL_assert(len <= FIPS_MAX_CIPHER_TEST_SIZE);
+	memset(pltmp, 0, FIPS_MAX_CIPHER_TEST_SIZE);
+	memset(citmp, 0, FIPS_MAX_CIPHER_TEST_SIZE);
 	if (FIPS_cipherinit(ctx, cipher, key, iv, 1) <= 0)
 		return 0;
-	FIPS_cipher(ctx, citmp, plaintext, len);
+	if (!FIPS_cipher(ctx, citmp, plaintext, len))
+		return 0;
 	if (memcmp(citmp, ciphertext, len))
 		return 0;
 	if (FIPS_cipherinit(ctx, cipher, key, iv, 0) <= 0)
