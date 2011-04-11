@@ -16,6 +16,7 @@ my @objlist = split / /, $objs;
 foreach (@objlist) { $tarobjs{"$1.c"} = 1 if /([^\/]+).o$/};
 
 $tarobjs{"ncbc_enc.c"} = 1;
+$tarobjs{"mem_clr.c"} = 1;
 
 foreach (split / /, $ENV{LINKDIRS} ) { $cdirs{$_} = 1 };
 
