@@ -68,7 +68,7 @@
 #define HMAC_SHA1_SIG "?have to make sure this string is unique"
 #endif
 
-static const unsigned char FINGERPRINT_ascii_value[40] = HMAC_SHA1_SIG;
+static const unsigned char FINGERPRINT_ascii_value[41] = HMAC_SHA1_SIG;
 
 #define atox(c) ((c)>='a'?((c)-'a'+10):((c)>='A'?(c)-'A'+10:(c)-'0'))
 
