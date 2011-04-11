@@ -2083,7 +2083,7 @@ OpenSSL FIPS Object Module as identified by the CMVP
 (http://csrc.nist.gov/cryptval/) in any application requiring the use of FIPS
 140-2 validated software. 
 
-This is an OpenSSL 1.1.0 test version.
+This is a test OpenSSL 2.0 FIPS module.
 
 See the file README.FIPS for details of how to build a test library.
 
