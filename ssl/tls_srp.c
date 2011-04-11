@@ -56,12 +56,14 @@
  * Hudson (tjh@cryptsoft.com).
  *
  */
-#include "ssl_locl.h"
-#ifndef OPENSSL_NO_SRP
 
+#include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/srp.h>
 #include <openssl/err.h>
+#include "ssl_locl.h"
+
+#ifndef OPENSSL_NO_SRP
 
 int SSL_CTX_SRP_CTX_free(struct ssl_ctx_st *ctx)
 	{
