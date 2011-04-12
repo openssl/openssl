@@ -332,6 +332,7 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/modes/ctr128.o \
 	../crypto/modes/gcm128.o \
 	../crypto/modes/ofb128.o \
+	../crypto/modes/xts128.o \
 	../crypto/rsa/rsa_eay.o \
 	../crypto/rsa/rsa_gen.o \
 	../crypto/rsa/rsa_crpt.o \

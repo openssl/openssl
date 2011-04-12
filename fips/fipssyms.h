@@ -175,6 +175,7 @@
 #define CRYPTO_gcm128_setiv FIPS_crypto_gcm128_setiv
 #define CRYPTO_gcm128_tag FIPS_crypto_gcm128_tag
 #define CRYPTO_ofb128_encrypt FIPS_crypto_ofb128_encrypt
+#define CRYPTO_xts128_encrypt FIPS_crypto_xts128_encrypt
 #define DES_cfb64_encrypt FIPS_des_cfb64_encrypt
 #define DES_cfb_encrypt FIPS_des_cfb_encrypt
 #define DES_check_key_parity FIPS_des_check_key_parity
@@ -297,6 +298,7 @@
 #define EVP_aes_128_ecb FIPS_evp_aes_128_ecb
 #define EVP_aes_128_gcm FIPS_evp_aes_128_gcm
 #define EVP_aes_128_ofb FIPS_evp_aes_128_ofb
+#define EVP_aes_128_xts FIPS_evp_aes_128_xts
 #define EVP_aes_192_cbc FIPS_evp_aes_192_cbc
 #define EVP_aes_192_cfb1 FIPS_evp_aes_192_cfb1
 #define EVP_aes_192_cfb128 FIPS_evp_aes_192_cfb128
@@ -313,6 +315,7 @@
 #define EVP_aes_256_ecb FIPS_evp_aes_256_ecb
 #define EVP_aes_256_gcm FIPS_evp_aes_256_gcm
 #define EVP_aes_256_ofb FIPS_evp_aes_256_ofb
+#define EVP_aes_256_xts FIPS_evp_aes_256_xts
 #define EVP_des_ede FIPS_evp_des_ede
 #define EVP_des_ede3 FIPS_evp_des_ede3
 #define EVP_des_ede3_cbc FIPS_evp_des_ede3_cbc
