@@ -97,7 +97,8 @@ int FIPS_selftest_ecdsa()
 	BIGNUM *x = NULL, *y = NULL, *d = NULL;
 	EVP_MD_CTX mctx;
 	ECDSA_SIG *esig = NULL;
-	int i, rv = 0;
+	int rv = 0;
+	size_t i;
 
 	FIPS_md_ctx_init(&mctx);
 
@@ -105,9 +106,9 @@ int FIPS_selftest_ecdsa()
 		{
 		EC_SELFTEST_PRIVKEY *key = test_ec_keys + i;
 
-		x = BN_bin2bn(key->x, key->xlen, NULL);
-		y = BN_bin2bn(key->y, key->ylen, NULL);
-		d = BN_bin2bn(key->d, key->dlen, NULL);
+		x = BN_bin2bn(key->x, key->xlen, x);
+		y = BN_bin2bn(key->y, key->ylen, y);
+		d = BN_bin2bn(key->d, key->dlen, d);
 
 		if (!x || !y || !d)
 			goto err;
@@ -142,12 +143,14 @@ int FIPS_selftest_ecdsa()
 
 		FIPS_ecdsa_sig_free(esig);
 		esig = NULL;
+		EC_KEY_free(ec);
+		ec = NULL;
 		}
 
 	rv = 1;
 
 	err:
-	
+
 	if (x)
 		BN_clear_free(x);
 	if (y)
