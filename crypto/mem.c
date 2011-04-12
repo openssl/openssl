@@ -101,7 +101,7 @@ static void (*free_locked_func)(void *)     = free;
 
 /* may be changed as long as 'allow_customize_debug' is set */
 /* XXX use correct function pointer types */
-#if defined(CRYPTO_MDEBUG) && !defined(OPENSSL_FIPSCANISTER)
+#if defined(CRYPTO_MDEBUG)
 /* use default functions from mem_dbg.c */
 static void (*malloc_debug_func)(void *,int,const char *,int,int)
 	= CRYPTO_dbg_malloc;
