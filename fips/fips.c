@@ -449,14 +449,20 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 		if (!esig)
 			goto error;
 		}
-#if 0
-	else if (!EVP_SignFinal(&mctx, sig, &siglen, pkey))
-		goto error;
-#endif
 
 	if (kat && ((siglen != katlen) || memcmp(kat, sig, katlen)))
 		goto error;
-
+#if 0
+	{
+	/* Debug code to print out self test KAT discrepancies */
+	unsigned int i;
+	fprintf(stderr, "%s=", fail_str);
+	for (i = 0; i < siglen; i++)
+			fprintf(stderr, "%02X", sig[i]);
+	fprintf(stderr, "\n");
+	goto error;
+	}
+#endif
 	if (!FIPS_digestinit(&mctx, digest))
 		goto error;
 	if (!FIPS_digestupdate(&mctx, tbs, tbslen))
@@ -474,10 +480,6 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 		{
 		ret = FIPS_ecdsa_verify_ctx(pkey->pkey.ec, &mctx, esig);
 		}
-#if 0
-	else
-		ret = EVP_VerifyFinal(&mctx, sig, siglen, pkey);
-#endif
 
 	error:
 	if (dsig != NULL)

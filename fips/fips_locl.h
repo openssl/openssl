@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,6 +54,10 @@ extern "C" {
 #endif
 
 #define FIPS_MAX_CIPHER_TEST_SIZE	16
+#define fips_load_key_component(key, comp, pre) \
+	key->comp = BN_bin2bn(pre##_##comp, sizeof(pre##_##comp), key->comp); \
+	if (!key->comp) \
+		goto err
 
 #ifdef  __cplusplus
 }
