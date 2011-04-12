@@ -62,9 +62,9 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 913
-#define NUM_SN 906
-#define NUM_LN 906
+#define NUM_NID 915
+#define NUM_SN 908
+#define NUM_LN 908
 #define NUM_OBJ 856
 
 static const unsigned char lvalues[5971]={
@@ -2395,6 +2395,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_anyExtendedKeyUsage,4,&(lvalues[5948]),0},
 {"MGF1","mgf1",NID_mgf1,9,&(lvalues[5952]),0},
 {"RSASSA-PSS","rsassaPss",NID_rsassaPss,9,&(lvalues[5961]),0},
+{"AES-128-XTS","aes-128-xts",NID_aes_128_xts,0,NULL,0},
+{"AES-256-XTS","aes-256-xts",NID_aes_256_xts,0,NULL,0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2406,6 +2408,7 @@ static const unsigned int sn_objs[NUM_SN]={
 904,	/* "AES-128-CTR" */
 418,	/* "AES-128-ECB" */
 420,	/* "AES-128-OFB" */
+913,	/* "AES-128-XTS" */
 423,	/* "AES-192-CBC" */
 425,	/* "AES-192-CFB" */
 651,	/* "AES-192-CFB1" */
@@ -2420,6 +2423,7 @@ static const unsigned int sn_objs[NUM_SN]={
 906,	/* "AES-256-CTR" */
 426,	/* "AES-256-ECB" */
 428,	/* "AES-256-OFB" */
+914,	/* "AES-256-XTS" */
 91,	/* "BF-CBC" */
 93,	/* "BF-CFB" */
 92,	/* "BF-ECB" */
@@ -3459,6 +3463,7 @@ static const unsigned int ln_objs[NUM_LN]={
 418,	/* "aes-128-ecb" */
 895,	/* "aes-128-gcm" */
 420,	/* "aes-128-ofb" */
+913,	/* "aes-128-xts" */
 423,	/* "aes-192-cbc" */
 899,	/* "aes-192-ccm" */
 425,	/* "aes-192-cfb" */
@@ -3477,6 +3482,7 @@ static const unsigned int ln_objs[NUM_LN]={
 426,	/* "aes-256-ecb" */
 901,	/* "aes-256-gcm" */
 428,	/* "aes-256-ofb" */
+914,	/* "aes-256-xts" */
 376,	/* "algorithm" */
 484,	/* "associatedDomain" */
 485,	/* "associatedName" */

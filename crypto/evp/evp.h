@@ -83,7 +83,7 @@
 #define EVP_RC5_32_12_16_KEY_SIZE	16
 */
 #define EVP_MAX_MD_SIZE			64	/* longest known is SHA512 */
-#define EVP_MAX_KEY_LENGTH		32
+#define EVP_MAX_KEY_LENGTH		64
 #define EVP_MAX_IV_LENGTH		16
 #define EVP_MAX_BLOCK_LENGTH		32
 
@@ -330,6 +330,8 @@ struct evp_cipher_st
 #define		EVP_CIPH_OFB_MODE		0x4
 #define		EVP_CIPH_CTR_MODE		0x5
 #define		EVP_CIPH_GCM_MODE		0x6
+#define		EVP_CIPH_CCM_MODE		0x7
+#define		EVP_CIPH_XTS_MODE		0x10001
 #define 	EVP_CIPH_MODE			0xF0007
 /* Set if variable length cipher */
 #define 	EVP_CIPH_VARIABLE_LENGTH	0x8
@@ -788,6 +790,7 @@ const EVP_CIPHER *EVP_aes_128_cfb128(void);
 const EVP_CIPHER *EVP_aes_128_ofb(void);
 const EVP_CIPHER *EVP_aes_128_ctr(void);
 const EVP_CIPHER *EVP_aes_128_gcm(void);
+const EVP_CIPHER *EVP_aes_128_xts(void);
 const EVP_CIPHER *EVP_aes_192_ecb(void);
 const EVP_CIPHER *EVP_aes_192_cbc(void);
 const EVP_CIPHER *EVP_aes_192_cfb1(void);
@@ -806,6 +809,7 @@ const EVP_CIPHER *EVP_aes_256_cfb128(void);
 const EVP_CIPHER *EVP_aes_256_ofb(void);
 const EVP_CIPHER *EVP_aes_256_ctr(void);
 const EVP_CIPHER *EVP_aes_256_gcm(void);
+const EVP_CIPHER *EVP_aes_256_xts(void);
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);

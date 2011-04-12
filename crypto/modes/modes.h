@@ -104,3 +104,9 @@ int  CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
 			size_t len);
 void  CRYPTO_gcm128_tag(GCM128_CONTEXT *ctx, unsigned char *tag, size_t len);
 void CRYPTO_gcm128_release(GCM128_CONTEXT *ctx);
+
+typedef struct xts128_context XTS128_CONTEXT;
+
+int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char *iv,
+	const unsigned char *inp, unsigned char *out,
+	size_t len, int enc);

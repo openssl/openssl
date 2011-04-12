@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Provisional XTS support. Note: this does increase the maximum key
+     length from 32 to 64 bytes but there should be no binary compatibility
+     issues as existing applications will never use XTS mode.
+     [Steve Henson]
+
   *) Extensive reorganisation of FIPS PRNG behaviour. Remove all dependencies
      to OpenSSL RAND code and replace with a tiny FIPS RAND API which also
      performs algorithm blocking for unapproved PRNG types. Also do not

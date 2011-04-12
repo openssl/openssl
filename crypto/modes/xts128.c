@@ -58,12 +58,7 @@
 #endif
 #include <assert.h>
 
-typedef struct {
-	void      *key1, *key2;
-	block128_f block1,block2;
-} XTS128_CONTEXT;
-
-int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, u64 secno,
+int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char *iv,
 	const unsigned char *inp, unsigned char *out,
 	size_t len, int enc)
 {
@@ -73,15 +68,7 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, u64 secno,
 
 	if (len<16) return -1;
 
-	if (is_endian.little) {
-		tweak.u[0] = secno;
-		tweak.u[1] = 0;
-	}
-	else {
-		PUTU32(tweak.c,secno);
-		PUTU32(tweak.c+4,secno>>32);
-		tweak.u[1] = 0;
-	}
+	memcpy(tweak.c, iv, 16);
 
 	(*ctx->block2)(tweak.c,tweak.c,ctx->key2);
 

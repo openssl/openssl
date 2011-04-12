@@ -458,5 +458,104 @@ static const EVP_CIPHER aes_256_gcm_cipher=
 
 const EVP_CIPHER *EVP_aes_256_gcm (void)
 {	return &aes_256_gcm_cipher;	}
+
+typedef struct
+	{
+	/* AES key schedules to use */
+	AES_KEY ks1, ks2;
+	XTS128_CONTEXT xts;
+	} EVP_AES_XTS_CTX;
+
+static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+	{
+	EVP_AES_XTS_CTX *xctx = c->cipher_data;
+	if (type != EVP_CTRL_INIT)
+		return -1;
+	/* key1 and key2 are used as an indicator both key and IV are set */
+	xctx->xts.key1 = NULL;
+	xctx->xts.key2 = NULL;
+	xctx->xts.block1 = (block128_f)AES_encrypt;
+	xctx->xts.block2 = (block128_f)AES_encrypt;
+	return 1;
+	}
+
+static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                        const unsigned char *iv, int enc)
+	{
+	EVP_AES_XTS_CTX *xctx = ctx->cipher_data;
+	if (!iv && !key)
+		return 1;
+
+	if (key)
+		{
+		AES_set_encrypt_key(key, ctx->key_len * 8, &xctx->ks1);
+		AES_set_encrypt_key(key + ctx->key_len, ctx->key_len * 8,
+								&xctx->ks2);
+
+		xctx->xts.key1 = &xctx->ks1;
+		xctx->xts.block1 = (block128_f)AES_encrypt;
+		xctx->xts.block2 = (block128_f)AES_encrypt;
+		}
+
+	if (iv)
+		{
+		xctx->xts.key2 = &xctx->ks2;
+		memcpy(ctx->iv, iv, 16);
+		}
+
+	return 1;
+	}
+
+static int aes_xts(EVP_CIPHER_CTX *ctx, unsigned char *out,
+		const unsigned char *in, size_t len)
+	{
+	EVP_AES_XTS_CTX *xctx = ctx->cipher_data;
+	if (!xctx->xts.key1 || !xctx->xts.key2)
+		return -1;
+	if (!out || !in)
+		return -1;
+	if (CRYPTO_xts128_encrypt(&xctx->xts, ctx->iv, in, out, len,
+								ctx->encrypt))
+		return -1;
+	return len;
+	}
+
+static const EVP_CIPHER aes_128_xts_cipher=
+	{
+	NID_aes_128_xts,16,32,16,
+	EVP_CIPH_XTS_MODE|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1
+		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER
+		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT,
+	aes_xts_init_key,
+	aes_xts,
+	0,
+	sizeof(EVP_AES_XTS_CTX),
+	NULL,
+	NULL,
+	aes_xts_ctrl,
+	NULL
+	};
+
+const EVP_CIPHER *EVP_aes_128_xts (void)
+{	return &aes_128_xts_cipher;	}
+	
+static const EVP_CIPHER aes_256_xts_cipher=
+	{
+	NID_aes_256_xts,16,64,16,
+	EVP_CIPH_XTS_MODE|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1
+		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER
+		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT,
+	aes_xts_init_key,
+	aes_xts,
+	0,
+	sizeof(EVP_AES_XTS_CTX),
+	NULL,
+	NULL,
+	aes_xts_ctrl,
+	NULL
+	};
+
+const EVP_CIPHER *EVP_aes_256_xts (void)
+{	return &aes_256_xts_cipher;	}
 		
 #endif

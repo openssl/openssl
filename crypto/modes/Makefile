@@ -21,9 +21,9 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c
+LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c xts128.c
 LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o \
-	$(MODES_ASM_OBJ)
+	xts128.o $(MODES_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
