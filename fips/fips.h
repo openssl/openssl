@@ -102,8 +102,8 @@ unsigned int FIPS_incore_fingerprint(unsigned char *sig,unsigned int len);
 int FIPS_check_incore_fingerprint(void);
 
 int fips_pkey_signature_test(struct evp_pkey_st *pkey,
-			const unsigned char *tbs, int tbslen,
-			const unsigned char *kat, unsigned int katlen,
+			const unsigned char *tbs, size_t tbslen,
+			const unsigned char *kat, size_t katlen,
 			const struct env_md_st *digest, int pad_mode,
 			const char *fail_str);
 

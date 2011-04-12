@@ -144,8 +144,6 @@ static const unsigned char dsa_test_2048_priv_key[] = {
 	0xec,0x55,0xf6,0xcc
 };
 
-static const unsigned char str1[]="12345678901234567890";
-
 void FIPS_corrupt_dsa()
     {
     ++dsa_test_2048_q[0];
@@ -171,7 +169,7 @@ int FIPS_selftest_dsa()
 	pk.type = EVP_PKEY_DSA;
 	pk.pkey.dsa = dsa;
 
-	if (!fips_pkey_signature_test(&pk, str1, sizeof(str1) - 1,
+	if (!fips_pkey_signature_test(&pk, NULL, 0,
 					NULL, 0, EVP_sha384(), 0,
 					"DSA SHA384"))
 		goto err;

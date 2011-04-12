@@ -397,21 +397,25 @@ unsigned char *fips_signature_witness(void)
  */
 
 int fips_pkey_signature_test(EVP_PKEY *pkey,
-			const unsigned char *tbs, int tbslen,
-			const unsigned char *kat, unsigned int katlen,
+			const unsigned char *tbs, size_t tbslen,
+			const unsigned char *kat, size_t katlen,
 			const EVP_MD *digest, int pad_mode,
 			const char *fail_str)
 	{	
 	int ret = 0;
-	unsigned char sigtmp[256], *sig = sigtmp;
+	unsigned char *sig = NULL;
 	unsigned int siglen;
+	static const unsigned char str1[]="12345678901234567890";
 	DSA_SIG *dsig = NULL;
 	ECDSA_SIG *esig = NULL;
 	EVP_MD_CTX mctx;
 	FIPS_md_ctx_init(&mctx);
 
-	if ((pkey->type == EVP_PKEY_RSA)
-		&& ((size_t)RSA_size(pkey->pkey.rsa) > sizeof(sigtmp)))
+
+	if (tbs == NULL)
+		tbs = str1;
+
+	if (pkey->type == EVP_PKEY_RSA)
 		{
 		sig = OPENSSL_malloc(RSA_size(pkey->pkey.rsa));
 		if (!sig)
@@ -421,7 +425,7 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 			}
 		}
 
-	if (tbslen == -1)
+	if (tbslen == 0)
 		tbslen = strlen((char *)tbs);
 
 	if (digest == NULL)
@@ -486,7 +490,7 @@ int fips_pkey_signature_test(EVP_PKEY *pkey,
 		FIPS_dsa_sig_free(dsig);
 	if (esig != NULL)
 		FIPS_ecdsa_sig_free(esig);
-	if (sig != sigtmp)
+	if (sig)
 		OPENSSL_free(sig);
 	FIPS_md_ctx_cleanup(&mctx);
 	if (ret != 1)

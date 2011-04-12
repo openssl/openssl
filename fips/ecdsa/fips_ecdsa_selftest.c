@@ -1,4 +1,56 @@
 /* fips/ecdsa/fips_ecdsa_selftest.c */
+/* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
+ * project 2011.
+ */
+/* ====================================================================
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer. 
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * 3. All advertising materials mentioning features or use of this
+ *    software must display the following acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit. (http://www.OpenSSL.org/)"
+ *
+ * 4. The names "OpenSSL Toolkit" and "OpenSSL Project" must not be used to
+ *    endorse or promote products derived from this software without
+ *    prior written permission. For written permission, please contact
+ *    licensing@OpenSSL.org.
+ *
+ * 5. Products derived from this software may not be called "OpenSSL"
+ *    nor may "OpenSSL" appear in their names without prior written
+ *    permission of the OpenSSL Project.
+ *
+ * 6. Redistributions of any form whatsoever must retain the following
+ *    acknowledgment:
+ *    "This product includes software developed by the OpenSSL Project
+ *    for use in the OpenSSL Toolkit (http://www.OpenSSL.org/)"
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OpenSSL PROJECT ``AS IS'' AND ANY
+ * EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OpenSSL PROJECT OR
+ * ITS CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ * ====================================================================
+ *
+ */
 
 #define OPENSSL_FIPSAPI
 
@@ -13,16 +65,9 @@
 
 #ifdef OPENSSL_FIPS
 
-static const unsigned char str1[]="12345678901234567890";
+static const char P_384_name[] = "ECDSA P-384";
 
-static int corrupt_ecdsa = 0;
-
-void FIPS_corrupt_ecdsa()
-    {
-    corrupt_ecdsa = 1;
-    }
-
-static const unsigned char P_384_d[] = {
+static unsigned char P_384_d[] = {
 	0x1d,0x84,0x42,0xde,0xa2,0x35,0x29,0xbd,0x9f,0xe2,0x6e,0x6d,
 	0x01,0x26,0x30,0x79,0x33,0x57,0x01,0xf3,0x97,0x88,0x41,0xb3,
 	0x82,0x07,0x08,0x5e,0x63,0x8e,0x1a,0xa6,0x9b,0x08,0xb6,0xe2,
@@ -41,7 +86,14 @@ static const unsigned char P_384_qy[] = {
 	0xfc,0x03,0xe5,0x12,0x50,0x17,0x98,0x7f,0x14,0x7e,0x95,0x17
 };
 
+void FIPS_corrupt_ecdsa()
+    	{
+	P_384_d[0]++;
+    	}
+
 #ifndef OPENSSL_NO_EC2M
+
+static const char K_409_name[] = "ECDSA K-409";
 
 static const unsigned char K_409_d[] = {
 	0x68,0xe1,0x64,0x0a,0xe6,0x80,0x57,0x53,0x8d,0x35,0xd1,0xec,
@@ -70,24 +122,25 @@ static const unsigned char K_409_qy[] = {
 typedef struct 
 	{
 	int curve;
+	const char *name;
 	const unsigned char *x;
 	size_t xlen;
 	const unsigned char *y;
 	size_t ylen;
 	const unsigned char *d;
 	size_t dlen;
-	} EC_SELFTEST_PRIVKEY;
+	} EC_SELFTEST_DATA;
 
-#define make_ec_key(nid, pr) { nid, \
+#define make_ecdsa_test(nid, pr) { nid, pr##_name, \
 				pr##_qx, sizeof(pr##_qx), \
 				pr##_qy, sizeof(pr##_qy), \
-				pr##_d, sizeof(pr##_d) }
+				pr##_d, sizeof(pr##_d)}
 
-static EC_SELFTEST_PRIVKEY test_ec_keys[] = 
+static EC_SELFTEST_DATA test_ec_data[] = 
 	{
-	make_ec_key(NID_secp384r1, P_384),
+	make_ecdsa_test(NID_secp384r1, P_384),
 #ifndef OPENSSL_NO_EC2M
-	make_ec_key(NID_sect409k1, K_409)
+	make_ecdsa_test(NID_sect409k1, K_409)
 #endif
 	};
 
@@ -95,25 +148,22 @@ int FIPS_selftest_ecdsa()
 	{
 	EC_KEY *ec = NULL;
 	BIGNUM *x = NULL, *y = NULL, *d = NULL;
-	EVP_MD_CTX mctx;
-	ECDSA_SIG *esig = NULL;
+	EVP_PKEY pk;
 	int rv = 0;
 	size_t i;
 
-	FIPS_md_ctx_init(&mctx);
-
-	for (i = 0; i < sizeof(test_ec_keys)/sizeof(EC_SELFTEST_PRIVKEY); i++)
+	for (i = 0; i < sizeof(test_ec_data)/sizeof(EC_SELFTEST_DATA); i++)
 		{
-		EC_SELFTEST_PRIVKEY *key = test_ec_keys + i;
+		EC_SELFTEST_DATA *ecd = test_ec_data + i;
 
-		x = BN_bin2bn(key->x, key->xlen, x);
-		y = BN_bin2bn(key->y, key->ylen, y);
-		d = BN_bin2bn(key->d, key->dlen, d);
+		x = BN_bin2bn(ecd->x, ecd->xlen, x);
+		y = BN_bin2bn(ecd->y, ecd->ylen, y);
+		d = BN_bin2bn(ecd->d, ecd->dlen, d);
 
 		if (!x || !y || !d)
 			goto err;
 
-		ec = EC_KEY_new_by_curve_name(key->curve);
+		ec = EC_KEY_new_by_curve_name(ecd->curve);
 		if (!ec)
 			goto err;
 
@@ -123,26 +173,13 @@ int FIPS_selftest_ecdsa()
 		if (!EC_KEY_set_private_key(ec, d))
 			goto err;
 
-		if (!FIPS_digestinit(&mctx, EVP_sha512()))
-			goto err;
-		if (!FIPS_digestupdate(&mctx, str1, 20))
-			goto err;
-		esig = FIPS_ecdsa_sign_ctx(ec, &mctx);
-		if (!esig)
-			goto err;
+		pk.type = EVP_PKEY_EC;
+		pk.pkey.ec = ec;
 
-		if (corrupt_ecdsa)
-			BN_add_word(esig->r, 1);
-
-		if (!FIPS_digestinit(&mctx, EVP_sha512()))
+		if (!fips_pkey_signature_test(&pk, NULL, 0,
+						NULL, 0, EVP_sha512(), 0,
+						ecd->name))
 			goto err;
-		if (!FIPS_digestupdate(&mctx, str1, 20))
-			goto err;
-		if (FIPS_ecdsa_verify_ctx(ec, &mctx, esig) != 1)
-			goto err;
-
-		FIPS_ecdsa_sig_free(esig);
-		esig = NULL;
 		EC_KEY_free(ec);
 		ec = NULL;
 		}
@@ -150,8 +187,6 @@ int FIPS_selftest_ecdsa()
 	rv = 1;
 
 	err:
-
-	FIPS_md_ctx_cleanup(&mctx);
 
 	if (x)
 		BN_clear_free(x);
@@ -161,8 +196,6 @@ int FIPS_selftest_ecdsa()
 		BN_clear_free(d);
 	if (ec)
 		EC_KEY_free(ec);
-	if (esig)
-		FIPS_ecdsa_sig_free(esig);
 
 	return rv;
 
