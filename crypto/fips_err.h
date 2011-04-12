@@ -157,6 +157,7 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {ERR_REASON(FIPS_R_SELFTEST_FAILURE)     ,"selftest failure"},
 {ERR_REASON(FIPS_R_STRENGTH_ERROR_UNDETECTED),"strength error undetected"},
 {ERR_REASON(FIPS_R_TEST_FAILURE)         ,"test failure"},
+{ERR_REASON(FIPS_R_UNINSTANTIATE_ERROR)  ,"uninstantiate error"},
 {ERR_REASON(FIPS_R_UNINSTANTIATE_ZEROISE_ERROR),"uninstantiate zeroise error"},
 {ERR_REASON(FIPS_R_UNSUPPORTED_DRBG_TYPE),"unsupported drbg type"},
 {ERR_REASON(FIPS_R_UNSUPPORTED_PLATFORM) ,"unsupported platform"},

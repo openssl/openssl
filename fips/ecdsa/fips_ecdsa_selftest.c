@@ -151,6 +151,8 @@ int FIPS_selftest_ecdsa()
 
 	err:
 
+	FIPS_md_ctx_cleanup(&mctx);
+
 	if (x)
 		BN_clear_free(x);
 	if (y)

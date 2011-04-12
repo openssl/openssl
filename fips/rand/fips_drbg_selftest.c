@@ -859,6 +859,13 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 
+	dctx->flags &= ~DRBG_FLAG_NOERR;
+	if (!FIPS_drbg_uninstantiate(dctx))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		goto err;
+		}
+
 	/* Instantiate with valid data. NB: errors now reported again */
 	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
 		goto err;
@@ -911,6 +918,14 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 		
+	dctx->flags &= ~DRBG_FLAG_NOERR;
+
+	if (!FIPS_drbg_uninstantiate(dctx))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		goto err;
+		}
+
 
 	/* Instantiate again with valid data */
 
