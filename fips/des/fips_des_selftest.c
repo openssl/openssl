@@ -115,7 +115,7 @@ int FIPS_selftest_des()
     /* Encrypt/decrypt with 3DES and compare to known answers */
     for(n=0 ; n < 2 ; ++n)
 	{
-	if (!fips_cipher_test(&ctx, EVP_des_ede3_ecb(),
+	if (!fips_cipher_test(FIPS_TEST_CIPHER, &ctx, EVP_des_ede3_ecb(),
 				tests3[n].key, NULL,
 				tests3[n].plaintext, tests3[n].ciphertext, 8))
 		goto err;

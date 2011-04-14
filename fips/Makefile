@@ -41,8 +41,8 @@ GENERAL=Makefile README fips-lib.com install.com
 
 LIB= $(TOP)/libcrypto.a
 SHARED_LIB= $(FIPSCANLIB)$(SHLIB_EXT)
-LIBSRC=fips.c 
-LIBOBJ=fips.o
+LIBSRC=fips.c fips_post.c
+LIBOBJ=fips.o fips_post.o
 
 FIPS_OBJ_LISTS=sha/lib hmac/lib rand/lib des/lib aes/lib dsa/lib rsa/lib \
 		dh/lib utl/lib ecdsa/lib cmac/lib

@@ -56,7 +56,7 @@
 #include <openssl/sha.h>
 
 #ifdef OPENSSL_FIPS
-static char test[][60]=
+static unsigned char test[][60]=
     {
     "",
     "abc",
@@ -79,21 +79,20 @@ void FIPS_corrupt_sha1()
     }
 
 int FIPS_selftest_sha1()
-    {
-    size_t n;
-
-    for(n=0 ; n<sizeof(test)/sizeof(test[0]) ; ++n)
 	{
-	unsigned char md[SHA_DIGEST_LENGTH];
-
-	FIPS_digest(test[n],strlen(test[n]),md, NULL, EVP_sha1());
-	if(memcmp(md,ret[n],sizeof md))
-	    {
-	    FIPSerr(FIPS_F_FIPS_SELFTEST_SHA1,FIPS_R_SELFTEST_FAILED);
-	    return 0;
-	    }
-	}
-    return 1;
-    }
+	int rv = 1;
+	size_t i;
+	
+	for(i=0 ; i <sizeof(test)/sizeof(test[0]) ; i++)
+		{
+		if (!fips_pkey_signature_test(FIPS_TEST_DIGEST, NULL,
+						test[i], 0,
+						ret[i], 20,
+						EVP_sha1(), 0,
+						"SHA1 Digest"))
+			rv = 0;
+	    	}
+    	return rv;
+    	}
 
 #endif

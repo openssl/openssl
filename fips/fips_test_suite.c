@@ -665,6 +665,165 @@ static void test_msg(const char *msg, int result)
 	printf("%s...%s\n", msg, result ? "successful" : Fail("Failed!"));
 	}
 
+static const char *post_get_sig(int id)
+	{
+	switch (id)
+		{
+		case EVP_PKEY_RSA:
+		return " (RSA)";
+
+		case EVP_PKEY_DSA:
+		return " (DSA)";
+
+		case EVP_PKEY_EC:
+		return " (ECDSA)";
+
+		default:
+		return " (UNKNOWN)";
+
+		}
+	}
+
+static const char *post_get_cipher(int id)
+	{
+	static char out[128];
+	switch(id)
+		{
+
+		case NID_aes_128_ecb:
+		return " (AES-128-ECB)";
+
+		case NID_des_ede3_ecb:
+		return " (DES-EDE3-ECB)";
+		
+		default:
+		sprintf(out, " (NID=%d)", id);
+		return out;
+
+		}
+	}
+
+static int fail_id = -1;
+static int fail_sub = -1;
+static int fail_key = -1;
+
+static int post_cb(int op, int id, int subid, void *ex)
+	{
+	const char *idstr, *exstr = "";
+	int keytype = -1;
+	switch(id)
+		{
+		case FIPS_TEST_INTEGRITY:
+		idstr = "Integrity";
+		break;
+
+		case FIPS_TEST_DIGEST:
+		idstr = "Digest";
+		if (subid == NID_sha1)
+			exstr = " (SHA1)";
+		break;
+
+		case FIPS_TEST_CIPHER:
+		exstr = post_get_cipher(subid);
+		idstr = "Cipher";
+		break;
+
+		case FIPS_TEST_SIGNATURE:
+		if (ex)
+			{
+			EVP_PKEY *pkey = ex;
+			keytype = pkey->type;
+			exstr = post_get_sig(keytype);
+			}
+		idstr = "Signature";
+		break;
+
+		case FIPS_TEST_HMAC:
+		idstr = "HMAC";
+		break;
+
+		case FIPS_TEST_CMAC:
+		idstr = "HMAC";
+		break;
+
+		case FIPS_TEST_GCM:
+		idstr = "HMAC";
+		break;
+
+		case FIPS_TEST_CCM:
+		idstr = "HMAC";
+		break;
+
+		case FIPS_TEST_XTS:
+		idstr = "HMAC";
+		break;
+
+		case FIPS_TEST_X931:
+		idstr = "X9.31 PRNG";
+		break;
+
+		case FIPS_TEST_DRBG:
+		idstr = "DRBG";
+		break;
+
+		case FIPS_TEST_PAIRWISE:
+		if (ex)
+			{
+			EVP_PKEY *pkey = ex;
+			keytype = pkey->type;
+			exstr = post_get_sig(keytype);
+			}
+		idstr = "Pairwise Consistency";
+		break;
+
+		case FIPS_TEST_CONTINUOUS:
+		idstr = "Continuous PRNG";
+		break;
+
+		default:
+		idstr = "Unknown";
+		break;
+
+		}
+
+	switch(op)
+		{
+		case FIPS_POST_BEGIN:
+		printf("\tPOST started\n");
+		break;
+
+		case FIPS_POST_END:
+		printf("\tPOST %s\n", id ? "Success" : "Failed");
+		break;
+
+		case FIPS_POST_STARTED:
+		printf("\t\t%s%s test started\n", idstr, exstr);
+		break;
+
+		case FIPS_POST_SUCCESS:
+		printf("\t\t%s%s test OK\n", idstr, exstr);
+		break;
+
+		case FIPS_POST_FAIL:
+		printf("\t\t%s%s test FAILED!!\n", idstr, exstr);
+		break;
+
+		case FIPS_POST_CORRUPT:
+		if (fail_id == id
+			&& (fail_key == -1 || fail_key == keytype)
+			&& (fail_sub == -1 || fail_sub == subid))
+			{
+			printf("\t\t%s%s test failure induced\n", idstr, exstr);
+			return 0;
+			}
+		break;
+
+		}
+	return 1;
+	}
+
+
+
 int main(int argc,char **argv)
     {
 
@@ -676,47 +835,51 @@ int main(int argc,char **argv)
 
     fips_algtest_init_nofips();
 
+    FIPS_post_set_callback(post_cb);
+
     printf("\tFIPS-mode test application\n\n");
 
     if (argv[1]) {
         /* Corrupted KAT tests */
-        if (!strcmp(argv[1], "aes")) {
-            FIPS_corrupt_aes();
-            printf("AES encryption/decryption with corrupted KAT...\n");
+        if (!strcmp(argv[1], "integrity")) {
+	    fail_id = FIPS_TEST_INTEGRITY;
+        } else if (!strcmp(argv[1], "aes")) {
+	    fail_id = FIPS_TEST_CIPHER;
+	    fail_sub = NID_aes_128_ecb;	
         } else if (!strcmp(argv[1], "aes-gcm")) {
             FIPS_corrupt_aes_gcm();
             printf("AES-GCM encryption/decryption with corrupted KAT...\n");
         } else if (!strcmp(argv[1], "des")) {
-            FIPS_corrupt_des();
-            printf("DES3-ECB encryption/decryption with corrupted KAT...\n");
+	    fail_id = FIPS_TEST_CIPHER;
+	    fail_sub = NID_des_ede3_ecb;	
         } else if (!strcmp(argv[1], "dsa")) {
-            FIPS_corrupt_dsa();
-            printf("DSA key generation and signature validation with corrupted KAT...\n");
+	    fail_id = FIPS_TEST_SIGNATURE;
+	    fail_key = EVP_PKEY_DSA;	
         } else if (!strcmp(argv[1], "ecdsa")) {
-            FIPS_corrupt_ecdsa();
-            printf("ECDSA key generation and signature validation with corrupted KAT...\n");
+	    fail_id = FIPS_TEST_SIGNATURE;
+	    fail_key = EVP_PKEY_EC;	
         } else if (!strcmp(argv[1], "rsa")) {
-            FIPS_corrupt_rsa();
-            printf("RSA key generation and signature validation with corrupted KAT...\n");
+	    fail_id = FIPS_TEST_SIGNATURE;
+	    fail_key = EVP_PKEY_RSA;	
         } else if (!strcmp(argv[1], "rsakey")) {
             printf("RSA key generation and signature validation with corrupted key...\n");
 	    bad_rsa = 1;
 	    no_exit = 1;
         } else if (!strcmp(argv[1], "rsakeygen")) {
-	    do_corrupt_rsa_keygen = 1;
+	    fail_id = FIPS_TEST_PAIRWISE;
+	    fail_key = EVP_PKEY_RSA;
 	    no_exit = 1;
-            printf("RSA key generation and signature validation with corrupted keygen...\n");
         } else if (!strcmp(argv[1], "dsakey")) {
             printf("DSA key generation and signature validation with corrupted key...\n");
 	    bad_dsa = 1;
 	    no_exit = 1;
         } else if (!strcmp(argv[1], "dsakeygen")) {
-	    do_corrupt_dsa_keygen = 1;
+	    fail_id = FIPS_TEST_PAIRWISE;
+	    fail_key = EVP_PKEY_DSA;
 	    no_exit = 1;
-            printf("DSA key generation and signature validation with corrupted keygen...\n");
         } else if (!strcmp(argv[1], "sha1")) {
-            FIPS_corrupt_sha1();
-            printf("SHA-1 hash with corrupted KAT...\n");
+	    fail_id = FIPS_TEST_DIGEST;
+	    fail_sub = NID_sha1;	
 	} else if (!strcmp(argv[1], "drbg")) {
 	    FIPS_corrupt_drbg();
 	} else if (!strcmp(argv[1], "rng")) {

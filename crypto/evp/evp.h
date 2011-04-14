@@ -460,6 +460,7 @@ typedef int (EVP_PBE_KEYGEN)(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 #define M_EVP_MD_CTX_type(e)		M_EVP_MD_type(M_EVP_MD_CTX_md(e))
 #define M_EVP_MD_CTX_md(e)			((e)->digest)
 
+#define M_EVP_CIPHER_nid(e)		((e)->nid)
 #define M_EVP_CIPHER_CTX_iv_length(e)	((e)->cipher->iv_len)
 #define M_EVP_CIPHER_CTX_flags(e)	((e)->cipher->flags)
 #define M_EVP_CIPHER_CTX_block_size(e)	((e)->cipher->block_size)

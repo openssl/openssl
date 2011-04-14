@@ -93,11 +93,11 @@ int fips_check_rsa(RSA *rsa)
     	pk.pkey.rsa = rsa;
 
 	/* Perform pairwise consistency signature test */
-	if (!fips_pkey_signature_test(&pk, tbs, -1,
+	if (!fips_pkey_signature_test(FIPS_TEST_PAIRWISE, &pk, tbs, -1,
 			NULL, 0, NULL, RSA_PKCS1_PADDING, NULL)
-		|| !fips_pkey_signature_test(&pk, tbs, -1,
+		|| !fips_pkey_signature_test(FIPS_TEST_PAIRWISE, &pk, tbs, -1,
 			NULL, 0, NULL, RSA_X931_PADDING, NULL)
-		|| !fips_pkey_signature_test(&pk, tbs, -1,
+		|| !fips_pkey_signature_test(FIPS_TEST_PAIRWISE, &pk, tbs, -1,
 			NULL, 0, NULL, RSA_PKCS1_PSS_PADDING, NULL))
 		goto err;
 	/* Now perform pairwise consistency encrypt/decrypt test */

@@ -59,6 +59,14 @@ extern "C" {
 	if (!key->comp) \
 		goto err
 
+int fips_post_begin(void);
+void fips_post_end(void);
+int fips_post_started(int id, int subid, void *ex);
+int fips_post_success(int id, int subid, void *ex);
+int fips_post_failed(int id, int subid, void *ex);
+int fips_post_corrupt(int id, int subid, void *ex);
+int fips_post_status(void);
+
 #ifdef  __cplusplus
 }
 #endif

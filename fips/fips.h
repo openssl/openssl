@@ -101,20 +101,6 @@ int FIPS_selftest_cmac(void);
 unsigned int FIPS_incore_fingerprint(unsigned char *sig,unsigned int len);
 int FIPS_check_incore_fingerprint(void);
 
-int fips_pkey_signature_test(struct evp_pkey_st *pkey,
-			const unsigned char *tbs, size_t tbslen,
-			const unsigned char *kat, size_t katlen,
-			const struct env_md_st *digest, int pad_mode,
-			const char *fail_str);
-
-int fips_cipher_test(struct evp_cipher_ctx_st *ctx,
-			const struct evp_cipher_st *cipher,
-			const unsigned char *key,
-			const unsigned char *iv,
-			const unsigned char *plaintext,
-			const unsigned char *ciphertext,
-			int len);
-
 void fips_set_selftest_fail(void);
 int fips_check_rsa(struct rsa_st *rsa);
 
@@ -129,8 +115,67 @@ void FIPS_set_malloc_callbacks(
 
 void FIPS_get_timevec(unsigned char *buf, unsigned long *pctr);
 
+/* POST callback operation value: */
+/* All tests started */
+#define	FIPS_POST_BEGIN		1
+/* All tests end: result in id */
+#define	FIPS_POST_END		2
+/* One individual test started */
+#define	FIPS_POST_STARTED	3
+/* Individual test success */
+#define	FIPS_POST_SUCCESS	4
+/* Individual test failure */
+#define	FIPS_POST_FAIL		5
+/* Induce failure in test if zero return */
+#define FIPS_POST_CORRUPT	6
+
+/* Test IDs */
+/* HMAC integrity test */
+#define FIPS_TEST_INTEGRITY	1
+/* Digest test */
+#define FIPS_TEST_DIGEST	2
+/* Symmetric cipher test */
+#define FIPS_TEST_CIPHER	3
+/* Public key signature test */
+#define FIPS_TEST_SIGNATURE	4
+/* HMAC test */
+#define FIPS_TEST_HMAC		5
+/* CMAC test */
+#define FIPS_TEST_CMAC		6
+/* GCM test */
+#define FIPS_TEST_GCM		7
+/* CCM test */
+#define FIPS_TEST_CCM		8
+/* XTS test */
+#define FIPS_TEST_XTS		9
+/* X9.31 PRNG */
+#define FIPS_TEST_X931		10
+/* DRNB */
+#define FIPS_TEST_DRBG		11
+/* Keygen pairwise consistency test */
+#define FIPS_TEST_PAIRWISE	12
+/* Continuous PRNG test */
+#define FIPS_TEST_CONTINUOUS	13
+
+void FIPS_post_set_callback(
+	int (*post_cb)(int op, int id, int subid, void *ex));
+
 #define FIPS_ERROR_IGNORED(alg) OpenSSLDie(__FILE__, __LINE__, \
 		alg " previous FIPS forbidden algorithm error ignored");
+
+int fips_pkey_signature_test(int id, struct evp_pkey_st *pkey,
+			const unsigned char *tbs, size_t tbslen,
+			const unsigned char *kat, size_t katlen,
+			const struct env_md_st *digest, int pad_mode,
+			const char *fail_str);
+
+int fips_cipher_test(int id, struct evp_cipher_ctx_st *ctx,
+			const struct evp_cipher_st *cipher,
+			const unsigned char *key,
+			const unsigned char *iv,
+			const unsigned char *plaintext,
+			const unsigned char *ciphertext,
+			int len);
 
 /* Where necessary redirect standard OpenSSL APIs to FIPS versions */
 

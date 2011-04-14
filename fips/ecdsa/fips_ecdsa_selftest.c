@@ -176,7 +176,7 @@ int FIPS_selftest_ecdsa()
 		pk.type = EVP_PKEY_EC;
 		pk.pkey.ec = ec;
 
-		if (!fips_pkey_signature_test(&pk, NULL, 0,
+		if (!fips_pkey_signature_test(FIPS_TEST_SIGNATURE, &pk, NULL, 0,
 						NULL, 0, EVP_sha512(), 0,
 						ecd->name))
 			goto err;

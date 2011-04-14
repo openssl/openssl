@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Initial version of POST overhaul. Add POST callback to allow the status
+     of POST to be monitored and/or failures induced. Modify fips_test_suite
+     to use callback. Always run all selftests even if one fails.
+     [Steve Henson]
+
   *) Provisional XTS support. Note: this does increase the maximum key
      length from 32 to 64 bytes but there should be no binary compatibility
      issues as existing applications will never use XTS mode.

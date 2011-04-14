@@ -239,7 +239,8 @@ int FIPS_selftest_rsa()
 	pk.type = EVP_PKEY_RSA;
 	pk.pkey.rsa = key;
 
-	if (!fips_pkey_signature_test(&pk, kat_tbs, sizeof(kat_tbs) - 1,
+	if (!fips_pkey_signature_test(FIPS_TEST_SIGNATURE,
+				&pk, kat_tbs, sizeof(kat_tbs) - 1,
 				kat_RSA_PSS_SHA256, sizeof(kat_RSA_PSS_SHA256),
 				EVP_sha256(), RSA_PKCS1_PSS_PADDING,
 				"RSA SHA256 PSS"))

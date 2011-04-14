@@ -169,7 +169,7 @@ int FIPS_selftest_dsa()
 	pk.type = EVP_PKEY_DSA;
 	pk.pkey.dsa = dsa;
 
-	if (!fips_pkey_signature_test(&pk, NULL, 0,
+	if (!fips_pkey_signature_test(FIPS_TEST_SIGNATURE, &pk, NULL, 0,
 					NULL, 0, EVP_sha384(), 0,
 					"DSA SHA384"))
 		goto err;

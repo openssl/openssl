@@ -250,7 +250,8 @@ static int fips_check_ec(EC_KEY *key)
     	pk.type = EVP_PKEY_EC;
     	pk.pkey.ec = key;
 
-	if (!fips_pkey_signature_test(&pk, tbs, -1, NULL, 0, NULL, 0, NULL))
+	if (!fips_pkey_signature_test(FIPS_TEST_PAIRWISE,
+					&pk, tbs, -1, NULL, 0, NULL, 0, NULL))
 		{
 		FIPSerr(FIPS_F_FIPS_CHECK_EC,FIPS_R_PAIRWISE_TEST_FAILED);
 		fips_set_selftest_fail();

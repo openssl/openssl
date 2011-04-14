@@ -86,7 +86,7 @@ int FIPS_selftest_aes()
 
     for(n=0 ; n < 1 ; ++n)
 	{
-	if (fips_cipher_test(&ctx, EVP_aes_128_ecb(),
+	if (fips_cipher_test(FIPS_TEST_CIPHER, &ctx, EVP_aes_128_ecb(),
 				tests[n].key, NULL,
 				tests[n].plaintext,
 				tests[n].ciphertext,
