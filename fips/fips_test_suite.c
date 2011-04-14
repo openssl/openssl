@@ -711,6 +711,7 @@ static int fail_key = -1;
 static int post_cb(int op, int id, int subid, void *ex)
 	{
 	const char *idstr, *exstr = "";
+	char asctmp[20];
 	int keytype = -1;
 	switch(id)
 		{
@@ -762,6 +763,8 @@ static int post_cb(int op, int id, int subid, void *ex)
 
 		case FIPS_TEST_X931:
 		idstr = "X9.31 PRNG";
+		sprintf(asctmp, "keylen=%d", subid);
+		exstr = asctmp;
 		break;
 
 		case FIPS_TEST_DRBG:
@@ -883,7 +886,7 @@ int main(int argc,char **argv)
 	} else if (!strcmp(argv[1], "drbg")) {
 	    FIPS_corrupt_drbg();
 	} else if (!strcmp(argv[1], "rng")) {
-	    FIPS_corrupt_x931();
+	    fail_id = FIPS_TEST_X931;
 	} else if (!strcmp(argv[1], "rngstick")) {
 	    do_rng_stick = 1;
 	    no_exit = 1;

@@ -54,6 +54,7 @@
 #include <openssl/fips.h>
 #include <openssl/rand.h>
 #include <openssl/fips_rand.h>
+#include "fips_locl.h"
 
 #ifdef OPENSSL_FIPS
 
@@ -324,11 +325,6 @@ static AES_PRNG_TV aes_256_tv[] = {
 };
 
 
-void FIPS_corrupt_x931()
-    {
-    aes_192_tv[0].V[0]++;
-    }
-
 #define fips_x931_test(key, tv) \
 	do_x931_test(key, sizeof key, tv, sizeof(tv)/sizeof(AES_PRNG_TV))
 
@@ -336,38 +332,48 @@ static int do_x931_test(unsigned char *key, int keylen,
 			AES_PRNG_TV *tv, int ntv)
 	{
 	unsigned char R[16];
-	int i;
+	int i, rv = 1;
 	if (!FIPS_x931_set_key(key, keylen))
 		return 0;
 	for (i = 0; i < ntv; i++)
 		{
+		if (!fips_post_started(FIPS_TEST_X931, keylen, NULL))
+			return 1;
+		if (!fips_post_corrupt(FIPS_TEST_X931, keylen, NULL))
+			tv[i].V[0]++;
 		FIPS_x931_seed(tv[i].V, 16);
 		FIPS_x931_set_dt(tv[i].DT);
 		FIPS_x931_bytes(R, 16);
 		if (memcmp(R, tv[i].R, 16))
+			{
+			fips_post_failed(FIPS_TEST_X931, keylen, NULL);
+			rv = 0;
+			}
+		else if (!fips_post_success(FIPS_TEST_X931, keylen, NULL))
 			return 0;
 		}
-	return 1;
+	return rv;
 	}
-	
 
 int FIPS_selftest_x931()
 	{
+	int rv = 1;
 	FIPS_x931_reset();
 	if (!FIPS_x931_test_mode())
 		{
 		FIPSerr(FIPS_F_FIPS_SELFTEST_X931,FIPS_R_SELFTEST_FAILED);
 		return 0;
 		}
-	if (!fips_x931_test(aes_128_key,aes_128_tv)
-		|| !fips_x931_test(aes_192_key, aes_192_tv)
-		|| !fips_x931_test(aes_256_key, aes_256_tv))
-		{
-		FIPSerr(FIPS_F_FIPS_SELFTEST_X931,FIPS_R_SELFTEST_FAILED);
-		return 0;
-		}
+	if (!fips_x931_test(aes_128_key,aes_128_tv))
+		rv = 0;
+	if (!fips_x931_test(aes_192_key, aes_192_tv))
+		rv = 0;
+	if (!fips_x931_test(aes_256_key, aes_256_tv))
+		rv = 0;
 	FIPS_x931_reset();
-	return 1;
+	if (!rv)
+		FIPSerr(FIPS_F_FIPS_SELFTEST_X931,FIPS_R_SELFTEST_FAILED);
+	return rv;
 	}
 
 #endif

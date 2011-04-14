@@ -79,7 +79,6 @@ int FIPS_selftest_des(void);
 int FIPS_selftest_rsa(void);
 int FIPS_selftest_dsa(void);
 int FIPS_selftest_ecdsa(void);
-void FIPS_corrupt_x931(void);
 void FIPS_corrupt_drbg(void);
 void FIPS_x931_stick(void);
 void FIPS_drbg_stick(void);
