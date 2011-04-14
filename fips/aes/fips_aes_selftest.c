@@ -134,7 +134,7 @@ int FIPS_selftest_aes_gcm(void)
 	memset(tag, 0, sizeof(tag));
 	if (!fips_post_started(FIPS_TEST_GCM, 0, 0))
 		return 1;
-	if (!fips_post_corrupt(FIPS_TEST_HMAC, 0, NULL))
+	if (!fips_post_corrupt(FIPS_TEST_GCM, 0, NULL))
 		do_corrupt = 1;
 	if (!FIPS_cipherinit(&ctx, EVP_aes_256_gcm(), NULL, NULL, 1))
 		goto err;

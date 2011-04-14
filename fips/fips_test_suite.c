@@ -665,42 +665,39 @@ static void test_msg(const char *msg, int result)
 	printf("%s...%s\n", msg, result ? "successful" : Fail("Failed!"));
 	}
 
-static const char *post_get_sig(int id)
+/* Table of IDs for POST translating between NIDs and names */
+
+typedef struct 
 	{
-	switch (id)
-		{
-		case EVP_PKEY_RSA:
-		return " (RSA)";
+	int id;
+	const char *name;
+	} POST_ID;
 
-		case EVP_PKEY_DSA:
-		return " (DSA)";
+POST_ID id_list[] = {
+	{NID_sha1, "SHA1"},
+	{NID_sha224, "SHA224"},
+	{NID_sha256, "SHA256"},
+	{NID_sha384, "SHA384"},
+	{NID_sha512, "SHA512"},
+	{EVP_PKEY_RSA, "RSA"},
+	{EVP_PKEY_DSA, "DSA"},
+	{EVP_PKEY_EC, "ECDSA"},
+	{NID_aes_128_ecb, "AES-128-ECB"},
+	{NID_des_ede3_ecb, "DES-EDE3-ECB"},
+	{0, NULL}
+};
 
-		case EVP_PKEY_EC:
-		return " (ECDSA)";
-
-		default:
-		return " (UNKNOWN)";
-
-		}
-	}
-
-static const char *post_get_cipher(int id)
+static const char *lookup_id(int id)
 	{
-	static char out[128];
-	switch(id)
+	POST_ID *n;
+	static char out[40];
+	for (n = id_list; n->name; n++)
 		{
-
-		case NID_aes_128_ecb:
-		return " (AES-128-ECB)";
-
-		case NID_des_ede3_ecb:
-		return " (DES-EDE3-ECB)";
-		
-		default:
-		sprintf(out, " (NID=%d)", id);
-		return out;
-
+		if (n->id == id)
+			return n->name;
 		}
+	sprintf(out, "ID=%d\n", id);
+	return out;
 	}
 
 static int fail_id = -1;
@@ -719,12 +716,11 @@ static int post_cb(int op, int id, int subid, void *ex)
 
 		case FIPS_TEST_DIGEST:
 		idstr = "Digest";
-		if (subid == NID_sha1)
-			exstr = " (SHA1)";
+		exstr = lookup_id(subid);
 		break;
 
 		case FIPS_TEST_CIPHER:
-		exstr = post_get_cipher(subid);
+		exstr = lookup_id(subid);
 		idstr = "Cipher";
 		break;
 
@@ -733,12 +729,13 @@ static int post_cb(int op, int id, int subid, void *ex)
 			{
 			EVP_PKEY *pkey = ex;
 			keytype = pkey->type;
-			exstr = post_get_sig(keytype);
+			exstr = lookup_id(keytype);
 			}
 		idstr = "Signature";
 		break;
 
 		case FIPS_TEST_HMAC:
+		exstr = lookup_id(subid);
 		idstr = "HMAC";
 		break;
 
@@ -747,11 +744,11 @@ static int post_cb(int op, int id, int subid, void *ex)
 		break;
 
 		case FIPS_TEST_GCM:
-		idstr = "HMAC";
+		idstr = "GCM";
 		break;
 
 		case FIPS_TEST_CCM:
-		idstr = "HMAC";
+		idstr = "CCM";
 		break;
 
 		case FIPS_TEST_XTS:
@@ -771,7 +768,7 @@ static int post_cb(int op, int id, int subid, void *ex)
 			{
 			EVP_PKEY *pkey = ex;
 			keytype = pkey->type;
-			exstr = post_get_sig(keytype);
+			exstr = lookup_id(keytype);
 			}
 		idstr = "Pairwise Consistency";
 		break;
@@ -797,15 +794,15 @@ static int post_cb(int op, int id, int subid, void *ex)
 		break;
 
 		case FIPS_POST_STARTED:
-		printf("\t\t%s%s test started\n", idstr, exstr);
+		printf("\t\t%s %s test started\n", idstr, exstr);
 		break;
 
 		case FIPS_POST_SUCCESS:
-		printf("\t\t%s%s test OK\n", idstr, exstr);
+		printf("\t\t%s %s test OK\n", idstr, exstr);
 		break;
 
 		case FIPS_POST_FAIL:
-		printf("\t\t%s%s test FAILED!!\n", idstr, exstr);
+		printf("\t\t%s %s test FAILED!!\n", idstr, exstr);
 		break;
 
 		case FIPS_POST_CORRUPT:
@@ -813,7 +810,7 @@ static int post_cb(int op, int id, int subid, void *ex)
 			&& (fail_key == -1 || fail_key == keytype)
 			&& (fail_sub == -1 || fail_sub == subid))
 			{
-			printf("\t\t%s%s test failure induced\n", idstr, exstr);
+			printf("\t\t%s %s test failure induced\n", idstr, exstr);
 			return 0;
 			}
 		break;
@@ -821,8 +818,6 @@ static int post_cb(int op, int id, int subid, void *ex)
 		}
 	return 1;
 	}
-
-
 
 int main(int argc,char **argv)
     {

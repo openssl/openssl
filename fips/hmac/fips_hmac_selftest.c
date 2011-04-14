@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 2005 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -119,46 +119,58 @@ int FIPS_selftest_hmac()
 	unsigned char   out[EVP_MAX_MD_SIZE];
 	const EVP_MD   *md;
 	const HMAC_KAT *t;
-	int rv = 0, do_corrupt = 0;
+	int rv = 1, subid;
 	HMAC_CTX c;
 	HMAC_CTX_init(&c);
 
-	if (!fips_post_started(FIPS_TEST_HMAC, 0, 0))
-		return 1;
-	if (!fips_post_corrupt(FIPS_TEST_HMAC, 0, NULL))
-		do_corrupt = 1;
 
 	for(n=0,t=vector; n<sizeof(vector)/sizeof(vector[0]); n++,t++)
 		{
 		md = (*t->alg)();
+		subid = M_EVP_MD_type(md);
+		if (!fips_post_started(FIPS_TEST_HMAC, subid, 0))
+			continue;
 		if (!HMAC_Init_ex(&c, t->key, strlen(t->key), md, NULL))
+			{
+			rv = -1;
 			goto err;
+			}
 		if (!HMAC_Update(&c, (const unsigned char *)t->iv, strlen(t->iv)))
+			{
+			rv = -1;
 			goto err;
-		if (do_corrupt)
+			}
+		if (!fips_post_corrupt(FIPS_TEST_HMAC, subid, NULL))
 			{
 			if (!HMAC_Update(&c, (const unsigned char *)t->iv, 1))
+				{
+				rv = -1;
 				goto err;
+				}
 			}
 		if (!HMAC_Final(&c, out, &outlen))
+			{
+			rv = -1;
 			goto err;
+			}
 
 		if(memcmp(out,t->kaval,outlen))
 			{
 		    	FIPSerr(FIPS_F_FIPS_SELFTEST_HMAC,FIPS_R_SELFTEST_FAILED);
-			goto err;
+			fips_post_failed(FIPS_TEST_HMAC, subid, NULL);
+			rv = 0;
 		    	}
+		if (!fips_post_success(FIPS_TEST_HMAC, subid, NULL))
+			goto err;
 		}
-
-	rv = 1;
 
 	err:
 	HMAC_CTX_cleanup(&c);
-	if (rv == 0)
+	if (rv == -1)
 		{
-		fips_post_failed(FIPS_TEST_HMAC, 0, NULL);
-		return 0;
+		fips_post_failed(FIPS_TEST_HMAC, subid, NULL);
+		rv = 0;
 		}
-	return fips_post_success(FIPS_TEST_HMAC, 0, NULL);
+	return rv;
 	}
 #endif
