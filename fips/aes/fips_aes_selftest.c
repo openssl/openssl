@@ -57,9 +57,9 @@
 #ifdef OPENSSL_FIPS
 static struct
     {
-    unsigned char key[16];
-    unsigned char plaintext[16];
-    unsigned char ciphertext[16];
+    const unsigned char key[16];
+    const unsigned char plaintext[16];
+    const unsigned char ciphertext[16];
     } tests[]=
 	{
 	{
@@ -71,11 +71,6 @@ static struct
 	  0xD8,0xCD,0xB7,0x80,0x70,0xB4,0xC5,0x5A },
 	},
 	};
-
-void FIPS_corrupt_aes()
-    {
-    tests[0].key[0]++;
-    }
 
 int FIPS_selftest_aes()
     {

@@ -826,8 +826,6 @@ static int post_cb(int op, int id, int subid, void *ex)
 
 int main(int argc,char **argv)
     {
-
-    int do_corrupt_rsa_keygen = 0, do_corrupt_dsa_keygen = 0;
     int bad_rsa = 0, bad_dsa = 0;
     int do_rng_stick = 0;
     int do_drbg_stick = 0;
@@ -917,10 +915,6 @@ int main(int argc,char **argv)
     test_msg("2. Automatic power-up self test", FIPS_mode_set(1));
     if (!FIPS_mode())
 	exit(1);
-    if (do_corrupt_dsa_keygen)
-            FIPS_corrupt_dsa_keygen();
-    if (do_corrupt_rsa_keygen)
-            FIPS_corrupt_rsa_keygen();
     if (do_drbg_stick)
             FIPS_drbg_stick();
     if (do_rng_stick)

@@ -71,13 +71,6 @@
 #include <openssl/fips.h>
 #include <openssl/evp.h>
 
-static int fips_dsa_pairwise_fail = 0;
-
-void FIPS_corrupt_dsa_keygen(void)
-	{
-	fips_dsa_pairwise_fail = 1;
-	}
-
 static int fips_check_dsa(DSA *dsa)
 	{
 	EVP_PKEY pk;
@@ -159,8 +152,6 @@ static int dsa_builtin_keygen(DSA *dsa)
 	dsa->priv_key=priv_key;
 	dsa->pub_key=pub_key;
 #ifdef OPENSSL_FIPS
-	if (fips_dsa_pairwise_fail)
-		BN_add_word(dsa->pub_key, 1);
 	if(!fips_check_dsa(dsa))
 		{
 		dsa->pub_key = NULL;

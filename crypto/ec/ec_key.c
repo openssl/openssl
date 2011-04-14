@@ -236,13 +236,6 @@ int EC_KEY_up_ref(EC_KEY *r)
 
 #include <openssl/evp.h>
 
-static int fips_ec_pairwise_fail = 0;
-
-void FIPS_corrupt_ec_keygen(void)
-	{
-	fips_ec_pairwise_fail = 1;
-	}
-
 static int fips_check_ec(EC_KEY *key)
 	{
 	EVP_PKEY pk;
@@ -311,8 +304,6 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 	eckey->pub_key  = pub_key;
 
 #ifdef OPENSSL_FIPS
-	if (fips_ec_pairwise_fail)
-		BN_add_word(eckey->priv_key, 1);
 	if(!fips_check_ec(eckey))
 		{
 		eckey->priv_key = NULL;
