@@ -114,39 +114,63 @@ int FIPS_selftest_cmac()
 	const EVP_CIPHER *cipher;
 	CMAC_CTX *ctx = CMAC_CTX_new();
 	const CMAC_KAT *t;
-	int do_corrupt = 0, rv = 0;
-
-	if (!fips_post_started(FIPS_TEST_CMAC, 0, 0))
-		return 1;
-	if (!fips_post_corrupt(FIPS_TEST_CMAC, 0, NULL))
+	int subid, rv = 1;
 
 	for(n=0,t=vector; n<sizeof(vector)/sizeof(vector[0]); n++,t++)
 		{
 		cipher = (*t->alg)();
-		CMAC_Init(ctx, t->key, t->keysize/8, cipher, 0);
-		CMAC_Update(ctx, t->msg, t->msgsize/8);
-		if (do_corrupt)
-			CMAC_Update(ctx, t->msg, 1);
-		CMAC_Final(ctx, out, &outlen);
+		subid = M_EVP_CIPHER_nid(cipher);
+		if (!fips_post_started(FIPS_TEST_CMAC, subid, 0))
+			continue;
+		if (!CMAC_Init(ctx, t->key, t->keysize/8, cipher, 0))
+			{
+			rv = -1;
+			goto err;
+			}
+		if (!CMAC_Update(ctx, t->msg, t->msgsize/8))
+			{
+			rv = -1;
+			goto err;
+			}
+			
+		if (!fips_post_corrupt(FIPS_TEST_CMAC, subid, NULL))
+			{
+			if (!CMAC_Update(ctx, t->msg, 1))
+				{
+				rv = -1;
+				goto err;
+				}
+			}
+		if (!CMAC_Final(ctx, out, &outlen))
+			{
+			rv = -1;
+			goto err;
+			}
 		CMAC_CTX_cleanup(ctx);
 
 		if(outlen < t->macsize/8 || memcmp(out,t->mac,t->macsize/8))
 			{
-		    	FIPSerr(FIPS_F_FIPS_SELFTEST_CMAC,FIPS_R_SELFTEST_FAILED);
-		    	goto err;
+			fips_post_failed(FIPS_TEST_CMAC, subid, NULL);
+		    	rv = 0;
 		    	}
+		else if (!fips_post_success(FIPS_TEST_CMAC, subid, NULL))
+			{
+			rv = 0;
+			goto err;
+			}
 		}
 
-	rv = 1;
 	err:
 	CMAC_CTX_free(ctx);
 
-	if (rv == 0)
+	if (rv == -1)
 		{
-		fips_post_failed(FIPS_TEST_CMAC, 0, NULL);
-		return 0;
+		fips_post_failed(FIPS_TEST_CMAC, subid, NULL);
+		rv = 0;
 		}
+	if (!rv)
+		   FIPSerr(FIPS_F_FIPS_SELFTEST_CMAC,FIPS_R_SELFTEST_FAILED);
 
-	return fips_post_success(FIPS_TEST_CMAC, 0, NULL);
+	return rv;
 	}
 #endif

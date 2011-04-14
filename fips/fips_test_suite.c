@@ -682,7 +682,11 @@ POST_ID id_list[] = {
 	{EVP_PKEY_RSA, "RSA"},
 	{EVP_PKEY_DSA, "DSA"},
 	{EVP_PKEY_EC, "ECDSA"},
+	{NID_aes_128_cbc, "AES-128-CBC"},
+	{NID_aes_192_cbc, "AES-192-CBC"},
+	{NID_aes_256_cbc, "AES-256-CBC"},
 	{NID_aes_128_ecb, "AES-128-ECB"},
+	{NID_des_ede3_cbc, "DES-EDE3-CBC"},
 	{NID_des_ede3_ecb, "DES-EDE3-ECB"},
 	{0, NULL}
 };
@@ -696,7 +700,7 @@ static const char *lookup_id(int id)
 		if (n->id == id)
 			return n->name;
 		}
-	sprintf(out, "ID=%d\n", id);
+	sprintf(out, "ID=%d", id);
 	return out;
 	}
 
@@ -741,6 +745,7 @@ static int post_cb(int op, int id, int subid, void *ex)
 
 		case FIPS_TEST_CMAC:
 		idstr = "CMAC";
+		exstr = lookup_id(subid);
 		break;
 
 		case FIPS_TEST_GCM:
@@ -873,6 +878,8 @@ int main(int argc,char **argv)
 	    fail_id = FIPS_TEST_DIGEST;
         } else if (!strcmp(argv[1], "hmac")) {
 	    fail_id = FIPS_TEST_HMAC;
+        } else if (!strcmp(argv[1], "cmac")) {
+	    fail_id = FIPS_TEST_CMAC;
 	} else if (!strcmp(argv[1], "drbg")) {
 	    FIPS_corrupt_drbg();
 	} else if (!strcmp(argv[1], "rng")) {

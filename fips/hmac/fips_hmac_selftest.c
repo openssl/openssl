@@ -156,11 +156,10 @@ int FIPS_selftest_hmac()
 
 		if(memcmp(out,t->kaval,outlen))
 			{
-		    	FIPSerr(FIPS_F_FIPS_SELFTEST_HMAC,FIPS_R_SELFTEST_FAILED);
 			fips_post_failed(FIPS_TEST_HMAC, subid, NULL);
 			rv = 0;
 		    	}
-		if (!fips_post_success(FIPS_TEST_HMAC, subid, NULL))
+		else if (!fips_post_success(FIPS_TEST_HMAC, subid, NULL))
 			goto err;
 		}
 
@@ -171,6 +170,8 @@ int FIPS_selftest_hmac()
 		fips_post_failed(FIPS_TEST_HMAC, subid, NULL);
 		rv = 0;
 		}
+	if (!rv)
+		   FIPSerr(FIPS_F_FIPS_SELFTEST_HMAC,FIPS_R_SELFTEST_FAILED);
 	return rv;
 	}
 #endif
