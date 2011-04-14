@@ -53,6 +53,7 @@
 #include <openssl/err.h>
 #include <openssl/fips.h>
 #include <openssl/hmac.h>
+#include "fips_locl.h"
 
 #ifdef OPENSSL_FIPS
 typedef struct {
@@ -112,26 +113,52 @@ static const HMAC_KAT vector[] = {
 };
 
 int FIPS_selftest_hmac()
-    {
-    size_t n;
-    unsigned int    outlen;
-    unsigned char   out[EVP_MAX_MD_SIZE];
-    const EVP_MD   *md;
-    const HMAC_KAT *t;
-
-    for(n=0,t=vector; n<sizeof(vector)/sizeof(vector[0]); n++,t++)
 	{
-	md = (*t->alg)();
-	HMAC(md,t->key,strlen(t->key),
-		(const unsigned char *)t->iv,strlen(t->iv),
-		out,&outlen);
+	size_t n;
+	unsigned int    outlen;
+	unsigned char   out[EVP_MAX_MD_SIZE];
+	const EVP_MD   *md;
+	const HMAC_KAT *t;
+	int rv = 0, do_corrupt = 0;
+	HMAC_CTX c;
+	HMAC_CTX_init(&c);
 
-	if(memcmp(out,t->kaval,outlen))
-	    {
-	    FIPSerr(FIPS_F_FIPS_SELFTEST_HMAC,FIPS_R_SELFTEST_FAILED);
-	    return 0;
-	    }
+	if (!fips_post_started(FIPS_TEST_HMAC, 0, 0))
+		return 1;
+	if (!fips_post_corrupt(FIPS_TEST_HMAC, 0, NULL))
+		do_corrupt = 1;
+
+	for(n=0,t=vector; n<sizeof(vector)/sizeof(vector[0]); n++,t++)
+		{
+		md = (*t->alg)();
+		if (!HMAC_Init_ex(&c, t->key, strlen(t->key), md, NULL))
+			goto err;
+		if (!HMAC_Update(&c, (const unsigned char *)t->iv, strlen(t->iv)))
+			goto err;
+		if (do_corrupt)
+			{
+			if (!HMAC_Update(&c, (const unsigned char *)t->iv, 1))
+				goto err;
+			}
+		if (!HMAC_Final(&c, out, &outlen))
+			goto err;
+
+		if(memcmp(out,t->kaval,outlen))
+			{
+		    	FIPSerr(FIPS_F_FIPS_SELFTEST_HMAC,FIPS_R_SELFTEST_FAILED);
+			goto err;
+		    	}
+		}
+
+	rv = 1;
+
+	err:
+	HMAC_CTX_cleanup(&c);
+	if (rv == 0)
+		{
+		fips_post_failed(FIPS_TEST_HMAC, 0, NULL);
+		return 0;
+		}
+	return fips_post_success(FIPS_TEST_HMAC, 0, NULL);
 	}
-    return 1;
-    }
 #endif

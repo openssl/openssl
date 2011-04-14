@@ -53,6 +53,7 @@
 #include <openssl/err.h>
 #include <openssl/fips.h>
 #include <openssl/cmac.h>
+#include "fips_locl.h"
 
 #ifdef OPENSSL_FIPS
 typedef struct {
@@ -107,29 +108,45 @@ static const CMAC_KAT vector[] = {
 };
 
 int FIPS_selftest_cmac()
-    {
-    size_t n, outlen;
-    unsigned char    out[32];
-    const EVP_CIPHER *cipher;
-    CMAC_CTX *ctx = CMAC_CTX_new();
-    const CMAC_KAT *t;
-
-    for(n=0,t=vector; n<sizeof(vector)/sizeof(vector[0]); n++,t++)
 	{
-	cipher = (*t->alg)();
-	CMAC_Init(ctx, t->key, t->keysize/8, cipher, 0);
-	CMAC_Update(ctx, t->msg, t->msgsize/8);
-	CMAC_Final(ctx, out, &outlen);
-	CMAC_CTX_cleanup(ctx);
+	size_t n, outlen;
+	unsigned char    out[32];
+	const EVP_CIPHER *cipher;
+	CMAC_CTX *ctx = CMAC_CTX_new();
+	const CMAC_KAT *t;
+	int do_corrupt = 0, rv = 0;
 
-	if(outlen < t->macsize/8 || memcmp(out,t->mac,t->macsize/8))
-	    {
-	    FIPSerr(FIPS_F_FIPS_SELFTEST_CMAC,FIPS_R_SELFTEST_FAILED);
-	    return 0;
-	    }
+	if (!fips_post_started(FIPS_TEST_CMAC, 0, 0))
+		return 1;
+	if (!fips_post_corrupt(FIPS_TEST_CMAC, 0, NULL))
+
+	for(n=0,t=vector; n<sizeof(vector)/sizeof(vector[0]); n++,t++)
+		{
+		cipher = (*t->alg)();
+		CMAC_Init(ctx, t->key, t->keysize/8, cipher, 0);
+		CMAC_Update(ctx, t->msg, t->msgsize/8);
+		if (do_corrupt)
+			CMAC_Update(ctx, t->msg, 1);
+		CMAC_Final(ctx, out, &outlen);
+		CMAC_CTX_cleanup(ctx);
+
+		if(outlen < t->macsize/8 || memcmp(out,t->mac,t->macsize/8))
+			{
+		    	FIPSerr(FIPS_F_FIPS_SELFTEST_CMAC,FIPS_R_SELFTEST_FAILED);
+		    	goto err;
+		    	}
+		}
+
+	rv = 1;
+	err:
+	CMAC_CTX_free(ctx);
+
+	if (rv == 0)
+		{
+		fips_post_failed(FIPS_TEST_CMAC, 0, NULL);
+		return 0;
+		}
+
+	return fips_post_success(FIPS_TEST_CMAC, 0, NULL);
 	}
-
-    CMAC_CTX_free(ctx);
-    return 1;
-    }
 #endif

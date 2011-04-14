@@ -53,6 +53,7 @@
 #include <openssl/err.h>
 #include <openssl/fips.h>
 #include <openssl/evp.h>
+#include "fips_locl.h"
 
 #ifdef OPENSSL_FIPS
 static struct
@@ -123,22 +124,23 @@ static const unsigned char gcm_tag[] = {
 	0x98,0xf7,0x7e,0x0c
 };
 
-static int corrupt_aes_gcm = 0;
-
-void FIPS_corrupt_aes_gcm(void)
-    {
-    corrupt_aes_gcm = 1;
-    }
-
 int FIPS_selftest_aes_gcm(void)
 	{
-	int ret = 0;
+	int ret = 0, do_corrupt = 0;
 	unsigned char out[128], tag[16];
 	EVP_CIPHER_CTX ctx;
 	FIPS_cipher_ctx_init(&ctx);
-	FIPS_cipherinit(&ctx, EVP_aes_256_gcm(), NULL, NULL, 1);
-	FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN,
-					sizeof(gcm_iv), NULL);
+	memset(out, 0, sizeof(out));
+	memset(tag, 0, sizeof(tag));
+	if (!fips_post_started(FIPS_TEST_GCM, 0, 0))
+		return 1;
+	if (!fips_post_corrupt(FIPS_TEST_HMAC, 0, NULL))
+		do_corrupt = 1;
+	if (!FIPS_cipherinit(&ctx, EVP_aes_256_gcm(), NULL, NULL, 1))
+		goto err;
+	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN,
+					sizeof(gcm_iv), NULL))
+		goto err;
 	if (!FIPS_cipherinit(&ctx, NULL, gcm_key, gcm_iv, 1))
 		goto err;
 	if (FIPS_cipher(&ctx, NULL, gcm_aad, sizeof(gcm_aad)) < 0)
@@ -154,13 +156,17 @@ int FIPS_selftest_aes_gcm(void)
 	if (memcmp(tag, gcm_tag, 16) || memcmp(out, gcm_ct, 16))
 		goto err;
 
+	memset(out, 0, sizeof(out));
+
 	/* Modify expected tag value */
-	if (corrupt_aes_gcm)
+	if (do_corrupt)
 		tag[0]++;
 
-	FIPS_cipherinit(&ctx, EVP_aes_256_gcm(), NULL, NULL, 0);
-	FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN,
-					sizeof(gcm_iv), NULL);
+	if (!FIPS_cipherinit(&ctx, EVP_aes_256_gcm(), NULL, NULL, 0))
+		goto err;
+	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_SET_IVLEN,
+					sizeof(gcm_iv), NULL))
+		goto err;
 	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_SET_TAG, 16, tag))
 		goto err;
 	if (!FIPS_cipherinit(&ctx, NULL, gcm_key, gcm_iv, 0))
@@ -178,13 +184,17 @@ int FIPS_selftest_aes_gcm(void)
 	ret = 1;
 
 	err:
-
-	if (ret == 0)
-		FIPSerr(FIPS_F_FIPS_SELFTEST_AES_GCM,FIPS_R_SELFTEST_FAILED);
-
 	FIPS_cipher_ctx_cleanup(&ctx);
 
-	return ret;
+	if (ret == 0)
+		{
+		fips_post_failed(FIPS_TEST_GCM, 0, NULL);
+		FIPSerr(FIPS_F_FIPS_SELFTEST_AES_GCM,FIPS_R_SELFTEST_FAILED);
+		return 0;
+		}
+	else
+		return fips_post_success(FIPS_TEST_GCM, 0, NULL);
+
 	}
 
 #endif

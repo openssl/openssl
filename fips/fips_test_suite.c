@@ -743,7 +743,7 @@ static int post_cb(int op, int id, int subid, void *ex)
 		break;
 
 		case FIPS_TEST_CMAC:
-		idstr = "HMAC";
+		idstr = "CMAC";
 		break;
 
 		case FIPS_TEST_GCM:
@@ -845,8 +845,7 @@ int main(int argc,char **argv)
 	    fail_id = FIPS_TEST_CIPHER;
 	    fail_sub = NID_aes_128_ecb;	
         } else if (!strcmp(argv[1], "aes-gcm")) {
-            FIPS_corrupt_aes_gcm();
-            printf("AES-GCM encryption/decryption with corrupted KAT...\n");
+	    fail_id = FIPS_TEST_GCM;
         } else if (!strcmp(argv[1], "des")) {
 	    fail_id = FIPS_TEST_CIPHER;
 	    fail_sub = NID_des_ede3_ecb;	
@@ -877,7 +876,8 @@ int main(int argc,char **argv)
 	    no_exit = 1;
         } else if (!strcmp(argv[1], "sha1")) {
 	    fail_id = FIPS_TEST_DIGEST;
-	    fail_sub = NID_sha1;	
+        } else if (!strcmp(argv[1], "hmac")) {
+	    fail_id = FIPS_TEST_HMAC;
 	} else if (!strcmp(argv[1], "drbg")) {
 	    FIPS_corrupt_drbg();
 	} else if (!strcmp(argv[1], "rng")) {

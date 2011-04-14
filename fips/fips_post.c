@@ -105,12 +105,14 @@ void fips_post_end(void)
 	if (post_failure)
 		{
 		post_status = FIPS_POST_STATUS_FAILED;
-		fips_post_cb(FIPS_POST_END, 0, 0, NULL);
+		if(fips_post_cb)
+			fips_post_cb(FIPS_POST_END, 0, 0, NULL);
 		}
 	else
 		{
 		post_status = FIPS_POST_STATUS_OK;
-		fips_post_cb(FIPS_POST_END, 1, 0, NULL);
+		if (fips_post_cb)
+			fips_post_cb(FIPS_POST_END, 1, 0, NULL);
 		}
 	}
 
