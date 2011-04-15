@@ -686,6 +686,8 @@ POST_ID id_list[] = {
 	{NID_aes_192_cbc, "AES-192-CBC"},
 	{NID_aes_256_cbc, "AES-256-CBC"},
 	{NID_aes_128_ecb, "AES-128-ECB"},
+	{NID_aes_128_xts, "AES-128-XTS"},
+	{NID_aes_256_xts, "AES-256-XTS"},
 	{NID_des_ede3_cbc, "DES-EDE3-CBC"},
 	{NID_des_ede3_ecb, "DES-EDE3-ECB"},
 	{0, NULL}
@@ -753,12 +755,13 @@ static int post_cb(int op, int id, int subid, void *ex)
 		idstr = "GCM";
 		break;
 
-		case FIPS_TEST_CCM:
-		idstr = "CCM";
+		case FIPS_TEST_XTS:
+		idstr = "XTS";
+		exstr = lookup_id(subid);
 		break;
 
-		case FIPS_TEST_XTS:
-		idstr = "HMAC";
+		case FIPS_TEST_CCM:
+		idstr = "CCM";
 		break;
 
 		case FIPS_TEST_X931:
@@ -849,6 +852,8 @@ int main(int argc,char **argv)
 	    fail_sub = NID_aes_128_ecb;	
         } else if (!strcmp(argv[1], "aes-gcm")) {
 	    fail_id = FIPS_TEST_GCM;
+        } else if (!strcmp(argv[1], "aes-xts")) {
+	    fail_id = FIPS_TEST_XTS;
         } else if (!strcmp(argv[1], "des")) {
 	    fail_id = FIPS_TEST_CIPHER;
 	    fail_sub = NID_des_ede3_ecb;	

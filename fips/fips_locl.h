@@ -53,7 +53,7 @@
 extern "C" {
 #endif
 
-#define FIPS_MAX_CIPHER_TEST_SIZE	16
+#define FIPS_MAX_CIPHER_TEST_SIZE	32
 #define fips_load_key_component(key, comp, pre) \
 	key->comp = BN_bin2bn(pre##_##comp, sizeof(pre##_##comp), key->comp); \
 	if (!key->comp) \

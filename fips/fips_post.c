@@ -174,6 +174,8 @@ int FIPS_selftest(void)
 		rv = 0;
 	if (!FIPS_selftest_aes_gcm())
 		rv = 0;
+	if (!FIPS_selftest_aes_xts())
+		rv = 0;
 	if (!FIPS_selftest_des())
 		rv = 0;
 	if (!FIPS_selftest_rsa())
