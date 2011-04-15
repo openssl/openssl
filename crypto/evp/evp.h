@@ -1248,6 +1248,7 @@ void ERR_load_EVP_strings(void);
 /* Function codes. */
 #define EVP_F_AESNI_INIT_KEY				 165
 #define EVP_F_AES_INIT_KEY				 133
+#define EVP_F_AES_XTS					 172
 #define EVP_F_CAMELLIA_INIT_KEY				 159
 #define EVP_F_D2I_PKEY					 100
 #define EVP_F_DO_SIGVER_INIT				 161
@@ -1369,6 +1370,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_PRIVATE_KEY_DECODE_ERROR			 145
 #define EVP_R_PRIVATE_KEY_ENCODE_ERROR			 146
 #define EVP_R_PUBLIC_KEY_NOT_RSA			 106
+#define EVP_R_TOO_LARGE					 164
 #define EVP_R_UNKNOWN_CIPHER				 160
 #define EVP_R_UNKNOWN_DIGEST				 161
 #define EVP_R_UNKNOWN_PBE_ALGORITHM			 121

@@ -519,6 +519,14 @@ static int aes_xts(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		return -1;
 	if (!out || !in)
 		return -1;
+#ifdef OPENSSL_FIPS
+	/* Requirement of SP800-38E */
+	if (FIPS_mode() && len > (1L<<20)*16)
+		{
+		EVPerr(EVP_F_AES_XTS, EVP_R_TOO_LARGE);
+		return -1;
+		}
+#endif
 	if (CRYPTO_xts128_encrypt(&xctx->xts, ctx->iv, in, out, len,
 								ctx->encrypt))
 		return -1;
