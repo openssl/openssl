@@ -263,9 +263,84 @@ static void gcmtest(FILE *in, FILE *out, int encrypt)
 		}
 	}
 
+static void xtstest(FILE *in, FILE *out)
+	{
+	char buf[2048];
+	char lbuf[2048];
+	char *keyword, *value;
+	int inlen;
+	int encrypt = 0;
+	int rv;
+	long l;
+	unsigned char *key = NULL, *iv = NULL;
+	unsigned char *inbuf = NULL, *outbuf = NULL;
+	EVP_CIPHER_CTX ctx;
+	const EVP_CIPHER *xts = NULL;
+	FIPS_cipher_ctx_init(&ctx);
+
+	while(fgets(buf,sizeof buf,in) != NULL)
+		{
+		fputs(buf,out);
+		if (buf[0] == '[' && strlen(buf) >= 9)
+			{
+			if(!strncmp(buf,"[ENCRYPT]", 9))
+				encrypt = 1;
+			else if(!strncmp(buf,"[DECRYPT]", 9))
+				encrypt = 0;
+			}
+		if (!parse_line(&keyword, &value, lbuf, buf))
+			continue;
+		else if(!strcmp(keyword,"Key"))
+			{
+			key = hex2bin_m(value, &l);
+			if (l == 32)
+				xts = EVP_aes_128_xts();
+			else if (l == 64)
+				xts = EVP_aes_256_xts();
+			else
+				{
+				fprintf(stderr, "Inconsistent Key length\n");
+				exit(1);
+				}
+			}
+		else if(!strcmp(keyword,"i"))
+			{
+			iv = hex2bin_m(value, &l);
+			if (l != 16)
+				{
+				fprintf(stderr, "Inconsistent i length\n");
+				exit(1);
+				}
+			}
+		else if(encrypt && !strcmp(keyword,"PT"))
+			{
+			inbuf = hex2bin_m(value, &l);
+			inlen = l;
+			}
+		else if(!encrypt && !strcmp(keyword,"CT"))
+			{
+			inbuf = hex2bin_m(value, &l);
+			inlen = l;
+			}
+		if (inbuf)
+			{
+			FIPS_cipherinit(&ctx, xts, key, iv, encrypt);
+			outbuf = OPENSSL_malloc(inlen);
+			rv = FIPS_cipher(&ctx, outbuf, inbuf, inlen);
+			OutputValue(encrypt ? "CT":"PT", outbuf, inlen, out, 0);
+			OPENSSL_free(inbuf);
+			OPENSSL_free(outbuf);
+			OPENSSL_free(key);
+			OPENSSL_free(iv);
+			iv = key = inbuf = outbuf = NULL;
+			}	
+		}
+	}
+
 int main(int argc,char **argv)
 	{
 	int encrypt;
+	int xts = 0;
 	FILE *in, *out;
 	if (argc == 4)
 		{
@@ -299,13 +374,18 @@ int main(int argc,char **argv)
 		encrypt = 2;
 	else if(!strcmp(argv[1],"-decrypt"))
 		encrypt = 0;
+	else if(!strcmp(argv[1],"-xts"))
+		xts = 1;
 	else
 		{
 		fprintf(stderr,"Don't know how to %s.\n",argv[1]);
 		exit(1);
 		}
 
-	gcmtest(in, out, encrypt);
+	if (xts)
+		xtstest(in, out);
+	else
+		gcmtest(in, out, encrypt);
 
 	if (argc == 4)
 		{

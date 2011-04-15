@@ -9,9 +9,10 @@
      to use callback. Always run all selftests even if one fails.
      [Steve Henson]
 
-  *) Provisional XTS support. Note: this does increase the maximum key
-     length from 32 to 64 bytes but there should be no binary compatibility
-     issues as existing applications will never use XTS mode.
+  *) XTS support including algorithm test driver in the fips_gcmtest program.
+     Note: this does increase the maximum key length from 32 to 64 bytes but
+     there should be no binary compatibility issues as existing applications
+     will never use XTS mode.
      [Steve Henson]
 
   *) Extensive reorganisation of FIPS PRNG behaviour. Remove all dependencies

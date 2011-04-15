@@ -471,8 +471,6 @@ static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	/* key1 and key2 are used as an indicator both key and IV are set */
 	xctx->xts.key1 = NULL;
 	xctx->xts.key2 = NULL;
-	xctx->xts.block1 = (block128_f)AES_encrypt;
-	xctx->xts.block2 = (block128_f)AES_encrypt;
 	return 1;
 	}
 
@@ -485,13 +483,23 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 	if (key)
 		{
-		AES_set_encrypt_key(key, ctx->key_len * 8, &xctx->ks1);
-		AES_set_encrypt_key(key + ctx->key_len, ctx->key_len * 8,
-								&xctx->ks2);
+		/* key_len is two AES keys */
+		if (ctx->encrypt)
+			{
+			AES_set_encrypt_key(key, ctx->key_len * 4, &xctx->ks1);
+			xctx->xts.block1 = (block128_f)AES_encrypt;
+			}
+		else
+			{
+			AES_set_decrypt_key(key, ctx->key_len * 4, &xctx->ks1);
+			xctx->xts.block1 = (block128_f)AES_decrypt;
+			}
+
+		AES_set_encrypt_key(key + ctx->key_len/2,
+						ctx->key_len * 4, &xctx->ks2);
+		xctx->xts.block2 = (block128_f)AES_encrypt;
 
 		xctx->xts.key1 = &xctx->ks1;
-		xctx->xts.block1 = (block128_f)AES_encrypt;
-		xctx->xts.block2 = (block128_f)AES_encrypt;
 		}
 
 	if (iv)
