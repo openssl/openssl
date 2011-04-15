@@ -892,6 +892,8 @@ int main(int argc,char **argv)
 	    FIPS_corrupt_drbg();
 	} else if (!strcmp(argv[1], "rng")) {
 	    fail_id = FIPS_TEST_X931;
+	} else if (!strcmp(argv[1], "post")) {
+	    fail_id = -1;
 	} else if (!strcmp(argv[1], "rngstick")) {
 	    do_rng_stick = 1;
 	    no_exit = 1;
