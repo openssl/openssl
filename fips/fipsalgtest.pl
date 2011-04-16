@@ -48,17 +48,20 @@ my @fips_rsa_test_list = (
 
 my @fips_rsa_pss0_test_list = (
 
-    [ "SigGenPSS(0)", "fips_rsastest -saltlen 0" ],
-    [ "SigVerPSS(0)", "fips_rsavtest -saltlen 0" ]
+    [ "SigGenPSS(0)", "fips_rsastest -saltlen 0",
+					'^\s*#\s*salt\s+len:\s+0\s*$' ],
+    [ "SigVerPSS(0)", "fips_rsavtest -saltlen 0",
+					'^\s*#\s*salt\s+len:\s+0\s*$' ],
 
 );
 
 # RSA PSS salt length 62 tests
 
 my @fips_rsa_pss62_test_list = (
-    [ "SigGenPSS(62)", "fips_rsastest -saltlen 62" ],
-    [ "SigVerPSS(62)", "fips_rsavtest -saltlen 62" ]
-
+    [ "SigGenPSS(62)", "fips_rsastest -saltlen 62",
+					'^\s*#\s*salt\s+len:\s+62\s*$' ],
+    [ "SigVerPSS(62)", "fips_rsavtest -saltlen 62",
+					'^\s*#\s*salt\s+len:\s+62\s*$' ],
 );
 
 # SHA tests
@@ -489,8 +492,8 @@ if ($list_tests) {
 foreach (@fips_test_list) {
     next unless ref($_);
     my $nm = $_->[0];
-    $_->[2] = "";
     $_->[3] = "";
+    $_->[4] = "";
     print STDERR "Duplicate test $nm\n" if exists $fips_tests{$nm};
     $fips_tests{$nm} = $_;
 }
@@ -627,17 +630,18 @@ sub sanity_check_exe {
 
 sub find_files {
     my ( $filter, $dir ) = @_;
-    my ( $dirh, $testname );
+    my ( $dirh, $testname, $tref );
     opendir( $dirh, $dir );
     while ( $_ = readdir($dirh) ) {
         next if ( $_ eq "." || $_ eq ".." );
         $_ = "$dir/$_";
         if ( -f "$_" ) {
             if (/\/([^\/]*)\.rsp$/) {
-                $testname = fix_pss( $1, $_ );
-                if ( exists $fips_tests{$testname} ) {
-                    if ( $fips_tests{$testname}->[3] eq "" ) {
-                        $fips_tests{$testname}->[3] = $_;
+		$tref = find_test($1, $_);
+		$testname = $$tref[0];
+                if ( defined $tref ) {
+                    if ( $$tref[4] eq "" ) {
+                        $$tref[4] = $_;
                     }
                     else {
                         print STDERR
@@ -652,10 +656,11 @@ sub find_files {
             }
             next unless /$filter.*\.req$/i;
             if (/\/([^\/]*)\.req$/) {
-                $testname = fix_pss( $1, $_ );
-                if ( exists $fips_tests{$testname} ) {
-                    if ( $fips_tests{$testname}->[2] eq "" ) {
-                        $fips_tests{$testname}->[2] = $_;
+		$tref = find_test($1, $_);
+		$testname = $$tref[0];
+                if ( defined $tref ) {
+                    if ( $$tref[3] eq "" ) {
+                        $$tref[3] = $_;
                     }
                     else {
                         print STDERR
@@ -676,35 +681,40 @@ sub find_files {
     }
     closedir($dirh);
 }
+#
+# Find test based on filename.
+# In ambiguous cases search file contents for a match
+#
 
-sub fix_pss {
+sub find_test {
     my ( $test, $path ) = @_;
-    my $sl = "";
-    local $_;
-    if ( $test =~ /PSS/ ) {
-        open( IN, $path ) || die "Can't Open File $path";
-        while (<IN>) {
-            if (/^\s*#\s*salt\s+len:\s+(\d+)\s*$/i) {
-                $sl = $1;
-                last;
-            }
-        }
-        close IN;
-        if ( $sl eq "" ) {
-            print STDERR "WARNING: No Salt length detected for file $path\n";
-        }
-        else {
-            return $test . "($sl)";
-        }
+    foreach $tref (@fips_test_list) {
+        next unless ref($tref);
+        my ( $tst, $cmd, $regexp, $req, $resp ) = @$tref;
+	$tst =~ s/\(.*$//;
+	if ($tst eq $test) {
+		return $tref if (!defined $regexp);
+		my $found = 0;
+		my $line;
+        	open( IN, $path ) || die "Can't Open File $path";
+        	while ($line = <IN>) {
+            	    if ($line =~ /$regexp/i) {
+			$found = 1;
+			last;
+		    }
+		}
+		close IN;
+		return $tref if $found == 1;
+	}
     }
-    return $test;
+    return undef;
 }
 
 sub sanity_check_files {
     my $bad = 0;
     foreach (@fips_test_list) {
         next unless ref($_);
-        my ( $tst, $cmd, $req, $resp ) = @$_;
+        my ( $tst, $cmd, $regexp, $req, $resp ) = @$_;
 
         #print STDERR "FILES $tst, $cmd, $req, $resp\n";
         if ( $req eq "" ) {
@@ -743,7 +753,7 @@ sub run_tests {
             print "Running $_ tests\n" unless $quiet;
             next;
         }
-        my ( $tname, $tcmd, $req, $rsp ) = @$_;
+        my ( $tname, $tcmd, $regexp, $req, $rsp ) = @$_;
         my $out = $rsp;
         if ($verify) {
             $out =~ s/\.rsp$/.tst/;
