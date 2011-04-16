@@ -59,8 +59,7 @@
 #include <assert.h>
 
 typedef struct {
-	union { u8 c[16]; size_t s[16/sizeof(size_t)]; } nonce, cmac,
-							 scratch, inp;
+	union { u64 u[2]; u8 c[16]; } nonce, cmac;
 	u64 blocks;
 	block128_f block;
 	void *key;
@@ -94,7 +93,7 @@ int CRYPTO_ccm128_setiv(CCM128_CONTEXT *ctx,
 		ctx->nonce.c[11] = (u8)(mlen>>(32%(sizeof(mlen)*8)));
 	}
 	else
-		*((size_t *)&ctx->nonce.s[8]) = 0;
+		*(u32*)(&ctx->nonce.c[8]) = 0;
 
 	ctx->nonce.c[12] = (u8)(mlen>>24);
 	ctx->nonce.c[13] = (u8)(mlen>>16);
@@ -111,11 +110,12 @@ int CRYPTO_ccm128_setiv(CCM128_CONTEXT *ctx,
 void CRYPTO_ccm128_aad(CCM128_CONTEXT *ctx,
 	const unsigned char *aad,size_t alen)
 {	unsigned int i;
+	block128_f block = ctx->block;
 
 	if (alen==0) return;
 
 	ctx->nonce.c[0] |= 0x40;	/* set Adata flag */
-	(*ctx->block)(ctx->nonce.c,ctx->cmac.c,ctx->key),
+	(*block)(ctx->nonce.c,ctx->cmac.c,ctx->key),
 	ctx->blocks++;
 
 	if (alen<(0x10000-0x100)) {
@@ -149,7 +149,7 @@ void CRYPTO_ccm128_aad(CCM128_CONTEXT *ctx,
 	do {
 		for(;i<16 && alen;++i,++aad,--alen)
 			ctx->cmac.c[i] ^= *aad;
-		(*ctx->block)(ctx->cmac.c,ctx->cmac.c,ctx->key),
+		(*block)(ctx->cmac.c,ctx->cmac.c,ctx->key),
 		ctx->blocks++;
 		i=0;
 	} while (alen);
@@ -175,16 +175,19 @@ int CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
 	size_t len)
 {
 	size_t		n;
-	unsigned int	i;
-	unsigned char	flags = ctx->nonce.c[0];
+	unsigned int	i,L;
+	unsigned char	flags0 = ctx->nonce.c[0];
+	block128_f	block = ctx->block;
+	union { u64 u[2]; u8 c[16]; } scratch;
 
-	if (!(flags&0x40))
-		(*ctx->block)(ctx->nonce.c,ctx->cmac.c,ctx->key),
+	if (!(flags0&0x40))
+		(*block)(ctx->nonce.c,ctx->cmac.c,ctx->key),
 		ctx->blocks++;
 
-	flags &= 7;	/* extract the L parameter */
-	for (n=0,i=15-flags;i<15;++i) {
-		n |= ctx->nonce.c[i]; ctx->nonce.c[i]=0;
+	ctx->nonce.c[0] = L = flags0&7;
+	for (n=0,i=15-L;i<15;++i) {
+		n |= ctx->nonce.c[i];
+		ctx->nonce.c[i]=0;
 		n <<= 8;
 	}
 	n |= ctx->nonce.c[15];	/* reconstructed length */
@@ -197,23 +200,25 @@ int CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
 
 	while (len>=16) {
 #if defined(STRICT_ALIGNMENT)
-		memcpy (ctx->inp.c,inp,16);
-		for (i=0; i<16/sizeof(size_t); ++i)
-			ctx->cmac.s[i] ^= ctx->inp.s[i];
+		union { u64 u[2]; u8 c[16]; } temp;
+
+		memcpy (temp.c,inp,16);
+		ctx->cmac.u[0] ^= temp.u[0];
+		ctx->cmac.u[1] ^= temp.u[1];
 #else
-		for (i=0; i<16/sizeof(size_t); ++i)
-			ctx->cmac.s[i] ^= ((size_t*)inp)[i];
+		ctx->cmac.u[0] ^= ((u64*)inp)[0];
+		ctx->cmac.u[1] ^= ((u64*)inp)[1];
 #endif
-		(*ctx->block)(ctx->cmac.c,ctx->cmac.c,ctx->key);
-		(*ctx->block)(ctx->nonce.c,ctx->scratch.c,ctx->key);
+		(*block)(ctx->cmac.c,ctx->cmac.c,ctx->key);
+		(*block)(ctx->nonce.c,scratch.c,ctx->key);
 		ctr128_inc(ctx->nonce.c);
 #if defined(STRICT_ALIGNMENT)
-		for (i=0; i<16/sizeof(size_t); ++i)
-			ctx->inp.s[i] ^= ctx->scratch.s[i];
-		memcpy(out,ctx->inp.c,16);
+		temp.u[0] ^= scratch.u[0];
+		temp.u[1] ^= scratch.u[1];
+		memcpy(out,temp.c,16);
 #else
-		for (i=0; i<16/sizeof(size_t); ++i)
-			((size_t*)out)[i] = ctx->scratch.s[i]^((size_t*)inp)[i];
+		((u64*)out)[0] = scratch.u[0]^((u64*)inp)[0];
+		((u64*)out)[1] = scratch.u[1]^((u64*)inp)[1];
 #endif
 		inp += 16;
 		out += 16;
@@ -222,17 +227,19 @@ int CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
 
 	if (len) {
 		for (i=0; i<len; ++i) ctx->cmac.c[i] ^= inp[i];
-		(*ctx->block)(ctx->cmac.c,ctx->cmac.c,ctx->key);
-		(*ctx->block)(ctx->nonce.c,ctx->scratch.c,ctx->key);
-		for (i=0; i<len; ++i) out[i] = ctx->scratch.c[i]^inp[i];
+		(*block)(ctx->cmac.c,ctx->cmac.c,ctx->key);
+		(*block)(ctx->nonce.c,scratch.c,ctx->key);
+		for (i=0; i<len; ++i) out[i] = scratch.c[i]^inp[i];
 	}
 
-	for (i=15-flags;i<16;++i)
+	for (i=15-L;i<16;++i)
 		ctx->nonce.c[i]=0;
 
-	(*ctx->block)(ctx->nonce.c,ctx->scratch.c,ctx->key);
-	for (i=0; i<16/sizeof(size_t); ++i)
-		ctx->cmac.s[i] ^= ctx->scratch.s[i];
+	(*block)(ctx->nonce.c,scratch.c,ctx->key);
+	ctx->cmac.u[0] ^= scratch.u[0];
+	ctx->cmac.u[1] ^= scratch.u[1];
+
+	ctx->nonce.c[0] = flags0;
 
 	return 0;
 }
@@ -242,15 +249,18 @@ int CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
 	size_t len)
 {
 	size_t		n;
-	unsigned int	i;
-	unsigned char	flags = ctx->nonce.c[0];
+	unsigned int	i,L;
+	unsigned char	flags0 = ctx->nonce.c[0];
+	block128_f	block;
+	union { u64 u[2]; u8 c[16]; } scratch;
 
-	if (!(flags&0x40))
-		(*ctx->block)(ctx->nonce.c,ctx->cmac.c,ctx->key);
+	if (!(flags0&0x40))
+		(*block)(ctx->nonce.c,ctx->cmac.c,ctx->key);
 
-	flags &= 7;	/* extract the L parameter */
-	for (n=0,i=15-flags;i<15;++i) {
-		n |= ctx->nonce.c[i]; ctx->nonce.c[i]=0;
+	ctx->nonce.c[0] = L = flags0&7;
+	for (n=0,i=15-L;i<15;++i) {
+		n |= ctx->nonce.c[i];
+		ctx->nonce.c[i]=0;
 		n <<= 8;
 	}
 	n |= ctx->nonce.c[15];	/* reconstructed length */
@@ -259,18 +269,18 @@ int CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
 	if (n!=len) return -1;
 
 	while (len>=16) {
-		(*ctx->block)(ctx->nonce.c,ctx->scratch.c,ctx->key);
+		(*block)(ctx->nonce.c,scratch.c,ctx->key);
 		ctr128_inc(ctx->nonce.c);
 #if defined(STRICT_ALIGNMENT)
 		memcpy (ctx->inp.c,inp,16);
 		for (i=0; i<16/sizeof(size_t); ++i)
-			ctx->cmac.s[i] ^= (ctx->scratch.s[i] ^= ctx->inp.s[i]);
-		memcpy (out,ctx->scratch,16);
+			ctx->cmac.s[i] ^= (scratch.s[i] ^= ctx->inp.s[i]);
+		memcpy (out,scratch,16);
 #else
-		for (i=0; i<16/sizeof(size_t); ++i)
-			ctx->cmac.s[i] ^= ((size_t*)out)[i] = ctx->scratch.s[i]^((size_t*)inp)[i];
+		ctx->cmac.u[0] ^= (((u64*)out)[0] = scratch.u[0]^((u64*)inp)[0]);
+		ctx->cmac.u[1] ^= (((u64*)out)[1] = scratch.u[1]^((u64*)inp)[1]);
 #endif
-		(*ctx->block)(ctx->cmac.c,ctx->cmac.c,ctx->key);
+		(*block)(ctx->cmac.c,ctx->cmac.c,ctx->key);
 
 		inp += 16;
 		out += 16;
@@ -278,18 +288,20 @@ int CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
 	}
 
 	if (len) {
-		(*ctx->block)(ctx->nonce.c,ctx->scratch.c,ctx->key);
+		(*block)(ctx->nonce.c,scratch.c,ctx->key);
 		for (i=0; i<len; ++len)
-			ctx->cmac.c[i] ^= (out[i] = ctx->scratch.c[i]^inp[i]);
-		(*ctx->block)(ctx->cmac.c,ctx->cmac.c,ctx->key);
+			ctx->cmac.c[i] ^= (out[i] = scratch.c[i]^inp[i]);
+		(*block)(ctx->cmac.c,ctx->cmac.c,ctx->key);
 	}
 
-	for (i=15-flags;i<16;++i)
+	for (i=15-L;i<16;++i)
 		ctx->nonce.c[i]=0;
 
-	(*ctx->block)(ctx->nonce.c,ctx->scratch.c,ctx->key);
-	for (i=0; i<16/sizeof(size_t); ++i)
-		ctx->cmac.s[i] ^= ctx->scratch.s[i];
+	(*block)(ctx->nonce.c,scratch.c,ctx->key);
+	ctx->cmac.u[0] ^= scratch.u[0];
+	ctx->cmac.u[1] ^= scratch.u[1];
+
+	ctx->nonce.c[0] = flags0;
 
 	return 0;
 }
