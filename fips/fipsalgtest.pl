@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Perl utility to run or verify FIPS 140-2 CMVP algorithm tests based on the
+# Perl utility to run or verify FIPS 140-2 CAVP algorithm tests based on the
 # pathnames of input algorithm test files actually present (the unqualified
 # file names are consistent but the pathnames are not).
 #
@@ -373,7 +373,6 @@ my $onedir = 0;
 my $filter = "";
 my $tvdir;
 my $tprefix;
-my $shwrap_prefix;
 my $debug          = 0;
 my $quiet          = 0;
 my $notest         = 0;
@@ -383,6 +382,8 @@ my $ignore_missing = 0;
 my $ignore_bogus   = 0;
 my $bufout         = '';
 my $list_tests     = 0;
+my $minimal_script = 0;
+my $outfile        = '';
 
 my %fips_enabled = (
     dsa         => 1,
@@ -417,7 +418,13 @@ foreach (@ARGV) {
     elsif ( $_ eq "--ignore-bogus" ) {
         $ignore_bogus = 1;
     }
-    elsif ( $_ eq "--generate" ) {
+    elsif ( $_ eq "--minimal-script" ) {
+        $minimal_script = 1;
+    }
+    elsif (/--generate-script=(.*)$/) {
+        $outfile = $1;
+	$verify = 0;
+    } elsif ( $_ eq "--generate" ) {
         $verify = 0;
     }
     elsif ( $_ eq "--notest" ) {
@@ -434,9 +441,6 @@ foreach (@ARGV) {
     }
     elsif (/--tprefix=(.*)$/) {
         $tprefix = $1;
-    }
-    elsif (/--shwrap_prefix=(.*)$/) {
-        $shwrap_prefix = $1;
     }
     elsif (/^--(enable|disable)-(.*)$/) {
         if ( !exists $fips_enabled{$2} ) {
@@ -491,9 +495,9 @@ if ($list_tests) {
 
 foreach (@fips_test_list) {
     next unless ref($_);
-    my $nm = $_->[0];
-    $_->[3] = "";
-    $_->[4] = "";
+    my $nm = $$_[0];
+    $$_[3] = "";
+    $$_[4] = "";
     print STDERR "Duplicate test $nm\n" if exists $fips_tests{$nm};
     $fips_tests{$nm} = $_;
 }
@@ -513,17 +517,13 @@ if ($win32) {
 else {
     if ($onedir) {
         $tprefix       = "./" unless defined $tprefix;
-        $shwrap_prefix = "./" unless defined $shwrap_prefix;
     }
     else {
         $tprefix       = "../test/" unless defined $tprefix;
-        $shwrap_prefix = "../util/" unless defined $shwrap_prefix;
     }
 }
 
-sanity_check_exe( $win32, $tprefix, $shwrap_prefix );
-
-my $cmd_prefix = $win32 ? "" : "${shwrap_prefix}shlib_wrap.sh ";
+sanity_check_exe( $win32, $tprefix) if $outfile eq "";
 
 find_files( $filter, $tvdir );
 
@@ -533,8 +533,8 @@ my ( $runerr, $cmperr, $cmpok, $scheckrunerr, $scheckerr, $scheckok, $skipcnt )
   = ( 0, 0, 0, 0, 0, 0, 0 );
 
 exit(0) if $notest;
-
-run_tests( $verify, $win32, $tprefix, $filter, $tvdir );
+print "Outputting commands to $outfile\n" if $outfile ne "";
+run_tests( $verify, $win32, $tprefix, $filter, $tvdir, $outfile );
 
 if ($verify) {
     print "ALGORITHM TEST VERIFY SUMMARY REPORT:\n";
@@ -553,7 +553,7 @@ if ($verify) {
         print "***ALL TESTS SUCCESSFUL***\n";
     }
 }
-else {
+elsif ($outfile eq "") {
     print "ALGORITHM TEST SUMMARY REPORT:\n";
     print "Tests skipped due to missing files:        $skipcnt\n";
     print "Algorithm test program execution failures: $runerr\n";
@@ -570,13 +570,12 @@ else {
 sub Help {
     ( my $cmd ) = ( $0 =~ m#([^/]+)$# );
     print <<EOF;
-$cmd: generate run CMVP algorithm tests
+$cmd: generate run CAVP algorithm tests
 	--debug                     Enable debug output
 	--dir=<dirname>             Optional root for *.req file search
 	--filter=<regexp>
 	--onedir <dirname>          Assume all components in current directory
 	--rspdir=<dirname>          Name of subdirectories containing *.rsp files, default "rsp"
-	--shwrap_prefix=<prefix>
 	--tprefix=<prefix>
 	--ignore-bogus              Ignore duplicate or bogus files
 	--ignore-missing            Ignore missing test files
@@ -598,10 +597,9 @@ while (my ($key, $value) = each %fips_enabled)
 # Sanity check to see if all necessary executables exist
 
 sub sanity_check_exe {
-    my ( $win32, $tprefix, $shwrap_prefix ) = @_;
+    my ( $win32, $tprefix, ) = @_;
     my %exe_list;
     my $bad = 0;
-    $exe_list{ $shwrap_prefix . "shlib_wrap.sh" } = 1 unless $win32;
     foreach (@fips_test_list) {
         next unless ref($_);
         my $cmd = $_->[1];
@@ -638,8 +636,8 @@ sub find_files {
         if ( -f "$_" ) {
             if (/\/([^\/]*)\.rsp$/) {
 		$tref = find_test($1, $_);
-		$testname = $$tref[0];
                 if ( defined $tref ) {
+		    $testname = $$tref[0];
                     if ( $$tref[4] eq "" ) {
                         $$tref[4] = $_;
                     }
@@ -657,8 +655,8 @@ sub find_files {
             next unless /$filter.*\.req$/i;
             if (/\/([^\/]*)\.req$/) {
 		$tref = find_test($1, $_);
-		$testname = $$tref[0];
                 if ( defined $tref ) {
+		    $testname = $$tref[0];
                     if ( $$tref[3] eq "" ) {
                         $$tref[3] = $_;
                     }
@@ -745,12 +743,47 @@ sub sanity_check_files {
 }
 
 sub run_tests {
-    my ( $verify, $win32, $tprefix, $filter, $tvdir ) = @_;
+    my ( $verify, $win32, $tprefix, $filter, $tvdir, $outfile ) = @_;
     my ( $tname, $tref );
     my $bad = 0;
+    my $lastdir = "";
+    if ($outfile ne "") {
+	open OUT, ">$outfile" || die "Can't open $outfile";
+    }
+    if ($outfile ne "" && !$minimal_script) {
+        if ($win32) {
+	    print OUT <<\END;
+@echo off
+rem Test vector run script
+rem Auto generated by fipsalgtest.pl script
+rem Do not edit
+
+echo Running Algorithm Tests
+
+END
+	} else {
+	    print OUT <<\END;
+#!/bin/sh
+
+# Test vector run script
+# Auto generated by fipsalgtest.pl script
+# Do not edit
+
+echo Running Algorithm Tests
+
+END
+	}
+
+    }
+
     foreach (@fips_test_list) {
         if ( !ref($_) ) {
-            print "Running $_ tests\n" unless $quiet;
+	    if ($outfile ne "") {
+		print "Generating script for $_ tests\n";
+		print OUT "\n\n\necho \"Running $_ tests\"\n" unless $minimal_script;
+	    } else {	
+            	print "Running $_ tests\n" unless $quiet;
+	    }
             next;
         }
         my ( $tname, $tcmd, $regexp, $req, $rsp ) = @$_;
@@ -779,32 +812,53 @@ sub run_tests {
             $out =~ s|/req/(\S+)\.req|/$rspdir/$1.rsp|;
             my $outdir = $out;
             $outdir =~ s|/[^/]*$||;
-            if ( !-d $outdir ) {
+	    if ($outfile ne "") {
+	    	if ($win32) {
+		    $outdir =~ tr|/|\\|;
+		    $req =~ tr|/|\\|;
+		    $out =~ tr|/|\\|;
+	    	}
+		if ($outdir ne $lastdir && !$minimal_script) {
+		    if ($win32) {
+		    print OUT <<END
+if exist \"$outdir\" rd /s /q "$outdir"
+md \"$outdir\"
+
+END
+		    } else {
+		    print OUT <<END
+rm -rf \"$outdir\"
+mkdir \"$outdir\"
+
+END
+		    }
+		$lastdir = $outdir;
+		}
+            } elsif ( !-d $outdir ) {
                 print STDERR "DEBUG: Creating directory $outdir\n" if $debug;
                 mkdir($outdir) || die "Can't create directory $outdir";
             }
         }
-        my $cmd = "$cmd_prefix$tprefix$tcmd ";
-        if ( $tcmd =~ /-f$/ ) {
-            $cmd .= "\"$req\" \"$out\"";
-        }
-        else {
-            $cmd .= "\"$req\" \"$out\"";
-        }
+        my $cmd = "$tprefix$tcmd \"$req\" \"$out\"";
         print STDERR "DEBUG: running test $tname\n" if ( $debug && !$verify );
-        system($cmd);
-        if ( $? != 0 ) {
-            print STDERR
-              "WARNING: error executing test $tname for command: $cmd\n";
-            $runerr++;
-            next;
+	if ($outfile ne "") {
+	    print OUT "echo \"    running $tname test\"\n" unless $minimal_script;
+	    print OUT "$cmd\n";
+        } else {
+            system($cmd);
+            if ( $? != 0 ) {
+            	print STDERR
+                     "WARNING: error executing test $tname for command: $cmd\n";
+                $runerr++;
+                next;
+            }
         }
         if ($verify) {
             if ( exists $verify_special{$tname} ) {
                 my $vout = $rsp;
                 $vout =~ s/\.rsp$/.ver/;
                 $tcmd = $verify_special{$tname};
-                $cmd  = "$cmd_prefix$tprefix$tcmd ";
+                $cmd  = "$tprefix$tcmd ";
                 $cmd .= "\"$out\" \"$vout\"";
                 system($cmd);
                 if ( $? != 0 ) {
@@ -849,6 +903,10 @@ sub run_tests {
             }
             unlink $out;
         }
+    }
+    if ($outfile ne "") {
+	print OUT "\n\necho All Tests Completed\n" unless $minimal_script;
+    	close OUT;
     }
 }
 
