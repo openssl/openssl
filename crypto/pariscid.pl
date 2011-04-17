@@ -87,8 +87,8 @@ OPENSSL_wipe_cpu
 	.PROCEND
 ___
 {
-$inp="%r26";
-$len="%r25";
+my $inp="%r26";
+my $len="%r25";
 
 $code.=<<___;
 	.EXPORT	OPENSSL_cleanse,ENTRY,ARGW0=GR,ARGW1=GR
@@ -112,9 +112,9 @@ Lalign
 
 Laligned
 	andcm		$len,%r1,%r28
-Loop
+Lot
 	$ST		%r0,0($inp)
-	addib,*<>	-$SIZE_T,%r28,Loop
+	addib,*<>	-$SIZE_T,%r28,Lot
 	ldo		$SIZE_T($inp),$inp
 
 	and,*<>		$len,%r1,$len
@@ -130,7 +130,93 @@ Ldone
 	.PROCEND
 ___
 }
+{
+my ($out,$cnt,$max)=("%r26","%r25","%r24");
+my ($tick,$lasttick)=("%r23","%r22");
+my ($diff,$lastdiff)=("%r21","%r20");
 
+$code.=<<___;
+	.EXPORT	OPENSSL_instrument_bus,ENTRY,ARGW0=GR,ARGW1=GR
+	.ALIGN	8
+OPENSSL_instrument_bus
+	.PROC
+	.CALLINFO	NO_CALLS
+	.ENTRY
+	copy		$cnt,$rv
+	mfctl		%cr16,$tick
+	copy		$tick,$lasttick
+	ldi		0,$diff
+
+	fdc		0($out)
+	ldw		0($out),$tick
+	add		$diff,$tick,$tick
+	stw		$tick,0($out)
+Loop
+	mfctl		%cr16,$tick
+	sub		$tick,$lasttick,$diff
+	copy		$tick,$lasttick
+
+	fdc		0($out)
+	ldw		0($out),$tick
+	add		$diff,$tick,$tick
+	stw		$tick,0($out)
+
+	addib,<>	-1,$cnt,Loop
+	addi		4,$out,$out
+
+	bv		($rp)
+	.EXIT
+	sub		$rv,$cnt,$rv
+	.PROCEND
+
+	.EXPORT	OPENSSL_instrument_bus2,ENTRY,ARGW0=GR,ARGW1=GR
+	.ALIGN	8
+OPENSSL_instrument_bus2
+	.PROC
+	.CALLINFO	NO_CALLS
+	.ENTRY
+	copy		$cnt,$rv
+	sub		%r0,$cnt,$cnt
+
+	mfctl		%cr16,$tick
+	copy		$tick,$lasttick
+	ldi		0,$diff
+
+	fdc		0($out)
+	ldw		0($out),$tick
+	add		$diff,$tick,$tick
+	stw		$tick,0($out)
+
+	mfctl		%cr16,$tick
+	sub		$tick,$lasttick,$diff
+	copy		$tick,$lasttick
+Loop2
+	copy		$diff,$lastdiff
+	fdc		0($out)
+	ldw		0($out),$tick
+	add		$diff,$tick,$tick
+	stw		$tick,0($out)
+
+	addib,=		-1,$max,Ldone2
+	nop
+
+	mfctl		%cr16,$tick
+	sub		$tick,$lasttick,$diff
+	copy		$tick,$lasttick
+	cmpclr,<>	$lastdiff,$diff,$tick
+	ldi		1,$tick
+
+	ldi		1,%r1
+	xor		%r1,$tick,$tick
+	addb,<>		$tick,$cnt,Loop2
+	shladd,l	$tick,2,$out,$out
+Ldone2
+	bv		($rp)
+	.EXIT
+	add		$rv,$cnt,$rv
+	.PROCEND
+___
+}
 $code =~ s/cmpib,\*/comib,/gm if ($SIZE_T==4);
 $code =~ s/,\*/,/gm if ($SIZE_T==4);
 print $code;

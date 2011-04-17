@@ -11,6 +11,7 @@
 #define SPARCV9_VIS1		(1<<2)
 #define SPARCV9_VIS2		(1<<3)	/* reserved */
 #define SPARCV9_FMADD		(1<<4)	/* reserved for SPARC64 V */
+#define SPARCV9_BLK		(1<<5)	/* VIS1 block copy */
 
 static int OPENSSL_sparcv9cap_P=SPARCV9_TICK_PRIVILEGED;
 
@@ -31,6 +32,8 @@ void		_sparcv9_vis1_probe(void);
 unsigned long	_sparcv9_vis1_instrument(void);
 void		_sparcv9_vis2_probe(void);
 void		_sparcv9_fmadd_probe(void);
+size_t 		_sparcv9_vis1_instrument_bus(unsigned int *,size_t);
+size_t		_sparcv8_vis1_instrument_bus2(unsigned int *,size_t,size_t);
 
 unsigned long OPENSSL_rdtsc(void)
 	{
@@ -42,6 +45,24 @@ unsigned long OPENSSL_rdtsc(void)
 #endif
 	else
 		return _sparcv9_rdtick();
+	}
+
+size_t OPENSSL_instrument_bus(unsigned int *out,size_t cnt)
+	{
+	if (OPENSSL_sparcv9cap_P&(SPARCV9_TICK_PRIVILEGED|SPARCV9_BLK) ==
+			SPARCV9_BLK)
+		return _sparcv9_vis1_instrument_bus(out,cnt);
+	else
+		return 0;
+	}
+
+size_t OPENSSL_instrument_bus2(unsigned int *out,size_t cnt,size_t max)
+	{
+	if (OPENSSL_sparcv9cap_P&(SPARCV9_TICK_PRIVILEGED|SPARCV9_BLK) ==
+			SPARCV9_BLK)
+		return _sparcv9_vis1_instrument_bus2(out,cnt,max);
+	else
+		return 0;
 	}
 
 #if 0 && defined(__sun) && defined(__SVR4)
@@ -112,7 +133,7 @@ void OPENSSL_cpuid_setup(void)
 	if (sysinfo(SI_ISALIST,si,sizeof(si))>0)
 		{
 		if (strstr(si,"+vis"))
-			OPENSSL_sparcv9cap_P |= SPARCV9_VIS1;
+			OPENSSL_sparcv9cap_P |= SPARCV9_VIS1|SPARCV9_BLK;
 		if (strstr(si,"+vis2"))
 			{
 			OPENSSL_sparcv9cap_P |= SPARCV9_VIS2;
@@ -169,7 +190,6 @@ void OPENSSL_cpuid_setup(void)
 	char *e;
 	struct sigaction	common_act,ill_oact,bus_oact;
 	sigset_t		all_masked,oset;
-	int			sig;
 	static int trigger=0;
 
 	if (trigger) return;
@@ -211,7 +231,7 @@ void OPENSSL_cpuid_setup(void)
 	if (sigsetjmp(common_jmp,1) == 0)
 		{
 		_sparcv9_vis1_probe();
-		OPENSSL_sparcv9cap_P |= SPARCV9_VIS1;
+		OPENSSL_sparcv9cap_P |= SPARCV9_VIS1|SPARCV9_BLK;
 		/* detect UltraSPARC-Tx, see sparccpud.S for details... */
 		if (_sparcv9_vis1_instrument() >= 12)
 			OPENSSL_sparcv9cap_P &= ~(SPARCV9_VIS1|SPARCV9_PREFER_FPU);

@@ -307,6 +307,108 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&ret	();
 &function_end_B("OPENSSL_cleanse");
 
+{
+my $lasttick = "esi";
+my $lastdiff = "ebx";
+my $out = "edi";
+my $cnt = "ecx";
+my $max = "ebp";
+
+&function_begin("OPENSSL_instrument_bus");
+    &mov	("eax",0);
+    if ($sse2) {
+	&picmeup("edx","OPENSSL_ia32cap_P");
+	&bt	(&DWP(0,"edx"),4);
+	&jnc	(&label("nogo"));	# no TSC
+	&bt	(&DWP(0,"edx"),19);
+	&jnc	(&label("nogo"));	# no CLFLUSH
+
+	&mov	($out,&wparam(0));	# load arguments
+	&mov	($cnt,&wparam(1));
+
+	# collect 1st tick
+	&rdtsc	();
+	&mov	($lasttick,"eax");	# lasttick = tick
+	&mov	($lastdiff,0);		# lastdiff = 0
+	&clflush(&DWP(0,$out));
+	&lock	();
+	&add	(&DWP(0,$out),$lastdiff);
+	&jmp	(&label("loop"));
+
+&set_label("loop",16);
+	&rdtsc	();
+	&mov	("edx","eax");		# put aside tick (yes, I neglect edx)
+	&sub	("eax",$lasttick);	# diff
+	&mov	($lasttick,"edx");	# lasttick = tick
+	&mov	($lastdiff,"eax");	# lastdiff = diff
+	&clflush(&DWP(0,$out));
+	&lock	();
+	&add	(&DWP(0,$out),"eax");	# accumulate diff
+	&lea	($out,&DWP(4,$out));	# ++$out
+	&sub	($cnt,1);		# --$cnt
+	&jnz	(&label("loop"));
+
+	&mov	("eax",&wparam(1));
+&set_label("nogo");
+    }
+&function_end("OPENSSL_instrument_bus");
+
+&function_begin("OPENSSL_instrument_bus2");
+    &mov	("eax",0);
+    if ($sse2) {
+	&picmeup("edx","OPENSSL_ia32cap_P");
+	&bt	(&DWP(0,"edx"),4);
+	&jnc	(&label("nogo"));	# no TSC
+	&bt	(&DWP(0,"edx"),19);
+	&jnc	(&label("nogo"));	# no CLFLUSH
+
+	&mov	($out,&wparam(0));	# load arguments
+	&mov	($cnt,&wparam(1));
+	&mov	($max,&wparam(2));
+
+	&rdtsc	();			# collect 1st tick
+	&mov	($lasttick,"eax");	# lasttick = tick
+	&mov	($lastdiff,0);		# lastdiff = 0
+
+	&clflush(&DWP(0,$out));
+	&lock	();
+	&add	(&DWP(0,$out),$lastdiff);
+
+	&rdtsc	();			# collect 1st diff
+	&mov	("edx","eax");		# put aside tick (yes, I neglect edx)
+	&sub	("eax",$lasttick);	# diff
+	&mov	($lasttick,"edx");	# lasttick = tick
+	&mov	($lastdiff,"eax");	# lastdiff = diff
+	&jmp	(&label("loop2"));
+
+&set_label("loop2",16);
+	&clflush(&DWP(0,$out));
+	&lock	();
+	&add	(&DWP(0,$out),"eax");	# accumulate diff
+
+	&sub	($max,1);
+	&jz	(&label("done2"));
+
+	&rdtsc	();
+	&mov	("edx","eax");		# put aside tick (yes, I neglect edx)
+	&sub	("eax",$lasttick);	# diff
+	&mov	($lasttick,"edx");	# lasttick = tick
+	&cmp	("eax",$lastdiff);
+	&mov	($lastdiff,"eax");	# lastdiff = diff
+	&mov	("edx",0);
+	&setne	("dl");
+	&sub	($cnt,"edx");		# conditional --$cnt
+	&lea	($out,&DWP(0,$out,"edx",4));	# conditional ++$out
+	&jnz	(&label("loop2"));
+
+&set_label("done2");
+	&mov	("eax",&wparam(1));
+	&sub	("eax",$cnt);
+&set_label("nogo");
+    }
+&function_end("OPENSSL_instrument_bus2");
+}
+
 &initseg("OPENSSL_cpuid_setup");
 
 &asm_finish();

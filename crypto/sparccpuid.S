@@ -397,6 +397,102 @@ OPENSSL_cleanse:
 .type	OPENSSL_cleanse,#function
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
+.global	_sparcv9_vis1_instrument_bus
+.align	8
+_sparcv9_vis1_instrument_bus:
+	mov	%o1,%o3					! save cnt
+	.word	0x99410000	!rd	%tick,%o4	! tick
+	mov	%o4,%o5					! lasttick = tick
+	set	0,%g4					! diff
+
+	andn	%o0,63,%g1
+	.word	0xc1985e00	!ldda	[%g1]0xf0,%f0	! block load
+	.word	0x8143e040	!membar	#Sync
+	.word	0xc1b85c00	!stda	%f0,[%g1]0xe0	! block store and commit
+	.word	0x8143e040	!membar	#Sync
+	ld	[%o0],%o4
+	add	%o4,%g4,%g4
+	.word	0xc9e2100c	!cas	[%o0],%o4,%g4
+
+.Loop:	.word	0x99410000	!rd	%tick,%o4
+	sub	%o4,%o5,%g4				! diff=tick-lasttick
+	mov	%o4,%o5					! lasttick=tick
+
+	andn	%o0,63,%g1
+	.word	0xc1985e00	!ldda	[%g1]0xf0,%f0	! block load
+	.word	0x8143e040	!membar	#Sync
+	.word	0xc1b85c00	!stda	%f0,[%g1]0xe0	! block store and commit
+	.word	0x8143e040	!membar	#Sync
+	ld	[%o0],%o4
+	add	%o4,%g4,%g4
+	.word	0xc9e2100c	!cas	[%o0],%o4,%g4
+	subcc	%o1,1,%o1				! --$cnt
+	bnz	.Loop
+	add	%o0,4,%o0				! ++$out
+
+	retl
+	mov	%o3,%o0
+.type	_sparcv9_vis1_instrument_bus,#function
+.size	_sparcv9_vis1_instrument_bus,.-_sparcv9_vis1_instrument_bus
+
+.global	_sparcv9_vis1_instrument_bus2
+.align	8
+_sparcv9_vis1_instrument_bus2:
+	mov	%o1,%o3					! save cnt
+	sll	%o1,2,%o1				! cnt*=4
+
+	.word	0x99410000	!rd	%tick,%o4	! tick
+	mov	%o4,%o5					! lasttick = tick
+	set	0,%g4					! diff
+
+	andn	%o0,63,%g1
+	.word	0xc1985e00	!ldda	[%g1]0xf0,%f0	! block load
+	.word	0x8143e040	!membar	#Sync
+	.word	0xc1b85c00	!stda	%f0,[%g1]0xe0	! block store and commit
+	.word	0x8143e040	!membar	#Sync
+	ld	[%o0],%o4
+	add	%o4,%g4,%g4
+	.word	0xc9e2100c	!cas	[%o0],%o4,%g4
+
+	.word	0x99410000	!rd	%tick,%o4	! tick
+	sub	%o4,%o5,%g4				! diff=tick-lasttick
+	mov	%o4,%o5					! lasttick=tick
+	mov	%g4,%g5					! lastdiff=diff
+.Loop2:
+	andn	%o0,63,%g1
+	.word	0xc1985e00	!ldda	[%g1]0xf0,%f0	! block load
+	.word	0x8143e040	!membar	#Sync
+	.word	0xc1b85c00	!stda	%f0,[%g1]0xe0	! block store and commit
+	.word	0x8143e040	!membar	#Sync
+	ld	[%o0],%o4
+	add	%o4,%g4,%g4
+	.word	0xc9e2100c	!cas	[%o0],%o4,%g4
+
+	subcc	%o2,1,%o2				! --max
+	bz	.Ldone2
+	nop
+
+	.word	0x99410000	!rd	%tick,%o4	! tick
+	sub	%o4,%o5,%g4				! diff=tick-lasttick
+	mov	%o4,%o5					! lasttick=tick
+	cmp	%g4,%g5
+	mov	%g4,%g5					! lastdiff=diff
+
+	.word	0x83408000	!rd	%ccr,%g1
+	and	%g1,4,%g1				! isolate zero flag
+	xor	%g1,4,%g1				! flip zero flag
+
+	subcc	%o1,%g1,%o1				! conditional --$cnt
+	bnz	.Loop2
+	add	%o0,%g1,%o0				! conditional ++$out
+
+.Ldone2:
+	srl	%o1,2,%o1
+	retl
+	sub	%o3,%o1,%o0
+.type	_sparcv9_vis1_instrument_bus2,#function
+.size	_sparcv9_vis1_instrument_bus2,.-_sparcv9_vis1_instrument_bus2
+
 .section	".init",#alloc,#execinstr
 	call	OPENSSL_cpuid_setup
 	nop

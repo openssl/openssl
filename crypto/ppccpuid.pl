@@ -69,10 +69,10 @@ $code=<<___;
 .globl	.OPENSSL_atomic_add
 .align	4
 .OPENSSL_atomic_add:
-Loop:	lwarx	r5,0,r3
+Ladd:	lwarx	r5,0,r3
 	add	r0,r4,r5
 	stwcx.	r0,0,r3
-	bne-	Loop
+	bne-	Ladd
 	$SIGNX	r3,r0
 	blr
 
@@ -112,6 +112,89 @@ Laligned:
 	bne	Little
 	blr
 ___
+{
+my ($out,$cnt,$max)=("r3","r4","r5");
+my ($tick,$lasttick)=("r6","r7");
+my ($diff,$lastdiff)=("r8","r9");
+
+$code.=<<___;
+.globl	.OPENSSL_instrument_bus
+.align	4
+.OPENSSL_instrument_bus:
+	mtctr	$cnt
+
+	mftb	$lasttick		# collect 1st tick
+	li	$diff,0
+
+	dcbf	0,$out			# flush cache line
+	lwarx	$tick,0,$out		# load and lock
+	add	$tick,$tick,$diff
+	stwcx.	$tick,0,$out
+	stwx	$tick,0,$out
+
+Loop:	mftb	$tick
+	sub	$diff,$tick,$lasttick
+	mr	$lasttick,$tick
+	dcbf	0,$out			# flush cache line
+	lwarx	$tick,0,$out		# load and lock
+	add	$tick,$tick,$diff
+	stwcx.	$tick,0,$out
+	stwx	$tick,0,$out
+	addi	$out,$out,4		# ++$out
+	bdnz	Loop
+
+	mr	r3,$cnt
+	blr
+
+.globl	.OPENSSL_instrument_bus2
+.align	4
+.OPENSSL_instrument_bus2:
+	mr	r0,$cnt
+	slwi	$cnt,$cnt,2
+
+	mftb	$lasttick		# collect 1st tick
+	li	$diff,0
+
+	dcbf	0,$out			# flush cache line
+	lwarx	$tick,0,$out		# load and lock
+	add	$tick,$tick,$diff
+	stwcx.	$tick,0,$out
+	stwx	$tick,0,$out
+
+	mftb	$tick			# collect 1st diff
+	sub	$diff,$tick,$lasttick
+	mr	$lasttick,$tick
+	mr	$lastdiff,$diff
+Loop2:
+	dcbf	0,$out			# flush cache line
+	lwarx	$tick,0,$out		# load and lock
+	add	$tick,$tick,$diff
+	stwcx.	$tick,0,$out
+	stwx	$tick,0,$out
+
+	addic.	$max,$max,-1
+	beq	Ldone2
+
+	mftb	$tick
+	sub	$diff,$tick,$lasttick
+	mr	$lasttick,$tick
+	cmplw	7,$diff,$lastdiff
+	mr	$lastdiff,$diff
+
+	mfcr	$tick			# pull cr
+	not	$tick,$tick		# flip bits
+	rlwinm	$tick,$tick,1,29,29	# isolate flipped eq bit and scale
+
+	sub.	$cnt,$cnt,$tick		# conditional --$cnt
+	add	$out,$out,$tick		# conditional ++$out
+	bne	Loop2
+
+Ldone2:
+	srwi	$cnt,$cnt,2
+	sub	r3,r0,$cnt
+	blr
+___
+}
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;

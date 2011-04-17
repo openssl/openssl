@@ -9,8 +9,9 @@ $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 open STDOUT,"| $^X ${dir}perlasm/x86_64-xlate.pl $flavour $output";
 
-if ($win64)	{ $arg1="%rcx"; $arg2="%rdx"; }
-else		{ $arg1="%rdi"; $arg2="%rsi"; }
+($arg1,$arg2,$arg3,$arg4)=$win64?("%rcx","%rdx","%r8", "%r9") :	# Win64 order
+				 ("%rdi","%rsi","%rdx","%rcx");	# Unix order
+
 print<<___;
 .extern		OPENSSL_cpuid_setup
 .section	.init
@@ -228,5 +229,95 @@ OPENSSL_wipe_cpu:
 	ret
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 ___
+{
+my $out="%r10";
+my $cnt="%rcx";
+my $max="%r11";
+my $lasttick="%r8d";
+my $lastdiff="%r9d";
+my $redzone=win64?8:-8;
+
+print<<___;
+.globl	OPENSSL_instrument_bus
+.type	OPENSSL_instrument_bus,\@abi-omnipotent
+.align	16
+OPENSSL_instrument_bus:
+	mov	$arg1,$out	# tribute to Win64
+	mov	$arg2,$cnt
+	mov	$arg2,$max
+
+	rdtsc			# collect 1st tick
+	mov	%eax,$lasttick	# lasttick = tick
+	mov	\$0,$lastdiff	# lastdiff = 0
+	clflush	($out)
+	lock
+	add	$lastdiff,($out)
+	jmp	.Loop
+.align	16
+.Loop:	rdtsc
+	mov	%eax,%edx
+	sub	$lasttick,%eax
+	mov	%edx,$lasttick
+	mov	%eax,$lastdiff
+	clflush	($out)
+	lock
+	add	%eax,($out)
+	lea	4($out),$out
+	sub	\$1,$cnt
+	jnz	.Loop
+
+	mov	$max,%rax
+	ret
+.size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
+
+.globl	OPENSSL_instrument_bus2
+.type	OPENSSL_instrument_bus2,\@abi-omnipotent
+.align	16
+OPENSSL_instrument_bus2:
+	mov	$arg1,$out	# tribute to Win64
+	mov	$arg2,$cnt
+	mov	$arg3,$max
+	mov	$cnt,$redzone(%rsp)
+
+	rdtsc			# collect 1st tick
+	mov	%eax,$lasttick	# lasttick = tick
+	mov	\$0,$lastdiff	# lastdiff = 0
+
+	clflush	($out)
+	lock
+	add	$lastdiff,($out)
+
+	rdtsc			# collect 1st diff
+	mov	%eax,%edx
+	sub	$lasttick,%eax	# diff
+	mov	%edx,$lasttick	# lasttick = tick
+	mov	%eax,$lastdiff	# lastdiff = diff
+.Loop2:
+	clflush	($out)
+	lock
+	add	%eax,($out)	# accumulate diff
+
+	sub	\$1,$max
+	jz	.Ldone2
+
+	rdtsc
+	mov	%eax,%edx
+	sub	$lasttick,%eax	# diff
+	mov	%edx,$lasttick	# lasttick = tick
+	cmp	$lastdiff,%eax
+	mov	%eax,$lastdiff	# lastdiff = diff
+	mov	\$0,%edx
+	setne	%dl
+	sub	%rdx,$cnt	# conditional --$cnt
+	lea	($out,%rdx,4),$out	# conditional ++$out
+	jnz	.Loop2
+
+.Ldone2:
+	mov	$redzone(%rsp),%rax
+	sub	$cnt,%rax
+	ret
+.size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
+___
+}
 
 close STDOUT;	# flush

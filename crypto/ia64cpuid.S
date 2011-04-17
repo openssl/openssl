@@ -26,7 +26,7 @@ OPENSSL_atomic_add:
 { .mii;	mov		ar.ccv=r2
 	add		r8=r2,r33
 	mov		r3=r2		};;
-{ .mmi;	mf
+{ .mmi;	mf;;
 	cmpxchg4.acq	r2=[r32],r8,ar.ccv
 	nop.i		0		};;
 { .mib;	cmp.ne		p6,p0=r2,r3
@@ -165,3 +165,89 @@ OPENSSL_cleanse:
 (p7)	br.cond.dpnt	.Little
 (p6)	br.ret.sptk.many	b0	};;
 .endp	OPENSSL_cleanse#
+
+.global	OPENSSL_instrument_bus#
+.proc	OPENSSL_instrument_bus#
+OPENSSL_instrument_cache:
+{ .mmi;	mov		r2=r33
+#if defined(_HPUX_SOURCE) && !defined(_LP64)
+	addp4		r32=0,r32
+#endif
+					}
+{ .mmi;	mov		r8=ar.itc;;
+	mov		r10=r0
+	mov		r9=r8		};;
+
+{ .mmi;	fc		r32;;
+	ld4		r8=[r32]	};;
+{ .mmi;	mf
+	mov		ar.ccv=r8
+	add		r8=r8,r10	};;
+{ .mmi;	cmpxchg4.acq	r3=[r32],r8,ar.ccv
+					};;
+.Loop:
+{ .mmi;	mov		r8=ar.itc;;
+	sub		r10=r8,r9		// diff=tick-lasttick
+	mov		r9=r8		};;	// lasttick=tick
+{ .mmi;	fc		r32;;
+	ld4		r8=[r32]	};;
+{ .mmi;	mf
+	mov		ar.ccv=r8
+	add		r8=r8,r10	};;
+{ .mmi;	cmpxchg4.acq	r3=[r32],r8,ar.ccv
+	add		r33=-1,r33
+	add		r32=4,r32	};;
+{ .mib;	cmp4.ne		p6,p0=0,r33
+(p6)	br.cond.dptk	.Loop		};;
+
+{ .mib;	sub		r8=r2,r33
+	br.ret.sptk.many	b0	};;
+.endp	OPENSSL_instrument_bus#
+
+.global	OPENSSL_instrument_bus2#
+.proc	OPENSSL_instrument_bus2#
+OPENSSL_instrument_cache2:
+{ .mmi;	mov		r2=r33			// put aside cnt
+#if defined(_HPUX_SOURCE) && !defined(_LP64)
+	addp4		r32=0,r32
+#endif
+					}
+{ .mmi;	mov		r8=ar.itc;;
+	mov		r10=r0
+	mov		r9=r8		};;
+
+{ .mmi;	fc		r32;;
+	ld4		r8=[r32]	};;
+{ .mmi;	mf
+	mov		ar.ccv=r8
+	add		r8=r8,r10	};;
+{ .mmi;	cmpxchg4.acq	r3=[r32],r8,ar.ccv
+					};;
+
+{ .mmi;	mov		r8=ar.itc;;
+	sub		r10=r8,r9
+	mov		r9=r8		};;
+.Loop2:
+{ .mmi;	mov		r11=r10			// lastdiff=diff
+	add		r34=-1,r34	};;	// --max
+{ .mmi;	fc		r32;;
+	ld4		r8=[r32]
+	cmp4.eq		p6,p0=0,r34	};;
+{ .mmi;	mf
+	mov		ar.ccv=r8
+	add		r8=r8,r10	};;
+{ .mmb;	cmpxchg4.acq	r3=[r32],r8,ar.ccv
+(p6)	br.cond.spnt	.Ldone2		};;
+
+{ .mmi;	mov		r8=ar.itc;;
+	sub		r10=r8,r9		// diff=tick-lasttick
+	mov		r9=r8		};;	// lasttick=tick
+{ .mmi;	cmp.ne		p6,p0=r10,r11;;		// diff!=lastdiff
+(p6)	add		r33=-1,r33	};;	// conditional --cnt
+{ .mib;	cmp4.ne		p7,p0=0,r33
+(p6)	add		r32=4,r32		// conditional ++out
+(p7)	br.cond.dptk	.Loop2		};;
+.Ldone2:
+{ .mib;	sub		r8=r2,r33
+	br.ret.sptk.many	b0	};;
+.endp	OPENSSL_instrument_bus2#

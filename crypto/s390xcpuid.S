@@ -93,6 +93,22 @@ OPENSSL_cleanse:
 	br	%r14
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
+.globl	OPENSSL_instrument_bus
+.type	OPENSSL_instrument_bus,@function
+.align	16
+OPENSSL_instrument_bus:
+	lghi	%r2,0
+	br	%r14
+.size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
+
+.globl	OPENSSL_instrument_bus2
+.type	OPENSSL_instrument_bus2,@function
+.align	16
+OPENSSL_instrument_bus2:
+	lghi	%r2,0
+	br	%r14
+.size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
+
 .section	.init
 	brasl	%r14,OPENSSL_cpuid_setup
 
