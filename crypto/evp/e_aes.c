@@ -201,8 +201,6 @@ typedef struct
 	unsigned char *iv;
 	/* IV length */
 	int ivlen;
-	/* Tag to verify */
-	unsigned char tag[16];
 	int taglen;
 	/* It is OK to generate IVs */
 	int iv_gen;
@@ -268,14 +266,14 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	case EVP_CTRL_GCM_SET_TAG:
 		if (arg <= 0 || arg > 16 || c->encrypt)
 			return 0;
-		memcpy(gctx->tag, ptr, arg);
+		memcpy(c->buf, ptr, arg);
 		gctx->taglen = arg;
 		return 1;
 
 	case EVP_CTRL_GCM_GET_TAG:
 		if (arg <= 0 || arg > 16 || !c->encrypt || gctx->taglen < 0)
 			return 0;
-		memcpy(ptr, gctx->tag, arg);
+		memcpy(ptr, c->buf, arg);
 		return 1;
 
 	case EVP_CTRL_GCM_SET_IV_FIXED:
@@ -385,12 +383,12 @@ static int aes_gcm(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		if (!ctx->encrypt)
 			{
 			if (CRYPTO_gcm128_finish(&gctx->gcm,
-					gctx->tag, gctx->taglen) != 0)
+					ctx->buf, gctx->taglen) != 0)
 				return -1;
 			gctx->iv_set = 0;
 			return 0;
 			}
-		CRYPTO_gcm128_tag(&gctx->gcm, gctx->tag, 16);
+		CRYPTO_gcm128_tag(&gctx->gcm, ctx->buf, 16);
 		gctx->taglen = 16;
 		/* Don't reuse the IV */
 		gctx->iv_set = 0;
