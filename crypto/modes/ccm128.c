@@ -285,7 +285,7 @@ int CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
 
 	if (len) {
 		(*block)(ctx->nonce.c,scratch.c,ctx->key);
-		for (i=0; i<len; ++len)
+		for (i=0; i<len; ++i)
 			ctx->cmac.c[i] ^= (out[i] = scratch.c[i]^inp[i]);
 		(*block)(ctx->cmac.c,ctx->cmac.c,ctx->key);
 	}
