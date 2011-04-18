@@ -262,13 +262,16 @@ int CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
 	if (n!=len) return -1;
 
 	while (len>=16) {
+#if defined(STRICT_ALIGNMENT)
+		union { u64 u[2]; u8 c[16]; } temp;
+#endif
 		(*block)(ctx->nonce.c,scratch.c,ctx->key);
 		ctr128_inc(ctx->nonce.c);
 #if defined(STRICT_ALIGNMENT)
-		memcpy (ctx->inp.c,inp,16);
-		for (i=0; i<16/sizeof(size_t); ++i)
-			ctx->cmac.s[i] ^= (scratch.s[i] ^= ctx->inp.s[i]);
-		memcpy (out,scratch,16);
+		memcpy (temp.c,inp,16);
+		ctx->cmac.u[0] ^= (scratch.u[0] ^= temp.u[0]);
+		ctx->cmac.u[1] ^= (scratch.u[1] ^= temp.u[1]);
+		memcpy (out,scratch.c,16);
 #else
 		ctx->cmac.u[0] ^= (((u64*)out)[0] = scratch.u[0]^((u64*)inp)[0]);
 		ctx->cmac.u[1] ^= (((u64*)out)[1] = scratch.u[1]^((u64*)inp)[1]);
