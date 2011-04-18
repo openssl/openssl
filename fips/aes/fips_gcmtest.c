@@ -337,7 +337,7 @@ static void xtstest(FILE *in, FILE *out)
 		}
 	}
 
-static void ccmencrypt(FILE *in, FILE *out)
+static void ccmtest(FILE *in, FILE *out)
 	{
 	char buf[2048];
 	char lbuf[2048];
@@ -347,26 +347,37 @@ static void ccmencrypt(FILE *in, FILE *out)
 	unsigned char *Adata = NULL, *Payload = NULL;
 	unsigned char *CT = NULL;
 	int Plen = -1, Nlen = -1, Tlen = -1, Alen = -1;
+	int decr = 0;
 	EVP_CIPHER_CTX ctx;
 	const EVP_CIPHER *ccm = NULL;
 	FIPS_cipher_ctx_init(&ctx);
 
 	while(fgets(buf,sizeof buf,in) != NULL)
 		{
+		char *p;
 		fputs(buf,out);
+		redo:
 		if (!parse_line(&keyword, &value, lbuf, buf))
 			continue;
 
 		/* If surrounded by square brackets zap them */
 		if (keyword[0] == '[')
 			{
-			char *p;
 			keyword++;
 			p = strchr(value, ']');
 			if (p)
 				*p = 0;
 			}
-
+		/* See if we have a comma separated list of parameters
+		 * if so copy rest of line back to buffer and redo later.
+		 */
+		p = strchr(value, ',');
+		if (p)
+			{
+			*p = 0;
+			strcpy(buf, p + 1);
+			decr = 1;
+			}
 		if (!strcmp(keyword,"Plen"))
 			Plen = atoi(value);
 		else if (!strcmp(keyword,"Nlen"))
@@ -375,7 +386,9 @@ static void ccmencrypt(FILE *in, FILE *out)
 			Tlen = atoi(value);
 		else if (!strcmp(keyword,"Alen"))
 			Alen = atoi(value);
-		else if (!strcmp(keyword,"Key"))
+		if (p)
+			goto redo;
+		if (!strcmp(keyword,"Key"))
 			{
 			if (Key)
 				OPENSSL_free(Key);
@@ -403,7 +416,7 @@ static void ccmencrypt(FILE *in, FILE *out)
 				exit(1);
 				}
 			}
-		else if (!strcmp(keyword,"Payload"))
+		else if (!strcmp(keyword,"Payload") && !decr)
 			{
 			Payload = hex2bin_m(value, &l);
 			if (Plen && l != Plen)
@@ -418,6 +431,15 @@ static void ccmencrypt(FILE *in, FILE *out)
 			if (Alen && l != Alen)
 				{
 				fprintf(stderr, "Inconsistent Payload length\n");
+				exit(1);
+				}
+			}
+		else if (!strcmp(keyword,"CT") && decr)
+			{
+			CT = hex2bin_m(value, &l);
+			if (l != (Plen + Tlen))
+				{
+				fprintf(stderr, "Inconsistent CT length\n");
 				exit(1);
 				}
 			}
@@ -438,7 +460,33 @@ static void ccmencrypt(FILE *in, FILE *out)
 			OPENSSL_free(CT);
 			OPENSSL_free(Payload);
 			CT = Payload = NULL;
-			}	
+			}
+		if (CT)
+			{
+			int rv;
+			int len = Plen == 0 ? 1: Plen;
+			FIPS_cipherinit(&ctx, ccm, NULL, NULL, 0);
+			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_CCM_SET_IVLEN, Nlen, 0);
+			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG,
+						Tlen, CT + Plen);
+			FIPS_cipherinit(&ctx, NULL, Key, Nonce, 0);
+			FIPS_cipher(&ctx, NULL, NULL, Plen);
+			FIPS_cipher(&ctx, NULL, Adata, Alen);
+			Payload = OPENSSL_malloc(len);
+			rv = FIPS_cipher(&ctx, Payload, CT, Plen);
+			if (rv >= 0)
+				{
+				if (rv == 0)
+					Payload[0] = 0;
+				fputs("Result = Pass\n", out);
+				OutputValue("Payload", Payload, len, out, 0);
+				}
+			else
+				fputs("Result = Fail\n", out);
+			OPENSSL_free(CT);
+			OPENSSL_free(Payload);
+			CT = Payload = NULL;
+			}
 		}
 	if (Key)
 		OPENSSL_free(Key);
@@ -450,7 +498,7 @@ static void ccmencrypt(FILE *in, FILE *out)
 int main(int argc,char **argv)
 	{
 	int encrypt;
-	int xts = 0, ccmenc = 0;
+	int xts = 0, ccm = 0;
 	FILE *in, *out;
 	if (argc == 4)
 		{
@@ -484,8 +532,8 @@ int main(int argc,char **argv)
 		encrypt = 2;
 	else if(!strcmp(argv[1],"-decrypt"))
 		encrypt = 0;
-	else if(!strcmp(argv[1],"-ccmencrypt"))
-		ccmenc = 1;
+	else if(!strcmp(argv[1],"-ccm"))
+		ccm = 1;
 	else if(!strcmp(argv[1],"-xts"))
 		xts = 1;
 	else
@@ -494,8 +542,8 @@ int main(int argc,char **argv)
 		exit(1);
 		}
 
-	if (ccmenc)
-		ccmencrypt(in, out);
+	if (ccm)
+		ccmtest(in, out);
 	else if (xts)
 		xtstest(in, out);
 	else

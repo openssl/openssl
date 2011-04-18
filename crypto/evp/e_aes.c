@@ -625,7 +625,7 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	case EVP_CTRL_CCM_GET_TAG:
 		if (!c->encrypt || !cctx->tag_set)
 			return 0;
-		if(CRYPTO_ccm128_tag(&cctx->ccm, ptr, (size_t)arg))
+		if(!CRYPTO_ccm128_tag(&cctx->ccm, ptr, (size_t)arg))
 			return 0;
 		cctx->tag_set = 0;
 		cctx->iv_set = 0;
@@ -707,7 +707,7 @@ static int aes_ccm(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		if (!CRYPTO_ccm128_decrypt(ccm, in, out, len))
 			{
 			unsigned char tag[16];
-			if (!CRYPTO_ccm128_tag(ccm, tag, cctx->M))
+			if (CRYPTO_ccm128_tag(ccm, tag, cctx->M))
 				{
 				if (!memcmp(tag, ctx->buf, cctx->M))
 					rv = len;

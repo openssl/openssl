@@ -4,9 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
-  *) Initial untested CCM support via EVP. Interface is very similar to GCM
-     case except we must supply all data in one chunk (i.e. no update, final)
-     and the message length must be supplied if AAD is used.
+  *) CCM support via EVP. Interface is very similar to GCM case except we
+     must supply all data in one chunk (i.e. no update, final) and the
+     message length must be supplied if AAD is used. Add algorithm test
+     support.
      [Steve Henson]
 
   *) Initial version of POST overhaul. Add POST callback to allow the status
