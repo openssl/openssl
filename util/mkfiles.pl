@@ -66,6 +66,7 @@ my @dirs = (
 "crypto/srp",
 "fips",
 "fips/aes",
+"fips/cmac",
 "fips/des",
 "fips/dsa",
 "fips/dh",
