@@ -116,7 +116,7 @@ void CRYPTO_ccm128_aad(CCM128_CONTEXT *ctx,
 		ctx->cmac.c[1] ^= (u8)alen;
 		i=2;
 	}
-	else if (sizeof(alen)==8 && alen>=(size_t)1<<32) {
+	else if (sizeof(alen)==8 && alen>=(size_t)1<<(32%(sizeof(alen)*8))) {
 		ctx->cmac.c[0] ^= 0xFF;
 		ctx->cmac.c[1] ^= 0xFF;
 		ctx->cmac.c[2] ^= (u8)(alen>>(56%(sizeof(alen)*8)));
