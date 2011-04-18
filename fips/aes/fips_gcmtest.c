@@ -288,7 +288,7 @@ static void xtstest(FILE *in, FILE *out)
 			else if(!strncmp(buf,"[DECRYPT]", 9))
 				encrypt = 0;
 			}
-		if (!parse_line(&keyword, &value, lbuf, buf))
+		if  (!parse_line(&keyword, &value, lbuf, buf))
 			continue;
 		else if(!strcmp(keyword,"Key"))
 			{
@@ -337,10 +337,120 @@ static void xtstest(FILE *in, FILE *out)
 		}
 	}
 
+static void ccmencrypt(FILE *in, FILE *out)
+	{
+	char buf[2048];
+	char lbuf[2048];
+	char *keyword, *value;
+	long l;
+	unsigned char *Key = NULL, *Nonce = NULL;
+	unsigned char *Adata = NULL, *Payload = NULL;
+	unsigned char *CT = NULL;
+	int Plen = -1, Nlen = -1, Tlen = -1, Alen = -1;
+	EVP_CIPHER_CTX ctx;
+	const EVP_CIPHER *ccm = NULL;
+	FIPS_cipher_ctx_init(&ctx);
+
+	while(fgets(buf,sizeof buf,in) != NULL)
+		{
+		fputs(buf,out);
+		if (!parse_line(&keyword, &value, lbuf, buf))
+			continue;
+
+		/* If surrounded by square brackets zap them */
+		if (keyword[0] == '[')
+			{
+			char *p;
+			keyword++;
+			p = strchr(value, ']');
+			if (p)
+				*p = 0;
+			}
+
+		if (!strcmp(keyword,"Plen"))
+			Plen = atoi(value);
+		else if (!strcmp(keyword,"Nlen"))
+			Nlen = atoi(value);
+		else if (!strcmp(keyword,"Tlen"))
+			Tlen = atoi(value);
+		else if (!strcmp(keyword,"Alen"))
+			Alen = atoi(value);
+		else if (!strcmp(keyword,"Key"))
+			{
+			if (Key)
+				OPENSSL_free(Key);
+			Key = hex2bin_m(value, &l);
+			if (l == 16)
+				ccm = EVP_aes_128_ccm();
+			else if (l == 24)
+				ccm = EVP_aes_192_ccm();
+			else if (l == 32)
+				ccm = EVP_aes_256_ccm();
+			else
+				{
+				fprintf(stderr, "Inconsistent Key length\n");
+				exit(1);
+				}
+			}
+		else if (!strcmp(keyword,"Nonce"))
+			{
+			if (Nonce)
+				OPENSSL_free(Nonce);
+			Nonce = hex2bin_m(value, &l);
+			if (l != Nlen)
+				{
+				fprintf(stderr, "Inconsistent nonce length\n");
+				exit(1);
+				}
+			}
+		else if (!strcmp(keyword,"Payload"))
+			{
+			Payload = hex2bin_m(value, &l);
+			if (Plen && l != Plen)
+				{
+				fprintf(stderr, "Inconsistent Payload length\n");
+				exit(1);
+				}
+			}
+		else if (!strcmp(keyword,"Adata"))
+			{
+			Adata = hex2bin_m(value, &l);
+			if (Alen && l != Alen)
+				{
+				fprintf(stderr, "Inconsistent Payload length\n");
+				exit(1);
+				}
+			}
+		if (Payload)
+			{
+			FIPS_cipherinit(&ctx, ccm, NULL, NULL, 1);
+			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_CCM_SET_IVLEN, Nlen, 0);
+			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, Tlen, 0);
+			FIPS_cipherinit(&ctx, NULL, Key, Nonce, 1);
+
+			FIPS_cipher(&ctx, NULL, NULL, Plen);
+			FIPS_cipher(&ctx, NULL, Adata, Alen);
+			CT = OPENSSL_malloc(Plen + Tlen);
+			FIPS_cipher(&ctx, CT, Payload, Plen);
+			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_CCM_GET_TAG, Tlen,
+						CT + Plen);
+			OutputValue("CT", CT, Plen + Tlen, out, 0);
+			OPENSSL_free(CT);
+			OPENSSL_free(Payload);
+			CT = Payload = NULL;
+			}	
+		}
+	if (Key)
+		OPENSSL_free(Key);
+	if (Nonce)
+		OPENSSL_free(Nonce);
+	FIPS_cipher_ctx_cleanup(&ctx);
+	}
+
 int main(int argc,char **argv)
 	{
 	int encrypt;
-	int xts = 0;
+	int xts = 0, ccmenc = 0;
 	FILE *in, *out;
 	if (argc == 4)
 		{
@@ -374,6 +484,8 @@ int main(int argc,char **argv)
 		encrypt = 2;
 	else if(!strcmp(argv[1],"-decrypt"))
 		encrypt = 0;
+	else if(!strcmp(argv[1],"-ccmencrypt"))
+		ccmenc = 1;
 	else if(!strcmp(argv[1],"-xts"))
 		xts = 1;
 	else
@@ -382,7 +494,9 @@ int main(int argc,char **argv)
 		exit(1);
 		}
 
-	if (xts)
+	if (ccmenc)
+		ccmencrypt(in, out);
+	else if (xts)
 		xtstest(in, out);
 	else
 		gcmtest(in, out, encrypt);
