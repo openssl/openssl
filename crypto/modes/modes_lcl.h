@@ -122,3 +122,10 @@ struct xts128_context {
 	block128_f block1,block2;
 };
 
+struct ccm128_context {
+	union { u64 u[2]; u8 c[16]; } nonce, cmac;
+	u64 blocks;
+	block128_f block;
+	void *key;
+};
+

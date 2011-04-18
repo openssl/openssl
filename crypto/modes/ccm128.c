@@ -58,13 +58,6 @@
 #endif
 #include <assert.h>
 
-typedef struct {
-	union { u64 u[2]; u8 c[16]; } nonce, cmac;
-	u64 blocks;
-	block128_f block;
-	void *key;
-} CCM128_CONTEXT;
-
 /* First you setup M and L parameters and pass the key schedule */
 void CRYPTO_ccm128_init(CCM128_CONTEXT *ctx,
 	unsigned int M,unsigned int L,void *key,block128_f block)
@@ -251,7 +244,7 @@ int CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
 	size_t		n;
 	unsigned int	i,L;
 	unsigned char	flags0 = ctx->nonce.c[0];
-	block128_f	block;
+	block128_f	block = ctx->block;
 	union { u64 u[2]; u8 c[16]; } scratch;
 
 	if (!(flags0&0x40))
