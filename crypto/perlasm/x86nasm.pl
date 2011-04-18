@@ -19,6 +19,8 @@ sub ::generic
 	{   $_[0] = "NEAR $_[0]";   	}
 	elsif ($opcode eq "lea" && $#_==1)  # wipe storage qualifier from lea
 	{   $_[1] =~ s/^[^\[]*\[/\[/o;	}
+	elsif ($opcode eq "clflush" && $#_==0)
+	{   $_[0] =~ s/^[^\[]*\[/\[/o;	}
     }
     &::emit($opcode,@_);
   1;
