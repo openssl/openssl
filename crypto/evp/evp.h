@@ -378,6 +378,11 @@ struct evp_cipher_st
 #define 	EVP_CTRL_GCM_SET_TAG		0x11
 #define		EVP_CTRL_GCM_SET_IV_FIXED	0x12
 #define		EVP_CTRL_GCM_IV_GEN		0x13
+#define		EVP_CTRL_CCM_SET_IVLEN		EVP_CTRL_GCM_SET_IVLEN
+#define		EVP_CTRL_CCM_GET_TAG		EVP_CTRL_GCM_GET_TAG
+#define		EVP_CTRL_CCM_SET_TAG		EVP_CTRL_GCM_SET_TAG
+#define		EVP_CTRL_CCM_SET_L		0x14
+#define		EVP_CTRL_CCM_SET_MSGLEN		0x15
 
 typedef struct evp_cipher_info_st
 	{
@@ -790,6 +795,7 @@ const EVP_CIPHER *EVP_aes_128_cfb128(void);
 # define EVP_aes_128_cfb EVP_aes_128_cfb128
 const EVP_CIPHER *EVP_aes_128_ofb(void);
 const EVP_CIPHER *EVP_aes_128_ctr(void);
+const EVP_CIPHER *EVP_aes_128_ccm(void);
 const EVP_CIPHER *EVP_aes_128_gcm(void);
 const EVP_CIPHER *EVP_aes_128_xts(void);
 const EVP_CIPHER *EVP_aes_192_ecb(void);
@@ -800,6 +806,7 @@ const EVP_CIPHER *EVP_aes_192_cfb128(void);
 # define EVP_aes_192_cfb EVP_aes_192_cfb128
 const EVP_CIPHER *EVP_aes_192_ofb(void);
 const EVP_CIPHER *EVP_aes_192_ctr(void);
+const EVP_CIPHER *EVP_aes_192_ccm(void);
 const EVP_CIPHER *EVP_aes_192_gcm(void);
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
@@ -809,6 +816,7 @@ const EVP_CIPHER *EVP_aes_256_cfb128(void);
 # define EVP_aes_256_cfb EVP_aes_256_cfb128
 const EVP_CIPHER *EVP_aes_256_ofb(void);
 const EVP_CIPHER *EVP_aes_256_ctr(void);
+const EVP_CIPHER *EVP_aes_256_ccm(void);
 const EVP_CIPHER *EVP_aes_256_gcm(void);
 const EVP_CIPHER *EVP_aes_256_xts(void);
 #endif

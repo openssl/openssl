@@ -568,5 +568,215 @@ static const EVP_CIPHER aes_256_xts_cipher=
 
 const EVP_CIPHER *EVP_aes_256_xts (void)
 {	return &aes_256_xts_cipher;	}
-		
+
+typedef struct
+	{
+	/* AES key schedule to use */
+	AES_KEY ks;
+	/* Set if key initialised */
+	int key_set;
+	/* Set if an iv is set */
+	int iv_set;
+	/* Set if tag is valid */
+	int tag_set;
+	/* Set if message length set */
+	int len_set;
+	/* L and M parameters from RFC3610 */
+	int L, M;
+	CCM128_CONTEXT ccm;
+	} EVP_AES_CCM_CTX;
+
+static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+	{
+	EVP_AES_CCM_CTX *cctx = c->cipher_data;
+	switch (type)
+		{
+	case EVP_CTRL_INIT:
+		cctx->key_set = 0;
+		cctx->iv_set = 0;
+		cctx->L = 8;
+		cctx->M = 12;
+		cctx->tag_set = 0;
+		cctx->len_set = 0;
+		return 1;
+
+	case EVP_CTRL_CCM_SET_IVLEN:
+		arg = 15 - arg;
+	case EVP_CTRL_CCM_SET_L:
+		if (arg < 2 || arg > 8)
+			return 0;
+		cctx->L = arg;
+		return 1;
+
+	case EVP_CTRL_CCM_SET_TAG:
+		if ((arg & 1) || arg < 4 || arg > 16)
+			return 0;
+		if ((c->encrypt && ptr) || (!c->encrypt && !ptr))
+			return 0;
+		if (ptr)
+			{
+			cctx->tag_set = 1;
+			memcpy(c->buf, ptr, arg);
+			}
+		cctx->M = arg;
+		return 1;
+
+	case EVP_CTRL_CCM_GET_TAG:
+		if (!c->encrypt || !cctx->tag_set)
+			return 0;
+		if(CRYPTO_ccm128_tag(&cctx->ccm, ptr, (size_t)arg))
+			return 0;
+		cctx->tag_set = 0;
+		cctx->iv_set = 0;
+		cctx->len_set = 0;
+		return 1;
+
+	default:
+		return -1;
+
+		}
+	}
+
+static int aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                        const unsigned char *iv, int enc)
+	{
+	EVP_AES_CCM_CTX *cctx = ctx->cipher_data;
+	if (!iv && !key)
+		return 1;
+	if (key)
+		{
+		AES_set_encrypt_key(key, ctx->key_len * 8, &cctx->ks);
+		CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
+					&cctx->ks, (block128_f)AES_encrypt);
+		cctx->key_set = 1;
+		}
+	if (iv)
+		{
+		memcpy(ctx->iv, iv, 15 - cctx->L);
+		cctx->iv_set = 1;
+		}
+	return 1;
+	}
+
+static int aes_ccm(EVP_CIPHER_CTX *ctx, unsigned char *out,
+		const unsigned char *in, size_t len)
+	{
+	EVP_AES_CCM_CTX *cctx = ctx->cipher_data;
+	CCM128_CONTEXT *ccm = &cctx->ccm;
+	/* If not set up, return error */
+	if (!cctx->iv_set && !cctx->key_set)
+		return -1;
+	if (!ctx->encrypt && !cctx->tag_set)
+		return -1;
+	if (!out)
+		{
+		if (!in)
+			{
+			if (CRYPTO_ccm128_setiv(ccm, ctx->iv, 15 - cctx->L,len))
+				return -1;
+			cctx->len_set = 1;
+			return len;
+			}
+		/* If have AAD need message length */
+		if (!cctx->len_set && len)
+			return -1;
+		CRYPTO_ccm128_aad(ccm, in, len);
+		return len;
+		}
+	/* EVP_*Final() doesn't return any data */
+	if (!in)
+		return 0;
+	/* If not set length yet do it */
+	if (!cctx->len_set)
+		{
+		if (CRYPTO_ccm128_setiv(ccm, ctx->iv, 15 - cctx->L, len))
+			return -1;
+		cctx->len_set = 1;
+		}
+	if (ctx->encrypt)
+		{
+		if (CRYPTO_ccm128_encrypt(ccm, in, out, len))
+			return -1;
+		cctx->tag_set = 1;
+		return len;
+		}
+	else
+		{
+		int rv = -1;
+		if (!CRYPTO_ccm128_decrypt(ccm, in, out, len))
+			{
+			unsigned char tag[16];
+			if (!CRYPTO_ccm128_tag(ccm, tag, cctx->M))
+				{
+				if (!memcmp(tag, ctx->buf, cctx->M))
+					rv = len;
+				}
+			}
+		if (rv == -1)
+			OPENSSL_cleanse(out, len);
+		cctx->iv_set = 0;
+		cctx->tag_set = 0;
+		cctx->len_set = 0;
+		return rv;
+		}
+
+	}
+
+static const EVP_CIPHER aes_128_ccm_cipher=
+	{
+	NID_aes_128_ccm,1,16,12,
+	EVP_CIPH_CCM_MODE|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1
+		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER
+		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT,
+	aes_ccm_init_key,
+	aes_ccm,
+	0,
+	sizeof(EVP_AES_CCM_CTX),
+	NULL,
+	NULL,
+	aes_ccm_ctrl,
+	NULL
+	};
+
+const EVP_CIPHER *EVP_aes_128_ccm (void)
+{	return &aes_128_ccm_cipher;	}
+
+static const EVP_CIPHER aes_192_ccm_cipher=
+	{
+	NID_aes_128_ccm,1,24,12,
+	EVP_CIPH_CCM_MODE|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1
+		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER
+		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT,
+	aes_ccm_init_key,
+	aes_ccm,
+	0,
+	sizeof(EVP_AES_CCM_CTX),
+	NULL,
+	NULL,
+	aes_ccm_ctrl,
+	NULL
+	};
+
+const EVP_CIPHER *EVP_aes_192_ccm (void)
+{	return &aes_192_ccm_cipher;	}
+
+static const EVP_CIPHER aes_256_ccm_cipher=
+	{
+	NID_aes_128_ccm,1,32,12,
+	EVP_CIPH_CCM_MODE|EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_DEFAULT_ASN1
+		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER
+		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT,
+	aes_ccm_init_key,
+	aes_ccm,
+	0,
+	sizeof(EVP_AES_CCM_CTX),
+	NULL,
+	NULL,
+	aes_ccm_ctrl,
+	NULL
+	};
+
+const EVP_CIPHER *EVP_aes_256_ccm (void)
+{	return &aes_256_ccm_cipher;	}
+
 #endif

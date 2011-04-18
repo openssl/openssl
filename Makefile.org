@@ -328,6 +328,7 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/evp/m_sha1.o \
 	../crypto/hmac/hmac.o \
 	../crypto/modes/cbc128.o \
+	../crypto/modes/ccm128.o \
 	../crypto/modes/cfb128.o \
 	../crypto/modes/ctr128.o \
 	../crypto/modes/gcm128.o \
