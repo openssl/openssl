@@ -97,6 +97,108 @@ int FIPS_selftest_aes()
     return ret;
     }
 
+/* AES-CCM test data from NIST public test vectors */
+
+static const unsigned char ccm_key[] = {
+	0xce,0xb0,0x09,0xae,0xa4,0x45,0x44,0x51,0xfe,0xad,0xf0,0xe6,
+	0xb3,0x6f,0x45,0x55,0x5d,0xd0,0x47,0x23,0xba,0xa4,0x48,0xe8
+};
+static const unsigned char ccm_nonce[] = {
+	0x76,0x40,0x43,0xc4,0x94,0x60,0xb7
+};
+static const unsigned char ccm_adata[] = {
+	0x6e,0x80,0xdd,0x7f,0x1b,0xad,0xf3,0xa1,0xc9,0xab,0x25,0xc7,
+	0x5f,0x10,0xbd,0xe7,0x8c,0x23,0xfa,0x0e,0xb8,0xf9,0xaa,0xa5,
+	0x3a,0xde,0xfb,0xf4,0xcb,0xf7,0x8f,0xe4
+};
+static const unsigned char ccm_pt[] = {
+	0xc8,0xd2,0x75,0xf9,0x19,0xe1,0x7d,0x7f,0xe6,0x9c,0x2a,0x1f,
+	0x58,0x93,0x9d,0xfe,0x4d,0x40,0x37,0x91,0xb5,0xdf,0x13,0x10
+};
+static const unsigned char ccm_ct[] = {
+	0x8a,0x0f,0x3d,0x82,0x29,0xe4,0x8e,0x74,0x87,0xfd,0x95,0xa2,
+	0x8a,0xd3,0x92,0xc8,0x0b,0x36,0x81,0xd4,0xfb,0xc7,0xbb,0xfd
+};
+static const unsigned char ccm_tag[] = {
+	0x2d,0xd6,0xef,0x1c,0x45,0xd4,0xcc,0xb7,0x23,0xdc,0x07,0x44,
+	0x14,0xdb,0x50,0x6d
+};
+
+int FIPS_selftest_aes_ccm(void)
+	{
+	int ret = 0, do_corrupt = 0;
+	unsigned char out[128], tag[16];
+	EVP_CIPHER_CTX ctx;
+	FIPS_cipher_ctx_init(&ctx);
+	memset(out, 0, sizeof(out));
+	if (!fips_post_started(FIPS_TEST_CCM, 0, 0))
+		return 1;
+	if (!fips_post_corrupt(FIPS_TEST_CCM, 0, NULL))
+		do_corrupt = 1;
+	if (!FIPS_cipherinit(&ctx, EVP_aes_192_ccm(), NULL, NULL, 1))
+		goto err;
+	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_CCM_SET_IVLEN,
+					sizeof(ccm_nonce), NULL))
+		goto err;
+	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG,
+					sizeof(ccm_tag), NULL))
+		goto err;
+	if (!FIPS_cipherinit(&ctx, NULL, ccm_key, ccm_nonce, 1))
+		goto err;
+	if (FIPS_cipher(&ctx, NULL, NULL, sizeof(ccm_pt)) != sizeof(ccm_pt))
+		goto err;
+	if (FIPS_cipher(&ctx, NULL, ccm_adata, sizeof(ccm_adata)) < 0)
+		goto err;
+	if (FIPS_cipher(&ctx, out, ccm_pt, sizeof(ccm_pt)) != sizeof(ccm_ct))
+		goto err;
+
+	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_CCM_GET_TAG, 16, tag))
+		goto err;
+	if (memcmp(tag, ccm_tag, sizeof(ccm_tag))
+		|| memcmp(out, ccm_ct, sizeof(ccm_ct)))
+		goto err;
+
+	memset(out, 0, sizeof(out));
+
+	/* Modify expected tag value */
+	if (do_corrupt)
+		tag[0]++;
+
+	if (!FIPS_cipherinit(&ctx, EVP_aes_192_ccm(), NULL, NULL, 0))
+		goto err;
+	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_CCM_SET_IVLEN,
+					sizeof(ccm_nonce), NULL))
+		goto err;
+	if (!FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_CCM_SET_TAG, 16, tag))
+		goto err;
+	if (!FIPS_cipherinit(&ctx, NULL, ccm_key, ccm_nonce, 0))
+		goto err;
+	if (FIPS_cipher(&ctx, NULL, NULL, sizeof(ccm_ct)) != sizeof(ccm_ct))
+		goto err;
+	if (FIPS_cipher(&ctx, NULL, ccm_adata, sizeof(ccm_adata)) < 0)
+		goto err;
+	if (FIPS_cipher(&ctx, out, ccm_ct, sizeof(ccm_ct)) != sizeof(ccm_pt))
+		goto err;
+
+	if (memcmp(out, ccm_pt, sizeof(ccm_pt)))
+		goto err;
+
+	ret = 1;
+
+	err:
+	FIPS_cipher_ctx_cleanup(&ctx);
+
+	if (ret == 0)
+		{
+		fips_post_failed(FIPS_TEST_CCM, 0, NULL);
+		FIPSerr(FIPS_F_FIPS_SELFTEST_AES_CCM,FIPS_R_SELFTEST_FAILED);
+		return 0;
+		}
+	else
+		return fips_post_success(FIPS_TEST_CCM, 0, NULL);
+
+	}
+
 /* AES-GCM test data from NIST public test vectors */
 
 static const unsigned char gcm_key[] = {

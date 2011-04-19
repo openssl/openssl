@@ -99,6 +99,7 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 {ERR_FUNC(FIPS_F_FIPS_RAND_SET_METHOD),	"FIPS_rand_set_method"},
 {ERR_FUNC(FIPS_F_FIPS_RAND_STATUS),	"FIPS_rand_status"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_AES),	"FIPS_selftest_aes"},
+{ERR_FUNC(FIPS_F_FIPS_SELFTEST_AES_CCM),	"FIPS_selftest_aes_ccm"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_AES_GCM),	"FIPS_selftest_aes_gcm"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_AES_XTS),	"FIPS_selftest_aes_xts"},
 {ERR_FUNC(FIPS_F_FIPS_SELFTEST_CMAC),	"FIPS_selftest_cmac"},

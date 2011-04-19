@@ -73,6 +73,7 @@ int FIPS_selftest(void);
 int FIPS_selftest_failed(void);
 void FIPS_selftest_check(void);
 int FIPS_selftest_sha1(void);
+int FIPS_selftest_aes_ccm(void);
 int FIPS_selftest_aes_gcm(void);
 int FIPS_selftest_aes_xts(void);
 int FIPS_selftest_aes(void);
@@ -260,6 +261,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_RAND_SET_METHOD			 126
 #define FIPS_F_FIPS_RAND_STATUS				 127
 #define FIPS_F_FIPS_SELFTEST_AES			 128
+#define FIPS_F_FIPS_SELFTEST_AES_CCM			 145
 #define FIPS_F_FIPS_SELFTEST_AES_GCM			 129
 #define FIPS_F_FIPS_SELFTEST_AES_XTS			 144
 #define FIPS_F_FIPS_SELFTEST_CMAC			 130

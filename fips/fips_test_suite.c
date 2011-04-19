@@ -850,6 +850,8 @@ int main(int argc,char **argv)
         } else if (!strcmp(argv[1], "aes")) {
 	    fail_id = FIPS_TEST_CIPHER;
 	    fail_sub = NID_aes_128_ecb;	
+        } else if (!strcmp(argv[1], "aes-ccm")) {
+	    fail_id = FIPS_TEST_CCM;
         } else if (!strcmp(argv[1], "aes-gcm")) {
 	    fail_id = FIPS_TEST_GCM;
         } else if (!strcmp(argv[1], "aes-xts")) {
