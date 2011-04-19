@@ -79,7 +79,7 @@ static int fips_check_dsa(DSA *dsa)
     	pk.pkey.dsa = dsa;
 
 	if (!fips_pkey_signature_test(FIPS_TEST_PAIRWISE,
-					&pk, tbs, -1, NULL, 0, NULL, 0, NULL))
+					&pk, tbs, 0, NULL, 0, NULL, 0, NULL))
 		{
 		FIPSerr(FIPS_F_FIPS_CHECK_DSA,FIPS_R_PAIRWISE_TEST_FAILED);
 		fips_set_selftest_fail();
