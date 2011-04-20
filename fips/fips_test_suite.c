@@ -685,6 +685,9 @@ POST_ID id_list[] = {
 	{NID_aes_128_cbc, "AES-128-CBC"},
 	{NID_aes_192_cbc, "AES-192-CBC"},
 	{NID_aes_256_cbc, "AES-256-CBC"},
+	{NID_aes_128_ctr, "AES-128-CTR"},
+	{NID_aes_192_ctr, "AES-192-CTR"},
+	{NID_aes_256_ctr, "AES-256-CTR"},
 	{NID_aes_128_ecb, "AES-128-ECB"},
 	{NID_aes_128_xts, "AES-128-XTS"},
 	{NID_aes_256_xts, "AES-256-XTS"},
@@ -772,6 +775,13 @@ static int post_cb(int op, int id, int subid, void *ex)
 
 		case FIPS_TEST_DRBG:
 		idstr = "DRBG";
+		if (*(int *)ex & DRBG_FLAG_CTR_USE_DF)
+			{
+			sprintf(asctmp, "%s DF", lookup_id(subid));
+			exstr = asctmp;
+			}
+		else
+			exstr = lookup_id(subid);
 		break;
 
 		case FIPS_TEST_PAIRWISE:
@@ -891,7 +901,7 @@ int main(int argc,char **argv)
         } else if (!strcmp(argv[1], "cmac")) {
 	    fail_id = FIPS_TEST_CMAC;
 	} else if (!strcmp(argv[1], "drbg")) {
-	    FIPS_corrupt_drbg();
+	    fail_id = FIPS_TEST_DRBG;
 	} else if (!strcmp(argv[1], "rng")) {
 	    fail_id = FIPS_TEST_X931;
 	} else if (!strcmp(argv[1], "post")) {

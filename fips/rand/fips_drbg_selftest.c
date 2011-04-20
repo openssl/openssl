@@ -60,6 +60,7 @@
 #include <openssl/err.h>
 #include <openssl/fips_rand.h>
 #include "fips_rand_lcl.h"
+#include "fips_locl.h"
 
 typedef struct {
 	int nid;
@@ -688,7 +689,7 @@ static const unsigned char sha512_additionalinput2[] =
 	0x41,0xbe,0x14,0x87,0x81,0x08,0x0d,0xee
 	};
 /* NB: not constant so we can corrupt it */
-static unsigned char sha512_entropyinputpr2[] =
+static const unsigned char sha512_entropyinputpr2[] =
 	{
 	0xed,0x22,0x42,0x61,0xa7,0x4c,0xed,0xc7,0x10,0x82,0x61,0x17,
 	0xaa,0x7d,0xdb,0x4e,0x1c,0x96,0x61,0x23,0xcd,0x8f,0x84,0x77,
@@ -750,15 +751,11 @@ static size_t test_nonce(DRBG_CTX *dctx, unsigned char **pout,
 	return t->noncelen;
 	}
 
-void FIPS_corrupt_drbg(void)
-	{
-	sha512_entropyinputpr2[0]++;
-	}
-
 static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	{
 	TEST_ENT t;
 	int rv = 0;
+	size_t adinlen;
 	unsigned char randout[1024];
 	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
 		return 0;
@@ -780,8 +777,16 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	t.ent = td->entpr;
 	t.entlen = td->entprlen;
 
+	/* Note for CTR without DF some additional input values
+	 * ignore bytes after the keylength: so reduce adinlen
+	 * to half to ensure invalid data is fed in.
+	 */
+	if (!fips_post_corrupt(FIPS_TEST_DRBG, dctx->type, &dctx->flags))
+		adinlen = td->adinlen / 2;
+	else
+		adinlen = td->adinlen;
 	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 1,
-				td->adin, td->adinlen))
+				td->adin, adinlen))
 		goto err;
 
 	t.ent = td->entg;
@@ -1018,20 +1023,31 @@ int FIPS_selftest_drbg(void)
 	{
 	DRBG_CTX *dctx;
 	DRBG_SELFTEST_DATA *td;
+	int rv = 1;
 	dctx = FIPS_drbg_new(0, 0);
 	if (!dctx)
 		return 0;
 	for (td = drbg_test; td->nid != 0; td++)
 		{
+		if (!fips_post_started(FIPS_TEST_DRBG, td->nid, &td->flags))
+			return 1;
 		if (!fips_drbg_single_kat(dctx, td))
-			break;
+			{
+			fips_post_failed(FIPS_TEST_DRBG, td->nid, &td->flags);
+			rv = 0;
+			continue;
+			}
 		if (!fips_drbg_health_check(dctx, td))
-			break;
+			{
+			fips_post_failed(FIPS_TEST_DRBG, td->nid, &td->flags);
+			rv = 0;
+			continue;
+			}
+		if (!fips_post_success(FIPS_TEST_DRBG, td->nid, &td->flags))
+			return 0;
 		}
 	FIPS_drbg_free(dctx);
-	if (td->nid == 0)
-		return 1;
-	return 0;
+	return rv;
 	}
 
 
