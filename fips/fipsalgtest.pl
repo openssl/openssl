@@ -377,7 +377,27 @@ my @fips_drbg_test_list = (
     # SP800-90 DRBG tests
     "SP800-90 DRBG",
     [ "CTR_DRBG",   "fips_drbgvs" ],
-    [ "Hash_DRBG",  "fips_drbgvs" ],
+    [ "Hash_DRBG",  "fips_drbgvs" ]
+
+);
+
+my @fips_dh_test_list = (
+
+    # DH
+    "DH Ephemeral Primitives Only",
+    [ "KASValidityTest_FFCEphem_NOKC_ZZOnly_init",   "fips_dhvs dhver" ],
+    [ "KASValidityTest_FFCEphem_NOKC_ZZOnly_resp",   "fips_dhvs dhver" ],
+
+);
+
+my @fips_ecdh_test_list = (
+
+    # ECDH
+    "ECDH Ephemeral Primitives Only",
+    [ "KASValidityTest_ECCEphemeralUnified_NOKC_ZZOnly_init",
+							"fips_ecdhvs ecdhver" ],
+    [ "KASValidityTest_ECCEphemeralUnified_NOKC_ZZOnly_resp",
+							"fips_ecdhvs ecdhver" ],
 
 );
 
@@ -437,6 +457,8 @@ my %fips_enabled = (
     "des3-cfb1" => 0,
     drbg	=> 0,
     ccm		=> 0,
+    dh		=> 0,
+    ecdh	=> 0,
 );
 
 foreach (@ARGV) {
@@ -524,6 +546,8 @@ push @fips_test_list, @fips_des3_test_list      if $fips_enabled{"des3"};
 push @fips_test_list, @fips_des3_cfb1_test_list if $fips_enabled{"des3-cfb1"};
 push @fips_test_list, @fips_drbg_test_list	if $fips_enabled{"drbg"};
 push @fips_test_list, @fips_aes_ccm_test_list	if $fips_enabled{"aes-ccm"};
+push @fips_test_list, @fips_dh_test_list	if $fips_enabled{"dh"};
+push @fips_test_list, @fips_ecdh_test_list	if $fips_enabled{"ecdh"};
 
 if ($list_tests) {
     my ( $test, $en );
