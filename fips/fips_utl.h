@@ -280,6 +280,9 @@ int parse_line(char **pkw, char **pval, char *linebuf, char *olinebuf)
 	/* Remove trailing space from value */
 	p = value + strlen(value) - 1;
 
+	if (*p != '\n')
+		fprintf(stderr, "Warning: missing EOL\n");
+
 	while (*p == '\n' || isspace((unsigned char)*p))
 		*p-- = 0;
 

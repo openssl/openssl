@@ -266,6 +266,30 @@ my @fips_aes_cfb1_test_list = (
 
 );
 
+my @fips_aes_ccm_test_list = (
+
+    # AES CCM tests
+
+    "AES CCM",
+
+    [ "DVPT128",  "fips_gcmtest -ccm" ],
+    [ "DVPT192",  "fips_gcmtest -ccm" ],
+    [ "DVPT256",  "fips_gcmtest -ccm" ],
+    [ "VADT128",  "fips_gcmtest -ccm" ],
+    [ "VADT192",  "fips_gcmtest -ccm" ],
+    [ "VADT256",  "fips_gcmtest -ccm" ],
+    [ "VNT128",  "fips_gcmtest -ccm" ],
+    [ "VNT192",  "fips_gcmtest -ccm" ],
+    [ "VNT256",  "fips_gcmtest -ccm" ],
+    [ "VPT128",  "fips_gcmtest -ccm" ],
+    [ "VPT192",  "fips_gcmtest -ccm" ],
+    [ "VPT256",  "fips_gcmtest -ccm" ],
+    [ "VTT128",  "fips_gcmtest -ccm" ],
+    [ "VTT192",  "fips_gcmtest -ccm" ],
+    [ "VTT256",  "fips_gcmtest -ccm" ]
+
+);
+
 # Triple DES tests
 
 my @fips_des3_test_list = (
@@ -348,6 +372,16 @@ my @fips_des3_cfb1_test_list = (
 
 );
 
+my @fips_drbg_test_list = (
+
+    # SP800-90 DRBG tests
+    "SP800-90 DRBG",
+    [ "CTR_DRBG",   "fips_drbgvs" ],
+    [ "Hash_DRBG",  "fips_drbgvs" ],
+
+);
+
+
 # Verification special cases.
 # In most cases the output of a test is deterministic and
 # it can be compared to a known good result. A few involve
@@ -384,6 +418,7 @@ my $bufout         = '';
 my $list_tests     = 0;
 my $minimal_script = 0;
 my $outfile        = '';
+my $no_warn_missing = 0;
 
 my %fips_enabled = (
     dsa         => 1,
@@ -399,7 +434,9 @@ my %fips_enabled = (
     aes         => 1,
     "aes-cfb1"  => 0,
     des3        => 1,
-    "des3-cfb1" => 0
+    "des3-cfb1" => 0,
+    drbg	=> 0,
+    ccm		=> 0,
 );
 
 foreach (@ARGV) {
@@ -411,6 +448,10 @@ foreach (@ARGV) {
     }
     elsif ( $_ eq "--debug" ) {
         $debug = 1;
+    }
+    elsif ( $_ eq "--quiet-missing" ) {
+        $ignore_missing = 1;
+        $no_warn_missing = 1;
     }
     elsif ( $_ eq "--ignore-missing" ) {
         $ignore_missing = 1;
@@ -481,6 +522,8 @@ push @fips_test_list, @fips_aes_test_list       if $fips_enabled{"aes"};
 push @fips_test_list, @fips_aes_cfb1_test_list  if $fips_enabled{"aes-cfb1"};
 push @fips_test_list, @fips_des3_test_list      if $fips_enabled{"des3"};
 push @fips_test_list, @fips_des3_cfb1_test_list if $fips_enabled{"des3-cfb1"};
+push @fips_test_list, @fips_drbg_test_list	if $fips_enabled{"drbg"};
+push @fips_test_list, @fips_aes_ccm_test_list	if $fips_enabled{"aes-ccm"};
 
 if ($list_tests) {
     my ( $test, $en );
@@ -716,7 +759,7 @@ sub sanity_check_files {
 
         #print STDERR "FILES $tst, $cmd, $req, $resp\n";
         if ( $req eq "" ) {
-            print STDERR "WARNING: missing request file for $tst\n";
+            print STDERR "WARNING: missing request file for $tst\n" unless $no_warn_missing;
             $bad = 1;
             next;
         }
@@ -793,7 +836,7 @@ END
         }
         if ( $req eq "" ) {
             print STDERR
-              "WARNING: Request file for $tname missing: test skipped\n";
+              "WARNING: Request file for $tname missing: test skipped\n" unless $no_warn_missing;
             $skipcnt++;
             next;
         }

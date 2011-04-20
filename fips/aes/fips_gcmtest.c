@@ -339,8 +339,8 @@ static void xtstest(FILE *in, FILE *out)
 
 static void ccmtest(FILE *in, FILE *out)
 	{
-	char buf[2048];
-	char lbuf[2048];
+	char buf[200048];
+	char lbuf[200048];
 	char *keyword, *value;
 	long l;
 	unsigned char *Key = NULL, *Nonce = NULL;
@@ -376,6 +376,7 @@ static void ccmtest(FILE *in, FILE *out)
 			{
 			*p = 0;
 			strcpy(buf, p + 1);
+			strcat(buf, "\n");
 			decr = 1;
 			}
 		if (!strcmp(keyword,"Plen"))
