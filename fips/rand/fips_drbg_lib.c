@@ -71,6 +71,9 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 	dctx->flags = flags;
 	dctx->type = type;
 
+	dctx->health_check_cnt = 0;
+	dctx->health_check_interval = DRBG_HEALTH_INTERVAL;
+
 	rv = fips_drbg_hash_init(dctx);
 
 	if (rv == -2)
@@ -277,12 +280,33 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 	return 0;
 	}
 
+static int fips_drbg_check(DRBG_CTX *dctx)
+	{
+	if (dctx->flags & DRBG_FLAG_TEST)
+		return 1;
+	dctx->health_check_cnt++;
+	if (dctx->health_check_cnt >= dctx->health_check_interval)
+		{
+		DRBG_CTX tctx;
+		if (!fips_drbg_kat(&tctx, dctx->type,
+						dctx->flags | DRBG_FLAG_TEST))
+			{
+			FIPSerr(FIPS_F_FIPS_DRBG_CHECK, FIPS_R_SELFTEST_FAILURE);
+			return 0;
+			}
+		dctx->health_check_cnt = 0;
+		}
+	return 1;
+	}
 
 int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 			int strength, int prediction_resistance,
 			const unsigned char *adin, size_t adinlen)
 	{
 	int r = 0;
+
+	if (!fips_drbg_check(dctx))
+		return 0;
 
 	if (dctx->status != DRBG_STATUS_READY
 		&& dctx->status != DRBG_STATUS_RESEED)
@@ -406,6 +430,11 @@ size_t FIPS_drbg_get_blocklength(DRBG_CTX *dctx)
 int FIPS_drbg_get_strength(DRBG_CTX *dctx)
 	{
 	return dctx->strength;
+	}
+
+void FIPS_drbg_set_check_interval(DRBG_CTX *dctx, int interval)
+	{
+	dctx->health_check_interval = interval;
 	}
 
 static int drbg_stick = 0;

@@ -105,6 +105,8 @@ struct drbg_ctr_ctx_st
  */
 #define DRBG_MAX_BLOCK			EVP_MAX_MD_SIZE
 
+#define DRBG_HEALTH_INTERVAL		(1 << 24)
+
 /* DRBG context structure */
 
 struct drbg_ctx_st
@@ -114,6 +116,8 @@ struct drbg_ctx_st
 	int type;
 	/* Various flags */
 	unsigned int flags;
+	/* Used for periodic health checks */
+	int health_check_cnt, health_check_interval;
 
 	/* The following parameters are setup by mechanism drbg_init() call */
 	int strength;
