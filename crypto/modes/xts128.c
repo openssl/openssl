@@ -58,7 +58,7 @@
 #endif
 #include <assert.h>
 
-int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char *iv,
+int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 	const unsigned char *inp, unsigned char *out,
 	size_t len, int enc)
 {
@@ -84,9 +84,14 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char *iv,
 		scratch.u[1] = ((u64*)inp)[1]^tweak.u[1];
 #endif
 		(*ctx->block1)(scratch.c,scratch.c,ctx->key1);
+#if defined(STRICT_ALIGNMENT)
 		scratch.u[0] ^= tweak.u[0];
 		scratch.u[1] ^= tweak.u[1];
 		memcpy(out,scratch.c,16);
+#else
+		((u64*)out)[0] = scratch.u[0]^tweak.u[0];
+		((u64*)out)[1] = scratch.u[1]^tweak.u[1];
+#endif
 		inp += 16;
 		out += 16;
 		len -= 16;
@@ -166,9 +171,14 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char *iv,
 		scratch.u[0] ^= tweak.u[0];
 		scratch.u[1] ^= tweak.u[1];
 		(*ctx->block1)(scratch.c,scratch.c,ctx->key1);
+#if defined(STRICT_ALIGNMENT)
 		scratch.u[0] ^= tweak.u[0];
 		scratch.u[1] ^= tweak.u[1];
 		memcpy (out,scratch.c,16);
+#else
+		((u64*)out)[0] = scratch.u[0]^tweak.u[0];
+		((u64*)out)[1] = scratch.u[1]^tweak.u[1];
+#endif
 	}
 
 	return 0;
