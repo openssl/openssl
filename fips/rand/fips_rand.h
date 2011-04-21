@@ -93,6 +93,7 @@ int FIPS_drbg_set_callbacks(DRBG_CTX *dctx,
 	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
 				int entropy, size_t min_len, size_t max_len),
 	void (*cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
+	size_t entropy_blocklen,
 	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
 				int entropy, size_t min_len, size_t max_len),
 	void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen));

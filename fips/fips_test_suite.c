@@ -847,7 +847,6 @@ int main(int argc,char **argv)
     int do_drbg_stick = 0;
     int no_exit = 0;
 
-    fips_algtest_init_nofips();
 
     FIPS_post_set_callback(post_cb);
 
@@ -910,6 +909,8 @@ int main(int argc,char **argv)
 	    do_rng_stick = 1;
 	    no_exit = 1;
 	    printf("RNG test with stuck continuous test...\n");
+	} else if (!strcmp(argv[1], "drbgentstick")) {
+		do_entropy_stick();
 	} else if (!strcmp(argv[1], "drbgstick")) {
 	    do_drbg_stick = 1;
 	    no_exit = 1;
@@ -919,6 +920,7 @@ int main(int argc,char **argv)
             exit(1);
         }
 	if (!no_exit) {
+    		fips_algtest_init_nofips();
         	if (!FIPS_mode_set(1)) {
         	    printf("Power-up self test failed\n");
 		    exit(1);
@@ -927,6 +929,8 @@ int main(int argc,char **argv)
         	exit(0);
 	}
     }
+
+    fips_algtest_init_nofips();
 
     /* Non-Approved cryptographic operation
     */

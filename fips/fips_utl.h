@@ -67,6 +67,7 @@ int bin2bint(const unsigned char *in,int len,char *out);
 void PrintValue(char *tag, unsigned char *val, int len);
 void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode);
 void fips_algtest_init(void);
+void do_entropy_stick(void);
 
 static int no_err;
 
@@ -109,16 +110,27 @@ static size_t dummy_cb(DRBG_CTX *ctx, unsigned char **pout,
 	return min_len;
 	}
 
+static int entropy_stick = 0;
+
 static void fips_algtest_init_nofips(void)
 	{
 	DRBG_CTX *ctx;
+	size_t i;
 	FIPS_set_error_callbacks(put_err_cb, add_err_cb);
-	OPENSSL_cleanse(dummy_entropy, 1024);
+	for (i = 0; i < sizeof(dummy_entropy); i++)
+		dummy_entropy[i] = i & 0xff;
+	if (entropy_stick)
+		memcpy(dummy_entropy + 32, dummy_entropy + 16, 16);
 	ctx = FIPS_get_default_drbg();
 	FIPS_drbg_init(ctx, NID_aes_256_ctr, DRBG_FLAG_CTR_USE_DF);
-	FIPS_drbg_set_callbacks(ctx, dummy_cb, 0, dummy_cb, 0);
+	FIPS_drbg_set_callbacks(ctx, dummy_cb, 0, 16, dummy_cb, 0);
 	FIPS_drbg_instantiate(ctx, dummy_entropy, 10);
 	FIPS_rand_set_method(FIPS_drbg_method());
+	}
+
+void do_entropy_stick(void)
+	{
+	entropy_stick = 1;
 	}
 
 void fips_algtest_init(void)

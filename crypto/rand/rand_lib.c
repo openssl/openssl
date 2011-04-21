@@ -253,7 +253,7 @@ int RAND_init_fips(void)
 	dctx = FIPS_get_default_drbg();
         FIPS_drbg_init(dctx, NID_aes_256_ctr, DRBG_FLAG_CTR_USE_DF);
         FIPS_drbg_set_callbacks(dctx,
-				drbg_get_entropy, drbg_free_entropy,
+				drbg_get_entropy, drbg_free_entropy, 20,
 				drbg_get_entropy, drbg_free_entropy);
 	FIPS_drbg_set_rand_callbacks(dctx, drbg_get_adin, 0,
 					drbg_rand_seed, drbg_rand_add);

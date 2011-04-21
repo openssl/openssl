@@ -71,6 +71,7 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 	dctx->flags = flags;
 	dctx->type = type;
 
+	dctx->entropy_blocklen = 0;
 	dctx->health_check_cnt = 0;
 	dctx->health_check_interval = DRBG_HEALTH_INTERVAL;
 
@@ -131,6 +132,43 @@ void FIPS_drbg_free(DRBG_CTX *dctx)
 	OPENSSL_free(dctx);
 	}
 
+static size_t fips_get_entropy(DRBG_CTX *dctx, unsigned char **pout,
+				int entropy, size_t min_len, size_t max_len)
+	{
+	unsigned char *tout, *p;
+	size_t bl = dctx->entropy_blocklen, rv;
+	if (dctx->flags & DRBG_FLAG_TEST || !bl)
+		return dctx->get_entropy(dctx, pout, entropy, min_len, max_len);
+	rv = dctx->get_entropy(dctx, &tout, entropy + bl,
+				min_len + bl, max_len + bl);
+	*pout = tout + bl;
+	if (rv < (min_len + bl) || (rv % bl))
+		return 0;
+	/* Compare consecutive blocks for continuous PRNG test */
+	for (p = tout; p < tout + rv; p += bl)
+		{
+		if (!memcmp(p, p + bl, bl))
+			{
+			FIPSerr(FIPS_F_FIPS_GET_ENTROPY, FIPS_R_ENTROPY_SOURCE_STUCK);
+			return 0;
+			}
+		}
+	return rv - bl;
+	}
+
+static void fips_cleanup_entropy(DRBG_CTX *dctx,
+					unsigned char *out, size_t olen)
+	{
+	size_t bl;
+	if (dctx->flags & DRBG_FLAG_TEST)
+		bl = 0;
+	else
+		bl = dctx->entropy_blocklen;
+	/* Call cleanup with original arguments */
+	dctx->cleanup_entropy(dctx, out - bl, olen + bl);
+	}
+
+
 int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 				const unsigned char *pers, size_t perslen)
 	{
@@ -167,7 +205,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 
 	dctx->status = DRBG_STATUS_ERROR;
 
-	entlen = dctx->get_entropy(dctx, &entropy, dctx->strength,
+	entlen = fips_get_entropy(dctx, &entropy, dctx->strength,
 				dctx->min_entropy, dctx->max_entropy);
 
 	if (entlen < dctx->min_entropy || entlen > dctx->max_entropy)
@@ -206,7 +244,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 	end:
 
 	if (entropy && dctx->cleanup_entropy)
-		dctx->cleanup_entropy(dctx, entropy, entlen);
+		fips_cleanup_entropy(dctx, entropy, entlen);
 
 	if (nonce && dctx->cleanup_nonce)
 		dctx->cleanup_nonce(dctx, nonce, noncelen);
@@ -252,7 +290,7 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 
 	dctx->status = DRBG_STATUS_ERROR;
 
-	entlen = dctx->get_entropy(dctx, &entropy, dctx->strength,
+	entlen = fips_get_entropy(dctx, &entropy, dctx->strength,
 				dctx->min_entropy, dctx->max_entropy);
 
 	if (entlen < dctx->min_entropy || entlen > dctx->max_entropy)
@@ -269,7 +307,7 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 	end:
 
 	if (entropy && dctx->cleanup_entropy)
-		dctx->cleanup_entropy(dctx, entropy, entlen);
+		fips_cleanup_entropy(dctx, entropy, entlen);
 
 	if (dctx->status == DRBG_STATUS_READY)
 		return 1;
@@ -383,12 +421,14 @@ int FIPS_drbg_set_callbacks(DRBG_CTX *dctx,
 	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
 				int entropy, size_t min_len, size_t max_len),
 	void (*cleanup_entropy)(DRBG_CTX *ctx, unsigned char *out, size_t olen),
+	size_t entropy_blocklen,
 	size_t (*get_nonce)(DRBG_CTX *ctx, unsigned char **pout,
 				int entropy, size_t min_len, size_t max_len),
 	void (*cleanup_nonce)(DRBG_CTX *ctx, unsigned char *out, size_t olen))
 	{
 	if (dctx->status != DRBG_STATUS_UNINITIALISED)
 		return 0;
+	dctx->entropy_blocklen = entropy_blocklen;
 	dctx->get_entropy = get_entropy;
 	dctx->cleanup_entropy = cleanup_entropy;
 	dctx->get_nonce = get_nonce;

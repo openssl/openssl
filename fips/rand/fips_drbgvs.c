@@ -248,7 +248,7 @@ int main(int argc,char **argv)
 			dctx = FIPS_drbg_new(nid, df | DRBG_FLAG_TEST);
 			if (!dctx)
 				exit (1);
-			FIPS_drbg_set_callbacks(dctx, test_entropy, 0,
+			FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0,
 							test_nonce, 0);
 			FIPS_drbg_set_app_data(dctx, &t);
 			randoutlen = (int)FIPS_drbg_get_blocklength(dctx);

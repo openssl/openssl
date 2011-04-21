@@ -759,7 +759,7 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	unsigned char randout[1024];
 	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
 		return 0;
-	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, test_nonce, 0))
+	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0, test_nonce, 0))
 		return 0;
 
 	FIPS_drbg_set_app_data(dctx, &t);
@@ -825,7 +825,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
 		goto err;
 
-	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, test_nonce, 0))
+	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0, test_nonce, 0))
 		goto err;
 
 	FIPS_drbg_set_app_data(dctx, &t);
@@ -874,7 +874,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	/* Instantiate with valid data. NB: errors now reported again */
 	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
 		goto err;
-	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, test_nonce, 0))
+	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0, test_nonce, 0))
 		goto err;
 	FIPS_drbg_set_app_data(dctx, &t);
 
@@ -936,7 +936,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
 		goto err;
-	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, test_nonce, 0))
+	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0, test_nonce, 0))
 		goto err;
 	FIPS_drbg_set_app_data(dctx, &t);
 

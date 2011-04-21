@@ -157,6 +157,9 @@ struct drbg_ctx_st
 	/* uninstantiate */
 	int (*uninstantiate)(DRBG_CTX *ctx);
 
+	/* Entropy source block length */
+	size_t entropy_blocklen;
+
 	/* entropy gathering function */
 	size_t (*get_entropy)(DRBG_CTX *ctx, unsigned char **pout,
 				int entropy, size_t min_len, size_t max_len);
