@@ -102,7 +102,7 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 			unsigned int carry,res;
 			
 			res = 0x87&(((int)tweak.d[3])>>31);
-			carry = tweak.u[0]>>63;
+			carry = (unsigned int)(tweak.u[0]>>63);
 			tweak.u[0] = (tweak.u[0]<<1)^res;
 			tweak.u[1] = (tweak.u[1]<<1)|carry;
 		}
@@ -137,7 +137,7 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 			unsigned int carry,res;
 
 			res = 0x87&(((int)tweak.d[3])>>31);
-			carry = tweak.u[0]>>63;
+			carry = (unsigned int)(tweak.u[0]>>63);
 			tweak1.u[0] = (tweak.u[0]<<1)^res;
 			tweak1.u[1] = (tweak.u[1]<<1)|carry;
 		}
