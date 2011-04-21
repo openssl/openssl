@@ -58,7 +58,8 @@ my %mf_import = (
 	RMD160_ASM_OBJ => \$mf_rmd_asm,
 	WP_ASM_OBJ     => \$mf_wp_asm,
 	CMLL_ENC       => \$mf_cm_asm,
-	MODES_ASM_OBJ  => \$mf_modes_asm
+	MODES_ASM_OBJ  => \$mf_modes_asm,
+	FIPSCANISTERONLY  => \$mf_fipscanisteronly
 );
 
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
@@ -73,6 +74,13 @@ while(<IN>) {
 close(IN);
 
 $debug = 1 if $mf_platform =~ /^debug-/;
+
+if ($mf_fipscanisteronly eq "y") {
+	$fips = 1;
+	$fipscanisterbuild = 1;
+	$fipscanisteronly = 1;
+}
+
 
 die "Makefile is not the toplevel Makefile!\n" if $ssl_version eq "";
 

@@ -155,7 +155,7 @@ if ($dir eq "." && defined($sym{"BUILDENV"}))
 print "RELATIVE_DIRECTORY=\n";
 
 close (IN);
-if ($dir eq "." && $sym{CONFIGURE_ARGS} =~ /fipscanisteronly/)
+if ($dir eq "." && $sym{FIPSCANISTERONLY} eq "y")
 	{
 	$fipscanisteronly = 1;
 	}
