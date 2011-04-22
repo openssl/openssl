@@ -301,7 +301,11 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 static int dh_init(DH *dh)
 	{
 #ifdef OPENSSL_FIPS
-	FIPS_selftest_check();
+	if(FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_DH_INIT,FIPS_R_FIPS_SELFTEST_FAILED);
+		return 0;
+		}
 #endif
 	dh->flags |= DH_FLAG_CACHE_MONT_P;
 	return(1);

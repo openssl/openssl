@@ -233,6 +233,7 @@ void ERR_load_FIPS_strings(void);
 
 /* Function codes. */
 #define FIPS_F_DH_BUILTIN_GENPARAMS			 100
+#define FIPS_F_DH_INIT					 148
 #define FIPS_F_DSA_BUILTIN_PARAMGEN			 101
 #define FIPS_F_DSA_BUILTIN_PARAMGEN2			 102
 #define FIPS_F_DSA_DO_SIGN				 103
@@ -275,6 +276,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_SELFTEST_X931			 136
 #define FIPS_F_HASH_FINAL				 137
 #define FIPS_F_RSA_BUILTIN_KEYGEN			 138
+#define FIPS_F_RSA_EAY_INIT				 149
 #define FIPS_F_RSA_EAY_PRIVATE_DECRYPT			 139
 #define FIPS_F_RSA_EAY_PRIVATE_ENCRYPT			 140
 #define FIPS_F_RSA_EAY_PUBLIC_DECRYPT			 141

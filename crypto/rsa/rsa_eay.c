@@ -937,7 +937,11 @@ err:
 static int RSA_eay_init(RSA *rsa)
 	{
 #ifdef OPENSSL_FIPS
-	FIPS_selftest_check();
+	if(FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_RSA_EAY_INIT,FIPS_R_FIPS_SELFTEST_FAILED);
+		return 0;
+		}
 #endif
 	rsa->flags|=RSA_FLAG_CACHE_PUBLIC|RSA_FLAG_CACHE_PRIVATE;
 	return(1);
