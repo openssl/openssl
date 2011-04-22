@@ -59,8 +59,6 @@ int do_bn_print(FILE *out, const BIGNUM *bn);
 int do_bn_print_name(FILE *out, const char *name, const BIGNUM *bn);
 int parse_line(char **pkw, char **pval, char *linebuf, char *olinebuf);
 BIGNUM *hex2bn(const char *in);
-int bin2hex(const unsigned char *in,int len,char *out);
-void pv(const char *tag,const unsigned char *val,int len);
 int tidy_line(char *linebuf, char *olinebuf);
 int bint2bin(const char *in, int len, unsigned char *out);
 int bin2bint(const unsigned char *in,int len,char *out);
@@ -313,36 +311,6 @@ BIGNUM *hex2bn(const char *in)
     return p;
     }
 
-int bin2hex(const unsigned char *in,int len,char *out)
-    {
-    int n1, n2;
-    unsigned char ch;
-
-    for (n1=0,n2=0 ; n1 < len ; ++n1)
-	{
-	ch=in[n1] >> 4;
-	if (ch <= 0x09)
-	    out[n2++]=ch+'0';
-	else
-	    out[n2++]=ch-10+'a';
-	ch=in[n1] & 0x0f;
-	if(ch <= 0x09)
-	    out[n2++]=ch+'0';
-	else
-	    out[n2++]=ch-10+'a';
-	}
-    out[n2]='\0';
-    return n2;
-    }
-
-void pv(const char *tag,const unsigned char *val,int len)
-    {
-    char obuf[2048];
-
-    bin2hex(val,len,obuf);
-    printf("%s = %s\n",tag,obuf);
-    }
-
 /* To avoid extensive changes to test program at this stage just convert
  * the input line into an acceptable form. Keyword lines converted to form
  * "keyword = value\n" no matter what white space present, all other lines
@@ -423,11 +391,8 @@ int bin2bint(const unsigned char *in,int len,char *out)
 
 void PrintValue(char *tag, unsigned char *val, int len)
 {
-#if VERBOSE
-  char obuf[2048];
-  int olen;
-  olen = bin2hex(val, len, obuf);
-  printf("%s = %.*s\n", tag, olen, obuf);
+#ifdef VERBOSE
+	OutputValue(tag, val, len, stdout, 0);
 #endif
 }
 
@@ -437,11 +402,19 @@ void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode)
     int olen;
 
     if(bitmode)
+	{
 	olen=bin2bint(val,len,obuf);
+    	fprintf(rfp, "%s = %.*s\n", tag, olen, obuf);
+	}
     else
-	olen=bin2hex(val,len,obuf);
+	{
+	int i;
+    	fprintf(rfp, "%s = ", tag);
+	for (i = 0; i < len; i++)
+		fprintf(rfp, "%02x", val[i]);
+	fputs("\n", rfp);
+	}
 
-    fprintf(rfp, "%s = %.*s\n", tag, olen, obuf);
 #if VERBOSE
     printf("%s = %.*s\n", tag, olen, obuf);
 #endif

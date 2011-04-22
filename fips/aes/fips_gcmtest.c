@@ -265,8 +265,8 @@ static void gcmtest(FILE *in, FILE *out, int encrypt)
 
 static void xtstest(FILE *in, FILE *out)
 	{
-	char buf[2048];
-	char lbuf[2048];
+	char buf[204800];
+	char lbuf[204800];
 	char *keyword, *value;
 	int inlen;
 	int encrypt = 0;
