@@ -302,6 +302,16 @@ my @fips_aes_gcm_test_list = (
 
 );
 
+my @fips_aes_xts_test_list = (
+    # AES XTS tests
+
+    "AES XTS",
+
+    [ "XTSGenAES128",  "fips_gcmtest -xts" ],
+    [ "XTSGenAES256",  "fips_gcmtest -xts" ],
+
+);
+
 # Triple DES tests
 
 my @fips_des3_test_list = (
@@ -469,6 +479,7 @@ my %fips_enabled = (
     "des3-cfb1" => 0,
     drbg	=> 0,
     ccm		=> 0,
+    xts		=> 0,
     gcm		=> 0,
     dh		=> 0,
     ecdh	=> 0,
@@ -560,6 +571,7 @@ push @fips_test_list, @fips_des3_cfb1_test_list if $fips_enabled{"des3-cfb1"};
 push @fips_test_list, @fips_drbg_test_list	if $fips_enabled{"drbg"};
 push @fips_test_list, @fips_aes_ccm_test_list	if $fips_enabled{"aes-ccm"};
 push @fips_test_list, @fips_aes_gcm_test_list	if $fips_enabled{"aes-gcm"};
+push @fips_test_list, @fips_aes_xts_test_list	if $fips_enabled{"aes-xts"};
 push @fips_test_list, @fips_dh_test_list	if $fips_enabled{"dh"};
 push @fips_test_list, @fips_ecdh_test_list	if $fips_enabled{"ecdh"};
 
