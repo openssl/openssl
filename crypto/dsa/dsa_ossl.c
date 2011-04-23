@@ -150,11 +150,14 @@ static DSA_SIG *dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 	    return NULL;
 	    }
 
-	if (FIPS_mode() && (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
+	if (FIPS_mode() && !(dsa->flags & DSA_FLAG_NON_FIPS_ALLOW) 
+		&& (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
 		{
 		DSAerr(DSA_F_DSA_DO_SIGN, DSA_R_KEY_SIZE_TOO_SMALL);
 		return NULL;
 		}
+	if (!fips_check_dsa_prng(dsa, 0, 0))
+		goto err;
 #endif
 
 	BN_init(&m);

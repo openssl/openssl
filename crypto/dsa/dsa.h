@@ -113,6 +113,7 @@
  */
 
 #define DSA_FLAG_NON_FIPS_ALLOW			0x0400
+#define DSA_FLAG_FIPS_CHECKED			0x0800
 
 #ifdef  __cplusplus
 extern "C" {

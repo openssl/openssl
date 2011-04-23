@@ -74,7 +74,48 @@
 
 
 #include <openssl/fips.h>
+#include <openssl/fips_rand.h>
 #include <openssl/evp.h>
+
+/* Check PRNG has sufficient security level to handle an RSA operation */
+
+int fips_check_rsa_prng(RSA *rsa, int bits)
+	{
+	int strength;
+	if (!FIPS_mode())
+		return 1;
+
+	if (rsa->flags & (RSA_FLAG_NON_FIPS_ALLOW|RSA_FLAG_CHECKED))
+		return 1;
+
+	if (bits == 0)
+		bits = BN_num_bits(rsa->n);
+
+	/* Should never happen */
+	if (bits < 1024)
+		{
+	    	FIPSerr(FIPS_F_FIPS_CHECK_RSA_PRNG,FIPS_R_KEY_TOO_SHORT);
+		return 0;
+		}
+	/* From SP800-57 */
+	if (bits < 2048)
+		strength = 80;
+	else if (bits < 3072)
+		strength = 112;
+	else if (bits < 7680)
+		strength = 128;
+	else if (bits < 15360)
+		strength = 192;
+	else 
+		strength = 256;
+
+	if (FIPS_rand_strength() >= strength)
+		return 1;
+
+	FIPSerr(FIPS_F_FIPS_CHECK_RSA_PRNG,FIPS_R_PRNG_STRENGTH_TOO_LOW);
+	return 0;
+	}
+	
 
 int fips_check_rsa(RSA *rsa)
 	{
@@ -164,11 +205,14 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	    return 0;
 	    }
 
-	if (FIPS_mode() && (bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
+	if (FIPS_mode() && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW) 
+		&& (bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
 	    {
 	    FIPSerr(FIPS_F_RSA_BUILTIN_KEYGEN,FIPS_R_KEY_TOO_SHORT);
 	    return 0;
 	    }
+	if (!fips_check_rsa_prng(rsa, bits))
+	    return 0;
 #endif
 
 	ctx=BN_CTX_new();

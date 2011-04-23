@@ -249,6 +249,7 @@ struct ec_key_st {
 	point_conversion_form_t conv_form;
 
 	int 	references;
+	int	flags;
 
 	EC_EXTRA_DATA *method_data;
 } /* EC_KEY */;

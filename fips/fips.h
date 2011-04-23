@@ -60,6 +60,7 @@ extern "C" {
 #endif
 
 struct dsa_st;
+struct ec_key_st;
 struct rsa_st;
 struct evp_pkey_st;
 struct env_md_st;
@@ -94,6 +95,9 @@ int FIPS_check_incore_fingerprint(void);
 
 void fips_set_selftest_fail(void);
 int fips_check_rsa(struct rsa_st *rsa);
+int fips_check_rsa_prng(struct rsa_st *rsa, int bits);
+int fips_check_dsa_prng(struct dsa_st *dsa, size_t L, size_t N);
+int fips_check_ec_prng(struct ec_key_st *ec);
 
 void FIPS_set_locking_callbacks(void (*func)(int mode, int type,
 				const char *file,int line),
@@ -239,9 +243,12 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_DSA_DO_SIGN				 103
 #define FIPS_F_DSA_DO_VERIFY				 104
 #define FIPS_F_FIPS_CHECK_DSA				 105
+#define FIPS_F_FIPS_CHECK_DSA_PRNG			 151
 #define FIPS_F_FIPS_CHECK_EC				 106
+#define FIPS_F_FIPS_CHECK_EC_PRNG			 152
 #define FIPS_F_FIPS_CHECK_INCORE_FINGERPRINT		 107
 #define FIPS_F_FIPS_CHECK_RSA				 108
+#define FIPS_F_FIPS_CHECK_RSA_PRNG			 150
 #define FIPS_F_FIPS_CIPHERINIT				 109
 #define FIPS_F_FIPS_DIGESTINIT				 110
 #define FIPS_F_FIPS_DRBG_BYTES				 111
@@ -308,6 +315,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_R_INSUFFICIENT_SECURITY_STRENGTH		 120
 #define FIPS_R_INTERNAL_ERROR				 121
 #define FIPS_R_INVALID_KEY_LENGTH			 122
+#define FIPS_R_INVALID_PARAMETERS			 144
 #define FIPS_R_IN_ERROR_STATE				 123
 #define FIPS_R_KEY_TOO_SHORT				 124
 #define FIPS_R_NON_FIPS_METHOD				 125
@@ -315,6 +323,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_R_PAIRWISE_TEST_FAILED			 127
 #define FIPS_R_PERSONALISATION_ERROR_UNDETECTED		 128
 #define FIPS_R_PERSONALISATION_STRING_TOO_LONG		 129
+#define FIPS_R_PRNG_STRENGTH_TOO_LOW			 143
 #define FIPS_R_REQUEST_LENGTH_ERROR_UNDETECTED		 130
 #define FIPS_R_REQUEST_TOO_LARGE_FOR_DRBG		 131
 #define FIPS_R_RESEED_COUNTER_ERROR			 132

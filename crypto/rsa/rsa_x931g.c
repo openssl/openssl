@@ -210,7 +210,8 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e, BN_GENCB *cb)
 	BN_CTX *ctx = NULL;
 
 #ifdef OPENSSL_FIPS
-	if (bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS)
+	if (FIPS_mode() && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW) && 
+		(bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
 	    {
 	    FIPSerr(FIPS_F_RSA_X931_GENERATE_KEY_EX,FIPS_R_KEY_TOO_SHORT);
 	    return 0;
@@ -227,6 +228,8 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e, BN_GENCB *cb)
 	    FIPSerr(FIPS_F_RSA_X931_GENERATE_KEY_EX,FIPS_R_FIPS_SELFTEST_FAILED);
 	    return 0;
 	    }
+	if (!fips_check_rsa_prng(rsa, bits))
+	    return 0;
 #endif
 
 	ctx = BN_CTX_new();

@@ -80,6 +80,7 @@ EC_KEY *EC_KEY_new(void)
 		}
 
 	ret->version = 1;	
+	ret->flags = 0;
 	ret->group   = NULL;
 	ret->pub_key = NULL;
 	ret->priv_key= NULL;
@@ -199,6 +200,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 	dest->enc_flag  = src->enc_flag;
 	dest->conv_form = src->conv_form;
 	dest->version   = src->version;
+	dest->flags = src->flags;
 
 	return dest;
 	}
@@ -235,6 +237,8 @@ int EC_KEY_up_ref(EC_KEY *r)
 #ifdef OPENSSL_FIPS
 
 #include <openssl/evp.h>
+#include <openssl/fips.h>
+#include <openssl/fips_rand.h>
 
 static int fips_check_ec(EC_KEY *key)
 	{
@@ -251,6 +255,46 @@ static int fips_check_ec(EC_KEY *key)
 		return 0;
 		}
 	return 1;
+	}
+
+int fips_check_ec_prng(EC_KEY *ec)
+	{
+	int bits, strength;
+	if (!FIPS_mode())
+		return 1;
+
+	if (ec->flags & (EC_FLAG_NON_FIPS_ALLOW|EC_FLAG_FIPS_CHECKED))
+		return 1;
+
+	if (!ec->group)
+		return 1;
+
+	bits = BN_num_bits(&ec->group->order);
+
+	if (bits < 160)
+		{
+	    	FIPSerr(FIPS_F_FIPS_CHECK_DSA_PRNG,FIPS_R_KEY_TOO_SHORT);
+		return 0;
+		}
+	/* Comparable algorithm strengths: from SP800-57 table 2 */
+	if (bits >= 512)
+		strength = 256;
+	else if (bits >= 384)
+		strength = 192;
+	else if (bits >= 256)
+		strength = 128;
+	else if (bits >= 224)
+		strength = 112;
+	else
+		strength = 80;
+
+
+	if (FIPS_rand_strength() >= strength)
+		return 1;
+
+	FIPSerr(FIPS_F_FIPS_CHECK_EC_PRNG,FIPS_R_PRNG_STRENGTH_TOO_LOW);
+	return 0;
+
 	}
 
 #endif
@@ -282,6 +326,11 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 
 	if (!EC_GROUP_get_order(eckey->group, order, ctx))
 		goto err;
+
+#ifdef OPENSSL_FIPS
+	if (!fips_check_ec_prng(eckey))
+		goto err;
+#endif
 
 	do
 		if (!BN_rand_range(priv_key, order))
@@ -570,4 +619,19 @@ int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx)
 	if (key->group == NULL)
 		return 0;
 	return EC_GROUP_precompute_mult(key->group, ctx);
+	}
+
+int EC_KEY_get_flags(const EC_KEY *key)
+	{
+	return key->flags;
+	}
+
+void EC_KEY_set_flags(EC_KEY *key, int flags)
+	{
+	key->flags |= flags;
+	}
+
+void EC_KEY_clear_flags(EC_KEY *key, int flags)
+	{
+	key->flags &= ~flags;
 	}

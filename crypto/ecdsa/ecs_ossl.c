@@ -133,6 +133,11 @@ static int ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
 		ECDSAerr(ECDSA_F_ECDSA_SIGN_SETUP, ERR_R_EC_LIB);
 		goto err;
 	}
+
+#ifdef OPENSSL_FIPS
+	if (!fips_check_ec_prng(eckey))
+		goto err;
+#endif
 	
 	do
 	{
@@ -234,6 +239,11 @@ static ECDSA_SIG *ecdsa_do_sign(const unsigned char *dgst, int dgst_len,
 		ECDSAerr(ECDSA_F_ECDSA_DO_SIGN, ERR_R_PASSED_NULL_PARAMETER);
 		return NULL;
 	}
+
+#ifdef OPENSSL_FIPS
+	if (!fips_check_ec_prng(eckey))
+		return NULL;
+#endif
 
 	ret = ECDSA_SIG_new();
 	if (!ret)

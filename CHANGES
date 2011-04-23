@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add PRNG security strength checks to RSA, DSA and ECDSA using 
+     information in FIPS186-3, SP800-57 and SP800-131A.
+     [Steve Henson]
+
   *) CCM support via EVP. Interface is very similar to GCM case except we
      must supply all data in one chunk (i.e. no update, final) and the
      message length must be supplied if AAD is used. Add algorithm test
