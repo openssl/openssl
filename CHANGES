@@ -4,6 +4,14 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Minor change to DRBG entropy callback semantics. In some cases
+     there is no mutiple of the block length between min_len and
+     max_len. Allow the callback to return more than max_len bytes
+     of entropy but discard any extra: it is the callback's responsibility
+     to ensure that the extra data discarded does not impact the
+     requested amount of entropy.
+     [Steve Henson]
+
   *) Add PRNG security strength checks to RSA, DSA and ECDSA using 
      information in FIPS186-3, SP800-57 and SP800-131A.
      [Steve Henson]

@@ -153,7 +153,10 @@ static size_t fips_get_entropy(DRBG_CTX *dctx, unsigned char **pout,
 			return 0;
 			}
 		}
-	return rv - bl;
+	rv -= bl;
+	if (rv > max_len)
+		return max_len;
+	return rv;
 	}
 
 static void fips_cleanup_entropy(DRBG_CTX *dctx,
