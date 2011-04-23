@@ -353,7 +353,8 @@ static int dsa_do_verify(const unsigned char *dgst, int dgst_len, DSA_SIG *sig,
 	    return -1;
 	    }
 
-	if (FIPS_mode() && (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
+	if (FIPS_mode() && !(dsa->flags & DSA_FLAG_NON_FIPS_ALLOW) 
+		&& (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
 		{
 		DSAerr(DSA_F_DSA_DO_VERIFY, DSA_R_KEY_SIZE_TOO_SMALL);
 		return -1;
