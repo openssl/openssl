@@ -118,6 +118,7 @@ int MAIN(int argc, char **argv)
 	char *infile,*outfile,*prog,*inrand=NULL;
 	int numbits= -1,num,genkey=0;
 	int need_rand=0;
+	int non_fips_allow = 0;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
@@ -195,6 +196,8 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv,"-noout") == 0)
 			noout=1;
+		else if (strcmp(*argv,"-non-fips-allow") == 0)
+			non_fips_allow = 1;
 		else if (sscanf(*argv,"%d",&num) == 1)
 			{
 			/* generate a key */
@@ -297,6 +300,8 @@ bad:
 			BIO_printf(bio_err,"Error allocating DSA object\n");
 			goto end;
 			}
+		if (non_fips_allow)
+			dsa->flags |= DSA_FLAG_NON_FIPS_ALLOW;
 		BIO_printf(bio_err,"Generating DSA parameters, %d bit long prime\n",num);
 	        BIO_printf(bio_err,"This could take some time\n");
 #ifdef GENCB_TEST
@@ -326,6 +331,7 @@ bad:
 				goto end;
 				}
 #endif
+			ERR_print_errors(bio_err);
 			BIO_printf(bio_err,"Error, DSA key generation failed\n");
 			goto end;
 			}

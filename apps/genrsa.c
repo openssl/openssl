@@ -93,6 +93,7 @@ int MAIN(int argc, char **argv)
 	ENGINE *e = NULL;
 #endif
 	int ret=1;
+	int non_fips_allow = 0;
 	int i,num=DEFBITS;
 	long l;
 	const EVP_CIPHER *enc=NULL;
@@ -185,6 +186,8 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			passargout= *(++argv);
 			}
+		else if (strcmp(*argv,"-non-fips-allow") == 0)
+			non_fips_allow = 1;
 		else
 			break;
 		argv++;
@@ -272,6 +275,9 @@ bad:
 #endif
 	if (!rsa)
 		goto err;
+
+	if (non_fips_allow)
+		rsa->flags |= RSA_FLAG_NON_FIPS_ALLOW;
 
 	if(!BN_set_word(bn, f4) || !RSA_generate_key_ex(rsa, num, bn, &cb))
 		goto err;
