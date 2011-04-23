@@ -89,8 +89,8 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 		scratch.u[1] ^= tweak.u[1];
 		memcpy(out,scratch.c,16);
 #else
-		((u64*)out)[0] = scratch.u[0]^tweak.u[0];
-		((u64*)out)[1] = scratch.u[1]^tweak.u[1];
+		((u64*)out)[0] = scratch.u[0]^=tweak.u[0];
+		((u64*)out)[1] = scratch.u[1]^=tweak.u[1];
 #endif
 		inp += 16;
 		out += 16;
