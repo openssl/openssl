@@ -461,6 +461,7 @@ my $list_tests     = 0;
 my $minimal_script = 0;
 my $outfile        = '';
 my $no_warn_missing = 0;
+my $no_warn_bogus = 0;
 
 my %fips_enabled = (
     dsa         => 1,
@@ -479,7 +480,7 @@ my %fips_enabled = (
     "des3-cfb1" => 0,
     drbg	=> 0,
     ccm		=> 0,
-    xts		=> 0,
+    "aes-xts"	=> 0,
     gcm		=> 0,
     dh		=> 0,
     ecdh	=> 0,
@@ -501,6 +502,10 @@ foreach (@ARGV) {
     }
     elsif ( $_ eq "--ignore-missing" ) {
         $ignore_missing = 1;
+    }
+    elsif ( $_ eq "--quiet-bogus" ) {
+        $ignore_bogus = 1;
+	$no_warn_bogus = 1;
     }
     elsif ( $_ eq "--ignore-bogus" ) {
         $ignore_bogus = 1;
@@ -532,6 +537,7 @@ foreach (@ARGV) {
     elsif (/^--(enable|disable)-(.*)$/) {
         if ( !exists $fips_enabled{$2} ) {
             print STDERR "Unknown test $2\n";
+	    exit(1);
         }
         if ( $1 eq "enable" ) {
             $fips_enabled{$2} = 1;
@@ -741,7 +747,7 @@ sub find_files {
                     }
                 }
                 else {
-                    print STDERR "WARNING: bogus file $_\n";
+                    print STDERR "WARNING: bogus file $_\n" unless $no_warn_bogus;
                     $nbogus++;
                 }
             }
@@ -761,7 +767,7 @@ sub find_files {
 
                 }
                 elsif ( !/SHAmix\.req$/ ) {
-                    print STDERR "WARNING: unrecognized filename $_\n";
+                    print STDERR "WARNING: unrecognized filename $_\n" unless $no_warn_bogus;
                     $nbogus++;
                 }
             }
