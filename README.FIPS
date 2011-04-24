@@ -1,5 +1,9 @@
 Preliminary status and build information for FIPS module v2.0
 
+If you have any object files from a previous build do:
+
+make clean
+
 To build the module do:
 
 ./config fipscanisterbuild
