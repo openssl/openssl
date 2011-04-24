@@ -273,7 +273,7 @@ int fips_check_ec_prng(EC_KEY *ec)
 
 	if (bits < 160)
 		{
-	    	FIPSerr(FIPS_F_FIPS_CHECK_DSA_PRNG,FIPS_R_KEY_TOO_SHORT);
+	    	FIPSerr(FIPS_F_FIPS_CHECK_EC_PRNG,FIPS_R_KEY_TOO_SHORT);
 		return 0;
 		}
 	/* Comparable algorithm strengths: from SP800-57 table 2 */
