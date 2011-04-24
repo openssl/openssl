@@ -407,6 +407,7 @@ static int dsa2_valid_parameters(size_t L, size_t N)
 	return 0;
 	}
 
+#ifdef OPENSSL_FIPS
 int fips_check_dsa_prng(DSA *dsa, size_t L, size_t N)
 	{
 	int strength;
@@ -442,6 +443,7 @@ int fips_check_dsa_prng(DSA *dsa, size_t L, size_t N)
 	return 0;
 
 	}
+#endif /* OPENSSL_FIPS */
 
 /* This is a parameter generation algorithm for the DSA2 algorithm as
  * described in FIPS 186-3.
