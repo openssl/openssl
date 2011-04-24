@@ -372,6 +372,8 @@ err:
 	return ok;
 	}
 
+#ifdef OPENSSL_FIPS
+
 /* Security strength of parameter values for (L,N): see FIPS186-3 4.2
  * and SP800-131A
  */
@@ -407,7 +409,6 @@ static int dsa2_valid_parameters(size_t L, size_t N)
 	return 0;
 	}
 
-#ifdef OPENSSL_FIPS
 int fips_check_dsa_prng(DSA *dsa, size_t L, size_t N)
 	{
 	int strength;
