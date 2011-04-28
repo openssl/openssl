@@ -462,6 +462,8 @@ my $minimal_script = 0;
 my $outfile        = '';
 my $no_warn_missing = 0;
 my $no_warn_bogus = 0;
+my $rmcmd = "rm -rf";
+my $mkcmd = "mkdir";
 
 my %fips_enabled = (
     dsa         => 1,
@@ -548,6 +550,15 @@ foreach (@ARGV) {
     }
     elsif (/--filter=(.*)$/) {
         $filter = $1;
+    }
+    elsif (/--rm=(.*)$/) {
+        $rmcmd = $1;
+    }
+    elsif (/--script-tprefix=(.*)$/) {
+        $stprefix = $1;
+    }
+    elsif (/--mkdir=(.*)$/) {
+        $mkcmd = $1;
     }
     elsif (/^--list-tests$/) {
         $list_tests = 1;
@@ -861,7 +872,8 @@ echo Running Algorithm Tests
 
 END
 	} else {
-	    print OUT <<\END;
+	$stprefix = $tprefix unless defined $stprefix;
+	    print OUT <<END;
 #!/bin/sh
 
 # Test vector run script
@@ -869,6 +881,10 @@ END
 # Do not edit
 
 echo Running Algorithm Tests
+
+RM="$rmcmd";
+MKDIR="$mkcmd";
+TPREFIX=$stprefix
 
 END
 	}
@@ -926,8 +942,8 @@ md \"$outdir\"
 END
 		    } else {
 		    print OUT <<END
-rm -rf \"$outdir\"
-mkdir \"$outdir\"
+\$RM -rf \"$outdir\"
+\$MKDIR \"$outdir\"
 
 END
 		    }
@@ -938,12 +954,13 @@ END
                 mkdir($outdir) || die "Can't create directory $outdir";
             }
         }
-        my $cmd = "$tprefix$tcmd \"$req\" \"$out\"";
+        my $cmd = "$tcmd \"$req\" \"$out\"";
         print STDERR "DEBUG: running test $tname\n" if ( $debug && !$verify );
 	if ($outfile ne "") {
 	    print OUT "echo \"    running $tname test\"\n" unless $minimal_script;
-	    print OUT "$cmd\n";
+	    print OUT "\${TPREFIX}$cmd\n";
         } else {
+            $cmd = "$tprefix$cmd";
             system($cmd);
             if ( $? != 0 ) {
             	print STDERR
