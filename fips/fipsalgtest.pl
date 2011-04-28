@@ -942,7 +942,7 @@ md \"$outdir\"
 END
 		    } else {
 		    print OUT <<END
-\$RM -rf \"$outdir\"
+\$RM \"$outdir\"
 \$MKDIR \"$outdir\"
 
 END
