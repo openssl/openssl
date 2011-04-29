@@ -1071,6 +1071,103 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	256,
 	},
 
+	/* TLS v1.2 ciphersuites */
+	/* Cipher 3B */
+	{
+	1,
+	TLS1_TXT_RSA_WITH_NULL_SHA256,
+	TLS1_CK_RSA_WITH_NULL_SHA256,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_eNULL,
+	SSL_SHA256,
+	SSL_SSLV3,
+	SSL_NOT_EXP|SSL_STRONG_NONE|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	0,
+	0,
+	},
+
+	/* Cipher 3C */
+	{
+	1,
+	TLS1_TXT_RSA_WITH_AES_128_SHA256,
+	TLS1_CK_RSA_WITH_AES_128_SHA256,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_AES128,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	128,
+	128,
+	},
+
+	/* Cipher 3D */
+	{
+	1,
+	TLS1_TXT_RSA_WITH_AES_256_SHA256,
+	TLS1_CK_RSA_WITH_AES_256_SHA256,
+	SSL_kRSA,
+	SSL_aRSA,
+	SSL_AES256,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	256,
+	256,
+	},
+
+	/* Cipher 3E */
+	{
+	0, /* not implemented (non-ephemeral DH) */
+	TLS1_TXT_DH_DSS_WITH_AES_128_SHA256,
+	TLS1_CK_DH_DSS_WITH_AES_128_SHA256,
+	SSL_kDHr,
+	SSL_aDH,
+	SSL_AES128,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	128,
+	128,
+	},
+
+	/* Cipher 3F */
+	{
+	0, /* not implemented (non-ephemeral DH) */
+	TLS1_TXT_DH_RSA_WITH_AES_128_SHA256,
+	TLS1_CK_DH_RSA_WITH_AES_128_SHA256,
+	SSL_kDHr,
+	SSL_aDH,
+	SSL_AES128,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	128,
+	128,
+	},
+
+	/* Cipher 40 */
+	{
+	1,
+	TLS1_TXT_DHE_DSS_WITH_AES_128_SHA256,
+	TLS1_CK_DHE_DSS_WITH_AES_128_SHA256,
+	SSL_kEDH,
+	SSL_aDSS,
+	SSL_AES128,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	128,
+	128,
+	},
+
 #ifndef OPENSSL_NO_CAMELLIA
 	/* Camellia ciphersuites from RFC4132 (128-bit portion) */
 
@@ -1287,6 +1384,122 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	128,
 	},
 #endif
+
+	/* TLS v1.2 ciphersuites */
+	/* Cipher 67 */
+	{
+	1,
+	TLS1_TXT_DHE_RSA_WITH_AES_128_SHA256,
+	TLS1_CK_DHE_RSA_WITH_AES_128_SHA256,
+	SSL_kEDH,
+	SSL_aRSA,
+	SSL_AES128,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	128,
+	128,
+	},
+
+	/* Cipher 68 */
+	{
+	0, /* not implemented (non-ephemeral DH) */
+	TLS1_TXT_DH_DSS_WITH_AES_256_SHA256,
+	TLS1_CK_DH_DSS_WITH_AES_256_SHA256,
+	SSL_kDHr,
+	SSL_aDH,
+	SSL_AES256,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	256,
+	256,
+	},
+
+	/* Cipher 69 */
+	{
+	0, /* not implemented (non-ephemeral DH) */
+	TLS1_TXT_DH_RSA_WITH_AES_256_SHA256,
+	TLS1_CK_DH_RSA_WITH_AES_256_SHA256,
+	SSL_kDHr,
+	SSL_aDH,
+	SSL_AES256,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	256,
+	256,
+	},
+
+	/* Cipher 6A */
+	{
+	1,
+	TLS1_TXT_DHE_DSS_WITH_AES_256_SHA256,
+	TLS1_CK_DHE_DSS_WITH_AES_256_SHA256,
+	SSL_kEDH,
+	SSL_aDSS,
+	SSL_AES256,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	256,
+	256,
+	},
+
+	/* Cipher 6B */
+	{
+	1,
+	TLS1_TXT_DHE_RSA_WITH_AES_256_SHA256,
+	TLS1_CK_DHE_RSA_WITH_AES_256_SHA256,
+	SSL_kEDH,
+	SSL_aRSA,
+	SSL_AES256,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	256,
+	256,
+	},
+
+	/* Cipher 6C */
+	{
+	1,
+	TLS1_TXT_ADH_WITH_AES_128_SHA256,
+	TLS1_CK_ADH_WITH_AES_128_SHA256,
+	SSL_kEDH,
+	SSL_aNULL,
+	SSL_AES128,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	128,
+	128,
+	},
+
+	/* Cipher 6D */
+	{
+	1,
+	TLS1_TXT_ADH_WITH_AES_256_SHA256,
+	TLS1_CK_ADH_WITH_AES_256_SHA256,
+	SSL_kEDH,
+	SSL_aNULL,
+	SSL_AES256,
+	SSL_SHA256,
+	SSL_TLSV1,
+	SSL_NOT_EXP|SSL_HIGH|SSL_FIPS,
+	SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF,
+	256,
+	256,
+	},
+
+	/* GOST Ciphersuites */
+
 	{
 	1,
 	"GOST94-GOST89-GOST89",
@@ -3024,6 +3237,9 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 	id=0x03000000L|((unsigned long)p[0]<<8L)|(unsigned long)p[1];
 	c.id=id;
 	cp = OBJ_bsearch_ssl_cipher_id(&c, ssl3_ciphers, SSL3_NUM_CIPHERS);
+#ifdef DEBUG_PRINT_UNKNOWN_CIPHERSUITES
+if (cp == NULL) fprintf(stderr, "Unknown cipher ID %x\n", (p[0] << 8) | p[1]);
+#endif
 	if (cp == NULL || cp->valid == 0)
 		return NULL;
 	else
@@ -3558,3 +3774,15 @@ need to go to SSL_ST_ACCEPT.
 		}
 	return(ret);
 	}
+/* If we are using TLS v1.2 or later and default SHA1+MD5 algorithms switch
+ * to new SHA256 PRF and handshake macs
+ */
+long ssl_get_algorithm2(SSL *s)
+	{
+	long alg2 = s->s3->tmp.new_cipher->algorithm2;
+	if (s->version >= TLS1_2_VERSION &&
+	    alg2 == (SSL_HANDSHAKE_MAC_DEFAULT|TLS1_PRF))
+		return SSL_HANDSHAKE_MAC_SHA256 | TLS1_PRF_SHA256;
+	return alg2;
+	}
+		

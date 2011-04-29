@@ -179,28 +179,29 @@ static STACK_OF(SSL_COMP) *ssl_comp_methods=NULL;
 #define SSL_MD_SHA1_IDX	1
 #define SSL_MD_GOST94_IDX 2
 #define SSL_MD_GOST89MAC_IDX 3
+#define SSL_MD_SHA256_IDX 4
 /*Constant SSL_MAX_DIGEST equal to size of digests array should be 
  * defined in the
  * ssl_locl.h */
 #define SSL_MD_NUM_IDX	SSL_MAX_DIGEST 
 static const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX]={
-	NULL,NULL,NULL,NULL
+	NULL,NULL,NULL,NULL,NULL
 	};
 /* PKEY_TYPE for GOST89MAC is known in advance, but, because
  * implementation is engine-provided, we'll fill it only if
  * corresponding EVP_PKEY_METHOD is found 
  */
 static int  ssl_mac_pkey_id[SSL_MD_NUM_IDX]={
-	EVP_PKEY_HMAC,EVP_PKEY_HMAC,EVP_PKEY_HMAC,NID_undef
+	EVP_PKEY_HMAC,EVP_PKEY_HMAC,EVP_PKEY_HMAC,NID_undef,EVP_PKEY_HMAC
 	};
 
 static int ssl_mac_secret_size[SSL_MD_NUM_IDX]={
-	0,0,0,0
+	0,0,0,0,0
 	};
 
 static int ssl_handshake_digest_flag[SSL_MD_NUM_IDX]={
 	SSL_HANDSHAKE_MAC_MD5,SSL_HANDSHAKE_MAC_SHA,
-	SSL_HANDSHAKE_MAC_GOST94,0
+	SSL_HANDSHAKE_MAC_GOST94, 0, SSL_HANDSHAKE_MAC_SHA256
 	};
 
 #define CIPHER_ADD	1
@@ -298,6 +299,7 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_SHA,0,     0,0,0,SSL_SHA1,  0,0,0,0,0},
 	{0,SSL_TXT_GOST94,0,     0,0,0,SSL_GOST94,  0,0,0,0,0},
 	{0,SSL_TXT_GOST89MAC,0,     0,0,0,SSL_GOST89MAC,  0,0,0,0,0},
+	{0,SSL_TXT_SHA256,0,    0,0,0,SSL_SHA256,  0,0,0,0,0},
 
 	/* protocol version aliases */
 	{0,SSL_TXT_SSLV2,0,   0,0,0,0,SSL_SSLV2, 0,0,0,0},
@@ -406,6 +408,10 @@ void ssl_load_ciphers(void)
 			ssl_mac_secret_size[SSL_MD_GOST89MAC_IDX]=32;
 		}		
 
+	ssl_digest_methods[SSL_MD_SHA256_IDX]=
+		EVP_get_digestbyname(SN_sha256);
+	ssl_mac_secret_size[SSL_MD_SHA256_IDX]=
+		EVP_MD_size(ssl_digest_methods[SSL_MD_SHA256_IDX]);
 	}
 #ifndef OPENSSL_NO_COMP
 
@@ -550,6 +556,9 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	case SSL_SHA1:
 		i=SSL_MD_SHA1_IDX;
 		break;
+	case SSL_SHA256:
+		i=SSL_MD_SHA256_IDX;
+		break;
 	case SSL_GOST94:
 		i = SSL_MD_GOST94_IDX;
 		break;
@@ -586,9 +595,11 @@ int ssl_get_handshake_digest(int idx, long *mask, const EVP_MD **md)
 		{
 		return 0;
 		}
-	if (ssl_handshake_digest_flag[idx]==0) return 0;
 	*mask = ssl_handshake_digest_flag[idx];
-	*md = ssl_digest_methods[idx];
+	if (*mask)
+		*md = ssl_digest_methods[idx];
+	else
+		*md = NULL;
 	return 1;
 }
 
@@ -1602,6 +1613,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_SHA1:
 		mac="SHA1";
+		break;
+	case SSL_SHA256:
+		mac="SHA256";
 		break;
 	default:
 		mac="unknown";

@@ -676,6 +676,10 @@ void MS_CALLBACK tlsext_cb(SSL *s, int client_server, int type,
 		extname = "renegotiate";
 		break;
 
+		case TLSEXT_TYPE_signature_algorithms:
+		extname = "signature algorithms";
+		break;
+
 #ifdef TLSEXT_TYPE_opaque_prf_input
 		case TLSEXT_TYPE_opaque_prf_input:
 		extname = "opaque PRF input";

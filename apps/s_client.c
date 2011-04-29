@@ -328,11 +328,12 @@ static void sc_usage(void)
 #endif
 	BIO_printf(bio_err," -ssl2         - just use SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - just use SSLv3\n");
+	BIO_printf(bio_err," -tls1_2       - just use TLSv1.2\n");
 	BIO_printf(bio_err," -tls1_1       - just use TLSv1.1\n");
 	BIO_printf(bio_err," -tls1         - just use TLSv1\n");
 	BIO_printf(bio_err," -dtls1        - just use DTLSv1\n");    
 	BIO_printf(bio_err," -mtu          - set the link layer MTU\n");
-	BIO_printf(bio_err," -no_tls1_1/-no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
+	BIO_printf(bio_err," -no_tls1_2/-no_tls1_1/-no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol\n");
 	BIO_printf(bio_err," -bugs         - Switch on all SSL implementation bug workarounds\n");
 	BIO_printf(bio_err," -serverpref   - Use server's cipher preferences (only SSLv2)\n");
 	BIO_printf(bio_err," -cipher       - preferred cipher to use, use the 'openssl ciphers'\n");
@@ -790,6 +791,8 @@ int MAIN(int argc, char **argv)
 			meth=SSLv3_client_method();
 #endif
 #ifndef OPENSSL_NO_TLS1
+		else if	(strcmp(*argv,"-tls1_2") == 0)
+			meth=TLSv1_2_client_method();
 		else if	(strcmp(*argv,"-tls1_1") == 0)
 			meth=TLSv1_1_client_method();
 		else if	(strcmp(*argv,"-tls1") == 0)
@@ -840,6 +843,8 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			CAfile= *(++argv);
 			}
+		else if (strcmp(*argv,"-no_tls1_2") == 0)
+			off|=SSL_OP_NO_TLSv1_2;
 		else if (strcmp(*argv,"-no_tls1_1") == 0)
 			off|=SSL_OP_NO_TLSv1_1;
 		else if (strcmp(*argv,"-no_tls1") == 0)

@@ -1834,6 +1834,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	 * deployed might change this.
 	 */
 	ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
+	/* Disable TLS v1.2 by default for now */
+	ret->options |= SSL_OP_NO_TLSv1_2;
 
 	return(ret);
 err:
@@ -2572,7 +2574,9 @@ SSL_METHOD *ssl_bad_method(int ver)
 
 const char *SSL_get_version(const SSL *s)
 	{
-	if (s->version == TLS1_1_VERSION)
+	if (s->version == TLS1_2_VERSION)
+		return("TLSv1.2");
+	else if (s->version == TLS1_1_VERSION)
 		return("TLSv1.1");
 	else if (s->version == TLS1_VERSION)
 		return("TLSv1");

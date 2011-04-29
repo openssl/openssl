@@ -476,7 +476,7 @@ typedef struct ssl3_state_st
 		int finish_md_len;
 		unsigned char peer_finish_md[EVP_MAX_MD_SIZE*2];
 		int peer_finish_md_len;
-		
+
 		unsigned long message_size;
 		int message_type;
 

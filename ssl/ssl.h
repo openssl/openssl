@@ -296,11 +296,13 @@ extern "C" {
 #define SSL_TXT_SHA		"SHA" /* same as "SHA1" */
 #define SSL_TXT_GOST94		"GOST94" 
 #define SSL_TXT_GOST89MAC		"GOST89MAC" 
+#define SSL_TXT_SHA256		"SHA256"
 
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
 #define SSL_TXT_TLSV1		"TLSv1"
 #define SSL_TXT_TLSV1_1		"TLSv1.1"
+#define SSL_TXT_TLSV1_2		"TLSv1.2"
 
 #define SSL_TXT_EXP		"EXP"
 #define SSL_TXT_EXPORT		"EXPORT"
@@ -591,11 +593,16 @@ struct ssl_session_st
 #define SSL_OP_NO_SSLv2					0x01000000L
 #define SSL_OP_NO_SSLv3					0x02000000L
 #define SSL_OP_NO_TLSv1					0x04000000L
+#define SSL_OP_NO_TLSv1_2				0x08000000L
 
+/* These next two were never actually used for anything since SSLeay
+ * zap so we have some more flags.
+ */
 /* The next flag deliberately changes the ciphertest, this is a check
  * for the PKCS#1 attack */
-#define SSL_OP_PKCS1_CHECK_1				0x08000000L
-#define SSL_OP_PKCS1_CHECK_2				0x10000000L
+#define SSL_OP_PKCS1_CHECK_1				0x0
+#define SSL_OP_PKCS1_CHECK_2				0x0
+
 #define SSL_OP_NETSCAPE_CA_DN_BUG			0x20000000L
 #define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG		0x40000000L
 /* Make server add server-hello extension from early version of
@@ -1834,6 +1841,11 @@ const SSL_METHOD *TLSv1_client_method(void);	/* TLSv1.0 */
 const SSL_METHOD *TLSv1_1_method(void);		/* TLSv1.1 */
 const SSL_METHOD *TLSv1_1_server_method(void);	/* TLSv1.1 */
 const SSL_METHOD *TLSv1_1_client_method(void);	/* TLSv1.1 */
+
+const SSL_METHOD *TLSv1_2_method(void);		/* TLSv1.2 */
+const SSL_METHOD *TLSv1_2_server_method(void);	/* TLSv1.2 */
+const SSL_METHOD *TLSv1_2_client_method(void);	/* TLSv1.2 */
+
 
 const SSL_METHOD *DTLSv1_method(void);		/* DTLSv1.0 */
 const SSL_METHOD *DTLSv1_server_method(void);	/* DTLSv1.0 */

@@ -170,7 +170,7 @@
 # define OPENSSL_EXTERN OPENSSL_EXPORT
 #endif
 
-#define PKCS1_CHECK
+#undef PKCS1_CHECK
 
 #define c2l(c,l)	(l = ((unsigned long)(*((c)++)))     , \
 			 l|=(((unsigned long)(*((c)++)))<< 8), \
@@ -327,6 +327,7 @@
 #define SSL_SHA1		0x00000002L
 #define SSL_GOST94      0x00000004L
 #define SSL_GOST89MAC   0x00000008L
+#define SSL_SHA256		0x00000010L
 
 /* Bits for algorithm_ssl (protocol version) */
 #define SSL_SSLV2		0x00000001L
@@ -339,15 +340,17 @@
 #define SSL_HANDSHAKE_MAC_MD5 0x10
 #define SSL_HANDSHAKE_MAC_SHA 0x20
 #define SSL_HANDSHAKE_MAC_GOST94 0x40
+#define SSL_HANDSHAKE_MAC_SHA256 0x80
 #define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
 
 /* When adding new digest in the ssl_ciph.c and increment SSM_MD_NUM_IDX
  * make sure to update this constant too */
-#define SSL_MAX_DIGEST 4
+#define SSL_MAX_DIGEST 5
 
 #define TLS1_PRF_DGST_SHIFT 8
 #define TLS1_PRF_MD5 (SSL_HANDSHAKE_MAC_MD5 << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF_SHA1 (SSL_HANDSHAKE_MAC_SHA << TLS1_PRF_DGST_SHIFT)
+#define TLS1_PRF_SHA256 (SSL_HANDSHAKE_MAC_SHA256 << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF_GOST94 (SSL_HANDSHAKE_MAC_GOST94 << TLS1_PRF_DGST_SHIFT)
 #define TLS1_PRF (TLS1_PRF_MD5 | TLS1_PRF_SHA1)
 
@@ -671,7 +674,7 @@ const SSL_METHOD *func_name(void)  \
 const SSL_METHOD *func_name(void)  \
 	{ \
 	static const SSL_METHOD func_name##_data= { \
-	TLS1_1_VERSION, \
+	TLS1_2_VERSION, \
 	tls1_new, \
 	tls1_clear, \
 	tls1_free, \
@@ -1083,4 +1086,5 @@ int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
 					int maxlen);
 int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 					  int *al);
+long ssl_get_algorithm2(SSL *s);
 #endif
