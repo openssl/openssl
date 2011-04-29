@@ -4,6 +4,12 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) New option OPENSSL_NO_SSL_INTERN. If an application can be compiled
+     with this defined it will not be affected by any changes to ssl internal
+     structures. Add several utility functions to allow openssl application
+     to work with OPENSSL_NO_SSL_INTERN defined.
+     [Steve Henson]
+
   *) Minor change to DRBG entropy callback semantics. In some cases
      there is no mutiple of the block length between min_len and
      max_len. Allow the callback to return more than max_len bytes

@@ -365,6 +365,8 @@ int raw_write_stdout(const void *,int);
 double app_tminterval (int stop,int usertime);
 #endif
 
+#define OPENSSL_NO_SSL_INTERN
+
 #ifndef OPENSSL_NO_NEXTPROTONEG
 unsigned char *next_protos_parse(unsigned short *outlen, const char *in);
 #endif

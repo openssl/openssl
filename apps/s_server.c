@@ -2042,7 +2042,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 
 	if (s_debug)
 		{
-		con->debug=1;
+		SSL_set_debug(con, 1);
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
 		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
 		}
@@ -2380,7 +2380,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out, "\n");
 		}
 #endif
-	if (con->hit) BIO_printf(bio_s_out,"Reused session-id\n");
+	if (SSL_cache_hit(con)) BIO_printf(bio_s_out,"Reused session-id\n");
 	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
 		TLS1_FLAGS_TLS_PADDING_BUG)
 		BIO_printf(bio_s_out,"Peer has incorrect TLSv1 block padding\n");
@@ -2499,7 +2499,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 
 	if (s_debug)
 		{
-		con->debug=1;
+		SSL_set_debug(con, 1);
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
 		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
 		}
@@ -2585,7 +2585,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				goto err;
 				}
 			/* EVIL HACK! */
-			con->state = SSL_ST_ACCEPT;
+			SSL_set_state(con, SSL_ST_ACCEPT);
 			i=SSL_do_handshake(con);
 			BIO_printf(bio_s_out, "SSL_do_handshake -> %d\n",i);
 			if (i <= 0)
@@ -2651,7 +2651,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 					}
 				BIO_puts(io,"\n");
 				}
-			BIO_printf(io,((con->hit)
+			BIO_printf(io,(SSL_cache_hit(con)
 				?"---\nReused, "
 				:"---\nNew, "));
 			c=SSL_get_current_cipher(con);
@@ -2908,7 +2908,7 @@ static int generate_session_id(const SSL *ssl, unsigned char *id,
 typedef struct simple_ssl_session_st
 	{
 	unsigned char *id;
-	int idlen;
+	unsigned int idlen;
 	unsigned char *der;
 	int derlen;
 	struct simple_ssl_session_st *next;
@@ -2923,10 +2923,10 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
 
 	sess = OPENSSL_malloc(sizeof(simple_ssl_session));
 
-	sess->idlen = session->session_id_length;
+	sess->idlen = SSL_SESSION_get_id_len(session);
 	sess->derlen = i2d_SSL_SESSION(session, NULL);
 
-	sess->id = BUF_memdup(session->session_id, sess->idlen);
+	sess->id = BUF_memdup(SSL_SESSION_get0_id(session), sess->idlen);
 
 	sess->der = OPENSSL_malloc(sess->derlen);
 	p = sess->der;
@@ -2945,7 +2945,7 @@ static SSL_SESSION *get_session(SSL *ssl, unsigned char *id, int idlen,
 	*do_copy = 0;
 	for (sess = first; sess; sess = sess->next)
 		{
-		if (idlen == sess->idlen && !memcmp(sess->id, id, idlen))
+		if (idlen == (int)sess->idlen && !memcmp(sess->id, id, idlen))
 			{
 			const unsigned char *p = sess->der;
 			BIO_printf(bio_err, "Lookup session: cache hit\n");
@@ -2959,8 +2959,8 @@ static SSL_SESSION *get_session(SSL *ssl, unsigned char *id, int idlen,
 static void del_session(SSL_CTX *sctx, SSL_SESSION *session)
 	{
 	simple_ssl_session *sess, *prev = NULL;
-	unsigned char *id = session->session_id;
-	int idlen = session->session_id_length;
+	const unsigned char *id = SSL_SESSION_get0_id(session);
+	unsigned int idlen = SSL_SESSION_get_id_len(session);
 	for (sess = first; sess; sess = sess->next)
 		{
 		if (idlen == sess->idlen && !memcmp(sess->id, id, idlen))

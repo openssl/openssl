@@ -339,6 +339,8 @@ extern "C" {
 #define SSL3_AD_CERTIFICATE_UNKNOWN	46
 #define SSL3_AD_ILLEGAL_PARAMETER	47	/* fatal */
 
+#ifndef OPENSSL_NO_SSL_INTERN
+
 typedef struct ssl3_record_st
 	{
 /*r */	int type;               /* type of record */
@@ -360,6 +362,8 @@ typedef struct ssl3_buffer_st
 	int left;               /* how many bytes left */
 	} SSL3_BUFFER;
 
+#endif
+
 #define SSL3_CT_RSA_SIGN			1
 #define SSL3_CT_DSS_SIGN			2
 #define SSL3_CT_RSA_FIXED_DH			3
@@ -379,6 +383,8 @@ typedef struct ssl3_buffer_st
 #define SSL3_FLAGS_POP_BUFFER			0x0004
 #define TLS1_FLAGS_TLS_PADDING_BUG		0x0008
 #define TLS1_FLAGS_SKIP_CERT_VERIFY		0x0010
+
+#ifndef OPENSSL_NO_SSL_INTERN
 
 typedef struct ssl3_state_st
 	{
@@ -520,6 +526,7 @@ typedef struct ssl3_state_st
         int send_connection_binding; /* TODOEKR */
 	} SSL3_STATE;
 
+#endif
 
 /* SSLv3 */
 /*client */

@@ -1660,6 +1660,11 @@ int SSL_CIPHER_get_bits(const SSL_CIPHER *c, int *alg_bits)
 	return(ret);
 	}
 
+unsigned long SSL_CIPHER_get_id(const SSL_CIPHER *c)
+	{
+	return c->id;
+	}
+
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n)
 	{
 	SSL_COMP *ctmp;
