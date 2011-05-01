@@ -920,11 +920,21 @@ int main(int argc,char **argv)
             exit(1);
         }
 	if (!no_exit) {
+#ifdef FIPS_POST_TIME
+		clock_t start, end;
+#endif
     		fips_algtest_init_nofips();
+#ifdef FIPS_POST_TIME
+		start = clock();
+#endif
         	if (!FIPS_mode_set(1)) {
         	    printf("Power-up self test failed\n");
 		    exit(1);
 		}
+#ifdef FIPS_POST_TIME
+		end = clock();
+		printf("Took %f seconds\n", ((double)(end - start))/CLOCKS_PER_SEC);
+#endif
         	printf("Power-up self test successful\n");
         	exit(0);
 	}
