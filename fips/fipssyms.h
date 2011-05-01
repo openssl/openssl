@@ -539,6 +539,7 @@
 #define DES_encrypt2 FIPS_des_encrypt2
 #define DES_encrypt3 FIPS_des_encrypt3
 #define DES_ncbc_encrypt FIPS_des_ncbc_encrypt
+#define OPENSSL_altivec_probe FIPS_openssl_altivec_probe
 #define OPENSSL_atomic_add FIPS_openssl_atomic_add
 #define OPENSSL_cleanse FIPS_openssl_cleanse
 #define OPENSSL_cpuid_setup FIPS_openssl_cpuid_setup
@@ -546,6 +547,7 @@
 #define OPENSSL_ia32cap_P FIPS_openssl_ia32cap_p
 #define OPENSSL_instrument_bus FIPS_openssl_instrument_bus
 #define OPENSSL_instrument_bus2 FIPS_openssl_instrument_bus2
+#define OPENSSL_ppc64_probe FIPS_openssl_ppc64_probe
 #define OPENSSL_rdtsc FIPS_openssl_rdtsc
 #define OPENSSL_wipe_cpu FIPS_openssl_wipe_cpu
 #define SHA256 FIPS_sha256
