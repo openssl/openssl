@@ -156,6 +156,14 @@
 #define CRYPTO_get_id_callback FIPS_crypto_get_id_callback
 #define CRYPTO_set_id_callback FIPS_crypto_set_id_callback
 #define CRYPTO_thread_id FIPS_crypto_thread_id
+#define CRYPTO_ccm128_aad FIPS_crypto_ccm128_aad
+#define CRYPTO_ccm128_decrypt FIPS_crypto_ccm128_decrypt
+#define CRYPTO_ccm128_decrypt_ccm64 FIPS_crypto_ccm128_decrypt_ccm64
+#define CRYPTO_ccm128_encrypt FIPS_crypto_ccm128_encrypt
+#define CRYPTO_ccm128_encrypt_ccm64 FIPS_crypto_ccm128_encrypt_ccm64
+#define CRYPTO_ccm128_init FIPS_crypto_ccm128_init
+#define CRYPTO_ccm128_setiv FIPS_crypto_ccm128_setiv
+#define CRYPTO_ccm128_tag FIPS_crypto_ccm128_tag
 #define CRYPTO_cbc128_decrypt FIPS_crypto_cbc128_decrypt
 #define CRYPTO_cbc128_encrypt FIPS_crypto_cbc128_encrypt
 #define CRYPTO_cfb128_1_encrypt FIPS_crypto_cfb128_1_encrypt
@@ -260,6 +268,9 @@
 #define EC_KEY_set_asn1_flag FIPS_ec_key_set_asn1_flag
 #define EC_KEY_set_conv_form FIPS_ec_key_set_conv_form
 #define EC_KEY_set_enc_flags FIPS_ec_key_set_enc_flags
+#define EC_KEY_set_flags FIPS_ec_key_set_flags
+#define EC_KEY_clear_flags FIPS_ec_key_clear_flags
+#define EC_KEY_get_flags FIPS_ec_key_get_flags
 #define EC_KEY_set_group FIPS_ec_key_set_group
 #define EC_KEY_set_private_key FIPS_ec_key_set_private_key
 #define EC_KEY_set_public_key FIPS_ec_key_set_public_key
@@ -291,6 +302,7 @@
 #define EC_POINTs_mul FIPS_ec_points_mul
 #define EC_get_builtin_curves FIPS_ec_get_builtin_curves
 #define EVP_aes_128_cbc FIPS_evp_aes_128_cbc
+#define EVP_aes_128_ccm FIPS_evp_aes_128_ccm
 #define EVP_aes_128_cfb1 FIPS_evp_aes_128_cfb1
 #define EVP_aes_128_cfb128 FIPS_evp_aes_128_cfb128
 #define EVP_aes_128_cfb8 FIPS_evp_aes_128_cfb8
@@ -300,6 +312,7 @@
 #define EVP_aes_128_ofb FIPS_evp_aes_128_ofb
 #define EVP_aes_128_xts FIPS_evp_aes_128_xts
 #define EVP_aes_192_cbc FIPS_evp_aes_192_cbc
+#define EVP_aes_192_ccm FIPS_evp_aes_192_ccm
 #define EVP_aes_192_cfb1 FIPS_evp_aes_192_cfb1
 #define EVP_aes_192_cfb128 FIPS_evp_aes_192_cfb128
 #define EVP_aes_192_cfb8 FIPS_evp_aes_192_cfb8
@@ -308,6 +321,7 @@
 #define EVP_aes_192_gcm FIPS_evp_aes_192_gcm
 #define EVP_aes_192_ofb FIPS_evp_aes_192_ofb
 #define EVP_aes_256_cbc FIPS_evp_aes_256_cbc
+#define EVP_aes_256_ccm FIPS_evp_aes_256_ccm
 #define EVP_aes_256_cfb1 FIPS_evp_aes_256_cfb1
 #define EVP_aes_256_cfb128 FIPS_evp_aes_256_cfb128
 #define EVP_aes_256_cfb8 FIPS_evp_aes_256_cfb8
@@ -530,6 +544,8 @@
 #define OPENSSL_cpuid_setup FIPS_openssl_cpuid_setup
 #define OPENSSL_ia32_cpuid FIPS_openssl_ia32_cpuid
 #define OPENSSL_ia32cap_P FIPS_openssl_ia32cap_p
+#define OPENSSL_instrument_bus FIPS_openssl_instrument_bus
+#define OPENSSL_instrument_bus2 FIPS_openssl_instrument_bus2
 #define OPENSSL_rdtsc FIPS_openssl_rdtsc
 #define OPENSSL_wipe_cpu FIPS_openssl_wipe_cpu
 #define SHA256 FIPS_sha256
