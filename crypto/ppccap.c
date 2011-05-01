@@ -3,6 +3,7 @@
 #include <string.h>
 #include <setjmp.h>
 #include <signal.h>
+#include <crypto.h>
 #include <openssl/bn.h>
 
 #define PPC_FPU64	(1<<0)
