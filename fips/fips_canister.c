@@ -177,6 +177,8 @@ const void *FIPS_ref_point()
 # else
     return (void *)FIPS_ref_point;
 # endif
+#elif  defined(__vxworks)
+    return (void *)FIPS_ref_point;
 /*
  * In case you wonder why there is no #ifdef __linux. All Linux targets
  * are GCC-based and therefore are covered by instruction_pointer above

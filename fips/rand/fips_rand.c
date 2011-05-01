@@ -66,8 +66,11 @@
 #include <openssl/aes.h>
 #include <openssl/err.h>
 #include <openssl/fips_rand.h>
-#ifndef OPENSSL_SYS_WIN32
-#include <sys/time.h>
+#if !(defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VXWORKS))
+# include <sys/time.h>
+#endif
+#if defined(OPENSSL_SYS_VXWORKS)
+# include <time.h>
 #endif
 #include <assert.h>
 #ifndef OPENSSL_SYS_WIN32
@@ -225,6 +228,8 @@ void FIPS_get_timevec(unsigned char *buf, unsigned long *pctr)
 	{
 #ifdef OPENSSL_SYS_WIN32
 	FILETIME ft;
+#elif defined(OPENSSL_SYS_VXWORKS)
+        struct timespec ts;
 #else
 	struct timeval tv;
 #endif
@@ -243,6 +248,16 @@ void FIPS_get_timevec(unsigned char *buf, unsigned long *pctr)
 	buf[5] = (unsigned char) ((ft.dwLowDateTime >> 8) & 0xff);
 	buf[6] = (unsigned char) ((ft.dwLowDateTime >> 16) & 0xff);
 	buf[7] = (unsigned char) ((ft.dwLowDateTime >> 24) & 0xff);
+#elif defined(OPENSSL_SYS_VXWORKS)
+	clock_gettime(CLOCK_REALTIME, &ts);
+	buf[0] = (unsigned char) (ts.tv_sec & 0xff);
+	buf[1] = (unsigned char) ((ts.tv_sec >> 8) & 0xff);
+	buf[2] = (unsigned char) ((ts.tv_sec >> 16) & 0xff);
+	buf[3] = (unsigned char) ((ts.tv_sec >> 24) & 0xff);
+	buf[4] = (unsigned char) (ts.tv_nsec & 0xff);
+	buf[5] = (unsigned char) ((ts.tv_nsec >> 8) & 0xff);
+	buf[6] = (unsigned char) ((ts.tv_nsec >> 16) & 0xff);
+	buf[7] = (unsigned char) ((ts.tv_nsec >> 24) & 0xff);
 #else
 	gettimeofday(&tv,NULL);
 	buf[0] = (unsigned char) (tv.tv_sec & 0xff);
