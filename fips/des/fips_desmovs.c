@@ -105,17 +105,17 @@ static int DESTest(EVP_CIPHER_CTX *ctx,
 	EXIT(1);
 	}
 
-    if (strcasecmp(amode, "CBC") == 0)
+    if (fips_strcasecmp(amode, "CBC") == 0)
 	cipher = EVP_des_ede3_cbc();
-    else if (strcasecmp(amode, "ECB") == 0)
+    else if (fips_strcasecmp(amode, "ECB") == 0)
 	cipher = EVP_des_ede3_ecb();
-    else if (strcasecmp(amode, "CFB64") == 0)
+    else if (fips_strcasecmp(amode, "CFB64") == 0)
 	cipher = EVP_des_ede3_cfb64();
-    else if (strncasecmp(amode, "OFB", 3) == 0)
+    else if (fips_strncasecmp(amode, "OFB", 3) == 0)
 	cipher = EVP_des_ede3_ofb();
-    else if(!strcasecmp(amode,"CFB8"))
+    else if(!fips_strcasecmp(amode,"CFB8"))
 	cipher = EVP_des_ede3_cfb8();
-    else if(!strcasecmp(amode,"CFB1"))
+    else if(!fips_strcasecmp(amode,"CFB1"))
 	cipher = EVP_des_ede3_cfb1();
     else
 	{
@@ -125,7 +125,7 @@ static int DESTest(EVP_CIPHER_CTX *ctx,
 
     if (FIPS_cipherinit(ctx, cipher, aKey, iVec, dir) <= 0)
 	return 0;
-    if(!strcasecmp(amode,"CFB1"))
+    if(!fips_strcasecmp(amode,"CFB1"))
 	M_EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS);
     FIPS_cipher(ctx, out, in, len);
 
@@ -398,9 +398,9 @@ static int proc_file(char *rqfile, char *rspfile)
 		{
 		fputs(ibuf, rfp);
 		++step;
-		if (strncasecmp(ibuf, "[ENCRYPT]", 9) == 0)
+		if (fips_strncasecmp(ibuf, "[ENCRYPT]", 9) == 0)
 		    dir = 1;
-		else if (strncasecmp(ibuf, "[DECRYPT]", 9) == 0)
+		else if (fips_strncasecmp(ibuf, "[DECRYPT]", 9) == 0)
 		    dir = 0;
 		else
 		    {
@@ -424,24 +424,24 @@ static int proc_file(char *rqfile, char *rspfile)
 	        fputs(ibuf, rfp);
 		break;
                 }
-	    if(!strncasecmp(ibuf,"COUNT = ",8))
+	    if(!fips_strncasecmp(ibuf,"COUNT = ",8))
 		{
 	        fputs(ibuf, rfp);
 		break;
                 }
-	    if(!strncasecmp(ibuf,"COUNT=",6))
+	    if(!fips_strncasecmp(ibuf,"COUNT=",6))
 		{
 	        fputs(ibuf, rfp);
 		break;
                 }
-	    if(!strncasecmp(ibuf,"NumKeys = ",10))
+	    if(!fips_strncasecmp(ibuf,"NumKeys = ",10))
 		{
 		numkeys=atoi(ibuf+10);
 		break;
 		}
 	  
 	    fputs(ibuf, rfp);
-	    if(!strncasecmp(ibuf,"KEY = ",6))
+	    if(!fips_strncasecmp(ibuf,"KEY = ",6))
 		{
 		akeysz=64;
 		len = hex2bin((char*)ibuf+6, aKey);
@@ -454,7 +454,7 @@ static int proc_file(char *rqfile, char *rspfile)
 		PrintValue("KEY", aKey, len);
 		++step;
 		}
-	    else if(!strncasecmp(ibuf,"KEYs = ",7))
+	    else if(!fips_strncasecmp(ibuf,"KEYs = ",7))
 		{
 		akeysz=64*3;
 		len=hex2bin(ibuf+7,aKey);
@@ -470,7 +470,7 @@ static int proc_file(char *rqfile, char *rspfile)
 		PrintValue("KEYs",aKey,len);
 		++step;
 		}
-	    else if(!strncasecmp(ibuf,"KEY",3))
+	    else if(!fips_strncasecmp(ibuf,"KEY",3))
 		{
 		int n=ibuf[3]-'1';
 
@@ -496,7 +496,7 @@ static int proc_file(char *rqfile, char *rspfile)
 
 	case 3: /* IV = xxxx */
 	    fputs(ibuf, rfp);
-	    if (strncasecmp(ibuf, "IV = ", 5) != 0)
+	    if (fips_strncasecmp(ibuf, "IV = ", 5) != 0)
 		{
 		printf("Missing IV\n");
 		err = 1;
@@ -517,7 +517,7 @@ static int proc_file(char *rqfile, char *rspfile)
 
 	case 4: /* PLAINTEXT = xxxx */
 	    fputs(ibuf, rfp);
-	    if (strncasecmp(ibuf, "PLAINTEXT = ", 12) != 0)
+	    if (fips_strncasecmp(ibuf, "PLAINTEXT = ", 12) != 0)
 		{
 		printf("Missing PLAINTEXT\n");
 		err = 1;
@@ -559,7 +559,7 @@ static int proc_file(char *rqfile, char *rspfile)
 
 	case 5: /* CIPHERTEXT = xxxx */
 	    fputs(ibuf, rfp);
-	    if (strncasecmp(ibuf, "CIPHERTEXT = ", 13) != 0)
+	    if (fips_strncasecmp(ibuf, "CIPHERTEXT = ", 13) != 0)
 		{
 		printf("Missing KEY\n");
 		err = 1;
@@ -636,11 +636,11 @@ int main(int argc, char **argv)
     fips_algtest_init();
     if (argc > 1)
 	{
-	if (strcasecmp(argv[1], "-d") == 0)
+	if (fips_strcasecmp(argv[1], "-d") == 0)
 	    {
 	    d_opt = 1;
 	    }
-	else if (strcasecmp(argv[1], "-f") == 0)
+	else if (fips_strcasecmp(argv[1], "-f") == 0)
 	    {
 	    f_opt = 1;
 	    d_opt = 0;

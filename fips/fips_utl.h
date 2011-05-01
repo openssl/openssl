@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,6 +66,8 @@ void PrintValue(char *tag, unsigned char *val, int len);
 void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode);
 void fips_algtest_init(void);
 void do_entropy_stick(void);
+int fips_strncasecmp(const char *str1, const char *str2, size_t n);
+int fips_strcasecmp(const char *str1, const char *str2);
 
 static int no_err;
 
@@ -419,4 +421,33 @@ void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode)
     printf("%s = %.*s\n", tag, olen, obuf);
 #endif
     }
+
+/* Not all platforms support strcasecmp and strncasecmp: implement versions
+ * in here to avoid need to include them in the validated module. Taken
+ * from crypto/o_str.c written by Richard Levitte (richard@levitte.org)
+ */
+
+int fips_strncasecmp(const char *str1, const char *str2, size_t n)
+	{
+	while (*str1 && *str2 && n)
+		{
+		int res = toupper(*str1) - toupper(*str2);
+		if (res) return res < 0 ? -1 : 1;
+		str1++;
+		str2++;
+		n--;
+		}
+	if (n == 0)
+		return 0;
+	if (*str1)
+		return 1;
+	if (*str2)
+		return -1;
+	return 0;
+	}
+
+int fips_strcasecmp(const char *str1, const char *str2)
+	{
+	return fips_strncasecmp(str1, str2, (size_t)-1);
+	}
 
