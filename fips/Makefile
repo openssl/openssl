@@ -92,11 +92,8 @@ fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
 	list="$(DES_ENC)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/des/$$i" ; done; \
 	list="$(SHA1_ASM_OBJ)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/sha/$$i" ; done; \
 	list="$(MODES_ASM_OBJ)"; for i in $$list; do FIPS_ASM="$$FIPS_ASM ../crypto/modes/$$i" ; done; \
-	if [ -n "$(CPUID_OBJ)" ]; then \
-		CPUID=../crypto/$(CPUID_OBJ) ; \
-	else \
-		CPUID="" ; \
-	fi ; \
+	CPUID=""; \
+	list="$(CPUID_OBJ)"; for i in $$list; do CPUID="$$CPUID ../crypto/$$i" ; done; \
 	objs="fips_start.o $(LIBOBJ) $(FIPS_EX_OBJ) $$CPUID $$FIPS_ASM"; \
 	for i in $(FIPS_OBJ_LISTS); do \
 		dir=`dirname $$i`; script="s|^|$$dir/|;s| | $$dir/|g"; \
