@@ -718,6 +718,9 @@ static int post_cb(int op, int id, int subid, void *ex)
 	const char *idstr, *exstr = "";
 	char asctmp[20];
 	int keytype = -1;
+#ifdef FIPS_POST_TIME
+	static struct timespec start, end, tstart, tend;
+#endif
 	switch(id)
 		{
 		case FIPS_TEST_INTEGRITY:
@@ -807,19 +810,38 @@ static int post_cb(int op, int id, int subid, void *ex)
 	switch(op)
 		{
 		case FIPS_POST_BEGIN:
+#ifdef FIPS_POST_TIME
+		clock_gettime(CLOCK_REALTIME, &tstart);
+#endif
 		printf("\tPOST started\n");
 		break;
 
 		case FIPS_POST_END:
 		printf("\tPOST %s\n", id ? "Success" : "Failed");
+#ifdef FIPS_POST_TIME
+		clock_gettime(CLOCK_REALTIME, &tend);
+		printf("\t\tTook %f seconds\n",
+			(double)((tend.tv_sec+tend.tv_nsec*1e-9)
+                        - (tstart.tv_sec+tstart.tv_nsec*1e-9)));
+#endif
 		break;
 
 		case FIPS_POST_STARTED:
 		printf("\t\t%s %s test started\n", idstr, exstr);
+#ifdef FIPS_POST_TIME
+		clock_gettime(CLOCK_REALTIME, &start);
+#endif
 		break;
 
 		case FIPS_POST_SUCCESS:
 		printf("\t\t%s %s test OK\n", idstr, exstr);
+#ifdef FIPS_POST_TIME
+		clock_gettime(CLOCK_REALTIME, &end);
+		printf("\t\t\tTook %f seconds\n",
+			(double)((end.tv_sec+end.tv_nsec*1e-9)
+                        - (start.tv_sec+start.tv_nsec*1e-9)));
+		start = end;
+#endif
 		break;
 
 		case FIPS_POST_FAIL:
@@ -920,21 +942,11 @@ int main(int argc,char **argv)
             exit(1);
         }
 	if (!no_exit) {
-#ifdef FIPS_POST_TIME
-		clock_t start, end;
-#endif
     		fips_algtest_init_nofips();
-#ifdef FIPS_POST_TIME
-		start = clock();
-#endif
         	if (!FIPS_mode_set(1)) {
         	    printf("Power-up self test failed\n");
 		    exit(1);
 		}
-#ifdef FIPS_POST_TIME
-		end = clock();
-		printf("Took %f seconds\n", ((double)(end - start))/CLOCKS_PER_SEC);
-#endif
         	printf("Power-up self test successful\n");
         	exit(0);
 	}
