@@ -22,6 +22,8 @@ echo Processor Architecture Unrecognized: defaulting to X86
 echo Auto Configuring for X86
 
 SET TARGET=VC-WIN32
+if x%ASM% == xno-asm goto compile
+SET ASM=nasm
 
 goto compile
 
@@ -45,6 +47,9 @@ if ERRORLEVEL 1 goto error
 ml64 -c -Foms\uptable.obj ms\uptable.asm
 if ERRORLEVEL 1 goto error
 
+if x%ASM% == xno-asm goto compile
+SET ASM=ml64
+
 :compile
 
 perl Configure %TARGET% fipscanisteronly
@@ -55,11 +60,6 @@ echo on
 perl util\mkfiles.pl >MINFO
 @if ERRORLEVEL 1 goto error
 perl util\mk1mf.pl dll %ASM% %TARGET% >ms\ntdll.mak
-@if ERRORLEVEL 1 goto error
-
-perl util\mkdef.pl 32 libeay > ms\libeay32.def
-@if ERRORLEVEL 1 goto error
-perl util\mkdef.pl 32 ssleay > ms\ssleay32.def
 @if ERRORLEVEL 1 goto error
 
 nmake -f ms\ntdll.mak clean
