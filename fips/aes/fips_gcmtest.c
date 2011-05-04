@@ -268,7 +268,7 @@ static void xtstest(FILE *in, FILE *out)
 	char buf[204800];
 	char lbuf[204800];
 	char *keyword, *value;
-	int inlen;
+	int inlen = 0;
 	int encrypt = 0;
 	int rv;
 	long l;
