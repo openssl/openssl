@@ -521,7 +521,7 @@ links:
 	@$(PERL) $(TOP)/util/mkdir-p.pl include/openssl
 	@$(PERL) $(TOP)/util/mklink.pl include/openssl $(EXHEADER)
 	@set -e; dir=fips target=links; $(RECURSIVE_BUILD_CMD)
-	@set -e; dir=crypto target=links; $(RECURSIVE_BUILD_CMD)
+	@(cd crypto ; SDIRS='$(LINKDIRS)' $(MAKE) -e links)
 
 gentests:
 	@(cd test && echo "generating dummy tests (if needed)..." && \

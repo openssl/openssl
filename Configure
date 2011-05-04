@@ -1126,7 +1126,6 @@ my $exp_cflags = "";
 
 if ($fipscanisteronly == 2)
 	{
-print STDERR "ADDING FIPSSYM\n";
 	$exp_cflags .= " -DOPENSSL_FIPSSYMS";
 	}
 
