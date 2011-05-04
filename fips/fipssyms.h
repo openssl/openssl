@@ -585,6 +585,7 @@
 #define OPENSSL_far_spin fips_openssl_far_spin
 #define OPENSSL_indirect_call fips_openssl_indirect_call
 #define OPENSSL_instrument_halt fips_openssl_instrument_halt
+#define OPENSSL_armcap fips_openssl_armcap
 #define aesni_cbc_encrypt fips_aesni_cbc_encrypt
 #define aesni_decrypt fips_aesni_decrypt
 #define aesni_set_decrypt_key fips_aesni_set_decrypt_key
