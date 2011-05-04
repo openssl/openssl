@@ -107,14 +107,15 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 			tweak.u[1] = (tweak.u[1]<<1)|carry;
 		}
 		else {
-			unsigned int carry,c;
+			size_t c;
 
-			for (carry=0,i=0;i<16;++i) {
-				c = tweak.c[i];
-				tweak.c[i] = (c<<1)|carry;
-				carry = c>>7;
+			for (c=0,i=0;i<16;++i) {
+				/*+ substitutes for |, because c is 1 bit */ 
+				c += ((size_t)tweak.c[i])<<1;
+				tweak.c[i] = (u8)c;
+				c = c>>8;
 			}
-			tweak.c[0] ^= 0x87&(0-carry);
+			tweak.c[0] ^= (u8)(0x87&(0-c));
 		}
 	}
 	if (enc) {
@@ -142,14 +143,15 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
 			tweak1.u[1] = (tweak.u[1]<<1)|carry;
 		}
 		else {
-			unsigned int carry,c;
+			size_t c;
 
-			for (carry=0,i=0;i<16;++i) {
-				c = tweak.c[i];
-				tweak1.c[i] = (c<<1)|carry;
-				carry = c>>7;
+			for (c=0,i=0;i<16;++i) {
+				/*+ substitutes for |, because c is 1 bit */ 
+				c += ((size_t)tweak.c[i])<<1;
+				tweak1.c[i] = (u8)c;
+				c = c>>8;
 			}
-			tweak1.c[0] ^= 0x87&(0-carry);
+			tweak1.c[0] ^= (u8)(0x87&(0-c));
 		}
 #if defined(STRICT_ALIGNMENT)
 		memcpy(scratch.c,inp,16);
