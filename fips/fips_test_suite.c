@@ -811,6 +811,9 @@ static int post_cb(int op, int id, int subid, void *ex)
 		{
 		case FIPS_POST_BEGIN:
 #ifdef FIPS_POST_TIME
+		clock_getres(CLOCK_REALTIME, &tstart);
+		printf("\tTimer resolution %ld s, %ld ns\n",
+				(long)tstart.tv_sec, (long)tstart.tv_nsec);
 		clock_gettime(CLOCK_REALTIME, &tstart);
 #endif
 		printf("\tPOST started\n");
