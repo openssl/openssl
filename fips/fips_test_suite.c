@@ -840,7 +840,6 @@ static int post_cb(int op, int id, int subid, void *ex)
 		printf("\t\t\tTook %f seconds\n",
 			(double)((end.tv_sec+end.tv_nsec*1e-9)
                         - (start.tv_sec+start.tv_nsec*1e-9)));
-		start = end;
 #endif
 		break;
 
