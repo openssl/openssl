@@ -76,14 +76,8 @@ Known issues:
 
 Algorithm tests are pre-2011.
 The fipslagtest.pl script wont auto run new algorithm tests such as DSA2.
-Usage of ECDH/DH needs review and whether any KDFs need to be implemented.
-Selftests need updating with larger key sizes in some cases and redundant
-tests pruned.
-SP800-90 DRBG needs more work: check for compliance, continuous PRNG test
-when entropy gathering, periodic health tests.
-Some algorithms need to check security strength of PRNG: keygen etc.
-No CCM.
-No XTS.
+Code needs extensively reviewing to ensure it builds correctly on 
+supported platforms and is compliant with FIPS 140-2.
 The "FIPS capable OpenSSL" is not yet complete: meaning that the rest of
 OpenSSL doesn't always use the correct FIPS module APIs and block others
 in FIPS mode.
