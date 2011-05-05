@@ -590,3 +590,6 @@
 #define aesni_decrypt fips_aesni_decrypt
 #define aesni_set_decrypt_key fips_aesni_set_decrypt_key
 #define aesni_set_encrypt_key fips_aesni_set_encrypt_key
+#define bn_GF2m_mul_2x2 fips_bn_GF2m_mul_2x2
+#define gcm_ghash_neon fips_gcm_ghash_neon
+#define gcm_gmult_neon fips_gcm_gmult_neon
