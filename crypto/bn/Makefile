@@ -120,6 +120,9 @@ alpha-mont.s:	asm/alpha-mont.pl
 
 # GNU make "catch all"
 %-mont.s:	asm/%-mont.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+%-gf2m.S:	asm/%-gf2m.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+
+armv4-gf2m.o:	armv4-gf2m.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

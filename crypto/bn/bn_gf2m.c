@@ -126,6 +126,7 @@ static const BN_ULONG SQR_tb[16] =
     SQR_tb[(w) >>  4 & 0xF] <<  8 | SQR_tb[(w)       & 0xF]
 #endif
 
+#if !defined(OPENSSL_BN_ASM_GF2m)
 /* Product of two polynomials a, b each with degree < BN_BITS2 - 1,
  * result is a polynomial r with degree < 2 * BN_BITS - 1
  * The caller MUST ensure that the variables have the right amount
@@ -220,7 +221,9 @@ static void bn_GF2m_mul_2x2(BN_ULONG *r, const BN_ULONG a1, const BN_ULONG a0, c
 	r[2] ^= m1 ^ r[1] ^ r[3];  /* h0 ^= m1 ^ l1 ^ h1; */
 	r[1] = r[3] ^ r[2] ^ r[0] ^ m1 ^ m0;  /* l1 ^= l0 ^ h0 ^ m0; */
 	}
-
+#else
+void bn_GF2m_mul_2x2(BN_ULONG *r, BN_ULONG a1, BN_ULONG a0, BN_ULONG b1, BN_ULONG b0);
+#endif 
 
 /* Add polynomials a and b and store result in r; r could be a or b, a and b 
  * could be equal; r is the bitwise XOR of a and b.

@@ -21,13 +21,8 @@
 # runs in even less cycles, ~30, improvement is measurable only on
 # longer keys. One has to optimize code elsewhere to get NEON glow...
 
-$a="r1";
-$b="r0";
-
-($a0,$a1,$a2,$a12,$a4,$a14)=
-($hi,$lo,$t0,$t1, $i0,$i1 )=map("r$_",(4..9),12);
-
-$mask="r12";
+while (($output=shift) && ($output!~/^\w[\w\-]*\.\w+$/)) {}
+open STDOUT,">$output";
 
 sub Dlo()   { shift=~m|q([1]?[0-9])|?"d".($1*2):"";     }
 sub Dhi()   { shift=~m|q([1]?[0-9])|?"d".($1*2+1):"";   }
@@ -67,9 +62,21 @@ mul_1x1_neon:
 	bx	lr
 .size	mul_1x1_neon,.-mul_1x1_neon
 #endif
+___
+################
+# private interface to mul_1x1_ialu
+#
+$a="r1";
+$b="r0";
 
-.align	5
+($a0,$a1,$a2,$a12,$a4,$a14)=
+($hi,$lo,$t0,$t1, $i0,$i1 )=map("r$_",(4..9),12);
+
+$mask="r12";
+
+$code.=<<___;
 .type	mul_1x1_ialu,%function
+.align	5
 mul_1x1_ialu:
 	mov	$a0,#0
 	bic	$a1,$a,#3<<30		@ a1=a&0x3fffffff
@@ -147,7 +154,15 @@ mul_1x1_ialu:
 
 	mov	pc,lr
 .size	mul_1x1_ialu,.-mul_1x1_ialu
+___
+################
+# void	bn_GF2m_mul_2x2(BN_ULONG *r,
+#	BN_ULONG a1,BN_ULONG a0,
+#	BN_ULONG b1,BN_ULONG b0);	# r[3..0]=a1a0·b1b0
 
+($A1,$B1,$A0,$B0,$A1B1,$A0B0)=map("d$_",(18..23));
+
+$code.=<<___;
 .global	bn_GF2m_mul_2x2
 .type	bn_GF2m_mul_2x2,%function
 .align	5
@@ -157,9 +172,7 @@ bn_GF2m_mul_2x2:
 .Lpic:	ldr	r12,[pc,r12]
 	tst	r12,#1
 	beq	.Lialu
-___
-($A1,$B1,$A0,$B0,$A0B0,$A1B1)=map("d$_",(18..23));
-$code.=<<___;
+
 	veor	$A1,$A1
 	vmov.32	$B1,r3,r3		@ two copies of b1
 	vmov.32	${A1}[0],r1		@ a1
