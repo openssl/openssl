@@ -31,10 +31,6 @@ goto compile
 
 echo Auto Configuring for IA64
 SET TARGET=VC-WIN64I
-perl ms\uplink.pl win64i > ms\uptable.asm
-if ERRORLEVEL 1 goto error
-ias -o ms\uptable.obj ms\uptable.asm
-if ERRORLEVEL 1 goto error
 
 goto compile
 
@@ -42,13 +38,8 @@ goto compile
 
 echo Auto Configuring for AMD64
 SET TARGET=VC-WIN64A
-perl ms\uplink.pl win64a > ms\uptable.asm
-if ERRORLEVEL 1 goto error
-ml64 -c -Foms\uptable.obj ms\uptable.asm
-if ERRORLEVEL 1 goto error
-
 if x%ASM% == xno-asm goto compile
-SET ASM=ml64
+SET ASM=nasm
 
 :compile
 
