@@ -234,6 +234,21 @@ extern "C" {
 #define TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2	2
 #define TLSEXT_ECPOINTFORMAT_last			2
 
+/* Signature and hash algorithms from RFC 5246 */
+
+#define TLSEXT_signature_anonymous			0
+#define TLSEXT_signature_rsa				1
+#define TLSEXT_signature_dsa				2
+#define TLSEXT_signature_ecdsa				3
+
+#define TLSEXT_hash_none				0
+#define TLSEXT_hash_md5					1
+#define TLSEXT_hash_sha1				2
+#define TLSEXT_hash_sha224				3
+#define TLSEXT_hash_sha256				4
+#define TLSEXT_hash_sha384				5
+#define TLSEXT_hash_sha512				6
+
 #ifndef OPENSSL_NO_TLSEXT
 
 #define TLSEXT_MAXLEN_host_name 255

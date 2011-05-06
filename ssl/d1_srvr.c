@@ -1139,7 +1139,7 @@ int dtls1_send_server_key_exchange(SSL *s)
 		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
 			&& !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK))
 			{
-			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher))
+			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher, NULL))
 				== NULL)
 				{
 				al=SSL_AD_DECODE_ERROR;

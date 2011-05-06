@@ -1530,6 +1530,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 	BN_CTX *bn_ctx = NULL; 
 #endif
 	EVP_PKEY *pkey;
+	const EVP_MD *md = NULL;
 	unsigned char *p,*d;
 	int al,i;
 	unsigned long type;
@@ -1810,7 +1811,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 		if (!(s->s3->tmp.new_cipher->algorithm_auth & SSL_aNULL)
 			&& !(s->s3->tmp.new_cipher->algorithm_mkey & SSL_kPSK))
 			{
-			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher))
+			if ((pkey=ssl_get_sign_pkey(s,s->s3->tmp.new_cipher,&md))
 				== NULL)
 				{
 				al=SSL_AD_DECODE_ERROR;
@@ -1888,7 +1889,8 @@ int ssl3_send_server_key_exchange(SSL *s)
 			/* n is the length of the params, they start at &(d[4])
 			 * and p points to the space at the end. */
 #ifndef OPENSSL_NO_RSA
-			if (pkey->type == EVP_PKEY_RSA)
+			if (pkey->type == EVP_PKEY_RSA
+					&& s->version < TLS1_2_VERSION)
 				{
 				q=md_buf;
 				j=0;
@@ -1915,44 +1917,37 @@ int ssl3_send_server_key_exchange(SSL *s)
 				}
 			else
 #endif
-#if !defined(OPENSSL_NO_DSA)
-				if (pkey->type == EVP_PKEY_DSA)
+			if (md)
 				{
-				/* lets do DSS */
-				EVP_SignInit_ex(&md_ctx,EVP_dss1(), NULL);
+				/* For TLS1.2 and later send signature
+				 * algorithm */
+				if (s->version >= TLS1_2_VERSION)
+					{
+					if (!tls12_get_sigandhash(p, pkey, md))
+						{
+						/* Should never happen */
+						al=SSL_AD_INTERNAL_ERROR;
+						SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+						goto f_err;
+						}
+					p+=2;
+					}
+				EVP_SignInit_ex(&md_ctx, md, NULL);
 				EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
 				EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
 				EVP_SignUpdate(&md_ctx,&(d[4]),n);
 				if (!EVP_SignFinal(&md_ctx,&(p[2]),
 					(unsigned int *)&i,pkey))
 					{
-					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_DSA);
+					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_EVP);
 					goto err;
 					}
 				s2n(i,p);
 				n+=i+2;
+				if (s->version >= TLS1_2_VERSION)
+					n+= 2;
 				}
 			else
-#endif
-#if !defined(OPENSSL_NO_ECDSA)
-				if (pkey->type == EVP_PKEY_EC)
-				{
-				/* let's do ECDSA */
-				EVP_SignInit_ex(&md_ctx,EVP_ecdsa(), NULL);
-				EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx,&(d[4]),n);
-				if (!EVP_SignFinal(&md_ctx,&(p[2]),
-					(unsigned int *)&i,pkey))
-					{
-					SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_LIB_ECDSA);
-					goto err;
-					}
-				s2n(i,p);
-				n+=i+2;
-				}
-			else
-#endif
 				{
 				/* Is this error check actually needed? */
 				al=SSL_AD_HANDSHAKE_FAILURE;

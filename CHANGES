@@ -4,6 +4,12 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add server support for TLS v1.2 signature algorithms extension. Switch
+     to new signature format when needed using client digest preference.
+     All server ciphersuites should now work correctly in TLS v1.2. No client
+     support yet and no support for client certificates.
+     [Steve Henson]
+
   *) Initial TLS v1.2 support. Add new SHA256 digest to ssl code, switch
      to SHA256 for PRF when using TLS v1.2 and later. Add new SHA256 based
      ciphersuites. At present only RSA key exchange ciphersuites work with

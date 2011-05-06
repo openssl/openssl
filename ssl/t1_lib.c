@@ -122,6 +122,7 @@ const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
 				const unsigned char *sess_id, int sesslen,
 				SSL_SESSION **psess);
+static int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize);
 #endif
 
 SSL3_ENC_METHOD TLSv1_enc_data={
@@ -693,6 +694,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	unsigned short len;
 	unsigned char *data = *p;
 	int renegotiate_seen = 0;
+	int sigalg_seen = 0;
 
 	s->servername_done = 0;
 	s->tlsext_status_type = -1;
@@ -955,6 +957,28 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			if(!ssl_parse_clienthello_renegotiate_ext(s, data, size, al))
 				return 0;
 			renegotiate_seen = 1;
+			}
+		else if (type == TLSEXT_TYPE_signature_algorithms)
+			{
+			int dsize;
+			if (sigalg_seen || size < 2) 
+				{
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				}
+			sigalg_seen = 1;
+			n2s(data,dsize);
+			size -= 2;
+			if (dsize != size || dsize & 1) 
+				{
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				}
+			if (!tls1_process_sigalgs(s, data, dsize))
+				{
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				}
 			}
 		else if (type == TLSEXT_TYPE_status_request &&
 		         s->version != DTLS1_VERSION && s->ctx->tlsext_status_cb)
@@ -1891,6 +1915,187 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	tickerr:	
 	s->tlsext_ticket_expected = 1;
 	return 0;
+	}
+
+/* Tables to translate from NIDs to TLS v1.2 ids */
+
+typedef struct 
+	{
+	int nid;
+	int id;
+	} tls12_lookup;
+
+static tls12_lookup tls12_md[] = {
+#ifndef OPENSSL_NO_MD5
+	{NID_md5, TLSEXT_hash_md5},
+#endif
+#ifndef OPENSSL_NO_SHA
+	{NID_sha1, TLSEXT_hash_sha1},
+#endif
+#ifndef OPENSSL_NO_SHA256
+	{NID_sha224, TLSEXT_hash_sha224},
+	{NID_sha256, TLSEXT_hash_sha256},
+#endif
+#ifndef OPENSSL_NO_SHA512
+	{NID_sha384, TLSEXT_hash_sha384},
+	{NID_sha512, TLSEXT_hash_sha512}
+#endif
+};
+
+static tls12_lookup tls12_sig[] = {
+#ifndef OPENSSL_NO_RSA
+	{EVP_PKEY_RSA, TLSEXT_signature_rsa},
+#endif
+#ifndef OPENSSL_NO_RSA
+	{EVP_PKEY_DSA, TLSEXT_signature_dsa},
+#endif
+#ifndef OPENSSL_NO_ECDSA
+	{EVP_PKEY_EC, TLSEXT_signature_ecdsa}
+#endif
+};
+
+static int tls12_find_id(int nid, tls12_lookup *table, size_t tlen)
+	{
+	size_t i;
+	for (i = 0; i < tlen; i++)
+		{
+		if (table[i].nid == nid)
+			return table[i].id;
+		}
+	return -1;
+	}
+#if 0
+static int tls12_find_nid(int id, tls12_lookup *table, size_t tlen)
+	{
+	size_t i;
+	for (i = 0; i < tlen; i++)
+		{
+		if (table[i].id == id)
+			return table[i].nid;
+		}
+	return -1;
+	}
+#endif
+int tls12_get_sigandhash(unsigned char *p, EVP_PKEY *pk, const EVP_MD *md)
+	{
+	int sig_id, md_id;
+	md_id = tls12_find_id(EVP_MD_type(md), tls12_md,
+				sizeof(tls12_md)/sizeof(tls12_lookup));
+	if (md_id == -1)
+		return 0;
+	sig_id = tls12_find_id(pk->type, tls12_sig,
+				sizeof(tls12_sig)/sizeof(tls12_lookup));
+	if (sig_id == -1)
+		return 0;
+	p[0] = (unsigned char)md_id;
+	p[1] = (unsigned char)sig_id;
+	return 1;
+	}
+
+/* Set preferred digest for each key type */
+
+int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
+	{
+	int i, idx;
+	const EVP_MD *md;
+	CERT *c = s->cert;
+	/* Extension ignored for TLS versions below 1.2 */
+	if (s->version < TLS1_2_VERSION)
+		return 1;
+
+	c->pkeys[SSL_PKEY_DSA_SIGN].digest = NULL;
+	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
+	c->pkeys[SSL_PKEY_RSA_ENC].digest = NULL;
+	c->pkeys[SSL_PKEY_ECC].digest = NULL;
+
+	for (i = 0; i < dsize; i += 2)
+		{
+		unsigned char hash_alg = data[i], sig_alg = data[i+1];
+
+		switch(sig_alg)
+			{
+#ifndef OPENSSL_NO_RSA
+			case TLSEXT_signature_rsa:
+			idx = SSL_PKEY_RSA_SIGN;
+			break;
+#endif
+#ifndef OPENSSL_NO_DSA
+			case TLSEXT_signature_dsa:
+			idx = SSL_PKEY_DSA_SIGN;
+			break;
+#endif
+#ifndef OPENSSL_NO_ECDSA
+			case TLSEXT_signature_ecdsa:
+			idx = SSL_PKEY_ECC;
+			break;
+#endif
+			default:
+			continue;
+			}
+
+		if (c->pkeys[idx].digest)
+			continue;
+
+		switch(hash_alg)
+			{
+#ifndef OPENSSL_NO_MD5
+			case TLSEXT_hash_md5:
+			md = EVP_md5();
+			break;
+#endif
+#ifndef OPENSSL_NO_SHA
+			case TLSEXT_hash_sha1:
+			md = EVP_sha1();
+			break;
+#endif
+#ifndef OPENSSL_NO_SHA256
+			case TLSEXT_hash_sha224:
+			md = EVP_sha224();
+			break;
+
+			case TLSEXT_hash_sha256:
+			md = EVP_sha256();
+			break;
+#endif
+#ifndef OPENSSL_NO_SHA512
+			case TLSEXT_hash_sha384:
+			md = EVP_sha384();
+			break;
+
+			case TLSEXT_hash_sha512:
+			md = EVP_sha512();
+			break;
+#endif
+			default:
+			continue;
+
+			}
+
+		c->pkeys[idx].digest = md;
+		if (idx == SSL_PKEY_RSA_SIGN)
+			c->pkeys[SSL_PKEY_RSA_ENC].digest = md;
+
+		}
+
+	/* Set any remaining keys to default values. NOTE: if alg is not
+	 * supported it stays as NULL.
+	 */
+#ifndef OPENSSL_NO_DSA
+	if (!c->pkeys[SSL_PKEY_DSA_SIGN].digest)
+		c->pkeys[SSL_PKEY_DSA_SIGN].digest = EVP_dss1();
+#endif
+#ifndef OPENSSL_NO_RSA
+	if (!c->pkeys[SSL_PKEY_RSA_SIGN].digest)
+		{
+		c->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
+		c->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
+		}
+#endif
+#ifndef OPENSSL_NO_ECDSA
+	if (!c->pkeys[SSL_PKEY_ECC].digest)
+		c->pkeys[SSL_PKEY_ECC].digest = EVP_ecdsa();
+#endif
+	return 1;
 	}
 
 #endif

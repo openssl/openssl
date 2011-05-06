@@ -461,6 +461,8 @@ typedef struct cert_pkey_st
 	{
 	X509 *x509;
 	EVP_PKEY *privatekey;
+	/* Digest to use when signing */
+	const EVP_MD *digest;
 	} CERT_PKEY;
 
 typedef struct cert_st
@@ -814,7 +816,7 @@ int ssl_undefined_function(SSL *s);
 int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
-EVP_PKEY *ssl_get_sign_pkey(SSL *,const SSL_CIPHER *);
+EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *c, const EVP_MD **pmd);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
 void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher);
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
@@ -1088,3 +1090,4 @@ int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 					  int *al);
 long ssl_get_algorithm2(SSL *s);
 #endif
+int tls12_get_sigandhash(unsigned char *p, EVP_PKEY *pk, const EVP_MD *md);
