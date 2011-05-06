@@ -219,7 +219,11 @@ int FIPS_rsa_sign_digest(RSA *rsa, const unsigned char *md, int md_len,
 	/* Largest DigestInfo: 19 (max encoding) + max MD */
 	unsigned char tmpdinfo[19 + EVP_MAX_MD_SIZE];
 
-	FIPS_selftest_check();
+	if (FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_RSA_SIGN_DIGEST, FIPS_R_SELFTEST_FAILED);
+		return 0;
+		}
 
 	md_type = M_EVP_MD_type(mhash);
 
@@ -322,13 +326,17 @@ int FIPS_rsa_verify_digest(RSA *rsa, const unsigned char *dig, int diglen,
 	int md_type;
 	int rsa_dec_pad_mode;
 
+	if (FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_RSA_VERIFY_DIGEST, FIPS_R_SELFTEST_FAILED);
+		return 0;
+		}
+
 	if (siglen != (unsigned int)RSA_size(rsa))
 		{
 		RSAerr(RSA_F_FIPS_RSA_VERIFY_DIGEST,RSA_R_WRONG_SIGNATURE_LENGTH);
 		return(0);
 		}
-
-	FIPS_selftest_check();
 
 	md_type = M_EVP_MD_type(mhash);
 

@@ -136,7 +136,11 @@ static void fips_rand_prng_reset(FIPS_PRNG_CTX *ctx)
 static int fips_set_prng_key(FIPS_PRNG_CTX *ctx,
 			const unsigned char *key, unsigned int keylen)
 	{
-	FIPS_selftest_check();
+	if (FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_SET_PRNG_KEY, FIPS_R_SELFTEST_FAILED);
+		return 0;
+		}
 	if (keylen != 16 && keylen != 24 && keylen != 32)
 		{
 		/* error: invalid key size */

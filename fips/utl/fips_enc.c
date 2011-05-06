@@ -256,11 +256,15 @@ int FIPS_cipher_ctx_cleanup(EVP_CIPHER_CTX *c)
 int FIPS_cipher_ctx_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
 	int ret;
+	if (FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_CIPHER_CTX_CTRL, FIPS_R_SELFTEST_FAILED);
+		return 0;
+		}
 	if(!ctx->cipher) {
 		EVPerr(EVP_F_FIPS_CIPHER_CTX_CTRL, EVP_R_NO_CIPHER_SET);
 		return 0;
 	}
-	FIPS_selftest_check();
 
 	if(!ctx->cipher->ctrl) {
 		EVPerr(EVP_F_FIPS_CIPHER_CTX_CTRL, EVP_R_CTRL_NOT_IMPLEMENTED);
@@ -327,6 +331,10 @@ int FIPS_cipher_ctx_set_key_length(EVP_CIPHER_CTX *ctx, int keylen)
 int FIPS_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 			const unsigned char *in, unsigned int inl)
 	{
-	FIPS_selftest_check();
+	if (FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_CIPHER, FIPS_R_SELFTEST_FAILED);
+		return -1;
+		}
 	return ctx->cipher->do_cipher(ctx,out,in,inl);
 	}

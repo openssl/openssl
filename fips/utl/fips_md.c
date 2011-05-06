@@ -204,7 +204,11 @@ int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type)
 
 int FIPS_digestupdate(EVP_MD_CTX *ctx, const void *data, size_t count)
 	{
-	FIPS_selftest_check();
+	if (FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_DIGESTUPDATE, FIPS_R_SELFTEST_FAILED);
+		return 0;
+		}
 	return ctx->update(ctx,data,count);
 	}
 
@@ -213,7 +217,11 @@ int FIPS_digestfinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size)
 	{
 	int ret;
 
-	FIPS_selftest_check();
+	if (FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_DIGESTFINAL, FIPS_R_SELFTEST_FAILED);
+		return 0;
+		}
 
 	OPENSSL_assert(ctx->digest->md_size <= EVP_MAX_MD_SIZE);
 	ret=ctx->digest->final(ctx,md);

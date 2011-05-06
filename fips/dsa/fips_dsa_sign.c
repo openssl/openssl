@@ -3,7 +3,7 @@
  * project 2007.
  */
 /* ====================================================================
- * Copyright (c) 2007 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -84,7 +84,11 @@ DSA_SIG * FIPS_dsa_sign_ctx(DSA *dsa, EVP_MD_CTX *ctx)
 
 DSA_SIG * FIPS_dsa_sign_digest(DSA *dsa, const unsigned char *dig, int dlen)
 	{
-	FIPS_selftest_check();
+	if (FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_DSA_SIGN_DIGEST, FIPS_R_SELFTEST_FAILED);
+		return NULL;
+		}
 	return dsa->meth->dsa_do_sign(dig, dlen, dsa);
 	}
 
@@ -102,7 +106,11 @@ int FIPS_dsa_verify_ctx(DSA *dsa, EVP_MD_CTX *ctx, DSA_SIG *s)
 int FIPS_dsa_verify_digest(DSA *dsa,
 				const unsigned char *dig, int dlen, DSA_SIG *s)
 	{
-	FIPS_selftest_check();
+	if (FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_DSA_VERIFY_DIGEST, FIPS_R_SELFTEST_FAILED);
+		return -1;
+		}
 	return dsa->meth->dsa_do_verify(dig,dlen,s,dsa);
 	}
 
