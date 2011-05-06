@@ -17,12 +17,9 @@ if ($ARGS[0] eq "norunasm")
 	shift @ARGS;
 	}
 
-# HACK to disable operation if no OPENSSL_FIPSSYMS option.
-# will go away when tested more fully.
-
 my $enabled = 0;
 
-foreach (@ARGS) { $enabled = 1 if /-DOPENSSL_FIPSSYMS/ ; }
+$enabled = 1 if $ENV{CFLAG} =~ /-DOPENSSL_FIPSSYMS/;
 
 if ($enabled == 0 && $runasm)
 	{

@@ -17,7 +17,7 @@ foreach (@objlist) { $tarobjs{"$1.c"} = 1 if /([^\/]+).o$/};
 
 $tarobjs{"ncbc_enc.c"} = 1;
 $tarobjs{"mem_clr.c"} = 1;
-$tarobjs{"ppc_cap.c"} = 1;
+$tarobjs{"ppccap.c"} = 1;
 
 foreach (split / /, $ENV{LINKDIRS} ) { $cdirs{$_} = 1 };
 
@@ -58,7 +58,7 @@ while (<STDIN>)
 		# Skip unused directories under crypto/
 		next if -d "crypto/$1" && !exists $cdirs{$1};
 		# Keep assembly language dir, Makefile or certain extensions
-		if (!/\/asm\// && !/\/Makefile$/ && !/\.(in|pl|h)$/)
+		if (!/\/asm\// && !/\/Makefile$/ && !/\.(in|pl|h|S)$/)
 			{
 			# If C source file must be on list.
 			next if !/(\w+\.c)$/ || !exists $tarobjs{$1};
