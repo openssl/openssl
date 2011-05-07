@@ -66,6 +66,8 @@ co-586.s:	asm/co-586.pl ../perlasm/x86asm.pl
 	$(PERL) asm/co-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 x86-mont.s:	asm/x86-mont.pl ../perlasm/x86asm.pl
 	$(PERL) asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+x86-gf2m.s:	asm/x86-gf2m.pl ../perlasm/x86asm.pl
+	$(PERL) asm/x86-gf2m.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 sparcv8.o:	asm/sparcv8.S
 	$(CC) $(CFLAGS) -c asm/sparcv8.S
