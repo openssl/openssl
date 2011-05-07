@@ -1363,6 +1363,10 @@ if ($no_asm)
 	$cflags=~s/\-D[BL]_ENDIAN//		if ($fips);
 	$thread_cflags=~s/\-D[BL]_ENDIAN//	if ($fips);
 	}
+elsif (defined($disabled{ec2m}))
+	{
+	$bn_obj =~ s/\w+-gf2m.o//;
+	}
 
 if (!$no_shared)
 	{
