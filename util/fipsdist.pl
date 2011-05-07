@@ -28,6 +28,8 @@ if (exists $ENV{NOEC2M})
 	delete $tarobjs{"bn_gf2m.c"};
 	delete $tarobjs{"ec2_mult.c"};
 	delete $tarobjs{"ec2_smpl.c"};
+	delete $tarobjs{"armv4-gf2m.pl"};
+	delete $tarobjs{"x86-gf2m.pl"};
 	}
 
 my %keep = 
