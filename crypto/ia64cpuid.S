@@ -168,7 +168,7 @@ OPENSSL_cleanse:
 
 .global	OPENSSL_instrument_bus#
 .proc	OPENSSL_instrument_bus#
-OPENSSL_instrument_cache:
+OPENSSL_instrument_bus:
 { .mmi;	mov		r2=r33
 #if defined(_HPUX_SOURCE) && !defined(_LP64)
 	addp4		r32=0,r32
@@ -206,7 +206,7 @@ OPENSSL_instrument_cache:
 
 .global	OPENSSL_instrument_bus2#
 .proc	OPENSSL_instrument_bus2#
-OPENSSL_instrument_cache2:
+OPENSSL_instrument_bus2:
 { .mmi;	mov		r2=r33			// put aside cnt
 #if defined(_HPUX_SOURCE) && !defined(_LP64)
 	addp4		r32=0,r32

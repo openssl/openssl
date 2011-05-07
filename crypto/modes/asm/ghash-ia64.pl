@@ -98,10 +98,10 @@ inp=r26;	end=r27;
 Hhi=r28;	Hlo=r29;
 Zhi=r30;	Zlo=r31;
 
+.align	128
+.skip	16					// aligns loop body
 .global	gcm_gmult_4bit#
 .proc	gcm_gmult_4bit#
-.align	128
-.skip	16;;					// aligns loop body
 gcm_gmult_4bit:
 	.prologue
 { .mmi;	.save	ar.pfs,prevfs
@@ -141,7 +141,7 @@ $code.=<<___;
 { .mmi;	add	Hlo=9,Xi;;			// ;; is here to prevent
 	add	Hhi=1,Xi		};;	// pipeline flush on Itanium
 { .mib;	st8	[Hlo]=Zlo
-	mov	pr=prevpr,-2		};;
+	mov	pr=prevpr,0x1ffff	};;
 { .mib;	st8	[Hhi]=Zhi
 	mov	ar.lc=prevlc
 	br.ret.sptk.many	b0	};;
@@ -175,10 +175,10 @@ ___
 $code.=<<___;
 prevsp=r3;
 
+.align	32
+.skip	16					// aligns loop body
 .global	gcm_ghash_4bit#
 .proc	gcm_ghash_4bit#
-.align	32
-.skip	16;;					// aligns loop body
 gcm_ghash_4bit:
 	.prologue
 { .mmi;	.save	ar.pfs,prevfs
@@ -410,7 +410,7 @@ $code.=<<___;	# (p19)
 .endp	gcm_ghash_4bit#
 ___
 $code.=<<___;
-.align	128;;
+.align	128
 .type	rem_4bit#,\@object
 rem_4bit:
         data8	0x0000<<48, 0x1C20<<48, 0x3840<<48, 0x2460<<48

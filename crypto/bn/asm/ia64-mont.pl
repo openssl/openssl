@@ -72,9 +72,9 @@ $code=<<___;
 // int bn_mul_mont (BN_ULONG *rp,const BN_ULONG *ap,
 //		    const BN_ULONG *bp,const BN_ULONG *np,
 //		    const BN_ULONG *n0p,int num);			
+.align	64
 .global	bn_mul_mont#
 .proc	bn_mul_mont#
-.align	64;;
 bn_mul_mont:
 	.prologue
 	.body
@@ -99,9 +99,9 @@ n0=f6;
 m0=f7;
 bi=f8;
 
+.align	64
 .local	bn_mul_mont_general#
 .proc	bn_mul_mont_general#
-.align	64;;
 bn_mul_mont_general:
 	.prologue
 { .mmi;	.save	ar.pfs,prevfs
@@ -353,7 +353,7 @@ bn_mul_mont_general:
 	mov		ar.lc=prevlc	}
 { .mib;	.restore	sp
 	mov		sp=prevsp
-	mov		pr=prevpr,-2
+	mov		pr=prevpr,0x1ffff
 	br.ret.sptk.many	b0	};;
 .endp	bn_mul_mont_general#
 
@@ -364,10 +364,10 @@ t0=r15;
 ai0=f8;  ai1=f9;  ai2=f10; ai3=f11; ai4=f12; ai5=f13; ai6=f14; ai7=f15;
 ni0=f16; ni1=f17; ni2=f18; ni3=f19; ni4=f20; ni5=f21; ni6=f22; ni7=f23;
 
+.align	64
+.skip	48		// aligns loop body
 .local	bn_mul_mont_8#
 .proc	bn_mul_mont_8#
-.align	64
-.skip	48;;		// aligns loop body
 bn_mul_mont_8:
 	.prologue
 { .mmi;	.save		ar.pfs,prevfs
@@ -828,7 +828,7 @@ bn_mul_mont_8:
 	nop.i		0		}
 { .mmi;	ldf.fill	f18=[r18],64
 	ldf.fill	f19=[r19],64
-	mov		pr=prevpr,-2	};;
+	mov		pr=prevpr,0x1ffff	};;
 { .mmi;	ldf.fill	f20=[r16]
 	ldf.fill	f21=[r17]
 	mov		ar.lc=prevlc	}
