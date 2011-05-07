@@ -275,8 +275,6 @@ BUILD_ONE_CMD=\
 reflect:
 	@[ -n "$(THIS)" ] && $(CLEARENV) && $(MAKE) $(THIS) -e $(BUILDENV)
 
-# FIXME
-
 FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/aes/aes_ecb.o \
 	../crypto/aes/aes_ofb.o \
