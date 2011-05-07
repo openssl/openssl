@@ -10,6 +10,8 @@ foreach (split / /, "FIPS_EX_OBJ AES_ENC BN_ASM DES_ENC SHA1_ASM_OBJ MODES_ASM_O
 	$objs .= " $ENV{$_}";
 	}
 
+my $noec2m = 0;
+
 
 my @objlist = split / /, $objs;
 
@@ -23,13 +25,13 @@ foreach (split / /, $ENV{LINKDIRS} ) { $cdirs{$_} = 1 };
 
 $cdirs{perlasm} = 1;
 
-if (exists $ENV{NOEC2M})
+$noec2m = 1 if (exists $ENV{NOEC2M});
+
+if ($noec2m)
 	{
 	delete $tarobjs{"bn_gf2m.c"};
 	delete $tarobjs{"ec2_mult.c"};
 	delete $tarobjs{"ec2_smpl.c"};
-	delete $tarobjs{"armv4-gf2m.pl"};
-	delete $tarobjs{"x86-gf2m.pl"};
 	}
 
 my %keep = 
@@ -59,6 +61,8 @@ while (<STDIN>)
 		{
 		# Skip unused directories under crypto/
 		next if -d "crypto/$1" && !exists $cdirs{$1};
+		# Skip GF2m assembly language perl scripts
+		next if $noec2m && /gf2m\.pl/;
 		# Keep assembly language dir, Makefile or certain extensions
 		if (!/\/asm\// && !/\/Makefile$/ && !/\.(in|pl|h|S)$/)
 			{
