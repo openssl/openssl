@@ -319,6 +319,13 @@ static void nist_cp_bn(BN_ULONG *buf, BN_ULONG *a, int top)
 						:(to[(n)/2] =((m)&1)?(from[(m)/2]>>32):(from[(m)/2]&BN_MASK2l)))
 #define bn_32_set_0(to, n)		(((n)&1)?(to[(n)/2]&=BN_MASK2l):(to[(n)/2]=0));
 #define bn_cp_32(to,n,from,m)		((m)>=0)?bn_cp_32_naked(to,n,from,m):bn_32_set_0(to,n)
+# if defined(L_ENDIAN)
+#  if defined(__arch64__)
+#   define NIST_INT64 long
+#  else
+#   define NIST_INT64 long long
+#  endif
+# endif
 #else
 #define bn_cp_64(to, n, from, m) \
 	{ \
@@ -330,10 +337,13 @@ static void nist_cp_bn(BN_ULONG *buf, BN_ULONG *a, int top)
 	bn_32_set_0(to, (n)*2); \
 	bn_32_set_0(to, (n)*2+1); \
 	}
-#if BN_BITS2 == 32
 #define bn_cp_32(to, n, from, m)	(to)[n] = (m>=0)?((from)[m]):0;
 #define bn_32_set_0(to, n)		(to)[n] = (BN_ULONG)0;
-#endif
+# if defined(_WIN32) && !defined(__GNUC__)
+#  define NIST_INT64 __int64
+# else
+#  define NIST_INT64 long long
+# endif
 #endif /* BN_BITS2 != 64 */
 
 
@@ -350,8 +360,7 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	int      top = a->top, i;
 	int      carry;
 	register BN_ULONG *r_d, *a_d = a->d;
-	BN_ULONG t_d[BN_NIST_192_TOP],
-	         buf[BN_NIST_192_TOP],
+	BN_ULONG buf[BN_NIST_192_TOP],
 		 c_d[BN_NIST_192_TOP],
 		*res;
 	PTR_SIZE_INT mask;
@@ -387,13 +396,46 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	nist_cp_bn_0(buf, a_d + BN_NIST_192_TOP, top - BN_NIST_192_TOP, BN_NIST_192_TOP);
 
+#if defined(NIST_INT64)
+	{
+	NIST_INT64		r;
+	unsigned int		*rp=(unsigned int *)r_d;
+	const unsigned int	*bp=(const unsigned int *)buf;
+
+	r  = rp[0];	r += bp[3*2-6];
+			r += bp[5*2-6];	rp[0] = (unsigned int)r; r >>= 32;
+
+	r += rp[1];	r += bp[3*2-5];
+			r += bp[5*2-5];	rp[1] = (unsigned int)r; r >>= 32;
+
+	r += rp[2];	r += bp[3*2-6];
+			r += bp[4*2-6];
+			r += bp[5*2-6];	rp[2] = (unsigned int)r; r >>= 32;
+
+	r += rp[3];	r += bp[3*2-5];
+			r += bp[4*2-5];
+			r += bp[5*2-5];	rp[3] = (unsigned int)r; r >>= 32;
+
+	r += rp[4];	r += bp[4*2-6];
+			r += bp[5*2-6];	rp[4] = (unsigned int)r; r >>= 32;
+
+	r += rp[5];	r += bp[4*2-5];
+			r += bp[5*2-5];	rp[5] = (unsigned int)r;
+
+	carry = (int)(r>>32);
+	}
+#else
+	{
+	BN_ULONG t_d[BN_NIST_192_TOP];
+
 	nist_set_192(t_d, buf, 0, 3, 3);
 	carry = (int)bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP);
 	nist_set_192(t_d, buf, 4, 4, 0);
 	carry += (int)bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP);
 	nist_set_192(t_d, buf, 5, 5, 5)
 	carry += (int)bn_add_words(r_d, r_d, t_d, BN_NIST_192_TOP);
-
+	}
+#endif
 	if (carry > 0)
 		carry = (int)bn_sub_words(r_d,r_d,_nist_p_192[carry-1],BN_NIST_192_TOP);
 	else
@@ -435,8 +477,7 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	int	top = a->top, i;
 	int	carry;
 	BN_ULONG *r_d, *a_d = a->d;
-	BN_ULONG t_d[BN_NIST_224_TOP],
-	         buf[BN_NIST_224_TOP],
+	BN_ULONG buf[BN_NIST_224_TOP],
 		 c_d[BN_NIST_224_TOP],
 		*res;
 	PTR_SIZE_INT mask;
@@ -474,14 +515,54 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 #if BN_BITS2==64
 	/* copy upper 256 bits of 448 bit number ... */
-	nist_cp_bn_0(t_d, a_d + (BN_NIST_224_TOP-1), top - (BN_NIST_224_TOP-1), BN_NIST_224_TOP);
+	nist_cp_bn_0(c_d, a_d + (BN_NIST_224_TOP-1), top - (BN_NIST_224_TOP-1), BN_NIST_224_TOP);
 	/* ... and right shift by 32 to obtain upper 224 bits */
-	nist_set_224(buf, t_d, 14, 13, 12, 11, 10, 9, 8);
+	nist_set_224(buf, c_d, 14, 13, 12, 11, 10, 9, 8);
 	/* truncate lower part to 224 bits too */
 	r_d[BN_NIST_224_TOP-1] &= BN_MASK2l;
 #else
 	nist_cp_bn_0(buf, a_d + BN_NIST_224_TOP, top - BN_NIST_224_TOP, BN_NIST_224_TOP);
 #endif
+
+#if defined(NIST_INT64) && BN_BITS2!=64
+	{
+	NIST_INT64		r;
+	unsigned int		*rp=(unsigned int *)r_d;
+	const unsigned int	*bp=(const unsigned int *)buf;
+
+	r  = rp[0];	r -= bp[7-7];
+			r -= bp[11-7];	rp[0] = (unsigned int)r; r >>= 32;
+
+	r += rp[1];	r -= bp[8-7];
+			r -= bp[12-7];	rp[1] = (unsigned int)r; r >>= 32;
+
+	r += rp[2];	r -= bp[9-7];
+			r -= bp[13-7];	rp[2] = (unsigned int)r; r >>= 32;
+
+	r += rp[3];	r += bp[7-7];
+			r += bp[11-7];
+			r -= bp[10-7];	rp[3] = (unsigned int)r; r >>= 32;
+
+	r += rp[4];	r += bp[8-7];
+			r += bp[12-7];
+			r -= bp[11-7];	rp[4] = (unsigned int)r; r >>= 32;
+
+	r += rp[5];	r += bp[9-7];
+			r += bp[13-7];
+			r -= bp[12-7];	rp[5] = (unsigned int)r; r >>= 32;
+
+	r += rp[6];	r += bp[10-7];
+			r -= bp[13-7];	rp[6] = (unsigned int)r;
+
+	carry = (int)(r>>32);
+# if BN_BITS2==64
+	rp[7] = carry;
+# endif
+	}	
+#else
+	{
+	BN_ULONG t_d[BN_NIST_224_TOP];
+
 	nist_set_224(t_d, buf, 10, 9, 8, 7, 0, 0, 0);
 	carry = (int)bn_add_words(r_d, r_d, t_d, BN_NIST_224_TOP);
 	nist_set_224(t_d, buf, 0, 13, 12, 11, 0, 0, 0);
@@ -493,6 +574,8 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 #if BN_BITS2==64
 	carry = (int)(r_d[BN_NIST_224_TOP-1]>>32);
+#endif
+	}
 #endif
 	u.f = bn_sub_words;
 	if (carry > 0)
@@ -548,8 +631,7 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	int	i, top = a->top;
 	int	carry = 0;
 	register BN_ULONG *a_d = a->d, *r_d;
-	BN_ULONG t_d[BN_NIST_256_TOP],
-	         buf[BN_NIST_256_TOP],
+	BN_ULONG buf[BN_NIST_256_TOP],
 		 c_d[BN_NIST_256_TOP],
 		*res;
 	PTR_SIZE_INT mask;
@@ -585,6 +667,81 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		r_d = a_d;
 
 	nist_cp_bn_0(buf, a_d + BN_NIST_256_TOP, top - BN_NIST_256_TOP, BN_NIST_256_TOP);
+
+#if defined(NIST_INT64)
+	{
+	NIST_INT64		r;
+	unsigned int		*rp=(unsigned int *)r_d;
+	const unsigned int	*bp=(const unsigned int *)buf;
+
+	r = rp[0];	r += bp[8-8];
+			r += bp[9-8];
+			r -= bp[11-8];
+			r -= bp[12-8];
+			r -= bp[13-8];
+			r -= bp[14-8];	rp[0] = (unsigned int)r; r >>= 32;
+
+	r += rp[1];	r += bp[9-8];
+			r += bp[10-8];
+			r -= bp[12-8];
+			r -= bp[13-8];
+			r -= bp[14-8];
+			r -= bp[15-8];	rp[1] = (unsigned int)r; r >>= 32;
+
+	r += rp[2];	r += bp[10-8];
+			r += bp[11-8];
+			r -= bp[13-8];
+			r -= bp[14-8];
+			r -= bp[15-8];	rp[2] = (unsigned int)r; r >>= 32;
+
+	r += rp[3];	r += bp[11-8];
+			r += bp[11-8];
+			r += bp[12-8];
+			r += bp[12-8];
+			r += bp[13-8];
+			r -= bp[15-8];
+			r -= bp[8-8];
+			r -= bp[9-8];	rp[3] = (unsigned int)r; r >>= 32;
+
+	r += rp[4];	r += bp[12-8];
+			r += bp[12-8];
+			r += bp[13-8];
+			r += bp[13-8];
+			r += bp[14-8];
+			r -= bp[9-8];
+			r -= bp[10-8];	rp[4] = (unsigned int)r; r >>= 32;
+
+	r += rp[5];	r += bp[13-8];
+			r += bp[13-8];
+			r += bp[14-8];
+			r += bp[14-8];
+			r += bp[15-8];
+			r -= bp[10-8];
+			r -= bp[11-8];	rp[5] = (unsigned int)r; r >>= 32;
+
+	r += rp[6];	r += bp[14-8];
+			r += bp[14-8];
+			r += bp[15-8];
+			r += bp[15-8];
+			r += bp[14-8];
+			r += bp[13-8];
+			r -= bp[8-8];
+			r -= bp[9-8];	rp[6] = (unsigned int)r; r >>= 32;
+
+	r += rp[7];	r += bp[15-8];
+			r += bp[15-8];
+			r += bp[15-8];
+			r += bp[8 -8];
+			r -= bp[10-8];
+			r -= bp[11-8];
+			r -= bp[12-8];
+			r -= bp[13-8];	rp[7] = (unsigned int)r;
+
+	carry = (int)(r>>32);
+	}
+#else
+	{
+	BN_ULONG t_d[BN_NIST_256_TOP];
 
 	/*S1*/
 	nist_set_256(t_d, buf, 15, 14, 13, 12, 11, 0, 0, 0);
@@ -625,6 +782,8 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	nist_set_256(t_d, buf, 13, 0, 11, 10, 9, 0, 15, 14);
 	carry -= (int)bn_sub_words(r_d, r_d, t_d, BN_NIST_256_TOP);
 
+	}
+#endif
 	/* see BN_nist_mod_224 for explanation */
 	u.f = bn_sub_words;
 	if (carry > 0)
@@ -672,8 +831,7 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	int	i, top = a->top;
 	int	carry = 0;
 	register BN_ULONG *r_d, *a_d = a->d;
-	BN_ULONG t_d[BN_NIST_384_TOP],
-	         buf[BN_NIST_384_TOP],
+	BN_ULONG buf[BN_NIST_384_TOP],
 		 c_d[BN_NIST_384_TOP],
 		*res;
 	PTR_SIZE_INT mask;
@@ -710,6 +868,96 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 		r_d = a_d;
 
 	nist_cp_bn_0(buf, a_d + BN_NIST_384_TOP, top - BN_NIST_384_TOP, BN_NIST_384_TOP);
+
+#if defined(NIST_INT64)
+	{
+	NIST_INT64		r;
+	unsigned int		*rp=(unsigned int *)r_d;
+	const unsigned int	*bp=(const unsigned int *)buf;
+
+	r = rp[0];	r += bp[12-12];
+			r += bp[21-12];
+			r += bp[20-12];
+			r -= bp[23-12];	rp[0] = (unsigned int)r; r >>= 32;
+
+	r += rp[1];	r += bp[13-12];
+			r += bp[22-12];
+			r += bp[23-12];
+			r -= bp[12-12];
+			r -= bp[20-12];	rp[1] = (unsigned int)r; r >>= 32;
+
+	r += rp[2];	r += bp[14-12];
+			r += bp[23-12];
+			r -= bp[13-12];
+			r -= bp[21-12];	rp[2] = (unsigned int)r; r >>= 32;
+
+	r += rp[3];	r += bp[15-12];
+			r += bp[12-12];
+			r += bp[20-12];
+			r += bp[21-12];
+			r -= bp[14-12];
+			r -= bp[22-12];
+			r -= bp[23-12];	rp[3] = (unsigned int)r; r >>= 32;
+
+	r += rp[4];	r += bp[21-12];
+			r += bp[21-12];
+			r += bp[16-12];
+			r += bp[13-12];
+			r += bp[12-12];
+			r += bp[20-12];
+			r += bp[22-12];
+			r -= bp[15-12];
+			r -= bp[23-12];
+			r -= bp[23-12];	rp[4] = (unsigned int)r; r >>= 32;
+
+	r += rp[5];	r += bp[22-12];
+			r += bp[22-12];
+			r += bp[17-12];
+			r += bp[14-12];
+			r += bp[13-12];
+			r += bp[21-12];
+			r += bp[23-12];
+			r -= bp[16-12];	rp[5] = (unsigned int)r; r >>= 32;
+			
+	r += rp[6];	r += bp[23-12];
+			r += bp[23-12];
+			r += bp[18-12];
+			r += bp[15-12];
+			r += bp[14-12];
+			r += bp[22-12];
+			r -= bp[17-12];	rp[6] = (unsigned int)r; r >>= 32;
+			
+	r += rp[7];	r += bp[19-12];
+			r += bp[16-12];
+			r += bp[15-12];
+			r += bp[23-12];
+			r -= bp[18-12];	rp[7] = (unsigned int)r; r >>= 32;
+			
+	r += rp[8];	r += bp[20-12];
+			r += bp[17-12];
+			r += bp[16-12];
+			r -= bp[19-12];	rp[8] = (unsigned int)r; r >>= 32;
+			
+	r += rp[9];	r += bp[21-12];
+			r += bp[18-12];
+			r += bp[17-12];
+			r -= bp[20-12];	rp[9] = (unsigned int)r; r >>= 32;
+			
+	r += rp[10];	r += bp[22-12];
+			r += bp[19-12];
+			r += bp[18-12];
+			r -= bp[21-12];	rp[10] = (unsigned int)r; r >>= 32;
+			
+	r += rp[11];	r += bp[23-12];
+			r += bp[20-12];
+			r += bp[19-12];
+			r -= bp[22-12];	rp[11] = (unsigned int)r;
+
+	carry = (int)(r>>32);
+	}
+#else
+	{
+	BN_ULONG t_d[BN_NIST_384_TOP];
 
 	/*S1*/
 	nist_set_256(t_d, buf, 0, 0, 0, 0, 0, 23-4, 22-4, 21-4);
@@ -752,6 +1000,8 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	nist_set_384(t_d,buf,0,0,0,0,0,0,0,23,23,0,0,0);
 	carry -= (int)bn_sub_words(r_d, r_d, t_d, BN_NIST_384_TOP);
 
+	}
+#endif
 	/* see BN_nist_mod_224 for explanation */
 	u.f = bn_sub_words;
 	if (carry > 0)
