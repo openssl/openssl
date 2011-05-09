@@ -1050,7 +1050,7 @@ int ssl3_alert_code(int code);
 int ssl_ok(SSL *s);
 
 #ifndef OPENSSL_NO_ECDH
-int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs);
+int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 #endif
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
@@ -1077,6 +1077,12 @@ int ssl_check_serverhello_tlsext(SSL *s);
 #endif
 int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 				const unsigned char *limit, SSL_SESSION **ret);
+
+int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
+				const EVP_MD *md);
+int tls12_get_sigid(const EVP_PKEY *pk);
+const EVP_MD *tls12_get_hash(unsigned char hash_alg);
+
 #endif
 EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) ;
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
@@ -1090,4 +1096,3 @@ int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 					  int *al);
 long ssl_get_algorithm2(SSL *s);
 #endif
-int tls12_get_sigandhash(unsigned char *p, EVP_PKEY *pk, const EVP_MD *md);

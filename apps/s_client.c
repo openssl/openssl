@@ -1103,6 +1103,9 @@ bad:
 		SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
 		}
 #endif
+	/* HACK while TLS v1.2 is disabled by default */
+	if (!(off & SSL_OP_NO_TLSv1_2))
+		SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_2);
 	if (bugs)
 		SSL_CTX_set_options(ctx,SSL_OP_ALL|off);
 	else
@@ -2008,6 +2011,18 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 		BIO_printf(bio, "Next protocol: (%d) ", next_proto.status);
 		BIO_write(bio, proto, proto_len);
 		BIO_write(bio, "\n", 1);
+	}
+#endif
+
+#ifdef SSL_DEBUG
+	{
+	/* Print out local port of connection: useful for debugging */
+	int sock;
+	struct sockaddr_in ladd;
+	socklen_t ladd_size = sizeof(ladd);
+	sock = SSL_get_fd(s);
+	getsockname(sock, (struct sockaddr *)&ladd, &ladd_size);
+	BIO_printf(bio_c_out, "LOCAL PORT is %u\n", ntohs(ladd.sin_port));
 	}
 #endif
 

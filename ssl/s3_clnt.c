@@ -1203,6 +1203,7 @@ int ssl3_get_key_exchange(SSL *s)
 	int al,i,j,param_len,ok;
 	long n,alg_k,alg_a;
 	EVP_PKEY *pkey=NULL;
+	const EVP_MD *md = NULL;
 #ifndef OPENSSL_NO_RSA
 	RSA *rsa=NULL;
 #endif
@@ -1653,6 +1654,38 @@ int ssl3_get_key_exchange(SSL *s)
 	/* if it was signed, check the signature */
 	if (pkey != NULL)
 		{
+		if (s->version >= TLS1_2_VERSION)
+			{
+			int sigalg = tls12_get_sigid(pkey);
+			/* Should never happen */
+			if (sigalg == -1)
+				{
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+			/* Check key type is consistent with signature */
+			if (sigalg != (int)p[1])
+				{
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_WRONG_SIGNATURE_TYPE);
+				al=SSL_AD_DECODE_ERROR;
+				goto f_err;
+				}
+			md = tls12_get_hash(p[0]);
+			if (md == NULL)
+				{
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNKNOWN_DIGEST);
+				al=SSL_AD_DECODE_ERROR;
+				goto f_err;
+				}
+#ifdef SSL_DEBUG
+fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
+#endif
+			p += 2;
+			n -= 2;
+			}
+		else
+			md = EVP_sha1();
+			
 		n2s(p,i);
 		n-=2;
 		j=EVP_PKEY_size(pkey);
@@ -1666,7 +1699,7 @@ int ssl3_get_key_exchange(SSL *s)
 			}
 
 #ifndef OPENSSL_NO_RSA
-		if (pkey->type == EVP_PKEY_RSA)
+		if (pkey->type == EVP_PKEY_RSA && s->version < TLS1_2_VERSION)
 			{
 			int num;
 
@@ -1701,11 +1734,8 @@ int ssl3_get_key_exchange(SSL *s)
 			}
 		else
 #endif
-#ifndef OPENSSL_NO_DSA
-			if (pkey->type == EVP_PKEY_DSA)
 			{
-			/* lets do DSS */
-			EVP_VerifyInit_ex(&md_ctx,EVP_dss1(), NULL);
+			EVP_VerifyInit_ex(&md_ctx, md, NULL);
 			EVP_VerifyUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
 			EVP_VerifyUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
 			EVP_VerifyUpdate(&md_ctx,param,param_len);
@@ -1716,30 +1746,6 @@ int ssl3_get_key_exchange(SSL *s)
 				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_SIGNATURE);
 				goto f_err;
 				}
-			}
-		else
-#endif
-#ifndef OPENSSL_NO_ECDSA
-			if (pkey->type == EVP_PKEY_EC)
-			{
-			/* let's do ECDSA */
-			EVP_VerifyInit_ex(&md_ctx,EVP_ecdsa(), NULL);
-			EVP_VerifyUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
-			EVP_VerifyUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
-			EVP_VerifyUpdate(&md_ctx,param,param_len);
-			if (EVP_VerifyFinal(&md_ctx,p,(int)n,pkey) <= 0)
-				{
-				/* bad signature */
-				al=SSL_AD_DECRYPT_ERROR;
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_BAD_SIGNATURE);
-				goto f_err;
-				}
-			}
-		else
-#endif
-			{
-			SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,ERR_R_INTERNAL_ERROR);
-			goto err;
 			}
 		}
 	else
@@ -1787,7 +1793,7 @@ int ssl3_get_certificate_request(SSL *s)
 	{
 	int ok,ret=0;
 	unsigned long n,nc,l;
-	unsigned int llen,ctype_num,i;
+	unsigned int llen,sigalglen, ctype_num,i;
 	X509_NAME *xn=NULL;
 	const unsigned char *p,*q;
 	unsigned char *d;
@@ -1843,6 +1849,17 @@ int ssl3_get_certificate_request(SSL *s)
 	for (i=0; i<ctype_num; i++)
 		s->s3->tmp.ctype[i]= p[i];
 	p+=ctype_num;
+	/* HACK! For now just skip over signatature algorithms */
+	if (s->version >= TLS1_2_VERSION)
+		{
+		n2s(p, sigalglen);
+		p += sigalglen;
+		sigalglen += 2;
+		}
+	else
+		sigalglen = 0;
+		
+		
 
 	/* get the CA RDNs */
 	n2s(p,llen);
@@ -1855,7 +1872,7 @@ fclose(out);
 }
 #endif
 
-	if ((llen+ctype_num+2+1) != n)
+	if ((llen+ctype_num+sigalglen+2+1) != n)
 		{
 		ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECODE_ERROR);
 		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,SSL_R_LENGTH_MISMATCH);
@@ -3059,7 +3076,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 	if (idx == SSL_PKEY_ECC)
 		{
 		if (ssl_check_srvr_ecc_cert_and_alg(sc->peer_pkeys[idx].x509,
-		    s->s3->tmp.new_cipher) == 0) 
+		    						s) == 0) 
 			{ /* check failed */
 			SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_BAD_ECC_CERT);
 			goto f_err;

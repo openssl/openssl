@@ -1008,6 +1008,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	const void *co = NULL, *so = NULL;
 	int col = 0, sol = 0;
 
+
 #ifdef KSSL_DEBUG
 	printf ("tls1_generate_master_secret(%p,%p, %p, %d)\n", s,out, p,len);
 #endif	/* KSSL_DEBUG */
@@ -1032,6 +1033,16 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 		so, sol,
 		p,len,
 		s->session->master_key,buff,sizeof buff);
+#ifdef SSL_DEBUG
+	fprintf(stderr, "Premaster Secret:\n");
+	BIO_dump_fp(stderr, (char *)p, len);
+	fprintf(stderr, "Client Random:\n");
+	BIO_dump_fp(stderr, (char *)s->s3->client_random, SSL3_RANDOM_SIZE);
+	fprintf(stderr, "Server Random:\n");
+	BIO_dump_fp(stderr, (char *)s->s3->server_random, SSL3_RANDOM_SIZE);
+	fprintf(stderr, "Master Secret:\n");
+	BIO_dump_fp(stderr, (char *)s->session->master_key, SSL3_MASTER_SECRET_SIZE);
+#endif
 
 #ifdef KSSL_DEBUG
 	printf ("tls1_generate_master_secret() complete\n");

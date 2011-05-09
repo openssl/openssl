@@ -451,6 +451,62 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 		skip_ext:
 
+	if (s->version >= TLS1_2_VERSION)
+		{
+		/* List of supported signature algorithms and hashes.
+		 * Should make this customisable at some point, for
+		 * now include everything we support.
+		 */
+		static unsigned char sigalgs[] = {
+#ifndef OPENSSL_NO_RSA
+# ifndef OPENSSL_NO_SHA512
+			TLSEXT_hash_sha512, TLSEXT_signature_rsa,
+			TLSEXT_hash_sha384, TLSEXT_signature_rsa,
+# endif
+# ifndef OPENSSL_NO_SHA256
+			TLSEXT_hash_sha256, TLSEXT_signature_rsa,
+			TLSEXT_hash_sha224, TLSEXT_signature_rsa,
+# endif
+# ifndef OPENSSL_NO_SHA
+			TLSEXT_hash_sha1, TLSEXT_signature_rsa,
+# endif
+#endif
+#ifndef OPENSSL_NO_ECDSA
+# ifndef OPENSSL_NO_SHA512
+			TLSEXT_hash_sha512, TLSEXT_signature_ecdsa,
+			TLSEXT_hash_sha384, TLSEXT_signature_ecdsa,
+# endif
+# ifndef OPENSSL_NO_SHA256
+			TLSEXT_hash_sha256, TLSEXT_signature_ecdsa,
+			TLSEXT_hash_sha224, TLSEXT_signature_ecdsa,
+# endif
+# ifndef OPENSSL_NO_SHA
+			TLSEXT_hash_sha1, TLSEXT_signature_ecdsa,
+# endif
+#endif
+#ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_SHA512
+			TLSEXT_hash_sha512, TLSEXT_signature_dsa,
+			TLSEXT_hash_sha384, TLSEXT_signature_dsa,
+# endif
+# ifndef OPENSSL_NO_SHA256
+			TLSEXT_hash_sha256, TLSEXT_signature_dsa,
+			TLSEXT_hash_sha224, TLSEXT_signature_dsa,
+# endif
+# ifndef OPENSSL_NO_SHA
+			TLSEXT_hash_sha1, TLSEXT_signature_dsa
+# endif
+#endif
+		};
+		if ((size_t)(limit - ret) < sizeof(sigalgs) + 6)
+			return NULL; 
+		s2n(TLSEXT_TYPE_signature_algorithms,ret);
+		s2n(sizeof(sigalgs) + 2, ret);
+		s2n(sizeof(sigalgs), ret);
+		memcpy(ret, sigalgs, sizeof(sigalgs));
+		ret += sizeof(sigalgs);
+		}
+
 #ifdef TLSEXT_TYPE_opaque_prf_input
 	if (s->s3->client_opaque_prf_input != NULL &&
 	    s->version != DTLS1_VERSION)
@@ -1976,15 +2032,15 @@ static int tls12_find_nid(int id, tls12_lookup *table, size_t tlen)
 	return -1;
 	}
 #endif
-int tls12_get_sigandhash(unsigned char *p, EVP_PKEY *pk, const EVP_MD *md)
+
+int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk, const EVP_MD *md)
 	{
 	int sig_id, md_id;
 	md_id = tls12_find_id(EVP_MD_type(md), tls12_md,
 				sizeof(tls12_md)/sizeof(tls12_lookup));
 	if (md_id == -1)
 		return 0;
-	sig_id = tls12_find_id(pk->type, tls12_sig,
-				sizeof(tls12_sig)/sizeof(tls12_lookup));
+	sig_id = tls12_get_sigid(pk);
 	if (sig_id == -1)
 		return 0;
 	p[0] = (unsigned char)md_id;
@@ -1992,9 +2048,47 @@ int tls12_get_sigandhash(unsigned char *p, EVP_PKEY *pk, const EVP_MD *md)
 	return 1;
 	}
 
+int tls12_get_sigid(const EVP_PKEY *pk)
+	{
+	return tls12_find_id(pk->type, tls12_sig,
+				sizeof(tls12_sig)/sizeof(tls12_lookup));
+	}
+
+const EVP_MD *tls12_get_hash(unsigned char hash_alg)
+	{
+	switch(hash_alg)
+		{
+#ifndef OPENSSL_NO_MD5
+		case TLSEXT_hash_md5:
+		return EVP_md5();
+#endif
+#ifndef OPENSSL_NO_SHA
+		case TLSEXT_hash_sha1:
+		return EVP_sha1();
+#endif
+#ifndef OPENSSL_NO_SHA256
+		case TLSEXT_hash_sha224:
+		return EVP_sha224();
+
+		case TLSEXT_hash_sha256:
+		return EVP_sha256();
+#endif
+#ifndef OPENSSL_NO_SHA512
+		case TLSEXT_hash_sha384:
+		return EVP_sha384();
+
+		case TLSEXT_hash_sha512:
+		return EVP_sha512();
+#endif
+		default:
+		return NULL;
+
+		}
+	}
+
 /* Set preferred digest for each key type */
 
-int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
+static int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	{
 	int i, idx;
 	const EVP_MD *md;
@@ -2033,47 +2127,16 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 			continue;
 			}
 
-		if (c->pkeys[idx].digest)
-			continue;
-
-		switch(hash_alg)
+		if (c->pkeys[idx].digest == NULL)
 			{
-#ifndef OPENSSL_NO_MD5
-			case TLSEXT_hash_md5:
-			md = EVP_md5();
-			break;
-#endif
-#ifndef OPENSSL_NO_SHA
-			case TLSEXT_hash_sha1:
-			md = EVP_sha1();
-			break;
-#endif
-#ifndef OPENSSL_NO_SHA256
-			case TLSEXT_hash_sha224:
-			md = EVP_sha224();
-			break;
-
-			case TLSEXT_hash_sha256:
-			md = EVP_sha256();
-			break;
-#endif
-#ifndef OPENSSL_NO_SHA512
-			case TLSEXT_hash_sha384:
-			md = EVP_sha384();
-			break;
-
-			case TLSEXT_hash_sha512:
-			md = EVP_sha512();
-			break;
-#endif
-			default:
-			continue;
-
+			md = tls12_get_hash(hash_alg);
+			if (md)
+				{
+				c->pkeys[idx].digest = md;
+				if (idx == SSL_PKEY_RSA_SIGN)
+					c->pkeys[SSL_PKEY_RSA_ENC].digest = md;
+				}
 			}
-
-		c->pkeys[idx].digest = md;
-		if (idx == SSL_PKEY_RSA_SIGN)
-			c->pkeys[SSL_PKEY_RSA_ENC].digest = md;
 
 		}
 

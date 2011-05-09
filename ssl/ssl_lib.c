@@ -2185,12 +2185,13 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 
 #ifndef OPENSSL_NO_EC
 
-int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
+int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 	{
 	unsigned long alg_k, alg_a;
 	EVP_PKEY *pkey = NULL;
 	int keysize = 0;
 	int signature_nid = 0;
+	const SSL_CIPHER *cs = s->s3->tmp.new_cipher;
 
 	alg_k = cs->algorithm_mkey;
 	alg_a = cs->algorithm_auth;
@@ -2217,7 +2218,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 			SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG, SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT);
 			return 0;
 			}
-		if (alg_k & SSL_kECDHe)
+		if ((alg_k & SSL_kECDHe) && s->version < TLS1_2_VERSION)
 			{
 			/* signature alg must be ECDSA */
 			if (signature_nid != NID_ecdsa_with_SHA1)
@@ -2226,7 +2227,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 				return 0;
 				}
 			}
-		if (alg_k & SSL_kECDHr)
+		if ((alg_k & SSL_kECDHr) && s->version < TLS1_2_VERSION)
 			{
 			/* signature alg must be RSA */
 

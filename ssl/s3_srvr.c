@@ -1932,6 +1932,10 @@ int ssl3_send_server_key_exchange(SSL *s)
 						}
 					p+=2;
 					}
+#ifdef SSL_DEBUG
+				fprintf(stderr, "Using hash %s\n",
+							EVP_MD_name(md));
+#endif
 				EVP_SignInit_ex(&md_ctx, md, NULL);
 				EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
 				EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
