@@ -477,7 +477,7 @@ static int print_cmac_ver(const EVP_CIPHER *cipher, FILE *out,
 		unsigned char *Mac, int Maclen,
 		int Tlen)
 	{
-	int rc;
+	int rc = 1;
 	size_t reslen;
 	unsigned char res[128];
 	CMAC_CTX *cmac_ctx = CMAC_CTX_new();
