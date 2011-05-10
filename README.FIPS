@@ -1,5 +1,8 @@
 Preliminary status and build information for FIPS module v2.0
 
+NB: if you are cross compiling you now need to use the latest "incore2" script
+from http://www.openssl.org/docs/fips/incore2
+
 If you have any object files from a previous build do:
 
 make clean
