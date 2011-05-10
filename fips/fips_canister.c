@@ -22,9 +22,15 @@ const void         *FIPS_text_end(void);
 	(defined(__linux) && (defined(__arm) || defined(__arm__)))	|| \
 	(defined(__i386) || defined(__i386__))				|| \
 	(defined(__x86_64) || defined(__x86_64__))			|| \
-	defined(__ANDROID__)						|| \
 	(defined(vax) || defined(__vax__))
 #  define POINTER_TO_FUNCTION_IS_POINTER_TO_1ST_INSTRUCTION
+# endif
+#endif
+
+#if !defined(FIPS_REF_POINT_IS_SAFE_TO_CROSS_COMPILE)
+# if	(defined(__ANDROID__) && (defined(__arm__) || defined(__arm)))	|| \
+	(defined(__vxworks)   && (defined(__ppc__) || defined(__ppc)))
+#  define FIPS_REF_POINT_IS_SAFE_TO_CROSS_COMPILE
 # endif
 #endif
 
@@ -89,9 +95,10 @@ static void *instruction_pointer(void)
 			"move	%0,$31\n\t"
 			"move	$31,%1"		/* restore ra */
 			: "=r"(ret),"=r"(scratch) );
-# elif	defined(__ppc__) || defined(__powerpc) || defined(__powerpc__) || \
+# elif	defined(__ppc__) || defined(__ppc) || \\
+	defined(__powerpc) || defined(__powerpc__) || \
 	defined(__POWERPC__) || defined(_POWER) || defined(__PPC__) || \
-	defined(__PPC64__) || defined(__powerpc64__)
+	defined(__PPC64__) || defined(__ppc64__) || defined(__powerpc64__)
 #   define INSTRUCTION_POINTER_IMPLEMENTED
     void *scratch;
     __asm __volatile (	"mfspr	%1,8\n\t"	/* save lr */
@@ -115,6 +122,9 @@ static void *instruction_pointer(void)
 #   define INSTRUCTION_POINTER_IMPLEMENTED
     __asm __volatile (	"leaq	0(%%rip),%0" : "=r"(ret) );
     ret = (void *)((size_t)ret&~3UL); /* align for better performance */
+# elif defined(__arm) || defined(__arm__)
+#   define INSTRUCTION_POINTER_IMPLEMENTED
+    __asm __volatile (	"sub	%0,pc,#8" : "=r"(ret) );
 # endif
 #elif	defined(__DECC) && defined(__alpha)
 #   define INSTRUCTION_POINTER_IMPLEMENTED
@@ -139,6 +149,8 @@ static void *instruction_pointer(void)
  */
 const void *FIPS_ref_point()
 {
+#if	defined(FIPS_REF_POINT_IS_SAFE_TO_CROSS_COMPILE)
+    return (void *)FIPS_ref_point;
 #if	defined(INSTRUCTION_POINTER_IMPLEMENTED)
     return instruction_pointer();
 /* Below we essentially cover vendor compilers which do not support
@@ -177,8 +189,6 @@ const void *FIPS_ref_point()
 # else
     return (void *)FIPS_ref_point;
 # endif
-#elif  defined(__vxworks)
-    return (void *)FIPS_ref_point;
 /*
  * In case you wonder why there is no #ifdef __linux. All Linux targets
  * are GCC-based and therefore are covered by instruction_pointer above
