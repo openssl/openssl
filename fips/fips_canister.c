@@ -95,7 +95,7 @@ static void *instruction_pointer(void)
 			"move	%0,$31\n\t"
 			"move	$31,%1"		/* restore ra */
 			: "=r"(ret),"=r"(scratch) );
-# elif	defined(__ppc__) || defined(__ppc) || \\
+# elif	defined(__ppc__) || defined(__ppc) || \
 	defined(__powerpc) || defined(__powerpc__) || \
 	defined(__POWERPC__) || defined(_POWER) || defined(__PPC__) || \
 	defined(__PPC64__) || defined(__ppc64__) || defined(__powerpc64__)
