@@ -151,7 +151,7 @@ const void *FIPS_ref_point()
 {
 #if	defined(FIPS_REF_POINT_IS_SAFE_TO_CROSS_COMPILE)
     return (void *)FIPS_ref_point;
-#if	defined(INSTRUCTION_POINTER_IMPLEMENTED)
+#elif	defined(INSTRUCTION_POINTER_IMPLEMENTED)
     return instruction_pointer();
 /* Below we essentially cover vendor compilers which do not support
  * inline assembler... */
