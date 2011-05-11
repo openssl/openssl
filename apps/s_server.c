@@ -499,7 +499,7 @@ static void sv_usage(void)
 #endif
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
-	BIO_printf(bio_err," -tls1_1       - Just talk TLSv1_1\n");
+	BIO_printf(bio_err," -tls1_1       - Just talk TLSv1.1\n");
 	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
 	BIO_printf(bio_err," -dtls1        - Just talk DTLSv1\n");
 	BIO_printf(bio_err," -timeout      - Enable timeouts\n");
