@@ -271,6 +271,53 @@ int tls1_ec_nid2curve_id(int nid)
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_TLSEXT
+
+/* List of supported signature algorithms and hashes. Should make this
+ * customisable at some point, for now include everything we support.
+ */
+
+#ifdef OPENSSL_NO_RSA
+#define tlsext_sigalg_rsa(md) /* */
+#else
+#define tlsext_sigalg_rsa(md) md, TLSEXT_signature_rsa,
+#endif
+
+#ifdef OPENSSL_NO_DSA
+#define tlsext_sigalg_dsa(md) /* */
+#else
+#define tlsext_sigalg_dsa(md) md, TLSEXT_signature_dsa,
+#endif
+
+#ifdef OPENSSL_NO_ECDSA
+#define tlsext_sigalg_ecdsa(md) /* */
+#else
+#define tlsext_sigalg_ecdsa(md) md, TLSEXT_signature_dsa,
+#endif
+
+#define tlsext_sigalg(md) \
+		tlsext_sigalg_rsa(md) \
+		tlsext_sigalg_dsa(md) \
+		tlsext_sigalg_ecdsa(md)
+
+static unsigned char tls12_sigalgs[] = {
+#ifndef OPENSSL_NO_SHA512
+	tlsext_sigalg(TLSEXT_hash_sha512)
+	tlsext_sigalg(TLSEXT_hash_sha384)
+#endif
+#ifndef OPENSSL_NO_SHA256
+	tlsext_sigalg(TLSEXT_hash_sha256)
+	tlsext_sigalg(TLSEXT_hash_sha224)
+#endif
+#ifndef OPENSSL_NO_SHA
+	tlsext_sigalg(TLSEXT_hash_sha1)
+#endif
+#ifndef OPENSSL_NO_MD5
+	tlsext_sigalg_rsa(TLSEXT_hash_md5)
+#endif
+};
+
+
+
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	{
 	int extdatalen=0;
@@ -453,58 +500,13 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 	if (s->version >= TLS1_2_VERSION)
 		{
-		/* List of supported signature algorithms and hashes.
-		 * Should make this customisable at some point, for
-		 * now include everything we support.
-		 */
-		static unsigned char sigalgs[] = {
-#ifndef OPENSSL_NO_RSA
-# ifndef OPENSSL_NO_SHA512
-			TLSEXT_hash_sha512, TLSEXT_signature_rsa,
-			TLSEXT_hash_sha384, TLSEXT_signature_rsa,
-# endif
-# ifndef OPENSSL_NO_SHA256
-			TLSEXT_hash_sha256, TLSEXT_signature_rsa,
-			TLSEXT_hash_sha224, TLSEXT_signature_rsa,
-# endif
-# ifndef OPENSSL_NO_SHA
-			TLSEXT_hash_sha1, TLSEXT_signature_rsa,
-# endif
-#endif
-#ifndef OPENSSL_NO_ECDSA
-# ifndef OPENSSL_NO_SHA512
-			TLSEXT_hash_sha512, TLSEXT_signature_ecdsa,
-			TLSEXT_hash_sha384, TLSEXT_signature_ecdsa,
-# endif
-# ifndef OPENSSL_NO_SHA256
-			TLSEXT_hash_sha256, TLSEXT_signature_ecdsa,
-			TLSEXT_hash_sha224, TLSEXT_signature_ecdsa,
-# endif
-# ifndef OPENSSL_NO_SHA
-			TLSEXT_hash_sha1, TLSEXT_signature_ecdsa,
-# endif
-#endif
-#ifndef OPENSSL_NO_DSA
-# ifndef OPENSSL_NO_SHA512
-			TLSEXT_hash_sha512, TLSEXT_signature_dsa,
-			TLSEXT_hash_sha384, TLSEXT_signature_dsa,
-# endif
-# ifndef OPENSSL_NO_SHA256
-			TLSEXT_hash_sha256, TLSEXT_signature_dsa,
-			TLSEXT_hash_sha224, TLSEXT_signature_dsa,
-# endif
-# ifndef OPENSSL_NO_SHA
-			TLSEXT_hash_sha1, TLSEXT_signature_dsa
-# endif
-#endif
-		};
-		if ((size_t)(limit - ret) < sizeof(sigalgs) + 6)
+		if ((size_t)(limit - ret) < sizeof(tls12_sigalgs) + 6)
 			return NULL; 
 		s2n(TLSEXT_TYPE_signature_algorithms,ret);
-		s2n(sizeof(sigalgs) + 2, ret);
-		s2n(sizeof(sigalgs), ret);
-		memcpy(ret, sigalgs, sizeof(sigalgs));
-		ret += sizeof(sigalgs);
+		s2n(sizeof(tls12_sigalgs) + 2, ret);
+		s2n(sizeof(tls12_sigalgs), ret);
+		memcpy(ret, tls12_sigalgs, sizeof(tls12_sigalgs));
+		ret += sizeof(tls12_sigalgs);
 		}
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
