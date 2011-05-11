@@ -141,7 +141,7 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 	    goto err;
 	    }
 
-	if (FIPS_mode() && !(ret->flags & DSA_FLAG_NON_FIPS_ALLOW) 
+	if (FIPS_module_mode() && !(ret->flags & DSA_FLAG_NON_FIPS_ALLOW) 
 			&& (bits < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
 		{
 		DSAerr(DSA_F_DSA_BUILTIN_PARAMGEN, DSA_R_KEY_SIZE_TOO_SMALL);
@@ -412,7 +412,7 @@ static int dsa2_valid_parameters(size_t L, size_t N)
 int fips_check_dsa_prng(DSA *dsa, size_t L, size_t N)
 	{
 	int strength;
-	if (!FIPS_mode())
+	if (!FIPS_module_mode())
 		return 1;
 
 	if (dsa->flags & (DSA_FLAG_NON_FIPS_ALLOW|DSA_FLAG_FIPS_CHECKED))

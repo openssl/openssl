@@ -72,7 +72,7 @@ int FIPS_rand_set_method(const RAND_METHOD *meth)
 	else
 		fips_approved_rand_meth = 0;
 
-	if (!fips_approved_rand_meth && FIPS_mode())
+	if (!fips_approved_rand_meth && FIPS_module_mode())
 		{
 		FIPSerr(FIPS_F_FIPS_RAND_SET_METHOD, FIPS_R_NON_FIPS_METHOD);
 		return 0;
@@ -83,7 +83,7 @@ int FIPS_rand_set_method(const RAND_METHOD *meth)
 
 void FIPS_rand_seed(const void *buf, int num)
 	{
-	if (!fips_approved_rand_meth && FIPS_mode())
+	if (!fips_approved_rand_meth && FIPS_module_mode())
 		{
 		FIPSerr(FIPS_F_FIPS_RAND_SEED, FIPS_R_NON_FIPS_METHOD);
 		return;
@@ -94,7 +94,7 @@ void FIPS_rand_seed(const void *buf, int num)
 
 void FIPS_rand_add(const void *buf, int num, double entropy)
 	{
-	if (!fips_approved_rand_meth && FIPS_mode())
+	if (!fips_approved_rand_meth && FIPS_module_mode())
 		{
 		FIPSerr(FIPS_F_FIPS_RAND_ADD, FIPS_R_NON_FIPS_METHOD);
 		return;
@@ -105,7 +105,7 @@ void FIPS_rand_add(const void *buf, int num, double entropy)
 
 int FIPS_rand_bytes(unsigned char *buf, int num)
 	{
-	if (!fips_approved_rand_meth && FIPS_mode())
+	if (!fips_approved_rand_meth && FIPS_module_mode())
 		{
 		FIPSerr(FIPS_F_FIPS_RAND_BYTES, FIPS_R_NON_FIPS_METHOD);
 		return 0;
@@ -117,7 +117,7 @@ int FIPS_rand_bytes(unsigned char *buf, int num)
 
 int FIPS_rand_pseudo_bytes(unsigned char *buf, int num)
 	{
-	if (!fips_approved_rand_meth && FIPS_mode())
+	if (!fips_approved_rand_meth && FIPS_module_mode())
 		{
 		FIPSerr(FIPS_F_FIPS_RAND_PSEUDO_BYTES, FIPS_R_NON_FIPS_METHOD);
 		return 0;
@@ -129,7 +129,7 @@ int FIPS_rand_pseudo_bytes(unsigned char *buf, int num)
 
 int FIPS_rand_status(void)
 	{
-	if (!fips_approved_rand_meth && FIPS_mode())
+	if (!fips_approved_rand_meth && FIPS_module_mode())
 		{
 		FIPSerr(FIPS_F_FIPS_RAND_STATUS, FIPS_R_NON_FIPS_METHOD);
 		return 0;
@@ -153,7 +153,7 @@ int FIPS_rand_strength(void)
 		return 80;
 	else if (fips_approved_rand_meth == 0)
 		{
-		if (FIPS_mode())
+		if (FIPS_module_mode())
 			return 0;
 		else
 			return 256;

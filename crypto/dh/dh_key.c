@@ -128,7 +128,7 @@ static int generate_key(DH *dh)
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
 
 #ifdef OPENSSL_FIPS
-	if (FIPS_mode() && (BN_num_bits(dh->p) < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
+	if (FIPS_module_mode() && (BN_num_bits(dh->p) < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
 		{
 		DHerr(DH_F_GENERATE_KEY, DH_R_KEY_SIZE_TOO_SMALL);
 		return 0;
@@ -227,7 +227,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 		}
 
 #ifdef OPENSSL_FIPS
-	if (FIPS_mode() && (BN_num_bits(dh->p) < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
+	if (FIPS_module_mode() && (BN_num_bits(dh->p) < OPENSSL_DH_FIPS_MIN_MODULUS_BITS))
 		{
 		DHerr(DH_F_COMPUTE_KEY, DH_R_KEY_SIZE_TOO_SMALL);
 		goto err;

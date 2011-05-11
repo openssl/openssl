@@ -136,7 +136,7 @@ int FIPS_cipherinit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	if (cipher)
 		{
 		/* Only FIPS ciphers allowed */
-		if (FIPS_mode() && !(cipher->flags & EVP_CIPH_FLAG_FIPS) &&
+		if (FIPS_module_mode() && !(cipher->flags & EVP_CIPH_FLAG_FIPS) &&
 			!(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW))
 			{
 			EVPerr(EVP_F_FIPS_CIPHERINIT, EVP_R_DISABLED_FOR_FIPS);
@@ -288,7 +288,7 @@ int FIPS_cipher_ctx_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 		}
 
 	/* Only FIPS ciphers allowed */
-	if (FIPS_mode() && !(in->cipher->flags & EVP_CIPH_FLAG_FIPS) &&
+	if (FIPS_module_mode() && !(in->cipher->flags & EVP_CIPH_FLAG_FIPS) &&
 		!(out->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW))
 		{
 		EVPerr(EVP_F_FIPS_CIPHER_CTX_COPY, EVP_R_DISABLED_FOR_FIPS);

@@ -106,7 +106,7 @@ static int dsa_builtin_keygen(DSA *dsa)
 	BIGNUM *pub_key=NULL,*priv_key=NULL;
 
 #ifdef OPENSSL_FIPS
-	if (FIPS_mode() && !(dsa->flags & DSA_FLAG_NON_FIPS_ALLOW)
+	if (FIPS_module_mode() && !(dsa->flags & DSA_FLAG_NON_FIPS_ALLOW)
 		&& (BN_num_bits(dsa->p) < OPENSSL_DSA_FIPS_MIN_MODULUS_BITS))
 		{
 		DSAerr(DSA_F_DSA_BUILTIN_KEYGEN, DSA_R_KEY_SIZE_TOO_SMALL);

@@ -96,7 +96,7 @@ static void fips_set_mode(int onoff)
 		}
 	}
 
-int FIPS_mode(void)
+int FIPS_module_mode(void)
 	{
 	int ret = 0;
 	int owning_thread = fips_is_owning_thread();
@@ -237,7 +237,7 @@ int FIPS_check_incore_fingerprint(void)
     return rv;
     }
 
-int FIPS_mode_set(int onoff)
+int FIPS_module_mode_set(int onoff)
     {
     int fips_set_owning_thread();
     int fips_clear_owning_thread();
@@ -254,7 +254,7 @@ int FIPS_mode_set(int onoff)
 
 	/* Don't go into FIPS mode twice, just so we can do automagic
 	   seeding */
-	if(FIPS_mode())
+	if(FIPS_module_mode())
 	    {
 	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_FIPS_MODE_ALREADY_SET);
 	    fips_selftest_fail = 1;

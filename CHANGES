@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Rename FIPS_mode_set and FIPS_mode to FIPS_module_mode_set and
+     FIPS_module_mode. FIPS_mode and FIPS_mode_set will be implmeneted
+     outside the validated module in the FIPS capable OpenSSL.
+     [Steve Henson]
+
   *) Initial TLS v1.2 client support. Add a default signature algorithms
      extension including all the algorithms we support. Parse new signature
      format in client key exchange. Relax some ECC signing restrictions for

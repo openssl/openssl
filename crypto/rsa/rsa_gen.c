@@ -82,7 +82,7 @@
 int fips_check_rsa_prng(RSA *rsa, int bits)
 	{
 	int strength;
-	if (!FIPS_mode())
+	if (!FIPS_module_mode())
 		return 1;
 
 	if (rsa->flags & (RSA_FLAG_NON_FIPS_ALLOW|RSA_FLAG_CHECKED))
@@ -205,7 +205,7 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	    return 0;
 	    }
 
-	if (FIPS_mode() && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW) 
+	if (FIPS_module_mode() && !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW) 
 		&& (bits < OPENSSL_RSA_FIPS_MIN_MODULUS_BITS))
 	    {
 	    FIPSerr(FIPS_F_RSA_BUILTIN_KEYGEN,FIPS_R_KEY_TOO_SHORT);

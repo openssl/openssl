@@ -945,7 +945,7 @@ int main(int argc,char **argv)
         }
 	if (!no_exit) {
     		fips_algtest_init_nofips();
-        	if (!FIPS_mode_set(1)) {
+        	if (!FIPS_module_mode_set(1)) {
         	    printf("Power-up self test failed\n");
 		    exit(1);
 		}
@@ -964,8 +964,8 @@ int main(int argc,char **argv)
     /* Power-up self test
     */
     ERR_clear_error();
-    test_msg("2. Automatic power-up self test", FIPS_mode_set(1));
-    if (!FIPS_mode())
+    test_msg("2. Automatic power-up self test", FIPS_module_mode_set(1));
+    if (!FIPS_module_mode())
 	exit(1);
     if (do_drbg_stick)
             FIPS_drbg_stick();

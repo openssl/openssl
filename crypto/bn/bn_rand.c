@@ -252,7 +252,7 @@ static int bn_rand_range(int pseudo, BIGNUM *r, const BIGNUM *range)
 	 * generated. So we just use the second case which is equivalent to
 	 * "Generation by Testing Candidates" mentioned in B.1.2 et al.
 	 */
-	else if (!FIPS_mode() && !BN_is_bit_set(range, n - 2) && !BN_is_bit_set(range, n - 3))
+	else if (!FIPS_module_mode() && !BN_is_bit_set(range, n - 2) && !BN_is_bit_set(range, n - 3))
 #else
 	else if (!BN_is_bit_set(range, n - 2) && !BN_is_bit_set(range, n - 3))
 #endif

@@ -173,7 +173,7 @@ int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type)
 		ctx->digest = &bad_md;
 		return 0;
 		}
-	if(FIPS_mode() && !(type->flags & EVP_MD_FLAG_FIPS) &&
+	if(FIPS_module_mode() && !(type->flags & EVP_MD_FLAG_FIPS) &&
 		!(ctx->flags & EVP_MD_CTX_FLAG_NON_FIPS_ALLOW))
 		{
 		EVPerr(EVP_F_FIPS_DIGESTINIT, EVP_R_DISABLED_FOR_FIPS);

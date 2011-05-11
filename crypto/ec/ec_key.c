@@ -260,7 +260,7 @@ static int fips_check_ec(EC_KEY *key)
 int fips_check_ec_prng(EC_KEY *ec)
 	{
 	int bits, strength;
-	if (!FIPS_mode())
+	if (!FIPS_module_mode())
 		return 1;
 
 	if (ec->flags & (EC_FLAG_NON_FIPS_ALLOW|EC_FLAG_FIPS_CHECKED))

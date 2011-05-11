@@ -136,7 +136,7 @@ void do_entropy_stick(void)
 void fips_algtest_init(void)
 	{
 	fips_algtest_init_nofips();
-	if (!FIPS_mode_set(1))
+	if (!FIPS_module_mode_set(1))
 		{
 		fprintf(stderr, "Error entering FIPS mode\n");
 		exit(1);

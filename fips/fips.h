@@ -67,8 +67,8 @@ struct env_md_st;
 struct evp_cipher_st;
 struct evp_cipher_ctx_st;
 
-int FIPS_mode_set(int onoff);
-int FIPS_mode(void);
+int FIPS_module_mode_set(int onoff);
+int FIPS_module_mode(void);
 const void *FIPS_rand_check(void);
 int FIPS_selftest(void);
 int FIPS_selftest_failed(void);
