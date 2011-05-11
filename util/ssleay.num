@@ -294,3 +294,17 @@ SSL_srp_server_param_with_username      336	EXIST:!VMS:FUNCTION:SRP
 SSL_srp_server_param_with_un            336	EXIST:VMS:FUNCTION:SRP
 SRP_have_to_put_srp_username            337	EXIST::FUNCTION:SRP
 SSL_SRP_CTX_free                        338	EXIST::FUNCTION:SRP
+SSL_set_debug                           339	EXIST::FUNCTION:
+SSL_SESSION_get0_peer                   340	EXIST::FUNCTION:
+TLSv1_2_client_method                   341	EXIST::FUNCTION:
+SSL_SESSION_set1_id_context             342	EXIST::FUNCTION:
+TLSv1_2_server_method                   343	EXIST::FUNCTION:
+SSL_cache_hit                           344	EXIST::FUNCTION:
+SSL_get0_kssl_ctx                       345	EXIST::FUNCTION:KRB5
+SSL_set0_kssl_ctx                       346	EXIST::FUNCTION:KRB5
+SSL_SESSION_get0_id                     347	EXIST::FUNCTION:
+SSL_set_state                           348	EXIST::FUNCTION:
+SSL_CIPHER_get_id                       349	EXIST::FUNCTION:
+TLSv1_2_method                          350	EXIST::FUNCTION:
+SSL_SESSION_get_id_len                  351	EXIST::FUNCTION:
+kssl_ctx_get0_client_princ              352	EXIST::FUNCTION:KRB5
