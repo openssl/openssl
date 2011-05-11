@@ -398,31 +398,31 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 #if defined(NIST_INT64)
 	{
-	NIST_INT64		r;
+	NIST_INT64		acc;	/* accumulator */
 	unsigned int		*rp=(unsigned int *)r_d;
 	const unsigned int	*bp=(const unsigned int *)buf;
 
-	r  = rp[0];	r += bp[3*2-6];
-			r += bp[5*2-6];	rp[0] = (unsigned int)r; r >>= 32;
+	acc  = rp[0];	acc += bp[3*2-6];
+			acc += bp[5*2-6]; rp[0] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[1];	r += bp[3*2-5];
-			r += bp[5*2-5];	rp[1] = (unsigned int)r; r >>= 32;
+	acc += rp[1];	acc += bp[3*2-5];
+			acc += bp[5*2-5]; rp[1] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[2];	r += bp[3*2-6];
-			r += bp[4*2-6];
-			r += bp[5*2-6];	rp[2] = (unsigned int)r; r >>= 32;
+	acc += rp[2];	acc += bp[3*2-6];
+			acc += bp[4*2-6];
+			acc += bp[5*2-6]; rp[2] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[3];	r += bp[3*2-5];
-			r += bp[4*2-5];
-			r += bp[5*2-5];	rp[3] = (unsigned int)r; r >>= 32;
+	acc += rp[3];	acc += bp[3*2-5];
+			acc += bp[4*2-5];
+			acc += bp[5*2-5]; rp[3] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[4];	r += bp[4*2-6];
-			r += bp[5*2-6];	rp[4] = (unsigned int)r; r >>= 32;
+	acc += rp[4];	acc += bp[4*2-6];
+			acc += bp[5*2-6]; rp[4] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[5];	r += bp[4*2-5];
-			r += bp[5*2-5];	rp[5] = (unsigned int)r;
+	acc += rp[5];	acc += bp[4*2-5];
+			acc += bp[5*2-5]; rp[5] = (unsigned int)acc;
 
-	carry = (int)(r>>32);
+	carry = (int)(acc>>32);
 	}
 #else
 	{
@@ -526,35 +526,35 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 #if defined(NIST_INT64) && BN_BITS2!=64
 	{
-	NIST_INT64		r;
+	NIST_INT64		acc;	/* accumulator */
 	unsigned int		*rp=(unsigned int *)r_d;
 	const unsigned int	*bp=(const unsigned int *)buf;
 
-	r  = rp[0];	r -= bp[7-7];
-			r -= bp[11-7];	rp[0] = (unsigned int)r; r >>= 32;
+	acc  = rp[0];	acc -= bp[7-7];
+			acc -= bp[11-7]; rp[0] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[1];	r -= bp[8-7];
-			r -= bp[12-7];	rp[1] = (unsigned int)r; r >>= 32;
+	acc += rp[1];	acc -= bp[8-7];
+			acc -= bp[12-7]; rp[1] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[2];	r -= bp[9-7];
-			r -= bp[13-7];	rp[2] = (unsigned int)r; r >>= 32;
+	acc += rp[2];	acc -= bp[9-7];
+			acc -= bp[13-7]; rp[2] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[3];	r += bp[7-7];
-			r += bp[11-7];
-			r -= bp[10-7];	rp[3] = (unsigned int)r; r >>= 32;
+	acc += rp[3];	acc += bp[7-7];
+			acc += bp[11-7];
+			acc -= bp[10-7]; rp[3] = (unsigned int)acc; acc>>= 32;
 
-	r += rp[4];	r += bp[8-7];
-			r += bp[12-7];
-			r -= bp[11-7];	rp[4] = (unsigned int)r; r >>= 32;
+	acc += rp[4];	acc += bp[8-7];
+			acc += bp[12-7];
+			acc -= bp[11-7]; rp[4] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[5];	r += bp[9-7];
-			r += bp[13-7];
-			r -= bp[12-7];	rp[5] = (unsigned int)r; r >>= 32;
+	acc += rp[5];	acc += bp[9-7];
+			acc += bp[13-7];
+			acc -= bp[12-7]; rp[5] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[6];	r += bp[10-7];
-			r -= bp[13-7];	rp[6] = (unsigned int)r;
+	acc += rp[6];	acc += bp[10-7];
+			acc -= bp[13-7]; rp[6] = (unsigned int)acc;
 
-	carry = (int)(r>>32);
+	carry = (int)(acc>>32);
 # if BN_BITS2==64
 	rp[7] = carry;
 # endif
@@ -670,74 +670,74 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 #if defined(NIST_INT64)
 	{
-	NIST_INT64		r;
+	NIST_INT64		acc;	/* accumulator */
 	unsigned int		*rp=(unsigned int *)r_d;
 	const unsigned int	*bp=(const unsigned int *)buf;
 
-	r = rp[0];	r += bp[8-8];
-			r += bp[9-8];
-			r -= bp[11-8];
-			r -= bp[12-8];
-			r -= bp[13-8];
-			r -= bp[14-8];	rp[0] = (unsigned int)r; r >>= 32;
+	acc = rp[0];	acc += bp[8-8];
+			acc += bp[9-8];
+			acc -= bp[11-8];
+			acc -= bp[12-8];
+			acc -= bp[13-8];
+			acc -= bp[14-8]; rp[0] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[1];	r += bp[9-8];
-			r += bp[10-8];
-			r -= bp[12-8];
-			r -= bp[13-8];
-			r -= bp[14-8];
-			r -= bp[15-8];	rp[1] = (unsigned int)r; r >>= 32;
+	acc += rp[1];	acc += bp[9-8];
+			acc += bp[10-8];
+			acc -= bp[12-8];
+			acc -= bp[13-8];
+			acc -= bp[14-8];
+			acc -= bp[15-8]; rp[1] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[2];	r += bp[10-8];
-			r += bp[11-8];
-			r -= bp[13-8];
-			r -= bp[14-8];
-			r -= bp[15-8];	rp[2] = (unsigned int)r; r >>= 32;
+	acc += rp[2];	acc += bp[10-8];
+			acc += bp[11-8];
+			acc -= bp[13-8];
+			acc -= bp[14-8];
+			acc -= bp[15-8]; rp[2] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[3];	r += bp[11-8];
-			r += bp[11-8];
-			r += bp[12-8];
-			r += bp[12-8];
-			r += bp[13-8];
-			r -= bp[15-8];
-			r -= bp[8-8];
-			r -= bp[9-8];	rp[3] = (unsigned int)r; r >>= 32;
+	acc += rp[3];	acc += bp[11-8];
+			acc += bp[11-8];
+			acc += bp[12-8];
+			acc += bp[12-8];
+			acc += bp[13-8];
+			acc -= bp[15-8];
+			acc -= bp[8-8];
+			acc -= bp[9-8];  rp[3] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[4];	r += bp[12-8];
-			r += bp[12-8];
-			r += bp[13-8];
-			r += bp[13-8];
-			r += bp[14-8];
-			r -= bp[9-8];
-			r -= bp[10-8];	rp[4] = (unsigned int)r; r >>= 32;
+	acc += rp[4];	acc += bp[12-8];
+			acc += bp[12-8];
+			acc += bp[13-8];
+			acc += bp[13-8];
+			acc += bp[14-8];
+			acc -= bp[9-8];
+			acc -= bp[10-8]; rp[4] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[5];	r += bp[13-8];
-			r += bp[13-8];
-			r += bp[14-8];
-			r += bp[14-8];
-			r += bp[15-8];
-			r -= bp[10-8];
-			r -= bp[11-8];	rp[5] = (unsigned int)r; r >>= 32;
+	acc += rp[5];	acc += bp[13-8];
+			acc += bp[13-8];
+			acc += bp[14-8];
+			acc += bp[14-8];
+			acc += bp[15-8];
+			acc -= bp[10-8];
+			acc -= bp[11-8]; rp[5] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[6];	r += bp[14-8];
-			r += bp[14-8];
-			r += bp[15-8];
-			r += bp[15-8];
-			r += bp[14-8];
-			r += bp[13-8];
-			r -= bp[8-8];
-			r -= bp[9-8];	rp[6] = (unsigned int)r; r >>= 32;
+	acc += rp[6];	acc += bp[14-8];
+			acc += bp[14-8];
+			acc += bp[15-8];
+			acc += bp[15-8];
+			acc += bp[14-8];
+			acc += bp[13-8];
+			acc -= bp[8-8];
+			acc -= bp[9-8];  rp[6] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[7];	r += bp[15-8];
-			r += bp[15-8];
-			r += bp[15-8];
-			r += bp[8 -8];
-			r -= bp[10-8];
-			r -= bp[11-8];
-			r -= bp[12-8];
-			r -= bp[13-8];	rp[7] = (unsigned int)r;
+	acc += rp[7];	acc += bp[15-8];
+			acc += bp[15-8];
+			acc += bp[15-8];
+			acc += bp[8 -8];
+			acc -= bp[10-8];
+			acc -= bp[11-8];
+			acc -= bp[12-8];
+			acc -= bp[13-8]; rp[7] = (unsigned int)acc;
 
-	carry = (int)(r>>32);
+	carry = (int)(acc>>32);
 	}
 #else
 	{
@@ -871,89 +871,89 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 #if defined(NIST_INT64)
 	{
-	NIST_INT64		r;
+	NIST_INT64		acc;	/* accumulator */
 	unsigned int		*rp=(unsigned int *)r_d;
 	const unsigned int	*bp=(const unsigned int *)buf;
 
-	r = rp[0];	r += bp[12-12];
-			r += bp[21-12];
-			r += bp[20-12];
-			r -= bp[23-12];	rp[0] = (unsigned int)r; r >>= 32;
+	acc = rp[0];	acc += bp[12-12];
+			acc += bp[21-12];
+			acc += bp[20-12];
+			acc -= bp[23-12]; rp[0] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[1];	r += bp[13-12];
-			r += bp[22-12];
-			r += bp[23-12];
-			r -= bp[12-12];
-			r -= bp[20-12];	rp[1] = (unsigned int)r; r >>= 32;
+	acc += rp[1];	acc += bp[13-12];
+			acc += bp[22-12];
+			acc += bp[23-12];
+			acc -= bp[12-12];
+			acc -= bp[20-12]; rp[1] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[2];	r += bp[14-12];
-			r += bp[23-12];
-			r -= bp[13-12];
-			r -= bp[21-12];	rp[2] = (unsigned int)r; r >>= 32;
+	acc += rp[2];	acc += bp[14-12];
+			acc += bp[23-12];
+			acc -= bp[13-12];
+			acc -= bp[21-12]; rp[2] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[3];	r += bp[15-12];
-			r += bp[12-12];
-			r += bp[20-12];
-			r += bp[21-12];
-			r -= bp[14-12];
-			r -= bp[22-12];
-			r -= bp[23-12];	rp[3] = (unsigned int)r; r >>= 32;
+	acc += rp[3];	acc += bp[15-12];
+			acc += bp[12-12];
+			acc += bp[20-12];
+			acc += bp[21-12];
+			acc -= bp[14-12];
+			acc -= bp[22-12];
+			acc -= bp[23-12]; rp[3] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[4];	r += bp[21-12];
-			r += bp[21-12];
-			r += bp[16-12];
-			r += bp[13-12];
-			r += bp[12-12];
-			r += bp[20-12];
-			r += bp[22-12];
-			r -= bp[15-12];
-			r -= bp[23-12];
-			r -= bp[23-12];	rp[4] = (unsigned int)r; r >>= 32;
+	acc += rp[4];	acc += bp[21-12];
+			acc += bp[21-12];
+			acc += bp[16-12];
+			acc += bp[13-12];
+			acc += bp[12-12];
+			acc += bp[20-12];
+			acc += bp[22-12];
+			acc -= bp[15-12];
+			acc -= bp[23-12];
+			acc -= bp[23-12]; rp[4] = (unsigned int)acc; acc >>= 32;
 
-	r += rp[5];	r += bp[22-12];
-			r += bp[22-12];
-			r += bp[17-12];
-			r += bp[14-12];
-			r += bp[13-12];
-			r += bp[21-12];
-			r += bp[23-12];
-			r -= bp[16-12];	rp[5] = (unsigned int)r; r >>= 32;
+	acc += rp[5];	acc += bp[22-12];
+			acc += bp[22-12];
+			acc += bp[17-12];
+			acc += bp[14-12];
+			acc += bp[13-12];
+			acc += bp[21-12];
+			acc += bp[23-12];
+			acc -= bp[16-12]; rp[5] = (unsigned int)acc; acc >>= 32;
 			
-	r += rp[6];	r += bp[23-12];
-			r += bp[23-12];
-			r += bp[18-12];
-			r += bp[15-12];
-			r += bp[14-12];
-			r += bp[22-12];
-			r -= bp[17-12];	rp[6] = (unsigned int)r; r >>= 32;
+	acc += rp[6];	acc += bp[23-12];
+			acc += bp[23-12];
+			acc += bp[18-12];
+			acc += bp[15-12];
+			acc += bp[14-12];
+			acc += bp[22-12];
+			acc -= bp[17-12]; rp[6] = (unsigned int)acc; acc >>= 32;
 			
-	r += rp[7];	r += bp[19-12];
-			r += bp[16-12];
-			r += bp[15-12];
-			r += bp[23-12];
-			r -= bp[18-12];	rp[7] = (unsigned int)r; r >>= 32;
+	acc += rp[7];	acc += bp[19-12];
+			acc += bp[16-12];
+			acc += bp[15-12];
+			acc += bp[23-12];
+			acc -= bp[18-12]; rp[7] = (unsigned int)acc; acc >>= 32;
 			
-	r += rp[8];	r += bp[20-12];
-			r += bp[17-12];
-			r += bp[16-12];
-			r -= bp[19-12];	rp[8] = (unsigned int)r; r >>= 32;
+	acc += rp[8];	acc += bp[20-12];
+			acc += bp[17-12];
+			acc += bp[16-12];
+			acc -= bp[19-12]; rp[8] = (unsigned int)acc; acc >>= 32;
 			
-	r += rp[9];	r += bp[21-12];
-			r += bp[18-12];
-			r += bp[17-12];
-			r -= bp[20-12];	rp[9] = (unsigned int)r; r >>= 32;
+	acc += rp[9];	acc += bp[21-12];
+			acc += bp[18-12];
+			acc += bp[17-12];
+			acc -= bp[20-12]; rp[9] = (unsigned int)acc; acc >>= 32;
 			
-	r += rp[10];	r += bp[22-12];
-			r += bp[19-12];
-			r += bp[18-12];
-			r -= bp[21-12];	rp[10] = (unsigned int)r; r >>= 32;
+	acc += rp[10];	acc += bp[22-12];
+			acc += bp[19-12];
+			acc += bp[18-12];
+			acc -= bp[21-12]; rp[10] = (unsigned int)acc; acc >>= 32;
 			
-	r += rp[11];	r += bp[23-12];
-			r += bp[20-12];
-			r += bp[19-12];
-			r -= bp[22-12];	rp[11] = (unsigned int)r;
+	acc += rp[11];	acc += bp[23-12];
+			acc += bp[20-12];
+			acc += bp[19-12];
+			acc -= bp[22-12]; rp[11] = (unsigned int)acc;
 
-	carry = (int)(r>>32);
+	carry = (int)(acc>>32);
 	}
 #else
 	{
