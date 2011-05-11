@@ -39,6 +39,7 @@ my %keep =
 	"Makefile.fips" => 1,
 	"Makefile.shared" => 1,
 	"README.FIPS" => 1,
+	"README.ECC" => 1,
 	"e_os.h" => 1,
 	"e_os2.h" => 1,
 	"Configure" => 1,
