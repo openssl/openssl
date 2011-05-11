@@ -105,6 +105,8 @@ extern "C" {
 #define DTLS1_AL_HEADER_LENGTH                   2
 #endif
 
+#ifndef OPENSSL_NO_SSL_INTERN
+
 
 typedef struct dtls1_bitmap_st
 	{
@@ -253,6 +255,7 @@ typedef struct dtls1_record_data_st
 	SSL3_RECORD    rrec;
 	} DTLS1_RECORD_DATA;
 
+#endif
 
 /* Timeout multipliers (timeout slice is defined in apps/timeouts.h */
 #define DTLS1_TMO_READ_COUNT                      2

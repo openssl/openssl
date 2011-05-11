@@ -1960,7 +1960,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 
 	if (s_debug)
 		{
-		con->debug=1;
+		SSL_set_debug(con, 1);
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
 		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
 		}
@@ -2285,7 +2285,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
-	if (con->hit) BIO_printf(bio_s_out,"Reused session-id\n");
+	if (SSL_cache_hit(con)) BIO_printf(bio_s_out,"Reused session-id\n");
 	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
 		TLS1_FLAGS_TLS_PADDING_BUG)
 		BIO_printf(bio_s_out,"Peer has incorrect TLSv1 block padding\n");
@@ -2405,7 +2405,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 
 	if (s_debug)
 		{
-		con->debug=1;
+		SSL_set_debug(con, 1);
 		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
 		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
 		}
@@ -2526,7 +2526,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 					}
 				BIO_puts(io,"\n");
 				}
-			BIO_printf(io,((con->hit)
+			BIO_printf(io,(SSL_cache_hit(con)
 				?"---\nReused, "
 				:"---\nNew, "));
 			c=SSL_get_current_cipher(con);

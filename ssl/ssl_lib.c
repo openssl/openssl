@@ -2802,6 +2802,11 @@ int SSL_state(const SSL *ssl)
 	return(ssl->state);
 	}
 
+void SSL_set_state(SSL *ssl, int state)
+	{
+	ssl->state = state;
+	}
+
 void SSL_set_verify_result(SSL *ssl,long arg)
 	{
 	ssl->verify_result=arg;
@@ -3059,6 +3064,16 @@ void ssl_clear_hash_ctx(EVP_MD_CTX **hash)
 	if (*hash) EVP_MD_CTX_destroy(*hash);
 	*hash=NULL;
 }
+
+void SSL_set_debug(SSL *s, int debug)
+	{
+	s->debug = debug;
+	}
+
+int SSL_cache_hit(SSL *s)
+	{
+	return s->hit;
+	}
 
 #if defined(_WINDLL) && defined(OPENSSL_SYS_WIN16)
 #include "../crypto/bio/bss_file.c"

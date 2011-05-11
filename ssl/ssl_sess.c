@@ -836,6 +836,35 @@ long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 	return(t);
 	}
 
+unsigned int SSL_SESSION_get_id_len(SSL_SESSION *s)
+	{
+	return s->session_id_length;
+	}
+
+const unsigned char *SSL_SESSION_get0_id(SSL_SESSION *s)
+	{
+	return s->session_id;
+	}
+
+X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
+	{
+	return s->peer;
+	}
+
+int SSL_SESSION_set1_id_context(SSL_SESSION *s,const unsigned char *sid_ctx,
+			       unsigned int sid_ctx_len)
+    {
+    if(sid_ctx_len > SSL_MAX_SID_CTX_LENGTH)
+	{
+	SSLerr(SSL_F_SSL_SESSION_SET1_ID_CONTEXT,SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+	return 0;
+	}
+    s->sid_ctx_length=sid_ctx_len;
+    memcpy(s->sid_ctx,sid_ctx,sid_ctx_len);
+
+    return 1;
+    }
+
 long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 	{
 	long l;

@@ -359,9 +359,20 @@ extern "C" {
  * in SSL_CTX. */
 typedef struct ssl_st *ssl_crock_st;
 typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
+typedef struct ssl_method_st SSL_METHOD;
+typedef struct ssl_cipher_st SSL_CIPHER;
+typedef struct ssl_session_st SSL_SESSION;
+
+DECLARE_STACK_OF(SSL_CIPHER)
+
+typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data, int len, void *arg);
+typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg);
+
+
+#ifndef OPENSSL_NO_SSL_INTERN
 
 /* used to hold info on the particular ciphers used */
-typedef struct ssl_cipher_st
+struct ssl_cipher_st
 	{
 	int valid;
 	const char *name;		/* text name */
@@ -378,15 +389,11 @@ typedef struct ssl_cipher_st
 	unsigned long algorithm2;	/* Extra flags */
 	int strength_bits;		/* Number of bits really used */
 	int alg_bits;			/* Number of bits for algorithm */
-	} SSL_CIPHER;
+	};
 
-DECLARE_STACK_OF(SSL_CIPHER)
-
-typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data, int len, void *arg);
-typedef int (*tls_session_secret_cb_fn)(SSL *s, void *secret, int *secret_len, STACK_OF(SSL_CIPHER) *peer_ciphers, SSL_CIPHER **cipher, void *arg);
 
 /* Used to hold functions for SSLv2 or SSLv3/TLSv1 functions */
-typedef struct ssl_method_st
+struct ssl_method_st
 	{
 	int version;
 	int (*ssl_new)(SSL *s);
@@ -419,7 +426,7 @@ typedef struct ssl_method_st
 	int (*ssl_version)(void);
 	long (*ssl_callback_ctrl)(SSL *s, int cb_id, void (*fp)(void));
 	long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)(void));
-	} SSL_METHOD;
+	};
 
 /* Lets make this into an ASN.1 type structure as follows
  * SSL_SESSION_ID ::= SEQUENCE {
@@ -444,7 +451,7 @@ typedef struct ssl_method_st
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).
  */
-typedef struct ssl_session_st
+struct ssl_session_st
 	{
 	int ssl_version;	/* what ssl version session info is
 				 * being kept in here? */
@@ -519,8 +526,9 @@ typedef struct ssl_session_st
 #ifndef OPENSSL_NO_SRP
 	char *srp_username;
 #endif
-	} SSL_SESSION;
+	};
 
+#endif
 
 #define SSL_OP_MICROSOFT_SESS_ID_BUG			0x00000001L
 #define SSL_OP_NETSCAPE_CHALLENGE_BUG			0x00000002L
@@ -652,6 +660,8 @@ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int con
 
 #ifndef OPENSSL_NO_SRP
 
+#ifndef OPENSSL_NO_SSL_INTERN
+
 typedef struct srp_ctx_st
 	{
 	/* param for all the callbacks */
@@ -673,6 +683,8 @@ typedef struct srp_ctx_st
 
 	unsigned long srp_Mask;
 	} SRP_CTX;
+
+#endif
 
 /* see tls_srp.c */
 int SSL_SRP_CTX_init(SSL *s);
@@ -711,7 +723,11 @@ int SRP_have_to_put_srp_username(SSL *s);
 typedef int (*GEN_SESSION_CB)(const SSL *ssl, unsigned char *id,
 				unsigned int *id_len);
 
-typedef struct ssl_comp_st
+typedef struct ssl_comp_st SSL_COMP;
+
+#ifndef OPENSSL_NO_SSL_INTERN
+
+struct ssl_comp_st
 	{
 	int id;
 	const char *name;
@@ -720,7 +736,7 @@ typedef struct ssl_comp_st
 #else
 	char *method;
 #endif
-	} SSL_COMP;
+	};
 
 DECLARE_STACK_OF(SSL_COMP)
 DECLARE_LHASH_OF(SSL_SESSION);
@@ -915,6 +931,8 @@ struct ssl_ctx_st
 #endif
 	};
 
+#endif
+
 #define SSL_SESS_CACHE_OFF			0x0000
 #define SSL_SESS_CACHE_CLIENT			0x0001
 #define SSL_SESS_CACHE_SERVER			0x0002
@@ -1006,6 +1024,8 @@ const char *SSL_get_psk_identity(const SSL *s);
 
 #define SSL_MAC_FLAG_READ_MAC_STREAM 1
 #define SSL_MAC_FLAG_WRITE_MAC_STREAM 2
+
+#ifndef OPENSSL_NO_SSL_INTERN
 
 struct ssl_st
 	{
@@ -1234,6 +1254,8 @@ struct ssl_st
 #define session_ctx ctx
 #endif /* OPENSSL_NO_TLSEXT */
 	};
+
+#endif
 
 #ifdef __cplusplus
 }
@@ -1544,6 +1566,7 @@ const SSL_CIPHER *SSL_get_current_cipher(const SSL *s);
 int	SSL_CIPHER_get_bits(const SSL_CIPHER *c,int *alg_bits);
 char *	SSL_CIPHER_get_version(const SSL_CIPHER *c);
 const char *	SSL_CIPHER_get_name(const SSL_CIPHER *c);
+unsigned long 	SSL_CIPHER_get_id(const SSL_CIPHER *c);
 
 int	SSL_get_fd(const SSL *s);
 int	SSL_get_rfd(const SSL *s);
@@ -1609,6 +1632,11 @@ long	SSL_SESSION_set_time(SSL_SESSION *s, long t);
 long	SSL_SESSION_get_timeout(const SSL_SESSION *s);
 long	SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
 void	SSL_copy_session_id(SSL *to,const SSL *from);
+unsigned int SSL_SESSION_get_id_len(SSL_SESSION *s);
+const unsigned char *SSL_SESSION_get0_id(SSL_SESSION *s);
+X509 *SSL_SESSION_get0_peer(SSL_SESSION *s);
+int SSL_SESSION_set1_id_context(SSL_SESSION *s,const unsigned char *sid_ctx,
+			       unsigned int sid_ctx_len);
 
 SSL_SESSION *SSL_SESSION_new(void);
 const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
@@ -1800,6 +1828,7 @@ void SSL_set_info_callback(SSL *ssl,
 			   void (*cb)(const SSL *ssl,int type,int val));
 void (*SSL_get_info_callback(const SSL *ssl))(const SSL *ssl,int type,int val);
 int SSL_state(const SSL *ssl);
+void SSL_set_state(SSL *ssl, int state);
 
 void SSL_set_verify_result(SSL *ssl,long v);
 long SSL_get_verify_result(const SSL *ssl);
@@ -1904,6 +1933,9 @@ int SSL_tls1_key_exporter(SSL *s, unsigned char *label, int label_len,
                            unsigned char *context, int context_len,
                            unsigned char *out, int olen);
 
+void SSL_set_debug(SSL *s, int debug);
+int SSL_cache_hit(SSL *s);
+	
 /* BEGIN ERROR CODES */
 /* The following lines are auto generated by the script mkerr.pl. Any changes
  * made after this point may be overwritten when the script is next run.
@@ -2080,6 +2112,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_RSA_PUBLIC_ENCRYPT			 188
 #define SSL_F_SSL_SESSION_NEW				 189
 #define SSL_F_SSL_SESSION_PRINT_FP			 190
+#define SSL_F_SSL_SESSION_SET1_ID_CONTEXT		 306
 #define SSL_F_SSL_SESS_CERT_NEW				 225
 #define SSL_F_SSL_SET_CERT				 191
 #define SSL_F_SSL_SET_CIPHER_LIST			 271

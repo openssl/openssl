@@ -1171,7 +1171,7 @@ re_start:
 			}
 		}
 #endif                                              
-	if (c_Pause & 0x01) con->debug=1;
+	if (c_Pause & 0x01) SSL_set_debug(con, 1);
 
 	if ( SSL_version(con) == DTLS1_VERSION)
 		{
@@ -1220,7 +1220,7 @@ re_start:
 
 	if (c_debug)
 		{
-		con->debug=1;
+		SSL_set_debug(con, 1);
 		BIO_set_callback(sbio,bio_dump_callback);
 		BIO_set_callback_arg(sbio,(char *)bio_c_out);
 		}
@@ -1905,7 +1905,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 			BIO_number_read(SSL_get_rbio(s)),
 			BIO_number_written(SSL_get_wbio(s)));
 		}
-	BIO_printf(bio,((s->hit)?"---\nReused, ":"---\nNew, "));
+	BIO_printf(bio,(SSL_cache_hit(s)?"---\nReused, ":"---\nNew, "));
 	c=SSL_get_current_cipher(s);
 	BIO_printf(bio,"%s, Cipher is %s\n",
 		SSL_CIPHER_get_version(c),

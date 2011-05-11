@@ -357,4 +357,7 @@ int raw_write_stdout(const void *,int);
 #define TM_START	0
 #define TM_STOP		1
 double app_tminterval (int stop,int usertime);
+
+#define OPENSSL_NO_SSL_INTERN
+
 #endif

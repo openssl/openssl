@@ -3,6 +3,12 @@
  _______________
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
+ 
+  *) New option OPENSSL_NO_SSL_INTERN. If an application can be compiled
+     with this defined it will not be affected by any changes to ssl internal
+     structures. Add several utility functions to allow openssl application
+     to work with OPENSSL_NO_SSL_INTERN defined.
+     [Steve Henson]
 
   *) Add SRP support.
      [Tom Wu <tjw@cs.stanford.edu> and Ben Laurie]
