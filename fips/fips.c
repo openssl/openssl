@@ -281,7 +281,7 @@ int FIPS_module_mode_set(int onoff)
 	    }
 
 	if(FIPS_selftest())
-	    fips_set_mode(1);
+	    fips_set_mode(onoff);
 	else
 	    {
 	    fips_selftest_fail = 1;
