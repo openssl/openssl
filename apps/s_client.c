@@ -502,6 +502,9 @@ int MAIN(int argc, char **argv)
 	{
 	unsigned int off=0, clr=0;
 	SSL *con=NULL;
+#ifndef OPENSSL_NO_KRB5
+	KSSL_CTX *kctx;
+#endif
 	int s,k,width,state=0;
 	char *cbuf=NULL,*sbuf=NULL,*mbuf=NULL;
 	int cbuf_len,cbuf_off;
@@ -1145,9 +1148,10 @@ bad:
 		}
 #endif
 #ifndef OPENSSL_NO_KRB5
-	if (con  &&  (con->kssl_ctx = kssl_ctx_new()) != NULL)
+	if (con  &&  (kctx = kssl_ctx_new()) != NULL)
                 {
-                kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVER, host);
+		SSL_set0_kssl_ctx(con, kctx);
+                kssl_ctx_setstring(kctx, KSSL_SERVER, host);
 		}
 #endif	/* OPENSSL_NO_KRB5  */
 /*	SSL_set_cipher_list(con,"RC4-MD5"); */
