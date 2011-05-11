@@ -170,7 +170,7 @@
 # define OPENSSL_EXTERN OPENSSL_EXPORT
 #endif
 
-#define PKCS1_CHECK
+#undef PKCS1_CHECK
 
 #define c2l(c,l)	(l = ((unsigned long)(*((c)++)))     , \
 			 l|=(((unsigned long)(*((c)++)))<< 8), \
@@ -327,6 +327,7 @@
 #define SSL_SHA1		0x00000002L
 #define SSL_GOST94      0x00000004L
 #define SSL_GOST89MAC   0x00000008L
+#define SSL_SHA256		0x00000010L
 
 /* Bits for algorithm_ssl (protocol version) */
 #define SSL_SSLV2		0x00000001L
@@ -339,11 +340,12 @@
 #define SSL_HANDSHAKE_MAC_MD5 0x10
 #define SSL_HANDSHAKE_MAC_SHA 0x20
 #define SSL_HANDSHAKE_MAC_GOST94 0x40
+#define SSL_HANDSHAKE_MAC_SHA256 0x80
 #define SSL_HANDSHAKE_MAC_DEFAULT (SSL_HANDSHAKE_MAC_MD5 | SSL_HANDSHAKE_MAC_SHA)
 
 /* When adding new digest in the ssl_ciph.c and increment SSM_MD_NUM_IDX
  * make sure to update this constant too */
-#define SSL_MAX_DIGEST 4
+#define SSL_MAX_DIGEST 5
 
 #define TLS1_PRF_DGST_MASK	(0xff << TLS1_PRF_DGST_SHIFT)
 
@@ -461,6 +463,8 @@ typedef struct cert_pkey_st
 	{
 	X509 *x509;
 	EVP_PKEY *privatekey;
+	/* Digest to use when signing */
+	const EVP_MD *digest;
 	} CERT_PKEY;
 
 typedef struct cert_st
@@ -674,7 +678,7 @@ const SSL_METHOD *func_name(void)  \
 const SSL_METHOD *func_name(void)  \
 	{ \
 	static const SSL_METHOD func_name##_data= { \
-	TLS1_1_VERSION, \
+	TLS1_2_VERSION, \
 	tls1_new, \
 	tls1_clear, \
 	tls1_free, \
@@ -814,7 +818,7 @@ int ssl_undefined_function(SSL *s);
 int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
 X509 *ssl_get_server_send_cert(SSL *);
-EVP_PKEY *ssl_get_sign_pkey(SSL *,const SSL_CIPHER *);
+EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *c, const EVP_MD **pmd);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
 void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher);
 STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
@@ -1042,7 +1046,7 @@ int ssl3_alert_code(int code);
 int ssl_ok(SSL *s);
 
 #ifndef OPENSSL_NO_ECDH
-int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs);
+int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 #endif
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
@@ -1069,6 +1073,12 @@ int ssl_check_serverhello_tlsext(SSL *s);
 #endif
 int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 				const unsigned char *limit, SSL_SESSION **ret);
+
+int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
+				const EVP_MD *md);
+int tls12_get_sigid(const EVP_PKEY *pk);
+const EVP_MD *tls12_get_hash(unsigned char hash_alg);
+
 #endif
 EVP_MD_CTX* ssl_replace_hash(EVP_MD_CTX **hash,const EVP_MD *md) ;
 void ssl_clear_hash_ctx(EVP_MD_CTX **hash);
@@ -1080,4 +1090,5 @@ int ssl_add_clienthello_renegotiate_ext(SSL *s, unsigned char *p, int *len,
 					int maxlen);
 int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 					  int *al);
+long ssl_get_algorithm2(SSL *s);
 #endif

@@ -291,7 +291,7 @@ static int tls1_generate_key_block(SSL *s, unsigned char *km,
 	     unsigned char *tmp, int num)
 	{
 	int ret;
-	ret = tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+	ret = tls1_PRF(ssl_get_algorithm2(s),
 		 TLS_MD_KEY_EXPANSION_CONST,TLS_MD_KEY_EXPANSION_CONST_SIZE,
 		 s->s3->server_random,SSL3_RANDOM_SIZE,
 		 s->s3->client_random,SSL3_RANDOM_SIZE,
@@ -494,7 +494,7 @@ printf("which = %04X\nmac key=",which);
 		/* In here I set both the read and write key/iv to the
 		 * same value since only the correct one will be used :-).
 		 */
-		if (!tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+		if (!tls1_PRF(ssl_get_algorithm2(s),
 				exp_label,exp_label_len,
 				s->s3->client_random,SSL3_RANDOM_SIZE,
 				s->s3->server_random,SSL3_RANDOM_SIZE,
@@ -505,7 +505,7 @@ printf("which = %04X\nmac key=",which);
 
 		if (k > 0)
 			{
-			if (!tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+			if (!tls1_PRF(ssl_get_algorithm2(s),
 					TLS_MD_IV_BLOCK_CONST,TLS_MD_IV_BLOCK_CONST_SIZE,
 					s->s3->client_random,SSL3_RANDOM_SIZE,
 					s->s3->server_random,SSL3_RANDOM_SIZE,
@@ -879,7 +879,7 @@ int tls1_final_finish_mac(SSL *s,
 
 	for (idx=0;ssl_get_handshake_digest(idx,&mask,&md);idx++)
 		{
-		if (mask & s->s3->tmp.new_cipher->algorithm2)
+		if (mask & ssl_get_algorithm2(s))
 			{
 			int hashsize = EVP_MD_size(md);
 			if (hashsize < 0 || hashsize > (int)(sizeof buf - (size_t)(q-buf)))
@@ -898,7 +898,7 @@ int tls1_final_finish_mac(SSL *s,
 			}
 		}
 		
-	if (!tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+	if (!tls1_PRF(ssl_get_algorithm2(s),
 			str,slen, buf,(int)(q-buf), NULL,0, NULL,0, NULL,0,
 			s->session->master_key,s->session->master_key_length,
 			out,buf2,sizeof buf2))
@@ -1008,6 +1008,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	const void *co = NULL, *so = NULL;
 	int col = 0, sol = 0;
 
+
 #ifdef KSSL_DEBUG
 	printf ("tls1_generate_master_secret(%p,%p, %p, %d)\n", s,out, p,len);
 #endif	/* KSSL_DEBUG */
@@ -1024,7 +1025,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 		}
 #endif
 
-	tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+	tls1_PRF(ssl_get_algorithm2(s),
 		TLS_MD_MASTER_SECRET_CONST,TLS_MD_MASTER_SECRET_CONST_SIZE,
 		s->s3->client_random,SSL3_RANDOM_SIZE,
 		co, col,
@@ -1032,6 +1033,16 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 		so, sol,
 		p,len,
 		s->session->master_key,buff,sizeof buff);
+#ifdef SSL_DEBUG
+	fprintf(stderr, "Premaster Secret:\n");
+	BIO_dump_fp(stderr, (char *)p, len);
+	fprintf(stderr, "Client Random:\n");
+	BIO_dump_fp(stderr, (char *)s->s3->client_random, SSL3_RANDOM_SIZE);
+	fprintf(stderr, "Server Random:\n");
+	BIO_dump_fp(stderr, (char *)s->s3->server_random, SSL3_RANDOM_SIZE);
+	fprintf(stderr, "Master Secret:\n");
+	BIO_dump_fp(stderr, (char *)s->session->master_key, SSL3_MASTER_SECRET_SIZE);
+#endif
 
 #ifdef KSSL_DEBUG
 	printf ("tls1_generate_master_secret() complete\n");
@@ -1096,7 +1107,7 @@ int SSL_tls1_key_exporter(SSL *s, unsigned char *label, int label_len,
 	if (!tmp)
 		return 0;
 	
-	rv = tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
+	rv = tls1_PRF(ssl_get_algorithm2(s),
 			 label, label_len,
 			 s->s3->client_random,SSL3_RANDOM_SIZE,
 			 s->s3->server_random,SSL3_RANDOM_SIZE,

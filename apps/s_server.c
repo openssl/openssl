@@ -499,6 +499,7 @@ static void sv_usage(void)
 #endif
 	BIO_printf(bio_err," -ssl2         - Just talk SSLv2\n");
 	BIO_printf(bio_err," -ssl3         - Just talk SSLv3\n");
+	BIO_printf(bio_err," -tls1_2       - Just talk TLSv1.2\n");
 	BIO_printf(bio_err," -tls1_1       - Just talk TLSv1.1\n");
 	BIO_printf(bio_err," -tls1         - Just talk TLSv1\n");
 	BIO_printf(bio_err," -dtls1        - Just talk DTLSv1\n");
@@ -509,6 +510,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -no_ssl3      - Just disable SSLv3\n");
 	BIO_printf(bio_err," -no_tls1      - Just disable TLSv1\n");
 	BIO_printf(bio_err," -no_tls1_1    - Just disable TLSv1.1\n");
+	BIO_printf(bio_err," -no_tls1_2    - Just disable TLSv1.2\n");
 #ifndef OPENSSL_NO_DH
 	BIO_printf(bio_err," -no_dhe       - Disable ephemeral DH\n");
 #endif
@@ -1190,6 +1192,8 @@ int MAIN(int argc, char *argv[])
 			{ off|=SSL_OP_NO_TLSv1; }
 		else if	(strcmp(*argv,"-no_tls1_1") == 0)
 			{ off|=SSL_OP_NO_TLSv1_1; }
+		else if	(strcmp(*argv,"-no_tls1_2") == 0)
+			{ off|=SSL_OP_NO_TLSv1_2; }
 		else if	(strcmp(*argv,"-no_comp") == 0)
 			{ off|=SSL_OP_NO_COMPRESSION; }
 #ifndef OPENSSL_NO_TLSEXT
@@ -1209,6 +1213,8 @@ int MAIN(int argc, char *argv[])
 			{ meth=TLSv1_server_method(); }
 		else if	(strcmp(*argv,"-tls1_1") == 0)
 			{ meth=TLSv1_1_server_method(); }
+		else if	(strcmp(*argv,"-tls1_2") == 0)
+			{ meth=TLSv1_2_server_method(); }
 #endif
 #ifndef OPENSSL_NO_DTLS1
 		else if	(strcmp(*argv,"-dtls1") == 0)
@@ -1457,6 +1463,9 @@ bad:
 	SSL_CTX_set_quiet_shutdown(ctx,1);
 	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
+	/* HACK while TLS v1.2 is disabled by default */
+	if (!(off & SSL_OP_NO_TLSv1_2))
+		SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_2);
 	SSL_CTX_set_options(ctx,off);
 	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 	 * Setting read ahead solves this problem.

@@ -610,7 +610,7 @@ int ssl3_digest_cached_records(SSL *s)
 	/* Loop through bitso of algorithm2 field and create MD_CTX-es */
 	for (i=0;ssl_get_handshake_digest(i,&mask,&md); i++) 
 		{
-		if ((mask & s->s3->tmp.new_cipher->algorithm2) && md) 
+		if ((mask & ssl_get_algorithm2(s)) && md) 
 			{
 			s->s3->handshake_dgst[i]=EVP_MD_CTX_create();
 			EVP_DigestInit_ex(s->s3->handshake_dgst[i],md,NULL);

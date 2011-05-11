@@ -1702,6 +1702,8 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	 * deployed might change this.
 	 */
 	ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
+	/* Disable TLS v1.2 by default for now */
+	ret->options |= SSL_OP_NO_TLSv1_2;
 
 	return(ret);
 err:
@@ -2051,12 +2053,13 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 
 #ifndef OPENSSL_NO_EC
 
-int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
+int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 	{
 	unsigned long alg_k, alg_a;
 	EVP_PKEY *pkey = NULL;
 	int keysize = 0;
 	int signature_nid = 0;
+	const SSL_CIPHER *cs = s->s3->tmp.new_cipher;
 
 	alg_k = cs->algorithm_mkey;
 	alg_a = cs->algorithm_auth;
@@ -2083,7 +2086,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 			SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG, SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT);
 			return 0;
 			}
-		if (alg_k & SSL_kECDHe)
+		if ((alg_k & SSL_kECDHe) && s->version < TLS1_2_VERSION)
 			{
 			/* signature alg must be ECDSA */
 			if (signature_nid != NID_ecdsa_with_SHA1)
@@ -2092,7 +2095,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 				return 0;
 				}
 			}
-		if (alg_k & SSL_kECDHr)
+		if ((alg_k & SSL_kECDHr) && s->version < TLS1_2_VERSION)
 			{
 			/* signature alg must be RSA */
 
@@ -2188,34 +2191,36 @@ X509 *ssl_get_server_send_cert(SSL *s)
 	return(c->pkeys[i].x509);
 	}
 
-EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *cipher)
+EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *cipher, const EVP_MD **pmd)
 	{
 	unsigned long alg_a;
 	CERT *c;
+	int idx = -1;
 
 	alg_a = cipher->algorithm_auth;
 	c=s->cert;
 
 	if ((alg_a & SSL_aDSS) &&
 		(c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL))
-		return(c->pkeys[SSL_PKEY_DSA_SIGN].privatekey);
+		idx = SSL_PKEY_DSA_SIGN;
 	else if (alg_a & SSL_aRSA)
 		{
 		if (c->pkeys[SSL_PKEY_RSA_SIGN].privatekey != NULL)
-			return(c->pkeys[SSL_PKEY_RSA_SIGN].privatekey);
+			idx = SSL_PKEY_RSA_SIGN;
 		else if (c->pkeys[SSL_PKEY_RSA_ENC].privatekey != NULL)
-			return(c->pkeys[SSL_PKEY_RSA_ENC].privatekey);
-		else
-			return(NULL);
+			idx = SSL_PKEY_RSA_ENC;
 		}
 	else if ((alg_a & SSL_aECDSA) &&
 	         (c->pkeys[SSL_PKEY_ECC].privatekey != NULL))
-		return(c->pkeys[SSL_PKEY_ECC].privatekey);
-	else /* if (alg_a & SSL_aNULL) */
+		idx = SSL_PKEY_ECC;
+	if (idx == -1)
 		{
 		SSLerr(SSL_F_SSL_GET_SIGN_PKEY,ERR_R_INTERNAL_ERROR);
 		return(NULL);
 		}
+	if (pmd)
+		*pmd = c->pkeys[idx].digest;
+	return c->pkeys[idx].privatekey;
 	}
 
 void ssl_update_cache(SSL *s,int mode)
@@ -2440,7 +2445,9 @@ SSL_METHOD *ssl_bad_method(int ver)
 
 const char *SSL_get_version(const SSL *s)
 	{
-	if (s->version == TLS1_1_VERSION)
+	if (s->version == TLS1_2_VERSION)
+		return("TLSv1.2");
+	else if (s->version == TLS1_1_VERSION)
 		return("TLSv1.1");
 	if (s->version == TLS1_VERSION)
 		return("TLSv1");
