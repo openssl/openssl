@@ -1943,6 +1943,9 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 	unsigned long l;
 	SSL *con=NULL;
 	BIO *sbio;
+#ifndef OPENSSL_NO_KRB5
+	KSSL_CTX *kctx;
+#endif
 	struct timeval timeout;
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_NETWARE) || defined(OPENSSL_SYS_BEOS_R5)
 	struct timeval tv;
@@ -1983,12 +1986,11 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		}
 #endif
 #ifndef OPENSSL_NO_KRB5
-		if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
+		if ((kctx = kssl_ctx_new()) != NULL)
                         {
-                        kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE,
-								KRB5SVC);
-                        kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB,
-								KRB5KEYTAB);
+			SSL_set0_kssl_ctx(con, kctx);
+                        kssl_ctx_setstring(kctx, KSSL_SERVICE, KRB5SVC);
+                        kssl_ctx_setstring(kctx, KSSL_KEYTAB, KRB5KEYTAB);
                         }
 #endif	/* OPENSSL_NO_KRB5 */
 		if(context)
@@ -2341,6 +2343,9 @@ static int init_ssl_connection(SSL *con)
 	const unsigned char *next_proto_neg;
 	unsigned next_proto_neg_len;
 #endif
+#ifndef OPENSSL_NO_KRB5
+	char *client_princ;
+#endif
 
 	if ((i=SSL_accept(con)) <= 0)
 		{
@@ -2394,10 +2399,11 @@ static int init_ssl_connection(SSL *con)
 		TLS1_FLAGS_TLS_PADDING_BUG)
 		BIO_printf(bio_s_out,"Peer has incorrect TLSv1 block padding\n");
 #ifndef OPENSSL_NO_KRB5
-	if (con->kssl_ctx->client_princ != NULL)
+	client_princ = kssl_ctx_get0_client_princ(SSL_get0_kssl_ctx(con));
+	if (client_princ != NULL)
 		{
 		BIO_printf(bio_s_out,"Kerberos peer principal is %s\n",
-			con->kssl_ctx->client_princ);
+								client_princ);
 		}
 #endif /* OPENSSL_NO_KRB5 */
 	BIO_printf(bio_s_out, "Secure Renegotiation IS%s supported\n",
@@ -2449,6 +2455,9 @@ static int www_body(char *hostname, int s, unsigned char *context)
 	SSL *con;
 	const SSL_CIPHER *c;
 	BIO *io,*ssl_bio,*sbio;
+#ifndef OPENSSL_NO_KRB5
+	KSSL_CTX *kctx;
+#endif
 
 	buf=OPENSSL_malloc(bufsize);
 	if (buf == NULL) return(0);
@@ -2480,10 +2489,10 @@ static int www_body(char *hostname, int s, unsigned char *context)
 			}
 #endif
 #ifndef OPENSSL_NO_KRB5
-	if ((con->kssl_ctx = kssl_ctx_new()) != NULL)
+	if ((kctx = kssl_ctx_new()) != NULL)
 		{
-		kssl_ctx_setstring(con->kssl_ctx, KSSL_SERVICE, KRB5SVC);
-		kssl_ctx_setstring(con->kssl_ctx, KSSL_KEYTAB, KRB5KEYTAB);
+		kssl_ctx_setstring(kctx, KSSL_SERVICE, KRB5SVC);
+		kssl_ctx_setstring(kctx, KSSL_KEYTAB, KRB5KEYTAB);
 		}
 #endif	/* OPENSSL_NO_KRB5 */
 	if(context) SSL_set_session_id_context(con, context,
