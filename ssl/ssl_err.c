@@ -473,6 +473,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_SERVERHELLO_TLSEXT)    ,"serverhello tlsext"},
 {ERR_REASON(SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED),"session id context uninitialized"},
 {ERR_REASON(SSL_R_SHORT_READ)            ,"short read"},
+{ERR_REASON(SSL_R_SIGNATURE_ALGORITHMS_ERROR),"signature algorithms error"},
 {ERR_REASON(SSL_R_SIGNATURE_FOR_NON_SIGNING_CERTIFICATE),"signature for non signing certificate"},
 {ERR_REASON(SSL_R_SRP_A_CALC)            ,"error with the srp params"},
 {ERR_REASON(SSL_R_SSL23_DOING_SESSION_ID_REUSE),"ssl23 doing session id reuse"},
