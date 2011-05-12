@@ -112,7 +112,9 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 # NEXTPROTONEG
 			 "NEXTPROTONEG",
 			 # Deprecated functions
-			 "DEPRECATED" );
+			 "DEPRECATED",
+			 # Hide SSL internals
+			 "SSL_INTERN");
 
 my $options="";
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
