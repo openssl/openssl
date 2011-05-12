@@ -2257,6 +2257,9 @@ static int init_ssl_connection(SSL *con)
 	X509 *peer;
 	long verify_error;
 	MS_STATIC char buf[BUFSIZ];
+#ifndef OPENSSL_NO_KRB5
+	char *client_princ;
+#endif
 
 	if ((i=SSL_accept(con)) <= 0)
 		{
