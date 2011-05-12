@@ -256,7 +256,7 @@ int FIPS_module_mode_set(int onoff)
 	   seeding */
 	if(FIPS_module_mode())
 	    {
-	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_FIPS_MODE_ALREADY_SET);
+	    FIPSerr(FIPS_F_FIPS_MODULE_MODE_SET,FIPS_R_FIPS_MODE_ALREADY_SET);
 	    fips_selftest_fail = 1;
 	    ret = 0;
 	    goto end;
@@ -265,7 +265,7 @@ int FIPS_module_mode_set(int onoff)
 #ifdef OPENSSL_IA32_SSE2
 	if ((OPENSSL_ia32cap & (1<<25|1<<26)) != (1<<25|1<<26))
 	    {
-	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_UNSUPPORTED_PLATFORM);
+	    FIPSerr(FIPS_F_FIPS_MODULE_MODE_SET,FIPS_R_UNSUPPORTED_PLATFORM);
 	    fips_selftest_fail = 1;
 	    ret = 0;
 	    goto end;
@@ -274,7 +274,7 @@ int FIPS_module_mode_set(int onoff)
 
 	if(fips_signature_witness() != FIPS_signature)
 	    {
-	    FIPSerr(FIPS_F_FIPS_MODE_SET,FIPS_R_CONTRADICTING_EVIDENCE);
+	    FIPSerr(FIPS_F_FIPS_MODULE_MODE_SET,FIPS_R_CONTRADICTING_EVIDENCE);
 	    fips_selftest_fail = 1;
 	    ret = 0;
 	    goto end;
