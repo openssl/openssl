@@ -4218,4 +4218,4 @@ EVP_PKEY_meth_copy                      4588	EXIST::FUNCTION:
 ERR_add_error_vdata                     4589	EXIST::FUNCTION:
 EVP_aes_128_ctr                         4590	EXIST::FUNCTION:AES
 EVP_aes_256_ctr                         4591	EXIST::FUNCTION:AES
-EC_GFp_nistp224_method                  4592	EXIST::FUNCTION:EC
+EC_GFp_nistp224_method                  4592	EXIST::FUNCTION:EC,EC_NISTP224_64_GCC_128
