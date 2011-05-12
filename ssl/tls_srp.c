@@ -477,14 +477,14 @@ char *SSL_get_srp_userinfo(SSL *s)
 #define tls1_ctx_ctrl ssl3_ctx_ctrl
 #define tls1_ctx_callback_ctrl ssl3_ctx_callback_ctrl
 
-int SSL_CTX_set_srp_username(SSL_CTX *ctx, char *name)
+int SSL_CTX_set_srp_username(SSL_CTX *ctx,char *name)
 	{
-	return tls1_ctx_ctrl(ctx, SSL_CTRL_SET_TLS_EXT_SRP_USERNAME, 0, name);
+	return tls1_ctx_ctrl(ctx,SSL_CTRL_SET_TLS_EXT_SRP_USERNAME,0,name);
 	}
 
-int SSL_CTX_set_srp_password(SSL_CTX *ctx, char *password)
+int SSL_CTX_set_srp_password(SSL_CTX *ctx,char *password)
 	{
-	return tls1_ctx_ctrl(ctx, SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD, 0, password);
+	return tls1_ctx_ctrl(ctx,SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD,0,password);
 	}
 
 int SSL_CTX_set_srp_strength(SSL_CTX *ctx, int strength)
@@ -495,8 +495,8 @@ int SSL_CTX_set_srp_strength(SSL_CTX *ctx, int strength)
 
 int SSL_CTX_set_srp_verify_param_callback(SSL_CTX *ctx, int (*cb)(SSL *,void *))
 	{
-	return tls1_ctx_callback_ctrl(ctx, SSL_CTRL_SET_SRP_VERIFY_PARAM_CB,
-				      (void (*)())cb);
+	return tls1_ctx_callback_ctrl(ctx,SSL_CTRL_SET_SRP_VERIFY_PARAM_CB,
+				      (void (*)(void))cb);
 	}
 
 int SSL_CTX_set_srp_cb_arg(SSL_CTX *ctx, void *arg)
@@ -507,21 +507,21 @@ int SSL_CTX_set_srp_cb_arg(SSL_CTX *ctx, void *arg)
 int SSL_CTX_set_srp_username_callback(SSL_CTX *ctx,
 				      int (*cb)(SSL *,int *,void *))
 	{
-	return tls1_ctx_callback_ctrl(ctx, SSL_CTRL_SET_TLS_EXT_SRP_USERNAME_CB,
-				      (void (*)())cb);
+	return tls1_ctx_callback_ctrl(ctx,SSL_CTRL_SET_TLS_EXT_SRP_USERNAME_CB,
+				      (void (*)(void))cb);
 	}
 
 int SSL_CTX_set_srp_client_pwd_callback(SSL_CTX *ctx, char *(*cb)(SSL *,void *))
 	{
-	return tls1_ctx_callback_ctrl(ctx, SSL_CTRL_SET_SRP_GIVE_CLIENT_PWD_CB,
-				      (void (*)())cb);
+	return tls1_ctx_callback_ctrl(ctx,SSL_CTRL_SET_SRP_GIVE_CLIENT_PWD_CB,
+				      (void (*)(void))cb);
 	}
 
 int SSL_CTX_set_srp_missing_srp_username_callback(SSL_CTX *ctx,
 						  char *(*cb)(SSL *,void *))
 	{
 	return tls1_ctx_callback_ctrl(ctx,
-				      SSL_CTRL_SET_TLS_EXT_SRP_MISSING_CLIENT_USERNAME_CB,
-				      (void (*)())cb);
+			    SSL_CTRL_SET_TLS_EXT_SRP_MISSING_CLIENT_USERNAME_CB,
+				      (void (*)(void))cb);
 	}
 #endif
