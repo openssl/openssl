@@ -315,7 +315,10 @@ int main(int Argc, char *ARGV[])
 
 	if(getenv("OPENSSL_FIPS")) {
 #ifdef OPENSSL_FIPS
-		if (!FIPS_mode_set(1)) {
+		/* For now call FIPS_module_mode_set(): will call
+		 * FIPS_mode_set() later.
+		 */
+		if (!FIPS_module_mode_set(1)) {
 			ERR_load_crypto_strings();
 			ERR_print_errors(BIO_new_fp(stderr,BIO_NOCLOSE));
 			EXIT(1);
