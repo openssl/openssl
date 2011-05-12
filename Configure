@@ -667,7 +667,7 @@ my $perl;
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
-		 "ec-nistp224-64-gcc-218" => "default",
+		 "ec-nistp224-64-gcc-128" => "default",
 		 "gmp"		  => "default",
                  "jpake"          => "experimental",
                  "md2"            => "default",
