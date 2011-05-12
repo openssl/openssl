@@ -4,6 +4,11 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Add TLS v1.2 client side support for client authentication. Keep cache
+     of handshake records longer as we don't know the hash algorithm to use
+     until after the certificate request message is received.
+     [Steve Henson]
+
   *) Initial TLS v1.2 client support. Add a default signature algorithms
      extension including all the algorithms we support. Parse new signature
      format in client key exchange. Relax some ECC signing restrictions for

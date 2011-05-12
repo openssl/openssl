@@ -904,9 +904,11 @@ int ssl3_get_server_hello(SSL *s)
 			}
 		}
 	s->s3->tmp.new_cipher=c;
-	if (!ssl3_digest_cached_records(s))
+	/* Don't digest cached records if TLS v1.2: we may need them for
+	 * client authentication.
+	 */
+	if (s->version < TLS1_2_VERSION && !ssl3_digest_cached_records(s))
 		goto f_err;
-
 	/* lets get the compression algorithm */
 	/* COMPRESSION */
 #ifdef OPENSSL_NO_COMP
@@ -1795,6 +1797,14 @@ int ssl3_get_certificate_request(SSL *s)
 	if (s->s3->tmp.message_type == SSL3_MT_SERVER_DONE)
 		{
 		s->s3->tmp.reuse_message=1;
+		/* If we get here we don't need any cached handshake records
+		 * as we wont be doing client auth.
+		 */
+		if (s->s3->handshake_buffer)
+			{
+			if (!ssl3_digest_cached_records(s))
+				goto err;
+			}
 		return(1);
 		}
 
@@ -2836,11 +2846,12 @@ int ssl3_send_client_verify(SSL *s)
 	unsigned char data[MD5_DIGEST_LENGTH+SHA_DIGEST_LENGTH];
 	EVP_PKEY *pkey;
 	EVP_PKEY_CTX *pctx=NULL;
-#ifndef OPENSSL_NO_RSA
+	EVP_MD_CTX mctx;
 	unsigned u=0;
-#endif
 	unsigned long n;
 	int j;
+
+	EVP_MD_CTX_init(&mctx);
 
 	if (s->state == SSL3_ST_CW_CERT_VRFY_A)
 		{
@@ -2852,7 +2863,8 @@ int ssl3_send_client_verify(SSL *s)
 		EVP_PKEY_sign_init(pctx);
 		if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1())>0)
 			{
-			s->method->ssl3_enc->cert_verify_mac(s,
+			if (s->version < TLS1_2_VERSION)
+				s->method->ssl3_enc->cert_verify_mac(s,
 						NID_sha1,
 						&(data[MD5_DIGEST_LENGTH]));
 			}
@@ -2860,6 +2872,41 @@ int ssl3_send_client_verify(SSL *s)
 			{
 			ERR_clear_error();
 			}
+		/* For TLS v1.2 send signature algorithm and signature
+		 * using agreed digest and cached handshake records.
+		 */
+		if (s->version >= TLS1_2_VERSION)
+			{
+			long hdatalen = 0;
+			void *hdata;
+			const EVP_MD *md = s->cert->key->digest;
+			hdatalen = BIO_get_mem_data(s->s3->handshake_buffer,
+								&hdata);
+			if (hdatalen <= 0 || !tls12_get_sigandhash(p, pkey, md))
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
+						ERR_R_INTERNAL_ERROR);
+				goto err;
+				}
+			p += 2;
+#ifdef SSL_DEBUG
+			fprintf(stderr, "Using TLS 1.2 with client alg %s\n",
+							EVP_MD_name(md));
+#endif
+			if (!EVP_SignInit_ex(&mctx, md, NULL)
+				|| !EVP_SignUpdate(&mctx, hdata, hdatalen)
+				|| !EVP_SignFinal(&mctx, p + 2, &u, pkey))
+				{
+				SSLerr(SSL_F_SSL3_SEND_CLIENT_VERIFY,
+						ERR_R_EVP_LIB);
+				goto err;
+				}
+			s2n(u,p);
+			n = u + 4;
+			if (!ssl3_digest_cached_records(s))
+				goto err;
+			}
+		else
 #ifndef OPENSSL_NO_RSA
 		if (pkey->type == EVP_PKEY_RSA)
 			{
@@ -2942,9 +2989,11 @@ int ssl3_send_client_verify(SSL *s)
 		s->init_num=(int)n+4;
 		s->init_off=0;
 		}
+	EVP_MD_CTX_cleanup(&mctx);
 	EVP_PKEY_CTX_free(pctx);
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 err:
+	EVP_MD_CTX_cleanup(&mctx);
 	EVP_PKEY_CTX_free(pctx);
 	return(-1);
 	}
