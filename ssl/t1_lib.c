@@ -122,7 +122,6 @@ const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
 				const unsigned char *sess_id, int sesslen,
 				SSL_SESSION **psess);
-static int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize);
 #endif
 
 SSL3_ENC_METHOD TLSv1_enc_data={
@@ -2090,7 +2089,7 @@ const EVP_MD *tls12_get_hash(unsigned char hash_alg)
 
 /* Set preferred digest for each key type */
 
-static int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
+int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	{
 	int i, idx;
 	const EVP_MD *md;
@@ -2098,6 +2097,9 @@ static int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	/* Extension ignored for TLS versions below 1.2 */
 	if (s->version < TLS1_2_VERSION)
 		return 1;
+	/* Should never happen */
+	if (!c)
+		return 0;
 
 	c->pkeys[SSL_PKEY_DSA_SIGN].digest = NULL;
 	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
@@ -2141,6 +2143,7 @@ static int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 			}
 
 		}
+
 
 	/* Set any remaining keys to default values. NOTE: if alg is not
 	 * supported it stays as NULL.

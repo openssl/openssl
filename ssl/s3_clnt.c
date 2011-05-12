@@ -1793,7 +1793,7 @@ int ssl3_get_certificate_request(SSL *s)
 	{
 	int ok,ret=0;
 	unsigned long n,nc,l;
-	unsigned int llen,sigalglen, ctype_num,i;
+	unsigned int llen, ctype_num,i;
 	X509_NAME *xn=NULL;
 	const unsigned char *p,*q;
 	unsigned char *d;
@@ -1852,14 +1852,24 @@ int ssl3_get_certificate_request(SSL *s)
 	/* HACK! For now just skip over signatature algorithms */
 	if (s->version >= TLS1_2_VERSION)
 		{
-		n2s(p, sigalglen);
-		p += sigalglen;
-		sigalglen += 2;
+		n2s(p, llen);
+		/* Check we have enough room for signature algorithms and
+		 * following length value.
+		 */
+		if ((unsigned long)(p - d + llen + 2) > n)
+			{
+			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECODE_ERROR);
+			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,SSL_R_DATA_LENGTH_TOO_LONG);
+			goto err;
+			}
+		if ((llen & 1) || !tls1_process_sigalgs(s, p, llen))
+			{
+			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECODE_ERROR);
+			SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,SSL_R_SIGNATURE_ALGORITHMS_ERROR);
+			goto err;
+			}
+		p += llen;
 		}
-	else
-		sigalglen = 0;
-		
-		
 
 	/* get the CA RDNs */
 	n2s(p,llen);
@@ -1872,7 +1882,7 @@ fclose(out);
 }
 #endif
 
-	if ((llen+ctype_num+sigalglen+2+1) != n)
+	if ((unsigned long)(p - d + llen) != n)
 		{
 		ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_DECODE_ERROR);
 		SSLerr(SSL_F_SSL3_GET_CERTIFICATE_REQUEST,SSL_R_LENGTH_MISMATCH);
