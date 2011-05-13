@@ -219,7 +219,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-rfc3779$/)	{ $no_rfc3779=1; }
 	elsif (/^no-tlsext$/)	{ $no_tlsext=1; }
 	elsif (/^no-cms$/)	{ $no_cms=1; }
-	elsif (/^no-nistp224-64-gcc-128$/)	{ $no_nistp_gcc=1; }
+	elsif (/^no-ec-nistp224-64-gcc-128$/)	{ $no_nistp_gcc=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
 	elsif (/^no-capieng$/)	{ $no_capieng=1; }
 	elsif (/^no-jpake$/)	{ $no_jpake=1; }
@@ -1179,7 +1179,7 @@ sub is_valid
 			if ($keyword eq "TLSEXT" && $no_tlsext) { return 0; }
 			if ($keyword eq "PSK" && $no_psk) { return 0; }
 			if ($keyword eq "CMS" && $no_cms) { return 0; }
-			if ($keyword eq "NISTP224-64-GCC-128" && $no_nistp_gcc)
+			if ($keyword eq "EC_NISTP224_64_GCC_128" && $no_nistp_gcc)
 					{ return 0; }
 			if ($keyword eq "SSL2" && $no_ssl2) { return 0; }
 			if ($keyword eq "CAPIENG" && $no_capieng) { return 0; }
