@@ -134,7 +134,7 @@ my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw;
 my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
 my $no_rfc3779; my $no_psk; my $no_tlsext; my $no_cms; my $no_capieng;
 my $no_jpake; my $no_ssl2; my $no_ec2m; my $no_nextprotoneg;
-my $no_srp;
+my $no_srp; my $no_nistp_gcc;
 
 my $fips;
 
@@ -226,6 +226,8 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-tlsext$/)	{ $no_tlsext=1; }
 	elsif (/^no-cms$/)	{ $no_cms=1; }
 	elsif (/^no-ec2m$/)	{ $no_ec2m=1; }
+	elsif (/^no-nistp224-64-gcc-128$/)	{ $no_nistp_gcc=1; }
+	elsif (/^no-ec2m$/)	{ $no_nistp_gcc=1; }
 	elsif (/^no-nextprotoneg$/)	{ $no_nextprotoneg=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
 	elsif (/^no-capieng$/)	{ $no_capieng=1; }
@@ -1184,6 +1186,8 @@ sub is_valid
 			if ($keyword eq "TLSEXT" && $no_tlsext) { return 0; }
 			if ($keyword eq "PSK" && $no_psk) { return 0; }
 			if ($keyword eq "CMS" && $no_cms) { return 0; }
+			if ($keyword eq "NISTP224-64-GCC-128" && $no_nistp_gcc)
+					{ return 0; }
 			if ($keyword eq "EC2M" && $no_ec2m) { return 0; }
 			if ($keyword eq "NEXTPROTONEG" && $no_nextprotoneg) { return 0; }
 			if ($keyword eq "SSL2" && $no_ssl2) { return 0; }
