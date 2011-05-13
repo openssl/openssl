@@ -1063,6 +1063,7 @@ sub read_options
 		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
 		"no-jpake" => \$no_jpake,
+		"no-ec-nistp224-64-gcc-128" => 0,
 		"no-err" => \$no_err,
 		"no-sock" => \$no_sock,
 		"no-krb5" => \$no_krb5,
