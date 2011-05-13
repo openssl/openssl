@@ -227,7 +227,6 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-cms$/)	{ $no_cms=1; }
 	elsif (/^no-ec2m$/)	{ $no_ec2m=1; }
 	elsif (/^no-nistp224-64-gcc-128$/)	{ $no_nistp_gcc=1; }
-	elsif (/^no-ec2m$/)	{ $no_nistp_gcc=1; }
 	elsif (/^no-nextprotoneg$/)	{ $no_nextprotoneg=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
 	elsif (/^no-capieng$/)	{ $no_capieng=1; }
