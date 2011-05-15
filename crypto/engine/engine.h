@@ -141,6 +141,13 @@ extern "C" {
  * the existing ENGINE's structural reference count. */
 #define ENGINE_FLAGS_BY_ID_COPY		(int)0x0004
 
+/* This flag if for an ENGINE that does not want its methods registered as 
+ * part of ENGINE_register_all_complete() for example if the methods are
+ * not usable as default methods.
+ */
+
+#define ENGINE_FLAGS_NO_REGISTER_ALL	(int)0x0008
+
 /* ENGINEs can support their own command types, and these flags are used in
  * ENGINE_CTRL_GET_CMD_FLAGS to indicate to the caller what kind of input each
  * command expects. Currently only numeric and string input is supported. If a

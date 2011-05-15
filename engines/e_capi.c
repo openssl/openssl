@@ -522,6 +522,7 @@ static int bind_capi(ENGINE *e)
 	{
 	if (!ENGINE_set_id(e, engine_capi_id)
 		|| !ENGINE_set_name(e, engine_capi_name)
+		|| !ENGINE_set_flags(e, ENGINE_FLAGS_NO_REGISTER_ALL)
 		|| !ENGINE_set_init_function(e, capi_init)
 		|| !ENGINE_set_finish_function(e, capi_finish)
 		|| !ENGINE_set_destroy_function(e, capi_destroy)
