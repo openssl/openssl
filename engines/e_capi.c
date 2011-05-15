@@ -1158,17 +1158,23 @@ static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
 	LPTSTR cspname = NULL;
 
 	CAPI_trace(ctx, "Listing containers CSP=%s, type = %d\n", ctx->cspname, ctx->csptype);
-	if (sizeof(TCHAR)!=sizeof(char))
+	if (ctx->cspname && sizeof(TCHAR)!=sizeof(char))
 		{
 		if ((clen=MultiByteToWideChar(CP_ACP,0,ctx->cspname,-1,NULL,0)))
 			{
 			cspname = alloca(clen*sizeof(WCHAR));
 			MultiByteToWideChar(CP_ACP,0,ctx->cspname,-1,(WCHAR *)cspname,clen);
 			}
+		if (!cspname)
+			{
+			CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, ERR_R_MALLOC_FAILURE);
+			capi_addlasterror();
+			return 0;
+			}
 		}
 	else
 		cspname = (TCHAR *)ctx->cspname;
-	if (!cspname || !CryptAcquireContext(&hprov, NULL, cspname, ctx->csptype, CRYPT_VERIFYCONTEXT))
+	if (!CryptAcquireContext(&hprov, NULL, cspname, ctx->csptype, CRYPT_VERIFYCONTEXT))
 		{
 		CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, CAPI_R_CRYPTACQUIRECONTEXT_ERROR);
 		capi_addlasterror();
