@@ -20,7 +20,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&pop	("eax");
 	&xor	("ecx","eax");
 	&bt	("ecx",21);
-	&jnc	(&label("done"));
+	&jnc	(&label("generic"));
 	&xor	("eax","eax");
 	&cpuid	();
 	&mov	("edi","eax");		# max value for standard query level
@@ -51,7 +51,14 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	# AMD specific
 	&mov	("eax",0x80000000);
 	&cpuid	();
-	&cmp	("eax",0x80000008);
+	&cmp	("eax",0x80000001);
+	&jb	(&label("intel"));
+	&mov	("esi","eax");
+	&mov	("eax",0x80000001);
+	&cpuid	();
+	&or	("ebp","ecx");
+	&and	("ebp",1<<11|1);	# isolate XOP bit
+	&cmp	("esi",0x80000008);
 	&jb	(&label("intel"));
 
 	&mov	("eax",0x80000008);
@@ -62,13 +69,13 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&mov	("eax",1);
 	&cpuid	();
 	&bt	("edx",28);
-	&jnc	(&label("done"));
+	&jnc	(&label("generic"));
 	&shr	("ebx",16);
 	&and	("ebx",0xff);
 	&cmp	("ebx","esi");
-	&ja	(&label("done"));
+	&ja	(&label("generic"));
 	&and	("edx",0xefffffff);	# clear hyper-threading bit
-	&jmp	(&label("done"));
+	&jmp	(&label("generic"));
 	
 &set_label("intel");
 	&cmp	("edi",4);
@@ -93,19 +100,42 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&or	("edx",1<<20);		# use reserved bit to engage RC4_CHAR
 &set_label("notP4");
 	&bt	("edx",28);		# test hyper-threading bit
-	&jnc	(&label("done"));
+	&jnc	(&label("generic"));
 	&and	("edx",0xefffffff);
 	&cmp	("edi",0);
-	&je	(&label("done"));
+	&je	(&label("generic"));
 
 	&or	("edx",0x10000000);
 	&shr	("ebx",16);
 	&cmp	(&LB("ebx"),1);
-	&ja	(&label("done"));
+	&ja	(&label("generic"));
 	&and	("edx",0xefffffff);	# clear hyper-threading bit if not
+
+&set_label("generic");
+	&and	("ebp",1<<11);		# isolate AMD XOP flag
+	&and	("ecx",~(1<<11));
+	&mov	("esi","edx");
+	&or	("ebp","ecx");		# merge AMD XOP flag
+
+	&bt	("ecx",26);		# check XSAVE bit
+	&jnc	(&label("done"));
+	&bt	("ecx",27);		# check OSXSAVE bit
+	&jnc	(&label("clear_xmm"));
+	&xor	("ecx","ecx");
+	&data_byte(0x0f,0x01,0xd0);	# xgetbv
+	&and	("eax",6);
+	&cmp	("eax",6);
+	&je	(&label("done"));
+	&cmp	("eax",2);
+	&je	(&label("clear_avx"));
+&set_label("clear_xmm");
+	&and	("ebp",~(1<<25|1<<1));	# clear AESNI and PCLMULQDQ bits
+	&and	("esi",~(1<<24));	# clear FXSR
+&set_label("clear_avx");
+	&and	("ebp",~(1<<28|1<<12|1<<11));# clear AVX, FMA and AMD XOP bits
 &set_label("done");
-	&mov	("eax","edx");
-	&mov	("edx","ecx");
+	&mov	("eax","esi");
+	&mov	("edx","ebp");
 &function_end("OPENSSL_ia32_cpuid");
 
 &external_label("OPENSSL_ia32cap_P");
@@ -199,8 +229,9 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&bt	(&DWP(0,"ecx"),1);
 	&jnc	(&label("no_x87"));
 	if ($sse2) {
-		&bt	(&DWP(0,"ecx"),26);
-		&jnc	(&label("no_sse2"));
+		&and	("ecx",1<<26|1<<24);	# check SSE2 and FXSR bits
+		&cmp	("ecx",1<<26|1<<24);
+		&jne	(&label("no_sse2"));
 		&pxor	("xmm0","xmm0");
 		&pxor	("xmm1","xmm1");
 		&pxor	("xmm2","xmm2");
@@ -331,7 +362,7 @@ my $max = "ebp";
 	&mov	($lasttick,"eax");	# lasttick = tick
 	&mov	($lastdiff,0);		# lastdiff = 0
 	&clflush(&DWP(0,$out));
-	&lock	();
+	&data_byte(0xf0);		# lock
 	&add	(&DWP(0,$out),$lastdiff);
 	&jmp	(&label("loop"));
 
@@ -342,7 +373,7 @@ my $max = "ebp";
 	&mov	($lasttick,"edx");	# lasttick = tick
 	&mov	($lastdiff,"eax");	# lastdiff = diff
 	&clflush(&DWP(0,$out));
-	&lock	();
+	&data_byte(0xf0);		# lock
 	&add	(&DWP(0,$out),"eax");	# accumulate diff
 	&lea	($out,&DWP(4,$out));	# ++$out
 	&sub	($cnt,1);		# --$cnt
@@ -371,7 +402,7 @@ my $max = "ebp";
 	&mov	($lastdiff,0);		# lastdiff = 0
 
 	&clflush(&DWP(0,$out));
-	&lock	();
+	&data_byte(0xf0);		# lock
 	&add	(&DWP(0,$out),$lastdiff);
 
 	&rdtsc	();			# collect 1st diff
@@ -383,7 +414,7 @@ my $max = "ebp";
 
 &set_label("loop2",16);
 	&clflush(&DWP(0,$out));
-	&lock	();
+	&data_byte(0xf0);		# lock
 	&add	(&DWP(0,$out),"eax");	# accumulate diff
 
 	&sub	($max,1);

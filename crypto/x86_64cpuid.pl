@@ -47,7 +47,7 @@ OPENSSL_rdtsc:
 .type	OPENSSL_ia32_cpuid,\@abi-omnipotent
 .align	16
 OPENSSL_ia32_cpuid:
-	mov	%rbx,%r8
+	mov	%rbx,%r8		# save %rbx
 
 	xor	%eax,%eax
 	cpuid
@@ -79,7 +79,15 @@ OPENSSL_ia32_cpuid:
 	# AMD specific
 	mov	\$0x80000000,%eax
 	cpuid
-	cmp	\$0x80000008,%eax
+	cmp	\$0x80000001,%eax
+	jb	.Lintel
+	mov	%eax,%r10d
+	mov	\$0x80000001,%eax
+	cpuid
+	or	%ecx,%r9d
+	and	\$0x00000801,%r9d	# isolate AMD XOP bit, 1<<11
+
+	cmp	\$0x80000008,%r10d
 	jb	.Lintel
 
 	mov	\$0x80000008,%eax
@@ -90,12 +98,12 @@ OPENSSL_ia32_cpuid:
 	mov	\$1,%eax
 	cpuid
 	bt	\$28,%edx		# test hyper-threading bit
-	jnc	.Ldone
+	jnc	.Lgeneric
 	shr	\$16,%ebx		# number of logical processors
 	cmp	%r10b,%bl
-	ja	.Ldone
+	ja	.Lgeneric
 	and	\$0xefffffff,%edx	# ~(1<<28)
-	jmp	.Ldone
+	jmp	.Lgeneric
 
 .Lintel:
 	cmp	\$4,%r11d
@@ -121,21 +129,38 @@ OPENSSL_ia32_cpuid:
 	or	\$0x40000000,%edx	# use reserved bit to skip unrolled loop
 .Lnotintel:
 	bt	\$28,%edx		# test hyper-threading bit
-	jnc	.Ldone
+	jnc	.Lgeneric
 	and	\$0xefffffff,%edx	# ~(1<<28)
 	cmp	\$0,%r10d
-	je	.Ldone
+	je	.Lgeneric
 
 	or	\$0x10000000,%edx	# 1<<28
 	shr	\$16,%ebx
 	cmp	\$1,%bl			# see if cache is shared
-	ja	.Ldone
+	ja	.Lgeneric
 	and	\$0xefffffff,%edx	# ~(1<<28)
-.Ldone:
+.Lgeneric:
+	and	\$0x00000800,%r9d	# isolate AMD XOP flag
+	and	\$0xfffff7ff,%ecx
+	or	%r9d,%ecx		# merge AMD XOP flag
+
 	shl	\$32,%rcx
-	mov	%edx,%eax
-	mov	%r8,%rbx
-	or	%rcx,%rax
+	mov	%edx,%ebx
+	or	%rcx,%rbx		# compose capability vector in %rbx
+	bt	\$27+32,%rcx		# check OSXSAVE bit
+	jnc	.Lclear_avx
+	xor	%ecx,%ecx		# XCR0
+	.byte	0x0f,0x01,0xd0		# xgetbv
+	and	\$6,%eax		# isolate XMM and YMM state support
+	cmp	\$6,%eax
+	je	.Ldone
+.Lclear_avx:
+	mov	\$0xefffe7ff,%eax	# ~(1<<28|1<<12|1<<11)
+	shl	\$32,%rax
+	and	%rax,%rbx		# clear AVX, FMA and AMD XOP bits
+.Ldone:
+	mov	%rbx,%rax
+	mov	%r8,%rbx		# restore %rbx
 	ret
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
 
@@ -250,7 +275,7 @@ OPENSSL_instrument_bus:
 	mov	%eax,$lasttick	# lasttick = tick
 	mov	\$0,$lastdiff	# lastdiff = 0
 	clflush	($out)
-	lock
+	.byte	0xf0		# lock
 	add	$lastdiff,($out)
 	jmp	.Loop
 .align	16
@@ -260,7 +285,7 @@ OPENSSL_instrument_bus:
 	mov	%edx,$lasttick
 	mov	%eax,$lastdiff
 	clflush	($out)
-	lock
+	.byte	0xf0		# lock
 	add	%eax,($out)
 	lea	4($out),$out
 	sub	\$1,$cnt
@@ -284,7 +309,7 @@ OPENSSL_instrument_bus2:
 	mov	\$0,$lastdiff	# lastdiff = 0
 
 	clflush	($out)
-	lock
+	.byte	0xf0		# lock
 	add	$lastdiff,($out)
 
 	rdtsc			# collect 1st diff
@@ -294,7 +319,7 @@ OPENSSL_instrument_bus2:
 	mov	%eax,$lastdiff	# lastdiff = diff
 .Loop2:
 	clflush	($out)
-	lock
+	.byte	0xf0		# lock
 	add	%eax,($out)	# accumulate diff
 
 	sub	\$1,$max
