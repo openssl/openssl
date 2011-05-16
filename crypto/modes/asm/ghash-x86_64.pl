@@ -798,35 +798,7 @@ se_handler:
 ___
 }
 
-sub rex {
- local *opcode=shift;
- my ($dst,$src)=@_;
-
-   if ($dst>=8 || $src>=8) {
-	$rex=0x40;
-	$rex|=0x04 if($dst>=8);
-	$rex|=0x01 if($src>=8);
-	push @opcode,$rex;
-   }
-}
-
-sub pclmulqdq {
-  my $arg=shift;
-  my @opcode=(0x66);
-
-    if ($arg=~/\$([x0-9a-f]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
-	rex(\@opcode,$3,$2);
-	push @opcode,0x0f,0x3a,0x44;
-	push @opcode,0xc0|($2&7)|(($3&7)<<3);	# ModR/M
-	my $c=$1;
-	push @opcode,$c=~/^0/?oct($c):$c;
-	return ".byte\t".join(',',@opcode);
-    }
-    return "pclmulqdq\t".$arg;
-}
-
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
-$code =~ s/\bpclmulqdq\s+(\$.*%xmm[0-9]+).*$/pclmulqdq($1)/gem;
 
 print $code;
 

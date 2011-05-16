@@ -256,8 +256,9 @@ my %globals;
 	    $self->{label} =~ s/^___imp_/__imp__/   if ($flavour eq "mingw64");
 
 	    if (defined($self->{index})) {
-		sprintf "%s%s(%%%s,%%%s,%d)",$self->{asterisk},
-					$self->{label},$self->{base},
+		sprintf "%s%s(%s,%%%s,%d)",$self->{asterisk},
+					$self->{label},
+					$self->{base}?"%$self->{base}":"",
 					$self->{index},$self->{scale};
 	    } else {
 		sprintf "%s%s(%%%s)",	$self->{asterisk},$self->{label},$self->{base};
@@ -272,10 +273,10 @@ my %globals;
 	    $sz="q" if ($self->{asterisk});
 
 	    if (defined($self->{index})) {
-		sprintf "%s[%s%s*%d+%s]",$szmap{$sz},
+		sprintf "%s[%s%s*%d%s]",$szmap{$sz},
 					$self->{label}?"$self->{label}+":"",
 					$self->{index},$self->{scale},
-					$self->{base};
+					$self->{base}?"+$self->{base}":"";
 	    } elsif ($self->{base} eq "rip") {
 		sprintf "%s[%s]",$szmap{$sz},$self->{label};
 	    } else {
@@ -666,7 +667,7 @@ my $pinsrd = sub {
 	$imm=$1;
 	$src=$2;
 	$dst=$3;
-	if ($src =~ /%r([0-9]+)d/)	{ $src = $1; }
+	if ($src =~ /%r([0-9]+)/)	{ $src = $1; }
 	elsif ($src =~ /%e/)		{ $src = $regrm{$src}; }
 	rex(\@opcode,$dst,$src);
 	push @opcode,0x0f,0x3a,0x22;
@@ -684,6 +685,33 @@ my $pshufb = sub {
 	rex(\@opcode,$2,$1);
 	push @opcode,0x0f,0x38,0x00;
 	push @opcode,0xc0|($1&7)|(($2&7)<<3);		# ModR/M
+	@opcode;
+    } else {
+	();
+    }
+};
+
+my $palignr = sub {
+    if (shift =~ /\$([0-9]+),%xmm([0-9]+),%xmm([0-9]+)/) {
+      my @opcode=(0x66);
+	rex(\@opcode,$3,$2);
+	push @opcode,0x0f,0x3a,0x0f;
+	push @opcode,0xc0|($2&7)|(($3&7)<<3);		# ModR/M
+	push @opcode,$1;
+	@opcode;
+    } else {
+	();
+    }
+};
+
+my $pclmulqdq = sub {
+    if (shift =~ /\$([x0-9a-f]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+      my @opcode=(0x66);
+	rex(\@opcode,$3,$2);
+	push @opcode,0x0f,0x3a,0x44;
+	push @opcode,0xc0|($2&7)|(($3&7)<<3);		# ModR/M
+	my $c=$1;
+	push @opcode,$c=~/^0/?oct($c):$c;
 	@opcode;
     } else {
 	();
