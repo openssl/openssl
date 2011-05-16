@@ -197,12 +197,6 @@ $R="mm0";
 	&ret	();
 &function_end_B("_mul_1x1_ialu");
 
-sub pclmulqdq
-{ my($dst,$src,$imm)=@_;
-    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
-    {   &data_byte(0x66,0x0f,0x3a,0x44,0xc0|($1<<3)|$2,$imm);   }
-}
-
 # void bn_GF2m_mul_2x2(BN_ULONG *r, BN_ULONG a1, BN_ULONG a0, BN_ULONG b1, BN_ULONG b0);
 &function_begin_B("bn_GF2m_mul_2x2");
 if (!$x86only) {
@@ -314,6 +308,6 @@ if ($sse2) {
 	&ret	();
 &function_end_B("bn_GF2m_mul_2x2");
 
-&asciz	("GF2m Multiplication for x86, CRYPTOGAMS by <appro\@openssl.org>");
+&asciz	("GF(2^m) Multiplication for x86, CRYPTOGAMS by <appro\@openssl.org>");
 
 &asm_finish();

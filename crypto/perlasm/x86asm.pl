@@ -107,6 +107,22 @@ sub ::pshufb
     {	&::generic("pshufb",@_);		}
 }
 
+sub ::palignr
+{ my($dst,$src,$imm)=@_;
+    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
+    {	&::data_byte(0x66,0x0f,0x3a,0x0f,0xc0|($1<<3)|$2,$imm);	}
+    else
+    {	&::generic("palignr",@_);		}
+}
+
+sub ::pclmulqdq
+{ my($dst,$src,$imm)=@_;
+    if ("$dst:$src" =~ /xmm([0-7]):xmm([0-7])/)
+    {	&::data_byte(0x66,0x0f,0x3a,0x44,0xc0|($1<<3)|$2,$imm);	}
+    else
+    {	&::generic("pclmulqdq",@_);		}
+}
+
 # label management
 $lbdecor="L";		# local label decoration, set by package
 $label="000";
