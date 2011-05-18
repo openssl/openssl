@@ -458,25 +458,27 @@ padlock_available(void)
 	eax = 0x00000000;
 	vendor_string[12] = 0;
 	asm volatile (
+		"pushq	%%rbx\n"
 		"cpuid\n"
 		"movl	%%ebx,(%1)\n"
 		"movl	%%edx,4(%1)\n"
 		"movl	%%ecx,8(%1)\n"
-		: "+a"(eax) : "r"(vendor_string) : "rbx", "rcx", "rdx");
+		"popq	%%rbx"
+		: "+a"(eax) : "r"(vendor_string) : "rcx", "rdx");
 	if (strcmp(vendor_string, "CentaurHauls") != 0)
 		return 0;
 
 	/* Check for Centaur Extended Feature Flags presence */
 	eax = 0xC0000000;
-	asm volatile ("cpuid"
-		: "+a"(eax) : : "rbx", "rcx", "rdx");
+	asm volatile ("pushq %%rbx; cpuid; popq %%rbx"
+		: "+a"(eax) : : "rcx", "rdx");
 	if (eax < 0xC0000001)
 		return 0;
 
 	/* Read the Centaur Extended Feature Flags */
 	eax = 0xC0000001;
-	asm volatile ("cpuid"
-		: "+a"(eax), "=d"(edx) : : "rbx", "rcx");
+	asm volatile ("pushq %%rbx; cpuid; popq %%rbx"
+		: "+a"(eax), "=d"(edx) : : "rcx");
 
 	/* Fill up some flags */
 	padlock_use_ace = ((edx & (0x3<<6)) == (0x3<<6));
@@ -532,12 +534,14 @@ static inline void *name(size_t cnt,		\
 	struct padlock_cipher_data *cdata,	\
 	void *out, const void *inp) 		\
 {	void *iv; 				\
-	asm volatile ( "leaq	16(%0),%%rdx\n"	\
+	asm volatile ( "pushq	%%rbx\n"	\
+		"	leaq	16(%0),%%rdx\n"	\
 		"	leaq	32(%0),%%rbx\n"	\
 			rep_xcrypt "\n"		\
+		"	popq	%%rbx"		\
 		: "=a"(iv), "=c"(cnt), "=D"(out), "=S"(inp) \
 		: "0"(cdata), "1"(cnt), "2"(out), "3"(inp)  \
-		: "rbx", "rdx", "cc", "memory");	\
+		: "rdx", "cc", "memory");	\
 	return iv;				\
 }
 #endif
