@@ -508,6 +508,11 @@ my %globals;
 		    }
 		} elsif ($dir =~ /\.(text|data)/) {
 		    $current_segment=".$1";
+		} elsif ($dir =~ /\.hidden/) {
+		    if    ($flavour eq "macosx")  { $self->{value} = ".private_extern\t$prefix$line"; }
+		    elsif ($flavour eq "mingw64") { $self->{value} = ""; }
+		} elsif ($dir =~ /\.comm/) {
+		    $self->{value} = "$dir\t$prefix$line";
 		}
 		$line = "";
 		return $self;
@@ -615,6 +620,19 @@ my %globals;
 						.join(",",@str) if (@str);
 				    last;
 				  };
+		/\.comm/    && do { my @str=split(/,\s*/,$line);
+				    my $v=undef;
+				    if ($nasm) {
+					$v.="common	$prefix@str[0] @str[1]:near";
+				    } else {
+					$v="$current_segment\tENDS\n" if ($current_segment);
+					$current_segment = ".data";
+					$v.="$current_segment\tSEGMENT\n";
+					$v.="COMM	@str[0]:DWORD:".@str[1]/4;
+				    }
+				    $self->{value} = $v;
+				    last;
+				  };
 	    }
 	    $line = "";
 	}
@@ -629,14 +647,11 @@ my %globals;
 
 sub rex {
  local *opcode=shift;
- my ($dst,$src)=@_;
+ my ($dst,$src,$rex)=@_;
 
-   if ($dst>=8 || $src>=8) {
-	$rex=0x40;
-	$rex|=0x04 if($dst>=8);
-	$rex|=0x01 if($src>=8);
-	push @opcode,$rex;
-   }
+   $rex|=0x04 if($dst>=8);
+   $rex|=0x01 if($src>=8);
+   push @opcode,($rex|0x40) if ($rex);
 }
 
 # older gas and ml64 don't handle SSE>2 instructions
