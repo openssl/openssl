@@ -123,6 +123,8 @@ my %globals;
 		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /^p/ && $' !~ /^(ush|op|insrw)/) { # SSEn
 		$self->{sz} = "";
+	    } elsif ($self->{op} =~ /movq/ && $line =~ /%xmm/) {
+		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])$/) {
 		$self->{op} = $1;
 		$self->{sz} = $2;
@@ -657,6 +659,28 @@ sub rex {
 # older gas and ml64 don't handle SSE>2 instructions
 my %regrm = (	"%eax"=>0, "%ecx"=>1, "%edx"=>2, "%ebx"=>3,
 		"%esp"=>4, "%ebp"=>5, "%esi"=>6, "%edi"=>7	);
+
+my $movq = sub {	# elderly gas can't handle inter-register movq
+  my $arg = shift;
+  my @opcode=(0x66);
+    if ($arg =~ /%xmm([0-9]+),%r(\w+)/) {
+	my ($src,$dst)=($1,$2);
+	if ($dst !~ /[0-9]+/)	{ $dst = $regrm{"%e$dst"}; }
+	rex(\@opcode,$src,$dst,0x8);
+	push @opcode,0x0f,0x7e;
+	push @opcode,0xc0|(($src&7)<<3)|($dst&7);	# ModR/M
+	@opcode;
+    } elsif ($arg =~ /%r(\w+),%xmm([0-9]+)/) {
+	my ($src,$dst)=($2,$1);
+	if ($dst !~ /[0-9]+/)	{ $dst = $regrm{"%e$dst"}; }
+	rex(\@opcode,$src,$dst,0x8);
+	push @opcode,0x0f,0x6e;
+	push @opcode,0xc0|(($src&7)<<3)|($dst&7);	# ModR/M
+	@opcode;
+    } else {
+	();
+    }
+};
 
 my $pextrd = sub {
     if (shift =~ /\$([0-9]+),%xmm([0-9]+),(%\w+)/) {
