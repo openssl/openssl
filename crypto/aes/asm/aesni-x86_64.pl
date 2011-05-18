@@ -975,7 +975,7 @@ $code.=<<___;
 .align	16
 ${PREFIX}_set_decrypt_key:
 	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
-	call	_aesni_set_encrypt_key
+	call	__aesni_set_encrypt_key
 	shl	\$4,$bits		# rounds-1 after _aesni_set_encrypt_key
 	test	%eax,%eax
 	jnz	.Ldec_key_ret
@@ -1024,7 +1024,7 @@ $code.=<<___;
 .type	${PREFIX}_set_encrypt_key,\@abi-omnipotent
 .align	16
 ${PREFIX}_set_encrypt_key:
-_aesni_set_encrypt_key:
+__aesni_set_encrypt_key:
 	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
 	mov	\$-1,%rax
 	test	$inp,$inp
