@@ -170,6 +170,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 #endif
 	k=0;
 	EVP_MD_CTX_init(&m5);
+	EVP_MD_CTX_set_flags(&m5, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	EVP_MD_CTX_init(&s1);
 	for (i=0; (int)i<num; i+=MD5_DIGEST_LENGTH)
 		{
@@ -614,6 +615,13 @@ int ssl3_digest_cached_records(SSL *s)
 			{
 			s->s3->handshake_dgst[i]=EVP_MD_CTX_create();
 			EVP_DigestInit_ex(s->s3->handshake_dgst[i],md,NULL);
+#ifdef OPENSSL_FIPS
+			if (EVP_MD_nid(md) == NID_md5)
+				{
+				EVP_MD_CTX_set_flags(s->s3->handshake_dgst[i],
+						EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
+				}
+#endif
 			EVP_DigestUpdate(s->s3->handshake_dgst[i],hdata,hdatalen);
 			} 
 		else 
@@ -669,6 +677,7 @@ static int ssl3_handshake_mac(SSL *s, int md_nid,
 		return 0;
 	}	
 	EVP_MD_CTX_init(&ctx);
+	EVP_MD_CTX_set_flags(&ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
 	EVP_MD_CTX_copy_ex(&ctx,d);
 	n=EVP_MD_CTX_size(&ctx);
 	if (n < 0)
