@@ -4,6 +4,10 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Functions FIPS_mode_set() and FIPS_mode() which call the underlying
+     FIPS modules versions.
+     [Steve Henson]
+
   *) Add TLS v1.2 client side support for client authentication. Keep cache
      of handshake records longer as we don't know the hash algorithm to use
      until after the certificate request message is received.
