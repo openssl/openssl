@@ -740,6 +740,9 @@ static void ssl_cipher_collect_ciphers(const SSL_METHOD *ssl_method,
 		c = ssl_method->get_cipher(i);
 		/* drop those that use any of that is not available */
 		if ((c != NULL) && c->valid &&
+#ifdef OPENSSL_FIPS
+		    (!FIPS_mode() || (c->algo_strength & SSL_FIPS)) &&
+#endif
 		    !(c->algorithm_mkey & disabled_mkey) &&
 		    !(c->algorithm_auth & disabled_auth) &&
 		    !(c->algorithm_enc & disabled_enc) &&
@@ -1439,7 +1442,11 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 	 */
 	for (curr = head; curr != NULL; curr = curr->next)
 		{
+#ifdef OPENSSL_FIPS
+		if (curr->active && (!FIPS_mode() || curr->cipher->algo_strength & SSL_FIPS))
+#else
 		if (curr->active)
+#endif
 			{
 			sk_SSL_CIPHER_push(cipherstack, curr->cipher);
 #ifdef CIPHER_DEBUG
