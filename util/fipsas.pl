@@ -70,9 +70,9 @@ if ($runasm)
 	{
 	# run assembler
 	system @ARGS;
-print STDERR "RUNNING: @ARGS\n";
+
 	my $rv = $?;
-exit 0;
+
 	# restore target
 	unlink $target;
 	rename "tmptarg.s", $target;
