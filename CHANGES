@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add support for FIPS mode in ssl library: disable SSLv3, non-FIPS ciphers
+     and enable MD5.
+     [Steve Henson]
+
   *) Functions FIPS_mode_set() and FIPS_mode() which call the underlying
      FIPS modules versions.
      [Steve Henson]
