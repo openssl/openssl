@@ -1560,6 +1560,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 			    (unsigned char *)encodedPoint, 
 			    encodedlen);
 			OPENSSL_free(encodedPoint);
+			encodedPoint = NULL;
 			p += encodedlen;
 			}
 #endif
