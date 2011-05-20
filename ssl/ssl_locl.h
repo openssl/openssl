@@ -1096,4 +1096,5 @@ int ssl_parse_clienthello_renegotiate_ext(SSL *s, unsigned char *d, int len,
 					  int *al);
 long ssl_get_algorithm2(SSL *s);
 int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize);
+int tls12_get_req_sig_algs(SSL *s, unsigned char *p);
 #endif
