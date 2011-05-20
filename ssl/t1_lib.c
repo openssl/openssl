@@ -270,6 +270,14 @@ int tls1_ec_nid2curve_id(int nid)
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_TLSEXT
+
+int tls12_get_req_sig_algs(SSL *s, unsigned char *p)
+	{
+	if (p)
+		memcpy(p, tls12_sigalgs, sizeof(tls12_sigalgs));
+	return (int)sizeof(tls12_sigalgs);
+	}
+
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
 	{
 	int extdatalen=0;

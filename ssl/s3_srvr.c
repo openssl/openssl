@@ -513,6 +513,9 @@ int ssl3_accept(SSL *s)
 				skip=1;
 				s->s3->tmp.cert_request=0;
 				s->state=SSL3_ST_SW_SRVR_DONE_A;
+				if (s->s3->handshake_buffer)
+					if (!ssl3_digest_cached_records(s))
+						return -1;
 				}
 			else
 				{
@@ -597,6 +600,24 @@ int ssl3_accept(SSL *s)
 				 */
 				s->state=SSL3_ST_SR_FINISHED_A;
 				s->init_num = 0;
+				}
+			else if (s->version >= TLS1_2_VERSION)
+				{
+				s->state=SSL3_ST_SR_CERT_VRFY_A;
+				s->init_num=0;
+				if (!s->session->peer)
+					break;
+				/* For TLS v1.2 freeze the handshake buffer
+				 * at this point and digest cached records.
+				 */
+				if (!s->s3->handshake_buffer)
+					{
+					SSLerr(SSL_F_SSL3_ACCEPT,ERR_R_INTERNAL_ERROR);
+					return -1;
+					}
+				s->s3->flags |= TLS1_FLAGS_KEEP_HANDSHAKE;
+				if (!ssl3_digest_cached_records(s))
+					return -1;
 				}
 			else
 				{
@@ -1316,8 +1337,11 @@ int ssl3_get_client_hello(SSL *s)
 		s->s3->tmp.new_cipher=s->session->cipher;
 		}
 
-	if (!ssl3_digest_cached_records(s))
-		goto f_err;
+	if (s->version < TLS1_2_VERSION || !(s->verify_mode & SSL_VERIFY_PEER))
+		{
+		if (!ssl3_digest_cached_records(s))
+			goto f_err;
+		}
 	
 	/* we now have the following setup. 
 	 * client_random
@@ -1962,6 +1986,14 @@ int ssl3_send_certificate_request(SSL *s)
 		d[0]=n;
 		p+=n;
 		n++;
+
+		if (s->version >= TLS1_2_VERSION)
+			{
+			nl = tls12_get_req_sig_algs(s, p + 2);
+			s2n(nl, p);
+			p += nl + 2;
+			n += nl + 2;
+			}
 
 		off=n;
 		p+=2;
@@ -2817,6 +2849,9 @@ int ssl3_get_cert_verify(SSL *s)
 	long n;
 	int type=0,i,j;
 	X509 *peer;
+	const EVP_MD *md = NULL;
+	EVP_MD_CTX mctx;
+	EVP_MD_CTX_init(&mctx);
 
 	n=s->method->ssl_get_message(s,
 		SSL3_ST_SR_CERT_VRFY_A,
@@ -2885,6 +2920,36 @@ int ssl3_get_cert_verify(SSL *s)
 		} 
 	else 
 		{	
+		if (s->version >= TLS1_2_VERSION)
+			{
+			int sigalg = tls12_get_sigid(pkey);
+			/* Should never happen */
+			if (sigalg == -1)
+				{
+				SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,ERR_R_INTERNAL_ERROR);
+				al=SSL_AD_INTERNAL_ERROR;
+				goto f_err;
+				}
+			/* Check key type is consistent with signature */
+			if (sigalg != (int)p[1])
+				{
+				SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_WRONG_SIGNATURE_TYPE);
+				al=SSL_AD_DECODE_ERROR;
+				goto f_err;
+				}
+			md = tls12_get_hash(p[0]);
+			if (md == NULL)
+				{
+				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNKNOWN_DIGEST);
+				al=SSL_AD_DECODE_ERROR;
+				goto f_err;
+				}
+#ifdef SSL_DEBUG
+fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
+#endif
+			p += 2;
+			n -= 2;
+			}
 		n2s(p,i);
 		n-=2;
 		if (i > n)
@@ -2902,6 +2967,37 @@ int ssl3_get_cert_verify(SSL *s)
 		goto f_err;
 		}
 
+	if (s->version >= TLS1_2_VERSION)
+		{
+		long hdatalen = 0;
+		void *hdata;
+		hdatalen = BIO_get_mem_data(s->s3->handshake_buffer, &hdata);
+		if (hdatalen <= 0)
+			{
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_INTERNAL_ERROR);
+			al=SSL_AD_INTERNAL_ERROR;
+			goto f_err;
+			}
+#ifdef SSL_DEBUG
+		fprintf(stderr, "Using TLS 1.2 with client verify alg %s\n",
+							EVP_MD_name(md));
+#endif
+		if (!EVP_VerifyInit_ex(&mctx, md, NULL)
+			|| !EVP_VerifyUpdate(&mctx, hdata, hdatalen))
+			{
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY, ERR_R_EVP_LIB);
+			al=SSL_AD_INTERNAL_ERROR;
+			goto f_err;
+			}
+
+		if (EVP_VerifyFinal(&mctx, p , i, pkey) <= 0)
+			{
+			al=SSL_AD_DECRYPT_ERROR;
+			SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_BAD_SIGNATURE);
+			goto f_err;
+			}
+		}
+	else
 #ifndef OPENSSL_NO_RSA 
 	if (pkey->type == EVP_PKEY_RSA)
 		{
@@ -2992,6 +3088,13 @@ f_err:
 		ssl3_send_alert(s,SSL3_AL_FATAL,al);
 		}
 end:
+	if (s->s3->handshake_buffer)
+		{
+		BIO_free(s->s3->handshake_buffer);
+		s->s3->handshake_buffer = NULL;
+		s->s3->flags &= ~TLS1_FLAGS_KEEP_HANDSHAKE;
+		}
+	EVP_MD_CTX_cleanup(&mctx);
 	EVP_PKEY_free(pkey);
 	return(ret);
 	}
@@ -3102,6 +3205,12 @@ int ssl3_get_client_certificate(SSL *s)
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
 			al=SSL_AD_HANDSHAKE_FAILURE;
+			goto f_err;
+			}
+		/* No client certificate so digest cached records */
+		if (s->s3->handshake_buffer && !ssl3_digest_cached_records(s))
+			{
+			al=SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 			}
 		}

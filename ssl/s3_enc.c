@@ -569,12 +569,12 @@ void ssl3_free_digest_list(SSL *s)
 	OPENSSL_free(s->s3->handshake_dgst);
 	s->s3->handshake_dgst=NULL;
 	}	
-		
+
 
 
 void ssl3_finish_mac(SSL *s, const unsigned char *buf, int len)
 	{
-	if (s->s3->handshake_buffer) 
+	if (s->s3->handshake_buffer && !(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE)) 
 		{
 		BIO_write (s->s3->handshake_buffer,(void *)buf,len);
 		} 
@@ -629,9 +629,12 @@ int ssl3_digest_cached_records(SSL *s)
 			s->s3->handshake_dgst[i]=NULL;
 			}
 		}
-	/* Free handshake_buffer BIO */
-	BIO_free(s->s3->handshake_buffer);
-	s->s3->handshake_buffer = NULL;
+	if (!(s->s3->flags & TLS1_FLAGS_KEEP_HANDSHAKE))
+		{
+		/* Free handshake_buffer BIO */
+		BIO_free(s->s3->handshake_buffer);
+		s->s3->handshake_buffer = NULL;
+		}
 
 	return 1;
 	}

@@ -4,6 +4,9 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Add TLS v1.2 server support for client authentication. 
+     [Steve Henson]
+
   *) Add support for FIPS mode in ssl library: disable SSLv3, non-FIPS ciphers
      and enable MD5.
      [Steve Henson]
