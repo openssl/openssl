@@ -153,6 +153,7 @@ $code.=<<___;
 
 	add	\$128+8,%rsp
 	ret
+.Lend_mul_1x1:
 .size	_mul_1x1,.-_mul_1x1
 ___
 
@@ -167,7 +168,7 @@ $code.=<<___;
 bn_GF2m_mul_2x2:
 	mov	OPENSSL_ia32cap_P(%rip),%rax
 	bt	\$33,%rax
-	jnc	.Lvanilla
+	jnc	.Lvanilla_mul_2x2
 
 	movq		$a1,%xmm0
 	movq		$b1,%xmm1
@@ -188,7 +189,7 @@ $code.=<<___;
 	pclmulqdq	\$0,%xmm3,%xmm2	# a0·b0
 	pclmulqdq	\$0,%xmm5,%xmm4	# (a0+a1)·(b0+b1)
 	xorps		%xmm0,%xmm4
-	xorps		%xmm2,%xmm4
+	xorps		%xmm2,%xmm4	# (a0+a1)·(b0+b1)-a0·b0-a1·b1
 	movdqa		%xmm4,%xmm5
 	pslldq		\$8,%xmm4
 	psrldq		\$8,%xmm5
@@ -199,7 +200,7 @@ $code.=<<___;
 	ret
 
 .align	16
-.Lvanilla:
+.Lvanilla_mul_2x2:
 	lea	-8*17(%rsp),%rsp
 ___
 $code.=<<___ if ($win64);
@@ -213,7 +214,7 @@ $code.=<<___;
 	mov	%r12,8*12(%rsp)
 	mov	%rbp,8*13(%rsp)
 	mov	%rbx,8*14(%rsp)
-.Lbody:
+.Lbody_mul_2x2:
 	mov	$rp,32(%rsp)		# save the arguments
 	mov	$a1,40(%rsp)
 	mov	$a0,48(%rsp)
@@ -272,9 +273,116 @@ ___
 $code.=<<___;
 	lea	8*17(%rsp),%rsp
 	ret
+.Lend_mul_2x2:
 .size	bn_GF2m_mul_2x2,.-bn_GF2m_mul_2x2
 .asciz	"GF(2^m) Multiplication for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
+.align	16
 ___
+
+# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
+#               CONTEXT *context,DISPATCHER_CONTEXT *disp)
+if ($win64) {
+$rec="%rcx";
+$frame="%rdx";
+$context="%r8";
+$disp="%r9";
+
+$code.=<<___;
+.extern __imp_RtlVirtualUnwind
+
+.type	se_handler,\@abi-omnipotent
+.align	16
+se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	152($context),%rax	# pull context->Rsp
+	mov	248($context),%rbx	# pull context->Rip
+
+	lea	.Lbody_mul_2x2(%rip),%r10
+	cmp	%r10,%rbx		# context->Rip<"prologue" label
+	jb	.Lin_prologue
+
+	mov	8*10(%rax),%r14		# mimic epilogue
+	mov	8*11(%rax),%r13
+	mov	8*12(%rax),%r12
+	mov	8*13(%rax),%rbp
+	mov	8*14(%rax),%rbx
+	mov	8*15(%rax),%rdi
+	mov	8*16(%rax),%rsi
+
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
+
+.Lin_prologue:
+	lea	8*17(%rax),%rax
+	mov	%rax,152($context)	# restore context->Rsp
+
+	mov	40($disp),%rdi		# disp->ContextRecord
+	mov	$context,%rsi		# context
+	mov	\$154,%ecx		# sizeof(CONTEXT)
+	.long	0xa548f3fc		# cld; rep movsq
+
+	mov	$disp,%rsi
+	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
+	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
+	mov	0(%rsi),%r8		# arg3, disp->ControlPc
+	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
+	mov	40(%rsi),%r10		# disp->ContextRecord
+	lea	56(%rsi),%r11		# &disp->HandlerData
+	lea	24(%rsi),%r12		# &disp->EstablisherFrame
+	mov	%r10,32(%rsp)		# arg5
+	mov	%r11,40(%rsp)		# arg6
+	mov	%r12,48(%rsp)		# arg7
+	mov	%rcx,56(%rsp)		# arg8, (NULL)
+	call	*__imp_RtlVirtualUnwind(%rip)
+
+	mov	\$1,%eax		# ExceptionContinueSearch
+	add	\$64,%rsp
+	popfq
+	pop	%r15
+	pop	%r14
+	pop	%r13
+	pop	%r12
+	pop	%rbp
+	pop	%rbx
+	pop	%rdi
+	pop	%rsi
+	ret
+.size	se_handler,.-se_handler
+
+.section	.pdata
+.align	4
+	.rva	_mul_1x1
+	.rva	.Lend_mul_1x1
+	.rva	.LSEH_info_1x1
+
+	.rva	.Lvanilla_mul_2x2
+	.rva	.Lend_mul_2x2
+	.rva	.LSEH_info_2x2
+.section	.xdata
+.align	8
+.LSEH_info_1x1:
+	.byte	0x01,0x07,0x02,0x00
+	.byte	0x07,0x01,0x11,0x00	# sub rsp,128+8
+.LSEH_info_2x2:
+	.byte	9,0,0,0
+	.rva	se_handler
+___
+}
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 print $code;
