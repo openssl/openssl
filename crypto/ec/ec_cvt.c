@@ -80,7 +80,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 	const EC_METHOD *meth;
 	EC_GROUP *ret;
 
-#if defined(OPENSSL_BN_ASM_MONT) && !defined(__sparc)
+#if defined(OPENSSL_BN_ASM_MONT)
 	/*
 	 * This might appear controversial, but the fact is that generic
 	 * prime method was observed to deliver better performance even
@@ -93,7 +93,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
 	 * arguable, because the dependency of improvement coefficient
 	 * from key length is not a "monotone" curve. For example while
 	 * 571-bit result is 23% on ARM, 384-bit one is -1%. But it's
-	 * generally faster, sometimes "respectfully" faster, or
+	 * generally faster, sometimes "respectfully" faster, sometimes
 	 * "tolerably" slower... What effectively happens is that loop
 	 * with bn_mul_add_words is put against bn_mul_mont, and the
 	 * latter "wins" on short vectors. Correct solution should be
