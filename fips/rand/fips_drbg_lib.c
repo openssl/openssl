@@ -145,7 +145,7 @@ static size_t fips_get_entropy(DRBG_CTX *dctx, unsigned char **pout,
 	if (rv < (min_len + bl) || (rv % bl))
 		return 0;
 	/* Compare consecutive blocks for continuous PRNG test */
-	for (p = tout; p < tout + rv; p += bl)
+	for (p = tout; p < tout + rv - bl; p += bl)
 		{
 		if (!memcmp(p, p + bl, bl))
 			{
