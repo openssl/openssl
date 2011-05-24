@@ -453,32 +453,33 @@ padlock_available(void)
 {
 	char vendor_string[16];
 	unsigned int eax, edx;
+	size_t	scratch;
 
 	/* Are we running on the Centaur (VIA) CPU? */
 	eax = 0x00000000;
 	vendor_string[12] = 0;
 	asm volatile (
-		"pushq	%%rbx\n"
+		"movq	%%rbx,%1\n"
 		"cpuid\n"
-		"movl	%%ebx,(%1)\n"
-		"movl	%%edx,4(%1)\n"
-		"movl	%%ecx,8(%1)\n"
-		"popq	%%rbx"
-		: "+a"(eax) : "r"(vendor_string) : "rcx", "rdx");
+		"movl	%%ebx,(%2)\n"
+		"movl	%%edx,4(%2)\n"
+		"movl	%%ecx,8(%2)\n"
+		"movq	%1,%%rbx"
+		: "+a"(eax), "=&r"(scratch) : "r"(vendor_string) : "rcx", "rdx");
 	if (strcmp(vendor_string, "CentaurHauls") != 0)
 		return 0;
 
 	/* Check for Centaur Extended Feature Flags presence */
 	eax = 0xC0000000;
-	asm volatile ("pushq %%rbx; cpuid; popq %%rbx"
-		: "+a"(eax) : : "rcx", "rdx");
+	asm volatile ("movq %%rbx,%1; cpuid; movq %1,%%rbx"
+		: "+a"(eax), "=&r"(scratch) : : "rcx", "rdx");
 	if (eax < 0xC0000001)
 		return 0;
 
 	/* Read the Centaur Extended Feature Flags */
 	eax = 0xC0000001;
-	asm volatile ("pushq %%rbx; cpuid; popq %%rbx"
-		: "+a"(eax), "=d"(edx) : : "rcx");
+	asm volatile ("movq %%rbx,%2; cpuid; movq %2,%%rbx"
+		: "+a"(eax), "=d"(edx), "=&r"(scratch) : : "rcx");
 
 	/* Fill up some flags */
 	padlock_use_ace = ((edx & (0x3<<6)) == (0x3<<6));
@@ -534,12 +535,13 @@ static inline void *name(size_t cnt,		\
 	struct padlock_cipher_data *cdata,	\
 	void *out, const void *inp) 		\
 {	void *iv; 				\
-	asm volatile ( "pushq	%%rbx\n"	\
+	size_t scratch;				\
+	asm volatile ( "movq	%%rbx,%4\n"	\
 		"	leaq	16(%0),%%rdx\n"	\
 		"	leaq	32(%0),%%rbx\n"	\
 			rep_xcrypt "\n"		\
-		"	popq	%%rbx"		\
-		: "=a"(iv), "=c"(cnt), "=D"(out), "=S"(inp) \
+		"	movq	%%rbx,%4"	\
+		: "=a"(iv), "=c"(cnt), "=D"(out), "=S"(inp), "=&r"(scratch) \
 		: "0"(cdata), "1"(cnt), "2"(out), "3"(inp)  \
 		: "rdx", "cc", "memory");	\
 	return iv;				\
