@@ -601,7 +601,7 @@ int ssl3_accept(SSL *s)
 				s->state=SSL3_ST_SR_FINISHED_A;
 				s->init_num = 0;
 				}
-			else if (s->version >= TLS1_2_VERSION)
+			else if (TLS1_get_version(s) >= TLS1_2_VERSION)
 				{
 				s->state=SSL3_ST_SR_CERT_VRFY_A;
 				s->init_num=0;
@@ -1337,7 +1337,7 @@ int ssl3_get_client_hello(SSL *s)
 		s->s3->tmp.new_cipher=s->session->cipher;
 		}
 
-	if (s->version < TLS1_2_VERSION || !(s->verify_mode & SSL_VERIFY_PEER))
+	if (TLS1_get_version(s) < TLS1_2_VERSION || !(s->verify_mode & SSL_VERIFY_PEER))
 		{
 		if (!ssl3_digest_cached_records(s))
 			goto f_err;
@@ -1871,7 +1871,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 			 * and p points to the space at the end. */
 #ifndef OPENSSL_NO_RSA
 			if (pkey->type == EVP_PKEY_RSA
-					&& s->version < TLS1_2_VERSION)
+					&& TLS1_get_version(s) < TLS1_2_VERSION)
 				{
 				q=md_buf;
 				j=0;
@@ -1904,7 +1904,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 				{
 				/* For TLS1.2 and later send signature
 				 * algorithm */
-				if (s->version >= TLS1_2_VERSION)
+				if (TLS1_get_version(s) >= TLS1_2_VERSION)
 					{
 					if (!tls12_get_sigandhash(p, pkey, md))
 						{
@@ -1931,7 +1931,7 @@ int ssl3_send_server_key_exchange(SSL *s)
 					}
 				s2n(i,p);
 				n+=i+2;
-				if (s->version >= TLS1_2_VERSION)
+				if (TLS1_get_version(s) >= TLS1_2_VERSION)
 					n+= 2;
 				}
 			else
@@ -1987,7 +1987,7 @@ int ssl3_send_certificate_request(SSL *s)
 		p+=n;
 		n++;
 
-		if (s->version >= TLS1_2_VERSION)
+		if (TLS1_get_version(s) >= TLS1_2_VERSION)
 			{
 			nl = tls12_get_req_sig_algs(s, p + 2);
 			s2n(nl, p);
@@ -2920,7 +2920,7 @@ int ssl3_get_cert_verify(SSL *s)
 		} 
 	else 
 		{	
-		if (s->version >= TLS1_2_VERSION)
+		if (TLS1_get_version(s) >= TLS1_2_VERSION)
 			{
 			int sigalg = tls12_get_sigid(pkey);
 			/* Should never happen */
@@ -2967,7 +2967,7 @@ fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 		goto f_err;
 		}
 
-	if (s->version >= TLS1_2_VERSION)
+	if (TLS1_get_version(s) >= TLS1_2_VERSION)
 		{
 		long hdatalen = 0;
 		void *hdata;
