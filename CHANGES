@@ -4,7 +4,12 @@
 
  Changes between 1.0.0d and 1.0.0e [xx XXX xxxx]
 
-  *)
+  *) Add protection against ECDSA timing attacks as mentioned in the paper
+     by Billy Bob Brumley and Nicola Tuveri, see:
+
+	http://eprint.iacr.org/2011/232.pdf
+
+     [Billy Bob Brumley and Nicola Tuveri]
 
  Changes between 1.0.0c and 1.0.0d [8 Feb 2011]
 
