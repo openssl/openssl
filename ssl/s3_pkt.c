@@ -246,7 +246,8 @@ int ssl3_read_n(SSL *s, int n, int max, int extend)
 		if (i <= 0)
 			{
 			rb->left = left;
-			if (s->mode & SSL_MODE_RELEASE_BUFFERS)
+			if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
+			    SSL_version(s) != DTLS1_VERSION && SSL_version(s) != DTLS1_BAD_VER)
 				if (len+left == 0)
 					ssl3_release_read_buffer(s);
 			return(i);
@@ -846,7 +847,8 @@ int ssl3_write_pending(SSL *s, int type, const unsigned char *buf,
 			{
 			wb->left=0;
 			wb->offset+=i;
-			if (s->mode & SSL_MODE_RELEASE_BUFFERS)
+			if (s->mode & SSL_MODE_RELEASE_BUFFERS &&
+			    SSL_version(s) != DTLS1_VERSION && SSL_version(s) != DTLS1_BAD_VER)
 				ssl3_release_write_buffer(s);
 			s->rwstate=SSL_NOTHING;
 			return(s->s3->wpend_ret);
