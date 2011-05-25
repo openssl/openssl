@@ -593,3 +593,5 @@
 #define bn_GF2m_mul_2x2 fips_bn_GF2m_mul_2x2
 #define gcm_ghash_neon fips_gcm_ghash_neon
 #define gcm_gmult_neon fips_gcm_gmult_neon
+#define aesni_xts_decrypt fips_aesni_xts_decrypt
+#define aesni_xts_encrypt fips_aesni_xts_encrypt
