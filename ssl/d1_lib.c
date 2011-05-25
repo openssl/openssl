@@ -129,26 +129,22 @@ int dtls1_new(SSL *s)
 	return(1);
 	}
 
-void dtls1_free(SSL *s)
+static void dtls1_clear_queues(SSL *s)
 	{
     pitem *item = NULL;
     hm_fragment *frag = NULL;
-
-	ssl3_free(s);
-
+	
     while( (item = pqueue_pop(s->d1->unprocessed_rcds.q)) != NULL)
         {
         OPENSSL_free(item->data);
         pitem_free(item);
         }
-    pqueue_free(s->d1->unprocessed_rcds.q);
 
     while( (item = pqueue_pop(s->d1->processed_rcds.q)) != NULL)
         {
         OPENSSL_free(item->data);
         pitem_free(item);
         }
-    pqueue_free(s->d1->processed_rcds.q);
 
     while( (item = pqueue_pop(s->d1->buffered_messages)) != NULL)
         {
@@ -157,7 +153,6 @@ void dtls1_free(SSL *s)
         OPENSSL_free(frag);
         pitem_free(item);
         }
-    pqueue_free(s->d1->buffered_messages);
 
     while ( (item = pqueue_pop(s->d1->sent_messages)) != NULL)
         {
@@ -166,7 +161,6 @@ void dtls1_free(SSL *s)
         OPENSSL_free(frag);
         pitem_free(item);
         }
-	pqueue_free(s->d1->sent_messages);
 
 	while ( (item = pqueue_pop(s->d1->buffered_app_data.q)) != NULL)
 		{
@@ -175,6 +169,18 @@ void dtls1_free(SSL *s)
 		OPENSSL_free(frag);
 		pitem_free(item);
 		}
+	}
+
+void dtls1_free(SSL *s)
+	{
+	ssl3_free(s);
+
+	dtls1_clear_queues(s);
+
+    pqueue_free(s->d1->unprocessed_rcds.q);
+    pqueue_free(s->d1->processed_rcds.q);
+    pqueue_free(s->d1->buffered_messages);
+	pqueue_free(s->d1->sent_messages);
 	pqueue_free(s->d1->buffered_app_data.q);
 
 	OPENSSL_free(s->d1);
@@ -182,6 +188,36 @@ void dtls1_free(SSL *s)
 
 void dtls1_clear(SSL *s)
 	{
+    pqueue unprocessed_rcds;
+    pqueue processed_rcds;
+    pqueue buffered_messages;
+	pqueue sent_messages;
+	pqueue buffered_app_data;
+	
+	if (s->d1)
+		{
+		unprocessed_rcds = s->d1->unprocessed_rcds.q;
+		processed_rcds = s->d1->processed_rcds.q;
+		buffered_messages = s->d1->buffered_messages;
+		sent_messages = s->d1->sent_messages;
+		buffered_app_data = s->d1->buffered_app_data.q;
+
+		dtls1_clear_queues(s);
+
+		memset(s->d1, 0, sizeof(*(s->d1)));
+
+		if (s->server)
+			{
+			s->d1->cookie_len = sizeof(s->d1->cookie);
+			}
+
+		s->d1->unprocessed_rcds.q = unprocessed_rcds;
+		s->d1->processed_rcds.q = processed_rcds;
+		s->d1->buffered_messages = buffered_messages;
+		s->d1->sent_messages = sent_messages;
+		s->d1->buffered_app_data.q = buffered_app_data;
+		}
+
 	ssl3_clear(s);
 	if (s->options & SSL_OP_CISCO_ANYCONNECT)
 		s->version=DTLS1_BAD_VER;
