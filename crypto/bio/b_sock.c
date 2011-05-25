@@ -683,6 +683,7 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 	 * note that commonly IPv6 wildchard socket can service
 	 * IPv4 connections just as well...  */
 	memset(&hint,0,sizeof(hint));
+	hint.ai_flags = AI_PASSIVE;
 	if (h)
 		{
 		if (strchr(h,':'))
@@ -695,7 +696,10 @@ int BIO_get_accept_socket(char *host, int bind_mode)
 #endif
 			}
 	    	else if (h[0]=='*' && h[1]=='\0')
+			{
+			hint.ai_family = AF_INET;
 			h=NULL;
+			}
 		}
 
 	if ((*p_getaddrinfo.f)(h,p,&hint,&res)) break;
