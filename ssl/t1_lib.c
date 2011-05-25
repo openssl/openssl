@@ -317,9 +317,15 @@ static unsigned char tls12_sigalgs[] = {
 
 int tls12_get_req_sig_algs(SSL *s, unsigned char *p)
 	{
+	size_t slen = sizeof(tls12_sigalgs);
+#ifdef OPENSSL_FIPS
+	/* If FIPS mode don't include MD5 which is last */
+	if (FIPS_mode())
+		slen -= 2;
+#endif
 	if (p)
-		memcpy(p, tls12_sigalgs, sizeof(tls12_sigalgs));
-	return (int)sizeof(tls12_sigalgs);
+		memcpy(p, tls12_sigalgs, slen);
+	return (int)slen;
 	}
 
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit)
@@ -2066,6 +2072,10 @@ const EVP_MD *tls12_get_hash(unsigned char hash_alg)
 		{
 #ifndef OPENSSL_NO_MD5
 		case TLSEXT_hash_md5:
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			return NULL;
+#endif
 		return EVP_md5();
 #endif
 #ifndef OPENSSL_NO_SHA
