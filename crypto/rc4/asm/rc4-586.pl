@@ -30,8 +30,8 @@
 
 # May 2011
 #
-# Optimize for Core2 and Westmere [and Opteron]. Current performance
-# in cycles per processed byte (less is better) is:
+# Optimize for Core2 and Westmere [and incidentally Opteron]. Current
+# performance in cycles per processed byte (less is better) is:
 #
 # Pentium	10.2			# original numbers
 # Pentium III	7.8(*)
@@ -43,11 +43,12 @@
 # Sandy Bridge	5.4/0%
 #
 # (*)	PIII can actually deliver 6.6 cycles per byte with MMX code,
-#	but this specific code performs poorly on Core2. While below
-#	MMX code delivering 5.8 on Core2 performs at 8.0 on PIII:-(
-#	As PIII is not a "hot" CPU [anymore], I chose not to introduce
-#	PIII-specific code path, which is why MMX code path is quarded
-#	by SSE2 bit (see below), not MMX.
+#	but this specific code performs poorly on Core2. And vice
+#	versa, below MMX/SSE code delivering 5.8/7.1 on Core2 performs
+#	poorly on PIII, at 8.0/14.5:-( As PIII is not a "hot" CPU
+#	[anymore], I chose to discard PIII-specific code path and opt
+#	for original IALU-only code, which is why MMX/SSE code path
+#	is guarded by SSE2 bit (see below), not MMX/SSE.
 # (**)	Performance vs. block size on Core2 and Westmere had a maximum
 #	at ... 64 bytes block size. And it was quite a maximum, 40-60%
 #	in comparison to largest 8KB block size. Above improvement
@@ -88,31 +89,40 @@ sub RC4_loop {
 }
 
 if ($alt=0) {
-  # works ~5% faster on Atom and ~20% slower on Core2
+  # >20% faster on Atom and Sandy Bridge[!], 8% faster on Opteron,
+  # but ~40% slower on Core2 and Westmere... Attempt to add movz
+  # brings down Opteron by 25%, Atom and Sandy Bridge by 15%, yet
+  # on Core2 with movz it's almost 20% slower than below alternative
+  # code... Yes, it's a total mess...
   my @XX=($xx,$out);
-  $RC4_loop_mmx = sub {
+  $RC4_loop_mmx = sub {		# SSE actually...
     my $i=shift;
+    my $j=$i<=0?0:$i>>1;
+    my $mm=$i<=0?"mm0":"mm".($i&1);
 
-	&add	($yy,$tx);
-	&movz	($yy,&LB($yy));
+	&add	(&LB($yy),&LB($tx));
 	&lea	(@XX[1],&DWP(1,@XX[0]));
-	&psllq	("mm1",8*(($i-1)&7))			if (abs($i)!=1);
+	&pxor	("mm2","mm0")				if ($i==0);
+	&psllq	("mm1",8)				if ($i==0);
 	&and	(@XX[1],0xff);
+	&pxor	("mm0","mm0")				if ($i<=0);
 	&mov	($ty,&DWP(0,$dat,$yy,4));
 	&mov	(&DWP(0,$dat,$yy,4),$tx);
+	&pxor	("mm1","mm2")				if ($i==0);
 	&mov	(&DWP(0,$dat,$XX[0],4),$ty);
-	&add	($ty,$tx);
+	&add	(&LB($ty),&LB($tx));
 	&movd	(@XX[0],"mm7")				if ($i==0);
-	&movz	($ty,&LB($ty));
 	&mov	($tx,&DWP(0,$dat,@XX[1],4));
-	&pxor	("mm2",$i==1?"mm0":"mm1")		if ($i>=0);
-	&movq	("mm0",&QWP(0,$inp))			if ($i<=0);
-	&movq	(&QWP(-8,(@XX[0],$inp)),"mm2")		if ($i==0);
-	&movd	($i>0?"mm1":"mm2",&DWP(0,$dat,$ty,4));
+	&pxor	("mm1","mm1")				if ($i==1);
+	&movq	("mm2",&QWP(0,$inp))			if ($i==1);
+	&movq	(&QWP(-8,(@XX[0],$inp)),"mm1")		if ($i==0);
+	&pinsrw	($mm,&DWP(0,$dat,$ty,4),$j);
 
 	push	(@XX,shift(@XX))			if ($i>=0);
   }
 } else {
+  # Using pinsrw here improves performane on Intel CPUs by 2-3%, but
+  # brings down AMD by 7%...
   $RC4_loop_mmx = sub {
     my $i=shift;
 
@@ -185,8 +195,6 @@ if ($alt=0) {
 	&movd	("mm7",&wparam(3))	if ($alt);
 	&and	($ty,-8);
 	&lea	($ty,&DWP(-8,$inp,$ty));
-	&mov	(&wparam(2),$ty);
-
 	&mov	(&DWP(-4,$dat),$ty);	# save input+(len/8)*8-8
 
 	&$RC4_loop_mmx(-1);
@@ -200,10 +208,17 @@ if ($alt=0) {
 		&lea	($inp,&DWP(8,$inp));
 	&jb	(&label("loop_mmx"));
 
-	&movd	($out,"mm7")		if ($alt);
+    if ($alt) {
+	&movd	($out,"mm7");
+	&pxor	("mm2","mm0");
+	&psllq	("mm1",8);
+	&pxor	("mm1","mm2");
+	&movq	(&QWP(-8,$out,$inp),"mm1");
+    } else {
 	&psllq	("mm1",56);
 	&pxor	("mm2","mm1");
 	&movq	(&QWP(-8,$out,$inp),"mm2");
+    }
 	&emms	();
 
 	&cmp	($inp,&wparam(1));	# compare to input+len
@@ -267,7 +282,7 @@ if ($alt=0) {
 
 &set_label("done");
 	&dec	(&LB($xx));
-	&mov	(&BP(-4,$dat),&LB($yy));	# save key->y
+	&mov	(&DWP(-4,$dat),$yy);		# save key->y
 	&mov	(&BP(-8,$dat),&LB($xx));	# save key->x
 &set_label("abort");
 &function_end("RC4");
