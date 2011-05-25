@@ -928,7 +928,7 @@ int ssl3_get_server_hello(SSL *s)
 	/* Don't digest cached records if TLS v1.2: we may need them for
 	 * client authentication.
 	 */
-	if (s->version < TLS1_2_VERSION && !ssl3_digest_cached_records(s))
+	if (TLS1_get_version(s) < TLS1_2_VERSION && !ssl3_digest_cached_records(s))
 		goto f_err;
 	/* lets get the compression algorithm */
 	/* COMPRESSION */
@@ -1659,7 +1659,7 @@ int ssl3_get_key_exchange(SSL *s)
 	/* if it was signed, check the signature */
 	if (pkey != NULL)
 		{
-		if (s->version >= TLS1_2_VERSION)
+		if (TLS1_get_version(s) >= TLS1_2_VERSION)
 			{
 			int sigalg = tls12_get_sigid(pkey);
 			/* Should never happen */
@@ -1704,7 +1704,7 @@ fprintf(stderr, "USING TLSv1.2 HASH %s\n", EVP_MD_name(md));
 			}
 
 #ifndef OPENSSL_NO_RSA
-		if (pkey->type == EVP_PKEY_RSA && s->version < TLS1_2_VERSION)
+		if (pkey->type == EVP_PKEY_RSA && TLS1_get_version(s) < TLS1_2_VERSION)
 			{
 			int num;
 
@@ -1864,8 +1864,7 @@ int ssl3_get_certificate_request(SSL *s)
 	for (i=0; i<ctype_num; i++)
 		s->s3->tmp.ctype[i]= p[i];
 	p+=ctype_num;
-	/* HACK! For now just skip over signatature algorithms */
-	if (s->version >= TLS1_2_VERSION)
+	if (TLS1_get_version(s) >= TLS1_2_VERSION)
 		{
 		n2s(p, llen);
 		/* Check we have enough room for signature algorithms and
@@ -2886,7 +2885,7 @@ int ssl3_send_client_verify(SSL *s)
 		EVP_PKEY_sign_init(pctx);
 		if (EVP_PKEY_CTX_set_signature_md(pctx, EVP_sha1())>0)
 			{
-			if (s->version < TLS1_2_VERSION)
+			if (TLS1_get_version(s) < TLS1_2_VERSION)
 				s->method->ssl3_enc->cert_verify_mac(s,
 						NID_sha1,
 						&(data[MD5_DIGEST_LENGTH]));
@@ -2898,7 +2897,7 @@ int ssl3_send_client_verify(SSL *s)
 		/* For TLS v1.2 send signature algorithm and signature
 		 * using agreed digest and cached handshake records.
 		 */
-		if (s->version >= TLS1_2_VERSION)
+		if (TLS1_get_version(s) >= TLS1_2_VERSION)
 			{
 			long hdatalen = 0;
 			void *hdata;

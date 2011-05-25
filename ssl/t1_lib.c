@@ -502,7 +502,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 		skip_ext:
 
-	if (s->version >= TLS1_2_VERSION)
+	if (TLS1_get_version(s) >= TLS1_2_VERSION)
 		{
 		if ((size_t)(limit - ret) < sizeof(tls12_sigalgs) + 6)
 			return NULL; 
@@ -2100,7 +2100,7 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	const EVP_MD *md;
 	CERT *c = s->cert;
 	/* Extension ignored for TLS versions below 1.2 */
-	if (s->version < TLS1_2_VERSION)
+	if (TLS1_get_version(s) < TLS1_2_VERSION)
 		return 1;
 	/* Should never happen */
 	if (!c)

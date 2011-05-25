@@ -2226,7 +2226,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 			SSLerr(SSL_F_SSL_CHECK_SRVR_ECC_CERT_AND_ALG, SSL_R_ECC_CERT_NOT_FOR_KEY_AGREEMENT);
 			return 0;
 			}
-		if ((alg_k & SSL_kECDHe) && s->version < TLS1_2_VERSION)
+		if ((alg_k & SSL_kECDHe) && TLS1_get_version(s) < TLS1_2_VERSION)
 			{
 			/* signature alg must be ECDSA */
 			if (signature_nid != NID_ecdsa_with_SHA1)
@@ -2235,7 +2235,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 				return 0;
 				}
 			}
-		if ((alg_k & SSL_kECDHr) && s->version < TLS1_2_VERSION)
+		if ((alg_k & SSL_kECDHr) && TLS1_get_version(s) < TLS1_2_VERSION)
 			{
 			/* signature alg must be RSA */
 
