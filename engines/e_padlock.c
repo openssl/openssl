@@ -540,7 +540,7 @@ static inline void *name(size_t cnt,		\
 		"	leaq	16(%0),%%rdx\n"	\
 		"	leaq	32(%0),%%rbx\n"	\
 			rep_xcrypt "\n"		\
-		"	movq	%%rbx,%4"	\
+		"	movq	%4,%%rbx"	\
 		: "=a"(iv), "=c"(cnt), "=D"(out), "=S"(inp), "=&r"(scratch) \
 		: "0"(cdata), "1"(cnt), "2"(out), "3"(inp)  \
 		: "rdx", "cc", "memory");	\
