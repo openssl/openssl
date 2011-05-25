@@ -4,7 +4,12 @@
 
  Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
 
-  *)
+  *) Add protection against ECDSA timing attacks as mentioned in the paper
+     by Billy Bob Brumley and Nicola Tuveri, see:
+
+	http://eprint.iacr.org/2011/232.pdf
+
+     [Billy Bob Brumley and Nicola Tuveri]
 
  Changes between 0.9.8q and 0.9.8r [8 Feb 2011]
 
