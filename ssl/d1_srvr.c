@@ -148,6 +148,7 @@ int dtls1_accept(SSL *s)
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state,skip=0;
+	int listen;
 
 	RAND_add(&Time,sizeof(Time),0);
 	ERR_clear_error();
@@ -157,6 +158,8 @@ int dtls1_accept(SSL *s)
 		cb=s->info_callback;
 	else if (s->ctx->info_callback != NULL)
 		cb=s->ctx->info_callback;
+	
+	listen = s->d1->listen;
 
 	/* init things to blank */
 	s->in_handshake++;
@@ -272,7 +275,7 @@ int dtls1_accept(SSL *s)
 			s->init_num=0;
 
 			/* If we're just listening, stop here */
-			if (s->d1->listen && s->state == SSL3_ST_SW_SRVR_HELLO_A)
+			if (listen && s->state == SSL3_ST_SW_SRVR_HELLO_A)
 				{
 				ret = 2;
 				s->d1->listen = 0;
