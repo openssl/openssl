@@ -153,6 +153,8 @@ $(EXE): progs.h $(E_OBJ) $(PROGRAM).o $(DLIBCRYPTO) $(DLIBSSL)
 	$(RM) $(EXE)
 	shlib_target=; if [ -n "$(SHARED_LIBS)" ]; then \
 		shlib_target="$(SHLIB_TARGET)"; \
+	elif [ -n "$(FIPSCANLIB)" ]; then \
+	  FIPSLD_CC="$(CC)"; CC=$(FIPSDIR)bin/fipsld; export CC FIPSLD_CC; \
 	fi; \
 	LIBRARIES="$(LIBSSL) $(LIBKRB5) $(LIBCRYPTO)" ; \
 	$(MAKE) -f $(TOP)/Makefile.shared -e \

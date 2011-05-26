@@ -628,6 +628,9 @@ my $openssldir="";
 my $exe_ext="";
 my $install_prefix= "$ENV{'INSTALL_PREFIX'}";
 my $cross_compile_prefix="";
+my $fipsdir="/usr/local/ssl/fips-2.0/";
+my $fipslibdir="";
+my $baseaddr="0xFB00000";
 my $no_threads=0;
 my $threads=0;
 my $no_shared=0; # but "no-shared" is default
@@ -662,6 +665,7 @@ my $cmll_enc="camellia.o cmll_misc.o cmll_cbc.o";
 my $processor="";
 my $default_ranlib;
 my $perl;
+my $fips=0;
 
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
@@ -809,6 +813,10 @@ PROCESS_ARGS:
 			}
 		elsif (/^386$/)
 			{ $processor=386; }
+		elsif (/^fips$/)
+			{
+			$fips=1;
+		        }
 		elsif (/^rsaref$/)
 			{
 			# No RSAref support any more since it's not needed.
@@ -852,6 +860,18 @@ PROCESS_ARGS:
 			elsif (/^--with-zlib-include=(.*)$/)
 				{
 				$withargs{"zlib-include"}="-I$1";
+				}
+			elsif (/^--with-fipsdir=(.*)$/)
+				{
+				$fipsdir="$1/";
+				}
+			elsif (/^--with-fipslibdir=(.*)$/)
+				{
+				$fipslibdir="$1/";
+				}
+			elsif (/^--with-baseaddr=(.*)$/)
+				{
+				$baseaddr="$1";
 				}
 			elsif (/^--cross-compile-prefix=(.*)$/)
 				{
@@ -925,6 +945,11 @@ if (defined($disabled{"ec"}))
 if (defined($disabled{"md5"}) || defined($disabled{"rsa"}))
 	{
 	$disabled{"ssl2"} = "forced";
+	}
+
+if ($fips && $fipslibdir eq "")
+	{
+	$fipslibdir = $fipsdir . "lib/";
 	}
 
 # SSL 3.0 and TLS requires MD5 and SHA and either RSA or DSA+DH
@@ -1385,6 +1410,12 @@ $cflags.=" -DOPENSSL_IA32_SSE2" if (!$no_sse2 && $bn_obj =~ /86/);
 
 $cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /-mont/);
 
+if ($fips)
+	{
+	$openssl_other_defines.="#define OPENSSL_FIPS\n";
+	$cflags .= " -I\$(FIPSDIR)include";
+	}
+
 $cpuid_obj="mem_clr.o"	unless ($cpuid_obj =~ /\.o$/);
 $des_obj=$des_enc	unless ($des_obj =~ /\.o$/);
 $bf_obj=$bf_enc		unless ($bf_obj =~ /\.o$/);
@@ -1552,6 +1583,12 @@ while (<IN>)
 	s/^LIBKRB5=.*/LIBKRB5=$withargs{"krb5-lib"}/;
 	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
+
+	s/^FIPSDIR=.*/FIPSDIR=$fipsdir/;
+	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
+	s/^FIPSCANLIB=.*/FIPSCANLIB=libcrypto/ if $fips;
+	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
+
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
 	s/^SHLIB_MARK=.*/SHLIB_MARK=$shared_mark/;
 	s/^SHARED_LIBS=.*/SHARED_LIBS=\$(SHARED_CRYPTO) \$(SHARED_SSL)/ if (!$no_shared);

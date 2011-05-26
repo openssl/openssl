@@ -109,6 +109,30 @@ LIBKRB5=
 ZLIB_INCLUDE=
 LIBZLIB=
 
+# TOP level FIPS install directory.
+FIPSDIR=
+
+# This is the location of fipscanister.o and friends.
+# The FIPS module build will place it $(INSTALLTOP)/lib
+# but since $(INSTALLTOP) can only take the default value
+# when the module is built it will be in /usr/local/ssl/lib
+# $(INSTALLTOP) for this build may be different so hard
+# code the path.
+
+FIPSLIBDIR=
+
+# The location of the library which contains fipscanister.o
+# normally it will be libcrypto unless fipsdso is set in which
+# case it will be libfips. If not compiling in FIPS mode at all
+# this is empty making it a useful test for a FIPS compile.
+
+FIPSCANLIB=
+
+# Shared library base address. Currently only used on Windows.
+#
+
+BASEADDR=
+
 DIRS=   crypto ssl engines apps test tools
 ENGDIRS= ccgost
 SHLIBDIRS= crypto ssl
@@ -205,6 +229,9 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
 		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
 		PERLASM_SCHEME='$(PERLASM_SCHEME)'		\
+		FIPSLIBDIR='${FIPSLIBDIR}'			\
+		FIPSDIR='${FIPSDIR}'				\
+		FIPSCANLIB="$${FIPSCANLIB:-$(FIPSCANLIB)}"	\
 		THIS=$${THIS:-$@} MAKEFILE=Makefile MAKEOVERRIDES=
 # MAKEOVERRIDES= effectively "equalizes" GNU-ish and SysV-ish make flavors,
 # which in turn eliminates ambiguities in variable treatment with -e.
