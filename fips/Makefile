@@ -51,7 +51,7 @@ SRC= $(LIBSRC)
 
 EXHEADER=fips.h fipssyms.h
 HEADER=$(EXHEADER) fips_utl.h fips_locl.h
-EXE=fipsld
+EXE=fipsld fips_standalone_sha1
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 

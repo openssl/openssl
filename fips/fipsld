@@ -138,6 +138,8 @@ lib*|*.dll)	# must be linking a shared lib...
 	# directory or off the installed binary target destination.
 	if [ -x "${THERE}/fips/fips_standalone_sha1" ]; then
 		FINGERTYPE="${THERE}/fips/fips_standalone_sha1"
+	elif [ -x "${THERE}/bin/fips_standalone_sha1" ]; then
+		FINGERTYPE="${THERE}/bin/fips_standalone_sha1"
 	else	# Installed tree is expected to contain
 		# lib/fipscanister.o, lib/fipscanister.o.sha1 and
 		# lib/fips_premain.c [not to mention bin/openssl].
