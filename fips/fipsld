@@ -94,7 +94,7 @@ lib*|*.dll)	# must be linking a shared lib...
 		PREMAIN_DSO="${THERE}/fips/fips_premain_dso"
 	elif [ -x "${THERE}/bin/fips_standalone_sha1" ]; then
 		FINGERTYPE="${THERE}/bin/fips_standalone_sha1"
-		PREMAIN_DSO="fips_premain_dso"
+		PREMAIN_DSO="./fips_premain_dso"
 	fi
 
 	# verify fipspremain.c against its detached signature...
@@ -106,17 +106,17 @@ lib*|*.dll)	# must be linking a shared lib...
 		diff -w "${CANISTER_O}.sha1" - || \
 	{ echo "${CANISTER_O} fingerprint mismatch"; exit 1; }
 
-	[ -z "${FIPSLIBCRYPTO}" -a -f "${THERE}/libcrypto.a" ] && \
-		FIPSLIBCRYPTO = -f "${THERE}/libcrypto.a"
+	[ -z "${FIPSLD_LIBCRYPTO}" -a -f "${THERE}/libcrypto.a" ] && \
+		FIPSLD_LIBCRYPTO = -f "${THERE}/libcrypto.a"
 		
 
 	# Temporarily remove fipscanister.o from libcrypto.a!
 	# We are required to use the standalone copy...
-	if [ -n  "${FIPSLIBCRYPTO}" ]; then
-	    if ar d "${FIPSLIBCRYPTO}" fipscanister.o; then
-		(ranlib "${FIPSLIBCRYPTO}") 2>/dev/null || :
-		trap	'ar r "${FIPSLIBCRYPTO}" "${CANISTER_O}";
-			 (ranlib "${FIPSLIBCRYPTO}") 2>/dev/null || :;
+	if [ -n  "${FIPSLD_LIBCRYPTO}" ]; then
+	    if ar d "${FIPSLD_LIBCRYPTO}" fipscanister.o; then
+		(ranlib "${FIPSLD_LIBCRYPTO}") 2>/dev/null || :
+		trap	'ar r "${FIPSLD_LIBCRYPTO}" "${CANISTER_O}";
+			 (ranlib "${FIPSLD_LIBCRYPTO}") 2>/dev/null || :;
 			 sleep 1;
 			 touch -c "${TARGET}"' 0
 	    fi
