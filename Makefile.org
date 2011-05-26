@@ -285,9 +285,20 @@ all_testapps: build_libs build_testapps
 build_testapps:
 	@dir=crypto; target=testapps; $(BUILD_ONE_CMD)
 
-libcrypto$(SHLIB_EXT): libcrypto.a
+fips_premain_dso$(EXE_EXT): libcrypto.a
+	[ -n "$(FIPSCANLIB)" ] && $(CC) $(CFLAGS) \
+		-DFINGERPRINT_PREMAIN_DSO_LOAD -o $@  \
+		$(FIPSLIBDIR)fips_premain.c $(FIPSLIBDIR)fipscanister.o \
+		libcrypto.a $(EX_LIBS)
+
+libcrypto$(SHLIB_EXT): libcrypto.a fips_premain_dso$(EXE_EXT)
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
-		$(MAKE) SHLIBDIRS=crypto build-shared; \
+		if [ "$(FIPSCANLIB)" = "libcrypto" ]; then \
+			FIPSLD_LIBCRYPTO=libcrypto.a ; \
+			FIPSLD_CC="$(CC)"; CC=$(FIPSDIR)bin/fipsld; \
+			export CC FIPSLD_CC FIPSLD_LIBCRYPTO; \
+		fi; \
+		$(MAKE) -e SHLIBDIRS=crypto build-shared; \
 	else \
 		echo "There's no support for shared libraries on this platform" >&2; \
 		exit 1; \
