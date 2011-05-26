@@ -146,12 +146,10 @@ OPENSSL_ia32_cpuid:
 .Lgeneric:
 	and	\$0x00000800,%r9d	# isolate AMD XOP flag
 	and	\$0xfffff7ff,%ecx
-	or	%r9d,%ecx		# merge AMD XOP flag
+	or	%ecx,%r9d		# merge AMD XOP flag
 
-	shl	\$32,%rcx
-	mov	%edx,%ebx
-	or	%rcx,%rbx		# compose capability vector in %rbx
-	bt	\$27+32,%rcx		# check OSXSAVE bit
+	mov	%edx,%r10d		# %r9d:%r10d is copy of %ecx:%edx
+	bt	\$27,%r9d		# check OSXSAVE bit
 	jnc	.Lclear_avx
 	xor	%ecx,%ecx		# XCR0
 	.byte	0x0f,0x01,0xd0		# xgetbv
@@ -160,11 +158,12 @@ OPENSSL_ia32_cpuid:
 	je	.Ldone
 .Lclear_avx:
 	mov	\$0xefffe7ff,%eax	# ~(1<<28|1<<12|1<<11)
-	shl	\$32,%rax
-	and	%rax,%rbx		# clear AVX, FMA and AMD XOP bits
+	and	%eax,%r9d		# clear AVX, FMA and AMD XOP bits
 .Ldone:
-	mov	%rbx,%rax
+	shl	\$32,%r9
+	mov	%r10d,%eax
 	mov	%r8,%rbx		# restore %rbx
+	or	%r9,%rax
 	ret
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
 
