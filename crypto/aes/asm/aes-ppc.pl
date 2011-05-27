@@ -18,7 +18,7 @@
 
 # February 2010
 #
-# Rescheduling instructions to favour Power6 pipeline gives 10%
+# Rescheduling instructions to favour Power6 pipeline gave 10%
 # performance improvement on the platfrom in question (and marginal
 # improvement even on others). It should be noted that Power6 fails
 # to process byte in 18 cycles, only in 23, because it fails to issue
@@ -33,11 +33,13 @@ $flavour = shift;
 
 if ($flavour =~ /64/) {
 	$SIZE_T	=8;
+	$LRSAVE	=2*$SIZE_T;
 	$STU	="stdu";
 	$POP	="ld";
 	$PUSH	="std";
 } elsif ($flavour =~ /32/) {
 	$SIZE_T	=4;
+	$LRSAVE	=$SIZE_T;
 	$STU	="stwu";
 	$POP	="lwz";
 	$PUSH	="stw";
@@ -116,15 +118,19 @@ LAES_Te:
 	addi	$Tbl0,$Tbl0,`128-8`
 	mtlr	r0
 	blr
-	.space	`32-24`
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
+	.space	`64-9*4`
 LAES_Td:
 	mflr	r0
 	bcl	20,31,\$+4
 	mflr	$Tbl0	;    vvvvvvvv "distance" between . and 1st data entry
-	addi	$Tbl0,$Tbl0,`128-8-32+2048+256`
+	addi	$Tbl0,$Tbl0,`128-64-8+2048+256`
 	mtlr	r0
 	blr
-	.space	`128-32-24`
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
+	.space	`128-64-9*4`
 ___
 &_data_word(
 	0xc66363a5, 0xf87c7c84, 0xee777799, 0xf67b7b8d,
@@ -328,10 +334,9 @@ $code.=<<___;
 .globl	.AES_encrypt
 .align	7
 .AES_encrypt:
-	mflr	r0
 	$STU	$sp,-$FRAME($sp)
+	mflr	r0
 
-	$PUSH	r0,`$FRAME-$SIZE_T*21`($sp)
 	$PUSH	$toc,`$FRAME-$SIZE_T*20`($sp)
 	$PUSH	r13,`$FRAME-$SIZE_T*19`($sp)
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
@@ -352,6 +357,7 @@ $code.=<<___;
 	$PUSH	r29,`$FRAME-$SIZE_T*3`($sp)
 	$PUSH	r30,`$FRAME-$SIZE_T*2`($sp)
 	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
+	$PUSH	r0,`$FRAME+$LRSAVE`($sp)
 
 	lwz	$s0,0($inp)
 	lwz	$s1,4($inp)
@@ -364,7 +370,7 @@ $code.=<<___;
 	stw	$s2,8($out)
 	stw	$s3,12($out)
 
-	$POP	r0,`$FRAME-$SIZE_T*21`($sp)
+	$POP	r0,`$FRAME+$LRSAVE`($sp)
 	$POP	$toc,`$FRAME-$SIZE_T*20`($sp)
 	$POP	r13,`$FRAME-$SIZE_T*19`($sp)
 	$POP	r14,`$FRAME-$SIZE_T*18`($sp)
@@ -388,6 +394,9 @@ $code.=<<___;
 	mtlr	r0
 	addi	$sp,$sp,$FRAME
 	blr
+	.long	0
+	.byte	0,12,4,1,0x80,18,3,0
+	.long	0
 
 .align	5
 Lppc_AES_encrypt:
@@ -530,6 +539,8 @@ Lenc_loop:
 	xor	$s2,$s2,$t2
 	xor	$s3,$s3,$t3
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
 
 .align	4
 Lppc_AES_encrypt_compact:
@@ -673,14 +684,15 @@ Lenc_compact_done:
 	xor	$s2,$s2,$t2
 	xor	$s3,$s3,$t3
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
 
 .globl	.AES_decrypt
 .align	7
 .AES_decrypt:
-	mflr	r0
 	$STU	$sp,-$FRAME($sp)
+	mflr	r0
 
-	$PUSH	r0,`$FRAME-$SIZE_T*21`($sp)
 	$PUSH	$toc,`$FRAME-$SIZE_T*20`($sp)
 	$PUSH	r13,`$FRAME-$SIZE_T*19`($sp)
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
@@ -701,6 +713,7 @@ Lenc_compact_done:
 	$PUSH	r29,`$FRAME-$SIZE_T*3`($sp)
 	$PUSH	r30,`$FRAME-$SIZE_T*2`($sp)
 	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
+	$PUSH	r0,`$FRAME+$LRSAVE`($sp)
 
 	lwz	$s0,0($inp)
 	lwz	$s1,4($inp)
@@ -713,7 +726,7 @@ Lenc_compact_done:
 	stw	$s2,8($out)
 	stw	$s3,12($out)
 
-	$POP	r0,`$FRAME-$SIZE_T*21`($sp)
+	$POP	r0,`$FRAME+$LRSAVE`($sp)
 	$POP	$toc,`$FRAME-$SIZE_T*20`($sp)
 	$POP	r13,`$FRAME-$SIZE_T*19`($sp)
 	$POP	r14,`$FRAME-$SIZE_T*18`($sp)
@@ -737,6 +750,9 @@ Lenc_compact_done:
 	mtlr	r0
 	addi	$sp,$sp,$FRAME
 	blr
+	.long	0
+	.byte	0,12,4,1,0x80,18,3,0
+	.long	0
 
 .align	5
 Lppc_AES_decrypt:
@@ -879,6 +895,8 @@ Ldec_loop:
 	xor	$s2,$s2,$t2
 	xor	$s3,$s3,$t3
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
 
 .align	4
 Lppc_AES_decrypt_compact:
@@ -1179,7 +1197,9 @@ Ldec_compact_done:
 	xor	$s2,$s2,$t2
 	xor	$s3,$s3,$t3
 	blr
-.long	0
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
+
 .asciz	"AES for PPC, CRYPTOGAMS by <appro\@openssl.org>"
 .align	7
 ___

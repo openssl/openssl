@@ -29,12 +29,16 @@ $code=<<___;
 	fcfid	f1,f1
 	extrdi	r0,r0,32,0
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
 
 .globl	.OPENSSL_altivec_probe
 .align	4
 .OPENSSL_altivec_probe:
 	.long	0x10000484	# vor	v0,v0,v0
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
 
 .globl	.OPENSSL_wipe_cpu
 .align	4
@@ -65,6 +69,8 @@ $code=<<___;
 	fmr	f12,f31
 	fmr	f13,f31
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
 
 .globl	.OPENSSL_atomic_add
 .align	4
@@ -75,6 +81,9 @@ Ladd:	lwarx	r5,0,r3
 	bne-	Ladd
 	$SIGNX	r3,r0
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,2,0
+	.long	0
 
 .globl	.OPENSSL_rdtsc
 .align	4
@@ -82,6 +91,8 @@ Ladd:	lwarx	r5,0,r3
 	mftb	r3
 	mftbu	r4
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,0,0
 
 .globl	.OPENSSL_cleanse
 .align	4
@@ -111,6 +122,9 @@ Laligned:
 	andi.	r4,r4,3
 	bne	Little
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,2,0
+	.long	0
 ___
 {
 my ($out,$cnt,$max)=("r3","r4","r5");
@@ -145,6 +159,9 @@ Loop:	mftb	$tick
 
 	mr	r3,$cnt
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,2,0
+	.long	0
 
 .globl	.OPENSSL_instrument_bus2
 .align	4
@@ -193,6 +210,9 @@ Ldone2:
 	srwi	$cnt,$cnt,2
 	sub	r3,r0,$cnt
 	blr
+	.long	0
+	.byte	0,12,0x14,0,0,0,3,0
+	.long	0
 ___
 }
 

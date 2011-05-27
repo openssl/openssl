@@ -70,7 +70,6 @@ $flavour = shift;
 if ($flavour =~ /32/) {
 	$SIZE_T=4;
 	$RZONE=	224;
-	$FRAME=	$SIZE_T*12+8*12;
 	$fname=	"bn_mul_mont_fpu64";
 
 	$STUX=	"stwux";	# store indexed and update
@@ -79,7 +78,6 @@ if ($flavour =~ /32/) {
 } elsif ($flavour =~ /64/) {
 	$SIZE_T=8;
 	$RZONE=	288;
-	$FRAME=	$SIZE_T*12+8*12;
 	$fname=	"bn_mul_mont_fpu64";
 
 	# same as above, but 64-bit mnemonics...
@@ -95,7 +93,7 @@ die "can't locate ppc-xlate.pl";
 
 open STDOUT,"| $^X $xlate $flavour ".shift || die "can't call $xlate: $!";
 
-$FRAME=($FRAME+63)&~63;
+$FRAME=64;	# padded frame header
 $TRANSFER=16*8;
 
 $carry="r0";
@@ -112,16 +110,16 @@ $tp="r10";
 $j="r11";
 $i="r12";
 # non-volatile registers
-$nap_d="r14";	# interleaved ap and np in double format
-$a0="r15";	# ap[0]
-$t0="r16";	# temporary registers
-$t1="r17";
-$t2="r18";
-$t3="r19";
-$t4="r20";
-$t5="r21";
-$t6="r22";
-$t7="r23";
+$nap_d="r22";	# interleaved ap and np in double format
+$a0="r23";	# ap[0]
+$t0="r24";	# temporary registers
+$t1="r25";
+$t2="r26";
+$t3="r27";
+$t4="r28";
+$t5="r29";
+$t6="r30";
+$t7="r31";
 
 # PPC offers enough register bank capacity to unroll inner loops twice
 #
@@ -151,28 +149,17 @@ $ba="f0";	$bb="f1";	$bc="f2";	$bd="f3";
 $na="f4";	$nb="f5";	$nc="f6";	$nd="f7";
 $dota="f8";	$dotb="f9";
 $A0="f10";	$A1="f11";	$A2="f12";	$A3="f13";
-$N0="f14";	$N1="f15";	$N2="f16";	$N3="f17";
-$T0a="f18";	$T0b="f19";
-$T1a="f20";	$T1b="f21";
-$T2a="f22";	$T2b="f23";
-$T3a="f24";	$T3b="f25";
+$N0="f20";	$N1="f21";	$N2="f22";	$N3="f23";
+$T0a="f24";	$T0b="f25";
+$T1a="f26";	$T1b="f27";
+$T2a="f28";	$T2b="f29";
+$T3a="f30";	$T3b="f31";
 
 # sp----------->+-------------------------------+
 #		| saved sp			|
 #		+-------------------------------+
-#		|				|
-#		+-------------------------------+
-#		| 10 saved gpr, r14-r23		|
 #		.				.
-#		.				.
-#   +12*size_t	+-------------------------------+
-#		| 12 saved fpr, f14-f25		|
-#		.				.
-#		.				.
-#   +12*8	+-------------------------------+
-#		| padding to 64 byte boundary	|
-#		.				.
-#   +X		+-------------------------------+
+#   +64		+-------------------------------+
 #		| 16 gpr<->fpr transfer zone	|
 #		.				.
 #		.				.
@@ -189,6 +176,16 @@ $T3a="f24";	$T3b="f25";
 #   +X		+-------------------------------+
 #		| double nap_d[4*num]		|
 #		.				.
+#		.				.
+#		.				.
+#		+-------------------------------+
+#		.				.
+#   -12*size_t	+-------------------------------+
+#		| 10 saved gpr, r22-r31		|
+#		.				.
+#		.				.
+#   -12*8	+-------------------------------+
+#		| 12 saved fpr, f20-f31		|
 #		.				.
 #		.				.
 #		+-------------------------------+
@@ -215,30 +212,31 @@ $code=<<___;
 	subf	$tp,$tp,$sp	; $sp-$tp
 	and	$tp,$tp,$i	; minimize TLB usage
 	subf	$tp,$sp,$tp	; $tp-$sp
+	mr	$i,$sp
 	$STUX	$sp,$sp,$tp	; alloca
 
-	$PUSH	r14,`2*$SIZE_T`($sp)
-	$PUSH	r15,`3*$SIZE_T`($sp)
-	$PUSH	r16,`4*$SIZE_T`($sp)
-	$PUSH	r17,`5*$SIZE_T`($sp)
-	$PUSH	r18,`6*$SIZE_T`($sp)
-	$PUSH	r19,`7*$SIZE_T`($sp)
-	$PUSH	r20,`8*$SIZE_T`($sp)
-	$PUSH	r21,`9*$SIZE_T`($sp)
-	$PUSH	r22,`10*$SIZE_T`($sp)
-	$PUSH	r23,`11*$SIZE_T`($sp)
-	stfd	f14,`12*$SIZE_T+0`($sp)
-	stfd	f15,`12*$SIZE_T+8`($sp)
-	stfd	f16,`12*$SIZE_T+16`($sp)
-	stfd	f17,`12*$SIZE_T+24`($sp)
-	stfd	f18,`12*$SIZE_T+32`($sp)
-	stfd	f19,`12*$SIZE_T+40`($sp)
-	stfd	f20,`12*$SIZE_T+48`($sp)
-	stfd	f21,`12*$SIZE_T+56`($sp)
-	stfd	f22,`12*$SIZE_T+64`($sp)
-	stfd	f23,`12*$SIZE_T+72`($sp)
-	stfd	f24,`12*$SIZE_T+80`($sp)
-	stfd	f25,`12*$SIZE_T+88`($sp)
+	$PUSH	r22,`-12*8-10*$SIZE_T`($i)
+	$PUSH	r23,`-12*8-9*$SIZE_T`($i)
+	$PUSH	r24,`-12*8-8*$SIZE_T`($i)
+	$PUSH	r25,`-12*8-7*$SIZE_T`($i)
+	$PUSH	r26,`-12*8-6*$SIZE_T`($i)
+	$PUSH	r27,`-12*8-5*$SIZE_T`($i)
+	$PUSH	r28,`-12*8-4*$SIZE_T`($i)
+	$PUSH	r29,`-12*8-3*$SIZE_T`($i)
+	$PUSH	r30,`-12*8-2*$SIZE_T`($i)
+	$PUSH	r31,`-12*8-1*$SIZE_T`($i)
+	stfd	f20,`-12*8`($i)
+	stfd	f21,`-11*8`($i)
+	stfd	f22,`-10*8`($i)
+	stfd	f23,`-9*8`($i)
+	stfd	f24,`-8*8`($i)
+	stfd	f25,`-7*8`($i)
+	stfd	f26,`-6*8`($i)
+	stfd	f27,`-5*8`($i)
+	stfd	f28,`-4*8`($i)
+	stfd	f29,`-3*8`($i)
+	stfd	f30,`-2*8`($i)
+	stfd	f31,`-1*8`($i)
 ___
 $code.=<<___ if ($SIZE_T==8);
 	ld	$a0,0($ap)	; pull ap[0] value
@@ -1052,33 +1050,37 @@ Lcopy:				; copy or in-place refresh
 ___
 
 $code.=<<___;
-	$POP	r14,`2*$SIZE_T`($sp)
-	$POP	r15,`3*$SIZE_T`($sp)
-	$POP	r16,`4*$SIZE_T`($sp)
-	$POP	r17,`5*$SIZE_T`($sp)
-	$POP	r18,`6*$SIZE_T`($sp)
-	$POP	r19,`7*$SIZE_T`($sp)
-	$POP	r20,`8*$SIZE_T`($sp)
-	$POP	r21,`9*$SIZE_T`($sp)
-	$POP	r22,`10*$SIZE_T`($sp)
-	$POP	r23,`11*$SIZE_T`($sp)
-	lfd	f14,`12*$SIZE_T+0`($sp)
-	lfd	f15,`12*$SIZE_T+8`($sp)
-	lfd	f16,`12*$SIZE_T+16`($sp)
-	lfd	f17,`12*$SIZE_T+24`($sp)
-	lfd	f18,`12*$SIZE_T+32`($sp)
-	lfd	f19,`12*$SIZE_T+40`($sp)
-	lfd	f20,`12*$SIZE_T+48`($sp)
-	lfd	f21,`12*$SIZE_T+56`($sp)
-	lfd	f22,`12*$SIZE_T+64`($sp)
-	lfd	f23,`12*$SIZE_T+72`($sp)
-	lfd	f24,`12*$SIZE_T+80`($sp)
-	lfd	f25,`12*$SIZE_T+88`($sp)
-	$POP	$sp,0($sp)
+	$POP	$i,0($sp)
 	li	r3,1	; signal "handled"
+	$POP	r22,`-12*8-10*$SIZE_T`($i)
+	$POP	r23,`-12*8-9*$SIZE_T`($i)
+	$POP	r24,`-12*8-8*$SIZE_T`($i)
+	$POP	r25,`-12*8-7*$SIZE_T`($i)
+	$POP	r26,`-12*8-6*$SIZE_T`($i)
+	$POP	r27,`-12*8-5*$SIZE_T`($i)
+	$POP	r28,`-12*8-4*$SIZE_T`($i)
+	$POP	r29,`-12*8-3*$SIZE_T`($i)
+	$POP	r30,`-12*8-2*$SIZE_T`($i)
+	$POP	r31,`-12*8-1*$SIZE_T`($i)
+	lfd	f20,`-12*8`($i)
+	lfd	f21,`-11*8`($i)
+	lfd	f22,`-10*8`($i)
+	lfd	f23,`-9*8`($i)
+	lfd	f24,`-8*8`($i)
+	lfd	f25,`-7*8`($i)
+	lfd	f26,`-6*8`($i)
+	lfd	f27,`-5*8`($i)
+	lfd	f28,`-4*8`($i)
+	lfd	f29,`-3*8`($i)
+	lfd	f30,`-2*8`($i)
+	lfd	f31,`-1*8`($i)
+	mr	$sp,$i
 	blr
 	.long	0
-.asciz  "Montgomery Multiplication for PPC64, CRYPTOGAMS by <appro\@fy.chalmers.se>"
+	.byte	0,12,4,0,0x8c,10,6,0
+	.long	0
+
+.asciz  "Montgomery Multiplication for PPC64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
