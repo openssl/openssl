@@ -37,10 +37,10 @@
 # Pentium III	7.8(*)
 # Intel P4	7.5
 #
-# Opteron	6.4/+14%		# new MMX numbers
-# Core2		5.8/+50%(**)
-# Westmere	5.5/+80%(**)
-# Sandy Bridge	5.4/0%
+# Opteron	6.1/+20%		# new MMX numbers
+# Core2		5.3/+67%(**)
+# Westmere	5.1/+94%(**)
+# Sandy Bridge	5.0/+8%
 #
 # (*)	PIII can actually deliver 6.6 cycles per byte with MMX code,
 #	but this specific code performs poorly on Core2. And vice
@@ -126,8 +126,7 @@ if ($alt=0) {
   $RC4_loop_mmx = sub {
     my $i=shift;
 
-	&add	($yy,$tx);
-	&movz	($yy,&LB($yy));				# (*)
+	&add	(&LB($yy),&LB($tx));
 	&psllq	("mm1",8*(($i-1)&7))			if (abs($i)!=1);
 	&mov	($ty,&DWP(0,$dat,$yy,4));
 	&mov	(&DWP(0,$dat,$yy,4),$tx);
@@ -204,6 +203,9 @@ if ($alt=0) {
 		&$RC4_loop_mmx(0);
 	&set_label("loop_mmx_enter");
 		for 	($i=1;$i<8;$i++) { &$RC4_loop_mmx($i); }
+		&mov	($ty,$yy);
+		&xor	($yy,$yy);		# this is second key to Core2
+		&mov	(&LB($yy),&LB($ty));	# and Westmere performance...
 		&cmp	($inp,&DWP(-4,$dat));
 		&lea	($inp,&DWP(8,$inp));
 	&jb	(&label("loop_mmx"));
