@@ -78,12 +78,13 @@
 
 # May 2011
 #
-# The only code path that was not modified is P4-specific one. New
-# AMD code path is inspired by and Intel optimization is heavily
-# based on submission from Maxim Locktyukhin of Intel. Current
-# performance in cycles per processed byte (less is better) and
-# improvement coefficients relative to previous version of this
-# module are:
+# The only code path that was not modified is P4-specific one. Non-P4
+# Intel code path optimization is heavily based on submission by Maxim
+# Perminov, Maxim Locktyukhin and Jim Guilford of Intel. I've used
+# some of the ideas even in attempt to optmize the original RC4_INT
+# code path... Current performance in cycles per processed byte (less
+# is better) and improvement coefficients relative to previous
+# version of this module are:
 #
 # Opteron	5.3/+0%
 # P4		6.5
@@ -92,9 +93,10 @@
 # Sandy Bridge	4.2/+120%
 # Atom		9.3/+80%
 #
-# (*)	Note that this result is ~15% lower than result for 32-bit
-#	code, meaning that it's possible to improve it, but it's
-#	more than likely at the cost of the others...
+# (*)	Note that Core2 result is ~15% lower than corresponding result
+#	for 32-bit code, meaning that it's possible to improve it,
+#	but more than likely at the cost of the others (see rc4-586.pl
+#	to get the idea)...
 
 $flavour = shift;
 $output  = shift;
