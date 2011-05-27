@@ -37,14 +37,13 @@ moment of this writing following bits are significant:
 =item bit #28 denoting Hyperthreading, which is used to distiguish
       cores with shared cache;
 
-=item bit #30, reserved by Intel, is used to choose among RC4 code
-      paths;
+=item bit #30, reserved by Intel, denotes specifically Intel CPUs;
 
 =item bit #33 denoting availability of PCLMULQDQ instruction;
 
 =item bit #41 denoting SSSE3, Supplemental SSE3, support;
 
-=item bit #43 denoting AMD XOP support (forced to zero on Intel);
+=item bit #43 denoting AMD XOP support (forced to zero on non-AMD CPUs);
 
 =item bit #57 denoting AES-NI instruction set extension;
 

@@ -92,13 +92,15 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 &set_label("nocacheinfo");
 	&mov	("eax",1);
 	&cpuid	();
+	&and	("edx",~(1<<20|1<<30));	# force reserved bits to 0
 	&cmp	("ebp",0);
-	&jne	(&label("notP4"));
+	&jne	(&label("notintel"));
+	&or	("edx",1<<30);		# set reserved bit#30 on Intel CPUs
 	&and	(&HB("eax"),15);	# familiy ID
 	&cmp	(&HB("eax"),15);	# P4?
-	&jne	(&label("notP4"));
-	&or	("edx",1<<20);		# use reserved bit to engage RC4_CHAR
-&set_label("notP4");
+	&jne	(&label("notintel"));
+	&or	("edx",1<<20);		# set reserved bit#20 to engage RC4_CHAR
+&set_label("notintel");
 	&bt	("edx",28);		# test hyper-threading bit
 	&jnc	(&label("generic"));
 	&and	("edx",0xefffffff);

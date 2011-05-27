@@ -124,13 +124,14 @@ OPENSSL_ia32_cpuid:
 .Lnocacheinfo:
 	mov	\$1,%eax
 	cpuid
+	and	\$0xbfefffff,%edx	# force reserved bits to 0
 	cmp	\$0,%r9d
 	jne	.Lnotintel
-	or	\$0x00100000,%edx	# use reserved 20th bit to engage RC4_CHAR
+	or	\$0x40000000,%edx	# set reserved bit#30 on Intel CPUs
 	and	\$15,%ah
 	cmp	\$15,%ah		# examine Family ID
-	je	.Lnotintel
-	or	\$0x40000000,%edx	# use reserved bit to skip unrolled loop
+	jne	.Lnotintel
+	or	\$0x00100000,%edx	# set reserved bit#20 to engage RC4_CHAR
 .Lnotintel:
 	bt	\$28,%edx		# test hyper-threading bit
 	jnc	.Lgeneric

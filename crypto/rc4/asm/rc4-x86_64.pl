@@ -159,8 +159,8 @@ $code.=<<___;
 	movl	($dat,$XX[0],4),$TX[0]#d
 	test	\$-16,$len
 	jz	.Lloop1
-	bt	\$30,%r8d	# Intel CPU Family 6
-	jc	.L16x
+	bt	\$30,%r8d	# Intel CPU?
+	jc	.Lintel
 	and	\$7,$TX[1]
 	lea	1($XX[0]),$XX[1]
 	jz	.Loop8
@@ -217,7 +217,7 @@ $code.=<<___;
 	jmp	.Lexit
 
 .align	16
-.L16x:
+.Lintel:
 	test	\$-32,$len
 	jz	.Lloop1
 	and	\$15,$TX[1]
@@ -438,10 +438,8 @@ RC4_set_key:
 	xor	%r11,%r11
 
 	mov	OPENSSL_ia32cap_P(%rip),$idx#d
-	bt	\$20,$idx#d	# Intel CPU
-	jnc	.Lw1stloop
-	bt	\$30,$idx#d	# Intel CPU Family 6
-	jnc	.Lc1stloop
+	bt	\$20,$idx#d	# RC4_CHAR?
+	jc	.Lc1stloop
 	jmp	.Lw1stloop
 
 .align	16
