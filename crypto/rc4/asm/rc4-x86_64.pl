@@ -503,11 +503,13 @@ RC4_options:
 	lea	.Lopts(%rip),%rax
 	mov	OPENSSL_ia32cap_P(%rip),%edx
 	bt	\$20,%edx
-	jnc	.Ldone
-	add	\$12,%rax
+	jc	.L8xchar
 	bt	\$30,%edx
 	jnc	.Ldone
-	add	\$13,%rax
+	add	\$25,%rax
+	ret
+.L8xchar:
+	add	\$12,%rax
 .Ldone:
 	ret
 .align	64
