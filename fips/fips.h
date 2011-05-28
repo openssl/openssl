@@ -174,6 +174,8 @@ int fips_cipher_test(int id, struct evp_cipher_ctx_st *ctx,
 
 #ifndef OPENSSL_FIPSCANISTER
 
+int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type);
+
 const EVP_CIPHER *FIPS_evp_aes_128_cbc(void);
 const EVP_CIPHER *FIPS_evp_aes_128_ccm(void);
 const EVP_CIPHER *FIPS_evp_aes_128_cfb1(void);
