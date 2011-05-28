@@ -117,6 +117,10 @@
 #include <openssl/engine.h>
 #endif
 
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 void EVP_MD_CTX_init(EVP_MD_CTX *ctx)
 	{
 	memset(ctx,'\0',sizeof *ctx);
@@ -225,6 +229,16 @@ skip_to_init:
 		}
 	if (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT)
 		return 1;
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode())
+		{
+		if (FIPS_digestinit(ctx, type))
+			return 1;
+		OPENSSL_free(ctx->md_data);
+		ctx->md_data = NULL;
+		return 0;
+		}
+#endif
 	return ctx->digest->init(ctx);
 	}
 

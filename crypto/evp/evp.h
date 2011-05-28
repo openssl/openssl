@@ -83,7 +83,7 @@
 #define EVP_RC5_32_12_16_KEY_SIZE	16
 */
 #define EVP_MAX_MD_SIZE			64	/* longest known is SHA512 */
-#define EVP_MAX_KEY_LENGTH		32
+#define EVP_MAX_KEY_LENGTH		64
 #define EVP_MAX_IV_LENGTH		16
 #define EVP_MAX_BLOCK_LENGTH		32
 
@@ -116,6 +116,7 @@
 #define EVP_PKEY_DH	NID_dhKeyAgreement
 #define EVP_PKEY_EC	NID_X9_62_id_ecPublicKey
 #define EVP_PKEY_HMAC	NID_hmac
+#define EVP_PKEY_CMAC	NID_cmac
 
 #ifdef	__cplusplus
 extern "C" {
@@ -215,6 +216,8 @@ typedef int evp_verify_method(int type,const unsigned char *m,
 /* Custom handling via ctrl */
 
 #define EVP_MD_FLAG_DIGALGID_CUSTOM		0x0018
+
+#define EVP_MD_FLAG_FIPS	0x0400 /* Note if suitable for use in FIPS mode */
 
 /* Digest ctrls */
 
@@ -326,6 +329,9 @@ struct evp_cipher_st
 #define		EVP_CIPH_CFB_MODE		0x3
 #define		EVP_CIPH_OFB_MODE		0x4
 #define		EVP_CIPH_CTR_MODE		0x5
+#define		EVP_CIPH_GCM_MODE		0x6
+#define		EVP_CIPH_CCM_MODE		0x7
+#define		EVP_CIPH_XTS_MODE		0x10001
 #define 	EVP_CIPH_MODE			0xF0007
 /* Set if variable length cipher */
 #define 	EVP_CIPH_VARIABLE_LENGTH	0x8
@@ -347,6 +353,14 @@ struct evp_cipher_st
 #define		EVP_CIPH_FLAG_DEFAULT_ASN1	0x1000
 /* Buffer length in bits not bytes: CFB1 mode only */
 #define		EVP_CIPH_FLAG_LENGTH_BITS	0x2000
+/* Note if suitable for use in FIPS mode */
+#define		EVP_CIPH_FLAG_FIPS		0x4000
+/* Allow non FIPS cipher in FIPS mode */
+#define		EVP_CIPH_FLAG_NON_FIPS_ALLOW	0x8000
+/* Cipher handles any and all padding logic as well
+ * as finalisation.
+ */
+#define 	EVP_CIPH_FLAG_CUSTOM_CIPHER	0x10000
 
 /* ctrl() values */
 
@@ -359,6 +373,16 @@ struct evp_cipher_st
 #define 	EVP_CTRL_RAND_KEY		0x6
 #define 	EVP_CTRL_PBE_PRF_NID		0x7
 #define 	EVP_CTRL_COPY			0x8
+#define 	EVP_CTRL_GCM_SET_IVLEN		0x9
+#define 	EVP_CTRL_GCM_GET_TAG		0x10
+#define 	EVP_CTRL_GCM_SET_TAG		0x11
+#define		EVP_CTRL_GCM_SET_IV_FIXED	0x12
+#define		EVP_CTRL_GCM_IV_GEN		0x13
+#define		EVP_CTRL_CCM_SET_IVLEN		EVP_CTRL_GCM_SET_IVLEN
+#define		EVP_CTRL_CCM_GET_TAG		EVP_CTRL_GCM_GET_TAG
+#define		EVP_CTRL_CCM_SET_TAG		EVP_CTRL_GCM_SET_TAG
+#define		EVP_CTRL_CCM_SET_L		0x14
+#define		EVP_CTRL_CCM_SET_MSGLEN		0x15
 
 typedef struct evp_cipher_info_st
 	{
@@ -743,6 +767,9 @@ const EVP_CIPHER *EVP_aes_128_cfb128(void);
 # define EVP_aes_128_cfb EVP_aes_128_cfb128
 const EVP_CIPHER *EVP_aes_128_ofb(void);
 const EVP_CIPHER *EVP_aes_128_ctr(void);
+const EVP_CIPHER *EVP_aes_128_ccm(void);
+const EVP_CIPHER *EVP_aes_128_gcm(void);
+const EVP_CIPHER *EVP_aes_128_xts(void);
 const EVP_CIPHER *EVP_aes_192_ecb(void);
 const EVP_CIPHER *EVP_aes_192_cbc(void);
 const EVP_CIPHER *EVP_aes_192_cfb1(void);
@@ -751,6 +778,8 @@ const EVP_CIPHER *EVP_aes_192_cfb128(void);
 # define EVP_aes_192_cfb EVP_aes_192_cfb128
 const EVP_CIPHER *EVP_aes_192_ofb(void);
 const EVP_CIPHER *EVP_aes_192_ctr(void);
+const EVP_CIPHER *EVP_aes_192_ccm(void);
+const EVP_CIPHER *EVP_aes_192_gcm(void);
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
 const EVP_CIPHER *EVP_aes_256_cfb1(void);
@@ -759,6 +788,9 @@ const EVP_CIPHER *EVP_aes_256_cfb128(void);
 # define EVP_aes_256_cfb EVP_aes_256_cfb128
 const EVP_CIPHER *EVP_aes_256_ofb(void);
 const EVP_CIPHER *EVP_aes_256_ctr(void);
+const EVP_CIPHER *EVP_aes_256_ccm(void);
+const EVP_CIPHER *EVP_aes_256_gcm(void);
+const EVP_CIPHER *EVP_aes_256_xts(void);
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);
@@ -1042,10 +1074,16 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 #define EVP_PKEY_CTRL_CMS_DECRYPT	10
 #define EVP_PKEY_CTRL_CMS_SIGN		11
 
+#define EVP_PKEY_CTRL_CIPHER		12
+
 #define EVP_PKEY_ALG_CTRL		0x1000
 
 
 #define EVP_PKEY_FLAG_AUTOARGLEN	2
+/* Method handles all operations: don't assume any digest related
+ * defaults.
+ */
+#define EVP_PKEY_FLAG_SIGCTX_CUSTOM	4
 
 const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type);
 EVP_PKEY_METHOD* EVP_PKEY_meth_new(int id, int flags);
@@ -1188,7 +1226,9 @@ void ERR_load_EVP_strings(void);
 /* Error codes for the EVP functions. */
 
 /* Function codes. */
+#define EVP_F_AESNI_INIT_KEY				 165
 #define EVP_F_AES_INIT_KEY				 133
+#define EVP_F_AES_XTS					 172
 #define EVP_F_CAMELLIA_INIT_KEY				 159
 #define EVP_F_D2I_PKEY					 100
 #define EVP_F_DO_SIGVER_INIT				 161
@@ -1244,15 +1284,23 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_EVP_RIJNDAEL				 126
 #define EVP_F_EVP_SIGNFINAL				 107
 #define EVP_F_EVP_VERIFYFINAL				 108
+#define EVP_F_FIPS_CIPHERINIT				 166
+#define EVP_F_FIPS_CIPHER_CTX_COPY			 170
+#define EVP_F_FIPS_CIPHER_CTX_CTRL			 167
+#define EVP_F_FIPS_CIPHER_CTX_SET_KEY_LENGTH		 171
+#define EVP_F_FIPS_DIGESTINIT				 168
+#define EVP_F_FIPS_MD_CTX_COPY				 169
 #define EVP_F_INT_CTX_NEW				 157
 #define EVP_F_PKCS5_PBE_KEYIVGEN			 117
 #define EVP_F_PKCS5_V2_PBE_KEYIVGEN			 118
+#define EVP_F_PKCS5_V2_PBKDF2_KEYIVGEN			 164
 #define EVP_F_PKCS8_SET_BROKEN				 112
 #define EVP_F_PKEY_SET_TYPE				 158
 #define EVP_F_RC2_MAGIC_TO_METH				 109
 #define EVP_F_RC5_CTRL					 125
 
 /* Reason codes. */
+#define EVP_R_AES_IV_SETUP_FAILED			 162
 #define EVP_R_AES_KEY_SETUP_FAILED			 143
 #define EVP_R_ASN1_LIB					 140
 #define EVP_R_BAD_BLOCK_LENGTH				 136
@@ -1270,6 +1318,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_DECODE_ERROR				 114
 #define EVP_R_DIFFERENT_KEY_TYPES			 101
 #define EVP_R_DIFFERENT_PARAMETERS			 153
+#define EVP_R_DISABLED_FOR_FIPS				 163
 #define EVP_R_ENCODE_ERROR				 115
 #define EVP_R_EVP_PBE_CIPHERINIT_ERROR			 119
 #define EVP_R_EXPECTING_AN_RSA_KEY			 127
@@ -1301,6 +1350,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_R_PRIVATE_KEY_DECODE_ERROR			 145
 #define EVP_R_PRIVATE_KEY_ENCODE_ERROR			 146
 #define EVP_R_PUBLIC_KEY_NOT_RSA			 106
+#define EVP_R_TOO_LARGE					 164
 #define EVP_R_UNKNOWN_CIPHER				 160
 #define EVP_R_UNKNOWN_DIGEST				 161
 #define EVP_R_UNKNOWN_PBE_ALGORITHM			 121

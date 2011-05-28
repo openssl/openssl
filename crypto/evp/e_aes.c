@@ -58,6 +58,8 @@
 #include <openssl/modes.h>
 #include "evp_locl.h"
 
+#ifndef OPENSSL_FIPS
+
 static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 					const unsigned char *iv, int enc);
 
@@ -190,5 +192,7 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 	return 1;
 	}
+
+#endif
 
 #endif

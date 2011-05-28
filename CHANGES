@@ -4,6 +4,13 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Redirect digest operations to FIPS module for FIPS builds. 
+     [Steve Henson]
+
+  *) Update build system to add "fips" flag which will link in fipscanister.o
+     for static and shared library builds embedding a signature if needed.
+     [Steve Henson]
+
   *) Add protection against ECDSA timing attacks as mentioned in the paper
      by Billy Bob Brumley and Nicola Tuveri, see:
 
