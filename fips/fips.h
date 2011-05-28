@@ -172,6 +172,57 @@ int fips_cipher_test(int id, struct evp_cipher_ctx_st *ctx,
 			const unsigned char *ciphertext,
 			int len);
 
+#ifndef OPENSSL_FIPSCANISTER
+
+const EVP_CIPHER *FIPS_evp_aes_128_cbc(void);
+const EVP_CIPHER *FIPS_evp_aes_128_ccm(void);
+const EVP_CIPHER *FIPS_evp_aes_128_cfb1(void);
+const EVP_CIPHER *FIPS_evp_aes_128_cfb128(void);
+const EVP_CIPHER *FIPS_evp_aes_128_cfb8(void);
+const EVP_CIPHER *FIPS_evp_aes_128_ctr(void);
+const EVP_CIPHER *FIPS_evp_aes_128_ecb(void);
+const EVP_CIPHER *FIPS_evp_aes_128_gcm(void);
+const EVP_CIPHER *FIPS_evp_aes_128_ofb(void);
+const EVP_CIPHER *FIPS_evp_aes_128_xts(void);
+const EVP_CIPHER *FIPS_evp_aes_192_cbc(void);
+const EVP_CIPHER *FIPS_evp_aes_192_ccm(void);
+const EVP_CIPHER *FIPS_evp_aes_192_cfb1(void);
+const EVP_CIPHER *FIPS_evp_aes_192_cfb128(void);
+const EVP_CIPHER *FIPS_evp_aes_192_cfb8(void);
+const EVP_CIPHER *FIPS_evp_aes_192_ctr(void);
+const EVP_CIPHER *FIPS_evp_aes_192_ecb(void);
+const EVP_CIPHER *FIPS_evp_aes_192_gcm(void);
+const EVP_CIPHER *FIPS_evp_aes_192_ofb(void);
+const EVP_CIPHER *FIPS_evp_aes_256_cbc(void);
+const EVP_CIPHER *FIPS_evp_aes_256_ccm(void);
+const EVP_CIPHER *FIPS_evp_aes_256_cfb1(void);
+const EVP_CIPHER *FIPS_evp_aes_256_cfb128(void);
+const EVP_CIPHER *FIPS_evp_aes_256_cfb8(void);
+const EVP_CIPHER *FIPS_evp_aes_256_ctr(void);
+const EVP_CIPHER *FIPS_evp_aes_256_ecb(void);
+const EVP_CIPHER *FIPS_evp_aes_256_gcm(void);
+const EVP_CIPHER *FIPS_evp_aes_256_ofb(void);
+const EVP_CIPHER *FIPS_evp_aes_256_xts(void);
+const EVP_CIPHER *FIPS_evp_des_ede(void);
+const EVP_CIPHER *FIPS_evp_des_ede3(void);
+const EVP_CIPHER *FIPS_evp_des_ede3_cbc(void);
+const EVP_CIPHER *FIPS_evp_des_ede3_cfb1(void);
+const EVP_CIPHER *FIPS_evp_des_ede3_cfb64(void);
+const EVP_CIPHER *FIPS_evp_des_ede3_cfb8(void);
+const EVP_CIPHER *FIPS_evp_des_ede3_ecb(void);
+const EVP_CIPHER *FIPS_evp_des_ede3_ofb(void);
+const EVP_CIPHER *FIPS_evp_des_ede_cbc(void);
+const EVP_CIPHER *FIPS_evp_des_ede_cfb64(void);
+const EVP_CIPHER *FIPS_evp_des_ede_ecb(void);
+const EVP_CIPHER *FIPS_evp_des_ede_ofb(void);
+const EVP_MD *FIPS_evp_sha1(void);
+const EVP_MD *FIPS_evp_sha224(void);
+const EVP_MD *FIPS_evp_sha256(void);
+const EVP_MD *FIPS_evp_sha384(void);
+const EVP_MD *FIPS_evp_sha512(void);
+
+#endif
+
 /* Where necessary redirect standard OpenSSL APIs to FIPS versions */
 
 #if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSAPI)
