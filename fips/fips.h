@@ -1,5 +1,5 @@
 /* ====================================================================
- * Copyright (c) 2003 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -175,6 +175,12 @@ int fips_cipher_test(int id, struct evp_cipher_ctx_st *ctx,
 #ifndef OPENSSL_FIPSCANISTER
 
 int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type);
+int FIPS_digestupdate(EVP_MD_CTX *ctx, const void *data, size_t count);
+int FIPS_digestfinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *size);
+int FIPS_md_ctx_cleanup(EVP_MD_CTX *ctx);
+
+int FIPS_cipherinit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
+	     const unsigned char *key, const unsigned char *iv, int enc);
 
 const EVP_CIPHER *FIPS_evp_aes_128_cbc(void);
 const EVP_CIPHER *FIPS_evp_aes_128_ccm(void);
