@@ -72,7 +72,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-$avx=1 if (`$ENV{CC} -Wa,-V -c -o /dev/null -x assembler /dev/null 2>&1`
+$avx=1 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
 	   $1>=2.19);
 $avx=1 if (!$avx && $flavour =~ /nasm/ &&
