@@ -64,6 +64,9 @@
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 #include "evp_locl.h"
 
 const char EVP_version[]="EVP" OPENSSL_VERSION_PTEXT;
@@ -155,6 +158,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 			ctx->engine = NULL;
 #endif
 
+#ifdef OPENSSL_FIPS
+		return FIPS_cipherinit(ctx, cipher, key, iv, enc);
+#else
 		ctx->cipher=cipher;
 		if (ctx->cipher->ctx_size)
 			{
@@ -179,6 +185,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 				return 0;
 				}
 			}
+#endif
 		}
 	else if(!ctx->cipher)
 		{
@@ -188,6 +195,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 #ifndef OPENSSL_NO_ENGINE
 skip_to_init:
 #endif
+#ifdef OPENSSL_FIPS
+	return FIPS_cipherinit(ctx, cipher, key, iv, enc);
+#else
 	/* we assume block size is a power of 2 in *cryptUpdate */
 	OPENSSL_assert(ctx->cipher->block_size == 1
 	    || ctx->cipher->block_size == 8
@@ -233,6 +243,7 @@ skip_to_init:
 	ctx->final_used=0;
 	ctx->block_mask=ctx->cipher->block_size-1;
 	return 1;
+#endif
 	}
 
 int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,

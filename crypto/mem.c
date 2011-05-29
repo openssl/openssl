@@ -125,6 +125,7 @@ static long (*get_debug_options_func)(void) = NULL;
 int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t),
 	void (*f)(void *))
 	{
+	OPENSSL_init();
 	if (!allow_customize)
 		return 0;
 	if ((m == 0) || (r == 0) || (f == 0))
@@ -184,6 +185,7 @@ int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 				   void (*so)(long),
 				   long (*go)(void))
 	{
+	OPENSSL_init();
 	if (!allow_customize_debug)
 		return 0;
 	malloc_debug_func=m;
