@@ -4,6 +4,9 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Redirect cipher operations to FIPS module for FIPS builds. 
+     [Steve Henson]
+
   *) Redirect digest operations to FIPS module for FIPS builds. 
      [Steve Henson]
 
