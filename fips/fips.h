@@ -181,6 +181,9 @@ int FIPS_md_ctx_cleanup(EVP_MD_CTX *ctx);
 
 int FIPS_cipherinit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 	     const unsigned char *key, const unsigned char *iv, int enc);
+int FIPS_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+			const unsigned char *in, unsigned int inl);
+int FIPS_cipher_ctx_cleanup(EVP_CIPHER_CTX *c);
 
 const EVP_CIPHER *FIPS_evp_aes_128_cbc(void);
 const EVP_CIPHER *FIPS_evp_aes_128_ccm(void);
