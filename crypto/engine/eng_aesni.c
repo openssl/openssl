@@ -176,7 +176,7 @@ static int aesni_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
 
 #define AESNI_MIN_ALIGN	16
 #define AESNI_ALIGN(x) \
-	((void *)(((unsigned long)(x)+AESNI_MIN_ALIGN-1)&~(AESNI_MIN_ALIGN-1)))
+	((void *)(((size_t)(x)+AESNI_MIN_ALIGN-1)&~(AESNI_MIN_ALIGN-1)))
 
 /* Engine names */
 static const char   aesni_id[] = "aesni",
