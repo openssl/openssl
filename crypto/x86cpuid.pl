@@ -92,7 +92,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 &set_label("nocacheinfo");
 	&mov	("eax",1);
 	&cpuid	();
-	&and	("edx",~(1<<20|1<<30));	# force reserved bits to 0
+	&and	("edx",0xbfefffff);	# force reserved bits #20, #30 to 0
 	&cmp	("ebp",0);
 	&jne	(&label("notintel"));
 	&or	("edx",1<<30);		# set reserved bit#30 on Intel CPUs
@@ -115,7 +115,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 &set_label("generic");
 	&and	("ebp",1<<11);		# isolate AMD XOP flag
-	&and	("ecx",~(1<<11));
+	&and	("ecx",0xfffff7ff);	# force 11th bit to 0
 	&mov	("esi","edx");
 	&or	("ebp","ecx");		# merge AMD XOP flag
 
@@ -131,10 +131,10 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&cmp	("eax",2);
 	&je	(&label("clear_avx"));
 &set_label("clear_xmm");
-	&and	("ebp",~(1<<25|1<<1));	# clear AESNI and PCLMULQDQ bits
-	&and	("esi",~(1<<24));	# clear FXSR
+	&and	("ebp",0xfdfffffd);	# clear AESNI and PCLMULQDQ bits
+	&and	("esi",0xfeffffff);	# clear FXSR
 &set_label("clear_avx");
-	&and	("ebp",~(1<<28|1<<12|1<<11));# clear AVX, FMA and AMD XOP bits
+	&and	("ebp",0xefffe7ff);	# clear AVX, FMA and AMD XOP bits
 &set_label("done");
 	&mov	("eax","esi");
 	&mov	("edx","ebp");
