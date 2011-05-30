@@ -196,14 +196,30 @@ static int aes_cfb8_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	return 1;
 }
 
+#define MAXBITCHUNK	((size_t)1<<(sizeof(size_t)*8-4))
+
 static int aes_cfb1_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 	const unsigned char *in,size_t len)
 {
-	CRYPTO_cfb128_1_encrypt(in,out,len,ctx->cipher_data,
-			ctx->iv,&ctx->num,ctx->encrypt,
-			OPENSSL_ia32cap_P[1]&AESNI_CAPABLE ?
+	block128_f block = OPENSSL_ia32cap_P[1]&AESNI_CAPABLE ?
 				(block128_f)aesni_encrypt  :
 				(block128_f)AES_encrypt);
+
+	if (ctx->flags&EVP_CIPH_FLAG_LENGTH_BITS) {
+		CRYPTO_cfb128_1_encrypt(in,out,len,ctx->cipher_data,
+			ctx->iv,&ctx->num,ctx->encrypt,block);
+		return 1;
+	}
+
+	while (len>=MAXBITCHUNK) {
+		CRYPTO_cfb128_1_encrypt(in,out,MAXBITCHUNK*8,ctx->cipher_data,
+			ctx->iv,&ctx->num,ctx->encrypt,block);
+		len-=MAXBITCHUNK;
+	}
+	if (len)
+		CRYPTO_cfb128_1_encrypt(in,out,len*8,ctx->cipher_data,
+			ctx->iv,&ctx->num,ctx->encrypt,block);
+	
 	return 1;
 }
 
