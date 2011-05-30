@@ -14,6 +14,11 @@
      for static and shared library builds embedding a signature if needed.
      [Steve Henson]
 
+  *) Output TLS supported curves in preference order instead of numerical
+     order. This is currently hardcoded for the highest order curves first.
+     This should be configurable so applications can judge speed vs strength.
+     [Steve Henson]
+
   *) Add protection against ECDSA timing attacks as mentioned in the paper
      by Billy Bob Brumley and Nicola Tuveri, see:
 
