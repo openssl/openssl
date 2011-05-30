@@ -203,7 +203,7 @@ static int aes_cfb1_cipher(EVP_CIPHER_CTX *ctx,unsigned char *out,
 {
 	block128_f block = OPENSSL_ia32cap_P[1]&AESNI_CAPABLE ?
 				(block128_f)aesni_encrypt  :
-				(block128_f)AES_encrypt);
+				(block128_f)AES_encrypt;
 
 	if (ctx->flags&EVP_CIPH_FLAG_LENGTH_BITS) {
 		CRYPTO_cfb128_1_encrypt(in,out,len,ctx->cipher_data,
