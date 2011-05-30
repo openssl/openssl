@@ -54,7 +54,7 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],$0);
 
-if ($PREFIX eq "aesni")	{ $movekey=*movaps; }
+if ($PREFIX eq "aesni")	{ $movekey=*movups; }
 else			{ $movekey=*movups; }
 
 $len="eax";

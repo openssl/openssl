@@ -174,7 +174,7 @@ die "can't locate x86_64-xlate.pl";
 
 open STDOUT,"| $^X $xlate $flavour $output";
 
-$movkey = $PREFIX eq "aesni" ? "movaps" : "movups";
+$movkey = $PREFIX eq "aesni" ? "movups" : "movups";
 @_4args=$win64?	("%rcx","%rdx","%r8", "%r9") :	# Win64 order
 		("%rdi","%rsi","%rdx","%rcx");	# Unix order
 
