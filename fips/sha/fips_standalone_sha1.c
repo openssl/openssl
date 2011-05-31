@@ -59,6 +59,7 @@
 int FIPS_selftest_failed() { return 0; }
 void FIPS_selftest_check() {}
 void OPENSSL_cleanse(void *p,size_t len) {}
+unsigned int  OPENSSL_ia32cap_P[2];
 #endif
 
 #ifdef OPENSSL_FIPS

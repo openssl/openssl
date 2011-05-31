@@ -171,6 +171,7 @@ int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type)
 		{
 		FIPSerr(FIPS_F_FIPS_DIGESTINIT,FIPS_R_FIPS_SELFTEST_FAILED);
 		ctx->digest = &bad_md;
+		ctx->update = bad_update;
 		return 0;
 		}
 	if(FIPS_module_mode() && !(type->flags & EVP_MD_FLAG_FIPS) &&
@@ -178,6 +179,7 @@ int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type)
 		{
 		EVPerr(EVP_F_FIPS_DIGESTINIT, EVP_R_DISABLED_FOR_FIPS);
 		ctx->digest = &bad_md;
+		ctx->update = bad_update;
 		return 0;
 		}
 	if (ctx->digest != type)
