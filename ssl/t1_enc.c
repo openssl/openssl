@@ -265,6 +265,8 @@ static int tls1_PRF(long digest_mask,
 		if ((m<<TLS1_PRF_DGST_SHIFT) & digest_mask) count++;
 	}	
 	len=slen/count;
+	if (count == 1)
+		slen = 0;
 	S1=sec;
 	memset(out1,0,olen);
 	for (idx=0;ssl_get_handshake_digest(idx,&m,&md);idx++) {
