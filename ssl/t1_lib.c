@@ -320,7 +320,7 @@ int tls1_ec_nid2curve_id(int nid)
 #ifdef OPENSSL_NO_ECDSA
 #define tlsext_sigalg_ecdsa(md) /* */
 #else
-#define tlsext_sigalg_ecdsa(md) md, TLSEXT_signature_dsa,
+#define tlsext_sigalg_ecdsa(md) md, TLSEXT_signature_ecdsa,
 #endif
 
 #define tlsext_sigalg(md) \
