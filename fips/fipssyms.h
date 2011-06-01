@@ -343,6 +343,9 @@
 #define EVP_des_ede_ecb FIPS_evp_des_ede_ecb
 #define EVP_des_ede_ofb FIPS_evp_des_ede_ofb
 #define EVP_sha1 FIPS_evp_sha1
+#define EVP_dss FIPS_evp_dss
+#define EVP_dss1 FIPS_evp_dss1
+#define EVP_ecdsa FIPS_evp_ecdsa
 #define EVP_sha224 FIPS_evp_sha224
 #define EVP_sha256 FIPS_evp_sha256
 #define EVP_sha384 FIPS_evp_sha384

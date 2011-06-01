@@ -330,6 +330,9 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/evp/e_aes.o \
 	../crypto/evp/e_des3.o \
 	../crypto/evp/m_sha1.o \
+	../crypto/evp/m_dss1.o \
+	../crypto/evp/m_dss.o \
+	../crypto/evp/m_ecdsa.o \
 	../crypto/hmac/hmac.o \
 	../crypto/modes/cbc128.o \
 	../crypto/modes/ccm128.o \
