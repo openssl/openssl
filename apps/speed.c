@@ -184,6 +184,15 @@
 #include <openssl/ecdh.h>
 #endif
 
+#ifdef OPENSSL_FIPS
+#define BF_set_key	private_BF_set_key
+#define CAST_set_key	private_CAST_set_key
+#define idea_set_encrypt_key	private_idea_set_encrypt_key
+#define SEED_set_key	private_SEED_set_key
+#define RC2_set_key	private_RC2_set_key
+#define DES_set_key_unchecked	private_DES_set_key_unchecked
+#endif
+
 #ifndef HAVE_FORK
 # if defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_MACINTOSH_CLASSIC) || defined(OPENSSL_SYS_OS2) || defined(OPENSSL_SYS_NETWARE)
 #  define HAVE_FORK 0

@@ -357,4 +357,12 @@ void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
 #define SHA256_Init	private_SHA256_Init
 #define SHA384_Init	private_SHA384_Init
 #define SHA512_Init	private_SHA512_Init
+
+#define BF_set_key	private_BF_set_key
+#define CAST_set_key	private_CAST_set_key
+#define idea_set_encrypt_key	private_idea_set_encrypt_key
+#define SEED_set_key	private_SEED_set_key
+#define RC2_set_key	private_RC2_set_key
+#define DES_set_key_unchecked	private_DES_set_key_unchecked
+
 #endif
