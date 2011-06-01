@@ -231,6 +231,9 @@ const EVP_MD *FIPS_evp_sha224(void);
 const EVP_MD *FIPS_evp_sha256(void);
 const EVP_MD *FIPS_evp_sha384(void);
 const EVP_MD *FIPS_evp_sha512(void);
+const EVP_MD *FIPS_evp_dss1(void);
+const EVP_MD *FIPS_evp_dss(void);
+const EVP_MD *FIPS_evp_ecdsa(void);
 
 #endif
 
