@@ -66,12 +66,7 @@
 #endif
 
 #ifndef OPENSSL_NO_SHA
-#ifdef OPENSSL_FIPS
-#include <openssl/fips.h>
-
-const EVP_MD *EVP_dss(void) { return FIPS_evp_dss(); }
-
-#else
+#ifndef OPENSSL_FIPS
 
 static int init(EVP_MD_CTX *ctx)
 	{ return SHA1_Init(ctx->md_data); }

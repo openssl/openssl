@@ -105,4 +105,8 @@ const EVP_MD *EVP_sha256(void)  { return FIPS_evp_sha256(); }
 const EVP_MD *EVP_sha384(void)  { return FIPS_evp_sha384(); }
 const EVP_MD *EVP_sha512(void)  { return FIPS_evp_sha512(); }
 
+const EVP_MD *EVP_dss(void)  { return FIPS_evp_dss(); }
+const EVP_MD *EVP_dss1(void)  { return FIPS_evp_dss1(); }
+const EVP_MD *EVP_ecdsa(void)  { return FIPS_evp_ecdsa(); }
+
 #endif
