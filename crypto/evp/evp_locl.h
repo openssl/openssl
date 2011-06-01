@@ -343,3 +343,18 @@ struct evp_pkey_method_st
 	} /* EVP_PKEY_METHOD */;
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
+
+#ifdef OPENSSL_FIPS
+#define RIPEMD160_Init	private_RIPEMD160_Init
+#define WHIRLPOOL_Init	private_WHIRLPOOL_Init
+#define MD5_Init	private_MD5_Init
+#define MD4_Init	private_MD4_Init
+#define MD2_Init	private_MD2_Init
+#define MDC2_Init	private_MDC2_Init
+#define SHA_Init	private_SHA_Init
+#define SHA1_Init	private_SHA1_Init
+#define SHA224_Init	private_SHA224_Init
+#define SHA256_Init	private_SHA256_Init
+#define SHA384_Init	private_SHA384_Init
+#define SHA512_Init	private_SHA512_Init
+#endif

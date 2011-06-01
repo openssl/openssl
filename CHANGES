@@ -4,6 +4,11 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Low level digest APIs are not approved in FIPS mode: any attempt
+     to use these will cause a fatal error. Applications that *really* want
+     to use them can use the private_* version instead.
+     [Steve Henson]
+
   *) Redirect cipher operations to FIPS module for FIPS builds. 
      [Steve Henson]
 

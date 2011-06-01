@@ -59,7 +59,7 @@ const char SHA512_version[]="SHA-512" OPENSSL_VERSION_PTEXT;
 #define SHA512_BLOCK_CAN_MANAGE_UNALIGNED_DATA
 #endif
 
-int SHA384_Init (SHA512_CTX *c)
+fips_md_init_ctx(SHA384, SHA512)
 	{
 #if defined(SHA512_ASM) && (defined(__arm__) || defined(__arm))
 	/* maintain dword order required by assembler module */
@@ -88,7 +88,7 @@ int SHA384_Init (SHA512_CTX *c)
         return 1;
 	}
 
-int SHA512_Init (SHA512_CTX *c)
+fips_md_init(SHA512)
 	{
 #if defined(SHA512_ASM) && (defined(__arm__) || defined(__arm))
 	/* maintain dword order required by assembler module */
