@@ -1,0 +1,9 @@
+There is often a need to generate test certificates automatically using
+a script. This is often a cause for confusion which can result in incorrect
+CA certificates, obsolete V1 certificates or duplicate serial numbers.
+The range of command line options can be daunting for a beginner.
+
+This is a simple example of how to generate certificates automatically
+using scripts. Example creates a root CA, a server certificate signed by
+the root, an intermediate CA signed by the root and finally a client 
+certificate signed by the intermediate CA.
