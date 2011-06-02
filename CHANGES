@@ -4,6 +4,10 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Redirect low level RSA operations to FIPS module including blocking of
+     non FIPS RSA methods.
+     [Steve Henson]
+
   *) Add similar low level API blocking to ciphers.
      [Steve Henson]
 

@@ -77,6 +77,14 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
 	const unsigned char *s = NULL;
 	X509_ALGOR algor;
 	ASN1_OCTET_STRING digest;
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !(rsa->meth->flags & RSA_FLAG_FIPS_METHOD)
+			&& !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW))
+		{
+		RSAerr(RSA_F_RSA_SIGN, RSA_R_NON_FIPS_RSA_METHOD);
+		return 0;
+		}
+#endif
 	if((rsa->flags & RSA_FLAG_SIGN_VER) && rsa->meth->rsa_sign)
 		{
 		return rsa->meth->rsa_sign(type, m, m_len,
@@ -152,6 +160,15 @@ int int_rsa_verify(int dtype, const unsigned char *m,
 	int i,ret=0,sigtype;
 	unsigned char *s;
 	X509_SIG *sig=NULL;
+
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !(rsa->meth->flags & RSA_FLAG_FIPS_METHOD)
+			&& !(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW))
+		{
+		RSAerr(RSA_F_INT_RSA_VERIFY, RSA_R_NON_FIPS_RSA_METHOD);
+		return 0;
+		}
+#endif
 
 	if (siglen != (unsigned int)RSA_size(rsa))
 		{
