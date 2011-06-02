@@ -327,6 +327,9 @@ int fips_drbg_hash_init(DRBG_CTX *dctx)
 	{
 	const EVP_MD *md;
 	DRBG_HASH_CTX *hctx = &dctx->d.hash;
+	md = FIPS_get_digestbynid(dctx->type);
+	if (!md)
+		return -2;
 	switch (dctx->type)
 		{
 		case NID_sha1:
@@ -339,25 +342,9 @@ int fips_drbg_hash_init(DRBG_CTX *dctx)
 		dctx->strength = 192;
 		break;
 
-		case NID_sha256:
-		md = EVP_sha256();
-		dctx->strength = 256;
-		break;
-
-		case NID_sha384:
-		md = EVP_sha384();
-		dctx->strength = 256;
-		break;
-
-		case NID_sha512:
-		md = EVP_sha512();
-		dctx->strength = 256;
-		break;
-
 		default:
-		return -2;
+		dctx->strength = 256;
 		break;
-
 		}
 
 	dctx->instantiate = drbg_hash_instantiate;

@@ -64,6 +64,7 @@ struct ec_key_st;
 struct rsa_st;
 struct evp_pkey_st;
 struct env_md_st;
+struct env_md_ctx_st;
 struct evp_cipher_st;
 struct evp_cipher_ctx_st;
 
@@ -172,6 +173,31 @@ int fips_cipher_test(int id, struct evp_cipher_ctx_st *ctx,
 			const unsigned char *ciphertext,
 			int len);
 
+const struct env_md_st *FIPS_get_digestbynid(int nid);
+
+struct rsa_st *FIPS_rsa_new(void);
+void FIPS_rsa_free(struct rsa_st *r);
+int FIPS_rsa_sign_ctx(struct rsa_st *rsa, struct env_md_ctx_st *ctx,
+			int rsa_pad_mode, int saltlen,
+			const struct env_md_st *mgf1Hash,
+			unsigned char *sigret, unsigned int *siglen);
+int FIPS_rsa_sign_digest(struct rsa_st *rsa,
+			const unsigned char *md, int md_len,
+			const struct env_md_st *mhash,
+			int rsa_pad_mode, int saltlen,
+			const struct env_md_st *mgf1Hash,
+			unsigned char *sigret, unsigned int *siglen);
+int FIPS_rsa_verify_ctx(struct rsa_st *rsa, struct env_md_ctx_st *ctx,
+			int rsa_pad_mode, int saltlen,
+			const struct env_md_st *mgf1Hash,
+			unsigned char *sigbuf, unsigned int siglen);
+int FIPS_rsa_verify_digest(struct rsa_st *rsa,
+			const unsigned char *dig, int diglen,
+			const struct env_md_st *mhash,
+			int rsa_pad_mode, int saltlen,
+			const struct env_md_st *mgf1Hash,
+			unsigned char *sigbuf, unsigned int siglen);
+
 #ifndef OPENSSL_FIPSCANISTER
 
 int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type);
@@ -234,6 +260,8 @@ const EVP_MD *FIPS_evp_sha512(void);
 const EVP_MD *FIPS_evp_dss1(void);
 const EVP_MD *FIPS_evp_dss(void);
 const EVP_MD *FIPS_evp_ecdsa(void);
+
+const RSA_METHOD *FIPS_rsa_pkcs1_ssleay(void);
 
 #endif
 

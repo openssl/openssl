@@ -321,3 +321,27 @@ int FIPS_md_ctx_copy(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 	
 	return 1;
 	}
+
+const EVP_MD *FIPS_get_digestbynid(int nid)
+	{
+	switch (nid)
+		{
+		case NID_sha1:
+		return EVP_sha1();
+
+		case NID_sha224:
+		return EVP_sha224();
+
+		case NID_sha256:
+		return EVP_sha256();
+
+		case NID_sha384:
+		return EVP_sha384();
+
+		case NID_sha512:
+		return EVP_sha512();
+
+		default:
+		return NULL;
+		}
+	}

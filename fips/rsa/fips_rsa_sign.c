@@ -224,8 +224,10 @@ int FIPS_rsa_sign_digest(RSA *rsa, const unsigned char *md, int md_len,
 		FIPSerr(FIPS_F_FIPS_RSA_SIGN_DIGEST, FIPS_R_SELFTEST_FAILED);
 		return 0;
 		}
-
-	md_type = M_EVP_MD_type(mhash);
+	if (!mhash && rsa_pad_mode == RSA_PKCS1_PADDING)
+		md_type = saltlen;
+	else
+		md_type = M_EVP_MD_type(mhash);
 
 	if (rsa_pad_mode == RSA_X931_PADDING)
 		{
@@ -338,7 +340,10 @@ int FIPS_rsa_verify_digest(RSA *rsa, const unsigned char *dig, int diglen,
 		return(0);
 		}
 
-	md_type = M_EVP_MD_type(mhash);
+	if (!mhash && rsa_pad_mode == RSA_PKCS1_PADDING)
+		md_type = saltlen;
+	else
+		md_type = M_EVP_MD_type(mhash);
 
 	s= OPENSSL_malloc((unsigned int)siglen);
 	if (s == NULL)
