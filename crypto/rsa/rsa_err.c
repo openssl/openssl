@@ -1,6 +1,6 @@
 /* crypto/rsa/rsa_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2008 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -97,6 +97,7 @@ static ERR_STRING_DATA RSA_str_functs[]=
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_NONE),	"RSA_padding_add_none"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_OAEP),	"RSA_padding_add_PKCS1_OAEP"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_PSS),	"RSA_padding_add_PKCS1_PSS"},
+{ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1),	"RSA_padding_add_PKCS1_PSS_mgf1"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1),	"RSA_padding_add_PKCS1_type_1"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2),	"RSA_padding_add_PKCS1_type_2"},
 {ERR_FUNC(RSA_F_RSA_PADDING_ADD_SSLV23),	"RSA_padding_add_SSLv23"},
@@ -118,6 +119,7 @@ static ERR_STRING_DATA RSA_str_functs[]=
 {ERR_FUNC(RSA_F_RSA_VERIFY),	"RSA_verify"},
 {ERR_FUNC(RSA_F_RSA_VERIFY_ASN1_OCTET_STRING),	"RSA_verify_ASN1_OCTET_STRING"},
 {ERR_FUNC(RSA_F_RSA_VERIFY_PKCS1_PSS),	"RSA_verify_PKCS1_PSS"},
+{ERR_FUNC(RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1),	"RSA_verify_PKCS1_PSS_mgf1"},
 {0,NULL}
 	};
 
@@ -146,6 +148,7 @@ static ERR_STRING_DATA RSA_str_reasons[]=
 {ERR_REASON(RSA_R_INVALID_HEADER)        ,"invalid header"},
 {ERR_REASON(RSA_R_INVALID_KEYBITS)       ,"invalid keybits"},
 {ERR_REASON(RSA_R_INVALID_MESSAGE_LENGTH),"invalid message length"},
+{ERR_REASON(RSA_R_INVALID_MGF1_MD)       ,"invalid mgf1 md"},
 {ERR_REASON(RSA_R_INVALID_PADDING)       ,"invalid padding"},
 {ERR_REASON(RSA_R_INVALID_PADDING_MODE)  ,"invalid padding mode"},
 {ERR_REASON(RSA_R_INVALID_PSS_SALTLEN)   ,"invalid pss saltlen"},

@@ -222,11 +222,21 @@ struct rsa_st
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, EVP_PKEY_CTRL_RSA_PADDING, \
 				pad, NULL)
 
+#define EVP_PKEY_CTX_get_rsa_padding(ctx, ppad) \
+	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, -1, \
+				EVP_PKEY_CTRL_GET_RSA_PADDING, 0, ppad)
+
 #define EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, len) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, \
 				(EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
 				EVP_PKEY_CTRL_RSA_PSS_SALTLEN, \
 				len, NULL)
+
+#define EVP_PKEY_CTX_get_rsa_pss_saltlen(ctx, plen) \
+	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, \
+				(EVP_PKEY_OP_SIGN|EVP_PKEY_OP_VERIFY), \
+				EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN, \
+				0, plen)
 
 #define EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits) \
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN, \
@@ -236,11 +246,24 @@ struct rsa_st
 	EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN, \
 				EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp)
 
+#define	 EVP_PKEY_CTX_set_rsa_mgf1_md(ctx, md)	\
+		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_SIG,  \
+				EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)md)
+
+#define	 EVP_PKEY_CTX_get_rsa_mgf1_md(ctx, pmd)	\
+		EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_TYPE_SIG,  \
+				EVP_PKEY_CTRL_GET_RSA_MGF1_MD, 0, (void *)pmd)
+
 #define EVP_PKEY_CTRL_RSA_PADDING	(EVP_PKEY_ALG_CTRL + 1)
 #define EVP_PKEY_CTRL_RSA_PSS_SALTLEN	(EVP_PKEY_ALG_CTRL + 2)
 
 #define EVP_PKEY_CTRL_RSA_KEYGEN_BITS	(EVP_PKEY_ALG_CTRL + 3)
 #define EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP	(EVP_PKEY_ALG_CTRL + 4)
+#define EVP_PKEY_CTRL_RSA_MGF1_MD	(EVP_PKEY_ALG_CTRL + 5)
+
+#define EVP_PKEY_CTRL_GET_RSA_PADDING		(EVP_PKEY_ALG_CTRL + 6)
+#define EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN	(EVP_PKEY_ALG_CTRL + 7)
+#define EVP_PKEY_CTRL_GET_RSA_MGF1_MD		(EVP_PKEY_ALG_CTRL + 8)
 
 #define RSA_PKCS1_PADDING	1
 #define RSA_SSLV23_PADDING	2
@@ -380,6 +403,14 @@ int RSA_padding_add_PKCS1_PSS(RSA *rsa, unsigned char *EM,
 			const unsigned char *mHash,
 			const EVP_MD *Hash, int sLen);
 
+int RSA_verify_PKCS1_PSS_mgf1(RSA *rsa, const unsigned char *mHash,
+			const EVP_MD *Hash, const EVP_MD *mgf1Hash, 
+			const unsigned char *EM, int sLen);
+
+int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
+			const unsigned char *mHash,
+			const EVP_MD *Hash, const EVP_MD *mgf1Hash, int sLen);
+
 int RSA_get_ex_new_index(long argl, void *argp, CRYPTO_EX_new *new_func,
 	CRYPTO_EX_dup *dup_func, CRYPTO_EX_free *free_func);
 int RSA_set_ex_data(RSA *r,int idx,void *arg);
@@ -424,6 +455,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_PADDING_ADD_NONE			 107
 #define RSA_F_RSA_PADDING_ADD_PKCS1_OAEP		 121
 #define RSA_F_RSA_PADDING_ADD_PKCS1_PSS			 125
+#define RSA_F_RSA_PADDING_ADD_PKCS1_PSS_MGF1		 148
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_1		 108
 #define RSA_F_RSA_PADDING_ADD_PKCS1_TYPE_2		 109
 #define RSA_F_RSA_PADDING_ADD_SSLV23			 110
@@ -445,6 +477,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_F_RSA_VERIFY				 119
 #define RSA_F_RSA_VERIFY_ASN1_OCTET_STRING		 120
 #define RSA_F_RSA_VERIFY_PKCS1_PSS			 126
+#define RSA_F_RSA_VERIFY_PKCS1_PSS_MGF1			 149
 
 /* Reason codes. */
 #define RSA_R_ALGORITHM_MISMATCH			 100
@@ -470,6 +503,7 @@ void ERR_load_RSA_strings(void);
 #define RSA_R_INVALID_HEADER				 137
 #define RSA_R_INVALID_KEYBITS				 145
 #define RSA_R_INVALID_MESSAGE_LENGTH			 131
+#define RSA_R_INVALID_MGF1_MD				 149
 #define RSA_R_INVALID_PADDING				 138
 #define RSA_R_INVALID_PADDING_MODE			 141
 #define RSA_R_INVALID_PSS_SALTLEN			 146

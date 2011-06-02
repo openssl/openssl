@@ -79,6 +79,8 @@ typedef struct
 	int pad_mode;
 	/* message digest */
 	const EVP_MD *md;
+	/* message digest for MGF1 */
+	const EVP_MD *mgf1md;
 	/* PSS/OAEP salt length */
 	int saltlen;
 	/* Temp buffer */
@@ -95,6 +97,7 @@ static int pkey_rsa_init(EVP_PKEY_CTX *ctx)
 	rctx->pub_exp = NULL;
 	rctx->pad_mode = RSA_PKCS1_PADDING;
 	rctx->md = NULL;
+	rctx->mgf1md = NULL;
 	rctx->tbuf = NULL;
 
 	rctx->saltlen = -2;
@@ -186,8 +189,10 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 			{
 			if (!setup_tbuf(rctx, ctx))
 				return -1;
-			if (!RSA_padding_add_PKCS1_PSS(rsa, rctx->tbuf, tbs,
-						rctx->md, rctx->saltlen))
+			if (!RSA_padding_add_PKCS1_PSS_mgf1(rsa,
+						rctx->tbuf, tbs,
+						rctx->md, rctx->mgf1md,
+						rctx->saltlen))
 				return -1;
 			ret = RSA_private_encrypt(RSA_size(rsa), rctx->tbuf,
 						sig, rsa, RSA_NO_PADDING);
@@ -289,7 +294,8 @@ static int pkey_rsa_verify(EVP_PKEY_CTX *ctx,
 							rsa, RSA_NO_PADDING);
 			if (ret <= 0)
 				return 0;
-			ret = RSA_verify_PKCS1_PSS(rsa, tbs, rctx->md,
+			ret = RSA_verify_PKCS1_PSS_mgf1(rsa, tbs,
+						rctx->md, rctx->mgf1md,
 						rctx->tbuf, rctx->saltlen);
 			if (ret <= 0)
 				return 0;
@@ -403,15 +409,25 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 				RSA_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE);
 		return -2;
 
+		case EVP_PKEY_CTRL_GET_RSA_PADDING:
+		*(int *)p2 = rctx->pad_mode;
+		return 1;
+
 		case EVP_PKEY_CTRL_RSA_PSS_SALTLEN:
-		if (p1 < -2)
-			return -2;
+		case EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN:
 		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING)
 			{
 			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_PSS_SALTLEN);
 			return -2;
 			}
-		rctx->saltlen = p1;
+		if (type == EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN)
+			*(int *)p2 = rctx->saltlen;
+		else
+			{
+			if (p1 < -2)
+				return -2;
+			rctx->saltlen = p1;
+			}
 		return 1;
 
 		case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
@@ -433,6 +449,24 @@ static int pkey_rsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		if (!check_padding_md(p2, rctx->pad_mode))
 			return 0;
 		rctx->md = p2;
+		return 1;
+
+		case EVP_PKEY_CTRL_RSA_MGF1_MD:
+		case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
+		if (rctx->pad_mode != RSA_PKCS1_PSS_PADDING)
+			{
+			RSAerr(RSA_F_PKEY_RSA_CTRL, RSA_R_INVALID_MGF1_MD);
+			return -2;
+			}
+		if (type == EVP_PKEY_CTRL_GET_RSA_MGF1_MD)
+			{
+			if (rctx->mgf1md)
+				*(const EVP_MD **)p2 = rctx->mgf1md;
+			else
+				*(const EVP_MD **)p2 = rctx->md;
+			}
+		else
+			rctx->mgf1md = p2;
 		return 1;
 
 		case EVP_PKEY_CTRL_DIGESTINIT:
