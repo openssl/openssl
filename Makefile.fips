@@ -626,7 +626,7 @@ install: all install_sw
 install_sw:
 	@$(PERL) $(TOP)/util/mkdir-p.pl $(INSTALL_PREFIX)$(INSTALLTOP)/bin \
 		$(INSTALL_PREFIX)$(INSTALLTOP)/$(LIBDIR) \
-		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl \
+		$(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl
 	@set -e; headerlist="$(EXHEADER)"; for i in $$headerlist;\
 	do \
 	(cp $$i $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i; \
