@@ -315,25 +315,6 @@ int	RSA_up_ref(RSA *r);
 
 int	RSA_flags(const RSA *r);
 
-#ifdef OPENSSL_FIPS
-RSA *FIPS_rsa_new(void);
-void FIPS_rsa_free(RSA *r);
-int FIPS_rsa_sign_ctx(RSA *rsa, EVP_MD_CTX *ctx,
-			int rsa_pad_mode, int saltlen, const EVP_MD *mgf1Hash,
-			unsigned char *sigret, unsigned int *siglen);
-int FIPS_rsa_sign_digest(RSA *rsa, const unsigned char *md, int md_len,
-			const EVP_MD *mhash, int rsa_pad_mode, int saltlen,
-			const EVP_MD *mgf1Hash,
-			unsigned char *sigret, unsigned int *siglen);
-int FIPS_rsa_verify_ctx(RSA *rsa, EVP_MD_CTX *ctx,
-			int rsa_pad_mode, int saltlen, const EVP_MD *mgf1Hash,
-			unsigned char *sigbuf, unsigned int siglen);
-int FIPS_rsa_verify_digest(RSA *rsa, const unsigned char *dig, int diglen,
-			const EVP_MD *mhash, int rsa_pad_mode, int saltlen,
-			const EVP_MD *mgf1Hash,
-			unsigned char *sigbuf, unsigned int siglen);
-#endif
-
 void RSA_set_default_method(const RSA_METHOD *meth);
 const RSA_METHOD *RSA_get_default_method(void);
 const RSA_METHOD *RSA_get_method(const RSA *rsa);
