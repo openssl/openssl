@@ -2940,7 +2940,7 @@ int ssl3_get_cert_verify(SSL *s)
 			md = tls12_get_hash(p[0]);
 			if (md == NULL)
 				{
-				SSLerr(SSL_F_SSL3_GET_KEY_EXCHANGE,SSL_R_UNKNOWN_DIGEST);
+				SSLerr(SSL_F_SSL3_GET_CERT_VERIFY,SSL_R_UNKNOWN_DIGEST);
 				al=SSL_AD_DECODE_ERROR;
 				goto f_err;
 				}
