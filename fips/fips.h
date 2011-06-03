@@ -59,6 +59,10 @@
 extern "C" {
 #endif
 
+#ifndef OPENSSL_FIPSCANISTER
+#define OPENSSL_FIPSCAPABLE
+#endif
+
 struct dsa_st;
 struct ec_key_st;
 struct rsa_st;
@@ -262,6 +266,7 @@ const EVP_MD *FIPS_evp_dss(void);
 const EVP_MD *FIPS_evp_ecdsa(void);
 
 const RSA_METHOD *FIPS_rsa_pkcs1_ssleay(void);
+int FIPS_rsa_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
 
 #endif
 
