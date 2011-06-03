@@ -4,6 +4,10 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Backport libcrypto audit of return value checking from HEAD, not
+     all cases can be covered as some introduce binary incompatibilities.
+     [Steve Henson]
+
   *) Redirect RSA operations to FIPS module including keygen,
      encrypt, decrypt, sign and verify. Block use of non FIPS RSA methods.
      [Steve Henson]
