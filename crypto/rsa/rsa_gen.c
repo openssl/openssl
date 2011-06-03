@@ -67,6 +67,9 @@
 #include "cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb);
 
@@ -77,6 +80,18 @@ static int rsa_builtin_keygen(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
  * now just because key-generation is part of RSA_METHOD. */
 int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 	{
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode())
+		{
+		if (rsa->meth->flags & RSA_FLAG_FIPS_METHOD)
+			return FIPS_rsa_generate_key_ex(rsa, bits, e_value, cb);
+		if (!(rsa->flags & RSA_FLAG_NON_FIPS_ALLOW))
+			{
+			RSAerr(RSA_F_RSA_GENERATE_KEY_EX, RSA_R_NON_FIPS_RSA_METHOD);
+			return 0;
+			}
+		}
+#endif
 	if(rsa->meth->rsa_keygen)
 		return rsa->meth->rsa_keygen(rsa, bits, e_value, cb);
 	return rsa_builtin_keygen(rsa, bits, e_value, cb);
