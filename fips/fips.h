@@ -190,13 +190,13 @@ int FIPS_rsa_sign_digest(struct rsa_st *rsa,
 int FIPS_rsa_verify_ctx(struct rsa_st *rsa, struct env_md_ctx_st *ctx,
 			int rsa_pad_mode, int saltlen,
 			const struct env_md_st *mgf1Hash,
-			unsigned char *sigbuf, unsigned int siglen);
+			const unsigned char *sigbuf, unsigned int siglen);
 int FIPS_rsa_verify_digest(struct rsa_st *rsa,
 			const unsigned char *dig, int diglen,
 			const struct env_md_st *mhash,
 			int rsa_pad_mode, int saltlen,
 			const struct env_md_st *mgf1Hash,
-			unsigned char *sigbuf, unsigned int siglen);
+			const unsigned char *sigbuf, unsigned int siglen);
 
 #ifndef OPENSSL_FIPSCANISTER
 
