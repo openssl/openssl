@@ -107,7 +107,7 @@ lib*|*.dll)	# must be linking a shared lib...
 	{ echo "${CANISTER_O} fingerprint mismatch"; exit 1; }
 
 	[ -z "${FIPSLD_LIBCRYPTO}" -a -f "${THERE}/libcrypto.a" ] && \
-		FIPSLD_LIBCRYPTO = "${THERE}/libcrypto.a"
+		FIPSLD_LIBCRYPTO="${THERE}/libcrypto.a"
 		
 
 	# Temporarily remove fipscanister.o from libcrypto.a!
