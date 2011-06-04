@@ -367,7 +367,7 @@ OPENSSL_ia32_rdrand:
 	cmp	\$0,%rax
 	cmove	%rcx,%rax
 	ret
-.size	OPENSSL_ia32_rdrand,.-OPENSSL_ia32_rdarnd
+.size	OPENSSL_ia32_rdrand,.-OPENSSL_ia32_rdrand
 ___
 
 close STDOUT;	# flush
