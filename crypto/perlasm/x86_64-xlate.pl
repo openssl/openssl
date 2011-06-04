@@ -625,7 +625,7 @@ my %globals;
 		/\.comm/    && do { my @str=split(/,\s*/,$line);
 				    my $v=undef;
 				    if ($nasm) {
-					$v.="common	$prefix@str[0] @str[1]:near";
+					$v.="common	$prefix@str[0] @str[1]";
 				    } else {
 					$v="$current_segment\tENDS\n" if ($current_segment);
 					$current_segment = ".data";
@@ -751,6 +751,19 @@ my $pclmulqdq = sub {
 	push @opcode,0xc0|($2&7)|(($3&7)<<3);		# ModR/M
 	my $c=$1;
 	push @opcode,$c=~/^0/?oct($c):$c;
+	@opcode;
+    } else {
+	();
+    }
+};
+
+my $rdrand = sub {
+    if (shift =~ /%[er](\w+)/) {
+      my @opcode=();
+      my $dst=$1;
+	if ($dst !~ /[0-9]+/) { $dst = $regrm{"%e$dst"}; }
+	rex(\@opcode,0,$1,8);
+	push @opcode,0x0f,0xc7,0xf0|($dst&7);
 	@opcode;
     } else {
 	();

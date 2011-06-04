@@ -51,6 +51,8 @@ moment of this writing following bits are significant:
 
 =item bit #60 denoting AVX extension;
 
+=item bit #62 denoting availability of RDRAND instruction;
+
 For example, clearing bit #26 at run-time disables high-performance
 SSE2 code present in the crypto library, while clearing bit #24
 disables SSE2 code operating on 128-bit XMM register bank. You might

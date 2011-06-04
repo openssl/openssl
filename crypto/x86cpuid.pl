@@ -442,6 +442,18 @@ my $max = "ebp";
 &function_end("OPENSSL_instrument_bus2");
 }
 
+&function_begin_B("OPENSSL_ia32_rdrand");
+	&mov	("ecx",8);
+&set_label("loop");
+	&rdrand	("eax");
+	&jc	(&label("break"));
+	&loop	(&label("loop"));
+&set_label("break");
+	&cmp	("eax",0);
+	&cmove	("eax","ecx");
+	&ret	();
+&function_end_B("OPENSSL_ia32_rdrand");
+
 &initseg("OPENSSL_cpuid_setup");
 
 &asm_finish();

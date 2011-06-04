@@ -7,7 +7,11 @@ if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
 $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-open STDOUT,"| $^X ${dir}perlasm/x86_64-xlate.pl $flavour $output";
+( $xlate="${dir}x86_64-xlate.pl" and -f $xlate ) or
+( $xlate="${dir}perlasm/x86_64-xlate.pl" and -f $xlate) or
+die "can't locate x86_64-xlate.pl";
+
+open STDOUT,"| $^X $xlate $flavour $output";
 
 ($arg1,$arg2,$arg3,$arg4)=$win64?("%rcx","%rdx","%r8", "%r9") :	# Win64 order
 				 ("%rdi","%rsi","%rdx","%rcx");	# Unix order
@@ -348,5 +352,22 @@ OPENSSL_instrument_bus2:
 .size	OPENSSL_instrument_bus2,.-OPENSSL_instrument_bus2
 ___
 }
+
+print<<___;
+.globl	OPENSSL_ia32_rdrand
+.type	OPENSSL_ia32_rdrand,\@abi-omnipotent
+.align	16
+OPENSSL_ia32_rdrand:
+	mov	\$8,%ecx
+.Loop_rdrand:
+	rdrand	%rax
+	jc	.Lbreak_rdrand
+	loop	.Loop_rdrand
+.Lbreak_rdrand:
+	cmp	\$0,%rax
+	cmove	%rcx,%rax
+	ret
+.size	OPENSSL_ia32_rdrand,.-OPENSSL_ia32_rdarnd
+___
 
 close STDOUT;	# flush
