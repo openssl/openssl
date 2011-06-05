@@ -24,7 +24,7 @@
 #	For reference! This code delivers ~80% of rc4-amd64.pl
 #	performance on the same Opteron machine.
 # (**)	This number requires compressed key schedule set up by
-#	RC4_set_key [see commentary below for further details].
+#	private_RC4_set_key [see commentary below for further details].
 #
 #					<appro@fy.chalmers.se>
 
@@ -166,8 +166,8 @@ $idx="edx";
 
 &external_label("OPENSSL_ia32cap_P");
 
-# void RC4_set_key(RC4_KEY *key,int len,const unsigned char *data);
-&function_begin("RC4_set_key");
+# void private_RC4_set_key(RC4_KEY *key,int len,const unsigned char *data);
+&function_begin("private_RC4_set_key");
 	&mov	($out,&wparam(0));		# load key
 	&mov	($idi,&wparam(1));		# load len
 	&mov	($inp,&wparam(2));		# load data
@@ -245,7 +245,7 @@ $idx="edx";
 	&xor	("eax","eax");
 	&mov	(&DWP(-8,$out),"eax");		# key->x=0;
 	&mov	(&DWP(-4,$out),"eax");		# key->y=0;
-&function_end("RC4_set_key");
+&function_end("private_RC4_set_key");
 
 # const char *RC4_options(void);
 &function_begin_B("RC4_options");

@@ -1277,13 +1277,13 @@ $code.=<<___;
 ___
 }
 
-# int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+# int private_AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 #                        AES_KEY *key)
 $code.=<<___;
-.globl	AES_set_encrypt_key
-.type	AES_set_encrypt_key,\@function,3
+.globl	private_AES_set_encrypt_key
+.type	private_AES_set_encrypt_key,\@function,3
 .align	16
-AES_set_encrypt_key:
+private_AES_set_encrypt_key:
 	push	%rbx
 	push	%rbp
 	push	%r12			# redundant, but allows to share 
@@ -1304,7 +1304,7 @@ AES_set_encrypt_key:
 	add	\$56,%rsp
 .Lenc_key_epilogue:
 	ret
-.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+.size	private_AES_set_encrypt_key,.-private_AES_set_encrypt_key
 
 .type	_x86_64_AES_set_encrypt_key,\@abi-omnipotent
 .align	16
@@ -1547,13 +1547,13 @@ $code.=<<___;
 ___
 }
 
-# int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+# int private_AES_set_decrypt_key(const unsigned char *userKey, const int bits,
 #                        AES_KEY *key)
 $code.=<<___;
-.globl	AES_set_decrypt_key
-.type	AES_set_decrypt_key,\@function,3
+.globl	private_AES_set_decrypt_key
+.type	private_AES_set_decrypt_key,\@function,3
 .align	16
-AES_set_decrypt_key:
+private_AES_set_decrypt_key:
 	push	%rbx
 	push	%rbp
 	push	%r12
@@ -1622,7 +1622,7 @@ $code.=<<___;
 	add	\$56,%rsp
 .Ldec_key_epilogue:
 	ret
-.size	AES_set_decrypt_key,.-AES_set_decrypt_key
+.size	private_AES_set_decrypt_key,.-private_AES_set_decrypt_key
 ___
 
 # void AES_cbc_encrypt (const void char *inp, unsigned char *out,

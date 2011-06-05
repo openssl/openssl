@@ -266,10 +266,10 @@ $ido="%r9";
 
 $code.=<<___;
 .extern	OPENSSL_ia32cap_P
-.globl	RC4_set_key
-.type	RC4_set_key,\@function,3
+.globl	private_RC4_set_key
+.type	private_RC4_set_key,\@function,3
 .align	16
-RC4_set_key:
+private_RC4_set_key:
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len
@@ -339,7 +339,7 @@ RC4_set_key:
 	mov	%eax,-8($dat)
 	mov	%eax,-4($dat)
 	ret
-.size	RC4_set_key,.-RC4_set_key
+.size	private_RC4_set_key,.-private_RC4_set_key
 
 .globl	RC4_options
 .type	RC4_options,\@abi-omnipotent

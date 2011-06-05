@@ -28,7 +28,7 @@
 
 # May 2007.
 #
-# Implement AES_set_[en|de]crypt_key. Key schedule setup is avoided
+# Implement private_AES_set_[en|de]crypt_key. Key schedule setup is avoided
 # for 128-bit keys, if hardware support is detected.
 
 # Januray 2009.
@@ -730,12 +730,12 @@ _s390x_AES_decrypt:
 ___
 
 $code.=<<___;
-# void AES_set_encrypt_key(const unsigned char *in, int bits,
+# void private_AES_set_encrypt_key(const unsigned char *in, int bits,
 # 		 AES_KEY *key) {
-.globl	AES_set_encrypt_key
-.type	AES_set_encrypt_key,\@function
+.globl	private_AES_set_encrypt_key
+.type	private_AES_set_encrypt_key,\@function
 .align	16
-AES_set_encrypt_key:
+private_AES_set_encrypt_key:
 	lghi	$t0,0
 	clgr	$inp,$t0
 	je	.Lminus1
@@ -1011,17 +1011,17 @@ $code.=<<___;
 .Lminus1:
 	lghi	%r2,-1
 	br	$ra
-.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+.size	private_AES_set_encrypt_key,.-private_AES_set_encrypt_key
 
-# void AES_set_decrypt_key(const unsigned char *in, int bits,
+# void private_AES_set_decrypt_key(const unsigned char *in, int bits,
 # 		 AES_KEY *key) {
-.globl	AES_set_decrypt_key
-.type	AES_set_decrypt_key,\@function
+.globl	private_AES_set_decrypt_key
+.type	private_AES_set_decrypt_key,\@function
 .align	16
-AES_set_decrypt_key:
-	stg	$key,32($sp)		# I rely on AES_set_encrypt_key to
+private_AES_set_decrypt_key:
+	stg	$key,32($sp)		# I rely on private_AES_set_encrypt_key to
 	stg	$ra,112($sp)		# save non-volatile registers!
-	bras	$ra,AES_set_encrypt_key
+	bras	$ra,private_AES_set_encrypt_key
 	lg	$key,32($sp)
 	lg	$ra,112($sp)
 	ltgr	%r2,%r2
@@ -1123,10 +1123,10 @@ $code.=<<___;
 	la	$key,4($key)
 	brct	$rounds,.Lmix
 
-	lmg	%r6,%r13,48($sp)# as was saved by AES_set_encrypt_key!
+	lmg	%r6,%r13,48($sp)# as was saved by private_AES_set_encrypt_key!
 	lghi	%r2,0
 	br	$ra
-.size	AES_set_decrypt_key,.-AES_set_decrypt_key
+.size	private_AES_set_decrypt_key,.-private_AES_set_decrypt_key
 ___
 
 #void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,

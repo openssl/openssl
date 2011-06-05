@@ -130,7 +130,7 @@ $code.=<<___;
 ___
 }
 
-# void RC4_set_key(RC4_KEY *key,unsigned int len,const void *inp)
+# void private_RC4_set_key(RC4_KEY *key,unsigned int len,const void *inp)
 {
 $cnt="%r0";
 $idx="%r1";
@@ -143,10 +143,10 @@ $ikey="%r7";
 $iinp="%r8";
 
 $code.=<<___;
-.globl	RC4_set_key
-.type	RC4_set_key,\@function
+.globl	private_RC4_set_key
+.type	private_RC4_set_key,\@function
 .align	64
-RC4_set_key:
+private_RC4_set_key:
 	stmg	%r6,%r8,48($sp)
 	lhi	$cnt,256
 	la	$idx,0(%r0)
@@ -182,7 +182,7 @@ RC4_set_key:
 .Ldone:
 	lmg	%r6,%r8,48($sp)
 	br	$rp
-.size	RC4_set_key,.-RC4_set_key
+.size	private_RC4_set_key,.-private_RC4_set_key
 
 ___
 }
