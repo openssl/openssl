@@ -65,10 +65,17 @@
 #include <openssl/err.h>
 #include <openssl/symhacks.h>
 
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 #include "ec_lcl.h"
 
 const EC_METHOD *EC_GFp_simple_method(void)
 	{
+#ifdef OPENSSL_FIPS
+	return fips_ec_gfp_simple_method();
+#else
 	static const EC_METHOD ret = {
 		EC_FLAGS_DEFAULT_OCT,
 		NID_X9_62_prime_field,
@@ -109,6 +116,7 @@ const EC_METHOD *EC_GFp_simple_method(void)
 		0 /* field_set_to_one */ };
 
 	return &ret;
+#endif
 	}
 
 

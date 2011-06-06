@@ -65,6 +65,9 @@
 #include "ec_lcl.h"
 #include <openssl/err.h>
 #include <string.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 EC_KEY *EC_KEY_new(void)
 	{
@@ -238,6 +241,11 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 	BN_CTX	*ctx = NULL;
 	BIGNUM	*priv_key = NULL, *order = NULL;
 	EC_POINT *pub_key = NULL;
+
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode())
+		return FIPS_ec_key_generate_key(eckey);
+#endif
 
 	if (!eckey || !eckey->group)
 		{

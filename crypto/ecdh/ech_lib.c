@@ -73,6 +73,9 @@
 #include <openssl/engine.h>
 #endif
 #include <openssl/err.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 const char ECDH_version[]="ECDH" OPENSSL_VERSION_PTEXT;
 
@@ -90,7 +93,14 @@ void ECDH_set_default_method(const ECDH_METHOD *meth)
 const ECDH_METHOD *ECDH_get_default_method(void)
 	{
 	if(!default_ECDH_method) 
-		default_ECDH_method = ECDH_OpenSSL();
+		{
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			default_ECDH_method = FIPS_ecdh_openssl();
+		else
+#endif
+			default_ECDH_method = ECDH_OpenSSL();
+		}
 	return default_ECDH_method;
 	}
 

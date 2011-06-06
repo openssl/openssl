@@ -60,6 +60,9 @@
 #endif
 #include <openssl/err.h>
 #include <openssl/bn.h>
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 const char ECDSA_version[]="ECDSA" OPENSSL_VERSION_PTEXT;
 
@@ -77,7 +80,14 @@ void ECDSA_set_default_method(const ECDSA_METHOD *meth)
 const ECDSA_METHOD *ECDSA_get_default_method(void)
 {
 	if(!default_ECDSA_method) 
-		default_ECDSA_method = ECDSA_OpenSSL();
+		{
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			default_ECDSA_method = FIPS_ecdsa_openssl();
+		else
+#endif
+			default_ECDSA_method = ECDSA_OpenSSL();
+		}
 	return default_ECDSA_method;
 }
 

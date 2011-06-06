@@ -4,6 +4,10 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Redirect ECDSA and ECDH operations to FIPS module in FIPS mode. Also use
+     FIPS EC methods unconditionally for now.
+     [Steve Henson]
+
   *) New build option no-ec2m to disable characteristic 2 code.
      [Steve Henson]
 
