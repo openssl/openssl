@@ -48,6 +48,7 @@
  */
 
 #include <openssl/opensslconf.h>
+#include <stdarg.h>
 
 #ifndef OPENSSL_FIPS
 #error FIPS is disabled.
@@ -108,6 +109,10 @@ void FIPS_set_locking_callbacks(void (*func)(int mode, int type,
 				const char *file,int line),
 				int (*add_cb)(int *pointer, int amount,
 					int type, const char *file, int line));
+
+void FIPS_set_error_callbacks(
+	void (*put_cb)(int lib, int func,int reason,const char *file,int line),
+	void (*add_cb)(int num, va_list args) );
 
 void FIPS_set_malloc_callbacks(
 		void *(*malloc_cb)(int num, const char *file, int line),
