@@ -138,9 +138,9 @@ void RC4_set_key(RC4_KEY *key, int len, const unsigned char *data)
 		 */
 #ifdef OPENSSL_FIPS
 		unsigned long *ia32cap_ptr = OPENSSL_ia32cap_loc();
-		if (ia32cap_ptr && (*ia32cap_ptr & (1<<28))) {
+		if (ia32cap_ptr && (*ia32cap_ptr & (1<<20))) {
 #else
-		if (OPENSSL_ia32cap_P & (1<<28)) {
+		if (OPENSSL_ia32cap_P & (1<<20)) {
 #endif
 			unsigned char *cp=(unsigned char *)d;
 
