@@ -776,6 +776,7 @@ static void prime_field_tests()
 	if (!(_variable = EC_GROUP_new(EC_GROUP_method_of(group)))) ABORT; \
 	if (!EC_GROUP_copy(_variable, group)) ABORT; \
 
+#ifndef OPENSSL_NO_EC2M
 
 static void char2_field_tests()
 	{	
@@ -1210,6 +1211,7 @@ static void char2_field_tests()
 	if (C2_B571) EC_GROUP_free(C2_B571);
 
 	}
+#endif
 
 static void internal_curve_test(void)
 	{
@@ -1391,7 +1393,9 @@ int main(int argc, char *argv[])
 
 	prime_field_tests();
 	puts("");
+#ifndef OPENSSL_NO_EC2M
 	char2_field_tests();
+#endif
 #ifdef EC_NISTP224_64_GCC_128
 	nistp224_test();
 #endif

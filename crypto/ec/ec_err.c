@@ -213,6 +213,7 @@ static ERR_STRING_DATA EC_str_reasons[]=
 {ERR_REASON(EC_R_DISCRIMINANT_IS_ZERO)   ,"discriminant is zero"},
 {ERR_REASON(EC_R_EC_GROUP_NEW_BY_NAME_FAILURE),"ec group new by name failure"},
 {ERR_REASON(EC_R_FIELD_TOO_LARGE)        ,"field too large"},
+{ERR_REASON(EC_R_GF2M_NOT_SUPPORTED)     ,"gf2m not supported"},
 {ERR_REASON(EC_R_GROUP2PKPARAMETERS_FAILURE),"group2pkparameters failure"},
 {ERR_REASON(EC_R_I2D_ECPKPARAMETERS_FAILURE),"i2d ecpkparameters failure"},
 {ERR_REASON(EC_R_INCOMPATIBLE_OBJECTS)   ,"incompatible objects"},

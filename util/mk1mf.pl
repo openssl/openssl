@@ -273,6 +273,7 @@ $cflags.=" -DOPENSSL_NO_GOST" if $no_gost;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
 $cflags.=" -DOPENSSL_NO_JPAKE"    if $no_jpake;
+$cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
 $cflags.= " -DZLIB" if $zlib_opt;
 $cflags.= " -DZLIB_SHARED" if $zlib_opt == 2;
 
@@ -1062,6 +1063,7 @@ sub read_options
 		"no-tlsext" => \$no_tlsext,
 		"no-srp" => \$no_srp,
 		"no-cms" => \$no_cms,
+		"no-ec2m" => \$no_ec2m,
 		"no-jpake" => \$no_jpake,
 		"no-ec-nistp224-64-gcc-128" => 0,
 		"no-err" => \$no_err,

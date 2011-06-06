@@ -71,6 +71,8 @@
 
 #include "ec_lcl.h"
 
+#ifndef OPENSSL_NO_EC2M
+
 
 const EC_METHOD *EC_GF2m_simple_method(void)
 	{
@@ -1040,3 +1042,5 @@ int ec_GF2m_simple_field_div(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a, 
 	{
 	return BN_GF2m_mod_div(r, a, b, &group->field, ctx);
 	}
+
+#endif

@@ -623,6 +623,8 @@ int	BN_mod_exp_recp(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
 int	BN_div_recp(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m,
 	BN_RECP_CTX *recp, BN_CTX *ctx);
 
+#ifndef OPENSSL_NO_EC2M
+
 /* Functions for arithmetic over binary polynomials represented by BIGNUMs. 
  *
  * The BIGNUM::neg property of BIGNUMs representing binary polynomials is
@@ -673,6 +675,8 @@ int	BN_GF2m_mod_solve_quad_arr(BIGNUM *r, const BIGNUM *a,
 	const int p[], BN_CTX *ctx); /* r^2 + r = a mod p */
 int	BN_GF2m_poly2arr(const BIGNUM *a, int p[], int max);
 int	BN_GF2m_arr2poly(const int p[], BIGNUM *a);
+
+#endif
 
 /* faster mod functions for the 'NIST primes' 
  * 0 <= a < p^2 */

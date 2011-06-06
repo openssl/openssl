@@ -158,7 +158,7 @@ const EC_METHOD *EC_GFp_nist_method(void);
 const EC_METHOD *EC_GFp_nistp224_method(void);
 #endif
 
-
+#ifndef OPENSSL_NO_EC2M
 /********************************************************************/ 
 /*           EC_METHOD for curves over GF(2^m)                      */
 /********************************************************************/
@@ -167,6 +167,8 @@ const EC_METHOD *EC_GFp_nistp224_method(void);
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GF2m_simple_method(void);
+
+#endif
 
 
 /********************************************************************/
@@ -289,6 +291,7 @@ int EC_GROUP_set_curve_GFp(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, co
  */
 int EC_GROUP_get_curve_GFp(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
 
+#ifndef OPENSSL_NO_EC2M
 /** Sets the parameter of a ec over GF2m defined by y^2 + x*y = x^3 + a*x^2 + b
  *  \param  group  EC_GROUP object
  *  \param  p      BIGNUM with the polynomial defining the underlying field
@@ -308,7 +311,7 @@ int EC_GROUP_set_curve_GF2m(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, c
  *  \return 1 on success and 0 if an error occured
  */
 int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p, BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
-
+#endif
 /** Returns the number of bits needed to represent a field element 
  *  \param  group  EC_GROUP object
  *  \return number of bits needed to represent a field element
@@ -349,7 +352,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx);
  *  \return newly created EC_GROUP object with the specified parameters
  */
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-
+#ifndef OPENSSL_NO_EC2M
 /** Creates a new EC_GROUP object with the specified parameters defined
  *  over GF2m (defined by the equation y^2 + x*y = x^3 + a*x^2 + b)
  *  \param  p    BIGNUM with the polynomial defining the underlying field
@@ -359,7 +362,7 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a, const BIGNUM 
  *  \return newly created EC_GROUP object with the specified parameters
  */
 EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);
-
+#endif
 /** Creates a EC_GROUP object with a curve specified by a NID
  *  \param  nid  NID of the OID of the curve name
  *  \return newly created EC_GROUP object with specified curve or NULL
@@ -488,7 +491,7 @@ int EC_POINT_get_affine_coordinates_GFp(const EC_GROUP *group,
  */
 int EC_POINT_set_compressed_coordinates_GFp(const EC_GROUP *group, EC_POINT *p,
 	const BIGNUM *x, int y_bit, BN_CTX *ctx);
-
+#ifndef OPENSSL_NO_EC2M
 /** Sets the affine coordinates of a EC_POINT over GF2m
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
@@ -521,7 +524,7 @@ int EC_POINT_get_affine_coordinates_GF2m(const EC_GROUP *group,
  */
 int EC_POINT_set_compressed_coordinates_GF2m(const EC_GROUP *group, EC_POINT *p,
 	const BIGNUM *x, int y_bit, BN_CTX *ctx);
-
+#endif
 /** Encodes a EC_POINT object to a octet string
  *  \param  group  underlying EC_GROUP object
  *  \param  p      EC_POINT object
@@ -660,9 +663,11 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 /* EC_GROUP_get_basis_type() returns the NID of the basis type
  * used to represent the field elements */
 int EC_GROUP_get_basis_type(const EC_GROUP *);
+#ifndef OPENSSL_NO_EC2M
 int EC_GROUP_get_trinomial_basis(const EC_GROUP *, unsigned int *k);
 int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1, 
 	unsigned int *k2, unsigned int *k3);
+#endif
 
 #define OPENSSL_EC_NAMED_CURVE	0x001
 
@@ -1082,6 +1087,7 @@ void ERR_load_EC_strings(void);
 #define EC_R_DISCRIMINANT_IS_ZERO			 118
 #define EC_R_EC_GROUP_NEW_BY_NAME_FAILURE		 119
 #define EC_R_FIELD_TOO_LARGE				 143
+#define EC_R_GF2M_NOT_SUPPORTED				 147
 #define EC_R_GROUP2PKPARAMETERS_FAILURE			 120
 #define EC_R_I2D_ECPKPARAMETERS_FAILURE			 121
 #define EC_R_INCOMPATIBLE_OBJECTS			 101
