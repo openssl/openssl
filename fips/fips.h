@@ -72,6 +72,8 @@ struct env_md_st;
 struct env_md_ctx_st;
 struct evp_cipher_st;
 struct evp_cipher_ctx_st;
+struct ec_method_st;
+struct ecdsa_method;
 
 int FIPS_module_mode_set(int onoff);
 int FIPS_module_mode(void);
@@ -272,6 +274,16 @@ const EVP_MD *FIPS_evp_ecdsa(void);
 
 const RSA_METHOD *FIPS_rsa_pkcs1_ssleay(void);
 int FIPS_rsa_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
+
+struct ec_method_st *fips_ec_gf2m_simple_method(void);
+struct ec_method_st *fips_ec_gfp_simple_method(void);
+struct ec_method_st *fips_ec_gfp_mont_method(void);
+struct ec_method_st *fips_ec_gfp_nist_method(void);
+
+struct ecdsa_method *FIPS_ecdsa_openssl(void);
+struct ecdh_method *FIPS_ecdh_openssl(void);
+
+int FIPS_ec_key_generate_key(struct ec_key_st *key);
 
 #endif
 
