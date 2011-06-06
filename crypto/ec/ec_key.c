@@ -78,6 +78,7 @@ EC_KEY *EC_KEY_new(void)
 		}
 
 	ret->version = 1;	
+	ret->flags = 0;
 	ret->group   = NULL;
 	ret->pub_key = NULL;
 	ret->priv_key= NULL;
@@ -197,6 +198,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 	dest->enc_flag  = src->enc_flag;
 	dest->conv_form = src->conv_form;
 	dest->version   = src->version;
+	dest->flags = src->flags;
 
 	return dest;
 	}
@@ -536,4 +538,19 @@ int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx)
 	if (key->group == NULL)
 		return 0;
 	return EC_GROUP_precompute_mult(key->group, ctx);
+	}
+
+int EC_KEY_get_flags(const EC_KEY *key)
+	{
+	return key->flags;
+	}
+
+void EC_KEY_set_flags(EC_KEY *key, int flags)
+	{
+	key->flags |= flags;
+	}
+
+void EC_KEY_clear_flags(EC_KEY *key, int flags)
+	{
+	key->flags &= ~flags;
 	}

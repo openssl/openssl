@@ -701,10 +701,20 @@ typedef struct ec_key_st EC_KEY;
 #define EC_PKEY_NO_PARAMETERS	0x001
 #define EC_PKEY_NO_PUBKEY	0x002
 
+/* some values for the flags field */
+#define EC_FLAG_NON_FIPS_ALLOW	0x1
+#define EC_FLAG_FIPS_CHECKED	0x2
+
 /** Creates a new EC_KEY object.
  *  \return EC_KEY object or NULL if an error occurred.
  */
 EC_KEY *EC_KEY_new(void);
+
+int EC_KEY_get_flags(const EC_KEY *key);
+
+void EC_KEY_set_flags(EC_KEY *key, int flags);
+
+void EC_KEY_clear_flags(EC_KEY *key, int flags);
 
 /** Creates a new EC_KEY object using a named curve as underlying
  *  EC_GROUP object.
