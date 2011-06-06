@@ -153,7 +153,7 @@ static void pkey_rsa_cleanup(EVP_PKEY_CTX *ctx)
 		OPENSSL_free(rctx);
 		}
 	}
-
+#ifdef OPENSSL_FIPS
 /* FIP checker. Return value indicates status of context parameters:
  * 1  : redirect to FIPS.
  * 0  : don't redirect to FIPS.
@@ -177,6 +177,7 @@ static int pkey_fips_check_ctx(EVP_PKEY_CTX *ctx)
 		return rv;
 	return 1;
 	}
+#endif
 
 static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 					const unsigned char *tbs, size_t tbslen)
