@@ -225,6 +225,14 @@ ECDH_DATA *ecdh_check(EC_KEY *key)
 	}
 	else
 		ecdh_data = (ECDH_DATA *)data;
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !(ecdh_data->flags & ECDH_FLAG_FIPS_METHOD)
+			&& !(EC_KEY_get_flags(key) & EC_FLAG_NON_FIPS_ALLOW))
+		{
+		ECDHerr(ECDH_F_ECDH_CHECK, ECDH_R_NON_FIPS_METHOD);
+		return NULL;
+		}
+#endif
 	
 
 	return ecdh_data;

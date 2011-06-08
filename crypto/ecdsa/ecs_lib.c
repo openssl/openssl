@@ -203,7 +203,14 @@ ECDSA_DATA *ecdsa_check(EC_KEY *key)
 	}
 	else
 		ecdsa_data = (ECDSA_DATA *)data;
-	
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !(ecdsa_data->flags & ECDSA_FLAG_FIPS_METHOD)
+			&& !(EC_KEY_get_flags(key) & EC_FLAG_NON_FIPS_ALLOW))
+		{
+		ECDSAerr(ECDSA_F_ECDSA_CHECK, ECDSA_R_NON_FIPS_METHOD);
+		return NULL;
+		}
+#endif
 
 	return ecdsa_data;
 }
