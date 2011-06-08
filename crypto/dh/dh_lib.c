@@ -64,6 +64,10 @@
 #include <openssl/engine.h>
 #endif
 
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 const char DH_version[]="Diffie-Hellman" OPENSSL_VERSION_PTEXT;
 
 static const DH_METHOD *default_DH_method = NULL;
@@ -76,7 +80,14 @@ void DH_set_default_method(const DH_METHOD *meth)
 const DH_METHOD *DH_get_default_method(void)
 	{
 	if(!default_DH_method)
-		default_DH_method = DH_OpenSSL();
+		{
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			default_DH_method = FIPS_dh_openssl();
+		else
+#endif
+			default_DH_method = DH_OpenSSL();
+		}
 	return default_DH_method;
 	}
 
@@ -156,7 +167,7 @@ DH *DH_new_method(ENGINE *engine)
 	ret->counter = NULL;
 	ret->method_mont_p=NULL;
 	ret->references = 1;
-	ret->flags=ret->meth->flags;
+	ret->flags=ret->meth->flags & ~DH_FLAG_NON_FIPS_ALLOW;
 	CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data);
 	if ((ret->meth->init != NULL) && !ret->meth->init(ret))
 		{
