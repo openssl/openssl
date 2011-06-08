@@ -1,6 +1,6 @@
-/* crypto/camellia/camellia_misc.c -*- mode:C; c-file-style: "eay" -*- */
+/* crypto/camellia/cmll_utl.c -*- mode:C; c-file-style: "eay" -*- */
 /* ====================================================================
- * Copyright (c) 2006 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,25 +56,11 @@
 
 const char CAMELLIA_version[]="CAMELLIA" OPENSSL_VERSION_PTEXT;
 
-int private_Camellia_set_key(const unsigned char *userKey, const int bits,
+int Camellia_set_key(const unsigned char *userKey, const int bits,
 	CAMELLIA_KEY *key)
 	{
-	if(!userKey || !key)
-		return -1;
-	if(bits != 128 && bits != 192 && bits != 256)
-		return -2;
-	key->grand_rounds = Camellia_Ekeygen(bits , userKey, key->u.rd_key);
-	return 0;
-	}
-
-void Camellia_encrypt(const unsigned char *in, unsigned char *out,
-	const CAMELLIA_KEY *key)
-	{
-	Camellia_EncryptBlock_Rounds(key->grand_rounds, in , key->u.rd_key , out);
-	}
-
-void Camellia_decrypt(const unsigned char *in, unsigned char *out,
-	const CAMELLIA_KEY *key)
-	{
-	Camellia_DecryptBlock_Rounds(key->grand_rounds, in , key->u.rd_key , out);
+#ifdef OPENSSL_FIPS
+	fips_cipher_abort(Camellia);
+#endif
+	return private_Camellia_set_key(userKey, bits, key);
 	}
