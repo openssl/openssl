@@ -108,7 +108,7 @@ compute_key,
 dh_bn_mod_exp,
 dh_init,
 dh_finish,
-0,
+DH_FLAG_FIPS_METHOD,
 NULL,
 NULL
 };
