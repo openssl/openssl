@@ -91,7 +91,7 @@ static ECDH_METHOD openssl_ecdh_meth = {
 	NULL, /* init     */
 	NULL, /* finish   */
 #endif
-	0,    /* flags    */
+	ECDH_FLAG_FIPS_METHOD,    /* flags    */
 	NULL  /* app_data */
 };
 

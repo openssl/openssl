@@ -79,7 +79,7 @@ static ECDSA_METHOD openssl_ecdsa_meth = {
 	NULL, /* init     */
 	NULL, /* finish   */
 #endif
-	0,    /* flags    */
+	ECDSA_FLAG_FIPS_METHOD,    /* flags    */
 	NULL  /* app_data */
 };
 
