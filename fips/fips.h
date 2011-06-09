@@ -276,6 +276,16 @@ const EVP_MD *FIPS_evp_ecdsa(void);
 const RSA_METHOD *FIPS_rsa_pkcs1_ssleay(void);
 int FIPS_rsa_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
 
+const struct dsa_method *FIPS_dsa_openssl(void);
+int	FIPS_dsa_generate_parameters_ex(DSA *dsa, int bits,
+		const unsigned char *seed,int seed_len,
+		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
+
+int fips_dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
+	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
+	unsigned char *seed_out,
+	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
+
 const struct ec_method_st *fips_ec_gf2m_simple_method(void);
 const struct ec_method_st *fips_ec_gfp_simple_method(void);
 const struct ec_method_st *fips_ec_gfp_mont_method(void);
