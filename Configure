@@ -1148,7 +1148,14 @@ if ($openssldir eq "" and $prefix eq "")
 	{
 	if ($fips)
 		{
-		$openssldir="/usr/local/ssl/fips-2.0";
+		if (exists $ENV{FIPSDIR})
+			{
+			$openssldir="$ENV{FIPSDIR}";
+			}
+		else
+			{
+			$openssldir="/usr/local/ssl/fips-2.0";
+			}
 		}
 	else
 		{
