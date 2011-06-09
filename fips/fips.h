@@ -277,6 +277,7 @@ const RSA_METHOD *FIPS_rsa_pkcs1_ssleay(void);
 int FIPS_rsa_generate_key_ex(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
 
 const struct dsa_method *FIPS_dsa_openssl(void);
+int	FIPS_dsa_generate_key(DSA *dsa);
 int	FIPS_dsa_generate_parameters_ex(DSA *dsa, int bits,
 		const unsigned char *seed,int seed_len,
 		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
@@ -284,7 +285,7 @@ int	FIPS_dsa_generate_parameters_ex(DSA *dsa, int bits,
 int fips_dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
 	unsigned char *seed_out,
-	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
+	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
 
 const struct ec_method_st *fips_ec_gf2m_simple_method(void);
 const struct ec_method_st *fips_ec_gfp_simple_method(void);
@@ -297,6 +298,8 @@ const struct ecdh_method *FIPS_ecdh_openssl(void);
 int FIPS_ec_key_generate_key(struct ec_key_st *key);
 
 const struct dh_method *FIPS_dh_openssl(void);
+int FIPS_dh_generate_parameters_ex(DH *dh, int prime_len,
+						int generator, BN_GENCB *cb);
 
 #endif
 
