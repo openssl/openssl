@@ -81,13 +81,32 @@
 #include <openssl/sha.h>
 #include "dsa_locl.h"
 
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
+
 int DSA_generate_parameters_ex(DSA *ret, int bits,
 		const unsigned char *seed_in, int seed_len,
 		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
 	{
+	if (FIPS_mode() && !(ret->meth->flags & DSA_FLAG_FIPS_METHOD)
+			&& !(ret->flags & DSA_FLAG_NON_FIPS_ALLOW))
+		{
+		DSAerr(DSA_F_DSA_GENERATE_PARAMETERS_EX, DSA_R_NON_FIPS_DSA_METHOD);
+		return 0;
+		}
+
 	if(ret->meth->dsa_paramgen)
 		return ret->meth->dsa_paramgen(ret, bits, seed_in, seed_len,
 				counter_ret, h_ret, cb);
+#ifdef OPENSSL_FIPS
+	else if (FIPS_mode())
+		{
+		return FIPS_dsa_generate_parameters_ex(ret, bits, 
+							seed_in, seed_len,
+							counter_ret, h_ret, cb);
+		}
+#endif
 	else
 		{
 		const EVP_MD *evpmd;
