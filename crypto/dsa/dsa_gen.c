@@ -89,13 +89,14 @@ int DSA_generate_parameters_ex(DSA *ret, int bits,
 		const unsigned char *seed_in, int seed_len,
 		int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
 	{
+#ifdef OPENSSL_FIPS
 	if (FIPS_mode() && !(ret->meth->flags & DSA_FLAG_FIPS_METHOD)
 			&& !(ret->flags & DSA_FLAG_NON_FIPS_ALLOW))
 		{
 		DSAerr(DSA_F_DSA_GENERATE_PARAMETERS_EX, DSA_R_NON_FIPS_DSA_METHOD);
 		return 0;
 		}
-
+#endif
 	if(ret->meth->dsa_paramgen)
 		return ret->meth->dsa_paramgen(ret, bits, seed_in, seed_len,
 				counter_ret, h_ret, cb);

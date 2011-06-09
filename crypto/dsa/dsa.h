@@ -287,6 +287,7 @@ void ERR_load_DSA_strings(void);
 #define DSA_F_DSAPARAMS_PRINT_FP			 101
 #define DSA_F_DSA_DO_SIGN				 112
 #define DSA_F_DSA_DO_VERIFY				 113
+#define DSA_F_DSA_GENERATE_KEY				 124
 #define DSA_F_DSA_GENERATE_PARAMETERS_EX		 123
 #define DSA_F_DSA_NEW_METHOD				 103
 #define DSA_F_DSA_PARAM_DECODE				 119

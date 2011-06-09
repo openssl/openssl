@@ -247,6 +247,7 @@ void ERR_load_DH_strings(void);
 #define DH_F_DH_BUILTIN_GENPARAMS			 106
 #define DH_F_DH_COMPUTE_KEY				 114
 #define DH_F_DH_GENERATE_KEY				 115
+#define DH_F_DH_GENERATE_PARAMETERS_EX			 116
 #define DH_F_DH_NEW_METHOD				 105
 #define DH_F_DH_PARAM_DECODE				 107
 #define DH_F_DH_PRIV_DECODE				 110

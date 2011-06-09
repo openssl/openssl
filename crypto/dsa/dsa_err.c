@@ -76,6 +76,7 @@ static ERR_STRING_DATA DSA_str_functs[]=
 {ERR_FUNC(DSA_F_DSAPARAMS_PRINT_FP),	"DSAparams_print_fp"},
 {ERR_FUNC(DSA_F_DSA_DO_SIGN),	"DSA_do_sign"},
 {ERR_FUNC(DSA_F_DSA_DO_VERIFY),	"DSA_do_verify"},
+{ERR_FUNC(DSA_F_DSA_GENERATE_KEY),	"DSA_generate_key"},
 {ERR_FUNC(DSA_F_DSA_GENERATE_PARAMETERS_EX),	"DSA_generate_parameters_ex"},
 {ERR_FUNC(DSA_F_DSA_NEW_METHOD),	"DSA_new_method"},
 {ERR_FUNC(DSA_F_DSA_PARAM_DECODE),	"DSA_PARAM_DECODE"},
