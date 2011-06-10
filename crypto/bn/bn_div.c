@@ -143,6 +143,7 @@ int BN_div(BIGNUM *dv, BIGNUM *rem, const BIGNUM *m, const BIGNUM *d,
     *
     *					<appro@fy.chalmers.se>
     */
+#undef bn_div_words
 #  define bn_div_words(n0,n1,d0)		\
 	({  asm volatile (			\
 		"divl	%4"			\
