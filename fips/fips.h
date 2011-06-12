@@ -212,7 +212,7 @@ int FIPS_rsa_verify_digest(struct rsa_st *rsa,
 			const struct env_md_st *mgf1Hash,
 			const unsigned char *sigbuf, unsigned int siglen);
 
-#ifndef OPENSSL_FIPSCANISTER
+#ifdef OPENSSL_FIPSCAPABLE
 
 int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type);
 int FIPS_digestupdate(EVP_MD_CTX *ctx, const void *data, size_t count);
