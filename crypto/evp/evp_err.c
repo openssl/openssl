@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,6 +74,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_AES_INIT_KEY),	"AES_INIT_KEY"},
 {ERR_FUNC(EVP_F_AES_XTS),	"AES_XTS"},
 {ERR_FUNC(EVP_F_CAMELLIA_INIT_KEY),	"CAMELLIA_INIT_KEY"},
+{ERR_FUNC(EVP_F_CMAC_INIT),	"CMAC_INIT"},
 {ERR_FUNC(EVP_F_D2I_PKEY),	"D2I_PKEY"},
 {ERR_FUNC(EVP_F_DO_SIGVER_INIT),	"DO_SIGVER_INIT"},
 {ERR_FUNC(EVP_F_DSAPKEY2PKCS8),	"DSAPKEY2PKCS8"},
@@ -134,6 +135,7 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_FIPS_CIPHER_CTX_SET_KEY_LENGTH),	"FIPS_CIPHER_CTX_SET_KEY_LENGTH"},
 {ERR_FUNC(EVP_F_FIPS_DIGESTINIT),	"FIPS_DIGESTINIT"},
 {ERR_FUNC(EVP_F_FIPS_MD_CTX_COPY),	"FIPS_MD_CTX_COPY"},
+{ERR_FUNC(EVP_F_HMAC_INIT_EX),	"HMAC_Init_ex"},
 {ERR_FUNC(EVP_F_INT_CTX_NEW),	"INT_CTX_NEW"},
 {ERR_FUNC(EVP_F_PKCS5_PBE_KEYIVGEN),	"PKCS5_PBE_keyivgen"},
 {ERR_FUNC(EVP_F_PKCS5_V2_PBE_KEYIVGEN),	"PKCS5_v2_PBE_keyivgen"},

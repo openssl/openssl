@@ -4,6 +4,11 @@
 
  Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
 
+  *) Redirect HMAC and CMAC operations to FIPS module in FIPS mode. If an
+     ENGINE is used then we cannot handle that in the FIPS module so we
+     keep original code iff non-FIPS operations are allowed.
+     [Steve Henson]
+
   *) Add -attime option to openssl verify.
      [Peter Eckersley <pde@eff.org> and Ben Laurie]
 

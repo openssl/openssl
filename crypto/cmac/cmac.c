@@ -51,13 +51,15 @@
  * ====================================================================
  */
 
-#define OPENSSL_FIPSAPI
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "cryptlib.h"
 #include <openssl/cmac.h>
+
+#ifdef OPENSSL_FIPS
+#include <openssl/fips.h>
+#endif
 
 struct CMAC_CTX_st
 	{
@@ -105,6 +107,13 @@ CMAC_CTX *CMAC_CTX_new(void)
 
 void CMAC_CTX_cleanup(CMAC_CTX *ctx)
 	{
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !ctx->cctx.engine)
+		{
+		FIPS_cmac_ctx_cleanup(ctx);
+		return;
+		}
+#endif
 	EVP_CIPHER_CTX_cleanup(&ctx->cctx);
 	OPENSSL_cleanse(ctx->tbl, EVP_MAX_BLOCK_LENGTH);
 	OPENSSL_cleanse(ctx->k1, EVP_MAX_BLOCK_LENGTH);
@@ -144,6 +153,24 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 			const EVP_CIPHER *cipher, ENGINE *impl)
 	{
 	static unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH];
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode())
+		{
+		/* If we have an ENGINE need to allow non FIPS */
+		if ((impl || ctx->cctx.engine)
+			&& !(ctx->cctx.flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW))
+
+			{
+			EVPerr(EVP_F_CMAC_INIT, EVP_R_DISABLED_FOR_FIPS);
+			return 0;
+			}
+		/* Other algorithm blocking will be done in FIPS_cmac_init,
+		 * via FIPS_cipherinit().
+		 */
+		if (!impl && !ctx->cctx.engine)
+			return FIPS_cmac_init(ctx, key, keylen, cipher, NULL);
+		}
+#endif
 	/* All zeros means restart */
 	if (!key && !cipher && !impl && keylen == 0)
 		{
@@ -187,6 +214,10 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 	{
 	const unsigned char *data = in;
 	size_t bl;
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !ctx->cctx.engine)
+		return FIPS_cmac_update(ctx, in, dlen);
+#endif
 	if (ctx->nlast_block == -1)
 		return 0;
 	if (dlen == 0)
@@ -228,6 +259,10 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 int CMAC_Final(CMAC_CTX *ctx, unsigned char *out, size_t *poutlen)
 	{
 	int i, bl, lb;
+#ifdef OPENSSL_FIPS
+	if (FIPS_mode() && !ctx->cctx.engine)
+		return FIPS_cmac_final(ctx, out, poutlen);
+#endif
 	if (ctx->nlast_block == -1)
 		return 0;
 	bl = EVP_CIPHER_CTX_block_size(&ctx->cctx);

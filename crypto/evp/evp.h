@@ -1236,6 +1236,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_AES_INIT_KEY				 133
 #define EVP_F_AES_XTS					 172
 #define EVP_F_CAMELLIA_INIT_KEY				 159
+#define EVP_F_CMAC_INIT					 173
 #define EVP_F_D2I_PKEY					 100
 #define EVP_F_DO_SIGVER_INIT				 161
 #define EVP_F_DSAPKEY2PKCS8				 134
@@ -1296,6 +1297,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_FIPS_CIPHER_CTX_SET_KEY_LENGTH		 171
 #define EVP_F_FIPS_DIGESTINIT				 168
 #define EVP_F_FIPS_MD_CTX_COPY				 169
+#define EVP_F_HMAC_INIT_EX				 174
 #define EVP_F_INT_CTX_NEW				 157
 #define EVP_F_PKCS5_PBE_KEYIVGEN			 117
 #define EVP_F_PKCS5_V2_PBE_KEYIVGEN			 118
