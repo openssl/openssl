@@ -76,6 +76,7 @@ struct ec_method_st;
 struct ecdsa_method;
 struct dh_method;
 struct CMAC_CTX_st;
+struct hmac_ctx_st;
 
 int FIPS_module_mode_set(int onoff);
 int FIPS_module_mode(void);
@@ -308,6 +309,14 @@ int FIPS_cmac_update(struct CMAC_CTX_st *ctx, const void *in, size_t dlen);
 int FIPS_cmac_final(struct CMAC_CTX_st *ctx, unsigned char *out,
 							size_t *poutlen);
 void FIPS_cmac_ctx_cleanup(struct CMAC_CTX_st *ctx);
+
+void FIPS_hmac_ctx_cleanup(struct hmac_ctx_st *ctx);
+int FIPS_hmac_init_ex(struct hmac_ctx_st *ctx, const void *key, int len,
+		  const EVP_MD *md, ENGINE *impl);
+int FIPS_hmac_update(struct hmac_ctx_st *ctx,
+			const unsigned char *data, size_t len);
+int FIPS_hmac_final(struct hmac_ctx_st *ctx,
+			unsigned char *md, unsigned int *len);
 
 #endif
 
