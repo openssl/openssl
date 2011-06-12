@@ -75,6 +75,7 @@ struct evp_cipher_ctx_st;
 struct ec_method_st;
 struct ecdsa_method;
 struct dh_method;
+struct CMAC_CTX_st;
 
 int FIPS_module_mode_set(int onoff);
 int FIPS_module_mode(void);
@@ -300,6 +301,13 @@ int FIPS_ec_key_generate_key(struct ec_key_st *key);
 const struct dh_method *FIPS_dh_openssl(void);
 int FIPS_dh_generate_parameters_ex(DH *dh, int prime_len,
 						int generator, BN_GENCB *cb);
+
+int FIPS_cmac_init(struct CMAC_CTX_st *ctx, const void *key, size_t keylen, 
+			const EVP_CIPHER *cipher, ENGINE *impl);
+int FIPS_cmac_update(struct CMAC_CTX_st *ctx, const void *in, size_t dlen);
+int FIPS_cmac_final(struct CMAC_CTX_st *ctx, unsigned char *out,
+							size_t *poutlen);
+void FIPS_cmac_ctx_cleanup(struct CMAC_CTX_st *ctx);
 
 #endif
 
