@@ -79,7 +79,8 @@ my $OS2=0;
 my $safe_stack_def = 0;
 
 my @known_platforms = ( "__FreeBSD__", "PERL5", "NeXT",
-			"EXPORT_VAR_AS_FUNCTION", "ZLIB", "OPENSSL_FIPS" );
+			"EXPORT_VAR_AS_FUNCTION", "ZLIB",
+			"OPENSSL_FIPS", "OPENSSL_FIPSCAPABLE" );
 my @known_ossl_platforms = ( "VMS", "WIN16", "WIN32", "WINNT", "OS2" );
 my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "CAST", "MD2", "MD4", "MD5", "SHA", "SHA0", "SHA1",
@@ -1136,6 +1137,9 @@ sub is_valid
 			if ($keyword eq "EXPORT_VAR_AS_FUNCTION" && ($VMSVAX || $W32 || $W16)) {
 				return 1;
 			}
+			if ($keyword eq "OPENSSL_FIPSCAPABLE") {
+				return 0;
+			}
 			if ($keyword eq "OPENSSL_FIPS" && $fips) {
 				return 1;
 			}
@@ -1484,6 +1488,7 @@ sub update_numbers
 		next if defined($rsyms{$sym});
 		die "ERROR: Symbol $sym had no info attached to it."
 		    if $i eq "";
+		next if $i =~ /OPENSSL_FIPSCAPABLE/;
 		if (!exists $nums{$s}) {
 			$new_syms++;
 			my $s2 = $s;
