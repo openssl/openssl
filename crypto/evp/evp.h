@@ -360,7 +360,7 @@ struct evp_cipher_st
 /* Cipher handles any and all padding logic as well
  * as finalisation.
  */
-#define 	EVP_CIPH_FLAG_CUSTOM_CIPHER	0x10000
+#define 	EVP_CIPH_FLAG_CUSTOM_CIPHER	0x100000
 
 /* ctrl() values */
 
