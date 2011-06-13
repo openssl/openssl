@@ -61,11 +61,6 @@
 #include "cryptlib.h"
 #include <openssl/rand.h>
 
-#ifdef OPENSSL_FIPSCANISTER
-#define OPENSSL_NO_ENGINE
-#include <openssl/fips.h>
-#endif
-
 #ifndef OPENSSL_NO_ENGINE
 #include <openssl/engine.h>
 #endif
@@ -115,6 +110,18 @@ const RAND_METHOD *RAND_get_rand_method(void)
 			}
 		if(e)
 			funct_ref = e;
+		else
+#endif
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			{
+			default_RAND_meth = FIPS_rand_get_method();
+			if (default_RAND_meth == NULL)
+				{
+				RANDerr(RAND_F_RAND_GET_RAND_METHOD,
+					RAND_R_NO_FIPS_RANDOM_METHOD_SET);
+				}
+			}
 		else
 #endif
 			default_RAND_meth = RAND_SSLeay();

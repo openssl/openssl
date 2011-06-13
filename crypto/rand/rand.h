@@ -136,6 +136,7 @@ void ERR_load_RAND_strings(void);
 #define RAND_F_SSLEAY_RAND_BYTES			 100
 
 /* Reason codes. */
+#define RAND_R_NO_FIPS_RANDOM_METHOD_SET		 101
 #define RAND_R_PRNG_NOT_SEEDED				 100
 
 #ifdef  __cplusplus
