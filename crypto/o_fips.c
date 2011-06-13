@@ -58,6 +58,8 @@
 #include "cryptlib.h"
 #ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
+#include <openssl/fips_rand.h>
+#include <openssl/rand.h>
 #endif
 
 int FIPS_mode(void)
@@ -71,8 +73,15 @@ int FIPS_mode(void)
 
 int FIPS_mode_set(int r)
 	{
+	OPENSSL_init();
 #ifdef OPENSSL_FIPS
-	return FIPS_module_mode_set(r);
+	if (!FIPS_module_mode_set(r))
+		return 0;
+	if (r)
+		RAND_set_rand_method(FIPS_rand_get_method());
+	else
+		RAND_set_rand_method(NULL);
+	return 1;
 #else
 	if (r == 0)
 		return 1;

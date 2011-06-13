@@ -112,18 +112,6 @@ const RAND_METHOD *RAND_get_rand_method(void)
 			funct_ref = e;
 		else
 #endif
-#ifdef OPENSSL_FIPS
-		if (FIPS_mode())
-			{
-			default_RAND_meth = FIPS_rand_get_method();
-			if (default_RAND_meth == NULL)
-				{
-				RANDerr(RAND_F_RAND_GET_RAND_METHOD,
-					RAND_R_NO_FIPS_RANDOM_METHOD_SET);
-				}
-			}
-		else
-#endif
 			default_RAND_meth = RAND_SSLeay();
 		}
 	return default_RAND_meth;
