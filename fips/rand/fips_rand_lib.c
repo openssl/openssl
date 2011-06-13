@@ -62,23 +62,40 @@
 
 static const RAND_METHOD *fips_rand_meth = NULL;
 static int fips_approved_rand_meth = 0;
+static int fips_rand_bits = 0;
+
+/* Allows application to override number of bits and uses non-FIPS methods */
+void FIPS_rand_set_bits(int nbits)
+	{
+	fips_rand_bits = nbits;
+	}
 
 int FIPS_rand_set_method(const RAND_METHOD *meth)
 	{
-	if (meth == FIPS_drbg_method())
-		fips_approved_rand_meth = 1;
-	else if (meth == FIPS_x931_method())
-		fips_approved_rand_meth = 2;
-	else
-		fips_approved_rand_meth = 0;
-
-	if (!fips_approved_rand_meth && FIPS_module_mode())
+	if (!fips_rand_bits)
 		{
-		FIPSerr(FIPS_F_FIPS_RAND_SET_METHOD, FIPS_R_NON_FIPS_METHOD);
-		return 0;
+		if (meth == FIPS_drbg_method())
+			fips_approved_rand_meth = 1;
+		else if (meth == FIPS_x931_method())
+			fips_approved_rand_meth = 2;
+		else
+			{
+			fips_approved_rand_meth = 0;
+			if (FIPS_module_mode())
+				{
+				FIPSerr(FIPS_F_FIPS_RAND_SET_METHOD,
+						FIPS_R_NON_FIPS_METHOD);
+				return 0;
+				}
+			}
 		}
 	fips_rand_meth = meth;
 	return 1;
+	}
+
+const RAND_METHOD *FIPS_rand_get_method(void)
+	{
+	return fips_rand_meth;
 	}
 
 void FIPS_rand_seed(const void *buf, int num)
@@ -147,6 +164,8 @@ int FIPS_rand_status(void)
 
 int FIPS_rand_strength(void)
 	{
+	if (fips_rand_bits)
+		return fips_rand_bits;
 	if (fips_approved_rand_meth == 1)
 		return FIPS_drbg_get_strength(FIPS_get_default_drbg());
 	else if (fips_approved_rand_meth == 2)

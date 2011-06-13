@@ -114,7 +114,11 @@ void FIPS_drbg_set_check_interval(DRBG_CTX *dctx, int interval);
 DRBG_CTX *FIPS_get_default_drbg(void);
 const RAND_METHOD *FIPS_drbg_method(void);
 
+
 int FIPS_rand_set_method(const RAND_METHOD *meth);
+const RAND_METHOD *FIPS_rand_get_method(void);
+
+void FIPS_rand_set_bits(int nbits);
 
 int FIPS_rand_strength(void);
 
