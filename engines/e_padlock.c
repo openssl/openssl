@@ -104,11 +104,11 @@
 # if (defined(__GNUC__) && (defined(__i386__) || defined(__i386))) || \
      (defined(_MSC_VER) && defined(_M_IX86))
 #  define COMPILE_HW_PADLOCK
-static ENGINE *ENGINE_padlock (void);
 # endif
 #endif
 
 #ifdef OPENSSL_NO_DYNAMIC_ENGINE
+static ENGINE *ENGINE_padlock (void);
 
 void ENGINE_load_padlock (void)
 {
@@ -197,6 +197,8 @@ padlock_bind_helper(ENGINE *e)
 	return 1;
 }
 
+#ifdef OPENSSL_NO_DYNAMIC_ENGINE
+
 /* Constructor */
 static ENGINE *
 ENGINE_padlock(void)
@@ -214,6 +216,8 @@ ENGINE_padlock(void)
 
 	return eng;
 }
+
+#endif
 
 /* Check availability of the engine */
 static int
