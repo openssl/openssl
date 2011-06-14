@@ -286,7 +286,7 @@ build_testapps:
 	@dir=crypto; target=testapps; $(BUILD_ONE_CMD)
 
 fips_premain_dso$(EXE_EXT): libcrypto.a
-	[ -z "$(FIPSCANLIB)" ] || $(CC) $(CFLAGS) \
+	[ -z "$(FIPSCANLIB)" ] || $(CC) $(CFLAGS) -Iinclude \
 		-DFINGERPRINT_PREMAIN_DSO_LOAD -o $@  \
 		$(FIPSLIBDIR)fips_premain.c $(FIPSLIBDIR)fipscanister.o \
 		libcrypto.a $(EX_LIBS)
