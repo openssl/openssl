@@ -4,63 +4,9 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
-  *) Output TLS supported curves in preference order instead of numerical
-     order. This is currently hardcoded for the highest order curves first.
-     This should be configurable so applications can judge speed vs strength.
-     [Steve Henson]
-
-  *) Add protection against ECDSA timing attacks as mentioned in the paper
-     by Billy Bob Brumley and Nicola Tuveri, see:
-
-	http://eprint.iacr.org/2011/232.pdf
-
-     [Billy Bob Brumley and Nicola Tuveri]
-
-  *) Add TLS v1.2 server support for client authentication. 
-     [Steve Henson]
-
-  *) Add support for FIPS mode in ssl library: disable SSLv3, non-FIPS ciphers
-     and enable MD5.
-     [Steve Henson]
-
-  *) Functions FIPS_mode_set() and FIPS_mode() which call the underlying
-     FIPS modules versions.
-     [Steve Henson]
-
-  *) Add TLS v1.2 client side support for client authentication. Keep cache
-     of handshake records longer as we don't know the hash algorithm to use
-     until after the certificate request message is received.
-     [Steve Henson]
-
   *) Rename FIPS_mode_set and FIPS_mode to FIPS_module_mode_set and
      FIPS_module_mode. FIPS_mode and FIPS_mode_set will be implmeneted
      outside the validated module in the FIPS capable OpenSSL.
-     [Steve Henson]
-
-  *) Initial TLS v1.2 client support. Add a default signature algorithms
-     extension including all the algorithms we support. Parse new signature
-     format in client key exchange. Relax some ECC signing restrictions for
-     TLS v1.2 as indicated in RFC5246.
-     [Steve Henson]
-
-  *) Add server support for TLS v1.2 signature algorithms extension. Switch
-     to new signature format when needed using client digest preference.
-     All server ciphersuites should now work correctly in TLS v1.2. No client
-     support yet and no support for client certificates.
-     [Steve Henson]
-
-  *) Initial TLS v1.2 support. Add new SHA256 digest to ssl code, switch
-     to SHA256 for PRF when using TLS v1.2 and later. Add new SHA256 based
-     ciphersuites. At present only RSA key exchange ciphersuites work with
-     TLS v1.2. Add new option for TLS v1.2 replacing the old and obsolete
-     SSL_OP_PKCS1_CHECK flags with SSL_OP_NO_TLSv1_2. New TLSv1.2 methods
-     and version checking.
-     [Steve Henson]
-
-  *) New option OPENSSL_NO_SSL_INTERN. If an application can be compiled
-     with this defined it will not be affected by any changes to ssl internal
-     structures. Add several utility functions to allow openssl application
-     to work with OPENSSL_NO_SSL_INTERN defined.
      [Steve Henson]
 
   *) Minor change to DRBG entropy callback semantics. In some cases
@@ -110,9 +56,6 @@
      Remove strength parameter from FIPS_drbg_instantiate and always
      instantiate at maximum supported strength.
      [Steve Henson]
-
-  *) Add SRP support.
-     [Tom Wu <tjw@cs.stanford.edu> and Ben Laurie]
 
   *) Add ECDH code to fips module and fips_ecdhvs for primitives only testing.
      [Steve Henson]
@@ -302,7 +245,101 @@
      whose return value is often ignored. 
      [Steve Henson]
   
- Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
+ Changes between 1.0.0e and 1.0.1  [xx XXX xxxx]
+
+  *) Redirect HMAC and CMAC operations to FIPS module in FIPS mode. If an
+     ENGINE is used then we cannot handle that in the FIPS module so we
+     keep original code iff non-FIPS operations are allowed.
+     [Steve Henson]
+
+  *) Add -attime option to openssl verify.
+     [Peter Eckersley <pde@eff.org> and Ben Laurie]
+
+  *) Redirect DSA and DH operations to FIPS module in FIPS mode.
+     [Steve Henson]
+
+  *) Redirect ECDSA and ECDH operations to FIPS module in FIPS mode. Also use
+     FIPS EC methods unconditionally for now.
+     [Steve Henson]
+
+  *) New build option no-ec2m to disable characteristic 2 code.
+     [Steve Henson]
+
+  *) Backport libcrypto audit of return value checking from 1.1.0-dev; not
+     all cases can be covered as some introduce binary incompatibilities.
+     [Steve Henson]
+
+  *) Redirect RSA operations to FIPS module including keygen,
+     encrypt, decrypt, sign and verify. Block use of non FIPS RSA methods.
+     [Steve Henson]
+
+  *) Add similar low level API blocking to ciphers.
+     [Steve Henson]
+
+  *) Low level digest APIs are not approved in FIPS mode: any attempt
+     to use these will cause a fatal error. Applications that *really* want
+     to use them can use the private_* version instead.
+     [Steve Henson]
+
+  *) Redirect cipher operations to FIPS module for FIPS builds. 
+     [Steve Henson]
+
+  *) Redirect digest operations to FIPS module for FIPS builds. 
+     [Steve Henson]
+
+  *) Update build system to add "fips" flag which will link in fipscanister.o
+     for static and shared library builds embedding a signature if needed.
+     [Steve Henson]
+
+  *) Output TLS supported curves in preference order instead of numerical
+     order. This is currently hardcoded for the highest order curves first.
+     This should be configurable so applications can judge speed vs strength.
+     [Steve Henson]
+
+  *) Add TLS v1.2 server support for client authentication. 
+     [Steve Henson]
+
+  *) Add support for FIPS mode in ssl library: disable SSLv3, non-FIPS ciphers
+     and enable MD5.
+     [Steve Henson]
+
+  *) Functions FIPS_mode_set() and FIPS_mode() which call the underlying
+     FIPS modules versions.
+     [Steve Henson]
+
+  *) Add TLS v1.2 client side support for client authentication. Keep cache
+     of handshake records longer as we don't know the hash algorithm to use
+     until after the certificate request message is received.
+     [Steve Henson]
+
+  *) Initial TLS v1.2 client support. Add a default signature algorithms
+     extension including all the algorithms we support. Parse new signature
+     format in client key exchange. Relax some ECC signing restrictions for
+     TLS v1.2 as indicated in RFC5246.
+     [Steve Henson]
+
+  *) Add server support for TLS v1.2 signature algorithms extension. Switch
+     to new signature format when needed using client digest preference.
+     All server ciphersuites should now work correctly in TLS v1.2. No client
+     support yet and no support for client certificates.
+     [Steve Henson]
+
+  *) Initial TLS v1.2 support. Add new SHA256 digest to ssl code, switch
+     to SHA256 for PRF when using TLS v1.2 and later. Add new SHA256 based
+     ciphersuites. At present only RSA key exchange ciphersuites work with
+     TLS v1.2. Add new option for TLS v1.2 replacing the old and obsolete
+     SSL_OP_PKCS1_CHECK flags with SSL_OP_NO_TLSv1_2. New TLSv1.2 methods
+     and version checking.
+     [Steve Henson]
+
+  *) New option OPENSSL_NO_SSL_INTERN. If an application can be compiled
+     with this defined it will not be affected by any changes to ssl internal
+     structures. Add several utility functions to allow openssl application
+     to work with OPENSSL_NO_SSL_INTERN defined.
+     [Steve Henson]
+
+  *) Add SRP support.
+     [Tom Wu <tjw@cs.stanford.edu> and Ben Laurie]
 
   *) Add functions to copy EVP_PKEY_METHOD and retrieve flags and id.
      [Steve Henson]
@@ -340,6 +377,15 @@
        Add explicit IV handling (ported from DTLS code).
        Add command line options to s_client/s_server.
      [Steve Henson]
+
+ Changes between 1.0.0d and 1.0.0e [xx XXX xxxx]
+
+  *) Add protection against ECDSA timing attacks as mentioned in the paper
+     by Billy Bob Brumley and Nicola Tuveri, see:
+
+	http://eprint.iacr.org/2011/232.pdf
+
+     [Billy Bob Brumley and Nicola Tuveri]
 
  Changes between 1.0.0c and 1.0.0d [8 Feb 2011]
 
@@ -1221,6 +1267,15 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
   
+ Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
+
+  *) Add protection against ECDSA timing attacks as mentioned in the paper
+     by Billy Bob Brumley and Nicola Tuveri, see:
+
+	http://eprint.iacr.org/2011/232.pdf
+
+     [Billy Bob Brumley and Nicola Tuveri]
+
  Changes between 0.9.8q and 0.9.8r [8 Feb 2011]
 
   *) Fix parsing of OCSP stapling ClientHello extension. CVE-2011-0014
