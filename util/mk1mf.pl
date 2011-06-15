@@ -541,11 +541,30 @@ if ($fipscanisteronly)
 	$build_targets = "\$(O_FIPSCANISTER) \$(T_EXE)";
 	$libs_dep = "";
 	}
-	
 
-if ($shlib)
+$extra_install= <<"EOF";
+	\$(CP) \"\$(INCO_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin\"
+	\$(MKDIR) \"\$(OPENSSLDIR)\"
+	\$(CP) apps${o}openssl.cnf \"\$(OPENSSLDIR)\"
+EOF
+
+if ($fipscanisteronly)
 	{
-	$extra_install= <<"EOF";
+	$extra_install = <<"EOF";
+	\$(CP) \"\$(O_FIPSCANISTER)\" \"\$(INSTALLTOP)${o}lib\"
+	\$(CP) \"\$(O_FIPSCANISTER).sha1\" \"\$(INSTALLTOP)${o}lib\"
+	\$(CP) \"fips${o}fips_premain.c\" \"\$(INSTALLTOP)${o}lib\"
+	\$(CP) \"fips${o}fips_premain.c.sha1\" \"\$(INSTALLTOP)${o}lib\"
+	\$(CP) \"\$(INCO_D)${o}fips.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) \"\$(INCO_D)${o}fips_rand.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
+	\$(CP) "\$(BIN_D)${o}fips_standalone_sha1$exep" \"\$(INSTALLTOP)${o}bin\"
+	\$(CP) \"util${o}fipslink.pl\" \"\$(INSTALLTOP)${o}bin\"
+EOF
+	}
+elsif ($shlib)
+	{
+	$extra_install .= <<"EOF";
 	\$(CP) \"\$(O_SSL)\" \"\$(INSTALLTOP)${o}bin\"
 	\$(CP) \"\$(O_CRYPTO)\" \"\$(INSTALLTOP)${o}bin\"
 	\$(CP) \"\$(L_SSL)\" \"\$(INSTALLTOP)${o}lib\"
@@ -561,7 +580,7 @@ EOF
 	}
 else
 	{
-	$extra_install= <<"EOF";
+	$extra_install .= <<"EOF";
 	\$(CP) \"\$(O_SSL)\" \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"\$(O_CRYPTO)\" \"\$(INSTALLTOP)${o}lib\"
 EOF
@@ -723,10 +742,6 @@ install: all
 	\$(MKDIR) \"\$(INSTALLTOP)${o}include\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(MKDIR) \"\$(INSTALLTOP)${o}lib\"
-	\$(CP) \"\$(INCO_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
-	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin\"
-	\$(MKDIR) \"\$(OPENSSLDIR)\"
-	\$(CP) apps${o}openssl.cnf \"\$(OPENSSLDIR)\"
 $extra_install
 
 
