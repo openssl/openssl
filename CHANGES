@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0d and 1.0.1  [xx XXX xxxx]
+ Changes between 1.0.0e and 1.0.1  [xx XXX xxxx]
 
   *) Redirect HMAC and CMAC operations to FIPS module in FIPS mode. If an
      ENGINE is used then we cannot handle that in the FIPS module so we
@@ -22,7 +22,7 @@
   *) New build option no-ec2m to disable characteristic 2 code.
      [Steve Henson]
 
-  *) Backport libcrypto audit of return value checking from HEAD, not
+  *) Backport libcrypto audit of return value checking from 1.1.0-dev; not
      all cases can be covered as some introduce binary incompatibilities.
      [Steve Henson]
 
@@ -52,13 +52,6 @@
      order. This is currently hardcoded for the highest order curves first.
      This should be configurable so applications can judge speed vs strength.
      [Steve Henson]
-
-  *) Add protection against ECDSA timing attacks as mentioned in the paper
-     by Billy Bob Brumley and Nicola Tuveri, see:
-
-	http://eprint.iacr.org/2011/232.pdf
-
-     [Billy Bob Brumley and Nicola Tuveri]
 
   *) Add TLS v1.2 server support for client authentication. 
      [Steve Henson]
@@ -95,7 +88,7 @@
      SSL_OP_PKCS1_CHECK flags with SSL_OP_NO_TLSv1_2. New TLSv1.2 methods
      and version checking.
      [Steve Henson]
- 
+
   *) New option OPENSSL_NO_SSL_INTERN. If an application can be compiled
      with this defined it will not be affected by any changes to ssl internal
      structures. Add several utility functions to allow openssl application
@@ -141,6 +134,15 @@
        Add explicit IV handling (ported from DTLS code).
        Add command line options to s_client/s_server.
      [Steve Henson]
+
+ Changes between 1.0.0d and 1.0.0e [xx XXX xxxx]
+
+  *) Add protection against ECDSA timing attacks as mentioned in the paper
+     by Billy Bob Brumley and Nicola Tuveri, see:
+
+	http://eprint.iacr.org/2011/232.pdf
+
+     [Billy Bob Brumley and Nicola Tuveri]
 
  Changes between 1.0.0c and 1.0.0d [8 Feb 2011]
 
@@ -1022,6 +1024,15 @@
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
   
+ Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
+
+  *) Add protection against ECDSA timing attacks as mentioned in the paper
+     by Billy Bob Brumley and Nicola Tuveri, see:
+
+	http://eprint.iacr.org/2011/232.pdf
+
+     [Billy Bob Brumley and Nicola Tuveri]
+
  Changes between 0.9.8q and 0.9.8r [8 Feb 2011]
 
   *) Fix parsing of OCSP stapling ClientHello extension. CVE-2011-0014
