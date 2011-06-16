@@ -43,7 +43,7 @@ SET ASM=nasm
 
 :compile
 
-perl Configure %TARGET% fipscanisteronly
+perl Configure %TARGET% fipscheck
 pause
 
 echo on

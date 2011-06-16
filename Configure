@@ -870,6 +870,16 @@ PROCESS_ARGS:
 			$fips = 1;
 			$nofipscanistercheck = 1;
 			}
+		elsif (/^fipscheck$/)
+			{
+			if ($fipscanisteronly != 2)
+				{
+				print STDERR <<"EOF";
+ERROR: FIPS not autodetected. Not running from restricted tarball??
+EOF
+				exit(1);
+				}
+			}
 		elsif (/^fipscanisteronly$/)
 			{
 			$fips = 1;
