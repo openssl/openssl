@@ -53,6 +53,9 @@ with FIPS or fips. One way to check with GNU nm is:
 
 nm -g --defined-only fips/fipscanister.o | grep -v -i fips
 
+If you get *any* output at all from this test (i.e. symbols not starting with
+fips or FIPS) please report it.
+
 Restricted tarball tests.
 
 The validated module will have its own tarball containing sufficient code to
@@ -75,12 +78,61 @@ make
 You can then run the algorithm tests as above. This build automatically uses
 fipscanisteronly and -DOPENSSL_FIPSYMS and no-ec2m as appropriate.
 
+FIPS capable OpenSSL test: WARNING PRELIMINARY INSTRUCTIONS, SUBJECT TO CHANGE.
+
+At least initially the test module and FIPS capable OpenSSL may change and
+by out of sync. You are advised to check for any changes and pull the latest
+source from CVS if you have problems. See anon CVS and rsync instructions at:
+
+http://www.openssl.org/source/repos.html
+
+Make or download a restricted tarball from ftp://ftp.openssl.org/snapshot/
+
+If required set the environment variable FIPSDIR to an appropriate location
+to install the test module. If cross compiling set other environment
+variables too.
+
+In this restricted tarball on a Linux or U*ix like system run:
+
+./config
+make
+make install
+
+On Windows from a VC++ environment do:
+
+ms\do_fips
+
+This will build and install the test module and some associated files.
+
+Now download the latest version of the OpenSSL 1.0.1 branch from either a
+snapshot or preferably CVS. For Linux do:
+
+./config fips [other args]
+make
+
+For Windows:
+
+perl Configure VC-WIN32 [other args]
+ms\do_nasm
+nmake -f ms\ntdll.mak
+
+(or ms\nt.mak for a static build).
+
+Where [other args] can be any other arguments you use for an OpenSSL build
+such as "shared" or "zlib".
+
+This will build the fips capable OpenSSL and link it to the test module. You
+can now try linking and testing applications against the FIPS capable OpenSSL.
+
+Please report any problems to either the openssl-dev mailing list or directly
+to me steve@openssl.org . Check the mailing lists regularly to avoid duplicate
+reports.
+
 Known issues:
 
 Algorithm tests are pre-2011.
 The fipslagtest.pl script wont auto run new algorithm tests such as DSA2.
 Code needs extensively reviewing to ensure it builds correctly on 
 supported platforms and is compliant with FIPS 140-2.
-The "FIPS capable OpenSSL" is not yet complete: meaning that the rest of
-OpenSSL doesn't always use the correct FIPS module APIs and block others
-in FIPS mode.
+The "FIPS capable OpenSSL" is still largely untested, it builds and runs
+some simple tests OK on some systems but needs far more "real world" testing.
