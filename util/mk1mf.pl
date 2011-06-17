@@ -18,6 +18,8 @@ local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
 local $zlib_lib = "";
 local $perl_asm = 0;	# 1 to autobuild asm files from perl scripts
 
+my $ex_l_libs = "";
+
 # Options to import from top level Makefile
 
 my %mf_import = (
@@ -40,7 +42,9 @@ my %mf_import = (
 	SHA1_ASM_OBJ   => \$mf_sha_asm,
 	RMD160_ASM_OBJ => \$mf_rmd_asm,
 	WP_ASM_OBJ     => \$mf_wp_asm,
-	CMLL_ENC       => \$mf_cm_asm
+	CMLL_ENC       => \$mf_cm_asm,
+	BASEADDR       => \$baseaddr,
+	FIPSDIR        => \$fipsdir,
 );
 
 
@@ -55,6 +59,7 @@ while(<IN>) {
 }
 close(IN);
 
+$fipsdir =~ tr/\\/\//;
 $debug = 1 if $mf_platform =~ /^debug-/;
 
 die "Makefile is not the toplevel Makefile!\n" if $ssl_version eq "";
@@ -272,6 +277,7 @@ $cflags.=" -DOPENSSL_NO_ECDH" if $no_ecdh;
 $cflags.=" -DOPENSSL_NO_GOST" if $no_gost;
 $cflags.=" -DOPENSSL_NO_ENGINE"   if $no_engine;
 $cflags.=" -DOPENSSL_NO_HW"   if $no_hw;
+$cflags.=" -DOPENSSL_FIPS"    if $fips;
 $cflags.=" -DOPENSSL_NO_JPAKE"    if $no_jpake;
 $cflags.=" -DOPENSSL_NO_EC2M"    if $no_ec2m;
 $cflags.= " -DZLIB" if $zlib_opt;
@@ -407,6 +413,11 @@ else
 	\$(CP) \"\$(O_CRYPTO)\" \"\$(INSTALLTOP)${o}lib\"
 EOF
 	$ex_libs .= " $zlib_lib" if $zlib_opt == 1;
+	if ($fips)
+		{
+		$build_targets .= " \$(LIB_D)$o$crypto_compat \$(PREMAIN_DSO_EXE)";
+		$ex_l_libs .= " \$(O_FIPSCANISTER)";
+		}
 	}
 
 $defs= <<"EOF";
@@ -468,6 +479,18 @@ MKLIB=$bin_dir$mklib
 MLFLAGS=$mlflags
 ASM=$bin_dir$asm
 
+# FIPS validated module and support file locations
+
+FIPSDIR=$fipsdir
+BASEADDR=$baseaddr
+FIPSLIB_D=\$(FIPSDIR)lib
+FIPS_PREMAIN_SRC=\$(FIPSLIB_D)${o}fips_premain.c
+O_FIPSCANISTER=\$(FIPSLIB_D)${o}fipscanister.lib
+FIPS_SHA1_EXE=\$(FIPSDIR)bin${o}fips_standalone_sha1${exep}
+E_PREMAIN_DSO=fips_premain_dso
+PREMAIN_DSO_EXE=\$(BIN_D)${o}fips_premain_dso$exep
+FIPSLINK=\$(PERL) \$(FIPSDIR)bin${o}fipslink.pl
+
 ######################################################
 # You should not need to touch anything below this point
 ######################################################
@@ -500,7 +523,7 @@ SO_CRYPTO= $plib\$(CRYPTO)$so_shlibp
 L_SSL=     \$(LIB_D)$o$plib\$(SSL)$libp
 L_CRYPTO=  \$(LIB_D)$o$plib\$(CRYPTO)$libp
 
-L_LIBS= \$(L_SSL) \$(L_CRYPTO)
+L_LIBS= \$(L_SSL) \$(L_CRYPTO) $ex_l_libs
 
 ######################################################
 # Don't touch anything below this point
@@ -516,7 +539,7 @@ LIBS_DEP=\$(O_CRYPTO) \$(O_SSL)
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers lib exe $build_targets
 
 banner:
 $banner
@@ -632,6 +655,16 @@ $rules.=&do_compile_rule("\$(OBJ_D)",$test,"\$(APP_CFLAGS)");
 $defs.=&do_defs("E_OBJ",$e_exe,"\$(OBJ_D)",$obj);
 $rules.=&do_compile_rule("\$(OBJ_D)",$e_exe,'-DMONOLITH $(APP_CFLAGS)');
 
+# Special case rule for fips_premain_dso
+
+if ($fips)
+	{
+	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
+		"\$(FIPS_PREMAIN_SRC)",
+		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)", "");
+	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
+	}
+
 foreach (values %lib_nam)
 	{
 	$lib_obj=$lib_obj{$_};
@@ -680,7 +713,28 @@ foreach (split(/\s+/,$engines))
 
 
 $rules.= &do_lib_rule("\$(SSLOBJ)","\$(O_SSL)",$ssl,$shlib,"\$(SO_SSL)");
-$rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)");
+
+if ($fips)
+	{
+	if ($shlib)
+		{
+		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
+				"\$(O_CRYPTO)", "$crypto",
+				$shlib, "\$(SO_CRYPTO)", "\$(BASEADDR)");
+		}
+	else
+		{
+		$rules.= &do_lib_rule("\$(CRYPTOOBJ)",
+			"\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)", "");
+		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
+			"\$(LIB_D)$o$crypto_compat",$crypto,$shlib,"\$(SO_CRYPTO)", "");
+		}
+	}
+	else
+	{
+	$rules.= &do_lib_rule("\$(CRYPTOOBJ)","\$(O_CRYPTO)",$crypto,$shlib,
+							"\$(SO_CRYPTO)");
+	}
 
 foreach (split(" ",$otherlibs))
 	{
@@ -690,7 +744,7 @@ foreach (split(" ",$otherlibs))
 
 	}
 
-$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)");
+$rules.=&do_link_rule("\$(BIN_D)$o\$(E_EXE)$exep","\$(E_OBJ)","\$(LIBS_DEP)","\$(L_LIBS) \$(EX_LIBS)", ($fips && !$shlib) ? 2 : 0);
 
 print $defs;
 
@@ -944,14 +998,15 @@ sub Sasm_compile_target
 
 sub cc_compile_target
 	{
-	local($target,$source,$ex_flags)=@_;
+	local($target,$source,$ex_flags, $srcd)=@_;
 	local($ret);
 	
 	$ex_flags.=" -DMK1MF_BUILD -D$platform_cpp_symbol" if ($source =~ /cversion/);
 	$target =~ s/\//$o/g if $o ne "/";
 	$source =~ s/\//$o/g if $o ne "/";
-	$ret ="$target: \$(SRC_D)$o$source\n\t";
-	$ret.="\$(CC) ${ofile}$target $ex_flags -c \$(SRC_D)$o$source\n\n";
+	$srcd = "\$(SRC_D)$o" unless defined $srcd;
+	$ret ="$target: $srcd$source\n\t";
+	$ret.="\$(CC) ${ofile}$target $ex_flags -c $srcd$source\n\n";
 	return($ret);
 	}
 
@@ -1094,6 +1149,7 @@ sub read_options
 		"no-store" => 0,
 		"no-zlib" => 0,
 		"no-zlib-dynamic" => 0,
+		"fips" => \$fips
 		);
 
 	if (exists $valid_options{$_})
