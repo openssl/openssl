@@ -542,6 +542,8 @@ if ($fipscanisteronly)
 	$libs_dep = "";
 	}
 
+$cp2 = $cp unless defined $cp2;
+
 $extra_install= <<"EOF";
 	\$(CP) \"\$(INCO_D)${o}*.\[ch\]\" \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(CP) \"\$(BIN_D)$o\$(E_EXE)$exep \$(INSTALLTOP)${o}bin\"
@@ -554,7 +556,7 @@ if ($fipscanisteronly)
 	$extra_install = <<"EOF";
 	\$(CP) \"\$(O_FIPSCANISTER)\" \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"\$(O_FIPSCANISTER).sha1\" \"\$(INSTALLTOP)${o}lib\"
-	\$(CP) \"fips${o}fips_premain.c\" \"\$(INSTALLTOP)${o}lib\"
+	\$(CP2) \"fips${o}fips_premain.c\" \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"fips${o}fips_premain.c.sha1\" \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"\$(INCO_D)${o}fips.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(CP) \"\$(INCO_D)${o}fips_rand.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
@@ -640,6 +642,7 @@ INCO_D=$inc_dir${o}openssl
 
 PERL=$perl
 CP=$cp
+CP2=$cp2
 RM=$rm
 RANLIB=$ranlib
 MKDIR=$mkdir
@@ -924,7 +927,7 @@ if ($fips)
 		{
 		$rules.= &do_lib_rule("\$(CRYPTOOBJ)",
 			"\$(O_CRYPTO)",$crypto,$shlib,"\$(SO_CRYPTO)", "");
-		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(FIPSOBJ)",
+		$rules.= &do_lib_rule("\$(CRYPTOOBJ) \$(O_FIPSCANISTER)",
 			"\$(LIB_D)$o$crypto_compat",$crypto,$shlib,"\$(SO_CRYPTO)", "");
 		}
 	}

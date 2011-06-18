@@ -23,6 +23,7 @@ if ($fipscanisterbuild)
 
 $o='\\';
 $cp='$(PERL) util/copy.pl';
+$cp2='$(PERL) util/copy.pl -stripcr';
 $mkdir='$(PERL) util/mkdir-p.pl';
 $rm='del /Q';
 
