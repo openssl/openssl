@@ -674,7 +674,7 @@ my $fips=0;
 if (exists $ENV{FIPSDIR})
 	{
 	$fipsdir = $ENV{FIPSDIR};
-	$fipsdir .= "/" unless $fipsdir =~ /\/$/;
+	$fipsdir =~ s/\/$//;
 	}
 
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
@@ -958,7 +958,7 @@ if (defined($disabled{"md5"}) || defined($disabled{"rsa"}))
 
 if ($fips && $fipslibdir eq "")
 	{
-	$fipslibdir = $fipsdir . "lib/";
+	$fipslibdir = $fipsdir . "/lib/";
 	}
 
 # SSL 3.0 and TLS requires MD5 and SHA and either RSA or DSA+DH
@@ -1422,7 +1422,7 @@ $cflags.=" -DOPENSSL_BN_ASM_MONT" if ($bn_obj =~ /-mont/);
 if ($fips)
 	{
 	$openssl_other_defines.="#define OPENSSL_FIPS\n";
-	$cflags .= " -I\$(FIPSDIR)include";
+	$cflags .= " -I\$(FIPSDIR)/include";
 	}
 
 $cpuid_obj="mem_clr.o"	unless ($cpuid_obj =~ /\.o$/);

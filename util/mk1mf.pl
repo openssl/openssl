@@ -59,7 +59,7 @@ while(<IN>) {
 }
 close(IN);
 
-$fipsdir =~ tr/\\/\//;
+$fipsdir =~ tr/\//${o}/;
 $debug = 1 if $mf_platform =~ /^debug-/;
 
 die "Makefile is not the toplevel Makefile!\n" if $ssl_version eq "";
@@ -483,10 +483,10 @@ ASM=$bin_dir$asm
 
 FIPSDIR=$fipsdir
 BASEADDR=$baseaddr
-FIPSLIB_D=\$(FIPSDIR)lib
+FIPSLIB_D=\$(FIPSDIR)${o}lib
 FIPS_PREMAIN_SRC=\$(FIPSLIB_D)${o}fips_premain.c
 O_FIPSCANISTER=\$(FIPSLIB_D)${o}fipscanister.lib
-FIPS_SHA1_EXE=\$(FIPSDIR)bin${o}fips_standalone_sha1${exep}
+FIPS_SHA1_EXE=\$(FIPSDIR)${o}bin${o}fips_standalone_sha1${exep}
 E_PREMAIN_DSO=fips_premain_dso
 PREMAIN_DSO_EXE=\$(BIN_D)${o}fips_premain_dso$exep
 FIPSLINK=\$(PERL) \$(FIPSDIR)bin${o}fipslink.pl

@@ -295,7 +295,7 @@ libcrypto$(SHLIB_EXT): libcrypto.a fips_premain_dso$(EXE_EXT)
 	@if [ "$(SHLIB_TARGET)" != "" ]; then \
 		if [ "$(FIPSCANLIB)" = "libcrypto" ]; then \
 			FIPSLD_LIBCRYPTO=libcrypto.a ; \
-			FIPSLD_CC="$(CC)"; CC=$(FIPSDIR)bin/fipsld; \
+			FIPSLD_CC="$(CC)"; CC=$(FIPSDIR)/bin/fipsld; \
 			export CC FIPSLD_CC FIPSLD_LIBCRYPTO; \
 		fi; \
 		$(MAKE) -e SHLIBDIRS=crypto build-shared; \
