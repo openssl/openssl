@@ -112,7 +112,7 @@ make
 
 For Windows:
 
-perl Configure VC-WIN32 [other args]
+perl Configure VC-WIN32 fips [other args]
 ms\do_nasm
 nmake -f ms\ntdll.mak
 
