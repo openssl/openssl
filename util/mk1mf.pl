@@ -489,7 +489,7 @@ O_FIPSCANISTER=\$(FIPSLIB_D)${o}fipscanister.lib
 FIPS_SHA1_EXE=\$(FIPSDIR)${o}bin${o}fips_standalone_sha1${exep}
 E_PREMAIN_DSO=fips_premain_dso
 PREMAIN_DSO_EXE=\$(BIN_D)${o}fips_premain_dso$exep
-FIPSLINK=\$(PERL) \$(FIPSDIR)bin${o}fipslink.pl
+FIPSLINK=\$(PERL) \$(FIPSDIR)${o}bin${o}fipslink.pl
 
 ######################################################
 # You should not need to touch anything below this point
