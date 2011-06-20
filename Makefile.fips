@@ -329,6 +329,7 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/ecdsa/ecs_ossl.o \
 	../crypto/evp/e_aes.o \
 	../crypto/evp/e_des3.o \
+	../crypto/evp/e_null.o \
 	../crypto/evp/m_sha1.o \
 	../crypto/evp/m_dss1.o \
 	../crypto/evp/m_dss.o \
