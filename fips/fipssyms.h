@@ -342,7 +342,7 @@
 #define EVP_des_ede_cfb64 FIPS_evp_des_ede_cfb64
 #define EVP_des_ede_ecb FIPS_evp_des_ede_ecb
 #define EVP_des_ede_ofb FIPS_evp_des_ede_ofb
-#define EVP_null FIPS_evp_null
+#define EVP_enc_null FIPS_evp_enc_null
 #define EVP_sha1 FIPS_evp_sha1
 #define EVP_dss FIPS_evp_dss
 #define EVP_dss1 FIPS_evp_dss1
