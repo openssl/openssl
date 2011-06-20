@@ -187,6 +187,7 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		case EVP_PKEY_CTRL_MD:
 		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1   &&
 		    EVP_MD_type((const EVP_MD *)p2) != NID_dsa    &&
+		    EVP_MD_type((const EVP_MD *)p2) != NID_dsaWithSHA    &&
 		    EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
 		    EVP_MD_type((const EVP_MD *)p2) != NID_sha256)
 			{
