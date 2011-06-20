@@ -98,6 +98,7 @@ const EVP_CIPHER *EVP_des_ede_cbc(void)  { return FIPS_evp_des_ede_cbc(); }
 const EVP_CIPHER *EVP_des_ede_cfb64(void)  { return FIPS_evp_des_ede_cfb64(); }
 const EVP_CIPHER *EVP_des_ede_ecb(void)  { return FIPS_evp_des_ede_ecb(); }
 const EVP_CIPHER *EVP_des_ede_ofb(void)  { return FIPS_evp_des_ede_ofb(); }
+const EVP_CIPHER *EVP_enc_null(void)  { return FIPS_evp_enc_null(); }
 
 const EVP_MD *EVP_sha1(void)  { return FIPS_evp_sha1(); }
 const EVP_MD *EVP_sha224(void)  { return FIPS_evp_sha224(); }
