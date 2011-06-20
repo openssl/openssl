@@ -83,10 +83,12 @@ const ECDSA_METHOD *ECDSA_get_default_method(void)
 		{
 #ifdef OPENSSL_FIPS
 		if (FIPS_mode())
-			default_ECDSA_method = FIPS_ecdsa_openssl();
+			return FIPS_ecdsa_openssl();
 		else
+			return ECDSA_OpenSSL();
+#else
+		default_ECDSA_method = ECDSA_OpenSSL();
 #endif
-			default_ECDSA_method = ECDSA_OpenSSL();
 		}
 	return default_ECDSA_method;
 }

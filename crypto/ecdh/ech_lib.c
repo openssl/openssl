@@ -96,10 +96,12 @@ const ECDH_METHOD *ECDH_get_default_method(void)
 		{
 #ifdef OPENSSL_FIPS
 		if (FIPS_mode())
-			default_ECDH_method = FIPS_ecdh_openssl();
+			return FIPS_ecdh_openssl();
 		else
+			return ECDH_OpenSSL();
+#else
+		default_ECDH_method = ECDH_OpenSSL();
 #endif
-			default_ECDH_method = ECDH_OpenSSL();
 		}
 	return default_ECDH_method;
 	}

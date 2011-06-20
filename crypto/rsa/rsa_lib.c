@@ -91,18 +91,16 @@ const RSA_METHOD *RSA_get_default_method(void)
 	{
 	if (default_RSA_meth == NULL)
 		{
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			return FIPS_rsa_pkcs1_ssleay();
+		else
+			return RSA_PKCS1_SSLeay();
+#else
 #ifdef RSA_NULL
 		default_RSA_meth=RSA_null_method();
 #else
-#if 0 /* was: #ifdef RSAref */
-		default_RSA_meth=RSA_PKCS1_RSAref();
-#else
-#ifdef OPENSSL_FIPS
-		if (FIPS_mode())
-			default_RSA_meth = FIPS_rsa_pkcs1_ssleay();
-		else
-#endif
-			default_RSA_meth=RSA_PKCS1_SSLeay();
+		default_RSA_meth=RSA_PKCS1_SSLeay();
 #endif
 #endif
 		}

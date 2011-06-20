@@ -83,10 +83,12 @@ const DH_METHOD *DH_get_default_method(void)
 		{
 #ifdef OPENSSL_FIPS
 		if (FIPS_mode())
-			default_DH_method = FIPS_dh_openssl();
+			return FIPS_dh_openssl();
 		else
+			return DH_OpenSSL();
+#else
+		default_DH_method = DH_OpenSSL();
 #endif
-			default_DH_method = DH_OpenSSL();
 		}
 	return default_DH_method;
 	}

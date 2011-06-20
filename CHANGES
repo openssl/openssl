@@ -4,6 +4,12 @@
 
  Changes between 1.0.0e and 1.0.1  [xx XXX xxxx]
 
+  *) For FIPS capable OpenSSL interpret a NULL default public key method
+     as unset and return the appopriate default but do *not* set the default.
+     This means we can return the appopriate method in applications that
+     swicth between FIPS and non-FIPS modes.
+     [Steve Henson]
+
   *) Redirect HMAC and CMAC operations to FIPS module in FIPS mode. If an
      ENGINE is used then we cannot handle that in the FIPS module so we
      keep original code iff non-FIPS operations are allowed.
