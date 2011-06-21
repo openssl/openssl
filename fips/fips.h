@@ -266,6 +266,7 @@ const EVP_CIPHER *FIPS_evp_des_ede_cbc(void);
 const EVP_CIPHER *FIPS_evp_des_ede_cfb64(void);
 const EVP_CIPHER *FIPS_evp_des_ede_ecb(void);
 const EVP_CIPHER *FIPS_evp_des_ede_ofb(void);
+const EVP_CIPHER *FIPS_evp_enc_null(void);
 const EVP_MD *FIPS_evp_sha1(void);
 const EVP_MD *FIPS_evp_sha224(void);
 const EVP_MD *FIPS_evp_sha256(void);
