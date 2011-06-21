@@ -108,7 +108,9 @@
 #endif
 
 #ifdef OPENSSL_NO_DYNAMIC_ENGINE
+#ifdef COMPILE_HW_PADLOCK
 static ENGINE *ENGINE_padlock (void);
+#endif
 
 void ENGINE_load_padlock (void)
 {
