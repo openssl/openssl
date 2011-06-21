@@ -78,10 +78,6 @@ static const RAND_METHOD *default_RAND_meth = NULL;
 
 int RAND_set_rand_method(const RAND_METHOD *meth)
 	{
-#ifdef OPENSSL_FIPS
-	if (!FIPS_rand_set_method(meth))
-		return 0;
-#endif
 #ifndef OPENSSL_NO_ENGINE
 	if(funct_ref)
 		{
