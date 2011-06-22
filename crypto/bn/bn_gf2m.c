@@ -545,6 +545,7 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 		{
 		while (!BN_is_odd(u))
 			{
+			if (BN_is_zero(u)) goto err;
 			if (!BN_rshift1(u, u)) goto err;
 			if (BN_is_odd(b))
 				{
