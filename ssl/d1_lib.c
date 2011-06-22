@@ -438,7 +438,7 @@ int dtls1_handle_timeout(SSL *s)
 		{
 		/* fail the connection, enough alerts have been sent */
 		SSLerr(SSL_F_DTLS1_HANDLE_TIMEOUT,SSL_R_READ_TIMEOUT_EXPIRED);
-		return 0;
+		return -1;
 		}
 
 	state->timeout.read_timeouts++;
