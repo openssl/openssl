@@ -139,7 +139,7 @@ int a2d_ASN1_OBJECT(unsigned char *out, int olen, const char *buf, int num)
 				ASN1err(ASN1_F_A2D_ASN1_OBJECT,ASN1_R_INVALID_DIGIT);
 				goto err;
 				}
-			if (!use_bn && l > (ULONG_MAX / 10L))
+			if (!use_bn && l >= (ULONG_MAX / 10L))
 				{
 				use_bn = 1;
 				if (!bl)
