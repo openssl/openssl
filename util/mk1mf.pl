@@ -59,7 +59,7 @@ my %mf_import = (
 	WP_ASM_OBJ     => \$mf_wp_asm,
 	CMLL_ENC       => \$mf_cm_asm,
 	MODES_ASM_OBJ  => \$mf_modes_asm,
-	FIPSCANISTERONLY  => \$mf_fipscanisteronly
+	FIPSCANISTERONLY  => \$mf_fipscanisteronly,
 	FIPSCANISTERINTERNAL  => \$mf_fipscanisterinternal
 );
 
