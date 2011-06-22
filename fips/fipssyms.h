@@ -599,3 +599,4 @@
 #define gcm_gmult_neon fips_gcm_gmult_neon
 #define aesni_xts_decrypt fips_aesni_xts_decrypt
 #define aesni_xts_encrypt fips_aesni_xts_encrypt
+#define OPENSSL_ia32_rdrand fips_openssl_ia32_rdrand
