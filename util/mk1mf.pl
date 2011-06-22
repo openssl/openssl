@@ -60,6 +60,7 @@ my %mf_import = (
 	CMLL_ENC       => \$mf_cm_asm,
 	MODES_ASM_OBJ  => \$mf_modes_asm,
 	FIPSCANISTERONLY  => \$mf_fipscanisteronly
+	FIPSCANISTERINTERNAL  => \$mf_fipscanisterinternal
 );
 
 open(IN,"<Makefile") || die "unable to open Makefile!\n";
@@ -75,7 +76,7 @@ close(IN);
 
 $debug = 1 if $mf_platform =~ /^debug-/;
 
-if ($mf_fipscanisteronly eq "y") {
+if ($mf_fipscanisterinternal eq "y") {
 	$fips = 1;
 	$fipscanisterbuild = 1;
 	$fipscanisteronly = 1;
@@ -1196,7 +1197,7 @@ sub perlasm_compile_target
 	$bname =~ s/(.*)\.[^\.]$/$1/;
 	$ret ="\$(TMP_D)$o$bname.asm: $source\n";
 	$ret.="\t\$(PERL) $source $asmtype \$(CFLAG) >\$\@\n";
-	if ($cflags =~ /-DOPENSSL_FIPSSYMS/)
+	if ($fipscanisteronly)
 		{
 		$ret .= "\t\$(PERL) util\\fipsas.pl . \$@ norunasm \$(CFLAG)\n";
 		}

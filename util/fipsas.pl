@@ -19,7 +19,7 @@ if ($ARGS[0] eq "norunasm")
 
 my $enabled = 0;
 
-$enabled = 1 if $ENV{CFLAG} =~ /-DOPENSSL_FIPSSYMS/;
+$enabled = 1 if $ENV{FIPSCANISTERINTERNAL} eq "y";
 
 if ($enabled == 0 && $runasm)
 	{

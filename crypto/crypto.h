@@ -147,7 +147,7 @@
  * non-FIPS OpenSSL.
  */
 
-#if defined(OPENSSL_FIPSCANISTER) && defined(OPENSSL_FIPSSYMS)
+#if defined(OPENSSL_FIPSCANISTER)
 #include <openssl/fipssyms.h>
 #endif
 

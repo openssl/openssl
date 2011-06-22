@@ -1,3 +1,57 @@
+
+/* Where necessary redirect standard OpenSSL APIs to FIPS versions */
+
+#define CRYPTO_lock FIPS_lock
+#define CRYPTO_add_lock FIPS_add_lock
+#define CRYPTO_malloc FIPS_malloc
+#define CRYPTO_free FIPS_free
+
+#define ERR_put_error FIPS_put_error
+#define ERR_add_error_data FIPS_add_error_data
+
+#define EVP_MD_CTX_init FIPS_md_ctx_init
+#define EVP_MD_CTX_cleanup FIPS_md_ctx_cleanup
+#define EVP_MD_CTX_create FIPS_md_ctx_create
+#define EVP_MD_CTX_destroy FIPS_md_ctx_destroy
+#define EVP_DigestInit_ex(ctx, type, impl) FIPS_digestinit(ctx, type)
+#define EVP_DigestInit FIPS_digestinit
+#define EVP_DigestUpdate FIPS_digestupdate
+#define EVP_Digest(data, count, md, size, type, impl) \
+			FIPS_digest(data, count, md, size, type)
+#define EVP_DigestFinal_ex FIPS_digestfinal
+#define EVP_MD_CTX_copy_ex FIPS_md_ctx_copy
+
+#define EVP_CipherInit_ex(ctx, cipher, impl, key, iv, enc) \
+				FIPS_cipherinit(ctx, cipher, key, iv, enc)
+
+#define EVP_CipherInit FIPS_cipherinit
+
+#define EVP_CIPHER_CTX_init FIPS_cipher_ctx_init
+#define EVP_CIPHER_CTX_cleanup FIPS_cipher_ctx_cleanup
+#define EVP_Cipher FIPS_cipher
+#define EVP_CIPHER_CTX_ctrl FIPS_cipher_ctx_ctrl
+#define EVP_CIPHER_CTX_new FIPS_cipher_ctx_new
+#define EVP_CIPHER_CTX_free FIPS_cipher_ctx_free
+#define EVP_CIPHER_CTX_copy FIPS_cipher_ctx_copy
+#define EVP_CIPHER_CTX_set_key_length FIPS_cipher_ctx_set_key_length
+
+#define DSA_SIG_new FIPS_dsa_sig_new
+#define DSA_SIG_free FIPS_dsa_sig_free
+
+#define ECDSA_SIG_new FIPS_ecdsa_sig_new
+#define ECDSA_SIG_free FIPS_ecdsa_sig_free
+
+#define ecdsa_check fips_ecdsa_check
+#define ecdh_check fips_ecdh_check
+
+#define RAND_bytes FIPS_rand_bytes
+#define RAND_pseudo_bytes FIPS_rand_pseudo_bytes
+#define RAND_add FIPS_rand_add
+#define RAND_seed FIPS_rand_seed
+#define RAND_status FIPS_rand_status
+
+/* Rename symbols so they don't clash with standard OpenSSL */
+
 #define AES_cfb128_encrypt fips_aes_cfb128_encrypt
 #define AES_cfb1_encrypt fips_aes_cfb1_encrypt
 #define AES_cfb8_encrypt fips_aes_cfb8_encrypt

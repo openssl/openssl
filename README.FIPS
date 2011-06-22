@@ -35,23 +35,10 @@ Run test vectors:
 4. It should say "passed all tests" at the end. Report full details of any
    failures.
 
-Run:
-
-make clean
-
-to remove any object modules from previous compile.
-
-Run symbol hiding test:
-
-./config fipscanisteronly -DOPENSSL_FIPSSYMS
-make
-
-This time only the fips utilities should be built.
-
 Examine the external symbols in fips/fipscanister.o they should all begin
 with FIPS or fips. One way to check with GNU nm is:
 
-nm -g --defined-only fips/fipscanister.o | grep -v -i fips
+	nm -g --defined-only fips/fipscanister.o | grep -v -i fips
 
 If you get *any* output at all from this test (i.e. symbols not starting with
 fips or FIPS) please report it.
@@ -76,7 +63,7 @@ Once you've created the tarball extract into a fresh directory and do:
 make
 
 You can then run the algorithm tests as above. This build automatically uses
-fipscanisteronly and -DOPENSSL_FIPSYMS and no-ec2m as appropriate.
+fipscanisterbuild and no-ec2m as appropriate.
 
 FIPS capable OpenSSL test: WARNING PRELIMINARY INSTRUCTIONS, SUBJECT TO CHANGE.
 
