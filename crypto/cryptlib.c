@@ -208,9 +208,6 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 	case DLL_THREAD_ATTACH:
 		break;
 	case DLL_THREAD_DETACH:
-#ifndef OPENSSL_FIPS
-		ERR_remove_state(0);
-#endif
 		break;
 	case DLL_PROCESS_DETACH:
 		break;
