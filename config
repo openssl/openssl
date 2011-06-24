@@ -736,7 +736,7 @@ case "$GUESSOS" in
 	if [ $CC = "gcc" -a $GCC_BITS = "64" ]; then
 	    OUT="hpux64-parisc2-gcc"
 	fi
-	KERNEL_BITS=`(getconf KERNEL_BITS) 2>/dev/null`
+	[ "$KERNEL_BITS" ] || KERNEL_BITS=`(getconf KERNEL_BITS) 2>/dev/null`
 	KERNEL_BITS=${KERNEL_BITS:-32}
 	CPU_VERSION=`(getconf CPU_VERSION) 2>/dev/null`
 	CPU_VERSION=${CPU_VERSION:-0}
@@ -770,7 +770,7 @@ case "$GUESSOS" in
 	options="$options -D_REENTRANT" ;;
   *-hpux)	OUT="hpux-parisc-$CC" ;;
   *-aix)
-	KERNEL_BITS=`(getconf KERNEL_BITMODE) 2>/dev/null`
+	[ "$KERNEL_BITS" ] || KERNEL_BITS=`(getconf KERNEL_BITMODE) 2>/dev/null`
 	KERNEL_BITS=${KERNEL_BITS:-32}
 	OBJECT_MODE=${OBJECT_MODE:-32}
 	if [ "$CC" = "gcc" ]; then
