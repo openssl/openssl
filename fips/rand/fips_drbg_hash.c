@@ -199,9 +199,8 @@ static int hash_gen(DRBG_CTX *dctx, unsigned char *out, size_t outlen)
 			{
 			FIPS_digestfinal(&hctx->mctx, dctx->lb, NULL);
 			dctx->lb_valid = 1;
-			continue;
 			}
-		if (outlen < dctx->blocklength)
+		else if (outlen < dctx->blocklength)
 			{
 			FIPS_digestfinal(&hctx->mctx, hctx->vtmp, NULL);
 			if (!fips_drbg_cprng_test(dctx, hctx->vtmp))
@@ -209,13 +208,16 @@ static int hash_gen(DRBG_CTX *dctx, unsigned char *out, size_t outlen)
 			memcpy(out, hctx->vtmp, outlen);
 			return 1;
 			}
-		FIPS_digestfinal(&hctx->mctx, out, NULL);
-		if (!fips_drbg_cprng_test(dctx, out))
-			return 0;
-		outlen -= dctx->blocklength;
-		if (outlen == 0)
-			return 1;
-		out += dctx->blocklength;
+		else
+			{
+			FIPS_digestfinal(&hctx->mctx, out, NULL);
+			if (!fips_drbg_cprng_test(dctx, out))
+				return 0;
+			outlen -= dctx->blocklength;
+			if (outlen == 0)
+				return 1;
+			out += dctx->blocklength;
+			}
 		ctx_add_buf(dctx, hctx->vtmp, NULL, 0);
 		}
 	}
