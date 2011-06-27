@@ -78,9 +78,9 @@
 
 # February 2011.
 #
-# Add AES_xts_[en|de]crypt. This includes support for z196
-# km-xts-aes instructions, which deliver ~70% improvement at 8KB
-# block size over vanilla km-based code.
+# Add AES_xts_[en|de]crypt. This includes support for z196 km-xts-aes
+# instructions, which deliver ~70% improvement at 8KB block size over
+# vanilla km-based code, 37% - at most like 512-bytes block size.
 
 $flavour = shift;
 
@@ -1579,7 +1579,8 @@ ___
 
 ########################################################################
 # void AES_xts_encrypt(const char *inp,char *out,size_t len,
-#	const AES_KEY *key1, const AES_KEY *key2,u64 secno);
+#	const AES_KEY *key1, const AES_KEY *key2,
+#	const unsigned char iv[16]);
 #
 {
 my $inp="%r2";
@@ -1595,7 +1596,7 @@ $code.=<<___;
 .align	16
 _s390x_xts_km:
 ___
-$code.=<<___ if(0);
+$code.=<<___ if(1);
 	llgfr	$s0,%r0			# put aside the function code
 	lghi	$s1,0x7f
 	nr	$s1,%r0
@@ -1789,9 +1790,10 @@ $code.=<<___ if (!$softonly);
 	sllg	$len,$len,4		# $len&=~15
 	slgr	$out,$inp
 
-	lrvg	$s0,$stdframe($sp)	# load secno
-	lghi	$s1,0
+	# generate the tweak value
+	l${g}	$s3,$stdframe($sp)	# pointer to iv
 	la	$s2,$tweak($sp)
+	lmg	$s0,$s1,0($s3)
 	lghi	$s3,16
 	stmg	$s0,$s1,0($s2)
 	la	%r1,0($key2)		# $key2 is not needed anymore
@@ -1996,12 +1998,11 @@ $code.=<<___ if (!$softonly);
 	slgr	$out,$inp
 
 	# generate the tweak value
-	lrvg	$s0,$stdframe($sp)	# load secno
-	lghi	$s1,0
+	l${g}	$s3,$stdframe($sp)	# pointer to iv
 	la	$s2,$tweak($sp)
+	lmg	$s0,$s1,0($s3)
 	lghi	$s3,16
-	stg	$s0,0($s2)
-	stg	$s1,8($s2)
+	stmg	$s0,$s1,0($s2)
 	la	%r1,0($key2)		# $key2 is not needed past this point
 	.long	0xb92e00aa		# km $s2,$s2, generate the tweak
 	brc	1,.-4			# can this happen?
