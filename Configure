@@ -370,7 +370,7 @@ my %table=(
 # ldconfig and run-time linker to autodiscover. Unfortunately it
 # doesn't work just yet, because of couple of bugs in glibc
 # sysdep/s390/dl-procinfo.c affecting ldconfig and ld.so.1...
-"linux32-s390x",	"gcc:-m31 -Wa,-mzarch -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:s390xcap.o s390xcpuid.o:bn_asm.o s390x-mont.o s390x-gf2m.o::aes_ctr.o aes-s390x.o:::sha1-s390x.o sha256-s390x.o sha512-s390x.o::rc4-s390x.o:::::ghash-s390x.o:31:dlfcn:linux-shared:-fPIC:-m31:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/highgprs",
+"linux32-s390x",	"gcc:-m31 -Wa,-mzarch -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:".($s390x_asm=~s/bn\-s390x\.o/bn_asm.o/,$s390x_asm).":31:dlfcn:linux-shared:-fPIC:-m31:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/highgprs",
 #### SPARC Linux setups
 # Ray Miller <ray.miller@computing-services.oxford.ac.uk> has patiently
 # assisted with debugging of following two configs.
