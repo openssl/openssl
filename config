@@ -759,14 +759,11 @@ case "$GUESSOS" in
 	CPU_VERSION=${CPU_VERSION:-0}
 	# See <sys/unistd.h> for further info on CPU_VERSION.
 	if   [ $CPU_VERSION -ge 768 ]; then	# IA-64 CPU
-	     echo "WARNING! 64-bit ABI is the default configured ABI on HP-UXi."
-	     echo "         If you wish to build 32-bit library, the you have to"
-	     echo "         invoke './Configure hpux-ia64-cc' *manually*."
-	     if [ "$TEST" = "false" -a -t 1 ]; then
-		echo "         You have about 5 seconds to press Ctrl-C to abort."
-		(trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
-	     fi
-	     OUT="hpux64-ia64-cc"
+	     if [ $KERNEL_BITS -eq 64 -a "$CC" = "cc" ]; then
+	        OUT="hpux64-ia64-cc"
+             else
+	        OUT="hpux-ia64-cc"
+             fi
 	elif [ $CPU_VERSION -ge 532 ]; then	# PA-RISC 2.x CPU
 	     OUT=${OUT:-"hpux-parisc2-${CC}"}
 	     if [ $KERNEL_BITS -eq 64 -a "$CC" = "cc" ]; then
