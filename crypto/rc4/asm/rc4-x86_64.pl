@@ -86,14 +86,17 @@
 # is better) and improvement coefficients relative to previous
 # version of this module are:
 #
-# Opteron	5.3/+0%
+# Opteron	5.3/+0%(*)
 # P4		6.5
-# Core2		6.2/+15%(*)
+# Core2		6.2/+15%(**)
 # Westmere	4.2/+60%
 # Sandy Bridge	4.2/+120%
 # Atom		9.3/+80%
 #
-# (*)	Note that Core2 result is ~15% lower than corresponding result
+# (*)	But corresponding loop has less instructions, which should have
+#	positive effect on upcoming Bulldozer, which has one less ALU.
+#	For reference, Intel code runs at 6.8 cpb rate on Opteron.
+# (**)	Note that Core2 result is ~15% lower than corresponding result
 #	for 32-bit code, meaning that it's possible to improve it,
 #	but more than likely at the cost of the others (see rc4-586.pl
 #	to get the idea)...
