@@ -3018,15 +3018,13 @@ ___
 }
 
 sub rex {
- local *opcode=shift;
- my ($dst,$src)=@_;
+  local *opcode=shift;
+  my ($dst,$src)=@_;
+  my $rex=0;
 
-   if ($dst>=8 || $src>=8) {
-	$rex=0x40;
-	$rex|=0x04 if($dst>=8);
-	$rex|=0x01 if($src>=8);
-	push @opcode,$rex;
-   }
+    $rex|=0x04			if($dst>=8);
+    $rex|=0x01			if($src>=8);
+    push @opcode,$rex|0x40	if($rex);
 }
 
 sub aesni {

@@ -123,6 +123,8 @@ my %globals;
 		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /^p/ && $' !~ /^(ush|op|insrw)/) { # SSEn
 		$self->{sz} = "";
+	    } elsif ($self->{op} =~ /^v/) { # VEX
+		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /movq/ && $line =~ /%xmm/) {
 		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /([a-z]{3,})([qlwb])$/) {
