@@ -31,7 +31,8 @@
 # May 2011
 #
 # Optimize for Core2 and Westmere [and incidentally Opteron]. Current
-# performance in cycles per processed byte (less is better) is:
+# performance in cycles per processed byte (less is better) and
+# improvement relative to previous version of this module is:
 #
 # Pentium	10.2			# original numbers
 # Pentium III	7.8(*)
@@ -41,6 +42,7 @@
 # Core2		5.3/+67%(**)
 # Westmere	5.1/+94%(**)
 # Sandy Bridge	5.0/+8%
+# Atom		12.6/+6%
 #
 # (*)	PIII can actually deliver 6.6 cycles per byte with MMX code,
 #	but this specific code performs poorly on Core2. And vice
