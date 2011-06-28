@@ -62,10 +62,10 @@ typedef unsigned int u32;
 typedef unsigned char u8;
 
 #define STRICT_ALIGNMENT
-#if defined(__i386)	|| defined(__i386__)	|| \
-    defined(__x86_64)	|| defined(__x86_64__)	|| \
-    defined(_M_IX86)	|| defined(_M_AMD64)	|| defined(_M_X64) || \
-    defined(__s390__)	|| defined(__s390x__)
+#if defined(__i386)    || defined(__i386__)    || \
+    defined(__x86_64)  || defined(__x86_64__)  || \
+    defined(_M_IX86)   || defined(_M_AMD64)    || defined(_M_X64) || \
+    defined(__s390__)  || defined(__s390x__)
 #  undef STRICT_ALIGNMENT
 #endif
 
@@ -178,6 +178,87 @@ void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 		out[l] = in[l] ^ ecount_buf[n];
 		++l;
 		n = (n+1) % 16;
+	}
+
+	*num=n;
+}
+
+#define GETU32(p)	((u32)(p)[0]<<24|(u32)(p)[1]<<16|(u32)(p)[2]<<8|(u32)(p)[3])
+#define PUTU32(p,v)	((p)[0]=(u8)((v)>>24),(p)[1]=(u8)((v)>>16),(p)[2]=(u8)((v)>>8),(p)[3]=(u8)(v))
+
+/* increment upper 96 bits of 128-bit counter by 1 */
+static void ctr96_inc(unsigned char *counter) {
+	u32 n=12;
+	u8  c;
+
+	do {
+		--n;
+		c = counter[n];
+		++c;
+		counter[n] = c;
+		if (c) return;
+	} while (n);
+}
+
+void CRYPTO_ctr128_encrypt_ctr32(const unsigned char *in, unsigned char *out,
+			size_t len, const void *key,
+			unsigned char ivec[16], unsigned char ecount_buf[16],
+			unsigned int *num, ctr128_f func)
+{
+	unsigned int n,ctr32;
+
+	assert(in && out && key && ecount_buf && num);
+	assert(*num < 16);
+
+	n = *num;
+
+	while (n && len) {
+		*(out++) = *(in++) ^ ecount_buf[n];
+		--len;
+		n = (n+1) % 16;
+	}
+
+	ctr32 = GETU32(ivec+12);
+	while (len>=16) {
+		size_t blocks = len/16;
+		/*
+		 * 1<<28 is just a not-so-small yet not-so-large number...
+		 * Below condition is practically never met, but it has to
+		 * be checked for code correctness.
+		 */
+		if (sizeof(size_t)>sizeof(unsigned int) && blocks>(1U<<28))
+			blocks = (1U<<28);
+		/*
+		 * As (*func) operates on 32-bit counter, caller
+		 * has to handle overflow. 'if' below detects the
+		 * overflow, which is then handled by limiting the
+		 * amount of blocks to the exact overflow point...
+		 */
+		ctr32 += (u32)blocks;
+		if (ctr32 < blocks) {
+			blocks -= ctr32;
+			ctr32   = 0;
+		}
+		(*func)(in,out,blocks,key,ivec);
+		/* (*ctr) does not update ivec, caller does: */
+		PUTU32(ivec+12,ctr32);
+		/* ... overflow was detected, propogate carry. */
+		if (ctr32 == 0)	ctr96_inc(ivec);
+		blocks *= 16;
+		len -= blocks;
+		out += blocks;
+		in  += blocks;
+	}
+	if (len) {
+		memset(ecount_buf,0,16);
+		(*func)(ecount_buf,ecount_buf,1,key,ivec);
+		++ctr32;
+		PUTU32(ivec+12,ctr32);
+		if (ctr32 == 0)	ctr96_inc(ivec);
+		while (len--) {
+			out[n] = in[n] ^ ecount_buf[n];
+			++n;
+		}
 	}
 
 	*num=n;
