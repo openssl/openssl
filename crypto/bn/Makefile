@@ -91,8 +91,8 @@ mips-mont.s:	asm/mips-mont.pl
 
 bn-s390x.o:	asm/s390x.S
 	$(CC) $(CFLAGS) -c -o $@ asm/s390x.S
-s390x-gf2m.s:	asm/s390x-gfm2.pl
-	$(PERL) asm/s390x-gfm2.pl $(PERLASM_SCHEME) $@
+s390x-gf2m.s:	asm/s390x-gf2m.pl
+	$(PERL) asm/s390x-gf2m.pl $(PERLASM_SCHEME) $@
 
 x86_64-gcc.o:	asm/x86_64-gcc.c
 	$(CC) $(CFLAGS) -c -o $@ asm/x86_64-gcc.c
