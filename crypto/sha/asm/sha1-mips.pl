@@ -59,7 +59,6 @@ if ($flavour =~ /64|n32/i) {
 	$PTR_SLL="sll";
 	$SZREG=4;
 }
-$SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0x00fff008 : 0x00ff0000;
 #
 # <appro@openssl.org>
 #
@@ -77,11 +76,11 @@ if (!defined($big_endian))
 $MSB=$big_endian?0:3;
 $LSB=3&~$MSB;
 
-@X=(	"\$8",	"\$9",	"\$10",	"\$11",	"\$12",	"\$13",	"\$14",	"\$15",
-	"\$16",	"\$17",	"\$18",	"\$19",	"\$20",	"\$21",	"\$22",	"\$23");
-$ctx="\$4";	# a0
-$inp="\$5";	# a1
-$num="\$6";	# a2
+@X=map("\$$_",(8..23));	# a4-a7,s0-s11
+
+$ctx=$a0;
+$inp=$a1;
+$num=$a2;
 $A="\$1";
 $B="\$2";
 $C="\$3";
@@ -91,8 +90,6 @@ $t0="\$25";
 $t1=$num;	# $num is offloaded to stack
 $t2="\$30";	# fp
 $K="\$31";	# ra
-
-$FRAMESIZE=16;
 
 sub BODY_00_14 {
 my ($i,$a,$b,$c,$d,$e)=@_;
@@ -105,8 +102,8 @@ $code.=<<___	if (!$big_endian);
 	andi	$t1,0xFF00
 	sll	$t2,$t2,8
 	or	@X[$i],$t0
+	or	$t1,$t2
 	or	@X[$i],$t1
-	or	@X[$i],$t2
 ___
 $code.=<<___;
 	 lwl	@X[$j],$j*4+$MSB($inp)
@@ -236,6 +233,9 @@ $code.=<<___ if ($i<79);
 ___
 }
 
+$FRAMESIZE=16;	# large enough to accomodate NUBI saved registers
+$SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0xc0fff008 : 0xc0ff0000;
+
 $code=<<___;
 .text
 
@@ -246,7 +246,7 @@ $code=<<___;
 .ent	sha1_block_data_order
 sha1_block_data_order:
 	.frame	$sp,$FRAMESIZE*$SZREG,$ra
-	.mask	0xd0000000|$SAVED_REGS_MASK,-$SZREG
+	.mask	$SAVED_REGS_MASK,-$SZREG
 	.set	noreorder
 	$PTR_SUB $sp,$FRAMESIZE*$SZREG
 	$REG_S	$ra,($FRAMESIZE-1)*$SZREG($sp)
@@ -260,7 +260,7 @@ sha1_block_data_order:
 	$REG_S	$s5,($FRAMESIZE-9)*$SZREG($sp)
 	$REG_S	$s4,($FRAMESIZE-10)*$SZREG($sp)
 ___
-$code.=<<___ if ($flavour =~ /nubi/i);
+$code.=<<___ if ($flavour =~ /nubi/i);	# optimize non-nubi prologue
 	$REG_S	$s3,($FRAMESIZE-11)*$SZREG($sp)
 	$REG_S	$s2,($FRAMESIZE-12)*$SZREG($sp)
 	$REG_S	$s1,($FRAMESIZE-13)*$SZREG($sp)

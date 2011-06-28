@@ -314,12 +314,15 @@ for (;$i<32;$i++)
 $code.=<<___;
 	and	@X[6],0xfff
 	li	@X[7],$lastK
-	$PTR_ADD $Ktbl,16*$SZ		# Ktbl+=16
+	.set	noreorder
 	bne	@X[6],@X[7],.L16_xx
+	$PTR_ADD $Ktbl,16*$SZ		# Ktbl+=16
 
+	$REG_L	@X[15],16*$SZ($sp)	# restore pointer to the end of input
 	$LD	@X[0],0*$SZ($ctx)
 	$LD	@X[1],1*$SZ($ctx)
 	$LD	@X[2],2*$SZ($ctx)
+	$PTR_ADD $inp,16*$SZ
 	$LD	@X[3],3*$SZ($ctx)
 	$ADDU	$A,@X[0]
 	$LD	@X[4],4*$SZ($ctx)
@@ -337,17 +340,14 @@ $code.=<<___;
 	$ST	$C,2*$SZ($ctx)
 	$ADDU	$H,@X[7]
 	$ST	$D,3*$SZ($ctx)
-	$PTR_ADD $inp,16*$SZ
 	$ST	$E,4*$SZ($ctx)
-	$REG_L	@X[15],16*$SZ($sp)	# restore pointer to the end of input
 	$ST	$F,5*$SZ($ctx)
 	$ST	$G,6*$SZ($ctx)
 	$ST	$H,7*$SZ($ctx)
 
+	bnel	$inp,@X[15],.Loop
 	$PTR_SUB $Ktbl,`($rounds-16)*$SZ`	# rewind $Ktbl
-	bne	$inp,@X[15],.Loop
 
-	.set	noreorder
 	$REG_L	$ra,$FRAMESIZE-1*$SZREG($sp)
 	$REG_L	$fp,$FRAMESIZE-2*$SZREG($sp)
 	$REG_L	$s11,$FRAMESIZE-3*$SZREG($sp)
