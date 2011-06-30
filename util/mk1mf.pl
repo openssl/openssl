@@ -1375,6 +1375,7 @@ sub read_options
 		"fips" => \$fips,
 		"fipscanisterbuild" => [\$fips, \$fipscanisterbuild],
 		"fipscanisteronly" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],
+		"fipscheck" => [\$fips, \$fipscanisterbuild, \$fipscanisteronly],
 		);
 
 	if (exists $valid_options{$_})

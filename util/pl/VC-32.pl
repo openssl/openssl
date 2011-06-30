@@ -64,6 +64,10 @@ if ($FLAVOR =~ /WIN64/)
 \$(TMP_D)$o$bname.asm: $source
 	set ASM=\$(ASM)
 	\$(PERL) $source \$\@
+___
+	$ret .= "\t\$(PERL) util\\fipsas.pl . \$@ norunasm \$(CFLAG)\n" if $fipscanisterbuild;
+
+	$ret.=<<___;
 
 $target: \$(TMP_D)$o$bname.asm
 	\$(ASM) $afile\$\@ \$(TMP_D)$o$bname.asm
