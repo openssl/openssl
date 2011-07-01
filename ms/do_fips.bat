@@ -1,6 +1,7 @@
 @echo off
 
 SET ASM=%1
+SET EXARG=
 
 if NOT X%PROCESSOR_ARCHITECTURE% == X goto defined 
 
