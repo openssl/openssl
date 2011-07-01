@@ -2766,13 +2766,13 @@ cbc_se_handler:
 	.rva	.LSEH_end_AES_decrypt
 	.rva	.LSEH_info_AES_decrypt
 
-	.rva	.LSEH_begin_AES_set_encrypt_key
-	.rva	.LSEH_end_AES_set_encrypt_key
-	.rva	.LSEH_info_AES_set_encrypt_key
+	.rva	.LSEH_begin_private_AES_set_encrypt_key
+	.rva	.LSEH_end_private_AES_set_encrypt_key
+	.rva	.LSEH_info_private_AES_set_encrypt_key
 
-	.rva	.LSEH_begin_AES_set_decrypt_key
-	.rva	.LSEH_end_AES_set_decrypt_key
-	.rva	.LSEH_info_AES_set_decrypt_key
+	.rva	.LSEH_begin_private_AES_set_decrypt_key
+	.rva	.LSEH_end_private_AES_set_decrypt_key
+	.rva	.LSEH_info_private_AES_set_decrypt_key
 
 	.rva	.LSEH_begin_AES_cbc_encrypt
 	.rva	.LSEH_end_AES_cbc_encrypt
@@ -2788,11 +2788,11 @@ cbc_se_handler:
 	.byte	9,0,0,0
 	.rva	block_se_handler
 	.rva	.Ldec_prologue,.Ldec_epilogue	# HandlerData[]
-.LSEH_info_AES_set_encrypt_key:
+.LSEH_info_private_AES_set_encrypt_key:
 	.byte	9,0,0,0
 	.rva	key_se_handler
 	.rva	.Lenc_key_prologue,.Lenc_key_epilogue	# HandlerData[]
-.LSEH_info_AES_set_decrypt_key:
+.LSEH_info_private_AES_set_decrypt_key:
 	.byte	9,0,0,0
 	.rva	key_se_handler
 	.rva	.Ldec_key_prologue,.Ldec_key_epilogue	# HandlerData[]
