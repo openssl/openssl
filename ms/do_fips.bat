@@ -43,7 +43,8 @@ SET ASM=nasm
 
 :compile
 
-perl Configure %TARGET% fipscheck
+if x%ASM% == xno-asm SET EXARG=no-asm
+perl Configure %TARGET% %EXARG% fipscheck
 pause
 
 echo on
