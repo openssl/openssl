@@ -75,9 +75,12 @@ die "can't locate x86_64-xlate.pl";
 $avx=1 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
 	   $1>=2.19);
-$avx=1 if (!$avx && $flavour =~ /nasm/ &&
+$avx=1 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
 	   $1>=2.03);
+$avx=1 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
+	   `ml64 2>&1` =~ /Version ([0-9]+)\./ &&
+	   $1>=10);
 
 open STDOUT,"| $^X $xlate $flavour $output";
 
@@ -697,7 +700,7 @@ $code.=<<___ if ($win64);
 	movaps	64+64(%rsp),%xmm10
 ___
 $code.=<<___;
-	lea	`64+($win64?6*16:0)`(%rsp),%rsi
+	lea	`64+($win64?5*16:0)`(%rsp),%rsi
 	mov	0(%rsi),%r12
 	mov	8(%rsi),%rbp
 	mov	16(%rsi),%rbx
@@ -1055,7 +1058,7 @@ $code.=<<___ if ($win64);
 	movaps	64+64(%rsp),%xmm10
 ___
 $code.=<<___;
-	lea	`64+($win64?6*16:0)`(%rsp),%rsi
+	lea	`64+($win64?5*16:0)`(%rsp),%rsi
 	mov	0(%rsi),%r12
 	mov	8(%rsi),%rbp
 	mov	16(%rsi),%rbx
@@ -1168,12 +1171,14 @@ ssse3_handler:
 	lea	512($context),%rdi	# &context.Xmm6
 	mov	\$10,%ecx
 	.long	0xa548f3fc		# cld; rep movsq
-	lea	24+5*16(%rax),%rax	# adjust stack pointer
+	lea	`24+64+5*16`(%rax),%rax	# adjust stack pointer
 
 	mov	-8(%rax),%rbx
 	mov	-16(%rax),%rbp
+	mov	-24(%rax),%r12
 	mov	%rbx,144($context)	# restore context->Rbx
 	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore cotnext->R12
 
 .Lcommon_seh_tail:
 	mov	8(%rax),%rdi
