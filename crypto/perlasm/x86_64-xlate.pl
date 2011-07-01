@@ -274,7 +274,7 @@ my %globals;
 	    $self->{label} =~ s/\./\$/g;
 	    $self->{label} =~ s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
-	    $sz="q" if ($self->{asterisk});
+	    $sz="q" if ($self->{asterisk} || opcode->mnemonic() eq "movq");
 
 	    if (defined($self->{index})) {
 		sprintf "%s[%s%s*%d%s]",$szmap{$sz},
@@ -630,7 +630,7 @@ my %globals;
 					$v.="common	$prefix@str[0] @str[1]";
 				    } else {
 					$v="$current_segment\tENDS\n" if ($current_segment);
-					$current_segment = ".data";
+					$current_segment = "_DATA";
 					$v.="$current_segment\tSEGMENT\n";
 					$v.="COMM	@str[0]:DWORD:".@str[1]/4;
 				    }
