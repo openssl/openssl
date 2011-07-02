@@ -49,11 +49,11 @@ while (<IN>)
 my ($from, $to);
 
 #rename target temporarily
-rename($target, "tmptarg.s") || die "Can't rename $target\n";
+rename($target, "tmptarg.s") || die "Can't rename $target";
 
 #edit target
-open IN,"tmptarg.s";
-open OUT, ">$target";
+open(IN,"tmptarg.s") || die "Can't open temporary file";
+open(OUT, ">$target") || die "Can't open output file $target";
 
 while (<IN>)
 {
