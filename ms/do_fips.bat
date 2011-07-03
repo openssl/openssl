@@ -56,7 +56,6 @@ perl util\mk1mf.pl dll %ASM% %TARGET% >ms\ntdll.mak
 @if ERRORLEVEL 1 goto error
 
 nmake -f ms\ntdll.mak clean
-@if ERRORLEVEL 1 goto error
 nmake -f ms\ntdll.mak
 @if ERRORLEVEL 1 goto error
 nmake -f ms\ntdll.mak install
