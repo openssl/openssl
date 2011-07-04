@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add functions FIPS_module_version() and FIPS_module_version_text()
+     to return numberical and string versions of the FIPS module number.
+     [Steve Henson]
+
   *) Rename FIPS_mode_set and FIPS_mode to FIPS_module_mode_set and
      FIPS_module_mode. FIPS_mode and FIPS_mode_set will be implmeneted
      outside the validated module in the FIPS capable OpenSSL.

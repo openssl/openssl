@@ -365,6 +365,16 @@ unsigned char *fips_signature_witness(void)
 	return FIPS_signature;
 	}
 
+unsigned long FIPS_module_version(void)
+	{
+	return FIPS_MODULE_VERSION_NUMBER;
+	}
+
+const char *FIPS_module_version_text(void)
+	{
+	return FIPS_MODULE_VERSION_TEXT;
+	}
+
 #if 0
 /* The purpose of this is to ensure the error code exists and the function
  * name is to keep the error checking script quiet

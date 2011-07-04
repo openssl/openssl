@@ -874,7 +874,9 @@ int main(int argc,char **argv)
 
     FIPS_post_set_callback(post_cb);
 
-    printf("\tFIPS-mode test application\n\n");
+    printf("\tFIPS-mode test application\n");
+
+    printf("\t%s\n\n", FIPS_module_version_text());
 
     if (argv[1]) {
         /* Corrupted KAT tests */

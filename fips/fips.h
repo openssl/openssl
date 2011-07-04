@@ -78,6 +78,9 @@ struct dh_method;
 struct CMAC_CTX_st;
 struct hmac_ctx_st;
 
+unsigned long FIPS_module_version(void);
+const char *FIPS_module_version_text(void);
+
 int FIPS_module_mode_set(int onoff);
 int FIPS_module_mode(void);
 const void *FIPS_rand_check(void);
