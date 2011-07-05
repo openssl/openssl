@@ -621,6 +621,7 @@
 #define bn_mul_comba4 fips_bn_mul_comba4
 #define bn_mul_comba8 fips_bn_mul_comba8
 #define bn_mul_mont fips_bn_mul_mont
+#define bn_sqr_mont fips_bn_sqr_mont
 #define bn_mul_mont_fpu64 fips_bn_mul_mont_fpu64
 #define bn_mul_mont_int fips_bn_mul_mont_int
 #define bn_mul_words fips_bn_mul_words
