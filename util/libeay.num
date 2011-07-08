@@ -4253,3 +4253,4 @@ CMAC_Update                             4623	EXIST::FUNCTION:
 CMAC_resume                             4624	EXIST::FUNCTION:
 CMAC_CTX_new                            4625	EXIST::FUNCTION:
 CMAC_Final                              4626	EXIST::FUNCTION:
+CRYPTO_ctr128_encrypt_ctr32             4627	EXIST::FUNCTION:
