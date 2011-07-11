@@ -369,7 +369,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 		{
 		if (s->s3->tmp.new_cipher->algorithm2 & TLS1_STREAM_MAC)
 			s->mac_flags |= SSL_MAC_FLAG_READ_MAC_STREAM;
-			else
+		else
 			s->mac_flags &= ~SSL_MAC_FLAG_READ_MAC_STREAM;
 
 		if (s->enc_read_ctx != NULL)
@@ -485,10 +485,14 @@ int tls1_change_cipher_state(SSL *s, int which)
 		}
 
 	memcpy(mac_secret,ms,i);
-	mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
-			mac_secret,*mac_secret_size);
-	EVP_DigestSignInit(mac_ctx,NULL,m,NULL,mac_key);
-	EVP_PKEY_free(mac_key);
+
+	if (!(EVP_CIPHER_flags(c)&EVP_CIPH_FLAG_AEAD_CIPHER))
+		{
+		mac_key = EVP_PKEY_new_mac_key(mac_type, NULL,
+				mac_secret,*mac_secret_size);
+		EVP_DigestSignInit(mac_ctx,NULL,m,NULL,mac_key);
+		EVP_PKEY_free(mac_key);
+		}
 #ifdef TLS_DEBUG
 printf("which = %04X\nmac key=",which);
 { int z; for (z=0; z<i; z++) printf("%02X%c",ms[z],((z+1)%16)?' ':'\n'); }
@@ -536,6 +540,12 @@ printf("which = %04X\nmac key=",which);
 #endif	/* KSSL_DEBUG */
 
 	EVP_CipherInit_ex(dd,c,NULL,key,iv,(which & SSL3_CC_WRITE));
+
+	/* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
+	if ((EVP_CIPHER_flags(c)&EVP_CIPH_FLAG_AEAD_CIPHER) && *mac_secret_size)
+		EVP_CIPHER_CTX_ctrl(dd,EVP_CTRL_AEAD_SET_MAC_KEY,
+				*mac_secret_size,mac_secret);
+
 #ifdef TLS_DEBUG
 printf("which = %04X\nkey=",which);
 { int z; for (z=0; z<EVP_CIPHER_key_length(c); z++) printf("%02X%c",key[z],((z+1)%16)?' ':'\n'); }
@@ -652,14 +662,14 @@ int tls1_enc(SSL *s, int send)
 	SSL3_RECORD *rec;
 	EVP_CIPHER_CTX *ds;
 	unsigned long l;
-	int bs,i,ii,j,k,n=0;
+	int bs,i,ii,j,k,pad=0;
 	const EVP_CIPHER *enc;
 
 	if (send)
 		{
 		if (EVP_MD_CTX_md(s->write_hash))
 			{
-			n=EVP_MD_CTX_size(s->write_hash);
+			int n=EVP_MD_CTX_size(s->write_hash);
 			OPENSSL_assert(n >= 0);
 			}
 		ds=s->enc_write_ctx;
@@ -679,12 +689,12 @@ int tls1_enc(SSL *s, int send)
 			if (ivlen > 1)
 				{
 				if ( rec->data != rec->input)
-				/* we can't write into the input stream:
-				 * Can this ever happen?? (steve)
-				 */
-				fprintf(stderr,
-					"%s:%d: rec->data != rec->input\n",
-					__FILE__, __LINE__);
+					/* we can't write into the input stream:
+					 * Can this ever happen?? (steve)
+					 */
+					fprintf(stderr,
+						"%s:%d: rec->data != rec->input\n",
+						__FILE__, __LINE__);
 				else if (RAND_bytes(rec->input, ivlen) <= 0)
 					return -1;
 				}
@@ -694,7 +704,7 @@ int tls1_enc(SSL *s, int send)
 		{
 		if (EVP_MD_CTX_md(s->read_hash))
 			{
-			n=EVP_MD_CTX_size(s->read_hash);
+			int n=EVP_MD_CTX_size(s->read_hash);
 			OPENSSL_assert(n >= 0);
 			}
 		ds=s->enc_read_ctx;
@@ -720,7 +730,43 @@ int tls1_enc(SSL *s, int send)
 		l=rec->length;
 		bs=EVP_CIPHER_block_size(ds->cipher);
 
-		if ((bs != 1) && send)
+		if (EVP_CIPHER_flags(ds->cipher)&EVP_CIPH_FLAG_AEAD_CIPHER)
+			{
+			unsigned char buf[13],*seq;
+
+			seq = send?s->s3->write_sequence:s->s3->read_sequence;
+
+			if (s->version == DTLS1_VERSION || s->version == DTLS1_BAD_VER)
+				{
+				unsigned char dtlsseq[9],*p=dtlsseq;
+
+				s2n(send?s->d1->w_epoch:s->d1->r_epoch,p);
+				memcpy(p,&seq[2],6);
+				memcpy(buf,dtlsseq,8);
+				}
+			else
+				{
+				memcpy(buf,seq,8);
+				for (i=7; i>=0; i--)	/* increment */
+					{
+					++seq[i];
+					if (seq[i] != 0) break; 
+					}
+				}
+
+			buf[8]=rec->type;
+			buf[9]=(unsigned char)(s->version>>8);
+			buf[10]=(unsigned char)(s->version);
+			buf[11]=rec->length>>8;
+			buf[12]=rec->length&0xff;
+			pad=EVP_CIPHER_CTX_ctrl(ds,EVP_CTRL_AEAD_TLS1_AAD,13,buf);
+			if (send)
+				{
+				l+=pad;
+				rec->length+=pad;
+				}
+			}
+		else if ((bs != 1) && send)
 			{
 			i=bs-((int)l%bs);
 
@@ -769,7 +815,8 @@ int tls1_enc(SSL *s, int send)
 				}
 			}
 		
-		EVP_Cipher(ds,rec->data,rec->input,l);
+		if (!EVP_Cipher(ds,rec->data,rec->input,l))
+			return -1;	/* AEAD can fail to verify MAC */
 
 #ifdef KSSL_DEBUG
 		{
@@ -828,6 +875,8 @@ int tls1_enc(SSL *s, int send)
 				rec->length -= bs;
 				}
 			}
+		if (pad && !send)
+			rec->length -= pad;
 		}
 	return(1);
 	}
