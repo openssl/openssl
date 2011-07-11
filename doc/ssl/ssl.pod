@@ -158,7 +158,7 @@ Constructor for the SSLv3 SSL_METHOD structure for combined client and server.
 
 Constructor for the TLSv1 SSL_METHOD structure for a dedicated client.
 
-=item cosnt SSL_METHOD *B<TLSv1_server_method>(void);
+=item const SSL_METHOD *B<TLSv1_server_method>(void);
 
 Constructor for the TLSv1 SSL_METHOD structure for a dedicated server.
 
