@@ -583,8 +583,29 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		if (mac_secret_size!=NULL) *mac_secret_size = ssl_mac_secret_size[i];
 	}	
 
-	if ((*enc != NULL) && (*md != NULL) && (!mac_pkey_type||*mac_pkey_type != NID_undef))
+	if ((*enc != NULL) &&
+	    (*md != NULL || (EVP_CIPHER_flags(*enc)&EVP_CIPH_FLAG_AEAD_CIPHER)) &&
+	    (!mac_pkey_type||*mac_pkey_type != NID_undef))
+		{
+		const EVP_CIPHER *evp;
+
+		if	(s->ssl_version >= TLS1_VERSION &&
+			 c->algorithm_enc == SSL_RC4 &&
+			 c->algorithm_mac == SSL_MD5 &&
+			 (evp=EVP_get_cipherbyname("RC4-HMAC-MD5")))
+			*enc = evp, *md = NULL;
+		else if (s->ssl_version >= TLS1_VERSION &&
+			 c->algorithm_enc == SSL_AES128 &&
+			 c->algorithm_mac == SSL_SHA1 &&
+			 (evp=EVP_get_cipherbyname("AES-128-CBC-HMAC-SHA1")))
+			*enc = evp, *md = NULL;
+		else if (s->ssl_version >= TLS1_VERSION &&
+			 c->algorithm_enc == SSL_AES256 &&
+			 c->algorithm_mac == SSL_SHA1 &&
+			 (evp=EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA1")))
+			*enc = evp, *md = NULL;
 		return(1);
+		}
 	else
 		return(0);
 	}
