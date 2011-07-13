@@ -101,13 +101,16 @@ fipscanister.o: fips_start.o $(LIBOBJ) $(FIPS_OBJ_LISTS) fips_end.o
 	done; \
 	objs="$$objs fips_end.o" ; \
 	os="`(uname -s) 2>/dev/null`"; cflags="$(CFLAGS)"; \
-	[ "$$os" = "AIX" ] && cflags="$$cflags -Wl,-bnoobjreorder"; \
+	case "$$os" in \
+		AIX)	cflags="$$cflags -Wl,-bnoobjreorder" ;; \
+		HP-UX)	cflags="$$cflags -Wl,+sectionmerge"  ;; \
+	esac; \
 	if [ -n "${FIPS_SITE_LD}" ]; then \
 		set -x; ${FIPS_SITE_LD} -r -o $@ $$objs; \
 	elif $(CC) -dumpversion >/dev/null 2>&1; then \
 		set -x; $(CC) $$cflags -r -nostdlib -o $@ $$objs ; \
 	else case "$$os" in \
-		HP-UX|OSF1|SunOS) set -x; /usr/ccs/bin/ld -r -o $@ $$objs ;; \
+		OSF1|SunOS) set -x; /usr/ccs/bin/ld -r -o $@ $$objs ;; \
 		*) set -x; $(CC) $$cflags -r -o $@ $$objs ;; \
 	esac fi
 	./fips_standalone_sha1$(EXE_EXT) fipscanister.o > fipscanister.o.sha1
