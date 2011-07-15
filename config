@@ -825,6 +825,10 @@ esac
 #  options="$options -DATALLA"
 #fi
 
+($CC -Wa,--help -c -o /dev/null -x assembler /dev/null 2>&1 | \
+ grep \\--noexecstack) 2>&1 > /dev/null && \
+  options="$options -Wa,--noexecstack"
+
 # gcc < 2.8 does not support -march=ultrasparc
 if [ "$OUT" = solaris-sparcv9-gcc -a $GCCVER -lt 28 ]
 then
