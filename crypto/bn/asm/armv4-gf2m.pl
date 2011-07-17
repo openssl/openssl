@@ -264,12 +264,12 @@ $code.=<<___;
 #if __ARM_ARCH__>=7
 .align	5
 .LOPENSSL_armcap:
-.word	OPENSSL_armcap-(.Lpic+8)
+.word	OPENSSL_armcap_P-(.Lpic+8)
 #endif
-.asciz	"GF2m Multiplication for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
+.asciz	"GF(2^m) Multiplication for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align	5
 
-.comm	OPENSSL_armcap,4,4
+.comm	OPENSSL_armcap_P,4,4
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

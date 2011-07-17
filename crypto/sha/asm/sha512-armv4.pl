@@ -221,7 +221,7 @@ WORD64(0x4cc5d4be,0xcb3e42b6, 0x597f299c,0xfc657e2a)
 WORD64(0x5fcb6fab,0x3ad6faec, 0x6c44198c,0x4a475817)
 .size	K512,.-K512
 .LOPENSSL_armcap:
-.word	OPENSSL_armcap-sha512_block_data_order
+.word	OPENSSL_armcap_P-sha512_block_data_order
 .skip	32-4
 
 .global	sha512_block_data_order
@@ -231,7 +231,7 @@ sha512_block_data_order:
 	add	$len,$inp,$len,lsl#7	@ len to point at the end of inp
 #if __ARM_ARCH__>=7
 	ldr	r12,.LOPENSSL_armcap
-	ldr	r12,[r3,r12]		@ OPENSSL_armcap
+	ldr	r12,[r3,r12]		@ OPENSSL_armcap_P
 	tst	r12,#1
 	bne	.LNEON
 #endif
@@ -573,7 +573,7 @@ $code.=<<___;
 .size	sha512_block_data_order,.-sha512_block_data_order
 .asciz	"SHA512 block transform for ARMv4/NEON, CRYPTOGAMS by <appro\@openssl.org>"
 .align	2
-.comm	OPENSSL_armcap,4,4
+.comm	OPENSSL_armcap_P,4,4
 ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;

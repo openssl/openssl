@@ -668,8 +668,6 @@ void gcm_ghash_4bit_x86(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len
 #  if __ARM_ARCH__>=7
 #   define GHASH_ASM_ARM
 #   define GCM_FUNCREF_4BIT
-extern unsigned int OPENSSL_armcap;
-
 void gcm_gmult_neon(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_neon(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 #  endif
@@ -715,7 +713,8 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #elif	TABLE_BITS==4
 # if	defined(GHASH_ASM_X86_OR_64)
 #  if	!defined(GHASH_ASM_X86) || defined(OPENSSL_IA32_SSE2)
-	if (OPENSSL_ia32cap_P[1]&(1<<1)) {	/* check PCLMULQDQ bit */
+	if (OPENSSL_ia32cap_P[0]&(1<<24) &&	/* check FXSR bit */
+	    OPENSSL_ia32cap_P[1]&(1<<1) ) {	/* check PCLMULQDQ bit */
 		gcm_init_clmul(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_clmul;
 		ctx->ghash = gcm_ghash_clmul;
@@ -736,7 +735,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 	ctx->ghash = gcm_ghash_4bit;
 #  endif
 # elif	defined(GHASH_ASM_ARM)
-	if (OPENSSL_armcap & 1) {
+	if (OPENSSL_armcap_P & ARMV7_NEON) {
 		ctx->gmult = gcm_gmult_neon;
 		ctx->ghash = gcm_ghash_neon;
 	} else {
