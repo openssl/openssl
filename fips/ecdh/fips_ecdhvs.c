@@ -106,18 +106,9 @@ static const EVP_MD *parse_md(char *line)
 		return NULL;
 	}
 
-static int lookup_curve(char *cname)
+static int lookup_curve2(char *cname)
 	{
 	char *p;
-	p = strchr(cname, ':');
-	if (!p)
-		{
-		fprintf(stderr, "Parse error: missing :\n");
-		return NID_undef;
-		}
-	cname = p + 1;
-	while(isspace(*cname))
-		cname++;
 	p = strchr(cname, ']');
 	if (!p)
 		{
@@ -161,6 +152,21 @@ static int lookup_curve(char *cname)
 	return NID_undef;
 	}
 
+static int lookup_curve(char *cname)
+	{
+	char *p;
+	p = strchr(cname, ':');
+	if (!p)
+		{
+		fprintf(stderr, "Parse error: missing :\n");
+		return NID_undef;
+		}
+	cname = p + 1;
+	while(isspace(*cname))
+		cname++;
+	return lookup_curve2(cname);
+	}
+
 static EC_POINT *make_peer(EC_GROUP *group, BIGNUM *x, BIGNUM *y)
 	{
 	EC_POINT *peer;
@@ -190,7 +196,7 @@ static EC_POINT *make_peer(EC_GROUP *group, BIGNUM *x, BIGNUM *y)
 	return NULL;
 	}
 
-static int ec_print_pubkey(FILE *out, EC_KEY *key)
+static int ec_print_pubkey(FILE *out, EC_KEY *key, int add_e)
 	{
 	const EC_POINT *pt;
 	const EC_GROUP *grp;
@@ -220,8 +226,16 @@ static int ec_print_pubkey(FILE *out, EC_KEY *key)
 		rv = EC_POINT_get_affine_coordinates_GF2m(grp, pt, tx, ty, ctx);
 #endif
 
-	do_bn_print_name(out, "QeIUTx", tx);
-	do_bn_print_name(out, "QeIUTy", ty);
+	if (add_e)
+		{
+		do_bn_print_name(out, "QeIUTx", tx);
+		do_bn_print_name(out, "QeIUTy", ty);
+		}
+	else
+		{
+		do_bn_print_name(out, "QIUTx", tx);
+		do_bn_print_name(out, "QIUTy", ty);
+		}
 
 	BN_CTX_free(ctx);
 
@@ -244,9 +258,10 @@ static void ec_output_Zhash(FILE *out, int exout, EC_GROUP *group,
 	peerkey = make_peer(group, cx, cy);
 	if (rhash == NULL)
 		{
-		rhashlen = M_EVP_MD_size(md);
+		if (md)
+			rhashlen = M_EVP_MD_size(md);
 		EC_KEY_generate_key(ec);
-		ec_print_pubkey(out, ec);
+		ec_print_pubkey(out, ec, md ? 1 : 0);
 		}
 	else
 		{
@@ -258,15 +273,21 @@ static void ec_output_Zhash(FILE *out, int exout, EC_GROUP *group,
 	if (!Z)
 		exit(1);
 	ECDH_compute_key(Z, Zlen, peerkey, ec, 0);
-	if (exout)
-		OutputValue("Z", Z, Zlen, out, 0);
-	FIPS_digest(Z, Zlen, chash, NULL, md);
-	OutputValue(rhash ? "IUTHashZZ" : "HashZZ", chash, rhashlen, out, 0);
-	if (rhash)
+	if (md)
 		{
-		fprintf(out, "Result = %s\n",
+		if (exout)
+			OutputValue("Z", Z, Zlen, out, 0);
+		FIPS_digest(Z, Zlen, chash, NULL, md);
+		OutputValue(rhash ? "IUTHashZZ" : "HashZZ",
+						chash, rhashlen, out, 0);
+		if (rhash)
+			{
+			fprintf(out, "Result = %s\n",
 				memcmp(chash, rhash, rhashlen) ? "F" : "P");
+			}
 		}
+	else
+		OutputValue("ZIUT", Z, Zlen, out, 0);
 	OPENSSL_cleanse(Z, Zlen);
 	OPENSSL_free(Z);
 	EC_KEY_free(ec);
@@ -372,6 +393,16 @@ int main(int argc,char **argv)
 			curve_nids[param_set] = nid;
 			}
 
+		if (strlen(buf) > 4 && buf[0] == '[' && buf[2] == '-')
+			{
+			int nid = lookup_curve2(buf + 1);
+			if (nid == NID_undef)
+				goto parse_error;
+			if (group)
+				EC_GROUP_free(group);
+			group = EC_GROUP_new_by_curve_name(nid);
+			}
+
 		if (strlen(buf) > 6 && !strncmp(buf, "[E", 2))
 			{
 			md = parse_md(buf);
@@ -381,12 +412,12 @@ int main(int argc,char **argv)
 			}
 		if (!parse_line(&keyword, &value, lbuf, buf))
 			continue;
-		if (!strcmp(keyword, "QeCAVSx"))
+		if (!strcmp(keyword, "QeCAVSx") || !strcmp(keyword, "QCAVSx"))
 			{
 			if (!do_hex2bn(&cx, value))
 				goto parse_error;
 			}
-		else if (!strcmp(keyword, "QeCAVSy"))
+		else if (!strcmp(keyword, "QeCAVSy") || !strcmp(keyword, "QCAVSy"))
 			{
 			if (!do_hex2bn(&cy, value))
 				goto parse_error;
