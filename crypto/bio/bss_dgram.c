@@ -308,7 +308,6 @@ static int dgram_read(BIO *b, char *out, int outl)
 			OPENSSL_assert(sa.len.s<=sizeof(sa.peer));
 			sa.len.i = (int)sa.len.s;
 			}
-		dgram_reset_rcv_timeout(b);
 
 		if ( ! data->connected  && ret >= 0)
 			BIO_ctrl(b, BIO_CTRL_DGRAM_SET_PEER, 0, &sa.peer);
@@ -322,6 +321,8 @@ static int dgram_read(BIO *b, char *out, int outl)
 				data->_errno = get_last_socket_error();
 				}
 			}
+
+		dgram_reset_rcv_timeout(b);
 		}
 	return(ret);
 	}
@@ -745,9 +746,13 @@ static int BIO_dgram_should_retry(int i)
 		{
 		err=get_last_socket_error();
 
-#if defined(OPENSSL_SYS_WINDOWS) && 0 /* more microsoft stupidity? perhaps not? Ben 4/1/99 */
-		if ((i == -1) && (err == 0))
-			return(1);
+#if defined(OPENSSL_SYS_WINDOWS)
+	/* If the socket return value (i) is -1
+	 * and err is unexpectedly 0 at this point,
+	 * the error code was overwritten by
+	 * another system call before this error
+	 * handling is called.
+	 */
 #endif
 
 		return(BIO_dgram_non_fatal_error(err));
