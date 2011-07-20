@@ -89,6 +89,8 @@ x86_64-gcc.o:	asm/x86_64-gcc.c
 	$(CC) $(CFLAGS) -c -o $@ asm/x86_64-gcc.c
 x86_64-mont.s:	asm/x86_64-mont.pl
 	$(PERL) asm/x86_64-mont.pl $(PERLASM_SCHEME) > $@
+modexp512-x86_64.s:	asm/modexp512-x86_64.pl
+	$(PERL) asm/modexp512-x86_64.pl $(PERLASM_SCHEME) > $@
 
 bn-ia64.s:	asm/ia64.S
 	$(CC) $(CFLAGS) -E asm/ia64.S > $@
