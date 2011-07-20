@@ -295,7 +295,6 @@ int dtls1_accept(SSL *s)
 		case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_A:
 		case DTLS1_ST_SW_HELLO_VERIFY_REQUEST_B:
 
-			dtls1_start_timer(s);
 			ret = dtls1_send_hello_verify_request(s);
 			if ( ret <= 0) goto end;
 			s->state=SSL3_ST_SW_FLUSH;
