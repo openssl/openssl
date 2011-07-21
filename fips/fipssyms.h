@@ -655,3 +655,4 @@
 #define aesni_xts_decrypt fips_aesni_xts_decrypt
 #define aesni_xts_encrypt fips_aesni_xts_encrypt
 #define OPENSSL_ia32_rdrand fips_openssl_ia32_rdrand
+#define mod_exp_512 fips_mod_exp_512
