@@ -361,6 +361,7 @@ struct evp_cipher_st
  * as finalisation.
  */
 #define 	EVP_CIPH_FLAG_CUSTOM_CIPHER	0x100000
+#define		EVP_CIPH_FLAG_AEAD_CIPHER	0x200000
 
 /* ctrl() values */
 
@@ -383,6 +384,14 @@ struct evp_cipher_st
 #define		EVP_CTRL_CCM_SET_TAG		EVP_CTRL_GCM_SET_TAG
 #define		EVP_CTRL_CCM_SET_L		0x14
 #define		EVP_CTRL_CCM_SET_MSGLEN		0x15
+/* AEAD cipher deduces payload length and returns number of bytes
+ * required to store MAC and eventual padding. Subsequent call to
+ * EVP_Cipher even appends/verifies MAC.
+ */
+#define		EVP_CTRL_AEAD_TLS1_AAD		0x16
+/* Used by composite AEAD ciphers, no-op in GCM, CCM... */
+#define		EVP_CTRL_AEAD_SET_MAC_KEY	0x17
+
 
 typedef struct evp_cipher_info_st
 	{
