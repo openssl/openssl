@@ -73,6 +73,7 @@
 #include <openssl/rsa.h>
 #endif
 #include <openssl/bn.h>
+#include <openssl/err.h>
 
 /* RSAX is available **ONLY* on x86_64 CPUs */
 #undef COMPILE_RSAX
@@ -284,7 +285,7 @@ static E_RSAX_MOD_CTX *e_rsax_get_ctx(RSA *rsa, int idx, BIGNUM* m)
 	    RSA_set_ex_data(rsa, rsax_ex_data_idx, hptr);
         }
 
-        if (hptr[idx].type == BN_num_bits(m))
+        if (hptr[idx].type == (UINT64)BN_num_bits(m))
             return hptr+idx;
 
         if (BN_num_bits(m) == 512) {
