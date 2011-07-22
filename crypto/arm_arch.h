@@ -35,7 +35,7 @@
 #  endif
 # endif
 
-#ifdef OPENSSL_FIPSCANISTERBUILD
+#ifdef OPENSSL_FIPSCANISTER
 #include <openssl/fipssyms.h>
 #endif
 

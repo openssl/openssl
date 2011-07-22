@@ -1518,6 +1518,7 @@ if ($fips)
 	if ($fipscanisterinternal eq "y")
 		{
 		$openssl_other_defines.="#define OPENSSL_FIPSCANISTER\n";
+		$cflags = "-DOPENSSL_FIPSCANISTER $cflags";
 		}
 	}
 
