@@ -29,7 +29,8 @@ const void         *FIPS_text_end(void);
 
 #if !defined(FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE)
 # if	(defined(__ANDROID__) && (defined(__arm__) || defined(__arm)))	|| \
-	(defined(__vxworks)   && (defined(__ppc__) || defined(__ppc)))
+	(defined(__vxworks)   && (defined(__ppc__) || defined(__ppc)))	|| \
+	(defined(__linux)     && defined(__PPC__) && !defined(__PPC64__))
 #  define FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE
 # endif
 #endif
@@ -46,7 +47,10 @@ static void *instruction_pointer_xlc(void);
 #endif
 
 #ifdef FIPS_START
-#define FIPS_ref_point FIPS_text_start
+# define FIPS_ref_point FIPS_text_start
+# ifdef FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE
+#  define instruction_pointer	FIPS_text_startX
+# endif
 /* Some compilers put string literals into a separate segment. As we
  * are mostly interested to hash AES tables in .rodata, we declare
  * reference points accordingly. In case you wonder, the values are
@@ -55,7 +59,10 @@ static void *instruction_pointer_xlc(void);
 const unsigned int FIPS_rodata_start[]=
 	{ 0x46495053, 0x5f726f64, 0x6174615f, 0x73746172 };
 #else
-#define FIPS_ref_point FIPS_text_end
+# define FIPS_ref_point FIPS_text_end
+# ifdef FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE
+#  define instruction_pointer	FIPS_text_endX
+# endif
 const unsigned int FIPS_rodata_end[]=
 	{ 0x46495053, 0x5f726f64, 0x6174615f, 0x656e645b };
 #endif
@@ -150,7 +157,7 @@ static void *instruction_pointer(void)
 const void *FIPS_ref_point()
 {
 #if	defined(FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE)
-    return (void *)FIPS_ref_point;
+    return (void *)instruction_pointer;
 #elif	defined(INSTRUCTION_POINTER_IMPLEMENTED)
     return instruction_pointer();
 /* Below we essentially cover vendor compilers which do not support
