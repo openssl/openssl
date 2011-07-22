@@ -383,7 +383,8 @@ if (!$legacy_mode) {
     $FINGERPRINT_ascii_value
 			= $exe->Lookup("FINGERPRINT_ascii_value")	or die;
 
-} elsif ($FIPS_text_startX && $FIPS_text_endX) {
+}
+if ($FIPS_text_startX && $FIPS_text_endX) {
     $FIPS_text_start = $FIPS_text_startX;
     $FIPS_text_end   = $FIPS_text_endX;
 }
