@@ -656,3 +656,6 @@
 #define aesni_xts_encrypt fips_aesni_xts_encrypt
 #define OPENSSL_ia32_rdrand fips_openssl_ia32_rdrand
 #define mod_exp_512 fips_mod_exp_512
+#define OPENSSL_armcap_P fips_openssl_armcap_P
+#define _armv7_neon_probe _fips_armv7_neon_probe
+#define _armv7_tick _fips_armv7_tick
