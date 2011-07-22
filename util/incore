@@ -370,17 +370,22 @@ $FIPS_rodata_start	= $exe->Lookup("FIPS_rodata_start")		or die;
 $FIPS_rodata_end	= $exe->Lookup("FIPS_rodata_end")		or die;
 $FIPS_signature		= $exe->Lookup("FIPS_signature")		or die;
 
-if (!$legacy_mode) {
-    $FIPS_text_start	= $exe->Lookup("FIPS_text_startX");
-    $FIPS_text_end	= $exe->Lookup("FIPS_text_endX");
+# new cross-compile support
+$FIPS_text_startX	= $exe->Lookup("FIPS_text_startX");
+$FIPS_text_endX		= $exe->Lookup("FIPS_text_endX");
 
-    if (!$FIPS_text_start || !$FIPS_text_end) {
+if (!$legacy_mode) {
+    if (!$FIPS_text_startX || !$FIPS_text_endX) {
 	print STDERR "@ARGV[$#ARGV] is not cross-compiler aware.\n";
 	exit(1);
     }
 
     $FINGERPRINT_ascii_value
 			= $exe->Lookup("FINGERPRINT_ascii_value")	or die;
+
+} elsif ($FIPS_text_startX && $FIPS_text_endX) {
+    $FIPS_text_start = $FIPS_text_startX;
+    $FIPS_text_end   = $FIPS_text_endX;
 }
 
 sysopen(FD,@ARGV[$#ARGV],$legacy_mode?0:2) or die "$!";	# 2 is read/write
