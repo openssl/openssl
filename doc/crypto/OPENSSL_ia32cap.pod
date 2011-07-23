@@ -61,10 +61,10 @@ capable CPU, but under control of OS that does not enable XMM
 registers. Even though you can manipulate the value programmatically,
 you most likely will find it more appropriate to set up an environment
 variable with the same name prior starting target application, e.g. on
-Intel P4 processor 'env OPENSSL_ia32cap=0x16980010 apps/openssl', to
-achieve same effect without modifying the application source code.
-Alternatively you can reconfigure the toolkit with no-sse2 option and
-recompile.
+Intel P4 processor 'env OPENSSL_ia32cap=0x16980010 apps/openssl', or
+better yet 'env OPENSSL_ia32cap=~0x1000000 apps/openssl' to achieve same
+effect without modifying the application source code. Alternatively you
+can reconfigure the toolkit with no-sse2 option and recompile.
 
 Less intuituve is clearing bit #28. The truth is that it's not copied
 from CPUID output verbatim, but is adjusted to reflect whether or not
