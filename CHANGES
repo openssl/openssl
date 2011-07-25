@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add HMAC ECC ciphersuites from RFC5289. Include SHA384 PRF support.
+     As required by RFC5289 these ciphersuites cannot be used if for
+     versions of TLS earlier than 1.2.
+     [Steve Henson]
+
   *) Add functions FIPS_module_version() and FIPS_module_version_text()
      to return numberical and string versions of the FIPS module number.
      [Steve Henson]
