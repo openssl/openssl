@@ -3360,8 +3360,6 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 	return(1);
 	}
 
-#define DEBUG_PRINT_UNKNOWN_CIPHERSUITES
-
 /* This function needs to check if the ciphers required are actually
  * available */
 const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
