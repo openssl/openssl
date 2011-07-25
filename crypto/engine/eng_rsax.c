@@ -79,7 +79,8 @@
 #undef COMPILE_RSAX
 
 #if (defined(__x86_64) || defined(__x86_64__) || \
-     defined(_M_AMD64) || defined (_M_X64)) && !defined(OPENSSL_NO_ASM)
+     defined(_M_AMD64) || defined (_M_X64)) && !defined(OPENSSL_NO_ASM) && \
+     !defined(OPENSSL_SYS_WIN32)
 #define COMPILE_RSAX
 static ENGINE *ENGINE_rsax (void);
 #endif
