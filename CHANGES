@@ -4,6 +4,11 @@
 
  Changes between 1.0.0e and 1.0.1  [xx XXX xxxx]
 
+  *) Add HMAC ECC ciphersuites from RFC5289. Include SHA384 PRF support.
+     As required by RFC5289 these ciphersuites cannot be used if for
+     versions of TLS earlier than 1.2.
+     [Steve Henson]
+
   *) For FIPS capable OpenSSL interpret a NULL default public key method
      as unset and return the appopriate default but do *not* set the default.
      This means we can return the appopriate method in applications that

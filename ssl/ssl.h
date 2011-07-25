@@ -297,6 +297,7 @@ extern "C" {
 #define SSL_TXT_GOST94		"GOST94" 
 #define SSL_TXT_GOST89MAC		"GOST89MAC" 
 #define SSL_TXT_SHA256		"SHA256"
+#define SSL_TXT_SHA384		"SHA384"
 
 #define SSL_TXT_SSLV2		"SSLv2"
 #define SSL_TXT_SSLV3		"SSLv3"
