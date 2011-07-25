@@ -239,8 +239,6 @@ int FIPS_check_incore_fingerprint(void)
 
 int FIPS_module_mode_set(int onoff)
     {
-    int fips_set_owning_thread();
-    int fips_clear_owning_thread();
     int ret = 0;
 
     fips_w_lock();

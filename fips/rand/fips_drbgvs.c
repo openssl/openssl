@@ -123,8 +123,6 @@ static int parse_aes(char *str, int *pdf)
 		return NID_undef;
 
 		}
-
-	return NID_undef;
 	}
 
 typedef struct 

@@ -187,7 +187,7 @@ static void pqgver(FILE *in, FILE *out)
     char *keyword, *value;
     BIGNUM *p = NULL, *q = NULL, *g = NULL;
     int counter=-1, counter2;
-    unsigned long h=-1, h2;
+    unsigned long h=0, h2;
     DSA *dsa=NULL;
     int dsa2, L, N, part_test = 0;
     const EVP_MD *md = NULL;
