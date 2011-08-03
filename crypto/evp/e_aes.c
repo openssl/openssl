@@ -76,6 +76,7 @@ typedef struct
 	int ivlen;		/* IV length */
 	int taglen;
 	int iv_gen;		/* It is OK to generate IVs */
+	int tls_aad_len;	/* TLS AAD length */
 	} EVP_AES_GCM_CTX;
 
 typedef struct
@@ -748,6 +749,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 		gctx->iv = c->iv;
 		gctx->taglen = -1;
 		gctx->iv_gen = 0;
+		gctx->tls_aad_len = -1;
 		return 1;
 
 	case EVP_CTRL_GCM_SET_IVLEN:
@@ -798,7 +800,8 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 			return 0;
 		if (arg)
 			memcpy(gctx->iv, ptr, arg);
-		if (RAND_bytes(gctx->iv + arg, gctx->ivlen - arg) <= 0)
+		if (c->encrypt &&
+			RAND_bytes(gctx->iv + arg, gctx->ivlen - arg) <= 0)
 			return 0;
 		gctx->iv_gen = 1;
 		return 1;
@@ -807,7 +810,9 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 		if (gctx->iv_gen == 0 || gctx->key_set == 0)
 			return 0;
 		CRYPTO_gcm128_setiv(&gctx->gcm, gctx->iv, gctx->ivlen);
-		memcpy(ptr, gctx->iv, gctx->ivlen);
+		if (arg <= 0 || arg > gctx->ivlen)
+			arg = gctx->ivlen;
+		memcpy(ptr, gctx->iv + gctx->ivlen - arg, arg);
 		/* Invocation field will be at least 8 bytes in size and
 		 * so no need to check wrap around or increment more than
 		 * last 8 bytes.
@@ -815,6 +820,33 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 		ctr64_inc(gctx->iv + gctx->ivlen - 8);
 		gctx->iv_set = 1;
 		return 1;
+
+	case EVP_CTRL_GCM_SET_IV_INV:
+		if (gctx->iv_gen == 0 || gctx->key_set == 0 || c->encrypt)
+			return 0;
+		memcpy(gctx->iv + gctx->ivlen - arg, ptr, arg);
+		CRYPTO_gcm128_setiv(&gctx->gcm, gctx->iv, gctx->ivlen);
+		gctx->iv_set = 1;
+		return 1;
+
+	case EVP_CTRL_AEAD_TLS1_AAD:
+		/* Save the AAD for later use */
+		if (arg != 13)
+			return 0;
+		memcpy(c->buf, ptr, arg);
+		gctx->tls_aad_len = arg;
+			{
+			unsigned int len=c->buf[arg-2]<<8|c->buf[arg-1];
+			/* Correct length for explicit IV */
+			len -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
+			/* If decrypting correct for tag too */
+			if (!c->encrypt)
+				len -= EVP_GCM_TLS_TAG_LEN;
+                        c->buf[arg-2] = len>>8;
+                        c->buf[arg-1] = len & 0xff;
+			}
+		/* Extra padding: tag appended to record */
+		return EVP_GCM_TLS_TAG_LEN;
 
 	default:
 		return -1;
@@ -857,12 +889,79 @@ static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 	}
 
+/* Handle TLS GCM packet format. This consists of the last portion of the IV
+ * followed by the payload and finally the tag. On encrypt generate IV,
+ * encrypt payload and write the tag. On verify retrieve IV, decrypt payload
+ * and verify tag.
+ */
+
+static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+		const unsigned char *in, size_t len)
+	{
+	EVP_AES_GCM_CTX *gctx = ctx->cipher_data;
+	int rv = -1;
+	/* Encrypt/decrypt must be performed in place */
+	if (out != in)
+		return -1;
+	/* Set IV from start of buffer or generate IV and write to start
+	 * of buffer.
+	 */
+	if (EVP_CIPHER_CTX_ctrl(ctx, ctx->encrypt ?
+				EVP_CTRL_GCM_IV_GEN : EVP_CTRL_GCM_SET_IV_INV,
+				EVP_GCM_TLS_EXPLICIT_IV_LEN, out) <= 0)
+		goto err;
+	/* Use saved AAD */
+	if (CRYPTO_gcm128_aad(&gctx->gcm, ctx->buf, gctx->tls_aad_len))
+		goto err;
+	/* Fix buffer and length to point to payload */
+	in += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+	out += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+	len -= EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+	if (ctx->encrypt)
+		{
+		/* Encrypt payload */
+		if (CRYPTO_gcm128_encrypt(&gctx->gcm, in, out, len))
+			goto err;
+		out += len;
+		/* Finally write tag */
+		CRYPTO_gcm128_tag(&gctx->gcm, out, EVP_GCM_TLS_TAG_LEN);
+		rv = len + EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+		}
+	else
+		{
+		/* Decrypt */
+		if (CRYPTO_gcm128_decrypt(&gctx->gcm, in, out, len))
+			goto err;
+		/* Retrieve tag */
+		CRYPTO_gcm128_tag(&gctx->gcm, ctx->buf,
+					EVP_GCM_TLS_TAG_LEN);
+		/* If tag mismatch wipe buffer */
+		if (memcmp(ctx->buf, in + len, EVP_GCM_TLS_TAG_LEN))
+			{
+			OPENSSL_cleanse(out, len);
+			goto err;
+			}
+		rv = len;
+		}
+
+	err:
+	gctx->iv_set = 0;
+	gctx->tls_aad_len = -1;
+	return rv;
+	}
+
 static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		const unsigned char *in, size_t len)
 	{
 	EVP_AES_GCM_CTX *gctx = ctx->cipher_data;
 	/* If not set up, return error */
-	if (!gctx->iv_set && !gctx->key_set)
+	if (!gctx->key_set)
+		return -1;
+
+	if (gctx->tls_aad_len >= 0)
+		return aes_gcm_tls_cipher(ctx, out, in, len);
+
+	if (!gctx->iv_set)
 		return -1;
 	if (!ctx->encrypt && gctx->taglen < 0)
 		return -1;
@@ -908,9 +1007,12 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
 		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT)
 
-BLOCK_CIPHER_custom(NID_aes,128,1,12,gcm,GCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes,192,1,12,gcm,GCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes,256,1,12,gcm,GCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,128,1,12,gcm,GCM,
+		EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,192,1,12,gcm,GCM,
+		EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,256,1,12,gcm,GCM,
+		EVP_CIPH_FLAG_FIPS|EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
 
 static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	{

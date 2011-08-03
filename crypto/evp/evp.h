@@ -391,6 +391,16 @@ struct evp_cipher_st
 #define		EVP_CTRL_AEAD_TLS1_AAD		0x16
 /* Used by composite AEAD ciphers, no-op in GCM, CCM... */
 #define		EVP_CTRL_AEAD_SET_MAC_KEY	0x17
+/* Set the GCM invocation field, decrypt only */
+#define		EVP_CTRL_GCM_SET_IV_INV		0x18
+
+/* GCM TLS constants */
+/* Length of fixed part of IV derived from PRF */
+#define EVP_GCM_TLS_FIXED_IV_LEN			4
+/* Length of explicit part of IV part of TLS records */
+#define EVP_GCM_TLS_EXPLICIT_IV_LEN			8
+/* Length of tag for TLS */
+#define EVP_GCM_TLS_TAG_LEN				16
 
 typedef struct evp_cipher_info_st
 	{
