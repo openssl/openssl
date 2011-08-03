@@ -163,6 +163,7 @@ static int bind_helper(ENGINE *e)
 	e_rsax_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
 	e_rsax_rsa.rsa_priv_dec = meth1->rsa_priv_dec;
 	e_rsax_rsa.bn_mod_exp = meth1->bn_mod_exp;
+	e_rsax_rsa.finish = meth1->finish;
 #endif
 	return 1;
 	}
