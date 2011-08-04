@@ -55,7 +55,8 @@
 #include <string.h>
 #include <assert.h>
 #include <openssl/aes.h>
-#include <openssl/modes.h>
+#include <openssl/rand.h>
+#include "modes_lcl.h"
 #include "evp_locl.h"
 
 #ifndef OPENSSL_FIPS
@@ -64,6 +65,19 @@ typedef struct
 	{
 	AES_KEY ks;
 	} EVP_AES_KEY;
+
+typedef struct
+	{
+	AES_KEY ks;		/* AES key schedule to use */
+	int key_set;		/* Set if key initialised */
+	int iv_set;		/* Set if an iv is set */
+	GCM128_CONTEXT gcm;
+	unsigned char *iv;	/* Temporary IV store */
+	int ivlen;		/* IV length */
+	int taglen;
+	int iv_gen;		/* It is OK to generate IVs */
+	int tls_aad_len;	/* TLS AAD length */
+	} EVP_AES_GCM_CTX;
 
 #define MAXBITCHUNK	((size_t)1<<(sizeof(size_t)*8-4))
 
@@ -382,6 +396,319 @@ static int aes_ctr_cipher (EVP_CIPHER_CTX *ctx, unsigned char *out,
 BLOCK_CIPHER_generic_pack(NID_aes,128,0)
 BLOCK_CIPHER_generic_pack(NID_aes,192,0)
 BLOCK_CIPHER_generic_pack(NID_aes,256,0)
+
+static int aes_gcm_cleanup(EVP_CIPHER_CTX *c)
+	{
+	EVP_AES_GCM_CTX *gctx = c->cipher_data;
+	OPENSSL_cleanse(&gctx->gcm, sizeof(gctx->gcm));
+	if (gctx->iv != c->iv)
+		OPENSSL_free(gctx->iv);
+	return 1;
+	}
+
+/* increment counter (64-bit int) by 1 */
+static void ctr64_inc(unsigned char *counter) {
+	int n=8;
+	unsigned char  c;
+
+	do {
+		--n;
+		c = counter[n];
+		++c;
+		counter[n] = c;
+		if (c) return;
+	} while (n);
+}
+
+static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+	{
+	EVP_AES_GCM_CTX *gctx = c->cipher_data;
+	switch (type)
+		{
+	case EVP_CTRL_INIT:
+		gctx->key_set = 0;
+		gctx->iv_set = 0;
+		gctx->ivlen = c->cipher->iv_len;
+		gctx->iv = c->iv;
+		gctx->taglen = -1;
+		gctx->iv_gen = 0;
+		gctx->tls_aad_len = -1;
+		return 1;
+
+	case EVP_CTRL_GCM_SET_IVLEN:
+		if (arg <= 0)
+			return 0;
+#ifdef OPENSSL_FIPS
+		if (FIPS_module_mode() && !(c->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW)
+						 && arg < 12)
+			return 0;
+#endif
+		/* Allocate memory for IV if needed */
+		if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen))
+			{
+			if (gctx->iv != c->iv)
+				OPENSSL_free(gctx->iv);
+			gctx->iv = OPENSSL_malloc(arg);
+			if (!gctx->iv)
+				return 0;
+			}
+		gctx->ivlen = arg;
+		return 1;
+
+	case EVP_CTRL_GCM_SET_TAG:
+		if (arg <= 0 || arg > 16 || c->encrypt)
+			return 0;
+		memcpy(c->buf, ptr, arg);
+		gctx->taglen = arg;
+		return 1;
+
+	case EVP_CTRL_GCM_GET_TAG:
+		if (arg <= 0 || arg > 16 || !c->encrypt || gctx->taglen < 0)
+			return 0;
+		memcpy(ptr, c->buf, arg);
+		return 1;
+
+	case EVP_CTRL_GCM_SET_IV_FIXED:
+		/* Special case: -1 length restores whole IV */
+		if (arg == -1)
+			{
+			memcpy(gctx->iv, ptr, gctx->ivlen);
+			gctx->iv_gen = 1;
+			return 1;
+			}
+		/* Fixed field must be at least 4 bytes and invocation field
+		 * at least 8.
+		 */
+		if ((arg < 4) || (gctx->ivlen - arg) < 8)
+			return 0;
+		if (arg)
+			memcpy(gctx->iv, ptr, arg);
+		if (c->encrypt &&
+			RAND_bytes(gctx->iv + arg, gctx->ivlen - arg) <= 0)
+			return 0;
+		gctx->iv_gen = 1;
+		return 1;
+
+	case EVP_CTRL_GCM_IV_GEN:
+		if (gctx->iv_gen == 0 || gctx->key_set == 0)
+			return 0;
+		CRYPTO_gcm128_setiv(&gctx->gcm, gctx->iv, gctx->ivlen);
+		if (arg <= 0 || arg > gctx->ivlen)
+			arg = gctx->ivlen;
+		memcpy(ptr, gctx->iv + gctx->ivlen - arg, arg);
+		/* Invocation field will be at least 8 bytes in size and
+		 * so no need to check wrap around or increment more than
+		 * last 8 bytes.
+		 */
+		ctr64_inc(gctx->iv + gctx->ivlen - 8);
+		gctx->iv_set = 1;
+		return 1;
+
+	case EVP_CTRL_GCM_SET_IV_INV:
+		if (gctx->iv_gen == 0 || gctx->key_set == 0 || c->encrypt)
+			return 0;
+		memcpy(gctx->iv + gctx->ivlen - arg, ptr, arg);
+		CRYPTO_gcm128_setiv(&gctx->gcm, gctx->iv, gctx->ivlen);
+		gctx->iv_set = 1;
+		return 1;
+
+	case EVP_CTRL_AEAD_TLS1_AAD:
+		/* Save the AAD for later use */
+		if (arg != 13)
+			return 0;
+		memcpy(c->buf, ptr, arg);
+		gctx->tls_aad_len = arg;
+			{
+			unsigned int len=c->buf[arg-2]<<8|c->buf[arg-1];
+			/* Correct length for explicit IV */
+			len -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
+			/* If decrypting correct for tag too */
+			if (!c->encrypt)
+				len -= EVP_GCM_TLS_TAG_LEN;
+                        c->buf[arg-2] = len>>8;
+                        c->buf[arg-1] = len & 0xff;
+			}
+		/* Extra padding: tag appended to record */
+		return EVP_GCM_TLS_TAG_LEN;
+
+	default:
+		return -1;
+
+		}
+	}
+
+static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                        const unsigned char *iv, int enc)
+	{
+	EVP_AES_GCM_CTX *gctx = ctx->cipher_data;
+	if (!iv && !key)
+		return 1;
+	if (key)
+		{
+		AES_set_encrypt_key(key, ctx->key_len * 8, &gctx->ks);
+		CRYPTO_gcm128_init(&gctx->gcm, &gctx->ks, (block128_f)AES_encrypt);
+		/* If we have an iv can set it directly, otherwise use
+		 * saved IV.
+		 */
+		if (iv == NULL && gctx->iv_set)
+			iv = gctx->iv;
+		if (iv)
+			{
+			CRYPTO_gcm128_setiv(&gctx->gcm, iv, gctx->ivlen);
+			gctx->iv_set = 1;
+			}
+		gctx->key_set = 1;
+		}
+	else
+		{
+		/* If key set use IV, otherwise copy */
+		if (gctx->key_set)
+			CRYPTO_gcm128_setiv(&gctx->gcm, iv, gctx->ivlen);
+		else
+			memcpy(gctx->iv, iv, gctx->ivlen);
+		gctx->iv_set = 1;
+		gctx->iv_gen = 0;
+		}
+	return 1;
+	}
+
+/* Handle TLS GCM packet format. This consists of the last portion of the IV
+ * followed by the payload and finally the tag. On encrypt generate IV,
+ * encrypt payload and write the tag. On verify retrieve IV, decrypt payload
+ * and verify tag.
+ */
+
+static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+		const unsigned char *in, size_t len)
+	{
+	EVP_AES_GCM_CTX *gctx = ctx->cipher_data;
+	int rv = -1;
+	/* Encrypt/decrypt must be performed in place */
+	if (out != in)
+		return -1;
+	/* Set IV from start of buffer or generate IV and write to start
+	 * of buffer.
+	 */
+	if (EVP_CIPHER_CTX_ctrl(ctx, ctx->encrypt ?
+				EVP_CTRL_GCM_IV_GEN : EVP_CTRL_GCM_SET_IV_INV,
+				EVP_GCM_TLS_EXPLICIT_IV_LEN, out) <= 0)
+		goto err;
+	/* Use saved AAD */
+	if (CRYPTO_gcm128_aad(&gctx->gcm, ctx->buf, gctx->tls_aad_len))
+		goto err;
+	/* Fix buffer and length to point to payload */
+	in += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+	out += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+	len -= EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+	if (ctx->encrypt)
+		{
+		/* Encrypt payload */
+		if (CRYPTO_gcm128_encrypt(&gctx->gcm, in, out, len))
+			goto err;
+		out += len;
+		/* Finally write tag */
+		CRYPTO_gcm128_tag(&gctx->gcm, out, EVP_GCM_TLS_TAG_LEN);
+		rv = len + EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+		}
+	else
+		{
+		/* Decrypt */
+		if (CRYPTO_gcm128_decrypt(&gctx->gcm, in, out, len))
+			goto err;
+		/* Retrieve tag */
+		CRYPTO_gcm128_tag(&gctx->gcm, ctx->buf,
+					EVP_GCM_TLS_TAG_LEN);
+		/* If tag mismatch wipe buffer */
+		if (memcmp(ctx->buf, in + len, EVP_GCM_TLS_TAG_LEN))
+			{
+			OPENSSL_cleanse(out, len);
+			goto err;
+			}
+		rv = len;
+		}
+
+	err:
+	gctx->iv_set = 0;
+	gctx->tls_aad_len = -1;
+	return rv;
+	}
+
+static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+		const unsigned char *in, size_t len)
+	{
+	EVP_AES_GCM_CTX *gctx = ctx->cipher_data;
+	/* If not set up, return error */
+	if (!gctx->key_set)
+		return -1;
+
+	if (gctx->tls_aad_len >= 0)
+		return aes_gcm_tls_cipher(ctx, out, in, len);
+
+	if (!gctx->iv_set)
+		return -1;
+	if (!ctx->encrypt && gctx->taglen < 0)
+		return -1;
+	if (in)
+		{
+		if (out == NULL)
+			{
+			if (CRYPTO_gcm128_aad(&gctx->gcm, in, len))
+				return -1;
+			}
+		else if (ctx->encrypt)
+			{
+			if (CRYPTO_gcm128_encrypt(&gctx->gcm, in, out, len))
+				return -1;
+			}
+		else
+			{
+			if (CRYPTO_gcm128_decrypt(&gctx->gcm, in, out, len))
+				return -1;
+			}
+		return len;
+		}
+	else
+		{
+		if (!ctx->encrypt)
+			{
+			if (CRYPTO_gcm128_finish(&gctx->gcm,
+					ctx->buf, gctx->taglen) != 0)
+				return -1;
+			gctx->iv_set = 0;
+			return 0;
+			}
+		CRYPTO_gcm128_tag(&gctx->gcm, ctx->buf, 16);
+		gctx->taglen = 16;
+		/* Don't reuse the IV */
+		gctx->iv_set = 0;
+		return 0;
+		}
+
+	}
+
+#define BLOCK_CIPHER_custom(nid,keylen,blocksize,ivlen,mode,MODE,flags) \
+static const EVP_CIPHER aes_##keylen##_##mode = { \
+	nid##_##keylen##_##mode,blocksize, \
+	(EVP_CIPH_##MODE##_MODE==EVP_CIPH_XTS_MODE?2:1)*keylen/8, ivlen, \
+	flags|EVP_CIPH_##MODE##_MODE,	\
+	aes_##mode##_init_key,		\
+	aes_##mode##_cipher,		\
+	aes_##mode##_cleanup,		\
+	sizeof(EVP_AES_##MODE##_CTX),	\
+	NULL,NULL,aes_##mode##_ctrl,NULL }; \
+const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
+{ return &aes_##keylen##_##mode; }
+
+#define CUSTOM_FLAGS	(EVP_CIPH_FLAG_DEFAULT_ASN1 \
+		| EVP_CIPH_CUSTOM_IV | EVP_CIPH_FLAG_CUSTOM_CIPHER \
+		| EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT)
+
+BLOCK_CIPHER_custom(NID_aes,128,1,12,gcm,GCM,
+		EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,192,1,12,gcm,GCM,
+		EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,256,1,12,gcm,GCM,
+		EVP_CIPH_FLAG_AEAD_CIPHER|CUSTOM_FLAGS)
 
 #endif
 #endif

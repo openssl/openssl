@@ -391,6 +391,16 @@ struct evp_cipher_st
 #define		EVP_CTRL_AEAD_TLS1_AAD		0x16
 /* Used by composite AEAD ciphers, no-op in GCM, CCM... */
 #define		EVP_CTRL_AEAD_SET_MAC_KEY	0x17
+/* Set the GCM invocation field, decrypt only */
+#define		EVP_CTRL_GCM_SET_IV_INV		0x18
+
+/* GCM TLS constants */
+/* Length of fixed part of IV derived from PRF */
+#define EVP_GCM_TLS_FIXED_IV_LEN			4
+/* Length of explicit part of IV part of TLS records */
+#define EVP_GCM_TLS_EXPLICIT_IV_LEN			8
+/* Length of tag for TLS */
+#define EVP_GCM_TLS_TAG_LEN				16
 
 
 typedef struct evp_cipher_info_st
@@ -776,9 +786,9 @@ const EVP_CIPHER *EVP_aes_128_cfb128(void);
 # define EVP_aes_128_cfb EVP_aes_128_cfb128
 const EVP_CIPHER *EVP_aes_128_ofb(void);
 const EVP_CIPHER *EVP_aes_128_ctr(void);
+const EVP_CIPHER *EVP_aes_128_gcm(void);
 #ifdef OPENSSL_FIPS
 const EVP_CIPHER *EVP_aes_128_ccm(void);
-const EVP_CIPHER *EVP_aes_128_gcm(void);
 const EVP_CIPHER *EVP_aes_128_xts(void);
 #endif
 const EVP_CIPHER *EVP_aes_192_ecb(void);
@@ -789,9 +799,9 @@ const EVP_CIPHER *EVP_aes_192_cfb128(void);
 # define EVP_aes_192_cfb EVP_aes_192_cfb128
 const EVP_CIPHER *EVP_aes_192_ofb(void);
 const EVP_CIPHER *EVP_aes_192_ctr(void);
+const EVP_CIPHER *EVP_aes_192_gcm(void);
 #ifdef OPENSSL_FIPS
 const EVP_CIPHER *EVP_aes_192_ccm(void);
-const EVP_CIPHER *EVP_aes_192_gcm(void);
 #endif
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
@@ -801,9 +811,9 @@ const EVP_CIPHER *EVP_aes_256_cfb128(void);
 # define EVP_aes_256_cfb EVP_aes_256_cfb128
 const EVP_CIPHER *EVP_aes_256_ofb(void);
 const EVP_CIPHER *EVP_aes_256_ctr(void);
+const EVP_CIPHER *EVP_aes_256_gcm(void);
 #ifdef OPENSSL_FIPS
 const EVP_CIPHER *EVP_aes_256_ccm(void);
-const EVP_CIPHER *EVP_aes_256_gcm(void);
 const EVP_CIPHER *EVP_aes_256_xts(void);
 #endif
 #endif

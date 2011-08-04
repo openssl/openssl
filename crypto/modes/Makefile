@@ -17,14 +17,14 @@ TEST=
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c
-LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o
+LIBSRC= cbc128.c ctr128.c cts128.c cfb128.c ofb128.c gcm128.c
+LIBOBJ= cbc128.o ctr128.o cts128.o cfb128.o ofb128.o gcm128.o
 
 SRC= $(LIBSRC)
 
 #EXHEADER= store.h str_compat.h
 EXHEADER= modes.h
-HEADER=	$(EXHEADER)
+HEADER=	modes_lcl.h $(EXHEADER)
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
