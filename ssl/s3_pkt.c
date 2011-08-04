@@ -742,12 +742,18 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	plen=p; 
 	p+=2;
 	/* Explicit IV length, block ciphers and TLS version 1.1 or later */
-	if (s->enc_write_ctx && s->version >= TLS1_1_VERSION
-		&& EVP_CIPHER_CTX_mode(s->enc_write_ctx) == EVP_CIPH_CBC_MODE)
+	if (s->enc_write_ctx && s->version >= TLS1_1_VERSION)
 		{
-		eivlen = EVP_CIPHER_CTX_iv_length(s->enc_write_ctx);
-		if (eivlen <= 1)
-			eivlen = 0;
+		int mode = EVP_CIPHER_CTX_mode(s->enc_write_ctx);
+		if (mode == EVP_CIPH_CBC_MODE)
+			{
+			eivlen = EVP_CIPHER_CTX_iv_length(s->enc_write_ctx);
+			if (eivlen <= 1)
+				eivlen = 0;
+			}
+		/* Need explicit part of IV for GCM mode */
+		else if (mode == EVP_CIPH_GCM_MODE)
+			eivlen = EVP_GCM_TLS_EXPLICIT_IV_LEN;
 		}
 	else 
 		eivlen = 0;

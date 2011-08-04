@@ -456,7 +456,11 @@ int tls1_change_cipher_state(SSL *s, int which)
 	j=is_export ? (cl < SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher) ?
 	               cl : SSL_C_EXPORT_KEYLENGTH(s->s3->tmp.new_cipher)) : cl;
 	/* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
-	k=EVP_CIPHER_iv_length(c);
+	/* If GCM mode only part of IV comes from PRF */
+	if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
+		k = EVP_GCM_TLS_FIXED_IV_LEN;
+	else
+		k=EVP_CIPHER_iv_length(c);
 	if (	(which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
 		(which == SSL3_CHANGE_CIPHER_SERVER_READ))
 		{
@@ -539,7 +543,13 @@ printf("which = %04X\nmac key=",which);
 	}
 #endif	/* KSSL_DEBUG */
 
-	EVP_CipherInit_ex(dd,c,NULL,key,iv,(which & SSL3_CC_WRITE));
+	if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
+		{
+		EVP_CipherInit_ex(dd,c,NULL,key,NULL,(which & SSL3_CC_WRITE));
+		EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GCM_SET_IV_FIXED, k, iv);
+		}
+	else	
+		EVP_CipherInit_ex(dd,c,NULL,key,iv,(which & SSL3_CC_WRITE));
 
 	/* Needed for "composite" AEADs, such as RC4-HMAC-MD5 */
 	if ((EVP_CIPHER_flags(c)&EVP_CIPH_FLAG_AEAD_CIPHER) && *mac_secret_size)
@@ -815,8 +825,14 @@ int tls1_enc(SSL *s, int send)
 				}
 			}
 		
-		if (!EVP_Cipher(ds,rec->data,rec->input,l))
+		if (EVP_Cipher(ds,rec->data,rec->input,l) < 0)
 			return -1;	/* AEAD can fail to verify MAC */
+		if (EVP_CIPHER_mode(enc) == EVP_CIPH_GCM_MODE && !send)
+			{
+			rec->data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+			rec->input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+			rec->length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
+			}
 
 #ifdef KSSL_DEBUG
 		{

@@ -317,18 +317,23 @@
 #define SSL_CAMELLIA256		0x00000200L
 #define SSL_eGOST2814789CNT	0x00000400L
 #define SSL_SEED		0x00000800L
+#define SSL_AES128GCM		0x00001000L
+#define SSL_AES256GCM		0x00002000L
 
-#define SSL_AES        		(SSL_AES128|SSL_AES256)
+#define SSL_AES        		(SSL_AES128|SSL_AES256|SSL_AES128GCM|SSL_AES256GCM)
 #define SSL_CAMELLIA		(SSL_CAMELLIA128|SSL_CAMELLIA256)
 
 
 /* Bits for algorithm_mac (symmetric authentication) */
+
 #define SSL_MD5			0x00000001L
 #define SSL_SHA1		0x00000002L
 #define SSL_GOST94      0x00000004L
 #define SSL_GOST89MAC   0x00000008L
 #define SSL_SHA256		0x00000010L
 #define SSL_SHA384		0x00000020L
+/* Not a real MAC, just an indication it is part of cipher */
+#define SSL_AEAD		0x00000040L
 
 /* Bits for algorithm_ssl (protocol version) */
 #define SSL_SSLV2		0x00000001L

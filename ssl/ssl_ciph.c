@@ -162,11 +162,13 @@
 #define SSL_ENC_CAMELLIA256_IDX	9
 #define SSL_ENC_GOST89_IDX	10
 #define SSL_ENC_SEED_IDX    	11
-#define SSL_ENC_NUM_IDX		12
+#define SSL_ENC_AES128GCM_IDX	12
+#define SSL_ENC_AES256GCM_IDX	13
+#define SSL_ENC_NUM_IDX		14
 
 
 static const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX]={
-	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,
+	NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL
 	};
 
 #define SSL_COMP_NULL_IDX	0
@@ -289,9 +291,10 @@ static const SSL_CIPHER cipher_aliases[]={
 	{0,SSL_TXT_IDEA,0,    0,0,SSL_IDEA,  0,0,0,0,0,0},
 	{0,SSL_TXT_SEED,0,    0,0,SSL_SEED,  0,0,0,0,0,0},
 	{0,SSL_TXT_eNULL,0,   0,0,SSL_eNULL, 0,0,0,0,0,0},
-	{0,SSL_TXT_AES128,0,  0,0,SSL_AES128,0,0,0,0,0,0},
-	{0,SSL_TXT_AES256,0,  0,0,SSL_AES256,0,0,0,0,0,0},
-	{0,SSL_TXT_AES,0,     0,0,SSL_AES128|SSL_AES256,0,0,0,0,0,0},
+	{0,SSL_TXT_AES128,0,  0,0,SSL_AES128|SSL_AES128GCM,0,0,0,0,0,0},
+	{0,SSL_TXT_AES256,0,  0,0,SSL_AES256|SSL_AES256GCM,0,0,0,0,0,0},
+	{0,SSL_TXT_AES,0,     0,0,SSL_AES,0,0,0,0,0,0},
+	{0,SSL_TXT_AES_GCM,0, 0,0,SSL_AES128GCM|SSL_AES256GCM,0,0,0,0,0,0},
 	{0,SSL_TXT_CAMELLIA128,0,0,0,SSL_CAMELLIA128,0,0,0,0,0,0},
 	{0,SSL_TXT_CAMELLIA256,0,0,0,SSL_CAMELLIA256,0,0,0,0,0,0},
 	{0,SSL_TXT_CAMELLIA   ,0,0,0,SSL_CAMELLIA128|SSL_CAMELLIA256,0,0,0,0,0,0},
@@ -386,6 +389,11 @@ void ssl_load_ciphers(void)
 	  EVP_get_cipherbyname(SN_gost89_cnt);
 	ssl_cipher_methods[SSL_ENC_SEED_IDX]=
 	  EVP_get_cipherbyname(SN_seed_cbc);
+
+	ssl_cipher_methods[SSL_ENC_AES128GCM_IDX]=
+	  EVP_get_cipherbyname(SN_aes_128_gcm);
+	ssl_cipher_methods[SSL_ENC_AES256GCM_IDX]=
+	  EVP_get_cipherbyname(SN_aes_256_gcm);
 
 	ssl_digest_methods[SSL_MD_MD5_IDX]=
 		EVP_get_digestbyname(SN_md5);
@@ -541,6 +549,12 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 	case SSL_SEED:
 		i=SSL_ENC_SEED_IDX;
 		break;
+	case SSL_AES128GCM:
+		i=SSL_ENC_AES128GCM_IDX;
+		break;
+	case SSL_AES256GCM:
+		i=SSL_ENC_AES256GCM_IDX;
+		break;
 	default:
 		i= -1;
 		break;
@@ -585,14 +599,15 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		*md=NULL; 
 		if (mac_pkey_type!=NULL) *mac_pkey_type = NID_undef;
 		if (mac_secret_size!=NULL) *mac_secret_size = 0;
-
+		if (c->algorithm_mac == SSL_AEAD)
+			mac_pkey_type = NULL;
 	}
 	else
 	{
 		*md=ssl_digest_methods[i];
 		if (mac_pkey_type!=NULL) *mac_pkey_type = ssl_mac_pkey_id[i];
 		if (mac_secret_size!=NULL) *mac_secret_size = ssl_mac_secret_size[i];
-	}	
+	}
 
 	if ((*enc != NULL) &&
 	    (*md != NULL || (EVP_CIPHER_flags(*enc)&EVP_CIPH_FLAG_AEAD_CIPHER)) &&
@@ -1635,6 +1650,12 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 	case SSL_AES256:
 		enc="AES(256)";
 		break;
+	case SSL_AES128GCM:
+		enc="AESGCM(128)";
+		break;
+	case SSL_AES256GCM:
+		enc="AESGCM(256)";
+		break;
 	case SSL_CAMELLIA128:
 		enc="Camellia(128)";
 		break;
@@ -1662,6 +1683,9 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
 		break;
 	case SSL_SHA384:
 		mac="SHA384";
+		break;
+	case SSL_AEAD:
+		mac="AEAD";
 		break;
 	default:
 		mac="unknown";
