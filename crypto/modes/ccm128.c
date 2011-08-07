@@ -356,10 +356,10 @@ int CRYPTO_ccm128_encrypt_ccm64(CCM128_CONTEXT *ctx,
 		inp += n;
 		out += n;
 		len -= n;
+		if (len) ctr64_add(ctx->nonce.c,n/16);
 	}
 
 	if (len) {
-		if (n) ctr64_add(ctx->nonce.c,n/16);
 		for (i=0; i<len; ++i) ctx->cmac.c[i] ^= inp[i];
 		(*block)(ctx->cmac.c,ctx->cmac.c,key);
 		(*block)(ctx->nonce.c,scratch.c,key);
@@ -409,10 +409,10 @@ int CRYPTO_ccm128_decrypt_ccm64(CCM128_CONTEXT *ctx,
 		inp += n;
 		out += n;
 		len -= n;
+		if (len) ctr64_add(ctx->nonce.c,n/16);
 	}
 
 	if (len) {
-		if (n) ctr64_add(ctx->nonce.c,n/16);
 		(*block)(ctx->nonce.c,scratch.c,key);
 		for (i=0; i<len; ++i)
 			ctx->cmac.c[i] ^= (out[i] = scratch.c[i]^inp[i]);
