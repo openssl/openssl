@@ -490,7 +490,7 @@ my $debug          = 0;
 my $quiet          = 0;
 my $notest         = 0;
 my $verify         = 1;
-my $rspdir         = "rsp";
+my $rspdir         = "resp";
 my $ignore_missing = 0;
 my $ignore_bogus   = 0;
 my $bufout         = '';
@@ -732,7 +732,7 @@ $cmd: generate run CAVP algorithm tests
 	--dir=<dirname>             Optional root for *.req file search
 	--filter=<regexp>
 	--onedir <dirname>          Assume all components in current directory
-	--rspdir=<dirname>          Name of subdirectories containing *.rsp files, default "rsp"
+	--rspdir=<dirname>          Name of subdirectories containing *.rsp files, default "resp"
 	--tprefix=<prefix>
 	--ignore-bogus              Ignore duplicate or bogus files
 	--ignore-missing            Ignore missing test files
