@@ -12,16 +12,48 @@ my @fips_dsa_test_list = (
 
     "DSA",
 
-    [ "PQGGen",  "fips_dssvs pqg" ],
-    [ "KeyPair", "fips_dssvs keypair" ],
-    [ "SigGen",  "fips_dssvs siggen" ],
-    [ "SigVer",  "fips_dssvs sigver" ]
+    [ "PQGGen",  "fips_dssvs pqg", "path:/DSA/.*PQGGen" ],
+    [ "KeyPair", "fips_dssvs keypair", "path:/DSA/.*KeyPair" ],
+    [ "SigGen",  "fips_dssvs siggen", "path:/DSA/.*SigGen" ],
+    [ "SigVer",  "fips_dssvs sigver", "path:/DSA/.*SigVer" ]
 
 );
 
 my @fips_dsa_pqgver_test_list = (
 
-    [ "PQGVer",  "fips_dssvs pqgver" ]
+    [ "PQGVer",  "fips_dssvs pqgver", "path:/DSA/.*PQGVer" ]
+
+);
+
+# DSA2 tests
+my @fips_dsa2_test_list = (
+
+    "DSA2",
+
+    [ "PQGGen",  "fips_dssvs pqg", "path:/DSA2/.*PQGGen" ],
+    [ "KeyPair", "fips_dssvs keypair", "path:/DSA2/.*KeyPair" ],
+    [ "SigGen",  "fips_dssvs siggen", "path:/DSA2/.*SigGen" ],
+    [ "SigVer",  "fips_dssvs sigver", "path:/DSA2/.*SigVer" ],
+    [ "PQGVer",  "fips_dssvs pqgver", "path:/DSA2/.*PQGVer" ]
+
+);
+
+# ECDSA and ECDSA2 tests
+my @fips_ecdsa_test_list = (
+
+    "ECDSA",
+
+    [ "KeyPair", "fips_ecdsavs KeyPair", "path:/ECDSA/.*KeyPair" ],
+    [ "PKV",  "fips_ecdsavs PKV", "path:/ECDSA/.*PKV" ],
+    [ "SigGen",  "fips_ecdsavs SigGen", "path:/ECDSA/.*SigGen" ],
+    [ "SigVer",  "fips_ecdsavs SigVer", "path:/ECDSA/.*SigVer" ],
+
+    "ECDSA2",
+
+    [ "KeyPair", "fips_ecdsavs KeyPair", "path:/ECDSA2/.*KeyPair" ],
+    [ "PKV",  "fips_ecdsavs PKV", "path:/ECDSA2/.*PKV" ],
+    [ "SigGen",  "fips_ecdsavs SigGen", "path:/ECDSA2/.*SigGen" ],
+    [ "SigVer",  "fips_ecdsavs SigVer", "path:/ECDSA2/.*SigVer" ],
 
 );
 
@@ -49,9 +81,9 @@ my @fips_rsa_test_list = (
 my @fips_rsa_pss0_test_list = (
 
     [ "SigGenPSS(0)", "fips_rsastest -saltlen 0",
-					'^\s*#\s*salt\s+len:\s+0\s*$' ],
+					'file:^\s*#\s*salt\s+len:\s+0\s*$' ],
     [ "SigVerPSS(0)", "fips_rsavtest -saltlen 0",
-					'^\s*#\s*salt\s+len:\s+0\s*$' ],
+					'file:^\s*#\s*salt\s+len:\s+0\s*$' ],
 
 );
 
@@ -59,9 +91,9 @@ my @fips_rsa_pss0_test_list = (
 
 my @fips_rsa_pss62_test_list = (
     [ "SigGenPSS(62)", "fips_rsastest -saltlen 62",
-					'^\s*#\s*salt\s+len:\s+62\s*$' ],
+					'file:^\s*#\s*salt\s+len:\s+62\s*$' ],
     [ "SigVerPSS(62)", "fips_rsavtest -saltlen 62",
-					'^\s*#\s*salt\s+len:\s+62\s*$' ],
+					'file:^\s*#\s*salt\s+len:\s+62\s*$' ],
 );
 
 # SHA tests
@@ -299,6 +331,9 @@ my @fips_aes_gcm_test_list = (
     [ "gcmDecrypt128",  "fips_gcmtest -decrypt" ],
     [ "gcmDecrypt192",  "fips_gcmtest -decrypt" ],
     [ "gcmDecrypt256",  "fips_gcmtest -decrypt" ],
+    [ "gcmEncryptIntIV128",  "fips_gcmtest -encrypt" ],
+    [ "gcmEncryptIntIV192",  "fips_gcmtest -encrypt" ],
+    [ "gcmEncryptIntIV256",  "fips_gcmtest -encrypt" ],
 
 );
 
@@ -399,7 +434,8 @@ my @fips_drbg_test_list = (
     # SP800-90 DRBG tests
     "SP800-90 DRBG",
     [ "CTR_DRBG",   "fips_drbgvs" ],
-    [ "Hash_DRBG",  "fips_drbgvs" ]
+    [ "Hash_DRBG",  "fips_drbgvs" ],
+    [ "HMAC_DRBG",  "fips_drbgvs" ]
 
 );
 
@@ -416,10 +452,11 @@ my @fips_ecdh_test_list = (
 
     # ECDH
     "ECDH Ephemeral Primitives Only",
-    [ "KASValidityTest_ECCEphemeralUnified_NOKC_ZZOnly_init",
-							"fips_ecdhvs ecdhver" ],
-    [ "KASValidityTest_ECCEphemeralUnified_NOKC_ZZOnly_resp",
-							"fips_ecdhvs ecdhver" ],
+    [ "KAS_ECC_CDH_PrimitiveTest", "fips_ecdhvs WTF" ],
+#    [ "KASValidityTest_ECCEphemeralUnified_NOKC_ZZOnly_init",
+#							"fips_ecdhvs ecdhver" ],
+#    [ "KASValidityTest_ECCEphemeralUnified_NOKC_ZZOnly_resp",
+#							"fips_ecdhvs ecdhver" ],
 
 );
 
@@ -467,25 +504,28 @@ my $mkcmd = "mkdir";
 
 my %fips_enabled = (
     dsa         => 1,
-    "dsa-pqgver"  => 0,
+    dsa2        => 2,
+    "dsa-pqgver"  => 2,
+    ecdsa       => 2,
     rsa         => 1,
     "rsa-pss0"  => 0,
     "rsa-pss62" => 1,
     sha         => 1,
     hmac        => 1,
-    cmac        => 0,
+    cmac        => 2,
     "rand-aes"  => 1,
     "rand-des2" => 0,
     aes         => 1,
-    "aes-cfb1"  => 0,
+    "aes-cfb1"  => 2,
     des3        => 1,
-    "des3-cfb1" => 0,
-    drbg	=> 0,
-    ccm		=> 0,
-    "aes-xts"	=> 0,
-    gcm		=> 0,
+    "des3-cfb1" => 2,
+    drbg	=> 2,
+    "aes-ccm"	=> 2,
+    "aes-xts"	=> 2,
+    "aes-gcm"	=> 2,
     dh		=> 0,
-    ecdh	=> 0,
+    ecdh	=> 2,
+    v2		=> 0,
 );
 
 foreach (@ARGV) {
@@ -571,8 +611,17 @@ foreach (@ARGV) {
 
 my @fips_test_list;
 
+
+if (!$fips_enabled{"v2"}) {
+	foreach (keys %fips_enabled) {
+		$fips_enabled{$_} = 0 if $fips_enabled{$_} == 2;
+	}
+}
+
 push @fips_test_list, @fips_dsa_test_list       if $fips_enabled{"dsa"};
+push @fips_test_list, @fips_dsa2_test_list      if $fips_enabled{"dsa2"};
 push @fips_test_list, @fips_dsa_pqgver_test_list if $fips_enabled{"dsa-pqgver"};
+push @fips_test_list, @fips_ecdsa_test_list     if $fips_enabled{"ecdsa"};
 push @fips_test_list, @fips_rsa_test_list       if $fips_enabled{"rsa"};
 push @fips_test_list, @fips_rsa_pss0_test_list  if $fips_enabled{"rsa-pss0"};
 push @fips_test_list, @fips_rsa_pss62_test_list if $fips_enabled{"rsa-pss62"};
@@ -608,8 +657,6 @@ foreach (@fips_test_list) {
     my $nm = $$_[0];
     $$_[3] = "";
     $$_[4] = "";
-    print STDERR "Duplicate test $nm\n" if exists $fips_tests{$nm};
-    $fips_tests{$nm} = $_;
 }
 
 $tvdir = "." unless defined $tvdir;
@@ -700,7 +747,7 @@ EOF
 while (my ($key, $value) = each %fips_enabled)
 	{
 	printf "\t\t%-20s(%s by default)\n", $key ,
-			$value ? "enabled" : "disabled";
+			$value == 1 ? "enabled" : "disabled";
 	}
 }
 
@@ -798,9 +845,21 @@ sub find_test {
     my ( $test, $path ) = @_;
     foreach $tref (@fips_test_list) {
         next unless ref($tref);
-        my ( $tst, $cmd, $regexp, $req, $resp ) = @$tref;
+        my ( $tst, $cmd, $excmd, $req, $resp ) = @$tref;
+	my $regexp;
 	$tst =~ s/\(.*$//;
-	if ($tst eq $test) {
+	$test =~ s/_186-2//;
+	if (defined $excmd) {
+		if ($excmd =~ /^path:(.*)$/) {
+			my $fmatch = $1;
+			return $tref if ($path =~ /$fmatch/);
+			next;
+		}
+		elsif ($excmd =~ /^file:(.*)$/) {
+			$regexp = $1;
+		}
+	}
+	if ($test eq $tst) {
 		return $tref if (!defined $regexp);
 		my $found = 0;
 		my $line;
