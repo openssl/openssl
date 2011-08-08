@@ -166,6 +166,9 @@ int main(int argc,char **argv)
 	long entlen, noncelen, perslen, adinlen;
 	int df = 0;
 
+	enum dtype { DRBG_NONE, DRBG_CTR, DRBG_HASH, DRBG_HMAC, DRBG_DUAL_EC }
+		drbg_type = DRBG_NONE;
+
 	int randoutlen = 0;
 
 	int gen = 0;
@@ -201,11 +204,52 @@ int main(int argc,char **argv)
 	while (fgets(buf, sizeof(buf), in) != NULL)
 		{
 		fputs(buf, out);
+		if (drbg_type == DRBG_NONE)
+			{
+			if (strstr(buf, "CTR_DRBG"))
+				drbg_type = DRBG_CTR;
+			else if (strstr(buf, "Hash_DRBG"))
+				drbg_type = DRBG_HASH;
+			else if (strstr(buf, "HMAC_DRBG"))
+				drbg_type = DRBG_HMAC;
+			else if (strstr(buf, "Dual_EC_DRBG"))
+				drbg_type = DRBG_DUAL_EC;
+			else
+				continue;
+			}
 		if (strlen(buf) > 4 && !strncmp(buf, "[SHA-", 5))
 			{
 			nid = parse_md(buf);
 			if (nid == NID_undef)
 				exit(1);
+			if (drbg_type == DRBG_HMAC)
+				{
+				switch (nid)
+					{
+					case NID_sha1:
+					nid = NID_hmacWithSHA1;
+					break;
+
+					case NID_sha224:
+					nid = NID_hmacWithSHA224;
+					break;
+
+					case NID_sha256:
+					nid = NID_hmacWithSHA256;
+					break;
+
+					case NID_sha384:
+					nid = NID_hmacWithSHA384;
+					break;
+
+					case NID_sha512:
+					nid = NID_hmacWithSHA512;
+					break;
+
+					default:
+					exit(1);
+					}
+				}
 			}
 		if (strlen(buf) > 12 && !strncmp(buf, "[AES-", 5))
 			{

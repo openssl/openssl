@@ -54,8 +54,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/aes.h>
 #include <openssl/fips.h>
 #include <openssl/fips_rand.h>
 #include "fips_rand_lcl.h"

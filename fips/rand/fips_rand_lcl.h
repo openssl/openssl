@@ -52,6 +52,7 @@
  */
 
 typedef struct drbg_hash_ctx_st DRBG_HASH_CTX;
+typedef struct drbg_hmac_ctx_st DRBG_HMAC_CTX;
 typedef struct drbg_ctr_ctx_st DRBG_CTR_CTX;
 
 /* 888 bits from 10.1 table 2 */
@@ -65,6 +66,14 @@ struct drbg_hash_ctx_st
 	unsigned char C[HASH_PRNG_MAX_SEEDLEN];
 	/* Temporary value storage: should always exceed max digest length */
 	unsigned char vtmp[HASH_PRNG_MAX_SEEDLEN];
+	};
+
+struct drbg_hmac_ctx_st
+	{
+	const EVP_MD *md;
+	HMAC_CTX hctx;
+	unsigned char K[EVP_MAX_MD_SIZE];
+	unsigned char V[EVP_MAX_MD_SIZE];
 	};
 
 struct drbg_ctr_ctx_st
@@ -137,6 +146,7 @@ struct drbg_ctx_st
 	union 
 		{
 		DRBG_HASH_CTX hash;
+		DRBG_HMAC_CTX hmac;
 		DRBG_CTR_CTX  ctr;
 		} d;
 	/* Initialiase PRNG and setup callbacks below */
