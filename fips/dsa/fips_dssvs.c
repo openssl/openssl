@@ -41,7 +41,7 @@ static int parse_mod(char *line, int *pdsa2, int *pL, int *pN,
 		}
 	*pdsa2 = 1;
 	*p = 0;
-	if (!parse_line(&keyword, &value, lbuf, line))
+	if (!parse_line2(&keyword, &value, lbuf, line, 0))
 		return 0;
 	if (strcmp(keyword, "L"))
 		return 0;
@@ -54,7 +54,7 @@ static int parse_mod(char *line, int *pdsa2, int *pL, int *pN,
 	if (!p)
 		return 0;
 	*p = 0;
-	if (!parse_line(&keyword, &value, lbuf, line))
+	if (!parse_line2(&keyword, &value, lbuf, line, 0))
 		return 0;
 	if (strcmp(keyword, "N"))
 		return 0;

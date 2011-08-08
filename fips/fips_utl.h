@@ -58,6 +58,7 @@ int do_hex2bn(BIGNUM **pr, const char *in);
 int do_bn_print(FILE *out, const BIGNUM *bn);
 int do_bn_print_name(FILE *out, const char *name, const BIGNUM *bn);
 int parse_line(char **pkw, char **pval, char *linebuf, char *olinebuf);
+int parse_line2(char **pkw, char **pval, char *linebuf, char *olinebuf, int eol);
 BIGNUM *hex2bn(const char *in);
 int tidy_line(char *linebuf, char *olinebuf);
 int bint2bin(const char *in, int len, unsigned char *out);
@@ -262,6 +263,11 @@ int do_bn_print_name(FILE *out, const char *name, const BIGNUM *bn)
 
 int parse_line(char **pkw, char **pval, char *linebuf, char *olinebuf)
 	{
+	return parse_line2(pkw, pval, linebuf, olinebuf, 1);
+	}
+
+int parse_line2(char **pkw, char **pval, char *linebuf, char *olinebuf, int eol)
+	{
 	char *keyword, *value, *p, *q;
 	strcpy(linebuf, olinebuf);
 	keyword = linebuf;
@@ -292,7 +298,7 @@ int parse_line(char **pkw, char **pval, char *linebuf, char *olinebuf)
 	/* Remove trailing space from value */
 	p = value + strlen(value) - 1;
 
-	if (*p != '\n')
+	if (eol && *p != '\n')
 		fprintf(stderr, "Warning: missing EOL\n");
 
 	while (*p == '\n' || isspace((unsigned char)*p))
