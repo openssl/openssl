@@ -263,4 +263,21 @@ OPENSSL_wipe_cpu:
 .size	OPENSSL_wipe_cpu,.-OPENSSL_wipe_cpu
 ___
 
+print<<___;
+.globl	OPENSSL_ia32_rdrand
+.type	OPENSSL_ia32_rdrand,\@abi-omnipotent
+.align	16
+OPENSSL_ia32_rdrand:
+	mov	\$8,%ecx
+.Loop_rdrand:
+	rdrand	%rax
+	jc	.Lbreak_rdrand
+	loop	.Loop_rdrand
+.Lbreak_rdrand:
+	cmp	\$0,%rax
+	cmove	%rcx,%rax
+	ret
+.size	OPENSSL_ia32_rdrand,.-OPENSSL_ia32_rdrand
+___
+
 close STDOUT;	# flush

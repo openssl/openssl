@@ -1,16 +1,12 @@
-/* crypto/engine/eng_all.c -*- mode: C; c-file-style: "eay" -*- */
-/* Written by Richard Levitte <richard@levitte.org> for the OpenSSL
- * project 2000.
- */
 /* ====================================================================
- * Copyright (c) 2000-2001 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
@@ -49,87 +45,96 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  * ====================================================================
- *
- * This product includes cryptographic software written by Eric Young
- * (eay@cryptsoft.com).  This product includes software written by Tim
- * Hudson (tjh@cryptsoft.com).
- *
  */
 
-#include "cryptlib.h"
-#include "eng_int.h"
+#include <openssl/opensslconf.h>
 
-void ENGINE_load_builtin_engines(void)
+#include <stdio.h>
+#include <string.h>
+#include <openssl/engine.h>
+
+#if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
+     defined(__x86_64) || defined(__x86_64__) || \
+     defined(_M_AMD64) || defined (_M_X64)) && !defined(OPENSSL_NO_ASM)
+
+size_t OPENSSL_ia32_rdrand(void);
+
+static int get_random_bytes (unsigned char *buf, size_t num)
 	{
-	/* Some ENGINEs need this */
-	OPENSSL_cpuid_setup();
-#if 0
-	/* There's no longer any need for an "openssl" ENGINE unless, one day,
-	 * it is the *only* way for standard builtin implementations to be be
-	 * accessed (ie. it would be possible to statically link binaries with
-	 * *no* builtin implementations). */
-	ENGINE_load_openssl();
-#endif
-#if !defined(OPENSSL_NO_HW) && (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV))
-	ENGINE_load_cryptodev();
-#endif
-#ifndef OPENSSL_NO_RSAX
-	ENGINE_load_rsax();
-#endif
-#ifndef OPENSSL_NO_RDRAND
-	ENGINE_load_rdrand();
-#endif
-	ENGINE_load_dynamic();
-#ifndef OPENSSL_NO_STATIC_ENGINE
-#ifndef OPENSSL_NO_HW
-#ifndef OPENSSL_NO_HW_4758_CCA
-	ENGINE_load_4758cca();
-#endif
-#ifndef OPENSSL_NO_HW_AEP
-	ENGINE_load_aep();
-#endif
-#ifndef OPENSSL_NO_HW_ATALLA
-	ENGINE_load_atalla();
-#endif
-#ifndef OPENSSL_NO_HW_CSWIFT
-	ENGINE_load_cswift();
-#endif
-#ifndef OPENSSL_NO_HW_NCIPHER
-	ENGINE_load_chil();
-#endif
-#ifndef OPENSSL_NO_HW_NURON
-	ENGINE_load_nuron();
-#endif
-#ifndef OPENSSL_NO_HW_SUREWARE
-	ENGINE_load_sureware();
-#endif
-#ifndef OPENSSL_NO_HW_UBSEC
-	ENGINE_load_ubsec();
-#endif
-#ifndef OPENSSL_NO_HW_PADLOCK
-	ENGINE_load_padlock();
-#endif
-#endif
-#ifndef OPENSSL_NO_GOST
-	ENGINE_load_gost();
-#endif
-#ifndef OPENSSL_NO_GMP
-	ENGINE_load_gmp();
-#endif
-#if defined(OPENSSL_SYS_WIN32) && !defined(OPENSSL_NO_CAPIENG)
-	ENGINE_load_capi();
-#endif
-#endif
-	ENGINE_register_all_complete();
+	size_t rnd;
+
+	while (num>=sizeof(size_t)) {
+		if ((rnd = OPENSSL_ia32_rdrand()) == 0) return 0;
+
+		*((size_t *)buf) = rnd;
+		buf += sizeof(size_t);
+		num -= sizeof(size_t);
+	}
+	if (num) {
+		if ((rnd = OPENSSL_ia32_rdrand()) == 0) return 0;
+
+		memcpy (buf,&rnd,num);
 	}
 
-#if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
-void ENGINE_setup_bsd_cryptodev(void) {
-	static int bsd_cryptodev_default_loaded = 0;
-	if (!bsd_cryptodev_default_loaded) {
-		ENGINE_load_cryptodev();
-		ENGINE_register_all_complete();
+	return 1;
 	}
-	bsd_cryptodev_default_loaded=1;
-}
+
+static int random_status (void)
+{	return 1;	}
+
+static RAND_METHOD rdrand_meth =
+	{
+	NULL,	/* seed */
+	get_random_bytes,
+	NULL,	/* cleanup */
+	NULL,	/* add */
+	get_random_bytes,
+	random_status,
+	};
+
+static int rdrand_init(ENGINE *e)
+{	return 1;	}
+
+static const char *engine_e_rdrand_id = "rdrand";
+static const char *engine_e_rdrand_name = "Intel RDRAND engine";
+
+static int bind_helper(ENGINE *e)
+	{
+	if (!ENGINE_set_id(e, engine_e_rdrand_id) ||
+	    !ENGINE_set_name(e, engine_e_rdrand_name) ||
+	    !ENGINE_set_init_function(e, rdrand_init) ||
+	    !ENGINE_set_RAND(e, &rdrand_meth) )
+		return 0;
+
+	return 1;
+	}
+
+static ENGINE *ENGINE_rdrand(void)
+	{
+	ENGINE *ret = ENGINE_new();
+	if(!ret)
+		return NULL;
+	if(!bind_helper(ret))
+		{
+		ENGINE_free(ret);
+		return NULL;
+		}
+	return ret;
+	}
+
+void ENGINE_load_rdrand (void)
+	{
+	extern OPENSSL_ia32cap_P[];
+
+	if (OPENSSL_ia32cap_P[1] & (1<<(62-32)))
+		{
+		ENGINE *toadd = ENGINE_rdrand();
+		if(!toadd) return;
+		ENGINE_add(toadd);
+		ENGINE_free(toadd);
+		ERR_clear_error();
+		}
+	}
+#else
+void ENGINE_load_rdrand (void) {}
 #endif
