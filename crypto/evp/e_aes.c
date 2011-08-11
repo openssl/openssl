@@ -304,12 +304,80 @@ static int aesni_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 	}
 
+/* Handle TLS GCM packet format. This consists of the last portion of the IV
+ * followed by the payload and finally the tag. On encrypt generate IV,
+ * encrypt payload and write the tag. On verify retrieve IV, decrypt payload
+ * and verify tag.
+ */
+
+static int aesni_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+		const unsigned char *in, size_t len)
+	{
+	EVP_AES_GCM_CTX *gctx = ctx->cipher_data;
+	int rv = -1;
+	/* Encrypt/decrypt must be performed in place */
+	if (out != in)
+		return -1;
+	/* Set IV from start of buffer or generate IV and write to start
+	 * of buffer.
+	 */
+	if (EVP_CIPHER_CTX_ctrl(ctx, ctx->encrypt ?
+				EVP_CTRL_GCM_IV_GEN : EVP_CTRL_GCM_SET_IV_INV,
+				EVP_GCM_TLS_EXPLICIT_IV_LEN, out) <= 0)
+		goto err;
+	/* Use saved AAD */
+	if (CRYPTO_gcm128_aad(&gctx->gcm, ctx->buf, gctx->tls_aad_len))
+		goto err;
+	/* Fix buffer and length to point to payload */
+	in += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+	out += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+	len -= EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+	if (ctx->encrypt)
+		{
+		/* Encrypt payload */
+		if (CRYPTO_gcm128_encrypt_ctr32(&gctx->gcm, in, out, len,
+						aesni_ctr32_encrypt_blocks))
+		out += len;
+		/* Finally write tag */
+		CRYPTO_gcm128_tag(&gctx->gcm, out, EVP_GCM_TLS_TAG_LEN);
+		rv = len + EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+		}
+	else
+		{
+		/* Decrypt */
+		if (CRYPTO_gcm128_decrypt_ctr32(&gctx->gcm, in, out, len,
+						aesni_ctr32_encrypt_blocks))
+			goto err;
+		/* Retrieve tag */
+		CRYPTO_gcm128_tag(&gctx->gcm, ctx->buf,
+					EVP_GCM_TLS_TAG_LEN);
+		/* If tag mismatch wipe buffer */
+		if (memcmp(ctx->buf, in + len, EVP_GCM_TLS_TAG_LEN))
+			{
+			OPENSSL_cleanse(out, len);
+			goto err;
+			}
+		rv = len;
+		}
+
+	err:
+	gctx->iv_set = 0;
+	gctx->tls_aad_len = -1;
+	return rv;
+	}
+
 static int aesni_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		const unsigned char *in, size_t len)
 	{
 	EVP_AES_GCM_CTX *gctx = ctx->cipher_data;
 	/* If not set up, return error */
-	if (!gctx->iv_set && !gctx->key_set)
+	if (!gctx->key_set)
+		return -1;
+
+	if (gctx->tls_aad_len >= 0)
+		return aesni_gcm_tls_cipher(ctx, out, in, len);
+
+	if (!gctx->iv_set)
 		return -1;
 	if (!ctx->encrypt && gctx->taglen < 0)
 		return -1;
