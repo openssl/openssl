@@ -21,6 +21,7 @@ $tarobjs{"ncbc_enc.c"} = 1;
 $tarobjs{"mem_clr.c"} = 1;
 $tarobjs{"ppccap.c"} = 1;
 $tarobjs{"sparcv9cap.c"} = 1;
+$tarobjs{"armcap.c"} = 1;
 
 foreach (split / /, $ENV{LINKDIRS} ) { $cdirs{$_} = 1 };
 
