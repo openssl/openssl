@@ -333,12 +333,10 @@ int fips_drbg_hash_init(DRBG_CTX *dctx)
 	switch (dctx->type)
 		{
 		case NID_sha1:
-		md = EVP_sha1();
 		dctx->strength = 128;
 		break;
 
 		case NID_sha224:
-		md = EVP_sha224();
 		dctx->strength = 192;
 		break;
 
