@@ -787,10 +787,8 @@ const EVP_CIPHER *EVP_aes_128_cfb128(void);
 const EVP_CIPHER *EVP_aes_128_ofb(void);
 const EVP_CIPHER *EVP_aes_128_ctr(void);
 const EVP_CIPHER *EVP_aes_128_gcm(void);
-#ifdef OPENSSL_FIPS
 const EVP_CIPHER *EVP_aes_128_ccm(void);
 const EVP_CIPHER *EVP_aes_128_xts(void);
-#endif
 const EVP_CIPHER *EVP_aes_192_ecb(void);
 const EVP_CIPHER *EVP_aes_192_cbc(void);
 const EVP_CIPHER *EVP_aes_192_cfb1(void);
@@ -800,9 +798,7 @@ const EVP_CIPHER *EVP_aes_192_cfb128(void);
 const EVP_CIPHER *EVP_aes_192_ofb(void);
 const EVP_CIPHER *EVP_aes_192_ctr(void);
 const EVP_CIPHER *EVP_aes_192_gcm(void);
-#ifdef OPENSSL_FIPS
 const EVP_CIPHER *EVP_aes_192_ccm(void);
-#endif
 const EVP_CIPHER *EVP_aes_256_ecb(void);
 const EVP_CIPHER *EVP_aes_256_cbc(void);
 const EVP_CIPHER *EVP_aes_256_cfb1(void);
@@ -812,10 +808,8 @@ const EVP_CIPHER *EVP_aes_256_cfb128(void);
 const EVP_CIPHER *EVP_aes_256_ofb(void);
 const EVP_CIPHER *EVP_aes_256_ctr(void);
 const EVP_CIPHER *EVP_aes_256_gcm(void);
-#ifdef OPENSSL_FIPS
 const EVP_CIPHER *EVP_aes_256_ccm(void);
 const EVP_CIPHER *EVP_aes_256_xts(void);
-#endif
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);
