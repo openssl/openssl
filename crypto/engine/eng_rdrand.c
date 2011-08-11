@@ -52,6 +52,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/engine.h>
+#include <openssl/rand.h>
+#include <openssl/err.h>
 
 #if (defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
      defined(__x86_64) || defined(__x86_64__) || \
@@ -59,11 +61,11 @@
 
 size_t OPENSSL_ia32_rdrand(void);
 
-static int get_random_bytes (unsigned char *buf, size_t num)
+static int get_random_bytes (unsigned char *buf, int num)
 	{
 	size_t rnd;
 
-	while (num>=sizeof(size_t)) {
+	while (num>=(int)sizeof(size_t)) {
 		if ((rnd = OPENSSL_ia32_rdrand()) == 0) return 0;
 
 		*((size_t *)buf) = rnd;
@@ -124,7 +126,7 @@ static ENGINE *ENGINE_rdrand(void)
 
 void ENGINE_load_rdrand (void)
 	{
-	extern OPENSSL_ia32cap_P[];
+	extern unsigned int OPENSSL_ia32cap_P[];
 
 	if (OPENSSL_ia32cap_P[1] & (1<<(62-32)))
 		{
