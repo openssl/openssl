@@ -2735,6 +2735,14 @@
 #define LN_aes_256_ctr		"aes-256-ctr"
 #define NID_aes_256_ctr		906
 
+#define SN_aes_128_xts		"AES-128-XTS"
+#define LN_aes_128_xts		"aes-128-xts"
+#define NID_aes_128_xts		913
+
+#define SN_aes_256_xts		"AES-256-XTS"
+#define LN_aes_256_xts		"aes-256-xts"
+#define NID_aes_256_xts		914
+
 #define SN_des_cfb1		"DES-CFB1"
 #define LN_des_cfb1		"des-cfb1"
 #define NID_des_cfb1		656

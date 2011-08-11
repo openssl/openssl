@@ -910,3 +910,5 @@ id_camellia256_wrap		909
 anyExtendedKeyUsage		910
 mgf1		911
 rsassaPss		912
+aes_128_xts		913
+aes_256_xts		914
