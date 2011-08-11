@@ -19,6 +19,10 @@ typedef void (*ctr128_f)(const unsigned char *in, unsigned char *out,
 			size_t blocks, const void *key,
 			const unsigned char ivec[16]);
 
+typedef void (*ccm128_f)(const unsigned char *in, unsigned char *out,
+			size_t blocks, const void *key,
+			const unsigned char ivec[16],unsigned char cmac[16]);
+
 void CRYPTO_cbc128_encrypt(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,
 			unsigned char ivec[16], block128_f block);
@@ -67,6 +71,19 @@ size_t CRYPTO_cts128_decrypt(const unsigned char *in, unsigned char *out,
 			size_t len, const void *key,
 			unsigned char ivec[16], cbc128_f cbc);
 
+size_t CRYPTO_nistcts128_encrypt_block(const unsigned char *in, unsigned char *out,
+			size_t len, const void *key,
+			unsigned char ivec[16], block128_f block);
+size_t CRYPTO_nistcts128_encrypt(const unsigned char *in, unsigned char *out,
+			size_t len, const void *key,
+			unsigned char ivec[16], cbc128_f cbc);
+size_t CRYPTO_nistcts128_decrypt_block(const unsigned char *in, unsigned char *out,
+			size_t len, const void *key,
+			unsigned char ivec[16], block128_f block);
+size_t CRYPTO_nistcts128_decrypt(const unsigned char *in, unsigned char *out,
+			size_t len, const void *key,
+			unsigned char ivec[16], cbc128_f cbc);
+
 typedef struct gcm128_context GCM128_CONTEXT;
 
 GCM128_CONTEXT *CRYPTO_gcm128_new(void *key, block128_f block);
@@ -91,3 +108,28 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx,const unsigned char *tag,
 			size_t len);
 void CRYPTO_gcm128_tag(GCM128_CONTEXT *ctx, unsigned char *tag, size_t len);
 void CRYPTO_gcm128_release(GCM128_CONTEXT *ctx);
+
+typedef struct ccm128_context CCM128_CONTEXT;
+
+void CRYPTO_ccm128_init(CCM128_CONTEXT *ctx,
+	unsigned int M, unsigned int L, void *key,block128_f block);
+int CRYPTO_ccm128_setiv(CCM128_CONTEXT *ctx,
+	const unsigned char *nonce, size_t nlen, size_t mlen);
+void CRYPTO_ccm128_aad(CCM128_CONTEXT *ctx,
+	const unsigned char *aad, size_t alen);
+int CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
+	const unsigned char *inp, unsigned char *out, size_t len);
+int CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
+	const unsigned char *inp, unsigned char *out, size_t len);
+int CRYPTO_ccm128_encrypt_ccm64(CCM128_CONTEXT *ctx,
+	const unsigned char *inp, unsigned char *out, size_t len,
+	ccm128_f stream);
+int CRYPTO_ccm128_decrypt_ccm64(CCM128_CONTEXT *ctx,
+	const unsigned char *inp, unsigned char *out, size_t len,
+	ccm128_f stream);
+size_t CRYPTO_ccm128_tag(CCM128_CONTEXT *ctx, unsigned char *tag, size_t len);
+
+typedef struct xts128_context XTS128_CONTEXT;
+
+int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx, const unsigned char iv[16],
+	const unsigned char *inp, unsigned char *out, size_t len, int enc);

@@ -48,7 +48,8 @@
  *
  */
 
-#include "modes.h"
+#include <openssl/crypto.h>
+#include "modes_lcl.h"
 #include <string.h>
 
 #ifndef MODES_DEBUG
@@ -57,17 +58,6 @@
 # endif
 #endif
 #include <assert.h>
-
-typedef unsigned int u32;
-typedef unsigned char u8;
-
-#define STRICT_ALIGNMENT
-#if defined(__i386)    || defined(__i386__)    || \
-    defined(__x86_64)  || defined(__x86_64__)  || \
-    defined(_M_IX86)   || defined(_M_AMD64)    || defined(_M_X64) || \
-    defined(__s390__)  || defined(__s390x__)
-#  undef STRICT_ALIGNMENT
-#endif
 
 /* NOTE: the IV/counter CTR mode is big-endian.  The code itself
  * is endian-neutral. */
@@ -182,9 +172,6 @@ void CRYPTO_ctr128_encrypt(const unsigned char *in, unsigned char *out,
 
 	*num=n;
 }
-
-#define GETU32(p)	((u32)(p)[0]<<24|(u32)(p)[1]<<16|(u32)(p)[2]<<8|(u32)(p)[3])
-#define PUTU32(p,v)	((p)[0]=(u8)((v)>>24),(p)[1]=(u8)((v)>>16),(p)[2]=(u8)((v)>>8),(p)[3]=(u8)(v))
 
 /* increment upper 96 bits of 128-bit counter by 1 */
 static void ctr96_inc(unsigned char *counter) {
