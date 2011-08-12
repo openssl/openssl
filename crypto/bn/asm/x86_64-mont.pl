@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -142,6 +142,7 @@ $code.=<<___;
 	jne	.L1st
 
 	add	%rax,$hi1
+	mov	($ap),%rax		# ap[0]
 	adc	\$0,%rdx
 	add	$hi0,$hi1		# np[j]*m1+ap[j]*bp[0]
 	adc	\$0,%rdx
@@ -161,7 +162,6 @@ $code.=<<___;
 .Louter:
 	mov	($bp,$i,8),$m0		# m0=bp[i]
 	xor	$j,$j			# j=0
-	mov	($ap),%rax		# ap[0]
 	mov	$n0,$m1
 	mov	(%rsp),$lo0
 	mulq	$m0			# ap[0]*bp[i]
@@ -208,6 +208,7 @@ $code.=<<___;
 	jne	.Linner
 
 	add	%rax,$hi1
+	mov	($ap),%rax		# ap[0]
 	adc	\$0,%rdx
 	add	$lo0,$hi1		# np[j]*m1+ap[j]*bp[i]+tp[j]
 	mov	(%rsp,$j,8),$lo0
