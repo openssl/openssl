@@ -116,9 +116,9 @@ my %globals;
 	    $line = substr($line,@+[0]); $line =~ s/^\s+//;
 
 	    undef $self->{sz};
-	    if ($self->{op} =~ /^(movz)b.*/) {	# movz is pain...
+	    if ($self->{op} =~ /^(movz)x?([bw]).*/) {	# movz is pain...
 		$self->{op} = $1;
-		$self->{sz} = "b";
+		$self->{sz} = $2;
 	    } elsif ($self->{op} =~ /call|jmp/) {
 		$self->{sz} = "";
 	    } elsif ($self->{op} =~ /^p/ && $' !~ /^(ush|op|insrw)/) { # SSEn
