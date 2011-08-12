@@ -99,19 +99,19 @@ OPENSSL_cleanse:
 	beq	$0,.Laligned
 
 .Little:
+	subq	$0,8,$0
 	ldq_u	$1,0($16)
 	mov	$16,$2
 .Lalign:
 	mskbl	$1,$16,$1
 	lda	$16,1($16)
 	subq	$17,1,$17
-	subq	$0,1,$0
+	addq	$0,1,$0
 	beq	$17,.Lout
 	bne	$0,.Lalign
 .Lout:	stq_u	$1,0($2)
 	beq	$17,.Ldone
 	bic	$17,7,$at
-	mov	$17,$0
 	beq	$at,.Little
 
 .Laligned:
@@ -120,9 +120,7 @@ OPENSSL_cleanse:
 	lda	$16,8($16)
 	bic	$17,7,$at
 	bne	$at,.Laligned
-	beq	$17,.Ldone
-	mov	$17,$0
-	br	.Little
+	bne	$17,.Little
 .Ldone: ret	($26)
 .end	OPENSSL_cleanse
 ___

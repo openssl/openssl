@@ -41,7 +41,7 @@ $j="s4";
 $m1="s5";
 
 $code=<<___;
-#indef __linux__
+#ifdef __linux__
 #include <asm/regdef.h>
 #else
 #include <asm.h>
