@@ -64,6 +64,7 @@ bn_mul_mont_gather5:
 
 .align	16
 .Lmul_enter:
+	mov	${num}d,${num}d
 	mov	`($win64?56:8)`(%rsp),%r10d	# load 7th argument
 	push	%rbx
 	push	%rbp
@@ -71,10 +72,16 @@ bn_mul_mont_gather5:
 	push	%r13
 	push	%r14
 	push	%r15
-
-	mov	${num}d,${num}d
-	lea	2($num),%r11
+___
+$code.=<<___ if ($win64);
+	lea	-0x28(%rsp),%rsp
+	movaps	%xmm6,(%rsp)
+	movaps	%xmm7,0x10(%rsp)
+.Lmul_alloca:
+___
+$code.=<<___;
 	mov	%rsp,%rax
+	lea	2($num),%r11
 	neg	%r11
 	lea	(%rsp,%r11,8),%rsp	# tp=alloca(8*(num+2))
 	and	\$-1024,%rsp		# minimize TLB usage
@@ -313,6 +320,13 @@ $code.=<<___;
 
 	mov	8(%rsp,$num,8),%rsi	# restore %rsp
 	mov	\$1,%rax
+___
+$code.=<<___ if ($win64);
+	movaps	(%rsi),%xmm6
+	movaps	0x10(%rsi),%xmm7
+	lea	0x28(%rsi),%rsi
+___
+$code.=<<___;
 	mov	(%rsi),%r15
 	mov	8(%rsi),%r14
 	mov	16(%rsi),%r13
@@ -332,6 +346,7 @@ $code.=<<___;
 .align	16
 bn_mul4x_mont_gather5:
 .Lmul4x_enter:
+	mov	${num}d,${num}d
 	mov	`($win64?56:8)`(%rsp),%r10d	# load 7th argument
 	push	%rbx
 	push	%rbp
@@ -339,10 +354,16 @@ bn_mul4x_mont_gather5:
 	push	%r13
 	push	%r14
 	push	%r15
-
-	mov	${num}d,${num}d
+___
+$code.=<<___ if ($win64);
+	lea	-0x28(%rsp),%rsp
+	movaps	%xmm6,(%rsp)
+	movaps	%xmm7,0x10(%rsp)
+.Lmul4x_alloca:
+___
+$code.=<<___;
+	mov	%rsp,%rax
 	lea	4($num),%r11
-	mov	%rsp,%rax		# !!!!
 	neg	%r11
 	lea	(%rsp,%r11,8),%rsp	# tp=alloca(8*(num+4))
 	and	\$-1024,%rsp		# minimize TLB usage
@@ -787,6 +808,13 @@ ___
 $code.=<<___;
 	mov	8(%rsp,$num,8),%rsi	# restore %rsp
 	mov	\$1,%rax
+___
+$code.=<<___ if ($win64);
+	movaps	(%rsi),%xmm6
+	movaps	0x10(%rsi),%xmm7
+	lea	0x28(%rsi),%rsi
+___
+$code.=<<___;
 	mov	(%rsi),%r15
 	mov	8(%rsi),%r14
 	mov	16(%rsi),%r13
@@ -827,6 +855,142 @@ $code.=<<___;
 	.long	0,0, 0,0, 0,0,  0,0
 .asciz	"Montgomery Multiplication with scatter/gather for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
+
+# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
+#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
+if ($win64) {
+$rec="%rcx";
+$frame="%rdx";
+$context="%r8";
+$disp="%r9";
+
+$code.=<<___;
+.extern	__imp_RtlVirtualUnwind
+.type	mul_handler,\@abi-omnipotent
+.align	16
+mul_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	mov	8($disp),%rsi		# disp->ImageBase
+	mov	56($disp),%r11		# disp->HandlerData
+
+	mov	0(%r11),%r10d		# HandlerData[0]
+	lea	(%rsi,%r10),%r10	# end of prologue label
+	cmp	%r10,%rbx		# context->Rip<end of prologue label
+	jb	.Lcommon_seh_tail
+
+	lea	`40+48`(%rax),%rax
+
+	mov	4(%r11),%r10d		# HandlerData[1]
+	lea	(%rsi,%r10),%r10	# end of alloca label
+	cmp	%r10,%rbx		# context->Rip<end of alloca label
+	jb	.Lcommon_seh_tail
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	mov	8(%r11),%r10d		# HandlerData[2]
+	lea	(%rsi,%r10),%r10	# epilogue label
+	cmp	%r10,%rbx		# context->Rip>=epilogue label
+	jae	.Lcommon_seh_tail
+
+	mov	192($context),%r10	# pull $num
+	mov	8(%rax,%r10,8),%rax	# pull saved stack pointer
+
+	movaps	(%rax),%xmm0
+	movaps	16(%rax),%xmm1
+	lea	`40+48`(%rax),%rax
+
+	mov	-8(%rax),%rbx
+	mov	-16(%rax),%rbp
+	mov	-24(%rax),%r12
+	mov	-32(%rax),%r13
+	mov	-40(%rax),%r14
+	mov	-48(%rax),%r15
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
+	mov	%r15,240($context)	# restore context->R15
+	movups	%xmm0,512($context)	# restore context->Xmm6
+	movups	%xmm1,528($context)	# restore context->Xmm7
+
+.Lcommon_seh_tail:
+	mov	8(%rax),%rdi
+	mov	16(%rax),%rsi
+	mov	%rax,152($context)	# restore context->Rsp
+	mov	%rsi,168($context)	# restore context->Rsi
+	mov	%rdi,176($context)	# restore context->Rdi
+
+	mov	40($disp),%rdi		# disp->ContextRecord
+	mov	$context,%rsi		# context
+	mov	\$154,%ecx		# sizeof(CONTEXT)
+	.long	0xa548f3fc		# cld; rep movsq
+
+	mov	$disp,%rsi
+	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
+	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
+	mov	0(%rsi),%r8		# arg3, disp->ControlPc
+	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
+	mov	40(%rsi),%r10		# disp->ContextRecord
+	lea	56(%rsi),%r11		# &disp->HandlerData
+	lea	24(%rsi),%r12		# &disp->EstablisherFrame
+	mov	%r10,32(%rsp)		# arg5
+	mov	%r11,40(%rsp)		# arg6
+	mov	%r12,48(%rsp)		# arg7
+	mov	%rcx,56(%rsp)		# arg8, (NULL)
+	call	*__imp_RtlVirtualUnwind(%rip)
+
+	mov	\$1,%eax		# ExceptionContinueSearch
+	add	\$64,%rsp
+	popfq
+	pop	%r15
+	pop	%r14
+	pop	%r13
+	pop	%r12
+	pop	%rbp
+	pop	%rbx
+	pop	%rdi
+	pop	%rsi
+	ret
+.size	mul_handler,.-mul_handler
+
+.section	.pdata
+.align	4
+	.rva	.LSEH_begin_bn_mul_mont_gather5
+	.rva	.LSEH_end_bn_mul_mont_gather5
+	.rva	.LSEH_info_bn_mul_mont_gather5
+
+	.rva	.LSEH_begin_bn_mul4x_mont_gather5
+	.rva	.LSEH_end_bn_mul4x_mont_gather5
+	.rva	.LSEH_info_bn_mul4x_mont_gather5
+
+.section	.xdata
+.align	8
+.LSEH_info_bn_mul_mont_gather5:
+	.byte	9,0,0,0
+	.rva	mul_handler
+	.rva	.Lmul_alloca,.Lmul_body,.Lmul_epilogue		# HandlerData[]
+.align	8
+.LSEH_info_bn_mul4x_mont_gather5:
+	.byte	9,0,0,0
+	.rva	mul_handler
+	.rva	.Lmul4x_alloca,.Lmul4x_body,.Lmul4x_epilogue	# HandlerData[]
+.align	8
+___
+}
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
