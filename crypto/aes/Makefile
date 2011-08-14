@@ -121,9 +121,11 @@ aes_ige.o: ../../include/openssl/lhash.h ../../include/openssl/opensslconf.h
 aes_ige.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 aes_ige.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 aes_ige.o: ../../include/openssl/symhacks.h ../cryptlib.h aes_ige.c aes_locl.h
-aes_misc.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
-aes_misc.o: ../../include/openssl/opensslconf.h
-aes_misc.o: ../../include/openssl/opensslv.h aes_locl.h aes_misc.c
+aes_misc.o: ../../include/openssl/aes.h ../../include/openssl/crypto.h
+aes_misc.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
+aes_misc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+aes_misc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+aes_misc.o: ../../include/openssl/symhacks.h aes_locl.h aes_misc.c
 aes_ofb.o: ../../include/openssl/aes.h ../../include/openssl/modes.h
 aes_ofb.o: ../../include/openssl/opensslconf.h aes_ofb.c
 aes_wrap.o: ../../e_os.h ../../include/openssl/aes.h

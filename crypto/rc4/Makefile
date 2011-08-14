@@ -113,3 +113,8 @@ rc4_skey.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rc4_skey.o: ../../include/openssl/rc4.h ../../include/openssl/safestack.h
 rc4_skey.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
 rc4_skey.o: ../cryptlib.h rc4_locl.h rc4_skey.c
+rc4_utl.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+rc4_utl.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+rc4_utl.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rc4.h
+rc4_utl.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
+rc4_utl.o: ../../include/openssl/symhacks.h rc4_utl.c
