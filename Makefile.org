@@ -645,7 +645,7 @@ install_sw:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 	@set -e; target=install; $(RECURSIVE_BUILD_CMD)
-	@set -e; for i in $(LIBS) ;\
+	@set -e; for i in "$(LIBS)" ;\
 	do \
 		if [ -f "$$i" ]; then \
 		(       echo installing $$i; \
