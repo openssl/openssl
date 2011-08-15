@@ -616,6 +616,7 @@ if (!$fips_enabled{"v2"}) {
 	foreach (keys %fips_enabled) {
 		$fips_enabled{$_} = 0 if $fips_enabled{$_} == 2;
 	}
+	$fips_enabled{"rsa-pss0"} = 1;
 }
 
 push @fips_test_list, @fips_dsa_test_list       if $fips_enabled{"dsa"};
