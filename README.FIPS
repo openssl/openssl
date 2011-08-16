@@ -1,7 +1,7 @@
 Preliminary status and build information for FIPS module v2.0
 
 NB: if you are cross compiling you now need to use the latest "incore" script
-this can be found under the util/ in the tarballs.
+this can be found at util/incore in the tarballs.
 
 If you have any object files from a previous build do:
 
