@@ -12,16 +12,16 @@ my @fips_dsa_test_list = (
 
     "DSA",
 
-    [ "PQGGen",  "fips_dssvs pqg", "path:/DSA/.*PQGGen" ],
-    [ "KeyPair", "fips_dssvs keypair", "path:/DSA/.*KeyPair" ],
-    [ "SigGen",  "fips_dssvs siggen", "path:/DSA/.*SigGen" ],
-    [ "SigVer",  "fips_dssvs sigver", "path:/DSA/.*SigVer" ]
+    [ "PQGGen",  "fips_dssvs pqg", "path:[^C]DSA/.*PQGGen" ],
+    [ "KeyPair", "fips_dssvs keypair", "path:[^C]DSA/.*KeyPair" ],
+    [ "SigGen",  "fips_dssvs siggen", "path:[^C]DSA/.*SigGen" ],
+    [ "SigVer",  "fips_dssvs sigver", "path:[^C]DSA/.*SigVer" ]
 
 );
 
 my @fips_dsa_pqgver_test_list = (
 
-    [ "PQGVer",  "fips_dssvs pqgver", "path:/DSA/.*PQGVer" ]
+    [ "PQGVer",  "fips_dssvs pqgver", "path:[^C]DSA/.*PQGVer" ]
 
 );
 
@@ -30,11 +30,11 @@ my @fips_dsa2_test_list = (
 
     "DSA2",
 
-    [ "PQGGen",  "fips_dssvs pqg", "path:/DSA2/.*PQGGen" ],
-    [ "KeyPair", "fips_dssvs keypair", "path:/DSA2/.*KeyPair" ],
-    [ "SigGen",  "fips_dssvs siggen", "path:/DSA2/.*SigGen" ],
-    [ "SigVer",  "fips_dssvs sigver", "path:/DSA2/.*SigVer" ],
-    [ "PQGVer",  "fips_dssvs pqgver", "path:/DSA2/.*PQGVer" ]
+    [ "PQGGen",  "fips_dssvs pqg", "path:[^C]DSA2/.*PQGGen" ],
+    [ "KeyPair", "fips_dssvs keypair", "path:[^C]DSA2/.*KeyPair" ],
+    [ "SigGen",  "fips_dssvs siggen", "path:[^C]DSA2/.*SigGen" ],
+    [ "SigVer",  "fips_dssvs sigver", "path:[^C]DSA2/.*SigVer" ],
+    [ "PQGVer",  "fips_dssvs pqgver", "path:[^C]DSA2/.*PQGVer" ]
 
 );
 
@@ -616,7 +616,6 @@ if (!$fips_enabled{"v2"}) {
 	foreach (keys %fips_enabled) {
 		$fips_enabled{$_} = 0 if $fips_enabled{$_} == 2;
 	}
-	$fips_enabled{"rsa-pss0"} = 1;
 }
 
 push @fips_test_list, @fips_dsa_test_list       if $fips_enabled{"dsa"};
