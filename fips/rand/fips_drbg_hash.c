@@ -371,7 +371,7 @@ int fips_drbg_hash_init(DRBG_CTX *dctx)
 	dctx->max_pers = DRBG_MAX_LENGTH;
 	dctx->max_adin = DRBG_MAX_LENGTH;
 
-	dctx->max_request = 1<<19;
+	dctx->max_request = 1<<16;
 	dctx->reseed_interval = 1<<24;
 
 	return 1;

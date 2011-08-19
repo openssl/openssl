@@ -429,7 +429,7 @@ int fips_drbg_ctr_init(DRBG_CTX *dctx)
 		dctx->max_adin = dctx->seedlen;
 		}
 
-	dctx->max_request = 1<<19;
+	dctx->max_request = 1<<16;
 	dctx->reseed_interval = 1<<24;
 
 	return 1;
