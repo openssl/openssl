@@ -1117,7 +1117,7 @@ mod_exp_512:
 	# adjust stack down and then align it with cache boundary
 	 mov	%rsp, %r8
 	 sub	\$($mem_size), %rsp
-	 and	\$~63, %rsp
+	 and	\$-64, %rsp
 
 	# store previous stack pointer and arguments
 	 mov	%r8, (+$rsp_offset)(%rsp)
