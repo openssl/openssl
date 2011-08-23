@@ -57,6 +57,8 @@ aes-x86_64.s: asm/aes-x86_64.pl
 	$(PERL) asm/aes-x86_64.pl $(PERLASM_SCHEME) > $@
 aesni-x86_64.s: asm/aesni-x86_64.pl
 	$(PERL) asm/aesni-x86_64.pl $(PERLASM_SCHEME) > $@
+aesni-sha1-x86_64.s:	asm/aesni-sha1-x86_64.pl
+	$(PERL) asm/aesni-sha1-x86_64.pl $(PERLASM_SCHEME) > $@
 
 aes-sparcv9.s: asm/aes-sparcv9.pl
 	$(PERL) asm/aes-sparcv9.pl $(CFLAGS) > $@

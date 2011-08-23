@@ -4009,3 +4009,19 @@
 #define LN_cmac		"cmac"
 #define NID_cmac		894
 
+#define SN_rc4_hmac_md5		"RC4-HMAC-MD5"
+#define LN_rc4_hmac_md5		"rc4-hmac-md5"
+#define NID_rc4_hmac_md5		915
+
+#define SN_aes_128_cbc_hmac_sha1		"AES-128-CBC-HMAC-SHA1"
+#define LN_aes_128_cbc_hmac_sha1		"aes-128-cbc-hmac-sha1"
+#define NID_aes_128_cbc_hmac_sha1		916
+
+#define SN_aes_192_cbc_hmac_sha1		"AES-192-CBC-HMAC-SHA1"
+#define LN_aes_192_cbc_hmac_sha1		"aes-192-cbc-hmac-sha1"
+#define NID_aes_192_cbc_hmac_sha1		917
+
+#define SN_aes_256_cbc_hmac_sha1		"AES-256-CBC-HMAC-SHA1"
+#define LN_aes_256_cbc_hmac_sha1		"aes-256-cbc-hmac-sha1"
+#define NID_aes_256_cbc_hmac_sha1		918
+
