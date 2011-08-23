@@ -659,3 +659,8 @@
 #define OPENSSL_armcap_P fips_openssl_armcap_P
 #define _armv7_neon_probe _fips_armv7_neon_probe
 #define _armv7_tick _fips_armv7_tick
+#define _sparcv9_rdtick _fips_sparcv9_rdtick
+#define _sparcv9_vis1_probe _fips_sparcv9_vis1_probe
+#define _sparcv9_vis2_probe _fips_sparcv9_vis2_probe
+#define _sparcv9_fmadd_probe _fips_sparcv9_fmadd_probe
+#define _sparcv9_vis1_instrument _fips_sparcv9_vis1_instrument
