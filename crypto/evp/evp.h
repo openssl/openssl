@@ -766,6 +766,9 @@ const EVP_MD *EVP_dev_crypto_md5(void);
 #ifndef OPENSSL_NO_RC4
 const EVP_CIPHER *EVP_rc4(void);
 const EVP_CIPHER *EVP_rc4_40(void);
+#ifndef OPENSSL_NO_MD5
+const EVP_CIPHER *EVP_rc4_hmac_md5(void);
+#endif
 #endif
 #ifndef OPENSSL_NO_IDEA
 const EVP_CIPHER *EVP_idea_ecb(void);
@@ -837,6 +840,10 @@ const EVP_CIPHER *EVP_aes_256_ctr(void);
 const EVP_CIPHER *EVP_aes_256_ccm(void);
 const EVP_CIPHER *EVP_aes_256_gcm(void);
 const EVP_CIPHER *EVP_aes_256_xts(void);
+#if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
+const EVP_CIPHER *EVP_aes_128_cbc_hmac_sha1(void);
+const EVP_CIPHER *EVP_aes_256_cbc_hmac_sha1(void);
+#endif
 #endif
 #ifndef OPENSSL_NO_CAMELLIA
 const EVP_CIPHER *EVP_camellia_128_ecb(void);

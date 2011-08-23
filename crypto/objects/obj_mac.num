@@ -912,3 +912,7 @@ mgf1		911
 rsassaPss		912
 aes_128_xts		913
 aes_256_xts		914
+rc4_hmac_md5		915
+aes_128_cbc_hmac_sha1		916
+aes_192_cbc_hmac_sha1		917
+aes_256_cbc_hmac_sha1		918

@@ -46,6 +46,8 @@ rc4-586.s:	asm/rc4-586.pl ../perlasm/x86asm.pl
 
 rc4-x86_64.s: asm/rc4-x86_64.pl
 	$(PERL) asm/rc4-x86_64.pl $(PERLASM_SCHEME) > $@
+rc4-md5-x86_64.s:	asm/rc4-md5-x86_64.pl
+	$(PERL) asm/rc4-md5-x86_64.pl $(PERLASM_SCHEME) > $@
 
 rc4-ia64.S: asm/rc4-ia64.pl
 	$(PERL) asm/rc4-ia64.pl $(CFLAGS) > $@
