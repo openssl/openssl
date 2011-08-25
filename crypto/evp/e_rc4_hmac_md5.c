@@ -224,7 +224,7 @@ static int rc4_hmac_md5_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 
 		memset (hmac_key,0,sizeof(hmac_key));
 
-		if (arg > sizeof(hmac_key)) {
+		if (arg > (int)sizeof(hmac_key)) {
 			MD5_Init(&key->head);
 			MD5_Update(&key->head,ptr,arg);
 			MD5_Final(hmac_key,&key->head);
