@@ -452,11 +452,11 @@ int fips_check_dsa_prng(DSA *dsa, size_t L, size_t N)
 
 int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
-	unsigned char *seed_out,
+	int idx, unsigned char *seed_out,
 	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb)
 	{
 	int ok=-1;
-	unsigned char *seed = NULL;
+	unsigned char *seed = NULL, *seed_tmp = NULL;
 	unsigned char md[EVP_MAX_MD_SIZE];
 	int mdsize;
 	BIGNUM *r0,*W,*X,*c,*test;
@@ -466,7 +466,10 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 	int counter=0;
 	int r=0;
 	BN_CTX *ctx=NULL;
+	EVP_MD_CTX mctx;
 	unsigned int h=2;
+
+	EVP_MD_CTX_init(&mctx);
 
 #ifdef OPENSSL_FIPS
 	if(FIPS_selftest_failed())
@@ -497,7 +500,12 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 
 	seed = OPENSSL_malloc(seed_len);
 
-	if (!seed)
+	if (seed_out)
+		seed_tmp = seed_out;
+	else
+		seed_tmp = OPENSSL_malloc(seed_len);
+
+	if (!seed || !seed_tmp)
 		goto err;
 
 	if (seed_in)
@@ -513,11 +521,23 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 	r0 = BN_CTX_get(ctx);
 	g = BN_CTX_get(ctx);
 	W = BN_CTX_get(ctx);
-	q = BN_CTX_get(ctx);
 	X = BN_CTX_get(ctx);
 	c = BN_CTX_get(ctx);
-	p = BN_CTX_get(ctx);
 	test = BN_CTX_get(ctx);
+
+	/* if p, q already supplied generate g only */
+	if (ret->p && ret->q)
+		{
+		p = ret->p;
+		q = ret->q;
+		memcpy(seed_tmp, seed, seed_len);
+		goto g_only;
+		}
+	else
+		{
+		p = BN_CTX_get(ctx);
+		q = BN_CTX_get(ctx);
+		}
 
 	if (!BN_lshift(test,BN_value_one(),L-1))
 		goto err;
@@ -648,21 +668,50 @@ end:
 	if(!BN_GENCB_call(cb, 2, 1))
 		goto err;
 
+	g_only:
+
 	/* We now need to generate g */
 	/* Set r0=(p-1)/q */
 	if (!BN_sub(test,p,BN_value_one())) goto err;
 	if (!BN_div(r0,NULL,test,q,ctx)) goto err;
 
-	if (!BN_set_word(test,h)) goto err;
+	if (idx < 0)
+		{
+		if (!BN_set_word(test,h))
+			goto err;
+		}
+	else
+		h = 1;
 	if (!BN_MONT_CTX_set(mont,p,ctx)) goto err;
 
 	for (;;)
 		{
+		static const unsigned char ggen[4] = {0x67,0x67,0x65,0x6e};
+		if (idx >= 0)
+			{
+			md[0] = idx & 0xff;
+			md[1] = (h >> 8) & 0xff;
+			md[2] = h & 0xff;
+			if (!EVP_DigestInit_ex(&mctx, evpmd, NULL))
+				goto err;
+			if (!EVP_DigestUpdate(&mctx, seed_tmp, seed_len))
+				goto err;
+			if (!EVP_DigestUpdate(&mctx, ggen, sizeof(ggen)))
+				goto err;
+			if (!EVP_DigestUpdate(&mctx, md, 3))
+				goto err;
+			if (!EVP_DigestFinal_ex(&mctx, md, NULL))
+				goto err;
+			if (!BN_bin2bn(md, mdsize, test))
+				goto err;
+			}
 		/* g=test^r0%p */
 		if (!BN_mod_exp_mont(g,test,r0,p,ctx,mont)) goto err;
 		if (!BN_is_one(g)) break;
-		if (!BN_add(test,test,BN_value_one())) goto err;
+		if (idx < 0 && !BN_add(test,test,BN_value_one())) goto err;
 		h++;
+		if ( idx >= 0 && h > 0xffff)
+			goto err;
 		}
 
 	if(!BN_GENCB_call(cb, 3, 1))
@@ -672,11 +721,17 @@ end:
 err:
 	if (ok == 1)
 		{
-		if(ret->p) BN_free(ret->p);
-		if(ret->q) BN_free(ret->q);
+		if (p != ret->p)
+			{
+			if(ret->p) BN_free(ret->p);
+			ret->p=BN_dup(p);
+			}
+		if (q != ret->q)
+			{
+			if(ret->q) BN_free(ret->q);
+			ret->q=BN_dup(q);
+			}
 		if(ret->g) BN_free(ret->g);
-		ret->p=BN_dup(p);
-		ret->q=BN_dup(q);
 		ret->g=BN_dup(g);
 		if (ret->p == NULL || ret->q == NULL || ret->g == NULL)
 			{
@@ -688,12 +743,53 @@ err:
 		}
 	if (seed)
 		OPENSSL_free(seed);
+	if (seed_out != seed_tmp)
+		OPENSSL_free(seed_tmp);
 	if(ctx)
 		{
 		BN_CTX_end(ctx);
 		BN_CTX_free(ctx);
 		}
 	if (mont != NULL) BN_MONT_CTX_free(mont);
+	EVP_MD_CTX_cleanup(&mctx);
 	return ok;
 	}
+
+int dsa_paramgen_check_g(DSA *dsa)
+	{
+	BN_CTX *ctx;
+	BIGNUM *tmp;
+	BN_MONT_CTX *mont = NULL;
+	int rv = -1;
+	ctx = BN_CTX_new();
+	if (!ctx)
+		return -1;
+	BN_CTX_start(ctx);
+	if (BN_cmp(dsa->g, BN_value_one()) <= 0)
+		return 0;
+	if (BN_cmp(dsa->g, dsa->p) >= 0)
+		return 0;
+	tmp = BN_CTX_get(ctx);
+	if (!tmp)
+		goto err;
+	if ((mont=BN_MONT_CTX_new()) == NULL)
+		goto err;
+	if (!BN_MONT_CTX_set(mont,dsa->p,ctx))
+		goto err;
+	/* Work out g^q mod p */
+	if (!BN_mod_exp_mont(tmp,dsa->g,dsa->q, dsa->p, ctx, mont))
+		goto err;
+	if (!BN_cmp(tmp, BN_value_one()))
+		rv = 1;
+	else
+		rv = 0;
+	err:
+	BN_CTX_end(ctx);
+	if (mont)
+		BN_MONT_CTX_free(mont);
+	BN_CTX_free(ctx);
+	return rv;
+
+	}
+
 #endif

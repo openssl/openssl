@@ -111,9 +111,9 @@ int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
 	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
 	unsigned char *seed_out,
 	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
-int dsa_builtin_paramgen2(DSA *ret, size_t bits, size_t qbits,
+int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 	const EVP_MD *evpmd, const unsigned char *seed_in, size_t seed_len,
-	unsigned char *seed_out,
+	int idx, unsigned char *seed_out,
 	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
 
 static void pqg(FILE *in, FILE *out)
@@ -160,7 +160,7 @@ static void pqg(FILE *in, FILE *out)
 			exit(1);
 			}
 		if (dsa2 && dsa_builtin_paramgen2(dsa, L, N, md,
-						NULL, 0, seed,
+						NULL, 0, -1, seed,
 						&counter, &h, NULL) <= 0)
 			{
 			fprintf(stderr, "Parameter Generation error\n");
@@ -191,8 +191,8 @@ static void pqgver(FILE *in, FILE *out)
     DSA *dsa=NULL;
     int dsa2, L, N, part_test = 0;
     const EVP_MD *md = NULL;
-    int seedlen=-1;
-    unsigned char seed[1024];
+    int seedlen=-1, idxlen, idx = -1;
+    unsigned char seed[1024], idtmp[1024];
 
     while(fgets(buf,sizeof buf,in) != NULL)
 	{
@@ -221,7 +221,8 @@ static void pqgver(FILE *in, FILE *out)
 	    q=hex2bn(value);
 	else if(!strcmp(keyword,"G"))
 	    g=hex2bn(value);
-	else if(!strcmp(keyword,"Seed"))
+	else if(!strcmp(keyword,"Seed")
+		|| !strcmp(keyword,"domain_parameter_seed"))
 	    {
 	    seedlen = hex2bin(value, seed);
 	    if (!dsa2 && seedlen != 20)
@@ -229,9 +230,21 @@ static void pqgver(FILE *in, FILE *out)
 		fprintf(stderr, "Seed parse length error\n");
 		exit (1);
 		}
+	    if (idx > 0)
+		part_test = 1;
+	    }
+	else if(!strcmp(keyword,"index"))
+	    {
+	    idxlen = hex2bin(value, idtmp);
+            if (idxlen != 1)
+		{
+		fprintf(stderr, "Index value error\n");
+		exit (1);
+		}
+	    idx = idtmp[0];
 	    }
 	else if(!strcmp(keyword,"c"))
-	    counter =atoi(buf+4);
+	    counter = atoi(buf+4);
 	partial:
 	if(!strcmp(keyword,"H") || part_test)
 	    {
@@ -243,6 +256,11 @@ static void pqgver(FILE *in, FILE *out)
 		exit (1);
 		}
 	    dsa = FIPS_dsa_new();
+	    if (idx >= 0)
+		{
+		dsa->p = BN_dup(p);
+		dsa->q = BN_dup(q);
+		}
 	    if (!dsa2 && !dsa_builtin_paramgen(dsa, L, N, md,
 					seed, seedlen, NULL,
 					&counter2, &h2, NULL))
@@ -251,13 +269,20 @@ static void pqgver(FILE *in, FILE *out)
 			exit(1);
 			}
 	    if (dsa2 && dsa_builtin_paramgen2(dsa, L, N, md,
-					seed, seedlen, NULL,
+					seed, seedlen, idx, NULL,
 					&counter2, &h2, NULL) < 0)
 			{
 			fprintf(stderr, "Parameter Generation error\n");
 			exit(1);
 			}
-            if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) || 
+	    if (idx >= 0)
+		{
+		if (BN_cmp(dsa->g, g))
+			fprintf(out, "Result = F\n");
+		else
+			fprintf(out, "Result = P\n");
+		}
+            else if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) || 
 		(!part_test &&
 		((BN_cmp(dsa->g, g) || (counter != counter2) || (h != h2)))))
 	    	fprintf(out, "Result = F\n");
@@ -273,9 +298,11 @@ static void pqgver(FILE *in, FILE *out)
 	    dsa = NULL;
 	    if (part_test)
 		{
-		fputs(buf,out);
+		if (idx == -1)
+			fputs(buf,out);
 		part_test = 0;
 		}
+	    idx = -1;
 	    }
 	}
     }
@@ -436,7 +463,7 @@ static void keypair(FILE *in, FILE *out)
 			fprintf(stderr, "Parameter Generation error\n");
 			exit(1);
 			}
-	    if (dsa2 && dsa_builtin_paramgen2(dsa, L, N, NULL, NULL, 0,
+	    if (dsa2 && dsa_builtin_paramgen2(dsa, L, N, NULL, NULL, 0, -1,
 						NULL, NULL, NULL, NULL) <= 0)
 			{
 			fprintf(stderr, "Parameter Generation error\n");
@@ -493,7 +520,7 @@ static void siggen(FILE *in, FILE *out)
 			fprintf(stderr, "Parameter Generation error\n");
 			exit(1);
 			}
-	    if (dsa2 && dsa_builtin_paramgen2(dsa, L, N, md, NULL, 0,
+	    if (dsa2 && dsa_builtin_paramgen2(dsa, L, N, md, NULL, 0, -1,
 						NULL, NULL, NULL, NULL) <= 0)
 			{
 			fprintf(stderr, "Parameter Generation error\n");
