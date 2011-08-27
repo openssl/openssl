@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 #
-# Copyrifgr (c) 2011 The OpenSSL Project.
+# Copyright (c) 2011 The OpenSSL Project.
 #
 # The script embeds fingerprint into ELF executable object, either
 # application binary or shared library.
