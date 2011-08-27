@@ -494,22 +494,26 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 		}
 
 	mdsize = M_EVP_MD_size(evpmd);
+	/* If unverificable g generation only don't need seed */
+	if (!ret->p || !ret->q || idx >= 0)
+		{
+		if (seed_len == 0)
+			seed_len = mdsize;
 
-	if (seed_len == 0)
-		seed_len = mdsize;
+		seed = OPENSSL_malloc(seed_len);
 
-	seed = OPENSSL_malloc(seed_len);
+		if (seed_out)
+			seed_tmp = seed_out;
+		else
+			seed_tmp = OPENSSL_malloc(seed_len);
 
-	if (seed_out)
-		seed_tmp = seed_out;
-	else
-		seed_tmp = OPENSSL_malloc(seed_len);
+		if (!seed || !seed_tmp)
+			goto err;
 
-	if (!seed || !seed_tmp)
-		goto err;
+		if (seed_in)
+			memcpy(seed, seed_in, seed_len);
 
-	if (seed_in)
-		memcpy(seed, seed_in, seed_len);
+		}
 
 	if ((ctx=BN_CTX_new()) == NULL)
 		goto err;
@@ -530,7 +534,8 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 		{
 		p = ret->p;
 		q = ret->q;
-		memcpy(seed_tmp, seed, seed_len);
+		if (idx >= 0)
+			memcpy(seed_tmp, seed, seed_len);
 		goto g_only;
 		}
 	else

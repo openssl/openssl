@@ -123,30 +123,44 @@ static void pqg(FILE *in, FILE *out)
     char *keyword, *value;
     int dsa2, L, N;
     const EVP_MD *md = NULL;
+    BIGNUM *p = NULL, *q = NULL;
+    enum pqtype { PQG_NONE, PQG_PQ, PQG_G, PQG_GCANON}
+		pqg_type = PQG_NONE;
+    int seedlen=-1, idxlen, idx = -1;
+    unsigned char seed[1024], idtmp[1024];
 
     while(fgets(buf,sizeof buf,in) != NULL)
 	{
+	if (buf[0] == '[')
+		{
+	    	if (strstr(buf, "Probable"))
+			pqg_type = PQG_PQ;
+	    	else if (strstr(buf, "Unverifiable"))
+			pqg_type = PQG_G;
+	    	else if (strstr(buf, "Canonical"))
+			pqg_type = PQG_GCANON;
+		}
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
 		fputs(buf,out);
 		continue;
 		}
+	fputs(buf,out);
 	if(!strcmp(keyword,"[mod"))
 	    {
-	    fputs(buf,out);
 	    if (!parse_mod(value, &dsa2, &L, &N, &md))
 		{
 		fprintf(stderr, "Mod Parse Error\n");
 		exit (1);
 		}
 	    }
-	else if(!strcmp(keyword,"N"))
+	else if(!strcmp(keyword,"N") 
+		|| (!strcmp(keyword, "Num") && pqg_type == PQG_PQ))
 	    {
 	    int n=atoi(value);
 
 	    while(n--)
 		{
-		unsigned char seed[EVP_MAX_MD_SIZE];
 		DSA *dsa;
 		int counter;
 		unsigned long h;
@@ -169,14 +183,53 @@ static void pqg(FILE *in, FILE *out)
  
 		do_bn_print_name(out, "P",dsa->p);
 		do_bn_print_name(out, "Q",dsa->q);
-		do_bn_print_name(out, "G",dsa->g);
-		OutputValue("Seed",seed, M_EVP_MD_size(md), out, 0);
-		fprintf(out, "c = %d\n",counter);
-		fprintf(out, "H = %lx\n\n",h);
+		if (!dsa2)
+			do_bn_print_name(out, "G",dsa->g);
+		OutputValue(dsa2 ? "domain_parameter_seed" : "Seed",
+				seed, M_EVP_MD_size(md), out, 0);
+		if (!dsa2)
+			{
+			fprintf(out, "c = %d\n",counter);
+			fprintf(out, "H = %lx\n\n",h);
+			}
+		else
+			fputs("\n", out);
 		}
 	    }
-	else
-	    fputs(buf,out);
+	else if(!strcmp(keyword,"P"))
+	    p=hex2bn(value);
+	else if(!strcmp(keyword,"Q"))
+	    q=hex2bn(value);
+	else if(!strcmp(keyword,"domain_parameter_seed"))
+	    seedlen = hex2bin(value, seed);
+	else if(!strcmp(keyword,"index"))
+	    {
+	    idxlen = hex2bin(value, idtmp);
+            if (idxlen != 1)
+		{
+		fprintf(stderr, "Index value error\n");
+		exit (1);
+		}
+	    idx = idtmp[0];
+	    }
+	if ((idx >= 0 && pqg_type == PQG_GCANON) || (q && pqg_type == PQG_G))
+		{
+		DSA *dsa;
+		dsa = FIPS_dsa_new();
+		dsa->p = p;
+		dsa->q = q;
+		p = q = NULL;
+		if (dsa_builtin_paramgen2(dsa, L, N, md,
+						seed, seedlen, idx, NULL,
+						NULL, NULL, NULL) <= 0)
+			{
+			fprintf(stderr, "Parameter Generation error\n");
+			exit(1);
+			}
+		do_bn_print_name(out, "G",dsa->g);
+		FIPS_dsa_free(dsa);
+		idx = -1;
+		}
 	}
     }
 
