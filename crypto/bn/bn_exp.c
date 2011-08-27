@@ -654,16 +654,21 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	numPowers = 1 << window;
 	powerbufLen = sizeof(m->d[0])*(top*numPowers +
 				(top>numPowers?top:numPowers));
+#ifdef alloca
 	if (powerbufLen < 3072)
 		powerbufFree = alloca(powerbufLen+MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH);
-	else if ((powerbufFree=(unsigned char*)OPENSSL_malloc(powerbufLen+MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH)) == NULL)
+	else
+#endif
+	if ((powerbufFree=(unsigned char*)OPENSSL_malloc(powerbufLen+MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH)) == NULL)
 		goto err;
 		
 	powerbuf = MOD_EXP_CTIME_ALIGN(powerbufFree);
 	memset(powerbuf, 0, powerbufLen);
 
+#ifdef alloca
 	if (powerbufLen < 3072)
 		powerbufFree = NULL;
+#endif
 
 	computeTemp.d = (BN_ULONG *)(powerbuf + sizeof(m->d[0])*top*numPowers);
 	computeTemp.top = computeTemp.dmax = top;
