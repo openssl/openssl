@@ -452,7 +452,7 @@ my @fips_ecdh_test_list = (
 
     # ECDH
     "ECDH Ephemeral Primitives Only",
-    [ "KAS_ECC_CDH_PrimitiveTest", "fips_ecdhvs WTF" ],
+    [ "KAS_ECC_CDH_PrimitiveTest", "fips_ecdhvs ecdhgen" ],
 #    [ "KASValidityTest_ECCEphemeralUnified_NOKC_ZZOnly_init",
 #							"fips_ecdhvs ecdhver" ],
 #    [ "KASValidityTest_ECCEphemeralUnified_NOKC_ZZOnly_resp",
