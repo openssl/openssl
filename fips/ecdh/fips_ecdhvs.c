@@ -196,13 +196,14 @@ static EC_POINT *make_peer(EC_GROUP *group, BIGNUM *x, BIGNUM *y)
 	return NULL;
 	}
 
-static int ec_print_pubkey(FILE *out, EC_KEY *key, int add_e)
+static int ec_print_key(FILE *out, EC_KEY *key, int add_e, int exout)
 	{
 	const EC_POINT *pt;
 	const EC_GROUP *grp;
 	const EC_METHOD *meth;
 	int rv;
 	BIGNUM *tx, *ty;
+	const BIGNUM *d = NULL;
 	BN_CTX *ctx;
 	ctx = BN_CTX_new();
 	if (!ctx)
@@ -213,6 +214,8 @@ static int ec_print_pubkey(FILE *out, EC_KEY *key, int add_e)
 		return 0;
 	grp = EC_KEY_get0_group(key);
 	pt = EC_KEY_get0_public_key(key);
+	if (exout)
+		d = EC_KEY_get0_private_key(key);
 	meth = EC_GROUP_method_of(grp);
 	if (EC_METHOD_get_field_type(meth) == NID_X9_62_prime_field)
 		rv = EC_POINT_get_affine_coordinates_GFp(grp, pt, tx, ty, ctx);
@@ -230,11 +233,15 @@ static int ec_print_pubkey(FILE *out, EC_KEY *key, int add_e)
 		{
 		do_bn_print_name(out, "QeIUTx", tx);
 		do_bn_print_name(out, "QeIUTy", ty);
+		if (d)
+			do_bn_print_name(out, "QeIUTd", d);
 		}
 	else
 		{
 		do_bn_print_name(out, "QIUTx", tx);
 		do_bn_print_name(out, "QIUTy", ty);
+		if (d)
+			do_bn_print_name(out, "QIUTd", d);
 		}
 
 	BN_CTX_free(ctx);
@@ -261,7 +268,7 @@ static void ec_output_Zhash(FILE *out, int exout, EC_GROUP *group,
 		if (md)
 			rhashlen = M_EVP_MD_size(md);
 		EC_KEY_generate_key(ec);
-		ec_print_pubkey(out, ec, md ? 1 : 0);
+		ec_print_key(out, ec, md ? 1 : 0, exout);
 		}
 	else
 		{
