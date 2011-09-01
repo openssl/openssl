@@ -57,7 +57,6 @@
  *
  */
 
-#ifndef OPENSSL_NO_DGRAM
 
 #include <stdio.h>
 #include <errno.h>
@@ -65,6 +64,7 @@
 #include "cryptlib.h"
 
 #include <openssl/bio.h>
+#ifndef OPENSSL_NO_DGRAM
 
 #if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS)
 #include <sys/timeb.h>
@@ -724,7 +724,6 @@ int BIO_dgram_non_fatal_error(int err)
 		}
 	return(0);
 	}
-#endif
 
 static void get_current_time(struct timeval *t)
 	{
@@ -742,3 +741,5 @@ static void get_current_time(struct timeval *t)
 	gettimeofday(t, NULL);
 #endif
 	}
+
+#endif
