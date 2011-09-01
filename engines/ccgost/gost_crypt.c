@@ -495,7 +495,8 @@ int  gost89_get_asn1_parameters(EVP_CIPHER_CTX *ctx,ASN1_TYPE *params)
 int gost_imit_init_cpa(EVP_MD_CTX *ctx)
 	{
 	struct ossl_gost_imit_ctx *c = ctx->md_data;
-	memset(c->buffer,0,16);
+	memset(c->buffer,0,sizeof(c->buffer));
+	memset(c->partial_block,0,sizeof(c->partial_block));
 	c->count = 0;
 	c->bytes_left=0;
 	c->key_meshing=1;
