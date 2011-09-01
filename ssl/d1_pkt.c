@@ -409,13 +409,13 @@ dtls1_process_record(SSL *s)
 	enc_err = s->method->ssl3_enc->enc(s,0);
 	if (enc_err <= 0)
 		{
-		if (enc_err == 0)
-			/* SSLerr() and ssl3_send_alert() have been called */
-			goto err;
-
-		/* otherwise enc_err == -1 */
-		al=SSL_AD_BAD_RECORD_MAC;
-		goto f_err;
+		/* decryption failed, silently discard message */
+		if (enc_err < 0)
+			{
+			rr->length = 0;
+			s->packet_length = 0;
+			}
+		goto err;
 		}
 
 #ifdef TLS_DEBUG
@@ -658,10 +658,12 @@ again:
 
 	/* If this record is from the next epoch (either HM or ALERT),
 	 * and a handshake is currently in progress, buffer it since it
-	 * cannot be processed at this time. */
+	 * cannot be processed at this time. However, do not buffer
+	 * anything while listening.
+	 */
 	if (is_next_epoch)
 		{
-		if (SSL_in_init(s) || s->in_handshake)
+		if ((SSL_in_init(s) || s->in_handshake) && !s->d1->listen)
 			{
 			dtls1_buffer_record(s, &(s->d1->unprocessed_rcds), rr->seq_num);
 			}
