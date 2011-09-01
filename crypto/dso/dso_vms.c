@@ -160,7 +160,7 @@ static int vms_load(DSO *dso)
 # define DSO_MALLOC OPENSSL_malloc
 #endif /* __INITIAL_POINTER_SIZE == 64 [else] */
 
-	DSO_VMS_INTERNAL *p;
+	DSO_VMS_INTERNAL *p = NULL;
 
 #if __INITIAL_POINTER_SIZE == 64
 # pragma pointer_size restore
