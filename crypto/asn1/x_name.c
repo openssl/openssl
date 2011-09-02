@@ -464,7 +464,8 @@ static int asn1_string_canon(ASN1_STRING *out, ASN1_STRING *in)
 			}
 		else
 			{
-			*to++ = tolower(*from++);
+			*to++ = tolower(*from);
+			from++;
 			i++;
 			}
 		}
