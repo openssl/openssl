@@ -491,6 +491,7 @@
 #define bn_sqr_recursive fips_bn_sqr_recursive
 #define dsa_builtin_paramgen fips_dsa_builtin_paramgen
 #define dsa_builtin_paramgen2 fips_dsa_builtin_paramgen2
+#define dsa_paramgen_check_g fips_dsa_paramgen_check_g
 #define ec_GF2m_have_precompute_mult fips_ec_gf2m_have_precompute_mult
 #define ec_GF2m_precompute_mult fips_ec_gf2m_precompute_mult
 #define ec_GF2m_simple_add fips_ec_gf2m_simple_add
@@ -655,7 +656,6 @@
 #define aesni_xts_decrypt fips_aesni_xts_decrypt
 #define aesni_xts_encrypt fips_aesni_xts_encrypt
 #define OPENSSL_ia32_rdrand fips_openssl_ia32_rdrand
-#define mod_exp_512 fips_mod_exp_512
 #define OPENSSL_armcap_P fips_openssl_armcap_P
 #define _armv7_neon_probe _fips_armv7_neon_probe
 #define _armv7_tick _fips_armv7_tick
@@ -664,3 +664,5 @@
 #define _sparcv9_vis2_probe _fips_sparcv9_vis2_probe
 #define _sparcv9_fmadd_probe _fips_sparcv9_fmadd_probe
 #define _sparcv9_vis1_instrument _fips_sparcv9_vis1_instrument
+#define bn_mul_mont_gather5 fips_bn_mul_mont_gather5
+#define bn_scatter5 fips_bn_scatter5
