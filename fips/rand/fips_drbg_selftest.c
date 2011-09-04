@@ -63,6 +63,7 @@
 #include "fips_drbg_selftest.h"
 
 typedef struct {
+	int post;
 	int nid;
 	unsigned int flags;
 
@@ -108,7 +109,7 @@ typedef struct {
 
 	} DRBG_SELFTEST_DATA;
 
-#define make_drbg_test_data(nid, flag, pr) { nid, flag | DRBG_FLAG_TEST, \
+#define make_drbg_test_data(nid, flag, pr, p) {p, nid, flag | DRBG_FLAG_TEST, \
 	pr##_entropyinput, sizeof(pr##_entropyinput), \
 	pr##_nonce, sizeof(pr##_nonce), \
 	pr##_personalizationstring, sizeof(pr##_personalizationstring), \
@@ -129,26 +130,26 @@ typedef struct {
 	pr##_pr_returnedbits, sizeof(pr##_pr_returnedbits), \
 	}
 
-#define make_drbg_test_data_df(nid, pr) \
-	make_drbg_test_data(nid, DRBG_FLAG_CTR_USE_DF, pr)
+#define make_drbg_test_data_df(nid, pr, p) \
+	make_drbg_test_data(nid, DRBG_FLAG_CTR_USE_DF, pr, p)
 
 static DRBG_SELFTEST_DATA drbg_test[] = {
-	make_drbg_test_data_df(NID_aes_128_ctr, aes_128_use_df),
-	make_drbg_test_data_df(NID_aes_192_ctr, aes_192_use_df),
-	make_drbg_test_data_df(NID_aes_256_ctr, aes_256_use_df),
-	make_drbg_test_data(NID_aes_128_ctr, 0, aes_128_no_df),
-	make_drbg_test_data(NID_aes_192_ctr, 0, aes_192_no_df),
-	make_drbg_test_data(NID_aes_256_ctr, 0, aes_256_no_df),
-	make_drbg_test_data(NID_sha1, 0, sha1),
-	make_drbg_test_data(NID_sha224, 0, sha224),
-	make_drbg_test_data(NID_sha256, 0, sha256),
-	make_drbg_test_data(NID_sha384, 0, sha384),
-	make_drbg_test_data(NID_sha512, 0, sha512),
-	make_drbg_test_data(NID_hmacWithSHA1, 0, hmac_sha1),
-	make_drbg_test_data(NID_hmacWithSHA224, 0, hmac_sha224),
-	make_drbg_test_data(NID_hmacWithSHA256, 0, hmac_sha256),
-	make_drbg_test_data(NID_hmacWithSHA384, 0, hmac_sha384),
-	make_drbg_test_data(NID_hmacWithSHA512, 0, hmac_sha512),
+	make_drbg_test_data_df(NID_aes_128_ctr, aes_128_use_df, 0),
+	make_drbg_test_data_df(NID_aes_192_ctr, aes_192_use_df, 0),
+	make_drbg_test_data_df(NID_aes_256_ctr, aes_256_use_df, 1),
+	make_drbg_test_data(NID_aes_128_ctr, 0, aes_128_no_df, 0),
+	make_drbg_test_data(NID_aes_192_ctr, 0, aes_192_no_df, 0),
+	make_drbg_test_data(NID_aes_256_ctr, 0, aes_256_no_df, 1),
+	make_drbg_test_data(NID_sha1, 0, sha1, 0),
+	make_drbg_test_data(NID_sha224, 0, sha224, 0),
+	make_drbg_test_data(NID_sha256, 0, sha256, 1),
+	make_drbg_test_data(NID_sha384, 0, sha384, 0),
+	make_drbg_test_data(NID_sha512, 0, sha512, 0),
+	make_drbg_test_data(NID_hmacWithSHA1, 0, hmac_sha1, 0),
+	make_drbg_test_data(NID_hmacWithSHA224, 0, hmac_sha224, 0),
+	make_drbg_test_data(NID_hmacWithSHA256, 0, hmac_sha256, 1),
+	make_drbg_test_data(NID_hmacWithSHA384, 0, hmac_sha384, 0),
+	make_drbg_test_data(NID_hmacWithSHA512, 0, hmac_sha512, 0),
 	{0,0,0}
 	};
 
@@ -302,6 +303,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	unsigned char randout[1024];
 	TEST_ENT t;
 	size_t i;
+	unsigned int reseed_counter_tmp;
 	unsigned char *p = (unsigned char *)dctx;
 
 	/* Initialise DRBG */
@@ -425,28 +427,15 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	FIPS_drbg_set_app_data(dctx, &t);
 
 	t.entlen = td->entlen;
-	/* Test reseeding works */
-	dctx->reseed_interval = 2;
+	/* Test reseed counter works */
 	if (!FIPS_drbg_instantiate(dctx, td->pers, td->perslen))
 		goto err;
+	/* Save initial reseed counter */
+	reseed_counter_tmp = dctx->reseed_counter;
+	/* Set reseed counter to beyond interval */
+	dctx->reseed_counter = dctx->reseed_interval;
 
-	/* Check generation is now OK */
-	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
-				td->adin, td->adinlen))
-		goto err;
-	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
-				td->adin, td->adinlen))
-		goto err;
-
-	/* DRBG should now require a reseed */
-	if (dctx->status != DRBG_STATUS_RESEED)
-		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_RESEED_COUNTER_ERROR);
-		goto err;
-		}
-
-
-	/* Generate again and check entropy has been requested for reseed */
+	/* Generate output and check entropy has been requested for reseed */
 	t.entcnt = 0;
 	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
 				td->adin, td->adinlen))
@@ -454,6 +443,12 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (t.entcnt != 1)
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_NOT_REQUESTED_FOR_RESEED);
+		goto err;
+		}
+	/* Check reseed counter has been reset */
+	if (dctx->reseed_counter != reseed_counter_tmp + 1)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_RESEED_COUNTER_ERROR);
 		goto err;
 		}
 
@@ -513,15 +508,11 @@ int FIPS_selftest_drbg(void)
 		return 0;
 	for (td = drbg_test; td->nid != 0; td++)
 		{
+		if (td->post != 1)
+			continue;
 		if (!fips_post_started(FIPS_TEST_DRBG, td->nid, &td->flags))
 			return 1;
 		if (!fips_drbg_single_kat(dctx, td))
-			{
-			fips_post_failed(FIPS_TEST_DRBG, td->nid, &td->flags);
-			rv = 0;
-			continue;
-			}
-		if (!fips_drbg_health_check(dctx, td))
 			{
 			fips_post_failed(FIPS_TEST_DRBG, td->nid, &td->flags);
 			rv = 0;
