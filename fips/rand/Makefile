@@ -32,7 +32,7 @@ LIBOBJ=	fips_rand.o fips_rand_selftest.o fips_drbg_lib.o \
 SRC= $(LIBSRC)
 
 EXHEADER= fips_rand.h
-HEADER=	$(EXHEADER) fips_rand_lcl.h
+HEADER=	$(EXHEADER) fips_rand_lcl.h fips_drbg_selftest.h
 
 ALL=    $(GENERAL) $(SRC) $(HEADER)
 
