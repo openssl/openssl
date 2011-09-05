@@ -668,14 +668,11 @@ int ssl3_accept(SSL *s)
 			ret=ssl3_get_finished(s,SSL3_ST_SR_FINISHED_A,
 				SSL3_ST_SR_FINISHED_B);
 			if (ret <= 0) goto end;
-#ifndef OPENSSL_NO_TLSEXT
-			if (s->tlsext_ticket_expected)
-				s->state=SSL3_ST_SW_SESSION_TICKET_A;
-			else if (s->hit)
-				s->state=SSL_ST_OK;
-#else
 			if (s->hit)
 				s->state=SSL_ST_OK;
+#ifndef OPENSSL_NO_TLSEXT
+			else if (s->tlsext_ticket_expected)
+				s->state=SSL3_ST_SW_SESSION_TICKET_A;
 #endif
 			else
 				s->state=SSL3_ST_SW_CHANGE_A;
@@ -753,9 +750,6 @@ int ssl3_accept(SSL *s)
 
 			if (s->renegotiate == 2) /* skipped if we just sent a HelloRequest */
 				{
-				/* actually not necessarily a 'new' session unless
-				 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
-				
 				s->renegotiate=0;
 				s->new_session=0;
 				
@@ -947,13 +941,16 @@ int ssl3_get_client_hello(SSL *s)
 	j= *(p++);
 
 	s->hit=0;
-	/* Versions before 0.9.7 always allow session reuse during renegotiation
-	 * (i.e. when s->new_session is true), option
-	 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is new with 0.9.7.
-	 * Maybe this optional behaviour should always have been the default,
-	 * but we cannot safely change the default behaviour (or new applications
-	 * might be written that become totally unsecure when compiled with
-	 * an earlier library version)
+	/* Versions before 0.9.7 always allow clients to resume sessions in renegotiation.
+	 * 0.9.7 and later allow this by default, but optionally ignore resumption requests
+	 * with flag SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION (it's a new flag rather
+	 * than a change to default behavior so that applications relying on this for security
+	 * won't even compile against older library versions).
+	 *
+	 * 1.0.1 and later also have a function SSL_renegotiate_abbreviated() to request
+	 * renegotiation but not a new session (s->new_session remains unset): for servers,
+	 * this essentially just means that the SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION
+	 * setting will be ignored.
 	 */
 	if ((s->new_session && (s->options & SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION)))
 		{
@@ -1401,20 +1398,20 @@ int ssl3_send_server_hello(SSL *s)
 		memcpy(p,s->s3->server_random,SSL3_RANDOM_SIZE);
 		p+=SSL3_RANDOM_SIZE;
 
-		/* now in theory we have 3 options to sending back the
-		 * session id.  If it is a re-use, we send back the
-		 * old session-id, if it is a new session, we send
-		 * back the new session-id or we send back a 0 length
-		 * session-id if we want it to be single use.
-		 * Currently I will not implement the '0' length session-id
-		 * 12-Jan-98 - I'll now support the '0' length stuff.
-		 *
-		 * We also have an additional case where stateless session
-		 * resumption is successful: we always send back the old
-		 * session id. In this case s->hit is non zero: this can
-		 * only happen if stateless session resumption is succesful
-		 * if session caching is disabled so existing functionality
-		 * is unaffected.
+		/* There are several cases for the session ID to send
+		 * back in the server hello:
+		 * - For session reuse from the session cache,
+		 *   we send back the old session ID.
+		 * - If stateless session reuse (using a session ticket)
+		 *   is successful, we send back the client's "session ID"
+		 *   (which doesn't actually identify the session).
+		 * - If it is a new session, we send back the new
+		 *   session ID.
+		 * - However, if we want the new session to be single-use,
+		 *   we send back a 0-length session ID.
+		 * s->hit is non-zero in either case of session reuse,
+		 * so the following won't overwrite an ID that we're supposed
+		 * to send back.
 		 */
 		if (!(s->ctx->session_cache_mode & SSL_SESS_CACHE_SERVER)
 			&& !s->hit)
@@ -3297,13 +3294,17 @@ int ssl3_send_server_certificate(SSL *s)
 	/* SSL3_ST_SW_CERT_B */
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
+
 #ifndef OPENSSL_NO_TLSEXT
+/* send a new session ticket (not necessarily for a new session) */
 int ssl3_send_newsession_ticket(SSL *s)
 	{
 	if (s->state == SSL3_ST_SW_SESSION_TICKET_A)
 		{
 		unsigned char *p, *senc, *macstart;
-		int len, slen;
+		const unsigned char *const_p;
+		int len, slen_full, slen;
+		SSL_SESSION *sess;
 		unsigned int hlen;
 		EVP_CIPHER_CTX ctx;
 		HMAC_CTX hctx;
@@ -3312,12 +3313,38 @@ int ssl3_send_newsession_ticket(SSL *s)
 		unsigned char key_name[16];
 
 		/* get session encoding length */
-		slen = i2d_SSL_SESSION(s->session, NULL);
+		slen_full = i2d_SSL_SESSION(s->session, NULL);
 		/* Some length values are 16 bits, so forget it if session is
  		 * too long
  		 */
-		if (slen > 0xFF00)
+		if (slen_full > 0xFF00)
 			return -1;
+		senc = OPENSSL_malloc(slen_full);
+		if (!senc)
+			return -1;
+		p = senc;
+		i2d_SSL_SESSION(s->session, &p);
+
+		/* create a fresh copy (not shared with other threads) to clean up */
+		const_p = senc;
+		sess = d2i_SSL_SESSION(NULL, &const_p, slen_full);
+		if (sess == NULL)
+			{
+			OPENSSL_free(senc);
+			return -1;
+			}
+		sess->session_id_length = 0; /* ID is irrelevant for the ticket */
+
+		slen = i2d_SSL_SESSION(sess, NULL);
+		if (slen > slen_full) /* shouldn't ever happen */
+			{
+			OPENSSL_free(senc);
+			return -1;
+			}
+		p = senc;
+		i2d_SSL_SESSION(sess, &p);
+		SSL_SESSION_free(sess);
+
 		/* Grow buffer if need be: the length calculation is as
  		 * follows 1 (size of message name) + 3 (message length
  		 * bytes) + 4 (ticket lifetime hint) + 2 (ticket length) +
@@ -3329,11 +3356,6 @@ int ssl3_send_newsession_ticket(SSL *s)
 			26 + EVP_MAX_IV_LENGTH + EVP_MAX_BLOCK_LENGTH +
 			EVP_MAX_MD_SIZE + slen))
 			return -1;
-		senc = OPENSSL_malloc(slen);
-		if (!senc)
-			return -1;
-		p = senc;
-		i2d_SSL_SESSION(s->session, &p);
 
 		p=(unsigned char *)s->init_buf->data;
 		/* do the header */
@@ -3364,7 +3386,13 @@ int ssl3_send_newsession_ticket(SSL *s)
 					tlsext_tick_md(), NULL);
 			memcpy(key_name, tctx->tlsext_tick_key_name, 16);
 			}
-		l2n(s->session->tlsext_tick_lifetime_hint, p);
+
+		/* Ticket lifetime hint (advisory only):
+		 * We leave this unspecified for resumed session (for simplicity),
+		 * and guess that tickets for new sessions will live as long
+		 * as their sessions. */
+		l2n(s->hit ? 0 : s->session->timeout, p);
+
 		/* Skip ticket length for now */
 		p += 2;
 		/* Output key name */

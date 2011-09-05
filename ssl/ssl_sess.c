@@ -436,6 +436,25 @@ int ssl_get_new_session(SSL *s, int session)
 	return(1);
 	}
 
+/* ssl_get_prev attempts to find an SSL_SESSION to be used to resume this
+ * connection. It is only called by servers.
+ *
+ *   session_id: points at the session ID in the ClientHello. This code will
+ *       read past the end of this in order to parse out the session ticket
+ *       extension, if any.
+ *   len: the length of the session ID.
+ *   limit: a pointer to the first byte after the ClientHello.
+ *
+ * Returns:
+ *   -1: error
+ *    0: a session may have been found.
+ *
+ * Side effects:
+ *   - If a session is found then s->session is pointed at it (after freeing an
+ *     existing session if need be) and s->verify_result is set from the session.
+ *   - Both for new and resumed sessions, s->tlsext_ticket_expected is set to 1
+ *     if the server should issue a new session ticket (to 0 otherwise).
+ */
 int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 			const unsigned char *limit)
 	{
@@ -443,27 +462,39 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 
 	SSL_SESSION *ret=NULL;
 	int fatal = 0;
+	int try_session_cache = 1;
 #ifndef OPENSSL_NO_TLSEXT
 	int r;
 #endif
 
 	if (len > SSL_MAX_SSL_SESSION_ID_LENGTH)
 		goto err;
+
+	if (len == 0)
+		try_session_cache = 0;
+
 #ifndef OPENSSL_NO_TLSEXT
-	r = tls1_process_ticket(s, session_id, len, limit, &ret);
-	if (r == -1)
+	r = tls1_process_ticket(s, session_id, len, limit, &ret); /* sets s->tlsext_ticket_expected */
+	switch (r)
 		{
+	case -1: /* Error during processing */
 		fatal = 1;
 		goto err;
+	case 0: /* No ticket found */
+	case 1: /* Zero length ticket found */
+		break; /* Ok to carry on processing session id. */
+	case 2: /* Ticket found but not decrypted. */
+	case 3: /* Ticket decrypted, *ret has been set. */
+		try_session_cache = 0;
+		break;
+	default:
+		abort();
 		}
-	else if (r == 0 || (!ret && !len))
-		goto err;
-	else if (!ret && !(s->session_ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
-#else
-	if (len == 0)
-		goto err;
-	if (!(s->session_ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
 #endif
+
+	if (try_session_cache &&
+	    ret == NULL &&
+	    !(s->session_ctx->session_cache_mode & SSL_SESS_CACHE_NO_INTERNAL_LOOKUP))
 		{
 		SSL_SESSION data;
 		data.ssl_version=s->version;
@@ -474,20 +505,22 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 		CRYPTO_r_lock(CRYPTO_LOCK_SSL_CTX);
 		ret=lh_SSL_SESSION_retrieve(s->session_ctx->sessions,&data);
 		if (ret != NULL)
-		    /* don't allow other threads to steal it: */
-		    CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
+			{
+			/* don't allow other threads to steal it: */
+			CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
+			}
 		CRYPTO_r_unlock(CRYPTO_LOCK_SSL_CTX);
+		if (ret == NULL)
+			s->session_ctx->stats.sess_miss++;
 		}
 
-	if (ret == NULL)
+	if (try_session_cache &&
+	    ret == NULL &&
+	    s->session_ctx->get_session_cb != NULL)
 		{
 		int copy=1;
 	
-		s->session_ctx->stats.sess_miss++;
-		ret=NULL;
-		if (s->session_ctx->get_session_cb != NULL
-		    && (ret=s->session_ctx->get_session_cb(s,session_id,len,&copy))
-		       != NULL)
+		if ((ret=s->session_ctx->get_session_cb(s,session_id,len,&copy)))
 			{
 			s->session_ctx->stats.sess_cb_hit++;
 
@@ -506,23 +539,18 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 				 * things are very strange */
 				SSL_CTX_add_session(s->session_ctx,ret);
 			}
-		if (ret == NULL)
-			goto err;
 		}
 
-	/* Now ret is non-NULL, and we own one of its reference counts. */
+	if (ret == NULL)
+		goto err;
+
+	/* Now ret is non-NULL and we own one of its reference counts. */
 
 	if (ret->sid_ctx_length != s->sid_ctx_length
 	    || memcmp(ret->sid_ctx,s->sid_ctx,ret->sid_ctx_length))
 		{
-		/* We've found the session named by the client, but we don't
+		/* We have the session requested by the client, but we don't
 		 * want to use it in this context. */
-
-#if 0 /* The client cannot always know when a session is not appropriate,
-       * so we shouldn't generate an error message. */
-
-		SSLerr(SSL_F_SSL_GET_PREV_SESSION,SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT);
-#endif
 		goto err; /* treat like cache miss */
 		}
 	
@@ -559,39 +587,36 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 			goto err;
 		}
 
-
-#if 0 /* This is way too late. */
-
-	/* If a thread got the session, then 'swaped', and another got
-	 * it and then due to a time-out decided to 'OPENSSL_free' it we could
-	 * be in trouble.  So I'll increment it now, then double decrement
-	 * later - am I speaking rubbish?. */
-	CRYPTO_add(&ret->references,1,CRYPTO_LOCK_SSL_SESSION);
-#endif
-
 	if (ret->timeout < (long)(time(NULL) - ret->time)) /* timeout */
 		{
 		s->session_ctx->stats.sess_timeout++;
-		/* remove it from the cache */
-		SSL_CTX_remove_session(s->session_ctx,ret);
+		if (try_session_cache)
+			{
+			/* session was from the cache, so remove it */
+			SSL_CTX_remove_session(s->session_ctx,ret);
+			}
 		goto err;
 		}
 
 	s->session_ctx->stats.sess_hit++;
 
-	/* ret->time=time(NULL); */ /* rezero timeout? */
-	/* again, just leave the session 
-	 * if it is the same session, we have just incremented and
-	 * then decremented the reference count :-) */
 	if (s->session != NULL)
 		SSL_SESSION_free(s->session);
 	s->session=ret;
 	s->verify_result = s->session->verify_result;
-	return(1);
+	return 1;
 
  err:
 	if (ret != NULL)
+		{
 		SSL_SESSION_free(ret);
+		if (!try_session_cache)
+			{
+			/* The session was from a ticket, so we should
+			 * issue a ticket for the new session */
+			s->tlsext_ticket_expected = 1;
+			}
+		}
 	if (fatal)
 		return -1;
 	else
@@ -770,10 +795,6 @@ int SSL_set_session(SSL *s, SSL_SESSION *session)
 			{
 			if (!SSL_set_ssl_method(s,meth))
 				return(0);
-			if (s->ctx->session_timeout == 0)
-				session->timeout=SSL_get_default_timeout(s);
-			else
-				session->timeout=s->ctx->session_timeout;
 			}
 
 #ifndef OPENSSL_NO_KRB5
@@ -858,17 +879,17 @@ X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
 
 int SSL_SESSION_set1_id_context(SSL_SESSION *s,const unsigned char *sid_ctx,
 			       unsigned int sid_ctx_len)
-    {
-    if(sid_ctx_len > SSL_MAX_SID_CTX_LENGTH)
 	{
-	SSLerr(SSL_F_SSL_SESSION_SET1_ID_CONTEXT,SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
-	return 0;
-	}
-    s->sid_ctx_length=sid_ctx_len;
-    memcpy(s->sid_ctx,sid_ctx,sid_ctx_len);
+	if(sid_ctx_len > SSL_MAX_SID_CTX_LENGTH)
+		{
+		SSLerr(SSL_F_SSL_SESSION_SET1_ID_CONTEXT,SSL_R_SSL_SESSION_ID_CONTEXT_TOO_LONG);
+		return 0;
+		}
+	s->sid_ctx_length=sid_ctx_len;
+	memcpy(s->sid_ctx,sid_ctx,sid_ctx_len);
 
-    return 1;
-    }
+	return 1;
+	}
 
 long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 	{

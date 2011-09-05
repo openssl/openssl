@@ -1083,12 +1083,12 @@ struct ssl_st
 	int server;	/* are we the server side? - mostly used by SSL_clear*/
 
 	int new_session;/* Generate a new session or reuse an old one.
-					 * NB: For servers, the 'new' session may actually be a previously
-					 * cached session or even the previous session unless
-					 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
+	                 * NB: For servers, the 'new' session may actually be a previously
+	                 * cached session or even the previous session unless
+	                 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
 	int renegotiate;/* 1 if we are renegotiating.
-					 * 2 if we are a server and are inside a handshake
-					 *   (i.e. not just sending a HelloRequest) */
+	                 * 2 if we are a server and are inside a handshake
+	                 * (i.e. not just sending a HelloRequest) */
 
 	int quiet_shutdown;/* don't send shutdown packets */
 	int shutdown;	/* we have shut things down, 0x01 sent, 0x02

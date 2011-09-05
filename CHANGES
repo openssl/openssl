@@ -4,6 +4,16 @@
 
  Changes between 1.0.0e and 1.0.1  [xx XXX xxxx]
 
+  *) Session-handling fixes:
+     - Fix handling of connections that are resuming with a session ID,
+       but also support Session Tickets.
+     - Fix a bug that suppressed issuing of a new ticket if the client
+       presented a ticket with an expired session.
+     - Try to set the ticket lifetime hint to something reasonable.
+     - Make tickets shorter by excluding irrelevant information.
+     - On the client side, don't ignore renewed tickets.
+     [Adam Langley, Bodo Moeller (Google)]
+
   *) Fix PSK session representation.
      [Bodo Moeller]
 
