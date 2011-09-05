@@ -1031,12 +1031,11 @@ int dtls1_send_server_key_exchange(SSL *s)
 				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
 				goto err;
 				}
-			if (!EC_KEY_up_ref(ecdhp))
+			if ((ecdh = EC_KEY_dup(ecdhp)) == NULL)
 				{
 				SSLerr(SSL_F_DTLS1_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
 				goto err;
 				}
-			ecdh = ecdhp;
 
 			s->s3->tmp.ecdh=ecdh;
 			if ((EC_KEY_get0_public_key(ecdh) == NULL) ||

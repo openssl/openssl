@@ -883,14 +883,19 @@ int ssl3_check_client_hello(SSL *s)
 	if (s->s3->tmp.message_type == SSL3_MT_CLIENT_HELLO)
 		{
 		/* Throw away what we have done so far in the current handshake,
-		 * which will now be aborted. (A full SSL_clear would be too much.)
-		 * I hope that tmp.dh is the only thing that may need to be cleared
-		 * when a handshake is not completed ... */
+		 * which will now be aborted. (A full SSL_clear would be too much.) */
 #ifndef OPENSSL_NO_DH
 		if (s->s3->tmp.dh != NULL)
 			{
 			DH_free(s->s3->tmp.dh);
 			s->s3->tmp.dh = NULL;
+			}
+#endif
+#ifndef OPENSSL_NO_ECDH
+		if (s->s3->tmp.ecdh != NULL)
+			{
+			EC_KEY_free(s->s3->tmp.ecdh);
+			s->s3->tmp.ecdh = NULL;
 			}
 #endif
 		return 2;
@@ -1622,7 +1627,6 @@ int ssl3_send_server_key_exchange(SSL *s)
 
 			if (s->s3->tmp.dh != NULL)
 				{
-				DH_free(dh);
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
 				goto err;
 				}
@@ -1683,7 +1687,6 @@ int ssl3_send_server_key_exchange(SSL *s)
 
 			if (s->s3->tmp.ecdh != NULL)
 				{
-				EC_KEY_free(s->s3->tmp.ecdh); 
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE, ERR_R_INTERNAL_ERROR);
 				goto err;
 				}
@@ -1694,12 +1697,11 @@ int ssl3_send_server_key_exchange(SSL *s)
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
 				goto err;
 				}
-			if (!EC_KEY_up_ref(ecdhp))
+			if ((ecdh = EC_KEY_dup(ecdhp)) == NULL)
 				{
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
 				goto err;
 				}
-			ecdh = ecdhp;
 
 			s->s3->tmp.ecdh=ecdh;
 			if ((EC_KEY_get0_public_key(ecdh) == NULL) ||
@@ -2611,6 +2613,12 @@ int ssl3_get_client_key_exchange(SSL *s)
 			/* Get encoded point length */
 			i = *p; 
 			p += 1;
+			if (n != 1 + i)
+				{
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,
+				    ERR_R_EC_LIB);
+				goto err;
+				}
 			if (EC_POINT_oct2point(group, 
 			    clnt_ecpoint, p, i, bn_ctx) == 0)
 				{
