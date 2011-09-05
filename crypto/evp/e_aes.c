@@ -177,7 +177,7 @@ static int aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 	if(ret < 0)
 		{
-		EVPerr(EVP_F_AES_INIT_KEY,EVP_R_AES_KEY_SETUP_FAILED);
+		EVPerr(EVP_F_AESNI_INIT_KEY,EVP_R_AES_KEY_SETUP_FAILED);
 		return 0;
 		}
 
@@ -474,7 +474,7 @@ static int aesni_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	if (FIPS_module_mode() && !(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW) &&
 			(len > (1L<<20)*16))
 		{
-		EVPerr(EVP_F_AES_XTS, EVP_R_TOO_LARGE);
+		EVPerr(EVP_F_AESNI_XTS_CIPHER, EVP_R_TOO_LARGE);
 		return -1;
 		}
 #endif
@@ -1143,7 +1143,7 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	if (FIPS_module_mode() && !(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW) &&
 			(len > (1L<<20)*16))
 		{
-		EVPerr(EVP_F_AES_XTS, EVP_R_TOO_LARGE);
+		EVPerr(EVP_F_AES_XTS_CIPHER, EVP_R_TOO_LARGE);
 		return -1;
 		}
 #endif
