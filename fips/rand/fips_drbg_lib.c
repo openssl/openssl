@@ -373,6 +373,9 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 		goto end;
 		}
 
+	if (dctx->reseed_counter >= dctx->reseed_interval)
+		dctx->status = DRBG_STATUS_RESEED;
+
 	if (dctx->status == DRBG_STATUS_RESEED || prediction_resistance)
 		{
 		if (!FIPS_drbg_reseed(dctx, adin, adinlen))
