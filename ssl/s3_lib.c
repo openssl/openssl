@@ -1722,11 +1722,17 @@ void ssl3_clear(SSL *s)
 		}
 #ifndef OPENSSL_NO_DH
 	if (s->s3->tmp.dh != NULL)
+		{
 		DH_free(s->s3->tmp.dh);
+		s->s3->tmp.dh = NULL;
+		}
 #endif
 #ifndef OPENSSL_NO_ECDH
 	if (s->s3->tmp.ecdh != NULL)
+		{
 		EC_KEY_free(s->s3->tmp.ecdh);
+		s->s3->tmp.ecdh = NULL;
+		}
 #endif
 
 	rp = s->s3->rbuf.buf;
