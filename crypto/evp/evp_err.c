@@ -1,6 +1,6 @@
 /* crypto/evp/evp_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -71,8 +71,10 @@
 static ERR_STRING_DATA EVP_str_functs[]=
 	{
 {ERR_FUNC(EVP_F_AESNI_INIT_KEY),	"AESNI_INIT_KEY"},
+{ERR_FUNC(EVP_F_AESNI_XTS_CIPHER),	"AESNI_XTS_CIPHER"},
 {ERR_FUNC(EVP_F_AES_INIT_KEY),	"AES_INIT_KEY"},
 {ERR_FUNC(EVP_F_AES_XTS),	"AES_XTS"},
+{ERR_FUNC(EVP_F_AES_XTS_CIPHER),	"AES_XTS_CIPHER"},
 {ERR_FUNC(EVP_F_CAMELLIA_INIT_KEY),	"CAMELLIA_INIT_KEY"},
 {ERR_FUNC(EVP_F_D2I_PKEY),	"D2I_PKEY"},
 {ERR_FUNC(EVP_F_DO_SIGVER_INIT),	"DO_SIGVER_INIT"},
@@ -128,11 +130,11 @@ static ERR_STRING_DATA EVP_str_functs[]=
 {ERR_FUNC(EVP_F_EVP_RIJNDAEL),	"EVP_RIJNDAEL"},
 {ERR_FUNC(EVP_F_EVP_SIGNFINAL),	"EVP_SignFinal"},
 {ERR_FUNC(EVP_F_EVP_VERIFYFINAL),	"EVP_VerifyFinal"},
-{ERR_FUNC(EVP_F_FIPS_CIPHERINIT),	"FIPS_CIPHERINIT"},
+{ERR_FUNC(EVP_F_FIPS_CIPHERINIT),	"FIPS_cipherinit"},
 {ERR_FUNC(EVP_F_FIPS_CIPHER_CTX_COPY),	"FIPS_CIPHER_CTX_COPY"},
 {ERR_FUNC(EVP_F_FIPS_CIPHER_CTX_CTRL),	"FIPS_CIPHER_CTX_CTRL"},
 {ERR_FUNC(EVP_F_FIPS_CIPHER_CTX_SET_KEY_LENGTH),	"FIPS_CIPHER_CTX_SET_KEY_LENGTH"},
-{ERR_FUNC(EVP_F_FIPS_DIGESTINIT),	"FIPS_DIGESTINIT"},
+{ERR_FUNC(EVP_F_FIPS_DIGESTINIT),	"FIPS_digestinit"},
 {ERR_FUNC(EVP_F_FIPS_MD_CTX_COPY),	"FIPS_MD_CTX_COPY"},
 {ERR_FUNC(EVP_F_INT_CTX_NEW),	"INT_CTX_NEW"},
 {ERR_FUNC(EVP_F_PKCS5_PBE_KEYIVGEN),	"PKCS5_PBE_keyivgen"},
