@@ -447,10 +447,12 @@ struct ssl_method_st
  *	Session_ID_context [ 4 ] EXPLICIT OCTET STRING,   -- the Session ID context
  *	Verify_result [ 5 ] EXPLICIT INTEGER,   -- X509_V_... code for `Peer'
  *	HostName [ 6 ] EXPLICIT OCTET STRING,   -- optional HostName from servername TLS extension 
- *	ECPointFormatList [ 7 ] OCTET STRING,     -- optional EC point format list from TLS extension
- *	PSK_identity_hint [ 8 ] EXPLICIT OCTET STRING, -- optional PSK identity hint
- *	PSK_identity [ 9 ] EXPLICIT OCTET STRING -- optional PSK identity
- *	SRP_username [ 11 ] EXPLICIT OCTET STRING -- optional SRP username
+ *	PSK_identity_hint [ 7 ] EXPLICIT OCTET STRING, -- optional PSK identity hint
+ *	PSK_identity [ 8 ] EXPLICIT OCTET STRING,  -- optional PSK identity
+ *	Ticket_lifetime_hint [9] EXPLICIT INTEGER, -- server's lifetime hint for session ticket
+ *	Ticket [10]             EXPLICIT OCTET STRING, -- session ticket (clients only)
+ *	Compression_meth [11]   EXPLICIT OCTET STRING, -- optional compression method
+ *	SRP_username [ 12 ] EXPLICIT OCTET STRING -- optional SRP username
  *	}
  * Look in ssl/ssl_asn1.c for more details
  * I'm using EXPLICIT tags so I can read the damn things using asn1parse :-).

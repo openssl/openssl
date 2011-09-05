@@ -4,6 +4,9 @@
 
  Changes between 1.0.0e and 1.0.1  [xx XXX xxxx]
 
+  *) Fix PSK session representation.
+     [Bodo Moeller]
+
   *) Add RC4-MD5 and AESNI-SHA1 "stitched" implementations.
 
      This work was sponsored by Intel.
