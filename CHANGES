@@ -164,6 +164,10 @@
 
  Changes between 1.0.0d and 1.0.0e [xx XXX xxxx]
 
+  *) Fix SSL memory handling for (EC)DH ciphersuites, in particular
+     for multi-threaded use of ECDH.
+     [Adam Langley (Google)]
+
   *) Fix x509_name_ex_d2i memory leak on bad inputs.
      [Bodo Moeller]
 
@@ -1060,6 +1064,10 @@
      [NTT]
   
  Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
+
+  *) Fix SSL memory handling for (EC)DH ciphersuites, in particular
+     for multi-threaded use of ECDH.
+     [Adam Langley (Google)]
 
   *) Fix x509_name_ex_d2i memory leak on bad inputs.
      [Bodo Moeller]
