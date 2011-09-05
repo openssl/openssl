@@ -541,7 +541,7 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	if (BN_is_zero(u)) goto err;
 
 	if (!BN_copy(v, p)) goto err;
-#if 0
+#if 1
 	if (!BN_one(b)) goto err;
 
 	while (1)

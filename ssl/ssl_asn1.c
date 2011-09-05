@@ -572,6 +572,19 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 		}
 	else
 		ret->psk_identity_hint=NULL;
+
+	os.length=0;
+	os.data=NULL;
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,8);
+	if (os.data)
+		{
+		ret->psk_identity = BUF_strndup((char *)os.data, os.length);
+		OPENSSL_free(os.data);
+		os.data = NULL;
+		os.length = 0;
+		}
+	else
+		ret->psk_identity=NULL;
 #endif /* OPENSSL_NO_PSK */
 
 #ifndef OPENSSL_NO_TLSEXT
