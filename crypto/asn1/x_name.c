@@ -196,7 +196,9 @@ static int x509_name_ex_d2i(ASN1_VALUE **val, const unsigned char **in, long len
 	*val = nm.a;
 	*in = p;
 	return ret;
-	err:
+err:
+        if (nm.x != NULL)
+		X509_NAME_free(nm.x);
 	ASN1err(ASN1_F_X509_NAME_EX_D2I, ERR_R_NESTED_ASN1_ERROR);
 	return 0;
 }
