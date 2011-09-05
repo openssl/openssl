@@ -1027,14 +1027,14 @@ int SSL_renegotiate(SSL *s)
 	}
 
 int SSL_renegotiate_abbreviated(SSL *s)
-{
+	{
 	if (s->renegotiate == 0)
 		s->renegotiate=1;
-	
+
 	s->new_session=0;
-	
+
 	return(s->method->ssl_renegotiate(s));
-}
+	}
 
 int SSL_renegotiate_pending(SSL *s)
 	{
@@ -3241,4 +3241,3 @@ IMPLEMENT_STACK_OF(SSL_CIPHER)
 IMPLEMENT_STACK_OF(SSL_COMP)
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER,
 				    ssl_cipher_id);
-

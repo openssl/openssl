@@ -1838,26 +1838,56 @@ int ssl_check_serverhello_tlsext(SSL *s)
 		}
 	}
 
-/* Since the server cache lookup is done early on in the processing of client
- * hello and other operations depend on the result we need to handle any TLS
- * session ticket extension at the same time.
+/* Since the server cache lookup is done early on in the processing of the
+ * ClientHello, and other operations depend on the result, we need to handle
+ * any TLS session ticket extension at the same time.
+ *
+ *   session_id: points at the session ID in the ClientHello. This code will
+ *       read past the end of this in order to parse out the session ticket
+ *       extension, if any.
+ *   len: the length of the session ID.
+ *   limit: a pointer to the first byte after the ClientHello.
+ *   ret: (output) on return, if a ticket was decrypted, then this is set to
+ *       point to the resulting session.
+ *
+ * If s->tls_session_secret_cb is set then we are expecting a pre-shared key
+ * ciphersuite, in which case we have no use for session tickets and one will
+ * never be decrypted, nor will s->tlsext_ticket_expected be set to 1.
+ *
+ * Returns:
+ *   -1: fatal error, either from parsing or decrypting the ticket.
+ *    0: no ticket was found (or was ignored, based on settings).
+ *    1: a zero length extension was found, indicating that the client supports
+ *       session tickets but doesn't currently have one to offer.
+ *    2: either s->tls_session_secret_cb was set, or a ticket was offered but
+ *       couldn't be decrypted because of a non-fatal error.
+ *    3: a ticket was successfully decrypted and *ret was set.
+ *
+ * Side effects:
+ *   Sets s->tlsext_ticket_expected to 1 if the server will have to issue
+ *   a new session ticket to the client because the client indicated support
+ *   (and s->tls_session_secret_cb is NULL) but the client either doesn't have
+ *   a session ticket or we couldn't use the one it gave us, or if
+ *   s->ctx->tlsext_ticket_key_cb asked to renew the client's ticket.
+ *   Otherwise, s->tlsext_ticket_expected is set to 0.
  */
-
 int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
-				const unsigned char *limit, SSL_SESSION **ret)
+			const unsigned char *limit, SSL_SESSION **ret)
 	{
 	/* Point after session ID in client hello */
 	const unsigned char *p = session_id + len;
 	unsigned short i;
 
-	/* If tickets disabled behave as if no ticket present
- 	 * to permit stateful resumption.
- 	 */
-	if (SSL_get_options(s) & SSL_OP_NO_TICKET)
-		return 1;
+	*ret = NULL;
+	s->tlsext_ticket_expected = 0;
 
+	/* If tickets disabled behave as if no ticket present
+	 * to permit stateful resumption.
+	 */
+	if (SSL_get_options(s) & SSL_OP_NO_TICKET)
+		return 0;
 	if ((s->version <= SSL3_VERSION) || !limit)
-		return 1;
+		return 0;
 	if (p >= limit)
 		return -1;
 	/* Skip past DTLS cookie */
@@ -1880,7 +1910,7 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 		return -1;
 	/* Now at start of extensions */
 	if ((p + 2) >= limit)
-		return 1;
+		return 0;
 	n2s(p, i);
 	while ((p + 4) <= limit)
 		{
@@ -1888,39 +1918,61 @@ int tls1_process_ticket(SSL *s, unsigned char *session_id, int len,
 		n2s(p, type);
 		n2s(p, size);
 		if (p + size > limit)
-			return 1;
+			return 0;
 		if (type == TLSEXT_TYPE_session_ticket)
 			{
-			/* If tickets disabled indicate cache miss which will
- 			 * trigger a full handshake
- 			 */
-			if (SSL_get_options(s) & SSL_OP_NO_TICKET)
-				return 1;
-			/* If zero length note client will accept a ticket
- 			 * and indicate cache miss to trigger full handshake
- 			 */
+			int r;
 			if (size == 0)
 				{
+				/* The client will accept a ticket but doesn't
+				 * currently have one. */
 				s->tlsext_ticket_expected = 1;
-				return 0;	/* Cache miss */
+				return 1;
 				}
 			if (s->tls_session_secret_cb)
 				{
-				/* Indicate cache miss here and instead of
-				 * generating the session from ticket now,
-				 * trigger abbreviated handshake based on
-				 * external mechanism to calculate the master
-				 * secret later. */
-				return 0;
+				/* Indicate that the ticket couldn't be
+				 * decrypted rather than generating the session
+				 * from ticket now, trigger abbreviated
+				 * handshake based on external mechanism to
+				 * calculate the master secret later. */
+				return 2;
 				}
-			return tls_decrypt_ticket(s, p, size, session_id, len,
-									ret);
+			r = tls_decrypt_ticket(s, p, size, session_id, len, ret);
+			switch (r)
+				{
+				case 2: /* ticket couldn't be decrypted */
+					s->tlsext_ticket_expected = 1;
+					return 2;
+				case 3: /* ticket was decrypted */
+					return r;
+				case 4: /* ticket decrypted but need to renew */
+					s->tlsext_ticket_expected = 1;
+					return 3;
+				default: /* fatal error */
+					return -1;
+				}
 			}
 		p += size;
 		}
-	return 1;
+	return 0;
 	}
 
+/* tls_decrypt_ticket attempts to decrypt a session ticket.
+ *
+ *   etick: points to the body of the session ticket extension.
+ *   eticklen: the length of the session tickets extenion.
+ *   sess_id: points at the session ID.
+ *   sesslen: the length of the session ID.
+ *   psess: (output) on return, if a ticket was decrypted, then this is set to
+ *       point to the resulting session.
+ *
+ * Returns:
+ *   -1: fatal error, either from parsing or decrypting the ticket.
+ *    2: the ticket couldn't be decrypted.
+ *    3: a ticket was successfully decrypted and *psess was set.
+ *    4: same as 3, but the ticket needs to be renewed.
+ */
 static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 				const unsigned char *sess_id, int sesslen,
 				SSL_SESSION **psess)
@@ -1935,7 +1987,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	SSL_CTX *tctx = s->initial_ctx;
 	/* Need at least keyname + iv + some encrypted data */
 	if (eticklen < 48)
-		goto tickerr;
+		return 2;
 	/* Initialize session ticket encryption and HMAC contexts */
 	HMAC_CTX_init(&hctx);
 	EVP_CIPHER_CTX_init(&ctx);
@@ -1947,7 +1999,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 		if (rv < 0)
 			return -1;
 		if (rv == 0)
-			goto tickerr;
+			return 2;
 		if (rv == 2)
 			renew_ticket = 1;
 		}
@@ -1955,15 +2007,15 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 		{
 		/* Check key name matches */
 		if (memcmp(etick, tctx->tlsext_tick_key_name, 16))
-			goto tickerr;
+			return 2;
 		HMAC_Init_ex(&hctx, tctx->tlsext_tick_hmac_key, 16,
 					tlsext_tick_md(), NULL);
 		EVP_DecryptInit_ex(&ctx, EVP_aes_128_cbc(), NULL,
 				tctx->tlsext_tick_aes_key, etick + 16);
 		}
 	/* Attempt to process session ticket, first conduct sanity and
- 	 * integrity checks on ticket.
- 	 */
+	 * integrity checks on ticket.
+	 */
 	mlen = HMAC_size(&hctx);
 	if (mlen < 0)
 		{
@@ -1976,7 +2028,7 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 	HMAC_Final(&hctx, tick_hmac, NULL);
 	HMAC_CTX_cleanup(&hctx);
 	if (memcmp(tick_hmac, etick + eticklen, mlen))
-		goto tickerr;
+		return 2;
 	/* Attempt to decrypt session data */
 	/* Move p after IV to start of encrypted ticket, update length */
 	p = etick + 16 + EVP_CIPHER_CTX_iv_length(&ctx);
@@ -1989,33 +2041,33 @@ static int tls_decrypt_ticket(SSL *s, const unsigned char *etick, int eticklen,
 		}
 	EVP_DecryptUpdate(&ctx, sdec, &slen, p, eticklen);
 	if (EVP_DecryptFinal(&ctx, sdec + slen, &mlen) <= 0)
-		goto tickerr;
+		return 2;
 	slen += mlen;
 	EVP_CIPHER_CTX_cleanup(&ctx);
 	p = sdec;
-		
+
 	sess = d2i_SSL_SESSION(NULL, &p, slen);
 	OPENSSL_free(sdec);
 	if (sess)
 		{
-		/* The session ID if non-empty is used by some clients to
- 		 * detect that the ticket has been accepted. So we copy it to
- 		 * the session structure. If it is empty set length to zero
- 		 * as required by standard.
- 		 */
+		/* The session ID, if non-empty, is used by some clients to
+		 * detect that the ticket has been accepted. So we copy it to
+		 * the session structure. If it is empty set length to zero
+		 * as required by standard.
+		 */
 		if (sesslen)
 			memcpy(sess->session_id, sess_id, sesslen);
 		sess->session_id_length = sesslen;
 		*psess = sess;
-		s->tlsext_ticket_expected = renew_ticket;
-		return 1;
+		if (renew_ticket)
+			return 4;
+		else
+			return 3;
 		}
-	/* If session decrypt failure indicate a cache miss and set state to
- 	 * send a new ticket
- 	 */
-	tickerr:	
-	s->tlsext_ticket_expected = 1;
-	return 0;
+        ERR_clear_error();
+	/* For session parse failure, indicate that we need to send a new
+	 * ticket. */
+	return 2;
 	}
 
 /* Tables to translate from NIDs to TLS v1.2 ids */

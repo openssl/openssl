@@ -638,9 +638,6 @@ int dtls1_accept(SSL *s)
 
 			if (s->renegotiate == 2) /* skipped if we just sent a HelloRequest */
 				{
-				/* actually not necessarily a 'new' session unless
-				 * SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION is set */
-				
 				s->renegotiate=0;
 				s->new_session=0;
 				
