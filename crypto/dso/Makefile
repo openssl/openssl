@@ -139,7 +139,7 @@ dso_vms.o: ../../include/openssl/err.h ../../include/openssl/lhash.h
 dso_vms.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
 dso_vms.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
 dso_vms.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-dso_vms.o: ../cryptlib.h ../vms_rms.h dso_vms.c
+dso_vms.o: ../cryptlib.h dso_vms.c
 dso_win32.o: ../../e_os.h ../../include/openssl/bio.h
 dso_win32.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 dso_win32.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
