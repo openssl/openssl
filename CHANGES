@@ -4,6 +4,9 @@
 
  Changes between 1.0.0d and 1.0.0e [xx XXX xxxx]
 
+  *) Fix x509_name_ex_d2i memory leak on bad inputs.
+     [Bodo Moeller]
+
   *) Remove hard coded ecdsaWithSHA1 signature tests in ssl code and check
      signature public key algorithm by using OID xref utilities instead.
      Before this you could only use some ECC ciphersuites with SHA1 only.
@@ -897,6 +900,9 @@
      [NTT]
   
  Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
+
+  *) Fix x509_name_ex_d2i memory leak on bad inputs.
+     [Bodo Moeller]
 
   *) Add protection against ECDSA timing attacks as mentioned in the paper
      by Billy Bob Brumley and Nicola Tuveri, see:
