@@ -822,6 +822,7 @@ esac
 #  options="$options -DATALLA"
 #fi
 
+! expr "$options" : '.*no\-asm' > /dev/null && \
 ($CC -Wa,--help -c -o /dev/null -x assembler /dev/null 2>&1 | \
  grep \\--noexecstack) 2>&1 > /dev/null && \
   options="$options -Wa,--noexecstack"
