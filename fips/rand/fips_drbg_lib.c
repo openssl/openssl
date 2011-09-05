@@ -96,6 +96,7 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 		if (!fips_drbg_kat(&tctx, type, flags | DRBG_FLAG_TEST))
 			{
 			FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_SELFTEST_FAILURE);
+			dctx->status = DRBG_STATUS_ERROR;
 			return 0;
 			}
 		}
@@ -333,6 +334,7 @@ static int fips_drbg_check(DRBG_CTX *dctx)
 						dctx->flags | DRBG_FLAG_TEST))
 			{
 			FIPSerr(FIPS_F_FIPS_DRBG_CHECK, FIPS_R_SELFTEST_FAILURE);
+			dctx->status = DRBG_STATUS_ERROR;
 			return 0;
 			}
 		dctx->health_check_cnt = 0;
