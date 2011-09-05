@@ -11,22 +11,6 @@
      to handle HMAC cases.
      [Steve Henson]
 
-  *) Add GCM support to TLS library. Some custom code is needed to split
-     the IV between the fixed (from PRF) and explicit (from TLS record)
-     portions. This adds all GCM ciphersuites supported by RFC5288 and 
-     RFC5289. Generalise some AES* cipherstrings to inlclude GCM and
-     add a special AESGCM string for GCM only.
-     [Steve Henson]
-
-  *) Expand range of ctrls for AES GCM. Permit setting invocation
-     field on decrypt and retrieval of invocation field only on encrypt.
-     [Steve Henson]
-
-  *) Add HMAC ECC ciphersuites from RFC5289. Include SHA384 PRF support.
-     As required by RFC5289 these ciphersuites cannot be used if for
-     versions of TLS earlier than 1.2.
-     [Steve Henson]
-
   *) Add functions FIPS_module_version() and FIPS_module_version_text()
      to return numberical and string versions of the FIPS module number.
      [Steve Henson]
@@ -274,10 +258,32 @@
   
  Changes between 1.0.0e and 1.0.1  [xx XXX xxxx]
 
-  *) Add RC4-MD5 and AESNI-SHA1 "stiched" implementations.
+  *) Add RC4-MD5 and AESNI-SHA1 "stitched" implementations.
 
      This work was sponsored by Intel.
      [Andy Polyakov]
+
+  *) Add GCM support to TLS library. Some custom code is needed to split
+     the IV between the fixed (from PRF) and explicit (from TLS record)
+     portions. This adds all GCM ciphersuites supported by RFC5288 and 
+     RFC5289. Generalise some AES* cipherstrings to inlclude GCM and
+     add a special AESGCM string for GCM only.
+     [Steve Henson]
+
+  *) Expand range of ctrls for AES GCM. Permit setting invocation
+     field on decrypt and retrieval of invocation field only on encrypt.
+     [Steve Henson]
+
+  *) Add HMAC ECC ciphersuites from RFC5289. Include SHA384 PRF support.
+     As required by RFC5289 these ciphersuites cannot be used if for
+     versions of TLS earlier than 1.2.
+     [Steve Henson]
+
+  *) For FIPS capable OpenSSL interpret a NULL default public key method
+     as unset and return the appopriate default but do *not* set the default.
+     This means we can return the appopriate method in applications that
+     swicth between FIPS and non-FIPS modes.
+     [Steve Henson]
 
   *) Redirect HMAC and CMAC operations to FIPS module in FIPS mode. If an
      ENGINE is used then we cannot handle that in the FIPS module so we
