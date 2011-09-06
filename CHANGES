@@ -431,8 +431,12 @@
 
  Changes between 1.0.0d and 1.0.0e [xx XXX xxxx]
 
+  *) Fix bug where CRLs with nextUpdate in the past are sometimes accepted
+     by initialising X509_STORE_CTX properly. (CVE-2011-3207)
+     [Kaspar Brand <ossl@velox.ch>]
+
   *) Fix SSL memory handling for (EC)DH ciphersuites, in particular
-     for multi-threaded use of ECDH.
+     for multi-threaded use of ECDH. (CVE-2011-3210)
      [Adam Langley (Google)]
 
   *) Fix x509_name_ex_d2i memory leak on bad inputs.
