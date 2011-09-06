@@ -206,7 +206,7 @@ padlock_${mode}_encrypt:
 	lea	16($ctx),$ctx		# control word
 	xor	%eax,%eax
 	xor	%ebx,%ebx
-	test	\$`1<<5`,($ctx)		# align bit in control word
+	testl	\$`1<<5`,($ctx)		# align bit in control word
 	test	\$0x0f,$out
 	setz	%al			# !out_misaligned
 	test	\$0x0f,$inp
