@@ -181,7 +181,8 @@ static size_t test_nonce(DRBG_CTX *dctx, unsigned char **pout,
 	return t->noncelen;
 	}
 
-static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
+static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
+								int quick)
 	{
 	TEST_ENT t;
 	int rv = 0;
@@ -220,7 +221,10 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 
 	if (memcmp(randout, td->kat, td->katlen))
-		goto err;
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_SINGLE_KAT, FIPS_R_NOPR_TEST1_FAILURE);
+		goto err2;
+		}
 
 	t.ent = td->entreseed;
 	t.entlen = td->entreseedlen;
@@ -233,7 +237,10 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 
 	if (memcmp(randout, td->kat2, td->kat2len))
-		goto err;
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_SINGLE_KAT, FIPS_R_NOPR_TEST2_FAILURE);
+		goto err2;
+		}
 
 	FIPS_drbg_uninstantiate(dctx);
 
@@ -271,7 +278,16 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 
 	if (memcmp(randout, td->kat_pr, td->katlen_pr))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_SINGLE_KAT, FIPS_R_PR_TEST1_FAILURE);
+		goto err2;
+		}
+
+	if (quick)
+		{
+		rv = 1;
 		goto err;
+		}
 
 	t.ent = td->entg_pr;
 	t.entlen = td->entglen_pr;
@@ -281,13 +297,17 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 
 	if (memcmp(randout, td->kat2_pr, td->kat2len_pr))
-		goto err;
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_SINGLE_KAT, FIPS_R_PR_TEST2_FAILURE);
+		goto err2;
+		}
 
 	rv = 1;
 
 	err:
 	if (rv == 0)
 		FIPSerr(FIPS_F_FIPS_DRBG_SINGLE_KAT, FIPS_R_SELFTEST_FAILED);
+	err2:
 	FIPS_drbg_uninstantiate(dctx);
 	
 	return rv;
@@ -489,7 +509,7 @@ int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags)
 		{
 		if (td->nid == nid && td->flags == flags)
 			{
-			rv = fips_drbg_single_kat(dctx, td);
+			rv = fips_drbg_single_kat(dctx, td, 0);
 			if (rv <= 0)
 				return rv;
 			return fips_drbg_health_check(dctx, td);
@@ -512,7 +532,7 @@ int FIPS_selftest_drbg(void)
 			continue;
 		if (!fips_post_started(FIPS_TEST_DRBG, td->nid, &td->flags))
 			return 1;
-		if (!fips_drbg_single_kat(dctx, td))
+		if (!fips_drbg_single_kat(dctx, td, 1))
 			{
 			fips_post_failed(FIPS_TEST_DRBG, td->nid, &td->flags);
 			rv = 0;
