@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0e and 1.0.0f [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.0d and 1.0.0e [6 Sep 2011]
 
   *) Fix bug where CRLs with nextUpdate in the past are sometimes accepted
