@@ -16,10 +16,13 @@ RECURSIVE_MAKE=	[ -z "$(ENGDIRS)" ] || for i in $(ENGDIRS) ; do \
 		    $(MAKE) -e TOP=../.. DIR=$$i $$target ) || exit 1; \
 		done;
 
+ENGINES_ASM_OBJ=
+
 PEX_LIBS=
 EX_LIBS=
 
 CFLAGS= $(INCLUDES) $(CFLAG)
+ASFLAGS= $(INCLUDES) $(ASFLAG)
 
 GENERAL=Makefile engines.com install.com engine_vector.mar
 TEST=
@@ -49,7 +52,8 @@ LIBOBJ= e_4758cca.o \
 	e_sureware.o \
 	e_ubsec.o \
 	e_padlock.o \
-	e_capi.o
+	e_capi.o \
+	$(ENGINES_ASM_OBJ)
 
 SRC= $(LIBSRC)
 
@@ -77,7 +81,7 @@ lib:	$(LIBOBJ)
 		set -e; \
 		for l in $(LIBNAMES); do \
 			$(MAKE) -f ../Makefile.shared -e \
-				LIBNAME=$$l LIBEXTRAS=e_$$l.o \
+				LIBNAME=$$l LIBEXTRAS="e_$$l*.o" \
 				LIBDEPS='-L.. -lcrypto $(EX_LIBS)' \
 				link_o.$(SHLIB_TARGET); \
 		done; \
@@ -86,6 +90,11 @@ lib:	$(LIBOBJ)
 		$(RANLIB) $(LIB) || echo Never mind.; \
 	fi; \
 	touch lib
+
+e_padlock-x86.s:	asm/e_padlock-x86.pl
+	$(PERL) asm/e_padlock-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+e_padlock-x86_64.s:	asm/e_padlock-x86_64.pl
+	$(PERL) asm/e_padlock-x86_64.pl $(PERLASM_SCHEME) > $@
 
 subdirs:
 	echo $(EDIRS)

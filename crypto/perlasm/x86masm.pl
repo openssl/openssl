@@ -186,4 +186,11 @@ ___
 sub ::dataseg
 {   push(@out,"$segment\tENDS\n_DATA\tSEGMENT\n"); $segment="_DATA";   }
 
+sub ::safeseh
+{ my $nm=shift;
+    push(@out,"IF \@Version GE 710\n");
+    push(@out,".SAFESEH	".&::LABEL($nm,$nmdecor.$nm)."\n");
+    push(@out,"ENDIF\n");
+}
+
 1;

@@ -100,6 +100,7 @@ RMD160_ASM_OBJ=
 WP_ASM_OBJ=
 CMLL_ENC=
 MODES_ASM_OBJ=
+ENGINES_ASM_OBJ=
 PERLASM_SCHEME=
 
 # KRB5 stuff
@@ -232,6 +233,7 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
 		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
 		MODES_ASM_OBJ='$(MODES_ASM_OBJ)'		\
+		ENGINES_ASM_OBJ='$(ENGINES_ASM_OBJ)'		\
 		PERLASM_SCHEME='$(PERLASM_SCHEME)'		\
 		FIPSLIBDIR='${FIPSLIBDIR}'			\
 		FIPSCANLIB="$${FIPSCANLIB:-$(FIPSCANLIB)}"	\
@@ -375,7 +377,7 @@ build_crypto:
 build_ssl:
 	@dir=ssl; target=all; $(BUILD_ONE_CMD)
 build_engines:
-	@dir=engines; target=all; $(BUILD_ONE_CMD)
+	@dir=engines; target=all; AS='$(CC) -c'; export AS; $(BUILD_ONE_CMD)
 build_apps:
 	@dir=apps; target=all; $(BUILD_ONE_CMD)
 build_tests:
