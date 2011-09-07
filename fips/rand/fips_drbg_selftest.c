@@ -226,6 +226,12 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 		goto err2;
 		}
 
+	if (quick)
+		{
+		rv = 1;
+		goto err;
+		}
+
 	t.ent = td->entreseed;
 	t.entlen = td->entreseedlen;
 
@@ -281,12 +287,6 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_SINGLE_KAT, FIPS_R_PR_TEST1_FAILURE);
 		goto err2;
-		}
-
-	if (quick)
-		{
-		rv = 1;
-		goto err;
 		}
 
 	t.ent = td->entg_pr;
