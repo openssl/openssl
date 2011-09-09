@@ -4,11 +4,15 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add support for Dual EC DRBG from SP800-90. Update DRBG algorithm test
+     and POST to handle Dual EC cases.
+     [Steve Henson]
+
   *) Add support for canonical generation of DSA parameter 'g'. See 
      FIPS 186-3 A.2.3.
 
-  *) Add support for HMAC DRBG from SP800-90. Update algorithm and POST
-     to handle HMAC cases.
+  *) Add support for HMAC DRBG from SP800-90. Update DRBG algorithm test and
+     POST to handle HMAC cases.
      [Steve Henson]
 
   *) Add functions FIPS_module_version() and FIPS_module_version_text()

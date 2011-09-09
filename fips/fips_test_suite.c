@@ -698,6 +698,9 @@ POST_ID id_list[] = {
 	{NID_aes_256_xts, "AES-256-XTS"},
 	{NID_des_ede3_cbc, "DES-EDE3-CBC"},
 	{NID_des_ede3_ecb, "DES-EDE3-ECB"},
+	{NID_X9_62_prime256v1, "P-256"},
+	{NID_secp384r1, "P-384"},
+	{NID_secp521r1, "P-521"},
 	{0, NULL}
 };
 
@@ -786,6 +789,13 @@ static int post_cb(int op, int id, int subid, void *ex)
 		if (*(int *)ex & DRBG_FLAG_CTR_USE_DF)
 			{
 			sprintf(asctmp, "%s DF", lookup_id(subid));
+			exstr = asctmp;
+			}
+		else if (subid >> 16)
+			{
+			sprintf(asctmp, "%s %s",
+					lookup_id(subid >> 16),
+					lookup_id(subid & 0xFFFF));
 			exstr = asctmp;
 			}
 		else

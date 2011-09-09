@@ -79,6 +79,8 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 		rv = fips_drbg_ctr_init(dctx);
 	if (rv == -2)
 		rv = fips_drbg_hmac_init(dctx);
+	if (rv == -2)
+		rv = fips_drbg_ec_init(dctx);
 
 	if (rv <= 0)
 		{
@@ -243,7 +245,8 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 
 
 	dctx->status = DRBG_STATUS_READY;
-	dctx->reseed_counter = 1;
+	if (!(dctx->flags & DRBG_CUSTOM_RESEED))
+		dctx->reseed_counter = 1;
 
 	end:
 
@@ -307,7 +310,8 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 		goto end;
 
 	dctx->status = DRBG_STATUS_READY;
-	dctx->reseed_counter = 1;
+	if (!(dctx->flags & DRBG_CUSTOM_RESEED))
+		dctx->reseed_counter = 1;
 	end:
 
 	if (entropy && dctx->cleanup_entropy)
@@ -373,7 +377,9 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 		goto end;
 		}
 
-	if (dctx->reseed_counter >= dctx->reseed_interval)
+	if (dctx->flags & DRBG_CUSTOM_RESEED)
+		dctx->generate(dctx, NULL, outlen, NULL, 0);
+	else if (dctx->reseed_counter >= dctx->reseed_interval)
 		dctx->status = DRBG_STATUS_RESEED;
 
 	if (dctx->status == DRBG_STATUS_RESEED || prediction_resistance)
@@ -393,10 +399,13 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 		dctx->status = DRBG_STATUS_ERROR;
 		goto end;
 		}
-	if (dctx->reseed_counter >= dctx->reseed_interval)
-		dctx->status = DRBG_STATUS_RESEED;
-	else
-		dctx->reseed_counter++;
+	if (!(dctx->flags & DRBG_CUSTOM_RESEED))
+		{
+		if (dctx->reseed_counter >= dctx->reseed_interval)
+			dctx->status = DRBG_STATUS_RESEED;
+		else
+			dctx->reseed_counter++;
+		}
 
 	end:
 	if (r)

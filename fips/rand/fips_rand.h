@@ -53,6 +53,7 @@
 #include <openssl/aes.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/ec.h>
 
 #ifdef OPENSSL_FIPS
 

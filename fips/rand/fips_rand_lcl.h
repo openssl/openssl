@@ -54,6 +54,7 @@
 typedef struct drbg_hash_ctx_st DRBG_HASH_CTX;
 typedef struct drbg_hmac_ctx_st DRBG_HMAC_CTX;
 typedef struct drbg_ctr_ctx_st DRBG_CTR_CTX;
+typedef struct drbg_ec_ctx_st DRBG_EC_CTX;
 
 /* 888 bits from 10.1 table 2 */
 #define HASH_PRNG_MAX_SEEDLEN	111
@@ -91,10 +92,42 @@ struct drbg_ctr_ctx_st
 	unsigned char KX[48];
 	};
 
+/* Maximum seed length */
+#define EC_PRNG_MAX_SEEDLEN	66
+
+struct drbg_ec_ctx_st
+	{
+	/* Message digest to use */
+	const EVP_MD *md;
+	/* Curve to use: generator is point P */
+	EC_GROUP *curve;
+	/* Point Q */
+	EC_POINT *Q;
+	/* Temporary point */
+	EC_POINT *ptmp;
+	size_t exbits;
+	/* Secret s value */
+	BIGNUM *s;
+	/* Buffer to store byte version of s value */
+	unsigned char sbuf[EC_PRNG_MAX_SEEDLEN];
+	/* Buffer to store byte version of t value */
+	unsigned char tbuf[EC_PRNG_MAX_SEEDLEN];
+	/* Digest context */
+	EVP_MD_CTX mctx;
+	/* Temporary value storage: should always exceed max digest length */
+	unsigned char vtmp[EC_PRNG_MAX_SEEDLEN];
+	/* Flag to indicate s = s * P has been deferred */
+	int sp_defer;
+	/* Temp BN context */
+	BN_CTX *bctx;
+	};
+
 /* DRBG flags */
 
 /* Functions shouldn't call err library */
 #define	DRBG_FLAG_NOERR			0x4
+/* Custom reseed checking */
+#define	DRBG_CUSTOM_RESEED		0x8
 
 /* DRBG status values */
 /* not initialised */
@@ -148,6 +181,7 @@ struct drbg_ctx_st
 		DRBG_HASH_CTX hash;
 		DRBG_HMAC_CTX hmac;
 		DRBG_CTR_CTX  ctr;
+		DRBG_EC_CTX  ec;
 		} d;
 	/* Initialiase PRNG and setup callbacks below */
 	int (*init)(DRBG_CTX *ctx, int nid, int security, unsigned int flags);
@@ -202,5 +236,6 @@ struct drbg_ctx_st
 int fips_drbg_ctr_init(DRBG_CTX *dctx);
 int fips_drbg_hash_init(DRBG_CTX *dctx);
 int fips_drbg_hmac_init(DRBG_CTX *dctx);
+int fips_drbg_ec_init(DRBG_CTX *dctx);
 int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags);
 int fips_drbg_cprng_test(DRBG_CTX *dctx, const unsigned char *out);

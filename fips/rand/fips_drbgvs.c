@@ -100,6 +100,27 @@ static int parse_md(char *str)
 	return NID_undef;
 	}
 
+static int parse_ec(char *str)
+	{
+	int curve_nid, md_nid;
+	char *md;
+	md = strchr(str, ' ');
+	if (!md)
+		return NID_undef;
+	if (!strncmp(str, "[P-256", 6))
+		curve_nid = NID_X9_62_prime256v1;
+	else if (!strncmp(str, "[P-384", 6))
+		curve_nid = NID_secp384r1;
+	else if (!strncmp(str, "[P-521", 6))
+		curve_nid = NID_secp521r1;
+	else
+		return NID_undef;
+	md_nid = parse_md(md);
+	if (md_nid == NID_undef)
+		return NID_undef;
+	return (curve_nid << 16) | md_nid;
+	}
+
 static int parse_aes(char *str, int *pdf)
 	{
 
@@ -254,6 +275,12 @@ int main(int argc,char **argv)
 		if (strlen(buf) > 12 && !strncmp(buf, "[AES-", 5))
 			{
 			nid = parse_aes(buf, &df);
+			if (nid == NID_undef)
+				exit(1);
+			}
+		if (strlen(buf) > 12 && !strncmp(buf, "[P-", 3))
+			{
+			nid = parse_ec(buf);
 			if (nid == NID_undef)
 				exit(1);
 			}
