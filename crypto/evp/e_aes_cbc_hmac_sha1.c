@@ -239,7 +239,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 		if (plen) {	/* "TLS" mode of operation */
 			/* figure out payload length */
-			if (len<(out[len-1]+1+SHA_DIGEST_LENGTH))
+			if (len<(size_t)(out[len-1]+1+SHA_DIGEST_LENGTH))
 				return 0;
 
 			len -= (out[len-1]+1+SHA_DIGEST_LENGTH);
@@ -288,7 +288,7 @@ static int aesni_cbc_hmac_sha1_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void
 
 		memset (hmac_key,0,sizeof(hmac_key));
 
-		if (arg > sizeof(hmac_key)) {
+		if (arg > (int)sizeof(hmac_key)) {
 			SHA1_Init(&key->head);
 			SHA1_Update(&key->head,ptr,arg);
 			SHA1_Final(hmac_key,&key->head);
