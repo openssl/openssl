@@ -1090,6 +1090,7 @@ sub cmp_file {
     my ( $tname, $rsp, $tst ) = @_;
     my ( $rspf,    $tstf );
     my ( $rspline, $tstline );
+    my $monte = 0;
     if ( !open( $rspf, $rsp ) ) {
         print STDERR "ERROR: can't open request file $rsp\n";
         return 0;
@@ -1098,6 +1099,7 @@ sub cmp_file {
         print STDERR "ERROR: can't open output file $tst\n";
         return 0;
     }
+    $monte = 1 if ($rsp =~ /Monte[123]/);
     for ( ; ; ) {
         $rspline = next_line($rspf);
         $tstline = next_line($tstf);
@@ -1105,6 +1107,21 @@ sub cmp_file {
             print STDERR "DEBUG: $tname file comparison OK\n" if $debug;
             return 1;
         }
+	# Workaround for old broken DES3 MCT format which added bogus
+	# extra lines: after [ENCRYPT] or [DECRYPT] skip until first
+	# COUNT line.
+	if ($monte) {
+		if ($rspline =~ /CRYPT/) {
+			do {
+				$rspline = next_line($rspf);
+			} while (defined($rspline) && $rspline !~ /COUNT/);
+		}
+		if ($tstline =~ /CRYPT/) {
+			do {
+				$tstline = next_line($tstf);
+			} while (defined($tstline) && $tstline !~ /COUNT/);
+		}
+	}
         if ( !defined($rspline) ) {
             print STDERR "ERROR: $tname EOF on $rsp\n";
             return 0;

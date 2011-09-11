@@ -177,7 +177,6 @@ static void do_mct(char *amode,
 	printf("Unrecognized mode: %s\n", amode);
 	EXIT(1);
 	}
-
     for(i=0 ; i < 400 ; ++i)
 	{
 	int j;
@@ -277,7 +276,7 @@ static int proc_file(char *rqfile, char *rspfile)
     char atest[100] = "";
     int akeysz=0;
     unsigned char iVec[20], aKey[40];
-    int dir = -1, err = 0, step = 0;
+    int dir = -1, err = 0, step = 0, echo = 1;
     unsigned char plaintext[2048];
     unsigned char ciphertext[2048];
     char *rp;
@@ -383,6 +382,8 @@ static int proc_file(char *rqfile, char *rspfile)
 			n = strlen(xp+1)-1;
 			strncpy(amode, xp+1, n);
 			amode[n] = '\0';
+			if (!strcmp(atest, "Monte"))
+				echo = 0;
 			/* amode[3] = '\0'; */
 			if (VERBOSE)
 				printf("Test=%s, Mode=%s\n",atest,amode);
@@ -439,8 +440,8 @@ static int proc_file(char *rqfile, char *rspfile)
 		numkeys=atoi(ibuf+10);
 		break;
 		}
-	  
-	    fputs(ibuf, rfp);
+	    if (echo) 
+	    	fputs(ibuf, rfp);
 	    if(!fips_strncasecmp(ibuf,"KEY = ",6))
 		{
 		akeysz=64;
@@ -495,7 +496,8 @@ static int proc_file(char *rqfile, char *rspfile)
 	    break;
 
 	case 3: /* IV = xxxx */
-	    fputs(ibuf, rfp);
+	    if (echo)
+	    	fputs(ibuf, rfp);
 	    if (fips_strncasecmp(ibuf, "IV = ", 5) != 0)
 		{
 		printf("Missing IV\n");
@@ -516,7 +518,8 @@ static int proc_file(char *rqfile, char *rspfile)
 	    break;
 
 	case 4: /* PLAINTEXT = xxxx */
-	    fputs(ibuf, rfp);
+	    if (echo)
+	    	fputs(ibuf, rfp);
 	    if (fips_strncasecmp(ibuf, "PLAINTEXT = ", 12) != 0)
 		{
 		printf("Missing PLAINTEXT\n");
@@ -558,7 +561,8 @@ static int proc_file(char *rqfile, char *rspfile)
 	    break;
 
 	case 5: /* CIPHERTEXT = xxxx */
-	    fputs(ibuf, rfp);
+	    if (echo)
+	    	fputs(ibuf, rfp);
 	    if (fips_strncasecmp(ibuf, "CIPHERTEXT = ", 13) != 0)
 		{
 		printf("Missing KEY\n");
