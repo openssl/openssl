@@ -115,8 +115,14 @@ DRBG_CTX *FIPS_drbg_new(int type, unsigned int flags)
 		FIPSerr(FIPS_F_FIPS_DRBG_NEW, ERR_R_MALLOC_FAILURE);
 		return NULL;
 		}
+
 	if (type == 0)
+		{
+		memset(dctx, 0, sizeof(DRBG_CTX));
+		dctx->type = 0;
+		dctx->status = DRBG_STATUS_UNINITIALISED;
 		return dctx;
+		}
 
 	if (FIPS_drbg_init(dctx, type, flags) <= 0)
 		{

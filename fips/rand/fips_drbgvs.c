@@ -314,6 +314,11 @@ int main(int argc,char **argv)
 		if (!strcmp(keyword, "PersonalizationString"))
 			{
 			pers = hex2bin_m(value, &perslen);
+			if (nid == 0)
+				{
+				fprintf(stderr, "DRBG type not recognised!\n");
+				exit (1);
+				}
 			dctx = FIPS_drbg_new(nid, df | DRBG_FLAG_TEST);
 			if (!dctx)
 				exit (1);
