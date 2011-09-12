@@ -377,6 +377,12 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 		return 0;
 		}
 
+	if (adinlen > dctx->max_adin)
+		{
+		r = FIPS_R_ADDITIONAL_INPUT_TOO_LONG;
+		goto end;
+		}
+
 	if (dctx->flags & DRBG_CUSTOM_RESEED)
 		dctx->generate(dctx, NULL, outlen, NULL, 0);
 	else if (dctx->reseed_counter >= dctx->reseed_interval)
