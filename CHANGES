@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) More extensive health check for DRBG checking many more failure modes.
+     New function FIPS_selftest_drbg_all() to handle every possible DRBG
+     combination: call this in fips_test_suite.
+     [Steve Henson]
+
   *) Add support for Dual EC DRBG from SP800-90. Update DRBG algorithm test
      and POST to handle Dual EC cases.
      [Steve Henson]

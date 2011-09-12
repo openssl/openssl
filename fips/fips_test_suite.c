@@ -1077,6 +1077,10 @@ int main(int argc,char **argv)
     		Zeroize() ? "successful as expected"
 					: Fail("failed INCORRECTLY!") );
 
+    printf("11. Complete DRBG health check...\n\t%s\n",
+    		FIPS_selftest_drbg_all() ? "successful as expected"
+					: Fail("failed INCORRECTLY!") );
+
     printf("\nAll tests completed with %d errors\n", Error);
     return Error ? 1 : 0;
     }

@@ -329,6 +329,40 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 
 	}
 
+/* Initialise a DRBG based on selftest data */
+
+static int do_drbg_init(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td, TEST_ENT *t)
+	{
+
+	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
+		return 0;
+
+	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0, test_nonce, 0))
+		return 0;
+
+	FIPS_drbg_set_app_data(dctx, t);
+
+	t->ent = td->ent;
+	t->entlen = td->entlen;
+	t->nonce = td->nonce;
+	t->noncelen = td->noncelen;
+	t->entcnt = 0;
+	t->noncecnt = 0;
+	return 1;
+	}
+
+/* Initialise and instantiate DRBG based on selftest data */
+static int do_drbg_instantiate(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
+								TEST_ENT *t)
+	{
+	if (!do_drbg_init(dctx, td, t))
+		return 0;
+	if (!FIPS_drbg_instantiate(dctx, td->pers, td->perslen))
+		return 0;
+
+	return 1;
+	}
+
 /* This is the "health check" function required by SP800-90. Induce several
  * failure modes and check an error condition is set.
  */
@@ -343,34 +377,28 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	/* Initialise DRBG */
 
-	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
+	if (!do_drbg_init(dctx, td, &t))
 		goto err;
-
-	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0, test_nonce, 0))
-		goto err;
-
-	FIPS_drbg_set_app_data(dctx, &t);
-
-	t.ent = td->ent;
-	t.entlen = td->entlen;
-	t.nonce = td->nonce;
-	t.noncelen = td->noncelen;
-	t.entcnt = 0;
-	t.noncecnt = 0;
 
 	/* Don't report induced errors */
 	dctx->flags |= DRBG_FLAG_NOERR;
 
-	/* Try too large a personalisation length */
+	/* Personalisation string tests */
+
+	/* Test detection of too large personlisation string */
+
 	if (FIPS_drbg_instantiate(dctx, td->pers, dctx->max_pers + 1) > 0)
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_PERSONALISATION_ERROR_UNDETECTED);
 		goto err;
 		}
 
-	/* Test entropy source failure detection */
+	/* Entropy source tests */
+
+	/* Test entropy source failure detecion: i.e. returns no data */
 
 	t.entlen = 0;
+
 	if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
@@ -392,24 +420,114 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 
-	/* Instantiate with valid data. NB: errors now reported again */
-	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
+	if (!do_drbg_init(dctx, td, &t))
 		goto err;
-	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0, test_nonce, 0))
-		goto err;
-	FIPS_drbg_set_app_data(dctx, &t);
 
-	t.entlen = td->entlen;
-	if (!FIPS_drbg_instantiate(dctx, td->pers, td->perslen))
+	dctx->flags |= DRBG_FLAG_NOERR;
+
+	/* Test insufficient entropy */
+
+	t.entlen = dctx->min_entropy - 1;
+
+	if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
 		goto err;
+		}
+
+	dctx->flags &= ~DRBG_FLAG_NOERR;
+	if (!FIPS_drbg_uninstantiate(dctx))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		goto err;
+		}
+
+	/* Test too much entropy */
+
+	if (!do_drbg_init(dctx, td, &t))
+		goto err;
+
+	dctx->flags |= DRBG_FLAG_NOERR;
+
+	t.entlen = dctx->max_entropy + 1;
+
+	if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	dctx->flags &= ~DRBG_FLAG_NOERR;
+	if (!FIPS_drbg_uninstantiate(dctx))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		goto err;
+		}
+
+	/* Nonce tests */
+
+	/* Test too small nonce */
+
+	if (dctx->min_nonce)
+		{
+
+		if (!do_drbg_init(dctx, td, &t))
+			goto err;
+
+		dctx->flags |= DRBG_FLAG_NOERR;
+
+		t.noncelen = dctx->min_nonce - 1;
+
+		if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
+			{
+			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_NONCE_ERROR_UNDETECTED);
+			goto err;
+			}
+
+		dctx->flags &= ~DRBG_FLAG_NOERR;
+		if (!FIPS_drbg_uninstantiate(dctx))
+			{
+			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+			goto err;
+			}
+
+		}
+
+	/* Test too large nonce */
+
+	if (dctx->max_nonce)
+		{
+
+		if (!do_drbg_init(dctx, td, &t))
+			goto err;
+
+		dctx->flags |= DRBG_FLAG_NOERR;
+
+		t.noncelen = dctx->max_nonce + 1;
+
+		if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
+			{
+			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_NONCE_ERROR_UNDETECTED);
+			goto err;
+			}
+
+		dctx->flags &= ~DRBG_FLAG_NOERR;
+		if (!FIPS_drbg_uninstantiate(dctx))
+			{
+			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+			goto err;
+			}
+
+		}
+
+	/* Instantiate with valid data. */
+	if (!do_drbg_instantiate(dctx, td, &t))
+			goto err;
 
 	/* Check generation is now OK */
 	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0,
 				td->adin, td->adinlen))
 		goto err;
-
-	/* Try to generate with too high a strength.
-	 */
 
 	dctx->flags |= DRBG_FLAG_NOERR;
 
@@ -418,6 +536,14 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 				td->adin, td->adinlen))
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_REQUEST_LENGTH_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	/* Try too large additional input */
+	if (FIPS_drbg_generate(dctx, randout, td->katlen, 0,
+				td->adin, dctx->max_adin + 1))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED);
 		goto err;
 		}
 
@@ -445,16 +571,9 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	/* Instantiate again with valid data */
 
-	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
-		goto err;
-	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0, test_nonce, 0))
-		goto err;
-	FIPS_drbg_set_app_data(dctx, &t);
-
-	t.entlen = td->entlen;
+	if (!do_drbg_instantiate(dctx, td, &t))
+			goto err;
 	/* Test reseed counter works */
-	if (!FIPS_drbg_instantiate(dctx, td->pers, td->perslen))
-		goto err;
 	/* Save initial reseed counter */
 	reseed_counter_tmp = dctx->reseed_counter;
 	/* Set reseed counter to beyond interval */
@@ -477,7 +596,146 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 
-	FIPS_drbg_uninstantiate(dctx);
+	/* Explicit reseed tests */
+
+	/* Test explicit reseed with too large additional input */
+	if (!do_drbg_init(dctx, td, &t))
+		goto err;
+
+	dctx->flags |= DRBG_FLAG_NOERR;
+
+	if (FIPS_drbg_reseed(dctx, td->adin, dctx->max_adin + 1) > 0)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	/* Test explicit reseed with entropy source failure */
+
+	/* Check prediction resistance request fails if entropy source
+	 * failure.
+	 */
+
+	t.entlen = 0;
+
+	if (FIPS_drbg_generate(dctx, randout, td->katlen, 1,
+				td->adin, td->adinlen))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		goto err;
+		}
+		
+	dctx->flags &= ~DRBG_FLAG_NOERR;
+
+	if (!FIPS_drbg_uninstantiate(dctx))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		goto err;
+		}
+
+
+	if (!do_drbg_instantiate(dctx, td, &t))
+			goto err;
+	/* Test reseed counter works */
+	/* Save initial reseed counter */
+	reseed_counter_tmp = dctx->reseed_counter;
+	/* Set reseed counter to beyond interval */
+	dctx->reseed_counter = dctx->reseed_interval;
+
+	/* Generate output and check entropy has been requested for reseed */
+	t.entcnt = 0;
+	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0,
+				td->adin, td->adinlen))
+		goto err;
+	if (t.entcnt != 1)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_NOT_REQUESTED_FOR_RESEED);
+		goto err;
+		}
+	/* Check reseed counter has been reset */
+	if (dctx->reseed_counter != reseed_counter_tmp + 1)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_RESEED_COUNTER_ERROR);
+		goto err;
+		}
+
+	/* Explicit reseed tests */
+
+	/* Test explicit reseed with too large additional input */
+	if (!do_drbg_init(dctx, td, &t))
+		goto err;
+
+	dctx->flags |= DRBG_FLAG_NOERR;
+
+	if (FIPS_drbg_reseed(dctx, td->adin, dctx->max_adin + 1) > 0)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	/* Test explicit reseed with entropy source failure */
+
+	if (!do_drbg_init(dctx, td, &t))
+		goto err;
+
+	dctx->flags |= DRBG_FLAG_NOERR;
+
+	t.entlen = 0;
+
+	if (FIPS_drbg_reseed(dctx, td->adin, td->adinlen) > 0)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	if (!FIPS_drbg_uninstantiate(dctx))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		goto err;
+		}
+
+	/* Test explicit reseed with too much entropy */
+
+	if (!do_drbg_init(dctx, td, &t))
+		goto err;
+
+	dctx->flags |= DRBG_FLAG_NOERR;
+
+	t.entlen = dctx->max_entropy + 1;
+
+	if (FIPS_drbg_reseed(dctx, td->adin, td->adinlen) > 0)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	if (!FIPS_drbg_uninstantiate(dctx))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		goto err;
+		}
+
+	/* Test explicit reseed with too little entropy */
+
+	if (!do_drbg_init(dctx, td, &t))
+		goto err;
+
+	dctx->flags |= DRBG_FLAG_NOERR;
+
+	t.entlen = dctx->min_entropy - 1;
+
+	if (FIPS_drbg_reseed(dctx, td->adin, td->adinlen) > 0)
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		goto err;
+		}
+
+	if (!FIPS_drbg_uninstantiate(dctx))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		goto err;
+		}
+
 	p = (unsigned char *)&dctx->d;
 	/* Standard says we have to check uninstantiate really zeroes
 	 * the data...
@@ -504,7 +762,6 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	return 0;
 
 	}
-
 
 int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags)
 	{
@@ -551,5 +808,34 @@ int FIPS_selftest_drbg(void)
 	}
 
 
-
+int FIPS_selftest_drbg_all(void)
+	{
+	DRBG_CTX *dctx;
+	DRBG_SELFTEST_DATA *td;
+	int rv = 1;
+	dctx = FIPS_drbg_new(0, 0);
+	if (!dctx)
+		return 0;
+	for (td = drbg_test; td->nid != 0; td++)
+		{
+		if (!fips_post_started(FIPS_TEST_DRBG, td->nid, &td->flags))
+			return 1;
+		if (!fips_drbg_single_kat(dctx, td, 0))
+			{
+			fips_post_failed(FIPS_TEST_DRBG, td->nid, &td->flags);
+			rv = 0;
+			continue;
+			}
+		if (!fips_drbg_health_check(dctx, td))
+			{
+			fips_post_failed(FIPS_TEST_DRBG, td->nid, &td->flags);
+			rv = 0;
+			continue;
+			}
+		if (!fips_post_success(FIPS_TEST_DRBG, td->nid, &td->flags))
+			return 0;
+		}
+	FIPS_drbg_free(dctx);
+	return rv;
+	}
 

@@ -102,6 +102,7 @@ void FIPS_drbg_stick(void);
 int FIPS_selftest_x931(void);
 int FIPS_selftest_hmac(void);
 int FIPS_selftest_drbg(void);
+int FIPS_selftest_drbg_all(void);
 int FIPS_selftest_cmac(void);
 
 unsigned int FIPS_incore_fingerprint(unsigned char *sig,unsigned int len);
@@ -397,6 +398,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_RSA_X931_GENERATE_KEY_EX			 143
 
 /* Reason codes. */
+#define FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED	 150
 #define FIPS_R_ADDITIONAL_INPUT_TOO_LONG		 100
 #define FIPS_R_ALREADY_INSTANTIATED			 101
 #define FIPS_R_CONTRADICTING_EVIDENCE			 102
@@ -424,6 +426,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_R_INVALID_PARAMETERS			 144
 #define FIPS_R_IN_ERROR_STATE				 123
 #define FIPS_R_KEY_TOO_SHORT				 124
+#define FIPS_R_NONCE_ERROR_UNDETECTED			 149
 #define FIPS_R_NON_FIPS_METHOD				 125
 #define FIPS_R_NOPR_TEST1_FAILURE			 145
 #define FIPS_R_NOPR_TEST2_FAILURE			 146
