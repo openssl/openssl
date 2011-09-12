@@ -231,7 +231,7 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 		adinlen = td->adinlen / 2;
 	else
 		adinlen = td->adinlen;
-	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
+	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0,
 				td->adin, adinlen))
 		goto err;
 
@@ -253,7 +253,7 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 	if (!FIPS_drbg_reseed(dctx, td->adinreseed, td->adinreseedlen))
 		goto err;
 
-	if (!FIPS_drbg_generate(dctx, randout, td->kat2len, 0, 0,
+	if (!FIPS_drbg_generate(dctx, randout, td->kat2len, 0,
 				td->adin2, td->adin2len))
 		goto err;
 
@@ -294,7 +294,7 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 		adinlen = td->adinlen_pr / 2;
 	else
 		adinlen = td->adinlen_pr;
-	if (!FIPS_drbg_generate(dctx, randout, td->katlen_pr, 0, 1,
+	if (!FIPS_drbg_generate(dctx, randout, td->katlen_pr, 1,
 				td->adin_pr, adinlen))
 		goto err;
 
@@ -307,7 +307,7 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 	t.ent = td->entg_pr;
 	t.entlen = td->entglen_pr;
 
-	if (!FIPS_drbg_generate(dctx, randout, td->kat2len_pr, 0, 1,
+	if (!FIPS_drbg_generate(dctx, randout, td->kat2len_pr, 1,
 				td->ading_pr, td->adinglen_pr))
 		goto err;
 
@@ -378,7 +378,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		}
 
 	/* Try to generate output from uninstantiated DRBG */
-	if (FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
+	if (FIPS_drbg_generate(dctx, randout, td->katlen, 0,
 				td->adin, td->adinlen))
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_GENERATE_ERROR_UNDETECTED);
@@ -404,7 +404,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 
 	/* Check generation is now OK */
-	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
+	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0,
 				td->adin, td->adinlen))
 		goto err;
 
@@ -412,19 +412,9 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	 */
 
 	dctx->flags |= DRBG_FLAG_NOERR;
-	if (dctx->strength != 256)
-		{
-		if (FIPS_drbg_generate(dctx, randout, td->katlen, 256, 0,
-					td->adin, td->adinlen))
-			{
-			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_STRENGTH_ERROR_UNDETECTED);
-
-			goto err;
-			}
-		}
 
 	/* Request too much data for one request */
-	if (FIPS_drbg_generate(dctx, randout, dctx->max_request + 1, 0, 0,
+	if (FIPS_drbg_generate(dctx, randout, dctx->max_request + 1, 0,
 				td->adin, td->adinlen))
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_REQUEST_LENGTH_ERROR_UNDETECTED);
@@ -437,7 +427,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	t.entlen = 0;
 
-	if (FIPS_drbg_generate(dctx, randout, td->katlen, 0, 1,
+	if (FIPS_drbg_generate(dctx, randout, td->katlen, 1,
 				td->adin, td->adinlen))
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
@@ -472,7 +462,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	/* Generate output and check entropy has been requested for reseed */
 	t.entcnt = 0;
-	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0, 0,
+	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0,
 				td->adin, td->adinlen))
 		goto err;
 	if (t.entcnt != 1)

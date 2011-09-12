@@ -353,7 +353,7 @@ static int fips_drbg_check(DRBG_CTX *dctx)
 	}
 
 int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
-			int strength, int prediction_resistance,
+			int prediction_resistance,
 			const unsigned char *adin, size_t adinlen)
 	{
 	int r = 0;
@@ -375,12 +375,6 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 		{
 		r = FIPS_R_REQUEST_TOO_LARGE_FOR_DRBG;
 		return 0;
-		}
-
-	if (strength > dctx->strength)
-		{
-		r = FIPS_R_INSUFFICIENT_SECURITY_STRENGTH;
-		goto end;
 		}
 
 	if (dctx->flags & DRBG_CUSTOM_RESEED)

@@ -344,7 +344,7 @@ int main(int argc,char **argv)
 			adin = hex2bin_m(value, &adinlen);
 			if (pr)
 				continue;
-			r = FIPS_drbg_generate(dctx, randout, randoutlen, 0, 0,
+			r = FIPS_drbg_generate(dctx, randout, randoutlen, 0,
 								adin, adinlen);
 			if (!r)
 				{
@@ -367,7 +367,7 @@ int main(int argc,char **argv)
 				t.entlen = entlen;
 				r = FIPS_drbg_generate(dctx,
 							randout, randoutlen,
-							0, 1, adin, adinlen);
+							1, adin, adinlen);
 				if (!r)
 					{
 					fprintf(stderr,

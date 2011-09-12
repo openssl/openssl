@@ -96,7 +96,7 @@ static int fips_drbg_bytes(unsigned char *out, int count)
 				goto err;
 				}
 			}
-		rv = FIPS_drbg_generate(dctx, out, rcnt, 0, 0, adin, adinlen);
+		rv = FIPS_drbg_generate(dctx, out, rcnt, 0, adin, adinlen);
 		if (adin)
 			{
 			if (dctx->cleanup_adin)
