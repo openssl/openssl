@@ -666,14 +666,14 @@ my %regrm = (	"%eax"=>0, "%ecx"=>1, "%edx"=>2, "%ebx"=>3,
 my $movq = sub {	# elderly gas can't handle inter-register movq
   my $arg = shift;
   my @opcode=(0x66);
-    if ($arg =~ /%xmm([0-9]+),%r(\w+)/) {
+    if ($arg =~ /%xmm([0-9]+),\s*%r(\w+)/) {
 	my ($src,$dst)=($1,$2);
 	if ($dst !~ /[0-9]+/)	{ $dst = $regrm{"%e$dst"}; }
 	rex(\@opcode,$src,$dst,0x8);
 	push @opcode,0x0f,0x7e;
 	push @opcode,0xc0|(($src&7)<<3)|($dst&7);	# ModR/M
 	@opcode;
-    } elsif ($arg =~ /%r(\w+),%xmm([0-9]+)/) {
+    } elsif ($arg =~ /%r(\w+),\s*%xmm([0-9]+)/) {
 	my ($src,$dst)=($2,$1);
 	if ($dst !~ /[0-9]+/)	{ $dst = $regrm{"%e$dst"}; }
 	rex(\@opcode,$src,$dst,0x8);
@@ -686,7 +686,7 @@ my $movq = sub {	# elderly gas can't handle inter-register movq
 };
 
 my $pextrd = sub {
-    if (shift =~ /\$([0-9]+),%xmm([0-9]+),(%\w+)/) {
+    if (shift =~ /\$([0-9]+),\s*%xmm([0-9]+),\s*(%\w+)/) {
       my @opcode=(0x66);
 	$imm=$1;
 	$src=$2;
@@ -704,7 +704,7 @@ my $pextrd = sub {
 };
 
 my $pinsrd = sub {
-    if (shift =~ /\$([0-9]+),(%\w+),%xmm([0-9]+)/) {
+    if (shift =~ /\$([0-9]+),\s*(%\w+),\s*%xmm([0-9]+)/) {
       my @opcode=(0x66);
 	$imm=$1;
 	$src=$2;
@@ -722,7 +722,7 @@ my $pinsrd = sub {
 };
 
 my $pshufb = sub {
-    if (shift =~ /%xmm([0-9]+),%xmm([0-9]+)/) {
+    if (shift =~ /%xmm([0-9]+),\s*%xmm([0-9]+)/) {
       my @opcode=(0x66);
 	rex(\@opcode,$2,$1);
 	push @opcode,0x0f,0x38,0x00;
@@ -734,7 +734,7 @@ my $pshufb = sub {
 };
 
 my $palignr = sub {
-    if (shift =~ /\$([0-9]+),%xmm([0-9]+),%xmm([0-9]+)/) {
+    if (shift =~ /\$([0-9]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
       my @opcode=(0x66);
 	rex(\@opcode,$3,$2);
 	push @opcode,0x0f,0x3a,0x0f;
