@@ -43,7 +43,7 @@
 #	pshufb,	yet it's respectable +32%/65%  improvement on Core 2
 #	and +58%/40% on Atom.
 #
-#						<appro@openss.org>
+#						<appro@openssl.org>
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");

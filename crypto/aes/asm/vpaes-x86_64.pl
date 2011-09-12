@@ -42,7 +42,7 @@
 # (***)	Less impressive improvement on Core 2 and Atom is due to slow
 #	pshufb,	yet it's respectable +40%/78% improvement on Core 2.
 #
-#						<appro@openss.org>
+#						<appro@openssl.org>
 
 $flavour = shift;
 $output  = shift;
