@@ -656,7 +656,6 @@ my $install_prefix= "$ENV{'INSTALL_PREFIX'}";
 my $cross_compile_prefix="";
 my $fipslibdir="/usr/local/ssl/fips-2.0/lib/";
 my $nofipscanistercheck=0;
-my $fipsdso=0;
 my $fipscanisterinternal="n";
 my $fipscanisteronly = 0;
 my $baseaddr="0xFB00000";
@@ -896,14 +895,6 @@ EOF
 			$fipslibdir="";
 			$fipscanisterinternal="y";
 			$fipscanisteronly = 1;
-			}
-		elsif (/^fipsdso$/)
-			{
-			$fips = 1;
-			$nofipscanistercheck = 1;
-			$fipslibdir="";
-			$fipscanisterinternal="y";
-			$fipsdso = 1;
 			}
 		elsif (/^[-+]/)
 			{
@@ -1713,18 +1704,9 @@ while (<IN>)
 	s/^LIBZLIB=.*/LIBZLIB=$withargs{"zlib-lib"}/;
 	s/^ZLIB_INCLUDE=.*/ZLIB_INCLUDE=$withargs{"zlib-include"}/;
 	s/^FIPSLIBDIR=.*/FIPSLIBDIR=$fipslibdir/;
-	if ($fipsdso)
-		{
-		s/^FIPSCANLIB=.*/FIPSCANLIB=libfips/;
-		s/^SHARED_FIPS=.*/SHARED_FIPS=libfips\$(SHLIB_EXT)/;
-		s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl fips/;
-		}
-	else
-		{
-		s/^FIPSCANLIB=.*/FIPSCANLIB=libcrypto/ if $fips;
-		s/^SHARED_FIPS=.*/SHARED_FIPS=/;
-		s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl/;
-		}
+	s/^FIPSCANLIB=.*/FIPSCANLIB=libcrypto/ if $fips;
+	s/^SHARED_FIPS=.*/SHARED_FIPS=/;
+	s/^SHLIBDIRS=.*/SHLIBDIRS= crypto ssl/;
 	s/^FIPSCANISTERINTERNAL=.*/FIPSCANISTERINTERNAL=$fipscanisterinternal/;
 	s/^BASEADDR=.*/BASEADDR=$baseaddr/;
 	s/^SHLIB_TARGET=.*/SHLIB_TARGET=$shared_target/;
