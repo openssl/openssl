@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) New function FIPS_get_cipherbynid() to lookup FIPS supported ciphers
+     based on NID.
+     [Steve Henson]
+
   *) More extensive health check for DRBG checking many more failure modes.
      New function FIPS_selftest_drbg_all() to handle every possible DRBG
      combination: call this in fips_test_suite.

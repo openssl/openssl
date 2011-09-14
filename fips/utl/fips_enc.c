@@ -338,3 +338,131 @@ int FIPS_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}
 	return ctx->cipher->do_cipher(ctx,out,in,inl);
 	}
+
+const EVP_CIPHER *FIPS_get_cipherbynid(int nid)
+	{
+	switch (nid)
+		{
+		case NID_aes_128_cbc:
+		return FIPS_evp_aes_128_cbc();
+
+		case NID_aes_128_ccm:
+		return FIPS_evp_aes_128_ccm();
+
+		case NID_aes_128_cfb1:
+		return FIPS_evp_aes_128_cfb1();
+
+		case NID_aes_128_cfb128:
+		return FIPS_evp_aes_128_cfb128();
+
+		case NID_aes_128_cfb8:
+		return FIPS_evp_aes_128_cfb8();
+
+		case NID_aes_128_ctr:
+		return FIPS_evp_aes_128_ctr();
+
+		case NID_aes_128_ecb:
+		return FIPS_evp_aes_128_ecb();
+
+		case NID_aes_128_gcm:
+		return FIPS_evp_aes_128_gcm();
+
+		case NID_aes_128_ofb128:
+		return FIPS_evp_aes_128_ofb();
+
+		case NID_aes_128_xts:
+		return FIPS_evp_aes_128_xts();
+
+		case NID_aes_192_cbc:
+		return FIPS_evp_aes_192_cbc();
+
+		case NID_aes_192_ccm:
+		return FIPS_evp_aes_192_ccm();
+
+		case NID_aes_192_cfb1:
+		return FIPS_evp_aes_192_cfb1();
+
+		case NID_aes_192_cfb128:
+		return FIPS_evp_aes_192_cfb128();
+
+		case NID_aes_192_cfb8:
+		return FIPS_evp_aes_192_cfb8();
+
+		case NID_aes_192_ctr:
+		return FIPS_evp_aes_192_ctr();
+
+		case NID_aes_192_ecb:
+		return FIPS_evp_aes_192_ecb();
+
+		case NID_aes_192_gcm:
+		return FIPS_evp_aes_192_gcm();
+
+		case NID_aes_192_ofb128:
+		return FIPS_evp_aes_192_ofb();
+
+		case NID_aes_256_cbc:
+		return FIPS_evp_aes_256_cbc();
+
+		case NID_aes_256_ccm:
+		return FIPS_evp_aes_256_ccm();
+
+		case NID_aes_256_cfb1:
+		return FIPS_evp_aes_256_cfb1();
+
+		case NID_aes_256_cfb128:
+		return FIPS_evp_aes_256_cfb128();
+
+		case NID_aes_256_cfb8:
+		return FIPS_evp_aes_256_cfb8();
+
+		case NID_aes_256_ctr:
+		return FIPS_evp_aes_256_ctr();
+
+		case NID_aes_256_ecb:
+		return FIPS_evp_aes_256_ecb();
+
+		case NID_aes_256_gcm:
+		return FIPS_evp_aes_256_gcm();
+
+		case NID_aes_256_ofb128:
+		return FIPS_evp_aes_256_ofb();
+
+		case NID_aes_256_xts:
+		return FIPS_evp_aes_256_xts();
+
+		case NID_des_ede_ecb:
+		return FIPS_evp_des_ede();
+
+		case NID_des_ede3_ecb:
+		return FIPS_evp_des_ede3();
+
+		case NID_des_ede3_cbc:
+		return FIPS_evp_des_ede3_cbc();
+
+		case NID_des_ede3_cfb1:
+		return FIPS_evp_des_ede3_cfb1();
+
+		case NID_des_ede3_cfb64:
+		return FIPS_evp_des_ede3_cfb64();
+
+		case NID_des_ede3_cfb8:
+		return FIPS_evp_des_ede3_cfb8();
+
+		case NID_des_ede3_ofb64:
+		return FIPS_evp_des_ede3_ofb();
+
+		case NID_des_ede_cbc:
+		return FIPS_evp_des_ede_cbc();
+
+		case NID_des_ede_cfb64:
+		return FIPS_evp_des_ede_cfb64();
+
+		case NID_des_ede_ofb64:
+		return FIPS_evp_des_ede_ofb();
+
+		default:
+		return NULL;
+
+		}
+	}
+

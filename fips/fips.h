@@ -193,6 +193,8 @@ int fips_cipher_test(int id, struct evp_cipher_ctx_st *ctx,
 
 const struct env_md_st *FIPS_get_digestbynid(int nid);
 
+const struct evp_cipher_st *FIPS_get_cipherbynid(int nid);
+
 struct rsa_st *FIPS_rsa_new(void);
 void FIPS_rsa_free(struct rsa_st *r);
 int FIPS_rsa_sign_ctx(struct rsa_st *rsa, struct env_md_ctx_st *ctx,
