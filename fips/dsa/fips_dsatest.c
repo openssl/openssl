@@ -140,8 +140,10 @@ static unsigned char out_g[] = {
 	};
 
 
+__fips_constseg
 static const unsigned char str1[]="12345678901234567890";
 
+__fips_constseg
 static const char rnd_seed[] = "string to make the random number generator think it has entropy";
 
 int main(int argc, char **argv)

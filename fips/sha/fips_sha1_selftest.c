@@ -63,6 +63,7 @@ static const unsigned char test[][60]=
     "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
     };
 
+__fips_constseg
 static const unsigned char ret[][SHA_DIGEST_LENGTH]=
     {
     { 0xda,0x39,0xa3,0xee,0x5e,0x6b,0x4b,0x0d,0x32,0x55,

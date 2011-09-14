@@ -64,6 +64,7 @@ typedef struct {
 } CMAC_KAT;
 
 /* from http://csrc.nist.gov/publications/nistpubs/800-38B/SP_800-38B.pdf */
+__fips_constseg
 static const CMAC_KAT vector[] = {
     {	NID_aes_128_cbc,	/* Count = 32 from CMACGenAES128.txt */
 	{ 0x77,0xa7,0x7f,0xaf, 0x29,0x0c,0x1f,0xa3,

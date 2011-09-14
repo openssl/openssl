@@ -162,7 +162,7 @@ $app_cflag.=" /Zi /Fd\$(TMP_D)/app";
 $lib_cflag.=" /Zi /Fd\$(TMP_D)/lib";
 $lflags.=" /debug";
 
-$lflags.=" /fixed" if $fips;
+$lflags.=" /fixed" if ($fips && $FLAVOR !~ /WIN64/);
 
 $obj='.obj';
 $asm_suffix='.asm';

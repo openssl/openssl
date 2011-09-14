@@ -145,6 +145,7 @@ void fips_set_selftest_fail(void)
 extern const void         *FIPS_text_start(),  *FIPS_text_end();
 extern const unsigned char FIPS_rodata_start[], FIPS_rodata_end[];
 unsigned char              FIPS_signature [20] = { 0 };
+__fips_constseg
 static const char          FIPS_hmac_key[]="etaonrishdlcupfm";
 
 unsigned int FIPS_incore_fingerprint(unsigned char *sig,unsigned int len)

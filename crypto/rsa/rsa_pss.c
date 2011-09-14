@@ -71,6 +71,7 @@
 #include <openssl/fips.h>
 #endif
 
+__fips_constseg
 static const unsigned char zeroes[] = {0,0,0,0,0,0,0,0};
 
 #if defined(_MSC_VER) && defined(_ARM_)

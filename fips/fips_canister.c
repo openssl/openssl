@@ -56,12 +56,20 @@ static void *instruction_pointer_xlc(void);
  * reference points accordingly. In case you wonder, the values are
  * big-endian encoded variable names, just to prevent these arrays
  * from being merged by linker. */
+# if defined(_MSC_VER) && defined(_WIN64)
+#  pragma section("fipsro$a",read)
+   __declspec(allocate("fipsro$a"))
+# endif
 const unsigned int FIPS_rodata_start[]=
 	{ 0x46495053, 0x5f726f64, 0x6174615f, 0x73746172 };
 #else
 # define FIPS_ref_point FIPS_text_end
 # ifdef FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE
 #  define instruction_pointer	FIPS_text_endX
+# endif
+# if defined(_MSC_VER) && defined(_WIN64)
+#  pragma section("fipsro$c",read)
+   __declspec(allocate("fipsro$c"))
 # endif
 const unsigned int FIPS_rodata_end[]=
 	{ 0x46495053, 0x5f726f64, 0x6174615f, 0x656e645b };

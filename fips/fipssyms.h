@@ -666,3 +666,10 @@
 #define _sparcv9_vis1_instrument _fips_sparcv9_vis1_instrument
 #define bn_mul_mont_gather5 fips_bn_mul_mont_gather5
 #define bn_scatter5 fips_bn_scatter5
+
+#if defined(_MSC_VER) && defined(_WIN64)
+# pragma section("fipsro$b",read)
+# define __fips_constseg __declspec(allocate("fipsro$b"))
+#else
+# define __fips_constseg
+#endif

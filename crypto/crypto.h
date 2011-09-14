@@ -148,7 +148,9 @@
  */
 
 #if defined(OPENSSL_FIPSCANISTER)
-#include <openssl/fipssyms.h>
+# include <openssl/fipssyms.h>
+#else
+# define __fips_constseg
 #endif
 
 #ifdef  __cplusplus

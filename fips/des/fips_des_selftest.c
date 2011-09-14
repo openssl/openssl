@@ -57,7 +57,8 @@
 
 #ifdef OPENSSL_FIPS
 
-static struct
+__fips_constseg
+static const struct
     {
     const unsigned char key[24];
     const unsigned char plaintext[8];

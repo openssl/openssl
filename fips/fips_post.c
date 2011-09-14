@@ -209,6 +209,7 @@ int fips_pkey_signature_test(int id, EVP_PKEY *pkey,
 	int ret = 0;
 	unsigned char *sig = NULL;
 	unsigned int siglen;
+	__fips_constseg
 	static const unsigned char str1[]="12345678901234567890";
 	DSA_SIG *dsig = NULL;
 	ECDSA_SIG *esig = NULL;
