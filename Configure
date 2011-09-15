@@ -1552,6 +1552,7 @@ if ($aes_obj =~ /\.o$/)
 	# module implements AES_ctr32_encrypt...
 	$cflags.=" -DAES_CTR_ASM" if ($aes_obj =~ s/\s*aes_ctr\.o//);
 	$aes_obj =~ s/\s*(vpaes|aesni)\-x86\.o// if ($no_sse2);
+	$aes_obj =~ s/\s*vpaes-\w*\.o// if ($fipscanisterinternal eq "y");
 	$cflags.=" -DVPAES_ASM" if ($aes_obj =~ m/vpaes/);
 	}
 else	{

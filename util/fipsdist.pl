@@ -66,6 +66,7 @@ while (<STDIN>)
 		next if -d "crypto/$1" && !exists $cdirs{$1};
 		# Skip GF2m assembly language perl scripts
 		next if $noec2m && /gf2m\.pl/;
+		next if /vpaes-\w*\.pl/;
 		# Keep assembly language dir, Makefile or certain extensions
 		if (!/\/asm\// && !/\/Makefile$/ && !/\.(in|pl|h|S)$/)
 			{
