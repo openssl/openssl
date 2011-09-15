@@ -220,7 +220,8 @@ static void compare(const unsigned char *result,const unsigned char *expected,
     }
 
 
-static void run_test(unsigned char *key, int keylen, AES_PRNG_MCT *tv)
+static void run_test(const unsigned char *key, int keylen,
+							const AES_PRNG_MCT *tv)
     {
     unsigned char buf[16], dt[16];
     int i, j;
