@@ -21,7 +21,7 @@
 # about its alignment...
 #
 # Performance summary. aes-x86_64.pl column lists large-block CBC
-# encrypt/decrypt/with-hypert-hreading-off(*) results in cycles per
+# encrypt/decrypt/with-hyper-threading-off(*) results in cycles per
 # byte processed with 128-bit key, and vpaes-x86_64.pl column -
 # encrypt/decrypt.
 #
@@ -40,7 +40,8 @@
 # (**)	"Core 2" refers to initial 65nm design, a.k.a. Conroe.
 #
 # (***)	Less impressive improvement on Core 2 and Atom is due to slow
-#	pshufb,	yet it's respectable +40%/78% improvement on Core 2.
+#	pshufb,	yet it's respectable +40%/78% improvement on Core 2
+#	(as implied, over "hyper-threading-safe" code path).
 #
 #						<appro@openssl.org>
 
@@ -57,7 +58,7 @@ die "can't locate x86_64-xlate.pl";
 
 open STDOUT,"| $^X $xlate $flavour $output";
 
-$PREFIX="AES";
+$PREFIX="vpaes";
 
 $code.=<<___;
 .text

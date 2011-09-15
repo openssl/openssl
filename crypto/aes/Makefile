@@ -50,11 +50,15 @@ aes-ia64.s: asm/aes-ia64.S
 
 aes-586.s:	asm/aes-586.pl ../perlasm/x86asm.pl
 	$(PERL) asm/aes-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+vpaes-x86.s:	asm/vpaes-x86.pl ../perlasm/x86asm.pl
+	$(PERL) asm/vpaes-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 aesni-x86.s:	asm/aesni-x86.pl ../perlasm/x86asm.pl
 	$(PERL) asm/aesni-x86.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 aes-x86_64.s: asm/aes-x86_64.pl
 	$(PERL) asm/aes-x86_64.pl $(PERLASM_SCHEME) > $@
+vpaes-x86_64.s:	asm/vpaes-x86_64.pl
+	$(PERL) asm/vpaes-x86_64.pl $(PERLASM_SCHEME) > $@
 aesni-x86_64.s: asm/aesni-x86_64.pl
 	$(PERL) asm/aesni-x86_64.pl $(PERLASM_SCHEME) > $@
 aesni-sha1-x86_64.s:	asm/aesni-sha1-x86_64.pl

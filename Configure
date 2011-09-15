@@ -123,11 +123,11 @@ my $tlib="-lnsl -lsocket";
 my $bits1="THIRTY_TWO_BIT ";
 my $bits2="SIXTY_FOUR_BIT ";
 
-my $x86_asm="x86cpuid.o:bn-586.o co-586.o x86-mont.o x86-gf2m.o:des-586.o crypt586.o:aes-586.o aesni-x86.o:bf-586.o:md5-586.o:sha1-586.o sha256-586.o sha512-586.o:cast-586.o:rc4-586.o:rmd-586.o:rc5-586.o:wp_block.o wp-mmx.o:cmll-x86.o:ghash-x86.o:e_padlock-x86.o";
+my $x86_asm="x86cpuid.o:bn-586.o co-586.o x86-mont.o x86-gf2m.o:des-586.o crypt586.o:aes-586.o vpaes-x86.o aesni-x86.o:bf-586.o:md5-586.o:sha1-586.o sha256-586.o sha512-586.o:cast-586.o:rc4-586.o:rmd-586.o:rc5-586.o:wp_block.o wp-mmx.o:cmll-x86.o:ghash-x86.o:e_padlock-x86.o";
 
 my $x86_elf_asm="$x86_asm:elf";
 
-my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o modexp512-x86_64.o::aes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o::rc4-x86_64.o rc4-md5-x86_64.o:::wp-x86_64.o:cmll-x86_64.o cmll_misc.o:ghash-x86_64.o:e_padlock-x86_64.o";
+my $x86_64_asm="x86_64cpuid.o:x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o modexp512-x86_64.o::aes-x86_64.o vpaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o::md5-x86_64.o:sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o::rc4-x86_64.o rc4-md5-x86_64.o:::wp-x86_64.o:cmll-x86_64.o cmll_misc.o:ghash-x86_64.o:e_padlock-x86_64.o";
 my $ia64_asm="ia64cpuid.o:bn-ia64.o ia64-mont.o::aes_core.o aes_cbc.o aes-ia64.o::md5-ia64.o:sha1-ia64.o sha256-ia64.o sha512-ia64.o::rc4-ia64.o rc4_skey.o:::::ghash-ia64.o::void";
 my $sparcv9_asm="sparcv9cap.o sparccpuid.o:bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o:des_enc-sparc.o fcrypt_b.o:aes_core.o aes_cbc.o aes-sparcv9.o:::sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o:::::::ghash-sparcv9.o::void";
 my $sparcv8_asm=":sparcv8.o:des_enc-sparc.o fcrypt_b.o:::::::::::::void";
@@ -369,8 +369,8 @@ my %table=(
 # alongside generic one, e.g. as /lib/highgprs/libcrypto.so.x.y, for
 # ldconfig and run-time linker to autodiscover. Unfortunately it
 # doesn't work just yet, because of couple of bugs in glibc
-# sysdep/s390/dl-procinfo.c affecting ldconfig and ld.so.1...
-"linux32-s390x",	"gcc:-m31 -Wa,-mzarch -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:".($s390x_asm=~s/bn\-s390x\.o/bn_asm.o/,$s390x_asm).":31:dlfcn:linux-shared:-fPIC:-m31:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/highgprs",
+# sysdeps/s390/dl-procinfo.c affecting ldconfig and ld.so.1...
+"linux32-s390x",	"gcc:-m31 -Wa,-mzarch -DB_ENDIAN -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL:".eval{my $asm=$s390x_asm;$asm=~s/bn\-s390x\.o/bn_asm.o/;$asm}.":31:dlfcn:linux-shared:-fPIC:-m31:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::/highgprs",
 #### SPARC Linux setups
 # Ray Miller <ray.miller@computing-services.oxford.ac.uk> has patiently
 # assisted with debugging of following two configs.
@@ -1551,7 +1551,8 @@ if ($aes_obj =~ /\.o$/)
 	# aes_ctr.o is not a real file, only indication that assembler
 	# module implements AES_ctr32_encrypt...
 	$cflags.=" -DAES_CTR_ASM" if ($aes_obj =~ s/\s*aes_ctr\.o//);
-	$aes_obj =~ s/\s*aesni\-x86\.o// if ($no_sse2);
+	$aes_obj =~ s/\s*(vpaes|aesni)\-x86\.o// if ($no_sse2);
+	$cflags.=" -DVPAES_ASM" if ($aes_obj =~ m/vpaes/);
 	}
 else	{
 	$aes_obj=$aes_enc;

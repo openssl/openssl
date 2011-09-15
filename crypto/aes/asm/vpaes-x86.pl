@@ -21,7 +21,7 @@
 # about its alignment...
 #
 # Performance summary. aes-586.pl column lists large-block CBC
-# encrypt/decrypt/with-hypert-hreading-off(*) results in cycles per
+# encrypt/decrypt/with-hyper-threading-off(*) results in cycles per
 # byte processed with 128-bit key, and vpaes-x86.pl column -
 # encrypt/decrypt.
 #
@@ -41,7 +41,8 @@
 #
 # (***)	Less impressive improvement on Core 2 and Atom is due to slow
 #	pshufb,	yet it's respectable +32%/65%  improvement on Core 2
-#	and +58%/40% on Atom.
+#	and +58%/40% on Atom (as implied, over "hyper-threading-safe"
+#	code path).
 #
 #						<appro@openssl.org>
 
@@ -51,7 +52,7 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],"vpaes-x86.pl",$x86only = $ARGV[$#ARGV] eq "386");
 
-$PREFIX="AES";
+$PREFIX="vpaes";
 
 my  ($round, $base, $magic, $key, $const, $inp, $out)=
     ("eax",  "ebx", "ecx",  "edx","ebp",  "esi","edi");
