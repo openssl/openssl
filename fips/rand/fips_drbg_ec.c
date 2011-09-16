@@ -311,7 +311,7 @@ static int drbg_ec_generate(DRBG_CTX *dctx,
 			return 0;
 		}
 	else
-		/* Note if no additional input t and s the algorithm never
+		/* Note if no additional input the algorithm never
 		 * needs separate values for t and s.
 		 */
 		t = s;
