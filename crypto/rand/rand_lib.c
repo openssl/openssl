@@ -245,13 +245,34 @@ static int drbg_rand_seed(DRBG_CTX *ctx, const void *in, int inlen)
 	return 1;
 	}
 
+#ifndef OPENSSL_DRBG_DEFAULT_TYPE
+#define OPENSSL_DRBG_DEFAULT_TYPE	NID_aes_256_ctr
+#endif
+#ifndef OPENSSL_DRBG_DEFAULT_FLAGS
+#define OPENSSL_DRBG_DEFAULT_FLAGS	DRBG_FLAG_CTR_USE_DF
+#endif 
+
+static int fips_drbg_type = OPENSSL_DRBG_DEFAULT_TYPE;
+static int fips_drbg_flags = OPENSSL_DRBG_DEFAULT_FLAGS;
+
+void RAND_set_fips_drbg_type(int type, int flags)
+	{
+	fips_drbg_type = type;
+	fips_drbg_flags = flags;
+	}
+
 int RAND_init_fips(void)
 	{
 	DRBG_CTX *dctx;
 	size_t plen;
 	unsigned char pers[32], *p;
 	dctx = FIPS_get_default_drbg();
-        FIPS_drbg_init(dctx, NID_aes_256_ctr, DRBG_FLAG_CTR_USE_DF);
+        if (FIPS_drbg_init(dctx, fips_drbg_type, fips_drbg_flags) <= 0)
+		{
+		RANDerr(RAND_F_RAND_INIT_FIPS, RAND_R_ERROR_INITIALISING_DRBG);
+		return 0;
+		}
+		
         FIPS_drbg_set_callbacks(dctx,
 				drbg_get_entropy, drbg_free_entropy, 20,
 				drbg_get_entropy, drbg_free_entropy);
@@ -262,7 +283,11 @@ int RAND_init_fips(void)
 	plen = drbg_get_adin(dctx, &p);
 	memcpy(pers + 16, p, plen);
 
-        FIPS_drbg_instantiate(dctx, pers, sizeof(pers));
+        if (FIPS_drbg_instantiate(dctx, pers, sizeof(pers)) <= 0)
+		{
+		RANDerr(RAND_F_RAND_INIT_FIPS, RAND_R_ERROR_INSTANTIATING_DRBG);
+		return 0;
+		}
         FIPS_rand_set_method(FIPS_drbg_method());
 	return 1;
 	}

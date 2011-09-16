@@ -120,6 +120,7 @@ int RAND_event(UINT, WPARAM, LPARAM);
 #endif
 
 #ifdef OPENSSL_FIPS
+void RAND_set_fips_drbg_type(int type, int flags);
 int RAND_init_fips(void);
 #endif
 
@@ -133,9 +134,12 @@ void ERR_load_RAND_strings(void);
 
 /* Function codes. */
 #define RAND_F_RAND_GET_RAND_METHOD			 101
+#define RAND_F_RAND_INIT_FIPS				 102
 #define RAND_F_SSLEAY_RAND_BYTES			 100
 
 /* Reason codes. */
+#define RAND_R_ERROR_INITIALISING_DRBG			 102
+#define RAND_R_ERROR_INSTANTIATING_DRBG			 103
 #define RAND_R_NO_FIPS_RANDOM_METHOD_SET		 101
 #define RAND_R_PRNG_NOT_SEEDED				 100
 
