@@ -287,17 +287,19 @@ static int drbg_ec_generate(DRBG_CTX *dctx,
 		}
 
 	BN_CTX_start(ectx->bctx);
-	t = BN_CTX_get(ectx->bctx);
 	r = BN_CTX_get(ectx->bctx);
 	if (!r)
 		goto err;
 	if (adin && adin_len)
 		{
 		size_t i;
+		t = BN_CTX_get(ectx->bctx);
+		if (!t)
+			goto err;
 		/* Convert s to buffer */
 		if (ectx->exbits)
-			BN_lshift(ectx->s, ectx->s, ectx->exbits);
-		bn2binpad(ectx->sbuf, dctx->seedlen, ectx->s);
+			BN_lshift(s, s, ectx->exbits);
+		bn2binpad(ectx->sbuf, dctx->seedlen, s);
 		/* Step 2 */
 		if (!hash_df(dctx, ectx->tbuf, adin, adin_len,
 				NULL, 0, NULL, 0))
@@ -309,11 +311,13 @@ static int drbg_ec_generate(DRBG_CTX *dctx,
 			return 0;
 		}
 	else
-		if (!BN_copy(t, ectx->s))
-			goto err;
+		/* Note if no additional input t and s the algorithm never
+		 * needs separate values for t and s.
+		 */
+		t = s;
 
 #ifdef EC_DRBG_TRACE
-	bnprint(stderr, "s at start of generate: ", ectx->s);
+	bnprint(stderr, "s at start of generate: ", s);
 #endif
 
 	for (;;)
@@ -360,6 +364,8 @@ static int drbg_ec_generate(DRBG_CTX *dctx,
 		if (!outlen)
 			break;
 		out += dctx->blocklength;
+		/* Step #5 after first pass */
+		t = s;
 #ifdef EC_DRBG_TRACE
 		fprintf(stderr, "Random bits written:\n");
 		hexprint(stderr, out, dctx->blocklength);
