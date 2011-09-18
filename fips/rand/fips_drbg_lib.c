@@ -500,6 +500,11 @@ void FIPS_drbg_set_check_interval(DRBG_CTX *dctx, int interval)
 	dctx->health_check_interval = interval;
 	}
 
+void FIPS_drbg_set_reseed_interval(DRBG_CTX *dctx, int interval)
+	{
+	dctx->reseed_interval = interval;
+	}
+
 static int drbg_stick = 0;
 
 void FIPS_drbg_stick(void)

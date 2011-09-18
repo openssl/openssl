@@ -113,6 +113,7 @@ void FIPS_drbg_set_app_data(DRBG_CTX *ctx, void *app_data);
 size_t FIPS_drbg_get_blocklength(DRBG_CTX *dctx);
 int FIPS_drbg_get_strength(DRBG_CTX *dctx);
 void FIPS_drbg_set_check_interval(DRBG_CTX *dctx, int interval);
+void FIPS_drbg_set_reseed_interval(DRBG_CTX *dctx, int interval);
 
 DRBG_CTX *FIPS_get_default_drbg(void);
 const RAND_METHOD *FIPS_drbg_method(void);
