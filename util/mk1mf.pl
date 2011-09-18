@@ -13,6 +13,7 @@ $banner="\t\@echo Building OpenSSL";
 
 my $no_static_engine = 1;
 my $engines = "";
+my @engines_obj = "";
 my $otherlibs = "";
 local $zlib_opt = 0;	# 0 = no zlib, 1 = static, 2 = dynamic
 local $zlib_lib = "";
@@ -411,8 +412,13 @@ for (;;)
 	if ($key eq "HEADER")
 		{ $header.=&var_add($dir,$val, 1); }
 
-	if ($key eq "LIBOBJ" && ($dir ne "engines" || !$no_static_engine))
+	if ($key eq "LIBOBJ")
+	    {
+	    if ($dir ne "engines" || !$no_static_engine)
 		{ $libobj=&var_add($dir,$val, 0); }
+	    else
+		{ push(@engines_obj,split(/\s+/,&var_add($dir,$val,0))); }
+	    }
 	if ($key eq "LIBNAMES" && $dir eq "engines" && $no_static_engine)
  		{ $engines.=$val }
 
@@ -899,8 +905,11 @@ $defs.=&do_defs("E_SHLIB",$engines . $otherlibs,"\$(ENG_D)",$shlibp);
 
 foreach (split(/\s+/,$engines))
 	{
-	$rules.=&do_compile_rule("\$(OBJ_D)","engines${o}e_$_",$lib);
-	$rules.= &do_lib_rule("\$(OBJ_D)${o}e_${_}.obj","\$(ENG_D)$o$_$shlibp","",$shlib,"");
+	my $engine = $_;
+	my @objs   = grep(/$engine/,@engines_obj);
+	$rules.=&do_compile_rule("\$(OBJ_D)",join(" ",@objs),$lib);
+	map {$_=~s/[^\/]*\/*([^\/]+)/\$(OBJ_D)${o}$1.obj/} @objs;
+	$rules.= &do_lib_rule(join(" ",@objs),"\$(ENG_D)$o$engine$shlibp","",$shlib,"");
 	}
 
 

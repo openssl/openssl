@@ -276,7 +276,7 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&shl	($magic,4);
 	&pand	("xmm0","xmm6");
 	&pshufb	("xmm2","xmm0");
-	&movdqa	("xmm0",&DWP($k_dipt-$k_dsbd+16,$base));
+	&movdqa	("xmm0",&QWP($k_dipt-$k_dsbd+16,$base));
 	&xor	($magic,0x30);
 	&pshufb	("xmm0","xmm1");
 	&and	($magic,0x30);

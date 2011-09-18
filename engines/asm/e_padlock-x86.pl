@@ -110,7 +110,8 @@ $chunk="ebx";
 
 &function_begin_B("padlock_verify_context");
 	&mov	($ctx,&wparam(0));
-	&lea	("eax",&DWP("padlock_saved_context-".&label("verify_pic_point")));
+	&lea	("eax",($::win32 or $::coff) ? &DWP(&label("padlock_saved_context")) :
+		       &DWP(&label("padlock_saved_context")."-".&label("verify_pic_point")));
 	&pushf	();
 	&call	("_padlock_verify_ctx");
 &set_label("verify_pic_point");
@@ -119,7 +120,7 @@ $chunk="ebx";
 &function_end_B("padlock_verify_context");
 
 &function_begin_B("_padlock_verify_ctx");
-	&add	("eax",&DWP(0,"esp"));		# &padlock_saved_context
+	&add	("eax",&DWP(0,"esp")) if(!($::win32 or $::coff));# &padlock_saved_context
 	&bt	(&DWP(4,"esp"),30);		# eflags
 	&jnc	(&label("verified"));
 	&cmp	($ctx,&DWP(0,"eax"));
@@ -167,7 +168,8 @@ my ($mode,$opcode) = @_;
 	&jnz	(&label("${mode}_abort"));
 	&test	($len,15);
 	&jnz	(&label("${mode}_abort"));
-	&lea	("eax",&DWP("padlock_saved_context-".&label("${mode}_pic_point")));
+	&lea	("eax",($::win32 or $::coff) ? &DWP(&label("padlock_saved_context")) :
+		       &DWP(&label("padlock_saved_context")."-".&label("${mode}_pic_point")));
 	&pushf	();
 	&cld	();
 	&call	("_padlock_verify_ctx");
@@ -243,7 +245,7 @@ my ($mode,$opcode) = @_;
 	&data_byte(0xf3,0x0f,0xa7,$opcode);	# rep xcrypt*
 						if ($mode !~ /ecb|ctr/) {
 	&movdqa	("xmm0",&QWP(0,"eax"));
-	&movdqa	(&DWP(-16,$ctx),"xmm0");	# copy [or refresh] iv
+	&movdqa	(&QWP(-16,$ctx),"xmm0");	# copy [or refresh] iv
 						}
 	&mov	($out,&DWP(0,"ebp"));		# restore parameters
 	&mov	($chunk,&DWP(12,"ebp"));
@@ -300,7 +302,7 @@ my ($mode,$opcode) = @_;
 	&data_byte(0xf3,0x0f,0xa7,$opcode);	# rep xcrypt*
 						if ($mode ne "ecb") {
 	&movdqa	("xmm0",&QWP(0,"eax"));
-	&movdqa	(&DWP(-16,$ctx),"xmm0");	# copy [or refresh] iv
+	&movdqa	(&QWP(-16,$ctx),"xmm0");	# copy [or refresh] iv
 						}
 &set_label("${mode}_exit");			}
 	&mov	("eax",1);
