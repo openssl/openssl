@@ -765,7 +765,6 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags)
 	{
-	int rv;
 	DRBG_SELFTEST_DATA *td;
 	flags |= DRBG_FLAG_TEST;
 	for (td = drbg_test; td->nid != 0; td++)
