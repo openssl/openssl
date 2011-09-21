@@ -337,7 +337,7 @@ static int drbg_ec_generate(DRBG_CTX *dctx,
 		dctx->reseed_counter++;
 		/* Get rightmost bits of r to output buffer */
 
-		if (!(dctx->flags & DRBG_FLAG_TEST) && !dctx->lb_valid)
+		if (!(dctx->xflags & DRBG_FLAG_TEST) && !dctx->lb_valid)
 			{
 			if (!bn2binpad(dctx->lb, dctx->blocklength, r))
 				goto err;
@@ -499,7 +499,7 @@ int fips_drbg_ec_init(DRBG_CTX *dctx)
 		return -2;
 		}
 
-	dctx->flags |= DRBG_CUSTOM_RESEED;
+	dctx->iflags |= DRBG_CUSTOM_RESEED;
 	dctx->reseed_counter = 0;
 	dctx->instantiate = drbg_ec_instantiate;
 	dctx->reseed = drbg_ec_reseed;

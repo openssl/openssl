@@ -122,12 +122,12 @@ struct drbg_ec_ctx_st
 	BN_CTX *bctx;
 	};
 
-/* DRBG flags */
+/* DRBG internal flags */
 
 /* Functions shouldn't call err library */
-#define	DRBG_FLAG_NOERR			0x4
+#define	DRBG_FLAG_NOERR			0x1
 /* Custom reseed checking */
-#define	DRBG_CUSTOM_RESEED		0x8
+#define	DRBG_CUSTOM_RESEED		0x2
 
 /* DRBG status values */
 /* not initialised */
@@ -156,8 +156,10 @@ struct drbg_ctx_st
 	/* First types common to all implementations */
 	/* DRBG type: a NID for the underlying algorithm */
 	int type;
-	/* Various flags */
-	unsigned int flags;
+	/* Various external flags */
+	unsigned int xflags;
+	/* Various internal use only flags */
+	unsigned int iflags;
 	/* Used for periodic health checks */
 	int health_check_cnt, health_check_interval;
 

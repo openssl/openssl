@@ -74,7 +74,7 @@ int FIPS_x931_status(void);
 const RAND_METHOD *FIPS_x931_method(void);
 
 typedef struct drbg_ctx_st DRBG_CTX;
-
+/* DRBG external flags */
 /* Flag for CTR mode only: use derivation function ctr_df */
 #define	DRBG_FLAG_CTR_USE_DF		0x1
 /* PRNG is in test state */
@@ -114,6 +114,8 @@ size_t FIPS_drbg_get_blocklength(DRBG_CTX *dctx);
 int FIPS_drbg_get_strength(DRBG_CTX *dctx);
 void FIPS_drbg_set_check_interval(DRBG_CTX *dctx, int interval);
 void FIPS_drbg_set_reseed_interval(DRBG_CTX *dctx, int interval);
+
+int FIPS_drbg_test(DRBG_CTX *dctx);
 
 DRBG_CTX *FIPS_get_default_drbg(void);
 const RAND_METHOD *FIPS_drbg_method(void);

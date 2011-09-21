@@ -182,7 +182,7 @@ static int drbg_hmac_generate(DRBG_CTX *dctx,
 			return 0;
 		if (!HMAC_Update(hctx, Vtmp, dctx->blocklength))
 			return 0;
-		if (!(dctx->flags & DRBG_FLAG_TEST) && !dctx->lb_valid)
+		if (!(dctx->xflags & DRBG_FLAG_TEST) && !dctx->lb_valid)
 			{
 			if (!HMAC_Final(hctx, dctx->lb, NULL))
 				return 0;

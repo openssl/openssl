@@ -193,7 +193,7 @@ static int hash_gen(DRBG_CTX *dctx, unsigned char *out, size_t outlen)
 		{
 		FIPS_digestinit(&hctx->mctx, hctx->md);
 		FIPS_digestupdate(&hctx->mctx, hctx->vtmp, dctx->seedlen);
-		if (!(dctx->flags & DRBG_FLAG_TEST) && !dctx->lb_valid)
+		if (!(dctx->xflags & DRBG_FLAG_TEST) && !dctx->lb_valid)
 			{
 			FIPS_digestfinal(&hctx->mctx, dctx->lb, NULL);
 			dctx->lb_valid = 1;

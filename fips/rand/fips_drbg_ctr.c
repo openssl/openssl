@@ -263,7 +263,7 @@ static void ctr_Update(DRBG_CTX *dctx,
 		memcpy(cctx->V, cctx->K + 24, 8);
 		}
 
-	if (dctx->flags & DRBG_FLAG_CTR_USE_DF)
+	if (dctx->xflags & DRBG_FLAG_CTR_USE_DF)
 		{
 		/* If no input reuse existing derived value */
 		if (in1 || nonce || in2)
@@ -316,7 +316,7 @@ static int drbg_ctr_generate(DRBG_CTX *dctx,
 		{
 		ctr_Update(dctx, adin, adinlen, NULL, 0, NULL, 0);
 		/* This means we reuse derived value */
-		if (dctx->flags & DRBG_FLAG_CTR_USE_DF)
+		if (dctx->xflags & DRBG_FLAG_CTR_USE_DF)
 			{
 			adin = NULL;
 			adinlen = 1;
@@ -328,7 +328,7 @@ static int drbg_ctr_generate(DRBG_CTX *dctx,
 	for (;;)
 		{
 		inc_128(cctx);
-		if (!(dctx->flags & DRBG_FLAG_TEST) && !dctx->lb_valid)
+		if (!(dctx->xflags & DRBG_FLAG_TEST) && !dctx->lb_valid)
 			{
 			AES_encrypt(cctx->V, dctx->lb, &cctx->ks);
 			dctx->lb_valid = 1;
@@ -398,7 +398,7 @@ int fips_drbg_ctr_init(DRBG_CTX *dctx)
 	dctx->blocklength = 16;
 	dctx->seedlen = keylen + 16;
 
-	if (dctx->flags & DRBG_FLAG_CTR_USE_DF)
+	if (dctx->xflags & DRBG_FLAG_CTR_USE_DF)
 		{
 		/* df initialisation */
 		static unsigned char df_key[32] =

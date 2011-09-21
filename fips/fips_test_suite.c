@@ -43,6 +43,7 @@ int main(int argc, char *argv[])
 #include <openssl/dh.h>
 
 #include <openssl/fips.h>
+#include <openssl/fips_rand.h>
 #include "fips_utl.h"
 
 /* AES: encrypt and decrypt known plaintext, verify result matches original plaintext
@@ -653,6 +654,103 @@ static int Zeroize()
     return 1;
     }
 
+/* Dummy Entropy for DRBG tests. WARNING: THIS IS TOTALLY BOGUS
+ * HAS ZERO SECURITY AND MUST NOT BE USED IN REAL APPLICATIONS.
+ */
+
+static unsigned char dummy_drbg_entropy[1024];
+
+static size_t drbg_test_cb(DRBG_CTX *ctx, unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len)
+	{
+	*pout = dummy_drbg_entropy;
+	/* Round up to multiple of block size */
+	return (min_len + 0xf) & ~0xf;
+	}
+
+/* DRBG test: just generate lots of data and trigger health checks */
+
+static int do_drbg_test(int type, int flags)
+    {
+    DRBG_CTX *dctx;
+    int rv = 0;
+    size_t i;
+    unsigned char randout[1024];
+    dctx = FIPS_drbg_new(type, flags);
+    if (!dctx)
+	return 0;
+    FIPS_drbg_set_callbacks(dctx, drbg_test_cb, 0, 0x10, drbg_test_cb, 0);
+    for (i = 0; i < sizeof(dummy_drbg_entropy); i++)
+	{
+	dummy_drbg_entropy[i] = i & 0xff;
+	}
+    if (!FIPS_drbg_instantiate(dctx, dummy_drbg_entropy, 10))
+	goto err;
+    FIPS_drbg_set_check_interval(dctx, 10);
+    for (i = 0; i < 32; i++)
+	{
+	if (!FIPS_drbg_generate(dctx, randout, sizeof(randout), 0, NULL, 0))
+		goto err;
+	if (!FIPS_drbg_generate(dctx, randout, sizeof(randout), 0, dummy_drbg_entropy, 1))
+		goto err;
+	}
+    rv = 1;
+    err:
+    FIPS_drbg_uninstantiate(dctx);
+    return rv;
+    }
+
+typedef struct 
+    {
+    int type, flags;
+    } DRBG_LIST;
+
+static int do_drbg_all(void)
+    {
+    static DRBG_LIST drbg_types[] =
+	{
+		{NID_sha1, 0},
+		{NID_sha224, 0},
+		{NID_sha256, 0},
+		{NID_sha384, 0},
+		{NID_sha512, 0},
+		{NID_hmacWithSHA1, 0},
+		{NID_hmacWithSHA224, 0},
+		{NID_hmacWithSHA256, 0},
+		{NID_hmacWithSHA384, 0},
+		{NID_hmacWithSHA512, 0},
+		{NID_aes_128_ctr, 0},
+		{NID_aes_192_ctr, 0},
+		{NID_aes_256_ctr, 0},
+		{NID_aes_128_ctr, DRBG_FLAG_CTR_USE_DF},
+		{NID_aes_192_ctr, DRBG_FLAG_CTR_USE_DF},
+		{NID_aes_256_ctr, DRBG_FLAG_CTR_USE_DF},
+		{(NID_X9_62_prime256v1 << 16)|NID_sha1, 0},
+		{(NID_X9_62_prime256v1 << 16)|NID_sha224, 0},
+		{(NID_X9_62_prime256v1 << 16)|NID_sha256, 0},
+		{(NID_X9_62_prime256v1 << 16)|NID_sha384, 0},
+		{(NID_X9_62_prime256v1 << 16)|NID_sha512, 0},
+		{(NID_secp384r1 << 16)|NID_sha224, 0},
+		{(NID_secp384r1 << 16)|NID_sha256, 0},
+		{(NID_secp384r1 << 16)|NID_sha384, 0},
+		{(NID_secp384r1 << 16)|NID_sha512, 0},
+		{(NID_secp521r1 << 16)|NID_sha256, 0},
+		{(NID_secp521r1 << 16)|NID_sha384, 0},
+		{(NID_secp521r1 << 16)|NID_sha512, 0},
+		{0, 0}
+	};
+    DRBG_LIST *lst;
+    int rv = 1;
+    for (lst = drbg_types;; lst++)
+	{
+	if (lst->type == 0)
+		break;
+	if (!do_drbg_test(lst->type, lst->flags))
+		rv = 0;
+	}
+    return rv;
+    }
+
 static int Error;
 static const char * Fail(const char *msg)
     {
@@ -885,7 +983,7 @@ int main(int argc,char **argv)
     int do_rng_stick = 0;
     int do_drbg_stick = 0;
     int no_exit = 0;
-
+    int no_dh = 0;
 
     FIPS_post_set_callback(post_cb);
 
@@ -944,6 +1042,9 @@ int main(int argc,char **argv)
 	    fail_id = FIPS_TEST_DRBG;
 	} else if (!strcmp(argv[1], "rng")) {
 	    fail_id = FIPS_TEST_X931;
+	} else if (!strcmp(argv[1], "nodh")) {
+	    no_dh = 1;
+	    no_exit = 1;
 	} else if (!strcmp(argv[1], "post")) {
 	    fail_id = -1;
 	} else if (!strcmp(argv[1], "rngstick")) {
@@ -976,7 +1077,10 @@ int main(int argc,char **argv)
     /* Non-Approved cryptographic operation
     */
     printf("1. Non-Approved cryptographic operation test...\n");
-    test_msg("\ta. Included algorithm (D-H)...", dh_test());
+    if (no_dh)
+	printf("\t D-H test skipped\n");
+    else
+    	test_msg("\ta. Included algorithm (D-H)...", dh_test());
 
     /* Power-up self test
     */
@@ -1068,6 +1172,7 @@ int main(int argc,char **argv)
     */
     printf("9. Non-Approved cryptographic operation test...\n");
     printf("\ta. Included algorithm (D-H)...%s\n",
+		no_dh ? "skipped" :
     		dh_test() ? "successful as expected"
 	    					: Fail("failed INCORRECTLY!") );
 
@@ -1077,8 +1182,12 @@ int main(int argc,char **argv)
     		Zeroize() ? "successful as expected"
 					: Fail("failed INCORRECTLY!") );
 
-    printf("11. Complete DRBG health check...\n\t%s\n",
-    		FIPS_selftest_drbg_all() ? "successful as expected"
+    printf("11. Complete DRBG health check...\n");
+    printf("\t%s\n", FIPS_selftest_drbg_all() ? "successful as expected"
+					: Fail("failed INCORRECTLY!") );
+
+    printf("12. DRBG generation check...\n");
+    printf("\t%s\n", do_drbg_all() ? "successful as expected"
 					: Fail("failed INCORRECTLY!") );
 
     printf("\nAll tests completed with %d errors\n", Error);

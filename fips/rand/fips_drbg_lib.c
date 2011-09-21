@@ -66,9 +66,10 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 	int rv;
 	memset(dctx, 0, sizeof(DRBG_CTX));
 	dctx->status = DRBG_STATUS_UNINITIALISED;
-	dctx->flags = flags;
+	dctx->xflags = flags;
 	dctx->type = type;
 
+	dctx->iflags = 0;
 	dctx->entropy_blocklen = 0;
 	dctx->health_check_cnt = 0;
 	dctx->health_check_interval = DRBG_HEALTH_INTERVAL;
@@ -92,7 +93,7 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 
 	/* If not in test mode run selftests on DRBG of the same type */
 
-	if (!(dctx->flags & DRBG_FLAG_TEST))
+	if (!(dctx->xflags & DRBG_FLAG_TEST))
 		{
 		DRBG_CTX tctx;
 		if (!fips_drbg_kat(&tctx, type, flags | DRBG_FLAG_TEST))
@@ -146,7 +147,7 @@ static size_t fips_get_entropy(DRBG_CTX *dctx, unsigned char **pout,
 	{
 	unsigned char *tout, *p;
 	size_t bl = dctx->entropy_blocklen, rv;
-	if (dctx->flags & DRBG_FLAG_TEST || !bl)
+	if (dctx->xflags & DRBG_FLAG_TEST || !bl)
 		return dctx->get_entropy(dctx, pout, entropy, min_len, max_len);
 	rv = dctx->get_entropy(dctx, &tout, entropy + bl,
 				min_len + bl, max_len + bl);
@@ -172,7 +173,7 @@ static void fips_cleanup_entropy(DRBG_CTX *dctx,
 					unsigned char *out, size_t olen)
 	{
 	size_t bl;
-	if (dctx->flags & DRBG_FLAG_TEST)
+	if (dctx->xflags & DRBG_FLAG_TEST)
 		bl = 0;
 	else
 		bl = dctx->entropy_blocklen;
@@ -251,7 +252,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 
 
 	dctx->status = DRBG_STATUS_READY;
-	if (!(dctx->flags & DRBG_CUSTOM_RESEED))
+	if (!(dctx->iflags & DRBG_CUSTOM_RESEED))
 		dctx->reseed_counter = 1;
 
 	end:
@@ -265,7 +266,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 	if (dctx->status == DRBG_STATUS_READY)
 		return 1;
 
-	if (r && !(dctx->flags & DRBG_FLAG_NOERR))
+	if (r && !(dctx->iflags & DRBG_FLAG_NOERR))
 		FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, r);
 
 	return 0;
@@ -316,7 +317,7 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 		goto end;
 
 	dctx->status = DRBG_STATUS_READY;
-	if (!(dctx->flags & DRBG_CUSTOM_RESEED))
+	if (!(dctx->iflags & DRBG_CUSTOM_RESEED))
 		dctx->reseed_counter = 1;
 	end:
 
@@ -326,7 +327,7 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 	if (dctx->status == DRBG_STATUS_READY)
 		return 1;
 
-	if (r && !(dctx->flags & DRBG_FLAG_NOERR))
+	if (r && !(dctx->iflags & DRBG_FLAG_NOERR))
 		FIPSerr(FIPS_F_FIPS_DRBG_RESEED, r);
 
 	return 0;
@@ -334,14 +335,12 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 
 static int fips_drbg_check(DRBG_CTX *dctx)
 	{
-	if (dctx->flags & DRBG_FLAG_TEST)
+	if (dctx->xflags & DRBG_FLAG_TEST)
 		return 1;
 	dctx->health_check_cnt++;
 	if (dctx->health_check_cnt >= dctx->health_check_interval)
 		{
-		DRBG_CTX tctx;
-		if (!fips_drbg_kat(&tctx, dctx->type,
-						dctx->flags | DRBG_FLAG_TEST))
+		if (FIPS_drbg_test(dctx) <= 0)
 			{
 			FIPSerr(FIPS_F_FIPS_DRBG_CHECK, FIPS_R_SELFTEST_FAILURE);
 			dctx->status = DRBG_STATUS_ERROR;
@@ -383,7 +382,7 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 		goto end;
 		}
 
-	if (dctx->flags & DRBG_CUSTOM_RESEED)
+	if (dctx->iflags & DRBG_CUSTOM_RESEED)
 		dctx->generate(dctx, NULL, outlen, NULL, 0);
 	else if (dctx->reseed_counter >= dctx->reseed_interval)
 		dctx->status = DRBG_STATUS_RESEED;
@@ -405,7 +404,7 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 		dctx->status = DRBG_STATUS_ERROR;
 		goto end;
 		}
-	if (!(dctx->flags & DRBG_CUSTOM_RESEED))
+	if (!(dctx->iflags & DRBG_CUSTOM_RESEED))
 		{
 		if (dctx->reseed_counter >= dctx->reseed_interval)
 			dctx->status = DRBG_STATUS_RESEED;
@@ -416,7 +415,7 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 	end:
 	if (r)
 		{
-		if (!(dctx->flags & DRBG_FLAG_NOERR))
+		if (!(dctx->iflags & DRBG_FLAG_NOERR))
 			FIPSerr(FIPS_F_FIPS_DRBG_GENERATE, r);
 		return 0;
 		}
@@ -516,7 +515,7 @@ void FIPS_drbg_stick(void)
 int fips_drbg_cprng_test(DRBG_CTX *dctx, const unsigned char *out)
 	{
 	/* No CPRNG in test mode */
-	if (dctx->flags & DRBG_FLAG_TEST)
+	if (dctx->xflags & DRBG_FLAG_TEST)
 		return 1;
 	/* Check block is valid: should never happen */
 	if (dctx->lb_valid == 0)

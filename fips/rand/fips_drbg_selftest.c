@@ -227,7 +227,7 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 	 * ignore bytes after the keylength: so reduce adinlen
 	 * to half to ensure invalid data is fed in.
 	 */
-	if (!fips_post_corrupt(FIPS_TEST_DRBG, dctx->type, &dctx->flags))
+	if (!fips_post_corrupt(FIPS_TEST_DRBG, dctx->type, &dctx->iflags))
 		adinlen = td->adinlen / 2;
 	else
 		adinlen = td->adinlen;
@@ -290,7 +290,7 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 	 * ignore bytes after the keylength: so reduce adinlen
 	 * to half to ensure invalid data is fed in.
 	 */
-	if (!fips_post_corrupt(FIPS_TEST_DRBG, dctx->type, &dctx->flags))
+	if (!fips_post_corrupt(FIPS_TEST_DRBG, dctx->type, &dctx->iflags))
 		adinlen = td->adinlen_pr / 2;
 	else
 		adinlen = td->adinlen_pr;
@@ -381,7 +381,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 
 	/* Don't report induced errors */
-	dctx->flags |= DRBG_FLAG_NOERR;
+	dctx->iflags |= DRBG_FLAG_NOERR;
 
 	/* Personalisation string tests */
 
@@ -413,7 +413,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 
-	dctx->flags &= ~DRBG_FLAG_NOERR;
+	dctx->iflags &= ~DRBG_FLAG_NOERR;
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
@@ -423,7 +423,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (!do_drbg_init(dctx, td, &t))
 		goto err;
 
-	dctx->flags |= DRBG_FLAG_NOERR;
+	dctx->iflags |= DRBG_FLAG_NOERR;
 
 	/* Test insufficient entropy */
 
@@ -435,7 +435,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 
-	dctx->flags &= ~DRBG_FLAG_NOERR;
+	dctx->iflags &= ~DRBG_FLAG_NOERR;
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
@@ -447,7 +447,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (!do_drbg_init(dctx, td, &t))
 		goto err;
 
-	dctx->flags |= DRBG_FLAG_NOERR;
+	dctx->iflags |= DRBG_FLAG_NOERR;
 
 	t.entlen = dctx->max_entropy + 1;
 
@@ -457,7 +457,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 
-	dctx->flags &= ~DRBG_FLAG_NOERR;
+	dctx->iflags &= ~DRBG_FLAG_NOERR;
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
@@ -474,7 +474,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		if (!do_drbg_init(dctx, td, &t))
 			goto err;
 
-		dctx->flags |= DRBG_FLAG_NOERR;
+		dctx->iflags |= DRBG_FLAG_NOERR;
 
 		t.noncelen = dctx->min_nonce - 1;
 
@@ -484,7 +484,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 			goto err;
 			}
 
-		dctx->flags &= ~DRBG_FLAG_NOERR;
+		dctx->iflags &= ~DRBG_FLAG_NOERR;
 		if (!FIPS_drbg_uninstantiate(dctx))
 			{
 			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
@@ -501,7 +501,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		if (!do_drbg_init(dctx, td, &t))
 			goto err;
 
-		dctx->flags |= DRBG_FLAG_NOERR;
+		dctx->iflags |= DRBG_FLAG_NOERR;
 
 		t.noncelen = dctx->max_nonce + 1;
 
@@ -511,7 +511,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 			goto err;
 			}
 
-		dctx->flags &= ~DRBG_FLAG_NOERR;
+		dctx->iflags &= ~DRBG_FLAG_NOERR;
 		if (!FIPS_drbg_uninstantiate(dctx))
 			{
 			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
@@ -529,7 +529,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 				td->adin, td->adinlen))
 		goto err;
 
-	dctx->flags |= DRBG_FLAG_NOERR;
+	dctx->iflags |= DRBG_FLAG_NOERR;
 
 	/* Request too much data for one request */
 	if (FIPS_drbg_generate(dctx, randout, dctx->max_request + 1, 0,
@@ -560,7 +560,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 		
-	dctx->flags &= ~DRBG_FLAG_NOERR;
+	dctx->iflags &= ~DRBG_FLAG_NOERR;
 
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
@@ -602,7 +602,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (!do_drbg_init(dctx, td, &t))
 		goto err;
 
-	dctx->flags |= DRBG_FLAG_NOERR;
+	dctx->iflags |= DRBG_FLAG_NOERR;
 
 	if (FIPS_drbg_reseed(dctx, td->adin, dctx->max_adin + 1) > 0)
 		{
@@ -625,7 +625,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 		
-	dctx->flags &= ~DRBG_FLAG_NOERR;
+	dctx->iflags &= ~DRBG_FLAG_NOERR;
 
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
@@ -665,7 +665,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (!do_drbg_init(dctx, td, &t))
 		goto err;
 
-	dctx->flags |= DRBG_FLAG_NOERR;
+	dctx->iflags |= DRBG_FLAG_NOERR;
 
 	if (FIPS_drbg_reseed(dctx, td->adin, dctx->max_adin + 1) > 0)
 		{
@@ -678,7 +678,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (!do_drbg_init(dctx, td, &t))
 		goto err;
 
-	dctx->flags |= DRBG_FLAG_NOERR;
+	dctx->iflags |= DRBG_FLAG_NOERR;
 
 	t.entlen = 0;
 
@@ -699,7 +699,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (!do_drbg_init(dctx, td, &t))
 		goto err;
 
-	dctx->flags |= DRBG_FLAG_NOERR;
+	dctx->iflags |= DRBG_FLAG_NOERR;
 
 	t.entlen = dctx->max_entropy + 1;
 
@@ -720,7 +720,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (!do_drbg_init(dctx, td, &t))
 		goto err;
 
-	dctx->flags |= DRBG_FLAG_NOERR;
+	dctx->iflags |= DRBG_FLAG_NOERR;
 
 	t.entlen = dctx->min_entropy - 1;
 
@@ -756,7 +756,7 @@ static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	/* A real error as opposed to an induced one: underlying function will
 	 * indicate the error.
 	 */
-	if (!(dctx->flags & DRBG_FLAG_NOERR))
+	if (!(dctx->iflags & DRBG_FLAG_NOERR))
 		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_FUNCTION_ERROR);
 	FIPS_drbg_uninstantiate(dctx);
 	return 0;
@@ -767,6 +767,7 @@ int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags)
 	{
 	int rv;
 	DRBG_SELFTEST_DATA *td;
+	flags |= DRBG_FLAG_TEST;
 	for (td = drbg_test; td->nid != 0; td++)
 		{
 		if (td->nid == nid && td->flags == flags)
@@ -778,6 +779,24 @@ int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags)
 			}
 		}
 	return 0;
+	}
+
+int FIPS_drbg_test(DRBG_CTX *dctx)
+	{
+	int rv;
+	DRBG_CTX *tctx = NULL;
+	tctx = FIPS_drbg_new(0, 0);
+	fips_post_started(FIPS_TEST_DRBG, dctx->type, &dctx->xflags);
+	if (!tctx)
+		return 0;
+	rv = fips_drbg_kat(tctx, dctx->type, dctx->xflags);
+	if (tctx)
+		FIPS_drbg_free(tctx);
+	if (rv)
+		fips_post_success(FIPS_TEST_DRBG, dctx->type, &dctx->xflags);
+	else
+		fips_post_failed(FIPS_TEST_DRBG, dctx->type, &dctx->xflags);
+	return rv;
 	}
 
 int FIPS_selftest_drbg(void)
