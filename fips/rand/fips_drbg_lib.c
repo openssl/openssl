@@ -273,8 +273,8 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 
 	}
 
-int FIPS_drbg_reseed(DRBG_CTX *dctx,
-			const unsigned char *adin, size_t adinlen)
+static int drbg_reseed(DRBG_CTX *dctx,
+			const unsigned char *adin, size_t adinlen, int hcheck)
 	{
 	unsigned char *entropy = NULL;
 	size_t entlen;
@@ -303,6 +303,17 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 		}
 
 	dctx->status = DRBG_STATUS_ERROR;
+	/* Peform health check on all reseed operations if not a prediction
+	 * resistance request and not in test mode.
+	 */
+	if (hcheck && !(dctx->xflags & DRBG_FLAG_TEST))
+		{
+		if (!FIPS_drbg_test(dctx))
+			{
+			r = FIPS_R_SELFTEST_FAILURE;
+			goto end;
+			}
+		}
 
 	entlen = fips_get_entropy(dctx, &entropy, dctx->strength,
 				dctx->min_entropy, dctx->max_entropy);
@@ -333,6 +344,12 @@ int FIPS_drbg_reseed(DRBG_CTX *dctx,
 	return 0;
 	}
 
+int FIPS_drbg_reseed(DRBG_CTX *dctx,
+			const unsigned char *adin, size_t adinlen)
+	{
+	return drbg_reseed(dctx, adin, adinlen, 1);
+	}
+
 static int fips_drbg_check(DRBG_CTX *dctx)
 	{
 	if (dctx->xflags & DRBG_FLAG_TEST)
@@ -340,7 +357,7 @@ static int fips_drbg_check(DRBG_CTX *dctx)
 	dctx->health_check_cnt++;
 	if (dctx->health_check_cnt >= dctx->health_check_interval)
 		{
-		if (FIPS_drbg_test(dctx) <= 0)
+		if (!FIPS_drbg_test(dctx))
 			{
 			FIPSerr(FIPS_F_FIPS_DRBG_CHECK, FIPS_R_SELFTEST_FAILURE);
 			dctx->status = DRBG_STATUS_ERROR;
@@ -389,7 +406,10 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 
 	if (dctx->status == DRBG_STATUS_RESEED || prediction_resistance)
 		{
-		if (!FIPS_drbg_reseed(dctx, adin, adinlen))
+		/* If prediction resistance request don't do health check */
+		int hcheck = prediction_resistance ? 0 : 1;
+		
+		if (!drbg_reseed(dctx, adin, adinlen, hcheck))
 			{
 			r = FIPS_R_RESEED_ERROR;
 			goto end;

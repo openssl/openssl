@@ -772,9 +772,8 @@ int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags)
 		{
 		if (td->nid == nid && td->flags == flags)
 			{
-			rv = fips_drbg_single_kat(dctx, td, 0);
-			if (rv <= 0)
-				return rv;
+			if (!fips_drbg_single_kat(dctx, td, 0))
+				return 0;
 			return fips_drbg_health_check(dctx, td);
 			}
 		}
