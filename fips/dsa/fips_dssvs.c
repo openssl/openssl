@@ -314,6 +314,7 @@ static void pqgver(FILE *in, FILE *out)
 		dsa->p = BN_dup(p);
 		dsa->q = BN_dup(q);
 		}
+	    no_err = 1;
 	    if (!dsa2 && !dsa_builtin_paramgen(dsa, L, N, md,
 					seed, seedlen, NULL,
 					&counter2, &h2, NULL))
@@ -328,6 +329,7 @@ static void pqgver(FILE *in, FILE *out)
 			fprintf(stderr, "Parameter Generation error\n");
 			exit(1);
 			}
+	    no_err = 0;
 	    if (idx >= 0)
 		{
 		if (BN_cmp(dsa->g, g))

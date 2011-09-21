@@ -284,7 +284,9 @@ static int PKV(FILE *in, FILE *out)
 				return 0;
 				}
 			key = EC_KEY_new_by_curve_name(curve_nid);
+			no_err = 1;
 			rv = EC_KEY_set_public_key_affine_coordinates(key, Qx, Qy);
+			no_err = 0;
 			fprintf(out, "Result = %s\n", rv ? "P":"F");
 			}
 
