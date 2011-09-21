@@ -137,6 +137,7 @@ static ERR_STRING_DATA FIPS_str_functs[]=
 
 static ERR_STRING_DATA FIPS_str_reasons[]=
 	{
+{ERR_REASON(FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED),"additional input error undetected"},
 {ERR_REASON(FIPS_R_ADDITIONAL_INPUT_TOO_LONG),"additional input too long"},
 {ERR_REASON(FIPS_R_ALREADY_INSTANTIATED) ,"already instantiated"},
 {ERR_REASON(FIPS_R_CONTRADICTING_EVIDENCE),"contradicting evidence"},
@@ -164,6 +165,7 @@ static ERR_STRING_DATA FIPS_str_reasons[]=
 {ERR_REASON(FIPS_R_INVALID_PARAMETERS)   ,"invalid parameters"},
 {ERR_REASON(FIPS_R_IN_ERROR_STATE)       ,"in error state"},
 {ERR_REASON(FIPS_R_KEY_TOO_SHORT)        ,"key too short"},
+{ERR_REASON(FIPS_R_NONCE_ERROR_UNDETECTED),"nonce error undetected"},
 {ERR_REASON(FIPS_R_NON_FIPS_METHOD)      ,"non fips method"},
 {ERR_REASON(FIPS_R_NOPR_TEST1_FAILURE)   ,"nopr test1 failure"},
 {ERR_REASON(FIPS_R_NOPR_TEST2_FAILURE)   ,"nopr test2 failure"},
