@@ -115,7 +115,7 @@ int FIPS_drbg_get_strength(DRBG_CTX *dctx);
 void FIPS_drbg_set_check_interval(DRBG_CTX *dctx, int interval);
 void FIPS_drbg_set_reseed_interval(DRBG_CTX *dctx, int interval);
 
-int FIPS_drbg_test(DRBG_CTX *dctx);
+int FIPS_drbg_health_check(DRBG_CTX *dctx);
 
 DRBG_CTX *FIPS_get_default_drbg(void);
 const RAND_METHOD *FIPS_drbg_method(void);

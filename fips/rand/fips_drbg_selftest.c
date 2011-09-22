@@ -206,6 +206,10 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 
 	/* Initial test without PR */
 
+	/* Instantiate DRBG with test entropy, nonce and personalisation
+	 * string.
+	 */
+
 	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
 		return 0;
 	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0, test_nonce, 0))
@@ -231,6 +235,8 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 		adinlen = td->adinlen / 2;
 	else
 		adinlen = td->adinlen;
+
+	/* Generate with no PR and verify output matches expected data */
 	if (!FIPS_drbg_generate(dctx, randout, td->katlen, 0,
 				td->adin, adinlen))
 		goto err;
@@ -240,19 +246,20 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 		FIPSerr(FIPS_F_FIPS_DRBG_SINGLE_KAT, FIPS_R_NOPR_TEST1_FAILURE);
 		goto err2;
 		}
-
+	/* If abbreviated POST end of test */
 	if (quick)
 		{
 		rv = 1;
 		goto err;
 		}
-
+	/* Reseed DRBG with test entropy and additional input */
 	t.ent = td->entreseed;
 	t.entlen = td->entreseedlen;
 
 	if (!FIPS_drbg_reseed(dctx, td->adinreseed, td->adinreseedlen))
 		goto err;
 
+	/* Generate with no PR and verify output matches expected data */
 	if (!FIPS_drbg_generate(dctx, randout, td->kat2len, 0,
 				td->adin2, td->adin2len))
 		goto err;
@@ -266,6 +273,10 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 	FIPS_drbg_uninstantiate(dctx);
 
 	/* Now test with PR */
+
+	/* Instantiate DRBG with test entropy, nonce and personalisation
+	 * string.
+	 */
 	if (!FIPS_drbg_init(dctx, td->nid, td->flags))
 		return 0;
 	if (!FIPS_drbg_set_callbacks(dctx, test_entropy, 0, 0, test_nonce, 0))
@@ -282,6 +293,10 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 
 	if (!FIPS_drbg_instantiate(dctx, td->pers_pr, td->perslen_pr))
 		goto err;
+
+	/* Now generate with PR: we need to supply entropy as this will
+	 * perform a reseed operation. Check output matches expected value.
+	 */
 
 	t.ent = td->entpr_pr;
 	t.entlen = td->entprlen_pr;
@@ -304,6 +319,10 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 		goto err2;
 		}
 
+	/* Now generate again with PR: supply new entropy again.
+	 * Check output matches expected value.
+	 */
+
 	t.ent = td->entg_pr;
 	t.entlen = td->entglen_pr;
 
@@ -316,7 +335,7 @@ static int fips_drbg_single_kat(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 		FIPSerr(FIPS_F_FIPS_DRBG_SINGLE_KAT, FIPS_R_PR_TEST2_FAILURE);
 		goto err2;
 		}
-
+	/* All OK, test complete */
 	rv = 1;
 
 	err:
@@ -363,11 +382,13 @@ static int do_drbg_instantiate(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 	return 1;
 	}
 
-/* This is the "health check" function required by SP800-90. Induce several
- * failure modes and check an error condition is set.
+/* This function performd extensive error checking as required by SP800-90.
+ * Induce several failure modes and check an error condition is set.
+ * This function along with fips_drbg_single_kat peforms the health checking
+ * operation.
  */
 
-static int fips_drbg_health_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
+static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	{
 	unsigned char randout[1024];
 	TEST_ENT t;
@@ -773,13 +794,13 @@ int fips_drbg_kat(DRBG_CTX *dctx, int nid, unsigned int flags)
 			{
 			if (!fips_drbg_single_kat(dctx, td, 0))
 				return 0;
-			return fips_drbg_health_check(dctx, td);
+			return fips_drbg_error_check(dctx, td);
 			}
 		}
 	return 0;
 	}
 
-int FIPS_drbg_test(DRBG_CTX *dctx)
+int FIPS_drbg_health_check(DRBG_CTX *dctx)
 	{
 	int rv;
 	DRBG_CTX *tctx = NULL;
@@ -794,6 +815,10 @@ int FIPS_drbg_test(DRBG_CTX *dctx)
 		fips_post_success(FIPS_TEST_DRBG, dctx->type, &dctx->xflags);
 	else
 		fips_post_failed(FIPS_TEST_DRBG, dctx->type, &dctx->xflags);
+	if (!rv)
+		dctx->status = DRBG_STATUS_ERROR;
+	else
+		dctx->health_check_cnt = 0;
 	return rv;
 	}
 
@@ -843,7 +868,7 @@ int FIPS_selftest_drbg_all(void)
 			rv = 0;
 			continue;
 			}
-		if (!fips_drbg_health_check(dctx, td))
+		if (!fips_drbg_error_check(dctx, td))
 			{
 			fips_post_failed(FIPS_TEST_DRBG, td->nid, &td->flags);
 			rv = 0;

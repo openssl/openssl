@@ -5,8 +5,8 @@
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
   *) Use separate DRBG fields for internal and external flags. New function
-     FIPS_drbg_test() to perform on demand health checking. Add generation
-     tests to fips_test_suite with reduced health check interval to 
+     FIPS_drbg_health_check() to perform on demand health checking. Add
+     generation tests to fips_test_suite with reduced health check interval to 
      demonstrate periodic health checking. Add "nodh" option to
      fips_test_suite to skip very slow DH test.
      [Steve Henson]

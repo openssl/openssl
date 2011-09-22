@@ -1,4 +1,3 @@
-/* fips/rand/fips_drbg_lib.c */
 /* Written by Dr Stephen N Henson (steve@openssl.org) for the OpenSSL
  * project.
  */
@@ -95,11 +94,9 @@ int FIPS_drbg_init(DRBG_CTX *dctx, int type, unsigned int flags)
 
 	if (!(dctx->xflags & DRBG_FLAG_TEST))
 		{
-		DRBG_CTX tctx;
-		if (!fips_drbg_kat(&tctx, type, flags | DRBG_FLAG_TEST))
+		if (!FIPS_drbg_health_check(dctx))
 			{
 			FIPSerr(FIPS_F_FIPS_DRBG_INIT, FIPS_R_SELFTEST_FAILURE);
-			dctx->status = DRBG_STATUS_ERROR;
 			return 0;
 			}
 		}
@@ -308,7 +305,7 @@ static int drbg_reseed(DRBG_CTX *dctx,
 	 */
 	if (hcheck && !(dctx->xflags & DRBG_FLAG_TEST))
 		{
-		if (!FIPS_drbg_test(dctx))
+		if (!FIPS_drbg_health_check(dctx))
 			{
 			r = FIPS_R_SELFTEST_FAILURE;
 			goto end;
@@ -357,13 +354,11 @@ static int fips_drbg_check(DRBG_CTX *dctx)
 	dctx->health_check_cnt++;
 	if (dctx->health_check_cnt >= dctx->health_check_interval)
 		{
-		if (!FIPS_drbg_test(dctx))
+		if (!FIPS_drbg_health_check(dctx))
 			{
 			FIPSerr(FIPS_F_FIPS_DRBG_CHECK, FIPS_R_SELFTEST_FAILURE);
-			dctx->status = DRBG_STATUS_ERROR;
 			return 0;
 			}
-		dctx->health_check_cnt = 0;
 		}
 	return 1;
 	}
