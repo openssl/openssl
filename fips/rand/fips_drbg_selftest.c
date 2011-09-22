@@ -382,7 +382,7 @@ static int do_drbg_instantiate(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td,
 	return 1;
 	}
 
-/* This function performd extensive error checking as required by SP800-90.
+/* This function performs extensive error checking as required by SP800-90.
  * Induce several failure modes and check an error condition is set.
  * This function along with fips_drbg_single_kat peforms the health checking
  * operation.
