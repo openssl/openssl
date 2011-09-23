@@ -620,8 +620,8 @@ if (!$fips_enabled{"v2"}) {
 }
 
 push @fips_test_list, @fips_dsa_test_list       if $fips_enabled{"dsa"};
-push @fips_test_list, @fips_dsa2_test_list      if $fips_enabled{"dsa2"};
 push @fips_test_list, @fips_dsa_pqgver_test_list if $fips_enabled{"dsa-pqgver"};
+push @fips_test_list, @fips_dsa2_test_list      if $fips_enabled{"dsa2"};
 push @fips_test_list, @fips_ecdsa_test_list     if $fips_enabled{"ecdsa"};
 push @fips_test_list, @fips_rsa_test_list       if $fips_enabled{"rsa"};
 push @fips_test_list, @fips_rsa_pss0_test_list  if $fips_enabled{"rsa-pss0"};
