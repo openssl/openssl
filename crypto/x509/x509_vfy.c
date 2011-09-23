@@ -1732,7 +1732,7 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
 	atm.length=sizeof(buff2);
 	atm.data=(unsigned char *)buff2;
 
-	if (X509_time_adj(&atm,-offset*60, cmp_time) == NULL)
+	if (X509_time_adj(&atm, offset*60, cmp_time) == NULL)
 		return 0;
 
 	if (ctm->type == V_ASN1_UTCTIME)
