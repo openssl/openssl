@@ -1065,6 +1065,9 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 		s->max_cert_list=larg;
 		return(l);
 	case SSL_CTRL_SET_MTU:
+		if (larg < dtls1_min_mtu())
+			return 0;
+
 		if (SSL_version(s) == DTLS1_VERSION ||
 		    SSL_version(s) == DTLS1_BAD_VER)
 			{

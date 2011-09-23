@@ -204,7 +204,8 @@ void dtls1_clear(SSL *s)
     pqueue buffered_messages;
 	pqueue sent_messages;
 	pqueue buffered_app_data;
-	
+	unsigned int mtu;
+
 	if (s->d1)
 		{
 		unprocessed_rcds = s->d1->unprocessed_rcds.q;
@@ -212,6 +213,7 @@ void dtls1_clear(SSL *s)
 		buffered_messages = s->d1->buffered_messages;
 		sent_messages = s->d1->sent_messages;
 		buffered_app_data = s->d1->buffered_app_data.q;
+		mtu = s->d1->mtu;
 
 		dtls1_clear_queues(s);
 
@@ -220,6 +222,11 @@ void dtls1_clear(SSL *s)
 		if (s->server)
 			{
 			s->d1->cookie_len = sizeof(s->d1->cookie);
+			}
+
+		if (SSL_get_options(s) & SSL_OP_NO_QUERY_MTU)
+			{
+			s->d1->mtu = mtu;
 			}
 
 		s->d1->unprocessed_rcds.q = unprocessed_rcds;
