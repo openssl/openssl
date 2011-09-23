@@ -618,7 +618,7 @@ int MAIN(int argc, char **argv)
 		BIO_printf (bio_err, "-certsout file certificate output file\n");
 		BIO_printf (bio_err, "-signer file   signer certificate file\n");
 		BIO_printf (bio_err, "-recip  file   recipient certificate file for decryption\n");
-		BIO_printf (bio_err, "-skeyid        use subject key identifier\n");
+		BIO_printf (bio_err, "-keyid        use subject key identifier\n");
 		BIO_printf (bio_err, "-in file       input file\n");
 		BIO_printf (bio_err, "-inform arg    input format SMIME (default), PEM or DER\n");
 		BIO_printf (bio_err, "-inkey file    input private key (if not signer or recipient)\n");
