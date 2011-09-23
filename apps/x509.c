@@ -969,7 +969,7 @@ bad:
 				else
 					{
 					pk=load_key(bio_err,
-						keyfile, FORMAT_PEM, 0,
+						keyfile, keyformat, 0,
 						passin, e, "request key");
 					if (pk == NULL) goto end;
 					}
