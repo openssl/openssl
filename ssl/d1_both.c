@@ -158,7 +158,6 @@ static unsigned char bitmask_end_values[]   = {0xff, 0x01, 0x03, 0x07, 0x0f, 0x1
 /* XDTLS:  figure out the right values */
 static unsigned int g_probable_mtu[] = {1500 - 28, 512 - 28, 256 - 28};
 
-static unsigned int dtls1_min_mtu(void);
 static unsigned int dtls1_guess_mtu(unsigned int curr_mtu);
 static void dtls1_fix_message_header(SSL *s, unsigned long frag_off, 
 	unsigned long frag_len);
@@ -264,10 +263,9 @@ int dtls1_do_write(SSL *s, int type)
 			return ret;
 		mtu = s->d1->mtu - (DTLS1_HM_HEADER_LENGTH + DTLS1_RT_HEADER_LENGTH);
 		}
-
-	OPENSSL_assert(mtu > 0);  /* should have something reasonable now */
-
 #endif
+
+	OPENSSL_assert(s->d1->mtu >= dtls1_min_mtu());  /* should have something reasonable now */
 
 	if ( s->init_off == 0  && type == SSL3_RT_HANDSHAKE)
 		OPENSSL_assert(s->init_num == 
@@ -1371,7 +1369,7 @@ dtls1_write_message_header(SSL *s, unsigned char *p)
 	return p;
 	}
 
-static unsigned int 
+unsigned int 
 dtls1_min_mtu(void)
 	{
 	return (g_probable_mtu[(sizeof(g_probable_mtu) / 
