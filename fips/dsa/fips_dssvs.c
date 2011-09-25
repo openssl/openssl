@@ -20,35 +20,15 @@ int main()
 
 #include "fips_utl.h"
 
-static void pbn(const char *name, BIGNUM *bn)
-	{
-	int len, i;
-	unsigned char *tmp;
-	len = BN_num_bytes(bn);
-	tmp = OPENSSL_malloc(len);
-	if (!tmp)
-		{
-		fprintf(stderr, "Memory allocation error\n");
-		return;
-		}
-	BN_bn2bin(bn, tmp);
-	printf("%s = ", name);
-	for (i = 0; i < len; i++)
-		printf("%02X", tmp[i]);
-	fputs("\n", stdout);
-	OPENSSL_free(tmp);
-	return;
-	}
-
-void primes()
+void primes(FILE *in, FILE *out)
     {
     char buf[10240];
     char lbuf[10240];
     char *keyword, *value;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
-	fputs(buf,stdout);
+	fputs(buf,out);
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		continue;
 	if(!strcmp(keyword,"Prime"))
@@ -57,24 +37,24 @@ void primes()
 
 	    pp=BN_new();
 	    do_hex2bn(&pp,value);
-	    printf("result= %c\n",
+	    fprintf(out, "result= %c\n",
 		   BN_is_prime_ex(pp,20,NULL,NULL) ? 'P' : 'F');
 	    }	    
 	}
     }
 
-void pqg()
+void pqg(FILE *in, FILE *out)
     {
     char buf[1024];
     char lbuf[1024];
     char *keyword, *value;
     int nmod=0;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		continue;
 		}
 	if(!strcmp(keyword,"[mod"))
@@ -83,7 +63,7 @@ void pqg()
 	    {
 	    int n=atoi(value);
 
-	    printf("[mod = %d]\n\n",nmod);
+	    fprintf(out, "[mod = %d]\n\n",nmod);
 
 	    while(n--)
 		{
@@ -98,22 +78,22 @@ void pqg()
 			do_print_errors();
 			exit(1);
 			}
-		pbn("P",dsa->p);
-		pbn("Q",dsa->q);
-		pbn("G",dsa->g);
-		pv("Seed",seed,20);
-		printf("c = %d\n",counter);
-		printf("H = %lx\n",h);
-		putc('\n',stdout);
+		do_bn_print_name(out, "P",dsa->p);
+		do_bn_print_name(out, "Q",dsa->q);
+		do_bn_print_name(out, "G",dsa->g);
+		OutputValue("Seed",seed,20, out, 0);
+		fprintf(out, "c = %d\n",counter);
+		fprintf(out, "H = %lx\n",h);
+		fputs("\n", out);
 		}
 	    }
 	else
-	    fputs(buf,stdout);
+	    fputs(buf,out);
 	}
     }
 
 
-void pqgver()
+void pqgver(FILE *in, FILE *out)
     {
     char buf[1024];
     char lbuf[1024];
@@ -125,11 +105,11 @@ void pqgver()
     int nmod=0;
     unsigned char seed[1024];
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		continue;
 		}
 	if(!strcmp(keyword,"[mod"))
@@ -159,12 +139,12 @@ void pqgver()
 		fprintf(stderr, "Parse Error\n");
 		exit (1);
 		}
-	    pbn("P",p);
-	    pbn("Q",q);
-	    pbn("G",g);
-	    pv("Seed",seed,20);
-	    printf("c = %d\n",counter);
-	    printf("H = %lx\n",h);
+	    do_bn_print_name(out, "P",p);
+	    do_bn_print_name(out, "Q",q);
+	    do_bn_print_name(out, "G",g);
+	    OutputValue("Seed",seed,20, out, 0);
+	    fprintf(out, "c = %d\n",counter);
+	    fprintf(out, "H = %lx\n",h);
 	    dsa = FIPS_dsa_new();
 	    if (!DSA_generate_parameters_ex(dsa, nmod,seed,20 ,&counter2,&h2,NULL))
 			{
@@ -173,9 +153,9 @@ void pqgver()
 			}
             if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) || BN_cmp(dsa->g, g)
 		|| (counter != counter2) || (h != h2))
-	    	printf("Result = F\n");
+	    	fprintf(out, "Result = F\n");
 	    else
-	    	printf("Result = T\n");
+	    	fprintf(out, "Result = T\n");
 	    BN_free(p);
 	    BN_free(q);
 	    BN_free(g);
@@ -189,18 +169,18 @@ void pqgver()
     }
 
 
-void keypair()
+void keypair(FILE *in, FILE *out)
     {
     char buf[1024];
     char lbuf[1024];
     char *keyword, *value;
     int nmod=0;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		continue;
 		}
 	if(!strcmp(keyword,"[mod"))
@@ -210,17 +190,17 @@ void keypair()
 	    DSA *dsa;
 	    int n=atoi(value);
 
-	    printf("[mod = %d]\n\n",nmod);
+	    fprintf(out, "[mod = %d]\n\n",nmod);
 	    dsa = FIPS_dsa_new();
 	    if (!DSA_generate_parameters_ex(dsa, nmod,NULL,0,NULL,NULL,NULL))
 		{
 		do_print_errors();
 		exit(1);
 		}
-	    pbn("P",dsa->p);
-	    pbn("Q",dsa->q);
-	    pbn("G",dsa->g);
-	    putc('\n',stdout);
+	    do_bn_print_name(out, "P",dsa->p);
+	    do_bn_print_name(out, "Q",dsa->q);
+	    do_bn_print_name(out, "G",dsa->g);
+	    fputs("\n", out);
 
 	    while(n--)
 		{
@@ -230,15 +210,15 @@ void keypair()
 			exit(1);
 			}
 
-		pbn("X",dsa->priv_key);
-		pbn("Y",dsa->pub_key);
-		putc('\n',stdout);
+		do_bn_print_name(out, "X",dsa->priv_key);
+		do_bn_print_name(out, "Y",dsa->pub_key);
+		fputs("\n", out);
 		}
 	    }
 	}
     }
 
-void siggen()
+void siggen(FILE *in, FILE *out)
     {
     char buf[1024];
     char lbuf[1024];
@@ -246,17 +226,17 @@ void siggen()
     int nmod=0;
     DSA *dsa=NULL;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		continue;
 		}
 	if(!strcmp(keyword,"[mod"))
 	    {
 	    nmod=atoi(value);
-	    printf("[mod = %d]\n\n",nmod);
+	    fprintf(out, "[mod = %d]\n\n",nmod);
 	    if (dsa)
 		FIPS_dsa_free(dsa);
 	    dsa = FIPS_dsa_new();
@@ -265,10 +245,10 @@ void siggen()
 		do_print_errors();
 		exit(1);
 		}
-	    pbn("P",dsa->p);
-	    pbn("Q",dsa->q);
-	    pbn("G",dsa->g);
-	    putc('\n',stdout);
+	    do_bn_print_name(out, "P",dsa->p);
+	    do_bn_print_name(out, "Q",dsa->q);
+	    do_bn_print_name(out, "G",dsa->g);
+	    fputs("\n", out);
 	    }
 	else if(!strcmp(keyword,"Msg"))
 	    {
@@ -282,7 +262,7 @@ void siggen()
 	    EVP_MD_CTX_init(&mctx);
 
 	    n=hex2bin(value,msg);
-	    pv("Msg",msg,n);
+	    OutputValue("Msg",msg,n, out, 0);
 
 	    if (!DSA_generate_key(dsa))
 		{
@@ -291,7 +271,7 @@ void siggen()
 		}
 	    pk.type = EVP_PKEY_DSA;
 	    pk.pkey.dsa = dsa;
-	    pbn("Y",dsa->pub_key);
+	    do_bn_print_name(out, "Y",dsa->pub_key);
 
 	    EVP_SignInit_ex(&mctx, EVP_dss1(), NULL);
 	    EVP_SignUpdate(&mctx, msg, n);
@@ -300,9 +280,9 @@ void siggen()
 	    sig = DSA_SIG_new();
 	    FIPS_dsa_sig_decode(sig, sbuf, slen);
 
-	    pbn("R",sig->r);
-	    pbn("S",sig->s);
-	    putc('\n',stdout);
+	    do_bn_print_name(out, "R",sig->r);
+	    do_bn_print_name(out, "S",sig->s);
+	    fputs("\n", out);
 	    DSA_SIG_free(sig);
 	    EVP_MD_CTX_cleanup(&mctx);
 	    }
@@ -311,7 +291,7 @@ void siggen()
 		FIPS_dsa_free(dsa);
     }
 
-void sigver()
+void sigver(FILE *in, FILE *out)
     {
     DSA *dsa=NULL;
     char buf[1024];
@@ -325,11 +305,11 @@ void sigver()
     sig->r = NULL;
     sig->s = NULL;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
 	if (!parse_line(&keyword, &value, lbuf, buf))
 		{
-		fputs(buf,stdout);
+		fputs(buf,out);
 		continue;
 		}
 	if(!strcmp(keyword,"[mod"))
@@ -347,16 +327,16 @@ void sigver()
 	    {
 	    dsa->g=hex2bn(value);
 
-	    printf("[mod = %d]\n\n",nmod);
-	    pbn("P",dsa->p);
-	    pbn("Q",dsa->q);
-	    pbn("G",dsa->g);
-	    putc('\n',stdout);
+	    fprintf(out, "[mod = %d]\n\n",nmod);
+	    do_bn_print_name(out, "P",dsa->p);
+	    do_bn_print_name(out, "Q",dsa->q);
+	    do_bn_print_name(out, "G",dsa->g);
+	    fputs("\n", out);
 	    }
 	else if(!strcmp(keyword,"Msg"))
 	    {
 	    n=hex2bin(value,msg);
-	    pv("Msg",msg,n);
+	    OutputValue("Msg",msg,n, out, 0);
 	    }
 	else if(!strcmp(keyword,"Y"))
 	    dsa->pub_key=hex2bn(value);
@@ -374,9 +354,9 @@ void sigver()
 	    pk.pkey.dsa = dsa;
 	    sig->s=hex2bn(value);
 	
-	    pbn("Y",dsa->pub_key);
-	    pbn("R",sig->r);
-	    pbn("S",sig->s);
+	    do_bn_print_name(out, "Y",dsa->pub_key);
+	    do_bn_print_name(out, "R",sig->r);
+	    do_bn_print_name(out, "S",sig->s);
 
 	    slen = FIPS_dsa_sig_encode(sigbuf, sig);
 	    EVP_VerifyInit_ex(&mctx, EVP_dss1(), NULL);
@@ -384,17 +364,38 @@ void sigver()
 	    r = EVP_VerifyFinal(&mctx, sigbuf, slen, &pk);
 	    EVP_MD_CTX_cleanup(&mctx);
 	
-	    printf("Result = %c\n", r == 1 ? 'P' : 'F');
-	    putc('\n',stdout);
+	    fprintf(out, "Result = %c\n", r == 1 ? 'P' : 'F');
+	    fputs("\n", out);
 	    }
 	}
     }
 
 int main(int argc,char **argv)
     {
-    if(argc != 2)
+    FILE *in, *out;
+    if (argc == 4)
 	{
-	fprintf(stderr,"%s [prime|pqg]\n",argv[0]);
+	in = fopen(argv[2], "r");
+	if (!in)
+		{
+		fprintf(stderr, "Error opening input file\n");
+		exit(1);
+		}
+	out = fopen(argv[3], "w");
+	if (!out)
+		{
+		fprintf(stderr, "Error opening output file\n");
+		exit(1);
+		}
+	}
+    else if (argc == 2)
+	{
+	in = stdin;
+	out = stdout;
+	}
+    else
+	{
+	fprintf(stderr,"%s [prime|pqg|pqgver|keypair|siggen|sigver]\n",argv[0]);
 	exit(1);
 	}
     if(!FIPS_mode_set(1))
@@ -403,21 +404,27 @@ int main(int argc,char **argv)
 	exit(1);
 	}
     if(!strcmp(argv[1],"prime"))
-	primes();
+	primes(in, out);
     else if(!strcmp(argv[1],"pqg"))
-	pqg();
+	pqg(in, out);
     else if(!strcmp(argv[1],"pqgver"))
-	pqgver();
+	pqgver(in, out);
     else if(!strcmp(argv[1],"keypair"))
-	keypair();
+	keypair(in, out);
     else if(!strcmp(argv[1],"siggen"))
-	siggen();
+	siggen(in, out);
     else if(!strcmp(argv[1],"sigver"))
-	sigver();
+	sigver(in, out);
     else
 	{
 	fprintf(stderr,"Don't know how to %s.\n",argv[1]);
 	exit(1);
+	}
+
+    if (argc == 4)
+	{
+	fclose(in);
+	fclose(out);
 	}
 
     return 0;

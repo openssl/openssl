@@ -30,7 +30,7 @@ int main()
 
 #include "fips_utl.h"
 
-void vst()
+void vst(FILE *in, FILE *out)
     {
     unsigned char *key = NULL;
     unsigned char *v = NULL;
@@ -43,9 +43,9 @@ void vst()
 
     keylen = 0;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
-	fputs(buf,stdout);
+	fputs(buf,out);
 	if(!strncmp(buf,"[AES 128-Key]", 13))
 		keylen = 16;
 	else if(!strncmp(buf,"[AES 192-Key]", 13))
@@ -96,7 +96,7 @@ void vst()
 	        return;
 	        }
 
-	    pv("R",ret,16);
+	    OutputValue("R",ret,16, out, 0);
 	    OPENSSL_free(key);
 	    key = NULL;
 	    OPENSSL_free(dt);
@@ -107,7 +107,7 @@ void vst()
 	}
     }
 
-void mct()
+void mct(FILE *in, FILE *out)
     {
     unsigned char *key = NULL;
     unsigned char *v = NULL;
@@ -121,9 +121,9 @@ void mct()
 
     keylen = 0;
 
-    while(fgets(buf,sizeof buf,stdin) != NULL)
+    while(fgets(buf,sizeof buf,in) != NULL)
 	{
-	fputs(buf,stdout);
+	fputs(buf,out);
 	if(!strncmp(buf,"[AES 128-Key]", 13))
 		keylen = 16;
 	else if(!strncmp(buf,"[AES 192-Key]", 13))
@@ -184,7 +184,7 @@ void mct()
 			}
 		}
 
-	    pv("R",ret,16);
+	    OutputValue("R",ret,16, out, 0);
 	    OPENSSL_free(key);
 	    key = NULL;
 	    OPENSSL_free(dt);
@@ -197,7 +197,28 @@ void mct()
 
 int main(int argc,char **argv)
     {
-    if(argc != 2)
+    FILE *in, *out;
+    if (argc == 4)
+	{
+	in = fopen(argv[2], "r");
+	if (!in)
+		{
+		fprintf(stderr, "Error opening input file\n");
+		exit(1);
+		}
+	out = fopen(argv[3], "w");
+	if (!out)
+		{
+		fprintf(stderr, "Error opening output file\n");
+		exit(1);
+		}
+	}
+    else if (argc == 2)
+	{
+	in = stdin;
+	out = stdout;
+	}
+    else
 	{
 	fprintf(stderr,"%s [mct|vst]\n",argv[0]);
 	exit(1);
@@ -215,13 +236,19 @@ int main(int argc,char **argv)
 	exit(1);
 	}
     if(!strcmp(argv[1],"mct"))
-	mct();
+	mct(in, out);
     else if(!strcmp(argv[1],"vst"))
-	vst();
+	vst(in, out);
     else
 	{
 	fprintf(stderr,"Don't know how to %s.\n",argv[1]);
 	exit(1);
+	}
+
+    if (argc == 4)
+	{
+	fclose(in);
+	fclose(out);
 	}
 
     return 0;
