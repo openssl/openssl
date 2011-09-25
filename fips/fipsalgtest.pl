@@ -577,6 +577,11 @@ foreach (@ARGV) {
     elsif (/--tprefix=(.*)$/) {
         $tprefix = $1;
     }
+    elsif (/^--disable-all$/) {
+	foreach (keys %fips_enabled) {
+		$fips_enabled{$_} = 0;
+	}
+    }
     elsif (/^--(enable|disable)-(.*)$/) {
         if ( !exists $fips_enabled{$2} ) {
             print STDERR "Unknown test $2\n";
