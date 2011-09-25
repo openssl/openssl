@@ -524,6 +524,8 @@ my %table=(
 "OS2-EMX", "gcc::::::::",
 
 ##### VxWorks for various targets
+"vxworks-ppc60x","ccppc:-D_REENTRANT -mrtp -mhard-float -mstrict-align -fno-implicit-fp -DPPC32_fp60x -O2 -fstrength-reduce -fno-builtin -fno-strict-aliasing -Wall -DCPU=PPC32 -DTOOL_FAMILY=gnu -DTOOL=gnu -I\$(WIND_BASE)/target/usr/h -I\$(WIND_BASE)/target/usr/h/wrn/coreip:::VXWORKS:-Wl,--defsym,__wrs_rtp_base=0xe0000000 -L \$(WIND_BASE)/target/usr/lib/ppc/PPC32/common:::linux_ppc32.o:::::::::::::::ranlibppc:",
+"vxworks-ppcgen","ccppc:-D_REENTRANT -mrtp -msoft-float -mstrict-align -O1 -fno-builtin -fno-strict-aliasing -Wall -DCPU=PPC32 -DTOOL_FAMILY=gnu -DTOOL=gnu -I\$(WIND_BASE)/target/usr/h -I\$(WIND_BASE)/target/usr/h/wrn/coreip:::VXWORKS:-Wl,--defsym,__wrs_rtp_base=0xe0000000 -L \$(WIND_BASE)/target/usr/lib/ppc/PPC32/sfcommon:::linux_ppc32.o:::::::::::::::ranlibppc:",
 "vxworks-ppc405","ccppc:-g -msoft-float -mlongcall -DCPU=PPC405 -I\$(WIND_BASE)/target/h:::VXWORKS:-r:::::",
 "vxworks-ppc750","ccppc:-ansi -nostdinc -DPPC750 -D_REENTRANT -fvolatile -fno-builtin -fno-for-scope -fsigned-char -Wall -msoft-float -mlongcall -DCPU=PPC604 -I\$(WIND_BASE)/target/h \$(DEBUG_FLAG):::VXWORKS:-r:::::",
 "vxworks-ppc750-debug","ccppc:-ansi -nostdinc -DPPC750 -D_REENTRANT -fvolatile -fno-builtin -fno-for-scope -fsigned-char -Wall -msoft-float -mlongcall -DCPU=PPC604 -I\$(WIND_BASE)/target/h -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DPEDANTIC -DDEBUG_SAFESTACK -DDEBUG -g:::VXWORKS:-r:::::",

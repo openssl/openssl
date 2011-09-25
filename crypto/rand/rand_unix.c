@@ -323,8 +323,43 @@ int RAND_poll(void)
 
 
 #if defined(OPENSSL_SYS_VXWORKS)
+/* Note: the existence of /dev/urandom on VxWorks platforms is uncommon
+*  however we check for one and use it if found for those cases where
+* it is present. */
 int RAND_poll(void)
-	{
+{
+	unsigned long l;
+#ifdef DEVRANDOM
+	unsigned char buf[ENTROPY_NEEDED];
+	int n = 0, r, fd;
+
+	if ((fd = open("/dev/urandom", O_RDONLY, 0)) >= 0)
+		{
+		do
+			{
+			r = read(fd,(unsigned char *)buf+n, ENTROPY_NEEDED-n);
+			if (r > 0)
+				n += r;
+			}
+		while ((r > 0 || errno == EINTR) && n < ENTROPY_NEEDED);
+
+		close(fd);
+		}
+
+	if (n > 0)
+		{
+		RAND_add(buf,sizeof buf,(double)n);
+		OPENSSL_cleanse(buf,n);
+		}
+#endif
+
+	l=time(NULL);
+	RAND_add(&l,sizeof(l),0.0);
+
+#if defined(DEVRANDOM)
+	return 1;
+#else
 	return 0;
-	}
+#endif
+}
 #endif

@@ -56,8 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-/* We need to define this to get macros like S_IFBLK and S_IFCHR */
-#define _XOPEN_SOURCE 500
 
 #include <errno.h>
 #include <stdio.h>
@@ -69,6 +67,10 @@
 #include <openssl/rand.h>
 #include <openssl/buffer.h>
 
+#if !defined(OPENSSL_SYS_VXWORKS)
+/* We need to define this to get macros like S_IFBLK and S_IFCHR */
+# define _XOPEN_SOURCE 500
+#endif
 #ifdef OPENSSL_SYS_VMS
 #include <unixio.h>
 #endif
