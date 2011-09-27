@@ -4,7 +4,7 @@
 ### AES-128 [originally in CTR mode]				###
 ### bitsliced implementation for Intel Core 2 processors	###
 ### requires support of SSE extensions up to SSSE3		###
-### Author: Emilia Käsper					###
+### Author: Emilia Käsper and Peter Schwabe			###
 ### Date: 2009-03-19						###
 ### Public domain						###
 ###								###
@@ -669,8 +669,8 @@ $code.=<<___;
 ___
 }
 
-if (1) {	# following two functions are unsupported interface
-		# used for benchmarking...
+if (1 && !$win64) {	# following two functions are unsupported interface
+			# used for benchmarking...
 $code.=<<___;
 .globl	bsaes_enc_key_convert
 .type	bsaes_enc_key_convert,\@function,2
@@ -1173,7 +1173,7 @@ $code.=<<___;
 .LADD6:	.quad	0x0000000000000000, 0x0000000600000000
 .LADD7:	.quad	0x0000000000000000, 0x0000000700000000
 .LADD8:	.quad	0x0000000000000000, 0x0000000800000000
-.asciz	"Bit-sliced AES for x86_64, Emilia Käsper"
+.asciz	"Bit-sliced AES for x86_64/SSSE3, Emilia Käsper and Peter Schwabe"
 .align	64
 ___
 
