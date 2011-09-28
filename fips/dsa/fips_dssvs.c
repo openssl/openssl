@@ -145,7 +145,8 @@ static void pqg(FILE *in, FILE *out)
 		fputs(buf,out);
 		continue;
 		}
-	fputs(buf,out);
+	if (strcmp(keyword, "Num") || pqg_type != PQG_PQ)
+		fputs(buf,out);
 	if(!strcmp(keyword,"[mod"))
 	    {
 	    if (!parse_mod(value, &dsa2, &L, &N, &md))
@@ -193,7 +194,10 @@ static void pqg(FILE *in, FILE *out)
 			fprintf(out, "H = %lx\n\n",h);
 			}
 		else
+			{
+			fprintf(out, "counter = %d\n",counter);
 			fputs("\n", out);
+			}
 		}
 	    }
 	else if(!strcmp(keyword,"P"))
