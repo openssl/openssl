@@ -219,17 +219,29 @@ dclean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-fips.o: ../include/openssl/asn1.h ../include/openssl/bio.h
-fips.o: ../include/openssl/crypto.h ../include/openssl/des.h
-fips.o: ../include/openssl/des_old.h ../include/openssl/dsa.h
-fips.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
-fips.o: ../include/openssl/ecdsa.h ../include/openssl/err.h
-fips.o: ../include/openssl/evp.h ../include/openssl/fips.h
-fips.o: ../include/openssl/fips_rand.h ../include/openssl/hmac.h
-fips.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-fips.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-fips.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-fips.o: ../include/openssl/rand.h ../include/openssl/rsa.h
-fips.o: ../include/openssl/safestack.h ../include/openssl/stack.h
-fips.o: ../include/openssl/symhacks.h ../include/openssl/ui.h
-fips.o: ../include/openssl/ui_compat.h fips.c fips_locl.h
+fips.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips.o: ../include/openssl/bio.h ../include/openssl/crypto.h
+fips.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips.o: ../include/openssl/ec.h ../include/openssl/ecdsa.h
+fips.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips.o: ../include/openssl/fips.h ../include/openssl/fips_rand.h
+fips.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+fips.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+fips.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+fips.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
+fips.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+fips.o: ../include/openssl/stack.h ../include/openssl/symhacks.h fips.c
+fips.o: fips_locl.h
+fips_post.o: ../include/openssl/aes.h ../include/openssl/asn1.h
+fips_post.o: ../include/openssl/bio.h ../include/openssl/crypto.h
+fips_post.o: ../include/openssl/dsa.h ../include/openssl/e_os2.h
+fips_post.o: ../include/openssl/ec.h ../include/openssl/ecdsa.h
+fips_post.o: ../include/openssl/err.h ../include/openssl/evp.h
+fips_post.o: ../include/openssl/fips.h ../include/openssl/fips_rand.h
+fips_post.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+fips_post.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+fips_post.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+fips_post.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
+fips_post.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+fips_post.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips_post.o: fips_locl.h fips_post.c

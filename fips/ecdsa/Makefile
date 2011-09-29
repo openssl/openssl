@@ -106,8 +106,7 @@ fips_ecdsa_sign.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
 fips_ecdsa_sign.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
 fips_ecdsa_sign.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
 fips_ecdsa_sign.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-fips_ecdsa_sign.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
-fips_ecdsa_sign.o: ../../include/openssl/lhash.h
+fips_ecdsa_sign.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
 fips_ecdsa_sign.o: ../../include/openssl/obj_mac.h
 fips_ecdsa_sign.o: ../../include/openssl/objects.h
 fips_ecdsa_sign.o: ../../include/openssl/opensslconf.h
@@ -116,11 +115,12 @@ fips_ecdsa_sign.o: ../../include/openssl/ossl_typ.h
 fips_ecdsa_sign.o: ../../include/openssl/safestack.h
 fips_ecdsa_sign.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 fips_ecdsa_sign.o: ../../include/openssl/symhacks.h fips_ecdsa_sign.c
-fips_ecdsavs.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_ecdsavs.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_ecdsavs.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
-fips_ecdsavs.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-fips_ecdsavs.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_ecdsavs.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+fips_ecdsavs.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+fips_ecdsavs.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+fips_ecdsavs.o: ../../include/openssl/ec.h ../../include/openssl/ecdsa.h
+fips_ecdsavs.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+fips_ecdsavs.o: ../../include/openssl/fips_rand.h ../../include/openssl/hmac.h
 fips_ecdsavs.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 fips_ecdsavs.o: ../../include/openssl/objects.h
 fips_ecdsavs.o: ../../include/openssl/opensslconf.h

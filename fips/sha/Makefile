@@ -129,10 +129,12 @@ fips_sha1_selftest.o: ../../include/openssl/ossl_typ.h
 fips_sha1_selftest.o: ../../include/openssl/safestack.h
 fips_sha1_selftest.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 fips_sha1_selftest.o: ../../include/openssl/symhacks.h fips_sha1_selftest.c
-fips_shatest.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-fips_shatest.o: ../../include/openssl/bn.h ../../include/openssl/crypto.h
-fips_shatest.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
+fips_shatest.o: ../../include/openssl/aes.h ../../include/openssl/asn1.h
+fips_shatest.o: ../../include/openssl/bio.h ../../include/openssl/bn.h
+fips_shatest.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
+fips_shatest.o: ../../include/openssl/ec.h ../../include/openssl/err.h
 fips_shatest.o: ../../include/openssl/evp.h ../../include/openssl/fips.h
+fips_shatest.o: ../../include/openssl/fips_rand.h ../../include/openssl/hmac.h
 fips_shatest.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
 fips_shatest.o: ../../include/openssl/objects.h
 fips_shatest.o: ../../include/openssl/opensslconf.h
