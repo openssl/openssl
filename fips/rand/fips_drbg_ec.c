@@ -218,7 +218,7 @@ static int drbg_ec_mul(DRBG_EC_CTX *ectx, BIGNUM *r, const BIGNUM *s, int use_q)
 	if (!EC_POINT_get_affine_coordinates_GFp(ectx->curve, ectx->ptmp, r,
 							NULL, ectx->bctx))
 		return 0;
-	return 0;
+	return 1;
 	}
 
 static int drbg_ec_instantiate(DRBG_CTX *dctx,
@@ -244,7 +244,7 @@ static int drbg_ec_reseed(DRBG_CTX *dctx,
 	/* Check if we have a deferred s = s * P */
 	if (ectx->sp_defer)
 		{
-		if (drbg_ec_mul(ectx, ectx->s, ectx->s, 0))
+		if (!drbg_ec_mul(ectx, ectx->s, ectx->s, 0))
 			return 0;
 		ectx->sp_defer = 0;
 		}
@@ -281,7 +281,7 @@ static int drbg_ec_generate(DRBG_CTX *dctx,
 	/* Check if we have a deferred s = s * P */
 	if (ectx->sp_defer)
 		{
-		if (drbg_ec_mul(ectx, s, s, 0))
+		if (!drbg_ec_mul(ectx, s, s, 0))
 			goto err;
 		ectx->sp_defer = 0;
 		}
@@ -323,13 +323,13 @@ static int drbg_ec_generate(DRBG_CTX *dctx,
 	for (;;)
 		{
 		/* Step #6, calculate s = t * P */
-		if (drbg_ec_mul(ectx, s, t, 0))
+		if (!drbg_ec_mul(ectx, s, t, 0))
 			goto err;
 #ifdef EC_DRBG_TRACE
 		bnprint(stderr, "s in generate: ", ectx->s);
 #endif
 		/* Step #7, calculate r = s * Q */
-		if (drbg_ec_mul(ectx, r, s, 1))
+		if (!drbg_ec_mul(ectx, r, s, 1))
 			goto err;
 #ifdef EC_DRBG_TRACE
 	bnprint(stderr, "r in generate is: ", r);
