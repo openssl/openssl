@@ -796,6 +796,8 @@ POST_ID id_list[] = {
 	{NID_aes_256_xts, "AES-256-XTS"},
 	{NID_des_ede3_cbc, "DES-EDE3-CBC"},
 	{NID_des_ede3_ecb, "DES-EDE3-ECB"},
+	{NID_secp224r1, "P-224"},
+	{NID_sect233r1, "B-233"},
 	{NID_X9_62_prime256v1, "P-256"},
 	{NID_secp384r1, "P-384"},
 	{NID_secp521r1, "P-521"},
@@ -912,6 +914,11 @@ static int post_cb(int op, int id, int subid, void *ex)
 
 		case FIPS_TEST_CONTINUOUS:
 		idstr = "Continuous PRNG";
+		break;
+
+		case FIPS_TEST_ECDH:
+		idstr = "ECDH";
+		exstr = lookup_id(subid);
 		break;
 
 		default:

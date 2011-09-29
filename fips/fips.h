@@ -96,6 +96,7 @@ int FIPS_selftest_des(void);
 int FIPS_selftest_rsa(void);
 int FIPS_selftest_dsa(void);
 int FIPS_selftest_ecdsa(void);
+int FIPS_selftest_ecdh(void);
 void FIPS_corrupt_drbg(void);
 void FIPS_x931_stick(void);
 void FIPS_drbg_stick(void);
@@ -170,6 +171,8 @@ void FIPS_get_timevec(unsigned char *buf, unsigned long *pctr);
 #define FIPS_TEST_PAIRWISE	12
 /* Continuous PRNG test */
 #define FIPS_TEST_CONTINUOUS	13
+/* ECDH test */
+#define FIPS_TEST_ECDH		14
 
 void FIPS_post_set_callback(
 	int (*post_cb)(int op, int id, int subid, void *ex));

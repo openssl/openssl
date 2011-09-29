@@ -22,8 +22,8 @@ TEST= fips_ecdhvs.c
 APPS=
 
 LIB=$(TOP)/libcrypto.a
-LIBSRC= 
-LIBOBJ= 
+LIBSRC= fips_ecdh_selftest.c
+LIBOBJ= fips_ecdh_selftest.o
 
 SRC= $(LIBSRC)
 

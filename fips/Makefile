@@ -45,7 +45,7 @@ LIBSRC=fips.c fips_post.c
 LIBOBJ=fips.o fips_post.o
 
 FIPS_OBJ_LISTS=sha/lib hmac/lib rand/lib des/lib aes/lib dsa/lib rsa/lib \
-		dh/lib utl/lib ecdsa/lib cmac/lib
+		dh/lib utl/lib ecdsa/lib ecdh/lib cmac/lib
 
 SRC= $(LIBSRC)
 
