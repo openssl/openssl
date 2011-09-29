@@ -116,8 +116,6 @@ struct drbg_ec_ctx_st
 	EVP_MD_CTX mctx;
 	/* Temporary value storage: should always exceed max digest length */
 	unsigned char vtmp[EC_PRNG_MAX_SEEDLEN];
-	/* Flag to indicate s = s * P has been deferred */
-	int sp_defer;
 	/* Temp BN context */
 	BN_CTX *bctx;
 	};

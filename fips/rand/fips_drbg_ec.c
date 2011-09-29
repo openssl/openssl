@@ -241,13 +241,6 @@ static int drbg_ec_reseed(DRBG_CTX *dctx,
 				const unsigned char *adin, size_t adin_len)
 	{
 	DRBG_EC_CTX *ectx = &dctx->d.ec;
-	/* Check if we have a deferred s = s * P */
-	if (ectx->sp_defer)
-		{
-		if (!drbg_ec_mul(ectx, ectx->s, ectx->s, 0))
-			return 0;
-		ectx->sp_defer = 0;
-		}
 	/* Convert s value to a binary buffer. Save it to tbuf as we are
 	 * about to overwrite it.
 	 */
@@ -277,13 +270,6 @@ static int drbg_ec_generate(DRBG_CTX *dctx,
 		if (dctx->reseed_counter + nb > dctx->reseed_interval)
 			dctx->status = DRBG_STATUS_RESEED;
 		return 1;
-		}
-	/* Check if we have a deferred s = s * P */
-	if (ectx->sp_defer)
-		{
-		if (!drbg_ec_mul(ectx, s, s, 0))
-			goto err;
-		ectx->sp_defer = 0;
 		}
 
 	BN_CTX_start(ectx->bctx);
@@ -371,8 +357,8 @@ static int drbg_ec_generate(DRBG_CTX *dctx,
 		hexprint(stderr, out, dctx->blocklength);
 #endif
 		}
-	/* Defer s = s * P until we need it */
-	ectx->sp_defer = 1;
+	if (!drbg_ec_mul(ectx, ectx->s, ectx->s, 0))
+		return 0;
 #ifdef EC_DRBG_TRACE
 	bnprint(stderr, "s after generate is: ", s);
 #endif
@@ -533,8 +519,6 @@ int fips_drbg_ec_init(DRBG_CTX *dctx)
 
 	ectx->Q = EC_POINT_new(ectx->curve);
 	ectx->ptmp = EC_POINT_new(ectx->curve);
-
-	ectx->sp_defer = 0;
 
 	x = BN_CTX_get(ectx->bctx);
 	y = BN_CTX_get(ectx->bctx);
