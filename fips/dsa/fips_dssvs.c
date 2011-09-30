@@ -145,7 +145,7 @@ static void pqg(FILE *in, FILE *out)
 		fputs(buf,out);
 		continue;
 		}
-	if (strcmp(keyword, "Num") || pqg_type != PQG_PQ)
+	if (strcmp(keyword, "Num"))
 		fputs(buf,out);
 	if(!strcmp(keyword,"[mod"))
 	    {
