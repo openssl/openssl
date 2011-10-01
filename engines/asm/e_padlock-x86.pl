@@ -177,7 +177,7 @@ my ($mode,$opcode) = @_;
 	&lea	($ctx,&DWP(16,$ctx));	# control word
 	&xor	("eax","eax");
 					if ($mode eq "ctr16") {
-	&movq	("xmm0",&QWP(-16,$ctx));# load [upper part of] counter
+	&movq	("mm0",&QWP(-16,$ctx));	# load [upper part of] counter
 					} else {
 	&xor	("ebx","ebx");
 	&test	(&DWP(0,$ctx),1<<5);	# align bit in control word
@@ -216,7 +216,7 @@ my ($mode,$opcode) = @_;
 &set_label("${mode}_prepare");
 	&mov	(&DWP(12,"esp",$out),"ecx");
 	&bswap	("ecx");
-	&movq	(&QWP(0,"esp",$out),"xmm0");
+	&movq	(&QWP(0,"esp",$out),"mm0");
 	&inc	("ecx");
 	&mov	(&DWP(8,"esp",$out),"eax");
 	&bswap	("ecx");
@@ -304,6 +304,7 @@ my ($mode,$opcode) = @_;
 &set_label("${mode}_exit");			}
 	&mov	("eax",1);
 	&lea	("esp",&DWP(4,"esp"));		# popf
+	&emms	()				if ($mode eq "ctr16");
 &set_label("${mode}_abort");
 &function_end("padlock_${mode}_encrypt");
 }
