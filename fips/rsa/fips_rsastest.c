@@ -276,9 +276,9 @@ int rsa_stest(FILE *out, FILE *in, int Saltlen)
 			BN_free(bn_e);
 			fputs("n = ", out);
 			do_bn_print(out, rsa->n);
-			fputs("\ne = ", out);
+			fputs(RESP_EOL "e = ", out);
 			do_bn_print(out, rsa->e);
-			fputs("\n", out);
+			fputs(RESP_EOL, out);
 			current_keylen = keylen;
 			}
 
@@ -352,7 +352,7 @@ static int rsa_printsig(FILE *out, RSA *rsa, const EVP_MD *dgst,
 	for (i = 0; i < siglen; i++)
 		fprintf(out, "%02X", sigbuf[i]);
 
-	fputs("\n", out);
+	fputs(RESP_EOL, out);
 
 	ret = 1;
 

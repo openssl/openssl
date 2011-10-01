@@ -186,7 +186,7 @@ static void do_mct(char *amode,
 	EVP_CIPHER_CTX ctx;
 	FIPS_cipher_ctx_init(&ctx);
 
-	fprintf(rfp,"\nCOUNT = %d\n",i);
+	fprintf(rfp,RESP_EOL "COUNT = %d" RESP_EOL,i);
 	if(kp == 1)
 	    OutputValue("KEY",akey,8,rfp,0);
 	else
@@ -341,7 +341,7 @@ static int proc_file(char *rqfile, char *rspfile)
 		    }
 		else
 		    {
-		    fputs(ibuf, rfp);
+		    copy_line(ibuf, rfp);
 		    ++ step;
 		    }
 		}
@@ -357,11 +357,12 @@ static int proc_file(char *rqfile, char *rspfile)
 		if(*amode)
 		    { /* insert current time & date */
 		    time_t rtim = time(0);
-		    fprintf(rfp, "# %s", ctime(&rtim));
+		    fputs("# ", rfp);
+		    copy_line(ctime(&rtim), rfp);
 		    }
 		else
 		    {
-		    fputs(ibuf, rfp);
+		    copy_line(ibuf, rfp);
 		    if(!strncmp(pp,"INVERSE ",8) || !strncmp(pp,"DES ",4)
 		       || !strncmp(pp,"TDES ",5)
 		       || !strncmp(pp,"PERMUTATION ",12)
@@ -397,7 +398,7 @@ static int proc_file(char *rqfile, char *rspfile)
 		break;
 	    if (ibuf[0] == '[')
 		{
-		fputs(ibuf, rfp);
+		copy_line(ibuf, rfp);
 		++step;
 		if (fips_strncasecmp(ibuf, "[ENCRYPT]", 9) == 0)
 		    dir = 1;
@@ -422,17 +423,17 @@ static int proc_file(char *rqfile, char *rspfile)
 	case 2: /* KEY = xxxx */
 	    if(*ibuf == '\n')
 		{
-	        fputs(ibuf, rfp);
+	        copy_line(ibuf, rfp);
 		break;
                 }
 	    if(!fips_strncasecmp(ibuf,"COUNT = ",8))
 		{
-	        fputs(ibuf, rfp);
+	        copy_line(ibuf, rfp);
 		break;
                 }
 	    if(!fips_strncasecmp(ibuf,"COUNT=",6))
 		{
-	        fputs(ibuf, rfp);
+	        copy_line(ibuf, rfp);
 		break;
                 }
 	    if(!fips_strncasecmp(ibuf,"NumKeys = ",10))
@@ -441,7 +442,7 @@ static int proc_file(char *rqfile, char *rspfile)
 		break;
 		}
 	    if (echo) 
-	    	fputs(ibuf, rfp);
+	    	copy_line(ibuf, rfp);
 	    if(!fips_strncasecmp(ibuf,"KEY = ",6))
 		{
 		akeysz=64;
@@ -497,7 +498,7 @@ static int proc_file(char *rqfile, char *rspfile)
 
 	case 3: /* IV = xxxx */
 	    if (echo)
-	    	fputs(ibuf, rfp);
+	    	copy_line(ibuf, rfp);
 	    if (fips_strncasecmp(ibuf, "IV = ", 5) != 0)
 		{
 		printf("Missing IV\n");
@@ -519,7 +520,7 @@ static int proc_file(char *rqfile, char *rspfile)
 
 	case 4: /* PLAINTEXT = xxxx */
 	    if (echo)
-	    	fputs(ibuf, rfp);
+	    	copy_line(ibuf, rfp);
 	    if (fips_strncasecmp(ibuf, "PLAINTEXT = ", 12) != 0)
 		{
 		printf("Missing PLAINTEXT\n");
@@ -562,7 +563,7 @@ static int proc_file(char *rqfile, char *rspfile)
 
 	case 5: /* CIPHERTEXT = xxxx */
 	    if (echo)
-	    	fputs(ibuf, rfp);
+	    	copy_line(ibuf, rfp);
 	    if (fips_strncasecmp(ibuf, "CIPHERTEXT = ", 13) != 0)
 		{
 		printf("Missing KEY\n");
@@ -608,7 +609,7 @@ static int proc_file(char *rqfile, char *rspfile)
 		}
 	    else if (strcmp(atest, "MCT") != 0)
 		{ /* MCT already added terminating nl */
-		fputs(ibuf, rfp);
+		copy_line(ibuf, rfp);
 		}
 	    step = 1;
 	    break;

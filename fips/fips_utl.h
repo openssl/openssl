@@ -52,6 +52,12 @@
 #include <openssl/fips_rand.h>
 #include <openssl/objects.h>
 
+#ifdef OPENSSL_SYS_WIN32
+#define RESP_EOL	"\n"
+#else
+#define RESP_EOL	"\r\n"
+#endif
+
 int hex2bin(const char *in, unsigned char *out);
 unsigned char *hex2bin_m(const char *in, long *plen);
 int do_hex2bn(BIGNUM **pr, const char *in);
@@ -61,6 +67,7 @@ int parse_line(char **pkw, char **pval, char *linebuf, char *olinebuf);
 int parse_line2(char **pkw, char **pval, char *linebuf, char *olinebuf, int eol);
 BIGNUM *hex2bn(const char *in);
 int tidy_line(char *linebuf, char *olinebuf);
+int copy_line(const char *in, FILE *ofp);
 int bint2bin(const char *in, int len, unsigned char *out);
 int bin2bint(const unsigned char *in,int len,char *out);
 void PrintValue(char *tag, unsigned char *val, int len);
@@ -74,9 +81,9 @@ static int no_err;
 
 static void put_err_cb(int lib, int func,int reason,const char *file,int line)
 	{
-		if (no_err)
-			return;
-		fprintf(stderr, "ERROR:%08lX:lib=%d,func=%d,reason=%d"
+	if (no_err)
+		return;
+	fprintf(stderr, "ERROR:%08lX:lib=%d,func=%d,reason=%d"
 				":file=%s:line=%d\n",
 			ERR_PACK(lib, func, reason),
 			lib, func, reason, file, line);
@@ -257,7 +264,7 @@ int do_bn_print_name(FILE *out, const char *name, const BIGNUM *bn)
 	r = do_bn_print(out, bn);
 	if (!r)
 		return 0;
-	fputs("\n", out);
+	fputs(RESP_EOL, out);
 	return 1;
 	}
 
@@ -373,6 +380,20 @@ int tidy_line(char *linebuf, char *olinebuf)
 
 	return 1;
 	}
+/* Copy supplied line to ofp replacing \n with \r\n */
+int copy_line(const char *in, FILE *ofp)
+	{
+	const char *p;
+	p = strchr(in, '\n');
+	if (p)
+		{
+		fwrite(in, 1, (size_t)(p - in), ofp);
+		fputs(RESP_EOL, ofp);
+		}
+	else
+		fputs(in, ofp);
+	return 1;
+	}
 
 /* NB: this return the number of _bits_ read */
 int bint2bin(const char *in, int len, unsigned char *out)
@@ -412,7 +433,7 @@ void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode)
     if(bitmode)
 	{
 	olen=bin2bint(val,len,obuf);
-    	fprintf(rfp, "%s = %.*s\n", tag, olen, obuf);
+    	fprintf(rfp, "%s = %.*s" RESP_EOL, tag, olen, obuf);
 	}
     else
 	{
@@ -420,7 +441,7 @@ void OutputValue(char *tag, unsigned char *val, int len, FILE *rfp,int bitmode)
     	fprintf(rfp, "%s = ", tag);
 	for (i = 0; i < len; i++)
 		fprintf(rfp, "%02x", val[i]);
-	fputs("\n", rfp);
+	fputs(RESP_EOL, rfp);
 	}
 
 #if VERBOSE

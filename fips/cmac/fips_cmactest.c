@@ -464,7 +464,7 @@ static int print_cmac_gen(const EVP_CIPHER *cipher, FILE *out,
 		fputs("Mac = ", out);
 		for (i = 0; i < Tlen; i++)
 			fprintf(out, "%02x", res[i]);
-		fputs("\n", out);
+		fputs(RESP_EOL, out);
 		rc = 1;
 		}
 	CMAC_CTX_free(cmac_ctx);
@@ -502,9 +502,9 @@ static int print_cmac_ver(const EVP_CIPHER *cipher, FILE *out,
 	else
 		{
 		if (!memcmp(Mac, res, Maclen))
-			fputs("Result = P\n", out);
+			fputs("Result = P" RESP_EOL, out);
 		else
-			fputs("Result = F\n", out);
+			fputs("Result = F" RESP_EOL, out);
 		}
 	CMAC_CTX_free(cmac_ctx);
 	return rc;

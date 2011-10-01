@@ -243,7 +243,7 @@ static void gcmtest(FILE *in, FILE *out, int encrypt)
 				}
 			rv = FIPS_cipher(&ctx, NULL, NULL, 0);
 			if (rv < 0)
-				fprintf(out, "FAIL\n");
+				fprintf(out, "FAIL" RESP_EOL);
 			else
 				OutputValue("PT", pt, ptlen, out, 0);
 			if (iv)
@@ -479,11 +479,11 @@ static void ccmtest(FILE *in, FILE *out)
 				{
 				if (rv == 0)
 					Payload[0] = 0;
-				fputs("Result = Pass\n", out);
+				fputs("Result = Pass" RESP_EOL, out);
 				OutputValue("Payload", Payload, len, out, 0);
 				}
 			else
-				fputs("Result = Fail\n", out);
+				fputs("Result = Fail" RESP_EOL, out);
 			OPENSSL_free(CT);
 			OPENSSL_free(Payload);
 			CT = Payload = NULL;

@@ -234,7 +234,7 @@ static int KeyPair(FILE *in, FILE *out)
 				do_bn_print_name(out, "d", d);
 				do_bn_print_name(out, "Qx", Qx);
 				do_bn_print_name(out, "Qy", Qy);
-				fputs("\n", out);
+				fputs(RESP_EOL, out);
 				EC_KEY_free(key);
 
 				}
@@ -287,7 +287,7 @@ static int PKV(FILE *in, FILE *out)
 			no_err = 1;
 			rv = EC_KEY_set_public_key_affine_coordinates(key, Qx, Qy);
 			no_err = 0;
-			fprintf(out, "Result = %s\n", rv ? "P":"F");
+			fprintf(out, "Result = %s" RESP_EOL, rv ? "P":"F");
 			}
 
 		}
@@ -453,7 +453,7 @@ static int SigVer(FILE *in, FILE *out)
 	    		rv = FIPS_ecdsa_verify_ctx(key, &mctx, sig);
 			no_err = 0;
 
-			fprintf(out, "Result = %s\n", rv ? "P":"F");
+			fprintf(out, "Result = %s" RESP_EOL, rv ? "P":"F");
 			}
 
 		}

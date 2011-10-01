@@ -313,7 +313,7 @@ static int print_hmac(const EVP_MD *emd, FILE *out,
 	fputs("Mac = ", out);
 	for (i = 0; i < Tlen; i++)
 		fprintf(out, "%02x", md[i]);
-	fputs("\n", out);
+	fputs(RESP_EOL, out);
 	return 1;
 	}
 

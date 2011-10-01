@@ -305,7 +305,7 @@ static int print_dgst(const EVP_MD *emd, FILE *out,
 	fputs("MD = ", out);
 	for (i = 0; i < mdlen; i++)
 		fprintf(out, "%02x", md[i]);
-	fputs("\n", out);
+	fputs(RESP_EOL, out);
 	return 1;
 	}
 
@@ -337,7 +337,7 @@ static int print_monte(const EVP_MD *md, FILE *out,
 	memcpy(m2, Seed, SeedLen);
 	memcpy(m3, Seed, SeedLen);
 
-	fputs("\n", out);
+	fputs(RESP_EOL, out);
 
 	for (j = 0; j < 100; j++)
 		{
@@ -355,11 +355,11 @@ static int print_monte(const EVP_MD *md, FILE *out,
 			m3 = p;
 			FIPS_digestfinal(&ctx, m3, &m3len);
 			}
-		fprintf(out, "COUNT = %d\n", j);
+		fprintf(out, "COUNT = %d" RESP_EOL, j);
 		fputs("MD = ", out);
 		for (k = 0; k < m3len; k++)
 			fprintf(out, "%02x", m3[k]);
-		fputs("\n\n", out);
+		fputs(RESP_EOL RESP_EOL, out);
 		memcpy(m1, m3, m3len);
 		memcpy(m2, m3, m3len);
 		m1len = m2len = m3len;

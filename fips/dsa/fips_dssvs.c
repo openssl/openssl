@@ -101,7 +101,7 @@ static void primes(FILE *in, FILE *out)
 
 	    pp=BN_new();
 	    do_hex2bn(&pp,value);
-	    fprintf(out, "result= %c\n",
+	    fprintf(out, "result= %c" RESP_EOL,
 		   BN_is_prime_ex(pp,20,NULL,NULL) ? 'P' : 'F');
 	    }	    
 	}
@@ -190,13 +190,12 @@ static void pqg(FILE *in, FILE *out)
 				seed, M_EVP_MD_size(md), out, 0);
 		if (!dsa2)
 			{
-			fprintf(out, "c = %d\n",counter);
-			fprintf(out, "H = %lx\n\n",h);
+			fprintf(out, "c = %d" RESP_EOL, counter);
+			fprintf(out, "H = %lx" RESP_EOL RESP_EOL,h);
 			}
 		else
 			{
-			fprintf(out, "counter = %d\n",counter);
-			fputs("\n", out);
+			fprintf(out, "counter = %d" RESP_EOL RESP_EOL, counter);
 			}
 		}
 	    }
@@ -343,16 +342,16 @@ static void pqgver(FILE *in, FILE *out)
 	    if (idx >= 0)
 		{
 		if (BN_cmp(dsa->g, g))
-			fprintf(out, "Result = F\n");
+			fprintf(out, "Result = F" RESP_EOL);
 		else
-			fprintf(out, "Result = P\n");
+			fprintf(out, "Result = P" RESP_EOL);
 		}
             else if (BN_cmp(dsa->p, p) || BN_cmp(dsa->q, q) || 
 		(!part_test &&
 		((BN_cmp(dsa->g, g) || (counter != counter2) || (h != h2)))))
-	    	fprintf(out, "Result = F\n");
+	    	fprintf(out, "Result = F" RESP_EOL);
 	    else
-	    	fprintf(out, "Result = P\n");
+	    	fprintf(out, "Result = P" RESP_EOL);
 	    BN_free(p);
 	    BN_free(q);
 	    BN_free(g);
@@ -470,13 +469,13 @@ static void keyver(FILE *in, FILE *out)
 			paramcheck = -1;
 		}
 	    if (paramcheck != 1)
-	   	fprintf(out, "Result = F\n");
+	   	fprintf(out, "Result = F" RESP_EOL);
 	    else
 		{
 		if (!BN_mod_exp(Y2, g, X, p, ctx) || BN_cmp(Y2, Y))
-	    		fprintf(out, "Result = F\n");
+	    		fprintf(out, "Result = F" RESP_EOL);
 	        else
-	    		fprintf(out, "Result = P\n");
+	    		fprintf(out, "Result = P" RESP_EOL);
 		}
 	    BN_free(X);
 	    BN_free(Y);
@@ -537,7 +536,7 @@ static void keypair(FILE *in, FILE *out)
 	    do_bn_print_name(out, "P",dsa->p);
 	    do_bn_print_name(out, "Q",dsa->q);
 	    do_bn_print_name(out, "G",dsa->g);
-	    fputs("\n", out);
+	    fputs(RESP_EOL, out);
 
 	    while(n--)
 		{
@@ -546,7 +545,7 @@ static void keypair(FILE *in, FILE *out)
 
 		do_bn_print_name(out, "X",dsa->priv_key);
 		do_bn_print_name(out, "Y",dsa->pub_key);
-	    	fputs("\n", out);
+	    	fputs(RESP_EOL, out);
 		}
 	    }
 	}
@@ -594,7 +593,7 @@ static void siggen(FILE *in, FILE *out)
 	    do_bn_print_name(out, "P",dsa->p);
 	    do_bn_print_name(out, "Q",dsa->q);
 	    do_bn_print_name(out, "G",dsa->g);
-	    fputs("\n", out);
+	    fputs(RESP_EOL, out);
 	    }
 	else if(!strcmp(keyword,"Msg"))
 	    {
@@ -616,7 +615,7 @@ static void siggen(FILE *in, FILE *out)
 
 	    do_bn_print_name(out, "R",sig->r);
 	    do_bn_print_name(out, "S",sig->s);
-	    fputs("\n", out);
+	    fputs(RESP_EOL, out);
 	    FIPS_dsa_sig_free(sig);
 	    FIPS_md_ctx_cleanup(&mctx);
 	    }
@@ -685,7 +684,7 @@ static void sigver(FILE *in, FILE *out)
 	    no_err = 0;
 	    FIPS_md_ctx_cleanup(&mctx);
 	
-	    fprintf(out, "Result = %c\n\n", r == 1 ? 'P' : 'F');
+	    fprintf(out, "Result = %c" RESP_EOL RESP_EOL, r == 1 ? 'P' : 'F');
 	    }
 	}
     }

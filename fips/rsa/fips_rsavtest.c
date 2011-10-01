@@ -355,9 +355,9 @@ static int rsa_printver(FILE *out,
 		goto error;
 
 	if (r == 0)
-		fputs("Result = F\n", out);
+		fputs("Result = F" RESP_EOL, out);
 	else
-		fputs("Result = P\n", out);
+		fputs("Result = P" RESP_EOL, out);
 
 	ret = 1;
 
