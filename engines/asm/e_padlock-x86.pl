@@ -177,7 +177,7 @@ my ($mode,$opcode) = @_;
 	&lea	($ctx,&DWP(16,$ctx));	# control word
 	&xor	("eax","eax");
 					if ($mode eq "ctr16") {
-	&movdqa	("xmm0",&QWP(-16,$ctx));# load iv
+	&movq	("xmm0",&QWP(-16,$ctx));# load [upper part of] counter
 					} else {
 	&xor	("ebx","ebx");
 	&test	(&DWP(0,$ctx),1<<5);	# align bit in control word
@@ -210,20 +210,21 @@ my ($mode,$opcode) = @_;
 	&mov	($len,$chunk);
 	&mov	(&DWP(12,"ebp"),$chunk);	# chunk
 						if ($mode eq "ctr16") {
-	&pextrw	("ecx","xmm0",7);		# borrow $len
-	&mov	($inp,1);
+	&mov	("ecx",&DWP(-4,$ctx));
 	&xor	($out,$out);
-	&xchg	("ch","cl");
+	&mov	("eax",&DWP(-8,$ctx));		# borrow $len
 &set_label("${mode}_prepare");
-	&movdqa	(&QWP(0,"esp",$out),"xmm0");
-	&lea	("eax",&DWP(0,"ecx",$inp));
-	&xchg	("ah","al");
+	&mov	(&DWP(12,"esp",$out),"ecx");
+	&bswap	("ecx");
+	&movq	(&QWP(0,"esp",$out),"xmm0");
+	&inc	("ecx");
+	&mov	(&DWP(8,"esp",$out),"eax");
+	&bswap	("ecx");
 	&lea	($out,&DWP(16,$out));
-	&pinsrw	("xmm0","eax",7);
-	&lea	($inp,&DWP(1,$inp));
 	&cmp	($out,$chunk);
 	&jb	(&label("${mode}_prepare"));
 
+	&mov	(&DWP(-4,$ctx),"ecx");
 	&lea	($inp,&DWP(0,"esp"));
 	&lea	($out,&DWP(0,"esp"));
 	&mov	($len,$chunk);
@@ -244,8 +245,8 @@ my ($mode,$opcode) = @_;
 	&shr	($len,4);			# len/=AES_BLOCK_SIZE
 	&data_byte(0xf3,0x0f,0xa7,$opcode);	# rep xcrypt*
 						if ($mode !~ /ecb|ctr/) {
-	&movdqa	("xmm0",&QWP(0,"eax"));
-	&movdqa	(&QWP(-16,$ctx),"xmm0");	# copy [or refresh] iv
+	&movaps	("xmm0",&QWP(0,"eax"));
+	&movaps	(&QWP(-16,$ctx),"xmm0");	# copy [or refresh] iv
 						}
 	&mov	($out,&DWP(0,"ebp"));		# restore parameters
 	&mov	($chunk,&DWP(12,"ebp"));
@@ -253,10 +254,10 @@ my ($mode,$opcode) = @_;
 	&mov	($inp,&DWP(4,"ebp"));
 	&xor	($len,$len);
 &set_label("${mode}_xor");
-	&movdqu	("xmm1",&QWP(0,$inp,$len));
+	&movups	("xmm1",&QWP(0,$inp,$len));
 	&lea	($len,&DWP(16,$len));
 	&pxor	("xmm1",&QWP(-16,"esp",$len));
-	&movdqu	(&QWP(-16,$out,$len),"xmm1");
+	&movups	(&QWP(-16,$out,$len),"xmm1");
 	&cmp	($len,$chunk);
 	&jb	(&label("${mode}_xor"));
 						} else {
@@ -276,11 +277,7 @@ my ($mode,$opcode) = @_;
 	&sub	($len,$chunk);
 	&mov	($chunk,$PADLOCK_CHUNK);
 	&jnz	(&label("${mode}_loop"));
-						if ($mode eq "ctr16") {
-	&movdqa	(&QWP(-16,$ctx),"xmm0");	# write out iv
-	&pxor	("xmm0","xmm0");
-	&pxor	("xmm1","xmm1");
-						} else {
+						if ($mode ne "ctr16") {
 	&test	($out,0x0f);			# out_misaligned
 	&jz	(&label("${mode}_done"));
 						}
@@ -301,8 +298,8 @@ my ($mode,$opcode) = @_;
 	&shr	($len,4);			# len/=AES_BLOCK_SIZE
 	&data_byte(0xf3,0x0f,0xa7,$opcode);	# rep xcrypt*
 						if ($mode ne "ecb") {
-	&movdqa	("xmm0",&QWP(0,"eax"));
-	&movdqa	(&QWP(-16,$ctx),"xmm0");	# copy [or refresh] iv
+	&movaps	("xmm0",&QWP(0,"eax"));
+	&movaps	(&QWP(-16,$ctx),"xmm0");	# copy [or refresh] iv
 						}
 &set_label("${mode}_exit");			}
 	&mov	("eax",1);
