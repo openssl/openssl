@@ -181,7 +181,8 @@ padlock_sha256_blocks:
 	ret
 .size	padlock_sha256_blocks,.-padlock_sha256_blocks
 
-.globl	padlock_sha512_blocks,\@function,3
+.globl	padlock_sha512_blocks
+.type	padlock_sha512_blocks,\@function,3
 .align	16
 padlock_sha512_blocks:
 	mov	%rdx,%rcx
