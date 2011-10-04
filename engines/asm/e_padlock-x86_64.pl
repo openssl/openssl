@@ -151,15 +151,15 @@ padlock_sha1_oneshot:
 	ret
 .size	padlock_sha1_oneshot,.-padlock_sha1_oneshot
 
-.globl	padlock_sha1
-.type	padlock_sha1,\@function,3
+.globl	padlock_sha1_blocks
+.type	padlock_sha1_blocks,\@function,3
 .align	16
-padlock_sha1:
+padlock_sha1_blocks:
 	mov	\$-1,%rax
 	mov	%rdx,%rcx
 	.byte	0xf3,0x0f,0xa6,0xc8	# rep xsha1
 	ret
-.size	padlock_sha1,.-padlock_sha1
+.size	padlock_sha1_blocks,.-padlock_sha1_blocks
 
 .globl	padlock_sha256_oneshot
 .type	padlock_sha256_oneshot,\@function,3
@@ -171,15 +171,23 @@ padlock_sha256_oneshot:
 	ret
 .size	padlock_sha256_oneshot,.-padlock_sha256_oneshot
 
-.globl	padlock_sha256
-.type	padlock_sha256,\@function,3
+.globl	padlock_sha256_blocks
+.type	padlock_sha256_blocks,\@function,3
 .align	16
-padlock_sha256:
+padlock_sha256_blocks:
 	mov	\$-1,%rax
 	mov	%rdx,%rcx
 	.byte	0xf3,0x0f,0xa6,0xd0	# rep xsha256
 	ret
-.size	padlock_sha256,.-padlock_sha256
+.size	padlock_sha256_blocks,.-padlock_sha256_blocks
+
+.globl	padlock_sha512_blocks,\@function,3
+.align	16
+padlock_sha512_blocks:
+	mov	%rdx,%rcx
+	.byte	0xf3,0x0f,0xa6,0xe0	# rep xha512
+	ret
+.size	padlock_sha512_blocks,.-padlock_sha512_blocks
 ___
 
 sub generate_mode {
@@ -207,6 +215,7 @@ padlock_${mode}_encrypt:
 	xor	%eax,%eax
 	xor	%ebx,%ebx
 	testl	\$`1<<5`,($ctx)		# align bit in control word
+	jnz	.L${mode}_aligned
 	test	\$0x0f,$out
 	setz	%al			# !out_misaligned
 	test	\$0x0f,$inp

@@ -15,14 +15,21 @@
 # mode and ~75% in CBC mode. For aligned data improvement can be
 # observed for short inputs only, e.g. 45% for 64-byte messages in
 # ECB mode, 20% in CBC. Difference in performance for aligned vs.
-# misaligned data depends on misalignment and is either ~1.8x or
-# ~2.9x. These are approximately same factors as for hardware support,
-# so there is little reason to rely on the latter. It might actually
-# hurt performance in mixture of aligned and misaligned buffers,
-# because a) if you choose to flip 'align' flag on per-buffer basis,
-# then you'd have to reload key context; b) if you choose to set
-# 'align' flag permanently, it limits performance for aligned data
-# to ~1/2. All results were collected on 1.5GHz C7.
+# misaligned data depends on misalignment and is either ~1.8x or 2.9x.
+# These are approximately same factors as for hardware support, so
+# there is little reason to rely on the latter. On the contrary, it
+# might actually hurt performance in mixture of aligned and misaligned
+# buffers, because a) if you choose to flip 'align' flag in control
+# word on per-buffer basis, then you'd have to reload key context,
+# which incurs penalty; b) if you choose to set 'align' flag
+# permanently, it limits performance even for aligned data to ~1/2.
+# All above mentioned results were collected on 1.5GHz C7. Nano on the
+# other hand handles unaligned data more gracefully. Depending on
+# algorithm and how unaligned data is, hardware can be up to 70% more
+# efficient than below software alignment procedures, nor does 'align'
+# flag have affect on aligned performance [if has any meaning at all].
+# Therefore suggestion is to unconditionally set 'align' flag on Nano
+# for optimal performance.
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../crypto/perlasm");
@@ -362,7 +369,7 @@ my ($mode,$opcode) = @_;
 	&ret	();
 &function_end_B("padlock_sha1_oneshot");
 
-&function_begin_B("padlock_sha1");
+&function_begin_B("padlock_sha1_blocks");
 	&push	("edi");
 	&push	("esi");
 	&mov	("eax",-1);
@@ -373,7 +380,7 @@ my ($mode,$opcode) = @_;
 	&pop	("esi");
 	&pop	("edi");
 	&ret	();
-&function_end_B("padlock_sha1");
+&function_end_B("padlock_sha1_blocks");
 
 &function_begin_B("padlock_sha256_oneshot");
 	&push	("edi");
@@ -397,7 +404,7 @@ my ($mode,$opcode) = @_;
 	&ret	();
 &function_end_B("padlock_sha256_oneshot");
 
-&function_begin_B("padlock_sha256");
+&function_begin_B("padlock_sha256_blocks");
 	&push	("edi");
 	&push	("esi");
 	&mov	("eax",-1);
@@ -408,7 +415,19 @@ my ($mode,$opcode) = @_;
 	&pop	("esi");
 	&pop	("edi");
 	&ret	();
-&function_end_B("padlock_sha256");
+&function_end_B("padlock_sha256_blocks");
+
+&function_begin_B("padlock_sha512_blocks");
+	&push	("edi");
+	&push	("esi");
+	&mov	("edi",&wparam(0));
+	&mov	("esi",&wparam(1));
+	&mov	("ecx",&wparam(2));
+	&data_byte(0xf3,0x0f,0xa6,0xe0);	# rep xsha512
+	&pop	("esi");
+	&pop	("edi");
+	&ret	();
+&function_end_B("padlock_sha512_blocks");
 
 &asciz	("VIA Padlock x86 module, CRYPTOGAMS by <appro\@openssl.org>");
 &align	(16);
@@ -417,7 +436,7 @@ my ($mode,$opcode) = @_;
 # Essentially this variable belongs in thread local storage.
 # Having this variable global on the other hand can only cause
 # few bogus key reloads [if any at all on signle-CPU system],
-# so we accept the panalty...
+# so we accept the penalty...
 &set_label("padlock_saved_context",4);
 &data_word(0);
 
