@@ -9,7 +9,8 @@
 
 # September 2011
 #
-# Assembler helpers for Padlock engine.
+# Assembler helpers for Padlock engine. See even e_padlock-x86.pl for
+# details.
 
 $flavour = shift;
 $output  = shift;
@@ -26,7 +27,7 @@ open STDOUT,"| $^X $xlate $flavour $output";
 
 $code=".text\n";
 
-$PADLOCK_CHUNK=512;	# Must be a power of 2 larger than 16
+$PADLOCK_CHUNK=512;	# Must be a power of 2 between 32 and 2^20
 
 $ctx="%rdx";
 $out="%rdi";
@@ -234,9 +235,23 @@ padlock_${mode}_encrypt:
 	neg	%rax
 	and	\$$PADLOCK_CHUNK-1,$chunk	# chunk%=PADLOCK_CHUNK
 	lea	(%rax,%rbp),%rsp
+___
+$code.=<<___				if ($mode eq "ctr32");
+	mov	-4($ctx),%eax		# pull 32-bit counter
+	bswap	%eax
+	neg	%eax
+	and	\$`$PADLOCK_CHUNK/16-1`,%eax
+	jz	.L${mode}_loop
+	shl	\$4,%eax
+	cmp	%rax,$len
+	cmova	%rax,$chunk		# don't let counter cross PADLOCK_CHUNK
+___
+$code.=<<___;
 	jmp	.L${mode}_loop
 .align	16
 .L${mode}_loop:
+	cmp	$len,$chunk		# ctr32 artefact
+	cmova	$len,$chunk		# ctr32 artefact
 	mov	$out,%r8		# save parameters
 	mov	$inp,%r9
 	mov	$len,%r10
@@ -260,6 +275,16 @@ ___
 $code.=<<___				if ($mode !~ /ecb|ctr/);
 	movdqa	(%rax),%xmm0
 	movdqa	%xmm0,-16($ctx)		# copy [or refresh] iv
+___
+$code.=<<___				if ($mode eq "ctr32");
+	mov	-4($ctx),%eax		# pull 32-bit counter
+	test	\$0xffff0000,%eax
+	jnz	.L${mode}_no_corr
+	bswap	%eax
+	add	\$0x10000,%eax
+	bswap	%eax
+	mov	%eax,-4($ctx)
+.L${mode}_no_corr:
 ___
 $code.=<<___;
 	mov	%r8,$out		# restore paramters
@@ -295,6 +320,29 @@ $code.=<<___;
 
 .align	16
 .L${mode}_aligned:
+___
+$code.=<<___				if ($mode eq "ctr32");
+	mov	-4($ctx),%eax		# pull 32-bit counter
+	mov	\$`16*0x10000`,$chunk
+	bswap	%eax
+	cmp	$len,$chunk
+	cmova	$len,$chunk
+	neg	%eax
+	and	\$0xffff,%eax
+	jz	.L${mode}_aligned_loop
+	shl	\$4,%eax
+	cmp	%rax,$len
+	cmova	%rax,$chunk		# don't let counter cross 2^16
+	jmp	.L${mode}_aligned_loop
+.align	16
+.L${mode}_aligned_loop:
+	cmp	$len,$chunk
+	cmova	$len,$chunk
+	mov	$len,%r10		# save parameters
+	mov	$chunk,$len
+	mov	$chunk,%r11
+___
+$code.=<<___;
 	lea	-16($ctx),%rax		# ivp
 	lea	16($ctx),%rbx		# key
 	shr	\$4,$len		# len/=AES_BLOCK_SIZE
@@ -303,6 +351,19 @@ ___
 $code.=<<___				if ($mode !~ /ecb|ctr/);
 	movdqa	(%rax),%xmm0
 	movdqa	%xmm0,-16($ctx)		# copy [or refresh] iv
+___
+$code.=<<___				if ($mode eq "ctr32");
+	mov	-4($ctx),%eax		# pull 32-bit counter
+	bswap	%eax
+	add	\$0x10000,%eax
+	bswap	%eax
+	mov	%eax,-4($ctx)
+
+	mov	%r11,$chunk		# restore paramters
+	mov	%r10,$len
+	sub	$chunk,$len
+	mov	\$`16*0x10000`,$chunk
+	jnz	.L${mode}_aligned_loop
 ___
 $code.=<<___;
 .L${mode}_exit:
@@ -320,7 +381,7 @@ ___
 &generate_mode("cbc",0xd0);
 &generate_mode("cfb",0xe0);
 &generate_mode("ofb",0xe8);
-&generate_mode("ctr16",0xd8);
+&generate_mode("ctr32",0xd8);	# all 64-bit CPUs have working CTR...
 
 $code.=<<___;
 .asciz	"VIA Padlock x86_64 module, CRYPTOGAMS by <appro\@openssl.org>"

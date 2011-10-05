@@ -183,7 +183,7 @@ my ($mode,$opcode) = @_;
 &set_label("${mode}_pic_point");
 	&lea	($ctx,&DWP(16,$ctx));	# control word
 	&xor	("eax","eax");
-					if ($mode eq "ctr16") {
+					if ($mode eq "ctr32") {
 	&movq	("mm0",&QWP(-16,$ctx));	# load [upper part of] counter
 					} else {
 	&xor	("ebx","ebx");
@@ -216,7 +216,7 @@ my ($mode,$opcode) = @_;
 	&mov	(&DWP(8,"ebp"),$len);
 	&mov	($len,$chunk);
 	&mov	(&DWP(12,"ebp"),$chunk);	# chunk
-						if ($mode eq "ctr16") {
+						if ($mode eq "ctr32") {
 	&mov	("ecx",&DWP(-4,$ctx));
 	&xor	($out,$out);
 	&mov	("eax",&DWP(-8,$ctx));		# borrow $len
@@ -257,7 +257,7 @@ my ($mode,$opcode) = @_;
 						}
 	&mov	($out,&DWP(0,"ebp"));		# restore parameters
 	&mov	($chunk,&DWP(12,"ebp"));
-						if ($mode eq "ctr16") {
+						if ($mode eq "ctr32") {
 	&mov	($inp,&DWP(4,"ebp"));
 	&xor	($len,$len);
 &set_label("${mode}_xor");
@@ -284,7 +284,7 @@ my ($mode,$opcode) = @_;
 	&sub	($len,$chunk);
 	&mov	($chunk,$PADLOCK_CHUNK);
 	&jnz	(&label("${mode}_loop"));
-						if ($mode ne "ctr16") {
+						if ($mode ne "ctr32") {
 	&test	($out,0x0f);			# out_misaligned
 	&jz	(&label("${mode}_done"));
 						}
@@ -296,7 +296,7 @@ my ($mode,$opcode) = @_;
 	&data_byte(0xf3,0xab);			# rep stosl
 &set_label("${mode}_done");
 	&lea	("esp",&DWP(24,"ebp"));
-						if ($mode ne "ctr16") {
+						if ($mode ne "ctr32") {
 	&jmp	(&label("${mode}_exit"));
 
 &set_label("${mode}_aligned",16);
@@ -311,7 +311,7 @@ my ($mode,$opcode) = @_;
 &set_label("${mode}_exit");			}
 	&mov	("eax",1);
 	&lea	("esp",&DWP(4,"esp"));		# popf
-	&emms	()				if ($mode eq "ctr16");
+	&emms	()				if ($mode eq "ctr32");
 &set_label("${mode}_abort");
 &function_end("padlock_${mode}_encrypt");
 }
@@ -320,10 +320,11 @@ my ($mode,$opcode) = @_;
 &generate_mode("cbc",0xd0);
 &generate_mode("cfb",0xe0);
 &generate_mode("ofb",0xe8);
-&generate_mode("ctr16",0xc8);	# yes, it implements own ctr with ecb opcode,
-				# because hardware ctr was introduced later
-				# and even has errata on certain CPU stepping.
-				# own implementation *always* works...
+&generate_mode("ctr32",0xc8);	# yes, it implements own CTR with ECB opcode,
+				# because hardware CTR was introduced later
+				# and even has errata on certain C7 stepping.
+				# own implementation *always* works, though
+				# ~15% slower than dedicated hardware...
 
 &function_begin_B("padlock_xstore");
 	&push	("edi");

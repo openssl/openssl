@@ -76,6 +76,7 @@
 #endif
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/modes.h>
 
 #ifndef OPENSSL_NO_HW
 #ifndef OPENSSL_NO_HW_PADLOCK
@@ -337,16 +338,19 @@ static int padlock_cipher_nids[] = {
 	NID_aes_128_cbc,
 	NID_aes_128_cfb,
 	NID_aes_128_ofb,
+	NID_aes_128_ctr,
 
 	NID_aes_192_ecb,
 	NID_aes_192_cbc,
 	NID_aes_192_cfb,
 	NID_aes_192_ofb,
+	NID_aes_192_ctr,
 
 	NID_aes_256_ecb,
 	NID_aes_256_cbc,
 	NID_aes_256_cfb,
 	NID_aes_256_ofb,
+	NID_aes_256_ctr
 };
 static int padlock_cipher_nids_num = (sizeof(padlock_cipher_nids)/
 				      sizeof(padlock_cipher_nids[0]));
@@ -505,10 +509,35 @@ padlock_ofb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
 	return 1;
 }
 
+static void padlock_ctr32_encrypt_glue(const unsigned char *in,
+			unsigned char *out, size_t blocks,
+			struct padlock_cipher_data *ctx,
+			const unsigned char *ivec)
+{
+	memcpy(ctx->iv,ivec,AES_BLOCK_SIZE);
+	padlock_ctr32_encrypt(out,in,ctx,AES_BLOCK_SIZE*blocks);
+}
+
+static int
+padlock_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out_arg,
+		   const unsigned char *in_arg, size_t nbytes)
+{
+	struct padlock_cipher_data *cdata = ALIGNED_CIPHER_DATA(ctx);
+	unsigned int num = ctx->num;
+
+	CRYPTO_ctr128_encrypt_ctr32(in_arg,out_arg,nbytes,
+			cdata,ctx->iv,ctx->buf,&num,
+			(ctr128_f)padlock_ctr32_encrypt_glue);
+
+	ctx->num = (size_t)num;
+	return 1;
+}
+
 #define EVP_CIPHER_block_size_ECB	AES_BLOCK_SIZE
 #define EVP_CIPHER_block_size_CBC	AES_BLOCK_SIZE
 #define EVP_CIPHER_block_size_OFB	1
 #define EVP_CIPHER_block_size_CFB	1
+#define EVP_CIPHER_block_size_CTR	1
 
 /* Declaring so many ciphers by hand would be a pain.
    Instead introduce a bit of preprocessor magic :-) */
@@ -533,16 +562,19 @@ DECLARE_AES_EVP(128,ecb,ECB);
 DECLARE_AES_EVP(128,cbc,CBC);
 DECLARE_AES_EVP(128,cfb,CFB);
 DECLARE_AES_EVP(128,ofb,OFB);
+DECLARE_AES_EVP(128,ctr,CTR);
 
 DECLARE_AES_EVP(192,ecb,ECB);
 DECLARE_AES_EVP(192,cbc,CBC);
 DECLARE_AES_EVP(192,cfb,CFB);
 DECLARE_AES_EVP(192,ofb,OFB);
+DECLARE_AES_EVP(192,ctr,CTR);
 
 DECLARE_AES_EVP(256,ecb,ECB);
 DECLARE_AES_EVP(256,cbc,CBC);
 DECLARE_AES_EVP(256,cfb,CFB);
 DECLARE_AES_EVP(256,ofb,OFB);
+DECLARE_AES_EVP(256,ctr,CTR);
 
 static int
 padlock_ciphers (ENGINE *e, const EVP_CIPHER **cipher, const int **nids, int nid)
@@ -567,6 +599,9 @@ padlock_ciphers (ENGINE *e, const EVP_CIPHER **cipher, const int **nids, int nid
 	  case NID_aes_128_ofb:
 	    *cipher = &padlock_aes_128_ofb;
 	    break;
+	  case NID_aes_128_ctr:
+	    *cipher = &padlock_aes_128_ctr;
+	    break;
 
 	  case NID_aes_192_ecb:
 	    *cipher = &padlock_aes_192_ecb;
@@ -580,6 +615,9 @@ padlock_ciphers (ENGINE *e, const EVP_CIPHER **cipher, const int **nids, int nid
 	  case NID_aes_192_ofb:
 	    *cipher = &padlock_aes_192_ofb;
 	    break;
+	  case NID_aes_192_ctr:
+	    *cipher = &padlock_aes_192_ctr;
+	    break;
 
 	  case NID_aes_256_ecb:
 	    *cipher = &padlock_aes_256_ecb;
@@ -592,6 +630,9 @@ padlock_ciphers (ENGINE *e, const EVP_CIPHER **cipher, const int **nids, int nid
 	    break;
 	  case NID_aes_256_ofb:
 	    *cipher = &padlock_aes_256_ofb;
+	    break;
+	  case NID_aes_256_ctr:
+	    *cipher = &padlock_aes_256_ctr;
 	    break;
 
 	  default:
@@ -610,6 +651,7 @@ padlock_aes_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *key,
 {
 	struct padlock_cipher_data *cdata;
 	int key_len = EVP_CIPHER_CTX_key_length(ctx) * 8;
+	unsigned long mode = EVP_CIPHER_CTX_mode(ctx);
 
 	if (key==NULL) return 0;	/* ERROR */
 
@@ -617,7 +659,7 @@ padlock_aes_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	memset(cdata, 0, sizeof(struct padlock_cipher_data));
 
 	/* Prepare Control word. */
-	if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_OFB_MODE)
+	if (mode == EVP_CIPH_OFB_MODE || mode == EVP_CIPH_CTR_MODE)
 		cdata->cword.b.encdec = 0;
 	else
 		cdata->cword.b.encdec = (ctx->encrypt == 0);
@@ -640,8 +682,8 @@ padlock_aes_init_key (EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			   and is listed as hardware errata. They most
 			   likely will fix it at some point and then
 			   a check for stepping would be due here. */
-			if ((EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_ECB_MODE ||
-			     EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_CBC_MODE)
+			if ((mode == EVP_CIPH_ECB_MODE ||
+			     mode == EVP_CIPH_CBC_MODE)
 			    && !enc)
 				AES_set_decrypt_key(key, key_len, &cdata->ks);
 			else
