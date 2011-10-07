@@ -174,6 +174,9 @@ extern "C" {
 #define TLS1_get_version(s) \
 		((s->version >> 8) == TLS1_VERSION_MAJOR ? s->version : 0)
 
+#define TLS1_get_client_version(s) \
+		((s->client_version >> 8) == TLS1_VERSION_MAJOR ? s->client_version : 0)
+
 #define TLS1_AD_DECRYPTION_FAILED	21
 #define TLS1_AD_RECORD_OVERFLOW		22
 #define TLS1_AD_UNKNOWN_CA		48	/* fatal */
