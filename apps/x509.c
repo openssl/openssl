@@ -174,7 +174,7 @@ int MAIN(int argc, char **argv)
 	X509 *x=NULL,*xca=NULL;
 	ASN1_OBJECT *objtmp;
 	STACK_OF(OPENSSL_STRING) *sigopts = NULL;
-	EVP_PKEY *Upkey=NULL,*CApkey=NULL;
+	EVP_PKEY *Upkey=NULL,*CApkey=NULL, *fkey = NULL;
 	ASN1_INTEGER *sno = NULL;
 	int i,num,badops=0;
 	BIO *out=NULL;
@@ -183,6 +183,7 @@ int MAIN(int argc, char **argv)
 	int informat,outformat,keyformat,CAformat,CAkeyformat;
 	char *infile=NULL,*outfile=NULL,*keyfile=NULL,*CAfile=NULL;
 	char *CAkeyfile=NULL,*CAserial=NULL;
+	char *fkeyfile=NULL;
 	char *alias=NULL;
 	int text=0,serial=0,subject=0,issuer=0,startdate=0,enddate=0;
 	int next_serial=0;
@@ -346,6 +347,11 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			if (!(sno = s2i_ASN1_INTEGER(NULL, *(++argv))))
 				goto bad;
+			}
+		else if (strcmp(*argv,"-force_pubkey") == 0)
+			{
+			if (--argc < 1) goto bad;
+			fkeyfile= *(++argv);
 			}
 		else if (strcmp(*argv,"-addtrust") == 0)
 			{
@@ -517,6 +523,13 @@ bad:
 		goto end;
 		}
 
+	if (fkeyfile)
+		{
+		fkey = load_pubkey(bio_err, fkeyfile, keyformat, 0,
+						NULL, e, "Forced key");
+		if (fkey == NULL) goto end;
+		}
+
 	if ((CAkeyfile == NULL) && (CA_flag) && (CAformat == FORMAT_PEM))
 		{ CAkeyfile=CAfile; }
 	else if ((CA_flag) && (CAkeyfile == NULL))
@@ -653,10 +666,14 @@ bad:
 
 		X509_gmtime_adj(X509_get_notBefore(x),0);
 	        X509_time_adj_ex(X509_get_notAfter(x),days, 0, NULL);
-
-		pkey = X509_REQ_get_pubkey(req);
-		X509_set_pubkey(x,pkey);
-		EVP_PKEY_free(pkey);
+		if (fkey)
+			X509_set_pubkey(x, fkey);
+		else
+			{
+			pkey = X509_REQ_get_pubkey(req);
+			X509_set_pubkey(x,pkey);
+			EVP_PKEY_free(pkey);
+			}
 		}
 	else
 		x=load_cert(bio_err,infile,informat,NULL,e,"Certificate");
@@ -1093,6 +1110,7 @@ end:
 	X509_free(xca);
 	EVP_PKEY_free(Upkey);
 	EVP_PKEY_free(CApkey);
+	EVP_PKEY_free(fkey);
 	if (sigopts)
 		sk_OPENSSL_STRING_free(sigopts);
 	X509_REQ_free(rq);
