@@ -70,6 +70,7 @@ my @dirs = (
 "fips/des",
 "fips/dsa",
 "fips/dh",
+"fips/ecdh",
 "fips/ecdsa",
 "fips/hmac",
 "fips/rand",
