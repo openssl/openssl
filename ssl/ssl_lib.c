@@ -1371,7 +1371,7 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 		c=sk_SSL_CIPHER_value(sk,i);
 		/* Skip TLS v1.2 only ciphersuites if lower than v1.2 */
 		if ((c->algorithm_ssl & SSL_TLSV1_2) && 
-			(TLS1_get_version(s) < TLS1_2_VERSION))
+			(TLS1_get_client_version(s) < TLS1_2_VERSION))
 			continue;
 #ifndef OPENSSL_NO_KRB5
 		if (((c->algorithm_mkey & SSL_kKRB5) || (c->algorithm_auth & SSL_aKRB5)) &&
