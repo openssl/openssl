@@ -352,19 +352,34 @@ my ($mode,$opcode) = @_;
 	&push	("edi");
 	&push	("esi");
 	&xor	("eax","eax");
+	&mov	("edi",&wparam(0));
+	&mov	("esi",&wparam(1));
+	&mov	("ecx",&wparam(2));
     if ($::win32 or $::coff) {
     	&push	(&::islabel("_win32_segv_handler"));
 	&data_byte(0x64,0xff,0x30);		# push	%fs:(%eax)
 	&data_byte(0x64,0x89,0x20);		# mov	%esp,%fs:(%eax)
     }
-	&mov	("edi",&wparam(0));
-	&mov	("esi",&wparam(1));
-	&mov	("ecx",&wparam(2));
+	&mov	("edx","esp");			# put aside %esp
+	&add	("esp",-128);			# 32 is enough but spec says 128
+	&movups	("xmm0",&QWP(0,"edi"));		# copy-in context
+	&and	("esp",-16);
+	&mov	("eax",&DWP(16,"edi"));
+	&movaps	(&QWP(0,"esp"),"xmm0");
+	&mov	("edi","esp");
+	&mov	(&DWP(16,"esp"),"eax");
+	&xor	("eax","eax");
 	&data_byte(0xf3,0x0f,0xa6,0xc8);	# rep xsha1
+	&movaps	("xmm0",&QWP(0,"esp"));
+	&mov	("eax",&DWP(16,"esp"));
+	&mov	("esp","edx");			# restore %esp
     if ($::win32 or $::coff) {
 	&data_byte(0x64,0x8f,0x05,0,0,0,0);	# pop	%fs:0
 	&lea	("esp",&DWP(4,"esp"));
     }
+	&mov	("edi",&wparam(0));
+	&movups	(&QWP(0,"edi"),"xmm0");		# copy-out context
+	&mov	(&DWP(16,"edi"),"eax");
 	&pop	("esi");
 	&pop	("edi");
 	&ret	();
@@ -373,12 +388,26 @@ my ($mode,$opcode) = @_;
 &function_begin_B("padlock_sha1_blocks");
 	&push	("edi");
 	&push	("esi");
-	&mov	("eax",-1);
 	&mov	("edi",&wparam(0));
 	&mov	("esi",&wparam(1));
+	&mov	("edx","esp");			# put aside %esp
 	&mov	("ecx",&wparam(2));
+	&add	("esp",-128);
+	&movups	("xmm0",&QWP(0,"edi"));		# copy-in context
+	&and	("esp",-16);
+	&mov	("eax",&DWP(16,"edi"));
+	&movaps	(&QWP(0,"esp"),"xmm0");
+	&mov	("edi","esp");
+	&mov	(&DWP(16,"esp"),"eax");
+	&mov	("eax",-1);
 	&data_byte(0xf3,0x0f,0xa6,0xc8);	# rep xsha1
-	&pop	("esi");
+	&movaps	("xmm0",&QWP(0,"esp"));
+	&mov	("eax",&DWP(16,"esp"));
+	&mov	("esp","edx");			# restore %esp
+	&mov	("edi",&wparam(0));
+	&movups	(&QWP(0,"edi"),"xmm0");		# copy-out context
+	&mov	(&DWP(16,"edi"),"eax");
+ 	&pop	("esi");
 	&pop	("edi");
 	&ret	();
 &function_end_B("padlock_sha1_blocks");
@@ -387,19 +416,34 @@ my ($mode,$opcode) = @_;
 	&push	("edi");
 	&push	("esi");
 	&xor	("eax","eax");
+	&mov	("edi",&wparam(0));
+	&mov	("esi",&wparam(1));
+	&mov	("ecx",&wparam(2));
     if ($::win32 or $::coff) {
     	&push	(&::islabel("_win32_segv_handler"));
 	&data_byte(0x64,0xff,0x30);		# push	%fs:(%eax)
 	&data_byte(0x64,0x89,0x20);		# mov	%esp,%fs:(%eax)
     }
-	&mov	("edi",&wparam(0));
-	&mov	("esi",&wparam(1));
-	&mov	("ecx",&wparam(2));
+	&mov	("edx","esp");			# put aside %esp
+	&add	("esp",-128);
+	&movups	("xmm0",&QWP(0,"edi"));		# copy-in context
+	&and	("esp",-16);
+	&movups	("xmm1",&QWP(16,"edi"));
+	&movaps	(&QWP(0,"esp"),"xmm0");
+	&mov	("edi","esp");
+	&movaps	(&QWP(16,"esp"),"xmm1");
+	&xor	("eax","eax");
 	&data_byte(0xf3,0x0f,0xa6,0xd0);	# rep xsha256
+	&movaps	("xmm0",&QWP(0,"esp"));
+	&movaps	("xmm1",&QWP(16,"esp"));
+	&mov	("esp","edx");			# restore %esp
     if ($::win32 or $::coff) {
 	&data_byte(0x64,0x8f,0x05,0,0,0,0);	# pop	%fs:0
 	&lea	("esp",&DWP(4,"esp"));
     }
+	&mov	("edi",&wparam(0));
+	&movups	(&QWP(0,"edi"),"xmm0");		# copy-out context
+	&movups	(&QWP(16,"edi"),"xmm1");
 	&pop	("esi");
 	&pop	("edi");
 	&ret	();
@@ -408,11 +452,25 @@ my ($mode,$opcode) = @_;
 &function_begin_B("padlock_sha256_blocks");
 	&push	("edi");
 	&push	("esi");
-	&mov	("eax",-1);
 	&mov	("edi",&wparam(0));
 	&mov	("esi",&wparam(1));
 	&mov	("ecx",&wparam(2));
+	&mov	("edx","esp");			# put aside %esp
+	&add	("esp",-128);
+	&movups	("xmm0",&QWP(0,"edi"));		# copy-in context
+	&and	("esp",-16);
+	&movups	("xmm1",&QWP(16,"edi"));
+	&movaps	(&QWP(0,"esp"),"xmm0");
+	&mov	("edi","esp");
+	&movaps	(&QWP(16,"esp"),"xmm1");
+	&mov	("eax",-1);
 	&data_byte(0xf3,0x0f,0xa6,0xd0);	# rep xsha256
+	&movaps	("xmm0",&QWP(0,"esp"));
+	&movaps	("xmm1",&QWP(16,"esp"));
+	&mov	("esp","edx");			# restore %esp
+	&mov	("edi",&wparam(0));
+	&movups	(&QWP(0,"edi"),"xmm0");		# copy-out context
+	&movups	(&QWP(16,"edi"),"xmm1");
 	&pop	("esi");
 	&pop	("edi");
 	&ret	();
@@ -424,7 +482,29 @@ my ($mode,$opcode) = @_;
 	&mov	("edi",&wparam(0));
 	&mov	("esi",&wparam(1));
 	&mov	("ecx",&wparam(2));
+	&mov	("edx","esp");			# put aside %esp
+	&add	("esp",-128);
+	&movups	("xmm0",&QWP(0,"edi"));		# copy-in context
+	&and	("esp",-16);
+	&movups	("xmm1",&QWP(16,"edi"));
+	&movups	("xmm2",&QWP(32,"edi"));
+	&movups	("xmm3",&QWP(48,"edi"));
+	&movaps	(&QWP(0,"esp"),"xmm0");
+	&mov	("edi","esp");
+	&movaps	(&QWP(16,"esp"),"xmm1");
+	&movaps	(&QWP(32,"esp"),"xmm2");
+	&movaps	(&QWP(48,"esp"),"xmm3");
 	&data_byte(0xf3,0x0f,0xa6,0xe0);	# rep xsha512
+	&movaps	("xmm0",&QWP(0,"esp"));
+	&movaps	("xmm1",&QWP(16,"esp"));
+	&movaps	("xmm2",&QWP(32,"esp"));
+	&movaps	("xmm3",&QWP(48,"esp"));
+	&mov	("esp","edx");			# restore %esp
+	&mov	("edi",&wparam(0));
+	&movups	(&QWP(0,"edi"),"xmm0");		# copy-out context
+	&movups	(&QWP(16,"edi"),"xmm1");
+	&movups	(&QWP(32,"edi"),"xmm2");
+	&movups	(&QWP(48,"edi"),"xmm3");
 	&pop	("esi");
 	&pop	("edi");
 	&ret	();

@@ -146,9 +146,20 @@ padlock_xstore:
 .type	padlock_sha1_oneshot,\@function,3
 .align	16
 padlock_sha1_oneshot:
-	xor	%rax,%rax
 	mov	%rdx,%rcx
+	mov	%rdi,%rdx		# put aside %rdi
+	movups	(%rdi),%xmm0		# copy-in context
+	sub	\$128+8,%rsp
+	mov	16(%rdi),%eax
+	movaps	%xmm0,(%rsp)
+	mov	%rsp,%rdi
+	mov	%eax,16(%rsp)
+	xor	%rax,%rax
 	.byte	0xf3,0x0f,0xa6,0xc8	# rep xsha1
+	movaps	(%rsp),%xmm0
+	mov	16(%rsp),%eax
+	movups	%xmm0,(%rdx)		# copy-out context
+	mov	%eax,16(%rdx)
 	ret
 .size	padlock_sha1_oneshot,.-padlock_sha1_oneshot
 
@@ -156,9 +167,20 @@ padlock_sha1_oneshot:
 .type	padlock_sha1_blocks,\@function,3
 .align	16
 padlock_sha1_blocks:
-	mov	\$-1,%rax
 	mov	%rdx,%rcx
+	mov	%rdi,%rdx		# put aside %rdi
+	movups	(%rdi),%xmm0		# copy-in context
+	sub	\$128+8,%rsp
+	mov	16(%rdi),%eax
+	movaps	%xmm0,(%rsp)
+	mov	%rsp,%rdi
+	mov	%eax,16(%rsp)
+	mov	\$-1,%rax
 	.byte	0xf3,0x0f,0xa6,0xc8	# rep xsha1
+	movaps	(%rsp),%xmm0
+	mov	16(%rsp),%eax
+	movups	%xmm0,(%rdx)		# copy-out context
+	mov	%eax,16(%rdx)
 	ret
 .size	padlock_sha1_blocks,.-padlock_sha1_blocks
 
@@ -166,9 +188,20 @@ padlock_sha1_blocks:
 .type	padlock_sha256_oneshot,\@function,3
 .align	16
 padlock_sha256_oneshot:
-	xor	%rax,%rax
 	mov	%rdx,%rcx
+	mov	%rdi,%rdx		# put aside %rdi
+	movups	(%rdi),%xmm0		# copy-in context
+	sub	\$128+8,%rsp
+	movups	16(%rdi),%xmm1
+	movaps	%xmm0,(%rsp)
+	mov	%rsp,%rdi
+	movaps	%xmm1,16(%rsp)
+	xor	%rax,%rax
 	.byte	0xf3,0x0f,0xa6,0xd0	# rep xsha256
+	movaps	(%rsp),%xmm0
+	movaps	16(%rsp),%xmm1
+	movups	%xmm0,(%rdx)		# copy-out context
+	movups	%xmm1,16(%rdx)
 	ret
 .size	padlock_sha256_oneshot,.-padlock_sha256_oneshot
 
@@ -176,9 +209,20 @@ padlock_sha256_oneshot:
 .type	padlock_sha256_blocks,\@function,3
 .align	16
 padlock_sha256_blocks:
-	mov	\$-1,%rax
 	mov	%rdx,%rcx
+	mov	%rdi,%rdx		# put aside %rdi
+	movups	(%rdi),%xmm0		# copy-in context
+	sub	\$128+8,%rsp
+	movups	16(%rdi),%xmm1
+	movaps	%xmm0,(%rsp)
+	mov	%rsp,%rdi
+	movaps	%xmm1,16(%rsp)
+	mov	\$-1,%rax
 	.byte	0xf3,0x0f,0xa6,0xd0	# rep xsha256
+	movaps	(%rsp),%xmm0
+	movaps	16(%rsp),%xmm1
+	movups	%xmm0,(%rdx)		# copy-out context
+	movups	%xmm1,16(%rdx)
 	ret
 .size	padlock_sha256_blocks,.-padlock_sha256_blocks
 
@@ -187,7 +231,26 @@ padlock_sha256_blocks:
 .align	16
 padlock_sha512_blocks:
 	mov	%rdx,%rcx
+	mov	%rdi,%rdx		# put aside %rdi
+	movups	(%rdi),%xmm0		# copy-in context
+	sub	\$128+8,%rsp
+	movups	16(%rdi),%xmm1
+	movups	32(%rdi),%xmm2
+	movups	48(%rdi),%xmm3
+	movaps	%xmm0,(%rsp)
+	mov	%rsp,%rdi
+	movaps	%xmm1,16(%rsp)
+	movaps	%xmm2,32(%rsp)
+	movaps	%xmm3,48(%rsp)
 	.byte	0xf3,0x0f,0xa6,0xe0	# rep xha512
+	movaps	(%rsp),%xmm0
+	movaps	16(%rsp),%xmm1
+	movaps	32(%rsp),%xmm2
+	movaps	48(%rsp),%xmm3
+	movups	%xmm0,(%rdx)		# copy-out context
+	movups	%xmm1,16(%rdx)
+	movups	%xmm2,32(%rdx)
+	movups	%xmm3,48(%rdx)
 	ret
 .size	padlock_sha512_blocks,.-padlock_sha512_blocks
 ___
