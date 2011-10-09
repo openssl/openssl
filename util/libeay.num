@@ -4283,3 +4283,8 @@ CRYPTO_gcm128_decrypt_ctr32             4653	EXIST::FUNCTION:
 CRYPTO_gcm128_encrypt_ctr32             4654	EXIST::FUNCTION:
 CRYPTO_gcm128_finish                    4655	EXIST::FUNCTION:
 EVP_aes_256_cbc_hmac_sha1               4656	EXIST::FUNCTION:AES,SHA,SHA1
+PKCS5_pbkdf2_set                        4657	EXIST::FUNCTION:
+CMS_add0_recipient_password             4658	EXIST::FUNCTION:CMS
+CMS_decrypt_set1_password               4659	EXIST::FUNCTION:CMS
+CMS_RecipientInfo_set0_password         4660	EXIST::FUNCTION:CMS
+RAND_set_fips_drbg_type                 4661	EXIST:OPENSSL_FIPS:FUNCTION:
