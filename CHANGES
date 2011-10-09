@@ -4,6 +4,40 @@
 
  Changes between 1.0.0e and 1.0.1  [xx XXX xxxx]
 
+  *) New -sigopt option to the ca, req and x509 utilities. Additional
+     signature parameters can be passed using this option and in
+     particular PSS. 
+     [Steve Henson]
+
+  *) Add RSA PSS signing function. This will generate and set the
+     appropriate AlgorithmIdentifiers for PSS based on those in the
+     corresponding EVP_MD_CTX structure. No application support yet.
+     [Steve Henson]
+
+  *) Support for companion algorithm specific ASN1 signing routines.
+     New function ASN1_item_sign_ctx() signs a pre-initialised
+     EVP_MD_CTX structure and sets AlgorithmIdentifiers based on
+     the appropriate parameters.
+     [Steve Henson]
+
+  *) Add new algorithm specific ASN1 verification initialisation function
+     to EVP_PKEY_ASN1_METHOD: this is not in EVP_PKEY_METHOD since the ASN1
+     handling will be the same no matter what EVP_PKEY_METHOD is used.
+     Add a PSS handler to support verification of PSS signatures: checked
+     against a number of sample certificates.
+     [Steve Henson]
+
+  *) Add signature printing for PSS. Add PSS OIDs.
+     [Steve Henson, Martin Kaiser <lists@kaiser.cx>]
+
+  *) Add algorithm specific signature printing. An individual ASN1 method
+     can now print out signatures instead of the standard hex dump. 
+
+     More complex signatures (e.g. PSS) can print out more meaningful
+     information. Include DSA version that prints out the signature
+     parameters r, s.
+     [Steve Henson]
+
   *) Password based recipient info support for CMS library: implementing
      RFC3211.
      [Steve Henson]
