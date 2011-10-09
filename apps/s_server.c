@@ -1463,9 +1463,6 @@ bad:
 	SSL_CTX_set_quiet_shutdown(ctx,1);
 	if (bugs) SSL_CTX_set_options(ctx,SSL_OP_ALL);
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
-	/* HACK while TLS v1.2 is disabled by default */
-	if (!(off & SSL_OP_NO_TLSv1_2))
-		SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_2);
 	SSL_CTX_set_options(ctx,off);
 	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 	 * Setting read ahead solves this problem.

@@ -1044,9 +1044,6 @@ bad:
 		SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
 		}
 #endif
-	/* HACK while TLS v1.2 is disabled by default */
-	if (!(off & SSL_OP_NO_TLSv1_2))
-		SSL_CTX_clear_options(ctx, SSL_OP_NO_TLSv1_2);
 	if (bugs)
 		SSL_CTX_set_options(ctx,SSL_OP_ALL|off);
 	else

@@ -1717,8 +1717,6 @@ SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth)
 	 * deployed might change this.
 	 */
 	ret->options |= SSL_OP_LEGACY_SERVER_CONNECT;
-	/* Disable TLS v1.2 by default for now */
-	ret->options |= SSL_OP_NO_TLSv1_2;
 
 	return(ret);
 err:
