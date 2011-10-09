@@ -383,6 +383,7 @@ static int range_should_be_prefix(const unsigned char *min,
   unsigned char mask;
   int i, j;
 
+  OPENSSL_assert(memcmp(min, max, length) <= 0);
   for (i = 0; i < length && min[i] == max[i]; i++)
     ;
   for (j = length - 1; j >= 0 && min[j] == 0x00 && max[j] == 0xFF; j--)
@@ -800,14 +801,16 @@ int v3_addr_is_canonical(IPAddrBlocks *addr)
     }
 
     /*
-     * Check final range to see if it should be a prefix.
+     * Check range to see if it's inverted or should be a
+     * prefix.
      */
     j = sk_IPAddressOrRange_num(aors) - 1;
     {
       IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
-      if (a->type == IPAddressOrRange_addressRange) {
+      if (a != NULL && a->type == IPAddressOrRange_addressRange) {
 	extract_min_max(a, a_min, a_max, length);
-	if (range_should_be_prefix(a_min, a_max, length) >= 0)
+	if (memcmp(a_min, a_max, length) > 0 ||
+	    range_should_be_prefix(a_min, a_max, length) >= 0)
 	  return 0;
       }
     }
@@ -845,6 +848,13 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
     extract_min_max(b, b_min, b_max, length);
 
     /*
+     * Punt inverted ranges.
+     */
+    if (memcmp(a_min, a_max, length) > 0 ||
+	memcmp(b_min, b_max, length) > 0)
+      return 0;
+
+    /*
      * Punt overlaps.
      */
     if (memcmp(a_max, b_min, length) >= 0)
@@ -866,6 +876,20 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
       IPAddressOrRange_free(b);
       --i;
       continue;
+    }
+  }
+
+  /*
+   * Check for inverted final range.
+   */
+  j = sk_IPAddressOrRange_num(aors) - 1;
+  {
+    IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
+    if (a != NULL && a->type == IPAddressOrRange_addressRange) {
+      unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
+      extract_min_max(a, a_min, a_max, length);
+      if (memcmp(a_min, a_max, length) > 0)
+	return 0;
     }
   }
 
@@ -1014,6 +1038,11 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
       }
       if (a2i_ipadd(max, s + i1) != length) {
 	X509V3err(X509V3_F_V2I_IPADDRBLOCKS, X509V3_R_INVALID_IPADDRESS);
+	X509V3_conf_err(val);
+	goto err;
+      }
+      if (memcmp(min, max, length_from_afi(afi)) > 0) {
+	X509V3err(X509V3_F_V2I_IPADDRBLOCKS, X509V3_R_EXTENSION_VALUE_ERROR);
 	X509V3_conf_err(val);
 	goto err;
       }
