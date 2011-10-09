@@ -256,8 +256,8 @@
      multi-process servers.
      [Steve Henson]
 
-  *) Experiemental password based recipient info support for CMS library:
-     implementing RFC3211.
+  *) Password based recipient info support for CMS library: implementing
+     RFC3211.
      [Steve Henson]
 
   *) Split password based encryption into PBES2 and PBKDF2 functions. This
