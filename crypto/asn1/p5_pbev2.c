@@ -153,6 +153,8 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 
 	/* Setup keyfunc */
 
+	X509_ALGOR_free(pbe2->keyfunc);
+
 	pbe2->keyfunc = PKCS5_pbkdf2_set(iter, salt, saltlen, prf_nid, keylen);
 
 	if (!pbe2->keyfunc)
