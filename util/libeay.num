@@ -4288,3 +4288,14 @@ CMS_add0_recipient_password             4658	EXIST::FUNCTION:CMS
 CMS_decrypt_set1_password               4659	EXIST::FUNCTION:CMS
 CMS_RecipientInfo_set0_password         4660	EXIST::FUNCTION:CMS
 RAND_set_fips_drbg_type                 4661	EXIST:OPENSSL_FIPS:FUNCTION:
+X509_REQ_sign_ctx                       4662	EXIST::FUNCTION:EVP
+RSA_PSS_PARAMS_new                      4663	EXIST::FUNCTION:RSA
+X509_CRL_sign_ctx                       4664	EXIST::FUNCTION:EVP
+X509_signature_dump                     4665	EXIST::FUNCTION:EVP
+d2i_RSA_PSS_PARAMS                      4666	EXIST::FUNCTION:RSA
+RSA_PSS_PARAMS_it                       4667	EXIST:!EXPORT_VAR_AS_FUNCTION:VARIABLE:RSA
+RSA_PSS_PARAMS_it                       4667	EXIST:EXPORT_VAR_AS_FUNCTION:FUNCTION:RSA
+RSA_PSS_PARAMS_free                     4668	EXIST::FUNCTION:RSA
+X509_sign_ctx                           4669	EXIST::FUNCTION:EVP
+i2d_RSA_PSS_PARAMS                      4670	EXIST::FUNCTION:RSA
+ASN1_item_sign_ctx                      4671	EXIST::FUNCTION:EVP
