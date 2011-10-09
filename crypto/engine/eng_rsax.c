@@ -108,6 +108,7 @@ static int e_rsax_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 /* RSA stuff */
 static int e_rsax_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
 static int e_rsax_rsa_finish(RSA *r);
+static int (*def_rsa_finish)(RSA *r);
 #endif
 
 static const ENGINE_CMD_DEFN e_rsax_cmd_defns[] = {
@@ -163,7 +164,7 @@ static int bind_helper(ENGINE *e)
 	e_rsax_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
 	e_rsax_rsa.rsa_priv_dec = meth1->rsa_priv_dec;
 	e_rsax_rsa.bn_mod_exp = meth1->bn_mod_exp;
-	e_rsax_rsa.finish = meth1->finish;
+	def_rsa_finish = meth1->finish;
 #endif
 	return 1;
 	}
@@ -310,6 +311,8 @@ static int e_rsax_rsa_finish(RSA *rsa)
 
 	OPENSSL_free(hptr);
 	RSA_set_ex_data(rsa, rsax_ex_data_idx, NULL);
+	if (def_rsa_finish)
+		def_rsa_finish(rsa);
 	return 1;
 	}
 
@@ -468,7 +471,7 @@ static int mod_exp_pre_compute_data_512(UINT64 *m, struct mod_ctx_512 *data)
 err:
     /* Cleanup */
 	if (ctx != NULL) {
-		BN_CTX_end(ctx); }
+		BN_CTX_end(ctx); BN_CTX_free(ctx); }
     BN_free(&two_768);
     BN_free(&two_640);
     BN_free(&two_128);
