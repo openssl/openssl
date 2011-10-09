@@ -4,6 +4,16 @@
 
  Changes between 1.0.0e and 1.0.1  [xx XXX xxxx]
 
+  *) Experiemental password based recipient info support for CMS library:
+     implementing RFC3211.
+     [Steve Henson]
+
+  *) Split password based encryption into PBES2 and PBKDF2 functions. This
+     neatly separates the code into cipher and PBE sections and is required
+     for some algorithms that split PBES2 into separate pieces (such as
+     password based CMS).
+     [Steve Henson]
+
   *) Session-handling fixes:
      - Fix handling of connections that are resuming with a session ID,
        but also support Session Tickets.
