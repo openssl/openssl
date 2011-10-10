@@ -401,7 +401,6 @@ static int mod_exp_pre_compute_data_512(UINT64 *m, struct mod_ctx_512 *data)
     /* Some tmps */
     UINT64 _t[8];
     int i, j, ret = 0;
-CRYPTO_push_info("precomp");
     /* Init _m with m */
     BN_init(&_m);
     interleaved_array_to_bn_512(&_m, m);
@@ -485,8 +484,6 @@ err:
     BN_free(&tmp2);
     BN_free(&_m);
 
-    CRYPTO_pop_info();
-
     return ret;
 }
 
@@ -497,7 +494,6 @@ static int e_rsax_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx
 	BIGNUM local_dmp1,local_dmq1,local_c,local_r1;
 	BIGNUM *dmp1,*dmq1,*c,*pr1;
 	int ret=0;
-CRYPTO_push_info("start");
 	BN_CTX_start(ctx);
 	r1 = BN_CTX_get(ctx);
 	m1 = BN_CTX_get(ctx);
@@ -664,7 +660,6 @@ CRYPTO_push_info("start");
 	ret=1;
 
 err:
-	CRYPTO_pop_info();
 	BN_CTX_end(ctx);
 
 	return ret;
