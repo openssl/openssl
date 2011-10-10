@@ -307,12 +307,17 @@ static E_RSAX_MOD_CTX *e_rsax_get_ctx(RSA *rsa, int idx, BIGNUM* m)
 static int e_rsax_rsa_finish(RSA *rsa)
 	{
 	E_RSAX_MOD_CTX *hptr = RSA_get_ex_data(rsa, rsax_ex_data_idx);
-	if(!hptr) return 0;
-
-	OPENSSL_free(hptr);
-	RSA_set_ex_data(rsa, rsax_ex_data_idx, NULL);
-	if (def_rsa_finish)
-		def_rsa_finish(rsa);
+	if(hptr)
+		{
+		OPENSSL_free(hptr);
+		RSA_set_ex_data(rsa, rsax_ex_data_idx, NULL);
+		}
+	if (rsa->_method_mod_n)
+		BN_MONT_CTX_free(rsa->_method_mod_n);
+	if (rsa->_method_mod_p)
+		BN_MONT_CTX_free(rsa->_method_mod_p);
+	if (rsa->_method_mod_q)
+		BN_MONT_CTX_free(rsa->_method_mod_q);
 	return 1;
 	}
 
@@ -396,7 +401,7 @@ static int mod_exp_pre_compute_data_512(UINT64 *m, struct mod_ctx_512 *data)
     /* Some tmps */
     UINT64 _t[8];
     int i, j, ret = 0;
-
+CRYPTO_push_info("precomp");
     /* Init _m with m */
     BN_init(&_m);
     interleaved_array_to_bn_512(&_m, m);
@@ -480,6 +485,8 @@ err:
     BN_free(&tmp2);
     BN_free(&_m);
 
+    CRYPTO_pop_info();
+
     return ret;
 }
 
@@ -490,7 +497,7 @@ static int e_rsax_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx
 	BIGNUM local_dmp1,local_dmq1,local_c,local_r1;
 	BIGNUM *dmp1,*dmq1,*c,*pr1;
 	int ret=0;
-
+CRYPTO_push_info("start");
 	BN_CTX_start(ctx);
 	r1 = BN_CTX_get(ctx);
 	m1 = BN_CTX_get(ctx);
@@ -657,6 +664,7 @@ static int e_rsax_rsa_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx
 	ret=1;
 
 err:
+	CRYPTO_pop_info();
 	BN_CTX_end(ctx);
 
 	return ret;
