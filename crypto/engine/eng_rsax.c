@@ -108,7 +108,6 @@ static int e_rsax_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f)(void));
 /* RSA stuff */
 static int e_rsax_rsa_mod_exp(BIGNUM *r, const BIGNUM *I, RSA *rsa, BN_CTX *ctx);
 static int e_rsax_rsa_finish(RSA *r);
-static int (*def_rsa_finish)(RSA *r);
 #endif
 
 static const ENGINE_CMD_DEFN e_rsax_cmd_defns[] = {
@@ -164,7 +163,6 @@ static int bind_helper(ENGINE *e)
 	e_rsax_rsa.rsa_priv_enc = meth1->rsa_priv_enc;
 	e_rsax_rsa.rsa_priv_dec = meth1->rsa_priv_dec;
 	e_rsax_rsa.bn_mod_exp = meth1->bn_mod_exp;
-	def_rsa_finish = meth1->finish;
 #endif
 	return 1;
 	}
