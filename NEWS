@@ -5,6 +5,14 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.0d and OpenSSL 1.0.0e:
+
+      o Fix for CRL vulnerability issue CVE-2011-3207
+      o Fix for ECDH crashes CVE-2011-3210
+      o Protection against EC timing attacks.
+      o Support ECDH ciphersuites for certificates using SHA2 algorithms.
+      o Various DTLS fixes.
+
   Major changes between OpenSSL 1.0.0c and OpenSSL 1.0.0d:
 
       o Fix for security issue CVE-2011-0014
