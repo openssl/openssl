@@ -307,12 +307,17 @@ static E_RSAX_MOD_CTX *e_rsax_get_ctx(RSA *rsa, int idx, BIGNUM* m)
 static int e_rsax_rsa_finish(RSA *rsa)
 	{
 	E_RSAX_MOD_CTX *hptr = RSA_get_ex_data(rsa, rsax_ex_data_idx);
-	if(!hptr) return 0;
-
-	OPENSSL_free(hptr);
-	RSA_set_ex_data(rsa, rsax_ex_data_idx, NULL);
-	if (def_rsa_finish)
-		def_rsa_finish(rsa);
+	if(hptr)
+		{
+		OPENSSL_free(hptr);
+		RSA_set_ex_data(rsa, rsax_ex_data_idx, NULL);
+		}
+	if (rsa->_method_mod_n)
+		BN_MONT_CTX_free(rsa->_method_mod_n);
+	if (rsa->_method_mod_p)
+		BN_MONT_CTX_free(rsa->_method_mod_p);
+	if (rsa->_method_mod_q)
+		BN_MONT_CTX_free(rsa->_method_mod_q);
 	return 1;
 	}
 
