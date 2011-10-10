@@ -185,7 +185,7 @@ int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
 				unsigned char *key, size_t keylen,
 				unsigned char *id, size_t idlen);
 int CMS_decrypt_set1_password(CMS_ContentInfo *cms, 
-				unsigned char *pass, ssize_t passlen);
+				unsigned char *pass, ossl_ssize_t passlen);
 
 STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
 int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
@@ -222,11 +222,13 @@ int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
 					const unsigned char *id, size_t idlen);
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri, 
-					unsigned char *pass, ssize_t passlen);
+					unsigned char *pass,
+					ossl_ssize_t passlen);
 
 CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 					int iter, int wrap_nid, int pbe_nid,
-					unsigned char *pass, ssize_t passlen,
+					unsigned char *pass,
+					ossl_ssize_t passlen,
 					const EVP_CIPHER *kekciph);
 
 int CMS_RecipientInfo_decrypt(CMS_ContentInfo *cms, CMS_RecipientInfo *ri);
