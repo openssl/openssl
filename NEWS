@@ -5,6 +5,14 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.0e and OpenSSL 1.0.1:
+
+      o PSS signatures in certificates, requests and CRLs.
+      o Support for password based recipient info for CMS.
+      o Support TLS v1.2 and TLS v1.1.
+      o Preliminary FIPS capability for unvalidated 2.0 FIPS module.
+      o SRP support.
+
   Major changes between OpenSSL 1.0.0d and OpenSSL 1.0.0e:
 
       o Fix for CRL vulnerability issue CVE-2011-3207
