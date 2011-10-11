@@ -343,6 +343,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
 		}
 
 	update_buflen(x->g, &buf_len);
+	update_buflen(x->q, &buf_len);
 	update_buflen(pub_key, &buf_len);
 	update_buflen(priv_key, &buf_len);
 
@@ -370,6 +371,7 @@ static int do_dh_print(BIO *bp, const DH *x, int indent,
 
 	if (!ASN1_bn_print(bp,"prime:",x->p,m,indent)) goto err;
 	if (!ASN1_bn_print(bp,"generator:",x->g,m,indent)) goto err;
+	if (x->q && !ASN1_bn_print(bp,"subgroup order:",x->q,m,indent)) goto err;
 	if (x->length != 0)
 		{
 		BIO_indent(bp, indent, 128);
