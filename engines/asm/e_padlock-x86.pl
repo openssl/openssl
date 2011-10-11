@@ -37,6 +37,7 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],$0);
 
+%PADLOCK_MARGIN=(ecb=>128, cbc=>64); # prefetch errata
 $PADLOCK_CHUNK=512;	# Must be a power of 2 larger than 16
 
 $ctx="edx";
@@ -187,6 +188,10 @@ my ($mode,$opcode) = @_;
 	&movq	("mm0",&QWP(-16,$ctx));	# load [upper part of] counter
 					} else {
 	&xor	("ebx","ebx");
+    if ($PADLOCK_MARGIN{$mode}) {
+	&cmp	($len,$PADLOCK_MARGIN{$mode});
+	&jbe	(&label("${mode}_short"));
+    }
 	&test	(&DWP(0,$ctx),1<<5);	# align bit in control word
 	&jnz	(&label("${mode}_aligned"));
 	&test	($out,0x0f);
@@ -285,19 +290,38 @@ my ($mode,$opcode) = @_;
 	&mov	($chunk,$PADLOCK_CHUNK);
 	&jnz	(&label("${mode}_loop"));
 						if ($mode ne "ctr32") {
-	&test	($out,0x0f);			# out_misaligned
-	&jz	(&label("${mode}_done"));
+	&cmp	("esp","ebp");
+	&je	(&label("${mode}_done"));
 						}
-	&mov	($len,"ebp");
-	&mov	($out,"esp");
-	&sub	($len,"esp");
-	&xor	("eax","eax");
-	&shr	($len,2);
-	&data_byte(0xf3,0xab);			# rep stosl
+	&pxor	("xmm0","xmm0");
+	&lea	("eax",&DWP(0,"esp"));
+&set_label("${mode}_bzero");
+	&movaps	(&QWP(0,"eax"),"xmm0");
+	&lea	("eax",&DWP(16,"eax"));
+	&cmp	("ebp","eax");
+	&ja	(&label("${mode}_bzero"));
+
 &set_label("${mode}_done");
 	&lea	("esp",&DWP(24,"ebp"));
 						if ($mode ne "ctr32") {
 	&jmp	(&label("${mode}_exit"));
+
+&set_label("${mode}_short",16);
+	&xor	("eax","eax");
+	&lea	("ebp",&DWP(-24,"esp"));
+	&sub	("eax",$len);
+	&lea	("esp",&DWP(0,"eax","ebp"));
+	&and	("esp",-16);
+	&xor	($chunk,$chunk);
+&set_label("${mode}_short_copy");
+	&movups	("xmm0",&QWP(0,$inp,$chunk));
+	&lea	($chunk,&DWP(16,$chunk));
+	&cmp	($len,$chunk);
+	&movaps	(&QWP(-16,"esp",$chunk),"xmm0");
+	&ja	(&label("${mode}_short_copy"));
+	&mov	($inp,"esp");
+	&mov	($chunk,$len);
+	&jmp	(&label("${mode}_loop"));
 
 &set_label("${mode}_aligned",16);
 	&lea	("eax",&DWP(-16,$ctx));		# ivp

@@ -27,6 +27,7 @@ open STDOUT,"| $^X $xlate $flavour $output";
 
 $code=".text\n";
 
+%PADLOCK_MARGIN=(ecb=>128, cbc=>64, ctr32=>64);	# prefetch errata
 $PADLOCK_CHUNK=512;	# Must be a power of 2 between 32 and 2^20
 
 $ctx="%rdx";
@@ -284,6 +285,17 @@ padlock_${mode}_encrypt:
 	lea	16($ctx),$ctx		# control word
 	xor	%eax,%eax
 	xor	%ebx,%ebx
+___
+# Formally speaking correct condtion is $len<=$margin and $inp+$margin
+# crosses page boundary [and next page is unreadable]. But $inp can
+# be unaligned in which case data can be copied to $out if latter is
+# aligned, in which case $out+$margin has to be checked. Covering all
+# cases appears more complicated than just copying short input...
+$code.=<<___	if ($PADLOCK_MARGIN{$mode});
+	cmp	\$$PADLOCK_MARGIN{$mode},$len
+	jbe	.L${mode}_short
+___
+$code.=<<___;
 	testl	\$`1<<5`,($ctx)		# align bit in control word
 	jnz	.L${mode}_aligned
 	test	\$0x0f,$out
@@ -305,6 +317,7 @@ padlock_${mode}_encrypt:
 	lea	(%rax,%rbp),%rsp
 ___
 $code.=<<___				if ($mode eq "ctr32");
+.L${mode}_reenter:
 	mov	-4($ctx),%eax		# pull 32-bit counter
 	bswap	%eax
 	neg	%eax
@@ -373,19 +386,38 @@ $code.=<<___;
 	mov	\$$PADLOCK_CHUNK,$chunk
 	jnz	.L${mode}_loop
 
-	test	\$0x0f,$out
-	jz	.L${mode}_done
+	cmp	%rsp,%rbp
+	je	.L${mode}_done
 
-	mov	%rbp,$len
-	mov	%rsp,$out
-	sub	%rsp,$len
-	xor	%rax,%rax
-	shr	\$3,$len
-	.byte	0xf3,0x48,0xab		# rep stosq
+	pxor	%xmm0,%xmm0
+	lea	(%rsp),%rax
+.L${mode}_bzero:
+	movaps	%xmm0,(%rax)
+	lea	16(%rax),%rax
+	cmp	%rax,%rbp
+	ja	.L${mode}_bzero
+
 .L${mode}_done:
 	lea	(%rbp),%rsp
 	jmp	.L${mode}_exit
-
+___
+$code.=<<___ if ($PADLOCK_MARGIN{$mode});
+.align	16
+.L${mode}_short:
+	mov	%rsp,%rbp
+	sub	$len,%rsp
+	xor	$chunk,$chunk
+.L${mode}_short_copy:
+	movups	($inp,$chunk),%xmm0
+	lea	16($chunk),$chunk
+	cmp	$chunk,$len
+	movaps	%xmm0,-16(%rsp,$chunk)
+	ja	.L${mode}_short_copy
+	mov	%rsp,$inp
+	mov	$len,$chunk
+	jmp	.L${mode}_`${mode} eq "ctr32"?"reenter":"loop"`
+___
+$code.=<<___;
 .align	16
 .L${mode}_aligned:
 ___
