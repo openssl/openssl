@@ -487,6 +487,7 @@ my %verify_special = (
     "RSA:SigGenRSA"     => "fips_rsavtest -x931",
     "RSA:SigGenPSS(0)"  => "fips_rsavtest -saltlen 0",
     "RSA:SigGenPSS(62)" => "fips_rsavtest -saltlen 62",
+    "ECDH Ephemeral Primitives Only:KAS_ECC_CDH_PrimitiveTest" => "skip"
 );
 
 my $win32  = $^O =~ m/mswin/i;
@@ -509,6 +510,7 @@ my $no_warn_missing = 0;
 my $no_warn_bogus = 0;
 my $rmcmd = "rm -rf";
 my $mkcmd = "mkdir";
+my $cmpall = 0;
 
 my %fips_enabled = (
     dsa         => 1,
@@ -568,6 +570,9 @@ foreach (@ARGV) {
 	$verify = 0;
     } elsif ( $_ eq "--generate" ) {
         $verify = 0;
+    }
+    elsif ( $_ eq "--compare-all" ) {
+        $cmpall = 1;
     }
     elsif ( $_ eq "--notest" ) {
         $notest = 1;
@@ -1045,10 +1050,15 @@ END
             }
         }
         if ($verify) {
-            if ( exists $verify_special{"$ttype:$tname"} ) {
+            if ( exists $verify_special{"$ttype:$tname"} && !$cmpall) {
                 my $vout = $rsp;
                 $vout =~ s/\.rsp$/.ver/;
                 $tcmd = $verify_special{"$ttype:$tname"};
+		if ($tcmd eq "skip") {
+			print STDERR "DEBUG: No verify possible: skipped.\n" if $debug;
+			$scheckok++;
+			next;
+		}
                 $cmd  = "$tprefix$tcmd ";
                 $cmd .= "\"$out\" \"$vout\"";
                 system($cmd);
