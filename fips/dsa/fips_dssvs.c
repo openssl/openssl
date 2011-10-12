@@ -283,6 +283,12 @@ static void pqgver(FILE *in, FILE *out)
 	    q=hex2bn(value);
 	else if(!strcmp(keyword,"G"))
 	    g=hex2bn(value);
+	else if(!strcmp(keyword,"firstseed"))
+	    seedlen = hex2bin(value, seed);
+	else if(!strcmp(keyword,"pseed"))
+	    seedlen += hex2bin(value, seed + seedlen);
+	else if(!strcmp(keyword,"qseed"))
+	    seedlen += hex2bin(value, seed + seedlen);
 	else if(!strcmp(keyword,"Seed")
 		|| !strcmp(keyword,"domain_parameter_seed"))
 	    {
