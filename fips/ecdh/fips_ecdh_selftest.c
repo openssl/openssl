@@ -214,6 +214,9 @@ int FIPS_selftest_ecdh(void)
 			goto err;
 			}
 
+		if (!fips_post_corrupt(FIPS_TEST_ECDH, ecd->curve, NULL))
+			ztmp[0] ^= 0x1;
+
 		if (memcmp(ztmp, ecd->z, ecd->zlen))
 			{
 			fips_post_failed(FIPS_TEST_ECDH, ecd->curve, 0);

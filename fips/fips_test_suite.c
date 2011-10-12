@@ -1017,6 +1017,8 @@ int main(int argc,char **argv)
         } else if (!strcmp(argv[1], "dsa")) {
 	    fail_id = FIPS_TEST_SIGNATURE;
 	    fail_key = EVP_PKEY_DSA;	
+        } else if (!strcmp(argv[1], "ecdh")) {
+	    fail_id = FIPS_TEST_ECDH;
         } else if (!strcmp(argv[1], "ecdsa")) {
 	    fail_id = FIPS_TEST_SIGNATURE;
 	    fail_key = EVP_PKEY_EC;	
