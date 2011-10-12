@@ -473,13 +473,20 @@ my @fips_ecdh_test_list = (
 #
 
 my %verify_special = (
-    "PQGGen"        => "fips_dssvs pqgver",
-    "KeyPair"       => "fips_dssvs keyver",
-    "SigGen"        => "fips_dssvs sigver",
-    "SigGen15"      => "fips_rsavtest",
-    "SigGenRSA"     => "fips_rsavtest -x931",
-    "SigGenPSS(0)"  => "fips_rsavtest -saltlen 0",
-    "SigGenPSS(62)" => "fips_rsavtest -saltlen 62",
+    "DSA:PQGGen"        => "fips_dssvs pqgver",
+    "DSA:KeyPair"       => "fips_dssvs keyver",
+    "DSA:SigGen"        => "fips_dssvs sigver",
+    "DSA2:PQGGen"        => "fips_dssvs pqgver",
+    "DSA2:KeyPair"       => "fips_dssvs keyver",
+    "DSA2:SigGen"        => "fips_dssvs sigver",
+    "ECDSA:KeyPair"     => "fips_ecdsavs PKV",
+    "ECDSA:SigGen"      => "fips_ecdsavs SigVer",
+    "ECDSA2:KeyPair"    => "fips_ecdsavs PKV",
+    "ECDSA2:SigGen"     => "fips_ecdsavs SigVer",
+    "RSA:SigGen15"      => "fips_rsavtest",
+    "RSA:SigGenRSA"     => "fips_rsavtest -x931",
+    "RSA:SigGenPSS(0)"  => "fips_rsavtest -saltlen 0",
+    "RSA:SigGenPSS(62)" => "fips_rsavtest -saltlen 62",
 );
 
 my $win32  = $^O =~ m/mswin/i;
@@ -509,7 +516,7 @@ my %fips_enabled = (
     "dsa-pqgver"  => 2,
     ecdsa       => 2,
     rsa         => 1,
-    "rsa-pss0"  => 0,
+    "rsa-pss0"  => 2,
     "rsa-pss62" => 1,
     sha         => 1,
     hmac        => 1,
@@ -526,7 +533,7 @@ my %fips_enabled = (
     "aes-gcm"	=> 2,
     dh		=> 0,
     ecdh	=> 2,
-    v2		=> 0,
+    v2		=> 1,
 );
 
 foreach (@ARGV) {
@@ -956,6 +963,8 @@ END
 
     }
 
+    my $ttype = "";
+
     foreach (@fips_test_list) {
         if ( !ref($_) ) {
 	    if ($outfile ne "") {
@@ -964,6 +973,7 @@ END
 	    } else {	
             	print "Running $_ tests\n" unless $quiet;
 	    }
+	    $ttype = $_;
             next;
         }
         my ( $tname, $tcmd, $regexp, $req, $rsp ) = @$_;
@@ -1035,10 +1045,10 @@ END
             }
         }
         if ($verify) {
-            if ( exists $verify_special{$tname} ) {
+            if ( exists $verify_special{"$ttype:$tname"} ) {
                 my $vout = $rsp;
                 $vout =~ s/\.rsp$/.ver/;
-                $tcmd = $verify_special{$tname};
+                $tcmd = $verify_special{"$ttype:$tname"};
                 $cmd  = "$tprefix$tcmd ";
                 $cmd .= "\"$out\" \"$vout\"";
                 system($cmd);
