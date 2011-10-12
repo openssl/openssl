@@ -798,6 +798,7 @@ POST_ID id_list[] = {
 	{NID_des_ede3_ecb, "DES-EDE3-ECB"},
 	{NID_secp224r1, "P-224"},
 	{NID_sect233r1, "B-233"},
+	{NID_sect233k1, "K-233"},
 	{NID_X9_62_prime256v1, "P-256"},
 	{NID_secp384r1, "P-384"},
 	{NID_secp521r1, "P-521"},
@@ -850,7 +851,17 @@ static int post_cb(int op, int id, int subid, void *ex)
 			{
 			EVP_PKEY *pkey = ex;
 			keytype = pkey->type;
-			exstr = lookup_id(keytype);
+			if (keytype == EVP_PKEY_EC)
+				{
+				const EC_GROUP *grp;
+				int cnid;
+				grp = EC_KEY_get0_group(pkey->pkey.ec);
+				cnid = EC_GROUP_get_curve_name(grp);
+				sprintf(asctmp, "ECDSA %s", lookup_id(cnid));
+				exstr = asctmp;
+				}
+			else
+				exstr = lookup_id(keytype);
 			}
 		idstr = "Signature";
 		break;
