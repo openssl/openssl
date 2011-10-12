@@ -115,7 +115,7 @@ int FIPS_selftest_cmac()
 	const EVP_CIPHER *cipher;
 	CMAC_CTX *ctx = CMAC_CTX_new();
 	const CMAC_KAT *t;
-	int subid, rv = 1;
+	int subid = -1, rv = 1;
 
 	for(n=0,t=vector; n<sizeof(vector)/sizeof(vector[0]); n++,t++)
 		{

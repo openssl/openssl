@@ -120,7 +120,7 @@ int FIPS_selftest_hmac()
 	unsigned char   out[EVP_MAX_MD_SIZE];
 	const EVP_MD   *md;
 	const HMAC_KAT *t;
-	int rv = 1, subid;
+	int rv = 1, subid = -1;
 	HMAC_CTX c;
 	HMAC_CTX_init(&c);
 

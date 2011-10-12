@@ -274,7 +274,7 @@ static int drbg_reseed(DRBG_CTX *dctx,
 			const unsigned char *adin, size_t adinlen, int hcheck)
 	{
 	unsigned char *entropy = NULL;
-	size_t entlen;
+	size_t entlen = 0;
 	int r = 0;
 
 #if 0
