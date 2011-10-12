@@ -30,7 +30,7 @@ Run test vectors:
 3. Run the test vector perl script, for example:
 
    cd fips
-   perl fipsalgtest.pl --dir=/wherever/stuff/was/extracted
+   perl fipsalgtest.pl --disable-v2 --dir=/wherever/stuff/was/extracted
 
 4. It should say "passed all tests" at the end. Report full details of any
    failures.
