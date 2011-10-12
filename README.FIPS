@@ -9,7 +9,7 @@ make clean
 
 To build the module do:
 
-./config fipscanisterbuild
+./config fipscanisteronly
 make
 
 Build should complete without errors.
@@ -23,17 +23,20 @@ again should complete without errors.
 Run test vectors: 
 
 1. Download an appropriate set of testvectors from www.openssl.org/docs/fips
-   those for 2007 are OK.
+   only the fips-2.0 testvector files are usable for complete tests.
 
 2. Extract the files to a suitable directory.
 
 3. Run the test vector perl script, for example:
 
    cd fips
-   perl fipsalgtest.pl --disable-v2 --dir=/wherever/stuff/was/extracted
+   perl fipsalgtest.pl --dir=/wherever/stuff/was/extracted
 
 4. It should say "passed all tests" at the end. Report full details of any
    failures.
+
+If you wish to use the older 1.2.x testvectors (for example those from 2007)
+you need the command line switch --disable-v2 to fipsalgtest.pl
 
 Examine the external symbols in fips/fipscanister.o they should all begin
 with FIPS or fips. One way to check with GNU nm is:
@@ -117,8 +120,6 @@ reports.
 
 Known issues:
 
-Algorithm tests are pre-2011.
-The fipslagtest.pl script wont auto run new algorithm tests such as DSA2.
 Code needs extensively reviewing to ensure it builds correctly on 
 supported platforms and is compliant with FIPS 140-2.
 The "FIPS capable OpenSSL" is still largely untested, it builds and runs
