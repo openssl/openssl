@@ -116,6 +116,8 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 	int idx, unsigned char *seed_out,
 	int *counter_ret, unsigned long *h_ret, BN_GENCB *cb);
 
+int dsa_paramgen_check_g(DSA *dsa);
+
 static void pqg(FILE *in, FILE *out)
     {
     char buf[1024];
@@ -314,7 +316,27 @@ static void pqgver(FILE *in, FILE *out)
 	else if(!strcmp(keyword,"c"))
 	    counter = atoi(buf+4);
 	partial:
-	if(!strcmp(keyword,"H") || part_test)
+	if (part_test && idx < 0 && h == 0 && g)
+	    {
+	    dsa = FIPS_dsa_new();
+	    dsa->p = BN_dup(p);
+	    dsa->q = BN_dup(q);
+	    dsa->g = BN_dup(g);
+	    if (dsa_paramgen_check_g(dsa))
+		fprintf(out, "Result = P" RESP_EOL);
+	    else
+		fprintf(out, "Result = F" RESP_EOL);
+	    BN_free(p);
+	    BN_free(q);
+	    BN_free(g);
+	    p = NULL;
+	    q = NULL;
+	    g = NULL;
+	    FIPS_dsa_free(dsa);
+	    dsa = NULL;
+	    part_test = 0;
+	    }
+	else if(!strcmp(keyword,"H") || part_test)
 	    {
 	    if (!part_test)
 	    	h = atoi(value);
