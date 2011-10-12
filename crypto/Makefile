@@ -88,23 +88,6 @@ pariscid.s:	pariscid.pl;	$(PERL) pariscid.pl $(PERLASM_SCHEME) $@
 alphacpuid.s:	alphacpuid.pl
 	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
 
-o_init.o: o_init.c
-	case "`(uname -s) 2>/dev/null`" in \
-	OSF1|IRIX*)	_WL_INIT="-Wl,-init,OPENSSL_init"	;; \
-	HP-UX)		_WL_INIT="-Wl,+init,OPENSSL_init"	;; \
-	AIX)		_WL_INIT="-Wl,-binitfini:OPENSSL_init,-bnoobjreorder";; \
-	Darwin)		(   while [ "x$1" != "x" -a "x$1" != "x-dynamiclib" ]; do shift; done; \
-			    [ $# -ge 1 ] \
-			) && _WL_INIT="-Wl,-init,_OPENSSL_init" ;; \
-	esac ; \
-	$(CC) $(CFLAGS) $(_WL_INIT) -c -o $@ $<
-
-testapps:
-	[ -z "$(THIS)" ] || (	if expr " $(SDIRS) " : ".* des " >/dev/null; \
-				then cd des && $(MAKE) -e des; fi )
-	[ -z "$(THIS)" ] || ( cd pkcs7 && $(MAKE) -e testapps );
-	@if [ -z "$(THIS)" ]; then $(MAKE) -f $(TOP)/Makefile reflect THIS=$@; fi
-
 subdirs:
 	@target=all; $(RECURSIVE_MAKE)
 
