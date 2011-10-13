@@ -207,7 +207,7 @@
      Add CMAC pkey methods.
      [Steve Henson]
 
-  *) Experiemental regnegotiation in s_server -www mode. If the client 
+  *) Experimental regnegotiation in s_server -www mode. If the client 
      browses /reneg connection is renegotiated. If /renegcert it is
      renegotiated requesting a certificate.
      [Steve Henson]
