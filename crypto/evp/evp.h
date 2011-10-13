@@ -419,7 +419,7 @@ struct evp_cipher_ctx_st
 	unsigned char  oiv[EVP_MAX_IV_LENGTH];	/* original iv */
 	unsigned char  iv[EVP_MAX_IV_LENGTH];	/* working iv */
 	unsigned char buf[EVP_MAX_BLOCK_LENGTH];/* saved partial block */
-	int num;				/* used by cfb/ofb mode */
+	int num;				/* used by cfb/ofb/ctr mode */
 
 	void *app_data;		/* application stuff */
 	int key_len;		/* May change for variable length cipher */
