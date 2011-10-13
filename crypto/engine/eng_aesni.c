@@ -301,16 +301,6 @@ aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *user_key,
 		return 0;
 	}
 
-	if (ctx->cipher->flags&EVP_CIPH_CUSTOM_IV)
-		{
-		if (iv!=NULL)
-			memcpy (ctx->iv,iv,ctx->cipher->iv_len);
-		else	{
-			EVPerr(EVP_F_AESNI_INIT_KEY,EVP_R_AES_IV_SETUP_FAILED);
-			return 0;
-			}
-		}
-
 	return 1;
 }
 
@@ -413,7 +403,7 @@ static int aesni_counter(EVP_CIPHER_CTX *ctx, unsigned char *out,
 static const EVP_CIPHER aesni_128_ctr=
 	{
 	NID_aes_128_ctr,1,16,16,
-	EVP_CIPH_CUSTOM_IV,
+	EVP_CIPH_CTR_MODE,
 	aesni_init_key,
 	aesni_counter,
 	NULL,
@@ -427,7 +417,7 @@ static const EVP_CIPHER aesni_128_ctr=
 static const EVP_CIPHER aesni_192_ctr=
 	{
 	NID_aes_192_ctr,1,24,16,
-	EVP_CIPH_CUSTOM_IV,
+	EVP_CIPH_CTR_MODE,
 	aesni_init_key,
 	aesni_counter,
 	NULL,
@@ -441,7 +431,7 @@ static const EVP_CIPHER aesni_192_ctr=
 static const EVP_CIPHER aesni_256_ctr=
 	{
 	NID_aes_256_ctr,1,32,16,
-	EVP_CIPH_CUSTOM_IV,
+	EVP_CIPH_CTR_MODE,
 	aesni_init_key,
 	aesni_counter,
 	NULL,
