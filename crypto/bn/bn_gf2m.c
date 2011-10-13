@@ -644,6 +644,9 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	ret = 1;
 
 err:
+#ifdef BN_DEBUG /* BN_CTX_end would complain about the expanded form */
+        bn_correct_top(c);
+#endif
   	BN_CTX_end(ctx);
 	return ret;
 	}
