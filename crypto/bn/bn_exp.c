@@ -693,9 +693,6 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	if (!BN_copy(&computeTemp, am)) goto err;
 
-	if (bn_wexpand(am,top)==NULL ||	bn_wexpand(r,top)==NULL)
-		goto err;
-
 #if defined(OPENSSL_BN_ASM_MONT5)
     /* This optimization uses ideas from http://eprint.iacr.org/2011/239,
      * specifically optimization of cache-timing attack countermeasures
@@ -717,6 +714,24 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 	bn_scatter5(am->d,am->top,powerbuf,1);
 
 	acc = computeTemp.d;
+	/* bn_mul_mont() and bn_mul_mont_gather5() assume fixed length inputs.
+	 * Pad the inputs with zeroes.
+	 */
+	if (bn_wexpand(am,top)==NULL ||	bn_wexpand(r,top)==NULL ||
+	    bn_wexpand(&computeTemp,top)==NULL)
+		goto err;
+	for (i = am->top; i < top; ++i)
+		{
+		am->d[i] = 0;
+		}
+	for (i = computeTemp.top; i < top; ++i)
+		{
+		computeTemp.d[i] = 0;
+		}
+	for (i = r->top; i < top; ++i)
+		{
+		r->d[i] = 0;
+		}
 #if 0
 	for (i=2; i<32; i++)
 		{
@@ -1102,4 +1117,3 @@ err:
 	bn_check_top(r);
 	return(ret);
 	}
-

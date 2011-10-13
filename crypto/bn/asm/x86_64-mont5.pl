@@ -836,6 +836,8 @@ $code.=<<___;
 .type	bn_scatter5,\@abi-omnipotent
 .align	16
 bn_scatter5:
+	cmp	\$0, $num
+	jz	.Lscatter_epilogue
 	lea	($tbl,$idx,8),$tbl
 .Lscatter:
 	mov	($inp),%rax
@@ -844,6 +846,7 @@ bn_scatter5:
 	lea	32*8($tbl),$tbl
 	sub	\$1,$num
 	jnz	.Lscatter
+.Lscatter_epilogue:
 	ret
 .size	bn_scatter5,.-bn_scatter5
 ___
