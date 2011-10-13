@@ -100,8 +100,8 @@ echo test sslv2/sslv3 via BIO pair
 $ssltest $extra || exit 1
 
 if [ $dsa_cert = NO ]; then
-  echo test sslv2/sslv3 w/o DHE via BIO pair
-  $ssltest -bio_pair -no_dhe $extra || exit 1
+  echo 'test sslv2/sslv3 w/o (EC)DHE via BIO pair'
+  $ssltest -bio_pair -no_dhe -no_ecdhe $extra || exit 1
 fi
 
 echo test sslv2/sslv3 with 1024bit DHE via BIO pair
@@ -131,8 +131,8 @@ fi
 if ../util/shlib_wrap.sh ../apps/openssl no-rsa; then
   echo skipping RSA tests
 else
-  echo test tls1 with 1024bit RSA, no DHE, multiple handshakes
-  ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -no_dhe -num 10 -f -time $extra || exit 1
+  echo 'test tls1 with 1024bit RSA, no (EC)DHE, multiple handshakes'
+  ../util/shlib_wrap.sh ./ssltest -v -bio_pair -tls1 -cert ../apps/server2.pem -no_dhe -no_ecdhe -num 10 -f -time $extra || exit 1
 
   if ../util/shlib_wrap.sh ../apps/openssl no-dh; then
     echo skipping RSA+DHE tests
