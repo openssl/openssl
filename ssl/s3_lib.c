@@ -3000,6 +3000,7 @@ void ssl3_clear(SSL *s)
 	{
 	unsigned char *rp,*wp;
 	size_t rlen, wlen;
+	int init_extra;
 
 #ifdef TLSEXT_TYPE_opaque_prf_input
 	if (s->s3->client_opaque_prf_input != NULL)
@@ -3038,6 +3039,7 @@ void ssl3_clear(SSL *s)
 	wp = s->s3->wbuf.buf;
 	rlen = s->s3->rbuf.len;
  	wlen = s->s3->wbuf.len;
+	init_extra = s->s3->init_extra;
 	if (s->s3->handshake_buffer) {
 		BIO_free(s->s3->handshake_buffer);
 		s->s3->handshake_buffer = NULL;
@@ -3050,6 +3052,7 @@ void ssl3_clear(SSL *s)
 	s->s3->wbuf.buf = wp;
 	s->s3->rbuf.len = rlen;
  	s->s3->wbuf.len = wlen;
+	s->s3->init_extra = init_extra;
 
 	ssl_free_wbio_buffer(s);
 

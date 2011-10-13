@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0e and 1.0.1  [xx XXX xxxx]
+ Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
   *) Use type ossl_ssize_t instad of ssize_t which isn't available on
      all platforms. Move ssize_t definition from e_os.h to the public
@@ -224,7 +224,12 @@
        Add command line options to s_client/s_server.
      [Steve Henson]
 
- Changes between 1.0.0d and 1.0.0e [xx XXX xxxx]
+ Changes between 1.0.0e and 1.0.0f [xx XXX xxxx]
+
+  *) In ssl3_clear, preserve s3->init_extra along with s3->rbuf.
+     [Bob Buckholz (Google)]
+
+ Changes between 1.0.0d and 1.0.0e [6 Sep 2011]
 
   *) Fix bug where CRLs with nextUpdate in the past are sometimes accepted
      by initialising X509_STORE_CTX properly. (CVE-2011-3207)
@@ -1130,6 +1135,9 @@
      [NTT]
   
  Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
+
+  *) In ssl3_clear, preserve s3->init_extra along with s3->rbuf.
+     [Bob Buckholz (Google)]
 
   *) Fix SSL memory handling for (EC)DH ciphersuites, in particular
      for multi-threaded use of ECDH.
