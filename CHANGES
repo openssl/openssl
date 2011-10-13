@@ -4,6 +4,9 @@
 
  Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
 
+  *) In ssl3_clear, preserve s3->init_extra along with s3->rbuf.
+     [Bob Buckholz (Google)]
+
   *) Fix SSL memory handling for (EC)DH ciphersuites, in particular
      for multi-threaded use of ECDH.
      [Adam Langley (Google)]

@@ -1710,6 +1710,7 @@ void ssl3_clear(SSL *s)
 	{
 	unsigned char *rp,*wp;
 	size_t rlen, wlen;
+	int init_extra;
 
 	ssl3_cleanup_key_block(s);
 	if (s->s3->tmp.ca_names != NULL)
@@ -1739,6 +1740,7 @@ void ssl3_clear(SSL *s)
 	wp = s->s3->wbuf.buf;
 	rlen = s->s3->rbuf.len;
  	wlen = s->s3->wbuf.len;
+        init_extra = s->s3->init_extra;
 
 	EVP_MD_CTX_cleanup(&s->s3->finish_dgst1);
 	EVP_MD_CTX_cleanup(&s->s3->finish_dgst2);
@@ -1748,6 +1750,7 @@ void ssl3_clear(SSL *s)
 	s->s3->wbuf.buf = wp;
 	s->s3->rbuf.len = rlen;
  	s->s3->wbuf.len = wlen;
+	s->s3->init_extra = init_extra;
 
 	ssl_free_wbio_buffer(s);
 
@@ -2641,4 +2644,3 @@ need to go to SSL_ST_ACCEPT.
 		}
 	return(ret);
 	}
-
