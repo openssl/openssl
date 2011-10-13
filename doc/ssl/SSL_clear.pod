@@ -39,10 +39,16 @@ for a description of the method's properties.
 SSL_clear() resets the SSL object to allow for another connection. The
 reset operation however keeps several settings of the last sessions
 (some of these settings were made automatically during the last
-handshake). It only makes sense when opening a new session (or reusing
-an old one) with the same peer that shares these settings.
-SSL_clear() is not a short form for the sequence
-L<SSL_free(3)|SSL_free(3)>; L<SSL_new(3)|SSL_new(3)>; .
+handshake). It only makes sense for a new connection with the exact
+same peer that shares these settings, and may fail if that peer
+changes its settings between connections. Use the sequence
+L<SSL_get_session(3)|SSL_get_session(3)>;
+L<SSL_new(3)|SSL_new(3)>;
+L<SSL_set_session(3)|SSL_set_session(3)>;
+L<SSL_free(3)|SSL_free(3)>
+instead to avoid such failures
+(or simply L<SSL_free(3)|SSL_free(3)>; L<SSL_new(3)|SSL_new(3)>
+if session reuse is not desired).
 
 =head1 RETURN VALUES
 
