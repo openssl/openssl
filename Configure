@@ -961,6 +961,12 @@ if ($fips && $fipslibdir eq "")
 	$fipslibdir = $fipsdir . "/lib/";
 	}
 
+# RSAX ENGINE sets default non-FIPS RSA method.
+if ($fips)
+	{
+	$disabled{"rsax"} = "forced";
+	}
+
 # SSL 3.0 and TLS requires MD5 and SHA and either RSA or DSA+DH
 if (defined($disabled{"md5"}) || defined($disabled{"sha"})
     || (defined($disabled{"rsa"})
