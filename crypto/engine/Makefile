@@ -22,13 +22,13 @@ LIBSRC= eng_err.c eng_lib.c eng_list.c eng_init.c eng_ctrl.c \
 	tb_rsa.c tb_dsa.c tb_ecdsa.c tb_dh.c tb_ecdh.c tb_rand.c tb_store.c \
 	tb_cipher.c tb_digest.c tb_pkmeth.c tb_asnmth.c \
 	eng_openssl.c eng_cnf.c eng_dyn.c eng_cryptodev.c \
-	eng_aesni.c eng_rsax.c eng_rdrand.c
+	eng_rsax.c eng_rdrand.c
 LIBOBJ= eng_err.o eng_lib.o eng_list.o eng_init.o eng_ctrl.o \
 	eng_table.o eng_pkey.o eng_fat.o eng_all.o \
 	tb_rsa.o tb_dsa.o tb_ecdsa.o tb_dh.o tb_ecdh.o tb_rand.o tb_store.o \
 	tb_cipher.o tb_digest.o tb_pkmeth.o tb_asnmth.o \
 	eng_openssl.o eng_cnf.o eng_dyn.o eng_cryptodev.o \
-	eng_aesni.o eng_rsax.o eng_rdrand.o
+	eng_rsax.o eng_rdrand.o
 
 SRC= $(LIBSRC)
 
@@ -84,21 +84,6 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-eng_aesni.o: ../../e_os.h ../../include/openssl/aes.h
-eng_aesni.o: ../../include/openssl/asn1.h ../../include/openssl/bio.h
-eng_aesni.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
-eng_aesni.o: ../../include/openssl/dso.h ../../include/openssl/e_os2.h
-eng_aesni.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-eng_aesni.o: ../../include/openssl/ecdsa.h ../../include/openssl/engine.h
-eng_aesni.o: ../../include/openssl/err.h ../../include/openssl/evp.h
-eng_aesni.o: ../../include/openssl/lhash.h ../../include/openssl/modes.h
-eng_aesni.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
-eng_aesni.o: ../../include/openssl/opensslconf.h
-eng_aesni.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-eng_aesni.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
-eng_aesni.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
-eng_aesni.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
-eng_aesni.o: ../../include/openssl/x509_vfy.h ../cryptlib.h eng_aesni.c
 eng_all.o: ../../e_os.h ../../include/openssl/asn1.h
 eng_all.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 eng_all.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

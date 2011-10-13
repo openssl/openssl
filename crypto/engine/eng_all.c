@@ -73,9 +73,6 @@ void ENGINE_load_builtin_engines(void)
 #if defined(__OpenBSD__) || defined(__FreeBSD__) || defined(HAVE_CRYPTODEV)
 	ENGINE_load_cryptodev();
 #endif
-#if !defined(OPENSSL_NO_HW) && !defined(OPENSSL_NO_HW_AESNI)
-	ENGINE_load_aesni();
-#endif
 #ifndef OPENSSL_NO_RSAX
 	ENGINE_load_rsax();
 #endif
