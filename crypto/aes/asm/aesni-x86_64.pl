@@ -821,8 +821,8 @@ ___
 {
 my $cmac="%r9";	# 6th argument
 
-my $increment="%xmm8";
-my $bswap_mask="%xmm9";
+my $increment="%xmm6";
+my $bswap_mask="%xmm7";
 
 $code.=<<___;
 .globl	aesni_ccm64_encrypt_blocks
@@ -839,30 +839,29 @@ $code.=<<___ if ($win64);
 .Lccm64_enc_body:
 ___
 $code.=<<___;
+	mov	240($key),$rounds		# key->rounds
 	movdqu	($ivp),$iv
-	movdqu	($cmac),$inout1
 	movdqa	.Lincrement64(%rip),$increment
 	movdqa	.Lbswap_mask(%rip),$bswap_mask
-	pshufb	$bswap_mask,$iv			# keep iv in reverse order
 
-	mov	240($key),$rounds		# key->rounds
-	mov	$key,$key_
-	mov	$rounds,$rnds_
-	movdqa	$iv,$inout0
-
-.Lccm64_enc_outer:
-	movups	($inp),$in0			# load inp
-	pshufb	$bswap_mask,$inout0
-	mov	$key_,$key
-	mov	$rnds_,$rounds
-
-	$movkey	($key),$rndkey0
 	shr	\$1,$rounds
-	$movkey	16($key),$rndkey1
-	xorps	$rndkey0,$in0
-	lea	32($key),$key
-	xorps	$rndkey0,$inout0
-	xorps	$inout1,$in0			# cmac^=inp
+	lea	0($key),$key_
+	movdqu	($cmac),$inout1
+	movdqa	$iv,$inout0
+	mov	$rounds,$rnds_
+	pshufb	$bswap_mask,$iv
+	jmp	.Lccm64_enc_outer
+.align	16
+.Lccm64_enc_outer:
+	$movkey	($key_),$rndkey0
+	mov	$rnds_,$rounds
+	movups	($inp),$in0			# load inp
+
+	xorps	$rndkey0,$inout0		# counter
+	$movkey	16($key_),$rndkey1
+	xorps	$in0,$rndkey0
+	lea	32($key_),$key
+	xorps	$rndkey0,$inout1		# cmac^=inp
 	$movkey	($key),$rndkey0
 
 .Lccm64_enc2_loop:
@@ -877,16 +876,17 @@ $code.=<<___;
 	jnz	.Lccm64_enc2_loop
 	aesenc	$rndkey1,$inout0
 	aesenc	$rndkey1,$inout1
+	paddq	$increment,$iv
 	aesenclast	$rndkey0,$inout0
 	aesenclast	$rndkey0,$inout1
 
-	paddq	$increment,$iv
 	dec	$len
 	lea	16($inp),$inp
 	xorps	$inout0,$in0			# inp ^= E(iv)
 	movdqa	$iv,$inout0
 	movups	$in0,($out)			# save output
 	lea	16($out),$out
+	pshufb	$bswap_mask,$inout0
 	jnz	.Lccm64_enc_outer
 
 	movups	$inout1,($cmac)
@@ -919,39 +919,40 @@ $code.=<<___ if ($win64);
 .Lccm64_dec_body:
 ___
 $code.=<<___;
-	movdqu	($ivp),$iv
+	mov	240($key),$rounds		# key->rounds
+	movups	($ivp),$iv
 	movdqu	($cmac),$inout1
 	movdqa	.Lincrement64(%rip),$increment
 	movdqa	.Lbswap_mask(%rip),$bswap_mask
 
-	mov	240($key),$rounds		# key->rounds
-	movdqa	$iv,$inout0
-	pshufb	$bswap_mask,$iv			# keep iv in reverse order
+	movaps	$iv,$inout0
 	mov	$rounds,$rnds_
 	mov	$key,$key_
+	pshufb	$bswap_mask,$iv
 ___
 	&aesni_generate1("enc",$key,$rounds);
 $code.=<<___;
-.Lccm64_dec_outer:
-	paddq	$increment,$iv
 	movups	($inp),$in0			# load inp
-	xorps	$inout0,$in0
-	movdqa	$iv,$inout0
+	paddq	$increment,$iv
 	lea	16($inp),$inp
-	pshufb	$bswap_mask,$inout0
-	mov	$key_,$key
+	jmp	.Lccm64_dec_outer
+.align	16
+.Lccm64_dec_outer:
+	xorps	$inout0,$in0			# inp ^= E(iv)
+	movdqa	$iv,$inout0
 	mov	$rnds_,$rounds
-	movups	$in0,($out)
+	movups	$in0,($out)			# save output
 	lea	16($out),$out
+	pshufb	$bswap_mask,$inout0
 
 	sub	\$1,$len
 	jz	.Lccm64_dec_break
 
-	$movkey	($key),$rndkey0
+	$movkey	($key_),$rndkey0
 	shr	\$1,$rounds
-	$movkey	16($key),$rndkey1
+	$movkey	16($key_),$rndkey1
 	xorps	$rndkey0,$in0
-	lea	32($key),$key
+	lea	32($key_),$key
 	xorps	$rndkey0,$inout0
 	xorps	$in0,$inout1			# cmac^=out
 	$movkey	($key),$rndkey0
@@ -966,15 +967,20 @@ $code.=<<___;
 	aesenc	$rndkey0,$inout1
 	$movkey	0($key),$rndkey0
 	jnz	.Lccm64_dec2_loop
+	movups	($inp),$in0			# load inp
+	paddq	$increment,$iv
 	aesenc	$rndkey1,$inout0
 	aesenc	$rndkey1,$inout1
+	lea	16($inp),$inp
 	aesenclast	$rndkey0,$inout0
+	aesenclast	$rndkey0,$inout1
 	jmp	.Lccm64_dec_outer
 
 .align	16
 .Lccm64_dec_break:
+	#xorps	$in0,$inout1			# cmac^=out
 ___
-	&aesni_generate1("enc",$key,$rounds,$inout1);
+	&aesni_generate1("enc",$key_,$rounds,$inout1,$in0);
 $code.=<<___;
 	movups	$inout1,($cmac)
 ___

@@ -594,6 +594,7 @@ if ($PREFIX eq "aesni") {
 
 	&movdqu	($ivec,&QWP(0,$rounds_));	# load ivec
 	&movdqu	($cmac,&QWP(0,$rounds));	# load cmac
+	&mov	($rounds,&DWP(240,$key));
 
 	# compose byte-swap control mask for pshufb on stack
 	&mov	(&DWP(0,"esp"),0x0c0d0e0f);
@@ -602,34 +603,30 @@ if ($PREFIX eq "aesni") {
 	&mov	(&DWP(12,"esp"),0x00010203);
 
 	# compose counter increment vector on stack
-	&mov	($rounds,1);
+	&mov	($rounds_,1);
 	&xor	($key_,$key_);
-	&mov	(&DWP(16,"esp"),$rounds);
+	&mov	(&DWP(16,"esp"),$rounds_);
 	&mov	(&DWP(20,"esp"),$key_);
 	&mov	(&DWP(24,"esp"),$key_);
 	&mov	(&DWP(28,"esp"),$key_);
 
+	&shr	($rounds,1);
+	&lea	($key_,&DWP(0,$key));
 	&movdqa	($inout3,&QWP(0,"esp"));
-	&pshufb	($ivec,$inout3);		# keep iv in reverse order
-
-	&mov	($rounds,&DWP(240,$key));
-	&mov	($key_,$key);
-	&mov	($rounds_,$rounds);
 	&movdqa	($inout0,$ivec);
+	&mov	($rounds_,$rounds);
+	&pshufb	($ivec,$inout3);
 
 &set_label("ccm64_enc_outer");
-	&movups		($in0,&QWP(0,$inp));
-	&pshufb		($inout0,$inout3);
-	&mov		($key,$key_);
+	&$movekey	($rndkey0,&QWP(0,$key_));
 	&mov		($rounds,$rounds_);
+	&movups		($in0,&QWP(0,$inp));
 
-	&$movekey	($rndkey0,&QWP(0,$key));
-	&shr		($rounds,1);
-	&$movekey	($rndkey1,&QWP(16,$key));
-	&xorps		($in0,$rndkey0);
-	&lea		($key,&DWP(32,$key));
 	&xorps		($inout0,$rndkey0);
-	&xorps		($cmac,$in0);		# cmac^=inp
+	&$movekey	($rndkey1,&QWP(16,$key_));
+	&xorps		($rndkey0,$in0);
+	&lea		($key,&DWP(32,$key_));
+	&xorps		($cmac,$rndkey0);		# cmac^=inp
 	&$movekey	($rndkey0,&QWP(0,$key));
 
 &set_label("ccm64_enc2_loop");
@@ -644,16 +641,17 @@ if ($PREFIX eq "aesni") {
 	&jnz		(&label("ccm64_enc2_loop"));
 	&aesenc		($inout0,$rndkey1);
 	&aesenc		($cmac,$rndkey1);
+	&paddq		($ivec,&QWP(16,"esp"));
 	&aesenclast	($inout0,$rndkey0);
 	&aesenclast	($cmac,$rndkey0);
 
-	&paddq	($ivec,&QWP(16,"esp"));
 	&dec	($len);
 	&lea	($inp,&DWP(16,$inp));
 	&xorps	($in0,$inout0);			# inp^=E(ivec)
 	&movdqa	($inout0,$ivec);
-	&movups	(&QWP(0,$out),$in0);
+	&movups	(&QWP(0,$out),$in0);		# save output
 	&lea	($out,&DWP(16,$out));
+	&pshufb	($inout0,$inout3);
 	&jnz	(&label("ccm64_enc_outer"));
 
 	&mov	("esp",&DWP(48,"esp"));
@@ -675,6 +673,7 @@ if ($PREFIX eq "aesni") {
 
 	&movdqu	($ivec,&QWP(0,$rounds_));	# load ivec
 	&movdqu	($cmac,&QWP(0,$rounds));	# load cmac
+	&mov	($rounds,&DWP(240,$key));
 
 	# compose byte-swap control mask for pshufb on stack
 	&mov	(&DWP(0,"esp"),0x0c0d0e0f);
@@ -683,46 +682,45 @@ if ($PREFIX eq "aesni") {
 	&mov	(&DWP(12,"esp"),0x00010203);
 
 	# compose counter increment vector on stack
-	&mov	($rounds,1);
+	&mov	($rounds_,1);
 	&xor	($key_,$key_);
-	&mov	(&DWP(16,"esp"),$rounds);
+	&mov	(&DWP(16,"esp"),$rounds_);
 	&mov	(&DWP(20,"esp"),$key_);
 	&mov	(&DWP(24,"esp"),$key_);
 	&mov	(&DWP(28,"esp"),$key_);
 
 	&movdqa	($inout3,&QWP(0,"esp"));	# bswap mask
 	&movdqa	($inout0,$ivec);
-	&pshufb	($ivec,$inout3);		# keep iv in reverse order
 
-	&mov	($rounds,&DWP(240,$key));
 	&mov	($key_,$key);
 	&mov	($rounds_,$rounds);
 
+	&pshufb	($ivec,$inout3);
 	if ($inline)
 	{   &aesni_inline_generate1("enc");	}
 	else
 	{   &call	("_aesni_encrypt1");	}
-
-&set_label("ccm64_dec_outer");
-	&paddq	($ivec,&QWP(16,"esp"));
 	&movups	($in0,&QWP(0,$inp));		# load inp
-	&xorps	($in0,$inout0);
-	&movdqa	($inout0,$ivec);
+	&paddq	($ivec,&QWP(16,"esp"));
 	&lea	($inp,&QWP(16,$inp));
-	&pshufb	($inout0,$inout3);
-	&mov	($key,$key_);
+	&jmp	(&label("ccm64_dec_outer"));
+
+&set_label("ccm64_dec_outer",16);
+	&xorps	($in0,$inout0);			# inp ^= E(ivec)
+	&movdqa	($inout0,$ivec);
 	&mov	($rounds,$rounds_);
-	&movups	(&QWP(0,$out),$in0);
+	&movups	(&QWP(0,$out),$in0);		# save output
 	&lea	($out,&DWP(16,$out));
+	&pshufb	($inout0,$inout3);
 
 	&sub	($len,1);
 	&jz	(&label("ccm64_dec_break"));
 
-	&$movekey	($rndkey0,&QWP(0,$key));
+	&$movekey	($rndkey0,&QWP(0,$key_));
 	&shr		($rounds,1);
-	&$movekey	($rndkey1,&QWP(16,$key));
+	&$movekey	($rndkey1,&QWP(16,$key_));
 	&xorps		($in0,$rndkey0);
-	&lea		($key,&DWP(32,$key));
+	&lea		($key,&DWP(32,$key_));
 	&xorps		($inout0,$rndkey0);
 	&xorps		($cmac,$in0);		# cmac^=out
 	&$movekey	($rndkey0,&QWP(0,$key));
@@ -737,13 +735,17 @@ if ($PREFIX eq "aesni") {
 	&aesenc		($cmac,$rndkey0);
 	&$movekey	($rndkey0,&QWP(0,$key));
 	&jnz		(&label("ccm64_dec2_loop"));
+	&movups		($in0,&QWP(0,$inp));	# load inp
+	&paddq		($ivec,&QWP(16,"esp"));
 	&aesenc		($inout0,$rndkey1);
 	&aesenc		($cmac,$rndkey1);
+	&lea		($inp,&QWP(16,$inp));
 	&aesenclast	($inout0,$rndkey0);
 	&aesenclast	($cmac,$rndkey0);
 	&jmp	(&label("ccm64_dec_outer"));
 
 &set_label("ccm64_dec_break",16);
+	&mov	($key,$key_);
 	if ($inline)
 	{   &aesni_inline_generate1("enc",$cmac,$in0);	}
 	else
