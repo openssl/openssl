@@ -756,6 +756,10 @@ $cmd: generate run CAVP algorithm tests
 	--ignore-missing            Ignore missing test files
 	--quiet                     Shhh....
 	--generate                  Generate algorithm test output
+	--generate-script=<file>    Create shell script of test commands
+	--minimal-script	    Keep script commands to a minimum
+	--mkdir=<command>	    Command to make directories in scripts
+	--rm=<command>	   	    Command to remove directories in scripts
 	--win32                     Win32 environment
 	--enable-<alg>		    Enable algorithm set <alg>.
 	--disable-<alg>		    Disable algorithm set <alg>.
