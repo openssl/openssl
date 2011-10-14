@@ -938,6 +938,7 @@ sub run_tests {
     my ( $tname, $tref );
     my $bad = 0;
     my $lastdir = "";
+    $stprefix = $tprefix unless defined $stprefix;
     if ($outfile ne "") {
 	open OUT, ">$outfile" || die "Can't open $outfile";
     }
@@ -953,7 +954,6 @@ echo Running Algorithm Tests
 
 END
 	} else {
-	$stprefix = $tprefix unless defined $stprefix;
 	    print OUT <<END;
 #!/bin/sh
 
@@ -1041,8 +1041,12 @@ END
         my $cmd = "$tcmd \"$req\" \"$out\"";
         print STDERR "DEBUG: running test $tname\n" if ( $debug && !$verify );
 	if ($outfile ne "") {
-	    print OUT "echo \"    running $tname test\"\n" unless $minimal_script;
-	    print OUT "\${TPREFIX}$cmd\n";
+	    if ($minimal_script) {
+		print OUT "$stprefix$cmd\n";
+	    } else {
+		print OUT "echo \"    running $tname test\"\n" unless $minimal_script;
+		print OUT "\${TPREFIX}$cmd\n";
+	    }
         } else {
             $cmd = "$tprefix$cmd";
             system($cmd);
