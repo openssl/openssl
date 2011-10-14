@@ -849,6 +849,7 @@ $code.=<<___;
 	movdqu	($cmac),$inout1
 	movdqa	$iv,$inout0
 	mov	$rounds,$rnds_
+	pshufb	$bswap_mask,$iv
 	jmp	.Lccm64_enc_outer
 .align	16
 .Lccm64_enc_outer:
@@ -873,7 +874,6 @@ $code.=<<___;
 	aesenc	$rndkey0,$inout1
 	$movkey	0($key),$rndkey0
 	jnz	.Lccm64_enc2_loop
-	pshufb	$bswap_mask,$iv
 	aesenc	$rndkey1,$inout0
 	aesenc	$rndkey1,$inout1
 	paddq	$increment,$iv
@@ -886,7 +886,7 @@ $code.=<<___;
 	movdqa	$iv,$inout0
 	movups	$in0,($out)			# save output
 	lea	16($out),$out
-	pshufb	$bswap_mask,$iv
+	pshufb	$bswap_mask,$inout0
 	jnz	.Lccm64_enc_outer
 
 	movups	$inout1,($cmac)
@@ -934,7 +934,6 @@ ___
 $code.=<<___;
 	movups	($inp),$in0			# load inp
 	paddq	$increment,$iv
-	pshufb	$bswap_mask,$iv
 	lea	16($inp),$inp
 	jmp	.Lccm64_dec_outer
 .align	16
@@ -944,6 +943,7 @@ $code.=<<___;
 	mov	$rnds_,$rounds
 	movups	$in0,($out)			# save output
 	lea	16($out),$out
+	pshufb	$bswap_mask,$inout0
 
 	sub	\$1,$len
 	jz	.Lccm64_dec_break
@@ -971,7 +971,6 @@ $code.=<<___;
 	paddq	$increment,$iv
 	aesenc	$rndkey1,$inout0
 	aesenc	$rndkey1,$inout1
-	pshufb	$bswap_mask,$iv
 	lea	16($inp),$inp
 	aesenclast	$rndkey0,$inout0
 	aesenclast	$rndkey0,$inout1

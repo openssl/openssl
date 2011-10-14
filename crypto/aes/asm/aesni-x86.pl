@@ -612,9 +612,10 @@ if ($PREFIX eq "aesni") {
 
 	&shr	($rounds,1);
 	&lea	($key_,&DWP(0,$key));
+	&movdqa	($inout3,&QWP(0,"esp"));
 	&movdqa	($inout0,$ivec);
 	&mov	($rounds_,$rounds);
-	&movdqa	($inout3,&QWP(0,"esp"));
+	&pshufb	($ivec,$inout3);
 
 &set_label("ccm64_enc_outer");
 	&$movekey	($rndkey0,&QWP(0,$key_));
@@ -638,7 +639,6 @@ if ($PREFIX eq "aesni") {
 	&aesenc		($cmac,$rndkey0);
 	&$movekey	($rndkey0,&QWP(0,$key));
 	&jnz		(&label("ccm64_enc2_loop"));
-	&pshufb		($ivec,$inout3);
 	&aesenc		($inout0,$rndkey1);
 	&aesenc		($cmac,$rndkey1);
 	&paddq		($ivec,&QWP(16,"esp"));
@@ -651,7 +651,7 @@ if ($PREFIX eq "aesni") {
 	&movdqa	($inout0,$ivec);
 	&movups	(&QWP(0,$out),$in0);		# save output
 	&lea	($out,&DWP(16,$out));
-	&pshufb	($ivec,$inout3);
+	&pshufb	($inout0,$inout3);
 	&jnz	(&label("ccm64_enc_outer"));
 
 	&mov	("esp",&DWP(48,"esp"));
@@ -702,7 +702,6 @@ if ($PREFIX eq "aesni") {
 	{   &call	("_aesni_encrypt1");	}
 	&movups	($in0,&QWP(0,$inp));		# load inp
 	&paddq	($ivec,&QWP(16,"esp"));
-	&pshufb	($ivec,$inout3);
 	&lea	($inp,&QWP(16,$inp));
 	&jmp	(&label("ccm64_dec_outer"));
 
@@ -712,6 +711,7 @@ if ($PREFIX eq "aesni") {
 	&mov	($rounds,$rounds_);
 	&movups	(&QWP(0,$out),$in0);		# save output
 	&lea	($out,&DWP(16,$out));
+	&pshufb	($inout0,$inout3);
 
 	&sub	($len,1);
 	&jz	(&label("ccm64_dec_break"));
@@ -739,7 +739,6 @@ if ($PREFIX eq "aesni") {
 	&paddq		($ivec,&QWP(16,"esp"));
 	&aesenc		($inout0,$rndkey1);
 	&aesenc		($cmac,$rndkey1);
-	&pshufb		($ivec,$inout3);
 	&lea		($inp,&QWP(16,$inp));
 	&aesenclast	($inout0,$rndkey0);
 	&aesenclast	($cmac,$rndkey0);
