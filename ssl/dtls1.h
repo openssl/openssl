@@ -72,7 +72,11 @@
 #elif defined(OPENSSL_SYS_NETWARE) && !defined(_WINSOCK2API_)
 #include <sys/timeval.h>
 #else
+#if defined(OPENSSL_SYS_VXWORKS)
+#include <sys/times.h>
+#else
 #include <sys/time.h>
+#endif
 #endif
 
 #ifdef  __cplusplus

@@ -122,9 +122,15 @@
  * sigaction and fileno included. -pedantic would be more appropriate for
  * the intended purposes, but we can't prevent users from adding -ansi.
  */
+#if defined(OPENSSL_SYSNAME_VXWORKS)
+#include <sys/types.h>
+#endif
+
+#if !defined(OPENSSL_SYSNAME_VXWORKS)
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 2
 #endif
+#endif /* !OPENSSL_SYSNAME_VXWORKS  */
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>

@@ -56,15 +56,18 @@
  * [including the GNU Public Licence.]
  */
 
+#include "e_os.h"
+
 /* We need to define this to get macros like S_IFBLK and S_IFCHR */
+#if !defined(OPENSSL_SYS_VXWORKS)
 #define _XOPEN_SOURCE 500
+#endif
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "e_os.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/buffer.h>
