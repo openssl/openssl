@@ -411,7 +411,9 @@ exit 0
 # this is where the translation occurs into SSLeay terms
 # ---------------------------------------------------------------------------
 
-GCCVER=`(gcc -dumpversion) 2>/dev/null`
+if [ -z "$GCCVER" ]; then
+	GCCVER=`(gcc -dumpversion) 2>/dev/null`
+fi
 if [ "$GCCVER" != "" ]; then
   # then strip off whatever prefix egcs prepends the number with...
   # Hopefully, this will work for any future prefixes as well.
@@ -589,6 +591,9 @@ case "$GUESSOS" in
   ppc-*-linux2) OUT="linux-ppc" ;;
   ppc60x-*-vxworks*) OUT="vxworks-ppc60x" ;;
   ppcgen-*-vxworks*) OUT="vxworks-ppcgen" ;;
+  pentium-*-vxworks*) OUT="vxworks-pentium" ;;
+  simlinux-*-vxworks*) OUT="vxworks-simlinux" ;;
+  mips-*-vxworks*) OUT="vxworks-mips";;
   ia64-*-linux?) OUT="linux-ia64" ;;
   sparc64-*-linux2)
 	echo "WARNING! If you *know* that your GNU C supports 64-bit/V9 ABI"
@@ -841,10 +846,16 @@ esac
 #  options="$options -DATALLA"
 #fi
 
-! expr "$options" : '.*no\-asm' > /dev/null && \
-($CC -Wa,--help -c -o /dev/null -x assembler /dev/null 2>&1 | \
+if [ -n "$CONFIG_OPTIONS" ]; then
+  options="$options $CONFIG_OPTIONS"
+fi
+
+if [ -z "$CONFIG_SKIP_NOEXECSTACK" ]; then
+  ! expr "$options" : '.*no\-asm' > /dev/null && \
+  ($CC -Wa,--help -c -o /dev/null -x assembler /dev/null 2>&1 | \
  grep \\--noexecstack) 2>&1 > /dev/null && \
   options="$options -Wa,--noexecstack"
+fi
 
 # gcc < 2.8 does not support -march=ultrasparc
 if [ "$OUT" = solaris-sparcv9-gcc -a $GCCVER -lt 28 ]
