@@ -338,6 +338,7 @@ static int aesni_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		/* Encrypt payload */
 		if (CRYPTO_gcm128_encrypt_ctr32(&gctx->gcm, in, out, len,
 						aesni_ctr32_encrypt_blocks))
+			goto err;
 		out += len;
 		/* Finally write tag */
 		CRYPTO_gcm128_tag(&gctx->gcm, out, EVP_GCM_TLS_TAG_LEN);
