@@ -746,23 +746,29 @@ sub Help {
     ( my $cmd ) = ( $0 =~ m#([^/]+)$# );
     print <<EOF;
 $cmd: generate run CAVP algorithm tests
-	--debug                     Enable debug output
-	--dir=<dirname>             Optional root for *.req file search
-	--filter=<regexp>
-	--onedir <dirname>          Assume all components in current directory
-	--rspdir=<dirname>          Name of subdirectories containing *.rsp files, default "resp"
-	--tprefix=<prefix>
-	--ignore-bogus              Ignore duplicate or bogus files
-	--ignore-missing            Ignore missing test files
-	--quiet                     Shhh....
-	--generate                  Generate algorithm test output
-	--generate-script=<file>    Create shell script of test commands
-	--minimal-script	    Keep script commands to a minimum
-	--mkdir=<command>	    Command to make directories in scripts
-	--rm=<command>	   	    Command to remove directories in scripts
-	--win32                     Win32 environment
-	--enable-<alg>		    Enable algorithm set <alg>.
-	--disable-<alg>		    Disable algorithm set <alg>.
+	--debug                       Enable debug output
+	--dir=<dirname>               Optional root for *.req file search
+	--filter=<regexp>	      Regex for input files of interest
+	--onedir <dirname>            Assume all components in current directory
+	--rspdir=<dirname>            Name of subdirectories containing *.rsp files, default "resp"
+	--tprefix=<prefix>            Pathname prefix for directory containing test programs
+	--ignore-bogus                Ignore duplicate or bogus files
+	--ignore-missing              Ignore missing test files
+	--quiet                       Shhh....
+	--quiet-bogus                 Skip unrecognized file warnings
+	--quiet-missing               Skip missing request file warnings
+	--generate                    Generate algorithm test output
+	--generate-script=<filename>  Generate script to call algorithm programs
+	--minimal-script              Simplest possible output for --generate-script
+	--win32                       Win32 environment
+	--compare-all                 Verify unconditionally for all tests
+	--list-tests                  Show individual tests
+	--mkdir=<cmd>                 Specify "mkdir" command
+	--notest                      Exit before running tests
+	--rm=<cmd>                    Specify "rm" command
+	--script-tprefix              Pathname prefix for --generate-script output
+	--enable-<alg>		      Enable algorithm set <alg>.
+	--disable-<alg>		      Disable algorithm set <alg>.
 	Where <alg> can be one of:
 EOF
 
