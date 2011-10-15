@@ -209,7 +209,14 @@ sub ::picmeup
 sub ::initseg
 { my $f=$nmdecor.shift;
 
-    if ($::elf)
+    if ($::android)
+    {	$initseg.=<<___;
+.section	.init_array
+.align	4
+.long	$f
+___
+    }
+    elsif ($::elf)
     {	$initseg.=<<___;
 .section	.init
 	call	$f

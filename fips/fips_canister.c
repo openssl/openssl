@@ -28,7 +28,8 @@ const void         *FIPS_text_end(void);
 #endif
 
 #if !defined(FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE)
-# if	(defined(__ANDROID__) && (defined(__arm__) || defined(__arm)))	|| \
+# if	(defined(__ANDROID__) && (defined(__arm__) || defined(__arm)	|| \
+				  defined(__i386__)|| defined(__i386)))	|| \
 	(defined(__vxworks)   && (defined(__ppc__) || defined(__ppc)))	|| \
 	(defined(__linux)     && defined(__PPC__) && !defined(__PPC64__))
 #  define FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE
