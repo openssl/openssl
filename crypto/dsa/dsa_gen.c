@@ -405,7 +405,7 @@ static int dsa2_valid_parameters(size_t L, size_t N)
 	if (L == 2048 && N == 256)
 		return 112;
 	if (L == 3072 && N == 256)
-		return 112;
+		return 128;
 	return 0;
 	}
 
