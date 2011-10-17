@@ -817,15 +817,14 @@ bn_sqr4x_mont:
 
 	xor	$A0[1],$A0[1]
 	add	$A1[0],$A0[0]
-	 lea	16($j),$j
 	adc	\$0,$A0[1]
 	mul	$a0			# a[5]*a[2]
 	add	%rax,$A0[0]		# a[5]*a[2]+a[4]*a[3]+t[5]
 	 mov	$ai,%rax
 	adc	%rdx,$A0[1]
-	mov	$A0[0],-8($tptr,$j)	# t[5]
+	mov	$A0[0],8($tptr,$j)	# t[5]
 
-	 mov	($aptr,$j),$ai		# a[6]
+	 mov	16($aptr,$j),$ai	# a[6]
 	xor	$A1[0],$A1[0]
 	mul	$a1			# a[5]*a[3]
 	add	%rax,$A1[1]		# a[5]*a[3]+t[6]
@@ -839,10 +838,10 @@ bn_sqr4x_mont:
 	add	%rax,$A0[1]		# a[6]*a[2]+a[5]*a[3]+t[6]
 	 mov	$ai,%rax		# a[3]
 	adc	%rdx,$A0[0]
-	mov	$A0[1],($tptr,$j)	# t[6]
+	mov	$A0[1],16($tptr,$j)	# t[6]
 
 
-	 mov	8($aptr,$j),$ai		# a[7]
+	 mov	24($aptr,$j),$ai	# a[7]
 	xor	$A1[1],$A1[1]
 	mul	$a1			# a[6]*a[5]
 	add	%rax,$A1[0]		# a[6]*a[5]+t[7]
@@ -851,7 +850,7 @@ bn_sqr4x_mont:
 
 	xor	$A0[1],$A0[1]
 	add	$A1[0],$A0[0]
-	 lea	16($j),$j
+	 lea	32($j),$j
 	adc	\$0,$A0[1]
 	mul	$a0			# a[7]*a[4]
 	add	%rax,$A0[0]		# a[7]*a[4]+a[6]*a[5]+t[6]
@@ -962,7 +961,7 @@ bn_sqr4x_mont:
 	add	%rax,$A0[0]		# a[5]*a[2]+a[4]*a[3]+t[5]
 	 mov	$ai,%rax
 	adc	%rdx,$A0[1]
-	mov	$A0[0],-8($tptr,$j)	# t[5]
+	mov	$A0[0],-8($tptr,$j)	# t[5], "preloaded t[1]" below
 
 	cmp	\$0,$j
 	jne	.Lsqr4x_inner
@@ -974,8 +973,8 @@ bn_sqr4x_mont:
 	add	%rax,$A1[1]
 	adc	%rdx,$A1[0]
 
-	mov	$A1[1],($tptr)		# t[6]
-	mov	$A1[0],8($tptr)		# t[7]
+	mov	$A1[1],($tptr)		# t[6], "preloaded t[2]" below
+	mov	$A1[0],8($tptr)		# t[7], "preloaded t[3]" below
 
 	add	\$16,$i
 	jnz	.Lsqr4x_outer
@@ -988,16 +987,15 @@ bn_sqr4x_mont:
 	mov	-16($aptr),$ai		# a[2]
 	mov	%rax,$a1
 
-	mov	-24($tptr),$A0[0]	# t[1]
 	xor	$A0[1],$A0[1]
 	mul	$a0			# a[1]*a[0]
-	add	%rax,$A0[0]		# a[1]*a[0]+t[1]
+	add	%rax,$A0[0]		# a[1]*a[0]+t[1], preloaded t[1]
 	 mov	$ai,%rax		# a[2]
 	adc	%rdx,$A0[1]
 	mov	$A0[0],-24($tptr)	# t[1]
 
 	xor	$A0[0],$A0[0]
-	add	-16($tptr),$A0[1]	# a[2]*a[0]+t[2]
+	add	$A1[1],$A0[1]		# a[2]*a[0]+t[2], preloaded t[2]
 	adc	\$0,$A0[0]
 	mul	$a0			# a[2]*a[0]
 	add	%rax,$A0[1]
@@ -1005,18 +1003,15 @@ bn_sqr4x_mont:
 	adc	%rdx,$A0[0]
 	mov	$A0[1],-16($tptr)	# t[2]
 
-	xor	$A1[0],$A1[0]
 	 mov	-8($aptr),$ai		# a[3]
-	xor	$A1[1],$A1[1]
-	add	-8($tptr),$A1[0]
-	adc	\$0,$A1[1]
 	mul	$a1			# a[2]*a[1]
-	add	%rax,$A1[0]		# a[2]*a[1]+t[3]
+	add	%rax,$A1[0]		# a[2]*a[1]+t[3], preloaded t[3]
 	 mov	$ai,%rax
-	adc	%rdx,$A1[1]
+	adc	\$0,%rdx
 
 	xor	$A0[1],$A0[1]
 	add	$A1[0],$A0[0]
+	 mov	%rdx,$A1[1]
 	adc	\$0,$A0[1]
 	mul	$a0			# a[3]*a[0]
 	add	%rax,$A0[0]		# a[3]*a[0]+a[2]*a[1]+t[3]
