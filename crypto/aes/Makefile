@@ -59,6 +59,8 @@ aes-x86_64.s: asm/aes-x86_64.pl
 	$(PERL) asm/aes-x86_64.pl $(PERLASM_SCHEME) > $@
 vpaes-x86_64.s:	asm/vpaes-x86_64.pl
 	$(PERL) asm/vpaes-x86_64.pl $(PERLASM_SCHEME) > $@
+bsaes-x86_64.s:	asm/bsaes-x86_64.pl
+	$(PERL) asm/bsaes-x86_64.pl $(PERLASM_SCHEME) > $@
 aesni-x86_64.s: asm/aesni-x86_64.pl
 	$(PERL) asm/aesni-x86_64.pl $(PERLASM_SCHEME) > $@
 aesni-sha1-x86_64.s:	asm/aesni-sha1-x86_64.pl
