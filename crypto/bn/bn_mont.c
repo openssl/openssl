@@ -196,9 +196,9 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 	/* clear the top words of T */
 #if 1
 	for (i=r->top; i<max; i++) /* memset? XXX */
-		r->d[i]=0;
+		rp[i]=0;
 #else
-	memset(&(r->d[r->top]),0,(max-r->top)*sizeof(BN_ULONG)); 
+	memset(&(rp[r->top]),0,(max-r->top)*sizeof(BN_ULONG)); 
 #endif
 
 	r->top=max;
@@ -225,10 +225,10 @@ static int BN_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
 #else
 		v=bn_mul_add_words(rp,np,nl,(rp[0]*n0)&BN_MASK2);
 #endif
-		if ((rp[nl] = (rp[nl]+v+carry)&BN_MASK2) < v)
-			carry = 1;
-		else
-			carry = 0;
+		v = (v+carry+rp[nl])&BN_MASK2;
+		carry |= (v != rp[nl]);
+		carry &= (v <= rp[nl]);
+		rp[nl]=v;
 		}
 
 	if (bn_wexpand(ret,nl) == NULL) return(0);
