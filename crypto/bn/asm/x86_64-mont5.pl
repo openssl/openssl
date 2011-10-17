@@ -607,7 +607,6 @@ $code.=<<___;
 	add	$A[1],$N[1]		# np[j]*m1+ap[j]*bp[i]+tp[j]
 	lea	4($j),$j		# j+=2
 	adc	\$0,%rdx
-	mov	$N[1],(%rsp)		# tp[j-1]
 	mov	%rdx,$N[0]
 	jmp	.Linner4x
 .align	16
@@ -626,7 +625,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[0],$N[0]
 	adc	\$0,%rdx
-	mov	$N[0],-24(%rsp,$j,8)	# tp[j-1]
+	mov	$N[1],-32(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[1]
 
 	mulq	$m0			# ap[j]*bp[i]
@@ -643,7 +642,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[1],$N[1]
 	adc	\$0,%rdx
-	mov	$N[1],-16(%rsp,$j,8)	# tp[j-1]
+	mov	$N[0],-24(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 
 	mulq	$m0			# ap[j]*bp[i]
@@ -660,7 +659,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[0],$N[0]
 	adc	\$0,%rdx
-	mov	$N[0],-8(%rsp,$j,8)	# tp[j-1]
+	mov	$N[1],-16(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[1]
 
 	mulq	$m0			# ap[j]*bp[i]
@@ -678,7 +677,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[1],$N[1]
 	adc	\$0,%rdx
-	mov	$N[1],-32(%rsp,$j,8)	# tp[j-1]
+	mov	$N[0],-40(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 	cmp	$num,$j
 	jl	.Linner4x
@@ -697,7 +696,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[0],$N[0]
 	adc	\$0,%rdx
-	mov	$N[0],-24(%rsp,$j,8)	# tp[j-1]
+	mov	$N[1],-32(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[1]
 
 	mulq	$m0			# ap[j]*bp[i]
@@ -715,10 +714,11 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[1],$N[1]
 	adc	\$0,%rdx
-	mov	$N[1],-16(%rsp,$j,8)	# tp[j-1]
+	mov	$N[0],-24(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 
 	movq	%xmm0,$m0		# bp[i+1]
+	mov	$N[1],-16(%rsp,$j,8)	# tp[j-1]
 
 	xor	$N[1],$N[1]
 	add	$A[0],$N[0]
@@ -831,6 +831,10 @@ ___
 {
 my ($inp,$num,$tbl,$idx)=$win64?("%rcx","%rdx","%r8", "%r9") : # Win64 order
 				("%rdi","%rsi","%rdx","%rcx"); # Unix order
+my $out=$inp;
+my $STRIDE=2**5*8;
+my $N=$STRIDE/4;
+
 $code.=<<___;
 .globl	bn_scatter5
 .type	bn_scatter5,\@abi-omnipotent
@@ -849,6 +853,61 @@ bn_scatter5:
 .Lscatter_epilogue:
 	ret
 .size	bn_scatter5,.-bn_scatter5
+
+.globl	bn_gather5
+.type	bn_gather5,\@abi-omnipotent
+.align	16
+bn_gather5:
+___
+$code.=<<___ if ($win64);
+.LSEH_begin_bn_gather5:
+	# I can't trust assembler to use specific encoding:-(
+	.byte	0x48,0x83,0xec,0x28		#sub	\$0x28,%rsp
+	.byte	0x0f,0x29,0x34,0x24		#movaps	%xmm6,(%rsp)
+	.byte	0x0f,0x29,0x7c,0x24,0x10	#movdqa	%xmm7,0x10(%rsp)
+___
+$code.=<<___;
+	mov	$idx,%r11
+	shr	\$`log($N/8)/log(2)`,$idx
+	and	\$`$N/8-1`,%r11
+	not	$idx
+	lea	.Lmagic_masks(%rip),%rax
+	and	\$`2**5/($N/8)-1`,$idx	# 5 is "window size"
+	lea	96($tbl,%r11,8),$tbl	# pointer within 1st cache line
+	movq	0(%rax,$idx,8),%xmm4	# set of masks denoting which
+	movq	8(%rax,$idx,8),%xmm5	# cache line contains element
+	movq	16(%rax,$idx,8),%xmm6	# denoted by 7th argument
+	movq	24(%rax,$idx,8),%xmm7
+	jmp	.Lgather
+.align	16
+.Lgather:
+	movq	`0*$STRIDE/4-96`($tbl),%xmm0
+	movq	`1*$STRIDE/4-96`($tbl),%xmm1
+	pand	%xmm4,%xmm0
+	movq	`2*$STRIDE/4-96`($tbl),%xmm2
+	pand	%xmm5,%xmm1
+	movq	`3*$STRIDE/4-96`($tbl),%xmm3
+	pand	%xmm6,%xmm2
+	por	%xmm1,%xmm0
+	pand	%xmm7,%xmm3
+	por	%xmm2,%xmm0
+	lea	$STRIDE($tbl),$tbl
+	por	%xmm3,%xmm0
+
+	movq	%xmm0,($out)		# m0=bp[0]
+	lea	8($out),$out
+	sub	\$1,$num
+	jnz	.Lgather
+___
+$code.=<<___ if ($win64);
+	movaps	%xmm6,(%rsp)
+	movaps	%xmm7,0x10(%rsp)
+	lea	0x28(%rsp),%rsp
+___
+$code.=<<___;
+	ret
+.LSEH_end_bn_gather5:
+.size	bn_gather5,.-bn_gather5
 ___
 }
 $code.=<<___;
@@ -980,6 +1039,10 @@ mul_handler:
 	.rva	.LSEH_end_bn_mul4x_mont_gather5
 	.rva	.LSEH_info_bn_mul4x_mont_gather5
 
+	.rva	.LSEH_begin_bn_gather5
+	.rva	.LSEH_end_bn_gather5
+	.rva	.LSEH_info_bn_gather5
+
 .section	.xdata
 .align	8
 .LSEH_info_bn_mul_mont_gather5:
@@ -991,6 +1054,12 @@ mul_handler:
 	.byte	9,0,0,0
 	.rva	mul_handler
 	.rva	.Lmul4x_alloca,.Lmul4x_body,.Lmul4x_epilogue	# HandlerData[]
+.align	8
+.LSEH_info_bn_gather5:
+        .byte   0x01,0x0d,0x05,0x00
+        .byte   0x0d,0x78,0x01,0x00	#movaps	0x10(rsp),xmm7
+        .byte   0x08,0x68,0x00,0x00	#movaps	(rsp),xmm6
+        .byte   0x04,0x42,0x00,0x00	#sub	rsp,0x28
 .align	8
 ___
 }
