@@ -23,7 +23,7 @@
 # Performance summary. aes-x86_64.pl column lists large-block CBC
 # encrypt/decrypt/with-hyper-threading-off(*) results in cycles per
 # byte processed with 128-bit key, and vpaes-x86_64.pl column -
-# encrypt/decrypt.
+# [also large-block CBC] encrypt/decrypt.
 #
 #		aes-x86_64.pl		vpaes-x86_64.pl
 #
@@ -1057,7 +1057,7 @@ _vpaes_consts:
 .Lk_dsbo:	# decryption sbox final output
 	.quad	0x1387EA537EF94000, 0xC7AA6DB9D4943E2D
 	.quad	0x12D7560F93441D00, 0xCA4B8159D8C58E9C
-.asciz	"Vector Permutaion AES for x86_64, Mike Hamburg (Stanford University)"
+.asciz	"Vector Permutaion AES for x86_64/SSSE3, Mike Hamburg (Stanford University)"
 .align	64
 .size	_vpaes_consts,.-_vpaes_consts
 ___

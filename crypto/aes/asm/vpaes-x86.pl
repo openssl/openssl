@@ -22,8 +22,8 @@
 #
 # Performance summary. aes-586.pl column lists large-block CBC
 # encrypt/decrypt/with-hyper-threading-off(*) results in cycles per
-# byte processed with 128-bit key, and vpaes-x86.pl column -
-# encrypt/decrypt.
+# byte processed with 128-bit key, and vpaes-x86.pl column - [also
+# large-block CBC] encrypt/decrypt.
 #
 #		aes-586.pl		vpaes-x86.pl
 #
@@ -153,7 +153,7 @@ $k_dsbe=0x2a0;		# decryption sbox output *E*u, *E*t
 $k_dsbo=0x2c0;		# decryption sbox final output
 	&data_word(0x7EF94000,0x1387EA53,0xD4943E2D,0xC7AA6DB9);
 	&data_word(0x93441D00,0x12D7560F,0xD8C58E9C,0xCA4B8159);
-&asciz	("Vector Permutation AES for x86, Mike Hamburg (Stanford University)");
+&asciz	("Vector Permutation AES for x86/SSSE3, Mike Hamburg (Stanford University)");
 &align	(64);
 
 &function_begin_B("_vpaes_preheat");

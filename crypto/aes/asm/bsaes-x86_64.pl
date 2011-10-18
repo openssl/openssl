@@ -70,7 +70,7 @@
 # Atom		570		0.26
 #
 # The ratio values mean that 128-byte blocks will be processed
-# 21-27% slower, 256-byte blocks - 12-16%, 382-byte blocks - 8-11%,
+# 21-27% slower, 256-byte blocks - 12-16%, 384-byte blocks - 8-11%,
 # etc. Then keep in mind that input sizes not divisible by 128 are
 # *effectively* slower, especially shortest ones, e.g. consecutive
 # 144-byte blocks are processed 44% slower than one would expect,
