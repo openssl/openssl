@@ -102,7 +102,7 @@ static int bad_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 static const EVP_CIPHER bad_cipher =
 	{
 	0,
-	0,
+	1,
 	0,
 	0,
 	0,
