@@ -276,6 +276,7 @@ my %globals;
 	    $self->{label} =~ s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/ig;
 	    $self->{label} = "($self->{label})" if ($self->{label} =~ /[\*\+\-\/]/);
 	    $sz="q" if ($self->{asterisk} || opcode->mnemonic() eq "movq");
+	    $sz="l" if (opcode->mnemonic() eq "movd");
 
 	    if (defined($self->{index})) {
 		sprintf "%s[%s%s*%d%s]",$szmap{$sz},
@@ -567,7 +568,7 @@ my %globals;
 					    $v.=" READONLY";
 					    $v.=" ALIGN(".($1 eq "p" ? 4 : 8).")" if ($masm>=$masmref);
 					} elsif ($line=~/\.CRT\$/i) {
-					    $v.=" READONLY DWORD";
+					    $v.=" READONLY ALIGN(8)";
 					}
 				    }
 				    $current_segment = $line;
@@ -589,7 +590,7 @@ my %globals;
 					    $self->{value}="${decor}SEH_end_$current_function->{name}:";
 					    $self->{value}.=":\n" if($masm);
 					}
-					$self->{value}.="$current_function->{name}\tENDP" if($masm);
+					$self->{value}.="$current_function->{name}\tENDP" if($masm && $current_function->{name});
 					undef $current_function;
 				    }
 				    last;
