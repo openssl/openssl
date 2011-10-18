@@ -666,6 +666,7 @@
 #define _sparcv9_vis1_instrument _fips_sparcv9_vis1_instrument
 #define bn_mul_mont_gather5 fips_bn_mul_mont_gather5
 #define bn_scatter5 fips_bn_scatter5
+#define bn_gather5 fips_bn_gather5
 
 #if defined(_MSC_VER)
 # pragma section("fipsro$b",read)
