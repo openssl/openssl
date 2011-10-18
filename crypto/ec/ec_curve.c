@@ -1903,16 +1903,19 @@ static const ec_list_element curve_list[] = {
 	/* SECG secp192r1 is the same as X9.62 prime192v1 and hence omitted */
 	{ NID_secp192k1, &_EC_SECG_PRIME_192K1.h, 0, "SECG curve over a 192 bit prime field" },
 	{ NID_secp224k1, &_EC_SECG_PRIME_224K1.h, 0, "SECG curve over a 224 bit prime field" },
-#ifdef EC_NISTP224_64_GCC_128
-        { NID_secp224r1, &_EC_NIST_PRIME_224.h, EC_GFp_nistp224_method, "NIST/SECG curve over a 224 bit prime field,\n"
-	  "\t\t64-bit optimized implementation." },
+#ifdef EC_NISTP_64_GCC_128
+	{ NID_secp224r1, &_EC_NIST_PRIME_224.h, EC_GFp_nistp224_method, "NIST/SECG curve over a 224 bit prime field" },
 #else
 	{ NID_secp224r1, &_EC_NIST_PRIME_224.h, 0, "NIST/SECG curve over a 224 bit prime field" },
 #endif
 	{ NID_secp256k1, &_EC_SECG_PRIME_256K1.h, 0, "SECG curve over a 256 bit prime field" },
 	/* SECG secp256r1 is the same as X9.62 prime256v1 and hence omitted */
 	{ NID_secp384r1, &_EC_NIST_PRIME_384.h, 0, "NIST/SECG curve over a 384 bit prime field" },
+#ifdef EC_NISTP_64_GCC_128
+	{ NID_secp521r1, &_EC_NIST_PRIME_521.h, EC_GFp_nistp521_method, "NIST/SECG curve over a 521 bit prime field" },
+#else
 	{ NID_secp521r1, &_EC_NIST_PRIME_521.h, 0, "NIST/SECG curve over a 521 bit prime field" },
+#endif
 	/* X9.62 curves */
 	{ NID_X9_62_prime192v1, &_EC_NIST_PRIME_192.h, 0, "NIST/X9.62/SECG curve over a 192 bit prime field" },
 	{ NID_X9_62_prime192v2, &_EC_X9_62_PRIME_192V2.h, 0, "X9.62 curve over a 192 bit prime field" },
@@ -1920,7 +1923,11 @@ static const ec_list_element curve_list[] = {
 	{ NID_X9_62_prime239v1, &_EC_X9_62_PRIME_239V1.h, 0, "X9.62 curve over a 239 bit prime field" },
 	{ NID_X9_62_prime239v2, &_EC_X9_62_PRIME_239V2.h, 0, "X9.62 curve over a 239 bit prime field" },
 	{ NID_X9_62_prime239v3, &_EC_X9_62_PRIME_239V3.h, 0, "X9.62 curve over a 239 bit prime field" },
+#ifdef EC_NISTP_64_GCC_128
+	{ NID_X9_62_prime256v1, &_EC_X9_62_PRIME_256V1.h, EC_GFp_nistp256_method, "X9.62/SECG curve over a 256 bit prime field" },
+#else
 	{ NID_X9_62_prime256v1, &_EC_X9_62_PRIME_256V1.h, 0, "X9.62/SECG curve over a 256 bit prime field" },
+#endif
 #ifndef OPENSSL_NO_EC2M
 	/* characteristic two field curves */
 	/* NIST/SECG curves */

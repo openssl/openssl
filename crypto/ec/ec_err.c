@@ -1,6 +1,6 @@
 /* crypto/ec/ec_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -116,6 +116,12 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_FUNC(EC_F_EC_GFP_NISTP224_GROUP_SET_CURVE),	"ec_GFp_nistp224_group_set_curve"},
 {ERR_FUNC(EC_F_EC_GFP_NISTP224_POINTS_MUL),	"ec_GFp_nistp224_points_mul"},
 {ERR_FUNC(EC_F_EC_GFP_NISTP224_POINT_GET_AFFINE_COORDINATES),	"ec_GFp_nistp224_point_get_affine_coordinates"},
+{ERR_FUNC(EC_F_EC_GFP_NISTP256_GROUP_SET_CURVE),	"ec_GFp_nistp256_group_set_curve"},
+{ERR_FUNC(EC_F_EC_GFP_NISTP256_POINTS_MUL),	"ec_GFp_nistp256_points_mul"},
+{ERR_FUNC(EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES),	"ec_GFp_nistp256_point_get_affine_coordinates"},
+{ERR_FUNC(EC_F_EC_GFP_NISTP521_GROUP_SET_CURVE),	"ec_GFp_nistp521_group_set_curve"},
+{ERR_FUNC(EC_F_EC_GFP_NISTP521_POINTS_MUL),	"ec_GFp_nistp521_points_mul"},
+{ERR_FUNC(EC_F_EC_GFP_NISTP521_POINT_GET_AFFINE_COORDINATES),	"ec_GFp_nistp521_point_get_affine_coordinates"},
 {ERR_FUNC(EC_F_EC_GFP_NIST_FIELD_MUL),	"ec_GFp_nist_field_mul"},
 {ERR_FUNC(EC_F_EC_GFP_NIST_FIELD_SQR),	"ec_GFp_nist_field_sqr"},
 {ERR_FUNC(EC_F_EC_GFP_NIST_GROUP_SET_CURVE),	"ec_GFp_nist_group_set_curve"},
@@ -190,6 +196,8 @@ static ERR_STRING_DATA EC_str_functs[]=
 {ERR_FUNC(EC_F_I2D_ECPRIVATEKEY),	"i2d_ECPrivateKey"},
 {ERR_FUNC(EC_F_I2O_ECPUBLICKEY),	"i2o_ECPublicKey"},
 {ERR_FUNC(EC_F_NISTP224_PRE_COMP_NEW),	"NISTP224_PRE_COMP_NEW"},
+{ERR_FUNC(EC_F_NISTP256_PRE_COMP_NEW),	"NISTP256_PRE_COMP_NEW"},
+{ERR_FUNC(EC_F_NISTP521_PRE_COMP_NEW),	"NISTP521_PRE_COMP_NEW"},
 {ERR_FUNC(EC_F_O2I_ECPUBLICKEY),	"o2i_ECPublicKey"},
 {ERR_FUNC(EC_F_OLD_EC_PRIV_DECODE),	"OLD_EC_PRIV_DECODE"},
 {ERR_FUNC(EC_F_PKEY_EC_CTRL),	"PKEY_EC_CTRL"},
