@@ -667,7 +667,7 @@
 #define bn_mul_mont_gather5 fips_bn_mul_mont_gather5
 #define bn_scatter5 fips_bn_scatter5
 
-#if defined(_MSC_VER) && defined(_WIN64)
+#if defined(_MSC_VER)
 # pragma section("fipsro$b",read)
 # define __fips_constseg __declspec(allocate("fipsro$b"))
 #else
