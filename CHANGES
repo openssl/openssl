@@ -4,6 +4,24 @@
 
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
+  *) Add optional 64-bit optimized implementations of elliptic curves NIST-P224,
+     NIST-P256, NIST-P521, with constant-time single point multiplication on
+     typical inputs. Compiler support for the nonstandard type __uint128_t is
+     required to use this. Code made available under Apache License version 2.0.
+
+     To include this in your build of OpenSSL, use -DEC_NISTP_64_GCC_128 on
+     the Configure (or config) command line, and run "make depend" (or "make
+     update"). This enables the following EC_METHODs:
+
+         EC_GFp_nistp224_method()
+         EC_GFp_nistp256_method()
+         EC_GFp_nistp521_method()
+
+     EC_GROUP_new_by_curve_name() will automatically use these (while
+     EC_GROUP_new_curve_GFp() currently prefers the more flexible
+     implementations).
+     [Emilia Käsper, Adam Langley, Bodo Moeller (Google)]
+
   *) Use type ossl_ssize_t instad of ssize_t which isn't available on
      all platforms. Move ssize_t definition from e_os.h to the public
      header file e_os2.h as it now appears in public header file cms.h
@@ -189,18 +207,6 @@
 
   *) Add functions to copy EVP_PKEY_METHOD and retrieve flags and id.
      [Steve Henson]
-
-  *) Add EC_GFp_nistp224_method(), a 64-bit optimized implementation for
-     elliptic curve NIST-P224 with constant-time single point multiplication on
-     typical inputs.  EC_GROUP_new_by_curve_name() will automatically use this
-     (while EC_GROUP_new_curve_GFp() currently won't and prefers the more
-     flexible implementations).
-
-     The implementation requires support for the nonstandard type __uint128_t,
-     and so is disabled by default.  To include this in your build of OpenSSL,
-     use -DEC_NISTP224_64_GCC_128 on the Configure (or config) command line,
-     and run "make depend" (or "make update").
-     [Emilia Käsper <emilia.kasper@esat.kuleuven.be> (Google)]
 
   *) Permit abbreviated handshakes when renegotiating using the function
      SSL_renegotiate_abbreviated().

@@ -151,11 +151,21 @@ const EC_METHOD *EC_GFp_mont_method(void);
  */
 const EC_METHOD *EC_GFp_nist_method(void);
 
-#ifndef OPENSSL_NO_EC_NISTP224_64_GCC_128
+#ifdef EC_NISTP_64_GCC_128
 /** Returns 64-bit optimized methods for nistp224
  *  \return  EC_METHOD object
  */
 const EC_METHOD *EC_GFp_nistp224_method(void);
+
+/** Returns 64-bit optimized methods for nistp256
+ *  \return  EC_METHOD object
+ */
+const EC_METHOD *EC_GFp_nistp256_method(void);
+
+/** Returns 64-bit optimized methods for nistp521
+ *  \return  EC_METHOD object
+ */
+const EC_METHOD *EC_GFp_nistp521_method(void);
 #endif
 
 #ifndef OPENSSL_NO_EC2M
@@ -1003,6 +1013,12 @@ void ERR_load_EC_strings(void);
 #define EC_F_EC_GFP_NISTP224_GROUP_SET_CURVE		 225
 #define EC_F_EC_GFP_NISTP224_POINTS_MUL			 228
 #define EC_F_EC_GFP_NISTP224_POINT_GET_AFFINE_COORDINATES 226
+#define EC_F_EC_GFP_NISTP256_GROUP_SET_CURVE		 230
+#define EC_F_EC_GFP_NISTP256_POINTS_MUL			 231
+#define EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES 232
+#define EC_F_EC_GFP_NISTP521_GROUP_SET_CURVE		 233
+#define EC_F_EC_GFP_NISTP521_POINTS_MUL			 234
+#define EC_F_EC_GFP_NISTP521_POINT_GET_AFFINE_COORDINATES 235
 #define EC_F_EC_GFP_NIST_FIELD_MUL			 200
 #define EC_F_EC_GFP_NIST_FIELD_SQR			 201
 #define EC_F_EC_GFP_NIST_GROUP_SET_CURVE		 202
@@ -1077,6 +1093,8 @@ void ERR_load_EC_strings(void);
 #define EC_F_I2D_ECPRIVATEKEY				 192
 #define EC_F_I2O_ECPUBLICKEY				 151
 #define EC_F_NISTP224_PRE_COMP_NEW			 227
+#define EC_F_NISTP256_PRE_COMP_NEW			 236
+#define EC_F_NISTP521_PRE_COMP_NEW			 237
 #define EC_F_O2I_ECPUBLICKEY				 152
 #define EC_F_OLD_EC_PRIV_DECODE				 222
 #define EC_F_PKEY_EC_CTRL				 197

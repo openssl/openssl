@@ -398,15 +398,49 @@ int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
 int ec_GF2m_have_precompute_mult(const EC_GROUP *group);
 
-#ifdef EC_NISTP224_64_GCC_128
+#ifdef EC_NISTP_64_GCC_128
+/* method functions in ec2_mult.c */
+int ec_GF2m_simple_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
+	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
+int ec_GF2m_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+int ec_GF2m_have_precompute_mult(const EC_GROUP *group);
+
 /* method functions in ecp_nistp224.c */
 int ec_GFp_nistp224_group_init(EC_GROUP *group);
-int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p,
-	const BIGNUM *a, const BIGNUM *n, BN_CTX *);
-int ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP *group,
-	const EC_POINT *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
-int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
-	size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
+int ec_GFp_nistp224_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *n, BN_CTX *);
+int ec_GFp_nistp224_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
+int ec_GFp_nistp224_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
+int ec_GFp_nistp224_points_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx);
 int ec_GFp_nistp224_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
 int ec_GFp_nistp224_have_precompute_mult(const EC_GROUP *group);
+
+/* method functions in ecp_nistp256.c */
+int ec_GFp_nistp256_group_init(EC_GROUP *group);
+int ec_GFp_nistp256_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *n, BN_CTX *);
+int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
+int ec_GFp_nistp256_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
+int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx);
+int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+int ec_GFp_nistp256_have_precompute_mult(const EC_GROUP *group);
+
+/* method functions in ecp_nistp521.c */
+int ec_GFp_nistp521_group_init(EC_GROUP *group);
+int ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p, const BIGNUM *a, const BIGNUM *n, BN_CTX *);
+int ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP *group, const EC_POINT *point, BIGNUM *x, BIGNUM *y, BN_CTX *ctx);
+int ec_GFp_nistp521_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *);
+int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar, size_t num, const EC_POINT *points[], const BIGNUM *scalars[], BN_CTX *ctx);
+int ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+int ec_GFp_nistp521_have_precompute_mult(const EC_GROUP *group);
+
+/* utility functions in ecp_nistputil.c */
+void ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array,
+	size_t felem_size, void *tmp_felems,
+	void (*felem_one)(void *out),
+	int (*felem_is_zero)(const void *in),
+	void (*felem_assign)(void *out, const void *in),
+	void (*felem_square)(void *out, const void *in),
+	void (*felem_mul)(void *out, const void *in1, const void *in2),
+	void (*felem_inv)(void *out, const void *in),
+	void (*felem_contract)(void *out, const void *in));
+void ec_GFp_nistp_recode_scalar_bits(unsigned char *sign, unsigned char *digit, unsigned char in);
 #endif
