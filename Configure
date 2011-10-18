@@ -1554,8 +1554,8 @@ if ($aes_obj =~ /\.o$/)
 	# aes_ctr.o is not a real file, only indication that assembler
 	# module implements AES_ctr32_encrypt...
 	$cflags.=" -DAES_CTR_ASM" if ($aes_obj =~ s/\s*aes_ctr\.o//);
-	$aes_obj =~ s/\s*(vpaes|aesni)\-x86\.o// if ($no_sse2);
-	$aes_obj =~ s/\s*(vp|bs)aes-\w*\.o// if ($fipscanisterinternal eq "y");
+	$aes_obj =~ s/\s*(vpaes|aesni)\-x86\.o//g if ($no_sse2);
+	$aes_obj =~ s/\s*(vp|bs)aes-\w*\.o//g if ($fipscanisterinternal eq "y");
 	$cflags.=" -DVPAES_ASM" if ($aes_obj =~ m/vpaes/);
 	$cflags.=" -DBSAES_ASM" if ($aes_obj =~ m/bsaes/);
 	}
