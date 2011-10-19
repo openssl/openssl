@@ -30,8 +30,10 @@ const void         *FIPS_text_end(void);
 #if !defined(FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE)
 # if	(defined(__ANDROID__) && (defined(__arm__) || defined(__arm)	|| \
 				  defined(__i386__)|| defined(__i386)))	|| \
-	(defined(__vxworks)   && (defined(__ppc__) || defined(__ppc)))	|| \
-	(defined(__linux)     && defined(__PPC__) && !defined(__PPC64__))
+	(defined(__vxworks)   && (defined(__ppc__) || defined(__ppc)	|| \
+				  defined(__mips__)|| defined(__mips)))	|| \
+	(defined(__linux)     && ((defined(__PPC__) && !defined(__PPC64__)) || \
+				  defined(__arm__) || defined(__arm)))
 #  define FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE
 # endif
 #endif
@@ -166,7 +168,11 @@ static void *instruction_pointer(void)
 const void *FIPS_ref_point()
 {
 #if	defined(FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE)
+# if defined(__thumb__) || defined(__thumb)
+    return (void *)((size_t)instruction_pointer&~1);
+# else
     return (void *)instruction_pointer;
+# endif
 #elif	defined(INSTRUCTION_POINTER_IMPLEMENTED)
     return instruction_pointer();
 /* Below we essentially cover vendor compilers which do not support
