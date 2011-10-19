@@ -4218,7 +4218,7 @@ EVP_PKEY_meth_copy                      4588	EXIST::FUNCTION:
 ERR_add_error_vdata                     4589	EXIST::FUNCTION:
 EVP_aes_128_ctr                         4590	EXIST::FUNCTION:AES
 EVP_aes_256_ctr                         4591	EXIST::FUNCTION:AES
-EC_GFp_nistp224_method                  4592	EXIST:!WIN32:FUNCTION:EC,EC_NISTP224_64_GCC_128
+EC_GFp_nistp224_method                  4592	EXIST:!WIN32:FUNCTION:EC,EC_NISTP_64_GCC_128
 EC_KEY_get_flags                        4593	EXIST::FUNCTION:EC
 RSA_padding_add_PKCS1_PSS_mgf1          4594	EXIST::FUNCTION:RSA
 EVP_aes_128_xts                         4595	EXIST::FUNCTION:AES
@@ -4326,7 +4326,7 @@ X509_VERIFY_PARAM_get_count             4695	EXIST::FUNCTION:
 FIPS_rand_strength                      4696	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_module_mode_set                    4697	EXIST:OPENSSL_FIPS:FUNCTION:
 fips_check_rsa_prng                     4698	EXIST:OPENSSL_FIPS:FUNCTION:
-ENGINE_load_aesni                       4699	EXIST::FUNCTION:ENGINE
+ENGINE_load_aesni                       4699	NOEXIST::FUNCTION:
 DH_compute_key_padded                   4700	EXIST::FUNCTION:DH
 FIPS_x931_stick                         4701	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_drbg_stick                         4702	EXIST:OPENSSL_FIPS:FUNCTION:
@@ -4386,3 +4386,5 @@ BN_nist_mod_func                        4755	EXIST::FUNCTION:
 FIPS_drbg_get_app_data                  4756	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_rsa_verify_ctx                     4757	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_drbg_method                        4758	EXIST:OPENSSL_FIPS:FUNCTION:
+EC_GFp_nistp521_method                  4759	EXIST:!WIN32:FUNCTION:EC,EC_NISTP_64_GCC_128
+EC_GFp_nistp256_method                  4760	EXIST:!WIN32:FUNCTION:EC,EC_NISTP_64_GCC_128

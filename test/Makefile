@@ -756,14 +756,14 @@ fips_hmactest.o: ../include/openssl/symhacks.h fips_hmactest.c
 fips_randtest.o: ../e_os.h ../include/openssl/aes.h ../include/openssl/asn1.h
 fips_randtest.o: ../include/openssl/bio.h ../include/openssl/bn.h
 fips_randtest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
-fips_randtest.o: ../include/openssl/err.h ../include/openssl/evp.h
-fips_randtest.o: ../include/openssl/fips_rand.h ../include/openssl/hmac.h
-fips_randtest.o: ../include/openssl/lhash.h ../include/openssl/obj_mac.h
-fips_randtest.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
-fips_randtest.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
-fips_randtest.o: ../include/openssl/rand.h ../include/openssl/safestack.h
-fips_randtest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-fips_randtest.o: fips_randtest.c
+fips_randtest.o: ../include/openssl/ec.h ../include/openssl/err.h
+fips_randtest.o: ../include/openssl/evp.h ../include/openssl/fips_rand.h
+fips_randtest.o: ../include/openssl/hmac.h ../include/openssl/lhash.h
+fips_randtest.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
+fips_randtest.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+fips_randtest.o: ../include/openssl/ossl_typ.h ../include/openssl/rand.h
+fips_randtest.o: ../include/openssl/safestack.h ../include/openssl/stack.h
+fips_randtest.o: ../include/openssl/symhacks.h fips_randtest.c
 fips_rngvs.o: ../include/openssl/opensslconf.h fips_rngvs.c
 fips_rsagtest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 fips_rsagtest.o: ../include/openssl/bn.h ../include/openssl/crypto.h

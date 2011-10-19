@@ -301,13 +301,14 @@ e_padlock.o: ../include/openssl/e_os2.h ../include/openssl/ec.h
 e_padlock.o: ../include/openssl/ecdh.h ../include/openssl/ecdsa.h
 e_padlock.o: ../include/openssl/engine.h ../include/openssl/err.h
 e_padlock.o: ../include/openssl/evp.h ../include/openssl/lhash.h
-e_padlock.o: ../include/openssl/obj_mac.h ../include/openssl/objects.h
-e_padlock.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
-e_padlock.o: ../include/openssl/ossl_typ.h ../include/openssl/pkcs7.h
-e_padlock.o: ../include/openssl/rand.h ../include/openssl/safestack.h
-e_padlock.o: ../include/openssl/sha.h ../include/openssl/stack.h
-e_padlock.o: ../include/openssl/symhacks.h ../include/openssl/x509.h
-e_padlock.o: ../include/openssl/x509_vfy.h e_padlock.c
+e_padlock.o: ../include/openssl/modes.h ../include/openssl/obj_mac.h
+e_padlock.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
+e_padlock.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
+e_padlock.o: ../include/openssl/pkcs7.h ../include/openssl/rand.h
+e_padlock.o: ../include/openssl/safestack.h ../include/openssl/sha.h
+e_padlock.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+e_padlock.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+e_padlock.o: e_padlock.c
 e_sureware.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 e_sureware.o: ../include/openssl/bn.h ../include/openssl/buffer.h
 e_sureware.o: ../include/openssl/crypto.h ../include/openssl/dh.h
