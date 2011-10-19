@@ -26,7 +26,8 @@
  * work which got its smarts from Daniel J. Bernstein's work on the same.
  */
 
-#ifdef EC_NISTP_64_GCC_128
+#include <openssl/opensslconf.h>
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 
 #include <stdint.h>
 #include <string.h>
@@ -363,6 +364,10 @@ static const felem zero110 = { two64m0, two110p32m0, two64m46, two64m32 };
 static void felem_shrink(smallfelem out, const felem in)
 	{
 	felem tmp;
+	u64 a, b, mask;
+	s64 high, low;
+	static const u64 kPrime3Test = 0x7fffffff00000001ul; /* 2^63 - 2^32 + 1 */
+
 	/* Carry 2->3 */
 	tmp[3] = zero110[3] + in[3] + ((u64) (in[2] >> 64));
 	/* tmp[3] < 2^110 */
@@ -375,13 +380,13 @@ static void felem_shrink(smallfelem out, const felem in)
 	/* We perform two partial reductions where we eliminate the
 	 * high-word of tmp[3]. We don't update the other words till the end.
 	 */
-	u64 a = tmp[3] >> 64; /* a < 2^46 */
+	a = tmp[3] >> 64; /* a < 2^46 */
 	tmp[3] = (u64) tmp[3];
 	tmp[3] -= a;
 	tmp[3] += ((limb)a) << 32;
 	/* tmp[3] < 2^79 */
 
-	u64 b = a;
+	b = a;
 	a = tmp[3] >> 64; /* a < 2^15 */
 	b += a; /* b < 2^46 + 2^15 < 2^47 */
 	tmp[3] = (u64) tmp[3];
@@ -396,16 +401,15 @@ static void felem_shrink(smallfelem out, const felem in)
 
 	/* In order to make space in tmp[3] for the carry from 2 -> 3, we
 	 * conditionally subtract kPrime if tmp[3] is large enough. */
-	static const u64 kPrime3Test = 0x7fffffff00000001ul; /* 2^63 - 2^32 + 1 */
-	s64 high = tmp[3] >> 64;
+	high = tmp[3] >> 64;
 	/* As tmp[3] < 2^65, high is either 1 or 0 */
 	high <<= 63;
 	high >>= 63;
 	/* high is:
 	 *   all ones   if the high word of tmp[3] is 1
 	 *   all zeros  if the high word of tmp[3] if 0 */
-	s64 low = tmp[3];
-	u64 mask = low >> 63;
+	low = tmp[3];
+	mask = low >> 63;
 	/* mask is:
 	 *   all ones   if the MSB of low is 1
 	 *   all zeros  if the MSB of low if 0 */
@@ -815,7 +819,9 @@ static void felem_contract(smallfelem out, const felem in)
 	 * compare each u64, from most-significant to least significant. For
 	 * each one, if all words so far have been equal (m is all ones) then a
 	 * non-equal result is the answer. Otherwise we continue. */
-	for (i = 3; i < 4; i--) {
+	for (i = 3; i < 4; i--)
+		{
+		u64 equal;
 		uint128_t a = ((uint128_t) kPrime[i]) - out[i];
 		/* if out[i] > kPrime[i] then a will underflow and the high
 		 * 64-bits will all be set. */
@@ -823,7 +829,7 @@ static void felem_contract(smallfelem out, const felem in)
 
 		/* if kPrime[i] == out[i] then |equal| will be all zeros and
 		 * the decrement will make it all ones. */
-		u64 equal = kPrime[i] ^ out[i];
+		equal = kPrime[i] ^ out[i];
 		equal--;
 		equal &= equal << 32;
 		equal &= equal << 16;
@@ -834,7 +840,7 @@ static void felem_contract(smallfelem out, const felem in)
 		equal = ((s64) equal) >> 63;
 
 		all_equal_so_far &= equal;
-	}
+		}
 
 	/* if all_equal_so_far is still all ones then the two values are equal
 	 * and so out >= kPrime is true. */
@@ -884,6 +890,7 @@ static void smallfelem_mul_contract(smallfelem out, const smallfelem in1, const 
 static limb smallfelem_is_zero(const smallfelem small)
 	{
 	limb result;
+	u64 is_p;
 
 	u64 is_zero = small[0] | small[1] | small[2] | small[3];
 	is_zero--;
@@ -895,10 +902,10 @@ static limb smallfelem_is_zero(const smallfelem small)
 	is_zero &= is_zero << 1;
 	is_zero = ((s64) is_zero) >> 63;
 
-	u64 is_p = (small[0] ^ kPrime[0]) |
-		   (small[1] ^ kPrime[1]) |
-		   (small[2] ^ kPrime[2]) |
-		   (small[3] ^ kPrime[3]);
+	is_p = (small[0] ^ kPrime[0]) |
+	       (small[1] ^ kPrime[1]) |
+	       (small[2] ^ kPrime[2]) |
+	       (small[3] ^ kPrime[3]);
 	is_p--;
 	is_p &= is_p << 32;
 	is_p &= is_p << 16;
@@ -1457,9 +1464,9 @@ static const smallfelem gmul[2][16][3] =
    {0x501e82885bc98cda, 0x41ef80e5d046ac04, 0x557d9f49461210fb, 0x4ab5b6b2b8753f81},
    {1, 0, 0, 0}}}};
 
-/* select_point selects the |index|th point from a precomputation table and
+/* select_point selects the |idx|th point from a precomputation table and
  * copies it to out. */
-static void select_point(const u64 index, unsigned int size, const smallfelem pre_comp[16][3], smallfelem out[3])
+static void select_point(const u64 idx, unsigned int size, const smallfelem pre_comp[16][3], smallfelem out[3])
 	{
 	unsigned i, j;
 	u64 *outlimbs = &out[0][0];
@@ -1468,7 +1475,7 @@ static void select_point(const u64 index, unsigned int size, const smallfelem pr
 	for (i = 0; i < size; i++)
 		{
 		const u64 *inlimbs = (u64*) &pre_comp[i][0][0];
-		u64 mask = i ^ index;
+		u64 mask = i ^ idx;
 		mask |= mask >> 4;
 		mask |= mask >> 2;
 		mask |= mask >> 1;
@@ -1623,9 +1630,9 @@ const EC_METHOD *EC_GFp_nistp256_method(void)
 		ec_GFp_simple_get_Jprojective_coordinates_GFp,
 		ec_GFp_simple_point_set_affine_coordinates,
 		ec_GFp_nistp256_point_get_affine_coordinates,
-                0 /* point_set_compressed_coordinates */,
-                0 /* point2oct */,
-                0 /* oct2point */,
+		0 /* point_set_compressed_coordinates */,
+		0 /* point2oct */,
+		0 /* oct2point */,
 		ec_GFp_simple_add,
 		ec_GFp_simple_dbl,
 		ec_GFp_simple_invert,
@@ -1784,16 +1791,17 @@ int ec_GFp_nistp256_point_get_affine_coordinates(const EC_GROUP *group,
 	felem_contract(y_out, y_in);
 	if (y != NULL)
 		{
-		if (!smallfelem_to_BN(y, y_out)) {
-		ECerr(EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES,
-			ERR_R_BN_LIB);
-		return 0;
-		}
+		if (!smallfelem_to_BN(y, y_out))
+			{
+			ECerr(EC_F_EC_GFP_NISTP256_POINT_GET_AFFINE_COORDINATES,
+				ERR_R_BN_LIB);
+			return 0;
+			}
 		}
 	return 1;
 	}
 
-static void make_points_affine(size_t num, smallfelem points[num][3], smallfelem tmp_smallfelems[num+1])
+static void make_points_affine(size_t num, smallfelem points[/* num */][3], smallfelem tmp_smallfelems[/* num+1 */])
 	{
 	/* Runs in constant time, unless an input is the point at infinity
 	 * (which normally shouldn't happen). */

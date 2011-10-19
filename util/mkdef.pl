@@ -86,8 +86,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "SHA256", "SHA512", "RIPEMD",
 			 "MDC2", "WHIRLPOOL", "RSA", "DSA", "DH", "EC", "ECDH", "ECDSA", "EC2M",
 			 "HMAC", "AES", "CAMELLIA", "SEED", "GOST",
-			 # ECP_NISTP224
-			 "EC_NISTP224_64_GCC_128",
+			 # EC_NISTP_64_GCC_128
+			 "EC_NISTP_64_GCC_128",
 			 # Envelope "algorithms"
 			 "EVP", "X509", "ASN1_TYPEDEFS",
 			 # Helper "algorithms"
@@ -1188,7 +1188,7 @@ sub is_valid
 			if ($keyword eq "PSK" && $no_psk) { return 0; }
 			if ($keyword eq "CMS" && $no_cms) { return 0; }
 			if ($keyword eq "EC2M" && $no_ec2m) { return 0; }
-			if ($keyword eq "EC_NISTP224_64_GCC_128" && $no_nistp_gcc)
+			if ($keyword eq "EC_NISTP_64_GCC_128" && $no_nistp_gcc)
 					{ return 0; }
 			if ($keyword eq "SSL2" && $no_ssl2) { return 0; }
 			if ($keyword eq "CAPIENG" && $no_capieng) { return 0; }
