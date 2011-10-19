@@ -1169,6 +1169,10 @@ $perl=$ENV{'PERL'} or $perl=&which("perl5") or $perl=&which("perl")
   or $perl="perl";
 my $make = $ENV{'MAKE'} || "make";
 
+my $fips_auth_key = $ENV{'FIPS_AUTH_KEY'};
+my $fips_auth_officer = $ENV{'FIPS_AUTH_OFFICER'};
+my $fips_auth_user = $ENV{'FIPS_AUTH_USER'};
+
 $cross_compile_prefix=$ENV{'CROSS_COMPILE'} if $cross_compile_prefix eq "";
 
 chop $openssldir if $openssldir =~ /\/$/;
@@ -1619,6 +1623,21 @@ if ($strict_warnings)
 		{
 		$cflags .= " $wopt" unless ($cflags =~ /$wopt/)
 		}
+	}
+
+if ($fipscanisterinternal eq "y")
+	{
+	open(IN,"<fips/fips_auth.in") || die "can't open fips_auth.in";
+	open(OUT,">fips/fips_auth.h") || die "can't open fips_auth.h";
+	while(<IN>)
+		{
+		s/FIPS_AUTH_KEY.*$/FIPS_AUTH_KEY $fips_auth_key/ if defined $fips_auth_key;
+		s/FIPS_AUTH_CRYPTO_OFFICER.*$/FIPS_AUTH_CRYPTO_OFFICER $fips_auth_officer/ if defined $fips_auth_officer;
+		s/FIPS_AUTH_CRYPTO_USER.*$/FIPS_AUTH_CRYPTO_USER $fips_auth_user/ if defined $fips_auth_user;
+		print OUT $_;
+		}
+	close IN;
+	close OUT;
 	}
 
 my $mforg = $fipscanisteronly ? "Makefile.fips" : "Makefile.org";

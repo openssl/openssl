@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add authorisation parameter to FIPS_module_mode_set().
+     [Steve Henson]
+
   *) Add FIPS selftest for ECDH algorithm using P-224 and B-233 curves.
      [Steve Henson]
 

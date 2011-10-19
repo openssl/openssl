@@ -1002,6 +1002,7 @@ int main(int argc,char **argv)
     int do_drbg_stick = 0;
     int no_exit = 0;
     int no_dh = 0;
+    char *pass = FIPS_AUTH_USER_PASS;
 
     FIPS_post_set_callback(post_cb);
 
@@ -1077,13 +1078,19 @@ int main(int argc,char **argv)
 	    do_drbg_stick = 1;
 	    no_exit = 1;
 	    printf("DRBG test with stuck continuous test...\n");
+	} else if (!strcmp(argv[1], "user")) {
+		pass = FIPS_AUTH_USER_PASS;
+	} else if (!strcmp(argv[1], "officer")) {
+		pass = FIPS_AUTH_OFFICER_PASS;
+	} else if (!strcmp(argv[1], "badpass")) {
+		pass = "bad invalid password";
         } else {
             printf("Bad argument \"%s\"\n", argv[1]);
             exit(1);
         }
 	if (!no_exit) {
     		fips_algtest_init_nofips();
-        	if (!FIPS_module_mode_set(1)) {
+        	if (!FIPS_module_mode_set(1, pass)) {
         	    printf("Power-up self test failed\n");
 		    exit(1);
 		}
@@ -1105,7 +1112,7 @@ int main(int argc,char **argv)
     /* Power-up self test
     */
     ERR_clear_error();
-    test_msg("2. Automatic power-up self test", FIPS_module_mode_set(1));
+    test_msg("2. Automatic power-up self test", FIPS_module_mode_set(1, pass));
     if (!FIPS_module_mode())
 	exit(1);
     if (do_drbg_stick)

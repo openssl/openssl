@@ -4,5 +4,6 @@ fips_test_suite
 fips_premain_dso
 fips_standalone_sha1
 fipscanister.o.sha1
+fips_auth.h
 *.flc
 semantic.cache

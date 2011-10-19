@@ -61,6 +61,7 @@
 #include <string.h>
 #include <limits.h>
 #include "fips_locl.h"
+#include "fips_auth.h"
 
 #ifdef OPENSSL_FIPS
 
@@ -70,7 +71,10 @@
 #define PATH_MAX 1024
 #endif
 
+#define atox(c) ((c)>='a'?((c)-'a'+10):((c)>='A'?(c)-'A'+10:(c)-'0'))
+
 static int fips_selftest_fail = 0;
+static int fips_auth_fail = 0;
 static int fips_mode = 0;
 static int fips_started = 0;
 
@@ -238,7 +242,46 @@ int FIPS_check_incore_fingerprint(void)
     return rv;
     }
 
-int FIPS_module_mode_set(int onoff)
+static int fips_asc_check(const unsigned char *sig, const char *asc_sig)
+    {
+    char tsig[20];
+    const char *p;
+    int i;
+    if (strlen(asc_sig) != 40)
+	return 0;
+    for (i = 0, p = asc_sig; i < 20; i++, p += 2)
+	tsig[i] = (atox(p[0]) << 4) | atox(p[1]);
+    if (memcmp(tsig, sig, 20))
+	return 0;
+    return 1;
+    }
+
+static int fips_check_auth(const char *auth)
+    {
+    unsigned char auth_hmac[20];
+    unsigned int hmac_len;
+    if (fips_auth_fail)
+	return 0;
+    if (strlen(auth) < FIPS_AUTH_MIN_LEN)
+	return 0;
+    if (!HMAC(EVP_sha1(), FIPS_AUTH_KEY, strlen(FIPS_AUTH_KEY),
+		(unsigned char *)auth, strlen(auth), auth_hmac, &hmac_len))
+	return 0;
+    if (hmac_len != sizeof(auth_hmac))
+	return 0;
+
+    if (fips_asc_check(auth_hmac, FIPS_AUTH_CRYPTO_OFFICER))
+	return 1;
+
+    if (fips_asc_check(auth_hmac, FIPS_AUTH_CRYPTO_USER))
+	return 1;
+
+    return 0;
+    }
+	
+    
+
+int FIPS_module_mode_set(int onoff, const char *auth)
     {
     int ret = 0;
 
@@ -250,6 +293,13 @@ int FIPS_module_mode_set(int onoff)
 	{
 
 	fips_selftest_fail = 0;
+    	if (!fips_check_auth(auth))
+	    {
+	    fips_auth_fail = 1;
+	    fips_selftest_fail = 1;
+	    FIPSerr(FIPS_F_FIPS_MODULE_MODE_SET,FIPS_R_AUTHENTICATION_FAILURE);
+	    return 0;
+	    }
 
 	/* Don't go into FIPS mode twice, just so we can do automagic
 	   seeding */

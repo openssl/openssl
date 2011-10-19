@@ -81,7 +81,7 @@ struct hmac_ctx_st;
 unsigned long FIPS_module_version(void);
 const char *FIPS_module_version_text(void);
 
-int FIPS_module_mode_set(int onoff);
+int FIPS_module_mode_set(int onoff, const char *auth);
 int FIPS_module_mode(void);
 const void *FIPS_rand_check(void);
 int FIPS_selftest(void);
@@ -173,6 +173,9 @@ void FIPS_get_timevec(unsigned char *buf, unsigned long *pctr);
 #define FIPS_TEST_CONTINUOUS	13
 /* ECDH test */
 #define FIPS_TEST_ECDH		14
+
+/* Minimum authorisation string length */
+#define FIPS_AUTH_MIN_LEN	16
 
 void FIPS_post_set_callback(
 	int (*post_cb)(int op, int id, int subid, void *ex));
@@ -406,6 +409,7 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED	 150
 #define FIPS_R_ADDITIONAL_INPUT_TOO_LONG		 100
 #define FIPS_R_ALREADY_INSTANTIATED			 101
+#define FIPS_R_AUTHENTICATION_FAILURE			 151
 #define FIPS_R_CONTRADICTING_EVIDENCE			 102
 #define FIPS_R_DRBG_STUCK				 103
 #define FIPS_R_ENTROPY_ERROR_UNDETECTED			 104

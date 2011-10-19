@@ -58,6 +58,15 @@
 #define RESP_EOL	"\r\n"
 #endif
 
+#ifndef FIPS_AUTH_OFFICER_PASS
+#define FIPS_AUTH_OFFICER_PASS	"Default FIPS Crypto Officer Password"
+#endif
+
+#ifndef FIPS_AUTH_USER_PASS
+#define FIPS_AUTH_USER_PASS	"Default FIPS Crypto User Password"
+#endif
+
+
 int hex2bin(const char *in, unsigned char *out);
 unsigned char *hex2bin_m(const char *in, long *plen);
 int do_hex2bn(BIGNUM **pr, const char *in);
@@ -144,7 +153,7 @@ void do_entropy_stick(void)
 void fips_algtest_init(void)
 	{
 	fips_algtest_init_nofips();
-	if (!FIPS_module_mode_set(1))
+	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
 		{
 		fprintf(stderr, "Error entering FIPS mode\n");
 		exit(1);
