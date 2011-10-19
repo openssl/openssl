@@ -26,7 +26,8 @@
 	defined(__ARM_ARCH_6T2__)
 #   define __ARM_ARCH__ 6
 #  elif	defined(__ARM_ARCH_5__)	|| defined(__ARM_ARCH_5T__)	|| \
-	defined(__ARM_ARCH_5E__)|| defined(__ARM_ARCH_5TE__)
+	defined(__ARM_ARCH_5E__)|| defined(__ARM_ARCH_5TE__)	|| \
+	defined(__ARM_ARCH_5TEJ__)
 #   define __ARM_ARCH__ 5
 #  elif	defined(__ARM_ARCH_4__)	|| defined(__ARM_ARCH_4T__)
 #   define __ARM_ARCH__ 4
