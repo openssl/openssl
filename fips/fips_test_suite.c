@@ -1084,6 +1084,8 @@ int main(int argc,char **argv)
 		pass = FIPS_AUTH_OFFICER_PASS;
 	} else if (!strcmp(argv[1], "badpass")) {
 		pass = "bad invalid password";
+	} else if (!strcmp(argv[1], "nopass")) {
+		pass = "";
         } else {
             printf("Bad argument \"%s\"\n", argv[1]);
             exit(1);
