@@ -14,6 +14,10 @@ make
 
 Build should complete without errors.
 
+Build test utilities:
+
+make build_tests
+
 Run test suite:
 
 test/fips_test_suite

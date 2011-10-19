@@ -359,7 +359,7 @@ FIPS_EX_OBJ= ../crypto/aes/aes_cfb.o \
 	../crypto/uid.o
 
 sub_all: build_all
-build_all: build_libs build_tests
+build_all: build_libs
 
 build_libs: build_crypto build_fips
 
