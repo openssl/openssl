@@ -680,17 +680,17 @@ if (exists $ENV{FIPSDIR})
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
-      		 "ec_nistp_64_gcc_128" => "default",
+		 "ec_nistp_64_gcc_128" => "default",
 		 "gmp"		  => "default",
-                 "jpake"          => "experimental",
-                 "md2"            => "default",
-                 "rc5"            => "default",
+		 "jpake"          => "experimental",
+		 "md2"            => "default",
+		 "rc5"            => "default",
 		 "rfc3779"	  => "default",
-                 "shared"         => "default",
+		 "shared"         => "default",
 		 "store"	  => "experimental",
-                 "zlib"           => "default",
-                 "zlib-dynamic"   => "default"
-               );
+		 "zlib"           => "default",
+		 "zlib-dynamic"   => "default"
+	       );
 my @experimental = ();
 
 # This is what $depflags will look like with the above defaults
@@ -825,7 +825,7 @@ PROCESS_ARGS:
 		elsif (/^fips$/)
 			{
 			$fips=1;
-		        }
+			}
 		elsif (/^rsaref$/)
 			{
 			# No RSAref support any more since it's not needed.
