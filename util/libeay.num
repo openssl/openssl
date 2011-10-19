@@ -4218,7 +4218,7 @@ EVP_PKEY_meth_copy                      4588	EXIST::FUNCTION:
 ERR_add_error_vdata                     4589	EXIST::FUNCTION:
 EVP_aes_128_ctr                         4590	EXIST::FUNCTION:AES
 EVP_aes_256_ctr                         4591	EXIST::FUNCTION:AES
-EC_GFp_nistp224_method                  4592	EXIST::FUNCTION:EC,EC_NISTP224_64_GCC_128
+EC_GFp_nistp224_method                  4592	EXIST::FUNCTION:EC,EC_NISTP_64_GCC_128
 EC_KEY_get_flags                        4593	EXIST::FUNCTION:EC
 RSA_padding_add_PKCS1_PSS_mgf1          4594	EXIST::FUNCTION:RSA
 EVP_aes_128_xts                         4595	EXIST::FUNCTION:AES
@@ -4299,3 +4299,5 @@ RSA_PSS_PARAMS_free                     4668	EXIST::FUNCTION:RSA
 X509_sign_ctx                           4669	EXIST::FUNCTION:EVP
 i2d_RSA_PSS_PARAMS                      4670	EXIST::FUNCTION:RSA
 ASN1_item_sign_ctx                      4671	EXIST::FUNCTION:EVP
+EC_GFp_nistp521_method                  4672	EXIST::FUNCTION:EC,EC_NISTP_64_GCC_128
+EC_GFp_nistp256_method                  4673	EXIST::FUNCTION:EC,EC_NISTP_64_GCC_128
