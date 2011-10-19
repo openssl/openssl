@@ -24,7 +24,10 @@
  * Inspired by Daniel J. Bernstein's public domain nistp224 implementation
  * and Adam Langley's public domain 64-bit C implementation of curve25519
  */
-#ifdef EC_NISTP_64_GCC_128
+
+#include <openssl/opensslconf.h>
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+
 #include <stdint.h>
 #include <string.h>
 #include <openssl/err.h>
@@ -247,9 +250,9 @@ const EC_METHOD *EC_GFp_nistp224_method(void)
 		ec_GFp_simple_get_Jprojective_coordinates_GFp,
 		ec_GFp_simple_point_set_affine_coordinates,
 		ec_GFp_nistp224_point_get_affine_coordinates,
-                0 /* point_set_compressed_coordinates */,
-                0 /* point2oct */,
-                0 /* oct2point */,
+		0 /* point_set_compressed_coordinates */,
+		0 /* point2oct */,
+		0 /* oct2point */,
 		ec_GFp_simple_add,
 		ec_GFp_simple_dbl,
 		ec_GFp_simple_invert,
@@ -1000,9 +1003,9 @@ static void point_add(felem x3, felem y3, felem z3,
 	felem_assign(z3, z_out);
 	}
 
-/* select_point selects the |index|th point from a precomputation table and
+/* select_point selects the |idx|th point from a precomputation table and
  * copies it to out. */
-static void select_point(const u64 index, unsigned int size, const felem pre_comp[/*size*/][3], felem out[3])
+static void select_point(const u64 idx, unsigned int size, const felem pre_comp[/*size*/][3], felem out[3])
 	{
 	unsigned i, j;
 	limb *outlimbs = &out[0][0];
@@ -1011,7 +1014,7 @@ static void select_point(const u64 index, unsigned int size, const felem pre_com
 	for (i = 0; i < size; i++)
 		{
 		const limb *inlimbs = &pre_comp[i][0][0];
-		u64 mask = i ^ index;
+		u64 mask = i ^ idx;
 		mask |= mask >> 4;
 		mask |= mask >> 2;
 		mask |= mask >> 1;

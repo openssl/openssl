@@ -235,11 +235,12 @@
   *) Add optional 64-bit optimized implementations of elliptic curves NIST-P224,
      NIST-P256, NIST-P521, with constant-time single point multiplication on
      typical inputs. Compiler support for the nonstandard type __uint128_t is
-     required to use this. Code made available under Apache License version 2.0.
+     required to use this (present in gcc 4.4 and later, for 64-bit builds).
+     Code made available under Apache License version 2.0.
 
-     To include this in your build of OpenSSL, use -DEC_NISTP_64_GCC_128 on
-     the Configure (or config) command line, and run "make depend" (or "make
-     update"). This enables the following EC_METHODs:
+     Specify "enable-ec_nistp_64_gcc_128" on the Configure (or config) command
+     line to include this in your build of OpenSSL, and run "make depend" (or
+     "make update"). This enables the following EC_METHODs:
 
          EC_GFp_nistp224_method()
          EC_GFp_nistp256_method()

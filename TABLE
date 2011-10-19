@@ -1883,36 +1883,36 @@ $multilib     =
 
 *** debug-bodo
 $cc           = gcc
-$cflags       = -DL_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBIO_PAIR_DEBUG -DPEDANTIC -g -march=i486 -pedantic -Wshadow -Wall -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DBN_DEBUG_RAND -DCONF_DEBUG -DBIO_PAIR_DEBUG -m64 -DL_ENDIAN -DTERMIO -g -DMD32_REG_T=int
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
-$lflags       = 
-$bn_ops       = BN_LLONG DES_PTR DES_RISC1 DES_UNROLL RC4_INDEX MD2_INT
-$cpuid_obj    = x86cpuid.o
-$bn_obj       = bn-586.o co-586.o x86-mont.o x86-gf2m.o
-$des_obj      = des-586.o crypt586.o
-$aes_obj      = aes-586.o vpaes-x86.o aesni-x86.o
-$bf_obj       = bf-586.o
-$md5_obj      = md5-586.o
-$sha1_obj     = sha1-586.o sha256-586.o sha512-586.o
-$cast_obj     = cast-586.o
-$rc4_obj      = rc4-586.o
-$rmd160_obj   = rmd-586.o
-$rc5_obj      = rc5-586.o
-$wp_obj       = wp_block.o wp-mmx.o
-$cmll_obj     = cmll-x86.o
-$modes_obj    = ghash-x86.o
-$engines_obj  = e_padlock-x86.o
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL
+$cpuid_obj    = x86_64cpuid.o
+$bn_obj       = x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o modexp512-x86_64.o
+$des_obj      = 
+$aes_obj      = aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o
+$bf_obj       = 
+$md5_obj      = md5-x86_64.o
+$sha1_obj     = sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o
+$cast_obj     = 
+$rc4_obj      = rc4-x86_64.o rc4-md5-x86_64.o
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = wp-x86_64.o
+$cmll_obj     = cmll-x86_64.o cmll_misc.o
+$modes_obj    = ghash-x86_64.o
+$engines_obj  = e_padlock-x86_64.o
 $perlasm_scheme = elf
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = -m64
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
 $ranlib       = 
 $arflags      = 
-$multilib     = 
+$multilib     = 64
 
 *** debug-darwin-i386-cc
 $cc           = cc
@@ -5841,6 +5841,39 @@ $ranlib       =
 $arflags      = 
 $multilib     = 
 
+*** vxworks-mips
+$cc           = ccmips
+$cflags       = -B$(WIND_BASE)/host/$(WIND_HOST_TYPE)/lib/gcc-lib/ -D_VSB_CONFIG_FILE="$(WIND_BASE)/target/lib/h/config/vsbConfig.h" -DB_ENDIAN -DCPU=MIPS32 -G 0 -mips2 -EB -Wl,-EB -msoft-float -mno-branch-likely -DTOOL_FAMILY=gnu -DTOOL=gnu -fno-builtin -fno-defer-pop -DNO_STRINGS_H -I$(WIND_BASE)/target/h -I$(WIND_BASE)/target/h/wrn/coreip
+$unistd       = 
+$thread_cflag = 
+$sys_id       = VXWORKS
+$lflags       = -r
+$bn_ops       = 
+$cpuid_obj    = 
+$bn_obj       = 
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$modes_obj    = 
+$engines_obj  = 
+$perlasm_scheme = void
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = ranlibmips
+$arflags      = 
+$multilib     = 
+
 *** vxworks-mipsle
 $cc           = ccmips
 $cflags       = -B$(WIND_BASE)/host/$(WIND_HOST_TYPE)/lib/gcc-lib/ -DL_ENDIAN -EL -Wl,-EL -mips2 -mno-branch-likely -G 0 -fno-builtin -msoft-float -DCPU=MIPS32 -DMIPSEL -DNO_STRINGS_H -I$(WIND_BASE)/target/h
@@ -6069,5 +6102,38 @@ $shared_cflag =
 $shared_ldflag = 
 $shared_extension = 
 $ranlib       = 
+$arflags      = 
+$multilib     = 
+
+*** vxworks-simlinux
+$cc           = ccpentium
+$cflags       = -B$(WIND_BASE)/host/$(WIND_HOST_TYPE)/lib/gcc-lib/ -D_VSB_CONFIG_FILE="$(WIND_BASE)/target/lib/h/config/vsbConfig.h" -DL_ENDIAN -DCPU=SIMLINUX -DTOOL_FAMILY=gnu -DTOOL=gnu -fno-builtin -fno-defer-pop -DNO_STRINGS_H -I$(WIND_BASE)/target/h -I$(WIND_BASE)/target/h/wrn/coreip -DOPENSSL_NO_HW_PADLOCK
+$unistd       = 
+$thread_cflag = 
+$sys_id       = VXWORKS
+$lflags       = -r
+$bn_ops       = 
+$cpuid_obj    = 
+$bn_obj       = 
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$modes_obj    = 
+$engines_obj  = 
+$perlasm_scheme = void
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = ranlibpentium
 $arflags      = 
 $multilib     = 

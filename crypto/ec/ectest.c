@@ -94,6 +94,7 @@ int main(int argc, char * argv[]) { puts("Elliptic curves are disabled."); retur
 #include <openssl/objects.h>
 #include <openssl/rand.h>
 #include <openssl/bn.h>
+#include <openssl/opensslconf.h>
 
 #if defined(_MSC_VER) && defined(_MIPS_) && (_MSC_VER/100==12)
 /* suppress "too big too optimize" warning */
@@ -1270,7 +1271,7 @@ static void internal_curve_test(void)
 	return;
 	}
 
-#ifdef EC_NISTP_64_GCC_128
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 /* nistp_test_params contains magic numbers for testing our optimized
  * implementations of several NIST curves with characteristic > 3. */
 struct nistp_test_params
@@ -1331,16 +1332,18 @@ static const struct nistp_test_params nistp_tests_params[] =
 
 void nistp_single_test(const struct nistp_test_params *test)
 	{
-	fprintf(stdout, "\nNIST curve P-%d (optimised implementation):\n", test->degree);
+	BN_CTX *ctx;
 	BIGNUM *p, *a, *b, *x, *y, *n, *m, *order;
+	EC_GROUP *NISTP;
+	EC_POINT *G, *P, *Q, *Q_CHECK;
+
+	fprintf(stdout, "\nNIST curve P-%d (optimised implementation):\n", test->degree);
+	ctx = BN_CTX_new();
 	p = BN_new();
 	a = BN_new();
 	b = BN_new();
 	x = BN_new(); y = BN_new();
 	m = BN_new(); n = BN_new(); order = BN_new();
-	BN_CTX *ctx = BN_CTX_new();
-	EC_GROUP *NISTP;
-	EC_POINT *G, *P, *Q, *Q_CHECK;
 
 	NISTP = EC_GROUP_new(test->meth());
 	if(!NISTP) ABORT;
@@ -1467,7 +1470,7 @@ int main(int argc, char *argv[])
 #ifndef OPENSSL_NO_EC2M
 	char2_field_tests();
 #endif
-#ifdef EC_NISTP_64_GCC_128
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 	nistp_tests();
 #endif
 	/* test the internal curves */

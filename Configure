@@ -173,7 +173,7 @@ my %table=(
 "debug-ben-no-opt",	"gcc: -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG -Werror -DL_ENDIAN -DTERMIOS -Wall -g3::(unknown)::::::",
 "debug-ben-strict",	"gcc:-DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DCONST_STRICT -O2 -Wall -Wshadow -Werror -Wpointer-arith -Wcast-qual -Wwrite-strings -pipe::(unknown)::::::",
 "debug-rse","cc:-DTERMIOS -DL_ENDIAN -pipe -O -g -ggdb3 -Wall::(unknown):::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
-"debug-bodo",	"gcc:-DL_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DBIO_PAIR_DEBUG -DPEDANTIC -g -march=i486 -pedantic -Wshadow -Wall -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion::-D_REENTRANT:::BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}",
+"debug-bodo",	"gcc:$gcc_devteam_warn -DBN_DEBUG -DBN_DEBUG_RAND -DCONF_DEBUG -DBIO_PAIR_DEBUG -m64 -DL_ENDIAN -DTERMIO -g -DMD32_REG_T=int::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
 "debug-ulf", "gcc:-DTERMIOS -DL_ENDIAN -march=i486 -Wall -DBN_DEBUG -DBN_DEBUG_RAND -DREF_CHECK -DCONF_DEBUG -DBN_CTX_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -g -Wformat -Wshadow -Wmissing-prototypes -Wmissing-declarations:::CYGWIN32:::${no_asm}:win32:cygwin-shared:::.dll",
 "debug-steve64", "gcc:$gcc_devteam_warn -m64 -DL_ENDIAN -DTERMIO -DCONF_DEBUG -DDEBUG_SAFESTACK -g::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHUNK DES_INT DES_UNROLL:${x86_64_asm}:elf:dlfcn:linux-shared:-fPIC:-m64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "debug-steve32", "gcc:$gcc_devteam_warn -m32 -DL_ENDIAN -DCONF_DEBUG -DDEBUG_SAFESTACK -g -pipe::-D_REENTRANT::-rdynamic -ldl:BN_LLONG ${x86_gcc_des} ${x86_gcc_opts}:${x86_elf_asm}:dlfcn:linux-shared:-fPIC:-m32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
@@ -701,7 +701,7 @@ my $fips=0;
 # All of the following is disabled by default (RC5 was enabled before 0.9.8):
 
 my %disabled = ( # "what"         => "comment" [or special keyword "experimental"]
-		 "ec-nistp224-64-gcc-128" => "default",
+      		 "ec_nistp_64_gcc_128" => "default",
 		 "gmp"		  => "default",
                  "jpake"          => "experimental",
                  "md2"            => "default",
@@ -731,7 +731,7 @@ if (!-d "ssl")
 
 # This is what $depflags will look like with the above defaults
 # (we need this to see if we should advise the user to run "make depend"):
-my $default_depflags = " -DOPENSSL_NO_EC_NISTP224_64_GCC_128 -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_STORE";
+my $default_depflags = " -DOPENSSL_NO_EC_NISTP_64_GCC_128 -DOPENSSL_NO_GMP -DOPENSSL_NO_JPAKE -DOPENSSL_NO_MD2 -DOPENSSL_NO_RC5 -DOPENSSL_NO_RFC3779 -DOPENSSL_NO_STORE";
 
 # Explicit "no-..." options will be collected in %disabled along with the defaults.
 # To remove something from %disabled, use "enable-foo" (unless it's experimental).

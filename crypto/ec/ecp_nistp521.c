@@ -26,7 +26,8 @@
  * work which got its smarts from Daniel J. Bernstein's work on the same.
  */
 
-#ifdef EC_NISTP_64_GCC_128
+#include <openssl/opensslconf.h>
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 
 #include <stdint.h>
 #include <string.h>
@@ -339,7 +340,7 @@ static void felem_diff64(felem out, const felem in)
  */
 static void felem_diff_128_64(largefelem out, const felem in)
 	{
-	// In order to prevent underflow, we add 0 mod p before subtracting.
+	/* In order to prevent underflow, we add 0 mod p before subtracting. */
 	static const limb two63m6 = (((limb)1) << 62) - (((limb)1) << 5);
 	static const limb two63m5 = (((limb)1) << 62) - (((limb)1) << 4);
 
@@ -362,7 +363,7 @@ static void felem_diff_128_64(largefelem out, const felem in)
  */
 static void felem_diff128(largefelem out, const largefelem in)
 	{
-	// In order to prevent underflow, we add 0 mod p before subtracting.
+	/* In order to prevent underflow, we add 0 mod p before subtracting. */
 	static const uint128_t two127m70 = (((uint128_t)1) << 127) - (((uint128_t)1) << 70);
 	static const uint128_t two127m69 = (((uint128_t)1) << 127) - (((uint128_t)1) << 69);
 
@@ -431,40 +432,40 @@ static void felem_square(largefelem out, const felem in)
 	 * the inputs to the multiplication. If we want to double for both this
 	 * reason, and the reason above, then we end up multiplying by four. */
 
-	// 9
+	/* 9 */
 	out[0] += ((uint128_t) in[1]) * inx4[8] +
 		  ((uint128_t) in[2]) * inx4[7] +
 		  ((uint128_t) in[3]) * inx4[6] +
 		  ((uint128_t) in[4]) * inx4[5];
 
-	// 10
+	/* 10 */
 	out[1] += ((uint128_t) in[2]) * inx4[8] +
 		  ((uint128_t) in[3]) * inx4[7] +
 		  ((uint128_t) in[4]) * inx4[6] +
 		  ((uint128_t) in[5]) * inx2[5];
 
-	// 11
+	/* 11 */
 	out[2] += ((uint128_t) in[3]) * inx4[8] +
 		  ((uint128_t) in[4]) * inx4[7] +
 		  ((uint128_t) in[5]) * inx4[6];
 
-	// 12
+	/* 12 */
 	out[3] += ((uint128_t) in[4]) * inx4[8] +
 		  ((uint128_t) in[5]) * inx4[7] +
 		  ((uint128_t) in[6]) * inx2[6];
 
-	// 13
+	/* 13 */
 	out[4] += ((uint128_t) in[5]) * inx4[8] +
 		  ((uint128_t) in[6]) * inx4[7];
 
-	// 14
+	/* 14 */
 	out[5] += ((uint128_t) in[6]) * inx4[8] +
 		  ((uint128_t) in[7]) * inx2[7];
 
-	// 15
+	/* 15 */
 	out[6] += ((uint128_t) in[7]) * inx4[8];
 
-	// 16
+	/* 16 */
 	out[7] += ((uint128_t) in[8]) * inx2[8];
 	}
 
@@ -591,6 +592,8 @@ static const limb bottom52bits = 0xfffffffffffff;
  */
 static void felem_reduce(felem out, const largefelem in)
 	{
+	u64 overflow1, overflow2;
+
 	out[0] = ((limb) in[0]) & bottom58bits;
 	out[1] = ((limb) in[1]) & bottom58bits;
 	out[2] = ((limb) in[2]) & bottom58bits;
@@ -637,11 +640,11 @@ static void felem_reduce(felem out, const largefelem in)
 	out[8] += (((limb) (in[7] >> 64)) & bottom52bits) << 6;
 	/* out[x > 1] < 2^58 + 2^6 + 2^58 + 2^12
 	 *            < 2^59 + 2^13 */
-	u64 overflow1 = ((limb) (in[7] >> 64)) >> 52;
+	overflow1 = ((limb) (in[7] >> 64)) >> 52;
 
 	overflow1 += ((limb) in[8]) >> 58;
 	overflow1 += (((limb) (in[8] >> 64)) & bottom52bits) << 6;
-	u64 overflow2 = ((limb) (in[8] >> 64)) >> 52;
+	overflow2 = ((limb) (in[8] >> 64)) >> 52;
 
 	overflow1 <<= 1;  /* overflow1 < 2^13 + 2^7 + 2^59 */
 	overflow2 <<= 1;  /* overflow2 < 2^13 */
@@ -800,8 +803,8 @@ static limb felem_is_zero(const felem in)
 	is_zero |= ftmp[8];
 
 	is_zero--;
-	// We know that ftmp[i] < 2^63, therefore the only way that the top bit
-	// can be set is if is_zero was 0 before the decrement.
+	/* We know that ftmp[i] < 2^63, therefore the only way that the top bit
+	 * can be set is if is_zero was 0 before the decrement. */
 	is_zero = ((s64) is_zero) >> 63;
 
 	is_p = ftmp[0] ^ kPrime[0];
@@ -1341,9 +1344,9 @@ static const felem gmul[16][3] =
 	   0x0154536a0c6e966a, 0x037964d1286ee9fe, 0x0199bcd90e125055},
 	 {1, 0, 0, 0, 0, 0, 0, 0, 0}}};
 
-/* select_point selects the |index|th point from a precomputation table and
+/* select_point selects the |idx|th point from a precomputation table and
  * copies it to out. */
-static void select_point(const limb index, unsigned int size, const felem pre_comp[size][3],
+static void select_point(const limb idx, unsigned int size, const felem pre_comp[/* size */][3],
 			 felem out[3])
 	{
 	unsigned i, j;
@@ -1353,7 +1356,7 @@ static void select_point(const limb index, unsigned int size, const felem pre_co
 	for (i = 0; i < size; i++)
 		{
 		const limb *inlimbs = &pre_comp[i][0][0];
-		limb mask = i ^ index;
+		limb mask = i ^ idx;
 		mask |= mask >> 4;
 		mask |= mask >> 2;
 		mask |= mask >> 1;
@@ -1493,9 +1496,9 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
 		ec_GFp_simple_get_Jprojective_coordinates_GFp,
 		ec_GFp_simple_point_set_affine_coordinates,
 		ec_GFp_nistp521_point_get_affine_coordinates,
-                0 /* point_set_compressed_coordinates */,
-                0 /* point2oct */,
-                0 /* oct2point */,
+		0 /* point_set_compressed_coordinates */,
+		0 /* point2oct */,
+		0 /* oct2point */,
 		ec_GFp_simple_add,
 		ec_GFp_simple_dbl,
 		ec_GFp_simple_invert,
@@ -1663,7 +1666,7 @@ int ec_GFp_nistp521_point_get_affine_coordinates(const EC_GROUP *group,
 	return 1;
 	}
 
-static void make_points_affine(size_t num, felem points[num][3], felem tmp_felems[num+1])
+static void make_points_affine(size_t num, felem points[/* num */][3], felem tmp_felems[/* num+1 */])
 	{
 	/* Runs in constant time, unless an input is the point at infinity
 	 * (which normally shouldn't happen). */

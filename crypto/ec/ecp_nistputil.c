@@ -18,7 +18,8 @@
  *  limitations under the License.
  */
 
-#ifdef EC_NISTP_64_GCC_128
+#include <openssl/opensslconf.h>
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 
 /*
  * Common utility functions for ecp_nistp224.c, ecp_nistp256.c, ecp_nistp521.c.
