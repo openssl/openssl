@@ -5843,19 +5843,19 @@ $multilib     =
 
 *** vxworks-mips
 $cc           = ccmips
-$cflags       = -B$(WIND_BASE)/host/$(WIND_HOST_TYPE)/lib/gcc-lib/ -D_VSB_CONFIG_FILE="$(WIND_BASE)/target/lib/h/config/vsbConfig.h" -DB_ENDIAN -DCPU=MIPS32 -G 0 -mips2 -EB -Wl,-EB -msoft-float -mno-branch-likely -DTOOL_FAMILY=gnu -DTOOL=gnu -fno-builtin -fno-defer-pop -DNO_STRINGS_H -I$(WIND_BASE)/target/h -I$(WIND_BASE)/target/h/wrn/coreip
+$cflags       = -mrtp -mips2 -O -G 0 -B$(WIND_BASE)/host/$(WIND_HOST_TYPE)/lib/gcc-lib/ -D_VSB_CONFIG_FILE="$(WIND_BASE)/target/lib/h/config/vsbConfig.h" -DCPU=MIPS32 -msoft-float -mno-branch-likely -DTOOL_FAMILY=gnu -DTOOL=gnu -fno-builtin -fno-defer-pop -DNO_STRINGS_H -I$(WIND_BASE)/target/usr/h -I$(WIND_BASE)/target/h/wrn/coreip
 $unistd       = 
-$thread_cflag = 
+$thread_cflag = -D_REENTRANT
 $sys_id       = VXWORKS
-$lflags       = -r
+$lflags       = -Wl,--defsym,__wrs_rtp_base=0xe0000000 -L $(WIND_BASE)/target/usr/lib/mips/MIPSI32/sfcommon
 $bn_ops       = 
 $cpuid_obj    = 
-$bn_obj       = 
+$bn_obj       = bn-mips.o
 $des_obj      = 
-$aes_obj      = 
+$aes_obj      = aes_cbc.o aes-mips.o
 $bf_obj       = 
 $md5_obj      = 
-$sha1_obj     = 
+$sha1_obj     = sha1-mips.o sha256-mips.o
 $cast_obj     = 
 $rc4_obj      = 
 $rmd160_obj   = 
@@ -5864,40 +5864,7 @@ $wp_obj       =
 $cmll_obj     = 
 $modes_obj    = 
 $engines_obj  = 
-$perlasm_scheme = void
-$dso_scheme   = 
-$shared_target= 
-$shared_cflag = 
-$shared_ldflag = 
-$shared_extension = 
-$ranlib       = ranlibmips
-$arflags      = 
-$multilib     = 
-
-*** vxworks-mipsle
-$cc           = ccmips
-$cflags       = -B$(WIND_BASE)/host/$(WIND_HOST_TYPE)/lib/gcc-lib/ -DL_ENDIAN -EL -Wl,-EL -mips2 -mno-branch-likely -G 0 -fno-builtin -msoft-float -DCPU=MIPS32 -DMIPSEL -DNO_STRINGS_H -I$(WIND_BASE)/target/h
-$unistd       = 
-$thread_cflag = 
-$sys_id       = VXWORKS
-$lflags       = -r
-$bn_ops       = 
-$cpuid_obj    = 
-$bn_obj       = 
-$des_obj      = 
-$aes_obj      = 
-$bf_obj       = 
-$md5_obj      = 
-$sha1_obj     = 
-$cast_obj     = 
-$rc4_obj      = 
-$rmd160_obj   = 
-$rc5_obj      = 
-$wp_obj       = 
-$cmll_obj     = 
-$modes_obj    = 
-$engines_obj  = 
-$perlasm_scheme = void
+$perlasm_scheme = o32
 $dso_scheme   = 
 $shared_target= 
 $shared_cflag = 

@@ -70,9 +70,9 @@ $pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 #
 ######################################################################
 
-for (@ARGV) {	$big_endian=1 if (/\-DB_ENDIAN/);
-		$big_endian=0 if (/\-DL_ENDIAN/);
-		$output=$_ if (/^\w[\w\-]*\.\w+$/);	}
+$big_endian=(`echo MIPSEL | $ENV{CC} -E -P -`=~/MIPSEL/)?1:0;
+
+for (@ARGV) {	$output=$_ if (/^\w[\w\-]*\.\w+$/);	}
 open STDOUT,">$output";
 
 if (!defined($big_endian))
@@ -85,8 +85,13 @@ my ($MSB,$LSB)=(0,3);	# automatically converted to little-endian
 
 $code.=<<___;
 .text
+#ifdef OPENSSL_FIPSCANISTER
+# include <openssl/fipssyms.h>
+#endif
 
+#if !defined(__vxworks) || defined(__pic__)
 .option	pic2
+#endif
 .set	noat
 ___
 

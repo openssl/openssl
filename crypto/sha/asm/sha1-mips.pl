@@ -64,9 +64,9 @@ if ($flavour =~ /64|n32/i) {
 #
 ######################################################################
 
-for (@ARGV) {	$big_endian=1 if (/\-DB_ENDIAN/);
-		$big_endian=0 if (/\-DL_ENDIAN/);
-		$output=$_ if (/^\w[\w\-]*\.\w+$/);   }
+$big_endian=(`echo MIPSEL | $ENV{CC} -E -P -`=~/MIPSEL/)?1:0;
+
+for (@ARGV) {	$output=$_ if (/^\w[\w\-]*\.\w+$/);   }
 open STDOUT,">$output";
 
 if (!defined($big_endian))
@@ -237,6 +237,10 @@ $FRAMESIZE=16;	# large enough to accomodate NUBI saved registers
 $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0xc0fff008 : 0xc0ff0000;
 
 $code=<<___;
+ifdef OPENSSL_FIPSCANISTER
+# include <openssl/fipssyms.h>
+#endif
+
 .text
 
 .set	noat

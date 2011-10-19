@@ -75,7 +75,7 @@ aes-ppc.s:	asm/aes-ppc.pl
 aes-parisc.s:	asm/aes-parisc.pl
 	$(PERL) asm/aes-parisc.pl $(PERLASM_SCHEME) $@
 
-aes-mips.s:	asm/aes-mips.pl
+aes-mips.S:	asm/aes-mips.pl
 	$(PERL) asm/aes-mips.pl $(PERLASM_SCHEME) $@
 
 # GNU make "catch all"

@@ -68,9 +68,9 @@ $pf = ($flavour =~ /nubi/i) ? $t0 : $t2;
 #
 ######################################################################
 
-for (@ARGV) {	$big_endian=1 if (/\-DB_ENDIAN/);
-		$big_endian=0 if (/\-DL_ENDIAN/);
-		$output=$_ if (/^\w[\w\-]*\.\w+$/);	}
+$big_endian=(`echo MIPSEL | $ENV{CC} -E -P -`=~/MIPSEL/)?1:0;
+
+for (@ARGV) {	$output=$_ if (/^\w[\w\-]*\.\w+$/);	}
 open STDOUT,">$output";
 
 if (!defined($big_endian)) { $big_endian=(unpack('L',pack('N',1))==1); }
@@ -238,9 +238,15 @@ $FRAMESIZE=16*$SZ+16*$SZREG;
 $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0xc0fff008 : 0xc0ff0000;
 
 $code.=<<___;
+#ifdef OPENSSL_FIPSCANISTER
+# include <openssl/fipssyms.h>
+#endif
+
 .text
 .set	noat
+#if !defined(__vxworks) || defined(__pic__)
 .option	pic2
+#endif
 
 .align	5
 .globl	sha${label}_block_data_order
