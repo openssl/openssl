@@ -410,7 +410,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (FIPS_drbg_instantiate(dctx, td->pers, dctx->max_pers + 1) > 0)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_PERSONALISATION_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_PERSONALISATION_ERROR_UNDETECTED);
 		goto err;
 		}
 
@@ -422,7 +422,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
 		goto err;
 		}
 
@@ -430,14 +430,14 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (FIPS_drbg_generate(dctx, randout, td->katlen, 0,
 				td->adin, td->adinlen))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_GENERATE_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_GENERATE_ERROR_UNDETECTED);
 		goto err;
 		}
 
 	dctx->iflags &= ~DRBG_FLAG_NOERR;
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 		goto err;
 		}
 
@@ -452,14 +452,14 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
 		goto err;
 		}
 
 	dctx->iflags &= ~DRBG_FLAG_NOERR;
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 		goto err;
 		}
 
@@ -474,14 +474,14 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
 		goto err;
 		}
 
 	dctx->iflags &= ~DRBG_FLAG_NOERR;
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 		goto err;
 		}
 
@@ -501,14 +501,14 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 		if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
 			{
-			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_NONCE_ERROR_UNDETECTED);
+			FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_NONCE_ERROR_UNDETECTED);
 			goto err;
 			}
 
 		dctx->iflags &= ~DRBG_FLAG_NOERR;
 		if (!FIPS_drbg_uninstantiate(dctx))
 			{
-			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+			FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 			goto err;
 			}
 
@@ -528,14 +528,14 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 		if (FIPS_drbg_instantiate(dctx, td->pers, td->perslen) > 0)
 			{
-			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_NONCE_ERROR_UNDETECTED);
+			FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_NONCE_ERROR_UNDETECTED);
 			goto err;
 			}
 
 		dctx->iflags &= ~DRBG_FLAG_NOERR;
 		if (!FIPS_drbg_uninstantiate(dctx))
 			{
-			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+			FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 			goto err;
 			}
 
@@ -556,7 +556,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (FIPS_drbg_generate(dctx, randout, dctx->max_request + 1, 0,
 				td->adin, td->adinlen))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_REQUEST_LENGTH_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_REQUEST_LENGTH_ERROR_UNDETECTED);
 		goto err;
 		}
 
@@ -564,7 +564,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (FIPS_drbg_generate(dctx, randout, td->katlen, 0,
 				td->adin, dctx->max_adin + 1))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED);
 		goto err;
 		}
 
@@ -577,7 +577,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (FIPS_drbg_generate(dctx, randout, td->katlen, 1,
 				td->adin, td->adinlen))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
 		goto err;
 		}
 		
@@ -585,7 +585,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 		goto err;
 		}
 
@@ -607,13 +607,13 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 	if (t.entcnt != 1)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_NOT_REQUESTED_FOR_RESEED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ENTROPY_NOT_REQUESTED_FOR_RESEED);
 		goto err;
 		}
 	/* Check reseed counter has been reset */
 	if (dctx->reseed_counter != reseed_counter_tmp + 1)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_RESEED_COUNTER_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_RESEED_COUNTER_ERROR);
 		goto err;
 		}
 
@@ -627,7 +627,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (FIPS_drbg_reseed(dctx, td->adin, dctx->max_adin + 1) > 0)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED);
 		goto err;
 		}
 
@@ -642,7 +642,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	if (FIPS_drbg_generate(dctx, randout, td->katlen, 1,
 				td->adin, td->adinlen))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
 		goto err;
 		}
 		
@@ -650,7 +650,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 		goto err;
 		}
 
@@ -670,13 +670,13 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 	if (t.entcnt != 1)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_NOT_REQUESTED_FOR_RESEED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ENTROPY_NOT_REQUESTED_FOR_RESEED);
 		goto err;
 		}
 	/* Check reseed counter has been reset */
 	if (dctx->reseed_counter != reseed_counter_tmp + 1)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_RESEED_COUNTER_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_RESEED_COUNTER_ERROR);
 		goto err;
 		}
 
@@ -690,7 +690,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (FIPS_drbg_reseed(dctx, td->adin, dctx->max_adin + 1) > 0)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED);
 		goto err;
 		}
 
@@ -705,13 +705,13 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (FIPS_drbg_reseed(dctx, td->adin, td->adinlen) > 0)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
 		goto err;
 		}
 
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 		goto err;
 		}
 
@@ -726,13 +726,13 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (FIPS_drbg_reseed(dctx, td->adin, td->adinlen) > 0)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
 		goto err;
 		}
 
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 		goto err;
 		}
 
@@ -747,13 +747,13 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	if (FIPS_drbg_reseed(dctx, td->adin, td->adinlen) > 0)
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ENTROPY_ERROR_UNDETECTED);
 		goto err;
 		}
 
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 		goto err;
 		}
 
@@ -765,7 +765,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		{
 		if (*p != 0)
 			{
-			FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_UNINSTANTIATE_ZEROISE_ERROR);
+			FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ZEROISE_ERROR);
 			goto err;
 			}
 		p++;
@@ -778,7 +778,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 	 * indicate the error.
 	 */
 	if (!(dctx->iflags & DRBG_FLAG_NOERR))
-		FIPSerr(FIPS_F_FIPS_DRBG_HEALTH_CHECK, FIPS_R_FUNCTION_ERROR);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_FUNCTION_ERROR);
 	FIPS_drbg_uninstantiate(dctx);
 	return 0;
 

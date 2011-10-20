@@ -344,6 +344,7 @@ void ERR_load_FIPS_strings(void);
 /* Function codes. */
 #define FIPS_F_DH_BUILTIN_GENPARAMS			 100
 #define FIPS_F_DH_INIT					 148
+#define FIPS_F_DRBG_RESEED				 162
 #define FIPS_F_DSA_BUILTIN_PARAMGEN			 101
 #define FIPS_F_DSA_BUILTIN_PARAMGEN2			 102
 #define FIPS_F_DSA_DO_SIGN				 103
@@ -364,8 +365,8 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_FIPS_DRBG_BYTES				 111
 #define FIPS_F_FIPS_DRBG_CHECK				 146
 #define FIPS_F_FIPS_DRBG_CPRNG_TEST			 112
+#define FIPS_F_FIPS_DRBG_ERROR_CHECK			 114
 #define FIPS_F_FIPS_DRBG_GENERATE			 113
-#define FIPS_F_FIPS_DRBG_HEALTH_CHECK			 114
 #define FIPS_F_FIPS_DRBG_INIT				 115
 #define FIPS_F_FIPS_DRBG_INSTANTIATE			 116
 #define FIPS_F_FIPS_DRBG_NEW				 117

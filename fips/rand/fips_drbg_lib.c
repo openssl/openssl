@@ -278,8 +278,8 @@ static int drbg_reseed(DRBG_CTX *dctx,
 	int r = 0;
 
 #if 0
-	FIPSerr(FIPS_F_FIPS_DRBG_RESEED, FIPS_R_NOT_INSTANTIATED);
-	FIPSerr(FIPS_F_FIPS_DRBG_RESEED, FIPS_R_ADDITIONAL_INPUT_TOO_LONG);
+	FIPSerr(FIPS_F_DRBG_RESEED, FIPS_R_NOT_INSTANTIATED);
+	FIPSerr(FIPS_F_DRBG_RESEED, FIPS_R_ADDITIONAL_INPUT_TOO_LONG);
 #endif
 	if (dctx->status != DRBG_STATUS_READY
 		&& dctx->status != DRBG_STATUS_RESEED)
@@ -336,7 +336,7 @@ static int drbg_reseed(DRBG_CTX *dctx,
 		return 1;
 
 	if (r && !(dctx->iflags & DRBG_FLAG_NOERR))
-		FIPSerr(FIPS_F_FIPS_DRBG_RESEED, r);
+		FIPSerr(FIPS_F_DRBG_RESEED, r);
 
 	return 0;
 	}
