@@ -669,7 +669,8 @@
 #define bn_gather5 fips_bn_gather5
 
 #if defined(_MSC_VER)
-# pragma section("fipsro$b",read)
+# pragma const_seg("fipsro$b")
+# pragma const_seg()
 # define __fips_constseg __declspec(allocate("fipsro$b"))
 #else
 # define __fips_constseg

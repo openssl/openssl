@@ -60,7 +60,13 @@ static void *instruction_pointer_xlc(void);
  * big-endian encoded variable names, just to prevent these arrays
  * from being merged by linker. */
 # if defined(_MSC_VER)
-#  pragma section("fipsro$a",read)
+#  pragma code_seg("fipstx")
+#  pragma code_seg()
+   __declspec(allocate("fipstx"))
+const unsigned int FIPS_text_startX[]=
+	{ 0x46495053, 0x5f746578, 0x745f7374, 0x61727458 };
+#  pragma const_seg("fipsro$a")
+#  pragma const_seg()
    __declspec(allocate("fipsro$a"))
 # endif
 const unsigned int FIPS_rodata_start[]=
@@ -71,13 +77,20 @@ const unsigned int FIPS_rodata_start[]=
 #  define instruction_pointer	FIPS_text_endX
 # endif
 # if defined(_MSC_VER)
-#  pragma section("fipsro$c",read)
-   __declspec(allocate("fipsro$c"))
+#  pragma code_seg("fipstx$z")
+#  pragma code_seg()
+   __declspec(allocate("fipstx$z"))
+const unsigned int FIPS_text_endX[]=
+	{ 0x46495053, 0x5f746578, 0x745f656e, 0x64585b5d };
+#  pragma const_seg("fipsro$z")
+#  pragma const_seg()
+   __declspec(allocate("fipsro$z"))
 # endif
 const unsigned int FIPS_rodata_end[]=
 	{ 0x46495053, 0x5f726f64, 0x6174615f, 0x656e645b };
 #endif
 
+#if !defined(_MSC_VER) || !defined(instruction_pointer)
 /*
  * I declare reference function as static in order to avoid certain
  * pitfalls in -dynamic linker behaviour...
@@ -159,6 +172,7 @@ static void *instruction_pointer(void)
 #endif
   return ret;
 }
+#endif
 
 /*
  * This function returns pointer to an instruction in the vicinity of

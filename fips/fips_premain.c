@@ -69,7 +69,8 @@
 #endif
 
 #if defined(_MSC_VER)
-# pragma section("fipsro",read)
+# pragma const_seg("fipsro")
+# pragma const_seg()
   __declspec(allocate("fipsro"))
 #endif
 static const unsigned char FINGERPRINT_ascii_value[41] = HMAC_SHA1_SIG;
