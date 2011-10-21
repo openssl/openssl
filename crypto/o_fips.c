@@ -75,7 +75,10 @@ int FIPS_mode_set(int r)
 	{
 	OPENSSL_init();
 #ifdef OPENSSL_FIPS
-	if (!FIPS_module_mode_set(r))
+#ifndef FIPS_AUTH_USER_PASS
+#define FIPS_AUTH_USER_PASS	"Default FIPS Crypto User Password"
+#endif
+	if (!FIPS_module_mode_set(r, FIPS_AUTH_USER_PASS))
 		return 0;
 	if (r)
 		RAND_set_rand_method(FIPS_rand_get_method());
