@@ -906,9 +906,9 @@ $defs.=&do_defs("E_SHLIB",$engines . $otherlibs,"\$(ENG_D)",$shlibp);
 foreach (split(/\s+/,$engines))
 	{
 	my $engine = $_;
-	my @objs   = grep(/$engine/,@engines_obj);
+	my @objs   = grep {/e_$engine/} @engines_obj;
 	$rules.=&do_compile_rule("\$(OBJ_D)",join(" ",@objs),$lib);
-	map {$_=~s/[^\/]*\/*([^\/]+)/\$(OBJ_D)${o}$1.obj/} @objs;
+	map {$_=~s/.*\/([^\/]+)$/\$(OBJ_D)${o}$1$obj/} @objs;
 	$rules.= &do_lib_rule(join(" ",@objs),"\$(ENG_D)$o$engine$shlibp","",$shlib,"");
 	}
 
@@ -1223,7 +1223,9 @@ sub Sasm_compile_target
 
 	$bname =~ s/(.*)\.[^\.]$/$1/;
 	$ret ="\$(TMP_D)$o$bname.asm: $source\n";
-	$ret.="\t\$(CC) -E \$(CFLAG) $source >\$\@\n\n";
+	$ret.="\t\$(CC) -E \$(CFLAG) $source >\$\@\n";
+	$ret.="\t\$(PERL) util\\fipsas.pl . \$@ norunasm \$(CFLAG)\n" if $fipscanisteronly;
+	$ret.="\n";
 	$ret.="$target: \$(TMP_D)$o$bname.asm\n";
 	$ret.="\t\$(ASM) $afile\$\@ \$(TMP_D)$o$bname.asm\n\n";
 	return($ret);
