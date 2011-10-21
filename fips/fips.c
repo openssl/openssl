@@ -316,7 +316,7 @@ int FIPS_module_mode_set(int onoff, const char *auth)
 
 #ifdef OPENSSL_IA32_SSE2
 	{
-	unsigned int OPENSSL_ia32cap_P[];
+	extern unsigned int OPENSSL_ia32cap_P[2];
 	if ((OPENSSL_ia32cap_P[0] & (1<<25|1<<26)) != (1<<25|1<<26))
 	    {
 	    FIPSerr(FIPS_F_FIPS_MODULE_MODE_SET,FIPS_R_UNSUPPORTED_PLATFORM);
@@ -325,7 +325,7 @@ int FIPS_module_mode_set(int onoff, const char *auth)
 	    goto end;
 	    }
 	OPENSSL_ia32cap_P[0] |= (1<<28);	/* set "shared cache"	*/
-	OPENSSL_ia32cap_P[1] &= ~(1<<60);	/* clear AVX		*/
+	OPENSSL_ia32cap_P[1] &= ~(1<<(60-32));	/* clear AVX		*/
 	}
 #endif
 
