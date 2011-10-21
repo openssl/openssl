@@ -135,8 +135,18 @@ void FIPS_drbg_free(DRBG_CTX *dctx)
 	{
 	if (dctx->uninstantiate)
 		dctx->uninstantiate(dctx);
-	OPENSSL_cleanse(&dctx->d, sizeof(dctx->d));
-	OPENSSL_free(dctx);
+	/* Don't free up default DRBG */
+	if (dctx == FIPS_get_default_drbg())
+		{
+		memset(dctx, 0, sizeof(DRBG_CTX));
+		dctx->type = 0;
+		dctx->status = DRBG_STATUS_UNINITIALISED;
+		}
+	else
+		{
+		OPENSSL_cleanse(&dctx->d, sizeof(dctx->d));
+		OPENSSL_free(dctx);
+		}
 	}
 
 static size_t fips_get_entropy(DRBG_CTX *dctx, unsigned char **pout,
@@ -194,6 +204,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 	FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_ERROR_RETRIEVING_ENTROPY);
 	FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_ERROR_RETRIEVING_NONCE);
 	FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_INSTANTIATE_ERROR);
+	FIPSerr(FIPS_F_FIPS_DRBG_INSTANTIATE, FIPS_R_DRBG_NOT_INITIALISED);
 #endif
 
 	int r = 0;
@@ -201,6 +212,12 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 	if (perslen > dctx->max_pers)
 		{
 		r = FIPS_R_PERSONALISATION_STRING_TOO_LONG;
+		goto end;
+		}
+
+	if (!dctx->instantiate)
+		{
+		r = FIPS_R_DRBG_NOT_INITIALISED;
 		goto end;
 		}
 
