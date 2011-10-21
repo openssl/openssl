@@ -160,9 +160,6 @@ unsigned int FIPS_incore_fingerprint(unsigned char *sig,unsigned int len)
     const unsigned char *p4 = FIPS_rodata_end;
     HMAC_CTX c;
 
-#if defined(_MSC_VER)
-#endif
-
     HMAC_CTX_init(&c);
     HMAC_Init(&c,FIPS_hmac_key,strlen(FIPS_hmac_key),EVP_sha1());
 
