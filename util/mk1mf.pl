@@ -1120,7 +1120,7 @@ sub read_options
 		"no-cms" => \$no_cms,
 		"no-ec2m" => \$no_ec2m,
 		"no-jpake" => \$no_jpake,
-		"no-ec-nistp224-64-gcc-128" => 0,
+		"no-ec_nistp_64_gcc_128" => 0,
 		"no-err" => \$no_err,
 		"no-sock" => \$no_sock,
 		"no-krb5" => \$no_krb5,
