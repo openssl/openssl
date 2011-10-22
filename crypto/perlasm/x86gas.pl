@@ -220,9 +220,6 @@ ___
     {	$initseg.=<<___;
 .section	.init
 	call	$f
-	jmp	.Linitalign
-.align	$align
-.Linitalign:
 ___
     }
     elsif ($::coff)
