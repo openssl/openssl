@@ -349,6 +349,10 @@ void ERR_load_FIPS_strings(void);
 #define FIPS_F_DSA_BUILTIN_PARAMGEN2			 102
 #define FIPS_F_DSA_DO_SIGN				 103
 #define FIPS_F_DSA_DO_VERIFY				 104
+#define FIPS_F_ECDH_COMPUTE_KEY				 163
+#define FIPS_F_ECDSA_DO_SIGN				 164
+#define FIPS_F_ECDSA_DO_VERIFY				 165
+#define FIPS_F_EC_KEY_GENERATE_KEY			 166
 #define FIPS_F_FIPS_CHECK_DSA				 105
 #define FIPS_F_FIPS_CHECK_DSA_PRNG			 151
 #define FIPS_F_FIPS_CHECK_EC				 106

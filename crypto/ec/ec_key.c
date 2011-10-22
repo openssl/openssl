@@ -306,6 +306,14 @@ int EC_KEY_generate_key(EC_KEY *eckey)
 	BIGNUM	*priv_key = NULL, *order = NULL;
 	EC_POINT *pub_key = NULL;
 
+#ifdef OPENSSL_FIPS
+	if(FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_EC_KEY_GENERATE_KEY,FIPS_R_FIPS_SELFTEST_FAILED);
+		return 0;
+		}
+#endif
+
 	if (!eckey || !eckey->group)
 		{
 		ECerr(EC_F_EC_KEY_GENERATE_KEY, ERR_R_PASSED_NULL_PARAMETER);

@@ -386,6 +386,12 @@ int FIPS_drbg_generate(DRBG_CTX *dctx, unsigned char *out, size_t outlen,
 	{
 	int r = 0;
 
+	if (FIPS_selftest_failed())
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_GENERATE, FIPS_R_SELFTEST_FAILED);
+		return 0;
+		}
+
 	if (!fips_drbg_check(dctx))
 		return 0;
 
