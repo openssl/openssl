@@ -940,7 +940,7 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	EVP_AES_GCM_CTX *gctx = ctx->cipher_data;
 	int rv = -1;
 	/* Encrypt/decrypt must be performed in place */
-	if (out != in)
+	if (out != in || len < (EVP_GCM_TLS_EXPLICIT_IV_LEN+EVP_GCM_TLS_TAG_LEN))
 		return -1;
 	/* Set IV from start of buffer or generate IV and write to start
 	 * of buffer.
