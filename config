@@ -411,25 +411,18 @@ exit 0
 # this is where the translation occurs into SSLeay terms
 # ---------------------------------------------------------------------------
 
-if [ -z "$GCCVER" ]; then
-	GCCVER=`(gcc -dumpversion) 2>/dev/null`
-fi
-if [ "$GCCVER" != "" ]; then
-  # then strip off whatever prefix egcs prepends the number with...
-  # Hopefully, this will work for any future prefixes as well.
-  GCCVER=`echo $GCCVER | LC_ALL=C sed 's/^[a-zA-Z]*\-//'`
-  # Since gcc 3.1 gcc --version behaviour has changed.  gcc -dumpversion
-  # does give us what we want though, so we use that.  We just just the
-  # major and minor version numbers.
-  # peak single digit before and after first dot, e.g. 2.95.1 gives 29
-  GCCVER=`echo $GCCVER | sed 's/\([0-9]\)\.\([0-9]\).*/\1\2/'`
-fi
-
 # Only set CC if not supplied already
-if [ -z "$CC" ]; then
-# figure out if gcc is available and if so we use it otherwise
-# we fallback to whatever cc does on the system
+if [ -z "$CROSS_COMPILE$CC" ]; then
+  GCCVER=`sh -c "gcc -dumpversion" 2>/dev/null`
   if [ "$GCCVER" != "" ]; then
+    # then strip off whatever prefix egcs prepends the number with...
+    # Hopefully, this will work for any future prefixes as well.
+    GCCVER=`echo $GCCVER | LC_ALL=C sed 's/^[a-zA-Z]*\-//'`
+    # Since gcc 3.1 gcc --version behaviour has changed.  gcc -dumpversion
+    # does give us what we want though, so we use that.  We just just the
+    # major and minor version numbers.
+    # peak single digit before and after first dot, e.g. 2.95.1 gives 29
+    GCCVER=`echo $GCCVER | sed 's/\([0-9]\)\.\([0-9]\).*/\1\2/'`
     CC=gcc
   else
     CC=cc
@@ -851,10 +844,9 @@ if [ -n "$CONFIG_OPTIONS" ]; then
   options="$options $CONFIG_OPTIONS"
 fi
 
-if [ -z "$CONFIG_SKIP_NOEXECSTACK" ]; then
-  ! expr "$options" : '.*no\-asm' > /dev/null && \
-  ($CC -Wa,--help -c -o /dev/null -x assembler /dev/null 2>&1 | \
- grep \\--noexecstack) 2>&1 > /dev/null && \
+if expr "$options" : '.*no\-asm' > /dev/null; then :; else
+  sh -c "$CROSS_COMPILE${CC:-gcc} -Wa,--help -c -o /tmp/null.$$.o -x assembler /dev/null && rm /tmp/null.$$.o" 2>&1 | \
+  grep \\--noexecstack >/dev/null && \
   options="$options -Wa,--noexecstack"
 fi
 
