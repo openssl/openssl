@@ -1184,8 +1184,11 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 #define aes_xts_cleanup NULL
 
-BLOCK_CIPHER_custom(NID_aes,128,1,16,xts,XTS,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
-BLOCK_CIPHER_custom(NID_aes,256,1,16,xts,XTS,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
+#define XTS_FLAGS	(EVP_CIPH_FLAG_DEFAULT_ASN1 | EVP_CIPH_CUSTOM_IV \
+			 | EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT)
+
+BLOCK_CIPHER_custom(NID_aes,128,1,16,xts,XTS,EVP_CIPH_FLAG_FIPS|XTS_FLAGS)
+BLOCK_CIPHER_custom(NID_aes,256,1,16,xts,XTS,EVP_CIPH_FLAG_FIPS|XTS_FLAGS)
 
 static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	{
