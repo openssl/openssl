@@ -293,8 +293,12 @@ void OPENSSL_showfatal (const char *fmta,...)
     if ((h=GetStdHandle(STD_ERROR_HANDLE)) != NULL &&
 	GetFileType(h)!=FILE_TYPE_UNKNOWN)
     {	/* must be console application */
+	int   len;
+	DWORD out;
+
 	va_start (ap,fmta);
-	vfprintf (stderr,fmta,ap);
+	len=_vsnprintf((char *)buf,sizeof(buf),fmt,ap);
+	WriteFile(h,buf,len<0?sizeof(buf):(DWORD)len,&out,NULL);
 	va_end (ap);
 	return;
     }
@@ -375,4 +379,6 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 #endif
 	}
 
+#ifndef OPENSSL_FIPSCANISTER
 void *OPENSSL_stderr(void)	{ return stderr; }
+#endif
