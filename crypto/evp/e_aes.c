@@ -100,6 +100,7 @@ typedef struct
 	int len_set;		/* Set if message length set */
 	int L, M;		/* L and M parameters from RFC3610 */
 	CCM128_CONTEXT ccm;
+	ccm128_f str;
 	} EVP_AES_CCM_CTX;
 
 #define MAXBITCHUNK	((size_t)1<<(sizeof(size_t)*8-4))
@@ -397,6 +398,8 @@ static int aesni_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		aesni_set_encrypt_key(key, ctx->key_len * 8, &cctx->ks);
 		CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
 					&cctx->ks, (block128_f)aesni_encrypt);
+		cctx->str = enc?(ccm128_f)aesni_ccm64_encrypt_blocks :
+				(ccm128_f)aesni_ccm64_decrypt_blocks;
 		cctx->key_set = 1;
 		}
 	if (iv)
@@ -407,71 +410,9 @@ static int aesni_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 	}
 
+#define aesni_ccm_cipher aes_ccm_cipher
 static int aesni_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		const unsigned char *in, size_t len)
-	{
-	EVP_AES_CCM_CTX *cctx = ctx->cipher_data;
-	CCM128_CONTEXT *ccm = &cctx->ccm;
-	/* If not set up, return error */
-	if (!cctx->iv_set && !cctx->key_set)
-		return -1;
-	if (!ctx->encrypt && !cctx->tag_set)
-		return -1;
-	if (!out)
-		{
-		if (!in)
-			{
-			if (CRYPTO_ccm128_setiv(ccm, ctx->iv, 15 - cctx->L,len))
-				return -1;
-			cctx->len_set = 1;
-			return len;
-			}
-		/* If have AAD need message length */
-		if (!cctx->len_set && len)
-			return -1;
-		CRYPTO_ccm128_aad(ccm, in, len);
-		return len;
-		}
-	/* EVP_*Final() doesn't return any data */
-	if (!in)
-		return 0;
-	/* If not set length yet do it */
-	if (!cctx->len_set)
-		{
-		if (CRYPTO_ccm128_setiv(ccm, ctx->iv, 15 - cctx->L, len))
-			return -1;
-		cctx->len_set = 1;
-		}
-	if (ctx->encrypt)
-		{
-		if (CRYPTO_ccm128_encrypt_ccm64(ccm, in, out, len,
-				aesni_ccm64_encrypt_blocks))
-			return -1;
-		cctx->tag_set = 1;
-		return len;
-		}
-	else
-		{
-		int rv = -1;
-		if (!CRYPTO_ccm128_decrypt_ccm64(ccm, in, out, len,
-				aesni_ccm64_decrypt_blocks))
-			{
-			unsigned char tag[16];
-			if (CRYPTO_ccm128_tag(ccm, tag, cctx->M))
-				{
-				if (!memcmp(tag, ctx->buf, cctx->M))
-					rv = len;
-				}
-			}
-		if (rv == -1)
-			OPENSSL_cleanse(out, len);
-		cctx->iv_set = 0;
-		cctx->tag_set = 0;
-		cctx->len_set = 0;
-		return rv;
-		}
-
-	}
+		const unsigned char *in, size_t len);
 
 #define BLOCK_CIPHER_generic(nid,keylen,blocksize,ivlen,nmode,mode,MODE,flags) \
 static const EVP_CIPHER aesni_##keylen##_##mode = { \
@@ -1262,6 +1203,7 @@ static int aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		AES_set_encrypt_key(key, ctx->key_len * 8, &cctx->ks);
 		CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
 					&cctx->ks, (block128_f)AES_encrypt);
+		cctx->str = NULL;
 		cctx->key_set = 1;
 		} while (0);
 	if (iv)
@@ -1309,7 +1251,9 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}
 	if (ctx->encrypt)
 		{
-		if (CRYPTO_ccm128_encrypt(ccm, in, out, len))
+		if (cctx->str ? CRYPTO_ccm128_encrypt_ccm64(ccm, in, out, len,
+						cctx->str) :
+				CRYPTO_ccm128_encrypt(ccm, in, out, len))
 			return -1;
 		cctx->tag_set = 1;
 		return len;
@@ -1317,7 +1261,9 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	else
 		{
 		int rv = -1;
-		if (!CRYPTO_ccm128_decrypt(ccm, in, out, len))
+		if (cctx->str ? !CRYPTO_ccm128_decrypt_ccm64(ccm, in, out, len,
+						cctx->str) :
+				!CRYPTO_ccm128_decrypt(ccm, in, out, len))
 			{
 			unsigned char tag[16];
 			if (CRYPTO_ccm128_tag(ccm, tag, cctx->M))
