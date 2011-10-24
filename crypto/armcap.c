@@ -30,7 +30,7 @@ unsigned int OPENSSL_rdtsc(void)
 	}
 
 #if defined(__GNUC__) && __GNUC__>=2
-void OPENSSL_cpuid_setup(void) __attribute__((constructor))
+void OPENSSL_cpuid_setup(void) __attribute__((constructor));
 #endif
 void OPENSSL_cpuid_setup(void)
 	{
