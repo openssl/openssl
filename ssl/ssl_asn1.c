@@ -627,7 +627,7 @@ SSL_SESSION *d2i_SSL_SESSION(SSL_SESSION **a, const unsigned char **pp,
 #ifndef OPENSSL_NO_SRP
 	os.length=0;
 	os.data=NULL;
-	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,11);
+	M_ASN1_D2I_get_EXP_opt(osp,d2i_ASN1_OCTET_STRING,12);
 	if (os.data)
 		{
 		ret->srp_username = BUF_strndup((char *)os.data, os.length);
