@@ -1271,7 +1271,7 @@ int dtls1_send_server_key_exchange(SSL *s)
 				EVP_SignInit_ex(&md_ctx,EVP_ecdsa(), NULL);
 				EVP_SignUpdate(&md_ctx,&(s->s3->client_random[0]),SSL3_RANDOM_SIZE);
 				EVP_SignUpdate(&md_ctx,&(s->s3->server_random[0]),SSL3_RANDOM_SIZE);
-				EVP_SignUpdate(&md_ctx,&(d[4]),n);
+				EVP_SignUpdate(&md_ctx,&(d[DTLS1_HM_HEADER_LENGTH]),n);
 				if (!EVP_SignFinal(&md_ctx,&(p[2]),
 					(unsigned int *)&i,pkey))
 					{
