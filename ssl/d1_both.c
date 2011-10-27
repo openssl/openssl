@@ -793,7 +793,13 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 		*ok = 0;
 		return i;
 		}
-	OPENSSL_assert(i == DTLS1_HM_HEADER_LENGTH);
+	/* Handshake fails if message header is incomplete */
+	if (i != DTLS1_HM_HEADER_LENGTH)
+		{
+		al=SSL_AD_UNEXPECTED_MESSAGE;
+		SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,SSL_R_UNEXPECTED_MESSAGE);
+		goto f_err;
+		}
 
 	/* parse the message fragment header */
 	dtls1_get_message_header(wire, &msg_hdr);
@@ -865,7 +871,12 @@ dtls1_get_message_fragment(SSL *s, int st1, int stn, long max, int *ok)
 
 	/* XDTLS:  an incorrectly formatted fragment should cause the 
 	 * handshake to fail */
-	OPENSSL_assert(i == (int)frag_len);
+	if (i != (int)frag_len)
+		{
+		al=SSL3_AD_ILLEGAL_PARAMETER;
+		SSLerr(SSL_F_DTLS1_GET_MESSAGE_FRAGMENT,SSL3_AD_ILLEGAL_PARAMETER);
+		goto f_err;
+		}
 
 	*ok = 1;
 
