@@ -80,7 +80,11 @@
 #
 # October 2011.
 #
-# Add decryption procedure.
+# Add decryption procedure. Performance in CPU cycles spent to decrypt
+# one byte out of 4096-byte buffer with 128-bit key is:
+#
+# Core 2	11.0
+# Nehalem	9.16
 #
 #						<appro@openssl.org>
 
@@ -500,171 +504,143 @@ my @x=@_[0..7];
 my @t=@_[8..15];
 
 $code.=<<___;
-	pshufd	\$0x93, @x[0], @t[0]
-	pshufd	\$0x93, @x[1], @t[1]
-	movdqa	@x[2], @t[2]
-	pshufd	\$0x93, @x[3], @t[3]
-	movdqa	@x[4], @t[4]
-	movdqa	@x[5], @t[5]
-	pshufd	\$0x93, @x[6], @t[6]
-	pshufd	\$0x93, @x[7], @t[7]
-
 	# multiplication by 0x0e
+	pshufd	\$0x93, @x[7], @t[7]
+	movdqa	@x[2], @t[2]
 	pxor	@x[5], @x[7]		# 7 5
 	pxor	@x[5], @x[2]		# 2 5
+	pshufd	\$0x93, @x[0], @t[0]
+	movdqa	@x[5], @t[5]
 	pxor	@x[0], @x[5]		# 5 0		[1]
 	pxor	@x[1], @x[0]		# 0 1
+	pshufd	\$0x93, @x[1], @t[1]
 	pxor	@x[2], @x[1]		# 1 25
 	pxor	@x[6], @x[0]		# 01 6		[2]
 	pxor	@x[3], @x[1]		# 125 3		[4]
+	pshufd	\$0x93, @x[3], @t[3]
 	pxor	@x[0], @x[2]		# 25 016	[3]
 	pxor	@x[7], @x[3]		# 3 75
 	pxor	@x[6], @x[7]		# 75 6		[0]
+	pshufd	\$0x93, @x[6], @t[6]
+	movdqa	@x[4], @t[4]
 	pxor	@x[4], @x[6]		# 6 4
 	pxor	@x[3], @x[4]		# 4 375		[6]
 	pxor	@x[7], @x[3]		# 375 756=36
 	pxor	@t[5], @x[6]		# 64 5		[7]
-	pshufd	\$0x93, @t[5], @t[5]
 	pxor	@t[2], @x[3]		# 36 2
-	pshufd	\$0x93, @t[2], @t[2]
 	pxor	@t[4], @x[3]		# 362 4		[5]
-	pshufd	\$0x93, @t[4], @t[4]
+	pshufd	\$0x93, @t[5], @t[5]
 ___
 					my @y = @x[7,5,0,2,1,3,4,6];
 $code.=<<___;
 	# multiplication by 0x0b
 	pxor	@y[0], @y[1]
 	pxor	@t[0], @y[0]
-	pxor	@t[5], @y[0]
-	pxor	@t[7], @y[0]		# 0^=057
-	pxor	@y[0], @y[1]		# 1^=057
 	pxor	@t[1], @y[1]
-	pxor	@t[6], @y[1]		# 1^=057 16
-
+	pshufd	\$0x93, @t[2], @t[2]
+	pxor	@t[5], @y[0]
+	pxor	@t[6], @y[1]
+	pxor	@t[7], @y[0]
+	pshufd	\$0x93, @t[4], @t[4]
 	pxor	@t[6], @t[7]		# clobber t[7]
-
-	pxor	@t[1], @y[2]
-	pxor	@t[2], @y[2]
-	pxor	@t[7], @y[2]		# 2^=12 67
+	pxor	@y[0], @y[1]
 
 	pxor	@t[0], @y[3]
+	pshufd	\$0x93, @t[0], @t[0]
+	pxor	@t[1], @y[2]
+	pxor	@t[1], @y[4]
+	pxor	@t[2], @y[2]
+	pshufd	\$0x93, @t[1], @t[1]
 	pxor	@t[2], @y[3]
+	pxor	@t[2], @y[5]
+	pxor	@t[7], @y[2]
+	pshufd	\$0x93, @t[2], @t[2]
 	pxor	@t[3], @y[3]
-	pxor	@t[5], @y[3]		# 3^=0235
-
+	pxor	@t[3], @y[6]
+	pxor	@t[3], @y[4]
+	pshufd	\$0x93, @t[3], @t[3]
+	pxor	@t[4], @y[7]
+	pxor	@t[4], @y[5]
 	pxor	@t[7], @y[7]
-	pxor	@t[4], @y[7]		# 7^=4 67
-
+	pxor	@t[5], @y[3]
+	pxor	@t[4], @y[4]
 	pxor	@t[5], @t[7]		# clobber t[7] even more
 
-	pxor	@t[3], @y[6]
-	pxor	@t[7], @y[6]		# 6^=3 567
-
-	pxor	@t[7], @y[5]		# 5^=567
-	pxor	@t[7], @y[4]		# 4^=567
+	pxor	@t[7], @y[5]
+	pshufd	\$0x93, @t[4], @t[4]
+	pxor	@t[7], @y[6]
+	pxor	@t[7], @y[4]
 
 	pxor	@t[5], @t[7]
+	pshufd	\$0x93, @t[5], @t[5]
 	pxor	@t[6], @t[7]		# restore t[7]
 
-	pxor	@t[2], @y[5]
-	pxor	@t[4], @y[5]		# 5^=24 567
-
-	pxor	@t[1], @y[4]
-	pxor	@t[3], @y[4]
-	pxor	@t[4], @y[4]		# 4^=134 567
-
-	pshufd	\$0x93, @t[0], @t[0]
-	pshufd	\$0x93, @t[1], @t[1]
-	pshufd	\$0x93, @t[2], @t[2]
-	pshufd	\$0x93, @t[3], @t[3]
-	pshufd	\$0x93, @t[4], @t[4]
-	pshufd	\$0x93, @t[5], @t[5]
-	pshufd	\$0x93, @t[6], @t[6]
-	pshufd	\$0x93, @t[7], @t[7]
-
 	# multiplication by 0x0d
-	pxor	@t[0], @y[0]
-	pxor	@t[5], @y[0]
-	pxor	@t[6], @y[0]		# 0^=056
+	pxor	@y[7], @y[4]
+	pxor	@t[4], @y[7]
+	pshufd	\$0x93, @t[6], @t[6]
+	pxor	@t[0], @y[2]
+	pxor	@t[5], @y[7]
+	pxor	@t[2], @y[2]
+	pshufd	\$0x93, @t[7], @t[7]
 
 	pxor	@y[1], @y[3]
 	pxor	@t[1], @y[1]
-	pxor	@t[5], @y[1]
-	pxor	@t[7], @y[1]		# 1^=157
-	pxor	@y[1], @y[3]		# 3^=157
-
-	pxor	@t[0], @y[2]
-	pxor	@t[2], @y[2]
-	pxor	@t[6], @y[2]		# 2^=026
-
-	pxor	@t[3], @t[6]		# clobber t[6]
-
+	pxor	@t[0], @y[0]
 	pxor	@t[0], @y[3]
-	pxor	@t[6], @y[3]		# 3^=0 36 157
-
-	pxor	@y[7], @y[4]
-	pxor	@t[4], @y[7]
-	pxor	@t[5], @y[7]
-	pxor	@t[7], @y[7]		# 7^=457
-	pxor	@y[7], @y[4]		# 4^=457
+	pxor	@t[5], @y[1]
+	pxor	@t[5], @y[0]
+	pxor	@t[7], @y[1]
+	pshufd	\$0x93, @t[0], @t[0]
+	pxor	@t[6], @y[0]
+	pxor	@y[1], @y[3]
 	pxor	@t[1], @y[4]
-	pxor	@t[2], @y[4]		# 4^=12 457
+	pshufd	\$0x93, @t[1], @t[1]
 
+	pxor	@t[7], @y[7]
+	pxor	@t[2], @y[4]
 	pxor	@t[2], @y[5]
-	pxor	@t[5], @y[5]
-	pxor	@t[6], @y[5]		# 5^=25 36
+	pshufd	\$0x93, @t[2], @t[2]
+	pxor	@t[6], @y[2]
+	pxor	@t[3], @t[6]		# clobber t[6]
+	pxor	@y[7], @y[4]
+	pxor	@t[6], @y[3]
 
 	pxor	@t[6], @y[6]
+	pxor	@t[5], @y[5]
 	pxor	@t[4], @y[6]
-	pxor	@t[7], @y[6]		# 6^=47 36
+	pshufd	\$0x93, @t[4], @t[4]
+	pxor	@t[6], @y[5]
+	pxor	@t[7], @y[6]
 	pxor	@t[3], @t[6]		# restore t[6]
 
-	pshufd	\$0x93, @t[0], @t[0]
-	pshufd	\$0x93, @t[1], @t[1]
-	pshufd	\$0x93, @t[2], @t[2]
-	pshufd	\$0x93, @t[3], @t[3]
-	pshufd	\$0x93, @t[4], @t[4]
 	pshufd	\$0x93, @t[5], @t[5]
 	pshufd	\$0x93, @t[6], @t[6]
 	pshufd	\$0x93, @t[7], @t[7]
+	pshufd	\$0x93, @t[3], @t[3]
 
 	# multiplication by 0x09
 	pxor	@y[1], @y[4]
-	pxor	@t[1], @y[1]
-	pxor	@t[5], @y[1]
-	pxor	@t[6], @y[1]		# 1^=156
-	pxor	@y[1], @y[4]		# 4^=156
-	pxor	@t[4], @y[4]		# 4^=4 156
-
-	pxor	@t[7], @t[6]		# clobber t[6]
+	pxor	@y[1], @t[1]		# t[1]=y[1]
 	pxor	@t[5], @t[0]		# clobber t[0]
-
-	pxor	@t[0], @y[0]		# 0^=05
+	pxor	@t[5], @t[1]
 	pxor	@t[0], @y[3]
-	pxor	@t[3], @y[3]
-	pxor	@t[7], @y[3]		# 3^=05 37
-
-	pxor	@t[2], @y[2]
-	pxor	@t[6], @y[2]		# 2^=2 67
-
-	pxor	@t[2], @y[5]
-	pxor	@t[5], @y[5]
-	pxor	@t[6], @y[5]		# 5^=25 67
-
-	pxor	@t[3], @y[6]
-	pxor	@t[6], @y[6]		# 6^=3 67
-
+	pxor	@y[0], @t[0]		# t[0]=y[0]
+	pxor	@t[6], @t[1]
+	pxor	@t[7], @t[6]		# clobber t[6]
+	pxor	@t[1], @y[4]
 	pxor	@t[4], @y[7]
-	pxor	@t[7], @y[7]		# 7^=47
-
-	movdqa	@y[0], @t[0]
-	movdqa	@y[1], @t[1]
-	movdqa	@y[2], @t[2]
-	movdqa	@y[3], @t[3]
-	movdqa	@y[4], @t[4]
-	movdqa	@y[5], @t[5]
-	movdqa	@y[6], @t[6]
-	movdqa	@y[7], @t[7]
+	pxor	@y[4], @t[4]		# t[4]=y[4]
+	pxor	@t[3], @y[6]
+	pxor	@y[3], @t[3]		# t[3]=y[3]
+	pxor	@t[2], @y[5]
+	pxor	@y[2], @t[2]		# t[2]=y[2]
+	pxor	@t[7], @t[3]
+	pxor	@y[5], @t[5]		# t[5]=y[5]
+	pxor	@t[6], @t[2]
+	pxor	@t[6], @t[5]
+	pxor	@y[6], @t[6]		# t[6]=y[6]
+	pxor	@y[7], @t[7]		# t[7]=y[7]
 
 	movdqa	@t[0],@XMM[0]
 	movdqa	@t[1],@XMM[1]
