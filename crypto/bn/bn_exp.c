@@ -693,6 +693,11 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
 
 	BN_ULONG *np=mont->N.d, *n0=mont->n0;
 
+	/* BN_to_montgomery can contaminate words above .top
+	 * [in BN_DEBUG[_DEBUG] build]... */
+	for (i=am.top; i<top; i++)	am.d[i]=0;
+	for (i=tmp.top; i<top; i++)	tmp.d[i]=0;
+
 	bn_scatter5(tmp.d,top,powerbuf,0);
 	bn_scatter5(am.d,am.top,powerbuf,1);
 	bn_mul_mont(tmp.d,am.d,am.d,np,n0,top);
