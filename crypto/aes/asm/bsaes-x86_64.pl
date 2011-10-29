@@ -78,6 +78,10 @@
 # it's still faster than ["hyper-threading-safe" code path in]
 # aes-x86_64.pl on all lengths above 64 bytes...
 #
+# October 2011.
+#
+# Add decryption procedure.
+#
 #						<appro@openssl.org>
 
 $flavour = shift;
@@ -99,7 +103,7 @@ my @XMM=map("%xmm$_",(15,0..14));	# best on Atom, +10% over (0..15)
 {
 my ($key,$rounds,$const)=("%rax","%r10d","%r11");
 
-sub sbox {
+sub Sbox {
 # input in  lsb > [b0, b1, b2, b3, b4, b5, b6, b7] < msb
 # output in lsb > [b0, b1, b4, b6, b3, b7, b2, b5] < msb
 my @b=@_[0..7];
@@ -117,9 +121,9 @@ my @b=@_[0..7];
 $code.=<<___;
 	pxor	@b[6], @b[5]
 	pxor	@b[1], @b[2]
-	pxor 	@b[0], @b[5]
+	pxor	@b[0], @b[3]
 	pxor	@b[2], @b[6]
-	pxor 	@b[0], @b[3]
+	pxor 	@b[0], @b[5]
 
 	pxor	@b[3], @b[6]
 	pxor	@b[7], @b[3]
@@ -151,6 +155,57 @@ $code.=<<___;
 	pxor	@b[5], @b[2]
 
 	pxor	@b[7], @b[4]
+___
+}
+
+sub InvSbox {
+# input in lsb 	> [b0, b1, b2, b3, b4, b5, b6, b7] < msb
+# output in lsb	> [b0, b1, b6, b4, b2, b7, b3, b5] < msb
+my @b=@_[0..7];
+my @t=@_[8..11];
+my @s=@_[12..15];
+	&InvInBasisChange	(@b);
+	&Inv_GF256		(@b[5,1,2,6,3,7,0,4],@t,@s);
+	&InvOutBasisChange	(@b[3,7,0,4,5,1,2,6]);
+}
+
+sub InvInBasisChange {		# OutBasisChange in reverse
+my @b=@_[5,1,2,6,3,7,0,4];
+$code.=<<___
+	pxor	@b[7], @b[4]
+
+	pxor	@b[5], @b[7]
+	pxor	@b[5], @b[2]
+	pxor	@b[7], @b[3]
+	pxor	@b[3], @b[5]
+	pxor	@b[5], @b[1]
+
+	pxor	@b[1], @b[6]
+	pxor	@b[0], @b[2]
+	pxor	@b[6], @b[4]
+	pxor	@b[6], @b[0]
+	pxor	@b[4], @b[1]
+___
+}
+
+sub InvOutBasisChange {		# InBasisChange in reverse
+my @b=@_[2,5,7,3,6,1,0,4];
+$code.=<<___;
+	pxor	@b[5], @b[1]
+	pxor	@b[7], @b[2]
+
+	pxor	@b[1], @b[3]
+	pxor	@b[5], @b[4]
+	pxor	@b[5], @b[7]
+	pxor	@b[4], @b[3]
+	 pxor 	@b[0], @b[5]
+	pxor	@b[7], @b[3]
+	 pxor	@b[2], @b[6]
+	 pxor	@b[1], @b[2]
+	pxor	@b[3], @b[6]
+
+	pxor	@b[0], @b[3]
+	pxor	@b[6], @b[5]
 ___
 }
 
@@ -361,7 +416,7 @@ ___
 
 # AES linear components
 
-sub shiftrows {
+sub ShiftRows {
 my @x=@_[0..7];
 my $mask=pop;
 $code.=<<___;
@@ -385,7 +440,7 @@ $code.=<<___;
 ___
 }
 
-sub mixcolumns {
+sub MixColumns {
 # modified to emit output in order suitable for feeding back to aesenc[last]
 my @x=@_[0..7];
 my @t=@_[8..15];
@@ -440,15 +495,197 @@ $code.=<<___;
 ___
 }
 
+sub InvMixColumns {
+my @x=@_[0..7];
+my @t=@_[8..15];
+
+$code.=<<___;
+	pshufd	\$0x93, @x[0], @t[0]
+	pshufd	\$0x93, @x[1], @t[1]
+	movdqa	@x[2], @t[2]
+	pshufd	\$0x93, @x[3], @t[3]
+	movdqa	@x[4], @t[4]
+	movdqa	@x[5], @t[5]
+	pshufd	\$0x93, @x[6], @t[6]
+	pshufd	\$0x93, @x[7], @t[7]
+
+	# multiplication by 0x0e
+	pxor	@x[5], @x[7]		# 7 5
+	pxor	@x[5], @x[2]		# 2 5
+	pxor	@x[0], @x[5]		# 5 0		[1]
+	pxor	@x[1], @x[0]		# 0 1
+	pxor	@x[2], @x[1]		# 1 25
+	pxor	@x[6], @x[0]		# 01 6		[2]
+	pxor	@x[3], @x[1]		# 125 3		[4]
+	pxor	@x[0], @x[2]		# 25 016	[3]
+	pxor	@x[7], @x[3]		# 3 75
+	pxor	@x[6], @x[7]		# 75 6		[0]
+	pxor	@x[4], @x[6]		# 6 4
+	pxor	@x[3], @x[4]		# 4 375		[6]
+	pxor	@x[7], @x[3]		# 375 756=36
+	pxor	@t[5], @x[6]		# 64 5		[7]
+	pshufd	\$0x93, @t[5], @t[5]
+	pxor	@t[2], @x[3]		# 36 2
+	pshufd	\$0x93, @t[2], @t[2]
+	pxor	@t[4], @x[3]		# 362 4		[5]
+	pshufd	\$0x93, @t[4], @t[4]
+___
+					my @y = @x[7,5,0,2,1,3,4,6];
+$code.=<<___;
+	# multiplication by 0x0b
+	pxor	@y[0], @y[1]
+	pxor	@t[0], @y[0]
+	pxor	@t[5], @y[0]
+	pxor	@t[7], @y[0]		# 0^=057
+	pxor	@y[0], @y[1]		# 1^=057
+	pxor	@t[1], @y[1]
+	pxor	@t[6], @y[1]		# 1^=057 16
+
+	pxor	@t[6], @t[7]		# clobber t[7]
+
+	pxor	@t[1], @y[2]
+	pxor	@t[2], @y[2]
+	pxor	@t[7], @y[2]		# 2^=12 67
+
+	pxor	@t[0], @y[3]
+	pxor	@t[2], @y[3]
+	pxor	@t[3], @y[3]
+	pxor	@t[5], @y[3]		# 3^=0235
+
+	pxor	@t[7], @y[7]
+	pxor	@t[4], @y[7]		# 7^=4 67
+
+	pxor	@t[5], @t[7]		# clobber t[7] even more
+
+	pxor	@t[3], @y[6]
+	pxor	@t[7], @y[6]		# 6^=3 567
+
+	pxor	@t[7], @y[5]		# 5^=567
+	pxor	@t[7], @y[4]		# 4^=567
+
+	pxor	@t[5], @t[7]
+	pxor	@t[6], @t[7]		# restore t[7]
+
+	pxor	@t[2], @y[5]
+	pxor	@t[4], @y[5]		# 5^=24 567
+
+	pxor	@t[1], @y[4]
+	pxor	@t[3], @y[4]
+	pxor	@t[4], @y[4]		# 4^=134 567
+
+	pshufd	\$0x93, @t[0], @t[0]
+	pshufd	\$0x93, @t[1], @t[1]
+	pshufd	\$0x93, @t[2], @t[2]
+	pshufd	\$0x93, @t[3], @t[3]
+	pshufd	\$0x93, @t[4], @t[4]
+	pshufd	\$0x93, @t[5], @t[5]
+	pshufd	\$0x93, @t[6], @t[6]
+	pshufd	\$0x93, @t[7], @t[7]
+
+	# multiplication by 0x0d
+	pxor	@t[0], @y[0]
+	pxor	@t[5], @y[0]
+	pxor	@t[6], @y[0]		# 0^=056
+
+	pxor	@y[1], @y[3]
+	pxor	@t[1], @y[1]
+	pxor	@t[5], @y[1]
+	pxor	@t[7], @y[1]		# 1^=157
+	pxor	@y[1], @y[3]		# 3^=157
+
+	pxor	@t[0], @y[2]
+	pxor	@t[2], @y[2]
+	pxor	@t[6], @y[2]		# 2^=026
+
+	pxor	@t[3], @t[6]		# clobber t[6]
+
+	pxor	@t[0], @y[3]
+	pxor	@t[6], @y[3]		# 3^=0 36 157
+
+	pxor	@y[7], @y[4]
+	pxor	@t[4], @y[7]
+	pxor	@t[5], @y[7]
+	pxor	@t[7], @y[7]		# 7^=457
+	pxor	@y[7], @y[4]		# 4^=457
+	pxor	@t[1], @y[4]
+	pxor	@t[2], @y[4]		# 4^=12 457
+
+	pxor	@t[2], @y[5]
+	pxor	@t[5], @y[5]
+	pxor	@t[6], @y[5]		# 5^=25 36
+
+	pxor	@t[6], @y[6]
+	pxor	@t[4], @y[6]
+	pxor	@t[7], @y[6]		# 6^=47 36
+	pxor	@t[3], @t[6]		# restore t[6]
+
+	pshufd	\$0x93, @t[0], @t[0]
+	pshufd	\$0x93, @t[1], @t[1]
+	pshufd	\$0x93, @t[2], @t[2]
+	pshufd	\$0x93, @t[3], @t[3]
+	pshufd	\$0x93, @t[4], @t[4]
+	pshufd	\$0x93, @t[5], @t[5]
+	pshufd	\$0x93, @t[6], @t[6]
+	pshufd	\$0x93, @t[7], @t[7]
+
+	# multiplication by 0x09
+	pxor	@y[1], @y[4]
+	pxor	@t[1], @y[1]
+	pxor	@t[5], @y[1]
+	pxor	@t[6], @y[1]		# 1^=156
+	pxor	@y[1], @y[4]		# 4^=156
+	pxor	@t[4], @y[4]		# 4^=4 156
+
+	pxor	@t[7], @t[6]		# clobber t[6]
+	pxor	@t[5], @t[0]		# clobber t[0]
+
+	pxor	@t[0], @y[0]		# 0^=05
+	pxor	@t[0], @y[3]
+	pxor	@t[3], @y[3]
+	pxor	@t[7], @y[3]		# 3^=05 37
+
+	pxor	@t[2], @y[2]
+	pxor	@t[6], @y[2]		# 2^=2 67
+
+	pxor	@t[2], @y[5]
+	pxor	@t[5], @y[5]
+	pxor	@t[6], @y[5]		# 5^=25 67
+
+	pxor	@t[3], @y[6]
+	pxor	@t[6], @y[6]		# 6^=3 67
+
+	pxor	@t[4], @y[7]
+	pxor	@t[7], @y[7]		# 7^=47
+
+	movdqa	@y[0], @t[0]
+	movdqa	@y[1], @t[1]
+	movdqa	@y[2], @t[2]
+	movdqa	@y[3], @t[3]
+	movdqa	@y[4], @t[4]
+	movdqa	@y[5], @t[5]
+	movdqa	@y[6], @t[6]
+	movdqa	@y[7], @t[7]
+
+	movdqa	@t[0],@XMM[0]
+	movdqa	@t[1],@XMM[1]
+	movdqa	@t[2],@XMM[2]
+	movdqa	@t[3],@XMM[3]
+	movdqa	@t[4],@XMM[4]
+	movdqa	@t[5],@XMM[5]
+	movdqa	@t[6],@XMM[6]
+	movdqa	@t[7],@XMM[7]
+___
+}
+
 sub aesenc {				# not used
 my @b=@_[0..7];
 my @t=@_[8..15];
 $code.=<<___;
 	movdqa	0x30($const),@t[0]	# .LSR
 ___
-	&shiftrows	(@b,@t[0]);
-	&sbox		(@b,@t);
-	&mixcolumns	(@b[0,1,4,6,3,7,2,5],@t);
+	&ShiftRows	(@b,@t[0]);
+	&Sbox		(@b,@t);
+	&MixColumns	(@b[0,1,4,6,3,7,2,5],@t);
 }
 
 sub aesenclast {			# not used
@@ -457,8 +694,8 @@ my @t=@_[8..15];
 $code.=<<___;
 	movdqa	0x40($const),@t[0]	# .LSRM0
 ___
-	&shiftrows	(@b,@t[0]);
-	&sbox		(@b,@t);
+	&ShiftRows	(@b,@t[0]);
+	&Sbox		(@b,@t);
 $code.=<<___
 	pxor	0x00($key),@b[0]
 	pxor	0x10($key),@b[1]
@@ -526,6 +763,7 @@ $code.=<<___;
 .text
 
 .extern	AES_encrypt
+.extern	AES_decrypt
 
 .type	_bsaes_encrypt8,\@abi-omnipotent
 .align	64
@@ -560,14 +798,14 @@ $code.=<<___;
 .align	16
 .Lenc_loop:
 ___
-	&shiftrows	(@XMM[0..7, 8]);
+	&ShiftRows	(@XMM[0..7, 8]);
 $code.=".Lenc_sbox:\n";
-	&sbox		(@XMM[0..7, 8..15]);
+	&Sbox		(@XMM[0..7, 8..15]);
 $code.=<<___;
 	dec	$rounds
 	jl	.Lenc_done
 ___
-	&mixcolumns	(@XMM[0,1,4,6,3,7,2,5, 8..15]);
+	&MixColumns	(@XMM[0,1,4,6,3,7,2,5, 8..15]);
 $code.=<<___;
 	movdqa	0x30($const), @XMM[8]	# .LSR
 	jnz	.Lenc_loop
@@ -580,16 +818,78 @@ ___
 	&bitslice	(@XMM[0,1,4,6,3,7,2,5, 8..11]);
 $code.=<<___;
 	movdqa	($key), @XMM[8]		# last round key
-	pxor	@XMM[8], @XMM[0]
-	pxor	@XMM[8], @XMM[1]
 	pxor	@XMM[8], @XMM[4]
 	pxor	@XMM[8], @XMM[6]
 	pxor	@XMM[8], @XMM[3]
 	pxor	@XMM[8], @XMM[7]
 	pxor	@XMM[8], @XMM[2]
 	pxor	@XMM[8], @XMM[5]
+	pxor	@XMM[8], @XMM[0]
+	pxor	@XMM[8], @XMM[1]
 	ret
 .size	_bsaes_encrypt8,.-_bsaes_encrypt8
+
+.type	_bsaes_decrypt8,\@abi-omnipotent
+.align	64
+_bsaes_decrypt8:
+	lea	.LBS0(%rip), $const	# constants table
+
+	movdqa	($key), @XMM[9]		# round 0 key
+	lea	0x10($key), $key
+	movdqa	-0x30($const), @XMM[8]	# .LM0ISR
+	pxor	@XMM[9], @XMM[0]	# xor with round0 key
+	pxor	@XMM[9], @XMM[1]
+	 pshufb	@XMM[8], @XMM[0]
+	pxor	@XMM[9], @XMM[2]
+	 pshufb	@XMM[8], @XMM[1]
+	pxor	@XMM[9], @XMM[3]
+	 pshufb	@XMM[8], @XMM[2]
+	pxor	@XMM[9], @XMM[4]
+	 pshufb	@XMM[8], @XMM[3]
+	pxor	@XMM[9], @XMM[5]
+	 pshufb	@XMM[8], @XMM[4]
+	pxor	@XMM[9], @XMM[6]
+	 pshufb	@XMM[8], @XMM[5]
+	pxor	@XMM[9], @XMM[7]
+	 pshufb	@XMM[8], @XMM[6]
+	 pshufb	@XMM[8], @XMM[7]
+___
+	&bitslice	(@XMM[0..7, 8..11]);
+$code.=<<___;
+	dec	$rounds
+	jmp	.Ldec_sbox
+.align	16
+.Ldec_loop:
+___
+	&ShiftRows	(@XMM[0..7, 8]);
+$code.=".Ldec_sbox:\n";
+	&InvSbox	(@XMM[0..7, 8..15]);
+$code.=<<___;
+	dec	$rounds
+	jl	.Ldec_done
+___
+	&InvMixColumns	(@XMM[0,1,6,4,2,7,3,5, 8..15]);
+$code.=<<___;
+	movdqa	-0x10($const), @XMM[8]	# .LISR
+	jnz	.Ldec_loop
+	movdqa	-0x20($const), @XMM[8]	# .LISRM0
+	jmp	.Ldec_loop
+.align	16
+.Ldec_done:
+___
+	&bitslice	(@XMM[0,1,6,4,2,7,3,5, 8..11]);
+$code.=<<___;
+	movdqa	($key), @XMM[8]		# last round key
+	pxor	@XMM[8], @XMM[6]
+	pxor	@XMM[8], @XMM[4]
+	pxor	@XMM[8], @XMM[2]
+	pxor	@XMM[8], @XMM[7]
+	pxor	@XMM[8], @XMM[3]
+	pxor	@XMM[8], @XMM[5]
+	pxor	@XMM[8], @XMM[0]
+	pxor	@XMM[8], @XMM[1]
+	ret
+.size	_bsaes_decrypt8,.-_bsaes_decrypt8
 ___
 }
 {
@@ -620,16 +920,16 @@ ___
 }
 
 $code.=<<___;
-.type	_bsaes_enc_key_convert,\@abi-omnipotent
+.type	_bsaes_key_convert,\@abi-omnipotent
 .align	16
-_bsaes_enc_key_convert:
+_bsaes_key_convert:
 	lea	.LBS1(%rip), $const
 	movdqu	($inp), %xmm7		# load round 0 key
 	movdqa	-0x10($const), %xmm8	# .LBS0
 	movdqa	0x00($const), %xmm9	# .LBS1
 	movdqa	0x10($const), %xmm10	# .LBS2
 	movdqa	0x40($const), %xmm13	# .LM0
-	movdqa	0x60($const),%xmm14	# .LNOT
+	movdqa	0x60($const), %xmm14	# .LNOT
 
 	movdqu	0x10($inp), %xmm6	# load round 1 key
 	lea	0x10($inp), $inp
@@ -639,7 +939,7 @@ _bsaes_enc_key_convert:
 	jmp	.Lkey_loop
 .align	16
 .Lkey_loop:
-	pshufb	%xmm13, %xmm6
+	pshufb	%xmm13, %xmm6		# .LM0
 	movdqa	%xmm6, %xmm7
 ___
 	&bitslice_key	(map("%xmm$_",(0..7, 8..12)));
@@ -662,14 +962,14 @@ $code.=<<___;
 	dec	$rounds
 	jnz	.Lkey_loop
 
-	pxor	0x70($const), %xmm6	# .L63
-	movdqa	%xmm6, ($out)		# save last round key
+	movdqa	0x70($const), %xmm7	# .L63
+	#movdqa	%xmm6, ($out)		# don't save last round key
 	ret
-.size	_bsaes_enc_key_convert,.-_bsaes_enc_key_convert
+.size	_bsaes_key_convert,.-_bsaes_key_convert
 ___
 }
 
-if (1 && !$win64) {	# following two functions are unsupported interface
+if (1 && !$win64) {	# following four functions are unsupported interface
 			# used for benchmarking...
 $code.=<<___;
 .globl	bsaes_enc_key_convert
@@ -679,7 +979,9 @@ bsaes_enc_key_convert:
 	mov	240($inp),%r10d		# pass rounds
 	mov	$inp,%rcx		# pass key
 	mov	$out,%rax		# pass key schedule
-	call	_bsaes_enc_key_convert
+	call	_bsaes_key_convert
+	pxor	%xmm6,%xmm7		# fix up last round key
+	movdqa	%xmm7,(%rax)		# save last round key
 	ret
 .size	bsaes_enc_key_convert,.-bsaes_enc_key_convert
 
@@ -715,6 +1017,53 @@ bsaes_encrypt_128:
 	ja	.Lenc128_loop
 	ret
 .size	bsaes_encrypt_128,.-bsaes_encrypt_128
+
+.globl	bsaes_dec_key_convert
+.type	bsaes_dec_key_convert,\@function,2
+.align	16
+bsaes_dec_key_convert:
+	mov	240($inp),%r10d		# pass rounds
+	mov	$inp,%rcx		# pass key
+	mov	$out,%rax		# pass key schedule
+	call	_bsaes_key_convert
+	pxor	($out),%xmm7		# fix up round 0 key
+	movdqa	%xmm6,(%rax)		# save last round key
+	movdqa	%xmm7,($out)
+	ret
+.size	bsaes_dec_key_convert,.-bsaes_dec_key_convert
+
+.globl	bsaes_decrypt_128
+.type	bsaes_decrypt_128,\@function,4
+.align	16
+bsaes_decrypt_128:
+.Ldec128_loop:
+	movdqu	0x00($inp), @XMM[0]	# load input
+	movdqu	0x10($inp), @XMM[1]
+	movdqu	0x20($inp), @XMM[2]
+	movdqu	0x30($inp), @XMM[3]
+	movdqu	0x40($inp), @XMM[4]
+	movdqu	0x50($inp), @XMM[5]
+	movdqu	0x60($inp), @XMM[6]
+	movdqu	0x70($inp), @XMM[7]
+	mov	$key, %rax		# pass the $key
+	lea	0x80($inp), $inp
+	mov	\$10,%r10d
+
+	call	_bsaes_decrypt8
+
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	movdqu	@XMM[2], 0x40($out)
+	movdqu	@XMM[7], 0x50($out)
+	movdqu	@XMM[3], 0x60($out)
+	movdqu	@XMM[5], 0x70($out)
+	lea	0x80($out), $out
+	sub	\$0x80,$len
+	ja	.Ldec128_loop
+	ret
+.size	bsaes_decrypt_128,.-bsaes_decrypt_128
 ___
 }
 {
@@ -770,7 +1119,9 @@ $code.=<<___;
 	mov	%rsp,%rax		# pass key schedule
 	mov	$key,%rcx		# pass key
 	mov	%ebx,%r10d		# pass rounds
-	call	_bsaes_enc_key_convert
+	call	_bsaes_key_convert
+	pxor	%xmm6,%xmm7		# fix up last round key
+	movdqa	%xmm7,(%rax)		# save last round key
 
 	sub	\$8,$len
 .Lecb_enc_loop:
@@ -970,7 +1321,9 @@ $code.=<<___;
 	mov	%rsp, %rax		# pass key schedule
 	mov	$key, %rcx		# pass key
 	mov	%ebx, %r10d		# pass rounds
-	call	_bsaes_enc_key_convert
+	call	_bsaes_key_convert
+	pxor	%xmm6,%xmm7		# fix up last round key
+	movdqa	%xmm7,(%rax)		# save last round key
 
 	movdqa	(%rsp), @XMM[9]		# load round0 key
 	lea	.LADD1(%rip), %r11
@@ -1152,6 +1505,12 @@ ___
 }
 $code.=<<___;
 .align	64
+.LM0ISR:	# InvShiftRows constants
+	.quad	0x0a0e0206070b0f03, 0x0004080c0d010509
+.LISRM0:
+	.quad	0x01040b0e0205080f, 0x0306090c00070a0d
+.LISR:
+	.quad	0x0504070602010003, 0x0f0e0d0c080b0a09
 .LBS0:		# bit-slice constants
 	.quad	0x5555555555555555, 0x5555555555555555
 .LBS1:
