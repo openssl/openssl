@@ -263,8 +263,10 @@ $ CONFIG_LOGICALS := AES,-
 		     DH,-
 		     DSA,-
 		     EC,-
+		     EC2M,-
 		     ECDH,-
 		     ECDSA,-
+		     EC_NISTP_64_GCC_128,-
 		     ENGINE,-
 		     ERR,-
 		     EVP,-
@@ -298,6 +300,7 @@ $ CONFIG_LOGICALS := AES,-
 		     SOCK,-
 		     SRP,-
 		     SSL2,-
+		     SSL_INTERN,-
 		     STACK,-
 		     STATIC_ENGINE,-
 		     STDIO,-
@@ -336,7 +339,8 @@ $ CONFIG_DISABLE_RULES := RIJNDAEL/AES;-
 			  DSA/GOST;-
 			  DH/GOST;-
 			  /STATIC_ENGINE;-
-			  /KRB5
+			  /KRB5;-
+			  /EC_NISTP_64_GCC_128
 $ CONFIG_ENABLE_RULES := ZLIB_DYNAMIC/ZLIB;-
 			 /THREADS
 $
@@ -705,7 +709,7 @@ $ SDIRS := , -
    BUFFER, BIO, STACK, LHASH, RAND, ERR, -
    EVP, ASN1, PEM, X509, X509V3, CONF, TXT_DB, PKCS7, PKCS12, -
    COMP, OCSP, UI, KRB5, -
-   CMS, PQUEUE, TS, JPAKE, SRP, STORE
+   CMS, PQUEUE, TS, JPAKE, SRP, STORE, CMAC
 $!
 $ EXHEADER_ := crypto.h, opensslv.h, ebcdic.h, symhacks.h, ossl_typ.h
 $ EXHEADER_'ARCHD' := opensslconf.h
@@ -764,6 +768,7 @@ $ EXHEADER_JPAKE := jpake.h
 $ EXHEADER_SRP := srp.h
 $!!! EXHEADER_STORE := store.h, str_compat.h
 $ EXHEADER_STORE := store.h
+$ EXHEADER_CMAC := cmac.h
 $!
 $ i = 0
 $ loop_sdirs:
