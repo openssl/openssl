@@ -207,7 +207,9 @@ $!
 $ APPS_DES = "DES/DES,CBC3_ENC"
 $ APPS_PKCS7 = "ENC/ENC;DEC/DEC;SIGN/SIGN;VERIFY/VERIFY,EXAMPLE"
 $
-$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,cpt_err,ebcdic,uid,o_time,o_str,o_dir,thr_id,lock,fips_ers"
+$ LIB_ = "cryptlib,mem,mem_clr,mem_dbg,cversion,ex_data,cpt_err,"+ -
+	"ebcdic,uid,o_time,o_str,o_dir,thr_id,lock,fips_ers,"+ -
+	"o_init,o_fips"
 $ LIB_MD2 = "md2_dgst,md2_one"
 $ LIB_MD4 = "md4_dgst,md4_one"
 $ LIB_MD5 = "md5_dgst,md5_one"
@@ -229,10 +231,10 @@ $ LIB_RC5 = "rc5_skey,rc5_ecb,rc5_enc,rc5cfb64,rc5ofb64"
 $ LIB_IDEA = "i_cbc,i_cfb64,i_ofb64,i_ecb,i_skey"
 $ LIB_BF = "bf_skey,bf_ecb,bf_enc,bf_cfb64,bf_ofb64"
 $ LIB_CAST = "c_skey,c_ecb,c_enc,c_cfb64,c_ofb64"
-$ LIB_CAMELLIA = "camellia,cmll_misc,cmll_ecb,cmll_cbc,cmll_ofb,"+ -
-	"cmll_cfb,cmll_ctr"
+$ LIB_CAMELLIA = "camellia,cmll_misc,cmll_cbc"
 $ LIB_SEED = "seed,seed_ecb,seed_cbc,seed_cfb,seed_ofb"
-$ LIB_MODES = "cbc128,ctr128,cts128,cfb128,ofb128,gcm128"
+$ LIB_MODES = "cbc128,ctr128,cts128,cfb128,ofb128,gcm128,"+ -
+	"ccm128,xts128"
 $ LIB_BN_ASM = "[.asm]vms.mar,vms-helper"
 $ IF F$TRNLNM("OPENSSL_NO_ASM") .OR. ARCH .NES. "VAX" THEN -
      LIB_BN_ASM = "bn_asm"
@@ -244,7 +246,8 @@ $ LIB_BN = "bn_add,bn_div,bn_exp,bn_lib,bn_ctx,bn_mul,bn_mod,"+ -
 $ LIB_EC = "ec_lib,ecp_smpl,ecp_mont,ecp_nist,ec_cvt,ec_mult,"+ -
 	"ec_err,ec_curve,ec_check,ec_print,ec_asn1,ec_key,"+ -
 	"ec2_smpl,ec2_mult,ec_ameth,ec_pmeth,eck_prn,"+ -
-	"ecp_nistp224,ecp_oct,ec2_oct,ec_oct"
+	"ecp_nistp224,ecp_nistp256,ecp_nistp521,ecp_nistputil,"+ -
+	"ecp_oct,ec2_oct,ec_oct"
 $ LIB_RSA = "rsa_eay,rsa_gen,rsa_lib,rsa_sign,rsa_saos,rsa_err,"+ -
 	"rsa_pk1,rsa_ssl,rsa_none,rsa_oaep,rsa_chk,rsa_null,"+ -
 	"rsa_pss,rsa_x931,rsa_asn1,rsa_depr,rsa_ameth,rsa_prn,"+ -
@@ -262,7 +265,7 @@ $ LIB_ENGINE = "eng_err,eng_lib,eng_list,eng_init,eng_ctrl,"+ -
 	"tb_rsa,tb_dsa,tb_ecdsa,tb_dh,tb_ecdh,tb_rand,tb_store,"+ -
 	"tb_cipher,tb_digest,tb_pkmeth,tb_asnmth,"+ -
 	"eng_openssl,eng_dyn,eng_cnf,eng_cryptodev,"+ -
-	"eng_aesni"
+	"eng_rsax,eng_rdrand"
 $ LIB_AES = "aes_core,aes_misc,aes_ecb,aes_cbc,aes_cfb,aes_ofb,"+ -
 	"aes_ige,aes_wrap"
 $ LIB_BUFFER = "buffer,buf_str,buf_err"
@@ -289,7 +292,8 @@ $ LIB_EVP_2 = "m_null,m_md2,m_md4,m_md5,m_sha,m_sha1,m_wp," + -
 	"bio_md,bio_b64,bio_enc,evp_err,e_null,"+ -
 	"c_all,c_allc,c_alld,evp_lib,bio_ok,"+-
 	"evp_pkey,evp_pbe,p5_crpt,p5_crpt2"
-$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn,pmeth_gn,m_sigver"
+$ LIB_EVP_3 = "e_old,pmeth_lib,pmeth_fn,pmeth_gn,m_sigver,evp_fips,"+ -
+	"e_aes_cbc_hmac_sha1,e_rc4_hmac_md5"
 $ LIB_ASN1 = "a_object,a_bitstr,a_utctm,a_gentm,a_time,a_int,a_octet,"+ -
 	"a_print,a_type,a_set,a_dup,a_d2i_fp,a_i2d_fp,"+ -
 	"a_enum,a_utf8,a_sign,a_digest,a_verify,a_mbstr,a_strex,"+ -

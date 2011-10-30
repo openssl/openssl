@@ -266,6 +266,7 @@ $ CONFIG_LOGICALS := AES,-
 		     EC2M,-
 		     ECDH,-
 		     ECDSA,-
+		     EC_NISTP_64_GCC_128,-
 		     ENGINE,-
 		     ERR,-
 		     EVP,-
@@ -300,6 +301,7 @@ $ CONFIG_LOGICALS := AES,-
 		     SOCK,-
 		     SRP,-
 		     SSL2,-
+		     SSL_INTERN,-
 		     STACK,-
 		     STATIC_ENGINE,-
 		     STDIO,-
@@ -338,7 +340,8 @@ $ CONFIG_DISABLE_RULES := RIJNDAEL/AES;-
 			  DSA/GOST;-
 			  DH/GOST;-
 			  /STATIC_ENGINE;-
-			  /KRB5
+			  /KRB5;-
+			  /EC_NISTP_64_GCC_128
 $ CONFIG_ENABLE_RULES := ZLIB_DYNAMIC/ZLIB;-
 			 /THREADS
 $
