@@ -6,6 +6,7 @@ $! P2: Zlib object library path (optional).
 $!
 $! Input:	[.UTIL]LIBEAY.NUM,[.xxx.EXE.CRYPTO]SSL_LIBCRYPTO[32].OLB
 $!		[.UTIL]SSLEAY.NUM,[.xxx.EXE.SSL]SSL_LIBSSL[32].OLB
+$!		[.CRYPTO.xxx]OPENSSLCONF.H
 $! Output:	[.xxx.EXE.CRYPTO]SSL_LIBCRYPTO_SHR[32].OPT,.MAP,.EXE
 $!		[.xxx.EXE.SSL]SSL_LIBSSL_SRH[32].OPT,.MAP,.EXE
 $!
@@ -69,6 +70,9 @@ $       exit
 $     endif
 $   endif
 $ endif
+$!
+$! ----- Prepare info for processing: disabled algorithms info
+$ gosub read_disabled_algorithms_info
 $!
 $ ZLIB = p2
 $ zlib_lib = ""
@@ -384,8 +388,7 @@ $	alg_i = alg_i + 1
 $       if alg_entry .eqs. "" then goto loop2
 $       if alg_entry .nes. ","
 $       then
-$         if alg_entry .eqs. "KRB5" then goto loop ! Special for now
-$	  if alg_entry .eqs. "STATIC_ENGINE" then goto loop ! Special for now
+$	  if disabled_algorithms - ("," + alg_entry + ",") .nes disabled_algorithms then goto loop
 $         if f$trnlnm("OPENSSL_NO_"+alg_entry) .nes. "" then goto loop
 $	  goto loop2
 $       endif
@@ -451,4 +454,23 @@ $       libvmatch = "LEQUAL"
 $     endif
 $   endloop_rvi:
 $   close vf
+$   return
+$
+$! The disabled algorithms reader
+$ read_disabled_algorithms_info:
+$   disabled_algorithms = ","
+$   open /read cf [.CRYPTO.'ARCH']OPENSSLCONF.H
+$   loop_rci:
+$     read/err=endloop_rci/end=endloop_rci cf rci_line
+$     rci_line = f$edit(rci_line,"TRIM,COMPRESS")
+$     rci_ei = 0
+$     if f$extract(0,9,rci_line) .eqs. "# define " then rci_ei = 2
+$     if f$extract(0,8,rci_line) .eqs. "#define " then rci_ei = 1
+$     if rci_ei .eq. 0 then goto loop_rci
+$     rci_e = f$element(rci_ei," ",rci_line)
+$     if f$extract(0,11,rci_e) .nes. "OPENSSL_NO_" then goto loop_rci
+$     disabled_algorithms = disabled_algorithms + f$extract(11,999,rci_e) + ","
+$     goto loop_rci
+$   endloop_rci:
+$   close cf
 $   return
