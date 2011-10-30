@@ -123,6 +123,9 @@ void vpaes_cbc_encrypt(const unsigned char *in,
 			unsigned char *ivec, int enc);
 #endif
 #ifdef BSAES_ASM
+void bsaes_cbc_encrypt(const unsigned char *in, unsigned char *out,
+			size_t length, const AES_KEY *key,
+			unsigned char ivec[16], int enc);
 void bsaes_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
 			size_t len, const AES_KEY *key,
 			const unsigned char ivec[16]);
@@ -503,6 +506,15 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	mode = ctx->cipher->flags & EVP_CIPH_MODE;
 	if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)
 	    && !enc)
+#ifdef BSAES_CAPABLE
+	    if (BSAES_CAPABLE && mode==EVP_CIPH_CBC_MODE)
+		{
+		ret = AES_set_decrypt_key(key,ctx->key_len*8,&dat->ks);
+		dat->block	= (block128_f)AES_decrypt;
+		dat->stream.cbc	= (cbc128_f)bsaes_cbc_encrypt;
+		}
+	    else
+#endif
 #ifdef VPAES_CAPABLE
 	    if (VPAES_CAPABLE)
 		{

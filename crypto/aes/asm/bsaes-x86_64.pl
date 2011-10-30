@@ -1047,10 +1047,11 @@ ___
 #
 # OpenSSL interface
 #
-my ($arg1,$arg2,$arg3,$arg4,$arg5) = $win64	? ("%rcx","%rdx","%r8","%r9","%r10")
-						: ("%rdi","%rsi","%rdx","%rcx","%r8");
+my ($arg1,$arg2,$arg3,$arg4,$arg5,$arg6)=$win64	? ("%rcx","%rdx","%r8","%r9","%r10","%r11d")
+						: ("%rdi","%rsi","%rdx","%rcx","%r8","%r9d");
 my ($inp,$out,$len,$key)=("%r12","%r13","%r14","%r15");
 
+if (0) {	# suppress unreferenced ECB subroutines, spare some space...
 $code.=<<___;
 .globl	bsaes_ecb_encrypt_blocks
 .type	bsaes_ecb_encrypt_blocks,\@abi-omnipotent
@@ -1249,6 +1250,490 @@ $code.=<<___;
 .Lecb_enc_epilogue:
 	ret
 .size	bsaes_ecb_encrypt_blocks,.-bsaes_ecb_encrypt_blocks
+
+.globl	bsaes_ecb_decrypt_blocks
+.type	bsaes_ecb_decrypt_blocks,\@abi-omnipotent
+.align	16
+bsaes_ecb_decrypt_blocks:
+	push	%rbp
+	push	%rbx
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	lea	-0x48(%rsp),%rsp
+___
+$code.=<<___ if ($win64);
+	lea	-0xa0(%rsp), %rsp
+	movaps	%xmm6, 0x40(%rsp)
+	movaps	%xmm7, 0x50(%rsp)
+	movaps	%xmm8, 0x60(%rsp)
+	movaps	%xmm9, 0x70(%rsp)
+	movaps	%xmm10, 0x80(%rsp)
+	movaps	%xmm11, 0x90(%rsp)
+	movaps	%xmm12, 0xa0(%rsp)
+	movaps	%xmm13, 0xb0(%rsp)
+	movaps	%xmm14, 0xc0(%rsp)
+	movaps	%xmm15, 0xd0(%rsp)
+.Lecb_dec_body:
+___
+$code.=<<___;
+	mov	%rsp,%rbp		# backup %rsp
+	mov	240($arg4),%eax		# rounds
+	mov	$arg1,$inp		# backup arguments
+	mov	$arg2,$out
+	mov	$arg3,$len
+	mov	$arg4,$key
+	cmp	\$8,$arg3
+	jb	.Lecb_dec_short
+
+	mov	%eax,%ebx		# backup rounds
+	shl	\$7,%rax		# 128 bytes per inner round key
+	sub	\$`128-32`,%rax		# size of bit-sliced key schedule
+	sub	%rax,%rsp
+	mov	%rsp,%rax		# pass key schedule
+	mov	$key,%rcx		# pass key
+	mov	%ebx,%r10d		# pass rounds
+	call	_bsaes_key_convert
+	pxor	(%rsp),%xmm7		# fix up 0 round key
+	movdqa	%xmm6,(%rax)		# save last round key
+	movdqa	%xmm7,(%rsp)
+
+	sub	\$8,$len
+.Lecb_dec_loop:
+	movdqu	0x00($inp), @XMM[0]	# load input
+	movdqu	0x10($inp), @XMM[1]
+	movdqu	0x20($inp), @XMM[2]
+	movdqu	0x30($inp), @XMM[3]
+	movdqu	0x40($inp), @XMM[4]
+	movdqu	0x50($inp), @XMM[5]
+	mov	%rsp, %rax		# pass key schedule
+	movdqu	0x60($inp), @XMM[6]
+	mov	%ebx,%r10d		# pass rounds
+	movdqu	0x70($inp), @XMM[7]
+	lea	0x80($inp), $inp
+
+	call	_bsaes_decrypt8
+
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	movdqu	@XMM[2], 0x40($out)
+	movdqu	@XMM[7], 0x50($out)
+	movdqu	@XMM[3], 0x60($out)
+	movdqu	@XMM[5], 0x70($out)
+	lea	0x80($out), $out
+	sub	\$8,$len
+	jnc	.Lecb_dec_loop
+
+	add	\$8,$len
+	jz	.Lecb_dec_done
+
+	movdqu	0x00($inp), @XMM[0]	# load input
+	mov	%rsp, %rax		# pass key schedule
+	mov	%ebx,%r10d		# pass rounds
+	cmp	\$2,$len
+	jb	.Lecb_dec_one
+	movdqu	0x10($inp), @XMM[1]
+	je	.Lecb_dec_two
+	movdqu	0x20($inp), @XMM[2]
+	cmp	\$4,$len
+	jb	.Lecb_dec_three
+	movdqu	0x30($inp), @XMM[3]
+	je	.Lecb_dec_four
+	movdqu	0x40($inp), @XMM[4]
+	cmp	\$6,$len
+	jb	.Lecb_dec_five
+	movdqu	0x50($inp), @XMM[5]
+	je	.Lecb_dec_six
+	movdqu	0x60($inp), @XMM[6]
+	call	_bsaes_decrypt8
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	movdqu	@XMM[2], 0x40($out)
+	movdqu	@XMM[7], 0x50($out)
+	movdqu	@XMM[3], 0x60($out)
+	jmp	.Lecb_dec_done
+.align	16
+.Lecb_dec_six:
+	call	_bsaes_decrypt8
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	movdqu	@XMM[2], 0x40($out)
+	movdqu	@XMM[7], 0x50($out)
+	jmp	.Lecb_dec_done
+.align	16
+.Lecb_dec_five:
+	call	_bsaes_decrypt8
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	movdqu	@XMM[2], 0x40($out)
+	jmp	.Lecb_dec_done
+.align	16
+.Lecb_dec_four:
+	call	_bsaes_decrypt8
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	jmp	.Lecb_dec_done
+.align	16
+.Lecb_dec_three:
+	call	_bsaes_decrypt8
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	jmp	.Lecb_dec_done
+.align	16
+.Lecb_dec_two:
+	call	_bsaes_decrypt8
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	jmp	.Lecb_dec_done
+.align	16
+.Lecb_dec_one:
+	call	_bsaes_decrypt8
+	movdqu	@XMM[0], 0x00($out)	# write output
+	jmp	.Lecb_dec_done
+.align	16
+.Lecb_dec_short:
+	lea	($inp), $arg1
+	lea	($out), $arg2
+	lea	($key), $arg3
+	call	AES_decrypt
+	lea	16($inp), $inp
+	lea	16($out), $out
+	dec	$len
+	jnz	.Lecb_dec_short
+
+.Lecb_dec_done:
+	lea	(%rsp),%rax
+	pxor	%xmm0, %xmm0
+.Lecb_dec_bzero:			# wipe key schedule [if any]
+	movdqa	%xmm0, 0x00(%rax)
+	movdqa	%xmm0, 0x10(%rax)
+	lea	0x20(%rax), %rax
+	cmp	%rax, %rbp
+	jb	.Lecb_dec_bzero
+
+	lea	(%rbp),%rsp		# restore %rsp
+___
+$code.=<<___ if ($win64);
+	movaps	0x40(%rbp), %xmm6
+	movaps	0x50(%rbp), %xmm7
+	movaps	0x60(%rbp), %xmm8
+	movaps	0x70(%rbp), %xmm9
+	movaps	0x80(%rbp), %xmm10
+	movaps	0x90(%rbp), %xmm11
+	movaps	0xa0(%rbp), %xmm12
+	movaps	0xb0(%rbp), %xmm13
+	movaps	0xc0(%rbp), %xmm14
+	movaps	0xd0(%rbp), %xmm15
+	lea	0xa0(%rbp), %rsp
+___
+$code.=<<___;
+	mov	0x48(%rsp), %r15
+	mov	0x50(%rsp), %r14
+	mov	0x58(%rsp), %r13
+	mov	0x60(%rsp), %r12
+	mov	0x68(%rsp), %rbx
+	mov	0x70(%rsp), %rbp
+	lea	0x78(%rsp), %rsp
+.Lecb_dec_epilogue:
+	ret
+.size	bsaes_ecb_decrypt_blocks,.-bsaes_ecb_decrypt_blocks
+___
+}
+$code.=<<___;
+.extern	AES_cbc_encrypt
+.globl	bsaes_cbc_encrypt
+.type	bsaes_cbc_encrypt,\@abi-omnipotent
+.align	16
+bsaes_cbc_encrypt:
+___
+$code.=<<___ if ($win64);
+	mov	48(%rsp),$arg6		# pull direction flag
+___
+$code.=<<___;
+	cmp	\$0,$arg6
+	jne	AES_cbc_encrypt
+	cmp	\$128,$arg3
+	jb	AES_cbc_encrypt
+
+	push	%rbp
+	push	%rbx
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	lea	-0x48(%rsp), %rsp
+___
+$code.=<<___ if ($win64);
+	mov	0xa0(%rsp),$arg5	# pull ivp
+	lea	-0xa0(%rsp), %rsp
+	movaps	%xmm6, 0x40(%rsp)
+	movaps	%xmm7, 0x50(%rsp)
+	movaps	%xmm8, 0x60(%rsp)
+	movaps	%xmm9, 0x70(%rsp)
+	movaps	%xmm10, 0x80(%rsp)
+	movaps	%xmm11, 0x90(%rsp)
+	movaps	%xmm12, 0xa0(%rsp)
+	movaps	%xmm13, 0xb0(%rsp)
+	movaps	%xmm14, 0xc0(%rsp)
+	movaps	%xmm15, 0xd0(%rsp)
+.Lcbc_dec_body:
+___
+$code.=<<___;
+	mov	%rsp, %rbp		# backup %rsp
+	mov	240($arg4), %eax	# rounds
+	mov	$arg1, $inp		# backup arguments
+	mov	$arg2, $out
+	mov	$arg3, $len
+	mov	$arg4, $key
+	mov	$arg5, %rdx
+	shr	\$4, $len		# bytes to blocks
+
+	mov	%eax, %ebx		# rounds
+	shl	\$7, %rax		# 128 bytes per inner round key
+	sub	\$`128-32`, %rax	# size of bit-sliced key schedule
+	sub	%rax, %rsp
+
+	mov	%rsp, %rax		# pass key schedule
+	mov	$key, %rcx		# pass key
+	mov	%ebx, %r10d		# pass rounds
+	call	_bsaes_key_convert
+	pxor	(%rsp),%xmm7		# fix up 0 round key
+	movdqa	%xmm6,(%rax)		# save last round key
+	movdqa	%xmm7,(%rsp)
+
+	movdqu	(%rdx), @XMM[15]	# load IV
+	sub	\$8,$len
+.Lcbc_dec_loop:
+	movdqu	0x00($inp), @XMM[0]	# load input
+	movdqu	0x10($inp), @XMM[1]
+	movdqu	0x20($inp), @XMM[2]
+	movdqu	0x30($inp), @XMM[3]
+	movdqu	0x40($inp), @XMM[4]
+	movdqu	0x50($inp), @XMM[5]
+	mov	%rsp, %rax		# pass key schedule
+	movdqu	0x60($inp), @XMM[6]
+	mov	%ebx,%r10d		# pass rounds
+	movdqu	0x70($inp), @XMM[7]
+	movdqa	@XMM[15], 0x20(%rbp)	# put aside IV
+
+	call	_bsaes_decrypt8
+
+	pxor	0x20(%rbp), @XMM[0]	# ^= IV
+	movdqu	0x00($inp), @XMM[8]	# re-load input
+	movdqu	0x10($inp), @XMM[9]
+	pxor	@XMM[8], @XMM[1]
+	movdqu	0x20($inp), @XMM[10]
+	pxor	@XMM[9], @XMM[6]
+	movdqu	0x30($inp), @XMM[11]
+	pxor	@XMM[10], @XMM[4]
+	movdqu	0x40($inp), @XMM[12]
+	pxor	@XMM[11], @XMM[2]
+	movdqu	0x50($inp), @XMM[13]
+	pxor	@XMM[12], @XMM[7]
+	movdqu	0x60($inp), @XMM[14]
+	pxor	@XMM[13], @XMM[3]
+	movdqu	0x70($inp), @XMM[15]	# IV
+	pxor	@XMM[14], @XMM[5]
+	movdqu	@XMM[0], 0x00($out)	# write output
+	lea	0x80($inp), $inp
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	movdqu	@XMM[2], 0x40($out)
+	movdqu	@XMM[7], 0x50($out)
+	movdqu	@XMM[3], 0x60($out)
+	movdqu	@XMM[5], 0x70($out)
+	lea	0x80($out), $out
+	sub	\$8,$len
+	jnc	.Lcbc_dec_loop
+
+	add	\$8,$len
+	jz	.Lcbc_dec_done
+
+	movdqu	0x00($inp), @XMM[0]	# load input
+	mov	%rsp, %rax		# pass key schedule
+	mov	%ebx, %r10d		# pass rounds
+	cmp	\$2,$len
+	jb	.Lcbc_dec_one
+	movdqu	0x10($inp), @XMM[1]
+	je	.Lcbc_dec_two
+	movdqu	0x20($inp), @XMM[2]
+	cmp	\$4,$len
+	jb	.Lcbc_dec_three
+	movdqu	0x30($inp), @XMM[3]
+	je	.Lcbc_dec_four
+	movdqu	0x40($inp), @XMM[4]
+	cmp	\$6,$len
+	jb	.Lcbc_dec_five
+	movdqu	0x50($inp), @XMM[5]
+	je	.Lcbc_dec_six
+	movdqu	0x60($inp), @XMM[6]
+	movdqa	@XMM[15], 0x20(%rbp)	# put aside IV
+	call	_bsaes_decrypt8
+	pxor	0x20(%rbp), @XMM[0]	# ^= IV
+	movdqu	0x00($inp), @XMM[8]	# re-load input
+	movdqu	0x10($inp), @XMM[9]
+	pxor	@XMM[8], @XMM[1]
+	movdqu	0x20($inp), @XMM[10]
+	pxor	@XMM[9], @XMM[6]
+	movdqu	0x30($inp), @XMM[11]
+	pxor	@XMM[10], @XMM[4]
+	movdqu	0x40($inp), @XMM[12]
+	pxor	@XMM[11], @XMM[2]
+	movdqu	0x50($inp), @XMM[13]
+	pxor	@XMM[12], @XMM[7]
+	movdqu	0x60($inp), @XMM[15]	# IV
+	pxor	@XMM[13], @XMM[3]
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	movdqu	@XMM[2], 0x40($out)
+	movdqu	@XMM[7], 0x50($out)
+	movdqu	@XMM[3], 0x60($out)
+	jmp	.Lcbc_dec_done
+.align	16
+.Lcbc_dec_six:
+	movdqa	@XMM[15], 0x20(%rbp)	# put aside IV
+	call	_bsaes_decrypt8
+	pxor	0x20(%rbp), @XMM[0]	# ^= IV
+	movdqu	0x00($inp), @XMM[8]	# re-load input
+	movdqu	0x10($inp), @XMM[9]
+	pxor	@XMM[8], @XMM[1]
+	movdqu	0x20($inp), @XMM[10]
+	pxor	@XMM[9], @XMM[6]
+	movdqu	0x30($inp), @XMM[11]
+	pxor	@XMM[10], @XMM[4]
+	movdqu	0x40($inp), @XMM[12]
+	pxor	@XMM[11], @XMM[2]
+	movdqu	0x50($inp), @XMM[15]	# IV
+	pxor	@XMM[12], @XMM[7]
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	movdqu	@XMM[2], 0x40($out)
+	movdqu	@XMM[7], 0x50($out)
+	jmp	.Lcbc_dec_done
+.align	16
+.Lcbc_dec_five:
+	movdqa	@XMM[15], 0x20(%rbp)	# put aside IV
+	call	_bsaes_decrypt8
+	pxor	0x20(%rbp), @XMM[0]	# ^= IV
+	movdqu	0x00($inp), @XMM[8]	# re-load input
+	movdqu	0x10($inp), @XMM[9]
+	pxor	@XMM[8], @XMM[1]
+	movdqu	0x20($inp), @XMM[10]
+	pxor	@XMM[9], @XMM[6]
+	movdqu	0x30($inp), @XMM[11]
+	pxor	@XMM[10], @XMM[4]
+	movdqu	0x40($inp), @XMM[15]	# IV
+	pxor	@XMM[11], @XMM[2]
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	movdqu	@XMM[2], 0x40($out)
+	jmp	.Lcbc_dec_done
+.align	16
+.Lcbc_dec_four:
+	movdqa	@XMM[15], 0x20(%rbp)	# put aside IV
+	call	_bsaes_decrypt8
+	pxor	0x20(%rbp), @XMM[0]	# ^= IV
+	movdqu	0x00($inp), @XMM[8]	# re-load input
+	movdqu	0x10($inp), @XMM[9]
+	pxor	@XMM[8], @XMM[1]
+	movdqu	0x20($inp), @XMM[10]
+	pxor	@XMM[9], @XMM[6]
+	movdqu	0x30($inp), @XMM[15]	# IV
+	pxor	@XMM[10], @XMM[4]
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	movdqu	@XMM[4], 0x30($out)
+	jmp	.Lcbc_dec_done
+.align	16
+.Lcbc_dec_three:
+	movdqa	@XMM[15], 0x20(%rbp)	# put aside IV
+	call	_bsaes_decrypt8
+	pxor	0x20(%rbp), @XMM[0]	# ^= IV
+	movdqu	0x00($inp), @XMM[8]	# re-load input
+	movdqu	0x10($inp), @XMM[9]
+	pxor	@XMM[8], @XMM[1]
+	movdqu	0x20($inp), @XMM[15]	# IV
+	pxor	@XMM[9], @XMM[6]
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	movdqu	@XMM[6], 0x20($out)
+	jmp	.Lcbc_dec_done
+.align	16
+.Lcbc_dec_two:
+	movdqa	@XMM[15], 0x20(%rbp)	# put aside IV
+	call	_bsaes_decrypt8
+	pxor	0x20(%rbp), @XMM[0]	# ^= IV
+	movdqu	0x00($inp), @XMM[8]	# re-load input
+	movdqu	0x10($inp), @XMM[15]	# IV
+	pxor	@XMM[8], @XMM[1]
+	movdqu	@XMM[0], 0x00($out)	# write output
+	movdqu	@XMM[1], 0x10($out)
+	jmp	.Lcbc_dec_done
+.align	16
+.Lcbc_dec_one:
+	movdqa	@XMM[15], 0x20(%rbp)	# put aside IV
+	call	_bsaes_decrypt8
+	pxor	0x20(%rbp), @XMM[0]	# ^= IV
+	movdqu	0x00($inp), @XMM[15]	# IV
+	movdqu	@XMM[0], 0x00($out)	# write output
+
+.Lcbc_dec_done:
+	movdqu	@XMM[15], (%rdx)	# return IV
+	lea	(%rsp), %rax
+	pxor	%xmm0, %xmm0
+.Lcbc_dec_bzero:			# wipe key schedule [if any]
+	movdqa	%xmm0, 0x00(%rax)
+	movdqa	%xmm0, 0x10(%rax)
+	lea	0x20(%rax), %rax
+	cmp	%rax, %rbp
+	ja	.Lcbc_dec_bzero
+
+	lea	(%rbp),%rsp		# restore %rsp
+___
+$code.=<<___ if ($win64);
+	movaps	0x40(%rbp), %xmm6
+	movaps	0x50(%rbp), %xmm7
+	movaps	0x60(%rbp), %xmm8
+	movaps	0x70(%rbp), %xmm9
+	movaps	0x80(%rbp), %xmm10
+	movaps	0x90(%rbp), %xmm11
+	movaps	0xa0(%rbp), %xmm12
+	movaps	0xb0(%rbp), %xmm13
+	movaps	0xc0(%rbp), %xmm14
+	movaps	0xd0(%rbp), %xmm15
+	lea	0xa0(%rbp), %rsp
+___
+$code.=<<___;
+	mov	0x48(%rsp), %r15
+	mov	0x50(%rsp), %r14
+	mov	0x58(%rsp), %r13
+	mov	0x60(%rsp), %r12
+	mov	0x68(%rsp), %rbx
+	mov	0x70(%rsp), %rbp
+	lea	0x78(%rsp), %rsp
+.Lcbc_dec_epilogue:
+	ret
+.size	bsaes_cbc_encrypt,.-bsaes_cbc_encrypt
 
 .globl	bsaes_ctr32_encrypt_blocks
 .type	bsaes_ctr32_encrypt_blocks,\@abi-omnipotent
@@ -1480,7 +1965,9 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
+.type	_bsaes_const,\@object
 .align	64
+_bsaes_const:
 .LM0ISR:	# InvShiftRows constants
 	.quad	0x0a0e0206070b0f03, 0x0004080c0d010509
 .LISRM0:
@@ -1525,8 +2012,9 @@ $code.=<<___;
 	.quad	0x0000000000000000, 0x0000000700000000
 .LADD8:
 	.quad	0x0000000000000000, 0x0000000800000000
-.asciz	"Bit-sliced AES for x86_64/SSSE3, Emilia Käsper and Peter Schwabe"
+.asciz	"Bit-sliced AES for x86_64/SSSE3, Emilia Käsper, Peter Schwabe, Andy Polyakov"
 .align	64
+.size	_bsaes_const,.-_bsaes_const
 ___
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
