@@ -198,7 +198,11 @@ static void mct(FILE *in, FILE *out)
 	}
     }
 
-int main(int argc,char **argv)
+#ifdef FIPS_ALGVS
+int fips_rngvs_main(int argc, char **argv)
+#else
+int main(int argc, char **argv)
+#endif
     {
     FILE *in, *out;
     if (argc == 4)

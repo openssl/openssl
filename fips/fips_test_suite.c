@@ -995,7 +995,11 @@ static int post_cb(int op, int id, int subid, void *ex)
 	return 1;
 	}
 
-int main(int argc,char **argv)
+#ifdef FIPS_ALGVS
+int fips_test_suite_main(int argc, char **argv)
+#else
+int main(int argc, char **argv)
+#endif
     {
     int bad_rsa = 0, bad_dsa = 0;
     int do_rng_stick = 0;

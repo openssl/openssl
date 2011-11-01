@@ -496,7 +496,11 @@ static void ccmtest(FILE *in, FILE *out)
 	FIPS_cipher_ctx_cleanup(&ctx);
 	}
 
-int main(int argc,char **argv)
+#ifdef FIPS_ALGVS
+int fips_gcmtest_main(int argc, char **argv)
+#else
+int main(int argc, char **argv)
+#endif
 	{
 	int encrypt;
 	int xts = 0, ccm = 0;

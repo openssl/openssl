@@ -92,7 +92,11 @@ static int print_cmac_ver(const EVP_CIPHER *cipher, FILE *out,
 		unsigned char *Mac, int Maclen,
 		int Tlen);
 
+#ifdef FIPS_ALGVS
+int fips_cmactest_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 	{
 	FILE *in = NULL, *out = NULL;
 	int mode = 0;		/* 0 => Generate, 1 => Verify */

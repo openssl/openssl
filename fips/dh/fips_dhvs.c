@@ -145,8 +145,12 @@ static void output_Zhash(FILE *out, int exout,
 	OPENSSL_cleanse(Z, Zlen);
 	OPENSSL_free(Z);
 	}
-		
-int main(int argc,char **argv)
+
+#ifdef FIPS_ALGVS
+int fips_dhvs_main(int argc, char **argv)
+#else
+int main(int argc, char **argv)
+#endif
 	{
 	char **args = argv + 1;
 	int argn = argc - 1;

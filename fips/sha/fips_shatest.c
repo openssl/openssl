@@ -86,7 +86,11 @@ static int print_dgst(const EVP_MD *md, FILE *out,
 static int print_monte(const EVP_MD *md, FILE *out,
 		unsigned char *Seed, int SeedLen);
 
+#ifdef FIPS_ALGVS
+int fips_shatest_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 	{
 	FILE *in = NULL, *out = NULL;
 

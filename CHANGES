@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add fips_algvs: a multicall fips utility incorporaing all the algorithm
+     test programs and fips_test_suite. Includes functionality to parse
+     the minimal script output of fipsalgest.pl directly.
+
   *) Add authorisation parameter to FIPS_module_mode_set().
      [Steve Henson]
 

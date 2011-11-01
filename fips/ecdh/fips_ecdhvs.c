@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
 #include "fips_utl.h"
 
-static const EVP_MD *parse_md(char *line)
+static const EVP_MD *eparse_md(char *line)
 	{
 	char *p;
 	if (line[0] != '[' || line[1] != 'E')
@@ -301,7 +301,11 @@ static void ec_output_Zhash(FILE *out, int exout, EC_GROUP *group,
 	EC_POINT_free(peerkey);
 	}
 		
-int main(int argc,char **argv)
+#ifdef FIPS_ALGVS
+int fips_ecdhvs_main(int argc, char **argv)
+#else
+int main(int argc, char **argv)
+#endif
 	{
 	char **args = argv + 1;
 	int argn = argc - 1;
@@ -412,7 +416,7 @@ int main(int argc,char **argv)
 
 		if (strlen(buf) > 6 && !strncmp(buf, "[E", 2))
 			{
-			md = parse_md(buf);
+			md = eparse_md(buf);
 			if (md == NULL)
 				goto parse_error;
 			continue;

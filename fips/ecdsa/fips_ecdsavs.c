@@ -75,7 +75,7 @@ int main(int argc, char **argv)
 #include <openssl/objects.h>
 
 
-static int lookup_curve(char *in, char *curve_name, const EVP_MD **pmd)
+static int elookup_curve(char *in, char *curve_name, const EVP_MD **pmd)
 	{
 	char *cname, *p;
 	/* Copy buffer as we will change it */
@@ -200,7 +200,7 @@ static int KeyPair(FILE *in, FILE *out)
 		if (*buf == '[' && buf[2] == '-')
 			{
 			if (buf[2] == '-')
-			curve_nid = lookup_curve(buf, lbuf, NULL);
+			curve_nid = elookup_curve(buf, lbuf, NULL);
 			fputs(buf, out);
 			continue;
 			}
@@ -260,7 +260,7 @@ static int PKV(FILE *in, FILE *out)
 		fputs(buf, out);
 		if (*buf == '[' && buf[2] == '-')
 			{
-			curve_nid = lookup_curve(buf, lbuf, NULL);
+			curve_nid = elookup_curve(buf, lbuf, NULL);
 			if (curve_nid == NID_undef)
 				return 0;
 				
@@ -314,7 +314,7 @@ static int SigGen(FILE *in, FILE *out)
 		fputs(buf, out);
 		if (*buf == '[')
 			{
-			curve_nid = lookup_curve(buf, lbuf, &digest);
+			curve_nid = elookup_curve(buf, lbuf, &digest);
 			if (curve_nid == NID_undef)
 				return 0;
 			}
@@ -390,7 +390,7 @@ static int SigVer(FILE *in, FILE *out)
 		fputs(buf, out);
 		if (*buf == '[')
 			{
-			curve_nid = lookup_curve(buf, lbuf, &digest);
+			curve_nid = elookup_curve(buf, lbuf, &digest);
 			if (curve_nid == NID_undef)
 				return 0;
 			}
@@ -459,8 +459,11 @@ static int SigVer(FILE *in, FILE *out)
 		}
 	return 1;
 	}
-
+#ifdef FIPS_ALGVS
+int fips_ecdsavs_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 	{
 	FILE *in = NULL, *out = NULL;
 	const char *cmd = argv[1];
