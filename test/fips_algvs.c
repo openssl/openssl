@@ -229,9 +229,23 @@ int main(int argc, char **argv)
 	char **xargv;
 	int lineno = 0, badarg = 0;
 	int nerr = 0, quiet = 0, verbose = 0;
+	int rv;
 	FILE *in = NULL;
+#ifdef FIPS_ALGVS_MEMCHECK
+	CRYPTO_malloc_debug_init();
+	OPENSSL_init();
+	CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
+	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+#endif
+
 	if (*args && *args[0] != '-')
-		return run_prg(argc - 1, args);
+		{
+		rv = run_prg(argc - 1, args);
+#ifdef FIPS_ALGVS_MEMCHECK
+		CRYPTO_mem_leaks_fp(stderr);
+#endif
+		return rv;
+		}
 	while (!badarg && *args && *args[0] == '-')
 		{
 		if (!strcmp(*args, "-script"))
@@ -276,7 +290,6 @@ int main(int argc, char **argv)
 			fprintf(stderr, "Error processing line %d\n", lineno);
 		else
 			{
-			int rv;
 			if (!quiet)
 				{
 				int i;
@@ -303,10 +316,15 @@ int main(int argc, char **argv)
 	if (!quiet)
 		printf("Completed with %d errors\n", nerr);
 
+	if (arg.data)
+		OPENSSL_free(arg.data);
+
 	fclose(in);
+#ifdef FIPS_ALGVS_MEMCHECK
+	CRYPTO_mem_leaks_fp(stderr);
+#endif
 	if (nerr == 0)
 		return 0;
 	return 1;
 	}
-
 #endif

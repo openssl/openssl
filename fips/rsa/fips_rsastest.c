@@ -362,6 +362,9 @@ static int rsa_printsig(FILE *out, RSA *rsa, const EVP_MD *dgst,
 
 	error:
 
+	if (sigbuf)
+		OPENSSL_free(sigbuf);
+
 	return ret;
 	}
 #endif

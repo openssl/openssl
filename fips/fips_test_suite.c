@@ -651,6 +651,8 @@ static int Zeroize()
     for(i = 0; i < sizeof(userkey); i++) printf("%02x", userkey[i]);
         printf("\n");
 
+    FIPS_rsa_free(key);
+
     return 1;
     }
 
@@ -696,7 +698,7 @@ static int do_drbg_test(int type, int flags)
 	}
     rv = 1;
     err:
-    FIPS_drbg_uninstantiate(dctx);
+    FIPS_drbg_free(dctx);
     return rv;
     }
 

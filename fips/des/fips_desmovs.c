@@ -263,6 +263,7 @@ static int do_tmct(char *amode,
 	if(imode == TOFB)
 	    for(n=0 ; n < 8 ; ++n)
 		text[n]=text0[n]^old_iv[n];
+	FIPS_cipher_ctx_cleanup(&ctx);
 	}
     return 1;
     }
@@ -622,6 +623,7 @@ static int tproc_file(char *rqfile, char *rspfile)
 	fclose(rfp);
     if (afp)
 	fclose(afp);
+    FIPS_cipher_ctx_cleanup(&ctx);
     return err;
     }
 

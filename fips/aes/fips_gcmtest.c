@@ -261,6 +261,7 @@ static void gcmtest(FILE *in, FILE *out, int encrypt)
 			iv = aad = ct = pt = key = tag = NULL;
 			}
 		}
+	FIPS_cipher_ctx_cleanup(&ctx);	
 	}
 
 static void xtstest(FILE *in, FILE *out)
@@ -335,6 +336,7 @@ static void xtstest(FILE *in, FILE *out)
 			iv = key = inbuf = outbuf = NULL;
 			}	
 		}
+	FIPS_cipher_ctx_cleanup(&ctx);	
 	}
 
 static void ccmtest(FILE *in, FILE *out)
@@ -428,6 +430,8 @@ static void ccmtest(FILE *in, FILE *out)
 			}
 		else if (!strcmp(keyword,"Adata"))
 			{
+			if (Adata)
+				OPENSSL_free(Adata);
 			Adata = hex2bin_m(value, &l);
 			if (Alen && l != Alen)
 				{
@@ -493,6 +497,8 @@ static void ccmtest(FILE *in, FILE *out)
 		OPENSSL_free(Key);
 	if (Nonce)
 		OPENSSL_free(Nonce);
+	if (Adata)
+		OPENSSL_free(Adata);
 	FIPS_cipher_ctx_cleanup(&ctx);
 	}
 

@@ -287,10 +287,13 @@ static int PKV(FILE *in, FILE *out)
 			no_err = 1;
 			rv = EC_KEY_set_public_key_affine_coordinates(key, Qx, Qy);
 			no_err = 0;
+			EC_KEY_free(key);
 			fprintf(out, "Result = %s" RESP_EOL, rv ? "P":"F");
 			}
 
 		}
+	BN_free(Qx);
+	BN_free(Qy);
 	return 1;
 	}
 
@@ -358,7 +361,7 @@ static int SigGen(FILE *in, FILE *out)
 			do_bn_print_name(out, "S", sig->s);
 
 			EC_KEY_free(key);
-
+			OPENSSL_free(msg);
 			FIPS_ecdsa_sig_free(sig);
 
 			}
@@ -451,12 +454,24 @@ static int SigVer(FILE *in, FILE *out)
 			FIPS_digestupdate(&mctx, msg, mlen);
 			no_err = 1;
 	    		rv = FIPS_ecdsa_verify_ctx(key, &mctx, sig);
+			EC_KEY_free(key);
+			if (msg)
+				OPENSSL_free(msg);
 			no_err = 0;
 
 			fprintf(out, "Result = %s" RESP_EOL, rv ? "P":"F");
 			}
 
 		}
+	if (sig->r)
+		BN_free(sig->r);
+	if (sig->s)
+		BN_free(sig->s);
+	if (Qx)
+		BN_free(Qx);
+	if (Qy)
+		BN_free(Qy);
+	EVP_MD_CTX_cleanup(&mctx);
 	return 1;
 	}
 #ifdef FIPS_ALGVS

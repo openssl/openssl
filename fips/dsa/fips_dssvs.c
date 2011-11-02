@@ -199,6 +199,7 @@ static void pqg(FILE *in, FILE *out)
 			{
 			fprintf(out, "counter = %d" RESP_EOL RESP_EOL, counter);
 			}
+		FIPS_dsa_free(dsa);
 		}
 	    }
 	else if(!strcmp(keyword,"P"))
@@ -519,6 +520,8 @@ static void keyver(FILE *in, FILE *out)
 	    BN_free(g);
 	if (Y2)
 	    BN_free(Y2);
+	if (ctx)
+	    BN_CTX_free(ctx);
     }
 
 static void keypair(FILE *in, FILE *out)
@@ -575,6 +578,8 @@ static void keypair(FILE *in, FILE *out)
 		do_bn_print_name(out, "Y",dsa->pub_key);
 	    	fputs(RESP_EOL, out);
 		}
+	    if (dsa)
+		FIPS_dsa_free(dsa);
 	    }
 	}
     }
@@ -648,8 +653,8 @@ static void siggen(FILE *in, FILE *out)
 	    FIPS_md_ctx_cleanup(&mctx);
 	    }
 	}
-	if (dsa)
-		FIPS_dsa_free(dsa);
+    if (dsa)
+	FIPS_dsa_free(dsa);
     }
 
 static void sigver(FILE *in, FILE *out)
@@ -687,15 +692,15 @@ static void sigver(FILE *in, FILE *out)
 	    dsa = FIPS_dsa_new();
 	    }
 	else if(!strcmp(keyword,"P"))
-	    dsa->p=hex2bn(value);
+	    do_hex2bn(&dsa->p, value);
 	else if(!strcmp(keyword,"Q"))
-	    dsa->q=hex2bn(value);
+	    do_hex2bn(&dsa->q, value);
 	else if(!strcmp(keyword,"G"))
-	    dsa->g=hex2bn(value);
+	    do_hex2bn(&dsa->g, value);
 	else if(!strcmp(keyword,"Msg"))
 	    n=hex2bin(value,msg);
 	else if(!strcmp(keyword,"Y"))
-	    dsa->pub_key=hex2bn(value);
+	    do_hex2bn(&dsa->pub_key, value);
 	else if(!strcmp(keyword,"R"))
 	    sig->r=hex2bn(value);
 	else if(!strcmp(keyword,"S"))
@@ -711,10 +716,22 @@ static void sigver(FILE *in, FILE *out)
 	    r = FIPS_dsa_verify_ctx(dsa, &mctx, sig);
 	    no_err = 0;
 	    FIPS_md_ctx_cleanup(&mctx);
+	    if (sig->s)
+		{
+		BN_free(sig->s);
+		sig->s = NULL;
+		}
+	    if (sig->r)
+		{
+		BN_free(sig->r);
+		sig->r = NULL;
+		}
 	
 	    fprintf(out, "Result = %c" RESP_EOL RESP_EOL, r == 1 ? 'P' : 'F');
 	    }
 	}
+	if (dsa)
+	    FIPS_dsa_free(dsa);
     }
 
 #ifdef FIPS_ALGVS
