@@ -1092,16 +1092,16 @@ int main(int argc, char **argv)
 		pass = "";
         } else {
             printf("Bad argument \"%s\"\n", argv[1]);
-            exit(1);
+            return 1;
         }
 	if (!no_exit) {
     		fips_algtest_init_nofips();
         	if (!FIPS_module_mode_set(1, pass)) {
         	    printf("Power-up self test failed\n");
-		    exit(1);
+		    return 1;
 		}
         	printf("Power-up self test successful\n");
-        	exit(0);
+        	return 0;
 	}
     }
 
@@ -1120,7 +1120,7 @@ int main(int argc, char **argv)
     ERR_clear_error();
     test_msg("2. Automatic power-up self test", FIPS_module_mode_set(1, pass));
     if (!FIPS_module_mode())
-	exit(1);
+	return 1;
     if (do_drbg_stick)
             FIPS_drbg_stick();
     if (do_rng_stick)
