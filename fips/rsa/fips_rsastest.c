@@ -85,7 +85,11 @@ static int rsa_stest(FILE *out, FILE *in, int Saltlen);
 static int rsa_printsig(FILE *out, RSA *rsa, const EVP_MD *dgst,
 		unsigned char *Msg, long Msglen, int Saltlen);
 
+#ifdef FIPS_ALGVS
+int fips_rsastest_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 	{
 	FILE *in = NULL, *out = NULL;
 

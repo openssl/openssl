@@ -47,6 +47,9 @@
  *
  */
 
+#ifndef FIPS_UTL_H
+#define FIPS_UTL_H
+
 #define OPENSSL_FIPSAPI
 
 #include <openssl/fips_rand.h>
@@ -487,3 +490,5 @@ int fips_strcasecmp(const char *str1, const char *str2)
 	return fips_strncasecmp(str1, str2, (size_t)-1);
 	}
 
+
+#endif

@@ -82,14 +82,18 @@ int main(int argc, char *argv[])
 
 #include "fips_utl.h"
 
-int rsa_test(FILE *out, FILE *in, int saltlen);
+int rsa_vtest(FILE *out, FILE *in, int saltlen);
 static int rsa_printver(FILE *out,
 		BIGNUM *n, BIGNUM *e,
 		const EVP_MD *dgst,
 		unsigned char *Msg, long Msglen,
 		unsigned char *S, long Slen, int Saltlen);
 
+#ifdef FIPS_ALGVS
+int fips_rsavtest_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 	{
 	FILE *in = NULL, *out = NULL;
 
@@ -138,7 +142,7 @@ int main(int argc, char **argv)
 		goto end;
 		}
 
-	if (!rsa_test(out, in, Saltlen))
+	if (!rsa_vtest(out, in, Saltlen))
 		{
 		fprintf(stderr, "FATAL RSAVTEST file processing error\n");
 		goto end;
@@ -159,7 +163,7 @@ int main(int argc, char **argv)
 
 #define RSA_TEST_MAXLINELEN	10240
 
-int rsa_test(FILE *out, FILE *in, int Saltlen)
+int rsa_vtest(FILE *out, FILE *in, int Saltlen)
 	{
 	char *linebuf, *olinebuf, *p, *q;
 	char *keyword, *value;

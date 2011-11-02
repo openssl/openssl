@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
 #include "fips_utl.h"
 
-static int parse_md(char *str)
+static int dparse_md(char *str)
 	{
 	switch(atoi(str + 5))
 		{
@@ -115,7 +115,7 @@ static int parse_ec(char *str)
 		curve_nid = NID_secp521r1;
 	else
 		return NID_undef;
-	md_nid = parse_md(md);
+	md_nid = dparse_md(md);
 	if (md_nid == NID_undef)
 		return NID_undef;
 	return (curve_nid << 16) | md_nid;
@@ -170,9 +170,11 @@ static size_t test_nonce(DRBG_CTX *dctx, unsigned char **pout,
 	return t->noncelen;
 	}
 
-
-
+#ifdef FIPS_ALGVS
+int fips_drbgvs_main(int argc,char **argv)
+#else
 int main(int argc,char **argv)
+#endif
 	{
 	FILE *in, *out;
 	DRBG_CTX *dctx = NULL;
@@ -240,7 +242,7 @@ int main(int argc,char **argv)
 			}
 		if (strlen(buf) > 4 && !strncmp(buf, "[SHA-", 5))
 			{
-			nid = parse_md(buf);
+			nid = dparse_md(buf);
 			if (nid == NID_undef)
 				exit(1);
 			if (drbg_type == DRBG_HMAC)

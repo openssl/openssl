@@ -780,7 +780,7 @@ static int proc_file(char *rqfile, char *rspfile)
 		    if(do_mct(amode, akeysz, aKey, iVec, 
 			      dir, (unsigned char*)plaintext, len, 
 			      rfp) < 0)
-			EXIT(1);
+			err = 1;
 		    }
 		else
 		    {
@@ -862,7 +862,11 @@ static int proc_file(char *rqfile, char *rspfile)
     aes_test -d xxxxx.xxx
   The default is: -d req.txt
 --------------------------------------------------*/
+#ifdef FIPS_ALGVS
+int fips_aesavs_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
     {
     char *rqlist = "req.txt", *rspfile = NULL;
     FILE *fp = NULL;
@@ -915,7 +919,7 @@ int main(int argc, char **argv)
 	    if (proc_file(rfn, rspfile))
 		{
 		printf(">>> Processing failed for: %s <<<\n", rfn);
-		EXIT(1);
+		return 1;
 		}
 	    }
 	fclose(fp);
@@ -929,7 +933,6 @@ int main(int argc, char **argv)
 	    printf(">>> Processing failed for: %s <<<\n", fn);
 	    }
 	}
-    EXIT(0);
     return 0;
     }
 

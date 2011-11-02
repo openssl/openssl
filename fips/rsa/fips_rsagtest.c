@@ -88,7 +88,11 @@ static int rsa_printkey1(FILE *out, RSA *rsa,
 static int rsa_printkey2(FILE *out, RSA *rsa,
 		BIGNUM *Xq1, BIGNUM *Xq2, BIGNUM *Xq);
 
+#ifdef FIPS_ALGVS
+int fips_rsagtest_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 	{
 	FILE *in = NULL, *out = NULL;
 

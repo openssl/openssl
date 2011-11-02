@@ -102,7 +102,7 @@ static int DESTest(EVP_CIPHER_CTX *ctx,
     if (akeysz != 192)
 	{
 	printf("Invalid key size: %d\n", akeysz);
-	EXIT(1);
+	return 0;
 	}
 
     if (fips_strcasecmp(amode, "CBC") == 0)
@@ -120,7 +120,7 @@ static int DESTest(EVP_CIPHER_CTX *ctx,
     else
 	{
 	printf("Unknown mode: %s\n", amode);
-	EXIT(1);
+	return 0;
 	}
 
     if (FIPS_cipherinit(ctx, cipher, aKey, iVec, dir) <= 0)
@@ -155,12 +155,12 @@ static void shiftin(unsigned char *dst,unsigned char *src,int nbits)
     }	
 
 /*-----------------------------------------------*/
-char *t_tag[2] = {"PLAINTEXT", "CIPHERTEXT"};
-char *t_mode[6] = {"CBC","ECB","OFB","CFB1","CFB8","CFB64"};
-enum Mode {CBC, ECB, OFB, CFB1, CFB8, CFB64};
+char *tdes_t_tag[2] = {"PLAINTEXT", "CIPHERTEXT"};
+char *tdes_t_mode[6] = {"CBC","ECB","OFB","CFB1","CFB8","CFB64"};
+enum tdes_Mode {TCBC, TECB, TOFB, TCFB1, TCFB8, TCFB64};
 int Sizes[6]={64,64,64,1,8,64};
 
-static void do_mct(char *amode, 
+static int do_tmct(char *amode, 
 	    int akeysz, int numkeys, unsigned char *akey,unsigned char *ivec,
 	    int dir, unsigned char *text, int len,
 	    FILE *rfp)
@@ -170,12 +170,12 @@ static void do_mct(char *amode,
     unsigned char text0[8];
 
     for (imode=0 ; imode < 6 ; ++imode)
-	if(!strcmp(amode,t_mode[imode]))
+	if(!strcmp(amode,tdes_t_mode[imode]))
 	    break;
     if (imode == 6)
 	{ 
 	printf("Unrecognized mode: %s\n", amode);
-	EXIT(1);
+	return 0;
 	}
     for(i=0 ; i < 400 ; ++i)
 	{
@@ -196,12 +196,12 @@ static void do_mct(char *amode,
 		OutputValue("",akey+n*8,8,rfp,0);
 		}
 
-	if(imode != ECB)
+	if(imode != TECB)
 	    OutputValue("IV",ivec,8,rfp,0);
-	OutputValue(t_tag[dir^1],text,len,rfp,imode == CFB1);
+	OutputValue(tdes_t_tag[dir^1],text,len,rfp,imode == TCFB1);
 #if 0
 	/* compensate for endianness */
-	if(imode == CFB1)
+	if(imode == TCFB1)
 	    text[0]<<=7;
 #endif
 	memcpy(text0,text,8);
@@ -223,18 +223,18 @@ static void do_mct(char *amode,
 		}
 	    if(j == 9999)
 		{
-		OutputValue(t_tag[dir],text,len,rfp,imode == CFB1);
+		OutputValue(tdes_t_tag[dir],text,len,rfp,imode == TCFB1);
 		/*		memcpy(ivec,text,8); */
 		}
 	    /*	    DebugValue("iv",ctx.iv,8); */
 	    /* accumulate material for the next key */
 	    shiftin(nk,text,Sizes[imode]);
 	    /*	    DebugValue("nk",nk,24);*/
-	    if((dir && (imode == CFB1 || imode == CFB8 || imode == CFB64
-			|| imode == CBC)) || imode == OFB)
+	    if((dir && (imode == TCFB1 || imode == TCFB8
+			|| imode == TCFB64 || imode == TCBC)) || imode == TOFB)
 		memcpy(text,old_iv,8);
 
-	    if(!dir && (imode == CFB1 || imode == CFB8 || imode == CFB64))
+	    if(!dir && (imode == TCFB1 || imode == TCFB8 || imode == TCFB64))
 		{
 		/* the test specifies using the output of the raw DES operation
 		   which we don't have, so reconstruct it... */
@@ -260,13 +260,14 @@ static void do_mct(char *amode,
 	/* pointless exercise - the final text doesn't depend on the
 	   initial text in OFB mode, so who cares what it is? (Who
 	   designed these tests?) */
-	if(imode == OFB)
+	if(imode == TOFB)
 	    for(n=0 ; n < 8 ; ++n)
 		text[n]=text0[n]^old_iv[n];
 	}
+    return 1;
     }
     
-static int proc_file(char *rqfile, char *rspfile)
+static int tproc_file(char *rqfile, char *rspfile)
     {
     char afn[256], rfn[256];
     FILE *afp = NULL, *rfp = NULL;
@@ -546,7 +547,9 @@ static int proc_file(char *rqfile, char *rspfile)
 		PrintValue("PLAINTEXT", (unsigned char*)plaintext, len);
 		if (strcmp(atest, "Monte") == 0)  /* Monte Carlo Test */
 		    {
-		    do_mct(amode,akeysz,numkeys,aKey,iVec,dir,plaintext,len,rfp);
+		    if (!do_tmct(amode,akeysz,numkeys,aKey,iVec,
+					dir,plaintext,len,rfp))
+			return -1;
 		    }
 		else
 		    {
@@ -585,7 +588,7 @@ static int proc_file(char *rqfile, char *rspfile)
 		PrintValue("CIPHERTEXT", ciphertext, len);
 		if (strcmp(atest, "Monte") == 0)  /* Monte Carlo Test */
 		    {
-		    do_mct(amode, akeysz, numkeys, aKey, iVec, 
+		    do_tmct(amode, akeysz, numkeys, aKey, iVec, 
 			   dir, ciphertext, len, rfp);
 		    }
 		else
@@ -631,7 +634,11 @@ static int proc_file(char *rqfile, char *rspfile)
     aes_test -d xxxxx.xxx
   The default is: -d req.txt
 --------------------------------------------------*/
+#ifdef FIPS_ALGVS
+int fips_desmovs_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
     {
     char *rqlist = "req.txt", *rspfile = NULL;
     FILE *fp = NULL;
@@ -680,10 +687,10 @@ int main(int argc, char **argv)
 	    strtok(fn, "\r\n");
 	    strcpy(rfn, fn);
 	    printf("Processing: %s\n", rfn);
-	    if (proc_file(rfn, rspfile))
+	    if (tproc_file(rfn, rspfile))
 		{
 		printf(">>> Processing failed for: %s <<<\n", rfn);
-		EXIT(1);
+		return -1;
 		}
 	    }
 	fclose(fp);
@@ -692,12 +699,11 @@ int main(int argc, char **argv)
 	{
 	if (VERBOSE)
 		printf("Processing: %s\n", fn);
-	if (proc_file(fn, rspfile))
+	if (tproc_file(fn, rspfile))
 	    {
 	    printf(">>> Processing failed for: %s <<<\n", fn);
 	    }
 	}
-    EXIT(0);
     return 0;
     }
 

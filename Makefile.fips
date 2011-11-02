@@ -387,6 +387,8 @@ build_apps:
 	@dir=apps; target=all; $(BUILD_ONE_CMD)
 build_tests:
 	@dir=test; target=fipsexe; $(BUILD_ONE_CMD)
+build_algvs:
+	@dir=test; target=fipsalgvs; $(BUILD_ONE_CMD)
 build_tools:
 	@dir=tools; target=all; $(BUILD_ONE_CMD)
 

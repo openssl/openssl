@@ -85,7 +85,11 @@ static int print_hmac(const EVP_MD *md, FILE *out,
 		unsigned char *Key, int Klen,
 		unsigned char *Msg, int Msglen, int Tlen);
 
+#ifdef FIPS_ALGVS
+int fips_hmactest_main(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 	{
 	FILE *in = NULL, *out = NULL;
 

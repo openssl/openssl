@@ -81,6 +81,7 @@ FIPS_ECDHVS=	fips_ecdhvs
 FIPS_ECDSAVS=	fips_ecdsavs
 FIPS_TEST_SUITE=fips_test_suite
 FIPS_CMACTEST=	fips_cmactest
+FIPS_ALGVS=	fips_algvs
 
 TESTS=		alltests
 
@@ -119,7 +120,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(FIPS_RSASTEST).o $(FIPS_RSAGTEST).o $(FIPS_GCMTEST).o \
 	$(FIPS_DSSVS).o $(FIPS_DSATEST).o $(FIPS_RNGVS).o $(FIPS_DRBGVS).o \
 	$(FIPS_TEST_SUITE).o $(FIPS_DHVS).o $(FIPS_ECDSAVS).o \
-	$(FIPS_ECDHVS).o $(FIPS_CMACTEST).o \
+	$(FIPS_ECDHVS).o $(FIPS_CMACTEST).o $(FIPS_ALGVS).o \
 	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
@@ -133,7 +134,7 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(FIPS_RSASTEST).c $(FIPS_RSAGTEST).c $(FIPS_GCMTEST).c \
 	$(FIPS_DSSVS).c $(FIPS_DSATEST).c $(FIPS_RNGVS).c $(FIPS_DRBGVS).c \
 	$(FIPS_TEST_SUITE).c $(FIPS_DHVS).c $(FIPS_ECDSAVS).c \
-	$(FIPS_ECDHVS).c $(FIPS_CMACTEST).c \
+	$(FIPS_ECDHVS).c $(FIPS_CMACTEST).c $(FIPS_ALGVS).c \
 	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c
 
 EXHEADER= 
@@ -149,6 +150,8 @@ all:	exe
 exe:	$(EXE) $(FIPSEXE) dummytest$(EXE_EXT)
 
 fipsexe:	$(FIPSEXE)
+
+fipsalgvs:	$(FIPS_ALGVS)
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
@@ -503,6 +506,9 @@ $(FIPS_TEST_SUITE)$(EXE_EXT): $(FIPS_TEST_SUITE).o $(DLIBCRYPTO)
 
 $(FIPS_CMACTEST)$(EXE_EXT): $(FIPS_CMACTEST).o $(DLIBCRYPTO)
 	@target=$(FIPS_CMACTEST); $(FIPS_BUILD_CMD)
+
+$(FIPS_ALGVS)$(EXE_EXT): $(FIPS_ALGVS).o $(DLIBCRYPTO)
+	@target=$(FIPS_ALGVS); $(FIPS_BUILD_CMD)
 
 $(RMDTEST)$(EXE_EXT): $(RMDTEST).o $(DLIBCRYPTO)
 	@target=$(RMDTEST); $(BUILD_CMD)
