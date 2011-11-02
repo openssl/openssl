@@ -582,7 +582,6 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		}
 		
 	dctx->iflags &= ~DRBG_FLAG_NOERR;
-
 	if (!FIPS_drbg_uninstantiate(dctx))
 		{
 		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
@@ -617,21 +616,12 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 
-	/* Explicit reseed tests */
-
-	/* Test explicit reseed with too large additional input */
-	if (!do_drbg_init(dctx, td, &t))
-		goto err;
-
-	dctx->iflags |= DRBG_FLAG_NOERR;
-
-	if (FIPS_drbg_reseed(dctx, td->adin, dctx->max_adin + 1) > 0)
+	dctx->iflags &= ~DRBG_FLAG_NOERR;
+	if (!FIPS_drbg_uninstantiate(dctx))
 		{
-		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_ADDITIONAL_INPUT_ERROR_UNDETECTED);
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
 		goto err;
 		}
-
-	/* Test explicit reseed with entropy source failure */
 
 	/* Check prediction resistance request fails if entropy source
 	 * failure.
@@ -639,6 +629,7 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 
 	t.entlen = 0;
 
+	dctx->iflags |= DRBG_FLAG_NOERR;
 	if (FIPS_drbg_generate(dctx, randout, td->katlen, 1,
 				td->adin, td->adinlen))
 		{
@@ -680,6 +671,13 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		goto err;
 		}
 
+	dctx->iflags &= ~DRBG_FLAG_NOERR;
+	if (!FIPS_drbg_uninstantiate(dctx))
+		{
+		FIPSerr(FIPS_F_FIPS_DRBG_ERROR_CHECK, FIPS_R_UNINSTANTIATE_ERROR);
+		goto err;
+		}
+
 	/* Explicit reseed tests */
 
 	/* Test explicit reseed with too large additional input */
@@ -695,11 +693,6 @@ static int fips_drbg_error_check(DRBG_CTX *dctx, DRBG_SELFTEST_DATA *td)
 		}
 
 	/* Test explicit reseed with entropy source failure */
-
-	if (!do_drbg_init(dctx, td, &t))
-		goto err;
-
-	dctx->iflags |= DRBG_FLAG_NOERR;
 
 	t.entlen = 0;
 
