@@ -535,7 +535,7 @@ static int do_mct(char *amode,
 		}
 	    }
 	}
-    
+    FIPS_cipher_ctx_cleanup(&ctx);
     return ret;
     }
 
@@ -850,6 +850,7 @@ static int proc_file(char *rqfile, char *rspfile)
 	fclose(rfp);
     if (afp)
 	fclose(afp);
+    FIPS_cipher_ctx_cleanup(&ctx);
     return err;
     }
 

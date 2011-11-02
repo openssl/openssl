@@ -319,6 +319,7 @@ int main(int argc, char **argv)
 	EC_GROUP *group = NULL;
 	char *keyword = NULL, *value = NULL;
 	int do_verify = -1, exout = 0;
+	int rv = 1;
 
 	int curve_nids[5] = {0,0,0,0,0};
 	int param_set = -1;
@@ -463,10 +464,23 @@ int main(int argc, char **argv)
 					md, rhash, rhashlen);
 			}
 		}
-	return 0;
+	rv = 0;
 	parse_error:
-	fprintf(stderr, "Error Parsing request file\n");
-	exit(1);
+	if (id)
+		BN_free(id);
+	if (ix)
+		BN_free(ix);
+	if (iy)
+		BN_free(iy);
+	if (cx)
+		BN_free(cx);
+	if (cy)
+		BN_free(cy);
+	if (group)
+		EC_GROUP_free(group);
+	if (rv)
+		fprintf(stderr, "Error Parsing request file\n");
+	return rv;
 	}
 
 #endif
