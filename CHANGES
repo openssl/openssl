@@ -4,9 +4,14 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add FIPS_{rsa,dsa,ecdsa}_{sign,verify} functions which digest and
+     sign or verify all in one operation.
+     [Steve Henson]
+
   *) Add fips_algvs: a multicall fips utility incorporaing all the algorithm
      test programs and fips_test_suite. Includes functionality to parse
      the minimal script output of fipsalgest.pl directly.
+     [Steve Henson]
 
   *) Add authorisation parameter to FIPS_module_mode_set().
      [Steve Henson]
