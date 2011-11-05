@@ -122,7 +122,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&bt	("ecx",26);		# check XSAVE bit
 	&jnc	(&label("done"));
 	&bt	("ecx",27);		# check OSXSAVE bit
-	&jnc	(&label("clear_xmm"));
+	&jnc	(&label("clear_avx"));
 	&xor	("ecx","ecx");
 	&data_byte(0x0f,0x01,0xd0);	# xgetbv
 	&and	("eax",6);
