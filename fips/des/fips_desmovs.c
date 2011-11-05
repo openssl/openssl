@@ -273,7 +273,7 @@ static int tproc_file(char *rqfile, char *rspfile)
     char afn[256], rfn[256];
     FILE *afp = NULL, *rfp = NULL;
     char ibuf[2048], tbuf[2048];
-    int ilen, len, ret = 0;
+    int len;
     char amode[8] = "";
     char atest[100] = "";
     int akeysz=0;
@@ -324,7 +324,6 @@ static int tproc_file(char *rqfile, char *rspfile)
     while (!err && (fgets(ibuf, sizeof(ibuf), afp)) != NULL)
 	{
 	tidy_line(tbuf, ibuf);
-	ilen = strlen(ibuf);
 	/*	printf("step=%d ibuf=%s",step,ibuf);*/
 	if(step == 3 && !strcmp(amode,"ECB"))
 	    {
@@ -555,7 +554,7 @@ static int tproc_file(char *rqfile, char *rspfile)
 		else
 		    {
 		    assert(dir == 1);
-		    ret = DESTest(&ctx, amode, akeysz, aKey, iVec, 
+		    DESTest(&ctx, amode, akeysz, aKey, iVec, 
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  ciphertext, plaintext, len);
 		    OutputValue("CIPHERTEXT",ciphertext,len,rfp,
@@ -595,7 +594,7 @@ static int tproc_file(char *rqfile, char *rspfile)
 		else
 		    {
 		    assert(dir == 0);
-		    ret = DESTest(&ctx, amode, akeysz, aKey, iVec, 
+		    DESTest(&ctx, amode, akeysz, aKey, iVec, 
 				  dir,  /* 0 = decrypt, 1 = encrypt */
 				  plaintext, ciphertext, len);
 		    OutputValue("PLAINTEXT",(unsigned char *)plaintext,len,rfp,
@@ -645,7 +644,7 @@ int main(int argc, char **argv)
     char *rqlist = "req.txt", *rspfile = NULL;
     FILE *fp = NULL;
     char fn[250] = "", rfn[256] = "";
-    int f_opt = 0, d_opt = 1;
+    int d_opt = 1;
 
     fips_algtest_init();
     if (argc > 1)
@@ -656,7 +655,6 @@ int main(int argc, char **argv)
 	    }
 	else if (fips_strcasecmp(argv[1], "-f") == 0)
 	    {
-	    f_opt = 1;
 	    d_opt = 0;
 	    }
 	else
