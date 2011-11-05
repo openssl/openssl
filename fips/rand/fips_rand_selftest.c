@@ -129,15 +129,16 @@ static AES_PRNG_TV aes_256_tv =
 static int do_x931_test(unsigned char *key, int keylen,
 			AES_PRNG_TV *tv)
 	{
-	unsigned char R[16];
+	unsigned char R[16], V[16];
 	int rv = 1;
+	memcpy(V, tv->V, sizeof(V));
 	if (!FIPS_x931_set_key(key, keylen))
 		return 0;
 	if (!fips_post_started(FIPS_TEST_X931, keylen, NULL))
 		return 1;
 	if (!fips_post_corrupt(FIPS_TEST_X931, keylen, NULL))
-		tv->V[0]++;
-	FIPS_x931_seed(tv->V, 16);
+		V[0]++;
+	FIPS_x931_seed(V, 16);
 	FIPS_x931_set_dt(tv->DT);
 	FIPS_x931_bytes(R, 16);
 	if (memcmp(R, tv->R, 16))

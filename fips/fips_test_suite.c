@@ -1104,9 +1104,9 @@ int main(int argc, char **argv)
     if (!FIPS_module_mode())
 	return 1;
     if (do_drbg_stick)
-            FIPS_drbg_stick();
+            FIPS_drbg_stick(1);
     if (do_rng_stick)
-            FIPS_x931_stick();
+            FIPS_x931_stick(1);
 
     /* AES encryption/decryption
     */

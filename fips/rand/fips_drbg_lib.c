@@ -544,9 +544,9 @@ void FIPS_drbg_set_reseed_interval(DRBG_CTX *dctx, int interval)
 
 static int drbg_stick = 0;
 
-void FIPS_drbg_stick(void)
+void FIPS_drbg_stick(int onoff)
 	{
-	drbg_stick = 1;
+	drbg_stick = onoff;
 	}
 
 /* Continuous DRBG utility function */

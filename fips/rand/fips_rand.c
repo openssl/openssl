@@ -114,9 +114,9 @@ static FIPS_PRNG_CTX sctx;
 
 static int fips_prng_fail = 0;
 
-void FIPS_x931_stick(void)
+void FIPS_x931_stick(int onoff)
 	{
-	fips_prng_fail = 1;
+	fips_prng_fail = onoff;
 	}
 
 static void fips_rand_prng_reset(FIPS_PRNG_CTX *ctx)
