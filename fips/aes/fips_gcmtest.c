@@ -271,7 +271,6 @@ static void xtstest(FILE *in, FILE *out)
 	char *keyword, *value;
 	int inlen = 0;
 	int encrypt = 0;
-	int rv;
 	long l;
 	unsigned char *key = NULL, *iv = NULL;
 	unsigned char *inbuf = NULL, *outbuf = NULL;
@@ -327,7 +326,7 @@ static void xtstest(FILE *in, FILE *out)
 			{
 			FIPS_cipherinit(&ctx, xts, key, iv, encrypt);
 			outbuf = OPENSSL_malloc(inlen);
-			rv = FIPS_cipher(&ctx, outbuf, inbuf, inlen);
+			FIPS_cipher(&ctx, outbuf, inbuf, inlen);
 			OutputValue(encrypt ? "CT":"PT", outbuf, inlen, out, 0);
 			OPENSSL_free(inbuf);
 			OPENSSL_free(outbuf);
