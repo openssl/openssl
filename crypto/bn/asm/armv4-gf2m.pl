@@ -218,38 +218,38 @@ $code.=<<___;
 	mov	$b,r3			@ $b=b1
 	ldr	r3,[sp,#32]		@ load b0
 	mov	$mask,#7<<2
-	sub	sp,#32			@ allocate tab[8]
+	sub	sp,sp,#32		@ allocate tab[8]
 
 	bl	mul_1x1_ialu		@ a1·b1
 	str	$lo,[$ret,#8]
 	str	$hi,[$ret,#12]
 
-	eor	$b,r3			@ flip b0 and b1
-	 eor	$a,r2			@ flip a0 and a1
-	eor	r3,$b
-	 eor	r2,$a
-	eor	$b,r3
-	 eor	$a,r2
+	eor	$b,$b,r3		@ flip b0 and b1
+	 eor	$a,$a,r2		@ flip a0 and a1
+	eor	r3,r3,$b
+	 eor	r2,r2,$a
+	eor	$b,$b,r3
+	 eor	$a,$a,r2
 	bl	mul_1x1_ialu		@ a0·b0
 	str	$lo,[$ret]
 	str	$hi,[$ret,#4]
 
-	eor	$a,r2
-	eor	$b,r3
+	eor	$a,$a,r2
+	eor	$b,$b,r3
 	bl	mul_1x1_ialu		@ (a1+a0)·(b1+b0)
 ___
 @r=map("r$_",(6..9));
 $code.=<<___;
 	ldmia	$ret,{@r[0]-@r[3]}
-	eor	$lo,$hi
-	eor	$hi,@r[1]
-	eor	$lo,@r[0]
-	eor	$hi,@r[2]
-	eor	$lo,@r[3]
-	eor	$hi,@r[3]
+	eor	$lo,$lo,$hi
+	eor	$hi,$hi,@r[1]
+	eor	$lo,$lo,@r[0]
+	eor	$hi,$hi,@r[2]
+	eor	$lo,$lo,@r[3]
+	eor	$hi,$hi,@r[3]
 	str	$hi,[$ret,#8]
-	eor	$lo,$hi
-	add	sp,#32			@ destroy tab[8]
+	eor	$lo,$lo,$hi
+	add	sp,sp,#32		@ destroy tab[8]
 	str	$lo,[$ret,#4]
 
 #if __ARM_ARCH__>=5
