@@ -144,11 +144,9 @@ static int FIPS_dsa_test(int bad)
     DSA *dsa = NULL;
     unsigned char dgst[] = "etaonrishdlc";
     int r = 0;
-    EVP_MD_CTX mctx;
     DSA_SIG *sig = NULL;
 
     ERR_clear_error();
-    FIPS_md_ctx_init(&mctx);
     dsa = FIPS_dsa_new();
     if (!dsa)
 	goto end;
@@ -159,23 +157,14 @@ static int FIPS_dsa_test(int bad)
     if (bad)
 	    BN_add_word(dsa->pub_key, 1);
 
-    if (!FIPS_digestinit(&mctx, EVP_sha256()))
-	goto end;
-    if (!FIPS_digestupdate(&mctx, dgst, sizeof(dgst) - 1))
-	goto end;
-    sig = FIPS_dsa_sign_ctx(dsa, &mctx);
+    sig = FIPS_dsa_sign(dsa, dgst, sizeof(dgst) -1, EVP_sha256());
     if (!sig)
 	goto end;
 
-    if (!FIPS_digestinit(&mctx, EVP_sha256()))
-	goto end;
-    if (!FIPS_digestupdate(&mctx, dgst, sizeof(dgst) - 1))
-	goto end;
-    r = FIPS_dsa_verify_ctx(dsa, &mctx, sig);
+    r = FIPS_dsa_verify(dsa, dgst, sizeof(dgst) -1, EVP_sha256(), sig);
     end:
     if (sig)
 	FIPS_dsa_sig_free(sig);
-    FIPS_md_ctx_cleanup(&mctx);
     if (dsa)
   	  FIPS_dsa_free(dsa);
     if (r != 1)
@@ -193,11 +182,9 @@ static int FIPS_rsa_test(int bad)
     unsigned char buf[256];
     unsigned int slen;
     BIGNUM *bn;
-    EVP_MD_CTX mctx;
     int r = 0;
 
     ERR_clear_error();
-    FIPS_md_ctx_init(&mctx);
     key = FIPS_rsa_new();
     bn = BN_new();
     if (!key || !bn)
@@ -209,20 +196,13 @@ static int FIPS_rsa_test(int bad)
     if (bad)
 	    BN_add_word(key->n, 1);
 
-    if (!FIPS_digestinit(&mctx, EVP_sha256()))
-	goto end;
-    if (!FIPS_digestupdate(&mctx, input_ptext, sizeof(input_ptext) - 1))
-	goto end;
-    if (!FIPS_rsa_sign_ctx(key, &mctx, RSA_PKCS1_PADDING, 0, NULL, buf, &slen))
+    if (!FIPS_rsa_sign(key, input_ptext, sizeof(input_ptext) - 1, EVP_sha256(),
+			RSA_PKCS1_PADDING, 0, NULL, buf, &slen))
 	goto end;
 
-    if (!FIPS_digestinit(&mctx, EVP_sha256()))
-	goto end;
-    if (!FIPS_digestupdate(&mctx, input_ptext, sizeof(input_ptext) - 1))
-	goto end;
-    r = FIPS_rsa_verify_ctx(key, &mctx, RSA_PKCS1_PADDING, 0, NULL, buf, slen);
+    r = FIPS_rsa_verify(key, input_ptext, sizeof(input_ptext) - 1, EVP_sha256(),
+			RSA_PKCS1_PADDING, 0, NULL, buf, slen);
     end:
-    FIPS_md_ctx_cleanup(&mctx);
     if (key)
   	  FIPS_rsa_free(key);
     if (r != 1)

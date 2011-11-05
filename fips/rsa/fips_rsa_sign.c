@@ -442,4 +442,33 @@ err:
 	return(ret);
 	}
 
+int FIPS_rsa_sign(RSA *rsa, const unsigned char *msg, int msglen,
+			const EVP_MD *mhash, int rsa_pad_mode, int saltlen,
+			const EVP_MD *mgf1Hash,
+			unsigned char *sigret, unsigned int *siglen)
+	{
+	unsigned int md_len, rv;
+	unsigned char md[EVP_MAX_MD_SIZE];
+        FIPS_digest(msg, msglen, md, &md_len, mhash);
+	rv = FIPS_rsa_sign_digest(rsa, md, md_len, mhash, rsa_pad_mode,
+					saltlen, mgf1Hash, sigret, siglen);
+	OPENSSL_cleanse(md, md_len);
+	return rv;
+	}
+
+
+int FIPS_rsa_verify(RSA *rsa, const unsigned char *msg, int msglen,
+			const EVP_MD *mhash, int rsa_pad_mode, int saltlen,
+			const EVP_MD *mgf1Hash,
+			const unsigned char *sigbuf, unsigned int siglen)
+	{
+	unsigned int md_len, rv;
+	unsigned char md[EVP_MAX_MD_SIZE];
+        FIPS_digest(msg, msglen, md, &md_len, mhash);
+	rv = FIPS_rsa_verify_digest(rsa, md, md_len, mhash, rsa_pad_mode,
+					saltlen, mgf1Hash, sigbuf, siglen);
+	OPENSSL_cleanse(md, md_len);
+	return rv;
+	}
+
 #endif

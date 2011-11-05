@@ -154,9 +154,7 @@ int main(int argc, char **argv)
 	unsigned char buf[256];
 	unsigned long h;
 	BN_GENCB cb;
-	EVP_MD_CTX mctx;
 	BN_GENCB_set(&cb, dsa_cb, stderr);
-	FIPS_md_ctx_init(&mctx);
 
     	fips_algtest_init();
 
@@ -210,19 +208,11 @@ int main(int argc, char **argv)
 		}
 	DSA_generate_key(dsa);
 
-	if (!FIPS_digestinit(&mctx, EVP_sha1()))
-		goto end;
-	if (!FIPS_digestupdate(&mctx, str1, 20))
-		goto end;
-	sig = FIPS_dsa_sign_ctx(dsa, &mctx);
+	sig = FIPS_dsa_sign(dsa, str1, 20, EVP_sha1());
 	if (!sig)
 		goto end;
 
-	if (!FIPS_digestinit(&mctx, EVP_sha1()))
-		goto end;
-	if (!FIPS_digestupdate(&mctx, str1, 20))
-		goto end;
-	if (FIPS_dsa_verify_ctx(dsa, &mctx, sig) != 1)
+	if (FIPS_dsa_verify(dsa, str1, 20, EVP_sha1(), sig) != 1)
 		goto end;
 
 	ret = 1;
@@ -231,7 +221,6 @@ end:
 	if (sig)
 		FIPS_dsa_sig_free(sig);
 	if (dsa != NULL) FIPS_dsa_free(dsa);
-	FIPS_md_ctx_cleanup(&mctx);
 #if 0
 	CRYPTO_mem_leaks(bio_err);
 #endif

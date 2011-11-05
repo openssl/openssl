@@ -224,6 +224,16 @@ int FIPS_rsa_verify_digest(struct rsa_st *rsa,
 			const struct env_md_st *mgf1Hash,
 			const unsigned char *sigbuf, unsigned int siglen);
 
+int FIPS_rsa_sign(struct rsa_st *rsa, const unsigned char *msg, int msglen,
+			const struct env_md_st *mhash, int rsa_pad_mode,
+			int saltlen, const struct env_md_st *mgf1Hash,
+			unsigned char *sigret, unsigned int *siglen);
+
+int FIPS_rsa_verify(struct rsa_st *rsa, const unsigned char *msg, int msglen,
+			const struct env_md_st *mhash, int rsa_pad_mode,
+			int saltlen, const struct env_md_st *mgf1Hash,
+			const unsigned char *sigbuf, unsigned int siglen);
+
 #ifdef OPENSSL_FIPSCAPABLE
 
 int FIPS_digestinit(EVP_MD_CTX *ctx, const EVP_MD *type);

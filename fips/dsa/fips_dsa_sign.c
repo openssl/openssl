@@ -114,4 +114,28 @@ int FIPS_dsa_verify_digest(DSA *dsa,
 	return dsa->meth->dsa_do_verify(dig,dlen,s,dsa);
 	}
 
+int FIPS_dsa_verify(DSA *dsa, const unsigned char *msg, size_t msglen,
+			const EVP_MD *mhash, DSA_SIG *s)
+	{
+	int ret=-1;
+	unsigned char dig[EVP_MAX_MD_SIZE];
+	unsigned int dlen;
+        FIPS_digest(msg, msglen, dig, &dlen, mhash);
+	ret=FIPS_dsa_verify_digest(dsa, dig, dlen, s);
+	OPENSSL_cleanse(dig, dlen);
+	return ret;
+	}
+
+DSA_SIG * FIPS_dsa_sign(DSA *dsa, const unsigned char *msg, size_t msglen,
+			const EVP_MD *mhash)
+	{
+	DSA_SIG *s;
+	unsigned char dig[EVP_MAX_MD_SIZE];
+	unsigned int dlen;
+        FIPS_digest(msg, msglen, dig, &dlen, mhash);
+	s = FIPS_dsa_sign_digest(dsa, dig, dlen);
+	OPENSSL_cleanse(dig, dlen);
+	return s;
+	}
+
 #endif

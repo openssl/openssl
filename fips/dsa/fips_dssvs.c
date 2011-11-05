@@ -632,9 +632,7 @@ static void siggen(FILE *in, FILE *out)
 	    {
 	    unsigned char msg[1024];
 	    int n;
-	    EVP_MD_CTX mctx;
 	    DSA_SIG *sig;
-	    FIPS_md_ctx_init(&mctx);
 
 	    n=hex2bin(value,msg);
 
@@ -642,15 +640,12 @@ static void siggen(FILE *in, FILE *out)
 		exit(1);
 	    do_bn_print_name(out, "Y",dsa->pub_key);
 
-	    FIPS_digestinit(&mctx, md);
-	    FIPS_digestupdate(&mctx, msg, n);
-	    sig = FIPS_dsa_sign_ctx(dsa, &mctx);
+	    sig = FIPS_dsa_sign(dsa, msg, n, md);
 
 	    do_bn_print_name(out, "R",sig->r);
 	    do_bn_print_name(out, "S",sig->s);
 	    fputs(RESP_EOL, out);
 	    FIPS_dsa_sig_free(sig);
-	    FIPS_md_ctx_cleanup(&mctx);
 	    }
 	}
     if (dsa)
@@ -705,17 +700,12 @@ static void sigver(FILE *in, FILE *out)
 	    sig->r=hex2bn(value);
 	else if(!strcmp(keyword,"S"))
 	    {
-	    EVP_MD_CTX mctx;
 	    int r;
-	    FIPS_md_ctx_init(&mctx);
 	    sig->s=hex2bn(value);
 
-	    FIPS_digestinit(&mctx, md);
-	    FIPS_digestupdate(&mctx, msg, n);
 	    no_err = 1;
-	    r = FIPS_dsa_verify_ctx(dsa, &mctx, sig);
+	    r = FIPS_dsa_verify(dsa, msg, n, md, sig);
 	    no_err = 0;
-	    FIPS_md_ctx_cleanup(&mctx);
 	    if (sig->s)
 		{
 		BN_free(sig->s);

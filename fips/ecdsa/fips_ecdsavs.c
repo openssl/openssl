@@ -308,8 +308,6 @@ static int SigGen(FILE *in, FILE *out)
 	EC_KEY *key = NULL;
 	ECDSA_SIG *sig = NULL;
 	const EVP_MD *digest = NULL;
-	EVP_MD_CTX mctx;
-	EVP_MD_CTX_init(&mctx);
 	Qx = BN_new();
 	Qy = BN_new();
 	while(fgets(buf, sizeof buf, in) != NULL)
@@ -345,9 +343,7 @@ static int SigGen(FILE *in, FILE *out)
 				return 0;
 				}
 
-			FIPS_digestinit(&mctx, digest);
-			FIPS_digestupdate(&mctx, msg, mlen);
-	    		sig = FIPS_ecdsa_sign_ctx(key, &mctx);
+	    		sig = FIPS_ecdsa_sign(key, msg, mlen, digest);
 
 			if (!sig)
 				{
@@ -369,7 +365,6 @@ static int SigGen(FILE *in, FILE *out)
 		}
 	BN_free(Qx);
 	BN_free(Qy);
-	FIPS_md_ctx_cleanup(&mctx);
 	return 1;
 	}
 
@@ -384,8 +379,6 @@ static int SigVer(FILE *in, FILE *out)
 	EC_KEY *key = NULL;
 	ECDSA_SIG sg, *sig = &sg;
 	const EVP_MD *digest = NULL;
-	EVP_MD_CTX mctx;
-	EVP_MD_CTX_init(&mctx);
 	sig->r = NULL;
 	sig->s = NULL;
 	while(fgets(buf, sizeof buf, in) != NULL)
@@ -450,10 +443,8 @@ static int SigVer(FILE *in, FILE *out)
 				return 0;
 				}
 
-			FIPS_digestinit(&mctx, digest);
-			FIPS_digestupdate(&mctx, msg, mlen);
 			no_err = 1;
-	    		rv = FIPS_ecdsa_verify_ctx(key, &mctx, sig);
+	    		rv = FIPS_ecdsa_verify(key, msg, mlen, digest, sig);
 			EC_KEY_free(key);
 			if (msg)
 				OPENSSL_free(msg);
@@ -471,7 +462,6 @@ static int SigVer(FILE *in, FILE *out)
 		BN_free(Qx);
 	if (Qy)
 		BN_free(Qy);
-	EVP_MD_CTX_cleanup(&mctx);
 	return 1;
 	}
 #ifdef FIPS_ALGVS

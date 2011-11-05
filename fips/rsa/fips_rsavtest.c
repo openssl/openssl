@@ -323,7 +323,6 @@ static int rsa_printver(FILE *out,
 	int ret = 0, r, pad_mode;
 	/* Setup RSA and EVP_PKEY structures */
 	RSA *rsa_pubkey = NULL;
-	EVP_MD_CTX ctx;
 	unsigned char *buf = NULL;
 	rsa_pubkey = FIPS_rsa_new();
 	if (!rsa_pubkey)
@@ -333,8 +332,6 @@ static int rsa_printver(FILE *out,
 	if (!rsa_pubkey->n || !rsa_pubkey->e)
 		goto error;
 
-	FIPS_md_ctx_init(&ctx);
-
 	if (Saltlen >= 0)
 		pad_mode = RSA_PKCS1_PSS_PADDING;
 	else if (Saltlen == -2)
@@ -342,18 +339,10 @@ static int rsa_printver(FILE *out,
 	else
 		pad_mode = RSA_PKCS1_PADDING;
 
-	if (!FIPS_digestinit(&ctx, dgst))
-		goto error;
-	if (!FIPS_digestupdate(&ctx, Msg, Msglen))
-		goto error;
-
 	no_err = 1;
-	r = FIPS_rsa_verify_ctx(rsa_pubkey, &ctx,
+	r = FIPS_rsa_verify(rsa_pubkey, Msg, Msglen, dgst,
 				pad_mode, Saltlen, NULL, S, Slen);
 	no_err = 0;
-
-
-	FIPS_md_ctx_cleanup(&ctx);
 
 	if (r < 0)
 		goto error;

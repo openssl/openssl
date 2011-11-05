@@ -325,14 +325,11 @@ static int rsa_printsig(FILE *out, RSA *rsa, const EVP_MD *dgst,
 	unsigned char *sigbuf = NULL;
 	int i, siglen, pad_mode;
 	/* EVP_PKEY structure */
-	EVP_MD_CTX ctx;
 
 	siglen = RSA_size(rsa);
 	sigbuf = OPENSSL_malloc(siglen);
 	if (!sigbuf)
 		goto error;
-
-	FIPS_md_ctx_init(&ctx);
 
 	if (Saltlen >= 0)
 		pad_mode = RSA_PKCS1_PSS_PADDING;
@@ -341,15 +338,9 @@ static int rsa_printsig(FILE *out, RSA *rsa, const EVP_MD *dgst,
 	else
 		pad_mode = RSA_PKCS1_PADDING;
 
-	if (!FIPS_digestinit(&ctx, dgst))
-		goto error;
-	if (!FIPS_digestupdate(&ctx, Msg, Msglen))
-		goto error;
-	if (!FIPS_rsa_sign_ctx(rsa, &ctx, pad_mode, Saltlen, NULL,
+	if (!FIPS_rsa_sign(rsa, Msg, Msglen, dgst, pad_mode, Saltlen, NULL,
 				sigbuf, (unsigned int *)&siglen))
 		goto error;
-
-	FIPS_md_ctx_cleanup(&ctx);
 
 	fputs("S = ", out);
 
