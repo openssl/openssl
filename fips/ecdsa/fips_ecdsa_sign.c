@@ -107,7 +107,7 @@ ECDSA_SIG * FIPS_ecdsa_sign(EC_KEY *key,
 	unsigned char dig[EVP_MAX_MD_SIZE];
 	unsigned int dlen;
         FIPS_digest(msg, msglen, dig, &dlen, mhash);
-	s = FIPS_dsa_sign_digest(key, dig, dlen);
+	s = FIPS_ecdsa_sign_digest(key, dig, dlen);
 	OPENSSL_cleanse(dig, dlen);
 	return s;
 	}
