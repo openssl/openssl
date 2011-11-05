@@ -44,7 +44,7 @@ OPENSSL_atomic_add:
 	bne	.Lspin
 
 	ldr	r2,[r4]
-	add	r2,r5
+	add	r2,r2,r5
 	str	r2,[r4]
 	str	r0,[r6]		@ release spinlock
 	ldmia	sp!,{r4-r6,lr}
@@ -59,26 +59,26 @@ OPENSSL_atomic_add:
 OPENSSL_cleanse:
 	eor	ip,ip,ip
 	cmp	r1,#7
-	subhs	r1,#4
+	subhs	r1,r1,#4
 	bhs	.Lot
 	cmp	r1,#0
 	beq	.Lcleanse_done
 .Little:
 	strb	ip,[r0],#1
-	subs	r1,#1
+	subs	r1,r1,#1
 	bhi	.Little
 	b	.Lcleanse_done
 
 .Lot:	tst	r0,#3
 	beq	.Laligned
 	strb	ip,[r0],#1
-	sub	r1,#1
+	sub	r1,r1,#1
 	b	.Lot
 .Laligned:
 	str	ip,[r0],#4
-	subs	r1,#4
+	subs	r1,r1,#4
 	bhs	.Laligned
-	adds	r1,#4
+	adds	r1,r1,#4
 	bne	.Little
 .Lcleanse_done:
 	tst	lr,#1
