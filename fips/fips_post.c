@@ -207,7 +207,6 @@ int fips_pkey_signature_test(int id, EVP_PKEY *pkey,
 			const char *fail_str)
 	{	
 	int subid;
-	void *ex = NULL;
 	int ret = 0;
 	unsigned char *sig = NULL;
 	unsigned int siglen;
@@ -335,7 +334,7 @@ int fips_pkey_signature_test(int id, EVP_PKEY *pkey,
 		FIPSerr(FIPS_F_FIPS_PKEY_SIGNATURE_TEST,FIPS_R_TEST_FAILURE);
 		if (fail_str)
 			FIPS_add_error_data(2, "Type=", fail_str);
-		fips_post_failed(id, subid, ex);
+		fips_post_failed(id, subid, pkey);
 		return 0;
 		}
 	return fips_post_success(id, subid, pkey);
