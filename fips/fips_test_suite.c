@@ -804,11 +804,14 @@ static int fail_id = -1;
 static int fail_sub = -1;
 static int fail_key = -1;
 
+static int st_err, post_quiet = 0;
+
 static int post_cb(int op, int id, int subid, void *ex)
 	{
 	const char *idstr, *exstr = "";
 	char asctmp[20];
 	int keytype = -1;
+	int exp_fail = 0;
 #ifdef FIPS_POST_TIME
 	static struct timespec start, end, tstart, tend;
 #endif
@@ -920,6 +923,11 @@ static int post_cb(int op, int id, int subid, void *ex)
 
 		}
 
+	if (fail_id == id
+		&& (fail_key == -1 || fail_key == keytype)
+		&& (fail_sub == -1 || fail_sub == subid))
+			exp_fail = 1;
+
 	switch(op)
 		{
 		case FIPS_POST_BEGIN:
@@ -943,14 +951,22 @@ static int post_cb(int op, int id, int subid, void *ex)
 		break;
 
 		case FIPS_POST_STARTED:
-		printf("\t\t%s %s test started\n", idstr, exstr);
+		if (!post_quiet && !exp_fail)
+			printf("\t\t%s %s test started\n", idstr, exstr);
 #ifdef FIPS_POST_TIME
 		clock_gettime(CLOCK_REALTIME, &start);
 #endif
 		break;
 
 		case FIPS_POST_SUCCESS:
-		printf("\t\t%s %s test OK\n", idstr, exstr);
+		if (exp_fail)
+			{
+			printf("\t\t%s %s test OK but should've failed\n",
+								idstr, exstr);
+			st_err++;
+			}
+		else if (!post_quiet)
+			printf("\t\t%s %s test OK\n", idstr, exstr);
 #ifdef FIPS_POST_TIME
 		clock_gettime(CLOCK_REALTIME, &end);
 		printf("\t\t\tTook %f seconds\n",
@@ -960,13 +976,21 @@ static int post_cb(int op, int id, int subid, void *ex)
 		break;
 
 		case FIPS_POST_FAIL:
-		printf("\t\t%s %s test FAILED!!\n", idstr, exstr);
+		if (exp_fail)
+			{
+			printf("\t\t%s %s test failed as expected\n",
+							idstr, exstr);
+			}
+		else
+			{
+			printf("\t\t%s %s test Failed Incorrectly!!\n",
+							idstr, exstr);
+			st_err++;
+			}
 		break;
 
 		case FIPS_POST_CORRUPT:
-		if (fail_id == id
-			&& (fail_key == -1 || fail_key == keytype)
-			&& (fail_sub == -1 || fail_sub == subid))
+		if (exp_fail)
 			{
 			printf("\t\t%s %s test failure induced\n", idstr, exstr);
 			return 0;
@@ -977,18 +1001,272 @@ static int post_cb(int op, int id, int subid, void *ex)
 	return 1;
 	}
 
+/* Test POST induced failures */
+
+typedef struct 
+	{
+	const char *name;
+	int id, subid, keyid;
+	} fail_list;
+
+static fail_list flist[] =
+	{
+	{"Integrity", FIPS_TEST_INTEGRITY, -1, -1},
+	{"AES", FIPS_TEST_CIPHER, NID_aes_128_ecb, -1},
+	{"DES3", FIPS_TEST_CIPHER, NID_des_ede3_ecb, -1},
+	{"AES-GCM", FIPS_TEST_GCM, -1, -1},
+	{"AES-CCM", FIPS_TEST_CCM, -1, -1},
+	{"AES-XTS", FIPS_TEST_XTS, -1, -1},
+	{"Digest", FIPS_TEST_DIGEST, -1, -1},
+	{"HMAC", FIPS_TEST_HMAC, -1, -1},
+	{"CMAC", FIPS_TEST_CMAC, -1, -1},
+	{"DRBG", FIPS_TEST_DRBG, -1, -1},
+	{"X9.31 PRNG", FIPS_TEST_X931, -1, -1},
+	{"RSA", FIPS_TEST_SIGNATURE, -1, EVP_PKEY_RSA},
+	{"DSA", FIPS_TEST_SIGNATURE, -1, EVP_PKEY_DSA},
+	{"ECDSA", FIPS_TEST_SIGNATURE, -1, EVP_PKEY_EC},
+	{"ECDH", FIPS_TEST_ECDH, -1, -1},
+	{NULL, -1, -1, -1}
+	};
+
+static int do_fail_all(int fullpost, int fullerr)
+	{
+	fail_list *ftmp;
+	int rv;
+	size_t i;
+	RSA *rsa = NULL;
+	DSA *dsa = NULL;
+	DRBG_CTX *dctx = NULL;
+	EC_KEY *ec = NULL;
+	BIGNUM *bn = NULL;
+	unsigned char out[10];
+	if (!fullpost)
+		post_quiet = 1;
+	if (!fullerr)
+		no_err = 1;
+	FIPS_module_mode_set(0, NULL);
+	for (ftmp = flist; ftmp->name; ftmp++)
+		{
+		printf("    Testing induced failure of %s test\n", ftmp->name);
+		fail_id = ftmp->id;
+		fail_sub = ftmp->subid;
+		fail_key = ftmp->keyid;
+		rv = FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS);
+		if (rv)
+			{
+			printf("\tFIPS mode incorrectly successful!!\n");
+			st_err++;
+			}
+		}
+	printf("    Testing induced failure of RSA keygen test\n");
+	/* NB POST will succeed with a pairwise test failures as
+	 * it is not used during POST.
+	 */
+	fail_id = FIPS_TEST_PAIRWISE;
+	fail_key = EVP_PKEY_RSA;
+	/* Now enter FIPS mode successfully */
+	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+		{
+		printf("\tError entering FIPS mode\n");
+		st_err++;
+		}
+
+	rsa = FIPS_rsa_new();
+	bn = BN_new();
+ 	if (!rsa || !bn)
+		return 0;
+	BN_set_word(bn, 65537);
+	if (RSA_generate_key_ex(rsa, 2048,bn,NULL))
+		{
+		printf("\tRSA key generated OK incorrectly!!\n");
+		st_err++;
+		}
+	else
+		printf("\tRSA key generation failed as expected.\n");
+
+	/* Leave FIPS mode to clear error */
+	FIPS_module_mode_set(0, NULL);
+
+	printf("    Testing induced failure of DSA keygen test\n");
+	fail_key = EVP_PKEY_DSA;
+	/* Enter FIPS mode successfully */
+	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+		{
+		printf("\tError entering FIPS mode\n");
+		st_err++;
+		}
+	dsa = FIPS_dsa_new();
+    	if (!dsa)
+		return 0;
+	if (!DSA_generate_parameters_ex(dsa, 1024,NULL,0,NULL,NULL,NULL))
+		return 0;
+    	if (DSA_generate_key(dsa))
+		{
+		printf("\tDSA key generated OK incorrectly!!\n");
+		st_err++;
+		}
+	else
+		printf("\tDSA key generation failed as expected.\n");
+
+	/* Leave FIPS mode to clear error */
+	FIPS_module_mode_set(0, NULL);
+	/* Enter FIPS mode successfully */
+	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+		{
+		printf("\tError entering FIPS mode\n");
+		st_err++;
+		}
+
+	printf("    Testing induced failure of ECDSA keygen test\n");
+	fail_key = EVP_PKEY_EC;
+
+	ec = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+
+	if (!ec)
+		return 0;
+
+    	if (EC_KEY_generate_key(ec))
+		{
+		printf("\tECDSA key generated OK incorrectly!!\n");
+		st_err++;
+		}
+	else
+		printf("\tECDSA key generation failed as expected.\n");
+
+	fail_id = -1;
+	fail_sub = -1;
+	fail_key = -1;
+	/* Leave FIPS mode to clear error */
+	FIPS_module_mode_set(0, NULL);
+	/* Enter FIPS mode successfully */
+	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+		{
+		printf("\tError entering FIPS mode\n");
+		st_err++;
+		}
+	/* Induce continuous PRNG failure for DRBG */
+	printf("    Testing induced failure of DRBG CPRNG test\n");
+	FIPS_drbg_stick(1);
+
+	/* Initialise a DRBG context */
+	dctx = FIPS_drbg_new(NID_sha1, 0);
+	if (!dctx)
+		return 0;
+	for (i = 0; i < sizeof(dummy_drbg_entropy); i++)
+		{
+		dummy_drbg_entropy[i] = i & 0xff;
+		}
+	FIPS_drbg_set_callbacks(dctx, drbg_test_cb, 0, 0x10, drbg_test_cb, 0);
+	if (!FIPS_drbg_instantiate(dctx, dummy_drbg_entropy, 10))
+		{
+		printf("\tDRBG instantiate error!!\n");
+		st_err++;
+		}
+	if (FIPS_drbg_generate(dctx, out, sizeof(out), 0, NULL, 0))
+		{
+		printf("\tDRBG continuous PRNG OK incorrectly!!\n");
+		st_err++;
+		}
+	else
+		printf("\tDRBG continuous PRNG failed as expected\n");
+	FIPS_drbg_stick(0);
+
+	/* Leave FIPS mode to clear error */
+	FIPS_module_mode_set(0, NULL);
+	/* Enter FIPS mode successfully */
+	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+		{
+		printf("\tError entering FIPS mode\n");
+		st_err++;
+		}
+
+	FIPS_drbg_free(dctx);
+
+	/* Induce continuous PRNG failure for DRBG entropy source*/
+	printf("    Testing induced failure of DRBG entropy CPRNG test\n");
+
+	/* Initialise a DRBG context */
+	dctx = FIPS_drbg_new(NID_sha1, 0);
+	if (!dctx)
+		return 0;
+	for (i = 0; i < sizeof(dummy_drbg_entropy); i++)
+		{
+		dummy_drbg_entropy[i] = i & 0xf;
+		}
+	FIPS_drbg_set_callbacks(dctx, drbg_test_cb, 0, 0x10, drbg_test_cb, 0);
+	if (FIPS_drbg_instantiate(dctx, dummy_drbg_entropy, 10))
+		{
+		printf("\tDRBG continuous PRNG entropy OK incorrectly!!\n");
+		st_err++;
+		}
+	else
+		printf("\tDRBG continuous PRNG entropy failed as expected\n");
+	/* Leave FIPS mode to clear error */
+	FIPS_module_mode_set(0, NULL);
+	/* Enter FIPS mode successfully */
+	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+		{
+		printf("\tError entering FIPS mode\n");
+		st_err++;
+		}
+	FIPS_drbg_free(dctx);
+
+	/* Leave FIPS mode to clear error */
+	FIPS_module_mode_set(0, NULL);
+	/* Enter FIPS mode successfully */
+	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+		{
+		printf("\tError entering FIPS mode\n");
+		st_err++;
+		}
+
+	printf("    Testing induced failure of X9.31 CPRNG test\n");
+	FIPS_x931_stick(1);
+	if (!FIPS_x931_set_key(dummy_drbg_entropy, 32))
+		{
+		printf("\tError initialiasing X9.31 PRNG\n");
+		st_err++;
+		}
+	if (!FIPS_x931_seed(dummy_drbg_entropy + 32, 16))
+		{
+		printf("\tError seeding X9.31 PRNG\n");
+		st_err++;
+		}
+	if (FIPS_x931_bytes(out, 10) > 0)
+		{
+		printf("\tX9.31 continuous PRNG failure OK incorrectly!!\n");
+		st_err++;
+		}
+	else
+		printf("\tX9.31 continuous PRNG failed as expected\n");
+	FIPS_x931_stick(0);
+
+	printf("  Induced failure test completed with %d errors\n", st_err);
+	post_quiet = 0; 
+	no_err = 0;
+	BN_free(bn);
+	FIPS_rsa_free(rsa);
+	FIPS_dsa_free(dsa);
+	FIPS_ec_key_free(ec);
+	if (st_err)
+		return 0;
+	return 1;
+	}
+
 #ifdef FIPS_ALGVS
 int fips_test_suite_main(int argc, char **argv)
 #else
 int main(int argc, char **argv)
 #endif
     {
+    char **args = argv + 1;
     int bad_rsa = 0, bad_dsa = 0;
     int do_rng_stick = 0;
     int do_drbg_stick = 0;
     int no_exit = 0;
-    int no_dh = 0;
+    int no_dh = 0, no_drbg = 0;
     char *pass = FIPS_AUTH_USER_PASS;
+    int fullpost = 0, fullerr = 0;
 
     FIPS_post_set_callback(post_cb);
 
@@ -996,87 +1274,99 @@ int main(int argc, char **argv)
 
     printf("\t%s\n\n", FIPS_module_version_text());
 
-    if (argv[1]) {
+    while(*args) {
         /* Corrupted KAT tests */
-        if (!strcmp(argv[1], "integrity")) {
+        if (!strcmp(*args, "integrity")) {
 	    fail_id = FIPS_TEST_INTEGRITY;
-        } else if (!strcmp(argv[1], "aes")) {
+        } else if (!strcmp(*args, "aes")) {
 	    fail_id = FIPS_TEST_CIPHER;
 	    fail_sub = NID_aes_128_ecb;	
-        } else if (!strcmp(argv[1], "aes-ccm")) {
+        } else if (!strcmp(*args, "aes-ccm")) {
 	    fail_id = FIPS_TEST_CCM;
-        } else if (!strcmp(argv[1], "aes-gcm")) {
+        } else if (!strcmp(*args, "aes-gcm")) {
 	    fail_id = FIPS_TEST_GCM;
-        } else if (!strcmp(argv[1], "aes-xts")) {
+        } else if (!strcmp(*args, "aes-xts")) {
 	    fail_id = FIPS_TEST_XTS;
-        } else if (!strcmp(argv[1], "des")) {
+        } else if (!strcmp(*args, "des")) {
 	    fail_id = FIPS_TEST_CIPHER;
 	    fail_sub = NID_des_ede3_ecb;	
-        } else if (!strcmp(argv[1], "dsa")) {
+        } else if (!strcmp(*args, "dsa")) {
 	    fail_id = FIPS_TEST_SIGNATURE;
 	    fail_key = EVP_PKEY_DSA;	
         } else if (!strcmp(argv[1], "ecdh")) {
 	    fail_id = FIPS_TEST_ECDH;
-        } else if (!strcmp(argv[1], "ecdsa")) {
+        } else if (!strcmp(*args, "ecdsa")) {
 	    fail_id = FIPS_TEST_SIGNATURE;
 	    fail_key = EVP_PKEY_EC;	
-        } else if (!strcmp(argv[1], "rsa")) {
+        } else if (!strcmp(*args, "rsa")) {
 	    fail_id = FIPS_TEST_SIGNATURE;
 	    fail_key = EVP_PKEY_RSA;	
-        } else if (!strcmp(argv[1], "rsakey")) {
+        } else if (!strcmp(*args, "rsakey")) {
             printf("RSA key generation and signature validation with corrupted key...\n");
 	    bad_rsa = 1;
 	    no_exit = 1;
-        } else if (!strcmp(argv[1], "rsakeygen")) {
+        } else if (!strcmp(*args, "rsakeygen")) {
 	    fail_id = FIPS_TEST_PAIRWISE;
 	    fail_key = EVP_PKEY_RSA;
 	    no_exit = 1;
-        } else if (!strcmp(argv[1], "dsakey")) {
+        } else if (!strcmp(*args, "dsakey")) {
             printf("DSA key generation and signature validation with corrupted key...\n");
 	    bad_dsa = 1;
 	    no_exit = 1;
-        } else if (!strcmp(argv[1], "dsakeygen")) {
+        } else if (!strcmp(*args, "dsakeygen")) {
 	    fail_id = FIPS_TEST_PAIRWISE;
 	    fail_key = EVP_PKEY_DSA;
 	    no_exit = 1;
-        } else if (!strcmp(argv[1], "sha1")) {
+        } else if (!strcmp(*args, "sha1")) {
 	    fail_id = FIPS_TEST_DIGEST;
-        } else if (!strcmp(argv[1], "hmac")) {
+        } else if (!strcmp(*args, "hmac")) {
 	    fail_id = FIPS_TEST_HMAC;
-        } else if (!strcmp(argv[1], "cmac")) {
+        } else if (!strcmp(*args, "cmac")) {
 	    fail_id = FIPS_TEST_CMAC;
-	} else if (!strcmp(argv[1], "drbg")) {
+	} else if (!strcmp(*args, "drbg")) {
 	    fail_id = FIPS_TEST_DRBG;
 	} else if (!strcmp(argv[1], "rng")) {
 	    fail_id = FIPS_TEST_X931;
-	} else if (!strcmp(argv[1], "nodh")) {
+	} else if (!strcmp(*args, "nodrbg")) {
+	    no_drbg = 1;
+	    no_exit = 1;
+	} else if (!strcmp(*args, "nodh")) {
 	    no_dh = 1;
 	    no_exit = 1;
-	} else if (!strcmp(argv[1], "post")) {
+	} else if (!strcmp(*args, "post")) {
 	    fail_id = -1;
-	} else if (!strcmp(argv[1], "rngstick")) {
+	} else if (!strcmp(*args, "rngstick")) {
 	    do_rng_stick = 1;
 	    no_exit = 1;
 	    printf("RNG test with stuck continuous test...\n");
-	} else if (!strcmp(argv[1], "drbgentstick")) {
+	} else if (!strcmp(*args, "drbgentstick")) {
 		do_entropy_stick();
-	} else if (!strcmp(argv[1], "drbgstick")) {
+	} else if (!strcmp(*args, "drbgstick")) {
 	    do_drbg_stick = 1;
 	    no_exit = 1;
 	    printf("DRBG test with stuck continuous test...\n");
-	} else if (!strcmp(argv[1], "user")) {
+	} else if (!strcmp(*args, "user")) {
 		pass = FIPS_AUTH_USER_PASS;
-	} else if (!strcmp(argv[1], "officer")) {
+	} else if (!strcmp(*args, "officer")) {
 		pass = FIPS_AUTH_OFFICER_PASS;
-	} else if (!strcmp(argv[1], "badpass")) {
+	} else if (!strcmp(*args, "badpass")) {
 		pass = "bad invalid password";
-	} else if (!strcmp(argv[1], "nopass")) {
+	} else if (!strcmp(*args, "nopass")) {
 		pass = "";
+	} else if (!strcmp(*args, "fullpost")) {
+		fullpost = 1;
+	    	no_exit = 1;
+	} else if (!strcmp(*args, "fullerr")) {
+		fullerr = 1;
+	    	no_exit = 1;
         } else {
-            printf("Bad argument \"%s\"\n", argv[1]);
+            printf("Bad argument \"%s\"\n", *args);
             return 1;
         }
-	if (!no_exit) {
+    args++;
+    }
+
+    if ((argc != 1) && !no_exit) {
     		fips_algtest_init_nofips();
         	if (!FIPS_module_mode_set(1, pass)) {
         	    printf("Power-up self test failed\n");
@@ -1084,7 +1374,6 @@ int main(int argc, char **argv)
 		}
         	printf("Power-up self test successful\n");
         	return 0;
-	}
     }
 
     fips_algtest_init_nofips();
@@ -1202,9 +1491,15 @@ int main(int argc, char **argv)
 					: Fail("failed INCORRECTLY!") );
 
     printf("12. DRBG generation check...\n");
-    printf("\t%s\n", do_drbg_all() ? "successful as expected"
+    if (no_drbg)
+	printf("\tskipped\n");
+    else
+    	printf("\t%s\n", do_drbg_all() ? "successful as expected"
 					: Fail("failed INCORRECTLY!") );
 
+    printf("13. Induced test failure check...\n");
+    printf("\t%s\n", do_fail_all(fullpost, fullerr) ? "successful as expected"
+					: Fail("failed INCORRECTLY!") );
     printf("\nAll tests completed with %d errors\n", Error);
     return Error ? 1 : 0;
     }

@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Update fips_test_suite to support multiple command line options. New
+     test to induce all self test errors in sequence and check expected
+     failures.
+     [Steve Henson]
+
   *) Add FIPS_{rsa,dsa,ecdsa}_{sign,verify} functions which digest and
      sign or verify all in one operation.
      [Steve Henson]
