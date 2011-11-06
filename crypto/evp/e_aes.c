@@ -89,6 +89,10 @@ typedef struct
 	{
 	AES_KEY ks1, ks2;	/* AES key schedules to use */
 	XTS128_CONTEXT xts;
+	void     (*stream)(const unsigned char *in,
+			unsigned char *out, size_t length,
+			const AES_KEY *key1, const AES_KEY *key2,
+			const unsigned char iv[16]);
 	} EVP_AES_XTS_CTX;
 
 typedef struct
@@ -123,6 +127,9 @@ void vpaes_cbc_encrypt(const unsigned char *in,
 			unsigned char *ivec, int enc);
 #endif
 #ifdef BSAES_ASM
+void bsaes_cbc_encrypt(const unsigned char *in, unsigned char *out,
+			size_t length, const AES_KEY *key,
+			unsigned char ivec[16], int enc);
 void bsaes_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
 			size_t len, const AES_KEY *key,
 			const unsigned char ivec[16]);
@@ -337,11 +344,13 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			{
 			aesni_set_encrypt_key(key, ctx->key_len * 4, &xctx->ks1);
 			xctx->xts.block1 = (block128_f)aesni_encrypt;
+			xctx->stream = aesni_xts_encrypt;
 			}
 		else
 			{
 			aesni_set_decrypt_key(key, ctx->key_len * 4, &xctx->ks1);
 			xctx->xts.block1 = (block128_f)aesni_decrypt;
+			xctx->stream = aesni_xts_decrypt;
 			}
 
 		aesni_set_encrypt_key(key + ctx->key_len/2,
@@ -360,32 +369,9 @@ static int aesni_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	return 1;
 	}
 
+#define aesni_xts_cipher aes_xts_cipher
 static int aesni_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
-		const unsigned char *in, size_t len)
-	{
-	EVP_AES_XTS_CTX *xctx = ctx->cipher_data;
-	if (!xctx->xts.key1 || !xctx->xts.key2)
-		return -1;
-	if (!out || !in)
-		return -1;
-#ifdef OPENSSL_FIPS
-	/* Requirement of SP800-38E */
-	if (FIPS_module_mode() && !(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW) &&
-			(len > (1L<<20)*16))
-		{
-		EVPerr(EVP_F_AESNI_XTS_CIPHER, EVP_R_TOO_LARGE);
-		return -1;
-		}
-#endif
-	if (ctx->encrypt)
-		aesni_xts_encrypt(in, out, len,
-			xctx->xts.key1, xctx->xts.key2, ctx->iv);
-	else
-		aesni_xts_decrypt(in, out, len,
-			xctx->xts.key1, xctx->xts.key2, ctx->iv);
-
-	return len;
-	}
+		const unsigned char *in, size_t len);
 
 static int aesni_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc)
@@ -503,6 +489,15 @@ static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	mode = ctx->cipher->flags & EVP_CIPH_MODE;
 	if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)
 	    && !enc)
+#ifdef BSAES_CAPABLE
+	    if (BSAES_CAPABLE && mode==EVP_CIPH_CBC_MODE)
+		{
+		ret = AES_set_decrypt_key(key,ctx->key_len*8,&dat->ks);
+		dat->block	= (block128_f)AES_decrypt;
+		dat->stream.cbc	= (cbc128_f)bsaes_cbc_encrypt;
+		}
+	    else
+#endif
 #ifdef VPAES_CAPABLE
 	    if (VPAES_CAPABLE)
 		{
@@ -1050,6 +1045,7 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 	if (key) do
 		{
+		xctx->stream = NULL;
 		/* key_len is two AES keys */
 #ifdef VPAES_CAPABLE
 		if (VPAES_CAPABLE)
@@ -1105,22 +1101,25 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	{
 	EVP_AES_XTS_CTX *xctx = ctx->cipher_data;
 	if (!xctx->xts.key1 || !xctx->xts.key2)
-		return -1;
+		return 0;
 	if (!out || !in)
-		return -1;
+		return 0;
 #ifdef OPENSSL_FIPS
 	/* Requirement of SP800-38E */
 	if (FIPS_module_mode() && !(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW) &&
-			(len > (1L<<20)*16))
+			(len > (1UL<<20)*16))
 		{
 		EVPerr(EVP_F_AES_XTS_CIPHER, EVP_R_TOO_LARGE);
-		return -1;
+		return 0;
 		}
 #endif
-	if (CRYPTO_xts128_encrypt(&xctx->xts, ctx->iv, in, out, len,
+	if (xctx->stream)
+		(*xctx->stream)(in, out, len,
+				xctx->xts.key1, xctx->xts.key2, ctx->iv);
+	else if (CRYPTO_xts128_encrypt(&xctx->xts, ctx->iv, in, out, len,
 								ctx->encrypt))
-		return -1;
-	return len;
+		return 0;
+	return 1;
 	}
 
 #define aes_xts_cleanup NULL
