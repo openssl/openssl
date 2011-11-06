@@ -34,6 +34,7 @@
 	@e_ident{magic,class,data,version,osabi,abiver,pad}=
 		unpack("a4C*",$elf);
 
+	$!=42;		# signal fipsld to revert to two-step link
 	die "not ELF file" if ($e_ident{magic} ne chr(0177)."ELF");
 
 	my $elf_bits   = $e_ident{class}*32;	# 32 or 64
@@ -377,7 +378,7 @@ $FIPS_text_endX		= $exe->Lookup("FIPS_text_endX");
 if (!$legacy_mode) {
     if (!$FIPS_text_startX || !$FIPS_text_endX) {
 	print STDERR "@ARGV[$#ARGV] is not cross-compiler aware.\n";
-	exit(1);
+	exit(42);	# signal fipsld to revert to two-step link
     }
 
     $FINGERPRINT_ascii_value
