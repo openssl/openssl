@@ -154,6 +154,8 @@ static size_t fips_get_entropy(DRBG_CTX *dctx, unsigned char **pout,
 	{
 	unsigned char *tout, *p;
 	size_t bl = dctx->entropy_blocklen, rv;
+	if (!dctx->get_entropy)
+		return 0;
 	if (dctx->xflags & DRBG_FLAG_TEST || !bl)
 		return dctx->get_entropy(dctx, pout, entropy, min_len, max_len);
 	rv = dctx->get_entropy(dctx, &tout, entropy + bl,
@@ -241,7 +243,7 @@ int FIPS_drbg_instantiate(DRBG_CTX *dctx,
 		goto end;
 		}
 
-	if (dctx->max_nonce > 0)
+	if (dctx->max_nonce > 0 && dctx->get_nonce)
 		{
 		noncelen = dctx->get_nonce(dctx, &nonce,
 					dctx->strength / 2,
