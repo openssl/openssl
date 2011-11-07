@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (c) 2005-2007 The OpenSSL Project.
+# Copyright (c) 2005-2011 The OpenSSL Project.
 #
 # Depending on output file name, the script either embeds fingerprint
 # into libcrypto.so or static application. "Static" refers to static
@@ -127,12 +127,15 @@ lib*|*.dll)	# must be linking a shared lib...
 		"${PREMAIN_C}" \
 		${_WL_PREMAIN} "$@"
 
-	# generate signature...
-	if [ -z "${FIPS_SIG}" ]; then
-		SIG=`"${PREMAIN_DSO}" "${TARGET}"`
-	else
-		SIG=`"${FIPS_SIG}" -dso "${TARGET}"`
+	if [ "x${FIPS_SIG}" != "x" ]; then
+		# embed signature
+		"${FIPS_SIG}" "${TARGET}"
+		[ $? -ne 42 ] && exit $?
 	fi
+
+	# generate signature...
+	SIG=`"${PREMAIN_DSO}" "${TARGET}"`
+
 	/bin/rm -f "${TARGET}"
 	if [ -z "${SIG}" ]; then
 	   echo "unable to collect signature"; exit 1
@@ -172,12 +175,15 @@ lib*|*.dll)	# must be linking a shared lib...
 		"${PREMAIN_C}" \
 		${_WL_PREMAIN} "$@"
 
-	# generate signature...
-	if [ -z "${FIPS_SIG}" ]; then
-		SIG=`"${TARGET}"`
-	else
-		SIG=`"${FIPS_SIG}" -exe "${TARGET}"`
+	if [ "x${FIPS_SIG}" != "x" ]; then
+		# embed signature
+		"${FIPS_SIG}" "${TARGET}"
+		[ $? -ne 42 ] && exit $?
 	fi
+
+	# generate signature...
+	SIG=`"${TARGET}"`
+
 	/bin/rm -f "${TARGET}"
 	if [ -z "${SIG}" ]; then
 	   echo "unable to collect signature"; exit 1
