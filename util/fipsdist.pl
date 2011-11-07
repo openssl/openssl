@@ -76,7 +76,7 @@ while (<STDIN>)
 		}
 	if (/^test\//)
 		{
-		next unless /Makefile/ || /dummytest.c/;
+		next unless /Makefile/ || /dummytest.c/ || /fips_algvs.c/ ;
 		}
 	print "$_\n";
 	}
