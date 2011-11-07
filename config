@@ -277,6 +277,9 @@ case "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}" in
 	    Power*)
 		echo "ppc-apple-darwin${VERSION}"
 		;;
+            x86_64)
+		echo "x86_64-apple-darwin${VERSION}"
+		;;
 	    *)
 		echo "i686-apple-darwin${VERSION}"
 		;;
@@ -547,6 +550,8 @@ case "$GUESSOS" in
 	    fi
 	fi
 	OUT="darwin-ppc-cc" ;;
+  x86_64-*-darwin*) OUT="darwin-x86_64-cc" ;;
+  i386-whatever-darwin) OUT="darwin-i386-cc" ;;
   i?86-apple-darwin*)
 	ISA64=`(sysctl -n hw.optional.x86_64) 2>/dev/null`
 	if [ "$ISA64" = "1" ]; then
@@ -825,6 +830,7 @@ case "$GUESSOS" in
   *-*-qnx6) OUT="QNX6" ;;
   x86-*-android|i?86-*-android) OUT="android-x86" ;;
   armv[7-9]*-*-android) OUT="android-armv7" ;;
+  darwin-whatever-*) OUT=`echo $GUESSOS | sed -e 's/-whatever//'`;;
   *) OUT=`echo $GUESSOS | awk -F- '{print $3}'`;;
 esac
 
