@@ -538,7 +538,7 @@ case "$GUESSOS" in
   ppc-apple-rhapsody) OUT="rhapsody-ppc-cc" ;;
   ppc-apple-darwin*)
 	ISA64=`(sysctl -n hw.optional.64bitops) 2>/dev/null`
-	if [ "$ISA64" = "1" ]; then
+	if [ "$ISA64" = "1" -a -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 64-bit library, then you have to"
 	    echo "         invoke './Configure darwin64-ppc-cc' *manually*."
 	    if [ "$TEST" = "false" -a -t 1 ]; then
@@ -546,10 +546,14 @@ case "$GUESSOS" in
 	      (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	    fi
 	fi
-	OUT="darwin-ppc-cc" ;;
+	if [ "$ISA64" = "1" -a "$KERNEL_BITS" = "64" ]; then
+	    OUT="darwin64-ppc-cc"
+	else
+	    OUT="darwin-ppc-cc"
+	fi ;;
   i?86-apple-darwin*)
 	ISA64=`(sysctl -n hw.optional.x86_64) 2>/dev/null`
-	if [ "$ISA64" = "1" ]; then
+	if [ "$ISA64" = "1" -a -z "$KERNEL_BITS" ]; then
 	    echo "WARNING! If you wish to build 64-bit library, then you have to"
 	    echo "         invoke './Configure darwin64-x86_64-cc' *manually*."
 	    if [ "$TEST" = "false" -a -t 1 ]; then
@@ -557,7 +561,11 @@ case "$GUESSOS" in
 	      (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
 	    fi
 	fi
-	OUT="darwin-i386-cc" ;;
+	if [ "$ISA64" = "1" -a "$KERNEL_BITS" = "64" ]; then
+	    OUT="darwin64-x86_64-cc"
+	else
+	    OUT="darwin-i386-cc"
+	fi ;;
   armv6+7-*-iphoneos)
 	options="$options -arch%20armv6 -arch%20armv7"
 	OUT="iphoneos-cross" ;;
