@@ -906,6 +906,7 @@ EOF
 				}
 			elsif (/^-[^-]/ or /^\+/)
 				{
+				$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
 				$flags.=$_." ";
 				}
 			elsif (/^--prefix=(.*)$/)
