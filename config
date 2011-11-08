@@ -558,6 +558,12 @@ case "$GUESSOS" in
 	    fi
 	fi
 	OUT="darwin-i386-cc" ;;
+  armv6+7-*-iphoneos)
+	options="$options -arch%20armv6 -arch%20armv7"
+	OUT="iphoneos-cross" ;;
+  *-*-iphoneos)
+	options="$options -arch%20${MACHINE}"
+	OUT="iphoneos-cross" ;;
   alpha-*-linux2)
         ISA=`awk '/cpu model/{print$4;exit(0);}' /proc/cpuinfo`
 	case ${ISA:-generic} in
