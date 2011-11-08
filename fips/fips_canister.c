@@ -34,6 +34,7 @@ const void         *FIPS_text_end(void);
 				  defined(__mips__)|| defined(__mips)))	|| \
 	(defined(__linux)     && ((defined(__PPC__) && !defined(__PPC64__)) || \
 				  defined(__arm__) || defined(__arm)))	|| \
+	(defined(__APPLE__) /* verified on all MacOS X & iOS flavors */)|| \
 	(defined(_WIN32)      && defined(_MSC_VER))
 #  define FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE
 # endif
