@@ -119,8 +119,6 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&mov	("esi","edx");
 	&or	("ebp","ecx");		# merge AMD XOP flag
 
-	&bt	("ecx",26);		# check XSAVE bit
-	&jnc	(&label("done"));
 	&bt	("ecx",27);		# check OSXSAVE bit
 	&jnc	(&label("clear_avx"));
 	&xor	("ecx","ecx");
