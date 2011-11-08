@@ -678,7 +678,7 @@ case "$GUESSOS" in
   sun4[uv]*-*-solaris2)
 	OUT="solaris-sparcv9-$CC"
 	ISA64=`(isalist) 2>/dev/null | grep sparcv9`
-	if [ "$ISA64" != "" ]; then
+	if [ "$ISA64" != "" -a "$KERNEL_BITS" = "" ]; then
 	    if [ "$CC" = "cc" -a $CCVER -ge 50 ]; then
 		echo "WARNING! If you wish to build 64-bit library, then you have to"
 		echo "         invoke './Configure solaris64-sparcv9-cc' *manually*."
@@ -708,13 +708,16 @@ case "$GUESSOS" in
 		fi
 	    fi
 	fi
+	if [ "$ISA64" != "" -a "$KERNEL_BITS" = "64" ]; then
+	    OUT="solaris64-sparcv9-$CC"
+	fi
 	;;
   sun4m-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
   sun4d-*-solaris2)	OUT="solaris-sparcv8-$CC" ;;
   sun4*-*-solaris2)	OUT="solaris-sparcv7-$CC" ;;
   *86*-*-solaris2)
 	ISA64=`(isalist) 2>/dev/null | grep amd64`
-	if [ "$ISA64" != "" ]; then
+	if [ "$ISA64" != "" -a ${KERNEL_BITS:-64} -eq 64 ]; then
 	    OUT="solaris64-x86_64-$CC"
 	else
 	    OUT="solaris-x86-$CC"
