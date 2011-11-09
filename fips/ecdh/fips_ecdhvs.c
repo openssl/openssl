@@ -413,6 +413,11 @@ int main(int argc, char **argv)
 			if (group)
 				EC_GROUP_free(group);
 			group = EC_GROUP_new_by_curve_name(nid);
+			if (!group)
+				{
+				fprintf(stderr, "ERROR: unsupported curve %s\n", buf + 1);
+				return 1;
+				}
 			}
 
 		if (strlen(buf) > 6 && !strncmp(buf, "[E", 2))
