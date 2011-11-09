@@ -35,6 +35,7 @@
 #   error "unsupported ARM architecture"
 #  endif
 # endif
+#endif
 
 #ifdef OPENSSL_FIPSCANISTER
 #include <openssl/fipssyms.h>
@@ -47,5 +48,4 @@ extern unsigned int OPENSSL_armcap_P;
 #define ARMV7_TICK      (1<<1)
 #endif
 
-#endif
 #endif
