@@ -133,6 +133,12 @@ void bsaes_cbc_encrypt(const unsigned char *in, unsigned char *out,
 void bsaes_ctr32_encrypt_blocks(const unsigned char *in, unsigned char *out,
 			size_t len, const AES_KEY *key,
 			const unsigned char ivec[16]);
+void bsaes_xts_encrypt(const unsigned char *inp, unsigned char *out,
+			size_t len, const AES_KEY *key1,
+			const AES_KEY *key2, const unsigned char iv[16]);
+void bsaes_xts_decrypt(const unsigned char *inp, unsigned char *out,
+			size_t len, const AES_KEY *key1,
+			const AES_KEY *key2, const unsigned char iv[16]);
 #endif
 #ifdef AES_CTR_ASM
 void AES_ctr32_encrypt(const unsigned char *in, unsigned char *out,
@@ -1047,6 +1053,11 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		{
 		xctx->stream = NULL;
 		/* key_len is two AES keys */
+#ifdef BSAES_CAPABLE
+		if (BSAES_CAPABLE)
+			xctx->stream = enc ? bsaes_xts_encrypt : bsaes_xts_decrypt;
+		else
+#endif
 #ifdef VPAES_CAPABLE
 		if (VPAES_CAPABLE)
 		    {
