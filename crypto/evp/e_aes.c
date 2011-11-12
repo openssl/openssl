@@ -1113,7 +1113,7 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	EVP_AES_XTS_CTX *xctx = ctx->cipher_data;
 	if (!xctx->xts.key1 || !xctx->xts.key2)
 		return 0;
-	if (!out || !in)
+	if (!out || !in || len<AES_BLOCK_SIZE)
 		return 0;
 #ifdef OPENSSL_FIPS
 	/* Requirement of SP800-38E */
