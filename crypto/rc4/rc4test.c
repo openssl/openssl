@@ -121,7 +121,9 @@ int main(int argc, char *argv[])
 	RC4_KEY key;
 	unsigned char obuf[512];
 
+#if !defined(OPENSSL_PIC)
 	OPENSSL_cpuid_setup();
+#endif
 
 	for (i=0; i<6; i++)
 		{
