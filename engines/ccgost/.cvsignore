@@ -4,3 +4,4 @@ libs
 *.flc
 semantic.cache
 *.dll
+*.dylib
