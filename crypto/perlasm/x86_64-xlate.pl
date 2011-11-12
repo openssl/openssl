@@ -519,6 +519,7 @@ my %globals;
 		    elsif ($flavour eq "mingw64") { $self->{value} = ""; }
 		} elsif ($dir =~ /\.comm/) {
 		    $self->{value} = "$dir\t$prefix$line";
+		    $self->{value} =~ s|,([0-9]+),([0-9]+)$|",$1,".log($2)/log(2)|e if ($flavour eq "macosx");
 		}
 		$line = "";
 		return $self;

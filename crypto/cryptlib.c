@@ -125,7 +125,7 @@ static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 	defined(__INTEL__) || \
 	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 
-unsigned int  OPENSSL_ia32cap_P[2];
+extern unsigned int  OPENSSL_ia32cap_P[2];
 unsigned int *OPENSSL_ia32cap_loc(void) { return OPENSSL_ia32cap_P; }
 
 #if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
@@ -164,6 +164,8 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_ia32cap_P[0] = (unsigned int)vec|(1<<10);
     OPENSSL_ia32cap_P[1] = (unsigned int)(vec>>32);
 }
+#else
+unsigned int OPENSSL_ia32cap_P[2];
 #endif
 
 #else

@@ -23,7 +23,7 @@ print<<___;
 	call	OPENSSL_cpuid_setup
 
 .hidden	OPENSSL_ia32cap_P
-.comm	OPENSSL_ia32cap_P,8
+.comm	OPENSSL_ia32cap_P,8,4
 
 .text
 
