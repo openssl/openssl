@@ -1020,7 +1020,6 @@ int test_mod_exp_mont_consttime(BIO *bp, BN_CTX *ctx)
 int test_mod_exp_mont5(BIO *bp, BN_CTX *ctx)
 	{
 	BIGNUM *a,*p,*m,*d,*e;
-	int i;
 
 	BN_MONT_CTX *mont;
 

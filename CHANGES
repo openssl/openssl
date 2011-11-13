@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add DH parameters from RFC5114 including test data to dhtest.
+     [Steve Henson]
+
   *) Update fips_test_suite to support multiple command line options. New
      test to induce all self test errors in sequence and check expected
      failures.
