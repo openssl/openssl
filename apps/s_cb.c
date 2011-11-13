@@ -552,6 +552,9 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 				case 114:
 					str_details2 = " bad_certificate_hash_value";
 					break;
+				case 115:
+					str_details2 = " unknown_psk_identity";
+					break;
 					}
 				}
 			}

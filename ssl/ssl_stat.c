@@ -550,11 +550,6 @@ const char *SSL_alert_desc_string_long(int value)
 	case TLS1_AD_UNKNOWN_PSK_IDENTITY:
 		str="unknown PSK identity";
 		break;
-#ifndef OPENSSL_NO_SRP
-	case TLS1_AD_MISSING_SRP_USERNAME:
-		str="no srp username";
-		break;
-#endif
 	default: str="unknown"; break;
 		}
 	return(str);
