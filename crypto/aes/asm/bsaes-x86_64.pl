@@ -88,8 +88,8 @@
 #
 # November 2011.
 #
-# Add bsaes_xts_[en|de]crypt. Small-block performance is suboptimal,
-# but XTS is meant to be used with larger blocks...
+# Add bsaes_xts_[en|de]crypt. Less-than-80-bytes-block performance is
+# suboptimal, but XTS is meant to be used with larger blocks...
 #
 #						<appro@openssl.org>
 
@@ -108,6 +108,7 @@ open STDOUT,"| $^X $xlate $flavour $output";
 
 my ($inp,$out,$len,$key,$ivp)=("%rdi","%rsi","%rdx","%rcx");
 my @XMM=map("%xmm$_",(15,0..14));	# best on Atom, +10% over (0..15)
+my $ecb=0;	# suppress unreferenced ECB subroutines, spare some space...
 
 {
 my ($key,$rounds,$const)=("%rax","%r10d","%r11");
@@ -743,8 +744,8 @@ ___
 $code.=<<___;
 .text
 
-.extern	AES_encrypt
-.extern	AES_decrypt
+.extern	asm_AES_encrypt
+.extern	asm_AES_decrypt
 
 .type	_bsaes_encrypt8,\@abi-omnipotent
 .align	64
@@ -950,7 +951,7 @@ $code.=<<___;
 ___
 }
 
-if (1 && !$win64) {	# following four functions are unsupported interface
+if (0 && !$win64) {	# following four functions are unsupported interface
 			# used for benchmarking...
 $code.=<<___;
 .globl	bsaes_enc_key_convert
@@ -1056,12 +1057,14 @@ my ($arg1,$arg2,$arg3,$arg4,$arg5,$arg6)=$win64	? ("%rcx","%rdx","%r8","%r9","%r
 						: ("%rdi","%rsi","%rdx","%rcx","%r8","%r9d");
 my ($inp,$out,$len,$key)=("%r12","%r13","%r14","%r15");
 
-if (0) {	# suppress unreferenced ECB subroutines, spare some space...
+if ($ecb) {
 $code.=<<___;
 .globl	bsaes_ecb_encrypt_blocks
 .type	bsaes_ecb_encrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ecb_encrypt_blocks:
+	mov	%rsp, %rax
+.Lecb_enc_prologue:
 	push	%rbp
 	push	%rbx
 	push	%r12
@@ -1213,7 +1216,7 @@ $code.=<<___;
 	lea	($inp), $arg1
 	lea	($out), $arg2
 	lea	($key), $arg3
-	call	AES_encrypt
+	call	asm_AES_encrypt
 	lea	16($inp), $inp
 	lea	16($out), $out
 	dec	$len
@@ -1250,8 +1253,9 @@ $code.=<<___;
 	mov	0x58(%rsp), %r13
 	mov	0x60(%rsp), %r12
 	mov	0x68(%rsp), %rbx
-	mov	0x70(%rsp), %rbp
+	mov	0x70(%rsp), %rax
 	lea	0x78(%rsp), %rsp
+	mov	%rax, %rbp
 .Lecb_enc_epilogue:
 	ret
 .size	bsaes_ecb_encrypt_blocks,.-bsaes_ecb_encrypt_blocks
@@ -1260,6 +1264,8 @@ $code.=<<___;
 .type	bsaes_ecb_decrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ecb_decrypt_blocks:
+	mov	%rsp, %rax
+.Lecb_dec_prologue:
 	push	%rbp
 	push	%rbx
 	push	%r12
@@ -1412,7 +1418,7 @@ $code.=<<___;
 	lea	($inp), $arg1
 	lea	($out), $arg2
 	lea	($key), $arg3
-	call	AES_decrypt
+	call	asm_AES_decrypt
 	lea	16($inp), $inp
 	lea	16($out), $out
 	dec	$len
@@ -1449,15 +1455,16 @@ $code.=<<___;
 	mov	0x58(%rsp), %r13
 	mov	0x60(%rsp), %r12
 	mov	0x68(%rsp), %rbx
-	mov	0x70(%rsp), %rbp
+	mov	0x70(%rsp), %rax
 	lea	0x78(%rsp), %rsp
+	mov	%rax, %rbp
 .Lecb_dec_epilogue:
 	ret
 .size	bsaes_ecb_decrypt_blocks,.-bsaes_ecb_decrypt_blocks
 ___
 }
 $code.=<<___;
-.extern	AES_cbc_encrypt
+.extern	asm_AES_cbc_encrypt
 .globl	bsaes_cbc_encrypt
 .type	bsaes_cbc_encrypt,\@abi-omnipotent
 .align	16
@@ -1468,10 +1475,12 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	cmp	\$0,$arg6
-	jne	AES_cbc_encrypt
+	jne	asm_AES_cbc_encrypt
 	cmp	\$128,$arg3
-	jb	AES_cbc_encrypt
+	jb	asm_AES_cbc_encrypt
 
+	mov	%rsp, %rax
+.Lcbc_dec_prologue:
 	push	%rbp
 	push	%rbx
 	push	%r12
@@ -1699,7 +1708,7 @@ $code.=<<___;
 	lea	($inp), $arg1
 	lea	0x20(%rbp), $arg2	# buffer output
 	lea	($key), $arg3
-	call	AES_decrypt		# doesn't touch %xmm
+	call	asm_AES_decrypt		# doesn't touch %xmm
 	pxor	0x20(%rbp), @XMM[15]	# ^= IV
 	movdqu	@XMM[15], ($out)	# write output
 	movdqa	@XMM[0], @XMM[15]	# IV
@@ -1736,8 +1745,9 @@ $code.=<<___;
 	mov	0x58(%rsp), %r13
 	mov	0x60(%rsp), %r12
 	mov	0x68(%rsp), %rbx
-	mov	0x70(%rsp), %rbp
+	mov	0x70(%rsp), %rax
 	lea	0x78(%rsp), %rsp
+	mov	%rax, %rbp
 .Lcbc_dec_epilogue:
 	ret
 .size	bsaes_cbc_encrypt,.-bsaes_cbc_encrypt
@@ -1746,6 +1756,8 @@ $code.=<<___;
 .type	bsaes_ctr32_encrypt_blocks,\@abi-omnipotent
 .align	16
 bsaes_ctr32_encrypt_blocks:
+	mov	%rsp, %rax
+.Lctr_enc_prologue:
 	push	%rbp
 	push	%rbx
 	push	%r12
@@ -1919,7 +1931,7 @@ $code.=<<___;
 	lea	0x20(%rbp), $arg1
 	lea	0x30(%rbp), $arg2
 	lea	($key), $arg3
-	call	AES_encrypt
+	call	asm_AES_encrypt
 	movdqu	($inp), @XMM[1]
 	lea	16($inp), $inp
 	mov	0x2c(%rbp), %eax	# load 32-bit counter
@@ -1964,8 +1976,9 @@ $code.=<<___;
 	mov	0x58(%rsp), %r13
 	mov	0x60(%rsp), %r12
 	mov	0x68(%rsp), %rbx
-	mov	0x70(%rsp), %rbp
+	mov	0x70(%rsp), %rax
 	lea	0x78(%rsp), %rsp
+	mov	%rax, %rbp
 .Lctr_enc_epilogue:
 	ret
 .size	bsaes_ctr32_encrypt_blocks,.-bsaes_ctr32_encrypt_blocks
@@ -1981,6 +1994,8 @@ $code.=<<___;
 .type	bsaes_xts_encrypt,\@abi-omnipotent
 .align	16
 bsaes_xts_encrypt:
+	mov	%rsp, %rax
+.Lxts_enc_prologue:
 	push	%rbp
 	push	%rbx
 	push	%r12
@@ -2015,7 +2030,7 @@ $code.=<<___;
 	lea	($arg6), $arg1
 	lea	0x20(%rbp), $arg2
 	lea	($arg5), $arg3
-	call	AES_encrypt		# generate initial tweak
+	call	asm_AES_encrypt		# generate initial tweak
 
 	mov	240($key), %eax		# rounds
 	mov	$len, %rbx		# backup $len
@@ -2281,7 +2296,7 @@ $code.=<<___;
 	lea	0x20(%rbp), $arg1
 	lea	0x20(%rbp), $arg2
 	lea	($key), $arg3
-	call	AES_encrypt		# doesn't touch %xmm
+	call	asm_AES_encrypt		# doesn't touch %xmm
 	pxor	0x20(%rbp), @XMM[0]	# ^= tweak[]
 	#pxor	@XMM[8], @XMM[0]
 	#lea	0x80(%rsp), %rax	# pass key schedule
@@ -2314,7 +2329,7 @@ $code.=<<___;
 	lea	0x20(%rbp), $arg2
 	movdqa	@XMM[0], 0x20(%rbp)
 	lea	($key), $arg3
-	call	AES_encrypt		# doesn't touch %xmm
+	call	asm_AES_encrypt		# doesn't touch %xmm
 	pxor	0x20(%rbp), @XMM[7]
 	movdqu	@XMM[7], -16($out)
 
@@ -2349,8 +2364,9 @@ $code.=<<___;
 	mov	0x58(%rsp), %r13
 	mov	0x60(%rsp), %r12
 	mov	0x68(%rsp), %rbx
-	mov	0x70(%rsp), %rbp
+	mov	0x70(%rsp), %rax
 	lea	0x78(%rsp), %rsp
+	mov	%rax, %rbp
 .Lxts_enc_epilogue:
 	ret
 .size	bsaes_xts_encrypt,.-bsaes_xts_encrypt
@@ -2359,6 +2375,8 @@ $code.=<<___;
 .type	bsaes_xts_decrypt,\@abi-omnipotent
 .align	16
 bsaes_xts_decrypt:
+	mov	%rsp, %rax
+.Lxts_dec_prologue:
 	push	%rbp
 	push	%rbx
 	push	%r12
@@ -2393,7 +2411,7 @@ $code.=<<___;
 	lea	($arg6), $arg1
 	lea	0x20(%rbp), $arg2
 	lea	($arg5), $arg3
-	call	AES_encrypt		# generate initial tweak
+	call	asm_AES_encrypt		# generate initial tweak
 
 	mov	240($key), %eax		# rounds
 	mov	$len, %rbx		# backup $len
@@ -2666,7 +2684,7 @@ $code.=<<___;
 	lea	0x20(%rbp), $arg1
 	lea	0x20(%rbp), $arg2
 	lea	($key), $arg3
-	call	AES_decrypt		# doesn't touch %xmm
+	call	asm_AES_decrypt		# doesn't touch %xmm
 	pxor	0x20(%rbp), @XMM[0]	# ^= tweak[]
 	#pxor	@XMM[8], @XMM[0]
 	#lea	0x80(%rsp), %rax	# pass key schedule
@@ -2697,7 +2715,7 @@ $code.=<<___;
 	lea	0x20(%rbp), $arg2
 	movdqa	@XMM[0], 0x20(%rbp)
 	lea	($key), $arg3
-	call	AES_decrypt		# doesn't touch %xmm
+	call	asm_AES_decrypt		# doesn't touch %xmm
 	pxor	0x20(%rbp), @XMM[7]
 	mov	$out, %rdx
 	movdqu	@XMM[7], ($out)
@@ -2718,7 +2736,7 @@ $code.=<<___;
 	lea	0x20(%rbp), $arg2
 	movdqa	@XMM[0], 0x20(%rbp)
 	lea	($key), $arg3
-	call	AES_decrypt		# doesn't touch %xmm
+	call	asm_AES_decrypt		# doesn't touch %xmm
 	pxor	0x20(%rbp), @XMM[6]
 	movdqu	@XMM[6], ($out)
 
@@ -2753,8 +2771,9 @@ $code.=<<___;
 	mov	0x58(%rsp), %r13
 	mov	0x60(%rsp), %r12
 	mov	0x68(%rsp), %rbx
-	mov	0x70(%rsp), %rbp
+	mov	0x70(%rsp), %rax
 	lea	0x78(%rsp), %rsp
+	mov	%rax, %rbp
 .Lxts_dec_epilogue:
 	ret
 .size	bsaes_xts_decrypt,.-bsaes_xts_decrypt
@@ -2814,6 +2833,168 @@ _bsaes_const:
 .align	64
 .size	_bsaes_const,.-_bsaes_const
 ___
+
+# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
+#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
+if ($win64) {
+$rec="%rcx";
+$frame="%rdx";
+$context="%r8";
+$disp="%r9";
+
+$code.=<<___;
+.extern	__imp_RtlVirtualUnwind
+.type	se_handler,\@abi-omnipotent
+.align	16
+se_handler:
+	push	%rsi
+	push	%rdi
+	push	%rbx
+	push	%rbp
+	push	%r12
+	push	%r13
+	push	%r14
+	push	%r15
+	pushfq
+	sub	\$64,%rsp
+
+	mov	120($context),%rax	# pull context->Rax
+	mov	248($context),%rbx	# pull context->Rip
+
+	mov	8($disp),%rsi		# disp->ImageBase
+	mov	56($disp),%r11		# disp->HandlerData
+
+	mov	0(%r11),%r10d		# HandlerData[0]
+	lea	(%rsi,%r10),%r10	# prologue label
+	cmp	%r10,%rbx		# context->Rip<prologue label
+	jb	.Lin_prologue
+
+	mov	152($context),%rax	# pull context->Rsp
+
+	mov	4(%r11),%r10d		# HandlerData[1]
+	lea	(%rsi,%r10),%r10	# epilogue label
+	cmp	%r10,%rbx		# context->Rip>=epilogue label
+	jae	.Lin_prologue
+
+	mov	160($context),%rax	# pull context->Rbp
+
+	lea	0x40(%rax),%rsi		# %xmm save area
+	lea	512($context),%rdi	# &context.Xmm6
+	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
+	.long	0xa548f3fc		# cld; rep movsq
+	lea	0xa0(%rax),%rax		# adjust stack pointer
+
+	mov	0x70(%rax),%rbp
+	mov	0x68(%rax),%rbx
+	mov	0x60(%rax),%r12
+	mov	0x58(%rax),%r13
+	mov	0x50(%rax),%r14
+	mov	0x48(%rax),%r15
+	lea	0x78(%rax),%rax		# adjust stack pointer
+	mov	%rbx,144($context)	# restore context->Rbx
+	mov	%rbp,160($context)	# restore context->Rbp
+	mov	%r12,216($context)	# restore context->R12
+	mov	%r13,224($context)	# restore context->R13
+	mov	%r14,232($context)	# restore context->R14
+	mov	%r15,240($context)	# restore context->R15
+
+.Lin_prologue:
+	mov	%rax,152($context)	# restore context->Rsp
+
+	mov	40($disp),%rdi		# disp->ContextRecord
+	mov	$context,%rsi		# context
+	mov	\$`1232/8`,%ecx		# sizeof(CONTEXT)
+	.long	0xa548f3fc		# cld; rep movsq
+
+	mov	$disp,%rsi
+	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
+	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
+	mov	0(%rsi),%r8		# arg3, disp->ControlPc
+	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
+	mov	40(%rsi),%r10		# disp->ContextRecord
+	lea	56(%rsi),%r11		# &disp->HandlerData
+	lea	24(%rsi),%r12		# &disp->EstablisherFrame
+	mov	%r10,32(%rsp)		# arg5
+	mov	%r11,40(%rsp)		# arg6
+	mov	%r12,48(%rsp)		# arg7
+	mov	%rcx,56(%rsp)		# arg8, (NULL)
+	call	*__imp_RtlVirtualUnwind(%rip)
+
+	mov	\$1,%eax		# ExceptionContinueSearch
+	add	\$64,%rsp
+	popfq
+	pop	%r15
+	pop	%r14
+	pop	%r13
+	pop	%r12
+	pop	%rbp
+	pop	%rbx
+	pop	%rdi
+	pop	%rsi
+	ret
+.size	se_handler,.-se_handler
+
+.section	.pdata
+.align	4
+___
+$code.=<<___ if ($ecb);
+	.rva	.Lecb_enc_prologue
+	.rva	.Lecb_enc_epilogue
+	.rva	.Lecb_enc_info
+
+	.rva	.Lecb_dec_prologue
+	.rva	.Lecb_dec_epilogue
+	.rva	.Lecb_dec_info
+___
+$code.=<<___;
+	.rva	.Lcbc_dec_prologue
+	.rva	.Lcbc_dec_epilogue
+	.rva	.Lcbc_dec_info
+
+	.rva	.Lctr_enc_prologue
+	.rva	.Lctr_enc_epilogue
+	.rva	.Lctr_enc_info
+
+	.rva	.Lxts_enc_prologue
+	.rva	.Lxts_enc_epilogue
+	.rva	.Lxts_enc_info
+
+	.rva	.Lxts_dec_prologue
+	.rva	.Lxts_dec_epilogue
+	.rva	.Lxts_dec_info
+
+.section	.xdata
+.align	8
+___
+$code.=<<___ if ($ecb);
+.Lecb_enc_info:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lecb_enc_body,.Lecb_enc_epilogue	# HandlerData[]
+.Lecb_dec_info:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lecb_dec_body,.Lecb_dec_epilogue	# HandlerData[]
+___
+$code.=<<___;
+.Lcbc_dec_info:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lcbc_dec_body,.Lcbc_dec_epilogue	# HandlerData[]
+.Lctr_enc_info:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lctr_enc_body,.Lctr_enc_epilogue	# HandlerData[]
+.Lxts_enc_info:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lxts_enc_body,.Lxts_enc_epilogue	# HandlerData[]
+.Lxts_dec_info:
+	.byte	9,0,0,0
+	.rva	se_handler
+	.rva	.Lxts_dec_body,.Lxts_dec_epilogue	# HandlerData[]
+___
+}
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 

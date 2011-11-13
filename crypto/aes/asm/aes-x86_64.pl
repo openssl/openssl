@@ -588,6 +588,9 @@ $code.=<<___;
 .globl	AES_encrypt
 .type	AES_encrypt,\@function,3
 .align	16
+.globl	asm_AES_encrypt
+.hidden	asm_AES_encrypt
+asm_AES_encrypt:
 AES_encrypt:
 	push	%rbx
 	push	%rbp
@@ -1184,6 +1187,9 @@ $code.=<<___;
 .globl	AES_decrypt
 .type	AES_decrypt,\@function,3
 .align	16
+.globl	asm_AES_decrypt
+.hidden	asm_AES_decrypt
+asm_AES_decrypt:
 AES_decrypt:
 	push	%rbx
 	push	%rbp
@@ -1644,6 +1650,9 @@ $code.=<<___;
 .type	AES_cbc_encrypt,\@function,6
 .align	16
 .extern	OPENSSL_ia32cap_P
+.globl	asm_AES_cbc_encrypt
+.hidden	asm_AES_cbc_encrypt
+asm_AES_cbc_encrypt:
 AES_cbc_encrypt:
 	cmp	\$0,%rdx	# check length
 	je	.Lcbc_epilogue
