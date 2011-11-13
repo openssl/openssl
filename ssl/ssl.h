@@ -917,9 +917,28 @@ struct ssl_ctx_st
 	int (*tlsext_status_cb)(SSL *ssl, void *arg);
 	void *tlsext_status_arg;
 
+# ifndef OPENSSL_NO_NEXTPROTONEG
+	/* Next protocol negotiation information */
+	/* (for experimental NPN extension). */
+
+	/* For a server, this contains a callback function by which the set of
+	 * advertised protocols can be provided. */
+	int (*next_protos_advertised_cb)(SSL *s, const unsigned char **buf,
+			                 unsigned int *len, void *arg);
+	void *next_protos_advertised_cb_arg;
+	/* For a client, this contains a callback function that selects the
+	 * next protocol from the list provided by the server. */
+	int (*next_proto_select_cb)(SSL *s, unsigned char **out,
+				    unsigned char *outlen,
+				    const unsigned char *in,
+				    unsigned int inlen,
+				    void *arg);
+	void *next_proto_select_cb_arg;
+
 	/* draft-rescorla-tls-opaque-prf-input-00.txt information */
 	int (*tlsext_opaque_prf_input_callback)(SSL *, void *peerinput, size_t len, void *arg);
 	void *tlsext_opaque_prf_input_callback_arg;
+# endif
 #endif
 
 #ifndef OPENSSL_NO_PSK
@@ -996,6 +1015,32 @@ int SSL_CTX_set_client_cert_engine(SSL_CTX *ctx, ENGINE *e);
 #endif
 void SSL_CTX_set_cookie_generate_cb(SSL_CTX *ctx, int (*app_gen_cookie_cb)(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len));
 void SSL_CTX_set_cookie_verify_cb(SSL_CTX *ctx, int (*app_verify_cookie_cb)(SSL *ssl, unsigned char *cookie, unsigned int cookie_len));
+#ifndef OPENSSL_NO_NEXTPROTONEG
+void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s,
+					   int (*cb) (SSL *ssl,
+						      const unsigned char **out,
+						      unsigned int *outlen,
+						      void *arg),
+					   void *arg);
+void SSL_CTX_set_next_proto_select_cb(SSL_CTX *s,
+				      int (*cb) (SSL *ssl,
+						 unsigned char **out,
+						 unsigned char *outlen,
+						 const unsigned char *in,
+						 unsigned int inlen,
+						 void *arg),
+				      void *arg);
+
+int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
+			  const unsigned char *in, unsigned int inlen,
+			  const unsigned char *client, unsigned int client_len);
+void SSL_get0_next_proto_negotiated(const SSL *s,
+				    const unsigned char **data, unsigned *len);
+
+#define OPENSSL_NPN_UNSUPPORTED	0
+#define OPENSSL_NPN_NEGOTIATED	1
+#define OPENSSL_NPN_NO_OVERLAP	2
+#endif
 
 #ifndef OPENSSL_NO_PSK
 /* the maximum length of the buffer given to callbacks containing the
@@ -1260,6 +1305,19 @@ struct ssl_st
 	void *tls_session_secret_cb_arg;
 
 	SSL_CTX * initial_ctx; /* initial ctx, used to store sessions */
+
+#ifndef OPENSSL_NO_NEXTPROTONEG
+	/* Next protocol negotiation. For the client, this is the protocol that
+	 * we sent in NextProtocol and is set when handling ServerHello
+	 * extensions.
+	 *
+	 * For a server, this is the client's selected_protocol from
+	 * NextProtocol and is set when handling the NextProtocol message,
+	 * before the Finished message. */
+	unsigned char *next_proto_negotiated;
+	unsigned char next_proto_negotiated_len;
+#endif
+
 #define session_ctx initial_ctx
 #else
 #define session_ctx ctx
@@ -2046,6 +2104,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL3_GET_KEY_EXCHANGE			 141
 #define SSL_F_SSL3_GET_MESSAGE				 142
 #define SSL_F_SSL3_GET_NEW_SESSION_TICKET		 283
+#define SSL_F_SSL3_GET_NEXT_PROTO			 305
 #define SSL_F_SSL3_GET_RECORD				 143
 #define SSL_F_SSL3_GET_SERVER_CERTIFICATE		 144
 #define SSL_F_SSL3_GET_SERVER_DONE			 145
@@ -2250,6 +2309,8 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_EXCESSIVE_MESSAGE_SIZE			 152
 #define SSL_R_EXTRA_DATA_IN_MESSAGE			 153
 #define SSL_R_GOT_A_FIN_BEFORE_A_CCS			 154
+#define SSL_R_GOT_NEXT_PROTO_BEFORE_A_CCS		 355
+#define SSL_R_GOT_NEXT_PROTO_WITHOUT_EXTENSION		 356
 #define SSL_R_HTTPS_PROXY_REQUEST			 155
 #define SSL_R_HTTP_REQUEST				 156
 #define SSL_R_ILLEGAL_PADDING				 283
