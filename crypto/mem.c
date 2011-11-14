@@ -185,9 +185,9 @@ int CRYPTO_set_mem_debug_functions(void (*m)(void *,int,const char *,int,int),
 				   void (*so)(long),
 				   long (*go)(void))
 	{
-	OPENSSL_init();
 	if (!allow_customize_debug)
 		return 0;
+	OPENSSL_init();
 	malloc_debug_func=m;
 	realloc_debug_func=r;
 	free_debug_func=f;
