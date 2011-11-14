@@ -289,7 +289,8 @@ void *DSA_get_ex_data(DSA *d, int idx)
 DH *DSA_dup_DH(const DSA *r)
 	{
 	/* DSA has p, q, g, optional pub_key, optional priv_key.
-	 * DH has p, optional length, g, optional pub_key, optional priv_key.
+	 * DH has p, optional length, g, optional pub_key, optional priv_key,
+	 * optional q.
 	 */ 
 
 	DH *ret = NULL;
@@ -303,7 +304,11 @@ DH *DSA_dup_DH(const DSA *r)
 		if ((ret->p = BN_dup(r->p)) == NULL)
 			goto err;
 	if (r->q != NULL)
+		{
 		ret->length = BN_num_bits(r->q);
+		if ((ret->q = BN_dup(r->q)) == NULL)
+			goto err;
+		}
 	if (r->g != NULL)
 		if ((ret->g = BN_dup(r->g)) == NULL)
 			goto err;
