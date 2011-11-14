@@ -171,6 +171,7 @@ void OpenSSL_add_all_ciphers(void)
 	EVP_add_cipher(EVP_aes_128_ofb());
 	EVP_add_cipher(EVP_aes_128_ctr());
 	EVP_add_cipher(EVP_aes_128_gcm());
+	EVP_add_cipher(EVP_aes_128_xts());
 	EVP_add_cipher_alias(SN_aes_128_cbc,"AES128");
 	EVP_add_cipher_alias(SN_aes_128_cbc,"aes128");
 	EVP_add_cipher(EVP_aes_192_ecb());
@@ -191,6 +192,7 @@ void OpenSSL_add_all_ciphers(void)
 	EVP_add_cipher(EVP_aes_256_ofb());
 	EVP_add_cipher(EVP_aes_256_ctr());
 	EVP_add_cipher(EVP_aes_256_gcm());
+	EVP_add_cipher(EVP_aes_256_xts());
 	EVP_add_cipher_alias(SN_aes_256_cbc,"AES256");
 	EVP_add_cipher_alias(SN_aes_256_cbc,"aes256");
 #if !defined(OPENSSL_NO_SHA) && !defined(OPENSSL_NO_SHA1)
