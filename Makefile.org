@@ -99,6 +99,8 @@ SHA1_ASM_OBJ=
 RMD160_ASM_OBJ= 
 WP_ASM_OBJ=
 CMLL_ENC=
+MODES_ASM_OBJ=
+ENGINES_ASM_OBJ=
 PERLASM_SCHEME=
 
 # KRB5 stuff
@@ -228,6 +230,8 @@ BUILDENV=	PLATFORM='$(PLATFORM)' PROCESSOR='$(PROCESSOR)' \
 		MD5_ASM_OBJ='$(MD5_ASM_OBJ)'			\
 		RMD160_ASM_OBJ='$(RMD160_ASM_OBJ)'		\
 		WP_ASM_OBJ='$(WP_ASM_OBJ)'			\
+		MODES_ASM_OBJ='$(MODES_ASM_OBJ)'		\
+		ENGINES_ASM_OBJ='$(ENGINES_ASM_OBJ)'		\
 		PERLASM_SCHEME='$(PERLASM_SCHEME)'		\
 		FIPSLIBDIR='${FIPSLIBDIR}'			\
 		FIPSDIR='${FIPSDIR}'				\
@@ -395,7 +399,7 @@ Makefile: Makefile.org Configure config
 	@false
 
 libclean:
-	rm -f *.map *.so *.so.* *.dll engines/*.so engines/*.dll *.a engines/*.a */lib */*/lib
+	rm -f *.map *.so *.so.* *.dylib *.dll engines/*.so engines/*.dll engines/*.dylib *.a engines/*.a */lib */*/lib
 
 clean:	libclean
 	rm -f shlib/*.o *.o core a.out fluff rehash.time testlog make.log cctest cctest.c
@@ -547,7 +551,7 @@ install_sw:
 	chmod 644 $(INSTALL_PREFIX)$(INSTALLTOP)/include/openssl/$$i ); \
 	done;
 	@set -e; target=install; $(RECURSIVE_BUILD_CMD)
-	@set -e; for i in $(LIBS) ;\
+	@set -e; liblist="$(LIBS)"; for i in $$liblist ;\
 	do \
 		if [ -f "$$i" ]; then \
 		(       echo installing $$i; \
