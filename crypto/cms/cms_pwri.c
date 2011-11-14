@@ -239,21 +239,22 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
 		}
 	tmp = OPENSSL_malloc(inlen);
 	/* setup IV by decrypting last two blocks */
-	EVP_DecryptUpdate(ctx, tmp + inlen - 2 * blocklen, &outl,
-				in  + inlen - 2 * blocklen, blocklen * 2);
+	if (!EVP_DecryptUpdate(ctx, tmp + inlen - 2 * blocklen, &outl,
+			       in  + inlen - 2 * blocklen, blocklen * 2)
 	/* Do a decrypt of last decrypted block to set IV to correct value
 	 * output it to start of buffer so we don't corrupt decrypted block
 	 * this works because buffer is at least two block lengths long.
 	 */
-	EVP_DecryptUpdate(ctx, tmp, &outl,
-				tmp  + inlen - blocklen, blocklen);
+	    || !EVP_DecryptUpdate(ctx, tmp, &outl,
+				  tmp  + inlen - blocklen, blocklen)
 	/* Can now decrypt first n - 1 blocks */
-	EVP_DecryptUpdate(ctx, tmp, &outl, in, inlen - blocklen);
+	    || !EVP_DecryptUpdate(ctx, tmp, &outl, in, inlen - blocklen)
 
 	/* Reset IV to original value */
-	EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, NULL);
+	    || !EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, NULL)
 	/* Decrypt again */
-	EVP_DecryptUpdate(ctx, tmp, &outl, tmp, inlen);
+	    || !EVP_DecryptUpdate(ctx, tmp, &outl, tmp, inlen))
+		goto err;
 	/* Check check bytes */
 	if (((tmp[1] ^ tmp[4]) & (tmp[2] ^ tmp[5]) & (tmp[3] ^ tmp[6])) != 0xff)
 		{
@@ -308,8 +309,9 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
 		if (olen > inlen + 4)
 			RAND_pseudo_bytes(out + 4 + inlen, olen - 4 - inlen);
 		/* Encrypt twice */
-		EVP_EncryptUpdate(ctx, out, &dummy, out, olen);
-		EVP_EncryptUpdate(ctx, out, &dummy, out, olen);
+		if (!EVP_EncryptUpdate(ctx, out, &dummy, out, olen)
+		    || !EVP_EncryptUpdate(ctx, out, &dummy, out, olen))
+			return 0;
 		}
 
 	*outlen = olen;

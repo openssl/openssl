@@ -248,14 +248,14 @@ unsigned long X509_NAME_hash_old(X509_NAME *x)
 	i2d_X509_NAME(x,NULL);
 	EVP_MD_CTX_init(&md_ctx);
 	EVP_MD_CTX_set_flags(&md_ctx, EVP_MD_CTX_FLAG_NON_FIPS_ALLOW);
-	EVP_DigestInit_ex(&md_ctx, EVP_md5(), NULL);
-	EVP_DigestUpdate(&md_ctx, x->bytes->data, x->bytes->length);
-	EVP_DigestFinal_ex(&md_ctx,md,NULL);
+	if (EVP_DigestInit_ex(&md_ctx, EVP_md5(), NULL)
+	    && EVP_DigestUpdate(&md_ctx, x->bytes->data, x->bytes->length)
+	    && EVP_DigestFinal_ex(&md_ctx,md,NULL))
+		ret=(((unsigned long)md[0]     )|((unsigned long)md[1]<<8L)|
+		     ((unsigned long)md[2]<<16L)|((unsigned long)md[3]<<24L)
+		     )&0xffffffffL;
 	EVP_MD_CTX_cleanup(&md_ctx);
 
-	ret=(	((unsigned long)md[0]     )|((unsigned long)md[1]<<8L)|
-		((unsigned long)md[2]<<16L)|((unsigned long)md[3]<<24L)
-		)&0xffffffffL;
 	return(ret);
 	}
 #endif

@@ -618,7 +618,8 @@ static int create_digest(BIO *input, char *digest, const EVP_MD *md,
 			{
 			EVP_DigestUpdate(&md_ctx, buffer, length);
 			}
-		EVP_DigestFinal(&md_ctx, *md_value, NULL);
+		if (!EVP_DigestFinal(&md_ctx, *md_value, NULL))
+			return 0;
 		}
 	else
 		{

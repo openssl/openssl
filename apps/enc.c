@@ -549,9 +549,13 @@ bad:
 				sptr = salt;
 			}
 
-			EVP_BytesToKey(cipher,dgst,sptr,
-				(unsigned char *)str,
-				strlen(str),1,key,iv);
+			if (!EVP_BytesToKey(cipher,dgst,sptr,
+					    (unsigned char *)str,
+					    strlen(str),1,key,iv))
+				{
+				BIO_printf(bio_err, "EVP_BytesToKey failed\n");
+				goto end;
+				}
 			/* zero the complete buffer or the string
 			 * passed from the command line
 			 * bug picked up by

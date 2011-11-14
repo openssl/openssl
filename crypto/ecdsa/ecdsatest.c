@@ -196,9 +196,10 @@ int x9_62_test_internal(BIO *out, int nid, const char *r_in, const char *s_in)
 
 	EVP_MD_CTX_init(&md_ctx);
 	/* get the message digest */
-	EVP_DigestInit(&md_ctx, EVP_ecdsa());
-	EVP_DigestUpdate(&md_ctx, (const void*)message, 3);
-	EVP_DigestFinal(&md_ctx, digest, &dgst_len);
+	if (!EVP_DigestInit(&md_ctx, EVP_ecdsa())
+	    || !EVP_DigestUpdate(&md_ctx, (const void*)message, 3)
+	    || !EVP_DigestFinal(&md_ctx, digest, &dgst_len))
+		goto x962_int_err;
 
 	BIO_printf(out, "testing %s: ", OBJ_nid2sn(nid));
 	/* create the key */

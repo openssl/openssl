@@ -55,7 +55,7 @@ the IV.
 
 =head1 RETURN VALUES
 
-EVP_BytesToKey() returns the size of the derived key in bytes.
+EVP_BytesToKey() returns the size of the derived key in bytes, or 0 on error.
 
 =head1 SEE ALSO
 
