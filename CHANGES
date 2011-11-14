@@ -4,6 +4,12 @@
 
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
+  *) Add Next Protocol Negotiation,
+     http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-00. Can be
+     disabled with a no-npn flag to config or Configure. Code donated
+     by Google.
+     [Adam Langley <agl@google.com> and Ben Laurie]
+
   *) Add optional 64-bit optimized implementations of elliptic curves NIST-P224,
      NIST-P256, NIST-P521, with constant-time single point multiplication on
      typical inputs. Compiler support for the nonstandard type __uint128_t is
