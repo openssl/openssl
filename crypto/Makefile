@@ -69,14 +69,13 @@ applink.o:	$(TOP)/ms/applink.c
 uplink.o:	$(TOP)/ms/uplink.c applink.o
 	$(CC) $(CFLAGS) -c -o $@ $(TOP)/ms/uplink.c
 
-uplink-cof.s:	$(TOP)/ms/uplink.pl
-	$(PERL) $(TOP)/ms/uplink.pl coff > $@
+uplink-x86.s:	$(TOP)/ms/uplink-x86.pl
+	$(PERL) $(TOP)/ms/uplink-x64.pl $(PERLASM_SCHEME) > $@
 
-x86_64cpuid.s: x86_64cpuid.pl
-	$(PERL) x86_64cpuid.pl $(PERLASM_SCHEME) > $@
-ia64cpuid.s: ia64cpuid.S
-	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
+x86_64cpuid.s: x86_64cpuid.pl;	$(PERL) x86_64cpuid.pl $(PERLASM_SCHEME) > $@
+ia64cpuid.s: ia64cpuid.S;	$(CC) $(CFLAGS) -E ia64cpuid.S > $@
 ppccpuid.s:	ppccpuid.pl;	$(PERL) ppccpuid.pl $(PERLASM_SCHEME) $@
+pariscid.s:	pariscid.pl;	$(PERL) pariscid.pl $(PERLASM_SCHEME) $@
 alphacpuid.s:	alphacpuid.pl
 	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
 

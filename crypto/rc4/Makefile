@@ -52,8 +52,8 @@ rc4-md5-x86_64.s:	asm/rc4-md5-x86_64.pl
 rc4-ia64.S: asm/rc4-ia64.pl
 	$(PERL) asm/rc4-ia64.pl $(CFLAGS) > $@
 
-rc4-s390x.s:	asm/rc4-s390x.pl
-	$(PERL) asm/rc4-s390x.pl > $@
+rc4-parisc.s:	asm/rc4-parisc.pl
+	$(PERL) asm/rc4-parisc.pl $(PERLASM_SCHEME) $@
 
 rc4-ia64.s: rc4-ia64.S
 	@case `awk '/^#define RC4_INT/{print$$NF}' $(TOP)/include/openssl/opensslconf.h` in \
@@ -61,6 +61,9 @@ rc4-ia64.s: rc4-ia64.S
 	char)	set -x; $(CC) $(CFLAGS) -DSZ=1 -E rc4-ia64.S > $@ ;; \
 	*)	exit 1 ;; \
 	esac
+
+# GNU make "catch all"
+rc4-%.s:	asm/rc4-%.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO

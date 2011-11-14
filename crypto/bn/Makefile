@@ -66,6 +66,8 @@ co-586.s:	asm/co-586.pl ../perlasm/x86asm.pl
 	$(PERL) asm/co-586.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 x86-mont.s:	asm/x86-mont.pl ../perlasm/x86asm.pl
 	$(PERL) asm/x86-mont.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
+x86-gf2m.s:	asm/x86-gf2m.pl ../perlasm/x86asm.pl
+	$(PERL) asm/x86-gf2m.pl $(PERLASM_SCHEME) $(CFLAGS) $(PROCESSOR) > $@
 
 sparcv8.o:	asm/sparcv8.S
 	$(CC) $(CFLAGS) -c asm/sparcv8.S
@@ -82,18 +84,31 @@ bn-mips3.o:	asm/mips3.s
 		as -$$ABI -O -o $@ asm/mips3.s; \
 	else	$(CC) -c $(CFLAGS) -o $@ asm/mips3.s; fi
 
+bn-mips.s:	asm/mips.pl
+	$(PERL) asm/mips.pl $(PERLASM_SCHEME) $@
+mips-mont.s:	asm/mips-mont.pl
+	$(PERL)	asm/mips-mont.pl $(PERLASM_SCHEME) $@
+
 bn-s390x.o:	asm/s390x.S
 	$(CC) $(CFLAGS) -c -o $@ asm/s390x.S
+s390x-gf2m.s:	asm/s390x-gf2m.pl
+	$(PERL) asm/s390x-gf2m.pl $(PERLASM_SCHEME) $@
 
 x86_64-gcc.o:	asm/x86_64-gcc.c
 	$(CC) $(CFLAGS) -c -o $@ asm/x86_64-gcc.c
 x86_64-mont.s:	asm/x86_64-mont.pl
 	$(PERL) asm/x86_64-mont.pl $(PERLASM_SCHEME) > $@
+x86_64-mont5.s:	asm/x86_64-mont5.pl
+	$(PERL) asm/x86_64-mont5.pl $(PERLASM_SCHEME) > $@
+x86_64-gf2m.s:	asm/x86_64-gf2m.pl
+	$(PERL) asm/x86_64-gf2m.pl $(PERLASM_SCHEME) > $@
 modexp512-x86_64.s:	asm/modexp512-x86_64.pl
 	$(PERL) asm/modexp512-x86_64.pl $(PERLASM_SCHEME) > $@
 
 bn-ia64.s:	asm/ia64.S
 	$(CC) $(CFLAGS) -E asm/ia64.S > $@
+ia64-mont.s:	asm/ia64-mont.pl
+	$(PERL) asm/ia64-mont.pl $@ $(CFLAGS)
 
 # GNU assembler fails to compile PA-RISC2 modules, insist on calling
 # vendor assembler...
@@ -101,16 +116,22 @@ pa-risc2W.o: asm/pa-risc2W.s
 	/usr/ccs/bin/as -o pa-risc2W.o asm/pa-risc2W.s
 pa-risc2.o: asm/pa-risc2.s
 	/usr/ccs/bin/as -o pa-risc2.o asm/pa-risc2.s
+parisc-mont.s:	asm/parisc-mont.pl
+	$(PERL) asm/parisc-mont.pl $(PERLASM_SCHEME) $@
 
 # ppc - AIX, Linux, MacOS X...
 bn-ppc.s:	asm/ppc.pl;	$(PERL) asm/ppc.pl $(PERLASM_SCHEME) $@
 ppc-mont.s:	asm/ppc-mont.pl;$(PERL) asm/ppc-mont.pl $(PERLASM_SCHEME) $@
+ppc64-mont.s:	asm/ppc64-mont.pl;$(PERL) asm/ppc64-mont.pl $(PERLASM_SCHEME) $@
 
 alpha-mont.s:	asm/alpha-mont.pl
 	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
 
 # GNU make "catch all"
-%-mont.s:	asm/%-mont.pl;	$(PERL) $< $(CFLAGS) > $@
+%-mont.s:	asm/%-mont.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+%-gf2m.S:	asm/%-gf2m.pl;	$(PERL) $< $(PERLASM_SCHEME) $@
+
+armv4-gf2m.o:	armv4-gf2m.S
 
 files:
 	$(PERL) $(TOP)/util/files.pl Makefile >> $(TOP)/MINFO
