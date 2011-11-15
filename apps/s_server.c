@@ -297,6 +297,9 @@ static int no_resume_ephemeral = 0;
 static int s_msg=0;
 static int s_quiet=0;
 
+static char *keymatexportlabel=NULL;
+static int keymatexportlen=20;
+
 static int hack=0;
 #ifndef OPENSSL_NO_ENGINE
 static char *engine_id=NULL;
@@ -548,6 +551,8 @@ static void sv_usage(void)
 # endif
         BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list");
 #endif
+	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
+	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
 	}
 
 static int local_argc=0;
@@ -1331,6 +1336,17 @@ int MAIN(int argc, char *argv[])
 			{
 			if (--argc < 1) goto bad;
 			srtp_profiles = *(++argv);
+			}
+		else if (strcmp(*argv,"-keymatexport") == 0)
+			{
+			if (--argc < 1) goto bad;
+			keymatexportlabel= *(++argv);
+			}
+		else if (strcmp(*argv,"-keymatexportlen") == 0)
+			{
+			if (--argc < 1) goto bad;
+			keymatexportlen=atoi(*(++argv));
+			if (keymatexportlen == 0) goto bad;
 			}
 		else
 			{
@@ -2354,6 +2370,8 @@ static int init_ssl_connection(SSL *con)
 #ifndef OPENSSL_NO_KRB5
 	char *client_princ;
 #endif
+	unsigned char *exportedkeymat;
+
 
 	if ((i=SSL_accept(con)) <= 0)
 		{
@@ -2425,6 +2443,32 @@ static int init_ssl_connection(SSL *con)
 #endif /* OPENSSL_NO_KRB5 */
 	BIO_printf(bio_s_out, "Secure Renegotiation IS%s supported\n",
 		      SSL_get_secure_renegotiation_support(con) ? "" : " NOT");
+ 	if (keymatexportlabel != NULL) {
+ 		BIO_printf(bio_s_out, "Keying material exporter:\n");
+ 		BIO_printf(bio_s_out, "    Label: '%s'\n", keymatexportlabel);
+ 		BIO_printf(bio_s_out, "    Length: %i bytes\n",
+			   keymatexportlen);
+ 		exportedkeymat = OPENSSL_malloc(keymatexportlen);
+ 		if (exportedkeymat != NULL) {
+ 			i = SSL_export_keying_material(con, exportedkeymat,
+						       keymatexportlen,
+						       keymatexportlabel,
+						     strlen(keymatexportlabel),
+						       NULL, 0, 0);
+ 			if (i != keymatexportlen) {
+ 				BIO_printf(bio_s_out,
+					   "    Error: return value %i\n", i);
+ 			} else {
+ 				BIO_printf(bio_s_out, "    Keying material: ");
+ 				for (i=0; i<keymatexportlen; i++)
+ 					BIO_printf(bio_s_out, "%02X",
+						   exportedkeymat[i]);
+ 				BIO_printf(bio_s_out, "\n");
+ 			}
+ 			OPENSSL_free(exportedkeymat);
+ 		}
+ 	}
+
 	return(1);
 	}
 

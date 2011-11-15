@@ -262,8 +262,10 @@ extern "C" {
 
 #define TLSEXT_MAXLEN_host_name 255
 
-const char *SSL_get_servername(const SSL *s, const int type) ;
-int SSL_get_servername_type(const SSL *s) ;
+const char *SSL_get_servername(const SSL *s, const int type);
+int SSL_get_servername_type(const SSL *s);
+int SSL_export_keying_material(SSL *s, unsigned char *out, int olen, 
+        char *label, int llen, unsigned char *p, int plen, int use_context);
 
 #define SSL_set_tlsext_host_name(s,name) \
 SSL_ctrl(s,SSL_CTRL_SET_TLSEXT_HOSTNAME,TLSEXT_NAMETYPE_host_name,(char *)name)

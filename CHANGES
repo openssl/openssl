@@ -198,6 +198,9 @@
      security.
      [Emilia Käsper <emilia.kasper@esat.kuleuven.be> (Google)]
 
+  *) Add TLS key material exporter from RFC 5705.
+     [Eric Rescorla]
+
   *) Add DTLS-SRTP negotiation from RFC 5764.
      [Eric Rescorla]
 
