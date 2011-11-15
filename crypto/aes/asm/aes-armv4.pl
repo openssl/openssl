@@ -404,10 +404,10 @@ _armv4_AES_encrypt:
 	ldr	pc,[sp],#4		@ pop and return
 .size	_armv4_AES_encrypt,.-_armv4_AES_encrypt
 
-.global AES_set_encrypt_key
-.type   AES_set_encrypt_key,%function
+.global private_AES_set_encrypt_key
+.type   private_AES_set_encrypt_key,%function
 .align	5
-AES_set_encrypt_key:
+private_AES_set_encrypt_key:
 	sub	r3,pc,#8		@ AES_set_encrypt_key
 	teq	r0,#0
 	moveq	r0,#-1
@@ -425,7 +425,7 @@ AES_set_encrypt_key:
 	bne	.Labrt
 
 .Lok:	stmdb   sp!,{r4-r12,lr}
-	sub	$tbl,r3,#AES_set_encrypt_key-AES_Te-1024	@ Te4
+	sub	$tbl,r3,#private_AES_set_encrypt_key-AES_Te-1024	@ Te4
 
 	mov	$rounds,r0		@ inp
 	mov	lr,r1			@ bits
@@ -678,14 +678,14 @@ AES_set_encrypt_key:
 .Labrt:	tst	lr,#1
 	moveq	pc,lr			@ be binary compatible with V4, yet
 	bx	lr			@ interoperable with Thumb ISA:-)
-.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+.size	private_AES_set_encrypt_key,.-private_AES_set_encrypt_key
 
-.global AES_set_decrypt_key
-.type   AES_set_decrypt_key,%function
+.global private_AES_set_decrypt_key
+.type   private_AES_set_decrypt_key,%function
 .align	5
-AES_set_decrypt_key:
+private_AES_set_decrypt_key:
 	str	lr,[sp,#-4]!            @ push lr
-	bl	AES_set_encrypt_key
+	bl	private_AES_set_encrypt_key
 	teq	r0,#0
 	ldrne	lr,[sp],#4              @ pop lr
 	bne	.Labrt
@@ -772,7 +772,7 @@ $code.=<<___;
 	moveq	pc,lr			@ be binary compatible with V4, yet
 	bx	lr			@ interoperable with Thumb ISA:-)
 #endif
-.size	AES_set_decrypt_key,.-AES_set_decrypt_key
+.size	private_AES_set_decrypt_key,.-private_AES_set_decrypt_key
 
 .type	AES_Td,%object
 .align	5
