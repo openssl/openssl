@@ -4,6 +4,9 @@
 
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
+  *) Add TLS key material exporter from RFC 5705.
+     [Eric Rescorla]
+
   *) Add DTLS-SRTP negotiation from RFC 5764.
      [Eric Rescorla]
 

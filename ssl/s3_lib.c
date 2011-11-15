@@ -2904,6 +2904,9 @@ SSL3_ENC_METHOD SSLv3_enc_data={
 	SSL3_MD_CLIENT_FINISHED_CONST,4,
 	SSL3_MD_SERVER_FINISHED_CONST,4,
 	ssl3_alert_code,
+	(int (*)(SSL *, unsigned char *, unsigned int, const char *,
+		 unsigned int, const unsigned char *, unsigned int,
+		 int use_context))ssl_undefined_function,
 	};
 
 long ssl3_default_timeout(void)
