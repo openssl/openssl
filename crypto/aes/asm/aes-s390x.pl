@@ -779,10 +779,10 @@ ___
 $code.=<<___;
 # void AES_set_encrypt_key(const unsigned char *in, int bits,
 # 		 AES_KEY *key) {
-.globl	AES_set_encrypt_key
-.type	AES_set_encrypt_key,\@function
+.globl	private_AES_set_encrypt_key
+.type	private_AES_set_encrypt_key,\@function
 .align	16
-AES_set_encrypt_key:
+private_AES_set_encrypt_key:
 	lghi	$t0,0
 	cl${g}r	$inp,$t0
 	je	.Lminus1
@@ -1058,14 +1058,14 @@ $code.=<<___;
 .Lminus1:
 	lghi	%r2,-1
 	br	$ra
-.size	AES_set_encrypt_key,.-AES_set_encrypt_key
+.size	private_AES_set_encrypt_key,.-private_AES_set_encrypt_key
 
 # void AES_set_decrypt_key(const unsigned char *in, int bits,
 # 		 AES_KEY *key) {
-.globl	AES_set_decrypt_key
-.type	AES_set_decrypt_key,\@function
+.globl	private_AES_set_decrypt_key
+.type	private_AES_set_decrypt_key,\@function
 .align	16
-AES_set_decrypt_key:
+private_AES_set_decrypt_key:
 	st${g}	$key,4*$SIZE_T($sp)	# I rely on AES_set_encrypt_key to
 	st${g}	$ra,14*$SIZE_T($sp)	# save non-volatile registers!
 	bras	$ra,AES_set_encrypt_key
@@ -1173,7 +1173,7 @@ $code.=<<___;
 	lm${g}	%r6,%r13,6*$SIZE_T($sp)# as was saved by AES_set_encrypt_key!
 	lghi	%r2,0
 	br	$ra
-.size	AES_set_decrypt_key,.-AES_set_decrypt_key
+.size	private_AES_set_decrypt_key,.-private_AES_set_decrypt_key
 ___
 
 ########################################################################
