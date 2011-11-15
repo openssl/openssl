@@ -255,6 +255,9 @@ extern "C" {
 #define TLSEXT_hash_sha384				5
 #define TLSEXT_hash_sha512				6
 
+/* ExtensionType value from RFC5764 */
+#define TLSEXT_TYPE_use_srtp                           14
+
 #ifndef OPENSSL_NO_TLSEXT
 
 #define TLSEXT_MAXLEN_host_name 255
