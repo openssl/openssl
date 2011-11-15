@@ -1749,6 +1749,39 @@ $ranlib       =
 $arflags      = 
 $multilib     = 
 
+*** debug-ben-macos
+$cc           = cc
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DOPENSSL_NO_ASM -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DDEBUG_UNUSED -DOPENSSL_THREADS -D_REENTRANT -DDSO_DLFCN -DHAVE_DLFCN_H -arch i386 -O3 -DL_ENDIAN -g3 -pipe
+$unistd       = 
+$thread_cflag = (unknown)
+$sys_id       = 
+$lflags       = 
+$bn_ops       = 
+$cpuid_obj    = 
+$bn_obj       = 
+$des_obj      = 
+$aes_obj      = 
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = 
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$modes_obj    = 
+$engines_obj  = 
+$perlasm_scheme = 
+$dso_scheme   = 
+$shared_target= 
+$shared_cflag = 
+$shared_ldflag = 
+$shared_extension = 
+$ranlib       = 
+$arflags      = 
+$multilib     = 
+
 *** debug-ben-no-opt
 $cc           = gcc
 $cflags       = -Wall -Wmissing-prototypes -Wstrict-prototypes -Wmissing-declarations -DDEBUG_SAFESTACK -DCRYPTO_MDEBUG -Werror -DL_ENDIAN -DTERMIOS -Wall -g3
