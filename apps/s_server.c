@@ -309,6 +309,7 @@ static long socket_mtu;
 static int cert_chain = 0;
 #endif
 
+
 #ifndef OPENSSL_NO_PSK
 static char *psk_identity="Client_identity";
 char *psk_key=NULL; /* by default PSK is not used */
@@ -545,6 +546,7 @@ static void sv_usage(void)
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - set the advertised protocols for the NPN extension (comma-separated list)\n");
 # endif
+        BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list");
 #endif
 	}
 
@@ -910,6 +912,7 @@ int MAIN(int, char **);
 #ifndef OPENSSL_NO_JPAKE
 static char *jpake_secret = NULL;
 #endif
+static char *srtp_profiles = NULL;
 
 int MAIN(int argc, char *argv[])
 	{
@@ -1324,6 +1327,11 @@ int MAIN(int argc, char *argv[])
 			jpake_secret = *(++argv);
 			}
 #endif
+		else if (strcmp(*argv,"-use_srtp") == 0)
+			{
+			if (--argc < 1) goto bad;
+			srtp_profiles = *(++argv);
+			}
 		else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -1539,6 +1547,9 @@ bad:
 		init_session_cache_ctx(ctx);
 	else
 		SSL_CTX_sess_set_cache_size(ctx,128);
+
+	if (srtp_profiles != NULL)
+		SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
 
 #if 0
 	if (cipher == NULL) cipher=getenv("SSL_CIPHER");
@@ -2391,10 +2402,19 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out, "\n");
 		}
 #endif
+	{
+	SRTP_PROTECTION_PROFILE *srtp_profile
+	  = SSL_get_selected_srtp_profile(con);
+
+	if(srtp_profile)
+		BIO_printf(bio_s_out,"SRTP Extension negotiated, profile=%s\n",
+			   srtp_profile->name);
+	}
 	if (SSL_cache_hit(con)) BIO_printf(bio_s_out,"Reused session-id\n");
 	if (SSL_ctrl(con,SSL_CTRL_GET_FLAGS,0,NULL) &
 		TLS1_FLAGS_TLS_PADDING_BUG)
-		BIO_printf(bio_s_out,"Peer has incorrect TLSv1 block padding\n");
+		BIO_printf(bio_s_out,
+			   "Peer has incorrect TLSv1 block padding\n");
 #ifndef OPENSSL_NO_KRB5
 	client_princ = kssl_ctx_get0_client_princ(SSL_get0_kssl_ctx(con));
 	if (client_princ != NULL)

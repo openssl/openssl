@@ -596,6 +596,9 @@ void SSL_free(SSL *s)
 		OPENSSL_free(s->next_proto_negotiated);
 #endif
 
+        if (s->srtp_profiles)
+            sk_SRTP_PROTECTION_PROFILE_free(s->srtp_profiles);
+
 	OPENSSL_free(s);
 	}
 
@@ -1934,6 +1937,9 @@ void SSL_CTX_free(SSL_CTX *a)
 #else
 	a->comp_methods = NULL;
 #endif
+
+        if (a->srtp_profiles)
+                sk_SRTP_PROTECTION_PROFILE_free(a->srtp_profiles);
 
 #ifndef OPENSSL_NO_PSK
 	if (a->psk_identity_hint)

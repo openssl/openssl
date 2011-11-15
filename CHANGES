@@ -198,6 +198,12 @@
      security.
      [Emilia Käsper <emilia.kasper@esat.kuleuven.be> (Google)]
 
+  *) Add DTLS-SRTP negotiation from RFC 5764.
+     [Eric Rescorla]
+
+  *) Add DTLS-SRTP negotiation from RFC 5764.
+     [Eric Rescorla]
+
   *) Add Next Protocol Negotiation,
      http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-00. Can be
      disabled with a no-npn flag to config or Configure. Code donated

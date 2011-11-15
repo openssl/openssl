@@ -359,6 +359,7 @@ static void sc_usage(void)
 # endif
 #endif
 	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
+	BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list");
 	}
 
 #ifndef OPENSSL_NO_TLSEXT
@@ -487,6 +488,7 @@ static char * MS_CALLBACK missing_srp_username_callback(SSL *s, void *arg)
 	}
 
 #endif
+	char *srtp_profiles = NULL;
 
 # ifndef OPENSSL_NO_NEXTPROTONEG
 /* This the context that we pass to next_proto_cb */
@@ -935,7 +937,12 @@ int MAIN(int argc, char **argv)
 			jpake_secret = *++argv;
 			}
 #endif
-		else
+		else if (strcmp(*argv,"-use_srtp") == 0)
+			{
+			if (--argc < 1) goto bad;
+			srtp_profiles = *(++argv);
+			}
+                else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
 			badop=1;
@@ -1105,6 +1112,8 @@ bad:
 			BIO_printf(bio_c_out, "PSK key given or JPAKE in use, setting client callback\n");
 		SSL_CTX_set_psk_client_callback(ctx, psk_client_cb);
 		}
+	if (srtp_profiles != NULL)
+		SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
 #endif
 	if (bugs)
 		SSL_CTX_set_options(ctx,SSL_OP_ALL|off);
@@ -2027,6 +2036,14 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	}
 #endif
 
+ 	{
+ 	SRTP_PROTECTION_PROFILE *srtp_profile=SSL_get_selected_srtp_profile(s);
+ 
+	if(srtp_profile)
+		BIO_printf(bio,"SRTP Extension negotiated, profile=%s\n",
+			   srtp_profile->name);
+	}
+ 
 	SSL_SESSION_print(bio,SSL_get_session(s));
 	BIO_printf(bio,"---\n");
 	if (peer != NULL)

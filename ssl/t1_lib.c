@@ -629,6 +629,25 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 #endif
 
+        if(SSL_get_srtp_profiles(s))
+                {
+                int el;
+
+                ssl_add_clienthello_use_srtp_ext(s, 0, &el, 0);
+                
+                if((limit - p - 4 - el) < 0) return NULL;
+
+                s2n(TLSEXT_TYPE_use_srtp,ret);
+                s2n(el,ret);
+
+                if(ssl_add_clienthello_use_srtp_ext(s, ret, &el, el))
+			{
+			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+			return NULL;
+			}
+                ret += el;
+                }
+
 	if ((extdatalen = ret-p-2)== 0) 
 		return p;
 
@@ -741,6 +760,26 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		ret += sol;
 		}
 #endif
+
+        if(s->srtp_profile)
+                {
+                int el;
+
+                ssl_add_serverhello_use_srtp_ext(s, 0, &el, 0);
+                
+                if((limit - p - 4 - el) < 0) return NULL;
+
+                s2n(TLSEXT_TYPE_use_srtp,ret);
+                s2n(el,ret);
+
+                if(ssl_add_serverhello_use_srtp_ext(s, ret, &el, el))
+			{
+			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+			return NULL;
+			}
+                ret+=el;
+                }
+
 	if (((s->s3->tmp.new_cipher->id & 0xFFFF)==0x80 || (s->s3->tmp.new_cipher->id & 0xFFFF)==0x81) 
 		&& (SSL_get_options(s) & SSL_OP_CRYPTOPRO_TLSEXT_BUG))
 		{ const unsigned char cryptopro_ext[36] = {
@@ -1208,6 +1247,13 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 #endif
 
 		/* session ticket processed earlier */
+		else if (type == TLSEXT_TYPE_use_srtp)
+                        {
+			if(ssl_parse_clienthello_use_srtp_ext(s, data, size,
+							      al))
+				return 0;
+                        }
+
 		data+=size;
 		}
 				
@@ -1422,6 +1468,13 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				return 0;
 			renegotiate_seen = 1;
 			}
+		else if (type == TLSEXT_TYPE_use_srtp)
+                        {
+                        if(ssl_parse_serverhello_use_srtp_ext(s, data, size,
+							      al))
+                                return 0;
+                        }
+
 		data+=size;		
 		}
 
