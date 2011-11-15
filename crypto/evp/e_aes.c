@@ -145,6 +145,14 @@ void AES_ctr32_encrypt(const unsigned char *in, unsigned char *out,
 			size_t blocks, const AES_KEY *key,
 			const unsigned char ivec[AES_BLOCK_SIZE]);
 #endif
+#ifdef AES_XTS_ASM
+void AES_xts_encrypt(const char *inp,char *out,size_t len,
+			const AES_KEY *key1, const AES_KEY *key2,
+			const unsigned char iv[16]);
+void AES_xts_decrypt(const char *inp,char *out,size_t len,
+			const AES_KEY *key1, const AES_KEY *key2,
+			const unsigned char iv[16]);
+#endif
 
 #if	defined(AES_ASM) && !defined(I386_ONLY) &&	(  \
 	((defined(__i386)	|| defined(__i386__)	|| \
@@ -1051,7 +1059,11 @@ static int aes_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 	if (key) do
 		{
+#ifdef AES_XTS_ASM
+		xctx->stream = enc ? AES_xts_encrypt : AES_xts_decrypt;
+#else
 		xctx->stream = NULL;
+#endif
 		/* key_len is two AES keys */
 #ifdef BSAES_CAPABLE
 		if (BSAES_CAPABLE)
