@@ -511,10 +511,12 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y)
 								tx, ty, ctx))
 			goto err;
 		}
-	/* Check if retrieved coordinates match originals: if not values
-	 * are out of range.
+	/* Check if retrieved coordinates match originals and are less than
+	 * field order: if not values are out of range.
 	 */
-	if (BN_cmp(x, tx) || BN_cmp(y, ty))
+	if (BN_cmp(x, tx) || BN_cmp(y, ty)
+		|| (BN_cmp(x, &key->group->field) >= 0)
+		|| (BN_cmp(y, &key->group->field) >= 0))
 		{
 		ECerr(EC_F_EC_KEY_SET_PUBLIC_KEY_AFFINE_COORDINATES,
 			EC_R_COORDINATES_OUT_OF_RANGE);
