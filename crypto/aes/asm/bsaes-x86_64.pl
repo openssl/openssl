@@ -1894,6 +1894,7 @@ $code.=<<___;
 	jmp	.Lctr_enc_done
 .align	16
 .Lctr_enc_loop_done:
+	add	\$8, $len
 	movdqu	0x00($inp), @XMM[8]	# load input
 	pxor	@XMM[8], @XMM[0]
 	movdqu	@XMM[0], 0x00($out)	# write output
