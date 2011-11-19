@@ -166,6 +166,7 @@ int FIPS_selftest_ecdh(void)
 			rv = -1;
 			goto err;
 			}
+		EC_KEY_set_flags(ec1, EC_FLAG_COFACTOR_ECDH);
 
 		if (!EC_KEY_set_public_key_affine_coordinates(ec1, x, y))
 			{
@@ -194,6 +195,7 @@ int FIPS_selftest_ecdh(void)
 			rv = -1;
 			goto err;
 			}
+		EC_KEY_set_flags(ec1, EC_FLAG_COFACTOR_ECDH);
 
 		if (!EC_KEY_set_public_key_affine_coordinates(ec2, x, y))
 			{

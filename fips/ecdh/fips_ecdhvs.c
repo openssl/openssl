@@ -261,6 +261,7 @@ static void ec_output_Zhash(FILE *out, int exout, EC_GROUP *group,
 	unsigned char chash[EVP_MAX_MD_SIZE];
 	int Zlen;
 	ec = EC_KEY_new();
+	EC_KEY_set_flags(ec, EC_FLAG_COFACTOR_ECDH);
 	EC_KEY_set_group(ec, group);
 	peerkey = make_peer(group, cx, cy);
 	if (rhash == NULL)
