@@ -1172,13 +1172,13 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, unsigned int olen,
 	 * 15, so size of val > max(prohibited label len) = 15 and the
 	 * comparisons won't have buffer overflow
 	 */
-	if (bcmp(val, TLS_MD_CLIENT_FINISH_CONST,
+	if (memcmp(val, TLS_MD_CLIENT_FINISH_CONST,
 		 TLS_MD_CLIENT_FINISH_CONST_SIZE) == 0) goto err1;
-	if (bcmp(val, TLS_MD_SERVER_FINISH_CONST,
+	if (memcmp(val, TLS_MD_SERVER_FINISH_CONST,
 		 TLS_MD_SERVER_FINISH_CONST_SIZE) == 0) goto err1;
-	if (bcmp(val, TLS_MD_MASTER_SECRET_CONST,
+	if (memcmp(val, TLS_MD_MASTER_SECRET_CONST,
 		 TLS_MD_MASTER_SECRET_CONST_SIZE) == 0) goto err1;
-	if (bcmp(val, TLS_MD_KEY_EXPANSION_CONST,
+	if (memcmp(val, TLS_MD_KEY_EXPANSION_CONST,
 		 TLS_MD_KEY_EXPANSION_CONST_SIZE) == 0) goto err1;
 
 	tls1_PRF(s->s3->tmp.new_cipher->algorithm2,
