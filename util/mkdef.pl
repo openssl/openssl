@@ -109,6 +109,8 @@ my @known_algorithms = ( "RC2", "RC4", "RC5", "IDEA", "DES", "BF",
 			 "SSL2",
 			 # JPAKE
 			 "JPAKE",
+			 # NEXTPROTONEG
+			 "NEXTPROTONEG",
 			 # Deprecated functions
 			 "DEPRECATED",
 			 # Hide SSL internals
@@ -132,6 +134,7 @@ my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw;
 my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
 my $no_rfc3779; my $no_psk; my $no_tlsext; my $no_cms; my $no_capieng;
 my $no_jpake; my $no_srp; my $no_ssl2; my $no_ec2m; my $no_nistp_gcc; 
+my $no_nextprotoneg;
 
 my $fips;
 
@@ -224,6 +227,7 @@ foreach (@ARGV, split(/ /, $options))
 	elsif (/^no-cms$/)	{ $no_cms=1; }
 	elsif (/^no-ec2m$/)	{ $no_ec2m=1; }
 	elsif (/^no-ec_nistp_64_gcc_128$/)	{ $no_nistp_gcc=1; }
+	elsif (/^no-nextprotoneg$/)	{ $no_nextprotoneg=1; }
 	elsif (/^no-ssl2$/)	{ $no_ssl2=1; }
 	elsif (/^no-capieng$/)	{ $no_capieng=1; }
 	elsif (/^no-jpake$/)	{ $no_jpake=1; }
@@ -1188,6 +1192,7 @@ sub is_valid
 			if ($keyword eq "PSK" && $no_psk) { return 0; }
 			if ($keyword eq "CMS" && $no_cms) { return 0; }
 			if ($keyword eq "EC2M" && $no_ec2m) { return 0; }
+			if ($keyword eq "NEXTPROTONEG" && $no_nextprotoneg) { return 0; }
 			if ($keyword eq "EC_NISTP_64_GCC_128" && $no_nistp_gcc)
 					{ return 0; }
 			if ($keyword eq "SSL2" && $no_ssl2) { return 0; }
