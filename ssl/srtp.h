@@ -137,11 +137,6 @@ SRTP_PROTECTION_PROFILE *SSL_get_selected_srtp_profile(SSL *s);
 STACK_OF(SRTP_PROTECTION_PROFILE) *SSL_get_srtp_profiles(SSL *ssl);
 SRTP_PROTECTION_PROFILE *SSL_get_selected_srtp_profile(SSL *s);
 
-int ssl_add_clienthello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int maxlen);
-int ssl_parse_clienthello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al);
-int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int maxlen);
-int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al);
-
 #ifdef  __cplusplus
 }
 #endif
