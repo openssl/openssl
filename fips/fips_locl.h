@@ -67,8 +67,8 @@ int fips_post_failed(int id, int subid, void *ex);
 int fips_post_corrupt(int id, int subid, void *ex);
 int fips_post_status(void);
 
-#define FIPS_MODULE_VERSION_NUMBER	0x20000004L
-#define FIPS_MODULE_VERSION_TEXT	"FIPS 2.0-rc4 unvalidated test module xx XXX xxxx"
+#define FIPS_MODULE_VERSION_NUMBER	0x20000005L
+#define FIPS_MODULE_VERSION_TEXT	"FIPS 2.0-rc5-dev unvalidated test module xx XXX xxxx"
 
 #ifdef  __cplusplus
 }
