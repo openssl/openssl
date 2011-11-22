@@ -186,6 +186,11 @@
 #include <openssl/modes.h>
 
 #ifdef OPENSSL_FIPS
+#ifdef OPENSSL_DOING_MAKEDEPEND
+#undef AES_set_encrypt_key
+#undef AES_set_decrypt_key
+#undef DES_set_key_unchecked
+#endif
 #define BF_set_key	private_BF_set_key
 #define CAST_set_key	private_CAST_set_key
 #define idea_set_encrypt_key	private_idea_set_encrypt_key

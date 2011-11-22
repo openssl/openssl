@@ -349,6 +349,16 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 			     const EVP_CIPHER *c, const EVP_MD *md, int en_de);
 
 #ifdef OPENSSL_FIPS
+
+#ifdef OPENSSL_DOING_MAKEDEPEND
+#undef SHA1_Init
+#undef SHA224_Init
+#undef SHA256_Init
+#undef SHA384_Init
+#undef SHA512_Init
+#undef DES_set_key_unchecked
+#endif
+
 #define RIPEMD160_Init	private_RIPEMD160_Init
 #define WHIRLPOOL_Init	private_WHIRLPOOL_Init
 #define MD5_Init	private_MD5_Init
