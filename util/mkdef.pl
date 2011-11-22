@@ -271,6 +271,7 @@ $ssl.=" ssl/tls1.h";
 $ssl.=" ssl/srtp.h";
 
 my $crypto ="crypto/crypto.h";
+$crypto.=" crypto/cryptlib.h";
 $crypto.=" crypto/o_dir.h";
 $crypto.=" crypto/o_str.h";
 $crypto.=" crypto/o_time.h";
