@@ -465,7 +465,7 @@ int ssl3_connect(SSL *s)
 #if defined(OPENSSL_NO_TLSEXT) || defined(OPENSSL_NO_NEXTPROTONEG)
 			s->state=SSL3_ST_CW_FINISHED_A;
 #else
-			if (s->next_proto_negotiated)
+			if (s->s3->next_proto_neg_seen)
 				s->state=SSL3_ST_CW_NEXT_PROTO_A;
 			else
 				s->state=SSL3_ST_CW_FINISHED_A;
