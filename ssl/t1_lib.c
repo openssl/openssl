@@ -836,6 +836,9 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 	s->servername_done = 0;
 	s->tlsext_status_type = -1;
+#ifndef OPENSSL_NO_NEXTPROTONEG
+	s->s3->next_proto_neg_seen = 0;
+#endif
 
 	if (data >= (d+n-2))
 		goto ri_check;
@@ -1305,6 +1308,10 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	int tlsext_servername = 0;
 	int renegotiate_seen = 0;
 
+#ifndef OPENSSL_NO_NEXTPROTONEG
+	s->s3->next_proto_neg_seen = 0;
+#endif
+
 	if (data >= (d+n-2))
 		goto ri_check;
 
@@ -1431,7 +1438,8 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 			s->tlsext_status_expected = 1;
 			}
 #ifndef OPENSSL_NO_NEXTPROTONEG
-		else if (type == TLSEXT_TYPE_next_proto_neg)
+		else if (type == TLSEXT_TYPE_next_proto_neg &&
+			 s->s3->tmp.finish_md_len == 0)
 			{
 			unsigned char *selected;
 			unsigned char selected_len;
@@ -1461,6 +1469,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				}
 			memcpy(s->next_proto_negotiated, selected, selected_len);
 			s->next_proto_negotiated_len = selected_len;
+			s->s3->next_proto_neg_seen = 1;
 			}
 #endif
 		else if (type == TLSEXT_TYPE_renegotiate)
