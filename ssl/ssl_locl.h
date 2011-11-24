@@ -571,7 +571,7 @@ typedef struct ssl3_enc_method
 	const char *server_finished_label;
 	int server_finished_label_len;
 	int (*alert_value)(int);
-        int (*export_keying_material)(SSL *, unsigned char *, unsigned int,
+	int (*export_keying_material)(SSL *, unsigned char *, unsigned int,
 				      const char *, unsigned int,
 				      const unsigned char *, unsigned int,
 				      int use_context);
