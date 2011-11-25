@@ -234,7 +234,7 @@ int SSL_srp_server_param_with_username(SSL *s, int *ad)
 	unsigned char b[SSL_MAX_MASTER_KEY_LENGTH];
 	int al;
 
-	*ad = SSL_AD_UNKNOWN_SRP_USERNAME;
+	*ad = SSL_AD_UNKNOWN_PSK_IDENTITY;
 	if ((s->srp_ctx.TLS_ext_srp_username_callback !=NULL) &&
 		((al = s->srp_ctx.TLS_ext_srp_username_callback(s, ad, s->srp_ctx.SRP_cb_arg))!=SSL_ERROR_NONE))
 			return al;
