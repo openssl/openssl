@@ -281,20 +281,6 @@ int ssl3_connect(SSL *s)
 		case SSL3_ST_CR_SRVR_HELLO_A:
 		case SSL3_ST_CR_SRVR_HELLO_B:
 			ret=ssl3_get_server_hello(s);
-#ifndef OPENSSL_NO_SRP
-			if ((ret == 0) && (s->s3->warn_alert == SSL_AD_MISSING_SRP_USERNAME))
-				{
-				if (!SRP_have_to_put_srp_username(s))
-					{
-					SSLerr(SSL_F_SSL3_CONNECT,SSL_R_MISSING_SRP_USERNAME);
-					ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_USER_CANCELLED);
-					goto end;
-					}
-				s->state=SSL3_ST_CW_CLNT_HELLO_A;
-				if (!ssl_init_wbio_buffer(s,0)) { ret= -1; goto end; }
-				break;
-				}
-#endif
 			if (ret <= 0) goto end;
 
 			if (s->hit)

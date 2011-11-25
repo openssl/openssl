@@ -196,8 +196,6 @@ extern "C" {
 #define TLS1_AD_BAD_CERTIFICATE_STATUS_RESPONSE 113
 #define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 114
 #define TLS1_AD_UNKNOWN_PSK_IDENTITY	115	/* fatal */
-#define TLS1_AD_UNKNOWN_SRP_USERNAME 120 /* fatal */
-#define TLS1_AD_MISSING_SRP_USERNAME 121
 
 /* ExtensionType values from RFC3546 / RFC4366 */
 #define TLSEXT_TYPE_server_name			0

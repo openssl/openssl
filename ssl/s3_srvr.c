@@ -181,24 +181,25 @@ static const SSL_METHOD *ssl3_get_server_method(int ver)
 	}
 
 #ifndef OPENSSL_NO_SRP
-static int SSL_check_srp_ext_ClientHello(SSL *s,int *ad)
+static int ssl_check_srp_ext_ClientHello(SSL *s,int *al)
 	{
 	int ret = SSL_ERROR_NONE;
 
-	*ad = SSL_AD_UNRECOGNIZED_NAME;
+	*al = SSL_AD_UNRECOGNIZED_NAME;
 
 	if ((s->s3->tmp.new_cipher->algorithm_mkey & SSL_kSRP) &&
 	    (s->srp_ctx.TLS_ext_srp_username_callback != NULL))
 		{
 		if(s->srp_ctx.login == NULL)
 			{
-			/* There isn't any srp login extension !!! */
-			ret = SSL3_AL_WARNING;
-			*ad = SSL_AD_MISSING_SRP_USERNAME;
+			/* RFC 5054 says SHOULD reject, 
+			   we do so if There is no srp login name */
+			ret = SSL3_AL_FATAL;
+			*al = SSL_AD_UNKNOWN_PSK_IDENTITY;
 			}
 		else
 			{
-			ret = SSL_srp_server_param_with_username(s,ad);
+			ret = SSL_srp_server_param_with_username(s,al);
 			}
 		}
 	return ret;
@@ -217,9 +218,6 @@ int ssl3_accept(SSL *s)
 	void (*cb)(const SSL *ssl,int type,int val)=NULL;
 	int ret= -1;
 	int new_state,state,skip=0;
-#ifndef OPENSSL_NO_SRP
-	int srp_no_username =0;
-#endif
 
 	RAND_add(&Time,sizeof(Time),0);
 	ERR_clear_error();
@@ -340,35 +338,22 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SR_CLNT_HELLO_A:
 		case SSL3_ST_SR_CLNT_HELLO_B:
 		case SSL3_ST_SR_CLNT_HELLO_C:
-#ifndef OPENSSL_NO_SRP
-		case SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME:
-#endif
 
 			s->shutdown=0;
 			ret=ssl3_get_client_hello(s);
 			if (ret <= 0) goto end;
 #ifndef OPENSSL_NO_SRP
 			{
-			int extension_error = 0,al;
+			int al;
 
-			if ((al = SSL_check_srp_ext_ClientHello(s,&extension_error)) != SSL_ERROR_NONE)
-				{
-				ssl3_send_alert(s,al,extension_error);
-				if (extension_error == SSL_AD_MISSING_SRP_USERNAME)
-					{
-					if (srp_no_username) goto end;
-					ERR_clear_error();
-					srp_no_username = 1;
-					s->state=SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME;
-					if (cb != NULL) cb(s,SSL_CB_HANDSHAKE_START,1);
-					if ((ret=BIO_flush(s->wbio)) <= 0) goto end;
-					s->init_num=0;
-					break;
-					}
-				ret = -1;
-				SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLSEXT);
-				goto end;
-				}
+ 			if ((ret = ssl_check_srp_ext_ClientHello(s,&al)) != SSL_ERROR_NONE)
+  				{
+				ssl3_send_alert(s,SSL3_AL_FATAL,al);				
+				SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLSEXT);			
+				ret = SSL_TLSEXT_ERR_ALERT_FATAL;			
+				ret= -1;
+				goto end;	
+  				}
 			}
 #endif
 			
@@ -917,9 +902,6 @@ int ssl3_get_client_hello(SSL *s)
 	 * TLSv1.
 	 */
 	if (s->state == SSL3_ST_SR_CLNT_HELLO_A
-#ifndef OPENSSL_NO_SRP
-		|| (s->state == SSL3_ST_SR_CLNT_HELLO_SRP_USERNAME)
-#endif
 		)
 		{
 		s->state=SSL3_ST_SR_CLNT_HELLO_B;
