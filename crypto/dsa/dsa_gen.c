@@ -666,7 +666,7 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 			/* "offset = offset + n + 1" */
 
 			/* step 14 */
-			if (counter >= 4096) break;
+			if (counter >= (int)(4 * L)) break;
 			}
 		}
 end:
