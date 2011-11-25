@@ -668,6 +668,12 @@ int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
 			/* step 14 */
 			if (counter >= (int)(4 * L)) break;
 			}
+		if (seed_in)
+			{
+			ok = 0;
+			DSAerr(DSA_F_DSA_BUILTIN_PARAMGEN2, DSA_R_INVALID_PARAMETERS);
+			goto err;
+			}
 		}
 end:
 	if(!BN_GENCB_call(cb, 2, 1))
