@@ -2019,9 +2019,10 @@ int SSL_set_session_ticket_ext_cb(SSL *s, tls_session_ticket_ext_cb_fn cb,
 /* Pre-shared secret session resumption functions */
 int SSL_set_session_secret_cb(SSL *s, tls_session_secret_cb_fn tls_session_secret_cb, void *arg);
 
-int SSL_tls1_key_exporter(SSL *s, unsigned char *label, int label_len,
-                           unsigned char *context, int context_len,
-                           unsigned char *out, int olen);
+int SSL_tls1_key_exporter(SSL *s,
+			  const unsigned char *label, int label_len,
+			  const unsigned char *context, int context_len,
+			  unsigned char *out, int olen);
 
 void SSL_set_debug(SSL *s, int debug);
 int SSL_cache_hit(SSL *s);
