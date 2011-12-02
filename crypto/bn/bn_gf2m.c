@@ -522,7 +522,7 @@ err:
  */
 int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 	{
-	BIGNUM *b, *c, *u, *v, *tmp;
+	BIGNUM *b, *c = NULL, *u = NULL, *v = NULL, *tmp;
 	int ret = 0;
 
 	bn_check_top(a);

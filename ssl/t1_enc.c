@@ -1124,7 +1124,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, unsigned int olen,
          unsigned int contextlen, int use_context)
 	{
 	unsigned char *buff;
-	unsigned char *val;
+	unsigned char *val = NULL;
 	unsigned int vallen, currentvalpos, rv;
 
 #ifdef KSSL_DEBUG
