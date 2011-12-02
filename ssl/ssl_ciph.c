@@ -303,6 +303,7 @@ static void load_builtin_compressions(void)
 						sk_SSL_COMP_push(ssl_comp_methods,comp);
 						}
 					}
+					sk_SSL_COMP_sort(ssl_comp_methods);
 				}
 			MemCheck_on();
 			}
