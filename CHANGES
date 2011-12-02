@@ -198,21 +198,6 @@
      security.
      [Emilia Käsper <emilia.kasper@esat.kuleuven.be> (Google)]
 
-  *) Add TLS key material exporter from RFC 5705.
-     [Eric Rescorla]
-
-  *) Add DTLS-SRTP negotiation from RFC 5764.
-     [Eric Rescorla]
-
-  *) Add DTLS-SRTP negotiation from RFC 5764.
-     [Eric Rescorla]
-
-  *) Add Next Protocol Negotiation,
-     http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-00. Can be
-     disabled with a no-npn flag to config or Configure. Code donated
-     by Google.
-     [Adam Langley <agl@google.com> and Ben Laurie]
-
   *) New function OPENSSL_gmtime_diff to find the difference in days
      and seconds between two tm structures. This will be used to provide
      additional functionality for ASN1_TIME.
@@ -260,6 +245,18 @@
      [Steve Henson]
   
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
+
+  *) Add TLS key material exporter from RFC 5705.
+     [Eric Rescorla]
+
+  *) Add DTLS-SRTP negotiation from RFC 5764.
+     [Eric Rescorla]
+
+  *) Add Next Protocol Negotiation,
+     http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-00. Can be
+     disabled with a no-npn flag to config or Configure. Code donated
+     by Google.
+     [Adam Langley <agl@google.com> and Ben Laurie]
 
   *) Add optional 64-bit optimized implementations of elliptic curves NIST-P224,
      NIST-P256, NIST-P521, with constant-time single point multiplication on
