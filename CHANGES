@@ -4,6 +4,9 @@
 
  Changes between 1.0.0e and 1.0.0f [xx XXX xxxx]
 
+  *) Fix spurious failures in ecdsatest.c.
+     [Emilia Käsper (Google)]
+
   *) Fix the BIO_f_buffer() implementation (which was mixing different
      interpretations of the '..._len' fields).
      [Adam Langley (Google)]
@@ -927,6 +930,9 @@
      [NTT]
   
  Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
+
+  *) Fix spurious failures in ecdsatest.c.
+     [Emilia Käsper (Google)]
 
   *) Fix the BIO_f_buffer() implementation (which was mixing different
      interpretations of the '..._len' fields).
