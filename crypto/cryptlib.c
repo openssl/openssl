@@ -219,6 +219,8 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 	}
 #endif
 
+#ifndef OPENSSL_FIPSCANISTER
+
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #include <tchar.h>
 #include <signal.h>
@@ -381,4 +383,6 @@ void OpenSSLDie(const char *file,int line,const char *assertion)
 
 #ifndef OPENSSL_FIPSCANISTER
 void *OPENSSL_stderr(void)	{ return stderr; }
+#endif
+
 #endif
