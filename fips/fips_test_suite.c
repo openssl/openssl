@@ -650,6 +650,13 @@ static size_t drbg_test_cb(DRBG_CTX *ctx, unsigned char **pout,
 	return (min_len + 0xf) & ~0xf;
 	}
 
+/* Callback which returns 0 to indicate entropy source failure */
+static size_t drbg_fail_cb(DRBG_CTX *ctx, unsigned char **pout,
+                                int entropy, size_t min_len, size_t max_len)
+	{
+	return 0;
+	}
+
 /* DRBG test: just generate lots of data and trigger health checks */
 
 static int do_drbg_test(int type, int flags)
@@ -1036,7 +1043,7 @@ static int do_fail_all(int fullpost, int fullerr)
 	size_t i;
 	RSA *rsa = NULL;
 	DSA *dsa = NULL;
-	DRBG_CTX *dctx = NULL;
+	DRBG_CTX *dctx = NULL, *defctx = NULL;
 	EC_KEY *ec = NULL;
 	BIGNUM *bn = NULL;
 	unsigned char out[10];
@@ -1132,6 +1139,9 @@ static int do_fail_all(int fullpost, int fullerr)
 		}
 	else
 		printf("\tECDSA key generation failed as expected.\n");
+
+	FIPS_ec_key_free(ec);
+	ec = NULL;
 
 	fail_id = -1;
 	fail_sub = -1;
@@ -1240,6 +1250,63 @@ static int do_fail_all(int fullpost, int fullerr)
 	else
 		printf("\tX9.31 continuous PRNG failed as expected\n");
 	FIPS_x931_stick(0);
+
+	/* Leave FIPS mode to clear error */
+	FIPS_module_mode_set(0, NULL);
+	/* Enter FIPS mode successfully */
+	if (!FIPS_module_mode_set(1, FIPS_AUTH_USER_PASS))
+		{
+		printf("\tError entering FIPS mode\n");
+		st_err++;
+		}
+
+	printf("    Testing operation failure with DRBG entropy failure\n");
+
+	/* Generate DSA key for later use */
+    	if (DSA_generate_key(dsa))
+		printf("\tDSA key generated OK as expected.\n");
+	else
+		{
+		printf("\tDSA key generation FAILED!!\n");
+		st_err++;
+		}
+
+	/* Initialise default DRBG context */
+	defctx = FIPS_get_default_drbg();
+	if (!defctx)
+		return 0;
+	if (!FIPS_drbg_init(defctx, NID_sha512, 0))
+		return 0;
+	/* Set entropy failure callback */
+	FIPS_drbg_set_callbacks(defctx, drbg_fail_cb, 0, 0x10, drbg_test_cb, 0);
+	if (FIPS_drbg_instantiate(defctx, dummy_drbg_entropy, 10))
+		{
+		printf("\tDRBG entropy fail OK incorrectly!!\n");
+		st_err++;
+		}
+	else
+		printf("\tDRBG entropy fail failed as expected\n");
+
+	if (FIPS_dsa_sign(dsa, dummy_drbg_entropy, 5, EVP_sha256()))
+		{
+		printf("\tDSA signing OK incorrectly!!\n");
+		st_err++;
+		}
+	else
+		printf("\tDSA signing failed as expected\n");
+
+	ec = EC_KEY_new_by_curve_name(NID_X9_62_prime256v1);
+
+	if (!ec)
+		return 0;
+
+    	if (EC_KEY_generate_key(ec))
+		{
+		printf("\tECDSA key generated OK incorrectly!!\n");
+		st_err++;
+		}
+	else
+		printf("\tECDSA key generation failed as expected.\n");
 
 	printf("  Induced failure test completed with %d errors\n", st_err);
 	post_quiet = 0; 
