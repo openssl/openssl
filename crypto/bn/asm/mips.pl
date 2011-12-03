@@ -267,7 +267,7 @@ ___
 $code.=<<___;
 	jr	$ra
 	move	$a0,$v0
-.end	bn_mul_add_words
+.end	bn_mul_add_words_internal
 
 .align	5
 .globl	bn_mul_words
@@ -778,7 +778,7 @@ ___
 $code.=<<___;
 	jr	$ra
 	move	$a0,$v0
-.end	bn_sub_words
+.end	bn_sub_words_internal
 
 .align 5
 .globl	bn_div_3_words
