@@ -359,7 +359,15 @@ void OPENSSL_showfatal (const char *fmta,...)
 { va_list ap;
 
     va_start (ap,fmta);
+#if defined(OPENSSL_SYS_VXWORKS)
+    {
+	char buf[256];
+	vsnprintf(buf,sizeof(buf),fmta,ap);
+	printf("%s",buf);
+    }
+#else 
     vfprintf (stderr,fmta,ap);
+#endif
     va_end (ap);
 }
 int OPENSSL_isservice (void) { return 0; }
