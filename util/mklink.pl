@@ -52,6 +52,7 @@ my $to = join('/', @to_path);
 my $file;
 $symlink_exists=eval {symlink("",""); 1};
 if ($^O eq "msys") { $symlink_exists=0 };
+if ($^O eq "MSWin32") { $symlink_exists=0 };
 foreach $file (@files) {
     my $err = "";
     if ($symlink_exists) {
