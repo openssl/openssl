@@ -145,7 +145,7 @@ localityName			= Locality Name (eg, city)
 organizationalUnitName		= Organizational Unit Name (eg, section)
 #organizationalUnitName_default	=
 
-commonName			= Common Name (eg, YOUR name)
+commonName			= Common Name (e.g. server FQDN or YOUR name)
 commonName_max			= 64
 
 emailAddress			= Email Address
