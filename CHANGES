@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Initial experimental support for X9.42 DH parameter format: mainly
+     to support use of 'q' parameter for RFC5114 parameters.
+     [Steve Henson]
+
   *) Add DH parameters from RFC5114 including test data to dhtest.
      [Steve Henson]
 

@@ -4025,3 +4025,8 @@
 #define LN_aes_256_cbc_hmac_sha1		"aes-256-cbc-hmac-sha1"
 #define NID_aes_256_cbc_hmac_sha1		918
 
+#define SN_dhpublicnumber		"dhpublicnumber"
+#define LN_dhpublicnumber		"X9.42 DH"
+#define NID_dhpublicnumber		919
+#define OBJ_dhpublicnumber		OBJ_ISO_US,10046L,2L,1L
+

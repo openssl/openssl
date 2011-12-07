@@ -299,6 +299,7 @@ int test_builtin(BIO *out)
 	unsigned char	digest[20], wrong_digest[20];
 	unsigned char	*signature = NULL;
 	unsigned char	*sig_ptr;
+	const unsigned char *csig_ptr;
 	unsigned char	*raw_buf = NULL;
 	unsigned int	sig_len, degree, r_len, s_len, bn_len, buf_len;
 	int		nid, ret =  0;
@@ -440,8 +441,8 @@ int test_builtin(BIO *out)
 		/* Modify a single byte of the signature: to ensure we don't
 		 * garble the ASN1 structure, we read the raw signature and
 		 * modify a byte in one of the bignums directly. */
-		sig_ptr = signature;
-		if ((ecdsa_sig = d2i_ECDSA_SIG(NULL, &sig_ptr, sig_len)) == NULL)
+		csig_ptr = signature;
+		if ((ecdsa_sig = d2i_ECDSA_SIG(NULL, &csig_ptr, sig_len)) == NULL)
 			{
 			BIO_printf(out, " failed\n");
 			goto builtin_err;
