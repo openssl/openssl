@@ -594,8 +594,10 @@ void ERR_load_PEM_strings(void);
 #define PEM_F_PEM_PK8PKEY				 119
 #define PEM_F_PEM_READ					 108
 #define PEM_F_PEM_READ_BIO				 109
+#define PEM_F_PEM_READ_BIO_DHPARAMS			 141
 #define PEM_F_PEM_READ_BIO_PARAMETERS			 140
 #define PEM_F_PEM_READ_BIO_PRIVATEKEY			 123
+#define PEM_F_PEM_READ_DHPARAMS				 142
 #define PEM_F_PEM_READ_PRIVATEKEY			 124
 #define PEM_F_PEM_SEALFINAL				 110
 #define PEM_F_PEM_SEALINIT				 111

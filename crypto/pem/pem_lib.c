@@ -236,6 +236,9 @@ static int check_pem(const char *nm, const char *name)
 			}
 		return 0;
 		}
+	/* If reading DH parameters handle X9.42 DH format too */
+	if(!strcmp(nm,PEM_STRING_DHXPARAMS) &&
+		!strcmp(name,PEM_STRING_DHPARAMS)) return 1;
 
 	/* Permit older strings */
 
