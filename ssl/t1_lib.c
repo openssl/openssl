@@ -775,7 +775,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
                 if(ssl_add_serverhello_use_srtp_ext(s, ret, &el, el))
 			{
-			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
+			SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
 			return NULL;
 			}
                 ret+=el;
