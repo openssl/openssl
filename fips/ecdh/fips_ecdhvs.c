@@ -484,6 +484,10 @@ int main(int argc, char **argv)
 		BN_free(cy);
 	if (group)
 		EC_GROUP_free(group);
+	if (in && in != stdin)
+		fclose(in);
+	if (out && out != stdout)
+		fclose(out);
 	if (rv)
 		fprintf(stderr, "Error Parsing request file\n");
 	return rv;

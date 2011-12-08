@@ -279,6 +279,10 @@ int main(int argc, char **argv)
 							rhash, rhashlen);
 			}
 		}
+	if (in && in != stdin)
+		fclose(in);
+	if (out && out != stdout)
+		fclose(out);
 	return 0;
 	parse_error:
 	fprintf(stderr, "Error Parsing request file\n");
