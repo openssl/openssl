@@ -693,12 +693,15 @@ void OPENSSL_cpuid_setup(void)
     if (trigger)	return;
 
     trigger=1;
-    if ((env=getenv("OPENSSL_ia32cap")))
+    if ((env=getenv("OPENSSL_ia32cap"))) {
+	int off = (env[0]=='~')?1:0;
 #if defined(_WIN32)
-    {	if (!sscanf(env,"%I64i",&vec)) vec = strtoul(env,NULL,0);   }
+	if (!sscanf(env+off,"%I64i",&vec)) vec = strtoul(env+off,NULL,0);
 #else
-	vec = strtoull(env,NULL,0);
+	vec = strtoull(env+off,NULL,0);
 #endif
+	if (off) vec = OPENSSL_ia32_cpuid()&~vec;
+    }
     else
 	vec = OPENSSL_ia32_cpuid();
     /*
