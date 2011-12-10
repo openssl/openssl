@@ -2257,6 +2257,7 @@ int args_verify(char ***pargs, int *pargc,
 	char **oldargs = *pargs;
 	char *arg = **pargs, *argn = (*pargs)[1];
 	const X509_VERIFY_PARAM *vpm = NULL;
+	time_t at_time = 0;
 	if (!strcmp(arg, "-policy"))
 		{
 		if (!argn)
@@ -2324,6 +2325,26 @@ int args_verify(char ***pargs, int *pargc,
 			}
 		(*pargs)++;
 		}
+	else if (strcmp(arg,"-attime") == 0)
+		{
+		if (!argn)
+			*badarg = 1;
+		else
+			{
+			long timestamp;
+			/* interpret argument as seconds since Epoch */
+			if (sscanf(argn, "%li", &timestamp) != 1)
+				{
+				BIO_printf(bio_err,
+						"Error parsing timestamp %s\n",
+					   	argn);
+				*badarg = 1;
+				}
+			/* on some platforms time_t may be a float */
+			at_time = (time_t) timestamp;
+			}
+		(*pargs)++;
+		}
 	else if (!strcmp(arg, "-ignore_critical"))
 		flags |= X509_V_FLAG_IGNORE_CRITICAL;
 	else if (!strcmp(arg, "-issuer_checks"))
@@ -2382,6 +2403,9 @@ int args_verify(char ***pargs, int *pargc,
 
 	if (depth >= 0)
 		X509_VERIFY_PARAM_set_depth(*pm, depth);
+
+	if (at_time) 
+		X509_VERIFY_PARAM_set_time(*pm, at_time);
 
 	end:
 
