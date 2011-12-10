@@ -261,6 +261,7 @@ static void ec_output_Zhash(FILE *out, int exout, EC_GROUP *group,
 	unsigned char chash[EVP_MAX_MD_SIZE];
 	int Zlen;
 	ec = EC_KEY_new();
+	EC_KEY_set_flags(ec, EC_FLAG_COFACTOR_ECDH);
 	EC_KEY_set_group(ec, group);
 	peerkey = make_peer(group, cx, cy);
 	if (rhash == NULL)
@@ -413,6 +414,11 @@ int main(int argc, char **argv)
 			if (group)
 				EC_GROUP_free(group);
 			group = EC_GROUP_new_by_curve_name(nid);
+			if (!group)
+				{
+				fprintf(stderr, "ERROR: unsupported curve %s\n", buf + 1);
+				return 1;
+				}
 			}
 
 		if (strlen(buf) > 6 && !strncmp(buf, "[E", 2))
@@ -478,6 +484,10 @@ int main(int argc, char **argv)
 		BN_free(cy);
 	if (group)
 		EC_GROUP_free(group);
+	if (in && in != stdin)
+		fclose(in);
+	if (out && out != stdout)
+		fclose(out);
 	if (rv)
 		fprintf(stderr, "Error Parsing request file\n");
 	return rv;

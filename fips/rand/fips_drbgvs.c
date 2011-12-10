@@ -176,7 +176,7 @@ int fips_drbgvs_main(int argc,char **argv)
 int main(int argc,char **argv)
 #endif
 	{
-	FILE *in, *out;
+	FILE *in = NULL, *out = NULL;
 	DRBG_CTX *dctx = NULL;
 	TEST_ENT t;
 	int r, nid = 0;
@@ -406,6 +406,10 @@ int main(int argc,char **argv)
 			}
 
 		}
+	if (in && in != stdin)
+		fclose(in);
+	if (out && out != stdout)
+		fclose(out);
 	return 0;
 	}
 
