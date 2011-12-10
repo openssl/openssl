@@ -8,6 +8,9 @@ my @ARGS = @ARGV;
 
 my $top = shift @ARGS;
 my $target = shift @ARGS;
+my $tmptarg = $target;
+
+$tmptarg =~ s/\.[^\\\/\.]+$/.tmp/;
 
 my $runasm = 1;
 
@@ -48,11 +51,15 @@ while (<IN>)
 
 my ($from, $to);
 
+#delete any temp file lying around
+
+unlink $tmptarg;
+
 #rename target temporarily
-rename($target, "tmptarg.s") || die "Can't rename $target";
+rename($target, $tmptarg) || die "Can't rename $target";
 
 #edit target
-open(IN,"tmptarg.s") || die "Can't open temporary file";
+open(IN,$tmptarg) || die "Can't open temporary file";
 open(OUT, ">$target") || die "Can't open output file $target";
 
 while (<IN>)
@@ -75,16 +82,12 @@ if ($runasm)
 
 	# restore target
 	unlink $target;
-	rename "tmptarg.s", $target;
+	rename $tmptarg, $target;
 
 	die "Error executing assembler!" if $rv != 0;
 	}
 else
 	{
 	# Don't care about target
-	unlink "tmptarg.s";
+	unlink $tmptarg;
 	}
-
-
-
-
