@@ -56,7 +56,14 @@ my ($from, $to);
 unlink $tmptarg;
 
 #rename target temporarily
-rename($target, $tmptarg) || die "Can't rename $target";
+my $rencnt = 0;
+# On windows the previous file doesn't always close straight away
+# so retry the rename operation a few times if it fails.
+while (!rename($target, $tmptarg))
+        {
+        sleep 2;
+        die "Can't rename $target" if ($rencnt++ > 10);
+        }
 
 #edit target
 open(IN,$tmptarg) || die "Can't open temporary file";
