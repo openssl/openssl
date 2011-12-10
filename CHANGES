@@ -129,8 +129,8 @@
      keep original code iff non-FIPS operations are allowed.
      [Steve Henson]
 
-  *) Add -attime option to openssl verify.
-     [Peter Eckersley <pde@eff.org> and Ben Laurie]
+  *) Add -attime option to openssl utilities.
+     [Peter Eckersley <pde@eff.org>, Ben Laurie and Steve Henson]
 
   *) Redirect DSA and DH operations to FIPS module in FIPS mode.
      [Steve Henson]
