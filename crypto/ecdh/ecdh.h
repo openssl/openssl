@@ -85,6 +85,8 @@
 extern "C" {
 #endif
 
+#define EC_FLAG_COFACTOR_ECDH	0x1000
+
 const ECDH_METHOD *ECDH_OpenSSL(void);
 
 void	  ECDH_set_default_method(const ECDH_METHOD *);
