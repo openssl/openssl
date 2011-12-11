@@ -784,8 +784,15 @@ my $ossl = "ossl/apps/openssl";
 
 my $ossl_cmd = "$ossl_path cms -verify -verify_retcode ";
 $ossl_cmd .= "-CAfile pkitsta.pem -crl_check_all -x509_strict ";
-# Uncomment out following line to use older data (uses Dec 10 00:29:26 2010)
-# $ossl_cmd .= "-attime 1291940972 ";
+
+# Check for expiry of trust anchor
+system "$ossl_path x509 -inform DER -in $pkitsta -checkend 0";
+if ($? == 256)
+	{
+	print STDERR "WARNING: using older expired data\n";
+	$ossl_cmd .= "-attime 1291940972 ";
+	}
+
 $ossl_cmd .= "-policy_check -extended_crl -use_deltas -out /dev/null 2>&1 ";
 
 system "$ossl_path x509 -inform DER -in $pkitsta -out pkitsta.pem";
