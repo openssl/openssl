@@ -464,7 +464,7 @@ $code.=<<___;
 	# do first part (X2 = Xh * M2)
 	 add	\$8*10, %rdi			# rdi -> pXh ; 128 bits, 2 qwords
 				#        Xh is actually { [rdi+8*1], rbp }
-	 add	\$($M2-$M1), %rsi			# rsi -> M2
+	 add	\$`$M2-$M1`, %rsi			# rsi -> M2
 	 lea	(+$Reduce_Data_offset+$X2_offset+$STACK_DEPTH)(%rsp), %rcx			# rcx -> pX2 ; 641 bits, 11 qwords
 ___
 	unshift(@X,pop(@X));	unshift(@X,pop(@X));
@@ -484,7 +484,7 @@ $code.=<<___;
 	 mov	%rax, (+$Reduce_Data_offset+$Carries_offset+$STACK_DEPTH)(%rsp)
 
 	 lea	(+$Reduce_Data_offset+$Q_offset+$STACK_DEPTH)(%rsp), %rdi			# rdi -> pQ ; 128 bits, 2 qwords
-	 add	\$($K1-$M2), %rsi			# rsi -> pK1 ; 128 bits, 2 qwords
+	 add	\$`$K1-$M2`, %rsi			# rsi -> pK1 ; 128 bits, 2 qwords
 
 	# MUL_128x128t128	rdi, rcx, rsi	; Q = X2 * K1 (bottom half)
 	# B1:B0 = rsi[1:0] = K1[1:0]
@@ -509,7 +509,7 @@ $code.=<<___;
 	 mov	%r9, (+8*1)(%rdi)
 	# end MUL_128x128t128
 
-	 sub	\$($K1-$M), %rsi
+	 sub	\$`$K1-$M`, %rsi
 
 	 mov	(%rcx), $X[6]
 	 mov	(+8*1)(%rcx), $X[7]			# r9:r8 = X2[1:0]
@@ -1116,7 +1116,7 @@ mod_exp_512:
 
 	# adjust stack down and then align it with cache boundary
 	 mov	%rsp, %r8
-	 sub	\$($mem_size), %rsp
+	 sub	\$$mem_size, %rsp
 	 and	\$-64, %rsp
 
 	# store previous stack pointer and arguments
