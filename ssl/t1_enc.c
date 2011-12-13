@@ -1249,36 +1249,3 @@ int tls1_alert_code(int code)
 	default:			return(-1);
 		}
 	}
-
-int SSL_tls1_key_exporter(SSL *s,
-			  const unsigned char *label, int label_len,
-			  const unsigned char *context, int context_len,
-			  unsigned char *out, int olen)
-	{
-	unsigned char *tmp;
-	int rv;
-	unsigned char context_len_16[2];
-
-	if (context_len > 0xffff)
-		return 0;
-
-	tmp = OPENSSL_malloc(olen);
-
-	if (!tmp)
-		return 0;
-
-	context_len_16[0] = context_len >> 8;
-	context_len_16[1] = context_len;
-	
-	rv = tls1_PRF(ssl_get_algorithm2(s),
-			 label, label_len,
-			 s->s3->client_random,SSL3_RANDOM_SIZE,
-			 s->s3->server_random,SSL3_RANDOM_SIZE,
-			 context_len_16, sizeof(context_len_16),
-			 context, context_len,
-			 s->session->master_key, s->session->master_key_length,
-			 out, tmp, olen);
-
-	OPENSSL_free(tmp);
-	return rv;
-	}
