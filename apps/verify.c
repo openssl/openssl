@@ -72,7 +72,7 @@
 static int MS_CALLBACK cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, char *file,
 		STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
-		STACK_OF(X509_CRL) *crls, ENGINE *e);
+		STACK_OF(X509_CRL) *crls, ENGINE *e, time_t at_time);
 static int v_verbose=0, vflags = 0;
 
 int MAIN(int, char **);
@@ -83,6 +83,9 @@ int MAIN(int argc, char **argv)
 	int i,ret=1, badarg = 0;
 	char *CApath=NULL,*CAfile=NULL;
 	char *untfile = NULL, *trustfile = NULL, *crlfile = NULL;
+	char *checktime_string = NULL;
+	long int timestamp;
+	time_t t = 0;
 	STACK_OF(X509) *untrusted = NULL, *trusted = NULL;
 	STACK_OF(X509_CRL) *crls = NULL;
 	X509_STORE *cert_ctx=NULL;
@@ -144,6 +147,11 @@ int MAIN(int argc, char **argv)
 				{
 				if (argc-- < 1) goto end;
 				crlfile= *(++argv);
+				}
+			else if (strcmp(*argv,"-attime") == 0)
+				{
+				if (argc-- < 1) goto end;
+				checktime_string= *(++argv);
 				}
 #ifndef OPENSSL_NO_ENGINE
 			else if (strcmp(*argv,"-engine") == 0)
@@ -222,14 +230,28 @@ int MAIN(int argc, char **argv)
 			goto end;
 		}
 
-	if (argc < 1) check(cert_ctx, NULL, untrusted, trusted, crls, e);
+	if(checktime_string)
+		{
+		/* interpret the -attime argument as seconds since Epoch */
+		if (sscanf(checktime_string, "%li", &timestamp) != 1)
+			{
+			BIO_printf(bio_err, "Error parsing timestamp %s\n",
+					   checktime_string);
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		t = (time_t) timestamp;  /* on some platforms time_t may be a float */
+		}
+
+	if (argc < 1) check(cert_ctx, NULL, untrusted, trusted, crls, e, t);
 	else
 		for (i=0; i<argc; i++)
-			check(cert_ctx,argv[i], untrusted, trusted, crls, e);
+			check(cert_ctx,argv[i], untrusted, trusted, crls, e, t);
 	ret=0;
 end:
 	if (ret == 1) {
 		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-crl_check]");
+		BIO_printf(bio_err," [-attime timestamp]");
 #ifndef OPENSSL_NO_ENGINE
 		BIO_printf(bio_err," [-engine e]");
 #endif
@@ -266,7 +288,7 @@ end:
 
 static int check(X509_STORE *ctx, char *file,
 		STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
-		STACK_OF(X509_CRL) *crls, ENGINE *e)
+		STACK_OF(X509_CRL) *crls, ENGINE *e, time_t at_time)
 	{
 	X509 *x=NULL;
 	int i=0,ret=0;
@@ -292,6 +314,9 @@ static int check(X509_STORE *ctx, char *file,
 	if(tchain) X509_STORE_CTX_trusted_stack(csc, tchain);
 	if (crls)
 		X509_STORE_CTX_set0_crls(csc, crls);
+	if (at_time) 
+		X509_STORE_CTX_set_time(csc, 0, at_time);
+
 	i=X509_verify_cert(csc);
 	X509_STORE_CTX_free(csc);
 

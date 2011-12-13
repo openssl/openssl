@@ -472,6 +472,9 @@
   *) Add SRP support.
      [Tom Wu <tjw@cs.stanford.edu> and Ben Laurie]
 
+  *) Add -attime option to openssl verify.
+     [Peter Eckersley <pde@eff.org> and Ben Laurie]
+
   *) Add functions to copy EVP_PKEY_METHOD and retrieve flags and id.
      [Steve Henson]
 
