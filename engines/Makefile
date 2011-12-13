@@ -51,7 +51,6 @@ LIBOBJ= e_4758cca.o \
 	e_nuron.o \
 	e_sureware.o \
 	e_ubsec.o \
-	e_padlock.o \
 	e_capi.o \
 	$(ENGINES_ASM_OBJ)
 
