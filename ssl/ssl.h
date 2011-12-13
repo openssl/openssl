@@ -2028,10 +2028,6 @@ int SSL_set_session_ticket_ext_cb(SSL *s, tls_session_ticket_ext_cb_fn cb,
 /* Pre-shared secret session resumption functions */
 int SSL_set_session_secret_cb(SSL *s, tls_session_secret_cb_fn tls_session_secret_cb, void *arg);
 
-int SSL_tls1_key_exporter(SSL *s, unsigned char *label, int label_len,
-                           unsigned char *context, int context_len,
-                           unsigned char *out, int olen);
-
 void SSL_CTX_set_not_resumable_session_callback(SSL_CTX *ctx,
 	int (*cb)(SSL *ssl, int is_forward_secure));
 

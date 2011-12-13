@@ -1124,7 +1124,7 @@ int tls1_export_keying_material(SSL *s, unsigned char *out, unsigned int olen,
          unsigned int contextlen, int use_context)
 	{
 	unsigned char *buff;
-	unsigned char *val;
+	unsigned char *val = NULL;
 	unsigned int vallen, currentvalpos, rv;
 
 #ifdef KSSL_DEBUG
@@ -1248,28 +1248,4 @@ int tls1_alert_code(int code)
 #endif
 	default:			return(-1);
 		}
-	}
-
-int SSL_tls1_key_exporter(SSL *s, unsigned char *label, int label_len,
-                           unsigned char *context, int context_len,
-                           unsigned char *out, int olen)
-	{
-	unsigned char *tmp;
-	int rv;
-
-	tmp = OPENSSL_malloc(olen);
-
-	if (!tmp)
-		return 0;
-	
-	rv = tls1_PRF(ssl_get_algorithm2(s),
-			 label, label_len,
-			 s->s3->client_random,SSL3_RANDOM_SIZE,
-			 s->s3->server_random,SSL3_RANDOM_SIZE,
-			 context, context_len, NULL, 0,
-			 s->session->master_key, s->session->master_key_length,
-			 out, tmp, olen);
-
-	OPENSSL_free(tmp);
-	return rv;
 	}
