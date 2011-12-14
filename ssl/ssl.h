@@ -692,8 +692,6 @@ typedef struct srp_ctx_st
 	int (*SRP_verify_param_callback)(SSL *, void *);
 	/* set SRP client passwd callback */
 	char *(*SRP_give_srp_client_pwd_callback)(SSL *, void *);
-	/* set SRP client username callback */
-	char *(*SRP_TLS_ext_missing_srp_client_username_callback)(SSL *, void *);
 
 	char *login;
 	BIGNUM *N,*g,*s,*B,*A;
@@ -1573,11 +1571,11 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME_CB	75
 #define SSL_CTRL_SET_SRP_VERIFY_PARAM_CB		76
 #define SSL_CTRL_SET_SRP_GIVE_CLIENT_PWD_CB		77
-#define SSL_CTRL_SET_TLS_EXT_SRP_MISSING_CLIENT_USERNAME_CB		78
-#define SSL_CTRL_SET_SRP_ARG		79
-#define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME		80
-#define SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH		81
-#define SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD		82
+
+#define SSL_CTRL_SET_SRP_ARG		78
+#define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME		79
+#define SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH		80
+#define SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD		81
 #endif
 
 #define DTLS_CTRL_GET_TIMEOUT		73
