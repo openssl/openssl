@@ -762,7 +762,7 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&mov	($magic,0x30);
 	&mov	($out,0);
 
-	&lea	($const,&DWP(&label("_vpaes_consts")."+0x30-".&label("pic_point")));
+	&mov	($const,&label("_vpaes_consts")."+0x30-".&label("pic_point"));
 	&call	("_vpaes_schedule_core");
 &set_label("pic_point");
 
@@ -792,7 +792,7 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&and	($magic,32);
 	&xor	($magic,32);			# nbist==192?0:32;
 
-	&lea	($const,&DWP(&label("_vpaes_consts")."+0x30-".&label("pic_point")));
+	&mov	($const,&label("_vpaes_consts")."+0x30-".&label("pic_point"));
 	&call	("_vpaes_schedule_core");
 &set_label("pic_point");
 
@@ -801,7 +801,7 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 &function_end("${PREFIX}_set_decrypt_key");
 
 &function_begin("${PREFIX}_encrypt");
-	&lea	($const,&DWP(&label("_vpaes_consts")."+0x30-".&label("pic_point")));
+	&mov	($const,&label("_vpaes_consts")."+0x30-".&label("pic_point"));
 	&call	("_vpaes_preheat");
 &set_label("pic_point");
 	&mov	($inp,&wparam(0));		# inp
@@ -820,7 +820,7 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 &function_end("${PREFIX}_encrypt");
 
 &function_begin("${PREFIX}_decrypt");
-	&lea	($const,&DWP(&label("_vpaes_consts")."+0x30-".&label("pic_point")));
+	&mov	($const,&label("_vpaes_consts")."+0x30-".&label("pic_point"));
 	&call	("_vpaes_preheat");
 &set_label("pic_point");
 	&mov	($inp,&wparam(0));		# inp
@@ -858,7 +858,7 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&mov	(&DWP(8,"esp"),$const);		# save ivp
 	&mov	($out,$round);			# $out works as $len
 
-	&lea	($const,&DWP(&label("_vpaes_consts")."+0x30-".&label("pic_point")));
+	&mov	($const,&label("_vpaes_consts")."+0x30-".&label("pic_point"));
 	&call	("_vpaes_preheat");
 &set_label("pic_point");
 	&cmp	($magic,0);
