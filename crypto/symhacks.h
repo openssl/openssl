@@ -202,9 +202,6 @@
 #define SSL_CTX_set_srp_verify_param_callback	SSL_CTX_set_srp_vfy_param_cb
 #undef SSL_CTX_set_srp_username_callback
 #define SSL_CTX_set_srp_username_callback	SSL_CTX_set_srp_un_cb
-#undef SSL_CTX_set_srp_missing_srp_username_callback
-#define SSL_CTX_set_srp_missing_srp_username_callback \
-						SSL_CTX_set_srp_miss_srp_un_cb
 
 /* Hack some long ENGINE names */
 #undef ENGINE_get_default_BN_mod_exp_crt

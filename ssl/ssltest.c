@@ -266,12 +266,6 @@ static char * MS_CALLBACK ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
 	return BUF_strdup((char *)srp_client_arg->srppassin);
 	}
 
-static char * MS_CALLBACK missing_srp_username_callback(SSL *s, void *arg)
-	{
-	SRP_CLIENT_ARG *srp_client_arg = (SRP_CLIENT_ARG *)arg;
-	return BUF_strdup(srp_client_arg->srplogin);
-	}
-
 /* SRP server */
 /* This is a context that we pass to SRP server callbacks */
 typedef struct srp_server_arg_st
@@ -617,7 +611,6 @@ int main(int argc, char *argv[])
 #endif
 #ifndef OPENSSL_NO_SRP
 	/* client */
-	int srp_lateuser = 0;
 	SRP_CLIENT_ARG srp_client_arg = {NULL,NULL};
 	/* server */
 	SRP_SERVER_ARG srp_server_arg = {NULL,NULL};
@@ -1147,9 +1140,7 @@ bad:
 #ifndef OPENSSL_NO_SRP
         if (srp_client_arg.srplogin)
 		{
-		if (srp_lateuser) 
-			SSL_CTX_set_srp_missing_srp_username_callback(c_ctx,missing_srp_username_callback);
-		else if (!SSL_CTX_set_srp_username(c_ctx, srp_client_arg.srplogin))
+		if (!SSL_CTX_set_srp_username(c_ctx, srp_client_arg.srplogin))
 			{
 			BIO_printf(bio_err,"Unable to set SRP username\n");
 			goto end;

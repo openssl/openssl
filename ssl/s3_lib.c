@@ -3679,10 +3679,6 @@ long ssl3_ctx_callback_ctrl(SSL_CTX *ctx, int cmd, void (*fp)(void))
 		ctx->srp_ctx.srp_Mask|=SSL_kSRP;
 		ctx->srp_ctx.SRP_give_srp_client_pwd_callback=(char *(*)(SSL *,void *))fp;
 		break;
-	case SSL_CTRL_SET_TLS_EXT_SRP_MISSING_CLIENT_USERNAME_CB:
-		ctx->srp_ctx.srp_Mask|=SSL_kSRP;
-		ctx->srp_ctx.SRP_TLS_ext_missing_srp_client_username_callback=(char *(*)(SSL *,void *))fp;
-		break;
 #endif
 #endif
 	case SSL_CTRL_SET_NOT_RESUMABLE_SESS_CB:
