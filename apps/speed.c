@@ -108,8 +108,14 @@
 #include <signal.h>
 #endif
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
+# if defined(__CYGwIN__) && !defined(_WIN32)
+  /* <windows.h> should define _WIN32, which normally is mutually
+   * exclusive with __CYGWIN__, but if it didn't... */
+#  define _WIN32
+  /* this is done because Cygwin alarm() fails sometimes. */
+# endif
 #endif
 
 #include <openssl/bn.h>
@@ -292,9 +298,12 @@ static SIGRETTYPE sig_done(int sig)
 
 #if defined(_WIN32)
 
+#if !defined(SIGALRM)
 #define SIGALRM
+#endif
 static unsigned int lapse,schlock;
-static void alarm(unsigned int secs) { lapse = secs*1000; }
+static void alarm_win32(unsigned int secs) { lapse = secs*1000; }
+#define alarm alarm_win32
 
 static DWORD WINAPI sleepy(VOID *arg)
 	{
