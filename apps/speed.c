@@ -110,7 +110,7 @@
 
 #if defined(_WIN32) || defined(__CYGWIN__)
 #include <windows.h>
-# if defined(__CYGwIN__) && !defined(_WIN32)
+# if defined(__CYGWIN__) && !defined(_WIN32)
   /* <windows.h> should define _WIN32, which normally is mutually
    * exclusive with __CYGWIN__, but if it didn't... */
 #  define _WIN32
