@@ -4,6 +4,17 @@
 
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
+  *) Extensive assembler packs updates, most notably:
+
+	- x86[_64]:     AES-NI, PCLMULQDQ, RDRAND support;
+	- x86[_64]:     SSSE3 support (SHA1, vector-permutation AES);
+	- x86_64:       bit-sliced AES implementation;
+	- ARM:          NEON support, contemporary platforms optimizations;
+	- s390x:        z196 support;
+	- *:            GHASH and GF(2^m) multiplication implementations;
+
+     [Andy Polyakov]
+
   *) Make TLS-SRP code conformant with RFC 5054 API cleanup
      (removal of unnecessary code)
      [Peter Sylvester <peter.sylvester@edelweb.fr>]
