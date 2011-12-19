@@ -255,6 +255,10 @@
   
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
+  *) Make TLS-SRP code conformant with RFC 5054 API cleanup
+     (removal of unnecessary code)
+     [Peter Sylvester <peter.sylvester@edelweb.fr>]
+
   *) Add -attime option to openssl utilities.
      [Peter Eckersley <pde@eff.org>, Ben Laurie and Steve Henson]
 
