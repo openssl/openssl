@@ -4,6 +4,9 @@
 
  Changes between 1.0.0e and 1.0.0f [xx XXX xxxx]
 
+  *) Improved PRNG seeding for VOS.
+     [Paul Green <Paul.Green@stratus.com>]
+
   *) Fix ssl_ciph.c set-up race.
      [Adam Langley (Google)]
 

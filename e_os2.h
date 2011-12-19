@@ -193,8 +193,14 @@ extern "C" {
 #endif
 
 /* --------------------------------- VOS ----------------------------------- */
-#ifdef OPENSSL_SYSNAME_VOS
+#if defined(__VOS__) || defined(OPENSSL_SYSNAME_VOS)
 # define OPENSSL_SYS_VOS
+#ifdef __HPPA__
+# define OPENSSL_SYS_VOS_HPPA
+#endif
+#ifdef __IA32__
+# define OPENSSL_SYS_VOS_IA32
+#endif
 #endif
 
 /* ------------------------------- VxWorks --------------------------------- */
