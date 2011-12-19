@@ -4,6 +4,9 @@
 
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
+  *) Improved PRNG seeding for VOS.
+     [Paul Green <Paul.Green@stratus.com>]
+
   *) Extensive assembler packs updates, most notably:
 
 	- x86[_64]:     AES-NI, PCLMULQDQ, RDRAND support;
