@@ -1392,10 +1392,8 @@ err:
 int ssl3_do_change_cipher_spec(SSL *s)
 	{
 	int i;
-#ifdef OPENSSL_NO_NEXTPROTONEG
 	const char *sender;
 	int slen;
-#endif
 
 	if (s->state & SSL_ST_ACCEPT)
 		i=SSL3_CHANGE_CIPHER_SERVER_READ;
@@ -1418,7 +1416,6 @@ int ssl3_do_change_cipher_spec(SSL *s)
 	if (!s->method->ssl3_enc->change_cipher_state(s,i))
 		return(0);
 
-#ifdef OPENSSL_NO_NEXTPROTONEG
 	/* we have to record the message digest at
 	 * this point so we can get it before we read
 	 * the finished message */
@@ -1435,7 +1432,6 @@ int ssl3_do_change_cipher_spec(SSL *s)
 
 	s->s3->tmp.peer_finish_md_len = s->method->ssl3_enc->final_finish_mac(s,
 		sender,slen,s->s3->tmp.peer_finish_md);
-#endif
 
 	return(1);
 	}
