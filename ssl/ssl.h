@@ -1802,8 +1802,6 @@ int SSL_CTX_set_srp_verify_param_callback(SSL_CTX *ctx,
 					  int (*cb)(SSL *,void *));
 int SSL_CTX_set_srp_username_callback(SSL_CTX *ctx,
 				      int (*cb)(SSL *,int *,void *));
-int SSL_CTX_set_srp_missing_srp_username_callback(SSL_CTX *ctx,
-						  char *(*cb)(SSL *,void *));
 int SSL_CTX_set_srp_cb_arg(SSL_CTX *ctx, void *arg);
 
 int SSL_set_srp_server_param(SSL *s, const BIGNUM *N, const BIGNUM *g,
