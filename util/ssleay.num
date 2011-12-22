@@ -259,7 +259,7 @@ SSL_set_session_secret_cb               307	EXIST::FUNCTION:
 SSL_set_session_ticket_ext_cb           308	EXIST::FUNCTION:
 SSL_set1_param                          309	EXIST::FUNCTION:
 SSL_CTX_set1_param                      310	EXIST::FUNCTION:
-SSL_tls1_key_exporter                   311	EXIST::FUNCTION:
+SSL_tls1_key_exporter                   311	NOEXIST::FUNCTION:
 SSL_renegotiate_abbreviated             312	EXIST::FUNCTION:
 TLSv1_1_method                          313	EXIST::FUNCTION:
 TLSv1_1_client_method                   314	EXIST::FUNCTION:
@@ -278,8 +278,8 @@ SSL_CTX_set_srp_password                324	EXIST::FUNCTION:SRP
 SSL_CTX_set_srp_strength                325	EXIST::FUNCTION:SRP
 SSL_CTX_set_srp_verify_param_callback   326	EXIST:!VMS:FUNCTION:SRP
 SSL_CTX_set_srp_vfy_param_cb            326	EXIST:VMS:FUNCTION:SRP
-SSL_CTX_set_srp_missing_srp_username_callback 327	EXIST:!VMS:FUNCTION:SRP
-SSL_CTX_set_srp_miss_srp_un_cb          327	EXIST:VMS:FUNCTION:SRP
+SSL_CTX_set_srp_miss_srp_un_cb          327	NOEXIST::FUNCTION:
+SSL_CTX_set_srp_missing_srp_username_callback 327	NOEXIST::FUNCTION:
 SSL_CTX_set_srp_cb_arg                  328	EXIST::FUNCTION:SRP
 SSL_CTX_set_srp_username                329	EXIST::FUNCTION:SRP
 SSL_CTX_SRP_CTX_init                    330	EXIST::FUNCTION:SRP
@@ -302,11 +302,11 @@ TLSv1_2_server_method                   343	EXIST::FUNCTION:
 SSL_cache_hit                           344	EXIST::FUNCTION:
 SSL_get0_kssl_ctx                       345	EXIST::FUNCTION:KRB5
 SSL_set0_kssl_ctx                       346	EXIST::FUNCTION:KRB5
-SSL_SESSION_get0_id                     347	EXIST::FUNCTION:
+SSL_SESSION_get0_id                     347	NOEXIST::FUNCTION:
 SSL_set_state                           348	EXIST::FUNCTION:
 SSL_CIPHER_get_id                       349	EXIST::FUNCTION:
 TLSv1_2_method                          350	EXIST::FUNCTION:
-SSL_SESSION_get_id_len                  351	EXIST::FUNCTION:
+SSL_SESSION_get_id_len                  351	NOEXIST::FUNCTION:
 kssl_ctx_get0_client_princ              352	EXIST::FUNCTION:KRB5
 SSL_export_keying_material              353	EXIST::FUNCTION:TLSEXT
 SSL_set_tlsext_use_srtp                 354	EXIST::FUNCTION:
@@ -319,7 +319,8 @@ SSL_select_next_proto                   359	EXIST::FUNCTION:NEXTPROTONEG
 SSL_get_srtp_profiles                   360	EXIST::FUNCTION:
 SSL_CTX_set_next_proto_select_cb        361	EXIST:!VMS:FUNCTION:NEXTPROTONEG
 SSL_CTX_set_next_proto_sel_cb           361	EXIST:VMS:FUNCTION:NEXTPROTONEG
-SSL_CTX_set_not_resumable_session_callback 362	EXIST:!VMS:FUNCTION:
-SSL_CTX_set_not_resumbl_sess_cb         362	EXIST:VMS:FUNCTION:
-SSL_set_not_resumable_session_callback  363	EXIST:!VMS:FUNCTION:
-SSL_set_not_resumbl_sess_cb             363	EXIST:VMS:FUNCTION:
+SSL_SESSION_get_compress_id             362	EXIST::FUNCTION:
+SSL_CTX_set_not_resumable_session_callback 363	EXIST:!VMS:FUNCTION:
+SSL_CTX_set_not_resumbl_sess_cb         363	EXIST:VMS:FUNCTION:
+SSL_set_not_resumable_session_callback  364	EXIST:!VMS:FUNCTION:
+SSL_set_not_resumbl_sess_cb             364	EXIST:VMS:FUNCTION:
