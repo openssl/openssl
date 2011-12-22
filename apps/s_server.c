@@ -3002,10 +3002,10 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
 
 	sess = OPENSSL_malloc(sizeof(simple_ssl_session));
 
-	sess->idlen = SSL_SESSION_get_id_len(session);
+	SSL_SESSION_get_id(session, &sess->idlen);
 	sess->derlen = i2d_SSL_SESSION(session, NULL);
 
-	sess->id = BUF_memdup(SSL_SESSION_get0_id(session), sess->idlen);
+	sess->id = BUF_memdup(SSL_SESSION_get_id(session, NULL), sess->idlen);
 
 	sess->der = OPENSSL_malloc(sess->derlen);
 	p = sess->der;
@@ -3038,8 +3038,9 @@ static SSL_SESSION *get_session(SSL *ssl, unsigned char *id, int idlen,
 static void del_session(SSL_CTX *sctx, SSL_SESSION *session)
 	{
 	simple_ssl_session *sess, *prev = NULL;
-	const unsigned char *id = SSL_SESSION_get0_id(session);
-	unsigned int idlen = SSL_SESSION_get_id_len(session);
+	const unsigned char *id;
+	unsigned int idlen;
+	id = SSL_SESSION_get_id(session, &idlen);	
 	for (sess = first; sess; sess = sess->next)
 		{
 		if (idlen == sess->idlen && !memcmp(sess->id, id, idlen))
