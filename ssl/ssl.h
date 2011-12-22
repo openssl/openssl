@@ -1586,6 +1586,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_CLEAR_OPTIONS			77
 #define SSL_CTRL_CLEAR_MODE			78
 
+#define SSL_CTRL_GET_EXTRA_CHAIN_CERTS		82
+#define SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS	83
+
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
 #define DTLSv1_handle_timeout(ssl) \
@@ -1622,6 +1625,10 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 
 #define SSL_CTX_add_extra_chain_cert(ctx,x509) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_EXTRA_CHAIN_CERT,0,(char *)x509)
+#define SSL_CTX_get_extra_chain_cert(ctx,px509) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_EXTRA_CHAIN_CERT,0,px509)
+#define SSL_CTX_clear_extra_chain_cert(ctx) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_CLEAR_EXTRA_CHAIN_CERT,0,NULL)
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);
@@ -1715,8 +1722,6 @@ long	SSL_SESSION_set_time(SSL_SESSION *s, long t);
 long	SSL_SESSION_get_timeout(const SSL_SESSION *s);
 long	SSL_SESSION_set_timeout(SSL_SESSION *s, long t);
 void	SSL_copy_session_id(SSL *to,const SSL *from);
-unsigned int SSL_SESSION_get_id_len(SSL_SESSION *s);
-const unsigned char *SSL_SESSION_get0_id(SSL_SESSION *s);
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s);
 int SSL_SESSION_set1_id_context(SSL_SESSION *s,const unsigned char *sid_ctx,
 			       unsigned int sid_ctx_len);
@@ -1724,6 +1729,7 @@ int SSL_SESSION_set1_id_context(SSL_SESSION *s,const unsigned char *sid_ctx,
 SSL_SESSION *SSL_SESSION_new(void);
 const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
 					unsigned int *len);
+unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s);
 #ifndef OPENSSL_NO_FP_API
 int	SSL_SESSION_print_fp(FILE *fp,const SSL_SESSION *ses);
 #endif

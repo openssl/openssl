@@ -3604,6 +3604,18 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		sk_X509_push(ctx->extra_certs,(X509 *)parg);
 		break;
 
+	case SSL_CTRL_GET_EXTRA_CHAIN_CERTS:
+		*(STACK_OF(X509) **)parg =  ctx->extra_certs;
+		break;
+
+	case SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS:
+		if (ctx->extra_certs)
+			{
+			sk_X509_pop_free(ctx->extra_certs, X509_free);
+			ctx->extra_certs = NULL;
+			}
+		break;
+
 	default:
 		return(0);
 		}

@@ -231,6 +231,11 @@ const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s, unsigned int *len)
 	return s->session_id;
 	}
 
+unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
+	{
+	return s->compress_meth;
+	}
+
 /* Even with SSLv2, we have 16 bytes (128 bits) of session ID space. SSLv3/TLSv1
  * has 32 bytes (256 bits). As such, filling the ID with random gunk repeatedly
  * until we have no conflict is going to complete in one iteration pretty much
@@ -862,16 +867,6 @@ long SSL_SESSION_set_time(SSL_SESSION *s, long t)
 	if (s == NULL) return(0);
 	s->time=t;
 	return(t);
-	}
-
-unsigned int SSL_SESSION_get_id_len(SSL_SESSION *s)
-	{
-	return s->session_id_length;
-	}
-
-const unsigned char *SSL_SESSION_get0_id(SSL_SESSION *s)
-	{
-	return s->session_id;
 	}
 
 X509 *SSL_SESSION_get0_peer(SSL_SESSION *s)
