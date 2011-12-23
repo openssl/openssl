@@ -716,7 +716,6 @@ int SSL_srp_server_param_with_username(SSL *s, int *ad);
 int SRP_generate_server_master_secret(SSL *s,unsigned char *master_key);
 int SRP_Calc_A_param(SSL *s);
 int SRP_generate_client_master_secret(SSL *s,unsigned char *master_key);
-int SRP_have_to_put_srp_username(SSL *s);
 
 #endif
 
