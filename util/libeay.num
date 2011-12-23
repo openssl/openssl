@@ -4398,3 +4398,7 @@ FIPS_dsa_verify                         4767	EXIST:OPENSSL_FIPS:FUNCTION:DSA
 FIPS_rsa_verify_ctx                     4768	EXIST:OPENSSL_FIPS:FUNCTION:
 DH_get_2048_224                         4769	EXIST::FUNCTION:DH
 FIPS_drbg_method                        4770	EXIST:OPENSSL_FIPS:FUNCTION:
+i2d_DHxparams                           4771	EXIST::FUNCTION:DH
+PEM_write_DHxparams                     4772	EXIST:!WIN16:FUNCTION:DH
+d2i_DHxparams                           4773	EXIST::FUNCTION:DH
+PEM_write_bio_DHxparams                 4774	EXIST::FUNCTION:DH

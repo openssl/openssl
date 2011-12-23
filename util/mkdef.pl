@@ -830,6 +830,7 @@ sub do_defs
 					$def .= "int PEM_write_bio_$1(void);";
 					next;
 				} elsif (/^DECLARE_PEM_write\s*\(\s*(\w*)\s*,/ ||
+					/^DECLARE_PEM_write_const\s*\(\s*(\w*)\s*,/ ||
 					 /^DECLARE_PEM_write_cb\s*\(\s*(\w*)\s*,/ ) {
 					# Things not in Win16
 					$def .=
