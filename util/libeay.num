@@ -4304,3 +4304,9 @@ EC_GFp_nistp256_method                  4673	EXIST::FUNCTION:EC,EC_NISTP_64_GCC_
 OPENSSL_stderr                          4674	EXIST::FUNCTION:
 OPENSSL_cpuid_setup                     4675	EXIST::FUNCTION:
 OPENSSL_showfatal                       4676	EXIST::FUNCTION:
+BIO_new_dgram_sctp                      4677	EXIST::FUNCTION:SCTP
+BIO_dgram_sctp_msg_waiting              4678	EXIST::FUNCTION:SCTP
+BIO_dgram_sctp_wait_for_dry             4679	EXIST::FUNCTION:SCTP
+BIO_s_datagram_sctp                     4680	EXIST::FUNCTION:DGRAM,SCTP
+BIO_dgram_is_sctp                       4681	EXIST::FUNCTION:SCTP
+BIO_dgram_sctp_notification_cb          4682	EXIST::FUNCTION:SCTP
