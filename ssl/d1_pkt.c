@@ -232,6 +232,14 @@ dtls1_buffer_record(SSL *s, record_pqueue *queue, unsigned char *priority)
 
 	item->data = rdata;
 
+#ifndef OPENSSL_NO_SCTP
+	/* Store bio_dgram_sctp_rcvinfo struct */
+	if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
+	    (s->state == SSL3_ST_SR_FINISHED_A || s->state == SSL3_ST_CR_FINISHED_A)) {
+		BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SCTP_GET_RCVINFO, sizeof(rdata->recordinfo), &rdata->recordinfo);
+	}
+#endif
+
 	/* insert should not fail, since duplicates are dropped */
 	if (pqueue_insert(queue->q, item) == NULL)
 		{
@@ -638,20 +646,28 @@ again:
 		goto again;   /* get another record */
 		}
 
-	/* Check whether this is a repeat, or aged record.
-	 * Don't check if we're listening and this message is
-	 * a ClientHello. They can look as if they're replayed,
-	 * since they arrive from different connections and
-	 * would be dropped unnecessarily.
-	 */
-	if (!(s->d1->listen && rr->type == SSL3_RT_HANDSHAKE &&
-		*p == SSL3_MT_CLIENT_HELLO) &&
-		!dtls1_record_replay_check(s, bitmap))
-		{
-		rr->length = 0;
-		s->packet_length=0; /* dump this record */
-		goto again;     /* get another record */
-		}
+#ifndef OPENSSL_NO_SCTP
+	/* Only do replay check if no SCTP bio */
+	if (!BIO_dgram_is_sctp(SSL_get_rbio(s)))
+  		{
+#endif
+		/* Check whether this is a repeat, or aged record.
+		 * Don't check if we're listening and this message is
+		 * a ClientHello. They can look as if they're replayed,
+		 * since they arrive from different connections and
+		 * would be dropped unnecessarily.
+		 */
+		if (!(s->d1->listen && rr->type == SSL3_RT_HANDSHAKE &&
+		    *p == SSL3_MT_CLIENT_HELLO) &&
+		    !dtls1_record_replay_check(s, bitmap))
+			{
+			rr->length = 0;
+			s->packet_length=0; /* dump this record */
+			goto again;     /* get another record */
+			}
+#ifndef OPENSSL_NO_SCTP
+  		}
+#endif
 
 	/* just read a 0 length packet */
 	if (rr->length == 0) goto again;
@@ -737,7 +753,17 @@ int dtls1_read_bytes(SSL *s, int type, unsigned char *buf, int len, int peek)
 
 	/* Now s->d1->handshake_fragment_len == 0 if type == SSL3_RT_HANDSHAKE. */
 
+#ifndef OPENSSL_NO_SCTP
+	/* Continue handshake if it had to be interrupted to read
+	 * app data with SCTP.
+	 */
+	if ((!s->in_handshake && SSL_in_init(s)) ||
+	    (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
+	     (s->state == DTLS1_SCTP_ST_SR_READ_SOCK || s->state == DTLS1_SCTP_ST_CR_READ_SOCK) &&
+	     s->s3->in_read_app_data != 2))
+#else
 	if (!s->in_handshake && SSL_in_init(s))
+#endif
 		{
 		/* type == SSL3_RT_APPLICATION_DATA */
 		i=s->handshake_func(s);
@@ -768,6 +794,15 @@ start:
 		item = pqueue_pop(s->d1->buffered_app_data.q);
 		if (item)
 			{
+#ifndef OPENSSL_NO_SCTP
+			/* Restore bio_dgram_sctp_rcvinfo struct */
+			if (BIO_dgram_is_sctp(SSL_get_rbio(s)))
+				{
+				DTLS1_RECORD_DATA *rdata = (DTLS1_RECORD_DATA *) item->data;
+				BIO_ctrl(SSL_get_rbio(s), BIO_CTRL_DGRAM_SCTP_SET_RCVINFO, sizeof(rdata->recordinfo), &rdata->recordinfo);
+				}
+#endif
+
 			dtls1_copy_record(s, item);
 
 			OPENSSL_free(item->data);
@@ -850,6 +885,31 @@ start:
 				rr->off=0;
 				}
 			}
+
+#ifndef OPENSSL_NO_SCTP
+			/* We were about to renegotiate but had to read
+			 * belated application data first, so retry.
+			 */
+			if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
+			    rr->type == SSL3_RT_APPLICATION_DATA &&
+			    (s->state == DTLS1_SCTP_ST_SR_READ_SOCK || s->state == DTLS1_SCTP_ST_CR_READ_SOCK))
+				{
+				s->rwstate=SSL_READING;
+				BIO_clear_retry_flags(SSL_get_rbio(s));
+				BIO_set_retry_read(SSL_get_rbio(s));
+				}
+
+			/* We might had to delay a close_notify alert because
+			 * of reordered app data. If there was an alert and there
+			 * is no message to read anymore, finally set shutdown.
+			 */
+			if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
+			    s->d1->shutdown_received && !BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)))
+				{
+				s->shutdown |= SSL_RECEIVED_SHUTDOWN;
+				return(0);
+				}
+#endif			
 		return(n);
 		}
 
@@ -1022,6 +1082,21 @@ start:
 			s->s3->warn_alert = alert_descr;
 			if (alert_descr == SSL_AD_CLOSE_NOTIFY)
 				{
+#ifndef OPENSSL_NO_SCTP
+				/* With SCTP and streams the socket may deliver app data
+				 * after a close_notify alert. We have to check this
+				 * first so that nothing gets discarded.
+				 */
+				if (BIO_dgram_is_sctp(SSL_get_rbio(s)) &&
+					BIO_dgram_sctp_msg_waiting(SSL_get_rbio(s)))
+					{
+					s->d1->shutdown_received = 1;
+					s->rwstate=SSL_READING;
+					BIO_clear_retry_flags(SSL_get_rbio(s));
+					BIO_set_retry_read(SSL_get_rbio(s));
+					return -1;
+					}
+#endif
 				s->shutdown |= SSL_RECEIVED_SHUTDOWN;
 				return(0);
 				}
@@ -1127,6 +1202,15 @@ start:
 
 		if (s->version == DTLS1_BAD_VER)
 			s->d1->handshake_read_seq++;
+
+#ifndef OPENSSL_NO_SCTP
+		/* Remember that a CCS has been received,
+		 * so that an old key of SCTP-Auth can be
+		 * deleted when a CCS is sent. Will be ignored
+		 * if no SCTP is used
+		 */
+		BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_AUTH_CCS_RCVD, 1, NULL);
+#endif
 
 		goto start;
 		}
@@ -1264,7 +1348,16 @@ dtls1_write_app_data_bytes(SSL *s, int type, const void *buf_, int len)
 	{
 	int i;
 
-	if (SSL_in_init(s) && !s->in_handshake)
+#ifndef OPENSSL_NO_SCTP
+		/* Check if we have to continue an interrupted handshake
+		 * for reading belated app data with SCTP.
+		 */
+		if ((SSL_in_init(s) && !s->in_handshake) ||
+		    (BIO_dgram_is_sctp(SSL_get_wbio(s)) &&
+		     (s->state == DTLS1_SCTP_ST_SR_READ_SOCK || s->state == DTLS1_SCTP_ST_CR_READ_SOCK)))
+#else
+		if (SSL_in_init(s) && !s->in_handshake)
+#endif
 		{
 		i=s->handshake_func(s);
 		if (i < 0) return(i);

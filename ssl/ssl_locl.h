@@ -772,7 +772,7 @@ const SSL_METHOD *func_name(void)  \
 		ssl3_read, \
 		ssl3_peek, \
 		ssl3_write, \
-		ssl3_shutdown, \
+		dtls1_shutdown, \
 		ssl3_renegotiate, \
 		ssl3_renegotiate_check, \
 		dtls1_get_message, \
@@ -1039,6 +1039,7 @@ int	dtls1_connect(SSL *s);
 void dtls1_free(SSL *s);
 void dtls1_clear(SSL *s);
 long dtls1_ctrl(SSL *s,int cmd, long larg, void *parg);
+int dtls1_shutdown(SSL *s);
 
 long dtls1_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok);
 int dtls1_get_record(SSL *s);
