@@ -10,7 +10,7 @@ use strict;
 
 # see INSTALL for instructions.
 
-my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
+my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimental-<cipher> ...] [-Dxxx] [-lxxx] [-Lxxx] [-fxxx] [-Kxxx] [no-hw-xxx|no-hw] [[no-]threads] [[no-]shared] [[no-]zlib|zlib-dynamic] [no-asm] [no-dso] [no-krb5] [sctp] [386] [--prefix=DIR] [--openssldir=OPENSSLDIR] [--with-xxx[=vvv]] [--test-sanity] os/compiler[:flags]\n";
 
 # Options:
 #
@@ -56,6 +56,7 @@ my $usage="Usage: Configure [no-<cipher> ...] [enable-<cipher> ...] [experimenta
 # [no-]zlib     [don't] compile support for zlib compression.
 # zlib-dynamic	Like "zlib", but the zlib library is expected to be a shared
 #		library and will be loaded in run-time by the OpenSSL library.
+# sctp          include SCTP support
 # 386           generate 80386 code
 # no-sse2	disables IA-32 SSE2 code, above option implies no-sse2
 # no-<cipher>   build without specified algorithm (rsa, idea, rc5, ...)
@@ -714,6 +715,7 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "md2"            => "default",
 		 "rc5"            => "default",
 		 "rfc3779"	  => "default",
+		 "sctp"       => "default",
 		 "shared"         => "default",
 		 "store"	  => "experimental",
 		 "zlib"           => "default",
@@ -781,6 +783,7 @@ PROCESS_ARGS:
 
 		# rewrite some options in "enable-..." form
 		s /^-?-?shared$/enable-shared/;
+		s /^sctp$/enable-sctp/;
 		s /^threads$/enable-threads/;
 		s /^zlib$/enable-zlib/;
 		s /^zlib-dynamic$/enable-zlib-dynamic/;
@@ -1384,6 +1387,14 @@ if (!$IsMK1MF)
 		{
 		$openssl_other_defines.="#define OPENSSL_NO_STATIC_ENGINE\n";
 		$options.=" no-static-engine";
+		}
+	}
+
+if (!defined($disabled{"sctp"}))
+	{
+	if ($target =~ /^solaris/)
+		{
+		$cflags = "$cflags -D_XPG4_2 -D__EXTENSIONS__";
 		}
 	}
 

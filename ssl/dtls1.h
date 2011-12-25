@@ -107,6 +107,9 @@ extern "C" {
 
 #ifndef OPENSSL_NO_SSL_INTERN
 
+#ifndef OPENSSL_NO_SCTP
+#define DTLS1_SCTP_AUTH_LABEL	"EXPORTER_DTLS_OVER_SCTP"
+#endif
 
 typedef struct dtls1_bitmap_st
 	{
@@ -245,6 +248,13 @@ typedef struct dtls1_state_st
 	unsigned int retransmitting;
 	unsigned int change_cipher_spec_ok;
 
+#ifndef OPENSSL_NO_SCTP
+	/* used when SSL_ST_XX_FLUSH is entered */
+	int next_state;
+
+	int shutdown_received;
+#endif
+
 	} DTLS1_STATE;
 
 typedef struct dtls1_record_data_st
@@ -253,6 +263,9 @@ typedef struct dtls1_record_data_st
 	unsigned int   packet_length;
 	SSL3_BUFFER    rbuf;
 	SSL3_RECORD    rrec;
+#ifndef OPENSSL_NO_SCTP
+	struct bio_dgram_sctp_rcvinfo recordinfo;
+#endif
 	} DTLS1_RECORD_DATA;
 
 #endif

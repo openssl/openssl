@@ -532,6 +532,10 @@ typedef struct ssl3_state_st
 /*client */
 /* extra state */
 #define SSL3_ST_CW_FLUSH		(0x100|SSL_ST_CONNECT)
+#ifndef OPENSSL_NO_SCTP
+#define DTLS1_SCTP_ST_CW_WRITE_SOCK			(0x310|SSL_ST_CONNECT)
+#define DTLS1_SCTP_ST_CR_READ_SOCK			(0x320|SSL_ST_CONNECT)
+#endif	
 /* write to server */
 #define SSL3_ST_CW_CLNT_HELLO_A		(0x110|SSL_ST_CONNECT)
 #define SSL3_ST_CW_CLNT_HELLO_B		(0x111|SSL_ST_CONNECT)
@@ -576,6 +580,10 @@ typedef struct ssl3_state_st
 /* server */
 /* extra state */
 #define SSL3_ST_SW_FLUSH		(0x100|SSL_ST_ACCEPT)
+#ifndef OPENSSL_NO_SCTP
+#define DTLS1_SCTP_ST_SW_WRITE_SOCK			(0x310|SSL_ST_ACCEPT)
+#define DTLS1_SCTP_ST_SR_READ_SOCK			(0x320|SSL_ST_ACCEPT)
+#endif	
 /* read from client */
 /* Do not change the number values, they do matter */
 #define SSL3_ST_SR_CLNT_HELLO_A		(0x110|SSL_ST_ACCEPT)
