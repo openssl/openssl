@@ -1155,7 +1155,7 @@ static int dgram_sctp_read(BIO *b, char *out, int outl)
 
 			if (!auth_data || !auth_forward)
 				{
-				BIOerr(BIO_F_BIO_READ,BIO_R_CONNECT_ERROR);
+				BIOerr(BIO_F_DGRAM_SCTP_READ,BIO_R_CONNECT_ERROR);
 				return -1;
 				}
 
