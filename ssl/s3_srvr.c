@@ -338,16 +338,27 @@ int ssl3_accept(SSL *s)
 		case SSL3_ST_SR_CLNT_HELLO_C:
 
 			s->shutdown=0;
-
-			ret=ssl3_get_client_hello(s);
-			if (ret <= 0) goto end;
+			if (s->rwstate != SSL_X509_LOOKUP)
+			{
+				ret=ssl3_get_client_hello(s);
+				if (ret <= 0) goto end;
+			}
 #ifndef OPENSSL_NO_SRP
 			{
 			int al;
-			if ((ret = ssl_check_srp_ext_ClientHello(s,&al)) != SSL_ERROR_NONE)
+			if ((ret = ssl_check_srp_ext_ClientHello(s,&al))  < 0)
+					{
+					/* callback indicates firther work to be done */
+					s->rwstate=SSL_X509_LOOKUP;
+					goto end;
+					}
+			if (ret != SSL_ERROR_NONE)
 				{
-				ssl3_send_alert(s,SSL3_AL_FATAL,al);				
-				SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLSEXT);			
+				ssl3_send_alert(s,SSL3_AL_FATAL,al);	
+				/* This is not really an error but the only means to
+                                   for a client to detect whether srp is supported. */
+ 				   if (al != TLS1_AD_UNKNOWN_PSK_IDENTITY) 	
+					SSLerr(SSL_F_SSL3_ACCEPT,SSL_R_CLIENTHELLO_TLSEXT);			
 				ret = SSL_TLSEXT_ERR_ALERT_FATAL;			
 				ret= -1;
 				goto end;	
