@@ -715,6 +715,11 @@ fips_aesavs.o: ../include/openssl/objects.h ../include/openssl/opensslconf.h
 fips_aesavs.o: ../include/openssl/opensslv.h ../include/openssl/ossl_typ.h
 fips_aesavs.o: ../include/openssl/safestack.h ../include/openssl/stack.h
 fips_aesavs.o: ../include/openssl/symhacks.h fips_aesavs.c
+fips_algvs.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
+fips_algvs.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
+fips_algvs.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
+fips_algvs.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+fips_algvs.o: fips_algvs.c
 fips_cmactest.o: ../include/openssl/asn1.h ../include/openssl/bio.h
 fips_cmactest.o: ../include/openssl/bn.h ../include/openssl/cmac.h
 fips_cmactest.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
@@ -929,11 +934,12 @@ ssltest.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
 ssltest.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
 ssltest.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
 ssltest.o: ../include/openssl/sha.h ../include/openssl/srp.h
-ssltest.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
-ssltest.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
-ssltest.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
-ssltest.o: ../include/openssl/tls1.h ../include/openssl/x509.h
-ssltest.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h ssltest.c
+ssltest.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
+ssltest.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
+ssltest.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
+ssltest.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
+ssltest.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
+ssltest.o: ../include/openssl/x509v3.h ssltest.c
 wp_test.o: ../include/openssl/crypto.h ../include/openssl/e_os2.h
 wp_test.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 wp_test.o: ../include/openssl/ossl_typ.h ../include/openssl/safestack.h
