@@ -1862,6 +1862,14 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				SSL_renegotiate(con);
 				cbuf_len=0;
 				}
+#ifndef OPENSSL_NO_HEARTBEATS
+			else if ((!c_ign_eof) && (cbuf[0] == 'B'))
+ 				{
+				BIO_printf(bio_err,"HEARTBEATING\n");
+				SSL_heartbeat(con);
+				cbuf_len=0;
+				}
+#endif
 			else
 				{
 				cbuf_len=i;

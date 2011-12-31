@@ -424,6 +424,14 @@ int dtls1_handle_timeout(SSL *s)
 		state->timeout.read_timeouts = 1;
 		}
 
+#ifndef OPENSSL_NO_HEARTBEATS
+	if (s->tlsext_hb_pending)
+		{
+		s->tlsext_hb_pending = 0;
+		return dtls1_heartbeat(s);
+		}
+#endif
+
 	dtls1_start_timer(s);
 	return dtls1_retransmit_buffered_messages(s);
 	}

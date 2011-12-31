@@ -256,6 +256,9 @@ extern "C" {
 /* ExtensionType value from RFC5764 */
 #define TLSEXT_TYPE_use_srtp                           14
 
+/* Heartbeat extension */
+#define TLSEXT_TYPE_heartbeat 15
+
 #ifndef OPENSSL_NO_TLSEXT
 
 #define TLSEXT_MAXLEN_host_name 255
@@ -335,6 +338,16 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG, 0, arg)
 #define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
 SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
 
+#ifndef OPENSSL_NO_HEARTBEATS
+#define SSL_TLSEXT_HB_ENABLED				0x01
+#define SSL_TLSEXT_HB_DONT_SEND_REQUESTS	0x02
+#define SSL_TLSEXT_HB_DONT_RECV_REQUESTS	0x04
+
+#define SSL_get_tlsext_heartbeat_pending(ssl) \
+        SSL_ctrl((ssl),SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING,0,NULL)
+#define SSL_set_tlsext_heartbeat_no_requests(ssl, arg) \
+        SSL_ctrl((ssl),SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS,arg,NULL)
+#endif
 #endif
 
 /* PSK ciphersuites from 4279 */

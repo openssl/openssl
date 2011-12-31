@@ -322,6 +322,7 @@ extern "C" {
 #define SSL3_RT_ALERT			21
 #define SSL3_RT_HANDSHAKE		22
 #define SSL3_RT_APPLICATION_DATA	23
+#define TLS1_RT_HEARTBEAT		24
 
 #define SSL3_AL_WARNING			1
 #define SSL3_AL_FATAL			2
@@ -339,6 +340,9 @@ extern "C" {
 #define SSL3_AD_CERTIFICATE_UNKNOWN	46
 #define SSL3_AD_ILLEGAL_PARAMETER	47	/* fatal */
 
+#define TLS1_HB_REQUEST		1
+#define TLS1_HB_RESPONSE	2
+	
 #ifndef OPENSSL_NO_SSL_INTERN
 
 typedef struct ssl3_record_st

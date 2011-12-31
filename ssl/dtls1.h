@@ -232,7 +232,7 @@ typedef struct dtls1_state_st
 
 	struct dtls1_timeout_st timeout;
 
-	/* Indicates when the last handshake msg sent will timeout */
+	/* Indicates when the last handshake msg or heartbeat sent will timeout */
 	struct timeval next_timeout;
 
 	/* Timeout duration */

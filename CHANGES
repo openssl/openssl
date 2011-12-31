@@ -4,6 +4,9 @@
 
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
+  *) Add support for TLS/DTLS heartbeats.
+     [Robin Seggelmann <seggelmann@fh-muenster.de>]
+
   *) Improved PRNG seeding for VOS.
      [Paul Green <Paul.Green@stratus.com>]
 

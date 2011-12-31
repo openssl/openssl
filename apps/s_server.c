@@ -2192,6 +2192,16 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 					goto err;
 					}
 
+#ifndef OPENSSL_NO_HEARTBEATS
+				if ((buf[0] == 'B') &&
+					((buf[1] == '\n') || (buf[1] == '\r')))
+					{
+					BIO_printf(bio_err,"HEARTBEATING\n");
+					SSL_heartbeat(con);
+					i=0;
+					continue;
+					}
+#endif
 				if ((buf[0] == 'r') && 
 					((buf[1] == '\n') || (buf[1] == '\r')))
 					{
