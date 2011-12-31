@@ -7,6 +7,9 @@
   *) Add support for TLS/DTLS heartbeats.
      [Robin Seggelmann <seggelmann@fh-muenster.de>]
 
+  *) Add support for SCTP.
+     [Robin Seggelmann <seggelmann@fh-muenster.de>]
+
   *) Improved PRNG seeding for VOS.
      [Paul Green <Paul.Green@stratus.com>]
 
