@@ -676,6 +676,11 @@ struct ssl_session_st
 #define SSL_get_secure_renegotiation_support(ssl) \
 	SSL_ctrl((ssl), SSL_CTRL_GET_RI_SUPPORT, 0, NULL)
 
+#ifndef OPENSSL_NO_HEARTBEATS
+#define SSL_heartbeat(ssl) \
+        SSL_ctrl((ssl),SSL_CTRL_TLS_EXT_SEND_HEARTBEAT,0,NULL)
+#endif
+
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
 void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
 #define SSL_CTX_set_msg_callback_arg(ctx, arg) SSL_CTX_ctrl((ctx), SSL_CTRL_SET_MSG_CALLBACK_ARG, 0, (arg))
@@ -1339,8 +1344,16 @@ struct ssl_st
 
 #define session_ctx initial_ctx
 
-        STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;  /* What we'll do */
-        SRTP_PROTECTION_PROFILE *srtp_profile;            /* What's been chosen */
+	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;  /* What we'll do */
+	SRTP_PROTECTION_PROFILE *srtp_profile;            /* What's been chosen */
+
+	unsigned int tlsext_heartbeat;  /* Is use of the Heartbeat extension negotiated?
+	                                   0: disabled
+	                                   1: enabled
+	                                   2: enabled, but not allowed to send Requests
+	                                 */
+	unsigned int tlsext_hb_pending; /* Indicates if a HeartbeatRequest is in flight */
+	unsigned int tlsext_hb_seq;     /* HeartbeatRequest sequence number */
 #else
 #define session_ctx ctx
 #endif /* OPENSSL_NO_TLSEXT */
@@ -1583,6 +1596,11 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME		79
 #define SSL_CTRL_SET_TLS_EXT_SRP_STRENGTH		80
 #define SSL_CTRL_SET_TLS_EXT_SRP_PASSWORD		81
+#ifndef OPENSSL_NO_HEARTBEATS
+#define SSL_CTRL_TLS_EXT_SEND_HEARTBEAT				85
+#define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING		86
+#define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS	87
+#endif
 #endif
 
 #define DTLS_CTRL_GET_TIMEOUT		73
@@ -2065,6 +2083,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_DTLS1_GET_MESSAGE_FRAGMENT		 253
 #define SSL_F_DTLS1_GET_RECORD				 254
 #define SSL_F_DTLS1_HANDLE_TIMEOUT			 297
+#define SSL_F_DTLS1_HEARTBEAT				 314
 #define SSL_F_DTLS1_OUTPUT_CERT_CHAIN			 255
 #define SSL_F_DTLS1_PREPROCESS_FRAGMENT			 288
 #define SSL_F_DTLS1_PROCESS_OUT_OF_SEQ_MESSAGE		 256
@@ -2255,6 +2274,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT		 274
 #define SSL_F_TLS1_ENC					 210
 #define SSL_F_TLS1_EXPORT_KEYING_MATERIAL		 312
+#define SSL_F_TLS1_HEARTBEAT				 313
 #define SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT		 275
 #define SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT		 276
 #define SSL_F_TLS1_PRF					 284
@@ -2509,6 +2529,8 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_TLSV1_UNRECOGNIZED_NAME			 1112
 #define SSL_R_TLSV1_UNSUPPORTED_EXTENSION		 1110
 #define SSL_R_TLS_CLIENT_CERT_REQ_WITH_ANON_CIPHER	 232
+#define SSL_R_TLS_HEARTBEAT_PEER_DOESNT_ACCEPT		 368
+#define SSL_R_TLS_HEARTBEAT_PENDING			 369
 #define SSL_R_TLS_ILLEGAL_EXPORTER_LABEL		 367
 #define SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST		 157
 #define SSL_R_TLS_PEER_DID_NOT_RESPOND_WITH_CERTIFICATE_LIST 233
