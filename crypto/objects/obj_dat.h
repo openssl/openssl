@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 920
-#define NUM_SN 913
-#define NUM_LN 913
-#define NUM_OBJ 857
+#define NUM_NID 921
+#define NUM_SN 914
+#define NUM_LN 914
+#define NUM_OBJ 858
 
-static const unsigned char lvalues[5978]={
+static const unsigned char lvalues[5987]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -924,7 +924,8 @@ static const unsigned char lvalues[5978]={
 0x55,0x1D,0x25,0x00,                         /* [5948] OBJ_anyExtendedKeyUsage */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x08,/* [5952] OBJ_mgf1 */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0A,/* [5961] OBJ_rsassaPss */
-0x2A,0x86,0x48,0xCE,0x3E,0x02,0x01,          /* [5970] OBJ_dhpublicnumber */
+0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x07,/* [5970] OBJ_rsaesOaep */
+0x2A,0x86,0x48,0xCE,0x3E,0x02,0x01,          /* [5979] OBJ_dhpublicnumber */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2405,7 +2406,8 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_aes_192_cbc_hmac_sha1,0,NULL,0},
 {"AES-256-CBC-HMAC-SHA1","aes-256-cbc-hmac-sha1",
 	NID_aes_256_cbc_hmac_sha1,0,NULL,0},
-{"dhpublicnumber","X9.42 DH",NID_dhpublicnumber,7,&(lvalues[5970]),0},
+{"RSAES-OAEP","rsaesOaep",NID_rsaesOaep,9,&(lvalues[5970]),0},
+{"dhpublicnumber","X9.42 DH",NID_dhpublicnumber,7,&(lvalues[5979]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2573,6 +2575,7 @@ static const unsigned int sn_objs[NUM_SN]={
 668,	/* "RSA-SHA256" */
 669,	/* "RSA-SHA384" */
 670,	/* "RSA-SHA512" */
+919,	/* "RSAES-OAEP" */
 912,	/* "RSASSA-PSS" */
 777,	/* "SEED-CBC" */
 779,	/* "SEED-CFB" */
@@ -2674,7 +2677,7 @@ static const unsigned int sn_objs[NUM_SN]={
 107,	/* "description" */
 871,	/* "destinationIndicator" */
 28,	/* "dhKeyAgreement" */
-919,	/* "dhpublicnumber" */
+920,	/* "dhpublicnumber" */
 382,	/* "directory" */
 887,	/* "distinguishedName" */
 892,	/* "dmdName" */
@@ -3458,7 +3461,7 @@ static const unsigned int ln_objs[NUM_LN]={
 85,	/* "X509v3 Subject Alternative Name" */
 769,	/* "X509v3 Subject Directory Attributes" */
 82,	/* "X509v3 Subject Key Identifier" */
-919,	/* "X9.42 DH" */
+920,	/* "X9.42 DH" */
 184,	/* "X9.57" */
 185,	/* "X9.57 CM ?" */
 478,	/* "aRecord" */
@@ -4013,6 +4016,7 @@ static const unsigned int ln_objs[NUM_LN]={
  6,	/* "rsaEncryption" */
 644,	/* "rsaOAEPEncryptionSET" */
 377,	/* "rsaSignature" */
+919,	/* "rsaesOaep" */
 912,	/* "rsassaPss" */
 124,	/* "run length compression" */
 482,	/* "sOARecord" */
@@ -4615,7 +4619,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
 416,	/* OBJ_ecdsa_with_SHA1              1 2 840 10045 4 1 */
 791,	/* OBJ_ecdsa_with_Recommended       1 2 840 10045 4 2 */
 792,	/* OBJ_ecdsa_with_Specified         1 2 840 10045 4 3 */
-919,	/* OBJ_dhpublicnumber               1 2 840 10046 2 1 */
+920,	/* OBJ_dhpublicnumber               1 2 840 10046 2 1 */
 258,	/* OBJ_id_pkix_mod                  1 3 6 1 5 5 7 0 */
 175,	/* OBJ_id_pe                        1 3 6 1 5 5 7 1 */
 259,	/* OBJ_id_qt                        1 3 6 1 5 5 7 2 */
@@ -4831,6 +4835,7 @@ static const unsigned int obj_objs[NUM_OBJ]={
  8,	/* OBJ_md5WithRSAEncryption         1 2 840 113549 1 1 4 */
 65,	/* OBJ_sha1WithRSAEncryption        1 2 840 113549 1 1 5 */
 644,	/* OBJ_rsaOAEPEncryptionSET         1 2 840 113549 1 1 6 */
+919,	/* OBJ_rsaesOaep                    1 2 840 113549 1 1 7 */
 911,	/* OBJ_mgf1                         1 2 840 113549 1 1 8 */
 912,	/* OBJ_rsassaPss                    1 2 840 113549 1 1 10 */
 668,	/* OBJ_sha256WithRSAEncryption      1 2 840 113549 1 1 11 */

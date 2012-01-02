@@ -166,6 +166,7 @@ pkcs1 3			: RSA-MD4		: md4WithRSAEncryption
 pkcs1 4			: RSA-MD5		: md5WithRSAEncryption
 pkcs1 5			: RSA-SHA1		: sha1WithRSAEncryption
 # According to PKCS #1 version 2.1
+pkcs1 7			: RSAES-OAEP		: rsaesOaep
 pkcs1 8			: MGF1			: mgf1
 pkcs1 10		: RSASSA-PSS		: rsassaPss
 
