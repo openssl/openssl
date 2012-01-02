@@ -580,6 +580,11 @@
 #define NID_sha1WithRSAEncryption		65
 #define OBJ_sha1WithRSAEncryption		OBJ_pkcs1,5L
 
+#define SN_rsaesOaep		"RSAES-OAEP"
+#define LN_rsaesOaep		"rsaesOaep"
+#define NID_rsaesOaep		919
+#define OBJ_rsaesOaep		OBJ_pkcs1,7L
+
 #define SN_mgf1		"MGF1"
 #define LN_mgf1		"mgf1"
 #define NID_mgf1		911
