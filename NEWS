@@ -7,6 +7,11 @@
 
   Major changes between OpenSSL 1.0.0e and OpenSSL 1.0.1:
 
+      o TLS/DTLS heartbeat support.
+      o SCTP support.
+      o RFC 5705 TLS key material exporter.
+      o RFC 5764 DTLS-SRTP negotiation.
+      o Next Protocol Negotiation.
       o PSS signatures in certificates, requests and CRLs.
       o Support for password based recipient info for CMS.
       o Support TLS v1.2 and TLS v1.1.
