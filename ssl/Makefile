@@ -949,14 +949,15 @@ t1_lib.o: ../include/openssl/objects.h ../include/openssl/ocsp.h
 t1_lib.o: ../include/openssl/opensslconf.h ../include/openssl/opensslv.h
 t1_lib.o: ../include/openssl/ossl_typ.h ../include/openssl/pem.h
 t1_lib.o: ../include/openssl/pem2.h ../include/openssl/pkcs7.h
-t1_lib.o: ../include/openssl/pqueue.h ../include/openssl/rsa.h
-t1_lib.o: ../include/openssl/safestack.h ../include/openssl/sha.h
-t1_lib.o: ../include/openssl/srtp.h ../include/openssl/ssl.h
-t1_lib.o: ../include/openssl/ssl2.h ../include/openssl/ssl23.h
-t1_lib.o: ../include/openssl/ssl3.h ../include/openssl/stack.h
-t1_lib.o: ../include/openssl/symhacks.h ../include/openssl/tls1.h
-t1_lib.o: ../include/openssl/x509.h ../include/openssl/x509_vfy.h
-t1_lib.o: ../include/openssl/x509v3.h ssl_locl.h t1_lib.c
+t1_lib.o: ../include/openssl/pqueue.h ../include/openssl/rand.h
+t1_lib.o: ../include/openssl/rsa.h ../include/openssl/safestack.h
+t1_lib.o: ../include/openssl/sha.h ../include/openssl/srtp.h
+t1_lib.o: ../include/openssl/ssl.h ../include/openssl/ssl2.h
+t1_lib.o: ../include/openssl/ssl23.h ../include/openssl/ssl3.h
+t1_lib.o: ../include/openssl/stack.h ../include/openssl/symhacks.h
+t1_lib.o: ../include/openssl/tls1.h ../include/openssl/x509.h
+t1_lib.o: ../include/openssl/x509_vfy.h ../include/openssl/x509v3.h ssl_locl.h
+t1_lib.o: t1_lib.c
 t1_meth.o: ../e_os.h ../include/openssl/asn1.h ../include/openssl/bio.h
 t1_meth.o: ../include/openssl/buffer.h ../include/openssl/comp.h
 t1_meth.o: ../include/openssl/crypto.h ../include/openssl/dsa.h
