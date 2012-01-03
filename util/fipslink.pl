@@ -60,10 +60,10 @@ die "Second stage Compile failure" if $? != 0;
 my $delcnt = 0;
 # On windows the previous file doesn't always close straight away
 # so retry an unlink operation a few times if it fails.
-while (!unlink($target))
+while (!unlink($fips_target))
         {
         sleep 2;
-        die "Can't delete $target" if ($delcnt++ > 10);
+        die "Can't delete $fips_target" if ($delcnt++ > 10);
         }
 
 
