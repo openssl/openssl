@@ -812,17 +812,20 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 
 #ifndef OPENSSL_NO_HEARTBEATS
-	/* Add Heartbeat extension */
-	s2n(TLSEXT_TYPE_heartbeat,ret);
-	s2n(1,ret);
-	/* Set mode:
-	 * 1: peer may send requests
-	 * 2: peer not allowed to send requests
-	 */
-	if (s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_RECV_REQUESTS)
-		*(ret++) = SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
-	else
-		*(ret++) = SSL_TLSEXT_HB_ENABLED;
+	/* Add Heartbeat extension if we've received one */
+	if (s->tlsext_heartbeat & SSL_TLSEXT_HB_ENABLED)
+		{
+		s2n(TLSEXT_TYPE_heartbeat,ret);
+		s2n(1,ret);
+		/* Set mode:
+		 * 1: peer may send requests
+		 * 2: peer not allowed to send requests
+		 */
+		if (s->tlsext_heartbeat & SSL_TLSEXT_HB_DONT_RECV_REQUESTS)
+			*(ret++) = SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
+		else
+			*(ret++) = SSL_TLSEXT_HB_ENABLED;
+		}
 #endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
