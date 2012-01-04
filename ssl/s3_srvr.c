@@ -2291,6 +2291,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 		if (i <= 0)
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
+			BN_clear_free(pub);
 			goto err;
 			}
 
