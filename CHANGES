@@ -261,6 +261,11 @@
   *) Add support for SCTP.
      [Robin Seggelmann <seggelmann@fh-muenster.de>]
 
+  *) Prevent malformed RFC3779 data triggering an assertion failure.
+     Thanks to Andrew Chi, BBN Technologies, for discovering the flaw
+     and Rob Austein <sra@hactrn.net> for fixing it. (CVE-2011-4577)
+     [Rob Austein <sra@hactrn.net>]
+
   *) Improved PRNG seeding for VOS.
      [Paul Green <Paul.Green@stratus.com>]
 
