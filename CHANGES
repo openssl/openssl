@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0f and 1.0.0g [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.0e and 1.0.0f [4 Jan 2012]
 
   *) Nadhem Alfardan and Kenny Paterson have discovered an extension
