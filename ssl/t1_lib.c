@@ -971,6 +971,12 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 				sdata = data;
 				if (dsize > 0)
 					{
+					if (s->tlsext_ocsp_exts)
+						{
+						sk_X509_EXTENSION_pop_free(s->tlsext_ocsp_exts,
+									   X509_EXTENSION_free);
+						}
+
 					s->tlsext_ocsp_exts =
 						d2i_X509_EXTENSIONS(NULL,
 							&sdata, dsize);
