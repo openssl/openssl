@@ -769,7 +769,7 @@ EOF
 	undef %err_reason_strings;
 }
 
-if($debug && defined(%notrans)) {
+if($debug && %notrans) {
 	print STDERR "The following function codes were not translated:\n";
 	foreach(sort keys %notrans)
 	{
