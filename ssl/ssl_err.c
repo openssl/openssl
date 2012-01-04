@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2009 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -137,6 +137,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL3_CALLBACK_CTRL),	"SSL3_CALLBACK_CTRL"},
 {ERR_FUNC(SSL_F_SSL3_CHANGE_CIPHER_STATE),	"SSL3_CHANGE_CIPHER_STATE"},
 {ERR_FUNC(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM),	"SSL3_CHECK_CERT_AND_ALGORITHM"},
+{ERR_FUNC(SSL_F_SSL3_CHECK_CLIENT_HELLO),	"SSL3_CHECK_CLIENT_HELLO"},
 {ERR_FUNC(SSL_F_SSL3_CLIENT_HELLO),	"SSL3_CLIENT_HELLO"},
 {ERR_FUNC(SSL_F_SSL3_CONNECT),	"SSL3_CONNECT"},
 {ERR_FUNC(SSL_F_SSL3_CTRL),	"SSL3_CTRL"},
@@ -397,6 +398,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_MISSING_TMP_RSA_KEY)   ,"missing tmp rsa key"},
 {ERR_REASON(SSL_R_MISSING_TMP_RSA_PKEY)  ,"missing tmp rsa pkey"},
 {ERR_REASON(SSL_R_MISSING_VERIFY_MESSAGE),"missing verify message"},
+{ERR_REASON(SSL_R_MULTIPLE_SGC_RESTARTS) ,"multiple sgc restarts"},
 {ERR_REASON(SSL_R_NON_SSLV2_INITIAL_PACKET),"non sslv2 initial packet"},
 {ERR_REASON(SSL_R_NO_CERTIFICATES_RETURNED),"no certificates returned"},
 {ERR_REASON(SSL_R_NO_CERTIFICATE_ASSIGNED),"no certificate assigned"},
