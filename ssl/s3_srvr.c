@@ -235,6 +235,7 @@ int ssl3_accept(SSL *s)
 				}
 
 			s->init_num=0;
+			s->s3->flags &= ~SSL3_FLAGS_SGC_RESTART_DONE;
 
 			if (s->state != SSL_ST_RENEGOTIATE)
 				{
@@ -697,6 +698,14 @@ int ssl3_check_client_hello(SSL *s)
 	int ok;
 	long n;
 
+	/* We only allow the client to restart the handshake once per
+	 * negotiation. */
+	if (s->s3->flags & SSL3_FLAGS_SGC_RESTART_DONE)
+		{
+		SSLerr(SSL_F_SSL3_CHECK_CLIENT_HELLO, SSL_R_MULTIPLE_SGC_RESTARTS);
+		return -1;
+		}
+
 	/* this function is called when we really expect a Certificate message,
 	 * so permit appropriate message length */
 	n=s->method->ssl_get_message(s,
@@ -725,6 +734,7 @@ int ssl3_check_client_hello(SSL *s)
 			s->s3->tmp.ecdh = NULL;
 			}
 #endif
+		s->s3->flags |= SSL3_FLAGS_SGC_RESTART_DONE;
 		return 2;
 		}
 	return 1;

@@ -3,6 +3,9 @@
  _______________
 
  Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
+
+  *) Only allow one SGC handshake restart for SSL/TLS. (CVE-2011-4619)
+     [Adam Langley (Google)]
  
   *) Prevent malformed RFC3779 data triggering an assertion failure.
      Thanks to Andrew Chi, BBN Technologies, for discovering the flaw
