@@ -261,14 +261,6 @@
   *) Add support for SCTP.
      [Robin Seggelmann <seggelmann@fh-muenster.de>]
 
-  *) Check parameters are not NULL in GOST ENGINE. (CVE-2012-0027)
-     [Andrey Kulikov <amdeich@gmail.com>]
-
-  *) Prevent malformed RFC3779 data triggering an assertion failure.
-     Thanks to Andrew Chi, BBN Technologies, for discovering the flaw
-     and Rob Austein <sra@hactrn.net> for fixing it. (CVE-2011-4577)
-     [Rob Austein <sra@hactrn.net>]
-
   *) Improved PRNG seeding for VOS.
      [Paul Green <Paul.Green@stratus.com>]
 
@@ -530,6 +522,17 @@
      [Steve Henson]
 
  Changes between 1.0.0e and 1.0.0f [xx XXX xxxx]
+
+  *) Only allow one SGC handshake restart for SSL/TLS. (CVE-2011-4619)
+     [Adam Langley (Google)]
+
+  *) Check parameters are not NULL in GOST ENGINE. (CVE-2012-0027)
+     [Andrey Kulikov <amdeich@gmail.com>]
+
+  *) Prevent malformed RFC3779 data triggering an assertion failure.
+     Thanks to Andrew Chi, BBN Technologies, for discovering the flaw
+     and Rob Austein <sra@hactrn.net> for fixing it. (CVE-2011-4577)
+     [Rob Austein <sra@hactrn.net>]
 
   *) Fix ssl_ciph.c set-up race.
      [Adam Langley (Google)]
