@@ -511,6 +511,9 @@ int ssl3_enc(SSL *s, int send)
 
 			/* we need to add 'i-1' padding bytes */
 			l+=i;
+			/* the last of these zero bytes will be overwritten
+			 * with the padding length. */
+			memset(&rec->input[rec->length], 0, i);
 			rec->length+=i;
 			rec->input[l-1]=(i-1);
 			}
