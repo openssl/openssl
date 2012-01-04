@@ -280,6 +280,10 @@ int pkey_GOST01cp_decrypt(EVP_PKEY_CTX *pctx, unsigned char *key, size_t * key_l
 		}
 		
 	param = get_encryption_params(gkt->key_agreement_info->cipher);
+    if(!param){
+        goto err;
+    }
+
 	gost_init(&ctx,param->sblock);	
 	OPENSSL_assert(gkt->key_agreement_info->eph_iv->length==8);
 	memcpy(wrappedKey,gkt->key_agreement_info->eph_iv->data,8);
