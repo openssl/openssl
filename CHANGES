@@ -523,6 +523,20 @@
 
  Changes between 1.0.0e and 1.0.0f [xx XXX xxxx]
 
+  *) Nadhem Alfardan and Kenny Paterson have discovered an extension
+     of the Vaudenay padding oracle attack on CBC mode encryption
+     which enables an efficient plaintext recovery attack against
+     the OpenSSL implementation of DTLS. Their attack exploits timing
+     differences arising during decryption processing. A research
+     paper describing this attack can be found at:
+                  http://www.isg.rhul.ac.uk/~kp/dtls.pdf
+     Thanks go to Nadhem Alfardan and Kenny Paterson of the Information
+     Security Group at Royal Holloway, University of London
+     (www.isg.rhul.ac.uk) for discovering this flaw and to Robin Seggelmann
+     <seggelmann@fh-muenster.de> and Michael Tuexen <tuexen@fh-muenster.de>
+     for preparing the fix. (CVE-2011-4108)
+     [Robin Seggelmann, Michael Tuexen]
+
   *) Clear bytes used for block padding of SSL 3.0 records.
      (CVE-2011-4576)
      [Adam Langley (Google)]
