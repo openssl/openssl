@@ -4,6 +4,10 @@
 
  Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
 
+  *) Clear bytes used for block padding of SSL 3.0 records.
+     (CVE-2011-4576)
+     [Adam Langley (Google)]
+
   *) Only allow one SGC handshake restart for SSL/TLS. (CVE-2011-4619)
      [Adam Langley (Google)]
  
