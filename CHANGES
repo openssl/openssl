@@ -4,6 +4,10 @@
 
  Changes between 1.0.0e and 1.0.0f [xx XXX xxxx]
 
+  *) Clear bytes used for block padding of SSL 3.0 records.
+     (CVE-2011-4576)
+     [Adam Langley (Google)]
+
   *) Only allow one SGC handshake restart for SSL/TLS. (CVE-2011-4619)
      [Adam Langley (Google)]
 
