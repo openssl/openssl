@@ -10,6 +10,12 @@
   *) Add support for SCTP.
      [Robin Seggelmann <seggelmann@fh-muenster.de>]
 
+  *) Only allow one SGC handshake restart for SSL/TLS. (CVE-2011-4619)
+     [Adam Langley (Google)]
+
+  *) Only allow one SGC handshake restart for SSL/TLS. (CVE-2011-4619)
+     [Adam Langley (Google)]
+
   *) Check parameters are not NULL in GOST ENGINE. (CVE-2012-0027)
      [Andrey Kulikov <amdeich@gmail.com>]
 
