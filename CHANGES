@@ -4,6 +4,20 @@
 
  Changes between 0.9.8r and 0.9.8s [xx XXX xxxx]
 
+  *) Nadhem Alfardan and Kenny Paterson have discovered an extension
+     of the Vaudenay padding oracle attack on CBC mode encryption
+     which enables an efficient plaintext recovery attack against
+     the OpenSSL implementation of DTLS. Their attack exploits timing
+     differences arising during decryption processing. A research
+     paper describing this attack can be found at:
+                  http://www.isg.rhul.ac.uk/~kp/dtls.pdf
+     Thanks go to Nadhem Alfardan and Kenny Paterson of the Information
+     Security Group at Royal Holloway, University of London
+     (www.isg.rhul.ac.uk) for discovering this flaw and to Robin Seggelmann
+     <seggelmann@fh-muenster.de> and Michael Tuexen <tuexen@fh-muenster.de>
+     for preparing the fix. (CVE-2011-4108)
+     [Robin Seggelmann, Michael Tuexen]
+
   *) Stop policy check failure freeing same buffer twice. (CVE-2011-4109)
      [Ben Laurie, Kasper <ekasper@google.com>]
 
