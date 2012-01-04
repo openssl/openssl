@@ -5,6 +5,14 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.0e and OpenSSL 1.0.0f:
+
+      o Fix for DTLS plaintext recovery attack CVE-2011-4108
+      o Clear block padding bytes of SSL 3.0 records CVE-2011-4576
+      o Only allow one SGC handshake restart for SSL/TLS CVE-2011-4619
+      o Check parameters are not NULL in GOST ENGINE CVE-2012-0027
+      o Check for malformed RFC3779 data CVE-2011-4577
+
   Major changes between OpenSSL 1.0.0d and OpenSSL 1.0.0e:
 
       o Fix for CRL vulnerability issue CVE-2011-3207
