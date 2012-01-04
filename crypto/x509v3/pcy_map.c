@@ -70,8 +70,6 @@ static int ref_cmp(const X509_POLICY_REF * const *a,
 
 static void policy_map_free(X509_POLICY_REF *map)
 	{
-	if (map->subjectDomainPolicy)
-		ASN1_OBJECT_free(map->subjectDomainPolicy);
 	OPENSSL_free(map);
 	}
 
@@ -95,6 +93,7 @@ int policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
 	{
 	POLICY_MAPPING *map;
 	X509_POLICY_REF *ref = NULL;
+	ASN1_OBJECT *subjectDomainPolicyRef;
 	X509_POLICY_DATA *data;
 	X509_POLICY_CACHE *cache = x->policy_cache;
 	int i;
@@ -153,13 +152,16 @@ int policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
 		if (!sk_ASN1_OBJECT_push(data->expected_policy_set, 
 						map->subjectDomainPolicy))
 			goto bad_mapping;
+                /* map->subjectDomainPolicy will be freed when
+                 * cache->data is freed. Set it to NULL to avoid double-free. */
+                subjectDomainPolicyRef = map->subjectDomainPolicy;
+                map->subjectDomainPolicy = NULL;
 		
 		ref = OPENSSL_malloc(sizeof(X509_POLICY_REF));
 		if (!ref)
 			goto bad_mapping;
 
-		ref->subjectDomainPolicy = map->subjectDomainPolicy;
-		map->subjectDomainPolicy = NULL;
+		ref->subjectDomainPolicy = subjectDomainPolicyRef;
 		ref->data = data;
 
 		if (!sk_X509_POLICY_REF_push(cache->maps, ref))
