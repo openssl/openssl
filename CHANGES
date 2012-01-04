@@ -261,6 +261,9 @@
   *) Add support for SCTP.
      [Robin Seggelmann <seggelmann@fh-muenster.de>]
 
+  *) Check parameters are not NULL in GOST ENGINE. (CVE-2012-0027)
+     [Andrey Kulikov <amdeich@gmail.com>]
+
   *) Prevent malformed RFC3779 data triggering an assertion failure.
      Thanks to Andrew Chi, BBN Technologies, for discovering the flaw
      and Rob Austein <sra@hactrn.net> for fixing it. (CVE-2011-4577)
