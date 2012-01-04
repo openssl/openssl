@@ -2482,7 +2482,7 @@ $multilib     =
 
 *** debug-vos-gcc
 $cc           = gcc
-$cflags       = -O0 -g -Wall -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG
+$cflags       = -O0 -g -Wall -DOPENSSL_SYSNAME_VOS -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = VOS
@@ -5303,7 +5303,7 @@ $multilib     =
 
 *** vos-gcc
 $cc           = gcc
-$cflags       = -O3 -Wall -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN
+$cflags       = -O3 -Wall -DOPENSSL_SYSNAME_VOS -D_POSIX_C_SOURCE=200112L -D_BSD -D_VOS_EXTENDED_NAMES -DB_ENDIAN
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = VOS
