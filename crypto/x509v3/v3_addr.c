@@ -142,12 +142,13 @@ unsigned int v3_addr_get_afi(const IPAddressFamily *f)
  * Expand the bitstring form of an address into a raw byte array.
  * At the moment this is coded for simplicity, not speed.
  */
-static void addr_expand(unsigned char *addr,
+static int addr_expand(unsigned char *addr,
 			const ASN1_BIT_STRING *bs,
 			const int length,
 			const unsigned char fill)
 {
-  OPENSSL_assert(bs->length >= 0 && bs->length <= length);
+  if (bs->length < 0 || bs->length > length)
+    return 0;
   if (bs->length > 0) {
     memcpy(addr, bs->data, bs->length);
     if ((bs->flags & 7) != 0) {
@@ -159,6 +160,7 @@ static void addr_expand(unsigned char *addr,
     }
   }
   memset(addr + bs->length, fill, length - bs->length);
+  return 1;
 }
 
 /*
@@ -181,15 +183,13 @@ static int i2r_address(BIO *out,
     return 0;
   switch (afi) {
   case IANA_AFI_IPV4:
-    if (bs->length > 4)
+    if (!addr_expand(addr, bs, 4, fill))
       return 0;
-    addr_expand(addr, bs, 4, fill);
     BIO_printf(out, "%d.%d.%d.%d", addr[0], addr[1], addr[2], addr[3]);
     break;
   case IANA_AFI_IPV6:
-    if (bs->length > 16)
+    if (!addr_expand(addr, bs, 16, fill))
       return 0;
-    addr_expand(addr, bs, 16, fill);
     for (n = 16; n > 1 && addr[n-1] == 0x00 && addr[n-2] == 0x00; n -= 2)
       ;
     for (i = 0; i < n; i += 2)
@@ -315,6 +315,12 @@ static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
 /*
  * Sort comparison function for a sequence of IPAddressOrRange
  * elements.
+ *
+ * There's no sane answer we can give if addr_expand() fails, and an
+ * assertion failure on externally supplied data is seriously uncool,
+ * so we just arbitrarily declare that if given invalid inputs this
+ * function returns -1.  If this messes up your preferred sort order
+ * for garbage input, tough noogies.
  */
 static int IPAddressOrRange_cmp(const IPAddressOrRange *a,
 				const IPAddressOrRange *b,
@@ -326,22 +332,26 @@ static int IPAddressOrRange_cmp(const IPAddressOrRange *a,
 
   switch (a->type) {
   case IPAddressOrRange_addressPrefix:
-    addr_expand(addr_a, a->u.addressPrefix, length, 0x00);
+    if (!addr_expand(addr_a, a->u.addressPrefix, length, 0x00))
+      return -1;
     prefixlen_a = addr_prefixlen(a->u.addressPrefix);
     break;
   case IPAddressOrRange_addressRange:
-    addr_expand(addr_a, a->u.addressRange->min, length, 0x00);
+    if (!addr_expand(addr_a, a->u.addressRange->min, length, 0x00))
+      return -1;
     prefixlen_a = length * 8;
     break;
   }
 
   switch (b->type) {
   case IPAddressOrRange_addressPrefix:
-    addr_expand(addr_b, b->u.addressPrefix, length, 0x00);
+    if (!addr_expand(addr_b, b->u.addressPrefix, length, 0x00))
+      return -1;
     prefixlen_b = addr_prefixlen(b->u.addressPrefix);
     break;
   case IPAddressOrRange_addressRange:
-    addr_expand(addr_b, b->u.addressRange->min, length, 0x00);
+    if (!addr_expand(addr_b, b->u.addressRange->min, length, 0x00))
+      return -1;
     prefixlen_b = length * 8;
     break;
   }
@@ -657,22 +667,22 @@ int v3_addr_add_range(IPAddrBlocks *addr,
 /*
  * Extract min and max values from an IPAddressOrRange.
  */
-static void extract_min_max(IPAddressOrRange *aor,
+static int extract_min_max(IPAddressOrRange *aor,
 			    unsigned char *min,
 			    unsigned char *max,
 			    int length)
 {
-  OPENSSL_assert(aor != NULL && min != NULL && max != NULL);
+  if (aor == NULL || min == NULL || max == NULL)
+    return 0;
   switch (aor->type) {
   case IPAddressOrRange_addressPrefix:
-    addr_expand(min, aor->u.addressPrefix, length, 0x00);
-    addr_expand(max, aor->u.addressPrefix, length, 0xFF);
-    return;
+    return (addr_expand(min, aor->u.addressPrefix, length, 0x00) &&
+	    addr_expand(max, aor->u.addressPrefix, length, 0xFF));
   case IPAddressOrRange_addressRange:
-    addr_expand(min, aor->u.addressRange->min, length, 0x00);
-    addr_expand(max, aor->u.addressRange->max, length, 0xFF);
-    return;
+    return (addr_expand(min, aor->u.addressRange->min, length, 0x00) &&
+	    addr_expand(max, aor->u.addressRange->max, length, 0xFF));
   }
+  return 0;
 }
 
 /*
@@ -688,9 +698,10 @@ int v3_addr_get_range(IPAddressOrRange *aor,
   if (aor == NULL || min == NULL || max == NULL ||
       afi_length == 0 || length < afi_length ||
       (aor->type != IPAddressOrRange_addressPrefix &&
-       aor->type != IPAddressOrRange_addressRange))
+       aor->type != IPAddressOrRange_addressRange) ||
+      !extract_min_max(aor, min, max, afi_length))
     return 0;
-  extract_min_max(aor, min, max, afi_length);
+
   return afi_length;
 }
 
@@ -772,8 +783,9 @@ int v3_addr_is_canonical(IPAddrBlocks *addr)
       IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
       IPAddressOrRange *b = sk_IPAddressOrRange_value(aors, j + 1);
 
-      extract_min_max(a, a_min, a_max, length);
-      extract_min_max(b, b_min, b_max, length);
+      if (!extract_min_max(a, a_min, a_max, length) ||
+	  !extract_min_max(b, b_min, b_max, length))
+	return 0;
 
       /*
        * Punt misordered list, overlapping start, or inverted range.
@@ -808,7 +820,8 @@ int v3_addr_is_canonical(IPAddrBlocks *addr)
     {
       IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
       if (a != NULL && a->type == IPAddressOrRange_addressRange) {
-	extract_min_max(a, a_min, a_max, length);
+	if (!extract_min_max(a, a_min, a_max, length))
+	  return 0;
 	if (memcmp(a_min, a_max, length) > 0 ||
 	    range_should_be_prefix(a_min, a_max, length) >= 0)
 	  return 0;
@@ -844,8 +857,9 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
     unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
     unsigned char b_min[ADDR_RAW_BUF_LEN], b_max[ADDR_RAW_BUF_LEN];
 
-    extract_min_max(a, a_min, a_max, length);
-    extract_min_max(b, b_min, b_max, length);
+    if (!extract_min_max(a, a_min, a_max, length) ||
+	!extract_min_max(b, b_min, b_max, length))
+      return 0;
 
     /*
      * Punt inverted ranges.
@@ -1131,13 +1145,15 @@ static int addr_contains(IPAddressOrRanges *parent,
 
   p = 0;
   for (c = 0; c < sk_IPAddressOrRange_num(child); c++) {
-    extract_min_max(sk_IPAddressOrRange_value(child, c),
-		    c_min, c_max, length);
+    if (!extract_min_max(sk_IPAddressOrRange_value(child, c),
+			 c_min, c_max, length))
+      return -1;
     for (;; p++) {
       if (p >= sk_IPAddressOrRange_num(parent))
 	return 0;
-      extract_min_max(sk_IPAddressOrRange_value(parent, p),
-		      p_min, p_max, length);
+      if (!extract_min_max(sk_IPAddressOrRange_value(parent, p),
+			   p_min, p_max, length))
+	return 0;
       if (memcmp(p_max, c_max, length) < 0)
 	continue;
       if (memcmp(p_min, c_min, length) > 0)
