@@ -267,7 +267,7 @@
        Add command line options to s_client/s_server.
      [Steve Henson]
 
- Changes between 1.0.0e and 1.0.0f [xx XXX xxxx]
+ Changes between 1.0.0e and 1.0.0f [4 Jan 2012]
 
   *) Nadhem Alfardan and Kenny Paterson have discovered an extension
      of the Vaudenay padding oracle attack on CBC mode encryption
