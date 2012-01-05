@@ -1019,10 +1019,11 @@ if (defined($disabled{"ec"}) || defined($disabled{"dsa"})
 	$disabled{"gost"} = "forced";
 	}
 
-# SRP requires TLSEXT
+# SRP and HEARTBEATS require TLSEXT
 if (defined($disabled{"tlsext"}))
 	{
 	$disabled{"srp"} = "forced";
+	$disabled{"heartbeats"} = "forced";
 	}
 
 if ($target eq "TABLE") {
