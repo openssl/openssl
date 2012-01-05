@@ -825,6 +825,7 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 			*(ret++) = SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
 		else
 			*(ret++) = SSL_TLSEXT_HB_ENABLED;
+
 		}
 #endif
 
@@ -1282,6 +1283,8 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 							s->tlsext_heartbeat |= SSL_TLSEXT_HB_ENABLED;
 							s->tlsext_heartbeat |= SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
 							break;
+				default:	*al = SSL_AD_ILLEGAL_PARAMETER;
+							return 0;
 				}
 			}
 #endif
@@ -1553,6 +1556,8 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 							s->tlsext_heartbeat |= SSL_TLSEXT_HB_ENABLED;
 							s->tlsext_heartbeat |= SSL_TLSEXT_HB_DONT_SEND_REQUESTS;
 							break;
+				default:	*al = SSL_AD_ILLEGAL_PARAMETER;
+							return 0;
 				}
 			}
 #endif
