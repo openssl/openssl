@@ -1054,8 +1054,10 @@ long SSL_ctrl(SSL *s,int cmd,long larg,void *parg)
 		s->max_cert_list=larg;
 		return(l);
 	case SSL_CTRL_SET_MTU:
+#ifndef OPENSSL_NO_DTLS1
 		if (larg < (long)dtls1_min_mtu())
 			return 0;
+#endif
 
 		if (SSL_version(s) == DTLS1_VERSION ||
 		    SSL_version(s) == DTLS1_BAD_VER)
@@ -3045,4 +3047,3 @@ IMPLEMENT_STACK_OF(SSL_CIPHER)
 IMPLEMENT_STACK_OF(SSL_COMP)
 IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER,
 				    ssl_cipher_id);
-
