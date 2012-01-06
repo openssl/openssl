@@ -77,19 +77,17 @@ struct CMAC_CTX_st
 
 /* Make temporary keys K1 and K2 */
 
-static void make_kn(unsigned char *k1, unsigned char *l, int bl)
+static void make_kn(unsigned char *k1, const unsigned char *l, int bl)
 	{
 	int i;
+	unsigned char c = l[0], carry = c>>7, cnext;
+
 	/* Shift block to left, including carry */
-	for (i = 0; i < bl; i++)
-		{
-		k1[i] = l[i] << 1;
-		if (i < bl - 1 && l[i + 1] & 0x80)
-			k1[i] |= 1;
-		}
+	for (i = 0; i < bl-1; i++, c = cnext)
+		k1[i] = (c << 1) | ((cnext=l[i+1]) >> 7);
+
 	/* If MSB set fixup with R */
-	if (l[0] & 0x80)
-		k1[bl - 1] ^= bl == 16 ? 0x87 : 0x1b;
+	k1[i] = (c << 1) ^ ((0-carry)&(bl==16?0x87:0x1b));
 	}
 
 CMAC_CTX *CMAC_CTX_new(void)
@@ -143,7 +141,8 @@ int CMAC_CTX_copy(CMAC_CTX *out, const CMAC_CTX *in)
 int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen, 
 			const EVP_CIPHER *cipher, ENGINE *impl)
 	{
-	static unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH];
+	__fips_constseg
+	static const unsigned char zero_iv[EVP_MAX_BLOCK_LENGTH] = {0};
 	/* All zeros means restart */
 	if (!key && !cipher && !impl && keylen == 0)
 		{
