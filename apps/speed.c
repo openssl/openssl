@@ -2597,7 +2597,7 @@ static void pkey_print_message(const char *str, const char *str2, long num,
 	BIO_printf(bio_err,mr ? "+DTP:%d:%s:%s:%d\n"
 			   : "Doing %d bit %s %s's for %ds: ",bits,str,str2,tm);
 	(void)BIO_flush(bio_err);
-	alarm(RSA_SECONDS);
+	alarm(tm);
 #else
 	BIO_printf(bio_err,mr ? "+DNP:%ld:%d:%s:%s\n"
 			   : "Doing %ld %d bit %s %s's: ",num,bits,str,str2);
