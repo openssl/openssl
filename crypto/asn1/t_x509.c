@@ -138,10 +138,10 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags, unsigned long cflag)
 		if (BIO_write(bp,"        Serial Number:",22) <= 0) goto err;
 
 		bs=X509_get_serialNumber(x);
-		if (bs->length <= 4)
+		if (bs->length <= sizeof(long))
 			{
 			l=ASN1_INTEGER_get(bs);
-			if (l < 0)
+			if (bs->type == V_ASN1_NEG_INTEGER)
 				{
 				l= -l;
 				neg="-";
