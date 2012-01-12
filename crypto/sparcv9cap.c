@@ -170,7 +170,6 @@ void OPENSSL_cpuid_setup(void)
 	char *e;
 	struct sigaction	common_act,ill_oact,bus_oact;
 	sigset_t		all_masked,oset;
-	int			sig;
 	static int trigger=0;
 
 	if (trigger) return;
