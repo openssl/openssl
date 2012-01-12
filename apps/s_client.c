@@ -581,7 +581,7 @@ int MAIN(int argc, char **argv)
 			psk_key=*(++argv);
 			for (j = 0; j < strlen(psk_key); j++)
                                 {
-                                if (isxdigit((int)psk_key[j]))
+                                if (isxdigit((unsigned char)psk_key[j]))
                                         continue;
                                 BIO_printf(bio_err,"Not a hex number '%s'\n",*argv);
                                 goto bad;

@@ -2536,7 +2536,7 @@ static int get_certificate_status(const char *serial, CA_DB *db)
 			
 	/* Make it Upper Case */
 	for (i=0; row[DB_serial][i] != '\0'; i++)
-		row[DB_serial][i] = toupper(row[DB_serial][i]);
+		row[DB_serial][i] = toupper((unsigned char)row[DB_serial][i]);
 	
 
 	ok=1;
