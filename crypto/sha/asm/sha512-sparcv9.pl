@@ -170,6 +170,7 @@ $code.=<<___ if ($i==0);
 	ld	[$inp+16],%l4
 	ld	[$inp+20],%l5
 	ld	[$inp+24],%l6
+	cmp	0,$tmp31
 	ld	[$inp+28],%l7
 ___
 $code.=<<___ if ($i<15);
@@ -185,7 +186,7 @@ $code.=<<___ if ($i<15);
 	$ST	$tmp2,[%sp+`$bias+$frame+$i*$SZ`]
 ___
 $code.=<<___ if ($i==12);
-	brnz,a	$tmp31,.+8
+	bnz,a,pn	%icc,.+8
 	ld	[$inp+128],%l0
 ___
 $code.=<<___ if ($i==15);
