@@ -68,7 +68,7 @@ $key="r5";
 $Tbl0="r3";
 $Tbl1="r6";
 $Tbl2="r7";
-$Tbl3="r2";
+$Tbl3=$out;	# stay away from "r2"; $out is offloaded to stack
 
 $s0="r8";
 $s1="r9";
@@ -76,7 +76,7 @@ $s2="r10";
 $s3="r11";
 
 $t0="r12";
-$t1="r13";
+$t1="r0";	# stay away from "r13";
 $t2="r14";
 $t3="r15";
 
@@ -100,9 +100,6 @@ $acc13="r29";
 $acc14="r30";
 $acc15="r31";
 
-# stay away from TLS pointer
-if ($SIZE_T==8)	{ die if ($t1 ne "r13");  $t1="r0";		}
-else		{ die if ($Tbl3 ne "r2"); $Tbl3=$t0; $t0="r0";	}
 $mask80=$Tbl2;
 $mask1b=$Tbl3;
 
@@ -337,8 +334,7 @@ $code.=<<___;
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
 
-	$PUSH	$toc,`$FRAME-$SIZE_T*20`($sp)
-	$PUSH	r13,`$FRAME-$SIZE_T*19`($sp)
+	$PUSH	$out,`$FRAME-$SIZE_T*19`($sp)
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
 	$PUSH	r15,`$FRAME-$SIZE_T*17`($sp)
 	$PUSH	r16,`$FRAME-$SIZE_T*16`($sp)
@@ -371,6 +367,7 @@ Lenc_unaligned_ok:
 	lwz	$s3,12($inp)
 	bl	LAES_Te
 	bl	Lppc_AES_encrypt_compact
+	$POP	$out,`$FRAME-$SIZE_T*19`($sp)
 	stw	$s0,0($out)
 	stw	$s1,4($out)
 	stw	$s2,8($out)
@@ -417,6 +414,7 @@ Lenc_xpage:
 
 	bl	LAES_Te
 	bl	Lppc_AES_encrypt_compact
+	$POP	$out,`$FRAME-$SIZE_T*19`($sp)
 
 	extrwi	$acc00,$s0,8,0
 	extrwi	$acc01,$s0,8,8
@@ -449,8 +447,6 @@ Lenc_xpage:
 
 Lenc_done:
 	$POP	r0,`$FRAME+$LRSAVE`($sp)
-	$POP	$toc,`$FRAME-$SIZE_T*20`($sp)
-	$POP	r13,`$FRAME-$SIZE_T*19`($sp)
 	$POP	r14,`$FRAME-$SIZE_T*18`($sp)
 	$POP	r15,`$FRAME-$SIZE_T*17`($sp)
 	$POP	r16,`$FRAME-$SIZE_T*16`($sp)
@@ -771,8 +767,7 @@ Lenc_compact_done:
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
 
-	$PUSH	$toc,`$FRAME-$SIZE_T*20`($sp)
-	$PUSH	r13,`$FRAME-$SIZE_T*19`($sp)
+	$PUSH	$out,`$FRAME-$SIZE_T*19`($sp)
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
 	$PUSH	r15,`$FRAME-$SIZE_T*17`($sp)
 	$PUSH	r16,`$FRAME-$SIZE_T*16`($sp)
@@ -805,6 +800,7 @@ Ldec_unaligned_ok:
 	lwz	$s3,12($inp)
 	bl	LAES_Td
 	bl	Lppc_AES_decrypt_compact
+	$POP	$out,`$FRAME-$SIZE_T*19`($sp)
 	stw	$s0,0($out)
 	stw	$s1,4($out)
 	stw	$s2,8($out)
@@ -851,6 +847,7 @@ Ldec_xpage:
 
 	bl	LAES_Td
 	bl	Lppc_AES_decrypt_compact
+	$POP	$out,`$FRAME-$SIZE_T*19`($sp)
 
 	extrwi	$acc00,$s0,8,0
 	extrwi	$acc01,$s0,8,8
@@ -883,8 +880,6 @@ Ldec_xpage:
 
 Ldec_done:
 	$POP	r0,`$FRAME+$LRSAVE`($sp)
-	$POP	$toc,`$FRAME-$SIZE_T*20`($sp)
-	$POP	r13,`$FRAME-$SIZE_T*19`($sp)
 	$POP	r14,`$FRAME-$SIZE_T*18`($sp)
 	$POP	r15,`$FRAME-$SIZE_T*17`($sp)
 	$POP	r16,`$FRAME-$SIZE_T*16`($sp)

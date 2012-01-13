@@ -110,7 +110,7 @@ $B  ="r9";
 $C  ="r10";
 $D  ="r11";
 $E  ="r12";
-$F  ="r13";	$F="r2" if ($SIZE_T==8);# reassigned to exempt TLS pointer
+$F  =$t1;	$t1 = "r0";	# stay away from "r13";
 $G  ="r14";
 $H  ="r15";
 
@@ -123,19 +123,18 @@ $inp="r31";	# reassigned $inp! aliases with @X[15]
 sub ROUND_00_15 {
 my ($i,$a,$b,$c,$d,$e,$f,$g,$h)=@_;
 $code.=<<___;
-	$LD	$T,`$i*$SZ`($Tbl)
 	$ROR	$a0,$e,$Sigma1[0]
 	$ROR	$a1,$e,$Sigma1[1]
 	and	$t0,$f,$e
-	andc	$t1,$g,$e
-	add	$T,$T,$h
 	xor	$a0,$a0,$a1
+	add	$h,$h,$t1
+	andc	$t1,$g,$e
 	$ROR	$a1,$a1,`$Sigma1[2]-$Sigma1[1]`
 	or	$t0,$t0,$t1		; Ch(e,f,g)
-	add	$T,$T,@X[$i]
+	add	$h,$h,@X[$i%16]
 	xor	$a0,$a0,$a1		; Sigma1(e)
-	add	$T,$T,$t0
-	add	$T,$T,$a0
+	add	$h,$h,$t0
+	add	$h,$h,$a0
 
 	$ROR	$a0,$a,$Sigma0[0]
 	$ROR	$a1,$a,$Sigma0[1]
@@ -146,9 +145,14 @@ $code.=<<___;
 	xor	$t0,$t0,$t1
 	and	$t1,$b,$c
 	xor	$a0,$a0,$a1		; Sigma0(a)
-	add	$d,$d,$T
+	add	$d,$d,$h
 	xor	$t0,$t0,$t1		; Maj(a,b,c)
-	add	$h,$T,$a0
+___
+$code.=<<___ if ($i<15);
+	$LD	$t1,`($i+1)*$SZ`($Tbl)
+___
+$code.=<<___;
+	add	$h,$h,$a0
 	add	$h,$h,$t0
 
 ___
@@ -169,10 +173,11 @@ $code.=<<___;
 	add	@X[$i],@X[$i],@X[($i+9)%16]
 	xor	$a0,$a0,$a1		; sigma0(X[(i+1)&0x0f])
 	xor	$t0,$t0,$t1		; sigma1(X[(i+14)&0x0f])
+	$LD	$t1,`$i*$SZ`($Tbl)
 	add	@X[$i],@X[$i],$a0
 	add	@X[$i],@X[$i],$t0
 ___
-&ROUND_00_15($i,$a,$b,$c,$d,$e,$f,$g,$h);
+&ROUND_00_15($i+16,$a,$b,$c,$d,$e,$f,$g,$h);
 }
 
 $code=<<___;
@@ -188,8 +193,6 @@ $func:
 
 	$PUSH	$ctx,`$FRAME-$SIZE_T*22`($sp)
 
-	$PUSH	$toc,`$FRAME-$SIZE_T*20`($sp)
-	$PUSH	r13,`$FRAME-$SIZE_T*19`($sp)
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
 	$PUSH	r15,`$FRAME-$SIZE_T*17`($sp)
 	$PUSH	r16,`$FRAME-$SIZE_T*16`($sp)
@@ -283,8 +286,6 @@ Lmemcpy:
 
 Ldone:
 	$POP	r0,`$FRAME+$LRSAVE`($sp)
-	$POP	$toc,`$FRAME-$SIZE_T*20`($sp)
-	$POP	r13,`$FRAME-$SIZE_T*19`($sp)
 	$POP	r14,`$FRAME-$SIZE_T*18`($sp)
 	$POP	r15,`$FRAME-$SIZE_T*17`($sp)
 	$POP	r16,`$FRAME-$SIZE_T*16`($sp)
@@ -312,6 +313,7 @@ Ldone:
 
 .align	4
 Lsha2_block_private:
+	$LD	$t1,0($Tbl)
 ___
 for($i=0;$i<16;$i++) {
 $code.=<<___ if ($SZ==4);
@@ -328,8 +330,8 @@ ___
 	unshift(@V,pop(@V));
 }
 $code.=<<___;
-	li	$T,`$rounds/16-1`
-	mtctr	$T
+	li	$t0,`$rounds/16-1`
+	mtctr	$t0
 .align	4
 Lrounds:
 	addi	$Tbl,$Tbl,`16*$SZ`
