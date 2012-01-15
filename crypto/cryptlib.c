@@ -149,7 +149,7 @@ void OPENSSL_cpuid_setup(void)
 #if defined(_WIN32)
     	if (!sscanf(env+off,"%I64i",&vec)) vec = strtoul(env+off,NULL,0);
 #else
-	if (!sscanf(env+off,"%lli",&vec)) vec = strtoul(env+off,NULL,0);
+	if (!sscanf(env+off,"%lli",(long long *)&vec)) vec = strtoul(env+off,NULL,0);
 #endif
 	if (off) vec = OPENSSL_ia32_cpuid()&~vec;
     }
