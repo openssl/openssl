@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Support for fixed DH ciphersuites: those requiring DH server
+     certificates.
+     [Steve Henson]
+
   *) Transparently support X9.42 DH parameters when calling
      PEM_read_bio_DHparameters. This means existing applications can handle
      the new parameter format automatically.

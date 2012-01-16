@@ -2110,6 +2110,9 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 	if (dh_dsa) mask_k|=SSL_kDHd;
 	if (dh_dsa_export) emask_k|=SSL_kDHd;
 
+	if (emask_k & (SSL_kDHr|SSL_kDHd))
+		mask_a |= SSL_aDH;
+
 	if (rsa_enc || rsa_sign)
 		{
 		mask_a|=SSL_aRSA;
