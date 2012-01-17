@@ -29,7 +29,9 @@
      (CVE-2011-4576)
      [Adam Langley (Google)]
 
-  *) Only allow one SGC handshake restart for SSL/TLS. (CVE-2011-4619)
+  *) Only allow one SGC handshake restart for SSL/TLS. Thanks to George
+     Kadianakis <desnacked@gmail.com> for discovering this issue and
+     Adam Langley for preparing the fix. (CVE-2011-4619)
      [Adam Langley (Google)]
  
   *) Prevent malformed RFC3779 data triggering an assertion failure.
