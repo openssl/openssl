@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8t and 0.9.8u [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8s and 0.9.8t [18 Jan 2012]
 
   *) Fix for DTLS DoS issue introduced by fix for CVE-2011-4109.
