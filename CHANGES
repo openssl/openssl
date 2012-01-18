@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0f and 1.0.0g [xx XXX xxxx]
+ Changes between 1.0.0f and 1.0.0g [18 Jan 2012]
 
   *) Fix for DTLS DoS issue introduced by fix for CVE-2011-4109.
      Thanks to Antonio Martin, Enterprise Secure Access Research and
