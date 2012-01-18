@@ -376,6 +376,7 @@ dtls1_process_record(SSL *s)
 	unsigned int mac_size;
 	unsigned char md[EVP_MAX_MD_SIZE];
 	int decryption_failed_or_bad_record_mac = 0;
+	unsigned char *mac = NULL;
 
 
 	rr= &(s->s3->rrec);
@@ -447,19 +448,15 @@ printf("\n");
 #endif			
 			}
 		/* check the MAC for rr->input (it's in mac_size bytes at the tail) */
-		if (rr->length < mac_size)
+		if (rr->length >= mac_size)
 			{
-#if 0 /* OK only for stream ciphers */
-			al=SSL_AD_DECODE_ERROR;
-			SSLerr(SSL_F_DTLS1_PROCESS_RECORD,SSL_R_LENGTH_TOO_SHORT);
-			goto f_err;
-#else
-			decryption_failed_or_bad_record_mac = 1;
-#endif
+			rr->length -= mac_size;
+			mac = &rr->data[rr->length];
 			}
-		rr->length-=mac_size;
+		else
+			rr->length = 0;
 		i=s->method->ssl3_enc->mac(s,md,0);
-		if (i < 0 || memcmp(md,&(rr->data[rr->length]),mac_size) != 0)
+		if (i < 0 || mac == NULL || memcmp(md, mac, mac_size) != 0)
 			{
 			decryption_failed_or_bad_record_mac = 1;
 			}
