@@ -57,16 +57,6 @@ print "$fips_cc -DHMAC_SHA1_SIG=\\\"$fips_hash\\\" $fips_cc_args $fips_libdir/fi
 system "$fips_cc -DHMAC_SHA1_SIG=\\\"$fips_hash\\\" $fips_cc_args $fips_libdir/fips_premain.c";
 die "Second stage Compile failure" if $? != 0;
 
-my $delcnt = 0;
-# On windows the previous file doesn't always close straight away
-# so retry an unlink operation a few times if it fails.
-while (!unlink($fips_target))
-        {
-        sleep 2;
-        die "Can't delete $fips_target" if ($delcnt++ > 10);
-        }
-
-
 print "$fips_link @ARGV\n";
 system "$fips_link @ARGV";
 die "Second stage Link failure" if $? != 0;
