@@ -522,6 +522,14 @@
        Add command line options to s_client/s_server.
      [Steve Henson]
 
+ Changes between 1.0.0f and 1.0.0g [18 Jan 2012]
+
+  *) Fix for DTLS DoS issue introduced by fix for CVE-2011-4109.
+     Thanks to Antonio Martin, Enterprise Secure Access Research and
+     Development, Cisco Systems, Inc. for discovering this bug and
+     preparing a fix. (CVE-2012-0050)
+     [Antonio Martin]
+
  Changes between 1.0.0e and 1.0.0f [4 Jan 2012]
 
   *) Nadhem Alfardan and Kenny Paterson have discovered an extension
@@ -1485,6 +1493,14 @@
 
   *) Change 'Configure' script to enable Camellia by default.
      [NTT]
+
+ Changes between 0.9.8s and 0.9.8t [18 Jan 2012]
+
+  *) Fix for DTLS DoS issue introduced by fix for CVE-2011-4109.
+     Thanks to Antonio Martin, Enterprise Secure Access Research and
+     Development, Cisco Systems, Inc. for discovering this bug and
+     preparing a fix. (CVE-2012-0050)
+     [Antonio Martin]
   
  Changes between 0.9.8r and 0.9.8s [4 Jan 2012]
 
