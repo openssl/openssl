@@ -45,10 +45,8 @@ sub ::generic
     undef $suffix if ($dst =~ m/^%[xm]/o || $src =~ m/^%[xm]/o);
 
     if ($#_==0)				{ &::emit($opcode);		}
-    elsif ($opcode =~ m/^j/o && $#_==1)	{ &::emit($opcode,@arg);	}
-    elsif ($opcode eq "call" && $#_==1)	{ &::emit($opcode,@arg);	}
-    elsif ($opcode eq "clflush" && $#_==1){ &::emit($opcode,@arg);	}
-    elsif ($opcode =~ m/^set/&& $#_==1)	{ &::emit($opcode,@arg);	}
+    elsif ($#_==1 && $opcode =~ m/^(call|clflush|j|loop|set)/o)
+					{ &::emit($opcode,@arg);	}
     else				{ &::emit($opcode.$suffix,@arg);}
 
   1;
