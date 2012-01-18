@@ -352,6 +352,7 @@ int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
 #ifdef OPENSSL_DOING_MAKEDEPEND
 #undef SHA1_Init
+#undef SHA1_Update
 #undef SHA224_Init
 #undef SHA256_Init
 #undef SHA384_Init

@@ -58,6 +58,7 @@
 #include <openssl/objects.h>
 #include <openssl/aes.h>
 #include <openssl/sha.h>
+#include "evp_locl.h"
 
 #ifndef EVP_CIPH_FLAG_AEAD_CIPHER
 #define EVP_CIPH_FLAG_AEAD_CIPHER	0x200000

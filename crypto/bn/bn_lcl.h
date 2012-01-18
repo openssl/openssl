@@ -472,6 +472,10 @@ extern "C" {
 	}
 #endif /* !BN_LLONG */
 
+#if defined(OPENSSL_DOING_MAKEDEPEND) && defined(OPENSSL_FIPS)
+#undef bn_div_words
+#endif
+
 void bn_mul_normal(BN_ULONG *r,BN_ULONG *a,int na,BN_ULONG *b,int nb);
 void bn_mul_comba8(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b);
 void bn_mul_comba4(BN_ULONG *r,BN_ULONG *a,BN_ULONG *b);
