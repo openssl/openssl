@@ -2279,6 +2279,8 @@ static int tls12_find_nid(int id, tls12_lookup *table, size_t tlen)
 int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk, const EVP_MD *md)
 	{
 	int sig_id, md_id;
+	if (!md)
+		return 0;
 	md_id = tls12_find_id(EVP_MD_type(md), tls12_md,
 				sizeof(tls12_md)/sizeof(tls12_lookup));
 	if (md_id == -1)
