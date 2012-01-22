@@ -2056,7 +2056,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	}
 #endif
 
-#if 1
+#ifdef SSL_DEBUG
 	{
 	/* Print out local port of connection: useful for debugging */
 	int sock;
