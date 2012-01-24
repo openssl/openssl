@@ -64,7 +64,6 @@
 #include <string.h>
 #include "ec_lcl.h"
 #include <openssl/err.h>
-#include <string.h>
 #ifdef OPENSSL_FIPS
 #include <openssl/fips.h>
 #endif
