@@ -569,7 +569,7 @@ my %globals;
 					    $v.=" READONLY";
 					    $v.=" ALIGN(".($1 eq "p" ? 4 : 8).")" if ($masm>=$masmref);
 					} elsif ($line=~/\.CRT\$/i) {
-					    $v.=" READONLY "
+					    $v.=" READONLY ";
 					    $v.=$masm>=$masmref ? "ALIGN(8)" : "DWORD";
 					}
 				    }
