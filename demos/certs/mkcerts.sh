@@ -1,6 +1,8 @@
 #!/bin/sh
 
-OPENSSL=openssl
+OPENSSL=../../apps/openssl
+OPENSSL_CONF=../../apps/openssl.cnf
+export OPENSSL_CONF
 
 # Root CA: create certificate directly
 CN="Test Root CA" $OPENSSL req -config ca.cnf -x509 -nodes \
@@ -23,3 +25,32 @@ CN="Test Client Cert" $OPENSSL req -config ca.cnf -nodes \
 # Sign using intermediate CA
 $OPENSSL x509 -req -in creq.pem -CA intca.pem -CAkey intkey.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial -out client.pem
+
+# Example creating a PKCS#3 DH certificate. 
+
+# First DH parameters
+
+[ -f dhp.pem ] || $OPENSSL genpkey -genparam -algorithm DH -pkeyopt dh_paramgen_prime_len:1024 -out dhp.pem
+
+# Now a DH private key
+$OPENSSL genpkey -paramfile dhp.pem -out dhskey.pem
+# Create DH public key file
+$OPENSSL pkey -in dhskey.pem -pubout -out dhspub.pem
+# Certificate request, key just reuses old one as it is ignored when the
+# request is signed.
+CN="Test Server DH Cert" $OPENSSL req -config ca.cnf -new \
+	-key skey.pem -out dhsreq.pem
+# Sign request: end entity DH extensions
+$OPENSSL x509 -req -in dhsreq.pem -CA root.pem -days 3600 \
+	-force_pubkey dhspub.pem \
+	-extfile ca.cnf -extensions dh_cert -CAcreateserial -out dhserver.pem
+
+# DH client certificate
+
+$OPENSSL genpkey -paramfile dhp.pem -out dhckey.pem
+$OPENSSL pkey -in dhckey.pem -pubout -out dhcpub.pem
+CN="Test Client DH Cert" $OPENSSL req -config ca.cnf -new \
+	-key skey.pem -out dhcreq.pem
+$OPENSSL x509 -req -in dhcreq.pem -CA root.pem -days 3600 \
+	-force_pubkey dhcpub.pem \
+	-extfile ca.cnf -extensions dh_cert -CAcreateserial -out dhclient.pem

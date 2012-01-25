@@ -42,6 +42,18 @@ nsComment			= "OpenSSL Generated Certificate"
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid
 
+[ dh_cert ]
+
+# These extensions are added when 'ca' signs a request for an end entity
+# DH certificate
+
+basicConstraints=critical, CA:FALSE
+keyUsage=critical, keyAgreement
+
+# PKIX recommendations harmless if included in all certificates.
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid
+
 [ v3_ca ]
 
 
