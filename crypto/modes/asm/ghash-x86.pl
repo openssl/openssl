@@ -331,7 +331,7 @@ if (!$x86only) {{{
 
 &static_label("rem_4bit");
 
-if (0) {{	# "May" MMX version is kept for reference...
+if (!$sse2) {{	# pure-MMX "May" version...
 
 $S=12;		# shift factor for rem_4bit
 
