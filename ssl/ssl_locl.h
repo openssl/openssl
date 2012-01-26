@@ -825,6 +825,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
 		       const EVP_MD **md,int *mac_pkey_type,int *mac_secret_size, SSL_COMP **comp);
 int ssl_get_handshake_digest(int i,long *mask,const EVP_MD **md);			   
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
+int ssl_add_cert_chain(SSL *s, X509 *x, unsigned long *l);
 int ssl_undefined_function(SSL *s);
 int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
