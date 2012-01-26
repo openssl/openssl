@@ -562,12 +562,18 @@ static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x, int c
 {
 	if(xku_reject(x,XKU_SSL_CLIENT)) return 0;
 	if(ca) return check_ssl_ca(x);
-	/* We need to do digital signatures with it */
-	if(ku_reject(x,KU_DIGITAL_SIGNATURE)) return 0;
+	/* We need to do digital signatures or key agreement */
+	if(ku_reject(x,KU_DIGITAL_SIGNATURE|KU_KEY_AGREEMENT)) return 0;
 	/* nsCertType if present should allow SSL client use */	
 	if(ns_reject(x, NS_SSL_CLIENT)) return 0;
 	return 1;
 }
+/* Key usage needed for TLS/SSL server: digital signature, encipherment or
+ * key agreement. The ssl code can check this more thoroughly for individual
+ * key types.
+ */
+#define KU_TLS \
+	KU_DIGITAL_SIGNATURE|KU_KEY_ENCIPHERMENT|KU_KEY_AGREEMENT
 
 static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x, int ca)
 {
@@ -575,8 +581,7 @@ static int check_purpose_ssl_server(const X509_PURPOSE *xp, const X509 *x, int c
 	if(ca) return check_ssl_ca(x);
 
 	if(ns_reject(x, NS_SSL_SERVER)) return 0;
-	/* Now as for keyUsage: we'll at least need to sign OR encipher */
-	if(ku_reject(x, KU_DIGITAL_SIGNATURE|KU_KEY_ENCIPHERMENT)) return 0;
+	if(ku_reject(x, KU_TLS)) return 0;
 	
 	return 1;
 
