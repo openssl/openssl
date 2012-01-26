@@ -321,13 +321,13 @@ int ssl3_send_change_cipher_spec(SSL *s, int a, int b)
 	return(ssl3_do_write(s,SSL3_RT_CHANGE_CIPHER_SPEC));
 	}
 
-unsigned long ssl3_output_cert_chain(SSL *s, X509 *x)
+unsigned long ssl3_output_cert_chain(SSL *s, CERT_PKEY *cpk)
 	{
 	unsigned char *p;
 	unsigned long l=7;
 	BUF_MEM *buf = s->init_buf;
 
-	if (!ssl_add_cert_chain(s, x, &l))
+	if (!ssl_add_cert_chain(s, cpk, &l))
 		return 0;
 
 	l-=7;

@@ -873,11 +873,18 @@ static int ssl_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
 	}
 
 /* Add certificate chain to internal SSL BUF_MEM strcuture */
-int ssl_add_cert_chain(SSL *s, X509 *x, unsigned long *l)
+int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
 	{
 	BUF_MEM *buf = s->init_buf;
 	int no_chain;
 	int i;
+
+	X509 *x;
+
+	if (cpk)
+		x = cpk->x509;
+	else
+		x = NULL;
 
 	if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || s->ctx->extra_certs)
 		no_chain = 1;

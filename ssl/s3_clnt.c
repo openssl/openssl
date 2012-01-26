@@ -3177,7 +3177,7 @@ int ssl3_send_client_certificate(SSL *s)
 		{
 		s->state=SSL3_ST_CW_CERT_D;
 		l=ssl3_output_cert_chain(s,
-			(s->s3->tmp.cert_req == 2)?NULL:s->cert->key->x509);
+			(s->s3->tmp.cert_req == 2)?NULL:s->cert->key);
 		s->init_num=(int)l;
 		s->init_off=0;
 		}
