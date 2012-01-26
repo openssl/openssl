@@ -2432,6 +2432,7 @@ int ssl3_send_client_key_exchange(SSL *s)
 				{
 				/* Use client certificate key */
 				EVP_PKEY *clkey = s->cert->key->privatekey;
+				dh_clnt = NULL;
 				if (clkey)
 					dh_clnt = EVP_PKEY_get1_DH(clkey);
 				if (dh_clnt == NULL)
