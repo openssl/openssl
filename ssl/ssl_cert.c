@@ -274,17 +274,18 @@ CERT *ssl_cert_dup(CERT *cert)
 
 	for (i = 0; i < SSL_PKEY_NUM; i++)
 		{
-		if (cert->pkeys[i].x509 != NULL)
+		CERT_PKEY *cpk = cert->pkeys + i;
+		CERT_PKEY *rpk = ret->pkeys + i;
+		if (cpk->x509 != NULL)
 			{
-			ret->pkeys[i].x509 = cert->pkeys[i].x509;
-			CRYPTO_add(&ret->pkeys[i].x509->references, 1,
-				CRYPTO_LOCK_X509);
+			rpk->x509 = cpk->x509;
+			CRYPTO_add(&rpk->x509->references, 1, CRYPTO_LOCK_X509);
 			}
 		
-		if (cert->pkeys[i].privatekey != NULL)
+		if (cpk->privatekey != NULL)
 			{
-			ret->pkeys[i].privatekey = cert->pkeys[i].privatekey;
-			CRYPTO_add(&ret->pkeys[i].privatekey->references, 1,
+			rpk->privatekey = cpk->privatekey;
+			CRYPTO_add(&cpk->privatekey->references, 1,
 				CRYPTO_LOCK_EVP_PKEY);
 
 			switch(i) 
@@ -347,11 +348,13 @@ err:
 
 	for (i = 0; i < SSL_PKEY_NUM; i++)
 		{
-		if (ret->pkeys[i].x509 != NULL)
-			X509_free(ret->pkeys[i].x509);
-		if (ret->pkeys[i].privatekey != NULL)
-			EVP_PKEY_free(ret->pkeys[i].privatekey);
+		CERT_PKEY *rpk = ret->pkeys + i;
+		if (rpk->x509 != NULL)
+			X509_free(rpk->x509);
+		if (rpk->privatekey != NULL)
+			EVP_PKEY_free(rpk->privatekey);
 		}
+
 
 	return NULL;
 	}
@@ -389,10 +392,11 @@ void ssl_cert_free(CERT *c)
 
 	for (i=0; i<SSL_PKEY_NUM; i++)
 		{
-		if (c->pkeys[i].x509 != NULL)
-			X509_free(c->pkeys[i].x509);
-		if (c->pkeys[i].privatekey != NULL)
-			EVP_PKEY_free(c->pkeys[i].privatekey);
+		CERT_PKEY *cpk = c->pkeys + i;
+		if (cpk->x509 != NULL)
+			X509_free(cpk->x509);
+		if (cpk->privatekey != NULL)
+			EVP_PKEY_free(cpk->privatekey);
 #if 0
 		if (c->pkeys[i].publickey != NULL)
 			EVP_PKEY_free(c->pkeys[i].publickey);
