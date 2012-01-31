@@ -3350,6 +3350,21 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 #endif
 
 #endif /* !OPENSSL_NO_TLSEXT */
+
+	case SSL_CTRL_CHAIN:
+		if (larg)
+			return ssl_cert_set1_chain(s->cert,
+						(STACK_OF (X509) *)parg);
+		else
+			return ssl_cert_set0_chain(s->cert,
+						(STACK_OF (X509) *)parg);
+
+	case SSL_CTRL_CHAIN_CERT:
+		if (larg)
+			return ssl_cert_add1_chain_cert(s->cert, (X509 *)parg);
+		else
+			return ssl_cert_add0_chain_cert(s->cert, (X509 *)parg);
+
 	default:
 		break;
 		}
@@ -3641,6 +3656,20 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 			ctx->extra_certs = NULL;
 			}
 		break;
+
+	case SSL_CTRL_CHAIN:
+		if (larg)
+			return ssl_cert_set1_chain(ctx->cert,
+						(STACK_OF (X509) *)parg);
+		else
+			return ssl_cert_set0_chain(ctx->cert,
+						(STACK_OF (X509) *)parg);
+
+	case SSL_CTRL_CHAIN_CERT:
+		if (larg)
+			return ssl_cert_add1_chain_cert(ctx->cert, (X509 *)parg);
+		else
+			return ssl_cert_add0_chain_cert(ctx->cert, (X509 *)parg);
 
 	default:
 		return(0);

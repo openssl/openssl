@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Enhance SSL/TLS certificate chain handling to support different
+     chains for each certificate instead of one chain in the parent SSL_CTX.
+     [Steve Henson]
+
   *) Support for fixed DH ciphersuite client authentication: where both
      server and client use DH certificates with common parameters.
      [Steve Henson]

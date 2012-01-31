@@ -1615,6 +1615,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_GET_EXTRA_CHAIN_CERTS		82
 #define SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS	83
 
+#define SSL_CTRL_CHAIN				88
+#define SSL_CTRL_CHAIN_CERT			89
+
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
 #define DTLSv1_handle_timeout(ssl) \
@@ -1655,6 +1658,24 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_CTX_ctrl(ctx,SSL_CTRL_GET_EXTRA_CHAIN_CERTS,0,px509)
 #define SSL_CTX_clear_extra_chain_certs(ctx) \
 	SSL_CTX_ctrl(ctx,SSL_CTRL_CLEAR_EXTRA_CHAIN_CERTS,0,NULL)
+
+#define SSL_CTX_set0_chain(ctx,sk) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_CHAIN,0,(char *)sk)
+#define SSL_CTX_set1_chain(ctx,sk) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_CHAIN,1,(char *)sk)
+#define SSL_CTX_add0_chain_cert(ctx,x509) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_CHAIN_CERT,0,(char *)x509)
+#define SSL_CTX_add1_chain_cert(ctx,x509) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_CHAIN_CERT,1,(char *)x509)
+
+#define SSL_set0_chain(ctx,sk) \
+	SSL_ctrl(ctx,SSL_CTRL_CHAIN,0,(char *)sk)
+#define SSL_set1_chain(ctx,sk) \
+	SSL_ctrl(ctx,SSL_CTRL_CHAIN,1,(char *)sk)
+#define SSL_add0_chain_cert(ctx,x509) \
+	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,0,(char *)x509)
+#define SSL_add1_chain_cert(ctx,x509) \
+	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,1,(char *)x509)
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);
