@@ -1002,7 +1002,7 @@ int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l)
 				{
 				x = sk_X509_value(xs_ctx.chain, i);
 
-				if (ssl_add_cert_to_buf(buf, l, x))
+				if (!ssl_add_cert_to_buf(buf, l, x))
 					{
 					X509_STORE_CTX_cleanup(&xs_ctx);
 					return 0;
