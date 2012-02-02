@@ -243,9 +243,9 @@ ___
 
 $code.=<<___;
 
-	.EXPORT	RC4_set_key,ENTRY,ARGW0=GR,ARGW1=GR,ARGW2=GR
+	.EXPORT	private_RC4_set_key,ENTRY,ARGW0=GR,ARGW1=GR,ARGW2=GR
 	.ALIGN	8
-RC4_set_key
+private_RC4_set_key
 	.PROC
 	.CALLINFO	NO_CALLS
 	.ENTRY
