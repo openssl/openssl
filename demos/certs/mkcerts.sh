@@ -30,7 +30,10 @@ $OPENSSL x509 -req -in creq.pem -CA intca.pem -CAkey intkey.pem -days 3600 \
 
 # First DH parameters
 
-[ -f dhp.pem ] || $OPENSSL genpkey -genparam -algorithm DH -pkeyopt dh_paramgen_prime_len:1024 -out dhp.pem
+$OPENSSL genpkey -genparam -algorithm DH -pkeyopt dh_paramgen_prime_len:1024 -out dhp.pem
+
+# Uncomment out this line for X9.42 DH parameters instead
+$OPENSSL genpkey -genparam -algorithm DH -out dhp.pem -pkeyopt dh_rfc5114:2
 
 # Now a DH private key
 $OPENSSL genpkey -paramfile dhp.pem -out dhskey.pem
