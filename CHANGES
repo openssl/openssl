@@ -4,6 +4,13 @@
 
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
+  *) Some servers which support TLS 1.0 can choke if we initially indicate
+     support for TLS 1.2 and later renegotiate using TLS 1.0 in the RSA
+     encrypted premaster secret. As a workaround use the maximum pemitted
+     client version in client hello, this should keep such servers happy
+     and still work with previous versions of OpenSSL.
+     [Steve Henson]
+
   *) Add support for TLS/DTLS heartbeats.
      [Robin Seggelmann <seggelmann@fh-muenster.de>]
 
