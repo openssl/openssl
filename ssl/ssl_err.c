@@ -330,6 +330,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_BAD_SRP_G_LENGTH)      ,"bad srp g length"},
 {ERR_REASON(SSL_R_BAD_SRP_N_LENGTH)      ,"bad srp n length"},
 {ERR_REASON(SSL_R_BAD_SRP_S_LENGTH)      ,"bad srp s length"},
+{ERR_REASON(SSL_R_BAD_SRTP_MKI_VALUE)    ,"bad srtp mki value"},
 {ERR_REASON(SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST),"bad srtp protection profile list"},
 {ERR_REASON(SSL_R_BAD_SSL_FILETYPE)      ,"bad ssl filetype"},
 {ERR_REASON(SSL_R_BAD_SSL_SESSION_ID_LENGTH),"bad ssl session id length"},
