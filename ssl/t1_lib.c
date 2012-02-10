@@ -432,25 +432,29 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
         }
 
 #ifndef OPENSSL_NO_SRP
-#define MIN(x,y) (((x)<(y))?(x):(y))
-	/* we add SRP username the first time only if we have one! */
+	/* Add SRP username if there is one */
 	if (s->srp_ctx.login != NULL)
-		{/* Add TLS extension SRP username to the Client Hello message */
-		int login_len = MIN(strlen(s->srp_ctx.login) + 1, 255);
-		long lenmax; 
+		{ /* Add TLS extension SRP username to the Client Hello message */
 
-		if ((lenmax = limit - ret - 5) < 0) return NULL; 
-		if (login_len > lenmax) return NULL;
-		if (login_len > 255)
+		int login_len = strlen(s->srp_ctx.login);	
+		if (login_len > 255 || login_len == 0)
 			{
 			SSLerr(SSL_F_SSL_ADD_CLIENTHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
 			return NULL;
-			}
+			} 
+
+		/* check for enough space.
+		   4 for the srp type type and entension length
+		   1 for the srp user identity
+		   + srp user identity length 
+		*/
+		if ((limit - ret - 5 - login_len) < 0) return NULL; 
+
+		/* fill in the extension */
 		s2n(TLSEXT_TYPE_srp,ret);
 		s2n(login_len+1,ret);
-
-		(*ret++) = (unsigned char) MIN(strlen(s->srp_ctx.login), 254);
-		memcpy(ret, s->srp_ctx.login, MIN(strlen(s->srp_ctx.login), 254));
+		(*ret++) = (unsigned char) login_len;
+		memcpy(ret, s->srp_ctx.login, login_len);
 		ret+=login_len;
 		}
 #endif
@@ -1007,13 +1011,25 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 #ifndef OPENSSL_NO_SRP
 		else if (type == TLSEXT_TYPE_srp)
 			{
-			if (size > 0)
+			if (size <= 0 || ((len = data[0])) != (size -1))
 				{
-				len = data[0];
-				if ((s->srp_ctx.login = OPENSSL_malloc(len+1)) == NULL)
-					return -1;
-				memcpy(s->srp_ctx.login, &data[1], len);
-				s->srp_ctx.login[len]='\0';  
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				}
+			if (s->srp_ctx.login != NULL)
+				{
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
+				}
+			if ((s->srp_ctx.login = OPENSSL_malloc(len+1)) == NULL)
+				return -1;
+			memcpy(s->srp_ctx.login, &data[1], len);
+			s->srp_ctx.login[len]='\0';
+  
+			if (strlen(s->srp_ctx.login) != len) 
+				{
+				*al = SSL_AD_DECODE_ERROR;
+				return 0;
 				}
 			}
 #endif
