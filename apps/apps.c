@@ -1215,7 +1215,8 @@ STACK_OF(X509) *load_certs(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *desc)
 	{
 	STACK_OF(X509) *certs;
-	load_certs_crls(err, file, format, pass, e, desc, &certs, NULL);
+	if (!load_certs_crls(err, file, format, pass, e, desc, &certs, NULL))
+		return NULL;
 	return certs;
 	}	
 
@@ -1223,7 +1224,8 @@ STACK_OF(X509_CRL) *load_crls(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *desc)
 	{
 	STACK_OF(X509_CRL) *crls;
-	load_certs_crls(err, file, format, pass, e, desc, NULL, &crls);
+	if (!load_certs_crls(err, file, format, pass, e, desc, NULL, &crls))
+		return NULL;
 	return crls;
 	}	
 
