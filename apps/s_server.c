@@ -2245,6 +2245,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 { static count=0; if (++count == 100) { count=0; SSL_renegotiate(con); } }
 #endif
 				k=SSL_write(con,&(buf[l]),(unsigned int)i);
+#ifndef OPENSSL_NO_SRP
 				while (SSL_get_error(con,k) == SSL_ERROR_WANT_X509_LOOKUP)
 					{
 					BIO_printf(bio_s_out,"LOOKUP renego during write\n");
@@ -2255,6 +2256,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 						BIO_printf(bio_s_out,"LOOKUP not successful\n");
 						k=SSL_write(con,&(buf[l]),(unsigned int)i);
 					}
+#endif
 				switch (SSL_get_error(con,k))
 					{
 				case SSL_ERROR_NONE:
@@ -2302,6 +2304,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				{
 again:	
 				i=SSL_read(con,(char *)buf,bufsize);
+#ifndef OPENSSL_NO_SRP
 				while (SSL_get_error(con,i) == SSL_ERROR_WANT_X509_LOOKUP)
 					{
 					BIO_printf(bio_s_out,"LOOKUP renego during read\n");
@@ -2312,6 +2315,7 @@ again:
 						BIO_printf(bio_s_out,"LOOKUP not successful\n");
 					i=SSL_read(con,(char *)buf,bufsize);
 					}
+#endif
 				switch (SSL_get_error(con,i))
 					{
 				case SSL_ERROR_NONE:
@@ -2389,6 +2393,7 @@ static int init_ssl_connection(SSL *con)
 
 
 	i=SSL_accept(con);
+#ifndef OPENSSL_NO_SRP
 	while (i <= 0 &&  SSL_get_error(con,i) == SSL_ERROR_WANT_X509_LOOKUP) 
 		{
 			BIO_printf(bio_s_out,"LOOKUP during accept %s\n",srp_callback_parm.login);
@@ -2399,6 +2404,7 @@ static int init_ssl_connection(SSL *con)
 				BIO_printf(bio_s_out,"LOOKUP not successful\n");
 			i=SSL_accept(con);
 		}
+#endif
 	if (i <= 0)
 		{
 		if (BIO_sock_should_retry(i))
@@ -2623,6 +2629,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 		if (hack)
 			{
 			i=SSL_accept(con);
+#ifndef OPENSSL_NO_SRP
 			while (i <= 0 &&  SSL_get_error(con,i) == SSL_ERROR_WANT_X509_LOOKUP) 
 		{
 			BIO_printf(bio_s_out,"LOOKUP during accept %s\n",srp_callback_parm.login);
@@ -2633,7 +2640,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				BIO_printf(bio_s_out,"LOOKUP not successful\n");
 			i=SSL_accept(con);
 		}
-
+#endif
 			switch (SSL_get_error(con,i))
 				{
 			case SSL_ERROR_NONE:
