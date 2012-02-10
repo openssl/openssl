@@ -125,10 +125,14 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 		/* Ensure a context left lying around from last time is cleared
 		 * (the previous check attempted to avoid this if the same
 		 * ENGINE and EVP_CIPHER could be used). */
-		EVP_CIPHER_CTX_cleanup(ctx);
-
-		/* Restore encrypt field: it is zeroed by cleanup */
-		ctx->encrypt = enc;
+		if (ctx->cipher)
+			{
+			unsigned long flags = ctx->flags;
+			EVP_CIPHER_CTX_cleanup(ctx);
+			/* Restore encrypt and flags */
+			ctx->encrypt = enc;
+			ctx->flags = flags;
+			}
 #ifndef OPENSSL_NO_ENGINE
 		if(impl)
 			{
