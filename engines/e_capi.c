@@ -447,28 +447,36 @@ static int capi_init(ENGINE *e)
 	CAPI_CTX *ctx;
 	const RSA_METHOD *ossl_rsa_meth;
 	const DSA_METHOD *ossl_dsa_meth;
-	capi_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
-	cert_capi_idx = X509_get_ex_new_index(0, NULL, NULL, NULL, 0);
+
+	if (capi_idx < 0)
+		{
+		capi_idx = ENGINE_get_ex_new_index(0, NULL, NULL, NULL, 0);
+		if (capi_idx < 0)
+			goto memerr;
+
+		cert_capi_idx = X509_get_ex_new_index(0, NULL, NULL, NULL, 0);
+
+		/* Setup RSA_METHOD */
+		rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
+		ossl_rsa_meth = RSA_PKCS1_SSLeay();
+		capi_rsa_method.rsa_pub_enc = ossl_rsa_meth->rsa_pub_enc;
+		capi_rsa_method.rsa_pub_dec = ossl_rsa_meth->rsa_pub_dec;
+		capi_rsa_method.rsa_mod_exp = ossl_rsa_meth->rsa_mod_exp;
+		capi_rsa_method.bn_mod_exp = ossl_rsa_meth->bn_mod_exp;
+
+		/* Setup DSA Method */
+		dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
+		ossl_dsa_meth = DSA_OpenSSL();
+		capi_dsa_method.dsa_do_verify = ossl_dsa_meth->dsa_do_verify;
+		capi_dsa_method.dsa_mod_exp = ossl_dsa_meth->dsa_mod_exp;
+		capi_dsa_method.bn_mod_exp = ossl_dsa_meth->bn_mod_exp;
+		}
 
 	ctx = capi_ctx_new();
-	if (!ctx || (capi_idx < 0))
+	if (!ctx)
 		goto memerr;
 
 	ENGINE_set_ex_data(e, capi_idx, ctx);
-	/* Setup RSA_METHOD */
-	rsa_capi_idx = RSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
-	ossl_rsa_meth = RSA_PKCS1_SSLeay();
-	capi_rsa_method.rsa_pub_enc = ossl_rsa_meth->rsa_pub_enc;
-	capi_rsa_method.rsa_pub_dec = ossl_rsa_meth->rsa_pub_dec;
-	capi_rsa_method.rsa_mod_exp = ossl_rsa_meth->rsa_mod_exp;
-	capi_rsa_method.bn_mod_exp = ossl_rsa_meth->bn_mod_exp;
-
-	/* Setup DSA Method */
-	dsa_capi_idx = DSA_get_ex_new_index(0, NULL, NULL, NULL, 0);
-	ossl_dsa_meth = DSA_OpenSSL();
-	capi_dsa_method.dsa_do_verify = ossl_dsa_meth->dsa_do_verify;
-	capi_dsa_method.dsa_mod_exp = ossl_dsa_meth->dsa_mod_exp;
-	capi_dsa_method.bn_mod_exp = ossl_dsa_meth->bn_mod_exp;
 
 #ifdef OPENSSL_CAPIENG_DIALOG
 	{
