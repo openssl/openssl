@@ -357,6 +357,12 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 	case TLS1_VERSION:
 		str_version = "TLS 1.0 ";
 		break;
+	case TLS1_1_VERSION:
+		str_version = "TLS 1.1 ";
+		break;
+	case TLS1_2_VERSION:
+		str_version = "TLS 1.2 ";
+		break;
 	case DTLS1_VERSION:
 		str_version = "DTLS 1.0 ";
 		break;
