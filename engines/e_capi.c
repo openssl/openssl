@@ -1164,6 +1164,7 @@ static int capi_list_containers(CAPI_CTX *ctx, BIO *out)
 		{
 		CAPIerr(CAPI_F_CAPI_LIST_CONTAINERS, CAPI_R_ENUMCONTAINERS_ERROR);
 		capi_addlasterror();
+		CryptReleaseContext(hprov, 0);
 		return 0;
 		}
 	CAPI_trace(ctx, "Got max container len %d\n", buflen);
@@ -1581,6 +1582,8 @@ static int capi_ctx_set_provname(CAPI_CTX *ctx, LPSTR pname, DWORD type, int che
 			}
 		CryptReleaseContext(hprov, 0);
 		}
+	if (ctx->cspname)
+		OPENSSL_free(ctx->cspname);
 	ctx->cspname = BUF_strdup(pname);
 	ctx->csptype = type;
 	return 1;
@@ -1590,9 +1593,12 @@ static int capi_ctx_set_provname_idx(CAPI_CTX *ctx, int idx)
 	{
 	LPSTR pname;
 	DWORD type;
+	int res;
 	if (capi_get_provname(ctx, &pname, &type, idx) != 1)
 		return 0;
-	return capi_ctx_set_provname(ctx, pname, type, 0);
+	res = capi_ctx_set_provname(ctx, pname, type, 0);
+	OPENSSL_free(pname);
+	return res;
 	}
 
 static int cert_issuer_match(STACK_OF(X509_NAME) *ca_dn, X509 *x)
