@@ -406,7 +406,7 @@ int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int max
 	{
 	if(p)
 		{
-		if(maxlen < 3)
+		if(maxlen < 5)
 			{
 			SSLerr(SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT,SSL_R_SRTP_PROTECTION_PROFILE_LIST_TOO_LONG);
 			return 1;
@@ -417,11 +417,11 @@ int ssl_add_serverhello_use_srtp_ext(SSL *s, unsigned char *p, int *len, int max
 			SSLerr(SSL_F_SSL_ADD_SERVERHELLO_USE_SRTP_EXT,SSL_R_USE_SRTP_NOT_NEGOTIATED);
 			return 1;
 			}
-
+                s2n(2, p);
 		s2n(s->srtp_profile->id,p);
                 *p++ = 0;
 		}
-	*len=3;
+	*len=5;
     
 	return 0;
 	}
@@ -431,10 +431,20 @@ int ssl_parse_serverhello_use_srtp_ext(SSL *s, unsigned char *d, int len,int *al
 	{
 	unsigned id;
 	int i;
+        int ct;
+
 	STACK_OF(SRTP_PROTECTION_PROFILE) *clnt;
 	SRTP_PROTECTION_PROFILE *prof;
 
-	if(len!=3)
+	if(len!=5)
+		{
+		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT,SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
+		*al=SSL_AD_DECODE_ERROR;
+		return 1;
+		}
+
+        n2s(d, ct);
+	if(ct!=2)
 		{
 		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_USE_SRTP_EXT,SSL_R_BAD_SRTP_PROTECTION_PROFILE_LIST);
 		*al=SSL_AD_DECODE_ERROR;
