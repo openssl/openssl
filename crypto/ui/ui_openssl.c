@@ -126,11 +126,11 @@
 #include <sys/types.h>
 #endif
 
-#if !defined(OPENSSL_SYSNAME_VXWORKS)
+#if !defined(_POSIX_C_SOURCE) && defined(OPENSSL_SYS_VMS)
 #ifndef _POSIX_C_SOURCE
 #define _POSIX_C_SOURCE 2
 #endif
-#endif /* !OPENSSL_SYSNAME_VXWORKS  */
+#endif
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>

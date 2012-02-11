@@ -109,7 +109,7 @@
  *
  */
 
-#ifndef _POSIX_C_SOURCE
+#if !defined(_POSIX_C_SOURCE) && defined(OPENSSL_SYS_VMS)
 #define _POSIX_C_SOURCE 2	/* On VMS, you need to define this to get
 				   the declaration of fileno().  The value
 				   2 is to make sure no function defined
