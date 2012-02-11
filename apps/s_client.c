@@ -362,7 +362,7 @@ static void sc_usage(void)
 # endif
 #endif
 	BIO_printf(bio_err," -legacy_renegotiation - enable use of legacy renegotiation (dangerous)\n");
-	BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list");
+	BIO_printf(bio_err," -use_srtp profiles - Offer SRTP key management with a colon-separated profile list\n");
  	BIO_printf(bio_err," -keymatexport label   - Export keying material using label\n");
  	BIO_printf(bio_err," -keymatexportlen len  - Export len bytes of keying material (default 20)\n");
 	}
@@ -2077,30 +2077,33 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	}
  
 	SSL_SESSION_print(bio,SSL_get_session(s));
-	if (keymatexportlabel != NULL) {
+	if (keymatexportlabel != NULL)
+		{
 		BIO_printf(bio, "Keying material exporter:\n");
 		BIO_printf(bio, "    Label: '%s'\n", keymatexportlabel);
 		BIO_printf(bio, "    Length: %i bytes\n", keymatexportlen);
 		exportedkeymat = OPENSSL_malloc(keymatexportlen);
-		if (exportedkeymat != NULL) {
-			i = SSL_export_keying_material(s, exportedkeymat,
-						       keymatexportlen,
-						       keymatexportlabel,
-						     strlen(keymatexportlabel),
-						       NULL, 0, 0);
-			if (i != keymatexportlen) {
-				BIO_printf(bio,
-					   "    Error: return value %i\n", i);
-			} else {
+		if (exportedkeymat != NULL)
+			{
+			if (!SSL_export_keying_material(s, exportedkeymat,
+						        keymatexportlen,
+						        keymatexportlabel,
+						        strlen(keymatexportlabel),
+						        NULL, 0, 0))
+				{
+				BIO_printf(bio, "    Error\n");
+				}
+			else
+				{
 				BIO_printf(bio, "    Keying material: ");
 				for (i=0; i<keymatexportlen; i++)
 					BIO_printf(bio, "%02X",
 						   exportedkeymat[i]);
 				BIO_printf(bio, "\n");
-			}
+				}
 			OPENSSL_free(exportedkeymat);
+			}
 		}
-	}
 	BIO_printf(bio,"---\n");
 	if (peer != NULL)
 		X509_free(peer);
