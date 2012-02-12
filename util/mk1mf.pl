@@ -59,7 +59,6 @@ while(<IN>) {
 }
 close(IN);
 
-$fipsdir =~ tr/\//${o}/;
 $debug = 1 if $mf_platform =~ /^debug-/;
 
 die "Makefile is not the toplevel Makefile!\n" if $ssl_version eq "";
@@ -233,6 +232,8 @@ else
 	$unix=1;
 	$cflags.=' -DTERMIO';
 	}
+
+$fipsdir =~ s/\//${o}/g;
 
 $out_dir=(defined($VARS{'OUT'}))?$VARS{'OUT'}:$out_def.($debug?".dbg":"");
 $tmp_dir=(defined($VARS{'TMP'}))?$VARS{'TMP'}:$tmp_def.($debug?".dbg":"");
