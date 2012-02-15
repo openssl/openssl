@@ -274,6 +274,10 @@
      the correct format in RSA_verify so both forms transparently work.
      [Steve Henson]
 
+  *) Add compatibility with old MDC2 signatures which use an ASN1 OCTET
+     STRING form instead of a DigestInfo.
+     [Steve Henson]
+
   *) Some servers which support TLS 1.0 can choke if we initially indicate
      support for TLS 1.2 and later renegotiate using TLS 1.0 in the RSA
      encrypted premaster secret. As a workaround use the maximum pemitted

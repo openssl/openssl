@@ -169,7 +169,20 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 					RSA_R_INVALID_DIGEST_LENGTH);
 			return -1;
 			}
-		if (rctx->pad_mode == RSA_X931_PADDING)
+
+		if (EVP_MD_type(rctx->md) == NID_mdc2)
+			{
+			unsigned int sltmp;
+			if (rctx->pad_mode != RSA_PKCS1_PADDING)
+				return -1;
+			ret = RSA_sign_ASN1_OCTET_STRING(NID_mdc2,
+						tbs, tbslen, sig, &sltmp, rsa);
+
+			if (ret <= 0)
+				return ret;
+			ret = sltmp;
+			}
+		else if (rctx->pad_mode == RSA_X931_PADDING)
 			{
 			if (!setup_tbuf(rctx, ctx))
 				return -1;
