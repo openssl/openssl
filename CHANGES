@@ -267,6 +267,13 @@
   
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
+  *) The format used for MDC2 RSA signatures is inconsistent between EVP
+     and the RSA_sign/RSA_verify functions. This was made more apparent when
+     OpenSSL used RSA_sign/RSA_verify for some RSA signatures in particular
+     those which went through EVP_PKEY_METHOD in 1.0.0 and later. Detect 
+     the correct format in RSA_verify so both forms transparently work.
+     [Steve Henson]
+
   *) Some servers which support TLS 1.0 can choke if we initially indicate
      support for TLS 1.2 and later renegotiate using TLS 1.0 in the RSA
      encrypted premaster secret. As a workaround use the maximum pemitted
