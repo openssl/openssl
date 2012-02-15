@@ -199,6 +199,22 @@ int int_rsa_verify(int dtype, const unsigned char *m,
 	i=RSA_public_decrypt((int)siglen,sigbuf,s,rsa,RSA_PKCS1_PADDING);
 
 	if (i <= 0) goto err;
+	/* Oddball MDC2 case: signature can be OCTET STRING.
+	 * check for correct tag and length octets.
+	 */
+	if (dtype == NID_mdc2 && i == 18 && s[0] == 0x04 && s[1] == 0x10)
+		{
+		if (rm)
+			{
+			memcpy(rm, s + 2, 16);
+			*prm_len = 16;
+			ret = 1;
+			}
+		else if(memcmp(m, s + 2, 16))
+			RSAerr(RSA_F_INT_RSA_VERIFY,RSA_R_BAD_SIGNATURE);
+		else
+			ret = 1;
+		}
 
 	/* Special case: SSL signature */
 	if(dtype == NID_md5_sha1) {
