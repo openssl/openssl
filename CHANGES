@@ -4,6 +4,10 @@
 
  Changes between 1.0.0f and 1.0.1  [xx XXX xxxx]
 
+  *) Add compatibility with old MDC2 signatures which use an ASN1 OCTET
+     STRING form instead of a DigestInfo.
+     [Steve Henson]
+
   *) The format used for MDC2 RSA signatures is inconsistent between EVP
      and the RSA_sign/RSA_verify functions. This was made more apparent when
      OpenSSL used RSA_sign/RSA_verify for some RSA signatures in particular
