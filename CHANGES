@@ -285,6 +285,13 @@
        Add command line options to s_client/s_server.
      [Steve Henson]
 
+ Changes between 1.0.0g and 1.0.0h [xx XXX xxxx]
+
+  *) Fix CVE-2011-4619: make sure we really are receiving a 
+     client hello before rejecting multiple SGC restarts. Thanks to
+     Ivan Nestlerode <inestlerode@us.ibm.com> for discovering this bug.
+     [Steve Henson]
+
  Changes between 1.0.0f and 1.0.0g [18 Jan 2012]
 
   *) Fix for DTLS DoS issue introduced by fix for CVE-2011-4109.
