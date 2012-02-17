@@ -2261,7 +2261,7 @@ static tls12_lookup tls12_sig[] = {
 #ifndef OPENSSL_NO_RSA
 	{EVP_PKEY_RSA, TLSEXT_signature_rsa},
 #endif
-#ifndef OPENSSL_NO_RSA
+#ifndef OPENSSL_NO_DSA
 	{EVP_PKEY_DSA, TLSEXT_signature_dsa},
 #endif
 #ifndef OPENSSL_NO_ECDSA
