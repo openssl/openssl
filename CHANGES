@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add new APIs EC_curve_nist2nid and EC_curve_nid2nist which convert
+     between NIDs and the more common NIST names such as "P-256". Enhance
+     ecparam utility and ECC method to recognise the NIST names for curves.
+     [Steve Henson]
+
   *) Enhance SSL/TLS certificate chain handling to support different
      chains for each certificate instead of one chain in the parent SSL_CTX.
      [Steve Henson]

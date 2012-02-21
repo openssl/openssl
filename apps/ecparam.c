@@ -402,6 +402,9 @@ bad:
 			}
 		else
 			nid = OBJ_sn2nid(curve_name);
+
+		if (nid == 0)
+			nid = EC_curve_nist2nid(curve_name);
 	
 		if (nid == 0)
 			{

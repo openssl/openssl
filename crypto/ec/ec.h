@@ -398,6 +398,8 @@ typedef struct {
  * are filled with the data of the first nitems internal groups */
 size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems);
 
+const char *EC_curve_nid2nist(int nid);
+int EC_curve_nist2nid(const char *name);
 
 /********************************************************************/
 /*                    EC_POINT functions                            */
