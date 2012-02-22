@@ -416,7 +416,6 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_MISSING_RSA_ENCRYPTING_CERT),"missing rsa encrypting cert"},
 {ERR_REASON(SSL_R_MISSING_RSA_SIGNING_CERT),"missing rsa signing cert"},
 {ERR_REASON(SSL_R_MISSING_SRP_PARAM)     ,"can't find SRP server param"},
-{ERR_REASON(SSL_R_MISSING_SRP_USERNAME)  ,"missing srp username"},
 {ERR_REASON(SSL_R_MISSING_TMP_DH_KEY)    ,"missing tmp dh key"},
 {ERR_REASON(SSL_R_MISSING_TMP_ECDH_KEY)  ,"missing tmp ecdh key"},
 {ERR_REASON(SSL_R_MISSING_TMP_RSA_KEY)   ,"missing tmp rsa key"},
