@@ -2270,6 +2270,8 @@ int ssl3_get_client_key_exchange(SSL *s)
 		EVP_PKEY *skey = NULL;
 		if (n)
 			n2s(p,i);
+		else
+			i = 0;
 		if (n && n != i+2)
 			{
 			if (!(s->options & SSL_OP_SSLEAY_080_CLIENT_DH_BUG))
