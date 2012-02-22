@@ -571,11 +571,11 @@ typedef struct ssl3_enc_method
 	const char *server_finished_label;
 	int server_finished_label_len;
 	int (*alert_value)(int);
-        int (*export_keying_material)(SSL *, unsigned char *, unsigned int,
-				      const char *, unsigned int,
-				      const unsigned char *, unsigned int,
-				      int use_context);
-	} SSL3_ENC_METHOD;
+	int (*export_keying_material)(SSL *, unsigned char *, size_t,
+				      const char *, size_t,
+				      const unsigned char *, size_t,
+ 				      int use_context);
+ 	} SSL3_ENC_METHOD;
 
 #ifndef OPENSSL_NO_COMP
 /* Used for holding the relevant compression methods loaded into SSL_CTX */
@@ -1068,9 +1068,9 @@ int tls1_cert_verify_mac(SSL *s, int md_nid, unsigned char *p);
 int tls1_mac(SSL *ssl, unsigned char *md, int snd);
 int tls1_generate_master_secret(SSL *s, unsigned char *out,
 	unsigned char *p, int len);
-int tls1_export_keying_material(SSL *s, unsigned char *out, unsigned int olen, 
-	const char *label, unsigned int llen, const unsigned char *p, 
-        unsigned int plen, int use_context);
+int tls1_export_keying_material(SSL *s, unsigned char *out, size_t olen,
+	const char *label, size_t llen,
+	const unsigned char *p, size_t plen, int use_context);
 int tls1_alert_code(int code);
 int ssl3_alert_code(int code);
 int ssl_ok(SSL *s);

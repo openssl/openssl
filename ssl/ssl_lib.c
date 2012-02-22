@@ -178,9 +178,9 @@ SSL3_ENC_METHOD ssl3_undef_enc_method={
 	NULL,	/* server_finished_label */
 	0,	/* server_finished_label_len */
 	(int (*)(int))ssl_undefined_function,
-	(int (*)(SSL *, unsigned char *, unsigned int, const char *,
-		 unsigned int, const unsigned char *, unsigned int,
-		 int use_context))ssl_undefined_function,
+	(int (*)(SSL *, unsigned char *, size_t, const char *,
+		 size_t, const unsigned char *, size_t,
+		 int use_context)) ssl_undefined_function,
 	};
 
 int SSL_clear(SSL *s)
@@ -1632,8 +1632,9 @@ void SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx, int (*cb) (SSL *s, unsigned 
 # endif
 #endif
 
-int SSL_export_keying_material(SSL *s, unsigned char *out, int olen, 
-        char *label, int llen, unsigned char *p, int plen, int use_context)
+int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
+	const char *label, size_t llen, const unsigned char *p, size_t plen,
+	int use_context)
 	{
 	if (s->version < TLS1_VERSION)
 		return -1;
