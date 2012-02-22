@@ -477,12 +477,6 @@ typedef struct ssl3_state_st
 	void *server_opaque_prf_input;
 	size_t server_opaque_prf_input_len;
 
-#ifndef OPENSSL_NO_NEXTPROTONEG
-	/* Set if we saw the Next Protocol Negotiation extension from
-	   our peer. */
-	int next_proto_neg_seen;
-#endif
-
 	struct	{
 		/* actually only needs to be 16+20 */
 		unsigned char cert_verify_md[EVP_MAX_MD_SIZE*2];
@@ -540,6 +534,12 @@ typedef struct ssl3_state_st
         unsigned char previous_server_finished[EVP_MAX_MD_SIZE];
         unsigned char previous_server_finished_len;
         int send_connection_binding; /* TODOEKR */
+
+#ifndef OPENSSL_NO_NEXTPROTONEG
+	/* Set if we saw the Next Protocol Negotiation extension from
+	   our peer. */
+	int next_proto_neg_seen;
+#endif
 	} SSL3_STATE;
 
 #endif

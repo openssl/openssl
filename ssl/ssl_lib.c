@@ -2348,7 +2348,7 @@ CERT_PKEY *ssl_get_server_send_pkey(SSL *s)
 		i=SSL_PKEY_GOST01;
 	else /* if (alg_a & SSL_aNULL) */
 		{
-		SSLerr(SSL_F_SSL_GET_SERVER_SEND_CERT,ERR_R_INTERNAL_ERROR);
+		SSLerr(SSL_F_SSL_GET_SERVER_SEND_PKEY,ERR_R_INTERNAL_ERROR);
 		return(NULL);
 		}
 	if (c->pkeys[i].x509 == NULL) return(NULL);
