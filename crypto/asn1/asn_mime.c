@@ -858,6 +858,10 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 static int mime_hdr_cmp(const MIME_HEADER * const *a,
 			const MIME_HEADER * const *b)
 {
+	if ((*a)->name == NULL || (*b)->name == NULL)
+		return (*a)->name - (*b)->name < 0 ? -1 :
+			(*a)->name - (*b)->name > 0 ? 1 : 0;
+
 	return(strcmp((*a)->name, (*b)->name));
 }
 
