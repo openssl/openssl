@@ -1329,12 +1329,6 @@ struct ssl_st
 	unsigned char *next_proto_negotiated;
 	unsigned char next_proto_negotiated_len;
 #endif
-	int renegotiate;/* 1 if we are renegotiating.
-	                 * 2 if we are a server and are inside a handshake
-	                 * (i.e. not just sending a HelloRequest) */
-#ifndef OPENSSL_NO_SRP
-	SRP_CTX srp_ctx; /* ctx for SRP authentication */
-#endif
 
 #define session_ctx initial_ctx
 
@@ -1351,6 +1345,13 @@ struct ssl_st
 #else
 #define session_ctx ctx
 #endif /* OPENSSL_NO_TLSEXT */
+
+	int renegotiate;/* 1 if we are renegotiating.
+	                 * 2 if we are a server and are inside a handshake
+	                 * (i.e. not just sending a HelloRequest) */
+#ifndef OPENSSL_NO_SRP
+	SRP_CTX srp_ctx; /* ctx for SRP authentication */
+#endif
 
 	/* Callback for disabling session caching and ticket support
 	 * on a session basis, depending on the chosen cipher. */
