@@ -504,6 +504,9 @@ $ WRITE H_FILE " *       value _IONBF is not supported."
 $ WRITE H_FILE " * So, skip it on VMS."
 $ WRITE H_FILE " */"
 $ WRITE H_FILE "#define OPENSSL_NO_SETVBUF_IONBF"
+$ WRITE H_FILE "/* STCP support comes with TCPIP 5.7 ECO 2 "
+$ WRITE H_FILE " * enable on newer systems / 2012-02-24 arpadffy */"
+$ WRITE H_FILE "#define OPENSSL_NO_SCTP"
 $ WRITE H_FILE ""
 $!
 $! Add in the common "crypto/opensslconf.h.in".
