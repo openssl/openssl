@@ -69,7 +69,11 @@
 #include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_SCTP
-#include <stdint.h>
+# ifndef OPENSSL_SYS_VMS
+# include <stdint.h>
+# else
+# include <inttypes.h>
+# endif
 #endif
 
 #ifdef  __cplusplus
