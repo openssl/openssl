@@ -36,6 +36,10 @@
 #include <openssl/seed.h>
 #include "seed_locl.h"
 
+#ifdef SS	/* can get defined on Solaris by inclusion of <stdlib.h> */
+#undef SS
+#endif
+
 static const seed_word SS[4][256] = {	{
 	0x2989a1a8, 0x05858184, 0x16c6d2d4, 0x13c3d3d0, 0x14445054, 0x1d0d111c, 0x2c8ca0ac, 0x25052124,
 	0x1d4d515c, 0x03434340, 0x18081018, 0x1e0e121c, 0x11415150, 0x3cccf0fc, 0x0acac2c8, 0x23436360,
