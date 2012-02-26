@@ -1449,14 +1449,6 @@ if (!$IsMK1MF)
 		}
 	}
 
-if (!defined($disabled{"sctp"}))
-	{
-	if ($target =~ /^solaris/)
-		{
-		$cflags = "$cflags -D_XPG4_2 -D__EXTENSIONS__";
-		}
-	}
-
 $cpuid_obj.=" uplink.o uplink-x86.o" if ($cflags =~ /\-DOPENSSL_USE_APPLINK/);
 
 #
