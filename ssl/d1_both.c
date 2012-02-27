@@ -1422,8 +1422,9 @@ dtls1_process_heartbeat(SSL *s)
 		*bp++ = TLS1_HB_RESPONSE;
 		s2n(payload, bp);
 		memcpy(bp, pl, payload);
+		bp += payload;
 		/* Random padding */
-		RAND_pseudo_bytes(p, padding);
+		RAND_pseudo_bytes(bp, padding);
 
 		r = dtls1_write_bytes(s, TLS1_RT_HEARTBEAT, buffer, 3 + payload + padding);
 
