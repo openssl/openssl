@@ -19,9 +19,9 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&pushf	();
 	&pop	("eax");
 	&xor	("ecx","eax");
-	&bt	("ecx",21);
-	&jnc	(&label("generic"));
 	&xor	("eax","eax");
+	&bt	("ecx",21);
+	&jnc	(&label("nocpuid"));
 	&cpuid	();
 	&mov	("edi","eax");		# max value for standard query level
 
@@ -136,6 +136,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 &set_label("done");
 	&mov	("eax","esi");
 	&mov	("edx","ebp");
+&set_label("nocpuid");
 &function_end("OPENSSL_ia32_cpuid");
 
 &external_label("OPENSSL_ia32cap_P");
