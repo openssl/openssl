@@ -521,6 +521,7 @@ static int pkey_gost_mac_ctrl_str(EVP_PKEY_CTX *ctx,
 				{
 				GOSTerr(GOST_F_PKEY_GOST_MAC_CTRL_STR,
 					GOST_R_INVALID_MAC_KEY_LENGTH);
+				OPENSSL_free(keybuf);
 				return 0;	
 				}
 			ret= pkey_gost_mac_ctrl(ctx, EVP_PKEY_CTRL_SET_MAC_KEY,
