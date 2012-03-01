@@ -68,6 +68,8 @@ $	EXPTEST :=	exptest
 $	IDEATEST :=	ideatest
 $	SHATEST :=	shatest
 $	SHA1TEST :=	sha1test
+$	SHA256TEST :=	sha256t
+$	SHA512TEST :=	sha512t
 $	MDC2TEST :=	mdc2test
 $	RMDTEST :=	rmdtest
 $	MD2TEST :=	md2test
@@ -115,6 +117,8 @@ $	return
 $ test_sha:
 $	mcr 'texe_dir''shatest'
 $	mcr 'texe_dir''sha1test'
+$	mcr 'texe_dir''sha256test'
+$	mcr 'texe_dir''sha512test'
 $	return
 $ test_mdc2:
 $	mcr 'texe_dir''mdc2test'
