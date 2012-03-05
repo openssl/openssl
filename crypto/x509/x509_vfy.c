@@ -443,6 +443,9 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 		{
 		int i;
 		X509 *ch;
+		/* Special case: single self signed certificate */
+		if (cert_self_signed(x) && sk_X509_num(ctx->chain) == 1)
+			return 1;
 		for (i = 0; i < sk_X509_num(ctx->chain); i++)
 			{
 			ch = sk_X509_value(ctx->chain, i);
