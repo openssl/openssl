@@ -3365,6 +3365,32 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		else
 			return ssl_cert_add0_chain_cert(s->cert, (X509 *)parg);
 
+	case SSL_CTRL_GET_CURVELIST:
+		{
+		unsigned char *clist;
+		size_t clistlen;
+		if (!s->session)
+			return 0;
+		clist = s->session->tlsext_ellipticcurvelist;
+		clistlen = s->session->tlsext_ellipticcurvelist_length / 2;
+		if (parg)
+			{
+			size_t i;
+			int *cptr = parg;
+			unsigned int cid, nid;
+			for (i = 0; i < clistlen; i++)
+				{
+				n2s(clist, cid);
+				nid = tls1_ec_curve_id2nid(cid);
+				if (nid != 0)
+					cptr[i] = nid;
+				else
+					cptr[i] = TLSEXT_nid_unknown | cid;
+				}
+			}
+		return (int)clistlen;
+		}
+
 	default:
 		break;
 		}

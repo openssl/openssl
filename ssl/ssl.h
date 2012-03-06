@@ -366,6 +366,7 @@ typedef struct tls_session_ticket_ext_st TLS_SESSION_TICKET_EXT;
 typedef struct ssl_method_st SSL_METHOD;
 typedef struct ssl_cipher_st SSL_CIPHER;
 typedef struct ssl_session_st SSL_SESSION;
+typedef struct tls_sigalgs_st TLS_SIGALGS;
 
 DECLARE_STACK_OF(SSL_CIPHER)
 
@@ -1617,6 +1618,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_CHAIN				88
 #define SSL_CTRL_CHAIN_CERT			89
 
+#define SSL_CTRL_GET_CURVELIST			90
+
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
 #define DTLSv1_handle_timeout(ssl) \
@@ -1675,6 +1678,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,0,(char *)x509)
 #define SSL_add1_chain_cert(ctx,x509) \
 	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,1,(char *)x509)
+#define SSL_get1_curvelist(ctx, s) \
+	SSL_ctrl(ctx,SSL_CTRL_GET_CURVELIST,0,(char *)s)
+
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);

@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) New ctrls to retrieve supported signature algorithms and 
+     supported curve values as an array of NIDs. Extend openssl utility
+     to print out received values.
+     [Steve Henson]
+
   *) Add new APIs EC_curve_nist2nid and EC_curve_nid2nist which convert
      between NIDs and the more common NIST names such as "P-256". Enhance
      ecparam utility and ECC method to recognise the NIST names for curves.

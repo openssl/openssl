@@ -278,6 +278,77 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key)
 	return 1;
 	}
 
+int ssl_print_sigalgs(BIO *out, SSL *s)
+	{
+	int i, nsig;
+	nsig = SSL_get_sigalgs(s, -1, NULL, NULL, NULL, NULL, NULL);
+	if (nsig == 0)
+		return 1;
+
+	BIO_puts(out, "Signature Algorithms: ");
+	for (i = 0; i < nsig; i++)
+		{
+		int hash_nid, sign_nid;
+		unsigned char rhash, rsign;
+		const char *sstr = NULL;
+		SSL_get_sigalgs(s, i, &sign_nid, &hash_nid, NULL,
+							&rsign, &rhash);
+		if (i)
+			BIO_puts(out, ":");
+		if (sign_nid == EVP_PKEY_RSA)
+			sstr = "RSA";
+		else if(sign_nid == EVP_PKEY_DSA)
+			sstr = "DSA";
+		else if(sign_nid == EVP_PKEY_EC)
+			sstr = "ECDSA";
+		if (sstr)
+			BIO_printf(out,"%s+", sstr);
+		else
+			BIO_printf(out,"0x%02X+", (int)rsign);
+		if (hash_nid != NID_undef)
+			BIO_printf(out, "%s", OBJ_nid2sn(hash_nid));
+		else
+			BIO_printf(out,"0x%02X", (int)rhash);
+		}
+	BIO_puts(out, "\n");
+	return 1;
+	}
+
+int ssl_print_curves(BIO *out, SSL *s)
+	{
+	int i, ncurves, *curves;
+	ncurves = SSL_get1_curvelist(s, NULL);
+	if (ncurves <= 0)
+		return 1;
+	curves = OPENSSL_malloc(ncurves * sizeof(int));
+	SSL_get1_curvelist(s, curves);
+
+	BIO_puts(out, "Supported Elliptic Curves: ");
+	for (i = 0; i < ncurves; i++)
+		{
+		int nid;
+		const char *cname;
+		if (i)
+			BIO_puts(out, ":");
+		nid = curves[i];
+		/* If unrecognised print out hex version */
+		if (nid & TLSEXT_nid_unknown)
+			BIO_printf(out, "0x%04X", nid & 0xFFFF);
+		else
+			{
+			/* Use NIST name for curve if it exists */
+			cname = EC_curve_nid2nist(nid);
+			if (!cname)
+				cname = OBJ_nid2sn(nid);
+			BIO_printf(out, "%s", cname);
+			}
+		}
+	BIO_puts(out, "\n");
+	OPENSSL_free(curves);
+	return 1;
+	}
+
+
 long MS_CALLBACK bio_dump_callback(BIO *bio, int cmd, const char *argp,
 				   int argi, long argl, long ret)
 	{
