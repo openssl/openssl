@@ -186,6 +186,7 @@ get_dev_crypto(void)
 
 	if ((fd = open_dev_crypto()) == -1)
 		return (-1);
+#ifndef CRIOGET_NOT_NEEDED
 	if (ioctl(fd, CRIOGET, &retfd) == -1)
 		return (-1);
 
@@ -194,7 +195,17 @@ get_dev_crypto(void)
 		close(retfd);
 		return (-1);
 	}
+#else
+        retfd = fd;
+#endif
 	return (retfd);
+}
+
+static void put_dev_crypto(int fd)
+{
+#ifndef CRIOGET_NOT_NEEDED
+	close(fd);
+#endif
 }
 
 /* Caching version for asym operations */
@@ -282,7 +293,7 @@ get_cryptodev_ciphers(const int **cnids)
 		    ioctl(fd, CIOCFSESSION, &sess.ses) != -1)
 			nids[count++] = ciphers[i].nid;
 	}
-	close(fd);
+	put_dev_crypto(fd);
 
 	if (count > 0)
 		*cnids = nids;
@@ -319,7 +330,7 @@ get_cryptodev_digests(const int **cnids)
 		    ioctl(fd, CIOCFSESSION, &sess.ses) != -1)
 			nids[count++] = digests[i].nid;
 	}
-	close(fd);
+	put_dev_crypto(fd);
 
 	if (count > 0)
 		*cnids = nids;
@@ -457,7 +468,7 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	sess->cipher = cipher;
 
 	if (ioctl(state->d_fd, CIOCGSESSION, sess) == -1) {
-		close(state->d_fd);
+		put_dev_crypto(state->d_fd);
 		state->d_fd = -1;
 		return (0);
 	}
@@ -494,7 +505,7 @@ cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 	} else {
 		ret = 1;
 	}
-	close(state->d_fd);
+	put_dev_crypto(state->d_fd);
 	state->d_fd = -1;
 
 	return (ret);
@@ -1084,11 +1095,11 @@ ENGINE_load_cryptodev(void)
 	 * find out what asymmetric crypto algorithms we support
 	 */
 	if (ioctl(fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
-		close(fd);
+		put_dev_crypto(fd);
 		ENGINE_free(engine);
 		return;
 	}
-	close(fd);
+	put_dev_crypto(fd);
 
 	if (!ENGINE_set_id(engine, "cryptodev") ||
 	    !ENGINE_set_name(engine, "BSD cryptodev engine") ||
