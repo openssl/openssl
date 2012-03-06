@@ -547,6 +547,27 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		ret = 0;
 #endif
 		break;
+	case BIO_CTRL_DGRAM_GET_FALLBACK_MTU:
+		switch (data->peer.sa.sa_family)
+			{
+			case AF_INET:
+				ret = 576 - 20 - 8;
+				break;
+#if OPENSSL_USE_IPV6
+			case AF_INET6:
+#ifdef IN6_IS_ADDR_V4MAPPED
+				if (IN6_IS_ADDR_V4MAPPED(&data->peer.sa_in6.sin6_addr))
+					ret = 576 - 20 - 8;
+				else
+#endif
+					ret = 1280 - 40 - 8;
+				break;
+#endif
+			default:
+				ret = 576 - 20 - 8;
+				break;
+			}
+		break;
 	case BIO_CTRL_DGRAM_GET_MTU:
 		return data->mtu;
 		break;
