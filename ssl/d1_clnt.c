@@ -330,7 +330,6 @@ int dtls1_connect(SSL *s)
 			if (ret <= 0) goto end;
 			else
 				{
-				dtls1_stop_timer(s);
 				if (s->hit)
 					{
 #ifndef OPENSSL_NO_SCTP
@@ -441,6 +440,7 @@ int dtls1_connect(SSL *s)
 		case SSL3_ST_CR_SRVR_DONE_B:
 			ret=ssl3_get_server_done(s);
 			if (ret <= 0) goto end;
+			dtls1_stop_timer(s);
 			if (s->s3->tmp.cert_req)
 				s->s3->tmp.next_state=SSL3_ST_CW_CERT_A;
 			else
