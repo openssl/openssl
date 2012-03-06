@@ -112,7 +112,7 @@ static int cms_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
 		cmsbio = tmpbio;
 		}
 
-	return 1;
+	return r;
 
 	}
 
