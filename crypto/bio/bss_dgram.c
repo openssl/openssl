@@ -494,6 +494,9 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 		ret = 0;
 #endif
 		break;
+	case BIO_CTRL_DGRAM_GET_FALLBACK_MTU:
+		ret = 576 - 20 - 8;
+		break;
 	case BIO_CTRL_DGRAM_GET_MTU:
 		return data->mtu;
 		break;

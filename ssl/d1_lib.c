@@ -454,6 +454,11 @@ int dtls1_handle_timeout(SSL *s)
 		state->timeout.read_timeouts = 1;
 		}
 
+	if (state->timeout_duration > 2)
+		{
+		s->d1->mtu = BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_GET_FALLBACK_MTU, 0, NULL);		
+		}
+
 	dtls1_start_timer(s);
 	return dtls1_retransmit_buffered_messages(s);
 	}
