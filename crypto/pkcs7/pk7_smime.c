@@ -507,7 +507,11 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
 					
 				break;
 				}
-			BIO_write(data, buf, i);
+			if (BIO_write(data, buf, i) != i)
+				{
+				ret = 0;
+				break;
+				}
 		}
 		BIO_free_all(tmpmem);
 		return ret;
