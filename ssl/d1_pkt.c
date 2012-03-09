@@ -139,7 +139,6 @@ static int dtls1_process_record(SSL *s);
 #if PQ_64BIT_IS_INTEGER
 static PQ_64BIT bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num);
 #endif
-static void dtls1_clear_timeouts(SSL *s);
 
 /* copy buffered record into SSL structure */
 static int
@@ -640,7 +639,6 @@ again:
 		goto again;     /* get another record */
 		}
 
-	dtls1_clear_timeouts(s);  /* done waiting */
 	return(1);
 
 	}
@@ -1109,6 +1107,9 @@ start:
 		 */
 		if (msg_hdr.type == SSL3_MT_FINISHED)
 			{
+			if (dtls1_check_timeout_num(s) < 0)
+				return -1;
+
 			dtls1_retransmit_buffered_messages(s);
 			rr->length = 0;
 			goto start;
@@ -1812,10 +1813,3 @@ bytes_to_long_long(unsigned char *bytes, PQ_64BIT *num)
        return _num;
        }
 #endif
-
-
-static void
-dtls1_clear_timeouts(SSL *s)
-	{
-	memset(&(s->d1->timeout), 0x00, sizeof(struct dtls1_timeout_st));
-	}
