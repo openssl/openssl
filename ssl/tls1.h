@@ -197,20 +197,42 @@ extern "C" {
 #define TLS1_AD_BAD_CERTIFICATE_HASH_VALUE 114
 #define TLS1_AD_UNKNOWN_PSK_IDENTITY	115	/* fatal */
 
-/* ExtensionType values from RFC3546 / RFC4366 */
+/* ExtensionType values from RFC3546 / RFC4366 / RFC6066 */
 #define TLSEXT_TYPE_server_name			0
 #define TLSEXT_TYPE_max_fragment_length		1
 #define TLSEXT_TYPE_client_certificate_url	2
 #define TLSEXT_TYPE_trusted_ca_keys		3
 #define TLSEXT_TYPE_truncated_hmac		4
 #define TLSEXT_TYPE_status_request		5
+/* ExtensionType values from RFC4681 */
+#define TLSEXT_TYPE_user_mapping		6
+
+/* ExtensionType values from RFC5878 */
+#define TLSEXT_TYPE_client_authz		7
+#define TLSEXT_TYPE_server_authz		8
+
+/* ExtensionType values from RFC6091 */
+#define TLSEXT_TYPE_cert_type		9
+
 /* ExtensionType values from RFC4492 */
 #define TLSEXT_TYPE_elliptic_curves		10
 #define TLSEXT_TYPE_ec_point_formats		11
+
 /* ExtensionType value from RFC5054 */
 #define TLSEXT_TYPE_srp				12
+
+/* ExtensionType values from RFC5246 */
 #define TLSEXT_TYPE_signature_algorithms	13
+
+/* ExtensionType value from RFC5764 */
+#define TLSEXT_TYPE_use_srtp	14
+
+/* ExtensionType value from RFC5620 */
+#define TLSEXT_TYPE_heartbeat	15
+
+/* ExtensionType value from RFC4507 */
 #define TLSEXT_TYPE_session_ticket		35
+
 /* ExtensionType value from draft-rescorla-tls-opaque-prf-input-00.txt */
 #if 0 /* will have to be provided externally for now ,
        * i.e. build with -DTLSEXT_TYPE_opaque_prf_input=38183
@@ -252,12 +274,6 @@ extern "C" {
 #define TLSEXT_hash_sha256				4
 #define TLSEXT_hash_sha384				5
 #define TLSEXT_hash_sha512				6
-
-/* ExtensionType value from RFC5764 */
-#define TLSEXT_TYPE_use_srtp                           14
-
-/* Heartbeat extension */
-#define TLSEXT_TYPE_heartbeat 15
 
 #ifndef OPENSSL_NO_TLSEXT
 
