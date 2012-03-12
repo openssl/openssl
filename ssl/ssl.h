@@ -1682,6 +1682,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_DTLS1_ACCEPT				 246
 #define SSL_F_DTLS1_ADD_CERT_TO_BUF			 280
 #define SSL_F_DTLS1_BUFFER_RECORD			 247
+#define SSL_F_DTLS1_CHECK_TIMEOUT_NUM			 293
 #define SSL_F_DTLS1_CLIENT_HELLO			 248
 #define SSL_F_DTLS1_CONNECT				 249
 #define SSL_F_DTLS1_ENC					 250
