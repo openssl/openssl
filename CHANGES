@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8t and 0.9.8u [xx XXX xxxx]
+ Changes between 0.9.8t and 0.9.8u [12 Mar 2012]
 
   *) Fix MMA (Bleichenbacher's attack on PKCS #1 v1.5 RSA padding) weakness
      in CMS and PKCS7 code. When RSA decryption fails use a random key for
