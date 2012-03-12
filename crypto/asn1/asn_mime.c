@@ -862,9 +862,8 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, char *name, char *value)
 static int mime_hdr_cmp(const MIME_HEADER * const *a,
 			const MIME_HEADER * const *b)
 {
-	if ((*a)->name == NULL || (*b)->name == NULL)
-		return (*a)->name - (*b)->name < 0 ? -1 :
-			(*a)->name - (*b)->name > 0 ? 1 : 0;
+	if (!(*a)->name || !(*b)->name)
+		return !!(*a)->name - !!(*b)->name;
 
 	return(strcmp((*a)->name, (*b)->name));
 }
@@ -872,6 +871,8 @@ static int mime_hdr_cmp(const MIME_HEADER * const *a,
 static int mime_param_cmp(const MIME_PARAM * const *a,
 			const MIME_PARAM * const *b)
 {
+	if (!(*a)->param_name || !(*b)->param_name)
+		return !!(*a)->param_name - !!(*b)->param_name;
 	return(strcmp((*a)->param_name, (*b)->param_name));
 }
 
