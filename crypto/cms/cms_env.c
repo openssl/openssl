@@ -352,6 +352,8 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 	unsigned char *ek = NULL;
 	int eklen;
 	int ret = 0;
+	CMS_EncryptedContentInfo *ec;
+	ec = cms->d.envelopedData->encryptedContentInfo;
 
 	if (ktri->pkey == NULL)
 		{
@@ -382,8 +384,14 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
 	ret = 1;
 
-	cms->d.envelopedData->encryptedContentInfo->key = ek;
-	cms->d.envelopedData->encryptedContentInfo->keylen = eklen;
+	if (ec->key)
+		{
+		OPENSSL_cleanse(ec->key, ec->keylen);
+		OPENSSL_free(ec->key);
+		}
+
+	ec->key = ek;
+	ec->keylen = eklen;
 
 	err:
 	if (!ret && ek)

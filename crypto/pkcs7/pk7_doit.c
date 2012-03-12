@@ -420,6 +420,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		int max;
 		X509_OBJECT ret;
 #endif
+		unsigned char *tkey = NULL;
+		int tkeylen;
 		int jj;
 
 		if ((etmp=BIO_new(BIO_f_cipher())) == NULL)
@@ -461,36 +463,42 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 
 		if (pcert == NULL)
 			{
+			/* Temporary storage in case EVP_PKEY_decrypt
+			 * overwrites output buffer on error.
+			 */
+			unsigned char *tmp2;
+			tmp2 = OPENSSL_malloc(jj);
+			if (!tmp2)
+				goto err;
+			jj = -1;
+			/* Always attempt to decrypt all cases to avoid
+			 * leaking timing information about a successful
+			 * decrypt.
+			 */
 			for (i=0; i<sk_PKCS7_RECIP_INFO_num(rsk); i++)
 				{
+				int tret;
 				ri=sk_PKCS7_RECIP_INFO_value(rsk,i);
-				jj=EVP_PKEY_decrypt(tmp,
+				tret=EVP_PKEY_decrypt(tmp2,
 					M_ASN1_STRING_data(ri->enc_key),
 					M_ASN1_STRING_length(ri->enc_key),
 						pkey);
-				if (jj > 0)
-					break;
+				if (tret > 0)
+					{
+					memcpy(tmp, tmp2, tret);
+					OPENSSL_cleanse(tmp2, tret);
+					jj = tret;
+					}
 				ERR_clear_error();
-				ri = NULL;
 				}
-			if (ri == NULL)
-				{
-				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
-				      PKCS7_R_NO_RECIPIENT_MATCHES_KEY);
-				goto err;
-				}
+			OPENSSL_free(tmp2);
 			}
 		else
 			{
 			jj=EVP_PKEY_decrypt(tmp,
 				M_ASN1_STRING_data(ri->enc_key),
 				M_ASN1_STRING_length(ri->enc_key), pkey);
-			if (jj <= 0)
-				{
-				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
-								ERR_R_EVP_LIB);
-				goto err;
-				}
+			ERR_clear_error();
 			}
 
 		evp_ctx=NULL;
@@ -499,23 +507,48 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			goto err;
 		if (EVP_CIPHER_asn1_to_param(evp_ctx,enc_alg->parameter) < 0)
 			goto err;
+		/* Generate random key to counter MMA */
+		tkeylen = EVP_CIPHER_CTX_key_length(evp_ctx);
+		tkey = OPENSSL_malloc(tkeylen);
+		if (!tkey)
+			goto err;
+		if (EVP_CIPHER_CTX_rand_key(evp_ctx, tkey) <= 0)
+			goto err;
+		/* If we have no key use random key */
+		if (jj <= 0)
+			{
+			OPENSSL_free(tmp);
+			jj = tkeylen;
+			tmp = tkey;
+			tkey = NULL;
+			}
 
-		if (jj != EVP_CIPHER_CTX_key_length(evp_ctx)) {
+		if (jj != tkeylen) {
 			/* Some S/MIME clients don't use the same key
 			 * and effective key length. The key length is
 			 * determined by the size of the decrypted RSA key.
 			 */
 			if(!EVP_CIPHER_CTX_set_key_length(evp_ctx, jj))
 				{
-				PKCS7err(PKCS7_F_PKCS7_DATADECODE,
-					PKCS7_R_DECRYPTED_KEY_IS_WRONG_LENGTH);
-				goto err;
+				/* As MMA defence use random key instead */
+				OPENSSL_cleanse(tmp, jj);
+				OPENSSL_free(tmp);
+				jj = tkeylen;
+				tmp = tkey;
+				tkey = NULL;
 				}
 		} 
+		ERR_clear_error();
 		if (EVP_CipherInit_ex(evp_ctx,NULL,NULL,tmp,NULL,0) <= 0)
 			goto err;
 
 		OPENSSL_cleanse(tmp,jj);
+
+		if (tkey)
+			{
+			OPENSSL_cleanse(tkey, tkeylen);
+			OPENSSL_free(tkey);
+			}
 
 		if (out == NULL)
 			out=etmp;
