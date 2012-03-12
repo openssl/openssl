@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0g and 1.0.0h [xx XXX xxxx]
+ Changes between 1.0.0g and 1.0.0h [12 Mar 2012]
 
   *) Fix MMA (Bleichenbacher's attack on PKCS #1 v1.5 RSA padding) weakness
      in CMS and PKCS7 code. When RSA decryption fails use a random key for
