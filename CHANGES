@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8u and 0.9.8v [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8t and 0.9.8u [12 Mar 2012]
 
   *) Fix MMA (Bleichenbacher's attack on PKCS #1 v1.5 RSA padding) weakness
