@@ -4,6 +4,17 @@
 
  Changes between 1.0.0g and 1.0.0h [xx XXX xxxx]
 
+  *) Fix MMA (Bleichenbacher's attack on PKCS #1 v1.5 RSA padding) weakness
+     in CMS and PKCS7 code. When RSA decryption fails use a random key for
+     content decryption and always return the same error. Note: this attack
+     needs on average 2^20 messages so it only affects automated senders. The
+     old behaviour can be reenabled in the CMS code by setting the
+     CMS_DEBUG_DECRYPT flag: this is useful for debugging and testing where
+     an MMA defence is not necessary.
+     Thanks to Ivan Nestlerode <inestlerode@us.ibm.com> for discovering
+     this issue. (CVE-2012-0884)
+     [Steve Henson]
+
   *) Fix CVE-2011-4619: make sure we really are receiving a 
      client hello before rejecting multiple SGC restarts. Thanks to
      Ivan Nestlerode <inestlerode@us.ibm.com> for discovering this bug.
