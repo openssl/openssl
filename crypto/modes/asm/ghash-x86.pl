@@ -12,14 +12,14 @@
 # The module implements "4-bit" GCM GHASH function and underlying
 # single multiplication operation in GF(2^128). "4-bit" means that it
 # uses 256 bytes per-key table [+64/128 bytes fixed table]. It has two
-# code paths: vanilla x86 and vanilla MMX. Former will be executed on
-# 486 and Pentium, latter on all others. MMX GHASH features so called
+# code paths: vanilla x86 and vanilla SSE. Former will be executed on
+# 486 and Pentium, latter on all others. SSE GHASH features so called
 # "528B" variant of "4-bit" method utilizing additional 256+16 bytes
 # of per-key storage [+512 bytes shared table]. Performance results
 # are for streamed GHASH subroutine and are expressed in cycles per
 # processed byte, less is better:
 #
-#		gcc 2.95.3(*)	MMX assembler	x86 assembler
+#		gcc 2.95.3(*)	SSE assembler	x86 assembler
 #
 # Pentium	105/111(**)	-		50
 # PIII		68 /75		12.2		24
@@ -30,7 +30,7 @@
 # (*)	gcc 3.4.x was observed to generate few percent slower code,
 #	which is one of reasons why 2.95.3 results were chosen,
 #	another reason is lack of 3.4.x results for older CPUs;
-#	comparison with MMX results is not completely fair, because C
+#	comparison with SSE results is not completely fair, because C
 #	results are for vanilla "256B" implementation, while
 #	assembler results are for "528B";-)
 # (**)	second number is result for code compiled with -fPIC flag,
@@ -40,8 +40,8 @@
 #
 # To summarize, it's >2-5 times faster than gcc-generated code. To
 # anchor it to something else SHA1 assembler processes one byte in
-# 11-13 cycles on contemporary x86 cores. As for choice of MMX in
-# particular, see comment at the end of the file...
+# ~7 cycles on contemporary x86 cores. As for choice of MMX/SSE
+# in particular, see comment at the end of the file...
 
 # May 2010
 #
@@ -1273,13 +1273,6 @@ my ($Xhi,$Xi)=@_;
 &set_label("bswap",64);
 	&data_byte(15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0);
 	&data_byte(1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0xc2);	# 0x1c2_polynomial
-}}	# $sse2
-
-&set_label("rem_4bit",64);
-	&data_word(0,0x0000<<$S,0,0x1C20<<$S,0,0x3840<<$S,0,0x2460<<$S);
-	&data_word(0,0x7080<<$S,0,0x6CA0<<$S,0,0x48C0<<$S,0,0x54E0<<$S);
-	&data_word(0,0xE100<<$S,0,0xFD20<<$S,0,0xD940<<$S,0,0xC560<<$S);
-	&data_word(0,0x9180<<$S,0,0x8DA0<<$S,0,0xA9C0<<$S,0,0xB5E0<<$S);
 &set_label("rem_8bit",64);
 	&data_short(0x0000,0x01C2,0x0384,0x0246,0x0708,0x06CA,0x048C,0x054E);
 	&data_short(0x0E10,0x0FD2,0x0D94,0x0C56,0x0918,0x08DA,0x0A9C,0x0B5E);
@@ -1313,6 +1306,13 @@ my ($Xhi,$Xi)=@_;
 	&data_short(0xA7D0,0xA612,0xA454,0xA596,0xA0D8,0xA11A,0xA35C,0xA29E);
 	&data_short(0xB5E0,0xB422,0xB664,0xB7A6,0xB2E8,0xB32A,0xB16C,0xB0AE);
 	&data_short(0xBBF0,0xBA32,0xB874,0xB9B6,0xBCF8,0xBD3A,0xBF7C,0xBEBE);
+}}	# $sse2
+
+&set_label("rem_4bit",64);
+	&data_word(0,0x0000<<$S,0,0x1C20<<$S,0,0x3840<<$S,0,0x2460<<$S);
+	&data_word(0,0x7080<<$S,0,0x6CA0<<$S,0,0x48C0<<$S,0,0x54E0<<$S);
+	&data_word(0,0xE100<<$S,0,0xFD20<<$S,0,0xD940<<$S,0,0xC560<<$S);
+	&data_word(0,0x9180<<$S,0,0x8DA0<<$S,0,0xA9C0<<$S,0,0xB5E0<<$S);
 }}}	# !$x86only
 
 &asciz("GHASH for x86, CRYPTOGAMS by <appro\@openssl.org>");
