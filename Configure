@@ -904,11 +904,11 @@ PROCESS_ARGS:
 				}
 			elsif (/^--with-fipsdir=(.*)$/)
 				{
-				$fipsdir="$1/";
+				$fipsdir="$1";
 				}
 			elsif (/^--with-fipslibdir=(.*)$/)
 				{
-				$fipslibdir="$1/";
+				$fipslibdir="$1";
 				}
 			elsif (/^--with-baseaddr=(.*)$/)
 				{
