@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0h and 1.0.1  [xx XXX xxxx]
+ Changes between 1.0.0h and 1.0.1  [14 Mar 2012]
 
   *) Add compatibility with old MDC2 signatures which use an ASN1 OCTET
      STRING form instead of a DigestInfo.

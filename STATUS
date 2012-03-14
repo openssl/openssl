@@ -1,13 +1,11 @@
 
   OpenSSL STATUS                           Last modified at
-  ______________                           $Date: 2012/02/23 22:13:59 $
+  ______________                           $Date: 2012/03/14 12:04:39 $
 
   DEVELOPMENT STATE
 
     o  OpenSSL 1.1.0:  Under development...
-    o  OpenSSL 1.0.1-beta3: Released on February 23rd, 2011
-    o  OpenSSL 1.0.1-beta2: Released on January 19th, 2011
-    o  OpenSSL 1.0.1-beta1: Released on January 3rd, 2011
+    o  OpenSSL 1.0.1:  Released on March     14th, 2012
     o  OpenSSL 1.0.0d: Released on February   8nd, 2011
     o  OpenSSL 1.0.0c: Released on December   2nd, 2010
     o  OpenSSL 1.0.0b: Released on November  16th, 2010
