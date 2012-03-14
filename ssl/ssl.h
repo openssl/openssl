@@ -1619,6 +1619,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_CHAIN_CERT			89
 
 #define SSL_CTRL_GET_CURVELIST			90
+#define SSL_CTRL_SET_CURVELIST			91
+#define SSL_CTRL_SHARED_CURVES			92
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1680,6 +1682,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,1,(char *)x509)
 #define SSL_get1_curvelist(ctx, s) \
 	SSL_ctrl(ctx,SSL_CTRL_GET_CURVELIST,0,(char *)s)
+#define SSL_set1_curvelist(ctx, clist, clistlen) \
+	SSL_ctrl(ctx,SSL_CTRL_SET_CURVELIST,clistlen,(char *)clist)
 
 
 #ifndef OPENSSL_NO_BIO
