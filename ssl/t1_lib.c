@@ -1678,26 +1678,20 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 		s->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
 
 		/* we support all named elliptic curves in draft-ietf-tls-ecc-12 */
-		if (s->tlsext_ellipticcurvelist == NULL)
+		if (s->tlsext_ellipticcurvelist != NULL) OPENSSL_free(s->tlsext_ellipticcurvelist);
+		s->tlsext_ellipticcurvelist_length = sizeof(pref_list)/sizeof(pref_list[0]) * 2;
+		if ((s->tlsext_ellipticcurvelist = OPENSSL_malloc(s->tlsext_ellipticcurvelist_length)) == NULL)
 			{
-			unsigned char *clist;
-			size_t clistlen;
 			s->tlsext_ellipticcurvelist_length = 0;
-			clistlen = sizeof(pref_list)/sizeof(pref_list[0]) * 2;
-			clist = OPENSSL_malloc(clistlen);
-			if (!clist)
-				{
-				SSLerr(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
-				return -1;
-				}
-			for (i = 0, j = clist; i < (int)clistlen/2; i++)
-				{
-				int id = tls1_ec_nid2curve_id(pref_list[i]);
-				s2n(id,j);
-				}
-			s->tlsext_ellipticcurvelist = clist;
-			s->tlsext_ellipticcurvelist_length = clistlen;
-			}	
+			SSLerr(SSL_F_SSL_PREPARE_CLIENTHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
+			return -1;
+			}
+		for (i = 0, j = s->tlsext_ellipticcurvelist; (unsigned int)i <
+				sizeof(pref_list)/sizeof(pref_list[0]); i++)
+			{
+			int id = tls1_ec_nid2curve_id(pref_list[i]);
+			s2n(id,j);
+			}
 		}
 #endif /* OPENSSL_NO_EC */
 

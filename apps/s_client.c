@@ -1209,21 +1209,6 @@ bad:
 #endif
 
 	con=SSL_new(ctx);
-#if 0
-{
-int curves[3];
-int rv;
-curves[0] = EC_curve_nist2nid("P-256");
-curves[1] = EC_curve_nist2nid("P-521");
-curves[2] = EC_curve_nist2nid("P-384");
-rv = SSL_set1_curvelist(con, curves, sizeof(curves)/sizeof(int));
-if (rv == 0)
-	{
-	fprintf(stderr, "Error setting curve list\n");
-	exit(1);
-	}
-}
-#endif
 	if (sess_in)
 		{
 		SSL_SESSION *sess;
