@@ -65,12 +65,12 @@
 # function is:
 #
 # 		conversion	conversion/8x block
-# Core 2	410		0.37
-# Nehalem	310		0.35
-# Atom		570		0.26
+# Core 2	240		0.22
+# Nehalem	180		0.20
+# Atom		430		0.19
 #
 # The ratio values mean that 128-byte blocks will be processed
-# 21-27% slower, 256-byte blocks - 12-16%, 384-byte blocks - 8-11%,
+# 16-18% slower, 256-byte blocks - 9-10%, 384-byte blocks - 6-7%,
 # etc. Then keep in mind that input sizes not divisible by 128 are
 # *effectively* slower, especially shortest ones, e.g. consecutive
 # 144-byte blocks are processed 44% slower than one would expect,
@@ -85,6 +85,7 @@
 #
 # Core 2	11.0
 # Nehalem	9.16
+# Atom		20.9
 #
 # November 2011.
 #
@@ -754,7 +755,7 @@ _bsaes_encrypt8:
 
 	movdqa	($key), @XMM[9]		# round 0 key
 	lea	0x10($key), $key
-	movdqa	0x60($const), @XMM[8]	# .LM0SR
+	movdqa	0x50($const), @XMM[8]	# .LM0SR
 	pxor	@XMM[9], @XMM[0]	# xor with round0 key
 	pxor	@XMM[9], @XMM[1]
 	 pshufb	@XMM[8], @XMM[0]
@@ -905,46 +906,82 @@ $code.=<<___;
 .type	_bsaes_key_convert,\@abi-omnipotent
 .align	16
 _bsaes_key_convert:
-	lea	.LBS1(%rip), $const
+	lea	.Lmasks(%rip), $const
 	movdqu	($inp), %xmm7		# load round 0 key
-	movdqa	-0x10($const), %xmm8	# .LBS0
-	movdqa	0x00($const), %xmm9	# .LBS1
-	movdqa	0x10($const), %xmm10	# .LBS2
-	movdqa	0x40($const), %xmm13	# .LM0
-	movdqa	0x60($const), %xmm14	# .LNOT
-
-	movdqu	0x10($inp), %xmm6	# load round 1 key
 	lea	0x10($inp), $inp
+	movdqa	0x00($const), %xmm0	# 0x01...
+	movdqa	0x10($const), %xmm1	# 0x02...
+	movdqa	0x20($const), %xmm2	# 0x04...
+	movdqa	0x30($const), %xmm3	# 0x08...
+	movdqa	0x40($const), %xmm4	# .LM0
+	pcmpeqd	%xmm5, %xmm5		# .LNOT
+
+	movdqu	($inp), %xmm6		# load round 1 key
 	movdqa	%xmm7, ($out)		# save round 0 key
 	lea	0x10($out), $out
 	dec	$rounds
 	jmp	.Lkey_loop
 .align	16
 .Lkey_loop:
-	pshufb	%xmm13, %xmm6		# .LM0
-	movdqa	%xmm6, %xmm7
-___
-	&bitslice_key	(map("%xmm$_",(0..7, 8..12)));
-$code.=<<___;
-	pxor	%xmm14, %xmm5		# "pnot"
-	pxor	%xmm14, %xmm6
-	pxor	%xmm14, %xmm0
-	pxor	%xmm14, %xmm1
-	lea	0x10($inp), $inp
-	movdqa	%xmm0, 0x00($out)	# write bit-sliced round key
-	movdqa	%xmm1, 0x10($out)
-	movdqa	%xmm2, 0x20($out)
-	movdqa	%xmm3, 0x30($out)
-	movdqa	%xmm4, 0x40($out)
-	movdqa	%xmm5, 0x50($out)
-	movdqa	%xmm6, 0x60($out)
-	movdqa	%xmm7, 0x70($out)
+	pshufb	%xmm4, %xmm6		# .LM0
+
+	movdqa	%xmm0,	%xmm8
+	movdqa	%xmm1,	%xmm9
+
+	pand	%xmm6,	%xmm8
+	pand	%xmm6,	%xmm9
+	movdqa	%xmm2,	%xmm10
+	pcmpeqb	%xmm0,	%xmm8
+	psllq	\$4,	%xmm0		# 0x10...
+	movdqa	%xmm3,	%xmm11
+	pcmpeqb	%xmm1,	%xmm9
+	psllq	\$4,	%xmm1		# 0x20...
+
+	pand	%xmm6,	%xmm10
+	pand	%xmm6,	%xmm11
+	movdqa	%xmm0,	%xmm12
+	pcmpeqb	%xmm2,	%xmm10
+	psllq	\$4,	%xmm2		# 0x40...
+	movdqa	%xmm1,	%xmm13
+	pcmpeqb	%xmm3,	%xmm11
+	psllq	\$4,	%xmm3		# 0x80...
+
+	movdqa	%xmm2,	%xmm14
+	movdqa	%xmm3,	%xmm15
+	 pxor	%xmm5,	%xmm8		# "pnot"
+	 pxor	%xmm5,	%xmm9
+
+	pand	%xmm6,	%xmm12
+	pand	%xmm6,	%xmm13
+	 movdqa	%xmm8, 0x00($out)	# write bit-sliced round key
+	pcmpeqb	%xmm0,	%xmm12
+	psrlq	\$4,	%xmm0		# 0x01...
+	 movdqa	%xmm9, 0x10($out)
+	pcmpeqb	%xmm1,	%xmm13
+	psrlq	\$4,	%xmm1		# 0x02...
+	 lea	0x10($inp), $inp
+
+	pand	%xmm6,	%xmm14
+	pand	%xmm6,	%xmm15
+	 movdqa	%xmm10, 0x20($out)
+	pcmpeqb	%xmm2,	%xmm14
+	psrlq	\$4,	%xmm2		# 0x04...
+	 movdqa	%xmm11, 0x30($out)
+	pcmpeqb	%xmm3,	%xmm15
+	psrlq	\$4,	%xmm3		# 0x08...
+	 movdqu	($inp), %xmm6		# load next round key
+
+	pxor	%xmm5, %xmm13		# "pnot"
+	pxor	%xmm5, %xmm14
+	movdqa	%xmm12, 0x40($out)
+	movdqa	%xmm13, 0x50($out)
+	movdqa	%xmm14, 0x60($out)
+	movdqa	%xmm15, 0x70($out)
 	lea	0x80($out),$out
-	movdqu	($inp), %xmm6		# load next round key
 	dec	$rounds
 	jnz	.Lkey_loop
 
-	movdqa	0x70($const), %xmm7	# .L63
+	movdqa	0x50($const), %xmm7	# .L63
 	#movdqa	%xmm6, ($out)		# don't save last round key
 	ret
 .size	_bsaes_key_convert,.-_bsaes_key_convert
@@ -2800,14 +2837,8 @@ _bsaes_const:
 	.quad	0x0504070600030201, 0x0f0e0d0c0a09080b
 .LSRM0:
 	.quad	0x0304090e00050a0f, 0x01060b0c0207080d
-.LM0:
-	.quad	0x02060a0e03070b0f, 0x0004080c0105090d
 .LM0SR:
 	.quad	0x0a0e02060f03070b, 0x0004080c05090d01
-.LNOT:		# magic constants
-	.quad	0xffffffffffffffff, 0xffffffffffffffff
-.L63:
-	.quad	0x6363636363636363, 0x6363636363636363
 .LSWPUP:	# byte-swap upper dword
 	.quad	0x0706050403020100, 0x0c0d0e0f0b0a0908
 .LSWPUPM0SR:
@@ -2830,6 +2861,15 @@ _bsaes_const:
 	.quad	0x0000000000000000, 0x0000000800000000
 .Lxts_magic:
 	.long	0x87,0,1,0
+.Lmasks:
+	.quad	0x0101010101010101, 0x0101010101010101
+	.quad	0x0202020202020202, 0x0202020202020202
+	.quad	0x0404040404040404, 0x0404040404040404
+	.quad	0x0808080808080808, 0x0808080808080808
+.LM0:
+	.quad	0x02060a0e03070b0f, 0x0004080c0105090d
+.L63:
+	.quad	0x6363636363636363, 0x6363636363636363
 .asciz	"Bit-sliced AES for x86_64/SSSE3, Emilia Käsper, Peter Schwabe, Andy Polyakov"
 .align	64
 .size	_bsaes_const,.-_bsaes_const
