@@ -18,9 +18,9 @@
 # only low-level primitives and unsupported entry points, just enough
 # to collect performance results, which for Cortex-A8 core are:
 #
-# encrypt	20.9 cycles per byte processed with 128-bit key
-# decrypt	25.6 cycles per byte processed with 128-bit key
-# key conv.	900  cycles per 128-bit key/0.34 of 8x block
+# encrypt	20.0 cycles per byte processed with 128-bit key
+# decrypt	24.7 cycles per byte processed with 128-bit key
+# key conv.	440  cycles per 128-bit key/0.17 of 8x block
 #
 # When comparing to x86_64 results keep in mind that NEON unit is
 # [mostly] single-issue and thus can't benefit from parallelism. And
@@ -292,24 +292,19 @@ $code.=<<___;
 	vand	@t[3], @t[3], @t[1]
 
 	veor	@s[2], @t[0], @t[3]
+	veor	@s[1], @t[2], @t[3]
+
 	vand	@s[3], @s[0], @s[2]
+	vbsl	@s[1], @t[1], @t[0]
 
 	veor	@s[3], @s[3], @t[2]
-	veor	@s[1], @t[1], @t[0]
-
-	veor	@t[3], @t[3], @t[2]
-
-	vand	@s[1], @s[1], @t[3]
-
-	veor	@s[1], @s[1], @t[0]
-
 	veor	@t[2], @s[2], @s[1]
-	veor	@t[1], @t[1], @s[1]
 
 	vand	@t[2], @t[2], @t[0]
+	vbsl	@t[0], @s[2], @s[1]
 
 	veor	@s[2], @s[2], @t[2]
-	veor	@t[1], @t[1], @t[2]
+	veor	@t[1], @t[1], @t[0]
 
 	vand	@s[2], @s[2], @s[3]
 
@@ -827,10 +822,13 @@ _bsaes_key_convert:
 	sub	$const,$const,#_bsaes_key_convert-.LM0
 	vld1.8	{@XMM[15]}, [$inp]!		@ load round 1 key
 
-	vmov.i8	@XMM[8], #0x55			@ compose .LBS0
-	vmov.i8	@XMM[9], #0x33			@ compose .LBS1
-	vmov.i8	@XMM[10],#0x0f			@ compose .LBS2
-	vldmia	$const, {@XMM[13]}		@ .LM0
+	vmov.i8	@XMM[8],  #0x01			@ bit masks
+	vmov.i8	@XMM[9],  #0x02
+	vmov.i8	@XMM[10], #0x04
+	vmov.i8	@XMM[11], #0x08
+	vmov.i8	@XMM[12], #0x10
+	vmov.i8	@XMM[13], #0x20
+	vldmia	$const, {@XMM[14]}		@ .LM0
 
 #ifdef __ARMEL__
 	vrev32.8	@XMM[7],  @XMM[7]
@@ -842,17 +840,24 @@ _bsaes_key_convert:
 
 .align	4
 .Lkey_loop:
-	vtbl.8	`&Dlo(@XMM[6])`,{@XMM[15]},`&Dlo(@XMM[13])`
-	vtbl.8	`&Dhi(@XMM[6])`,{@XMM[15]},`&Dhi(@XMM[13])`
-	vmov	@XMM[7], @XMM[6]
-___
-	&bitslice_key	(@XMM[0..7, 8..12]);
-$code.=<<___;
+	vtbl.8	`&Dlo(@XMM[7])`,{@XMM[15]},`&Dlo(@XMM[14])`
+	vtbl.8	`&Dhi(@XMM[7])`,{@XMM[15]},`&Dhi(@XMM[14])`
+	vmov.i8	@XMM[6],  #0x40
+	vmov.i8	@XMM[15], #0x80
+
+	vtst.8	@XMM[0], @XMM[7], @XMM[8]
+	vtst.8	@XMM[1], @XMM[7], @XMM[9]
+	vtst.8	@XMM[2], @XMM[7], @XMM[10]
+	vtst.8	@XMM[3], @XMM[7], @XMM[11]
+	vtst.8	@XMM[4], @XMM[7], @XMM[12]
+	vtst.8	@XMM[5], @XMM[7], @XMM[13]
+	vtst.8	@XMM[6], @XMM[7], @XMM[6]
+	vtst.8	@XMM[7], @XMM[7], @XMM[15]
 	vld1.8	{@XMM[15]}, [$inp]!		@ load next round key
-	vmvn	@XMM[5], @XMM[5]		@ "pnot"
-	vmvn	@XMM[6], @XMM[6]
-	vmvn	@XMM[0], @XMM[0]
+	vmvn	@XMM[0], @XMM[0]		@ "pnot"
 	vmvn	@XMM[1], @XMM[1]
+	vmvn	@XMM[5], @XMM[5]
+	vmvn	@XMM[6], @XMM[6]
 #ifdef __ARMEL__
 	vrev32.8	@XMM[15], @XMM[15]
 #endif
@@ -895,21 +900,16 @@ bsaes_encrypt_128:
 	stmdb	sp!,{r4-r6,lr}
 	vstmdb	sp!,{d8-d15}		@ ABI specification says so
 .Lenc128_loop:
-	vld1.8	{@XMM[0]}, [$inp]!		@ load input
-	vld1.8	{@XMM[1]}, [$inp]!
-	vld1.8	{@XMM[2]}, [$inp]!
-	vld1.8	{@XMM[3]}, [$inp]!
-	vld1.8	{@XMM[4]}, [$inp]!
-	vld1.8	{@XMM[5]}, [$inp]!
+	vld1.8	{@XMM[0]-@XMM[1]}, [$inp]!	@ load input
+	vld1.8	{@XMM[2]-@XMM[3]}, [$inp]!
 	mov	r4,$key				@ pass the key
-	vld1.8	{@XMM[6]}, [$inp]!
+	vld1.8	{@XMM[4]-@XMM[5]}, [$inp]!
 	mov	r5,#10				@ pass rounds
-	vld1.8	{@XMM[7]}, [$inp]!
+	vld1.8	{@XMM[6]-@XMM[7]}, [$inp]!
 
 	bl	_bsaes_encrypt8
 
-	vst1.8	{@XMM[0]}, [$out]!		@ write output
-	vst1.8	{@XMM[1]}, [$out]!
+	vst1.8	{@XMM[0]-@XMM[1]}, [$out]!	@ write output
 	vst1.8	{@XMM[4]}, [$out]!
 	vst1.8	{@XMM[6]}, [$out]!
 	vst1.8	{@XMM[3]}, [$out]!
@@ -950,21 +950,16 @@ bsaes_decrypt_128:
 	stmdb	sp!,{r4-r6,lr}
 	vstmdb	sp!,{d8-d15}		@ ABI specification says so
 .Ldec128_loop:
-	vld1.8	{@XMM[0]}, [$inp]!		@ load input
-	vld1.8	{@XMM[1]}, [$inp]!
-	vld1.8	{@XMM[2]}, [$inp]!
-	vld1.8	{@XMM[3]}, [$inp]!
-	vld1.8	{@XMM[4]}, [$inp]!
-	vld1.8	{@XMM[5]}, [$inp]!
+	vld1.8	{@XMM[0]-@XMM[1]}, [$inp]!	@ load input
+	vld1.8	{@XMM[2]-@XMM[3]}, [$inp]!
 	mov	r4,$key				@ pass the key
-	vld1.8	{@XMM[6]}, [$inp]!
+	vld1.8	{@XMM[4]-@XMM[5]}, [$inp]!
 	mov	r5,#10				@ pass rounds
-	vld1.8	{@XMM[7]}, [$inp]!
+	vld1.8	{@XMM[6]-@XMM[7]}, [$inp]!
 
 	bl	_bsaes_decrypt8
 
-	vst1.8	{@XMM[0]}, [$out]!		@ write output
-	vst1.8	{@XMM[1]}, [$out]!
+	vst1.8	{@XMM[0]-@XMM[1]}, [$out]!	@ write output
 	vst1.8	{@XMM[6]}, [$out]!
 	vst1.8	{@XMM[4]}, [$out]!
 	vst1.8	{@XMM[2]}, [$out]!
