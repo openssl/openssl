@@ -263,7 +263,7 @@ _vpaes_decrypt_core:
 	pshufb  %xmm2,  %xmm4	# 4 = sbou
 	pxor	%xmm0,  %xmm4	# 4 = sb1u + k
 	movdqa	0x70(%r10), %xmm0	# 0 : sbot
-	movdqa	.Lk_sr-.Lk_dsbd(%r11), %xmm2
+	movdqa	-0x160(%r11), %xmm2	# .Lk_sr-.Lk_dsbd=-0x160
 	pshufb  %xmm3,	%xmm0	# 0 = sb1t
 	pxor	%xmm4,	%xmm0	# 0 = A
 	pshufb	%xmm2,	%xmm0
