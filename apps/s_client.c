@@ -622,13 +622,7 @@ int MAIN(int argc, char **argv)
 	SRP_ARG srp_arg = {NULL,NULL,0,0,0,1024};
 #endif
 
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_client_method();
-#elif !defined(OPENSSL_NO_SSL3)
-	meth=SSLv3_client_method();
-#elif !defined(OPENSSL_NO_SSL2)
-	meth=SSLv2_client_method();
-#endif
 
 	apps_startup();
 	c_Pause=0;
