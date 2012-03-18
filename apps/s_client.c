@@ -345,13 +345,7 @@ int MAIN(int argc, char **argv)
 	char *jpake_secret = NULL;
 #endif
 
-#if !defined(OPENSSL_NO_SSL2) && !defined(OPENSSL_NO_SSL3)
 	meth=SSLv23_client_method();
-#elif !defined(OPENSSL_NO_SSL3)
-	meth=SSLv3_client_method();
-#elif !defined(OPENSSL_NO_SSL2)
-	meth=SSLv2_client_method();
-#endif
 
 	apps_startup();
 	c_Pause=0;
