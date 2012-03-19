@@ -37,7 +37,7 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],$0);
 
-%PADLOCK_MARGIN=(ecb=>128, cbc=>64); # prefetch errata
+%PADLOCK_PREFETCH=(ecb=>128, cbc=>64);	# prefetch errata
 $PADLOCK_CHUNK=512;	# Must be a power of 2 larger than 16
 
 $ctx="edx";
@@ -188,10 +188,6 @@ my ($mode,$opcode) = @_;
 	&movq	("mm0",&QWP(-16,$ctx));	# load [upper part of] counter
 					} else {
 	&xor	("ebx","ebx");
-    if ($PADLOCK_MARGIN{$mode}) {
-	&cmp	($len,$PADLOCK_MARGIN{$mode});
-	&jbe	(&label("${mode}_short"));
-    }
 	&test	(&DWP(0,$ctx),1<<5);	# align bit in control word
 	&jnz	(&label("${mode}_aligned"));
 	&test	($out,0x0f);
@@ -212,7 +208,27 @@ my ($mode,$opcode) = @_;
 	&neg	("eax");
 	&and	($chunk,$PADLOCK_CHUNK-1);	# chunk=len%PADLOCK_CHUNK
 	&lea	("esp",&DWP(0,"eax","ebp"));	# alloca
+	&mov	("eax",$PADLOCK_CHUNK);
+	&cmovz	($chunk,"eax");			# chunk=chunk?:PADLOCK_CHUNK
+	&mov	("eax","ebp");
+	&and	("ebp",-16);
 	&and	("esp",-16);
+	&mov	(&DWP(16,"ebp"),"eax");
+    if ($PADLOCK_PREFETCH{$mode}) {
+	&cmp	($len,$chunk);
+	&ja	(&label("${mode}_loop"));
+	&mov	("eax",$inp);		# check if prefetch crosses page
+	&cmp	("ebp","esp");
+	&cmove	("eax",$out);
+	&add	("eax",$len);
+	&neg	("eax");
+	&and	("eax",0xfff);		# distance to page boundary
+	&cmp	("eax",$PADLOCK_PREFETCH{$mode});
+	&mov	("eax",-$PADLOCK_PREFETCH{$mode});
+	&cmovae	("eax",$chunk);		# mask=distance<prefetch?-prefetch:-1
+	&and	($chunk,"eax");
+	&jz	(&label("${mode}_unaligned_tail"));
+    }
 	&jmp	(&label("${mode}_loop"));
 
 &set_label("${mode}_loop",16);
@@ -276,8 +292,8 @@ my ($mode,$opcode) = @_;
 	&test	($out,0x0f);
 	&jz	(&label("${mode}_out_aligned"));
 	&mov	($len,$chunk);
-	&shr	($len,2);
 	&lea	($inp,&DWP(0,"esp"));
+	&shr	($len,2);
 	&data_byte(0xf3,0xa5);			# rep movsl
 	&sub	($out,$chunk);
 &set_label("${mode}_out_aligned");
@@ -288,7 +304,30 @@ my ($mode,$opcode) = @_;
 	&add	($inp,$chunk);
 	&sub	($len,$chunk);
 	&mov	($chunk,$PADLOCK_CHUNK);
+    if (!$PADLOCK_PREFETCH{$mode}) {
 	&jnz	(&label("${mode}_loop"));
+    } else {
+	&jz	(&label("${mode}_break"));
+	&cmp	($len,$chunk);
+	&jae	(&label("${mode}_loop"));
+
+&set_label("${mode}_unaligned_tail");
+	&xor	("eax","eax");
+	&cmp	("esp","ebp");
+	&cmove	("eax",$len);
+	&sub	("esp","eax");			# alloca
+	&mov	("eax", $out);			# save parameters
+	&mov	($chunk,$len);
+	&shr	($len,2);
+	&lea	($out,&DWP(0,"esp"));
+	&data_byte(0xf3,0xa5);			# rep movsl
+	&mov	($inp,"esp");
+	&mov	($out,"eax");			# restore parameters
+	&mov	($len,$chunk);
+	&jmp	(&label("${mode}_loop"));
+
+&set_label("${mode}_break",16);
+    }
 						if ($mode ne "ctr32") {
 	&cmp	("esp","ebp");
 	&je	(&label("${mode}_done"));
@@ -302,28 +341,24 @@ my ($mode,$opcode) = @_;
 	&ja	(&label("${mode}_bzero"));
 
 &set_label("${mode}_done");
+	&mov	("ebp",&DWP(16,"ebp"));
 	&lea	("esp",&DWP(24,"ebp"));
 						if ($mode ne "ctr32") {
 	&jmp	(&label("${mode}_exit"));
 
-&set_label("${mode}_short",16);
-	&xor	("eax","eax");
-	&lea	("ebp",&DWP(-24,"esp"));
-	&sub	("eax",$len);
-	&lea	("esp",&DWP(0,"eax","ebp"));
-	&and	("esp",-16);
-	&xor	($chunk,$chunk);
-&set_label("${mode}_short_copy");
-	&movups	("xmm0",&QWP(0,$inp,$chunk));
-	&lea	($chunk,&DWP(16,$chunk));
-	&cmp	($len,$chunk);
-	&movaps	(&QWP(-16,"esp",$chunk),"xmm0");
-	&ja	(&label("${mode}_short_copy"));
-	&mov	($inp,"esp");
-	&mov	($chunk,$len);
-	&jmp	(&label("${mode}_loop"));
-
 &set_label("${mode}_aligned",16);
+    if ($PADLOCK_PREFETCH{$mode}) {
+	&lea	("ebp",&DWP(0,$inp,$len));
+	&neg	("ebp");
+	&and	("ebp",0xfff);			# distance to page boundary
+	&xor	("eax","eax");
+	&cmp	("ebp",$PADLOCK_PREFETCH{$mode});
+	&mov	("ebp",$PADLOCK_PREFETCH{$mode}-1);
+	&cmovae	("ebp","eax");
+	&and	("ebp",$len);			# remainder
+	&sub	($len,"ebp");
+	&jz	(&label("${mode}_aligned_tail"));
+    }
 	&lea	("eax",&DWP(-16,$ctx));		# ivp
 	&lea	("ebx",&DWP(16,$ctx));		# key
 	&shr	($len,4);			# len/=AES_BLOCK_SIZE
@@ -332,6 +367,29 @@ my ($mode,$opcode) = @_;
 	&movaps	("xmm0",&QWP(0,"eax"));
 	&movaps	(&QWP(-16,$ctx),"xmm0");	# copy [or refresh] iv
 						}
+    if ($PADLOCK_PREFETCH{$mode}) {
+	&test	("ebp","ebp");
+	&jz	(&label("${mode}_exit"));
+
+&set_label("${mode}_aligned_tail");
+	&mov	($len,"ebp");
+	&lea	("ebp",&DWP(-24,"esp"));
+	&mov	("esp","ebp");
+	&mov	("eax","ebp");
+	&sub	("esp",$len);
+	&and	("ebp",-16);
+	&and	("esp",-16);
+	&mov	(&DWP(16,"ebp"),"eax");
+	&mov	("eax", $out);			# save parameters
+	&mov	($chunk,$len);
+	&shr	($len,2);
+	&lea	($out,&DWP(0,"esp"));
+	&data_byte(0xf3,0xa5);			# rep movsl
+	&mov	($inp,"esp");
+	&mov	($out,"eax");			# restore parameters
+	&mov	($len,$chunk);
+	&jmp	(&label("${mode}_loop"));
+    }
 &set_label("${mode}_exit");			}
 	&mov	("eax",1);
 	&lea	("esp",&DWP(4,"esp"));		# popf

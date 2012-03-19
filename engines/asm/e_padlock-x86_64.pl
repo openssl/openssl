@@ -27,7 +27,7 @@ open STDOUT,"| $^X $xlate $flavour $output";
 
 $code=".text\n";
 
-%PADLOCK_MARGIN=(ecb=>128, cbc=>64, ctr32=>64);	# prefetch errata
+%PADLOCK_PREFETCH=(ecb=>128, cbc=>64, ctr32=>32);	# prefetch errata
 $PADLOCK_CHUNK=512;	# Must be a power of 2 between 32 and 2^20
 
 $ctx="%rdx";
@@ -285,17 +285,6 @@ padlock_${mode}_encrypt:
 	lea	16($ctx),$ctx		# control word
 	xor	%eax,%eax
 	xor	%ebx,%ebx
-___
-# Formally speaking correct condtion is $len<=$margin and $inp+$margin
-# crosses page boundary [and next page is unreadable]. But $inp can
-# be unaligned in which case data can be copied to $out if latter is
-# aligned, in which case $out+$margin has to be checked. Covering all
-# cases appears more complicated than just copying short input...
-$code.=<<___	if ($PADLOCK_MARGIN{$mode});
-	cmp	\$$PADLOCK_MARGIN{$mode},$len
-	jbe	.L${mode}_short
-___
-$code.=<<___;
 	testl	\$`1<<5`,($ctx)		# align bit in control word
 	jnz	.L${mode}_aligned
 	test	\$0x0f,$out
@@ -315,6 +304,8 @@ $code.=<<___;
 	neg	%rax
 	and	\$$PADLOCK_CHUNK-1,$chunk	# chunk%=PADLOCK_CHUNK
 	lea	(%rax,%rbp),%rsp
+	mov	\$$PADLOCK_CHUNK,%rax
+	cmovz	%rax,$chunk			# chunk=chunk?:PADLOCK_CHUNK
 ___
 $code.=<<___				if ($mode eq "ctr32");
 .L${mode}_reenter:
@@ -322,10 +313,27 @@ $code.=<<___				if ($mode eq "ctr32");
 	bswap	%eax
 	neg	%eax
 	and	\$`$PADLOCK_CHUNK/16-1`,%eax
-	jz	.L${mode}_loop
+	mov	\$$PADLOCK_CHUNK,$chunk
 	shl	\$4,%eax
+	cmovz	$chunk,%rax
 	cmp	%rax,$len
 	cmova	%rax,$chunk		# don't let counter cross PADLOCK_CHUNK
+	cmovbe	$len,$chunk
+___
+$code.=<<___				if ($PADLOCK_PREFETCH{$mode});
+	cmp	$chunk,$len
+	ja	.L${mode}_loop
+	mov	$inp,%rax		# check if prefetch crosses page
+	cmp	%rsp,%rbp
+	cmove	$out,%rax
+	add	$len,%rax
+	neg	%rax
+	and	\$0xfff,%rax		# distance to page boundary
+	cmp	\$$PADLOCK_PREFETCH{$mode},%rax
+	mov	\$-$PADLOCK_PREFETCH{$mode},%rax
+	cmovae	$chunk,%rax		# mask=distance<prefetch?-prefetch:-1
+	and	%rax,$chunk
+	jz	.L${mode}_unaligned_tail
 ___
 $code.=<<___;
 	jmp	.L${mode}_loop
@@ -360,12 +368,12 @@ ___
 $code.=<<___				if ($mode eq "ctr32");
 	mov	-4($ctx),%eax		# pull 32-bit counter
 	test	\$0xffff0000,%eax
-	jnz	.L${mode}_no_corr
+	jnz	.L${mode}_no_carry
 	bswap	%eax
 	add	\$0x10000,%eax
 	bswap	%eax
 	mov	%eax,-4($ctx)
-.L${mode}_no_corr:
+.L${mode}_no_carry:
 ___
 $code.=<<___;
 	mov	%r8,$out		# restore paramters
@@ -373,8 +381,8 @@ $code.=<<___;
 	test	\$0x0f,$out
 	jz	.L${mode}_out_aligned
 	mov	$chunk,$len
-	shr	\$3,$len
 	lea	(%rsp),$inp
+	shr	\$3,$len
 	.byte	0xf3,0x48,0xa5		# rep movsq
 	sub	$chunk,$out
 .L${mode}_out_aligned:
@@ -384,9 +392,52 @@ $code.=<<___;
 	add	$chunk,$inp
 	sub	$chunk,$len
 	mov	\$$PADLOCK_CHUNK,$chunk
+___
+					if (!$PADLOCK_PREFETCH{$mode}) {
+$code.=<<___;
 	jnz	.L${mode}_loop
-
+___
+					} else {
+$code.=<<___;
+	jz	.L${mode}_break
+	cmp	$chunk,$len
+	jae	.L${mode}_loop
+___
+$code.=<<___				if ($mode eq "ctr32");
+	mov	$len,$chunk
+	mov	$inp,%rax		# check if prefetch crosses page
 	cmp	%rsp,%rbp
+	cmove	$out,%rax
+	add	$len,%rax
+	neg	%rax
+	and	\$0xfff,%rax		# distance to page boundary
+	cmp	\$$PADLOCK_PREFETCH{$mode},%rax
+	mov	\$-$PADLOCK_PREFETCH{$mode},%rax
+	cmovae	$chunk,%rax
+	and	%rax,$chunk
+	jnz	.L${mode}_loop
+___
+$code.=<<___;
+.L${mode}_unaligned_tail:
+	xor	%eax,%eax
+	cmp	%rsp,%rbp
+	cmove	$len,%rax
+	mov	$out,%r8		# save parameters
+	mov	$len,$chunk
+	sub	%rax,%rsp		# alloca
+	shr	\$3,$len
+	lea	(%rsp),$out
+	.byte	0xf3,0x48,0xa5		# rep movsq
+	mov	%rsp,$inp
+	mov	%r8, $out		# restore parameters
+	mov	$chunk,$len
+	jmp	.L${mode}_loop
+.align	16
+.L${mode}_break:
+___
+					}
+$code.=<<___;
+	cmp	%rbp,%rsp
 	je	.L${mode}_done
 
 	pxor	%xmm0,%xmm0
@@ -400,47 +451,59 @@ $code.=<<___;
 .L${mode}_done:
 	lea	(%rbp),%rsp
 	jmp	.L${mode}_exit
-___
-$code.=<<___ if ($PADLOCK_MARGIN{$mode});
-.align	16
-.L${mode}_short:
-	mov	%rsp,%rbp
-	sub	$len,%rsp
-	xor	$chunk,$chunk
-.L${mode}_short_copy:
-	movups	($inp,$chunk),%xmm0
-	lea	16($chunk),$chunk
-	cmp	$chunk,$len
-	movaps	%xmm0,-16(%rsp,$chunk)
-	ja	.L${mode}_short_copy
-	mov	%rsp,$inp
-	mov	$len,$chunk
-	jmp	.L${mode}_`${mode} eq "ctr32"?"reenter":"loop"`
-___
-$code.=<<___;
+
 .align	16
 .L${mode}_aligned:
 ___
 $code.=<<___				if ($mode eq "ctr32");
 	mov	-4($ctx),%eax		# pull 32-bit counter
-	mov	\$`16*0x10000`,$chunk
 	bswap	%eax
-	cmp	$len,$chunk
-	cmova	$len,$chunk
 	neg	%eax
 	and	\$0xffff,%eax
-	jz	.L${mode}_aligned_loop
+	mov	\$`16*0x10000`,$chunk
 	shl	\$4,%eax
+	cmovz	$chunk,%rax
 	cmp	%rax,$len
 	cmova	%rax,$chunk		# don't let counter cross 2^16
-	jmp	.L${mode}_aligned_loop
-.align	16
+	cmovbe	$len,$chunk
+	jbe	.L${mode}_aligned_skip
+
 .L${mode}_aligned_loop:
-	cmp	$len,$chunk
-	cmova	$len,$chunk
 	mov	$len,%r10		# save parameters
 	mov	$chunk,$len
 	mov	$chunk,%r11
+
+	lea	-16($ctx),%rax		# ivp
+	lea	16($ctx),%rbx		# key
+	shr	\$4,$len		# len/=AES_BLOCK_SIZE
+	.byte	0xf3,0x0f,0xa7,$opcode	# rep xcrypt*
+
+	mov	-4($ctx),%eax		# pull 32-bit counter
+	bswap	%eax
+	add	\$0x10000,%eax
+	bswap	%eax
+	mov	%eax,-4($ctx)
+
+	mov	%r10,$len		# restore paramters
+	sub	%r11,$len
+	mov	\$`16*0x10000`,$chunk
+	jz	.L${mode}_exit
+	cmp	$chunk,$len
+	jae	.L${mode}_aligned_loop
+
+.L${mode}_aligned_skip:
+___
+$code.=<<___				if ($PADLOCK_PREFETCH{$mode});
+	lea	($inp,$len),%rbp
+	neg	%rbp
+	and	\$0xfff,%rbp		# distance to page boundary
+	xor	%eax,%eax
+	cmp	\$$PADLOCK_PREFETCH{$mode},%rbp
+	mov	\$$PADLOCK_PREFETCH{$mode}-1,%rbp
+	cmovae	%rax,%rbp
+	and	$len,%rbp		# remainder
+	sub	%rbp,$len
+	jz	.L${mode}_aligned_tail
 ___
 $code.=<<___;
 	lea	-16($ctx),%rax		# ivp
@@ -452,18 +515,23 @@ $code.=<<___				if ($mode !~ /ecb|ctr/);
 	movdqa	(%rax),%xmm0
 	movdqa	%xmm0,-16($ctx)		# copy [or refresh] iv
 ___
-$code.=<<___				if ($mode eq "ctr32");
-	mov	-4($ctx),%eax		# pull 32-bit counter
-	bswap	%eax
-	add	\$0x10000,%eax
-	bswap	%eax
-	mov	%eax,-4($ctx)
+$code.=<<___				if ($PADLOCK_PREFETCH{$mode});
+	test	%rbp,%rbp		# check remainder
+	jz	.L${mode}_exit
 
-	mov	%r11,$chunk		# restore paramters
-	mov	%r10,$len
-	sub	$chunk,$len
-	mov	\$`16*0x10000`,$chunk
-	jnz	.L${mode}_aligned_loop
+.L${mode}_aligned_tail:
+	mov	$out,%r8
+	mov	%rbp,$chunk
+	mov	%rbp,$len
+	lea	(%rsp),%rbp
+	sub	$len,%rsp
+	shr	\$3,$len
+	lea	(%rsp),$out
+	.byte	0xf3,0x48,0xa5		# rep movsq	
+	lea	(%r8),$out
+	lea	(%rsp),$inp
+	mov	$chunk,$len
+	jmp	.L${mode}_loop
 ___
 $code.=<<___;
 .L${mode}_exit:
