@@ -106,9 +106,9 @@ void ENGINE_load_builtin_engines(void)
 #ifndef OPENSSL_NO_HW_UBSEC
 	ENGINE_load_ubsec();
 #endif
-/*#ifndef OPENSSL_NO_HW_PADLOCK
+#ifndef OPENSSL_NO_HW_PADLOCK
 	ENGINE_load_padlock();
-	#endif*/
+#endif
 #endif
 #ifndef OPENSSL_NO_GOST
 	ENGINE_load_gost();
