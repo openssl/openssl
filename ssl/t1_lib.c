@@ -544,7 +544,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		}
 		skip_ext:
 
-	if (TLS1_get_version(s) >= TLS1_2_VERSION)
+	if (TLS1_get_client_version(s) >= TLS1_2_VERSION)
 		{
 		if ((size_t)(limit - ret) < sizeof(tls12_sigalgs) + 6)
 			return NULL; 
