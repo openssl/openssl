@@ -1,0 +1,5 @@
+lib
+Makefile.save
+*.flc
+semantic.cache
+rmd-*.s

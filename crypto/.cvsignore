@@ -1,0 +1,8 @@
+lib
+buildinf.h
+opensslconf.h
+Makefile.save
+*.flc
+semantic.cache
+*cpuid.s
+uplink-cof.s
