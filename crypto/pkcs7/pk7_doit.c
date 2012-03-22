@@ -430,6 +430,8 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	STACK_OF(X509_ALGOR) *md_sk=NULL;
 	STACK_OF(PKCS7_RECIP_INFO) *rsk=NULL;
 	PKCS7_RECIP_INFO *ri=NULL;
+       unsigned char *ek = NULL, *tkey = NULL;
+       int eklen = 0, tkeylen = 0;
 
 	i=OBJ_obj2nid(p7->type);
 	p7->state=PKCS7_S_HEADER;
@@ -507,8 +509,6 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 		int max;
 		X509_OBJECT ret;
 #endif
-		unsigned char *ek = NULL, *tkey = NULL;
-		int eklen, tkeylen;
 
 		if ((etmp=BIO_new(BIO_f_cipher())) == NULL)
 			{
@@ -609,11 +609,13 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 			{
 			OPENSSL_cleanse(ek,eklen);
 			OPENSSL_free(ek);
+                       ek = NULL;
 			}
 		if (tkey)
 			{
 			OPENSSL_cleanse(tkey,tkeylen);
 			OPENSSL_free(tkey);
+                       tkey = NULL;
 			}
 
 		if (out == NULL)
@@ -656,6 +658,16 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 	if (0)
 		{
 err:
+               if (ek)
+                       {
+                       OPENSSL_cleanse(ek,eklen);
+                       OPENSSL_free(ek);
+                       }
+               if (tkey)
+                       {
+                       OPENSSL_cleanse(tkey,tkeylen);
+                       OPENSSL_free(tkey);
+                       }
 		if (out != NULL) BIO_free_all(out);
 		if (btmp != NULL) BIO_free_all(btmp);
 		if (etmp != NULL) BIO_free_all(etmp);
