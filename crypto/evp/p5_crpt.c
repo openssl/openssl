@@ -138,5 +138,6 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
 	OPENSSL_cleanse(iv, EVP_MAX_IV_LENGTH);
 	rv = 1;
 	err:
+	EVP_MD_CTX_cleanup(&ctx);
 	return rv;
 }
