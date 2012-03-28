@@ -358,6 +358,28 @@ SSL *SSL_new(SSL_CTX *ctx)
 	s->tlsext_ocsp_resplen = -1;
 	CRYPTO_add(&ctx->references,1,CRYPTO_LOCK_SSL_CTX);
 	s->initial_ctx=ctx;
+#ifndef OPENSSL_NO_EC
+	if (ctx->tlsext_ecpointformatlist)
+		{
+		s->tlsext_ecpointformatlist =
+			BUF_memdup(ctx->tlsext_ecpointformatlist,
+					ctx->tlsext_ecpointformatlist_length);
+		if (!s->tlsext_ecpointformatlist)
+			goto err;
+		s->tlsext_ecpointformatlist_length =
+					ctx->tlsext_ecpointformatlist_length;
+		}
+	if (ctx->tlsext_ellipticcurvelist)
+		{
+		s->tlsext_ellipticcurvelist =
+			BUF_memdup(ctx->tlsext_ellipticcurvelist,
+					ctx->tlsext_ellipticcurvelist_length);
+		if (!s->tlsext_ellipticcurvelist)
+			goto err;
+		s->tlsext_ellipticcurvelist_length = 
+					ctx->tlsext_ellipticcurvelist_length;
+		}
+#endif
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	s->next_proto_negotiated = NULL;
 # endif
@@ -1975,6 +1997,14 @@ void SSL_CTX_free(SSL_CTX *a)
 		ssl_buf_freelist_free(a->wbuf_freelist);
 	if (a->rbuf_freelist)
 		ssl_buf_freelist_free(a->rbuf_freelist);
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+# ifndef OPENSSL_NO_EC
+	if (a->tlsext_ecpointformatlist)
+		OPENSSL_free(a->tlsext_ecpointformatlist);
+	if (a->tlsext_ellipticcurvelist)
+		OPENSSL_free(a->tlsext_ellipticcurvelist);
+# endif /* OPENSSL_NO_EC */
 #endif
 
 	OPENSSL_free(a);

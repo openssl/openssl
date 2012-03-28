@@ -1102,9 +1102,18 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 #ifndef OPENSSL_NO_EC
 int tls1_ec_curve_id2nid(int curve_id);
 int tls1_ec_nid2curve_id(int nid);
+int tls1_shared_curve(SSL *s, int nmatch);
+int tls1_set_curves(unsigned char **pext, size_t *pextlen,
+			int *curves, size_t ncurves);
+int tls1_set_curves_list(unsigned char **pext, size_t *pextlen, 
+				const char *str);
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_TLSEXT
+int tls1_shared_list(SSL *s,
+			const unsigned char *l1, size_t l1len,
+			const unsigned char *l2, size_t l2len,
+			int nmatch);
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
 unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n, int *al);

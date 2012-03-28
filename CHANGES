@@ -4,6 +4,13 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Enhance and tidy EC curve and point format TLS extension code. Use
+     static structures instead of allocation if default values are used.
+     New ctrls to set curves we wish to support and to retrieve shared curves.
+     Print out shared curves in s_server. New options to s_server and s_client
+     to set list of supported curves.
+     [Steve Henson]
+
   *) New ctrls to retrieve supported signature algorithms and 
      supported curve values as an array of NIDs. Extend openssl utility
      to print out received values.

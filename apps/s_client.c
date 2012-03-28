@@ -601,6 +601,7 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_TLSEXT
 	char *servername = NULL; 
+	char *curves=NULL;
         tlsextctx tlsextcbp = 
         {NULL,0};
 # ifndef OPENSSL_NO_NEXTPROTONEG
@@ -937,6 +938,11 @@ int MAIN(int argc, char **argv)
 			servername= *(++argv);
 			/* meth=TLSv1_client_method(); */
 			}
+		else if	(strcmp(*argv,"-curves") == 0)
+			{
+			if (--argc < 1) goto bad;
+			curves= *(++argv);
+			}
 #endif
 #ifndef OPENSSL_NO_JPAKE
 		else if (strcmp(*argv,"-jpake") == 0)
@@ -1176,6 +1182,12 @@ bad:
 		}
 
 #ifndef OPENSSL_NO_TLSEXT
+	if (curves != NULL)
+		if(!SSL_CTX_set1_curves_list(ctx,curves)) {
+		BIO_printf(bio_err,"error setting curve list\n");
+		ERR_print_errors(bio_err);
+		goto end;
+	}
 	if (servername != NULL)
 		{
 		tlsextcbp.biodebug = bio_err;
