@@ -287,12 +287,14 @@ static int ssl23_client_hello(SSL *s)
 
 	if (ssl2_compat && ssl23_no_ssl2_ciphers(s))
 		ssl2_compat = 0;
-
+#ifndef OPENSSL_NO_TLS1_2_CLIENT
 	if (!(s->options & SSL_OP_NO_TLSv1_2))
 		{
 		version = TLS1_2_VERSION;
 		}
-	else if (!(s->options & SSL_OP_NO_TLSv1_1))
+	else
+#endif
+	if (!(s->options & SSL_OP_NO_TLSv1_1))
 		{
 		version = TLS1_1_VERSION;
 		}
