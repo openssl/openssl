@@ -16,7 +16,7 @@ sub ::generic
     # fix hexadecimal constants
     for (@arg) { s/(?<![\w\$\.])0x([0-9a-f]+)/0$1h/oi; }
 
-    if ($opcode =~ /lea/ && @arg[1] =~ s/.*PTR\s+([^\[]+)$/$1/)	# no []
+    if ($opcode =~ /lea/ && @arg[1] =~ s/.*PTR\s+(\(.*\))$/OFFSET $1/)	# no []
     {	$opcode="mov";	}
     elsif ($opcode !~ /movq/)
     {	# fix xmm references
