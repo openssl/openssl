@@ -1746,11 +1746,16 @@ int main()
 			ctr_t/(double)sizeof(buf),
 			(gcm_t-ctr_t)/(double)sizeof(buf));
 #ifdef GHASH
-	GHASH(&ctx,buf.c,sizeof(buf));
+	{
+	void (*gcm_ghash_p)(u64 Xi[2],const u128 Htable[16],
+				const u8 *inp,size_t len)	= ctx.ghash;
+
+	GHASH((&ctx),buf.c,sizeof(buf));
 	start = OPENSSL_rdtsc();
-	for (i=0;i<100;++i) GHASH(&ctx,buf.c,sizeof(buf));
+	for (i=0;i<100;++i) GHASH((&ctx),buf.c,sizeof(buf));
 	gcm_t = OPENSSL_rdtsc() - start;
 	printf("%.2f\n",gcm_t/(double)sizeof(buf)/(double)i);
+	}
 #endif
 	}
 #endif
