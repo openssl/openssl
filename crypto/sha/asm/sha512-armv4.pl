@@ -26,7 +26,7 @@
 # March 2011.
 #
 # Add NEON implementation. On Cortex A8 it was measured to process
-# one byte in 25.5 cycles or 47% faster than integer-only code.
+# one byte in 23.3 cycles or ~60% faster than integer-only code.
 
 # Byte order [in]dependence. =========================================
 #
@@ -463,31 +463,28 @@ $code.=<<___;
 	vld1.64		{$K},[$Ktbl,:64]!	@ K[i++]
 	vsli.64		$t0,$e,#`64-@Sigma1[0]`
 	vsli.64		$t1,$e,#`64-@Sigma1[1]`
+	vmov		$Ch,$e
 	vsli.64		$t2,$e,#`64-@Sigma1[2]`
 #if $i<16 && defined(__ARMEL__)
 	vrev64.8	@X[$i],@X[$i]
 #endif
-	vadd.i64	$T1,$K,$h
-	veor		$Ch,$f,$g
-	veor		$t0,$t1
-	vand		$Ch,$e
-	veor		$t0,$t2			@ Sigma1(e)
-	veor		$Ch,$g			@ Ch(e,f,g)
-	vadd.i64	$T1,$t0
+	vbsl		$Ch,$f,$g		@ Ch(e,f,g)
+	veor		$t1,$t0
 	vshr.u64	$t0,$a,#@Sigma0[0]
-	vadd.i64	$T1,$Ch
+	veor		$t2,$t1			@ Sigma1(e)
 	vshr.u64	$t1,$a,#@Sigma0[1]
+	vadd.i64	$T1,$h,$t2
 	vshr.u64	$t2,$a,#@Sigma0[2]
+	vadd.i64	$T1,$Ch
 	vsli.64		$t0,$a,#`64-@Sigma0[0]`
-	vsli.64		$t1,$a,#`64-@Sigma0[1]`
-	vsli.64		$t2,$a,#`64-@Sigma0[2]`
 	vadd.i64	$T1,@X[$i%16]
-	vorr		$Maj,$a,$c
-	vand		$Ch,$a,$c
+	vsli.64		$t1,$a,#`64-@Sigma0[1]`
+	vadd.i64	$T1,$K
+	vsli.64		$t2,$a,#`64-@Sigma0[2]`
 	veor		$h,$t0,$t1
-	vand		$Maj,$b
+	veor		$Maj,$a,$b
 	veor		$h,$t2			@ Sigma0(a)
-	vorr		$Maj,$Ch		@ Maj(a,b,c)
+	vbsl		$Maj,$c,$b		@ Maj(a,b,c)
 	vadd.i64	$h,$T1
 	vadd.i64	$d,$T1
 	vadd.i64	$h,$Maj
