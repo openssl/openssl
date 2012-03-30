@@ -631,11 +631,11 @@ int BN_GF2m_mod_inv(BIGNUM *r, const BIGNUM *a, const BIGNUM *p, BN_CTX *ctx)
 			}
 		if (ubits==vbits)
 			{
-			BN_ULONG u;
+			BN_ULONG ul;
 			int utop = (ubits-1)/BN_BITS2;
 
-			while ((u=udp[utop])==0 && utop) utop--;
-			ubits = utop*BN_BITS2 + BN_num_bits_word(u);
+			while ((ul=udp[utop])==0 && utop) utop--;
+			ubits = utop*BN_BITS2 + BN_num_bits_word(ul);
 			}
 		}
 	bn_correct_top(b);
