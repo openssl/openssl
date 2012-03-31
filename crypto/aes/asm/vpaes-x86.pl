@@ -843,6 +843,8 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&mov	($out,&wparam(1));		# out
 	&mov	($round,&wparam(2));		# len
 	&mov	($key,&wparam(3));		# key
+	&sub	($round,16);
+	&jc	(&label("cbc_abort"));
 	&lea	($base,&DWP(-56,"esp"));
 	&mov	($const,&wparam(4));		# ivp
 	&and	($base,-16);
@@ -853,7 +855,6 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&mov	(&DWP(48,"esp"),$base);
 
 	&mov	(&DWP(0,"esp"),$out);		# save out
-	&sub	($round,16);
 	&mov	(&DWP(4,"esp"),$key)		# save key
 	&mov	(&DWP(8,"esp"),$const);		# save ivp
 	&mov	($out,$round);			# $out works as $len
@@ -896,6 +897,7 @@ $k_dsbo=0x2c0;		# decryption sbox final output
 	&mov	($base,&DWP(8,"esp"));		# restore ivp
 	&mov	("esp",&DWP(48,"esp"));
 	&movdqu	(&QWP(0,$base),"xmm1");		# write IV
+&set_label("cbc_abort");
 &function_end("${PREFIX}_cbc_encrypt");
 
 &asm_finish();

@@ -869,6 +869,8 @@ ${PREFIX}_cbc_encrypt:
 ___
 ($len,$key)=($key,$len);
 $code.=<<___;
+	sub	\$16,$len
+	jc	.Lcbc_abort
 ___
 $code.=<<___ if ($win64);
 	lea	-0xb8(%rsp),%rsp
@@ -887,7 +889,6 @@ ___
 $code.=<<___;
 	movdqu	($ivp),%xmm6		# load IV
 	sub	$inp,$out
-	sub	\$16,$len
 	call	_vpaes_preheat
 	cmp	\$0,${enc}d
 	je	.Lcbc_dec_loop
@@ -932,6 +933,7 @@ $code.=<<___ if ($win64);
 .Lcbc_epilogue:
 ___
 $code.=<<___;
+.Lcbc_abort:
 	ret
 .size	${PREFIX}_cbc_encrypt,.-${PREFIX}_cbc_encrypt
 ___
