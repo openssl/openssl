@@ -263,7 +263,7 @@ _vpaes_decrypt_core:
 	pshufb  %xmm2,  %xmm4	# 4 = sbou
 	pxor	%xmm0,  %xmm4	# 4 = sb1u + k
 	movdqa	0x70(%r10), %xmm0	# 0 : sbot
-	movdqa	.Lk_sr-.Lk_dsbd(%r11), %xmm2
+	movdqa	-0x160(%r11), %xmm2	# .Lk_sr-.Lk_dsbd=-0x160
 	pshufb  %xmm3,	%xmm0	# 0 = sb1t
 	pxor	%xmm4,	%xmm0	# 0 = A
 	pshufb	%xmm2,	%xmm0
@@ -869,6 +869,8 @@ ${PREFIX}_cbc_encrypt:
 ___
 ($len,$key)=($key,$len);
 $code.=<<___;
+	sub	\$16,$len
+	jc	.Lcbc_abort
 ___
 $code.=<<___ if ($win64);
 	lea	-0xb8(%rsp),%rsp
@@ -887,7 +889,6 @@ ___
 $code.=<<___;
 	movdqu	($ivp),%xmm6		# load IV
 	sub	$inp,$out
-	sub	\$16,$len
 	call	_vpaes_preheat
 	cmp	\$0,${enc}d
 	je	.Lcbc_dec_loop
@@ -932,6 +933,7 @@ $code.=<<___ if ($win64);
 .Lcbc_epilogue:
 ___
 $code.=<<___;
+.Lcbc_abort:
 	ret
 .size	${PREFIX}_cbc_encrypt,.-${PREFIX}_cbc_encrypt
 ___
