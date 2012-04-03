@@ -4408,3 +4408,5 @@ FIPS_dsa_verify                         4777	EXIST:OPENSSL_FIPS:FUNCTION:DSA
 FIPS_rsa_verify_ctx                     4778	EXIST:OPENSSL_FIPS:FUNCTION:
 DH_get_2048_224                         4779	EXIST::FUNCTION:DH
 FIPS_drbg_method                        4780	EXIST:OPENSSL_FIPS:FUNCTION:
+EC_curve_nist2nid                       4781	EXIST::FUNCTION:EC
+EC_curve_nid2nist                       4782	EXIST::FUNCTION:EC

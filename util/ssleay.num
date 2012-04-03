@@ -324,3 +324,4 @@ SSL_CTX_set_not_resumable_session_callback 363	EXIST:!VMS:FUNCTION:
 SSL_CTX_set_not_resumbl_sess_cb         363	EXIST:VMS:FUNCTION:
 SSL_set_not_resumable_session_callback  364	EXIST:!VMS:FUNCTION:
 SSL_set_not_resumbl_sess_cb             364	EXIST:VMS:FUNCTION:
+SSL_get_sigalgs                         365	EXIST::FUNCTION:TLSEXT
