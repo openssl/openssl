@@ -307,6 +307,30 @@ int tls1_ec_nid2curve_id(int nid)
 		return 0;
 		}
 	}
+/* Get curves list, if "sess" is set return client curves otherwise
+ * preferred list
+ */
+static void tls1_get_curvelist(SSL *s, int sess,
+					const unsigned char **pcurves,
+					size_t *pcurveslen)
+	{
+	if (sess)
+		{
+		*pcurves = s->session->tlsext_ellipticcurvelist;
+		*pcurveslen = s->session->tlsext_ellipticcurvelist_length;
+		}
+	else
+		{
+		*pcurves = s->tlsext_ellipticcurvelist;
+		*pcurveslen = s->tlsext_ellipticcurvelist_length;
+		}
+	/* If not set use default: for now static structure */
+	if (!*pcurves)
+		{
+		*pcurves = eccurves_default;
+		*pcurveslen = sizeof(eccurves_default);
+		}
+	}
 
 /* Return any common values from two lists. One list is used as a 
  * preference list where we return the most preferred match.
@@ -362,28 +386,10 @@ int tls1_shared_curve(SSL *s, int nmatch)
 	/* Can't do anything on client side */
 	if (s->server == 0)
 		return -1;
-	/* Use our preferred curve list, if not set use default */
-	if (s->tlsext_ellipticcurvelist)
-		{
-		l1 = s->tlsext_ellipticcurvelist;
-		l1len = s->tlsext_ellipticcurvelist_length;
-		}
-	else
-		{
-		l1 = eccurves_default;
-		l1len = sizeof(eccurves_default);
-		}
-	/* Use peer preferred curve list, if not set use default */
-	if(s->session->tlsext_ellipticcurvelist)
-		{
-		l2 = s->session->tlsext_ellipticcurvelist;
-		l2len =s->session->tlsext_ellipticcurvelist_length;
-		}
-	else
-		{
-		l2 = eccurves_default;
-		l2len = sizeof(eccurves_default);
-		}
+	/* Get supported curves */
+	tls1_get_curvelist(s, 0, &l1, &l1len);
+	tls1_get_curvelist(s, 1, &l2, &l2len);
+
 	id = tls1_shared_list(s, l1, l1len, l2, l2len, nmatch);
 	if (nmatch == -1)
 		return id;
@@ -465,6 +471,130 @@ int tls1_set_curves_list(unsigned char **pext, size_t *pextlen,
 	if (!CONF_parse_list(str, ':', 1, nid_cb, &ncb))
 		return 0;
 	return tls1_set_curves(pext, pextlen, ncb.nid_arr, ncb.nidcnt);
+	}
+/* For an EC key set TLS id and required compression based on parameters */
+static int tls1_set_ec_id(unsigned char *curve_id, unsigned char *comp_id,
+				EC_KEY *ec)
+	{
+	int is_prime, id;
+	const EC_GROUP *grp;
+	const EC_POINT *pt;
+	const EC_METHOD *meth;
+	if (!ec)
+		return 0;
+	/* Determine if it is a prime field */
+	grp = EC_KEY_get0_group(ec);
+        pt = EC_KEY_get0_public_key(ec);
+	if (!grp || !pt)
+		return 0;
+        meth = EC_GROUP_method_of(grp);
+	if (!meth)
+		return 0;
+        if (EC_METHOD_get_field_type(meth) == NID_X9_62_prime_field)
+		is_prime = 1;
+	else
+		is_prime = 0;
+	/* Determine curve ID */
+	id = EC_GROUP_get_curve_name(grp);
+	id = tls1_ec_nid2curve_id(id);
+	/* If we have an ID set it, otherwise set arbitrary explicit curve */
+	if (id)
+		{
+		curve_id[0] = 0;
+		curve_id[1] = (unsigned char)id;
+		}
+	else
+		{
+		curve_id[0] = 0xff;
+		if (is_prime)
+			curve_id[1] = 0x01;
+		else
+			curve_id[1] = 0x02;
+		}
+	if (comp_id)
+		{
+		if (EC_KEY_get_conv_form(ec) == POINT_CONVERSION_COMPRESSED)
+			{
+			if (is_prime)
+				*comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
+			else
+				*comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
+			}
+		else
+			*comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
+		}
+	return 1;
+	}
+/* Check an EC key is compatible with extensions */
+static int tls1_check_ec_key(SSL *s,
+			unsigned char *curve_id, unsigned char *comp_id)
+	{
+	const unsigned char *p;
+	size_t plen, i;
+	/* If point formats extension present check it, otherwise everything
+	 * is supported (see RFC4492).
+	 */
+	if (comp_id && s->session->tlsext_ecpointformatlist)
+		{
+		p = s->session->tlsext_ecpointformatlist;
+		plen = s->session->tlsext_ecpointformatlist_length;
+		for (i = 0; i < plen; i++, p++)
+			{
+			if (*comp_id == *p)
+				break;
+			}
+		if (i == plen)
+			return 0;
+		}
+	/* If curve list present check it, otherwise everything is
+	 * supported.
+	 */
+	if (s->session->tlsext_ellipticcurvelist)
+		{
+		p = s->session->tlsext_ellipticcurvelist;
+		plen = s->session->tlsext_ellipticcurvelist_length;
+		for (i = 0; i < plen; i+=2, p+=2)
+			{
+			if (p[0] == curve_id[0] && p[1] == curve_id[1])
+				return 1;
+			}
+		return 0;
+		}
+	return 1;
+	}
+/* Check EC server key is compatible with client extensions */
+int tls1_check_ec_server_key(SSL *s)
+	{
+	int rv;
+	CERT_PKEY *cpk = s->cert->pkeys + SSL_PKEY_ECC;
+	EVP_PKEY *pkey;
+	unsigned char comp_id, curve_id[2];
+	if (!cpk->x509 || !cpk->privatekey)
+		return 0;
+	pkey = X509_get_pubkey(cpk->x509);
+	if (!pkey)
+		return 0;
+	rv = tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec);
+	EVP_PKEY_free(pkey);
+	if (!rv)
+		return 0;
+	return tls1_check_ec_key(s, curve_id, &comp_id);
+	}
+/* Check EC temporary key is compatible with client extensions */
+int tls1_check_ec_tmp_key(SSL *s)
+	{
+	unsigned char curve_id[2];
+	EC_KEY *ec = s->cert->ecdh_tmp;
+	if (!ec)
+		{
+		if (s->cert->ecdh_tmp_cb)
+			return 1;
+		else
+			return 0;
+		}
+	if (!tls1_set_ec_id(curve_id, NULL, ec))
+		return 1;
+	return tls1_check_ec_key(s, curve_id, NULL);
 	}
 
 #endif /* OPENSSL_NO_EC */
@@ -685,15 +815,7 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 
 		/* Add TLS extension EllipticCurves to the ClientHello message */
 		plist = s->tlsext_ellipticcurvelist;
-		/* If we have a custom curve list use it otherwise
-		 * use default */
-		if (plist)
-			plistlen = s->tlsext_ellipticcurvelist_length;
-		else
-			{
-			plist = eccurves_default;
-			plistlen = sizeof(eccurves_default);
-			}
+		tls1_get_curvelist(s, 0, &plist, &plistlen);
 
 		if ((lenmax = limit - ret - 6) < 0) return NULL; 
 		if (plistlen > (size_t)lenmax) return NULL;
