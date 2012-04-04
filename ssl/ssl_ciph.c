@@ -616,18 +616,19 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		{
 		const EVP_CIPHER *evp;
 
-		if	(s->ssl_version >= TLS1_VERSION &&
-			 c->algorithm_enc == SSL_RC4 &&
+		if (s->ssl_version>>8 != TLS1_VERSION_MAJOR ||
+		    s->ssl_version < TLS1_VERSION)
+			return 1;
+
+		if	(c->algorithm_enc == SSL_RC4 &&
 			 c->algorithm_mac == SSL_MD5 &&
 			 (evp=EVP_get_cipherbyname("RC4-HMAC-MD5")))
 			*enc = evp, *md = NULL;
-		else if (s->ssl_version >= TLS1_VERSION &&
-			 c->algorithm_enc == SSL_AES128 &&
+		else if (c->algorithm_enc == SSL_AES128 &&
 			 c->algorithm_mac == SSL_SHA1 &&
 			 (evp=EVP_get_cipherbyname("AES-128-CBC-HMAC-SHA1")))
 			*enc = evp, *md = NULL;
-		else if (s->ssl_version >= TLS1_VERSION &&
-			 c->algorithm_enc == SSL_AES256 &&
+		else if (c->algorithm_enc == SSL_AES256 &&
 			 c->algorithm_mac == SSL_SHA1 &&
 			 (evp=EVP_get_cipherbyname("AES-256-CBC-HMAC-SHA1")))
 			*enc = evp, *md = NULL;
