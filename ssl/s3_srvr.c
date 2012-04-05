@@ -1683,7 +1683,14 @@ int ssl3_send_server_key_exchange(SSL *s)
 			const EC_GROUP *group;
 
 			ecdhp=cert->ecdh_tmp;
-			if ((ecdhp == NULL) && (s->cert->ecdh_tmp_cb != NULL))
+			if (s->cert->ecdh_tmp_auto)
+				{
+				/* Get NID of first shared curve */
+				int nid = tls1_shared_curve(s, 0);
+				if (nid != NID_undef)
+					ecdhp = EC_KEY_new_by_curve_name(nid);
+				}
+			else if ((ecdhp == NULL) && s->cert->ecdh_tmp_cb)
 				{
 				ecdhp=s->cert->ecdh_tmp_cb(s,
 				      SSL_C_IS_EXPORT(s->s3->tmp.new_cipher),
@@ -1708,7 +1715,9 @@ int ssl3_send_server_key_exchange(SSL *s)
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
 				goto err;
 				}
-			if ((ecdh = EC_KEY_dup(ecdhp)) == NULL)
+			if (s->cert->ecdh_tmp_auto)
+				ecdh = ecdhp;
+			else if ((ecdh = EC_KEY_dup(ecdhp)) == NULL)
 				{
 				SSLerr(SSL_F_SSL3_SEND_SERVER_KEY_EXCHANGE,ERR_R_ECDH_LIB);
 				goto err;

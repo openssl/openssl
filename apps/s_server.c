@@ -1713,10 +1713,11 @@ bad:
 		{
 		EC_KEY *ecdh=NULL;
 
-		if (named_curve)
+		if (named_curve && strcmp(named_curve, "auto"))
 			{
-			int nid = OBJ_sn2nid(named_curve);
-
+			int nid = EC_curve_nist2nid(named_curve);
+			if (nid == NID_undef)
+				nid = OBJ_sn2nid(named_curve);
 			if (nid == 0)
 				{
 				BIO_printf(bio_err, "unknown curve name (%s)\n", 
@@ -1736,6 +1737,8 @@ bad:
 			{
 			BIO_printf(bio_s_out,"Setting temp ECDH parameters\n");
 			}
+		else if (named_curve)
+			SSL_CTX_set_ecdh_auto(ctx, 1);
 		else
 			{
 			BIO_printf(bio_s_out,"Using default temp ECDH parameters\n");

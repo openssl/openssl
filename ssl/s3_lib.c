@@ -3398,7 +3398,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 
 	case SSL_CTRL_GET_SHARED_CURVE:
 		return tls1_shared_curve(s, larg);
- 
+
+	case SSL_CTRL_SET_ECDH_AUTO:
+		s->cert->ecdh_tmp_auto = larg;
+		break;
 
 	default:
 		break;
@@ -3678,6 +3681,9 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		return tls1_set_curves_list(&ctx->tlsext_ellipticcurvelist,
 					&ctx->tlsext_ellipticcurvelist_length,
 								parg);
+	case SSL_CTRL_SET_ECDH_AUTO:
+		ctx->cert->ecdh_tmp_auto = larg;
+		break;
 #endif /* !OPENSSL_NO_TLSEXT */
 
 	/* A Thawte special :-) */

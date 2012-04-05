@@ -1629,6 +1629,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_CURVES			91
 #define SSL_CTRL_SET_CURVES_LIST		92
 #define SSL_CTRL_GET_SHARED_CURVE		93
+#define SSL_CTRL_SET_ECDH_AUTO			94
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1700,6 +1701,10 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_ctrl(ctx,SSL_CTRL_SET_CURVES_LIST,0,(char *)s)
 #define SSL_get_shared_curve(s, n) \
 	SSL_ctrl(s,SSL_CTRL_GET_SHARED_CURVE,n,NULL)
+#define SSL_CTX_set_ecdh_auto(ctx, onoff) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_ECDH_AUTO,onoff,NULL)
+#define SSL_set_ecdh_auto(s, onoff) \
+	SSL_ctrl(s,SSL_CTRL_SET_ECDH_AUTO,onoff,NULL)
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);

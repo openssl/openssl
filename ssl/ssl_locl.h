@@ -502,6 +502,8 @@ typedef struct cert_st
 	EC_KEY *ecdh_tmp;
 	/* Callback for generating ephemeral ECDH keys */
 	EC_KEY *(*ecdh_tmp_cb)(SSL *ssl,int is_export,int keysize);
+	/* Select ECDH parameters automatically */
+	int ecdh_tmp_auto;
 #endif
 
 	CERT_PKEY pkeys[SSL_PKEY_NUM];

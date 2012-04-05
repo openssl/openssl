@@ -355,6 +355,8 @@ int ssl_print_curves(BIO *out, SSL *s)
 			cname = OBJ_nid2sn(nid);
 		BIO_printf(out, "%s", cname);
 		}
+	if (ncurves == 0)
+		BIO_puts(out, "NONE");
 	BIO_puts(out, "\n");
 	return 1;
 	}

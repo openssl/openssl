@@ -332,33 +332,24 @@ static void tls1_get_curvelist(SSL *s, int sess,
 		}
 	}
 
-/* Return any common values from two lists. One list is used as a 
- * preference list where we return the most preferred match.
+/* Return nth shared curve. If nmatch == -1 return number of
+ * matches.
  */
-int tls1_shared_list(SSL *s,
-			const unsigned char *l1, size_t l1len,
-			const unsigned char *l2, size_t l2len,
-			int nmatch)
+
+int tls1_shared_curve(SSL *s, int nmatch)
 	{
 	const unsigned char *pref, *supp;
 	size_t preflen, supplen, i, j;
 	int k;
-	l1len /= 2;
-	l2len /= 2;
-	if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
-		{
-		pref = l1;
-		preflen = l1len;
-		supp = l2;
-		supplen = l2len;
-		}
-	else
-		{
-		supp = l1;
-		supplen = l1len;
-		pref = l2;
-		preflen = l2len;
-		}
+	/* Can't do anything on client side */
+	if (s->server == 0)
+		return -1;
+	tls1_get_curvelist(s, !!(s->options & SSL_OP_CIPHER_SERVER_PREFERENCE),
+				&supp, &supplen);
+	tls1_get_curvelist(s, !(s->options & SSL_OP_CIPHER_SERVER_PREFERENCE),
+				&pref, &preflen);
+	preflen /= 2;
+	supplen /= 2;
 	k = 0;
 	for (i = 0; i < preflen; i++, pref+=2)
 		{
@@ -368,32 +359,17 @@ int tls1_shared_list(SSL *s,
 			if (pref[0] == tsupp[0] && pref[1] == tsupp[1])
 				{
 				if (nmatch == k)
-					return (pref[0] << 8) | pref[1];
+					{
+					int id = (pref[0] << 8) | pref[1];
+					return tls1_ec_curve_id2nid(id);
+					}
 				k++;
 				}
 			}
 		}
-	if (nmatch == -1 && k > 0)
-		return k;
-	return -1;
-	}
-
-int tls1_shared_curve(SSL *s, int nmatch)
-	{
-	const unsigned char *l1, *l2;
-	size_t l1len, l2len;
-	int id;
-	/* Can't do anything on client side */
-	if (s->server == 0)
-		return -1;
-	/* Get supported curves */
-	tls1_get_curvelist(s, 0, &l1, &l1len);
-	tls1_get_curvelist(s, 1, &l2, &l2len);
-
-	id = tls1_shared_list(s, l1, l1len, l2, l2len, nmatch);
 	if (nmatch == -1)
-		return id;
-	return tls1_ec_curve_id2nid(id);
+		return k;
+	return 0;
 	}
 
 int tls1_set_curves(unsigned char **pext, size_t *pextlen,
@@ -531,6 +507,7 @@ static int tls1_check_ec_key(SSL *s,
 	{
 	const unsigned char *p;
 	size_t plen, i;
+	int j;
 	/* If point formats extension present check it, otherwise everything
 	 * is supported (see RFC4492).
 	 */
@@ -546,19 +523,17 @@ static int tls1_check_ec_key(SSL *s,
 		if (i == plen)
 			return 0;
 		}
-	/* If curve list present check it, otherwise everything is
-	 * supported.
-	 */
-	if (s->session->tlsext_ellipticcurvelist)
+	/* Check curve is consistent with client and server preferences */
+	for (j = 0; j <= 1; j++)
 		{
-		p = s->session->tlsext_ellipticcurvelist;
-		plen = s->session->tlsext_ellipticcurvelist_length;
+		tls1_get_curvelist(s, j, &p, &plen);
 		for (i = 0; i < plen; i+=2, p+=2)
 			{
 			if (p[0] == curve_id[0] && p[1] == curve_id[1])
-				return 1;
+				break;
 			}
-		return 0;
+		if (i == plen)
+			return 0;
 		}
 	return 1;
 	}
@@ -585,6 +560,13 @@ int tls1_check_ec_tmp_key(SSL *s)
 	{
 	unsigned char curve_id[2];
 	EC_KEY *ec = s->cert->ecdh_tmp;
+	if (s->cert->ecdh_tmp_auto)
+		{
+		/* Need a shared curve */
+		if (tls1_shared_curve(s, 0))
+			return 1;
+		else return 0;
+		}
 	if (!ec)
 		{
 		if (s->cert->ecdh_tmp_cb)
