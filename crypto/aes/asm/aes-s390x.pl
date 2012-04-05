@@ -783,6 +783,7 @@ $code.=<<___;
 .type	AES_set_encrypt_key,\@function
 .align	16
 AES_set_encrypt_key:
+_s390x_AES_set_encrypt_key:
 	lghi	$t0,0
 	cl${g}r	$inp,$t0
 	je	.Lminus1
@@ -1068,7 +1069,7 @@ $code.=<<___;
 AES_set_decrypt_key:
 	st${g}	$key,4*$SIZE_T($sp)	# I rely on AES_set_encrypt_key to
 	st${g}	$ra,14*$SIZE_T($sp)	# save non-volatile registers!
-	bras	$ra,AES_set_encrypt_key
+	bras	$ra,_s390x_AES_set_encrypt_key
 	l${g}	$key,4*$SIZE_T($sp)
 	l${g}	$ra,14*$SIZE_T($sp)
 	ltgr	%r2,%r2
