@@ -182,8 +182,23 @@ int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey)
 	{
 	int i;
-
-	i=ssl_cert_type(NULL,pkey);
+	/* Special case for DH: check two DH certificate types for a match.
+	 * This means for DH certificates we must set the certificate first.
+	 */
+	if (pkey->type == EVP_PKEY_DH)
+		{
+		X509 *x;
+		i = -1;
+		x = c->pkeys[SSL_PKEY_DH_RSA].x509;
+		if (x && X509_check_private_key(x, pkey))
+				i = SSL_PKEY_DH_RSA;
+		x = c->pkeys[SSL_PKEY_DH_DSA].x509;
+		if (i == -1 && x && X509_check_private_key(x, pkey))
+				i = SSL_PKEY_DH_DSA;
+		ERR_clear_error();
+		}
+	else 
+		i=ssl_cert_type(NULL,pkey);
 	if (i < 0)
 		{
 		SSLerr(SSL_F_SSL_SET_PKEY,SSL_R_UNKNOWN_CERTIFICATE_TYPE);

@@ -2430,24 +2430,39 @@ int ssl3_send_client_key_exchange(SSL *s)
 		else if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 			{
 			DH *dh_srvr,*dh_clnt;
+			SESS_CERT *scert = s->session->sess_cert;
 
-			if (s->session->sess_cert == NULL) 
+			if (scert == NULL) 
 				{
 				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_UNEXPECTED_MESSAGE);
 				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNEXPECTED_MESSAGE);
 				goto err;
 				}
 
-			if (s->session->sess_cert->peer_dh_tmp != NULL)
-				dh_srvr=s->session->sess_cert->peer_dh_tmp;
+			if (scert->peer_dh_tmp != NULL)
+				dh_srvr=scert->peer_dh_tmp;
 			else
 				{
 				/* we get them from the cert */
-				ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_HANDSHAKE_FAILURE);
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,SSL_R_UNABLE_TO_FIND_DH_PARAMETERS);
-				goto err;
+				int idx = scert->peer_cert_type;
+				EVP_PKEY *spkey = NULL;
+				dh_srvr = NULL;
+				if (idx >= 0)
+					spkey = X509_get_pubkey(
+						scert->peer_pkeys[idx].x509);
+				if (spkey)
+					{
+					dh_srvr = EVP_PKEY_get1_DH(spkey);
+					EVP_PKEY_free(spkey);
+					}
+				if (dh_srvr == NULL)
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+					    ERR_R_INTERNAL_ERROR);
+					goto err;
+					}
 				}
-			
+
 			/* generate a new random key */
 			if ((dh_clnt=DHparams_dup(dh_srvr)) == NULL)
 				{
@@ -2465,6 +2480,8 @@ int ssl3_send_client_key_exchange(SSL *s)
 			 * make sure to clear it out afterwards */
 
 			n=DH_compute_key(p,dh_srvr->pub_key,dh_clnt);
+			if (scert->peer_dh_tmp == NULL)
+				DH_free(dh_srvr);
 
 			if (n <= 0)
 				{
@@ -3166,7 +3183,7 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 	alg_a=s->s3->tmp.new_cipher->algorithm_auth;
 
 	/* we don't have a certificate */
-	if ((alg_a & (SSL_aDH|SSL_aNULL|SSL_aKRB5)) || (alg_k & SSL_kPSK))
+	if ((alg_a & (SSL_aNULL|SSL_aKRB5)) || (alg_k & SSL_kPSK))
 		return(1);
 
 	sc=s->session->sess_cert;
@@ -3228,19 +3245,21 @@ int ssl3_check_cert_and_algorithm(SSL *s)
 		}
 #endif
 #ifndef OPENSSL_NO_DH
-	if ((alg_k & SSL_kEDH) &&
+	if ((alg_k & SSL_kEDH) && 
 		!(has_bits(i,EVP_PK_DH|EVP_PKT_EXCH) || (dh != NULL)))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_KEY);
 		goto f_err;
 		}
-	else if ((alg_k & SSL_kDHr) && !has_bits(i,EVP_PK_DH|EVP_PKS_RSA))
+	else if ((alg_k & SSL_kDHr) && (TLS1_get_version(s) < TLS1_2_VERSION) &&
+		!has_bits(i,EVP_PK_DH|EVP_PKS_RSA))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_RSA_CERT);
 		goto f_err;
 		}
 #ifndef OPENSSL_NO_DSA
-	else if ((alg_k & SSL_kDHd) && !has_bits(i,EVP_PK_DH|EVP_PKS_DSA))
+	else if ((alg_k & SSL_kDHd) && (TLS1_get_version(s) < TLS1_2_VERSION) &&
+		!has_bits(i,EVP_PK_DH|EVP_PKS_DSA))
 		{
 		SSLerr(SSL_F_SSL3_CHECK_CERT_AND_ALGORITHM,SSL_R_MISSING_DH_DSA_CERT);
 		goto f_err;

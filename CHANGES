@@ -4,7 +4,9 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
-  *)
+  *) Support for fixed DH ciphersuites: those requiring DH server
+     certificates.
+     [Steve Henson]
 
  Changes between 1.0.1 and 1.0.1a [xx XXX xxxx]
 

@@ -476,7 +476,7 @@ int ssl3_accept(SSL *s)
 			    /* SRP: send ServerKeyExchange */
 			    || (alg_k & SSL_kSRP)
 #endif
-			    || (alg_k & (SSL_kDHr|SSL_kDHd|SSL_kEDH))
+			    || (alg_k & SSL_kEDH)
 			    || (alg_k & SSL_kEECDH)
 			    || ((alg_k & SSL_kRSA)
 				&& (s->cert->pkeys[SSL_PKEY_RSA_ENC].privatekey == NULL
@@ -2278,7 +2278,25 @@ int ssl3_get_client_key_exchange(SSL *s)
 			}
 		else
 			{
-			if (s->s3->tmp.dh == NULL)
+			int idx = -1;
+			if (alg_k & SSL_kDHr)
+				idx = SSL_PKEY_DH_RSA;
+			else if (alg_k & SSL_kDHd)
+				idx = SSL_PKEY_DH_DSA;
+			if (idx >= 0)
+				{
+				EVP_PKEY *skey = s->cert->pkeys[idx].privatekey;
+				if ((skey == NULL) ||
+					(skey->type != EVP_PKEY_DH) ||
+					(skey->pkey.dh == NULL))
+					{
+					al=SSL_AD_HANDSHAKE_FAILURE;
+					SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_MISSING_RSA_CERTIFICATE);
+					goto f_err;
+					}
+				dh_srvr = skey->pkey.dh;
+				}
+			else if (s->s3->tmp.dh == NULL)
 				{
 				al=SSL_AD_HANDSHAKE_FAILURE;
 				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_MISSING_TMP_DH_KEY);

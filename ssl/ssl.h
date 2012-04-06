@@ -241,9 +241,9 @@ extern "C" {
 #define	SSL_TXT_NULL		"NULL"
 
 #define SSL_TXT_kRSA		"kRSA"
-#define SSL_TXT_kDHr		"kDHr" /* no such ciphersuites supported! */
-#define SSL_TXT_kDHd		"kDHd" /* no such ciphersuites supported! */
-#define SSL_TXT_kDH 		"kDH"  /* no such ciphersuites supported! */
+#define SSL_TXT_kDHr		"kDHr" 
+#define SSL_TXT_kDHd		"kDHd"
+#define SSL_TXT_kDH 		"kDH"
 #define SSL_TXT_kEDH		"kEDH"
 #define SSL_TXT_kKRB5     	"kKRB5"
 #define SSL_TXT_kECDHr		"kECDHr"
@@ -256,7 +256,7 @@ extern "C" {
 
 #define	SSL_TXT_aRSA		"aRSA"
 #define	SSL_TXT_aDSS		"aDSS"
-#define	SSL_TXT_aDH		"aDH" /* no such ciphersuites supported! */
+#define	SSL_TXT_aDH		"aDH"
 #define	SSL_TXT_aECDH		"aECDH"
 #define SSL_TXT_aKRB5     	"aKRB5"
 #define SSL_TXT_aECDSA		"aECDSA"

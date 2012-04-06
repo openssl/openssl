@@ -335,7 +335,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 /* The DH ciphers */
 /* Cipher 0B */
 	{
-	0,
+	1,
 	SSL3_TXT_DH_DSS_DES_40_CBC_SHA,
 	SSL3_CK_DH_DSS_DES_40_CBC_SHA,
 	SSL_kDHd,
@@ -351,7 +351,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 /* Cipher 0C */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	SSL3_TXT_DH_DSS_DES_64_CBC_SHA,
 	SSL3_CK_DH_DSS_DES_64_CBC_SHA,
 	SSL_kDHd,
@@ -367,7 +367,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 /* Cipher 0D */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	SSL3_TXT_DH_DSS_DES_192_CBC3_SHA,
 	SSL3_CK_DH_DSS_DES_192_CBC3_SHA,
 	SSL_kDHd,
@@ -383,7 +383,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 /* Cipher 0E */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	SSL3_TXT_DH_RSA_DES_40_CBC_SHA,
 	SSL3_CK_DH_RSA_DES_40_CBC_SHA,
 	SSL_kDHr,
@@ -399,7 +399,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 /* Cipher 0F */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	SSL3_TXT_DH_RSA_DES_64_CBC_SHA,
 	SSL3_CK_DH_RSA_DES_64_CBC_SHA,
 	SSL_kDHr,
@@ -415,7 +415,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 /* Cipher 10 */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	SSL3_TXT_DH_RSA_DES_192_CBC3_SHA,
 	SSL3_CK_DH_RSA_DES_192_CBC3_SHA,
 	SSL_kDHr,
@@ -902,7 +902,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	},
 /* Cipher 30 */
 	{
-	0,
+	1,
 	TLS1_TXT_DH_DSS_WITH_AES_128_SHA,
 	TLS1_CK_DH_DSS_WITH_AES_128_SHA,
 	SSL_kDHd,
@@ -917,7 +917,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	},
 /* Cipher 31 */
 	{
-	0,
+	1,
 	TLS1_TXT_DH_RSA_WITH_AES_128_SHA,
 	TLS1_CK_DH_RSA_WITH_AES_128_SHA,
 	SSL_kDHr,
@@ -993,7 +993,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	},
 /* Cipher 36 */
 	{
-	0,
+	1,
 	TLS1_TXT_DH_DSS_WITH_AES_256_SHA,
 	TLS1_CK_DH_DSS_WITH_AES_256_SHA,
 	SSL_kDHd,
@@ -1009,7 +1009,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 /* Cipher 37 */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_RSA_WITH_AES_256_SHA,
 	TLS1_CK_DH_RSA_WITH_AES_256_SHA,
 	SSL_kDHr,
@@ -1122,7 +1122,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher 3E */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_DSS_WITH_AES_128_SHA256,
 	TLS1_CK_DH_DSS_WITH_AES_128_SHA256,
 	SSL_kDHr,
@@ -1138,7 +1138,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher 3F */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_RSA_WITH_AES_128_SHA256,
 	TLS1_CK_DH_RSA_WITH_AES_128_SHA256,
 	SSL_kDHr,
@@ -1189,7 +1189,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher 42 */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_DSS_WITH_CAMELLIA_128_CBC_SHA,
 	TLS1_CK_DH_DSS_WITH_CAMELLIA_128_CBC_SHA,
 	SSL_kDHd,
@@ -1205,7 +1205,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher 43 */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_RSA_WITH_CAMELLIA_128_CBC_SHA,
 	TLS1_CK_DH_RSA_WITH_CAMELLIA_128_CBC_SHA,
 	SSL_kDHr,
@@ -1404,7 +1404,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher 68 */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_DSS_WITH_AES_256_SHA256,
 	TLS1_CK_DH_DSS_WITH_AES_256_SHA256,
 	SSL_kDHr,
@@ -1420,7 +1420,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher 69 */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_RSA_WITH_AES_256_SHA256,
 	TLS1_CK_DH_RSA_WITH_AES_256_SHA256,
 	SSL_kDHr,
@@ -1577,7 +1577,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 	},
 	/* Cipher 85 */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_DSS_WITH_CAMELLIA_256_CBC_SHA,
 	TLS1_CK_DH_DSS_WITH_CAMELLIA_256_CBC_SHA,
 	SSL_kDHd,
@@ -1593,7 +1593,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher 86 */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_RSA_WITH_CAMELLIA_256_CBC_SHA,
 	TLS1_CK_DH_RSA_WITH_CAMELLIA_256_CBC_SHA,
 	SSL_kDHr,
@@ -1743,7 +1743,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher 97 */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_DSS_WITH_SEED_SHA,
 	TLS1_CK_DH_DSS_WITH_SEED_SHA,
 	SSL_kDHd,
@@ -1759,7 +1759,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher 98 */
 	{
-	0, /* not implemented (non-ephemeral DH) */
+	1,
 	TLS1_TXT_DH_RSA_WITH_SEED_SHA,
 	TLS1_CK_DH_RSA_WITH_SEED_SHA,
 	SSL_kDHr,
@@ -1891,7 +1891,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher A0 */
 	{
-	0,
+	1,
 	TLS1_TXT_DH_RSA_WITH_AES_128_GCM_SHA256,
 	TLS1_CK_DH_RSA_WITH_AES_128_GCM_SHA256,
 	SSL_kDHr,
@@ -1907,7 +1907,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher A1 */
 	{
-	0,
+	1,
 	TLS1_TXT_DH_RSA_WITH_AES_256_GCM_SHA384,
 	TLS1_CK_DH_RSA_WITH_AES_256_GCM_SHA384,
 	SSL_kDHr,
@@ -1955,7 +1955,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher A4 */
 	{
-	0,
+	1,
 	TLS1_TXT_DH_DSS_WITH_AES_128_GCM_SHA256,
 	TLS1_CK_DH_DSS_WITH_AES_128_GCM_SHA256,
 	SSL_kDHr,
@@ -1971,7 +1971,7 @@ OPENSSL_GLOBAL SSL_CIPHER ssl3_ciphers[]={
 
 	/* Cipher A5 */
 	{
-	0,
+	1,
 	TLS1_TXT_DH_DSS_WITH_AES_256_GCM_SHA384,
 	TLS1_CK_DH_DSS_WITH_AES_256_GCM_SHA384,
 	SSL_kDHr,
