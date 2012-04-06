@@ -474,6 +474,8 @@ typedef struct cert_pkey_st
 	EVP_PKEY *privatekey;
 	/* Digest to use when signing */
 	const EVP_MD *digest;
+	/* Chain for this certificate */
+	STACK_OF(X509) *chain;
 	} CERT_PKEY;
 
 typedef struct cert_st
@@ -826,6 +828,11 @@ void ssl_update_cache(SSL *s, int mode);
 int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
 		       const EVP_MD **md,int *mac_pkey_type,int *mac_secret_size, SSL_COMP **comp);
 int ssl_get_handshake_digest(int i,long *mask,const EVP_MD **md);			   
+int ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain);
+int ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain);
+int ssl_cert_add0_chain_cert(CERT *c, X509 *x);
+int ssl_cert_add1_chain_cert(CERT *c, X509 *x);
+
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
 int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l);
 int ssl_undefined_function(SSL *s);
