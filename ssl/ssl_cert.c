@@ -851,3 +851,85 @@ err:
 	return ret;
 	}
 
+/* Add a certificate to a BUF_MEM structure */
+
+static int ssl_add_cert_to_buf(BUF_MEM *buf, unsigned long *l, X509 *x)
+	{
+	int n;
+	unsigned char *p;
+
+	n=i2d_X509(x,NULL);
+	if (!BUF_MEM_grow_clean(buf,(int)(n+(*l)+3)))
+		{
+		SSLerr(SSL_F_SSL_ADD_CERT_TO_BUF,ERR_R_BUF_LIB);
+		return 0;
+		}
+	p=(unsigned char *)&(buf->data[*l]);
+	l2n3(n,p);
+	i2d_X509(x,&p);
+	*l+=n+3;
+
+	return 1;
+	}
+
+/* Add certificate chain to internal SSL BUF_MEM strcuture */
+int ssl_add_cert_chain(SSL *s, X509 *x, unsigned long *l)
+	{
+	BUF_MEM *buf = s->init_buf;
+	int no_chain;
+	int i;
+
+	if ((s->mode & SSL_MODE_NO_AUTO_CHAIN) || s->ctx->extra_certs)
+		no_chain = 1;
+	else
+		no_chain = 0;
+
+	/* TLSv1 sends a chain with nothing in it, instead of an alert */
+	if (!BUF_MEM_grow_clean(buf,10))
+		{
+		SSLerr(SSL_F_SSL_ADD_CERT_CHAIN,ERR_R_BUF_LIB);
+		return 0;
+		}
+	if (x != NULL)
+		{
+		if (no_chain)
+			{
+			if (!ssl_add_cert_to_buf(buf, l, x))
+				return 0;
+			}
+		else
+			{
+			X509_STORE_CTX xs_ctx;
+
+			if (!X509_STORE_CTX_init(&xs_ctx,s->ctx->cert_store,x,NULL))
+				{
+				SSLerr(SSL_F_SSL_ADD_CERT_CHAIN,ERR_R_X509_LIB);
+				return(0);
+				}
+			X509_verify_cert(&xs_ctx);
+			/* Don't leave errors in the queue */
+			ERR_clear_error();
+			for (i=0; i < sk_X509_num(xs_ctx.chain); i++)
+				{
+				x = sk_X509_value(xs_ctx.chain, i);
+
+				if (!ssl_add_cert_to_buf(buf, l, x))
+					{
+					X509_STORE_CTX_cleanup(&xs_ctx);
+					return 0;
+					}
+				}
+			X509_STORE_CTX_cleanup(&xs_ctx);
+			}
+		}
+	/* Thawte special :-) */
+	for (i=0; i<sk_X509_num(s->ctx->extra_certs); i++)
+		{
+		x=sk_X509_value(s->ctx->extra_certs,i);
+		if (!ssl_add_cert_to_buf(buf, l, x))
+			return 0;
+		}
+
+	return 1;
+	}
+
