@@ -3365,7 +3365,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 		else
 			return ssl_cert_add0_chain_cert(s->cert, (X509 *)parg);
 
-	case SSL_CTRL_GET_CURVELIST:
+	case SSL_CTRL_GET_CURVES:
 		{
 		unsigned char *clist;
 		size_t clistlen;
@@ -3390,6 +3390,20 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 			}
 		return (int)clistlen;
 		}
+
+	case SSL_CTRL_SET_CURVES:
+		return tls1_set_curves(&s->tlsext_ellipticcurvelist,
+					&s->tlsext_ellipticcurvelist_length,
+								parg, larg);
+
+	case SSL_CTRL_SET_CURVES_LIST:
+		return tls1_set_curves_list(&s->tlsext_ellipticcurvelist,
+					&s->tlsext_ellipticcurvelist_length,
+								parg);
+
+	case SSL_CTRL_GET_SHARED_CURVE:
+		return tls1_shared_curve(s, larg);
+ 
 
 	default:
 		break;
@@ -3654,6 +3668,16 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
 		ctx->srp_ctx.strength=larg;
 		break;
 #endif
+
+	case SSL_CTRL_SET_CURVES:
+		return tls1_set_curves(&ctx->tlsext_ellipticcurvelist,
+					&ctx->tlsext_ellipticcurvelist_length,
+								parg, larg);
+
+	case SSL_CTRL_SET_CURVES_LIST:
+		return tls1_set_curves_list(&ctx->tlsext_ellipticcurvelist,
+					&ctx->tlsext_ellipticcurvelist_length,
+								parg);
 #endif /* !OPENSSL_NO_TLSEXT */
 
 	/* A Thawte special :-) */

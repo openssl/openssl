@@ -270,6 +270,7 @@ static int s_server_session_id_context = 1; /* anything will do */
 static const char *s_cert_file=TEST_CERT,*s_key_file=NULL;
 #ifndef OPENSSL_NO_TLSEXT
 static const char *s_cert_file2=TEST_CERT2,*s_key_file2=NULL;
+static char *curves=NULL;
 #endif
 static char *s_dcert_file=NULL,*s_dkey_file=NULL;
 #ifdef FIONBIO
@@ -433,6 +434,7 @@ static void s_server_init(void)
 	s_cert_file=TEST_CERT;
 	s_key_file=NULL;
 #ifndef OPENSSL_NO_TLSEXT
+	curves=NULL;
 	s_cert_file2=TEST_CERT2;
 	s_key_file2=NULL;
 	ctx2=NULL;
@@ -1161,6 +1163,11 @@ int MAIN(int argc, char *argv[])
 				goto bad;
 				}
 			}
+		else if	(strcmp(*argv,"-curves") == 0)
+			{
+			if (--argc < 1) goto bad;
+			curves= *(++argv);
+			}
 #endif
 		else if	(strcmp(*argv,"-msg") == 0)
 			{ s_msg=1; }
@@ -1820,6 +1827,23 @@ bad:
 			}
 #endif
 		}
+#ifndef OPENSSL_NO_TLSEXT
+	if (curves)
+		{
+		if(!SSL_CTX_set1_curves_list(ctx,curves))
+			{
+			BIO_printf(bio_err,"error setting curves list\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		if(ctx2 && !SSL_CTX_set1_curves_list(ctx2,curves))
+			{
+			BIO_printf(bio_err,"error setting curves list\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		}
+#endif
 	SSL_CTX_set_verify(ctx,s_server_verify,verify_callback);
 	SSL_CTX_set_session_id_context(ctx,(void*)&s_server_session_id_context,
 		sizeof s_server_session_id_context);

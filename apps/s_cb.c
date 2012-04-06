@@ -316,18 +316,17 @@ int ssl_print_sigalgs(BIO *out, SSL *s)
 
 int ssl_print_curves(BIO *out, SSL *s)
 	{
-	int i, ncurves, *curves;
-	ncurves = SSL_get1_curvelist(s, NULL);
+	int i, ncurves, *curves, nid;
+	const char *cname;
+	ncurves = SSL_get1_curves(s, NULL);
 	if (ncurves <= 0)
 		return 1;
 	curves = OPENSSL_malloc(ncurves * sizeof(int));
-	SSL_get1_curvelist(s, curves);
+	SSL_get1_curves(s, curves);
 
 	BIO_puts(out, "Supported Elliptic Curves: ");
 	for (i = 0; i < ncurves; i++)
 		{
-		int nid;
-		const char *cname;
 		if (i)
 			BIO_puts(out, ":");
 		nid = curves[i];
@@ -343,8 +342,20 @@ int ssl_print_curves(BIO *out, SSL *s)
 			BIO_printf(out, "%s", cname);
 			}
 		}
-	BIO_puts(out, "\n");
+	BIO_puts(out, "\nShared Elliptic curves: ");
 	OPENSSL_free(curves);
+	ncurves = SSL_get_shared_curve(s, -1);
+	for (i = 0; i < ncurves; i++)
+		{
+		if (i)
+			BIO_puts(out, ":");
+		nid = SSL_get_shared_curve(s, i);
+		cname = EC_curve_nid2nist(nid);
+		if (!cname)
+			cname = OBJ_nid2sn(nid);
+		BIO_printf(out, "%s", cname);
+		}
+	BIO_puts(out, "\n");
 	return 1;
 	}
 

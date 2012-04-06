@@ -973,6 +973,13 @@ struct ssl_ctx_st
 # endif
         /* SRTP profiles we are willing to do from RFC 5764 */
         STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;  
+# ifndef OPENSSL_NO_EC
+	/* EC extension values inherited by SSL structure */
+	size_t tlsext_ecpointformatlist_length;
+	unsigned char *tlsext_ecpointformatlist;
+	size_t tlsext_ellipticcurvelist_length;
+	unsigned char *tlsext_ellipticcurvelist;
+# endif /* OPENSSL_NO_EC */
 #endif
 	};
 
@@ -1608,7 +1615,10 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_CHAIN				88
 #define SSL_CTRL_CHAIN_CERT			89
 
-#define SSL_CTRL_GET_CURVELIST			90
+#define SSL_CTRL_GET_CURVES			90
+#define SSL_CTRL_SET_CURVES			91
+#define SSL_CTRL_SET_CURVES_LIST		92
+#define SSL_CTRL_GET_SHARED_CURVE		93
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1668,9 +1678,18 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,0,(char *)x509)
 #define SSL_add1_chain_cert(ctx,x509) \
 	SSL_ctrl(ctx,SSL_CTRL_CHAIN_CERT,1,(char *)x509)
-#define SSL_get1_curvelist(ctx, s) \
-	SSL_ctrl(ctx,SSL_CTRL_GET_CURVELIST,0,(char *)s)
-
+#define SSL_get1_curves(ctx, s) \
+	SSL_ctrl(ctx,SSL_CTRL_GET_CURVES,0,(char *)s)
+#define SSL_CTX_set1_curves(ctx, clist, clistlen) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CURVES,clistlen,(char *)clist)
+#define SSL_CTX_set1_curves_list(ctx, s) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CURVES_LIST,0,(char *)s)
+#define SSL_set1_curves(ctx, clist, clistlen) \
+	SSL_ctrl(ctx,SSL_CTRL_SET_CURVES,clistlen,(char *)clist)
+#define SSL_set1_curves_list(ctx, s) \
+	SSL_ctrl(ctx,SSL_CTRL_SET_CURVES_LIST,0,(char *)s)
+#define SSL_get_shared_curve(s, n) \
+	SSL_ctrl(s,SSL_CTRL_GET_SHARED_CURVE,n,NULL)
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);
