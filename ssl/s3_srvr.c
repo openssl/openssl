@@ -1177,16 +1177,11 @@ int ssl3_get_client_hello(SSL *s)
 	/* TLS extensions*/
 	if (s->version >= SSL3_VERSION)
 		{
-		if (!ssl_parse_clienthello_tlsext(s,&p,d,n, &al))
+		if (!ssl_parse_clienthello_tlsext(s,&p,d,n))
 			{
-			/* 'al' set by ssl_parse_clienthello_tlsext */
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_PARSE_TLSEXT);
-			goto f_err;
-			}
-		}
-		if (ssl_check_clienthello_tlsext(s) <= 0) {
-			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
 			goto err;
+			}
 		}
 
 	/* Check if we want to use external pre-shared secret for this
