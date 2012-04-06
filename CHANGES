@@ -4,6 +4,13 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Support for automatic EC temporary key parameter selection. If enabled
+     the most preferred EC parameters are automatically used instead of
+     hardcoded fixed parameters. Now a server just has to call:
+     SSL_CTX_set_ecdh_auto(ctx, 1) and the server will automatically
+     support ECDH and use the most appropriate parameters.
+     [Steve Henson]
+
   *) Enhance and tidy EC curve and point format TLS extension code. Use
      static structures instead of allocation if default values are used.
      New ctrls to set curves we wish to support and to retrieve shared curves.

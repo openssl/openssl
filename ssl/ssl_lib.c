@@ -2069,7 +2069,7 @@ void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
 #endif
 
 #ifndef OPENSSL_NO_ECDH
-	have_ecdh_tmp=(c->ecdh_tmp != NULL || c->ecdh_tmp_cb != NULL);
+	have_ecdh_tmp=(c->ecdh_tmp || c->ecdh_tmp_cb || c->ecdh_tmp_auto);
 #endif
 	cpk= &(c->pkeys[SSL_PKEY_RSA_ENC]);
 	rsa_enc= (cpk->x509 != NULL && cpk->privatekey != NULL);

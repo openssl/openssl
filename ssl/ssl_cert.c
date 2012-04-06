@@ -270,6 +270,7 @@ CERT *ssl_cert_dup(CERT *cert)
 			}
 		}
 	ret->ecdh_tmp_cb = cert->ecdh_tmp_cb;
+	ret->ecdh_tmp_auto = cert->ecdh_tmp_auto;
 #endif
 
 	for (i = 0; i < SSL_PKEY_NUM; i++)
