@@ -992,13 +992,13 @@ int dtls1_send_change_cipher_spec(SSL *s, int a, int b)
 	return(dtls1_do_write(s,SSL3_RT_CHANGE_CIPHER_SPEC));
 	}
 
-unsigned long dtls1_output_cert_chain(SSL *s, X509 *x)
+unsigned long dtls1_output_cert_chain(SSL *s, CERT_PKEY *cpk)
 	{
 	unsigned char *p;
 	unsigned long l= 3 + DTLS1_HM_HEADER_LENGTH;
 	BUF_MEM *buf=s->init_buf;
 
-	if (!ssl_add_cert_chain(s, x, &l))
+	if (!ssl_add_cert_chain(s, cpk, &l))
 		return 0;
 
 	l-= (3 + DTLS1_HM_HEADER_LENGTH);
