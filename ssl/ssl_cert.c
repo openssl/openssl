@@ -339,6 +339,9 @@ CERT *ssl_cert_dup(CERT *cert)
 	 * will be set during handshake.
 	 */
 	ssl_cert_set_default_md(ret);
+	/* Sigalgs set to NULL as we get these from handshake too */
+	ret->sigalgs = NULL;
+	ret->sigalgslen = 0;
 
 	return(ret);
 	
@@ -418,6 +421,8 @@ void ssl_cert_free(CERT *c)
 			EVP_PKEY_free(c->pkeys[i].publickey);
 #endif
 		}
+	if (c->sigalgs)
+		OPENSSL_free(c->sigalgs);
 	OPENSSL_free(c);
 	}
 
