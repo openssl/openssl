@@ -296,6 +296,7 @@ int ssl3_accept(SSL *s)
 
 			s->init_num=0;
 			s->s3->flags &= ~SSL3_FLAGS_SGC_RESTART_DONE;
+			s->s3->flags &= ~TLS1_FLAGS_SKIP_CERT_VERIFY;
 
 			if (s->state != SSL_ST_RENEGOTIATE)
 				{
@@ -2121,7 +2122,7 @@ int ssl3_get_client_key_exchange(SSL *s)
 #endif
 #ifndef OPENSSL_NO_DH
 	BIGNUM *pub=NULL;
-	DH *dh_srvr;
+	DH *dh_srvr, *dh_clnt = NULL;
 #endif
 #ifndef OPENSSL_NO_KRB5
 	KSSL_ERR kssl_err;
@@ -2255,8 +2256,11 @@ int ssl3_get_client_key_exchange(SSL *s)
 #ifndef OPENSSL_NO_DH
 		if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
 		{
-		n2s(p,i);
-		if (n != i+2)
+		int idx = -1;
+		EVP_PKEY *skey = NULL;
+		if (n)
+			n2s(p,i);
+		if (n && n != i+2)
 			{
 			if (!(s->options & SSL_OP_SSLEAY_080_CLIENT_DH_BUG))
 				{
@@ -2269,44 +2273,52 @@ int ssl3_get_client_key_exchange(SSL *s)
 				i=(int)n;
 				}
 			}
-
-		if (n == 0L) /* the parameters are in the cert */
+		if (alg_k & SSL_kDHr)
+			idx = SSL_PKEY_DH_RSA;
+		else if (alg_k & SSL_kDHd)
+			idx = SSL_PKEY_DH_DSA;
+		if (idx >= 0)
+			{
+			skey = s->cert->pkeys[idx].privatekey;
+			if ((skey == NULL) ||
+				(skey->type != EVP_PKEY_DH) ||
+				(skey->pkey.dh == NULL))
+				{
+				al=SSL_AD_HANDSHAKE_FAILURE;
+				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_MISSING_RSA_CERTIFICATE);
+				goto f_err;
+				}
+			dh_srvr = skey->pkey.dh;
+			}
+		else if (s->s3->tmp.dh == NULL)
 			{
 			al=SSL_AD_HANDSHAKE_FAILURE;
-			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_UNABLE_TO_DECODE_DH_CERTS);
+			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_MISSING_TMP_DH_KEY);
 			goto f_err;
 			}
 		else
+			dh_srvr=s->s3->tmp.dh;
+
+		if (n == 0L)
 			{
-			int idx = -1;
-			if (alg_k & SSL_kDHr)
-				idx = SSL_PKEY_DH_RSA;
-			else if (alg_k & SSL_kDHd)
-				idx = SSL_PKEY_DH_DSA;
-			if (idx >= 0)
+			/* Get pubkey from cert */
+			EVP_PKEY *clkey=X509_get_pubkey(s->session->peer);
+			if (clkey)
 				{
-				EVP_PKEY *skey = s->cert->pkeys[idx].privatekey;
-				if ((skey == NULL) ||
-					(skey->type != EVP_PKEY_DH) ||
-					(skey->pkey.dh == NULL))
-					{
-					al=SSL_AD_HANDSHAKE_FAILURE;
-					SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_MISSING_RSA_CERTIFICATE);
-					goto f_err;
-					}
-				dh_srvr = skey->pkey.dh;
+				if (EVP_PKEY_cmp_parameters(clkey, skey) == 1)
+					dh_clnt = EVP_PKEY_get1_DH(clkey);
 				}
-			else if (s->s3->tmp.dh == NULL)
+			if (dh_clnt == NULL)
 				{
 				al=SSL_AD_HANDSHAKE_FAILURE;
 				SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_MISSING_TMP_DH_KEY);
 				goto f_err;
 				}
-			else
-				dh_srvr=s->s3->tmp.dh;
+			EVP_PKEY_free(clkey);
+			pub = dh_clnt->pub_key;
 			}
-
-		pub=BN_bin2bn(p,i,NULL);
+		else
+			pub=BN_bin2bn(p,i,NULL);
 		if (pub == NULL)
 			{
 			SSLerr(SSL_F_SSL3_GET_CLIENT_KEY_EXCHANGE,SSL_R_BN_LIB);
@@ -2324,13 +2336,17 @@ int ssl3_get_client_key_exchange(SSL *s)
 
 		DH_free(s->s3->tmp.dh);
 		s->s3->tmp.dh=NULL;
-
-		BN_clear_free(pub);
+		if (dh_clnt)
+			DH_free(dh_clnt);
+		else
+			BN_clear_free(pub);
 		pub=NULL;
 		s->session->master_key_length=
 			s->method->ssl3_enc->generate_master_secret(s,
 				s->session->master_key,p,i);
 		OPENSSL_cleanse(p,i);
+		if (dh_clnt)
+			return 2;
 		}
 	else
 #endif

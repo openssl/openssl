@@ -2462,18 +2462,33 @@ int ssl3_send_client_key_exchange(SSL *s)
 					goto err;
 					}
 				}
-
-			/* generate a new random key */
-			if ((dh_clnt=DHparams_dup(dh_srvr)) == NULL)
+			if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY)
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
-				goto err;
+				/* Use client certificate key */
+				EVP_PKEY *clkey = s->cert->key->privatekey;
+				if (clkey)
+					dh_clnt = EVP_PKEY_get1_DH(clkey);
+				if (dh_clnt == NULL)
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,
+					    ERR_R_INTERNAL_ERROR);
+					goto err;
+					}
 				}
-			if (!DH_generate_key(dh_clnt))
+			else
 				{
-				SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
-				DH_free(dh_clnt);
-				goto err;
+				/* generate a new random key */
+				if ((dh_clnt=DHparams_dup(dh_srvr)) == NULL)
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
+					goto err;
+					}
+				if (!DH_generate_key(dh_clnt))
+					{
+					SSLerr(SSL_F_SSL3_SEND_CLIENT_KEY_EXCHANGE,ERR_R_DH_LIB);
+					DH_free(dh_clnt);
+					goto err;
+					}
 				}
 
 			/* use the 'p' output buffer for the DH key, but
@@ -2497,11 +2512,16 @@ int ssl3_send_client_key_exchange(SSL *s)
 			/* clean up */
 			memset(p,0,n);
 
-			/* send off the data */
-			n=BN_num_bytes(dh_clnt->pub_key);
-			s2n(n,p);
-			BN_bn2bin(dh_clnt->pub_key,p);
-			n+=2;
+			if (s->s3->flags & TLS1_FLAGS_SKIP_CERT_VERIFY)
+				n = 0;
+			else
+				{
+				/* send off the data */
+				n=BN_num_bytes(dh_clnt->pub_key);
+				s2n(n,p);
+				BN_bn2bin(dh_clnt->pub_key,p);
+				n+=2;
+				}
 
 			DH_free(dh_clnt);
 
@@ -3088,6 +3108,40 @@ err:
 	return(-1);
 	}
 
+/* Check a certificate can be used for client authentication. Currently
+ * just check cert exists and if static DH client certificates can be used.
+ */
+static int ssl3_check_client_certificate(SSL *s)
+	{
+	unsigned long alg_k;
+	if (!s->cert || !s->cert->key->x509 || !s->cert->key->privatekey)
+		return 0;
+	alg_k=s->s3->tmp.new_cipher->algorithm_mkey;
+	/* See if we can use client certificate for fixed DH */
+	if (alg_k & (SSL_kDHr|SSL_kDHd))
+		{
+		SESS_CERT *scert = s->session->sess_cert;
+		int i = scert->peer_cert_type;
+		EVP_PKEY *clkey = NULL, *spkey = NULL;
+		clkey = s->cert->key->privatekey;
+		/* If client key not DH assume it can be used */
+		if (EVP_PKEY_id(clkey) != EVP_PKEY_DH)
+			return 1;
+		if (i >= 0)
+			spkey = X509_get_pubkey(scert->peer_pkeys[i].x509);
+		if (spkey)
+			{
+			/* Compare server and client parameters */
+			i = EVP_PKEY_cmp_parameters(clkey, spkey);
+			EVP_PKEY_free(spkey);
+			if (i != 1)
+				return 0;
+			}
+		s->s3->flags |= TLS1_FLAGS_SKIP_CERT_VERIFY;
+		}
+	return 1;
+	}
+
 int ssl3_send_client_certificate(SSL *s)
 	{
 	X509 *x509=NULL;
@@ -3097,12 +3151,10 @@ int ssl3_send_client_certificate(SSL *s)
 
 	if (s->state ==	SSL3_ST_CW_CERT_A)
 		{
-		if ((s->cert == NULL) ||
-			(s->cert->key->x509 == NULL) ||
-			(s->cert->key->privatekey == NULL))
-			s->state=SSL3_ST_CW_CERT_B;
-		else
+		if (ssl3_check_client_certificate(s))
 			s->state=SSL3_ST_CW_CERT_C;
+		else
+			s->state=SSL3_ST_CW_CERT_B;
 		}
 
 	/* We need to get a client cert */
@@ -3134,6 +3186,8 @@ int ssl3_send_client_certificate(SSL *s)
 
 		if (x509 != NULL) X509_free(x509);
 		if (pkey != NULL) EVP_PKEY_free(pkey);
+		if (i && !ssl3_check_client_certificate(s))
+			i = 0;
 		if (i == 0)
 			{
 			if (s->version == SSL3_VERSION)
