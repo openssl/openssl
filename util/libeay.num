@@ -4310,3 +4310,12 @@ BIO_dgram_sctp_wait_for_dry             4679	EXIST::FUNCTION:SCTP
 BIO_s_datagram_sctp                     4680	EXIST::FUNCTION:DGRAM,SCTP
 BIO_dgram_is_sctp                       4681	EXIST::FUNCTION:SCTP
 BIO_dgram_sctp_notification_cb          4682	EXIST::FUNCTION:SCTP
+i2d_DHxparams                           4683	EXIST::FUNCTION:DH
+EC_curve_nist2nid                       4684	EXIST::FUNCTION:EC
+DH_get_1024_160                         4685	EXIST::FUNCTION:DH
+PEM_write_DHxparams                     4686	EXIST:!WIN16:FUNCTION:DH
+d2i_DHxparams                           4687	EXIST::FUNCTION:DH
+EC_curve_nid2nist                       4688	EXIST::FUNCTION:EC
+DH_get_2048_256                         4689	EXIST::FUNCTION:DH
+PEM_write_bio_DHxparams                 4690	EXIST::FUNCTION:DH
+DH_get_2048_224                         4691	EXIST::FUNCTION:DH
