@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Transparently support X9.42 DH parameters when calling
+     PEM_read_bio_DHparameters. This means existing applications can handle
+     the new parameter format automatically.
+     [Steve Henson]
+
   *) Initial experimental support for X9.42 DH parameter format: mainly
      to support use of 'q' parameter for RFC5114 parameters.
      [Steve Henson]
