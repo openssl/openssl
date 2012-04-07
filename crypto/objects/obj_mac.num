@@ -917,3 +917,4 @@ aes_128_cbc_hmac_sha1		916
 aes_192_cbc_hmac_sha1		917
 aes_256_cbc_hmac_sha1		918
 rsaesOaep		919
+dhpublicnumber		920

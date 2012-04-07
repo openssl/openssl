@@ -72,6 +72,7 @@ typedef struct
 	int prime_len;
 	int generator;
 	int use_dsa;
+	int rfc5114_param;
 	/* Keygen callback info */
 	int gentmp[2];
 	/* message digest */
@@ -86,6 +87,7 @@ static int pkey_dh_init(EVP_PKEY_CTX *ctx)
 	dctx->prime_len = 1024;
 	dctx->generator = 2;
 	dctx->use_dsa = 0;
+	dctx->rfc5114_param = 0;
 
 	ctx->data = dctx;
 	ctx->keygen_info = dctx->gentmp;
@@ -104,6 +106,7 @@ static int pkey_dh_copy(EVP_PKEY_CTX *dst, EVP_PKEY_CTX *src)
 	dctx->prime_len = sctx->prime_len;
 	dctx->generator = sctx->generator;
 	dctx->use_dsa = sctx->use_dsa;
+	dctx->rfc5114_param = sctx->rfc5114_param;
 	return 1;
 	}
 
@@ -129,6 +132,12 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		dctx->generator = p1;
 		return 1;
 
+		case EVP_PKEY_CTRL_DH_RFC5114:
+		if (p1 < 1 || p1 > 3)
+			return -2;
+		dctx->rfc5114_param = p1;
+		return 1;
+
 		case EVP_PKEY_CTRL_PEER_KEY:
 		/* Default behaviour is OK */
 		return 1;
@@ -149,6 +158,16 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
 		len = atoi(value);
 		return EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, len);
 		}
+	if (!strcmp(type, "dh_rfc5114"))
+		{
+		DH_PKEY_CTX *dctx = ctx->data;
+		int len;
+		len = atoi(value);
+		if (len < 0 || len > 3)
+			return -2;
+		dctx->rfc5114_param = len;
+		return 1;
+		}
 	if (!strcmp(type, "dh_paramgen_generator"))
 		{
 		int len;
@@ -164,6 +183,29 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	DH_PKEY_CTX *dctx = ctx->data;
 	BN_GENCB *pcb, cb;
 	int ret;
+	if (dctx->rfc5114_param)
+		{
+		switch (dctx->rfc5114_param)
+			{
+			case 1:
+			dh = DH_get_1024_160();
+			break;
+
+			case 2:
+			dh = DH_get_2048_224();
+			break;
+
+			case 3:
+			dh = DH_get_2048_256();
+			break;
+	
+			default:
+			return -2;
+			}
+		EVP_PKEY_assign(pkey, EVP_PKEY_DHX, dh);
+		return 1;
+		}
+
 	if (ctx->pkey_gencb)
 		{
 		pcb = &cb;
@@ -194,7 +236,7 @@ static int pkey_dh_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	dh = DH_new();
 	if (!dh)
 		return 0;
-	EVP_PKEY_assign_DH(pkey, dh);
+	EVP_PKEY_assign(pkey, ctx->pmeth->pkey_id, dh);
 	/* Note: if error return, pkey is freed by parent routine */
 	if (!EVP_PKEY_copy_parameters(pkey, ctx->pkey))
 		return 0;
@@ -220,6 +262,42 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 const EVP_PKEY_METHOD dh_pkey_meth = 
 	{
 	EVP_PKEY_DH,
+	EVP_PKEY_FLAG_AUTOARGLEN,
+	pkey_dh_init,
+	pkey_dh_copy,
+	pkey_dh_cleanup,
+
+	0,
+	pkey_dh_paramgen,
+
+	0,
+	pkey_dh_keygen,
+
+	0,
+	0,
+
+	0,
+	0,
+
+	0,0,
+
+	0,0,0,0,
+
+	0,0,
+
+	0,0,
+
+	0,
+	pkey_dh_derive,
+
+	pkey_dh_ctrl,
+	pkey_dh_ctrl_str
+
+	};
+
+const EVP_PKEY_METHOD dhx_pkey_meth = 
+	{
+	EVP_PKEY_DHX,
 	EVP_PKEY_FLAG_AUTOARGLEN,
 	pkey_dh_init,
 	pkey_dh_copy,
