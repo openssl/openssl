@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Add DH parameters from RFC5114 including test data to dhtest.
+     [Steve Henson]
+
   *) Support for automatic EC temporary key parameter selection. If enabled
      the most preferred EC parameters are automatically used instead of
      hardcoded fixed parameters. Now a server just has to call:
