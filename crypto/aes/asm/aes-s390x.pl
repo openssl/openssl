@@ -837,7 +837,8 @@ $code.=<<___ if (!$softonly);
 	je	1f
 	lg	%r1,24($inp)
 	stg	%r1,24($key)
-1:	st	$bits,236($key)	# save bits
+1:	st	$bits,236($key)	# save bits [for debugging purposes]
+	lgr	$t0,%r5
 	st	%r5,240($key)	# save km code
 	lghi	%r2,0
 	br	%r14
@@ -845,7 +846,7 @@ ___
 $code.=<<___;
 .align	16
 .Lekey_internal:
-	stm${g}	%r6,%r13,6*$SIZE_T($sp)	# all non-volatile regs
+	stm${g}	%r4,%r13,4*$SIZE_T($sp)	# all non-volatile regs and $key
 
 	larl	$tbl,AES_Te+2048
 
@@ -905,8 +906,9 @@ $code.=<<___;
 	la	$key,16($key)		# key+=4
 	la	$t3,4($t3)		# i++
 	brct	$rounds,.L128_loop
+	lghi	$t0,10
 	lghi	%r2,0
-	lm${g}	%r6,%r13,6*$SIZE_T($sp)
+	lm${g}	%r4,%r13,4*$SIZE_T($sp)
 	br	$ra
 
 .align	16
@@ -953,8 +955,9 @@ $code.=<<___;
 	st	$s2,32($key)
 	st	$s3,36($key)
 	brct	$rounds,.L192_continue
+	lghi	$t0,12
 	lghi	%r2,0
-	lm${g}	%r6,%r13,6*$SIZE_T($sp)
+	lm${g}	%r4,%r13,4*$SIZE_T($sp)
 	br	$ra
 
 .align	16
@@ -1015,8 +1018,9 @@ $code.=<<___;
 	st	$s2,40($key)
 	st	$s3,44($key)
 	brct	$rounds,.L256_continue
+	lghi	$t0,14
 	lghi	%r2,0
-	lm${g}	%r6,%r13,6*$SIZE_T($sp)
+	lm${g}	%r4,%r13,4*$SIZE_T($sp)
 	br	$ra
 
 .align	16
@@ -1067,34 +1071,26 @@ $code.=<<___;
 .type	private_AES_set_decrypt_key,\@function
 .align	16
 private_AES_set_decrypt_key:
-	st${g}	$key,4*$SIZE_T($sp)	# I rely on AES_set_encrypt_key to
-	st${g}	$ra,14*$SIZE_T($sp)	# save non-volatile registers!
+	#st${g}	$key,4*$SIZE_T($sp)	# I rely on AES_set_encrypt_key to
+	st${g}	$ra,14*$SIZE_T($sp)	# save non-volatile registers and $key!
 	bras	$ra,_s390x_AES_set_encrypt_key
-	l${g}	$key,4*$SIZE_T($sp)
+	#l${g}	$key,4*$SIZE_T($sp)
 	l${g}	$ra,14*$SIZE_T($sp)
 	ltgr	%r2,%r2
 	bnzr	$ra
 ___
 $code.=<<___ if (!$softonly);
-	l	$t0,240($key)
+	#l	$t0,240($key)
 	lhi	$t1,16
 	cr	$t0,$t1
 	jl	.Lgo
 	oill	$t0,0x80	# set "decrypt" bit
 	st	$t0,240($key)
 	br	$ra
-
-.align	16
-.Ldkey_internal:
-	st${g}	$key,4*$SIZE_T($sp)
-	st${g}	$ra,14*$SIZE_T($sp)
-	bras	$ra,.Lekey_internal
-	l${g}	$key,4*$SIZE_T($sp)
-	l${g}	$ra,14*$SIZE_T($sp)
 ___
 $code.=<<___;
-
-.Lgo:	llgf	$rounds,240($key)
+.align	16
+.Lgo:	lgr	$rounds,$t0	#llgf	$rounds,240($key)
 	la	$i1,0($key)
 	sllg	$i2,$rounds,4
 	la	$i2,0($i2,$key)
