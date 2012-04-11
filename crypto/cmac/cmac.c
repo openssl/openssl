@@ -179,7 +179,7 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 			return 0;
 		if (!EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
 			return 0;
-		memset(ctx->tbl, 0, M_EVP_CIPHER_CTX_block_size(&ctx->cctx));
+		memset(ctx->tbl, 0, EVP_CIPHER_CTX_block_size(&ctx->cctx));
 		ctx->nlast_block = 0;
 		return 1;
 		}
