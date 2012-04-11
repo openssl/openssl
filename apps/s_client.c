@@ -1169,7 +1169,7 @@ bad:
 #endif
 
 	SSL_CTX_set_verify(ctx,verify,verify_callback);
-	if (!set_cert_key_stuff(ctx,cert,key))
+	if (!set_cert_key_stuff(ctx,cert,key, NULL))
 		goto end;
 
 	if ((!SSL_CTX_load_verify_locations(ctx,CAfile,CApath)) ||

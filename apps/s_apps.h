@@ -154,7 +154,8 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx);
 #endif
 #ifdef HEADER_SSL_H
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file);
-int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key);
+int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
+							STACK_OF(X509) *chain);
 int ssl_print_sigalgs(BIO *out, SSL *s);
 int ssl_print_curves(BIO *out, SSL *s);
 #endif
