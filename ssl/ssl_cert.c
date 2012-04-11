@@ -321,15 +321,16 @@ CERT *ssl_cert_dup(CERT *cert)
 
 		if (cpk->chain)
 			{
+			int j;
 			rpk->chain = sk_X509_dup(cpk->chain);
 			if (!rpk->chain)
 				{
 				SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
 				goto err;
 				}
-			for (i = 0; i < sk_X509_num(rpk->chain); i++)
+			for (j = 0; j < sk_X509_num(rpk->chain); j++)
 				{
-				X509 *x = sk_X509_value(rpk->chain, i);
+				X509 *x = sk_X509_value(rpk->chain, j);
 				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 				}
 			}
