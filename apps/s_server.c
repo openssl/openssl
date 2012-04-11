@@ -270,12 +270,12 @@ extern int verify_depth, verify_return_error;
 static char *cipher=NULL;
 static int s_server_verify=SSL_VERIFY_NONE;
 static int s_server_session_id_context = 1; /* anything will do */
-static const char *s_cert_file=TEST_CERT,*s_key_file=NULL;
+static const char *s_cert_file=TEST_CERT,*s_key_file=NULL, *s_chain_file=NULL;
 #ifndef OPENSSL_NO_TLSEXT
 static const char *s_cert_file2=TEST_CERT2,*s_key_file2=NULL;
 static char *curves=NULL;
 #endif
-static char *s_dcert_file=NULL,*s_dkey_file=NULL;
+static char *s_dcert_file=NULL,*s_dkey_file=NULL, *s_dchain_file=NULL;
 #ifdef FIONBIO
 static int s_nbio=0;
 #endif
@@ -435,8 +435,10 @@ static void s_server_init(void)
 	s_server_verify=SSL_VERIFY_NONE;
 	s_dcert_file=NULL;
 	s_dkey_file=NULL;
+	s_dchain_file=NULL;
 	s_cert_file=TEST_CERT;
 	s_key_file=NULL;
+	s_chain_file=NULL;
 #ifndef OPENSSL_NO_TLSEXT
 	curves=NULL;
 	s_cert_file2=TEST_CERT2;
@@ -961,6 +963,7 @@ int MAIN(int argc, char *argv[])
 	char *dpassarg = NULL, *dpass = NULL;
 	int s_dcert_format = FORMAT_PEM, s_dkey_format = FORMAT_PEM;
 	X509 *s_cert = NULL, *s_dcert = NULL;
+	STACK_OF(X509) *s_chain = NULL, *s_dchain = NULL;
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
 	int no_cache = 0, ext_cache = 0;
 #ifndef OPENSSL_NO_TLSEXT
@@ -1061,6 +1064,11 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			passarg = *(++argv);
 			}
+		else if	(strcmp(*argv,"-cert_chain") == 0)
+			{
+			if (--argc < 1) goto bad;
+			s_chain_file= *(++argv);
+			}
 		else if	(strcmp(*argv,"-dhparam") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1097,6 +1105,11 @@ int MAIN(int argc, char *argv[])
 			{
 			if (--argc < 1) goto bad;
 			s_dkey_file= *(++argv);
+			}
+		else if	(strcmp(*argv,"-dcert_chain") == 0)
+			{
+			if (--argc < 1) goto bad;
+			s_dchain_file= *(++argv);
 			}
 		else if (strcmp(*argv,"-nocert") == 0)
 			{
@@ -1434,6 +1447,13 @@ bad:
 			ERR_print_errors(bio_err);
 			goto end;
 			}
+		if (s_chain_file)
+			{
+			s_chain = load_certs(bio_err, s_chain_file,FORMAT_PEM,
+					NULL, e, "server certificate chain");
+			if (!s_chain)
+				goto end;
+			}
 
 #ifndef OPENSSL_NO_TLSEXT
 		if (tlsextcbp.servername) 
@@ -1496,6 +1516,13 @@ bad:
 			{
 			ERR_print_errors(bio_err);
 			goto end;
+			}
+		if (s_dchain_file)
+			{
+			s_dchain = load_certs(bio_err, s_dchain_file,FORMAT_PEM,
+				NULL, e, "second server certificate chain");
+			if (!s_dchain)
+				goto end;
 			}
 
 		}
@@ -1760,15 +1787,15 @@ bad:
 		}
 #endif
 	
-	if (!set_cert_key_stuff(ctx,s_cert,s_key))
+	if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain))
 		goto end;
 #ifndef OPENSSL_NO_TLSEXT
-	if (ctx2 && !set_cert_key_stuff(ctx2,s_cert2,s_key2))
+	if (ctx2 && !set_cert_key_stuff(ctx2,s_cert2,s_key2, NULL))
 		goto end; 
 #endif
 	if (s_dcert != NULL)
 		{
-		if (!set_cert_key_stuff(ctx,s_dcert,s_dkey))
+		if (!set_cert_key_stuff(ctx, s_dcert, s_dkey, s_dchain))
 			goto end;
 		}
 

@@ -250,7 +250,8 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 	return(1);
 	}
 
-int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key)
+int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
+							STACK_OF(X509) *chain)
 	{
 	if (cert ==  NULL)
 		return 1;
@@ -273,6 +274,12 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key)
 	if (!SSL_CTX_check_private_key(ctx))
 		{
 		BIO_printf(bio_err,"Private key does not match the certificate public key\n");
+		return 0;
+		}
+	if (chain && !SSL_CTX_set1_chain(ctx, chain))
+		{
+		BIO_printf(bio_err,"error setting certificate chain\n");
+		ERR_print_errors(bio_err);
 		return 0;
 		}
 	return 1;
