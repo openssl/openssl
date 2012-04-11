@@ -151,6 +151,8 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 			return 0;
 		if (!M_EVP_EncryptInit_ex(&ctx->cctx, NULL, NULL, NULL, zero_iv))
 			return 0;
+		memset(ctx->tbl, 0, bl);
+		ctx->nlast_block = 0;
 		return 1;
 		}
 	/* Initialiase context */
