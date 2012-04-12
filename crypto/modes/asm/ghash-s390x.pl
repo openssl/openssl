@@ -138,7 +138,7 @@ $code.=<<___ if(!$softonly);
 .align	32
 .Lsoft_ghash:
 ___
-$cdoe.=<<___ if ($flavour =~ /3[12]/);
+$code.=<<___ if ($flavour =~ /3[12]/);
 	llgfr	$len,$len
 ___
 $code.=<<___;
