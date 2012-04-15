@@ -391,7 +391,7 @@ sub do_lib_rule
 			$ret.="\tSET FIPS_SHA1_EXE=\$(FIPS_SHA1_EXE)\n";
 			$ret.="\tSET FIPS_TARGET=$target\n";
 			$ret.="\tSET FIPSLIB_D=\$(FIPSLIB_D)\n";
-			$ret.="\t\$(FIPSLINK) \$(MLFLAGS) /map $base_arg $efile$target ";
+			$ret.="\t\$(FIPSLINK) \$(MLFLAGS) /fixed /map $base_arg $efile$target ";
 			$ret.="$name @<<\n  \$(SHLIB_EX_OBJ) $objs ";
 			$ret.="\$(OBJ_D)${o}fips_premain.obj $ex\n<<\n";
 			}
@@ -434,7 +434,7 @@ sub do_link_rule
 		$ret.="\tSET FIPS_TARGET=$target\n";
 		$ret.="\tSET FIPS_SHA1_EXE=\$(FIPS_SHA1_EXE)\n";
 		$ret.="\tSET FIPSLIB_D=\$(FIPSLIB_D)\n";
-		$ret.="\t\$(FIPSLINK) \$(LFLAGS) /map $efile$target @<<\n";
+		$ret.="\t\$(FIPSLINK) \$(LFLAGS) /fixed /map $efile$target @<<\n";
 		$ret.="\t\$(APP_EX_OBJ) $files \$(OBJ_D)${o}fips_premain.obj $libs\n<<\n";
 		}
 	else
