@@ -664,10 +664,14 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	if (	(sess == NULL) ||
 		(s->enc_write_ctx == NULL) ||
 		(EVP_MD_CTX_md(s->write_hash) == NULL))
+		{
+#if 1
+		clear=s->enc_write_ctx?0:1;	/* must be AEAD cipher */
+#else
 		clear=1;
-
-	if (clear)
+#endif
 		mac_size=0;
+		}
 	else
 		{
 		mac_size=EVP_MD_CTX_size(s->write_hash);
