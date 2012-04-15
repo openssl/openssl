@@ -82,6 +82,8 @@ typedef struct
     } aux;
     } EVP_AES_HMAC_SHA1;
 
+#define NO_PAYLOAD_LENGTH	((size_t)-1)
+
 #if	defined(AES_ASM) &&	( \
 	defined(__x86_64)	|| defined(__x86_64__)	|| \
 	defined(_M_AMD64)	|| defined(_M_X64)	|| \
@@ -123,7 +125,7 @@ static int aesni_cbc_hmac_sha1_init_key(EVP_CIPHER_CTX *ctx,
 	key->tail = key->head;
 	key->md   = key->head;
 
-	key->payload_length = 0;
+	key->payload_length = NO_PAYLOAD_LENGTH;
 
 	return ret<0?0:1;
 	}
@@ -184,7 +186,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 	if (len%AES_BLOCK_SIZE) return 0;
 
 	if (ctx->encrypt) {
-		if (plen==0)
+		if (plen==NO_PAYLOAD_LENGTH)
 			plen = len;
 		else if (len!=((plen+SHA_DIGEST_LENGTH+AES_BLOCK_SIZE)&-AES_BLOCK_SIZE))
 			return 0;
@@ -270,7 +272,7 @@ static int aesni_cbc_hmac_sha1_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		}
 	}
 
-	key->payload_length = 0;
+	key->payload_length = NO_PAYLOAD_LENGTH;
 
 	return 1;
 	}
