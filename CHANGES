@@ -291,6 +291,19 @@
   
  Changes between 1.0.1 and 1.0.1a [xx XXX xxxx]
 
+  *) Workarounds for some broken servers that "hang" if a client hello
+     record length exceeds 255 bytes:
+ 
+     1. Do not use record version number > TLS 1.0 in initial client
+        hello: some (but not all) hanging servers will now work.
+     2. If we set OPENSSL_MAX_TLS1_2_CIPHER_LENGTH this will truncate
+        the number of ciphers sent in the client hello. This should be
+        set to an even number, such as 50, for example by passing:
+        -DOPENSSL_MAX_TLS1_2_CIPHER_LENGTH=50 to config or Configure.
+        Most broken servers should now work.
+     3. If all else fails setting OPENSSL_NO_TLS1_2_CLIENT will disable
+        TLS 1.2 client support entirely.
+
   *) Fix SEGV in Vector Permutation AES module observed in OpenSSH.
      [Andy Polyakov]
 
