@@ -291,6 +291,9 @@
   
  Changes between 1.0.1 and 1.0.1a [xx XXX xxxx]
 
+  *) Don't allow TLS 1.2 SHA-256 ciphersuites in TLS 1.0, 1.1 connections.
+     [Adam Langley]
+
   *) Workarounds for some broken servers that "hang" if a client hello
      record length exceeds 255 bytes:
  
