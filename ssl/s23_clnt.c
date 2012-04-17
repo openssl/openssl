@@ -523,8 +523,13 @@ static int ssl23_client_hello(SSL *s)
 			d=buf;
 			*(d++) = SSL3_RT_HANDSHAKE;
 			*(d++) = version_major;
-			*(d++) = version_minor; /* arguably we should send the *lowest* suported version here
-			                         * (indicating, e.g., TLS 1.0 in "SSL 3.0 format") */
+			/* Some servers hang if we use long client hellos
+			 * and a record number > TLS 1.0.
+			 */
+			if (TLS1_get_client_version(s) > TLS1_VERSION)
+				*(d++) = 1;
+			else
+				*(d++) = version_minor;
 			s2n((int)l,d);
 
 			/* number of bytes to write */
