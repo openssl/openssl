@@ -5,6 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.1 and OpenSSL 1.0.1a:
+
+      o Workarounds for some servers that hang on long client hellos.
+      o Fix SEGV in AES code.
+
   Major changes between OpenSSL 1.0.0h and OpenSSL 1.0.1:
 
       o TLS/DTLS heartbeat support.
