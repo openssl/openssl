@@ -1661,7 +1661,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		!(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 		{
 		*al = SSL_AD_HANDSHAKE_FAILURE;
-	 	SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT,
+	 	SSLerr(SSL_F_SSL_SCAN_CLIENTHELLO_TLSEXT,
 				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
 		}
@@ -1680,7 +1680,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 
 	if (ssl_check_clienthello_tlsext(s) <= 0) 
 		{
-		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_CLIENTHELLO_TLSEXT);
+		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT,SSL_R_CLIENTHELLO_TLSEXT);
 		return 0;
 		}
 	return 1;
