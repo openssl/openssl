@@ -287,6 +287,8 @@ static EVP_CIPHER r4_hmac_md5_cipher=
 
 const EVP_CIPHER *EVP_rc4_hmac_md5(void)
 	{
-	return(&r4_hmac_md5_cipher);
+	extern unsigned int OPENSSL_ia32cap_P[];
+	/* RC4_CHAR flag ------------vvvvv */
+	return(OPENSSL_ia32cap_P[0]&(1<<20) ? NULL : &r4_hmac_md5_cipher);
 	}
 #endif
