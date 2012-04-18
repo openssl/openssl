@@ -3927,6 +3927,39 @@ $ranlib       =
 $arflags      = 
 $multilib     = 
 
+*** linux-c64xplus
+$cc           = cl6x
+$cflags       = --linux --strip_coff_underscore -ea=.s -eo=.o -mv6400+ -o2 -ox -ms -pden -DOPENSSL_SMALL_FOOTPRINT
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = 
+$bn_ops       = BN_LLONG
+$cpuid_obj    = c64xpluscpuid.o
+$bn_obj       = bn-c64xplus.o c64xplus-gf2m.o
+$des_obj      = 
+$aes_obj      = aes-c64xplus.o aes_cbc.o aes_ctr.o
+$bf_obj       = 
+$md5_obj      = 
+$sha1_obj     = sha1-c64xplus.o sha256-c64xplus.o sha512-c64xplus.o
+$cast_obj     = 
+$rc4_obj      = 
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = 
+$cmll_obj     = 
+$modes_obj    = ghash-c64xplus.o
+$engines_obj  = 
+$perlasm_scheme = void
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = --pic
+$shared_ldflag = -z --sysv --shared
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = true
+$arflags      = 
+$multilib     = 
+
 *** linux-elf
 $cc           = gcc
 $cflags       = -DL_ENDIAN -DTERMIO -O3 -fomit-frame-pointer -Wall
