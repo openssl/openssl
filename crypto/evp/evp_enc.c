@@ -170,7 +170,8 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 #endif
 
 #ifdef OPENSSL_FIPS
-		return FIPS_cipherinit(ctx, cipher, key, iv, enc);
+		if (FIPS_mode())
+			return FIPS_cipherinit(ctx, cipher, key, iv, enc);
 #else
 		ctx->cipher=cipher;
 		if (ctx->cipher->ctx_size)
@@ -207,7 +208,8 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 skip_to_init:
 #endif
 #ifdef OPENSSL_FIPS
-	return FIPS_cipherinit(ctx, cipher, key, iv, enc);
+	if (FIPS_mode())
+		return FIPS_cipherinit(ctx, cipher, key, iv, enc);
 #else
 	/* we assume block size is a power of 2 in *cryptUpdate */
 	OPENSSL_assert(ctx->cipher->block_size == 1
