@@ -4,7 +4,14 @@
 
  Changes between 0.9.8u and 0.9.8v [xx XXX xxxx]
 
-  *)
+  *) Check for potentially exploitable overflows in asn1_d2i_read_bio
+     BUF_mem_grow and BUF_mem_grow_clean. Refuse attempts to shrink buffer
+     in CRYPTO_realloc_clean.
+
+     Thanks to Tavis Ormandy, Google Security Team, for discovering this
+     issue and to Adam Langley <agl@chromium.org> for fixing it.
+     (CVE-2012-2110)
+     [Adam Langley (Google), Tavis Ormandy, Google Security Team]
 
  Changes between 0.9.8t and 0.9.8u [12 Mar 2012]
 
