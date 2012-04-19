@@ -7,6 +7,7 @@
 
   Major changes between OpenSSL 1.0.1 and OpenSSL 1.0.1a:
 
+      o Fix for ASN1 overflow bug CVE-2012-2110
       o Workarounds for some servers that hang on long client hellos.
       o Fix SEGV in AES code.
 
