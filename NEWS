@@ -5,6 +5,10 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 0.9.8u and OpenSSL 0.9.8v:
+
+      o Fix for ASN1 overflow bug CVE-2012-2110
+
   Major changes between OpenSSL 0.9.8t and OpenSSL 0.9.8u:
 
       o Fix for CMS/PKCS#7 MMA CVE-2012-0884
