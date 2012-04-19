@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 0.9.8v and 0.9.8w [xx XXX xxxx]
+
+  *)
+
  Changes between 0.9.8u and 0.9.8v [19 Apr 2012]
 
   *) Check for potentially exploitable overflows in asn1_d2i_read_bio
