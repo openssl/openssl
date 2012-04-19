@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.0i and 1.0.0j [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.0h and 1.0.0i [19 Apr 2012]
 
   *) Check for potentially exploitable overflows in asn1_d2i_read_bio
