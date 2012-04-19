@@ -82,7 +82,7 @@ OpenSSL  -  Frequently Asked Questions
 * Which is the current version of OpenSSL?
 
 The current version is available from <URL: http://www.openssl.org>.
-OpenSSL 1.0.1 was released on Mar 14th, 2012.
+OpenSSL 1.0.1a was released on Apr 19th, 2012.
 
 In addition to the current stable release, you can also access daily
 snapshots of the OpenSSL development version at <URL:

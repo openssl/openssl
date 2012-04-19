@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.1 and 1.0.1a [xx XXX xxxx]
+ Changes between 1.0.1 and 1.0.1a [19 Apr 2012]
 
   *) Check for potentially exploitable overflows in asn1_d2i_read_bio
      BUF_mem_grow and BUF_mem_grow_clean. Refuse attempts to shrink buffer
