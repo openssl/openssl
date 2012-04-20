@@ -64,6 +64,7 @@
 
 int FIPS_mode(void)
 	{
+	OPENSSL_init();
 #ifdef OPENSSL_FIPS
 	return FIPS_module_mode();
 #else
