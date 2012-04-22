@@ -62,12 +62,12 @@
  * [including the GNU Public Licence.]
  */
 
-#define NUM_NID 921
-#define NUM_SN 914
-#define NUM_LN 914
-#define NUM_OBJ 858
+#define NUM_NID 935
+#define NUM_SN 928
+#define NUM_LN 928
+#define NUM_OBJ 872
 
-static const unsigned char lvalues[5987]={
+static const unsigned char lvalues[6113]={
 0x00,                                        /* [  0] OBJ_undef */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,               /* [  1] OBJ_rsadsi */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,          /* [  7] OBJ_pkcs */
@@ -926,6 +926,20 @@ static const unsigned char lvalues[5987]={
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x0A,/* [5961] OBJ_rsassaPss */
 0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x01,0x07,/* [5970] OBJ_rsaesOaep */
 0x2A,0x86,0x48,0xCE,0x3E,0x02,0x01,          /* [5979] OBJ_dhpublicnumber */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x01,/* [5986] OBJ_brainpoolP160r1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x02,/* [5995] OBJ_brainpoolP160t1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x03,/* [6004] OBJ_brainpoolP192r1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x04,/* [6013] OBJ_brainpoolP192t1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x05,/* [6022] OBJ_brainpoolP224r1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x06,/* [6031] OBJ_brainpoolP224t1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x07,/* [6040] OBJ_brainpoolP256r1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x08,/* [6049] OBJ_brainpoolP256t1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x09,/* [6058] OBJ_brainpoolP320r1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x0A,/* [6067] OBJ_brainpoolP320t1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x0B,/* [6076] OBJ_brainpoolP384r1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x0C,/* [6085] OBJ_brainpoolP384t1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x0D,/* [6094] OBJ_brainpoolP512r1 */
+0x2B,0x24,0x03,0x03,0x02,0x08,0x01,0x01,0x0E,/* [6103] OBJ_brainpoolP512t1 */
 };
 
 static const ASN1_OBJECT nid_objs[NUM_NID]={
@@ -2408,6 +2422,34 @@ static const ASN1_OBJECT nid_objs[NUM_NID]={
 	NID_aes_256_cbc_hmac_sha1,0,NULL,0},
 {"RSAES-OAEP","rsaesOaep",NID_rsaesOaep,9,&(lvalues[5970]),0},
 {"dhpublicnumber","X9.42 DH",NID_dhpublicnumber,7,&(lvalues[5979]),0},
+{"brainpoolP160r1","brainpoolP160r1",NID_brainpoolP160r1,9,
+	&(lvalues[5986]),0},
+{"brainpoolP160t1","brainpoolP160t1",NID_brainpoolP160t1,9,
+	&(lvalues[5995]),0},
+{"brainpoolP192r1","brainpoolP192r1",NID_brainpoolP192r1,9,
+	&(lvalues[6004]),0},
+{"brainpoolP192t1","brainpoolP192t1",NID_brainpoolP192t1,9,
+	&(lvalues[6013]),0},
+{"brainpoolP224r1","brainpoolP224r1",NID_brainpoolP224r1,9,
+	&(lvalues[6022]),0},
+{"brainpoolP224t1","brainpoolP224t1",NID_brainpoolP224t1,9,
+	&(lvalues[6031]),0},
+{"brainpoolP256r1","brainpoolP256r1",NID_brainpoolP256r1,9,
+	&(lvalues[6040]),0},
+{"brainpoolP256t1","brainpoolP256t1",NID_brainpoolP256t1,9,
+	&(lvalues[6049]),0},
+{"brainpoolP320r1","brainpoolP320r1",NID_brainpoolP320r1,9,
+	&(lvalues[6058]),0},
+{"brainpoolP320t1","brainpoolP320t1",NID_brainpoolP320t1,9,
+	&(lvalues[6067]),0},
+{"brainpoolP384r1","brainpoolP384r1",NID_brainpoolP384r1,9,
+	&(lvalues[6076]),0},
+{"brainpoolP384t1","brainpoolP384t1",NID_brainpoolP384t1,9,
+	&(lvalues[6085]),0},
+{"brainpoolP512r1","brainpoolP512r1",NID_brainpoolP512r1,9,
+	&(lvalues[6094]),0},
+{"brainpoolP512t1","brainpoolP512t1",NID_brainpoolP512t1,9,
+	&(lvalues[6103]),0},
 };
 
 static const unsigned int sn_objs[NUM_SN]={
@@ -2622,6 +2664,20 @@ static const unsigned int sn_objs[NUM_SN]={
 87,	/* "basicConstraints" */
 365,	/* "basicOCSPResponse" */
 285,	/* "biometricInfo" */
+921,	/* "brainpoolP160r1" */
+922,	/* "brainpoolP160t1" */
+923,	/* "brainpoolP192r1" */
+924,	/* "brainpoolP192t1" */
+925,	/* "brainpoolP224r1" */
+926,	/* "brainpoolP224t1" */
+927,	/* "brainpoolP256r1" */
+928,	/* "brainpoolP256t1" */
+929,	/* "brainpoolP320r1" */
+930,	/* "brainpoolP320t1" */
+931,	/* "brainpoolP384r1" */
+932,	/* "brainpoolP384t1" */
+933,	/* "brainpoolP512r1" */
+934,	/* "brainpoolP512t1" */
 494,	/* "buildingName" */
 860,	/* "businessCategory" */
 691,	/* "c2onb191v4" */
@@ -3513,6 +3569,20 @@ static const unsigned int ln_objs[NUM_LN]={
 93,	/* "bf-cfb" */
 92,	/* "bf-ecb" */
 94,	/* "bf-ofb" */
+921,	/* "brainpoolP160r1" */
+922,	/* "brainpoolP160t1" */
+923,	/* "brainpoolP192r1" */
+924,	/* "brainpoolP192t1" */
+925,	/* "brainpoolP224r1" */
+926,	/* "brainpoolP224t1" */
+927,	/* "brainpoolP256r1" */
+928,	/* "brainpoolP256t1" */
+929,	/* "brainpoolP320r1" */
+930,	/* "brainpoolP320t1" */
+931,	/* "brainpoolP384r1" */
+932,	/* "brainpoolP384t1" */
+933,	/* "brainpoolP512r1" */
+934,	/* "brainpoolP512t1" */
 494,	/* "buildingName" */
 860,	/* "businessCategory" */
 691,	/* "c2onb191v4" */
@@ -4898,6 +4968,20 @@ static const unsigned int obj_objs[NUM_OBJ]={
 373,	/* OBJ_id_pkix_OCSP_valid           1 3 6 1 5 5 7 48 1 9 */
 374,	/* OBJ_id_pkix_OCSP_path            1 3 6 1 5 5 7 48 1 10 */
 375,	/* OBJ_id_pkix_OCSP_trustRoot       1 3 6 1 5 5 7 48 1 11 */
+921,	/* OBJ_brainpoolP160r1              1 3 36 3 3 2 8 1 1 1 */
+922,	/* OBJ_brainpoolP160t1              1 3 36 3 3 2 8 1 1 2 */
+923,	/* OBJ_brainpoolP192r1              1 3 36 3 3 2 8 1 1 3 */
+924,	/* OBJ_brainpoolP192t1              1 3 36 3 3 2 8 1 1 4 */
+925,	/* OBJ_brainpoolP224r1              1 3 36 3 3 2 8 1 1 5 */
+926,	/* OBJ_brainpoolP224t1              1 3 36 3 3 2 8 1 1 6 */
+927,	/* OBJ_brainpoolP256r1              1 3 36 3 3 2 8 1 1 7 */
+928,	/* OBJ_brainpoolP256t1              1 3 36 3 3 2 8 1 1 8 */
+929,	/* OBJ_brainpoolP320r1              1 3 36 3 3 2 8 1 1 9 */
+930,	/* OBJ_brainpoolP320t1              1 3 36 3 3 2 8 1 1 10 */
+931,	/* OBJ_brainpoolP384r1              1 3 36 3 3 2 8 1 1 11 */
+932,	/* OBJ_brainpoolP384t1              1 3 36 3 3 2 8 1 1 12 */
+933,	/* OBJ_brainpoolP512r1              1 3 36 3 3 2 8 1 1 13 */
+934,	/* OBJ_brainpoolP512t1              1 3 36 3 3 2 8 1 1 14 */
 418,	/* OBJ_aes_128_ecb                  2 16 840 1 101 3 4 1 1 */
 419,	/* OBJ_aes_128_cbc                  2 16 840 1 101 3 4 1 2 */
 420,	/* OBJ_aes_128_ofb128               2 16 840 1 101 3 4 1 3 */

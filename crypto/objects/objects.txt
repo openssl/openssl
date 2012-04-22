@@ -1292,3 +1292,23 @@ kisa 1 6                : SEED-OFB      : seed-ofb
 			: AES-256-CBC-HMAC-SHA1		: aes-256-cbc-hmac-sha1
 
 ISO-US 10046 2 1	: dhpublicnumber		: X9.42 DH
+
+# RFC 5639 curve OIDs (see http://www.ietf.org/rfc/rfc5639.txt)
+# versionOne OBJECT IDENTIFIER ::= {
+# iso(1) identifified-organization(3) teletrust(36) algorithm(3)
+# signature-algorithm(3) ecSign(2) ecStdCurvesAndGeneration(8)
+# ellipticCurve(1) 1 }
+1 3 36 3 3 2 8 1 1 1 : brainpoolP160r1
+1 3 36 3 3 2 8 1 1 2 : brainpoolP160t1
+1 3 36 3 3 2 8 1 1 3 : brainpoolP192r1
+1 3 36 3 3 2 8 1 1 4 : brainpoolP192t1
+1 3 36 3 3 2 8 1 1 5 : brainpoolP224r1
+1 3 36 3 3 2 8 1 1 6 : brainpoolP224t1
+1 3 36 3 3 2 8 1 1 7 : brainpoolP256r1
+1 3 36 3 3 2 8 1 1 8 : brainpoolP256t1
+1 3 36 3 3 2 8 1 1 9 : brainpoolP320r1
+1 3 36 3 3 2 8 1 1 10 : brainpoolP320t1
+1 3 36 3 3 2 8 1 1 11 : brainpoolP384r1
+1 3 36 3 3 2 8 1 1 12 : brainpoolP384t1
+1 3 36 3 3 2 8 1 1 13 : brainpoolP512r1
+1 3 36 3 3 2 8 1 1 14 : brainpoolP512t1            

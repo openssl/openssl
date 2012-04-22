@@ -4035,3 +4035,59 @@
 #define NID_dhpublicnumber		920
 #define OBJ_dhpublicnumber		OBJ_ISO_US,10046L,2L,1L
 
+#define SN_brainpoolP160r1		"brainpoolP160r1"
+#define NID_brainpoolP160r1		921
+#define OBJ_brainpoolP160r1		1L,3L,36L,3L,3L,2L,8L,1L,1L,1L
+
+#define SN_brainpoolP160t1		"brainpoolP160t1"
+#define NID_brainpoolP160t1		922
+#define OBJ_brainpoolP160t1		1L,3L,36L,3L,3L,2L,8L,1L,1L,2L
+
+#define SN_brainpoolP192r1		"brainpoolP192r1"
+#define NID_brainpoolP192r1		923
+#define OBJ_brainpoolP192r1		1L,3L,36L,3L,3L,2L,8L,1L,1L,3L
+
+#define SN_brainpoolP192t1		"brainpoolP192t1"
+#define NID_brainpoolP192t1		924
+#define OBJ_brainpoolP192t1		1L,3L,36L,3L,3L,2L,8L,1L,1L,4L
+
+#define SN_brainpoolP224r1		"brainpoolP224r1"
+#define NID_brainpoolP224r1		925
+#define OBJ_brainpoolP224r1		1L,3L,36L,3L,3L,2L,8L,1L,1L,5L
+
+#define SN_brainpoolP224t1		"brainpoolP224t1"
+#define NID_brainpoolP224t1		926
+#define OBJ_brainpoolP224t1		1L,3L,36L,3L,3L,2L,8L,1L,1L,6L
+
+#define SN_brainpoolP256r1		"brainpoolP256r1"
+#define NID_brainpoolP256r1		927
+#define OBJ_brainpoolP256r1		1L,3L,36L,3L,3L,2L,8L,1L,1L,7L
+
+#define SN_brainpoolP256t1		"brainpoolP256t1"
+#define NID_brainpoolP256t1		928
+#define OBJ_brainpoolP256t1		1L,3L,36L,3L,3L,2L,8L,1L,1L,8L
+
+#define SN_brainpoolP320r1		"brainpoolP320r1"
+#define NID_brainpoolP320r1		929
+#define OBJ_brainpoolP320r1		1L,3L,36L,3L,3L,2L,8L,1L,1L,9L
+
+#define SN_brainpoolP320t1		"brainpoolP320t1"
+#define NID_brainpoolP320t1		930
+#define OBJ_brainpoolP320t1		1L,3L,36L,3L,3L,2L,8L,1L,1L,10L
+
+#define SN_brainpoolP384r1		"brainpoolP384r1"
+#define NID_brainpoolP384r1		931
+#define OBJ_brainpoolP384r1		1L,3L,36L,3L,3L,2L,8L,1L,1L,11L
+
+#define SN_brainpoolP384t1		"brainpoolP384t1"
+#define NID_brainpoolP384t1		932
+#define OBJ_brainpoolP384t1		1L,3L,36L,3L,3L,2L,8L,1L,1L,12L
+
+#define SN_brainpoolP512r1		"brainpoolP512r1"
+#define NID_brainpoolP512r1		933
+#define OBJ_brainpoolP512r1		1L,3L,36L,3L,3L,2L,8L,1L,1L,13L
+
+#define SN_brainpoolP512t1		"brainpoolP512t1"
+#define NID_brainpoolP512t1		934
+#define OBJ_brainpoolP512t1		1L,3L,36L,3L,3L,2L,8L,1L,1L,14L
+
