@@ -156,7 +156,7 @@ int BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
 	/* This limit is sufficient to ensure (len+3)/3*4 < 2**31 */
 	if (len > LIMIT_BEFORE_EXPANSION)
 		{
-		BUFerr(BUF_F_BUF_MEM_GROW,ERR_R_MALLOC_FAILURE);
+		BUFerr(BUF_F_BUF_MEM_GROW_CLEAN,ERR_R_MALLOC_FAILURE);
 		return 0;
 		}
 	n=(len+3)/3*4;
