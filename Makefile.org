@@ -469,9 +469,9 @@ tags:
 	find . -name '[^.]*.[ch]' | xargs etags -a
 
 errors:
+	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
 	$(PERL) util/mkerr.pl -recurse -write
 	(cd engines; $(MAKE) PERL=$(PERL) errors)
-	$(PERL) util/ck_errf.pl -strict */*.c */*/*.c
 
 stacks:
 	$(PERL) util/mkstack.pl -write
