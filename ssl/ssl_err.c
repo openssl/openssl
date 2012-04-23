@@ -345,6 +345,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_CA_DN_TOO_LONG)        ,"ca dn too long"},
 {ERR_REASON(SSL_R_CCS_RECEIVED_EARLY)    ,"ccs received early"},
 {ERR_REASON(SSL_R_CERTIFICATE_VERIFY_FAILED),"certificate verify failed"},
+{ERR_REASON(SSL_R_CERT_CB_ERROR)         ,"cert cb error"},
 {ERR_REASON(SSL_R_CERT_LENGTH_MISMATCH)  ,"cert length mismatch"},
 {ERR_REASON(SSL_R_CHALLENGE_IS_DIFFERENT),"challenge is different"},
 {ERR_REASON(SSL_R_CIPHER_CODE_WRONG_LENGTH),"cipher code wrong length"},

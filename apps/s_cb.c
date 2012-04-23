@@ -285,6 +285,19 @@ int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
 	return 1;
 	}
 
+typedef struct 
+	{
+	X509 *cert;
+	EVP_PKEY *key;
+	STACK_OF(X509) *chain;
+	struct ssl_excert_st *next;
+	} SSL_EXCERT;
+
+static int set_cert_cb(SSL *ssl, void *arg)
+	{
+	return 1;
+	}
+
 int ssl_print_sigalgs(BIO *out, SSL *s)
 	{
 	int i, nsig;

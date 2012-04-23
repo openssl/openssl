@@ -345,6 +345,9 @@ CERT *ssl_cert_dup(CERT *cert)
 	ret->sigalgs = NULL;
 	ret->sigalgslen = 0;
 
+	ret->cert_cb = cert->cert_cb;
+	ret->cert_cb_arg = cert->cert_cb_arg;
+
 	return(ret);
 	
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_ECDH)
@@ -363,21 +366,36 @@ err:
 		EC_KEY_free(ret->ecdh_tmp);
 #endif
 
-	for (i = 0; i < SSL_PKEY_NUM; i++)
-		{
-		CERT_PKEY *rpk = ret->pkeys + i;
-		if (rpk->x509 != NULL)
-			X509_free(rpk->x509);
-		if (rpk->privatekey != NULL)
-			EVP_PKEY_free(rpk->privatekey);
-		if (rpk->chain)
-			sk_X509_pop_free(rpk->chain, X509_free);
-		}
-
+	ssl_cert_clear_certs(ret);
 
 	return NULL;
 	}
 
+/* Free up and clear all certificates and chains */
+
+void ssl_cert_clear_certs(CERT *c)
+	{
+	int i;
+	for (i = 0; i<SSL_PKEY_NUM; i++)
+		{
+		CERT_PKEY *cpk = c->pkeys + i;
+		if (cpk->x509)
+			{
+			X509_free(cpk->x509);
+			cpk->x509 = NULL;
+			}
+		if (cpk->privatekey)
+			{
+			EVP_PKEY_free(cpk->privatekey);
+			cpk->privatekey = NULL;
+			}
+		if (cpk->chain)
+			{
+			sk_X509_pop_free(cpk->chain, X509_free);
+			cpk->chain = NULL;
+			}
+		}
+	}
 
 void ssl_cert_free(CERT *c)
 	{
@@ -409,20 +427,8 @@ void ssl_cert_free(CERT *c)
 	if (c->ecdh_tmp) EC_KEY_free(c->ecdh_tmp);
 #endif
 
-	for (i=0; i<SSL_PKEY_NUM; i++)
-		{
-		CERT_PKEY *cpk = c->pkeys + i;
-		if (cpk->x509 != NULL)
-			X509_free(cpk->x509);
-		if (cpk->privatekey != NULL)
-			EVP_PKEY_free(cpk->privatekey);
-		if (cpk->chain)
-			sk_X509_pop_free(cpk->chain, X509_free);
-#if 0
-		if (c->pkeys[i].publickey != NULL)
-			EVP_PKEY_free(c->pkeys[i].publickey);
-#endif
-		}
+	ssl_cert_clear_certs(c);
+
 	if (c->sigalgs)
 		OPENSSL_free(c->sigalgs);
 	OPENSSL_free(c);
@@ -508,6 +514,12 @@ int ssl_cert_add1_chain_cert(CERT *c, X509 *x)
 		return 0;
 	CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 	return 1;
+	}
+
+void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg)
+	{
+	c->cert_cb = cb;
+	c->cert_cb_arg = arg;
 	}
 
 SESS_CERT *ssl_sess_cert_new(void)

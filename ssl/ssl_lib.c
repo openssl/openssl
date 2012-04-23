@@ -526,6 +526,12 @@ int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm)
 	return X509_VERIFY_PARAM_set1(ssl->param, vpm);
 	}
 
+void SSL_certs_clear(SSL *s)
+	{
+	if (s->cert)
+		ssl_cert_clear_certs(s->cert);
+	}
+
 void SSL_free(SSL *s)
 	{
 	int i;
@@ -2035,6 +2041,16 @@ void SSL_CTX_set_verify(SSL_CTX *ctx,int mode,int (*cb)(int, X509_STORE_CTX *))
 void SSL_CTX_set_verify_depth(SSL_CTX *ctx,int depth)
 	{
 	X509_VERIFY_PARAM_set_depth(ctx->param, depth);
+	}
+
+void SSL_CTX_set_cert_cb(SSL_CTX *c, int (*cb)(SSL *ssl, void *arg), void *arg)
+	{
+	ssl_cert_set_cert_cb(c->cert, cb, arg);
+	}
+
+void SSL_set_cert_cb(SSL *s, int (*cb)(SSL *ssl, void *arg), void *arg)
+	{
+	ssl_cert_set_cert_cb(s->cert, cb, arg);
 	}
 
 void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher)
