@@ -99,6 +99,11 @@ int BUF_MEM_grow(BUF_MEM *str, int len)
 	char *ret;
 	unsigned int n;
 
+	if (len < 0)
+		{
+		BUFerr(BUF_F_BUF_MEM_GROW,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 	if (str->length >= len)
 		{
 		str->length=len;
@@ -141,6 +146,11 @@ int BUF_MEM_grow_clean(BUF_MEM *str, int len)
 	char *ret;
 	unsigned int n;
 
+	if (len < 0)
+		{
+		BUFerr(BUF_F_BUF_MEM_GROW_CLEAN,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
 	if (str->length >= len)
 		{
 		memset(&str->data[len],0,str->length-len);
