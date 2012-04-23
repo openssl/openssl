@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8v and 0.9.8w [xx XXX xxxx]
+ Changes between 0.9.8v and 0.9.8w [23 Apr 2012]
 
   *) The fix for CVE-2012-2110 did not take into account that the 
      'len' argument to BUF_MEM_grow and BUF_MEM_grow_clean is an
