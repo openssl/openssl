@@ -512,15 +512,6 @@ typedef struct cert_st
 	TLS_SIGALGS *sigalgs;
 	/* Size of above array */
 	size_t sigalgslen;
-	/* Certificate setup callback: if set is called whenever a
-	 * certificate may be required (client or server). the callback
-	 * can then examine any appropriate parameters and setup any
-	 * certificates required. This allows advanced applications
-	 * to select certificates on the fly: for example based on
-	 * supported signature algorithms or curves.
-	 */
-	int (*cert_cb)(SSL *ssl, void *arg);
-	void *cert_cb_arg;
 
 	int references; /* >1 only if SSL_copy_session_id is used */
 	} CERT;
@@ -831,7 +822,6 @@ int ssl_clear_bad_session(SSL *s);
 CERT *ssl_cert_new(void);
 CERT *ssl_cert_dup(CERT *cert);
 int ssl_cert_inst(CERT **o);
-void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
 SESS_CERT *ssl_sess_cert_new(void);
 void ssl_sess_cert_free(SESS_CERT *sc);
@@ -859,7 +849,6 @@ int ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain);
 int ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain);
 int ssl_cert_add0_chain_cert(CERT *c, X509 *x);
 int ssl_cert_add1_chain_cert(CERT *c, X509 *x);
-void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg);
 
 int ssl_verify_cert_chain(SSL *s,STACK_OF(X509) *sk);
 int ssl_add_cert_chain(SSL *s, CERT_PKEY *cpk, unsigned long *l);
