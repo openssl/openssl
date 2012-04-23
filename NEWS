@@ -7,6 +7,10 @@
 
   Major changes between OpenSSL 0.9.8u and OpenSSL 0.9.8v:
 
+      o Fix for CVE-2012-2131 (corrected fix for 0.9.8 and CVE-2012-2110)
+
+  Major changes between OpenSSL 0.9.8u and OpenSSL 0.9.8v:
+
       o Fix for ASN1 overflow bug CVE-2012-2110
 
   Major changes between OpenSSL 0.9.8t and OpenSSL 0.9.8u:
