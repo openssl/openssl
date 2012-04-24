@@ -822,7 +822,7 @@ int ssl3_get_server_hello(SSL *s)
 	STACK_OF(SSL_CIPHER) *sk;
 	const SSL_CIPHER *c;
 	unsigned char *p,*d;
-	int i,al,ok;
+	int i,al=SSL_AD_INTERNAL_ERROR,ok;
 	unsigned int j;
 	long n;
 #ifndef OPENSSL_NO_COMP
@@ -928,7 +928,6 @@ int ssl3_get_server_hello(SSL *s)
 			{
 			if (!ssl_get_new_session(s,0))
 				{
-				al=SSL_AD_INTERNAL_ERROR;
 				goto f_err;
 				}
 			}
@@ -1002,7 +1001,6 @@ int ssl3_get_server_hello(SSL *s)
 	 */
 	if (s->session->compress_meth != 0)
 		{
-		al=SSL_AD_INTERNAL_ERROR;
 		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_INCONSISTENT_COMPRESSION);
 		goto f_err;
 		}
@@ -1039,19 +1037,10 @@ int ssl3_get_server_hello(SSL *s)
 
 #ifndef OPENSSL_NO_TLSEXT
 	/* TLS extensions*/
-	if (s->version >= SSL3_VERSION)
+	if (!ssl_parse_serverhello_tlsext(s,&p,d,n))
 		{
-		if (!ssl_parse_serverhello_tlsext(s,&p,d,n, &al))
-			{
-			/* 'al' set by ssl_parse_serverhello_tlsext */
-			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_PARSE_TLSEXT);
-			goto f_err; 
-			}
-		if (ssl_check_serverhello_tlsext(s) <= 0)
-			{
-			SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_SERVERHELLO_TLSEXT);
-				goto err;
-			}
+		SSLerr(SSL_F_SSL3_GET_SERVER_HELLO,SSL_R_PARSE_TLSEXT);
+		goto err; 
 		}
 #endif
 

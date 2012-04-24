@@ -916,7 +916,7 @@ int ssl3_check_client_hello(SSL *s)
 
 int ssl3_get_client_hello(SSL *s)
 	{
-	int i,j,ok,al,ret= -1;
+	int i,j,ok,al=SSL_AD_INTERNAL_ERROR,ret= -1;
 	unsigned int cookie_len;
 	long n;
 	unsigned long id;
@@ -1196,7 +1196,6 @@ int ssl3_get_client_hello(SSL *s)
 		l2n(Time,pos);
 		if (RAND_pseudo_bytes(pos,SSL3_RANDOM_SIZE-4) <= 0)
 			{
-			al=SSL_AD_INTERNAL_ERROR;
 			goto f_err;
 			}
 	}
@@ -1251,7 +1250,6 @@ int ssl3_get_client_hello(SSL *s)
 		/* Can't disable compression */
 		if (s->options & SSL_OP_NO_COMPRESSION)
 			{
-			al=SSL_AD_INTERNAL_ERROR;
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INCONSISTENT_COMPRESSION);
 			goto f_err;
 			}
@@ -1267,7 +1265,6 @@ int ssl3_get_client_hello(SSL *s)
 			}
 		if (s->s3->tmp.new_compression == NULL)
 			{
-			al=SSL_AD_INTERNAL_ERROR;
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INVALID_COMPRESSION_ALGORITHM);
 			goto f_err;
 			}
@@ -1316,7 +1313,6 @@ int ssl3_get_client_hello(SSL *s)
 	 */
 	if (s->session->compress_meth != 0)
 		{
-		al=SSL_AD_INTERNAL_ERROR;
 		SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_INCONSISTENT_COMPRESSION);
 		goto f_err;
 		}
