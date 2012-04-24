@@ -123,6 +123,8 @@ const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
 				const unsigned char *sess_id, int sesslen,
 				SSL_SESSION **psess);
+static int ssl_check_clienthello_tlsext(SSL *s);
+int ssl_check_serverhello_tlsext(SSL *s);
 #endif
 
 SSL3_ENC_METHOD TLSv1_enc_data={
@@ -1706,7 +1708,7 @@ static char ssl_next_proto_validate(unsigned char *d, unsigned len)
 	}
 #endif
 
-int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n, int *al)
+static int ssl_scan_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n, int *al)
 	{
 	unsigned short length;
 	unsigned short type;
@@ -1960,7 +1962,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		&& !(s->options & SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION))
 		{
 		*al = SSL_AD_HANDSHAKE_FAILURE;
-		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,
+		SSLerr(SSL_F_SSL_SCAN_SERVERHELLO_TLSEXT,
 				SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED);
 		return 0;
 		}
@@ -2040,7 +2042,7 @@ int ssl_prepare_serverhello_tlsext(SSL *s)
 	return 1;
 	}
 
-int ssl_check_clienthello_tlsext(SSL *s)
+static int ssl_check_clienthello_tlsext(SSL *s)
 	{
 	int ret=SSL_TLSEXT_ERR_NOACK;
 	int al = SSL_AD_UNRECOGNIZED_NAME;
@@ -2276,6 +2278,25 @@ int ssl_check_serverhello_tlsext(SSL *s)
 		return 1;
 		}
 	}
+
+int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, int n) 
+	{
+	int al = -1;
+	if (s->version < SSL3_VERSION)
+		return 1;
+	if (ssl_scan_serverhello_tlsext(s, p, d, n, &al) <= 0) 
+		{
+		ssl3_send_alert(s,SSL3_AL_FATAL,al); 
+		return 0;
+		}
+
+	if (ssl_check_serverhello_tlsext(s) <= 0) 
+		{
+		SSLerr(SSL_F_SSL_PARSE_SERVERHELLO_TLSEXT,SSL_R_SERVERHELLO_TLSEXT);
+		return 0;
+		}
+	return 1;
+}
 
 /* Since the server cache lookup is done early on in the processing of the
  * ClientHello, and other operations depend on the result, we need to handle
