@@ -52,6 +52,16 @@
      certificates.
      [Steve Henson]
 
+ Changes between 1.0.1a and 1.0.1b [xx XXX xxxx]
+
+  *) In order to ensure interoperabilty SSL_OP_NO_protocolX does not
+     disable just protocol X, but all protocols above X *if* there are
+     protocols *below* X still enabled. In more practical terms it means
+     that if application wants to disable TLS1.0 in favor of TLS1.1 and
+     above, it's not sufficient to pass SSL_OP_NO_TLSv1, one has to pass
+     SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3|SSL_OP_NO_SSLv2.
+     [Andy Polyakov]
+
  Changes between 1.0.1 and 1.0.1a [19 Apr 2012]
 
   *) Check for potentially exploitable overflows in asn1_d2i_read_bio
