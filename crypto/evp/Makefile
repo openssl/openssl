@@ -211,6 +211,7 @@ e_aes_cbc_hmac_sha1.o: ../../include/openssl/safestack.h
 e_aes_cbc_hmac_sha1.o: ../../include/openssl/sha.h
 e_aes_cbc_hmac_sha1.o: ../../include/openssl/stack.h
 e_aes_cbc_hmac_sha1.o: ../../include/openssl/symhacks.h e_aes_cbc_hmac_sha1.c
+e_aes_cbc_hmac_sha1.o: evp_locl.h
 e_bf.o: ../../e_os.h ../../include/openssl/asn1.h ../../include/openssl/bio.h
 e_bf.o: ../../include/openssl/blowfish.h ../../include/openssl/buffer.h
 e_bf.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

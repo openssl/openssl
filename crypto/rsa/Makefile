@@ -225,11 +225,12 @@ rsa_pk1.o: ../../include/openssl/symhacks.h ../cryptlib.h rsa_pk1.c
 rsa_pmeth.o: ../../e_os.h ../../include/openssl/asn1.h
 rsa_pmeth.o: ../../include/openssl/asn1t.h ../../include/openssl/bio.h
 rsa_pmeth.o: ../../include/openssl/bn.h ../../include/openssl/buffer.h
-rsa_pmeth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
-rsa_pmeth.o: ../../include/openssl/ec.h ../../include/openssl/ecdh.h
-rsa_pmeth.o: ../../include/openssl/ecdsa.h ../../include/openssl/err.h
-rsa_pmeth.o: ../../include/openssl/evp.h ../../include/openssl/lhash.h
-rsa_pmeth.o: ../../include/openssl/obj_mac.h ../../include/openssl/objects.h
+rsa_pmeth.o: ../../include/openssl/cms.h ../../include/openssl/crypto.h
+rsa_pmeth.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+rsa_pmeth.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+rsa_pmeth.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+rsa_pmeth.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+rsa_pmeth.o: ../../include/openssl/objects.h
 rsa_pmeth.o: ../../include/openssl/opensslconf.h
 rsa_pmeth.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 rsa_pmeth.o: ../../include/openssl/pkcs7.h ../../include/openssl/rsa.h
