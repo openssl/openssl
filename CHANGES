@@ -4,7 +4,9 @@
 
  Changes between 1.0.1b and 1.0.1c [xx XXX xxxx]
 
-  *)
+  *) In FIPS mode don't try to use composite ciphers as they are not
+     approved.
+     [Steve Henson]
 
  Changes between 1.0.1a and 1.0.1b [26 Apr 2012]
 

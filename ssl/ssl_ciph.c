@@ -620,6 +620,11 @@ int ssl_cipher_get_evp(const SSL_SESSION *s, const EVP_CIPHER **enc,
 		    s->ssl_version < TLS1_VERSION)
 			return 1;
 
+#ifdef OPENSSL_FIPS
+		if (FIPS_mode())
+			return 1;
+#endif
+
 		if	(c->algorithm_enc == SSL_RC4 &&
 			 c->algorithm_mac == SSL_MD5 &&
 			 (evp=EVP_get_cipherbyname("RC4-HMAC-MD5")))
