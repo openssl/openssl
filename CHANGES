@@ -2,6 +2,10 @@
  OpenSSL CHANGES
  _______________
 
+ Changes between 1.0.1b and 1.0.1c [xx XXX xxxx]
+
+  *)
+
  Changes between 1.0.1a and 1.0.1b [26 Apr 2012]
 
   *) OpenSSL 1.0.0 sets SSL_OP_ALL to 0x80000FFFL and OpenSSL 1.0.1 and
