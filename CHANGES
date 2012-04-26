@@ -308,7 +308,8 @@
      protocols *below* X still enabled. In more practical terms it means
      that if application wants to disable TLS1.0 in favor of TLS1.1 and
      above, it's not sufficient to pass SSL_OP_NO_TLSv1, one has to pass
-     SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3|SSL_OP_NO_SSLv2.
+     SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3|SSL_OP_NO_SSLv2. This applies to
+     client side.
      [Andy Polyakov]
 
  Changes between 1.0.1 and 1.0.1a [19 Apr 2012]
