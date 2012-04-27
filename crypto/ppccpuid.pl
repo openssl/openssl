@@ -105,7 +105,7 @@ Ladd:	lwarx	r5,0,r3
 Little:	mtctr	r4
 	stb	r0,0(r3)
 	addi	r3,r3,1
-	bdnz-	\$-8
+	bdnz	\$-8
 	blr
 Lot:	andi.	r5,r3,3
 	beq	Laligned
@@ -118,7 +118,7 @@ Laligned:
 	mtctr	r5
 	stw	r0,0(r3)
 	addi	r3,r3,4
-	bdnz-	\$-8
+	bdnz	\$-8
 	andi.	r4,r4,3
 	bne	Little
 	blr
