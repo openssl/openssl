@@ -242,7 +242,7 @@ $vertical_spin=0;	# shift "verticaly" defaults to 0, because of
 
 sub encvert()
 { my ($te,@s) = @_;
-  my $v0 = $acc, $v1 = $key;
+  my ($v0,$v1) = ($acc,$key);
 
 	&mov	($v0,$s[3]);				# copy s3
 	&mov	(&DWP(4,"esp"),$s[2]);			# save s2
@@ -299,7 +299,7 @@ sub encvert()
 # Another experimental routine, which features "horizontal spin," but
 # eliminates one reference to stack. Strangely enough runs slower...
 sub enchoriz()
-{ my $v0 = $key, $v1 = $acc;
+{ my ($v0,$v1) = ($key,$acc);
 
 	&movz	($v0,&LB($s0));			#  3, 2, 1, 0*
 	&rotr	($s2,8);			#  8,11,10, 9
@@ -427,7 +427,7 @@ sub sse_encbody()
 ######################################################################
 
 sub enccompact()
-{ my $Fn = mov;
+{ my $Fn = \&mov;
   while ($#_>5) { pop(@_); $Fn=sub{}; }
   my ($i,$te,@s)=@_;
   my $tmp = $key;
@@ -489,7 +489,7 @@ sub enctransform()
 
 	&xor	($s[$i],$acc);	# r0 ^ r2
 	&rotl	($s[$i],24);
-	&xor	($s[$i],$acc)	# ROTATE(r2^r0,24) ^ r2
+	&xor	($s[$i],$acc);	# ROTATE(r2^r0,24) ^ r2
 	&rotr	($tmp,16);
 	&xor	($s[$i],$tmp);
 	&rotr	($tmp,8);
@@ -1222,7 +1222,7 @@ sub enclast()
 ######################################################################
 
 sub deccompact()
-{ my $Fn = mov;
+{ my $Fn = \&mov;
   while ($#_>5) { pop(@_); $Fn=sub{}; }
   my ($i,$td,@s)=@_;
   my $tmp = $key;
@@ -2181,8 +2181,8 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 	&mov	("ecx",240/4);
 	&xor	("eax","eax");
 	&align	(4);
-	&data_word(0xABF3F689);	# rep stosd
-	&set_label("skip_ezero")
+	&data_word(0xABF3F689);		# rep stosd
+	&set_label("skip_ezero");
 	&mov	("esp",$_esp);
 	&popf	();
     &set_label("drop_out");
@@ -2301,8 +2301,8 @@ my $mark=&DWP(76+240,"esp");	# copy of aes_key->rounds
 	&mov	("ecx",240/4);
 	&xor	("eax","eax");
 	&align	(4);
-	&data_word(0xABF3F689);	# rep stosd
-	&set_label("skip_dzero")
+	&data_word(0xABF3F689);		# rep stosd
+	&set_label("skip_dzero");
 	&mov	("esp",$_esp);
 	&popf	();
 	&function_end_A();

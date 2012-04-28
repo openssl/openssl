@@ -170,10 +170,9 @@ sub ::data_short{   push(@out,".value\t".join(',',@_)."\n");  }
 sub ::data_word {   push(@out,".long\t".join(',',@_)."\n");   }
 
 sub ::align
-{ my $val=$_[0],$p2,$i;
+{ my $val=$_[0];
     if ($::aout)
-    {	for ($p2=0;$val!=0;$val>>=1) { $p2++; }
-	$val=$p2-1;
+    {	$val=int(log($val)/log(2));
 	$val.=",0x90";
     }
     push(@out,".align\t$val\n");

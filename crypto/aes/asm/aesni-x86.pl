@@ -54,8 +54,8 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],$0);
 
-if ($PREFIX eq "aesni")	{ $movekey=*movups; }
-else			{ $movekey=*movups; }
+if ($PREFIX eq "aesni")	{ $movekey=\&movups; }
+else			{ $movekey=\&movups; }
 
 $len="eax";
 $rounds="ecx";
@@ -1816,7 +1816,7 @@ if ($PREFIX eq "aesni") {
 	&movups	(&QWP(0x10,$out),$inout1);
 	&lea	($inp,&DWP(0x60,$inp));
 	&movups	(&QWP(0x20,$out),$inout2);
-	&mov	($rounds,$rounds_)		# restore $rounds
+	&mov	($rounds,$rounds_);		# restore $rounds
 	&movups	(&QWP(0x30,$out),$inout3);
 	&mov	($key,$key_);			# restore $key
 	&movups	(&QWP(0x40,$out),$inout4);
@@ -2015,7 +2015,7 @@ if ($PREFIX eq "aesni") {
 &set_label("12rounds",16);
 	&movq		("xmm2",&QWP(16,"eax"));	# remaining 1/3 of *userKey
 	&mov		($rounds,11);
-	&$movekey	(&QWP(-16,$key),"xmm0")		# round 0
+	&$movekey	(&QWP(-16,$key),"xmm0");	# round 0
 	&aeskeygenassist("xmm1","xmm2",0x01);		# round 1,2
 	&call		(&label("key_192a_cold"));
 	&aeskeygenassist("xmm1","xmm2",0x02);		# round 2,3
@@ -2152,7 +2152,7 @@ if ($PREFIX eq "aesni") {
 	&mov	($key,&wparam(2));
 	&call	("_aesni_set_encrypt_key");
 	&mov	($key,&wparam(2));
-	&shl	($rounds,4)	# rounds-1 after _aesni_set_encrypt_key
+	&shl	($rounds,4);	# rounds-1 after _aesni_set_encrypt_key
 	&test	("eax","eax");
 	&jnz	(&label("dec_key_ret"));
 	&lea	("eax",&DWP(16,$key,$rounds));	# end of key schedule
