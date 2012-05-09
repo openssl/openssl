@@ -722,10 +722,13 @@ int dtls1_accept(SSL *s)
 			if (ret <= 0) goto end;
 
 #ifndef OPENSSL_NO_SCTP
-			/* Change to new shared key of SCTP-Auth,
-			 * will be ignored if no SCTP used.
-			 */
-			BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+			if (!s->hit)
+				{
+				/* Change to new shared key of SCTP-Auth,
+				 * will be ignored if no SCTP used.
+				 */
+				BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+				}
 #endif
 
 			s->state=SSL3_ST_SW_FINISHED_A;
@@ -750,7 +753,16 @@ int dtls1_accept(SSL *s)
 			if (ret <= 0) goto end;
 			s->state=SSL3_ST_SW_FLUSH;
 			if (s->hit)
+				{
 				s->s3->tmp.next_state=SSL3_ST_SR_FINISHED_A;
+
+#ifndef OPENSSL_NO_SCTP
+				/* Change to new shared key of SCTP-Auth,
+				 * will be ignored if no SCTP used.
+				 */
+				BIO_ctrl(SSL_get_wbio(s), BIO_CTRL_DGRAM_SCTP_NEXT_AUTH_KEY, 0, NULL);
+#endif
+				}
 			else
 				{
 				s->s3->tmp.next_state=SSL_ST_OK;
