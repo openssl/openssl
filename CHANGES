@@ -54,6 +54,10 @@
 
  Changes between 1.0.1b and 1.0.1c [xx XXX xxxx]
 
+  *) Initialise tkeylen properly when encrypting CMS messages.
+     Thanks to Solar Designer of Openwall for reporting this issue.
+     [Steve Henson]
+
   *) In FIPS mode don't try to use composite ciphers as they are not
      approved.
      [Steve Henson]

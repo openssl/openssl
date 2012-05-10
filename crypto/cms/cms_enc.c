@@ -139,10 +139,10 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 				CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
 		goto err;
 		}
+	tkeylen = EVP_CIPHER_CTX_key_length(ctx);
 	/* Generate random session key */
 	if (!enc || !ec->key)
 		{
-		tkeylen = EVP_CIPHER_CTX_key_length(ctx);
 		tkey = OPENSSL_malloc(tkeylen);
 		if (!tkey)
 			{
@@ -174,7 +174,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
 			/* Only reveal failure if debugging so we don't
 			 * leak information which may be useful in MMA.
 			 */
-			if (ec->debug)
+			if (enc || ec->debug)
 				{
 				CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
 						CMS_R_INVALID_KEY_LENGTH);
