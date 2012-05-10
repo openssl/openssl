@@ -4,6 +4,14 @@
 
  Changes between 1.0.0i and 1.0.0j [xx XXX xxxx]
 
+  *) Sanity check record length before skipping explicit IV in DTLS
+     to fix DoS attack.
+
+     Thanks to Codenomicon for discovering this issue using Fuzz-o-Matic
+     fuzzing as a service testing platform.
+     (CVE-2012-2333)
+     [Steve Henson]
+
   *) Initialise tkeylen properly when encrypting CMS messages.
      Thanks to Solar Designer of Openwall for reporting this issue.
      [Steve Henson]
