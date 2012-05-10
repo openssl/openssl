@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.0i and 1.0.0j [xx XXX xxxx]
+ Changes between 1.0.0i and 1.0.0j [10 May 2012]
 
   *) Sanity check record length before skipping explicit IV in DTLS
      to fix DoS attack.
