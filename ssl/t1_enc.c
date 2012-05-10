@@ -889,6 +889,8 @@ int tls1_enc(SSL *s, int send)
 			if (s->version >= TLS1_1_VERSION
 				&& EVP_CIPHER_CTX_mode(ds) == EVP_CIPH_CBC_MODE)
 				{
+				if (bs > (int)rec->length)
+					return -1;
 				rec->data += bs;    /* skip the explicit IV */
 				rec->input += bs;
 				rec->length -= bs;
