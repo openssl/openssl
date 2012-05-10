@@ -5,6 +5,11 @@
   This file gives a brief overview of the major changes between each OpenSSL
   release. For more details please read the CHANGES file.
 
+  Major changes between OpenSSL 1.0.1b and OpenSSL 1.0.1c:
+
+      o Fix TLS/DTLS record length checking bug CVE-2012-2333
+      o Don't attempt to use non-FIPS composite ciphers in FIPS mode.
+
   Major changes between OpenSSL 1.0.1a and OpenSSL 1.0.1b:
 
       o Fix compilation error on non-x86 platforms.
