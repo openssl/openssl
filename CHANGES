@@ -4,7 +4,9 @@
 
  Changes between 0.9.8w and 0.9.8x [xx XXX xxxx]
 
-  *)
+  *) Initialise tkeylen properly when encrypting CMS messages.
+     Thanks to Solar Designer of Openwall for reporting this issue.
+     [Steve Henson]
 
  Changes between 0.9.8v and 0.9.8w [23 Apr 2012]
 
