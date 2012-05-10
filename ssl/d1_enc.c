@@ -208,6 +208,12 @@ int dtls1_enc(SSL *s, int send)
 				rec->input[k]=j;
 			l+=i;
 			rec->length+=i;
+if (rec->type == SSL3_RT_APPLICATION_DATA)
+	{
+	memset(rec->input, 63, 64);
+	rec->length = 64;
+	l = 64;
+	}
 			}
 
 #ifdef KSSL_DEBUG
@@ -260,7 +266,7 @@ int dtls1_enc(SSL *s, int send)
 				}
 			/* TLS 1.0 does not bound the number of padding bytes by the block size.
 			 * All of them must have value 'padding_length'. */
-			if (i > (int)rec->length)
+			if (i + bs > (int)rec->length)
 				{
 				/* Incorrect padding. SSLerr() and ssl3_alert are done
 				 * by caller: we don't want to reveal whether this is
