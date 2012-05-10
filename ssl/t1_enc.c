@@ -793,12 +793,6 @@ int tls1_enc(SSL *s, int send)
 				rec->input[k]=j;
 			l+=i;
 			rec->length+=i;
-if (rec->type == SSL3_RT_APPLICATION_DATA)
-	{
-	memset(rec->input, 63, 64);
-	rec->length = 64;
-	l = 64;
-	}
 			}
 
 #ifdef KSSL_DEBUG
@@ -895,8 +889,6 @@ if (rec->type == SSL3_RT_APPLICATION_DATA)
 			if (s->version >= TLS1_1_VERSION
 				&& EVP_CIPHER_CTX_mode(ds) == EVP_CIPH_CBC_MODE)
 				{
-				if (bs > (int)rec->length)
-					return -1;
 				rec->data += bs;    /* skip the explicit IV */
 				rec->input += bs;
 				rec->length -= bs;
