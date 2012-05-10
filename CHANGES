@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 0.9.8w and 0.9.8x [xx XXX xxxx]
+ Changes between 0.9.8w and 0.9.8x [10 May 2012]
 
   *) Sanity check record length before skipping explicit IV in DTLS
      to fix DoS attack.
