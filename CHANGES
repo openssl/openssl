@@ -4,7 +4,9 @@
 
  Changes between 1.0.1c and 1.0.1d [xx XXX xxxx]
 
-  *)
+  *) Don't use TLS 1.0 record version number in initial client hello
+     if renegotiating.
+     [Steve Henson]
 
  Changes between 1.0.1b and 1.0.1c [10 May 2012]
 
