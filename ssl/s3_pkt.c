@@ -744,6 +744,7 @@ static int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
 	 * bytes and record version number > TLS 1.0
 	 */
 	if (s->state == SSL3_ST_CW_CLNT_HELLO_B
+				&& !s->renegotiate
 				&& TLS1_get_version(s) > TLS1_VERSION)
 		*(p++) = 0x1;
 	else

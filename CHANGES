@@ -289,8 +289,13 @@
      whose return value is often ignored. 
      [Steve Henson]
 
- 
- Changes between 1.0.1b and 1.0.1c [xx XXX xxxx]
+ Changes between 1.0.1c and 1.0.1d [xx XXX xxxx]
+
+  *) Don't use TLS 1.0 record version number in initial client hello
+     if renegotiating.
+     [Steve Henson]
+
+ Changes between 1.0.1b and 1.0.1c [10 May 2012]
 
   *) Sanity check record length before skipping explicit IV in TLS
      1.2, 1.1 and DTLS to avoid DoS attack.
