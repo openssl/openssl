@@ -4,7 +4,8 @@
 
  Changes between 1.0.0j and 1.0.0k [xx XXX xxxx]
 
-  *)
+  *) Fix possible deadlock when decoding public keys.
+     [Steve Henson]
 
  Changes between 1.0.0i and 1.0.0j [10 May 2012]
 
