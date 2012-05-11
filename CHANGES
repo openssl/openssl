@@ -291,6 +291,9 @@
 
  Changes between 1.0.1c and 1.0.1d [xx XXX xxxx]
 
+  *) Fix possible deadlock when decoding public keys.
+     [Steve Henson]
+
   *) Don't use TLS 1.0 record version number in initial client hello
      if renegotiating.
      [Steve Henson]
