@@ -4,7 +4,8 @@
 
  Changes between 0.9.8x and 0.9.8y [xx XXX xxxx]
 
-  *)
+  *) Fix possible deadlock when decoding public keys.
+     [Steve Henson]
 
  Changes between 0.9.8w and 0.9.8x [10 May 2012]
 
