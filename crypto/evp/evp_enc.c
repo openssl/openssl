@@ -171,7 +171,14 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher, ENGINE *imp
 
 #ifdef OPENSSL_FIPS
 		if (FIPS_mode())
+			{
+			const EVP_CIPHER *fcipher;
+			if (cipher)
+				fcipher = FIPS_get_cipherbynid(EVP_CIPHER_type(cipher));
+			if (fcipher)
+				cipher = fcipher;
 			return FIPS_cipherinit(ctx, cipher, key, iv, enc);
+			}
 #endif
 		ctx->cipher=cipher;
 		if (ctx->cipher->ctx_size)

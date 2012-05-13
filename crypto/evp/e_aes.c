@@ -56,9 +56,13 @@
 #include <assert.h>
 #include <openssl/aes.h>
 #include "evp_locl.h"
-#ifndef OPENSSL_FIPS
 #include "modes_lcl.h"
 #include <openssl/rand.h>
+
+#ifndef OPENSSL_FIPSCANISTER
+#undef EVP_CIPH_FLAG_FIPS
+#define EVP_CIPH_FLAG_FIPS 0
+#endif
 
 typedef struct
 	{
@@ -715,7 +719,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 	case EVP_CTRL_GCM_SET_IVLEN:
 		if (arg <= 0)
 			return 0;
-#ifdef OPENSSL_FIPS
+#ifdef OPENSSL_FIPSCANISTER
 		if (FIPS_module_mode() && !(c->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW)
 						 && arg < 12)
 			return 0;
@@ -1126,7 +1130,7 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		return 0;
 	if (!out || !in || len<AES_BLOCK_SIZE)
 		return 0;
-#ifdef OPENSSL_FIPS
+#ifdef OPENSSL_FIPSCANISTER
 	/* Requirement of SP800-38E */
 	if (FIPS_module_mode() && !(ctx->flags & EVP_CIPH_FLAG_NON_FIPS_ALLOW) &&
 			(len > (1UL<<20)*16))
@@ -1309,5 +1313,4 @@ BLOCK_CIPHER_custom(NID_aes,128,1,12,ccm,CCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
 BLOCK_CIPHER_custom(NID_aes,192,1,12,ccm,CCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
 BLOCK_CIPHER_custom(NID_aes,256,1,12,ccm,CCM,EVP_CIPH_FLAG_FIPS|CUSTOM_FLAGS)
 
-#endif
 #endif

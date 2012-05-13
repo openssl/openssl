@@ -59,8 +59,6 @@
 #include <stdio.h>
 #include "cryptlib.h"
 
-#ifndef OPENSSL_FIPS
-
 #ifndef OPENSSL_NO_SHA
 
 #include <openssl/evp.h>
@@ -206,4 +204,3 @@ const EVP_MD *EVP_sha512(void)
 	{ return(&sha512_md); }
 #endif	/* ifndef OPENSSL_NO_SHA512 */
 
-#endif

@@ -174,10 +174,20 @@ static int pkey_fips_check_ctx(EVP_PKEY_CTX *ctx)
 		rv = 0;
 	if (!(rsa->meth->flags & RSA_FLAG_FIPS_METHOD) && rv)
 		return -1;
-	if (rctx->md && !(rctx->md->flags & EVP_MD_FLAG_FIPS))
-		return rv;
+	if (rctx->md)
+		{
+		const EVP_MD *fmd;
+		fmd = FIPS_get_digestbynid(EVP_MD_type(rctx->md));
+		if (!fmd || !(fmd->flags & EVP_MD_FLAG_FIPS))
+			return rv;
+		}
 	if (rctx->mgf1md && !(rctx->mgf1md->flags & EVP_MD_FLAG_FIPS))
-		return rv;
+		{
+		const EVP_MD *fmd;
+		fmd = FIPS_get_digestbynid(EVP_MD_type(rctx->mgf1md));
+		if (!fmd || !(fmd->flags & EVP_MD_FLAG_FIPS))
+			return rv;
+		}
 	return 1;
 	}
 #endif
