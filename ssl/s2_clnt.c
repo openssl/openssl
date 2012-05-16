@@ -359,12 +359,14 @@ static int get_server_hello(SSL *s)
 					SSL_R_PEER_ERROR);
 			return(-1);
 			}
-#ifdef __APPLE_CC__
-		/* The Rhapsody 5.5 (a.k.a. MacOS X) compiler bug
-		 * workaround. <appro@fy.chalmers.se> */
-		s->hit=(i=*(p++))?1:0;
-#else
+#if 0
 		s->hit=(*(p++))?1:0;
+		/* Some [PPC?] compilers fail to increment p in above
+		   statement, e.g. one provided with Rhapsody 5.5, but
+		   most recent example XL C 11.1 for AIX, even without
+		   optimization flag... */
+#else
+		s->hit=(*p)?1:0; p++;
 #endif
 		s->s2->tmp.cert_type= *(p++);
 		n2s(p,i);
