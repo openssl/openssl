@@ -23,6 +23,7 @@ local $fips_canister_path = "";
 my $fips_premain_dso_exe_path = "";
 my $fips_premain_c_path = "";
 my $fips_sha1_exe_path = "";
+my $fips_sha1_exe_build = 1;
 
 local $fipscanisterbuild = 0;
 
@@ -500,8 +501,16 @@ if ($fips)
 	{
 	if ($fips_sha1_exe_path eq "")
 		{
-		$fips_sha1_exe_path =
-			"\$(BIN_D)${o}fips_standalone_sha1$exep";
+		$fips_sha1_exe_path = $ENV{"FIPS_SHA1_PATH"};
+		if (defined $fips_sha1_exe_path)
+			{
+			$fips_sha1_exe_build = 0;
+			}
+		else
+			{
+			$fips_sha1_exe_path =
+				"\$(BIN_D)${o}fips_standalone_sha1$exep";
+			}
 		}
 	}
 	else
@@ -959,16 +968,16 @@ if ($fips)
 		# FIXME
 		$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)",
 					"\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}sha1dgst$obj $sha1_asm_obj",
-					"","\$(EX_LIBS)", 1);
+					"","\$(EX_LIBS)", 1) if $fips_sha1_exe_build;
 		}
 	else
 		{
 		$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)",
 					"\$(OBJ_D)${o}fips_standalone_sha1$obj \$(O_FIPSCANISTER)",
-					"","", 1);
+					"","", 1) if $fips_sha1_exe_build;
 
 		}
-	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
+	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1) unless defined $ENV{"FIPS_SIG"};
 	
 	}
 

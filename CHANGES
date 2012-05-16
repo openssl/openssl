@@ -4,6 +4,16 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add initial cross compilation support for Windows build. The following
+     environment variables should be set:
+
+     FIPS_SHA1_PATH: path to fips_standalone_sha1 exectutable which will
+     be used explicitly and not built.
+     FIPS_SIG: similar to other builds: path to a "get signature" script
+     which is used to obtain the signature of the target instead of
+     executing it on the host.
+     [Steve Henson]
+
   *) Add flag to EC_KEY to use cofactor ECDH if set.
      [Steve Henson]
 
