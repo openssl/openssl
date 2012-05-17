@@ -554,7 +554,7 @@ if ($fips)
 
 if ($fipscanisteronly)
 	{
-	$build_targets = "\$(O_FIPSCANISTER) \$(T_EXE)";
+	$build_targets = "\$(O_FIPSCANISTER)";
 	$libs_dep = "";
 	}
 
@@ -753,7 +753,11 @@ headers: \$(HEADER) \$(EXHEADER)
 
 lib: \$(LIBS_DEP) \$(E_SHLIB)
 
-exe: \$(T_EXE) \$(BIN_D)$o\$(E_EXE)$exep
+exe: \$(BIN_D)$o\$(E_EXE)$exep
+
+build_tests: \$(T_EXE)
+
+build_algvs: \$(T_SRC) \$(BIN_D)${o}fips_algvs$exep
 
 install: all
 	\$(MKDIR) \"\$(INSTALLTOP)\"
@@ -855,6 +859,9 @@ if ($fips)
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
 		"fips${o}fips_premain.c",
 		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)");
+	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_algvs$obj",
+		"test${o}fips_algvs.c",
+		"\$(SHLIB_CFLAGS)");
 	}
 
 foreach (values %lib_nam)
@@ -887,6 +894,7 @@ EOF
 }
 
 $defs.=&do_defs("T_EXE",$test,"\$(TEST_D)",$exep);
+$defs.=&do_defs("T_SRC",$test,"\$(TMP_D)",".c");
 foreach (split(/\s+/,$test))
 	{
 	my $t_libs;
@@ -908,7 +916,10 @@ foreach (split(/\s+/,$test))
 
 	$tt="\$(OBJ_D)${o}$t${obj}";
 	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","$t_libs \$(EX_LIBS)", $ltype);
+	$rules.=&do_copy_rule("\$(TMP_D)",$_,".c");
 	}
+
+	$rules.=&do_link_rule("\$(TEST_D)${o}fips_algvs$exep","\$(OBJ_D)${o}fips_algvs$obj","\$(LIBS_DEP)","\$(O_FIPSCANISTER) \$(EX_LIBS)", 2) if $fips;
 
 $defs.=&do_defs("E_SHLIB",$engines . $otherlibs,"\$(ENG_D)",$shlibp);
 

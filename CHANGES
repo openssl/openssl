@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Update Windows build system for FIPS. Don't compile algorithm test
+     utilties by default: the target build_tests is needed for that. Add
+     support for building fips_algvs with the build_algvs target.
+     [Steve Henson]
+
   *) Add initial cross compilation support for Windows build. The following
      environment variables should be set:
 
