@@ -1,5 +1,13 @@
 @echo off
 
+if X%CROSS_TARGET% == X goto detect 
+
+echo Cross compiling for %CROSS_TARGET%
+SET TARGET=%CROSS_TARGET%
+SET ASM=%CROSS_ASM%
+goto compile 
+
+:detect
 SET ASM=%1
 SET EXARG=
 
