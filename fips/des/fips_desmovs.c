@@ -356,10 +356,8 @@ static int tproc_file(char *rqfile, char *rspfile)
 		char *xp, *pp = ibuf+2;
 		int n;
 		if(*amode)
-		    { /* insert current time & date */
-		    time_t rtim = time(0);
-		    fputs("# ", rfp);
-		    copy_line(ctime(&rtim), rfp);
+		    {
+		    copy_line(ibuf, rfp);
 		    }
 		else
 		    {

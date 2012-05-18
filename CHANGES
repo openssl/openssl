@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Don't attempt to insert current time into AES/3DES tests, we should
+     be just copying input line across and this breaks some systems lacking
+     ctime. 
+     [Steve Henson]
+
   *) Update Windows build system for FIPS. Don't compile algorithm test
      utilties by default: the target build_tests is needed for that. Add
      support for building fips_algvs with the build_algvs target.
