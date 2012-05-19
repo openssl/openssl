@@ -9,20 +9,30 @@
 #
 # SHA256 block transform for x86. September 2007.
 #
+# Performance improvement over compiler generated code varies from
+# 10% to 40% [see below]. Not very impressive on some µ-archs, but
+# it's 5 times smaller and optimizies amount of writes.
+#
+# May 2012.
+#
+# Optimization including one of Pavel Semjanov's ideas resulted in
+# ~5% improvement on P4, AMD and Sandy Bridge, and ~13% on Atom.
+# Pavel also suggested full unroll. While his code runs ~20%/13%/6%
+# faster on K8/Core2/Sandy Bridge, it's 9.6x larger and ~6%/18%/24%
+# slower on P4/Atom/Pentium...
+#
 # Performance in clock cycles per processed byte (less is better):
 #
-#		Pentium	PIII	P4	AMD K8	Core2
+#		Pentium	PIII	P4	AMD K8	Core2	SB(**)	Atom
 # gcc		46	36	41	27	26
 # icc		57	33	38	25	23	
-# x86 asm	40	30	33	20	18
-# x86_64 asm(*)	-	-	21	16	16
+# x86 asm	39	29	31	19	18	19(**)	31
+# x86_64 asm(*)	-	-	21	16	16	18	25
 #
-# (*) x86_64 assembler performance is presented for reference
-#     purposes.
-#
-# Performance improvement over compiler generated code varies from
-# 10% to 40% [see above]. Not very impressive on some µ-archs, but
-# it's 5 times smaller and optimizies amount of writes.
+# (*)	x86_64 assembler performance is presented for reference
+#	purposes.
+# (**)	Sandy Bridge results can be improved by ~20% by replacing
+#	ror with equivalent shrd.
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
@@ -33,67 +43,62 @@ require "x86asm.pl";
 $A="eax";
 $E="edx";
 $T="ebx";
-$Aoff=&DWP(0,"esp");
-$Boff=&DWP(4,"esp");
-$Coff=&DWP(8,"esp");
-$Doff=&DWP(12,"esp");
-$Eoff=&DWP(16,"esp");
-$Foff=&DWP(20,"esp");
-$Goff=&DWP(24,"esp");
-$Hoff=&DWP(28,"esp");
-$Xoff=&DWP(32,"esp");
+$Aoff=&DWP(4,"esp");
+$Boff=&DWP(8,"esp");
+$Coff=&DWP(12,"esp");
+$Doff=&DWP(16,"esp");
+$Eoff=&DWP(20,"esp");
+$Foff=&DWP(24,"esp");
+$Goff=&DWP(28,"esp");
+$Hoff=&DWP(32,"esp");
+$Xoff=&DWP(36,"esp");
 $K256="ebp";
+
+# *ror = sub { &shrd(@_[0],@_) };
 
 sub BODY_00_15() {
     my $in_16_63=shift;
 
 	&mov	("ecx",$E);
-	 &add	($T,"edi")			if ($in_16_63);	# T += sigma1(X[-2])
-	&ror	("ecx",25-11);
 	 &mov	("esi",$Foff);
+	&ror	("ecx",25-11);
+	 &add	($T,"edi")			if ($in_16_63);	# T += sigma1(X[-2])
 	&xor	("ecx",$E);
-	&ror	("ecx",11-6);
-	 &mov	(&DWP(4*(8+15),"esp"),$T)	if ($in_16_63);	# save X[0]
-	&xor	("ecx",$E);
-	&ror	("ecx",6);	# Sigma1(e)
 	 &mov	("edi",$Goff);
+	&ror	("ecx",11-6);
+	 &xor	("esi","edi");
+	&xor	("ecx",$E);
+	 &mov	(&DWP(4*(9+15),"esp"),$T)	if ($in_16_63);	# save X[0]
+	&ror	("ecx",6);	# Sigma1(e)
+	 &and	("esi",$E);
 	&add	($T,"ecx");	# T += Sigma1(e)
-
-	&xor	("esi","edi");
 	 &mov	($Eoff,$E);	# modulo-scheduled
-	 &mov	("ecx",$A);
-	&and	("esi",$E);
-	 &mov	($E,$Doff);	# e becomes d, which is e in next iteration
 	&xor	("esi","edi");	# Ch(e,f,g)
-	 &mov	("edi",$A);
-	&add	($T,"esi");	# T += Ch(e,f,g)
-
-	&ror	("ecx",22-13);
 	 &add	($T,$Hoff);	# T += h
-	&xor	("ecx",$A);
-	&ror	("ecx",13-2);
-	 &mov	("esi",$Boff);
-	&xor	("ecx",$A);
-	&ror	("ecx",2);	# Sigma0(a)
-	 &add	($E,$T);	# d += T
-	 &mov	("edi",$Coff);
-
-	&add	($T,"ecx");	# T += Sigma0(a)
-	 &mov	($Aoff,$A);	# modulo-scheduled
 
 	&mov	("ecx",$A);
-	 &sub	("esp",4);
-	&or	($A,"esi");	# a becomes h, which is a in next iteration
-	&and	("ecx","esi");
-	&and	($A,"edi");
+	 &mov	($E,$Doff);	# e becomes d, which is e in next iteration
+	&ror	("ecx",22-13);
+	 &add	($T,"esi");	# T += Ch(e,f,g)
+	&xor	("ecx",$A);
 	 &mov	("esi",&DWP(0,$K256));
-	&or	($A,"ecx");	# h=Maj(a,b,c)
+	&ror	("ecx",13-2);
+	 &mov	("edi",$Boff);
+	&xor	("ecx",$A);
+	 &mov	($Aoff,$A);	# modulo-scheduled
+	&ror	("ecx",2);	# Sigma0(a)
+
+	 &xor	($A,"edi");	# a ^= b
+	&add	($T,"esi");
+	 &push	($A);		# (b^c) in next round
+	&add	($E,$T);	# d += T
+	 &and	($A,&DWP(4,"esp"));	# a &= (b^c)
+	&add	($T,"ecx");	# T += Sigma0(a)
+	 &xor	($A,"edi");	# h = Maj(a,b,c) = Ch(a^b,c,b)
 
 	&add	($K256,4);
-	&add	($A,$T);	# h += T
-	 &mov	($T,&DWP(4*(8+15+16-1),"esp"))	if ($in_16_63);	# preload T
-	&add	($E,"esi");	# d += K256[i]
-	&add	($A,"esi");	# h += K256[i]
+	 &add	($A,$T);	# h += T
+	&mov	($T,&DWP(4*(9+15+16-1),"esp"))	if ($in_16_63);	# preload T
 }
 
 &function_begin("sha256_block_data_order");
@@ -123,19 +128,19 @@ sub BODY_00_15() {
 	&mov	("eax",&DWP($i*16+0,"edi"));
 	&mov	("ebx",&DWP($i*16+4,"edi"));
 	&mov	("ecx",&DWP($i*16+8,"edi"));
-	&mov	("edx",&DWP($i*16+12,"edi"));
 	&bswap	("eax");
+	&mov	("edx",&DWP($i*16+12,"edi"));
 	&bswap	("ebx");
-	&bswap	("ecx");
-	&bswap	("edx");
 	&push	("eax");
+	&bswap	("ecx");
 	&push	("ebx");
+	&bswap	("edx");
 	&push	("ecx");
 	&push	("edx");
     }
 	&add	("edi",64);
-	&sub	("esp",4*8);		# place for A,B,C,D,E,F,G,H
-	&mov	(&DWP(4*(8+16)+4,"esp"),"edi");
+	&lea	("esp",&DWP(-4*9,"esp"));# place for A,B,C,D,E,F,G,H
+	&mov	(&DWP(4*(9+16)+4,"esp"),"edi");
 
 	# copy ctx->h[0-7] to A,B,C,D,E,F,G,H on stack
 	&mov	($A,&DWP(0,"esi"));
@@ -144,8 +149,10 @@ sub BODY_00_15() {
 	&mov	("edi",&DWP(12,"esi"));
 	# &mov	($Aoff,$A);
 	&mov	($Boff,"ebx");
+	&xor	("ebx","ecx");
 	&mov	($Coff,"ecx");
 	&mov	($Doff,"edi");
+	&mov	(&DWP(0,"esp"),"ebx");	# magic
 	&mov	($E,&DWP(16,"esi"));	
 	&mov	("ebx",&DWP(20,"esi"));
 	&mov	("ecx",&DWP(24,"esi"));
@@ -156,41 +163,41 @@ sub BODY_00_15() {
 	&mov	($Hoff,"edi");
 
 &set_label("00_15",16);
-	&mov	($T,&DWP(4*(8+15),"esp"));
+	&mov	($T,&DWP(4*(9+15),"esp"));
 
 	&BODY_00_15();
 
 	&cmp	("esi",0xc19bf174);
 	&jne	(&label("00_15"));
 
-	&mov	($T,&DWP(4*(8+15+16-1),"esp"));	# preloaded in BODY_00_15(1)
+	&mov	($T,&DWP(4*(9+15+16-1),"esp"));	# preloaded in BODY_00_15(1)
 &set_label("16_63",16);
 	&mov	("esi",$T);
-	 &mov	("ecx",&DWP(4*(8+15+16-14),"esp"));
+	 &mov	("ecx",&DWP(4*(9+15+16-14),"esp"));
 	&ror	("esi",18-7);
 	 &mov	("edi","ecx");
 	&xor	("esi",$T);
+	 &shr	($T,3);
 	&ror	("esi",7);
-	&shr	($T,3);
 
 	&ror	("edi",19-17);
 	 &xor	($T,"esi");			# T = sigma0(X[-15])
 	&xor	("edi","ecx");
+	 &shr	("ecx",10);
 	&ror	("edi",17);
-	&shr	("ecx",10);
-	 &add	($T,&DWP(4*(8+15+16),"esp"));	# T += X[-16]
+	 &add	($T,&DWP(4*(9+15+16),"esp"));	# T += X[-16]
 	&xor	("edi","ecx");			# sigma1(X[-2])
 
-	 &add	($T,&DWP(4*(8+15+16-9),"esp"));	# T += X[-7]
+	 &add	($T,&DWP(4*(9+15+16-9),"esp"));	# T += X[-7]
 	# &add	($T,"edi");			# T += sigma1(X[-2])
-	# &mov	(&DWP(4*(8+15),"esp"),$T);	# save X[0]
+	# &mov	(&DWP(4*(9+15),"esp"),$T);	# save X[0]
 
 	&BODY_00_15(1);
 
 	&cmp	("esi",0xc67178f2);
 	&jne	(&label("16_63"));
 
-	&mov	("esi",&DWP(4*(8+16+64)+0,"esp"));#ctx
+	&mov	("esi",&DWP(4*(9+16+64)+0,"esp"));#ctx
 	# &mov	($A,$Aoff);
 	&mov	("ebx",$Boff);
 	&mov	("ecx",$Coff);
@@ -207,7 +214,7 @@ sub BODY_00_15() {
 	&mov	("eax",$Foff);
 	&mov	("ebx",$Goff);
 	&mov	("ecx",$Hoff);
-	&mov	("edi",&DWP(4*(8+16+64)+4,"esp"));#inp
+	&mov	("edi",&DWP(4*(9+16+64)+4,"esp"));#inp
 	&add	($E,&DWP(16,"esi"));
 	&add	("eax",&DWP(20,"esi"));
 	&add	("ebx",&DWP(24,"esi"));
@@ -217,7 +224,7 @@ sub BODY_00_15() {
 	&mov	(&DWP(24,"esi"),"ebx");
 	&mov	(&DWP(28,"esi"),"ecx");
 
-	&add	("esp",4*(8+16+64));		# destroy frame
+	&lea	("esp",&DWP(4*(9+16+64),"esp"));# destroy frame
 	&sub	($K256,4*64);			# rewind K
 
 	&cmp	("edi",&DWP(8,"esp"));		# are we done yet?
