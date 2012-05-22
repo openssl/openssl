@@ -232,6 +232,9 @@ void FIPS_get_timevec(unsigned char *buf, unsigned long *pctr)
 	{
 #ifdef OPENSSL_SYS_WIN32
 	FILETIME ft;
+#ifdef _WIN32_WCE
+	SYSTEMTIME t;
+#endif
 #elif defined(OPENSSL_SYS_VXWORKS)
         struct timespec ts;
 #else
@@ -243,7 +246,12 @@ void FIPS_get_timevec(unsigned char *buf, unsigned long *pctr)
 #endif
 
 #ifdef OPENSSL_SYS_WIN32
+#ifdef _WIN32_WCE
+	GetSystemTime(&t);
+	SystemTimeToFileTime(&t, &ft);
+#else
 	GetSystemTimeAsFileTime(&ft);
+#endif
 	buf[0] = (unsigned char) (ft.dwHighDateTime & 0xff);
 	buf[1] = (unsigned char) ((ft.dwHighDateTime >> 8) & 0xff);
 	buf[2] = (unsigned char) ((ft.dwHighDateTime >> 16) & 0xff);

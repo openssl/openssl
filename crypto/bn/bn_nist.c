@@ -1047,6 +1047,10 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	return 1;
 	}
 
+#ifdef _W32_WCE
+#pragma optimize( "", off )
+#endif
+
 #define BN_NIST_521_RSHIFT	(521%BN_BITS2)
 #define BN_NIST_521_LSHIFT	(BN_BITS2-BN_NIST_521_RSHIFT)
 #define BN_NIST_521_TOP_MASK	((BN_ULONG)BN_MASK2>>BN_NIST_521_LSHIFT)
@@ -1112,6 +1116,10 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	return 1;
 	}
+
+#ifdef _W32_WCE
+#pragma optimize( "", on )
+#endif
 
 int (*BN_nist_mod_func(const BIGNUM *p))(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 	{
