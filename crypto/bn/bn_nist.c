@@ -1047,7 +1047,7 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	return 1;
 	}
 
-#ifdef _W32_WCE
+#ifdef _WIN32_WCE
 #pragma optimize( "", off )
 #endif
 
@@ -1117,7 +1117,7 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	return 1;
 	}
 
-#ifdef _W32_WCE
+#ifdef _WIN32_WCE
 #pragma optimize( "", on )
 #endif
 
