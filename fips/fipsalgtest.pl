@@ -495,6 +495,7 @@ my $onedir = 0;
 my $filter = "";
 my $tvdir;
 my $tprefix;
+my $sfprefix = "";
 my $debug          = 0;
 my $quiet          = 0;
 my $notest         = 0;
@@ -614,6 +615,9 @@ foreach (@ARGV) {
     }
     elsif (/--script-tprefix=(.*)$/) {
         $stprefix = $1;
+    }
+    elsif (/--script-fprefix=(.*)$/) {
+        $sfprefix = $1;
     }
     elsif (/--mkdir=(.*)$/) {
         $mkcmd = $1;
@@ -1044,7 +1048,7 @@ END
                 mkdir($outdir) || die "Can't create directory $outdir";
             }
         }
-        my $cmd = "$tcmd \"$req\" \"$out\"";
+        my $cmd = "$tcmd \"$sfprefix$req\" \"$sfprefix$out\"";
         print STDERR "DEBUG: running test $tname\n" if ( $debug && !$verify );
 	if ($outfile ne "") {
 	    if ($minimal_script) {
