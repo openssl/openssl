@@ -576,9 +576,14 @@ if ($fipscanisteronly)
 	\$(CP) \"fips${o}fips_premain.c.sha1\" \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"\$(INCO_D)${o}fips.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(CP) \"\$(INCO_D)${o}fips_rand.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
-	\$(CP) "\$(BIN_D)${o}fips_standalone_sha1$exep" \"\$(INSTALLTOP)${o}bin\"
 	\$(CP) \"util${o}fipslink.pl\" \"\$(INSTALLTOP)${o}bin\"
 EOF
+	if ($fips_sha1_exe_build)
+		{
+		$extra_install .= <<"EOF";
+	\$(CP) "\$(BIN_D)${o}fips_standalone_sha1$exep" \"\$(INSTALLTOP)${o}bin\"
+EOF
+		}
 	}
 elsif ($shlib)
 	{
