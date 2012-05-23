@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add perl scripts to calculate FIPS signatures for Windows
+     exectuables including WinCE. 
+     [Andy Polyakov]
+
   *) Don't attempt to insert current time into AES/3DES tests, we should
      be just copying input line across and this breaks some systems lacking
      ctime. 

@@ -1,0 +1,169 @@
+#!/usr/bin/env perl
+#
+# Copyright (c) 2012 The OpenSSL Project.
+#
+# The script embeds fingerprint into Microsoft PE-COFF executable object.
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+
+unshift(@INC,$dir);
+require "hmac_sha1.pl";
+
+######################################################################
+#
+# PE-COFF segment table parser by <appro@openssl.org>.
+#
+{ package PECOFF;
+  use FileHandle;
+
+    sub dup  { my %copy=map {$_} @_; return \%copy; }
+
+    sub Load {
+	my $class = shift;
+	my $self  = {};
+	my $FD    = FileHandle->new();	# autoclose
+	my $file  = shift;
+
+	bless $self,$class;
+
+	sysopen($FD,$file,0)		or die "$!";
+	binmode($FD);
+
+	#################################################
+	# read IMAGE_DOS_HEADER
+	#
+	read($FD,my $mz,64) or die "$!";
+	my @dos_header=unpack("a2C58V",$mz);
+
+	$!=42;		# signal fipsld to revert to two-step link
+	die "$file is not PE-COFF image" if (@dos_header[0] ne "MZ");
+
+	my $e_lfanew=pop(@dos_header);
+	seek($FD,$e_lfanew,0)		or die "$!";
+	read($FD,my $magic,4)		or die "$!";
+
+	$!=42;		# signal fipsld to revert to two-step link
+	die "$file is not PE-COFF image" if (unpack("V",$magic)!=0x4550);
+
+	#################################################
+	# read and parse COFF header...
+	#
+	read($FD,my $coff,20) or die "$!";
+
+	my %coff_header;
+	@coff_header{machine,nsects,date,syms_off,nsyms,opt,flags}=
+		unpack("v2V3v2",$coff);
+
+	my $strings;
+	my $symsize;
+
+	#################################################
+	# load strings table
+	#
+	if ($coff_header{syms_off}) {
+	    seek($FD,$coff_header{syms_off}+18*$coff_header{nsyms},0) or die "$!";
+	    read($FD,$strings,4) or die "$!";
+	    $symsize = unpack("V",$strings);
+	    read($FD,$strings,$symsize,4) or die "$!";
+	}
+
+	#################################################
+	# read sections
+	#
+	my $i;
+
+	# seek to section headers
+	seek($FD,$e_lfanew+24+@coff_header{opt},0) or die "$!";
+
+	for ($i=0;$i<$coff_header{nsects};$i++) {
+	    my %coff_shdr;
+	    my $name;
+
+	    read($FD,my $section,40) or die "$!";
+
+	    @coff_shdr{sh_name,sh_vsize,sh_vaddr,
+	    		sh_rawsize,sh_offset,sh_relocs,sh_lines,
+			sh_nrelocls,sh_nlines,sh_flags} =
+		unpack("a8V6v2V",$section);
+
+	    $name = $coff_shdr{sh_name};
+	    # see if sh_name is an offset in $strings
+	    my ($hi,$lo) = unpack("V2",$name);
+	    if ($hi==0 && $lo<$symsize) {
+		$name = substr($strings,$lo,64);
+	    }
+	    $name = (split(chr(0),$name))[0];
+	    $coff_shdr{sh_name} = $name;
+
+	    $self->{sections}{$name} = dup(%coff_shdr);
+	}
+
+	return $self;
+    }
+
+    sub Lookup {
+	my $self = shift;
+	my $name = shift;
+	return $self->{sections}{$name};
+    }
+}
+
+######################################################################
+#
+# main()
+#
+my $legacy_mode;
+
+if ($#ARGV<0 || ($#ARGV>0 && !($legacy_mode=(@ARGV[0] =~ /^\-(dso|exe)$/)))) {
+	print STDERR "usage: $0 [-dso|-exe] pe-coff-binary\n";
+	exit(1);
+}
+
+$exe = PECOFF->Load(@ARGV[$#ARGV]);
+
+sysopen(FD,@ARGV[$#ARGV],$legacy_mode?0:2) or die "$!";	# 2 is read/write
+binmode(FD);
+
+sub FIPS_incore_fingerprint {
+  my $ctx = HMAC->Init("etaonrishdlcupfm");
+  my ($beg,$end);
+  my $sect;
+
+    $sect = $exe->Lookup("fipstx")	or die "no fipstx section";
+
+    seek(FD,$sect->{sh_offset},0)	or die "$!";
+    read(FD,$blob,$sect->{sh_vsize})	or die "$!";
+
+    ($beg = index($blob,"SPIFxet_ts_tXtra")) >= 0
+					or die "no FIPS_text_startX";
+    ($end = rindex($blob,"SPIFxet_ne_t][Xd")) >= 0
+					or die "no FIPS_text_endX";
+
+    $ctx->Update(substr($blob,$beg,$end-$beg));
+
+    $sect = $exe->Lookup("fipsro")	or die "no fipsro section";
+
+    seek(FD,$sect->{sh_offset},0)	or die "$!";
+    read(FD,$blob,$sect->{sh_vsize})	or die "$!";
+
+    ($beg = index($blob,"SPIFdor__atarats",40)) >= 0
+					or die "no FIPS_rodata_start";
+    ($end = rindex($blob,"SPIFdor__ata[dne")) >= 0
+					or die "no FIPS_rodata_end";
+
+    $ctx->Update(substr($blob,$beg,$end-$beg));
+
+    return $ctx->Final();
+}
+
+$fingerprint = FIPS_incore_fingerprint();
+
+if ($legacy_mode) {
+    print unpack("H*",$fingerprint);
+} else {
+    my $sect = $exe->Lookup("fipsro");
+    seek(FD,$sect->{sh_offset},0)		or die "$!";
+    print FD unpack("H*",$fingerprint)		or die "$!";
+}
+
+close (FD);
