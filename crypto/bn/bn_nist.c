@@ -1048,6 +1048,7 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	}
 
 #ifdef _WIN32_WCE
+/* Workaround for compiler bug under CE */
 #pragma optimize( "", off )
 #endif
 
