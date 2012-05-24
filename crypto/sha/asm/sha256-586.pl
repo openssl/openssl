@@ -16,9 +16,9 @@
 # May 2012.
 #
 # Optimization including one of Pavel Semjanov's ideas resulted in
-# ~5% improvement on P4, AMD and Sandy Bridge, and ~13% on Atom.
+# ~5% improvement on AMD and Sandy Bridge, and ~15% on Atom and P4.
 # Pavel also suggested full unroll. While his code runs ~20%/13%/6%
-# faster on K8/Core2/Sandy Bridge, it's 9.6x larger and ~6%/18%/24%
+# faster on K8/Core2/Sandy Bridge, it's 9.6x larger and ~14%/23%/24%
 # slower on P4/Atom/Pentium...
 #
 # Performance in clock cycles per processed byte (less is better):
@@ -26,7 +26,7 @@
 #		Pentium	PIII	P4	AMD K8	Core2	SB(**)	Atom
 # gcc		46	36	41	27	26
 # icc		57	33	38	25	23	
-# x86 asm	39	29	31	19	18	19(**)	31
+# x86 asm	39	31	29	19	18	19(**)	30
 # x86_64 asm(*)	-	-	21	16	16	18	25
 #
 # (*)	x86_64 assembler performance is presented for reference
@@ -63,34 +63,35 @@ sub BODY_00_15() {
 	 &mov	("esi",$Foff);
 	&ror	("ecx",25-11);
 	 &add	($T,"edi")			if ($in_16_63);	# T += sigma1(X[-2])
-	&xor	("ecx",$E);
 	 &mov	("edi",$Goff);
-	&ror	("ecx",11-6);
-	 &xor	("esi","edi");
 	&xor	("ecx",$E);
+	 &xor	("esi","edi");
 	 &mov	(&DWP(4*(9+15),"esp"),$T)	if ($in_16_63);	# save X[0]
-	&ror	("ecx",6);	# Sigma1(e)
+	&ror	("ecx",11-6);
 	 &and	("esi",$E);
-	&add	($T,"ecx");	# T += Sigma1(e)
 	 &mov	($Eoff,$E);	# modulo-scheduled
-	&xor	("esi","edi");	# Ch(e,f,g)
+	&xor	($E,"ecx");
+	 &xor	("esi","edi");	# Ch(e,f,g)
 	 &add	($T,$Hoff);	# T += h
-
-	&mov	("ecx",$A);
-	 &mov	($E,$Doff);	# e becomes d, which is e in next iteration
-	&ror	("ecx",22-13);
+	&ror	($E,6);		# Sigma1(e)
+	 &mov	("ecx",$A);
 	 &add	($T,"esi");	# T += Ch(e,f,g)
-	&xor	("ecx",$A);
-	 &mov	("esi",&DWP(0,$K256));
-	&ror	("ecx",13-2);
+
+	&ror	("ecx",22-13);
+	 &add	($T,$E);	# T += Sigma1(e)
 	 &mov	("edi",$Boff);
 	&xor	("ecx",$A);
 	 &mov	($Aoff,$A);	# modulo-scheduled
+	 &lea	("esp",&DWP(-4,"esp"));
+	&ror	("ecx",13-2);
+	 &mov	("esi",&DWP(0,$K256));
+	&xor	("ecx",$A);
+	 &mov	($E,$Eoff);	# e becomes d, which is e in next iteration
+	 &xor	($A,"edi");	# a ^= b
 	&ror	("ecx",2);	# Sigma0(a)
 
-	 &xor	($A,"edi");	# a ^= b
-	&add	($T,"esi");
-	 &push	($A);		# (b^c) in next round
+	 &add	($T,"esi");	# T+= K[i]
+	 &mov	(&DWP(0,"esp"),$A);		# (b^c) in next round
 	&add	($E,$T);	# d += T
 	 &and	($A,&DWP(4,"esp"));	# a &= (b^c)
 	&add	($T,"ecx");	# T += Sigma0(a)
@@ -176,19 +177,17 @@ sub BODY_00_15() {
 	 &mov	("ecx",&DWP(4*(9+15+16-14),"esp"));
 	&ror	("esi",18-7);
 	 &mov	("edi","ecx");
-	&xor	("esi",$T);
-	 &shr	($T,3);
+	&ror	("ecx",19-17);
+	 &xor	("esi",$T);
+	&shr	($T,3);
+	 &xor	("ecx","edi");
 	&ror	("esi",7);
-
-	&ror	("edi",19-17);
 	 &xor	($T,"esi");			# T = sigma0(X[-15])
-	&xor	("edi","ecx");
-	 &shr	("ecx",10);
-	&ror	("edi",17);
+	&ror	("ecx",17);
 	 &add	($T,&DWP(4*(9+15+16),"esp"));	# T += X[-16]
-	&xor	("edi","ecx");			# sigma1(X[-2])
-
+	&shr	("edi",10);
 	 &add	($T,&DWP(4*(9+15+16-9),"esp"));	# T += X[-7]
+	&xor	("edi","ecx");			# sigma1(X[-2])
 	# &add	($T,"edi");			# T += sigma1(X[-2])
 	# &mov	(&DWP(4*(9+15),"esp"),$T);	# save X[0]
 
