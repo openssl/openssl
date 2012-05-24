@@ -1006,7 +1006,7 @@ ___
 # does not update *ivec! (see engine/eng_aesni.c for details)
 #
 {
-my $reserved = $win64?0:-0x28;
+my $frame_size = 0x20+($win64?160:0);
 my ($in0,$in1,$in2,$in3)=map("%xmm$_",(8..11));
 my ($iv0,$iv1,$ivec)=("%xmm12","%xmm13","%xmm14");
 my $bswap_mask="%xmm15";
@@ -1016,9 +1016,12 @@ $code.=<<___;
 .type	aesni_ctr32_encrypt_blocks,\@function,5
 .align	16
 aesni_ctr32_encrypt_blocks:
+	lea	(%rsp),%rax
+	push	%rbp
+	sub	\$$frame_size,%rsp
+	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
-	lea	-0xc8(%rsp),%rsp
 	movaps	%xmm6,0x20(%rsp)
 	movaps	%xmm7,0x30(%rsp)
 	movaps	%xmm8,0x40(%rsp)
@@ -1032,6 +1035,7 @@ $code.=<<___ if ($win64);
 .Lctr32_body:
 ___
 $code.=<<___;
+	lea	-8(%rax),%rbp
 	cmp	\$1,$len
 	je	.Lctr32_one_shortcut
 
@@ -1056,9 +1060,9 @@ $code.=<<___;
 	pinsrd	\$2,$rnds_,$iv0
 	inc	$key_
 	pinsrd	\$2,$key_,$iv1
-	movdqa	$iv0,$reserved(%rsp)
+	movdqa	$iv0,0x00(%rsp)
 	pshufb	$bswap_mask,$iv0
-	movdqa	$iv1,`$reserved+0x10`(%rsp)
+	movdqa	$iv1,0x10(%rsp)
 	pshufb	$bswap_mask,$iv1
 
 	pshufd	\$`3<<6`,$iv0,$inout0		# place counter to upper dword
@@ -1098,7 +1102,7 @@ $code.=<<___;
 	 movdqa		.Lincrement32(%rip),$iv1
 	pxor		$rndkey0,$inout3
 	aesenc		$rndkey1,$inout2
-	 movdqa		$reserved(%rsp),$iv0
+	 movdqa		(%rsp),$iv0
 	pxor		$rndkey0,$inout4
 	aesenc		$rndkey1,$inout3
 	pxor		$rndkey0,$inout5
@@ -1131,11 +1135,11 @@ $code.=<<___;
 	aesenc		$rndkey1,$inout0
 	 paddd		$iv1,$iv0		# increment counter vector
 	aesenc		$rndkey1,$inout1
-	 paddd		`$reserved+0x10`(%rsp),$iv1
+	 paddd		0x10(%rsp),$iv1
 	aesenc		$rndkey1,$inout2
-	 movdqa		$iv0,$reserved(%rsp)	# save counter vector
+	 movdqa		$iv0,0x00(%rsp)		# save counter vector
 	aesenc		$rndkey1,$inout3
-	 movdqa		$iv1,`$reserved+0x10`(%rsp)
+	 movdqa		$iv1,0x10(%rsp)
 	aesenc		$rndkey1,$inout4
 	 pshufb		$bswap_mask,$iv0	# byte swap
 	aesenc		$rndkey1,$inout5
@@ -1278,10 +1282,11 @@ $code.=<<___ if ($win64);
 	movaps	0x90(%rsp),%xmm13
 	movaps	0xa0(%rsp),%xmm14
 	movaps	0xb0(%rsp),%xmm15
-	lea	0xc8(%rsp),%rsp
-.Lctr32_ret:
 ___
 $code.=<<___;
+	lea	(%rbp),%rsp
+	pop	%rbp
+.Lctr32_ret:
 	ret
 .size	aesni_ctr32_encrypt_blocks,.-aesni_ctr32_encrypt_blocks
 ___
@@ -1296,14 +1301,17 @@ ___
 my @tweak=map("%xmm$_",(10..15));
 my ($twmask,$twres,$twtmp)=("%xmm8","%xmm9",@tweak[4]);
 my ($key2,$ivp,$len_)=("%r8","%r9","%r9");
-my $frame_size = 0x68 + ($win64?160:0);
+my $frame_size = 0x60 + ($win64?160:0);
 
 $code.=<<___;
 .globl	aesni_xts_encrypt
 .type	aesni_xts_encrypt,\@function,6
 .align	16
 aesni_xts_encrypt:
-	lea	-$frame_size(%rsp),%rsp
+	lea	(%rsp),%rax
+	push	%rbp
+	sub	\$$frame_size,%rsp
+	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,0x60(%rsp)
@@ -1319,6 +1327,7 @@ $code.=<<___ if ($win64);
 .Lxts_enc_body:
 ___
 $code.=<<___;
+	lea	-8(%rax),%rbp
 	movups	($ivp),@tweak[5]		# load clear-text tweak
 	mov	240(%r8),$rounds		# key2->rounds
 	mov	240($key),$rnds_		# key1->rounds
@@ -1682,7 +1691,8 @@ $code.=<<___ if ($win64);
 	movaps	0xf0(%rsp),%xmm15
 ___
 $code.=<<___;
-	lea	$frame_size(%rsp),%rsp
+	lea	(%rbp),%rsp
+	pop	%rbp
 .Lxts_enc_epilogue:
 	ret
 .size	aesni_xts_encrypt,.-aesni_xts_encrypt
@@ -1693,7 +1703,10 @@ $code.=<<___;
 .type	aesni_xts_decrypt,\@function,6
 .align	16
 aesni_xts_decrypt:
-	lea	-$frame_size(%rsp),%rsp
+	lea	(%rsp),%rax
+	push	%rbp
+	sub	\$$frame_size,%rsp
+	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
 	movaps	%xmm6,0x60(%rsp)
@@ -1709,6 +1722,7 @@ $code.=<<___ if ($win64);
 .Lxts_dec_body:
 ___
 $code.=<<___;
+	lea	-8(%rax),%rbp
 	movups	($ivp),@tweak[5]		# load clear-text tweak
 	mov	240($key2),$rounds		# key2->rounds
 	mov	240($key),$rnds_		# key1->rounds
@@ -2108,7 +2122,8 @@ $code.=<<___ if ($win64);
 	movaps	0xf0(%rsp),%xmm15
 ___
 $code.=<<___;
-	lea	$frame_size(%rsp),%rsp
+	lea	(%rbp),%rsp
+	pop	%rbp
 .Lxts_dec_epilogue:
 	ret
 .size	aesni_xts_decrypt,.-aesni_xts_decrypt
@@ -2120,7 +2135,7 @@ ___
 #			    size_t length, const AES_KEY *key,
 #			    unsigned char *ivp,const int enc);
 {
-my $reserved = $win64?0x40:-0x18;	# used in decrypt
+my $frame_size = 0x10 + ($win64?0x40:0);	# used in decrypt
 $code.=<<___;
 .globl	${PREFIX}_cbc_encrypt
 .type	${PREFIX}_cbc_encrypt,\@function,6
@@ -2176,16 +2191,20 @@ $code.=<<___;
 #--------------------------- CBC DECRYPT ------------------------------#
 .align	16
 .Lcbc_decrypt:
+	lea	(%rsp),%rax
+	push	%rbp
+	sub	\$$frame_size,%rsp
+	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
-	lea	-0x58(%rsp),%rsp
-	movaps	%xmm6,(%rsp)
-	movaps	%xmm7,0x10(%rsp)
-	movaps	%xmm8,0x20(%rsp)
-	movaps	%xmm9,0x30(%rsp)
+	movaps	%xmm6,0x10(%rsp)
+	movaps	%xmm7,0x20(%rsp)
+	movaps	%xmm8,0x30(%rsp)
+	movaps	%xmm9,0x40(%rsp)
 .Lcbc_decrypt_body:
 ___
 $code.=<<___;
+	lea	-8(%rax),%rbp
 	movups	($ivp),$iv
 	mov	$rnds_,$rounds
 	cmp	\$0x70,$len
@@ -2193,11 +2212,11 @@ $code.=<<___;
 	shr	\$1,$rnds_
 	sub	\$0x70,$len
 	mov	$rnds_,$rounds
-	movaps	$iv,$reserved(%rsp)
+	movaps	$iv,(%rsp)
 	jmp	.Lcbc_dec_loop8_enter
 .align	16
 .Lcbc_dec_loop8:
-	movaps	$rndkey0,$reserved(%rsp)	# save IV
+	movaps	$rndkey0,(%rsp)			# save IV
 	movups	$inout7,($out)
 	lea	0x10($out),$out
 .Lcbc_dec_loop8_enter:
@@ -2237,7 +2256,7 @@ $code.=<<___;
 
 	movups	($inp),$rndkey1		# re-load input
 	movups	0x10($inp),$rndkey0
-	xorps	$reserved(%rsp),$inout0	# ^= IV
+	xorps	(%rsp),$inout0		# ^= IV
 	xorps	$rndkey1,$inout1
 	movups	0x20($inp),$rndkey1
 	xorps	$rndkey0,$inout2
@@ -2301,11 +2320,11 @@ $code.=<<___;
 	jbe	.Lcbc_dec_six
 
 	movups	0x60($inp),$inout6
-	movaps	$iv,$reserved(%rsp)	# save IV
+	movaps	$iv,(%rsp)		# save IV
 	call	_aesni_decrypt8
 	movups	($inp),$rndkey1
 	movups	0x10($inp),$rndkey0
-	xorps	$reserved(%rsp),$inout0	# ^= IV
+	xorps	(%rsp),$inout0		# ^= IV
 	xorps	$rndkey1,$inout1
 	movups	0x20($inp),$rndkey1
 	xorps	$rndkey0,$inout2
@@ -2429,23 +2448,24 @@ $code.=<<___;
 	jmp	.Lcbc_dec_ret
 .align	16
 .Lcbc_dec_tail_partial:
-	movaps	$inout0,$reserved(%rsp)
+	movaps	$inout0,(%rsp)
 	mov	\$16,%rcx
 	mov	$out,%rdi
 	sub	$len,%rcx
-	lea	$reserved(%rsp),%rsi
+	lea	(%rsp),%rsi
 	.long	0x9066A4F3	# rep movsb
 
 .Lcbc_dec_ret:
 ___
 $code.=<<___ if ($win64);
-	movaps	(%rsp),%xmm6
-	movaps	0x10(%rsp),%xmm7
-	movaps	0x20(%rsp),%xmm8
-	movaps	0x30(%rsp),%xmm9
-	lea	0x58(%rsp),%rsp
+	movaps	0x10(%rsp),%xmm6
+	movaps	0x20(%rsp),%xmm7
+	movaps	0x30(%rsp),%xmm8
+	movaps	0x40(%rsp),%xmm9
 ___
 $code.=<<___;
+	lea	(%rbp),%rsp
+	pop	%rbp
 .Lcbc_ret:
 	ret
 .size	${PREFIX}_cbc_encrypt,.-${PREFIX}_cbc_encrypt
@@ -2820,9 +2840,8 @@ ctr32_se_handler:
 	lea	512($context),%rdi	# &context.Xmm6
 	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
 	.long	0xa548f3fc		# cld; rep movsq
-	lea	0xc8(%rax),%rax		# adjust stack pointer
 
-	jmp	.Lcommon_seh_tail
+	jmp	.Lcommon_rbp_tail
 .size	ctr32_se_handler,.-ctr32_se_handler
 
 .type	xts_se_handler,\@abi-omnipotent
@@ -2861,9 +2880,8 @@ xts_se_handler:
 	lea	512($context),%rdi	# & context.Xmm6
 	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
 	.long	0xa548f3fc		# cld; rep movsq
-	lea	0x68+160(%rax),%rax	# adjust stack pointer
 
-	jmp	.Lcommon_seh_tail
+	jmp	.Lcommon_rbp_tail
 .size	xts_se_handler,.-xts_se_handler
 ___
 $code.=<<___;
@@ -2896,11 +2914,16 @@ cbc_se_handler:
 	cmp	%r10,%rbx		# context->Rip>="epilogue" label
 	jae	.Lcommon_seh_tail
 
-	lea	0(%rax),%rsi		# top of stack
+	lea	16(%rax),%rsi		# %xmm save area
 	lea	512($context),%rdi	# &context.Xmm6
 	mov	\$8,%ecx		# 4*sizeof(%xmm0)/sizeof(%rax)
 	.long	0xa548f3fc		# cld; rep movsq
-	lea	0x58(%rax),%rax		# adjust stack pointer
+
+.Lcommon_rbp_tail:
+	mov	160($context),%rax	# pull context->Rbp
+	mov	(%rax),%rbp		# restore saved %rbp
+	lea	8(%rax),%rax		# adjust stack pointer
+	mov	%rbp,160($context)	# restore context->Rbp
 	jmp	.Lcommon_seh_tail
 
 .Lrestore_cbc_rax:
