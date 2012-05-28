@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 #
 # ====================================================================
-# Written by Andy Polyakov <appro@fy.chalmers.se> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. Rights for redistribution and usage in source and binary
 # forms are granted according to the OpenSSL license.
 # ====================================================================
@@ -39,6 +39,11 @@
 # contrary, 64-bit version, sha512_block, is ~30% *slower* than 32-bit
 # sha256_block:-( This is presumably because 64-bit shifts/rotates
 # apparently are not atomic instructions, but implemented in microcode.
+#
+# May 2012.
+#
+# Optimization including one of Pavel Semjanov's ideas, alternative
+# Maj, resulted in >=5% improvement on most CPUs, 20% on P4.
 
 $flavour = shift;
 $output  = shift;
@@ -59,7 +64,7 @@ if ($output =~ /512/) {
 	$SZ=8;
 	@ROT=($A,$B,$C,$D,$E,$F,$G,$H)=("%rax","%rbx","%rcx","%rdx",
 					"%r8", "%r9", "%r10","%r11");
-	($T1,$a0,$a1,$a2)=("%r12","%r13","%r14","%r15");
+	($T1,$a0,$a1,$a2,$a3)=("%r12","%r13","%r14","%r15","%rdi");
 	@Sigma0=(28,34,39);
 	@Sigma1=(14,18,41);
 	@sigma0=(1,  8, 7);
@@ -71,7 +76,7 @@ if ($output =~ /512/) {
 	$SZ=4;
 	@ROT=($A,$B,$C,$D,$E,$F,$G,$H)=("%eax","%ebx","%ecx","%edx",
 					"%r8d","%r9d","%r10d","%r11d");
-	($T1,$a0,$a1,$a2)=("%r12d","%r13d","%r14d","%r15d");
+	($T1,$a0,$a1,$a2,$a3)=("%r12d","%r13d","%r14d","%r15d","%edi");
 	@Sigma0=( 2,13,22);
 	@Sigma1=( 6,11,25);
 	@sigma0=( 7,18, 3);
@@ -79,8 +84,7 @@ if ($output =~ /512/) {
 	$rounds=64;
 }
 
-$ctx="%rdi";	# 1st arg
-$round="%rdi";	# zaps $ctx
+$ctx="%rdi";	# 1st arg, zapped by $a3
 $inp="%rsi";	# 2nd arg
 $Tbl="%rbp";
 
@@ -97,68 +101,71 @@ sub ROUND_00_15()
 $code.=<<___;
 	ror	\$`$Sigma1[2]-$Sigma1[1]`,$a0
 	mov	$f,$a2
-	mov	$T1,`$SZ*($i&0xf)`(%rsp)
 
 	ror	\$`$Sigma0[2]-$Sigma0[1]`,$a1
 	xor	$e,$a0
 	xor	$g,$a2			# f^g
 
 	ror	\$`$Sigma1[1]-$Sigma1[0]`,$a0
-	add	$h,$T1			# T1+=h
 	xor	$a,$a1
-
-	add	($Tbl,$round,$SZ),$T1	# T1+=K[round]
 	and	$e,$a2			# (f^g)&e
-	mov	$b,$h
 
-	ror	\$`$Sigma0[1]-$Sigma0[0]`,$a1
-	xor	$e,$a0
+	mov	$T1,`$SZ*($i&0xf)`(%rsp)
+	add	$h,$T1			# T1+=h
 	xor	$g,$a2			# Ch(e,f,g)=((f^g)&e)^g
 
-	xor	$c,$h			# b^c
-	xor	$a,$a1
+	ror	\$`$Sigma0[1]-$Sigma0[0]`,$a1
 	add	$a2,$T1			# T1+=Ch(e,f,g)
-	mov	$b,$a2
+	xor	$e,$a0
+
+	add	($Tbl),$T1		# T1+=K[round]
+	mov	$a,$a2
+	xor	$a,$a1
 
 	ror	\$$Sigma1[0],$a0	# Sigma1(e)
-	and	$a,$h			# h=(b^c)&a
-	and	$c,$a2			# b&c
+	xor	$b,$a2			# a^b, b^c in next round
+	mov	$b,$h
 
 	ror	\$$Sigma0[0],$a1	# Sigma0(a)
+	and	$a2,$a3
 	add	$a0,$T1			# T1+=Sigma1(e)
-	add	$a2,$h			# h+=b&c (completes +=Maj(a,b,c)
 
+	xor	$a3,$h			# h=Maj(a,b,c)=Ch(a^b,c,b)
 	add	$T1,$d			# d+=T1
 	add	$T1,$h			# h+=T1
-	lea	1($round),$round	# round++
+___
+$code.=<<___ if ($i>=15);
+	mov	`$SZ*(($i+2)&0xf)`(%rsp),$a0
+___
+$code.=<<___;
+	lea	$SZ($Tbl),$Tbl		# round++
 	add	$a1,$h			# h+=Sigma0(a)
 
 ___
+	($a2,$a3) = ($a3,$a2);
 }
 
 sub ROUND_16_XX()
 { my ($i,$a,$b,$c,$d,$e,$f,$g,$h) = @_;
 
 $code.=<<___;
-	mov	`$SZ*(($i+1)&0xf)`(%rsp),$a0
+	#mov	`$SZ*(($i+1)&0xf)`(%rsp),$a0
 	mov	`$SZ*(($i+14)&0xf)`(%rsp),$a1
+
 	mov	$a0,$T1
+	ror	\$`$sigma0[1]-$sigma0[0]`,$a0
 	mov	$a1,$a2
+	ror	\$`$sigma1[1]-$sigma1[0]`,$a1
 
-	ror	\$`$sigma0[1]-$sigma0[0]`,$T1
-	xor	$a0,$T1
-	shr	\$$sigma0[2],$a0
+	xor	$T1,$a0
+	shr	\$$sigma0[2],$T1
+	ror	\$$sigma0[0],$a0
+	xor	$a2,$a1
+	shr	\$$sigma1[2],$a2
 
-	ror	\$$sigma0[0],$T1
-	xor	$T1,$a0			# sigma0(X[(i+1)&0xf])
-	mov	`$SZ*(($i+9)&0xf)`(%rsp),$T1
-
-	ror	\$`$sigma1[1]-$sigma1[0]`,$a2
-	xor	$a1,$a2
-	shr	\$$sigma1[2],$a1
-
-	ror	\$$sigma1[0],$a2
-	add	$a0,$T1
+	xor	$a0,$T1			# sigma0(X[(i+1)&0xf])
+	ror	\$$sigma1[0],$a1
+	add	`$SZ*(($i+9)&0xf)`(%rsp),$T1
 	xor	$a2,$a1			# sigma1(X[(i+14)&0xf])
 
 	add	`$SZ*($i&0xf)`(%rsp),$T1
@@ -193,8 +200,6 @@ $func:
 	mov	%r11,$_rsp		# save copy of %rsp
 .Lprologue:
 
-	lea	$TABLE(%rip),$Tbl
-
 	mov	$SZ*0($ctx),$A
 	mov	$SZ*1($ctx),$B
 	mov	$SZ*2($ctx),$C
@@ -207,7 +212,9 @@ $func:
 
 .align	16
 .Lloop:
-	xor	$round,$round
+	mov	$B,$a3
+	lea	$TABLE(%rip),$Tbl
+	xor	$C,$a3			# magic
 ___
 	for($i=0;$i<16;$i++) {
 		$code.="	mov	$SZ*$i($inp),$T1\n";
@@ -228,8 +235,8 @@ ___
 	}
 
 $code.=<<___;
-	cmp	\$$rounds,$round
-	jb	.Lrounds_16_xx
+	testl	\$-1,($Tbl)
+	jnz	.Lrounds_16_xx
 
 	mov	$_ctx,$ctx
 	lea	16*$SZ($inp),$inp
@@ -289,6 +296,8 @@ $TABLE:
 	.long	0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3
 	.long	0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208
 	.long	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+	.long	0
+	.asciz	"SHA256 block transform for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 } else {
 $code.=<<___;
@@ -335,6 +344,8 @@ $TABLE:
 	.quad	0x3c9ebe0a15c9bebc,0x431d67c49c100d4c
 	.quad	0x4cc5d4becb3e42b6,0x597f299cfc657e2a
 	.quad	0x5fcb6fab3ad6faec,0x6c44198c4a475817
+	.long	0
+	.asciz	"SHA512 block transfort for x86_64, CRYPTOGAMS by <appro\@openssl.org>
 ___
 }
 
