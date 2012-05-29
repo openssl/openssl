@@ -538,14 +538,16 @@ struct ssl_session_st
 	unsigned char *tlsext_tick;	/* Session ticket */
 	size_t tlsext_ticklen;		/* Session ticket length */
 	long tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */
+#endif
+#ifndef OPENSSL_NO_SRP
+	char *srp_username;
+#endif
+#ifndef OPENSSL_NO_TLSEXT
 	/* Used by client: the proof for this session.
 	 * We store it outside the sess_cert structure, since the proof
 	 * is received before the certificate. */
 	unsigned char *audit_proof;
 	size_t audit_proof_length;
-#endif
-#ifndef OPENSSL_NO_SRP
-	char *srp_username;
 #endif
 	};
 
