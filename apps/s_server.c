@@ -309,6 +309,12 @@ static long socket_mtu;
 static int cert_chain = 0;
 #endif
 
+#ifndef OPENSSL_NO_TLSEXT
+static BIO *authz_in = NULL;
+static const char *s_authz_file = NULL;
+static unsigned char *authz = NULL;
+static size_t authz_length;
+#endif
 
 #ifndef OPENSSL_NO_PSK
 static char *psk_identity="Client_identity";
@@ -469,6 +475,7 @@ static void sv_usage(void)
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use\n");
 	BIO_printf(bio_err,"                 (default is %s)\n",TEST_CERT);
+	BIO_printf(bio_err," -authz arg   -  binary authz file for certificate\n");
 	BIO_printf(bio_err," -crl_check    - check the peer certificate has not been revoked by its CA.\n" \
 	                   "                 The CRL(s) are appended to the certificate file\n");
 	BIO_printf(bio_err," -crl_check_all - check the peer certificate has not been revoked by its CA\n" \
@@ -1033,6 +1040,13 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			s_cert_file= *(++argv);
 			}
+#ifndef OPENSSL_NO_TLSEXT
+		else if	(strcmp(*argv,"-authz") == 0)
+			{
+			if (--argc < 1) goto bad;
+			s_authz_file = *(++argv);
+			}
+#endif
 		else if	(strcmp(*argv,"-certform") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1474,7 +1488,34 @@ bad:
 			next_proto.data = NULL;
 			}
 # endif
-#endif
+		if (s_authz_file != NULL)
+			{
+			/* Allow authzs up to 64KB bytes. */
+			static const size_t authz_limit = 65536;
+
+			authz_in = BIO_new(BIO_s_file_internal());
+			if (authz_in == NULL)
+				{
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+
+			if (BIO_read_filename(authz_in, s_authz_file) <= 0)
+				{
+				ERR_print_errors(bio_err);
+				goto end;
+				}
+			authz = OPENSSL_malloc(authz_limit);
+			authz_length = BIO_read(authz_in, authz, authz_limit);
+			if (authz_length == authz_limit || authz_length <= 0)
+				{
+				BIO_printf(bio_err, "authz too large\n");
+				goto end;
+				}
+			BIO_free(authz_in);
+			authz_in = NULL;
+			}
+#endif /* OPENSSL_NO_TLSEXT */
 		}
 
 
@@ -1770,6 +1811,10 @@ bad:
 	if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain))
 		goto end;
 #ifndef OPENSSL_NO_TLSEXT
+	if (authz != NULL && !SSL_CTX_use_authz(ctx, authz, authz_length))
+		goto end;
+#endif
+#ifndef OPENSSL_NO_TLSEXT
 	if (ctx2 && !set_cert_key_stuff(ctx2,s_cert2,s_key2, NULL))
 		goto end; 
 #endif
@@ -1953,6 +1998,10 @@ end:
 		X509_free(s_cert2);
 	if (s_key2)
 		EVP_PKEY_free(s_key2);
+	if (authz != NULL)
+		OPENSSL_free(authz);
+	if (authz_in != NULL)
+		BIO_free(authz_in);
 #endif
 	if (bio_s_out != NULL)
 		{

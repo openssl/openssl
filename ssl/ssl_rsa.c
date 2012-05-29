@@ -66,6 +66,10 @@
 
 static int ssl_set_cert(CERT *c, X509 *x509);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
+#ifndef OPENSSL_NO_TLSEXT
+static int ssl_set_authz(CERT *c, unsigned char *authz,
+			 size_t authz_length);
+#endif
 int SSL_use_certificate(SSL *ssl, X509 *x)
 	{
 	if (x == NULL)
@@ -459,6 +463,15 @@ static int ssl_set_cert(CERT *c, X509 *x)
 		X509_free(c->pkeys[i].x509);
 	CRYPTO_add(&x->references,1,CRYPTO_LOCK_X509);
 	c->pkeys[i].x509=x;
+#ifndef OPENSSL_NO_TLSEXT
+	/* Free the old authz data, if it exists. */
+	if (c->pkeys[i].authz != NULL)
+		{
+		OPENSSL_free(c->pkeys[i].authz);
+		c->pkeys[i].authz = NULL;
+		c->pkeys[i].authz_length = 0;
+		}
+#endif
 	c->key= &(c->pkeys[i]);
 
 	c->valid=0;
@@ -725,7 +738,7 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
 
 	ERR_clear_error(); /* clear error stack for SSL_CTX_use_certificate() */
 
-	in=BIO_new(BIO_s_file_internal());
+	in = BIO_new(BIO_s_file_internal());
 	if (in == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE,ERR_R_BUF_LIB);
@@ -738,14 +751,16 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
 		goto end;
 		}
 
-	x=PEM_read_bio_X509_AUX(in,NULL,ctx->default_passwd_callback,ctx->default_passwd_callback_userdata);
+	x=PEM_read_bio_X509_AUX(in,NULL,ctx->default_passwd_callback,
+				ctx->default_passwd_callback_userdata);
 	if (x == NULL)
 		{
 		SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE,ERR_R_PEM_LIB);
 		goto end;
 		}
 
-	ret=SSL_CTX_use_certificate(ctx,x);
+	ret = SSL_CTX_use_certificate(ctx, x);
+
 	if (ERR_peek_error() != 0)
 		ret = 0;  /* Key/certificate mismatch doesn't imply ret==0 ... */
 	if (ret)
@@ -757,13 +772,15 @@ int SSL_CTX_use_certificate_chain_file(SSL_CTX *ctx, const char *file)
 		int r;
 		unsigned long err;
 		
-		if (ctx->extra_certs != NULL) 
+		if (ctx->extra_certs != NULL)
 			{
 			sk_X509_pop_free(ctx->extra_certs, X509_free);
 			ctx->extra_certs = NULL;
 			}
 
-		while ((ca = PEM_read_bio_X509(in,NULL,ctx->default_passwd_callback,ctx->default_passwd_callback_userdata))
+		while ((ca = PEM_read_bio_X509(in, NULL,
+					ctx->default_passwd_callback,
+					ctx->default_passwd_callback_userdata))
 			!= NULL)
 			{
 			r = SSL_CTX_add_extra_chain_cert(ctx, ca);
@@ -792,3 +809,96 @@ end:
 	return(ret);
 	}
 #endif
+
+#ifndef OPENSSL_NO_TLSEXT
+/* authz_validate returns true iff authz is well formed, i.e. that it meets the
+ * wire format as documented in the CERT_PKEY structure and that there are no
+ * duplicate entries. */
+static char authz_validate(const unsigned char *authz, size_t length)
+	{
+	unsigned char types_seen_bitmap[32];
+
+	if (!authz)
+		return 1;
+
+	memset(types_seen_bitmap, 0, sizeof(types_seen_bitmap));
+
+	for (;;)
+		{
+		unsigned char type, byte, bit;
+		unsigned short len;
+
+		if (!length)
+			return 1;
+
+		type = *(authz++);
+		length--;
+
+		byte = type / 8;
+		bit = type & 7;
+		if (types_seen_bitmap[byte] & (1 << bit))
+			return 0;
+		types_seen_bitmap[byte] |= (1 << bit);
+
+		if (length < 2)
+			return 0;
+		len = ((unsigned short) authz[0]) << 8 |
+		      ((unsigned short) authz[1]);
+		authz += 2;
+		length -= 2;
+
+		if (length < len)
+			return 0;
+
+		authz += len;
+		length -= len;
+		}
+	}
+
+static int ssl_set_authz(CERT *c, unsigned char *authz, size_t authz_length)
+	{
+	CERT_PKEY *current_key = c->key;
+	if (current_key == NULL)
+		return 0;
+	if (!authz_validate(authz, authz_length))
+		{
+		SSLerr(SSL_F_SSL_SET_AUTHZ,SSL_R_INVALID_AUTHZ_DATA);
+		return(0);
+		}
+	current_key->authz = OPENSSL_realloc(current_key->authz, authz_length);
+	current_key->authz_length = authz_length;
+	memcpy(current_key->authz, authz, authz_length);
+	return 1;
+	}
+
+int SSL_CTX_use_authz(SSL_CTX *ctx, unsigned char *authz,
+	size_t authz_length)
+	{
+	if (authz == NULL)
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_AUTHZ,ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	if (!ssl_cert_inst(&ctx->cert))
+		{
+		SSLerr(SSL_F_SSL_CTX_USE_AUTHZ,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+	return ssl_set_authz(ctx->cert, authz, authz_length);
+	}
+
+int SSL_use_authz(SSL *ssl, unsigned char *authz, size_t authz_length)
+	{
+	if (authz == NULL)
+		{
+		SSLerr(SSL_F_SSL_USE_AUTHZ,ERR_R_PASSED_NULL_PARAMETER);
+		return 0;
+		}
+	if (!ssl_cert_inst(&ssl->cert))
+		{
+		SSLerr(SSL_F_SSL_USE_AUTHZ,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+	return ssl_set_authz(ssl->cert, authz, authz_length);
+	}
+#endif /* OPENSSL_NO_TLSEXT */

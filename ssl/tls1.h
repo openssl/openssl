@@ -281,6 +281,14 @@ extern "C" {
 
 #define TLSEXT_MAXLEN_host_name 255
 
+/* From RFC 5878 */
+#define TLSEXT_SUPPLEMENTALDATATYPE_authz_data 16386
+/* This is not IANA assigned. See
+ * https://www.iana.org/assignments/tls-parameters/tls-parameters.xml#authorization-data-rules */
+#define TLSEXT_AUTHZDATAFORMAT_audit_proof 182
+
+#define TLSEXT_MAXLEN_supplemental_data 1024*16 /* Let's limit to 16k */
+
 const char *SSL_get_servername(const SSL *s, const int type);
 int SSL_get_servername_type(const SSL *s);
 /* SSL_export_keying_material exports a value derived from the master secret,
@@ -359,6 +367,13 @@ SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TLSEXT_OPAQUE_PRF_INPUT_CB_ARG, 0, arg)
 
 #define SSL_CTX_set_tlsext_ticket_key_cb(ssl, cb) \
 SSL_CTX_callback_ctrl(ssl,SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB,(void (*)(void))cb)
+
+/* Used by clients to process audit proofs. */
+#define SSL_CTX_set_tlsext_authz_server_audit_proof_cb(ctx, cb) \
+SSL_CTX_callback_ctrl(ctx, SSL_CTRL_SET_TLSEXT_AUTHZ_SERVER_AUDIT_PROOF_CB,(void (*)(void))cb)
+
+#define SSL_CTX_set_tlsext_authz_server_audit_proof_cb_arg(ctx, arg) \
+SSL_CTX_ctrl(ctx, SSL_CTRL_SET_TLSEXT_AUTHZ_SERVER_AUDIT_PROOF_CB_ARG, 0, arg);
 
 #ifndef OPENSSL_NO_HEARTBEATS
 #define SSL_TLSEXT_HB_ENABLED				0x01

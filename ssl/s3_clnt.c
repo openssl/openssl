@@ -306,10 +306,27 @@ int ssl3_connect(SSL *s)
 #endif
 				}
 			else
-				s->state=SSL3_ST_CR_CERT_A;
+				{
+#ifndef OPENSSL_NO_TLSEXT
+				/* The server hello indicated that
+				 * an audit proof would follow. */
+				if (s->s3->tlsext_authz_server_promised)
+					s->state=SSL3_ST_CR_SUPPLEMENTAL_DATA_A;
+				else
+#endif
+					s->state=SSL3_ST_CR_CERT_A;
+				}
 			s->init_num=0;
 			break;
-
+#ifndef OPENSSL_NO_TLSEXT
+		case SSL3_ST_CR_SUPPLEMENTAL_DATA_A:
+		case SSL3_ST_CR_SUPPLEMENTAL_DATA_B:
+			ret = tls1_get_server_supplemental_data(s);
+			if (ret <= 0) goto end;
+			s->state=SSL3_ST_CR_CERT_A;
+			s->init_num = 0;
+			break;
+#endif
 		case SSL3_ST_CR_CERT_A:
 		case SSL3_ST_CR_CERT_B:
 #ifndef OPENSSL_NO_TLSEXT
@@ -1231,8 +1248,22 @@ int ssl3_get_server_certificate(SSL *s)
 	s->session->verify_result = s->verify_result;
 
 	x=NULL;
-	ret=1;
+#ifndef OPENSSL_NO_TLSEXT
+	/* Check the audit proof. */
+	if (s->ctx->tlsext_authz_server_audit_proof_cb)
+		{
+		ret = s->ctx->tlsext_authz_server_audit_proof_cb(s,
+			s->ctx->tlsext_authz_server_audit_proof_cb_arg);
+		if (ret <= 0)
+			{
+			al = SSL_AD_BAD_CERTIFICATE;
+			SSLerr(SSL_F_SSL3_GET_SERVER_CERTIFICATE,SSL_R_INVALID_AUDIT_PROOF);
+			goto f_err;
+			}
+		}
 
+#endif
+	ret=1;
 	if (0)
 		{
 f_err:
@@ -3432,3 +3463,106 @@ int ssl_do_client_cert_cb(SSL *s, X509 **px509, EVP_PKEY **ppkey)
 		i = s->ctx->client_cert_cb(s,px509,ppkey);
 	return i;
 	}
+
+#ifndef OPENSSL_NO_TLSEXT
+int tls1_get_server_supplemental_data(SSL *s)
+	{
+	int al;
+	int ok;
+	unsigned long supp_data_len, authz_data_len;
+	long n;
+	unsigned short supp_data_type, authz_data_type, proof_len;
+	const unsigned char *p;
+	unsigned char *new_proof;
+
+	n=s->method->ssl_get_message(s,
+		SSL3_ST_CR_SUPPLEMENTAL_DATA_A,
+		SSL3_ST_CR_SUPPLEMENTAL_DATA_B,
+		SSL3_MT_SUPPLEMENTAL_DATA,
+		/* use default limit */
+		TLSEXT_MAXLEN_supplemental_data,
+		&ok);
+
+	if (!ok) return((int)n);
+
+	p = (unsigned char *)s->init_msg;
+
+	/* The message cannot be empty */
+	if (n < 3)
+		{
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA,SSL_R_LENGTH_MISMATCH);
+		goto f_err;
+		}
+	/* Length of supplemental data */
+	n2l3(p,supp_data_len);
+	n -= 3;
+	/* We must have at least one supplemental data entry
+	 * with type (1 byte) and length (2 bytes). */
+	if (supp_data_len != (unsigned long) n || n < 4)
+		{
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA,SSL_R_LENGTH_MISMATCH);
+		goto f_err;
+		}
+	/* Supplemental data type: must be authz_data */
+	n2s(p,supp_data_type);
+	n -= 2;
+	if (supp_data_type != TLSEXT_SUPPLEMENTALDATATYPE_authz_data)
+		{
+		al = SSL_AD_UNEXPECTED_MESSAGE;
+		SSLerr(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA,SSL_R_UNKNOWN_SUPPLEMENTAL_DATA_TYPE);
+		goto f_err;
+		}
+	/* Authz data length */
+	n2s(p, authz_data_len);
+	n -= 2;
+	if (authz_data_len != (unsigned long) n || n < 1)
+		{
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA,SSL_R_LENGTH_MISMATCH);
+		goto f_err;
+		}
+	/* Authz data type: must be audit_proof */
+	authz_data_type = *(p++);
+	n -= 1;
+	if (authz_data_type != TLSEXT_AUTHZDATAFORMAT_audit_proof)
+		{
+		al=SSL_AD_UNEXPECTED_MESSAGE;
+		SSLerr(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA,SSL_R_UNKNOWN_AUTHZ_DATA_TYPE);
+		goto f_err;
+		}
+	/* We have a proof: read its length */
+	if (n < 2)
+		{
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA,SSL_R_LENGTH_MISMATCH);
+		goto f_err;
+		}
+	n2s(p, proof_len);
+	n -= 2;
+	if (proof_len != (unsigned long) n)
+		{
+		al = SSL_AD_DECODE_ERROR;
+		SSLerr(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA,SSL_R_LENGTH_MISMATCH);
+		goto f_err;
+		}
+	/* Store the proof */
+	new_proof = OPENSSL_realloc(s->session->audit_proof,
+				    proof_len);
+	if (new_proof == NULL)
+		{
+		SSLerr(SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA,ERR_R_MALLOC_FAILURE);
+		return 0;
+		}
+	s->session->audit_proof_length = proof_len;
+	s->session->audit_proof = new_proof;
+	memcpy(s->session->audit_proof, p, proof_len);
+
+	/* Got the proof, but can't verify it yet. */
+	return 1;
+f_err:
+	ssl3_send_alert(s,SSL3_AL_FATAL,al);
+	return -1;
+	}
+#endif
