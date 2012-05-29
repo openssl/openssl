@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) RFC 5878 support.
+     [Emilia Kasper, Adam Langley, Ben Laurie (Google)]
+
   *) Experimental multi-implementation support for FIPS capable OpenSSL.
      When in FIPS mode the approved implementations are used as normal,
      when not in FIPS mode the internal unapproved versions are used instead.
