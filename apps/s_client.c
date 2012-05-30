@@ -202,6 +202,7 @@ static int c_debug=0;
 #ifndef OPENSSL_NO_TLSEXT
 static int c_tlsextdebug=0;
 static int c_status_req=0;
+static int c_proof_debug=0;
 #endif
 static int c_msg=0;
 static int c_showcerts=0;
@@ -213,6 +214,7 @@ static void sc_usage(void);
 static void print_stuff(BIO *berr,SSL *con,int full);
 #ifndef OPENSSL_NO_TLSEXT
 static int ocsp_resp_cb(SSL *s, void *arg);
+static int audit_proof_cb(SSL *s, void *arg);
 #endif
 static BIO *bio_c_out=NULL;
 static int c_quiet=0;
@@ -357,6 +359,7 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -tlsextdebug      - hex dump of all TLS extensions received\n");
 	BIO_printf(bio_err," -status           - request certificate status from server\n");
 	BIO_printf(bio_err," -no_ticket        - disable use of RFC4507bis session tickets\n");
+	BIO_printf(bio_err," -proof_debug      - request an audit proof and print its hex dump\n");
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	BIO_printf(bio_err," -nextprotoneg arg - enable NPN extension, considering named protocols supported (comma-separated list)\n");
 # endif
@@ -731,6 +734,8 @@ int MAIN(int argc, char **argv)
 			c_tlsextdebug=1;
 		else if	(strcmp(*argv,"-status") == 0)
 			c_status_req=1;
+		else if	(strcmp(*argv,"-proof_debug") == 0)
+			c_proof_debug=1;
 #endif
 #ifdef WATT32
 		else if (strcmp(*argv,"-wdebug") == 0)
@@ -1212,6 +1217,9 @@ bad:
 		}
 
 #endif
+	if (c_proof_debug)
+		SSL_CTX_set_tlsext_authz_server_audit_proof_cb(ctx,
+							       audit_proof_cb);
 #endif
 
 	con=SSL_new(ctx);
@@ -2147,4 +2155,26 @@ static int ocsp_resp_cb(SSL *s, void *arg)
 	return 1;
 	}
 
+static int audit_proof_cb(SSL *s, void *arg)
+	{
+	const unsigned char *proof;
+	size_t proof_len;
+	size_t i;
+	SSL_SESSION *sess = SSL_get_session(s);
+
+	proof = SSL_SESSION_get_tlsext_authz_server_audit_proof(sess,
+								&proof_len);
+	if (proof != NULL)
+		{
+		BIO_printf(bio_c_out, "Audit proof: ");
+		for (i = 0; i < proof_len; ++i)
+			BIO_printf(bio_c_out, "%02X", proof[i]);
+		BIO_printf(bio_c_out, "\n");
+		}
+	else
+		{
+		BIO_printf(bio_c_out, "No audit proof found.\n");
+		}
+	return 1;
+	}
 #endif

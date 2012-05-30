@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) RFC 5878 support.
+     [Emilia Kasper, Adam Langley, Ben Laurie (Google)]
+
   *) Support for automatic EC temporary key parameter selection. If enabled
      the most preferred EC parameters are automatically used instead of
      hardcoded fixed parameters. Now a server just has to call:

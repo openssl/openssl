@@ -474,6 +474,15 @@ typedef struct cert_pkey_st
 	const EVP_MD *digest;
 	/* Chain for this certificate */
 	STACK_OF(X509) *chain;
+#ifndef OPENSSL_NO_TLSEXT
+	/* authz/authz_length contain authz data for this certificate. The data
+	 * is in wire format, specifically it's a series of records like:
+	 *   uint8_t authz_type;  // (RFC 5878, AuthzDataFormat)
+	 *   uint16_t length;
+	 *   uint8_t data[length]; */
+	unsigned char *authz;
+	size_t authz_length;
+#endif
 	} CERT_PKEY;
 
 typedef struct cert_st
@@ -856,6 +865,7 @@ int ssl_undefined_function(SSL *s);
 int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
 CERT_PKEY *ssl_get_server_send_pkey(SSL *);
+unsigned char *ssl_get_authz_data(SSL *s, size_t *authz_length);
 EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *c, const EVP_MD **pmd);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
 void ssl_set_cert_masks(CERT *c, const SSL_CIPHER *cipher);
@@ -1124,6 +1134,11 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data, unsigned char *d,
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n);
 int ssl_prepare_clienthello_tlsext(SSL *s);
 int ssl_prepare_serverhello_tlsext(SSL *s);
+
+/* server only */
+int tls1_send_server_supplemental_data(SSL *s);
+/* client only */
+int tls1_get_server_supplemental_data(SSL *s);
 
 #ifndef OPENSSL_NO_HEARTBEATS
 int tls1_heartbeat(SSL *s);

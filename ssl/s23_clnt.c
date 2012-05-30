@@ -340,6 +340,8 @@ static int ssl23_client_hello(SSL *s)
 		if (s->ctx->tlsext_opaque_prf_input_callback != 0 || s->tlsext_opaque_prf_input != NULL)
 			ssl2_compat = 0;
 #endif
+                if (s->ctx->tlsext_authz_server_audit_proof_cb != NULL)
+			ssl2_compat = 0;
 		}
 #endif
 

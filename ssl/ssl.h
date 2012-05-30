@@ -539,11 +539,18 @@ struct ssl_session_st
 #endif /* OPENSSL_NO_EC */
 	/* RFC4507 info */
 	unsigned char *tlsext_tick;	/* Session ticket */
-	size_t	tlsext_ticklen;		/* Session ticket length */	
+	size_t tlsext_ticklen;		/* Session ticket length */
 	long tlsext_tick_lifetime_hint;	/* Session lifetime hint in seconds */
 #endif
 #ifndef OPENSSL_NO_SRP
 	char *srp_username;
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+	/* Used by client: the proof for this session.
+	 * We store it outside the sess_cert structure, since the proof
+	 * is received before the certificate. */
+	unsigned char *audit_proof;
+	size_t audit_proof_length;
 #endif
 	};
 
@@ -977,7 +984,7 @@ struct ssl_ctx_st
 	void *next_proto_select_cb_arg;
 # endif
         /* SRTP profiles we are willing to do from RFC 5764 */
-        STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;  
+	STACK_OF(SRTP_PROTECTION_PROFILE) *srtp_profiles;  
 #endif
 	/* Callback for disabling session caching and ticket support
 	 * on a session basis, depending on the chosen cipher. */
@@ -989,6 +996,8 @@ struct ssl_ctx_st
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist;
 #endif /* OPENSSL_NO_EC */
+	int (*tlsext_authz_server_audit_proof_cb)(SSL *s, void *arg);
+	void *tlsext_authz_server_audit_proof_cb_arg;
 	};
 
 #endif
@@ -1608,7 +1617,10 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_GET_TLS_EXT_HEARTBEAT_PENDING		86
 #define SSL_CTRL_SET_TLS_EXT_HEARTBEAT_NO_REQUESTS	87
 #endif
-#endif
+/* Callback for verifying audit proofs (client only) */
+#define SSL_CTRL_SET_TLSEXT_AUTHZ_SERVER_AUDIT_PROOF_CB 95
+#define SSL_CTRL_SET_TLSEXT_AUTHZ_SERVER_AUDIT_PROOF_CB_ARG 96
+#endif /* OPENSSL_NO_TLSEXT */
 
 #define DTLS_CTRL_GET_TIMEOUT		73
 #define DTLS_CTRL_HANDLE_TIMEOUT	74
@@ -1768,6 +1780,11 @@ int	SSL_use_PrivateKey_ASN1(int pk,SSL *ssl, const unsigned char *d, long len);
 int	SSL_use_certificate(SSL *ssl, X509 *x);
 int	SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len);
 
+#ifndef OPENSSL_NO_TLSEXT
+int	SSL_CTX_use_authz(SSL_CTX *ctx, unsigned char *authz, size_t authz_length);
+int	SSL_use_authz(SSL *ssl, unsigned char *authz, size_t authz_length);
+#endif
+
 #ifndef OPENSSL_NO_STDIO
 int	SSL_use_RSAPrivateKey_file(SSL *ssl, const char *file, int type);
 int	SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type);
@@ -1811,6 +1828,10 @@ int	SSL_SESSION_print_fp(FILE *fp,const SSL_SESSION *ses);
 #endif
 #ifndef OPENSSL_NO_BIO
 int	SSL_SESSION_print(BIO *fp,const SSL_SESSION *ses);
+#endif
+#ifndef OPENSSL_NO_TLSEXT
+unsigned char *SSL_SESSION_get_tlsext_authz_server_audit_proof(SSL_SESSION *s,
+	size_t *proof_length);
 #endif
 void	SSL_SESSION_free(SSL_SESSION *ses);
 int	i2d_SSL_SESSION(SSL_SESSION *in,unsigned char **pp);
@@ -2115,6 +2136,7 @@ void ERR_load_SSL_strings(void);
 /* Error codes for the SSL functions. */
 
 /* Function codes. */
+#define SSL_F_AUTHZ_VALIDATE				 323
 #define SSL_F_CLIENT_CERTIFICATE			 100
 #define SSL_F_CLIENT_FINISHED				 167
 #define SSL_F_CLIENT_HELLO				 101
@@ -2260,6 +2282,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_CTX_SET_SESSION_ID_CONTEXT		 219
 #define SSL_F_SSL_CTX_SET_SSL_VERSION			 170
 #define SSL_F_SSL_CTX_SET_TRUST				 229
+#define SSL_F_SSL_CTX_USE_AUTHZ				 324
 #define SSL_F_SSL_CTX_USE_CERTIFICATE			 171
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_ASN1		 172
 #define SSL_F_SSL_CTX_USE_CERTIFICATE_CHAIN_FILE	 220
@@ -2274,6 +2297,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_DO_HANDSHAKE				 180
 #define SSL_F_SSL_GET_NEW_SESSION			 181
 #define SSL_F_SSL_GET_PREV_SESSION			 217
+#define SSL_F_SSL_GET_SERVER_CERT_INDEX			 329
 #define SSL_F_SSL_GET_SERVER_SEND_PKEY			 182
 #define SSL_F_SSL_GET_SIGN_PKEY				 183
 #define SSL_F_SSL_INIT_WBIO_BUFFER			 184
@@ -2297,6 +2321,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_SESSION_PRINT_FP			 190
 #define SSL_F_SSL_SESSION_SET1_ID_CONTEXT		 312
 #define SSL_F_SSL_SESS_CERT_NEW				 225
+#define SSL_F_SSL_SET_AUTHZ				 325
 #define SSL_F_SSL_SET_CERT				 191
 #define SSL_F_SSL_SET_CIPHER_LIST			 271
 #define SSL_F_SSL_SET_FD				 192
@@ -2313,6 +2338,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_UNDEFINED_CONST_FUNCTION		 243
 #define SSL_F_SSL_UNDEFINED_FUNCTION			 197
 #define SSL_F_SSL_UNDEFINED_VOID_FUNCTION		 244
+#define SSL_F_SSL_USE_AUTHZ				 328
 #define SSL_F_SSL_USE_CERTIFICATE			 198
 #define SSL_F_SSL_USE_CERTIFICATE_ASN1			 199
 #define SSL_F_SSL_USE_CERTIFICATE_FILE			 200
@@ -2330,16 +2356,19 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_TLS1_CHECK_SERVERHELLO_TLSEXT		 274
 #define SSL_F_TLS1_ENC					 210
 #define SSL_F_TLS1_EXPORT_KEYING_MATERIAL		 314
+#define SSL_F_TLS1_GET_SERVER_SUPPLEMENTAL_DATA		 326
 #define SSL_F_TLS1_HEARTBEAT				 315
 #define SSL_F_TLS1_PREPARE_CLIENTHELLO_TLSEXT		 275
 #define SSL_F_TLS1_PREPARE_SERVERHELLO_TLSEXT		 276
 #define SSL_F_TLS1_PRF					 284
+#define SSL_F_TLS1_SEND_SERVER_SUPPLEMENTAL_DATA	 327
 #define SSL_F_TLS1_SETUP_KEY_BLOCK			 211
 #define SSL_F_WRITE_PENDING				 212
 
 /* Reason codes. */
 #define SSL_R_APP_DATA_IN_HANDSHAKE			 100
 #define SSL_R_ATTEMPT_TO_REUSE_SESSION_IN_DIFFERENT_CONTEXT 272
+#define SSL_R_AUTHZ_DATA_TOO_LARGE			 375
 #define SSL_R_BAD_ALERT_RECORD				 101
 #define SSL_R_BAD_AUTHENTICATION_TYPE			 102
 #define SSL_R_BAD_CHANGE_CIPHER_SPEC			 103
@@ -2428,6 +2457,8 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_HTTP_REQUEST				 156
 #define SSL_R_ILLEGAL_PADDING				 283
 #define SSL_R_INCONSISTENT_COMPRESSION			 340
+#define SSL_R_INVALID_AUDIT_PROOF			 371
+#define SSL_R_INVALID_AUTHZ_DATA			 374
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
 #define SSL_R_INVALID_COMMAND				 280
 #define SSL_R_INVALID_COMPRESSION_ALGORITHM		 341
@@ -2607,6 +2638,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_UNEXPECTED_RECORD				 245
 #define SSL_R_UNINITIALIZED				 276
 #define SSL_R_UNKNOWN_ALERT_TYPE			 246
+#define SSL_R_UNKNOWN_AUTHZ_DATA_TYPE			 372
 #define SSL_R_UNKNOWN_CERTIFICATE_TYPE			 247
 #define SSL_R_UNKNOWN_CIPHER_RETURNED			 248
 #define SSL_R_UNKNOWN_CIPHER_TYPE			 249
@@ -2617,6 +2649,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_UNKNOWN_REMOTE_ERROR_TYPE			 253
 #define SSL_R_UNKNOWN_SSL_VERSION			 254
 #define SSL_R_UNKNOWN_STATE				 255
+#define SSL_R_UNKNOWN_SUPPLEMENTAL_DATA_TYPE		 373
 #define SSL_R_UNSAFE_LEGACY_RENEGOTIATION_DISABLED	 338
 #define SSL_R_UNSUPPORTED_CIPHER			 256
 #define SSL_R_UNSUPPORTED_COMPRESSION_ALGORITHM		 257
