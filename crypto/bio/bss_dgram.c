@@ -81,6 +81,16 @@
 #define IP_MTU      14 /* linux is lame */
 #endif
 
+#ifdef __FreeBSD__
+/* Standard definition causes type-punning problems. */
+#undef IN6_IS_ADDR_V4MAPPED
+#define s6_addr32 __u6_addr.__u6_addr32
+#define IN6_IS_ADDR_V4MAPPED(a)               \
+        (((a)->s6_addr32[0] == 0) &&          \
+         ((a)->s6_addr32[1] == 0) &&          \
+         ((a)->s6_addr32[2] == htonl(0x0000ffff)))
+#endif
+
 #ifdef WATT32
 #define sock_write SockWrite  /* Watt-32 uses same names */
 #define sock_read  SockRead
