@@ -1240,13 +1240,13 @@ int MAIN(int argc, char *argv[])
 			{
 			if (--argc < 1) goto bad;
 			srp_verifier_file = *(++argv);
-			meth=TLSv1_server_method();
+			meth = TLSv1_server_method();
 			}
 		else if (strcmp(*argv, "-srpuserseed") == 0)
 			{
 			if (--argc < 1) goto bad;
 			srpuserseed = *(++argv);
-			meth=TLSv1_server_method();
+			meth = TLSv1_server_method();
 			}
 #endif
 		else if	(strcmp(*argv,"-www") == 0)
@@ -2806,6 +2806,11 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				BIO_write(io," ",1);
 				}
 			BIO_puts(io,"\n");
+
+			BIO_printf(io,
+				"Secure Renegotiation IS%s supported\n",
+		      		SSL_get_secure_renegotiation_support(con) ?
+							"" : " NOT");
 
 			/* The following is evil and should not really
 			 * be done */

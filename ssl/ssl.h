@@ -494,6 +494,9 @@ struct ssl_session_st
 	char *psk_identity_hint;
 	char *psk_identity;
 #endif
+	/* Used to indicate that session resumption is not allowed.
+	 * Applications can also set this bit for a new session via
+	 * not_resumable_session_cb to disable session caching and tickets. */
 	int not_resumable;
 
 	/* The cert is the certificate used to establish this connection */
@@ -935,6 +938,7 @@ struct ssl_ctx_st
 	/* Callback for status request */
 	int (*tlsext_status_cb)(SSL *ssl, void *arg);
 	void *tlsext_status_arg;
+
 	/* draft-rescorla-tls-opaque-prf-input-00.txt information */
 	int (*tlsext_opaque_prf_input_callback)(SSL *, void *peerinput, size_t len, void *arg);
 	void *tlsext_opaque_prf_input_callback_arg;
@@ -960,6 +964,7 @@ struct ssl_ctx_st
 #endif
 
 #ifndef OPENSSL_NO_TLSEXT
+
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	/* Next protocol negotiation information */
 	/* (for experimental NPN extension). */
@@ -1051,15 +1056,12 @@ void SSL_CTX_set_next_protos_advertised_cb(SSL_CTX *s,
 					   int (*cb) (SSL *ssl,
 						      const unsigned char **out,
 						      unsigned int *outlen,
-						      void *arg),
-					   void *arg);
+						      void *arg), void *arg);
 void SSL_CTX_set_next_proto_select_cb(SSL_CTX *s,
-				      int (*cb) (SSL *ssl,
-						 unsigned char **out,
+				      int (*cb) (SSL *ssl, unsigned char **out,
 						 unsigned char *outlen,
 						 const unsigned char *in,
-						 unsigned int inlen,
-						 void *arg),
+						 unsigned int inlen, void *arg),
 				      void *arg);
 
 int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,

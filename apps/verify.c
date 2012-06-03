@@ -235,13 +235,16 @@ end:
 		BIO_printf(bio_err," [-engine e]");
 #endif
 		BIO_printf(bio_err," cert1 cert2 ...\n");
+
 		BIO_printf(bio_err,"recognized usages:\n");
-		for(i = 0; i < X509_PURPOSE_get_count(); i++) {
+		for(i = 0; i < X509_PURPOSE_get_count(); i++)
+			{
 			X509_PURPOSE *ptmp;
 			ptmp = X509_PURPOSE_get0(i);
-			BIO_printf(bio_err, "\t%-10s\t%s\n", X509_PURPOSE_get0_sname(ptmp),
-								X509_PURPOSE_get0_name(ptmp));
-		}
+			BIO_printf(bio_err, "\t%-10s\t%s\n",
+				   X509_PURPOSE_get0_sname(ptmp),
+				   X509_PURPOSE_get0_name(ptmp));
+			}
 	}
 	if (vpm) X509_VERIFY_PARAM_free(vpm);
 	if (cert_ctx != NULL) X509_STORE_free(cert_ctx);

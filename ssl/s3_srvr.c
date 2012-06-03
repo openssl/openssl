@@ -191,7 +191,8 @@ static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 		{
 		if(s->srp_ctx.login == NULL)
 			{
-			/* There isn't any srp login extension !!! */
+			/* RFC 5054 says SHOULD reject, 
+			   we do so if There is no srp login name */
 			ret = SSL3_AL_FATAL;
 			*al = SSL_AD_UNKNOWN_PSK_IDENTITY;
 			}
@@ -379,6 +380,7 @@ int ssl3_accept(SSL *s)
 				}
 			}
 #endif		
+			
 			s->renegotiate = 2;
 			s->state=SSL3_ST_SW_SRVR_HELLO_A;
 			s->init_num=0;
