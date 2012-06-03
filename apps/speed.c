@@ -489,7 +489,7 @@ int MAIN(int argc, char **argv)
 #define D_IGE_128_AES   26
 #define D_IGE_192_AES   27
 #define D_IGE_256_AES   28
-#define D_GHASH         29
+#define D_GHASH		29
 	double d=0.0;
 	long c[ALGOR_NUM][SIZE_NUM];
 #define	R_DSA_512	0

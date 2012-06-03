@@ -56,7 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/crypto.h>
 #include "des_locl.h"
 
 void DES_pcbc_encrypt(const unsigned char *input, unsigned char *output,

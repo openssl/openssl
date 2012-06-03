@@ -2093,9 +2093,12 @@ krb5_error_code  kssl_check_authent(
         EVP_CIPHER_CTX_cleanup(&ciph_ctx);
 
 #ifdef KSSL_DEBUG
+	{
+	int padl;
 	printf("kssl_check_authent: decrypted authenticator[%d] =\n", outl);
 	for (padl=0; padl < outl; padl++) printf("%02x ",unenc_authent[padl]);
 	printf("\n");
+	}
 #endif	/* KSSL_DEBUG */
 
 	if ((p = kssl_skip_confound(enctype, unenc_authent)) == NULL)

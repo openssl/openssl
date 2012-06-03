@@ -146,7 +146,6 @@
 #  include <assert.h>
 #endif
 #include <stdio.h>
-#include <openssl/crypto.h>
 #include "ssl_locl.h"
 #include "kssl_lcl.h"
 #include <openssl/objects.h>
@@ -1650,7 +1649,6 @@ void SSL_CTX_set_next_proto_select_cb(SSL_CTX *ctx, int (*cb) (SSL *s, unsigned 
 	ctx->next_proto_select_cb = cb;
 	ctx->next_proto_select_cb_arg = arg;
 	}
-
 # endif
 #endif
 

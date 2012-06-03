@@ -1723,7 +1723,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 #endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
 		else if (type == TLSEXT_TYPE_next_proto_neg &&
-                         s->s3->tmp.finish_md_len == 0)
+			 s->s3->tmp.finish_md_len == 0)
 			{
 			/* We shouldn't accept this extension on a
 			 * renegotiation.
@@ -1852,7 +1852,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 /* ssl_next_proto_validate validates a Next Protocol Negotiation block. No
  * elements of zero length are allowed and the set of elements must exactly fill
  * the length of the block. */
-static int ssl_next_proto_validate(unsigned char *d, unsigned len)
+static char ssl_next_proto_validate(unsigned char *d, unsigned len)
 	{
 	unsigned int off = 0;
 

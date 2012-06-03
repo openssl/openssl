@@ -7,7 +7,6 @@
  *          Requires OpenSSL 0.9.9 for compilation                    *
  **********************************************************************/
 #include <string.h>
-#include <openssl/crypto.h>
 #include "gost89.h"
 #include <openssl/rand.h>
 #include "e_gost_err.h"

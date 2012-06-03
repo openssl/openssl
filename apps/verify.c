@@ -241,8 +241,8 @@ end:
 			X509_PURPOSE *ptmp;
 			ptmp = X509_PURPOSE_get0(i);
 			BIO_printf(bio_err, "\t%-10s\t%s\n",
-					X509_PURPOSE_get0_sname(ptmp),
-					X509_PURPOSE_get0_name(ptmp));
+				   X509_PURPOSE_get0_sname(ptmp),
+				   X509_PURPOSE_get0_name(ptmp));
 			}
 
 		BIO_printf(bio_err,"recognized verify names:\n");

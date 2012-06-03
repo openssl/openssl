@@ -101,7 +101,7 @@ static void (*free_locked_func)(void *)     = free;
 
 /* may be changed as long as 'allow_customize_debug' is set */
 /* XXX use correct function pointer types */
-#if defined(CRYPTO_MDEBUG)
+#ifdef CRYPTO_MDEBUG
 /* use default functions from mem_dbg.c */
 static void (*malloc_debug_func)(void *,int,const char *,int,int)
 	= CRYPTO_dbg_malloc;
@@ -120,8 +120,6 @@ static void (*free_debug_func)(void *,int) = NULL;
 static void (*set_debug_options_func)(long) = NULL;
 static long (*get_debug_options_func)(void) = NULL;
 #endif
-
-extern void OPENSSL_init(void);
 
 int CRYPTO_set_mem_functions(void *(*m)(size_t), void *(*r)(void *, size_t),
 	void (*f)(void *))

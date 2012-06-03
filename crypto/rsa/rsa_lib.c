@@ -90,11 +90,7 @@ const RSA_METHOD *RSA_get_default_method(void)
 #ifdef RSA_NULL
 		default_RSA_meth=RSA_null_method();
 #else
-#if 0 /* was: #ifdef RSAref */
-		default_RSA_meth=RSA_PKCS1_RSAref();
-#else
 		default_RSA_meth=RSA_PKCS1_SSLeay();
-#endif
 #endif
 		}
 

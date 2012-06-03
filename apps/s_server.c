@@ -926,7 +926,7 @@ static int next_proto_cb(SSL *s, const unsigned char **data, unsigned int *len, 
 
 	return SSL_TLSEXT_ERR_OK;
 	}
-# endif  /* ndef OPENSSL_NO_NPN */
+# endif  /* ndef OPENSSL_NO_NEXTPROTONEG */
 #endif
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
@@ -976,8 +976,6 @@ int MAIN(int argc, char *argv[])
 #ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
-#endif
-#ifndef OPENSSL_NO_TLSEXT
         tlsextctx tlsextcbp = {NULL, NULL, SSL_TLSEXT_ERR_ALERT_WARNING};
 # ifndef OPENSSL_NO_NEXTPROTONEG
 	const char *next_proto_neg_in = NULL;
@@ -1274,12 +1272,12 @@ int MAIN(int argc, char *argv[])
 			{ off|=SSL_OP_NO_SSLv2; }
 		else if	(strcmp(*argv,"-no_ssl3") == 0)
 			{ off|=SSL_OP_NO_SSLv3; }
-		else if	(strcmp(*argv,"-no_tls1_2") == 0)
-			{ off|=SSL_OP_NO_TLSv1_2; }
-		else if	(strcmp(*argv,"-no_tls1_1") == 0)
-			{ off|=SSL_OP_NO_TLSv1_1; }
 		else if	(strcmp(*argv,"-no_tls1") == 0)
 			{ off|=SSL_OP_NO_TLSv1; }
+		else if	(strcmp(*argv,"-no_tls1_1") == 0)
+			{ off|=SSL_OP_NO_TLSv1_1; }
+		else if	(strcmp(*argv,"-no_tls1_2") == 0)
+			{ off|=SSL_OP_NO_TLSv1_2; }
 		else if	(strcmp(*argv,"-no_comp") == 0)
 			{ off|=SSL_OP_NO_COMPRESSION; }
 #ifndef OPENSSL_NO_TLSEXT
@@ -1295,14 +1293,12 @@ int MAIN(int argc, char *argv[])
 			{ meth=SSLv3_server_method(); }
 #endif
 #ifndef OPENSSL_NO_TLS1
-		else if	(strcmp(*argv,"-tls1_2") == 0)
-			{ meth=TLSv1_2_server_method(); }
-		else if	(strcmp(*argv,"-tls1_1") == 0)
-			{ meth=TLSv1_1_server_method(); }
 		else if	(strcmp(*argv,"-tls1") == 0)
 			{ meth=TLSv1_server_method(); }
 		else if	(strcmp(*argv,"-tls1_1") == 0)
 			{ meth=TLSv1_1_server_method(); }
+		else if	(strcmp(*argv,"-tls1_2") == 0)
+			{ meth=TLSv1_2_server_method(); }
 #endif
 #ifndef OPENSSL_NO_DTLS1
 		else if	(strcmp(*argv,"-dtls1") == 0)
@@ -1489,6 +1485,7 @@ bad:
 				goto end;
 				}
 			}
+
 # ifndef OPENSSL_NO_NEXTPROTONEG
 		if (next_proto_neg_in)
 			{
@@ -1980,8 +1977,8 @@ bad:
 		if ((ret = SRP_VBASE_init(srp_callback_parm.vb, srp_verifier_file)) != SRP_NO_ERROR)
 			{
 			BIO_printf(bio_err,
-					   "Cannot initialize SRP verifier file \"%s\":ret=%d\n",
-					   srp_verifier_file,ret);
+				   "Cannot initialize SRP verifier file \"%s\":ret=%d\n",
+				   srp_verifier_file, ret);
 				goto end;
 			}
 		SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE,verify_callback);
@@ -2505,12 +2502,12 @@ static int init_ssl_connection(SSL *con)
 	X509 *peer;
 	long verify_error;
 	MS_STATIC char buf[BUFSIZ];
+#ifndef OPENSSL_NO_KRB5
+	char *client_princ;
+#endif
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	const unsigned char *next_proto_neg;
 	unsigned next_proto_neg_len;
-#endif
-#ifndef OPENSSL_NO_KRB5
-	char *client_princ;
 #endif
 	unsigned char *exportedkeymat;
 
@@ -2730,6 +2727,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 		}
 	SSL_set_bio(con,sbio,sbio);
 	SSL_set_accept_state(con);
+
 	/* SSL_set_fd(con,s); */
 	BIO_set_ssl(ssl_bio,con,BIO_CLOSE);
 	BIO_push(io,ssl_bio);

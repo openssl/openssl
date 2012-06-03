@@ -54,7 +54,6 @@
  *
  */
 
-#include <openssl/crypto.h>
 #include <openssl/e_os2.h>
 #include <openssl/rand.h>
 #include <openssl/buffer.h>

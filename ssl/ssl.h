@@ -989,13 +989,13 @@ struct ssl_ctx_st
 	/* Callback for disabling session caching and ticket support
 	 * on a session basis, depending on the chosen cipher. */
 	int (*not_resumable_session_cb)(SSL *ssl, int is_forward_secure);
-#ifndef OPENSSL_NO_EC
+# ifndef OPENSSL_NO_EC
 	/* EC extension values inherited by SSL structure */
 	size_t tlsext_ecpointformatlist_length;
 	unsigned char *tlsext_ecpointformatlist;
 	size_t tlsext_ellipticcurvelist_length;
 	unsigned char *tlsext_ellipticcurvelist;
-#endif /* OPENSSL_NO_EC */
+# endif /* OPENSSL_NO_EC */
 	int (*tlsext_authz_server_audit_proof_cb)(SSL *s, void *arg);
 	void *tlsext_authz_server_audit_proof_cb_arg;
 	};
@@ -1366,6 +1366,7 @@ struct ssl_st
 	int renegotiate;/* 1 if we are renegotiating.
 	                 * 2 if we are a server and are inside a handshake
 	                 * (i.e. not just sending a HelloRequest) */
+
 #ifndef OPENSSL_NO_SRP
 	SRP_CTX srp_ctx; /* ctx for SRP authentication */
 #endif

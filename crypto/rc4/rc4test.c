@@ -59,7 +59,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/crypto.h>
 
 #include "../e_os.h"
 
@@ -122,7 +121,7 @@ int main(int argc, char *argv[])
 	unsigned char obuf[512];
 
 #if !defined(OPENSSL_PIC)
-	void OPENSSL_cpuid_setup();
+	void OPENSSL_cpuid_setup(void);
 
 	OPENSSL_cpuid_setup();
 #endif

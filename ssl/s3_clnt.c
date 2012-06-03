@@ -149,7 +149,6 @@
  */
 
 #include <stdio.h>
-#include <openssl/crypto.h>
 #include "ssl_locl.h"
 #include "kssl_lcl.h"
 #include <openssl/buffer.h>

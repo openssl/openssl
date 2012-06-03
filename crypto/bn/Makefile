@@ -100,7 +100,7 @@ x86_64-mont.s:	asm/x86_64-mont.pl
 	$(PERL) asm/x86_64-mont.pl $(PERLASM_SCHEME) > $@
 x86_64-mont5.s:	asm/x86_64-mont5.pl
 	$(PERL) asm/x86_64-mont5.pl $(PERLASM_SCHEME) > $@
-x86_64-gf2m.s:  asm/x86_64-gf2m.pl
+x86_64-gf2m.s:	asm/x86_64-gf2m.pl
 	$(PERL) asm/x86_64-gf2m.pl $(PERLASM_SCHEME) > $@
 modexp512-x86_64.s:	asm/modexp512-x86_64.pl
 	$(PERL) asm/modexp512-x86_64.pl $(PERLASM_SCHEME) > $@

@@ -204,10 +204,11 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
 				goto err;
 		}
 	}
-	err:
+
+err:
 	PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI,ERR_R_MALLOC_FAILURE);
 
-	end:
+end:
 	OPENSSL_free (Ai);
 	OPENSSL_free (B);
 	OPENSSL_free (D);

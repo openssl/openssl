@@ -2060,18 +2060,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	BIO_printf(bio,"Expansion: %s\n",
 		expansion ? SSL_COMP_get_name(expansion) : "NONE");
 #endif
-
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
-	if (next_proto.status != -1) {
-		const unsigned char *proto;
-		unsigned int proto_len;
-		SSL_get0_next_proto_negotiated(s, &proto, &proto_len);
-		BIO_printf(bio, "Next protocol: (%d) ", next_proto.status);
-		BIO_write(bio, proto, proto_len);
-		BIO_write(bio, "\n", 1);
-	}
-#endif
-
+ 
 #ifdef SSL_DEBUG
 	{
 	/* Print out local port of connection: useful for debugging */
@@ -2081,6 +2070,17 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 	sock = SSL_get_fd(s);
 	getsockname(sock, (struct sockaddr *)&ladd, &ladd_size);
 	BIO_printf(bio_c_out, "LOCAL PORT is %u\n", ntohs(ladd.sin_port));
+	}
+#endif
+
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+	if (next_proto.status != -1) {
+		const unsigned char *proto;
+		unsigned int proto_len;
+		SSL_get0_next_proto_negotiated(s, &proto, &proto_len);
+		BIO_printf(bio, "Next protocol: (%d) ", next_proto.status);
+		BIO_write(bio, proto, proto_len);
+		BIO_write(bio, "\n", 1);
 	}
 #endif
 

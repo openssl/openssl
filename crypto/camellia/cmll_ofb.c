@@ -105,7 +105,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/crypto.h>
 #include <openssl/camellia.h>
 #include <openssl/modes.h>
 

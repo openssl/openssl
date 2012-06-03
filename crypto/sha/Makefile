@@ -59,7 +59,7 @@ sha512-ia64.s: asm/sha512-ia64.pl
 sha256-armv4.S: asm/sha256-armv4.pl
 	$(PERL) $< $(PERLASM_SCHEME) $@
 
-sha1-alpha.s:   asm/sha1-alpha.pl
+sha1-alpha.s:	asm/sha1-alpha.pl
 	$(PERL) $< | $(CC) -E - | tee $@ > /dev/null
 
 # Solaris make has to be explicitly told

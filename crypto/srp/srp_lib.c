@@ -328,7 +328,7 @@ int SRP_Verify_A_mod_N(BIGNUM *A, BIGNUM *N)
 /* Check if G and N are kwown parameters. 
    The values have been generated from the ietf-tls-srp draft version 8
 */
-char *  SRP_check_known_gN_param(BIGNUM* g, BIGNUM* N)
+char * SRP_check_known_gN_param(BIGNUM* g, BIGNUM* N)
 	{
 	size_t i;
 	if ((g == NULL) || (N == NULL))
@@ -339,22 +339,22 @@ char *  SRP_check_known_gN_param(BIGNUM* g, BIGNUM* N)
 
 	for(i = 0; i < KNOWN_GN_NUMBER; i++)
 		{
-		if (BN_cmp(knowngN[i].g,g) == 0 && BN_cmp(knowngN[i].N,N) == 0) 
+		if (BN_cmp(knowngN[i].g, g) == 0 && BN_cmp(knowngN[i].N, N) == 0) 
 			return knowngN[i].id;
 		}
 	return NULL;
 	}
 
-SRP_gN *SRP_get_default_gN(const char * id)
+SRP_gN *SRP_get_default_gN(const char *id)
 	{
-	size_t i; 
+	size_t i;
 
 	if (id == NULL) 
 		return knowngN;
 	for(i = 0; i < KNOWN_GN_NUMBER; i++)
 		{
-		if (strcmp(knowngN[i].id,id)==0)
-			return knowngN+i;
+		if (strcmp(knowngN[i].id, id)==0)
+			return knowngN + i;
 		}
 	return NULL;
 	}

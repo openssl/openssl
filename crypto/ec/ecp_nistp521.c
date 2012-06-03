@@ -29,7 +29,12 @@
 #include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 
+#ifndef OPENSSL_SYS_VMS
 #include <stdint.h>
+#else
+#include <inttypes.h>
+#endif
+
 #include <string.h>
 #include <openssl/err.h>
 #include "ec_lcl.h"

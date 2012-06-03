@@ -57,8 +57,8 @@
  */
 
 #include <stdio.h>
-#include "md4_locl.h"
 #include <openssl/opensslv.h>
+#include "md4_locl.h"
 
 const char MD4_version[]="MD4" OPENSSL_VERSION_PTEXT;
 

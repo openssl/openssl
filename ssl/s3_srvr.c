@@ -152,7 +152,6 @@
 #define NETSCAPE_HANG_BUG
 
 #include <stdio.h>
-#include <openssl/crypto.h>
 #include "ssl_locl.h"
 #include "kssl_lcl.h"
 #include <openssl/buffer.h>
@@ -181,7 +180,7 @@ static const SSL_METHOD *ssl3_get_server_method(int ver)
 	}
 
 #ifndef OPENSSL_NO_SRP
-static int ssl_check_srp_ext_ClientHello(SSL *s,int *al)
+static int ssl_check_srp_ext_ClientHello(SSL *s, int *al)
 	{
 	int ret = SSL_ERROR_NONE;
 
@@ -3583,7 +3582,7 @@ int ssl3_send_cert_status(SSL *s)
 	return(ssl3_do_write(s,SSL3_RT_HANDSHAKE));
 	}
 
-# ifndef OPENSSL_NO_NPN
+# ifndef OPENSSL_NO_NEXTPROTONEG
 /* ssl3_get_next_proto reads a Next Protocol Negotiation handshake message. It
  * sets the next_proto member in s if found */
 int ssl3_get_next_proto(SSL *s)

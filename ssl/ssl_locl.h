@@ -602,8 +602,8 @@ typedef struct ssl3_enc_method
 	int (*export_keying_material)(SSL *, unsigned char *, size_t,
 				      const char *, size_t,
 				      const unsigned char *, size_t,
- 				      int use_context);
- 	} SSL3_ENC_METHOD;
+				      int use_context);
+	} SSL3_ENC_METHOD;
 
 #ifndef OPENSSL_NO_COMP
 /* Used for holding the relevant compression methods loaded into SSL_CTX */

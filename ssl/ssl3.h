@@ -536,8 +536,7 @@ typedef struct ssl3_state_st
         int send_connection_binding; /* TODOEKR */
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-	/* Set if we saw the Next Protocol Negotiation extension from
-	   our peer. */
+	/* Set if we saw the Next Protocol Negotiation extension from our peer. */
 	int next_proto_neg_seen;
 #endif
 

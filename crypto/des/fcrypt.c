@@ -9,8 +9,6 @@
 #include <openssl/ebcdic.h>
 #endif
 
-#include <openssl/crypto.h>
-
 /* This version of crypt has been developed from my MIT compatible
  * DES library.
  * Eric Young (eay@cryptsoft.com)
@@ -24,6 +22,7 @@
  * defined 24.
  */
 
+#include <openssl/crypto.h>
 #include "des_locl.h"
 
 /* Added more values to handle illegal salt values the way normal

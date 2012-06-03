@@ -49,7 +49,6 @@
  *
  */
 
-#include <openssl/crypto.h>
 #include <openssl/aes.h>
 #include <openssl/modes.h>
 

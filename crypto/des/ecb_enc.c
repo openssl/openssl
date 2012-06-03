@@ -56,7 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/crypto.h>
 #include "des_locl.h"
 #include "des_ver.h"
 #include <openssl/opensslv.h>

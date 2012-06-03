@@ -56,7 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <openssl/crypto.h>
 #include "des_locl.h"
 
 /* The input and output encrypted as though 64bit ofb mode is being

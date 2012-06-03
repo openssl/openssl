@@ -589,12 +589,14 @@ int ssl_get_prev_session(SSL *s, unsigned char *session_id, int len,
 	if (ret != NULL)
 		{
 		SSL_SESSION_free(ret);
+#ifndef OPENSSL_NO_TLSEXT
 		if (!try_session_cache)
 			{
 			/* The session was from a ticket, so we should
 			 * issue a ticket for the new session */
 			s->tlsext_ticket_expected = 1;
 			}
+#endif
 		}
 	if (fatal)
 		return -1;

@@ -2334,7 +2334,8 @@ int args_verify(char ***pargs, int *pargc,
 		else
 			{
 			long timestamp;
-			/* interpret argument as seconds since Epoch */
+			/* interpret the -attime argument as seconds since
+			 * Epoch */
 			if (sscanf(argn, "%li", &timestamp) != 1)
 				{
 				BIO_printf(bio_err,
@@ -2740,6 +2741,50 @@ void jpake_server_auth(BIO *out, BIO *conn, const char *secret)
 
 #endif
 
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+/* next_protos_parse parses a comma separated list of strings into a string
+ * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
+ *   outlen: (output) set to the length of the resulting buffer on success.
+ *   err: (maybe NULL) on failure, an error message line is written to this BIO.
+ *   in: a NUL termianted string like "abc,def,ghi"
+ *
+ *   returns: a malloced buffer or NULL on failure.
+ */
+unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
+	{
+	size_t len;
+	unsigned char *out;
+	size_t i, start = 0;
+
+	len = strlen(in);
+	if (len >= 65535)
+		return NULL;
+
+	out = OPENSSL_malloc(strlen(in) + 1);
+	if (!out)
+		return NULL;
+
+	for (i = 0; i <= len; ++i)
+		{
+		if (i == len || in[i] == ',')
+			{
+			if (i - start > 255)
+				{
+				OPENSSL_free(out);
+				return NULL;
+				}
+			out[start] = i - start;
+			start = i + 1;
+			}
+		else
+			out[i+1] = in[i];
+		}
+
+	*outlen = len + 1;
+	return out;
+	}
+#endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
+
 /*
  * Platform-specific sections
  */
@@ -3065,46 +3110,3 @@ int raw_write_stdout(const void *buf,int siz)
 int raw_write_stdout(const void *buf,int siz)
 	{	return write(fileno(stdout),buf,siz);	}
 #endif
-
-#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
-/* next_protos_parse parses a comma separated list of strings into a string
- * in a format suitable for passing to SSL_CTX_set_next_protos_advertised.
- *   outlen: (output) set to the length of the resulting buffer on success.
- *   in: a NUL termianted string like "abc,def,ghi"
- *
- *   returns: a malloced buffer or NULL on failure.
- */
-unsigned char *next_protos_parse(unsigned short *outlen, const char *in)
-	{
-	size_t len;
-	unsigned char *out;
-	size_t i, start = 0;
-
-	len = strlen(in);
-	if (len >= 65535)
-		return NULL;
-
-	out = OPENSSL_malloc(strlen(in) + 1);
-	if (!out)
-		return NULL;
-
-	for (i = 0; i <= len; ++i)
-		{
-		if (i == len || in[i] == ',')
-			{
-			if (i - start > 255)
-				{
-				OPENSSL_free(out);
-				return NULL;
-				}
-			out[start] = i - start;
-			start = i + 1;
-			}
-		else
-			out[i+1] = in[i];
-		}
-
-	*outlen = len + 1;
-	return out;
-	}
-#endif  /* !OPENSSL_NO_TLSEXT && !OPENSSL_NO_NEXTPROTONEG */
