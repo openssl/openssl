@@ -1752,7 +1752,7 @@ int main()
 
 	GHASH((&ctx),buf.c,sizeof(buf));
 	start = OPENSSL_rdtsc();
-	for (i=0;i<100;++i) GHASH(&ctx,buf.c,sizeof(buf));
+	for (i=0;i<100;++i) GHASH((&ctx),buf.c,sizeof(buf));
 	gcm_t = OPENSSL_rdtsc() - start;
 	printf("%.2f\n",gcm_t/(double)sizeof(buf)/(double)i);
 	}

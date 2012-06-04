@@ -196,7 +196,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 &function_begin_B("OPENSSL_far_spin");
 	&pushf	();
-	&pop	("eax")
+	&pop	("eax");
 	&bt	("eax",9);
 	&jnc	(&label("nospin"));	# interrupts are disabled
 
