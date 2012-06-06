@@ -3676,6 +3676,8 @@ int tls1_send_server_supplemental_data(SSL *s)
 
 		type = *(authz++);
 		n2s(authz, len);
+		/* n2s increments authz by 2*/
+		i += 2;
 
 		if (memchr(s->s3->tlsext_authz_client_types,
 			   type,
@@ -3719,6 +3721,8 @@ int tls1_send_server_supplemental_data(SSL *s)
 
 		type = *(authz++);
 		n2s(authz, len);
+		/* n2s increments authz by 2 */
+		i += 2;
 
 		if (memchr(s->s3->tlsext_authz_client_types,
 			   type,
