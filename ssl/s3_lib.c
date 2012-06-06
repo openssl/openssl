@@ -2989,6 +2989,10 @@ void ssl3_free(SSL *s)
 #ifndef OPENSSL_NO_SRP
 	SSL_SRP_CTX_free(s);
 #endif
+#ifndef OPENSSL_NO_TLSEXT
+	if (s->s3->tlsext_authz_client_types != NULL)
+		OPENSSL_free(s->s3->tlsext_authz_client_types);
+#endif
 	OPENSSL_cleanse(s->s3,sizeof *s->s3);
 	OPENSSL_free(s->s3);
 	s->s3=NULL;
