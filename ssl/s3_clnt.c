@@ -1263,6 +1263,7 @@ int ssl3_get_server_certificate(SSL *s)
 
 #endif
 	ret=1;
+
 	if (0)
 		{
 f_err:

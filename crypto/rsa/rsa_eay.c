@@ -598,9 +598,9 @@ static int RSA_eay_private_decrypt(int flen, const unsigned char *from,
 		r=RSA_padding_check_PKCS1_type_2(to,num,buf,j,num);
 		break;
 #ifndef OPENSSL_NO_SHA
-	case RSA_PKCS1_OAEP_PADDING:
-	    r=RSA_padding_check_PKCS1_OAEP(to,num,buf,j,num,NULL,0);
-		break;
+        case RSA_PKCS1_OAEP_PADDING:
+	        r=RSA_padding_check_PKCS1_OAEP(to,num,buf,j,num,NULL,0);
+                break;
 #endif
  	case RSA_SSLV23_PADDING:
 		r=RSA_padding_check_SSLv23(to,num,buf,j,num);

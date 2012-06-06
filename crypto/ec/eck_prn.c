@@ -185,6 +185,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
 		nid = EC_GROUP_get_curve_name(x);
 		if (nid == 0)
 			goto err;
+
 		if (BIO_printf(bp, "ASN1 OID: %s", OBJ_nid2sn(nid)) <= 0)
 			goto err;
 		if (BIO_printf(bp, "\n") <= 0)
