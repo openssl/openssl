@@ -1234,6 +1234,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 				authz_count++;
 
 			n2s(authz, length);
+			/* n2s increments authz by 2 */
+			i += 2;
 			authz += length;
 			i += length;
 			}
@@ -1267,6 +1269,8 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 				   s->s3->tlsext_authz_client_types_len) != NULL)
 				*(ret++) = type;
 			n2s(authz, length);
+			/* n2s increments authz by 2 */
+			i += 2;
 			authz += length;
 			i += length;
 			}
