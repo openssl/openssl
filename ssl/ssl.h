@@ -1782,8 +1782,16 @@ int	SSL_use_certificate(SSL *ssl, X509 *x);
 int	SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len);
 
 #ifndef OPENSSL_NO_TLSEXT
+/* Set authz data for the current active cert. */
 int	SSL_CTX_use_authz(SSL_CTX *ctx, unsigned char *authz, size_t authz_length);
 int	SSL_use_authz(SSL *ssl, unsigned char *authz, size_t authz_length);
+/* Get the authz of type 'type' associated with the current active cert. */
+const unsigned char *SSL_CTX_get_authz_data(SSL_CTX *ctx, unsigned char type,
+					    size_t *data_length);
+#ifndef OPENSSL_NO_STDIO
+int	SSL_CTX_use_authz_file(SSL_CTX *ctx, const char *file);
+int	SSL_use_authz_file(SSL *ssl, const char *file);
+#endif
 #endif
 
 #ifndef OPENSSL_NO_STDIO
@@ -2137,6 +2145,7 @@ void ERR_load_SSL_strings(void);
 /* Error codes for the SSL functions. */
 
 /* Function codes. */
+#define SSL_F_AUTHZ_FIND_DATA				 330
 #define SSL_F_AUTHZ_VALIDATE				 323
 #define SSL_F_CLIENT_CERTIFICATE			 100
 #define SSL_F_CLIENT_FINISHED				 167
@@ -2180,6 +2189,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_GET_SERVER_HELLO				 109
 #define SSL_F_GET_SERVER_VERIFY				 110
 #define SSL_F_I2D_SSL_SESSION				 111
+#define SSL_F_READ_AUTHZ				 329
 #define SSL_F_READ_N					 112
 #define SSL_F_REQUEST_CERTIFICATE			 113
 #define SSL_F_SERVER_FINISH				 239

@@ -316,8 +316,6 @@ static int cert_chain = 0;
 #ifndef OPENSSL_NO_TLSEXT
 static BIO *authz_in = NULL;
 static const char *s_authz_file = NULL;
-static unsigned char *authz = NULL;
-static size_t authz_length;
 #endif
 
 #ifndef OPENSSL_NO_PSK
@@ -1501,33 +1499,6 @@ bad:
 			next_proto.data = NULL;
 			}
 # endif
-		if (s_authz_file != NULL)
-			{
-			/* Allow authzs up to 64KB bytes. */
-			static const size_t authz_limit = 65536;
-
-			authz_in = BIO_new(BIO_s_file_internal());
-			if (authz_in == NULL)
-				{
-				ERR_print_errors(bio_err);
-				goto end;
-				}
-
-			if (BIO_read_filename(authz_in, s_authz_file) <= 0)
-				{
-				ERR_print_errors(bio_err);
-				goto end;
-				}
-			authz = OPENSSL_malloc(authz_limit);
-			authz_length = BIO_read(authz_in, authz, authz_limit);
-			if (authz_length == authz_limit || authz_length <= 0)
-				{
-				BIO_printf(bio_err, "authz too large\n");
-				goto end;
-				}
-			BIO_free(authz_in);
-			authz_in = NULL;
-			}
 #endif /* OPENSSL_NO_TLSEXT */
 		}
 
@@ -1828,7 +1799,7 @@ bad:
 	if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain))
 		goto end;
 #ifndef OPENSSL_NO_TLSEXT
-	if (authz != NULL && !SSL_CTX_use_authz(ctx, authz, authz_length))
+	if (s_authz_file != NULL && !SSL_CTX_use_authz_file(ctx, s_authz_file))
 		goto end;
 #endif
 #ifndef OPENSSL_NO_TLSEXT
@@ -2025,8 +1996,6 @@ end:
 		X509_free(s_cert2);
 	if (s_key2)
 		EVP_PKEY_free(s_key2);
-	if (authz != NULL)
-		OPENSSL_free(authz);
 	if (authz_in != NULL)
 		BIO_free(authz_in);
 #endif
