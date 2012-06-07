@@ -1021,6 +1021,10 @@ END
             $out =~ s|/req/(\S+)\.req|/$rspdir/$1.rsp|;
             my $outdir = $out;
             $outdir =~ s|/[^/]*$||;
+            if ( !-d $outdir  && ($outfile eq "" || $minimal_script)) {
+                print STDERR "DEBUG: Creating directory $outdir\n" if $debug;
+                mkdir($outdir) || die "Can't create directory $outdir";
+            }
 	    if ($outfile ne "") {
 	    	if ($win32) {
 		    $outdir =~ tr|/|\\|;
@@ -1043,9 +1047,6 @@ END
 		    }
 		$lastdir = $outdir;
 		}
-            } elsif ( !-d $outdir ) {
-                print STDERR "DEBUG: Creating directory $outdir\n" if $debug;
-                mkdir($outdir) || die "Can't create directory $outdir";
             }
         }
         my $cmd = "$tcmd \"$sfprefix$req\" \"$sfprefix$out\"";
