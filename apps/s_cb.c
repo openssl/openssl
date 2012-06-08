@@ -237,8 +237,8 @@ int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file)
 
 		/* If we are using DSA, we can copy the parameters from
 		 * the private key */
-		
-		
+
+
 		/* Now we know that a key and cert have been set against
 		 * the SSL context */
 		if (!SSL_CTX_check_private_key(ctx))

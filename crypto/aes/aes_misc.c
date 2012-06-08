@@ -50,7 +50,6 @@
  */
 
 #include <openssl/opensslv.h>
-#include <openssl/crypto.h>
 #include <openssl/aes.h>
 #include "aes_locl.h"
 

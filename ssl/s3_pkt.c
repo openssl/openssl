@@ -1239,7 +1239,7 @@ start:
 				goto f_err;
 				}
 #ifdef SSL_AD_MISSING_SRP_USERNAME
-			if (alert_descr == SSL_AD_MISSING_SRP_USERNAME)
+			else if (alert_descr == SSL_AD_MISSING_SRP_USERNAME)
 				return(0);
 #endif
 			}

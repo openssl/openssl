@@ -204,7 +204,8 @@ int ssl3_send_finished(SSL *s, int a, int b, const char *sender, int slen)
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
 /* ssl3_take_mac calculates the Finished MAC for the handshakes messages seen to far. */
-static void ssl3_take_mac(SSL *s) {
+static void ssl3_take_mac(SSL *s)
+	{
 	const char *sender;
 	int slen;
 
@@ -221,7 +222,7 @@ static void ssl3_take_mac(SSL *s) {
 
 	s->s3->tmp.peer_finish_md_len = s->method->ssl3_enc->final_finish_mac(s,
 		sender,slen,s->s3->tmp.peer_finish_md);
-}
+	}
 #endif
 
 int ssl3_get_finished(SSL *s, int a, int b)
@@ -231,8 +232,9 @@ int ssl3_get_finished(SSL *s, int a, int b)
 	unsigned char *p;
 
 #ifdef OPENSSL_NO_NEXTPROTONEG
-	/* the mac has already been generated when we received the change
-	 * cipher spec message and is in s->s3->tmp.peer_finish_md. */
+	/* the mac has already been generated when we received the
+	 * change cipher spec message and is in s->s3->tmp.peer_finish_md.
+	 */ 
 #endif
 
 	n=s->method->ssl_get_message(s,
@@ -537,12 +539,14 @@ long ssl3_get_message(SSL *s, int st1, int stn, int mt, long max, int *ok)
 		s->init_num += i;
 		n -= i;
 		}
+
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	/* If receiving Finished, record MAC of prior handshake messages for
 	 * Finished verification. */
 	if (*s->init_buf->data == SSL3_MT_FINISHED)
 		ssl3_take_mac(s);
 #endif
+
 	/* Feed this message into MAC computation. */
 	ssl3_finish_mac(s, (unsigned char *)s->init_buf->data, s->init_num + 4);
 	if (s->msg_callback)

@@ -723,7 +723,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 #  endif
 	gcm_init_4bit(ctx->Htable,ctx->H.u);
 #  if	defined(GHASH_ASM_X86)			/* x86 only */
-#   if defined(OPENSSL_IA32_SSE2)
+#   if	defined(OPENSSL_IA32_SSE2)
 	if (OPENSSL_ia32cap_P[0]&(1<<25)) {	/* check SSE bit */
 #   else
 	if (OPENSSL_ia32cap_P[0]&(1<<23)) {	/* check MMX bit */

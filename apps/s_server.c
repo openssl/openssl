@@ -1206,13 +1206,13 @@ int MAIN(int argc, char *argv[])
 			{
 			if (--argc < 1) goto bad;
 			srp_verifier_file = *(++argv);
-			meth=TLSv1_server_method();
+			meth = TLSv1_server_method();
 			}
 		else if (strcmp(*argv, "-srpuserseed") == 0)
 			{
 			if (--argc < 1) goto bad;
 			srpuserseed = *(++argv);
-			meth=TLSv1_server_method();
+			meth = TLSv1_server_method();
 			}
 #endif
 		else if	(strcmp(*argv,"-www") == 0)
@@ -1730,7 +1730,7 @@ bad:
 		}
 #endif
 	
-	if (!set_cert_key_stuff(ctx,s_cert,s_key))
+	if (!set_cert_key_stuff(ctx, s_cert, s_key))
 		goto end;
 #ifndef OPENSSL_NO_TLSEXT
 	if (ctx2 && !set_cert_key_stuff(ctx2,s_cert2,s_key2))
@@ -1738,7 +1738,7 @@ bad:
 #endif
 	if (s_dcert != NULL)
 		{
-		if (!set_cert_key_stuff(ctx,s_dcert,s_dkey))
+		if (!set_cert_key_stuff(ctx, s_dcert, s_dkey))
 			goto end;
 		}
 
@@ -2433,6 +2433,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
+
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
 	SSL_get0_next_proto_negotiated(con, &next_proto_neg, &next_proto_neg_len);
 	if (next_proto_neg)
@@ -2700,6 +2701,11 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				BIO_write(io," ",1);
 				}
 			BIO_puts(io,"\n");
+
+			BIO_printf(io,
+				"Secure Renegotiation IS%s supported\n",
+		      		SSL_get_secure_renegotiation_support(con) ?
+							"" : " NOT");
 
 			/* The following is evil and should not really
 			 * be done */
