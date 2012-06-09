@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/crypto.h>
 #include <openssl/idea.h>
 #include "idea_lcl.h"
 

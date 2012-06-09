@@ -32,6 +32,7 @@
 #include <memory.h>
 #endif
 
+#include <openssl/crypto.h>
 #include <openssl/seed.h>
 #include "seed_locl.h"
 
