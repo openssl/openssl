@@ -56,6 +56,7 @@
  * [including the GNU Public Licence.]
  */
 
+#include <openssl/crypto.h>
 #include <openssl/rc2.h>
 #include "rc2_locl.h"
 

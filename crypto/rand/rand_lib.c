@@ -235,12 +235,14 @@ static size_t drbg_get_adin(DRBG_CTX *ctx, unsigned char **pout)
 static int drbg_rand_add(DRBG_CTX *ctx, const void *in, int inlen,
 				double entropy)
 	{
-	return RAND_SSLeay()->add(in, inlen, entropy);
+	RAND_SSLeay()->add(in, inlen, entropy);
+	return 1;
 	}
 
 static int drbg_rand_seed(DRBG_CTX *ctx, const void *in, int inlen)
 	{
-	return RAND_SSLeay()->seed(in, inlen);
+	RAND_SSLeay()->seed(in, inlen);
+	return 1;
 	}
 
 #ifndef OPENSSL_DRBG_DEFAULT_TYPE
