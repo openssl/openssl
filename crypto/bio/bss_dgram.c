@@ -460,8 +460,8 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 	int *ip;
 	struct sockaddr *to = NULL;
 	bio_dgram_data *data = NULL;
-#if defined(OPENSSL_SYS_LINUX) && (defined(IP_MTU_DISCOVER) || defined(IP_MTU))
 	int sockopt_val = 0;
+#if defined(OPENSSL_SYS_LINUX) && (defined(IP_MTU_DISCOVER) || defined(IP_MTU))
 	socklen_t sockopt_len;	/* assume that system supporting IP_MTU is
 				 * modern enough to define socklen_t */
 	socklen_t addr_len;
@@ -848,6 +848,50 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			ret = 0;
 		break;
 #endif
+	case BIO_CTRL_DGRAM_SET_DONT_FRAG:
+		sockopt_val = num ? 1 : 0;
+
+		switch (data->peer.sa.sa_family)
+			{
+			case AF_INET:
+#if defined(IP_DONTFRAG)
+				if ((ret = setsockopt(b->num, IPPROTO_IP, IP_DONTFRAG,
+					&sockopt_val, sizeof(sockopt_val))) < 0)
+					{ perror("setsockopt"); ret = -1; }
+#elif defined(OPENSSL_SYS_LINUX) && defined(IP_MTUDISCOVER)
+				if ((sockopt_val = num ? IP_PMTUDISC_PROBE : IP_PMTUDISC_DONT),
+				    (ret = setsockopt(b->num, IPPROTO_IP, IP_MTU_DISCOVER,
+					&sockopt_val, sizeof(sockopt_val))) < 0)
+					{ perror("setsockopt"); ret = -1; }
+#elif defined(OPENSSL_SYS_WINDOWS) && defined(IP_DONTFRAGMENT)
+				if ((ret = setsockopt(b->num, IPPROTO_IP, IP_DONTFRAGMENT,
+					(const char *)&sockopt_val, sizeof(sockopt_val))) < 0)
+					{ perror("setsockopt"); ret = -1; }
+#else
+				ret = -1;
+#endif
+				break;
+#if OPENSSL_USE_IPV6 
+			case AF_INET6:
+#if defined(IPV6_DONTFRAG)
+				if ((ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_DONTFRAG,
+					&sockopt_val, sizeof(sockopt_val))) < 0)
+					{ perror("setsockopt"); ret = -1; }
+#elif defined(OPENSSL_SYS_LINUX) && defined(IPV6_MTUDISCOVER)
+				if ((sockopt_val = num ? IP_PMTUDISC_PROBE : IP_PMTUDISC_DONT),
+				    (ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_MTU_DISCOVER,
+					&sockopt_val, sizeof(sockopt_val))) < 0)
+					{ perror("setsockopt"); ret = -1; }
+#else
+				ret = -1;
+#endif
+				break;
+#endif
+			default:
+				ret = -1;
+				break;
+			}
+		break;
 	default:
 		ret=0;
 		break;
