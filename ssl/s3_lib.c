@@ -3036,6 +3036,13 @@ void ssl3_clear(SSL *s)
 		s->s3->tmp.ecdh = NULL;
 		}
 #endif
+#ifndef OPENSSL_NO_TLSEXT
+	if (s->s3->tlsext_authz_client_types != NULL)
+		{
+		OPENSSL_free(s->s3->tlsext_authz_client_types);
+		s->s3->tlsext_authz_client_types = NULL;
+		}
+#endif
 
 	rp = s->s3->rbuf.buf;
 	wp = s->s3->wbuf.buf;

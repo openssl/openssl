@@ -1781,6 +1781,8 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			if (!s->hit)
 				{
 				size_t i;
+				if (s->s3->tlsext_authz_client_types != NULL)
+					OPENSSL_free(s->s3->tlsext_authz_client_types);
 				s->s3->tlsext_authz_client_types =
 					OPENSSL_malloc(server_authz_dataformatlist_length);
 				if (!s->s3->tlsext_authz_client_types)
