@@ -106,20 +106,20 @@ $code.=<<___;
 	xor	$e,$a0
 	xor	$g,$a2			# f^g
 
-	ror	\$`$Sigma1[1]-$Sigma1[0]`,$a0
+	mov	$T1,`$SZ*($i&0xf)`(%rsp)
 	xor	$a,$a1
 	and	$e,$a2			# (f^g)&e
 
-	mov	$T1,`$SZ*($i&0xf)`(%rsp)
+	ror	\$`$Sigma1[1]-$Sigma1[0]`,$a0
 	add	$h,$T1			# T1+=h
 	xor	$g,$a2			# Ch(e,f,g)=((f^g)&e)^g
 
 	ror	\$`$Sigma0[1]-$Sigma0[0]`,$a1
-	add	$a2,$T1			# T1+=Ch(e,f,g)
 	xor	$e,$a0
+	add	$a2,$T1			# T1+=Ch(e,f,g)
 
-	add	($Tbl),$T1		# T1+=K[round]
 	mov	$a,$a2
+	add	($Tbl),$T1		# T1+=K[round]
 	xor	$a,$a1
 
 	ror	\$$Sigma1[0],$a0	# Sigma1(e)

@@ -17,18 +17,18 @@
 #
 # Optimization including two of Pavel Semjanov's ideas, alternative
 # Maj and full unroll, resulted in ~20-25% improvement on most CPUs,
-# ~10% on Pentium and P4, ~37% on Atom. As fully unrolled loop body is
-# almost 15x larger, 8KB vs. 560B, it's fired only for longer inputs.
-# But not on P4, where it kills performance, nor Sandy Bridge, where
-# folded loop is just as fast...
+# ~7% on Pentium, ~40% on Atom. As fully unrolled loop body is almost
+# 15x larger, 8KB vs. 560B, it's fired only for longer inputs. But not
+# on P4, where it kills performance, nor Sandy Bridge, where folded
+# loop is approximately as fast...
 #
 # Performance in clock cycles per processed byte (less is better):
 #
-#		Pentium	PIII	P4	AMD K8	Core2	SB(**)	Atom
-# gcc		46	36	41	27	26	25	50
-# icc		57	33	38	25	23	-	-
-# x86 asm(*)	39/36	27/24	30	19/15.5	18/16	16(**)	30/26
-# x86_64 asm(***)	-	17.5	15	16	17.5	23
+#		PIII	P4	AMD K8	Core2	SB(**)	Atom	Bldzr
+# gcc		36	41	27	26	25	50	36
+# icc		33	38	25	23	-	-	-
+# x86 asm(*)	27/24	28	19/15.5	18/15.6	16(**)	30/25	27/22
+# x86_64 asm(***)	17.5	15	15.5	17.5	23	21
 #
 # (*)	numbers after slash are for unrolled loop, where available;
 # (**)	for Sandy Bridge executing code path with ror replaced with
@@ -42,7 +42,13 @@ require "x86asm.pl";
 
 &asm_init($ARGV[0],"sha512-586.pl",$ARGV[$#ARGV] eq "386");
 
-$unroll_after = 1024;
+$unroll_after = 64*4;	# If pre-evicted from L1P cache first spin of
+			# fully unrolled loop was measured to run about
+			# 3-4x slower. If slowdown coefficient is N and
+			# unrolled loop is m times faster, then you break
+			# even at (N-1)/(m-1) blocks. Then it needs to be
+			# adjusted for probability of code being evicted,
+			# code size/cache size=1/4. Typical m is 1.15...
 
 $A="eax";
 $E="edx";
@@ -65,9 +71,9 @@ sub BODY_16_63() {
 	 &mov	("edi","esi");
 	&ror	("esi",19-17);
 	 &xor	("ecx",$T);
-	&shr	($T,3);
-	 &xor	("esi","edi");
+	 &shr	($T,3);
 	&ror	("ecx",7);
+	 &xor	("esi","edi");
 	 &xor	($T,"ecx");			# T = sigma0(X[-15])
 	&ror	("esi",17);
 	 &add	($T,&DWP(4*(9+15+16),"esp"));	# T += X[-16]
@@ -96,8 +102,8 @@ sub BODY_00_15() {
 	 &and	("esi",$E);
 	 &mov	($Eoff,$E);		# modulo-scheduled
 	&xor	($E,"ecx");
-	 &xor	("esi","edi");		# Ch(e,f,g)
 	 &add	($T,$Hoff);		# T += h
+	 &xor	("esi","edi");		# Ch(e,f,g)
 	&ror	($E,6);			# Sigma1(e)
 	 &mov	("ecx",$A);
 	 &add	($T,"esi");		# T += Ch(e,f,g)
@@ -162,7 +168,7 @@ sub BODY_00_15() {
 						if ($unroll_after) {
 	&sub	("eax","edi");
 	&cmp	("eax",$unroll_after);
-	&jge	(&label("unrolled"));
+	&jae	(&label("unrolled"));
 						} }
 	&jmp	(&label("loop"));
 
@@ -288,6 +294,7 @@ my $suffix=shift;
 	0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,
 	0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2	);
 &data_word(@K256);
+&data_word(0x00010203,0x04050607,0x08090a0b,0x0c0d0e0f);
 
 if (!$i386 && $unroll_after) {
 my @AH=($A,$K256);
@@ -333,70 +340,72 @@ my @AH=($A,$K256);
 	&mov	(&DWP(96+4,"esp"),"edi");
 	&mov	(&DWP(32+12*$i,"esp"),"ebx");
 
+    my ($t1,$t2) = ("ecx","esi");
     my ($a,$b,$c,$d,$e,$f,$g,$h)=(0..7);	# offsets
     sub off { &DWP(4*(((shift)-$i)&7),"esp"); }
 
     for ($i=0;$i<64;$i++) {
 
       if ($i>=16) {
-	&mov	($T,"ecx");			# "ecx" is preloaded
-	# &mov	("esi",&DWP(32+4*(($i+14)&15),"esp"));
-	&ror	("ecx",18-7);
-	 &mov	("edi","esi");
-	&ror	("esi",19-17);
-	 &xor	("ecx",$T);
-	&shr	($T,3);
-	 &xor	("esi","edi");
-	&ror	("ecx",7);
-	 &xor	($T,"ecx");			# T = sigma0(X[-15])
-	&ror	("esi",17);
+	&mov	($T,$t1);			# $t1 is preloaded
+	# &mov	($t2,&DWP(32+4*(($i+14)&15),"esp"));
+	&ror	($t1,18-7);
+	 &mov	("edi",$t2);
+	&ror	($t2,19-17);
+	 &xor	($t1,$T);
+	 &shr	($T,3);
+	&ror	($t1,7);
+	 &xor	($t2,"edi");
+	 &xor	($T,$t1);			# T = sigma0(X[-15])
+	&ror	($t2,17);
 	 &add	($T,&DWP(32+4*($i&15),"esp"));	# T += X[-16]
 	&shr	("edi",10);
 	 &add	($T,&DWP(32+4*(($i+9)&15),"esp"));	# T += X[-7]
-	#&xor	("edi","esi")			# sigma1(X[-2])
+	#&xor	("edi",$t2)			# sigma1(X[-2])
 	# &add	($T,"edi");			# T += sigma1(X[-2])
 	# &mov	(&DWP(4*(9+15),"esp"),$T);	# save X[0]
       }
-	&mov	("ecx",$E);
-	 &xor	("edi","esi")			if ($i>=16);	# sigma1(X[-2])
-	 &mov	("esi",&off($f));
-	&ror	("ecx",25-11);
+	&mov	($t1,$E);
+	 &xor	("edi",$t2)			if ($i>=16);	# sigma1(X[-2])
+	 &mov	($t2,&off($f));
+	&ror	($E,25-11);
 	 &add	($T,"edi")			if ($i>=16);	# T += sigma1(X[-2])
 	 &mov	("edi",&off($g));
-	&xor	("ecx",$E);
-	 &xor	("esi","edi");
+	&xor	($E,$t1);
 	 &mov	($T,&DWP(32+4*($i&15),"esp"))	if ($i<16);	# X[i]
-	 &mov	(&DWP(32+4*($i&15),"esp"),$T)	if ($i>=16);	# save X[0]
-	&ror	("ecx",11-6);
-	 &and	("esi",$E);
-	 &mov	(&off($e),$E);		# modulo-scheduled
-	&xor	($E,"ecx");
-	 &xor	("esi","edi");		# Ch(e,f,g)
+	 &mov	(&DWP(32+4*($i&15),"esp"),$T)	if ($i>=16 && $i<62);	# save X[0]
+	 &xor	($t2,"edi");
+	&ror	($E,11-6);
+	 &and	($t2,$t1);
+	 &mov	(&off($e),$t1);		# save $E, modulo-scheduled
+	&xor	($E,$t1);
 	 &add	($T,&off($h));		# T += h
+	 &xor	("edi",$t2);		# Ch(e,f,g)
 	&ror	($E,6);			# Sigma1(e)
-	 &mov	("ecx",$AH[0]);
-	 &add	($T,"esi");		# T += Ch(e,f,g)
+	 &mov	($t1,$AH[0]);
+	 &add	($T,"edi");		# T += Ch(e,f,g)
 
-	&ror	("ecx",22-13);
+	&ror	($t1,22-13);
+	 &mov	($t2,$AH[0]);
 	 &mov	("edi",&off($b));
-	&xor	("ecx",$AH[0]);
-	 &mov	(&off($a),$AH[0]);	# modulo-scheduled
-	&ror	("ecx",13-2);
-	 &lea	($T,&DWP(@K256[$i],$T,$E));	# T += Sigma1(1)+K[i]
-	 &mov	($E,&off($d));		# e in next iteration, d in this one
-	&xor	("ecx",$AH[0]);
+	&xor	($t1,$AH[0]);
+	 &mov	(&off($a),$AH[0]);	# save $A, modulo-scheduled
 	 &xor	($AH[0],"edi");		# a ^= b, (b^c) in next round
-	&ror	("ecx",2);		# Sigma0(a)
+	&ror	($t1,13-2);
+	 &and	($AH[1],$AH[0]);	# (b^c) &= (a^b)
+	 &lea	($E,&DWP(@K256[$i],$T,$E));	# T += Sigma1(1)+K[i]
+	&xor	($t1,$t2);
+	 &xor	($AH[1],"edi");		# h = Maj(a,b,c) = Ch(a^b,c,b)
+	 &mov	($t2,&DWP(32+4*(($i+2)&15),"esp"))	if ($i>=15 && $i<63);
+	&ror	($t1,2);		# Sigma0(a)
 
-	&add	($E,$T);		# d += T
-	 &and	($AH[1],$AH[0]);	# a &= (b^c)
-	&add	($T,"ecx");		# T += Sigma0(a)
-	 &mov	("ecx",&DWP(32+4*(($i+2)&15),"esp"))	if ($i>=15 && $i<63);
-	&xor	($AH[1],"edi");		# h = Maj(a,b,c) = Ch(a^b,c,b)
-	 &mov	("esi",&DWP(32+4*(($i+15)&15),"esp"))	if ($i>=15 && $i<63);
-	&add	($AH[1],$T);		# h += T
+	 &add	($AH[1],$E);		# h += T
+	 &add	($E,&off($d));		# d += T
+	&add	($AH[1],$t1);		# h += Sigma0(a)
+	 &mov	($t1,&DWP(32+4*(($i+15)&15),"esp"))	if ($i>=15 && $i<63);
 
-	unshift(@AH,pop(@AH));		# rotate(a,h)
+	@AH = reverse(@AH);		# rotate(a,h)
+	($t1,$t2) = ($t2,$t1);		# rotate(t1,t2)
     }
 	&mov	("esi",&DWP(96,"esp"));	#ctx
 					#&mov	($AH[0],&DWP(0,"esp"));
