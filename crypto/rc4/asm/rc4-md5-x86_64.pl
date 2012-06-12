@@ -30,6 +30,9 @@
 # Westmere	4.3	5.2	9.5	7.0	+36%
 # Sandy Bridge	4.2	5.5	9.7	6.8	+43%
 # Atom		9.3	6.5	15.8	11.1	+42%
+# VIA Nano	6.3	5.4	11.7	8.6	+37%
+# Ivy Bridge	4.1	5.2	9.3	6.0	+54%
+# Bulldozer	4.5	5.4	9.9	7.7	+29%
 #
 # (*)	rc4-x86_64.pl delivers 5.3 on Opteron, so real improvement
 #	is +53%...

@@ -60,6 +60,9 @@
 # Atom		11.0		9.7/+13%	-
 # Westmere	7.1		5.6/+27%	-
 # Sandy Bridge	7.9		6.3/+25%	5.2/+51%
+# Ivy Bridge	6.4		4.8/+33%	4.7/+36%
+# Bulldozer	10.9		6.1/+79%
+# VIA Nano	10.2		7.4/+38%
 
 $flavour = shift;
 $output  = shift;

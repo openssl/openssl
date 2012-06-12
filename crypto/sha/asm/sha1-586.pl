@@ -92,6 +92,9 @@
 # Atom		12.5		9.5(*)/+32%	-
 # Westmere	7.3		5.6/+30%	-
 # Sandy Bridge	8.8		6.2/+40%	5.1(**)/+70%
+# Ivy Bridge	7.2		4.9/+47%	4.8(**)/+50%
+# Bulldozer	11.6		6.2/+88%
+# VIA Nano	10.6		7.5/+41%
 #
 # (*)	Loop is 1056 instructions long and expected result is ~8.25.
 #	It remains mystery [to me] why ILP is limited to 1.7.

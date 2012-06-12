@@ -26,6 +26,8 @@
 # P4		125/125		17.8		84(***)
 # Opteron	66 /70		10.1		30
 # Core2		54 /67		8.4		18
+# Atom		105/105		16.8		53
+# VIA Nano	69 /71		13.0		27
 #
 # (*)	gcc 3.4.x was observed to generate few percent slower code,
 #	which is one of reasons why 2.95.3 results were chosen,
@@ -112,6 +114,10 @@
 # on Sandy Bridge. Strangely enough attempt to modify 64-bit code in
 # similar manner resulted in almost 20% degradation on Sandy Bridge,
 # where original 64-bit code processes one byte in 1.95 cycles.
+
+#####################################################################
+# For reference, AMD Bulldozer processes one byte in 1.98 cycles in
+# 32-bit mode and 1.89 in 64-bit.
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");

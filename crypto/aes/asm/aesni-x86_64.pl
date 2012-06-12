@@ -157,6 +157,13 @@
 # one byte out of 8KB with 128-bit key, Sandy Bridge - 0.97. Just like
 # in CTR mode AES instruction interleave factor was chosen to be 6x.
 
+######################################################################
+# For reference, AMD Bulldozer spends 5.77 cycles per byte processed
+# with 128-bit key in CBC encrypt and 0.76 cycles in CBC decrypt, 0.70
+# in ECB, 0.94 in CTR, 0.95 in XTS... This means that aes[enc|dec]
+# instruction latency is 9 cycles and that they can be issued every
+# cycle.
+
 $PREFIX="aesni";	# if $PREFIX is set to "AES", the script
 			# generates drop-in replacement for
 			# crypto/aes/asm/aes-x86_64.pl:-)

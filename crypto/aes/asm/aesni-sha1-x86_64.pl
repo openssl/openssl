@@ -23,14 +23,20 @@
 #		AES-128-CBC	+SHA1		stitch      gain
 # Westmere	3.77[+5.6]	9.37		6.65	    +41%
 # Sandy Bridge	5.05[+5.2(6.3)]	10.25(11.35)	6.16(7.08)  +67%(+60%)
+# Ivy Bridge	5.05[+4.7]	9.75		5.59        +74%
+# Bulldozer	5.77[+6.1]	11.87		6.47        +83%
 #
 #		AES-192-CBC
 # Westmere	4.51		10.11		6.97	    +45%
 # Sandy Bridge	6.05		11.25(12.35)	6.34(7.27)  +77%(+70%)
+# Ivy Bridge	6.05		10.75		6.07        +77%
+# Bulldozer	6.89		12.99		7.02        +85%
 #
 #		AES-256-CBC
 # Westmere	5.25		10.85		7.25	    +50%
 # Sandy Bridge	7.05		12.25(13.35)	7.06(7.70)  +74%(+73%)
+# Ivy Bridge	7.05		11.75		7.12        +65%
+# Bulldozer	8.00		14.10		8.24        +71%
 #
 # (*)	There are two code paths: SSSE3 and AVX. See sha1-568.pl for
 #	background information. Above numbers in parentheses are SSSE3
@@ -47,6 +53,8 @@
 #		AES-128-CBC	AES-192-CBC	AES-256-CBC
 # Westmere	1.31		1.55		1.80
 # Sandy Bridge	0.93		1.06		1.22
+# Ivy Bridge	0.92		1.06		1.21
+# Bulldozer	0.76		0.90		1.04
 
 $flavour = shift;
 $output  = shift;

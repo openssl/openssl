@@ -92,6 +92,9 @@
 # Westmere	4.2/+60%
 # Sandy Bridge	4.2/+120%
 # Atom		9.3/+80%
+# VIA Nano	6.4/+4%
+# Ivy Bridge	4.1/+30%
+# Bulldozer	4.5/+30%(*)
 #
 # (*)	But corresponding loop has less instructions, which should have
 #	positive effect on upcoming Bulldozer, which has one less ALU.

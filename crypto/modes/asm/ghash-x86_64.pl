@@ -22,6 +22,8 @@
 # P4		28.6		14.0		+100%
 # Opteron	19.3		7.7		+150%
 # Core2		17.8		8.1(**)		+120%
+# Atom		31.6		16.8		+88%
+# VIA Nano	21.8		10.1		+115%
 #
 # (*)	comparison is not completely fair, because C results are
 #	for vanilla "256B" implementation, while assembler results

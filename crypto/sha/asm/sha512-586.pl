@@ -11,15 +11,16 @@
 #
 # Performance in clock cycles per processed byte (less is better):
 #
-#		Pentium	PIII	P4	AMD K8	Core2
-# gcc		100	75	116	54	66
-# icc		97	77	95	55	57
-# x86 asm	61	56	82	36	40
-# SSE2 asm	-	-	38	24	20
-# x86_64 asm(*)	-	-	30	10.0	10.5
+#		PIII	P4	AMD K8	Core2	SB	Atom	Bldzr
+# gcc		75	116	54	66	58	126	121
+# icc		77	95	55	57	-	-	-
+# x86 asm	56	82	36	40	35	68	50
+# SSE2 asm	-	38	24	20	16	64(**)	18
+# x86_64 asm(*)	-	33	9.6	10.3	11.3	14.7	13.5
 #
-# (*) x86_64 assembler performance is presented for reference
-#     purposes.
+# (*)	x86_64 assembler performance is presented for reference
+#	purposes.
+# (**)	paddq is increadibly slow on Atom.
 #
 # IALU code-path is optimized for elder Pentiums. On vanilla Pentium
 # performance improvement over compiler generated code reaches ~60%,
@@ -315,6 +316,7 @@ if ($sse2) {
 	&bswap	("edx");
 	&mov	(&DWP(8*9+4,"esp"),"ecx");
 	&mov	(&DWP(8*9+0,"esp"),"edx");
+	&jmp	(&label("00_14_sse2"));
 
 &set_label("00_14_sse2",16);
 	&mov	("eax",&DWP(0,"edi"));
