@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Print out deprecated issuer and subject unique ID fields in
+     certificates.
+     [Steve Henson]
+
   *) Extend OCSP I/O functions so they can be used for simple general purpose
      HTTP as well as OCSP. New wrapper function which can be used to download
      CRLs using the OCSP API.
