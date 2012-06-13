@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) New functions to retrieve certificate signature and signature
+     OID NID.
+     [Steve Henson]
+
   *) Print out deprecated issuer and subject unique ID fields in
      certificates.
      [Steve Henson]

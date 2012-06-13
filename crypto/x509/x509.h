@@ -849,6 +849,10 @@ void *X509_get_ex_data(X509 *r, int idx);
 int		i2d_X509_AUX(X509 *a,unsigned char **pp);
 X509 *		d2i_X509_AUX(X509 **a,const unsigned char **pp,long length);
 
+void X509_get0_signature(ASN1_BIT_STRING **psig, X509_ALGOR **palg,
+								const X509 *x);
+int X509_get_signature_nid(const X509 *x);
+
 int X509_alias_set1(X509 *x, unsigned char *name, int len);
 int X509_keyid_set1(X509 *x, unsigned char *id, int len);
 unsigned char * X509_alias_get0(X509 *x, int *len);
