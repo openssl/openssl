@@ -217,6 +217,7 @@ static int ocsp_resp_cb(SSL *s, void *arg);
 static int audit_proof_cb(SSL *s, void *arg);
 #endif
 static BIO *bio_c_out=NULL;
+static BIO *bio_c_msg=NULL;
 static int c_quiet=0;
 static int c_ign_eof=0;
 
@@ -743,6 +744,15 @@ int MAIN(int argc, char **argv)
 #endif
 		else if	(strcmp(*argv,"-msg") == 0)
 			c_msg=1;
+		else if	(strcmp(*argv,"-msgfile") == 0)
+			{
+			if (--argc < 1) goto bad;
+			bio_c_msg = BIO_new_file(*(++argv), "w");
+			}
+#ifndef OPENSSL_NO_SSL_TRACE
+		else if	(strcmp(*argv,"-trace") == 0)
+			c_msg=2;
+#endif
 		else if	(strcmp(*argv,"-showcerts") == 0)
 			c_showcerts=1;
 		else if	(strcmp(*argv,"-nbio_test") == 0)
@@ -1348,8 +1358,13 @@ re_start:
 		}
 	if (c_msg)
 		{
-		SSL_set_msg_callback(con, msg_cb);
-		SSL_set_msg_callback_arg(con, bio_c_out);
+#ifndef OPENSSL_NO_SSL_TRACE
+		if (c_msg == 2)
+			SSL_set_msg_callback(con, SSL_trace);
+		else
+#endif
+			SSL_set_msg_callback(con, msg_cb);
+		SSL_set_msg_callback_arg(con, bio_c_msg ? bio_c_msg : bio_c_out);
 		}
 #ifndef OPENSSL_NO_TLSEXT
 	if (c_tlsextdebug)
@@ -1925,6 +1940,11 @@ end:
 		{
 		BIO_free(bio_c_out);
 		bio_c_out=NULL;
+		}
+	if (bio_c_msg != NULL)
+		{
+		BIO_free(bio_c_msg);
+		bio_c_msg=NULL;
 		}
 	apps_shutdown();
 	OPENSSL_EXIT(ret);

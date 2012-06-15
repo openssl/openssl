@@ -4,6 +4,12 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Initial SSL tracing code. This parses out SSL/TLS records using the
+     message callback and prints the results. Needs compile time option
+     "enable-ssl-trace". New options to s_client and s_server to enable
+     tracing.
+     [Steve Henson]
+
   *) New functions to retrieve certificate signature and signature
      OID NID.
      [Steve Henson]

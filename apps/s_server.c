@@ -288,6 +288,7 @@ static SSL_CTX *ctx2=NULL;
 static int www=0;
 
 static BIO *bio_s_out=NULL;
+static BIO *bio_s_msg = NULL;
 static int s_debug=0;
 #ifndef OPENSSL_NO_TLSEXT
 static int s_tlsextdebug=0;
@@ -1207,6 +1208,15 @@ int MAIN(int argc, char *argv[])
 #endif
 		else if	(strcmp(*argv,"-msg") == 0)
 			{ s_msg=1; }
+		else if	(strcmp(*argv,"-msgfile") == 0)
+			{
+			if (--argc < 1) goto bad;
+			bio_s_msg = BIO_new_file(*(++argv), "w");
+			}
+#ifndef OPENSSL_NO_SSL_TRACE
+		else if	(strcmp(*argv,"-trace") == 0)
+			{ s_msg=2; }
+#endif
 		else if	(strcmp(*argv,"-hack") == 0)
 			{ hack=1; }
 		else if	(strcmp(*argv,"-state") == 0)
@@ -2004,6 +2014,11 @@ end:
         BIO_free(bio_s_out);
 		bio_s_out=NULL;
 		}
+	if (bio_s_msg != NULL)
+		{
+		BIO_free(bio_s_msg);
+		bio_s_msg = NULL;
+		}
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
@@ -2158,8 +2173,13 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 		}
 	if (s_msg)
 		{
-		SSL_set_msg_callback(con, msg_cb);
-		SSL_set_msg_callback_arg(con, bio_s_out);
+#ifndef OPENSSL_NO_SSL_TRACE
+		if (s_msg == 2)
+			SSL_set_msg_callback(con, SSL_trace);
+		else
+#endif
+			SSL_set_msg_callback(con, msg_cb);
+		SSL_set_msg_callback_arg(con, bio_s_msg ? bio_s_msg : bio_s_out);
 		}
 #ifndef OPENSSL_NO_TLSEXT
 	if (s_tlsextdebug)
@@ -2712,8 +2732,13 @@ static int www_body(char *hostname, int s, unsigned char *context)
 		}
 	if (s_msg)
 		{
-		SSL_set_msg_callback(con, msg_cb);
-		SSL_set_msg_callback_arg(con, bio_s_out);
+#ifndef OPENSSL_NO_SSL_TRACE
+		if (s_msg == 2)
+			SSL_set_msg_callback(con, SSL_trace);
+		else
+#endif
+			SSL_set_msg_callback(con, msg_cb);
+		SSL_set_msg_callback_arg(con, bio_s_msg ? bio_s_msg : bio_s_out);
 		}
 
 	for (;;)

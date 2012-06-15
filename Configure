@@ -715,6 +715,7 @@ my %disabled = ( # "what"         => "comment" [or special keyword "experimental
 		 "rfc3779"	  => "default",
 		 "sctp"       => "default",
 		 "shared"         => "default",
+		 "ssl-trace"	  => "default",
 		 "store"	  => "experimental",
 		 "zlib"           => "default",
 		 "zlib-dynamic"   => "default"
