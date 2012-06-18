@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) New function SSL_certs_clear() to delete all references to certificates
+     from an SSL structure. Before this once a certificate had been added
+     it couldn't be removed.
+     [Steve Henson]
+
   *) Initial SSL tracing code. This parses out SSL/TLS records using the
      message callback and prints the results. Needs compile time option
      "enable-ssl-trace". New options to s_client and s_server to enable

@@ -1922,6 +1922,7 @@ char *SSL_get_srp_username(SSL *s);
 char *SSL_get_srp_userinfo(SSL *s);
 #endif
 
+void	SSL_certs_clear(SSL *s);
 void	SSL_free(SSL *ssl);
 int 	SSL_accept(SSL *ssl);
 int 	SSL_connect(SSL *ssl);
