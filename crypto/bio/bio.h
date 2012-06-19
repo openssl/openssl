@@ -174,6 +174,7 @@ extern "C" {
 
 #define BIO_CTRL_DGRAM_SET_NEXT_TIMEOUT   45 /* Next DTLS handshake timeout to
                                               * adjust socket timeouts */
+#define BIO_CTRL_DGRAM_SET_DONT_FRAG      48
 
 #ifndef OPENSSL_NO_SCTP
 /* SCTP stuff */
