@@ -181,7 +181,7 @@ sub BODY_00_15() {
 	&test	("ecx",1<<20);		# check for P4
 	&jnz	(&label("loop"));
 	&test	("edx",1<<11);		# check for XOP
-	&jnz	(&label("XOP"));
+	&jnz	(&label("XOP"))		if ($ymm);
 	&and	("ecx",1<<30);		# mask "Intel CPU" bit
 	&and	("edx",1<<28);		# mask AVX bit
 	&or	("ecx","edx");
