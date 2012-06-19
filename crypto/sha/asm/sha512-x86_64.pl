@@ -345,7 +345,7 @@ $TABLE:
 	.quad	0x4cc5d4becb3e42b6,0x597f299cfc657e2a
 	.quad	0x5fcb6fab3ad6faec,0x6c44198c4a475817
 	.long	0
-	.asciz	"SHA512 block transfort for x86_64, CRYPTOGAMS by <appro\@openssl.org>
+	.asciz	"SHA512 block transfort for x86_64, CRYPTOGAMS by <appro\@openssl.org>"
 ___
 }
 
