@@ -1632,7 +1632,7 @@ ___
 $code.=<<___ if ($avx);
 	.rva	.LSEH_begin_${func}_avx
 	.rva	.LSEH_end_${func}_avx
-	.rva	.LSEH_info_${func}_xop
+	.rva	.LSEH_info_${func}_avx
 ___
 $code.=<<___;
 .section	.xdata
