@@ -462,6 +462,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_NO_RENEGOTIATION)      ,"no renegotiation"},
 {ERR_REASON(SSL_R_NO_REQUIRED_DIGEST)    ,"digest requred for handshake isn't computed"},
 {ERR_REASON(SSL_R_NO_SHARED_CIPHER)      ,"no shared cipher"},
+{ERR_REASON(SSL_R_NO_SHARED_SIGATURE_ALGORITHMS),"no shared sigature algorithms"},
 {ERR_REASON(SSL_R_NO_SRTP_PROFILES)      ,"no srtp profiles"},
 {ERR_REASON(SSL_R_NO_VERIFY_CALLBACK)    ,"no verify callback"},
 {ERR_REASON(SSL_R_NULL_SSL_CTX)          ,"null ssl ctx"},

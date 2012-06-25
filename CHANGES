@@ -4,6 +4,12 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Update and tidy signature algorithm extension processing. Work out
+     shared signature algorithms based on preferences and peer algorithms
+     and print them out in s_client and s_server. Abort handshake if no
+     shared signature algorithms.
+     [Steve Henson]
+
   *) Add new functions to allow customised supported signature algorithms
      for SSL and SSL_CTX structures. Add options to s_client and s_server
      to support them.
