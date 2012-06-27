@@ -2414,7 +2414,7 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	 */
 #ifndef OPENSSL_NO_DSA
 	if (!c->pkeys[SSL_PKEY_DSA_SIGN].digest)
-		c->pkeys[SSL_PKEY_DSA_SIGN].digest = EVP_dss1();
+		c->pkeys[SSL_PKEY_DSA_SIGN].digest = EVP_sha1();
 #endif
 #ifndef OPENSSL_NO_RSA
 	if (!c->pkeys[SSL_PKEY_RSA_SIGN].digest)
@@ -2425,7 +2425,7 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 #endif
 #ifndef OPENSSL_NO_ECDSA
 	if (!c->pkeys[SSL_PKEY_ECC].digest)
-		c->pkeys[SSL_PKEY_ECC].digest = EVP_ecdsa();
+		c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
 #endif
 	return 1;
 	}
