@@ -54,7 +54,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1; my $xlate;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-open STDOUT,"| $^X $xlate $flavour $output";
+open STDOUT,"| \"$^X\" $xlate $flavour $output";
 
 my ($dat,$in0,$out,$ctx,$inp,$len, $func,$nargs);
 

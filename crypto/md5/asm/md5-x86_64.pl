@@ -117,7 +117,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; my $dir=$1; my $xlate;
 die "can't locate x86_64-xlate.pl";
 
 no warnings qw(uninitialized);
-open STDOUT,"| $^X $xlate $flavour $output";
+open STDOUT,"| \"$^X\" $xlate $flavour $output";
 
 $code .= <<EOF;
 .text
