@@ -2,7 +2,7 @@
 
 $output=shift;
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
-open STDOUT,"| $^X ${dir}../crypto/perlasm/x86_64-xlate.pl $output";
+open STDOUT,"| \"$^X\" ${dir}../crypto/perlasm/x86_64-xlate.pl $output";
 push(@INC,"${dir}.");
 
 require "uplink-common.pl";
