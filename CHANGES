@@ -4,6 +4,18 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add new "valid_flags" field to CERT_PKEY structure which determines what
+     the certificate can be used for (if anything). Set valid_flags field 
+     in new tls1_check_chain function. Simplify ssl_set_cert_masks which used
+     to have similar checks in it.
+
+     Add new "cert_flags" field to CERT structure and include a "strict mode".
+     This enforces some TLS certificate requirements (such as only permitting
+     certificate signature algorithms contained in the supported algorithms
+     extension) which some implementations ignore: this option should be used
+     with caution as it could cause interoperability issues.
+     [Steve Henson]
+
   *) Update and tidy signature algorithm extension processing. Work out
      shared signature algorithms based on preferences and peer algorithms
      and print them out in s_client and s_server. Abort handshake if no

@@ -650,6 +650,12 @@ struct ssl_session_st
  * or just freed (depending on the context's setting for freelist_max_len). */
 #define SSL_MODE_RELEASE_BUFFERS 0x00000010L
 
+/* Cert related flags */
+/* Many implementations ignore some aspects of the TLS standards such as
+ * enforcing certifcate chain algorithms. When this is set we enforce them.
+ */
+#define SSL_CERT_FLAG_TLS_STRICT	0x00000001L
+
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
 
@@ -688,6 +694,15 @@ struct ssl_session_st
 #define SSL_heartbeat(ssl) \
         SSL_ctrl((ssl),SSL_CTRL_TLS_EXT_SEND_HEARTBEAT,0,NULL)
 #endif
+
+#define SSL_CTX_set_cert_flags(ctx,op) \
+	SSL_CTX_ctrl((ctx),SSL_CTRL_CERT_FLAGS,(op),NULL)
+#define SSL_set_cert_flags(s,op) \
+	SSL_ctrl((s),SSL_CTRL_CERT_FLAGS,(op),NULL)
+#define SSL_CTX_clear_cert_flags(ctx,op) \
+	SSL_CTX_ctrl((ctx),SSL_CTRL_CLEAR_CERT_FLAGS,(op),NULL)
+#define SSL_clear_cert_flags(s,op) \
+	SSL_ctrl((s),SSL_CTRL_CLEAR_CERT_FLAGS,(op),NULL)
 
 void SSL_CTX_set_msg_callback(SSL_CTX *ctx, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
 void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int content_type, const void *buf, size_t len, SSL *ssl, void *arg));
@@ -1645,6 +1660,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_ECDH_AUTO			94
 #define SSL_CTRL_SET_SIGALGS			97
 #define SSL_CTRL_SET_SIGALGS_LIST		98
+#define SSL_CTRL_CERT_FLAGS			99
+#define SSL_CTRL_CLEAR_CERT_FLAGS		100
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)

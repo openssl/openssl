@@ -539,23 +539,37 @@ static int tls1_check_ec_key(SSL *s,
 		}
 	return 1;
 	}
-/* Check EC server key is compatible with client extensions */
-int tls1_check_ec_server_key(SSL *s)
+
+/* Check cert parameters compatible with extensions: currently just checks
+ * EC certificates have compatible curves and compression.
+ */
+static int tls1_check_cert_param(SSL *s, X509 *x)
 	{
-	int rv;
-	CERT_PKEY *cpk = s->cert->pkeys + SSL_PKEY_ECC;
-	EVP_PKEY *pkey;
 	unsigned char comp_id, curve_id[2];
-	if (!cpk->x509 || !cpk->privatekey)
-		return 0;
-	pkey = X509_get_pubkey(cpk->x509);
+	EVP_PKEY *pkey;
+	int rv;
+	pkey = X509_get_pubkey(x);
 	if (!pkey)
 		return 0;
+	/* If not EC nothing to do */
+	if (pkey->type != EVP_PKEY_EC)
+		{
+		EVP_PKEY_free(pkey);
+		return 1;
+		}
 	rv = tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec);
 	EVP_PKEY_free(pkey);
 	if (!rv)
 		return 0;
 	return tls1_check_ec_key(s, curve_id, &comp_id);
+	}
+/* Check EC server key is compatible with client extensions */
+int tls1_check_ec_server_key(SSL *s)
+	{
+	CERT_PKEY *cpk = s->cert->pkeys + SSL_PKEY_ECC;
+	if (!cpk->x509 || !cpk->privatekey)
+		return 0;
+	return tls1_check_cert_param(s, cpk->x509);
 	}
 /* Check EC temporary key is compatible with client extensions */
 int tls1_check_ec_tmp_key(SSL *s)
@@ -3050,24 +3064,30 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 			}
 
 		}
-	/* Set any remaining keys to default values. NOTE: if alg is not
-	 * supported it stays as NULL.
+	/* In strict mode leave unset digests as NULL to indicate we can't
+	 * use the certificate for signing.
 	 */
+	if (!(s->cert->cert_flags & SSL_CERT_FLAG_TLS_STRICT))
+		{
+		/* Set any remaining keys to default values. NOTE: if alg is
+		 * not supported it stays as NULL.
+	 	 */
 #ifndef OPENSSL_NO_DSA
-	if (!c->pkeys[SSL_PKEY_DSA_SIGN].digest)
-		c->pkeys[SSL_PKEY_DSA_SIGN].digest = EVP_sha1();
+		if (!c->pkeys[SSL_PKEY_DSA_SIGN].digest)
+			c->pkeys[SSL_PKEY_DSA_SIGN].digest = EVP_sha1();
 #endif
 #ifndef OPENSSL_NO_RSA
-	if (!c->pkeys[SSL_PKEY_RSA_SIGN].digest)
-		{
-		c->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
-		c->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
-		}
+		if (!c->pkeys[SSL_PKEY_RSA_SIGN].digest)
+			{
+			c->pkeys[SSL_PKEY_RSA_SIGN].digest = EVP_sha1();
+			c->pkeys[SSL_PKEY_RSA_ENC].digest = EVP_sha1();
+			}
 #endif
 #ifndef OPENSSL_NO_ECDSA
-	if (!c->pkeys[SSL_PKEY_ECC].digest)
-		c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
+		if (!c->pkeys[SSL_PKEY_ECC].digest)
+			c->pkeys[SSL_PKEY_ECC].digest = EVP_sha1();
 #endif
+		}
 	return 1;
 	}
 
@@ -3358,6 +3378,149 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen)
 	err:
 	OPENSSL_free(sigalgs);
 	return 0;
+	}
+
+static int tls1_check_sig_alg(CERT *c, X509 *x, int default_nid)
+	{
+	int sig_nid;
+	size_t i;
+	if (default_nid == -1)
+		return 1;
+	sig_nid = X509_get_signature_nid(x);
+	if (default_nid)
+		return sig_nid == default_nid ? 1 : 0;
+	for (i = 0; i < c->shared_sigalgslen; i++)
+		if (sig_nid == c->shared_sigalgs[i].signandhash_nid)
+			return 1;
+	return 0;
+	}
+
+/* Check certificate chain is consistent with TLS extensions and is
+ * usable by server.
+ */
+int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
+									int idx)
+	{
+	int i;
+	int rv = CERT_PKEY_INVALID;
+	CERT_PKEY *cpk = NULL;
+	CERT *c = s->cert;
+	if (idx != -1)
+		{
+		cpk = c->pkeys + idx;
+		x = cpk->x509;
+		pk = cpk->privatekey;
+		chain = cpk->chain;
+		/* If no cert or key, forget it */
+		if (!x || !pk)
+			goto end;
+		}
+	else
+		{
+		idx = ssl_cert_type(x, pk);
+		if (idx == -1)
+			goto end;
+		}
+
+	/* Check all signature algorithms are consistent with
+	 * signature algorithms extension if TLS 1.2 or later
+	 * and strict mode.
+	 */
+	if (TLS1_get_version(s) >= TLS1_2_VERSION
+		&& c->cert_flags & SSL_CERT_FLAG_TLS_STRICT)
+		{
+		int default_nid;
+		unsigned char rsign = 0;
+		if (c->peer_sigalgs)
+			default_nid = 0;
+		/* If no sigalgs extension use defaults from RFC5246 */
+		else
+			{
+			switch(idx)
+				{	
+			case SSL_PKEY_RSA_ENC:
+			case SSL_PKEY_RSA_SIGN:
+			case SSL_PKEY_DH_RSA:
+				rsign = TLSEXT_signature_rsa;
+				default_nid = NID_sha1WithRSAEncryption;
+				break;
+
+			case SSL_PKEY_DSA_SIGN:
+			case SSL_PKEY_DH_DSA:
+				rsign = TLSEXT_signature_dsa;
+				default_nid = NID_dsaWithSHA1;
+				break;
+
+			case SSL_PKEY_ECC:
+				rsign = TLSEXT_signature_ecdsa;
+				default_nid = NID_ecdsa_with_SHA1;
+				break;
+
+			default:
+				default_nid = -1;
+				break;
+				}
+			}
+		/* If peer sent no signature algorithms extension and we
+		 * have set preferred signature algorithms check we support
+		 * sha1.
+		 */
+		if (default_nid > 0 && c->conf_sigalgs)
+			{
+			size_t j;
+			const unsigned char *p = c->conf_sigalgs;
+			for (j = 0; j < c->conf_sigalgslen; j += 2, p += 2)
+				{
+				if (p[0] == TLSEXT_hash_sha1 && p[1] == rsign)
+					break;
+				}
+			if (j == c->conf_sigalgslen)
+				goto end;
+			}
+		/* Check signature algorithm of each cert in chain */
+		if (!tls1_check_sig_alg(c, x, default_nid))
+			goto end;
+		for (i = 0; i < sk_X509_num(chain); i++)
+			{
+			if (!tls1_check_sig_alg(c, sk_X509_value(chain, i),
+							default_nid))
+				goto end;
+			}
+		}
+
+	/* Check cert parameters are consistent */
+	if (!tls1_check_cert_param(s, x))
+		goto end;
+	/* In strict mode check rest of chain too */
+	if (c->cert_flags & SSL_CERT_FLAG_TLS_STRICT)
+		{
+		for (i = 0; i < sk_X509_num(chain); i++)
+			{
+			if (!tls1_check_cert_param(s, sk_X509_value(chain, i)))
+				goto end;
+			}
+		}
+	rv = CERT_PKEY_VALID;
+
+	end:
+	if (cpk)
+		{
+		if (rv && cpk->digest)
+			rv |= CERT_PKEY_SIGN;
+		cpk->valid_flags = rv;
+		}
+	return rv;
+	}
+
+/* Set validity of certificates in an SSL structure */
+void tls1_set_cert_validity(SSL *s)
+	{
+	tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_ENC);
+	tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA_SIGN);
+	tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DSA_SIGN);
+	tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_RSA);
+	tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_DSA);
+	tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ECC);
 	}
 
 #endif
