@@ -563,14 +563,6 @@ static int tls1_check_cert_param(SSL *s, X509 *x)
 		return 0;
 	return tls1_check_ec_key(s, curve_id, &comp_id);
 	}
-/* Check EC server key is compatible with client extensions */
-int tls1_check_ec_server_key(SSL *s)
-	{
-	CERT_PKEY *cpk = s->cert->pkeys + SSL_PKEY_ECC;
-	if (!cpk->x509 || !cpk->privatekey)
-		return 0;
-	return tls1_check_cert_param(s, cpk->x509);
-	}
 /* Check EC temporary key is compatible with client extensions */
 int tls1_check_ec_tmp_key(SSL *s)
 	{
