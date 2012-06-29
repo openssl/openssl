@@ -3180,6 +3180,13 @@ int ssl3_send_client_certificate(SSL *s)
 
 	if (s->state ==	SSL3_ST_CW_CERT_A)
 		{
+		/* Let cert callback update client certificates if required */
+		if (s->cert->cert_cb
+			&& s->cert->cert_cb(s, s->cert->cert_cb_arg) <= 0)
+			{
+			ssl3_send_alert(s,SSL3_AL_FATAL,SSL_AD_INTERNAL_ERROR);
+			return 0;
+			}
 		if (ssl3_check_client_certificate(s))
 			s->state=SSL3_ST_CW_CERT_C;
 		else

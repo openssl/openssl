@@ -4,6 +4,15 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add certificate callback. If set this is called whenever a certificate
+     is required by client or server. An application can decide which
+     certificate chain to present based on arbitrary criteria: for example
+     supported signature algorithms. Add very simple example to s_server.
+     This fixes many of the problems and restrictions of the existing client
+     certificate callback: for example you can now clear an existing
+     certificate and specify the whole chain.
+     [Steve Henson]
+
   *) Add new "valid_flags" field to CERT_PKEY structure which determines what
      the certificate can be used for (if anything). Set valid_flags field 
      in new tls1_check_chain function. Simplify ssl_set_cert_masks which used

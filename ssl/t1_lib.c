@@ -3514,5 +3514,10 @@ void tls1_set_cert_validity(SSL *s)
 	tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_DH_DSA);
 	tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_ECC);
 	}
+/* User level utiity function to check a chain is suitable */
+int SSL_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain)
+	{
+	return tls1_check_chain(s, x, pk, chain, -1);
+	}
 
 #endif

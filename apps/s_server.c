@@ -991,6 +991,7 @@ int MAIN(int argc, char *argv[])
 	char *srpuserseed = NULL;
 	char *srp_verifier_file = NULL;
 #endif
+	SSL_EXCERT *exc = NULL;
 	meth=SSLv23_server_method();
 
 	local_argc=argc;
@@ -1138,6 +1139,12 @@ int MAIN(int argc, char *argv[])
 		else if (strcmp(*argv,"-ext_cache") == 0)
 			ext_cache = 1;
 		else if (args_verify(&argv, &argc, &badarg, bio_err, &vpm))
+			{
+			if (badarg)
+				goto bad;
+			continue;
+			}
+		else if (args_excert(&argv, &argc, &badarg, bio_err, &exc))
 			{
 			if (badarg)
 				goto bad;
@@ -1456,6 +1463,9 @@ bad:
 		s_key_file2 = s_cert_file2;
 #endif
 
+	if (!load_excert(&exc, bio_err))
+		goto end;
+
 	if (nocert == 0)
 		{
 		s_key = load_key(bio_err, s_key_file, s_key_format, 0, pass, e,
@@ -1618,6 +1628,7 @@ bad:
 	if (hack) SSL_CTX_set_options(ctx,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
 	SSL_CTX_set_options(ctx,off);
 	if (cert_flags) SSL_CTX_set_cert_flags(ctx, cert_flags);
+	if (exc) ssl_ctx_set_excert(ctx, exc);
 	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 	 * Setting read ahead solves this problem.
 	 */
@@ -1692,6 +1703,7 @@ bad:
 		if (hack) SSL_CTX_set_options(ctx2,SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG);
 		SSL_CTX_set_options(ctx2,off);
 		if (cert_flags) SSL_CTX_set_cert_flags(ctx2, cert_flags);
+		if (exc) ssl_ctx_set_excert(ctx2, exc);
 		/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 		 * Setting read ahead solves this problem.
 		 */
@@ -2035,6 +2047,7 @@ end:
 	if (authz_in != NULL)
 		BIO_free(authz_in);
 #endif
+	ssl_excert_free(exc);
 	if (bio_s_out != NULL)
 		{
         BIO_free(bio_s_out);

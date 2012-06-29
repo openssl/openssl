@@ -1357,6 +1357,14 @@ int ssl3_get_client_hello(SSL *s)
 			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_NO_CIPHERS_PASSED);
 			goto f_err;
 			}
+		/* Let cert callback update server certificates if required */
+		if (s->cert->cert_cb
+			&& s->cert->cert_cb(s, s->cert->cert_cb_arg) <= 0)
+			{
+			al=SSL_AD_INTERNAL_ERROR;
+			SSLerr(SSL_F_SSL3_GET_CLIENT_HELLO,SSL_R_CERT_CB_ERROR);
+			goto f_err;
+			}
 		ciphers=NULL;
 		c=ssl3_choose_cipher(s,s->session->ciphers,
 				     SSL_get_ciphers(s));
