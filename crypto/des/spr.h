@@ -56,8 +56,6 @@
  * [including the GNU Public Licence.]
  */
 
-#include <crypto.h>
-
 __fips_constseg
 OPENSSL_GLOBAL const DES_LONG DES_SPtrans[8][64]={
 {
