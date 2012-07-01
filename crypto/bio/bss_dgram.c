@@ -278,7 +278,7 @@ static void dgram_adjust_rcv_timeout(BIO *b)
 
 		sz.i = sizeof(timeout);
 		if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
-					   (void*)&timeout, &sz) < 0)
+					   (void*)&timeout, &sz.i) < 0)
 			{ perror("getsockopt"); }
 		else
 			{
@@ -748,7 +748,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 		sz.i = sizeof(timeout);
 		if (getsockopt(b->num, SOL_SOCKET, SO_RCVTIMEO,
-			(void*)&timeout, &sz) < 0)
+			(void*)&timeout, &sz.i) < 0)
 			{ perror("getsockopt"); ret = -1; }
 		else
 			{
@@ -797,7 +797,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 		sz.i = sizeof(timeout);
 		if (getsockopt(b->num, SOL_SOCKET, SO_SNDTIMEO,
-			(void*)&timeout, &sz) < 0)
+			(void*)&timeout, &sz.i) < 0)
 			{ perror("getsockopt"); ret = -1; }
 		else
 			{
@@ -805,7 +805,6 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			tv->tv_usec = (timeout % 1000) * 1000;
 			ret = sizeof(*tv);
 			}
-		}
 #else
 		sz.i = sizeof(struct timeval);
 		if ( getsockopt(b->num, SOL_SOCKET, SO_SNDTIMEO, 
