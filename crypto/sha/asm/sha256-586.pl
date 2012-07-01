@@ -34,7 +34,7 @@
 # gcc		36	41	27	26	25	50	36
 # icc		33	38	25	23	-	-	-
 # x86 asm(*)	27/24	28	19/15.5	18/15.6	12.5	30/25	16.6
-# x86_64 asm(**)	17.5	15	15.5	17.5	23	21
+# x86_64 asm(**)	17.5	15.1	13.9	11.6	22	13.7
 #
 # (*)	numbers after slash are for unrolled loop, where available;
 # (**)	x86_64 assembly performance is presented for reference
@@ -499,7 +499,7 @@ my @AH = ($A,$T);
 	&mov	("edi",&DWP(96+4,"esp"));	# inp
 	&mov	(&DWP(24,"esp"),"ecx");
 	&mov	(&DWP(28,"esp"),"esi");
-	&vmovdqa	($t3,&DWP(256,$K256));
+	&vmovdqa	($t3,&QWP(256,$K256));
 	&jmp	(&label("grand_xop"));
 
 &set_label("grand_xop",16);
@@ -738,7 +738,7 @@ sub body_00_15 () {
 	&mov	("edi",&DWP(96+4,"esp"));	# inp
 	&mov	(&DWP(24,"esp"),"ecx");
 	&mov	(&DWP(28,"esp"),"esi");
-	&vmovdqa	($t3,&DWP(256,$K256));
+	&vmovdqa	($t3,&QWP(256,$K256));
 	&jmp	(&label("grand_avx"));
 
 &set_label("grand_avx",16);
