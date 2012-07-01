@@ -3701,7 +3701,7 @@ int_EVP_CIPHER_init_engine_callbacks    4087	NOEXIST::FUNCTION:
 FIPS_rsa_free                           4088	EXIST:OPENSSL_FIPS:FUNCTION:
 FIPS_dsa_sig_encode                     4089	NOEXIST::FUNCTION:
 CRYPTO_dbg_remove_all_info              4090	NOEXIST::FUNCTION:
-OPENSSL_init                            4091	NOEXIST::FUNCTION:
+OPENSSL_init                            4091	EXIST::FUNCTION:
 private_Camellia_set_key                4092	NOEXIST::FUNCTION:
 CRYPTO_strdup                           4093	EXIST::FUNCTION:
 JPAKE_STEP3A_process                    4094	EXIST::FUNCTION:JPAKE
@@ -4410,3 +4410,5 @@ DH_get_2048_224                         4779	EXIST::FUNCTION:DH
 FIPS_drbg_method                        4780	EXIST:OPENSSL_FIPS:FUNCTION:
 EC_curve_nist2nid                       4781	EXIST::FUNCTION:EC
 EC_curve_nid2nist                       4782	EXIST::FUNCTION:EC
+X509_get0_signature                     4783	EXIST::FUNCTION:
+X509_get_signature_nid                  4784	EXIST::FUNCTION:
