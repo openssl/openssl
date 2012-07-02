@@ -474,8 +474,9 @@ int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	 */
 	mask  = 0-(PTR_SIZE_INT)bn_sub_words(c_d,r_d,_nist_p_192[0],BN_NIST_192_TOP);
 	mask &= 0-(PTR_SIZE_INT)carry;
+	res   = c_d;
 	res   = (BN_ULONG *)
-	 (((PTR_SIZE_INT)c_d&~mask) | ((PTR_SIZE_INT)r_d&mask));
+	 (((PTR_SIZE_INT)res&~mask) | ((PTR_SIZE_INT)r_d&mask));
 	nist_cp_bn(r_d, res, BN_NIST_192_TOP);
 	r->top = BN_NIST_192_TOP;
 	bn_correct_top(r);
@@ -632,7 +633,8 @@ int BN_nist_mod_224(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	/* otherwise it's effectively same as in BN_nist_mod_192... */
 	mask  = 0-(PTR_SIZE_INT)(*u.f)(c_d,r_d,_nist_p_224[0],BN_NIST_224_TOP);
 	mask &= 0-(PTR_SIZE_INT)carry;
-	res   = (BN_ULONG *)(((PTR_SIZE_INT)c_d&~mask) |
+	res   = c_d;
+	res   = (BN_ULONG *)(((PTR_SIZE_INT)res&~mask) |
 	 ((PTR_SIZE_INT)r_d&mask));
 	nist_cp_bn(r_d, res, BN_NIST_224_TOP);
 	r->top = BN_NIST_224_TOP;
@@ -831,7 +833,8 @@ int BN_nist_mod_256(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	mask  = 0-(PTR_SIZE_INT)(*u.f)(c_d,r_d,_nist_p_256[0],BN_NIST_256_TOP);
 	mask &= 0-(PTR_SIZE_INT)carry;
-	res   = (BN_ULONG *)(((PTR_SIZE_INT)c_d&~mask) |
+	res   = c_d;
+	res   = (BN_ULONG *)(((PTR_SIZE_INT)res&~mask) |
 	 ((PTR_SIZE_INT)r_d&mask));
 	nist_cp_bn(r_d, res, BN_NIST_256_TOP);
 	r->top = BN_NIST_256_TOP;
@@ -1052,7 +1055,8 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	mask  = 0-(PTR_SIZE_INT)(*u.f)(c_d,r_d,_nist_p_384[0],BN_NIST_384_TOP);
 	mask &= 0-(PTR_SIZE_INT)carry;
-	res   = (BN_ULONG *)(((PTR_SIZE_INT)c_d&~mask) |
+	res   = c_d;
+	res   = (BN_ULONG *)(((PTR_SIZE_INT)res&~mask) |
 	 ((PTR_SIZE_INT)r_d&mask));
 	nist_cp_bn(r_d, res, BN_NIST_384_TOP);
 	r->top = BN_NIST_384_TOP;
@@ -1118,7 +1122,8 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	bn_add_words(r_d,r_d,t_d,BN_NIST_521_TOP);
 	mask = 0-(PTR_SIZE_INT)bn_sub_words(t_d,r_d,_nist_p_521,BN_NIST_521_TOP);
-	res  = (BN_ULONG *)(((PTR_SIZE_INT)t_d&~mask) |
+	res  = t_d;
+	res  = (BN_ULONG *)(((PTR_SIZE_INT)res&~mask) |
 	 ((PTR_SIZE_INT)r_d&mask));
 	nist_cp_bn(r_d,res,BN_NIST_521_TOP);
 	r->top = BN_NIST_521_TOP;
