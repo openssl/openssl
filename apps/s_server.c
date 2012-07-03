@@ -1470,24 +1470,23 @@ bad:
 				goto end;
 				}
 			}
-
-# ifndef OPENSSL_NO_NEXTPROTONEG
-		if (next_proto_neg_in)
-			{
-			unsigned short len;
-			next_proto.data = next_protos_parse(&len,
-				next_proto_neg_in);
-			if (next_proto.data == NULL)
-				goto end;
-			next_proto.len = len;
-			}
-		else
-			{
-			next_proto.data = NULL;
-			}
-# endif
 #endif /* OPENSSL_NO_TLSEXT */
 		}
+
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG) 
+	if (next_proto_neg_in)
+		{
+		unsigned short len;
+		next_proto.data = next_protos_parse(&len, next_proto_neg_in);
+		if (next_proto.data == NULL)
+			goto end;
+		next_proto.len = len;
+		}
+	else
+		{
+		next_proto.data = NULL;
+		}
+#endif
 
 
 	if (s_dcert_file)
