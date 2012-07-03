@@ -1965,6 +1965,10 @@ end:
 			print_stuff(bio_c_out,con,1);
 		SSL_free(con);
 		}
+#if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
+	if (next_proto.data)
+		OPENSSL_free(next_proto.data);
+#endif
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (cert)
 		X509_free(cert);
