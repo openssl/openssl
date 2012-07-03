@@ -558,7 +558,7 @@ int MAIN(int, char **);
 int MAIN(int argc, char **argv)
 	{
 	unsigned int off=0, clr=0;
-	int cert_flags=0;
+	unsigned int cert_flags=0;
 	SSL *con=NULL;
 #ifndef OPENSSL_NO_KRB5
 	KSSL_CTX *kctx;

@@ -960,7 +960,7 @@ int MAIN(int argc, char *argv[])
 	int badop=0,bugs=0;
 	int ret=1;
 	int off=0;
-	int cert_flags = 0;
+	unsigned int cert_flags = 0;
 	int no_tmp_rsa=0,no_dhe=0,no_ecdhe=0,nocert=0;
 	int state=0;
 	const SSL_METHOD *meth=NULL;
