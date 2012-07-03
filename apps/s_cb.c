@@ -1192,11 +1192,16 @@ int args_excert(char ***pargs, int *pargc,
 	{
 	char *arg = **pargs, *argn = (*pargs)[1];
 	SSL_EXCERT *exc = *pexc;
-	if (!exc && !ssl_excert_prepend(&exc))
+	if (!exc)
 		{
-		BIO_printf(err, "Error initialising xcert\n");
-		*badarg = 1;
-		goto err;
+		if (ssl_excert_prepend(&exc))
+			*pexc = exc;
+		else
+			{
+			BIO_printf(err, "Error initialising xcert\n");
+			*badarg = 1;
+			goto err;
+			}
 		}
 	if (strcmp(arg, "-xcert") == 0)
 		{
