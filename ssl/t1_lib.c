@@ -3482,7 +3482,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 		 * have set preferred signature algorithms check we support
 		 * sha1.
 		 */
-		if (s->server && default_nid > 0 && c->conf_sigalgs)
+		if (default_nid > 0 && c->conf_sigalgs)
 			{
 			size_t j;
 			const unsigned char *p = c->conf_sigalgs;
