@@ -3341,6 +3341,11 @@ int SSL_cache_hit(SSL *s)
 	return s->hit;
 	}
 
+int SSL_is_server(SSL *s)
+	{
+	return s->server;
+	}
+
 #if defined(_WINDLL) && defined(OPENSSL_SYS_WIN16)
 #include "../crypto/bio/bss_file.c"
 #endif

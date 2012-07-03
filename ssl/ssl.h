@@ -2177,6 +2177,7 @@ void SSL_set_not_resumable_session_callback(SSL *ssl,
 
 void SSL_set_debug(SSL *s, int debug);
 int SSL_cache_hit(SSL *s);
+int SSL_is_server(SSL *s);
 
 #ifndef OPENSSL_NO_SSL_TRACE
 void SSL_trace(int write_p, int version, int content_type,
