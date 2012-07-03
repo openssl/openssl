@@ -639,10 +639,17 @@ size_t tls12_get_sig_algs(SSL *s, unsigned char *p)
 	{
 	const unsigned char *sigs;
 	size_t sigslen;
-	sigs = s->cert->conf_sigalgs;
-
-	if (sigs)
+	/* If server use client authentication sigalgs if not NULL */
+	if (s->server && s->cert->client_sigalgs)
+		{
+		sigs = s->cert->client_sigalgs;
+		sigslen = s->cert->client_sigalgslen;
+		}
+	else if (s->cert->conf_sigalgs)
+		{
+		sigs = s->cert->conf_sigalgs;
 		sigslen = s->cert->conf_sigalgslen;
+		}
 	else
 		{
 		sigs = tls12_sigalgs;
@@ -2975,9 +2982,17 @@ static int tls1_set_shared_sigalgs(SSL *s)
 	size_t nmatch;
 	TLS_SIGALGS *salgs = NULL;
 	CERT *c = s->cert;
-	conf = c->conf_sigalgs;
-	if (conf)
+	/* If client use client signature algorithms if not NULL */
+	if (!s->server && c->client_sigalgs)
+		{
+		conf = c->client_sigalgs;
+		conflen = c->client_sigalgslen;
+		}
+	else if (c->conf_sigalgs)
+		{
+		conf = c->conf_sigalgs;
 		conflen = c->conf_sigalgslen;
+		}
 	else
 		{
 		conf = tls12_sigalgs;
@@ -3328,16 +3343,16 @@ static int sig_cb(const char *elem, int len, void *arg)
 
 /* Set suppored signature algorithms based on a colon separated list
  * of the form sig+hash e.g. RSA+SHA512:DSA+SHA512 */
-int tls1_set_sigalgs_list(CERT *c, const char *str)
+int tls1_set_sigalgs_list(CERT *c, const char *str, int client)
 	{
 	sig_cb_st sig;
 	sig.sigalgcnt = 0;
 	if (!CONF_parse_list(str, ':', 1, sig_cb, &sig))
 		return 0;
-	return tls1_set_sigalgs(c, sig.sigalgs, sig.sigalgcnt);
+	return tls1_set_sigalgs(c, sig.sigalgs, sig.sigalgcnt, client);
 	}
 
-int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen)
+int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen, int client)
 	{
 	unsigned char *sigalgs, *sptr;
 	int rhash, rsign;
@@ -3360,11 +3375,21 @@ int tls1_set_sigalgs(CERT *c, const int *psig_nids, size_t salglen)
 		*sptr++ = rsign;
 		}
 
-	if (c->conf_sigalgs)
-		OPENSSL_free(c->conf_sigalgs);
+	if (client)
+		{
+		if (c->client_sigalgs)
+			OPENSSL_free(c->client_sigalgs);
+		c->client_sigalgs = sigalgs;
+		c->client_sigalgslen = salglen;
+		}
+	else
+		{
+		if (c->conf_sigalgs)
+			OPENSSL_free(c->conf_sigalgs);
+		c->conf_sigalgs = sigalgs;
+		c->conf_sigalgslen = salglen;
+		}
 
-	c->conf_sigalgs = sigalgs;
-	c->conf_sigalgslen = salglen;
 	return 1;
 
 	err:
@@ -3457,7 +3482,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 		 * have set preferred signature algorithms check we support
 		 * sha1.
 		 */
-		if (default_nid > 0 && c->conf_sigalgs)
+		if (s->server && default_nid > 0 && c->conf_sigalgs)
 			{
 			size_t j;
 			const unsigned char *p = c->conf_sigalgs;

@@ -361,19 +361,31 @@ CERT *ssl_cert_dup(CERT *cert)
 	/* Peer sigalgs set to NULL as we get these from handshake too */
 	ret->peer_sigalgs = NULL;
 	ret->peer_sigalgslen = 0;
-	/* Configure sigalgs however we copy across */
+	/* Configured sigalgs however we copy across */
+
 	if (cert->conf_sigalgs)
 		{
-		ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen
-							* sizeof(TLS_SIGALGS));
+		ret->conf_sigalgs = OPENSSL_malloc(cert->conf_sigalgslen);
 		if (!ret->conf_sigalgs)
 			goto err;
 		memcpy(ret->conf_sigalgs, cert->conf_sigalgs,
-				cert->conf_sigalgslen * sizeof(TLS_SIGALGS));
+						cert->conf_sigalgslen);
 		ret->conf_sigalgslen = cert->conf_sigalgslen;
 		}
 	else
 		ret->conf_sigalgs = NULL;
+
+	if (cert->client_sigalgs)
+		{
+		ret->client_sigalgs = OPENSSL_malloc(cert->client_sigalgslen);
+		if (!ret->client_sigalgs)
+			goto err;
+		memcpy(ret->client_sigalgs, cert->client_sigalgs,
+						cert->client_sigalgslen);
+		ret->client_sigalgslen = cert->client_sigalgslen;
+		}
+	else
+		ret->client_sigalgs = NULL;
 	/* Shared sigalgs also NULL */
 	ret->shared_sigalgs = NULL;
 
@@ -473,6 +485,8 @@ void ssl_cert_free(CERT *c)
 		OPENSSL_free(c->peer_sigalgs);
 	if (c->conf_sigalgs)
 		OPENSSL_free(c->conf_sigalgs);
+	if (c->client_sigalgs)
+		OPENSSL_free(c->client_sigalgs);
 	if (c->shared_sigalgs)
 		OPENSSL_free(c->shared_sigalgs);
 	OPENSSL_free(c);

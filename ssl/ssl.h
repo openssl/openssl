@@ -1662,6 +1662,8 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_SET_SIGALGS_LIST		98
 #define SSL_CTRL_CERT_FLAGS			99
 #define SSL_CTRL_CLEAR_CERT_FLAGS		100
+#define SSL_CTRL_SET_CLIENT_SIGALGS		101
+#define SSL_CTRL_SET_CLIENT_SIGALGS_LIST	102
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1746,6 +1748,15 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_ctrl(ctx,SSL_CTRL_SET_SIGALGS,clistlen,(int *)slist)
 #define SSL_set1_sigalgs_list(ctx, s) \
 	SSL_ctrl(ctx,SSL_CTRL_SET_SIGALGS_LIST,0,(char *)s)
+
+#define SSL_CTX_set1_client_sigalgs(ctx, slist, slistlen) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CLIENT_SIGALGS,slistlen,(int *)slist)
+#define SSL_CTX_set1_client_sigalgs_list(ctx, s) \
+	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CLIENT_SIGALGS_LIST,0,(char *)s)
+#define SSL_set1_client_sigalgs(ctx, slist, slistlen) \
+	SSL_ctrl(ctx,SSL_CTRL_SET_CLIENT_SIGALGS,clistlen,(int *)slist)
+#define SSL_set1_client_sigalgs_list(ctx, s) \
+	SSL_ctrl(ctx,SSL_CTRL_SET_CLIENT_SIGALGS_LIST,0,(char *)s)
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);

@@ -538,14 +538,25 @@ typedef struct cert_st
 	unsigned char *peer_sigalgs;
 	/* Size of above array */
 	size_t peer_sigalgslen;
-	/* configured signature algorithms (can be NULL for default).
-	 * sent in signature algorithms extension or certificate request.
+	/* suppported signature algorithms.
+	 * When set on a client this is sent in the client hello as the 
+	 * supported signature algorithms extension. For servers
+	 * it represents the signature algorithms we are willing to use.
 	 */
 	unsigned char *conf_sigalgs;
 	/* Size of above array */
 	size_t conf_sigalgslen;
+	/* Client authentication signature algorithms, if not set then
+	 * uses conf_sigalgs. On servers these will be the signature
+	 * algorithms sent to the client in a cerificate request for TLS 1.2.
+	 * On a client this represents the signature algortithms we are
+	 * willing to use for client authentication.
+	 */
+	unsigned char *client_sigalgs;
+	/* Size of above array */
+	size_t client_sigalgslen;
 	/* Signature algorithms shared by client and server: cached
-	 * because these are used most often
+	 * because these are used most often.
 	 */
 	TLS_SIGALGS *shared_sigalgs;
 	size_t shared_sigalgslen;
@@ -1200,8 +1211,8 @@ int tls12_get_sigandhash(unsigned char *p, const EVP_PKEY *pk,
 int tls12_get_sigid(const EVP_PKEY *pk);
 const EVP_MD *tls12_get_hash(unsigned char hash_alg);
 
-int tls1_set_sigalgs_list(CERT *c, const char *str);
-int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen);
+int tls1_set_sigalgs_list(CERT *c, const char *str, int client);
+int tls1_set_sigalgs(CERT *c, const int *salg, size_t salglen, int client);
 int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 								int idx);
 void tls1_set_cert_validity(SSL *s);

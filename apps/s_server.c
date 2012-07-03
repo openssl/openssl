@@ -275,6 +275,7 @@ static const char *s_cert_file=TEST_CERT,*s_key_file=NULL, *s_chain_file=NULL;
 static const char *s_cert_file2=TEST_CERT2,*s_key_file2=NULL;
 static char *curves=NULL;
 static char *sigalgs=NULL;
+static char *client_sigalgs=NULL;
 #endif
 static char *s_dcert_file=NULL,*s_dkey_file=NULL, *s_dchain_file=NULL;
 #ifdef FIONBIO
@@ -1219,6 +1220,11 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			sigalgs= *(++argv);
 			}
+		else if	(strcmp(*argv,"-client_sigalgs") == 0)
+			{
+			if (--argc < 1) goto bad;
+			client_sigalgs= *(++argv);
+			}
 #endif
 		else if	(strcmp(*argv,"-msg") == 0)
 			{ s_msg=1; }
@@ -1959,6 +1965,21 @@ bad:
 		if(ctx2 && !SSL_CTX_set1_sigalgs_list(ctx2,sigalgs))
 			{
 			BIO_printf(bio_err,"error setting signature algorithms\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		}
+	if (client_sigalgs)
+		{
+		if(!SSL_CTX_set1_client_sigalgs_list(ctx,client_sigalgs))
+			{
+			BIO_printf(bio_err,"error setting client signature algorithms\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		if(ctx2 && !SSL_CTX_set1_client_sigalgs_list(ctx2,client_sigalgs))
+			{
+			BIO_printf(bio_err,"error setting client signature algorithms\n");
 			ERR_print_errors(bio_err);
 			goto end;
 			}
