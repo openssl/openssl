@@ -159,7 +159,7 @@
 #undef CRYPTO_get_locked_mem_ex_functions
 #define CRYPTO_get_locked_mem_ex_functions      CRYPTO_get_locked_mem_ex_funcs
 
-/* Hack some long SSL names */
+/* Hack some long SSL/TLS names */
 #undef SSL_CTX_set_default_verify_paths
 #define SSL_CTX_set_default_verify_paths	SSL_CTX_set_def_verify_paths
 #undef SSL_get_ex_data_X509_STORE_CTX_idx
@@ -204,6 +204,15 @@
 #define SSL_CTX_set_next_protos_advertised_cb	SSL_CTX_set_next_protos_adv_cb
 #undef SSL_CTX_set_next_proto_select_cb
 #define SSL_CTX_set_next_proto_select_cb	SSL_CTX_set_next_proto_sel_cb
+
+#undef tls1_send_server_supplemental_data
+#define tls1_send_server_supplemental_data	tls1_send_server_suppl_data
+#undef tls1_get_server_supplemental_data
+#define tls1_get_server_supplemental_data	tls1_get_server_suppl_data
+
+#undef SSL_SESSION_get_tlsext_authz_server_audit_proof
+#define SSL_SESSION_get_tlsext_authz_server_audit_proof	\
+						S_SES_get_tlsx_auz_srvr_aud_prf
 
 /* Hack some long ENGINE names */
 #undef ENGINE_get_default_BN_mod_exp_crt
