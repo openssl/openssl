@@ -256,7 +256,7 @@ $ LIB_DSA = "dsa_gen,dsa_key,dsa_lib,dsa_asn1,dsa_vrf,dsa_sign,"+ -
 	"dsa_err,dsa_ossl,dsa_depr,dsa_ameth,dsa_pmeth,dsa_prn"
 $ LIB_ECDSA = "ecs_lib,ecs_asn1,ecs_ossl,ecs_sign,ecs_vrf,ecs_err"
 $ LIB_DH = "dh_asn1,dh_gen,dh_key,dh_lib,dh_check,dh_err,dh_depr,"+ -
-	"dh_ameth,dh_pmeth,dh_prn"
+	"dh_ameth,dh_pmeth,dh_prn,dh_rfc5114"
 $ LIB_ECDH = "ech_lib,ech_ossl,ech_key,ech_err"
 $ LIB_DSO = "dso_dl,dso_dlfcn,dso_err,dso_lib,dso_null,"+ -
 	"dso_openssl,dso_win32,dso_vms,dso_beos"
@@ -282,7 +282,7 @@ $ LIB_RAND = "md_rand,randfile,rand_lib,rand_err,rand_egd,"+ -
 	"rand_vms"
 $ LIB_ERR = "err,err_all,err_prn"
 $ LIB_OBJECTS = "o_names,obj_dat,obj_lib,obj_err,obj_xref"
-$ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,"+ -
+$ LIB_EVP = "encode,digest,evp_enc,evp_key,evp_acnf,evp_cnf,"+ -
 	"e_des,e_bf,e_idea,e_des3,e_camellia,"+ -
 	"e_rc4,e_aes,names,e_seed,"+ -
 	"e_xcbc_d,e_rc2,e_cast,e_rc5"
