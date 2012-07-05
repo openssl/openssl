@@ -159,7 +159,7 @@
 #undef CRYPTO_get_locked_mem_ex_functions
 #define CRYPTO_get_locked_mem_ex_functions      CRYPTO_get_locked_mem_ex_funcs
 
-/* Hack some long SSL names */
+/* Hack some long SSL/TLS names */
 #undef SSL_CTX_set_default_verify_paths
 #define SSL_CTX_set_default_verify_paths	SSL_CTX_set_def_verify_paths
 #undef SSL_get_ex_data_X509_STORE_CTX_idx
@@ -176,16 +176,6 @@
 #define SSL_CTX_set_default_passwd_cb_userdata  SSL_CTX_set_def_passwd_cb_ud
 #undef SSL_COMP_get_compression_methods
 #define SSL_COMP_get_compression_methods	SSL_COMP_get_compress_methods
-#undef SSL_CTX_set_next_protos_advertised_cb
-#define SSL_CTX_set_next_protos_advertised_cb	SSL_CTX_set_next_protos_adv_cb
-#undef SSL_CTX_set_next_proto_select_cb
-#define SSL_CTX_set_next_proto_select_cb	SSL_CTX_set_next_proto_sel_cb
-#undef SSL_CTX_set_not_resumable_session_callback
-#define SSL_CTX_set_not_resumable_session_callback \
-						SSL_CTX_set_not_resumbl_sess_cb
-#undef SSL_set_not_resumable_session_callback
-#define SSL_set_not_resumable_session_callback	SSL_set_not_resumbl_sess_cb
-
 #undef ssl_add_clienthello_renegotiate_ext
 #define ssl_add_clienthello_renegotiate_ext	ssl_add_clienthello_reneg_ext
 #undef ssl_add_serverhello_renegotiate_ext
@@ -202,6 +192,32 @@
 #define SSL_CTX_set_srp_verify_param_callback	SSL_CTX_set_srp_vfy_param_cb
 #undef SSL_CTX_set_srp_username_callback
 #define SSL_CTX_set_srp_username_callback	SSL_CTX_set_srp_un_cb
+#undef ssl_add_clienthello_use_srtp_ext
+#define ssl_add_clienthello_use_srtp_ext	ssl_add_clihello_use_srtp_ext
+#undef ssl_add_serverhello_use_srtp_ext
+#define ssl_add_serverhello_use_srtp_ext	ssl_add_serhello_use_srtp_ext
+#undef ssl_parse_clienthello_use_srtp_ext
+#define ssl_parse_clienthello_use_srtp_ext	ssl_parse_clihello_use_srtp_ext
+#undef ssl_parse_serverhello_use_srtp_ext
+#define ssl_parse_serverhello_use_srtp_ext	ssl_parse_serhello_use_srtp_ext
+#undef SSL_CTX_set_next_protos_advertised_cb
+#define SSL_CTX_set_next_protos_advertised_cb	SSL_CTX_set_next_protos_adv_cb
+#undef SSL_CTX_set_next_proto_select_cb
+#define SSL_CTX_set_next_proto_select_cb	SSL_CTX_set_next_proto_sel_cb
+#undef SSL_CTX_set_not_resumable_session_callback
+#define SSL_CTX_set_not_resumable_session_callback \
+						SSL_CTX_set_not_resumbl_sess_cb
+#undef SSL_set_not_resumable_session_callback
+#define SSL_set_not_resumable_session_callback	SSL_set_not_resumbl_sess_cb
+
+#undef tls1_send_server_supplemental_data
+#define tls1_send_server_supplemental_data	tls1_send_server_suppl_data
+#undef tls1_get_server_supplemental_data
+#define tls1_get_server_supplemental_data	tls1_get_server_suppl_data
+
+#undef SSL_SESSION_get_tlsext_authz_server_audit_proof
+#define SSL_SESSION_get_tlsext_authz_server_audit_proof	\
+						S_SES_get_tlsx_auz_srvr_aud_prf
 
 /* Hack some long ENGINE names */
 #undef ENGINE_get_default_BN_mod_exp_crt
@@ -314,8 +330,6 @@
 #define ec_GFp_simple_point_set_to_infinity     ec_GFp_simple_pt_set_to_inf
 #undef ec_GFp_simple_points_make_affine
 #define ec_GFp_simple_points_make_affine	ec_GFp_simple_pts_make_affine
-#undef ec_GFp_simple_group_get_curve_GFp
-#define ec_GFp_simple_group_get_curve_GFp       ec_GFp_simple_grp_get_curve_GFp
 #undef ec_GFp_simple_set_Jprojective_coordinates_GFp
 #define ec_GFp_simple_set_Jprojective_coordinates_GFp \
                                                 ec_GFp_smp_set_Jproj_coords_GFp
