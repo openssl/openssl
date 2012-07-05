@@ -252,15 +252,15 @@
 #define EC_POINT_set_compressed_coordinates_GF2m \
                                                 EC_POINT_set_compr_coords_GF2m
 #undef ec_GF2m_simple_group_clear_finish
-#define ec_GF2m_simple_group_clear_finish        ec_GF2m_simple_grp_clr_finish
+#define ec_GF2m_simple_group_clear_finish       ec_GF2m_simple_grp_clr_finish
 #undef ec_GF2m_simple_group_check_discriminant
 #define ec_GF2m_simple_group_check_discriminant	ec_GF2m_simple_grp_chk_discrim
 #undef ec_GF2m_simple_point_clear_finish
-#define ec_GF2m_simple_point_clear_finish        ec_GF2m_simple_pt_clr_finish
+#define ec_GF2m_simple_point_clear_finish       ec_GF2m_simple_pt_clr_finish
 #undef ec_GF2m_simple_point_set_to_infinity
-#define ec_GF2m_simple_point_set_to_infinity     ec_GF2m_simple_pt_set_to_inf
+#define ec_GF2m_simple_point_set_to_infinity    ec_GF2m_simple_pt_set_to_inf
 #undef ec_GF2m_simple_points_make_affine
-#define ec_GF2m_simple_points_make_affine        ec_GF2m_simple_pts_make_affine
+#define ec_GF2m_simple_points_make_affine       ec_GF2m_simple_pts_make_affine
 #undef ec_GF2m_simple_point_set_affine_coordinates
 #define ec_GF2m_simple_point_set_affine_coordinates \
                                                 ec_GF2m_smp_pt_set_af_coords
@@ -288,8 +288,6 @@
 #define ec_GFp_simple_point_set_to_infinity     ec_GFp_simple_pt_set_to_inf
 #undef ec_GFp_simple_points_make_affine
 #define ec_GFp_simple_points_make_affine        ec_GFp_simple_pts_make_affine
-#undef ec_GFp_simple_group_get_curve_GFp
-#define ec_GFp_simple_group_get_curve_GFp       ec_GFp_simple_grp_get_curve_GFp
 #undef ec_GFp_simple_set_Jprojective_coordinates_GFp
 #define ec_GFp_simple_set_Jprojective_coordinates_GFp \
                                                 ec_GFp_smp_set_Jproj_coords_GFp
