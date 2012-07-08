@@ -1936,11 +1936,22 @@ int ssl3_get_certificate_request(SSL *s)
 
 	/* get the certificate types */
 	ctype_num= *(p++);
+	if (s->cert->ctypes)
+		{
+		OPENSSL_free(s->cert->ctypes);
+		s->cert->ctypes = NULL;
+		}
 	if (ctype_num > SSL3_CT_NUMBER)
+		{
+		/* If we exceed static buffer copy all to cert structure */
+		s->cert->ctypes = OPENSSL_malloc(ctype_num);
+		memcpy(s->cert->ctypes, p, ctype_num);
+		s->cert->ctype_num = (size_t)ctype_num;
 		ctype_num=SSL3_CT_NUMBER;
+		}
 	for (i=0; i<ctype_num; i++)
 		s->s3->tmp.ctype[i]= p[i];
-	p+=ctype_num;
+	p+=p[-1];
 	if (TLS1_get_version(s) >= TLS1_2_VERSION)
 		{
 		n2s(p, llen);

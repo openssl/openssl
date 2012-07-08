@@ -531,6 +531,13 @@ typedef struct cert_st
 	unsigned int cert_flags;
 	CERT_PKEY pkeys[SSL_PKEY_NUM];
 
+	/* Certificate types (received or sent) in certificate request
+	 * message. On receive this is only set if number of certificate
+	 * types exceeds SSL3_CT_NUMBER.
+	 */
+	unsigned char *ctypes;
+	size_t ctype_num;
+
 	/* signature algorithms peer reports: e.g. supported signature
 	 * algorithms extension for server or as part of a certificate
 	 * request for client.
