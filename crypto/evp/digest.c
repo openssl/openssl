@@ -145,7 +145,7 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 	{
 	EVP_MD_CTX_clear_flags(ctx,EVP_MD_CTX_FLAG_CLEANED);
-#ifdef OPENSSL_FIPS_
+#ifdef OPENSSL_FIPS
 	/* If FIPS mode switch to approved implementation if possible */
 	if (FIPS_mode())
 		{
