@@ -56,12 +56,12 @@
 #		x86_64		SSSE3		AVX
 # P4		9.8		-
 # Opteron	6.6		-
-# Core2		6.7		6.1/+10%	-
-# Atom		11.0		9.7/+13%	-
-# Westmere	7.1		5.6/+27%	-
-# Sandy Bridge	7.9		6.3/+25%	5.2/+51%
-# Ivy Bridge	6.4		4.8/+33%	4.7/+36%
-# Bulldozer	10.9		6.1/+79%
+# Core2		6.7		6.2/+8%		-
+# Atom		11.0		9.5/+15%	-
+# Westmere	7.1		5.5/+29%	-
+# Sandy Bridge	7.9		6.2/+28%	5.1/+54%
+# Ivy Bridge	6.4		4.7/+35%	4.6/+37%
+# Bulldozer	10.9		6.0/+82%
 # VIA Nano	10.2		7.4/+38%
 
 $flavour = shift;
@@ -453,7 +453,7 @@ sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
 sub Xupdate_ssse3_32_79()
 { use integer;
   my $body = shift;
-  my @insns = (&$body,&$body,&$body,&$body);	# 32 to 48 instructions
+  my @insns = (&$body,&$body,&$body,&$body);	# 32 to 44 instructions
   my ($a,$b,$c,$d,$e);
 
 	&movdqa	(@Tx[0],@X[-1&7])	if ($Xi==8);
@@ -618,17 +618,16 @@ sub body_20_39 () {
 sub body_40_59 () {
 	(
 	'($a,$b,$c,$d,$e)=@V;'.
-	'&mov	(@T[1],$c);',
-	'&xor	($c,$d);',
+	'&xor	(@T[0],$c);',
+	'&xor	(@T[1],$d);',
 	'&add	($e,eval(4*($j++&15))."(%rsp)");',	# X[]+K xfer
-	'&and	(@T[1],$d);',
-	'&and	(@T[0],$c);',	# ($b&($c^$d))
+	'&and	(@T[0],$T[1]);',
 	'&$_ror	($b,7);',	# $b>>>2
-	'&add	($e,@T[1]);',
+	'&xor	(@T[0],$c);',
 	'&mov	(@T[1],$a);',	# $b in next round
 	'&$_rol	($a,5);',
 	'&add	($e,@T[0]);',
-	'&xor	($c,$d);',	# restore $c
+	'&mov	(@T[0],$b);',	# copy of $c in next round
 	'&add	($e,$a);'	.'unshift(@V,pop(@V)); unshift(@T,pop(@T));'
 	);
 }
@@ -646,6 +645,7 @@ ___
 	&Xupdate_ssse3_32_79(\&body_20_39);
 	&Xupdate_ssse3_32_79(\&body_20_39);
 	&Xupdate_ssse3_32_79(\&body_20_39);
+	&mov	(@T[1],@V[2]);	# copy of $c in next round
 	&Xupdate_ssse3_32_79(\&body_40_59);
 	&Xupdate_ssse3_32_79(\&body_40_59);
 	&Xupdate_ssse3_32_79(\&body_40_59);
@@ -859,7 +859,7 @@ sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
 sub Xupdate_avx_32_79()
 { use integer;
   my $body = shift;
-  my @insns = (&$body,&$body,&$body,&$body);	# 32 to 48 instructions
+  my @insns = (&$body,&$body,&$body,&$body);	# 32 to 44 instructions
   my ($a,$b,$c,$d,$e);
 
 	&vpalignr(@Tx[0],@X[-1&7],@X[-2&7],8);	# compose "X[-6]"
@@ -1002,6 +1002,7 @@ ___
 	&Xupdate_avx_32_79(\&body_20_39);
 	&Xupdate_avx_32_79(\&body_20_39);
 	&Xupdate_avx_32_79(\&body_20_39);
+	&mov	(@T[1],@V[2]);	# copy of $c in next round
 	&Xupdate_avx_32_79(\&body_40_59);
 	&Xupdate_avx_32_79(\&body_40_59);
 	&Xupdate_avx_32_79(\&body_40_59);

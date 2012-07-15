@@ -89,12 +89,12 @@
 # P4		10.6		-
 # AMD K8	7.1		-
 # Core2		7.3		6.1/+20%	-
-# Atom		12.5		9.5(*)/+32%	-
-# Westmere	7.3		5.6/+30%	-
-# Sandy Bridge	8.8		6.2/+40%	5.1(**)/+70%
-# Ivy Bridge	7.2		4.9/+47%	4.8(**)/+50%
-# Bulldozer	11.6		6.2/+88%
-# VIA Nano	10.6		7.5/+41%
+# Atom		12.5		9.3(*)/+35%	-
+# Westmere	7.3		5.5/+33%	-
+# Sandy Bridge	8.8		6.2/+40%	5.2(**)/+70%
+# Ivy Bridge	7.2		4.8/+51%	4.7(**)/+53%
+# Bulldozer	11.6		6.0/+92%
+# VIA Nano	10.6		7.6/+40%
 #
 # (*)	Loop is 1056 instructions long and expected result is ~8.25.
 #	It remains mystery [to me] why ILP is limited to 1.7.
@@ -616,7 +616,7 @@ sub Xupdate_ssse3_16_31()		# recall that $Xi starts wtih 4
 sub Xupdate_ssse3_32_79()
 { use integer;
   my $body = shift;
-  my @insns = (&$body,&$body,&$body,&$body);	# 32 to 48 instructions
+  my @insns = (&$body,&$body,&$body,&$body);	# 32 to 44 instructions
   my ($a,$b,$c,$d,$e);
 
 	&movdqa	(@X[2],@X[-1&7])	if ($Xi==8);
@@ -783,17 +783,16 @@ sub body_20_39 () {
 sub body_40_59 () {
 	(
 	'($a,$b,$c,$d,$e)=@V;'.
-	'&mov	(@T[1],$c);',
-	'&xor	($c,$d);',
+	'&xor	(@T[0],$c);',
+	'&xor	(@T[1],$d);',
 	'&add	($e,&DWP(4*($j++&15),"esp"));',	# X[]+K xfer
-	'&and	(@T[1],$d);',
-	'&and	(@T[0],$c);',	# ($b&($c^$d))
+	'&and	(@T[0],@T[1]);',
 	'&$_ror	($b,7);',	# $b>>>2
-	'&add	($e,@T[1]);',
+	'&xor	(@T[0],$c);',
 	'&mov	(@T[1],$a);',	# $b in next round
 	'&$_rol	($a,5);',
 	'&add	($e,@T[0]);',
-	'&xor	($c,$d);',	# restore $c
+	'&mov	(@T[0],$b);',	# copy of $c in next round
 	'&add	($e,$a);'	.'unshift(@V,pop(@V)); unshift(@T,pop(@T));'
 	);
 }
@@ -809,6 +808,7 @@ sub body_40_59 () {
 	&Xupdate_ssse3_32_79(\&body_20_39);
 	&Xupdate_ssse3_32_79(\&body_20_39);
 	&Xupdate_ssse3_32_79(\&body_20_39);
+	&mov	(@T[1],@V[2]);	# copy of $c in next round
 	&Xupdate_ssse3_32_79(\&body_40_59);
 	&Xupdate_ssse3_32_79(\&body_40_59);
 	&Xupdate_ssse3_32_79(\&body_40_59);
@@ -1032,7 +1032,7 @@ sub Xupdate_avx_16_31()		# recall that $Xi starts wtih 4
 sub Xupdate_avx_32_79()
 { use integer;
   my $body = shift;
-  my @insns = (&$body,&$body,&$body,&$body);	# 32 to 48 instructions
+  my @insns = (&$body,&$body,&$body,&$body);	# 32 to 44 instructions
   my ($a,$b,$c,$d,$e);
 
 	&vpalignr(@X[2],@X[-1&7],@X[-2&7],8);	# compose "X[-6]"
@@ -1173,6 +1173,7 @@ sub Xtail_avx()
 	&Xupdate_avx_32_79(\&body_20_39);
 	&Xupdate_avx_32_79(\&body_20_39);
 	&Xupdate_avx_32_79(\&body_20_39);
+	&mov	(@T[1],@V[2]);	# copy of $c in next round
 	&Xupdate_avx_32_79(\&body_40_59);
 	&Xupdate_avx_32_79(\&body_40_59);
 	&Xupdate_avx_32_79(\&body_40_59);
