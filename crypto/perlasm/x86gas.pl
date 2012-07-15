@@ -181,7 +181,9 @@ sub ::align
 sub ::picmeup
 { my($dst,$sym,$base,$reflabel)=@_;
 
-    if (($::pic && ($::elf || $::aout)) || $::macosx)
+    if (defined($base) && $sym eq "OPENSSL_ia32cap_P" && !$::macosx)
+    {	&::lea($dst,&::DWP("$sym-$reflabel",$base));	}
+    elsif (($::pic && ($::elf || $::aout)) || $::macosx)
     {	if (!defined($base))
 	{   &::call(&::label("PIC_me_up"));
 	    &::set_label("PIC_me_up");
