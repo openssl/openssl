@@ -14,7 +14,7 @@ else
     exit 1;
 fi
 
-if $PROG engine aesni | grep -v no-aesni; then
+if [ 1 ]; then
 
     HASH=`cat $PROG | $PROG dgst -hex`
 
@@ -29,8 +29,8 @@ if $PROG engine aesni | grep -v no-aesni; then
 	echo $alg
 	for bufsize in $BUFSIZE; do
 	    TEST=`(	cat $PROG | \
-		$PROG enc -e -k "$HASH" -$alg -bufsize $bufsize -engine aesni | \
-		$PROG enc -d -k "$HASH" -$alg | \
+		$PROG enc -e -k "$HASH" -$alg -bufsize $bufsize | \
+		env OPENSSL_ia32cap=~0x0200000000000000 $PROG enc -d -k "$HASH" -$alg | \
 		$PROG dgst -hex ) 2>/dev/null`
 	    if [ "$TEST" != "$HASH" ]; then
 		echo "-$alg/$bufsize encrypt test failed"
@@ -39,8 +39,8 @@ if $PROG engine aesni | grep -v no-aesni; then
 	done
 	for bufsize in $BUFSIZE; do 
 	    TEST=`(	cat $PROG | \
-		$PROG enc -e -k "$HASH" -$alg | \
-		$PROG enc -d -k "$HASH" -$alg -bufsize $bufsize -engine aesni | \
+		env OPENSSL_ia32cap=~0x0200000000000000 $PROG enc -e -k "$HASH" -$alg | \
+		$PROG enc -d -k "$HASH" -$alg -bufsize $bufsize | \
 		$PROG dgst -hex ) 2>/dev/null`
 	    if [ "$TEST" != "$HASH" ]; then
 		echo "-$alg/$bufsize decrypt test failed"
@@ -48,8 +48,8 @@ if $PROG engine aesni | grep -v no-aesni; then
 	    fi
 	done
 	TEST=`(	cat $PROG | \
-		$PROG enc -e -k "$HASH" -$alg -engine aesni | \
-		$PROG enc -d -k "$HASH" -$alg -engine aesni | \
+		$PROG enc -e -k "$HASH" -$alg | \
+		$PROG enc -d -k "$HASH" -$alg | \
 		$PROG dgst -hex ) 2>/dev/null`
 	if [ "$TEST" != "$HASH" ]; then
 		echo "-$alg en/decrypt test failed"
