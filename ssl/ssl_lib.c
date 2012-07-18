@@ -1410,10 +1410,10 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 	{
 	int i,j=0;
 	SSL_CIPHER *c;
+	CERT *ct = s->cert;
 	unsigned char *q;
-#ifndef OPENSSL_NO_KRB5
-	int nokrb5 = !kssl_tgt_is_available(s->kssl_ctx);
-#endif /* OPENSSL_NO_KRB5 */
+	/* Set disabled masks for this session */
+	ssl_set_client_disabled(s);
 
 	if (sk == NULL) return(0);
 	q=p;
@@ -1421,21 +1421,11 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 	for (i=0; i<sk_SSL_CIPHER_num(sk); i++)
 		{
 		c=sk_SSL_CIPHER_value(sk,i);
-		/* Skip TLS v1.2 only ciphersuites if lower than v1.2 */
-		if ((c->algorithm_ssl & SSL_TLSV1_2) && 
-			(TLS1_get_client_version(s) < TLS1_2_VERSION))
+		/* Skip disabled ciphers */
+		if (c->algorithm_ssl & ct->mask_ssl ||
+			c->algorithm_mkey & ct->mask_k ||
+			c->algorithm_auth & ct->mask_a)
 			continue;
-#ifndef OPENSSL_NO_KRB5
-		if (((c->algorithm_mkey & SSL_kKRB5) || (c->algorithm_auth & SSL_aKRB5)) &&
-		    nokrb5)
-		    continue;
-#endif /* OPENSSL_NO_KRB5 */
-#ifndef OPENSSL_NO_PSK
-		/* with PSK there must be client callback set */
-		if (((c->algorithm_mkey & SSL_kPSK) || (c->algorithm_auth & SSL_aPSK)) &&
-		    s->psk_client_callback == NULL)
-			continue;
-#endif /* OPENSSL_NO_PSK */
 		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
 		p+=j;
 		}
