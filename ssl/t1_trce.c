@@ -767,7 +767,7 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
 		*pname = "dh_rsa";
 		return SSL_kDHr;
 		}
-	if (alg_k & SSL_kDHr)
+	if (alg_k & SSL_kDHd)
 		{
 		*pname = "dh_dss";
 		return SSL_kDHd;
@@ -777,15 +777,25 @@ static int ssl_get_keyex(const char **pname, SSL *ssl)
 		*pname = "krb5";
 		return SSL_kKRB5;
 		}
-	if (alg_k & (SSL_kEDH|SSL_kDHr|SSL_kDHd))
+	if (alg_k & SSL_kEDH)
 		{
 		*pname = "edh";
 		return SSL_kEDH;
 		}
-	if (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe))
+	if (alg_k & SSL_kEECDH)
 		{
-		*pname = "ECDH";
+		*pname = "EECDH";
 		return SSL_kEECDH;
+		}
+	if (alg_k & SSL_kECDHr)
+		{
+		*pname = "ECDH RSA";
+		return SSL_kECDHr;
+		}
+	if (alg_k & SSL_kECDHe)
+		{
+		*pname = "ECDH ECDSA";
+		return SSL_kECDHe;
 		}
 	if (alg_k & SSL_kPSK)
 		{
@@ -839,6 +849,14 @@ static int ssl_print_client_keyex(BIO *bio, int indent, SSL *ssl,
 			return 0;
 		break;
 
+	case SSL_kECDHr:
+	case SSL_kECDHe:
+		if (msglen == 0)
+			{
+			BIO_indent(bio, indent + 2, 80);
+			BIO_puts(bio, "implicit\n");
+			break;
+			}
 	case SSL_kEECDH:
 		if (!ssl_print_hexbuf(bio, indent + 2, "ecdh_Yc", 1,
 							&msg, &msglen))
@@ -862,6 +880,8 @@ static int ssl_print_server_keyex(BIO *bio, int indent, SSL *ssl,
 		/* Should never happen */
 	case SSL_kDHd:
 	case SSL_kDHr:
+	case SSL_kECDHr:
+	case SSL_kECDHe:
 		BIO_indent(bio, indent + 2, 80);
 		BIO_printf(bio, "Unexpected Message\n");
 		break;
