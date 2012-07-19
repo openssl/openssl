@@ -2988,7 +2988,7 @@ static int tls12_get_pkey_idx(unsigned char sig_alg)
 static void tls1_lookup_sigalg(int *phash_nid, int *psign_nid,
 			int *psignhash_nid, const unsigned char *data)
 	{
-	int sign_nid, hash_nid;
+	int sign_nid = 0, hash_nid = 0;
 	if (!phash_nid && !psign_nid && !psignhash_nid)
 		return;
 	if (phash_nid || psignhash_nid)
