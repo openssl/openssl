@@ -4,6 +4,19 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add support for certificate stores in CERT structure. This makes it
+     possible to have different stores per SSL structure or one store in
+     the parent SSL_CTX. Include distint stores for certificate chain
+     verification and chain building. New ctrl SSL_CTRL_BUILD_CERT_CHAIN
+     to build and store a certificate chain in CERT structure: returing
+     an error if the chain cannot be built: this will allow applications
+     to test if a chain is correctly configured.
+
+     Note: if the CERT based stores are not set then the parent SSL_CTX
+     store is used to retain compatibility with existing behaviour.
+
+     [Steve Henson]
+
   *) New function ssl_set_client_disabled to set a ciphersuite disabled
      mask based on the current session, check mask when sending client
      hello and checking the requested ciphersuite.
