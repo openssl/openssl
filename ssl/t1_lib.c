@@ -333,6 +333,21 @@ static void tls1_get_curvelist(SSL *s, int sess,
 		*pcurveslen = sizeof(eccurves_default);
 		}
 	}
+/* Check a curve is one of our preferences */
+int tls1_check_curve(SSL *s, const unsigned char *p, size_t len)
+	{
+	const unsigned char *curves;
+	size_t curveslen, i;
+	if (len != 3 || p[0] != NAMED_CURVE_TYPE)
+		return 0;
+	tls1_get_curvelist(s, 0, &curves, &curveslen);
+	for (i = 0; i < curveslen; i += 2, curves += 2)
+		{
+		if (p[1] == curves[0] && p[2] == curves[1])
+			return 1;
+		}
+	return 0;
+	}
 
 /* Return nth shared curve. If nmatch == -1 return number of
  * matches.
@@ -584,7 +599,12 @@ int tls1_check_ec_tmp_key(SSL *s)
 		}
 	if (!tls1_set_ec_id(curve_id, NULL, ec))
 		return 0;
+/* Set this to allow use of invalid curves for testing */
+#if 0
+	return 1;
+#else
 	return tls1_check_ec_key(s, curve_id, NULL);
+#endif
 	}
 
 #endif /* OPENSSL_NO_EC */
