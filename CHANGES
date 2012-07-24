@@ -4,6 +4,12 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) If an attempt is made to use a signature algorithm not in the peer
+     preference list abort the handshake. If client has no suitable
+     signature algorithms in response to a certificate request do not
+     use the certificate.
+     [Steve Henson]
+
   *) If server EC tmp key is not in client preference list abort handshake.
      [Steve Henson]
 

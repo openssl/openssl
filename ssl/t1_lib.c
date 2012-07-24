@@ -680,6 +680,45 @@ size_t tls12_get_psigalgs(SSL *s, const unsigned char **psigs)
 			return sizeof(tls12_sigalgs);
 		}
 	}
+/* Check signature algorithm is consistent with sent supported signature
+ * algorithms and if so return relevant digest.
+ */
+int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
+				const unsigned char *sig, EVP_PKEY *pkey)
+	{
+	const unsigned char *sent_sigs;
+	size_t sent_sigslen, i;
+	int sigalg = tls12_get_sigid(pkey);
+	/* Should never happen */
+	if (sigalg == -1)
+		return -1;
+	/* Check key type is consistent with signature */
+	if (sigalg != (int)sig[1])
+		{
+		SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,SSL_R_WRONG_SIGNATURE_TYPE);
+		return 0;
+		}
+	/* Check signature matches a type we sent */
+	sent_sigslen = tls12_get_psigalgs(s, &sent_sigs);
+	for (i = 0; i < sent_sigslen; i+=2, sent_sigs+=2)
+		{
+		if (sig[0] == sent_sigs[0] && sig[1] == sent_sigs[1])
+			break;
+		}
+	/* Allow fallback to SHA1 if not strict mode */
+	if (i == sent_sigslen && (sig[0] != TLSEXT_hash_sha1 || s->cert->cert_flags & SSL_CERT_FLAG_TLS_STRICT))
+		{
+		SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,SSL_R_WRONG_SIGNATURE_TYPE);
+		return 0;
+		}
+	*pmd = tls12_get_hash(sig[0]);
+	if (*pmd == NULL)
+		{
+		SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,SSL_R_UNKNOWN_DIGEST);
+		return 0;
+		}
+	return 1;
+	}
 /* Get a mask of disabled algorithms: an algorithm is disabled
  * if it isn't supported or doesn't appear in supported signature
  * algorithms. Unlike ssl_cipher_get_disabled this applies to a specific
