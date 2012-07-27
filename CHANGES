@@ -4,6 +4,12 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Make tls1_check_chain return a set of flags indicating checks passed
+     by a certificate chain. Add additional tests to handle client
+     certificates: checks for matching certificate type and issuer name
+     comparison.
+     [Steve Henson]
+
   *) If an attempt is made to use a signature algorithm not in the peer
      preference list abort the handshake. If client has no suitable
      signature algorithms in response to a certificate request do not

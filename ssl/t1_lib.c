@@ -1451,6 +1451,7 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 	unsigned short len;
 	unsigned char *data = *p;
 	int renegotiate_seen = 0;
+	size_t i;
 
 	s->servername_done = 0;
 	s->tlsext_status_type = -1;
@@ -1473,6 +1474,12 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 		{
 		OPENSSL_free(s->cert->shared_sigalgs);
 		s->cert->shared_sigalgs = NULL;
+		}
+	/* Clear certificate digests and validity flags */
+	for (i = 0; i < SSL_PKEY_NUM; i++)
+		{
+		s->cert->pkeys[i].digest = NULL;
+		s->cert->pkeys[i].valid_flags = 0;
 		}
 
 	if (data >= (d+n-2))
@@ -1961,7 +1968,6 @@ static int ssl_scan_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char 
 			 * in the case of a session resumption. */
 			if (!s->hit)
 				{
-				size_t i;
 				if (s->s3->tlsext_authz_client_types != NULL)
 					OPENSSL_free(s->s3->tlsext_authz_client_types);
 				s->s3->tlsext_authz_client_types =
@@ -3180,11 +3186,6 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	if (!c)
 		return 0;
 
-	c->pkeys[SSL_PKEY_DSA_SIGN].digest = NULL;
-	c->pkeys[SSL_PKEY_RSA_SIGN].digest = NULL;
-	c->pkeys[SSL_PKEY_RSA_ENC].digest = NULL;
-	c->pkeys[SSL_PKEY_ECC].digest = NULL;
-
 	c->peer_sigalgs = OPENSSL_malloc(dsize);
 	if (!c->peer_sigalgs)
 		return 0;
@@ -3201,8 +3202,12 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 			{
 			md = tls12_get_hash(sigptr->rhash);
 			c->pkeys[idx].digest = md;
+			c->pkeys[idx].valid_flags = CERT_PKEY_EXPLICIT_SIGN;
 			if (idx == SSL_PKEY_RSA_SIGN)
+				{
+				c->pkeys[SSL_PKEY_RSA_ENC].valid_flags = CERT_PKEY_EXPLICIT_SIGN;
 				c->pkeys[SSL_PKEY_RSA_ENC].digest = md;
+				}
 			}
 
 		}
@@ -3546,40 +3551,76 @@ static int tls1_check_sig_alg(CERT *c, X509 *x, int default_nid)
 			return 1;
 	return 0;
 	}
+/* Check to see if a certificate issuer name matches list of CA names */
+static int ssl_check_ca_name(STACK_OF(X509_NAME) *names, X509 *x)
+	{
+	X509_NAME *nm;
+	int i;
+	nm = X509_get_issuer_name(x);
+	for (i = 0; i < sk_X509_NAME_num(names); i++)
+		{
+		if(!X509_NAME_cmp(nm, sk_X509_NAME_value(names, i)))
+			return 1;
+		}
+	return 0;
+	}
 
 /* Check certificate chain is consistent with TLS extensions and is
- * usable by server.
+ * usable by server. This servers two purposes: it allows users to 
+ * check chains before passing them to the server and it allows the
+ * server to check chains before attempting to use them.
  */
+
+/* Flags which need to be set for a certificate when stict mode not set */
+
+#define CERT_PKEY_VALID_FLAGS \
+	(CERT_PKEY_EE_SIGNATURE|CERT_PKEY_EE_PARAM)
+/* Strict mode flags */
+#define CERT_PKEY_STRICT_FLAGS \
+	 (CERT_PKEY_VALID_FLAGS|CERT_PKEY_CA_SIGNATURE|CERT_PKEY_CA_PARAM \
+	 | CERT_PKEY_ISSUER_NAME|CERT_PKEY_CERT_TYPE)
+
 int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 									int idx)
 	{
 	int i;
-	int rv = CERT_PKEY_INVALID;
+	int rv = 0;
+	int check_flags = 0, strict_mode;
 	CERT_PKEY *cpk = NULL;
 	CERT *c = s->cert;
+	/* idx != -1 means checking server chains */
 	if (idx != -1)
 		{
 		cpk = c->pkeys + idx;
 		x = cpk->x509;
 		pk = cpk->privatekey;
 		chain = cpk->chain;
+		strict_mode = c->cert_flags & SSL_CERT_FLAG_TLS_STRICT;
 		/* If no cert or key, forget it */
 		if (!x || !pk)
 			goto end;
 		}
 	else
 		{
+		if (!x || !pk)
+			goto end;
 		idx = ssl_cert_type(x, pk);
 		if (idx == -1)
 			goto end;
+		cpk = c->pkeys + idx;
+		if (c->cert_flags & SSL_CERT_FLAG_TLS_STRICT)
+			check_flags = CERT_PKEY_STRICT_FLAGS;
+		else
+			check_flags = CERT_PKEY_VALID_FLAGS;
+		strict_mode = 1;
 		}
+
 
 	/* Check all signature algorithms are consistent with
 	 * signature algorithms extension if TLS 1.2 or later
 	 * and strict mode.
 	 */
-	if (TLS1_get_version(s) >= TLS1_2_VERSION
-		&& c->cert_flags & SSL_CERT_FLAG_TLS_STRICT)
+	if (TLS1_get_version(s) >= TLS1_2_VERSION && strict_mode)
 		{
 		int default_nid;
 		unsigned char rsign = 0;
@@ -3627,39 +3668,171 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 					break;
 				}
 			if (j == c->conf_sigalgslen)
-				goto end;
+				{
+				if (check_flags)
+					goto skip_sigs;
+				else
+					goto end;
+				}
 			}
 		/* Check signature algorithm of each cert in chain */
 		if (!tls1_check_sig_alg(c, x, default_nid))
-			goto end;
+			{
+			if (!check_flags) goto end;
+			}
+		else
+			rv |= CERT_PKEY_EE_SIGNATURE;
+		rv |= CERT_PKEY_CA_SIGNATURE;
 		for (i = 0; i < sk_X509_num(chain); i++)
 			{
 			if (!tls1_check_sig_alg(c, sk_X509_value(chain, i),
 							default_nid))
-				goto end;
+				{
+				if (check_flags)
+					{
+					rv &= ~CERT_PKEY_CA_SIGNATURE;
+					break;
+					}
+				else
+					goto end;
+				}
 			}
 		}
-
-	/* Check cert parameters are consistent */
-	if (!tls1_check_cert_param(s, x))
+	/* Else not TLS 1.2, so mark EE and CA signing algorithms OK */
+	else if(check_flags)
+		rv |= CERT_PKEY_EE_SIGNATURE|CERT_PKEY_CA_SIGNATURE;
+	skip_sigs:
+	/* Check cert parameters are consistent: server certs only */
+	if (!s->server || tls1_check_cert_param(s, x))
+		rv |= CERT_PKEY_EE_PARAM;
+	else if (!check_flags)
 		goto end;
+	if (!s->server)
+		rv |= CERT_PKEY_CA_PARAM;
 	/* In strict mode check rest of chain too */
-	if (c->cert_flags & SSL_CERT_FLAG_TLS_STRICT)
+	else if (strict_mode)
 		{
+		rv |= CERT_PKEY_CA_PARAM;
 		for (i = 0; i < sk_X509_num(chain); i++)
 			{
 			if (!tls1_check_cert_param(s, sk_X509_value(chain, i)))
-				goto end;
+				{
+				if (check_flags)
+					{
+					rv &= ~CERT_PKEY_CA_PARAM;
+					break;
+					}
+				else
+					goto end;
+				}
 			}
 		}
-	rv = CERT_PKEY_VALID;
+	if (!s->server && strict_mode)
+		{
+		STACK_OF(X509_NAME) *ca_dn;
+		int check_type = 0;
+		switch (pk->type)
+			{
+		case EVP_PKEY_RSA:
+			check_type = TLS_CT_RSA_SIGN;
+			break;
+		case EVP_PKEY_DSA:
+			check_type = TLS_CT_DSS_SIGN;
+			break;
+		case EVP_PKEY_EC:
+			check_type = TLS_CT_ECDSA_SIGN;
+			break;
+		case EVP_PKEY_DH:
+		case EVP_PKEY_DHX:
+				{
+				int cert_type = X509_certificate_type(x, pk);
+				if (cert_type & EVP_PKS_RSA)
+					check_type = TLS_CT_RSA_FIXED_DH;
+				if (cert_type & EVP_PKS_DSA)
+					check_type = TLS_CT_DSS_FIXED_DH;
+				}
+			}
+		if (check_type)
+			{
+			const unsigned char *ctypes;
+			int ctypelen;
+			if (c->ctypes)
+				{
+				ctypes = c->ctypes;
+				ctypelen = (int)c->ctype_num;
+				}
+			else
+				{
+				ctypes = (unsigned char *)s->s3->tmp.ctype;
+				ctypelen = s->s3->tmp.ctype_num;
+				}
+			for (i = 0; i < ctypelen; i++)
+				{
+				if (ctypes[i] == check_type)
+					{
+					rv |= CERT_PKEY_CERT_TYPE;
+					break;
+					}
+				}
+			if (!(rv & CERT_PKEY_CERT_TYPE) && !check_flags)
+				goto end;
+			}
+		else
+			rv |= CERT_PKEY_CERT_TYPE;
+
+
+		ca_dn = s->s3->tmp.ca_names;
+
+		if (!sk_X509_NAME_num(ca_dn))
+			rv |= CERT_PKEY_ISSUER_NAME;
+
+		if (!(rv & CERT_PKEY_ISSUER_NAME))
+			{
+			if (ssl_check_ca_name(ca_dn, x))
+				rv |= CERT_PKEY_ISSUER_NAME;
+			}
+		if (!(rv & CERT_PKEY_ISSUER_NAME))
+			{
+			for (i = 0; i < sk_X509_num(chain); i++)
+				{
+				X509 *xtmp = sk_X509_value(chain, i);
+				if (ssl_check_ca_name(ca_dn, xtmp))
+					{
+					rv |= CERT_PKEY_ISSUER_NAME;
+					break;
+					}
+				}
+			}
+		if (!check_flags && !(rv & CERT_PKEY_ISSUER_NAME))
+			goto end;
+		}
+	else
+		rv |= CERT_PKEY_ISSUER_NAME|CERT_PKEY_CERT_TYPE;
+
+	if (!check_flags || (rv & check_flags) == check_flags)
+		rv |= CERT_PKEY_VALID;
 
 	end:
-	if (cpk)
+
+	if (TLS1_get_version(s) >= TLS1_2_VERSION)
 		{
-		if (rv && cpk->digest)
+		if (cpk->valid_flags & CERT_PKEY_EXPLICIT_SIGN)
+			rv |= CERT_PKEY_EXPLICIT_SIGN|CERT_PKEY_SIGN;
+		else if (cpk->digest)
 			rv |= CERT_PKEY_SIGN;
-		cpk->valid_flags = rv;
+		}
+	else
+		rv |= CERT_PKEY_SIGN|CERT_PKEY_EXPLICIT_SIGN;
+
+	/* When checking a CERT_PKEY structure all flags are irrelevant
+	 * if the chain is invalid.
+	 */
+	if (!check_flags)
+		{
+		if (rv & CERT_PKEY_VALID)
+			cpk->valid_flags = rv;
+		else
+			cpk->valid_flags = 0;
 		}
 	return rv;
 	}
