@@ -321,17 +321,11 @@ CERT *ssl_cert_dup(CERT *cert)
 
 		if (cpk->chain)
 			{
-			int j;
-			rpk->chain = sk_X509_dup(cpk->chain);
+			rpk->chain = X509_chain_up_ref(cpk->chain);
 			if (!rpk->chain)
 				{
 				SSLerr(SSL_F_SSL_CERT_DUP, ERR_R_MALLOC_FAILURE);
 				goto err;
-				}
-			for (j = 0; j < sk_X509_num(rpk->chain); j++)
-				{
-				X509 *x = sk_X509_value(rpk->chain, j);
-				CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
 				}
 			}
 		rpk->valid_flags = 0;
@@ -562,18 +556,11 @@ int ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain)
 int ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain)
 	{
 	STACK_OF(X509) *dchain;
-	X509 *x;
-	int i;
 	if (!chain)
 		return ssl_cert_set0_chain(c, NULL);
-	dchain = sk_X509_dup(chain);
+	dchain = X509_chain_up_ref(chain);
 	if (!dchain)
 		return 0;
-	for (i = 0; i < sk_X509_num(dchain); i++)
-		{
-		x = sk_X509_value(dchain, i);
-		CRYPTO_add(&x->references, 1, CRYPTO_LOCK_X509);
-		}
 	if (!ssl_cert_set0_chain(c, dchain))
 		{
 		sk_X509_pop_free(dchain, X509_free);
