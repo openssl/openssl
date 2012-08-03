@@ -2376,6 +2376,12 @@ int args_verify(char ***pargs, int *pargc,
 		flags |= X509_V_FLAG_CHECK_SS_SIGNATURE;
 	else if (!strcmp(arg, "-trusted_first"))
 		flags |= X509_V_FLAG_TRUSTED_FIRST;
+	else if (!strcmp(arg, "-suiteB_128_only"))
+		flags |= X509_V_FLAG_SUITEB_128_LOS_ONLY;
+	else if (!strcmp(arg, "-suiteB_128"))
+		flags |= X509_V_FLAG_SUITEB_128_LOS;
+	else if (!strcmp(arg, "-suiteB_192"))
+		flags |= X509_V_FLAG_SUITEB_192_LOS;
 	else
 		return 0;
 

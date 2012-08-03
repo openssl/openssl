@@ -185,6 +185,18 @@ const char *X509_verify_cert_error_string(long n)
 		return("CRL path validation error");
 	case X509_V_ERR_PATH_LOOP:
 		return("Path Loop");
+	case X509_V_ERR_SUITE_B_INVALID_VERSION:
+		return("Suite B: certificate version invalid");
+	case X509_V_ERR_SUITE_B_INVALID_ALGORITHM:
+		return("Suite B: invalid public key algorithm");
+	case X509_V_ERR_SUITE_B_INVALID_CURVE:
+		return("Suite B: invalid ECC curve");
+	case X509_V_ERR_SUITE_B_INVALID_SIGNATURE_ALGORITHM:
+		return("Suite B: invalid signature algorithm");
+	case X509_V_ERR_SUITE_B_LOS_NOT_ALLOWED:
+		return("Suite B: curve not allowed for this LOS");
+	case X509_V_ERR_SUITE_B_CANNOT_SIGN_P_384_WITH_P_256:
+		return("Suite B: cannot sign P-384 with P-256");
 
 	default:
 		BIO_snprintf(buf,sizeof buf,"error number %ld",n);

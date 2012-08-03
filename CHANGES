@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) New chain verification flags for Suite B levels of security. Check
+     algorithms are acceptable when flags are set in X509_verify_cert.
+     [Steve Henson]
+
   *) Make tls1_check_chain return a set of flags indicating checks passed
      by a certificate chain. Add additional tests to handle client
      certificates: checks for matching certificate type and issuer name

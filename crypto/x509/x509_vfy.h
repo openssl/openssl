@@ -355,6 +355,13 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define		X509_V_ERR_CRL_PATH_VALIDATION_ERROR		54
 /* Another issuer check debug option */
 #define		X509_V_ERR_PATH_LOOP				55
+/* Suite B mode algorithm violation */
+#define		X509_V_ERR_SUITE_B_INVALID_VERSION		56
+#define		X509_V_ERR_SUITE_B_INVALID_ALGORITHM		57
+#define		X509_V_ERR_SUITE_B_INVALID_CURVE		58
+#define		X509_V_ERR_SUITE_B_INVALID_SIGNATURE_ALGORITHM	59
+#define		X509_V_ERR_SUITE_B_LOS_NOT_ALLOWED		60
+#define		X509_V_ERR_SUITE_B_CANNOT_SIGN_P_384_WITH_P_256	61
 
 /* The application is not happy */
 #define		X509_V_ERR_APPLICATION_VERIFICATION		50
@@ -393,6 +400,12 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 #define X509_V_FLAG_CHECK_SS_SIGNATURE		0x4000
 /* Use trusted store first */
 #define X509_V_FLAG_TRUSTED_FIRST		0x8000
+/* Suite B 128 bit only mode: not normally used */
+#define X509_V_FLAG_SUITEB_128_LOS_ONLY		0x10000
+/* Suite B 192 bit only mode */
+#define X509_V_FLAG_SUITEB_192_LOS		0x20000
+/* Suite B 128 bit mode allowing 192 bit algorithms */
+#define X509_V_FLAG_SUITEB_128_LOS		0x30000
 
 
 #define X509_VP_FLAG_DEFAULT			0x1
