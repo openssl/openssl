@@ -4412,3 +4412,6 @@ EC_curve_nist2nid                       4781	EXIST::FUNCTION:EC
 EC_curve_nid2nist                       4782	EXIST::FUNCTION:EC
 X509_get0_signature                     4783	EXIST::FUNCTION:
 X509_get_signature_nid                  4784	EXIST::FUNCTION:
+X509_chain_check_suiteb                 4785	EXIST::FUNCTION:
+X509_chain_up_ref                       4786	EXIST::FUNCTION:
+X509_CRL_check_suiteb                   4787	EXIST::FUNCTION:
