@@ -1676,9 +1676,11 @@ SSL_set_tlsext_status_ids(con, ids);
 		while (!strstr(mbuf, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'") &&
 				!strstr(mbuf, "<starttls xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\""))
 			{
-			if (strstr(mbuf, "/stream:features>"))
-				goto shut;
 			seen = BIO_read(sbio,mbuf,BUFSIZZ);
+
+			if (seen <= 0)
+				goto shut;
+
 			mbuf[seen] = 0;
 			}
 		BIO_printf(sbio, "<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
