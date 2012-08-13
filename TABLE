@@ -1718,7 +1718,7 @@ $multilib     =
 
 *** debug-ben-debug
 $cc           = gcc
-$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -g3 -O2 -pipe
+$cflags       = -Wall -pedantic -DPEDANTIC -Wno-long-long -Wsign-compare -Wmissing-prototypes -Wshadow -Wformat -Werror -DCRYPTO_MDEBUG_ALL -DCRYPTO_MDEBUG_ABORT -DREF_CHECK -DOPENSSL_NO_DEPRECATED -DBN_DEBUG -DCONF_DEBUG -DDEBUG_SAFESTACK -DOPENSSL_NO_HW_PADLOCK -g3 -O2 -pipe
 $unistd       = 
 $thread_cflag = (unknown)
 $sys_id       = 
@@ -5441,7 +5441,7 @@ $shared_target= solaris-shared
 $shared_cflag = -KPIC
 $shared_ldflag = -xarch=v9 -G -dy -z text
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = /usr/ccs/bin/ar rs
+$ranlib       = 
 $arflags      = 
 $multilib     = /64
 
