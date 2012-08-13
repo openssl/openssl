@@ -95,13 +95,13 @@ die "can't locate x86_64-xlate.pl";
 
 $avx=1 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
-	   $1>=2.19);
+	   (($xop = $1>=2.21) || $1>=2.19));
 $avx=1 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 	   `nasm -v 2>&1` =~ /NASM version ([2-9]\.[0-9]+)/ &&
-	   $1>=2.09);
+	   ($xop = $1>=2.09));
 $avx=1 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   `ml64 2>&1` =~ /Version ([0-9]+)\./ &&
-	   $1>=10);
+	   ($xop = $1>=10));
 
 open STDOUT,"| \"$^X\" $xlate $flavour $output";
 
@@ -237,7 +237,7 @@ $code.=<<___ if ($SZ==4 || $avx);
 	mov	0(%r11),%r10d
 	mov	4(%r11),%r11d
 ___
-$code.=<<___ if ($avx && $SZ==8);
+$code.=<<___ if ($avx && $xop && $SZ==8);
 	test	\$`1<<11`,%r11d		# check for XOP
 	jnz	.Lxop_shortcut
 ___
@@ -824,7 +824,7 @@ if ($avx) {{
 ######################################################################
 # XOP code path
 #
-if ($SZ==8) {	# SHA512 only
+if ($xop && $SZ==8) {	# SHA512 only
 $code.=<<___;
 .type	${func}_xop,\@function,4
 .align	64
