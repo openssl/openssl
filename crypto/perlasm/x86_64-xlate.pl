@@ -772,6 +772,45 @@ my $rdrand = sub {
     }
 };
 
+sub rxb {
+ local *opcode=shift;
+ my ($dst,$src1,$src2,$rxb)=@_;
+
+   $rxb|=0x7<<5;
+   $rxb&=~(0x04<<5) if($dst>=8);
+   $rxb&=~(0x01<<5) if($src1>=8);
+   $rxb&=~(0x02<<5) if($src2>=8);
+   push @opcode,$rxb;
+}
+
+my $vprotd = sub {
+    if (shift =~ /\$([x0-9a-f]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+      my @opcode=(0x8f);
+	rxb(\@opcode,$3,$2,-1,0x08);
+	push @opcode,0x78,0xc2;
+	push @opcode,0xc0|($2&7)|(($3&7)<<3);		# ModR/M
+	my $c=$1;
+	push @opcode,$c=~/^0/?oct($c):$c;
+	@opcode;
+    } else {
+	();
+    }
+};
+
+my $vprotq = sub {
+    if (shift =~ /\$([x0-9a-f]+),\s*%xmm([0-9]+),\s*%xmm([0-9]+)/) {
+      my @opcode=(0x8f);
+	rxb(\@opcode,$3,$2,-1,0x08);
+	push @opcode,0x78,0xc3;
+	push @opcode,0xc0|($2&7)|(($3&7)<<3);		# ModR/M
+	my $c=$1;
+	push @opcode,$c=~/^0/?oct($c):$c;
+	@opcode;
+    } else {
+	();
+    }
+};
+
 if ($nasm) {
     print <<___;
 default	rel
