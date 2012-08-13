@@ -4863,7 +4863,7 @@ $shared_target= solaris-shared
 $shared_cflag = -KPIC
 $shared_ldflag = -xarch=v9 -G -dy -z text
 $shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
-$ranlib       = /usr/ccs/bin/ar rs
+$ranlib       = 
 $arflags      = 
 $multilib     = /64
 
