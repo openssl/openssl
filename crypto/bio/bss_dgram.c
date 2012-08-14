@@ -81,6 +81,10 @@
 #define IP_MTU      14 /* linux is lame */
 #endif
 
+#if OPENSSL_USE_IPV6 && !defined(IPPROTO_IPV6)
+#define IPPROTO_IPV6 41 /* windows is lame */
+#endif
+
 #if defined(__FreeBSD__) && defined(IN6_IS_ADDR_V4MAPPED)
 /* Standard definition causes type-punning problems. */
 #undef IN6_IS_ADDR_V4MAPPED
@@ -874,7 +878,7 @@ static long dgram_ctrl(BIO *b, int cmd, long num, void *ptr)
 			case AF_INET6:
 #if defined(IPV6_DONTFRAG)
 				if ((ret = setsockopt(b->num, IPPROTO_IPV6, IPV6_DONTFRAG,
-					&sockopt_val, sizeof(sockopt_val))) < 0)
+					(const void *)&sockopt_val, sizeof(sockopt_val))) < 0)
 					{ perror("setsockopt"); ret = -1; }
 #elif defined(OPENSSL_SYS_LINUX) && defined(IPV6_MTUDISCOVER)
 				if ((sockopt_val = num ? IP_PMTUDISC_PROBE : IP_PMTUDISC_DONT),
