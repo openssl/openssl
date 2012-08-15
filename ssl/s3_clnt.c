@@ -3154,8 +3154,9 @@ err:
 	}
 
 /* Check a certificate can be used for client authentication. Currently
- * check cert exists, if we have a suitable digest for TLS 1.2  and if
- * static DH client certificates can be used.
+ * check cert exists, if we have a suitable digest for TLS 1.2 if
+ * static DH client certificates can be used and optionally checks
+ * suitability for Suite B.
  */
 static int ssl3_check_client_certificate(SSL *s)
 	{
@@ -3164,6 +3165,12 @@ static int ssl3_check_client_certificate(SSL *s)
 		return 0;
 	/* If no suitable signature algorithm can't use certificate */
 	if (TLS1_get_version(s) >= TLS1_2_VERSION && !s->cert->key->digest)
+		return 0;
+	/* If strict mode check suitability of chain before using it.
+	 * This also adjusts suite B digest if necessary.
+	 */
+	if (s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT &&
+		!tls1_check_chain(s, NULL, NULL, NULL, -2))
 		return 0;
 	alg_k=s->s3->tmp.new_cipher->algorithm_mkey;
 	/* See if we can use client certificate for fixed DH */

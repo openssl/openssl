@@ -3966,7 +3966,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 	    }
 #endif
 
-	if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE)
+	if (s->options & SSL_OP_CIPHER_SERVER_PREFERENCE || tls1_suiteb(s))
 		{
 		prio = srvr;
 		allow = clnt;
@@ -4040,7 +4040,7 @@ SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
 		/* if we are considering an ECC cipher suite that uses
 		 * an ephemeral EC key check it */
 		if (alg_k & SSL_kEECDH)
-			ok = ok && tls1_check_ec_tmp_key(s);
+			ok = ok && tls1_check_ec_tmp_key(s, c->id);
 #endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_TLSEXT */
 
@@ -4059,7 +4059,7 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 	{
 	int ret=0;
 	const unsigned char *sig;
-	size_t siglen;
+	size_t i, siglen;
 	int have_rsa_sign = 0, have_dsa_sign = 0, have_ecdsa_sign = 0;
 	int nostrict = 1;
 	unsigned long alg_k;
@@ -4070,47 +4070,26 @@ int ssl3_get_req_cert_type(SSL *s, unsigned char *p)
 		memcpy(p, s->cert->ctypes, s->cert->ctype_num);
 		return (int)s->cert->ctype_num;
 		}
-	/* Else see if we have any signature algorithms configured */
-	if (s->cert->client_sigalgs)
+	/* get configured sigalgs */
+	siglen = tls12_get_psigalgs(s, &sig);
+	if (s->cert->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT)
+		nostrict = 0;
+	for (i = 0; i < siglen; i+=2, sig+=2)
 		{
-		sig = s->cert->client_sigalgs;
-		siglen = s->cert->client_sigalgslen;
-		}
-	else
-		{
-		sig = s->cert->conf_sigalgs;
-		siglen = s->cert->conf_sigalgslen;
-		}
-	/* If we have sigalgs work out if we can sign with RSA, DSA, ECDSA */
-	if (sig)
-		{
-		size_t i;
-		if (s->cert->cert_flags & SSL_CERT_FLAG_TLS_STRICT)
-			nostrict = 0;
-		for (i = 0; i < siglen; i+=2, sig+=2)
+		switch(sig[1])
 			{
-			switch(sig[1])
-				{
-			case TLSEXT_signature_rsa:
-				have_rsa_sign = 1;
-				break;
+		case TLSEXT_signature_rsa:
+			have_rsa_sign = 1;
+			break;
 
-			case TLSEXT_signature_dsa:
-				have_dsa_sign = 1;
-				break;
+		case TLSEXT_signature_dsa:
+			have_dsa_sign = 1;
+			break;
 
-			case TLSEXT_signature_ecdsa:
-				have_ecdsa_sign = 1;
-				break;
-				}
+		case TLSEXT_signature_ecdsa:
+			have_ecdsa_sign = 1;
+			break;
 			}
-		}
-	/* Otherwise allow anything */
-	else
-		{
-		have_rsa_sign = 1;
-		have_dsa_sign = 1;
-		have_ecdsa_sign = 1;
 		}
 
 	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;

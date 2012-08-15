@@ -489,6 +489,11 @@ typedef struct cert_pkey_st
 	 */
 	int valid_flags;
 	} CERT_PKEY;
+/* Retrieve Suite B flags */
+#define tls1_suiteb(s)	(s->cert->cert_flags & SSL_CERT_FLAG_SUITEB_128_LOS)
+/* Uses to check strict mode: suite B modes are always strict */
+#define SSL_CERT_FLAGS_CHECK_TLS_STRICT \
+	(SSL_CERT_FLAG_SUITEB_128_LOS|SSL_CERT_FLAG_TLS_STRICT)
 
 typedef struct cert_st
 	{
@@ -910,7 +915,7 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *meth,
 					     STACK_OF(SSL_CIPHER) **pref,
 					     STACK_OF(SSL_CIPHER) **sorted,
-					     const char *rule_str);
+					     const char *rule_str, CERT *c);
 void ssl_update_cache(SSL *s, int mode);
 int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
 		       const EVP_MD **md,int *mac_pkey_type,int *mac_secret_size, SSL_COMP **comp);
@@ -1184,7 +1189,7 @@ int tls1_set_curves(unsigned char **pext, size_t *pextlen,
 			int *curves, size_t ncurves);
 int tls1_set_curves_list(unsigned char **pext, size_t *pextlen, 
 				const char *str);
-int tls1_check_ec_tmp_key(SSL *s);
+int tls1_check_ec_tmp_key(SSL *s, unsigned long id);
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_TLSEXT

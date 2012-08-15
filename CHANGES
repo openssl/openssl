@@ -4,6 +4,12 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) New Suite B modes for TLS code. These use and enforce the requirements
+     of RFC6460: restrict ciphersuites, only permit Suite B algorithms and
+     only use Suite B curves. The Suite B modes can be set by using the
+     strings "SUITEB128", "SUITEB192" or "SUITEB128ONLY" for the cipherstring.
+     [Steve Henson]
+
   *) New chain verification flags for Suite B levels of security. Check
      algorithms are acceptable when flags are set in X509_verify_cert.
      [Steve Henson]

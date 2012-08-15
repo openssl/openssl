@@ -285,6 +285,11 @@ extern "C" {
 /* Flag set for unrecognised algorithms */
 #define TLSEXT_nid_unknown				0x1000000
 
+/* ECC curves */
+
+#define TLSEXT_curve_P_256				23
+#define TLSEXT_curve_P_384				24
+
 #ifndef OPENSSL_NO_TLSEXT
 
 #define TLSEXT_MAXLEN_host_name 255
