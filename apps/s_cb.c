@@ -436,6 +436,8 @@ void MS_CALLBACK msg_cb(int write_p, int version, int content_type, const void *
 
 	if (version == SSL3_VERSION ||
 	    version == TLS1_VERSION ||
+	    version == TLS1_1_VERSION ||
+	    version == TLS1_2_VERSION ||
 	    version == DTLS1_VERSION ||
 	    version == DTLS1_BAD_VER)
 		{
