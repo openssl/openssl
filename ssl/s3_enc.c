@@ -818,7 +818,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 	EVP_MD_CTX ctx;
 	int i,ret=0;
 	unsigned int n;
-#ifdef SSL_TRACE_CRYPTO_DEBUG
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
 	unsigned char *tmpout = out;
 #endif
 
@@ -843,7 +843,7 @@ int ssl3_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
 		}
 	EVP_MD_CTX_cleanup(&ctx);
 
-#ifdef SSL_TRACE_CRYPTO_DEBUG
+#ifdef OPENSSL_SSL_TRACE_CRYPTO
 	if (s->msg_callback)
 		{
 		s->msg_callback(2, s->version, TLS1_RT_CRYPTO_PREMASTER,
