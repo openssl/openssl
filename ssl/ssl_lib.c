@@ -2396,6 +2396,14 @@ CERT_PKEY *ssl_get_server_send_pkey(SSL *s)
 	c = s->cert;
 	ssl_set_cert_masks(c, s->s3->tmp.new_cipher);
 
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+	/* Broken protocol test: return last used certificate: which may
+	 * mismatch the one expected.
+	 */
+	if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTCOL)
+		return c->key;
+#endif
+
 	i = ssl_get_server_cert_index(s);
 
 	/* This may or may not be an error. */
@@ -2414,6 +2422,15 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *cipher, const EVP_MD **pmd)
 
 	alg_a = cipher->algorithm_auth;
 	c=s->cert;
+
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+	/* Broken protocol test: use last key: which may
+	 * mismatch the one expected.
+	 */
+	if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTCOL)
+		idx = c->key - c->pkeys;
+	else
+#endif
 
 	if ((alg_a & SSL_aDSS) &&
 		(c->pkeys[SSL_PKEY_DSA_SIGN].privatekey != NULL))

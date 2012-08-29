@@ -1007,6 +1007,10 @@ int MAIN(int argc, char **argv)
 			}
 		else if (strcmp(*argv, "-cert_strict") == 0)
 			cert_flags |= SSL_CERT_FLAG_TLS_STRICT;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+		else if (strcmp(*argv, "-debug_broken_protocol") == 0)
+			cert_flags |= SSL_CERT_FLAG_BROKEN_PROTCOL;
+#endif
                 else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);

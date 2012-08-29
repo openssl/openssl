@@ -686,6 +686,11 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 	{
 	unsigned char curve_id[2];
 	EC_KEY *ec = s->cert->ecdh_tmp;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+	/* Allow any curve: not just those peer supports */
+	if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTCOL)
+		return 1;
+#endif
 	/* If Suite B, AES128 MUST use P-256 and AES256 MUST use P-384,
 	 * no other curves permitted.
 	 */
@@ -864,7 +869,10 @@ int tls12_check_peer_sigalg(const EVP_MD **pmd, SSL *s,
 		if (!tls1_set_ec_id(curve_id, &comp_id, pkey->pkey.ec))
 			return 0;
 		if (!s->server && !tls1_check_ec_key(s, curve_id, &comp_id))
+			{
+			SSLerr(SSL_F_TLS12_CHECK_PEER_SIGALG,SSL_R_WRONG_CURVE);
 			return 0;
+			}
 		/* If Suite B only P-384+SHA384 or P-256+SHA-256 allowed */
 		if (tls1_suiteb(s))
 			{
@@ -3385,6 +3393,32 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 
 	tls1_set_shared_sigalgs(s);
 
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+	if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTCOL)
+		{
+		/* Use first set signature preference to force message
+		 * digest, ignoring any peer preferences.
+		 */
+		const unsigned char *sigs = NULL;
+		if (s->server)
+			sigs = c->conf_sigalgs;
+		else
+			sigs = c->client_sigalgs;
+		if (sigs)
+			{
+			idx = tls12_get_pkey_idx(sigs[1]);
+			md = tls12_get_hash(sigs[0]);
+			c->pkeys[idx].digest = md;
+			c->pkeys[idx].valid_flags = CERT_PKEY_EXPLICIT_SIGN;
+			if (idx == SSL_PKEY_RSA_SIGN)
+				{
+				c->pkeys[SSL_PKEY_RSA_ENC].valid_flags = CERT_PKEY_EXPLICIT_SIGN;
+				c->pkeys[SSL_PKEY_RSA_ENC].digest = md;
+				}
+			}
+		}
+#endif
+
 	for (i = 0, sigptr = c->shared_sigalgs;
 			i < c->shared_sigalgslen; i++, sigptr++)
 		{
@@ -3798,6 +3832,15 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 		/* If no cert or key, forget it */
 		if (!x || !pk)
 			goto end;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+		/* Allow any certificate to pass test */
+		if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTCOL)
+			{
+			rv = CERT_PKEY_STRICT_FLAGS|CERT_PKEY_EXPLICIT_SIGN|CERT_PKEY_VALID|CERT_PKEY_SIGN;
+			cpk->valid_flags = rv;
+			return rv;
+			}
+#endif
 		}
 	else
 		{
