@@ -2,7 +2,7 @@
  OpenSSL CHANGES
  _______________
 
- Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
+ Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
   *) New Suite B modes for TLS code. These use and enforce the requirements
      of RFC6460: restrict ciphersuites, only permit Suite B algorithms and
@@ -105,57 +105,6 @@
 
   *) Print out deprecated issuer and subject unique ID fields in
      certificates.
-     [Steve Henson]
-
-  *) RFC 5878 support.
-     [Emilia Kasper, Adam Langley, Ben Laurie (Google)]
-
-  *) Support for automatic EC temporary key parameter selection. If enabled
-     the most preferred EC parameters are automatically used instead of
-     hardcoded fixed parameters. Now a server just has to call:
-     SSL_CTX_set_ecdh_auto(ctx, 1) and the server will automatically
-     support ECDH and use the most appropriate parameters.
-     [Steve Henson]
-
-  *) Enhance and tidy EC curve and point format TLS extension code. Use
-     static structures instead of allocation if default values are used.
-     New ctrls to set curves we wish to support and to retrieve shared curves.
-     Print out shared curves in s_server. New options to s_server and s_client
-     to set list of supported curves.
-     [Steve Henson]
-
-  *) New ctrls to retrieve supported signature algorithms and 
-     supported curve values as an array of NIDs. Extend openssl utility
-     to print out received values.
-     [Steve Henson]
-
-  *) Add new APIs EC_curve_nist2nid and EC_curve_nid2nist which convert
-     between NIDs and the more common NIST names such as "P-256". Enhance
-     ecparam utility and ECC method to recognise the NIST names for curves.
-     [Steve Henson]
-
-  *) Enhance SSL/TLS certificate chain handling to support different
-     chains for each certificate instead of one chain in the parent SSL_CTX.
-     [Steve Henson]
-
-  *) Support for fixed DH ciphersuite client authentication: where both
-     server and client use DH certificates with common parameters.
-     [Steve Henson]
-
-  *) Support for fixed DH ciphersuites: those requiring DH server
-     certificates.
-     [Steve Henson]
-
-  *) Transparently support X9.42 DH parameters when calling
-     PEM_read_bio_DHparameters. This means existing applications can handle
-     the new parameter format automatically.
-     [Steve Henson]
-
-  *) Initial experimental support for X9.42 DH parameter format: mainly
-     to support use of 'q' parameter for RFC5114 parameters.
-     [Steve Henson]
-
-  *) Add DH parameters from RFC5114 including test data to dhtest.
      [Steve Henson]
 
   *) Update fips_test_suite to support multiple command line options. New
@@ -395,6 +344,69 @@
      whose return value is often ignored. 
      [Steve Henson]
 
+ Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
+
+  *) Support for linux-x32, ILP32 environment in x86_64 framework.
+     [Andy Polyakov]
+
+  *) RFC 5878 support.
+     [Emilia Kasper, Adam Langley, Ben Laurie (Google)]
+
+  *) Experimental multi-implementation support for FIPS capable OpenSSL.
+     When in FIPS mode the approved implementations are used as normal,
+     when not in FIPS mode the internal unapproved versions are used instead.
+     This means that the FIPS capable OpenSSL isn't forced to use the
+     (often lower perfomance) FIPS implementations outside FIPS mode.
+     [Steve Henson]
+
+  *) Transparently support X9.42 DH parameters when calling
+     PEM_read_bio_DHparameters. This means existing applications can handle
+     the new parameter format automatically.
+     [Steve Henson]
+
+  *) Initial experimental support for X9.42 DH parameter format: mainly
+     to support use of 'q' parameter for RFC5114 parameters.
+     [Steve Henson]
+
+  *) Add DH parameters from RFC5114 including test data to dhtest.
+     [Steve Henson]
+
+  *) Support for automatic EC temporary key parameter selection. If enabled
+     the most preferred EC parameters are automatically used instead of
+     hardcoded fixed parameters. Now a server just has to call:
+     SSL_CTX_set_ecdh_auto(ctx, 1) and the server will automatically
+     support ECDH and use the most appropriate parameters.
+     [Steve Henson]
+
+  *) Enhance and tidy EC curve and point format TLS extension code. Use
+     static structures instead of allocation if default values are used.
+     New ctrls to set curves we wish to support and to retrieve shared curves.
+     Print out shared curves in s_server. New options to s_server and s_client
+     to set list of supported curves.
+     [Steve Henson]
+
+  *) New ctrls to retrieve supported signature algorithms and 
+     supported curve values as an array of NIDs. Extend openssl utility
+     to print out received values.
+     [Steve Henson]
+
+  *) Add new APIs EC_curve_nist2nid and EC_curve_nid2nist which convert
+     between NIDs and the more common NIST names such as "P-256". Enhance
+     ecparam utility and ECC method to recognise the NIST names for curves.
+     [Steve Henson]
+
+  *) Enhance SSL/TLS certificate chain handling to support different
+     chains for each certificate instead of one chain in the parent SSL_CTX.
+     [Steve Henson]
+
+  *) Support for fixed DH ciphersuite client authentication: where both
+     server and client use DH certificates with common parameters.
+     [Steve Henson]
+
+  *) Support for fixed DH ciphersuites: those requiring DH server
+     certificates.
+     [Steve Henson]
+
  Changes between 1.0.1c and 1.0.1d [xx XXX xxxx]
 
   *) Fix possible deadlock when decoding public keys.
@@ -417,13 +429,13 @@
   *) Initialise tkeylen properly when encrypting CMS messages.
      Thanks to Solar Designer of Openwall for reporting this issue.
      [Steve Henson]
- 
+
   *) In FIPS mode don't try to use composite ciphers as they are not
      approved.
      [Steve Henson]
- 
+
  Changes between 1.0.1a and 1.0.1b [26 Apr 2012]
- 
+
   *) OpenSSL 1.0.0 sets SSL_OP_ALL to 0x80000FFFL and OpenSSL 1.0.1 and
      1.0.1a set SSL_OP_NO_TLSv1_1 to 0x00000400L which would unfortunately
      mean any application compiled against OpenSSL 1.0.0 headers setting
@@ -487,10 +499,6 @@
      OpenSSL used RSA_sign/RSA_verify for some RSA signatures in particular
      those which went through EVP_PKEY_METHOD in 1.0.0 and later. Detect 
      the correct format in RSA_verify so both forms transparently work.
-     [Steve Henson]
-
-  *) Add compatibility with old MDC2 signatures which use an ASN1 OCTET
-     STRING form instead of a DigestInfo.
      [Steve Henson]
 
   *) Some servers which support TLS 1.0 can choke if we initially indicate
