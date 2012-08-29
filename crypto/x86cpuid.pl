@@ -353,4 +353,7 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 
 &initseg("OPENSSL_cpuid_setup");
 
+&hidden("OPENSSL_cpuid_setup");
+&hidden("OPENSSL_ia32cap_P");
+
 &asm_finish();
