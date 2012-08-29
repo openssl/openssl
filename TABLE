@@ -4323,6 +4323,39 @@ $ranlib       =
 $arflags      = 
 $multilib     = 
 
+*** linux-x32
+$cc           = gcc
+$cflags       = -mx32 -DL_ENDIAN -DTERMIO -O3 -Wall
+$unistd       = 
+$thread_cflag = -D_REENTRANT
+$sys_id       = 
+$lflags       = -ldl
+$bn_ops       = SIXTY_FOUR_BIT RC4_CHUNK_LL DES_INT DES_UNROLL
+$cpuid_obj    = x86_64cpuid.o
+$bn_obj       = x86_64-gcc.o x86_64-mont.o x86_64-mont5.o x86_64-gf2m.o modexp512-x86_64.o
+$des_obj      = 
+$aes_obj      = aes-x86_64.o vpaes-x86_64.o bsaes-x86_64.o aesni-x86_64.o aesni-sha1-x86_64.o
+$bf_obj       = 
+$md5_obj      = md5-x86_64.o
+$sha1_obj     = sha1-x86_64.o sha256-x86_64.o sha512-x86_64.o
+$cast_obj     = 
+$rc4_obj      = rc4-x86_64.o rc4-md5-x86_64.o
+$rmd160_obj   = 
+$rc5_obj      = 
+$wp_obj       = wp-x86_64.o
+$cmll_obj     = cmll-x86_64.o cmll_misc.o
+$modes_obj    = ghash-x86_64.o
+$engines_obj  = 
+$perlasm_scheme = elf
+$dso_scheme   = dlfcn
+$shared_target= linux-shared
+$shared_cflag = -fPIC
+$shared_ldflag = -mx32
+$shared_extension = .so.$(SHLIB_MAJOR).$(SHLIB_MINOR)
+$ranlib       = 
+$arflags      = 
+$multilib     = x32
+
 *** linux-x86_64
 $cc           = gcc
 $cflags       = -m64 -DL_ENDIAN -DTERMIO -O3 -Wall

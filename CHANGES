@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Support for linux-x32, ILP32 environment in x86_64 framework.
+     [Andy Polyakov]
+
   *) RFC 5878 support.
      [Emilia Kasper, Adam Langley, Ben Laurie (Google)]
 
