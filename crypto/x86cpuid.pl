@@ -455,4 +455,7 @@ my $max = "ebp";
 
 &initseg("OPENSSL_cpuid_setup");
 
+&hidden("OPENSSL_cpuid_setup");
+&hidden("OPENSSL_ia32cap_P");
+
 &asm_finish();

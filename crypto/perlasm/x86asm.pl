@@ -257,4 +257,6 @@ EOF
     &file($filename);
 }
 
+sub ::hidden {}
+
 1;
