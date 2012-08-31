@@ -19,11 +19,11 @@ $OPENSSL ecparam -name P-256 -out ecp256.pem
 $OPENSSL ecparam -name P-384 -out ecp384.pem
 
 CN="OpenSSL Test P-256 SHA-256 cert" $OPENSSL req \
-	-config apps.cnf -extensions usr_cert -x509 -nodes \
+	-config apps.cnf -extensions ec_cert -x509 -nodes \
 	-nodes -keyout tecp256.pem -out tecp256.pem -newkey ec:ecp256.pem \
 	-days 3650 -sha256
 
 CN="OpenSSL Test P-384 SHA-384 cert" $OPENSSL req \
-	-config apps.cnf -extensions usr_cert -x509 -nodes \
+	-config apps.cnf -extensions ec_cert -x509 -nodes \
 	-nodes -keyout tecp384.pem -out tecp384.pem -newkey ec:ecp384.pem \
 	-days 3650 -sha384
