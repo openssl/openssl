@@ -2336,56 +2336,15 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 
 #endif
 
-/* THIS NEEDS CLEANING UP */
 static int ssl_get_server_cert_index(SSL *s)
 	{
- 	unsigned long alg_k, alg_a;
-
-	alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
-	alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-
-	if (alg_k & (SSL_kECDHr|SSL_kECDHe))
-		{
-		/* we don't need to look at SSL_kEECDH
-		 * since no certificate is needed for
-		 * anon ECDH and for authenticated
-		 * EECDH, the check for the auth
-		 * algorithm will set i correctly
-		 * NOTE: For ECDH-RSA, we need an ECC
-		 * not an RSA cert but for EECDH-RSA
-		 * we need an RSA cert. Placing the
-		 * checks for SSL_kECDH before RSA
-		 * checks ensures the correct cert is chosen.
-		 */
-		return SSL_PKEY_ECC;
-		}
-	else if (alg_a & SSL_aECDSA)
-		return SSL_PKEY_ECC;
-	else if (alg_k & SSL_kDHr)
-		return SSL_PKEY_DH_RSA;
-	else if (alg_k & SSL_kDHd)
-		return SSL_PKEY_DH_DSA;
-	else if (alg_a & SSL_aDSS)
-		return SSL_PKEY_DSA_SIGN;
-	else if (alg_a & SSL_aRSA)
-		{
-		if (s->cert->pkeys[SSL_PKEY_RSA_ENC].x509 == NULL)
-			return SSL_PKEY_RSA_SIGN;
-		else
-			return SSL_PKEY_RSA_ENC;
-		}
-	else if (alg_a & SSL_aKRB5)
-		/* VRS something else here? */
-		return -1;
-	else if (alg_a & SSL_aGOST94) 
-		return SSL_PKEY_GOST94;
-	else if (alg_a & SSL_aGOST01)
-		return SSL_PKEY_GOST01;
-	else /* if (alg_a & SSL_aNULL) */
-		{
+	int idx;
+	idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
+	if (idx == SSL_PKEY_RSA_ENC && !s->cert->pkeys[SSL_PKEY_RSA_ENC].x509)
+		idx = SSL_PKEY_RSA_SIGN;
+	if (idx == -1)
 		SSLerr(SSL_F_SSL_GET_SERVER_CERT_INDEX,ERR_R_INTERNAL_ERROR);
-		return -1;
-		}
+	return idx;
 	}
 
 CERT_PKEY *ssl_get_server_send_pkey(SSL *s)
