@@ -19,13 +19,16 @@
 # to collect performance results, which for Cortex-A8 core are:
 #
 # encrypt	20.0 cycles per byte processed with 128-bit key
-# decrypt	24.7 cycles per byte processed with 128-bit key
+# decrypt	24.5 cycles per byte processed with 128-bit key
 # key conv.	440  cycles per 128-bit key/0.17 of 8x block
 #
+# Snapdragon S4 encrypts byte in 18.3 cycles and decrypts in 23.3.
+#
 # When comparing to x86_64 results keep in mind that NEON unit is
-# [mostly] single-issue and thus can't benefit from parallelism. And
-# when comparing to aes-armv4 results keep in mind key schedule
-# conversion overhead (see bsaes-x86_64.pl for details)...
+# [mostly] single-issue and thus can't [fully] benefit from
+# instruction-level parallelism. And when comparing to aes-armv4
+# results keep in mind key schedule conversion overhead (see
+# bsaes-x86_64.pl for further details)...
 #
 #						<appro@openssl.org>
 
@@ -57,8 +60,8 @@ sub InBasisChange {
 # output in lsb > [b6, b5, b0, b3, b7, b1, b4, b2] < msb 
 my @b=@_[0..7];
 $code.=<<___;
-	veor	@b[5], @b[5], @b[6]
 	veor	@b[2], @b[2], @b[1]
+	veor	@b[5], @b[5], @b[6]
 	veor	@b[3], @b[3], @b[0]
 	veor	@b[6], @b[6], @b[2]
 	veor	@b[5], @b[5], @b[0]
@@ -68,9 +71,9 @@ $code.=<<___;
 	veor	@b[7], @b[7], @b[5]
 	veor	@b[3], @b[3], @b[4]
 	veor	@b[4], @b[4], @b[5]
-	veor	@b[3], @b[3], @b[1]
 
 	veor	@b[2], @b[2], @b[7]
+	veor	@b[3], @b[3], @b[1]
 	veor	@b[1], @b[1], @b[5]
 ___
 }
@@ -82,8 +85,8 @@ my @b=@_[0..7];
 $code.=<<___;
 	veor	@b[0], @b[0], @b[6]
 	veor	@b[1], @b[1], @b[4]
-	veor	@b[2], @b[2], @b[0]
 	veor	@b[4], @b[4], @b[6]
+	veor	@b[2], @b[2], @b[0]
 	veor	@b[6], @b[6], @b[1]
 
 	veor	@b[1], @b[1], @b[5]
@@ -107,19 +110,20 @@ my @s=@_[12..15];
 	&InvOutBasisChange	(@b[3,7,0,4,5,1,2,6]);
 }
 
-sub InvInBasisChange {		# OutBasisChange in reverse
+sub InvInBasisChange {		# OutBasisChange in reverse (with twist)
 my @b=@_[5,1,2,6,3,7,0,4];
 $code.=<<___
+	 veor	@b[1], @b[1], @b[7]
 	veor	@b[4], @b[4], @b[7]
 
 	veor	@b[7], @b[7], @b[5]
+	 veor	@b[1], @b[1], @b[3]
 	veor	@b[2], @b[2], @b[5]
 	veor	@b[3], @b[3], @b[7]
-	veor	@b[5], @b[5], @b[3]
-	veor	@b[1], @b[1], @b[5]
 
 	veor	@b[6], @b[6], @b[1]
 	veor	@b[2], @b[2], @b[0]
+	 veor	@b[5], @b[5], @b[3]
 	veor	@b[4], @b[4], @b[6]
 	veor	@b[0], @b[0], @b[6]
 	veor	@b[1], @b[1], @b[4]
@@ -151,15 +155,15 @@ sub Mul_GF4 {
 #;*************************************************************
 #;* Mul_GF4: Input x0-x1,y0-y1 Output x0-x1 Temp t0 (8) *
 #;*************************************************************
-my ($x0,$x1,$y0,$y1,$t0)=@_;
+my ($x0,$x1,$y0,$y1,$t0,$t1)=@_;
 $code.=<<___;
 	veor 	$t0, $y0, $y1
 	vand	$t0, $t0, $x0
 	veor	$x0, $x0, $x1
-	vand	$x1, $x1, $y0
+	vand	$t1, $x1, $y0
 	vand	$x0, $x0, $y1
-	veor	$x0, $x0, $x1
-	veor	$x1, $x1, $t0
+	veor	$x1, $t1, $t0
+	veor	$x0, $x0, $t1
 ___
 }
 
@@ -203,13 +207,11 @@ my @x=@_[0..7];
 my @y=@_[8..11];
 my @t=@_[12..15];
 $code.=<<___;
-	vmov	@t[0], @x[0]
-	vmov	@t[1], @x[1]
+	veor	@t[0], @x[0], @x[2]
+	veor	@t[1], @x[1], @x[3]
 ___
-	&Mul_GF4  	(@x[0], @x[1], @y[0], @y[1], @t[2]);
+	&Mul_GF4  	(@x[0], @x[1], @y[0], @y[1], @t[2..3]);
 $code.=<<___;
-	veor	@t[0], @t[0], @x[2]
-	veor	@t[1], @t[1], @x[3]
 	veor	@y[0], @y[0], @y[2]
 	veor	@y[1], @y[1], @y[3]
 ___
@@ -230,7 +232,7 @@ $code.=<<___;
 	veor	@y[0], @y[0], @y[2]
 	veor	@y[1], @y[1], @y[3]
 ___
-	&Mul_GF4  	(@x[4], @x[5], @y[0], @y[1], @t[3]);
+	&Mul_GF4  	(@x[4], @x[5], @y[0], @y[1], @t[2..3]);
 $code.=<<___;
 	veor	@x[4], @x[4], @t[0]
 	veor	@x[6], @x[6], @t[0]
@@ -402,8 +404,8 @@ $code.=<<___;
 	 vext.8	@x[3], @x[6], @x[6], #8
 	veor	@t[4], @t[4], @x[7]
 	 vext.8	@x[6], @x[2], @x[2], #8
-	veor	@x[2], @t[0], @t[4]
 	veor	@x[7], @t[1], @t[5]
+	veor	@x[2], @t[0], @t[4]
 
 	veor	@x[4], @x[4], @t[3]
 	veor	@x[5], @x[5], @t[7]
@@ -422,8 +424,8 @@ $code.=<<___;
 	@ multiplication by 0x0e
 	vext.8	@t[7], @x[7], @x[7], #12
 	vmov	@t[2], @x[2]
-	veor	@x[7], @x[7], @x[5]		@ 7 5
 	veor	@x[2], @x[2], @x[5]		@ 2 5
+	veor	@x[7], @x[7], @x[5]		@ 7 5
 	vext.8	@t[0], @x[0], @x[0], #12
 	vmov	@t[5], @x[5]
 	veor	@x[5], @x[5], @x[0]		@ 5 0		[1]
@@ -431,8 +433,8 @@ $code.=<<___;
 	vext.8	@t[1], @x[1], @x[1], #12
 	veor	@x[1], @x[1], @x[2]		@ 1 25
 	veor	@x[0], @x[0], @x[6]		@ 01 6		[2]
-	veor	@x[1], @x[1], @x[3]		@ 125 3		[4]
 	vext.8	@t[3], @x[3], @x[3], #12
+	veor	@x[1], @x[1], @x[3]		@ 125 3		[4]
 	veor	@x[2], @x[2], @x[0]		@ 25 016	[3]
 	veor	@x[3], @x[3], @x[7]		@ 3 75
 	veor	@x[7], @x[7], @x[6]		@ 75 6		[0]
@@ -451,21 +453,21 @@ $code.=<<___;
 	@ multiplication by 0x0b
 	veor	@y[1], @y[1], @y[0]
 	veor	@y[0], @y[0], @t[0]
-	veor	@y[1], @y[1], @t[1]
 	vext.8	@t[2], @t[2], @t[2], #12
+	veor	@y[1], @y[1], @t[1]
 	veor	@y[0], @y[0], @t[5]
+	vext.8	@t[4], @t[4], @t[4], #12
 	veor	@y[1], @y[1], @t[6]
 	veor	@y[0], @y[0], @t[7]
-	vext.8	@t[4], @t[4], @t[4], #12
 	veor	@t[7], @t[7], @t[6]		@ clobber t[7]
-	veor	@y[1], @y[1], @y[0]
 
 	veor	@y[3], @y[3], @t[0]
+	 veor	@y[1], @y[1], @y[0]
 	vext.8	@t[0], @t[0], @t[0], #12
 	veor	@y[2], @y[2], @t[1]
 	veor	@y[4], @y[4], @t[1]
-	veor	@y[2], @y[2], @t[2]
 	vext.8	@t[1], @t[1], @t[1], #12
+	veor	@y[2], @y[2], @t[2]
 	veor	@y[3], @y[3], @t[2]
 	veor	@y[5], @y[5], @t[2]
 	veor	@y[2], @y[2], @t[7]
@@ -473,8 +475,8 @@ $code.=<<___;
 	veor	@y[3], @y[3], @t[3]
 	veor	@y[6], @y[6], @t[3]
 	veor	@y[4], @y[4], @t[3]
-	vext.8	@t[3], @t[3], @t[3], #12
 	veor	@y[7], @y[7], @t[4]
+	vext.8	@t[3], @t[3], @t[3], #12
 	veor	@y[5], @y[5], @t[4]
 	veor	@y[7], @y[7], @t[7]
 	veor	@y[3], @y[3], @t[5]
@@ -488,16 +490,16 @@ $code.=<<___;
 
 	veor	@t[7], @t[7], @t[5]
 	vext.8	@t[5], @t[5], @t[5], #12
-	veor	@t[7], @t[7], @t[6]		@ restore t[7]
 
 	@ multiplication by 0x0d
 	veor	@y[4], @y[4], @y[7]
+	 veor	@t[7], @t[7], @t[6]		@ restore t[7]
 	veor	@y[7], @y[7], @t[4]
 	vext.8	@t[6], @t[6], @t[6], #12
 	veor	@y[2], @y[2], @t[0]
 	veor	@y[7], @y[7], @t[5]
-	veor	@y[2], @y[2], @t[2]
 	vext.8	@t[7], @t[7], @t[7], #12
+	veor	@y[2], @y[2], @t[2]
 
 	veor	@y[3], @y[3], @y[1]
 	veor	@y[1], @y[1], @t[1]
@@ -505,8 +507,8 @@ $code.=<<___;
 	veor	@y[3], @y[3], @t[0]
 	veor	@y[1], @y[1], @t[5]
 	veor	@y[0], @y[0], @t[5]
-	veor	@y[1], @y[1], @t[7]
 	vext.8	@t[0], @t[0], @t[0], #12
+	veor	@y[1], @y[1], @t[7]
 	veor	@y[0], @y[0], @t[6]
 	veor	@y[3], @y[3], @y[1]
 	veor	@y[4], @y[4], @t[1]
@@ -515,9 +517,9 @@ $code.=<<___;
 	veor	@y[7], @y[7], @t[7]
 	veor	@y[4], @y[4], @t[2]
 	veor	@y[5], @y[5], @t[2]
-	vext.8	@t[2], @t[2], @t[2], #12
 	veor	@y[2], @y[2], @t[6]
 	veor	@t[6], @t[6], @t[3]		@ clobber t[6]
+	vext.8	@t[2], @t[2], @t[2], #12
 	veor	@y[4], @y[4], @y[7]
 	veor	@y[3], @y[3], @t[6]
 
@@ -544,13 +546,13 @@ $code.=<<___;
 	veor	@t[6], @t[6], @t[7]		@ clobber t[6]
 	veor	@y[4], @y[4], @t[1]
 	veor	@y[7], @y[7], @t[4]
-	veor	@t[4], @t[4], @y[4]		@ t[4]=y[4]
 	veor	@y[6], @y[6], @t[3]
-	veor	@t[3], @t[3], @y[3]		@ t[3]=y[3]
 	veor	@y[5], @y[5], @t[2]
+	veor	@t[4], @t[4], @y[4]		@ t[4]=y[4]
+	veor	@t[3], @t[3], @y[3]		@ t[3]=y[3]
+	veor	@t[5], @t[5], @y[5]		@ t[5]=y[5]
 	veor	@t[2], @t[2], @y[2]		@ t[2]=y[2]
 	veor	@t[3], @t[3], @t[7]
-	veor	@t[5], @t[5], @y[5]		@ t[5]=y[5]
 	veor	@XMM[5], @t[5], @t[6]
 	veor	@XMM[6], @t[6], @y[6]		@ t[6]=y[6]
 	veor	@XMM[2], @t[2], @t[6]
