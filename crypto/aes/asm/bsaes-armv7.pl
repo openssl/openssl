@@ -18,11 +18,11 @@
 # only low-level primitives and unsupported entry points, just enough
 # to collect performance results, which for Cortex-A8 core are:
 #
-# encrypt	20.0 cycles per byte processed with 128-bit key
-# decrypt	24.5 cycles per byte processed with 128-bit key
+# encrypt	19.7 cycles per byte processed with 128-bit key
+# decrypt	24.1 cycles per byte processed with 128-bit key
 # key conv.	440  cycles per 128-bit key/0.17 of 8x block
 #
-# Snapdragon S4 encrypts byte in 18.3 cycles and decrypts in 23.3.
+# Snapdragon S4 encrypts byte in 17.9 cycles and decrypts in 22.9.
 #
 # When comparing to x86_64 results keep in mind that NEON unit is
 # [mostly] single-issue and thus can't [fully] benefit from
@@ -262,22 +262,22 @@ $code.=<<___;
 	vorr	@t[3], @t[3], @s[0]
 	veor	@s[0], @s[0], @t[1]
 	vand	@t[0], @t[0], @t[1]
+	veor	@t[1], @x[3], @x[2]
 	vand	@s[3], @s[3], @s[0]
-	veor	@s[0], @x[3], @x[2]
-	vand	@s[1], @s[1], @s[0]
+	vand	@s[1], @s[1], @t[1]
+	veor	@t[1], @x[4], @x[5]
+	veor	@s[0], @x[1], @x[0]
 	veor	@t[3], @t[3], @s[1]
 	veor	@t[2], @t[2], @s[1]
-	veor	@s[1], @x[4], @x[5]
-	veor	@s[0], @x[1], @x[0]
-	vorr	@t[1], @s[1], @s[0]
-	vand	@s[1], @s[1], @s[0]
-	veor	@t[0], @t[0], @s[1]
+	vand	@s[1], @t[1], @s[0]
+	vorr	@t[1], @t[1], @s[0]
 	veor	@t[3], @t[3], @s[3]
+	veor	@t[0], @t[0], @s[1]
 	veor	@t[2], @t[2], @s[2]
 	veor	@t[1], @t[1], @s[3]
 	veor	@t[0], @t[0], @s[2]
-	veor	@t[1], @t[1], @s[2]
 	vand	@s[0], @x[7], @x[3]
+	veor	@t[1], @t[1], @s[2]
 	vand	@s[1], @x[6], @x[2]
 	vand	@s[2], @x[5], @x[1]
 	vorr	@s[3], @x[4], @x[0]
@@ -381,13 +381,13 @@ $code.=<<___;
 	 veor	@x[5], @x[5], @t[5]
 	vext.8	@t[7], @x[7], @x[7], #12
 	 veor	@x[6], @x[6], @t[6]
-	 veor	@x[7], @x[7], @t[7]
 
 	veor	@t[1], @t[1], @x[0]
+	 veor	@x[7], @x[7], @t[7]
 	 vext.8	@x[0], @x[0], @x[0], #8		@ (x0 ^ (x0 <<< 32)) <<< 64)
+	veor	@t[2], @t[2], @x[1]
 	veor	@t[0], @t[0], @x[7]
 	veor	@t[1], @t[1], @x[7]
-	veor	@t[2], @t[2], @x[1]
 	 vext.8	@x[1], @x[1], @x[1], #8
 	veor	@t[5], @t[5], @x[4]
 	 veor	@x[0], @x[0], @t[0]
@@ -400,9 +400,9 @@ $code.=<<___;
 	 vext.8	@x[4], @x[3], @x[3], #8
 	veor	@t[3], @t[3], @x[2]
 	 vext.8	@x[5], @x[7], @x[7], #8
-	veor	@t[3], @t[3], @x[7]
-	 vext.8	@x[3], @x[6], @x[6], #8
 	veor	@t[4], @t[4], @x[7]
+	 vext.8	@x[3], @x[6], @x[6], #8
+	veor	@t[3], @t[3], @x[7]
 	 vext.8	@x[6], @x[2], @x[2], #8
 	veor	@x[7], @t[1], @t[5]
 	veor	@x[2], @t[0], @t[4]
@@ -479,9 +479,9 @@ $code.=<<___;
 	vext.8	@t[3], @t[3], @t[3], #12
 	veor	@y[5], @y[5], @t[4]
 	veor	@y[7], @y[7], @t[7]
+	veor	@t[7], @t[7], @t[5]		@ clobber t[7] even more
 	veor	@y[3], @y[3], @t[5]
 	veor	@y[4], @y[4], @t[4]
-	veor	@t[7], @t[7], @t[5]		@ clobber t[7] even more
 
 	veor	@y[5], @y[5], @t[7]
 	vext.8	@t[4], @t[4], @t[4], #12
