@@ -409,10 +409,13 @@ static int do_print_sigalgs(BIO *out, SSL *s, int shared)
 
 int ssl_print_sigalgs(BIO *out, SSL *s)
 	{
+	int mdnid;
 	if (!SSL_is_server(s))
 		ssl_print_client_cert_types(out, s);
 	do_print_sigalgs(out, s, 0);
 	do_print_sigalgs(out, s, 1);
+	if (SSL_get_peer_signature_nid(s, &mdnid))
+		BIO_printf(out, "Peer signing digest: %s\n", OBJ_nid2sn(mdnid));
 	return 1;
 	}
 

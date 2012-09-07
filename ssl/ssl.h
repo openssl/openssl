@@ -1707,6 +1707,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_BUILD_CERT_CHAIN		105
 #define SSL_CTRL_SET_VERIFY_CERT_STORE		106
 #define SSL_CTRL_SET_CHAIN_CERT_STORE		107
+#define SSL_CTRL_GET_PEER_SIGNATURE_NID		108
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1830,6 +1831,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 	SSL_CTX_ctrl(ctx,SSL_CTRL_SET_CLIENT_CERT_TYPES,clistlen,(char *)clist)
 #define SSL_set1_client_certificate_types(s, clist, clistlen) \
 	SSL_ctrl(s,SSL_CTRL_SET_CLIENT_CERT_TYPES,clistlen,(char *)clist)
+
+#define SSL_get_peer_signature_nid(s, pn) \
+	SSL_ctrl(s,SSL_CTRL_GET_PEER_SIGNATURE_NID,0,pn)
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);
