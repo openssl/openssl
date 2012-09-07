@@ -18,11 +18,13 @@
 # only low-level primitives and unsupported entry points, just enough
 # to collect performance results, which for Cortex-A8 core are:
 #
-# encrypt	19.7 cycles per byte processed with 128-bit key
-# decrypt	24.1 cycles per byte processed with 128-bit key
-# key conv.	440  cycles per 128-bit key/0.17 of 8x block
+# encrypt	19.5 cycles per byte processed with 128-bit key
+# decrypt	24.0 cycles per byte processed with 128-bit key
+# key conv.	440  cycles per 128-bit key/0.18 of 8x block
 #
-# Snapdragon S4 encrypts byte in 17.9 cycles and decrypts in 22.9.
+# Snapdragon S4 encrypts byte in 17.6 cycles and decrypts in 22.6,
+# which is [much] worse than anticipated (for further details see
+# http://www.openssl.org/~appro/Snapdragon-S4.html).
 #
 # When comparing to x86_64 results keep in mind that NEON unit is
 # [mostly] single-issue and thus can't [fully] benefit from
@@ -282,35 +284,32 @@ $code.=<<___;
 	vand	@s[2], @x[5], @x[1]
 	vorr	@s[3], @x[4], @x[0]
 	veor	@t[3], @t[3], @s[0]
-	veor	@t[2], @t[2], @s[1]
 	veor	@t[1], @t[1], @s[2]
 	veor	@t[0], @t[0], @s[3]
+	veor	@t[2], @t[2], @s[1]
 
 	@ Inv_GF16 \t0, \t1, \t2, \t3, \s0, \s1, \s2, \s3
 
 	@ new smaller inversion
 
-	veor	@s[0], @t[3], @t[2]
-	vand	@t[3], @t[3], @t[1]
+	vand	@s[2], @t[3], @t[1]
+	vmov	@s[0], @t[0]
 
-	veor	@s[2], @t[0], @t[3]
-	veor	@s[1], @t[2], @t[3]
+	veor	@s[1], @t[2], @s[2]
+	veor	@s[3], @t[0], @s[2]
+	veor	@s[2], @t[0], @s[2]	@ @s[2]=@s[3]
 
-	vand	@s[3], @s[0], @s[2]
 	vbsl	@s[1], @t[1], @t[0]
+	vbsl	@s[3], @t[3], @t[2]
+	veor	@t[3], @t[3], @t[2]
 
-	veor	@s[3], @s[3], @t[2]
-	veor	@t[2], @s[2], @s[1]
-
-	vand	@t[2], @t[2], @t[0]
+	vbsl	@s[0], @s[1], @s[2]
 	vbsl	@t[0], @s[2], @s[1]
 
-	veor	@s[2], @s[2], @t[2]
+	vand	@s[2], @s[0], @s[3]
 	veor	@t[1], @t[1], @t[0]
 
-	vand	@s[2], @s[2], @s[3]
-
-	veor	@s[2], @s[2], @s[0]
+	veor	@s[2], @s[2], @t[3]
 ___
 # output in s3, s2, s1, t1
 
