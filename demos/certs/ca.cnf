@@ -7,6 +7,7 @@
 HOME			= .
 RANDFILE		= $ENV::HOME/.rnd
 CN			= "Not Defined"
+default_ca		= ca
 
 ####################################################################
 [ req ]
@@ -41,6 +42,19 @@ nsComment			= "OpenSSL Generated Certificate"
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid
+# OCSP responder certificate
+[ ocsp_cert ]
+
+basicConstraints=critical, CA:FALSE
+keyUsage=critical, nonRepudiation, digitalSignature, keyEncipherment
+
+# This will be displayed in Netscape's comment listbox.
+nsComment			= "OpenSSL Generated Certificate"
+
+# PKIX recommendations harmless if included in all certificates.
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid
+extendedKeyUsage=OCSPSigning
 
 [ dh_cert ]
 
@@ -66,4 +80,7 @@ authorityKeyIdentifier=keyid:always
 basicConstraints = critical,CA:true
 keyUsage = critical, cRLSign, keyCertSign
 
-
+# Minimal CA entry to allow generation of CRLs.
+[ca]
+database=index.txt
+crlnumber=crlnum.txt
