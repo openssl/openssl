@@ -2092,6 +2092,10 @@ end:
 		EVP_PKEY_free(s_key);
 	if (s_dkey)
 		EVP_PKEY_free(s_dkey);
+	if (s_chain)
+		sk_X509_pop_free(s_chain, X509_free);
+	if (s_dchain)
+		sk_X509_pop_free(s_dchain, X509_free);
 	if (pass)
 		OPENSSL_free(pass);
 	if (dpass)
