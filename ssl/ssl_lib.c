@@ -2840,14 +2840,6 @@ void ssl_clear_cipher_ctx(SSL *s)
 /* Fix this function so that it takes an optional type parameter */
 X509 *SSL_get_certificate(const SSL *s)
 	{
-	if (s->server)
-		{
-		CERT_PKEY *certpkey;
-		certpkey = ssl_get_server_send_pkey(s);
-		if (certpkey && certpkey->x509)
-			return certpkey->x509;
-		}
-
 	if (s->cert != NULL)
 		return(s->cert->key->x509);
 	else

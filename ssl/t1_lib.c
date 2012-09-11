@@ -2355,6 +2355,18 @@ int ssl_check_clienthello_tlsext_late(SSL *s)
 	if ((s->tlsext_status_type != -1) && s->ctx && s->ctx->tlsext_status_cb)
 		{
 		int r;
+		CERT_PKEY *certpkey;
+		certpkey = ssl_get_server_send_pkey(s);
+		/* If no certificate can't return certificate status */
+		if (certpkey == NULL)
+			{
+			s->tlsext_status_expected = 0;
+			return 1;
+			}
+		/* Set current certificate to one we will use so
+		 * SSL_get_certificate et al can pick it up.
+		 */
+		s->cert->key = certpkey;
 		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
 		switch (r)
 			{
