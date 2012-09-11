@@ -219,6 +219,15 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 		dctx->gen_group = group;
 		return 1;
 
+		case EVP_PKEY_CTRL_EC_PARAM_ENC:
+		if (!dctx->gen_group)
+			{
+			ECerr(EC_F_PKEY_EC_CTRL, EC_R_NO_PARAMETERS_SET);
+			return 0;
+			}
+		EC_GROUP_set_asn1_flag(dctx->gen_group, p1);
+		return 1;
+
 		case EVP_PKEY_CTRL_MD:
 		if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1 &&
 		    EVP_MD_type((const EVP_MD *)p2) != NID_ecdsa_with_SHA1 &&
@@ -264,6 +273,18 @@ static int pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx,
 			}
 		return EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, nid);
 		}
+	else if (!strcmp(type, "ec_param_enc"))
+		{
+		int param_enc;
+		if (!strcmp(value, "explicit"))
+			param_enc = 0;
+		else if (!strcmp(value, "named_curve"))
+			param_enc = OPENSSL_EC_NAMED_CURVE;
+		else
+			return -2;
+		return EVP_PKEY_CTX_set_ec_param_enc(ctx, param_enc);
+		}
+			
 	return -2;
 	}
 
@@ -291,7 +312,8 @@ static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	{
 	EC_KEY *ec = NULL;
-	if (ctx->pkey == NULL)
+	EC_PKEY_CTX *dctx = ctx->data;
+	if (ctx->pkey == NULL && dctx->gen_group == NULL)
 		{
 		ECerr(EC_F_PKEY_EC_KEYGEN, EC_R_NO_PARAMETERS_SET);
 		return 0;
@@ -300,9 +322,17 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 	if (!ec)
 		return 0;
 	EVP_PKEY_assign_EC_KEY(pkey, ec);
-	/* Note: if error return, pkey is freed by parent routine */
-	if (!EVP_PKEY_copy_parameters(pkey, ctx->pkey))
-		return 0;
+	if (ctx->pkey)
+		{
+		/* Note: if error return, pkey is freed by parent routine */
+		if (!EVP_PKEY_copy_parameters(pkey, ctx->pkey))
+			return 0;
+		}
+	else
+		{
+		if (!EC_KEY_set_group(ec, dctx->gen_group))
+			return 0;
+		}
 	return EC_KEY_generate_key(pkey->pkey.ec);
 	}
 
