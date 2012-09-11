@@ -1550,6 +1550,12 @@ end:
 	if (dpass)
 		OPENSSL_free(dpass);
 #ifndef OPENSSL_NO_TLSEXT
+	if (tlscstatp.host)
+		OPENSSL_free(tlscstatp.host);
+	if (tlscstatp.port)
+		OPENSSL_free(tlscstatp.port);
+	if (tlscstatp.path)
+		OPENSSL_free(tlscstatp.path);
 	if (ctx2 != NULL) SSL_CTX_free(ctx2);
 	if (s_cert2)
 		X509_free(s_cert2);
