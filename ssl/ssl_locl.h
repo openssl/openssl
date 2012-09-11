@@ -934,7 +934,7 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref);
 int ssl_undefined_function(SSL *s);
 int ssl_undefined_void_function(void);
 int ssl_undefined_const_function(const SSL *s);
-CERT_PKEY *ssl_get_server_send_pkey(SSL *);
+CERT_PKEY *ssl_get_server_send_pkey(const SSL *s);
 unsigned char *ssl_get_authz_data(SSL *s, size_t *authz_length);
 EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *c, const EVP_MD **pmd);
 int ssl_cert_type(X509 *x,EVP_PKEY *pkey);
@@ -1201,6 +1201,7 @@ int tls1_shared_list(SSL *s,
 unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
 unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned char *limit); 
 int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n);
+int ssl_check_clienthello_tlsext_late(SSL *s);
 int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **data, unsigned char *d, int n);
 int ssl_prepare_clienthello_tlsext(SSL *s);
 int ssl_prepare_serverhello_tlsext(SSL *s);

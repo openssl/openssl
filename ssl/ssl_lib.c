@@ -2336,7 +2336,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s)
 
 #endif
 
-static int ssl_get_server_cert_index(SSL *s)
+static int ssl_get_server_cert_index(const SSL *s)
 	{
 	int idx;
 	idx = ssl_cipher_get_cert_index(s->s3->tmp.new_cipher);
@@ -2347,7 +2347,7 @@ static int ssl_get_server_cert_index(SSL *s)
 	return idx;
 	}
 
-CERT_PKEY *ssl_get_server_send_pkey(SSL *s)
+CERT_PKEY *ssl_get_server_send_pkey(const SSL *s)
 	{
 	CERT *c;
 	int i;
@@ -2833,6 +2833,14 @@ void ssl_clear_cipher_ctx(SSL *s)
 /* Fix this function so that it takes an optional type parameter */
 X509 *SSL_get_certificate(const SSL *s)
 	{
+	if (s->server)
+		{
+		CERT_PKEY *certpkey;
+		certpkey = ssl_get_server_send_pkey(s);
+		if (certpkey && certpkey->x509)
+			return certpkey->x509;
+		}
+
 	if (s->cert != NULL)
 		return(s->cert->key->x509);
 	else

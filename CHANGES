@@ -346,6 +346,12 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Call OCSP Stapling callback after ciphersuite has been chosen, so
+     the right response is stapled. Also change SSL_get_certificate()
+     so it returns the certificate actually sent.
+     See http://rt.openssl.org/Ticket/Display.html?id=2836.
+     [Rob Stradling <rob.stradling@comodo.com>]
+
   *) Support for linux-x32, ILP32 environment in x86_64 framework.
      [Andy Polyakov]
 
