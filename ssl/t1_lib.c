@@ -123,7 +123,7 @@ const char tls1_version_str[]="TLSv1" OPENSSL_VERSION_PTEXT;
 static int tls_decrypt_ticket(SSL *s, const unsigned char *tick, int ticklen,
 				const unsigned char *sess_id, int sesslen,
 				SSL_SESSION **psess);
-static int ssl_check_clienthello_tlsext(SSL *s);
+static int ssl_check_clienthello_tlsext_early(SSL *s);
 int ssl_check_serverhello_tlsext(SSL *s);
 #endif
 
@@ -1846,7 +1846,7 @@ int ssl_parse_clienthello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 		return 0;
 		}
 
-	if (ssl_check_clienthello_tlsext(s) <= 0) 
+	if (ssl_check_clienthello_tlsext_early(s) <= 0) 
 		{
 		SSLerr(SSL_F_SSL_PARSE_CLIENTHELLO_TLSEXT,SSL_R_CLIENTHELLO_TLSEXT);
 		return 0;
@@ -2247,7 +2247,7 @@ int ssl_prepare_serverhello_tlsext(SSL *s)
 	return 1;
 	}
 
-static int ssl_check_clienthello_tlsext(SSL *s)
+static int ssl_check_clienthello_tlsext_early(SSL *s)
 	{
 	int ret=SSL_TLSEXT_ERR_NOACK;
 	int al = SSL_AD_UNRECOGNIZED_NAME;
@@ -2266,42 +2266,12 @@ static int ssl_check_clienthello_tlsext(SSL *s)
 	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0) 		
 		ret = s->initial_ctx->tlsext_servername_callback(s, &al, s->initial_ctx->tlsext_servername_arg);
 
-	/* If status request then ask callback what to do.
- 	 * Note: this must be called after servername callbacks in case 
- 	 * the certificate has changed.
- 	 */
-	if ((s->tlsext_status_type != -1) && s->ctx && s->ctx->tlsext_status_cb)
-		{
-		int r;
-		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
-		switch (r)
-			{
-			/* We don't want to send a status request response */
-			case SSL_TLSEXT_ERR_NOACK:
-				s->tlsext_status_expected = 0;
-				break;
-			/* status request response should be sent */
-			case SSL_TLSEXT_ERR_OK:
-				if (s->tlsext_ocsp_resp)
-					s->tlsext_status_expected = 1;
-				else
-					s->tlsext_status_expected = 0;
-				break;
-			/* something bad happened */
-			case SSL_TLSEXT_ERR_ALERT_FATAL:
-				ret = SSL_TLSEXT_ERR_ALERT_FATAL;
-				al = SSL_AD_INTERNAL_ERROR;
-				goto err;
-			}
-		}
-	else
-		s->tlsext_status_expected = 0;
-
 #ifdef TLSEXT_TYPE_opaque_prf_input
  	{
 		/* This sort of belongs into ssl_prepare_serverhello_tlsext(),
 		 * but we might be sending an alert in response to the client hello,
-		 * so this has to happen here in ssl_check_clienthello_tlsext(). */
+		 * so this has to happen here in
+		 * ssl_check_clienthello_tlsext_early(). */
 
 		int r = 1;
 	
@@ -2353,8 +2323,8 @@ static int ssl_check_clienthello_tlsext(SSL *s)
 			}
 	}
 
-#endif
  err:
+#endif
 	switch (ret)
 		{
 		case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -2369,6 +2339,59 @@ static int ssl_check_clienthello_tlsext(SSL *s)
 			s->servername_done=0;
 			default:
 		return 1;
+		}
+	}
+
+int ssl_check_clienthello_tlsext_late(SSL *s)
+	{
+	int ret = SSL_TLSEXT_ERR_OK;
+	int al;
+
+	/* If status request then ask callback what to do.
+ 	 * Note: this must be called after servername callbacks in case
+ 	 * the certificate has changed, and must be called after the cipher
+	 * has been chosen because this may influence which certificate is sent
+ 	 */
+	if ((s->tlsext_status_type != -1) && s->ctx && s->ctx->tlsext_status_cb)
+		{
+		int r;
+		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
+		switch (r)
+			{
+			/* We don't want to send a status request response */
+			case SSL_TLSEXT_ERR_NOACK:
+				s->tlsext_status_expected = 0;
+				break;
+			/* status request response should be sent */
+			case SSL_TLSEXT_ERR_OK:
+				if (s->tlsext_ocsp_resp)
+					s->tlsext_status_expected = 1;
+				else
+					s->tlsext_status_expected = 0;
+				break;
+			/* something bad happened */
+			case SSL_TLSEXT_ERR_ALERT_FATAL:
+				ret = SSL_TLSEXT_ERR_ALERT_FATAL;
+				al = SSL_AD_INTERNAL_ERROR;
+				goto err;
+			}
+		}
+	else
+		s->tlsext_status_expected = 0;
+
+ err:
+	switch (ret)
+		{
+		case SSL_TLSEXT_ERR_ALERT_FATAL:
+			ssl3_send_alert(s, SSL3_AL_FATAL,al);
+			return -1;
+
+		case SSL_TLSEXT_ERR_ALERT_WARNING:
+			ssl3_send_alert(s, SSL3_AL_WARNING,al);
+			return 1; 
+
+		default:
+			return 1;
 		}
 	}
 
