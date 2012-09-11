@@ -1958,11 +1958,21 @@ end:
 		EVP_PKEY_free(s_key);
 	if (s_dkey)
 		EVP_PKEY_free(s_dkey);
+	if (s_chain)
+		sk_X509_pop_free(s_chain, X509_free);
+	if (s_dchain)
+		sk_X509_pop_free(s_dchain, X509_free);
 	if (pass)
 		OPENSSL_free(pass);
 	if (dpass)
 		OPENSSL_free(dpass);
 #ifndef OPENSSL_NO_TLSEXT
+	if (tlscstatp.host)
+		OPENSSL_free(tlscstatp.host);
+	if (tlscstatp.port)
+		OPENSSL_free(tlscstatp.port);
+	if (tlscstatp.path)
+		OPENSSL_free(tlscstatp.path);
 	if (ctx2 != NULL) SSL_CTX_free(ctx2);
 	if (s_cert2)
 		X509_free(s_cert2);
