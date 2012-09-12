@@ -268,7 +268,7 @@ static int accept_socket= -1;
 #undef PROG
 #define PROG		s_server_main
 
-extern int verify_depth, verify_return_error;
+extern int verify_depth, verify_return_error, verify_quiet;
 
 static char *cipher=NULL;
 static int s_server_verify=SSL_VERIFY_NONE;
@@ -303,6 +303,7 @@ static int cert_status_cb(SSL *s, void *arg);
 static int no_resume_ephemeral = 0;
 static int s_msg=0;
 static int s_quiet=0;
+static int s_brief=0;
 
 static char *keymatexportlabel=NULL;
 static int keymatexportlen=20;
@@ -466,6 +467,7 @@ static void s_server_init(void)
 	s_debug=0;
 	s_msg=0;
 	s_quiet=0;
+	s_brief=0;
 	hack=0;
 #ifndef OPENSSL_NO_ENGINE
 	engine_id=NULL;
@@ -1169,6 +1171,8 @@ int MAIN(int argc, char *argv[])
 			}
 		else if (strcmp(*argv,"-verify_return_error") == 0)
 			verify_return_error = 1;
+		else if (strcmp(*argv,"-verify_quiet") == 0)
+			verify_quiet = 1;
 		else if	(strcmp(*argv,"-serverpref") == 0)
 			{ off|=SSL_OP_CIPHER_SERVER_PREFERENCE; }
 		else if (strcmp(*argv,"-legacy_renegotiation") == 0)
@@ -1273,6 +1277,12 @@ int MAIN(int argc, char *argv[])
 			{ s_crlf=1; }
 		else if	(strcmp(*argv,"-quiet") == 0)
 			{ s_quiet=1; }
+		else if	(strcmp(*argv,"-brief") == 0)
+			{
+			s_quiet=1;
+			s_brief=1;
+			verify_quiet=1;
+			}
 		else if	(strcmp(*argv,"-bugs") == 0)
 			{ bugs=1; }
 		else if	(strcmp(*argv,"-no_tmp_rsa") == 0)
@@ -2389,7 +2399,7 @@ static int sv_body(char *hostname, int s, unsigned char *context)
 				}
 			else
 				i=raw_read_stdin(buf,bufsize);
-			if (!s_quiet)
+			if (!s_quiet && !s_brief)
 				{
 				if ((i <= 0) || (buf[0] == 'Q'))
 					{
@@ -2642,6 +2652,9 @@ static int init_ssl_connection(SSL *con)
 		return(0);
 		}
 
+	if (s_brief)
+		print_ssl_summary(bio_err, con);
+
 	PEM_write_bio_SSL_SESSION(bio_s_out,SSL_get_session(con));
 
 	peer=SSL_get_peer_certificate(con);
@@ -2660,7 +2673,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	ssl_print_sigalgs(bio_s_out, con);
-	ssl_print_curves(bio_s_out, con);
+	ssl_print_curves(bio_s_out, con, 0);
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
 
 #if !defined(OPENSSL_NO_TLSEXT) && !defined(OPENSSL_NO_NEXTPROTONEG)
@@ -3003,7 +3016,7 @@ static int www_body(char *hostname, int s, unsigned char *context)
 				BIO_puts(io,"\n");
 				}
 			ssl_print_sigalgs(io, con);
-			ssl_print_curves(io, con);
+			ssl_print_curves(io, con, 0);
 			BIO_printf(io,(SSL_cache_hit(con)
 				?"---\nReused, "
 				:"---\nNew, "));

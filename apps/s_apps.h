@@ -161,7 +161,7 @@ int set_cert_key_and_authz(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
                            unsigned char *authz, size_t authz_length);
 # endif
 int ssl_print_sigalgs(BIO *out, SSL *s);
-int ssl_print_curves(BIO *out, SSL *s);
+int ssl_print_curves(BIO *out, SSL *s, int noshared);
 #endif
 int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, char *server, int port, int type);
@@ -190,3 +190,4 @@ void ssl_excert_free(SSL_EXCERT *exc);
 int args_excert(char ***pargs, int *pargc,
 			int *badarg, BIO *err, SSL_EXCERT **pexc);
 int load_excert(SSL_EXCERT **pexc, BIO *err);
+void print_ssl_summary(BIO *bio, SSL *s);
