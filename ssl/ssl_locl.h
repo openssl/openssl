@@ -586,6 +586,10 @@ typedef struct cert_st
 	X509_STORE *chain_store;
 	X509_STORE *verify_store;
 
+	/* Raw values of the cipher list from a client */
+	unsigned char *ciphers_raw;
+	size_t ciphers_rawlen;
+
 	int references; /* >1 only if SSL_copy_session_id is used */
 	} CERT;
 
@@ -642,8 +646,6 @@ struct tls_sigalgs_st
 #define FP_ICC  (int (*)(const void *,const void *))
 #define ssl_put_cipher_by_char(ssl,ciph,ptr) \
 		((ssl)->method->put_cipher_by_char((ciph),(ptr)))
-#define ssl_get_cipher_by_char(ssl,ptr) \
-		((ssl)->method->get_cipher_by_char(ptr))
 
 /* This is for the SSLv3/TLSv1.0 differences in crypto/hash stuff
  * It is a bit of a mess of functions, but hell, think of it as
@@ -921,6 +923,7 @@ int ssl_cipher_get_evp(const SSL_SESSION *s,const EVP_CIPHER **enc,
 		       const EVP_MD **md,int *mac_pkey_type,int *mac_secret_size, SSL_COMP **comp);
 int ssl_get_handshake_digest(int i,long *mask,const EVP_MD **md);
 int ssl_cipher_get_cert_index(const SSL_CIPHER *c);
+const SSL_CIPHER *ssl_get_cipher_by_char(SSL *ssl, const unsigned char *ptr);
 int ssl_cert_set0_chain(CERT *c, STACK_OF(X509) *chain);
 int ssl_cert_set1_chain(CERT *c, STACK_OF(X509) *chain);
 int ssl_cert_add0_chain_cert(CERT *c, X509 *x);

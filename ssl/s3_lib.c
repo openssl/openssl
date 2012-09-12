@@ -3965,10 +3965,7 @@ const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p)
 #ifdef DEBUG_PRINT_UNKNOWN_CIPHERSUITES
 if (cp == NULL) fprintf(stderr, "Unknown cipher ID %x\n", (p[0] << 8) | p[1]);
 #endif
-	if (cp == NULL || cp->valid == 0)
-		return NULL;
-	else
-		return cp;
+	return cp;
 	}
 
 int ssl3_put_cipher_by_char(const SSL_CIPHER *c, unsigned char *p)
