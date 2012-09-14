@@ -4,6 +4,11 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) Add -rev test option to s_server to just reverse order of characters
+     received by client and send back to server. Also prints an abbreviated
+     summary of the connection parameters.
+     [Steve Henson]
+
   *) New option -brief for s_client and s_server to print out a brief summary
      of connection parameters.
      [Steve Henson]

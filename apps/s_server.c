@@ -207,6 +207,7 @@ static RSA MS_CALLBACK *tmp_rsa_cb(SSL *s, int is_export, int keylength);
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);
 static int sv_body(char *hostname, int s, unsigned char *context);
 static int www_body(char *hostname, int s, unsigned char *context);
+static int rev_body(char *hostname, int s, unsigned char *context);
 static void close_accept_socket(void );
 static void sv_usage(void);
 static int init_ssl_connection(SSL *s);
@@ -983,6 +984,7 @@ int MAIN(int argc, char *argv[])
 	STACK_OF(X509) *s_chain = NULL, *s_dchain = NULL;
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
 	int no_cache = 0, ext_cache = 0;
+	int rev = 0;
 #ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
@@ -1328,6 +1330,8 @@ int MAIN(int argc, char *argv[])
 			meth = TLSv1_server_method();
 			}
 #endif
+		else if	(strcmp(*argv,"-rev") == 0)
+			{ rev=1; }
 		else if	(strcmp(*argv,"-www") == 0)
 			{ www=1; }
 		else if	(strcmp(*argv,"-WWW") == 0)
@@ -2086,7 +2090,9 @@ bad:
 
 	BIO_printf(bio_s_out,"ACCEPT\n");
 	(void)BIO_flush(bio_s_out);
-	if (www)
+	if (rev)
+		do_server(port,socket_type,&accept_socket,rev_body, context);
+	else if (www)
 		do_server(port,socket_type,&accept_socket,www_body, context);
 	else
 		do_server(port,socket_type,&accept_socket,sv_body, context);
@@ -3207,6 +3213,146 @@ err:
 	if (buf != NULL) OPENSSL_free(buf);
 	if (io != NULL) BIO_free_all(io);
 /*	if (ssl_bio != NULL) BIO_free(ssl_bio);*/
+	return(ret);
+	}
+
+static int rev_body(char *hostname, int s, unsigned char *context)
+	{
+	char *buf=NULL;
+	int i;
+	int ret=1;
+	SSL *con;
+	BIO *io,*ssl_bio,*sbio;
+#ifndef OPENSSL_NO_KRB5
+	KSSL_CTX *kctx;
+#endif
+
+	buf=OPENSSL_malloc(bufsize);
+	if (buf == NULL) return(0);
+	io=BIO_new(BIO_f_buffer());
+	ssl_bio=BIO_new(BIO_f_ssl());
+	if ((io == NULL) || (ssl_bio == NULL)) goto err;
+
+	/* lets make the output buffer a reasonable size */
+	if (!BIO_set_write_buffer_size(io,bufsize)) goto err;
+
+	if ((con=SSL_new(ctx)) == NULL) goto err;
+#ifndef OPENSSL_NO_TLSEXT
+	if (s_tlsextdebug)
+		{
+		SSL_set_tlsext_debug_callback(con, tlsext_cb);
+		SSL_set_tlsext_debug_arg(con, bio_s_out);
+		}
+#endif
+#ifndef OPENSSL_NO_KRB5
+	if ((kctx = kssl_ctx_new()) != NULL)
+		{
+		kssl_ctx_setstring(kctx, KSSL_SERVICE, KRB5SVC);
+		kssl_ctx_setstring(kctx, KSSL_KEYTAB, KRB5KEYTAB);
+		}
+#endif	/* OPENSSL_NO_KRB5 */
+	if(context) SSL_set_session_id_context(con, context,
+					       strlen((char *)context));
+
+	sbio=BIO_new_socket(s,BIO_NOCLOSE);
+	SSL_set_bio(con,sbio,sbio);
+	SSL_set_accept_state(con);
+
+	BIO_set_ssl(ssl_bio,con,BIO_CLOSE);
+	BIO_push(io,ssl_bio);
+#ifdef CHARSET_EBCDIC
+	io = BIO_push(BIO_new(BIO_f_ebcdic_filter()),io);
+#endif
+
+	if (s_debug)
+		{
+		SSL_set_debug(con, 1);
+		BIO_set_callback(SSL_get_rbio(con),bio_dump_callback);
+		BIO_set_callback_arg(SSL_get_rbio(con),(char *)bio_s_out);
+		}
+	if (s_msg)
+		{
+#ifndef OPENSSL_NO_SSL_TRACE
+		if (s_msg == 2)
+			SSL_set_msg_callback(con, SSL_trace);
+		else
+#endif
+			SSL_set_msg_callback(con, msg_cb);
+		SSL_set_msg_callback_arg(con, bio_s_msg ? bio_s_msg : bio_s_out);
+		}
+
+	for (;;)
+		{
+		i = BIO_do_handshake(io);
+		if (i > 0)
+			break;
+		if (!BIO_should_retry(io))
+			{
+			BIO_puts(bio_err, "CONNECTION FAILURE\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		}
+	BIO_printf(bio_err, "CONNECTION ESTABLISHED\n");
+	print_ssl_summary(bio_err, con);
+
+	for (;;)
+		{
+		i=BIO_gets(io,buf,bufsize-1);
+		if (i < 0) /* error */
+			{
+			if (!BIO_should_retry(io))
+				{
+				if (!s_quiet)
+					ERR_print_errors(bio_err);
+				goto err;
+				}
+			else
+				{
+				BIO_printf(bio_s_out,"read R BLOCK\n");
+#if defined(OPENSSL_SYS_NETWARE)
+            delay(1000);
+#elif !defined(OPENSSL_SYS_MSDOS) && !defined(__DJGPP__)
+				sleep(1);
+#endif
+				continue;
+				}
+			}
+		else if (i == 0) /* end of input */
+			{
+			ret=1;
+			BIO_printf(bio_err, "CONNECTION CLOSED\n");
+			goto end;
+			}
+		else
+			{
+			char *p = buf + i - 1;
+			while(i && (*p == '\n' || *p == '\r'))
+				{
+				p--;
+				i--;
+				}
+			BUF_reverse((unsigned char *)buf, NULL, i);
+			buf[i] = '\n';
+			BIO_write(io, buf, i + 1);
+			for (;;)
+				{
+				i = BIO_flush(io);
+				if (i > 0)
+					break;
+				if (!BIO_should_retry(io))
+					goto end;
+				}
+			}
+		}
+end:
+	/* make sure we re-use sessions */
+	SSL_set_shutdown(con,SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
+
+err:
+
+	if (buf != NULL) OPENSSL_free(buf);
+	if (io != NULL) BIO_free_all(io);
 	return(ret);
 	}
 
