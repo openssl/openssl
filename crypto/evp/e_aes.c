@@ -1221,6 +1221,7 @@ static int aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 			vpaes_set_encrypt_key(key, ctx->key_len*8, &cctx->ks);
 			CRYPTO_ccm128_init(&cctx->ccm, cctx->M, cctx->L,
 					&cctx->ks, (block128_f)vpaes_encrypt);
+			cctx->str = NULL;
 			cctx->key_set = 1;
 			break;
 			}
