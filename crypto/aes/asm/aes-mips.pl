@@ -143,14 +143,14 @@ _mips_AES_encrypt:
 	lwl	$t2,3($i2)		# Te1[s3>>16]
 	lwl	$t3,3($i3)		# Te1[s0>>16]
 	lwr	$t0,2($i0)		# Te1[s1>>16]
-	lwr	$t1,2($i1)		# Te1[s2>>16]
-	lwr	$t2,2($i2)		# Te1[s3>>16]
-	lwr	$t3,2($i3)		# Te1[s0>>16]
-
 	_xtr	$i0,$s2,8-2
+	lwr	$t1,2($i1)		# Te1[s2>>16]
 	_xtr	$i1,$s3,8-2
+	lwr	$t2,2($i2)		# Te1[s3>>16]
 	_xtr	$i2,$s0,8-2
+	lwr	$t3,2($i3)		# Te1[s0>>16]
 	_xtr	$i3,$s1,8-2
+
 	and	$i0,0x3fc
 	and	$i1,0x3fc
 	and	$i2,0x3fc
@@ -164,14 +164,14 @@ _mips_AES_encrypt:
 	lwl	$t6,2($i2)		# Te2[s0>>8]
 	lwl	$t7,2($i3)		# Te2[s1>>8]
 	lwr	$t4,1($i0)		# Te2[s2>>8]
-	lwr	$t5,1($i1)		# Te2[s3>>8]
-	lwr	$t6,1($i2)		# Te2[s0>>8]
-	lwr	$t7,1($i3)		# Te2[s1>>8]
-
 	_xtr	$i0,$s3,0-2
+	lwr	$t5,1($i1)		# Te2[s3>>8]
 	_xtr	$i1,$s0,0-2
+	lwr	$t6,1($i2)		# Te2[s0>>8]
 	_xtr	$i2,$s1,0-2
+	lwr	$t7,1($i3)		# Te2[s1>>8]
 	_xtr	$i3,$s2,0-2
+
 	and	$i0,0x3fc
 	and	$i1,0x3fc
 	and	$i2,0x3fc
@@ -185,14 +185,14 @@ _mips_AES_encrypt:
 	lwl	$t10,1($i2)		# Te3[s1]
 	lwl	$t11,1($i3)		# Te3[s2]
 	lwr	$t8,0($i0)		# Te3[s3]
-	lwr	$t9,0($i1)		# Te3[s0]
-	lwr	$t10,0($i2)		# Te3[s1]
-	lwr	$t11,0($i3)		# Te3[s2]
-
 	_xtr	$i0,$s0,24-2
+	lwr	$t9,0($i1)		# Te3[s0]
 	_xtr	$i1,$s1,24-2
+	lwr	$t10,0($i2)		# Te3[s1]
 	_xtr	$i2,$s2,24-2
+	lwr	$t11,0($i3)		# Te3[s2]
 	_xtr	$i3,$s3,24-2
+
 	and	$i0,0x3fc
 	and	$i1,0x3fc
 	and	$i2,0x3fc
@@ -202,23 +202,22 @@ _mips_AES_encrypt:
 	$PTR_ADD $i2,$Tbl
 	$PTR_ADD $i3,$Tbl
 	xor	$t0,$t4
-	xor	$t1,$t5
-	xor	$t2,$t6
-	xor	$t3,$t7
 	lw	$t4,0($i0)		# Te0[s0>>24]
+	xor	$t1,$t5
 	lw	$t5,0($i1)		# Te0[s1>>24]
+	xor	$t2,$t6
 	lw	$t6,0($i2)		# Te0[s2>>24]
+	xor	$t3,$t7
 	lw	$t7,0($i3)		# Te0[s3>>24]
 
-	lw	$s0,0($key0)
-	lw	$s1,4($key0)
-	lw	$s2,8($key0)
-	lw	$s3,12($key0)
-
 	xor	$t0,$t8
+	lw	$s0,0($key0)
 	xor	$t1,$t9
+	lw	$s1,4($key0)
 	xor	$t2,$t10
+	lw	$s2,8($key0)
 	xor	$t3,$t11
+	lw	$s3,12($key0)
 
 	xor	$t0,$t4
 	xor	$t1,$t5
@@ -248,14 +247,14 @@ _mips_AES_encrypt:
 	$PTR_ADD $i2,$Tbl
 	$PTR_ADD $i3,$Tbl
 	lbu	$t0,2($i0)		# Te4[s1>>16]
-	lbu	$t1,2($i1)		# Te4[s2>>16]
-	lbu	$t2,2($i2)		# Te4[s3>>16]
-	lbu	$t3,2($i3)		# Te4[s0>>16]
-
 	_xtr	$i0,$s2,8-2
+	lbu	$t1,2($i1)		# Te4[s2>>16]
 	_xtr	$i1,$s3,8-2
+	lbu	$t2,2($i2)		# Te4[s3>>16]
 	_xtr	$i2,$s0,8-2
+	lbu	$t3,2($i3)		# Te4[s0>>16]
 	_xtr	$i3,$s1,8-2
+
 	and	$i0,0x3fc
 	and	$i1,0x3fc
 	and	$i2,0x3fc
@@ -265,14 +264,14 @@ _mips_AES_encrypt:
 	$PTR_ADD $i2,$Tbl
 	$PTR_ADD $i3,$Tbl
 	lbu	$t4,2($i0)		# Te4[s2>>8]
-	lbu	$t5,2($i1)		# Te4[s3>>8]
-	lbu	$t6,2($i2)		# Te4[s0>>8]
-	lbu	$t7,2($i3)		# Te4[s1>>8]
-
 	_xtr	$i0,$s0,24-2
+	lbu	$t5,2($i1)		# Te4[s3>>8]
 	_xtr	$i1,$s1,24-2
+	lbu	$t6,2($i2)		# Te4[s0>>8]
 	_xtr	$i2,$s2,24-2
+	lbu	$t7,2($i3)		# Te4[s1>>8]
 	_xtr	$i3,$s3,24-2
+
 	and	$i0,0x3fc
 	and	$i1,0x3fc
 	and	$i2,0x3fc
@@ -282,18 +281,22 @@ _mips_AES_encrypt:
 	$PTR_ADD $i2,$Tbl
 	$PTR_ADD $i3,$Tbl
 	lbu	$t8,2($i0)		# Te4[s0>>24]
-	lbu	$t9,2($i1)		# Te4[s1>>24]
-	lbu	$t10,2($i2)		# Te4[s2>>24]
-	lbu	$t11,2($i3)		# Te4[s3>>24]
-
 	_xtr	$i0,$s3,0-2
+	lbu	$t9,2($i1)		# Te4[s1>>24]
 	_xtr	$i1,$s0,0-2
+	lbu	$t10,2($i2)		# Te4[s2>>24]
 	_xtr	$i2,$s1,0-2
+	lbu	$t11,2($i3)		# Te4[s3>>24]
 	_xtr	$i3,$s2,0-2
+
 	and	$i0,0x3fc
 	and	$i1,0x3fc
 	and	$i2,0x3fc
 	and	$i3,0x3fc
+	$PTR_ADD $i0,$Tbl
+	$PTR_ADD $i1,$Tbl
+	$PTR_ADD $i2,$Tbl
+	$PTR_ADD $i3,$Tbl
 
 	_ins	$t0,16
 	_ins	$t1,16
@@ -306,27 +309,21 @@ _mips_AES_encrypt:
 	_ins	$t7,8
 
 	xor	$t0,$t4
-	xor	$t1,$t5
-	xor	$t2,$t6
-	xor	$t3,$t7
-
-	$PTR_ADD $i0,$Tbl
-	$PTR_ADD $i1,$Tbl
-	$PTR_ADD $i2,$Tbl
-	$PTR_ADD $i3,$Tbl
 	lbu	$t4,2($i0)		# Te4[s3]
+	xor	$t1,$t5
 	lbu	$t5,2($i1)		# Te4[s0]
+	xor	$t2,$t6
 	lbu	$t6,2($i2)		# Te4[s1]
+	xor	$t3,$t7
 	lbu	$t7,2($i3)		# Te4[s2]
 
 	_ins	$t8,24
-	_ins	$t9,24
-	_ins	$t10,24
-	_ins	$t11,24
-
 	lw	$s0,0($key0)
+	_ins	$t9,24
 	lw	$s1,4($key0)
+	_ins	$t10,24
 	lw	$s2,8($key0)
+	_ins	$t11,24
 	lw	$s3,12($key0)
 
 	xor	$t0,$t8
@@ -473,14 +470,14 @@ _mips_AES_decrypt:
 	lwl	$t2,3($i2)		# Td1[s1>>16]
 	lwl	$t3,3($i3)		# Td1[s2>>16]
 	lwr	$t0,2($i0)		# Td1[s3>>16]
-	lwr	$t1,2($i1)		# Td1[s0>>16]
-	lwr	$t2,2($i2)		# Td1[s1>>16]
-	lwr	$t3,2($i3)		# Td1[s2>>16]
-
 	_xtr	$i0,$s2,8-2
+	lwr	$t1,2($i1)		# Td1[s0>>16]
 	_xtr	$i1,$s3,8-2
+	lwr	$t2,2($i2)		# Td1[s1>>16]
 	_xtr	$i2,$s0,8-2
+	lwr	$t3,2($i3)		# Td1[s2>>16]
 	_xtr	$i3,$s1,8-2
+
 	and	$i0,0x3fc
 	and	$i1,0x3fc
 	and	$i2,0x3fc
@@ -494,14 +491,14 @@ _mips_AES_decrypt:
 	lwl	$t6,2($i2)		# Td2[s0>>8]
 	lwl	$t7,2($i3)		# Td2[s1>>8]
 	lwr	$t4,1($i0)		# Td2[s2>>8]
-	lwr	$t5,1($i1)		# Td2[s3>>8]
-	lwr	$t6,1($i2)		# Td2[s0>>8]
-	lwr	$t7,1($i3)		# Td2[s1>>8]
-
 	_xtr	$i0,$s1,0-2
+	lwr	$t5,1($i1)		# Td2[s3>>8]
 	_xtr	$i1,$s2,0-2
+	lwr	$t6,1($i2)		# Td2[s0>>8]
 	_xtr	$i2,$s3,0-2
+	lwr	$t7,1($i3)		# Td2[s1>>8]
 	_xtr	$i3,$s0,0-2
+
 	and	$i0,0x3fc
 	and	$i1,0x3fc
 	and	$i2,0x3fc
@@ -515,14 +512,14 @@ _mips_AES_decrypt:
 	lwl	$t10,1($i2)		# Td3[s3]
 	lwl	$t11,1($i3)		# Td3[s0]
 	lwr	$t8,0($i0)		# Td3[s1]
-	lwr	$t9,0($i1)		# Td3[s2]
-	lwr	$t10,0($i2)		# Td3[s3]
-	lwr	$t11,0($i3)		# Td3[s0]
-
 	_xtr	$i0,$s0,24-2
+	lwr	$t9,0($i1)		# Td3[s2]
 	_xtr	$i1,$s1,24-2
+	lwr	$t10,0($i2)		# Td3[s3]
 	_xtr	$i2,$s2,24-2
+	lwr	$t11,0($i3)		# Td3[s0]
 	_xtr	$i3,$s3,24-2
+
 	and	$i0,0x3fc
 	and	$i1,0x3fc
 	and	$i2,0x3fc
@@ -533,25 +530,22 @@ _mips_AES_decrypt:
 	$PTR_ADD $i3,$Tbl
 
 	xor	$t0,$t4
-	xor	$t1,$t5
-	xor	$t2,$t6
-	xor	$t3,$t7
-
-
 	lw	$t4,0($i0)		# Td0[s0>>24]
+	xor	$t1,$t5
 	lw	$t5,0($i1)		# Td0[s1>>24]
+	xor	$t2,$t6
 	lw	$t6,0($i2)		# Td0[s2>>24]
+	xor	$t3,$t7
 	lw	$t7,0($i3)		# Td0[s3>>24]
 
-	lw	$s0,0($key0)
-	lw	$s1,4($key0)
-	lw	$s2,8($key0)
-	lw	$s3,12($key0)
-
 	xor	$t0,$t8
+	lw	$s0,0($key0)
 	xor	$t1,$t9
+	lw	$s1,4($key0)
 	xor	$t2,$t10
+	lw	$s2,8($key0)
 	xor	$t3,$t11
+	lw	$s3,12($key0)
 
 	xor	$t0,$t4
 	xor	$t1,$t5
@@ -570,35 +564,35 @@ _mips_AES_decrypt:
 
 	.set	reorder
 	lw	$t4,1024($Tbl)		# prefetch Td4
-	lw	$t5,1024+32($Tbl)
-	lw	$t6,1024+64($Tbl)
-	lw	$t7,1024+96($Tbl)
-	lw	$t8,1024+128($Tbl)
-	lw	$t9,1024+160($Tbl)
-	lw	$t10,1024+192($Tbl)
-	lw	$t11,1024+224($Tbl)
-
 	_xtr	$i0,$s3,16
+	lw	$t5,1024+32($Tbl)
 	_xtr	$i1,$s0,16
+	lw	$t6,1024+64($Tbl)
 	_xtr	$i2,$s1,16
+	lw	$t7,1024+96($Tbl)
 	_xtr	$i3,$s2,16
+	lw	$t8,1024+128($Tbl)
 	and	$i0,0xff
+	lw	$t9,1024+160($Tbl)
 	and	$i1,0xff
+	lw	$t10,1024+192($Tbl)
 	and	$i2,0xff
+	lw	$t11,1024+224($Tbl)
 	and	$i3,0xff
+
 	$PTR_ADD $i0,$Tbl
 	$PTR_ADD $i1,$Tbl
 	$PTR_ADD $i2,$Tbl
 	$PTR_ADD $i3,$Tbl
 	lbu	$t0,1024($i0)		# Td4[s3>>16]
-	lbu	$t1,1024($i1)		# Td4[s0>>16]
-	lbu	$t2,1024($i2)		# Td4[s1>>16]
-	lbu	$t3,1024($i3)		# Td4[s2>>16]
-
 	_xtr	$i0,$s2,8
+	lbu	$t1,1024($i1)		# Td4[s0>>16]
 	_xtr	$i1,$s3,8
+	lbu	$t2,1024($i2)		# Td4[s1>>16]
 	_xtr	$i2,$s0,8
+	lbu	$t3,1024($i3)		# Td4[s2>>16]
 	_xtr	$i3,$s1,8
+
 	and	$i0,0xff
 	and	$i1,0xff
 	and	$i2,0xff
@@ -608,27 +602,31 @@ _mips_AES_decrypt:
 	$PTR_ADD $i2,$Tbl
 	$PTR_ADD $i3,$Tbl
 	lbu	$t4,1024($i0)		# Td4[s2>>8]
-	lbu	$t5,1024($i1)		# Td4[s3>>8]
-	lbu	$t6,1024($i2)		# Td4[s0>>8]
-	lbu	$t7,1024($i3)		# Td4[s1>>8]
-
 	_xtr	$i0,$s0,24
+	lbu	$t5,1024($i1)		# Td4[s3>>8]
 	_xtr	$i1,$s1,24
+	lbu	$t6,1024($i2)		# Td4[s0>>8]
 	_xtr	$i2,$s2,24
+	lbu	$t7,1024($i3)		# Td4[s1>>8]
 	_xtr	$i3,$s3,24
+
 	$PTR_ADD $i0,$Tbl
 	$PTR_ADD $i1,$Tbl
 	$PTR_ADD $i2,$Tbl
 	$PTR_ADD $i3,$Tbl
 	lbu	$t8,1024($i0)		# Td4[s0>>24]
-	lbu	$t9,1024($i1)		# Td4[s1>>24]
-	lbu	$t10,1024($i2)		# Td4[s2>>24]
-	lbu	$t11,1024($i3)		# Td4[s3>>24]
-
 	_xtr	$i0,$s1,0
+	lbu	$t9,1024($i1)		# Td4[s1>>24]
 	_xtr	$i1,$s2,0
+	lbu	$t10,1024($i2)		# Td4[s2>>24]
 	_xtr	$i2,$s3,0
+	lbu	$t11,1024($i3)		# Td4[s3>>24]
 	_xtr	$i3,$s0,0
+
+	$PTR_ADD $i0,$Tbl
+	$PTR_ADD $i1,$Tbl
+	$PTR_ADD $i2,$Tbl
+	$PTR_ADD $i3,$Tbl
 
 	_ins	$t0,16
 	_ins	$t1,16
@@ -641,39 +639,32 @@ _mips_AES_decrypt:
 	_ins	$t7,8
 
 	xor	$t0,$t4
-	xor	$t1,$t5
-	xor	$t2,$t6
-	xor	$t3,$t7
-
-	$PTR_ADD $i0,$Tbl
-	$PTR_ADD $i1,$Tbl
-	$PTR_ADD $i2,$Tbl
-	$PTR_ADD $i3,$Tbl
 	lbu	$t4,1024($i0)		# Td4[s1]
+	xor	$t1,$t5
 	lbu	$t5,1024($i1)		# Td4[s2]
+	xor	$t2,$t6
 	lbu	$t6,1024($i2)		# Td4[s3]
+	xor	$t3,$t7
 	lbu	$t7,1024($i3)		# Td4[s0]
 
 	_ins	$t8,24
-	_ins	$t9,24
-	_ins	$t10,24
-	_ins	$t11,24
-
 	lw	$s0,0($key0)
+	_ins	$t9,24
 	lw	$s1,4($key0)
+	_ins	$t10,24
 	lw	$s2,8($key0)
+	_ins	$t11,24
 	lw	$s3,12($key0)
-
-	_ins	$t4,0
-	_ins	$t5,0
-	_ins	$t6,0
-	_ins	$t7,0
-
 
 	xor	$t0,$t8
 	xor	$t1,$t9
 	xor	$t2,$t10
 	xor	$t3,$t11
+
+	_ins	$t4,0
+	_ins	$t5,0
+	_ins	$t6,0
+	_ins	$t7,0
 
 	xor	$t0,$t4
 	xor	$t1,$t5
