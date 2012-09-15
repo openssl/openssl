@@ -170,7 +170,7 @@ $code.=<<___ if ($i==0);
 	ld	[$inp+16],%l4
 	ld	[$inp+20],%l5
 	ld	[$inp+24],%l6
-	cmp	0,$tmp31
+	cmp	$tmp31,0
 	ld	[$inp+28],%l7
 ___
 $code.=<<___ if ($i<15);
