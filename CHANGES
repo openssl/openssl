@@ -4,6 +4,12 @@
 
  Changes between 1.0.1c and 1.0.1d [xx XXX xxxx]
 
+  *) Call OCSP Stapling callback after ciphersuite has been chosen, so
+     the right response is stapled. Also change SSL_get_certificate()
+     so it returns the certificate actually sent.
+     See http://rt.openssl.org/Ticket/Display.html?id=2836.
+     [Rob Stradling <rob.stradling@comodo.com>]
+
   *) Fix possible deadlock when decoding public keys.
      [Steve Henson]
 
