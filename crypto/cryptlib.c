@@ -504,7 +504,7 @@ void CRYPTO_THREADID_current(CRYPTO_THREADID *id)
 	CRYPTO_THREADID_set_numeric(id, (unsigned long)find_thread(NULL));
 #else
 	/* For everything else, default to using the address of 'errno' */
-	CRYPTO_THREADID_set_pointer(id, &errno);
+	CRYPTO_THREADID_set_pointer(id, (void*)&errno);
 #endif
 	}
 
