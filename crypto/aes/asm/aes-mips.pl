@@ -22,7 +22,10 @@
 
 # September 2012
 #
-# Add MIPS32R2 code.
+# Add MIPS32R2 (~10% less instructions) and SmartMIPS ASE (further
+# ~25% less instructions) code. Note that there is no run-time switch,
+# instead, code path is chosen upon pre-process time, pass -mips32r2
+# or/and -msmartmips.
 
 ######################################################################
 # There is a number of MIPS ABI in use, O32 and N32/64 are most
@@ -95,7 +98,11 @@ $code.=<<___;
 # include <openssl/fipssyms.h>
 #endif
 
-#if !defined(__vxworks) || defined(__pic__)
+#if defined(__mips_smartmips) && !defined(_MIPS_ARCH_MIPS32R2)
+#define _MIPS_ARCH_MIPS32R2
+#endif
+
+#if !defined(__mips_eabi) && (!defined(__vxworks) || defined(__pic__))
 .option	pic2
 #endif
 .set	noat
@@ -131,6 +138,89 @@ _mips_AES_encrypt:
 	xor	$s3,$t3
 
 	sub	$cnt,1
+#if defined(__mips_smartmips)
+	ext	$i0,$s1,16,8
+.Loop_enc:
+	ext	$i1,$s2,16,8
+	ext	$i2,$s3,16,8
+	ext	$i3,$s0,16,8
+	lwxs	$t0,$i0($Tbl)		# Te1[s1>>16]
+	ext	$i0,$s2,8,8
+	lwxs	$t1,$i1($Tbl)		# Te1[s2>>16]
+	ext	$i1,$s3,8,8
+	lwxs	$t2,$i2($Tbl)		# Te1[s3>>16]
+	ext	$i2,$s0,8,8
+	lwxs	$t3,$i3($Tbl)		# Te1[s0>>16]
+	ext	$i3,$s1,8,8
+
+	lwxs	$t4,$i0($Tbl)		# Te2[s2>>8]
+	ext	$i0,$s3,0,8
+	lwxs	$t5,$i1($Tbl)		# Te2[s3>>8]
+	ext	$i1,$s0,0,8
+	lwxs	$t6,$i2($Tbl)		# Te2[s0>>8]
+	ext	$i2,$s1,0,8
+	lwxs	$t7,$i3($Tbl)		# Te2[s1>>8]
+	ext	$i3,$s2,0,8
+
+	lwxs	$t8,$i0($Tbl)		# Te3[s3]
+	ext	$i0,$s0,24,8
+	lwxs	$t9,$i1($Tbl)		# Te3[s0]
+	ext	$i1,$s1,24,8
+	lwxs	$t10,$i2($Tbl)		# Te3[s1]
+	ext	$i2,$s2,24,8
+	lwxs	$t11,$i3($Tbl)		# Te3[s2]
+	ext	$i3,$s3,24,8
+
+	rotr	$t0,$t0,8
+	rotr	$t1,$t1,8
+	rotr	$t2,$t2,8
+	rotr	$t3,$t3,8
+
+	rotr	$t4,$t4,16
+	rotr	$t5,$t5,16
+	rotr	$t6,$t6,16
+	rotr	$t7,$t7,16
+
+	xor	$t0,$t4
+	lwxs	$t4,$i0($Tbl)		# Te0[s0>>24]
+	xor	$t1,$t5
+	lwxs	$t5,$i1($Tbl)		# Te0[s1>>24]
+	xor	$t2,$t6
+	lwxs	$t6,$i2($Tbl)		# Te0[s2>>24]
+	xor	$t3,$t7
+	lwxs	$t7,$i3($Tbl)		# Te0[s3>>24]
+
+	rotr	$t8,$t8,24
+	lw	$s0,0($key0)
+	rotr	$t9,$t9,24
+	lw	$s1,4($key0)
+	rotr	$t10,$t10,24
+	lw	$s2,8($key0)
+	rotr	$t11,$t11,24
+	lw	$s3,12($key0)
+
+	xor	$t0,$t8
+	xor	$t1,$t9
+	xor	$t2,$t10
+	xor	$t3,$t11
+
+	xor	$t0,$t4
+	xor	$t1,$t5
+	xor	$t2,$t6
+	xor	$t3,$t7
+
+	sub	$cnt,1
+	$PTR_ADD $key0,16
+	xor	$s0,$t0
+	xor	$s1,$t1
+	xor	$s2,$t2
+	xor	$s3,$t3
+	.set	noreorder
+	bnez	$cnt,.Loop_enc
+	ext	$i0,$s1,16,8
+
+	_xtr	$i0,$s1,16-2
+#else
 	_xtr	$i0,$s1,16-2
 .Loop_enc:
 	_xtr	$i1,$s2,16-2
@@ -181,13 +271,13 @@ _mips_AES_encrypt:
 	rotr	$t2,$t2,8
 	rotr	$t3,$t3,8
 # if defined(_MIPSEL)
-	lw	$t4,0($i0)		# Te1[s1>>16]
+	lw	$t4,0($i0)		# Te2[s2>>8]
 	_xtr	$i0,$s3,0-2
-	lw	$t5,0($i1)		# Te1[s2>>16]
+	lw	$t5,0($i1)		# Te2[s3>>8]
 	_xtr	$i1,$s0,0-2
-	lw	$t6,0($i2)		# Te1[s3>>16]
+	lw	$t6,0($i2)		# Te2[s0>>8]
 	_xtr	$i2,$s1,0-2
-	lw	$t7,0($i3)		# Te1[s0>>16]
+	lw	$t7,0($i3)		# Te2[s1>>8]
 	_xtr	$i3,$s2,0-2
 
 	and	$i0,0x3fc
@@ -198,31 +288,31 @@ _mips_AES_encrypt:
 	$PTR_ADD $i1,$Tbl
 	$PTR_ADD $i2,$Tbl
 	$PTR_ADD $i3,$Tbl
-	lw	$t8,0($i0)		# Te1[s1>>16]
+	lw	$t8,0($i0)		# Te3[s3]
 	$PTR_INS $i0,$s0,2,8
-	lw	$t9,0($i1)		# Te1[s2>>16]
+	lw	$t9,0($i1)		# Te3[s0]
 	$PTR_INS $i1,$s1,2,8
-	lw	$t10,0($i2)		# Te1[s3>>16]
+	lw	$t10,0($i2)		# Te3[s1]
 	$PTR_INS $i2,$s2,2,8
-	lw	$t11,0($i3)		# Te1[s0>>16]
+	lw	$t11,0($i3)		# Te3[s2]
 	$PTR_INS $i3,$s3,2,8
 # else
-	lw	$t4,0($i0)		# Te1[s1>>16]
+	lw	$t4,0($i0)		# Te2[s2>>8]
 	$PTR_INS $i0,$s3,2,8
-	lw	$t5,0($i1)		# Te1[s2>>16]
+	lw	$t5,0($i1)		# Te2[s3>>8]
 	$PTR_INS $i1,$s0,2,8
-	lw	$t6,0($i2)		# Te1[s3>>16]
+	lw	$t6,0($i2)		# Te2[s0>>8]
 	$PTR_INS $i2,$s1,2,8
-	lw	$t7,0($i3)		# Te1[s0>>16]
+	lw	$t7,0($i3)		# Te2[s1>>8]
 	$PTR_INS $i3,$s2,2,8
 
-	lw	$t8,0($i0)		# Te1[s1>>16]
+	lw	$t8,0($i0)		# Te3[s3]
 	_xtr	$i0,$s0,24-2
-	lw	$t9,0($i1)		# Te1[s2>>16]
+	lw	$t9,0($i1)		# Te3[s0]
 	_xtr	$i1,$s1,24-2
-	lw	$t10,0($i2)		# Te1[s3>>16]
+	lw	$t10,0($i2)		# Te3[s1]
 	_xtr	$i2,$s2,24-2
-	lw	$t11,0($i3)		# Te1[s0>>16]
+	lw	$t11,0($i3)		# Te3[s2]
 	_xtr	$i3,$s3,24-2
 
 	and	$i0,0x3fc
@@ -319,6 +409,7 @@ _mips_AES_encrypt:
 	.set	noreorder
 	bnez	$cnt,.Loop_enc
 	_xtr	$i0,$s1,16-2
+#endif
 
 	.set	reorder
 	_xtr	$i1,$s2,16-2
@@ -621,6 +712,89 @@ _mips_AES_decrypt:
 	xor	$s3,$t3
 
 	sub	$cnt,1
+#if defined(__mips_smartmips)
+	ext	$i0,$s3,16,8
+.Loop_dec:
+	ext	$i1,$s0,16,8
+	ext	$i2,$s1,16,8
+	ext	$i3,$s2,16,8
+	lwxs	$t0,$i0($Tbl)		# Td1[s3>>16]
+	ext	$i0,$s2,8,8
+	lwxs	$t1,$i1($Tbl)		# Td1[s0>>16]
+	ext	$i1,$s3,8,8
+	lwxs	$t2,$i2($Tbl)		# Td1[s1>>16]
+	ext	$i2,$s0,8,8
+	lwxs	$t3,$i3($Tbl)		# Td1[s2>>16]
+	ext	$i3,$s1,8,8
+
+	lwxs	$t4,$i0($Tbl)		# Td2[s2>>8]
+	ext	$i0,$s1,0,8
+	lwxs	$t5,$i1($Tbl)		# Td2[s3>>8]
+	ext	$i1,$s2,0,8
+	lwxs	$t6,$i2($Tbl)		# Td2[s0>>8]
+	ext	$i2,$s3,0,8
+	lwxs	$t7,$i3($Tbl)		# Td2[s1>>8]
+	ext	$i3,$s0,0,8
+
+	lwxs	$t8,$i0($Tbl)		# Td3[s1]
+	ext	$i0,$s0,24,8
+	lwxs	$t9,$i1($Tbl)		# Td3[s2]
+	ext	$i1,$s1,24,8
+	lwxs	$t10,$i2($Tbl)		# Td3[s3]
+	ext	$i2,$s2,24,8
+	lwxs	$t11,$i3($Tbl)		# Td3[s0]
+	ext	$i3,$s3,24,8
+
+	rotr	$t0,$t0,8
+	rotr	$t1,$t1,8
+	rotr	$t2,$t2,8
+	rotr	$t3,$t3,8
+
+	rotr	$t4,$t4,16
+	rotr	$t5,$t5,16
+	rotr	$t6,$t6,16
+	rotr	$t7,$t7,16
+
+	xor	$t0,$t4
+	lwxs	$t4,$i0($Tbl)		# Td0[s0>>24]
+	xor	$t1,$t5
+	lwxs	$t5,$i1($Tbl)		# Td0[s1>>24]
+	xor	$t2,$t6
+	lwxs	$t6,$i2($Tbl)		# Td0[s2>>24]
+	xor	$t3,$t7
+	lwxs	$t7,$i3($Tbl)		# Td0[s3>>24]
+
+	rotr	$t8,$t8,24
+	lw	$s0,0($key0)
+	rotr	$t9,$t9,24
+	lw	$s1,4($key0)
+	rotr	$t10,$t10,24
+	lw	$s2,8($key0)
+	rotr	$t11,$t11,24
+	lw	$s3,12($key0)
+
+	xor	$t0,$t8
+	xor	$t1,$t9
+	xor	$t2,$t10
+	xor	$t3,$t11
+
+	xor	$t0,$t4
+	xor	$t1,$t5
+	xor	$t2,$t6
+	xor	$t3,$t7
+
+	sub	$cnt,1
+	$PTR_ADD $key0,16
+	xor	$s0,$t0
+	xor	$s1,$t1
+	xor	$s2,$t2
+	xor	$s3,$t3
+	.set	noreorder
+	bnez	$cnt,.Loop_dec
+	ext	$i0,$s3,16,8
+
+	_xtr	$i0,$s3,16-2
+#else
 	_xtr	$i0,$s3,16-2
 .Loop_dec:
 	_xtr	$i1,$s0,16-2
@@ -811,6 +985,7 @@ _mips_AES_decrypt:
 	.set	noreorder
 	bnez	$cnt,.Loop_dec
 	_xtr	$i0,$s3,16-2
+#endif
 
 	.set	reorder
 	lw	$t4,1024($Tbl)		# prefetch Td4
@@ -1936,7 +2111,10 @@ foreach (split("\n",$code)) {
 		sprintf("$1%d($3)",eval("$2-$2%4+($2%4+1)&3"))/e;
 	}
 
-	s/(rotr\s+\$[0-9]+,\$[0-9]+),([0-9]+)/sprintf("$1,%d",32-$2)/e if(!$big_endian);
+	if (!$big_endian) {
+	    s/(rotr\s+\$[0-9]+,\$[0-9]+),([0-9]+)/sprintf("$1,%d",32-$2)/e;
+	    s/(ext\s+\$[0-9]+,\$[0-9]+),([0-9]+),8/sprintf("$1,%d,8",24-$2)/e;
+	}
 
 	print $_,"\n";
 }

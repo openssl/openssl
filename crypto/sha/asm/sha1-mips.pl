@@ -17,7 +17,7 @@
 
 # September 2012.
 #
-# Add MIPS32r2 code.
+# Add MIPS32r2 code (>25% less instructions).
 
 ######################################################################
 # There is a number of MIPS ABI in use, O32 and N32/64 are most
@@ -331,6 +331,10 @@ $SAVED_REGS_MASK = ($flavour =~ /nubi/i) ? 0xc0fff008 : 0xc0ff0000;
 $code=<<___;
 #ifdef OPENSSL_FIPSCANISTER
 # include <openssl/fipssyms.h>
+#endif
+
+#if defined(__mips_smartmips) && !defined(_MIPS_ARCH_MIPS32R2)
+#define _MIPS_ARCH_MIPS32R2
 #endif
 
 .text

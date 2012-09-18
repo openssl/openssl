@@ -19,7 +19,7 @@
 
 # September 2012.
 #
-# Add MIPS[32|64]r2 code.
+# Add MIPS[32|64]R2 code (>25% less instructions).
 
 ######################################################################
 # There is a number of MIPS ABI in use, O32 and N32/64 are most
@@ -293,9 +293,13 @@ $code.=<<___;
 # include <openssl/fipssyms.h>
 #endif
 
+#if defined(__mips_smartmips) && !defined(_MIPS_ARCH_MIPS32R2)
+#define _MIPS_ARCH_MIPS32R2
+#endif
+
 .text
 .set	noat
-#if !defined(__vxworks) || defined(__pic__)
+#if !defined(__mips_eabi) && (!defined(__vxworks) || defined(__pic__))
 .option	pic2
 #endif
 
