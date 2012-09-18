@@ -347,8 +347,10 @@ my %table=(
 # It's believed that majority of ARM toolchains predefine appropriate -march.
 # If you compiler does not, do complement config command line with one!
 "linux-armv4",	"gcc:-DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${armv4_asm}:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
-# Configure script adds minimumally required -march for assembly support,
-# if no -march was specified at command line.
+# Configure script adds minimally required -march for assembly support,
+# if no -march was specified at command line. mips32 and mips64 below
+# refer to contemporary MIPS Architecture specifications, MIPS32 and
+# MIPS64, rather than to kernel bitness.
 "linux-mips32",	"gcc:-mabi=32 -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips32_asm}:o32:dlfcn:linux-shared:-fPIC::.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR)",
 "linux-mips64",   "gcc:-mabi=n32 -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips64_asm}:n32:dlfcn:linux-shared:-fPIC:-mabi=n32:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::32",
 "linux64-mips64",   "gcc:-mabi=64 -DTERMIO -O3 -Wall::-D_REENTRANT::-ldl:SIXTY_FOUR_BIT_LONG RC4_CHAR RC4_CHUNK DES_INT DES_UNROLL BF_PTR:${mips64_asm}:64:dlfcn:linux-shared:-fPIC:-mabi=64:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):::64",
@@ -917,16 +919,7 @@ EOF
 			}
 		elsif (/^[-+]/)
 			{
-			if (/^-[lL](.*)$/ or /^-Wl,/)
-				{
-				$libs.=$_." ";
-				}
-			elsif (/^-[^-]/ or /^\+/)
-				{
-				$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
-				$flags.=$_." ";
-				}
-			elsif (/^--prefix=(.*)$/)
+			if (/^--prefix=(.*)$/)
 				{
 				$prefix=$1;
 				}
@@ -966,10 +959,14 @@ EOF
 				{
 				$cross_compile_prefix=$1;
 				}
-			else
+			elsif (/^-[lL](.*)$/ or /^-Wl,/)
 				{
-				print STDERR $usage;
-				exit(1);
+				$libs.=$_." ";
+				}
+			else	# common if (/^[-+]/), just pass down...
+				{
+				$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
+				$flags.=$_." ";
 				}
 			}
 		elsif ($_ =~ /^([^:]+):(.+)$/)
