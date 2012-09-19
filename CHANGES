@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) MIPS assembly pack updates: support for MIPS32r2 and SmartMIPS ASE,
+     platform support for Linux and Android.
+     [Andy Polyakov]
+
   *) Call OCSP Stapling callback after ciphersuite has been chosen, so
      the right response is stapled. Also change current certificate to
      the certificate actually sent.

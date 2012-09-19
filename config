@@ -596,6 +596,16 @@ case "$GUESSOS" in
 	OUT="linux-ppc"
 	;;
   ppc-*-linux2) OUT="linux-ppc" ;;
+  mips64*-*-linux2)
+	echo "WARNING! If you wish to build 64-bit library, then you have to"
+	echo "         invoke './Configure linux64-mips64' *manually*."
+	if [ "$TEST" = "false" -a -t 1 ]; then
+	    echo "         You have about 5 seconds to press Ctrl-C to abort."
+	    (trap "stty `stty -g`" 2 0; stty -icanon min 0 time 50; read waste) <&1
+	fi
+	OUT="linux-mips64"
+	;;
+  mips*-*-linux2) OUT="linux-mips32" ;;
   ppc60x-*-vxworks*) OUT="vxworks-ppc60x" ;;
   ppcgen-*-vxworks*) OUT="vxworks-ppcgen" ;;
   pentium-*-vxworks*) OUT="vxworks-pentium" ;;
