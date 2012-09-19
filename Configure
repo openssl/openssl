@@ -874,16 +874,7 @@ PROCESS_ARGS:
 			}
 		elsif (/^[-+]/)
 			{
-			if (/^-[lL](.*)$/ or /^-Wl,/)
-				{
-				$libs.=$_." ";
-				}
-			elsif (/^-[^-]/ or /^\+/)
-				{
-				$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
-				$flags.=$_." ";
-				}
-			elsif (/^--prefix=(.*)$/)
+			if (/^--prefix=(.*)$/)
 				{
 				$prefix=$1;
 				}
@@ -927,10 +918,14 @@ PROCESS_ARGS:
 				{
 				$cross_compile_prefix=$1;
 				}
-			else
+			elsif (/^-[lL](.*)$/ or /^-Wl,/)
 				{
-				print STDERR $usage;
-				exit(1);
+				$libs.=$_." ";
+				}
+			else	# common if (/^[-+]/), just pass down...
+				{
+				$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
+				$flags.=$_." ";
 				}
 			}
 		elsif ($_ =~ /^([^:]+):(.+)$/)
