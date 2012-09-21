@@ -350,7 +350,7 @@ int tls1_change_cipher_state(SSL *s, int which)
 	{
         int i;
         for (i=0; i<s->s3->tmp.key_block_length; i++)
-		printf("%02x", key_block[i]);  printf("\n");
+		printf("%02x", s->s3->tmp.key_block[i]);  printf("\n");
         }
 #endif	/* KSSL_DEBUG */
 
