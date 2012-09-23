@@ -255,6 +255,11 @@ _sparcv9_vis1_probe:
 !	UltraSPARC IIe		7
 !	UltraSPARC III		7
 !	UltraSPARC T1		24
+!	SPARC T4		65(*)
+!
+! (*)	result has lesser to do with VIS instruction latencies, rdtick
+!	appears that slow, but it does the trick in sense that FP and
+!	VIS code paths are still slower than integer-only ones.
 !
 ! Numbers for T2 and SPARC64 V-VII are more than welcomed.
 !
@@ -264,6 +269,8 @@ _sparcv9_vis1_probe:
 .global	_sparcv9_vis1_instrument
 .align	8
 _sparcv9_vis1_instrument:
+	.word	0x81b00d80	!fxor	%f0,%f0,%f0
+	.word	0x85b08d82	!fxor	%f2,%f2,%f2
 	.word	0x91410000	!rd	%tick,%o0
 	.word	0x81b00d80	!fxor	%f0,%f0,%f0
 	.word	0x85b08d82	!fxor	%f2,%f2,%f2
@@ -317,6 +324,30 @@ _sparcv9_fmadd_probe:
 	.word	0x81b80440	!fmaddd	%f0,%f0,%f2,%f0
 .type	_sparcv9_fmadd_probe,#function
 .size	_sparcv9_fmadd_probe,.-_sparcv9_fmadd_probe
+
+.global	_sparcv9_rdcfr
+.align	8
+_sparcv9_rdcfr:
+	retl
+	.word	0x91468000	!rd	%asr26,%o0
+.type	_sparcv9_rdcfr,#function
+.size	_sparcv9_rdcfr,.-_sparcv9_rdcfr
+
+.global	_sparcv9_vis3_probe
+.align	8
+_sparcv9_vis3_probe:
+	retl
+	.word	0x81b022a0	!xmulx	%g0,%g0,%g0
+.type	_sparcv9_vis3_probe,#function
+.size	_sparcv9_vis3_probe,.-_sparcv9_vis3_probe
+
+.global	_sparcv9_random
+.align	8
+_sparcv9_random:
+	retl
+	.word	0x91b002a0	!random	%o0
+.type	_sparcv9_random,#function
+.size	_sparcv9_random,.-_sparcv9_vis3_probe
 
 .global	OPENSSL_cleanse
 .align	32
