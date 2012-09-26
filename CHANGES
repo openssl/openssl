@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Add -trusted_first option which attempts to find certificates in the
+     trusted store even if an untrusted chain is also supplied.
+     [Steve Henson]
+
   *) MIPS assembly pack updates: support for MIPS32r2 and SmartMIPS ASE,
      platform support for Linux and Android.
      [Andy Polyakov]
