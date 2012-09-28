@@ -1,10 +1,6 @@
 #ifndef __SPARC_ARCH_H__
 #define __SPARC_ARCH_H__
 
-#if !__ASSEMBLER__
-extern unsigned int OPENSSL_sparcv9cap_P[];
-#endif
-
 #define SPARCV9_TICK_PRIVILEGED	(1<<0)
 #define SPARCV9_PREFER_FPU	(1<<1)
 #define SPARCV9_VIS1		(1<<2)
@@ -32,4 +28,62 @@ extern unsigned int OPENSSL_sparcv9cap_P[];
 #define CFR_MONTSQR	0x00000400 /* Supports MONTSQR opcodes */
 #define CFR_CRC32C	0x00000800 /* Supports CRC32C opcodes  */
 
+#if defined(OPENSSL_PIC) && !defined(__PIC__)
+# define __PIC__
 #endif
+
+#define SPARC_PIC_THUNK(reg)	\
+	.align	32;		\
+.Lpic_thunk:			\
+	jmp	%o7 + 8;	\
+	 add	%o7, reg, reg;
+
+#define SPARC_PIC_THUNK_CALL(reg)			\
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), reg;	\
+	call	.Lpic_thunk;				\
+	 or	reg, %lo(_GLOBAL_OFFSET_TABLE_+4), reg;
+
+#if 1
+# define SPARC_SETUP_GOT_REG(reg)	SPARC_PIC_THUNK_CALL(reg)
+#else
+# define SPARC_SETUP_GOT_REG(reg)	\
+	sethi	%hi(_GLOBAL_OFFSET_TABLE_-4), reg;	\
+	call	.+8;					\
+	or	reg,%lo(_GLOBAL_OFFSET_TABLE_+4), reg;	\
+	add	%o7, reg, reg
+#endif
+
+#if	(defined(__GNUC__) && defined(__arch64__)) || \
+	(defined(__SUNPRO_C) && defined(__sparcv9))
+
+# define SPARC_LOAD_ADDRESS(SYM, reg)	\
+	setx	SYM, %o7, reg;
+# define LDPTR	ldx
+
+#else
+
+# define SPARC_LOAD_ADDRESS(SYM, reg)	\
+	set	SYM, reg;
+# define LDPTR	ld
+# define SPARC_LOAD_ADDRESS_LEAF(SYM,reg,tmp) SPARC_LOAD_ADDRESS(SYM,reg)
+
+#endif
+
+#ifdef __PIC__
+# undef	SPARC_LOAD_ADDRESS
+# undef SPARC_LOAD_ADDRESS_LEAF
+# define SPARC_LOAD_ADDRESS(SYM, reg)	\
+	SPARC_SETUP_GOT_REG(reg);	\
+	sethi	%hi(SYM), %o7;		\
+	or	%o7, %lo(SYM), %o7;	\
+	LDPTR	[reg + %o7], reg;
+#endif
+
+#ifndef SPARC_LOAD_ADDRESS_LEAF
+# define SPARC_LOAD_ADDRESS_LEAF(SYM, reg, tmp)	\
+	mov	%o7, tmp;			\
+	SPARC_LOAD_ADDRESS(SYM, reg)		\
+	mov	tmp, %o7;
+#endif
+
+#endif	/* __SPARC_ARCH_H__ */
