@@ -1543,7 +1543,7 @@ int MAIN(int argc, char **argv)
 			print_message(names[D_MD5],c[D_MD5][j],lengths[j]);
 			Time_F(START);
 			for (count=0,run=1; COND(c[D_MD5][j]); count++)
-				EVP_Digest(&(buf[0]),(unsigned long)lengths[j],&(md5[0]),NULL,EVP_get_digestbyname("md5"),NULL);
+				MD5(buf,lengths[j],md5);
 			d=Time_F(STOP);
 			print_result(D_MD5,j,count,d);
 			}
