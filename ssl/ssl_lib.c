@@ -1423,6 +1423,7 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 	SSL_CIPHER *c;
 	CERT *ct = s->cert;
 	unsigned char *q;
+	int no_scsv = s->renegotiate;
 	/* Set disabled masks for this session */
 	ssl_set_client_disabled(s);
 
@@ -1437,13 +1438,22 @@ int ssl_cipher_list_to_bytes(SSL *s,STACK_OF(SSL_CIPHER) *sk,unsigned char *p,
 			c->algorithm_mkey & ct->mask_k ||
 			c->algorithm_auth & ct->mask_a)
 			continue;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+		if (c->id == SSL3_CK_SCSV)
+			{
+			if (no_scsv)
+				continue;
+			else
+				no_scsv = 1;
+			}
+#endif
 		j = put_cb ? put_cb(c,p) : ssl_put_cipher_by_char(s,c,p);
 		p+=j;
 		}
 	/* If p == q, no ciphers and caller indicates an error. Otherwise
 	 * add SCSV if not renegotiating.
 	 */
-	if (p != q && !s->renegotiate)
+	if (p != q && !no_scsv)
 		{
 		static SSL_CIPHER scsv =
 			{
