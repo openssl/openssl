@@ -27,6 +27,19 @@ if (exists $ENV{"PREMAIN_DSO_EXE"})
 	$fips_premain_dso = "";
 	}
 
+my $fips_sig = $ENV{"FIPS_SIG"};
+if (defined $fips_sig)
+	{
+	if ($fips_premain_dso ne "")
+		{
+		$fips_premain_dso = "$fips_sig -dso";
+		}
+	else
+		{
+		$fips_premain_dso = "$fips_sig -exe";
+		}
+	}
+
 check_hash($sha1_exe, "fips_premain.c");
 check_hash($sha1_exe, "fipscanister.lib");
 

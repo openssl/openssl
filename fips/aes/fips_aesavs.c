@@ -99,7 +99,7 @@ static int AESTest(EVP_CIPHER_CTX *ctx,
     {
     const EVP_CIPHER *cipher = NULL;
 
-    if (strcasecmp(amode, "CBC") == 0)
+    if (fips_strcasecmp(amode, "CBC") == 0)
 	{
 	switch (akeysz)
 		{
@@ -117,7 +117,7 @@ static int AESTest(EVP_CIPHER_CTX *ctx,
 		}
 
 	}
-    else if (strcasecmp(amode, "ECB") == 0)
+    else if (fips_strcasecmp(amode, "ECB") == 0)
 	{
 	switch (akeysz)
 		{
@@ -134,7 +134,7 @@ static int AESTest(EVP_CIPHER_CTX *ctx,
 		break;
 		}
 	}
-    else if (strcasecmp(amode, "CFB128") == 0)
+    else if (fips_strcasecmp(amode, "CFB128") == 0)
 	{
 	switch (akeysz)
 		{
@@ -169,7 +169,7 @@ static int AESTest(EVP_CIPHER_CTX *ctx,
 		break;
 		}
 	}
-    else if(!strcasecmp(amode,"CFB1"))
+    else if(!fips_strcasecmp(amode,"CFB1"))
 	{
 	switch (akeysz)
 		{
@@ -186,7 +186,7 @@ static int AESTest(EVP_CIPHER_CTX *ctx,
 		break;
 		}
 	}
-    else if(!strcasecmp(amode,"CFB8"))
+    else if(!fips_strcasecmp(amode,"CFB8"))
 	{
 	switch (akeysz)
 		{
@@ -215,7 +215,7 @@ static int AESTest(EVP_CIPHER_CTX *ctx,
 	}
     if (FIPS_cipherinit(ctx, cipher, aKey, iVec, dir) <= 0)
 	return 0;
-    if(!strcasecmp(amode,"CFB1"))
+    if(!fips_strcasecmp(amode,"CFB1"))
 	M_EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS);
     if (dir)
 		FIPS_cipher(ctx, ciphertext, plaintext, len);
@@ -635,10 +635,8 @@ static int proc_file(char *rqfile, char *rspfile)
 		char *xp, *pp = ibuf+2;
 		int n;
 		if (akeysz)
-		    { /* insert current time & date */
-		    time_t rtim = time(0);
-		    fputs("# ", rfp);
-		    copy_line(ctime(&rtim), rfp);
+		    {
+		    copy_line(ibuf, rfp);
 		    }
 		else
 		    {
@@ -876,11 +874,11 @@ int main(int argc, char **argv)
 
     if (argc > 1)
 	{
-	if (strcasecmp(argv[1], "-d") == 0)
+	if (fips_strcasecmp(argv[1], "-d") == 0)
 	    {
 	    d_opt = 1;
 	    }
-	else if (strcasecmp(argv[1], "-f") == 0)
+	else if (fips_strcasecmp(argv[1], "-f") == 0)
 	    {
 	    d_opt = 0;
 	    }

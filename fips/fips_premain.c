@@ -53,6 +53,12 @@
   int lib$initialize();
   globaldef int (*lib_init_ref)() = lib$initialize;
 # pragma __standard
+#elif defined(_TMS320C6X)
+# if defined(__TI_EABI__)
+  asm("\t.sect \".init_array\"\n\t.align 4\n\t.field FINGERPRINT_premain,32");
+# else
+  asm("\t.sect \".pinit\"\n\t.align 4\n\t.field _FINGERPRINT_premain,32");
+# endif
 #elif 0
   The rest has to be taken care of through command line:
 

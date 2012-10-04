@@ -286,7 +286,7 @@ int main(int argc, char **argv)
 	return 0;
 	parse_error:
 	fprintf(stderr, "Error Parsing request file\n");
-	exit(1);
+	return 1;
 	}
 
 #endif

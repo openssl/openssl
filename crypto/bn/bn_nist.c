@@ -366,6 +366,10 @@ static void nist_cp_bn(BN_ULONG *buf, BN_ULONG *a, int top)
 # endif
 #endif /* BN_BITS2 != 64 */
 
+#if defined(_TMS320C6X) && defined(NIST_INT64)
+# undef NIST_INT64     /* compiler bug */
+# pragma diag_suppress 177
+#endif
 
 #define nist_set_192(to, from, a1, a2, a3) \
 	{ \
@@ -1047,6 +1051,11 @@ int BN_nist_mod_384(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 	return 1;
 	}
 
+#ifdef _WIN32_WCE
+/* Workaround for compiler bug under CE */
+#pragma optimize( "", off )
+#endif
+
 #define BN_NIST_521_RSHIFT	(521%BN_BITS2)
 #define BN_NIST_521_LSHIFT	(BN_BITS2-BN_NIST_521_RSHIFT)
 #define BN_NIST_521_TOP_MASK	((BN_ULONG)BN_MASK2>>BN_NIST_521_LSHIFT)
@@ -1112,6 +1121,10 @@ int BN_nist_mod_521(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
 
 	return 1;
 	}
+
+#ifdef _WIN32_WCE
+#pragma optimize( "", on )
+#endif
 
 int (*BN_nist_mod_func(const BIGNUM *p))(BIGNUM *r, const BIGNUM *a, const BIGNUM *field, BN_CTX *ctx)
 	{

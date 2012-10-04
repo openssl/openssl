@@ -1,0 +1,7 @@
+#!/bin/sh
+
+perl Configure c64xplus fipscanisteronly no-engine
+perl util/mkfiles.pl > MINFO
+perl util/mk1mf.pl auto > c6x/fips.mak
+make -f c6x/fips.mak
+make -f c6x/fips_algvs.mak

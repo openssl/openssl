@@ -1,0 +1,43 @@
+#!/usr/bin/env perl
+
+$exe  = @ARGV[0];
+$exe .= ".out" if (! -f $exe);
+die if (! -f $exe);
+
+use CCS_SCRIPTING_PERL;
+
+my $studio=new CCS_SCRIPTING_PERL::CCS_Scripting();
+
+$studio->CCSOpenNamed("*","*",1);	# connect to board
+$studio->TargetReset();
+
+print "loading $exe\n";
+$studio->ProgramLoad($exe);
+
+sub write_string {
+    my ($studio,$addr,$str) = @_;
+    my $len = length($str);
+    my $i;
+
+    for ($i=0; $i<$len; $i++) {
+	$studio->MemoryWrite($CCS_SCRIPTING_PERL::PAGE_DATA,$addr+$i,8,vec($str,$i,8));
+    }
+    $studio->MemoryWrite($CCS_SCRIPTING_PERL::PAGE_DATA,$addr+$i,8,0);
+
+    return $i+1;
+}
+
+$addr= $studio->SymbolGetAddress("__c_args");
+printf "setting up __c_args at 0x%X\n",$addr;#\n";
+
+$studio->MemoryWrite($CCS_SCRIPTING_PERL::PAGE_DATA,$addr,32,$#ARGV+1);
+
+for ($i=0,$strings=$addr+($#ARGV+3)*4; $i<=$#ARGV; $i++) {
+    $off = write_string($studio,$strings,@ARGV[$i]);
+    $studio->MemoryWrite($CCS_SCRIPTING_PERL::PAGE_DATA,$addr+4*($i+1),32,$strings);
+    $strings += $off;
+}
+$studio->MemoryWrite($SCC_SCRIPTING_PERL::PAGE_DATA,$addr+4*($i+1),32,0);
+
+print "running...\n";
+$studio->TargetRun();

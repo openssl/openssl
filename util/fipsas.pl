@@ -8,9 +8,6 @@ my @ARGS = @ARGV;
 
 my $top = shift @ARGS;
 my $target = shift @ARGS;
-my $tmptarg = $target;
-
-$tmptarg =~ s/\.[^\\\/\.]+$/.tmp/;
 
 my $runasm = 1;
 
@@ -40,43 +37,31 @@ while (<IN>)
 	last if (/assembler/)
 	}
 
-# Store all renames.
+# Store all renames [noting minimal length].
+my $minlen=0x10000;
 while (<IN>)
 	{
-	if (/^#define\s+(\w+)\s+(\w+)\b/)
+	if (/^#define\s+_?(\w+)\s+_?(\w+)\b/)
 		{
 		$edits{$1} = $2;
+		my $len = length($1);
+		$minlen = $len if ($len<$minlen);
 		}
 	}
 
-my ($from, $to);
+open(IN,"$target") || die "Can't open $target for reading";
 
-#delete any temp file lying around
+@code = <IN>;	# suck in whole file
 
-unlink $tmptarg;
+close IN;
 
-#rename target temporarily
-my $rencnt = 0;
-# On windows the previous file doesn't always close straight away
-# so retry the rename operation a few times if it fails.
-while (!rename($target, $tmptarg))
-        {
-        sleep 2;
-        die "Can't rename $target" if ($rencnt++ > 10);
-        }
+open(OUT,">$target") || die "Can't open $target for writing";
 
-#edit target
-open(IN,$tmptarg) || die "Can't open temporary file";
-open(OUT, ">$target") || die "Can't open output file $target";
-
-while (<IN>)
-{
-	while (($from, $to) = each %edits)
-		{
-		s/(\b_*)$from(\b)/$1$to$2/g;
-		}
-	print OUT $_;
-}
+foreach $line (@code)
+	{
+	$line =~ s/\b(_?)(\w{$minlen,})\b/$1.($edits{$2} or $2)/geo;
+	print OUT $line;
+	}
 
 close OUT;
 
@@ -87,14 +72,5 @@ if ($runasm)
 
 	my $rv = $?;
 
-	# restore target
-	unlink $target;
-	rename $tmptarg, $target;
-
 	die "Error executing assembler!" if $rv != 0;
-	}
-else
-	{
-	# Don't care about target
-	unlink $tmptarg;
 	}

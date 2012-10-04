@@ -495,6 +495,7 @@ my $onedir = 0;
 my $filter = "";
 my $tvdir;
 my $tprefix;
+my $sfprefix = "";
 my $debug          = 0;
 my $quiet          = 0;
 my $notest         = 0;
@@ -614,6 +615,9 @@ foreach (@ARGV) {
     }
     elsif (/--script-tprefix=(.*)$/) {
         $stprefix = $1;
+    }
+    elsif (/--script-fprefix=(.*)$/) {
+        $sfprefix = $1;
     }
     elsif (/--mkdir=(.*)$/) {
         $mkcmd = $1;
@@ -1017,6 +1021,10 @@ END
             $out =~ s|/req/(\S+)\.req|/$rspdir/$1.rsp|;
             my $outdir = $out;
             $outdir =~ s|/[^/]*$||;
+            if ( !-d $outdir  && ($outfile eq "" || $minimal_script)) {
+                print STDERR "DEBUG: Creating directory $outdir\n" if $debug;
+                mkdir($outdir) || die "Can't create directory $outdir";
+            }
 	    if ($outfile ne "") {
 	    	if ($win32) {
 		    $outdir =~ tr|/|\\|;
@@ -1039,12 +1047,9 @@ END
 		    }
 		$lastdir = $outdir;
 		}
-            } elsif ( !-d $outdir ) {
-                print STDERR "DEBUG: Creating directory $outdir\n" if $debug;
-                mkdir($outdir) || die "Can't create directory $outdir";
             }
         }
-        my $cmd = "$tcmd \"$req\" \"$out\"";
+        my $cmd = "$tcmd \"$sfprefix$req\" \"$sfprefix$out\"";
         print STDERR "DEBUG: running test $tname\n" if ( $debug && !$verify );
 	if ($outfile ne "") {
 	    if ($minimal_script) {

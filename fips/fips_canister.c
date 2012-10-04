@@ -35,6 +35,7 @@ const void         *FIPS_text_end(void);
 	(defined(__linux)     && ((defined(__PPC__) && !defined(__PPC64__)) || \
 				  defined(__arm__) || defined(__arm)))	|| \
 	(defined(__APPLE__) /* verified on all MacOS X & iOS flavors */)|| \
+	(defined(_TMS320C6X))						|| \
 	(defined(_WIN32)      && defined(_MSC_VER))
 #  define FIPS_REF_POINT_IS_CROSS_COMPILER_AWARE
 # endif
@@ -70,6 +71,10 @@ const unsigned int FIPS_text_startX[]=
 #  pragma const_seg("fipsro$a")
 #  pragma const_seg()
    __declspec(allocate("fipsro$a"))
+# elif defined(_TMS320C6X)
+#  pragma CODE_SECTION(instruction_pointer,".fips_text:start")
+#  pragma CODE_SECTION(FIPS_ref_point,".fips_text:start")
+#  pragma DATA_SECTION(FIPS_rodata_start,".fips_const:start")
 # endif
 const unsigned int FIPS_rodata_start[]=
 	{ 0x46495053, 0x5f726f64, 0x6174615f, 0x73746172 };
@@ -87,6 +92,10 @@ const unsigned int FIPS_text_endX[]=
 #  pragma const_seg("fipsro$z")
 #  pragma const_seg()
    __declspec(allocate("fipsro$z"))
+# elif defined(_TMS320C6X)
+#  pragma CODE_SECTION(instruction_pointer,".fips_text:end")
+#  pragma CODE_SECTION(FIPS_ref_point,".fips_text:end")
+#  pragma DATA_SECTION(FIPS_rodata_end,".fips_const:end")
 # endif
 const unsigned int FIPS_rodata_end[]=
 	{ 0x46495053, 0x5f726f64, 0x6174615f, 0x656e645b };

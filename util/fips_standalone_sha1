@@ -1,0 +1,32 @@
+#!/usr/bin/env perl
+#
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+
+unshift(@INC,$dir);
+require "hmac_sha1.pl";
+
+(!@ARV[0] && -f @ARGV[$#ARGV]) || die "usage: $0 [-verify] file";
+
+$verify=shift	if (@ARGV[0] eq "-verify");
+
+sysopen(FD,@ARGV[0],0) || die "$!";
+binmode(FD);
+
+my $ctx = HMAC->Init("etaonrishdlcupfm");
+
+while (read(FD,$blob,4*1024)) { $ctx->Update($blob); }
+
+close(FD);
+
+my $signature = unpack("H*",$ctx->Final());
+
+print "HMAC-SHA1(@ARGV[0])= $signature\n";
+
+if ($verify) {
+	open(FD,"<@ARGV[0].sha1") || die "$!";
+	$line = <FD>;
+	close(FD);
+	exit(0)	if ($line =~ /HMAC\-SHA1\([^\)]*\)=\s*([0-9a-f]+)/i &&
+				$1 eq $signature);
+	die "signature mismatch";
+}

@@ -674,6 +674,8 @@ void gcm_ghash_4bit_x86(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len
 void gcm_gmult_neon(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_neon(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 #  endif
+# elif defined(_TMS320C6400_PLUS)
+#   define GHASH_ASM_C64Xplus
 # endif
 #endif
 
@@ -746,6 +748,10 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 		ctx->gmult = gcm_gmult_4bit;
 		ctx->ghash = gcm_ghash_4bit;
 	}
+# elif defined(GHASH_ASM_C64Xplus)
+	/* C64x+ assembler doesn't use tables, skip gcm_init_4bit.
+	 * This is likely to trigger "function never referenced"
+	 * warning and code being eliminated. */
 # else
 	gcm_init_4bit(ctx->Htable,ctx->H.u);
 # endif

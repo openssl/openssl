@@ -1,0 +1,19 @@
+SECTIONS
+{
+    .text:
+    {
+	*(.fips_text:start)
+	*(.text)
+	*(.const:aes_asm)
+	*(.const:sha_asm)
+	*(.const:des_sptrans)
+	*(.switch)
+	*(.fips_text:end)
+    }
+    .const:
+    {
+	*(.fips_const:start)
+	*(.const)
+	*(.fips_const:end)
+    }
+}

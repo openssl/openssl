@@ -1,0 +1,7 @@
+# MSYS-style PATH
+export PATH=/c/CCStudio_v3.3/c6000/cgtools/bin:/c/Program\ Files/ActivePerl58/bin:$PATH
+
+# Windows-style variables
+export C6X_C_DIR='C:\CCStudio_v3.3\c6000\cgtools\include;C:\CCStudio_v3.3\c6000\cgtools\lib'
+
+export PERL5LIB=C:/CCStudio_v3.3/bin/utilities/ccs_scripting

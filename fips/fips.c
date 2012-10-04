@@ -81,7 +81,7 @@ static int fips_started = 0;
 static int fips_is_owning_thread(void);
 static int fips_set_owning_thread(void);
 static int fips_clear_owning_thread(void);
-static unsigned char *fips_signature_witness(void);
+static const unsigned char *fips_signature_witness(void);
 
 #define fips_w_lock()	CRYPTO_w_lock(CRYPTO_LOCK_FIPS)
 #define fips_w_unlock()	CRYPTO_w_unlock(CRYPTO_LOCK_FIPS)
@@ -148,6 +148,9 @@ void fips_set_selftest_fail(void)
 
 extern const void         *FIPS_text_start(),  *FIPS_text_end();
 extern const unsigned char FIPS_rodata_start[], FIPS_rodata_end[];
+#ifdef _TMS320C6X
+const
+#endif
 unsigned char              FIPS_signature [20] = { 0 };
 __fips_constseg
 static const char          FIPS_hmac_key[]="etaonrishdlcupfm";
@@ -413,9 +416,8 @@ int fips_clear_owning_thread(void)
 	return ret;
 	}
 
-unsigned char *fips_signature_witness(void)
+const unsigned char *fips_signature_witness(void)
 	{
-	extern unsigned char FIPS_signature[];
 	return FIPS_signature;
 	}
 

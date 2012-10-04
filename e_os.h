@@ -668,7 +668,7 @@ extern char *sys_errlist[]; extern int sys_nerr;
 #if defined(OPENSSL_SYS_WINDOWS)
 #  define strcasecmp _stricmp
 #  define strncasecmp _strnicmp
-#elif defined(OPENSSL_SYS_VMS)
+#elif defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_DSPBIOS)
 /* VMS below version 7.0 doesn't have strcasecmp() */
 #  include "o_str.h"
 #  define strcasecmp OPENSSL_strcasecmp

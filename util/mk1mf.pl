@@ -23,6 +23,7 @@ local $fips_canister_path = "";
 my $fips_premain_dso_exe_path = "";
 my $fips_premain_c_path = "";
 my $fips_sha1_exe_path = "";
+my $fips_sha1_exe_build = 1;
 
 local $fipscanisterbuild = 0;
 
@@ -247,6 +248,10 @@ elsif (($platform eq "netware-clib") || ($platform eq "netware-libc") ||
 	$LIBC=1 if $platform eq "netware-libc" || $platform eq "netware-libc-bsdsock";
 	$BSDSOCK=1 if ($platform eq "netware-libc-bsdsock") || ($platform eq "netware-clib-bsdsock");
 	require 'netware.pl';
+	}
+elsif ($platform eq "c64xplus")
+	{
+	require "TI_CGTOOLS.pl";
 	}
 else
 	{
@@ -500,8 +505,16 @@ if ($fips)
 	{
 	if ($fips_sha1_exe_path eq "")
 		{
-		$fips_sha1_exe_path =
-			"\$(BIN_D)${o}fips_standalone_sha1$exep";
+		$fips_sha1_exe_path = $ENV{"FIPS_SHA1_PATH"};
+		if (defined $fips_sha1_exe_path)
+			{
+			$fips_sha1_exe_build = 0;
+			}
+		else
+			{
+			$fips_sha1_exe_path =
+				"\$(BIN_D)${o}fips_standalone_sha1$exep";
+			}
 		}
 	}
 	else
@@ -545,7 +558,7 @@ if ($fips)
 
 if ($fipscanisteronly)
 	{
-	$build_targets = "\$(O_FIPSCANISTER) \$(T_EXE)";
+	$build_targets = "\$(O_FIPSCANISTER)";
 	$libs_dep = "";
 	}
 
@@ -567,9 +580,14 @@ if ($fipscanisteronly)
 	\$(CP) \"fips${o}fips_premain.c.sha1\" \"\$(INSTALLTOP)${o}lib\"
 	\$(CP) \"\$(INCO_D)${o}fips.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
 	\$(CP) \"\$(INCO_D)${o}fips_rand.h\" \"\$(INSTALLTOP)${o}include${o}openssl\"
-	\$(CP) "\$(BIN_D)${o}fips_standalone_sha1$exep" \"\$(INSTALLTOP)${o}bin\"
 	\$(CP) \"util${o}fipslink.pl\" \"\$(INSTALLTOP)${o}bin\"
 EOF
+	if ($fips_sha1_exe_build)
+		{
+		$extra_install .= <<"EOF";
+	\$(CP) "\$(BIN_D)${o}fips_standalone_sha1$exep" \"\$(INSTALLTOP)${o}bin\"
+EOF
+		}
 	}
 elsif ($shlib)
 	{
@@ -716,7 +734,7 @@ LIBS_DEP=$libs_dep
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers \$(FIPS_SHA1_EXE) $build_targets
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers $build_targets
 
 banner:
 $banner
@@ -744,7 +762,11 @@ headers: \$(HEADER) \$(EXHEADER)
 
 lib: \$(LIBS_DEP) \$(E_SHLIB)
 
-exe: \$(T_EXE) \$(BIN_D)$o\$(E_EXE)$exep
+exe: \$(BIN_D)$o\$(E_EXE)$exep
+
+build_tests: \$(T_EXE)
+
+build_algvs: \$(T_SRC) \$(BIN_D)${o}fips_algvs$exep
 
 install: all
 	\$(MKDIR) \"\$(INSTALLTOP)\"
@@ -846,6 +868,9 @@ if ($fips)
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
 		"fips${o}fips_premain.c",
 		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)");
+	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_algvs$obj",
+		"test${o}fips_algvs.c",
+		"\$(SHLIB_CFLAGS)");
 	}
 
 foreach (values %lib_nam)
@@ -878,6 +903,7 @@ EOF
 }
 
 $defs.=&do_defs("T_EXE",$test,"\$(TEST_D)",$exep);
+$defs.=&do_defs("T_SRC",$test,"\$(TMP_D)",".c");
 foreach (split(/\s+/,$test))
 	{
 	my $t_libs;
@@ -899,7 +925,10 @@ foreach (split(/\s+/,$test))
 
 	$tt="\$(OBJ_D)${o}$t${obj}";
 	$rules.=&do_link_rule("\$(TEST_D)$o$t$exep",$tt,"\$(LIBS_DEP)","$t_libs \$(EX_LIBS)", $ltype);
+	$rules.=&do_copy_rule("\$(TMP_D)",$_,".c");
 	}
+
+	$rules.=&do_link_rule("\$(TEST_D)${o}fips_algvs$exep","\$(OBJ_D)${o}fips_algvs$obj","\$(LIBS_DEP)","\$(O_FIPSCANISTER) \$(EX_LIBS)", 2) if $fips;
 
 $defs.=&do_defs("E_SHLIB",$engines . $otherlibs,"\$(ENG_D)",$shlibp);
 
@@ -955,20 +984,20 @@ if ($fips)
 					"\$(OBJ_D)${o}fips_start$obj",
 					"\$(FIPSOBJ)",
 					"\$(OBJ_D)${o}fips_end$obj",
-					"\$(FIPS_SHA1_EXE)", "");
+					"");
 		# FIXME
 		$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)",
 					"\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}sha1dgst$obj $sha1_asm_obj",
-					"","\$(EX_LIBS)", 1);
+					"","\$(EX_LIBS)", 1) if $fips_sha1_exe_build;
 		}
 	else
 		{
 		$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)",
 					"\$(OBJ_D)${o}fips_standalone_sha1$obj \$(O_FIPSCANISTER)",
-					"","", 1);
+					"","", 1) if $fips_sha1_exe_build;
 
 		}
-	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
+	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1) unless defined $ENV{"FIPS_SIG"};
 	
 	}
 
@@ -1191,6 +1220,10 @@ sub do_compile_rule
 		       -f ($s="${d}${o}${n}.S"))
 			{
 			$ret.=&Sasm_compile_target("$to${o}$n$obj",$s,$n);
+			}
+		elsif (-f ($s="${d}${o}asm${o}${n}.asm"))
+			{
+			$ret.=&cc_compile_target("$to${o}$n$obj","$s",$ex);
 			}
 		else	{ die "no rule for $_"; }
 		}

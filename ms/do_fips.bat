@@ -1,7 +1,10 @@
-@echo off
+rem @echo off
 
 SET ASM=%1
 SET EXARG=
+SET MFILE=ntdll.mak
+
+if NOT X%OSVERSION% == X goto wince
 
 if NOT X%PROCESSOR_ARCHITECTURE% == X goto defined 
 
@@ -42,6 +45,14 @@ SET TARGET=VC-WIN64A
 if x%ASM% == xno-asm goto compile
 SET ASM=nasm
 
+goto compile
+
+:wince
+
+echo Auto Configuring for WinCE
+SET TARGET=VC-CE
+SET MFILE=cedll.mak
+
 :compile
 
 if x%ASM% == xno-asm SET EXARG=no-asm
@@ -52,13 +63,13 @@ echo on
 
 perl util\mkfiles.pl >MINFO
 @if ERRORLEVEL 1 goto error
-perl util\mk1mf.pl dll %ASM% %TARGET% >ms\ntdll.mak
+perl util\mk1mf.pl dll %ASM% %TARGET% >ms\%MFILE%
 @if ERRORLEVEL 1 goto error
 
-nmake -f ms\ntdll.mak clean
-nmake -f ms\ntdll.mak
+nmake -f ms\%MFILE% clean
+nmake -f ms\%MFILE%
 @if ERRORLEVEL 1 goto error
-nmake -f ms\ntdll.mak install
+nmake -f ms\%MFILE% install
 @if ERRORLEVEL 1 goto error
 
 @echo.
