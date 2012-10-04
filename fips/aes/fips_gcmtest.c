@@ -75,10 +75,11 @@ int main(int argc, char **argv)
 
 #include "fips_utl.h"
 
+static char buf[204800];
+static char lbuf[204800];
+
 static void gcmtest(FILE *in, FILE *out, int encrypt)
 	{
-	char buf[2048];
-	char lbuf[2048];
 	char *keyword, *value;
 	int keylen = -1, ivlen = -1, aadlen = -1, taglen = -1, ptlen = -1;
 	int rv;
@@ -266,8 +267,6 @@ static void gcmtest(FILE *in, FILE *out, int encrypt)
 
 static void xtstest(FILE *in, FILE *out)
 	{
-	char buf[204800];
-	char lbuf[204800];
 	char *keyword, *value;
 	int inlen = 0;
 	int encrypt = 0;
@@ -340,8 +339,6 @@ static void xtstest(FILE *in, FILE *out)
 
 static void ccmtest(FILE *in, FILE *out)
 	{
-	char buf[200048];
-	char lbuf[200048];
 	char *keyword, *value;
 	long l;
 	unsigned char *Key = NULL, *Nonce = NULL;

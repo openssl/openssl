@@ -589,6 +589,7 @@
 #define AES_encrypt fips_aes_encrypt
 #define AES_set_decrypt_key fips_aes_set_decrypt_key
 #define AES_set_encrypt_key fips_aes_set_encrypt_key
+#define AES_ctr32_encrypt fips_aes_ctr32_encrypt
 #define BN_from_montgomery fips_bn_from_montgomery
 #define BN_num_bits_word FIPS_bn_num_bits_word
 #define DES_SPtrans fips_des_sptrans

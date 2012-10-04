@@ -249,6 +249,10 @@ elsif (($platform eq "netware-clib") || ($platform eq "netware-libc") ||
 	$BSDSOCK=1 if ($platform eq "netware-libc-bsdsock") || ($platform eq "netware-clib-bsdsock");
 	require 'netware.pl';
 	}
+elsif ($platform eq "c64xplus")
+	{
+	require "TI_CGTOOLS.pl";
+	}
 else
 	{
 	require "unix.pl";
@@ -730,7 +734,7 @@ LIBS_DEP=$libs_dep
 EOF
 
 $rules=<<"EOF";
-all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers \$(FIPS_SHA1_EXE) $build_targets
+all: banner \$(TMP_D) \$(BIN_D) \$(TEST_D) \$(LIB_D) \$(INCO_D) headers $build_targets
 
 banner:
 $banner
@@ -980,7 +984,7 @@ if ($fips)
 					"\$(OBJ_D)${o}fips_start$obj",
 					"\$(FIPSOBJ)",
 					"\$(OBJ_D)${o}fips_end$obj",
-					"\$(FIPS_SHA1_EXE)", "");
+					"");
 		# FIXME
 		$rules.=&do_link_rule("\$(FIPS_SHA1_EXE)",
 					"\$(OBJ_D)${o}fips_standalone_sha1$obj \$(OBJ_D)${o}sha1dgst$obj $sha1_asm_obj",
@@ -1216,6 +1220,10 @@ sub do_compile_rule
 		       -f ($s="${d}${o}${n}.S"))
 			{
 			$ret.=&Sasm_compile_target("$to${o}$n$obj",$s,$n);
+			}
+		elsif (-f ($s="${d}${o}asm${o}${n}.asm"))
+			{
+			$ret.=&cc_compile_target("$to${o}$n$obj","$s",$ex);
 			}
 		else	{ die "no rule for $_"; }
 		}

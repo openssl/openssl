@@ -610,12 +610,14 @@ my %table=(
 "uClinux-dist","$ENV{'CC'}:\$(CFLAGS)::-D_REENTRANT::\$(LDFLAGS) \$(LDLIBS):BN_LLONG:${no_asm}:$ENV{'LIBSSL_dlfcn'}:linux-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):$ENV{'RANLIB'}::",
 "uClinux-dist64","$ENV{'CC'}:\$(CFLAGS)::-D_REENTRANT::\$(LDFLAGS) \$(LDLIBS):SIXTY_FOUR_BIT_LONG:${no_asm}:$ENV{'LIBSSL_dlfcn'}:linux-shared:-fPIC:-shared:.so.\$(SHLIB_MAJOR).\$(SHLIB_MINOR):$ENV{'RANLIB'}::",
 
+"c64xplus","cl6x:-mv6400+ -o2 -ox -ms -pden -DNO_SYS_TYPES_H -DGETPID_IS_MEANINGLESS -DMD32_REG_T=int -DOPENSSL_SMALL_FOOTPRINT:<c6x.h>::DSPBIOS::BN_LLONG:c64xpluscpuid.o:bn-c64xplus.o c64xplus-gf2m.o::aes-c64xplus.o aes_cbc.o aes_ctr.o:::sha1-c64xplus.o sha256-c64xplus.o sha512-c64xplus.o:::::::ghash-c64xplus.o::void:",
+
 );
 
 my @MK1MF_Builds=qw(VC-WIN64I VC-WIN64A
 		    debug-VC-WIN64I debug-VC-WIN64A
 		    VC-NT VC-CE VC-WIN32 debug-VC-WIN32
-		    BC-32 
+		    BC-32 c64xplus
 		    netware-clib netware-clib-bsdsock
 		    netware-libc netware-libc-bsdsock);
 

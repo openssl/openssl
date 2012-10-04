@@ -89,6 +89,7 @@ extern int fips_rsavtest_main(int argc, char **argv);
 extern int fips_shatest_main(int argc, char **argv);
 extern int fips_test_suite_main(int argc, char **argv);
 
+#if !defined(_TMS320C6400_PLUS)
 #include "fips_aesavs.c"
 #include "fips_cmactest.c"
 #include "fips_desmovs.c"
@@ -105,6 +106,28 @@ extern int fips_test_suite_main(int argc, char **argv);
 #include "fips_rsavtest.c"
 #include "fips_shatest.c"
 #include "fips_test_suite.c"
+
+#else
+#include "aes/fips_aesavs.c"
+#include "cmac/fips_cmactest.c"
+#include "des/fips_desmovs.c"
+#include "dh/fips_dhvs.c"
+#include "rand/fips_drbgvs.c"
+#include "dsa/fips_dssvs.c"
+#include "ecdh/fips_ecdhvs.c"
+#include "ecdsa/fips_ecdsavs.c"
+#include "aes/fips_gcmtest.c"
+#include "hmac/fips_hmactest.c"
+#include "rand/fips_rngvs.c"
+#include "rsa/fips_rsagtest.c"
+#include "rsa/fips_rsastest.c"
+#include "rsa/fips_rsavtest.c"
+#include "sha/fips_shatest.c"
+#include "fips_test_suite.c"
+
+#pragma DATA_SECTION(aucCmBootDspLoad, "BootDspSection");
+volatile unsigned char aucCmBootDspLoad[8*1024];
+#endif
 
 typedef struct
 	{
@@ -221,7 +244,7 @@ static int run_prg(int argc, char **argv)
 
 int main(int argc, char **argv)
 	{
-	char buf[1024];
+	static char buf[1024];
 	char **args = argv + 1;
 	const char *sname = "fipstests.sh";
 	ARGS arg;
@@ -236,6 +259,10 @@ int main(int argc, char **argv)
 	OPENSSL_init();
 	CRYPTO_set_mem_debug_options(V_CRYPTO_MDEBUG_ALL);
 	CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
+#endif
+
+#if defined(_TMS320C6400_PLUS)
+	SysInit();
 #endif
 
 	if (*args && *args[0] != '-')

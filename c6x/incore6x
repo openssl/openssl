@@ -1,0 +1,241 @@
+#!/usr/bin/env perl
+#
+# Copyright (c) 2011 The OpenSSL Project.
+#
+# The script embeds fingerprint into TI-COFF executable object.
+
+$0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
+
+unshift(@INC,$dir);
+require "hmac_sha1.pl";
+
+######################################################################
+#
+# COFF symbol table parser by <appro@openssl.org>. The table entries
+# are extended with offset within executable file...
+#
+{ package COFF;
+  use FileHandle;
+
+    sub dup  { my %copy=map {$_} @_; return \%copy; }
+
+    sub Load {
+	my $class = shift;
+	my $self  = {};
+	my $FD    = FileHandle->new();	# autoclose
+
+	bless $self,$class;
+
+	sysopen($FD,shift,0) or die "$!";
+	binmode($FD);
+
+	#################################################
+	# read and parse COFF header...
+	#
+	read($FD,my $coff,22) or die "$!";
+
+	my %coff_header;
+	@coff_header{version,nsects,date,syms_off,nsyms,opt,flags,magic}=
+		unpack("v2V3v3",$coff);
+
+	$!=42;		# signal fipsld to revert to two-step link
+	die "not TI-COFF file" if ($coff_header{version} != 0xC2);
+
+	my $big_endian = ($coff_header{flags}>>9)&1;	# 0 or 1
+
+	my $strings;
+	my $symsize;
+
+	#################################################
+	# load strings table
+	#
+	seek($FD,$coff_header{syms_off}+18*$coff_header{nsyms},0) or die "$!";
+	read($FD,$strings,4) or die "$!";
+	$symsize = unpack("V",$strings);
+	read($FD,$strings,$symsize,4) or die "$!";
+
+	#################################################
+	# read sections
+	#
+	my $i;
+	my @sections;
+
+	# seek to section headers
+	seek($FD,22+@coff_header{opt},0) or die "$!";
+	for ($i=0;$i<$coff_header{nsects};$i++) {
+	    my %coff_shdr;
+	    my $name;
+
+	    read($FD,my $section,48) or die "$!";
+
+	    @coff_shdr{sh_name,sh_phaddr,sh_vaddr,
+			sh_size,sh_offset,sh_relocs,sh_reserved,
+			sh_relocoff,sh_lines,sh_flags} =
+		unpack("a8V9",$section);
+
+	    $name = $coff_shdr{sh_name};
+	    # see if sh_name is a an offset in $strings
+	    my ($hi,$lo) = unpack("V2",$name);
+	    if ($hi==0 && $lo<$symsize) {
+		$name = substr($strings,$lo,64);
+	    }
+	    $coff_shdr{sh_name} = (split(chr(0),$name))[0];
+
+	    push(@sections,dup(%coff_shdr));
+	}
+
+	#################################################
+	# load symbols table
+	#
+	seek($FD,$coff_header{syms_off},0) or die "$!";
+	for ($i=0;$i<$coff_header{nsyms};$i++) {
+	    my %coff_sym;
+	    my $name;
+
+	    read($FD,my $blob,18) or die "$!";
+
+	    @coff_sym{st_name,st_value,st_shndx,reserved,class,aux} =
+		unpack("a8Vv2C2",$blob);
+
+	    # skip aux entries
+	    if ($coff_sym{aux}) {
+		seek($FD,18*$coff_sym{aux},1) or die "$!";
+		$i+=$coff_sym{aux};
+	    }
+
+	    $name = $coff_sym{st_name};
+	    # see if st_name is a an offset in $strings
+	    my ($hi,$lo) = unpack("V2",$name);
+	    if ($hi==0 && $lo<$symsize) {
+		$name = substr($strings,$lo,64);
+	    }
+	    $coff_sym{st_name} = $name = (split(chr(0),$name))[0];
+
+	    my $st_secn = $coff_sym{st_shndx}-1;
+	    if ($st_secn>=0 && $st_secn<=$#sections
+		&& @sections[$st_secn]->{sh_offset}
+		&& $name =~ m/^_[a-z]+/i) {
+		# synthesize st_offset, ...
+		$coff_sym{st_offset} = $coff_sym{st_value}
+				- @sections[$st_secn]->{sh_vaddr}
+				+ @sections[$st_secn]->{sh_offset};
+		$coff_sym{st_section} = @sections[$st_secn]->{sh_name};
+		# ... and add to lookup table
+		$self->{symbols}{$name} = dup(%coff_sym);
+	    }
+	}
+
+	return $self;
+    }
+
+    sub Lookup {
+	my $self = shift;
+	my $name = shift;
+	return $self->{symbols}{"_$name"};
+    }
+
+    sub Traverse {
+	my $self = shift;
+	my $code = shift;
+
+	if (ref($code) eq 'CODE') {
+	    for (keys(%{$self->{symbols}})) { &$code($self->{symbols}{$_}); }
+	}
+    }
+}
+
+######################################################################
+#
+# main()
+#
+my $legacy_mode;
+
+if ($#ARGV<0 || ($#ARGV>0 && !($legacy_mode=(@ARGV[0] =~ /^\-(dso|exe)$/)))) {
+	print STDERR "usage: $0 [-dso|-exe] ti-coff-binary\n";
+	exit(1);
+}
+
+$exe = COFF->Load(@ARGV[$#ARGV]);
+
+$FIPS_text_start	= $exe->Lookup("FIPS_text_start")		or die;
+$FIPS_text_end		= $exe->Lookup("FIPS_text_end")			or die;
+$FIPS_rodata_start	= $exe->Lookup("FIPS_rodata_start")		or die;
+$FIPS_rodata_end	= $exe->Lookup("FIPS_rodata_end")		or die;
+$FIPS_signature		= $exe->Lookup("FIPS_signature")		or die;
+
+# new cross-compile support
+$FIPS_text_startX	= $exe->Lookup("FIPS_text_startX");
+$FIPS_text_endX		= $exe->Lookup("FIPS_text_endX");
+
+if (!$legacy_mode) {
+    if (!$FIPS_text_startX || !$FIPS_text_endX) {
+	print STDERR "@ARGV[$#ARGV] is not cross-compiler aware.\n";
+	exit(42);	# signal fipsld to revert to two-step link
+    }
+
+    $FINGERPRINT_ascii_value
+			= $exe->Lookup("FINGERPRINT_ascii_value");
+}
+if ($FIPS_text_startX && $FIPS_text_endX) {
+    $FIPS_text_start = $FIPS_text_startX;
+    $FIPS_text_end   = $FIPS_text_endX;
+}
+
+sysopen(FD,@ARGV[$#ARGV],$legacy_mode?0:2) or die "$!";	# 2 is read/write
+binmode(FD);
+
+sub HMAC_Update {
+  my ($hmac,$off,$len) = @_;
+  my $blob;
+
+    seek(FD,$off,0)	or die "$!";
+    read(FD,$blob,$len)	or die "$!";
+    $$hmac->Update($blob);
+}
+
+# fips/fips.c:FIPS_incore_fingerprint's Perl twin
+#
+sub FIPS_incore_fingerprint {
+  my $p1  = $FIPS_text_start->{st_offset};
+  my $p2  = $FIPS_text_end->{st_offset};
+  my $p3  = $FIPS_rodata_start->{st_offset};
+  my $p4  = $FIPS_rodata_end->{st_offset};
+  my $sig = $FIPS_signature->{st_offset};
+  my $ctx = HMAC->Init("etaonrishdlcupfm");
+
+    # detect overlapping regions
+    if ($p1<=$p3 && $p2>=$p3) {
+	$p3 = $p1; $p4 = $p2>$p4?$p2:$p4; $p1 = 0; $p2 = 0;
+    } elsif ($p3<=$p1 && $p4>=$p1) {
+	$p3 = $p3; $p4 = $p2>$p4?$p2:$p4; $p1 = 0; $p2 = 0;
+    }
+
+    if ($p1) {
+	HMAC_Update (\$ctx,$p1,$p2-$p1);
+    }
+
+    if ($sig>=$p3 && $sig<$p4) {
+	# "punch" hole
+	HMAC_Update(\$ctx,$p3,$sig-$p3);
+	$p3 = $sig+20;
+	HMAC_Update(\$ctx,$p3,$p4-$p3);
+    } else {
+	HMAC_Update(\$ctx,$p3,$p4-$p3);
+    }
+
+    return $ctx->Final();
+}
+
+$fingerprint = FIPS_incore_fingerprint();
+
+if ($legacy_mode) {
+    print unpack("H*",$fingerprint);
+} elsif ($FINGERPRINT_ascii_value) {
+    seek(FD,$FINGERPRINT_ascii_value->{st_offset},0)	or die "$!";
+    print FD unpack("H*",$fingerprint)			or die "$!";
+} else {
+    seek(FD,$FIPS_signature->{st_offset},0)		or die "$!";
+    print FD $fingerprint				or die "$!";
+}
+
+close (FD);

@@ -62,8 +62,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#ifndef NO_SYS_TYPES_H
 #include <sys/types.h>
 #include <sys/stat.h>
+#endif
 
 #include "e_os.h"
 

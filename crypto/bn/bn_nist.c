@@ -366,6 +366,10 @@ static void nist_cp_bn(BN_ULONG *buf, BN_ULONG *a, int top)
 # endif
 #endif /* BN_BITS2 != 64 */
 
+#if defined(_TMS320C6X) && defined(NIST_INT64)
+# undef NIST_INT64     /* compiler bug */
+# pragma diag_suppress 177
+#endif
 
 #define nist_set_192(to, from, a1, a2, a3) \
 	{ \

@@ -174,12 +174,12 @@ $rsc="rc";
 $efile="/out:";
 $exep='.exe';
 if ($no_sock)		{ $ex_libs=''; }
-elsif ($FLAVOR =~ /CE/)	{ $ex_libs='winsock.lib'; }
+elsif ($FLAVOR =~ /CE/)	{ $ex_libs='ws2.lib'; }
 else			{ $ex_libs='ws2_32.lib'; }
 
 if ($FLAVOR =~ /CE/)
 	{
-	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib'	if (defined($ENV{'WCECOMPAT'}));
+	$ex_libs.=' $(WCECOMPAT)/lib/wcecompatex.lib crypt32.lib coredll.lib corelibc.lib'	if (defined($ENV{'WCECOMPAT'}));
 	$ex_libs.=' $(PORTSDK_LIBPATH)/portlib.lib'	if (defined($ENV{'PORTSDK_LIBPATH'}));
 	$ex_libs.=' /nodefaultlib:oldnames.lib coredll.lib corelibc.lib' if ($ENV{'TARGETCPU'} eq "X86");
 	}
@@ -389,8 +389,9 @@ sub do_rlink_rule
 
 	$file =~ s/\//$o/g if $o ne '/';
 	$n=&bname($targer);
-	$ret.="$target: $files $dep_libs \$(FIPS_SHA1_EXE)\n";
-	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$a $rl_start\n";
+	$ret.="$target: $files $dep_libs";
+	$ret.=" \$(FIPS_SHA1_EXE)" unless defined $ENV{"FIPS_SHA1_PATH"};
+  	$ret.="\n\t\$(PERL) ms\\segrenam.pl \$\$a $rl_start\n";
 	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$b $rl_mid\n";
 	$ret.="\t\$(PERL) ms\\segrenam.pl \$\$c $rl_end\n";
 	$ret.="\t\$(MKLIB) $lfile$target @<<\n\t$files\n<<\n";
