@@ -2107,7 +2107,7 @@ int ssl_check_srvr_ecc_cert_and_alg(X509 *x, const SSL_CIPHER *cs)
 #endif
 
 /* THIS NEEDS CLEANING UP */
-X509 *ssl_get_server_send_cert(SSL *s)
+X509 *ssl_get_server_send_cert(const SSL *s)
 	{
 	unsigned long alg_k,alg_a;
 	CERT *c;
@@ -2593,7 +2593,9 @@ void ssl_clear_cipher_ctx(SSL *s)
 /* Fix this function so that it takes an optional type parameter */
 X509 *SSL_get_certificate(const SSL *s)
 	{
-	if (s->cert != NULL)
+	if (s->server)
+		return(ssl_get_server_send_cert(s));
+	else if (s->cert != NULL)
 		return(s->cert->key->x509);
 	else
 		return(NULL);
