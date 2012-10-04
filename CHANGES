@@ -4,6 +4,30 @@
 
  Changes between 1.0.1 and 1.1.0  [xx XXX xxxx]
 
+  *) Add perl scripts to calculate FIPS signatures for Windows
+     exectuables including WinCE. 
+     [Andy Polyakov]
+
+  *) Don't attempt to insert current time into AES/3DES tests, we should
+     be just copying input line across and this breaks some systems lacking
+     ctime. 
+     [Steve Henson]
+
+  *) Update Windows build system for FIPS. Don't compile algorithm test
+     utilties by default: the target build_tests is needed for that. Add
+     support for building fips_algvs with the build_algvs target.
+     [Steve Henson]
+
+  *) Add initial cross compilation support for Windows build. The following
+     environment variables should be set:
+
+     FIPS_SHA1_PATH: path to fips_standalone_sha1 exectutable which will
+     be used explicitly and not built.
+     FIPS_SIG: similar to other builds: path to a "get signature" script
+     which is used to obtain the signature of the target instead of
+     executing it on the host.
+     [Steve Henson]
+
   *) Add flag to EC_KEY to use cofactor ECDH if set.
      [Steve Henson]
 
