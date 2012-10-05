@@ -745,7 +745,7 @@ int ssl_parse_serverhello_tlsext(SSL *s, unsigned char **p, unsigned char *d, in
 	return 1;
 	}
 
-int ssl_check_clienthello_tlsext(SSL *s)
+int ssl_check_clienthello_tlsext_early(SSL *s)
 	{
 	int ret=SSL_TLSEXT_ERR_NOACK;
 	int al = SSL_AD_UNRECOGNIZED_NAME;
@@ -755,11 +755,35 @@ int ssl_check_clienthello_tlsext(SSL *s)
 	else if (s->initial_ctx != NULL && s->initial_ctx->tlsext_servername_callback != 0) 		
 		ret = s->initial_ctx->tlsext_servername_callback(s, &al, s->initial_ctx->tlsext_servername_arg);
 
+	switch (ret)
+		{
+		case SSL_TLSEXT_ERR_ALERT_FATAL:
+			ssl3_send_alert(s, SSL3_AL_FATAL, al); 
+			return -1;
+
+		case SSL_TLSEXT_ERR_ALERT_WARNING:
+			ssl3_send_alert(s, SSL3_AL_WARNING, al);
+			return 1; 
+					
+		case SSL_TLSEXT_ERR_NOACK:
+			s->servername_done = 0;
+
+		default:
+			return 1;
+		}
+	}
+
+int ssl_check_clienthello_tlsext_late(SSL *s)
+	{
+	int ret = SSL_TLSEXT_ERR_OK;
+	int al;
+
 	/* If status request then ask callback what to do.
  	 * Note: this must be called after servername callbacks in case 
- 	 * the certificate has changed.
+ 	 * the certificate has changed, and must be called after the cipher
+	 * has been chosen because this may influence which certificate is sent
  	 */
-	if ((s->tlsext_status_type != -1) && s->ctx->tlsext_status_cb)
+	if (s->tlsext_status_type != -1 && s->ctx && s->ctx->tlsext_status_cb)
 		{
 		int r;
 		r = s->ctx->tlsext_status_cb(s, s->ctx->tlsext_status_arg);
@@ -785,7 +809,8 @@ int ssl_check_clienthello_tlsext(SSL *s)
 		}
 	else
 		s->tlsext_status_expected = 0;
-	err:
+
+ err:
 	switch (ret)
 		{
 		case SSL_TLSEXT_ERR_ALERT_FATAL:
@@ -795,11 +820,9 @@ int ssl_check_clienthello_tlsext(SSL *s)
 		case SSL_TLSEXT_ERR_ALERT_WARNING:
 			ssl3_send_alert(s,SSL3_AL_WARNING,al);
 			return 1; 
-					
-		case SSL_TLSEXT_ERR_NOACK:
-			s->servername_done=0;
-			default:
-		return 1;
+
+		default:
+			return 1;
 		}
 	}
 
