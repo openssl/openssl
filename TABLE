@@ -176,7 +176,7 @@ $bn_ops       = BN_LLONG RC2_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC2 BF_PTR
 $cpuid_obj    = sparcv9cap.o sparccpuid.o
 $bn_obj       = bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
-$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o
+$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o
 $bf_obj       = 
 $md5_obj      = md5-sparcv9.o
 $sha1_obj     = sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o
@@ -2114,7 +2114,7 @@ $multilib     =
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -ggdb -g3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2147,7 +2147,7 @@ $multilib     =
 
 *** debug-levitte-linux-elf-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2180,7 +2180,7 @@ $multilib     =
 
 *** debug-levitte-linux-noasm
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -ggdb -g3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2213,7 +2213,7 @@ $multilib     =
 
 *** debug-levitte-linux-noasm-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -2618,7 +2618,7 @@ $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_P
 $cpuid_obj    = sparcv9cap.o sparccpuid.o
 $bn_obj       = bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
-$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o
+$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o
 $bf_obj       = 
 $md5_obj      = md5-sparcv9.o
 $sha1_obj     = sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o
@@ -2651,7 +2651,7 @@ $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $cpuid_obj    = sparcv9cap.o sparccpuid.o
 $bn_obj       = bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
-$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o
+$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o
 $bf_obj       = 
 $md5_obj      = md5-sparcv9.o
 $sha1_obj     = sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o
@@ -4400,7 +4400,7 @@ $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $cpuid_obj    = sparcv9cap.o sparccpuid.o
 $bn_obj       = bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
-$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o
+$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o
 $bf_obj       = 
 $md5_obj      = md5-sparcv9.o
 $sha1_obj     = sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o
@@ -4598,7 +4598,7 @@ $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL
 $cpuid_obj    = sparcv9cap.o sparccpuid.o
 $bn_obj       = bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
-$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o
+$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o
 $bf_obj       = 
 $md5_obj      = md5-sparcv9.o
 $sha1_obj     = sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o
@@ -5456,7 +5456,7 @@ $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK_LL DES_PTR DES_RISC1 DES_UNROLL BF_P
 $cpuid_obj    = sparcv9cap.o sparccpuid.o
 $bn_obj       = bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
-$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o
+$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o
 $bf_obj       = 
 $md5_obj      = md5-sparcv9.o
 $sha1_obj     = sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o
@@ -5489,7 +5489,7 @@ $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_UNROLL BF_PTR
 $cpuid_obj    = sparcv9cap.o sparccpuid.o
 $bn_obj       = bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
-$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o
+$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o
 $bf_obj       = 
 $md5_obj      = md5-sparcv9.o
 $sha1_obj     = sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o
@@ -5588,7 +5588,7 @@ $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL
 $cpuid_obj    = sparcv9cap.o sparccpuid.o
 $bn_obj       = bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
-$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o
+$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o
 $bf_obj       = 
 $md5_obj      = md5-sparcv9.o
 $sha1_obj     = sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o
@@ -5621,7 +5621,7 @@ $bn_ops       = BN_LLONG RC4_CHAR RC4_CHUNK DES_INT DES_PTR DES_RISC1 DES_UNROLL
 $cpuid_obj    = sparcv9cap.o sparccpuid.o
 $bn_obj       = bn-sparcv9.o sparcv9-mont.o sparcv9a-mont.o
 $des_obj      = des_enc-sparc.o fcrypt_b.o
-$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o
+$aes_obj      = aes_core.o aes_cbc.o aes-sparcv9.o aest4-sparcv9.o
 $bf_obj       = 
 $md5_obj      = md5-sparcv9.o
 $sha1_obj     = sha1-sparcv9.o sha256-sparcv9.o sha512-sparcv9.o
