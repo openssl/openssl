@@ -208,6 +208,8 @@ int MAIN(int argc, char **argv)
 	int need_rand = 0;
 	int checkend=0,checkoffset=0;
 	unsigned long nmflag = 0, certflag = 0;
+	unsigned char *checkhost = NULL, *checkemail = NULL;
+	char *checkip = NULL;
 #ifndef OPENSSL_NO_ENGINE
 	char *engine=NULL;
 #endif
@@ -455,6 +457,21 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			checkoffset=atoi(*(++argv));
 			checkend=1;
+			}
+		else if (strcmp(*argv,"-checkhost") == 0)
+			{
+			if (--argc < 1) goto bad;
+			checkhost=(unsigned char *)*(++argv);
+			}
+		else if (strcmp(*argv,"-checkemail") == 0)
+			{
+			if (--argc < 1) goto bad;
+			checkemail=(unsigned char *)*(++argv);
+			}
+		else if (strcmp(*argv,"-checkip") == 0)
+			{
+			if (--argc < 1) goto bad;
+			checkip=*(++argv);
 			}
 		else if (strcmp(*argv,"-noout") == 0)
 			noout= ++num;
@@ -1060,6 +1077,8 @@ bad:
 			}
 		goto end;
 		}
+
+	print_cert_checks(STDout, x, checkhost, checkemail, checkip);
 
 	if (noout)
 		{

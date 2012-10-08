@@ -634,6 +634,9 @@ int MAIN(int argc, char **argv)
 #endif
 	SSL_EXCERT *exc = NULL;
 
+	unsigned char *checkhost = NULL, *checkemail = NULL;
+	char *checkip = NULL;
+
 	meth=SSLv23_client_method();
 
 	apps_startup();
@@ -993,6 +996,21 @@ int MAIN(int argc, char **argv)
 			client_sigalgs= *(++argv);
 			}
 #endif
+		else if (strcmp(*argv,"-checkhost") == 0)
+			{
+			if (--argc < 1) goto bad;
+			checkhost=(unsigned char *)*(++argv);
+			}
+		else if (strcmp(*argv,"-checkemail") == 0)
+			{
+			if (--argc < 1) goto bad;
+			checkemail=(unsigned char *)*(++argv);
+			}
+		else if (strcmp(*argv,"-checkip") == 0)
+			{
+			if (--argc < 1) goto bad;
+			checkip=*(++argv);
+			}
 #ifndef OPENSSL_NO_JPAKE
 		else if (strcmp(*argv,"-jpake") == 0)
 			{
@@ -1628,6 +1646,8 @@ SSL_set_tlsext_status_ids(con, ids);
 						"CONNECTION ESTABLISHED\n");
 					print_ssl_summary(bio_err, con);
 					}
+				print_ssl_cert_checks(bio_err, con, checkhost,
+							checkemail, checkip);
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
 

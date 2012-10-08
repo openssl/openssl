@@ -1003,6 +1003,10 @@ int MAIN(int argc, char *argv[])
 	char *srp_verifier_file = NULL;
 #endif
 	SSL_EXCERT *exc = NULL;
+
+	unsigned char *checkhost = NULL, *checkemail = NULL;
+	char *checkip = NULL;
+
 	meth=SSLv23_server_method();
 
 	local_argc=argc;
@@ -1260,6 +1264,21 @@ int MAIN(int argc, char *argv[])
 			client_sigalgs= *(++argv);
 			}
 #endif
+		else if (strcmp(*argv,"-checkhost") == 0)
+			{
+			if (--argc < 1) goto bad;
+			checkhost=(unsigned char *)*(++argv);
+			}
+		else if (strcmp(*argv,"-checkemail") == 0)
+			{
+			if (--argc < 1) goto bad;
+			checkemail=(unsigned char *)*(++argv);
+			}
+		else if (strcmp(*argv,"-checkip") == 0)
+			{
+			if (--argc < 1) goto bad;
+			checkip=*(++argv);
+			}
 		else if	(strcmp(*argv,"-msg") == 0)
 			{ s_msg=1; }
 		else if	(strcmp(*argv,"-msgfile") == 0)
@@ -2660,6 +2679,8 @@ static int init_ssl_connection(SSL *con)
 
 	if (s_brief)
 		print_ssl_summary(bio_err, con);
+
+	print_ssl_cert_checks(bio_err, con, checkhost, checkemail, checkip);
 
 	PEM_write_bio_SSL_SESSION(bio_s_out,SSL_get_session(con));
 

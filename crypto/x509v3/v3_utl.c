@@ -568,6 +568,134 @@ void X509_email_free(STACK_OF(OPENSSL_STRING) *sk)
 	sk_OPENSSL_STRING_pop_free(sk, str_free);
 }
 
+/* Compare an ASN1_STRING to a supplied string. If they match
+ * return 1. If cmp_type > 0 only compare if string matches the
+ * type, otherwise convert it to UTF8.
+ */
+
+static int do_check_string(ASN1_STRING *a, int cmp_type,
+				const unsigned char *b, size_t blen)
+	{
+	if (!a->data || !a->length)
+		return 0;
+	if (cmp_type > 0)
+		{
+		if (cmp_type != a->type)
+			return 0;
+		if (a->length == (int)blen && !memcmp(a->data, b, blen))
+			return 1;
+		else
+			return 0;
+		}
+	else
+		{
+		int astrlen, rv;
+		unsigned char *astr;
+		astrlen = ASN1_STRING_to_UTF8(&astr, a);
+		if (astrlen < 0)
+			return 0;
+		if (astrlen == (int)blen && !memcmp(astr, b, blen))
+			rv = 1;
+		else
+			rv = 0;
+		OPENSSL_free(astr);
+		return rv;
+		}
+	}
+
+static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
+					unsigned int flags, int check_type)
+	{
+	GENERAL_NAMES *gens = NULL;
+	X509_NAME *name = NULL;
+	int i;
+	int cnid;
+	if (check_type == GEN_EMAIL)
+		cnid = NID_pkcs9_emailAddress;
+	else if (check_type == GEN_DNS)
+		cnid = NID_commonName;
+	else
+		cnid = 0;
+
+	if (chklen == 0)
+		chklen = strlen((const char *)chk);
+
+	gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
+	if (gens)
+		{
+		int rv = 0;
+		int alt_type;
+		if (cnid)
+			alt_type = V_ASN1_IA5STRING;
+		else
+			alt_type = V_ASN1_OCTET_STRING;
+		for (i = 0; i < sk_GENERAL_NAME_num(gens); i++)
+			{
+			GENERAL_NAME *gen;
+			ASN1_STRING *cstr;
+			gen = sk_GENERAL_NAME_value(gens, i);
+			if(gen->type != check_type)
+				continue;
+			if (check_type == GEN_EMAIL)
+				cstr = gen->d.rfc822Name;
+			else if (check_type == GEN_DNS)
+				cstr = gen->d.dNSName;
+			else
+				cstr = gen->d.iPAddress;
+			if (do_check_string(cstr, alt_type, chk, chklen))
+				{
+				rv = 1;
+				break;
+				}
+			}
+		GENERAL_NAMES_free(gens);
+		if (rv)
+			return 1;
+		if (!(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT) || !cnid)
+			return 0;
+		}
+	i = -1;
+	name = X509_get_subject_name(x);
+	while((i = X509_NAME_get_index_by_NID(name, cnid, i)) >= 0)
+		{
+		X509_NAME_ENTRY *ne;
+		ASN1_STRING *str;
+		ne = X509_NAME_get_entry(name, i);
+		str = X509_NAME_ENTRY_get_data(ne);
+		if (do_check_string(str, -1, chk, chklen))
+			return 1;
+		}
+	return 0;
+	}
+
+int X509_check_host(X509 *x, const unsigned char *chk, size_t chklen,
+					unsigned int flags)
+	{
+	return do_x509_check(x, chk, chklen, flags, GEN_DNS);
+	}
+
+int X509_check_email(X509 *x, const unsigned char *chk, size_t chklen,
+					unsigned int flags)
+	{
+	return do_x509_check(x, chk, chklen, flags, GEN_EMAIL);
+	}
+
+int X509_check_ip(X509 *x, const unsigned char *chk, size_t chklen,
+					unsigned int flags)
+	{
+	return do_x509_check(x, chk, chklen, flags, GEN_IPADD);
+	}
+
+int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
+	{
+	unsigned char ipout[16];
+	int iplen;
+	iplen = a2i_ipadd(ipout, ipasc);
+	if (iplen == 0)
+		return 0;
+	return do_x509_check(x, ipout, (size_t)iplen, flags, GEN_IPADD);
+	}
+
 /* Convert IP addresses both IPv4 and IPv6 into an 
  * OCTET STRING compatible with RFC3280.
  */

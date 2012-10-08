@@ -191,3 +191,7 @@ int args_excert(char ***pargs, int *pargc,
 			int *badarg, BIO *err, SSL_EXCERT **pexc);
 int load_excert(SSL_EXCERT **pexc, BIO *err);
 void print_ssl_summary(BIO *bio, SSL *s);
+void print_ssl_cert_checks(BIO *bio, SSL *s,
+				const unsigned char *checkhost,
+				const unsigned char *checkemail,
+				const char *checkip);
