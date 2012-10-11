@@ -951,6 +951,9 @@ static char *jpake_secret = NULL;
 	static srpsrvparm srp_callback_parm;
 #endif
 static char *srtp_profiles = NULL;
+static unsigned char *checkhost = NULL, *checkemail = NULL;
+static char *checkip = NULL;
+
 
 int MAIN(int argc, char *argv[])
 	{
@@ -1003,9 +1006,6 @@ int MAIN(int argc, char *argv[])
 	char *srp_verifier_file = NULL;
 #endif
 	SSL_EXCERT *exc = NULL;
-
-	unsigned char *checkhost = NULL, *checkemail = NULL;
-	char *checkip = NULL;
 
 	meth=SSLv23_server_method();
 
