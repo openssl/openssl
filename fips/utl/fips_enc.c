@@ -208,6 +208,7 @@ int FIPS_cipherinit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 			break;
 
 			case EVP_CIPH_CTR_MODE:
+			ctx->num = 0;
 			/* Don't reuse IV for CTR mode */
 			if(iv)
 				memcpy(ctx->iv, iv, M_EVP_CIPHER_CTX_iv_length(ctx));
