@@ -48,8 +48,8 @@ require "sparcv9_modes.pl";
 
 $bits=32;
 for (@ARGV)     { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
-if ($bits==64)  { $::bias=2047; $::frame=192; }
-else            { $::bias=0;    $::frame=112; }
+if ($bits==64)  { $::bias=2047; $::frame=192; $::size_t_cc="%xcc"; }
+else            { $::bias=0;    $::frame=112; $::size_t_cc="%icc"; }
 
 $::evp=1;	# if $evp is set to 0, script generates module with
 # Camellia_[en|de]crypt, Camellia_set_key and Camellia_cbc_encrypt
