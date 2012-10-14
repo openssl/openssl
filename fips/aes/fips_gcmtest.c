@@ -208,6 +208,8 @@ static void gcmtest(FILE *in, FILE *out, int encrypt)
 				ct = OPENSSL_malloc(ptlen);
 				rv = FIPS_cipher(&ctx, ct, pt, ptlen);
 				}
+			else
+				FIPS_cipher(&ctx, iv, iv, 0);
 			FIPS_cipher(&ctx, NULL, NULL, 0);
 			FIPS_cipher_ctx_ctrl(&ctx, EVP_CTRL_GCM_GET_TAG,
 								taglen, tag);	
@@ -242,6 +244,8 @@ static void gcmtest(FILE *in, FILE *out, int encrypt)
 				pt = OPENSSL_malloc(ptlen);
 				rv = FIPS_cipher(&ctx, pt, ct, ptlen);
 				}
+			else
+				FIPS_cipher(&ctx, iv, iv, 0);
 			rv = FIPS_cipher(&ctx, NULL, NULL, 0);
 			if (rv < 0)
 				fprintf(out, "FAIL" RESP_EOL);
