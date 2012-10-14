@@ -46,7 +46,8 @@ static int parse_mod(char *line, int *pdsa2, int *pL, int *pN,
 	if (strcmp(keyword, "L"))
 		return 0;
 	*pL = atoi(value);
-	strcpy(line, p + 1);
+	strcpy(lbuf, p + 1);
+        strcpy(line, lbuf);
 	if (pmd)
 		p = strchr(line, ',');
 	else
