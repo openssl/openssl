@@ -1,7 +1,7 @@
 #!/usr/bin/env perl
 
 # ====================================================================
-# Written by Andy Polyakov <appro@opensl.org> for the OpenSSL
+# Written by Andy Polyakov <appro@openssl.org> for the OpenSSL
 # project. The module is, however, dual licensed under OpenSSL and
 # CRYPTOGAMS licenses depending on where you obtain it. For further
 # details see http://www.openssl.org/~appro/cryptogams/.
@@ -242,6 +242,7 @@ md5_block_asm_data_order:
 	subcc	%o2, 1, %o2		! done yet? 
 	ldd	[%o1 + 0x38], %f22
 	add	%o1, 0x40, %o1
+	prefetch [%o1 + 63], 20
 
 	.word	0x81b02800		! MD5
 
@@ -272,6 +273,7 @@ md5_block_asm_data_order:
 	subcc	%o2, 1, %o2		! done yet?
 	ldd	[%o1 + 0x40], %f26
 	add	%o1, 0x40, %o1
+	prefetch [%o1 + 63], 20
 
 	faligndata %f10, %f12, %f8
 	faligndata %f12, %f14, %f10

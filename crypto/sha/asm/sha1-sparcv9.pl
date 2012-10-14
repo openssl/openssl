@@ -227,6 +227,7 @@ sha1_block_data_order:
 	subcc	%o2, 1, %o2		! done yet? 
 	ldd	[%o1 + 0x38], %f22
 	add	%o1, 0x40, %o1
+	prefetch [%o1 + 63], 20
 
 	.word	0x81b02820		! SHA1
 
@@ -257,6 +258,7 @@ sha1_block_data_order:
 	subcc	%o2, 1, %o2		! done yet?
 	ldd	[%o1 + 0x40], %f26
 	add	%o1, 0x40, %o1
+	prefetch [%o1 + 63], 20
 
 	faligndata %f10, %f12, %f8
 	faligndata %f12, %f14, %f10

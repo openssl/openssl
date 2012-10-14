@@ -514,6 +514,8 @@ $code.=<<___ if ($SZ==8); 		# SHA512
 	subcc	%o2, 1, %o2		! done yet?
 	ldd	[%o1 + 0x78], %f46
 	add	%o1, 0x80, %o1
+	prefetch [%o1 + 63], 20
+	prefetch [%o1 + 64+63], 20
 
 	.word	0x81b02860		! SHA512
 
@@ -555,6 +557,8 @@ $code.=<<___ if ($SZ==8); 		# SHA512
 	subcc	%o2, 1, %o2		! done yet?
 	ldd	[%o1 + 0x80], %f50
 	add	%o1, 0x80, %o1
+	prefetch [%o1 + 63], 20
+	prefetch [%o1 + 64+63], 20
 
 	faligndata %f18, %f20, %f16
 	faligndata %f20, %f22, %f18
@@ -604,6 +608,7 @@ $code.=<<___ if ($SZ==4); 		# SHA256
 	subcc	%o2, 1, %o2		! done yet?
 	ldd	[%o1 + 0x38], %f22
 	add	%o1, 0x40, %o1
+	prefetch [%o1 + 63], 20
 
 	.word	0x81b02840		! SHA256
 
@@ -637,6 +642,7 @@ $code.=<<___ if ($SZ==4); 		# SHA256
 	subcc	%o2, 1, %o2		! done yet?
 	ldd	[%o1 + 0x40], %f26
 	add	%o1, 0x40, %o1
+	prefetch [%o1 + 63], 20
 
 	faligndata %f10, %f12, %f8
 	faligndata %f12, %f14, %f10
