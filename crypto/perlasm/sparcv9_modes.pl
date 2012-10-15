@@ -12,14 +12,9 @@
 # This is "cooperative" optimization, as it reduces overall pressure
 # on memory interface. Benefits can't be observed/quantified with
 # usual benchmarks, on the contrary you can notice that single-thread
-# performance for parallelizable modes is ~1.5% worse. Special note
-# about commented 'membar' instructions, otherwise recommended by
-# manual. Rationale is following. Memory view is consistent from
-# viewpoint of processor executing the code even when ASI in question
-# is used. If thread on another processor has to access the result,
-# its availability would have to be mediated and it can be done only
-# through a syncronization operation which would requre ... 'membar'.
-# All this based on suggestions from David Miller.
+# performance for parallelizable modes is ~1.5% worse for largest
+# block sizes [though few percent better for not so long ones]. All
+# this based on suggestions from David Miller.
 
 my ($inp,$out,$len,$key,$ivec,$enc)=map("%i$_",(0..5));
 my ($ileft,$iright,$ooff,$omask,$ivoff,$blk_init)=map("%l$_",(0..7));
@@ -213,7 +208,7 @@ $::code.=<<___;
 	brnz,pt		$len, .L${bits}_cbc_enc_blk_loop
 	add		$out, 8, $out
 
-	!membar		0x0f
+	membar		#StoreLoad|#StoreStore
 	brnz,pt		$blk_init, .L${bits}_cbc_enc_loop
 	mov		$blk_init, $len
 ___
@@ -277,9 +272,9 @@ $::code.=<<___;
 	mov		0xff, $omask
 	sub		$iright, $ileft, $iright
 	and		$out, 7, $ooff
-	cmp		$len, 127
+	cmp		$len, 255
 	movrnz		$ooff, 0, $blk_init		! if (	$out&7 ||
-	movleu		$::size_t_cc, 0, $blk_init	!	$len<128 ||
+	movleu		$::size_t_cc, 0, $blk_init	!	$len<256 ||
 	brnz,pn		$blk_init, .L${bits}cbc_dec_blk	!	$inp==$out)
 	srl		$omask, $ooff, $omask
 
@@ -569,7 +564,7 @@ $::code.=<<___;
 
 	add		$blk_init, $len, $len
 	andcc		$len, 1, %g0		! is number of blocks even?
-	!membar		0x0f
+	membar		#StoreLoad|#StoreStore
 	bnz,pt		%icc, .L${bits}_cbc_dec_loop
 	srl		$len, 0, $len
 	brnz,pn		$len, .L${bits}_cbc_dec_loop2x
@@ -630,9 +625,9 @@ ${alg}${bits}_t4_ctr32_encrypt:
 	mov		0xff, $omask
 	sub		$iright, $ileft, $iright
 	and		$out, 7, $ooff
-	cmp		$len, 127
+	cmp		$len, 255
 	movrnz		$ooff, 0, $blk_init		! if (	$out&7 ||
-	movleu		$::size_t_cc, 0, $blk_init	!	$len<128 ||
+	movleu		$::size_t_cc, 0, $blk_init	!	$len<256 ||
 	brnz,pn		$blk_init, .L${bits}_ctr32_blk	!	$inp==$out)
 	srl		$omask, $ooff, $omask
 
@@ -884,7 +879,7 @@ $::code.=<<___;
 
 	add		$blk_init, $len, $len
 	andcc		$len, 1, %g0		! is number of blocks even?
-	!membar		0x0f
+	membar		#StoreLoad|#StoreStore
 	bnz,pt		%icc, .L${bits}_ctr32_loop
 	srl		$len, 0, $len
 	brnz,pn		$len, .L${bits}_ctr32_loop2x
