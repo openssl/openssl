@@ -973,8 +973,6 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
 	if (!gctx->iv_set)
 		return -1;
-	if (!ctx->encrypt && gctx->taglen < 0)
-		return -1;
 	if (in)
 		{
 		if (out == NULL)
@@ -1016,6 +1014,8 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 		{
 		if (!ctx->encrypt)
 			{
+			if (gctx->taglen < 0)
+				return -1;
 			if (CRYPTO_gcm128_finish(&gctx->gcm,
 					ctx->buf, gctx->taglen) != 0)
 				return -1;
