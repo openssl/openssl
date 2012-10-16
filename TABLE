@@ -733,7 +733,7 @@ $arflags      =
 $cc           = cc
 $cflags       = -q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst
 $unistd       = 
-$thread_cflag = -qthreaded
+$thread_cflag = -qthreaded -D_THREAD_SAFE
 $sys_id       = AIX
 $lflags       = 
 $bn_ops       = BN_LLONG RC4_CHAR
@@ -814,7 +814,7 @@ $arflags      =
 $cc           = cc
 $cflags       = -q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst
 $unistd       = 
-$thread_cflag = -qthreaded
+$thread_cflag = -qthreaded -D_THREAD_SAFE
 $sys_id       = AIX
 $lflags       = 
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR
@@ -1487,7 +1487,7 @@ $arflags      =
 
 *** debug-levitte-linux-elf
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DL_ENDIAN -ggdb -g3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1514,7 +1514,7 @@ $arflags      =
 
 *** debug-levitte-linux-elf-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DL_ENDIAN -DTERMIO -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1541,7 +1541,7 @@ $arflags      =
 
 *** debug-levitte-linux-noasm
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DBN_DEBUG -DREF_CHECK -DCONF_DEBUG -DCRYPTO_MDEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -ggdb -g3 -Wall
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
@@ -1568,7 +1568,7 @@ $arflags      =
 
 *** debug-levitte-linux-noasm-extreme
 $cc           = gcc
-$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -D_POSIX_SOURCE -DPEDANTIC -ggdb -g3 -mcpu=i486 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
+$cflags       = -DLEVITTE_DEBUG -DREF_CHECK -DCONF_DEBUG -DBN_DEBUG -DBN_DEBUG_RAND -DCRYPTO_MDEBUG -DENGINE_CONF_DEBUG -DOPENSSL_NO_ASM -DL_ENDIAN -DTERMIO -DPEDANTIC -ggdb -g3 -pedantic -ansi -Wall -W -Wundef -Wshadow -Wcast-align -Wstrict-prototypes -Wmissing-prototypes -Wno-long-long -Wundef -Wconversion -pipe
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 
