@@ -862,7 +862,7 @@ $multilib     =
 $cc           = cc
 $cflags       = -q32 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst
 $unistd       = 
-$thread_cflag = -qthreaded
+$thread_cflag = -qthreaded -D_THREAD_SAFE
 $sys_id       = AIX
 $lflags       = 
 $bn_ops       = BN_LLONG RC4_CHAR
@@ -961,7 +961,7 @@ $multilib     =
 $cc           = cc
 $cflags       = -q64 -O -DB_ENDIAN -qmaxmem=16384 -qro -qroconst
 $unistd       = 
-$thread_cflag = -qthreaded
+$thread_cflag = -qthreaded -D_THREAD_SAFE
 $sys_id       = AIX
 $lflags       = 
 $bn_ops       = SIXTY_FOUR_BIT_LONG RC4_CHAR
