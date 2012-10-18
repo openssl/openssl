@@ -582,7 +582,7 @@ static int aes_t4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 	if(ret < 0)
 		{
-		EVPerr(EVP_F_AES_INIT_KEY,EVP_R_AES_KEY_SETUP_FAILED);
+		EVPerr(EVP_F_AES_T4_INIT_KEY,EVP_R_AES_KEY_SETUP_FAILED);
 		return 0;
 		}
 
