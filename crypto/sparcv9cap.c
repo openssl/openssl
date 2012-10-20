@@ -15,15 +15,20 @@ unsigned int OPENSSL_sparcv9cap_P[2]={SPARCV9_TICK_PRIVILEGED,0};
 
 int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num)
 	{
+	int bn_mul_mont_vis3(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num);
 	int bn_mul_mont_fpu(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num);
 	int bn_mul_mont_int(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0, int num);
 
-	if (num>=8 && !(num&1) &&
-	    (OPENSSL_sparcv9cap_P[0]&(SPARCV9_PREFER_FPU|SPARCV9_VIS1)) ==
-		(SPARCV9_PREFER_FPU|SPARCV9_VIS1))
-		return bn_mul_mont_fpu(rp,ap,bp,np,n0,num);
-	else
-		return bn_mul_mont_int(rp,ap,bp,np,n0,num);
+	if (!(num&1) && num>=6)
+		{
+		if ((OPENSSL_sparcv9cap_P[0]&SPARCV9_VIS3))
+			return bn_mul_mont_vis3(rp,ap,bp,np,n0,num);
+		else if (num>=8 &&
+			(OPENSSL_sparcv9cap_P[0]&(SPARCV9_PREFER_FPU|SPARCV9_VIS1)) ==
+			(SPARCV9_PREFER_FPU|SPARCV9_VIS1))
+			return bn_mul_mont_fpu(rp,ap,bp,np,n0,num);
+		}
+	return bn_mul_mont_int(rp,ap,bp,np,n0,num);
 	}
 
 unsigned long	_sparcv9_rdtick(void);
@@ -35,7 +40,7 @@ unsigned long	_sparcv9_rdcfr(void);
 void		_sparcv9_vis3_probe(void);
 unsigned long	_sparcv9_random(void);
 size_t 		_sparcv9_vis1_instrument_bus(unsigned int *,size_t);
-size_t		_sparcv8_vis1_instrument_bus2(unsigned int *,size_t,size_t);
+size_t		_sparcv9_vis1_instrument_bus2(unsigned int *,size_t,size_t);
 
 unsigned long OPENSSL_rdtsc(void)
 	{
@@ -51,7 +56,7 @@ unsigned long OPENSSL_rdtsc(void)
 
 size_t OPENSSL_instrument_bus(unsigned int *out,size_t cnt)
 	{
-	if (OPENSSL_sparcv9cap_P[0]&(SPARCV9_TICK_PRIVILEGED|SPARCV9_BLK) ==
+	if ((OPENSSL_sparcv9cap_P[0]&(SPARCV9_TICK_PRIVILEGED|SPARCV9_BLK)) ==
 			SPARCV9_BLK)
 		return _sparcv9_vis1_instrument_bus(out,cnt);
 	else
@@ -60,7 +65,7 @@ size_t OPENSSL_instrument_bus(unsigned int *out,size_t cnt)
 
 size_t OPENSSL_instrument_bus2(unsigned int *out,size_t cnt,size_t max)
 	{
-	if (OPENSSL_sparcv9cap_P[0]&(SPARCV9_TICK_PRIVILEGED|SPARCV9_BLK) ==
+	if ((OPENSSL_sparcv9cap_P[0]&(SPARCV9_TICK_PRIVILEGED|SPARCV9_BLK)) ==
 			SPARCV9_BLK)
 		return _sparcv9_vis1_instrument_bus2(out,cnt,max);
 	else
