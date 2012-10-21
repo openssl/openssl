@@ -4,6 +4,9 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <unistd.h>
+#ifdef __linux
+#include <sys/utsname.h>
+#endif
 #include <crypto.h>
 #include <openssl/bn.h>
 
@@ -102,6 +105,10 @@ void OPENSSL_cpuid_setup(void)
 
 	if (sizeof(size_t)==4)
 		{
+#ifdef __linux
+		struct utsname uts;
+		if (uname(&uts)==0 && strcmp(uts.machine,"ppc64")==0)
+#endif
 		if (sigsetjmp(ill_jmp,1) == 0)
 			{
 			OPENSSL_ppc64_probe();
