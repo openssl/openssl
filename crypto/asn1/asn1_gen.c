@@ -852,3 +852,27 @@ static int bitstr_cb(const char *elem, int len, void *bitstr)
 	return 1;
 	}
 
+static int mask_cb(const char *elem, int len, void *arg)
+	{
+	unsigned long *pmask = arg, tmpmask;
+	int tag;
+	if (len == 3 && !strncmp(elem, "DIR", 3))
+		{
+		*pmask |= B_ASN1_DIRECTORYSTRING;
+		return 1;
+		}
+	tag = asn1_str2tag(elem, len);
+	if (!tag || (tag & ASN1_GEN_FLAG))
+		return 0;
+	tmpmask = ASN1_tag2bit(tag);
+	if (!tmpmask)
+		return 0;
+	*pmask |= tmpmask;
+	return 1;
+	}
+
+int ASN1_str2mask(const char *str, unsigned long *pmask)
+	{
+	*pmask = 0;
+	return CONF_parse_list(str, '|', 1, mask_cb, pmask);
+	}

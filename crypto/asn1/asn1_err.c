@@ -1,6 +1,6 @@
 /* crypto/asn1/asn1_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2010 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2012 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -166,6 +166,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_FUNC(ASN1_F_D2I_X509),	"D2I_X509"},
 {ERR_FUNC(ASN1_F_D2I_X509_CINF),	"D2I_X509_CINF"},
 {ERR_FUNC(ASN1_F_D2I_X509_PKEY),	"d2i_X509_PKEY"},
+{ERR_FUNC(ASN1_F_DO_TCREATE),	"DO_TCREATE"},
 {ERR_FUNC(ASN1_F_I2D_ASN1_BIO_STREAM),	"i2d_ASN1_bio_stream"},
 {ERR_FUNC(ASN1_F_I2D_ASN1_SET),	"i2d_ASN1_SET"},
 {ERR_FUNC(ASN1_F_I2D_ASN1_TIME),	"I2D_ASN1_TIME"},
@@ -184,6 +185,7 @@ static ERR_STRING_DATA ASN1_str_functs[]=
 {ERR_FUNC(ASN1_F_PKCS5_PBKDF2_SET),	"PKCS5_pbkdf2_set"},
 {ERR_FUNC(ASN1_F_SMIME_READ_ASN1),	"SMIME_read_ASN1"},
 {ERR_FUNC(ASN1_F_SMIME_TEXT),	"SMIME_text"},
+{ERR_FUNC(ASN1_F_STBL_MODULE_INIT),	"STBL_MODULE_INIT"},
 {ERR_FUNC(ASN1_F_X509_CINF_NEW),	"X509_CINF_NEW"},
 {ERR_FUNC(ASN1_F_X509_CRL_ADD0_REVOKED),	"X509_CRL_add0_revoked"},
 {ERR_FUNC(ASN1_F_X509_INFO_NEW),	"X509_INFO_new"},
@@ -254,9 +256,11 @@ static ERR_STRING_DATA ASN1_str_reasons[]=
 {ERR_REASON(ASN1_R_INVALID_NUMBER)       ,"invalid number"},
 {ERR_REASON(ASN1_R_INVALID_OBJECT_ENCODING),"invalid object encoding"},
 {ERR_REASON(ASN1_R_INVALID_SEPARATOR)    ,"invalid separator"},
+{ERR_REASON(ASN1_R_INVALID_STRING_TABLE_VALUE),"invalid string table value"},
 {ERR_REASON(ASN1_R_INVALID_TIME_FORMAT)  ,"invalid time format"},
 {ERR_REASON(ASN1_R_INVALID_UNIVERSALSTRING_LENGTH),"invalid universalstring length"},
 {ERR_REASON(ASN1_R_INVALID_UTF8STRING)   ,"invalid utf8string"},
+{ERR_REASON(ASN1_R_INVALID_VALUE)        ,"invalid value"},
 {ERR_REASON(ASN1_R_IV_TOO_LARGE)         ,"iv too large"},
 {ERR_REASON(ASN1_R_LENGTH_ERROR)         ,"length error"},
 {ERR_REASON(ASN1_R_LIST_ERROR)           ,"list error"},

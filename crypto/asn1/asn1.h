@@ -263,6 +263,12 @@ typedef struct ASN1_ENCODING_st
 #define ASN1_LONG_UNDEF	0x7fffffffL
 
 #define STABLE_FLAGS_MALLOC	0x01
+/* A zero passed to ASN1_STRING_TABLE_new_add for the flags is 
+ * interpreted as "don't change" and STABLE_FLAGS_MALLOC is always
+ * set. By setting STABLE_FLAGS_MALLOC only we can clear the existing
+ * value. Use the alias STABLE_FLAGS_CLEAR to reflect this.
+ */
+#define STABLE_FLAGS_CLEAR	STABLE_FLAGS_MALLOC
 #define STABLE_NO_MASK		0x02
 #define DIRSTRING_TYPE	\
  (B_ASN1_PRINTABLESTRING|B_ASN1_T61STRING|B_ASN1_BMPSTRING|B_ASN1_UTF8STRING)
@@ -1090,9 +1096,11 @@ int ASN1_item_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
 int ASN1_item_ndef_i2d(ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *it);
 
 void ASN1_add_oid_module(void);
+void ASN1_add_stable_module(void);
 
 ASN1_TYPE *ASN1_generate_nconf(char *str, CONF *nconf);
 ASN1_TYPE *ASN1_generate_v3(char *str, X509V3_CTX *cnf);
+int ASN1_str2mask(const char *str, unsigned long *pmask);
 
 /* ASN1 Print flags */
 
@@ -1260,6 +1268,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_D2I_X509					 156
 #define ASN1_F_D2I_X509_CINF				 157
 #define ASN1_F_D2I_X509_PKEY				 159
+#define ASN1_F_DO_TCREATE				 222
 #define ASN1_F_I2D_ASN1_BIO_STREAM			 211
 #define ASN1_F_I2D_ASN1_SET				 188
 #define ASN1_F_I2D_ASN1_TIME				 160
@@ -1278,6 +1287,7 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_F_PKCS5_PBKDF2_SET				 219
 #define ASN1_F_SMIME_READ_ASN1				 212
 #define ASN1_F_SMIME_TEXT				 213
+#define ASN1_F_STBL_MODULE_INIT				 223
 #define ASN1_F_X509_CINF_NEW				 168
 #define ASN1_F_X509_CRL_ADD0_REVOKED			 169
 #define ASN1_F_X509_INFO_NEW				 170
@@ -1345,9 +1355,11 @@ void ERR_load_ASN1_strings(void);
 #define ASN1_R_INVALID_NUMBER				 187
 #define ASN1_R_INVALID_OBJECT_ENCODING			 216
 #define ASN1_R_INVALID_SEPARATOR			 131
+#define ASN1_R_INVALID_STRING_TABLE_VALUE		 218
 #define ASN1_R_INVALID_TIME_FORMAT			 132
 #define ASN1_R_INVALID_UNIVERSALSTRING_LENGTH		 133
 #define ASN1_R_INVALID_UTF8STRING			 134
+#define ASN1_R_INVALID_VALUE				 219
 #define ASN1_R_IV_TOO_LARGE				 135
 #define ASN1_R_LENGTH_ERROR				 136
 #define ASN1_R_LIST_ERROR				 188
