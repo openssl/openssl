@@ -36,6 +36,13 @@
 # references to input data and Z.hi updates to achieve 12 cycles
 # timing. To anchor to something else, sha1-sparcv9.pl spends 11.6
 # cycles to process one byte on UltraSPARC pre-Tx CPU and ~24 on T1.
+#
+# October 2012
+#
+# Add VIS3 lookup-table-free implementation using polynomial
+# multiplication xmulx[hi] and extended addition addxc[cc]
+# instructions. 3.96/6.26x improvement on T3/T4 or in absolute
+# terms 9.02/2.61 cycles per byte.
 
 $bits=32;
 for (@ARGV)     { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
@@ -66,6 +73,10 @@ $Htbl="%i1";
 $inp="%i2";
 $len="%i3";
 
+$code.=<<___ if ($bits==64);
+.register	%g2,#scratch
+.register	%g3,#scratch
+___
 $code.=<<___;
 .section	".text",#alloc,#execinstr
 
@@ -321,10 +332,213 @@ gcm_gmult_4bit:
 	restore
 .type	gcm_gmult_4bit,#function
 .size	gcm_gmult_4bit,(.-gcm_gmult_4bit)
-.asciz	"GHASH for SPARCv9, CRYPTOGAMS by <appro\@openssl.org>"
+___
+
+{{{
+# Straightforward 64-bits-at-a-time approach with pair of 128x64-bit
+# multiplications followed by 64-bit reductions. While it might be
+# suboptimal with regard to sheer amount of multiplications, other
+# methods would require larger amount of 64-bit registers, which we
+# don't have in 32-bit application. Also, they [alternative methods
+# such as aggregated reduction] kind of thrive on fast 128-bit SIMD
+# instructions and these are not option on SPARC...
+
+($Xip,$Htable,$inp,$len)=map("%i$_",(0..3));
+
+($xE1,$Hhi,$Hlo,$Rhi,$Rlo,$M0hi,$M0lo,$M1hi,$M1lo,$Zhi,$Zlo,$X)=
+	(map("%g$_",(1..5)),map("%o$_",(0..5,7)));
+($shl,$shr)=map("%l$_",(0..7));
+
+$code.=<<___;
+.globl	gcm_gmult_vis3
+.align	32
+gcm_gmult_vis3:
+	save	%sp,-$frame,%sp
+
+	ldx	[$Xip+8],$X		! load X.lo
+	ldx	[$Htable-8], $Hlo	! load H
+	ldx	[$Htable-16],$Hhi
+	mov	0xE1,$xE1
+	sllx	$xE1,57,$xE1
+
+	xmulx	$X,$Hlo,$M0lo		! H·X.lo
+	xmulxhi	$X,$Hlo,$M0hi
+	xmulx	$X,$Hhi,$M1lo
+	xmulxhi	$X,$Hhi,$M1hi
+	ldx	[$Xip+0],$X		! load X.hi
+
+	addcc	$M0lo,$M0lo,$M0lo	! (H·X.lo)<<1
+	xor	$M0hi,$M1lo,$M1lo
+
+	xmulx	$xE1,$M0lo,$Rlo		! res=Z.lo·(0xE1<<57)
+	xmulxhi	$xE1,$M0lo,$Rhi
+
+	addxccc	$M1lo,$M1lo,$Zlo	! Z=((H·X.lo)<<1)>>64
+	addxc	$M1hi,$M1hi,$Zhi
+	xor	$M0lo,$Zhi,$Zhi		! overflow bit from 0xE1<<57
+
+	xmulx	$X,$Hlo,$M0lo		! H·X.hi
+	xmulxhi	$X,$Hlo,$M0hi
+	xmulx	$X,$Hhi,$M1lo
+	xmulxhi	$X,$Hhi,$M1hi
+
+	xor	$Rlo,$Zlo,$Zlo		! Z^=res
+	xor	$Rhi,$Zhi,$Zhi
+
+	addcc	$M0lo,$M0lo,$M0lo	! (H·X.lo)<<1
+	xor	$Zlo, $M0lo,$M0lo
+	xor	$M0hi,$M1lo,$M1lo
+
+	xmulx	$xE1,$M0lo,$Rlo		! res=Z.lo·(0xE1<<57)
+	xmulxhi	$xE1,$M0lo,$Rhi
+
+	addxccc	$M1lo,$M1lo,$M1lo
+	addxc	$M1hi,$M1hi,$M1hi
+
+	xor	$M1lo,$Zhi,$Zlo		! Z=(Z^(H·X.hi)<<1)>>64
+	xor	$M0lo,$M1hi,$Zhi	! overflow bit from 0xE1<<57
+
+	xor	$Rlo,$Zlo,$Zlo		! Z^=res
+	xor	$Rhi,$Zhi,$Zhi
+
+	stx	$Zlo,[$Xip+8]		! save Xi
+	stx	$Zhi,[$Xip+0]
+
+	ret
+	restore
+.type	gcm_gmult_vis3,#function
+.size	gcm_gmult_vis3,.-gcm_gmult_vis3
+
+.globl	gcm_ghash_vis3
+.align	32
+gcm_ghash_vis3:
+	save	%sp,-$frame,%sp
+
+	ldx	[$Xip+0],$Zhi		! load X.hi
+	ldx	[$Xip+8],$Zlo		! load X.lo
+	and	$inp,7,$shl
+	andn	$inp,7,$inp
+	ldx	[$Htable-8], $Hlo	! load H
+	ldx	[$Htable-16],$Hhi
+	sll	$shl,3,$shl
+	prefetch [$inp+63], 20
+	mov	0xE1,$xE1
+	sub	%g0,$shl,$shr
+	sllx	$xE1,57,$xE1
+
+.Loop:
+	ldx	[$inp+8],$Rlo		! load *inp
+	brz,pt	$shl,1f
+	ldx	[$inp+0],$Rhi
+
+	ldx	[$inp+16],$X		! align data
+	srlx	$Rlo,$shr,$M0lo
+	sllx	$Rlo,$shl,$Rlo
+	sllx	$Rhi,$shl,$Rhi
+	srlx	$X,$shr,$X
+	or	$M0lo,$Rhi,$Rhi
+	or	$X,$Rlo,$Rlo
+
+1:
+	add	$inp,16,$inp
+	sub	$len,16,$len
+	xor	$Rlo,$Zlo,$X
+	prefetch [$inp+63], 20
+
+	xmulx	$X,$Hlo,$M0lo		! H·X.lo
+	xmulxhi	$X,$Hlo,$M0hi
+	xmulx	$X,$Hhi,$M1lo
+	xmulxhi	$X,$Hhi,$M1hi
+	xor	$Rhi,$Zhi,$X
+
+	addcc	$M0lo,$M0lo,$M0lo	! (H·X.lo)<<1
+	xor	$M0hi,$M1lo,$M1lo
+
+	xmulx	$xE1,$M0lo,$Rlo		! res=Z.lo·(0xE1<<57)
+	xmulxhi	$xE1,$M0lo,$Rhi
+
+	addxccc	$M1lo,$M1lo,$Zlo	! Z=((H·X.lo)<<1)>>64
+	addxc	$M1hi,$M1hi,$Zhi
+	xor	$M0lo,$Zhi,$Zhi		! overflow bit from 0xE1<<57
+
+	xmulx	$X,$Hlo,$M0lo		! H·X.hi
+	xmulxhi	$X,$Hlo,$M0hi
+	xmulx	$X,$Hhi,$M1lo
+	xmulxhi	$X,$Hhi,$M1hi
+
+	xor	$Rlo,$Zlo,$Zlo		! Z^=res
+	xor	$Rhi,$Zhi,$Zhi
+
+	addcc	$M0lo,$M0lo,$M0lo	! (H·X.lo)<<1
+	xor	$Zlo, $M0lo,$M0lo
+	xor	$M0hi,$M1lo,$M1lo
+
+	xmulx	$xE1,$M0lo,$Rlo		! res=Z.lo·(0xE1<<57)
+	xmulxhi	$xE1,$M0lo,$Rhi
+
+	addxccc	$M1lo,$M1lo,$M1lo
+	addxc	$M1hi,$M1hi,$M1hi
+
+	xor	$M1lo,$Zhi,$Zlo		! Z=(Z^(H·X.hi)<<1)>>64
+	xor	$M0lo,$M1hi,$Zhi	! overflow bit from 0xE1<<57
+
+	xor	$Rlo,$Zlo,$Zlo		! Z^=res
+	brnz,pt	$len,.Loop
+	xor	$Rhi,$Zhi,$Zhi
+
+	stx	$Zlo,[$Xip+8]		! save Xi
+	stx	$Zhi,[$Xip+0]
+
+	ret
+	restore
+.type	gcm_ghash_vis3,#function
+.size	gcm_ghash_vis3,.-gcm_ghash_vis3
+___
+}}}
+$code.=<<___;
+.asciz	"GHASH for SPARCv9/VIS3, CRYPTOGAMS by <appro\@openssl.org>"
 .align	4
 ___
 
-$code =~ s/\`([^\`]*)\`/eval $1/gem;
-print $code;
+
+# Purpose of these subroutines is to explicitly encode VIS instructions,
+# so that one can compile the module without having to specify VIS
+# extentions on compiler command line, e.g. -xarch=v9 vs. -xarch=v9a.
+# Idea is to reserve for option to produce "universal" binary and let
+# programmer detect if current CPU is VIS capable at run-time.
+sub unvis3 {
+my ($mnemonic,$rs1,$rs2,$rd)=@_;
+my %bias = ( "g" => 0, "o" => 8, "l" => 16, "i" => 24 );
+my ($ref,$opf);
+my %visopf = (	"addxc"		=> 0x011,
+		"addxccc"	=> 0x013,
+		"xmulx"		=> 0x115,
+		"xmulxhi"	=> 0x116	);
+
+    $ref = "$mnemonic\t$rs1,$rs2,$rd";
+
+    if ($opf=$visopf{$mnemonic}) {
+	foreach ($rs1,$rs2,$rd) {
+	    return $ref if (!/%([goli])([0-9])/);
+	    $_=$bias{$1}+$2;
+	}
+
+	return	sprintf ".word\t0x%08x !%s",
+			0x81b00000|$rd<<25|$rs1<<14|$opf<<5|$rs2,
+			$ref;
+    } else {
+	return $ref;
+    }
+}
+
+foreach (split("\n",$code)) {
+	s/\`([^\`]*)\`/eval $1/ge;
+
+	s/\b(xmulx[hi]*|addxc[c]{0,2})\s+(%[goli][0-7]),\s*(%[goli][0-7]),\s*(%[goli][0-7])/
+		&unvis3($1,$2,$3,$4)
+	 /ge;
+
+	print $_,"\n";
+}
+
 close STDOUT;
