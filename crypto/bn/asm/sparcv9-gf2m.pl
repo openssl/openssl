@@ -18,22 +18,7 @@
 # ~100-230% faster than gcc-generated code and ~35-90% faster than
 # the pure SPARCv9 code path.
 
-$bits=32;
-for (@ARGV)     { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
-if ($bits==64)  { $bias=2047; $frame=192; }
-else            { $bias=0;    $frame=112; }
-
 $locals=16*8;
-
-$code.=<<___;
-#include <sparc_arch.h>
-
-.section        ".text",#alloc,#execinstr
-___
-$code.=<<___ if ($bits==64);
-.register       %g2,#scratch
-.register       %g3,#scratch
-___
 
 $tab="%l0";
 
@@ -44,6 +29,13 @@ $tab="%l0";
 ($lo,$hi,$b)=("%g1",$a8,"%o7"); $a=$lo;
 
 $code.=<<___;
+#include <sparc_arch.h>
+
+#ifdef __arch64__
+.register	%g2,#scratch
+.register	%g3,#scratch
+#endif
+
 #ifdef __PIC__
 SPARC_PIC_THUNK(%g1)
 #endif
@@ -74,7 +66,7 @@ bn_GF2m_mul_2x2:
 
 .align	16
 .Lsoftware:
-	save	%sp,-$frame-$locals,%sp
+	save	%sp,-STACK_FRAME-$locals,%sp
 
 	sllx	%i1,32,$a
 	mov	-1,$a12
@@ -83,7 +75,7 @@ bn_GF2m_mul_2x2:
 	srlx	$a12,1,$a48			! 0x7fff...
 	or	%i4,$b,$b
 	srlx	$a12,2,$a12			! 0x3fff...
-	add	%sp,$bias+$frame,$tab
+	add	%sp,STACK_BIAS+STACK_FRAME,$tab
 
 	sllx	$a,2,$a4
 	mov	$a,$a1

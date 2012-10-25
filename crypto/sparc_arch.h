@@ -32,6 +32,10 @@
 # define __PIC__
 #endif
 
+#if defined(__SUNPRO_C) && defined(__sparcv9) && !defined(__arch64__)
+# define __arch64__
+#endif
+
 #define SPARC_PIC_THUNK(reg)	\
 	.align	32;		\
 .Lpic_thunk:			\
@@ -53,18 +57,23 @@
 	add	%o7, reg, reg
 #endif
 
-#if	(defined(__GNUC__) && defined(__arch64__)) || \
-	(defined(__SUNPRO_C) && defined(__sparcv9))
+#if defined(__arch64__)
 
 # define SPARC_LOAD_ADDRESS(SYM, reg)	\
 	setx	SYM, %o7, reg;
-# define LDPTR	ldx
+# define LDPTR		ldx
+# define SIZE_T_CC	%xcc
+# define STACK_FRAME	192
+# define STACK_BIAS	2047
 
 #else
 
 # define SPARC_LOAD_ADDRESS(SYM, reg)	\
 	set	SYM, reg;
-# define LDPTR	ld
+# define LDPTR		ld
+# define SIZE_T_CC	%icc
+# define STACK_FRAME	112
+# define STACK_BIAS	0
 # define SPARC_LOAD_ADDRESS_LEAF(SYM,reg,tmp) SPARC_LOAD_ADDRESS(SYM,reg)
 
 #endif

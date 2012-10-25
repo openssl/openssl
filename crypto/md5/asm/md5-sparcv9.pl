@@ -17,11 +17,6 @@
 # single-process result on 8-core processor, or ~11GBps per 2.85GHz
 # socket.
 
-$bits=32;
-for (@ARGV)	{ $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
-if ($bits==64)	{ $bias=2047; $frame=192; }
-else		{ $bias=0;    $frame=112; }
-
 $output=shift;
 open STDOUT,">$output";
 
@@ -198,12 +193,13 @@ $code.=<<___;
 ___
 }
 
-$code.=<<___ if ($bits==64);
-.register	%g2,#scratch
-.register	%g3,#scratch
-___
 $code.=<<___;
 #include "sparc_arch.h"
+
+#ifdef __arch64__
+.register	%g2,#scratch
+.register	%g3,#scratch
+#endif
 
 .section	".text",#alloc,#execinstr
 
@@ -246,7 +242,7 @@ md5_block_asm_data_order:
 
 	.word	0x81b02800		! MD5
 
-	bne,pt	`$bits==64?"%xcc":"%icc"`, .Lhw_loop
+	bne,pt	SIZE_T_CC, .Lhw_loop
 	nop
 
 .Lhwfinish:
@@ -287,7 +283,7 @@ md5_block_asm_data_order:
 
 	.word	0x81b02800		! MD5
 
-	bne,pt	`$bits==64?"%xcc":"%icc"`, .Lhwunaligned_loop
+	bne,pt	SIZE_T_CC, .Lhwunaligned_loop
 	for	%f26, %f26, %f10	! %f10=%f26
 
 	ba	.Lhwfinish
@@ -295,7 +291,7 @@ md5_block_asm_data_order:
 
 .align	16
 .Lsoftware:
-	save	%sp,-$frame,%sp
+	save	%sp,-STACK_FRAME,%sp
 
 	rd	%asi,$saved_asi
 	wr	%g0,0x88,%asi		! ASI_PRIMARY_LITTLE
@@ -355,7 +351,7 @@ $code.=<<___;
 	add	$t2,$C,$C
 	add	$CD,$D,$D
 	srl	$B,0,$B			! clruw	$B
-	bne	`$bits==64?"%xcc":"%icc"`,.Loop
+	bne	SIZE_T_CC,.Loop
 	srl	$D,0,$D			! clruw	$D
 
 	st	$A,[$ctx+0]		! write out ctx

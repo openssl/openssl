@@ -49,12 +49,6 @@
 # saturates at 11.5x single-process result on 8-core processor, or
 # ~11/16GBps per 2.85GHz socket.
 
-
-$bits=32;
-for (@ARGV)	{ $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
-if ($bits==64)	{ $bias=2047; $frame=192; }
-else		{ $bias=0;    $frame=112; }
-
 $output=shift;
 open STDOUT,">$output";
 
@@ -191,29 +185,29 @@ $code.=<<___ if ($i<15);
 	or	@pair[1],$tmp2,$tmp2
 	`"ld	[$inp+".eval(32+4+$i*8)."],@pair[1]"	if ($i<12)`
 	add	$h,$tmp2,$T1
-	$ST	$tmp2,[%sp+`$bias+$frame+$i*$SZ`]
+	$ST	$tmp2,[%sp+STACK_BIAS+STACK_FRAME+`$i*$SZ`]
 ___
 $code.=<<___ if ($i==12);
 	bnz,a,pn	%icc,.+8
 	ld	[$inp+128],%l0
 ___
 $code.=<<___ if ($i==15);
-	ld	[%sp+`$bias+$frame+(($i+1+1)%16)*$SZ+0`],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+1)%16)*$SZ+0`],%l2
 	sllx	@pair[1],$tmp31,$tmp2	! Xload($i)
 	add	$tmp31,32,$tmp0
-	ld	[%sp+`$bias+$frame+(($i+1+1)%16)*$SZ+4`],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+1)%16)*$SZ+4`],%l3
 	sllx	@pair[0],$tmp0,$tmp1
-	ld	[%sp+`$bias+$frame+(($i+1+9)%16)*$SZ+0`],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+9)%16)*$SZ+0`],%l4
 	srlx	@pair[2],$tmp32,@pair[1]
 	or	$tmp1,$tmp2,$tmp2
-	ld	[%sp+`$bias+$frame+(($i+1+9)%16)*$SZ+4`],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+9)%16)*$SZ+4`],%l5
 	or	@pair[1],$tmp2,$tmp2
-	ld	[%sp+`$bias+$frame+(($i+1+14)%16)*$SZ+0`],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+14)%16)*$SZ+0`],%l6
 	add	$h,$tmp2,$T1
-	$ST	$tmp2,[%sp+`$bias+$frame+$i*$SZ`]
-	ld	[%sp+`$bias+$frame+(($i+1+14)%16)*$SZ+4`],%l7
-	ld	[%sp+`$bias+$frame+(($i+1+0)%16)*$SZ+0`],%l0
-	ld	[%sp+`$bias+$frame+(($i+1+0)%16)*$SZ+4`],%l1
+	$ST	$tmp2,[%sp+STACK_BIAS+STACK_FRAME+`$i*$SZ`]
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+14)%16)*$SZ+4`],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+0)%16)*$SZ+0`],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+0)%16)*$SZ+4`],%l1
 ___
 } if ($SZ==8);
 
@@ -349,9 +343,9 @@ $code.=<<___;
 	or	%l3,$tmp0,$tmp0
 
 	srlx	$tmp0,@sigma0[0],$T1
-	ld	[%sp+`$bias+$frame+(($i+1+1)%16)*$SZ+0`],%l2
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+1)%16)*$SZ+0`],%l2
 	sllx	$tmp0,`64-@sigma0[2]`,$tmp1
-	ld	[%sp+`$bias+$frame+(($i+1+1)%16)*$SZ+4`],%l3
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+1)%16)*$SZ+4`],%l3
 	srlx	$tmp0,@sigma0[1],$tmp0
 	xor	$tmp1,$T1,$T1
 	sllx	$tmp1,`@sigma0[2]-@sigma0[1]`,$tmp1
@@ -363,9 +357,9 @@ $code.=<<___;
 	or	%l7,$tmp2,$tmp2
 
 	srlx	$tmp2,@sigma1[0],$tmp1
-	ld	[%sp+`$bias+$frame+(($i+1+14)%16)*$SZ+0`],%l6
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+14)%16)*$SZ+0`],%l6
 	sllx	$tmp2,`64-@sigma1[2]`,$tmp0
-	ld	[%sp+`$bias+$frame+(($i+1+14)%16)*$SZ+4`],%l7
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+14)%16)*$SZ+4`],%l7
 	srlx	$tmp2,@sigma1[1],$tmp2
 	xor	$tmp0,$tmp1,$tmp1
 	sllx	$tmp0,`@sigma1[2]-@sigma1[1]`,$tmp0
@@ -374,28 +368,29 @@ $code.=<<___;
 	xor	$tmp0,$tmp1,$tmp1
 	sllx	%l4,32,$tmp0
 	xor	$tmp2,$tmp1,$tmp1	! sigma1(X[$i+14])
-	ld	[%sp+`$bias+$frame+(($i+1+9)%16)*$SZ+0`],%l4
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+9)%16)*$SZ+0`],%l4
 	or	%l5,$tmp0,$tmp0
-	ld	[%sp+`$bias+$frame+(($i+1+9)%16)*$SZ+4`],%l5
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+9)%16)*$SZ+4`],%l5
 
 	sllx	%l0,32,$tmp2
 	add	$tmp1,$T1,$T1
-	ld	[%sp+`$bias+$frame+(($i+1+0)%16)*$SZ+0`],%l0
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+0)%16)*$SZ+0`],%l0
 	or	%l1,$tmp2,$tmp2
 	add	$tmp0,$T1,$T1		! +=X[$i+9]
-	ld	[%sp+`$bias+$frame+(($i+1+0)%16)*$SZ+4`],%l1
+	ld	[%sp+STACK_BIAS+STACK_FRAME+`(($i+1+0)%16)*$SZ+4`],%l1
 	add	$tmp2,$T1,$T1		! +=X[$i]
-	$ST	$T1,[%sp+`$bias+$frame+($i%16)*$SZ`]
+	$ST	$T1,[%sp+STACK_BIAS+STACK_FRAME+`($i%16)*$SZ`]
 ___
     &BODY_00_15(@_);
 } if ($SZ==8);
 
-$code.=<<___ if ($bits==64);
-.register	%g2,#scratch
-.register	%g3,#scratch
-___
 $code.=<<___;
 #include "sparc_arch.h"
+
+#ifdef __arch64__
+.register	%g2,#scratch
+.register	%g3,#scratch
+#endif
 
 .section	".text",#alloc,#execinstr
 
@@ -519,7 +514,7 @@ $code.=<<___ if ($SZ==8); 		# SHA512
 
 	.word	0x81b02860		! SHA512
 
-	bne,pt	`$bits==64?"%xcc":"%icc"`, .Lhwaligned_loop
+	bne,pt	SIZE_T_CC, .Lhwaligned_loop
 	nop
 
 .Lhwfinish:
@@ -579,7 +574,7 @@ $code.=<<___ if ($SZ==8); 		# SHA512
 
 	.word	0x81b02860		! SHA512
 
-	bne,pt	`$bits==64?"%xcc":"%icc"`, .Lhwunaligned_loop
+	bne,pt	SIZE_T_CC, .Lhwunaligned_loop
 	for	%f50, %f50, %f18	! %f18=%f50
 
 	ba	.Lhwfinish
@@ -612,7 +607,7 @@ $code.=<<___ if ($SZ==4); 		# SHA256
 
 	.word	0x81b02840		! SHA256
 
-	bne,pt	`$bits==64?"%xcc":"%icc"`, .Lhwloop
+	bne,pt	SIZE_T_CC, .Lhwloop
 	nop
 
 .Lhwfinish:
@@ -655,7 +650,7 @@ $code.=<<___ if ($SZ==4); 		# SHA256
 
 	.word	0x81b02840		! SHA256
 
-	bne,pt	`$bits==64?"%xcc":"%icc"`, .Lhwunaligned_loop
+	bne,pt	SIZE_T_CC, .Lhwunaligned_loop
 	for	%f26, %f26, %f10	! %f10=%f26
 
 	ba	.Lhwfinish
@@ -664,7 +659,7 @@ ___
 $code.=<<___;
 .align	16
 .Lsoftware:
-	save	%sp,`-$frame-$locals`,%sp
+	save	%sp,-STACK_FRAME-$locals,%sp
 	and	$inp,`$align-1`,$tmp31
 	sllx	$len,`log(16*$SZ)/log(2)`,$len
 	andn	$inp,`$align-1`,$inp
@@ -783,7 +778,7 @@ ___
 $code.=<<___;
 	add	$inp,`16*$SZ`,$inp		! advance inp
 	cmp	$inp,$len
-	bne	`$bits==64?"%xcc":"%icc"`,.Lloop
+	bne	SIZE_T_CC,.Lloop
 	sub	$Ktbl,`($rounds-16)*$SZ`,$Ktbl	! rewind Ktbl
 
 	ret

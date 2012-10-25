@@ -25,11 +25,6 @@
 # single-process result on 8-core processor, or ~9GBps per 2.85GHz
 # socket.
 
-$bits=32;
-for (@ARGV)	{ $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
-if ($bits==64)	{ $bias=2047; $frame=192; }
-else		{ $bias=0;    $frame=112; }
-
 $output=shift;
 open STDOUT,">$output";
 
@@ -185,12 +180,13 @@ $code.=<<___;
 ___
 }
 
-$code.=<<___ if ($bits==64);
-.register	%g2,#scratch
-.register	%g3,#scratch
-___
 $code.=<<___;
 #include "sparc_arch.h"
+
+#ifdef __arch64__
+.register	%g2,#scratch
+.register	%g3,#scratch
+#endif
 
 .section	".text",#alloc,#execinstr
 
@@ -231,7 +227,7 @@ sha1_block_data_order:
 
 	.word	0x81b02820		! SHA1
 
-	bne,pt	`$bits==64?"%xcc":"%icc"`, .Lhw_loop
+	bne,pt	SIZE_T_CC, .Lhw_loop
 	nop
 
 .Lhwfinish:
@@ -271,7 +267,7 @@ sha1_block_data_order:
 
 	.word	0x81b02820		! SHA1
 
-	bne,pt	`$bits==64?"%xcc":"%icc"`, .Lhwunaligned_loop
+	bne,pt	SIZE_T_CC, .Lhwunaligned_loop
 	for	%f26, %f26, %f10	! %f10=%f26
 
 	ba	.Lhwfinish
@@ -279,7 +275,7 @@ sha1_block_data_order:
 
 .align	16
 .Lsoftware:
-	save	%sp,-$frame,%sp
+	save	%sp,-STACK_FRAME,%sp
 	sllx	$len,6,$len
 	add	$inp,$len,$len
 
@@ -359,7 +355,7 @@ $code.=<<___;
 	add	$E,@X[4],$E
 	st	$E,[$ctx+16]
 
-	bne	`$bits==64?"%xcc":"%icc"`,.Lloop
+	bne	SIZE_T_CC,.Lloop
 	andn	$inp,7,$tmp0
 
 	ret
