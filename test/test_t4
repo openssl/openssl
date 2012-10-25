@@ -18,9 +18,12 @@ if [ 1 ]; then
 
     HASH=`cat $PROG | $PROG dgst -hex`
 
-    AES_ALGS="	aes-128-ctr aes-128-ecb aes-128-cbc aes-128-cfb aes-128-ofb \
-		aes-192-ctr aes-192-ecb aes-192-cbc aes-192-cfb aes-192-ofb \
-		aes-256-ctr aes-256-ecb aes-256-cbc aes-256-cfb aes-256-ofb"
+    AES_ALGS="	camellia-128-cbc camellia-128-cfb \
+		camellia-192-cbc camellia-192-cfb \
+		camellia-256-cbc camellia-256-cfb \
+		aes-128-ctr aes-128-cbc aes-128-cfb aes-128-ofb \
+		aes-192-ctr aes-192-cbc aes-192-cfb aes-192-ofb \
+		aes-256-ctr aes-256-cbc aes-256-cfb aes-256-ofb"
     BUFSIZE="16 32 48 999"
 
     nerr=0
