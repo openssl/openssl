@@ -16,7 +16,15 @@
 # block sizes [though few percent better for not so long ones]. All
 # this based on suggestions from David Miller.
 
-my ($inp,$out,$len,$key,$ivec,$enc)=map("%i$_",(0..5));
+sub asm_init {		# to be called with @ARGV as argument
+    for (@_)		{ $::abibits=64 if (/\-m64/ || /\-xarch\=v9/); }
+    if ($::abibits==64)	{ $::bias=2047; $::frame=192; $::size_t_cc="%xcc"; }
+    else		{ $::bias=0;    $::frame=112; $::size_t_cc="%icc"; }
+}
+
+# unified interface
+my ($inp,$out,$len,$key,$ivec)=map("%i$_",(0..5));
+# local variables
 my ($ileft,$iright,$ooff,$omask,$ivoff,$blk_init)=map("%l$_",(0..7));
 
 sub alg_cbc_encrypt_implement {
@@ -202,9 +210,9 @@ $::code.=<<___;
 	add		$inp, 16, $inp
 	sub		$len, 1, $len
 		
-	stda		%f0, [$out]0xf2		! ASI_BLK_INIT, T4-specific
+	stda		%f0, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	add		$out, 8, $out
-	stda		%f2, [$out]0xf2		! ASI_BLK_INIT, T4-specific
+	stda		%f2, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	brnz,pt		$len, .L${bits}_cbc_enc_blk_loop
 	add		$out, 8, $out
 
@@ -552,13 +560,13 @@ $::code.=<<___;
 	fxor		%f8, %f4, %f4
 	fxor		%f10, %f6, %f6
 
-	stda		%f0, [$out]0xf2		! ASI_BLK_INIT, T4-specific
+	stda		%f0, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	add		$out, 8, $out
-	stda		%f2, [$out]0xf2		! ASI_BLK_INIT, T4-specific
+	stda		%f2, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	add		$out, 8, $out
-	stda		%f4, [$out]0xf2		! ASI_BLK_INIT, T4-specific
+	stda		%f4, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	add		$out, 8, $out
-	stda		%f6, [$out]0xf2		! ASI_BLK_INIT, T4-specific
+	stda		%f6, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	bgu,pt		$::size_t_cc, .L${bits}_cbc_dec_blk_loop2x
 	add		$out, 8, $out
 
@@ -571,17 +579,17 @@ $::code.=<<___;
 	nop
 ___
 $::code.=<<___ if ($::evp);
-	st		%f0, [$ivec + 0]
-	st		%f1, [$ivec + 4]
-	st		%f2, [$ivec + 8]
-	st		%f3, [$ivec + 12]
+	st		%f12, [$ivec + 0]	! write out ivec
+	st		%f13, [$ivec + 4]
+	st		%f14, [$ivec + 8]
+	st		%f15, [$ivec + 12]
 ___
 $::code.=<<___ if (!$::evp);
 	brnz,pn		$ivoff, 3b
 	nop
 
-	std		%f0, [$ivec + 0]	! write out ivec
-	std		%f2, [$ivec + 8]
+	std		%f12, [$ivec + 0]	! write out ivec
+	std		%f14, [$ivec + 8]
 ___
 $::code.=<<___;
 	ret
@@ -867,13 +875,13 @@ $::code.=<<___;
 	fxor		%f12, %f4, %f4
 	fxor		%f8, %f6, %f6
 
-	stda		%f0, [$out]0xf2		! ASI_BLK_INIT, T4-specific
+	stda		%f0, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	add		$out, 8, $out
-	stda		%f2, [$out]0xf2		! ASI_BLK_INIT, T4-specific
+	stda		%f2, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	add		$out, 8, $out
-	stda		%f4, [$out]0xf2		! ASI_BLK_INIT, T4-specific
+	stda		%f4, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	add		$out, 8, $out
-	stda		%f6, [$out]0xf2		! ASI_BLK_INIT, T4-specific
+	stda		%f6, [$out]0xe2		! ASI_BLK_INIT, T4-specific
 	bgu,pt		$::size_t_cc, .L${bits}_ctr32_blk_loop2x
 	add		$out, 8, $out
 
