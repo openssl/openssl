@@ -28,7 +28,7 @@ CN="Test Client Cert" $OPENSSL req -config ca.cnf -nodes \
 $OPENSSL x509 -req -in creq.pem -CA intca.pem -CAkey intkey.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial -out client.pem
 
-# Revkoed certificate: request first
+# Revoked certificate: request first
 CN="Test Revoked Cert" $OPENSSL req -config ca.cnf -nodes \
 	-keyout revkey.pem -out rreq.pem -newkey rsa:1024
 # Sign using intermediate CA
