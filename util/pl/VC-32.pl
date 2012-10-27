@@ -49,8 +49,7 @@ if ($FLAVOR =~ /WIN64/)
     # considered safe to ignore.
     # 
     $base_cflags= " $mf_cflag";
-    my $f = $shlib?' /MD':' /MT';
-    $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
+    my $f = ($shlib and !$fipscanisterbuild)?' /MD':' /MT';
     $opt_cflags=$f.' /Ox';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
@@ -127,19 +126,24 @@ elsif ($FLAVOR =~ /CE/)
     $base_cflags.=" $wcecdefs";
     $base_cflags.=' -I$(WCECOMPAT)/include'		if (defined($ENV{'WCECOMPAT'}));
     $base_cflags.=' -I$(PORTSDK_LIBPATH)/../../include'	if (defined($ENV{'PORTSDK_LIBPATH'}));
-    $opt_cflags=' /MC /O1i';	# optimize for space, but with intrinsics...
-    $dbg_clfags=' /MC /Od -DDEBUG -D_DEBUG';
+    if (`cl 2>&1` =~ /Version 1[4-9]\./) {
+	$base_cflags.=($shlib and !$fipscanisterbuild)?' /MD':' /MT';
+    } else {
+	$base_cflags.=' /MC';
+    }
+    $opt_cflags=' /O1i';	# optimize for space, but with intrinsics...
+    $dbg_clfags=' /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /opt:ref $wcelflag";
     }
 else	# Win32
     {
     $base_cflags= " $mf_cflag";
-    my $f = $shlib?' /MD':' /MT';
-    $lib_cflag='/Zl' if (!$shlib);	# remove /DEFAULTLIBs from static lib
+    my $f = ($shlib and !$fipscanisterbuild)?' /MD':' /MT';
     $opt_cflags=$f.' /Ox /O2 /Ob2';
     $dbg_cflags=$f.'d /Od -DDEBUG -D_DEBUG';
     $lflags="/nologo /subsystem:console /opt:ref";
     }
+$lib_cflag='/Zl' if (!$shlib or $fipscanisterbuild);	# remove /DEFAULTLIBs
 $mlflags='';
 
 $out_def ="out32";	$out_def.="dll"			if ($shlib);
@@ -284,7 +288,8 @@ elsif ($shlib && $FLAVOR =~ /CE/)
 	{
 	$mlflags.=" $lflags /dll";
 	$lflags.=' /entry:mainCRTstartup' if(defined($ENV{'PORTSDK_LIBPATH'}));
-	$lib_cflag.=" -D_WINDLL -D_DLL";
+	$lib_cflag.=" -D_WINDLL";
+	$lib_cflag.=" -D_DLL" if (!$fipscanisterbuild);
 	}
 
 sub do_lib_rule
