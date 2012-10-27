@@ -33,14 +33,23 @@ check_hash($sha1_exe, "fipscanister.lib");
 
 print "Integrity check OK\n";
 
-print "$fips_cc $fips_cc_args $fips_libdir/fips_premain.c\n";
-system "$fips_cc $fips_cc_args $fips_libdir/fips_premain.c";
-die "First stage Compile failure" if $? != 0;
+if (grep /fips_premain\.obj/,@ARGV) {
+	print "$fips_cc $fips_cc_args $fips_libdir/fips_premain.c\n";
+	system "$fips_cc $fips_cc_args $fips_libdir/fips_premain.c";
+	die "First stage Compile failure" if $? != 0;
+} elsif (!defined($ENV{FIPS_SIG})) {
+	die "no fips_premain.obj";
+}
 
 print "$fips_link @ARGV\n";
 system "$fips_link @ARGV";
 die "First stage Link failure" if $? != 0;
 
+if (defined($ENV{FIPS_SIG})) {
+	system "$ENV{FIPS_SIG} $fips_target\n"
+	die "$ENV{FIPS_SIG} $fips_target failed" if $? != 0;
+	exit;
+}
 
 print "$fips_premain_dso $fips_target\n";
 system("$fips_premain_dso $fips_target >$fips_target.sha1");
