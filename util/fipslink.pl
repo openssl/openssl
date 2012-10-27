@@ -46,7 +46,7 @@ system "$fips_link @ARGV";
 die "First stage Link failure" if $? != 0;
 
 if (defined($ENV{FIPS_SIG})) {
-	system "$ENV{FIPS_SIG} $fips_target\n"
+	system "$ENV{FIPS_SIG} $fips_target"
 	die "$ENV{FIPS_SIG} $fips_target failed" if $? != 0;
 	exit;
 }
