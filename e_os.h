@@ -306,7 +306,7 @@ static unsigned int _strlen31(const char *str)
 #      undef isupper
 #      undef isxdigit
 #    endif
-#    if defined(_MSC_VER) && !defined(_DLL) && defined(stdin)
+#    if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
 #      if _MSC_VER>=1300
 #        undef stdin
 #        undef stdout
@@ -332,8 +332,10 @@ static unsigned int _strlen31(const char *str)
 #      endif
 #    endif
 #  endif
-#  include <io.h>
-#  include <fcntl.h>
+#  if !defined(OPENSSL_FIPSCANISTER)
+#    include <io.h>
+#    include <fcntl.h>
+#  endif
 
 #  ifdef OPENSSL_SYS_WINCE
 #    define OPENSSL_NO_POSIX_IO

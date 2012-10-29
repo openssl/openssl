@@ -30,7 +30,8 @@ LIB=$(TOP)/libcrypto.a
 LIBSRC=fips_sha1_selftest.c
 LIBOBJ=fips_sha1_selftest.o
 
-SRC= $(LIBSRC) fips_standalone_sha1.c
+SRC= $(LIBSRC)
+PROGS= fips_standalone_sha1.c
 
 EXHEADER=
 HEADER=	

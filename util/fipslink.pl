@@ -27,33 +27,30 @@ if (exists $ENV{"PREMAIN_DSO_EXE"})
 	$fips_premain_dso = "";
 	}
 
-my $fips_sig = $ENV{"FIPS_SIG"};
-if (defined $fips_sig)
-	{
-	if ($fips_premain_dso ne "")
-		{
-		$fips_premain_dso = "$fips_sig -dso";
-		}
-	else
-		{
-		$fips_premain_dso = "$fips_sig -exe";
-		}
-	}
-
 check_hash($sha1_exe, "fips_premain.c");
 check_hash($sha1_exe, "fipscanister.lib");
 
 
 print "Integrity check OK\n";
 
-print "$fips_cc $fips_cc_args $fips_libdir/fips_premain.c\n";
-system "$fips_cc $fips_cc_args $fips_libdir/fips_premain.c";
-die "First stage Compile failure" if $? != 0;
+if (is_premain_linked(@ARGV)) {
+	print "$fips_cc $fips_cc_args $fips_libdir/fips_premain.c\n";
+	system "$fips_cc $fips_cc_args $fips_libdir/fips_premain.c";
+	die "First stage Compile failure" if $? != 0;
+} elsif (!defined($ENV{FIPS_SIG})) {
+	die "no fips_premain.obj linked";
+}
 
 print "$fips_link @ARGV\n";
 system "$fips_link @ARGV";
 die "First stage Link failure" if $? != 0;
 
+if (defined($ENV{FIPS_SIG})) {
+	print "$ENV{FIPS_SIG} $fips_target\n";
+	system "$ENV{FIPS_SIG} $fips_target";
+	die "$ENV{FIPS_SIG} $fips_target failed" if $? != 0;
+	exit;
+}
 
 print "$fips_premain_dso $fips_target\n";
 system("$fips_premain_dso $fips_target >$fips_target.sha1");
@@ -73,6 +70,22 @@ die "Second stage Compile failure" if $? != 0;
 print "$fips_link @ARGV\n";
 system "$fips_link @ARGV";
 die "Second stage Link failure" if $? != 0;
+
+sub is_premain_linked
+	{
+	return 1 if (grep /fips_premain\.obj/,@_);
+	foreach (@_)
+		{
+		if (/^@(.*)/ && -f $1)
+			{
+			open FD,$1 or die "can't open $1";
+			my $ret = (grep /fips_premain\.obj/,<FD>)?1:0;
+			close FD;
+			return $ret;
+			}
+		}
+	return 0;
+	}
 
 sub check_hash
 	{
