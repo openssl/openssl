@@ -842,10 +842,10 @@ if ($fips)
 		}
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}fips_standalone_sha1$obj",
 		"fips${o}sha${o}fips_standalone_sha1.c",
-		"\$(SHLIB_CFLAGS)");
+		"\$(APP_CFLAGS)");
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
 		"fips${o}fips_premain.c",
-		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)");
+		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(APP_CFLAGS)");
 	}
 
 foreach (values %lib_nam)
