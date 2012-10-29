@@ -662,7 +662,7 @@ if ($fips)
 	{
 	$rules.=&cc_compile_target("\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj",
 		"\$(FIPS_PREMAIN_SRC)",
-		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(SHLIB_CFLAGS)", "");
+		"-DFINGERPRINT_PREMAIN_DSO_LOAD \$(APP_CFLAGS)", "");
 	$rules.=&do_link_rule("\$(PREMAIN_DSO_EXE)","\$(OBJ_D)${o}\$(E_PREMAIN_DSO)$obj \$(CRYPTOOBJ) \$(O_FIPSCANISTER)","","\$(EX_LIBS)", 1);
 	}
 
