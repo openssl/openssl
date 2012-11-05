@@ -16,8 +16,6 @@ CFLAGS= $(INCLUDES) $(CFLAG)
 ASFLAGS= $(INCLUDES) $(ASFLAG)
 AFLAGS= $(ASFLAGS)
 
-CFLAGS += -fno-strict-aliasing
-
 GENERAL=Makefile
 TEST=
 APPS=
