@@ -41,8 +41,10 @@
 #
 # Add VIS3 lookup-table-free implementation using polynomial
 # multiplication xmulx[hi] and extended addition addxc[cc]
-# instructions. 3.96/6.26x improvement on T3/T4 or in absolute
-# terms 9.02/2.61 cycles per byte.
+# instructions. 4.22/7.63x improvement on T3/T4 or in absolute
+# terms 8.45/2.14 cycles per byte. On T4 multi-process benchmark
+# saturates at ~15x single-process result on 8-core processor, or
+# ~19.7GBps per 2.85GHz socket.
 
 $bits=32;
 for (@ARGV)     { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
@@ -335,74 +337,103 @@ gcm_gmult_4bit:
 ___
 
 {{{
-# Straightforward 64-bits-at-a-time approach with pair of 128x64-bit
-# multiplications followed by 64-bit reductions. While it might be
-# suboptimal with regard to sheer amount of multiplications, other
-# methods would require larger amount of 64-bit registers, which we
-# don't have in 32-bit application. Also, they [alternative methods
-# such as aggregated reduction] kind of thrive on fast 128-bit SIMD
-# instructions and these are not option on SPARC...
+# Straightforward 128x128-bit multiplication using Karatsuba algorithm
+# followed by pair of 64-bit reductions [with a shortcut in first one,
+# which allowed to break dependency between reductions and remove one
+# mulitplication from critical path]. While it might be suboptimal
+# with regard to sheer number of multiplications, other methods [such
+# as aggregate reduction] would require more 64-bit registers, which
+# we don't have in 32-bit application context.
 
 ($Xip,$Htable,$inp,$len)=map("%i$_",(0..3));
 
-($xE1,$Hhi,$Hlo,$Rhi,$Rlo,$M0hi,$M0lo,$M1hi,$M1lo,$Zhi,$Zlo,$X)=
-	(map("%g$_",(1..5)),map("%o$_",(0..5,7)));
-($shl,$shr)=map("%l$_",(0..7));
+($Hhl,$Hlo,$Hhi,$Xlo,$Xhi,$xE1,$x384, $C0,$C1,$C2,$C3,$V)=
+	(map("%o$_",(0..5,7)),map("%g$_",(1..5)));
 
+($shl,$shr,$sqr)=map("%l$_",(0..7));
+
+# For details regarding "twisted H" see ghash-x86.pl.
 $code.=<<___;
+.globl	gcm_init_vis3
+.align	32
+gcm_init_vis3:
+	save	%sp,-$frame,%sp
+
+	ldx	[%i1+0],$Hhi
+	ldx	[%i1+8],$Hlo
+	mov	0xE1,$Xhi
+	mov	1,$Xlo
+	sllx	$Xhi,57,$Xhi
+	srax	$Hhi,63,$C0		! carry
+	addcc	$Hlo,$Hlo,$Hlo		! H<<=1
+	addxc	$Hhi,$Hhi,$Hhi
+	and	$Xlo,$C0,$Xlo
+	and	$Xhi,$C0,$Xhi
+	xor	$Xlo,$Hlo,$Hlo
+	xor	$Xhi,$Hhi,$Hhi
+	stx	$Hlo,[%i0+8]		! save twisted H
+	stx	$Hhi,[%i0+0]
+
+	ret
+	restore
+.type	gcm_init_vis3,#function
+.size	gcm_init_vis3,.-gcm_init_vis3
+
 .globl	gcm_gmult_vis3
 .align	32
 gcm_gmult_vis3:
 	save	%sp,-$frame,%sp
 
-	ldx	[$Xip+8],$X		! load X.lo
-	ldx	[$Htable-8], $Hlo	! load H
-	ldx	[$Htable-16],$Hhi
-	mov	0xE1,$xE1
-	sllx	$xE1,57,$xE1
+	ldx	[$Xip+8],$Xlo		! load Xi
+	ldx	[$Xip+0],$Xhi
+	ldx	[$Htable+8],$Hlo	! load twisted H
+	ldx	[$Htable+0],$Hhi
 
-	xmulx	$X,$Hlo,$M0lo		! H·X.lo
-	xmulxhi	$X,$Hlo,$M0hi
-	xmulx	$X,$Hhi,$M1lo
-	xmulxhi	$X,$Hhi,$M1hi
-	ldx	[$Xip+0],$X		! load X.hi
+	sethi	%hi(0xA0406080),$V
+	sethi	%hi(0x20C0E000),%l0
+	or	$V,%lo(0xA0406080),$V
+	or	%l0,%lo(0x20C0E000),%l0
+	sllx	$V,32,$V
+	mov	0xE1,%l1
+	or	%l0,$V,$V		! (0xE0·i)&0xff=0xA040608020C0E000
+	sllx	%l1,57,$xE1		! 57 is not a typo
+	sllx	%l1,50,$x384	
+	xor	$Hhi,$Hlo,$Hhl		! Karatsuba pre-processing
 
-	addcc	$M0lo,$M0lo,$M0lo	! (H·X.lo)<<1
-	xor	$M0hi,$M1lo,$M1lo
+	xmulx	$Xlo,$Hlo,$C0
+	xor	$Xlo,$Xhi,$C2		! Karatsuba pre-processing
+	xmulx	$C2,$Hhl,$C1
+	xmulxhi	$Xlo,$Hlo,$Xlo
+	xmulxhi	$C2,$Hhl,$C2
+	xmulxhi	$Xhi,$Hhi,$C3
+	xmulx	$Xhi,$Hhi,$Xhi
 
-	xmulx	$xE1,$M0lo,$Rlo		! res=Z.lo·(0xE1<<57)
-	xmulxhi	$xE1,$M0lo,$Rhi
+	sll	$C0,3,$sqr
+	srlx	$V,$sqr,$sqr		! ·0xE0 [implicit &(7<<3)]
+	xor	$C0,$sqr,$sqr
+	and	$sqr,0x7f,$sqr
 
-	addxccc	$M1lo,$M1lo,$Zlo	! Z=((H·X.lo)<<1)>>64
-	addxc	$M1hi,$M1hi,$Zhi
-	xor	$M0lo,$Zhi,$Zhi		! overflow bit from 0xE1<<57
+	xor	$C0,$C1,$C1		! Karatsuba post-processing
+	xor	$Xlo,$C2,$C2
+	xor	$Xhi,$C1,$C1
+	xor	$C3,$C2,$C2
+	xor	$Xlo,$C1,$C1
 
-	xmulx	$X,$Hlo,$M0lo		! H·X.hi
-	xmulxhi	$X,$Hlo,$M0hi
-	xmulx	$X,$Hhi,$M1lo
-	xmulxhi	$X,$Hhi,$M1hi
+	xmulxhi	$C0,$xE1,$Xlo		! ·0xE1<<1<<56
+	 xor	$Xhi,$C2,$C2
+	xmulx	$sqr,$x384,$Xhi		! ·0xE1<<2<<48
+	 xor	$C0,$C2,$C2
+	xmulx	$C1,$xE1,$C0
+	 xor	$C1,$C3,$C3
+	xmulxhi	$C1,$xE1,$C1
 
-	xor	$Rlo,$Zlo,$Zlo		! Z^=res
-	xor	$Rhi,$Zhi,$Zhi
+	xor	$Xlo,$C2,$C2
+	xor	$Xhi,$C3,$C3
+	xor	$C0,$C2,$C2
+	xor	$C1,$C3,$C3
 
-	addcc	$M0lo,$M0lo,$M0lo	! (H·X.lo)<<1
-	xor	$Zlo, $M0lo,$M0lo
-	xor	$M0hi,$M1lo,$M1lo
-
-	xmulx	$xE1,$M0lo,$Rlo		! res=Z.lo·(0xE1<<57)
-	xmulxhi	$xE1,$M0lo,$Rhi
-
-	addxccc	$M1lo,$M1lo,$M1lo
-	addxc	$M1hi,$M1hi,$M1hi
-
-	xor	$M1lo,$Zhi,$Zlo		! Z=(Z^(H·X.hi)<<1)>>64
-	xor	$M0lo,$M1hi,$Zhi	! overflow bit from 0xE1<<57
-
-	xor	$Rlo,$Zlo,$Zlo		! Z^=res
-	xor	$Rhi,$Zhi,$Zhi
-
-	stx	$Zlo,[$Xip+8]		! save Xi
-	stx	$Zhi,[$Xip+0]
+	stx	$C2,[$Xip+8]		! save Xi
+	stx	$C3,[$Xip+0]
 
 	ret
 	restore
@@ -414,80 +445,83 @@ gcm_gmult_vis3:
 gcm_ghash_vis3:
 	save	%sp,-$frame,%sp
 
-	ldx	[$Xip+0],$Zhi		! load X.hi
-	ldx	[$Xip+8],$Zlo		! load X.lo
+	ldx	[$Xip+8],$C2		! load Xi
+	ldx	[$Xip+0],$C3
+	ldx	[$Htable+8],$Hlo	! load twisted H
+	ldx	[$Htable+0],$Hhi
+
+	sethi	%hi(0xA0406080),$V
+	sethi	%hi(0x20C0E000),%l6
+	or	$V,%lo(0xA0406080),$V
+	or	%l6,%lo(0x20C0E000),%l6
+	sllx	$V,32,$V
+	mov	0xE1,%l7
+	or	%l6,$V,$V		! (0xE0·i)&0xff=0xA040608020C0E000
+	sllx	%l7,57,$xE1		! 57 is not a typo
+	sllx	%l7,50,$x384	
+
 	and	$inp,7,$shl
 	andn	$inp,7,$inp
-	ldx	[$Htable-8], $Hlo	! load H
-	ldx	[$Htable-16],$Hhi
 	sll	$shl,3,$shl
 	prefetch [$inp+63], 20
-	mov	0xE1,$xE1
 	sub	%g0,$shl,$shr
-	sllx	$xE1,57,$xE1
+
+	xor	$Hhi,$Hlo,$Hhl		! Karatsuba pre-processing
 
 .Loop:
-	ldx	[$inp+8],$Rlo		! load *inp
+	ldx	[$inp+8],$Xlo
 	brz,pt	$shl,1f
-	ldx	[$inp+0],$Rhi
+	ldx	[$inp+0],$Xhi
 
-	ldx	[$inp+16],$X		! align data
-	srlx	$Rlo,$shr,$M0lo
-	sllx	$Rlo,$shl,$Rlo
-	sllx	$Rhi,$shl,$Rhi
-	srlx	$X,$shr,$X
-	or	$M0lo,$Rhi,$Rhi
-	or	$X,$Rlo,$Rlo
-
+	ldx	[$inp+16],$C1		! align data
+	srlx	$Xlo,$shr,$C0
+	sllx	$Xlo,$shl,$Xlo
+	sllx	$Xhi,$shl,$Xhi
+	srlx	$C1,$shr,$C1
+	or	$C0,$Xhi,$Xhi
+	or	$C1,$Xlo,$Xlo
 1:
 	add	$inp,16,$inp
 	sub	$len,16,$len
-	xor	$Rlo,$Zlo,$X
+	xor	$C2,$Xlo,$Xlo
+	xor	$C3,$Xhi,$Xhi
 	prefetch [$inp+63], 20
 
-	xmulx	$X,$Hlo,$M0lo		! H·X.lo
-	xmulxhi	$X,$Hlo,$M0hi
-	xmulx	$X,$Hhi,$M1lo
-	xmulxhi	$X,$Hhi,$M1hi
-	xor	$Rhi,$Zhi,$X
+	xmulx	$Xlo,$Hlo,$C0
+	xor	$Xlo,$Xhi,$C2		! Karatsuba pre-processing
+	xmulx	$C2,$Hhl,$C1
+	xmulxhi	$Xlo,$Hlo,$Xlo
+	xmulxhi	$C2,$Hhl,$C2
+	xmulxhi	$Xhi,$Hhi,$C3
+	xmulx	$Xhi,$Hhi,$Xhi
 
-	addcc	$M0lo,$M0lo,$M0lo	! (H·X.lo)<<1
-	xor	$M0hi,$M1lo,$M1lo
+	sll	$C0,3,$sqr
+	srlx	$V,$sqr,$sqr		! ·0xE0 [implicit &(7<<3)]
+	xor	$C0,$sqr,$sqr
+	and	$sqr,0x7f,$sqr
 
-	xmulx	$xE1,$M0lo,$Rlo		! res=Z.lo·(0xE1<<57)
-	xmulxhi	$xE1,$M0lo,$Rhi
+	xor	$C0,$C1,$C1		! Karatsuba post-processing
+	xor	$Xlo,$C2,$C2
+	xor	$Xhi,$C1,$C1
+	xor	$C3,$C2,$C2
+	xor	$Xlo,$C1,$C1
 
-	addxccc	$M1lo,$M1lo,$Zlo	! Z=((H·X.lo)<<1)>>64
-	addxc	$M1hi,$M1hi,$Zhi
-	xor	$M0lo,$Zhi,$Zhi		! overflow bit from 0xE1<<57
+	xmulxhi	$C0,$xE1,$Xlo		! ·0xE1<<1<<56
+	 xor	$Xhi,$C2,$C2
+	xmulx	$sqr,$x384,$Xhi		! ·0xE1<<2<<48
+	 xor	$C0,$C2,$C2
+	xmulx	$C1,$xE1,$C0
+	 xor	$C1,$C3,$C3
+	xmulxhi	$C1,$xE1,$C1
 
-	xmulx	$X,$Hlo,$M0lo		! H·X.hi
-	xmulxhi	$X,$Hlo,$M0hi
-	xmulx	$X,$Hhi,$M1lo
-	xmulxhi	$X,$Hhi,$M1hi
-
-	xor	$Rlo,$Zlo,$Zlo		! Z^=res
-	xor	$Rhi,$Zhi,$Zhi
-
-	addcc	$M0lo,$M0lo,$M0lo	! (H·X.lo)<<1
-	xor	$Zlo, $M0lo,$M0lo
-	xor	$M0hi,$M1lo,$M1lo
-
-	xmulx	$xE1,$M0lo,$Rlo		! res=Z.lo·(0xE1<<57)
-	xmulxhi	$xE1,$M0lo,$Rhi
-
-	addxccc	$M1lo,$M1lo,$M1lo
-	addxc	$M1hi,$M1hi,$M1hi
-
-	xor	$M1lo,$Zhi,$Zlo		! Z=(Z^(H·X.hi)<<1)>>64
-	xor	$M0lo,$M1hi,$Zhi	! overflow bit from 0xE1<<57
-
-	xor	$Rlo,$Zlo,$Zlo		! Z^=res
+	xor	$Xlo,$C2,$C2
+	xor	$Xhi,$C3,$C3
+	xor	$C0,$C2,$C2
 	brnz,pt	$len,.Loop
-	xor	$Rhi,$Zhi,$Zhi
+	xor	$C1,$C3,$C3
 
-	stx	$Zlo,[$Xip+8]		! save Xi
-	stx	$Zhi,[$Xip+0]
+	stx	$C2,[$Xip+8]		! save Xi
+	stx	$C3,[$Xip+0]
 
 	ret
 	restore

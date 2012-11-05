@@ -679,6 +679,7 @@ void gcm_ghash_neon(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 #  define GHASH_ASM_SPARC
 #  define GCM_FUNCREF_4BIT
 extern unsigned int OPENSSL_sparcv9cap_P[];
+void gcm_init_vis3(u128 Htable[16],const u64 Xi[2]);
 void gcm_gmult_vis3(u64 Xi[2],const u128 Htable[16]);
 void gcm_ghash_vis3(u64 Xi[2],const u128 Htable[16],const u8 *inp,size_t len);
 # endif
@@ -759,6 +760,7 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx,void *key,block128_f block)
 	}
 # elif	defined(GHASH_ASM_SPARC)
 	if (OPENSSL_sparcv9cap_P[0] & SPARCV9_VIS3) {
+		gcm_init_vis3(ctx->Htable,ctx->H.u);
 		ctx->gmult = gcm_gmult_vis3;
 		ctx->ghash = gcm_ghash_vis3;
 	} else {
