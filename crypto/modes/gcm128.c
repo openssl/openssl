@@ -962,8 +962,9 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 		    size_t j=GHASH_CHUNK;
 
 		    while (j) {
-			size_t *out_t=(size_t *)out, *ivec_t=(size_t *)ivec;
-			const size_t *in_t=(const size_t *)in;
+		    	size_t *out_t=(size_t *)out;
+		    	const size_t *in_t=(const size_t *)in;
+
 			(*block)(ctx->Yi.c,ctx->EKi.c,key);
 			++ctr;
 			if (is_endian.little)
@@ -983,15 +984,17 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 		    size_t j=i;
 
 		    while (len>=16) {
+		    	size_t *out_t=(size_t *)out;
+		    	const size_t *in_t=(const size_t *)in;
+
 			(*block)(ctx->Yi.c,ctx->EKi.c,key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
-			for (i=0; i<16; i+=sizeof(size_t))
-				*(size_t *)(out+i) =
-				*(size_t *)(in+i)^*(size_t *)(ctx->EKi.c+i);
+			for (i=0; i<16/sizeof(size_t); ++i)
+				out_t[i] = in_t[i] ^ ctx->EKi.t[i];
 			out += 16;
 			in  += 16;
 			len -= 16;
@@ -1000,16 +1003,18 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 		}
 #else
 		while (len>=16) {
+		    	size_t *out_t=(size_t *)out;
+		    	const size_t *in_t=(const size_t *)in;
+
 			(*block)(ctx->Yi.c,ctx->EKi.c,key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
-			for (i=0; i<16; i+=sizeof(size_t))
-				*(size_t *)(ctx->Xi.c+i) ^=
-				*(size_t *)(out+i) =
-				*(size_t *)(in+i)^*(size_t *)(ctx->EKi.c+i);
+			for (i=0; i<16/sizeof(size_t); ++i)
+				ctx->Xi.t[i] ^=
+				out_t[i] = in_t[i]^ctx->EKi.t[i];
 			GCM_MUL(ctx,Xi);
 			out += 16;
 			in  += 16;
@@ -1113,15 +1118,17 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 
 		    GHASH(ctx,in,GHASH_CHUNK);
 		    while (j) {
+		    	size_t *out_t=(size_t *)out;
+		    	const size_t *in_t=(const size_t *)in;
+
 			(*block)(ctx->Yi.c,ctx->EKi.c,key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
-			for (i=0; i<16; i+=sizeof(size_t))
-				*(size_t *)(out+i) =
-				*(size_t *)(in+i)^*(size_t *)(ctx->EKi.c+i);
+			for (i=0; i<16/sizeof(size_t); ++i)
+				out_t[i] = in_t[i]^ctx->EKi.t[i];
 			out += 16;
 			in  += 16;
 			j   -= 16;
@@ -1131,15 +1138,17 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 		if ((i = (len&(size_t)-16))) {
 		    GHASH(ctx,in,i);
 		    while (len>=16) {
+		    	size_t *out_t=(size_t *)out;
+		    	const size_t *in_t=(const size_t *)in;
+
 			(*block)(ctx->Yi.c,ctx->EKi.c,key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
-			for (i=0; i<16; i+=sizeof(size_t))
-				*(size_t *)(out+i) =
-				*(size_t *)(in+i)^*(size_t *)(ctx->EKi.c+i);
+			for (i=0; i<16/sizeof(size_t); ++i)
+				out_t[i] = in_t[i]^ctx->EKi.t[i];
 			out += 16;
 			in  += 16;
 			len -= 16;
@@ -1147,16 +1156,19 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
 		}
 #else
 		while (len>=16) {
+		    	size_t *out_t=(size_t *)out;
+		    	const size_t *in_t=(const size_t *)in;
+
 			(*block)(ctx->Yi.c,ctx->EKi.c,key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
-			for (i=0; i<16; i+=sizeof(size_t)) {
-				size_t c = *(size_t *)(in+i);
-				*(size_t *)(out+i) = c^*(size_t *)(ctx->EKi.c+i);
-				*(size_t *)(ctx->Xi.c+i) ^= c;
+			for (i=0; i<16/sizeof(size_t); ++i) {
+				size_t c = in[i];
+				out[i] = c^ctx->EKi.t[i];
+				ctx->Xi.t[i] ^= c;
 			}
 			GCM_MUL(ctx,Xi);
 			out += 16;
