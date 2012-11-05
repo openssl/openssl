@@ -962,15 +962,16 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
 		    size_t j=GHASH_CHUNK;
 
 		    while (j) {
+			size_t *out_t=(size_t *)out, *ivec_t=(size_t *)ivec;
+			const size_t *in_t=(const size_t *)in;
 			(*block)(ctx->Yi.c,ctx->EKi.c,key);
 			++ctr;
 			if (is_endian.little)
 				PUTU32(ctx->Yi.c+12,ctr);
 			else
 				ctx->Yi.d[3] = ctr;
-			for (i=0; i<16; i+=sizeof(size_t))
-				*(size_t *)(out+i) =
-				*(size_t *)(in+i)^*(size_t *)(ctx->EKi.c+i);
+			for (i=0; i<16/sizeof(size_t); ++i)
+				out_t[i] = in_t[i] ^ ctx->EKi.t[i];
 			out += 16;
 			in  += 16;
 			j   -= 16;
