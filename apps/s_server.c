@@ -277,9 +277,9 @@ static int s_server_session_id_context = 1; /* anything will do */
 static const char *s_cert_file=TEST_CERT,*s_key_file=NULL, *s_chain_file=NULL;
 #ifndef OPENSSL_NO_TLSEXT
 static const char *s_cert_file2=TEST_CERT2,*s_key_file2=NULL;
-static char *curves=NULL;
-static char *sigalgs=NULL;
-static char *client_sigalgs=NULL;
+static const char *curves=NULL;
+static const char *sigalgs=NULL;
+static const char *client_sigalgs=NULL;
 #endif
 static char *s_dcert_file=NULL,*s_dkey_file=NULL, *s_dchain_file=NULL;
 #ifdef FIONBIO
