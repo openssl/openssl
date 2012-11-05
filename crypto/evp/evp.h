@@ -1291,6 +1291,7 @@ void ERR_load_EVP_strings(void);
 #define EVP_F_ALG_MODULE_INIT				 177
 #define EVP_F_CAMELLIA_INIT_KEY				 159
 #define EVP_F_CMAC_INIT					 173
+#define EVP_F_CMLL_T4_INIT_KEY				 179
 #define EVP_F_D2I_PKEY					 100
 #define EVP_F_DO_SIGVER_INIT				 161
 #define EVP_F_DSAPKEY2PKCS8				 134

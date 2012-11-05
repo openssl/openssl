@@ -177,7 +177,7 @@ static int cmll_t4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
 	if(ret < 0)
 		{
-		EVPerr(EVP_F_CAMELLIA_INIT_KEY,EVP_R_CAMELLIA_KEY_SETUP_FAILED);
+		EVPerr(EVP_F_CMLL_T4_INIT_KEY,EVP_R_CAMELLIA_KEY_SETUP_FAILED);
 		return 0;
 		}
 
