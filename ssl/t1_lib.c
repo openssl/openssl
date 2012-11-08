@@ -525,6 +525,8 @@ int tls1_set_curves_list(unsigned char **pext, size_t *pextlen,
 	ncb.nidcnt = 0;
 	if (!CONF_parse_list(str, ':', 1, nid_cb, &ncb))
 		return 0;
+	if (pext == NULL)
+		return 1;
 	return tls1_set_curves(pext, pextlen, ncb.nid_arr, ncb.nidcnt);
 	}
 /* For an EC key set TLS id and required compression based on parameters */
@@ -3754,6 +3756,8 @@ int tls1_set_sigalgs_list(CERT *c, const char *str, int client)
 	sig.sigalgcnt = 0;
 	if (!CONF_parse_list(str, ':', 1, sig_cb, &sig))
 		return 0;
+	if (c == NULL)
+		return 1;
 	return tls1_set_sigalgs(c, sig.sigalgs, sig.sigalgcnt, client);
 	}
 
