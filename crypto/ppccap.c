@@ -4,7 +4,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <unistd.h>
-#ifdef __linux
+#if defined(__linux) || defined(_AIX)
 #include <sys/utsname.h>
 #endif
 #include <crypto.h>
@@ -88,12 +88,14 @@ void OPENSSL_cpuid_setup(void)
 	OPENSSL_ppccap_P = 0;
 
 #if defined(_AIX)
-	if (sizeof(size_t)==4
+	if (sizeof(size_t)==4)
+		{
+		struct utsname uts;
 # if defined(_SC_AIX_KERNEL_BITMODE)
-	    && sysconf(_SC_AIX_KERNEL_BITMODE)!=64
+		if (sysconf(_SC_AIX_KERNEL_BITMODE)!=64)	return;
 # endif
-	   )
-		return;
+		if (uname(&uts)!=0 || atoi(uts.version)<6))	return;
+		}
 #endif
 
 	memset(&ill_act,0,sizeof(ill_act));
