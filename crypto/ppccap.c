@@ -94,7 +94,7 @@ void OPENSSL_cpuid_setup(void)
 # if defined(_SC_AIX_KERNEL_BITMODE)
 		if (sysconf(_SC_AIX_KERNEL_BITMODE)!=64)	return;
 # endif
-		if (uname(&uts)!=0 || atoi(uts.version)<6))	return;
+		if (uname(&uts)!=0 || atoi(uts.version)<6)	return;
 		}
 #endif
 
