@@ -1203,6 +1203,13 @@ static int ssl_print_heartbeat(BIO *bio, int indent,
 	return 1;
 	}
 
+const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c)
+	{
+	if (c->algorithm_ssl & SSL_SSLV2)
+		return NULL;
+	return ssl_trace_str(c->id & 0xFFFF, ssl_ciphers_tbl);
+	}
+
 void SSL_trace(int write_p, int version, int content_type,
 		const void *buf, size_t msglen, SSL *ssl, void *arg)
 	{

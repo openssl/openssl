@@ -2269,6 +2269,7 @@ int SSL_is_server(SSL *s);
 #ifndef OPENSSL_NO_SSL_TRACE
 void SSL_trace(int write_p, int version, int content_type,
 		const void *buf, size_t len, SSL *ssl, void *arg);
+const char *SSL_CIPHER_standard_name(const SSL_CIPHER *c);
 #endif
 
 /* BEGIN ERROR CODES */
