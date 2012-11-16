@@ -4,6 +4,10 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) New experimental SSL_CONF* functions. These provide a common framework
+     for application configuration using configuration files or command lines.
+     [Steve Henson]
+
   *) New functions to check a hostname email or IP address against a
      certificate. Add options to s_client, s_server and x509 utilities
      to print results of checks against a certificate.

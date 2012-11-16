@@ -28,7 +28,8 @@ client only type. B<method> can be of the following types:
 A TLS/SSL connection established with these methods will only understand
 the SSLv2 protocol. A client will send out SSLv2 client hello messages
 and will also indicate that it only understand SSLv2. A server will only
-understand SSLv2 client hello messages.
+understand SSLv2 client hello messages. The SSLv2 protocol is deprecated 
+and very broken: its use is B<strongly> discouraged.
 
 =item SSLv3_method(void), SSLv3_server_method(void), SSLv3_client_method(void)
 
@@ -45,6 +46,16 @@ A TLS/SSL connection established with these methods will only understand the
 TLSv1 protocol. A client will send out TLSv1 client hello messages
 and will indicate that it only understands TLSv1. A server will only understand
 TLSv1 client hello messages. This especially means, that it will
+not understand SSLv2 client hello messages which are widely used for
+compatibility reasons, see SSLv23_*_method(). It will also not understand
+SSLv3 client hello messages.
+
+=item TLSv1_1_method(void), TLSv1_1_server_method(void), TLSv1_1_client_method(void)
+
+A TLS/SSL connection established with these methods will only understand the
+TLSv1.1 protocol. A client will send out TLSv1.1 client hello messages
+and will indicate that it only understands TLSv1.1. A server will only
+understand TLSv1.1 client hello messages. This especially means, that it will
 not understand SSLv2 client hello messages which are widely used for
 compatibility reasons, see SSLv23_*_method(). It will also not understand
 SSLv3 client hello messages.

@@ -1,6 +1,6 @@
 /* ssl/ssl_err.c */
 /* ====================================================================
- * Copyright (c) 1999-2011 The OpenSSL Project.  All rights reserved.
+ * Copyright (c) 1999-2012 The OpenSSL Project.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -208,6 +208,7 @@ static ERR_STRING_DATA SSL_str_functs[]=
 {ERR_FUNC(SSL_F_SSL_CIPHER_STRENGTH_SORT),	"SSL_CIPHER_STRENGTH_SORT"},
 {ERR_FUNC(SSL_F_SSL_CLEAR),	"SSL_clear"},
 {ERR_FUNC(SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD),	"SSL_COMP_add_compression_method"},
+{ERR_FUNC(SSL_F_SSL_CONF_CTX_CMD),	"SSL_CONF_CTX_cmd"},
 {ERR_FUNC(SSL_F_SSL_CREATE_CIPHER_LIST),	"ssl_create_cipher_list"},
 {ERR_FUNC(SSL_F_SSL_CTRL),	"SSL_ctrl"},
 {ERR_FUNC(SSL_F_SSL_CTX_CHECK_PRIVATE_KEY),	"SSL_CTX_check_private_key"},
@@ -350,6 +351,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_BAD_SSL_FILETYPE)      ,"bad ssl filetype"},
 {ERR_REASON(SSL_R_BAD_SSL_SESSION_ID_LENGTH),"bad ssl session id length"},
 {ERR_REASON(SSL_R_BAD_STATE)             ,"bad state"},
+{ERR_REASON(SSL_R_BAD_VALUE)             ,"bad value"},
 {ERR_REASON(SSL_R_BAD_WRITE_RETRY)       ,"bad write retry"},
 {ERR_REASON(SSL_R_BIO_NOT_SET)           ,"bio not set"},
 {ERR_REASON(SSL_R_BLOCK_CIPHER_PAD_IS_WRONG),"block cipher pad is wrong"},
@@ -405,6 +407,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_INVALID_CHALLENGE_LENGTH),"invalid challenge length"},
 {ERR_REASON(SSL_R_INVALID_COMMAND)       ,"invalid command"},
 {ERR_REASON(SSL_R_INVALID_COMPRESSION_ALGORITHM),"invalid compression algorithm"},
+{ERR_REASON(SSL_R_INVALID_NULL_CMD_NAME) ,"invalid null cmd name"},
 {ERR_REASON(SSL_R_INVALID_PURPOSE)       ,"invalid purpose"},
 {ERR_REASON(SSL_R_INVALID_SRP_USERNAME)  ,"invalid srp username"},
 {ERR_REASON(SSL_R_INVALID_STATUS_RESPONSE),"invalid status response"},
@@ -589,6 +592,7 @@ static ERR_STRING_DATA SSL_str_reasons[]=
 {ERR_REASON(SSL_R_UNKNOWN_CERTIFICATE_TYPE),"unknown certificate type"},
 {ERR_REASON(SSL_R_UNKNOWN_CIPHER_RETURNED),"unknown cipher returned"},
 {ERR_REASON(SSL_R_UNKNOWN_CIPHER_TYPE)   ,"unknown cipher type"},
+{ERR_REASON(SSL_R_UNKNOWN_CMD_NAME)      ,"unknown cmd name"},
 {ERR_REASON(SSL_R_UNKNOWN_DIGEST)        ,"unknown digest"},
 {ERR_REASON(SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE),"unknown key exchange type"},
 {ERR_REASON(SSL_R_UNKNOWN_PKEY_TYPE)     ,"unknown pkey type"},

@@ -367,6 +367,7 @@ typedef struct ssl_method_st SSL_METHOD;
 typedef struct ssl_cipher_st SSL_CIPHER;
 typedef struct ssl_session_st SSL_SESSION;
 typedef struct tls_sigalgs_st TLS_SIGALGS;
+typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
 
 DECLARE_STACK_OF(SSL_CIPHER)
 
@@ -616,6 +617,9 @@ struct ssl_session_st
 #define SSL_OP_NO_TLSv1_2				0x08000000L
 #define SSL_OP_NO_TLSv1_1				0x10000000L
 
+#define SSL_OP_NO_SSL_MASK (SSL_OP_NO_SSLv2|SSL_OP_NO_SSLv3|\
+	SSL_OP_NO_TLSv1|SSL_OP_NO_TLSv1_1|SSL_OP_NO_TLSv1_2)
+
 /* These next two were never actually used for anything since SSLeay
  * zap so we have some more flags.
  */
@@ -693,6 +697,12 @@ struct ssl_session_st
 #define CERT_PKEY_CERT_TYPE	0x400
 /* Cert chain suitable to Suite B */
 #define CERT_PKEY_SUITEB	0x800
+
+#define SSL_CONF_FLAG_CMDLINE		0x1
+#define SSL_CONF_FLAG_FILE		0x2
+#define SSL_CONF_FLAG_CLIENT		0x4
+#define SSL_CONF_FLAG_SERVER		0x8
+#define SSL_CONF_FLAG_SHOW_ERRORS	0x10
 
 /* Note: SSL[_CTX]_set_{options,mode} use |= op on the previous value,
  * they cannot be used to clear bits. */
@@ -2266,6 +2276,18 @@ void SSL_set_debug(SSL *s, int debug);
 int SSL_cache_hit(SSL *s);
 int SSL_is_server(SSL *s);
 
+SSL_CONF_CTX *SSL_CONF_CTX_new(void);
+void SSL_CONF_CTX_free(SSL_CONF_CTX *cctx);
+unsigned int SSL_CONF_CTX_set_flags(SSL_CONF_CTX *cctx, unsigned int flags);
+unsigned int SSL_CONF_CTX_clear_flags(SSL_CONF_CTX *cctx, unsigned int flags);
+int SSL_CONF_CTX_set1_prefix(SSL_CONF_CTX *cctx, const char *pre);
+
+void SSL_CONF_CTX_set_ssl(SSL_CONF_CTX *cctx, SSL *ssl);
+void SSL_CONF_CTX_set_ssl_ctx(SSL_CONF_CTX *cctx, SSL_CTX *ctx);
+
+int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value);
+int SSL_CONF_cmd_argv(SSL_CONF_CTX *cctx, int *pargc, char ***pargv);
+
 #ifndef OPENSSL_NO_SSL_TRACE
 void SSL_trace(int write_p, int version, int content_type,
 		const void *buf, size_t len, SSL *ssl, void *arg);
@@ -2419,6 +2441,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_CIPHER_STRENGTH_SORT			 231
 #define SSL_F_SSL_CLEAR					 164
 #define SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD		 165
+#define SSL_F_SSL_CONF_CTX_CMD				 334
 #define SSL_F_SSL_CREATE_CIPHER_LIST			 166
 #define SSL_F_SSL_CTRL					 232
 #define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY			 168
@@ -2558,6 +2581,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_BAD_SSL_FILETYPE				 124
 #define SSL_R_BAD_SSL_SESSION_ID_LENGTH			 125
 #define SSL_R_BAD_STATE					 126
+#define SSL_R_BAD_VALUE					 384
 #define SSL_R_BAD_WRITE_RETRY				 127
 #define SSL_R_BIO_NOT_SET				 128
 #define SSL_R_BLOCK_CIPHER_PAD_IS_WRONG			 129
@@ -2613,6 +2637,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_INVALID_CHALLENGE_LENGTH			 158
 #define SSL_R_INVALID_COMMAND				 280
 #define SSL_R_INVALID_COMPRESSION_ALGORITHM		 341
+#define SSL_R_INVALID_NULL_CMD_NAME			 385
 #define SSL_R_INVALID_PURPOSE				 278
 #define SSL_R_INVALID_SRP_USERNAME			 357
 #define SSL_R_INVALID_STATUS_RESPONSE			 328
@@ -2797,6 +2822,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_R_UNKNOWN_CERTIFICATE_TYPE			 247
 #define SSL_R_UNKNOWN_CIPHER_RETURNED			 248
 #define SSL_R_UNKNOWN_CIPHER_TYPE			 249
+#define SSL_R_UNKNOWN_CMD_NAME				 386
 #define SSL_R_UNKNOWN_DIGEST				 368
 #define SSL_R_UNKNOWN_KEY_EXCHANGE_TYPE			 250
 #define SSL_R_UNKNOWN_PKEY_TYPE				 251
