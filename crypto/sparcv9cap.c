@@ -4,6 +4,7 @@
 #include <setjmp.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <unistd.h>
 #include <openssl/bn.h>
 
 #include "sparc_arch.h"
@@ -21,6 +22,25 @@ int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_U
 
 	if (!(num&1) && num>=6)
 		{
+		if ((num&15)==0 && num<=64 &&
+		    (OPENSSL_sparcv9cap_P[1]&(CFR_MONTMUL|CFR_MONTSQR))== 
+		    			     (CFR_MONTMUL|CFR_MONTSQR))
+			{
+			typedef int (*bn_mul_mont_f)(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0);
+			int bn_mul_mont_t4_8(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0);
+			int bn_mul_mont_t4_16(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0);
+			int bn_mul_mont_t4_24(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0);
+			int bn_mul_mont_t4_32(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp, const BN_ULONG *np,const BN_ULONG *n0);
+			static const bn_mul_mont_f funcs[4] = {
+				bn_mul_mont_t4_8,	bn_mul_mont_t4_16,
+				bn_mul_mont_t4_24,	bn_mul_mont_t4_32 };
+			bn_mul_mont_f worker = funcs[num/16-1];
+
+			if ((*worker)(rp,ap,bp,np,n0)) return 1;
+			/* retry once and fall back */
+			if ((*worker)(rp,ap,bp,np,n0)) return 1;
+			return bn_mul_mont_vis3(rp,ap,bp,np,n0,num);
+			}
 		if ((OPENSSL_sparcv9cap_P[0]&SPARCV9_VIS3))
 			return bn_mul_mont_vis3(rp,ap,bp,np,n0,num);
 		else if (num>=8 &&
@@ -289,6 +309,18 @@ void OPENSSL_cpuid_setup(void)
 	sigaction(SIGILL,&ill_oact,NULL);
 
 	sigprocmask(SIG_SETMASK,&oset,NULL);
+
+	if (sizeof(size_t)==8)
+		OPENSSL_sparcv9cap_P[0] |= SPARCV9_64BIT_STACK;
+#ifdef __linux
+	else
+		{
+		int ret = syscall(340);
+
+		if (ret>=0 && ret&1)
+			OPENSSL_sparcv9cap_P[0] |= SPARCV9_64BIT_STACK;
+		}
+#endif
 	}
 
 #endif

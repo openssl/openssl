@@ -79,6 +79,8 @@ sparcv9-mont.s:		asm/sparcv9-mont.pl
 	$(PERL) asm/sparcv9-mont.pl $(CFLAGS) > $@
 vis3-mont.s:		asm/vis3-mont.pl
 	$(PERL) asm/vis3-mont.pl $(CFLAGS) > $@
+sparct4-mont.S:	asm/sparct4-mont.pl
+	$(PERL) asm/sparct4-mont.pl $(CFLAGS) > $@
 sparcv9-gf2m.S:	asm/sparcv9-gf2m.pl
 	$(PERL) asm/sparcv9-gf2m.pl $(CFLAGS) > $@
 

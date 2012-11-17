@@ -9,6 +9,7 @@
 #define SPARCV9_BLK		(1<<5)	/* VIS1 block copy */
 #define SPARCV9_VIS3		(1<<6)
 #define SPARCV9_RANDOM		(1<<7)
+#define SPARCV9_64BIT_STACK	(1<<8)
 
 /*
  * OPENSSL_sparcv9cap_P[1] is copy of Compatibility Feature Register,
@@ -65,6 +66,7 @@
 # define SIZE_T_CC	%xcc
 # define STACK_FRAME	192
 # define STACK_BIAS	2047
+# define STACK_7thARG	(STACK_BIAS+176)
 
 #else
 
@@ -74,6 +76,7 @@
 # define SIZE_T_CC	%icc
 # define STACK_FRAME	112
 # define STACK_BIAS	0
+# define STACK_7thARG	92
 # define SPARC_LOAD_ADDRESS_LEAF(SYM,reg,tmp) SPARC_LOAD_ADDRESS(SYM,reg)
 
 #endif
