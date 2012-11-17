@@ -559,8 +559,6 @@ int MAIN(int, char **);
 
 int MAIN(int argc, char **argv)
 	{
-	unsigned int off=0, clr=0;
-	unsigned int cert_flags=0;
 	int build_chain = 0;
 	SSL *con=NULL;
 #ifndef OPENSSL_NO_KRB5
@@ -579,8 +577,8 @@ int MAIN(int argc, char **argv)
 	char *passarg = NULL, *pass = NULL;
 	X509 *cert = NULL;
 	EVP_PKEY *key = NULL;
-	char *CApath=NULL,*CAfile=NULL,*cipher=NULL;
-	int reconnect=0,badop=0,verify=SSL_VERIFY_NONE,bugs=0;
+	char *CApath=NULL,*CAfile=NULL;
+	int reconnect=0,badop=0,verify=SSL_VERIFY_NONE;
 	int crlf=0;
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
 	SSL_CTX *ctx=NULL;
@@ -609,9 +607,6 @@ int MAIN(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_TLSEXT
 	char *servername = NULL; 
-	const char *curves=NULL;
-	const char *sigalgs=NULL;
-	const char *client_sigalgs=NULL;
         tlsextctx tlsextcbp = 
         {NULL,0};
 # ifndef OPENSSL_NO_NEXTPROTONEG
@@ -636,6 +631,8 @@ int MAIN(int argc, char **argv)
 
 	unsigned char *checkhost = NULL, *checkemail = NULL;
 	char *checkip = NULL;
+	SSL_CONF_CTX *cctx = NULL;
+	STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
 
 	meth=SSLv23_client_method();
 
@@ -652,6 +649,11 @@ int MAIN(int argc, char **argv)
 
 	if (!load_config(bio_err, NULL))
 		goto end;
+	cctx = SSL_CONF_CTX_new();
+	if (!cctx)
+		goto end;
+	SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CLIENT);
+	SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CMDLINE);
 
 	if (	((cbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
 		((sbuf=OPENSSL_malloc(BUFSIZZ)) == NULL) ||
@@ -733,6 +735,12 @@ int MAIN(int argc, char **argv)
 			c_quiet = 1;
 			}
 		else if (args_excert(&argv, &argc, &badarg, bio_err, &exc))
+			{
+			if (badarg)
+				goto bad;
+			continue;
+			}
+		else if (args_ssl(&argv, &argc, cctx, &badarg, bio_err, &ssl_args))
 			{
 			if (badarg)
 				goto bad;
@@ -866,8 +874,6 @@ int MAIN(int argc, char **argv)
 			socket_mtu = atol(*(++argv));
 			}
 #endif
-		else if (strcmp(*argv,"-bugs") == 0)
-			bugs=1;
 		else if	(strcmp(*argv,"-keyform") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -899,21 +905,7 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			CAfile= *(++argv);
 			}
-		else if (strcmp(*argv,"-no_tls1_2") == 0)
-			off|=SSL_OP_NO_TLSv1_2;
-		else if (strcmp(*argv,"-no_tls1_1") == 0)
-			off|=SSL_OP_NO_TLSv1_1;
-		else if (strcmp(*argv,"-no_tls1") == 0)
-			off|=SSL_OP_NO_TLSv1;
-		else if (strcmp(*argv,"-no_ssl3") == 0)
-			off|=SSL_OP_NO_SSLv3;
-		else if (strcmp(*argv,"-no_ssl2") == 0)
-			off|=SSL_OP_NO_SSLv2;
-		else if	(strcmp(*argv,"-no_comp") == 0)
-			{ off|=SSL_OP_NO_COMPRESSION; }
 #ifndef OPENSSL_NO_TLSEXT
-		else if	(strcmp(*argv,"-no_ticket") == 0)
-			{ off|=SSL_OP_NO_TICKET; }
 # ifndef OPENSSL_NO_NEXTPROTONEG
 		else if (strcmp(*argv,"-nextprotoneg") == 0)
 			{
@@ -922,19 +914,6 @@ int MAIN(int argc, char **argv)
 			}
 # endif
 #endif
-		else if (strcmp(*argv,"-serverpref") == 0)
-			off|=SSL_OP_CIPHER_SERVER_PREFERENCE;
-		else if (strcmp(*argv,"-legacy_renegotiation") == 0)
-			off|=SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION;
-		else if	(strcmp(*argv,"-legacy_server_connect") == 0)
-			{ off|=SSL_OP_LEGACY_SERVER_CONNECT; }
-		else if	(strcmp(*argv,"-no_legacy_server_connect") == 0)
-			{ clr|=SSL_OP_LEGACY_SERVER_CONNECT; }
-		else if	(strcmp(*argv,"-cipher") == 0)
-			{
-			if (--argc < 1) goto bad;
-			cipher= *(++argv);
-			}
 #ifdef FIONBIO
 		else if (strcmp(*argv,"-nbio") == 0)
 			{ c_nbio=1; }
@@ -980,21 +959,6 @@ int MAIN(int argc, char **argv)
 			servername= *(++argv);
 			/* meth=TLSv1_client_method(); */
 			}
-		else if	(strcmp(*argv,"-curves") == 0)
-			{
-			if (--argc < 1) goto bad;
-			curves= *(++argv);
-			}
-		else if	(strcmp(*argv,"-sigalgs") == 0)
-			{
-			if (--argc < 1) goto bad;
-			sigalgs= *(++argv);
-			}
-		else if	(strcmp(*argv,"-client_sigalgs") == 0)
-			{
-			if (--argc < 1) goto bad;
-			client_sigalgs= *(++argv);
-			}
 #endif
 		else if (strcmp(*argv,"-checkhost") == 0)
 			{
@@ -1034,12 +998,6 @@ int MAIN(int argc, char **argv)
 			keymatexportlen=atoi(*(++argv));
 			if (keymatexportlen == 0) goto bad;
 			}
-		else if (strcmp(*argv, "-cert_strict") == 0)
-			cert_flags |= SSL_CERT_FLAG_TLS_STRICT;
-#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-		else if (strcmp(*argv, "-debug_broken_protocol") == 0)
-			cert_flags |= SSL_CERT_FLAG_BROKEN_PROTCOL;
-#endif
                 else
 			{
 			BIO_printf(bio_err,"unknown option %s\n",*argv);
@@ -1188,6 +1146,12 @@ bad:
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
 
+	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args))
+		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
 #ifndef OPENSSL_NO_ENGINE
 	if (ssl_client_engine)
 		{
@@ -1216,14 +1180,6 @@ bad:
 	if (srtp_profiles != NULL)
 		SSL_CTX_set_tlsext_use_srtp(ctx, srtp_profiles);
 #endif
-	if (bugs)
-		SSL_CTX_set_options(ctx,SSL_OP_ALL|off);
-	else
-		SSL_CTX_set_options(ctx,off);
-
-	if (clr)
-		SSL_CTX_clear_options(ctx, clr);
-	if (cert_flags) SSL_CTX_set_cert_flags(ctx, cert_flags);
 	if (exc) ssl_ctx_set_excert(ctx, exc);
 	/* DTLS: partial reads end up discarding unread UDP bytes :-( 
 	 * Setting read ahead solves this problem.
@@ -1236,12 +1192,6 @@ bad:
 #endif
 
 	if (state) SSL_CTX_set_info_callback(ctx,apps_ssl_info_callback);
-	if (cipher != NULL)
-		if(!SSL_CTX_set_cipher_list(ctx,cipher)) {
-		BIO_printf(bio_err,"error setting cipher list\n");
-		ERR_print_errors(bio_err);
-		goto end;
-	}
 #if 0
 	else
 		SSL_CTX_set_cipher_list(ctx,getenv("SSL_CIPHER"));
@@ -1261,24 +1211,6 @@ bad:
 		goto end;
 
 #ifndef OPENSSL_NO_TLSEXT
-	if (curves != NULL)
-		if(!SSL_CTX_set1_curves_list(ctx, curves)) {
-		BIO_printf(bio_err,"error setting curve list\n");
-		ERR_print_errors(bio_err);
-		goto end;
-	}
-	if (sigalgs != NULL)
-		if(!SSL_CTX_set1_sigalgs_list(ctx,sigalgs)) {
-		BIO_printf(bio_err,"error setting signature algorithms list\n");
-		ERR_print_errors(bio_err);
-		goto end;
-	}
-	if (client_sigalgs != NULL)
-		if(!SSL_CTX_set1_client_sigalgs_list(ctx,client_sigalgs)) {
-		BIO_printf(bio_err,"error setting client signature algorithms list\n");
-		ERR_print_errors(bio_err);
-		goto end;
-	}
 	if (servername != NULL)
 		{
 		tlsextcbp.biodebug = bio_err;
@@ -2022,6 +1954,10 @@ end:
 	if (pass)
 		OPENSSL_free(pass);
 	ssl_excert_free(exc);
+	if (ssl_args)
+		sk_OPENSSL_STRING_free(ssl_args);
+	if (cctx)
+		SSL_CONF_CTX_free(cctx);
 	if (cbuf != NULL) { OPENSSL_cleanse(cbuf,BUFSIZZ); OPENSSL_free(cbuf); }
 	if (sbuf != NULL) { OPENSSL_cleanse(sbuf,BUFSIZZ); OPENSSL_free(sbuf); }
 	if (mbuf != NULL) { OPENSSL_cleanse(mbuf,BUFSIZZ); OPENSSL_free(mbuf); }

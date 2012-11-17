@@ -1546,3 +1546,68 @@ void print_ssl_cert_checks(BIO *bio, SSL *s,
 		X509_free(peer);
 		}
 	}
+
+int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,
+			int *badarg, BIO *err, STACK_OF(OPENSSL_STRING) **pstr)
+	{
+	char *arg = **pargs, *argn = (*pargs)[1];
+	int rv;
+
+	/* Attempt to run SSL configuration command */
+	rv = SSL_CONF_cmd_argv(cctx, pargc, pargs);
+	/* If parameter not recognised just return */
+	if (rv == 0)
+		return 0;
+	/* see if missing argument error */
+	if (rv == -3)
+		{
+		BIO_printf(err, "-%s needs an argument\n", arg);
+		*badarg = 1;
+		goto end;
+		}
+	/* Check for some other error */
+	if (rv < 0)
+		{
+		BIO_printf(err, "-%s %s: failed.\n", arg, argn);
+		*badarg = 1;
+		goto end;
+		}
+	/* Store command and argument */
+	/* If only one argument processed store value as NULL */
+	if (rv == 1)
+		argn = NULL;
+	if (!*pstr)
+		*pstr = sk_OPENSSL_STRING_new_null();
+	if (!*pstr || !sk_OPENSSL_STRING_push(*pstr, arg) ||
+				!sk_OPENSSL_STRING_push(*pstr, argn))
+		{
+		BIO_puts(err, "Memory allocation failure\n");
+		goto end;
+		}
+
+	end:
+	if (*badarg)
+		ERR_print_errors(err);
+
+	return 1;
+	}
+
+int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
+						STACK_OF(OPENSSL_STRING) *str)
+	{
+	int i;
+	SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
+	for (i = 0; i < sk_OPENSSL_STRING_num(str); i+= 2)
+		{
+		const char *param = sk_OPENSSL_STRING_value(str, i);
+		const char *value = sk_OPENSSL_STRING_value(str, i + 1);
+		if (SSL_CONF_cmd(cctx, param, value) <= 0)
+			{
+			BIO_printf(err, "Error with command: \"%s %s\"\n",
+						param, value ? value : "");
+			ERR_print_errors(err);
+			return 0;
+			}
+		}
+	return 1;
+	}

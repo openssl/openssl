@@ -195,3 +195,9 @@ void print_ssl_cert_checks(BIO *bio, SSL *s,
 				const unsigned char *checkhost,
 				const unsigned char *checkemail,
 				const char *checkip);
+#ifdef HEADER_SSL_H
+int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,
+			int *badarg, BIO *err, STACK_OF(OPENSSL_STRING) **pstr);
+int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
+						STACK_OF(OPENSSL_STRING) *str);
+#endif
