@@ -1561,14 +1561,15 @@ int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,
 	/* see if missing argument error */
 	if (rv == -3)
 		{
-		BIO_printf(err, "-%s needs an argument\n", arg);
+		BIO_printf(err, "%s needs an argument\n", arg);
 		*badarg = 1;
 		goto end;
 		}
 	/* Check for some other error */
 	if (rv < 0)
 		{
-		BIO_printf(err, "-%s %s: failed.\n", arg, argn);
+		BIO_printf(err, "Error with command: \"%s %s\"\n",
+						arg, argn ? argn : "");
 		*badarg = 1;
 		goto end;
 		}
