@@ -933,6 +933,29 @@ my %visopf = (	"faligndata"	=> 0x048,
 	return $ref;
     }
 }
+sub unvis3 {
+my ($mnemonic,$rs1,$rs2,$rd)=@_;
+my %bias = ( "g" => 0, "o" => 8, "l" => 16, "i" => 24 );
+my ($ref,$opf);
+my %visopf = (	"addxc"		=> 0x011,
+		"addxccc"	=> 0x013,
+		"umulxhi"	=> 0x016	);
+
+    $ref = "$mnemonic\t$rs1,$rs2,$rd";
+
+    if ($opf=$visopf{$mnemonic}) {
+	foreach ($rs1,$rs2,$rd) {
+	    return $ref if (!/%([goli])([0-9])/);
+	    $_=$bias{$1}+$2;
+	}
+
+	return	sprintf ".word\t0x%08x !%s",
+			0x81b00000|$rd<<25|$rs1<<14|$opf<<5|$rs2,
+			$ref;
+    } else {
+	return $ref;
+    }
+}
 sub unalignaddr {
 my ($mnemonic,$rs1,$rs2,$rd)=@_;
 my %bias = ( "g" => 0, "o" => 8, "l" => 16, "i" => 24 );
@@ -1123,6 +1146,9 @@ sub emit_assembler {
 	 /ge or
 	s/\b(alignaddr[l]*)\s+(%[goli][0-7]),\s*(%[goli][0-7]),\s*(%[goli][0-7])/
 		&unalignaddr($1,$2,$3,$4)
+	 /ge or
+	s/\b(umulxhi|addxc[c]{0,2})\s+(%[goli][0-7]),\s*(%[goli][0-7]),\s*(%[goli][0-7])/
+		&unvis3($1,$2,$3,$4)
 	 /ge;
 
 	print $_,"\n";
