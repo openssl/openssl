@@ -19,8 +19,8 @@ The function SSL_CONF_CTX_clear_flags() clears B<flags> in the context B<cctx>.
 
 =head1 NOTES
 
-The flags how subsequent calls to SSL_CONF_set_cmd() or SSL_CONF_set_argv()
-behave.
+The flags set affect how subsequent calls to SSL_CONF_cmd() or
+SSL_CONF_argv() behave.
 
 Currently the following B<flags> values are recognised:
 
@@ -42,6 +42,8 @@ indicate errors relating to unrecognised options or missing arguments in
 the error queue. If this option isn't set such errors are only reflected
 in the return values of SSL_CONF_set_cmd() or SSL_CONF_set_argv()
 
+=back
+
 =head1 RETURN VALUES
 
 SSL_CONF_CTX_set_flags() and SSL_CONF_CTX_clear_flags() returns the new flags
@@ -51,6 +53,7 @@ value after setting or clearing flags.
 
 L<SSL_CONF_CTX_new(3)|SSL_CONF_CTX_new(3)>,
 L<SSL_CONF_CTX_set_ssl_ctx(3)|SSL_CONF_CTX_set_ssl_ctx(3)>,
+L<SSL_CONF_CTX_set1_prefix(3)|SSL_CONF_CTX_set1_prefix(3)>,
 L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)>,
 L<SSL_CONF_cmd_argv(3)|SSL_CONF_cmd_argv(3)>
 

@@ -22,7 +22,7 @@ framework for configuration files or command line options.
 Currently supported B<cmd> names for configuration files (i.e. when the
 flag B<SSL_CONF_FLAG_FILE> is set) are listed below. All configuration file
 B<cmd> names and are case insensitive so B<signaturealgorithms> is recognised
-as well as B<SignatureAlgorithms>. Unless otherwise states the B<value> names
+as well as B<SignatureAlgorithms>. Unless otherwise stated the B<value> names
 are also case insensitive.
 
 Note: the command prefix (if set) alters the recognised B<cmd> values.
@@ -32,7 +32,7 @@ Note: the command prefix (if set) alters the recognised B<cmd> values.
 =item B<CipherSuite>
 
 Sets the cipher suite list to B<value>. Note: syntax checking of B<value> is
-currently not performed unless a B<SSL> or B<SSL_CTX> structure is 
+currently not performed unless an B<SSL> or B<SSL_CTX> structure is 
 associated with B<cctx>.
 
 =item B<SignatureAlgorithms>
@@ -55,7 +55,7 @@ OpenSSL library are permissible.
 This sets the supported signature algorithms associated with client
 authentication for TLS v1.2. For servers the value is used in the supported
 signature algorithms field of a certificate request. For clients it is
-used to determine which signature algorithm to use for the client certificate.
+used to determine which signature algorithm to with the client certificate.
 
 The syntax of B<value> is identical to B<SignatureAlgorithms>. If not set then
 the value set for B<SignatureAlgorithms> will be used instead.
@@ -63,9 +63,9 @@ the value set for B<SignatureAlgorithms> will be used instead.
 =item B<Curves>
 
 This sets the supported elliptic curves. For servers the curves are
-sent using the supported curves extension to TLS. For clients the it is used
-to determine which curve to use. This affects curves used for both signatures
-and key exchange.
+sent using the supported curves extension for TLS v1.2. For clients it is used
+to determine which curve to use. This setting affects curves used for both
+signatures and key exchange, if applicable.
 
 The B<value> argument is a colon separated list of curves. The curve can be
 either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name (e.g
@@ -76,9 +76,9 @@ B<prime256v1>). Curve names are case sensitive.
 This sets the temporary curve used for ephemeral ECDH modes.
 
 The B<value> argument is a curve name or the special value B<Automatic> which
-automatically picks an appropriate curve based on client and server
-preferences. The curve can be either the B<NIST> name (e.g. B<P-256>) or an
-OpenSSL OID name (e.g B<prime256v1>). Curve names are case sensitive.
+picks an appropriate curve based on client and server preferences. The curve
+can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
+(e.g B<prime256v1>). Curve names are case sensitive.
 
 =item B<Protocol>
 
@@ -87,9 +87,9 @@ The supported versions of the SSL or TLS protocol.
 The B<value> argument is a comma separated list of supported protocols to
 enable or disable. If an protocol is preceded by B<-> that version is disabled.
 All versions are enabled by default, though applications may choose to
-explicitly disable some version. Currently supported protocol
-values are B<SSLv2>, B<SSLv3>, B<TLSv1>, B<TLSv1.1> and B<TLSv1.2>. The
-special value B<ALL> refers to all supported versions.
+explicitly disable some. Currently supported protocol values are B<SSLv2>,
+B<SSLv3>, B<TLSv1>, B<TLSv1.1> and B<TLSv1.2>. The special value B<ALL> refers
+to all supported versions.
 
 =item B<Options>
 
@@ -111,9 +111,9 @@ B<EmptyFragments>: use empty fragments as a countermeasure against a
 SSL 3.0/TLS 1.0 protocol vulnerability affecting CBC ciphers. It
 is set by default. Inverse of B<SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS>.
 
-B<Bugs> enable various bug workarounds. Same as B<SSL_OP_ALL>.
+B<Bugs>: enable various bug workarounds. Same as B<SSL_OP_ALL>.
 
-B<DHSingle> enable single use DH keys, set by default. Inverse of
+B<DHSingle>: enable single use DH keys, set by default. Inverse of
 B<SSL_OP_DH_SINGLE>. Only used by servers.
 
 B<ECDHSingle> enable single use ECDH keys, set by default. Inverse of
@@ -138,7 +138,7 @@ Set by default.
 Currently supported B<cmd> names for command lines (i.e. when the
 flag B<SSL_CONF_CMDLINE> is set) are listed below. Note: all B<cmd> names
 and are case sensitive. Unless otherwise stated the B<value> parameter is
-noh used. The default prefix for command line commands is B<-> and that is
+not used. The default prefix for command line commands is B<-> and that is
 reflected below.
 
 =over 4
@@ -174,7 +174,7 @@ associated with B<cctx>.
 
 Disables protocol support for SSLv2, SSLv3, TLS 1.0, TLS 1.1 or TLS 1.2 
 by setting the corresponding options B<SSL_OP_NO_SSL2>, B<SSL_OP_NO_SSL3>,
-B<SSL_OP_NO_TLS1> B<SSL_OP_NO_TLS1_1> and B<SSL_OP_NO_TLS1_2> respectively.
+B<SSL_OP_NO_TLS1>, B<SSL_OP_NO_TLS1_1> and B<SSL_OP_NO_TLS1_2> respectively.
 
 =item B<-bugs>
 

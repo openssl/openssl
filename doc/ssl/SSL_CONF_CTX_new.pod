@@ -13,7 +13,7 @@ SSL_CONF_CTX_new, SSL_CONF_CTX_free - SSL configuration allocation functions
 
 =head1 DESCRIPTION
 
-The function SSL_CONF_CTX_new() allocates and initialised an B<SSL_CONF_CTX>
+The function SSL_CONF_CTX_new() allocates and initialises an B<SSL_CONF_CTX>
 structure for use with the SSL_CONF functions.
 
 The function SSL_CONF_CTX_free() frees up the context B<cctx>.
@@ -29,6 +29,7 @@ SSL_CONF_CTX_free() does not return a value.
 
 L<SSL_CONF_CTX_set_flags(3)|SSL_CONF_CTX_set_flags(3)>,
 L<SSL_CONF_CTX_set_ssl_ctx(3)|SSL_CONF_CTX_set_ssl_ctx(3)>,
+L<SSL_CONF_CTX_set1_prefix(3)|SSL_CONF_CTX_set1_prefix(3)>,
 L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)>,
 L<SSL_CONF_cmd_argv(3)|SSL_CONF_cmd_argv(3)>
 
