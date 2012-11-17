@@ -22,6 +22,8 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&xor	("eax","eax");
 	&bt	("ecx",21);
 	&jnc	(&label("nocpuid"));
+	&mov	("esi",&wparam(0));
+	&mov	(&DWP(8,"esi"),"eax");	# clear 3rd word
 	&cpuid	();
 	&mov	("edi","eax");		# max value for standard query level
 
@@ -89,6 +91,15 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&shr	("edi",14);
 	&and	("edi",0xfff);		# number of cores -1 per L1D
 
+	&cmp	("edi",7);
+	&jb	(&label("nocacheinfo"));
+
+	&mov	("esi",&wparam(0));
+	&mov	("eax",7);
+	&xor	("ecx","ecx");
+	&cpuid	();
+	&mov	(&DWP(8,"esi"),"ebx");
+
 &set_label("nocacheinfo");
 	&mov	("eax",1);
 	&cpuid	();
@@ -133,6 +144,8 @@ for (@ARGV) { $sse2=1 if (/-DOPENSSL_IA32_SSE2/); }
 	&and	("esi",0xfeffffff);	# clear FXSR
 &set_label("clear_avx");
 	&and	("ebp",0xefffe7ff);	# clear AVX, FMA and AMD XOP bits
+	&mov	("edi",&wparam(0));
+	&and	(&DWP(8,"edi"),0xffffffdf);	# clear AVX2
 &set_label("done");
 	&mov	("eax","esi");
 	&mov	("edx","ebp");

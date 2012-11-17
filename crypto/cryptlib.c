@@ -125,7 +125,7 @@ static double SSLeay_MSVC5_hack=0.0; /* and for VC1.5 */
 	defined(__INTEL__) || \
 	defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 
-extern unsigned int  OPENSSL_ia32cap_P[2];
+extern unsigned int  OPENSSL_ia32cap_P[4];
 unsigned int *OPENSSL_ia32cap_loc(void) { return OPENSSL_ia32cap_P; }
 
 #if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
@@ -137,7 +137,7 @@ typedef unsigned long long IA32CAP;
 #endif
 void OPENSSL_cpuid_setup(void)
 { static int trigger=0;
-  IA32CAP OPENSSL_ia32_cpuid(void);
+  IA32CAP OPENSSL_ia32_cpuid(unsigned int *);
   IA32CAP vec;
   char *env;
 
@@ -151,10 +151,18 @@ void OPENSSL_cpuid_setup(void)
 #else
 	if (!sscanf(env+off,"%lli",(long long *)&vec)) vec = strtoul(env+off,NULL,0);
 #endif
-	if (off) vec = OPENSSL_ia32_cpuid()&~vec;
+	if (off) vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P)&~vec;
+
+	OPENSSL_ia32cap_P[2] = 0;
+	if ((env=strchr(env,':'))) {
+	    off = (env[1]=='~')?2:1;
+	    vec = strtoul(env+off,NULL,0);
+	    if (off>1)	OPENSSL_ia32cap_P[2] &= ~vec;
+	    else	OPENSSL_ia32cap_P[2] = vec;
+	}
     }
     else
-	vec = OPENSSL_ia32_cpuid();
+	vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
 
     /*
      * |(1<<10) sets a reserved bit to signal that variable
@@ -165,7 +173,7 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_ia32cap_P[1] = (unsigned int)(vec>>32);
 }
 #else
-unsigned int OPENSSL_ia32cap_P[2];
+unsigned int OPENSSL_ia32cap_P[4];
 #endif
 
 #else
@@ -173,7 +181,7 @@ unsigned int *OPENSSL_ia32cap_loc(void) { return NULL; }
 #endif
 int OPENSSL_NONPIC_relocated = 0;
 #if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
-void OPENSSL_cpuid_setup(void) {}
+void OPENSSL_cpuid_setup(unsigned int *) {}
 #endif
 
 #if (defined(_WIN32) || defined(__CYGWIN__)) && defined(_WINDLL)

@@ -72,3 +72,17 @@ the data cache is actually shared between logical cores. This in turn
 affects the decision on whether or not expensive countermeasures
 against cache-timing attacks are applied, most notably in AES assembler
 module.
+
+The vector is further extended with EBX value returned by CPUID with
+EAX=7 and ECX=0 as input. Following bits are significant:
+
+=item bit #64+3 denoting availability of BMI1 instructions, e.g. ANDN;
+
+=item bit #64+5 denoting availability of AVX2 instructions;
+
+=item bit #64+8 denoting availability of BMI2 instructions, e.g. MUXL
+      and RORX;
+
+=item bit #64+18 denoting availability of RDSEED instruction;
+
+=itme bit #64+19 denoting availability of ADCX and ADOX instructions;
