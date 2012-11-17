@@ -181,7 +181,7 @@ unsigned int *OPENSSL_ia32cap_loc(void) { return NULL; }
 #endif
 int OPENSSL_NONPIC_relocated = 0;
 #if !defined(OPENSSL_CPUID_SETUP) && !defined(OPENSSL_CPUID_OBJ)
-void OPENSSL_cpuid_setup(unsigned int *) {}
+void OPENSSL_cpuid_setup(void) {}
 #endif
 
 #if (defined(_WIN32) || defined(__CYGWIN__)) && defined(_WINDLL)
