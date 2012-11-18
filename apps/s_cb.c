@@ -454,13 +454,13 @@ int ssl_print_curves(BIO *out, SSL *s, int noshared)
 		}
 	if (ncurves == 0)
 		BIO_puts(out, "NONE");
+	OPENSSL_free(curves);
 	if (noshared)
 		{
 		BIO_puts(out, "\n");
 		return 1;
 		}
 	BIO_puts(out, "\nShared Elliptic curves: ");
-	OPENSSL_free(curves);
 	ncurves = SSL_get_shared_curve(s, -1);
 	for (i = 0; i < ncurves; i++)
 		{
