@@ -25,14 +25,11 @@ void close_up()
 		BIO_free(in);
 	}
 
-int main(argc,argv)
-int argc;
-char *argv[];
+int main(int argc, char *argv[])
 	{
 	char *port=NULL;
 	BIO *ssl_bio,*tmp;
 	SSL_CTX *ctx;
-	SSL *ssl;
 	char buf[512];
 	int ret=1,i;
 
@@ -44,11 +41,6 @@ char *argv[];
 	signal(SIGINT,close_up);
 
 	SSL_load_error_strings();
-
-#ifdef WATT32
-	dbug_init();
-	sock_init();
-#endif
 
 	/* Add ciphers and message digests */
 	OpenSSL_add_ssl_algorithms();
@@ -62,7 +54,6 @@ char *argv[];
 		goto err;
 
 	/* Setup server side SSL bio */
-	ssl=SSL_new(ctx);
 	ssl_bio=BIO_new_ssl(ctx,0);
 
 	if ((in=BIO_new_accept(port)) == NULL) goto err;
