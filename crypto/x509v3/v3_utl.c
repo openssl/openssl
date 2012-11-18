@@ -568,12 +568,177 @@ void X509_email_free(STACK_OF(OPENSSL_STRING) *sk)
 	sk_OPENSSL_STRING_pop_free(sk, str_free);
 }
 
+typedef int (*equal_fn)(const unsigned char *pattern, size_t pattern_len,
+			const unsigned char *subject, size_t subject_len);
+
+/* Compare while ASCII ignoring case. */
+static int equal_nocase(const unsigned char *pattern, size_t pattern_len,
+			const unsigned char *subject, size_t subject_len)
+	{
+	if (pattern_len != subject_len)
+		return 0;
+	while (pattern_len)
+		{
+		unsigned char l = *pattern;
+		unsigned char r = *subject;
+		/* The pattern must not contain NUL characters. */
+		if (l == 0)
+			return 0;
+		if (l != r)
+			{
+			if ('A' <= l && l <= 'Z')
+				l = (l - 'A') + 'a';
+			if ('A' <= r && r <= 'Z')
+				r = (r - 'A') + 'a';
+			if (l != r)
+				return 0;
+			}
+		++pattern;
+		++subject;
+		--pattern_len;
+		}
+	return 1;
+	}
+
+/* Compare using memcmp. */
+static int equal_case(const unsigned char *pattern, size_t pattern_len,
+		      const unsigned char *subject, size_t subject_len)
+{
+	/* The pattern must not contain NUL characters. */
+	if (memchr(pattern, '\0', pattern_len) != NULL)
+		return 0;
+	if (pattern_len != subject_len)
+		return 0;
+	return !memcmp(pattern, subject, pattern_len);
+}
+
+/* RFC 5280, section 7.5, requires that only the domain is compared in
+   a case-insensitive manner. */
+static int equal_email(const unsigned char *a, size_t a_len,
+		       const unsigned char *b, size_t b_len)
+	{
+	size_t i = a_len;
+	if (a_len != b_len)
+		return 0;
+	/* We search backwards for the '@' character, so that we do
+	   not have to deal with quoted local-parts.  The domain part
+	   is compared in a case-insensitive manner. */
+	while (i > 0)
+		{
+		--i;
+		if (a[i] == '@' || b[i] == '@')
+			{
+			if (!equal_nocase(a + i, a_len - i,
+					  b + i, a_len - i))
+				return 0;
+			break;
+			}
+		}
+	if (i == 0)
+		i = a_len;
+	return equal_case(a, i, b, i);
+	}
+
+/* Compare the prefix and suffix with the subject, and check that the
+   characters in-between are valid. */
+static int wildcard_match(const unsigned char *prefix, size_t prefix_len,
+			  const unsigned char *suffix, size_t suffix_len,
+			  const unsigned char *subject, size_t subject_len)
+	{
+	const unsigned char *wildcard_start;
+	const unsigned char *wildcard_end;
+	const unsigned char *p;
+	if (subject_len < prefix_len + suffix_len)
+		return 0;
+	if (!equal_nocase(prefix, prefix_len, subject, prefix_len))
+		return 0;
+	wildcard_start = subject + prefix_len;
+	wildcard_end = subject + (subject_len - suffix_len);
+	if (!equal_nocase(wildcard_end, suffix_len, suffix, suffix_len))
+		return 0;
+	/* The wildcard must match at least one character. */
+	if (wildcard_start == wildcard_end)
+		return 0;
+	/* Check that the part matched by the wildcard contains only
+	   permitted characters and only matches a single label. */
+	for (p = wildcard_start; p != wildcard_end; ++p)
+		if (!(('0' <= *p && *p <= '9') ||
+		      ('A' <= *p && *p <= 'Z') ||
+		      ('a' <= *p && *p <= 'z') ||
+		      *p == '-'))
+			return 0;
+	return 1;
+	}
+
+/* Checks if the memory region consistens of [0-9A-Za-z.-]. */
+static int valid_domain_characters(const unsigned char *p, size_t len)
+	{
+	while (len)
+		{
+		if (!(('0' <= *p && *p <= '9') ||
+		      ('A' <= *p && *p <= 'Z') ||
+		      ('a' <= *p && *p <= 'z') ||
+		      *p == '-' || *p == '.'))
+			return 0;
+		++p;
+		--len;
+		}
+	return 1;
+	}
+
+/* Find the '*' in a wildcard pattern.  If no such character is found
+   or the pattern is otherwise invalid, returns NULL. */
+static const unsigned char *wildcard_find_star(const unsigned char *pattern,
+					       size_t pattern_len)
+	{
+	const unsigned char *star = memchr(pattern, '*', pattern_len);
+	size_t dot_count = 0;
+	const unsigned char *suffix_start;
+	size_t suffix_length;
+	if (star == NULL)
+		return NULL;
+	suffix_start = star + 1;
+	suffix_length = (pattern + pattern_len) - (star + 1);
+	if (!(valid_domain_characters(pattern, star - pattern) &&
+	      valid_domain_characters(suffix_start, suffix_length)))
+		return NULL;
+	/* Check that the suffix matches at least two labels. */
+	while (suffix_length)
+		{
+		if (*suffix_start == '.')
+			++dot_count;
+		++suffix_start;
+		--suffix_length;
+		}
+	if (dot_count < 2)
+		return NULL;
+	return star;
+	}
+
+/* Compare using wildcards. */
+static int equal_wildcard(const unsigned char *pattern, size_t pattern_len,
+			  const unsigned char *subject, size_t subject_len)
+	{
+	const unsigned char *star;
+	/* Do not match IDNA names. */
+	if (subject_len >=4 && memcmp(subject, "xn--", 4) == 0)
+		star = NULL;
+	else
+		star = wildcard_find_star(pattern, pattern_len);
+	if (star == NULL)
+		return equal_nocase(pattern, pattern_len,
+				    subject, subject_len);
+	return wildcard_match(pattern, star - pattern,
+			      star + 1, (pattern + pattern_len) - star - 1,
+			      subject, subject_len);
+	}
+
 /* Compare an ASN1_STRING to a supplied string. If they match
  * return 1. If cmp_type > 0 only compare if string matches the
  * type, otherwise convert it to UTF8.
  */
 
-static int do_check_string(ASN1_STRING *a, int cmp_type,
+static int do_check_string(ASN1_STRING *a, int cmp_type, equal_fn equal,
 				const unsigned char *b, size_t blen)
 	{
 	if (!a->data || !a->length)
@@ -582,6 +747,8 @@ static int do_check_string(ASN1_STRING *a, int cmp_type,
 		{
 		if (cmp_type != a->type)
 			return 0;
+		if (cmp_type == V_ASN1_IA5STRING)
+			return equal(a->data, a->length, b, blen);
 		if (a->length == (int)blen && !memcmp(a->data, b, blen))
 			return 1;
 		else
@@ -593,11 +760,8 @@ static int do_check_string(ASN1_STRING *a, int cmp_type,
 		unsigned char *astr;
 		astrlen = ASN1_STRING_to_UTF8(&astr, a);
 		if (astrlen < 0)
-			return 0;
-		if (astrlen == (int)blen && !memcmp(astr, b, blen))
-			rv = 1;
-		else
-			rv = 0;
+			return -1;
+		rv = equal(astr, astrlen, b, blen);
 		OPENSSL_free(astr);
 		return rv;
 		}
@@ -610,12 +774,29 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 	X509_NAME *name = NULL;
 	int i;
 	int cnid;
+	int alt_type;
+	equal_fn equal;
 	if (check_type == GEN_EMAIL)
+		{
 		cnid = NID_pkcs9_emailAddress;
+		alt_type = V_ASN1_IA5STRING;
+		equal = equal_email;
+		}
 	else if (check_type == GEN_DNS)
+		{
 		cnid = NID_commonName;
+		alt_type = V_ASN1_IA5STRING;
+		if (flags & X509_CHECK_FLAG_NO_WILDCARDS)
+			equal = equal_nocase;
+		else
+			equal = equal_wildcard;
+		}
 	else
+		{
 		cnid = 0;
+		alt_type = V_ASN1_OCTET_STRING;
+		equal = equal_case;
+		}
 
 	if (chklen == 0)
 		chklen = strlen((const char *)chk);
@@ -624,11 +805,6 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 	if (gens)
 		{
 		int rv = 0;
-		int alt_type;
-		if (cnid)
-			alt_type = V_ASN1_IA5STRING;
-		else
-			alt_type = V_ASN1_OCTET_STRING;
 		for (i = 0; i < sk_GENERAL_NAME_num(gens); i++)
 			{
 			GENERAL_NAME *gen;
@@ -642,7 +818,7 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 				cstr = gen->d.dNSName;
 			else
 				cstr = gen->d.iPAddress;
-			if (do_check_string(cstr, alt_type, chk, chklen))
+			if (do_check_string(cstr, alt_type, equal, chk, chklen))
 				{
 				rv = 1;
 				break;
@@ -662,7 +838,7 @@ static int do_x509_check(X509 *x, const unsigned char *chk, size_t chklen,
 		ASN1_STRING *str;
 		ne = X509_NAME_get_entry(name, i);
 		str = X509_NAME_ENTRY_get_data(ne);
-		if (do_check_string(str, -1, chk, chklen))
+		if (do_check_string(str, -1, equal, chk, chklen))
 			return 1;
 		}
 	return 0;
@@ -692,7 +868,7 @@ int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
 	int iplen;
 	iplen = a2i_ipadd(ipout, ipasc);
 	if (iplen == 0)
-		return 0;
+		return -2;
 	return do_x509_check(x, ipout, (size_t)iplen, flags, GEN_IPADD);
 	}
 

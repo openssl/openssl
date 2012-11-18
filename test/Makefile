@@ -64,6 +64,7 @@ EVPTEST=	evp_test
 IGETEST=	igetest
 JPAKETEST=	jpaketest
 SRPTEST=	srptest
+V3NAMETEST=	v3nametest
 FIPS_SHATEST=	fips_shatest
 FIPS_DESTEST=	fips_desmovs
 FIPS_RANDTEST=	fips_randtest
@@ -94,7 +95,8 @@ EXE=	$(BNTEST)$(EXE_EXT) $(ECTEST)$(EXE_EXT)  $(ECDSATEST)$(EXE_EXT) $(ECDHTEST)
 	$(RANDTEST)$(EXE_EXT) $(DHTEST)$(EXE_EXT) $(ENGINETEST)$(EXE_EXT) \
 	$(BFTEST)$(EXE_EXT) $(CASTTEST)$(EXE_EXT) $(SSLTEST)$(EXE_EXT) \
 	$(EXPTEST)$(EXE_EXT) $(DSATEST)$(EXE_EXT) $(RSATEST)$(EXE_EXT) \
-	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT)
+	$(EVPTEST)$(EXE_EXT) $(IGETEST)$(EXE_EXT) $(JPAKETEST)$(EXE_EXT) $(SRPTEST)$(EXE_EXT) \
+	$(V3NAMETEST)$(EXE_EXT)
 
 FIPSEXE=$(FIPS_SHATEST)$(EXE_EXT) $(FIPS_DESTEST)$(EXE_EXT) \
 	$(FIPS_RANDTEST)$(EXE_EXT) $(FIPS_AESTEST)$(EXE_EXT) \
@@ -122,7 +124,7 @@ OBJ=	$(BNTEST).o $(ECTEST).o  $(ECDSATEST).o $(ECDHTEST).o $(IDEATEST).o \
 	$(FIPS_DSSVS).o $(FIPS_DSATEST).o $(FIPS_RNGVS).o $(FIPS_DRBGVS).o \
 	$(FIPS_TEST_SUITE).o $(FIPS_DHVS).o $(FIPS_ECDSAVS).o \
 	$(FIPS_ECDHVS).o $(FIPS_CMACTEST).o $(FIPS_ALGVS).o \
-	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o
+	$(EVPTEST).o $(IGETEST).o $(JPAKETEST).o $(V3NAMETEST).o
 SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(MD2TEST).c  $(MD4TEST).c $(MD5TEST).c \
 	$(HMACTEST).c $(WPTEST).c \
@@ -136,7 +138,7 @@ SRC=	$(BNTEST).c $(ECTEST).c  $(ECDSATEST).c $(ECDHTEST).c $(IDEATEST).c \
 	$(FIPS_DSSVS).c $(FIPS_DSATEST).c $(FIPS_RNGVS).c $(FIPS_DRBGVS).c \
 	$(FIPS_TEST_SUITE).c $(FIPS_DHVS).c $(FIPS_ECDSAVS).c \
 	$(FIPS_ECDHVS).c $(FIPS_CMACTEST).c $(FIPS_ALGVS).c \
-	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c
+	$(EVPTEST).c $(IGETEST).c $(JPAKETEST).c $(V3NAMETEST).c
 
 EXHEADER= 
 HEADER=	$(EXHEADER)
@@ -183,7 +185,7 @@ alltests: \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige \
-	test_jpake test_srp test_cms
+	test_jpake test_srp test_cms test_v3name
 
 test_evp:
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -360,6 +362,10 @@ test_cms:
 test_srp: $(SRPTEST)$(EXE_EXT)
 	@echo "Test SRP"
 	../util/shlib_wrap.sh ./srptest
+
+test_v3name: $(V3NAMETEST)$(EXE_EXT)
+	@echo "Test X509v3_check_*"
+	../util/shlib_wrap.sh ./$(V3NAMETEST)
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff
@@ -582,6 +588,9 @@ $(JPAKETEST)$(EXE_EXT): $(JPAKETEST).o $(DLIBCRYPTO)
 
 $(SRPTEST)$(EXE_EXT): $(SRPTEST).o $(DLIBCRYPTO)
 	@target=$(SRPTEST); $(BUILD_CMD)
+
+$(V3NAMETEST)$(EXE_EXT): $(V3NAMETEST).o $(DLIBCRYPTO)
+	@target=$(V3NAMETEST); $(BUILD_CMD)
 
 #$(AESTEST).o: $(AESTEST).c
 #	$(CC) -c $(CFLAGS) -DINTERMEDIATE_VALUE_KAT -DTRACE_KAT_MCT $(AESTEST).c

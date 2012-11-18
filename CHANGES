@@ -4,6 +4,10 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) Fixes and wildcard matching support to hostname and email checking
+     functions. Add manual page.
+     [Florian Weimer (Red Hat Product Security Team)]
+
   *) New experimental SSL_CONF* functions. These provide a common framework
      for application configuration using configuration files or command lines.
      [Steve Henson]
