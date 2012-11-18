@@ -1460,6 +1460,7 @@ static PCCERT_CONTEXT capi_find_cert(CAPI_CTX *ctx, const char *id, HCERTSTORE h
 static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const TCHAR *contname, TCHAR *provname, DWORD ptype, DWORD keyspec)
 	{
 	CAPI_KEY *key;
+	DWORD dwFlags = 0; 
 	key = OPENSSL_malloc(sizeof(CAPI_KEY));
 	if (sizeof(TCHAR)==sizeof(char))
 		CAPI_trace(ctx, "capi_get_key, contname=%s, provname=%s, type=%d\n",
@@ -1475,7 +1476,9 @@ static CAPI_KEY *capi_get_key(CAPI_CTX *ctx, const TCHAR *contname, TCHAR *provn
 		if (_provname) OPENSSL_free(_provname);
 		if (_contname) OPENSSL_free(_contname);
 		}
-	if (!CryptAcquireContext(&key->hprov, contname, provname, ptype, 0))
+	if(ctx->store_flags & CERT_SYSTEM_STORE_LOCAL_MACHINE)
+		dwFlags = CRYPT_MACHINE_KEYSET;
+	if (!CryptAcquireContext(&key->hprov, contname, provname, ptype, dwflags))
 		{
 		CAPIerr(CAPI_F_CAPI_GET_KEY, CAPI_R_CRYPTACQUIRECONTEXT_ERROR);
 		capi_addlasterror();
