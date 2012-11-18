@@ -284,7 +284,7 @@ static int init_client_ip(int *sock, unsigned char ip[4], int port, int type)
 	return(1);
 	}
 
-int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, unsigned char *context), unsigned char *context)
+int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, unsigned char *context), unsigned char *context, int naccept)
 	{
 	int sock;
 	char *name = NULL;
@@ -314,7 +314,9 @@ int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, uns
 		if (name != NULL) OPENSSL_free(name);
 		if (type==SOCK_STREAM)
 			SHUTDOWN2(sock);
-		if (i < 0)
+		if (naccept != -1)
+			naccept--;
+		if (i < 0 || naccept == 0)
 			{
 			SHUTDOWN2(accept_socket);
 			return(i);

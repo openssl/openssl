@@ -973,7 +973,7 @@ int MAIN(int argc, char *argv[])
 	STACK_OF(X509) *s_chain = NULL, *s_dchain = NULL;
 	EVP_PKEY *s_key = NULL, *s_dkey = NULL;
 	int no_cache = 0, ext_cache = 0;
-	int rev = 0;
+	int rev = 0, naccept = -1;
 #ifndef OPENSSL_NO_TLSEXT
 	EVP_PKEY *s_key2 = NULL;
 	X509 *s_cert2 = NULL;
@@ -1039,6 +1039,17 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			if (!extract_port(*(++argv),&port))
 				goto bad;
+			}
+		else if	(strcmp(*argv,"-naccept") == 0)
+			{
+			if (--argc < 1) goto bad;
+			naccept = atol(*(++argv));
+			if (naccept <= 0)
+				{
+				BIO_printf(bio_err, "bad accept value %s\n",
+							*argv);
+				goto bad;
+				}
 			}
 		else if	(strcmp(*argv,"-verify") == 0)
 			{
@@ -1967,11 +1978,11 @@ bad:
 	BIO_printf(bio_s_out,"ACCEPT\n");
 	(void)BIO_flush(bio_s_out);
 	if (rev)
-		do_server(port,socket_type,&accept_socket,rev_body, context);
+		do_server(port,socket_type,&accept_socket,rev_body, context, naccept);
 	else if (www)
-		do_server(port,socket_type,&accept_socket,www_body, context);
+		do_server(port,socket_type,&accept_socket,www_body, context, naccept);
 	else
-		do_server(port,socket_type,&accept_socket,sv_body, context);
+		do_server(port,socket_type,&accept_socket,sv_body, context, naccept);
 	print_stats(bio_s_out,ctx);
 	ret=0;
 end:
