@@ -246,9 +246,9 @@ commands.
 
 Applications can also use SSL_CTX_cmd() to process command lines though the
 utility function SSL_CTX_cmd_argv() is normally used instead. One way
-to do this is to check for an initial prefix ("-", "--" or "--ssl-" for example)
-on a command argument and pass the rest to B<cmd>. The following argument
-is passed to B<value> (which may be NULL).
+to do this is to set the prefix to an appropriate value using
+SSL_CONF_CTX_set1_prefix(), pass the current argument to B<cmd> and the
+following argument to B<value> (which may be NULL).
 
 In this case if the return value is positive then it is used to skip that
 number of arguments as they have been processed by SSL_CTX_cmd(). If -2 is
