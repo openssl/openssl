@@ -78,6 +78,11 @@ static int bind_gost (ENGINE *e,const char *id)
 	{
 	int ret = 0;
 	if (id && strcmp(id, engine_gost_id)) return 0;
+	if (ameth_GostR3410_94)
+		{
+		printf("GOST engine already loaded\n");
+		goto end;
+		}
 
 	if (!ENGINE_set_id(e, engine_gost_id)) 
 		{
