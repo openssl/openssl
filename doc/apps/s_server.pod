@@ -9,6 +9,7 @@ s_server - SSL/TLS server program
 
 B<openssl> B<s_server>
 [B<-accept port>]
+[B<-naccept count>]
 [B<-context id>]
 [B<-verify depth>]
 [B<-Verify depth>]
@@ -67,6 +68,10 @@ for connections on a given port using SSL/TLS.
 =item B<-accept port>
 
 the TCP port to listen on for connections. If not specified 4433 is used.
+
+=item B<-naccept count>
+
+The server will exit after receiving B<number> connections, default unlimited. 
 
 =item B<-context id>
 
