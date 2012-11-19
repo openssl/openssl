@@ -185,6 +185,15 @@ print extensive debugging information including a hex dump of all traffic.
 
 show all protocol messages with hex dump.
 
+=item B<-trace>
+
+show verbose trace output of protocol messages. OpenSSL needs to be compiled
+with B<enable-ssl-trace> for this option to work.
+
+=item B<-msgfile>
+
+file to send output of B<-msg> or B<-trace> to, default standard output.
+
 =item B<-nbio_test>
 
 tests non blocking I/O
