@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) New functions OPENSSL_gmtime_diff and ASN1_TIME_diff to find the
+     difference in days and seconds between two tm or ASN1_TIME structures.
+     [Steve Henson]
+
   *) Add -rev test option to s_server to just reverse order of characters
      received by client and send back to server. Also prints an abbreviated
      summary of the connection parameters.

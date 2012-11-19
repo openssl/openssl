@@ -66,6 +66,7 @@
 #include "cryptlib.h"
 #include "o_time.h"
 #include <openssl/asn1t.h>
+#include "asn1_locl.h"
 
 IMPLEMENT_ASN1_MSTRING(ASN1_TIME, B_ASN1_TIME)
 
@@ -197,64 +198,32 @@ int ASN1_TIME_set_string(ASN1_TIME *s, const char *str)
 	return 1;
 	}
 
-#if 0
-static int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *s)
+static int asn1_time_to_tm(struct tm *tm, const ASN1_TIME *t)
 	{
-	const unsigned char *p;
-
-	if (!ASN1_TIME_check(s))
+	if (t == NULL)
+		{
+		time_t now_t;
+		time(&now_t);
+		if (OPENSSL_gmtime(&now_t, tm))
+			return 1;
 		return 0;
+		}
+		
+	if (t->type == V_ASN1_UTCTIME)
+		return asn1_utctime_to_tm(tm, t);
+	else if (t->type == V_ASN1_GENERALIZEDTIME)
+		return asn1_generalizedtime_to_tm(tm, t);
 
-	memset(tm, 0 ,sizeof tm);
-	p = s->data;
-
-#define g2(p) (((p)[0] - '0') * 10 + ((p)[1] - '0'))
-	if (s->type == V_ASN1_GENERALIZEDTIME)
-		{
-		int yr = g2(p) * 100 + g2(p + 2);
-		if (yr < 1900)
-			return 0;
-		tm->tm_year = yr - 1900;
-		p += 4;
-		}
-	else
-		{
-		tm->tm_year=g2(p);
-		if(tm->tm_year < 50)
-			tm->tm_year+=100;
-		p += 2;
-		}
-	tm->tm_mon=g2(p)-1;
-	tm->tm_mday=g2(p + 2);
-	tm->tm_hour=g2(p + 4);
-	tm->tm_min=g2(p + 6);
-	p += 8;
-	/* Seconds optional in UTCTime */
-	if (s->type == V_ASN1_GENERALIZEDTIME || (*p >= '0' && *p <= '9'))
-		{
-		tm->tm_sec=g2(p);
-		p += 2;
-		}
-	else
-		tm->tm_sec = 0;
-	if (s->type == V_ASN1_GENERALIZEDTIME)
-		{
-		/* Skip any fractional seconds */
-		if (*p == '.')
-			{
-			p++;
-			while (*p >= '0' && *p <= '9')
-				p++;
-			}
-		}
-	/* Timezone */
-	if(*p != 'Z')
-		{
-		int off_sec = g2(p + 1) * 3600 + g2(p + 3) * 60;
-		if(*p == '-')
-			off_sec = -off_sec;
-		OPENSSL_gmtime_adj(tm, 0, off_sec);
-		}
-	return 1;
+	return 0;
 	}
-#endif
+
+int ASN1_TIME_diff(int *pday, int *psec,
+			const ASN1_TIME *from, const ASN1_TIME *to)
+	{
+	struct tm tm_from, tm_to;
+	if (!asn1_time_to_tm(&tm_from, from))
+		return 0;
+	if (!asn1_time_to_tm(&tm_to, to))
+		return 0;
+	return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
+	}	

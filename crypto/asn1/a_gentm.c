@@ -63,6 +63,7 @@
 #include "cryptlib.h"
 #include "o_time.h"
 #include <openssl/asn1.h>
+#include "asn1_locl.h"
 
 #if 0
 
@@ -115,7 +116,7 @@ err:
 
 #endif
 
-int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
+int asn1_generalizedtime_to_tm(struct tm *tm, const ASN1_GENERALIZEDTIME *d)
 	{
 	static const int min[9]={ 0, 0, 1, 1, 0, 0, 0, 0, 0};
 	static const int max[9]={99, 99,12,31,23,59,59,12,59};
@@ -135,7 +136,12 @@ int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
 		{
 		if ((i == 6) && ((a[o] == 'Z') ||
 			(a[o] == '+') || (a[o] == '-')))
-			{ i++; break; }
+			{
+			i++;
+			if (tm)
+				tm->tm_sec = 0;
+			break;
+			}
 		if ((a[o] < '0') || (a[o] > '9')) goto err;
 		n= a[o]-'0';
 		if (++o > l) goto err;
@@ -145,6 +151,33 @@ int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
 		if (++o > l) goto err;
 
 		if ((n < min[i]) || (n > max[i])) goto err;
+		if (tm)
+			{
+			switch(i)
+				{
+			case 0:
+				tm->tm_year = n * 100 - 1900;
+				break;
+			case 1:
+				tm->tm_year += n;
+				break;
+			case 2:
+				tm->tm_mon = n - 1;
+				break;
+			case 3:
+				tm->tm_mday = n;
+				break;
+			case 4:
+				tm->tm_hour = n;
+				break;
+			case 5:
+				tm->tm_min = n;
+				break;
+			case 6:
+				tm->tm_sec = n;
+				break;
+				}
+			}
 		}
 	/* Optional fractional seconds: decimal point followed by one
 	 * or more digits.
@@ -163,6 +196,7 @@ int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
 		o++;
 	else if ((a[o] == '+') || (a[o] == '-'))
 		{
+		int offsign = a[o] == '-' ? -1 : 1, offset = 0;
 		o++;
 		if (o+4 > l) goto err;
 		for (i=7; i<9; i++)
@@ -173,10 +207,19 @@ int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
 			if ((a[o] < '0') || (a[o] > '9')) goto err;
 			n=(n*10)+ a[o]-'0';
 			if ((n < min[i]) || (n > max[i])) goto err;
+			if (tm)
+				{
+				if (i == 7)
+					offset = n * 3600;
+				else if (i == 8)
+					offset += n * 60;
+				}
 			o++;
 			}
+		if (offset && !OPENSSL_gmtime_adj(tm, 0, offset * offsign))
+			return 0;
 		}
-	else
+	else if (a[o])
 		{
 		/* Missing time zone information. */
 		goto err;
@@ -184,6 +227,11 @@ int ASN1_GENERALIZEDTIME_check(ASN1_GENERALIZEDTIME *d)
 	return(o == l);
 err:
 	return(0);
+	}
+
+int ASN1_GENERALIZEDTIME_check(const ASN1_GENERALIZEDTIME *d)
+	{
+	return asn1_generalizedtime_to_tm(NULL, d);
 	}
 
 int ASN1_GENERALIZEDTIME_set_string(ASN1_GENERALIZEDTIME *s, const char *str)
