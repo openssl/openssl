@@ -474,6 +474,9 @@ static void sv_usage(void)
 	BIO_printf(bio_err,"usage: s_server [args ...]\n");
 	BIO_printf(bio_err,"\n");
 	BIO_printf(bio_err," -accept arg   - port to accept on (default is %d)\n",PORT);
+	BIO_printf(bio_err," -checkhost host - check peer certificate matches \"host\"\n");
+	BIO_printf(bio_err," -checkemail email - check peer certificate matches \"email\"\n");
+	BIO_printf(bio_err," -checkip ipaddr - check peer certificate matches \"ipaddr\"\n");
 	BIO_printf(bio_err," -context arg  - set session ID context\n");
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
