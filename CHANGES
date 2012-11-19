@@ -4,6 +4,10 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) New function ASN1_TIME_diff to calculate the difference between two
+     ASN1_TIME structures or one structure and the current time.
+     [Steve Henson]
+
   *) Fixes and wildcard matching support to hostname and email checking
      functions. Add manual page.
      [Florian Weimer (Red Hat Product Security Team)]
