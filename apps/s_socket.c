@@ -298,7 +298,11 @@ int do_server(int port, int type, int *ret, int (*cb)(char *hostname, int s, uns
   		{
 		if (type==SOCK_STREAM)
 			{
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+			if (do_accept(accept_socket,&sock,NULL) == 0)
+#else
 			if (do_accept(accept_socket,&sock,&name) == 0)
+#endif
 				{
 				SHUTDOWN(accept_socket);
 				return(0);
