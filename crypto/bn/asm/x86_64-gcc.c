@@ -199,7 +199,7 @@ BN_ULONG bn_add_words (BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int 
 	"	lea	1(%2),%2	\n"
 	"	loop	1b		\n"
 	"	sbbq	%0,%0		\n"
-		: "=r"(ret),"+c"(n),"+r"(i)
+		: "=&r"(ret),"+c"(n),"+r"(i)
 		: "r"(rp),"r"(ap),"r"(bp)
 		: "cc"
 	);
@@ -224,7 +224,7 @@ BN_ULONG bn_sub_words (BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,int 
 	"	lea	1(%2),%2	\n"
 	"	loop	1b		\n"
 	"	sbbq	%0,%0		\n"
-		: "=r"(ret),"+c"(n),"+r"(i)
+		: "=&r"(ret),"+c"(n),"+r"(i)
 		: "r"(rp),"r"(ap),"r"(bp)
 		: "cc"
 	);
