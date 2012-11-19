@@ -296,6 +296,7 @@ static int cert_status_cb(SSL *s, void *arg);
 static int no_resume_ephemeral = 0;
 static int s_msg=0;
 static int s_quiet=0;
+static int s_ign_eof=0;
 static int s_brief=0;
 
 static char *keymatexportlabel=NULL;
@@ -1223,6 +1224,10 @@ int MAIN(int argc, char *argv[])
 #endif
 			s_nbio_test=1;
 			}
+		else if	(strcmp(*argv,"-ign_eof") == 0)
+			s_ign_eof=1;
+		else if	(strcmp(*argv,"-no_ign_eof") == 0)
+			s_ign_eof=0;
 		else if	(strcmp(*argv,"-debug") == 0)
 			{ s_debug=1; }
 #ifndef OPENSSL_NO_TLSEXT
@@ -3198,6 +3203,12 @@ static int rev_body(char *hostname, int s, unsigned char *context)
 				{
 				p--;
 				i--;
+				}
+			if (!s_ign_eof && i == 5 && !strncmp(buf, "CLOSE", 5))
+				{
+				ret = 1;
+				BIO_printf(bio_err, "CONNECTION CLOSED\n");
+				goto end;
 				}
 			BUF_reverse((unsigned char *)buf, NULL, i);
 			buf[i] = '\n';
