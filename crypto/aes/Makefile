@@ -121,28 +121,17 @@ clean:
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.
 
-aes_cbc.o: ../../include/openssl/aes.h ../../include/openssl/crypto.h
-aes_cbc.o: ../../include/openssl/e_os2.h ../../include/openssl/modes.h
-aes_cbc.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-aes_cbc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-aes_cbc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-aes_cbc.o: aes_cbc.c
-aes_cfb.o: ../../include/openssl/aes.h ../../include/openssl/crypto.h
-aes_cfb.o: ../../include/openssl/e_os2.h ../../include/openssl/modes.h
-aes_cfb.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-aes_cfb.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-aes_cfb.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-aes_cfb.o: aes_cfb.c
+aes_cbc.o: ../../include/openssl/aes.h ../../include/openssl/modes.h
+aes_cbc.o: ../../include/openssl/opensslconf.h aes_cbc.c
+aes_cfb.o: ../../include/openssl/aes.h ../../include/openssl/modes.h
+aes_cfb.o: ../../include/openssl/opensslconf.h aes_cfb.c
 aes_core.o: ../../include/openssl/aes.h ../../include/openssl/crypto.h
 aes_core.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 aes_core.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
 aes_core.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 aes_core.o: ../../include/openssl/symhacks.h aes_core.c aes_locl.h
-aes_ecb.o: ../../include/openssl/aes.h ../../include/openssl/crypto.h
-aes_ecb.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-aes_ecb.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-aes_ecb.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-aes_ecb.o: ../../include/openssl/symhacks.h aes_ecb.c aes_locl.h
+aes_ecb.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
+aes_ecb.o: ../../include/openssl/opensslconf.h aes_ecb.c aes_locl.h
 aes_ige.o: ../../e_os.h ../../include/openssl/aes.h ../../include/openssl/bio.h
 aes_ige.o: ../../include/openssl/buffer.h ../../include/openssl/crypto.h
 aes_ige.o: ../../include/openssl/e_os2.h ../../include/openssl/err.h
@@ -153,12 +142,8 @@ aes_ige.o: ../../include/openssl/symhacks.h ../cryptlib.h aes_ige.c aes_locl.h
 aes_misc.o: ../../include/openssl/aes.h ../../include/openssl/e_os2.h
 aes_misc.o: ../../include/openssl/opensslconf.h
 aes_misc.o: ../../include/openssl/opensslv.h aes_locl.h aes_misc.c
-aes_ofb.o: ../../include/openssl/aes.h ../../include/openssl/crypto.h
-aes_ofb.o: ../../include/openssl/e_os2.h ../../include/openssl/modes.h
-aes_ofb.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
-aes_ofb.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
-aes_ofb.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
-aes_ofb.o: aes_ofb.c
+aes_ofb.o: ../../include/openssl/aes.h ../../include/openssl/modes.h
+aes_ofb.o: ../../include/openssl/opensslconf.h aes_ofb.c
 aes_wrap.o: ../../e_os.h ../../include/openssl/aes.h
 aes_wrap.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 aes_wrap.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h

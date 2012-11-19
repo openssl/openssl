@@ -138,13 +138,13 @@ cfb_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/ossl_typ.h
 cfb_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
 cfb_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
 cfb_enc.o: ../../include/openssl/ui_compat.h cfb_enc.c des_locl.h
-des_enc.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
-des_enc.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
-des_enc.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
-des_enc.o: ../../include/openssl/safestack.h ../../include/openssl/stack.h
-des_enc.o: ../../include/openssl/symhacks.h ../../include/openssl/ui.h
-des_enc.o: ../../include/openssl/ui_compat.h ../crypto.h des_enc.c des_locl.h
-des_enc.o: ncbc_enc.c spr.h
+des_enc.o: ../../include/openssl/crypto.h ../../include/openssl/des.h
+des_enc.o: ../../include/openssl/des_old.h ../../include/openssl/e_os2.h
+des_enc.o: ../../include/openssl/opensslconf.h ../../include/openssl/opensslv.h
+des_enc.o: ../../include/openssl/ossl_typ.h ../../include/openssl/safestack.h
+des_enc.o: ../../include/openssl/stack.h ../../include/openssl/symhacks.h
+des_enc.o: ../../include/openssl/ui.h ../../include/openssl/ui_compat.h
+des_enc.o: des_enc.c des_locl.h ncbc_enc.c spr.h
 des_old.o: ../../include/openssl/des.h ../../include/openssl/des_old.h
 des_old.o: ../../include/openssl/e_os2.h ../../include/openssl/opensslconf.h
 des_old.o: ../../include/openssl/ossl_typ.h ../../include/openssl/rand.h

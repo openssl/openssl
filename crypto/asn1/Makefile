@@ -396,6 +396,21 @@ asn_moid.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
 asn_moid.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
 asn_moid.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
 asn_moid.o: ../../include/openssl/x509_vfy.h ../cryptlib.h asn_moid.c
+asn_mstbl.o: ../../e_os.h ../../include/openssl/asn1.h
+asn_mstbl.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
+asn_mstbl.o: ../../include/openssl/conf.h ../../include/openssl/crypto.h
+asn_mstbl.o: ../../include/openssl/e_os2.h ../../include/openssl/ec.h
+asn_mstbl.o: ../../include/openssl/ecdh.h ../../include/openssl/ecdsa.h
+asn_mstbl.o: ../../include/openssl/err.h ../../include/openssl/evp.h
+asn_mstbl.o: ../../include/openssl/lhash.h ../../include/openssl/obj_mac.h
+asn_mstbl.o: ../../include/openssl/objects.h
+asn_mstbl.o: ../../include/openssl/opensslconf.h
+asn_mstbl.o: ../../include/openssl/opensslv.h ../../include/openssl/ossl_typ.h
+asn_mstbl.o: ../../include/openssl/pkcs7.h ../../include/openssl/safestack.h
+asn_mstbl.o: ../../include/openssl/sha.h ../../include/openssl/stack.h
+asn_mstbl.o: ../../include/openssl/symhacks.h ../../include/openssl/x509.h
+asn_mstbl.o: ../../include/openssl/x509_vfy.h ../../include/openssl/x509v3.h
+asn_mstbl.o: ../cryptlib.h asn_mstbl.c
 asn_pack.o: ../../e_os.h ../../include/openssl/asn1.h
 asn_pack.o: ../../include/openssl/bio.h ../../include/openssl/buffer.h
 asn_pack.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
