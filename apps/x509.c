@@ -150,6 +150,9 @@ static const char *x509_usage[]={
 " -engine e       - use engine e, possibly a hardware device.\n",
 #endif
 " -certopt arg    - various certificate text options\n",
+" -checkhost host - check certificate matches \"host\"\n",
+" -checkemail email - check certificate matches \"email\"\n",
+" -checkip ipaddr - check certificate matches \"ipaddr\"\n",
 NULL
 };
 
