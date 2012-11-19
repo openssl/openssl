@@ -46,6 +46,7 @@ B<openssl> B<s_server>
 [B<-no_tls1>]
 [B<-no_dhe>]
 [B<-bugs>]
+[B<-brief>]
 [B<-hack>]
 [B<-www>]
 [B<-WWW>]
@@ -62,6 +63,10 @@ The B<s_server> command implements a generic SSL/TLS server which listens
 for connections on a given port using SSL/TLS.
 
 =head1 OPTIONS
+
+In addition to the options below the B<s_server> utility also supports the
+common and server only options documented in the
+B<SUPPORTED COMMAND LINE OPTIONS> section in L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)>.
 
 =over 4
 
@@ -217,6 +222,11 @@ servers and permit them to use SSL v3, SSL v2 or TLS as appropriate.
 there are several known bug in SSL and TLS implementations. Adding this
 option enables various workarounds.
 
+=item B<-brief>
+
+only provide a brief summary of connection parameters instead of the
+normal verbose output.
+
 =item B<-hack>
 
 this option enables a further workaround for some some early Netscape
@@ -258,6 +268,11 @@ current directory, for example if the URL https://myhost/page.html is
 requested the file ./page.html will be loaded. The files loaded are
 assumed to contain a complete and correct HTTP response (lines that
 are part of the HTTP response line and headers must end with CRLF).
+
+=item B<-rev>
+
+simple test server which just reverses the text received from the client
+and sends it back to the server. Also sets B<-brief>.
 
 =item B<-engine id>
 

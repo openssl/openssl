@@ -52,6 +52,10 @@ SSL servers.
 
 =head1 OPTIONS
 
+In addition to the options below the B<s_client> utility also supports the
+common and client only options documented in the
+B<SUPPORTED COMMAND LINE OPTIONS> section in L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)>.
+
 =over 4
 
 =item B<-connect host:port>
@@ -191,6 +195,11 @@ support SSL v2 and may need the B<-ssl2> option.
 
 there are several known bug in SSL and TLS implementations. Adding this
 option enables various workarounds.
+
+=item B<-brief>
+
+only provide a brief summary of connection parameters instead of the
+normal verbose output.
 
 =item B<-cipher cipherlist>
 
