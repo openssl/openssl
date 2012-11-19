@@ -690,7 +690,7 @@ int tls1_check_ec_tmp_key(SSL *s, unsigned long cid)
 	EC_KEY *ec = s->cert->ecdh_tmp;
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
 	/* Allow any curve: not just those peer supports */
-	if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTCOL)
+	if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
 		return 1;
 #endif
 	/* If Suite B, AES128 MUST use P-256 and AES256 MUST use P-384,
@@ -3436,7 +3436,7 @@ int tls1_process_sigalgs(SSL *s, const unsigned char *data, int dsize)
 	tls1_set_shared_sigalgs(s);
 
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
-	if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTCOL)
+	if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
 		{
 		/* Use first set signature preference to force message
 		 * digest, ignoring any peer preferences.
@@ -3878,7 +3878,7 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
 			goto end;
 #ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
 		/* Allow any certificate to pass test */
-		if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTCOL)
+		if (s->cert->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
 			{
 			rv = CERT_PKEY_STRICT_FLAGS|CERT_PKEY_EXPLICIT_SIGN|CERT_PKEY_VALID|CERT_PKEY_SIGN;
 			cpk->valid_flags = rv;

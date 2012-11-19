@@ -464,7 +464,7 @@ int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value)
 int SSL_CONF_cmd_argv(SSL_CONF_CTX *cctx, int *pargc, char ***pargv)
 	{
 	int rv;
-	const char *arg, *argn;
+	const char *arg = NULL, *argn;
 	if (pargc && *pargc == 0)
 		return 0;
 	if (!pargc || *pargc > 0)

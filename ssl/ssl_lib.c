@@ -2404,7 +2404,7 @@ CERT_PKEY *ssl_get_server_send_pkey(const SSL *s)
 	/* Broken protocol test: return last used certificate: which may
 	 * mismatch the one expected.
 	 */
-	if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTCOL)
+	if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
 		return c->key;
 #endif
 
@@ -2431,7 +2431,7 @@ EVP_PKEY *ssl_get_sign_pkey(SSL *s,const SSL_CIPHER *cipher, const EVP_MD **pmd)
 	/* Broken protocol test: use last key: which may
 	 * mismatch the one expected.
 	 */
-	if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTCOL)
+	if (c->cert_flags & SSL_CERT_FLAG_BROKEN_PROTOCOL)
 		idx = c->key - c->pkeys;
 	else
 #endif
