@@ -1892,6 +1892,8 @@ end:
 		OPENSSL_free(pass);
 	if (dpass)
 		OPENSSL_free(dpass);
+	if (vpm)
+		X509_VERIFY_PARAM_free(vpm);
 #ifndef OPENSSL_NO_TLSEXT
 	if (tlscstatp.host)
 		OPENSSL_free(tlscstatp.host);
