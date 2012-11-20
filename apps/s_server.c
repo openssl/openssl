@@ -2040,6 +2040,8 @@ end:
 		OPENSSL_free(pass);
 	if (dpass)
 		OPENSSL_free(dpass);
+	if (vpm)
+		X509_VERIFY_PARAM_free(vpm);
 	free_sessions();
 #ifndef OPENSSL_NO_TLSEXT
 	if (tlscstatp.host)

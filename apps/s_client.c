@@ -1956,6 +1956,8 @@ end:
 		EVP_PKEY_free(key);
 	if (pass)
 		OPENSSL_free(pass);
+	if (vpm)
+		X509_VERIFY_PARAM_free(vpm);
 	ssl_excert_free(exc);
 	if (ssl_args)
 		sk_OPENSSL_STRING_free(ssl_args);
