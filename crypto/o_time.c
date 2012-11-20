@@ -289,8 +289,10 @@ int OPENSSL_gmtime_diff(struct tm *from, struct tm *to, int *pday, int *psec)
 		diff_sec -= SECS_PER_DAY;
 		}
 
-	*pday = (int)diff_day;
-	*psec = diff_sec;
+	if (pday)
+		*pday = (int)diff_day;
+	if (psec)
+		*psec = diff_sec;
 
 	return 1;
 
