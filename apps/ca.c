@@ -2052,7 +2052,13 @@ again2:
 
 	if (enddate == NULL)
 		X509_time_adj_ex(X509_get_notAfter(ret),days, 0, NULL);
-	else ASN1_TIME_set_string(X509_get_notAfter(ret),enddate);
+	else
+		{
+		int tdays;
+		ASN1_TIME_set_string(X509_get_notAfter(ret),enddate);
+		ASN1_TIME_diff(&tdays, NULL, NULL, X509_get_notAfter(ret));
+		days = tdays;
+		}
 
 	if (!X509_set_subject_name(ret,subject)) goto err;
 
