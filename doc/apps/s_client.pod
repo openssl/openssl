@@ -54,7 +54,8 @@ SSL servers.
 
 In addition to the options below the B<s_client> utility also supports the
 common and client only options documented in the
-B<SUPPORTED COMMAND LINE OPTIONS> section in L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)>.
+in the L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS>
+manual page.
 
 =over 4
 

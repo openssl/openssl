@@ -66,7 +66,8 @@ for connections on a given port using SSL/TLS.
 
 In addition to the options below the B<s_server> utility also supports the
 common and server only options documented in the
-B<SUPPORTED COMMAND LINE OPTIONS> section in L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)>.
+L<SSL_CONF_cmd(3)|SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS> manual
+page.
 
 =over 4
 
