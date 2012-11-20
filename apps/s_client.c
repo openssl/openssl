@@ -1596,6 +1596,8 @@ end:
 		EVP_PKEY_free(key);
 	if (pass)
 		OPENSSL_free(pass);
+	if (vpm)
+		X509_VERIFY_PARAM_free(vpm);
 	if (cbuf != NULL) { OPENSSL_cleanse(cbuf,BUFSIZZ); OPENSSL_free(cbuf); }
 	if (sbuf != NULL) { OPENSSL_cleanse(sbuf,BUFSIZZ); OPENSSL_free(sbuf); }
 	if (mbuf != NULL) { OPENSSL_cleanse(mbuf,BUFSIZZ); OPENSSL_free(mbuf); }
