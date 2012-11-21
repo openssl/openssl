@@ -319,7 +319,7 @@ static int cmd_cipher_list(SSL_CONF_CTX *cctx, const char *value)
 		rv = SSL_CTX_set_cipher_list(cctx->ctx, value);
 	if (cctx->ssl)
 		rv = SSL_set_cipher_list(cctx->ssl, value);
-	return rv;
+	return rv > 0;
 	}
 
 static int cmd_protocol(SSL_CONF_CTX *cctx, const char *value)
@@ -434,16 +434,20 @@ int SSL_CONF_cmd(SSL_CONF_CTX *cctx, const char *cmd, const char *value)
 
 	if (runcmd)
 		{
+		int rv;
 		if (value == NULL)
 			return -3;
-		if (t->cmd(cctx, value))
+		rv = t->cmd(cctx, value);
+		if (rv > 0)
 			return 2;
+		if (rv == -2)
+			return -2;
 		if (cctx->flags & SSL_CONF_FLAG_SHOW_ERRORS)
 			{
 			SSLerr(SSL_F_SSL_CONF_CTX_CMD, SSL_R_BAD_VALUE);
 			ERR_add_error_data(4, "cmd=", cmd, ", value=", value);
 			}
-		return -1;
+		return 0;
 		}
 
 	if (cctx->flags & SSL_CONF_FLAG_CMDLINE)
