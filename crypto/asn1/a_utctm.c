@@ -287,39 +287,26 @@ ASN1_UTCTIME *ASN1_UTCTIME_adj(ASN1_UTCTIME *s, time_t t,
 
 int ASN1_UTCTIME_cmp_time_t(const ASN1_UTCTIME *s, time_t t)
 	{
-	struct tm *tm;
-	struct tm data;
-	int offset;
-	int year;
+	struct tm stm, ttm;
+	int day, sec;
 
-#define g2(p) (((p)[0]-'0')*10+(p)[1]-'0')
+	if (!asn1_utctime_to_tm(&stm, s))
+		return -2;
 
-	if (s->data[12] == 'Z')
-		offset=0;
-	else
-		{
-		offset = g2(s->data+13)*60+g2(s->data+15);
-		if (s->data[12] == '-')
-			offset = -offset;
-		}
+	if (!OPENSSL_gmtime(&t, &ttm))
+		return -2;
 
-	t -= offset*60; /* FIXME: may overflow in extreme cases */
+	if (!OPENSSL_gmtime_diff(&day, &sec, &stm, &ttm))
+		return -2;
 
-	tm = OPENSSL_gmtime(&t, &data);
-	
-#define return_cmp(a,b) if ((a)<(b)) return -1; else if ((a)>(b)) return 1
-	year = g2(s->data);
-	if (year < 50)
-		year += 100;
-	return_cmp(year,              tm->tm_year);
-	return_cmp(g2(s->data+2) - 1, tm->tm_mon);
-	return_cmp(g2(s->data+4),     tm->tm_mday);
-	return_cmp(g2(s->data+6),     tm->tm_hour);
-	return_cmp(g2(s->data+8),     tm->tm_min);
-	return_cmp(g2(s->data+10),    tm->tm_sec);
-#undef g2
-#undef return_cmp
-
+	if (day > 0)
+		return 1;
+	if (day < 0)
+		return -1;
+	if (sec > 0)
+		return 1;
+	if (sec < 0)
+		return -1;
 	return 0;
 	}
 

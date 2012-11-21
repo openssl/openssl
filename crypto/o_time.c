@@ -234,7 +234,7 @@ struct tm *OPENSSL_gmtime(const time_t *timer, struct tm *result)
 
 static long date_to_julian(int y, int m, int d);
 static void julian_to_date(long jd, int *y, int *m, int *d);
-static int julian_adj(struct tm *tm, int off_day, long offset_sec,
+static int julian_adj(const struct tm *tm, int off_day, long offset_sec,
 		long *pday, int *psec);
 
 int OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
@@ -267,7 +267,8 @@ int OPENSSL_gmtime_adj(struct tm *tm, int off_day, long offset_sec)
 		
 }
 
-int OPENSSL_gmtime_diff(struct tm *from, struct tm *to, int *pday, int *psec)
+int OPENSSL_gmtime_diff(int *pday, int *psec,
+			const struct tm *from, const struct tm *to)
 	{
 	int from_sec, to_sec, diff_sec;
 	long from_jd, to_jd, diff_day;
@@ -300,7 +301,7 @@ int OPENSSL_gmtime_diff(struct tm *from, struct tm *to, int *pday, int *psec)
 	
 	
 /* Convert tm structure and offset into julian day and seconds */
-static int julian_adj(struct tm *tm, int off_day, long offset_sec,
+static int julian_adj(const struct tm *tm, int off_day, long offset_sec,
 		long *pday, int *psec)
 	{
 	int offset_hms, offset_day;

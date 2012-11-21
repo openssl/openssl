@@ -225,5 +225,5 @@ int ASN1_TIME_diff(int *pday, int *psec,
 		return 0;
 	if (!asn1_time_to_tm(&tm_to, to))
 		return 0;
-	return OPENSSL_gmtime_diff(&tm_from, &tm_to, pday, psec);
+	return OPENSSL_gmtime_diff(pday, psec, &tm_from, &tm_to);
 	}	
