@@ -246,8 +246,6 @@ static int cmd_client_sigalgs(SSL_CONF_CTX *cctx, const char *value)
 static int cmd_curves(SSL_CONF_CTX *cctx, const char *value)
 	{
 	int rv;
-	if (!(cctx->flags & SSL_CONF_FLAG_CLIENT))
-		return -2;
 	if (cctx->ssl)
 		rv = SSL_set1_curves_list(cctx->ssl, value);
 	/* NB: ctx == NULL performs syntax checking only */
