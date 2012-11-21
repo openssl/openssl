@@ -24,6 +24,7 @@ static const char *const exceptions[] =
 	"set CN: host: [*.example.com] matches [a.example.com]",
 	"set CN: host: [*.example.com] matches [b.example.com]",
 	"set CN: host: [*.example.com] matches [www.example.com]",
+	"set CN: host: [*.example.com] matches [xn--rger-koa.example.com]",
 	"set CN: host: [test.*.example.com] does not match [test.*.example.com]",
 	"set CN: host: [test.*.example.com] matches [test.www.example.com]",
 	"set CN: host: [*.www.example.com] does not match [*.www.example.com]",
@@ -36,6 +37,7 @@ static const char *const exceptions[] =
 	"set dnsName: host: [*.example.com] does not match [*.example.com]",
 	"set dnsName: host: [*.example.com] matches [a.example.com]",
 	"set dnsName: host: [*.example.com] matches [b.example.com]",
+	"set dnsName: host: [*.example.com] matches [xn--rger-koa.example.com]",
 	"set dnsName: host: [*.www.example.com] matches [test.www.example.com]",
 	"set dnsName: host: [*.www.example.com] does not match [*.www.example.com]",
 	"set dnsName: host: [test.*.example.com] matches [test.www.example.com]",
@@ -273,28 +275,38 @@ static void run_cert(X509 *crt, const char *nameincert,
 		ret = X509_check_host(crt, (const unsigned char *)name,
 				      namelen, 0);
 		match = -1;
-		if (fn->host)
+		if (ret < 0)
 			{
-			if (ret && !samename)
+			fprintf(stderr, "internal error in X509_check_host");
+			++errors;
+			}
+		else if (fn->host)
+			{
+			if (ret == 1 && !samename)
 				match = 1;
-			if (!ret && samename)
+			if (ret == 0 && samename)
 				match = 0;
 			}
-		else if (ret)
+		else if (ret == 1)
 			match = 1;
 		check_message(fn, "host", nameincert, match, *pname);
 
 		ret = X509_check_host(crt, (const unsigned char *)name,
 				      namelen, X509_CHECK_FLAG_NO_WILDCARDS);
 		match = -1;
-		if (fn->host)
+		if (ret < 0)
 			{
-			if (ret && !samename)
+			fprintf(stderr, "internal error in X509_check_host");
+			++errors;
+			}
+		else if (fn->host)
+			{
+			if (ret == 1 && !samename)
 				match = 1;
-			if (!ret && samename)
+			if (ret == 0 && samename)
 				match = 0;
 			}
-		else if (ret)
+		else if (ret == 1)
 			match = 1;
 		check_message(fn, "host-no-wildcards",
 			      nameincert, match, *pname);

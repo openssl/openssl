@@ -719,12 +719,7 @@ static const unsigned char *wildcard_find_star(const unsigned char *pattern,
 static int equal_wildcard(const unsigned char *pattern, size_t pattern_len,
 			  const unsigned char *subject, size_t subject_len)
 	{
-	const unsigned char *star;
-	/* Do not match IDNA names. */
-	if (subject_len >=4 && memcmp(subject, "xn--", 4) == 0)
-		star = NULL;
-	else
-		star = wildcard_find_star(pattern, pattern_len);
+	const unsigned char *star = wildcard_find_star(pattern, pattern_len);
 	if (star == NULL)
 		return equal_nocase(pattern, pattern_len,
 				    subject, subject_len);
