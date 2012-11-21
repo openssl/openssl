@@ -1149,7 +1149,7 @@ bad:
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
 
-	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args))
+	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, 1))
 		{
 		ERR_print_errors(bio_err);
 		goto end;

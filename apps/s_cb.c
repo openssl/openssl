@@ -1594,7 +1594,7 @@ int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,
 	}
 
 int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
-						STACK_OF(OPENSSL_STRING) *str)
+				STACK_OF(OPENSSL_STRING) *str, int no_ecdhe)
 	{
 	int i;
 	SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
@@ -1602,10 +1602,28 @@ int args_ssl_call(SSL_CTX *ctx, BIO *err, SSL_CONF_CTX *cctx,
 		{
 		const char *param = sk_OPENSSL_STRING_value(str, i);
 		const char *value = sk_OPENSSL_STRING_value(str, i + 1);
+		/* If no_ecdhe or named curve already specified don't need
+		 * a default.
+		 */
+		if (!no_ecdhe && !strcmp(param, "-named_curve"))
+			no_ecdhe = 1;
 		if (SSL_CONF_cmd(cctx, param, value) <= 0)
 			{
 			BIO_printf(err, "Error with command: \"%s %s\"\n",
 						param, value ? value : "");
+			ERR_print_errors(err);
+			return 0;
+			}
+		}
+	/* This is a special case to keep existing s_server functionality:
+	 * if we don't have any curve specified *and* we haven't disabled
+	 * ECDHE then use P-256.
+	 */
+	if (!no_ecdhe)
+		{
+		if (SSL_CONF_cmd(cctx, "-named_curve", "P-256") <= 0)
+			{
+			BIO_puts(err, "Error setting EC curve\n");
 			ERR_print_errors(err);
 			return 0;
 			}
