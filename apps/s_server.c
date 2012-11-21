@@ -1612,9 +1612,11 @@ bad:
 
 	if (bio_s_out == NULL)
 		{
-		if (s_quiet && !s_debug && !s_msg)
+		if (s_quiet && !s_debug)
 			{
 			bio_s_out=BIO_new(BIO_s_null());
+			if (s_msg && !bio_s_msg)
+				bio_s_msg=BIO_new_fp(stdout,BIO_NOCLOSE);
 			}
 		else
 			{
