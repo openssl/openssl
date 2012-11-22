@@ -4,6 +4,10 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) New ctrl and macro to retrieve supported points extensions.
+     Print out extension in s_server.
+     [Steve Henson]
+
   *) New function ASN1_TIME_diff to calculate the difference between two
      ASN1_TIME structures or one structure and the current time.
      [Steve Henson]

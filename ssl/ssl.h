@@ -1720,6 +1720,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 #define SSL_CTRL_GET_PEER_SIGNATURE_NID		108
 #define SSL_CTRL_GET_SERVER_TMP_KEY		109
 #define SSL_CTRL_GET_RAW_CIPHERLIST		110
+#define SSL_CTRL_GET_EC_POINT_FORMATS		111
 
 #define DTLSv1_get_timeout(ssl, arg) \
 	SSL_ctrl(ssl,DTLS_CTRL_GET_TIMEOUT,0, (void *)arg)
@@ -1852,6 +1853,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 
 #define SSL_get0_raw_cipherlist(s, plst) \
 	SSL_ctrl(s,SSL_CTRL_GET_RAW_CIPHERLIST,0,plst)
+
+#define SSL_get0_ec_point_formats(s, plst) \
+	SSL_ctrl(s,SSL_CTRL_GET_EC_POINT_FORMATS,0,plst)
 
 #ifndef OPENSSL_NO_BIO
 BIO_METHOD *BIO_f_ssl(void);

@@ -2558,6 +2558,7 @@ static int init_ssl_connection(SSL *con)
 		BIO_printf(bio_s_out,"Shared ciphers:%s\n",buf);
 	str=SSL_CIPHER_get_name(SSL_get_current_cipher(con));
 	ssl_print_sigalgs(bio_s_out, con);
+	ssl_print_point_formats(bio_s_out, con);
 	ssl_print_curves(bio_s_out, con, 0);
 	BIO_printf(bio_s_out,"CIPHER is %s\n",(str != NULL)?str:"(NONE)");
 
