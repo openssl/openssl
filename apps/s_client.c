@@ -581,6 +581,8 @@ int MAIN(int argc, char **argv)
 	X509 *cert = NULL;
 	EVP_PKEY *key = NULL;
 	char *CApath=NULL,*CAfile=NULL;
+	char *chCApath=NULL,*chCAfile=NULL;
+	char *vfyCApath=NULL,*vfyCAfile=NULL;
 	int reconnect=0,badop=0,verify=SSL_VERIFY_NONE;
 	int crlf=0;
 	int write_tty,read_tty,write_ssl,read_ssl,tty_on,ssl_pending;
@@ -901,12 +903,32 @@ int MAIN(int argc, char **argv)
 			if (--argc < 1) goto bad;
 			CApath= *(++argv);
 			}
+		else if	(strcmp(*argv,"-chainCApath") == 0)
+			{
+			if (--argc < 1) goto bad;
+			chCApath= *(++argv);
+			}
+		else if	(strcmp(*argv,"-verifyCApath") == 0)
+			{
+			if (--argc < 1) goto bad;
+			vfyCApath= *(++argv);
+			}
 		else if	(strcmp(*argv,"-build_chain") == 0)
 			build_chain = 1;
 		else if	(strcmp(*argv,"-CAfile") == 0)
 			{
 			if (--argc < 1) goto bad;
 			CAfile= *(++argv);
+			}
+		else if	(strcmp(*argv,"-chainCAfile") == 0)
+			{
+			if (--argc < 1) goto bad;
+			chCAfile= *(++argv);
+			}
+		else if	(strcmp(*argv,"-verifyCAfile") == 0)
+			{
+			if (--argc < 1) goto bad;
+			vfyCAfile= *(++argv);
 			}
 #ifndef OPENSSL_NO_TLSEXT
 # ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1153,6 +1175,13 @@ bad:
 
 	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, 1))
 		{
+		ERR_print_errors(bio_err);
+		goto end;
+		}
+
+	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile))
+		{
+		BIO_printf(bio_err, "Error loading store locations\n");
 		ERR_print_errors(bio_err);
 		goto end;
 		}

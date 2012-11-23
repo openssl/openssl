@@ -216,9 +216,6 @@ static int generate_session_id(const SSL *ssl, unsigned char *id,
 				unsigned int *id_len);
 static void init_session_cache_ctx(SSL_CTX *sctx);
 static void free_sessions(void);
-static int ssl_load_stores(SSL_CTX *sctx,
-			const char *vfyCApath, const char *vfyCAfile,
-			const char *chCApath, const char *chCAfile);
 #ifndef OPENSSL_NO_DH
 static DH *load_dh_param(const char *dhfile);
 static DH *get_dh512(void);
@@ -1057,7 +1054,8 @@ int MAIN(int argc, char *argv[])
 			s_server_verify=SSL_VERIFY_PEER|SSL_VERIFY_CLIENT_ONCE;
 			if (--argc < 1) goto bad;
 			verify_depth=atoi(*(++argv));
-			BIO_printf(bio_err,"verify depth is %d\n",verify_depth);
+			if (!s_quiet)
+				BIO_printf(bio_err,"verify depth is %d\n",verify_depth);
 			}
 		else if	(strcmp(*argv,"-Verify") == 0)
 			{
@@ -1065,7 +1063,8 @@ int MAIN(int argc, char *argv[])
 				SSL_VERIFY_CLIENT_ONCE;
 			if (--argc < 1) goto bad;
 			verify_depth=atoi(*(++argv));
-			BIO_printf(bio_err,"verify depth is %d, must return a certificate\n",verify_depth);
+			if (!s_quiet)
+				BIO_printf(bio_err,"verify depth is %d, must return a certificate\n",verify_depth);
 			}
 		else if	(strcmp(*argv,"-context") == 0)
 			{
@@ -3399,42 +3398,3 @@ static void free_sessions(void)
 		}
 	first = NULL;
 	}
-
-static int ssl_load_stores(SSL_CTX *sctx,
-			const char *vfyCApath, const char *vfyCAfile,
-			const char *chCApath, const char *chCAfile)
-	{
-	X509_STORE *vfy = NULL, *ch = NULL;
-	int rv = 0;
-	if (vfyCApath || vfyCAfile)
-		{
-		vfy = X509_STORE_new();
-		if (!X509_STORE_load_locations(vfy, vfyCAfile, vfyCApath))
-			goto err;
-		SSL_CTX_set1_verify_cert_store(ctx, vfy);
-		}
-	if (chCApath || chCAfile)
-		{
-		ch = X509_STORE_new();
-		if (!X509_STORE_load_locations(ch, chCAfile, chCApath))
-			goto err;
-		/*X509_STORE_set_verify_cb(ch, verify_callback);*/
-		SSL_CTX_set1_chain_cert_store(ctx, ch);
-		}
-	rv = 1;
-	err:
-	if (vfy)
-		X509_STORE_free(vfy);
-	if (ch)
-		X509_STORE_free(ch);
-	return rv;
-	}
-
-
-
-
-
-
-	
-
-
