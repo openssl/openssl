@@ -511,6 +511,18 @@ void	aes192_t4_ctr32_encrypt (const unsigned char *in, unsigned char *out,
 void	aes256_t4_ctr32_encrypt (const unsigned char *in, unsigned char *out,
 				size_t blocks, const AES_KEY *key,
 				unsigned char *ivec);
+void	aes128_t4_xts_encrypt (const unsigned char *in, unsigned char *out,
+				size_t blocks, const AES_KEY *key1,
+				const AES_KEY *key2, const unsigned char *ivec);
+void	aes128_t4_xts_decrypt (const unsigned char *in, unsigned char *out,
+				size_t blocks, const AES_KEY *key1,
+				const AES_KEY *key2, const unsigned char *ivec);
+void	aes256_t4_xts_encrypt (const unsigned char *in, unsigned char *out,
+				size_t blocks, const AES_KEY *key1,
+				const AES_KEY *key2, const unsigned char *ivec);
+void	aes256_t4_xts_decrypt (const unsigned char *in, unsigned char *out,
+				size_t blocks, const AES_KEY *key1,
+				const AES_KEY *key2, const unsigned char *ivec);
 
 static int aes_t4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 		   const unsigned char *iv, int enc)
@@ -681,46 +693,47 @@ static int aes_t4_xts_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	if (key)
 		{
 		int bits = ctx->key_len * 4;
+		xctx->stream = NULL;
 		/* key_len is two AES keys */
 		if (enc)
 			{
 			aes_t4_set_encrypt_key(key, bits, &xctx->ks1.ks);
 			xctx->xts.block1 = (block128_f)aes_t4_encrypt;
-#if 0 /* not yet */
 			switch (bits) {
 			    case 128:
 				xctx->stream = aes128_t4_xts_encrypt;
 				break;
+#if 0 /* not yet */
 			    case 192:
 				xctx->stream = aes192_t4_xts_encrypt;
 				break;
+#endif
 			    case 256:
 				xctx->stream = aes256_t4_xts_encrypt;
 				break;
 			    default:
 				return 0;
 			    }
-#endif
 			}
 		else
 			{
 			aes_t4_set_decrypt_key(key, ctx->key_len * 4, &xctx->ks1.ks);
 			xctx->xts.block1 = (block128_f)aes_t4_decrypt;
-#if 0 /* not yet */
 			switch (bits) {
 			    case 128:
 				xctx->stream = aes128_t4_xts_decrypt;
 				break;
+#if 0 /* not yet */
 			    case 192:
 				xctx->stream = aes192_t4_xts_decrypt;
 				break;
+#endif
 			    case 256:
 				xctx->stream = aes256_t4_xts_decrypt;
 				break;
 			    default:
 				return 0;
 			    }
-#endif
 			}
 
 		aes_t4_set_encrypt_key(key + ctx->key_len/2,

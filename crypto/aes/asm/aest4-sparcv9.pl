@@ -83,7 +83,12 @@ $::evp=1;	# if $evp is set to 0, script generates module with
 {
 my ($inp,$out,$key,$rounds,$tmp,$mask)=map("%o$_",(0..5));
 
-$code=<<___;
+$code.=<<___ if ($::abibits==64);
+.register	%g2,#scratch
+.register	%g3,#scratch
+
+___
+$code.=<<___;
 .text
 
 .globl	aes_t4_encrypt
@@ -412,24 +417,6 @@ my ($ileft,$iright,$ooff,$omask,$ivoff)=map("%l$_",(1..7));
 
 $code.=<<___;
 .align	32
-_aes128_loadkey:
-	ldx		[$key + 0], %g4
-	ldx		[$key + 8], %g5
-___
-for ($i=2; $i<22;$i++) {			# load key schedule
-    $code.=<<___;
-	ldd		[$key + `8*$i`], %f`12+2*$i`
-___
-}
-$code.=<<___;
-	retl
-	nop
-.type	_aes128_loadkey,#function
-.size	_aes128_loadkey,.-_aes128_loadkey
-_aes128_load_enckey=_aes128_loadkey
-_aes128_load_deckey=_aes128_loadkey
-
-.align	32
 _aes128_encrypt_1x:
 ___
 for ($i=0; $i<4; $i++) {
@@ -478,6 +465,35 @@ $code.=<<___;
 .size	_aes128_encrypt_2x,.-_aes128_encrypt_2x
 
 .align	32
+_aes128_loadkey:
+	ldx		[$key + 0], %g4
+	ldx		[$key + 8], %g5
+___
+for ($i=2; $i<22;$i++) {			# load key schedule
+    $code.=<<___;
+	ldd		[$key + `8*$i`], %f`12+2*$i`
+___
+}
+$code.=<<___;
+	retl
+	nop
+.type	_aes128_loadkey,#function
+.size	_aes128_loadkey,.-_aes128_loadkey
+_aes128_load_enckey=_aes128_loadkey
+_aes128_load_deckey=_aes128_loadkey
+
+___
+
+&alg_cbc_encrypt_implement("aes",128);
+if ($::evp) {
+    &alg_ctr32_implement("aes",128);
+    &alg_xts_implement("aes",128,"en");
+    &alg_xts_implement("aes",128,"de");
+}
+&alg_cbc_decrypt_implement("aes",128);
+
+$code.=<<___;
+.align	32
 _aes128_decrypt_1x:
 ___
 for ($i=0; $i<4; $i++) {
@@ -524,28 +540,9 @@ $code.=<<___;
 	aes_dround23_l	%f54, %f10, %f6, %f6
 .type	_aes128_decrypt_2x,#function
 .size	_aes128_decrypt_2x,.-_aes128_decrypt_2x
+___
 
-.align	32
-_aes192_loadkey:
-_aes256_loadkey:
-	ldx		[$key + 0], %g4
-	ldx		[$key + 8], %g5
-___
-for ($i=2; $i<26;$i++) {			# load key schedule
-    $code.=<<___;
-	ldd		[$key + `8*$i`], %f`12+2*$i`
-___
-}
 $code.=<<___;
-	retl
-	nop
-.type	_aes192_loadkey,#function
-.size	_aes192_loadkey,.-_aes192_loadkey
-_aes192_load_enckey=_aes192_loadkey
-_aes192_load_deckey=_aes192_loadkey
-_aes256_load_enckey=_aes192_loadkey
-_aes256_load_deckey=_aes192_loadkey
-
 .align	32
 _aes192_encrypt_1x:
 ___
@@ -593,54 +590,6 @@ $code.=<<___;
 	aes_eround23_l	%f62, %f10, %f6, %f6
 .type	_aes192_encrypt_2x,#function
 .size	_aes192_encrypt_2x,.-_aes192_encrypt_2x
-
-.align	32
-_aes192_decrypt_1x:
-___
-for ($i=0; $i<5; $i++) {
-    $code.=<<___;
-	aes_dround01	%f`16+8*$i+0`, %f0, %f2, %f4
-	aes_dround23	%f`16+8*$i+2`, %f0, %f2, %f2
-	aes_dround01	%f`16+8*$i+4`, %f4, %f2, %f0
-	aes_dround23	%f`16+8*$i+6`, %f4, %f2, %f2
-___
-}
-$code.=<<___;
-	aes_dround01	%f56, %f0, %f2, %f4
-	aes_dround23	%f58, %f0, %f2, %f2
-	aes_dround01_l	%f60, %f4, %f2, %f0
-	retl
-	aes_dround23_l	%f62, %f4, %f2, %f2
-.type	_aes192_decrypt_1x,#function
-.size	_aes192_decrypt_1x,.-_aes192_decrypt_1x
-
-.align	32
-_aes192_decrypt_2x:
-___
-for ($i=0; $i<5; $i++) {
-    $code.=<<___;
-	aes_dround01	%f`16+8*$i+0`, %f0, %f2, %f8
-	aes_dround23	%f`16+8*$i+2`, %f0, %f2, %f2
-	aes_dround01	%f`16+8*$i+0`, %f4, %f6, %f10
-	aes_dround23	%f`16+8*$i+2`, %f4, %f6, %f6
-	aes_dround01	%f`16+8*$i+4`, %f8, %f2, %f0
-	aes_dround23	%f`16+8*$i+6`, %f8, %f2, %f2
-	aes_dround01	%f`16+8*$i+4`, %f10, %f6, %f4
-	aes_dround23	%f`16+8*$i+6`, %f10, %f6, %f6
-___
-}
-$code.=<<___;
-	aes_dround01	%f56, %f0, %f2, %f8
-	aes_dround23	%f58, %f0, %f2, %f2
-	aes_dround01	%f56, %f4, %f6, %f10
-	aes_dround23	%f58, %f4, %f6, %f6
-	aes_dround01_l	%f60, %f8, %f2, %f0
-	aes_dround23_l	%f62, %f8, %f2, %f2
-	aes_dround01_l	%f60, %f10, %f6, %f4
-	retl
-	aes_dround23_l	%f62, %f10, %f6, %f6
-.type	_aes192_decrypt_2x,#function
-.size	_aes192_decrypt_2x,.-_aes192_decrypt_2x
 
 .align	32
 _aes256_encrypt_1x:
@@ -719,6 +668,40 @@ $code.=<<___;
 .size	_aes256_encrypt_2x,.-_aes256_encrypt_2x
 
 .align	32
+_aes192_loadkey:
+	ldx		[$key + 0], %g4
+	ldx		[$key + 8], %g5
+___
+for ($i=2; $i<26;$i++) {			# load key schedule
+    $code.=<<___;
+	ldd		[$key + `8*$i`], %f`12+2*$i`
+___
+}
+$code.=<<___;
+	retl
+	nop
+.type	_aes192_loadkey,#function
+.size	_aes192_loadkey,.-_aes192_loadkey
+_aes256_loadkey=_aes192_loadkey
+_aes192_load_enckey=_aes192_loadkey
+_aes192_load_deckey=_aes192_loadkey
+_aes256_load_enckey=_aes192_loadkey
+_aes256_load_deckey=_aes192_loadkey
+___
+
+&alg_cbc_encrypt_implement("aes",256);
+&alg_cbc_encrypt_implement("aes",192);
+if ($::evp) {
+    &alg_ctr32_implement("aes",256);
+    &alg_xts_implement("aes",256,"en");
+    &alg_xts_implement("aes",256,"de");
+    &alg_ctr32_implement("aes",192);
+}
+&alg_cbc_decrypt_implement("aes",192);
+&alg_cbc_decrypt_implement("aes",256);
+
+$code.=<<___;
+.align	32
 _aes256_decrypt_1x:
 	aes_dround01	%f16, %f0, %f2, %f4
 	aes_dround23	%f18, %f0, %f2, %f2
@@ -793,21 +776,55 @@ $code.=<<___;
 	ldd		[$key + 40], %f22
 .type	_aes256_decrypt_2x,#function
 .size	_aes256_decrypt_2x,.-_aes256_decrypt_2x
+
+.align	32
+_aes192_decrypt_1x:
 ___
-
-&alg_cbc_encrypt_implement("aes",128);
-&alg_cbc_encrypt_implement("aes",192);
-&alg_cbc_encrypt_implement("aes",256);
-
-&alg_cbc_decrypt_implement("aes",128);
-&alg_cbc_decrypt_implement("aes",192);
-&alg_cbc_decrypt_implement("aes",256);
-
-if ($::evp) {
-    &alg_ctr32_implement("aes",128);
-    &alg_ctr32_implement("aes",192);
-    &alg_ctr32_implement("aes",256);
+for ($i=0; $i<5; $i++) {
+    $code.=<<___;
+	aes_dround01	%f`16+8*$i+0`, %f0, %f2, %f4
+	aes_dround23	%f`16+8*$i+2`, %f0, %f2, %f2
+	aes_dround01	%f`16+8*$i+4`, %f4, %f2, %f0
+	aes_dround23	%f`16+8*$i+6`, %f4, %f2, %f2
+___
 }
+$code.=<<___;
+	aes_dround01	%f56, %f0, %f2, %f4
+	aes_dround23	%f58, %f0, %f2, %f2
+	aes_dround01_l	%f60, %f4, %f2, %f0
+	retl
+	aes_dround23_l	%f62, %f4, %f2, %f2
+.type	_aes192_decrypt_1x,#function
+.size	_aes192_decrypt_1x,.-_aes192_decrypt_1x
+
+.align	32
+_aes192_decrypt_2x:
+___
+for ($i=0; $i<5; $i++) {
+    $code.=<<___;
+	aes_dround01	%f`16+8*$i+0`, %f0, %f2, %f8
+	aes_dround23	%f`16+8*$i+2`, %f0, %f2, %f2
+	aes_dround01	%f`16+8*$i+0`, %f4, %f6, %f10
+	aes_dround23	%f`16+8*$i+2`, %f4, %f6, %f6
+	aes_dround01	%f`16+8*$i+4`, %f8, %f2, %f0
+	aes_dround23	%f`16+8*$i+6`, %f8, %f2, %f2
+	aes_dround01	%f`16+8*$i+4`, %f10, %f6, %f4
+	aes_dround23	%f`16+8*$i+6`, %f10, %f6, %f6
+___
+}
+$code.=<<___;
+	aes_dround01	%f56, %f0, %f2, %f8
+	aes_dround23	%f58, %f0, %f2, %f2
+	aes_dround01	%f56, %f4, %f6, %f10
+	aes_dround23	%f58, %f4, %f6, %f6
+	aes_dround01_l	%f60, %f8, %f2, %f0
+	aes_dround23_l	%f62, %f8, %f2, %f2
+	aes_dround01_l	%f60, %f10, %f6, %f4
+	retl
+	aes_dround23_l	%f62, %f10, %f6, %f6
+.type	_aes192_decrypt_2x,#function
+.size	_aes192_decrypt_2x,.-_aes192_decrypt_2x
+___
 }}}
 
 if (!$::evp) {

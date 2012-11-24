@@ -900,6 +900,480 @@ $::code.=<<___;
 ___
 }
 
+sub alg_xts_implement {
+my ($alg,$bits,$dir) = @_;
+my ($inp,$out,$len,$key1,$key2,$ivec)=map("%i$_",(0..5));
+my $rem=$ivec;
+
+$::code.=<<___;
+.globl	${alg}${bits}_t4_xts_${dir}crypt
+.align	32
+${alg}${bits}_t4_xts_${dir}crypt:
+	save		%sp, -$::frame-16, %sp
+
+	mov		$ivec, %o0
+	add		%fp, $::bias-16, %o1
+	call		${alg}_t4_encrypt
+	mov		$key2, %o2
+
+	add		%fp, $::bias-16, %l7
+	ldxa		[%l7]0x88, %g2
+	add		%fp, $::bias-8, %l7
+	ldxa		[%l7]0x88, %g3		! %g3:%g2 is tweak
+
+	sethi		%hi(0x76543210), %l7
+	or		%l7, %lo(0x76543210), %l7
+	bmask		%l7, %g0, %g0		! byte swap mask
+
+	prefetch	[$inp], 20
+	prefetch	[$inp + 63], 20
+	call		_${alg}${bits}_load_${dir}ckey
+	and		$len, 15,  $rem
+	and		$len, -16, $len
+___
+$code.=<<___ if ($dir eq "de");
+	mov		0, %l7
+	movrnz		$rem, 16,  %l7
+	sub		$len, %l7, $len
+___
+$code.=<<___;
+
+	sub		$inp, $out, $blk_init	! $inp!=$out
+	and		$inp, 7, $ileft
+	andn		$inp, 7, $inp
+	sll		$ileft, 3, $ileft
+	mov		64, $iright
+	mov		0xff, $omask
+	sub		$iright, $ileft, $iright
+	and		$out, 7, $ooff
+	cmp		$len, 255
+	movrnz		$ooff, 0, $blk_init		! if (	$out&7 ||
+	movleu		$::size_t_cc, 0, $blk_init	!	$len<256 ||
+	brnz,pn		$blk_init, .L${bits}_xts_${dir}blk !	$inp==$out)
+	srl		$omask, $ooff, $omask
+
+	andcc		$len, 16, %g0		! is number of blocks even?
+___
+$code.=<<___ if ($dir eq "de");
+	brz,pn		$len, .L${bits}_xts_${dir}steal
+___
+$code.=<<___;
+	alignaddrl	$out, %g0, $out
+	bz		%icc, .L${bits}_xts_${dir}loop2x
+	srlx		$len, 4, $len
+.L${bits}_xts_${dir}loop:
+	ldx		[$inp + 0], %o0
+	brz,pt		$ileft, 4f
+	ldx		[$inp + 8], %o1
+
+	ldx		[$inp + 16], %o2
+	sllx		%o0, $ileft, %o0
+	srlx		%o1, $iright, %g1
+	sllx		%o1, $ileft, %o1
+	or		%g1, %o0, %o0
+	srlx		%o2, $iright, %o2
+	or		%o2, %o1, %o1
+4:
+	movxtod		%g2, %f12
+	movxtod		%g3, %f14
+	bshuffle	%f12, %f12, %f12
+	bshuffle	%f14, %f14, %f14
+
+	xor		%g4, %o0, %o0		! ^= rk[0]
+	xor		%g5, %o1, %o1
+	movxtod		%o0, %f0
+	movxtod		%o1, %f2
+
+	fxor		%f12, %f0, %f0		! ^= tweak[0]
+	fxor		%f14, %f2, %f2
+
+	prefetch	[$out + 63], 22
+	prefetch	[$inp + 16+63], 20
+	call		_${alg}${bits}_${dir}crypt_1x
+	add		$inp, 16, $inp
+
+	fxor		%f12, %f0, %f0		! ^= tweak[0]
+	fxor		%f14, %f2, %f2
+
+	srax		%g3, 63, %l7		! next tweak value
+	addcc		%g2, %g2, %g2
+	and		%l7, 0x87, %l7
+	addxc		%g3, %g3, %g3
+	xor		%l7, %g2, %g2
+
+	brnz,pn		$ooff, 2f
+	sub		$len, 1, $len
+		
+	std		%f0, [$out + 0]
+	std		%f2, [$out + 8]
+	brnz,pt		$len, .L${bits}_xts_${dir}loop2x
+	add		$out, 16, $out
+
+	brnz,pn		$rem, .L${bits}_xts_${dir}steal
+	nop
+
+	ret
+	restore
+
+.align	16
+2:	ldxa		[$inp]0x82, %o0		! avoid read-after-write hazard
+						! and ~3x deterioration
+						! in inp==out case
+	faligndata	%f0, %f0, %f4		! handle unaligned output
+	faligndata	%f0, %f2, %f6
+	faligndata	%f2, %f2, %f8
+	stda		%f4, [$out + $omask]0xc0	! partial store
+	std		%f6, [$out + 8]
+	add		$out, 16, $out
+	orn		%g0, $omask, $omask
+	stda		%f8, [$out + $omask]0xc0	! partial store
+
+	brnz,pt		$len, .L${bits}_xts_${dir}loop2x+4
+	orn		%g0, $omask, $omask
+
+	brnz,pn		$rem, .L${bits}_xts_${dir}steal
+	nop
+
+	ret
+	restore
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+.align	32
+.L${bits}_xts_${dir}loop2x:
+	ldx		[$inp + 0], %o0
+	ldx		[$inp + 8], %o1
+	ldx		[$inp + 16], %o2
+	brz,pt		$ileft, 4f
+	ldx		[$inp + 24], %o3
+
+	ldx		[$inp + 32], %o4
+	sllx		%o0, $ileft, %o0
+	srlx		%o1, $iright, %g1
+	or		%g1, %o0, %o0
+	sllx		%o1, $ileft, %o1
+	srlx		%o2, $iright, %g1
+	or		%g1, %o1, %o1
+	sllx		%o2, $ileft, %o2
+	srlx		%o3, $iright, %g1
+	or		%g1, %o2, %o2
+	sllx		%o3, $ileft, %o3
+	srlx		%o4, $iright, %o4
+	or		%o4, %o3, %o3
+4:
+	movxtod		%g2, %f12
+	movxtod		%g3, %f14
+	bshuffle	%f12, %f12, %f12
+	bshuffle	%f14, %f14, %f14
+
+	srax		%g3, 63, %l7		! next tweak value
+	addcc		%g2, %g2, %g2
+	and		%l7, 0x87, %l7
+	addxc		%g3, %g3, %g3
+	xor		%l7, %g2, %g2
+
+	movxtod		%g2, %f8
+	movxtod		%g3, %f10
+	bshuffle	%f8,  %f8,  %f8
+	bshuffle	%f10, %f10, %f10
+
+	xor		%g4, %o0, %o0		! ^= rk[0]
+	xor		%g5, %o1, %o1
+	xor		%g4, %o2, %o2		! ^= rk[0]
+	xor		%g5, %o3, %o3
+	movxtod		%o0, %f0
+	movxtod		%o1, %f2
+	movxtod		%o2, %f4
+	movxtod		%o3, %f6
+
+	fxor		%f12, %f0, %f0		! ^= tweak[0]
+	fxor		%f14, %f2, %f2
+	fxor		%f8,  %f4, %f4		! ^= tweak[0]
+	fxor		%f10, %f6, %f6
+
+	prefetch	[$out + 63], 22
+	prefetch	[$inp + 32+63], 20
+	call		_${alg}${bits}_${dir}crypt_2x
+	add		$inp, 32, $inp
+
+	movxtod		%g2, %f8
+	movxtod		%g3, %f10
+
+	srax		%g3, 63, %l7		! next tweak value
+	addcc		%g2, %g2, %g2
+	and		%l7, 0x87, %l7
+	addxc		%g3, %g3, %g3
+	xor		%l7, %g2, %g2
+
+	bshuffle	%f8,  %f8,  %f8
+	bshuffle	%f10, %f10, %f10
+
+	fxor		%f12, %f0, %f0		! ^= tweak[0]
+	fxor		%f14, %f2, %f2
+	fxor		%f8,  %f4, %f4
+	fxor		%f10, %f6, %f6
+
+	brnz,pn		$ooff, 2f
+	sub		$len, 2, $len
+		
+	std		%f0, [$out + 0]
+	std		%f2, [$out + 8]
+	std		%f4, [$out + 16]
+	std		%f6, [$out + 24]
+	brnz,pt		$len, .L${bits}_xts_${dir}loop2x
+	add		$out, 32, $out
+
+	fsrc2		%f4, %f0
+	fsrc2		%f6, %f2
+	brnz,pn		$rem, .L${bits}_xts_${dir}steal
+	nop
+
+	ret
+	restore
+
+.align	16
+2:	ldxa		[$inp]0x82, %o0		! avoid read-after-write hazard
+						! and ~3x deterioration
+						! in inp==out case
+	faligndata	%f0, %f0, %f8		! handle unaligned output
+	faligndata	%f0, %f2, %f10
+	faligndata	%f2, %f4, %f12
+	faligndata	%f4, %f6, %f14
+	faligndata	%f6, %f6, %f0
+
+	stda		%f8, [$out + $omask]0xc0	! partial store
+	std		%f10, [$out + 8]
+	std		%f12, [$out + 16]
+	std		%f14, [$out + 24]
+	add		$out, 32, $out
+	orn		%g0, $omask, $omask
+	stda		%f0, [$out + $omask]0xc0	! partial store
+
+	brnz,pt		$len, .L${bits}_xts_${dir}loop2x+4
+	orn		%g0, $omask, $omask
+
+	fsrc2		%f4, %f0
+	fsrc2		%f6, %f2
+	brnz,pn		$rem, .L${bits}_xts_${dir}steal
+	nop
+
+	ret
+	restore
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+.align	32
+.L${bits}_xts_${dir}blk:
+	add	$out, $len, $blk_init
+	and	$blk_init, 63, $blk_init	! tail
+	sub	$len, $blk_init, $len
+	add	$blk_init, 15, $blk_init	! round up to 16n
+	srlx	$len, 4, $len
+	srl	$blk_init, 4, $blk_init
+	sub	$len, 1, $len
+	add	$blk_init, 1, $blk_init
+
+.L${bits}_xts_${dir}blk2x:
+	ldx		[$inp + 0], %o0
+	ldx		[$inp + 8], %o1
+	ldx		[$inp + 16], %o2
+	brz,pt		$ileft, 5f
+	ldx		[$inp + 24], %o3
+
+	ldx		[$inp + 32], %o4
+	sllx		%o0, $ileft, %o0
+	srlx		%o1, $iright, %g1
+	or		%g1, %o0, %o0
+	sllx		%o1, $ileft, %o1
+	srlx		%o2, $iright, %g1
+	or		%g1, %o1, %o1
+	sllx		%o2, $ileft, %o2
+	srlx		%o3, $iright, %g1
+	or		%g1, %o2, %o2
+	sllx		%o3, $ileft, %o3
+	srlx		%o4, $iright, %o4
+	or		%o4, %o3, %o3
+5:
+	movxtod		%g2, %f12
+	movxtod		%g3, %f14
+	bshuffle	%f12, %f12, %f12
+	bshuffle	%f14, %f14, %f14
+
+	srax		%g3, 63, %l7		! next tweak value
+	addcc		%g2, %g2, %g2
+	and		%l7, 0x87, %l7
+	addxc		%g3, %g3, %g3
+	xor		%l7, %g2, %g2
+
+	movxtod		%g2, %f8
+	movxtod		%g3, %f10
+	bshuffle	%f8,  %f8,  %f8
+	bshuffle	%f10, %f10, %f10
+
+	xor		%g4, %o0, %o0		! ^= rk[0]
+	xor		%g5, %o1, %o1
+	xor		%g4, %o2, %o2		! ^= rk[0]
+	xor		%g5, %o3, %o3
+	movxtod		%o0, %f0
+	movxtod		%o1, %f2
+	movxtod		%o2, %f4
+	movxtod		%o3, %f6
+
+	fxor		%f12, %f0, %f0		! ^= tweak[0]
+	fxor		%f14, %f2, %f2
+	fxor		%f8,  %f4, %f4		! ^= tweak[0]
+	fxor		%f10, %f6, %f6
+
+	prefetch	[$inp + 32+63], 20
+	call		_${alg}${bits}_${dir}crypt_2x
+	add		$inp, 32, $inp
+
+	movxtod		%g2, %f8
+	movxtod		%g3, %f10
+
+	srax		%g3, 63, %l7		! next tweak value
+	addcc		%g2, %g2, %g2
+	and		%l7, 0x87, %l7
+	addxc		%g3, %g3, %g3
+	xor		%l7, %g2, %g2
+
+	bshuffle	%f8,  %f8,  %f8
+	bshuffle	%f10, %f10, %f10
+
+	fxor		%f12, %f0, %f0		! ^= tweak[0]
+	fxor		%f14, %f2, %f2
+	fxor		%f8,  %f4, %f4
+	fxor		%f10, %f6, %f6
+
+	stda		%f0, [$out]0xe2		! ASI_BLK_INIT, T4-specific
+	add		$out, 8, $out
+	stda		%f2, [$out]0xe2		! ASI_BLK_INIT, T4-specific
+	add		$out, 8, $out
+	stda		%f4, [$out]0xe2		! ASI_BLK_INIT, T4-specific
+	add		$out, 8, $out
+	stda		%f6, [$out]0xe2		! ASI_BLK_INIT, T4-specific
+	bgu,pt		$::size_t_cc, .L${bits}_xts_${dir}blk2x
+	add		$out, 8, $out
+
+	add		$blk_init, $len, $len
+	andcc		$len, 1, %g0		! is number of blocks even?
+	membar		#StoreLoad|#StoreStore
+	bnz,pt		%icc, .L${bits}_xts_${dir}loop
+	srl		$len, 0, $len
+	brnz,pn		$len, .L${bits}_xts_${dir}loop2x
+	nop
+
+	fsrc2		%f4, %f0
+	fsrc2		%f6, %f2
+	brnz,pn		$rem, .L${bits}_xts_${dir}steal
+	nop
+
+	ret
+	restore
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+___
+$code.=<<___ if ($dir eq "en");
+.align	32
+.L${bits}_xts_${dir}steal:
+	std		%f0, [%fp + $::bias-16]	! copy of output
+	std		%f2, [%fp + $::bias-8]
+
+	srl		$ileft, 3, $ileft
+	add		%fp, $::bias-16, %l7
+	add		$inp, $ileft, $inp	! original $inp+$len&-15
+	add		$out, $ooff, $out	! original $out+$len&-15
+	mov		0, $ileft
+	nop					! align
+
+.L${bits}_xts_${dir}stealing:
+	ldub		[$inp + $ileft], %o0
+	ldub		[%l7  + $ileft], %o1
+	dec		$rem
+	stb		%o0, [%l7  + $ileft]
+	stb		%o1, [$out + $ileft]
+	brnz		$rem, .L${bits}_xts_${dir}stealing
+	inc		$ileft
+
+	mov		%l7, $inp
+	sub		$out, 16, $out
+	mov		0, $ileft
+	sub		$out, $ooff, $out
+	ba		.L${bits}_xts_${dir}loop	! one more time
+	mov		1, $len				! $rem is 0
+___
+$code.=<<___ if ($dir eq "de");
+.align	32
+.L${bits}_xts_${dir}steal:
+	ldx		[$inp + 0], %o0
+	brz,pt		$ileft, 8f
+	ldx		[$inp + 8], %o1
+
+	ldx		[$inp + 16], %o2
+	sllx		%o0, $ileft, %o0
+	srlx		%o1, $iright, %g1
+	sllx		%o1, $ileft, %o1
+	or		%g1, %o0, %o0
+	srlx		%o2, $iright, %o2
+	or		%o2, %o1, %o1
+8:
+	srax		%g3, 63, %l7		! next tweak value
+	addcc		%g2, %g2, %o2
+	and		%l7, 0x87, %l7
+	addxc		%g3, %g3, %o3
+	xor		%l7, %o2, %o2
+
+	movxtod		%o2, %f12
+	movxtod		%o3, %f14
+	bshuffle	%f12, %f12, %f12
+	bshuffle	%f14, %f14, %f14
+
+	xor		%g4, %o0, %o0		! ^= rk[0]
+	xor		%g5, %o1, %o1
+	movxtod		%o0, %f0
+	movxtod		%o1, %f2
+
+	fxor		%f12, %f0, %f0		! ^= tweak[0]
+	fxor		%f14, %f2, %f2
+
+	call		_${alg}${bits}_${dir}crypt_1x
+	add		$inp, 16, $inp
+
+	fxor		%f12, %f0, %f0		! ^= tweak[0]
+	fxor		%f14, %f2, %f2
+
+	std		%f0, [%fp + $::bias-16]
+	std		%f2, [%fp + $::bias-8]
+
+	srl		$ileft, 3, $ileft
+	add		%fp, $::bias-16, %l7
+	add		$inp, $ileft, $inp	! original $inp+$len&-15
+	add		$out, $ooff, $out	! original $out+$len&-15
+	mov		0, $ileft
+	add		$out, 16, $out
+	nop					! align
+
+.L${bits}_xts_${dir}stealing:
+	ldub		[$inp + $ileft], %o0
+	ldub		[%l7  + $ileft], %o1
+	dec		$rem
+	stb		%o0, [%l7  + $ileft]
+	stb		%o1, [$out + $ileft]
+	brnz		$rem, .L${bits}_xts_${dir}stealing
+	inc		$ileft
+
+	mov		%l7, $inp
+	sub		$out, 16, $out
+	mov		0, $ileft
+	sub		$out, $ooff, $out
+	ba		.L${bits}_xts_${dir}loop	! one more time
+	mov		1, $len				! $rem is 0
+___
+$code.=<<___;
+	ret
+	restore
+.type	${alg}${bits}_t4_xts_${dir}crypt,#function
+.size	${alg}${bits}_t4_xts_${dir}crypt,.-${alg}${bits}_t4_xts_${dir}crypt
+___
+}
+
 # Purpose of these subroutines is to explicitly encode VIS instructions,
 # so that one can compile the module without having to specify VIS
 # extentions on compiler command line, e.g. -xarch=v9 vs. -xarch=v9a.
@@ -909,6 +1383,7 @@ sub unvis {
 my ($mnemonic,$rs1,$rs2,$rd)=@_;
 my ($ref,$opf);
 my %visopf = (	"faligndata"	=> 0x048,
+		"bshuffle"	=> 0x04c,
 		"fnot2"		=> 0x066,
 		"fxor"		=> 0x06c,
 		"fsrc2"		=> 0x078	);
@@ -933,13 +1408,17 @@ my %visopf = (	"faligndata"	=> 0x048,
 	return $ref;
     }
 }
+
 sub unvis3 {
 my ($mnemonic,$rs1,$rs2,$rd)=@_;
 my %bias = ( "g" => 0, "o" => 8, "l" => 16, "i" => 24 );
 my ($ref,$opf);
 my %visopf = (	"addxc"		=> 0x011,
 		"addxccc"	=> 0x013,
-		"umulxhi"	=> 0x016	);
+		"umulxhi"	=> 0x016,
+		"alignaddr"	=> 0x018,
+		"bmask"		=> 0x019,
+		"alignaddrl"	=> 0x01a	);
 
     $ref = "$mnemonic\t$rs1,$rs2,$rd";
 
@@ -955,20 +1434,6 @@ my %visopf = (	"addxc"		=> 0x011,
     } else {
 	return $ref;
     }
-}
-sub unalignaddr {
-my ($mnemonic,$rs1,$rs2,$rd)=@_;
-my %bias = ( "g" => 0, "o" => 8, "l" => 16, "i" => 24 );
-my $ref = "$mnemonic\t$rs1,$rs2,$rd";
-my $opf = $mnemonic =~ /l$/ ? 0x01a :0x18;
-
-    foreach ($rs1,$rs2,$rd) {
-	if (/%([goli])([0-7])/)	{ $_=$bias{$1}+$2; }
-	else			{ return $ref; }
-    }
-    return  sprintf ".word\t0x%08x !%s",
-		    0x81b00000|$rd<<25|$rs1<<14|$opf<<5|$rs2,
-		    $ref;
 }
 
 sub unaes_round {	# 4-argument instructions
@@ -1121,35 +1586,32 @@ sub emit_assembler {
     foreach (split("\n",$::code)) {
 	s/\`([^\`]*)\`/eval $1/ge;
 
-	s/\b(f[a-z]+2[sd]*)\s+(%f[0-9]{1,2}),\s*(%f[0-9]{1,2})\s*$/$1\t%f0,$2,$3/g;
+	s/\b(f[a-z]+2[sd]*)\s+(%f[0-9]{1,2}),\s*(%f[0-9]{1,2})\s*$/$1\t%f0,$2,$3/go;
 
 	s/\b(aes_[edk][^\s]*)\s+(%f[0-9]{1,2}),\s*(%f[0-9]{1,2}),\s*([%fx0-9]+),\s*(%f[0-9]{1,2})/
 		&unaes_round($1,$2,$3,$4,$5)
-	 /ge or
+	 /geo or
 	s/\b(aes_kexpand[02])\s+(%f[0-9]{1,2}),\s*(%f[0-9]{1,2}),\s*(%f[0-9]{1,2})/
 		&unaes_kexpand($1,$2,$3,$4)
-	 /ge or
+	 /geo or
 	s/\b(camellia_f)\s+(%f[0-9]{1,2}),\s*(%f[0-9]{1,2}),\s*([%fx0-9]+),\s*(%f[0-9]{1,2})/
 		&uncamellia_f($1,$2,$3,$4,$5)
-	 /ge or
+	 /geo or
 	s/\b(camellia_[^s]+)\s+(%f[0-9]{1,2}),\s*(%f[0-9]{1,2}),\s*(%f[0-9]{1,2})/
 		&uncamellia3($1,$2,$3,$4)
-	 /ge or
+	 /geo or
 	s/\b(mov[ds]to\w+)\s+(%f[0-9]{1,2}),\s*(%[goli][0-7])/
 		&unmovxtox($1,$2,$3)
-	 /ge or
+	 /geo or
 	s/\b(mov[xw]to[ds])\s+(%[goli][0-7]),\s*(%f[0-9]{1,2})/
 		&unmovxtox($1,$2,$3)
-	 /ge or
-	s/\b(f[^\s]*)\s+(%f[0-9]{1,2}),\s*(%f[0-9]{1,2}),\s*(%f[0-9]{1,2})/
+	 /geo or
+	s/\b([fb][^\s]*)\s+(%f[0-9]{1,2}),\s*(%f[0-9]{1,2}),\s*(%f[0-9]{1,2})/
 		&unvis($1,$2,$3,$4)
-	 /ge or
-	s/\b(alignaddr[l]*)\s+(%[goli][0-7]),\s*(%[goli][0-7]),\s*(%[goli][0-7])/
-		&unalignaddr($1,$2,$3,$4)
-	 /ge or
-	s/\b(umulxhi|addxc[c]{0,2})\s+(%[goli][0-7]),\s*(%[goli][0-7]),\s*(%[goli][0-7])/
+	 /geo or
+	s/\b(umulxhi|bmask|addxc[c]{0,2}|alignaddr[l]*)\s+(%[goli][0-7]),\s*(%[goli][0-7]),\s*(%[goli][0-7])/
 		&unvis3($1,$2,$3,$4)
-	 /ge;
+	 /geo;
 
 	print $_,"\n";
     }
