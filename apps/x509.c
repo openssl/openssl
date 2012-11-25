@@ -179,7 +179,7 @@ int MAIN(int argc, char **argv)
 	STACK_OF(OPENSSL_STRING) *sigopts = NULL;
 	EVP_PKEY *Upkey=NULL,*CApkey=NULL, *fkey = NULL;
 	ASN1_INTEGER *sno = NULL;
-	int i,num,badops=0;
+	int i,num,badops=0, badsig=0;
 	BIO *out=NULL;
 	BIO *STDout=NULL;
 	STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
@@ -499,6 +499,8 @@ int MAIN(int argc, char **argv)
 #endif
 		else if (strcmp(*argv,"-ocspid") == 0)
 			ocspid= ++num;
+		else if (strcmp(*argv,"-badsig") == 0)
+			badsig = 1;
 		else if ((md_alg=EVP_get_digestbyname(*argv + 1)))
 			{
 			/* ok */
@@ -1088,6 +1090,9 @@ bad:
 		ret=0;
 		goto end;
 		}
+
+	if (badsig)
+		x->signature->data[x->signature->length - 1] ^= 0x1;
 
 	if 	(outformat == FORMAT_ASN1)
 		i=i2d_X509_bio(out,x);
