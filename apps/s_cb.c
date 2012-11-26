@@ -1565,11 +1565,9 @@ void print_ssl_summary(BIO *bio, SSL *s)
 		BIO_puts(bio, "No peer certificate\n");
 	if (peer)
 		X509_free(peer);
+	ssl_print_point_formats(bio, s);
 	if (SSL_is_server(s))
-		{
-		ssl_print_point_formats(bio, s);
 		ssl_print_curves(bio, s, 1);
-		}
 	else
 		ssl_print_tmp_key(bio, s);
 	}
