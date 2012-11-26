@@ -624,6 +624,27 @@ static int tls1_check_ec_key(SSL *s,
 	return 1;
 	}
 
+static void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
+					size_t *pformatslen)
+	{
+	/* If we have a custom point format list use it otherwise
+	 * use default */
+	if (s->tlsext_ecpointformatlist)
+		{
+		*pformats = s->tlsext_ecpointformatlist;
+		*pformatslen = s->tlsext_ecpointformatlist_length;
+		}
+	else
+		{
+		*pformats = ecformats_default;
+		/* For Suite B we don't support char2 fields */
+		if (tls1_suiteb(s))
+			*pformatslen = sizeof(ecformats_default) - 1;
+		else
+			*pformatslen = sizeof(ecformats_default);
+		}
+	}
+
 /* Check cert parameters compatible with extensions: currently just checks
  * EC certificates have compatible curves and compression.
  */
@@ -1155,16 +1176,8 @@ unsigned char *ssl_add_clienthello_tlsext(SSL *s, unsigned char *p, unsigned cha
 		long lenmax; 
 		const unsigned char *plist;
 		size_t plistlen;
-		/* If we have a custom point format list use it otherwise
-		 * use default */
-		plist = s->tlsext_ecpointformatlist;
-		if (plist)
-			plistlen = s->tlsext_ecpointformatlist_length;
-		else
-			{
-			plist = ecformats_default;
-			plistlen = sizeof(ecformats_default);
-			}
+
+		tls1_get_formatlist(s, &plist, &plistlen);
 
 		if ((lenmax = limit - ret - 5) < 0) return NULL; 
 		if (plistlen > (size_t)lenmax) return NULL;
@@ -1403,6 +1416,10 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
 #ifndef OPENSSL_NO_NEXTPROTONEG
 	int next_proto_neg_seen;
 #endif
+	unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
+	unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
+	int using_ecc = (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) || (alg_a & SSL_aECDSA);
+	using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
 
 	/* don't add extensions for SSLv3, unless doing secure renegotiation */
 	if (s->version == SSL3_VERSION && !s->s3->send_connection_binding)
@@ -1444,25 +1461,28 @@ unsigned char *ssl_add_serverhello_tlsext(SSL *s, unsigned char *p, unsigned cha
         }
 
 #ifndef OPENSSL_NO_EC
-	if (s->tlsext_ecpointformatlist != NULL &&
-	    s->version != DTLS1_VERSION)
+	if (using_ecc && s->version != DTLS1_VERSION)
 		{
+		const unsigned char *plist;
+		size_t plistlen;
 		/* Add TLS extension ECPointFormats to the ServerHello message */
 		long lenmax; 
 
+		tls1_get_formatlist(s, &plist, &plistlen);
+
 		if ((lenmax = limit - ret - 5) < 0) return NULL; 
-		if (s->tlsext_ecpointformatlist_length > (unsigned long)lenmax) return NULL;
-		if (s->tlsext_ecpointformatlist_length > 255)
+		if (plistlen > (size_t)lenmax) return NULL;
+		if (plistlen > 255)
 			{
 			SSLerr(SSL_F_SSL_ADD_SERVERHELLO_TLSEXT, ERR_R_INTERNAL_ERROR);
 			return NULL;
 			}
 		
 		s2n(TLSEXT_TYPE_ec_point_formats,ret);
-		s2n(s->tlsext_ecpointformatlist_length + 1,ret);
-		*(ret++) = (unsigned char) s->tlsext_ecpointformatlist_length;
-		memcpy(ret, s->tlsext_ecpointformatlist, s->tlsext_ecpointformatlist_length);
-		ret+=s->tlsext_ecpointformatlist_length;
+		s2n(plistlen + 1,ret);
+		*(ret++) = (unsigned char) plistlen;
+		memcpy(ret, plist, plistlen);
+		ret+=plistlen;
 
 		}
 	/* Currently the server should not respond with a SupportedCurves extension */
@@ -2622,32 +2642,6 @@ int ssl_prepare_clienthello_tlsext(SSL *s)
 
 int ssl_prepare_serverhello_tlsext(SSL *s)
 	{
-#ifndef OPENSSL_NO_EC
-	/* If we are server and using an ECC cipher suite, send the point formats we support 
-	 * if the client sent us an ECPointsFormat extension.  Note that the server is not
-	 * supposed to send an EllipticCurves extension.
-	 */
-
-	unsigned long alg_k = s->s3->tmp.new_cipher->algorithm_mkey;
-	unsigned long alg_a = s->s3->tmp.new_cipher->algorithm_auth;
-	int using_ecc = (alg_k & (SSL_kEECDH|SSL_kECDHr|SSL_kECDHe)) || (alg_a & SSL_aECDSA);
-	using_ecc = using_ecc && (s->session->tlsext_ecpointformatlist != NULL);
-	
-	if (using_ecc)
-		{
-		if (s->tlsext_ecpointformatlist != NULL) OPENSSL_free(s->tlsext_ecpointformatlist);
-		if ((s->tlsext_ecpointformatlist = OPENSSL_malloc(3)) == NULL)
-			{
-			SSLerr(SSL_F_SSL_PREPARE_SERVERHELLO_TLSEXT,ERR_R_MALLOC_FAILURE);
-			return -1;
-			}
-		s->tlsext_ecpointformatlist_length = 3;
-		s->tlsext_ecpointformatlist[0] = TLSEXT_ECPOINTFORMAT_uncompressed;
-		s->tlsext_ecpointformatlist[1] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
-		s->tlsext_ecpointformatlist[2] = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
-		}
-#endif /* OPENSSL_NO_EC */
-
 	return 1;
 	}
 
