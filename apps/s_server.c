@@ -1019,6 +1019,7 @@ int MAIN(int argc, char *argv[])
 	if (!cctx)
 		goto end;
 	SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_SERVER);
+	SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CMDLINE);
 
 	verify_depth=0;
 #ifdef FIONBIO
