@@ -3348,7 +3348,7 @@ int ssl3_get_client_certificate(SSL *s)
 		if (i <= 0)
 			{
 			al=ssl_verify_alarm_type(s->verify_result);
-			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_NO_CERTIFICATE_RETURNED);
+			SSLerr(SSL_F_SSL3_GET_CLIENT_CERTIFICATE,SSL_R_CERTIFICATE_VERIFY_FAILED);
 			goto f_err;
 			}
 		}
