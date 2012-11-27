@@ -4,8 +4,12 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) New functions to set lookup_crls function and to retrieve
+     X509_STORE from X509_STORE_CTX.
+     [Steve Henson]
+
   *) New ctrl and macro to retrieve supported points extensions.
-     Print out extension in s_server.
+     Print out extension in s_server and s_client.
      [Steve Henson]
 
   *) New function ASN1_TIME_diff to calculate the difference between two

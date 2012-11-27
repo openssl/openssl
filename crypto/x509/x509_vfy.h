@@ -439,6 +439,9 @@ int X509_STORE_set1_param(X509_STORE *ctx, X509_VERIFY_PARAM *pm);
 void X509_STORE_set_verify_cb(X509_STORE *ctx,
 				  int (*verify_cb)(int, X509_STORE_CTX *));
 
+void X509_STORE_set_lookup_crls_cb(X509_STORE *ctx,
+		STACK_OF(X509_CRL)* (*cb)(X509_STORE_CTX *ctx, X509_NAME *nm));
+
 X509_STORE_CTX *X509_STORE_CTX_new(void);
 
 int X509_STORE_CTX_get1_issuer(X509 **issuer, X509_STORE_CTX *ctx, X509 *x);
@@ -448,6 +451,8 @@ int X509_STORE_CTX_init(X509_STORE_CTX *ctx, X509_STORE *store,
 			 X509 *x509, STACK_OF(X509) *chain);
 void X509_STORE_CTX_trusted_stack(X509_STORE_CTX *ctx, STACK_OF(X509) *sk);
 void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
+
+X509_STORE *X509_STORE_CTX_get0_store(X509_STORE_CTX *ctx);
 
 X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *v, X509_LOOKUP_METHOD *m);
 
