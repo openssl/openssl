@@ -404,8 +404,17 @@ OCSP_CERTID *OCSP_CERTID_dup(OCSP_CERTID *id);
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, char *path, OCSP_REQUEST *req);
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, char *path, OCSP_REQUEST *req,
 								int maxline);
+int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx);
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx);
+OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline);
 void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx);
+void OCSP_set_max_response_length(OCSP_REQ_CTX *rctx, unsigned long len);
+int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const ASN1_ITEM *it, ASN1_VALUE *val);
+int OCSP_REQ_CTX_nbio_d2i(OCSP_REQ_CTX *rctx,
+					ASN1_VALUE **pval, const ASN1_ITEM *it);
+BIO *OCSP_REQ_CTX_get0_mem_bio(OCSP_REQ_CTX *rctx);
+int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const ASN1_ITEM *it, ASN1_VALUE *val);
+int OCSP_REQ_CTX_http(OCSP_REQ_CTX *rctx, const char *op, const char *path);
 int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req);
 int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
 		const char *name, const char *value);

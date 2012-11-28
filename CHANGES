@@ -4,7 +4,12 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
-  *) New functions to set lookup_crls function and to retrieve
+  *) Extend OCSP I/O functions so they can be used for simple general purpose
+     HTTP as well as OCSP. New wrapper function which can be used to download
+     CRLs using the OCSP API.
+     [Steve Henson]
+
+  *) New functions to set lookup_crls callback and to retrieve
      X509_STORE from X509_STORE_CTX.
      [Steve Henson]
 
