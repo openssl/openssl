@@ -38,6 +38,9 @@ open STDOUT,">$output";
 
 $code=<<___;
 	.text
+	.if	__TI_EABI__
+	.asg	sha1_block_data_order,_sha1_block_data_order
+	.endif
 
 	.asg	B3,RA
 	.asg	A15,FP

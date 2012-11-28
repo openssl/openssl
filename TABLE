@@ -3995,7 +3995,7 @@ $multilib     =
 
 *** linux-c64xplus
 $cc           = cl6x
-$cflags       = --linux --strip_coff_underscore -ea=.s -eo=.o -mv6400+ -o2 -ox -ms -pden -DOPENSSL_SMALL_FOOTPRINT
+$cflags       = --linux -ea=.s -eo=.o -mv6400+ -o2 -ox -ms -pden -DOPENSSL_SMALL_FOOTPRINT
 $unistd       = 
 $thread_cflag = -D_REENTRANT
 $sys_id       = 

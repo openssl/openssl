@@ -107,6 +107,9 @@ ___
 }
 $code.=<<___;
 	.text
+	.if	__TI_EABI__
+	.asg	bn_GF2m_mul_2x2,_bn_GF2m_mul_2x2
+	.endif
 
 	.global	_bn_GF2m_mul_2x2
 _bn_GF2m_mul_2x2:

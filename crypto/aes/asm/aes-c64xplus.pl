@@ -46,6 +46,11 @@ $code=<<___;
 	.text
 	.if	__TI_EABI__
 	.nocmp
+	.asg	AES_encrypt,_AES_encrypt
+	.asg	AES_decrypt,_AES_decrypt
+	.asg	AES_set_encrypt_key,_AES_set_encrypt_key
+	.asg	AES_set_decrypt_key,_AES_set_decrypt_key
+	.asg	AES_ctr32_encrypt,_AES_ctr32_encrypt
 	.endif
 
 	.asg	B3,RA
@@ -1021,7 +1026,11 @@ ___
 }
 # Tables are kept in endian-neutral manner
 $code.=<<___;
+	.if	__TI_EABI__
+	.sect	".text:aes_asm.const"
+	.else
 	.sect	".const:aes_asm"
+	.endif
 	.align	128
 AES_Te:
 	.byte	0xc6,0x63,0x63,0xa5,	0xf8,0x7c,0x7c,0x84
@@ -1359,3 +1368,4 @@ AES_Td4:
 ___
 
 print $code;
+close STDOUT;

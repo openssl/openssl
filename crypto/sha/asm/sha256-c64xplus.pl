@@ -40,6 +40,7 @@ $code.=<<___;
 	.text
 	.if	__TI_EABI__
 	.nocmp
+	.asg	sha256_block_data_order,_sha256_block_data_order
 	.endif
 
 	.asg	B3,RA
@@ -275,7 +276,11 @@ outerloop?:
 ||	STW	$H,*${CTXB}[7]
 	.endasmfunc
 
+	.if	__TI_EABI__
+	.sect	".text:sha_asm.const"
+	.else
 	.sect	".const:sha_asm"
+	.endif
 	.align	128
 K256:
 	.uword	0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5
@@ -300,3 +305,4 @@ K256:
 ___
 
 print $code;
+close STDOUT;

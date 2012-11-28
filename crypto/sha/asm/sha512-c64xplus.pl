@@ -48,6 +48,7 @@ $code.=<<___;
 	.text
 	.if	__TI_EABI__
 	.nocmp
+	.asg	sha512_block_data_order,_sha512_block_data_order
 	.endif
 
 	.asg	B3,RA
@@ -370,7 +371,11 @@ break?:
 	NOP	2				; wait till FP is committed
 	.endasmfunc
 
+	.if	__TI_EABI__
+	.sect	".text:sha_asm.const"
+	.else
 	.sect	".const:sha_asm"
+	.endif
 	.align	128
 K512:
 	.uword	0x428a2f98,0xd728ae22, 0x71374491,0x23ef65cd

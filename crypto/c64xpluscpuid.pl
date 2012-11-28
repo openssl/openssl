@@ -6,6 +6,14 @@ open STDOUT,">$output";
 
 $code.=<<___;
 	.text
+	.if	__TI_EABI__
+	.asg	OPENSSL_rdtsc,_OPENSSL_rdtsc
+	.asg	OPENSSL_cleanse,_OPENSSL_cleanse
+	.asg	OPENSSL_atomic_add,_OPENSSL_atomic_add
+	.asg	OPENSSL_wipe_cpu,_OPENSSL_wipe_cpu
+	.asg	OPENSSL_instrument_bus,_OPENSSL_instrument_bus
+	.asg	OPENSSL_instrument_bus2,_OPENSSL_instrument_bus2
+	.endif
 
 	.asg	B3,RA
 
