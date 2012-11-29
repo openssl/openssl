@@ -464,7 +464,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 
 int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs, X509_STORE *store, unsigned long flags);
 
-int OCSP_parse_url(char *url, char **phost, char **pport, char **ppath, int *pssl);
+int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath, int *pssl);
 
 int OCSP_id_issuer_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
 int OCSP_id_cmp(OCSP_CERTID *a, OCSP_CERTID *b);
