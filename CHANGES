@@ -4,6 +4,11 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Extend OCSP I/O functions so they can be used for simple general purpose
+     HTTP as well as OCSP. New wrapper function which can be used to download
+     CRLs using the OCSP API.
+     [Steve Henson]
+
   *) Delegate command line handling in s_client/s_server to SSL_CONF APIs.
      [Steve Henson]
 
