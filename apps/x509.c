@@ -166,6 +166,9 @@ static int x509_certify (X509_STORE *ctx,char *CAfile,const EVP_MD *digest,
 			 CONF *conf, char *section, ASN1_INTEGER *sno);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int reqfile=0;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+static int force_version=2;
+#endif
 
 int MAIN(int, char **);
 
@@ -288,6 +291,13 @@ int MAIN(int argc, char **argv)
 			if (!sigopts || !sk_OPENSSL_STRING_push(sigopts, *(++argv)))
 				goto bad;
 			}
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+		else if (strcmp(*argv,"-force_version") == 0)
+			{
+			if (--argc < 1) goto bad;
+			force_version=atoi(*(++argv)) - 1;
+			}
+#endif
 		else if (strcmp(*argv,"-days") == 0)
 			{
 			if (--argc < 1) goto bad;
@@ -1247,7 +1257,11 @@ static int x509_certify(X509_STORE *ctx, char *CAfile, const EVP_MD *digest,
 	if (conf)
 		{
 		X509V3_CTX ctx2;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+		X509_set_version(x, force_version);
+#else
 		X509_set_version(x,2); /* version 3 certificate */
+#endif
                 X509V3_set_ctx(&ctx2, xca, x, NULL, NULL, 0);
                 X509V3_set_nconf(&ctx2, conf);
                 if (!X509V3_EXT_add_nconf(conf, &ctx2, section, x)) goto end;
@@ -1325,7 +1339,11 @@ static int sign(X509 *x, EVP_PKEY *pkey, int days, int clrext, const EVP_MD *dig
 	if (conf)
 		{
 		X509V3_CTX ctx;
+#ifdef OPENSSL_SSL_DEBUG_BROKEN_PROTOCOL
+		X509_set_version(x, force_version);
+#else
 		X509_set_version(x,2); /* version 3 certificate */
+#endif
                 X509V3_set_ctx(&ctx, x, x, NULL, NULL, 0);
                 X509V3_set_nconf(&ctx, conf);
                 if (!X509V3_EXT_add_nconf(conf, &ctx, section, x)) goto err;
