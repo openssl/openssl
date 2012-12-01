@@ -1684,11 +1684,9 @@ $code.=<<___;
 	lghi	$i1,0x87
 	srag	$i2,$s1,63		# broadcast upper bit
 	ngr	$i1,$i2			# rem
-	srlg	$i2,$s0,63		# carry bit from lower half
-	sllg	$s0,$s0,1
-	sllg	$s1,$s1,1
+	algr	$s0,$s0
+	alcgr	$s1,$s1
 	xgr	$s0,$i1
-	ogr	$s1,$i2
 .Lxts_km_start:
 	lrvgr	$i1,$s0			# flip byte order
 	lrvgr	$i2,$s1
@@ -1745,11 +1743,9 @@ $code.=<<___;
 	lghi	$i1,0x87
 	srag	$i2,$s1,63		# broadcast upper bit
 	ngr	$i1,$i2			# rem
-	srlg	$i2,$s0,63		# carry bit from lower half
-	sllg	$s0,$s0,1
-	sllg	$s1,$s1,1
+	algr	$s0,$s0
+	alcgr	$s1,$s1
 	xgr	$s0,$i1
-	ogr	$s1,$i2
 
 	ltr	$len,$len		# clear zero flag
 	br	$ra
@@ -1843,12 +1839,11 @@ $code.=<<___;
 
 	slgr	$out,$inp
 
-	xgr	$s0,$s0			# clear upper half
-	xgr	$s1,$s1
-	lrv	$s0,$stdframe+4($sp)	# load secno
-	lrv	$s1,$stdframe+0($sp)
-	xgr	$s2,$s2
-	xgr	$s3,$s3
+	l${g}	$s3,$stdframe($sp)	# ivp
+	llgf	$s0,0($s3)		# load iv
+	llgf	$s1,4($s3)
+	llgf	$s2,8($s3)
+	llgf	$s3,12($s3)
 	stm${g}	%r2,%r5,2*$SIZE_T($sp)
 	la	$key,0($key2)
 	larl	$tbl,AES_Te
@@ -1864,11 +1859,9 @@ $code.=<<___;
 	lghi	%r1,0x87
 	srag	%r0,$s3,63		# broadcast upper bit
 	ngr	%r1,%r0			# rem
-	srlg	%r0,$s1,63		# carry bit from lower half
-	sllg	$s1,$s1,1
-	sllg	$s3,$s3,1
+	algr	$s1,$s1
+	alcgr	$s3,$s3
 	xgr	$s1,%r1
-	ogr	$s3,%r0
 	lrvgr	$s1,$s1			# flip byte order
 	lrvgr	$s3,$s3
 	srlg	$s0,$s1,32		# smash the tweak to 4x32-bits 
@@ -1917,11 +1910,9 @@ $code.=<<___;
 	lghi	%r1,0x87
 	srag	%r0,$s3,63		# broadcast upper bit
 	ngr	%r1,%r0			# rem
-	srlg	%r0,$s1,63		# carry bit from lower half
-	sllg	$s1,$s1,1
-	sllg	$s3,$s3,1
+	algr	$s1,$s1
+	alcgr	$s3,$s3
 	xgr	$s1,%r1
-	ogr	$s3,%r0
 	lrvgr	$s1,$s1			# flip byte order
 	lrvgr	$s3,$s3
 	srlg	$s0,$s1,32		# smash the tweak to 4x32-bits 
@@ -1956,7 +1947,8 @@ $code.=<<___;
 .size	AES_xts_encrypt,.-AES_xts_encrypt
 ___
 # void AES_xts_decrypt(const char *inp,char *out,size_t len,
-#	const AES_KEY *key1, const AES_KEY *key2,u64 secno);
+#	const AES_KEY *key1, const AES_KEY *key2,
+#	const unsigned char iv[16]);
 #
 $code.=<<___;
 .globl	AES_xts_decrypt
@@ -2028,11 +2020,9 @@ $code.=<<___ if (!$softonly);
 	lghi	$i1,0x87
 	srag	$i2,$s1,63		# broadcast upper bit
 	ngr	$i1,$i2			# rem
-	srlg	$i2,$s0,63		# carry bit from lower half
-	sllg	$s0,$s0,1
-	sllg	$s1,$s1,1
+	algr	$s0,$s0
+	alcgr	$s1,$s1
 	xgr	$s0,$i1
-	ogr	$s1,$i2
 	lrvgr	$i1,$s0			# flip byte order
 	lrvgr	$i2,$s1
 
@@ -2089,12 +2079,11 @@ $code.=<<___;
 	srlg	$len,$len,4
 	slgr	$out,$inp
 
-	xgr	$s0,$s0			# clear upper half
-	xgr	$s1,$s1
-	lrv	$s0,$stdframe+4($sp)	# load secno
-	lrv	$s1,$stdframe+0($sp)
-	xgr	$s2,$s2
-	xgr	$s3,$s3
+	l${g}	$s3,$stdframe($sp)	# ivp
+	llgf	$s0,0($s3)		# load iv
+	llgf	$s1,4($s3)
+	llgf	$s2,8($s3)
+	llgf	$s3,12($s3)
 	stm${g}	%r2,%r5,2*$SIZE_T($sp)
 	la	$key,0($key2)
 	larl	$tbl,AES_Te
@@ -2113,11 +2102,9 @@ $code.=<<___;
 	lghi	%r1,0x87
 	srag	%r0,$s3,63		# broadcast upper bit
 	ngr	%r1,%r0			# rem
-	srlg	%r0,$s1,63		# carry bit from lower half
-	sllg	$s1,$s1,1
-	sllg	$s3,$s3,1
+	algr	$s1,$s1
+	alcgr	$s3,$s3
 	xgr	$s1,%r1
-	ogr	$s3,%r0
 	lrvgr	$s1,$s1			# flip byte order
 	lrvgr	$s3,$s3
 	srlg	$s0,$s1,32		# smash the tweak to 4x32-bits 
@@ -2156,11 +2143,9 @@ $code.=<<___;
 	lghi	%r1,0x87
 	srag	%r0,$s3,63		# broadcast upper bit
 	ngr	%r1,%r0			# rem
-	srlg	%r0,$s1,63		# carry bit from lower half
-	sllg	$s1,$s1,1
-	sllg	$s3,$s3,1
+	algr	$s1,$s1
+	alcgr	$s3,$s3
 	xgr	$s1,%r1
-	ogr	$s3,%r0
 	lrvgr	$i2,$s1			# flip byte order
 	lrvgr	$i3,$s3
 	stmg	$i2,$i3,$tweak($sp)	# save the 1st tweak
@@ -2176,11 +2161,9 @@ $code.=<<___;
 	lghi	%r1,0x87
 	srag	%r0,$s3,63		# broadcast upper bit
 	ngr	%r1,%r0			# rem
-	srlg	%r0,$s1,63		# carry bit from lower half
-	sllg	$s1,$s1,1
-	sllg	$s3,$s3,1
+	algr	$s1,$s1
+	alcgr	$s3,$s3
 	xgr	$s1,%r1
-	ogr	$s3,%r0
 	lrvgr	$s1,$s1			# flip byte order
 	lrvgr	$s3,$s3
 	srlg	$s0,$s1,32		# smash the tweak to 4x32-bits
