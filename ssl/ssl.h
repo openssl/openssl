@@ -2309,6 +2309,7 @@ void ERR_load_SSL_strings(void);
 /* Function codes. */
 #define SSL_F_AUTHZ_FIND_DATA				 330
 #define SSL_F_AUTHZ_VALIDATE				 323
+#define SSL_F_CHECK_SUITEB_CIPHER_LIST			 335
 #define SSL_F_CLIENT_CERTIFICATE			 100
 #define SSL_F_CLIENT_FINISHED				 167
 #define SSL_F_CLIENT_HELLO				 101
@@ -2445,7 +2446,7 @@ void ERR_load_SSL_strings(void);
 #define SSL_F_SSL_CIPHER_STRENGTH_SORT			 231
 #define SSL_F_SSL_CLEAR					 164
 #define SSL_F_SSL_COMP_ADD_COMPRESSION_METHOD		 165
-#define SSL_F_SSL_CONF_CTX_CMD				 334
+#define SSL_F_SSL_CONF_CMD				 334
 #define SSL_F_SSL_CREATE_CIPHER_LIST			 166
 #define SSL_F_SSL_CTRL					 232
 #define SSL_F_SSL_CTX_CHECK_PRIVATE_KEY			 168
