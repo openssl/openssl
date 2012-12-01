@@ -152,13 +152,16 @@ void OPENSSL_cpuid_setup(void)
 	if (!sscanf(env+off,"%lli",(long long *)&vec)) vec = strtoul(env+off,NULL,0);
 #endif
 	if (off) vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P)&~vec;
+	else if (env[0]==':') vec = OPENSSL_ia32_cpuid(OPENSSL_ia32cap_P);
 
 	OPENSSL_ia32cap_P[2] = 0;
 	if ((env=strchr(env,':'))) {
-	    off = (env[1]=='~')?2:1;
-	    vec = strtoul(env+off,NULL,0);
-	    if (off>1)	OPENSSL_ia32cap_P[2] &= ~vec;
-	    else	OPENSSL_ia32cap_P[2] = vec;
+	    unsigned int vecx;
+	    env++;
+	    off = (env[0]=='~')?1:0;
+	    vecx = strtoul(env+off,NULL,0);
+	    if (off)	OPENSSL_ia32cap_P[2] &= ~vecx;
+	    else	OPENSSL_ia32cap_P[2] = vecx;
 	}
     }
     else
