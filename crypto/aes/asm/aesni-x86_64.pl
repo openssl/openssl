@@ -130,7 +130,7 @@
 # Further data for other parallelizable modes:
 #
 # CBC decrypt				1.16	0.93	0.93
-# CTR					1.14	0.91	n/a
+# CTR					1.14	0.91	0.90
 #
 # Well, given 3x column it's probably inappropriate to call the limit
 # asymptotic, if it can be surpassed, isn't it? What happens there?
@@ -160,7 +160,7 @@
 ######################################################################
 # For reference, AMD Bulldozer spends 5.77 cycles per byte processed
 # with 128-bit key in CBC encrypt and 0.76 cycles in CBC decrypt, 0.70
-# in ECB, 0.94 in CTR, 0.95 in XTS... This means that aes[enc|dec]
+# in ECB, 0.76 in CTR, 0.95 in XTS... This means that aes[enc|dec]
 # instruction latency is 9 cycles and that they can be issued every
 # cycle.
 
@@ -1013,286 +1013,321 @@ ___
 # does not update *ivec! (see engine/eng_aesni.c for details)
 #
 {
-my $frame_size = 0x20+($win64?160:0);
-my ($in0,$in1,$in2,$in3)=map("%xmm$_",(8..11));
-my ($iv0,$iv1,$ivec)=("%xmm12","%xmm13","%xmm14");
-my $bswap_mask="%xmm15";
+my ($in0,$in1,$in2,$in3,$one,$ivec)=map("%xmm$_",(10..15));
+my $len_="%r9";
 
 $code.=<<___;
 .globl	aesni_ctr32_encrypt_blocks
 .type	aesni_ctr32_encrypt_blocks,\@function,5
 .align	16
 aesni_ctr32_encrypt_blocks:
-	lea	(%rsp),%rax
-	push	%rbp
-	sub	\$$frame_size,%rsp
-	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
-	movaps	%xmm6,0x20(%rsp)
-	movaps	%xmm7,0x30(%rsp)
-	movaps	%xmm8,0x40(%rsp)
-	movaps	%xmm9,0x50(%rsp)
-	movaps	%xmm10,0x60(%rsp)
-	movaps	%xmm11,0x70(%rsp)
-	movaps	%xmm12,0x80(%rsp)
-	movaps	%xmm13,0x90(%rsp)
-	movaps	%xmm14,0xa0(%rsp)
-	movaps	%xmm15,0xb0(%rsp)
+	lea	-0xa8(%rsp),%rsp
+	movaps	%xmm6,0x00(%rsp)
+	movaps	%xmm7,0x10(%rsp)
+	movaps	%xmm8,0x20(%rsp)
+	movaps	%xmm9,0x30(%rsp)
+	movaps	%xmm10,0x40(%rsp)
+	movaps	%xmm11,0x50(%rsp)
+	movaps	%xmm12,0x60(%rsp)
+	movaps	%xmm13,0x70(%rsp)
+	movaps	%xmm14,0x80(%rsp)
+	movaps	%xmm15,0x90(%rsp)
 .Lctr32_body:
 ___
 $code.=<<___;
-	lea	-8(%rax),%rbp
 	cmp	\$1,$len
 	je	.Lctr32_one_shortcut
 
-	movdqu	($ivp),$ivec
-	movdqa	.Lbswap_mask(%rip),$bswap_mask
-	xor	$rounds,$rounds
-	pextrd	\$3,$ivec,$rnds_		# pull 32-bit counter
-	pinsrd	\$3,$rounds,$ivec		# wipe 32-bit counter
-
-	mov	240($key),$rounds		# key->rounds
-	bswap	$rnds_
-	pxor	$iv0,$iv0			# vector of 3 32-bit counters
-	pxor	$iv1,$iv1			# vector of 3 32-bit counters
-	pinsrd	\$0,$rnds_,$iv0
-	lea	3($rnds_),$key_
-	pinsrd	\$0,$key_,$iv1
-	inc	$rnds_
-	pinsrd	\$1,$rnds_,$iv0
-	inc	$key_
-	pinsrd	\$1,$key_,$iv1
-	inc	$rnds_
-	pinsrd	\$2,$rnds_,$iv0
-	inc	$key_
-	pinsrd	\$2,$key_,$iv1
-	movdqa	$iv0,0x00(%rsp)
-	pshufb	$bswap_mask,$iv0
-	movdqa	$iv1,0x10(%rsp)
-	pshufb	$bswap_mask,$iv1
-
-	pshufd	\$`3<<6`,$iv0,$inout0		# place counter to upper dword
-	pshufd	\$`2<<6`,$iv0,$inout1
-	pshufd	\$`1<<6`,$iv0,$inout2
-	cmp	\$6,$len
-	jb	.Lctr32_tail
-	shr	\$1,$rounds
+	movzb	15($ivp),%rax			# counter LSB
+	mov	$len,$len_			# backup $len
+	mov	240($key),$rnds_		# key->rounds
 	mov	$key,$key_			# backup $key
-	mov	$rounds,$rnds_			# backup $rounds
-	sub	\$6,$len
-	jmp	.Lctr32_loop6
+	movdqu	($ivp),$ivec
+	neg	%rax
+	movdqa	.Lincrement1(%rip),$one
+	add	\$256,%rax			# steps to closest overflow
+
+.Lctr32_grandloop:
+	cmp	%rax,$len
+	cmova	%rax,$len
+	mov	$rnds_,$rounds			# restore $rounds
+	sub	$len,$len_
+
+	cmp	\$8,$len
+	jb	.Lctr32_tail
+
+	$movkey	($key_),$rndkey0
+	shr	\$1,$rounds
+	shr	\$1,$rnds_
+	sub	\$8,$len
+	jmp	.Lctr32_loop8
 
 .align	16
-.Lctr32_loop6:
-	pshufd	\$`3<<6`,$iv1,$inout3
-	por	$ivec,$inout0			# merge counter-less ivec
-	 $movkey	($key_),$rndkey0
-	pshufd	\$`2<<6`,$iv1,$inout4
-	por	$ivec,$inout1
+.Lctr32_loop8:
 	 $movkey	16($key_),$rndkey1
-	pshufd	\$`1<<6`,$iv1,$inout5
-	por	$ivec,$inout2
-	por	$ivec,$inout3
-	 xorps		$rndkey0,$inout0
-	por	$ivec,$inout4
-	por	$ivec,$inout5
+	movdqa		$rndkey0,$inout0
+	movdqa		$rndkey0,$inout1
+	pxor		$ivec,$inout0
+	paddb		$one,$ivec
+	movdqa		$rndkey0,$inout2
+	 aesenc		$rndkey1,$inout0
+	pxor		$ivec,$inout1
+	paddb		$one,$ivec
+	 lea		32($key_),$key
+	movdqa		$rndkey0,$inout3
+	 aesenc		$rndkey1,$inout1
+	pxor		$ivec,$inout2
+	paddb		$one,$ivec
+	movdqa		$rndkey0,$inout4
+	 aesenc		$rndkey1,$inout2
+	pxor		$ivec,$inout3
+	paddb		$one,$ivec
+	movdqa		$rndkey0,$inout5
+	 aesenc		$rndkey1,$inout3
+	pxor		$ivec,$inout4
+	paddb		$one,$ivec
+	movdqa		$rndkey0,$inout6
+	 aesenc		$rndkey1,$inout4
+	pxor		$ivec,$inout5
+	paddb		$one,$ivec
+	movdqa		$rndkey0,$inout7
+	 aesenc		$rndkey1,$inout5
+	pxor		$ivec,$inout6
+	paddb		$one,$ivec
+	 $movkey	($key),$rndkey0
+	 aesenc		$rndkey1,$inout6
+	pxor		$ivec,$inout7
+	paddb		$one,$ivec
+	 dec		$rounds
+	 aesenc		$rndkey1,$inout7
+	 $movkey	16($key),$rndkey1
+	  movups	($inp),$in0		# load input
+	  movups	0x10($inp),$in1
+	  movups	0x20($inp),$in2
+	  movups	0x30($inp),$in3
 
-	# inline _aesni_encrypt6 and interleave last rounds
-	# with own code...
+	call		.Lenc_loop8_enter
 
-	pxor		$rndkey0,$inout1
-	aesenc		$rndkey1,$inout0
-	lea		32($key_),$key
-	pxor		$rndkey0,$inout2
-	aesenc		$rndkey1,$inout1
-	 movdqa		.Lincrement32(%rip),$iv1
-	pxor		$rndkey0,$inout3
-	aesenc		$rndkey1,$inout2
-	 movdqa		(%rsp),$iv0
-	pxor		$rndkey0,$inout4
-	aesenc		$rndkey1,$inout3
-	pxor		$rndkey0,$inout5
-	$movkey		($key),$rndkey0
-	dec		$rounds
-	aesenc		$rndkey1,$inout4
-	aesenc		$rndkey1,$inout5
-	jmp		.Lctr32_enc_loop6_enter
-.align	16
-.Lctr32_enc_loop6:
-	aesenc		$rndkey1,$inout0
-	aesenc		$rndkey1,$inout1
-	dec		$rounds
-	aesenc		$rndkey1,$inout2
-	aesenc		$rndkey1,$inout3
-	aesenc		$rndkey1,$inout4
-	aesenc		$rndkey1,$inout5
-.Lctr32_enc_loop6_enter:
-	$movkey		16($key),$rndkey1
-	aesenc		$rndkey0,$inout0
-	aesenc		$rndkey0,$inout1
-	lea		32($key),$key
-	aesenc		$rndkey0,$inout2
-	aesenc		$rndkey0,$inout3
-	aesenc		$rndkey0,$inout4
-	aesenc		$rndkey0,$inout5
-	$movkey		($key),$rndkey0
-	jnz		.Lctr32_enc_loop6
-
-	aesenc		$rndkey1,$inout0
-	 paddd		$iv1,$iv0		# increment counter vector
-	aesenc		$rndkey1,$inout1
-	 paddd		0x10(%rsp),$iv1
-	aesenc		$rndkey1,$inout2
-	 movdqa		$iv0,0x00(%rsp)		# save counter vector
-	aesenc		$rndkey1,$inout3
-	 movdqa		$iv1,0x10(%rsp)
-	aesenc		$rndkey1,$inout4
-	 pshufb		$bswap_mask,$iv0	# byte swap
-	aesenc		$rndkey1,$inout5
-	 pshufb		$bswap_mask,$iv1
-
-	aesenclast	$rndkey0,$inout0
-	 movups		($inp),$in0		# load input
-	aesenclast	$rndkey0,$inout1
-	 movups		0x10($inp),$in1
-	aesenclast	$rndkey0,$inout2
-	 movups		0x20($inp),$in2
-	aesenclast	$rndkey0,$inout3
-	 movups		0x30($inp),$in3
-	aesenclast	$rndkey0,$inout4
-	 movups		0x40($inp),$rndkey1
-	aesenclast	$rndkey0,$inout5
-	 movups		0x50($inp),$rndkey0
-	 lea	0x60($inp),$inp
-
-	xorps	$inout0,$in0			# xor
-	 pshufd	\$`3<<6`,$iv0,$inout0
-	xorps	$inout1,$in1
-	 pshufd	\$`2<<6`,$iv0,$inout1
-	movups	$in0,($out)			# store output
-	xorps	$inout2,$in2
-	 pshufd	\$`1<<6`,$iv0,$inout2
-	movups	$in1,0x10($out)
-	xorps	$inout3,$in3
-	movups	$in2,0x20($out)
-	xorps	$inout4,$rndkey1
-	movups	$in3,0x30($out)
-	xorps	$inout5,$rndkey0
-	movups	$rndkey1,0x40($out)
-	movups	$rndkey0,0x50($out)
-	lea	0x60($out),$out
+	xorps		$in0,$inout0		# xor
+	movups		0x40($inp),$in0
+	xorps		$in1,$inout1
+	movups		0x50($inp),$in1
+	xorps		$in2,$inout2
+	movups		0x60($inp),$in2
+	xorps		$in3,$inout3
+	movups		0x70($inp),$in3
+	lea		0x80($inp),$inp
+	xorps		$in0,$inout4
+	movups		$inout0,($out)		# store output
+	xorps		$in1,$inout5
+	movups		$inout1,0x10($out)
+	xorps		$in2,$inout6
+	movups		$inout2,0x20($out)
+	xorps		$in3,$inout7
+	movups		$inout3,0x30($out)
+	movups		$inout4,0x40($out)
+	movups		$inout5,0x50($out)
+	movups		$inout6,0x60($out)
+	movups		$inout7,0x70($out)
+	lea		0x80($out),$out
+	
+	$movkey	($key_),$rndkey0
 	mov	$rnds_,$rounds
-	sub	\$6,$len
-	jnc	.Lctr32_loop6
+	sub	\$8,$len
+	jnc	.Lctr32_loop8
 
-	add	\$6,$len
-	jz	.Lctr32_done
-	mov	$key_,$key			# restore $key
 	lea	1($rounds,$rounds),$rounds	# restore original value
+	lea	1($rnds_,$rnds_),$rnds_		# restore original value
+	add	\$8,$len
+	jz	.Lctr32_done
 
 .Lctr32_tail:
-	por	$ivec,$inout0
+	mov	$key_,$key			# restore $key
+	movdqa	$ivec,$inout0
+	paddb	$one,$ivec
 	movups	($inp),$in0
 	cmp	\$2,$len
 	jb	.Lctr32_one
 
-	por	$ivec,$inout1
+	movdqa	$ivec,$inout1
+	paddb	$one,$ivec
 	movups	0x10($inp),$in1
 	je	.Lctr32_two
 
-	pshufd	\$`3<<6`,$iv1,$inout3
-	por	$ivec,$inout2
+	movdqa	$ivec,$inout2
+	paddb	$one,$ivec
 	movups	0x20($inp),$in2
 	cmp	\$4,$len
 	jb	.Lctr32_three
 
-	pshufd	\$`2<<6`,$iv1,$inout4
-	por	$ivec,$inout3
+	movdqa	$ivec,$inout3
+	paddb	$one,$ivec
 	movups	0x30($inp),$in3
 	je	.Lctr32_four
 
-	por	$ivec,$inout4
-	xorps	$inout5,$inout5
+	movdqa	$ivec,$inout4
+	paddb	$one,$ivec
+	cmp	\$6,$len
+	jb	.Lctr32_five
 
-	call	_aesni_encrypt6
+	movdqa	$ivec,$inout5
+	paddb	$one,$ivec
+	je	.Lctr32_six
 
-	movups	0x40($inp),$rndkey1
-	xorps	$inout0,$in0
-	xorps	$inout1,$in1
-	movups	$in0,($out)
-	xorps	$inout2,$in2
-	movups	$in1,0x10($out)
-	xorps	$inout3,$in3
-	movups	$in2,0x20($out)
-	xorps	$inout4,$rndkey1
-	movups	$in3,0x30($out)
-	movups	$rndkey1,0x40($out)
+	movdqa	$ivec,$inout6
+	paddb	$one,$ivec
+	xorps	$inout7,$inout7
+
+	call	_aesni_encrypt8
+
+	xorps		$in0,$inout0		# xor
+	movups		0x40($inp),$in0
+	xorps		$in1,$inout1
+	movups		0x50($inp),$in1
+	xorps		$in2,$inout2
+	movups		0x60($inp),$in2
+	lea		0x70($inp),$inp
+	xorps		$in3,$inout3
+	movups		$inout0,($out)		# store output
+	xorps		$in0,$inout4
+	movups		$inout1,0x10($out)
+	xorps		$in1,$inout5
+	movups		$inout2,0x20($out)
+	xorps		$in2,$inout6
+	movups		$inout3,0x30($out)
+	movups		$inout4,0x40($out)
+	movups		$inout5,0x50($out)
+	movups		$inout6,0x60($out)
+	lea		0x70($out),$out
 	jmp	.Lctr32_done
 
 .align	16
 .Lctr32_one_shortcut:
 	movups	($ivp),$inout0
+	xor	$len_,$len_
 	movups	($inp),$in0
 	mov	240($key),$rounds		# key->rounds
 .Lctr32_one:
 ___
 	&aesni_generate1("enc",$key,$rounds);
 $code.=<<___;
-	xorps	$inout0,$in0
-	movups	$in0,($out)
+	xorps	$in0,$inout0
+	lea	0x10($inp),$inp
+	movups	$inout0,($out)
+	lea	0x10($out),$out
 	jmp	.Lctr32_done
 
 .align	16
 .Lctr32_two:
 	xorps	$inout2,$inout2
 	call	_aesni_encrypt3
-	xorps	$inout0,$in0
-	xorps	$inout1,$in1
-	movups	$in0,($out)
-	movups	$in1,0x10($out)
+	xorps	$in0,$inout0		# xor
+	lea	0x20($inp),$inp
+	xorps	$in1,$inout1
+	movups	$inout0,($out)		# store output
+	movups	$inout1,0x10($out)
+	lea	0x20($out),$out
 	jmp	.Lctr32_done
 
 .align	16
 .Lctr32_three:
 	call	_aesni_encrypt3
-	xorps	$inout0,$in0
-	xorps	$inout1,$in1
-	movups	$in0,($out)
-	xorps	$inout2,$in2
-	movups	$in1,0x10($out)
-	movups	$in2,0x20($out)
+	xorps	$in0,$inout0		# xor
+	lea	0x30($inp),$inp
+	xorps	$in1,$inout1
+	movups	$inout0,($out)		# store output
+	xorps	$in2,$inout2
+	movups	$inout1,0x10($out)
+	movups	$inout2,0x20($out)
+	lea	0x30($out),$out
 	jmp	.Lctr32_done
 
 .align	16
 .Lctr32_four:
 	call	_aesni_encrypt4
-	xorps	$inout0,$in0
-	xorps	$inout1,$in1
-	movups	$in0,($out)
-	xorps	$inout2,$in2
-	movups	$in1,0x10($out)
-	xorps	$inout3,$in3
-	movups	$in2,0x20($out)
-	movups	$in3,0x30($out)
+	xorps	$in0,$inout0		# xor
+	lea	0x40($inp),$inp
+	xorps	$in1,$inout1
+	movups	$inout0,($out)		# store output
+	xorps	$in2,$inout2
+	movups	$inout1,0x10($out)
+	xorps	$in3,$inout3
+	movups	$inout2,0x20($out)
+	movups	$inout3,0x30($out)
+	lea	0x40($out),$out
+	jmp	.Lctr32_done
+
+.align	16
+.Lctr32_five:
+	xorps	$inout5,$inout5
+	call	_aesni_encrypt6
+	xorps	$in0,$inout0		# xor
+	movups	0x40($inp),$in0
+	lea	0x50($inp),$inp
+	xorps	$in1,$inout1
+	movups	$inout0,($out)		# store output
+	xorps	$in2,$inout2
+	movups	$inout1,0x10($out)
+	xorps	$in3,$inout3
+	movups	$inout2,0x20($out)
+	xorps	$in0,$inout4
+	movups	$inout3,0x30($out)
+	movups	$inout4,0x40($out)
+	lea	0x50($out),$out
+	jmp	.Lctr32_done
+
+.align	16
+.Lctr32_six:
+	call	_aesni_encrypt6
+	xorps	$in0,$inout0		# xor
+	movups	0x40($inp),$in0
+	xorps	$in1,$inout1
+	movups	0x50($inp),$in1
+	lea	0x60($inp),$inp
+	xorps	$in2,$inout2
+	movups	$inout0,($out)		# store output
+	xorps	$in3,$inout3
+	movups	$inout1,0x10($out)
+	xorps	$in0,$inout4
+	movups	$inout2,0x20($out)
+	xorps	$in1,$inout5
+	movups	$inout3,0x30($out)
+	movups	$inout4,0x40($out)
+	movups	$inout5,0x50($out)
+	lea	0x60($out),$out
 
 .Lctr32_done:
+	test	$len_,$len_
+	jz	.Lctr32_really_done
+
+	movdqa	.Lbswap_mask(%rip),$rndkey1
+	pshufb	$rndkey1,$ivec
+	psrldq	\$14,$one		# 256
+	paddd	$one,$ivec
+	pslldq	\$14,$one
+	pshufb	$rndkey1,$ivec
+	mov	$len_,$len
+	mov	\$256,%rax
+	jmp	.Lctr32_grandloop
+
+.Lctr32_really_done:
 ___
 $code.=<<___ if ($win64);
-	movaps	0x20(%rsp),%xmm6
-	movaps	0x30(%rsp),%xmm7
-	movaps	0x40(%rsp),%xmm8
-	movaps	0x50(%rsp),%xmm9
-	movaps	0x60(%rsp),%xmm10
-	movaps	0x70(%rsp),%xmm11
-	movaps	0x80(%rsp),%xmm12
-	movaps	0x90(%rsp),%xmm13
-	movaps	0xa0(%rsp),%xmm14
-	movaps	0xb0(%rsp),%xmm15
+	movaps	0x00(%rsp),%xmm6
+	movaps	0x10(%rsp),%xmm7
+	movaps	0x20(%rsp),%xmm8
+	movaps	0x30(%rsp),%xmm9
+	movaps	0x40(%rsp),%xmm10
+	movaps	0x50(%rsp),%xmm11
+	movaps	0x60(%rsp),%xmm12
+	movaps	0x70(%rsp),%xmm13
+	movaps	0x80(%rsp),%xmm14
+	movaps	0x90(%rsp),%xmm15
+	lea	0xa8(%rsp),%rsp
 ___
 $code.=<<___;
-	lea	(%rbp),%rsp
-	pop	%rbp
 .Lctr32_ret:
 	ret
 .size	aesni_ctr32_encrypt_blocks,.-aesni_ctr32_encrypt_blocks
@@ -2739,6 +2774,8 @@ $code.=<<___;
 	.long	1,0,0,0
 .Lxts_magic:
 	.long	0x87,0,1,0
+.Lincrement1:
+	.byte	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1
 
 .asciz  "AES for Intel AES-NI, CRYPTOGAMS by <appro\@openssl.org>"
 .align	64
@@ -2843,12 +2880,13 @@ ctr32_se_handler:
 	cmp	%r10,%rbx
 	jae	.Lcommon_seh_tail
 
-	lea	0x20(%rax),%rsi		# %xmm save area
+	lea	(%rax),%rsi		# %xmm save area
 	lea	512($context),%rdi	# &context.Xmm6
 	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
 	.long	0xa548f3fc		# cld; rep movsq
+	lea	0xa8(%rax),%rax		# adjust stack pointer
 
-	jmp	.Lcommon_rbp_tail
+	jmp	.Lcommon_seh_tail
 .size	ctr32_se_handler,.-ctr32_se_handler
 
 .type	xts_se_handler,\@abi-omnipotent
