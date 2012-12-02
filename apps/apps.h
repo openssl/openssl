@@ -245,6 +245,8 @@ int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(BIO *err, CONF *conf);
 X509 *load_cert(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip);
+int load_cert_crl_http(const char *url, BIO *err,
+					X509 **pcert, X509_CRL **pcrl);
 EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
 	const char *pass, ENGINE *e, const char *key_descrip);
 EVP_PKEY *load_pubkey(BIO *err, const char *file, int format, int maybe_stdin,
@@ -354,6 +356,7 @@ void print_cert_checks(BIO *bio, X509 *x,
 #define FORMAT_ASN1RSA	10	/* DER RSAPubicKey format */
 #define FORMAT_MSBLOB	11	/* MS Key blob format */
 #define FORMAT_PVK	12	/* MS PVK file format */
+#define FORMAT_HTTP	13	/* Dowload using HTTP */
 
 #define EXT_COPY_NONE	0
 #define EXT_COPY_ADD	1
