@@ -102,7 +102,7 @@ int MAIN(int argc, char **argv)
 	unsigned long nmflag = 0;
 	X509_CRL *x=NULL;
 	char *CAfile = NULL, *CApath = NULL;
-	int ret=1,i,num,badops=0;
+	int ret=1,i,num,badops=0,badsig=0;
 	BIO *out=NULL;
 	int informat,outformat, keyformat;
 	char *infile=NULL,*outfile=NULL, *crldiff = NULL, *keyfile = NULL;
@@ -224,6 +224,8 @@ int MAIN(int argc, char **argv)
 			fingerprint= ++num;
 		else if (strcmp(*argv,"-crlnumber") == 0)
 			crlnumber= ++num;
+		else if (strcmp(*argv,"-badsig") == 0)
+			badsig = 1;
 		else if ((md_alg=EVP_get_digestbyname(*argv + 1)))
 			{
 			/* ok */
@@ -425,6 +427,9 @@ bad:
 		ret = 0;
 		goto end;
 		}
+
+	if (badsig)
+		x->signature->data[x->signature->length - 1] ^= 0x1;
 
 	if 	(outformat == FORMAT_ASN1)
 		i=(int)i2d_X509_CRL_bio(out,x);
