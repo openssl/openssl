@@ -407,6 +407,12 @@ static X509_CRL *load_crl(char *infile, int format)
 	X509_CRL *x=NULL;
 	BIO *in=NULL;
 
+	if (format == FORMAT_HTTP)
+		{
+		load_cert_crl_http(infile, bio_err, NULL, &x);
+		return x;
+		}
+
 	in=BIO_new(BIO_s_file());
 	if (in == NULL)
 		{

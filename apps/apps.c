@@ -275,6 +275,8 @@ int str2fmt(char *s)
 		return(FORMAT_PKCS12);
 	else if ((*s == 'E') || (*s == 'e'))
 		return(FORMAT_ENGINE);
+	else if ((*s == 'H') || (*s == 'h'))
+		return FORMAT_HTTP;
 	else if ((*s == 'P') || (*s == 'p'))
  		{
  		if (s[1] == 'V' || s[1] == 'v')
@@ -783,11 +785,79 @@ static int load_pkcs12(BIO *err, BIO *in, const char *desc,
 	return ret;
 	}
 
+int load_cert_crl_http(const char *url, BIO *err,
+					X509 **pcert, X509_CRL **pcrl)
+	{
+	char *host = NULL, *port = NULL, *path = NULL;
+	BIO *bio = NULL;
+	OCSP_REQ_CTX *rctx = NULL;
+	int use_ssl, rv = 0;
+	if (!OCSP_parse_url(url, &host, &port, &path, &use_ssl))
+		goto err;
+	if (use_ssl)
+		{
+		if (err)
+			BIO_puts(err, "https not supported\n");
+		goto err;
+		}
+	bio = BIO_new_connect(host);
+	if (!bio || !BIO_set_conn_port(bio, port))
+		goto err;
+	rctx = OCSP_REQ_CTX_new(bio, 1024);
+	if (!rctx)
+		goto err;
+	if (!OCSP_REQ_CTX_http(rctx, "GET", path))
+		goto err;
+	if (!OCSP_REQ_CTX_add1_header(rctx, "Host", host))
+		goto err;
+	if (pcert)
+		{
+		do
+			{
+			rv = X509_http_nbio(rctx, pcert);
+			}
+		while (rv == -1);
+		}
+	else
+		{
+		do
+			{
+			rv = X509_CRL_http_nbio(rctx, pcrl);
+			} while (rv == -1);
+		}
+
+	err:
+	if (host)
+		OPENSSL_free(host);
+	if (path)
+		OPENSSL_free(path);
+	if (port)
+		OPENSSL_free(port);
+	if (bio)
+		BIO_free_all(bio);
+	if (rctx)
+		OCSP_REQ_CTX_free(rctx);
+	if (rv != 1)
+		{
+		if (bio && err)
+			BIO_printf(bio_err, "Error loading %s from %s\n",
+					pcert ? "certificate" : "CRL", url);
+		ERR_print_errors(bio_err);
+		}
+	return rv;
+	}
+
 X509 *load_cert(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip)
 	{
 	X509 *x=NULL;
 	BIO *cert;
+
+	if (format == FORMAT_HTTP)
+		{
+		load_cert_crl_http(file, err, &x, NULL);
+		return x;
+		}
 
 	if ((cert=BIO_new(BIO_s_file())) == NULL)
 		{
