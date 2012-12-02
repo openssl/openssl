@@ -93,7 +93,6 @@ static const char *crl_usage[]={
 NULL
 };
 
-static X509_CRL *load_crl(char *file, int format);
 static BIO *bio_out=NULL;
 
 int MAIN(int, char **);
@@ -401,52 +400,3 @@ end:
 	apps_shutdown();
 	OPENSSL_EXIT(ret);
 	}
-
-static X509_CRL *load_crl(char *infile, int format)
-	{
-	X509_CRL *x=NULL;
-	BIO *in=NULL;
-
-	if (format == FORMAT_HTTP)
-		{
-		load_cert_crl_http(infile, bio_err, NULL, &x);
-		return x;
-		}
-
-	in=BIO_new(BIO_s_file());
-	if (in == NULL)
-		{
-		ERR_print_errors(bio_err);
-		goto end;
-		}
-
-	if (infile == NULL)
-		BIO_set_fp(in,stdin,BIO_NOCLOSE);
-	else
-		{
-		if (BIO_read_filename(in,infile) <= 0)
-			{
-			perror(infile);
-			goto end;
-			}
-		}
-	if 	(format == FORMAT_ASN1)
-		x=d2i_X509_CRL_bio(in,NULL);
-	else if (format == FORMAT_PEM)
-		x=PEM_read_bio_X509_CRL(in,NULL,NULL,NULL);
-	else	{
-		BIO_printf(bio_err,"bad input format specified for input crl\n");
-		goto end;
-		}
-	if (x == NULL)
-		{
-		BIO_printf(bio_err,"unable to load CRL\n");
-		ERR_print_errors(bio_err);
-		goto end;
-		}
-	
-end:
-	BIO_free(in);
-	return(x);
-	}
-

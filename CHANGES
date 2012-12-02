@@ -4,6 +4,9 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) New options -CRL and -CRLform for s_client and s_server for CRLs.
+     [Steve Henson]
+
   *) Extend OCSP I/O functions so they can be used for simple general purpose
      HTTP as well as OCSP. New wrapper function which can be used to download
      CRLs using the OCSP API.

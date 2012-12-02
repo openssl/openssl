@@ -999,6 +999,10 @@ int MAIN(int argc, char *argv[])
 	SSL_CONF_CTX *cctx = NULL;
 	STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
 
+	char *crl_file = NULL;
+	int crl_format = FORMAT_PEM;
+	STACK_OF(X509_CRL) *crls = NULL;
+
 	meth=SSLv23_server_method();
 
 	local_argc=argc;
@@ -1076,6 +1080,11 @@ int MAIN(int argc, char *argv[])
 			{
 			if (--argc < 1) goto bad;
 			s_cert_file= *(++argv);
+			}
+		else if	(strcmp(*argv,"-CRL") == 0)
+			{
+			if (--argc < 1) goto bad;
+			crl_file= *(++argv);
 			}
 #ifndef OPENSSL_NO_TLSEXT
 		else if	(strcmp(*argv,"-authz") == 0)
@@ -1167,6 +1176,11 @@ int MAIN(int argc, char *argv[])
 			no_cache = 1;
 		else if (strcmp(*argv,"-ext_cache") == 0)
 			ext_cache = 1;
+		else if	(strcmp(*argv,"-CRLform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			crl_format = str2fmt(*(++argv));
+			}
 		else if (args_verify(&argv, &argc, &badarg, bio_err, &vpm))
 			{
 			if (badarg)
@@ -1567,6 +1581,26 @@ bad:
 		}
 #endif
 
+	if (crl_file)
+		{
+		X509_CRL *crl;
+		crl = load_crl(crl_file, crl_format);
+		if (!crl)
+			{
+			BIO_puts(bio_err, "Error loading CRL\n");
+			ERR_print_errors(bio_err);
+			goto end;
+			}
+		crls = sk_X509_CRL_new_null();
+		if (!crls || !sk_X509_CRL_push(crls, crl))
+			{
+			BIO_puts(bio_err, "Error adding CRL\n");
+			ERR_print_errors(bio_err);
+			X509_CRL_free(crl);
+			goto end;
+			}
+		}
+
 
 	if (s_dcert_file)
 		{
@@ -1702,10 +1736,12 @@ bad:
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
 
+	ssl_ctx_add_crls(ctx, crls);
+
 	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, no_ecdhe))
 		goto end;
 
-	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile))
+	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile, crls))
 		{
 		BIO_printf(bio_err, "Error loading store locations\n");
 		ERR_print_errors(bio_err);
@@ -1767,6 +1803,8 @@ bad:
 			}
 		if (vpm)
 			SSL_CTX_set1_param(ctx2, vpm);
+
+		ssl_ctx_add_crls(ctx2, crls);
 
 		if (!args_ssl_call(ctx2, bio_err, cctx, ssl_args, no_ecdhe))
 			goto end;
@@ -1973,6 +2011,8 @@ end:
 	if (ctx != NULL) SSL_CTX_free(ctx);
 	if (s_cert)
 		X509_free(s_cert);
+	if (crls)
+		sk_X509_CRL_pop_free(crls, X509_CRL_free);
 	if (s_dcert)
 		X509_free(s_dcert);
 	if (s_key)
