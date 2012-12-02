@@ -4,6 +4,9 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) New options -CRL and -CRLform for s_client and s_server for CRLs.
+     [Steve Henson]
+
   *) New function X509_CRL_diff to generate a delta CRL from the difference
      of two full CRLs. Add support to "crl" utility.
      [Steve Henson]
