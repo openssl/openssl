@@ -1912,7 +1912,7 @@ printf("read=%d pending=%d peek=%d\n",k,SSL_pending(con),SSL_peek(con,zbuf,10240
 				break;
 			case SSL_ERROR_SYSCALL:
 				ret=get_last_socket_error();
-				if (ret == 0)
+				if (c_brief)
 					BIO_puts(bio_err, "CONNECTION CLOSED BY SERVER\n");
 				else
 					BIO_printf(bio_err,"read:errno=%d\n",ret);
