@@ -190,7 +190,8 @@ int MS_CALLBACK verify_callback(int ok, X509_STORE_CTX *ctx)
 		BIO_printf(bio_err,"\n");
 		break;
 	case X509_V_ERR_NO_EXPLICIT_POLICY:
-		policies_print(bio_err, ctx);
+		if (!verify_quiet)
+			policies_print(bio_err, ctx);
 		break;
 		}
 	if (err == X509_V_OK && ok == 2 && !verify_quiet)
