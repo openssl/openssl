@@ -1159,15 +1159,12 @@ static int make_REQ(X509_REQ *req, EVP_PKEY *pkey, char *subj, int multirdn,
 	/* setup version number */
 	if (!X509_REQ_set_version(req,0L)) goto err; /* version 1 */
 
-	if (no_prompt) 
+	if (subj)
+		i = build_subject(req, subj, chtype, multirdn);
+	else if (no_prompt) 
 		i = auto_info(req, dn_sk, attr_sk, attribs, chtype);
-	else 
-		{
-		if (subj)
-			i = build_subject(req, subj, chtype, multirdn);
-		else
-			i = prompt_info(req, dn_sk, dn_sect, attr_sk, attr_sect, attribs, chtype);
-		}
+	else
+		i = prompt_info(req, dn_sk, dn_sect, attr_sk, attr_sect, attribs, chtype);
 	if(!i) goto err;
 
 	if (!X509_REQ_set_pubkey(req,pkey)) goto err;
