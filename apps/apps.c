@@ -2052,7 +2052,7 @@ X509_NAME *parse_name(char *subject, long chtype, int multirdn)
 	X509_NAME *n = NULL;
 	int nid;
 
-	if (!buf || !ne_types || !ne_values)
+	if (!buf || !ne_types || !ne_values || !mval)
 		{
 		BIO_printf(bio_err, "malloc error\n");
 		goto error;
