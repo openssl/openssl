@@ -41,10 +41,10 @@
 #
 # Add VIS3 lookup-table-free implementation using polynomial
 # multiplication xmulx[hi] and extended addition addxc[cc]
-# instructions. 4.22/7.63x improvement on T3/T4 or in absolute
-# terms 8.45/2.14 cycles per byte. On T4 multi-process benchmark
-# saturates at ~15x single-process result on 8-core processor, or
-# ~19.7GBps per 2.85GHz socket.
+# instructions. 4.52/7.63x improvement on T3/T4 or in absolute
+# terms 7.90/2.14 cycles per byte. On T4 multi-process benchmark
+# saturates at ~15.5x single-process result on 8-core processor,
+# or ~20.5GBps per 2.85GHz socket.
 
 $bits=32;
 for (@ARGV)     { $bits=64 if (/\-m64/ || /\-xarch\=v9/); }
@@ -340,17 +340,17 @@ ___
 # Straightforward 128x128-bit multiplication using Karatsuba algorithm
 # followed by pair of 64-bit reductions [with a shortcut in first one,
 # which allowed to break dependency between reductions and remove one
-# mulitplication from critical path]. While it might be suboptimal
+# multiplication from critical path]. While it might be suboptimal
 # with regard to sheer number of multiplications, other methods [such
 # as aggregate reduction] would require more 64-bit registers, which
 # we don't have in 32-bit application context.
 
 ($Xip,$Htable,$inp,$len)=map("%i$_",(0..3));
 
-($Hhl,$Hlo,$Hhi,$Xlo,$Xhi,$xE1,$x384, $C0,$C1,$C2,$C3,$V)=
+($Hhl,$Hlo,$Hhi,$Xlo,$Xhi,$xE1,$sqr, $C0,$C1,$C2,$C3,$V)=
 	(map("%o$_",(0..5,7)),map("%g$_",(1..5)));
 
-($shl,$shr,$sqr)=map("%l$_",(0..7));
+($shl,$shr)=map("%l$_",(0..7));
 
 # For details regarding "twisted H" see ghash-x86.pl.
 $code.=<<___;
@@ -364,15 +364,23 @@ gcm_init_vis3:
 	mov	0xE1,$Xhi
 	mov	1,$Xlo
 	sllx	$Xhi,57,$Xhi
-	srax	$Hhi,63,$C0		! carry
+	srax	$Hhi,63,$C0		! broadcast carry
 	addcc	$Hlo,$Hlo,$Hlo		! H<<=1
 	addxc	$Hhi,$Hhi,$Hhi
-	and	$Xlo,$C0,$Xlo
-	and	$Xhi,$C0,$Xhi
+	and	$C0,$Xlo,$Xlo
+	and	$C0,$Xhi,$Xhi
 	xor	$Xlo,$Hlo,$Hlo
 	xor	$Xhi,$Hhi,$Hhi
 	stx	$Hlo,[%i0+8]		! save twisted H
 	stx	$Hhi,[%i0+0]
+
+	sethi	%hi(0xA0406080),$V
+	sethi	%hi(0x20C0E000),%l0
+	or	$V,%lo(0xA0406080),$V
+	or	%l0,%lo(0x20C0E000),%l0
+	sllx	$V,32,$V
+	or	%l0,$V,$V		! (0xE0·i)&0xff=0xA040608020C0E000
+	stx	$V,[%i0+16]
 
 	ret
 	restore
@@ -389,17 +397,11 @@ gcm_gmult_vis3:
 	ldx	[$Htable+8],$Hlo	! load twisted H
 	ldx	[$Htable+0],$Hhi
 
-	sethi	%hi(0xA0406080),$V
-	sethi	%hi(0x20C0E000),%l0
-	or	$V,%lo(0xA0406080),$V
-	or	%l0,%lo(0x20C0E000),%l0
-	sllx	$V,32,$V
-	mov	0xE1,%l1
-	or	%l0,$V,$V		! (0xE0·i)&0xff=0xA040608020C0E000
-	sllx	%l1,57,$xE1		! 57 is not a typo
-	sllx	%l1,50,$x384	
-	xor	$Hhi,$Hlo,$Hhl		! Karatsuba pre-processing
+	mov	0xE1,%l7
+	sllx	%l7,57,$xE1		! 57 is not a typo
+	ldx	[$Htable+16],$V		! (0xE0·i)&0xff=0xA040608020C0E000
 
+	xor	$Hhi,$Hlo,$Hhl		! Karatsuba pre-processing
 	xmulx	$Xlo,$Hlo,$C0
 	xor	$Xlo,$Xhi,$C2		! Karatsuba pre-processing
 	xmulx	$C2,$Hhl,$C1
@@ -411,24 +413,23 @@ gcm_gmult_vis3:
 	sll	$C0,3,$sqr
 	srlx	$V,$sqr,$sqr		! ·0xE0 [implicit &(7<<3)]
 	xor	$C0,$sqr,$sqr
-	and	$sqr,0x7f,$sqr
+	sllx	$sqr,57,$sqr		! ($C0·0xE1)<<1<<56 [implicit &0x7f]
 
 	xor	$C0,$C1,$C1		! Karatsuba post-processing
 	xor	$Xlo,$C2,$C2
-	xor	$Xhi,$C1,$C1
+	 xor	$sqr,$Xlo,$Xlo		! real destination is $C1
 	xor	$C3,$C2,$C2
 	xor	$Xlo,$C1,$C1
+	xor	$Xhi,$C2,$C2
+	xor	$Xhi,$C1,$C1
 
 	xmulxhi	$C0,$xE1,$Xlo		! ·0xE1<<1<<56
-	 xor	$Xhi,$C2,$C2
-	xmulx	$sqr,$x384,$Xhi		! ·0xE1<<2<<48
 	 xor	$C0,$C2,$C2
 	xmulx	$C1,$xE1,$C0
 	 xor	$C1,$C3,$C3
 	xmulxhi	$C1,$xE1,$C1
 
 	xor	$Xlo,$C2,$C2
-	xor	$Xhi,$C3,$C3
 	xor	$C0,$C2,$C2
 	xor	$C1,$C3,$C3
 
@@ -450,15 +451,9 @@ gcm_ghash_vis3:
 	ldx	[$Htable+8],$Hlo	! load twisted H
 	ldx	[$Htable+0],$Hhi
 
-	sethi	%hi(0xA0406080),$V
-	sethi	%hi(0x20C0E000),%l6
-	or	$V,%lo(0xA0406080),$V
-	or	%l6,%lo(0x20C0E000),%l6
-	sllx	$V,32,$V
 	mov	0xE1,%l7
-	or	%l6,$V,$V		! (0xE0·i)&0xff=0xA040608020C0E000
 	sllx	%l7,57,$xE1		! 57 is not a typo
-	sllx	%l7,50,$x384	
+	ldx	[$Htable+16],$V		! (0xE0·i)&0xff=0xA040608020C0E000
 
 	and	$inp,7,$shl
 	andn	$inp,7,$inp
@@ -467,7 +462,6 @@ gcm_ghash_vis3:
 	sub	%g0,$shl,$shr
 
 	xor	$Hhi,$Hlo,$Hhl		! Karatsuba pre-processing
-
 .Loop:
 	ldx	[$inp+8],$Xlo
 	brz,pt	$shl,1f
@@ -498,24 +492,23 @@ gcm_ghash_vis3:
 	sll	$C0,3,$sqr
 	srlx	$V,$sqr,$sqr		! ·0xE0 [implicit &(7<<3)]
 	xor	$C0,$sqr,$sqr
-	and	$sqr,0x7f,$sqr
+	sllx	$sqr,57,$sqr		! ($C0·0xE1)<<1<<56 [implicit &0x7f]
 
 	xor	$C0,$C1,$C1		! Karatsuba post-processing
 	xor	$Xlo,$C2,$C2
-	xor	$Xhi,$C1,$C1
+	 xor	$sqr,$Xlo,$Xlo		! real destination is $C1
 	xor	$C3,$C2,$C2
 	xor	$Xlo,$C1,$C1
+	xor	$Xhi,$C2,$C2
+	xor	$Xhi,$C1,$C1
 
 	xmulxhi	$C0,$xE1,$Xlo		! ·0xE1<<1<<56
-	 xor	$Xhi,$C2,$C2
-	xmulx	$sqr,$x384,$Xhi		! ·0xE1<<2<<48
 	 xor	$C0,$C2,$C2
 	xmulx	$C1,$xE1,$C0
 	 xor	$C1,$C3,$C3
 	xmulxhi	$C1,$xE1,$C1
 
 	xor	$Xlo,$C2,$C2
-	xor	$Xhi,$C3,$C3
 	xor	$C0,$C2,$C2
 	brnz,pt	$len,.Loop
 	xor	$C1,$C3,$C3
