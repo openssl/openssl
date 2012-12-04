@@ -105,8 +105,8 @@ int MAIN(int argc, char **argv)
 	char *CAfile = NULL, *CApath = NULL;
 	int ret=1,i,num,badops=0;
 	BIO *out=NULL;
-	int informat,outformat;
-	char *infile=NULL,*outfile=NULL;
+	int informat,outformat, keyformat;
+	char *infile=NULL,*outfile=NULL, *crldiff = NULL, *keyfile = NULL;
 	int hash=0,issuer=0,lastupdate=0,nextupdate=0,noout=0,text=0;
 	int fingerprint = 0, crlnumber = 0;
 	const char **pp;
@@ -141,6 +141,7 @@ int MAIN(int argc, char **argv)
 
 	informat=FORMAT_PEM;
 	outformat=FORMAT_PEM;
+	keyformat=FORMAT_PEM;
 
 	argc--;
 	argv++;
@@ -168,6 +169,21 @@ int MAIN(int argc, char **argv)
 			{
 			if (--argc < 1) goto bad;
 			infile= *(++argv);
+			}
+		else if (strcmp(*argv,"-gendelta") == 0)
+			{
+			if (--argc < 1) goto bad;
+			crldiff= *(++argv);
+			}
+		else if (strcmp(*argv,"-key") == 0)
+			{
+			if (--argc < 1) goto bad;
+			keyfile= *(++argv);
+			}
+		else if (strcmp(*argv,"-keyform") == 0)
+			{
+			if (--argc < 1) goto bad;
+			keyformat=str2fmt(*(++argv));
 			}
 		else if (strcmp(*argv,"-out") == 0)
 			{
@@ -275,6 +291,39 @@ bad:
 		if(i == 0) BIO_printf(bio_err, "verify failure\n");
 		else BIO_printf(bio_err, "verify OK\n");
 	}
+
+	if (crldiff)
+		{
+		X509_CRL *newcrl, *delta;
+		if (!keyfile)
+			{
+			BIO_puts(bio_err, "Missing CRL signing key\n");
+			goto end;
+			}
+		newcrl = load_crl(crldiff,informat);
+		if (!newcrl)
+			goto end;
+		pkey = load_key(bio_err, keyfile, keyformat, 0, NULL, NULL,
+					"CRL signing key");
+		if (!pkey)
+			{
+			X509_CRL_free(newcrl);
+			goto end;
+			}	
+		delta = X509_CRL_diff(x, newcrl, pkey, digest, 0);
+		X509_CRL_free(newcrl);
+		EVP_PKEY_free(pkey);
+		if (delta)
+			{
+			X509_CRL_free(x);
+			x = delta;
+			}
+		else
+			{
+			BIO_puts(bio_err, "Error creating delta CRL\n");
+			goto end;
+			}
+		}
 
 	if (num)
 		{
@@ -390,6 +439,8 @@ bad:
 	if (!i) { BIO_printf(bio_err,"unable to write CRL\n"); goto end; }
 	ret=0;
 end:
+	if (ret != 0)
+		ERR_print_errors(bio_err);
 	BIO_free_all(out);
 	BIO_free_all(bio_out);
 	bio_out=NULL;
