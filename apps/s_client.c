@@ -293,10 +293,6 @@ static void sc_usage(void)
 	BIO_printf(bio_err," -host host     - use -connect instead\n");
 	BIO_printf(bio_err," -port port     - use -connect instead\n");
 	BIO_printf(bio_err," -connect host:port - who to connect to (default is %s:%s)\n",SSL_HOST_NAME,PORT_STR);
-	BIO_printf(bio_err," -checkhost host - check peer certificate matches \"host\"\n");
-	BIO_printf(bio_err," -checkemail email - check peer certificate matches \"email\"\n");
-	BIO_printf(bio_err," -checkip ipaddr - check peer certificate matches \"ipaddr\"\n");
-
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -cert arg     - certificate file to use, PEM format assumed\n");
 	BIO_printf(bio_err," -certform arg - certificate format (PEM or DER) PEM default\n");
@@ -634,8 +630,6 @@ int MAIN(int argc, char **argv)
 #endif
 	SSL_EXCERT *exc = NULL;
 
-	unsigned char *checkhost = NULL, *checkemail = NULL;
-	char *checkip = NULL;
 	SSL_CONF_CTX *cctx = NULL;
 	STACK_OF(OPENSSL_STRING) *ssl_args = NULL;
 
@@ -999,21 +993,6 @@ int MAIN(int argc, char **argv)
 			/* meth=TLSv1_client_method(); */
 			}
 #endif
-		else if (strcmp(*argv,"-checkhost") == 0)
-			{
-			if (--argc < 1) goto bad;
-			checkhost=(unsigned char *)*(++argv);
-			}
-		else if (strcmp(*argv,"-checkemail") == 0)
-			{
-			if (--argc < 1) goto bad;
-			checkemail=(unsigned char *)*(++argv);
-			}
-		else if (strcmp(*argv,"-checkip") == 0)
-			{
-			if (--argc < 1) goto bad;
-			checkip=*(++argv);
-			}
 #ifndef OPENSSL_NO_JPAKE
 		else if (strcmp(*argv,"-jpake") == 0)
 			{
@@ -1648,8 +1627,6 @@ SSL_set_tlsext_status_ids(con, ids);
 						"CONNECTION ESTABLISHED\n");
 					print_ssl_summary(bio_err, con);
 					}
-				print_ssl_cert_checks(bio_err, con, checkhost,
-							checkemail, checkip);
 				print_stuff(bio_c_out,con,full_log);
 				if (full_log > 0) full_log--;
 

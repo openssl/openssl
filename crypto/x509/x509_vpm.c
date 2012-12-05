@@ -83,6 +83,24 @@ static void x509_verify_param_zero(X509_VERIFY_PARAM *param)
 		sk_ASN1_OBJECT_pop_free(param->policies, ASN1_OBJECT_free);
 		param->policies = NULL;
 		}
+	if (param->host)
+		{
+		OPENSSL_free(param->host);
+		param->host = NULL;
+		param->hostlen = 0;
+		}
+	if (param->email)
+		{
+		OPENSSL_free(param->email);
+		param->email = NULL;
+		param->emaillen = 0;
+		}
+	if (param->ip)
+		{
+		OPENSSL_free(param->ip);
+		param->ip = NULL;
+		param->iplen = 0;
+		}
 	}
 
 X509_VERIFY_PARAM *X509_VERIFY_PARAM_new(void)
@@ -193,6 +211,24 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
 			return 0;
 		}
 
+	if (test_x509_verify_param_copy(host, NULL))
+		{
+		if (!X509_VERIFY_PARAM_set1_host(dest, src->host, src->hostlen))
+			return 0;
+		}
+
+	if (test_x509_verify_param_copy(email, NULL))
+		{
+		if (!X509_VERIFY_PARAM_set1_email(dest, src->email, src->emaillen))
+			return 0;
+		}
+
+	if (test_x509_verify_param_copy(ip, NULL))
+		{
+		if (!X509_VERIFY_PARAM_set1_ip(dest, src->ip, src->iplen))
+			return 0;
+		}
+
 	return 1;
 	}
 
@@ -205,6 +241,35 @@ int X509_VERIFY_PARAM_set1(X509_VERIFY_PARAM *to,
 	ret = X509_VERIFY_PARAM_inherit(to, from);
 	to->inh_flags = save_flags;
 	return ret;
+	}
+
+static int int_x509_param_set1(unsigned char **pdest, size_t *pdestlen,
+				const unsigned char *src, size_t srclen)
+	{
+	void *tmp;
+	if (src)
+		{
+		if (srclen == 0)
+			{
+			tmp = BUF_strdup((char *)src);
+			srclen = strlen((char *)src);
+			}
+		else
+			tmp = BUF_memdup(src, srclen);
+		if (!tmp)
+			return 0;
+		}
+	else
+		{
+		tmp = NULL;
+		srclen = 0;
+		}
+	if (*pdest)
+		OPENSSL_free(*pdest);
+	*pdest = tmp;
+	if (pdestlen)
+		*pdestlen = srclen;
+	return 1;
 	}
 
 int X509_VERIFY_PARAM_set1_name(X509_VERIFY_PARAM *param, const char *name)
@@ -304,6 +369,38 @@ int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
 		}
 	param->flags |= X509_V_FLAG_POLICY_CHECK;
 	return 1;
+	}
+
+int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
+				const unsigned char *name, size_t namelen)
+	{
+	return int_x509_param_set1(&param->host, &param->hostlen,
+					name, namelen);
+	}
+
+int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
+				const unsigned char *email, size_t emaillen)
+	{
+	return int_x509_param_set1(&param->email, &param->emaillen,
+					email, emaillen);
+	}
+
+int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
+					const unsigned char *ip, size_t iplen)
+	{
+	if (iplen != 0 && iplen != 4 && iplen != 16)
+		return 0;
+	return int_x509_param_set1(&param->ip, &param->iplen, ip, iplen);
+	}
+
+int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc)
+	{
+	unsigned char ipout[16];
+	int iplen;
+	iplen = a2i_ipadd(ipout, ipasc);
+	if (iplen == 0)
+		return 0;
+	return X509_VERIFY_PARAM_set1_ip(param, ipout, (size_t)iplen);
 	}
 
 int X509_VERIFY_PARAM_get_depth(const X509_VERIFY_PARAM *param)

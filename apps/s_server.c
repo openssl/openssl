@@ -473,9 +473,6 @@ static void sv_usage(void)
 	BIO_printf(bio_err,"usage: s_server [args ...]\n");
 	BIO_printf(bio_err,"\n");
 	BIO_printf(bio_err," -accept arg   - port to accept on (default is %d)\n",PORT);
-	BIO_printf(bio_err," -checkhost host - check peer certificate matches \"host\"\n");
-	BIO_printf(bio_err," -checkemail email - check peer certificate matches \"email\"\n");
-	BIO_printf(bio_err," -checkip ipaddr - check peer certificate matches \"ipaddr\"\n");
 	BIO_printf(bio_err," -context arg  - set session ID context\n");
 	BIO_printf(bio_err," -verify arg   - turn on peer certificate verification\n");
 	BIO_printf(bio_err," -Verify arg   - turn on peer certificate verification, must have a cert.\n");
@@ -946,9 +943,6 @@ static char *jpake_secret = NULL;
 	static srpsrvparm srp_callback_parm;
 #endif
 static char *srtp_profiles = NULL;
-static unsigned char *checkhost = NULL, *checkemail = NULL;
-static char *checkip = NULL;
-
 
 int MAIN(int argc, char *argv[])
 	{
@@ -1268,21 +1262,6 @@ int MAIN(int argc, char *argv[])
 				}
 			}
 #endif
-		else if (strcmp(*argv,"-checkhost") == 0)
-			{
-			if (--argc < 1) goto bad;
-			checkhost=(unsigned char *)*(++argv);
-			}
-		else if (strcmp(*argv,"-checkemail") == 0)
-			{
-			if (--argc < 1) goto bad;
-			checkemail=(unsigned char *)*(++argv);
-			}
-		else if (strcmp(*argv,"-checkip") == 0)
-			{
-			if (--argc < 1) goto bad;
-			checkip=*(++argv);
-			}
 		else if	(strcmp(*argv,"-msg") == 0)
 			{ s_msg=1; }
 		else if	(strcmp(*argv,"-msgfile") == 0)
@@ -2577,8 +2556,6 @@ static int init_ssl_connection(SSL *con)
 
 	if (s_brief)
 		print_ssl_summary(bio_err, con);
-
-	print_ssl_cert_checks(bio_err, con, checkhost, checkemail, checkip);
 
 	PEM_write_bio_SSL_SESSION(bio_s_out,SSL_get_session(con));
 
