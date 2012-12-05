@@ -1598,11 +1598,11 @@ $code.=<<___ if(1);
 	lghi	$s1,0x7f
 	nr	$s1,%r0
 	lghi	%r0,0			# query capability vector
-	la	%r1,2*$SIZE_T($sp)
+	la	%r1,$tweak-16($sp)
 	.long	0xb92e0042		# km %r4,%r2
 	llihh	%r1,0x8000
 	srlg	%r1,%r1,32($s1)		# check for 32+function code
-	ng	%r1,2*$SIZE_T($sp)
+	ng	%r1,$tweak-16($sp)
 	lgr	%r0,$s0			# restore the function code
 	la	%r1,0($key1)		# restore $key1
 	jz	.Lxts_km_vanilla
@@ -1628,7 +1628,7 @@ $code.=<<___ if(1);
 
 	lrvg	$s0,$tweak+0($sp)	# load the last tweak
 	lrvg	$s1,$tweak+8($sp)
-	stmg	%r0,%r3,$tweak-32(%r1)	# wipe copy of the key
+	stmg	%r0,%r3,$tweak-32($sp)	# wipe copy of the key
 
 	nill	%r0,0xffdf		# switch back to original function code
 	la	%r1,0($key1)		# restore pointer to $key1
@@ -1777,8 +1777,8 @@ $code.=<<___ if (!$softonly);
 	clr	%r0,%r1
 	jl	.Lxts_enc_software
 
+	st${g}	$ra,5*$SIZE_T($sp)
 	stm${g}	%r6,$s3,6*$SIZE_T($sp)
-	st${g}	$ra,14*$SIZE_T($sp)
 
 	sllg	$len,$len,4		# $len&=~15
 	slgr	$out,$inp
@@ -1826,9 +1826,9 @@ $code.=<<___ if (!$softonly);
 	stg	$i2,8($i3)
 
 .Lxts_enc_km_done:
-	l${g}	$ra,14*$SIZE_T($sp)
-	st${g}	$sp,$tweak($sp)		# wipe tweak
-	st${g}	$sp,$tweak($sp)
+	stg	$sp,$tweak+0($sp)	# wipe tweak
+	stg	$sp,$tweak+8($sp)
+	l${g}	$ra,5*$SIZE_T($sp)
 	lm${g}	%r6,$s3,6*$SIZE_T($sp)
 	br	$ra
 .align	16
@@ -1980,8 +1980,8 @@ $code.=<<___ if (!$softonly);
 	clr	%r0,%r1
 	jl	.Lxts_dec_software
 
+	st${g}	$ra,5*$SIZE_T($sp)
 	stm${g}	%r6,$s3,6*$SIZE_T($sp)
-	st${g}	$ra,14*$SIZE_T($sp)
 
 	nill	$len,0xfff0		# $len&=~15
 	slgr	$out,$inp
@@ -2065,9 +2065,9 @@ $code.=<<___ if (!$softonly);
 	stg	$s2,0($i3)
 	stg	$s3,8($i3)
 .Lxts_dec_km_done:
-	l${g}	$ra,14*$SIZE_T($sp)
-	st${g}	$sp,$tweak($sp)		# wipe tweak
-	st${g}	$sp,$tweak($sp)
+	stg	$sp,$tweak+0($sp)	# wipe tweak
+	stg	$sp,$tweak+8($sp)
+	l${g}	$ra,5*$SIZE_T($sp)
 	lm${g}	%r6,$s3,6*$SIZE_T($sp)
 	br	$ra
 .align	16
