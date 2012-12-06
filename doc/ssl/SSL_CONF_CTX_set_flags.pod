@@ -26,7 +26,7 @@ Currently the following B<flags> values are recognised:
 
 =over 4
 
-=item SSL_CONF_FLAG_FLAG_CMDLINE, SSL_CONF_FLAG_FLAG_FILE
+=item SSL_CONF_FLAG_CMDLINE, SSL_CONF_FLAG_FILE
 
 recognise options intended for command line or configuration file use. At
 least one of these flags must be set.

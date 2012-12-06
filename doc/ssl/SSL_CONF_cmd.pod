@@ -55,8 +55,8 @@ the value set for B<-sigalgs> will be used instead.
 
 =item B<-curves>
 
-This sets the supported elliptic curves. For servers the curves are
-sent using the supported curves extension for TLS v1.2. For clients it is used
+This sets the supported elliptic curves. For clients the curves are
+sent using the supported curves extension. For servers it is used
 to determine which curve to use. This setting affects curves used for both
 signatures and key exchange, if applicable.
 
@@ -141,7 +141,7 @@ Note: the command prefix (if set) alters the recognised B<cmd> values.
 
 =over 4
 
-=item B<CipherSuite>
+=item B<CipherString>
 
 Sets the cipher suite list to B<value>. Note: syntax checking of B<value> is
 currently not performed unless an B<SSL> or B<SSL_CTX> structure is 
@@ -174,8 +174,8 @@ the value set for B<SignatureAlgorithms> will be used instead.
 
 =item B<Curves>
 
-This sets the supported elliptic curves. For servers the curves are
-sent using the supported curves extension for TLS v1.2. For clients it is used
+This sets the supported elliptic curves. For clients the curves are
+sent using the supported curves extension. For servers it is used
 to determine which curve to use. This setting affects curves used for both
 signatures and key exchange, if applicable.
 
