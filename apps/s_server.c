@@ -1715,12 +1715,12 @@ bad:
 	if (vpm)
 		SSL_CTX_set1_param(ctx, vpm);
 
-	ssl_ctx_add_crls(ctx, crls);
+	ssl_ctx_add_crls(ctx, crls, 0);
 
 	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, no_ecdhe))
 		goto end;
 
-	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile, crls))
+	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile, crls, 0))
 		{
 		BIO_printf(bio_err, "Error loading store locations\n");
 		ERR_print_errors(bio_err);
@@ -1783,7 +1783,7 @@ bad:
 		if (vpm)
 			SSL_CTX_set1_param(ctx2, vpm);
 
-		ssl_ctx_add_crls(ctx2, crls);
+		ssl_ctx_add_crls(ctx2, crls, 0);
 
 		if (!args_ssl_call(ctx2, bio_err, cctx, ssl_args, no_ecdhe))
 			goto end;

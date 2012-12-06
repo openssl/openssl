@@ -4,6 +4,10 @@
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
 
+  *) New option -crl_download in several openssl utilities to download CRLs
+     from CRLDP extension in certificates.
+     [Steve Henson]
+
   *) Integrate hostname, email address and IP address checking with certificate
      verification. New verify options supporting checking in opensl utility.
      [Steve Henson]

@@ -1660,32 +1660,28 @@ static int add_crls_store(X509_STORE *st, STACK_OF(X509_CRL) *crls)
 	{
 	X509_CRL *crl;
 	int i;
-	if (crls)
+	for (i = 0; i < sk_X509_CRL_num(crls); i++)
 		{
-		for (i = 0; i < sk_X509_CRL_num(crls); i++)
-			{
-			crl = sk_X509_CRL_value(crls, i);
-			X509_STORE_add_crl(st, crl);
-			}
+		crl = sk_X509_CRL_value(crls, i);
+		X509_STORE_add_crl(st, crl);
 		}
 	return 1;
 	}
 
-int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls)
+int ssl_ctx_add_crls(SSL_CTX *ctx, STACK_OF(X509_CRL) *crls, int crl_download)
 	{
 	X509_STORE *st;
-	if (crls)
-		{
-		st = SSL_CTX_get_cert_store(ctx);
-		add_crls_store(st, crls);
-		}
+	st = SSL_CTX_get_cert_store(ctx);
+	add_crls_store(st, crls);
+	if (crl_download)
+		store_setup_crl_download(st);
 	return 1;
 	}
 
 int ssl_load_stores(SSL_CTX *ctx,
 			const char *vfyCApath, const char *vfyCAfile,
 			const char *chCApath, const char *chCAfile,
-			STACK_OF(X509_CRL) *crls)
+			STACK_OF(X509_CRL) *crls, int crl_download)
 	{
 	X509_STORE *vfy = NULL, *ch = NULL;
 	int rv = 0;
@@ -1696,6 +1692,8 @@ int ssl_load_stores(SSL_CTX *ctx,
 			goto err;
 		add_crls_store(vfy, crls);
 		SSL_CTX_set1_verify_cert_store(ctx, vfy);
+		if (crl_download)
+			store_setup_crl_download(vfy);
 		}
 	if (chCApath || chCAfile)
 		{
