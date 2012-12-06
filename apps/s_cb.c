@@ -1572,20 +1572,6 @@ void print_ssl_summary(BIO *bio, SSL *s)
 		ssl_print_tmp_key(bio, s);
 	}
 
-void print_ssl_cert_checks(BIO *bio, SSL *s,
-				const unsigned char *checkhost,
-				const unsigned char *checkemail,
-				const char *checkip)
-	{
-	X509 *peer;
-	peer = SSL_get_peer_certificate(s);
-	if (peer)
-		{
-		print_cert_checks(bio, peer, checkhost, checkemail, checkip);
-		X509_free(peer);
-		}
-	}
-
 int args_ssl(char ***pargs, int *pargc, SSL_CONF_CTX *cctx,
 			int *badarg, BIO *err, STACK_OF(OPENSSL_STRING) **pstr)
 	{
