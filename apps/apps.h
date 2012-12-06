@@ -245,7 +245,7 @@ int app_passwd(BIO *err, char *arg1, char *arg2, char **pass1, char **pass2);
 int add_oid_section(BIO *err, CONF *conf);
 X509 *load_cert(BIO *err, const char *file, int format,
 	const char *pass, ENGINE *e, const char *cert_descrip);
-X509_CRL *load_crl(char *infile, int format);
+X509_CRL *load_crl(const char *infile, int format);
 int load_cert_crl_http(const char *url, BIO *err,
 					X509 **pcert, X509_CRL **pcrl);
 EVP_PKEY *load_key(BIO *err, const char *file, int format, int maybe_stdin,
@@ -342,6 +342,8 @@ void print_cert_checks(BIO *bio, X509 *x,
 				const unsigned char *checkhost,
 				const unsigned char *checkemail,
 				const char *checkip);
+
+void store_setup_crl_download(X509_STORE *st);
 
 #define FORMAT_UNDEF    0
 #define FORMAT_ASN1     1

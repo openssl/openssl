@@ -4,6 +4,10 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) New option -crl_download in several openssl utilities to download CRLs
+     from CRLDP extension in certificates.
+     [Steve Henson]
+
   *) New options -CRL and -CRLform for s_client and s_server for CRLs.
      [Steve Henson]
 
