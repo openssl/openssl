@@ -274,7 +274,7 @@ static int cmd_ecdhparam(SSL_CONF_CTX *cctx, const char *value)
 			}
 		if (!strcasecmp(value, "automatic"))
 			{
-			if (onoff != -1)
+			if (onoff == -1)
 				onoff = 1;
 			}
 		else if (onoff != -1)
