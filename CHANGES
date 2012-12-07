@@ -3,6 +3,8 @@
  _______________
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
+  *) Fix OCSP checking.
+     [Rob Stradling <rob.stradling@comodo.com> and Ben Laurie]
 
   *) New option -crl_download in several openssl utilities to download CRLs
      from CRLDP extension in certificates.

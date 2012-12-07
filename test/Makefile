@@ -185,7 +185,7 @@ alltests: \
 	test_enc test_x509 test_rsa test_crl test_sid \
 	test_gen test_req test_pkcs7 test_verify test_dh test_dsa \
 	test_ss test_ca test_engine test_evp test_ssl test_tsa test_ige \
-	test_jpake test_srp test_cms test_v3name
+	test_jpake test_srp test_cms test_v3name test_ocsp
 
 test_evp:
 	../util/shlib_wrap.sh ./$(EVPTEST) evptests.txt
@@ -366,6 +366,10 @@ test_srp: $(SRPTEST)$(EXE_EXT)
 test_v3name: $(V3NAMETEST)$(EXE_EXT)
 	@echo "Test X509v3_check_*"
 	../util/shlib_wrap.sh ./$(V3NAMETEST)
+
+test_ocsp:
+	@echo "Test OCSP"
+	@sh ./tocsp
 
 lint:
 	lint -DLINT $(INCLUDES) $(SRC)>fluff

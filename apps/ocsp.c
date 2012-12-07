@@ -866,6 +866,8 @@ int MAIN(int argc, char **argv)
 		goto end;
 		}
 
+	ret = 0;
+
 	if (!noverify)
 		{
 		if (req && ((i = OCSP_check_nonce(req, bs)) <= 0))
@@ -875,17 +877,17 @@ int MAIN(int argc, char **argv)
 			else
 				{
 				BIO_printf(bio_err, "Nonce Verify error\n");
+				ret = 1;
 				goto end;
 				}
 			}
 
 		i = OCSP_basic_verify(bs, verify_other, store, verify_flags);
-                if (i < 0) i = OCSP_basic_verify(bs, NULL, store, 0);
-
 		if(i <= 0)
 			{
 			BIO_printf(bio_err, "Response Verify Failure\n");
 			ERR_print_errors(bio_err);
+			ret = 1;
 			}
 		else
 			BIO_printf(bio_err, "Response verify OK\n");
@@ -893,9 +895,7 @@ int MAIN(int argc, char **argv)
 		}
 
 	if (!print_ocsp_summary(out, bs, req, reqnames, ids, nsec, maxage))
-		goto end;
-
-	ret = 0;
+		ret = 1;
 
 end:
 	ERR_print_errors(bio_err);
