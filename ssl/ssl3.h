@@ -338,6 +338,9 @@ extern "C" {
 #define TLS1_RT_CRYPTO_IV		(TLS1_RT_CRYPTO | 0x7)
 #define TLS1_RT_CRYPTO_FIXED_IV		(TLS1_RT_CRYPTO | 0x8)
 
+/* Pseudo content type for SSL/TLS header info */
+#define SSL3_RT_HEADER			0x100
+
 #define SSL3_AL_WARNING			1
 #define SSL3_AL_FATAL			2
 

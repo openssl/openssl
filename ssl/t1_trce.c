@@ -1224,18 +1224,19 @@ void SSL_trace(int write_p, int version, int content_type,
 				msg, msglen);
 		return;
 		}
-
-	BIO_printf(bio, "%s Record: Version = %s (0x%x)",
-				write_p ? "Sent" : "Received",
-				ssl_trace_str(version, ssl_version_tbl),
-				version);
-	BIO_printf(bio, " Length=%d\n", (int)msglen);
-	BIO_printf(bio, "  Content Type = %s (%d)\n",
-				ssl_trace_str(content_type, ssl_content_tbl),
-				content_type);
-
 	switch (content_type)
 		{
+	case SSL3_RT_HEADER:
+		{
+		int hvers = msg[1] << 8 | msg[2];
+		BIO_puts(bio, write_p ? "Sent" : "Received");
+		BIO_printf(bio, " Record\nHeader:\n  Version = %s (0x%x)\n",
+				ssl_trace_str(hvers, ssl_version_tbl), hvers);
+		BIO_printf(bio, "  Content Type = %s (%d)\n  Length = %d",
+				ssl_trace_str(msg[0], ssl_content_tbl), msg[0],
+				msg[3] << 8 | msg[4]);
+		}
+		break;
 	case SSL3_RT_HANDSHAKE:
 		if (!ssl_print_handshake(bio, ssl, msg, msglen, 4))
 			BIO_printf(bio, "Message length parse error!\n");
