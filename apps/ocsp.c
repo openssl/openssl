@@ -107,7 +107,7 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db,
 			X509 *ca, X509 *rcert, EVP_PKEY *rkey,
 			STACK_OF(X509) *rother, unsigned long flags,
-			int nmin, int ndays);
+			int nmin, int ndays, int badsig);
 
 static char **lookup_serial(CA_DB *db, ASN1_INTEGER *ser);
 static BIO *init_responder(char *port);
@@ -154,6 +154,7 @@ int MAIN(int argc, char **argv)
 	int ret = 1;
 	int accept_count = -1;
 	int badarg = 0;
+	int badsig = 0;
 	int i;
 	int ignore_err = 0;
 	STACK_OF(OPENSSL_STRING) *reqnames = NULL;
@@ -271,6 +272,8 @@ int MAIN(int argc, char **argv)
 			verify_flags |= OCSP_TRUSTOTHER;
 		else if (!strcmp(*args, "-no_intern"))
 			verify_flags |= OCSP_NOINTERN;
+		else if (!strcmp(*args, "-badsig"))
+			badsig = 1;
 		else if (!strcmp(*args, "-text"))
 			{
 			req_text = 1;
@@ -761,7 +764,7 @@ int MAIN(int argc, char **argv)
 
 	if (rdb)
 		{
-		i = make_ocsp_response(&resp, req, rdb, rca_cert, rsigner, rkey, rother, rflags, nmin, ndays);
+		i = make_ocsp_response(&resp, req, rdb, rca_cert, rsigner, rkey, rother, rflags, nmin, ndays, badsig);
 		if (cbio)
 			send_ocsp_response(cbio, resp);
 		}
@@ -1053,7 +1056,7 @@ static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
 static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db,
 			X509 *ca, X509 *rcert, EVP_PKEY *rkey,
 			STACK_OF(X509) *rother, unsigned long flags,
-			int nmin, int ndays)
+			int nmin, int ndays, int badsig)
 	{
 	ASN1_TIME *thisupd = NULL, *nextupd = NULL;
 	OCSP_CERTID *cid, *ca_id = NULL;
@@ -1143,6 +1146,9 @@ static int make_ocsp_response(OCSP_RESPONSE **resp, OCSP_REQUEST *req, CA_DB *db
 	OCSP_copy_nonce(bs, req);
 	
 	OCSP_basic_sign(bs, rcert, rkey, NULL, rother, flags);
+
+	if (badsig)
+		bs->signature->data[bs->signature->length -1] ^= 0x1;
 
 	*resp = OCSP_response_create(OCSP_RESPONSE_STATUS_SUCCESSFUL, bs);
 
