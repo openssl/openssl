@@ -332,9 +332,13 @@ static void tls1_get_curvelist(SSL *s, int sess,
 	switch (tls1_suiteb(s))
 		{
 	case SSL_CERT_FLAG_SUITEB_128_LOS:
-	case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
 		*pcurves = suiteb_curves;
 		*pcurveslen = sizeof(suiteb_curves);
+		break;
+
+	case SSL_CERT_FLAG_SUITEB_128_LOS_ONLY:
+		*pcurves = suiteb_curves;
+		*pcurveslen = 2;
 		break;
 
 	case SSL_CERT_FLAG_SUITEB_192_LOS:
