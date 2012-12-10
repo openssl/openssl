@@ -173,14 +173,14 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 		ret = X509_verify_cert(&ctx);
 		chain = tmpchain = X509_STORE_CTX_get1_chain(&ctx);
 		X509_STORE_CTX_cleanup(&ctx);
-        if (ret <= 0)
+		if (ret <= 0)
 			{
 			i = X509_STORE_CTX_get_error(&ctx);	
 			OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,OCSP_R_CERTIFICATE_VERIFY_ERROR);
 			ERR_add_error_data(2, "Verify error:",
 					X509_verify_cert_error_string(i));
-            goto end;
-            }
+			goto end;
+			}
 
 	verified_chain:
 		if(flags & OCSP_NOCHECKS)
