@@ -3,6 +3,10 @@
  _______________
 
  Changes between 1.0.x and 1.1.0  [xx XXX xxxx]
+
+  *) Make openssl verify return errors.
+     [Chris Palmer <palmer@google.com> and Ben Laurie]
+
   *) Fix OCSP checking.
      [Rob Stradling <rob.stradling@comodo.com> and Ben Laurie]
 

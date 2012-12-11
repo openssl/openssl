@@ -228,11 +228,19 @@ int MAIN(int argc, char **argv)
 	if (crl_download)
 		store_setup_crl_download(cert_ctx);
 
-	if (argc < 1) check(cert_ctx, NULL, untrusted, trusted, crls, e);
-	else
-		for (i=0; i<argc; i++)
-			check(cert_ctx,argv[i], untrusted, trusted, crls, e);
 	ret=0;
+	if (argc < 1)
+		{ 
+		if (1 != check(cert_ctx, NULL, untrusted, trusted, crls, e))
+			ret=-1;
+		}
+	else
+		{
+		for (i=0; i<argc; i++)
+			if (1 != check(cert_ctx,argv[i], untrusted, trusted, crls, e))
+				ret=-1;
+		}
+
 end:
 	if (ret == 1) {
 		BIO_printf(bio_err,"usage: verify [-verbose] [-CApath path] [-CAfile file] [-purpose purpose] [-crl_check]");
@@ -267,7 +275,7 @@ end:
 	sk_X509_pop_free(trusted, X509_free);
 	sk_X509_CRL_pop_free(crls, X509_CRL_free);
 	apps_shutdown();
-	OPENSSL_EXIT(ret);
+	OPENSSL_EXIT(ret < 0 ? 2 : ret);
 	}
 
 static int check(X509_STORE *ctx, char *file,
