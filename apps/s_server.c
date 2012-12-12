@@ -995,6 +995,7 @@ int MAIN(int argc, char *argv[])
 
 	char *crl_file = NULL;
 	int crl_format = FORMAT_PEM;
+	int crl_download = 0;
 	STACK_OF(X509_CRL) *crls = NULL;
 
 	meth=SSLv23_server_method();
@@ -1080,6 +1081,8 @@ int MAIN(int argc, char *argv[])
 			if (--argc < 1) goto bad;
 			crl_file= *(++argv);
 			}
+		else if	(strcmp(*argv,"-crl_download") == 0)
+			crl_download = 1;
 #ifndef OPENSSL_NO_TLSEXT
 		else if	(strcmp(*argv,"-authz") == 0)
 			{
@@ -1720,7 +1723,8 @@ bad:
 	if (!args_ssl_call(ctx, bio_err, cctx, ssl_args, no_ecdhe))
 		goto end;
 
-	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile, crls, 0))
+	if (!ssl_load_stores(ctx, vfyCApath, vfyCAfile, chCApath, chCAfile,
+						crls, crl_download))
 		{
 		BIO_printf(bio_err, "Error loading store locations\n");
 		ERR_print_errors(bio_err);
