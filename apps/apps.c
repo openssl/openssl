@@ -2527,6 +2527,8 @@ int args_verify(char ***pargs, int *pargc,
 		flags |= X509_V_FLAG_SUITEB_128_LOS;
 	else if (!strcmp(arg, "-suiteB_192"))
 		flags |= X509_V_FLAG_SUITEB_192_LOS;
+	else if (!strcmp(arg, "-partial_chain"))
+		flags |= X509_V_FLAG_PARTIAL_CHAIN;
 	else
 		return 0;
 

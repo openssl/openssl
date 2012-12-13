@@ -756,6 +756,15 @@ static int check_trust(X509_STORE_CTX *ctx)
 				return X509_TRUST_REJECTED;
 			}
 		}
+	/* If we accept partial chains and have at least one trusted
+	 * certificate return success.
+	 */
+	if (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN)
+		{
+		if (ctx->last_untrusted < sk_X509_num(ctx->chain))
+			return X509_TRUST_TRUSTED;
+		}
+
 	/* If no trusted certs in chain at all return untrusted and
 	 * allow standard (no issuer cert) etc errors to be indicated.
 	 */
