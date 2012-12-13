@@ -444,7 +444,7 @@ rehash.time: certs apps
 		[ -x "apps/openssl.exe" ] && OPENSSL="apps/openssl.exe" || :; \
 		OPENSSL_DEBUG_MEMORY=on; \
 		export OPENSSL OPENSSL_DEBUG_MEMORY; \
-		$(PERL) tools/c_rehash certs) && \
+		$(PERL) tools/c_rehash certs/demo) && \
 		touch rehash.time; \
 	else :; fi
 

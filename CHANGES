@@ -81,6 +81,9 @@
 
  Changes between 1.0.1c and 1.0.1d [xx XXX xxxx]
 
+  *) Make openssl verify return errors.
+     [Chris Palmer <palmer@google.com> and Ben Laurie]
+
   *) Fix possible deadlock when decoding public keys.
      [Steve Henson]
 
