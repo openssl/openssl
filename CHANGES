@@ -4,6 +4,9 @@
 
  Changes between 1.0.1c and 1.0.1d [xx XXX xxxx]
 
+  *) Make openssl verify return errors.
+     [Chris Palmer <palmer@google.com> and Ben Laurie]
+
   *) Call OCSP Stapling callback after ciphersuite has been chosen, so
      the right response is stapled. Also change SSL_get_certificate()
      so it returns the certificate actually sent.
