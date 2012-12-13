@@ -71,7 +71,7 @@ PREMAIN_C=`dirname "${CANISTER_O}"`/fips_premain.c
 
 HMAC_KEY="etaonrishdlcupfm"
 
-case "`(uname -s) 2>/dev/null`" in
+case "${CROSS_COMPILE:-`(uname -s) 2>/dev/null`}" in
 OSF1|IRIX*)	_WL_PREMAIN="-Wl,-init,FINGERPRINT_premain"	;;
 HP-UX)		_WL_PREMAIN="-Wl,+init,FINGERPRINT_premain"	;;
 AIX)		_WL_PREMAIN="-Wl,-binitfini:FINGERPRINT_premain,-bnoobjreorder";;
@@ -113,10 +113,10 @@ lib*|*.dll)	# must be linking a shared lib...
 	# Temporarily remove fipscanister.o from libcrypto.a!
 	# We are required to use the standalone copy...
 	if [ -n  "${FIPSLD_LIBCRYPTO}" ]; then
-	    if ar d "${FIPSLD_LIBCRYPTO}" fipscanister.o; then
-		(ranlib "${FIPSLD_LIBCRYPTO}") 2>/dev/null || :
-		trap	'ar r "${FIPSLD_LIBCRYPTO}" "${CANISTER_O}";
-			 (ranlib "${FIPSLD_LIBCRYPTO}") 2>/dev/null || :;
+	    if ${CROSS_COMPILE}ar d "${FIPSLD_LIBCRYPTO}" fipscanister.o; then
+		(${CROSS_COMPILE}ranlib "${FIPSLD_LIBCRYPTO}") 2>/dev/null || :
+		trap	'${CROSS_COMPILE}ar r "${FIPSLD_LIBCRYPTO}" "${CANISTER_O}";
+			 (${CROSS_COMPILE}ranlib "${FIPSLD_LIBCRYPTO}") 2>/dev/null || :;
 			 sleep 1;
 			 touch -c "${TARGET}"' 0
 	    fi
