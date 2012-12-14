@@ -35,6 +35,7 @@ commonName			= $ENV::CN
 
 basicConstraints=critical, CA:FALSE
 keyUsage=critical, nonRepudiation, digitalSignature, keyEncipherment
+subjectAltName=DNS:crl.host.com
 
 # This will be displayed in Netscape's comment listbox.
 nsComment			= "OpenSSL Generated Certificate"
@@ -42,11 +43,13 @@ nsComment			= "OpenSSL Generated Certificate"
 # PKIX recommendations harmless if included in all certificates.
 subjectKeyIdentifier=hash
 authorityKeyIdentifier=keyid
+authorityInfoAccess = OCSP;URI:http://ocsp.host.com:8080/cgi-bin/prinenv/some/ocsp/path
 # OCSP responder certificate
 [ ocsp_cert ]
 
 basicConstraints=critical, CA:FALSE
 keyUsage=critical, nonRepudiation, digitalSignature, keyEncipherment
+
 
 # This will be displayed in Netscape's comment listbox.
 nsComment			= "OpenSSL Generated Certificate"
