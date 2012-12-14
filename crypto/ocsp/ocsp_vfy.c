@@ -111,14 +111,13 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 		 */
 		if (chain == certs) goto verified_chain;
 
-		/* If we trust some "other" certificates, mark them as
-		 * explicitly trusted (because some of them might be
+		/* If we trust some "other" certificates, allow partial
+		 * chains (because some of them might be
 		 * Intermediate CA Certificates), put them in a store and
 		 * attempt to build a trusted chain.
 		 */
 		if ((flags & OCSP_TRUSTOTHER) && (certs != NULL))
 			{
-			ASN1_OBJECT *objtmp = OBJ_nid2obj(NID_OCSP_sign);
 			tmpstore = X509_STORE_new();
 			if (!tmpstore)
 				{
@@ -129,7 +128,6 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 			for (i = 0; i < sk_X509_num(certs); i++)
 				{
 				X509 *xother = sk_X509_value(certs, i);
-				X509_add1_trust_object(xother, objtmp);
 				if (!X509_STORE_add_cert(tmpstore, xother))
 					{
 					ret = -1;
@@ -145,6 +143,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 				goto end;
 				}
 			X509_STORE_CTX_set_purpose(&ctx, X509_PURPOSE_OCSP_HELPER);
+			X509_STORE_CTX_set_flags(&ctx, X509_V_FLAG_PARTIAL_CHAIN);
 			ret = X509_verify_cert(&ctx);
 			if (ret == 1)
 				{
