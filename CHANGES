@@ -4,6 +4,16 @@
 
  Changes between 1.0.1 and 1.0.2 [xx XXX xxxx]
 
+  *) Fix OCSP checking.
+     [Rob Stradling <rob.stradling@comodo.com> and Ben Laurie]
+
+  *) Backport support for partial chain verification: if an intermediate
+     certificate is explicitly trusted (using -addtrust option to x509
+     utility for example) the verification is sucessful even if the chain
+     is not complete.
+     The OCSP checking fix depends on this backport.
+     [Steve Henson and Rob Stradling <rob.stradling@comodo.com>]
+
   *) Add -trusted_first option which attempts to find certificates in the
      trusted store even if an untrusted chain is also supplied.
      [Steve Henson]
