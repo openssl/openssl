@@ -2363,6 +2363,8 @@ int args_verify(char ***pargs, int *pargc,
 		flags |= X509_V_FLAG_CHECK_SS_SIGNATURE;
 	else if (!strcmp(arg, "-trusted_first"))
 		flags |= X509_V_FLAG_TRUSTED_FIRST;
+	else if (!strcmp(arg, "-partial_chain"))
+		flags |= X509_V_FLAG_PARTIAL_CHAIN;
 	else
 		return 0;
 

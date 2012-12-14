@@ -392,6 +392,8 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 /* Use trusted store first */
 #define X509_V_FLAG_TRUSTED_FIRST		0x8000
 
+/* Allow partial chains if at least one certificate is in trusted store */
+#define X509_V_FLAG_PARTIAL_CHAIN		0x80000
 
 #define X509_VP_FLAG_DEFAULT			0x1
 #define X509_VP_FLAG_OVERWRITE			0x2
